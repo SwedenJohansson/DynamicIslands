@@ -68,7 +68,7 @@ place Block_Pillar_Tier3 - at 6 7.5 y=0.17
 place Block_Pillar_Tier3 - at 6 3 y=0.17
 place Block_Pillar_Tier3 - at 6 4.5 y=0.17
 roof 4 5 at 0 0 y=0.17
-place Survivor_Cage dagnycage at 3 3.75 y=0.2 sit yaw=0
+place Survivor_Cage dagnycage at 3 3.75 y=0.2 sit yaw=0 scale=0.94
 place Loot_Chest dagnycase at 5.2 0.8 y=0.2 sit yaw=270
 place TP_Moontown_Barrel01 cellarcasks at 0.6 6.9 y=0.2 sit
 place TP_Moontown_Barrel03 cellarcasks at 1.4 6.9 y=0.2 sit
@@ -106,6 +106,12 @@ next
 next
 for cx 0 15 3
 place Block_Pillar_Tier3 colonnade at $cx -4.5 y=0.02 sy=1.22
+next
+# (the hall's own columns under the flat roof, every 3 m between the furniture: each holds the four plates round it, so
+# save stands no posts through the pianos and the pool table - the user 2026-10-18)
+for cx 1.5 13.5 3
+place Block_Pillar_Tier3 colonnade at $cx 1.5 y=0.02 sy=1.22
+place Block_Pillar_Tier3 colonnade at $cx 7.5 y=0.02 sy=1.22
 next
 place Placeable_Piano - at 3.2 4.5 y=0.05 sit yaw=90
 place Tangaroa_BallroomKit_GrandPiano - at 11.6 5 y=0.05 sit yaw=270

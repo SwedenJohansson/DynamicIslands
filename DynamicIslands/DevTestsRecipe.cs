@@ -2014,7 +2014,10 @@ namespace DynamicIslands
 		/// <summary>
 		/// Posts under the floors and decks over nothing (ROADMAP CA30, FloorsOverNothing): at each corner nothing holds, one
 		/// of Raft's posts (RT_Pillar) stretched from 0.3 m into the ground or sea floor up to the floor's underside, as Raft's
-		/// stilt houses stand. A corner with a post within 0.4 m already (the check's reach) is left as it is. Returns how many were stood.
+		/// stilt houses stand. A corner with a post within 0.4 m already (the check's reach) is left as it is. A post never goes
+		/// through a thing (furniture, a prop, a chest, a tree's trunk - IG7, the user 2026-10-18: a grid of posts under The Isobar
+		/// Club's flat roof went through its pianos and its pool table): it moves in under the floor up to 0.6 m, or is left out.
+		/// Returns how many were stood.
 		/// </summary>
 		static int StandPosts()
 		{
@@ -2025,12 +2028,32 @@ namespace DynamicIslands
 			int floors;
 			List<FloorGap> gaps = FloorsOverNothing(placedRoot.GetComponentsInChildren<EditorGameObject>(), 0.3f, ground, DynamicIslands.EditorWaterLevel, out floors);
 			var stood = new List<Vector3>();
+			List<Bounds> things = gaps.Count > 0 ? PostObstacles(placedRoot) : new List<Bounds>();
+			int dodged = 0, blocked = 0;
 			foreach (FloorGap d in gaps)
-				foreach (Vector3 p in d.Corners)
+				foreach (Vector3 corner in d.Corners)
 				{
-					if (stood.Any(s => new Vector2(s.x - p.x, s.z - p.z).magnitude < 0.4f && Mathf.Abs(s.y - p.y) < 0.5f)) continue;
-					float foot = GroundY(p.x, p.z) - 0.3f;
-					if (p.y - foot < 0.5f || !ObjectLimit.Allow(1)) continue;
+					if (stood.Any(s => new Vector2(s.x - corner.x, s.z - corner.z).magnitude < 0.4f && Mathf.Abs(s.y - corner.y) < 0.5f)) continue;
+					float foot = GroundY(corner.x, corner.z) - 0.3f;
+					if (corner.y - foot < 0.5f || !ObjectLimit.Allow(1)) continue;
+					// (not through a thing: in under the floor, towards its middle, until the post's line is clear)
+					Vector3 p = corner;
+					if (PostBlocked(things, p, foot))
+					{
+						bool found = false;
+						Vector3 toMid = new Vector3(d.Box.center.x - corner.x, 0f, d.Box.center.z - corner.z);
+						foreach (float step in new[] { 0.2f, 0.4f, 0.6f })
+							foreach (Vector3 dir in new[] { new Vector3(Mathf.Sign(toMid.x), 0f, 0f), new Vector3(0f, 0f, Mathf.Sign(toMid.z)), new Vector3(Mathf.Sign(toMid.x), 0f, Mathf.Sign(toMid.z)).normalized })
+							{
+								Vector3 c = corner + dir * step;
+								if (found || c.x < d.Box.min.x + 0.05f || c.x > d.Box.max.x - 0.05f || c.z < d.Box.min.z + 0.05f || c.z > d.Box.max.z - 0.05f) continue;
+								float f = GroundY(c.x, c.z) - 0.3f;
+								if (PostBlocked(things, c, f)) continue;
+								p = c; foot = f; found = true;
+							}
+						if (!found) { blocked++; continue; }
+						dodged++;
+					}
 					GameObject go = PlaceableCatalog.Spawn("RT_Pillar", placedRoot);
 					if (go == null) return stood.Count;
 					go.transform.rotation = PlacementOptions.Straight(go.transform.rotation, true);
@@ -2049,8 +2072,44 @@ namespace DynamicIslands
 					CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { go }, true));
 					stood.Add(p);
 				}
-			if (stood.Count > 0) Log("  " + stood.Count + " posts stood under " + gaps.Count + " floors and decks over nothing");
+			if (stood.Count > 0) Log("  " + stood.Count + " posts stood under " + gaps.Count + " floors and decks over nothing" + (dodged > 0 ? ", " + dodged + " moved off things" : ""));
+			if (blocked > 0) Log("  " + blocked + " posts left out: a thing under the floor's corner (furniture, a prop, a trunk)");
 			return stood.Count;
+		}
+
+		/// <summary>What a post must not go through (StandPosts): the boxes of the placed things - not building pieces, the land's
+		/// own, pipes and ladders (the overlap check's kinds, IG7) - a tree or a plant by its colliders (its trunk), the rest by its meshes.</summary>
+		static List<Bounds> PostObstacles(Transform placedRoot)
+		{
+			var boxes = new List<Bounds>();
+			foreach (EditorGameObject e in placedRoot.GetComponentsInChildren<EditorGameObject>())
+			{
+				string n = e.GameObjectName ?? "";
+				if (!e.gameObject.activeInHierarchy || ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Note_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") ||
+					Structural.IsMatch(n) || FloorLike.IsMatch(n) || OverlapIgnore.IsMatch(n)) continue;
+				if (Vegetation.IsMatch(n))
+				{
+					foreach (Collider c in e.GetComponentsInChildren<Collider>(false))
+						if (c.enabled && !c.isTrigger) boxes.Add(c.bounds);
+					continue;
+				}
+				foreach (Renderer r in e.GetComponentsInChildren<Renderer>(false))
+					if (r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly) boxes.Add(r.bounds);
+			}
+			return boxes;
+		}
+
+		/// <summary>Whether a post at <paramref name="top"/> (the floor's underside) down to <paramref name="foot"/> goes more than the
+		/// overlap check's margin into one of <paramref name="things"/> (its radius ~0.1 m).</summary>
+		static bool PostBlocked(List<Bounds> things, Vector3 top, float foot)
+		{
+			const float r = 0.1f;
+			foreach (Bounds b in things)
+			{
+				if (b.max.y - OverlapMargin < foot || b.min.y + OverlapMargin > top.y) continue;
+				if (top.x + r > b.min.x + OverlapMargin && top.x - r < b.max.x - OverlapMargin && top.z + r > b.min.z + OverlapMargin && top.z - r < b.max.z - OverlapMargin) return true;
+			}
+			return false;
 		}
 
 		/// <summary>Whether an object is under the ground whole (ShowsAboveGround).</summary>

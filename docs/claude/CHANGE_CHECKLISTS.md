@@ -282,8 +282,12 @@ This is the most common change in history. It does not touch any `.cs` file.
   cave rims flush with the ground. Roofs rest *on* pillars or walls; foundations are never used as roofs. On a slope,
   flatten the ground under a building first (`ramp`/brush) or give it legs that reach down. Think about this while
   placing, not only at the end: set a height only when the object must sit on something else.
+- **Nothing goes through anything** (the user, 2026-10-18: a grid of posts through The Isobar Club's pianos and pool
+  table). A post, pillar, wall, floor or roof piece never passes through furniture, a prop, a chest or a tree's trunk.
+  Place furniture between columns; under a big flat roof of floor plates give it deliberate columns clear of the
+  furniture, or let `save`/`posts` stand its posts (they now move off things, or are left out).
 **Test**: `CIRecipe <name>`, `CIFloating` in the editor (0 problems), then `CIPlay <name>`, and in a test world
-`CIGroundIslands <name>` (TEST_CATALOGUE §G). A new plan: `CIGroundIslands plans`.
+`CIGroundIslands <name>` and `CIOverlapIslands <name>` (TEST_CATALOGUE §G, IG7). A new plan: both with `plans`.
 
 ## Every feature
 - Update the docs in the same commit (README `## Documentation`):

@@ -21,7 +21,15 @@ namespace DynamicIslands
 	public static partial class DevTests
 	{
 		[ConsoleCommand(name: "CIGroundWorld", docs: "Dev, in a world: every object on the loaded custom islands (the randomizer's extras too) stands on something - nothing more than 0.5 m over what is under it and touching nothing, no base on the ground with part of it more than 0.6 m in the air, nothing buried whole, every cave rim on the ground (IG1). Problems listed per island; all of them in Mods\\DynamicIslands\\ground_world.txt. CIGroundWorld [part of the island name]")]
-		public static void GroundWorldCommand(string[] args)
+		public static void GroundWorldCommand(string[] args) { WorldCheck(args, GroundCheck); }
+
+		/// <summary>A check of the objects on spawned islands (CIGround* / CIOverlap*): its name in the results, its files'
+		/// prefix, what a pass says, the measure.</summary>
+		class IslandCheck { public string Label, File, Pass; public IslandMeasure Measure; }
+		delegate List<string> IslandMeasure(IslandWorldState.Entry e, out int count);
+		static readonly IslandCheck GroundCheck = new IslandCheck { Label = "ground", File = "ground", Pass = "all on something", Measure = GroundProblems };
+
+		static void WorldCheck(string[] args, IslandCheck c)
 		{
 			string only = args != null && args.Length > 0 && args[0] != "*" ? args[0] : "";
 			var report = new StringBuilder();
@@ -31,7 +39,7 @@ namespace DynamicIslands
 				if (only.Length > 0 && (e.HostName ?? e.Name ?? "").IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
 				islands++;
 				int n;
-				List<string> lines = GroundProblems(e, out n);
+				List<string> lines = c.Measure(e, out n);
 				objects += n;
 				report.AppendLine(e.Name + ": " + n + " objects, " + lines.Count + " problems");
 				foreach (string l in lines) report.AppendLine("  " + l);
@@ -41,25 +49,27 @@ namespace DynamicIslands
 				Log("  '" + e.Name + "': " + lines.Count + " problem(s) of " + n + " objects");
 				foreach (string l in lines.Take(5)) Log("    " + l);
 			}
-			File.WriteAllText(Path.Combine(DynamicIslands.assetpath, "ground_world.txt"), report.ToString());
-			if (islands == 0) Fail("ground: no loaded custom island" + (only.Length > 0 ? " named *" + only + "*" : ""));
-			else if (bad > 0) Fail("ground: " + bad + " of " + islands + " islands with " + problems + " problems (ground_world.txt)");
-			else Log("PASS: ground - " + islands + " islands, " + objects + " objects, all on something");
+			File.WriteAllText(Path.Combine(DynamicIslands.assetpath, c.File + "_world.txt"), report.ToString());
+			if (islands == 0) Fail(c.Label + ": no loaded custom island" + (only.Length > 0 ? " named *" + only + "*" : ""));
+			else if (bad > 0) Fail(c.Label + ": " + bad + " of " + islands + " islands with " + problems + " problems (" + c.File + "_world.txt)");
+			else Log("PASS: " + c.Label + " - " + islands + " islands, " + objects + " objects, " + c.Pass);
 		}
 
 		[ConsoleCommand(name: "CIGroundIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIGroundWorld does, then taken away (IG2/IG3). <which>: part of the name, 'plans' (every island of every plan - the story lines), 'gen' (the saved generated ones) or * (all but the test islands, kept copies and randomizer extras). Results in Mods\\DynamicIslands\\ground_islands.txt. CIGroundIslands <which> [most] [skip the first n] [keep: left there, where each is logged - to look at it]")]
-		public static void GroundIslandsCommand(string[] args)
+		public static void GroundIslandsCommand(string[] args) { IslandsCheck(args, GroundCheck); }
+
+		static void IslandsCheck(string[] args, IslandCheck c)
 		{
 			string which = args != null && args.Length > 0 ? args[0] : "*";
 			int most = args != null && args.Length > 1 ? int.Parse(args[1]) : 9999;
 			int skip = args != null && args.Length > 2 ? int.Parse(args[2]) : 0;
 			bool keep = args != null && args.Length > 3 && args[3] == "keep";
-			StartTest(GroundIslandsRoutine(which, most, skip, keep));
+			StartTest(GroundIslandsRoutine(c, which, most, skip, keep));
 		}
 
-		static IEnumerator GroundIslandsRoutine(string which, int most, int skip, bool keep = false)
+		static IEnumerator GroundIslandsRoutine(IslandCheck c, string which, int most, int skip, bool keep = false)
 		{
-			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("ground islands: host, in a world"); yield break; }
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail(c.Label + " islands: host, in a world"); yield break; }
 			var kept = new System.Text.RegularExpressions.Regex("_[0-9a-f]{12}$");
 			var saved = new HashSet<string>(IslandSpawner.ListSavedIslands(), StringComparer.OrdinalIgnoreCase);
 			IEnumerable<string> pick;
@@ -67,7 +77,7 @@ namespace DynamicIslands
 			else pick = saved.Where(n => !n.StartsWith("ci", StringComparison.OrdinalIgnoreCase) && !kept.IsMatch(n) && !n.StartsWith(WorldRandomizer.ExtrasPrefix, StringComparison.OrdinalIgnoreCase) &&
 				(which == "*" || n.IndexOf(which, StringComparison.OrdinalIgnoreCase) >= 0));
 			List<string> names = pick.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n).Skip(skip).Take(most).ToList();
-			Log("Ground check of " + names.Count + " saved islands (" + which + ", from " + skip + ")");
+			Log(c.Label + " check of " + names.Count + " saved islands (" + which + ", from " + skip + ")");
 			var report = new StringBuilder();
 			int done = 0, bad = 0, problems = 0, missed = 0;
 			foreach (string name in names)
@@ -82,7 +92,7 @@ namespace DynamicIslands
 				if (e == null || e.Root == null) { Log("  " + name + ": didn't come"); missed++; continue; }
 				yield return new WaitForSeconds(2f); // (the cave mountains and Raft's physics settle)
 				int n;
-				List<string> lines = GroundProblems(e, out n);
+				List<string> lines = c.Measure(e, out n);
 				done++;
 				report.AppendLine(name + ": " + n + " objects, " + lines.Count + " problems");
 				foreach (string l in lines) report.AppendLine("  " + l);
@@ -98,27 +108,29 @@ namespace DynamicIslands
 				IslandCache.Forget();
 				yield return new WaitForSeconds(1f);
 			}
-			File.WriteAllText(Path.Combine(DynamicIslands.assetpath, "ground_islands.txt"), report.ToString());
+			File.WriteAllText(Path.Combine(DynamicIslands.assetpath, c.File + "_islands.txt"), report.ToString());
 			string sum = done + " of " + names.Count + " islands measured" + (missed > 0 ? " (" + missed + " didn't come)" : "");
-			if (names.Count == 0) Fail("ground islands: none matched '" + which + "'");
-			else if (bad > 0 || missed > 0) Fail("ground islands: " + bad + " with " + problems + " problems; " + sum + " (ground_islands.txt)");
-			else Log("PASS: ground islands - " + sum + ", all on something");
+			if (names.Count == 0) Fail(c.Label + " islands: none matched '" + which + "'");
+			else if (bad > 0 || missed > 0) Fail(c.Label + " islands: " + bad + " with " + problems + " problems; " + sum + " (" + c.File + "_islands.txt)");
+			else Log("PASS: " + c.Label + " islands - " + sum + ", " + c.Pass);
 		}
 
 		[ConsoleCommand(name: "CIGroundTypes", docs: "Dev, world (host, a test world 'CI ...'): brand-new islands of each map type made next to the raft by the generator as it is now, measured as CIGroundWorld does, then taken away (IG6) - a saved generated island keeps what an older generator made. Results in Mods\\DynamicIslands\\ground_types.txt. CIGroundTypes [types, comma-separated, or *] [islands of each, 2]")]
-		public static void GroundTypesCommand(string[] args)
+		public static void GroundTypesCommand(string[] args) { TypesCheck(args, GroundCheck); }
+
+		static void TypesCheck(string[] args, IslandCheck c)
 		{
 			string which = args != null && args.Length > 0 ? args[0] : "*";
 			int each = args != null && args.Length > 1 ? int.Parse(args[1]) : 2;
-			StartTest(GroundTypesRoutine(which, each));
+			StartTest(GroundTypesRoutine(c, which, each));
 		}
 
-		static IEnumerator GroundTypesRoutine(string which, int each)
+		static IEnumerator GroundTypesRoutine(IslandCheck c, string which, int each)
 		{
-			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("ground types: host, in a world"); yield break; }
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail(c.Label + " types: host, in a world"); yield break; }
 			List<string> types = (which == "*" ? MapTypes.All.Select(t => t.Name).Where(t => t != "random") : which.Split(',').Select(t => t.Trim()).Where(t => MapTypes.Get(t) != null)).ToList();
-			if (types.Count == 0) { Fail("ground types: no map type '" + which + "'"); yield break; }
-			Log("Ground check of new islands: " + string.Join(", ", types.ToArray()) + ", " + each + " of each");
+			if (types.Count == 0) { Fail(c.Label + " types: no map type '" + which + "'"); yield break; }
+			Log(c.Label + " check of new islands: " + string.Join(", ", types.ToArray()) + ", " + each + " of each");
 			var report = new StringBuilder();
 			int done = 0, bad = 0, problems = 0, missed = 0;
 			foreach (string type in types)
@@ -137,7 +149,7 @@ namespace DynamicIslands
 					}
 					yield return new WaitForSeconds(2f); // (the cave mountains and Raft's physics settle)
 					int n;
-					List<string> lines = GroundProblems(e, out n);
+					List<string> lines = c.Measure(e, out n);
 					done++;
 					report.AppendLine(type + " (" + e.Name + "): " + n + " objects, " + lines.Count + " problems");
 					foreach (string l in lines) report.AppendLine("  " + l);
@@ -152,10 +164,178 @@ namespace DynamicIslands
 					IslandCache.Forget();
 					yield return new WaitForSeconds(1f);
 				}
-			File.WriteAllText(Path.Combine(DynamicIslands.assetpath, "ground_types.txt"), report.ToString());
+			File.WriteAllText(Path.Combine(DynamicIslands.assetpath, c.File + "_types.txt"), report.ToString());
 			string sum = done + " of " + types.Count * each + " new islands measured" + (missed > 0 ? " (" + missed + " didn't come)" : "");
-			if (bad > 0 || missed > 0) Fail("ground types: " + bad + " with " + problems + " problems; " + sum + " (ground_types.txt)");
-			else Log("PASS: ground types - " + sum + ", all on something");
+			if (bad > 0 || missed > 0) Fail(c.Label + " types: " + bad + " with " + problems + " problems; " + sum + " (" + c.File + "_types.txt)");
+			else Log("PASS: " + c.Label + " types - " + sum + ", " + c.Pass);
+		}
+
+		static readonly IslandCheck OverlapCheck = new IslandCheck { Label = "overlap", File = "overlap", Pass = "nothing through anything", Measure = OverlapProblems };
+
+		[ConsoleCommand(name: "CIOverlapWorld", docs: "Dev, in a world: nothing on the loaded custom islands passes through anything else - no post, pillar, wall, floor or roof piece more than 6 cm inside a piece of furniture, a prop, a chest, a machine, a tree or a plant (IG7; the user 2026-10-18: posts through a piano and a pool table). Things resting on floors, roofs on their posts, things on tables don't count. Problems per island; all in Mods\\DynamicIslands\\overlap_world.txt. CIOverlapWorld [part of the island name]")]
+		public static void OverlapWorldCommand(string[] args) { WorldCheck(args, OverlapCheck); }
+
+		[ConsoleCommand(name: "CIOverlapIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIOverlapWorld does, then taken away (IG7). <which>: part of the name, 'plans' (every island of every plan), 'gen' or * (all but the test islands, kept copies and randomizer extras). Results in Mods\\DynamicIslands\\overlap_islands.txt. CIOverlapIslands <which> [most] [skip] [keep]")]
+		public static void OverlapIslandsCommand(string[] args) { IslandsCheck(args, OverlapCheck); }
+
+		[ConsoleCommand(name: "CIOverlapTypes", docs: "Dev, world (host, a test world 'CI ...'): brand-new islands of each map type made next to the raft by the generator as it is now, measured as CIOverlapWorld does, then taken away (IG7). Results in Mods\\DynamicIslands\\overlap_types.txt. CIOverlapTypes [types, comma-separated, or *] [islands of each, 2]")]
+		public static void OverlapTypesCommand(string[] args) { TypesCheck(args, OverlapCheck); }
+
+		/// <summary>Building pieces: what must not pass through the things below (posts, pillars, walls, floors, decks, roofs).</summary>
+		static readonly Regex Structural = new Regex("Pillar|Post(?!er|card|box)|Column|Wall|Roof|Beam|Fence|Pole|Railing|Floor|Foundation|Block_|Deck|Plank|Pier|Stilt|Scaffold|Girder|Truss|Apartment_Ext", RegexOptions.IgnoreCase);
+		/// <summary>Not measured either way: the land's own (rocks, ground plants, caves), what goes through things on purpose (pipes,
+		/// cables, ladders, doors in their walls), flat or loose things (rugs, puddles), lights and effects.</summary>
+		static readonly Regex OverlapIgnore = new Regex("Rock|Boulder|Stone|Cliff|Cave|Tunnel|Sand|Ground|Terrain|Water|Mountain|Hill|Kelp|Coral|Seaweed|Grass|Fern|Flower|Reed|Vine|Moss|Shell|Drift|Pipe|Cable|Rope|Chain|Wire|Ladder|Door|Hatch|Gate|Window|Curtain|Rug|Carpet|Decal|Puddle|Stain|Light|Lamp|Fire|Smoke|Steam|Splash|Bubble|Cobweb", RegexOptions.IgnoreCase);
+		/// <summary>Trees and big plants: measured by their colliders (the trunk), not by the box round the crown.</summary>
+		static readonly Regex Vegetation = new Regex("Tree|Bush|Palm|Plant|Cactus|Bamboo|Monstera|Shrub|Hedge|Pine|Birch|Oak", RegexOptions.IgnoreCase);
+		/// <summary>How far one solid must be inside another to count (a chair pushed against a wall, a pot sunk into a floor: not).</summary>
+		const float OverlapMargin = 0.06f;
+
+		/// <summary>A solid box of a thing: a renderer's mesh box or a collider's box, in its own frame.</summary>
+		class OverlapBox { public Transform T; public Vector3 Min, Max; }
+
+		/// <summary>
+		/// What passes through what on a spawned island (IG7): the middle of each building piece's material - rays across its
+		/// thinnest side against its own colliders, half-way between where they go in and come out (a post's axis, a wall's or a
+		/// floor's middle, a roof slab's middle; nothing in a doorway) - and every point of it more than <see cref="OverlapMargin"/>
+		/// inside a thing's solid box (furniture, props, chests, machines; a tree's trunk). One line per pair, the deepest point.
+		/// </summary>
+		static List<string> OverlapProblems(IslandWorldState.Entry e, out int count)
+		{
+			var lines = new List<string>();
+			count = 0;
+			Transform objects = e.Root.transform.Find("Objects");
+			if (objects == null) return lines;
+			Transform frame = e.Root.transform;
+			Physics.SyncTransforms();
+			var pieces = new List<Transform>();
+			var things = new List<KeyValuePair<Transform, List<OverlapBox>>>();
+			var thingBox = new List<Bounds>();
+			foreach (Transform o in objects)
+			{
+				if (o == null || !o.gameObject.activeInHierarchy) continue;
+				string n = o.name.Replace("(Clone)", "").Trim();
+				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Note_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") || OverlapIgnore.IsMatch(n)) continue;
+				if (RaftProps.Get(n) != null && RaftProps.Get(n).IsCave) continue;
+				count++;
+				if (Structural.IsMatch(n)) { pieces.Add(o); continue; }
+				var boxes = new List<OverlapBox>();
+				if (Vegetation.IsMatch(n))
+				{
+					foreach (Collider c in o.GetComponentsInChildren<Collider>(false))
+					{
+						if (!c.enabled || c.isTrigger) continue;
+						Vector3 lc, ls;
+						if (c is BoxCollider) { lc = ((BoxCollider)c).center; ls = ((BoxCollider)c).size; }
+						else if (c is CapsuleCollider)
+						{
+							var cc = (CapsuleCollider)c;
+							lc = cc.center;
+							ls = Vector3.one * cc.radius * 2f;
+							ls[cc.direction] = Mathf.Max(cc.height, cc.radius * 2f);
+						}
+						else if (c is SphereCollider) { lc = ((SphereCollider)c).center; ls = Vector3.one * ((SphereCollider)c).radius * 2f; }
+						else if (c is MeshCollider && ((MeshCollider)c).sharedMesh != null) { lc = ((MeshCollider)c).sharedMesh.bounds.center; ls = ((MeshCollider)c).sharedMesh.bounds.size; }
+						else continue;
+						boxes.Add(new OverlapBox { T = c.transform, Min = lc - ls / 2f, Max = lc + ls / 2f });
+					}
+				}
+				else
+					foreach (Renderer r in o.GetComponentsInChildren<Renderer>(false))
+					{
+						if (!(r is MeshRenderer) || !r.enabled || r.name == ContentCatalog.MarkerOnly) continue;
+						MeshFilter mf = r.GetComponent<MeshFilter>();
+						if (mf == null || mf.sharedMesh == null) continue;
+						Bounds mb = mf.sharedMesh.bounds;
+						boxes.Add(new OverlapBox { T = r.transform, Min = mb.min, Max = mb.max });
+					}
+				// (shrunk by the margin, in each box's own scale; too thin to hold a margin: no solid to pass through)
+				var solid = new List<OverlapBox>();
+				foreach (OverlapBox b in boxes)
+				{
+					Vector3 s = b.T.lossyScale, m = new Vector3(OverlapMargin / Mathf.Max(1e-4f, Mathf.Abs(s.x)), OverlapMargin / Mathf.Max(1e-4f, Mathf.Abs(s.y)), OverlapMargin / Mathf.Max(1e-4f, Mathf.Abs(s.z)));
+					Vector3 lo = b.Min + m, hi = b.Max - m;
+					if (lo.x < hi.x && lo.y < hi.y && lo.z < hi.z) solid.Add(new OverlapBox { T = b.T, Min = lo, Max = hi });
+				}
+				if (solid.Count == 0) continue;
+				Bounds w = new Bounds(solid[0].T.TransformPoint((solid[0].Min + solid[0].Max) / 2f), Vector3.zero);
+				foreach (OverlapBox b in solid)
+					for (int k = 0; k < 8; k++)
+						w.Encapsulate(b.T.TransformPoint(new Vector3((k & 1) == 0 ? b.Min.x : b.Max.x, (k & 2) == 0 ? b.Min.y : b.Max.y, (k & 4) == 0 ? b.Min.z : b.Max.z)));
+				things.Add(new KeyValuePair<Transform, List<OverlapBox>>(o, solid));
+				thingBox.Add(w);
+			}
+			if (things.Count == 0) return lines;
+			foreach (Transform piece in pieces)
+			{
+				string pn = piece.name.Replace("(Clone)", "").Trim();
+				Collider[] own = piece.GetComponentsInChildren<Collider>(false).Where(c => c.enabled && !c.isTrigger).ToArray();
+				var deepest = new Dictionary<int, float>();
+				var at = new Dictionary<int, Vector3>();
+				foreach (Renderer r in piece.GetComponentsInChildren<Renderer>(false))
+				{
+					if (!(r is MeshRenderer) || !r.enabled || r.name == ContentCatalog.MarkerOnly) continue;
+					MeshFilter mf = r.GetComponent<MeshFilter>();
+					if (mf == null || mf.sharedMesh == null) continue;
+					Bounds lb = mf.sharedMesh.bounds;
+					Bounds rb = r.bounds;
+					rb.Expand(0.1f);
+					List<int> near = Enumerable.Range(0, things.Count).Where(i => thingBox[i].Intersects(rb) && things[i].Key != piece).ToList();
+					if (near.Count == 0) continue;
+					// (its box's sides in the world; the thinnest one is crossed by the rays)
+					Vector3[] ax = { r.transform.TransformVector(new Vector3(lb.size.x, 0, 0)), r.transform.TransformVector(new Vector3(0, lb.size.y, 0)), r.transform.TransformVector(new Vector3(0, 0, lb.size.z)) };
+					int t = 0;
+					for (int i = 1; i < 3; i++) if (ax[i].magnitude < ax[t].magnitude) t = i;
+					int a1 = (t + 1) % 3, a2 = (t + 2) % 3;
+					int n1 = Mathf.Clamp(Mathf.CeilToInt(ax[a1].magnitude / 0.25f), 1, 40), n2 = Mathf.Clamp(Mathf.CeilToInt(ax[a2].magnitude / 0.25f), 1, 40);
+					Vector3 centre = r.transform.TransformPoint(lb.center), dir = ax[t].magnitude > 1e-4f ? ax[t].normalized : Vector3.up;
+					float thick = ax[t].magnitude;
+					for (int i = 0; i < n1; i++)
+						for (int j = 0; j < n2; j++)
+						{
+							Vector3 q = centre + ax[a1] * ((i + 0.5f) / n1 - 0.5f) + ax[a2] * ((j + 0.5f) / n2 - 0.5f);
+							Vector3 p = q;
+							if (own.Length > 0)
+							{
+								// (in and out of its own colliders across the thin side: the middle of the material, or nothing - a doorway)
+								float inD = float.MaxValue, outD = float.MaxValue;
+								RaycastHit h;
+								Ray fwd = new Ray(q - dir * (thick / 2f + 0.2f), dir), back = new Ray(q + dir * (thick / 2f + 0.2f), -dir);
+								foreach (Collider c in own)
+								{
+									if (c.Raycast(fwd, out h, thick + 0.4f) && h.distance < inD) inD = h.distance;
+									if (c.Raycast(back, out h, thick + 0.4f) && h.distance < outD) outD = h.distance;
+								}
+								if (inD == float.MaxValue || outD == float.MaxValue) continue;
+								Vector3 pin = fwd.GetPoint(inD), pout = back.GetPoint(outD);
+								if (Vector3.Dot(pout - pin, dir) < 0f) continue;
+								p = (pin + pout) / 2f;
+							}
+							foreach (int k in near)
+							{
+								if (!thingBox[k].Contains(p)) continue;
+								foreach (OverlapBox b in things[k].Value)
+								{
+									Vector3 l = b.T.InverseTransformPoint(p), s = b.T.lossyScale;
+									if (l.x <= b.Min.x || l.x >= b.Max.x || l.y <= b.Min.y || l.y >= b.Max.y || l.z <= b.Min.z || l.z >= b.Max.z) continue;
+									float d = OverlapMargin + Mathf.Min(Mathf.Min((l.x - b.Min.x) * Mathf.Abs(s.x), (b.Max.x - l.x) * Mathf.Abs(s.x)),
+										Mathf.Min(Mathf.Min((l.y - b.Min.y) * Mathf.Abs(s.y), (b.Max.y - l.y) * Mathf.Abs(s.y)), Mathf.Min((l.z - b.Min.z) * Mathf.Abs(s.z), (b.Max.z - l.z) * Mathf.Abs(s.z))));
+									float was;
+									if (!deepest.TryGetValue(k, out was) || d > was) { deepest[k] = d; at[k] = p; }
+								}
+							}
+						}
+				}
+				foreach (KeyValuePair<int, float> hit in deepest.OrderByDescending(x => x.Value))
+				{
+					Transform th = things[hit.Key].Key;
+					// (in the island's own frame, as its file and the editor have it)
+					Vector3 p = frame.InverseTransformPoint(at[hit.Key]), pp = frame.InverseTransformPoint(piece.position), tp = frame.InverseTransformPoint(th.position);
+					lines.Add("through: " + pn + " at " + Num(Math.Round(pp.x, 2)) + " " + Num(Math.Round(pp.z, 2)) + " goes " + Num(Math.Round(hit.Value, 2)) + " m into " +
+						th.name.Replace("(Clone)", "").Trim() + " at " + Num(Math.Round(tp.x, 2)) + " " + Num(Math.Round(tp.z, 2)) + " (the point " + Num(Math.Round(p.x, 2)) + " " + Num(Math.Round(p.z, 2)) + " y=" + Num(Math.Round(p.y, 2)) + ")");
+				}
+			}
+			return lines;
 		}
 
 		/// <summary>What stands on a mount narrower than itself: a dish on a mast, an antenna on a roof - one mesh, its box wider
