@@ -255,6 +255,26 @@ namespace DynamicIslands
 						yield return new WaitForSeconds(1.2f);
 						break;
 					}
+					case "dig":
+					{
+						// (dig [n]: the island's buried treasure n (0 = the first) dug up as a player's shovel does - three digs -
+						// and its chest picked up)
+						int dn = t.Length > 1 ? int.Parse(t[1], CultureInfo.InvariantCulture) : 0;
+						BuriedTreasure bt = playEntry.Root.GetComponentsInChildren<BuriedTreasure>(true).FirstOrDefault(b => b.Number == dn);
+						Check(ref ok, bt != null && bt.Point != null, "buried treasure " + dn + " there");
+						if (bt == null || bt.Point == null) break;
+						MethodInfo digOnce = typeof(TreasurePoint).GetMethod("ProgressExcevation", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+						PutPlayerNear(bt.transform, 1.5f);
+						for (int di = 0; di < 3; di++) { digOnce.Invoke(bt.Point, new object[] { 1, true }); yield return new WaitForSeconds(0.6f); }
+						yield return new WaitForSeconds(1.5f);
+						PickupItem dug = bt.Point.pickupNetworked != null ? bt.Point.pickupNetworked.GetComponent<PickupItem>() : null;
+						Check(ref ok, dug != null && !bt.Point.IsBuried, "treasure " + dn + " dug up");
+						Pickup digger = RAPI.GetLocalPlayer().GetComponentInChildren<Pickup>(true);
+						if (dug != null && digger != null) digger.PickupItemByType(dug, true);
+						checks++;
+						yield return new WaitForSeconds(1.5f);
+						break;
+					}
 					case "open":
 						Check(ref ok, ScOpenChest(playEntry, Rest(line, 1).Trim()) != null, "chest '" + Rest(line, 1).Trim() + "' opened");
 						yield return new WaitForSeconds(1.2f);
