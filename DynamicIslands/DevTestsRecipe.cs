@@ -1773,6 +1773,13 @@ namespace DynamicIslands
 								}
 								case "description": WorldPlanWindow.RecipeDescription(Unescape(arg)); break;
 								case "ending": WorldPlanWindow.RecipeEnding(IntroRule.UnMulti(Unescape(arg))); break;
+								case "credits":
+								{
+									int bar = arg.IndexOf('|');
+									if (bar < 0) WorldPlanWindow.RecipeCredits(Unescape(arg), "");
+									else WorldPlanWindow.RecipeCredits(Unescape(arg.Substring(0, bar)), Unescape(arg.Substring(bar + 1)));
+									break;
+								}
 								case "random": WorldPlanWindow.RecipeRandom(arg == "on"); break;
 								case "story": WorldPlanWindow.RecipeStory(arg == "on"); break;
 								case "leaveout":

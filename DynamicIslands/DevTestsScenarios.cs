@@ -181,6 +181,9 @@ namespace DynamicIslands
 			IslandObjectRef r = ScObjOf(e, name);
 			if (r == null) { Log("  (no object '" + name + "' on '" + e.HostName + "')"); return; }
 			PutPlayerNear(r.transform);
+			// (a survivor cage opens as a player's E on it does: SurvivorCage.Use, not the behaviours' use)
+			SurvivorCage cage = r.GetComponentInChildren<SurvivorCage>(true) ?? r.GetComponentInParent<SurvivorCage>();
+			if (cage != null) { Log("  (survivor cage '" + name + "': " + (cage.Use() ? "opened" : "stays shut") + ")"); return; }
 			Behaviours.Fire(e, r.Index, "use", true);
 		}
 

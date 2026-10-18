@@ -60,7 +60,7 @@ expect message isn't whole
 | `open` | `<title>` | Opens the chest whose note title is the text (`ScOpenChest`). |
 | `reach` | `<title>` | That chest is within 2.5 m of the player's eye with nothing solid between (`ScReach`). The player is not moved. |
 | `openat` | `<x> <z>` | Opens the nearest chest; it must be within 4 m of the point. |
-| `use` | `<name> [stay]` | Fires `use` on the object (`Behaviours.Fire`). The player is put next to it (`ScUse`); with `stay`, used from where they stand (a lift carries them). |
+| `use` | `<name> [stay]` | Fires `use` on the object (`Behaviours.Fire`). The player is put next to it (`ScUse`); with `stay`, used from where they stand (a lift carries them). A survivor cage is opened as a player's E opens it (`SurvivorCage.Use`). |
 | `code` | `<name> <digits> [wrong]` | Opens the object's keypad code lock (`lock.code`) as a player does, types the digits and OK; passes when the keypad closed and the lock is open (`CodeLock`). With `wrong`: passes when the digits did not open it. |
 | `kill` | `<label>` | Waits up to 15 s for the island's animals of that label, then defeats all of them (`ScKill`). |
 | `catch` | `<label> [n]` | Catches n (default 1) of the island's own spawner animals (`ScCarryHome`). |
@@ -87,6 +87,7 @@ expect message isn't whole
 | `expect title <text>` | The quest's title is exactly the text (case counts). |
 | `expect done` | The quest is done. |
 | `expect story <id> <n>` | The crew holds exactly n of that story item. |
+| `expect survivor <id>` | That survivor (`survivor.id`) is on the world's rescued list (`Survivors.Has`). |
 | `expect shown <name>` / `expect hidden <name>` | The object is shown / hidden. |
 | `expect message <text>` | One of the last messages contains the text (any case). |
 | `expect item <item> <n>` | The player has at least n of the item (Raft's unique item name, as in `content\objects\items.txt`). |

@@ -136,7 +136,8 @@ turn instead of the straightened spawn turn), `keep` (keep the spawned turn), `s
 ## World-plan steps
 
 `plan new <name>` (a valid name, not a built-in plan; opens World plans via `WorldPlanWindow.RecipeNew`),
-`plan description <text>`, `plan ending <text>`, `plan random on|off`, `plan story on|off`,
+`plan description <text>`, `plan ending <text>`, `plan credits <title> | <name> | <name>...` (the credits' title and
+the makers' names, one per line; `WorldPlanWindow.RecipeCredits`), `plan random on|off`, `plan story on|off`,
 `plan leaveout <Raft story island>`, `plan rule <id | what | when | where | message | label [| story place | done when]>`,
 `plan save`. `plan save` runs Check (`WorldPlanWindow.RecipeSave`), logs each finding as `check: ...`, fails on any
 problem, needs the file at `WorldPlan.PathFor(name)`, then closes the window. Every `plan` line except `new` needs a

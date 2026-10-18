@@ -574,6 +574,9 @@ namespace DynamicIslands
 				case "story":
 					Check(ref ok, StoryBook.Count(t[2]) == (int)F(t[3]), "story item " + t[2] + ": " + StoryBook.Count(t[2]) + " (expected " + t[3] + ")");
 					break;
+				case "survivor":
+					Check(ref ok, Survivors.Has(t[2]), "survivor '" + t[2] + "' rescued (" + Survivors.All.Count + " on the list)");
+					break;
 				case "shown":
 				case "hidden":
 				{

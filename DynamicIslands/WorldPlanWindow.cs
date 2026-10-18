@@ -986,6 +986,15 @@ namespace DynamicIslands.Editor
 			instance.ShowRules();
 		}
 
+		/// <summary>Recipes and tests: the credits' title and the makers' names (`|` = a new line).</summary>
+		public static void RecipeCredits(string title, string names)
+		{
+			if (instance == null || instance.plan == null) return;
+			instance.plan.EndingTitle = (title ?? "").Trim();
+			instance.plan.Credits = (names ?? "").Replace("|", "\n").Trim();
+			instance.ShowRules();
+		}
+
 		/// <summary>A main story island's tab in Raft's notebook: its title, colour and the intro on its first page.</summary>
 		void NotebookRow(RectTransform card, IntroRule r, ref float height)
 		{
