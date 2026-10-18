@@ -522,7 +522,8 @@ namespace DynamicIslands.Editor
 			for (int attempt = 0; attempt < 12; attempt++)
 			{
 				float side = UnityEngine.Random.value < 0.5f ? -1f : 1f;
-				float angle = side * UnityEngine.Random.Range(10f, 35f + attempt * 10f);
+				// (at most 80 degrees off: the later tries spread to 145, behind the raft - CIPoolAgain, 2026-10-18)
+				float angle = side * UnityEngine.Random.Range(10f, Mathf.Min(80f, 35f + attempt * 10f));
 				float distance = Mathf.Max(UnityEngine.Random.Range(SpawnDistanceMin, SpawnDistanceMax + attempt * 20f), radius + Clearance + RaftRadius);
 				Vector3 c = raftPos + Quaternion.Euler(0, angle, 0) * dir * distance;
 				c.y = y;

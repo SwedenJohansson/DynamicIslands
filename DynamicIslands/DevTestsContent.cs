@@ -1149,6 +1149,8 @@ namespace DynamicIslands
 				foreach (IslandWorldState.Entry e in new[] { begun, unseen })
 				{
 					string said = CustomIslandSpawner.TrySpawn(raftNow, true, e.HostName);
+					// (a sea crowded ahead - the island just brought back, Raft's islands in the way: each try picks other random spots; a player's game tries again later)
+					for (int again = 0; again < 5 && said != null && said.Contains("no free spot"); again++) said = CustomIslandSpawner.TrySpawn(raftNow, true, e.HostName);
 					float away = new Vector2(e.Position.x - raftNow.x, e.Position.z - raftNow.z).magnitude;
 					int copies = IslandWorldState.Islands.Count(x => x.HostName == e.HostName);
 					Check(ref ok, copies == 1 && away < behindBy - 300f && Vector3.Dot(e.Position - raftNow, CustomIslandSpawner.SailDirection()) > 0f,
