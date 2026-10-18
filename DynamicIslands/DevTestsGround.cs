@@ -185,7 +185,10 @@ namespace DynamicIslands
 		static readonly Regex Structural = new Regex("Pillar|Post(?!er|card|box)|Column|Wall|Roof|Beam|Fence|Pole|Railing|Floor|Foundation|Block_|Deck|Plank|Pier|Stilt|Scaffold|Girder|Truss|Apartment_Ext", RegexOptions.IgnoreCase);
 		/// <summary>Not measured either way: the land's own (rocks, ground plants, caves), what goes through things on purpose (pipes,
 		/// cables, ladders, doors in their walls), flat or loose things (rugs, puddles), lights and effects.</summary>
-		static readonly Regex OverlapIgnore = new Regex("Rock|Boulder|Stone|Cliff|Cave|Tunnel|Sand|Ground|Terrain|Water|Mountain|Hill|Kelp|Coral|Seaweed|Grass|Fern|Flower|Reed|Vine|Moss|Shell|Drift|Pipe|Cable|Rope|Chain|Wire|Ladder|Door|Hatch|Gate|Window|Curtain|Rug|Carpet|Decal|Puddle|Stain|Light|Lamp|Fire|Smoke|Steam|Splash|Bubble|Cobweb", RegexOptions.IgnoreCase);
+		static readonly Regex OverlapIgnore = new Regex("Rock|Boulder|Stone|Cliff|Cave|Tunnel|Sand|Ground|Terrain|Water|Mountain|Hill|Kelp|Coral|Seaweed|Grass|Fern|Flower|Reed|Vine|Moss|Shell|Drift|Pipe|Cable|Rope|Chain|Wire|Ladder|Door|Hatch|Gate|Window|Curtain|Rug|Carpet|Decal|Puddle|Stain|Light|Lamp|Fire|Smoke|Steam|Splash|Bubble|Cobweb|Hammock|Banner|Flag|Tent(?!acle)|Awning|Canopy|Stair|Zipline|Log(?!o)|(^|_)Ice|Dangly|Antenna|Sat+eliteDisc|Dish|Scrap", RegexOptions.IgnoreCase);
+		/// <summary>A thing's box this big (any side, metres) is a building or a set piece, not furniture: measured by its colliders
+		/// instead, and a mesh collider this big (not a solid box) not at all.</summary>
+		const float OverlapBig = 3.5f;
 		/// <summary>Trees and big plants: measured by their colliders (the trunk), not by the box round the crown.</summary>
 		static readonly Regex Vegetation = new Regex("Tree|Bush|Palm|Plant|Cactus|Bamboo|Monstera|Shrub|Hedge|Pine|Birch|Oak", RegexOptions.IgnoreCase);
 		/// <summary>How far one solid must be inside another to count (a chair pushed against a wall, a pot sunk into a floor: not).</summary>
@@ -194,12 +197,65 @@ namespace DynamicIslands
 		/// <summary>A solid box of a thing: a renderer's mesh box or a collider's box, in its own frame.</summary>
 		class OverlapBox { public Transform T; public Vector3 Min, Max; }
 
+		/// <summary>A thing's boxes from its meshes; null when one is <see cref="OverlapBig"/> or more (a set piece: use its colliders).</summary>
+		static List<OverlapBox> MeshBoxes(Transform o)
+		{
+			var boxes = new List<OverlapBox>();
+			foreach (Renderer r in o.GetComponentsInChildren<Renderer>(false))
+			{
+				if (!(r is MeshRenderer) || !r.enabled || r.name == ContentCatalog.MarkerOnly) continue;
+				MeshFilter mf = r.GetComponent<MeshFilter>();
+				if (mf == null || mf.sharedMesh == null) continue;
+				Bounds mb = mf.sharedMesh.bounds;
+				if (Big(mb.size, r.transform)) return null;
+				boxes.Add(new OverlapBox { T = r.transform, Min = mb.min, Max = mb.max });
+			}
+			return boxes;
+		}
+
+		/// <summary>A thing's boxes from its solid colliders (a tree's trunk; a set piece's parts) - a big mesh collider left out.</summary>
+		static List<OverlapBox> ColliderBoxes(Transform o)
+		{
+			var boxes = new List<OverlapBox>();
+			foreach (Collider c in o.GetComponentsInChildren<Collider>(false))
+			{
+				if (!c.enabled || c.isTrigger) continue;
+				Vector3 lc, ls;
+				if (c is BoxCollider) { lc = ((BoxCollider)c).center; ls = ((BoxCollider)c).size; }
+				else if (c is CapsuleCollider)
+				{
+					var cc = (CapsuleCollider)c;
+					lc = cc.center;
+					ls = Vector3.one * cc.radius * 2f;
+					ls[cc.direction] = Mathf.Max(cc.height, cc.radius * 2f);
+				}
+				else if (c is SphereCollider) { lc = ((SphereCollider)c).center; ls = Vector3.one * ((SphereCollider)c).radius * 2f; }
+				else if (c is MeshCollider && ((MeshCollider)c).sharedMesh != null)
+				{
+					lc = ((MeshCollider)c).sharedMesh.bounds.center; ls = ((MeshCollider)c).sharedMesh.bounds.size;
+					if (Big(ls, c.transform)) continue;
+				}
+				else continue;
+				boxes.Add(new OverlapBox { T = c.transform, Min = lc - ls / 2f, Max = lc + ls / 2f });
+			}
+			return boxes;
+		}
+
+		static bool Big(Vector3 size, Transform t)
+		{
+			Vector3 s = t.lossyScale;
+			return Mathf.Max(Mathf.Abs(size.x * s.x), Mathf.Abs(size.y * s.y), Mathf.Abs(size.z * s.z)) >= OverlapBig;
+		}
+
 		/// <summary>
 		/// What passes through what on a spawned island (IG7): the middle of each building piece's material - rays across its
 		/// thinnest side against its own colliders, half-way between where they go in and come out (a post's axis, a wall's or a
 		/// floor's middle, a roof slab's middle; nothing in a doorway) - and every point of it more than <see cref="OverlapMargin"/>
 		/// inside a thing's solid box (furniture, props, chests, machines; a tree's trunk). One line per pair, the deepest point.
 		/// </summary>
+		/// <summary>Pieces a thing may stand on top of (the overlap check, IG7).</summary>
+		static readonly Regex OnAPost = new Regex("Pillar|Post|Pole|Column", RegexOptions.IgnoreCase);
+
 		static List<string> OverlapProblems(IslandWorldState.Entry e, out int count)
 		{
 			var lines = new List<string>();
@@ -219,36 +275,8 @@ namespace DynamicIslands
 				if (RaftProps.Get(n) != null && RaftProps.Get(n).IsCave) continue;
 				count++;
 				if (Structural.IsMatch(n)) { pieces.Add(o); continue; }
-				var boxes = new List<OverlapBox>();
-				if (Vegetation.IsMatch(n))
-				{
-					foreach (Collider c in o.GetComponentsInChildren<Collider>(false))
-					{
-						if (!c.enabled || c.isTrigger) continue;
-						Vector3 lc, ls;
-						if (c is BoxCollider) { lc = ((BoxCollider)c).center; ls = ((BoxCollider)c).size; }
-						else if (c is CapsuleCollider)
-						{
-							var cc = (CapsuleCollider)c;
-							lc = cc.center;
-							ls = Vector3.one * cc.radius * 2f;
-							ls[cc.direction] = Mathf.Max(cc.height, cc.radius * 2f);
-						}
-						else if (c is SphereCollider) { lc = ((SphereCollider)c).center; ls = Vector3.one * ((SphereCollider)c).radius * 2f; }
-						else if (c is MeshCollider && ((MeshCollider)c).sharedMesh != null) { lc = ((MeshCollider)c).sharedMesh.bounds.center; ls = ((MeshCollider)c).sharedMesh.bounds.size; }
-						else continue;
-						boxes.Add(new OverlapBox { T = c.transform, Min = lc - ls / 2f, Max = lc + ls / 2f });
-					}
-				}
-				else
-					foreach (Renderer r in o.GetComponentsInChildren<Renderer>(false))
-					{
-						if (!(r is MeshRenderer) || !r.enabled || r.name == ContentCatalog.MarkerOnly) continue;
-						MeshFilter mf = r.GetComponent<MeshFilter>();
-						if (mf == null || mf.sharedMesh == null) continue;
-						Bounds mb = mf.sharedMesh.bounds;
-						boxes.Add(new OverlapBox { T = r.transform, Min = mb.min, Max = mb.max });
-					}
+				List<OverlapBox> boxes = Vegetation.IsMatch(n) ? null : MeshBoxes(o);
+				if (boxes == null) boxes = ColliderBoxes(o);
 				// (shrunk by the margin, in each box's own scale; too thin to hold a margin: no solid to pass through)
 				var solid = new List<OverlapBox>();
 				foreach (OverlapBox b in boxes)
@@ -326,8 +354,13 @@ namespace DynamicIslands
 							}
 						}
 				}
+				// (a post's top in a thing that stands on it - a lever on its stand, a bell on its pole: the thing's box, not the thing, round the top)
+				bool post = OnAPost.IsMatch(pn);
+				float top = float.MinValue;
+				if (post) foreach (Renderer r in piece.GetComponentsInChildren<Renderer>(false)) if (r.enabled) top = Mathf.Max(top, r.bounds.max.y);
 				foreach (KeyValuePair<int, float> hit in deepest.OrderByDescending(x => x.Value))
 				{
+					if (post && at[hit.Key].y > top - 0.3f && thingBox[hit.Key].center.y > top) continue;
 					Transform th = things[hit.Key].Key;
 					// (in the island's own frame, as its file and the editor have it)
 					Vector3 p = frame.InverseTransformPoint(at[hit.Key]), pp = frame.InverseTransformPoint(piece.position), tp = frame.InverseTransformPoint(th.position);

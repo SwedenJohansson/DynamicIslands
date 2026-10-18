@@ -121,7 +121,15 @@ namespace DynamicIslands.Editor
 		static float Footprint(string name)
 		{
 			PropInfo p = RaftProps.Get(name);
-			return p == null ? 0.6f : Mathf.Max(0.4f, Mathf.Min(p.Size.x, p.Size.z) * 0.45f);
+			// (plus how far its body sits off its pivot: a fence panel's pivot is at its end - IG7, a fence through a monument 2026-10-18)
+			return p == null ? 0.6f : Mathf.Max(0.4f, Mathf.Min(p.Size.x, p.Size.z) * 0.45f + new Vector2(p.Centre.x, p.Centre.z).magnitude);
+		}
+
+		/// <summary>How far a set piece's body reaches from its pivot on the ground: its longest side, all of it (a monument, a statue).</summary>
+		static float Reach(string name)
+		{
+			PropInfo p = RaftProps.Get(name);
+			return p == null ? 0.6f : Mathf.Max(0.4f, Mathf.Max(p.Size.x, p.Size.z) * 0.5f + new Vector2(p.Centre.x, p.Centre.z).magnitude);
 		}
 
 		/// <summary>Stands a measured prop on generated ground (sunk a little), protected from clearing like a set piece.</summary>
@@ -166,7 +174,7 @@ namespace DynamicIslands.Editor
 			RemoveContentNear(k, c, radius + 1f);
 			Prop(k, anchor, c, yaw);
 			// (each prop's footprint kept clear of the others': brick stacks and baskets stood inside each other)
-			var placed = new List<KeyValuePair<Vector2, float>> { new KeyValuePair<Vector2, float>(c, anchorSize * 0.8f) };
+			var placed = new List<KeyValuePair<Vector2, float>> { new KeyValuePair<Vector2, float>(c, Mathf.Max(anchorSize * 0.8f, Reach(anchor))) };
 			Func<string, Vector2, bool> free = (name, p) => { float fr = Footprint(name); return placed.All(q => (q.Key - p).magnitude >= q.Value + fr); };
 			int nm = medium.Length == 0 ? 0 : 2 + r.Next(3);
 			for (int i = 0; i < nm; i++)
@@ -215,7 +223,7 @@ namespace DynamicIslands.Editor
 			int placed = 0;
 			// (clear of the set pieces already there and of each other, by their footprints)
 			var taken = k.File.Objects.Where(o => o.Props != null && o.Props.ContainsKey("set.piece") && new Vector2(o.Position.x - c.x, o.Position.z - c.y).magnitude < outer + 25f)
-				.Select(o => new KeyValuePair<Vector2, float>(new Vector2(o.Position.x, o.Position.z), Footprint(o.Name))).ToList();
+				.Select(o => new KeyValuePair<Vector2, float>(new Vector2(o.Position.x, o.Position.z), Reach(o.Name))).ToList();
 			for (int i = 0; i < count * 4 && placed < count && props.Length > 0; i++)
 			{
 				Vector2 p = Around(c, Yaw(r), 0f, inner + (float)r.NextDouble() * (outer - inner));

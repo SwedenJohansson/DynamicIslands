@@ -2104,7 +2104,7 @@ namespace DynamicIslands
 					continue;
 				}
 				foreach (Renderer r in e.GetComponentsInChildren<Renderer>(false))
-					if (r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly) boxes.Add(r.bounds);
+					if (r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly && Mathf.Max(r.bounds.size.x, r.bounds.size.y, r.bounds.size.z) < OverlapBig) boxes.Add(r.bounds);
 			}
 			return boxes;
 		}
