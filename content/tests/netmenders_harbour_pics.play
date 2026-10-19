@@ -1,5 +1,6 @@
 # Guide pictures of Netmender's Harbour (CIPlay netmenders_harbour_pics): Raft's camera, morning, calm
 island Netmender's Harbour
+offset 0 0
 hour 10
 weather Calm
 at 24 0

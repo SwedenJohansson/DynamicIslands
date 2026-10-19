@@ -1,6 +1,7 @@
 # Play test of Highpine Island (CIPlay highpine_island): no quest - the path up the west peak, the rope bridge to the
 # east peak and its cache, the zipline's end, the cabin, the pier, the wreck, the den, the monsters
 island Highpine Island
+offset 0 0
 expect animals Bear 1
 expect animals Hyena 3
 expect animals Screecher 2

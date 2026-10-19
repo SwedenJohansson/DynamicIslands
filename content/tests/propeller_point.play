@@ -1,6 +1,7 @@
 # Play test of Propeller Point (CIPlay propeller_point): no quest - the strip, the cabin, the watch hut, the leather gear
 # in its chests, the den the generator made, the warthogs
 island Propeller Point
+offset 0 0
 expect animals Warthog 2
 expect animals Dolphin 2
 wait 5

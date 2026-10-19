@@ -1,5 +1,6 @@
 # Guide pictures of Propeller Point (CIPlay propeller_point_pics): Raft's camera, morning, calm
 island Propeller Point
+offset 0 0
 hour 10
 weather Calm
 at 0 -16
