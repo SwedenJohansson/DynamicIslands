@@ -1157,7 +1157,7 @@ namespace DynamicIslands
 					while (i < s.Length && (char.IsDigit(s[i]) || s[i] == '.' || s[i] == 'e' || s[i] == 'E')) i++;
 					return double.Parse(s.Substring(start, i - start), CultureInfo.InvariantCulture);
 				}
-				while (i < s.Length && char.IsLetter(s[i])) i++;
+				while (i < s.Length && (char.IsLetter(s[i]) || (i > start && char.IsDigit(s[i])))) i++;	// (digits after the first letter: atan2)
 				string name = s.Substring(start, i - start).ToLowerInvariant();
 				if (name.Length == 0) throw new Exception("a number missing at '" + s.Substring(start) + "'");
 				if (name == "pi") return Math.PI;
