@@ -89,6 +89,9 @@ pop
 place Zone_Trigger station at -17 24 h=10.2
 place Zone_Trigger inner at -2 18 h=10.2
 place Creature_PolarBear bearmother at 0 18 h=9.4
+# (SL9: Temperance's puffins on the west ledge by the snowy pines - they fly off when players come near)
+place Creature_Puffin puffins at -30 6 ground
+place Creature_Puffin - at -32 1 ground
 
 # --- The telescope on its terrace cut into the peak (18 m): the survey team's cable drum beside it ---------------------
 place TP_Telescope telescope at -6 -8 ground yaw=200

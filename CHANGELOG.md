@@ -115,6 +115,13 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   islands and a vending machine at the General Post Office. A side island, The Wandering Sorting Barge, comes back every
   6 km until its quest is done. Guide 16.10 shows what to look at. For plan testers: `CISetDay <n>` sets the day
   counter in a test world, for `day:N` rules.
+- **A Receiver dot that waits for a blueprint:** a world-plan rule's WHERE has a **DOT** choice (in the plan file
+  `needs=engine`, `steering` or `controls`). Until a player has that blueprint, the island comes straight ahead and has
+  no dot on the Receiver; then its dot shows and a "near" island comes to its side. Default: always, as Raft's story
+  islands. Check calls a blueprint Raft doesn't have a problem.
+- **Story animals and goods to place:** Caravan Town's white screecher, Temperance's puffins and Utopia's butler bot
+  (a new **Animals: harmless** category), and Utopia's market goods (sacks, baskets and crates of potatoes, bananas,
+  melons, mangoes, mackerel, salmon) among the things to gather. The remade Caravan Town, Temperance and Utopia use them.
 - **Fixed:** The Rain Engine's third laser mirror stood beside its panel's line since beams turn at a mirror's centre;
   the beam now reaches the panel.
 - **Fixed:** a laser beam turned at a mirror's box edge and could just graze the next mirror; it now turns at the

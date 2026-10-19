@@ -577,7 +577,9 @@ dig: palms (also the small islands' palms), mangoes, banana trees, Tangaroa's tr
 **snowy pine** to cut (Raft's pine wearing Temperance's snow), Caravan Town's acacias, pineapples, melons, strawberries,
 berry bushes, Balboa's mushrooms, flowers, Raft's finds on the sea floor - sand, clay, stone, iron and copper ore,
 scrap, giant clams, silver algae, **seaweed** - the finds lying on the story islands' land (stone, scrap, titanium ore,
-planks, plastic) and Raft's **dirt spots** (the mounds its big islands have; players dig them with the shovel for dirt).
+planks, plastic) and Raft's **dirt spots** (the mounds its big islands have; players dig them with the shovel for dirt) and Utopia's
+**market goods** (sacks, baskets and crates of potatoes, bananas, melons, mangoes, mackerel and salmon; picked, they give
+that food, and potatoes can be planted).
 They work for the player as on Raft's own islands: picked, or cut with the axe, they give Raft's items and come back
 after the island's regrow days, the same for every player and after a reload. Raft has no date palm: desert islands
 get Raft's palms and acacias. Those from Raft's story islands (banana and Tangaroa trees, acacias, strawberries,
@@ -1286,8 +1288,9 @@ Select an object to see its **inspector** in the tool panel. Everything here can
 
 ### 5.1 Creatures
 
-Open **Animals: hostile**, **Animals: catchable** or **Sea creatures** in the browser and place an animal: warthog,
-pig, bear, mama bear, polar bear, hyena, rats, roach, bee swarm, screecher; chicken, goat, llama; puffer fish, angler fish,
+Open **Animals: hostile**, **Animals: catchable**, **Animals: harmless** or **Sea creatures** in the browser and place an animal: warthog,
+pig, bear, mama bear, polar bear, hyena, rats, roach, bee swarm, screecher, Caravan Town's white screecher; chicken, goat, llama; Temperance's puffins and Utopia's butler bot
+(harmless: they walk or fly about and never attack); puffer fish, angler fish,
 turtle, stingray, dolphin, whale.
 
 ![The creature inspector](images/editor-creature.jpg)
@@ -2165,6 +2168,7 @@ or a click outside closes the list).*
 | **WHEN** | What the rule waits for - a ▼ list of nine choices ([7.4](#74-everything-a-rule-can-do)). A choice that needs more shows named fields after it: **island**, **zone**, **signal**, **steps**, **day**, **km sailed**, **rule**; a day or a distance also has the **again until done** tick box |
 | **BRING** | What kind of island: a new island of a map type, one of your saved islands, one island from a list, or a random one from the spawn pool. The field after it says which (**map type**, **island**, **islands**) |
 | **WHERE** | Ahead of the raft, near an island, on the Receiver, or by chance while sailing; then the **metres** (50 to 5000). For "near an island", also the **direction** (a ▼ list: Any way, North, North-east...) and **of** which island (empty = the island where the WHEN happened) |
+| **DOT** | When the island's dot shows on the Receiver's radar: **Always** (the default, as Raft's story islands), or only once the player has the **Motor wheel**, **Steering wheel** or **Engine controls** blueprint. Until then the island comes straight ahead of the raft (a player without an engine can still reach it) and has no dot; after it, a "near" island takes its place to the side. Check calls a blueprint Raft doesn't have a problem |
 | **TELL** | The message every player sees when the island appears (up to 160 letters) (with how far and which way it is), and the island's name **on the Receiver** (up to 18 letters). Both optional |
 | **STORY** | World plans only: **side quest** (the journal) or **main story** (Raft's notebook) - the island's place in the story (a ▼ list: side quest, main story first, after or in place of one of Raft's story islands, or beside Raft's story) and, for the main story, **next coordinates when** ([6.5](#65-your-islands-in-rafts-story-the-receiver)). A main story island's WHERE is always **On the Receiver** |
 | **NOTEBOOK** | Main story only: the island's **tab title**, **tab colour** (a ▼ list of Raft's nine: Pink, Sand, Purple, Teal, Olive, Red, Green, Blue, Light blue; **Automatic colour** takes one by the island's place in the story) and the **first page** intro in Raft's notebook |
@@ -2350,7 +2354,7 @@ rule = id | what | when | where | message | Receiver name
 |---|---|
 | what | `island:<saved island>`, `type:<map type>`, `pool`, `oneof:<island>, <island>, ...` |
 | when | `start`, `km:<km>`, `day:<day>` (`km:<km>:again`, `day:<day>:again` = again until done, [7.4](#74-everything-a-rule-can-do)), `quest:<island>` (`quest:<island>:2` for its quest 2), `step:<island>:<steps>`, `zone:<island>:<zone>`, `visit:<island>`, `rule:<rule id>`, `signal:<island>:<signal>` |
-| where | `ahead:<m>`, `near:<island>:<m>:<direction>`, `receiver:<m>`, `sailing:<m>`. In `near`, `self` = the island where the WHEN happened (the window writes it when **of** is empty); the direction can also be degrees |
+| where | `ahead:<m>`, `near:<island>:<m>:<direction>`, `receiver:<m>`, `sailing:<m>`. In `near`, `self` = the island where the WHEN happened (the window writes it when **of** is empty); the direction can also be degrees. End with `:needs=<blueprint>` (`engine`, `steering`, `controls` or a Raft item name, e.g. `near:self:700:east:needs=engine`) to hold the Receiver dot and the side placing until the player has that blueprint (the DOT choice) |
 
 Two more parts put an island into the main story: `| first` / `after:<story island or rule id>` / `instead:<story island>` / `beside`
 and when it's done: `quest`, `visit`, `step:<n>`, `zone:<zone>`, `signal:<signal>`, `note:<note number>` (empty: its quest, or reaching it). Three more parts style its notebook tab: `| tab title | tab colour | tab intro`; the colour is a number, 1 pink, 2 sand, 4 purple, 5 teal, 6 olive, 7 red, 8 green, 9 blue, 10 light blue (there is no 3; empty or 0 = by the island's place in the story). Other lines: `description = ...`, `storyending = ...` (the last page; `\n` = a new line), `endingtitle = ...` and `credits = ...` (the credits' title and the makers' names, `\n` between names),

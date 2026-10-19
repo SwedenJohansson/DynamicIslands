@@ -23,9 +23,11 @@ namespace DynamicIslands.Editor
 	{
 		public const string CatchableCategory = "Animals: catchable";
 		public const string HostileCategory = "Animals: hostile";
+		/// <summary>SL9: Raft's story-island creatures that harm no one (Temperance's puffins, Tangaroa's butler bots).</summary>
+		public const string HarmlessCategory = "Animals: harmless";
 		public const string SeaCategory = "Sea creatures";
 		public const string NotesCategory = "Notes & signs";
-		public static readonly string[] Categories = { CatchableCategory, HostileCategory, SeaCategory, NotesCategory, "Loot & chests", "Zones & triggers" };
+		public static readonly string[] Categories = { CatchableCategory, HostileCategory, HarmlessCategory, SeaCategory, NotesCategory, "Loot & chests", "Zones & triggers" };
 
 		/// <summary>Name of marker parts (ground ring, labels) that only help in the editor and are never tinted.</summary>
 		public const string MarkerOnly = "CI_NoTint";
@@ -65,6 +67,10 @@ namespace DynamicIslands.Editor
 			K(AI_NetworkBehaviourType.Roach, "Roach", HostileCategory, 0.5f, 0.25f, "Tangaroa's roach"),
 			K(AI_NetworkBehaviourType.BugSwarm_Bee, "Bee swarm", HostileCategory, 1f, 1f, "stings players nearby", Movement.Air),
 			K(AI_NetworkBehaviourType.StoneBird, "Screecher", HostileCategory, 2f, 1.2f, "a bird that attacks players and drops stones on the raft", Movement.Air),
+			// (SL9: Raft's story-island creatures not on any other island)
+			K(AI_NetworkBehaviourType.StoneBird_Caravan, "Caravan screecher", HostileCategory, 2f, 1.2f, "Caravan Town's screecher: attacks players and drops stones on the raft", Movement.Air),
+			K(AI_NetworkBehaviourType.Puffin, "Puffin", HarmlessCategory, 0.4f, 0.4f, "Temperance's puffin: flies off when players come near", Movement.Air),
+			K(AI_NetworkBehaviourType.ButlerBot, "Butler bot", HarmlessCategory, 0.8f, 1.2f, "Tangaroa's serving robot: rolls about, harms no one"),
 			K(AI_NetworkBehaviourType.PufferFish, "Puffer fish", SeaCategory, 0.6f, 0.6f, "swims near the island and explodes next to divers", Movement.Water),
 			K(AI_NetworkBehaviourType.AnglerFish, "Angler fish", SeaCategory, 1.5f, 1f, "a deep-sea hunter", Movement.Water),
 			K(AI_NetworkBehaviourType.Turtle, "Turtle", SeaCategory, 1f, 0.5f, "a friendly sea turtle", Movement.Water),
@@ -440,7 +446,7 @@ namespace DynamicIslands.Editor
 			root.transform.SetParent(PlaceableCatalog.Container.transform, false);
 			var marker = new GameObject("Marker").transform;
 			marker.SetParent(root.transform, false);
-			Color c = k.Category == CatchableCategory ? CatchableColor : k.Category == SeaCategory ? SeaColor : HostileColor;
+			Color c = k.Category == CatchableCategory || k.Category == HarmlessCategory ? CatchableColor : k.Category == SeaCategory ? SeaColor : HostileColor;
 			float len = k.Length, h = k.Height;
 
 			Part(PrimitiveType.Capsule, "Body", marker, new Vector3(0, h * 0.55f, 0), Quaternion.Euler(90, 0, 0), new Vector3(h * 0.7f, len * 0.5f, h * 0.7f), MarkerMaterial(c));

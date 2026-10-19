@@ -3935,7 +3935,7 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < s.Hostiles; i++)
 			{
 				string kind = hostiles[rnd.Next(hostiles.Length)];
-				bool flies = kind == "StoneBird" || kind == "BugSwarm_Bee";
+				bool flies = kind.StartsWith("StoneBird") || kind == "BugSwarm_Bee";
 				Vector2? p = find(new[] { ZLand }, (above, slope) => above > 3f && slope < 22f, apart);
 				if (p.HasValue) creature(kind, p.Value, flies ? 2f : 0f);
 			}

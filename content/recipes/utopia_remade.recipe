@@ -53,6 +53,12 @@ place UT_MarketBasket01 - at 8 43.5 ground
 place UT_MarketBasket03_Banana - at 9.2 43.2 ground
 place UT_MarketCrateSmall02 - at 10.5 44 ground yaw=20
 place UT_MarketStackBox01 stackbox at 1 46 ground yaw=-20
+# (SL9: Utopia's market goods to take - a sack of potatoes to plant, a basket of bananas, a crate of mackerel - and a
+# butler bot still rolling about the quay)
+place "Pickup_Landmark_MarketGood_Potato_Sack" potatoes at 6 45 ground yaw=10
+place "Pickup_Landmark_MarketGood_Banana_Basket01" - at 11.8 45.2 ground
+place "Pickup_Landmark_MarketGood_Mackerel_CrateSmall01" - at 4 44.5 ground yaw=-30
+place Creature_ButlerBot butler at 7 48 ground
 place TangaroaBenchSilver - at 0.5 48 ground yaw=180
 place Tangaroa_OutdoorFurnitureSilver_Table - at 12 48 ground
 place Tangaroa_OutdoorFurnitureSilver_Chair - at 11 48.3 ground yaw=90

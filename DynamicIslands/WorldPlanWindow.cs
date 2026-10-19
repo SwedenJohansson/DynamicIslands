@@ -465,6 +465,14 @@ namespace DynamicIslands.Editor
 			new DropList.Option("receiver", "On the Receiver", "It gets its own frequency on Raft's Receiver and comes when a player tunes to it"),
 			new DropList.Option("sailing", "By chance while sailing", "It turns up ahead of the raft some time later, while you sail"),
 		};
+		/// <summary>SL9: the blueprint a rule's island waits for before its Receiver dot shows and before it may come to the side.</summary>
+		static readonly DropList.Option[] NeedsOptions =
+		{
+			new DropList.Option("", "Always (as Raft's story islands)", "Its Receiver dot shows from the start, and it comes where WHERE says"),
+			new DropList.Option("Blueprint_MotorWheel", "Once players have the engine", "Until the host has the engine blueprint it comes straight ahead, and each player sees its dot once they have it"),
+			new DropList.Option("Blueprint_SteeringWheel", "Once players have the steering wheel", "Until the host has the steering wheel blueprint it comes straight ahead, and each player sees its dot once they have it"),
+			new DropList.Option("Blueprint_EngineControls", "Once players have the engine controls", "Until the host has the engine controls blueprint it comes straight ahead, and each player sees its dot once they have it"),
+		};
 		static readonly DropList.Option[] DoneOptions =
 		{
 			new DropList.Option("", "Its quest is done (or reached)", "Its quest is finished; an island without a quest counts when players reach it"),
@@ -686,6 +694,13 @@ namespace DynamicIslands.Editor
 			}
 			Fill(where);
 			HelpMark(where, islandMode ? HelpWhereIsland : HelpWhere);
+			// (SL9: the dot, and any place off to the side, wait for a blueprint - Raft's engine lets players reach off-course places)
+			RectTransform dot = Section(card, "DOT", ref height);
+			List<DropList.Option> needsOptions = NeedsOptions.ToList();
+			if (r.Needs.Length > 0 && !needsOptions.Any(o => o.Value == r.Needs)) needsOptions.Add(new DropList.Option(r.Needs, "Once players have " + PlanChecker.Pretty(r.Needs), "A blueprint written in the recipe"));
+			DropList.Make(dot, "Drop_Needs", needsOptions, r.Needs, v => { Keep(); r.Needs = v; ShowRules(); }, 300, "When its dot shows on the Receiver");
+			Fill(dot);
+			HelpMark(dot, HelpNeeds);
 			Explain(card, r.MainStory && !islandMode ? "MAIN STORY: found by its coordinates - its own frequency on the Receiver (shown on its notebook tab); it comes about this far away when a player tunes to it" : WhereHint(r), ref height);
 
 			// TELL
@@ -1237,6 +1252,9 @@ namespace DynamicIslands.Editor
 			"• On the Receiver: it gets its own frequency, and comes when a player tunes Raft's Receiver to it\n" +
 			"• By chance while sailing: it comes up ahead some time later\n\nThe ▾ after \"of\" lists the plan's rules and your saved islands.";
 		const string HelpWhereIsland = "WHERE it comes: that many metres ahead of the raft, or near an island (\"self\" = this island) in a direction - Any way means wherever there's room.";
+		const string HelpNeeds = "DOT - when the island's dot shows on Raft's Receiver:\n" +
+			"• Always: as Raft's own story islands (the default)\n" +
+			"• Once players have the engine / steering wheel / engine controls: each player sees the dot once they have that blueprint. Until the host has it, the island comes straight ahead of the raft (a raft without an engine can't turn far), even a \"near\" one; once they have it, it may come to the side as WHERE says.";
 		const string HelpTell = "Message: shown to every player when the island appears, with how far and which way it is (e.g. \"Smoke rises from a small island ahead.\").\n\n" +
 			"Receiver name: the island's name on its dot on Raft's Receiver. Both are optional.";
 		const string HelpStoryPlace = "Optional: makes this island part of the main story (Raft's notebook): first, beside Raft's story, after a story island (or one of your story islands), or in place of one. A side quest goes in the journal (J) instead.\n\n" +

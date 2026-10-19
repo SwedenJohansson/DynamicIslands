@@ -50,6 +50,22 @@ namespace DynamicIslands.Editor
 			return v;
 		}
 
+		/// <summary>SL9: an island whose rule needs a blueprint (needs=engine...) shows once this player has it (BlueprintSteps.Has).</summary>
+		internal static bool Unlocked(IslandWorldState.Entry e)
+		{
+			string bp = ReturningIslands.NeedsOf(e);
+			if (bp.Length == 0) return true;
+			float t;
+			bool v;
+			if (hasAt.TryGetValue(bp, out t) && Time.time - t < 1f && has.TryGetValue(bp, out v)) return v;
+			v = BlueprintSteps.Has(bp);
+			has[bp] = v; hasAt[bp] = Time.time;
+			return v;
+		}
+
+		static readonly Dictionary<string, float> hasAt = new Dictionary<string, float>();
+		static readonly Dictionary<string, bool> has = new Dictionary<string, bool>();
+
 		static readonly Dictionary<int, float> neededAt = new Dictionary<int, float>();
 		static readonly Dictionary<int, bool> needed = new Dictionary<int, bool>();
 		/// <summary>The islands shown this frame (one list kept: HandleUI runs every frame).</summary>
@@ -80,7 +96,7 @@ namespace DynamicIslands.Editor
 			for (int k = 0; k < all.Count; k++)
 			{
 				IslandWorldState.Entry e = all[k];
-				if (!WorldRandomizer.IsExtras(e) && !e.Excluded && (range <= 0f || new Vector2(e.Position.x - rp0.x, e.Position.z - rp0.z).magnitude <= range || Needed(e))) islands.Add(e);
+				if (!WorldRandomizer.IsExtras(e) && !e.Excluded && (range <= 0f || new Vector2(e.Position.x - rp0.x, e.Position.z - rp0.z).magnitude <= range || Needed(e)) && Unlocked(e)) islands.Add(e);
 			}
 			int wanted = show ? islands.Count : 0;
 			while (list.Count < wanted)

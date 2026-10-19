@@ -44,6 +44,27 @@ namespace DynamicIslands.Editor
 		public string Where = "ahead", WhereRef = "";
 		public float Distance = 300f;
 		public string Direction = "any";
+		/// <summary>SL9: a blueprint the players need before the island's Receiver dot shows and before it may come to
+		/// the side ("" = none, Raft's way for its story islands). Until the host has it, the island comes straight ahead
+		/// of the raft (players may have no engine yet). Written as a last WHERE part: "ahead:300:needs=engine".</summary>
+		public string Needs = "";
+		/// <summary>Short names for the blueprints a Needs part usually names.</summary>
+		public static readonly string[][] NeedsAliases = { new[] { "engine", "Blueprint_MotorWheel" }, new[] { "steering", "Blueprint_SteeringWheel" }, new[] { "controls", "Blueprint_EngineControls" } };
+		/// <summary>A Needs part as written ("engine", "Blueprint_SteeringWheel"...) to the blueprint's name; "" stays "".</summary>
+		public static string NeedsBlueprint(string s)
+		{
+			s = (s ?? "").Trim();
+			foreach (string[] a in NeedsAliases) if (s.Equals(a[0], StringComparison.OrdinalIgnoreCase)) return a[1];
+			return s;
+		}
+		/// <summary>The short name for a Needs blueprint when it has one ("Blueprint_MotorWheel" -> "engine").</summary>
+		public static string NeedsShort(string bp)
+		{
+			foreach (string[] a in NeedsAliases) if (string.Equals(bp, a[1], StringComparison.OrdinalIgnoreCase)) return a[0];
+			return bp ?? "";
+		}
+		/// <summary>True when the rule needs no blueprint or this machine's player has it.</summary>
+		public bool NeedsMet { get { return Needs.Length == 0 || BlueprintSteps.Has(Needs); } }
 		public string Message = "", Label = "";
 		/// <summary>Its place in Raft's Receiver chain (StoryChain): "", "first", "after:&lt;island or rule id&gt;", "instead:&lt;Raft story island&gt;".</summary>
 		public string StoryPlace = "";
@@ -115,6 +136,7 @@ namespace DynamicIslands.Editor
 				default: when = When + ":" + Part(WhenRef.Length > 0 ? WhenRef : (When == "rule" ? "" : Self)); break;
 			}
 			string where = Where == "near" ? "near:" + Part(WhereRef.Length > 0 ? WhereRef : Self) + ":" + Num(Distance) + ":" + Part(Direction) : Where + ":" + Num(Distance);
+			if (Needs.Length > 0) where += ":needs=" + Part(NeedsShort(Needs));
 			var parts = new List<string> { Part(Id), what, when, where, Text(Message), Text(Label) };
 			bool tab = TabTitle.Length > 0 || TabColour > 0 || TabIntro.Length > 0;
 			if (StoryPlace.Length > 0 || StoryDone.Length > 0 || tab) { parts.Add(Text(StoryPlace)); parts.Add(Text(StoryDone)); }
@@ -154,6 +176,8 @@ namespace DynamicIslands.Editor
 			}
 
 			string[] where = p[3].Split(':').Select(x => x.Trim()).ToArray();
+			string needs = where.FirstOrDefault(x => x.StartsWith("needs=", StringComparison.OrdinalIgnoreCase));
+			if (needs != null) { r.Needs = NeedsBlueprint(needs.Substring(6)); where = where.Where(x => x != needs).ToArray(); }
 			r.Where = where[0].ToLowerInvariant();
 			if (!WhereKinds.Contains(r.Where)) return null;
 			float d;
@@ -233,6 +257,12 @@ namespace DynamicIslands.Editor
 		}
 
 		public string DescribeWhere()
+		{
+			string w = DescribePlace();
+			return Needs.Length == 0 ? w : w + "; its Receiver dot and any side placing wait for the " + PlanChecker.Pretty(Needs) + " blueprint (straight ahead until then)";
+		}
+
+		string DescribePlace()
 		{
 			if (Where == "ahead") return Num(Distance) + " m ahead of the raft";
 			if (Where == "receiver") return "on its own Receiver frequency (it comes " + Num(Distance) + " m ahead when a player tunes to it)";
@@ -1495,7 +1525,9 @@ namespace DynamicIslands.Editor
 			why = null;
 			Vector3 raft = CustomIslandSpawner.RaftPosition.Value;
 			var reasons = new List<string>();
-			if (r.Where == "near")
+			// (SL9: a rule that needs a blueprint the host hasn't got - the engine, say - comes straight ahead, near or not)
+			bool waits = !r.NeedsMet;
+			if (r.Where == "near" && !waits)
 			{
 				IslandWorldState.Entry near = r.WhereRef.Length == 0 || r.WhereRef.Equals(IntroRule.Self, StringComparison.OrdinalIgnoreCase)
 					? (owner ?? at) : Refs(r.WhereRef, owner).FirstOrDefault();
@@ -1520,7 +1552,7 @@ namespace DynamicIslands.Editor
 			{
 				Vector3 dir = CustomIslandSpawner.SailDirection();
 				float distance = Mathf.Max(r.Distance, radius + CustomIslandSpawner.Clearance + CustomIslandSpawner.RaftRadius);
-				foreach (Vector2 o in Candidates(false).Where(o => wideSearch || Mathf.Abs(o.x) <= 60f))
+				foreach (Vector2 o in Candidates(false).Where(o => wideSearch || Mathf.Abs(o.x) <= 60f).OrderBy(o => waits && Mathf.Abs(o.x) > 16f ? 1 : 0))
 				{
 					Vector3 c = raft + Quaternion.Euler(0, o.x, 0) * dir * distance * o.y;
 					c.y = elevation;
@@ -1793,7 +1825,7 @@ namespace DynamicIslands.Editor
 			return e != null && e.State.TryGetValue(ReturnsKey, out r) ? r.Yield : 0;
 		}
 
-		static IntroRule RuleThatBrought(IslandWorldState.Entry e)
+		internal static IntroRule RuleThatBrought(IslandWorldState.Entry e)
 		{
 			if (string.IsNullOrEmpty(e.Rule)) return null;
 			IntroRule r = WorldDirector.Plan != null ? WorldDirector.Plan.Rules.FirstOrDefault(x => x.Id.Equals(e.Rule, StringComparison.OrdinalIgnoreCase)) : null;
@@ -1803,8 +1835,31 @@ namespace DynamicIslands.Editor
 				r = WorldDirector.RulesOf(owner).FirstOrDefault(x => x.Id.Equals(e.Rule, StringComparison.OrdinalIgnoreCase));
 				if (r != null) return r;
 			}
+			// (a player who joined: the plan's rules from the host's copy of the world file)
+			if (WorldCopy.HostLines != null)
+				foreach (string l in WorldCopy.HostLines)
+					if (l.StartsWith("@planrule="))
+					{
+						r = IntroRule.Parse(l.Substring(10));
+						if (r != null && r.Id.Equals(e.Rule, StringComparison.OrdinalIgnoreCase)) return r;
+					}
 			return null;
 		}
+
+		/// <summary>SL9: the blueprint an island's rule needs before its Receiver dot shows ("" = none), cached a second.</summary>
+		internal static string NeedsOf(IslandWorldState.Entry e)
+		{
+			if (e == null || string.IsNullOrEmpty(e.Rule)) return "";
+			float t;
+			string v;
+			if (needsAt.TryGetValue(e.Id, out t) && Time.time - t < 1f && needsOf.TryGetValue(e.Id, out v)) return v;
+			try { IntroRule r = RuleThatBrought(e); v = r != null ? r.Needs : ""; } catch { v = ""; }
+			needsOf[e.Id] = v; needsAt[e.Id] = Time.time;
+			return v;
+		}
+
+		static readonly Dictionary<int, float> needsAt = new Dictionary<int, float>();
+		static readonly Dictionary<int, string> needsOf = new Dictionary<int, string>();
 
 		/// <summary>Whether a rule that hasn't fired yet waits for something to happen on this island.</summary>
 		static bool Awaited(IslandWorldState.Entry e)

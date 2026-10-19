@@ -1181,6 +1181,9 @@ namespace DynamicIslands.Editor
 		static void CheckWhere(Ctx c, int i)
 		{
 			IntroRule r = c.Plan.Rules[i];
+			// (SL9: the blueprint its dot waits for must be one of Raft's)
+			if (r.Needs.Length > 0 && ItemManager.GetAllItems() != null && ItemManager.GetAllItems().Count > 0 && !BlueprintSteps.Exists(r.Needs))
+				c.Add(i, Level.Problem, R(c, i) + " shows its dot once players have '" + r.Needs + "', which isn't one of Raft's items: its dot never shows.", "Choose a blueprint in DOT (engine, steering wheel, engine controls).");
 			if (r.Distance > 3000f) c.Add(i, Level.Tip, R(c, i) + " puts its island " + r.Distance.ToString("0") + " m away: far enough that players may not find it" + (r.Label.Length == 0 ? " (it has no Receiver name)" : "") + ".", "A message saying which way helps, and a Receiver name shows it on Raft's Receiver.");
 			if (r.Where != "near") return;
 			bool happened = r.WhereRef.Length == 0 || r.WhereRef.Equals(IntroRule.Self, StringComparison.OrdinalIgnoreCase) && !c.IslandMode;

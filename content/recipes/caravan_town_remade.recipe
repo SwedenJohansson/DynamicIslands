@@ -95,7 +95,7 @@ place MayorsChest mayorschest at 4.8 4 ground yaw=-90
 place Zone_Trigger mayortower at 1 3 y=1.5
 place Zone_Trigger roof at 3 -1 y=6.5
 place Creature_Hyena hyenas at 0 2 ground
-place Creature_StoneBird whitebird at 3 -1 y=6 ground
+place Creature_StoneBird_Caravan whitebird at 3 -1 y=6 ground
 
 # --- In the bay south of the market: a trailer sunk on its side, the diver's crate by it, an air pocket ----------------
 place Caravan_Blue_01 sunktrailer at -15 -13 ground tilt=85 yaw=30
@@ -170,8 +170,6 @@ prop whitebird creature.size=1.4
 prop whitebird creature.health=3
 prop whitebird creature.respawn=0
 prop whitebird creature.zone=roof
-prop whitebird tint.color=#f2f2f2
-prop whitebird tint.amount=0.8
 
 quest title=The Mayor's Toll
 quest intro=Red stacks of trailers, a market in the inlet - and the mayor's pillar with its bridge pulled in. The market is the place to start.
