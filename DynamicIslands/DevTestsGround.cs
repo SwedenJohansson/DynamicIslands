@@ -172,6 +172,124 @@ namespace DynamicIslands
 
 		static readonly IslandCheck OverlapCheck = new IslandCheck { Label = "overlap", File = "overlap", Pass = "nothing through anything", Measure = OverlapProblems };
 
+		static readonly IslandCheck OneSidedCheck = new IslandCheck { Label = "one-sided", File = "onesided", Pass = "no wall seen through from behind", Measure = OneSidedProblems };
+
+		[ConsoleCommand(name: "CIOneSidedWorld", docs: "Dev, in a world: no wall-like piece on the loaded custom islands is drawn from one side only with nothing behind its open side (a facade panel seen from inside its room: see-through, IG8). Results in Mods\\DynamicIslands\\onesided_world.txt.")]
+		public static void OneSidedWorldCommand(string[] args) { WorldCheck(args, OneSidedCheck); }
+
+		[ConsoleCommand(name: "CIOneSidedIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIOneSidedWorld does, then taken away (IG8). Same arguments as CIOverlapIslands. Results in Mods\\DynamicIslands\\onesided_islands.txt.")]
+		public static void OneSidedIslandsCommand(string[] args) { IslandsCheck(args, OneSidedCheck); }
+
+		/// <summary>A piece's look across its thinnest side, per mesh + materials: +1 drawn only towards +axis, -1 only towards -axis, 0 both (or too little drawn).</summary>
+		static readonly Dictionary<string, int> OneSidedLook = new Dictionary<string, int>();
+		static Camera sideCam;
+		static RenderTexture sideRt;
+		static Texture2D sideTex;
+		const int SideLayer = 31, SidePx = 32;
+
+		/// <summary>How the renderer looks drawn alone from +dir and from -dir (an orthographic camera, its own layer, a 32 px
+		/// picture): what isn't the background colour counts. Works for any mesh or shader (most meshes can't be read).</summary>
+		static int RenderSide(Renderer r, Vector3 centre, Vector3 dir, Vector3 up, float size)
+		{
+			if (sideCam == null)
+			{
+				var go = new GameObject("CI one-sided camera");
+				UnityEngine.Object.DontDestroyOnLoad(go);
+				sideCam = go.AddComponent<Camera>();
+				sideCam.enabled = false;
+				sideCam.orthographic = true;
+				sideCam.cullingMask = 1 << SideLayer;
+				sideCam.clearFlags = CameraClearFlags.SolidColor;
+				sideCam.backgroundColor = new Color(1f, 0f, 1f, 1f);
+				sideCam.nearClipPlane = 0.01f;
+				sideCam.farClipPlane = 20f;
+				sideRt = new RenderTexture(SidePx, SidePx, 16, RenderTextureFormat.ARGB32);
+				sideTex = new Texture2D(SidePx, SidePx, TextureFormat.RGBA32, false);
+				sideCam.targetTexture = sideRt;
+			}
+			int layer = r.gameObject.layer;
+			r.gameObject.layer = SideLayer;
+			sideCam.orthographicSize = size / 2f * 1.05f;
+			var seen = new int[2];
+			try
+			{
+				for (int k = 0; k < 2; k++)
+				{
+					Vector3 from = k == 0 ? dir : -dir;
+					sideCam.transform.position = centre + from * 8f;
+					sideCam.transform.rotation = Quaternion.LookRotation(-from, up);
+					sideCam.Render();
+					RenderTexture old = RenderTexture.active;
+					RenderTexture.active = sideRt;
+					sideTex.ReadPixels(new Rect(0, 0, SidePx, SidePx), 0, 0);
+					sideTex.Apply();
+					RenderTexture.active = old;
+					foreach (Color32 c in sideTex.GetPixels32())
+						if (!(c.r > 240 && c.g < 15 && c.b > 240)) seen[k]++;
+				}
+			}
+			finally { r.gameObject.layer = layer; }
+			int most = Math.Max(seen[0], seen[1]), least = Math.Min(seen[0], seen[1]);
+			if (most < SidePx * SidePx / 8 || least > most * 0.15f) return 0;
+			return seen[0] > seen[1] ? 1 : -1;
+		}
+
+		/// <summary>
+		/// Walls seen through from behind (IG8): each wall-like mesh (thin across a level direction, at least 1 m each other way)
+		/// whose faces all look one way and whose material doesn't draw both sides, with no building piece or other solid within
+		/// 0.3 m behind the middle of its open side. One line each.
+		/// </summary>
+		static List<string> OneSidedProblems(IslandWorldState.Entry e, out int count)
+		{
+			var lines = new List<string>();
+			count = 0;
+			Transform objects = e.Root.transform.Find("Objects");
+			if (objects == null) return lines;
+			Physics.SyncTransforms();
+			foreach (Transform o in objects)
+			{
+				if (o == null || !o.gameObject.activeInHierarchy) continue;
+				string n = o.name.Replace("(Clone)", "").Trim();
+				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Note_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_")) continue;
+				if (Vegetation.IsMatch(n) || (OverlapIgnore.IsMatch(n) && !Structural.IsMatch(n))) continue;
+				count++;
+				foreach (Renderer r in o.GetComponentsInChildren<Renderer>(false))
+				{
+					if (!(r is MeshRenderer) || !r.enabled || r.name == ContentCatalog.MarkerOnly) continue;
+					MeshFilter mf = r.GetComponent<MeshFilter>();
+					if (mf == null || mf.sharedMesh == null) continue;
+					if (r.name == CaveBacks.Name || r.transform.Find(CaveBacks.Name) != null) continue; // (its back drawn already: Selene's and cave pieces)
+					Bounds lb = mf.sharedMesh.bounds;
+					Vector3[] ax = { r.transform.TransformVector(new Vector3(lb.size.x, 0, 0)), r.transform.TransformVector(new Vector3(0, lb.size.y, 0)), r.transform.TransformVector(new Vector3(0, 0, lb.size.z)) };
+					int t = 0;
+					for (int i = 1; i < 3; i++) if (ax[i].magnitude < ax[t].magnitude) t = i;
+					int a1 = (t + 1) % 3, a2 = (t + 2) % 3;
+					if (ax[t].magnitude > 0.4f || ax[a1].magnitude < 1f || ax[a2].magnitude < 1f) continue;
+					Vector3 dir = ax[t].magnitude > 1e-5f ? ax[t].normalized : r.transform.TransformDirection(Vector3.forward);
+					if (Mathf.Abs(dir.y) > 0.5f) continue;
+					string key = (r.transform.lossyScale.x * r.transform.lossyScale.y * r.transform.lossyScale.z < 0 ? "-" : "") + mf.sharedMesh.GetInstanceID() + ":" + string.Join(",", r.sharedMaterials.Select(m => m == null ? "0" : m.GetInstanceID().ToString()).ToArray());
+					Vector3 centre = r.transform.TransformPoint(lb.center);
+					int side;
+					if (!OneSidedLook.TryGetValue(key, out side))
+						OneSidedLook[key] = side = RenderSide(r, centre, dir, ax[a1].normalized, Mathf.Max(ax[a1].magnitude, ax[a2].magnitude));
+					if (side == 0) continue;
+					// (the open side: the one it isn't drawn towards)
+					Vector3 open = -dir * side;
+					float reach = (ax[t].magnitude / 2f + 0.32f) / 2f;
+					Vector3 face = centre + open * reach;
+					// (a box from its middle to 32 cm behind the open side - a twin turned round in its place, a lining - over the middle
+					// 60% of the piece: in the frame thin / up / along)
+					Quaternion rot = Quaternion.LookRotation(ax[a2].normalized, ax[a1].normalized);
+					Vector3 half = new Vector3(reach, ax[a1].magnitude * 0.3f, ax[a2].magnitude * 0.3f);
+					bool covered = Physics.OverlapBox(face, half, rot, ~0, QueryTriggerInteraction.Ignore).Any(c => c.enabled && !c.transform.IsChildOf(o));
+					if (covered) continue;
+					lines.Add("one-sided: " + n + " at " + Num(Math.Round(face.x, 2)) + " " + Num(Math.Round(face.z, 2)) + " y=" + Num(Math.Round(face.y, 2)) + " - drawn from one side only, nothing behind its open side (facing " + Num(Math.Round(open.x, 2)) + " " + Num(Math.Round(open.z, 2)) + ")");
+					break;
+				}
+			}
+			return lines;
+		}
+
 		[ConsoleCommand(name: "CIOverlapWorld", docs: "Dev, in a world: nothing on the loaded custom islands passes through anything else - no post, pillar, wall, floor or roof piece more than 6 cm inside a piece of furniture, a prop, a chest, a machine, a tree or a plant (IG7; the user 2026-10-18: posts through a piano and a pool table). Things resting on floors, roofs on their posts, things on tables don't count. Problems per island; all in Mods\\DynamicIslands\\overlap_world.txt. CIOverlapWorld [part of the island name]")]
 		public static void OverlapWorldCommand(string[] args) { WorldCheck(args, OverlapCheck); }
 

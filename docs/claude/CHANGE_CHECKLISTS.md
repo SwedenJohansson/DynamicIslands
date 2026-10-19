@@ -287,7 +287,7 @@ This is the most common change in history. It does not touch any `.cs` file.
   Place furniture between columns; under a big flat roof of floor plates give it deliberate columns clear of the
   furniture, or let `save`/`posts` stand its posts (they now move off things, or are left out).
 **Test**: `CIRecipe <name>`, `CIFloating` in the editor (0 problems), then `CIPlay <name>`, and in a test world
-`CIGroundIslands <name>` and `CIOverlapIslands <name>` (TEST_CATALOGUE §G, IG7). A new plan: both with `plans`.
+`CIGroundIslands <name>`, `CIOverlapIslands <name>` and `CIOneSidedIslands <name>` (TEST_CATALOGUE §G, IG7/IG8; a one-sided facade piece used as a wall needs a twin turned round, its face to the room). A new plan: both with `plans`.
 
 ## Every feature
 - Update the docs in the same commit (README `## Documentation`):

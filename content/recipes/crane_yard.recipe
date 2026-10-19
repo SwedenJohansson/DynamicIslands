@@ -43,6 +43,8 @@ place VP_PortableToilet - at -11 -11.5 sit yaw=45
 place VP_Cable_Roll01 - at 3 1 sit
 place VP_RubblePile_Small01 - at 8 11 sit
 place VP_Whiteboard board at 1.5 -2.5 sit yaw=200
+# (a whiteboard is drawn from the front only: standing free in the yard its back was see-through - a second one back to back)
+place VP_Whiteboard board at 1.5 -2.5 sit yaw=20
 place Zone_Trigger yard at 0 0 y=1.5
 
 # --- The spotlight tower: two open scaffold sections, a platform on top (6 m up) with the spotlight, a ladder ---------

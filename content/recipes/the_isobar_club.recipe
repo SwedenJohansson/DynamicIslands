@@ -99,6 +99,21 @@ place Apartment_Ext_BaseMidMidWall clubwalls at 0 3 y=0.02 yaw=180
 place Apartment_Ext_BaseMidMidWall clubwalls at 3 3 y=0.02 yaw=180
 place Apartment_Ext_BaseMidMidWall clubwalls at 9 3 y=0.02 yaw=180
 place Apartment_Ext_BaseMidMidWall clubwalls at 12 3 y=0.02 yaw=180
+# (the panels are drawn from outside only: from inside the hall they were see-through, only their frame strips showed -
+# so each has a twin turned round in the same place, its face to the room)
+for px 3 15 3
+place Apartment_Ext_BaseMidMidWall clubwalls at {$px-3} 12.15 y=0.02 yaw=180
+next
+for pz 3 9 3
+place Apartment_Ext_BaseMidMidWall clubwalls at -3.15 {$pz-3} y=0.02 yaw=90
+next
+for pz 0 6 3
+place Apartment_Ext_BaseMidMidWall clubwalls at 18.15 {$pz+3} y=0.02 yaw=270
+next
+place Apartment_Ext_BaseMidMidWall clubwalls at 3 -3.15 y=0.02 yaw=0
+place Apartment_Ext_BaseMidMidWall clubwalls at 6 -3.15 y=0.02 yaw=0
+place Apartment_Ext_BaseMidMidWall clubwalls at 12 -3.15 y=0.02 yaw=0
+place Apartment_Ext_BaseMidMidWall clubwalls at 15 -3.15 y=0.02 yaw=0
 for fx 0.75 14.25 1.5
 for fz -3.75 8.25 1.5
 place Block_Floor_Tier3 clubroof at $fx $fz y=3.22

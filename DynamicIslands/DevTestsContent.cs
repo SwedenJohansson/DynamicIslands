@@ -807,7 +807,7 @@ namespace DynamicIslands
 				}
 			}
 			if (found == 0) Fail("no object with '" + objectPart + "' on '" + e.HostName + "'");
-			else Log("PASS: dumped " + found + " object(s) of '" + e.HostName + "'");
+			else Log("PASS: dumped " + found + " object(s) of '" + e.HostName + "' (positions from its origin " + e.Position.ToString("F1") + ")");
 		}
 
 		[ConsoleCommand(name: "CIReturningIslands", docs: "Dev, in game (host, a test world 'CI ...'): islands the players still need come back ahead of the raft (ReturningIslands) - one with its quest begun and one a plan's rule waits for (never reached), left 1.3 km behind: after the return time (3 s here) both are ahead of the raft, load there, the quest where it was, a banner; one with its quest done, one never reached that nothing waits for, and one that came back 3 times stay; one a Receiver frequency brought doesn't count")]
