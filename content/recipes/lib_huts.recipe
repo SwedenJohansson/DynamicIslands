@@ -8,11 +8,12 @@
 # x 0..4.5, z 0..4.5. w1..w6 pick each wall piece (ReefHuts_Wall2/3, ReefHuts_PlasticWall1/4 - not Wall1/Wall5: they are
 # sheets that lie flat) or none. ladder: Raft's building ladder up the open front, on the ground (2.42 m: for decks of
 # about 2.4-2.8 m), or none (a hut over water reached from a walkway).
-macro stilt_hut y=2.6 w1=ReefHuts_Wall2 w2=ReefHuts_Wall3 w3=ReefHuts_PlasticWall1 w4=ReefHuts_Wall2 w5=ReefHuts_Wall3 w6=ReefHuts_PlasticWall1 ladder=Block_Ladder
-place ReefHuts_Pillar3 - at 0.15 0.15 y=0 sy={($y+2.98)/4.815}
-place ReefHuts_Pillar3 - at 4.35 0.15 y=0 sy={($y+2.98)/4.815}
-place ReefHuts_Pillar3 - at 0.15 4.35 y=0 sy={($y+2.98)/4.815}
-place ReefHuts_Pillar3 - at 4.35 4.35 y=0 sy={($y+2.98)/4.815}
+macro stilt_hut y=2.6 w1=ReefHuts_Wall2 w2=ReefHuts_Wall3 w3=ReefHuts_PlasticWall1 w4=ReefHuts_Wall2 w5=ReefHuts_Wall3 w6=ReefHuts_PlasticWall1 ladder=Block_Ladder foot=0
+# (foot: the pillars reach this far below the frame, for a hut on a slope)
+place ReefHuts_Pillar3 - at 0.15 0.15 y={0-$foot} sy={($y+2.98+$foot)/4.815}
+place ReefHuts_Pillar3 - at 4.35 0.15 y={0-$foot} sy={($y+2.98+$foot)/4.815}
+place ReefHuts_Pillar3 - at 0.15 4.35 y={0-$foot} sy={($y+2.98+$foot)/4.815}
+place ReefHuts_Pillar3 - at 4.35 4.35 y={0-$foot} sy={($y+2.98+$foot)/4.815}
 for fx 0.75 3.75 1.5
 for fz 0.75 3.75 1.5
 place Block_Floor_Wood - at $fx $fz y=$y

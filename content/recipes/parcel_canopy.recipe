@@ -14,7 +14,7 @@ include lib_huts
 include lib_post
 new
 # (nature: a jungle hill, Like Raft's Balboa woods but not as thick)
-gen Trees=0.32 Bushes=0.35 Rocks=0.25 Harvest=0.3 BeachThings=0.3
+gen Trees=0.32 Bushes=0.35 Rocks=0.25 Harvest=0.15 BeachThings=0.12
 gen Seed=4301 Radius=62 Height=16 Roughness=0.45 Peaks=1 Shape=0 Style=0 PeakShape=0.4 Cliffs=0.2 BeachWidth=0.5
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.15 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
@@ -145,6 +145,8 @@ note campchest Pilot's camp chest | Eskil's camp chest: his machete, its plans, 
 loot campchest Blueprint_Machete*1;Machete*1;Cooked_Potato*2;Coconut*2
 prop campchest loot.refill=0
 prop tailvines1 obj.name=tailvines1
+prop tailvines2 obj.name=tailvines2
+prop tailvines3 obj.name=tailvines3
 prop tailvines1 on.use=hide|\nhide|tailvines2\nhide|tailvines3\nshow|tailzone\nmessage||The machete bites through the vines. Behind them, the plane's tail section and its cargo door.
 prop tailzone zone.id=tail
 prop tailzone zone.radius=4
@@ -171,6 +173,7 @@ prop grave on.use=message||You lay the letter under the propeller blade. Someone
 prop grave else.use=message||A propeller blade stuck in the earth. Scratched on it: E. BRANDT, MAIL PILOT.
 prop graveflowers obj.name=graveflowers
 prop graveflowers beh.hidden=1
+prop graveflowers2 obj.name=graveflowers2
 prop graveflowers2 beh.hidden=1
 prop beacon obj.name=beacon
 prop beacon beh.use=Light the beacon

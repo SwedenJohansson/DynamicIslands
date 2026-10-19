@@ -64,6 +64,8 @@ read Staff letter: Head sorter
 read Staff letter: Postman Arvid
 expect story staffletter 3
 expect step 16
+zone archive
+wait 3
 kill Rat
 expect animals Rat 0
 expect step 17

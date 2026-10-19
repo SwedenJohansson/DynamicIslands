@@ -36,7 +36,7 @@ pop
 call mailsack x=-8 z=10 yaw=-30 al=sacks
 call mailsack x=-5.5 z=11.2 yaw=70 al=sacks
 place Antenna_pole - at 2 10 ground sit
-place Placeable_Lantern_Metal - at 1 10 ground y=1.4 sit
+place Placeable_Lantern_Metal - at 1 10 ground sit
 place Placeable_BirdsNest - at 9 8 ground sit
 
 # --- Nature: the reef, a few things to gather ------------------------------------------------------------------------

@@ -126,6 +126,7 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
      [16.6 The themed islands](#166-the-themed-islands) · [16.7 The new islands](#167-the-new-islands) ·
      [16.8 Raft's story islands, piece by piece](#168-rafts-story-islands-piece-by-piece) ·
      [16.9 A whole storyline: The Rainmakers](#169-a-whole-storyline-the-rainmakers)
+     [16.10 A whole storyline: The Last Post](#1610-a-whole-storyline-the-last-post)
 17. [Learn from the islands](#17-learn-from-the-islands)
    - [17.1 Opening any island in the editor](#171-opening-any-island-in-the-editor) · [17.2 Looking around](#172-looking-around) ·
      [17.3 Two islands made to learn from](#173-two-islands-made-to-learn-from) · [17.4 Every feature, and an island to look at](#174-every-feature-and-an-island-to-look-at)
@@ -4092,6 +4093,35 @@ To learn from it: open the plan with **EDITOR** > **A world plan** and look at i
 one before, each on a Receiver frequency); open any of its islands in the editor and look at the behaviours on the
 quest objects. Its quests are long like Raft's: 5 to 7 steps on the small stations, 10 to 13 on the large ones and 30
 on the Rain Engine.
+
+### 16.10 A whole storyline: The Last Post
+
+**The Last Post** is a second plan of nine story islands in the library, made like Raft's own story (Raft's story off,
+the plan's own chain on the Receiver, 500 to 1400). The Coastal Post was the last postal service on the sea. At its
+first stop, the Dead Letter Office, a letter waits that is addressed to your raft, with five dead letters in the
+pigeon-holes. Each dead letter is delivered on a later island (a `take` check on a letterbox, locker or pigeonhole) and
+its answer points on down the route, to the General Post Office, where the postmistress Ada Lind waits with the last
+letter. Each island has Raft's blueprints in Raft's order (a **Blueprint** step for each), Pneumatic Heights comes only
+from day 10 on (`day:10`), and the later islands have a **Raft store**; the General Post Office also has Raft's
+vending machine. A side island, **The Wandering Sorting Barge**, comes ahead of the raft every 6 km until its quest is
+done (`km:6:again`).
+
+| Island | What it is | What to look at |
+|---|---|---|
+| ![](images/library/dead_letter_office.jpg) **The Dead Letter Office** (first, 500) | A brick post office on a granite skerry, its clock stopped at nine | Done when a note is read (`note:1`), five dead letters as story items carried to later islands |
+| ![](images/library/pillarbox_pier.jpg) **Pillarbox Pier** (800) | A long pier with the ferry office and its sorting shed | Done when a zone is reached (`zone:sorting`), a dead letter posted with a `take` check |
+| ![](images/library/parcel_canopy.jpg) **Parcel Canopy** (900) | A jungle airstrip with the mail pilot's plane in the trees | Vines cut with the machete, a beacon whose **signal** finishes the island (`signal:beacon`) |
+| ![](images/library/pneumatic_heights.jpg) **Pneumatic Heights** (1000) | A terraced tube-post town round its exchange tower | Comes on day 10 (`day:10`), done after step 16 (`step:16`), valves, tubes and capsules, rats from the cellar |
+| ![](images/library/sorting_rock.jpg) **Sorting Rock** (1000) | A sorting hall in a quarried bowl, five parcel scales | A buried safe found with the metal detector, scales that each give a story item |
+| ![](images/library/telegraph_narrows.jpg) **Telegraph Narrows** (1100) | Two headlands and eight sea stacks, a telegraph pole and a zipline on each | Ziplines downhill stack to stack, a generator and a cable hub, a keypad code in Morse, a telegraphist in a cage |
+| ![](images/library/franking_works.jpg) **The Franking Works** (1100) | A stamp factory: works hall, presses, ink tanks, chimney | Done on landing (`visit`), Tangaroa's tokens as rare stamps (`take` 3), a Raft store by the yard |
+| ![](images/library/adas_round.jpg) **Ada's Round** (1200) | The postmistress's homestead on a green hill | A dovecote that shows the key box, Vasagatan's padlock door opened with a story key, a Raft store |
+| ![](images/library/general_post_office.jpg) **The General Post Office** (1400, the finale) | A white colonnade, a clock tower and the sorting hall on a half-drowned square, the archive and the roof above | A 26-step quest over four areas: a crank that unbolts the doors, a pneumatic router and a vault keypad, two scissor lifts, a claw, a brood mother boss, a character (Ada) who joins the crew, a camera moment at the flag, a Raft store and a vending machine |
+| ![](images/library/wandering_sorting_barge.jpg) **The Wandering Sorting Barge** (side, every 6 km) | A mail barge aground on a sandbar | A side rule that comes back until done (`km:6:again`) |
+
+To learn from it: open the plan with **EDITOR** > **A world plan** and compare its "done when" parts (`note:`, `zone:`,
+`signal:`, `step:`, `visit`, `quest`); then open The Dead Letter Office and a later island side by side to see how a
+story item from one island opens a check on another.
 
 ---
 

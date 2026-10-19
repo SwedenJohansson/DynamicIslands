@@ -93,6 +93,15 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Storylines ask for their blueprints:** The Rainmakers' quests now have a Blueprint step for each of Raft's
   blueprints its islands hold, and The Sleet Kilns and The Isobar Club each have a Raft store (Raft's goods, and any
   story blueprint a player missed).
+- **A second whole storyline in the library, The Last Post:** nine story islands down the Coastal Post's last route
+  (Raft's story off, the plan's own chain on the Receiver): The Dead Letter Office, Pillarbox Pier, Parcel Canopy,
+  Pneumatic Heights (from day 10), Sorting Rock, Telegraph Narrows, The Franking Works, Ada's Round and the finale, The
+  General Post Office (26 quest steps over four areas: a clock crank, a pneumatic router and a vault keypad, two lifts,
+  a claw, a brood mother on the roof, Ada joining the crew, a camera moment at the flag). Dead letters from the first
+  island are delivered on later ones; Raft's blueprints are quest steps in Raft's order; Raft stores on the later
+  islands and a vending machine at the General Post Office. A side island, The Wandering Sorting Barge, comes back every
+  6 km until its quest is done. Guide 16.10 shows what to look at. For plan testers: `CISetDay <n>` sets the day
+  counter in a test world, for `day:N` rules.
 - **Fixed:** The Rain Engine's third laser mirror stood beside its panel's line since beams turn at a mirror's centre;
   the beam now reaches the panel.
 - **Fixed:** a laser beam turned at a mirror's box edge and could just graze the next mirror; it now turns at the

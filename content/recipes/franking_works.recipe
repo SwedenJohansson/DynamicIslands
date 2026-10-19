@@ -29,7 +29,7 @@ clear from 0 -20 to 0 -38 r=4
 
 # --- The jetty -----------------------------------------------------------------------------------------------------------
 call pier x=0 z1=-34 z2=-48 h=1.45
-place Placeable_Lantern_Metal - at 1.2 -47 h=1.6 sit
+place Placeable_Lantern_Metal - at 1.2 -47 h=1.6 sit drop
 
 # --- The works hall: 6 x 4 cells, door to the yard; the ledger, the stamp album, the vault, the pigeonholes -------------
 push at -6 -2 h=2.5

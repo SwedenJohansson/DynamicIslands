@@ -14,7 +14,7 @@ include lib_huts
 include lib_post
 new
 # (nature: a steep green hill, Like Raft's hill islands)
-gen Trees=0.28 Bushes=0.3 Rocks=0.35 Harvest=0.25 BeachThings=0.25
+gen Trees=0.28 Bushes=0.3 Rocks=0.35 Harvest=0.25 BeachThings=0.12
 gen Seed=4401 Radius=64 Height=20 Roughness=0.5 Peaks=1 Shape=0 Style=0 PeakShape=0.5 Cliffs=0.3 BeachWidth=0.35
 gen Water=0.5 SeaRocks=0.35 SeaFinds=0.15 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
@@ -24,6 +24,7 @@ brush flatten from 0 -44 to 0 -54 r=4 s=20 frames=80 h=1.5
 brush flatten from -20 -32 to 14 -32 r=6 s=20 frames=160 h=6
 brush flatten from -22 -14 to 18 -14 r=6 s=20 frames=160 h=11
 brush flatten at 0 6 r=12 s=20 frames=160 h=16
+brush flatten at -11.5 8.5 r=5 s=20 frames=80 h=16
 brush smooth from 0 -50 to 0 -6 r=5 s=8 frames=40
 brush smooth from -22 -32 to 18 -14 r=8 s=5 frames=20
 origin
@@ -31,16 +32,17 @@ clear from 0 -40 to 0 -58 r=4
 clear from -20 -32 to 14 -32 r=6
 clear from -22 -14 to 18 -14 r=6
 clear at 0 6 r=12
+clear at -11.5 8.5 r=5
 clear from 0 -40 to 0 0 r=3
 
 # --- The harbour: a short pier, the harbour steps -----------------------------------------------------------------------
 call pier x=0 z1=-54 z2=-66 h=1.45
 place Zone_Trigger harbourzone at 0 -48 h=2
-place Placeable_Lantern_Metal - at 1.2 -64 h=1.6 sit
+place Placeable_Lantern_Metal - at 1.2 -64 h=1.6 sit drop
 
 # --- Terrace 1: houses 3 and 4 (4: the letterbox), the tube cellar's rats (hidden: let out by the letterbox) ------------
 push at -18 -31 h=6
-call stilt_hut y=2.6
+call stilt_hut y=2.6 foot=1.5
 place Loot_ChestSmall letterbox at 2.25 3.6 y=2.7 sit yaw=180
 pop
 push at 8 -31 h=6
@@ -50,10 +52,10 @@ place Creature_Rat rats at -12 -34 ground
 
 # --- Terrace 2: houses 2 and 5, the three tube valves on posts along the terrace ----------------------------------------
 push at -20 -13 h=11
-call stilt_hut y=2.6 w2=ReefHuts_Wall2
+call stilt_hut y=2.6 w2=ReefHuts_Wall2 foot=2.5
 pop
 push at 12 -13 h=11
-call stilt_hut y=2.6 w3=ReefHuts_Wall3
+call stilt_hut y=2.6 w3=ReefHuts_Wall3 foot=1.5
 pop
 macro valve al=valve1 x=0 z=0 yaw=0
 place RT_Pillar - at $x $z ground sy=0.5
@@ -89,7 +91,7 @@ place Note_Paper reply at -6.5 1.5 h=19.6 sit drop yaw=0
 
 # --- The linesman's signal hut on the top's west edge (tower_roof: its deck) -----------------------------------------
 push at -14 6 h=16
-call stilt_hut y=2.6
+call stilt_hut y=2.6 foot=2
 place Zone_Trigger roofzone at 2.25 2.25 y=2.8
 pop
 

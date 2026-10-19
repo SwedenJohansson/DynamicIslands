@@ -12,7 +12,7 @@ include lib_features
 include lib_post
 new
 # (nature: a green grass hill, Like Raft's farm islands, plenty to harvest)
-gen Trees=0.2 Bushes=0.35 Rocks=0.25 Harvest=0.3 BeachThings=0.3
+gen Trees=0.2 Bushes=0.35 Rocks=0.25 Harvest=0.3 BeachThings=0.12
 gen Seed=4801 Radius=52 Height=12 Roughness=0.25 Peaks=1 Shape=0 Style=3 PeakShape=0.3 Cliffs=0.1 BeachWidth=0.4
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.15 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
@@ -31,7 +31,7 @@ clear from 0 -14 to 0 -44 r=4
 
 # --- The jetty ------------------------------------------------------------------------------------------------------------
 call pier x=0 z1=-40 z2=-54 h=1.45
-place Placeable_Lantern_Metal - at 1.2 -53 h=1.6 sit
+place Placeable_Lantern_Metal - at 1.2 -53 h=1.6 sit drop
 
 # --- Ada's house: 4 x 3 cells, door to the garden; her diary on the table --------------------------------------------
 push at -1 4 h=9

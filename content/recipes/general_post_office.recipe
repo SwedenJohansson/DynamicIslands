@@ -15,7 +15,7 @@ include lib_features
 include lib_post
 new
 # (nature: a stone city island, few trees, Like Raft's rocky islands)
-gen Trees=0.08 Bushes=0.2 Rocks=0.3 Harvest=0.1 BeachThings=0.3
+gen Trees=0.08 Bushes=0.2 Rocks=0.1 Harvest=0.1 BeachThings=0.3
 gen Seed=4901 Radius=78 Height=10 Roughness=0.3 Peaks=1 Shape=0 Style=1 PeakShape=0.4 Cliffs=0.2 BeachWidth=0.4
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.15 Sunken=0.25 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
@@ -40,10 +40,10 @@ call pier x=-12 z1=-44 z2=-64 h=1.45
 place Antenna_pole - at 2.2 -50 ground sit
 place Antenna_pole - at -2.2 -60 ground sit
 place Antenna_pole - at -9.8 -54 ground sit
-place Placeable_Lantern_Metal - at 1.2 -50 h=1.6 sit
-place Placeable_Lantern_Metal - at -1.2 -60 h=1.6 sit
-place Placeable_Lantern_Metal - at -11 -54 h=1.6 sit
-place Placeable_Lantern_Metal - at 1.2 -69 h=1.6 sit
+place Placeable_Lantern_Metal - at 1.2 -50 h=1.6 sit drop
+place Placeable_Lantern_Metal - at -1.2 -60 h=1.6 sit drop
+place Placeable_Lantern_Metal - at -11 -54 h=1.6 sit drop
+place Placeable_Lantern_Metal - at 1.2 -69 h=1.6 sit drop
 # the notice of closure on a table in the square
 place Zone_Trigger squarezone at 0 -30 ground
 place "Table Office" - at -3 -31 ground sit yaw=0
@@ -80,8 +80,8 @@ place Block_Pillar_Tier3 - at 0 3 y=$ty
 place Block_Pillar_Tier3 - at 3 3 y=$ty
 next
 roof 2 2 at 0 0 y=5.04
-place Placeable_Clock_Fine clockface at 1.5 -0.2 y=6 yaw=180 scale=3
-place Placeable_Clock_Fine clockface at -0.2 1.5 y=6 yaw=270 scale=3
+place Placeable_Clock_Fine clockface at 1.5 -0.38 y=6 yaw=180 scale=3
+place Placeable_Clock_Fine clockface at -0.38 1.5 y=6 yaw=270 scale=3
 pop
 place RT_Pillar - at 13.5 -21 ground sy=0.4
 place TP_Selene_DoorCrankWheel clockcrank at 13.5 -21.12 ground y=1.1 rot=0,0,0 yaw=180
@@ -127,7 +127,7 @@ place Block_Pillar_Tier3 - at 0 9 y=0.2
 place Block_Pillar_Tier3 - at 15 9 y=0.2
 roof 10 6 at 0 0 y=0.2
 place UT_Skyscraber01PadlockDoor frontdoors at 7.25 0 y=0.2 sit yaw=0
-place Zone_Trigger hallzone at 7.5 3 y=0.8
+place Zone_Trigger hallzone at 7.5 4.5 y=0.8
 place Placeable_Cupboard_Small - at 5 0.8 y=1.3 sit drop yaw=0
 place Note_Paper rules at 5 0.8 y=2 sit drop yaw=8
 place "Table Office" - at 2 4.2 y=1.3 sit drop yaw=0
@@ -338,7 +338,7 @@ prop squarezone zone.id=square
 prop squarezone zone.radius=6
 prop squarezone zone.message=The square: drowned to the south, a stopped clock tower, and the post office behind its white colonnade.
 prop hallzone zone.id=main_hall
-prop hallzone zone.radius=4
+prop hallzone zone.radius=3
 prop hallzone zone.message=The sorting hall: tables, scales, the tubes along the ceiling, and the vault at the back.
 prop stairzone zone.id=stair
 prop stairzone zone.radius=3

@@ -49,7 +49,7 @@ place "Chair Office" - at 2.25 2.3 y=1.3 sit drop yaw=0
 place Placeable_Shelf_Small_Basic - at 0.9 1.6 y=1.3 sit drop yaw=90
 place Zone_Trigger firsthutzone at 2.25 1.5 y=0.8
 pop
-place "VG_DecorationPrefabBase_EmergencyGenerator Variant" generator at -37.5 -5 ground sit yaw=0
+place "VG_DecorationPrefabBase_EmergencyGenerator Variant" generator at -35.6 -4.6 ground sit yaw=0
 
 # --- The line: a pole on every stack, a zipline from each to the next, downhill west to east ---------------------------
 macro pole x=0 z=1.6

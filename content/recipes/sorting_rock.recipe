@@ -28,8 +28,8 @@ clear at 0 2 r=13
 clear from 0 -10 to 0 -34 r=4
 
 # --- The jetty and the landing ------------------------------------------------------------------------------------------
-call pier x=0 z1=-30 z2=-44 h=1.45
-place Placeable_Lantern_Metal - at 1.2 -43 h=1.6 sit
+call pier x=0 z1=-30 z2=-52 h=1.45
+place Placeable_Lantern_Metal - at 1.2 -51 h=1.6 sit drop
 
 # --- The sorting hall: 6 x 4 cells of roof on pillars, sorting tables, the five scales, the rates office chest --------
 push at -4.5 -2 h=4

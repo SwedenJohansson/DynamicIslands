@@ -912,6 +912,17 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIAgainUntilDone", docs: "Dev, in game (host, a test world 'CI ...'): SR1 - a 'day:N:again' rule's island comes back every N days until the players are done with it. A plan 'CI again' (day rules with again: an island with a two-step quest and one without; and one without again) brings three islands on day D; left behind unvisited, none is back the day before D+N; the world saved and read back (the plan's again, each island's clock, no second copies); on day D+N the two again islands come back ahead of the raft, the other stays; the plain one reached and the quest one begun, then left again: only the quest one comes back; its quest done, nothing comes back")]
 		public static void AgainUntilDoneTest() { StartTest(AgainUntilDoneRoutine()); }
 
+		[ConsoleCommand(name: "CISetDay", docs: "Dev, in game (host, a test world 'CI ...'): CISetDay <n> sets Raft's day counter to n, for plan tests with 'day:N' rules (run it before CIPlay)")]
+		public static void SetDayCommand(string[] args)
+		{
+			int day;
+			if (args == null || args.Length < 1 || !int.TryParse(args[0], out day) || day < 0) { Fail("CISetDay <day>"); return; }
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("CISetDay: host only, in a world"); return; }
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("CISetDay: only in a test world 'CI ...'"); return; }
+			SetDay(day);
+			if (WorldManager.DayCounter == day) Log("PASS: day " + day); else Fail("CISetDay: the day is " + WorldManager.DayCounter);
+		}
+
 		static void SetDay(int day)
 		{
 			System.Reflection.PropertyInfo p = typeof(WorldManager).GetProperty("DayCounter", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
