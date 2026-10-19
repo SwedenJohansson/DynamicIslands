@@ -44,19 +44,19 @@ clear at 0 46 r=6
 # --- Area A, the rim: five listening mirrors, the foreman's board, the generator, the control hut --------------------
 # mirror: a concrete plinth (four grey pillars and a 3 m plate on them) on the rim, a dish 6 m across sat on it and
 # turned out to sea (away from the island's middle 0 4)
-macro mirror x=0 z=0 alias=-
+macro mirror x=0 z=0 alias=- yaw=0
 place Block_Pillar_Tier3 - at {$x-1.2} {$z-1.2} h=10
 place Block_Pillar_Tier3 - at {$x+1.2} {$z-1.2} h=10
 place Block_Pillar_Tier3 - at {$x-1.2} {$z+1.2} h=10
 place Block_Pillar_Tier3 - at {$x+1.2} {$z+1.2} h=10
 place Block_Floor_Tier3 - at $x $z h=12.42 sx=2 sz=2
-place Antenna_dish $alias at $x $z h=12.5 sit scale=7 yaw={atan2($x,$z-4)}
+place Antenna_dish $alias at $x $z h=12.5 sit scale=7 yaw=$yaw
 end
-call mirror x=-26 z=-4 alias=mirror1
-call mirror x=-27 z=14
-call mirror x=-14 z=32
-call mirror x=14 z=32
-call mirror x=27 z=14
+call mirror x=-26 z=-4 yaw=-107.1 alias=mirror1
+call mirror x=-27 z=14 yaw=-69.7
+call mirror x=-14 z=32 yaw=-26.6
+call mirror x=14 z=32 yaw=26.6
+call mirror x=27 z=14 yaw=69.7
 
 place Zone_Trigger rim_landing at 0 -62 ground y=1
 place Note_Board foremanboard at 3.2 -60 ground sit yaw=200

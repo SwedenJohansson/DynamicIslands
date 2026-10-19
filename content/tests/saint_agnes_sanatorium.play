@@ -11,7 +11,7 @@ expect hidden musicbox
 walk 0 -40 to 0 -34
 zone gate
 expect step 1
-walk 0 -26 to 0 -10 to -9.75 -8 to -9.75 -4 h=6.2
+walk 0 -26 to 0 -8 to -9.75 -8 to -9.75 -4 h=6.2
 read Admissions book
 expect step 2
 read Nurse Edda's rota

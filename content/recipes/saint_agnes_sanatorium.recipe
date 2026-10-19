@@ -9,6 +9,7 @@
 include lib_sea
 include lib_features
 include lib_sl1
+include lib_huts
 new
 # (nature: forest headland, Like Raft: Trees 0.3, Bushes 0.28, Rocks 0.43)
 gen Trees=0.3 Bushes=0.28 Rocks=0.43 Harvest=0.25 BeachThings=0.3

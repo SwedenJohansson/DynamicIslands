@@ -42,6 +42,7 @@ at -13.75 -19 h=10
 use fuse
 expect story fuse 1
 expect step 8
+storespot -6 -25
 
 # Area B, the Choir chapel
 at 19.75 -14 h=10

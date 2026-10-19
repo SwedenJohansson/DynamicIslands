@@ -21,17 +21,25 @@ generate
 brush flatten from 0 -14 to 0 14 r=12 s=20 frames=120 h=-1.5
 brush flatten at 0 -38 r=12 s=20 frames=100 h=0.9
 brush flatten at 0 38 r=12 s=20 frames=100 h=0.9
+# (the landings: where lagoon and islet meet the ground humped up over the deck ends - lay it just under the planks)
+brush flatten from 0 -27 to 0 -23 r=2.5 s=20 frames=60 h=0.7
+brush flatten from 0 23 to 0 27 r=2.5 s=20 frames=60 h=0.7
+# (and the gatehouse's pad: the islet brush left its floor in the rock)
+brush flatten from -4 31.5 to 4 31.5 r=4 s=20 frames=80 h=0.9
 origin
 clear from 0 -46 to 0 46 r=13
 
-# --- The causeway: 3 m plank decks (0.8 m over the water) on two posts each, standing on the lagoon floor ----------
-# Rows every 3 m from z -25.5 to 25.5 on the lane x 0; fork 1 (z -16.5..-10.5) and fork 2 (z 4.5..10.5) run on two
+# --- The causeway: 3 m plank decks (0.8 m over the water) on four posts each, standing on the lagoon floor ----------
+# Rows every 3 m from z -22.5 to 22.5 on the lane x 0; fork 1 (z -16.5..-10.5) and fork 2 (z 4.5..10.5) run on two
 # branches at x -6 and 6, joined to the lane by crossbars (z -19.5, -7.5, 1.5, 13.5). Fork 1 is safe on the left (x -6),
 # fork 2 on the right (x 6). Lamps stand on the lane and the safe branches only.
 macro deck x=0 z=0
-place Block_Floor_Wood - at $x $z y=2.3 sx=2 sz=2
-place Block_Pillar_Wood - at {$x-1.2} $z y=0 sy=0.95
-place Block_Pillar_Wood - at {$x+1.2} $z y=0 sy=0.95
+place Block_Floor_Wood - at $x $z y=2.3 sx=2.15 sz=2.15
+for px -1.2 1.2 2.4
+for pz -1.2 1.2 2.4
+place Block_Pillar_Wood - at {$x+$px} {$z+$pz} y=0 sy=0.95
+next
+next
 end
 macro decklamp x=0 z=0
 place Antenna_pole - at $x $z y=2.3 sy=0.5
@@ -43,7 +51,7 @@ call deck x=$cx z=$z
 next
 end
 push at 0 0 h=-1.5
-for rz -25.5 -22.5 3
+for rz -22.5 -22.5 3
 call deck x=0 z=$rz
 next
 call crossbar z=-19.5
@@ -61,10 +69,10 @@ call deck x=-6 z=$rz
 call deck x=6 z=$rz
 next
 call crossbar z=13.5
-for rz 16.5 25.5 3
+for rz 16.5 22.5 3
 call deck x=0 z=$rz
 next
-call decklamp x=1.35 z=-25
+call decklamp x=1.35 z=-22
 call decklamp x=-7.35 z=-19.5
 call decklamp x=-7.35 z=-13.5
 call decklamp x=-4.65 z=-7.5
@@ -73,7 +81,7 @@ call decklamp x=7.35 z=1.5
 call decklamp x=7.35 z=7.5
 call decklamp x=4.65 z=13.5
 call decklamp x=1.35 z=19.5
-call decklamp x=-1.35 z=25
+call decklamp x=-1.35 z=22
 place Zone_Sound safesong1 at -6 -13.5 y=3.5
 place Zone_Sound safesong2 at 6 7.5 y=3.5
 place Zone_Trigger wrong1 at 6 -13.5 y=3.3

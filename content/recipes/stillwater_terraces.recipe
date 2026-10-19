@@ -22,7 +22,13 @@ brush flatten from -20 -38 to 20 -38 r=8 s=20 frames=120 h=3
 brush flatten from -20 -22 to 20 -22 r=8 s=20 frames=120 h=7
 brush flatten from -20 -6 to 20 -6 r=8 s=20 frames=120 h=11
 brush flatten from -14 12 to 14 12 r=9 s=20 frames=120 h=15
-brush smooth from 0 -48 to 0 4 r=3 s=8 frames=40
+# (the path up the middle: a ramp of pads at each terrace edge, 4 m up over 10 m, then smoothed)
+for k 0 10
+brush flatten at 0 {-35+$k} r=1.5 s=20 frames=40 h={3+0.4*$k}
+brush flatten at 0 {-19+$k} r=1.5 s=20 frames=40 h={7+0.4*$k}
+brush flatten at 0 {-6+$k} r=1.5 s=20 frames=40 h={11+0.4*$k}
+next
+brush smooth from 0 -48 to 0 5 r=2 s=4 frames=20
 origin
 clear from -22 -38 to 22 -38 r=9
 clear from -22 -22 to 22 -22 r=9
@@ -51,8 +57,16 @@ call paddy zc=-6 h=11
 # st_a: on the altar terrace's front, facing down the hill (shown at the start)
 # st_b: on terrace 3's back strip, facing the sea (shown from paddy 2 on, and again at the altar)
 # st_c: on terrace 2's back strip, facing up the hill - behind you (shown from paddy 3 on)
-for i 0 11
+# (st_a from the fourth on: the altar terrace's west end falls away to the sea)
+# (not the seventh and eleventh: x 1.6 sits on the path's ramp, x 14.4 on the terrace's falling east end)
+for i 3 5
 place TangaroaFounderStatue st_a at {-17.6+3.2*$i} 5 ground sit yaw=180 scale=0.4
+next
+for i 7 9
+place TangaroaFounderStatue st_a at {-17.6+3.2*$i} 5 ground sit yaw=180 scale=0.4
+next
+place TangaroaFounderStatue st_a at 17.6 5 ground sit yaw=180 scale=0.4
+for i 0 11
 place TangaroaFounderStatue st_b at {-17.6+3.2*$i} -1 ground sit yaw=180 scale=0.4
 place TangaroaFounderStatue st_c at {-17.6+3.2*$i} -17 ground sit yaw=0 scale=0.4
 next

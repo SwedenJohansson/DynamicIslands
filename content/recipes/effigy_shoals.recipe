@@ -30,14 +30,43 @@ clear at 0 0 r=36
 # five at 28 m on each. Set "effin" faces the middle; set "effout" (hidden) faces the landing beach (0 -38). ----------
 for bar 30 270 120
 for off -30 30 15
-call effigy x={20*cos($bar+$off)} z={20*sin($bar+$off)} yaw={atan2(0-20*cos($bar+$off), 0-20*sin($bar+$off))} alias=effin
-call effigy x={20*cos($bar+$off)} z={20*sin($bar+$off)} yaw={atan2(0-20*cos($bar+$off), -38-20*sin($bar+$off))} alias=effout
+call effigy x={20*cos($bar+$off)} z={20*sin($bar+$off)} yaw={270-$bar-$off} alias=effin
 next
 for off -32 32 16
-call effigy x={28*cos($bar+$off)} z={28*sin($bar+$off)} yaw={atan2(0-28*cos($bar+$off), 0-28*sin($bar+$off))} alias=effin
-call effigy x={28*cos($bar+$off)} z={28*sin($bar+$off)} yaw={atan2(0-28*cos($bar+$off), -38-28*sin($bar+$off))} alias=effout
+call effigy x={28*cos($bar+$off)} z={28*sin($bar+$off)} yaw={270-$bar-$off} alias=effin
 next
 next
+# (set "effout": its yaws worked out beforehand - each faces the landing beach at 0 -38)
+call effigy x=20.00 z=0.00 yaw=-152.2 alias=effout
+call effigy x=19.32 z=5.18 yaw=-155.9 alias=effout
+call effigy x=17.32 z=10.00 yaw=-160.2 alias=effout
+call effigy x=14.14 z=14.14 yaw=-164.8 alias=effout
+call effigy x=10.00 z=17.32 yaw=-169.8 alias=effout
+call effigy x=27.98 z=-0.98 yaw=-142.9 alias=effout
+call effigy x=27.17 z=6.77 yaw=-148.8 alias=effout
+call effigy x=24.25 z=14.00 yaw=-155.0 alias=effout
+call effigy x=19.45 z=20.14 yaw=-161.5 alias=effout
+call effigy x=13.15 z=24.72 yaw=-168.2 alias=effout
+call effigy x=-10.00 z=17.32 yaw=169.8 alias=effout
+call effigy x=-14.14 z=14.14 yaw=164.8 alias=effout
+call effigy x=-17.32 z=10.00 yaw=160.2 alias=effout
+call effigy x=-19.32 z=5.18 yaw=155.9 alias=effout
+call effigy x=-20.00 z=0.00 yaw=152.2 alias=effout
+call effigy x=-13.15 z=24.72 yaw=168.2 alias=effout
+call effigy x=-19.45 z=20.14 yaw=161.5 alias=effout
+call effigy x=-24.25 z=14.00 yaw=155.0 alias=effout
+call effigy x=-27.17 z=6.77 yaw=148.8 alias=effout
+call effigy x=-27.98 z=-0.98 yaw=142.9 alias=effout
+call effigy x=-10.00 z=-17.32 yaw=154.2 alias=effout
+call effigy x=-5.18 z=-19.32 yaw=164.5 alias=effout
+call effigy x=-0.00 z=-20.00 yaw=180.0 alias=effout
+call effigy x=5.18 z=-19.32 yaw=-164.5 alias=effout
+call effigy x=10.00 z=-17.32 yaw=-154.2 alias=effout
+call effigy x=-14.84 z=-23.75 yaw=133.9 alias=effout
+call effigy x=-7.72 z=-26.92 yaw=145.2 alias=effout
+call effigy x=-0.00 z=-28.00 yaw=180.0 alias=effout
+call effigy x=7.72 z=-26.92 yaw=-145.2 alias=effout
+call effigy x=14.84 z=-23.75 yaw=-133.9 alias=effout
 
 # --- The tallest effigy in the middle (it faces south both ways), the hymn sheet at its feet ------------------------
 place Placeable_Scarecrow_Advanced - at 0 6 ground sit yaw=180 scale=1.5

@@ -26,6 +26,12 @@ next
 brush smooth from -18 -46 to -18 -4 r=3 s=6 frames=30
 brush flatten at -18 -50 r=6 s=16 frames=40 h=1
 brush flatten at 0 12 r=4.2 s=20 frames=80 h=8.16
+# (and its square corners: the round dig alone left the corner plates and walls in the rock)
+for qx -1.5 1.5 3
+for qz 10.5 13.5 3
+brush flatten at $qx $qz r=3.2 s=20 frames=60 h=8.16
+next
+next
 origin
 clear at 0 8 r=25
 clear from -18 -52 to -18 -4 r=3
@@ -80,10 +86,10 @@ next
 
 # --- The tents: six round the pit facing it, banners between them, three diaries; the camp bell; the store ------------
 for a 15 315 60
-place Balboa_DecorationPrefabBase_SimpleTent - at {14*cos($a)} {12+14*sin($a)} ground sit yaw={atan2(0-14*cos($a), 0-14*sin($a))}
+place Balboa_DecorationPrefabBase_SimpleTent - at {14*cos($a)} {12+14*sin($a)} ground sit yaw={270-$a}
 next
 for a 45 345 60
-place Banner_01 - at {15*cos($a)} {12+15*sin($a)} ground sit yaw={atan2(0-15*cos($a), 0-15*sin($a))+90}
+place Banner_01 - at {15*cos($a)} {12+15*sin($a)} ground sit yaw={360-$a}
 next
 place Note_Paper diary_ro at {11*cos(15)} {12+11*sin(15)} ground sit yaw=30
 place Note_Paper diary_ansel at {11*cos(135)} {12+11*sin(135)} ground sit yaw=150
@@ -91,11 +97,11 @@ place Note_Paper diary_listener at {11*cos(255)} {12+11*sin(255)} ground sit yaw
 place Zone_Trigger tents at -6 -3 ground y=1
 place Block_Pillar_Wood - at 6 -4 ground sy=1.4
 place TangaroaBucket campbell at 6 -4 ground y=3.95 rot=180,0,0 scale=1.4
-store choirstore at 16 -6 ground
+store choirstore at 11 -3 ground
 
 # --- The rookery: nests along the plateau's edge; things to gather; the reef at the cliff foot ----------------------
 for a 0 330 30
-place Placeable_BirdsNest - at {22*cos($a)} {8+22*sin($a)} ground sit yaw={$a*3}
+place Placeable_BirdsNest - at {18*cos($a)} {8+18*sin($a)} ground sit yaw={$a*3}
 next
 scatter "Pickup_Landmark_PineappleLandmark" 2 at 0 0 r=50 seed=1271 free=5
 call dirt x=30 z=-30 r=8 n=2 seed=1272
