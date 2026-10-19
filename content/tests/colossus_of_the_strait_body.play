@@ -18,6 +18,7 @@ expect hidden heeldoor
 expect step 6
 walk -27 0 to -23 0 h=5
 use lift
+wait 6
 expect story heelride 1
 expect height 18.3
 zone chest_chamber

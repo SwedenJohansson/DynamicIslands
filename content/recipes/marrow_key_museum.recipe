@@ -30,7 +30,7 @@ clear from 0 -48 to 0 -16 r=5
 push at -7.5 -6 h=3
 for fx 0.75 14.25 1.5
 for fz -2.25 8.25 1.5
-place Block_Floor_Tier3 museumfloor at $fx $fz y=0.05
+place Block_Floor_Tier3 museumfloor at $fx $fz y=0.08
 next
 next
 # front wall with a double door in the middle; back wall; side walls
@@ -91,10 +91,10 @@ place "Box Big" plinths at 2.4 2.4 y=0.05 sit
 place "Box Big" plinths at 2.4 6.6 y=0.05 sit
 place "Box Big" plinths at 12.6 6.6 y=0.05 sit
 place "Box Big" plinths at 7.5 7.8 y=0.05 sit
-place VP_GlassBridge cases at 2.4 2.4 y=1.4 sit scale=0.16
-place VP_GlassBridge cases at 2.4 6.6 y=1.4 sit scale=0.16
-place VP_GlassBridge cases at 12.6 6.6 y=1.4 sit scale=0.16
-place VP_GlassBridge sunstaffcase at 7.5 7.8 y=1.4 sit scale=0.16
+place VP_GlassBridge cases at 2.4 2.4 y=0.92 sit scale=0.16
+place VP_GlassBridge cases at 2.4 6.6 y=0.92 sit scale=0.16
+place VP_GlassBridge cases at 12.6 6.6 y=0.92 sit scale=0.16
+place VP_GlassBridge sunstaffcase at 7.5 7.8 y=0.92 sit scale=0.16
 place VP_GlassBridge_Broken brokenglass at 7.2 4.4 y=0.06 sit scale=0.16 yaw=30
 place VP_GlassBridge_Broken brokenglass at 8.1 5.1 y=0.06 sit scale=0.12 yaw=110
 place TangaroaFounderStatue exhibit at 12.6 2.6 y=0.05 sit scale=0.6 yaw=270

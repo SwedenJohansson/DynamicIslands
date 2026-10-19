@@ -32,10 +32,10 @@ expect step 8
 use lionhead
 expect story sand 0
 expect shown sandtrail
-walk 0 -11 to 0 -7 to 0 -2 h=3
+walk 0 -11 to 0 -7 to 0 -3 h=3
 zone trial3_end
 expect step 9
-walk 0 -1 to 0 6 to 0 12.5 h=3
+walk 0 -1 to 0 6 to 0 12.5 h=6.5
 zone altar
 kill Bear
 expect step 10

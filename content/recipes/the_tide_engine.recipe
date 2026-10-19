@@ -14,7 +14,7 @@ include lib_sea
 include lib_features
 new
 # (nature: desert rock at Raft's density - cacti and dry grass, a few rocks; three reefs round the ring)
-gen Trees=0.15 Bushes=0.3 Rocks=0.25 Harvest=0.25 BeachThings=0.3
+gen Trees=0.5 Bushes=0.8 Rocks=0.6 Harvest=0.25 BeachThings=0.3
 gen Seed=9701 Radius=70 Height=6 Roughness=0.3 Peaks=1 Shape=0 Style=2 PeakShape=0.3 Cliffs=0.4 BeachWidth=0.6
 gen Water=0.5 SeaRocks=0.4 SeaFinds=0.2 Sunken=0.3 Hostiles=0 Friendly=0.1 SeaLife=0.3
 generate
@@ -24,8 +24,16 @@ generate
 brush flatten at 0 0 r=50 s=20 frames=400 h=5
 brush flatten at 0 0 r=13 s=20 frames=200 h=2
 brush smooth from 0 -22 to 0 -10 r=3 s=8 frames=40
-brush flatten at -42 0 r=6 s=20 frames=80 h=10
-brush smooth from -37 0 to -30 0 r=3 s=8 frames=30
+brush flatten at -44 0 r=4.5 s=20 frames=80 h=9.5
+brush flatten at -34 0 r=1.6 s=20 frames=60 h=5.6
+brush flatten at -35 0 r=1.6 s=20 frames=60 h=6.2
+brush flatten at -36 0 r=1.6 s=20 frames=60 h=6.8
+brush flatten at -37 0 r=1.6 s=20 frames=60 h=7.4
+brush flatten at -38 0 r=1.6 s=20 frames=60 h=8.0
+brush flatten at -39 0 r=1.6 s=20 frames=60 h=8.6
+brush flatten at -40 0 r=1.6 s=20 frames=60 h=9.2
+brush flatten at -41 0 r=1.6 s=20 frames=60 h=9.5
+brush smooth from -41 0 to -33.5 0 r=2 s=6 frames=20
 brush flatten from 0 -66 to 0 -54 r=4 s=20 frames=80 h=1.2
 brush smooth from 0 -56 to 0 -48 r=4 s=6 frames=30
 brush flatten from 36 -12 to 74 -12 r=4 s=20 frames=200 h=-3
@@ -37,6 +45,7 @@ clear at 28.5 0 r=8
 clear at 0 32 r=10
 clear at -28.5 0 r=8
 clear at -42 0 r=6
+clear from -40 0 to -33.5 0 r=2.5
 clear at 18 -44 r=6
 
 # --- The machine halls: sandstone walls 9 x 9 m with a 3 m gap in the middle of every side, brass pillars ----------
@@ -113,8 +122,8 @@ for cx -1.5 1.5 3
 place RT_PillarThick cablegs at $cx 36.5 h=5
 place RT_PillarThick cablegs at $cx 39.5 h=5
 next
-place RT_Floor cabplate at 0 38 h=11 sit sx=0.66 sz=0.44
-place Loot_Chest cablocker at 0.8 38.8 h=11.07 sit yaw=180
+place RT_Floor cabplate at 1.95 39.85 h=11 sit sx=0.66 sz=0.44
+place Loot_Chest cablocker at 0.3 38 h=11.15 sit yaw=180
 place LandmarkLadder_6m cabladder at 0 35.85 h=5 sit yaw=0
 place Zone_Trigger armtop at -0.8 37.6 h=11.2
 place ZiplinePath_Landmark zipacross at 8 40 ground
@@ -125,9 +134,9 @@ prop cablegs tint.color=#7a6a50
 prop cabplate tint.color=#5d646b
 
 # --- The piston hall (west) on the way to the ring's top: two of Utopia's small cranes as the Engine's pistons -----
-place UT_ElectricityIsland_Crane02 - at -30 -1 ground sit scale=0.4 yaw=90
-place Zone_Trigger ringtop at -42 0 h=10
-place Placeable_Lantern_Metal - at -41 2 h=10 sit
+place UT_ElectricityIsland_Crane02 - at -32 5 ground sit scale=0.4 yaw=90
+place Zone_Trigger ringtop at -42 0 h=9.5
+place Placeable_Lantern_Metal - at -42 2 h=9.5 sit
 
 # --- The south rim: Kett in the Syndicate's cage, her satchel, her warning ------------------------------------------
 place Zone_Trigger heartrim at 4 -18 h=5
@@ -148,12 +157,12 @@ place Placeable_Lantern_Metal coldlights at -1.5 -1.8 h=2 sit
 place TP_LaserEmitter emitter at -6.8 -6 h=2 sit yaw=0
 place TP_MirrorHousing_Rotating mirror1 at -6 -2 h=2 sit yaw=0
 place TP_MirrorHousing_Rotating mirror2 at 6 -2 h=2 sit yaw=270
-place "Box Big" - at 6 6.2 h=2 sit
-place TP_LaserDoorPanel reactorpanel at 6 6 h=3.4 sit scale=2 yaw=180
+place "Box Big" - at 6 6.8 h=2 sit
+place TP_LaserDoorPanel reactorpanel at 6 6 h=2 sit scale=2 yaw=180
 place Note_Sign heartinscription at -3 9 h=2 sit yaw=180
 place RT_Pillar - at -6 6 h=2 sy=0.4
 place TP_LaserControlPanel_lever seventhlever at -6 6 h=3.25 sit scale=3 yaw=180
-place Loot_ChestLarge treasury at 0 -9 h=2 sit yaw=0
+place Loot_ChestLarge treasury at 3.5 -8.5 h=2 sit yaw=-30
 place Zone_Trigger heartzone at 0 -6 h=2
 place Placeable_Lantern_Metal wellcam at 10 -12 h=5 sit
 place Creature_PolarBear beast at 0 4 h=2.2
@@ -177,7 +186,7 @@ story wheelturn|Tide wheel turned|Bolt|A tide wheel set turning. Three of them d
 story sluiceopen|Sluice opened|Bolt|The sluice gate is up; the gallery floods.
 story clawmoved|The Engine's arm raised|Bolt|The claw lever raised the Engine's arm off the well.
 story cagekey|Cage key|Placeable_Lantern_Metal|The key of the Syndicate's cage, from the crane cab's locker.
-story beamset|Beam on the reactor panel|Battery|The beam runs through two mirrors onto the reactor panel.
+story heartbeam|Beam on the reactor panel|Battery|The beam runs through two mirrors onto the reactor panel.
 story enginestopped|The Engine stopped|Bolt|The Seventh lever is down and the Engine is quiet.
 story relic|The Seventh Tide|Bolt|The relic: a brass ring of seven teeth, cold now. The Engine will never wake again.|raft=Placeable_TrophyBoard_Medium
 
@@ -237,8 +246,11 @@ prop wheel3 beh.use=Turn the tide wheel
 prop wheel3 if.use=!signal|wheel3
 prop wheel3 on.use=signal||wheel3\ngive||story:wheelturn*1\nmessage||The wheel groans and starts to turn.
 prop wheel1 beh.spin=20
+prop wheel1 beh.spinOwn=1
 prop wheel2 beh.spin=-20
+prop wheel2 beh.spinOwn=1
 prop wheel3 beh.spin=20
+prop wheel3 beh.spinOwn=1
 prop sluicelever obj.name=sluicelever
 prop sluicelever beh.use=Pull the sluice lever
 prop sluicelever if.use=signal|wheel1\nsignal|wheel2\nsignal|wheel3
@@ -305,7 +317,7 @@ prop mirror2 col.mode=box
 prop mirror2 on.use=switch|\nmessage||The mirror grinds round a quarter turn.
 prop reactorpanel obj.name=reactorpanel
 prop reactorpanel if.laser=!signal|laser
-prop reactorpanel on.laser=signal||laser\ngive||story:beamset*1\nmessage||The reactor panel drinks the beam. The heart hums awake - and the Seventh lever's light turns green.
+prop reactorpanel on.laser=signal||laser\ngive||story:heartbeam*1\nmessage||The reactor panel drinks the beam. The heart hums awake - and the Seventh lever's light turns green.
 prop seventhlever obj.name=seventhlever
 prop seventhlever beh.use=Pull the Seventh lever
 prop seventhlever if.use=signal|laser\n!signal|stopped
@@ -345,7 +357,7 @@ step open|Kett's satchel|1|Free Professor Kett (the cab's key opens her cage) an
 step read|Kett's warning|1|Hear Kett's warning
 step reach|heart|1|Go down into the heart of the Engine
 step kill|Polar bear|1|Defeat the Syndicate boss's beast
-step collect|story:beamset|1|Bring the beam through the two mirrors to the reactor panel
+step collect|story:heartbeam|1|Bring the beam through the two mirrors to the reactor panel
 step read|Heart inscription|1|Read the heart inscription
 step collect|story:enginestopped|1|Pull the Seventh lever
 step open|Engine treasury|1|Open the Engine's treasury

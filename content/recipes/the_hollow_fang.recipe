@@ -13,7 +13,7 @@ include lib_sea
 include lib_features
 new
 # (nature: a green rock spire at Raft's density - trees and bushes on its flanks, a few rocks; one reef)
-gen Trees=0.2 Bushes=0.35 Rocks=0.25 Harvest=0.3 BeachThings=0.3
+gen Trees=0.45 Bushes=0.35 Rocks=0.55 Harvest=0.3 BeachThings=0.3
 gen Seed=9501 Radius=58 Height=34 Roughness=0.35 Peaks=1 Shape=0 Style=0 PeakShape=0.9 Cliffs=0.8 BeachWidth=0.5
 gen Water=0.5 SeaRocks=0.5 SeaFinds=0.2 Sunken=0.3 Hostiles=0 Friendly=0.2 SeaLife=0.3
 generate
@@ -62,9 +62,11 @@ prop trialcols tint.color=#b8ab92
 place Note_Sign wordtablet at 2.6 -27.4 ground sit yaw=180
 place Zone_Trigger wordstart at 0 -27 ground
 for wx -1.6 1.6 1.6
-for wz -25.6 -14.4 1.6
-place RT_PillarThick stoneposts at $wx $wz h=-2.4 sy=0.86
-place Block_Floor_Tier3 stones at $wx $wz h=3
+for wz -27.2 -14.4 1.6
+place Block_Floor_Tier3 stones at $wx $wz h=3.05
+next
+for wz -24 -16 1.6
+place RT_PillarThick stoneposts at $wx $wz h=-2.4 sy=0.87
 next
 next
 place Zone_Trigger wrong1a at -1.6 -24 h=3.4
@@ -88,11 +90,11 @@ prop stoneposts tint.color=#8d8474
 # at the lip, the bag of sand in a chest, the sand trail that shows the bridge ------------------------------------------
 place Note_Sign leaptablet at 2.6 -12 ground sit yaw=180
 place Loot_ChestSmall sandchest at -2.6 -12 ground sit yaw=160
-place TangaroaFounderStatue lionhead at 2.8 -10.6 ground sit scale=0.32 yaw=200
+place TangaroaFounderStatue lionhead at 1.8 -13 ground sit scale=0.32 yaw=200
 place Zone_Trigger leaplip at 0 -11.4 ground
-place Helper_Ramp leapbridge at 0 -7 h=2.85 sy=0.05
+place Helper_Wall leapbridge at 0 -11.8 h=2.85 rot=90,0,0 sy=3.2
 for tz -9.75 -4.25 1.1
-place Block_Floor_Tier3 sandtrail at 0 $tz h=3.02 sx=0.35 sz=0.6
+place Block_Floor_Tier3 sandtrail at 0 $tz h=3.02 sx=0.35 sz=0.75
 next
 place Zone_Trigger chasmback at 0 -7 h=-2.5
 for iz -9 -5 4
@@ -113,7 +115,7 @@ place Placeable_Lantern_Metal - at -1.6 16.2 ground sit
 place Zone_Trigger altarzone at 0 13.6 ground
 place Creature_Bear mercs at 0 17 ground
 place Zone_Trigger fangtop at 0 28 ground
-place Placeable_Lantern_Metal fangcam at 0 26 h=4.2 sit yaw=0
+place Placeable_Lantern_Metal fangcam at 0 26 ground sit yaw=0
 
 # --- Things to gather, reefs ---------------------------------------------------------------------------------------------
 scatter "Pickup_Landmark_PineappleLandmark" 2 at 20 -40 r=10 seed=9521 free=3
@@ -155,7 +157,6 @@ prop lionhead on.use=message||The sand fans out over the chasm - and settles on 
 prop lionhead else.use=message||A stone lion's head at the chasm's lip. From here the far side seems a long jump away.
 prop sandtrail obj.name=sandtrail
 prop sandtrail beh.hidden=1
-prop sandtrail col.mode=none
 
 prop seacave zone.id=sea_cave
 prop seacave zone.radius=5

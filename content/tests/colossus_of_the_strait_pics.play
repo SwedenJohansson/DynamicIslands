@@ -3,7 +3,7 @@ island Colossus of the Strait
 offset 0 0
 hour 11
 weather Calm
-at -50 0 h=5
+at -36 -6
 wait 3
 picture colossus_of_the_strait_island 0 25 -110 0 18 0
 picture colossus_of_the_strait_giant -40 8 -20 0 18 0

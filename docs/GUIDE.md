@@ -127,6 +127,7 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
      [16.8 Raft's story islands, piece by piece](#168-rafts-story-islands-piece-by-piece) ·
      [16.9 A whole storyline: The Rainmakers](#169-a-whole-storyline-the-rainmakers)
      [16.10 A whole storyline: The Last Post](#1610-a-whole-storyline-the-last-post)
+     [16.11 A whole storyline: Relic of the Seventh Tide](#1611-a-whole-storyline-relic-of-the-seventh-tide)
      [16.12 A whole storyline: The Lullaby Frequency](#1612-a-whole-storyline-the-lullaby-frequency)
 17. [Learn from the islands](#17-learn-from-the-islands)
    - [17.1 Opening any island in the editor](#171-opening-any-island-in-the-editor) · [17.2 Looking around](#172-looking-around) ·
@@ -4153,6 +4154,33 @@ done (`km:6:again`).
 To learn from it: open the plan with **EDITOR** > **A world plan** and compare its "done when" parts (`note:`, `zone:`,
 `signal:`, `step:`, `visit`, `quest`); then open The Dead Letter Office and a later island side by side to see how a
 story item from one island opens a check on another.
+
+### 16.11 A whole storyline: Relic of the Seventh Tide
+
+**Relic of the Seventh Tide** is a plan of nine islands woven into Raft's own story (Raft's story on, the plan's
+islands come after Raft's, 600 to 1300 on the Receiver). Professor Kett hunts the Tide Engine, the machine the sea
+kings built to raise the sea, and the Syndicate is always one island ahead. Three gears from three islands open the
+stone giant in the strait, and the giant points to the Engine. Sunstaff Mesa comes **instead of** Balboa
+(`instead:Balboa`) and holds Balboa's four blueprints as **Blueprint** steps; the other islands come after a Raft
+island (`after:RadioTower`, `after:CaravanTown` ...), so Raft's own blueprints stay where they are. Skyhook Mast has
+Raft's vending machine and Tangaroa tokens to find; the Colossus and the Tide Engine have a **Raft store**. Two side
+islands come ahead of the raft by distance and by day (`km:8`, `day:5`).
+
+| Island | What it is | What to look at |
+|---|---|---|
+| ![](images/library/marrow_key_museum.jpg) **Marrow Key Museum** (first, 600, after the Radio Tower) | A small sandstone museum on a coral key, its glass cases smashed | A looted museum told by its notes, a safe whose code hides on an exhibit card, Kett's field journal |
+| ![](images/library/sunstaff_mesa.jpg) **Sunstaff Mesa** (800, instead of Balboa) | A red sandstone mesa split by a slot canyon, a map room on top | Vines that block the stair till cut, three turning mirrors that bring a sunbeam to a panel, Balboa's blueprints as steps |
+| ![](images/library/sandsunk_necropolis.jpg) **Sandsunk Necropolis** (900, after Caravan Town) | Dunes over a city of the dead, the great tomb of the sea kings | A seal found with the metal detector and shovel, scarabs in the dark, a gate that drops after its lever, the first gear |
+| ![](images/library/skyhook_mast.jpg) **Skyhook Mast** (900, after Tangaroa) | A steel mooring mast on a sea stack, Kett's airship wrecked below | A lift up the stack, screechers on the mast, a zipline down to the wreck, Raft's vending machine and Tangaroa tokens, done after step 5 (`step:5`) |
+| ![](images/library/the_hollow_fang.jpg) **The Hollow Fang** (1000, after Varuna Point) | A rock spire with three trials inside | Spinning blades, lettered stones that throw you back (zones with `teleport`), an invisible bridge shown by thrown sand |
+| ![](images/library/colossus_of_the_strait.jpg) **Colossus of the Strait** (1100, after Temperance) | A stone giant standing across a strait between two headlands | A keycard door and a lift up the leg, the three gears in a wheel that lights the giant's eyes, a Raft store |
+| ![](images/library/the_tide_engine.jpg) **The Tide Engine** (1300, the finale) | A ring of desert rock round a vast well with the Engine's heart | A 28-step quest: tide wheels, a sluice, a zipline, Kett in a cage, a boss's beast, a beam through two mirrors, a Raft store |
+| ![](images/library/dredgers_bank.jpg) **Dredgers Bank** (side, after 8 km) | The Syndicate's dredging rig on a sandbank | A safe whose code is in the manifest, a ladder up the rig, a side quest by distance (`km:8`) |
+| ![](images/library/rope_bridge_gorge.jpg) **Rope Bridge Gorge** (side, from day 5) | A jungle island split by a gorge, a rope bridge to a temple porch | Doll idols with lanterns, the temple's warthogs, a side quest seen ahead of the raft from day 5 (`day:5`) |
+
+To learn from it: open the plan with **EDITOR** > **A world plan** and look at its `after:` and `instead:` parts, which
+fit a storyline into Raft's own; then open Sandsunk Necropolis, Skyhook Mast and The Hollow Fang to see how a story item
+from each opens the gear wheel on the Colossus.
 
 ### 16.12 A whole storyline: The Lullaby Frequency
 

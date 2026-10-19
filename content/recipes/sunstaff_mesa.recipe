@@ -80,10 +80,12 @@ place Block_Pillar_Tier3 roompillars at -9 $pz y=0.2 sy=2.2
 place Block_Pillar_Tier3 roompillars at 9 $pz y=0.2 sy=2.2
 next
 # (the oculus's east corners and two posts in the west half, all clear of the mirrors and the beam's lines)
-place Block_Pillar_Tier3 roompillars at 1.5 -1.5 y=0.2 sy=2.2
-place Block_Pillar_Tier3 roompillars at 1.5 1.5 y=0.2 sy=2.2
+place Block_Pillar_Tier3 roompillars at -3 3 y=0.2 sy=2.2
+place Block_Pillar_Tier3 roompillars at 3 -3 y=0.2 sy=2.2
 place Block_Pillar_Tier3 roompillars at -3 -4.5 y=0.2 sy=2.2
-place Block_Pillar_Tier3 roompillars at -3 4.5 y=0.2 sy=2.2
+place Block_Pillar_Tier3 roompillars at 3 4.5 y=0.2 sy=2.2
+place Block_Pillar_Tier3 roompillars at -4.5 -1.5 y=0.2 sy=2.2
+place Block_Pillar_Tier3 roompillars at 3 -1.5 y=0.2 sy=2.2
 for fx -8.25 8.25 1.5
 place Block_Wall_Tier3 roomwall at $fx 9 y=0.2 sy=2.2
 next
@@ -112,14 +114,14 @@ place SmallRock_02 model at -3 7 y=0 sit scale=0.14 yaw=10
 place SmallRock_02 model at 5 6 y=0 sit scale=0.15 yaw=300
 # the sun beam: the lens's beam runs north, three mirrors bring it east onto the mark panel (the Rain Engine's layout)
 place TP_LaserEmitter sunlens at -7.4 -6.5 y=0 sit yaw=0
-place TP_MirrorHousing_Rotating mirror1 at -6.6 -2.5 y=0 sit yaw=0
-place TP_MirrorHousing_Rotating mirror2 at -0.6 -2.5 y=0 sit yaw=270
-place TP_MirrorHousing_Rotating mirror3 at -0.6 2.3 y=0 sit yaw=0
-place TP_LaserDoorPanel markpanel at 7.4 2.3 y=0 sit scale=2 yaw=-90
+place TP_MirrorHousing_Rotating mirror1 at -6.6 -2.9 y=0 sit yaw=0
+place TP_MirrorHousing_Rotating mirror2 at -0.6 -2.9 y=0 sit yaw=270
+place TP_MirrorHousing_Rotating mirror3 at -0.6 2.7 y=0 sit yaw=0
+place TP_LaserDoorPanel markpanel at 7.4 2.7 y=0 sit scale=2 yaw=-90
 place "Box Small" journalstand at -4.5 7.6 y=0 sit
 place Note_Paper burnedmark at 7.2 0.6 y=0.3 sit drop yaw=10
 place Loot_ChestLarge mapcache at 4 7.8 y=0 sit yaw=180
-place Placeable_Lantern_Metal - at -8.2 8.2 y=0 sit
+place Placeable_Lantern_Metal - at -7 7 y=0 sit
 place Placeable_Lantern_Metal - at 8.2 8.2 y=0 sit
 pop
 place Zone_Trigger maproom at 0 18 h=12
@@ -164,9 +166,9 @@ prop workshop beh.hidden=1
 prop canyonvines1 obj.name=canyonvines
 prop canyonvines2 obj.name=canyonvines
 prop canyonvines3 obj.name=canyonvines
-prop canyonvines1 on.use=hide|canyonvines\nmessage||The machete bites through the vines. The canyon is open to its head.
-prop canyonvines2 on.use=hide|canyonvines\nmessage||The machete bites through the vines. The canyon is open to its head.
-prop canyonvines3 on.use=hide|canyonvines\nmessage||The machete bites through the vines. The canyon is open to its head.
+prop canyonvines1 on.use=hide|canyonvines\nshow|stairzone\nmessage||The machete bites through the vines. The canyon is open to its head.
+prop canyonvines2 on.use=hide|canyonvines\nshow|stairzone\nmessage||The machete bites through the vines. The canyon is open to its head.
+prop canyonvines3 on.use=hide|canyonvines\nshow|stairzone\nmessage||The machete bites through the vines. The canyon is open to its head.
 prop journalstand obj.name=journalstand
 prop journalstand beh.use=Read Kett's setting for the mirrors
 prop journalstand if.use=!signal|stand
@@ -200,6 +202,8 @@ prop mouth zone.radius=6
 prop mouth zone.message=The canyon mouth: a tent, a cold fire, a trunk. Kett's camp - and no Kett.
 prop stair zone.id=canyon_stair
 prop stair zone.radius=4
+prop stair obj.name=stairzone
+prop stair beh.hidden=1
 prop stair zone.message=Past the vines the canyon climbs in rough steps towards green - an oasis.
 prop maproom zone.id=map_room
 prop maproom zone.radius=7

@@ -9,9 +9,9 @@ include lib_sea
 include lib_features
 new
 # (nature: a low tropical sandbank at Raft's density - a few low palms and bushes, beach things; one reef)
-gen Trees=0.15 Bushes=0.3 Rocks=0.2 Harvest=0.3 BeachThings=0.4
+gen Trees=0.6 Bushes=0.8 Rocks=0.7 Harvest=0.6 BeachThings=0.4
 gen Seed=9801 Radius=46 Height=3 Roughness=0.2 Peaks=1 Shape=0 Style=0 PeakShape=0.2 Cliffs=0.1 BeachWidth=0.9
-gen Water=0.5 SeaRocks=0.3 SeaFinds=0.2 Sunken=0.3 Hostiles=0 Friendly=0.2 SeaLife=0.3
+gen Water=0.5 SeaRocks=0.6 SeaFinds=0.5 Sunken=0.5 Hostiles=0 Friendly=0.2 SeaLife=0.3
 generate
 
 # --- Terrain: the camp flat at 1.6 m, the rig's pad at 1 m on the east end ------------------------------------------
@@ -31,7 +31,7 @@ place "Box Small" - at -8.6 -9 ground sit
 place RT_PowerBox safekeypad at -8.6 -9 h=2.6 sit drop yaw=0
 place Reef_Container containers at -2 8 ground sit yaw=90
 place Reef_Container containers at -2 11 ground sit yaw=90
-place Reef_Container containers at -2 9.5 h=4.25 sit yaw=90
+place Reef_Container containers at -2 14 ground sit yaw=90
 place VP_Forklift - at 6 6 ground sit yaw=200
 place Placeable_Lantern_Metal - at -5 -3 ground sit
 place Zone_Trigger camp at -6 0 h=1.6

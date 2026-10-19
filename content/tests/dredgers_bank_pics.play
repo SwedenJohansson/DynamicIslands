@@ -3,7 +3,7 @@ island Dredgers Bank
 offset 0 0
 hour 11
 weather Calm
-at -6 0 h=1.6
+at -6 0
 wait 3
 picture dredgers_bank_island 10 18 -60 0 2 0
 picture dredgers_bank_camp 8 5 -14 -6 2 2

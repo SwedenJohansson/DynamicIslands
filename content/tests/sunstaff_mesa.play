@@ -16,9 +16,10 @@ wait 2
 expect item Blueprint_Machete 1
 expect item Machete 1
 expect step 4
-walk 0 -58 to 0 -46 blocked
+expect hidden stairzone
 use canyonvines
 expect hidden canyonvines
+expect shown stairzone
 walk 0 -58 to 0 -50 to 0 -42 h=1.6
 zone canyon_stair
 expect step 5

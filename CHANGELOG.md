@@ -125,6 +125,13 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Story animals and goods to place:** Caravan Town's white screecher, Temperance's puffins and Utopia's butler bot
   (a new **Animals: harmless** category), and Utopia's market goods (sacks, baskets and crates of potatoes, bananas,
   melons, mangoes, mackerel, salmon) among the things to gather. The remade Caravan Town, Temperance and Utopia use them.
+- **A third whole storyline in the library, Relic of the Seventh Tide:** nine islands woven into Raft's own story
+  (Raft's story on; the plan's islands come after Raft's, 600 to 1300 on the Receiver): Marrow Key Museum, Sunstaff
+  Mesa (instead of Balboa, with Balboa's four blueprints as quest steps), Sandsunk Necropolis, Skyhook Mast (Raft's
+  vending machine and Tangaroa tokens), The Hollow Fang (three trials, an invisible bridge shown by thrown sand),
+  Colossus of the Strait (three gears light the giant's eyes; a Raft store) and the finale, The Tide Engine (28 quest
+  steps; a Raft store). Two side islands come ahead: Dredgers Bank (after 8 km) and Rope Bridge Gorge (from day 5).
+  Guide 16.11 shows what to look at.
 - **A fourth whole storyline in the library, The Lullaby Frequency:** a horror story of nine islands beside Raft's own
   (Raft's story on; the plan's chain on the Receiver, 500 to 1200): Hollins Cannery, Saint Agnes Sanatorium (Raft's
   vending machine and Tangaroa tokens), Effigy Shoals (from day 8), Stillwater Terraces (statues that come closer as you

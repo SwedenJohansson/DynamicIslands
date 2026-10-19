@@ -114,7 +114,8 @@ namespace DynamicIslands
 				string[] t = Tokens(line);
 				string verb = t[0].ToLowerInvariant();
 				var opt = Options(t.Skip(1));
-				bool storyStep = verb == "plan" || verb == "note" || verb == "tune" || verb == "arrive" || (verb == "expect" && t.Length > 1 && t[1] == "chain");
+				// (sail only counts distance: a plan whose first rule wants km sails before any island - Relic of the Seventh Tide)
+				bool storyStep = verb == "plan" || verb == "note" || verb == "tune" || verb == "arrive" || verb == "sail" || (verb == "expect" && t.Length > 1 && t[1] == "chain");
 				if (verb != "island" && verb != "log" && verb != "wait" && verb != "hour" && !storyStep && playEntry == null) { Fail("play " + name + ", " + rl.Where + ": no island yet"); yield break; }
 				// (the island step goes to a plan's island that isn't loaded yet - one a tuned frequency brought beyond the load distance)
 				if (playEntry != null && playEntry.Root == null && verb != "log" && verb != "island" && !storyStep) { Fail("play " + name + ", " + rl.Where + ": the island isn't loaded"); yield break; }

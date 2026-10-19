@@ -11,7 +11,7 @@ include lib_sea
 include lib_features
 new
 # (nature: a green rock stack at Raft's density - grass, bushes and a few palms on top, rocks below; one reef)
-gen Trees=0.15 Bushes=0.35 Rocks=0.25 Harvest=0.3 BeachThings=0.3
+gen Trees=0.55 Bushes=0.75 Rocks=0.65 Harvest=0.6 BeachThings=0.6
 gen Seed=9401 Radius=48 Height=18 Roughness=0.3 Peaks=1 Shape=4 Style=0 PeakShape=0.6 Cliffs=0.9 BeachWidth=0.6
 gen Water=0.5 SeaRocks=0.5 SeaFinds=0.2 Sunken=0.4 Hostiles=0 Friendly=0.2 SeaLife=0.3
 generate
@@ -31,7 +31,7 @@ clear from -18 -44 to -4 -34 r=6
 place Zone_Trigger stackfoot at 0 -30 ground
 place "Box Small" logdesk at 3 -28 ground sit
 place Note_Paper mooringlog at 3 -28 h=2 sit drop yaw=15
-place "Box Big" - at 4.4 -29.4 ground sit yaw=20
+place "Box Big" - at 3 -30 ground sit yaw=20
 place VP_Skylift lift at 0 -22.5 ground sit yaw=0
 place Zone_Trigger liftfoot at 0 -26 ground
 
@@ -44,10 +44,10 @@ place RT_PillarThick mastlegs at 1.5 -1.5 y={$st}
 place RT_PillarThick mastlegs at -1.5 1.5 y={$st}
 place RT_PillarThick mastlegs at 1.5 1.5 y={$st}
 for by 0.3 3.3 3
-place RT_Crossbeam mastbraces at 0 -1.5 y={$st+$by} sit sx=0.6
-place RT_Crossbeam mastbraces at 0 1.5 y={$st+$by} sit sx=0.6
-place RT_Crossbeam mastbraces at -1.5 0 y={$st+$by} sit sx=0.6 yaw=90
-place RT_Crossbeam mastbraces at 1.5 0 y={$st+$by} sit sx=0.6 yaw=90
+place RT_Crossbeam mastbraces at 1.5 -1.5 y={$st+$by} sit sx=0.667
+place RT_Crossbeam mastbraces at 1.5 1.5 y={$st+$by} sit sx=0.667
+place RT_Crossbeam mastbraces at -1.5 -1.5 y={$st+$by} sit sx=0.667 yaw=90
+place RT_Crossbeam mastbraces at 1.5 -1.5 y={$st+$by} sit sx=0.667 yaw=90
 next
 next
 place RT_Floor mastplate at 0 0 y=18 sit sx=0.66 sz=0.44

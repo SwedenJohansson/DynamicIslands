@@ -12,6 +12,7 @@ read Mooring log
 expect step 2
 walk 0 -26 to 0 -12 blocked
 use lift
+wait 6
 expect story liftride 1
 expect step 3
 expect height 18
@@ -24,6 +25,7 @@ expect story gear2 1
 expect item ZiplineTool 1
 expect step 5
 use liftdown
+wait 6
 expect height 1.5
 zone wreck_shore
 expect done

@@ -5,7 +5,7 @@
 # turn up by chance: a Syndicate dredging camp and a gorge with a rope bridge.
 #
 # Built by the recipe player (CIRecipe plan_relic_seventh_tide) in the editor's World plans window. Its play test:
-# content\tests\plan_relic_seventh_tide.play.
+# content\tests\plan_relic_seventh_tide.play (run it on day 5 or later: CISetDay 5, for Rope Bridge Gorge's day:5).
 plan new Relic of the Seventh Tide
 plan description Professor Kett's hunt for the engine that raised the sea, woven into Raft's own story: a looted museum, a sandstone mesa in Balboa's place, a buried necropolis, a mooring mast, a hollow fang of rock, a giant astride a strait - and before Utopia, the Tide Engine. Two side islands turn up on the way.
 plan random on
@@ -18,7 +18,7 @@ plan rule fang | island:The Hollow Fang | quest:mast | receiver:1000 | Kett's vo
 plan rule colossus | island:Colossus of the Strait | quest:fang | receiver:1100 | A Syndicate channel on 1100: "The giant in the strait. Dig out the heel." | Colossus of the Strait | after:Temperance | quest
 plan rule engine | island:The Tide Engine | quest:colossus | receiver:1300 | On 1300 the sea itself seems to hum: seven beats, over and over. The Tide Engine. | The Tide Engine | after:colossus | quest
 plan rule dredgers | island:Dredgers Bank | km:8 | sailing:600 | A generator coughs somewhere out to sea - a sandbank with a rig on legs. | Dredgers Bank
-plan rule gorge | island:Rope Bridge Gorge | km:12 | ahead:450 | An island split in two ahead, a rope bridge swaying over the gap. | Rope Bridge Gorge
+plan rule gorge | island:Rope Bridge Gorge | day:5 | ahead:450 | An island split in two ahead, a rope bridge swaying over the gap. | Rope Bridge Gorge
 plan credits A Professor Kett adventure | Custom Islands
 plan ending The Seventh Tide stops. Somewhere, the sea is a finger's width lower.\n\nThe end of Relic of the Seventh Tide.
 plan save

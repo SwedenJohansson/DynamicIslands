@@ -7,6 +7,6 @@ at 0 -30
 wait 3
 picture marrow_key_museum_island 10 30 -100 0 5 0
 picture marrow_key_museum_front 6 6 -24 0 5 -5
-picture marrow_key_museum_hall -5 5 -4.5 4 3.5 1
+picture marrow_key_museum_hall -6.5 6 -5.5 4 3.5 2
 picture marrow_key_museum_skylight 2 6 -3 0 3 -1.5
 picture marrow_key_museum_cases 3 5.5 -1 -5 4 0.6
