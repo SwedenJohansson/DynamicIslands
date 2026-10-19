@@ -76,7 +76,7 @@ namespace DynamicIslands
 				"'" + noQuest + "' shows its description: '" + (shownDesc.Length > 60 ? shownDesc.Substring(0, 60) + "..." : shownDesc) + "'");
 			Check(ref ok, kinds.All(k => IslandPickerWindow.BadgeOf(k) == "NEW EACH TIME" && (IslandPickerWindow.DescriptionOf(k) ?? "").Length > 0), "the map-type and generated rows say NEW EACH TIME and what they are");
 			string small = IslandPickerWindow.SmallPrintOf(noQuest) ?? "";
-			Check(ref ok, small.StartsWith("library island") && small.Contains(" KB"), "'" + noQuest + "' small print: '" + small + "'");
+			Check(ref ok, (small.StartsWith("library island") || small.StartsWith("your island")) && small.Contains(" KB") && small.Contains(" - "), "'" + noQuest + "' small print: '" + small + "'");
 
 			// Pictures (maps made once in the background, cached after)
 			until = Time.realtimeSinceStartup + 120f;

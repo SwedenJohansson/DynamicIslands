@@ -430,6 +430,20 @@ namespace DynamicIslands.Editor
 			string t = (text ?? "").Trim();
 			foreach (var kv in rows)
 				if (kv.Value != null) kv.Value.gameObject.SetActive(t.Length == 0 || WorldIslands.Label(kv.Key).IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0);
+			// A section heading shows only while a row under it does
+			if (list == null || rows.Count == 0) return;
+			GameObject heading = null;
+			bool any = false;
+			foreach (Transform child in list)
+			{
+				if (child.name == "Header")
+				{
+					if (heading != null) heading.SetActive(any);
+					heading = child.gameObject; any = false;
+				}
+				else if (child.gameObject.activeSelf) any = true;
+			}
+			if (heading != null) heading.SetActive(any);
 		}
 
 		/// <summary>The counts on the World settings button and in the list, and what the chosen plan means for them.</summary>
