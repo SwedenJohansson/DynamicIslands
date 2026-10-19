@@ -122,6 +122,13 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Story animals and goods to place:** Caravan Town's white screecher, Temperance's puffins and Utopia's butler bot
   (a new **Animals: harmless** category), and Utopia's market goods (sacks, baskets and crates of potatoes, bananas,
   melons, mangoes, mackerel, salmon) among the things to gather. The remade Caravan Town, Temperance and Utopia use them.
+- **A fourth whole storyline in the library, The Lullaby Frequency:** a horror story of nine islands beside Raft's own
+  (Raft's story on; the plan's chain on the Receiver, 500 to 1200): Hollins Cannery, Saint Agnes Sanatorium (Raft's
+  vending machine and Tangaroa tokens), Effigy Shoals (from day 8), Stillwater Terraces (statues that come closer as you
+  climb), Mistlock Causeway (a safe branch told by sound), Gannet Cliff (a Raft store), Cradle Reef (a drowned
+  dormitory under a buoy) and the finale, The Listening Mirrors (31 quest steps over four areas, a boss in the pit, a
+  Raft store). A side island, The Returning Islet, comes back ahead of the raft every second day. Guide 16.12 shows
+  what to look at.
 - **Fixed:** The Rain Engine's third laser mirror stood beside its panel's line since beams turn at a mirror's centre;
   the beam now reaches the panel.
 - **Fixed:** a laser beam turned at a mirror's box edge and could just graze the next mirror; it now turns at the

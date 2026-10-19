@@ -127,6 +127,7 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
      [16.8 Raft's story islands, piece by piece](#168-rafts-story-islands-piece-by-piece) ·
      [16.9 A whole storyline: The Rainmakers](#169-a-whole-storyline-the-rainmakers)
      [16.10 A whole storyline: The Last Post](#1610-a-whole-storyline-the-last-post)
+     [16.12 A whole storyline: The Lullaby Frequency](#1612-a-whole-storyline-the-lullaby-frequency)
 17. [Learn from the islands](#17-learn-from-the-islands)
    - [17.1 Opening any island in the editor](#171-opening-any-island-in-the-editor) · [17.2 Looking around](#172-looking-around) ·
      [17.3 Two islands made to learn from](#173-two-islands-made-to-learn-from) · [17.4 Every feature, and an island to look at](#174-every-feature-and-an-island-to-look-at)
@@ -4145,6 +4146,33 @@ done (`km:6:again`).
 To learn from it: open the plan with **EDITOR** > **A world plan** and compare its "done when" parts (`note:`, `zone:`,
 `signal:`, `step:`, `visit`, `quest`); then open The Dead Letter Office and a later island side by side to see how a
 story item from one island opens a check on another.
+
+### 16.12 A whole storyline: The Lullaby Frequency
+
+**The Lullaby Frequency** is a horror plan of nine islands beside Raft's own story (Raft's story on, the plan's chain
+on the Receiver, 500 to 1200). At 3:12 every night the Receiver hums a lullaby by itself. It leads from a cannery to a
+sanatorium, a shoal of effigies that turn to watch you, terraces where the statues stand closer each time you look up,
+a causeway in the mist, a silent choir on a seabird cliff and a drowned children's dormitory. The end is a quarry of
+five listening mirrors. The islands show how far the rule kinds go in one plan: a quest (`quest:cannery`), a day
+(`day:8`), a side island that comes back every second day (`day:2:again`, `ahead:400`), a zone on an earlier island
+(`zone:effigy:circle`), a quest step (`step:terraces:4`), a landing (`visit:causeway`) and notes read (`note:3`).
+Raft's story is on, so Raft's blueprints stay on Raft's islands and the plan has no **Blueprint** steps. Saint Agnes has
+Raft's vending machine and Tangaroa tokens; Gannet Cliff and The Listening Mirrors have a **Raft store**.
+
+| Island | What it is | What to look at |
+|---|---|---|
+| ![](images/library/hollins_cannery.jpg) **Hollins Cannery** (first, 500) | A fish cannery on a rocky shore, its slipway and yard | A small quest; the first lullaby on the hall's radio |
+| ![](images/library/saint_agnes_sanatorium.jpg) **Saint Agnes Sanatorium** (800) | Wards, a day room and a cot veranda on a hill terrace | A locked ward, the hydrotherapy house, Raft's vending machine by the gate |
+| ![](images/library/effigy_shoals.jpg) **Effigy Shoals** (day 8, 700) | Sandbars of scarecrow effigies | Done when three notes are read (`note:3`); a second set of effigies, shown later, faces the landing |
+| ![](images/library/the_returning_islet.jpg) **The Returning Islet** (side, every 2nd day) | One palm and a hut on stilts with a candle lit | Comes back ahead of the raft (`day:2:again`); a timed `wait` step |
+| ![](images/library/stillwater_terraces.jpg) **Stillwater Terraces** (900) | Flooded rice terraces with a shrine at the top | Three sets of statues, one shown at a time (`show`/`hide` on zones); three Bell stones set in a stand open the stair |
+| ![](images/library/mistlock_causeway.jpg) **Mistlock Causeway** (900) | Plank decks on posts across a misty lagoon, two forks | A safe branch told by sound (`Zone_Sound`); the wrong one sends you back; a timed gate lever |
+| ![](images/library/gannet_cliff.jpg) **Gannet Cliff** (1000) | A commune of tents on a cliff, a stone-lined listening pit, dishes in the ground | A gate that asks for a story item from Effigy Shoals (`if.use=has`), a deserter who joins the crew, a Raft store |
+| ![](images/library/cradle_reef.jpg) **Cradle Reef** (1000) | A buoy at sea; deep below it a drowned dormitory of cribs | A dive to a sunken building; a music box whose song is a story item |
+| ![](images/library/the_listening_mirrors.jpg) **The Listening Mirrors** (1200, the finale) | A quarry with five antenna mirrors round a pit | A 31-step quest over four areas: a generator and a keypad hut, a chapel, a cage and a bell, a crane and its claw, a boss in the pit, a Raft store |
+
+To learn from it: open the plan with **EDITOR** > **A world plan** and compare its "when" parts (`quest:`, `day:`,
+`zone:`, `step:`, `visit:`); then open Stillwater Terraces to see how zones show and hide sets of statues as you climb.
 
 ---
 
