@@ -161,7 +161,8 @@ Island files and settings live in `<Raft>\Mods\DynamicIslands\`:
 | `library.txt` | The island library window: `online = on/off` and the library's `address` (default: the shared Google Drive folder; a GitHub or other web address, or a local folder, also work) |
 | `library\cache\` | Pictures from the island library, kept so they needn't be downloaded again (safe to delete) |
 | `errors.txt` | The errors the mod noticed (time, versions, whose code, message, stack), cut to its newer half past 256 KB; attach it to a report |
-| `summarycache.txt` | The island lists' titles and quest steps, read again only when an island file changes (safe to delete: it is made again) |
+| `summarycache.txt` | The island lists' titles, descriptions and quests, read again only when an island file changes (safe to delete: it is made again) |
+| `thumbcache\` | Small maps of your islands for the **CHOOSE ISLANDS...** list, made again when an island is saved (safe to delete) |
 | `spawnpool.txt` | Which islands appear on their own while sailing, how often, and when harvested objects grow back. It's created on first use and explains itself. |
 | `worlds\<world id>.txt` | The custom islands in each world, with their harvested and picked-up objects, the world's plan and which of its rules have fired. |
 | `plans\*.plan` | World plans (text). The mod writes two lines itself: `id =` (which plan this is, whatever its name; none in library plans and plans from before 2026-10-10) and `modversion =` (the mod version that saved it: a plan from a newer version keeps the lines this version can't read) |
@@ -443,9 +444,10 @@ while sailing, and a summary of the world's plan and story. The host changes the
 see them read only. While an island is tried from the editor (Test) it also has **Back to the editor**.
 
 **Islands while sailing** (the fourth group): **CHOOSE ISLANDS...** lists everything that can turn up by chance while
-sailing - every saved or downloaded island, brand-new generated islands (the mod makes up a random island now and then, saved as `gen-...` in the world) and the map types of `spawnpool.txt` - each with
-a tick box. Untick what the world shouldn't have; a search field and **Tick shown** / **Untick shown** make that quick
-with many islands. Only what is left out is kept (the world file's `@islandsoff=` line), so islands made later join
+sailing - every saved or downloaded island, brand-new generated islands (the mod makes up a random island now and then, saved as `gen-...` in the world) and the map types of `spawnpool.txt` - A to Z, each a
+compact row with a tick box, a picture (the library picture, else a small map of the island kept in `thumbcache\`), a
+**QUEST** / **no quest** badge and two lines of its description. Untick what the world shouldn't have; a search field,
+**Tick all** / **Untick all** and **Tick shown** / **Untick shown** make that quick with many islands. Only what is left out is kept (the world file's `@islandsoff=` line), so islands made later join
 older worlds too; the host can change it in a world with `WorldIslands`. Under it, **One after every 3 to 6 of Raft's
 islands** (- and + by each number; the lower 2-20, the higher 4-50; the world file's `@raftgap=` line, `WorldIslandsGap`
 in a world): how often they come. None comes in a new world's first 10 minutes of play (`@playtime=`, `quietMinutes`).
@@ -779,11 +781,12 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `WorldDirector.cs` | Rules (`IntroRule`), world plans (`WorldPlan`), the host's world director (conditions, placement, announcements, saved state), and the patch that keeps Raft's own islands off custom ones |
 | `CreateWindow.cs`, `EditorEntry.cs`, `MenuWindows.cs` | The EDITOR start window (An island / A world plan / The guide), the ways in and out of the island editor (Use in a plan..., Edit island, Back to the plan; `editor_start.txt` remembers the last island and plan), and the canvas that shows the plan, helper, Check, Progression, Export/Import, name and choice windows on the main menu |
 | `WorldPlanWindow.cs`, `ChoiceWindow.cs`, `NewWorldOptions.cs` | The world plan window (tabs Main story line / Other islands / Settings; also the island's rules) with templates, a list picker (a list with islands opens at once and loads them: `OpenIslands`), and the plan and randomizer choices in Raft's New Game box |
-| `IslandSummaries.cs` | What the island lists show of each saved island (title, author, quest steps), kept in `summarycache.txt` and read again only when a file changes |
+| `IslandSummaries.cs` | What the island lists show of each saved island (title, author, description, quests), kept in `summarycache.txt` and read again only when a file changes |
+| `IslandThumbs.cs` | Small top-down maps of saved islands (kept in `thumbcache\`), Raft's island pictures as stock pictures |
 | `MissingIslandsCheck.cs` | When the host loads a world: the island files it uses (island lines, the plan's rules still to come) that aren't on this PC, the **Islands missing** box (library source; Play without them / Main menu) |
 | `RmlCache.cs` | RML's compiled copy of the mod kept read-only (RML's start would delete it, so every start compiled), older copies removed; the once-only "first start was slow" note |
 | `HelpLinks.cs`, `InfoWindow.cs` | Where help is: the guide (the PDF in the .rmod, or online), the Discord, GitHub issues, Raft's log folder; a message box (Report a problem, the Help of the World plans window) |
-| `WorldIslands.cs`, `IslandPickerWindow.cs` | The islands a world gets while sailing (the world file's `@islandsoff=`, the `WorldIslands` command) and the list with tick boxes in World settings |
+| `WorldIslands.cs`, `IslandPickerWindow.cs` | The islands a world gets while sailing (the world file's `@islandsoff=`, the `WorldIslands` command) and the list in World settings (rows with picture, quest badge and description) |
 | `QuestBook.cs`, `QuestBookPreview.cs`, `MainStoryHelper.cs` | The main story in Raft's notebook (tabs, pages, ending), the world plan window's Preview notebook, and the New main story line helper |
 | `QuestItemPickups.cs`, `QuestRewards.cs` | Raft's quest item pickups as story items; each player's share of a quest's Raft-item reward (`.rewards`) |
 | `BuriedTreasure.cs`, `CodeLock.cs`, `ZiplineEnds.cs` | Buried treasure for the metal detector and shovel (extra loot `treasure.loot`, dug once for the crew), keypad code locks (`lock.code`), zipline far ends (`zip.to`) |

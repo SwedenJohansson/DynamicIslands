@@ -2847,8 +2847,16 @@ island you have saved or downloaded, plus brand-new generated ones and the map t
 them this world may meet. Its button, **CHOOSE ISLANDS...**, says how many take part (`all 42`, `30 of 42`, or `none` when you untick them all: then only a world plan's own islands come) and
 opens the list:
 
-- one row per island or kind of island, each with a **tick box**: your own islands by name (with their size and date),
-  **New ... islands** for each map type (a new sandbar, wreck, atoll... each time) and **Brand-new generated islands**;
+- one compact row per island or kind of island, A to Z: a **tick box**, a **picture**, the name, a badge, two lines of
+  the island's description and, in small print, whether it is a library island or your own, its author, size and date.
+  The badge says **QUEST** (golden) when the island has a quest - any of its quests with steps - and **no quest**
+  otherwise. Point at a row to read its whole description. First come **New ... islands** for each map type (a new
+  sandbar, wreck, atoll... each time; badge **NEW EACH TIME**, the map type's description, a picture of one of Raft's
+  islands) and **Brand-new generated islands**, then your islands;
+- the picture of a downloaded library island is its library picture (when the library's list can be read); any other
+  island gets a small map of its land, made once the first time the list shows it and kept in
+  `Mods\DynamicIslands\thumbcache\` (made again when you save the island; safe to delete). Until a map is ready the
+  frame is plain;
 - **Brand-new generated islands** is the mod making up a new random island now and then while you sail: random size
   and style (tropical, snowy, desert, forest or volcanic), sometimes flying. Each one is saved as a `gen-<style>-<seed>.island`
   file and stays in that world (Tidy up moves unused ones away). Ticked, they join the pool next to your single islands and the
@@ -2860,7 +2868,8 @@ opens the list:
   own - then it is your island, in this list by its name. The **?** at the right end of the row says all this in the game;
 - untick the ones this world shouldn't have;
 - the **search** field narrows the list (type part of a name), and **Tick shown** / **Untick shown** do every row
-  shown, for example all your test islands at once.
+  shown, for example all your test islands at once. **Untick all** unticks every row of the list, whatever the search
+  shows; with any row unticked the same button says **Tick all** and ticks them all again.
 - **Islands of world plans are never in the list**: the islands a world plan brings - each plan's own story islands,
   and the islands those bring - only come in their own plan, so you never meet another plan's island out of its story.
   The list holds the single islands: islands made or downloaded to be found while sailing
@@ -3069,6 +3078,7 @@ Other files:
 | `notice.txt` | That you folded the alpha box, for this version of the mod |
 | `editor_light.txt` | The editor's time of day (the Light button) |
 | `editor_skysea.txt` | Whether the editor shows Raft's sky and sea |
+| `thumbcache\` | Small maps of your islands for **CHOOSE ISLANDS...** ([9.5](#95-islands-while-sailing)), made again when an island is saved (safe to delete) |
 | `rulescache.txt` | The islands' own rules, kept so lists open fast (made again if you delete it) |
 | `notbeforecache.txt` | The islands' "not before" distances, kept so random islands are picked fast (made again if you delete it) |
 | `deleted\` | Islands you deleted in the editor (move one back to get it back) |

@@ -305,29 +305,7 @@ namespace DynamicIslands.Editor
 			{
 				string path = IslandSpawner.PathFor(island);
 				if (path == null || !System.IO.File.Exists(path)) return null;
-				IslandFile f = IslandFile.Load(path);
-				if (f == null || f.Heights == null) return null;
-				int res = f.Heights.GetLength(0), skip = Mathf.Max(1, (res - 1) / 192), n = (res - 1) / skip + 1;
-				var m = new float[n, n];
-				for (int y = 0; y < n; y++)
-					for (int x = 0; x < n; x++)
-						m[y, x] = f.Heights[Mathf.Min(res - 1, y * skip), Mathf.Min(f.Heights.GetLength(1) - 1, x * skip)] * f.TerrainSize.y;
-				// (cropped to the land and a ring of sea round it: a small island on a big terrain would be a dot)
-				int x0 = n, y0 = n, x1 = -1, y1 = -1;
-				for (int y = 0; y < n; y++)
-					for (int x = 0; x < n; x++)
-						if (m[y, x] > f.WaterLevel - 1.5f) { x0 = Math.Min(x0, x); x1 = Math.Max(x1, x); y0 = Math.Min(y0, y); y1 = Math.Max(y1, y); }
-				if (x1 >= 0)
-				{
-					int side = Mathf.Clamp((int)(Math.Max(x1 - x0, y1 - y0) * 1.35f) + 8, 16, n);
-					int cx = Mathf.Clamp((x0 + x1) / 2 - side / 2, 0, n - side), cy = Mathf.Clamp((y0 + y1) / 2 - side / 2, 0, n - side);
-					var c = new float[side, side];
-					for (int y = 0; y < side; y++)
-						for (int x = 0; x < side; x++)
-							c[y, x] = m[cy + y, cx + x];
-					m = c;
-				}
-				return IslandGenerator.Preview(m, f.TerrainSize.x / (n - 1), TerrainPainter.StyleIndex(f.Style), null, f.WaterLevel);
+				return IslandThumbs.Map(IslandFile.Load(path), 192);
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Plan picture of " + island + ": " + e.Message); return null; }
 		}

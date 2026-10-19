@@ -93,6 +93,7 @@
     <Compile Include="DevTestsHeadStart.cs" />
     <Compile Include="DevTestsWorldIslands.cs" />
     <Compile Include="DevTestsStoryChain.cs" />
+    <Compile Include="DevTestsIslandPicker.cs" />
     <Compile Include="DevTestsQuestBook.cs" />
     <Compile Include="QuestBook.cs" />
     <Compile Include="QuestBookPreview.cs" />
@@ -164,6 +165,7 @@
     <Compile Include="LibraryWindow.cs" />
     <Compile Include="IslandPickerWindow.cs" />
     <Compile Include="GhostRafts.cs" />
+    <Compile Include="IslandThumbs.cs" />
     <Compile Include="PrivateStorage.cs" />
     <Compile Include="IronRaft.cs" />
     <Compile Include="NightDanger.cs" />

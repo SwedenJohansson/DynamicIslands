@@ -9,7 +9,7 @@ using UnityEngine;
 namespace DynamicIslands.Editor
 {
 	/// <summary>
-	/// What the island lists show of each saved island (its title, author and quest steps), kept in
+	/// What the island lists show of each saved island (its title, author, description and quests), kept in
 	/// Mods\DynamicIslands\summarycache.txt between sessions. A file is read again only when its size or time changed: the
 	/// lists read every island's whole file (heights, objects) just for its title, and "+ Add a saved island" took seconds
 	/// with nothing on screen. Prepare reads the changed ones on a worker thread (ChoiceWindow.OpenIslands shows how far it
@@ -19,9 +19,11 @@ namespace DynamicIslands.Editor
 	{
 		public class Summary
 		{
-			public string Name, Title = "", Author = "";
+			public string Name, Title = "", Author = "", Description = "";
 			public long Size, Time;
 			public int QuestSteps;
+			/// <summary>Any of its quests has steps (IslandQuest.HasQuest).</summary>
+			public bool HasQuest;
 			/// <summary>The file couldn't be read: not kept on disk, read again once it changes.</summary>
 			public bool Broken;
 			/// <summary>When the file's size and time were last compared (unscaled time; looked at again after 2 s).</summary>
@@ -45,7 +47,7 @@ namespace DynamicIslands.Editor
 		}
 
 		public const string FileName = "summarycache.txt";
-		const string Header = "# Custom Islands island summaries, version 1: name TAB size TAB time TAB title TAB author TAB quest steps (texts in base64). Deleted, it is made again.";
+		const string Header = "# Custom Islands island summaries, version 2: name TAB size TAB time TAB title TAB author TAB quest steps TAB description TAB has a quest (texts in base64). Deleted, it is made again.";
 
 		static Dictionary<string, Summary> kept;
 		static bool dirty;
@@ -170,7 +172,8 @@ namespace DynamicIslands.Editor
 			{
 				Name = name, Size = size, Time = time, CheckedAt = Time.unscaledTime,
 				Title = ObjectProps.Get(props, IslandProps.Title), Author = ObjectProps.Get(props, IslandProps.Author),
-				QuestSteps = IslandQuest.From(props).Steps.Count
+				QuestSteps = IslandQuest.From(props).Steps.Count,
+				Description = ObjectProps.Get(props, IslandProps.Description), HasQuest = IslandQuest.HasQuest(props)
 			};
 			kept[name] = s;
 			dirty = true;
@@ -218,8 +221,8 @@ namespace DynamicIslands.Editor
 					string[] p = lines[i].Split('\t');
 					long size, time;
 					int steps;
-					if (p.Length != 6 || p[0].Length == 0 || !long.TryParse(p[1], out size) || !long.TryParse(p[2], out time) || !int.TryParse(p[5], out steps)) { dirty = true; continue; }
-					try { kept[p[0]] = new Summary { Name = p[0], Size = size, Time = time, Title = FromBase64(p[3]), Author = FromBase64(p[4]), QuestSteps = steps }; }
+					if (p.Length != 8 || p[0].Length == 0 || !long.TryParse(p[1], out size) || !long.TryParse(p[2], out time) || !int.TryParse(p[5], out steps)) { dirty = true; continue; }
+					try { kept[p[0]] = new Summary { Name = p[0], Size = size, Time = time, Title = FromBase64(p[3]), Author = FromBase64(p[4]), QuestSteps = steps, Description = FromBase64(p[6]), HasQuest = p[7] == "1" }; }
 					catch (FormatException) { dirty = true; }
 				}
 			}
@@ -239,7 +242,7 @@ namespace DynamicIslands.Editor
 			{
 				var lines = new List<string> { Header };
 				foreach (Summary s in kept.Values.Where(x => !x.Broken).OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
-					lines.Add(s.Name + "\t" + s.Size + "\t" + s.Time + "\t" + ToBase64(s.Title) + "\t" + ToBase64(s.Author) + "\t" + s.QuestSteps);
+					lines.Add(s.Name + "\t" + s.Size + "\t" + s.Time + "\t" + ToBase64(s.Title) + "\t" + ToBase64(s.Author) + "\t" + s.QuestSteps + "\t" + ToBase64(s.Description) + "\t" + (s.HasQuest ? "1" : "0"));
 				SafeFile.WriteAllLines(CachePath, lines.ToArray());
 				dirty = false;
 			}
