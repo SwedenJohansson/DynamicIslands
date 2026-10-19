@@ -22,6 +22,8 @@ namespace DynamicIslands.Editor
 			public string Name, Title = "", Author = "", Description = "";
 			public long Size, Time;
 			public int QuestSteps;
+			/// <summary>The island's monsters (IslandDifficulty.MonstersOf): its "Difficulty:" label.</summary>
+			public int Monsters;
 			/// <summary>Any of its quests has steps (IslandQuest.HasQuest).</summary>
 			public bool HasQuest;
 			/// <summary>The file couldn't be read: not kept on disk, read again once it changes.</summary>
@@ -41,13 +43,14 @@ namespace DynamicIslands.Editor
 			internal string[] names, paths;
 			internal long[] knownSize, knownTime, sizes, times;
 			internal Dictionary<string, string>[] props;
+			internal int[] monsters;
 			internal bool[] gone;
 			internal string[] errors;
 			internal System.Threading.Tasks.Task task;
 		}
 
 		public const string FileName = "summarycache.txt";
-		const string Header = "# Custom Islands island summaries, version 2: name TAB size TAB time TAB title TAB author TAB quest steps TAB description TAB has a quest (texts in base64). Deleted, it is made again.";
+		const string Header = "# Custom Islands island summaries, version 3: name TAB size TAB time TAB title TAB author TAB quest steps TAB description TAB has a quest TAB monsters (texts in base64). Deleted, it is made again.";
 
 		static Dictionary<string, Summary> kept;
 		static bool dirty;
@@ -75,7 +78,7 @@ namespace DynamicIslands.Editor
 				if (!info.Exists) { if (known) { kept.Remove(name); dirty = true; } return null; }
 				long size = info.Length, time = info.LastWriteTimeUtc.Ticks;
 				if (known && s.Size == size && s.Time == time) { s.CheckedAt = Time.unscaledTime; return s.Broken ? null : s; }
-				try { s = Keep(name, size, time, IslandFile.Load(info.FullName).Props); }
+				try { IslandFile file = IslandFile.Load(info.FullName); s = Keep(name, size, time, file.Props, IslandDifficulty.MonstersOf(file)); }
 				catch (Exception e) { s = KeepBroken(name, size, time, e.Message); }
 				Save();
 				return s.Broken ? null : s;
@@ -104,6 +107,7 @@ namespace DynamicIslands.Editor
 			job.paths = job.names.Select(IslandSpawner.PathFor).ToArray();
 			job.knownSize = new long[count]; job.knownTime = new long[count]; job.sizes = new long[count]; job.times = new long[count];
 			job.props = new Dictionary<string, string>[count];
+			job.monsters = new int[count];
 			job.gone = new bool[count];
 			job.errors = new string[count];
 			for (int i = 0; i < count; i++)
@@ -132,7 +136,11 @@ namespace DynamicIslands.Editor
 						j.sizes[i] = info.Length;
 						j.times[i] = info.LastWriteTimeUtc.Ticks;
 						if (j.sizes[i] != j.knownSize[i] || j.times[i] != j.knownTime[i])
-							j.props[i] = IslandFile.LoadOffThread(j.paths[i]).Props ?? new Dictionary<string, string>();
+						{
+							IslandFile file = IslandFile.LoadOffThread(j.paths[i]);
+							j.props[i] = file.Props ?? new Dictionary<string, string>();
+							j.monsters[i] = IslandDifficulty.MonstersOf(file);
+						}
 					}
 				}
 				catch (Exception e) { j.errors[i] = e.Message; }
@@ -159,13 +167,13 @@ namespace DynamicIslands.Editor
 				Summary s;
 				if (job.gone[i]) { if (kept.Remove(name)) dirty = true; }
 				else if (job.errors[i] != null) KeepBroken(name, job.sizes[i], job.times[i], job.errors[i]);
-				else if (job.props[i] != null) Keep(name, job.sizes[i], job.times[i], job.props[i]);
+				else if (job.props[i] != null) Keep(name, job.sizes[i], job.times[i], job.props[i], job.monsters[i]);
 				else if (kept.TryGetValue(name, out s)) s.CheckedAt = Time.unscaledTime;
 			}
 			Save();
 		}
 
-		static Summary Keep(string name, long size, long time, Dictionary<string, string> props)
+		static Summary Keep(string name, long size, long time, Dictionary<string, string> props, int monsters)
 		{
 			props = props ?? new Dictionary<string, string>();
 			var s = new Summary
@@ -173,7 +181,7 @@ namespace DynamicIslands.Editor
 				Name = name, Size = size, Time = time, CheckedAt = Time.unscaledTime,
 				Title = ObjectProps.Get(props, IslandProps.Title), Author = ObjectProps.Get(props, IslandProps.Author),
 				QuestSteps = IslandQuest.From(props).Steps.Count,
-				Description = ObjectProps.Get(props, IslandProps.Description), HasQuest = IslandQuest.HasQuest(props)
+				Description = ObjectProps.Get(props, IslandProps.Description), HasQuest = IslandQuest.HasQuest(props), Monsters = monsters
 			};
 			kept[name] = s;
 			dirty = true;
@@ -220,9 +228,9 @@ namespace DynamicIslands.Editor
 				{
 					string[] p = lines[i].Split('\t');
 					long size, time;
-					int steps;
-					if (p.Length != 8 || p[0].Length == 0 || !long.TryParse(p[1], out size) || !long.TryParse(p[2], out time) || !int.TryParse(p[5], out steps)) { dirty = true; continue; }
-					try { kept[p[0]] = new Summary { Name = p[0], Size = size, Time = time, Title = FromBase64(p[3]), Author = FromBase64(p[4]), QuestSteps = steps, Description = FromBase64(p[6]), HasQuest = p[7] == "1" }; }
+					int steps, monsters;
+					if (p.Length != 9 || p[0].Length == 0 || !long.TryParse(p[1], out size) || !long.TryParse(p[2], out time) || !int.TryParse(p[5], out steps) || !int.TryParse(p[8], out monsters)) { dirty = true; continue; }
+					try { kept[p[0]] = new Summary { Name = p[0], Size = size, Time = time, Title = FromBase64(p[3]), Author = FromBase64(p[4]), QuestSteps = steps, Description = FromBase64(p[6]), HasQuest = p[7] == "1", Monsters = monsters }; }
 					catch (FormatException) { dirty = true; }
 				}
 			}
@@ -242,7 +250,7 @@ namespace DynamicIslands.Editor
 			{
 				var lines = new List<string> { Header };
 				foreach (Summary s in kept.Values.Where(x => !x.Broken).OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
-					lines.Add(s.Name + "\t" + s.Size + "\t" + s.Time + "\t" + ToBase64(s.Title) + "\t" + ToBase64(s.Author) + "\t" + s.QuestSteps + "\t" + ToBase64(s.Description) + "\t" + (s.HasQuest ? "1" : "0"));
+					lines.Add(s.Name + "\t" + s.Size + "\t" + s.Time + "\t" + ToBase64(s.Title) + "\t" + ToBase64(s.Author) + "\t" + s.QuestSteps + "\t" + ToBase64(s.Description) + "\t" + (s.HasQuest ? "1" : "0") + "\t" + s.Monsters);
 				SafeFile.WriteAllLines(CachePath, lines.ToArray());
 				dirty = false;
 			}

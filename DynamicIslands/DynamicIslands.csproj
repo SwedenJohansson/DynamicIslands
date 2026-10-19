@@ -233,6 +233,7 @@
     <Compile Include="DevTestsUpgradeShots.cs" />
     <Compile Include="DevTestsMoreB.cs" />
     <Compile Include="ChoiceWindow.cs" />
+    <Compile Include="IslandDifficulty.cs" />
     <Compile Include="IslandSummaries.cs" />
     <Compile Include="WorldPlanWindow.cs" />
     <Compile Include="CreateWindow.cs" />

@@ -238,7 +238,9 @@ namespace DynamicIslands.Editor
 			ir.anchorMin = ir.anchorMax = new Vector2(0f, 0.5f); ir.pivot = new Vector2(0f, 0.5f); ir.anchoredPosition = new Vector2(4f, 0f); ir.sizeDelta = new Vector2(56f, 56f);
 			Text name = UIKit.Label(b.transform, e.Info.title, 14, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Bold, "Name");
 			UIKit.Stretch(name.rectTransform, 70, 110, 6, 30);
-			Text sub = UIKit.Label(b.transform, "by " + e.Info.author + "  -  " + e.Info.summary, 11, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Normal, "Sub");
+			// (its difficulty when the list says: TODO 4d)
+			string difficulty = IslandDifficulty.Label(e.Monsters);
+			Text sub = UIKit.Label(b.transform, "by " + e.Info.author + "  -  " + (difficulty.Length > 0 ? difficulty + "  -  " : "") + e.Info.summary, 11, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Normal, "Sub");
 			UIKit.Stretch(sub.rectTransform, 70, 110, 28, 4);
 			sub.horizontalOverflow = HorizontalWrapMode.Wrap; sub.verticalOverflow = VerticalWrapMode.Truncate;
 			LibraryClient.State st = LibraryClient.StateOf(e);

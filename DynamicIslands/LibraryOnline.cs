@@ -23,6 +23,8 @@ namespace DynamicIslands.Editor
 		public string Path = "", Updated = "";
 		public long Size;
 		public int Islands;
+		/// <summary>An island entry's monsters (index.json "monsters", counted by build-index.ps1 as IslandDifficulty does), -1 when the list doesn't say.</summary>
+		public int Monsters = -1;
 		public List<LibraryFileRef> Files = new List<LibraryFileRef>();
 
 		/// <summary>The files an install needs: the islands, the plan and the map types they bring (not the pictures).</summary>
@@ -188,7 +190,7 @@ namespace DynamicIslands.Editor
 				var e = new LibraryEntry
 				{
 					Info = LibraryInfo.From(o), Path = LibraryJson.Str(o, "path"), Updated = LibraryJson.Str(o, "updated"),
-					Size = LibraryJson.Int(o, "size"), Islands = LibraryJson.Int(o, "islands"),
+					Size = LibraryJson.Int(o, "size"), Islands = LibraryJson.Int(o, "islands"), Monsters = LibraryJson.Int(o, "monsters", -1),
 					Files = LibraryJson.Objects(o, "files").Select(f => new LibraryFileRef { Name = LibraryJson.Str(f, "name"), Size = LibraryJson.Int(f, "size"), Sha256 = LibraryJson.Str(f, "sha256").ToLowerInvariant() }).ToList(),
 				};
 				if (e.Info.id.Length == 0) e.Info.id = LibraryJson.Str(o, "id");

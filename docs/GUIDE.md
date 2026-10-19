@@ -1157,6 +1157,11 @@ a shared Google Drive folder, where every
 entry is looked at before it goes in.
 - **World plans** and **Islands** tabs, a **search** (titles, authors, summaries, tags), featured entries first. Each
   row has the entry's icon, title, author and summary, and says **INSTALLED** or **UPDATE** when that applies.
+- An island's row also says how hard it is: **Difficulty: Easy**, **Medium**, **Hard**, **Extreme** or **Impossible** - only a label, from the island's monsters: Easy none, Medium 1-5, Hard 6-20, Extreme 21-49, Impossible 50 or more. Each creature spawn point counts its number of
+  creatures (a range such as 2..3 its highest number) plus the animals a boss calls; the animals to catch and the
+  harmless ones (chickens, goats, llamas, puffins, the butler bot, turtles, dolphins, stingrays, whales, birds) and a
+  creature made harmless (damage 0) don't count. It changes nothing in the game. The list takes it from the library's
+  index; an island put in before the label came shows none until the index is made again.
 - The picked entry shows its pictures (**<** **>**), description, author, version, date, size, how many islands, players
   and length, and for an island whether it has a quest (**Quest: yes**, or **No quest - an island to explore**, from its `quest` tag; a library maker gives every island with a quest that tag), and one button:
   - **Download** - downloads it and installs it the same way as Import (your own files are never overwritten, a plan's
@@ -2864,7 +2869,9 @@ them this world may meet. Its button, **CHOOSE ISLANDS...**, says how many take 
 opens the list:
 
 - one compact row per island or kind of island, A to Z: a **tick box**, a **picture**, the name, a badge, two lines of
-  the island's description and, in small print, whether it is a library island or your own, its author, size and date.
+  the island's description and, in small print, whether it is a library island or your own, its author, its
+  **Difficulty** (Easy to Impossible, counted from its monsters as in the library, [4.7](#47-saving-and-sharing)),
+  size and date. The map-type and generated rows have none: they are new each time.
   The badge says **QUEST** (golden) when the island has a quest - any of its quests with steps - and **no quest**
   otherwise. Point at a row to read its whole description. First come **New ... islands** for each map type (a new
   sandbar, wreck, atoll... each time; badge **NEW EACH TIME**, the map type's description, a picture of one of Raft's

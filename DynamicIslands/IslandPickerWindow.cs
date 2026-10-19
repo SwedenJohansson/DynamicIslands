@@ -263,11 +263,12 @@ namespace DynamicIslands.Editor
 			return t != null && !string.IsNullOrEmpty(t.Description) ? t.Description : "A new island of this map type each time.";
 		}
 
-		/// <summary>The small print under an island: library or your own, size, date.</summary>
+		/// <summary>The small print under an island: library or your own, its difficulty (once its summary is read: TODO 4d), size, date.</summary>
 		static string Small(string entry, IslandSummaries.Summary s)
 		{
 			string who = fromLibrary.ContainsKey(entry) ? "library island" : "your island";
 			if (s != null && !string.IsNullOrEmpty(s.Author)) who += " by " + s.Author;
+			if (s != null) who += "  -  " + IslandDifficulty.Label(s.Monsters);
 			try
 			{
 				var info = new System.IO.FileInfo(IslandSpawner.PathFor(entry));

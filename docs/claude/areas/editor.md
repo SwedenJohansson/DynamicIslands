@@ -31,7 +31,7 @@ The in-game island editor: shape and paint the land, place and set up objects, i
 
 ## Data and keys
 - `Mods\DynamicIslands\<name>.island` (`IslandSpawner.PathFor`): each object's `Props` and the island's `currentIslandProps`. Stamps: `stamps\<name>.stamp` (`CIST`, version 1, 65 x 65 floats). `placeables.txt` (only these names) and `placeables_generated.txt`.
-- `summarycache.txt` (`IslandSummaries`): the island lists' titles, authors and quest steps by file size + time; only changed files are read, on a worker thread (`ChoiceWindow.OpenIslands`). Safe to delete.
+- `summarycache.txt` (`IslandSummaries`): the island lists' titles, authors, quest steps and monster counts (`IslandDifficulty.MonstersOf`, header version 3) by file size + time; only changed files are read, on a worker thread (`ChoiceWindow.OpenIslands`). Safe to delete.
 - Console: `LoadEditor`, `SaveIsland`, `LoadIsland`, `ListIslands`, `DeleteGroup`, `SetToRaise`, `SetToLower`, `SetToFlatten`, `SetToSmooth`, `SetToAutoPaint`, `PaintTexture`, `ChangeWidth`, `ChangeStrength`, `SetElevation`, `SetStyle`.
 
 ## UIKit, and a new window
