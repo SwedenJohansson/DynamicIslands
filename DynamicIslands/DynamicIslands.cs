@@ -408,6 +408,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Raft colliders", e); }
 			try { QuestTracker.Tick(); QuestCount.Tick(); DailyQuest.Tick(); RogueShark.Tick(); StormDays.Tick(); }
 			catch (Exception e) { TickError("Quests", e); }
+			try { UfoSightings.Tick(); }
+			catch (Exception e) { TickError("UFO sightings", e); }
 			try { IslandInfo.Tick(); }
 			catch (Exception e) { TickError("Island banner", e); }
 			try { Behaviours.Tick(); }

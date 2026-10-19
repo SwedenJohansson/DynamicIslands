@@ -12,6 +12,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **UFO sightings** (World settings > Extra options, off by default): on about two days in five a flying saucer
+  crosses the sky high above the raft, horizon to horizon in about half a minute, in a new colour each time. It spins
+  and blinks its rim lights; at night it glows green or purple. Looks only. Every player sees the same saucer at the
+  same time.
 - **Difficulty on every island:** the island library's list and World settings > **CHOOSE ISLANDS...** say
   **Difficulty: Easy / Medium / Hard / Extreme / Impossible** by each island (none, 1-5, 6-20, 21-49, 50 or more
   monsters; harmless and catchable animals don't count). Only a label: it changes nothing in the game.

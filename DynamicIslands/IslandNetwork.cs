@@ -701,6 +701,7 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.Moment:
 						if (msg.Name == "camera") global::DynamicIslands.Editor.CameraMoment.OnMessage(msg);
+						else if (msg.Name == "ufo") global::DynamicIslands.Editor.UfoSightings.OnMessage(msg);
 						else if (msg.Name == "ending") global::DynamicIslands.Editor.StoryCredits.OnMessage(msg);
 						else global::DynamicIslands.Editor.TriggerSounds.OnMessage(msg);
 						break;

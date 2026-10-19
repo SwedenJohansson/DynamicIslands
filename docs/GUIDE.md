@@ -2463,7 +2463,7 @@ a world where they are all left alone plays as plain Raft plus your islands.
 - **World rules** (9.2): tougher or softer monsters, a dearer build menu.
 - **World randomizer** (9.3): a normal Raft world made different every time: colours, alphas, finds, odd islands, bosses.
 - **Extra options** (9.4): ghost rafts, private storages, long voyage, iron raft, shared EXP, night is dangerous, daily
-  quest, rogue shark, silver & golden barrels, storm days, trader raft, extra upgrades and a head start raft (older
+  quest, rogue shark, silver & golden barrels, storm days, trader raft, extra upgrades, UFO sightings and a head start raft (older
   worlds may still have scrambled blueprints or the story islands in a new order on).
 - **Islands while sailing** (9.5): which of your islands a world may meet.
 - **The level up system** (9.6): EXP and stat points - a switch in the window (a world option: islands don't turn it on).
@@ -2539,6 +2539,7 @@ already in the world is taken away. What each one does from the moment it change
 | Rogue shark | On: today's chance is rolled at once; off: one already out stays until killed |
 | Golden barrels | Barrels from now on; off: no extra loot and plain colours at once |
 | Storm days | At once: a storm day starts, or a storm ends within seconds |
+| UFO sightings | The next sighting day has one; off, a saucer already in the sky finishes its crossing |
 | Extra upgrades | Off: the recipes are hidden; upgrades built or worn keep working, learned ones are kept |
 | Scrambled blueprints / Story order (retired, off only) | Untaken blueprints go back to Raft's places / the Receiver goes back to Raft's order |
 | Level up system | At once; off keeps everyone's levels and takes the stat bonuses away until it is on again |
@@ -2838,6 +2839,23 @@ has its menu open, what lies in its slot goes back to that player's inventory.
 
 Every player needs the mod, as for any world with custom islands. The upgrades are saved with the world; a world
 loaded **without** the mod loses them (a machine's slot comes back empty, a built upgrade is gone).
+
+#### UFO sightings
+
+Now and then a **flying saucer** crosses the sky high above the raft: it comes out of the haze on one side, flies
+straight across (130-200 m up, in about half a minute) and is gone over the other horizon. It is there to look at -
+nothing to catch, nothing it does to you - so it pays to look up now and then.
+
+- **When:** on about two days in five (about three times in a week of Raft days, never on the first two days), at one
+  hour of that day: half of them by day (8:00-18:00), half at night (21:00-3:00). Which days and hours come from the
+  world's seed, so a loaded world has the same ones. A day slept through misses its saucer.
+- **What it looks like:** a flat metal disc in a **new colour every time**, with a glass dome on top, a dark underside, a
+  rim band and a ring of rim lights that blink round as it **spins**; it bobs and sways a little as it flies.
+- **At night** it **glows green or purple**: the rim lights take that colour, a soft halo shines around it and a light
+  under it lights its underside. By day only the rim lights shine.
+- **Every player sees the same saucer at the same time:** the host picks its colour, glow, path and speed and sends them
+  to everyone; each machine flies it on the same path over its raft. Switched on in a running world, the next sighting
+  day has one. Nothing is saved.
 
 #### Head start raft
 
