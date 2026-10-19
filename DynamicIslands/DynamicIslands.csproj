@@ -223,6 +223,7 @@
     <Compile Include="DevTestsHostSwap.cs" />
     <Compile Include="DevTestsWorldSave.cs" />
     <Compile Include="DevTestsLaser.cs" />
+    <Compile Include="DevTestsKrakenLook.cs" />
     <Compile Include="DevTestsRf.cs" />
     <Compile Include="DevTestsRf35.cs" />
     <Compile Include="DevTestsErrors.cs" />
