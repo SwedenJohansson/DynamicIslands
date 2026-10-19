@@ -234,6 +234,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **The .rmod holds only the mod's own files:** a stray `bash.exe.stackdump` was packed into the 10-17 build.
 - **The editor's Islands window opens at once with many islands:** the first rows show straight away and the rest
   fill in over the next frames (1,000 saved islands held it for over 2 s).
+- **Arrival banner only for islands with a quest:** an island's name, author and description no longer show when you
+  get near it unless the island has a quest. Zone and trigger messages are unchanged.
 - **Tidy up, Delete and Rename read islands faster:** they read only each island's own settings, not the whole
   file, when looking for the rules that name other islands.
 - **The host checks what players report:** used things, harvests, quest progress and fired rules count only from a

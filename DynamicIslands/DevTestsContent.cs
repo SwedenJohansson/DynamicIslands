@@ -267,6 +267,7 @@ namespace DynamicIslands
 			f.Props[IslandProps.Title] = "Warthog Hill";
 			f.Props[IslandProps.Author] = "CI";
 			f.Props[IslandProps.Description] = "Mind the red warthogs.";
+			f.Props[IslandQuest.KeySteps] = "reach|cizone|1|"; // the banner only comes for an island with a quest (2026-10-19)
 			f.Save(IslandSpawner.PathFor(CreatureIsland));
 			return true;
 		}
@@ -383,6 +384,23 @@ namespace DynamicIslands
 			yield return StandRoutine(entry.Root);
 			yield return new WaitForSeconds(1.5f);
 			Check(ref ok, IslandInfo.LastShown != null && IslandInfo.LastShown.StartsWith("Warthog Hill"), "arriving shows the banner: " + IslandInfo.LastShown);
+			{
+				// An island with a title and no quest gets no banner tag; with a quest it does (settings are added either way)
+				var noQ = new IslandFile { Name = "CI noquest" };
+				noQ.Props[IslandProps.Title] = "No Quest Isle";
+				GameObject tmp = new GameObject("CI noquest tag");
+				IslandInfo.Tag(tmp, noQ);
+				bool noBanner = tmp.GetComponent<IslandInfoTag>() == null && tmp.GetComponent<IslandSettings>() != null;
+				UnityEngine.Object.Destroy(tmp);
+				var withQ = new IslandFile { Name = "CI withquest" };
+				withQ.Props[IslandProps.Title] = "Quest Isle";
+				withQ.Props[IslandQuest.Key(IslandQuest.KeySteps, 3)] = "reach|cizone|1|";
+				GameObject tmp2 = new GameObject("CI quest tag");
+				IslandInfo.Tag(tmp2, withQ);
+				bool banner = tmp2.GetComponent<IslandInfoTag>() != null;
+				UnityEngine.Object.Destroy(tmp2);
+				Check(ref ok, noBanner && banner, "a titled island without a quest has no banner tag, one with a quest has (" + noBanner + "/" + banner + ")");
+			}
 			Screenshot(new[] { "creatures" });
 			yield return new WaitForSeconds(1f);
 

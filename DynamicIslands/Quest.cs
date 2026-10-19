@@ -60,6 +60,13 @@ namespace DynamicIslands.Editor
 		/// <summary>Most quests an island has: its main quest and up to eight more (ROADMAP LM4).</summary>
 		public const int MaxQuests = 9;
 
+		/// <summary>True when any of the island's quests (0..MaxQuests-1) has steps: only such islands announce themselves with a banner.</summary>
+		public static bool HasQuest(IDictionary<string, string> props)
+		{
+			for (int i = 0; i < MaxQuests; i++) if (ObjectProps.Get(props, Key(KeySteps, i)).Trim().Length > 0) return true;
+			return false;
+		}
+
 		/// <summary>The settings' key of quest n (0 = the main quest, "quest.title"; 1 = "quest2.title" ...).</summary>
 		public static string Key(string key, int n) { return n == 0 ? key : "quest" + (n + 1) + key.Substring("quest".Length); }
 

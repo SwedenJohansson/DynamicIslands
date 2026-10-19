@@ -97,6 +97,8 @@ namespace DynamicIslands.Editor
 			settings.WaterLevel = island.WaterLevel;
 			string title = ObjectProps.Get(island.Props, IslandProps.Title), desc = ObjectProps.Get(island.Props, IslandProps.Description);
 			if (title.Length == 0 && desc.Length == 0) return;
+			// (the user, 2026-10-19: an island without a quest shows no name/description banner when you get near; only islands with quests keep it)
+			if (!IslandQuest.HasQuest(island.Props)) return;
 			IslandInfoTag tag = root.AddComponent<IslandInfoTag>();
 			tag.FileName = island.Name;
 			tag.Title = title;

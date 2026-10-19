@@ -262,8 +262,8 @@ if they are within 2 km - an island the players still need shows however far it 
 
 ### Arriving
 
-An island with a name shows it as a **banner** when you come near (once per island per session), with its author and
-a short welcome if the builder wrote them. Banners and messages (an island's, a zone's, a lever's) come **one after
+An island **with a quest** and a name shows it as a **banner** when you come near (once per island per session), with its author and
+a short welcome if the builder wrote them. An island without a quest shows no banner (its zone and trigger messages still come). Banners and messages (an island's, a zone's, a lever's) come **one after
 another**: one that arrives while another is on screen waits until that one has gone. Each stays long enough to read: 5 seconds for a short one, longer for a long description (up to 16).
 
 ![Arriving at an oddity island](images/world-arrival-banner.jpg)
@@ -679,7 +679,7 @@ behaviours (see [section 5](#5-making-islands-come-alive)).
 | ![The sea 30 m above the island](images/editor-elevation-sunken.jpg) | ![The sea 60 m below the island](images/editor-elevation-flying.jpg) |
 
 *The same island at two heights: the blue plane is the sea it will meet in a world.*
-- **Shown to players:** the island's **name**, your name and a short welcome. Players see them as a banner.
+- **Shown to players:** the island's **name**, your name and a short welcome. Players see them as a banner when they arrive, but only if the island has a quest.
 - **Rules:** how many in-game days until chopped trees, picked items, killed animals, looted chests and fired zones
   come back on this island (empty = the world's setting, 0 = never, at most 999).
   **Comes by chance after ... km sailed:** the earliest the spawn pool may bring this island while sailing, in km the
@@ -997,7 +997,7 @@ step = open | Lookout cache | 1 |
 
 | Line | What it says |
 |---|---|
-| `label`, `description`, `title` | The name in lists, one line about it, and the banner players see on arrival (empty: none) |
+| `label`, `description`, `title` | The name in lists, one line about it, and the banner players see on arrival (empty: none; an island without a quest shows no banner) |
 | `flying = <chance> \| <min> - <max>`, `sunken = <m>` | How often it floats and how high; or under water, its top that many metres down |
 | `settings = ranges` | The land is rolled from the lines below (`random`: as a random island; a built-in type's name: that type's land) |
 | `styles`, `shape`, `radius`, `height`, `roughness`, `density`, `peaks`, `likeraft` | The land: one style is picked (name one twice to make it twice as likely); `shape` is round, atoll, archipelago, seastacks, plateau, marsh, crescent, twinpeaks, raftsmallisland or raftlargeisland; `60 - 70` is rolled, one number is fixed; `likeraft = large/small` makes trees and pickups as dense as on Raft's own islands |
