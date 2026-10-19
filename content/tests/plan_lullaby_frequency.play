@@ -16,7 +16,7 @@ include stillwater_terraces.play
 tune causeway
 include mistlock_causeway.play
 tune commune
-include gannet_cliff.play
+include gannet_cliff_quest.play
 tune cradle
 include cradle_reef.play
 tune mirrors
