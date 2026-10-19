@@ -84,7 +84,44 @@ namespace DynamicIslands
 			int now = Machine.LatestPurchaseButtonIndex;
 			if (Waiting(e) == now) return;
 			e.State[Key] = new ObjectState { Active = true, Yield = now + 1, Day = ContentState.Today };
+			if (Raft_Network.IsHost) IslandNetwork.SendVendingHatch(e.Id, Key, now + 1, ContentState.Today);
 			Debug.Log("[CUSTOM ISLANDS] [vending] '" + e.Name + "': " + (now >= 0 ? "paid at button " + now + ", the package in the hatch" : "the hatch emptied"));
+		}
+
+		/// <summary>A player, from the host (IslandNetMessage.VendingHatch): the hatch into the island's state and, if the island is
+		/// set up here and Raft's own message missed it (it came before the island was), into its machine (ShowLater).</summary>
+		internal static void OnHatchMessage(int islandId, int key, int value, int day)
+		{
+			IslandWorldState.Entry e = null;
+			foreach (IslandWorldState.Entry x in IslandWorldState.Islands) if (x.Id == islandId) { e = x; break; }
+			if (e == null || key < PackageKeyBase || key > PackageKeyBase + 0xFFFF) return;
+			e.State[key] = new ObjectState { Active = true, Yield = Math.Max(0, value), Day = day };
+			if (e.Root == null) return;
+			foreach (RaftVending v in e.Root.GetComponentsInChildren<RaftVending>(true))
+				if (v.Key == key && v.Machine != null) v.StartCoroutine(v.ShowLater(e));
+		}
+
+		/// <summary>Raft's own message for the press usually comes too (it gives the goods to the player who emptied the hatch):
+		/// the machine is only set to the host's hatch if, a moment later, it still differs.</summary>
+		System.Collections.IEnumerator ShowLater(IslandWorldState.Entry e)
+		{
+			yield return new WaitForSeconds(3f);
+			if (Machine == null) yield break;
+			try { Show(Waiting(e)); }
+			catch (Exception x) { Debug.LogError("[CUSTOM ISLANDS] [vending] The host's hatch on '" + e.Name + "': " + x); }
+		}
+
+		/// <summary>The machine shows this package in the hatch (-1 = none), if it doesn't already.</summary>
+		void Show(int waiting)
+		{
+			if (Machine.LatestPurchaseButtonIndex == waiting) return;
+			if (waiting >= 0) Machine.RestoreVendingMachine(new RGD_LandmarkItem_VendingMachine { lastPurchaseButtonIndex = waiting });
+			else
+			{
+				Traverse.Create(Machine).Field("latestPurchase").SetValue(null);
+				if (Machine.hatchButton != null) Machine.hatchButton.gameObject.SetActive(false);
+			}
+			Debug.Log("[CUSTOM ISLANDS] [vending] '" + (entry != null ? entry.Name : name) + "': the host's hatch " + (waiting >= 0 ? "(button " + waiting + ")" : "(empty)") + " put in this machine");
 		}
 
 		void OnDestroy()

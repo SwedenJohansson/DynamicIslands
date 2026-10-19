@@ -89,6 +89,10 @@ namespace DynamicIslands.Editor
 		/// it), Name = "sound" / "stop" (TriggerSounds, Data = the action's sound text), "camera" (CameraMoment, Data =
 		/// marker, a line break, "look at|seconds|range") or "ending" (StoryCredits, Data = title, credits and note split by U+001F). An older version ignores it.</summary>
 		public const int Moment = 33;
+		/// <summary>Host -> players: Raft's vending machine on a custom island (SL7b, RaftVending) paid or emptied: Ids = island,
+		/// state key, button + 1 (0 = empty), Count = day. Raft's own message can reach a player before the island is set up there
+		/// (F195); this keeps the player's island state, and its machine, as the host has it. An older version ignores it.</summary>
+		public const int VendingHatch = 34;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -475,6 +479,12 @@ namespace DynamicIslands.Editor
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
 		}
 
+		/// <summary>Host: a vending machine's hatch as the host has it (RaftVending.Note), for every player.</summary>
+		public static void SendVendingHatch(int islandId, int key, int value, int day)
+		{
+			if (Raft_Network.IsHost) SendToClients(new IslandNetMessage { Kind = IslandNetMessage.VendingHatch, Ids = new[] { islandId, key, value }, Count = day });
+		}
+
 		/// <summary>A tree or pickup was used on this machine's copy (host: to all clients; client: to the host, who passes it on).</summary>
 		public static void SendHarvest(int islandId, int ord, bool active, int yield, int day)
 		{
@@ -685,6 +695,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.WorldSave:
 						global::DynamicIslands.Editor.WorldSaveShare.OnMessage(msg);
+						break;
+					case IslandNetMessage.VendingHatch:
+						if (!Raft_Network.IsHost && msg.Ids != null && msg.Ids.Length >= 3) RaftVending.OnHatchMessage(msg.Ids[0], msg.Ids[1], msg.Ids[2], msg.Count);
 						break;
 					case IslandNetMessage.Moment:
 						if (msg.Name == "camera") global::DynamicIslands.Editor.CameraMoment.OnMessage(msg);
