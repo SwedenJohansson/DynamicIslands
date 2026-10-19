@@ -17,7 +17,7 @@ include lib_ni7b
 new
 # (nature: a grassy hill - Raft's tropical, trees on the lower slopes)
 gen Trees=0.25 Bushes=0.3 Rocks=0.4 Harvest=0.28 BeachThings=0.3
-gen Seed=7704 Radius=48 Height=16 Roughness=0.35 Peaks=1 Shape=0 Style=0 BeachWidth=0.6 Cliffs=0.25 PeakShape=0.5
+gen Seed=7714 Radius=48 Height=16 Roughness=0.35 Peaks=1 Shape=0 Style=0 BeachWidth=0.6 Cliffs=0.25 PeakShape=0.5
 gen SeaFloor=0 Shelf=0.5 Seabed=2
 gen Water=0.5 SeaRocks=0.4 SeaFinds=0.4 Sunken=0.4 Hostiles=0 Friendly=0.2 SeaLife=0.2
 generate
@@ -74,7 +74,7 @@ scatter "Pickup_Landmark_Tree_Mango" 2 at -14 18 r=10 seed=7742 free=5
 scatter "Pickup_Landmark_BerryBush" 4 at 0 0 r=30 seed=7743 free=3
 call hives x=0 z=0 r=30 n=2 seed=7744
 call dirt x=0 z=0 r=34 n=3 seed=7745
-call treasure x=0 z=0 r=32 n=1 seed=7704
+call treasure x=0 z=0 r=32 n=1 seed=7714
 place Creature_Goat goats at 14 16 ground
 prop goats creature.count=2
 call shallows r=72 deep=5 n=2 seed=774

@@ -15,7 +15,7 @@ include lib_ni7b
 new
 # (nature: a floating isle - grass and rocks, no beach, no sea round it)
 gen Trees=0.12 Bushes=0.3 Rocks=0.4 Harvest=0.2 BeachThings=0
-gen Seed=7705 Radius=30 Height=12 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.6 PeakShape=0.5
+gen Seed=7715 Radius=30 Height=12 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.6 PeakShape=0.5
 gen Water=0 SeaRocks=0 SeaFinds=0 Sunken=0 Hostiles=0 Friendly=0 SeaLife=0
 generate
 elevation 60
