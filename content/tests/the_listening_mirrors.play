@@ -66,7 +66,7 @@ read Wren's warning
 expect step 13
 at 21.5 -8 h=10
 open Reliquary
-expect step 14
+# (step 14, take the rope, is done as the reliquary opens: straight on to 15)
 expect story bellrope 1
 expect step 15
 at 24 -10 h=10

@@ -35,8 +35,8 @@ place Tangaroa_BallroomKit_GrandPiano piano at 9 3.8 y=0.6 sit drop yaw=90
 place Loot_ChestSmall musicbox at 9 3.8 y=2.8 sit drop yaw=90
 place "Table Office" admitdesk at 2 4.9 y=1.2 sit drop yaw=0
 place Note_Paper admissions at 2 4.9 y=2.2 sit drop yaw=10
-place "Table Office" nursedesk at 5 1.2 y=1.2 sit drop yaw=180
-place Note_Paper rota at 5 1.2 y=2.2 sit drop yaw=-15
+place "Table Office" nursedesk at 1.5 1.2 y=1.2 sit drop yaw=180
+place Note_Paper rota at 1.5 1.2 y=2.2 sit drop yaw=-15
 for cx 1.5 6 1.5
 place Placeable_Chair_Wood - at $cx 2.6 y=0.8 sit drop yaw=0
 next
