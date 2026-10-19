@@ -1154,7 +1154,7 @@ entry is looked at before it goes in.
 - **World plans** and **Islands** tabs, a **search** (titles, authors, summaries, tags), featured entries first. Each
   row has the entry's icon, title, author and summary, and says **INSTALLED** or **UPDATE** when that applies.
 - The picked entry shows its pictures (**<** **>**), description, author, version, date, size, how many islands, players
-  and length, and one button:
+  and length, and for an island whether it has a quest (**Quest: yes**, or **No quest - an island to explore**, from its `quest` tag; a library maker gives every island with a quest that tag), and one button:
   - **Download** - downloads it and installs it the same way as Import (your own files are never overwritten, a plan's
     islands never turn up at random, an island only if you tick **Also turn up while sailing**);
   - **Update** - the library has a newer version than the one you have, or one of its files changed there since you

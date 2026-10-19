@@ -12,6 +12,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **The island library says if an island has a quest:** the picked island's page shows **Quest: yes** or **No quest - an
+  island to explore**, read from the entry's `quest` tag (plans show nothing new).
 - **Story items as Raft's own items:** the Story items window's **Raft item...** links a story item to one of Raft's
   items; in the journal, **Take out** turns one into that item in your inventory (the host decides who gets the last).
 - **Sounds and music from a trigger:** the when/then actions **play sound/music** (one of Raft's sound events or

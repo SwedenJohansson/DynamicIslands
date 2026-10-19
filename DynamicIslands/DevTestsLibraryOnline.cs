@@ -111,6 +111,8 @@ namespace DynamicIslands
 				Check(ref ok, icon != null && icon.texture != null, "its row has its icon");
 				Check(ref ok, LibraryWindow.Selected != null && LibraryWindow.Selected.Info.id == "ci-lib-pack" && LibraryWindow.Picture != null, "it is selected, with its picture");
 				Check(ref ok, UIKit.LabelOf(LibraryWindow.MainButton).text == "Download" && !LibraryWindow.RemoveButton.gameObject.activeSelf, "the button says Download (no Remove yet)");
+				// (the user, 2026-10-19: the detail says whether an island has a quest - text only)
+				Check(ref ok, LibraryWindow.QuestText == "" && LibraryWindow.QuestLine(new LibraryInfo { tags = new[] { "Quest" } }) == "Quest: yes" && LibraryWindow.QuestLine(new LibraryInfo { tags = new[] { "test" } }).StartsWith("No quest") && LibraryWindow.QuestLine(new LibraryInfo { kind = LibraryPack.KindPlan, tags = new[] { "quest" } }) == "", "the quest line: a plan shows none; an island says Quest: yes by the quest tag (any case), else No quest");
 				Screenshot(new[] { "library_window" });
 				yield return new WaitForSecondsRealtime(0.6f);
 				var off = OffScreen(LibraryWindow.Root.gameObject, Screen.width, Screen.height);

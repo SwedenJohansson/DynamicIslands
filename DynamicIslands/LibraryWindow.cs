@@ -20,7 +20,7 @@ namespace DynamicIslands.Editor
 
 		static Canvas canvas;
 		static RectTransform list, detail;
-		static Text status, title, meta, tags, description, warning, progress, pictureCount, empty;
+		static Text status, title, meta, quest, tags, description, warning, progress, pictureCount, empty;
 		static Button[] tabs;
 		static Button mainButton, removeButton, sailingButton, keepButton, cancelButton;
 		static InputField search;
@@ -38,6 +38,14 @@ namespace DynamicIslands.Editor
 		public static Button KeepButton { get { return keepButton; } }
 		public static string Status { get { return status != null ? status.text : ""; } }
 		public static string Progress { get { return progress != null ? progress.text : ""; } }
+		public static string QuestText { get { return quest != null ? quest.text : ""; } }
+		/// <summary>The detail panel's quest line: islands only ("quest" tag, any case); empty for a plan.</summary>
+		public static string QuestLine(LibraryInfo i)
+		{
+			if (i == null || i.IsPlan) return "";
+			bool has = i.tags != null && i.tags.Any(t => string.Equals((t ?? "").Trim(), "quest", StringComparison.OrdinalIgnoreCase));
+			return has ? "Quest: yes" : "No quest - an island to explore";
+		}
 		public static bool Busy { get { return busy; } }
 		public static Texture Picture { get { return picture != null ? picture.texture : null; } }
 		public static Button Row(string id) { Button b; return rows.TryGetValue(id, out b) ? b : null; }
@@ -106,12 +114,15 @@ namespace DynamicIslands.Editor
 			meta = UIKit.Label(detail, "", 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Meta");
 			meta.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(meta.gameObject, -1, 32);
+			// (the user, 2026-10-19: the library page of an island should say whether it has a quest on it or not - read from the "quest" tag)
+			quest = UIKit.Label(detail, "", 12, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "QuestLine");
+			UIKit.Size(quest.gameObject, -1, 16);
 			tags = UIKit.Label(detail, "", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "Tags");
 			UIKit.Size(tags.gameObject, -1, 16);
 			description = UIKit.Label(detail, "", 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Description");
 			description.horizontalOverflow = HorizontalWrapMode.Wrap;
 			description.verticalOverflow = VerticalWrapMode.Truncate;
-			UIKit.Size(description.gameObject, -1, 62);
+			UIKit.Size(description.gameObject, -1, 46);
 			warning = UIKit.Label(detail, "", 12, UIKit.Accent, TextAnchor.UpperLeft, FontStyle.Italic, "Warning");
 			warning.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(warning.gameObject, -1, 30);
@@ -261,6 +272,7 @@ namespace DynamicIslands.Editor
 			meta.text = (i.IsPlan ? "World plan" : "Island") + " by " + i.author + "  -  version " + i.version + (selected.Updated.Length > 0 ? ", " + selected.Updated : "") +
 				"  -  " + Math.Max(1, selected.Size / 1024) + " KB" + (i.IsPlan ? ", " + selected.Islands + " island(s)" : "") +
 				(i.players.Length > 0 ? "  -  players " + i.players : "") + (i.length.Length > 0 ? ", " + i.length : "") + (i.basedOn.Length > 0 ? "\nBased on " + i.basedOn : "");
+			quest.text = QuestLine(i);
 			tags.text = i.tags.Length > 0 ? "Tags: " + string.Join(", ", i.tags) : "";
 			description.text = i.description.Length > 0 ? i.description : i.summary;
 			LibraryClient.State st = LibraryClient.StateOf(selected);
