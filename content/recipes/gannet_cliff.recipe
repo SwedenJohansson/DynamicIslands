@@ -89,7 +89,12 @@ for a 15 315 60
 place Balboa_DecorationPrefabBase_SimpleTent - at {14*cos($a)} {12+14*sin($a)} ground sit yaw={270-$a}
 next
 for a 45 345 60
-place Banner_01 - at {15*cos($a)} {12+15*sin($a)} ground sit yaw={360-$a}
+# (each banner's rope tied to a wooden post at both ends - Banner_01's rope spans x -2.55..2.37, 3.2 m over its bottom)
+push at {15*cos($a)} {12+15*sin($a)} yaw={360-$a} ground
+place Banner_01 - at 0 0 ground sit
+place Block_Pillar_Wood - at -2.5 0 ground sy=1.5
+place Block_Pillar_Wood - at 2.32 0 ground sy=1.5
+pop
 next
 place Note_Paper diary_ro at {11*cos(15)} {12+11*sin(15)} ground sit yaw=30
 place Note_Paper diary_ansel at {11*cos(135)} {12+11*sin(135)} ground sit yaw=150

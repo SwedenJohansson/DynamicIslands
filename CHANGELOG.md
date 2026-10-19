@@ -387,6 +387,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Nothing hangs in the air on the story islands and the randomizer's extras:** The Listening Mirrors' satellite
+  dishes stand on a mast on their plinths and its altar on the road; Gannet Cliff's red banners hang between two posts.
+  The randomizer stands every satellite dish it adds on its pole.
 - **A rescued survivor or a dug-up treasure could come back on an island with a looping sound:** the sound
   kept its state under the same numbers and cleared theirs when it stopped or the island loaded again. Each keeps
   its own numbers now, and a sound only clears its own.

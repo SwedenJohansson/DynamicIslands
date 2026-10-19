@@ -132,6 +132,19 @@ namespace DynamicIslands.Editor
 			return p == null ? 0.6f : Mathf.Max(0.4f, Mathf.Max(p.Size.x, p.Size.z) * 0.5f + new Vector2(p.Centre.x, p.Centre.z).magnitude);
 		}
 
+		/// <summary>Balboa's dish never stands on the ground by itself: it goes up on its antenna pole, the pole on the ground where
+		/// the dish was (dishes lay on the grass or hung over their spot, the ground check 2026-10-19). <paramref name="add"/> adds
+		/// the pole (name, position, yaw).</summary>
+		static void DishOnPole(IslandObject dish, float yaw, float sink, Func<string, Vector3, float, IslandObject> add)
+		{
+			if (dish == null || dish.Name != "Antenna_dish") return;
+			float baseY = dish.Position.y - RaftProps.Lift("Antenna_dish") + sink;
+			Vector3 at = dish.Position;
+			add("Antenna_pole", new Vector3(at.x, baseY - 0.1f, at.z), yaw);
+			// (as on Raft's Balboa: its back on the pole, 5.3 m up - the pole is 6.3 m)
+			dish.Position = new Vector3(at.x, baseY - 0.1f + 5.3f, at.z) + Quaternion.Euler(0f, yaw, 0f) * new Vector3(0f, 0f, 0.25f);
+		}
+
 		/// <summary>Stands a measured prop on generated ground (sunk a little), protected from clearing like a set piece.</summary>
 		static IslandObject Prop(MapKit k, string name, Vector2 p, float yaw, float sink = 0.05f)
 		{
@@ -186,7 +199,8 @@ namespace DynamicIslands.Editor
 					Vector2 p = Around(c, a, 0f, anchorSize + 2f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 3f));
 					if (k.Slope(p) > 22f || !free(name, p)) continue;
 					Vector2 toC = c - p;
-					Prop(k, name, p, Mathf.Atan2(toC.x, toC.y) * Mathf.Rad2Deg + (float)r.NextDouble() * 30f - 15f);
+					float my = Mathf.Atan2(toC.x, toC.y) * Mathf.Rad2Deg + (float)r.NextDouble() * 30f - 15f;
+					DishOnPole(Prop(k, name, p, my), my, 0.05f, (pn, pp, py) => k.Add(pn, pp, py, new Dictionary<string, string> { { "set.piece", "1" } }, 0f));
 					placed.Add(new KeyValuePair<Vector2, float>(p, Footprint(name)));
 					break;
 				}
@@ -231,7 +245,8 @@ namespace DynamicIslands.Editor
 				string name = One(r, props);
 				if (taken.Any(q => (q.Key - p).magnitude < q.Value + Footprint(name))) continue;
 				k.Clear(p, 1.5f);
-				Prop(k, name, p, Yaw(r));
+				float sy = Yaw(r);
+				DishOnPole(Prop(k, name, p, sy), sy, 0.05f, (pn, pp, py) => k.Add(pn, pp, py, new Dictionary<string, string> { { "set.piece", "1" } }, 0f));
 				taken.Add(new KeyValuePair<Vector2, float>(p, Footprint(name)));
 				placed++;
 			}
@@ -271,7 +286,7 @@ namespace DynamicIslands.Editor
 			{
 				float a = y0 + 60f + i * (240f / Mathf.Max(1, nm));
 				Vector3 p = c + Quaternion.Euler(0f, a, 0f) * Vector3.forward * (anchorSize + 2f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 3f));
-				put(p, a + 180f, 0.05f, One(r, medium));
+				DishOnPole(put(p, a + 180f, 0.05f, One(r, medium)), a + 180f, 0.05f, (pn, pp, py) => k.Add(pn, pp, py, new Dictionary<string, string> { { "set.piece", "1" } }));
 			}
 			int ns = small.Length == 0 ? 0 : 3 + r.Next(3);
 			for (int i = 0; i < ns; i++)

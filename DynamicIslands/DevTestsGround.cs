@@ -23,6 +23,33 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIGroundWorld", docs: "Dev, in a world: every object on the loaded custom islands (the randomizer's extras too) stands on something - nothing more than 0.5 m over what is under it and touching nothing, no base on the ground with part of it more than 0.6 m in the air, nothing buried whole, every cave rim on the ground (IG1). Problems listed per island; all of them in Mods\\DynamicIslands\\ground_world.txt. CIGroundWorld [part of the island name]")]
 		public static void GroundWorldCommand(string[] args) { WorldCheck(args, GroundCheck); }
 
+		[ConsoleCommand(name: "CIRenderers", docs: "Dev: an object's parts as spawned - each renderer (kind, on/off, shadow mode, its box from the pivot) and each collider - to see what 'sit' and the ground checks measure. CIRenderers <object> [scale]")]
+		public static void RenderersCommand(string[] args)
+		{
+			if (args == null || args.Length == 0) { Fail("CIRenderers <object> [scale]"); return; }
+			StartTest(RenderersRoutine(args[0], args.Length > 1 ? float.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture) : 1f));
+		}
+
+		static IEnumerator RenderersRoutine(string name, float scale)
+		{
+			yield return PlaceableCatalog.EnsureLoaded(new[] { name });
+			GameObject g = PlaceableCatalog.Spawn(name, null);
+			if (g == null) { Fail("CIRenderers: no object " + name); yield break; }
+			g.transform.position = new Vector3(0f, 500f, 0f);
+			g.transform.localScale = Vector3.one * scale;
+			yield return null;
+			Physics.SyncTransforms();
+			Vector3 p = g.transform.position;
+			foreach (Renderer r in g.GetComponentsInChildren<Renderer>(true))
+				Log("  renderer " + r.GetType().Name + " '" + r.name + "' " + (r.enabled && r.gameObject.activeInHierarchy ? "on" : "off") + " shadows=" + r.shadowCastingMode +
+					" min " + Num(r.bounds.min.y - p.y) + " max " + Num(r.bounds.max.y - p.y) + " size " + Num(r.bounds.size.x) + "x" + Num(r.bounds.size.y) + "x" + Num(r.bounds.size.z));
+			foreach (Collider c in g.GetComponentsInChildren<Collider>(true))
+				Log("  collider " + c.GetType().Name + " '" + c.name + "' " + (c.enabled && c.gameObject.activeInHierarchy ? "on" : "off") + (c.isTrigger ? " trigger" : "") +
+					" min " + Num(c.bounds.min.y - p.y) + " max " + Num(c.bounds.max.y - p.y));
+			UnityEngine.Object.Destroy(g);
+			Log("PASS: renderers of " + name + " listed");
+		}
+
 		/// <summary>A check of the objects on spawned islands (CIGround* / CIOverlap*): its name in the results, its files'
 		/// prefix, what a pass says, the measure.</summary>
 		class IslandCheck { public string Label, File, Pass; public IslandMeasure Measure; }
@@ -505,12 +532,18 @@ namespace DynamicIslands
 			Vector3 mid = e.Position;
 			float sea = 0f; // (Raft's sea level in the world)
 			Physics.SyncTransforms();
+			// (what holds what: an object is on the ground only when a chain of supports reaches the land, the sea or the
+			// island's rock - a pillar is not held by the floor that rests on it, a dish not by the table it floats over. Before
+			// 2026-10-19 any collider beside an object counted, so pillars and their floor held each other up in the air)
+			var nodes = new Dictionary<Transform, SupportNode>();
+			var banners = new List<BannerEnd>();
 			foreach (Transform o in objects)
 			{
 				if (o == null || !o.gameObject.activeInHierarchy) continue;
 				string n = o.name.Replace("(Clone)", "").Trim();
+				bool structural = ChainLink.IsMatch(n), banner = n.IndexOf("Banner", StringComparison.OrdinalIgnoreCase) >= 0;
 				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Note_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") ||
-					n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0 || Hangs.IsMatch(n)) continue;
+					n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0 || (Hangs.IsMatch(n) && !structural && !banner)) continue;
 				// (cave pieces: their rim, as CICaveRims - AU83)
 				if (RaftProps.Get(n) != null && RaftProps.Get(n).IsCave)
 				{
@@ -534,16 +567,44 @@ namespace DynamicIslands
 				Bounds b = baseParts[0].bounds;
 				foreach (Renderer r in baseParts) b.Encapsulate(r.bounds);
 				string where = Num(b.center.x - mid.x) + " " + Num(b.center.z - mid.z) + " h=" + Num(b.min.y - sea);
+				// A banner's rope: each end tied to a post, a pole, a wall or a roof that stands itself (the rope is the banner's
+				// top edge; Gannet Cliff's banners hung from nothing, 2026-10-19)
+				if (banner)
+				{
+					BannerEnd[] ends = RopeEnds(o, rs, n, where, objects);
+					if (ends != null) banners.AddRange(ends);
+					continue;
+				}
+				var node = new SupportNode { Name = n, Where = where };
+				nodes[o] = node;
+				Supports(o, b, objects, land, sea, node);
+				// Floors, decks, roofs, stairs: measured only as links of the chain (they lie on posts and walls, not on the ground)
+				if (structural) continue;
 				float groundMid = land != null ? land.SampleHeight(b.center) + land.transform.position.y : float.MinValue;
 				// Buried whole: its top under the land (not Raft's rocks and corals, which are set into it; not what is under the sea)
 				if (!NotABase.IsMatch(n) && land != null && whole.max.y < groundMid - 0.05f && whole.max.y > sea - 1f)
-				{ lines.Add("buried: " + n + " at " + where + ", its top " + Num(groundMid - whole.max.y) + " m under the ground"); continue; }
+				{ node.Reported = node.Direct = true; lines.Add("buried: " + n + " at " + where + ", its top " + Num(groundMid - whole.max.y) + " m under the ground"); continue; }
 				// Floating: nothing at its base (another object, a wall it hangs on, the land) and the first thing under it more than 0.5 m down
 				float gapUnder = GapUnder(o, new Vector3(b.center.x, b.min.y, b.center.z), land);
 				bool touches = Touches(o, b);
 				bool inSea = b.min.y <= sea + 0.3f; // (a dock post, a buoy, a wreck: in the water, held by it)
 				if (!touches && !inSea && gapUnder > 0.5f)
-				{ lines.Add("floating: " + n + " at " + where + ", " + (gapUnder > 999f ? "nothing under it" : Num(gapUnder) + " m over what is under it")); continue; }
+				{ node.Reported = true; lines.Add("floating: " + n + " at " + where + ", " + (gapUnder > 999f ? "nothing under it" : Num(gapUnder) + " m over what is under it")); continue; }
+				// On a steep wall: a small thing (a chest, a box, a crate) held by nothing but the land, with most of its base over
+				// the drop - its foot set into the slope reads "on the ground" (the Listening Mirrors' altar on its chasm wall)
+				if (!NotABase.IsMatch(n) && land != null && Mathf.Max(b.size.x, b.size.z) < 1.5f && node.Under.Count == 0 && b.min.y > sea + 0.3f)
+				{
+					int over = 0;
+					float most = 0f;
+					for (int c = 0; c < 4; c++)
+					{
+						var p = new Vector3((c & 1) == 0 ? Mathf.Lerp(b.min.x, b.max.x, 0.1f) : Mathf.Lerp(b.min.x, b.max.x, 0.9f), b.min.y, (c & 2) == 0 ? Mathf.Lerp(b.min.z, b.max.z, 0.1f) : Mathf.Lerp(b.min.z, b.max.z, 0.9f));
+						float g = GapUnder(o, p, land);
+						if (g > 0.6f) { over++; most = Mathf.Max(most, g); }
+					}
+					if (over >= 2)
+					{ node.Reported = true; lines.Add("on a steep wall: " + n + " at " + where + ", " + over + " of its 4 corners over the drop (up to " + (most > 999f ? "nothing under it" : Num(most) + " m") + ")"); continue; }
+				}
 				// Partly in the air: on the ground with part of its base, the rest more than 0.6 m over it (a house on a slope)
 				if (NotABase.IsMatch(n) || OnAMount.IsMatch(n) || land == null || Mathf.Max(b.size.x, b.size.z) < 1.5f || b.size.y < 0.6f || b.min.y < sea - 0.5f) continue;
 				float lowest = float.MaxValue, highest = float.MinValue;
@@ -583,7 +644,114 @@ namespace DynamicIslands
 				if (lowest <= 0.4f && highest > 0.6f)
 					lines.Add("partly in the air: " + n + " at " + where + ", its base up to " + (highest > 999f ? "over nothing" : Num(highest) + " m over the ground") + " (at " + Num(worst.x - mid.x) + " " + Num(worst.z - mid.z) + ")");
 			}
+			// The chain of supports: grounded = on the land, the sea or the island's rock, or on something grounded (what isn't
+			// measured - a ladder, a lamp, a cave piece - counts as grounded)
+			for (bool changed = true; changed;)
+			{
+				changed = false;
+				foreach (SupportNode s in nodes.Values)
+					if (!s.Grounded && (s.Direct || s.Under.Any(u => { SupportNode t; return !nodes.TryGetValue(u, out t) || t.Grounded; })))
+					{ s.Grounded = true; changed = true; }
+			}
+			foreach (SupportNode s in nodes.Values.Where(x => !x.Grounded && !x.Reported))
+				lines.Add("held up by nothing that reaches the ground: " + s.Name + " at " + s.Where +
+					(s.Under.Count > 0 ? " (rests on " + string.Join(", ", s.Under.Select(u => u.name.Replace("(Clone)", "").Trim()).Distinct().Take(3).ToArray()) + ", not grounded either)" : ""));
+			foreach (BannerEnd be in banners)
+			{
+				bool held = be.ByLand || be.By.Any(u => { SupportNode t; return !nodes.TryGetValue(u, out t) || t.Grounded; });
+				if (!held) lines.Add("banner rope end held by nothing: " + be.Name + " at " + be.Where + ", its " + be.Side + " end (" + (be.By.Count == 0 ? "no post or wall there" : "on " + string.Join(", ", be.By.Select(u => u.name.Replace("(Clone)", "").Trim()).Distinct().Take(3).ToArray()) + ", not grounded") + ")");
+			}
 			return lines;
+		}
+
+		/// <summary>Floors, decks, roofs, stairs: links of the support chain, reported when the chain doesn't reach the ground.</summary>
+		static readonly Regex ChainLink = new Regex("Floor|Deck|Plank|Bridge|Ramp|Stair|Roof|Scaffold", RegexOptions.IgnoreCase);
+
+		class SupportNode { public string Name, Where; public bool Direct, Grounded, Reported; public HashSet<Transform> Under = new HashSet<Transform>(); }
+		class BannerEnd { public string Name, Where, Side; public bool ByLand; public HashSet<Transform> By = new HashSet<Transform>(); }
+
+		/// <summary>The placed object (a child of <paramref name="objects"/>) a collider belongs to; null = not a placed object
+		/// (the land, the island's rock, the sea floor).</summary>
+		static Transform PlacedRoot(Transform t, Transform objects)
+		{
+			for (; t != null; t = t.parent) if (t.parent == objects) return t;
+			return null;
+		}
+
+		/// <summary>What holds <paramref name="o"/> up: on the land, the sea or the island's own rock (<see cref="SupportNode.Direct"/>),
+		/// and the placed objects at its base or at its sides that reach down at least as low as its base (a table under a box, a
+		/// wall a lamp hangs on - not a floor resting on a pillar's top).</summary>
+		static void Supports(Transform o, Bounds b, Transform objects, Terrain land, float sea, SupportNode node)
+		{
+			node.Direct = b.min.y <= sea + 0.3f;
+			float reach = b.min.y + 0.3f;
+			var half = new Vector3(Mathf.Max(0.05f, b.extents.x * 0.9f), 0.15f, Mathf.Max(0.05f, b.extents.z * 0.9f));
+			foreach (Collider c in Physics.OverlapBox(new Vector3(b.center.x, b.min.y, b.center.z), half, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore))
+			{
+				if (c.transform.IsChildOf(o)) continue;
+				Transform r = PlacedRoot(c.transform, objects);
+				if (r == null) node.Direct = true;
+				else if (c.bounds.min.y < reach) node.Under.Add(r);
+			}
+			foreach (Collider c in Physics.OverlapBox(b.center, b.extents + Vector3.one * 0.08f, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore))
+			{
+				if (c.transform.IsChildOf(o) || c.GetComponent<Terrain>() != null || c.bounds.min.y >= reach) continue;
+				Transform r = PlacedRoot(c.transform, objects);
+				if (r == null) node.Direct = true; else node.Under.Add(r);
+			}
+			// (right under its middle and its corners: the land within 0.5 m, or the first thing there)
+			for (int i = 0; i < 5; i++)
+			{
+				var p = i == 4 ? new Vector3(b.center.x, b.min.y, b.center.z) :
+					new Vector3((i & 1) == 0 ? Mathf.Lerp(b.min.x, b.max.x, 0.15f) : Mathf.Lerp(b.min.x, b.max.x, 0.85f), b.min.y, (i & 2) == 0 ? Mathf.Lerp(b.min.z, b.max.z, 0.15f) : Mathf.Lerp(b.min.z, b.max.z, 0.85f));
+				if (land != null)
+				{
+					float g = p.y - (land.SampleHeight(p) + land.transform.position.y);
+					Vector3 lp = land.transform.position, ls = land.terrainData.size;
+					if (g <= 0.5f && (g > -0.3f || (p.x >= lp.x && p.x <= lp.x + ls.x && p.z >= lp.z && p.z <= lp.z + ls.z))) { node.Direct = true; continue; }
+				}
+				RaycastHit best = default(RaycastHit);
+				float bestGap = float.MaxValue;
+				foreach (RaycastHit h in Physics.RaycastAll(p + Vector3.up * 0.3f, Vector3.down, 0.8f, ~0, QueryTriggerInteraction.Ignore))
+					if (!h.collider.transform.IsChildOf(o) && p.y - h.point.y < bestGap) { bestGap = p.y - h.point.y; best = h; }
+				if (bestGap > 0.5f) continue;
+				Transform r = PlacedRoot(best.collider.transform, objects);
+				if (r == null) node.Direct = true; else node.Under.Add(r);
+			}
+		}
+
+		/// <summary>A banner's two rope ends (the ends of its top edge, along its long side) and what each is tied to: a collider
+		/// within 0.35 m beside it and 0.6 m above or below. Null when its mesh can't be read.</summary>
+		static BannerEnd[] RopeEnds(Transform o, Renderer[] rs, string n, string where, Transform objects)
+		{
+			Vector3 lmin = Vector3.one * float.MaxValue, lmax = Vector3.one * float.MinValue;
+			foreach (Renderer r in rs)
+			{
+				MeshFilter mf = r.GetComponent<MeshFilter>();
+				if (mf == null || mf.sharedMesh == null || mf.sharedMesh.name.StartsWith("Combined Mesh")) return null;
+				Bounds mb = mf.sharedMesh.bounds;
+				for (int c = 0; c < 8; c++)
+				{
+					Vector3 l = o.InverseTransformPoint(r.transform.TransformPoint(mb.center + Vector3.Scale(mb.extents, new Vector3((c & 1) == 0 ? -1f : 1f, (c & 2) == 0 ? -1f : 1f, (c & 4) == 0 ? -1f : 1f))));
+					lmin = Vector3.Min(lmin, l); lmax = Vector3.Max(lmax, l);
+				}
+			}
+			bool alongX = lmax.x - lmin.x >= lmax.z - lmin.z;
+			var ends = new BannerEnd[2];
+			for (int k = 0; k < 2; k++)
+			{
+				Vector3 l = alongX ? new Vector3(k == 0 ? lmin.x + 0.1f : lmax.x - 0.1f, lmax.y, (lmin.z + lmax.z) * 0.5f)
+					: new Vector3((lmin.x + lmax.x) * 0.5f, lmax.y, k == 0 ? lmin.z + 0.1f : lmax.z - 0.1f);
+				var e = new BannerEnd { Name = n, Where = where, Side = k == 0 ? "left" : "right" };
+				foreach (Collider c in Physics.OverlapBox(o.TransformPoint(l), new Vector3(0.35f, 0.6f, 0.35f), o.rotation, ~0, QueryTriggerInteraction.Ignore))
+				{
+					if (c.transform.IsChildOf(o)) continue;
+					Transform r = PlacedRoot(c.transform, objects);
+					if (r == null) e.ByLand = true; else e.By.Add(r);
+				}
+				ends[k] = e;
+			}
+			return ends;
 		}
 
 		/// <summary>How far the first thing under <paramref name="foot"/> that isn't <paramref name="self"/> is (the land, another object,
