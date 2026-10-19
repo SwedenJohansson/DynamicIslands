@@ -21,6 +21,11 @@ brush flatten at -12.5 -1 r=7 s=20 frames=40 h=1.6
 brush flatten from -17.5 -5.5 to -10 -5.5 r=2.5 s=20 frames=40 h=1.6
 brush flatten at -30 14 r=10 s=20 frames=60 h=21.9
 brush flatten from -24 6.5 to -14 6.5 r=3 s=20 frames=40 h=21.9
+# (and the winch's end of the bridge's way again, harder: a hump at the mesa's edge stood a step over it and stopped a
+# player bound for the bridge - SL6 plan run, 2026-10-19)
+brush flatten from -17 6.5 to -13.5 6.5 r=2 s=20 frames=80 h=21.9
+# (and under the bridge's way out over the gap: the mesa's lip past it, a step over the deck, cut down below the bridge)
+brush flatten from -11.5 6.5 to -7.5 6.5 r=1.8 s=20 frames=60 h=12
 brush flatten at 0 3.5 r=7.5 s=20 frames=50 h=21.9
 # (and its west edge, where the bridge lands: a lip of the old pillar stood a metre over it)
 brush flatten from -5 0 to -5 10 r=2.2 s=20 frames=40 h=21.9
@@ -182,6 +187,9 @@ step reach|roof|1|Climb the ladder to the mayor's roof
 step kill|Screecher|1|Drive the white screecher off his roof
 step open|Screecher's nest|1|Take the mayor's key from her nest of wire and rags
 step open|Mayor's chest|1|Open the mayor's chest
+step blueprint|Blueprint_Firework|1|Take the firework plans from the mayor's chest
+step blueprint|Blueprint_EngineControls|1|Take the engine controls plans from the mayor's chest
+step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from the mayor's chest
 quest done=The chest opens: the fireworks' plans, the engine controls', a metal detector's. Down in the market, someone has already started to sweep.
 quest reward=Plank*8;Scrap*6;Rope*3
 

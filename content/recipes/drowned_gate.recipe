@@ -397,7 +397,13 @@ step collect|story:lockkey|1|Dive for the inner lock's key on the pump hall's fl
 step reach|innerlock|1|Carry the key to the inner lock's wheel on the wall
 step reach|gateoffice|1|Open the inner lock and go into the gate office
 step open|Gate office vault|1|Open the gate office's vault
+step blueprint|Blueprint_TitaniumTools|1|Take the titanium tools plans from the gate office vault
+step blueprint|Blueprint_BackpackAdvanced|1|Take the advanced backpack plans from the gate office vault
+step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline tool plans from the gate office vault
 quest done=The vault's brass plate has the last frequency: the Frontier. The Corps went through these locks - and so can you.
 quest reward=TitaniumIngot*2;Plank*8;Rope*3
+
+# --- A Raft store on the east hill by the strait: the Corps' canteen, still trading (Raft's goods, and plans the crew missed) --
+store canteen at 66 2 ground
 
 save The Drowned Gate

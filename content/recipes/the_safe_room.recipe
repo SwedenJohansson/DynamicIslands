@@ -327,6 +327,7 @@ step collect|story:codepart|3|Find the code's three parts: the gatehouse locker,
 step kill|Hyena|2|Enter the code at the study's keypad - and fight off the dogs that come back
 step read|Safe room log|1|Open the door behind the study's bookshelf and read the log inside
 step open|Boathouse safe|1|Take the escape shaft down to the boathouse and open its safe
+step blueprint|Blueprint_BatteryCharger|1|Take the battery charger plans from the boathouse safe
 quest done=Mother and daughter got away in the little boat - and the intruders' boat is at the bottom of the bay. What they left in the boathouse is yours.
 quest reward=Glass*4;Plank*6;Nail*12
 

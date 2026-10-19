@@ -68,6 +68,7 @@ expect step 11
 use altar
 expect message settle into their hollows
 open Rain Kings' offering chest
+wait 2
 expect done
 
 # The other boxes: the camp box, the storehouse, the offering pot, the barrel off the beach

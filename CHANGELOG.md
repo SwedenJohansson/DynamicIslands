@@ -93,6 +93,19 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Storylines ask for their blueprints:** The Rainmakers' quests now have a Blueprint step for each of Raft's
   blueprints its islands hold, and The Sleet Kilns and The Isobar Club each have a Raft store (Raft's goods, and any
   story blueprint a player missed).
+- **Raft's vending machine on custom islands:** the **VendingMachine** object (Islands list) is Tangaroa's vending
+  machine, working - Raft's six buttons, goods and prices (two of a Tangaroa plant for one Tangaroa token), the hatch.
+  A waiting package is saved with the world and shared by the crew. Recipes: `vending [alias] at x z ground`; tokens
+  from Raft's `QuestItemPickup_Tangaroa_Token` pickups.
+- **Stores and vending machines in every storyline:** each of the five older library storylines asks for its
+  blueprints too, and has a Raft store on a later island; every storyline has a vending machine on a story island
+  (The Drowned Metropolis, Tangaroa Remade, Hightide Harbor, The Arena, The Isobar Club), and Gullsong Bazaar has one by
+  its open stall. Five more library islands
+  have a Raft store (Frostgold Creek, Saltpan Delta, Crowfield Farm, Twin Forges, Gullsong Bazaar).
+- **Fixed:** on Caravan Town, Tangaroa, Utopia and Varuna Point Remade the ground and the big look-alike pieces had
+  crept onto the story's ways (a hump at the bridge's end, Tangaroa's harbour office on a hill and its pump house's
+  locker in the hill, pieces on Varuna's landing and Utopia's ramp); they are clear again. Sundown Canyons' bank vault and
+  Albatross Field's control tower door are reached as before.
 - **A second whole storyline in the library, The Last Post:** nine story islands down the Coastal Post's last route
   (Raft's story off, the plan's own chain on the Receiver): The Dead Letter Office, Pillarbox Pier, Parcel Canopy,
   Pneumatic Heights (from day 10), Sorting Rock, Telegraph Narrows, The Franking Works, Ada's Round and the finale, The
@@ -236,6 +249,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   Test, kept in `testkit.txt`) and **Give the kit**.
 
 ### Changed
+- **Arrival banner only for islands with a quest:** an island's name, author and description no longer show when you
+  get near it unless the island has a quest. Zone and trigger messages are unchanged.
 - **No update check:** the mod no longer asks GitHub for a newer version on the main menu (and never downloads one);
   new versions come from raftmodding.com. Players with different versions are still told when they meet.
 - **Esc closes every window of the mod**, the topmost one first and one per press: the plan picker, the island
@@ -249,8 +264,6 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **The .rmod holds only the mod's own files:** a stray `bash.exe.stackdump` was packed into the 10-17 build.
 - **The editor's Islands window opens at once with many islands:** the first rows show straight away and the rest
   fill in over the next frames (1,000 saved islands held it for over 2 s).
-- **Arrival banner only for islands with a quest:** an island's name, author and description no longer show when you
-  get near it unless the island has a quest. Zone and trigger messages are unchanged.
 - **Tidy up, Delete and Rename read islands faster:** they read only each island's own settings, not the whole
   file, when looking for the rules that name other islands.
 - **The host checks what players report:** used things, harvests, quest progress and fired rules count only from a

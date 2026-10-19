@@ -94,4 +94,5 @@ include old_mine_islet.play
 sail 4
 arrive shelter
 include shelter_atoll.play
+expect blueprints
 plan end

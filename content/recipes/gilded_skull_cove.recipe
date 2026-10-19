@@ -294,6 +294,7 @@ step collect|story:mappiece|3|Find the three map pieces: the cook's hollow log, 
 step collect|story:wholemap|1|Lay the pieces together on the captain's map table
 step reach|stones|1|Climb to the three standing stones on the saddle
 step open|Captain Marrow's hoard|1|Move the stones in the verse's order, dig, and open the hoard
+step blueprint|Blueprint_DetailPlank|1|Take the decorative plank plans from the captain Marrow's hoard
 quest done=The hoard is up and the verse kept its word. Whoever holed the Gilded Skull never found it - you did.
 quest reward=Plank*8;Rope*4;Cooked_Mackerel*3
 

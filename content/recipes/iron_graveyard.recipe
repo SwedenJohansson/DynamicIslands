@@ -216,6 +216,10 @@ step collect|story:cranekey|1|Open the yard office's safe for the crane key
 step collect|story:hub|1|Lift the turbine hub off the tanker with the crane
 step reach|turbinehill|1|Carry the parts up the ramp to the turbine on the mesa
 step open|Yard store|1|Get the turbine turning and open the yard store
+step blueprint|Blueprint_WindTurbine|1|Take the wind turbine plans from the yard store
+step blueprint|Blueprint_BatteryAdvanced|1|Take the advanced battery plans from the yard store
+step blueprint|Blueprint_HeadLight_Advanced|1|Take the advanced headlamp plans from the yard store
+step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans from the yard store
 quest done=The turbine turns over a lit yard. The breakers' plans are yours - and the chalk on the board says the Corps' fleet went on to Storm Spire.
 quest reward=Plank*8;MetalIngot*4;Bolt*6
 

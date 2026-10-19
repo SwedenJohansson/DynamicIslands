@@ -53,7 +53,7 @@ expect step 7
 
 # Up the tower's stairs to the deck and into the glass cab; the radio raises the flight
 walk -7.96 62 to -7.96 60.5 to -7.96 53.6 h=7.4
-walk -7.96 53.6 to -7.4 50 to -11.5 50 h=7.4 below=10
+walk -7.96 53.6 to -7.4 49.2 to -11.5 49.2 h=7.4 below=10
 zone tower
 expect step 8
 use radio
@@ -73,6 +73,7 @@ expect shown lamp4light
 expect story runwaylit 1
 expect step 10
 open Commander's footlocker
+wait 3
 expect item Blueprint_Reciever 1
 expect done
 

@@ -177,6 +177,9 @@ step reach|station|1|Go up to Selene's station on the terrace
 step reach|inner|1|Connect the cables, start the reactor and go through the inner doors
 step kill|Polar bear|1|Face the polar bear mother in the inner hall
 step open|Chief's vault|1|Open the station chief's vault
+step blueprint|Blueprint_SmelterElectric|1|Take the electric smelter plans from the chief's vault
+step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced biofuel extractor plans from the chief's vault
+step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced stationary anchor plans from the chief's vault
 quest done=The vault opens on the chief's plans: an electric smelter, an advanced refinery, an anchor for any storm. Behind you the reactor hums, and the station's lights burn over the snow again.
 quest reward=Wool*4;Plank*8;Glass*2
 

@@ -40,5 +40,6 @@ expect message dying of cold
 expect shown analyzerlight
 expect story sample 0
 open Director's safe
+wait 4
 expect item Blueprint_Recycler 1
 expect done

@@ -455,6 +455,8 @@ namespace DynamicIslands.Editor
 					else if (Survivors.IsCage(o.Name)) SurvivorCage.Attach(go, o.Props ?? new Dictionary<string, string>(), index);
 					// Raft's trading post (SL7: its store works; numbered and stocked in RaftStore.OnIslandReady)
 					else if (RaftStore.Is(o.Name)) RaftStore.Attach(go, index);
+					// Raft's vending machine (SL7b: it works; numbered in RaftVending.OnIslandReady)
+					else if (RaftVending.Is(o.Name)) RaftVending.Attach(go, index);
 					// Names, movement, "players can use it", collision, events (Behaviours)
 					Behaviours.Attach(go, o.Name, o.Props, index);
 				}

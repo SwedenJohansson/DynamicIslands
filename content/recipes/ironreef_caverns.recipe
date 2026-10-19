@@ -314,7 +314,11 @@ step pages||9|Wedge both charges into the rockfall and blow it open
 step reach|bearhall|1|Enter the Bear Hall
 step kill|Bear|1|Defeat Ironhide
 step open|Company strongbox|1|Open the company's strongbox
+step blueprint|Blueprint_TitaniumTools|1|Take the titanium tools plans from the company strongbox
 quest done=Ironhide is dead and the strongbox is open: the Heart of Ironreef - a fist-sized lump of pure iron - and the blueprint the company kept from its miners are yours.
 quest reward=MetalIngot*8;Nail*20;Bolt*6
+
+# --- A Raft store on the north beach: the mining company's tally shop, still trading (Raft's goods, and plans the crew missed) --
+store tallyshop at 8 54 ground
 
 save Ironreef Caverns

@@ -63,16 +63,17 @@ expect animals Warthog 0
 read The boar idol
 expect step 18
 open Temple offering
+wait 2
 expect story tusk 0
 expect item Blueprint_Machete 1
-expect step 19
+expect step 20
 
 # The machete: the explorer's two caches behind the vines
 expect hidden thornvine2
 use thornvines2
 expect shown thornvine2
 open Vine cache by the temple
-expect step 20
+expect step 21
 use thornvines1
 expect shown thornvine1
 open Vine cache by the camp

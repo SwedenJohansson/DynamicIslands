@@ -258,6 +258,7 @@ step read|Botanist's journal|1|Read the journal left in the open cage by the fir
 step collect|story:chainkey|1|Take the boat chain's key from the fire-keeper's hut
 step open|Botanist's satchel|1|Run the shore path round the headland - snatch up her dropped satchel, don't stop
 step open|Botanist's sea chest|1|On to the sea cave and open her sea chest before the hunters catch you
+step blueprint|Blueprint_Cropplot_Medium_Tier3|1|Take the medium crop plot plans from the botanist's sea chest
 quest done=The chain falls away and the little boat rocks free. Behind you the horn blows on the ridge, again and again - but you're already gone.
 quest reward=Plank*6;Rope*4;Leather*2
 

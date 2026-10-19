@@ -37,6 +37,7 @@ use indexterminal
 expect message whirrs
 expect story card 0
 open Rare book vault
+wait 5
 expect item Blueprint_EngineControls 1
 expect item Blueprint_ZiplineBase 1
 expect done

@@ -13,7 +13,7 @@ new
 # (nature: forest, Like Raft's own: Trees 0.28, Bushes 0.28, Rocks 0.43, Harvest 0.24 - CIGenLikeRaft)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
 gen Seed=9301 Radius=48 Height=22 Roughness=0.5 Peaks=2 Shape=0 Style=3 PeakShape=0.6 Cliffs=0.3 BeachWidth=0.4
-gen Water=0.5 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.3 Hostiles=0 Friendly=0.2 SeaLife=0.3
+gen Water=0.5 SeaRocks=0.5 SeaFinds=0.3 Sunken=0.3 Hostiles=0 Friendly=0.2 SeaLife=0.3
 generate
 
 # --- Terrain: the river cut from the hills to the south shore (its bed 1.5 m under the sea), level banks at the weir

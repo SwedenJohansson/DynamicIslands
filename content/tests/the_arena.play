@@ -67,6 +67,7 @@ use console
 expect story prizekey 1
 expect step 12
 open Prize vault
+wait 2
 expect done
 
 # The other gifts: on the upland, sunk in the lake

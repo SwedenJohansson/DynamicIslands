@@ -86,6 +86,7 @@ expect step 12
 # The harbour master's house on the south pier: his safe
 at -9 -12.3 h=2.5
 open Harbour master's safe
+wait 5
 expect item Blueprint_WaterTank 1
 expect item Blueprint_ElectricPurifier 1
 expect done

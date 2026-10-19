@@ -1244,6 +1244,7 @@ namespace DynamicIslands
 					IslandObjectState.Apply(entry, IslandRules.RegrowDays(entry));
 					BuriedTreasure.OnIslandReady(entry);
 					RaftStore.OnIslandReady(root, entry); // Raft's trading posts: network number, goods, what was sold
+					RaftVending.OnIslandReady(root, entry); // Raft's vending machines: network number, the package in the hatch
 					Behaviours.OnIslandReady(entry); // objects shown or hidden, doors open or closed, as saved
 					ContentState.OnIslandReady(entry); // first: chests refill and zones re-arm before the creatures look at them
 					CreatureSpawner.OnIslandReady(entry);

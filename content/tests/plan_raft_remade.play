@@ -35,4 +35,5 @@ expect chain utopiaremade unlocked
 tune utopiaremade
 include utopia_remade.play
 expect chain utopiaremade done
+expect blueprints
 plan end

@@ -41,12 +41,14 @@ expect step 8
 walk 2 15 to -1 17 h=1.4
 reach Engineer's locker
 open Engineer's locker
+wait 2
 expect item Blueprint_MotorWheel 1
-expect step 9
+expect step 10
 
 # The captain's safe on the bank by the ferry
 walk 2 15 to 0.5 20 to 0.2 23 h=1.4
 reach Captain's safe
 open Captain's safe
+wait 2
 expect item Blueprint_SteeringWheel 1
 expect done

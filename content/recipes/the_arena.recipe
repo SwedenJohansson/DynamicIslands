@@ -334,7 +334,14 @@ step reach|controlroom|1|Find the door that opened in the peak
 step read|Gamewarden's log|1|Read the gamewarden's log in the control room
 step collect|story:prizekey|1|Shut the games down at the master console
 step open|Prize vault|1|Open the prize vault
+step blueprint|Blueprint_ZiplineTool|1|Take the zipline tool plans from the prize vault
 quest done=The screens say GAMES ENDED and every camera on the island stops turning. You won - the only contestant in nineteen seasons to walk out through the wardens' door.
 quest reward=MetalIngot*6;HealingSalve_Good*3;Cooked_GenericMeat*4
+
+# --- Raft's vending machine at the arena's gate, from Tangaroa's arcade: Tangaroa's plants for its tokens; three tokens lie about --
+vending gatevend at 4 -34 ground
+place QuestItemPickup_Tangaroa_Token - at 0 -36 ground
+place QuestItemPickup_Tangaroa_Token - at 12 -24 ground
+place QuestItemPickup_Tangaroa_Token - at 28 -28 ground
 
 save The Arena

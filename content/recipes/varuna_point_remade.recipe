@@ -26,6 +26,10 @@ origin
 clear at 15 -4 r=18
 clear from 38 14 to 25 4 r=4
 clear at 44 19 r=5
+# (the generator's look pieces kept off the landing and the ramp by their bodies, not their pivots: the elevator shaft
+# stood on the landing once the generator spaced its pieces wider - SL6, 2026-10-19)
+clear from 44 20 to 38 14 r=1.5 body
+clear from 38 14 to 25 4 r=1.5 body
 # (no boulders strewn over the sand - Raft's beaches have few)
 clear at 0 0 r=90 only=Rock|Boulder on=sand above=0.2
 # (no boulders through the reef's crates or the strongbox)
@@ -162,6 +166,10 @@ step collect|story:part|4|Find the other three parts on the reef: the lens, the 
 step reach|lightdeck|1|Climb the floodlight tower
 step kill|Angler fish|1|Light the floodlight, then face the giant angler in the deep under the point
 step open|Foreman's strongbox|1|Open the foreman's strongbox in the deep
+step blueprint|Blueprint_WindTurbine|1|Take the wind turbine plans from the foreman's strongbox
+step blueprint|Blueprint_BatteryAdvanced|1|Take the advanced battery plans from the foreman's strongbox
+step blueprint|Blueprint_HeadLight_Advanced|1|Take the advanced headlamp plans from the foreman's strongbox
+step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans from the foreman's strongbox
 quest done=The strongbox gives up the site's plans: a wind turbine, advanced batteries, a head lamp, an electric grill. Up on the tower the floodlight still burns over the north water.
 quest reward=Plank*8;Scrap*8;Bolt*4
 

@@ -60,6 +60,7 @@ zone council
 walk -15.2 8 to -15.4 11 to -17.5 11.2 h=12.5 below=15
 reach Council's vault
 open Council's vault
+wait 5
 expect item Blueprint_WaterTank 1
 expect item Blueprint_Storage_Large 1
 expect done

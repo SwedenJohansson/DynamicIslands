@@ -298,4 +298,7 @@ step open|Works pay chest|1|Open the pay chest in the shipping office
 quest done=Three sacks of salt on the jetty and the last wages in your pocket. Somewhere, Gus the foreman would be pleased.
 quest reward=Stone*4;Cooked_GenericMeat*3;Rope*3
 
+# --- A Raft store by the salt works: the company shop (Raft's goods, and plans the crew missed) --
+store saltshop at -38 28 ground
+
 save Saltpan Delta

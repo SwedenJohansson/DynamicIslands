@@ -303,6 +303,7 @@ step collect|story:jade|3|Cross the stepping stones over the stakes to the Rain 
 step reach|summit|1|Climb the pyramid's stairway to the summit shrine
 step read|The Rain Kings' carvings|1|Read the carvings round the altar
 step open|Rain Kings' offering chest|1|Lay the three tablets in the altar and open the offering chest
+step blueprint|Blueprint_Cropplot_Medium_Tier3|1|Take the medium crop plot plans from the rain Kings' offering chest
 quest done=The tablets are home and the Kings' chest is open. Far out over the sea, for the first time in a long time, a rain cloud is building.
 quest reward=Clay*6;Stone*10;Brick_Dry*6
 

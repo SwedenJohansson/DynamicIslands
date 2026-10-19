@@ -75,5 +75,6 @@ use projector
 expect message films flicker
 expect story film 0
 open Blockhouse safe
+wait 2
 expect item Blueprint_Recycler 1
 expect done

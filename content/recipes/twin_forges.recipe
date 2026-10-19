@@ -290,4 +290,7 @@ step open|The contest prize|1|Open the contest prize
 quest done=The contest of the master-smith is settled - not by Brann, not by Kessa, but by a stranger with both their blades. They'll have to share the island now. Or fight you for it.
 quest reward=MetalIngot*4;Nail*12;Cooked_GenericMeat*2
 
+# --- A Raft store on the Bellows' shoulder: the ironmonger, selling what the smiths don't make (Raft's goods, and plans the crew missed) --
+store ironmonger at 6 -32 ground
+
 save Twin Forges

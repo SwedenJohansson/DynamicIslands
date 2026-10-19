@@ -157,7 +157,9 @@ step catch|Goat|2|Net the two goats grazing the eastern marsh
 step reach|hold|1|Look into the ferry's hold, where something scratches
 step kill|Rat|4|Clear the rats - and their king - out of the ferry's hold
 step open|Engineer's locker|1|Pump the ferry dry and open the engineer's locker
+step blueprint|Blueprint_MotorWheel|1|Take the engine plans from the engineer's locker
 step open|Captain's safe|1|Open the captain's safe on the bank
+step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel plans from the captain's safe
 quest done=The ferry's papers give the next station: Cinderfall, a geothermal plant at the foot of a volcano. With a motor wheel and a steering wheel, the raft can get there under its own power.
 quest reward=Plank*8;Rope*3;Nail*6
 

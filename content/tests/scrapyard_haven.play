@@ -73,5 +73,6 @@ expect stand -18.5 -10 h=18.7
 zone fortress
 expect step 20
 open Scrap king's hoard
+wait 3
 expect item Blueprint_ZiplineBase 1
 expect done

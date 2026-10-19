@@ -34,6 +34,10 @@ clear at -6.5 -6.5 r=15
 # (the open ground before the warden's gate: palms crowded its approach)
 clear at -6.5 8 r=9
 clear from 4 41 to -6.5 5 r=4
+# (the generator's look pieces kept off the summit path by their bodies, not their pivots: a tower's frame stood on it
+# once the generator spaced its pieces wider - SL6, 2026-10-19)
+clear from 4 41 to -6.5 5 r=1.5 body
+clear from -6.5 5 to -6.5 -3.5 r=1.5 body
 clear from 14 44 to 22 31 r=3
 # (no boulders strewn over the sand - Raft's beaches have few)
 clear at 0 0 r=90 only=Rock|Boulder on=sand above=0.2
@@ -217,7 +221,13 @@ step open|Warden's table|1|Go through the ledger on the warden's table
 step open|Warden's pot|1|Search the pot in the yard's back corner
 step pages||12|Find the warden's jar by the palisade: twelve pages, the last before his chest
 step open|Warden's chest|1|Open the warden's chest
+step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline tool plans from the warden's chest
+step blueprint|Blueprint_BackpackAdvanced|1|Take the advanced backpack plans from the warden's chest
+step blueprint|Blueprint_TitaniumTools|1|Take the titanium tools plans from the warden's chest
 quest done=The warden's chest opens on everything he hoarded: plans for an electric zipline, a big backpack, titanium tools. Below the summit, the docks are quiet, the sea wide open. Olof was right - it was meant for all of you. This is where Raft Remade's voyage ends: from the first radio tower's call to Utopia's last gate. Sail on - the sea has more islands than any map.
 quest reward=TitaniumIngot*2;Plank*10;Rope*4
+
+# --- A Raft store by the market: Utopia's last trader (Raft's goods, and plans the crew missed) --
+store utopiashop at 38 32 ground
 
 save Utopia Remade

@@ -1266,7 +1266,8 @@ namespace DynamicIslands
 			SetOrigin(new Vector2(500f, 500f));
 			// (the objects the recipe places, loaded first - Raft's scenes for the on-demand ones)
 			var wanted = lines.Select(l => Tokens(l.Text)).Where(t => t.Length > 1 && (t[0] == "place" || t[0] == "scatter" || t[0] == "line" || t[0] == "ramp")).Select(t => t[1])
-				.Concat(lines.Any(l => Tokens(l.Text).FirstOrDefault() == "store") ? new[] { RaftStore.ObjectName } : new string[0]).Where(n => n != "none").Distinct().ToList();
+				.Concat(lines.Any(l => Tokens(l.Text).FirstOrDefault() == "store") ? new[] { RaftStore.ObjectName } : new string[0])
+				.Concat(lines.Any(l => Tokens(l.Text).FirstOrDefault() == "vending") ? new[] { RaftVending.ObjectName } : new string[0]).Where(n => n != "none").Distinct().ToList();
 			yield return PlaceableCatalog.EnsureLoaded(wanted);
 			string missing = wanted.FirstOrDefault(w => !PlaceableCatalog.IsLoaded(w));
 			if (missing != null) { Fail("recipe " + name + ": '" + missing + "' isn't an object the editor has"); yield break; }
@@ -1382,7 +1383,8 @@ namespace DynamicIslands
 						case "clear":
 						{
 							// clear at x z r=<m> [all] | clear from x1 z1 to x2 z2 r=<m>: the generator's objects there (in a circle, or along
-							// a trail) removed - deleted as one undo step; "all" also this recipe's own; only=<name pattern> just those whose
+							// a trail) removed - deleted as one undo step; "all" also this recipe's own; "body" by how near its body comes (its
+							// renderers' box), not its pivot (a tower or a shaft whose pivot stands metres off it - SL6, 2026-10-19); only=<name pattern> just those whose
 							// name matches (only=Rock|Boulder), below=<m> / above=<m> just those under / over that height above the sea,
 							// on=sand|grass|rock|seabed just those on ground painted so (a beach's boulders, not the sea's or the hills' -
 							// Balboa Remade's wide sandy flats, 2-5 m up, were strewn with them, 2026-10-03)
@@ -1411,7 +1413,7 @@ namespace DynamicIslands
 							var gone = root.GetComponentsInChildren<EditorGameObject>()
 								.Where(e => (only == null || only.IsMatch(e.GameObjectName ?? "")) && e.transform.position.y - seaY < below && e.transform.position.y - seaY >= above && painted(e.transform.position))
 								.Select(e => e.gameObject)
-								.Where(g => (opt.ContainsKey("all") || !recipePlaced.Contains(g)) && DistanceToSegment(new Vector2(g.transform.position.x, g.transform.position.z), w, w2) <= r).ToList();
+								.Where(g => (opt.ContainsKey("all") || !recipePlaced.Contains(g)) && (t.Contains("body") ? BodyReach(g, w, w2) : DistanceToSegment(new Vector2(g.transform.position.x, g.transform.position.z), w, w2)) <= r).ToList();
 							if (gone.Count > 0) CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(gone, false));
 							break;
 						}
@@ -1423,6 +1425,16 @@ namespace DynamicIslands
 							st.Insert(1, RaftStore.ObjectName);
 							if (st.Count > 2 && st[2] == "at") st.Insert(2, "-");
 							t = st.ToArray();
+							goto case "place";
+						}
+						case "vending":
+						{
+							// vending [alias|-] at <x> <z> [place's options] - Raft's vending machine, working in a world (SL7b: RaftVending)
+							var vm = t.ToList();
+							vm[0] = "place";
+							vm.Insert(1, RaftVending.ObjectName);
+							if (vm.Count > 2 && vm[2] == "at") vm.Insert(2, "-");
+							t = vm.ToArray();
 							goto case "place";
 						}
 						case "place":
@@ -1943,6 +1955,20 @@ namespace DynamicIslands
 			Vector3 o = terraineditor.terrain.transform.position;
 			if (count == 0) return new Vector2(o.x + data.size.x / 2f, o.z + data.size.z / 2f);
 			return new Vector2(o.x + (float)(sx / count) / (res - 1) * data.size.x, o.z + (float)(sz / count) / (res - 1) * data.size.z);
+		}
+
+		/// <summary>clear ... body: how near an object's body (its renderers' box, flat) comes to the segment a-b.</summary>
+		static float BodyReach(GameObject g, Vector2 a, Vector2 b)
+		{
+			Vector2 p = new Vector2(g.transform.position.x, g.transform.position.z);
+			float best = DistanceToSegment(p, a, b);
+			foreach (Renderer rd in g.GetComponentsInChildren<Renderer>())
+			{
+				Bounds bb = rd.bounds;
+				float d = DistanceToSegment(new Vector2(bb.center.x, bb.center.z), a, b) - Mathf.Min(bb.extents.x, bb.extents.z);
+				if (d < best) best = d;
+			}
+			return Mathf.Max(0f, best);
 		}
 
 		static float DistanceToSegment(Vector2 p, Vector2 a, Vector2 b)

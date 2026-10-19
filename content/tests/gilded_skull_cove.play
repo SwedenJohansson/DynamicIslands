@@ -66,6 +66,7 @@ expect message rolls aside
 wait 3
 expect shown hoard
 open Captain Marrow's hoard
+wait 2
 expect item Blueprint_DetailPlank 1
 expect item Hat_Pirate 1
 expect done

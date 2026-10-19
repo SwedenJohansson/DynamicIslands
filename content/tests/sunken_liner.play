@@ -50,6 +50,7 @@ open Purser's safe
 expect story sapphire 1
 expect step 10
 open Ship's pay chest
+wait 2
 expect done
 
 # The other boxes: the trunks, the stores, the coal barrel, the box on the east islet

@@ -48,6 +48,7 @@ kill Angler fish
 wait 1
 expect step 13
 open Lair hoard
+wait 3
 expect item Blueprint_HeadLight_Advanced 1
 wait 1
 
@@ -57,6 +58,6 @@ zone pocket3
 zone pocket2
 zone pocket1
 zone camp
-expect step 16
+expect step 18
 read Expedition leader's log
 expect done

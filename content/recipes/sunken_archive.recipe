@@ -130,6 +130,10 @@ step kill|Angler fish|1|Face the vault's keeper, the angler with the lamp on its
 step open|Deep card box|1|Take the last catalogue card from the deep room's box
 step collect|story:card|3|Carry the three catalogue cards up to the index desk
 step open|Rare book vault|1|Feed the cards through the index, then open the rare book vault
+step blueprint|Blueprint_EngineControls|1|Take the engine controls plans from the rare book vault
+step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from the rare book vault
+step blueprint|Blueprint_Firework|1|Take the firework plans from the rare book vault
+step blueprint|Blueprint_ZiplineBase|1|Take the zipline plans from the rare book vault
 quest done=The vault gives up the Corps' rarest plans - and their map: Hightide Harbor, a fishing town on stilts, where the fleet went.
 quest reward=Plank*6;Plastic*6;Rope*2
 

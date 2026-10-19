@@ -305,4 +305,7 @@ step open|Abbie's strongbox|1|Set the assay slip on the claim post and open her 
 quest done=Claim No. 7 is staked, by the law of the creek. The Rourkes can pull all the stakes they like - the slip is nailed to the post, and Abbie's gold is yours.
 quest reward=Plank*10;Leather*3;Cooked_GenericMeat*3
 
+# --- A Raft store down the creek: the outfitter's, still trading with the diggers (Raft's goods, and plans the crew missed) --
+store outfitter at 30 -44 ground
+
 save Frostgold Creek

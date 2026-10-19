@@ -324,6 +324,7 @@ step kill|Rat|3|Clear the rats out of the dormitory
 step collect|story:fuel|1|Find the last can of fuel
 step read|Commander's orders|1|Start the generator and read the commander's final orders behind his door
 step open|Commander's safe|1|Open the commander's safe and take his charts
+step blueprint|Blueprint_Fueltank|1|Take the fuel tank plans from the commander's safe
 quest done=The lights are on, the blast gate stands open onto the lagoon, and the commander's charts are yours.
 quest reward=Battery*2;CircuitBoard*2;Scrap*6
 

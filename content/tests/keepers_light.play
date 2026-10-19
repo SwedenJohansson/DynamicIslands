@@ -71,6 +71,7 @@ expect shown beam
 use foghorn
 expect message rolls out over the fog
 open Lamp room locker
+wait 2
 expect item Blueprint_HeadLight 1
 expect done
 

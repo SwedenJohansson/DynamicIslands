@@ -101,4 +101,7 @@ step open|Marta's basket|1|Open Marta's basket in the farmhouse
 quest done=Three goats back in the pen, chewing as if they'd never left. Marta will be glad.
 quest reward=Seed_Mango*2;Raw_Potato*4;Rope*2
 
+# --- A Raft store on the plain: the farm stand (Raft's goods, and plans the crew missed) --
+store farmstand at 0 24 ground
+
 save Crowfield Farm

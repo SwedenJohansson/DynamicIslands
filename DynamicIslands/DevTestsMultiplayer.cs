@@ -154,7 +154,9 @@ namespace DynamicIslands
 			if (player == null || t == null) return;
 			Vector3 target = t.position + new Vector3(offset, 0f, offset);
 			RaycastHit hit;
-			if (Physics.Raycast(target + Vector3.up * 30f, Vector3.down, out hit, 60f, 1 << IslandSpawner.TerrainLayer)) target.y = hit.point.y + 1.2f;
+			// (from just above the animal: from 30 m up the ray landed on a mast platform over a cove's puffer fish, in the
+			// mast-top zone - Signal Rock's screechers woke early, SL6 2026-10-19)
+			if (Physics.Raycast(target + Vector3.up * 3f, Vector3.down, out hit, 60f, 1 << IslandSpawner.TerrainLayer)) target.y = hit.point.y + 1.2f;
 			// (off the raft first: a player still a child of the rocking raft was swung 14 m out of the gift zone - PlayerMove)
 			PlayerMove.To(player, target);
 			KeepAlive(player);

@@ -53,5 +53,6 @@ use douse
 expect message lantern gutters
 expect hidden lantern
 open Wreckers' hoard
+wait 3
 expect item Blueprint_HeadLight 1
 expect done

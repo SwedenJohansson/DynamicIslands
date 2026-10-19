@@ -220,6 +220,8 @@ step collect|story:capkey|1|Bring up the captain's key on its red cord
 step reach|bow|1|Wade out to the beached bow on the sandbar
 step kill|Rat|5|Clear the rats - and their king - out of the bow's sand
 step open|Captain's safe|1|Force the wheelhouse door and open the captain's safe
+step blueprint|Blueprint_MotorWheel|1|Take the engine plans from the captain's safe
+step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel plans from the captain's safe
 quest done=The ship's papers are yours, and with them the drawings of an engine and a steering wheel. Her last log names a ranger station on a jungle mountain.
 quest reward=Plank*10;Rope*4;Nail*12
 

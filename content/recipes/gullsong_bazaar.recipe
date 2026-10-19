@@ -173,4 +173,13 @@ step open|Merchant's strongbox|1|Open the merchant's strongbox
 quest done=From a pink shell to the best thing in the bazaar, in five fair trades. The gulls approve.
 quest reward=Plank*6;Rope*3;Cooked_Herring*3
 
+# --- A Raft store on the marsh west of the lagoon: the one stall still open this season (Raft's goods, and plans the crew missed) --
+store openstall at -28 0 ground
+
+# --- Raft's vending machine beside the open stall, from Tangaroa's arcade: Tangaroa's plants for its tokens; three tokens lie about the marsh --
+vending marshvend at -24 -3.5 ground yaw=270
+place QuestItemPickup_Tangaroa_Token - at -21 1 ground
+place QuestItemPickup_Tangaroa_Token - at -31 5 ground
+place QuestItemPickup_Tangaroa_Token - at -25 -8 ground
+
 save Gullsong Bazaar

@@ -255,6 +255,7 @@ step read|First fork slate|1|Dive to the mouth, tie off the line and follow the 
 step reach|airbell|1|Find the air bell halfway and breathe
 step kill|Angler fish|1|Face the light that waits in the Hall of Columns
 step open|Trader's strongbox|1|Open the old trader's strongbox in the hall
+step blueprint|Blueprint_Canteen|1|Take the canteen plans from the trader's strongbox
 step reach|exit|1|Pull the tide gate's lever and swim out before it shuts
 quest done=Out through the tide gate into the sun. The trader's strongbox is yours - and Noor's reel is still in the dive locker back at camp. Her last slate says she made it out.
 quest reward=OxygenBottle*2;Rope*4;CopperIngot*3

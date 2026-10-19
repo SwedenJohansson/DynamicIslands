@@ -65,6 +65,7 @@ use valveblack
 expect message the boiler falls quiet
 expect hidden ballroommusic
 open Caretaker's strongbox
+wait 2
 expect done
 
 # (the pantry, the jetty and shed boxes and the barrel off the jetty have no note on purpose - a note would be a page for

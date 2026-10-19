@@ -41,6 +41,7 @@ expect story rod 3
 expect step 5
 at 2.9 10.6 h=34.6
 open Station locker
+wait 4
 expect story rod 0
 expect item Blueprint_SmelterElectric 1
 expect done

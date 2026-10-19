@@ -60,6 +60,7 @@ expect message come out at the bottom of the cliff
 walk 1.5 34 to 1.2 36 to 0.6 38.5 h=2.6
 zone boathouse
 open Boathouse safe
+wait 2
 expect done
 
 # Back up the shaft into the safe room; the other boxes: the carport crate, the cooler, the intruders' tool box

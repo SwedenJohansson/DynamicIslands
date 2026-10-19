@@ -228,8 +228,15 @@ step collect|story:keycard|3|Hold all three council keycards
 step pages||5|Write the treasurer's strongbox tag into your journal
 step reach|meridianroof|1|Climb the Meridian Tower to its pool deck
 step open|Meridian Vault|1|Fill the vault's three card slots and open the Meridian Vault
+step blueprint|Blueprint_BatteryAdvanced|1|Take the advanced battery plans from the meridian Vault
 step pages||6|Close your journal on Meridian: six pages of the drowned city
 quest done=The vault of Meridian is open. The council saved batteries, titanium and a blueprint - and now they're yours.
 quest reward=Battery*2;CircuitBoard*2;Scrap*8
+
+# --- Raft's vending machine on the high ground, from Tangaroa's arcade: Tangaroa's plants for its tokens; three tokens lie about --
+vending cityvend at 44 56 ground
+place QuestItemPickup_Tangaroa_Token - at 42 58 ground
+place QuestItemPickup_Tangaroa_Token - at 46 54 ground
+place QuestItemPickup_Tangaroa_Token - at 42 54 ground
 
 save The Drowned Metropolis

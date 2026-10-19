@@ -304,6 +304,7 @@ step read|Inmate 1147's notes|1|Open cell 14 and read the notes hidden under the
 step collect|story:spoon|1|Find the sharpened spoon he hid in the mess hall
 step reach|tunnel|1|Unscrew the vent in cell 14 and crawl down his drain
 step open|Escape kit|1|Swim from the drain's mouth to the outer rock and open his escape kit
+step blueprint|Blueprint_ZiplineBase|1|Take the zipline plans from the escape kit
 quest done=The postcard says it all: he made it. So did you - the rock's only two escapes.
 quest reward=MetalIngot*4;Nail*15;Bolt*4
 

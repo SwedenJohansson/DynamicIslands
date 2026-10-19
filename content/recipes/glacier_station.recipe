@@ -229,8 +229,12 @@ step open|Frozen crate|1|Break open Petrov's crate, frozen into the crevasse flo
 step collect|story:fuse|3|Carry all three reactor fuses out of the crevasse
 step pages||7|Bring the fuses back to the basin and restart the reactor
 step open|Reactor vault|1|Open the reactor vault, unsealed at last
+step blueprint|Blueprint_ElectricPurifier|1|Take the electric purifier plans from the reactor vault
 step reach|chimneys|1|Stand under the twin chimneys as they breathe again
 quest done=The reactor hums, the pool glows and the domes are lit: the long night at Glacier Station is over.
 quest reward=CircuitBoard*3;Battery*2;Wool*6
+
+# --- A Raft store by the Moontown domes: the station's stores hut, still trading (Raft's goods, and plans the crew missed) --
+store stationshop at 88 -40 ground
 
 save Glacier Station

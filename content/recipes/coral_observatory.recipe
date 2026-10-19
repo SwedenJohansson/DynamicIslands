@@ -158,6 +158,9 @@ step kill|Angler fish|1|Drive the giant angler fish out of the blue hole
 step open|Blue hole sample case C|1|Go down the hole for the last case, C
 step collect|story:sample|3|Carry all three coral samples back to the lab
 step open|Director's safe|1|Run the analyzer and open the director's safe
+step blueprint|Blueprint_Recycler|1|Take the recycler plans from the director's safe
+step blueprint|Blueprint_Cropplot_Large_Tier3|1|Take the large crop plot plans from the director's safe
+step blueprint|Blueprint_Cropplot_Medium_Tier3|1|Take the medium crop plot plans from the director's safe
 quest done=The analyzer's printout says it plainly: the reef is dying of cold, a current from the north. Wherever it comes from, that is where the story goes next.
 quest reward=CopperIngot*4;Plastic*10;Glass*6
 

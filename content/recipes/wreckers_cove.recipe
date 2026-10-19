@@ -219,6 +219,8 @@ step open|Smugglers' strongbox|1|Open the smugglers' strongbox for the lantern k
 step read|Keeper's log|1|Follow the boardwalk to the south point and read the keeper's log
 step reach|lantern|1|Climb the false lantern to its roof
 step open|Wreckers' hoard|1|Douse the lantern and open the wreckers' hoard
+step blueprint|Blueprint_HeadLight|1|Take the headlamp plans from the wreckers' hoard
+step blueprint|Blueprint_BatteryCharger|1|Take the battery charger plans from the wreckers' hoard
 quest done=The point is dark, the hoard is yours - and no ship will follow the red light onto the reef again.
 quest reward=Rope*4;Nail*20;Plastic*8
 

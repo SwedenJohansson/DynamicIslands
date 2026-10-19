@@ -432,7 +432,11 @@ step kill|Polar bear|1|Survive what waits at the heart of the maze
 step collect|story:boilerkey|1|Take the boiler house key from the caretaker's coat
 step reach|boilerroom|1|Unlock the boiler house behind the lodge
 step open|Caretaker's strongbox|1|Vent the three valves in the order of his pages - and open his strongbox
+step blueprint|Blueprint_Cropplot_Small_Tier3|1|Take the small crop plot plans from the caretaker's strongbox
 quest done=The boiler sighs and goes cold, and the music in the ballroom stops. The winter book has its last chapter - you wrote it.
 quest reward=Plank*6;Wool*3;Cooked_GenericMeat*2
+
+# --- A Raft store down the hill south of the lodge: the gift shop, open all winter (Raft's goods, and plans the crew missed) --
+store giftshop at 2 -30 ground
 
 save Highmoor Lodge

@@ -25,5 +25,6 @@ expect animals Warthog 0
 # To the end of the line: the last ore cart
 walk 2 -17.4 to -8.5 -17.4 h=6.5
 open Last ore cart
+wait 2
 expect item Blueprint_MetalDetector 1
 expect done

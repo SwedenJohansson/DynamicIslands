@@ -64,6 +64,7 @@ walk -5.5 -6.5 to -3 -6 to 0 -6 to 4 -6 to 4.2 -8.3 to 6.6 -8.2 h=1.69 below=5
 read Commander's orders
 expect step 6
 open Commander's safe
+wait 2
 expect item Blueprint_Fueltank 1
 expect done
 

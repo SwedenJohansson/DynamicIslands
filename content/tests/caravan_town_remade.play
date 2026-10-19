@@ -52,6 +52,7 @@ open Screecher's nest
 expect story mayorkey 1
 expect step 11
 open Mayor's chest
+wait 4
 expect item Blueprint_EngineControls 1
 expect item Blueprint_MetalDetector 1
 expect done

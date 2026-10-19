@@ -39,5 +39,6 @@ expect message talks again
 expect shown onairlights
 expect story battery 0
 open Radio room locker
+wait 3
 expect item Blueprint_Reciever 1
 expect done

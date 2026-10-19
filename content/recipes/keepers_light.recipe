@@ -381,6 +381,7 @@ step read|Keeper Lusk's diary|1|Read the assistant keeper's diary in the oil sto
 step kill|Screecher|2|Climb to the dark lamp gallery and drive the screechers off it
 step kill|Angler fish|1|Go down into the flooded cistern and face what lives in it
 step open|Lamp room locker|1|Bring up the oil, light the lamp, sound the foghorn - and open the lamp room's locker
+step blueprint|Blueprint_HeadLight|1|Take the headlamp plans from the lamp room locker
 quest done=The light turns and the horn sounds over the fog. Whatever the two keepers saw in each other, the ships see the light again.
 quest reward=Plank*6;Rope*3;Cooked_Herring*3
 

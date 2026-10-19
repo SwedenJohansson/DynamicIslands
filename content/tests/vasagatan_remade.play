@@ -46,6 +46,7 @@ expect message swings free
 walk -27.2 -27.4 to -26.92 -25.86 h=1.4
 reach Captain's safe
 open Captain's safe
+wait 3
 expect item Blueprint_MotorWheel 1
 expect item Blueprint_SteeringWheel 1
 expect done

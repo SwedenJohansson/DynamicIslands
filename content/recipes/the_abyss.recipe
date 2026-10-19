@@ -184,6 +184,8 @@ step reach|lair|1|Face the light that is not a fish's at the bottom of the Abyss
 step pages||4|Kill the Abyssal Angler and write its end into your journal
 step kill|Angler fish|4|Finish off its brood - not one angler left in the lair
 step open|Lair hoard|1|Open what the lair kept
+step blueprint|Blueprint_HeadLight_Advanced|1|Take the advanced headlamp plans from the lair hoard
+step blueprint|Blueprint_BackpackAdvanced|1|Take the advanced backpack plans from the lair hoard
 step pages||5|Write the hoard into your journal - the expedition's answer
 step reach|camp|1|Climb the air line back up - the pockets still breathe on the way - and haul yourself aboard the expedition's raft
 step read|Expedition leader's log|1|Read the leader's log once more - its question has an answer now

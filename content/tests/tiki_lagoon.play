@@ -49,6 +49,7 @@ climb 22.25 3.88 h=2
 expect stand 22.25 6.25 h=4.6 below=6.5
 at 22.25 6.25 h=5.7
 open Manager's safe
+wait 2
 expect done
 
 # The towel hut's box and the staff room's chest

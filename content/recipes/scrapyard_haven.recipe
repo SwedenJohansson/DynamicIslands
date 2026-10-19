@@ -237,6 +237,8 @@ step read|King's pit sign|1|Read the painted sign at the pit's edge
 step reach|stilts|1|Climb the ridge to the foot of the fortress's stilts
 step reach|fortress|1|Climb the ladders up to the scrap king's fortress
 step open|Scrap king's hoard|1|Open the scrap king's hoard
+step blueprint|Blueprint_ZiplineBase|1|Take the zipline plans from the scrap king's hoard
+step blueprint|Blueprint_ZiplineTool|1|Take the zipline tool plans from the scrap king's hoard
 quest done=The pit is quiet and the hoard is open. The scrap king never came back - so his crown, of sorts, is yours.
 quest reward=MetalIngot*4;Nail*20;Plastic*10
 

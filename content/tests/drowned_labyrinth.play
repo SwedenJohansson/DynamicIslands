@@ -44,8 +44,9 @@ zone hall
 kill Angler fish
 expect step 5
 open Trader's strongbox
+wait 2
 expect item Blueprint_Canteen 1
-expect step 6
+expect step 7
 read Noor's last slate
 air airbell2
 

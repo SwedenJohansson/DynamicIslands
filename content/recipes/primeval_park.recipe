@@ -484,6 +484,8 @@ step reach|queengate|1|Open the great gate on the north horn and walk into the Q
 step kill|Mama bear|1|Face the Queen
 step read|Founder's farewell|1|Read the founder's farewell in the keeper lodge
 step open|Founder's vault|1|Open the founder's vault
+step blueprint|Blueprint_Cropplot_Large_Tier3|1|Take the large crop plot plans from the founder's vault
+step blueprint|Blueprint_Recycler|1|Take the recycler plans from the founder's vault
 quest done=The park's lights burn on an empty park. The ironbacks, the screechers, the leviathan, the Queen - you've seen them all. The founder's last wish is in your hands: plant something that grows the size it should.
 quest reward=MetalIngot*8;Bolt*8;Plastic*12
 

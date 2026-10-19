@@ -84,5 +84,6 @@ expect step 20
 expect animals Bear 0
 walk -4 32 to -4.5 14 h=6.8
 open Company strongbox
+wait 2
 expect item Blueprint_TitaniumTools 1
 expect done

@@ -473,6 +473,8 @@ step read|Hatch manual|1|Read the hatch's manual by the terminal
 step collect|story:accesscard|1|Enter the Sequence at the terminal
 step reach|vaultroom|1|Get through the vault door before the counter reaches zero
 step open|Initiative's vault|1|Open the Initiative's vault
+step blueprint|Blueprint_BatteryCharger|1|Take the battery charger plans from the initiative's vault
+step blueprint|Blueprint_ZiplineTool|1|Take the zipline tool plans from the initiative's vault
 quest done=The vault is open and the counter has stopped at zero. Nothing happened - or nothing you could see. The Initiative's stations stand empty in the mist, and the island keeps the rest of its secrets.
 quest reward=CircuitBoard*2;MetalIngot*8;Cooked_GenericMeat*4
 

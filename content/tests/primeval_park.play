@@ -96,6 +96,7 @@ expect step 18
 read Founder's farewell
 expect step 19
 open Founder's vault
+wait 3
 expect done
 # Raft's story machinery: the feed chest in the dog cage in the paddock's corner - refused while the cage is chained; the
 # bolt cutters from the keeper's tool chest; the cage opens and the chest with it. The camera on the keeper's hut sweeps

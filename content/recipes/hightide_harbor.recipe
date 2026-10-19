@@ -355,7 +355,17 @@ step reach|lamptower|1|Climb the lamp tower out on the point
 step kill|Screecher|2|Drive the screechers off the lamp tower
 step collect|story:safecode|1|Fill the harbour lamp and light it
 step open|Harbour master's safe|1|Open the harbour master's safe
+step blueprint|Blueprint_Pipe_Water|1|Take the water pipe plans from the harbour master's safe
+step blueprint|Blueprint_ElectricPurifier|1|Take the electric purifier plans from the harbour master's safe
+step blueprint|Blueprint_WaterTank|1|Take the water tank plans from the harbour master's safe
+step blueprint|Blueprint_Storage_Large|1|Take the large storage plans from the harbour master's safe
 quest done=The lamp burns over the harbour mouth again - for a fleet that went on to the Iron Graveyard, the chart in the safe says. The water runs, and the next crew will find the way.
 quest reward=Plank*10;Rope*4;Raw_Herring*4
+
+# --- Raft's vending machine on the street by the quay (its east side, clear of the walkway), from Tangaroa's arcade: Tangaroa's plants for its tokens; three tokens lie about the harbour --
+vending quayvend at 0.3 5.5 ground yaw=270
+place QuestItemPickup_Tangaroa_Token - at -0.5 8 ground
+place QuestItemPickup_Tangaroa_Token - at 20 -4 ground
+place QuestItemPickup_Tangaroa_Token - at 16 28 ground
 
 save Hightide Harbor

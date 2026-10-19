@@ -66,6 +66,7 @@ walk -31.6 0.85 to -35.3 0.85 to -38.5 1.5 to -41.5 1.9 to -44.2 1.9 to -48 0.5 
 zone dock
 expect step 6
 open Getaway boat locker
+wait 2
 expect item Blueprint_ZiplineTool 1
 expect done
 

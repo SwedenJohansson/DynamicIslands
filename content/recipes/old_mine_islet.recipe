@@ -115,6 +115,7 @@ step open|Miner's locker|1|Take the miner's head lamp
 step reach|deep|1|Light the lamp and follow the rails into the dark to the deep tunnel
 step kill|Warthog|1|Face the beast at the end of the line
 step open|Last ore cart|1|Bring out the last ore cart
+step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from the last ore cart
 quest done=The beast is gone and the last ore cart is yours - half of it, anyway.
 quest reward=MetalIngot*3;Nail*10
 

@@ -15,7 +15,7 @@ include lib_features
 include lib_huts
 new
 # (nature: a mountain - Rocks 0.5, few trees (0.2) on the lower slopes, Bushes and Harvest light)
-gen Trees=0.2 Bushes=0.3 Rocks=0.5 Harvest=0.15 BeachThings=0.3
+gen Trees=0.05 Bushes=0.3 Rocks=0.1 Harvest=0.15 BeachThings=0.3
 gen Seed=9991 Radius=95 Height=40 Roughness=0.4 Peaks=1 Shape=0 Style=1 PeakShape=0.5 Cliffs=0.4 BeachWidth=0.4
 gen Water=0.5 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.4 Hostiles=0 Friendly=0 SeaLife=0.2
 generate

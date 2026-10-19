@@ -60,6 +60,7 @@ expect step 10
 
 # Back to cabin 1: her footlocker
 open Counselor's footlocker
+wait 2
 expect done
 
 # The other boxes: the fridge, cabin 2's box, the sunk canoe's box

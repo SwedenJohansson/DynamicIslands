@@ -56,6 +56,7 @@ expect stand 48 -2 h=8.8
 zone meridianroof
 expect step 18
 open Meridian Vault
+wait 2
 expect story keycard 0
 expect item Blueprint_BatteryAdvanced 1
 wait 1

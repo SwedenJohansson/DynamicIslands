@@ -39,6 +39,7 @@ zone deep
 kill Angler fish
 expect step 5
 open Foreman's strongbox
+wait 5
 expect item Blueprint_WindTurbine 1
 expect item Blueprint_ElectricGrill 1
 expect done

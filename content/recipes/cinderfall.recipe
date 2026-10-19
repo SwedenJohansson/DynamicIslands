@@ -160,6 +160,10 @@ step collect|story:valvetag|3|Shut the last valve - three brass tags, and the hi
 step reach|hall|1|Go down to the turbine hall at the volcano's foot
 step kill|Roach|3|Clear the roaches out of the turbine hall
 step open|Plant store|1|Open the plant's store with the three valve tags
+step blueprint|Blueprint_Machete|1|Take the machete plans from the plant store
+step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from the plant store
+step blueprint|Blueprint_Fueltank|1|Take the fuel tank plans from the plant store
+step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe plans from the plant store
 quest done=The gauges settle, the hiss is gone. In the store the Corps left a machete and their fuel plans - and a note: the Sunken Archive, out in the lagoon.
 quest reward=Plank*8;Scrap*6;Rope*2
 

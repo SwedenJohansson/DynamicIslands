@@ -98,4 +98,5 @@ include highmoor_lodge.play
 sail 4
 arrive crater
 include crater_lair.play
+expect blueprints
 plan end

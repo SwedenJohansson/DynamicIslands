@@ -42,7 +42,11 @@ expect step 10
 use vinewall
 expect message machete bites
 expect hidden vinewall
-walk -62 -9.5 to -70 -9.5 to -78 -9.5
+# (to the mouth, then in: Balboa's cave rock has a low ridge across its floor 1.3 m inside the mouth that the walker
+# sticks on now and then (a player steps or jumps over it); CIRaySlice shows it - SL6 plan run, 2026-10-19)
+walk -62 -9.5 to -67.8 -9.5
+at -69.5 -9.5 h=6.6
+walk -69.5 -9.5 to -78 -9.5
 zone den
 expect step 11
 read Scrawled on a crate
@@ -75,6 +79,7 @@ expect step 19
 at 82 15
 expect step 19
 open Ranger's strongbox
+wait 5
 expect item Blueprint_Machete 1
 expect item Blueprint_Fueltank 1
 expect done

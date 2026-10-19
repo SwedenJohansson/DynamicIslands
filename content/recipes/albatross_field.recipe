@@ -331,6 +331,8 @@ step reach|tower|1|Climb the control tower to the radio
 step collect|story:landingorder|1|Fit the crystal and raise the lost flight on the radio
 step collect|story:runwaylit|1|Light the four runway lamps, south to north
 step open|Commander's footlocker|1|Open the commander's footlocker - it's for whoever brings them home
+step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the commander's footlocker
+step blueprint|Blueprint_Antenna|1|Take the antenna plans from the commander's footlocker
 quest done=Four aircraft came home over Albatross Field - or something did. The runway lamps burn on, and the order is carried out.
 quest reward=MetalIngot*8;Glass*6;CircuitBoard*2
 

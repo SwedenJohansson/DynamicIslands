@@ -35,4 +35,5 @@ expect chain gate done
 tune frontier
 include the_frontier.play
 expect chain frontier done
+expect blueprints
 plan end

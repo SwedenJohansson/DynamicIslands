@@ -17,4 +17,5 @@ tune city
 include drowned_metropolis.play
 tune abyss
 include the_abyss.play
+expect blueprints
 plan end

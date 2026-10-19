@@ -58,6 +58,7 @@ walk 34.23 -12.43 to 32.55 -17.14 to 31.16 -19.83 h=5.05 below=7.5
 zone gateoffice
 expect step 9
 open Gate office vault
+wait 4
 expect item Blueprint_TitaniumTools 1
 expect item Blueprint_ZiplineToolElectric 1
 expect done

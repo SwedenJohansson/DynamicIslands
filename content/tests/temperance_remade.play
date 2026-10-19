@@ -51,6 +51,7 @@ expect step 9
 walk -5 18 to 0 17.5 to 1.8 16.2 h=9 below=12
 reach Chief's vault
 open Chief's vault
+wait 4
 expect item Blueprint_SmelterElectric 1
 expect item Blueprint_AnchorStationaryAdvanced 1
 expect done

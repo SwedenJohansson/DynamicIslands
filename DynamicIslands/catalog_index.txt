@@ -92,6 +92,7 @@ Table Office	19#Landmark_Radar#Big radio tower	Radio tower
 UnlockCylinder	19#Landmark_Radar#Big radio tower	Radio tower	
 Vent	19#Landmark_Radar#Big radio tower	Radio tower	
 TradingPost	28#Landmark_Big#OG	Islands	
+VendingMachine	50#Landmark_Tangaroa#	Tangaroa	
 TradingPost_Register	28#Landmark_Big#OG	Islands	
 TradingPost_Register_Dollar1	28#Landmark_Big#OG	Islands	
 TradingPost_Register_Dollar2	28#Landmark_Big#OG	Islands	

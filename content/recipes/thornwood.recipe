@@ -251,6 +251,7 @@ step reach|temple|1|Climb to the stone temple on the hill
 step kill|Warthog|3|Defeat the Boar King and his guards
 step read|The boar idol|1|Read the spirals carved down the boar idol's flanks
 step open|Temple offering|1|Lay the three tusks on the altar
+step blueprint|Blueprint_Machete|1|Take the machete plans from the temple offering
 step open|Vine cache by the temple|1|Cut through the vines near the temple with the new machete
 step open|Vine cache by the camp|1|Back towards the beach: cut open the second cache behind the vines
 quest done=The Boar King is dead, the tusks lie on the altar and the explorer's caches are found. The temple's offering - and a machete blueprint the explorer left - are yours.

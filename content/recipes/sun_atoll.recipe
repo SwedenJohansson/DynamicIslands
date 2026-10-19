@@ -337,6 +337,7 @@ step reach|groundzero|1|Wade out to the test tower's stumps at ground zero
 step open|Tower camera's lead case|1|Dive into the crater for the tower camera's lead case - don't stay
 step collect|story:film|3|Recover the other two canisters from the north and south measuring posts
 step open|Blockhouse safe|1|Run the films on the projector and open the blockhouse safe
+step blueprint|Blueprint_Recycler|1|Take the recycler plans from the blockhouse safe
 quest done=The films have been seen. Whatever the world does with them, the atoll has its witness - and you have hers.
 quest reward=Scrap*8;Plastic*6;Nail*12
 

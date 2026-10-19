@@ -289,6 +289,7 @@ step read|Manager's last memo|1|Read the manager's memo pinned behind the bar
 step catch|Goat|2|Catch the petting zoo's two runaway goats (the net gun is in the bar's lockbox)
 step collect|story:fuelcan|1|Dive for the fuel can in the pedal boat sunk in the deep pool
 step open|Manager's safe|1|Start the generator - lights, music - and open the manager's safe
+step blueprint|Blueprint_Cropplot_Large_Tier3|1|Take the large crop plot plans from the manager's safe
 quest done=The lights are on, the jukebox is playing, the goats are safe. The season is open - and you're the only guest.
 quest reward=Pineapple*2;Coconut*4;Plastic*8
 

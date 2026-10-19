@@ -190,6 +190,10 @@ step read|Mast plate|1|Read the plate painted on the radio mast
 step open|Spare parts box|1|Search the rangers' spare parts box under the mast
 step open|Radio desk|1|Call out on the summit's radio and open its desk
 step open|Ranger's strongbox|1|Back at the station, open the rangers' strongbox with the key
+step blueprint|Blueprint_Machete|1|Take the machete plans from the ranger's strongbox
+step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from the ranger's strongbox
+step blueprint|Blueprint_Fueltank|1|Take the fuel tank plans from the ranger's strongbox
+step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe plans from the ranger's strongbox
 quest done=The strongbox opens: the machete's blueprint, the biofuel refiner's, the fuel tank's and its pipe's. The voice on the radio said south - toward the traders.
 quest reward=Plank*8;Rope*4;BioFuel*1
 

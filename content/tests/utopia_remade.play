@@ -74,6 +74,7 @@ expect step 19
 walk -2.5 -5 to -2.5 -11.8 to -4.8 -12.3 h=18
 reach Warden's chest
 open Warden's chest
+wait 4
 expect item Blueprint_TitaniumTools 1
 expect item Blueprint_ZiplineToolElectric 1
 wait 2

@@ -41,6 +41,7 @@ walk 49.5 6 to 49.5 -3 to 49.5 -8 to 48.5 -10.9 to 45 -11.7 to 42.2 -12.0 h=0
 reach Botanist's sea chest
 zone seacave
 open Botanist's sea chest
+wait 2
 expect item Blueprint_Cropplot_Medium_Tier3 1
 expect done
 

@@ -215,4 +215,10 @@ step open|Dagny's case|1|Free the prisoner in the wine cellar and take her case
 quest done=Dagny Holm is coming with you, and she knows the way to the Rain Engine. Its station answers on 1400.
 quest reward=Glass*4;Bolt*4;MetalIngot*3
 
+# --- Raft's vending machine by the members' shop, from Tangaroa's arcade: Tangaroa's plants for its tokens; three tokens lie about --
+vending clubvend at 18 -4 ground
+place QuestItemPickup_Tangaroa_Token - at 12 4 ground
+place QuestItemPickup_Tangaroa_Token - at 16 -12 ground
+place QuestItemPickup_Tangaroa_Token - at 18 0 ground
+
 save The Isobar Club

@@ -158,6 +158,8 @@ step reach|roof|1|Climb the tower's three ladders to the nest of wire and bones 
 step kill|Screecher|1|Drive Old Beak off the tower's roof
 step reach|radioroom|1|Climb to the radio room at the top
 step open|Radio room locker|1|Put the tower on the air and open the keeper's locker
+step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the radio room locker
+step blueprint|Blueprint_Antenna|1|Take the antenna plans from the radio room locker
 quest done=The tower talks again: its call goes out over the sea - and somewhere far off, a ship's beacon answers.
 quest reward=Plank*10;Rope*3;Nail*10
 

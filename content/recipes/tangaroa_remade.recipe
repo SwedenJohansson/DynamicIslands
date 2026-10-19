@@ -26,7 +26,17 @@ brush flatten from 26.5 -2 to 27.5 8 r=3.5 s=20 frames=40 h=2.1
 for i 0 6 1
 brush flatten at {26.5-$i*3.4} {8+$i*1.0} r=2.8 s=20 frames=30 h={2.1+$i*1.73}
 next
+# (and again in half steps: the land made like Tangaroa's left the road's ramp a lumpy gully a player slid off -
+# SL6 plan run, 2026-10-19)
+for i 0 12 1
+brush flatten at {26.5-$i*1.7} {8+$i*0.5} r=2.2 s=20 frames=40 h={2.1+$i*0.865}
+next
 brush smooth from 26.5 8 to 6.1 14 r=3 s=10 frames=20
+# (the harbour's pier and the harbour master's office stand over the sea east of the shore: the land made like Tangaroa's
+# own reached out under them, 9.7 m up at the office, and stood the office on a hill - SL6 plan run, 2026-10-19)
+for px 59 83 6
+brush flatten from {$px} -16 to {$px} 9 r=4 s=20 frames=60 h=-5
+next
 origin
 clear at -6 7 r=16
 clear at 33 -2 r=14
@@ -117,13 +127,19 @@ pop
 place RestaSunshadeGround - at 33 0 ground
 place Tangaroa_OutdoorFurniture_Table - at 33 0 ground
 place Tangaroa_OutdoorFurniture_Chair - at 32 -0.5 ground yaw=90
-place VendingMachine_w_Animations - at 28.6 2.4 ground yaw=180
+# (Raft's vending machine, working: Tangaroa's plants for its tokens; three tokens lie about the dome)
+vending domevend at 28.6 2.4 ground yaw=180
+place QuestItemPickup_Tangaroa_Token - at 32 -4 ground
+place QuestItemPickup_Tangaroa_Token - at 36 -4 ground
+place QuestItemPickup_Tangaroa_Token - at 28 -12 ground
 place TangaroaBench - at 40 -9.5 ground yaw=0
 place TangaroaBench - at 30 -9.5 ground yaw=0
 push at 24 -1 h=2.2
 call rt_storey r2=RT_WallDoor1 r1=RT_WallWindowBroken1 r3=RT_Wall1
 place RT_Floor - at 0 4.5 y=3.05
-place Locker pumplocker at -5.4 3.5 sit yaw=90
+# (the locker by the north wall, not the west one: the hill made like Tangaroa's leans into the house's west end
+# and hid a locker there - SL6 plan run, 2026-10-19)
+place Locker pumplocker at -2.5 3.6 sit yaw=180
 place "Box Big" - at -5.2 -3.6 sit yaw=10
 place "Box Small" - at -4 -3.7 sit yaw=-20
 place TangaroaBucket - at -1 3.7 sit
@@ -250,6 +266,10 @@ step kill|Tangaroa rat|3|Clear the rats out of the pump house
 step collect|story:genpart|1|Take the generator's part from the pump house
 step collect|story:keycard|3|Find the other two key cards: the harbour master's and the caretaker's
 step open|Council's vault|1|Start the generator on the square and open the council's vault
+step blueprint|Blueprint_Pipe_Water|1|Take the water pipe plans from the council's vault
+step blueprint|Blueprint_ElectricPurifier|1|Take the electric purifier plans from the council's vault
+step blueprint|Blueprint_WaterTank|1|Take the water tank plans from the council's vault
+step blueprint|Blueprint_Storage_Large|1|Take the large storage plans from the council's vault
 quest done=The vault opens on a city lit again: water pipes, purifiers, tanks - the founders' plans for keeping a floating city alive.
 quest reward=Plank*10;Plastic*6;Battery*1
 

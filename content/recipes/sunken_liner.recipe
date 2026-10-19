@@ -251,6 +251,7 @@ step kill|Angler fish|2|Drive the two lamps out of the stern
 step reach|purser|1|Find the purser's office beside the stern
 step collect|story:sapphire|1|Open the purser's safe for the Polar Star
 step open|Ship's pay chest|1|Open the ship's pay chest with the purser's key
+step blueprint|Blueprint_HeadLight|1|Take the headlamp plans from the ship's pay chest
 quest done=The Polar Star is yours, and the ship's last wages. Above you the ice-rocks stand where they always stood; below, the Regina Borealis sleeps on.
 quest reward=OxygenBottle*2;Wool*4;MetalIngot*6
 

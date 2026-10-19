@@ -78,6 +78,7 @@ expect story blade 0
 expect story hub 0
 at 25 -61.4 h=3.1
 open Yard store
+wait 5
 expect item Blueprint_WindTurbine 1
 expect item Blueprint_ElectricGrill 1
 expect done

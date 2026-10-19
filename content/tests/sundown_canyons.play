@@ -108,8 +108,8 @@ open Foreman's strongbox
 expect story dynamite 0
 expect story liftkey 1
 expect step 22
-# (through the gallery to its back: the cache, the lift cage up through the mesa)
-walk 24 -61 to 24 -50 to 24 -33 h=11.5 below=20
+# (through the gallery to its back: the cache, the lift cage up through the mesa) (round the tub on the rails)
+walk 24 -61 to 24 -50 to 22 -48.5 to 22 -45.5 to 24 -43 to 24 -33 h=11.5 below=20
 open Mine cache
 use liftcage
 expect step 23
@@ -163,6 +163,10 @@ walk -99.5 -18.5 to -99.5 -15.5 to -94 -15.5 h=3.05 below=6 blocked
 use vaultdoor
 wait 3
 walk -99.5 -18.5 to -99.5 -15.5 to -93 -15.5 h=3.05 below=6
+# (a bag full of the whole story by now: room made, or the vault's plans drop to the floor)
+empty
 open Bank vault
+wait 4
 expect item Blueprint_BatteryCharger 1
+wait 3
 expect done

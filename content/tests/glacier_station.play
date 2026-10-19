@@ -69,7 +69,8 @@ expect shown reactorglow
 wait 1
 expect step 18
 open Reactor vault
+wait 2
 expect item Blueprint_ElectricPurifier 1
-expect step 19
+expect step 20
 zone chimneys
 expect done

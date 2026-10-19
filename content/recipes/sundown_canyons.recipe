@@ -755,7 +755,13 @@ step reach|bank|1|Walk into the Bank of Sundown
 step collect|story:receipt|1|Return the silver at the teller's counter
 step read|Bank manager's letter|1|Read the bank manager's letter behind the counter
 step open|Bank vault|1|Open the bank vault with the gang's key
+step blueprint|Blueprint_BatteryCharger|1|Take the battery charger plans from the bank vault
+step blueprint|Blueprint_DetailPlank|1|Take the decorative plank plans from the bank vault
+step blueprint|Blueprint_Recycler|1|Take the recycler plans from the bank vault
 quest done=The silver is home, the gang is gone and the vault is open. Sundown's church bell is still ringing - for its new sheriff.
 quest reward=Plank*12;Leather*4;Cooked_GenericMeat*4
+
+# --- A Raft store on the edge of Sundown: the general store, still trading (Raft's goods, and plans the crew missed) --
+store generalstore at -116 -20 ground
 
 save Sundown Canyons

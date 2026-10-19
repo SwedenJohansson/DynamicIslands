@@ -295,6 +295,7 @@ step read|Dana's last note|1|Read the note pinned inside the old boathouse
 step reach|lookout|1|Climb to the fire lookout on the hill
 step collect|story:lockerkey|1|Fire the flare for the ranger boat and take the key from the nail by the post
 step open|Counselor's footlocker|1|Take her key back down to cabin 1 and open her footlocker
+step blueprint|Blueprint_Canteen|1|Take the canteen plans from the counselor's footlocker
 quest done=The flare has been fired and the ranger boat answered - a whole summer late. The Ridge Bear is gone; whatever happened to Dana, her camp is quiet now.
 quest reward=Plank*8;Rope*4;Raw_Salmon*3
 

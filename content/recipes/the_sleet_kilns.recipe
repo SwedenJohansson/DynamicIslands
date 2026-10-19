@@ -13,7 +13,7 @@ new
 # (nature: volcano density - black sand, rocks, few trees and bushes; Harvest 0.2)
 gen Trees=0.1 Bushes=0.15 Rocks=0.5 Harvest=0.2 BeachThings=0.3
 gen Seed=9901 Radius=56 Height=8 Roughness=0.3 Peaks=1 Shape=0 Style=4 PeakShape=0.15 Cliffs=0.3 BeachWidth=0.6
-gen Water=0.5 SeaRocks=0.5 SeaFinds=0.4 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.3
+gen Water=0.5 SeaRocks=0.5 SeaFinds=0.2 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
 
 # --- Terrain: the kiln yard flattened at 3 m, the tramway's bed north from the landing, the landing beach -------------

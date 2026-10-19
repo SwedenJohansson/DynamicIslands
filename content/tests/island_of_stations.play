@@ -114,6 +114,7 @@ walk 0 0 to 2.5 0 to 6 0 h=3 below=8
 zone vaultroom
 expect step 21
 open Initiative's vault
+wait 3
 expect item Blueprint_BatteryCharger 1
 expect done
 

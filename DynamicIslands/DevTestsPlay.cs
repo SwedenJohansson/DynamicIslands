@@ -458,8 +458,14 @@ namespace DynamicIslands
 							IslandObjectRef r = ScObjOf(playEntry, t[2]);
 							if (r == null) { Check(ref ok, false, "'" + t[2] + "' to spin (not there)"); break; }
 							Vector3 up0 = r.transform.up, fwd0 = r.transform.forward;
-							yield return new WaitForSeconds(1f);
-							Check(ref ok, Vector3.Angle(up0, r.transform.up) < 2f && Vector3.Angle(fwd0, r.transform.forward) > 5f, "'" + t[2] + "' turns around its own axis (its axis moved " + Vector3.Angle(up0, r.transform.up).ToString("F1") + " deg, it turned " + Vector3.Angle(fwd0, r.transform.forward).ToString("F1") + " deg)");
+							// (up to 3 s: a camera that sweeps to and fro may be at its turning point in the first second - SL6, 2026-10-19)
+							float tilt = 0f, turned = 0f;
+							for (int k = 0; k < 3 && turned <= 5f; k++)
+							{
+								yield return new WaitForSeconds(1f);
+								tilt = Mathf.Max(tilt, Vector3.Angle(up0, r.transform.up)); turned = Mathf.Max(turned, Vector3.Angle(fwd0, r.transform.forward));
+							}
+							Check(ref ok, tilt < 2f && turned > 5f, "'" + t[2] + "' turns around its own axis (its axis moved " + tilt.ToString("F1") + " deg, it turned " + turned.ToString("F1") + " deg)");
 							break;
 						}
 						yield return new WaitForSeconds(0.3f);
@@ -499,6 +505,11 @@ namespace DynamicIslands
 						break;
 					case "log":
 						Log("  " + Rest(line, 1));
+						break;
+					case "empty":
+						// the player's inventory emptied, as a player makes room (a long play carries a full bag by a vault whose plans
+						// would drop to the floor - Sundown's bank, SL6 2026-10-19); only in a CI world, its blueprints noted first
+						if ((SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ") && me != null && me.Inventory != null) { NotePlayBlueprints(me); me.Inventory.Clear(); Log("  inventory emptied"); }
 						break;
 					case "picture":
 					{
