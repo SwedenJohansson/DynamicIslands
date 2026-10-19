@@ -433,9 +433,12 @@ namespace DynamicIslands
 						// when a quest is done, after a visit) comes; the steps after it play on it
 						string rule = Rest(line, 1).Trim();
 						StoryChain.Tick();
-						yield return WaitFor(() => IslandWorldState.Islands.Any(x => x.Rule == rule && x.Root != null), 90f);
-						IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Rule == rule && x.Root != null);
-						Check(ref ok, e != null, "'" + rule + "' comes" + (e != null ? " ('" + e.HostName + "', " + (e.Position - me.transform.position).magnitude.ToString("F0") + " m away)" : ""));
+						// (brought is enough: one brought past the unload distance from a player still on the last island loads,
+						// unloads a moment later and loads again as the raft comes near - "island" takes the player there. Waiting for
+						// it loaded failed a plan run now and then: Silver Screen's Keeper's Light brought 900 m off, 2026-10-19)
+						yield return WaitFor(() => IslandWorldState.Islands.Any(x => x.Rule == rule && !x.Failed && (x.Root != null || !x.Loading)), 90f);
+						IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Rule == rule && !x.Failed);
+						Check(ref ok, e != null, "'" + rule + "' comes" + (e != null ? " ('" + e.HostName + "', " + (e.Position - me.transform.position).magnitude.ToString("F0") + " m away" + (e.Root == null ? ", not loaded yet" : "") + ")" : ""));
 						checks++;
 						if (e != null) { playEntry = e; playOffset = Vector2.zero; }
 						break;
@@ -827,6 +830,9 @@ namespace DynamicIslands
 			{
 				if (hit.collider.transform.IsChildOf(root)) return null;
 				if (hit.collider.isTrigger || hit.collider.transform.IsChildOf(cam.transform.root)) continue;
+				// (a slain creature's body (Body_Ragdoll) is loose and pushed aside, not part of the island - Sun Atoll's
+				// roaches fell in front of the locker now and then, 2026-10-19)
+				if (hit.collider.name.IndexOf("Ragdoll", StringComparison.OrdinalIgnoreCase) >= 0) continue;
 				return hit.collider.name + " in the way " + hit.distance.ToString("F1") + " m from the eye (the chest " + dist.ToString("F1") + " m)";
 			}
 			return "nothing of it within 2.5 m toward it (it is " + dist.ToString("F1") + " m from the eye)";

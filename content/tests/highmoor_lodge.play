@@ -29,7 +29,10 @@ walk 9.25 28.1 to 9.25 31.9 to 7.75 32.1 to 6.6 30.75 to 4.6 30.75 to 2.8 29.6 h
 read Typed page, chapter nine
 
 # Back down; through the back into the kitchen (page four, two rats); through the lobby's side into the ballroom (page five)
-walk 4.6 30.75 to 6.6 30.75 to 7.75 32.1 to 9.25 31.9 to 9.25 28.1 to 8 29 h=3.45 below=8.5
+# (down to the stair's foot first, then on: the walker turned for 8 29 a step above the foot now and then and met the
+# landing's floor - the SL6 plan runs, 2026-10-19)
+walk 4.6 30.75 to 6.6 30.75 to 7.75 32.1 to 9.25 31.9 to 9.25 28.1 h=3.45 below=8.5
+walk 9.25 28.1 to 8 29 h=3.45 below=5.5
 walk 8 29 to 7.75 28.3 to 7.75 26 to 7.6 24.6 h=3.45 below=5.5
 read Typed page, chapter eleven
 walk 7.75 26 to 7.75 28.6 to 3 30.75 to 1.5 30.75 to -1 30.75 h=3.45 below=5.5

@@ -58,7 +58,7 @@ expect message isn't whole
 | `air` | `<zone id>` | A shown zone with Air: a player with 10 % breath has over 90 % a moment later. |
 | `read` | `<title>` | Reads the note whose title contains the text, any case (or the note of a chest). |
 | `open` | `<title>` | Opens the chest whose note title is the text (`ScOpenChest`). |
-| `reach` | `<title>` | That chest is within 2.5 m of the player's eye with nothing solid between (`ScReach`). The player is not moved. |
+| `reach` | `<title>` | That chest is within 2.5 m of the player's eye with nothing solid between (`ScReach`; a slain creature's loose body does not count). The player is not moved. |
 | `openat` | `<x> <z>` | Opens the nearest chest; it must be within 4 m of the point. |
 | `use` | `<name> [stay]` | Fires `use` on the object (`Behaviours.Fire`). The player is put next to it (`ScUse`); with `stay`, used from where they stand (a lift carries them). A survivor cage is opened as a player's E opens it (`SurvivorCage.Use`). |
 | `code` | `<name> <digits> [wrong]` | Opens the object's keypad code lock (`lock.code`) as a player does, types the digits and OK; passes when the keypad closed and the lock is open (`CodeLock`). With `wrong`: passes when the digits did not open it. |
@@ -68,7 +68,7 @@ expect message isn't whole
 | `plan` | `<plan name>` or `end` | Clean story slate (`PlanCleanSlate`), then the world gets the plan (`ScSetPlan`); `end` puts the world's story back to Raft's. |
 | `note` | `<Raft story island>` | Reads Raft's note that gives that island's frequency (`PlayNote`). |
 | `tune` | `<rule>` | The Receiver tuned to a plan island's frequency (`TuneTo`); the island it brings is played next. |
-| `arrive` | `<rule>` | Waits up to 90 s for the island a plan rule brings by itself; it is played next. |
+| `arrive` | `<rule>` | Waits up to 90 s for the island a plan rule brings by itself (brought; it may not be loaded yet - `island` takes the player there); it is played next. |
 | `sail` | `<km>` | Adds that many km to `WorldDirector.Sailed` (for a plan's km rules). |
 | `expect` | see below | A check. |
 | `wait` | `[s]` | Waits s seconds (default 1). |
