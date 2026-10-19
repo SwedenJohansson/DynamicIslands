@@ -1,0 +1,10 @@
+# Guide pictures of Skyhollow (CIPlay skyhollow_pics): Raft's camera, morning, calm
+island Skyhollow
+offset 0 0
+hour 9
+weather Calm
+at 0 -2 h=7
+wait 3
+picture ni7b_skyhollow_island 40 4 -40 0 2 0
+picture ni7b_skyhollow_cabin -2 10 -12 -4 7 0
+picture ni7b_skyhollow_boat 20 9 -4 12 5 4

@@ -1,0 +1,16 @@
+# Play test of Skyhollow (CIPlay skyhollow, in a test world 'CI ...'): a flying island (60 m up; heights count from the
+# island's own water line). No quest: the meadow, the hermit's chest, the boat in its hollow and its crate, down to the
+# nesting ledge and up its ladder. Points as in its recipe.
+island Skyhollow
+offset 0 0
+wait 3
+at 0 -2
+expect height 7
+at -3.75 0.5 h=7
+open The hermit's chest
+at 9.5 5.5 h=5
+open Crate in the boat
+at 0 13 h=4
+expect height 4
+open Chest by the nests
+climb 0 10.15 h=4

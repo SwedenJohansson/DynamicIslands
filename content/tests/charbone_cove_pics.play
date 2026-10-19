@@ -1,0 +1,11 @@
+# Guide pictures of Charbone Cove (CIPlay charbone_cove_pics): Raft's camera, morning, calm
+island Charbone Cove
+offset 0 0
+hour 9
+weather Calm
+at 40 7
+wait 3
+picture ni7b_charbone_cove_island 60 26 -50 0 4 0
+picture ni7b_charbone_cove_camp -4 9 -14 -4 4 5
+picture ni7b_charbone_cove_cave 46 5 4 30 3 8
+picture ni7b_charbone_cove_wreck 14 -3 -54 8 -6 -62

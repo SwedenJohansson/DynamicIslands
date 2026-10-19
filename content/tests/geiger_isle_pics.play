@@ -1,0 +1,11 @@
+# Guide pictures of Geiger Isle (CIPlay geiger_isle_pics): Raft's camera, morning, calm
+island Geiger Isle
+offset 0 0
+hour 9
+weather Calm
+at 0 -30
+wait 3
+picture ni7b_geiger_isle_island 50 24 -62 0 4 -2
+picture ni7b_geiger_isle_yard 0 9 -30 0 3 -8
+picture ni7b_geiger_isle_bunker -1 6 4 -1 4 20
+picture ni7b_geiger_isle_jetty 12 5 -52 0 1.5 -48
