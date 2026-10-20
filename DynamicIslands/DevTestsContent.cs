@@ -1180,6 +1180,15 @@ namespace DynamicIslands
 					string said = CustomIslandSpawner.TrySpawn(raftNow, true, e.HostName);
 					// (a sea crowded ahead - the island just brought back, Raft's islands in the way: each try picks other random spots; a player's game tries again later)
 					for (int again = 0; again < 5 && said != null && said.Contains("no free spot"); again++) said = CustomIslandSpawner.TrySpawn(raftNow, true, e.HostName);
+					// (still none: a test world crowded by the earlier suites' islands - run i 2026-10-20 failed after the runner's 4 sail-ons; the
+					// sea's layout isn't what this tests, so once more with any spot clear of the raft, as CISpawnGenerated does)
+					if (said != null && said.Contains("no free spot"))
+					{
+						CustomIslandSpawner.TestAllRound = true;
+						try { said = CustomIslandSpawner.TrySpawn(raftNow, true, e.HostName); }
+						finally { CustomIslandSpawner.TestAllRound = false; }
+						Log("  ('" + e.HostName + "': no free spot in the crowded test sea - once more with any spot clear of the raft: " + said + ")");
+					}
 					float away = new Vector2(e.Position.x - raftNow.x, e.Position.z - raftNow.z).magnitude;
 					int copies = IslandWorldState.Islands.Count(x => x.HostName == e.HostName);
 					Check(ref ok, copies == 1 && away < behindBy - 300f && Vector3.Dot(e.Position - raftNow, CustomIslandSpawner.SailDirection()) > 0f,
