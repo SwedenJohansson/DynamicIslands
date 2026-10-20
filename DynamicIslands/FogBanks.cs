@@ -227,11 +227,39 @@ namespace DynamicIslands.Editor
 			c.a = 1f;
 			RenderSettings.fogColor = c;
 			NearEndShown = end;
+			SetTint(c, TintAlpha * w);
+		}
+
+		/// <summary>
+		/// The fog's veil: a full-screen layer in the fog's colour, as strong as the fog (TintAlpha at its thickest). Raft's
+		/// sea ignores both the sky's fog and Unity's, so without it the water 40-60 m out stayed crisp; with it the whole
+		/// view greys over and the water fades into the fog. Off (disabled, alpha 0) whenever the fog is not ours.
+		/// </summary>
+		internal static float TintAlpha = 0.35f;
+		static UnityEngine.UI.Image tint;
+		/// <summary>The veil's strength now (tests): 0 when hidden.</summary>
+		public static float TintShown { get { return tint != null && tint.enabled ? tint.color.a : 0f; } }
+
+		static void SetTint(Color c, float alpha)
+		{
+			if (tint == null)
+			{
+				if (alpha <= 0.001f) return;
+				Canvas canvas = UIKit.CreateCanvas("CustomIslands_FogTint", -101);
+				UnityEngine.Object.DontDestroyOnLoad(canvas.gameObject);
+				RectTransform r = UIKit.Rect("Tint", canvas.transform);
+				UIKit.Stretch(r);
+				tint = r.gameObject.AddComponent<UnityEngine.UI.Image>();
+				tint.raycastTarget = false;
+			}
+			tint.color = new Color(c.r, c.g, c.b, alpha);
+			tint.enabled = alpha > 0.001f;
 		}
 
 		static void ReleaseNearFog()
 		{
 			NearEndShown = 0f;
+			if (tint != null && tint.enabled) SetTint(Color.clear, 0f);
 			if (!nearTaken) return;
 			nearTaken = false;
 			RenderSettings.fog = nearFogWas; RenderSettings.fogMode = nearModeWas; RenderSettings.fogStartDistance = nearStartWas;

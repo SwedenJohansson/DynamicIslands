@@ -2913,7 +2913,7 @@ late, as a grey shape that firms up as you sail closer, so the **Receiver's rada
   the same banks.
 - **It fades:** the fog thickens over about an in-game hour and thins out the same way at the end - never a jump. A
   message says when it rolls in.
-- **Raft's own sky draws it,** by day grey-white and at night dark, with Raft's colours of the hour; Raft's weather
+- **Raft's own sky draws it,** with a veil in the fog's colour over the whole view so the sea fades too, by day grey-white and at night dark, with Raft's colours of the hour; Raft's weather
   goes on as before underneath. **While a storm blows** (rain, rough snow, big waves - Raft's own or Storm days) the
   wind keeps the fog away. Under water it does nothing.
 - **Every player sees the same fog at the same time:** each machine works out the banks from the host's world seed and

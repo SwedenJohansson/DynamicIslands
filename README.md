@@ -510,7 +510,7 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   sees the same one at the same time (the host sends its path and colour).
 - **Fog banks:** on about three days in five thick fog rolls in for three to six hours, by day or at night, fading in
   and out over an in-game hour. In it you see only 45-75 m, so islands show up late and the radar matters. Raft's own
-  sky draws it; a storm blows it away. Looks only; every player sees the same fog (worked out from the host's seed).
+  sky draws it, with a veil in its colour so the sea fades too; a storm blows it away. Looks only; every player sees the same fog (worked out from the host's seed).
 - **Whale breach:** now and then by day (about once or twice a Raft day) a whale breaches 170-320 m from the raft:
   it rises, leaps half out of the water, falls back with a big splash and spray, and dives away. Raft's own whale; looks
   only, it never comes near the raft. Every player sees the same breach (the host sends where and which way).
