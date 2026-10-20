@@ -460,6 +460,10 @@ namespace DynamicIslands
 				string n = e.GameObjectName ?? "";
 				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
 				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") || n.StartsWith("Note_") || NotABase.IsMatch(n) || Hangs.IsMatch(n)) continue;
+				// (a zipline with a zip.to: the editor shows Raft's own far end, which ZiplineEnds moves when the island is spawned -
+				// the Lodestone Array's north line read "partly in the air" off the cliff where Raft's 27 m line ends, 2026-10-20;
+				// CIGroundIslands measures each of its ends in the world)
+				if (n.StartsWith("ZiplinePath") && ObjectProps.Get(e.Props, ZiplineEnds.ZipTo).Length > 0) continue;
 				Renderer[] rs = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
 				if (rs.Length == 0 || ground == null) continue;
 				// (its base: the parts that reach down to its bottom - not a windmill's sails or a telescope's tube above it)

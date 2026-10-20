@@ -59,14 +59,24 @@ prop poles tint.amount=0.6
 place Loot_Chest westcache at -21 3 ground sit yaw=90
 
 # --- The ziplines: the landing ring to the north arm, then round the arms ------------------------------------------
-place ZiplinePath_Landmark zipring at 15 -15 ground
+place ZiplinePath_Landmark zipring at 15 -15 h=17.05
 zipto zipring -1 19
-place ZiplinePath_Landmark zipnorth at 1 19 ground
+place ZiplinePath_Landmark zipnorth at 1 19 h=17.05
 zipto zipnorth 19 1
-place ZiplinePath_Landmark zipeast at 19 -1 ground
+place ZiplinePath_Landmark zipeast at 19 -1 h=17.05
 zipto zipeast 1 -19
-place ZiplinePath_Landmark zipsouth at -1 -19 ground
+place ZiplinePath_Landmark zipsouth at -1 -19 h=17.05
 zipto zipsouth -19 1
+# (Raft's zipline has no stand: its near end's floor (ZiplineBase_FloorB) is 5.72 m west, 0.97 m north of where it is put and
+# 1.35 m under its h - put "ground" it hung 10-13 m in the air (or, the north line, sank under the plate where Raft's own
+# line ran off the cliff); each line starts at h 15.7 on an iron post down to the plate, 2026-10-20)
+macro zippost x=0 z=0 sy=1.78
+place RT_PillarThick zipposts at $x $z ground sy=$sy
+end
+call zippost x=9.28 z=-14.03 sy=1.77
+call zippost x=-4.72 z=19.97 sy=1.77
+call zippost x=13.28 z=-0.03 sy=1.96
+call zippost x=-6.72 z=-18.03 sy=1.77
 
 # --- The landing ring: the manual, the ring locker, the generator (its lever) and the coil boards; the store ----
 place Zone_Trigger ringzone at 18 -18 ground
@@ -84,8 +94,11 @@ place Creature_StoneBird screechers at 18 -18 h=16
 place VP_GlassBridge bridge at 0 -11 h=5 scale=0.5
 place VP_GlassBridge_Broken bridgebroken at 0 -11 h=5 scale=0.5
 place Zone_Trigger bridgezone at 0 -7.5 h=5.5
-place ZiplinePath_Landmark zipback at 3.5 -5 ground
+place ZiplinePath_Landmark zipback at 3.5 -5 h=17.05
 zipto zipback 15 -15
+call zippost x=-2.22 z=-4.03 sy=1.78
+prop zipposts tint.color=#3c4046
+prop zipposts tint.amount=0.6
 
 # --- The core platform: the core, its glow, the beam (emitter, two mirrors, the door panel), the guardian, the warning,
 # the cutoff lever; the core zone (shown when the core is dark) --------------------------------------------------------
