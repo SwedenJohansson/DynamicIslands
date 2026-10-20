@@ -4190,6 +4190,8 @@ They come in five sizes: normal, twice, four times, seven times and twenty times
 | ![](images/library/deepwatch_station.jpg) **Deepwatch Station** (medium) | An island under the sea: a sunken listening station with a pocket of air, a hatch in the sand, a wrecked submarine, a rock tunnel; puffer fish - no quest | A **sunken** island with an air pocket to breathe in |
 | ![](images/library/longpier_haven.jpg) **Longpier Haven** (medium) | A harbour island: a quay with a long plank pier, the harbour master's cabin, a bridge to a rock stack with a watch hut, a boat sunk in the bay, a smugglers' cave; boars and puffer fish - no quest | A long **pier** on posts and a plank bridge over the water |
 | ![](images/library/skyrope_peaks.jpg) **Skyrope Peaks** (medium) | An island floating high over the sea: two rocky peaks with a rope bridge between their tops, a cabin on the west peak, ladders up the east one; a screecher - no quest | A medium **flying island** with a hanging bridge |
+| ![](images/library/mourners_deep.jpg) **Mourner's Deep** (medium) | A **sunken island**: a drowned graveyard with headstones and a fence, the gravedigger's shack with an air pocket, a fishing boat sunk beside it - no quest | Graves, an air pocket to breathe in, a wreck to search, all under the sea |
+| ![](images/library/ringstone_hill.jpg) **Ringstone Hill** (medium) | A ring of standing stones on a green hill, a cave under the hill, a jetty and a sunken wreck offshore - no quest | Standing stones from Raft's own rocks; a cave entrance below a hill |
 
 ---
 

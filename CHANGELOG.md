@@ -21,6 +21,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   crag over a village; Firedance Isle, a volcanic tribe's huts, dancing ground and idols; Deepwatch Station, a
   sunken listening station with an air pocket and a wrecked submarine; Longpier Haven, a harbour with a long pier
   and a watch hut on a rock stack; Skyrope Peaks, a flying island with a rope bridge between two peaks.
+- **Two more medium library islands** (no quest, no banner): Mourner's Deep, a drowned graveyard with the
+  gravedigger's shack, an air pocket and a sunken boat; Ringstone Hill, a ring of standing stones on a hill with
+  a cave below it and a wreck offshore.
 - **Ghost ship** (World settings > Extra options, off by default): on about one night in four a glowing wreck
   drifts past the raft after dark, close enough to swim to - Raft's own pieces, lit cyan in a mist, with four chests
   of good loot (titanium, circuit boards, a battery...) and a crew of ghosts: Raft's monsters, see-through and
