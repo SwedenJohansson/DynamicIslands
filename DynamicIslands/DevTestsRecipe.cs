@@ -262,7 +262,7 @@ namespace DynamicIslands
 		{
 			yield return WaitForEditor(false);
 			var kept = new Regex("_[0-9a-f]{12}$");
-			List<string> names = IslandSpawner.ListSavedIslands().Where(n => !n.StartsWith("ci", StringComparison.OrdinalIgnoreCase) && !kept.IsMatch(n) &&
+			List<string> names = IslandSpawner.ListSavedIslands().Where(n => !n.StartsWith("ci", StringComparison.Ordinal) && !kept.IsMatch(n) &&
 				// (the randomizer's extras lie over Raft's own islands, whose land is not in the file: their finds stand on it)
 				!n.StartsWith(WorldRandomizer.ExtrasPrefix, StringComparison.OrdinalIgnoreCase) &&
 				(only.Length == 0 || n.IndexOf(only, StringComparison.OrdinalIgnoreCase) >= 0)).OrderBy(n => n).ToList();

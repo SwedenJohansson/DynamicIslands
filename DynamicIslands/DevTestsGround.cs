@@ -101,7 +101,7 @@ namespace DynamicIslands
 			var saved = new HashSet<string>(IslandSpawner.ListSavedIslands(), StringComparer.OrdinalIgnoreCase);
 			IEnumerable<string> pick;
 			if (which == "plans") pick = CustomIslandSpawner.AllPlansIslandNames().Where(n => saved.Contains(n));
-			else pick = saved.Where(n => !n.StartsWith("ci", StringComparison.OrdinalIgnoreCase) && !kept.IsMatch(n) && !n.StartsWith(WorldRandomizer.ExtrasPrefix, StringComparison.OrdinalIgnoreCase) &&
+			else pick = saved.Where(n => !n.StartsWith("ci", StringComparison.Ordinal) && !kept.IsMatch(n) && !n.StartsWith(WorldRandomizer.ExtrasPrefix, StringComparison.OrdinalIgnoreCase) &&
 				(which == "*" || n.IndexOf(which, StringComparison.OrdinalIgnoreCase) >= 0));
 			List<string> names = pick.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n).Skip(skip).Take(most).ToList();
 			Log(c.Label + " check of " + names.Count + " saved islands (" + which + ", from " + skip + ")");
@@ -575,9 +575,9 @@ namespace DynamicIslands
 					if (ends != null) banners.AddRange(ends);
 					continue;
 				}
-				var node = new SupportNode { Name = n, Where = where };
+				var node = new SupportNode { Name = n, Where = where, Box = whole, Link = structural };
 				nodes[o] = node;
-				Supports(o, b, objects, land, sea, node);
+				Supports(o, b, whole, objects, land, sea, node);
 				// Floors, decks, roofs, stairs: measured only as links of the chain (they lie on posts and walls, not on the ground)
 				if (structural) continue;
 				float groundMid = land != null ? land.SampleHeight(b.center) + land.transform.position.y : float.MinValue;
@@ -591,8 +591,9 @@ namespace DynamicIslands
 				if (!touches && !inSea && gapUnder > 0.5f)
 				{ node.Reported = true; lines.Add("floating: " + n + " at " + where + ", " + (gapUnder > 999f ? "nothing under it" : Num(gapUnder) + " m over what is under it")); continue; }
 				// On a steep wall: a small thing (a chest, a box, a crate) held by nothing but the land, with most of its base over
-				// the drop - its foot set into the slope reads "on the ground" (the Listening Mirrors' altar on its chasm wall)
-				if (!NotABase.IsMatch(n) && land != null && Mathf.Max(b.size.x, b.size.z) < 1.5f && node.Under.Count == 0 && b.min.y > sea + 0.3f)
+				// the drop - its foot set into the slope reads "on the ground" (the Listening Mirrors' altar on its chasm wall); a
+				// tall, thin leg or post (three times taller than wide) is driven into the slope, as the tower legs on Varuna Point
+				if (!NotABase.IsMatch(n) && land != null && Mathf.Max(b.size.x, b.size.z) < 1.5f && b.size.y < Mathf.Max(b.size.x, b.size.z) * 3f && node.Under.Count == 0 && node.Over.Count == 0 && b.min.y > sea + 0.3f)
 				{
 					int over = 0;
 					float most = 0f;
@@ -650,7 +651,11 @@ namespace DynamicIslands
 			{
 				changed = false;
 				foreach (SupportNode s in nodes.Values)
-					if (!s.Grounded && (s.Direct || s.Under.Any(u => { SupportNode t; return !nodes.TryGetValue(u, out t) || t.Grounded; })))
+					if (!s.Grounded && (s.Direct || s.Under.Any(u => { SupportNode t; return !nodes.TryGetValue(u, out t) || t.Grounded; }) ||
+						s.Over.Any(u => { SupportNode t; return !nodes.TryGetValue(u, out t) || t.Grounded; }) ||
+						// (a floor or roof piece joined edge to edge to one that is held, no higher than it: a hip roof's sides on its
+						// corners - Vaporhold Reservoir, 2026-10-20)
+						(s.Link && nodes.Values.Any(t => t != s && t.Link && t.Grounded && t.Box.min.y <= s.Box.min.y + 0.3f && Grow(t.Box, 0.1f).Intersects(s.Box)))))
 					{ s.Grounded = true; changed = true; }
 			}
 			foreach (SupportNode s in nodes.Values.Where(x => !x.Grounded && !x.Reported))
@@ -667,7 +672,9 @@ namespace DynamicIslands
 		/// <summary>Floors, decks, roofs, stairs: links of the support chain, reported when the chain doesn't reach the ground.</summary>
 		static readonly Regex ChainLink = new Regex("Floor|Deck|Plank|Bridge|Ramp|Stair|Roof|Scaffold", RegexOptions.IgnoreCase);
 
-		class SupportNode { public string Name, Where; public bool Direct, Grounded, Reported; public HashSet<Transform> Under = new HashSet<Transform>(); }
+		static Bounds Grow(Bounds b, float by) { b.Expand(by * 2f); return b; }
+		static readonly Regex FixedAbove = new Regex("Floor|Deck|Roof|Beam|Wall|Ceiling", RegexOptions.IgnoreCase);
+		class SupportNode { public string Name, Where; public bool Direct, Grounded, Reported, Link; public Bounds Box; public HashSet<Transform> Under = new HashSet<Transform>(), Over = new HashSet<Transform>(); }
 		class BannerEnd { public string Name, Where, Side; public bool ByLand; public HashSet<Transform> By = new HashSet<Transform>(); }
 
 		/// <summary>The placed object (a child of <paramref name="objects"/>) a collider belongs to; null = not a placed object
@@ -681,8 +688,18 @@ namespace DynamicIslands
 		/// <summary>What holds <paramref name="o"/> up: on the land, the sea or the island's own rock (<see cref="SupportNode.Direct"/>),
 		/// and the placed objects at its base or at its sides that reach down at least as low as its base (a table under a box, a
 		/// wall a lamp hangs on - not a floor resting on a pillar's top).</summary>
-		static void Supports(Transform o, Bounds b, Transform objects, Terrain land, float sea, SupportNode node)
+		static void Supports(Transform o, Bounds b, Bounds whole, Transform objects, Terrain land, float sea, SupportNode node)
 		{
+			// (fixed under a floor, roof, beam or wall above it - a rib under a deck, a ceiling lamp: held if that is held - Colossus of
+			// the Strait, Coral Observatory, 2026-10-20)
+			// (from 0.15 m under its top to 0.5 m over it: a lamp's mount may stop short of the ceiling's collider)
+			var top = new Vector3(Mathf.Max(0.05f, whole.extents.x * 0.8f), 0.325f, Mathf.Max(0.05f, whole.extents.z * 0.8f));
+			foreach (Collider c in Physics.OverlapBox(new Vector3(whole.center.x, whole.max.y + 0.175f, whole.center.z), top, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore))
+			{
+				if (c.transform.IsChildOf(o) || c.bounds.max.y < whole.max.y - 0.1f || c.bounds.min.y < whole.min.y) continue; // (its top in a thin ceiling)
+				Transform r = PlacedRoot(c.transform, objects);
+				if (r != null && FixedAbove.IsMatch(r.name)) node.Over.Add(r);
+			}
 			node.Direct = b.min.y <= sea + 0.3f;
 			float reach = b.min.y + 0.3f;
 			var half = new Vector3(Mathf.Max(0.05f, b.extents.x * 0.9f), 0.15f, Mathf.Max(0.05f, b.extents.z * 0.9f));

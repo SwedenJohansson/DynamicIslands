@@ -426,6 +426,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   joining player never asked the host for its islands. Now it asks anyway 10 s into the game.
 - **The credits at a story's end:** no island banner shows faintly behind the top of the credits card any more (the
   story's last banner waits until the credits are closed).
+  Scrapyard Haven's banner is tied to two posts, Cirrus Silo Farm's hatch and fence stand on level ground, and Varuna
+  Point's yard is level under the excavator and dumpster. The Varuna Point look-alike sets its rubble heaps on the
+  ground floor, not 0.5 m over the open top floor. The Radio Tower look-alike stands its satellite dish only on
+  near-level ground: on Radio Tower Remade's sharp peak the rock stood 2 m through it.
 - **Main story quests stay out of the journal's side quests:** a main story island's further quests, and the quest of
   a generated island in the main story (a *type* rule), were listed in the journal under "Other islands with a quest";
   they count with the main story now, whose steps are in Raft's notebook. A copy of a story island in the

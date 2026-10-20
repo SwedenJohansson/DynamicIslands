@@ -181,6 +181,21 @@ namespace DynamicIslands.Editor
 			return Centred(k, name, c, yaw, ground - sink - b.min.y);
 		}
 
+		/// <summary>How far the ground falls and rises under a piece's box at c (any yaw): its highest less its lowest point.</summary>
+		static float GroundSpread(MapKit k, string name, Vector2 c)
+		{
+			Bounds b;
+			if (!GenBuildings.Measured(name, out b)) b = new Bounds(Vector3.zero, Vector3.one);
+			float e = Mathf.Max(b.extents.x, b.extents.z), lo = float.MaxValue, hi = float.MinValue;
+			for (int i = 0; i < 9; i++)
+			{
+				Vector2 p = i == 8 ? c : c + new Vector2(Mathf.Cos(i * Mathf.PI / 4f), Mathf.Sin(i * Mathf.PI / 4f)) * e;
+				float g = k.Ground(p);
+				lo = Mathf.Min(lo, g); hi = Mathf.Max(hi, g);
+			}
+			return hi - lo;
+		}
+
 		static float YawOf(Vector2 dir) { return Mathf.Atan2(dir.x, dir.y) * Mathf.Rad2Deg; }
 
 		#endregion
@@ -581,7 +596,7 @@ namespace DynamicIslands.Editor
 		/// apex crane on the top floor, the lift shaft and the excavator outside and rubble and bricks on both floors.
 		/// </summary>
 		static readonly Vector3[] VarunaWalls = { new Vector3(-27.8f, 32.39f, 180f), new Vector3(-32.4f, -27.81f, 90f), new Vector3(32.43f, 27.75f, 270f), new Vector3(27.74f, -32.44f, 0f) };
-		const float VarunaStorey = 21f;
+		const float VarunaStorey = 21f, VarunaRim = 0.54f;
 
 		static string VarunaMotherlode(MapKit k, IslandGenSettings s, System.Random r)
 		{
@@ -624,13 +639,14 @@ namespace DynamicIslands.Editor
 			Vector2 cr = at(Rf(r, -12f, 12f), Rf(r, -12f, 12f));
 			if (k.Add("VP_ApexCrane", new Vector3(cr.x, roof - BottomOf("VP_ApexCrane") + 0.05f, cr.y), Rf(r, 0f, 360f), null, 0f) != null) n++;
 			string[] heaps = { "VP_RubblePile_Large01", "VP_RubblePile_Medium01", "VP_RubblePile_Medium02", "VP_BrickStack01", "VP_BrickStack02" };
+			// (on the ground floor's deck, 0.54 m under the top of its mesh box (its rim): the top floor is open where they
+			// fell, and set on the box's top they stood in the air - CIGroundIslands, Varuna Point Remade, 2026-10-20)
 			for (int i = 0; i < 8; i++)
 			{
-				bool up = i % 2 == 1;
 				Vector2 p = at(Rf(r, -half + 12f, half - 12f), Rf(r, -half + 12f, half - 12f));
 				if ((p - cr).magnitude < 12f) continue;
 				string h = heaps[r.Next(heaps.Length)];
-				if (Centred(k, h, p, Rf(r, 0f, 360f), (up ? roof : top) - BottomOf(h) - 0.05f) != null) n++;
+				if (Centred(k, h, p, Rf(r, 0f, 360f), top - VarunaRim - BottomOf(h) - 0.05f) != null) n++;
 			}
 			if (Stand(k, "VP_Excavator", at(-half - 6f, Rf(r, -25f, 25f)), yaw + Rf(r, -30f, 30f)) != null) n++;
 			return n + " of Varuna Point's motherlode pieces: two floors on four pillars inside its walls, " + (half * 2f).ToString("F0") + " m wide";
@@ -717,14 +733,16 @@ namespace DynamicIslands.Editor
 		static string RadioDish(MapKit k, IslandGenSettings s, System.Random r)
 		{
 			Vector2 top = k.Highest(k.Mid, s.Radius * 0.6f);
-			Vector2? at = k.Ground(top) > k.Sea + 1f && k.IsFree(top, 6f) ? top : (Vector2?)null;
+			// (only where the ground under its bowl is near level: on a sharp peak it was set down by its lowest corner and the
+			// peak stood 2 m through it - Radio Tower Remade, the ground check, 2026-10-20)
+			Vector2? at = k.Ground(top) > k.Sea + 1f && k.IsFree(top, 6f) && GroundSpread(k, "RT_SatteliteDisc", top) < 0.8f ? top : (Vector2?)null;
 			if (!at.HasValue)
 			{
 				float best = float.MinValue;
-				for (int i = 0; i < 6; i++)
+				for (int i = 0; i < 12; i++)
 				{
 					Vector2? p = FindR(k, r, k.Mid, s.Radius, (above, slope) => above > 1f && slope < 22f, 6f);
-					if (p.HasValue && k.Ground(p.Value) > best) { best = k.Ground(p.Value); at = p; }
+					if (p.HasValue && GroundSpread(k, "RT_SatteliteDisc", p.Value) < 0.8f && k.Ground(p.Value) > best) { best = k.Ground(p.Value); at = p; }
 				}
 			}
 			if (!at.HasValue) return null;
