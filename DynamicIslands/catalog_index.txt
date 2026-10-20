@@ -1285,3 +1285,9 @@ Pickup_Landmark_Tree_Tangaroa_1	50#Landmark_Tangaroa#	Harvestable	h
 Pickup_Landmark_Strawberry	50#Landmark_Tangaroa#	Harvestable	h
 Pickup_Landmark_Titanium_Land	50#Landmark_Tangaroa#	Harvestable	h
 Pickup_Landmark_Plank_Land	50#Landmark_Tangaroa#	Harvestable	h
+Pickup_Landmark_MarketGood_Banana_Basket01	56#Landmark_Utopia#	Harvestable	h
+Pickup_Landmark_MarketGood_Banana_Basket03	56#Landmark_Utopia#	Harvestable	h
+Pickup_Landmark_MarketGood_Banana_CrateBig02	56#Landmark_Utopia#	Harvestable	h
+Pickup_Landmark_MarketGood_Banana_CrateSmall01	56#Landmark_Utopia#	Harvestable	h
+Pickup_Landmark_MarketGood_Banana_CrateSmall03	56#Landmark_Utopia#	Harvestable	h
+Pickup_Landmark_MarketGood_Banana_Sack	56#Landmark_Utopia#	Harvestable	h

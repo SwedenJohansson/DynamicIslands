@@ -155,8 +155,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   no dot on the Receiver; then its dot shows and a "near" island comes to its side. Default: always, as Raft's story
   islands. Check calls a blueprint Raft doesn't have a problem.
 - **Story animals and goods to place:** Caravan Town's white screecher, Temperance's puffins and Utopia's butler bot
-  (a new **Animals: harmless** category), and Utopia's market goods (sacks, baskets and crates of potatoes, bananas,
-  melons, mangoes, mackerel, salmon) among the things to gather. The remade Caravan Town, Temperance and Utopia use them.
+  (a new **Animals: harmless** category), and Utopia's market goods (sacks, baskets and crates of bananas) among the
+  things to gather. The remade Caravan Town, Temperance and Utopia use them.
 - **A third whole storyline in the library, Relic of the Seventh Tide:** nine islands woven into Raft's own story
   (Raft's story on; the plan's islands come after Raft's, 600 to 1300 on the Receiver): Marrow Key Museum, Sunstaff
   Mesa (instead of Balboa, with Balboa's four blueprints as quest steps), Sandsunk Necropolis, Skyhook Mast (Raft's

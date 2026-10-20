@@ -581,8 +581,7 @@ dig: palms (also the small islands' palms), mangoes, banana trees, Tangaroa's tr
 berry bushes, Balboa's mushrooms, flowers, Raft's finds on the sea floor - sand, clay, stone, iron and copper ore,
 scrap, giant clams, silver algae, **seaweed** - the finds lying on the story islands' land (stone, scrap, titanium ore,
 planks, plastic) and Raft's **dirt spots** (the mounds its big islands have; players dig them with the shovel for dirt) and Utopia's
-**market goods** (sacks, baskets and crates of potatoes, bananas, melons, mangoes, mackerel and salmon; picked, they give
-that food, and potatoes can be planted).
+**market goods** (the sacks, baskets and crates of bananas on its market stalls; picked, they give bananas).
 They work for the player as on Raft's own islands: picked, or cut with the axe, they give Raft's items and come back
 after the island's regrow days, the same for every player and after a reload. Raft has no date palm: desert islands
 get Raft's palms and acacias. Those from Raft's story islands (banana and Tangaroa trees, acacias, strawberries,

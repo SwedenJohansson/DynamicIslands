@@ -122,11 +122,11 @@ namespace DynamicIslands.Editor
 		/// <summary>
 		/// More of Raft's things to gather (ROADMAP LM11, 2026-10-06): the small islands' palms, Caravan Town's acacias,
 		/// Tangaroa's trees and strawberries, Balboa's mushrooms and the finds lying on the story islands' land (stone,
-		/// scrap, titanium, planks, plastic), and (SL9) Utopia's market goods: baskets, crates and sacks of potatoes (plant
-		/// them), bananas, mangoes, melons, mackerel and salmon. Taken with their gameplay like the others, but never core objects: the
+		/// scrap, titanium, planks, plastic), and (SL9) Utopia's market goods: the baskets, crates and sacks of bananas
+		/// on its stalls (in catalog_index.txt by hand, scene 56#Landmark_Utopia#). Taken with their gameplay like the others, but never core objects: the
 		/// generator's islands stay the same for a seed (it only uses core objects).
 		/// </summary>
-		static readonly Regex ExtraGatherObjects = new Regex(@"^Pickup_Landmark_(Palmtree \d+|Tree_AcaciaTree_Big \d+|Tree_Tangaroa_1|Strawberry|Mushroom \d+|Rock_2_Land|Scrap \d+_Land|Titanium_Land|Plank_Land|Plastic\d+_Land|MarketGood_(Banana|Mackerel|Mango|Melon|Potato|Salmon)_(Basket01|CrateSmall01|Sack))$");
+		static readonly Regex ExtraGatherObjects = new Regex(@"^Pickup_Landmark_(Palmtree \d+|Tree_AcaciaTree_Big \d+|Tree_Tangaroa_1|Strawberry|Mushroom \d+|Rock_2_Land|Scrap \d+_Land|Titanium_Land|Plank_Land|Plastic\d+_Land|MarketGood_Banana_(Basket0[13]|CrateBig02|CrateSmall0[13]|Sack))$");
 		/// <summary>A snowy pine to cut (LM11): Raft's snowy islands' pines are scenery only, so this is Raft's pine (its
 		/// pickup, tree scripts and colliders: cut with the axe, gives what Raft's pine gives, regrows) wearing Temperance's
 		/// snowy pine.</summary>

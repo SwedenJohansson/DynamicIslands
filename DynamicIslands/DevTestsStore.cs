@@ -162,7 +162,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: raft store"); else Fail("raft store");
 		}
 
-		[ConsoleCommand(name: "CIStoreCubes", docs: "Dev, in game (host): SL9 - trash cubes as store money at Raft's trading post on a custom island: through Raft's own store window, cubes sold give coins and reputation, then goods bought with those coins")]
+		[ConsoleCommand(name: "CIStoreCubes", docs: "Dev, in game (host): SL9 - store money at Raft's trading post on a custom island, through Raft's own store window: trophy fish sold give coins (trade tokens) and reputation, then goods bought with those coins and trash cubes (Raft's stores buy no trash cubes: they are part of the price)")]
 		public static void StoreCubesCommand(string[] args) { StartTest(StoreCubesRoutine()); }
 
 		static IEnumerator StoreCubesRoutine()
@@ -193,38 +193,47 @@ namespace DynamicIslands
 			if (thrown != null) { Log("  opening threw (" + (thrown.InnerException ?? thrown).Message + "), opened through the window"); try { ui.Open(store.Post); } catch (Exception x) { Log("  ui.Open threw: " + x.Message); } }
 			List<SO_TradingPost_Sellable> sellables = TradingPost.SellableItems ?? new List<SO_TradingPost_Sellable>();
 			Log("  sellables: " + string.Join(", ", sellables.Where(x => x != null && x.sellableItem != null).Select(x => x.sellableItem.UniqueName + " -> " + CostText(x.reward) + " +" + x.reputationReward + " rep").ToArray()));
-			SO_TradingPost_Sellable cube = sellables.FirstOrDefault(x => x != null && x.sellableItem != null && x.sellableItem.UniqueName.IndexOf("cube", StringComparison.OrdinalIgnoreCase) >= 0 && x.reward != null && x.reward.item != null);
-			if (cube == null) { Fail("Raft's store buys no trash cubes"); try { store.Post.CloseUI(); } catch { } IslandWorldState.Remove(name); yield break; }
-			string cubeName = cube.sellableItem.UniqueName, coin = cube.reward.item.UniqueName;
-			// (the cheapest goods paid in coins only, of a tier the window shows now)
+			// (Raft's trading post buys trophy fish only, for trade tokens: trash cubes aren't sold, they are part of the price)
+			SO_TradingPost_Sellable fish = sellables.Where(x => x != null && x.sellableItem != null && x.reward != null && x.reward.item != null && x.reward.amount > 0)
+				.OrderByDescending(x => x.reputationReward).FirstOrDefault();
+			if (fish == null) { Fail("Raft's store buys nothing"); try { store.Post.CloseUI(); } catch { } IslandWorldState.Remove(name); yield break; }
+			Check(ref ok, !sellables.Any(x => x != null && x.sellableItem != null && x.sellableItem.UniqueName == "Trashcube"), "Raft's store doesn't buy trash cubes (as on Raft's own trading posts): they are part of the price");
+			string fishName = fish.sellableItem.UniqueName, coin = fish.reward.item.UniqueName, cubeName = "Trashcube";
+			// (the cheapest goods paid in trash cubes and coins, of a tier the window shows now)
 			TradingPost.Tier tier = ui.CurrentTier;
-			SO_TradingPost_Buyable.Instance buy = store.Post.buyableItems.Where(i => i.reward != null && i.reward.item != null && i.stock > 0 && i.tier <= tier && i.cost != null && i.cost.Length > 0 && i.cost.All(c => c.item != null && c.item.UniqueName == coin))
+			SO_TradingPost_Buyable.Instance buy = store.Post.buyableItems.Where(i => i.reward != null && i.reward.item != null && i.stock > 0 && i.tier <= tier && i.cost != null && i.cost.Length > 0
+					&& i.cost.All(c => c.item != null && (c.item.UniqueName == coin || c.item.UniqueName == cubeName)) && i.cost.Any(c => c.item.UniqueName == coin) && i.cost.Any(c => c.item.UniqueName == cubeName))
 				.OrderBy(i => i.cost.Sum(c => c.amount)).FirstOrDefault();
-			if (buy == null) { Fail("nothing at tier " + tier + " is priced in " + coin); try { store.Post.CloseUI(); } catch { } IslandWorldState.Remove(name); yield break; }
-			int price = buy.cost.Sum(c => c.amount), sales = Mathf.Max(1, Mathf.CeilToInt(price / (float)Mathf.Max(1, cube.reward.amount)));
+			if (buy == null) { Fail("nothing at tier " + tier + " is priced in " + cubeName + " and " + coin); try { store.Post.CloseUI(); } catch { } IslandWorldState.Remove(name); yield break; }
+			int price = buy.cost.Where(c => c.item.UniqueName == coin).Sum(c => c.amount), cubePrice = buy.cost.Where(c => c.item.UniqueName == cubeName).Sum(c => c.amount);
+			int sales = Mathf.Max(1, Mathf.CeilToInt(price / (float)fish.reward.amount));
 			int coinsStart = player.Inventory.GetItemCount(coin);
-			if (coinsStart > 0) { player.Inventory.RemoveItem(coin, coinsStart); coinsStart = 0; }
-			player.Inventory.AddItem(cubeName, sales);
-			int cubes = player.Inventory.GetItemCount(cubeName), rep = ui.CurrentReputation;
-			Log("  selling " + sales + " " + cubeName + " for " + coin + " (" + cube.reward.amount + " each), to buy " + buy.reward.item.UniqueName + " for " + price + " " + coin + " (tier " + tier + ", reputation " + rep + ")");
+			if (coinsStart > 0) player.Inventory.RemoveItem(coin, coinsStart);
+			int cubesStart = player.Inventory.GetItemCount(cubeName);
+			if (cubesStart > 0) player.Inventory.RemoveItem(cubeName, cubesStart);
+			player.Inventory.AddItem(fishName, sales);
+			player.Inventory.AddItem(cubeName, cubePrice);
+			int fishes = player.Inventory.GetItemCount(fishName), rep = ui.CurrentReputation;
+			Log("  selling " + sales + " " + fishName + " for " + coin + " (" + fish.reward.amount + " each), to buy " + buy.reward.item.UniqueName + " for " + cubePrice + " " + cubeName + " + " + price + " " + coin + " (tier " + tier + ", reputation " + rep + ")");
 			for (int n = 0; n < sales; n++)
 			{
-				try { Traverse.Create(ui).Field("selectedSellableItem").SetValue(cube); ui.Button_Sell(); } catch (Exception x) { Log("  Button_Sell threw: " + x.Message); }
+				try { Traverse.Create(ui).Field("selectedSellableItem").SetValue(fish); ui.Button_Sell(); } catch (Exception x) { Log("  Button_Sell threw: " + x.Message); }
 				yield return new WaitForSeconds(0.4f);
 			}
 			int coins = player.Inventory.GetItemCount(coin);
-			Check(ref ok, player.Inventory.GetItemCount(cubeName) == cubes - sales, "the cubes were taken (" + cubes + " -> " + player.Inventory.GetItemCount(cubeName) + ")");
-			Check(ref ok, coins == sales * cube.reward.amount, "coins given: " + coins + " " + coin + " (wanted " + sales * cube.reward.amount + ")");
-			Check(ref ok, ui.CurrentReputation >= rep + sales * cube.reputationReward, "reputation " + rep + " -> " + ui.CurrentReputation + " (+" + cube.reputationReward + " a sale)");
+			Check(ref ok, player.Inventory.GetItemCount(fishName) == fishes - sales, "the fish were taken (" + fishes + " -> " + player.Inventory.GetItemCount(fishName) + ")");
+			Check(ref ok, coins == sales * fish.reward.amount, "coins given: " + coins + " " + coin + " (wanted " + sales * fish.reward.amount + ")");
+			Check(ref ok, ui.CurrentReputation >= rep + sales * fish.reputationReward, "reputation " + rep + " -> " + ui.CurrentReputation + " (+" + fish.reputationReward + " a sale)");
 			int had = player.Inventory.GetItemCount(buy.reward.item.UniqueName), stock = buy.stock;
 			try { Traverse.Create(ui).Field("selectedBuyableItem").SetValue(buy); ui.Button_Buy(); } catch (Exception x) { Log("  Button_Buy threw: " + x.Message); }
 			yield return new WaitForSeconds(1.5f);
-			Check(ref ok, player.Inventory.GetItemCount(buy.reward.item.UniqueName) >= had + buy.reward.amount && buy.stock == stock - 1, "bought " + buy.reward.item.UniqueName + " with the coins (carried " + had + " -> " + player.Inventory.GetItemCount(buy.reward.item.UniqueName) + ", stock " + stock + " -> " + buy.stock + ")");
-			Check(ref ok, player.Inventory.GetItemCount(coin) == coins - price, "the coins were paid (" + coins + " -> " + player.Inventory.GetItemCount(coin) + ")");
+			Check(ref ok, player.Inventory.GetItemCount(buy.reward.item.UniqueName) >= had + buy.reward.amount && buy.stock == stock - 1, "bought " + buy.reward.item.UniqueName + " (carried " + had + " -> " + player.Inventory.GetItemCount(buy.reward.item.UniqueName) + ", stock " + stock + " -> " + buy.stock + ")");
+			Check(ref ok, player.Inventory.GetItemCount(coin) == coins - price && player.Inventory.GetItemCount(cubeName) == 0, "paid: " + coin + " " + coins + " -> " + player.Inventory.GetItemCount(coin) + ", " + cubeName + " " + cubePrice + " -> " + player.Inventory.GetItemCount(cubeName));
 			try { store.Post.CloseUI(); } catch (Exception x) { Log("  closing threw: " + x.Message); }
 			player.Inventory.RemoveItem(buy.reward.item.UniqueName, buy.reward.amount);
+			if (cubesStart > 0) player.Inventory.AddItem(cubeName, cubesStart);
 			IslandWorldState.Remove(name);
-			if (ok) Log("PASS: trash cubes sold for coins, goods bought with them"); else Fail("trash cubes at the store");
+			if (ok) Log("PASS: trophy fish sold for coins, goods bought with coins and trash cubes"); else Fail("store money");
 		}
 
 		[ConsoleCommand(name: "CIStoreIsland", docs: "Dev, two-player store test (host): spawns 'cimpstore', an island with Raft's trading post and a quest whose one step is a story blueprint neither player has yet (printed: BLUEPRINT <name>)")]

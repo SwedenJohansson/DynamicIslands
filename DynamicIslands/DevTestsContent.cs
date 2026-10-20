@@ -2064,10 +2064,10 @@ namespace DynamicIslands
 			EditorUI.SetTab(TAB.ObjectPlace);
 			Transform placed = GameObject.Find("PlacedObjects").transform;
 			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel, 500f);
-			string[] show = { "Creature_Boar", "Creature_Llama", "Creature_Bear", "Creature_Chicken", "Creature_Hyena" };
+			string[] show = { "Creature_Boar", "Creature_Llama", "Creature_Bear", "Creature_Chicken", "Creature_Puffin", "Creature_ButlerBot", "Creature_StoneBird_Caravan" };
 			for (int i = 0; i < show.Length; i++)
 			{
-				EditorGameObject e = PlaceForTest(show[i], c0 + new Vector3(i * 4f - 8f, 0, 0), placed);
+				EditorGameObject e = PlaceForTest(show[i], c0 + new Vector3(i * 4f - 12f, 0, 0), placed);
 				if (e != null && i == 0) PropsCommand.Change(e, ObjectProps.With(e.Props, ObjectProps.TintColor, "#6080FF"));
 			}
 			Camera.main.transform.position = c0 + new Vector3(0, 5f, -14f);
