@@ -36,16 +36,24 @@ namespace DynamicIslands
 		{
 			if (exclusiveTest != null && exclusiveTest != e) StopExclusive();
 			runningTests++;
-			Coroutine run = DynamicIslands.instance.StartCoroutine(Track(e));
+			int id = ++testSerial;
+			runningIds.Add(id);
+			if (exclusiveTest == e) exclusiveId = id;
+			Coroutine run = DynamicIslands.instance.StartCoroutine(Track(e, id));
 			if (exclusiveTest == e) exclusiveRun = run;
 			return run;
 		}
+
+		// Each running test's number: a command file's later lines wait only for the tests its own earlier lines started
+		static int testSerial;
+		static readonly HashSet<int> runningIds = new HashSet<int>();
 
 		// A long test that keeps changing the world (CIOptionsMatrix) stops when the next test starts: after a runner's
 		// timeout it went on switching options under the next tests (CIBlueprintsWorld, CIWorldOptionsCheck failed)
 		static IEnumerator exclusiveTest;
 		static Coroutine exclusiveRun;
 		static string exclusiveName;
+		static int exclusiveId;
 		static Coroutine StartExclusiveTest(string name, IEnumerator e)
 		{
 			if (exclusiveTest != null) StopExclusive();
@@ -61,6 +69,7 @@ namespace DynamicIslands
 			exclusiveTest = null;
 			if (exclusiveRun != null) DynamicIslands.instance.StopCoroutine(exclusiveRun);
 			exclusiveRun = null;
+			runningIds.Remove(exclusiveId);
 			Fail(exclusiveName + ": stopped - another test started (the runner moved on, e.g. after its timeout)");
 			// (Dispose runs the test's finally: the world's own options etc. back now, not over the next test)
 			try { IDisposable d = e as IDisposable; if (d != null) d.Dispose(); }
@@ -68,7 +77,7 @@ namespace DynamicIslands
 			if (--runningTests < 0) runningTests = 0;
 		}
 
-		static IEnumerator Track(IEnumerator e)
+		static IEnumerator Track(IEnumerator e, int id)
 		{
 			while (true)
 			{
@@ -79,6 +88,7 @@ namespace DynamicIslands
 				yield return e.Current;
 			}
 			if (exclusiveTest == e) { exclusiveTest = null; exclusiveRun = null; }
+			runningIds.Remove(id);
 			if (--runningTests <= 0) { runningTests = 0; if (pendingCommands > 0) idleOwed = true; else Log("IDLE (all tests done)"); }
 		}
 
@@ -2049,11 +2059,14 @@ namespace DynamicIslands
 				// One line after another: a line waits until the tests the earlier lines started have ended (two tests
 				// that both generate or load islands at once spoil each other - CIGenRaftFeatures next to CIGenParity, 10-16)
 				List<string> todo = lines.Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith("#")).ToList();
+				// (only the tests this file's lines start: a test left running from before - one that never ended - held
+				// every later file's second line for good, RUN1 10-20; CIPollerWait)
+				int firstTest = testSerial + 1;
 				for (int li = 0; li < todo.Count; li++)
 				{
 					string line = todo[li];
 					pendingCommands = todo.Count - li; // (this line too, until it runs)
-					if (li > 0) while (runningTests > 0) yield return null;
+					if (li > 0) while (runningIds.Any(i => i >= firstTest)) yield return null;
 					// "@<unix ms> <command>": run at that moment of the PC's clock - two Rafts on one PC then act in the same
 					// frame or the next, not up to a second apart as the file poll and the script's jobs leave them (IM28)
 					long at;
@@ -2074,6 +2087,25 @@ namespace DynamicIslands
 				if (idleOwed && runningTests == 0) Log("IDLE (all tests done)");
 				idleOwed = false;
 			}
+		}
+
+		[ConsoleCommand(name: "CIPollerWait", docs: "Dev: a command file's second line doesn't wait for a test left running from before the file (it held every later file for good after a never-ending test, RUN1 10-20): this test keeps running while it writes a two-line command file of CIPollerMark lines; both must run within 5 s")]
+		public static void PollerWaitCommand() { StartTest(PollerWaitRoutine()); }
+
+		static int pollerMarks;
+		[ConsoleCommand(name: "CIPollerMark", docs: "Dev, helper of CIPollerWait: counts one mark")]
+		public static void PollerMarkCommand() { pollerMarks++; Log("poller mark " + pollerMarks); }
+
+		static IEnumerator PollerWaitRoutine()
+		{
+			pollerMarks = 0;
+			// (the poller reads a file only once it is 0.1 s old, and this test's own file is gone by now)
+			yield return new WaitForSecondsRealtime(0.3f);
+			File.WriteAllLines(CommandFile, new[] { "CIPollerMark", "CIPollerMark" });
+			float end = Time.realtimeSinceStartup + 5f;
+			while (pollerMarks < 2 && Time.realtimeSinceStartup < end) yield return null;
+			if (pollerMarks == 2) Log("PASS: poller wait (both lines of a new file ran while an older test was still running)");
+			else Fail("poller wait: " + pollerMarks + " of 2 lines ran in 5 s while an older test was still running");
 		}
 
 		/// <summary>Runs one of this mod's console commands by name (they are static methods with a ConsoleCommand attribute).</summary>
