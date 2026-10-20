@@ -605,10 +605,23 @@ namespace DynamicIslands
 		#region Round trip of every saved island
 
 		/// <summary>Loads each saved island in the editor, saves it under a test name and compares the two files (terrain, paint, objects with settings, island settings).</summary>
-		[ConsoleCommand(name: "CIRoundTrip", docs: "Dev, editor: loads every saved island (or the one named), saves it again under a test name and compares: nothing may change")]
+		[ConsoleCommand(name: "CIRoundTrip", docs: "Dev, editor: loads every saved island (or the one named, or @<file> of names), saves it again under a test name and compares: nothing may change. Of the machine-written ones (gen-*, rnd-*, downloaded copies) a fixed sample of 20; 'all' takes every one. '<n>m' = its time limit in minutes (13, under alltests' 15); it stops when another test starts")]
 		public static void RoundTripCommand(string[] args)
 		{
-			StartTest(RoundTripRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
+			List<string> a = args != null ? args.ToList() : new List<string>();
+			float minutes = 13f, m;
+			if (a.Count > 0 && a[a.Count - 1].EndsWith("m") && float.TryParse(a[a.Count - 1].TrimEnd('m'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out m)) { minutes = m; a.RemoveAt(a.Count - 1); }
+			bool all = a.Count > 0 && a[0] == "all";
+			if (all) a.RemoveAt(0);
+			StartExclusiveTest("island round trip", RoundTripRoutine(a.Count > 0 ? string.Join(" ", a.ToArray()) : null, all, minutes * 60f));
+		}
+
+		// (machine-written islands - generated, the randomizer's extras, downloaded copies - are world spill: 270+ of them by
+		// 10-20 made the run 1600+ islands long, and it went on saving 44 min after the runner gave up; 20 of them cover the kind)
+		const int RoundTripMachineSample = 20;
+		static bool MachineWritten(string n)
+		{
+			return n.StartsWith(CustomIslandSpawner.GeneratedPrefix, StringComparison.OrdinalIgnoreCase) || n.StartsWith(WorldRandomizer.ExtrasPrefix, StringComparison.OrdinalIgnoreCase) || IslandNetwork.IsDownloadName(n);
 		}
 
 		[ConsoleCommand(name: "CIComponents", docs: "Dev: the components on a catalog object's prototype and on up to 3 of its copies in the scene (name) - a Rigidbody left on one lets it settle after loading")]
@@ -624,16 +637,31 @@ namespace DynamicIslands
 
 		const string RoundTripName = "ci_roundtrip";
 
-		static IEnumerator RoundTripRoutine(string only)
+		static IEnumerator RoundTripRoutine(string only, bool all = false, float limit = 780f)
 		{
 			yield return WaitForEditor(false);
 			// ("@<file>": the islands named in that file, one a line - a rerun of the ones that changed)
 			HashSet<string> listed = only != null && only.StartsWith("@") && File.Exists(only.Substring(1)) ? new HashSet<string>(File.ReadAllLines(only.Substring(1)).Select(l => l.Trim()).Where(l => l.Length > 0)) : null;
 			List<string> names = IslandSpawner.ListSavedIslands().Where(n => n != RoundTripName && (only == null || (listed != null ? listed.Contains(n) : n == only))).ToList();
-			int passed = 0;
+			int machineAll = 0;
+			if (only == null && !all)
+			{
+				List<string> machine = names.Where(MachineWritten).OrderBy(n => n, StringComparer.Ordinal).ToList();
+				machineAll = machine.Count;
+				// (the same spread-out 20 each run, from the sorted names)
+				List<string> sample = machine.Count <= RoundTripMachineSample ? machine
+					: Enumerable.Range(0, RoundTripMachineSample).Select(i => machine[(int)((i + 0.5f) * machine.Count / RoundTripMachineSample)]).Distinct().ToList();
+				names = names.Where(n => !MachineWritten(n)).Concat(sample).ToList();
+			}
+			int passed = 0, done = 0;
 			var failed = new List<string>();
+			float start = Time.realtimeSinceStartup;
+			try
+			{
 			foreach (string name in names)
 			{
+				if (Time.realtimeSinceStartup - start > limit) break;
+				done++;
 				IslandFile a;
 				try { a = IslandFile.Load(IslandSpawner.PathFor(name)); }
 				catch (Exception e) { failed.Add(name + ": can't read (" + e.Message + ")"); continue; }
@@ -656,9 +684,15 @@ namespace DynamicIslands
 				string diff = CompareIslands(a, b);
 				if (diff == null) passed++; else failed.Add(name + ": " + diff);
 			}
-			if (File.Exists(IslandSpawner.PathFor(RoundTripName))) File.Delete(IslandSpawner.PathFor(RoundTripName));
+			}
+			finally
+			{
+				// (also when it is stopped: another test started)
+				try { if (File.Exists(IslandSpawner.PathFor(RoundTripName))) File.Delete(IslandSpawner.PathFor(RoundTripName)); } catch { }
+			}
 			foreach (string f in failed) Log("  ROUND TRIP " + f);
-			Log("Round trip: " + passed + " of " + names.Count + " islands unchanged");
+			Log("Round trip: " + passed + " of " + names.Count + " islands unchanged" + (machineAll > 0 ? " (machine-written: a sample of " + Math.Min(machineAll, RoundTripMachineSample) + " of " + machineAll + ")" : ""));
+			if (done < names.Count) { Fail("island round trip: time limit " + Mathf.RoundToInt(limit / 60f) + " min - " + done + " of " + names.Count + " checked, " + failed.Count + " changed (run it alone with a longer limit: CIRoundTrip <n>m)"); yield break; }
 			if (failed.Count == 0 && names.Count > 0) Log("PASS: every saved island survives loading and saving"); else Fail("island round trip (" + failed.Count + " changed)");
 		}
 
