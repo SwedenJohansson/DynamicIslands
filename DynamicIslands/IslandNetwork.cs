@@ -96,6 +96,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Host -> everyone: the world option Storm seas (TODO 4e, StormSeas): a storm broke a raft floor. Name = "broke", Index =
 		/// the storm, Count = floors broken in the world. Raft itself takes the floor away on every machine; this is the banner. An older version ignores it.</summary>
 		public const int StormSeas = 35;
+		/// <summary>Host -> everyone: the world option Whale breach (TODO 4j, WhaleBreach): a whale breaches. Index = its number, Offsets = { dx, dz from the host's raft, heading, roll side }. Looks only.</summary>
+		public const int WhaleBreach = 36;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -701,6 +703,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.StormSeas:
 						global::DynamicIslands.Editor.StormSeas.OnMessage(msg);
+						break;
+					case IslandNetMessage.WhaleBreach:
+						global::DynamicIslands.Editor.WhaleBreach.OnMessage(msg);
 						break;
 					case IslandNetMessage.VendingHatch:
 						if (!Raft_Network.IsHost && msg.Ids != null && msg.Ids.Length >= 3) RaftVending.OnHatchMessage(msg.Ids[0], msg.Ids[1], msg.Ids[2], msg.Count);

@@ -181,6 +181,8 @@
     <Compile Include="StormSeas.cs" />
     <Compile Include="DevTestsStormSeas.cs" />
     <Compile Include="UfoSightings.cs" />
+    <Compile Include="WhaleBreach.cs" />
+    <Compile Include="DevTestsWhaleBreach.cs" />
     <Compile Include="DevTestsUfo.cs" />
     <Compile Include="ExtraUpgrades.cs" />
     <Compile Include="TraderRaft.cs" />
