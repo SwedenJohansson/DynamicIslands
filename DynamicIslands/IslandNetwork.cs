@@ -93,6 +93,9 @@ namespace DynamicIslands.Editor
 		/// state key, button + 1 (0 = empty), Count = day. Raft's own message can reach a player before the island is set up there
 		/// (F195); this keeps the player's island state, and its machine, as the host has it. An older version ignores it.</summary>
 		public const int VendingHatch = 34;
+		/// <summary>Host -> everyone: the world option Storm seas (TODO 4e, StormSeas): a storm broke a raft floor. Name = "broke", Index =
+		/// the storm, Count = floors broken in the world. Raft itself takes the floor away on every machine; this is the banner. An older version ignores it.</summary>
+		public const int StormSeas = 35;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -695,6 +698,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.WorldSave:
 						global::DynamicIslands.Editor.WorldSaveShare.OnMessage(msg);
+						break;
+					case IslandNetMessage.StormSeas:
+						global::DynamicIslands.Editor.StormSeas.OnMessage(msg);
 						break;
 					case IslandNetMessage.VendingHatch:
 						if (!Raft_Network.IsHost && msg.Ids != null && msg.Ids.Length >= 3) RaftVending.OnHatchMessage(msg.Ids[0], msg.Ids[1], msg.Ids[2], msg.Count);

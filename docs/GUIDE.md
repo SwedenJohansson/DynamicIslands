@@ -2463,7 +2463,7 @@ a world where they are all left alone plays as plain Raft plus your islands.
 - **World rules** (9.2): tougher or softer monsters, a dearer build menu.
 - **World randomizer** (9.3): a normal Raft world made different every time: colours, alphas, finds, odd islands, bosses.
 - **Extra options** (9.4): ghost rafts, private storages, long voyage, iron raft, shared EXP, night is dangerous, daily
-  quest, rogue shark, silver & golden barrels, storm days, trader raft, extra upgrades, UFO sightings and a head start raft (older
+  quest, rogue shark, silver & golden barrels, storm days, storm seas, trader raft, extra upgrades, UFO sightings and a head start raft (older
   worlds may still have scrambled blueprints or the story islands in a new order on).
 - **Islands while sailing** (9.5): which of your islands a world may meet.
 - **The level up system** (9.6): EXP and stat points - a switch in the window (a world option: islands don't turn it on).
@@ -2539,6 +2539,7 @@ already in the world is taken away. What each one does from the moment it change
 | Rogue shark | On: today's chance is rolled at once; off: one already out stays until killed |
 | Golden barrels | Barrels from now on; off: no extra loot and plain colours at once |
 | Storm days | At once: a storm day starts, or a storm ends within seconds |
+| Storm seas | At once: Raft's next weather is more often a storm, and a storm blowing now rocks harder; off: no more broken floors (broken ones stay broken) |
 | UFO sightings | The next sighting day has one; off, a saucer already in the sky finishes its crossing |
 | Extra upgrades | Off: the recipes are hidden; upgrades built or worn keep working, learned ones are kept |
 | Scrambled blueprints / Story order (retired, off only) | Untaken blueprints go back to Raft's places / the Receiver goes back to Raft's order |
@@ -2744,6 +2745,29 @@ in 0.6 of the usual time, on top of Night is dangerous), and the rain waters the
 At **nightfall the evening before**, every player is warned; a banner says when the storm day begins. Raft has no
 rain collector of its own, so the rain helps the crops only. Which days are stormy comes from the world's seed: a
 loaded world has the same storm days, and every player has the same weather. `StormDays` shows the next one.
+
+#### Storm seas
+
+A rougher sea for players who find Raft's weather too kind. It uses **Raft's own storms** (rain, or rough snow in the
+snow region), only more of them, and they hit harder:
+
+- **More storms:** when Raft picks its next weather, a calm pick turns into a storm **half the time**, and calm spells
+  last **half as long**, so a storm is never far off. Raft's calm-only weather (the very start of a world) is left alone.
+- **The raft rocks harder:** in a storm the raft tilts on the waves **two and a half times** as far as Raft's own, with a
+  slow sway of its own on top, but never more than 12 degrees. The rocking eases in over about 20 seconds as a storm
+  comes and eases out after it, so the raft never jumps.
+- **A broken floor:** each storm has a **1 in 4** chance to break one floor (foundation) of the raft, some 15-45
+  seconds after it starts. Only a foundation on the **edge or a corner** breaks (one with an open side), **never one in
+  the middle**, and the storm picks one whose loss keeps the raft in one piece when it can. It goes the way Raft takes
+  a destroyed block away: **what stands on it falls** with it. A banner tells every player: *The storm broke the raft*.
+  A raft of 4 foundations or fewer is never broken.
+
+Only the host decides: which storms break a floor and which floor comes from the world's seed and the storm's number,
+so a world taken over by another host goes on the same way. Every player sees the same storm and the same broken
+floor (Raft sends both itself), players who join later get the raft as it is, and the storms counted and the floors
+broken are saved with the world. Switched off in a running world, no more floors break and the raft rocks as Raft's
+own; a floor already broken stays broken. `StormSeas` (F10) shows the weather now, the storms counted, the floors
+broken and how many foundations are on the edge.
 
 #### Trader raft
 
@@ -3084,7 +3108,7 @@ there means plain Raft.
 |---|---|---|---|
 | `monsters` | `timid`, `normal`, `fierce`, `savage`, `nightmare`; `easy`, `moderate`, `hard`, `impossible` or 0-4 are read too | The monster difficulty the next new world starts with | **Monster difficulty** in World settings, when you press **Create**; `Monsters <level>` in the main menu, at once |
 | `buildcost` | 0-100 | How many % more the build menu costs in the next new world | **Build cost** in World settings (Create); `BuildCost <0-100>` in the main menu |
-| `options` | The extra options that are on, separated by commas: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades` | The extra options the next new world starts with | The option buttons in World settings (Create); `WorldOptions +option -option` in the main menu |
+| `options` | The extra options that are on, separated by commas: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas` | The extra options the next new world starts with | The option buttons in World settings (Create); `WorldOptions +option -option` in the main menu |
 | `levels` | `on`, `off` | The level up system in the next new world | **Level up system** in World settings (Create); `Levels on` / `Levels off` in the main menu |
 | `headstart` | 0-3 | The head start raft's level in the next new world (0 = none) | **Head start raft** in World settings (Create); `HeadStart <0-3>` in the main menu |
 | `islandsoff` | Island names separated by a vertical bar; also `type:<map type>` and `<generated>` | The islands left out of the next new world's islands while sailing | **CHOOSE ISLANDS...** in World settings (Create); `WorldIslands -<island>`, `+<island>`, `all` in the main menu |
@@ -3142,7 +3166,7 @@ Press **F10** for RML's console.
 | `WorldPlan` / `WorldPlan <name>` | World | The world's plan and its rules / give it another plan (host). A player who joined sees the host's plan, which of its rules are done and the story chain; trying to change it says only the host can |
 | `StoryChain` | World | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | World | What the randomizer does here / change it (host) |
-| `WorldOptions` / `WorldOptions +option -option` | World or main menu | The world's World settings / change them (host; at the main menu: the next new world). Options: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades` ([9.4](#94-extra-options)) |
+| `WorldOptions` / `WorldOptions +option -option` | World or main menu | The world's World settings / change them (host; at the main menu: the next new world). Options: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas` ([9.4](#94-extra-options)) |
 | `HeadStart` / `HeadStart 0-3` | World or main menu | The head start raft: this world's level and the next new world's / at the main menu choose the level for the next new world (0 = off) |
 | `Levels` / `Levels on` / `Levels off` | World or main menu | The level up system in this world / switch it (host; off keeps everyone's levels; at the main menu: for the next new world) |
 | `Resync` | World, joined player | Ask the host for its custom islands again (the list, and any island file that hasn't come) |
@@ -3155,6 +3179,7 @@ Press **F10** for RML's console.
 | `UpgradeTable` | World | The upgrade research table (option Extra upgrades): what this world has researched and learned there |
 | `RogueShark` / `RogueShark spawn` / `RogueShark giant` | World | The rogue shark (option Rogue shark): alive or not, giant or not, and the day before which none comes / one now, or a giant one now (host) |
 | `Barrels` / `Barrels roll <index> [<to>]` | World | The barrels in the sea now and which are silver or golden (option Silver & golden barrels) / what the barrel with that index is in this world (with `<to>`: the silver and golden ones in the range) |
+| `StormSeas` / `StormSeas break` | World | The weather now, the raft's rocking, the storms counted, the floors broken and the edge foundations (option Storm seas) / (host, for tests) break an edge floor now |
 | `StormDays` / `StormDays roll <from> <to>` | World | Whether today is a storm day, the next one, the weather and the shark's factor (option Storm days) / the storm days between two days |
 | `Traders` / `Traders offers <seed>` / `Traders bring` | World | The trader rafts loaded now and their stalls' stock (option Trader raft) / what a trader raft with that seed sells / a trader raft ahead now (host) |
 | `ExportMapType <type> [file name]` | Anywhere | Writes a map type as a file in `maptypes\` to start your own from (default name `my-<type>`) |

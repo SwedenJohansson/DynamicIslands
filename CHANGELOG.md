@@ -12,6 +12,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Storm seas** (World settings > Extra options, off by default): Raft's storms come far more often and rock the
+  raft harder. Each storm has a 1 in 4 chance to break one floor on the raft's edge or a corner (never one in the
+  middle), and what stands on it falls. The host decides; every player sees the same storm and the same broken floor.
 - **UFO sightings** (World settings > Extra options, off by default): on about two days in five a flying saucer
   crosses the sky high above the raft, horizon to horizon in about half a minute, in a new colour each time. It spins
   and blinks its rim lights; at night it glows green or purple. Looks only. Every player sees the same saucer at the
