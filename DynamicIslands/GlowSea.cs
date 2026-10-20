@@ -48,7 +48,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Whether this night glows in this world (the same on every machine). The night is the day it began on.</summary>
 		public static bool Rolls(int seed, int night)
 		{
-			if (night < 1) return false;
+			if (night < 0) return false; // (night 0 is a new world's first night: it rolls too)
 			return WorldOptions.Unit(seed, night, Salt) < Chance;
 		}
 
@@ -148,7 +148,7 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public class GlowSeaLook : MonoBehaviour
 	{
-		const int Sparks = 700, Patches = 70, Halos = 160, Stirred = 160;
+		const int Sparks = 900, Patches = 70, Halos = 160, Stirred = 160;
 		const float Radius = 42f, Grid = 6f;
 		const int GridN = 15;
 
@@ -314,8 +314,9 @@ namespace DynamicIslands.Editor
 			d.vel = new Vector3(Rand(-0.08f, 0.08f), 0f, Rand(-0.08f, 0.08f));
 			d.age = 0f;
 			d.life = Rand(1.5f, 5f);
-			d.size = Rand(0f, 1f) < 0.1f ? Rand(0.18f, 0.3f) : Rand(0.05f, 0.16f);
-			d.depth = Rand(0f, 1f) < 0.3f ? Rand(0.2f, 1.6f) : -0.04f;
+			d.size = Rand(0f, 1f) < 0.12f ? Rand(0.25f, 0.45f) : Rand(0.08f, 0.22f);
+			// (most ride just above the sampled surface: the waves between the 6 m height samples hid the ones level with it)
+			d.depth = Rand(0f, 1f) < 0.15f ? Rand(0.1f, 0.5f) : -0.08f;
 			d.col = Blue(Rand(0.7f, 1f));
 		}
 
@@ -326,8 +327,8 @@ namespace DynamicIslands.Editor
 			d.vel = new Vector3(Rand(-0.05f, 0.05f), 0f, Rand(-0.05f, 0.05f));
 			d.age = 0f;
 			d.life = Rand(6f, 14f);
-			d.size = Rand(1.8f, 5f);
-			d.depth = -0.03f;
+			d.size = Rand(2.5f, 6f);
+			d.depth = -0.1f;
 			d.col = Blue(Rand(0.5f, 0.8f));
 		}
 
@@ -367,8 +368,8 @@ namespace DynamicIslands.Editor
 				// (a twinkle: quick up, slow down; patches swell and fade slowly)
 				float a = spark || once ? Mathf.Clamp01(t * 6f) * Mathf.Clamp01((1f - t) * 1.6f) : Mathf.Sin(t * Mathf.PI);
 				if (spark) a *= 0.75f + 0.25f * Mathf.Sin(Time.time * 7f + i);
-				if (d.depth > 0f) a *= Mathf.Lerp(0.8f, 0.35f, d.depth / 1.6f);
-				a *= level * (spark || once ? 1f : 0.22f);
+				if (d.depth > 0f) a *= Mathf.Lerp(0.8f, 0.45f, d.depth / 0.5f);
+				a *= level * (spark || once ? 1f : 0.35f);
 				var p = new ParticleSystem.Particle();
 				p.position = new Vector3(d.pos.x, SeaY(d.pos.x, d.pos.z) - d.depth, d.pos.z);
 				p.startSize = d.size * (spark ? 1f : (0.8f + 0.2f * t));
