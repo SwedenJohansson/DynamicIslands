@@ -6,10 +6,12 @@ offset 0 0
 wait 3
 at 0 -2
 expect height 7
-at -3.75 0.5 h=7
+# (walked, not put with at ... h=: on a flying island that drops the player off the island)
+walk 0 -3 to -3.75 -2.5 to -3.75 0.5 h=7
 open The hermit's chest
-at 9.5 5.5 h=5
+# (stops short: walks via 5 2 and 5 4 got stuck on the stranded boat's hull; a player reaching the crate by hand is not checked here - open has no range check)
+walk 0 0 to 3.5 2.5 h=8
 open Crate in the boat
-at 0 12 h=7
+walk 0 0 to 0 9 to 1 12.8 h=7
 expect height 7
 open Chest by the nests

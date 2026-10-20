@@ -7,7 +7,7 @@
 # Built by the recipe player (CIRecipe skyhollow) through the editor's own operations. Points (metres over the island's
 # own water line; in the world it all hangs 60 m higher): the meadow (7 m, r 10 round 0 0); the hermit's cabin x
 # -6..-1.5, z -1..2 (its door south at -3.75 -1), his chest at -5 1.4; the boat's hollow round 12 4 (5 m); the nesting
-# rim round 0 13 (7 m) with the nest chest at 1.5 12.6; the lookout rocks at -10 -9.
+# rim round 0 13 (7 m) with the nest chest at -0.1 11.9; the lookout rocks at -10 -9.
 include lib_huts
 include lib_features
 include lib_ni34
@@ -24,12 +24,12 @@ elevation 60
 brush flatten at 0 0 r=10 s=20 frames=100 h=7
 brush flatten at 12 4 r=5 s=20 frames=80 h=5
 brush smooth from 6 2 to 12 4 r=4 s=10 frames=30
-brush flatten at 0 13 r=3 s=20 frames=80 h=7
+brush flatten at 0 13 r=4.5 s=20 frames=150 h=7
 brush grass at 0 0 r=12 s=20 frames=30
 brush rock at -10 -9 r=4 s=20 frames=20
 clear at 0 0 r=11
 clear at 12 4 r=6
-clear at 0 13 r=3.5
+clear at 0 13 r=4.5
 
 # ===== The hermit's cabin, his fire and woodpile ===========================================================================
 push at -6 -1 h=7
@@ -52,9 +52,9 @@ place BigBoulder4_Low - at -10 -9 ground scale=0.35 yaw=40
 place SmallBoulder2 - at -7.5 -10.5 ground sit scale=0.6
 
 # ===== The nesting rim to the north; nests and a chest on it ==============================================================
-place Bird_Nest - at -1.2 13.4 ground sit
-place Bird_Nest - at 1.4 13.8 ground sit yaw=120
-place Loot_ChestSmall nestchest at 1.5 12.6 ground sit yaw=200
+place Bird_Nest - at -1.4 13.2 ground sit
+place Bird_Nest - at 1.4 12.4 ground sit yaw=120
+place Loot_ChestSmall nestchest at -0.1 11.9 ground sit yaw=200
 
 # ===== Fruit, flowers, a hive; dirt to dig ================================================================================
 place "Pickup_Landmark_Tree_Mango" - at 5 -4 ground yaw=40

@@ -27,6 +27,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Two more medium library islands** (no quest, no banner): Mourner's Deep, a drowned graveyard with the
   gravedigger's shack, an air pocket and a sunken boat; Ringstone Hill, a ring of standing stones on a hill with
   a cave below it and a wreck offshore.
+- **Three more medium library islands** (no quest, no banner): Geiger Isle, a fenced yard of toxic barrels with a
+  guard's hut, a radio mast and a bunker in the rock; Charbone Cove, a jungle camp behind a palisade with tiki poles,
+  cages and a hoard in a hollow rock; Skyhollow, a peaceful island flying 60 m up with a hermit's cabin and a boat
+  stuck in its side.
 - **Ghost ship** (World settings > Extra options, off by default): on about one night in four a glowing wreck
   drifts past the raft after dark, close enough to swim to - Raft's own pieces, lit cyan in a mist, with four chests
   of good loot (titanium, circuit boards, a battery...) and a crew of ghosts: Raft's monsters, see-through and
