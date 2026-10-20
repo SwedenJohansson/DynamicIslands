@@ -59,7 +59,9 @@ place Zone_Sound wardenmusic at 2.5 -8.5 h=31
 # --- The prize vault at the chasm's north-west end, in its wall (a radio tower room, its door a stone slab that sinks when
 # the Warden falls): the prize, the Warden's broken chains --------------------------------------------------------------
 push at -1.13 3.35 h=22.05 yaw=-31
-call rt_storey f1=none f2=RT_Wall1
+call rt_storey f1=none f2=RT_Wall1 l1=none
+# (the front left wall reaches 1.5 m down: the chasm's rim falls away under it)
+place RT_Wall1 - at -6.04 -4.5 y=-1.5 yaw=90 sy=1.5
 place RT_Floor - at 0 4.5 y=3
 place RT_Wall1 vaultgate at -3 -4.5
 place Loot_ChestLarge prize at -3 3.2 y=0 sit yaw=180

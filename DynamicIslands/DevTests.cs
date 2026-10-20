@@ -726,7 +726,8 @@ namespace DynamicIslands
 				meshCells.Add(Mathf.RoundToInt(mz / spacing) * cells + Mathf.RoundToInt(mx / spacing));
 			}
 			int[] dx = { 1, -1, 0, 0 }, dz = { 0, 0, 1, -1 };
-			int edges = 0, seams = 0, rays = 0, through = 0;
+			int edges = 0, seams = 0, rays = 0, through = 0, byGround = 0;
+			TerrainCollider tc = terrain.GetComponent<TerrainCollider>();
 			string first = null;
 			Vector3 origin = terrain.transform.position;
 			for (int z = 0; z < cells; z++)
@@ -763,6 +764,10 @@ namespace DynamicIslands
 						rays++;
 						if (!uc.Raycast(new Ray(from, target - from), out hit, (target - from).magnitude))
 						{
+							// (the ground's own face first, from its open side: a coast cell where the terrain splits its square on the
+							// other diagonal than the underside, so the point lies in a sliver between them and the ray comes in over the
+							// rim - seen from below that is the ground, not the sky; Lodestone Array, Altitude Market 10-20)
+							if (tc != null && tc.Raycast(new Ray(from, target - from), out hit, (target - from).magnitude) && Vector3.Dot(hit.normal, target - from) < 0f) { byGround++; continue; }
 							through++;
 							if (first == null) first = "a ray from below reaches the rock at " + (target - origin).ToString("F1") + " without passing the underside";
 						}
@@ -772,7 +777,7 @@ namespace DynamicIslands
 			int differ = 0;
 			for (int z = 0; z < cells; z++) for (int x = 0; x < cells; x++) if (solid[z, x] != meshCells.Contains(z * cells + x)) differ++;
 			first += "; " + differ + " cells differ between the holes map and the underside, " + meshCells.Count + " under it";
-			return seams + " of " + (edges * 2) + " coast points open, " + through + " of " + rays + " rays from below get in; first: " + first;
+			return seams + " of " + (edges * 2) + " coast points open, " + through + " of " + rays + " rays from below get in (" + byGround + " met the ground's face first); first: " + first;
 		}
 
 		[ConsoleCommand(name: "CIDemo", docs: "Dev: scatters sample nature objects over the editor terrain (as undoable placements) and frames the camera")]

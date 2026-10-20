@@ -84,7 +84,7 @@ place Creature_StoneBird screechers at 18 -18 h=16
 place VP_GlassBridge bridge at 0 -11 h=5 scale=0.5
 place VP_GlassBridge_Broken bridgebroken at 0 -11 h=5 scale=0.5
 place Zone_Trigger bridgezone at 0 -7.5 h=5.5
-place ZiplinePath_Landmark zipback at 3 -7 h=5
+place ZiplinePath_Landmark zipback at 3.5 -5 ground
 zipto zipback 15 -15
 
 # --- The core platform: the core, its glow, the beam (emitter, two mirrors, the door panel), the guardian, the warning,
