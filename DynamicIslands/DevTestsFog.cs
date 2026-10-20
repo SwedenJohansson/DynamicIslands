@@ -14,7 +14,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIFog", docs: "Dev, in game (host): Fog banks (TODO 4i). Checks the schedule (rate, hours, sight, storms, smooth ramps), then brings fog in now, checks that the sky's fog distance drops to the bank's sight, ends it and checks that Raft's own fog is back.")]
 		public static void FogCommand(string[] args) { StartTest(FogRoutine()); }
 
-		[ConsoleCommand(name: "CIFogLook", docs: "Dev, in game (host): pictures of a fog bank - an island looming out of it by day and the fog at night (shot_fog_day.png, shot_fog_day_clear.png, shot_fog_night.png, shot_fog_night_clear.png). CIFogLook [sight m]")]
+		[ConsoleCommand(name: "CIFogLook", docs: "Dev, in game (host): pictures of a fog bank - an island looming out of it by day and the fog at night (shot_fog_day.png, shot_fog_day_far.png, shot_fog_day_near.png, shot_fog_day_clear.png, shot_fog_night.png, shot_fog_night_clear.png). CIFogLook [sight m]")]
 		public static void FogLookCommand(string[] args)
 		{
 			float sight = args != null && args.Length > 0 ? float.Parse(args[0], CultureInfo.InvariantCulture) : 60f;
@@ -51,6 +51,7 @@ namespace DynamicIslands
 				SetHour(12f);
 				yield return new WaitForSeconds(2f);
 				float raft = FogBanks.RaftDistance;
+				bool unityFog = RenderSettings.fog; float unityEnd = RenderSettings.fogEndDistance;
 				Log("fog: Raft's own fog distance " + raft.ToString("F0") + ", density " + FogBanks.ShownDensity.ToString("F2"));
 				Check(ref ok, FogBanks.Weight == 0f && Mathf.Abs(FogBanks.ShownDistance - raft) < 1f, "no fog before: shown " + FogBanks.ShownDistance.ToString("F0"));
 
@@ -71,6 +72,8 @@ namespace DynamicIslands
 				float want = 60f * FogBanks.DistanceFactor;
 				Check(ref ok, FogBanks.ShownDistance <= want * 1.1f && FogBanks.ShownDistance < raft * 0.5f, "fog distance drops: " + FogBanks.ShownDistance.ToString("F0") + " (Raft's " + raft.ToString("F0") + ", want " + want.ToString("F0") + ")");
 				Check(ref ok, FogBanks.ShownDensity > 0.95f, "thick: density " + FogBanks.ShownDensity.ToString("F2"));
+				Check(ref ok, RenderSettings.fog && FogBanks.NearEndShown > 0f && RenderSettings.fogEndDistance <= 60f * FogBanks.NearEnd * 1.1f,
+					"the sea fogs too (Unity fog " + RenderSettings.fogStartDistance.ToString("F0") + "-" + RenderSettings.fogEndDistance.ToString("F0") + " m, colour " + RenderSettings.fogColor + ")");
 				Check(ref ok, Mathf.Abs(FogBanks.RaftDistance - raft) < Mathf.Max(5f, raft * 0.1f), "Raft's own value untouched: " + FogBanks.RaftDistance.ToString("F0"));
 
 				// Out
@@ -80,6 +83,7 @@ namespace DynamicIslands
 				yield return new WaitForSeconds(1f);
 				Check(ref ok, FogBanks.Weight == 0f, "the fog lifts (" + (Time.unscaledTime - t0).ToString("F0") + " s)");
 				Check(ref ok, Mathf.Abs(FogBanks.ShownDistance - FogBanks.RaftDistance) < 1f, "back to Raft's own fog: " + FogBanks.ShownDistance.ToString("F0") + " = " + FogBanks.RaftDistance.ToString("F0"));
+				Check(ref ok, RenderSettings.fog == unityFog && Mathf.Abs(RenderSettings.fogEndDistance - unityEnd) < 0.01f && FogBanks.NearEndShown == 0f, "Unity's fog back as Raft had it (" + RenderSettings.fog + ", " + RenderSettings.fogEndDistance.ToString("F0") + ")");
 			}
 			finally { FogBanks.Reset(); WorldOptions.Set(optionsBefore); }
 			if (ok) Log("PASS: fog banks"); else Fail("fog banks");
@@ -100,9 +104,16 @@ namespace DynamicIslands
 			float radius = Mathf.Min(Mathf.Max(bounds.extents.x, bounds.extents.z), 120f);
 			Vector3 centre = new Vector3(bounds.center.x, 0f, bounds.center.z);
 			Vector3 dir = Flat(raftPos - centre).sqrMagnitude > 1f ? Flat(raftPos - centre).normalized : Vector3.forward;
-			Vector3 eye = centre + dir * (radius + sight * 0.75f) + Vector3.up * 4f;
+			// The island's real shore on that side: the first of its colliders a ray from far out meets (the bounds' radius
+			// can be far bigger than the land - the first pictures stood 130-165 m off and showed only fog)
+			float edge = radius;
+			Vector3 far = centre + dir * 400f + Vector3.up * 3f;
+			foreach (RaycastHit hit in Physics.RaycastAll(far, -dir, 400f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
+				if (hit.collider != null && hit.collider.transform.IsChildOf(big.transform)) { edge = 400f - hit.distance; break; }
 			Vector3 at = centre + Vector3.up * 8f;
-			Log("fog look: island " + big.name + ", radius " + radius.ToString("F0") + " m, eye " + (radius + sight * 0.75f).ToString("F0") + " m from its middle");
+			Func<float, Vector3> eyeAt = k => centre + dir * (edge + sight * k) + Vector3.up * 4f;
+			Vector3 eye = eyeAt(0.75f);
+			Log("fog look: island " + big.name + ", radius " + radius.ToString("F0") + " m, shore " + edge.ToString("F0") + " m, eye " + (edge + sight * 0.75f).ToString("F0") + " m from its middle");
 
 			var optionsBefore = new HashSet<string>(WorldOptions.Current);
 			try
@@ -116,6 +127,9 @@ namespace DynamicIslands
 				yield return new WaitForSeconds(2f);
 				Log("fog look: day, shown " + FogBanks.ShownDistance.ToString("F0") + " (Raft's " + FogBanks.RaftDistance.ToString("F0") + ")");
 				yield return CameraShot(eye, at, "fog_day");
+				// Looming: the shore from further out (only a shadow) and closer in (firming up)
+				yield return CameraShot(eyeAt(1.2f), at, "fog_day_far");
+				yield return CameraShot(eyeAt(0.35f), at, "fog_day_near");
 				SetHour(23f);
 				yield return new WaitForSeconds(3f);
 				Log("fog look: night, shown " + FogBanks.ShownDistance.ToString("F0") + " (Raft's " + FogBanks.RaftDistance.ToString("F0") + ")");

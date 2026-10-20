@@ -18,7 +18,8 @@ namespace DynamicIslands.Editor
 	///   - The look is Raft's own sky fog (AzureSky's fog scattering, the same fog Raft's weathers use): FogBanksSkyPatch
 	///     lends AzureSkyController a shorter fog distance and a full fog density just while it hands its values to the
 	///     shaders (UpdateShaderUniforms) and puts Raft's back right after, so Raft's weather blending never sees ours. The
-	///     fog takes the sky's colour: pale by day, dark blue at night.
+	///     fog takes the sky's colour: pale by day, dark blue at night. That fog covers the solid world only, so Unity's own
+	///     fog (ApplyNearFog) covers the sea and the rest in the horizon's colour.
 	///   - Smooth: a bank thickens over its first in-game hour and thins over its last, and what is shown follows that at
 	///     most 1/FadeSeconds per second (a jump in time - sleeping, a loaded world - fades too). The distance is blended
 	///     on a log scale, so the fog closes in evenly instead of all at the end.
@@ -60,7 +61,7 @@ namespace DynamicIslands.Editor
 
 		static void Log(string msg) { Debug.Log("[CUSTOM ISLANDS] [fog] " + msg); }
 
-		internal static void Reset() { TestTarget = null; TestVisibility = null; TestInstant = false; Weight = 0f; target = 0f; nextTarget = 0f; noticedBank = int.MinValue; }
+		internal static void Reset() { TestTarget = null; TestVisibility = null; TestInstant = false; Weight = 0f; target = 0f; nextTarget = 0f; noticedBank = int.MinValue; ReleaseNearFog(); }
 
 		/// <summary>One day's bank: Start in hours since day 0 (day x 24 + hour).</summary>
 		public struct Bank
@@ -158,7 +159,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Every frame: the schedule (once a second) and the shown fog following it.</summary>
 		internal static void Tick()
 		{
-			if (!LoadSceneManager.IsGameSceneLoaded) { Weight = 0f; target = 0f; return; }
+			if (!LoadSceneManager.IsGameSceneLoaded) { Weight = 0f; target = 0f; ReleaseNearFog(); return; }
 			if (Time.unscaledTime >= nextTarget)
 			{
 				nextTarget = Time.unscaledTime + 1f;
@@ -188,6 +189,53 @@ namespace DynamicIslands.Editor
 				}
 			}
 			Weight = TestInstant ? target : Mathf.MoveTowards(Weight, target, Time.unscaledDeltaTime / FadeSeconds);
+			if (Weight > 0.001f && !Underwater) ApplyNearFog(); else ReleaseNearFog();
+		}
+
+		/// <summary>
+		/// The near fog: Unity's own fog (RenderSettings), which Raft's sea and everything drawn after the sky's fog take.
+		/// AzureSky's fog is drawn over the solid world only (an opaque image effect), so the water and the raft's surroundings
+		/// stayed clear to the horizon. Linear from NearStart x sight (clear around you) to NearEnd x sight (gone), in the
+		/// colour of the sky's horizon ambient (pale by day, dark at night). Raft's values are kept and put back when the
+		/// fog has lifted, under water (Raft's water fog) or out of the world.
+		/// </summary>
+		internal static float NearStart = 0.1f, NearEnd = 1.25f;
+		const float FarEnd = 1500f;
+		static bool nearTaken, nearFogWas;
+		static FogMode nearModeWas;
+		static float nearStartWas, nearEndWas;
+		static Color nearColourWas;
+		/// <summary>The near fog shown (tests): its end distance, 0 when not ours.</summary>
+		public static float NearEndShown { get; private set; }
+
+		static void ApplyNearFog()
+		{
+			if (!nearTaken)
+			{
+				nearTaken = true;
+				nearFogWas = RenderSettings.fog; nearModeWas = RenderSettings.fogMode; nearStartWas = RenderSettings.fogStartDistance;
+				nearEndWas = RenderSettings.fogEndDistance; nearColourWas = RenderSettings.fogColor;
+			}
+			float w = Weight;
+			float end = Mathf.Exp(Mathf.Lerp(Mathf.Log(FarEnd), Mathf.Log(Mathf.Max(5f, Visibility * NearEnd)), w));
+			RenderSettings.fog = true;
+			RenderSettings.fogMode = FogMode.Linear;
+			RenderSettings.fogStartDistance = Mathf.Lerp(FarEnd * 0.5f, Visibility * NearStart, w);
+			RenderSettings.fogEndDistance = end;
+			Color c = RenderSettings.ambientMode == UnityEngine.Rendering.AmbientMode.Trilight
+				? Color.Lerp(RenderSettings.ambientEquatorColor, RenderSettings.ambientSkyColor, 0.25f) : RenderSettings.ambientLight;
+			c.a = 1f;
+			RenderSettings.fogColor = c;
+			NearEndShown = end;
+		}
+
+		static void ReleaseNearFog()
+		{
+			NearEndShown = 0f;
+			if (!nearTaken) return;
+			nearTaken = false;
+			RenderSettings.fog = nearFogWas; RenderSettings.fogMode = nearModeWas; RenderSettings.fogStartDistance = nearStartWas;
+			RenderSettings.fogEndDistance = nearEndWas; RenderSettings.fogColor = nearColourWas;
 		}
 
 		static string Clock(double time)
@@ -268,7 +316,8 @@ namespace DynamicIslands.Editor
 				", next bank day " + next.Day + " " + Clock(next.Start) + " for " + next.Hours.ToString("0.0", CultureInfo.InvariantCulture) + " h" +
 				", weather " + WeatherNow + (Stormy(WeatherNow) ? " (stormy: no fog)" : "") +
 				", shown " + Weight.ToString("0.00", CultureInfo.InvariantCulture) + " of " + Mathf.RoundToInt(Visibility) + " m, sky fog distance " + RaftDistance.ToString("0", CultureInfo.InvariantCulture) + " -> " + ShownDistance.ToString("0", CultureInfo.InvariantCulture) +
-				", density " + ShownDensity.ToString("0.00", CultureInfo.InvariantCulture));
+				", density " + ShownDensity.ToString("0.00", CultureInfo.InvariantCulture) +
+				(NearEndShown > 0f ? ", near fog to " + Mathf.RoundToInt(NearEndShown) + " m" : ""));
 		}
 	}
 
