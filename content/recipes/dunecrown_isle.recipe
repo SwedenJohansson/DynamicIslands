@@ -112,7 +112,7 @@ scatter Cactus3A 3 at -60 10 r=20 seed=7837 free=4
 scatter Cactus4B 3 at 20 -60 r=20 seed=7838 free=4
 
 # ===== Under the sea: a boat wrecked on the sea floor south of the island; Raft's finds in the shallows ==================
-call wreck x=-20 z=-100 yaw=110 roll=26 seed=7839 al=wreck
+call wreck x=-20 z=-100 yaw=110 roll=14 tilt=4 sink=2.8 seed=7839 al=wreck
 place Loot_SunkenBarrel wreckbarrel at -26 -96 ground
 call shallows r=102 deep=5 n=1 seed=7840
 

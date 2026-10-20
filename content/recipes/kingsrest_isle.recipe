@@ -102,7 +102,7 @@ place TangaroaFounderStatue statue at 36 40 h=22 sit scale=0.55 yaw=270
 place UT_EndRoom_Pot02 - at 34 42.5 h=22 sit
 place Loot_Chest offeringchest at 37.5 37.6 h=22 sit yaw=270
 call ni8air x=36 z=40 h=23 al=templeair fog=#d8d8e8 fa=0.1 light=#fff4d0 la=0.25 parts=mist r=8
-call hangbridge x1=13.5 z1=40 h1=22 x2=28.5 z2=40 h2=22 sag=1.5
+call hangbridge x1=13.5 z1=40 h1=22 x2=28.5 z2=40 h2=22 sag=1.5 pb=2
 
 # ===== The sea: Raft's finds in the shallows, dolphins ===================================================================
 call shallows r=105 deep=5 n=1 seed=7850

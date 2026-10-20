@@ -90,8 +90,8 @@ scatter CauliCoral 5 at 0 -52 r=26 seed=7871 wet free=3
 scatter SpineCoral_2 4 at 0 -55 r=24 seed=7872 wet free=3
 scatter SeaVine3 6 at 0 -50 r=28 seed=7873 wet free=3
 scatter Pickup_Landmark_GiantClam 2 at 0 -55 r=20 seed=7874 wet free=4
-call wreck x=-45 z=-62 yaw=60 roll=24 seed=7875 al=wreckwest
-call wreck x=46 z=-66 yaw=200 roll=-20 seed=7878 al=wreckeast
+call wreck x=-45 z=-62 yaw=60 roll=14 tilt=4 sink=2.8 seed=7875 al=wreckwest
+call wreck x=46 z=-66 yaw=200 roll=-14 tilt=4 sink=2.8 seed=7878 al=wreckeast
 place Loot_SunkenBarrel wreckbarrel at 40 -62 ground
 place RT_PlasticBoat - at 5 -21 h=0.15 yaw=10
 place Note_Sign streetsign at -3 -16 ground yaw=180
