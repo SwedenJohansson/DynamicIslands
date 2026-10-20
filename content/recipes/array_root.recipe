@@ -25,6 +25,8 @@ elevation -35
 # --- Terrain: the ring at 4 m, the reverse core pit at 0 m -----------------------------------------------------------
 brush flatten at 0 0 r=18 s=20 frames=200 h=4
 brush flatten at 0 0 r=6 s=20 frames=300 h=0
+brush flatten at 7.5 -13.5 r=3.5 s=20 frames=200 h=4
+brush flatten at -7.5 13.5 r=3.5 s=20 frames=200 h=4
 origin
 clear at 0 0 r=16
 
@@ -73,11 +75,15 @@ place Zone_Trigger anglerzone at 4 -10 ground y=2
 place Creature_AnglerFish anglers at 4 -10 ground y=3
 
 # --- The buoy on the surface over the root ----------------------------------------------------------------------------
+# (moored on a chain of six posts from the seabed, as Cradle Reef's buoy)
+for k 0 5
+place Antenna_pole - at 8 -20 ground y={$k*5.2} sy=0.82
+next
 place Reef_Buoy buoy at 8 -20 h=35
 place Zone_Trigger buoyzone at 8 -20 h=35
 
 # --- Kelp forests and three tight reefs -------------------------------------------------------------------------------
-scatter VP_CoralBulb05 5 at 15 12 r=3 seed=9711 free=1
+scatter VP_CoralBulb06 5 at 15 12 r=3 seed=9711 free=1
 scatter VP_CoralFoliose02 4 at 15 12 r=3 seed=9712 free=1
 scatter VP_CoralDigitate02 5 at -15 -10 r=3 seed=9713 free=1
 scatter TinyCoral 6 at -15 -10 r=3 seed=9714 free=1

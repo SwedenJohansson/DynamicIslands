@@ -12,6 +12,7 @@ use barometer
 expect story reading 1
 expect step 3
 open Station chest
+wait 3
 expect step 4
 read Twin note
 expect done

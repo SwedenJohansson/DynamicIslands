@@ -6,4 +6,4 @@ weather Calm
 at 0 0
 wait 3
 picture sl5_pendulum_isle_island 45 18 -55 0 4 0
-picture sl5_pendulum_isle_frame 8 8 -8 0 6 0
+picture sl5_pendulum_isle_frame 8 +3 -8 0 +1.2 0

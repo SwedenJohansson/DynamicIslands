@@ -15,9 +15,11 @@ expect step 3
 air cellar
 expect step 4
 open Cellar chest
+wait 3
 expect step 5
 zone root_cave
 kill Puffer fish
 expect step 6
 open Root cave cache
+wait 3
 expect done

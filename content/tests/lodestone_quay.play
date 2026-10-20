@@ -12,8 +12,10 @@ use lever
 expect story needles 1
 expect step 3
 open Instrument hut
+wait 3
 expect step 5
 read Dr. Halvard's log 1
 expect step 6
 open Builders' store
+wait 3
 expect done

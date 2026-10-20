@@ -23,6 +23,7 @@ elevation -25
 # --- Terrain: the seabed floor at 3 m -------------------------------------------------------------------------------
 brush flatten at 0 0 r=13 s=20 frames=200 h=3
 brush flatten at 12 6 r=6 s=20 frames=60 h=3
+brush flatten at -12 -2 r=6 s=20 frames=200 h=3
 origin
 clear at -9.75 0.25 r=5
 clear at 2 2 r=4

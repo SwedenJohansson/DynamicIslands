@@ -12,6 +12,7 @@ zone drowned_reef
 kill Puffer fish
 expect step 3
 open Drowned chest
+wait 3
 expect step 4
 read Twin's answer
 expect done

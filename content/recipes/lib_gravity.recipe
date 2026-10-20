@@ -25,7 +25,7 @@ end
 # airpocket: an air pocket on the ground at x z (Raft's air pocket, its trigger zone with air and bubbles): zone id,
 # alias for the zone (al) and its bubbles (bub), its radius r
 macro airpocket x=0 z=0 id=air al=air bub=airbub r=2.5 msg="An air pocket - breathe."
-place AirPocket_1 - at $x $z ground y=0.8 scale=0.6
+place AirPocket_1 - at $x $z ground y=0.05 scale=0.6
 place Zone_Trigger $al at $x $z ground y=1.6
 place Zone_Atmosphere $bub at $x $z ground y=1.2
 prop $al obj.name=$al

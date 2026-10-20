@@ -17,7 +17,7 @@ include lib_huts
 include lib_gravity
 new
 gen Trees=0.08 Bushes=0.3 Rocks=0.3 Harvest=0.25 BeachThings=0
-gen Seed=9551 Radius=34 Height=11 Roughness=0.45 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.8 PeakShape=0.5
+gen Seed=9551 Radius=34 Height=11 Roughness=0.45 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.7 PeakShape=0.5
 gen Water=0 SeaRocks=0 SeaFinds=0 Sunken=0 Hostiles=0 Friendly=0 SeaLife=0
 generate
 elevation 35
@@ -27,6 +27,7 @@ brush flatten at 0 0 r=16 s=20 frames=200 h=5
 brush flatten at 18 -14 r=6 s=20 frames=120 h=2
 brush flatten from 13 -10 to 17 -13 r=3 s=12 frames=40 h=3.5
 brush grass at 0 0 r=14 s=20 frames=20
+brush smooth at 43 -8 r=10 s=20 frames=150
 origin
 clear at 0 0 r=10
 clear at -12.75 -2.5 r=4
@@ -54,6 +55,8 @@ place Loot_Chest stationoffice at 3.7 2.3 y=0.1 sit yaw=180
 place Zone_Trigger stationzone at 2.25 1.5 y=1
 pop
 place ChoppableVines stationvines at -14.25 -4.8 ground yaw=0
+# (a porter's toolbox by the door: a machete for a player who has none yet - Rootcellar Deep's chest has one too)
+place Loot_Chest portertools at -11 -6.5 ground sit yaw=200
 
 # --- The clock tower on stilts: its room behind a keypad (on a stilt), a zipline from its deck down to the terrace ---
 push at 8 6 h=5
@@ -101,12 +104,15 @@ story clockcode|Clock tower keypad open|Note_Paper|The clock tower room's keypad
 story ballastdrop|Ballast dropped|Placeable_Lantern_Metal|You let the ballast stone go: it fell 35 m into the sea, where the market's lower town lies.
 
 note crier Market crier's board | MARKET DAY - HEAR YE\n\nThe market is OPEN, Lift Day or no Lift Day.\nStalls: fruit, rope, fireworks (by the south tent).\nThe cable-car is shut - vines. Bring a blade.\nClock tower room: the code is the hour the hill went up, 3:51, then 7 for luck - 3517.\nThe ballast crane holds the market level. DO NOT pull the release.
+note portertools Porter's toolbox | The cable-car porter's toolbox: a machete for the vines on the station door, and a coil of rope.
 note stationoffice Station office | The cable-car station's office chest: the engine plans for the cars and a metal detector's, "to find what fell".
 note clockroom Clock tower room | The clock tower room's chest: the market's fireworks money and a rigger's spare rope.
 note fireworks Fireworks stall | The fireworks seller's chest: rockets for the Lift Day show that never was, and how to make them.
 note riggerchest Rigger's chest | The rigger's chest on the tower deck: a zipline base's plans, "the quick way down to the terrace".
 loot stationoffice Blueprint_EngineControls*1;Blueprint_MetalDetector*1;Scrap*3
 prop stationoffice loot.refill=0
+loot portertools Machete*1;Rope*1
+prop portertools loot.refill=0
 loot clockroom TradeToken*4;Rope*3;Bolt*2
 prop clockroom loot.refill=0
 loot fireworks Blueprint_Firework*1;Firework*2;Rope*2
@@ -115,7 +121,7 @@ loot riggerchest Blueprint_ZiplineBase*1;Rope*4;Scrap*2
 prop riggerchest loot.refill=0
 
 prop stationvines obj.name=stationvines
-prop stationvines on.use=hide|\nsignal||vines\nmessage||The machete bites through the vines. The station door is free.
+prop stationvines on.use=hide|stationvines\nsignal||vines\nmessage||The machete bites through the vines. The station door is free.
 prop stationoffice if.open=signal|vines
 prop stationoffice else.open=message||The office is behind the vines.
 prop stationzone zone.id=station

@@ -13,6 +13,7 @@ expect step 2
 kill Screecher
 expect step 3
 open Ring locker
+wait 3
 expect step 4
 use generator
 expect story arraypower 1
@@ -29,11 +30,9 @@ use southcoil
 expect story coilsouth 0
 use eastcoil
 expect story coileast 1
-expect step 10
 zone south_arm
 use southcoil
 expect story coilsouth 1
-expect step 12
 zone west_arm
 use westcoil
 expect story coilwest 1
@@ -42,6 +41,7 @@ expect step 14
 read Coils offline
 expect step 15
 open West arm cache
+wait 3
 expect step 16
 use cutoff
 expect story crownoff 0
@@ -62,4 +62,5 @@ use cutoff
 expect story crownoff 1
 expect step 21
 zone core
+storespot 22 -12
 expect done

@@ -10,7 +10,7 @@
 # Built by the recipe player (CIRecipe pendulum_isle) through the editor's own operations. Points (metres over the
 # island's own water line; in the world it all floats 12 m higher): the island stretched 2.5 times along x; its top at
 # 5 m (x -22..22), the high west end at 6 m round -24 0, the low east end at 3.5 m round 22 0; the pendulum frame round
-# 0 0; the generator shed x 6..9, z 4..7; the keel under 0 0 (about 5 m under the water line).
+# 0 0; the generator shed x 6..9, z 4..7; the keel zone at 0 18, at the water line beside the south coast.
 include lib_huts
 include lib_features
 include lib_gravity
@@ -73,7 +73,9 @@ place Zone_Trigger lowzone at 22 0 ground
 store pendshop at 20 -3 ground
 place Note_Sign shaftwarning at 24.5 2.5 ground sit yaw=270
 place TangaroaHatchRoom_Hatch shaft at 25 0 ground sit yaw=90
-place Zone_Trigger keelzone at 0 0 h=-5
+# (the keel zone hangs in the open air beside the south coast at the water line: under it a flying island leaves out
+# everything below its own sea level, so it cannot sit under the island)
+place Zone_Trigger keelzone at 0 18 h=0
 place Placeable_Lantern_Metal - at 22 3.5 ground y=0.05 sit
 
 # --- Things to gather ------------------------------------------------------------------------------------------------

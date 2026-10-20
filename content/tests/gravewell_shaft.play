@@ -20,11 +20,14 @@ read Gallery logbook
 expect step 6
 air gallery_2
 open Gallery crate
+wait 3
 expect story pumpkey 1
 expect step 7
 open Pump hall
+wait 3
 expect step 8
 open Smelter store
+wait 3
 expect step 11
 read Halvard's log 7
 expect done

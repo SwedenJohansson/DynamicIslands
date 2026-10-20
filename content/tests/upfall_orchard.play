@@ -15,6 +15,7 @@ use apple4
 expect story upapple 4
 expect step 3
 open Farmhouse chest
+wait 3
 expect step 5
 read Well notice
 expect step 6

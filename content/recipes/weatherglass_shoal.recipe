@@ -30,11 +30,11 @@ call boardwalk n=6 wide=1 y=1.2
 pop
 
 # --- The weather station: the Stevenson screen, the barometer, the log, the chest ----------------------------------
-place RT_Pillar screenlegs at 2.4 3.4 ground sy=0.35
-place RT_Pillar screenlegs at 3.6 3.4 ground sy=0.35
-place RT_Pillar screenlegs at 2.4 4.6 ground sy=0.35
-place RT_Pillar screenlegs at 3.6 4.6 ground sy=0.35
-place "Box Small" screen at 3 4 ground y=1.05 sit
+place RT_Pillar screenlegs at 2.8 3.8 ground sy=0.4
+place RT_Pillar screenlegs at 3.2 3.8 ground sy=0.4
+place RT_Pillar screenlegs at 2.8 4.2 ground sy=0.4
+place RT_Pillar screenlegs at 3.2 4.2 ground sy=0.4
+place "Box Small" screen at 3 4 ground y=0.95 sit
 prop screen tint.color=#e8e4d8
 prop screen tint.amount=0.6
 place TP_IcePillar01 barometer at -3 4 ground sit scale=0.35

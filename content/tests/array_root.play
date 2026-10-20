@@ -34,6 +34,7 @@ expect hidden pylons
 expect shown pylonsburst
 expect step 9
 open Root vault
+wait 3
 expect step 10
 read Halvard's apology
 expect step 11

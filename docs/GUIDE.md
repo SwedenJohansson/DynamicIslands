@@ -129,6 +129,7 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
      [16.10 A whole storyline: The Last Post](#1610-a-whole-storyline-the-last-post)
      [16.11 A whole storyline: Relic of the Seventh Tide](#1611-a-whole-storyline-relic-of-the-seventh-tide)
      [16.12 A whole storyline: The Lullaby Frequency](#1612-a-whole-storyline-the-lullaby-frequency)
+     [16.13 A whole storyline: The Gravity Sea](#1613-a-whole-storyline-the-gravity-sea)
 17. [Learn from the islands](#17-learn-from-the-islands)
    - [17.1 Opening any island in the editor](#171-opening-any-island-in-the-editor) · [17.2 Looking around](#172-looking-around) ·
      [17.3 Two islands made to learn from](#173-two-islands-made-to-learn-from) · [17.4 Every feature, and an island to look at](#174-every-feature-and-an-island-to-look-at)
@@ -4353,6 +4354,37 @@ and **Lantern Spire** ([17.3](#173-two-islands-made-to-learn-from)).
    days, the earliest km, level up) and the buttons for its parts:
    - **Edit quest...**: the quest's steps, reward and messages; the buttons at the top switch between the **Main
      quest** and the island's other quests ([6.1](#61-quests)).
+### 16.13 A whole storyline: The Gravity Sea
+
+**The Gravity Sea** is a plan of twelve islands in place of Raft's own story (Raft's story off, no random islands,
+the chain on the Receiver, 500 to 1300). The Halvard Institute's Lodestone Array tore islands out of the rising sea
+and left their roots on the seabed. Each sky island brings its sunken half: you climb to an orchard 30 m up and dive
+to its cellar 25 m down, cross a market on a rock plate and dig through the stalls it dropped on the sea floor. The
+end is the Array's crown, 35 m up, and its root, 35 m under it. The islands show flying and sunken islands side by
+side (`elevation`), air pockets under water, and every kind of "when": a quest (`quest:quay`), a signal from a winch
+(`signal:orchard:roots`), a quest step (`step:9`), a zone (`zone:keel`, `zone:array:core`), a landing
+(`visit:gravewell`), a distance (`km:5`) and a twin found near another island (`near:shoal:600:north`). Raft's story
+is off, so all of Raft's story blueprints are **Blueprint** steps on the way. Altitude Market has Raft's vending
+machine; Pendulum Isle, The Stair of Hours and The Lodestone Array have a **Raft store**.
+
+| Island | What it is | What to look at |
+|---|---|---|
+| ![](images/library/lodestone_quay.jpg) **Lodestone Quay** (first, 500) | A stone quay, its crane and compass needles; the hill behind it cut flat | A short quest; the Receiver and antenna plans |
+| ![](images/library/upfall_orchard.jpg) **Upfall Orchard** (700, 30 m up) | An apple orchard and a farmhouse on a flying island | A well winch whose `signal` brings the island under it |
+| ![](images/library/rootcellar_deep.jpg) **Rootcellar Deep** (600, 25 m down) | The orchard's drowned half: the farmhouse, the well's bottom, the roots | Air pockets (`zone.air`) to breathe in; a hatch into the cellar |
+| ![](images/library/altitude_market.jpg) **Altitude Market** (900, 35 m up) | A market town on a rock plate, a clock tower on stilts | Choppable vines, a keypad, a zipline down, Raft's vending machine |
+| ![](images/library/sinkmarket_floor.jpg) **Sinkmarket Floor** (700, 30 m down) | The market's lower town, a diving bell, a flooded cistern | 14 steps under water, air pockets in a bell and a cistern |
+| ![](images/library/pendulum_isle.jpg) **Pendulum Isle** (1000, 12 m up) | A long island low over the sea, a pendulum hall | Sail under it; a shaft to its keel (`zone:keel`), a Raft store |
+| ![](images/library/gravewell_shaft.jpg) **Gravewell Shaft** (900, 45 m down) | A well shaft cut into the seabed, a pump hall at its bottom | A spiral stair down the shaft, galleries with air, anglers in the dark |
+| ![](images/library/the_stair_of_hours.jpg) **The Stair of Hours** (1100, 30 m up) | Terraces that make a giant sundial, an observatory | Hour stones walked in turn, a telescope aimed at the Array, a Raft store |
+| ![](images/library/the_lodestone_array.jpg) **The Lodestone Array** (1300, 35 m up, finale part 1) | Four magnet arms round a core platform | A 22-step quest: ziplines between the arms, a glass bridge that breaks, a beam through two mirrors, a Raft store |
+| ![](images/library/the_array_root.jpg) **The Array Root** (800, 35 m down, finale part 2) | The Array's foundation: four pylons round a pit | Comes when the crown is dark (`zone:array:core`); 12 steps: the root's guardian and its cutoff |
+| ![](images/library/weatherglass_shoal.jpg) **Weatherglass Shoal** (side, km 5) | A weather station on a sandbank | Turns up ahead of the raft (`km:5`, `ahead:450`) |
+| ![](images/library/weatherglass_deep.jpg) **Weatherglass Deep** (side) | Its drowned twin, north of it | Placed near another island (`near:shoal:600:north`) |
+
+To learn from it: open Upfall Orchard and Rootcellar Deep side by side to see how a flying island and a sunken one are
+set up (**Elevation** in the island settings), then open the plan and follow its signals and zones.
+
    - **Islands it brings...**: the island's own rules - which island comes, when and where ([6.4](#64-islands-that-bring-islands)).
    - **Island events**: what happens when players arrive or the quest is done; **Story items...**: the keys, logs and
      other things the quest gives and takes ([6.3](#63-story-items-and-story-sets)).

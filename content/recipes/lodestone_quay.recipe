@@ -21,6 +21,8 @@ generate
 # --- Terrain: the quay apron on the south shore, the sliced hilltop behind it ----------------------------------------
 brush flatten from -16 -28 to 16 -28 r=7 s=20 frames=200 h=1.5
 brush flatten from 0 -30 to 0 -18 r=7 s=20 frames=120 h=1.5
+brush flatten at -13.5 -22.5 r=5 s=20 frames=200 h=1.5
+brush flatten from -16 -35 to 16 -35 r=4 s=20 frames=200 h=1.2
 brush flatten at 0 12 r=12 s=20 frames=200 h=12
 brush smooth from -18 -38 to 18 -38 r=4 s=6 frames=20
 origin
@@ -50,7 +52,7 @@ place Note_Sign notice at 4 -33 ground sit yaw=180
 place UT_ElectricityIsland_Crane02 - at 13 -31 ground sit scale=0.45 yaw=180
 place Loot_ChestLarge buildstore at 8.5 -27 ground sit yaw=180
 place "Box Big" - at 10.5 -26 ground sit yaw=15
-place "Box Big" - at 10.5 -26 ground y=1.1 drop yaw=40
+place "Box Small" - at 10.5 -26 ground y=1.1 drop yaw=30
 place "Box Small" - at 7 -25.5 ground sit yaw=-20
 place Placeable_Lantern_Metal - at 7 -25.5 ground y=0.7 drop
 

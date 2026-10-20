@@ -16,6 +16,8 @@ use telescope
 expect story sighted 1
 expect step 4
 open Telescope vault
+wait 3
 expect step 7
 read Halvard's last log
+storespot 0 -18
 expect done

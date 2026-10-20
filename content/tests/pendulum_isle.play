@@ -16,6 +16,7 @@ use framelever
 expect story power 1
 expect step 4
 open Generator room
+wait 3
 expect step 8
 zone low_end
 expect step 9
@@ -23,4 +24,5 @@ read Keel shaft warning
 expect step 10
 use shaft
 zone keel
+storespot 20 -3
 expect done

@@ -6,4 +6,4 @@ weather Calm
 at 0 0 h=-3
 wait 3
 picture sl5_weatherglass_deep_island 20 6 -24 0 1 0
-picture sl5_weatherglass_deep_station 5 4 -3 0 2.5 3
+picture sl5_weatherglass_deep_station 5 +3 -3 0 +1.2 3

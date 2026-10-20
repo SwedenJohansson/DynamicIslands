@@ -6,4 +6,4 @@ weather Calm
 at 0 -17 h=-3
 wait 3
 picture sl5_array_root_island 26 8 -30 0 2 0
-picture sl5_array_root_pylons 10 5 -10 0 4 0
+picture sl5_array_root_pylons 10 +3 -10 0 +1.2 0

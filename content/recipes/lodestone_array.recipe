@@ -12,14 +12,14 @@
 # Built by the recipe player (CIRecipe lodestone_array) through the editor's own operations. Points (metres over the
 # island's own water line; in the world it all floats 35 m higher): the plate at 5 m (r 30 round 0 0); the moat r 9..13
 # at 1 m; the core platform r 9 at 5 m; the arms north 0 24, east 24 0, south 0 -24, west -24 0; the landing ring
-# round 18 -18. Beam: emitter -6.8 -6, mirrors -6 -2 / 6 -2, the door panel 6 6 (the_tide_engine's tested layout).
+# round 18 -18. Beam: emitter -6.8 -6, mirrors -6 -2 / 6 -2, the door panel 6 4.5 (the_tide_engine's tested layout).
 # (The design's UT_Set_TowerHarpoon is 380 m and Dome_Glass 100 m: the arms are built of a tower's platform and gun,
 # the core of the reactor controls in the open.)
 include lib_huts
 include lib_gravity
 new
 gen Trees=0 Bushes=0.15 Rocks=0.3 Harvest=0.15 BeachThings=0
-gen Seed=9681 Radius=36 Height=10 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.8 PeakShape=0.4
+gen Seed=9681 Radius=36 Height=10 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.7 PeakShape=0.4
 gen Water=0 SeaRocks=0 SeaFinds=0 Sunken=0 Hostiles=0 Friendly=0 SeaLife=0
 generate
 elevation 35
@@ -28,14 +28,18 @@ elevation 35
 brush flatten at 0 0 r=30 s=20 frames=200 h=5
 brush flatten at 0 0 r=13 s=20 frames=300 h=1
 brush flatten at 0 0 r=9 s=20 frames=300 h=5
+brush flatten at -6 -5 r=3 s=20 frames=200 h=5
+brush smooth at -21.6 -37.2 r=10 s=20 frames=150
+brush flatten at 6 4.5 r=3 s=20 frames=200 h=5
+brush flatten at -5 4 r=2.5 s=20 frames=200 h=5
 origin
 clear at 0 0 r=28
 
 # --- The four magnet arms: a harpoon tower's platform, its gun on top, two iron poles; a coil control on a post ------
 macro arm x=0 z=0 yaw=0 al=arm ctl=coil cx=0 cz=0
 place UT_HarpoonTower_Platform armdeck at $x $z ground sit yaw=$yaw
-place UT_Harpoon_Base armgun at $x $z ground y=3.2 yaw=$yaw
-place UT_Harpoon_Barrel armgun at $x $z ground y=3.55 yaw=$yaw
+place UT_Harpoon_Base armgun at $x $z ground y=4.5 drop yaw=$yaw
+place UT_Harpoon_Barrel armgun at $x $z ground y=5.5 drop yaw=$yaw
 place RT_PillarThick poles at {$x+3.6*cos($yaw)} {$z-3.6*sin($yaw)} ground sy=1.3
 place RT_PillarThick poles at {$x-3.6*cos($yaw)} {$z+3.6*sin($yaw)} ground sy=1.3
 place Zone_Trigger $al at $cx $cz ground y=1
@@ -95,12 +99,12 @@ place RT_Floodlight coreglow at -2.5 4.5 h=5 sit yaw=135
 place TP_LaserEmitter emitter at -6.8 -6 h=5 sit yaw=0
 place TP_MirrorHousing_Rotating mirror1 at -6 -2 h=5 sit yaw=0
 place TP_MirrorHousing_Rotating mirror2 at 6 -2 h=5 sit yaw=270
-place "Box Big" - at 6 6.2 h=5 sit
-place TP_LaserDoorPanel corepanel at 6 6 h=6.4 sit scale=2 yaw=180
+place "Box Big" - at 6 5.3 h=5 sit
+place TP_LaserDoorPanel corepanel at 6 4.5 h=5 sit scale=2 yaw=180
 place Note_Sign corewarning at -3 6.5 h=5 sit yaw=180
-place RT_Pillar - at -6 5 h=5 sy=0.4
-place TP_LaserControlPanel_lever cutoff at -6 5 h=6.25 sit scale=3 yaw=180
-place Placeable_Lantern_Metal corecam at 0 -8 h=8 sit
+place RT_Pillar - at -5 4 h=5 sy=0.4
+place TP_LaserControlPanel_lever cutoff at -5 4 h=6.25 sit scale=3 yaw=180
+place Placeable_Lantern_Metal corecam at 0 -6.5 h=5 sit
 place Zone_Trigger corezone at 0 -2.5 h=5.5
 place Creature_Bear guardian at 0 -4 h=5.2
 place Zone_Trigger guardzone at 0 0 h=5.5

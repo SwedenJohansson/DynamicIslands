@@ -14,7 +14,7 @@ include lib_huts
 include lib_gravity
 new
 gen Trees=0.06 Bushes=0.3 Rocks=0.3 Harvest=0.25 BeachThings=0
-gen Seed=9661 Radius=32 Height=15 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.8 PeakShape=0.3
+gen Seed=9661 Radius=32 Height=15 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.7 PeakShape=0.3
 gen Water=0 SeaRocks=0 SeaFinds=0 Sunken=0 Hostiles=0 Friendly=0 SeaLife=0
 generate
 elevation 30
@@ -25,6 +25,7 @@ brush flatten at 0 -5 r=7 s=20 frames=200 h=7
 brush flatten at 0 3 r=6 s=20 frames=200 h=10
 brush flatten at 0 10 r=5.5 s=20 frames=200 h=13
 brush grass at 0 -4 r=14 s=20 frames=20
+brush smooth at 24 14 r=10 s=20 frames=150
 origin
 clear at 0 -14 r=8
 clear at 0 -5 r=6
@@ -32,15 +33,15 @@ clear at 0 3 r=5
 clear at 0 10 r=5
 
 # --- The hour stones: clock faces on stone posts, one for each hour walked; the gnomon --------------------------------
-macro hourstone x=0 z=0 al=hour
+macro hourstone x=0 z=0 al=hour zn=hourzone
 place RT_Pillar - at $x $z ground sy=0.4
 place Clock_02 $al at $x $z ground y=1.2 drop
-place Zone_Trigger {$al}zone at $x {$z-1.2} ground y=1
+place Zone_Trigger $zn at $x {$z-1.2} ground y=1
 end
-call hourstone x=-6 z=-15 al=h1
-call hourstone x=6 z=-15 al=h3
-call hourstone x=-4.5 z=-6 al=h7
-call hourstone x=0 z=6 al=h12
+call hourstone x=-6 z=-15 al=h1 zn=h1zone
+call hourstone x=6 z=-15 al=h3 zn=h3zone
+call hourstone x=-4.5 z=-6 al=h7 zn=h7zone
+call hourstone x=0 z=6 al=h12 zn=h12zone
 place RT_PillarThick gnomon at -0.35 -1 ground sy=1.4
 place RT_PillarThick gnomon at 0.35 -1 ground sy=1.2
 place RT_PillarThick gnomon at 0 -1.6 ground sy=0.9
@@ -56,9 +57,15 @@ roof 3 3 at 0 0 y=0.1 wood
 place Placeable_Table_Basic - at 2.25 3.2 y=0.1 sit
 place Note_Paper lastlog at 2.25 3.2 y=1.1 drop yaw=20
 place Placeable_Lantern_Metal - at 1.4 3.2 y=1.1 drop
+# (posts under the roof's edge pieces; the middle post holds its peak)
+place RT_Pillar - at 2.25 2.25 y=0.1 sy=0.75
+place RT_Pillar - at 2.25 0.3 y=0.1 sy=0.75
+place RT_Pillar - at 2.25 4.2 y=0.1 sy=0.75
+place RT_Pillar - at 0.3 2.25 y=0.1 sy=0.75
+place RT_Pillar - at 4.2 2.25 y=0.1 sy=0.75
 pop
 place TP_Telescope telescope at 5.5 10 ground sit scale=0.5 yaw=270
-place TangaroaHatchRoom_Hatch vaulthatch at 5.5 7.6 ground sit
+place TangaroaHatchRoom_Hatch vaulthatch at 5.5 7.6 ground y=0.3
 place Loot_Chest vault at 5.5 7.6 ground sit yaw=180
 place Zone_Trigger arrayview at -60 10 h=40
 

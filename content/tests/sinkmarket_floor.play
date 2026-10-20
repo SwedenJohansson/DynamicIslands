@@ -21,10 +21,12 @@ zone cistern_hall
 kill Stingray
 expect step 7
 open Cistern store
+wait 3
 expect step 11
 use marncage
 expect survivor gravity_ilse
 open Marn's satchel
+wait 3
 expect step 12
 read Marn's map
 expect step 13

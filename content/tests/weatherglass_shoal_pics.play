@@ -6,4 +6,4 @@ weather Calm
 at 0 0
 wait 3
 picture sl5_weatherglass_shoal_island 30 15 -40 0 2 0
-picture sl5_weatherglass_shoal_station 6 4 -6 0 2.5 3
+picture sl5_weatherglass_shoal_station 6 +3 -6 0 +1.2 3
