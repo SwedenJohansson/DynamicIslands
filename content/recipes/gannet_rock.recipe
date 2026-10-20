@@ -19,20 +19,20 @@ gen Water=0.5 SeaRocks=0.45 SeaFinds=0.3 Sunken=0.4 Hostiles=0 Friendly=0 SeaLif
 generate
 
 # ===== Terrain: the knoll's top, the jetty's root ======================================================================
-brush flatten at -3 3 r=3.5 s=20 frames=60 h=6
+brush flatten at -3 3 r=4.5 s=20 frames=140 h=6
 brush flatten at 13 0 r=3 s=20 frames=60 h=1.35
 brush rock at -3 3 r=6 s=20 frames=20
 clear at -3 3 r=4
 clear at 13 0 r=3.5
 
 # ===== The nests on the knoll ===========================================================================================
-place Bird_Nest - at -3.5 2 ground
-place Bird_Nest - at -1.8 4.2 ground yaw=70
-place Bird_Nest - at -4.6 4.4 ground yaw=150
+place Bird_Nest - at -3.5 2 ground sit
+place Bird_Nest - at -2.2 4 ground sit yaw=70
+place Bird_Nest - at -4.2 4.1 ground sit yaw=150
 
 # ===== The jetty out from the east shore, the fisherman's crate and net on its head ======================================
 push at 14 0
-call jetty n=10 h=1.5
+call jetty n=10 h=1.5 d=8
 pop
 place Loot_Crate fishcrate at 30.5 1.2 h=1.5 sit yaw=15
 place FishingNets_02 - at 30.4 -1.1 h=1.5 sit yaw=80

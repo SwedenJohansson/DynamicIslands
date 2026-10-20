@@ -3,9 +3,9 @@
 island Cormorant Skerry
 offset 0 0
 wait 3
-at 4 -6
-expect height 2
+at 2.5 -6.5
+expect height 3.5
 open Crate by the boat
-at -4 5 h=5.5
+at -4 5
 expect height 5.5
 dig

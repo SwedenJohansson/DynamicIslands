@@ -32,9 +32,9 @@ place campfire_1 - at 3.5 -10.5 ground sit
 place Firewood_1 - at 2.4 -8.6 ground sit yaw=40
 
 # ===== The cormorants' nests on the top; snow drifts, pines and berries ===================================================
-place Bird_Nest - at -4.5 4 ground
-place Bird_Nest - at -2.6 6.2 ground yaw=90
-place Placeable_BirdsNest - at -5.6 6.4 ground yaw=200
+place Bird_Nest - at -4.5 4 ground sit
+place Bird_Nest - at -2.6 6.2 ground sit yaw=90
+place Placeable_BirdsNest - at -3.6 5.6 ground sit yaw=200
 place TP_SnowDrift01 - at -10 -2 ground sit yaw=30
 place TP_SnowDrift02 - at 9 6 ground sit yaw=150
 scatter "Pickup_Landmark_Tree_Pine" 2 at 0 0 r=18 seed=7419 free=6

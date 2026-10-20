@@ -4,10 +4,10 @@
 island Coyote Mesa
 offset 0 0
 expect animals Hyena 3
-expect animals StoneBird 1
+expect animals Screecher 1
 wait 3
 kill Hyena
-kill StoneBird
+kill Screecher
 # The hermit's cabin
 walk -25.75 -25 to -25.75 -23 to -25.75 -20.5 h=3.1 below=4
 open Hermit's box
@@ -21,6 +21,6 @@ climb -18 -4.65 h=12.6
 expect stand -18 0 h=17.4 below=19
 # Across the bridge
 walk -15 0 to -12 0 to -2 0 to 8 0 to 12 0 h=17.5 below=19
-expect stand -2 0 h=15.9 below=17
+expect stand -2.7 0 h=15.9 below=17
 open The hermit's hidden chest
 dig

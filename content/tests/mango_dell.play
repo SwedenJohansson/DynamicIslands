@@ -2,9 +2,9 @@
 # treasure. Points as in its recipe.
 island Mango Dell
 offset 0 0
-expect animals Boar 2
+expect animals Warthog 2
 wait 3
-kill Boar
+kill Warthog
 walk 0 -16 to 0 -8 to 0 -2 h=2.6 below=4
 expect stand 0 0 h=2.5 below=4
 dig

@@ -6,6 +6,6 @@ expect animals Stingray 2
 wait 3
 walk 10 -4 to 20 -4 h=1 below=3
 walk 22 -4 to 28 -4 to 34 -4 h=1.5 below=4
-expect stand 30 -4 h=1.5 below=4
+expect stand 30 -3.25 h=1.5 below=4
 open Crate on the landing stage
 dig

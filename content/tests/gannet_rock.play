@@ -6,10 +6,10 @@ expect animals Turtle 1
 expect animals Dolphin 2
 wait 3
 # Up on the knoll
-at -3 1 h=6
+at -3 1
 expect height 6
 # Along the jetty to its head, the crate
 walk 13 0 to 20 0 to 30 0 h=1.5 below=4
-expect stand 25 0 h=1.5 below=4
+expect stand 25 0.75 h=1.5 below=4
 open Fisherman's crate
 dig

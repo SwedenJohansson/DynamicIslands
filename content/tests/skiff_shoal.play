@@ -2,8 +2,8 @@
 # quest: down to the wreck, the skiff's chest. Points as in its recipe (heights over the island's own water line).
 island Skiff Shoal
 offset 0 0
-expect animals PufferFish 2
+expect animals Puffer fish 2
 wait 3
-kill PufferFish
+kill Puffer fish
 at 5.5 1.5 h=5
 open The skiff's chest

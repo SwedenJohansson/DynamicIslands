@@ -12,6 +12,11 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Fourteen new library islands to wander** (no quest, no banner): ten small - Gannet Rock, Driftwood Key,
+  Bearback Isle, Twin Horns, Pelican Spit, Mango Dell, Cormorant Skerry, Basalt Cay and the sunken Skiff Shoal
+  and Castaway Knoll - three medium - Bramblewood Isle, Gullwing Bay, Coyote Mesa - and Driftcloud Islet, a small
+  flying island. Raft's own look and density: things to gather on land and in the sea, caves, an underwater wreck,
+  jetties into the water, cabins, rope bridges, and monsters on the medium islands and a few small ones.
 - **Ghost ship** (World settings > Extra options, off by default): on about one night in four a glowing wreck
   drifts past the raft after dark, close enough to swim to - Raft's own pieces, lit cyan in a mist, with four chests
   of good loot (titanium, circuit boards, a battery...) and a crew of ghosts: Raft's monsters, see-through and

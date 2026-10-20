@@ -39,7 +39,7 @@ prop puffers creature.count=2
 
 # ===== The jetty out into the bay, its crate and nets =====================================================================
 push at 6 13 yaw=-90
-call jetty n=10 h=1.5
+call jetty n=10 h=1.5 d=10
 pop
 place Loot_Crate jettycrate at 7.2 29.5 h=1.5 sit yaw=10
 place FishingNets_02 - at 4.8 29 h=1.5 sit yaw=60

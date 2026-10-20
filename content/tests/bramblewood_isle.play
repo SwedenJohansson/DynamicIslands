@@ -3,11 +3,11 @@
 island Bramblewood Isle
 offset 0 0
 expect animals Bear 1
-expect animals Boar 3
+expect animals Warthog 3
 expect animals Turtle 2
 wait 3
 kill Bear
-kill Boar
+kill Warthog
 # Along the jetty to its head, the crate
 walk -6 -42 to -6 -48 to -6 -54 h=1.5 below=4
 open Crate on the jetty

@@ -23,17 +23,16 @@ brush flatten at -2 2 r=7 s=20 frames=60 h=5
 brush seabed at -2 2 r=9 s=20 frames=30
 clear at -2 2 r=8
 
-# ===== The lost raft: her floor broken in two on the sand, her bed, table, crate and chest ===============================
+# ===== The lost raft: her floor broken in two on the sand, her table, crate and chest ===============================
 for fx -5.25 -2.25 1.5
 place FL_Foundation1 - at $fx 1.5 ground sit roll=-4
 next
 for fx -0.25 2.75 1.5
 place FL_Foundation1 - at $fx 2.5 ground sit yaw=12 roll=6
 next
-place Bed_Simple - at -4.5 1.5 ground sit yaw=90 roll=-4
-place Table_Floor - at 0.6 2.4 ground sit yaw=12
-place Loot_Crate raftcrate at -2.6 1.2 ground sit yaw=20
-place Loot_ChestSmall raftchest at 2.2 3.4 ground sit yaw=192
+place Table_Floor - at 0.6 2.4 sit yaw=12
+place Loot_Crate raftcrate at -2.6 1.2 sit yaw=20
+place Loot_ChestSmall raftchest at 2.2 3.4 sit yaw=192
 place Reef_Barrel5 - at -7 4 ground sit roll=80
 
 # ===== Kelp all over the knoll, corals on its flanks, sunken barrels; a turtle in the kelp ===============================

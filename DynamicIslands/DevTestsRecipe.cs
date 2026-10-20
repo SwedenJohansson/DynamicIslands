@@ -1265,7 +1265,7 @@ namespace DynamicIslands
 			if (!DynamicIslands.InEditor()) { Fail("recipe " + name + ": the editor didn't open"); yield break; }
 			SetOrigin(new Vector2(500f, 500f));
 			// (the objects the recipe places, loaded first - Raft's scenes for the on-demand ones)
-			var wanted = lines.Select(l => Tokens(l.Text)).Where(t => t.Length > 1 && (t[0] == "place" || t[0] == "scatter" || t[0] == "line" || t[0] == "ramp")).Select(t => t[1])
+			var wanted = lines.Select(l => Tokens(l.Text)).Where(t => t.Length > 1 && (t[0] == "place" || t[0] == "scatter" || t[0] == "line" || t[0] == "ramp" || t[0] == "beside")).Select(t => t[1])
 				.Concat(lines.Any(l => Tokens(l.Text).FirstOrDefault() == "store") ? new[] { RaftStore.ObjectName } : new string[0])
 				.Concat(lines.Any(l => Tokens(l.Text).FirstOrDefault() == "vending") ? new[] { RaftVending.ObjectName } : new string[0]).Where(n => n != "none").Distinct().ToList();
 			yield return PlaceableCatalog.EnsureLoaded(wanted);

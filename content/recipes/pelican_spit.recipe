@@ -30,7 +30,7 @@ place Bird_Nest - at 17.5 -2.8 ground yaw=220
 
 # ===== The landing stage from the spit's tip out into deeper water, the crate on its head =====================
 push at 22 -4
-call jetty n=8 h=1.5
+call jetty n=8 h=1.5 d=8
 pop
 place Loot_Crate stagecrate at 35.5 -2.8 h=1.5 sit yaw=12
 

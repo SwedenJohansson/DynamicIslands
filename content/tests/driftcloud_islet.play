@@ -8,6 +8,6 @@ at 0 -2
 expect height 6
 at -1.5 -0.5 h=6
 open Chest under the lean-to
-at 2 -9.8 h=3.6
+at 2 -9.8
 expect height 3.6
 climb 2 -8.15 h=3.6

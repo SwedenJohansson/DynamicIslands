@@ -3,7 +3,7 @@
 # by a ledge; a screecher nests on the east horn, on a chest someone carried across. A monster island: mind the bird.
 #
 # Built by the recipe player (CIRecipe twin_horns) through the editor's own operations. Points: the west horn's top
-# (12 m) x -12..-8, z -3..3; the east horn's top (12 m) x 8..12, z -3..3; the bridge from -6.5 0 to 6.5 0 (deck 12.1 m,
+# (12 m) x -12..-8, z -3..3; the east horn's top (12 m) x 8..12, z -3..3; the bridge from -9 0 to 9 0 (its ends on the tops) (deck 12.1 m,
 # sagging 1.2 m); the ladders' foot at -10 -10 (2 m), ladders at x -10 against the faces at z -8.65 and -5.15 (the ledge
 # at z -6.5, 7 m); the chest on the east top at 10.5 1.5; the nests on both tops.
 include lib_huts
@@ -35,7 +35,7 @@ call ladders x=-10 z=-8.65 h=2 n=2 yaw=180
 call ladders x=-10 z=-5.15 h=7 n=2 yaw=180
 
 # ===== The rope bridge between the horns' tops ===========================================================================
-call hangbridge x1=-6.5 z1=0 h1=12.1 x2=6.5 z2=0 h2=12.1 sag=1.2
+call hangbridge x1=-9 z1=0 h1=12.1 x2=9 z2=0 h2=12.1 sag=1.2 pb=0
 
 # ===== The tops: nests, the chest on the east horn, its screecher ========================================================
 place Bird_Nest - at -11 2 h=12 sit

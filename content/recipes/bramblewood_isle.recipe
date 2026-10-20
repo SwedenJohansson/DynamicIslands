@@ -49,7 +49,7 @@ place Firewood_1 - at -15.4 -15.6 ground sit yaw=130
 
 # ===== The jetty out from the south beach =================================================================================
 push at -6 -40 yaw=90
-call jetty n=10 h=1.5
+call jetty n=10 h=1.5 d=8
 pop
 place Loot_Crate jettycrate at -4.6 -56.2 h=1.5 sit yaw=10
 
@@ -61,7 +61,7 @@ place Creature_Bear bear at 7 32 h=2.1
 # ===== The woods: pines and berry bushes, hives, dirt, a vine cache, a treasure; boars; Raft's finds in the shallows =======
 scatter "Pickup_Landmark_Tree_Pine" 6 at 0 0 r=36 seed=7511 free=6
 scatter "Pickup_Landmark_BerryBush" 5 at 0 0 r=36 seed=7521 free=3
-call hives x=0 z=0 r=30 n=3 seed=7531
+call hives x=0 z=0 r=30 n=3 seed=7537
 call dirt x=0 z=0 r=34 n=4 seed=7541
 call vinecache x=12 z=-10 r=14 seed=7551 items=Rope*3;Nail*10;Hinge*2
 call treasure x=0 z=0 r=34 n=1 seed=7411

@@ -5,7 +5,7 @@
 # palms, a treasure buried, Raft's finds in the shallows.
 #
 # Built by the recipe player (CIRecipe coyote_mesa) through the editor's own operations. Points: the west mesa's top
-# (17.4 m) x -22..-14, z -3..3; the east mesa's top (17.4 m) x 10..18, z -3..3; the bridge from -12.5 0 to 8.5 0 (deck
+# (17.4 m) x -22..-14, z -3..3; the east mesa's top (17.4 m) x 10..18, z -3..3; the bridge from -15 0 to 11 0 (its ends on the tops) (deck
 # 17.5 m, sagging 1.6 m); the ladders' foot at -18 -13 (3 m), ledges at z -9.5 (7.8 m) and -6 (12.6 m), ladders at x -18
 # against the faces at z -11.65, -8.15 and -4.65; the hermit's cabin x -28..-23.5, z -22..-19 (pad 3 m, its door on the
 # south side at -25.75 -22), his box inside at -27.1 -20; the hidden chest on the east top at 16 2; the hyenas at 12 -22.
@@ -43,7 +43,7 @@ call ladders x=-18 z=-8.15 h=7.8 n=2 yaw=180
 call ladders x=-18 z=-4.65 h=12.6 n=2 yaw=180
 
 # ===== The rope bridge between the mesas' tops ============================================================================
-call hangbridge x1=-12.5 z1=0 h1=17.5 x2=8.5 z2=0 h2=17.5 sag=1.6
+call hangbridge x1=-15 z1=0 h1=17.5 x2=11 z2=0 h2=17.5 sag=1.6 pb=2
 
 # ===== The hermit's cabin at the west mesa's foot: bed, box, fire ==========================================================
 push at -28 -22 h=3
