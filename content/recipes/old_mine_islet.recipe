@@ -38,8 +38,9 @@ next
 place VP_Wagon02 - at 9 -19.4 h=4.25 sit yaw=90
 place VP_Wagon02 - at -1 -19.4 h=4.25 sit yaw=90
 place VP_Wagon02 orecart at -11 -19.4 h=4.25 sit yaw=90
-place Crate_Big_01 - at 12 -23.6 h=4.2 sit yaw=10
-place Placeable_Lantern_Metal - at 12 -23.6 h=4.65 sit
+# (the near crate 4 m further in and off the south wall: at 12 -23.6 the den's floor doesn't reach under it by the mouth - it stood 1.24 m over the ground let down under the rock, 2026-10-21; its lantern on its top, 0.433 m up)
+place Crate_Big_01 - at 8 -23.2 h=4.2 sit yaw=10
+place Placeable_Lantern_Metal - at 8 -23.2 h=4.65 sit
 place Crate_Big_01 - at 3.5 -15 h=4.2 sit yaw=80
 place Placeable_Lantern_Metal - at 3.5 -15 h=4.65 sit
 place Crate_Big_01 - at -6 -23.6 h=4.2 sit yaw=20
