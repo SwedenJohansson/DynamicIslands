@@ -2317,6 +2317,9 @@ namespace DynamicIslands
 			PrivateStorage.Decode(storagesBefore + ";999999:12345");
 			int combos = 0, done = 0;
 			float start = Time.realtimeSinceStartup;
+			// (it stops when the world is left: it went on setting options in the next worlds until Raft restarted)
+			var world = SaveAndLoad.WorldGuid;
+			bool left = false;
 			try
 			{
 				// (switched together: the retired options, and the ones that only add something at sea or make it harsher (the
@@ -2332,6 +2335,7 @@ namespace DynamicIslands
 				for (int mask = 0; mask < (1 << groups.Length); mask++)
 				{
 					if (Time.realtimeSinceStartup - start > limit) break;
+					if (!LoadSceneManager.IsGameSceneLoaded || SaveAndLoad.WorldGuid != world) { left = true; break; }
 					done++;
 					var on = new HashSet<string>(groups.Where((g, i) => (mask & (1 << i)) != 0).SelectMany(g => g));
 					WorldOptions.Set(on);
@@ -2356,11 +2360,16 @@ namespace DynamicIslands
 			finally
 			{
 				Application.logMessageReceived -= watch;
-				PrivateStorage.Decode(storagesBefore);
-				WorldOptions.Set(optionsBefore);
-				DailyQuest.ReadLine("daily", dailyBefore);
 				RogueShark.TestDay = null;
+				// (the world's own options back - only into the same world, never into the next one)
+				if (LoadSceneManager.IsGameSceneLoaded && SaveAndLoad.WorldGuid == world)
+				{
+					PrivateStorage.Decode(storagesBefore);
+					WorldOptions.Set(optionsBefore);
+					DailyQuest.ReadLine("daily", dailyBefore);
+				}
 			}
+			Check(ref ok, !left, "still in its world");
 			Check(ref ok, combos > 0 && done == combos, done + " of " + combos + " combinations in " + Mathf.RoundToInt((Time.realtimeSinceStartup - start) / 60f) + " min (limit " + Mathf.RoundToInt(limit / 60f) + ")");
 			Check(ref ok, bad.Count == 0, done + " combinations: each the world's, and what follows from it holds" + (bad.Count > 0 ? " - not: " + string.Join("; ", bad.Take(4).ToArray()) : ""));
 			Check(ref ok, errors.Count == 0, "no errors while they ran" + (errors.Count > 0 ? " - " + errors[0] : ""));
