@@ -2203,6 +2203,30 @@ namespace DynamicIslands
 			Application.Quit();
 		}
 
+		// A stand-in for a Raft that never reads its CIQuit (10-20 RUN2: a paged-out box Raft; the runner then started a
+		// second Raft beside it): quitting - CIQuit or its window closed - is refused until the hold ends. For the
+		// runner's restart guard (alltests.ps1 quitguard phase: EndSingleRaft must close its window, one Raft only)
+		static float quitHoldEnd;
+		static bool quitHoldHooked;
+
+		[ConsoleCommand(name: "CIQuitHold", docs: "Dev test: Raft refuses to quit (CIQuit, its window closed) for <seconds> (default 60)")]
+		public static void QuitHoldCommand(string[] args)
+		{
+			int s;
+			if (args.Length == 0 || !int.TryParse(args[0], out s)) s = 60;
+			quitHoldEnd = Time.realtimeSinceStartup + s;
+			if (!quitHoldHooked) { Application.wantsToQuit += QuitHeld; quitHoldHooked = true; }
+			Log("Quit held for " + s + " s");
+		}
+
+		static bool QuitHeld()
+		{
+			float left = quitHoldEnd - Time.realtimeSinceStartup;
+			if (left <= 0f) return true;
+			Log("quit held (" + Mathf.CeilToInt(left) + " s left)");
+			return false;
+		}
+
 		[ConsoleCommand(name: "CIEditor", docs: "Dev: opens the editor (from the main menu) and waits until it is ready")]
 		public static void OpenEditor()
 		{
