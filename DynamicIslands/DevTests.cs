@@ -32,7 +32,41 @@ namespace DynamicIslands
 		// (ci.ps1 -done used to stop at CIA's IDLE while CIB ran on, and the next run's test overlapped it)
 		static int pendingCommands;
 		static bool idleOwed;
-		static Coroutine StartTest(IEnumerator e) { runningTests++; return DynamicIslands.instance.StartCoroutine(Track(e)); }
+		static Coroutine StartTest(IEnumerator e)
+		{
+			if (exclusiveTest != null && exclusiveTest != e) StopExclusive();
+			runningTests++;
+			Coroutine run = DynamicIslands.instance.StartCoroutine(Track(e));
+			if (exclusiveTest == e) exclusiveRun = run;
+			return run;
+		}
+
+		// A long test that keeps changing the world (CIOptionsMatrix) stops when the next test starts: after a runner's
+		// timeout it went on switching options under the next tests (CIBlueprintsWorld, CIWorldOptionsCheck failed)
+		static IEnumerator exclusiveTest;
+		static Coroutine exclusiveRun;
+		static string exclusiveName;
+		static Coroutine StartExclusiveTest(string name, IEnumerator e)
+		{
+			if (exclusiveTest != null) StopExclusive();
+			exclusiveTest = e;
+			exclusiveName = name;
+			return StartTest(e);
+		}
+
+		static void StopExclusive()
+		{
+			IEnumerator e = exclusiveTest;
+			if (e == null) return;
+			exclusiveTest = null;
+			if (exclusiveRun != null) DynamicIslands.instance.StopCoroutine(exclusiveRun);
+			exclusiveRun = null;
+			Fail(exclusiveName + ": stopped - another test started (the runner moved on, e.g. after its timeout)");
+			// (Dispose runs the test's finally: the world's own options etc. back now, not over the next test)
+			try { IDisposable d = e as IDisposable; if (d != null) d.Dispose(); }
+			catch (Exception ex) { Debug.LogException(ex); }
+			if (--runningTests < 0) runningTests = 0;
+		}
 
 		static IEnumerator Track(IEnumerator e)
 		{
@@ -44,6 +78,7 @@ namespace DynamicIslands
 				if (!more) break;
 				yield return e.Current;
 			}
+			if (exclusiveTest == e) { exclusiveTest = null; exclusiveRun = null; }
 			if (--runningTests <= 0) { runningTests = 0; if (pendingCommands > 0) idleOwed = true; else Log("IDLE (all tests done)"); }
 		}
 
