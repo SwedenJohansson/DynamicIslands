@@ -275,7 +275,7 @@ namespace DynamicIslands
 			if (n > 0) Log("PASS: pictures of " + n + " cave pieces"); else Fail("no cave pieces on the loaded islands");
 		}
 
-		[ConsoleCommand(name: "CICaveIslands", docs: "Dev, world (host, a test world 'CI ...'): every saved island with cave pieces brought next to the raft in turn - its rock mountain over the caves (AU83) is there, mapped (cavemap_<island>.txt) and pictured from four sides and above (shot_caveisl_<n>_<side>.png), nothing seen through from inside (CICaveInside's look round, a picture of the worst look: shot_caveisl_<n>_inside_<k>.png), then the island is taken away again: CICaveIslands [part of the name] [most]")]
+		[ConsoleCommand(name: "CICaveIslands", docs: "Dev, world (host, a test world 'CI ...'): every saved island with cave pieces brought next to the raft in turn - its rock mountain over the caves (AU83) is there, mapped (cavemap_<island>.txt) and pictured from four sides and above (shot_caveisl_<n>_<side>.png; each side picture must have the island in 15 % of it), nothing seen through from inside (CICaveInside's look round, a picture of the worst look: shot_caveisl_<n>_inside_<k>.png), then the island is taken away again: CICaveIslands [part of the name] [most]")]
 		public static void CaveIslandsCommand(string[] args)
 		{
 			string only = args != null && args.Length > 0 && args[0] != "*" ? args[0] : "";
@@ -298,7 +298,7 @@ namespace DynamicIslands
 				if (f != null && f.Objects.Any(o => only.Length > 0 ? RaftProps.Get(o.Name) != null && RaftProps.Get(o.Name).IsCave : CaveMountain.Wants(o.Name))) names.Add(name); // (named ones: the Vines cave too, to look at)
 			}
 			Log("Saved islands with cave pieces: " + names.Count + " (" + string.Join(", ", names.ToArray()) + ")");
-			int n = 0, bad = 0, blockedIslands = 0, insideIslands = 0;
+			int n = 0, bad = 0, blockedIslands = 0, insideIslands = 0, framedIslands = 0;
 			foreach (string name in names.Take(most))
 			{
 				n++;
@@ -327,17 +327,43 @@ namespace DynamicIslands
 				if (looks.Count > 0)
 				{
 					caves = looks; // (the pictures: every cave piece, the Vines cave too)
-					Bounds b = new Bounds(caves[0].position, Vector3.one);
-					foreach (Transform t in caves) foreach (Renderer rr in t.GetComponentsInChildren<Renderer>()) b.Encapsulate(rr.bounds);
-					float d = new Vector2(b.extents.x, b.extents.z).magnitude * 1.3f + 8f;
+					// (the pictures framed on what is there: the caves' and the mountain's meshes, only those within the island's land - from
+					// its land centre and radius, as d9ebe75 - and a camera 20 degrees up at a distance that fits them in the picture. Until
+					// 10-20 the camera stood 3 m over the sea: Shellback's side pictures showed only open sea, the Drowned Labyrinth's a strip)
+					Vector3 land = e.Root.transform.position + LocalLandCentre(e.Root, e.Name);
+					float landR = CustomIslandSpawner.LandRadius(e.Name);
+					if (landR <= 0f) landR = 60f;
+					Bounds b = new Bounds();
+					bool any = false;
+					var meshes = caves.SelectMany(t => t.GetComponentsInChildren<Renderer>()).ToList();
+					if (skin != null) meshes.AddRange(skin.GetComponentsInChildren<Renderer>());
+					foreach (Renderer rr in meshes)
+					{
+						if (rr == null || !rr.enabled || !(rr is MeshRenderer || rr is SkinnedMeshRenderer)) continue;
+						Vector3 off = rr.bounds.center - land;
+						if (new Vector2(off.x, off.z).magnitude > landR + 20f || rr.bounds.size.magnitude > landR * 4f + 100f) continue;
+						if (any) b.Encapsulate(rr.bounds); else { b = rr.bounds; any = true; }
+					}
+					if (!any) b = new Bounds(new Vector3(land.x, 5f, land.z), new Vector3(landR * 2f, 10f, landR * 2f));
+					float rXZ = Mathf.Max(new Vector2(b.extents.x, b.extents.z).magnitude, 10f);
+					float d = Mathf.Max(rXZ / 0.716f, b.extents.y / 0.577f) + 5f; // (the picture's 60 degrees high, 16:9: half widths 45.7 and 30 degrees)
+					var fills = new List<string>();
+					bool empty = false;
 					for (int i = 0; i < 4; i++)
 					{
-						Vector3 dir = Quaternion.Euler(0f, i * 90f + 30f, 0f) * Vector3.forward, from = b.center + dir * d;
+						Vector3 dir = Quaternion.Euler(0f, i * 90f + 30f, 0f) * Vector3.forward;
+						Vector3 from = b.center + dir * (d * 0.94f) + Vector3.up * (d * 0.34f);
 						RaycastHit hit;
-						float g = Physics.Raycast(from + Vector3.up * 200f, Vector3.down, out hit, 400f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : b.min.y;
-						from.y = Mathf.Max(g, 0.5f) + 3f;
-						yield return CameraShot(from, new Vector3(b.center.x, Mathf.Max(from.y - 2f, b.min.y + b.size.y * 0.3f), b.center.z), "caveisl_" + n + "_" + (i * 90 + 30));
+						float g = Physics.Raycast(new Vector3(from.x, 300f, from.z), Vector3.down, out hit, 600f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : 0f;
+						from.y = Mathf.Max(from.y, Mathf.Max(g, 0.5f) + 3f);
+						// (the island fills the picture: rays through it that end on the island above the sea)
+						float fill = IslandInView(from, b.center, e.Root.transform);
+						fills.Add((i * 90 + 30) + ": " + Mathf.RoundToInt(fill * 100f) + " %");
+						if (fill < 0.15f) empty = true;
+						yield return CameraShot(from, b.center, "caveisl_" + n + "_" + (i * 90 + 30));
 					}
+					Log("    the island in the side pictures: " + string.Join(", ", fills.ToArray()) + (empty ? " - a side without the island in view" : ""));
+					if (empty) { bad++; framedIslands++; }
 					yield return CameraShot(b.center + new Vector3(0.01f, b.size.y + d, -d * 0.6f), b.center, "caveisl_" + n + "_above");
 					// (and from inside: nothing seen through its walls or roof, the mountain over them, or the ground - X7)
 					bool seenThrough = false;
@@ -360,8 +386,26 @@ namespace DynamicIslands
 				yield return new WaitForSeconds(2f);
 			}
 			if (names.Count == 0) Fail("no saved island with cave pieces");
-			else if (bad > 0) Fail(bad + " of " + Math.Min(most, names.Count) + " islands without their mountain, with a way in blocked (" + blockedIslands + ") or seen through from inside (" + insideIslands + ", above)");
-			else Log("PASS: " + Math.Min(most, names.Count) + " islands with caves, each with its mountain, its ways in clear, nothing seen through from inside");
+			else if (bad > 0) Fail(bad + " of " + Math.Min(most, names.Count) + " islands without their mountain, with a way in blocked (" + blockedIslands + "), seen through from inside (" + insideIslands + ") or a side picture without the island in view (" + framedIslands + ", above)");
+			else Log("PASS: " + Math.Min(most, names.Count) + " islands with caves, each with its mountain, its ways in clear, nothing seen through from inside, each side picture with the island in view");
+		}
+
+		/// <summary>How much of a picture from <from> towards <at> (60 degrees high, 16:9) is the island under <root>: a 16 x 9 grid of
+		/// rays, those that end on it above the sea (-1.5 m: open sea, or only its seabed, is not the island in view).</summary>
+		static float IslandInView(Vector3 from, Vector3 at, Transform root)
+		{
+			Quaternion rot = Quaternion.LookRotation(at - from);
+			float tanV = Mathf.Tan(30f * Mathf.Deg2Rad), tanH = tanV * 16f / 9f;
+			int on = 0, all = 0;
+			for (int x = 0; x < 16; x++)
+				for (int y = 0; y < 9; y++)
+				{
+					Vector3 ray = rot * new Vector3(tanH * ((x + 0.5f) / 8f - 1f), tanV * ((y + 0.5f) / 4.5f - 1f), 1f);
+					RaycastHit hit;
+					all++;
+					if (Physics.Raycast(from, ray.normalized, out hit, 2500f, ~0, QueryTriggerInteraction.Ignore) && hit.collider.transform.IsChildOf(root) && hit.point.y > -1.5f) on++;
+				}
+			return all > 0 ? (float)on / all : 0f;
 		}
 
 		[ConsoleCommand(name: "CIAnimalsDry",docs: "Dev, in a world with a custom island with land animals loaded: no animal may walk in the sea - no NavMesh below the waterline at the islands, no land animal below it (AU84)")]
