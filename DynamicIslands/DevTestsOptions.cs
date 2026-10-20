@@ -1967,7 +1967,9 @@ namespace DynamicIslands
 				// The storm day
 				StormDays.TestDay = day; StormDays.TestNight = false;
 				float until = Time.time + 60f;
-				while (Time.time < until && (wm == null || wm.GetCurrentWeatherType() != StormDays.StormWeather(wm))) yield return new WaitForSeconds(1f);
+				// (until StormDays has taken the day - its Tick runs every 2 s: when Raft's own weather was rain already, the wait ended
+				// at once and found Raft's timer and the day-before banner, run i 2026-10-20)
+				while (Time.time < until && (wm == null || wm.GetCurrentWeatherType() != StormDays.StormWeather(wm) || !logs.Any(l => l.Contains("A storm day (day " + day + ")")))) yield return new WaitForSeconds(1f);
 				Check(ref ok, wm != null && wm.GetCurrentWeatherType() == StormDays.StormWeather(wm) && wm.WeatherTimer > 100f && (IslandInfo.LastShown ?? "").Contains("storm day"),
 					"day " + day + ": the storm's weather " + (wm != null ? wm.GetCurrentWeatherType() + " (" + wm.GetCurrentWeather().name + "), next change in " + Mathf.RoundToInt(wm.WeatherTimer) + " s" : "none") + ", banner: " + IslandInfo.LastShown);
 				float factorOff = NightDanger.SharkFactor;
