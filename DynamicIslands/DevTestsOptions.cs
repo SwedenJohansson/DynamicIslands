@@ -199,6 +199,10 @@ namespace DynamicIslands
 			// (its three groups: the world rules, the randomizer, the extra options)
 			var names = WorldSettingsWindow.Window.GetComponentsInChildren<RectTransform>(false).Select(r => r.name).ToList();
 			Check(ref ok, names.Contains(NewWorldRulesBox.PanelName) && names.Contains("CustomIslands_Randomizer") && WorldOptions.Offered.All(o => names.Contains("Option_" + o)) && !WorldOptions.Retired.Any(o => names.Contains("Option_" + o)), "the window has the world rules, the world randomizer and the " + WorldOptions.Offered.Length + " extra options");
+			// (each option's text under its button fits its box - the user, 2026-10-20: the long ones ran out of it)
+			var tooLong = WorldSettingsWindow.Window.GetComponentsInChildren<Text>(false).Where(t => t.name == "Detail" && t.preferredHeight > t.rectTransform.rect.height + 1f)
+				.Select(t => t.transform.parent.name + " " + Mathf.RoundToInt(t.preferredHeight) + ">" + Mathf.RoundToInt(t.rectTransform.rect.height)).ToList();
+			Check(ref ok, tooLong.Count == 0, "each option's text fits under its button" + (tooLong.Count > 0 ? " - not: " + string.Join(", ", tooLong.ToArray()) : ""));
 			int levelBefore = NewWorldRulesBox.MonsterLevel, percentBefore = NewWorldRulesBox.BuildPercent;
 			RandomizerSettings randBefore = NewWorldOptions.Randomizer.Copy();
 			Screenshot(new[] { "worldsettings" });

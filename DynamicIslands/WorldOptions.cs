@@ -73,6 +73,35 @@ namespace DynamicIslands.Editor
 			"Now and then (on about three days in five, by day or by night) thick fog rolls in over the sea for three to six hours, fading in and out. In it you see only 45-75 m: islands show up late, so the radar matters. While a storm blows the wind keeps the fog away. Looks only; the same for every player.",
 		};
 
+		/// <summary>
+		/// The short text under each toggle in World settings: three lines of 11 pt at most (the user, 2026-10-20: the long
+		/// ones ran out of the box). The whole Hints text shows on hover over the toggle.
+		/// </summary>
+		public static readonly string[] Shorts =
+		{
+			"Raft's story blueprints lie on other story islands than usual. What the story needs is never moved.",
+			"Raft's story islands come in another order; the Receiver and the notes follow it. The ending stays last.",
+			"Abandoned rafts drift by: small ones with a little loot and a note, now and then a large one guarded by rats and screechers.",
+			"A storage opens only for the player who built it: each player keeps their own things.",
+			"Random custom islands come half as often and lie further apart. Raft's own, quest and plan islands stay where they are.",
+			"The raft's blocks take half damage from shark bites: fewer repairs.",
+			"Players within 50 m of a defeated monster get 60 % of its EXP too.",
+			"After dark monsters are tougher and the shark comes more often; by day both are calmer.",
+			"Each morning the crew gets a small task. Done before dark, everyone gets a small reward.",
+			"Now and then a second, rust-red shark comes and stays until it is killed. Sometimes it is a giant. Never before day 3.",
+			"Now and then a drifting barrel is silver or golden, with extra nails, rope and scrap - sometimes a battery or bolts.",
+			"On about one day in ten the sea is rough and it rains all day: the shark comes more often. Warned the evening before.",
+			"Very rarely a trader's raft comes up ahead. Its stalls swap basic resources for seeds and now and then a blueprint.",
+			"About 30 better versions of Raft's things to craft (large battery, turbo engine, comfy bed, longbow and more), next to the thing they improve.",
+			"Storms come much more often and rock the raft harder. Now and then one breaks a floor on the raft's edge; rafts of 4 floors or fewer never.",
+			"Now and then a flying saucer crosses the sky high above the raft, glowing at night. Looks only.",
+			"On about one night in four the sea and the fish glow blue, and fish bite twice as fast on a rod.",
+			"In storms, lightning now and then hits the sea near the raft, rarely its antenna. Looks only: nothing is damaged.",
+			"On about one night in four a ghost ship comes by: good loot, guarded by ghost rats and screechers. It sinks at dawn.",
+			"Now and then, by day, a whale breaches far out at sea. Looks only: it never comes near the raft.",
+			"Now and then thick fog rolls in for a few hours: you see only 45-75 m, so the radar matters. Looks only.",
+		};
+
 		/// <summary>The current world's options (clients get the host's).</summary>
 		public static readonly HashSet<string> Current = new HashSet<string>();
 		/// <summary>The seed every shuffle of this world comes from (the same on every machine).</summary>

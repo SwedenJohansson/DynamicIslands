@@ -129,7 +129,7 @@ namespace DynamicIslands.Editor
 				Button b = UIKit.Button(group, "", () => Flip(option), WorldOptions.Hints[i], -1, 28f, 14);
 				b.name = "Toggle_" + option;
 				toggles[option] = b;
-				Text d = UIKit.Label(group, WorldOptions.Hints[i], 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
+				Text d = UIKit.Label(group, WorldOptions.Shorts[i], 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
 				d.horizontalOverflow = HorizontalWrapMode.Wrap;
 				UIKit.Size(d.gameObject, -1, 44);
 			}
@@ -149,7 +149,7 @@ namespace DynamicIslands.Editor
 				RectTransform group = UIKit.Group(list, null, "Option_headstart");
 				headStartToggle = UIKit.Button(group, "", () => { HeadStart.Chosen = (HeadStart.Chosen + 1) % 4; Show(); }, hint, -1, 28f, 14);
 				headStartToggle.name = "Toggle_headstart";
-				Text d = UIKit.Label(group, hint, 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
+				Text d = UIKit.Label(group, "The world starts on a bigger raft, already set up: level 1 with a grill, purifier, research table and bed, level 2 also smelters, a sail and nets, level 3 also the Receiver.", 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
 				d.horizontalOverflow = HorizontalWrapMode.Wrap;
 				UIKit.Size(d.gameObject, -1, 44);
 			}

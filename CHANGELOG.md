@@ -186,6 +186,13 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   dormitory under a buoy) and the finale, The Listening Mirrors (31 quest steps over four areas, a boss in the pit, a
   Raft store). A side island, The Returning Islet, comes back ahead of the raft every second day. Guide 16.12 shows
   what to look at.
+- **A fifth whole storyline in the library, The Gravity Sea:** twelve islands in place of Raft's own story (Raft's
+  story off; the chain on the Receiver, 500 to 1300). Every sky island has a sunken half: Lodestone Quay, Upfall
+  Orchard (30 m up) and Rootcellar Deep (25 m down), Altitude Market (Raft's vending machine) and Sinkmarket Floor,
+  Pendulum Isle (a Raft store), Gravewell Shaft (45 m down), The Stair of Hours (a Raft store), and a finale in two
+  halves: The Lodestone Array (35 m up, 22 quest steps, a Raft store) and The Array Root under it (12 steps). Two side islands, Weatherglass
+  Shoal and Weatherglass Deep, come ahead after 5 km. All of Raft's story blueprints are quest steps on the way.
+  Guide 16.13 shows what to look at.
 - **Fixed:** The Rain Engine's three ziplines: Raft's zipline has no stand, and its boarding floor sank 19 m into
   the North spire, 2 m into the East one and hung 14 m over the crown in the South; each now starts on its spire's
   flat top and ends on the next one's. Stilt Hollow's banner hangs between two posts (its rope was tied to nothing)
@@ -203,13 +210,6 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   ready-made one or your own - and looking at what it is made of, with a table of every editor feature and an island
   to look at for it. Two small library islands made to learn from, with a sign at each place: **The Lockkeeper's
   Isle** (a keypad code lock, three quests on one island, the island rules, an island its quest brings) and
-- **A fifth whole storyline in the library, The Gravity Sea:** twelve islands in place of Raft's own story (Raft's
-  story off; the chain on the Receiver, 500 to 1300). Every sky island has a sunken half: Lodestone Quay, Upfall
-  Orchard (30 m up) and Rootcellar Deep (25 m down), Altitude Market (Raft's vending machine) and Sinkmarket Floor,
-  Pendulum Isle (a Raft store), Gravewell Shaft (45 m down), The Stair of Hours (a Raft store), and a finale in two
-  halves: The Lodestone Array (35 m up, 22 quest steps, a Raft store) and The Array Root under it (12 steps). Two side islands, Weatherglass
-  Shoal and Weatherglass Deep, come ahead after 5 km. All of Raft's story blueprints are quest steps on the way.
-  Guide 16.13 shows what to look at.
   **Lantern Spire** (a flying island).
 - **World plan Check: one story item on two islands:** Check warns when two islands of a plan each give a story item
   with the same id (two 'keycard's) - the one found on either would open the other's locks.
@@ -450,6 +450,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **World settings: each extra option's text fits its box.** The text under each toggle is now short (one or two lines); the full description shows on hover. Extra upgrades, Storm seas, Lightning, Ghost ship and others ran out of the box.
 - **Ziplines with a far end you choose (`zip.to`):** the far end's floor now moves with the line; it stayed where Raft's own line ends, sometimes in the air on a slope (The Lodestone Array).
 - **Vending machine for a player who sets the island up late:** the host now sends the hatch state with each press, so a player whose island was set up after the host paid no longer misses Raft's message and sees the package.
 - **Nothing hangs in the air on the story islands and the randomizer's extras:** The Listening Mirrors' satellite
