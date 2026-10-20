@@ -580,6 +580,21 @@ namespace DynamicIslands
 				// Buried whole: its top under the land (not Raft's rocks and corals, which are set into it; not what is under the sea)
 				if (!NotABase.IsMatch(n) && land != null && whole.max.y < groundMid - 0.05f && whole.max.y > sea - 1f)
 				{ node.Reported = node.Direct = true; lines.Add("buried: " + n + " at " + where + ", its top " + Num(groundMid - whole.max.y) + " m under the ground"); continue; }
+				// A zipline: each end on its own (its base reaches from one end's floor to the other's, over the dip between them -
+				// the Lodestone Array's lines read "partly in the air" 3.7 m over their moat, 2026-10-20): every piece no wider than
+				// 4 m (not the rope) with nothing at its foot within 0.5 m
+				if (n.StartsWith("ZiplinePath"))
+				{
+					foreach (Renderer r in rs.Where(r => Mathf.Max(r.bounds.size.x, r.bounds.size.z) < 4f))
+					{
+						Bounds rb = r.bounds;
+						if (rs.Any(q => q != r && Mathf.Max(q.bounds.size.x, q.bounds.size.z) < 4f && q.bounds.min.y < rb.min.y - 0.3f && Mathf.Abs(q.bounds.center.x - rb.center.x) < 2f && Mathf.Abs(q.bounds.center.z - rb.center.z) < 2f)) continue;
+						float g = GapUnder(o, new Vector3(rb.center.x, rb.min.y, rb.center.z), land);
+						if (g > 0.5f && rb.min.y > sea + 0.3f)
+						{ node.Reported = true; lines.Add("floating: " + n + " end " + r.name + " at " + Num(rb.center.x - mid.x) + " " + Num(rb.center.z - mid.z) + " h=" + Num(rb.min.y - sea) + ", " + (g > 999f ? "nothing under it" : Num(g) + " m over what is under it")); break; }
+					}
+					continue;
+				}
 				// Floating: nothing at its base (another object, a wall it hangs on, the land) and the first thing under it more than 0.5 m down
 				float gapUnder = GapUnder(o, new Vector3(b.center.x, b.min.y, b.center.z), land);
 				bool touches = Touches(o, b);
