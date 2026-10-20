@@ -23,7 +23,7 @@ open Barrel by the cabin
 walk 30 -76 to 30 -82 to 30 -90 to 30 -97 h=1.8
 open Barrel at the pier
 open Barrel by the wreck
-open Cave hoard
+open Bear den hoard
 expect hidden vinechest
 dig
 kill Bear

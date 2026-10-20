@@ -2,12 +2,13 @@
 # A big green island with two rocky peaks in its north half and a rope bridge hanging between them over the saddle.
 # A path climbs the west peak from the west hills; the east peak is reached only over the bridge, and a zipline runs from
 # it down to the east beach. A woodcutter's cabin in the south-west, a plank pier out into the sea on the south shore,
-# a boat lying wrecked on the sea floor beyond it. A den in a hillside made by the generator (Caves). Monsters: a bear in
+# a boat lying wrecked on the sea floor beyond it. A bear den in the east woods, set by hand (the generator
+# found no spot for one). Monsters: a bear in
 # the east woods, hyenas in the west hills, screechers round the peaks, warthogs in the south.
 #
 # Built by the recipe player (CIRecipe highpine_island) through the editor's own operations. Points: the west peak's top
-# at -20 30, the east peak's at 20 30 (both 24 m, flat r 8); the saddle between them x -6..6 (13 m); the bridge x -9.2..9.2
-# along z 30 (deck 24 m); the path up the west peak from -72 30 (4 m) to -28 30; the zipline from 24 30 to the east beach
+# at -20 30, the east peak's at 20 30 (both 24 m, flat r 13); the saddle between them x -6..6 (13 m); the bridge x -8.75..8.75
+# along z 30 (deck 23-24 m, sagging); the path up the west peak from -72 30 (4 m) to -28 30; the zipline from 24 30 to the east beach
 # at 78 18; the cabin x -50..-45.5, z -34..-31 (pad 4 m, door south); the pier from 30 -80 out to 30 -98 (deck 1.8 m);
 # the wreck at 36 -116 (sea floor 9 m down).
 include lib_huts
@@ -17,40 +18,39 @@ new
 # (nature: tropical, Like Raft - palms and bushes, the peaks bare rock)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
 gen Seed=9355 Radius=95 Height=16 Roughness=0.4 Peaks=2 Shape=0 Style=0 BeachWidth=0.5 Cliffs=0.35 PeakShape=0.45
-gen Water=0.5 SeaRocks=0.5 SeaFinds=0.3 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0 Caves=true
+gen Water=0.5 SeaRocks=0.5 SeaFinds=0.3 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0 Caves=false
 generate
 
 # ===== The ground: the two peaks, the saddle, the path up the west peak, the cabin's pad, the pier's landing, the
 # sea floor under the pier and the wreck ===================================================================================
-brush flatten at -20 30 r=10 s=20 frames=260 h=24
-brush flatten at 20 30 r=10 s=20 frames=260 h=24
+brush flatten at -20 30 r=15 s=20 frames=400 h=24
+brush flatten at 20 30 r=15 s=20 frames=400 h=24
+brush flatten from -13 30 to -8.5 30 r=4 s=20 frames=300 h=24
+brush flatten from 13 30 to 8.5 30 r=4 s=20 frames=300 h=24
 brush flatten from 0 14 to 0 46 r=5 s=20 frames=220 h=13
+# the cliff edges under the sagging deck cut back, so no rock pokes up through the planks
+brush flatten from -5.5 30 to 5.5 30 r=1.5 s=20 frames=200 h=17
 for i 0 14 1
-brush flatten at {-72+$i*3} 30 r=3.5 s=20 frames=30 h={4+$i*1.45}
+brush flatten at {-72+$i*3} 30 r=4 s=20 frames=200 h={4+$i*1.45}
 next
-brush smooth from -72 30 to -30 30 r=3 s=6 frames=60
 brush flatten at -47.75 -32.5 r=5 s=20 frames=80 h=4
-brush flatten from 30 -70 to 30 -80 r=4 s=20 frames=80 h=1.2
-brush flatten from 30 -80 to 30 -100 r=5 s=20 frames=120 h=-2.5
+brush flatten from 30 -68 to 30 -80 r=4 s=20 frames=120 h=1.65
+brush flatten from 30 -86 to 30 -100 r=5 s=20 frames=120 h=-2.5
 brush flatten at 36 -116 r=10 s=20 frames=80 h=-9
-clear at -20 30 r=10
-clear at 20 30 r=10
+clear at -20 30 r=15
+clear at 20 30 r=15
 clear from -72 30 to -28 30 r=4
 clear at -47.75 -32.5 r=6
 clear from 30 -70 to 30 -100 r=5
 clear at 78 18 r=4
+clear at 46.5 -4 r=5
 
-# ===== The rope bridge between the peaks: two plank spans (17.5 m) on thick posts at the tops, rope rails, plank ends =====
-place CaravanHubBridge3 bridge at -4.38 30 h=23.9 sit yaw=90
-place CaravanHubBridge3 bridge at 4.38 30 h=23.9 sit yaw=90
-for bx -9.2 9.2 18.4
-place RT_PillarThick bridgeposts at $bx 28.7 h=20
-place RT_PillarThick bridgeposts at $bx 31.3 h=20
-place Placeable_DrawBridgeLong bridgeends at $bx 30 h=24 ground sit yaw=90
-next
-for rx -6 6 4
-place RopeFence_Medium bridgerails at $rx 29 h=24.4 sit yaw=90
-place RopeFence_Medium bridgerails at $rx 31 h=24.4 sit yaw=90
+# ===== The rope bridge between the peaks: two plank spans (17.5 m) on the tops, thick posts at its ends ================
+place CaravanHubBridge3 bridge at -4.38 30 h=22.8 sit yaw=90
+place CaravanHubBridge3 bridge at 4.38 30 h=22.8 sit yaw=270
+for bx -7 7 14
+place RT_PillarThick bridgeposts at $bx 28.7 ground sy=0.5
+place RT_PillarThick bridgeposts at $bx 31.3 ground sy=0.5
 next
 prop bridge tint.color=#8a6a44
 prop bridgeposts tint.color=#6b4f32
@@ -60,6 +60,10 @@ place Note_Sign peaksign at -27 32 ground yaw=270
 place Loot_Chest peakchest at 23 33.5 ground yaw=200
 place ZiplinePath_Landmark zipdown at 25 30 ground
 zipto zipdown 78 18
+
+# ===== The den: Balboa's bear cave in the east woods, its mouth west; the hoard on its floor ============================
+place BalboaCave_Bear den at 55 -5 ground y=4.55 yaw=310
+place Loot_ChestSmall denhoard at 48.2 -0.7 h=6.13 sit yaw=40
 
 # ===== The woodcutter's cabin in the south-west: floor, plank walls, the door south, a hipped roof on its corner posts;
 # bed, table, his book, the chest; logs stacked outside ====================================================================
@@ -77,8 +81,8 @@ place Block_Wall_Wood - at 3.75 0 y=0.1
 call corners w=3 d=2
 roof 3 2 at 0 0 y=0.1 wood
 place Placeable_Bed_Basic - at 1.15 1.6 y=0.1 sit yaw=90
-place Placeable_Table_Basic - at 3.3 2.1 y=0.1 sit
-place Note_Book cutterbook at 3.3 2.1 y=0.84 sit yaw=20
+place Placeable_Table_Basic - at 3.3 1.95 y=0.1 sit
+place Note_Book cutterbook at 3.3 1.95 y=0.84 sit yaw=20
 place Loot_Chest cabinchest at 3.7 0.7 y=0.1 sit yaw=180
 pop
 place Crate_Big_01 - at -44.2 -33 ground yaw=12
@@ -98,7 +102,7 @@ call shallows r=110 deep=5 n=1
 place Creature_Dolphin dolphins at -20 -118 h=-3
 
 # ===== Monsters and animals: a bear in the east woods, hyenas in the west hills, screechers round the peaks, warthogs ====
-place Creature_Bear bear at 52 -8 ground
+place Creature_Bear bear at 36 -2 ground
 place Creature_Hyena hyenas at -58 4 ground
 place Creature_StoneBird screechers at 0 30 h=34
 place Creature_Boar hogs at 2 -50 ground
@@ -135,5 +139,9 @@ prop hyenas creature.count=3
 prop screechers creature.count=2
 prop hogs creature.count=2
 prop dolphins creature.count=2
+
+note denhoard Bear den hoard | A chest dragged into the bear's den: leather, rope, nails, a little scrap.
+loot denhoard Leather*2;Rope*2;Nail*6;Scrap*2
+prop denhoard loot.refill=0
 
 save Highpine Island
