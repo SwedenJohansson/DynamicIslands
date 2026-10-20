@@ -60,6 +60,13 @@ namespace DynamicIslands.Editor
 		/// <summary>What to lift a prop by so it stands on the ground (0 if it wasn't measured).</summary>
 		public static float Lift(string name) { PropInfo p = Get(name); return p != null ? -p.Bottom : 0f; }
 
+		/// <summary>
+		/// Props whose measured bottom is not the bottom players see (from the pivot, m): CIMeasureProps counts hidden meshes too.
+		/// The excavator's reach down to its pivot, its tracks start 0.8 m above it - set on Lift it hovered 0.8 m over the ground
+		/// (CIGroundTypes gen-large-985145, 0.67 m on a slope); Crane Yard and Varuna Point Remade sink its pivot 0.81-0.91 m.
+		/// </summary>
+		static readonly Dictionary<string, float> SeenBottoms = new Dictionary<string, float>(StringComparer.Ordinal) { { "VP_Excavator", 0.8f } };
+
 		public static IEnumerable<PropInfo> All { get { if (props == null) Load(); return props.Values; } }
 
 		static void Load()
@@ -85,6 +92,15 @@ namespace DynamicIslands.Editor
 						p.OpenPlus = f[6] == "1"; p.OpenMinus = f[7] == "1";
 						if (f.Length >= 11) { p.Inside = V(f[8]); p.ToPlus = F(f[9]); p.ToMinus = F(f[10]); }
 					}
+				}
+				foreach (KeyValuePair<string, float> fix in SeenBottoms)
+				{
+					PropInfo p;
+					if (!props.TryGetValue(fix.Key, out p)) continue;
+					float top = p.Centre.y + p.Size.y * 0.5f;
+					p.Bottom = fix.Value;
+					p.Size.y = top - fix.Value;
+					p.Centre.y = (top + fix.Value) * 0.5f;
 				}
 				if (props.Count == 0) Debug.LogWarning("[CUSTOM ISLANDS] " + FileName + " has no props: props stand on their pivots");
 			}

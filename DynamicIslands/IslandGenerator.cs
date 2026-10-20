@@ -478,6 +478,7 @@ namespace DynamicIslands.Editor
 			// (what stands in the blend keeps its height over the ground as it changes, as at the cave - a tree past the
 			// clearing floated 3.8 m over the lowered ground, CIGroundTypes)
 			var around = file.Objects.Where(o => Mathf.Abs(o.Position.x - mid.x) < reach + step && Mathf.Abs(o.Position.z - mid.y) < reach + step).Select(o => new KeyValuePair<IslandObject, float>(o, k.Ground(new Vector2(o.Position.x, o.Position.z)))).ToList();
+			float[,] was = (float[,])file.Heights.Clone();
 			for (int zi = Mathf.Max(0, Mathf.FloorToInt((mid.y - reach) / step)); zi <= Mathf.Min(res - 1, Mathf.CeilToInt((mid.y + reach) / step)); zi++)
 				for (int xi = Mathf.Max(0, Mathf.FloorToInt((mid.x - reach) / step)); xi <= Mathf.Min(res - 1, Mathf.CeilToInt((mid.x + reach) / step)); xi++)
 				{
@@ -488,7 +489,25 @@ namespace DynamicIslands.Editor
 					float h = file.Heights[zi, xi] * file.TerrainSize.y;
 					file.Heights[zi, xi] = Mathf.Lerp(h, height, weight * weight * (3f - 2f * weight)) / file.TerrainSize.y;
 				}
-			foreach (var kv in around) kv.Key.Position.y += k.Ground(new Vector2(kv.Key.Position.x, kv.Key.Position.z)) - kv.Value;
+			// (nature moves by the lowest change under it, and goes where the ground changed unevenly under it, as at the cave:
+			// by its pivot's change alone, grass on a steep blend stood 1.1-1.7 m in the air, CIGroundIslands 2026-10-20)
+			foreach (var kv in around)
+			{
+				Vector2 p = new Vector2(kv.Key.Position.x, kv.Key.Position.z);
+				float d = k.Ground(p) - kv.Value;
+				if (kv.Key.Props == null || kv.Key.Props.Count == 0)
+				{
+					float most = d;
+					foreach (Vector2 o in new[] { new Vector2(1.5f, 0f), new Vector2(-1.5f, 0f), new Vector2(0f, 1.5f), new Vector2(0f, -1.5f) })
+					{
+						float ch = k.Ground(p + o) - IslandGenerator.SampleHeights(was, res, step, p.x + o.x, p.y + o.y) * file.TerrainSize.y;
+						d = Mathf.Min(d, ch);
+						most = Mathf.Max(most, ch);
+					}
+					if (most - d > 1f) { file.Objects.Remove(kv.Key); continue; }
+				}
+				kv.Key.Position.y += d;
+			}
 		}
 
 		static string Wall(System.Random r, int windows) { int v = r.Next(10); return v < windows ? (r.NextDouble() < 0.5 ? "RT_WallWindow1" : "RT_WallWindow2") : "RT_Wall1"; }

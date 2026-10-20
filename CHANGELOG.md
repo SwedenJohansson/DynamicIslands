@@ -450,6 +450,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Generated scrapyards: the excavator stands on its tracks.** It hovered about 0.8 m over the ground on generated islands (its measured size counted a hidden part down to its pivot). Grass and plants beside a generated radio tower or lighthouse also move with the levelled ground by its lowest change, so they no longer stand in the air on its slope.
 - **Look-alike story islands: the trees, rocks and caravans stand on the ground next to a design.** On Randomize existing, a Caravan Town look-alike's dead tree stood 1.1 m in the air where the design's levelled square blended into the land; the look's pieces now stand on the ground again once the designs, buildings and caves are done.
 - **World settings: each extra option's text fits its box.** The text under each toggle is now short (one or two lines); the full description shows on hover. Extra upgrades, Storm seas, Lightning, Ghost ship and others ran out of the box.
 - **Ziplines with a far end you choose (`zip.to`):** the far end's floor now moves with the line; it stayed where Raft's own line ends, sometimes in the air on a slope (The Lodestone Array).
