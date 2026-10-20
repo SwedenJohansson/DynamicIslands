@@ -86,6 +86,10 @@ brush flatten at 40 -62.5 r=3 s=20 frames=30 h=8.4
 call dabs 38 -60.5 8.6 28 -58 11.5 n=6
 brush flatten at 25 -59.5 r=7 s=20 frames=40 h=11.5
 brush flatten from 24 -60 to 24 -26 r=9 s=20 frames=60 h=11.5
+# (the trench as wide as the bear cave's back gallery, 16 m: its walls ran steeply through the gallery's sides, and the
+# cells cut there for it reached up out of the rock - a slit of sky on the west wall)
+brush flatten from 16 -49 to 16 -28 r=5 s=20 frames=50 h=11.5
+brush flatten from 32 -49 to 32 -28 r=5 s=20 frames=50 h=11.5
 brush flatten at 30.5 -61.5 r=4 s=20 frames=30 h=11.5
 # (the Double Bar ranch on the east plain; the box canyon behind it, cut into the hills)
 brush flatten at 106 2 r=22 s=20 frames=60 h=13.5
@@ -382,8 +386,9 @@ pop
 # ===== Chapter 5 - the gang's fort on Black Mesa ========================================================================
 # --- The lift's top station: Utopia's lift under a headframe of two thick pillars and a beam ---------------------------
 place UT_JumpPuzzle_Lift mesalift at -2 -34 h=44.02
-place RT_PillarThick - at -4.5 -34 h=42
-place RT_PillarThick - at 0.5 -34 h=42
+# (the posts start 3 m down and run 9 m up to the beam: the mesa top falls to 41 by the east post, which hung in the air)
+place RT_PillarThick - at -4.5 -34 h=39 sy=1.5
+place RT_PillarThick - at 0.5 -34 h=39 sy=1.5
 place RT_BeamThick - at 2.95 -34 h=48.2
 place Zone_Trigger mesatopzone at -2 -34 h=43.5
 

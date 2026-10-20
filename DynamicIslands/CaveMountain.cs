@@ -395,15 +395,21 @@ namespace DynamicIslands.Editor
 					Quad(verts, norms, uvs, tris, origin, a, e, d, c, n, true);
 				}
 			// Walls where the surface is cut off: down to the ground; at a way in, only a skirt under its floor
-			for (int i = 0; i + 1 < nx; i++)
-				for (int k = 0; k + 1 < nz; k++)
-				{
-					if (!on[i, k] || !on[i + 1, k] || !on[i, k + 1] || !on[i + 1, k + 1]) continue;
-					Edge(i, k, i + 1, k, 0, -1, nx, nz, on, top, height, ground, corridor, mouthAt, floorAt, P, verts, norms, uvs, tris, origin);
-					Edge(i, k + 1, i + 1, k + 1, 0, 1, nx, nz, on, top, height, ground, corridor, mouthAt, floorAt, P, verts, norms, uvs, tris, origin);
-					Edge(i, k, i, k + 1, -1, 0, nx, nz, on, top, height, ground, corridor, mouthAt, floorAt, P, verts, norms, uvs, tris, origin);
-					Edge(i + 1, k, i + 1, k + 1, 1, 0, nx, nz, on, top, height, ground, corridor, mouthAt, floorAt, P, verts, norms, uvs, tris, origin);
-				}
+			var arch = new Arch { Shells = cols, Box = b, Own = own, Ahead = ahead, Mouths = mouths, Top = top };
+			bool backs = Physics.queriesHitBackfaces;
+			try
+			{
+				for (int i = 0; i + 1 < nx; i++)
+					for (int k = 0; k + 1 < nz; k++)
+					{
+						if (!on[i, k] || !on[i + 1, k] || !on[i, k + 1] || !on[i + 1, k + 1]) continue;
+						Edge(i, k, i + 1, k, 0, -1, nx, nz, on, top, height, ground, corridor, mouthAt, floorAt, P, verts, norms, uvs, tris, origin, arch);
+						Edge(i, k + 1, i + 1, k + 1, 0, 1, nx, nz, on, top, height, ground, corridor, mouthAt, floorAt, P, verts, norms, uvs, tris, origin, arch);
+						Edge(i, k, i, k + 1, -1, 0, nx, nz, on, top, height, ground, corridor, mouthAt, floorAt, P, verts, norms, uvs, tris, origin, arch);
+						Edge(i + 1, k, i + 1, k + 1, 1, 0, nx, nz, on, top, height, ground, corridor, mouthAt, floorAt, P, verts, norms, uvs, tris, origin, arch);
+					}
+			}
+			finally { Physics.queriesHitBackfaces = backs; }
 			if (tris.Count == 0) return;
 
 			var mesh = new Mesh { name = SkinName };
@@ -503,7 +509,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The edge (i1,k1)-(i2,k2) of a surface square; (di,dk) points to the square beside it.</summary>
 		static void Edge(int i1, int k1, int i2, int k2, int di, int dk, int nx, int nz, bool[,] on, float[,] top, float[,] height,
 			float[,] ground, float[,] corridor, float[,] mouthAt, float[,] floorAt, System.Func<int, int, Vector3> P, List<Vector3> verts,
-			List<Vector3> norms, List<Vector2> uvs, List<int> tris, Vector3 origin)
+			List<Vector3> norms, List<Vector2> uvs, List<int> tris, Vector3 origin, Arch arch)
 		{
 			int a1 = i1 + di, c1 = k1 + dk, a2 = i2 + di, c2 = k2 + dk;
 			bool inside1 = a1 >= 0 && c1 >= 0 && a1 < nx && c1 < nz, inside2 = a2 >= 0 && c2 >= 0 && a2 < nx && c2 < nz;
@@ -514,20 +520,94 @@ namespace DynamicIslands.Editor
 			if (inside1 && !float.IsNaN(corridor[a1, c1])) way = corridor[a1, c1];
 			if (inside2 && !float.IsNaN(corridor[a2, c2])) way = float.IsNaN(way) ? corridor[a2, c2] : Mathf.Min(way, corridor[a2, c2]);
 			Vector3 p1 = P(i1, k1), p2 = P(i2, k2);
-			if (!float.IsNaN(way) && (!float.IsNaN(top[i1, k1]) || !float.IsNaN(top[i2, k2]) || !float.IsNaN(mouthAt[i1, k1]) || !float.IsNaN(mouthAt[i2, k2])))
+			bool atWay = !float.IsNaN(way) && (!float.IsNaN(top[i1, k1]) || !float.IsNaN(top[i2, k2]) || !float.IsNaN(mouthAt[i1, k1]) || !float.IsNaN(mouthAt[i2, k2]));
+			if (atWay)
 			{
 				// The open end of a cave: its own arch is the face; under its floor, down to the ground (no higher than the
 				// floor there: a lip over it stopped the way in)
 				float f = Mathf.Max(float.IsNaN(floorAt[i1, k1]) ? float.NegativeInfinity : floorAt[i1, k1], float.IsNaN(floorAt[i2, k2]) ? float.NegativeInfinity : floorAt[i2, k2]);
 				if (f > way - 3f && f < way) way = f;
-				if (Mathf.Min(g1, g2) > way - 0.15f) return;
-				p1.y = way; p2.y = way;
-				if (g1 > way) g1 = way;
-				if (g2 > way) g2 = way;
 			}
-			if (p1.y <= g1 && p2.y <= g2) return;
-			Vector3 q1 = new Vector3(p1.x, Mathf.Min(g1, p1.y), p1.z), q2 = new Vector3(p2.x, Mathf.Min(g2, p2.y), p2.z);
-			Quad(verts, norms, uvs, tris, origin, q1, p1, p2, q2, n, true);
+			// (beside the way in, over the cave's own roof, its arch goes on: the face there is the cave's too - a wall down to the
+			// ground stood just inside a mouth wider than the way in, Deepwatch Station's tunnel)
+			float floorY = atWay ? way : arch.FaceOut(i1, k1, i2, k2, a1, c1, a2, c2, inside1, inside2, n);
+			if (float.IsNaN(floorY))
+			{
+				if (p1.y <= g1 && p2.y <= g2) return;
+				Band(p1, p2, Mathf.Min(g1, p1.y), Mathf.Min(g2, p2.y), p1.y, p2.y, n, verts, norms, uvs, tris, origin);
+				return;
+			}
+			// In strips along it: where the cave's passage is, open from its floor to its roof (rock from the hill down to its
+			// roof, and from its floor down to the ground); elsewhere a skirt under the way in, or the wall down to the ground.
+			// (a skirt up to the passage's floor further in, and a wall at the way in's side, boxed in the mouth of a tunnel
+			// that widens and dips at its ends - Deepwatch Station)
+			float lo0, hi0, lo, hi;
+			bool open0 = arch.Passage(p1, floorY, out lo0, out hi0);
+			for (int s = 1; s <= Arch.Strips; s++)
+			{
+				float t0 = (s - 1) / (float)Arch.Strips, t = s / (float)Arch.Strips;
+				Vector3 e0 = Vector3.Lerp(p1, p2, t0), e = Vector3.Lerp(p1, p2, t);
+				float ga = Mathf.Lerp(g1, g2, t0), gb = Mathf.Lerp(g1, g2, t);
+				bool open = arch.Passage(e, floorY, out lo, out hi);
+				if (open || open0)
+				{
+					float l = open && open0 ? Mathf.Min(lo, lo0) : open ? lo : lo0, h = open && open0 ? Mathf.Max(hi, hi0) : open ? hi : hi0;
+					Band(e0, e, ga, gb, l, l, n, verts, norms, uvs, tris, origin);
+					Band(e0, e, h, h, e0.y, e.y, n, verts, norms, uvs, tris, origin);
+				}
+				else if (atWay)
+				{
+					if (Mathf.Min(ga, gb) <= way - 0.15f) Band(e0, e, Mathf.Min(ga, way), Mathf.Min(gb, way), way, way, n, verts, norms, uvs, tris, origin);
+				}
+				else Band(e0, e, Mathf.Min(ga, e0.y), Mathf.Min(gb, e.y), e0.y, e.y, n, verts, norms, uvs, tris, origin);
+				open0 = open; lo0 = lo; hi0 = hi;
+			}
+		}
+
+		/// <summary>A face up the edge a-b (x, z), from ya0/yb0 to ya1/yb1; none where it has no height.</summary>
+		static void Band(Vector3 a, Vector3 b, float ya0, float yb0, float ya1, float yb1, Vector3 n, List<Vector3> verts,
+			List<Vector3> norms, List<Vector2> uvs, List<int> tris, Vector3 origin)
+		{
+			if (ya1 <= ya0 + 0.01f && yb1 <= yb0 + 0.01f) return;
+			ya0 = Mathf.Min(ya0, ya1); yb0 = Mathf.Min(yb0, yb1);
+			Quad(verts, norms, uvs, tris, origin, new Vector3(a.x, ya0, a.z), new Vector3(a.x, ya1, a.z), new Vector3(b.x, yb1, b.z), new Vector3(b.x, yb0, b.z), n, true);
+		}
+
+		/// <summary>The caves' open ends where the hill's faces cross them.</summary>
+		sealed class Arch
+		{
+			public const int Strips = 8; // (per edge of a square: 0.16 m)
+			static readonly float[] Probe = { 0.6f, 1.6f, 2.6f };
+			public HashSet<Collider> Shells;
+			public Bounds Box;
+			public int[,] Own;
+			public float[][,] Ahead;
+			public List<Mouth> Mouths;
+			public float[,] Top;
+
+			/// <summary>The floor of the cave whose open end the face crosses, over that cave's own roof (NaN: not one).</summary>
+			public float FaceOut(int i1, int k1, int i2, int k2, int a1, int c1, int a2, int c2, bool in1, bool in2, Vector3 n)
+			{
+				int j = !float.IsNaN(Top[i1, k1]) ? Own[i1, k1] : !float.IsNaN(Top[i2, k2]) ? Own[i2, k2] : -1;
+				if (j < 0 || j >= Mouths.Count) return float.NaN;
+				if (!((in1 && Ahead[j][a1, c1] > 0f) || (in2 && Ahead[j][a2, c2] > 0f))) return float.NaN;
+				return Mathf.Abs(Vector3.Dot(n, Mouths[j].Along)) < 0.5f ? float.NaN : Mouths[j].FloorY;
+			}
+
+			/// <summary>Whether the spot (x, z) is in a cave's passage just over that floor: from its floor (lo) to its roof (hi).</summary>
+			public bool Passage(Vector3 at, float floorY, out float lo, out float hi)
+			{
+				lo = hi = 0f;
+				foreach (float up in Probe)
+				{
+					Vector3 p = new Vector3(at.x, floorY + up, at.z);
+					float under, over;
+					if (p.y <= Box.min.y || p.y >= Box.max.y || !CaveGround.Inside(p, Shells, Box, out under, out over)) continue;
+					lo = p.y - under; hi = p.y + over;
+					return true;
+				}
+				return false;
+			}
 		}
 
 		/// <summary>A four-sided face a-b-c-d with normal n (the other side too when both).</summary>

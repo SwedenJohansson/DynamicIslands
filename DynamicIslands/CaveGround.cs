@@ -360,7 +360,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>A point of the ground in the piece's room: its nearest faces straight up and straight down both seen from their fronts (the shells face inwards). under, over: how far down the floor is and how far up the roof.</summary>
-		static bool Inside(Vector3 p, HashSet<Collider> own, Bounds b, out float under, out float over)
+		internal static bool Inside(Vector3 p, HashSet<Collider> own, Bounds b, out float under, out float over)
 		{
 			Vector3 from = p + Vector3.up * 0.02f;
 			under = over = 0f;

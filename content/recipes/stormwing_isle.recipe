@@ -25,6 +25,12 @@ elevation 45
 brush flatten from -28 -6 to 28 -6 r=6 s=20 frames=220 h=9
 brush flatten at -20 20 r=11 s=20 frames=160 h=9
 brush flatten from -20 -6 to -20 14 r=5 s=20 frames=120 h=9
+# (the pad out to the hangar frame's corners: its posts stand up to 11.4 m out, where the r=11 pad fell to 5 m and left
+# the corner posts in the air)
+brush flatten from -27.5 13.5 to -27.5 26.5 r=4 s=20 frames=80 h=9
+brush flatten from -11.5 13.5 to -11.5 26.5 r=4 s=20 frames=80 h=9
+brush flatten from -27 26.8 to -12 26.8 r=4 s=20 frames=80 h=9
+brush flatten from -27 13 to -12 13 r=4 s=20 frames=80 h=9
 brush smooth from -30 -6 to 30 -6 r=9 s=5 frames=30
 brush rock from -28 -6 to 28 -6 r=5 s=20 frames=40
 # (a dead-flat pad for the standing plane - the smoothing rounded the strip's edge under its south float)
@@ -32,7 +38,7 @@ brush flatten at -20 -6 r=6 s=20 frames=150 h=9
 brush grass at -20 20 r=11 s=10 frames=20
 call ni8cave x=10 z=16 h=9 yaw=180 al=caverock
 clear from -32 -6 to 32 -6 r=7
-clear at -20 20 r=11
+clear at -20 20 r=12
 clear at 35.5 2 r=7.5
 
 # ===== The airfield: the beacons, the standing plane, the crashed one with its wing and blade thrown off ================
