@@ -54,6 +54,7 @@ namespace DynamicIslands.Editor
 				new[] { "Receiver", "the Receiver" }, new[] { "Notice", "the main menu box" }, new[] { "Library", "the island library" },
 				new[] { "IslandGround", "standing on custom islands (a moving raft could carry players off them)" },
 				new[] { "DeadCarrier", "warthogs letting go of a player when killed while carrying them" },
+				new[] { "FogBanks", "fog banks" },
 			};
 			foreach (string[] w in words) if (patch.IndexOf(w[0], StringComparison.OrdinalIgnoreCase) >= 0) return w[1];
 			return "a part of the mod (" + patch + ")";

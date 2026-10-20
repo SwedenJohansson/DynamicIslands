@@ -82,7 +82,7 @@ namespace DynamicIslands
 			// The options' text
 			HashSet<string> parsed = WorldOptions.Parse("storyorder, nonsense,GHOSTRAFTS;;privatestorage");
 			Check(ref ok, parsed.Count == 3 && parsed.Contains(WorldOptions.StoryOrder) && parsed.Contains(WorldOptions.GhostRafts) && parsed.Contains(WorldOptions.PrivateStorage), "options read from text, unknown ones left out: " + WorldOptions.Describe(parsed));
-			Check(ref ok, WorldOptions.Encode(WorldOptions.All, 42) == "on=blueprints,storyorder,ghostrafts,privatestorage,longvoyage,ironraft,sharedxp,nightdanger,dailyquest,rogueshark,barrels,stormdays,traderraft,upgrades,stormseas,ufo,glowsea,lightning,ghostship,whalebreach;seed=42" && WorldOptions.Encode(new string[0], 7) == "on=;seed=7", "options written as text: " + WorldOptions.Encode(WorldOptions.All, 42));
+			Check(ref ok, WorldOptions.Encode(WorldOptions.All, 42) == "on=blueprints,storyorder,ghostrafts,privatestorage,longvoyage,ironraft,sharedxp,nightdanger,dailyquest,rogueshark,barrels,stormdays,traderraft,upgrades,stormseas,ufo,glowsea,lightning,ghostship,whalebreach,fogbanks;seed=42" && WorldOptions.Encode(new string[0], 7) == "on=;seed=7", "options written as text: " + WorldOptions.Encode(WorldOptions.All, 42));
 			// Long voyage: twice as many of Raft's islands between random custom islands (and twice the spacing)
 			{
 				bool was = WorldOptions.Current.Contains(WorldOptions.LongVoyage);
@@ -2312,7 +2312,7 @@ namespace DynamicIslands
 				// (switched together: the retired options, and the ones that only add something at sea or make it harsher (the
 				// rogue shark, the barrels, storm days, the trader raft, night is dangerous): 512 combinations, not 16384 - ~22 min;
 				// with the upgrades option alone it was 1024 and ran past alltests' 25 min)
-				string[] sea = { WorldOptions.RogueShark, WorldOptions.Barrels, WorldOptions.StormDays, WorldOptions.TraderRaft, WorldOptions.NightDanger };
+				string[] sea = { WorldOptions.RogueShark, WorldOptions.Barrels, WorldOptions.StormDays, WorldOptions.TraderRaft, WorldOptions.NightDanger, WorldOptions.Fog };
 				string[][] groups = WorldOptions.Offered.Where(o => !sea.Contains(o)).Select(o => new[] { o }).Concat(new[] { sea, WorldOptions.Retired }).ToArray();
 				// (no rogue shark rolled meanwhile: before day 3 there's none)
 				RogueShark.TestDay = 1;

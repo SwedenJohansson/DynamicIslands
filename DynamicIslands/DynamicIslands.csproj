@@ -184,6 +184,8 @@
     <Compile Include="WhaleBreach.cs" />
     <Compile Include="DevTestsWhaleBreach.cs" />
     <Compile Include="DevTestsUfo.cs" />
+    <Compile Include="FogBanks.cs" />
+    <Compile Include="DevTestsFog.cs" />
     <Compile Include="ExtraUpgrades.cs" />
     <Compile Include="TraderRaft.cs" />
     <Compile Include="GhostShip.cs" />
