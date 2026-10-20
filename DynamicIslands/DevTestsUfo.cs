@@ -65,7 +65,7 @@ namespace DynamicIslands
 			Vector3 b = u.transform.position;
 			float speed = Vector3.Distance(new Vector3(a.x, 0f, a.z), new Vector3(b.x, 0f, b.z)) / 2f, expect = UfoSaucer.Reach * 2f / seconds;
 			Check(ref ok, speed > expect * 0.7f && speed < expect * 1.3f, "it moves: " + speed.ToString("F0") + " m/s (expected about " + expect.ToString("F0") + ")");
-			Check(ref ok, b.y - raftPos.Value.y > 120f, "high in the sky: " + (b.y - raftPos.Value.y).ToString("F0") + " m");
+			Check(ref ok, b.y - raftPos.Value.y > 90f, "high in the sky: " + (b.y - raftPos.Value.y).ToString("F0") + " m");
 
 			// Pictures: from the raft, the saucer coming in over the sea; and close up
 			while (u != null && u.Along < 0.27f) yield return null;
@@ -77,7 +77,7 @@ namespace DynamicIslands
 			if (u != null)
 			{
 				Vector3 c = u.transform.position;
-				Vector3 dir = (u.transform.forward + Vector3.down * 0.35f + u.transform.right * 0.8f).normalized;
+				Vector3 dir = (u.transform.forward + Vector3.up * 0.2f + u.transform.right * 0.8f).normalized;
 				yield return CameraShot(c + dir * 34f, c, "ufo_" + tag + "_close");
 			}
 

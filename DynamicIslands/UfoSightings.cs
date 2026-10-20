@@ -167,7 +167,7 @@ namespace DynamicIslands.Editor
 			static bool P(string s, out float f) { return float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out f); }
 		}
 
-		/// <summary>A random crossing: 25-40 s, 130-200 m up, up to 180 m to the side.</summary>
+		/// <summary>A random crossing: 25-40 s, 100-150 m up, up to 120 m to the side.</summary>
 		public static Path Roll(System.Random r)
 		{
 			return new Path
@@ -175,16 +175,16 @@ namespace DynamicIslands.Editor
 				Hue = (float)r.NextDouble(),
 				Glow = r.Next(2),
 				Heading = (float)(r.NextDouble() * 360.0),
-				Side = (float)((r.NextDouble() - 0.5) * 360.0),
-				Height = 130f + (float)(r.NextDouble() * 70.0),
+				Side = (float)((r.NextDouble() - 0.5) * 240.0),
+				Height = 100f + (float)(r.NextDouble() * 50.0),
 				Seconds = 25f + (float)(r.NextDouble() * 15.0),
 				Spin = r.Next(2) == 0 ? -1 : 1,
 			};
 		}
 
-		/// <summary>Half the length of the path: from the haze on one side to the other.</summary>
-		public const float Reach = 650f;
-		public const float Diameter = 18f;
+		/// <summary>Half the length of the path: from the haze on one side to the other. Raft's camera draws only 400 m, so the far ends stay just inside it.</summary>
+		public const float Reach = 340f;
+		public const float Diameter = 24f;
 
 		public Path Route;
 		/// <summary>Seconds since it appeared; 0-1 along the path.</summary>
@@ -238,7 +238,7 @@ namespace DynamicIslands.Editor
 			GameObject g = GameObject.CreatePrimitive(type);
 			g.name = name;
 			Collider c = g.GetComponent<Collider>();
-			if (c != null) UnityEngine.Object.Destroy(c);
+			if (c != null) UnityEngine.Object.DestroyImmediate(c);
 			g.transform.SetParent(parent, false);
 			g.transform.localPosition = pos;
 			g.transform.localScale = scale;

@@ -2872,7 +2872,7 @@ loaded **without** the mod loses them (a machine's slot comes back empty, a buil
 #### UFO sightings
 
 Now and then a **flying saucer** crosses the sky high above the raft: it comes out of the haze on one side, flies
-straight across (130-200 m up, in about half a minute) and is gone over the other horizon. It is there to look at -
+straight across (100-150 m up, in about half a minute) and is gone over the other horizon. It is there to look at -
 nothing to catch, nothing it does to you - so it pays to look up now and then.
 
 - **When:** on about two days in five (about three times in a week of Raft days, never on the first two days), at one
