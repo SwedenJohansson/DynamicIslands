@@ -57,6 +57,11 @@ place VP_BrickStack01 - at 15 2 ground sit yaw=30
 
 # ===== In the court: the lookout of planks (its ladder), the cellar hatch, the fire basket, the lookout's chest ===========
 push at 7 8 h=10
+# (four legs from 0.6 m into the court up under the deck)
+place ReefHuts_Pillar3 - at 0.15 0.15 y=-0.6 sy={(2.42+0.6)/4.815}
+place ReefHuts_Pillar3 - at 2.85 0.15 y=-0.6 sy={(2.42+0.6)/4.815}
+place ReefHuts_Pillar3 - at 0.15 2.85 y=-0.6 sy={(2.42+0.6)/4.815}
+place ReefHuts_Pillar3 - at 2.85 2.85 y=-0.6 sy={(2.42+0.6)/4.815}
 call floors w=2 d=2 y=2.52
 call corners w=2 d=2 y=2.52
 place Block_Wall_Fence_Rope - at 0.75 3 y=2.52

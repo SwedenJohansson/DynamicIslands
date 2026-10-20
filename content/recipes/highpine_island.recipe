@@ -96,7 +96,7 @@ place RT_PlasticBoat - at 33.4 -92 h=0.15 yaw=2
 place Loot_Barrel pierbarrel at 30 -72.5 ground
 
 # ===== Under the sea beyond the pier: the wrecked boat on the sea floor, a barrel beside it; Raft's finds in the shallows =
-place BoatStranded wreck at 36 -116 ground yaw=70 roll=24
+place BoatStranded wreck at 36 -116 ground sit y=-2.8 yaw=70 roll=14 tilt=4
 place Loot_SunkenBarrel wreckbarrel at 30 -111 ground
 call shallows r=110 deep=5 n=1
 place Creature_Dolphin dolphins at -20 -118 h=-3

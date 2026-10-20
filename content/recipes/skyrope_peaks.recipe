@@ -36,7 +36,7 @@ clear from 10 -9 to 16 -9 r=2.5
 clear from -8 0 to 8 0 r=3
 
 # ===== The bridge between the peaks; the cabin on the west peak; the ladders and nests on the east peak ================
-call hangbridge x1=-8.5 z1=0 h1=16 x2=8.5 z2=0 h2=14 sag=1.6 pb=6.7
+call hangbridge x1=-8.5 z1=0 h1=16 x2=8.5 z2=0 h2=14 sag=1.6 pb=6.7 po=1.4
 push at -17.5 -1.5 h=16
 call cabin w=3 d=2 al=peakcabin
 place Bed_Simple - at 3.2 2.0 y=0.1 sit yaw=90

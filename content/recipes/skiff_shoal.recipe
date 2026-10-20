@@ -24,7 +24,7 @@ brush seabed at 1 -1 r=12 s=20 frames=30
 clear at 1 -1 r=10
 
 # ===== The wreck: the fishing boat on her side, her cargo round her, her chest in the sand ===============================
-call wreck x=1 z=-1 yaw=10 roll=28 tilt=5 sink=1.2 al=skiff seed=7415 where=any
+call wreck x=1 z=-1 yaw=10 roll=14 tilt=4 sink=2.8 al=skiff seed=7415 where=any
 place Loot_ChestSmall wreckchest at 5.5 3.5 ground sit yaw=35 roll=8
 place Loot_SunkenBarrel - at -3 -6 ground sit
 place Loot_SunkenBarrel - at 6 -5.5 ground sit

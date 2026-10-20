@@ -57,7 +57,7 @@ place AirPocket_1 - at 4.8 -5.3 h=5.1 sit scale=0.6
 call airpocket x=4.8 z=-5.3 id=shackair al=shackair bub=shackbub r=2.2 msg="Air - trapped under the shack's roof. Breathe."
 
 # ===== The funeral boat on the slope, barrels; corals, kelp; the murk; anglerfish and a pufferfish ========================
-call wreck x=-15 z=15 yaw=200 roll=26 tilt=6 sink=1.2 al=funeralboat seed=7731 where=any
+call wreck x=-15 z=15 yaw=200 roll=14 tilt=4 sink=2.8 al=funeralboat seed=7731 where=any
 place Loot_SunkenBarrel - at 6 2 ground sit
 place Loot_SunkenBarrel - at -13 -2 ground sit
 macro reefhead x z seed

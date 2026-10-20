@@ -95,7 +95,7 @@ place FishingNets_02 - at 22.4 5.2 ground yaw=80
 # ===== The big boat beached on the west shore; the wreck on the sea floor off the harbour mouth with its barrel =========
 place BoatStranded - at -50 10 ground yaw=35 tilt=6
 place "Box Small" beachbox at -44.5 14 ground yaw=20
-place BoatStranded wreck at 66 -30 ground yaw=120 roll=-22
+place BoatStranded wreck at 66 -30 ground sit y=-2.8 yaw=120 roll=-14 tilt=4
 place Loot_SunkenBarrel wreckbarrel at 60.5 -26 ground
 call shallows r=72 deep=5 n=1
 place Creature_Dolphin dolphins at 78 10 h=-3

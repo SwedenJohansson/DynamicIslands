@@ -19,7 +19,7 @@ gen Water=0.5 SeaRocks=0.5 SeaFinds=0.3 Sunken=0.4 Hostiles=0 Friendly=0 SeaLife
 generate
 
 # ===== Terrain: the flat top, the ledge on the south face, the ladders' foot ==============================================
-brush flatten at 2 2 r=3.5 s=20 frames=120 h=9
+brush flatten at 2 2 r=4.5 s=20 frames=140 h=9
 brush flatten from 0 -1.5 to 4 -1.5 r=1.8 s=20 frames=100 h=9
 brush flatten from 0 -5 to 4 -5 r=1.8 s=20 frames=100 h=4.2
 brush flatten from 0 -8.5 to 4 -8.5 r=1.6 s=20 frames=60 h=2

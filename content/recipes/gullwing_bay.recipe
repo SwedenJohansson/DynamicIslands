@@ -32,7 +32,7 @@ clear at -30 -4 r=17
 clear from -31 12 to -31 20 r=4
 
 # ===== The wreck on the bay's bottom, pufferfish round her ================================================================
-call wreck x=-6 z=34 yaw=40 roll=-24 tilt=6 sink=1.2 al=fishingboat seed=7512
+call wreck x=-6 z=34 yaw=40 roll=-14 tilt=4 sink=2.8 al=fishingboat seed=7512
 place Loot_ChestSmall wreckchest at -2 30 ground sit yaw=20 roll=-6
 place Creature_PufferFish puffers at -6 34 h=-5
 prop puffers creature.count=2
