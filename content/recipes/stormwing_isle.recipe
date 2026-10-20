@@ -8,7 +8,7 @@
 #
 # Built by the recipe player (CIRecipe stormwing_isle) through the editor's own operations. Points (metres over the
 # island's own water line; in the world it all floats 45 m higher): the strip from -28 -6 to 28 -6 (9 m, 12 m wide); the
-# beacons at -31 -6 and 31 -6; the standing plane at -20 -6; the crashed plane at 35 -1; the hangar at -20 20 (pad 9 m,
+# beacons at -31 -6 and 31 -6; the standing plane at -20 -6; the crashed plane at 35.5 2; the hangar at -20 20 (pad 9 m,
 # r 11); the cave rock at 10 16 (pad 9 m, floor 9.45 m, the mouth south at z 0, the passage to -5).
 include lib_huts
 include lib_features
@@ -27,17 +27,22 @@ brush flatten at -20 20 r=11 s=20 frames=160 h=9
 brush flatten from -20 -6 to -20 14 r=5 s=20 frames=120 h=9
 brush smooth from -30 -6 to 30 -6 r=9 s=5 frames=30
 brush rock from -28 -6 to 28 -6 r=5 s=20 frames=40
+# (a dead-flat pad for the standing plane - the smoothing rounded the strip's edge under its south float)
+brush flatten at -20 -6 r=6 s=20 frames=150 h=9
 brush grass at -20 20 r=11 s=10 frames=20
 call ni8cave x=10 z=16 h=9 yaw=180 al=caverock
 clear from -32 -6 to 32 -6 r=7
 clear at -20 20 r=11
+clear at 35.5 2 r=7.5
 
 # ===== The airfield: the beacons, the standing plane, the crashed one with its wing and blade thrown off ================
 place TP_RotatingRedLight - at -31 -6 ground sit
 place TP_RotatingRedLight - at 31 -6 ground sit
-place Airplane standplane at -20 -6 ground yaw=90
-# (set level on the flat below the end, its floats sunk in: dropped, it came to rest on a wing tip with its floats in the air)
-place Airplane crashplane at 35 -1 ground y=-0.7 yaw=125
+# (rot=0,0,0: Raft's copy of the plane leans 20 degrees - set as it came, one float stood in the air and the tail on the
+# ground; level, both floats rest on the pad, sunk 0.1 m)
+place Airplane standplane at -20 -6 h=8.9 sit rot=0,0,0 yaw=90
+# (the crashed one belly-down on the flat shelf past the strip's end, its floats sunk 0.55 m in the turf)
+place Airplane crashplane at 35.5 2 h=1.95 sit rot=0,0,0 yaw=165
 place WingBroken - at 30 3 drop rot=0,20,170
 place PropellerBlade - at 26 -1.5 drop rot=0,30,90
 place Loot_ChestSmall pilotchest at 31.5 -3.5 ground sit yaw=250

@@ -32,6 +32,9 @@ brush smooth at -40 10 r=22 s=5 frames=30
 brush grass at -40 10 r=12 s=10 frames=20
 brush rock at -40 10 r=18 s=6 frames=20
 brush flatten at 35 -40 r=18 s=20 frames=120 h=3
+# (level pads for the two wells: their decks rest flat on the ground, the pipe buried)
+brush flatten at -33 3 r=4.5 s=20 frames=150 h=11.9
+brush flatten at 46 -46 r=4.5 s=20 frames=150 h=3.1
 brush grass at 35 -40 r=16 s=10 frames=20
 brush sand at 35 -44 r=5 s=20 frames=20
 brush flatten from 19.5 40 to 22.5 40 r=3 s=20 frames=200 h=10
@@ -55,14 +58,14 @@ clear at 36 40 r=10
 clear from 6 -9 to 6 34 r=4.5
 
 # ===== The castle: the ring of crumbled walls with the gate south, four stubby towers, fire baskets at the gate =========
+# (straight stone blocks with a flat foot, sunk 2 m or more under the lowest ground of their footprint, outer slope
+# included - the boulder bulges of the first build read as rocks hovering over the slope; walls 10.2 m close the ring)
 for wi 0 6 1
 set wa {315+45*$wi}
-set wx {-40+13*cos($wa)}
-set wz {10+13*sin($wa)}
-call ni8wall x1={$wx+4.2*sin($wa)} z1={$wz-4.2*cos($wa)} x2={$wx-4.2*sin($wa)} z2={$wz+4.2*cos($wa)} hgt={5.6+0.8*abs(sin($wa*3))} th=1.8 al=castlewall deep=3
+place RT_GroundPillar castlewall at {-40+13*cos($wa)} {10+13*sin($wa)} h=7.4 sit yaw={atan2(-sin($wa),cos($wa))} sx=0.75 sy={(9.2+0.8*abs(sin($wa*3)))/3} sz=4.25
 next
 for a 45 315 90
-call ni8wall x1={-40+13.5*cos($a)-1.8} z1={10+13.5*sin($a)} x2={-40+13.5*cos($a)+1.8} z2={10+13.5*sin($a)} hgt=8.5 th=3.8 al=castletower deep=4.5
+place RT_GroundPillar castletower at {-40+13.5*cos($a)} {10+13.5*sin($a)} h=7.3 sit sx=1.58 sy=4.33 sz=1.58
 next
 place Placeable_Lantern_FireBasket - at -43 -4.5 ground sit
 place Placeable_Lantern_FireBasket - at -37 -4.5 ground sit
@@ -76,7 +79,7 @@ place Note_Book lordsbook at 3.75 2.6 y=0.84 sit yaw=20
 place Loot_Chest lordschest at 6.6 3.6 y=0.1 sit yaw=270
 place Placeable_Bed_Basic - at 1.15 3 y=0.1 sit yaw=90
 pop
-place Well - at -33 3 ground sit
+place Well - at -33 3 ground y=-1.8 sit
 place Loot_Barrel castlebarrel at -48 4 ground
 
 # ===== The village in the south-east: four thatched huts, the fire, a tiki pole, the well, a barrel ====================
@@ -89,7 +92,7 @@ place Loot_Chest headmanchest at 34.2 -33.8 h=3.1 sit yaw=180
 place campfire_1 - at 35 -44 ground
 place Placeable_TikiPole_Complete - at 30 -46 ground sit yaw=10
 place Placeable_TikiPole_Complete - at 40 -46 ground sit yaw=350
-place Well - at 46 -46 ground sit
+place Well - at 46 -46 ground y=-1.8 sit
 place Loot_Barrel villagebarrel at 23 -42 ground
 line Block_Wall_Fence_Plank from 22 -50 to 30 -50 step=1.5 ground
 place Note_Paper villagenote at 33 -43 ground sit yaw=30
