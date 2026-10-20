@@ -179,6 +179,7 @@
     <Compile Include="GlowSea.cs" />
     <Compile Include="DevTestsGlowSea.cs" />
     <Compile Include="DevTestsGfx.cs" />
+    <Compile Include="DevTestsReady.cs" />
     <Compile Include="StormSeas.cs" />
     <Compile Include="DevTestsStormSeas.cs" />
     <Compile Include="UfoSightings.cs" />

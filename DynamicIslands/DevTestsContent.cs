@@ -2030,12 +2030,25 @@ namespace DynamicIslands
 			{
 				Log("Leaving the editor");
 				UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene", UnityEngine.SceneManagement.LoadSceneMode.Single);
+				StartTest(WaitForMainMenu());
 				return;
 			}
 			// (already at the main menu: nothing to leave - LeaveGame threw a NullReferenceException there)
 			if (!LoadSceneManager.IsGameSceneLoaded || ComponentManager<Raft_Network>.Value == null) { Log("At the main menu already (not in a world or the editor)"); return; }
 			Log("Leaving the world");
 			ComponentManager<Raft_Network>.Value.LeaveGame((DisconnectReason)2, (SceneName)1, true, false);
+			StartTest(WaitForMainMenu());
+		}
+
+		/// <summary>CIMainMenu's end (10-20): "At the main menu" once the menu's New Game box is there (60 s at most), then
+		/// IDLE - so "CIMainMenu;CINewWorld ..." and scripts wait for the menu itself instead of sleeping.</summary>
+		static IEnumerator WaitForMainMenu()
+		{
+			float start = Time.realtimeSinceStartup, end = start + 60f;
+			yield return null;
+			while (Time.realtimeSinceStartup < end && MenuNewGameBox() == null) yield return new WaitForSecondsRealtime(0.1f);
+			if (MenuNewGameBox() == null) { Fail("main menu: not there after 60 s"); yield break; }
+			Log("At the main menu (after " + Took(start) + ")");
 		}
 
 		[ConsoleCommand(name: "CIModelCheck", docs: "Dev, editor (after a world): creatures show Raft's real models instead of markers; places a few and takes a screenshot")]

@@ -1555,7 +1555,22 @@ namespace DynamicIslands
 		{
 			Vector3? pos = CustomIslandSpawner.RaftPosition;
 			if (!pos.HasValue) { Fail("no raft"); return; }
-			Log(CustomIslandSpawner.TrySpawn(pos.Value, true));
+			int before = IslandWorldState.Islands.Count;
+			string said = CustomIslandSpawner.TrySpawn(pos.Value, true);
+			Log(said);
+			StartTest(SpawnNowBuilt(IslandWorldState.Islands.Skip(before).ToList(), said));
+		}
+
+		/// <summary>CISpawnNow's end: a PASS line once the islands it placed are built (60 s at most), or that none came.</summary>
+		static IEnumerator SpawnNowBuilt(List<IslandWorldState.Entry> added, string said)
+		{
+			if (added.Count == 0) { Log("PASS: spawn now - no new island (" + said + ")"); yield break; }
+			float start = Time.realtimeSinceStartup, end = start + 60f;
+			while (Time.realtimeSinceStartup < end && added.Any(e => e.Root == null && !e.Failed && !e.Excluded)) yield return null;
+			List<IslandWorldState.Entry> bad = added.Where(e => e.Root == null && !e.Excluded).ToList(); // (excluded: not meant to load here)
+			string names = string.Join(", ", added.Select(e => "'" + e.Name + "'").ToArray());
+			if (bad.Count == 0) Log("PASS: spawn now - " + names + " built in " + Took(start));
+			else Fail("spawn now: " + string.Join(", ", bad.Select(e => "'" + e.Name + "'" + (e.Failed ? " failed" : " not built")).ToArray()) + " after " + Took(start));
 		}
 
 		[ConsoleCommand(name: "CIRealIsland",docs: "Dev, in game (host): spawns one of Raft's own small islands <distance> m east of the raft (for comparisons)")]
@@ -1976,11 +1991,13 @@ namespace DynamicIslands
 		{
 			while (true)
 			{
-				yield return new WaitForSecondsRealtime(1f);
+				// (every 0.2 s - a second before, 10-20: each ci.ps1 step waited half a second on average for it)
+				yield return new WaitForSecondsRealtime(0.2f);
 				string[] lines = null;
 				try
 				{
-					if (File.Exists(CommandFile))
+					// (a file written this instant may not be complete yet: the next look reads it)
+					if (File.Exists(CommandFile) && (DateTime.UtcNow - File.GetLastWriteTimeUtc(CommandFile)).TotalSeconds > 0.1)
 					{
 						lines = File.ReadAllLines(CommandFile);
 						File.Delete(CommandFile);
@@ -2157,10 +2174,16 @@ namespace DynamicIslands
 		{
 			float timeout = Time.realtimeSinceStartup + 180f;
 			System.Func<bool> isIn = () => { try { return LoadSceneManager.IsGameSceneLoaded && RAPI.GetLocalPlayer() != null; } catch { return false; } };
-			while (Time.realtimeSinceStartup < timeout && !isIn()) yield return new WaitForSecondsRealtime(1f);
+			float start = Time.realtimeSinceStartup;
+			while (Time.realtimeSinceStartup < timeout && !isIn()) yield return null;
 			if (!isIn()) { Fail("the world was not in after 180 s"); yield break; }
-			yield return new WaitForSecondsRealtime(3f); // (islands near the raft come in the first seconds)
-			Log("World ready");
+			// Islands near the raft come in the first seconds: ready once the spawner has streamed them in this world (on
+			// this world's list) and none it started is still loading - instead of a fixed 3 s (10-20); 10 s at most
+			float inAt = Time.realtimeSinceStartup, end = inAt + 10f;
+			System.Func<bool> near = () => CustomIslandSpawner.StreamTicks > 0 && !IslandWorldState.Islands.Any(e => e.Loading);
+			while (Time.realtimeSinceStartup < end && !near()) yield return null;
+			yield return new WaitForFixedUpdate();
+			Log("World ready (in after " + Took(start) + ", islands near the raft " + (near() ? "in" : "still loading") + " after " + Took(inAt) + " more)");
 		}
 
 		[ConsoleCommand(name: "CIClick", docs: "Dev, editor: presses an editor button by its label, e.g. CIClick Main menu / CIClick New / CIClick Duplicate")]
@@ -2180,11 +2203,27 @@ namespace DynamicIslands
 		{
 			PlayerTrust.ForTests = true; // (CB2: the CI tests set players' records and use things from afar - CITrust turns it off)
 			string name = args != null && args.Length > 0 ? string.Join(" ", args) : "CI Test";
-			NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
-			if (box == null) { Fail("no New Game box (go to the main menu first)"); return; }
+			StartTest(NewWorldOpen(name));
+		}
+
+		/// <summary>The main menu's New Game box, or null (in a world, or the menu still loading).</summary>
+		static NewGameBox MenuNewGameBox()
+		{
+			if (LoadSceneManager.IsGameSceneLoaded) return null;
+			return Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid() && b.gameObject.scene.isLoaded);
+		}
+
+		/// <summary>Waits for the main menu (a CINewWorld straight after CIMainMenu: up to 30 s - it failed at once before
+		/// and the scripts slept "to be safe", 10-20), then opens the New Game box.</summary>
+		static IEnumerator NewWorldOpen(string name)
+		{
+			float end = Time.realtimeSinceStartup + 30f;
+			NewGameBox box;
+			while ((box = MenuNewGameBox()) == null && Time.realtimeSinceStartup < end) yield return new WaitForSecondsRealtime(0.1f);
+			if (box == null) { Fail("no New Game box (go to the main menu first)"); yield break; }
 			box.gameObject.SetActive(true);
 			try { box.Close(); } catch { } box.Open(); // (Raft's Open subscribes to input changes each time, Close unsubscribes: never open twice)
-			StartTest(NewWorldCreate(box, name));
+			yield return NewWorldCreate(box, name);
 		}
 
 		/// <summary>
@@ -2193,7 +2232,15 @@ namespace DynamicIslands
 		/// </summary>
 		static IEnumerator NewWorldCreate(NewGameBox box, string name)
 		{
-			yield return new WaitForSecondsRealtime(1f);
+			// (ready: its tab group has a tab selected - the game mode tabs set up; 2 frames at least, 1 s at most as before)
+			TabGroup tabs = HarmonyLib.Traverse.Create(box).Field("tabGroup").GetValue<TabGroup>();
+			yield return null; yield return null;
+			for (float end = Time.realtimeSinceStartup + 1f; Time.realtimeSinceStartup < end; )
+			{
+				if (tabs != null && HarmonyLib.Traverse.Create(tabs).Field("selectedTabButton").GetValue() != null) break;
+				yield return null;
+			}
+			yield return null;
 			box.inputfield_GameName.text = name;
 			box.GameNameEndEdit(name);
 			for (float t = 0; t < 5f && box.createGameButton != null && !box.createGameButton.interactable; t += 0.5f) yield return new WaitForSecondsRealtime(0.5f);

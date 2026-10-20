@@ -121,12 +121,16 @@ namespace DynamicIslands.Editor
 			if (lastRaftPosition.HasValue) lastRaftPosition = lastRaftPosition.Value - shift;
 		}
 
+		/// <summary>How often the islands near the players were streamed in this world (0 until the first time) - the
+		/// tests' readiness check (DevTests.WaitForWorld) waits for one, instead of a fixed wait.</summary>
+		public static int StreamTicks;
+
 		/// <summary>Called every frame by the mod.</summary>
 		public static void Tick()
 		{
 			if (Time.unscaledTime < nextTick) return;
 			nextTick = Time.unscaledTime + TickInterval;
-			if (!LoadSceneManager.IsGameSceneLoaded) { lastRaftPosition = null; return; }
+			if (!LoadSceneManager.IsGameSceneLoaded) { lastRaftPosition = null; StreamTicks = 0; return; }
 			Vector3? pos = RaftPosition;
 			if (!pos.HasValue) return;
 
@@ -134,6 +138,7 @@ namespace DynamicIslands.Editor
 			// (host: not while the list is still the world played before - a world loading after another; its save checks the same)
 			if (Raft_Network.IsHost && !IslandWorldState.ForThisWorld) return;
 			StreamIslands(pos.Value);
+			StreamTicks++;
 			if (!Raft_Network.IsHost) { lastRaftPosition = null; return; }
 			LoadPool(false);
 			// (this world's play time: game time, so a paused game doesn't count)

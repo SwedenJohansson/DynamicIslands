@@ -88,7 +88,7 @@ namespace DynamicIslands
 			{
 				quality = QualitySettings.GetQualityLevel(), textureLimit = QualitySettings.masterTextureLimit, shadows = QualitySettings.shadows,
 				shadowCascades = QualitySettings.shadowCascades, shadowDistance = QualitySettings.shadowDistance, shadowResolution = QualitySettings.shadowResolution,
-				lodBias = QualitySettings.lodBias, vsync = QualitySettings.vSyncCount, fps = Application.targetFrameRate,
+				lodBias = QualitySettings.lodBias, vsync = QualitySettings.vSyncCount, fps = GameManager.targetFrameRate,
 				width = Screen.width, height = Screen.height, mode = Screen.fullScreenMode, current = Screen.currentResolution, refresh = Screen.currentResolution.refreshRate,
 			};
 			try { s.water = UltimateWater.WaterQualitySettings.Instance.GetQualityLevel(); } catch (Exception e) { Log("(water quality not read: " + e.Message + ")"); }
@@ -112,8 +112,17 @@ namespace DynamicIslands
 			GfxVolumetric(0);
 			if (!screen) return;
 			QualitySettings.vSyncCount = 0;
-			Application.targetFrameRate = gfxFps > 0 ? gfxFps : -1;
+			GfxCap();
 			Screen.SetResolution(GfxWidth, GfxHeight, FullScreenMode.Windowed);
+		}
+
+		/// <summary>The low frame cap. Raft's GameManager.Update puts its own static targetFrameRate (the settings' FPS cap)
+		/// into Application.targetFrameRate every frame: that static is set too (10-20: the cap had stayed at 60).</summary>
+		static void GfxCap()
+		{
+			int cap = gfxFps > 0 ? gfxFps : -1;
+			GameManager.targetFrameRate = cap;
+			Application.targetFrameRate = cap;
 		}
 
 		/// <summary>The user's values back; with <paramref name="screen"/> also their window, vsync and frame cap (and low ends).</summary>
@@ -135,7 +144,7 @@ namespace DynamicIslands
 			gfxLow = false;
 			gfxShotDepth = 0;
 			QualitySettings.vSyncCount = s.vsync;
-			Application.targetFrameRate = s.fps;
+			GameManager.targetFrameRate = s.fps; Application.targetFrameRate = s.fps;
 			Screen.SetResolution(s.width, s.height, s.mode, s.refresh);
 		}
 
@@ -211,7 +220,7 @@ namespace DynamicIslands
 		static IEnumerator GfxAgain()
 		{
 			yield return null; yield return null;
-			if (gfxLow && gfxShotDepth == 0) GfxApplyLow(false);
+			if (gfxLow && gfxShotDepth == 0) { GfxApplyLow(false); QualitySettings.vSyncCount = 0; GfxCap(); }
 		}
 
 		static void GfxSavePostfix(RGD_Settings settings)

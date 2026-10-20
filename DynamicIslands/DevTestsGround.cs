@@ -110,14 +110,14 @@ namespace DynamicIslands
 			foreach (string name in names)
 			{
 				var left = IslandWorldState.Islands.Where(x => string.Equals(x.HostName, name, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
-				if (left.Count > 0) { IslandWorldState.RemoveIds(left, true); IslandCache.Forget(); yield return new WaitForSeconds(1f); }
+				if (left.Count > 0) yield return RemoveIslandsAndWait(left);
 				Vector3? spot = ScSpot(name, 400f);
 				if (!spot.HasValue) { Log("  " + name + ": no open sea near the raft"); missed++; continue; }
 				var made = new List<IslandWorldState.Entry>();
 				yield return ScBring(name, spot.Value, made);
 				IslandWorldState.Entry e = made.LastOrDefault();
 				if (e == null || e.Root == null) { Log("  " + name + ": didn't come"); missed++; continue; }
-				yield return new WaitForSeconds(2f); // (the cave mountains and Raft's physics settle)
+				yield return WaitIslandSettled(e, 0.5f, 2f); // (the cave mountains and Raft's physics settle: until they have, 2 s at most)
 				int n;
 				List<string> lines = c.Measure(e, out n);
 				done++;
@@ -131,9 +131,7 @@ namespace DynamicIslands
 					foreach (string l in lines.Take(3)) Log("    " + l);
 				}
 				if (keep) { Log("  kept '" + name + "' at " + e.Root.transform.position.ToString("F1") + ", turned " + e.Root.transform.eulerAngles.y.ToString("F0") + "°"); continue; }
-				IslandWorldState.RemoveIds(made.Select(x => x.Id).ToList(), true);
-				IslandCache.Forget();
-				yield return new WaitForSeconds(1f);
+				yield return RemoveIslandsAndWait(made.Select(x => x.Id).ToList());
 			}
 			File.WriteAllText(Path.Combine(DynamicIslands.assetpath, c.File + "_islands.txt"), report.ToString());
 			string sum = done + " of " + names.Count + " islands measured" + (missed > 0 ? " (" + missed + " didn't come)" : "");
@@ -166,7 +164,7 @@ namespace DynamicIslands
 					Network_Player player = RAPI.GetLocalPlayer();
 					Vector3 raft = CustomIslandSpawner.RaftPosition ?? (player != null ? player.transform.position : Vector3.zero);
 					IslandWorldState.Entry e = SpawnTypeNear(type, raft);
-					for (float t = 0; e != null && t < 90f && e.Root == null && !e.Failed; t += 1f) yield return new WaitForSeconds(1f);
+					for (float t = 0; e != null && t < 90f && e.Root == null && !e.Failed; t += 0.1f) yield return new WaitForSeconds(0.1f);
 					if (e == null || e.Root == null)
 					{
 						Log("  " + type + ": " + (e == null ? "no open sea near the raft" : "didn't come"));
@@ -174,7 +172,7 @@ namespace DynamicIslands
 						if (e != null) IslandWorldState.RemoveIds(new[] { e.Id }, true);
 						continue;
 					}
-					yield return new WaitForSeconds(2f); // (the cave mountains and Raft's physics settle)
+					yield return WaitIslandSettled(e, 0.5f, 2f); // (the cave mountains and Raft's physics settle: until they have, 2 s at most)
 					int n;
 					List<string> lines = c.Measure(e, out n);
 					done++;
@@ -187,9 +185,7 @@ namespace DynamicIslands
 						Log("  " + e.Name + ": " + lines.Count + " problem(s) of " + n + " objects");
 						foreach (string l in lines.Take(3)) Log("    " + l);
 					}
-					IslandWorldState.RemoveIds(new[] { e.Id }, true);
-					IslandCache.Forget();
-					yield return new WaitForSeconds(1f);
+					yield return RemoveIslandsAndWait(new[] { e.Id });
 				}
 			File.WriteAllText(Path.Combine(DynamicIslands.assetpath, c.File + "_types.txt"), report.ToString());
 			string sum = done + " of " + types.Count * each + " new islands measured" + (missed > 0 ? " (" + missed + " didn't come)" : "");

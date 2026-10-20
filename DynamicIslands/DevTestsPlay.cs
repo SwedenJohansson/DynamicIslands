@@ -140,7 +140,7 @@ namespace DynamicIslands
 							Vector3 near = planned.Position + (toward.sqrMagnitude > 1f ? toward.normalized : Vector3.back) * 150f;
 							near.y = 0.5f;
 							PlayerMove.To(me, near);
-							for (float w = 0f; w < 40f && planned.Root == null; w += 0.5f) yield return new WaitForSeconds(0.5f);
+							for (float w = 0f; w < 40f && planned.Root == null; w += 0.1f) yield return new WaitForSeconds(0.1f);
 							Log("  went to the plan's '" + island + "' (" + (planned.Root != null ? "loaded" : "still not loaded") + ")");
 						}
 						if (planned != null && planned.Root != null) playEntry = planned;
@@ -149,14 +149,14 @@ namespace DynamicIslands
 						{
 							// (a copy left by an earlier run that stopped half way: removed first)
 							var left = IslandWorldState.Islands.Where(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
-							if (left.Count > 0) { IslandWorldState.RemoveIds(left, true); IslandCache.Forget(); Log("  (removed " + left.Count + " copy/copies of '" + island + "' left by an earlier run)"); yield return new WaitForSeconds(1f); }
+							if (left.Count > 0) { Log("  (removed " + left.Count + " copy/copies of '" + island + "' left by an earlier run)"); yield return RemoveIslandsAndWait(left); }
 							Vector3? spot = ScSpot(island, 400f, IslandSpawner.ElevationOf(island));  // (a flying island flies here too)
 							if (!spot.HasValue) { Fail("play " + name + ": no open sea for '" + island + "'"); yield break; }
 							yield return ScBring(island, spot.Value, made);
 							playEntry = made.LastOrDefault();
 							if (playEntry == null || playEntry.Root == null) { Fail("play " + name + ": '" + island + "' didn't come"); yield break; }
 						}
-						yield return new WaitForSeconds(3f);
+						yield return WaitIslandSettled(playEntry, 0.5f, 3f); // (until it is all there and still: 3 s at most, as before)
 						// (a clean start: the crew holds none of the island's story items - an earlier run in this world left them)
 						foreach (StoryItemDef d in StoryItems.Of(IslandCache.PropsOf(playEntry)))
 							if (StoryBook.Count(d.Id) > 0) StoryBook.Take(d.Id, StoryBook.Count(d.Id));

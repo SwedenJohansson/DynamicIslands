@@ -22,6 +22,9 @@ namespace DynamicIslands.Editor
 		float due = -1f;
 		GameObject skin;
 
+		/// <summary>A cave piece came and the mountain isn't (re)built yet (the tests wait for it instead of a fixed wait).</summary>
+		public bool Pending { get { return due >= 0f; } }
+
 		/// <summary>A cave piece spawned in a world under this island: (re)build the island's mountain once the island is all there.</summary>
 		public static void Add(Transform island, GameObject piece, string name)
 		{
