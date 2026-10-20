@@ -28,7 +28,7 @@ brush flatten at 0 -7 r=20 s=20 frames=100 h=3
 brush flatten at -1 22 r=14 s=20 frames=100 h=2.6
 brush flatten from 0 -24 to 0 -40 r=3.5 s=20 frames=60 h=2.2
 brush flatten at 0 -43 r=3 s=20 frames=60 h=1.35
-brush flatten at -8.75 -15.5 r=4 s=20 frames=80 h=2.8
+brush flatten at -8.75 -15.5 r=5 s=20 frames=150 h=3.2
 brush smooth from 0 -22 to 0 -42 r=5 s=10 frames=40
 brush grass at -26 -4 r=11 s=20 frames=20
 brush grass at 22 -22 r=9 s=20 frames=20
