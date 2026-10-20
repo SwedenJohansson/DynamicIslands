@@ -199,15 +199,22 @@ namespace DynamicIslands
 			// The library list: index.json's "monsters" (build-index.ps1), the same as the game counts its .island
 			if (libraryFolder.Length > 0 && System.IO.File.Exists(System.IO.Path.Combine(libraryFolder, "index.json")))
 			{
-				LibraryClient.TestAddress = "file:///" + System.IO.Path.GetFullPath(libraryFolder).Replace('\\', '/').TrimEnd('/') + "/";
-				LibraryClient.Forget();
-				try
-				{
-					LibraryWindow.Open(1);
-				}
-				catch (Exception x) { Check(ref ok, false, "the library opens: " + x.Message); }
+				// (the New Game box may have started a list load from the real library: let it end first, or it lands
+				// after the test's own and replaces its entries)
 				yield return LoadList(false);
-				yield return new WaitForSecondsRealtime(2f);
+				yield return new WaitForSecondsRealtime(1f);
+				LibraryClient.TestAddress = "file:///" + System.IO.Path.GetFullPath(libraryFolder).Replace('\\', '/').TrimEnd('/') + "/";
+				int local = System.Text.RegularExpressions.Regex.Matches(System.IO.File.ReadAllText(System.IO.Path.Combine(libraryFolder, "index.json")), "\"path\"\\s*:").Count;
+				for (int attempt = 0; attempt < 2; attempt++)
+				{
+					LibraryClient.Forget();
+					try { if (LibraryWindow.IsOpen) LibraryWindow.Close(); LibraryWindow.Open(1); }
+					catch (Exception x) { Check(ref ok, false, "the library opens: " + x.Message); }
+					yield return LoadList(false);
+					yield return new WaitForSecondsRealtime(2f);
+					if (LibraryClient.Entries != null && LibraryClient.Entries.Count == local) break;
+				}
+				Check(ref ok, LibraryClient.Entries != null && LibraryClient.Entries.Count == local, "the list is the folder's (" + local + " entries): " + (LibraryClient.Entries != null ? LibraryClient.Entries.Count : -1));
 				List<LibraryEntry> isl = (LibraryClient.Entries ?? new List<LibraryEntry>()).Where(x => !x.Info.IsPlan).ToList();
 				int same = 0, shown = 0;
 				var off = new List<string>();
