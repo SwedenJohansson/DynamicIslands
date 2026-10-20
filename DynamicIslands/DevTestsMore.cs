@@ -696,6 +696,25 @@ namespace DynamicIslands
 				while (coast < 150f && ground(centre + dir * coast) > 0f) coast += 0.25f;
 				float top = ground(centre);
 
+				// (the island's ground must stop a swimmer before the swim: on a minimised Raft (few frames) the first island's
+				// swimmer went in under the beach - feet 3.4 m under the sea, 6.5 m of ground over them - and the raft try a moment
+				// later stood on it; RUN2 10-20. Waited for here, up to 15 s; if it never comes, that is the mod's)
+				{
+					TerrainCollider tc = terrain.GetComponent<TerrainCollider>();
+					Vector3 probe = centre + dir * Mathf.Max(0f, coast - 2f);
+					float waited = 0f;
+					bool solid = false;
+					for (; waited < 15f; waited += 0.25f)
+					{
+						Physics.SyncTransforms();
+						RaycastHit hit;
+						solid = tc != null && tc.enabled && tc.Raycast(new Ray(probe + Vector3.up * 60f, Vector3.down), out hit, 200f) && Mathf.Abs(hit.point.y - ground(probe)) < 0.5f;
+						if (solid) break;
+						yield return new WaitForSecondsRealtime(0.25f);
+					}
+					if (waited > 0f) Log("  (" + kv.Key + ": the ground stopped things after " + waited.ToString("F2") + " s more)");
+					if (!solid) { Check(ref ok, false, kv.Key + ": the island's ground has no collider at its coast 15 s after it spawned"); IslandWorldState.Remove(f.Name); yield return null; continue; }
+				}
 				// 1. From the water: swim in, jump when blocked (WaterControll's jump: 1.25 x jumpSpeed), up to 4 tries
 				bool fromWater = false; int waterJumps = 0;
 				yield return BringIn(player, centre + dir * (coast + 5f), -dir, true, ground, (got, j) => { fromWater = got; waterJumps = j; });
