@@ -3,12 +3,13 @@
 # of a pyramid), a coloured air zone. "include lib_ni8" (lib_huts first for floors and corners).
 #
 # ni8wall: a stretch of crumbled wall of Raft's rock (a boulder cut to a slab) from x1 z1 to x2 z2 on the ground, about
-# hgt m high where it stands, th m thick, its foot sunk 1.2 m into the ground
-macro ni8wall x1=0 z1=0 x2=8 z2=0 hgt=3.5 th=2 al=-
+# hgt m high where it stands, th m thick, its foot sunk deep m into the ground (the rock is rounded below: sunk to its
+# middle - deep about hgt+1 - no end of it stands out over the ground)
+macro ni8wall x1=0 z1=0 x2=8 z2=0 hgt=3.5 th=2 al=- deep=1.2
 set dx {$x2-$x1}
 set dz {$z2-$z1}
 set dl {sqrt($dx*$dx+$dz*$dz)}
-place SmallBoulder2 $al at {($x1+$x2)/2} {($z1+$z2)/2} y=-1.2 sit yaw={atan2($dx,$dz)} sx={$th/3.966} sy={($hgt+1.2)/6.086} sz={$dl/10.383}
+place SmallBoulder2 $al at {($x1+$x2)/2} {($z1+$z2)/2} y=-$deep sit yaw={atan2($dx,$dz)} sx={$th/3.966} sy={($hgt+$deep)/6.086} sz={$dl/10.383}
 end
 
 # ni8hut: a hut of Raft's thatch blocks in a frame (push at its -x -z corner with h= its pad): a wooden floor w x d cells

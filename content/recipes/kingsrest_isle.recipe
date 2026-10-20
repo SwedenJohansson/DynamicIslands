@@ -37,10 +37,14 @@ brush sand at 35 -44 r=5 s=20 frames=20
 brush flatten from 19.5 40 to 22.5 40 r=3 s=20 frames=200 h=10
 brush flatten at 6 40 r=10 s=20 frames=300 h=22
 brush flatten at 36 40 r=10 s=20 frames=300 h=22
+# (the path: two passes of strokes 1 m apart, on into the peak's top; no smoothing - on this narrow ridge a smooth
+# stroke pulled it 5 m under its heights and left a wall at z 29-33)
+for pp 1 2 1
 for i 0 37 1
-brush flatten at 6 {-6+$i} r=2.8 s=20 frames=200 h={4+$i*18/37}
+brush flatten at 6 {-6+$i} r=3.2 s=20 frames=120 h={4+$i*18/37}
 next
-brush smooth from 6 -6 to 6 29 r=3 s=6 frames=50
+brush flatten from 6 31 to 6 35 r=3.2 s=20 frames=120 h=22
+next
 brush rock at 6 40 r=11 s=20 frames=40
 brush rock at 36 40 r=11 s=20 frames=40
 clear at -40 10 r=18
@@ -48,17 +52,17 @@ clear from -40 -30 to -40 -5 r=3.5
 clear at 35 -40 r=18
 clear at 6 40 r=10
 clear at 36 40 r=10
-clear from 6 -6 to 6 34 r=3
+clear from 6 -9 to 6 34 r=4.5
 
 # ===== The castle: the ring of crumbled walls with the gate south, four stubby towers, fire baskets at the gate =========
 for wi 0 6 1
 set wa {315+45*$wi}
 set wx {-40+13*cos($wa)}
 set wz {10+13*sin($wa)}
-call ni8wall x1={$wx+4.2*sin($wa)} z1={$wz-4.2*cos($wa)} x2={$wx-4.2*sin($wa)} z2={$wz+4.2*cos($wa)} hgt={3.6+0.8*abs(sin($wa*3))} th=1.8 al=castlewall
+call ni8wall x1={$wx+4.2*sin($wa)} z1={$wz-4.2*cos($wa)} x2={$wx-4.2*sin($wa)} z2={$wz+4.2*cos($wa)} hgt={5.6+0.8*abs(sin($wa*3))} th=1.8 al=castlewall deep=3
 next
 for a 45 315 90
-call ni8wall x1={-40+13.5*cos($a)-1.8} z1={10+13.5*sin($a)} x2={-40+13.5*cos($a)+1.8} z2={10+13.5*sin($a)} hgt=6.5 th=3.8 al=castletower
+call ni8wall x1={-40+13.5*cos($a)-1.8} z1={10+13.5*sin($a)} x2={-40+13.5*cos($a)+1.8} z2={10+13.5*sin($a)} hgt=8.5 th=3.8 al=castletower deep=4.5
 next
 place Placeable_Lantern_FireBasket - at -43 -4.5 ground sit
 place Placeable_Lantern_FireBasket - at -37 -4.5 ground sit
@@ -96,6 +100,12 @@ place Placeable_Lantern_FireBasket - at 2.4 42 ground sit
 place Placeable_Lantern_FireBasket - at 5.6 42 ground sit
 place Note_Sign peaksign at 9 37 ground yaw=270
 call ni8temple x=36 z=40 h=22 al=templecolumns roofal=templeroof
+# (the slab's corners stand out past the ring: a post under each, so the roof rests on posts at its corners too)
+for cx -1 1 2
+for cz -1 1 2
+place RT_PillarThick templecolumns at {36+4.2*$cx} {40+4.2*$cz} h=22 sy=0.483 sx=0.3 sz=0.3
+next
+next
 prop templecolumns tint.color=#e8e2d4
 prop templeroof tint.color=#e8e2d4
 place TangaroaFounderStatue statue at 36 40 h=22 sit scale=0.55 yaw=270
