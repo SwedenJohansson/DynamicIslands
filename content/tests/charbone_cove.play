@@ -10,7 +10,7 @@ wait 3
 kill Hyena
 kill Warthog
 # The camp's clearing, the chest by the fire
-walk -4 -8 to -6 -3 to -8.5 -1.5 h=4 below=5
+walk -4 -6 to -6 -3 to -7.6 -2.2 h=4 below=6
 expect stand -6 -3 h=4 below=5
 open Chest by the fire
 # The bone cave: in from the east beach to the hoard
