@@ -127,12 +127,15 @@ place Locker westlocker at -36.5 3.2 ground sit yaw=180
 place Zone_Trigger armwest at -30 0 h=32.5
 
 # The electric zipline from arm to arm, each line downhill to the next
-place ZiplinePath_Landmark zipnorth at 3 30 ground
-zipto zipnorth 30 3
-place ZiplinePath_Landmark zipeast at 31 -3 ground
-zipto zipeast 20 -19
-place ZiplinePath_Landmark zipsouth at 18 -21 ground
-zipto zipsouth -30 1
+# (fixed heights: on "ground" Raft's piece sank its near floor 19 m into the North spire, 2 m into the East one and
+# hung the South one 14 m over the crown - each near floor (5.72 m west, 0.97 m north of the pivot, 1.35 m under it)
+# now stands on its spire's flat top beside the pad, each far end on the next spire's top by its zone, every line downhill)
+place ZiplinePath_Landmark zipnorth at 9.02 34.33 h=38.35
+zipto zipnorth 33 3.2
+place ZiplinePath_Landmark zipeast at 42.02 -3.57 h=36.35
+zipto zipeast 22.5 -21.5
+place ZiplinePath_Landmark zipsouth at 26.22 -26.47 h=34.35
+zipto zipsouth -30.8 2.6
 
 # --- The master board in the middle of the crown (Selene's reactor controls), its arms-offline sheet; the screechers
 # the storm sends when the arms go down ---------------------------------------------------------------------------
