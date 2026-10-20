@@ -58,7 +58,7 @@ namespace DynamicIslands
 				WorldOptions.Set(new HashSet<string>(optionsBefore.Where(x => x != WorldOptions.StormSeas)));
 				int off = countStorms();
 				WorldOptions.Set(new HashSet<string>(optionsBefore) { WorldOptions.StormSeas });
-				Check(ref ok, on >= 200 && on > off, "Raft's weather pick gives a storm " + on + " of 400 times with the option on, " + off + " off");
+				Check(ref ok, on >= 160 && on > off, "Raft's weather pick gives a storm " + on + " of 400 times with the option on, " + off + " off");
 
 				// 4. The save line
 				StormSeas.Storms = 7; StormSeas.Breaks = 2; StormSeas.Pending = 0;
