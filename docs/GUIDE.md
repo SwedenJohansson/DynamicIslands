@@ -2463,7 +2463,7 @@ a world where they are all left alone plays as plain Raft plus your islands.
 - **World rules** (9.2): tougher or softer monsters, a dearer build menu.
 - **World randomizer** (9.3): a normal Raft world made different every time: colours, alphas, finds, odd islands, bosses.
 - **Extra options** (9.4): ghost rafts, private storages, long voyage, iron raft, shared EXP, night is dangerous, daily
-  quest, rogue shark, silver & golden barrels, storm days, bioluminescent sea, storm seas, trader raft, extra upgrades, UFO sightings and a head start raft (older
+  quest, rogue shark, silver & golden barrels, storm days, bioluminescent sea, storm seas, trader raft, extra upgrades, UFO sightings, lightning strikes and a head start raft (older
   worlds may still have scrambled blueprints or the story islands in a new order on).
 - **Islands while sailing** (9.5): which of your islands a world may meet.
 - **The level up system** (9.6): EXP and stat points - a switch in the window (a world option: islands don't turn it on).
@@ -2542,6 +2542,7 @@ already in the world is taken away. What each one does from the moment it change
 | Bioluminescent sea | At once: tonight's glow starts or fades within seconds |
 | Storm seas | At once: Raft's next weather is more often a storm, and a storm blowing now rocks harder; off: no more broken floors (broken ones stay broken) |
 | UFO sightings | The next sighting day has one; off, a saucer already in the sky finishes its crossing |
+| Lightning strikes | The next storm can have bolts (one blowing now too); off, a bolt already in the sky finishes |
 | Extra upgrades | Off: the recipes are hidden; upgrades built or worn keep working, learned ones are kept |
 | Scrambled blueprints / Story order (retired, off only) | Untaken blueprints go back to Raft's places / the Receiver goes back to Raft's order |
 | Level up system | At once; off keeps everyone's levels and takes the stat bonuses away until it is on again |
@@ -2898,6 +2899,23 @@ fish takes the bait it **flashes**.
 - **Every player sees the same glowing nights:** the host's options decide, and Raft keeps the time of day the same
   for everyone. Each player sees the glow around the raft (or around themselves when far from it). Nothing is saved.
 - `GlowSea` shows whether tonight glows and the next glowing night; `GlowSea roll <from> <to>` lists them.
+
+#### Lightning strikes
+
+Now and then, **in a storm, lightning strikes the sea** near the raft: a bright **flash** lights up the sky and the
+sea, a jagged **bolt** with a few forks stands from the clouds to the water for a moment and flickers out, and Raft's
+own **thunder** rolls. It is there to look at - it does no damage, starts no fire and breaks nothing.
+
+- **When:** only while a storm blows - Raft's own rain or rough-snow storms, and the storms of Storm days and Storm
+  seas. It is rare: about three storms in ten have no bolt at all, the others one to four, the first within about three
+  minutes of the storm's start and the next ones one to three minutes apart.
+- **Where:** a bolt hits the sea **30-150 m from the raft**, in any direction. **Very rarely** (about one bolt in twelve)
+  it hits the raft itself instead: the top of the **Receiver's antenna** or a **wind turbine**, the raft's highest
+  metal. Raft has no lightning rod, so those two are the rod; a raft without either always gets the sea.
+- **Looks only:** nothing on the raft is damaged or set on fire, and no player is hurt, also when it hits the antenna.
+- **Every player sees the same bolt at the same time:** the host decides when and where a bolt strikes and sends it to
+  everyone; a sea bolt hits the same spot next to the raft on every machine. Switched on in a running world, the next
+  storm (or the one blowing now) can have bolts. Nothing is saved.
 
 #### Head start raft
 

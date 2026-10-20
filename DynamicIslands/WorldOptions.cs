@@ -28,14 +28,15 @@ namespace DynamicIslands.Editor
 	///   - ufo: now and then a flying saucer crosses the sky, looks only (UfoSightings).
 	///   - stormseas: storms much more often, rocking the raft harder; now and then one breaks a floor on its edge (StormSeas).
 	///   - glowsea: on about one night in four the sea around the raft and the fish glow blue; fish bite faster (GlowSea).
+	///   - lightning: now and then in a storm a bolt hits the sea near the raft, rarely its antenna; looks only (LightningStrikes).
 	/// Saved in the world file ("@options=", "@optionseed=" - the seed every shuffle of the world comes from), sent by the host
 	/// to every player who joins and when they change (network kind 17: Data = "on=a,b;seed=n", Name = the private
 	/// storages' builders). The last choice in the box is kept in world_rules.txt ("options=").
 	/// </summary>
 	public static class WorldOptions
 	{
-		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger", DailyQuest = "dailyquest", RogueShark = "rogueshark", Barrels = "barrels", StormDays = "stormdays", TraderRaft = "traderraft", Upgrades = "upgrades", StormSeas = "stormseas", Ufo = "ufo", GlowSea = "glowsea";
-		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger, DailyQuest, RogueShark, Barrels, StormDays, TraderRaft, Upgrades, StormSeas, Ufo, GlowSea };
+		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger", DailyQuest = "dailyquest", RogueShark = "rogueshark", Barrels = "barrels", StormDays = "stormdays", TraderRaft = "traderraft", Upgrades = "upgrades", StormSeas = "stormseas", Ufo = "ufo", GlowSea = "glowsea", Lightning = "lightning";
+		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger, DailyQuest, RogueShark, Barrels, StormDays, TraderRaft, Upgrades, StormSeas, Ufo, GlowSea, Lightning };
 		/// <summary>
 		/// Options no longer offered (the user, 2026-10-09): not in the New Game box, left out of the remembered choice, and in
 		/// World settings only while a world still has them on (so the host can switch them off). A world that has one on keeps it.
@@ -43,7 +44,7 @@ namespace DynamicIslands.Editor
 		public static readonly string[] Retired = { Blueprints, StoryOrder };
 		public static bool IsRetired(string option) { return Array.IndexOf(Retired, option) >= 0; }
 		public static string[] Offered { get { return All.Where(o => !IsRetired(o)).ToArray(); } }
-		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous", "Daily quest", "Rogue shark", "Silver & golden barrels", "Storm days", "Trader raft", "Extra upgrades", "Storm seas", "UFO sightings", "Bioluminescent sea" };
+		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous", "Daily quest", "Rogue shark", "Silver & golden barrels", "Storm days", "Trader raft", "Extra upgrades", "Storm seas", "UFO sightings", "Bioluminescent sea", "Lightning strikes" };
 		public static readonly string[] Hints =
 		{
 			"The blueprints lying on Raft's story islands are found on other story islands than usual. What the story needs (the steering wheel, the engine and its fuel, the machete) is never moved: the story can always be finished.",
@@ -63,6 +64,7 @@ namespace DynamicIslands.Editor
 			"Storms come much more often (a calm spell is half as long, and half the time Raft's next weather is a storm) and rock the raft harder. Each storm has a 1 in 4 chance to break one raft floor on the edge or a corner of the raft - never one in the middle: what stood on it falls into the sea. A raft of 4 floors or fewer is never broken. The host's storms and floors are every player's.",
 			"Now and then (about three times in a week of days, half of them at night) a flying saucer crosses the sky high above the raft, from horizon to horizon in about half a minute, in a new colour each time. At night it glows green or purple. Looks only: every player sees the same one.",
 			"On about one night in four the sea around the raft glows: tiny blue lights twinkle on the waves and drift under them, a swimmer stirs up sparks, and the fish shine. On those nights fish bite twice as fast on a rod. Looks only otherwise; the same nights for every player.",
+			"In a storm (Raft's rain or rough snow, Storm days and Storm seas too), now and then a bolt of lightning hits the sea 30-150 m from the raft: a jagged bolt, a flash that lights everything up, thunder. Some storms have none, a few have up to four. Very rarely it hits the raft's Receiver antenna (or wind turbine). Looks only: nothing is damaged, nothing burns, nobody is hurt.",
 		};
 
 		/// <summary>The current world's options (clients get the host's).</summary>
@@ -174,6 +176,7 @@ namespace DynamicIslands.Editor
 			global::DynamicIslands.Editor.UpgradeTable.Reset();
 			ScrambledBlueprints.Reset();
 			global::DynamicIslands.Editor.GhostRafts.Reset();
+			global::DynamicIslands.Editor.LightningStrikes.Reset();
 			global::DynamicIslands.Editor.UfoSightings.Reset();
 			Notify();
 			if (isNew) Broadcast();
@@ -270,6 +273,7 @@ namespace DynamicIslands.Editor
 			global::DynamicIslands.Editor.StormDays.Reset();
 			global::DynamicIslands.Editor.StormSeas.Reset();
 			global::DynamicIslands.Editor.TraderRaft.Reset();
+			global::DynamicIslands.Editor.LightningStrikes.Reset();
 			ScrambledBlueprints.Reset();
 			global::DynamicIslands.Editor.UpgradeTable.Reset();
 			Notify();
@@ -301,7 +305,7 @@ namespace DynamicIslands.Editor
 			IslandWorldState.Save();
 		}
 
-		[ConsoleCommand(name: "WorldOptions", docs: "The world's options (chosen in the New Game box's World settings): WorldOptions = what this world has; WorldOptions +option / -option (ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades, stormseas, ufo, glowsea) = change them for this world (host)")]
+		[ConsoleCommand(name: "WorldOptions", docs: "The world's options (chosen in the New Game box's World settings): WorldOptions = what this world has; WorldOptions +option / -option (ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades, stormseas, ufo, glowsea, lightning) = change them for this world (host)")]
 		public static void WorldOptionsCommand(string[] args)
 		{
 			if (args != null && args.Length > 0 && !LoadSceneManager.IsGameSceneLoaded)

@@ -174,6 +174,8 @@
     <Compile Include="RogueShark.cs" />
     <Compile Include="GoldenBarrels.cs" />
     <Compile Include="StormDays.cs" />
+    <Compile Include="LightningStrikes.cs" />
+    <Compile Include="DevTestsLightning.cs" />
     <Compile Include="GlowSea.cs" />
     <Compile Include="DevTestsGlowSea.cs" />
     <Compile Include="StormSeas.cs" />
