@@ -515,7 +515,7 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   it rises, leaps half out of the water, falls back with a big splash and spray, and dives away. Raft's own whale; looks
   only, it never comes near the raft. Every player sees the same breach (the host sends where and which way).
 - **Lightning strikes:** in a storm (Raft's own, Storm days or Storm seas) a bolt now and then hits the sea 30-150 m
-  from the raft with a bright flash and Raft's thunder; some storms have none, the others one to four. Very rarely it
+  from the raft with a bright flash and a thunder clap; some storms have none, the others one to four. Very rarely it
   hits the raft's Receiver antenna or wind turbine instead. Looks only: no damage, no fire. Every player sees the same
   bolt (the host sends it).
 - **Head start raft:** the world starts on a bigger raft already set up - level 1: 6 x 12 foundations with a grill, a
@@ -839,7 +839,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `ScrambledBlueprints.cs`, `StoryOrder.cs` | Extra options: blueprints scrambled between Raft's islands (the story's needed ones kept), the story islands in a new order |
 | `GhostRafts.cs`, `PrivateStorage.cs` | Extra options: ghost rafts while sailing, storages only their builder opens |
 | `UfoSightings.cs` | Extra option UFO sightings: which days and hours have a saucer (from the seed), the host sending it (kind 33 `Moment`, Name "ufo"), the saucer built from Unity shapes, its flight, spin and night glow |
-| `LightningStrikes.cs` | Extra option Lightning strikes: when a storm has bolts (the host rolls them), where they hit (the sea 30-150 m away, rarely the antenna or wind turbine), sending them (kind 33 `Moment`, Name "bolt"), the bolt drawn with lines and lights, its flicker and Raft's thunder |
+| `LightningStrikes.cs` | Extra option Lightning strikes: when a storm has bolts (the host rolls them), where they hit (the sea 30-150 m away, rarely the antenna or wind turbine), sending them (kind 33 `Moment`, Name "bolt"), the bolt drawn with lines and lights, its flicker and the thunder (Raft has none: its dynamite bang + boss rumble) |
 | `FogBanks.cs` | Extra option Fog banks: which days and hours have a bank (from the seed and the day, so nothing is sent), the fade, and lending AzureSky a shorter fog distance around its `UpdateShaderUniforms` (Raft's weather blending never sees it); no fog while Raft's weather is stormy or under water. `FogBanks` command |
 | `WhaleBreach.cs` | Extra option Whale breach: the host's timer (once or twice a Raft day, by day, open sea 170-320 m out), the breach sent to everyone (kind 36 `WhaleBreach`), Raft's whale copied looks-only (scripts and colliders stripped) and flown along a leap curve, and Raft's water splash scaled up for the fall |
 | `DevTestsWhaleBreach.cs` | `CIWhaleBreach`: starts a breach, pictures mid-breach and of the splash, checks it rose, splashed and was removed |

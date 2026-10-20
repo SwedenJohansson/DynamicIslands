@@ -2966,8 +2966,8 @@ a stern cabin with a roof, railings, a mast with a flag and a torn sail, an anch
 #### Lightning strikes
 
 Now and then, **in a storm, lightning strikes the sea** near the raft: a bright **flash** lights up the sky and the
-sea, a jagged **bolt** with a few forks stands from the clouds to the water for a moment and flickers out, and Raft's
-own **thunder** rolls. It is there to look at - it does no damage, starts no fire and breaks nothing.
+sea, a jagged **bolt** with a few forks stands from the clouds to the water for a moment and flickers out, and a
+**thunder** clap rolls (Raft has none of its own: it is made of Raft's bang and rumble sounds). It is there to look at - it does no damage, starts no fire and breaks nothing.
 
 - **When:** only while a storm blows - Raft's own rain or rough-snow storms, and the storms of Storm days and Storm
   seas. It is rare: about three storms in ten have no bolt at all, the others one to four, the first within about three

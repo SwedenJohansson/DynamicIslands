@@ -238,24 +238,27 @@ namespace DynamicIslands.Editor
 			Current = bolt;
 			Started++;
 			Vector3 eye = Camera.main != null ? Camera.main.transform.position : hit;
-			Thunder(hit, Vector3.Distance(eye, hit));
+			Thunder(hit, eye);
 			Log("Bolt " + (s.Rod ? "on the raft's antenna" : "on the sea " + new Vector2(s.Point.x, s.Point.z).magnitude.ToString("F0") + " m away") + " (" + s.Encode() + "), thunder: " + LastThunder);
 		}
 
-		static string fmodThunder;
-		static bool fmodLooked;
+		/// <summary>Raft has no thunder of its own (its sky's thunder list is empty, no FMOD event is called thunder): a clap
+		/// and a roll made of Raft's own sounds - the dynamite's bang and the boss rumble - played between the listener and
+		/// the bolt, nearer for a near bolt (FMOD fades sounds out long before 150 m).</summary>
+		static readonly string[] ThunderEvents = { "event:/weapons/dynamite/explode", "event:/wildlife/boss/boss_rumble" };
+		static List<string> fmodThunder;
 
-		/// <summary>Raft's thunder: the sky's own (its flash over the whole sky and its sound), else an FMOD thunder event.</summary>
-		static void Thunder(Vector3 at, float distance)
+		/// <summary>Thunder: the sky's own if Raft ever has one (its flash and sound), else the clap and roll above.</summary>
+		static void Thunder(Vector3 at, Vector3 eye)
 		{
 			LastThunder = "none";
+			float distance = Vector3.Distance(eye, at);
 			try
 			{
 				AzureSkyController sky = RaftSkySea.Sky ?? ComponentManager<AzureSkyController>.Value ?? UnityEngine.Object.FindObjectOfType<AzureSkyController>();
 				var list = sky != null ? Traverse.Create(sky).Field("thunderList").GetValue() as System.Collections.IList : null;
 				if (list != null && list.Count > 0)
 				{
-					// (the nearer, the louder ones first: Raft's list goes from near to far)
 					int i = Mathf.Clamp((int)(distance / (MaxDistance + 1f) * list.Count), 0, list.Count - 1);
 					Traverse.Create(sky).Method("PlayThunderEffect", new[] { typeof(int) }).GetValue(i);
 					LastThunder = "sky " + i + " of " + list.Count;
@@ -265,12 +268,17 @@ namespace DynamicIslands.Editor
 			catch (Exception e) { Log("sky thunder: " + e.Message); }
 			try
 			{
-				if (!fmodLooked)
+				if (fmodThunder == null)
 				{
-					fmodLooked = true;
-					fmodThunder = SoundLibrary.Events.FirstOrDefault(e => e.IndexOf("thunder", StringComparison.OrdinalIgnoreCase) >= 0 && !SoundLibrary.IsLooping(e));
+					var known = new HashSet<string>(SoundLibrary.Events);
+					fmodThunder = ThunderEvents.Where(known.Contains).ToList();
 				}
-				if (fmodThunder != null) { SoundLibrary.PlayOnce(fmodThunder, at, 1f); LastThunder = fmodThunder; }
+				if (fmodThunder.Count == 0) return;
+				Vector3 dir = at - eye;
+				Vector3 where = dir.sqrMagnitude > 0.01f ? eye + dir.normalized * Mathf.Min(distance * 0.15f, 20f) : eye;
+				float volume = Mathf.Lerp(1f, 0.6f, Mathf.InverseLerp(10f, MaxDistance, distance));
+				foreach (string e in fmodThunder) SoundLibrary.PlayOnce(e, where, volume);
+				LastThunder = string.Join(" + ", fmodThunder.ToArray());
 			}
 			catch (Exception e) { Log("thunder: " + e.Message); }
 		}
@@ -321,7 +329,7 @@ namespace DynamicIslands.Editor
 			Top = hit + new Vector3(Mathf.Cos(a) * slant, height, Mathf.Sin(a) * slant);
 			List<Vector3> main = Jagged(r, Top, hit, 28, 9f);
 			Line(main, 1.1f, 0.5f, new Color(0.85f, 0.9f, 1f, 1f));
-			Line(main, 7f, 3f, new Color(0.45f, 0.55f, 1f, 0.35f));
+			Line(main, 4f, 2f, new Color(0.45f, 0.55f, 1f, 0.35f));
 			int forks = 2 + r.Next(3);
 			for (int f = 0; f < forks; f++)
 			{

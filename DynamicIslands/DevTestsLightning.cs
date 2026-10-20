@@ -103,7 +103,7 @@ namespace DynamicIslands
 			if (rod) Check(ref ok, Vector3.Distance(bolt.Hit, raft.transform.TransformPoint(rodTop.Value)) < 0.5f, "it hits the antenna's top");
 			else Check(ref ok, dist > 25f && dist < 160f && Mathf.Abs(bolt.Hit.y) < 0.5f, "it hits the sea " + dist.ToString("F0") + " m from the raft");
 			Check(ref ok, bolt.Top.y - bolt.Hit.y > 150f, "from " + (bolt.Top.y - bolt.Hit.y).ToString("F0") + " m up");
-			Log("lightning: thunder " + LightningStrikes.LastThunder);
+			Check(ref ok, !string.IsNullOrEmpty(LightningStrikes.LastThunder) && LightningStrikes.LastThunder != "none", "thunder: " + LightningStrikes.LastThunder);
 
 			// It flickers and is gone within a second
 			bool dimmed = false;
@@ -123,14 +123,14 @@ namespace DynamicIslands
 				{
 					Vector3 top = raft.transform.TransformPoint(rodTop.Value);
 					Vector3 away = (new Vector3(top.x, 0f, top.z) - new Vector3(raftPos.Value.x, 0f, raftPos.Value.z)); if (away.sqrMagnitude < 1f) away = Vector3.forward; away.Normalize();
-					eye = top + away * 26f + Vector3.up * 6f + Vector3.Cross(away, Vector3.up) * 10f;
-					at = top + Vector3.up * 14f;
+					eye = top + away * 55f + Vector3.up * 4f + Vector3.Cross(away, Vector3.up) * 20f;
+					at = top + Vector3.up * 30f;
 				}
 				else
 				{
 					Vector3 to = (held.Hit - raftPos.Value); to.y = 0f; to.Normalize();
-					eye = raftPos.Value - to * 12f + Vector3.up * 4f;
-					at = held.Hit + Vector3.up * 70f;
+					eye = raftPos.Value - to * 12f + Vector3.up * 5f;
+					at = held.Hit + Vector3.up * 35f;
 				}
 				yield return CameraShot(eye, at, "lightning_" + tag);
 			}
