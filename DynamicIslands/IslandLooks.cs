@@ -174,11 +174,44 @@ namespace DynamicIslands.Editor
 		{
 			Bounds b;
 			if (!GenBuildings.Measured(name, out b)) b = new Bounds(Vector3.zero, Vector3.one);
+			IslandObject o = Centred(k, name, c, yaw, LowestUnderBox(k, b, c, yaw) - sink - b.min.y);
+			k.Stood.Add(new KeyValuePair<IslandObject, float>(o, sink));
+			return o;
+		}
+
+		/// <summary>The lowest ground under a box (its middle at c, turned yaw): at its middle and near its corners.</summary>
+		static float LowestUnderBox(MapKit k, Bounds b, Vector2 c, float yaw)
+		{
 			Quaternion q = Quaternion.Euler(0f, yaw, 0f);
 			Vector3 ex = q * new Vector3(b.extents.x * 0.7f, 0f, 0f), ez = q * new Vector3(0f, 0f, b.extents.z * 0.7f);
 			float ground = float.MaxValue;
 			foreach (Vector3 d in new[] { Vector3.zero, ex + ez, ex - ez, -ex + ez, -ex - ez }) ground = Mathf.Min(ground, k.Ground(c + new Vector2(d.x, d.z)));
-			return Centred(k, name, c, yaw, ground - sink - b.min.y);
+			return ground;
+		}
+
+		/// <summary>
+		/// The look's standing pieces (Stand) stood on the ground again, after everything that changes the ground later: a
+		/// design's pad, a building's or a cave's floor. Those carry what stands in their blend with the ground at its pivot,
+		/// so a big piece on a steep blend stood in the air on its low side: a dead tree 1.1 m over a pad cut into a Caravan
+		/// variation's ground (CILookAlike, seed 7, 2026-10-20). What a pad cleared away is gone and stays gone.
+		/// </summary>
+		public static void SettleLook(MapKit k)
+		{
+			if (k.Stood.Count == 0) return;
+			var there = new HashSet<IslandObject>(k.File.Objects);
+			foreach (KeyValuePair<IslandObject, float> kv in k.Stood)
+			{
+				IslandObject o = kv.Key;
+				if (o == null || !there.Contains(o)) continue;
+				Bounds b;
+				if (!GenBuildings.Measured(o.Name, out b)) b = new Bounds(Vector3.zero, Vector3.one);
+				// (its box's middle from its pivot, as Centred put it)
+				float yaw = o.EulerRotation.y;
+				Vector3 off = Quaternion.Euler(0f, yaw, 0f) * new Vector3(b.center.x, 0f, b.center.z);
+				Vector2 c = new Vector2(o.Position.x + off.x, o.Position.z + off.z);
+				o.Position.y = LowestUnderBox(k, b, c, yaw) - kv.Value - b.min.y;
+			}
+			k.Stood.Clear();
 		}
 
 		/// <summary>How far the ground falls and rises under a piece's box at c (any yaw): its highest less its lowest point.</summary>

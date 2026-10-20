@@ -117,7 +117,13 @@ namespace DynamicIslands
 					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
 					float ground = terrain.SampleHeight(b.center) + terrain.transform.position.y;
 					// (or on another piece: a caravan on a design's scaffold deck stands)
-					if (b.min.y - ground > 0.6f && !objs.Any(o => o != e && OnTopOf(b, o))) floating.Add(e.GameObjectName + " +" + (b.min.y - ground).ToString("F1"));
+					if (b.min.y - ground > 0.6f && !objs.Any(o => o != e && OnTopOf(b, o)))
+					{
+						floating.Add(e.GameObjectName + " +" + (b.min.y - ground).ToString("F1") + " at " + b.center.x.ToString("F0", CultureInfo.InvariantCulture) + " " + b.center.z.ToString("F0", CultureInfo.InvariantCulture));
+						// (a close picture from the side, 10 m south of it at its foot, looking north)
+						if (floating.Count == 1)
+							Log("floating " + e.GameObjectName + ": CIShotFrom " + string.Join(" ", new[] { b.center.x, b.min.y + 1f, b.center.z - Mathf.Max(10f, b.extents.z + 6f), 0f, -5f }.Select(v => v.ToString("F1", CultureInfo.InvariantCulture)).ToArray()) + " float_" + e.GameObjectName);
+					}
 				}
 				int need = int.Parse(row[2]);
 				List<string> absent = row.Length > 3 ? row[3].Split(',').Where(n => !mine.Any(e => e.GameObjectName == n)).ToList() : new List<string>();

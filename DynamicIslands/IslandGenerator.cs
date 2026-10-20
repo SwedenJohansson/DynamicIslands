@@ -928,7 +928,7 @@ namespace DynamicIslands.Editor
 				bool cave = RandomizerIslands.CanBuildCaves && RandomizerIslands.EmbeddedCave(k, s, guard, "Treasure", "Cave hoard");
 				done.Add(cave ? "a cave" : RandomizerIslands.CanBuildCaves ? "no cave (no spot fits: it needs a hill by open, level land)" : "no cave (Raft's cave pieces aren't loaded)");
 			}
-			if (!s.Buildings) { GenFeatures.Make(k, s, done); Quest(k, s, done); return done; }
+			if (!s.Buildings) { GenFeatures.Make(k, s, done); Quest(k, s, done); Remakes.SettleLook(k); return done; }
 			List<Theme> suits = RandomizerIslands.ThemesFor(s.Style);
 			int count = Mathf.Clamp(s.BuildingCount, 0, MaxCount), built = 0;
 			var spots = new List<Vector2>();
@@ -970,6 +970,8 @@ namespace DynamicIslands.Editor
 			if (picks > 0) done.Add(picks + (picks == 1 ? " thing" : " things") + " to pick up on the houses' floors");
 			GenFeatures.Make(k, s, done);
 			Quest(k, s, done);
+			// (the look's pieces back on the ground that designs, buildings and caves changed after them)
+			Remakes.SettleLook(k);
 			return done;
 		}
 

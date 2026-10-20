@@ -450,6 +450,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Look-alike story islands: the trees, rocks and caravans stand on the ground next to a design.** On Randomize existing, a Caravan Town look-alike's dead tree stood 1.1 m in the air where the design's levelled square blended into the land; the look's pieces now stand on the ground again once the designs, buildings and caves are done.
 - **World settings: each extra option's text fits its box.** The text under each toggle is now short (one or two lines); the full description shows on hover. Extra upgrades, Storm seas, Lightning, Ghost ship and others ran out of the box.
 - **Ziplines with a far end you choose (`zip.to`):** the far end's floor now moves with the line; it stayed where Raft's own line ends, sometimes in the air on a slope (The Lodestone Array).
 - **Vending machine for a player who sets the island up late:** the host now sends the hatch state with each press, so a player whose island was set up after the host paid no longer misses Raft's message and sees the package.

@@ -116,6 +116,9 @@ namespace DynamicIslands.Editor
 		public readonly System.Random Rnd;
 		readonly float step;
 		readonly List<Vector2> placed = new List<Vector2>();
+		/// <summary>The pieces a story island's look stood on the ground, with how far each was sunk (Remakes.Stand): stood
+		/// again once the ground stops changing (Remakes.SettleLook).</summary>
+		internal readonly List<KeyValuePair<IslandObject, float>> Stood = new List<KeyValuePair<IslandObject, float>>();
 		/// <summary>Terrain height of the sea (the file's water level: 20 m on a shallow seabed, 160 m on a deep sea floor).</summary>
 		public float Sea { get { return File.WaterLevel; } }
 
