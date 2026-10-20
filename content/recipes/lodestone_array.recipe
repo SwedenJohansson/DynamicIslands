@@ -105,6 +105,13 @@ prop zipposts tint.amount=0.6
 place TP_SeleneReactorControls core at 0 2 h=5 sit
 prop core tint.color=#4a6a8a
 prop core tint.amount=0.5
+# (Raft's reactor controls hang from a ceiling in Temperance: a 10.6 m bent pipe from a ring mount down to the claw -
+# put "sit" it stood on its claw tips with nothing holding the ring; it hangs from a beam on two iron posts, 2026-10-20)
+place RT_PillarThick coreframe at -1.6 2 ground sy=1.87
+place RT_PillarThick coreframe at 2.4 2 ground sy=1.87
+place RT_PillarThick coreframe at 2.7 2 h=15.85 rot=0,0,90 sy=0.77
+prop coreframe tint.color=#3c4046
+prop coreframe tint.amount=0.6
 place RT_Floodlight coreglow at 2.5 -0.5 h=5 sit yaw=-45
 place RT_Floodlight coreglow at -2.5 -0.5 h=5 sit yaw=45
 place RT_Floodlight coreglow at 2.5 4.5 h=5 sit yaw=-135
