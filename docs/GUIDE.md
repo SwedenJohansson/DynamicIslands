@@ -2463,7 +2463,7 @@ a world where they are all left alone plays as plain Raft plus your islands.
 - **World rules** (9.2): tougher or softer monsters, a dearer build menu.
 - **World randomizer** (9.3): a normal Raft world made different every time: colours, alphas, finds, odd islands, bosses.
 - **Extra options** (9.4): ghost rafts, private storages, long voyage, iron raft, shared EXP, night is dangerous, daily
-  quest, rogue shark, silver & golden barrels, storm days, bioluminescent sea, storm seas, trader raft, extra upgrades, UFO sightings, lightning strikes, fog banks and a head start raft (older
+  quest, rogue shark, silver & golden barrels, storm days, bioluminescent sea, storm seas, trader raft, extra upgrades, UFO sightings, lightning strikes, fog banks, whale breach and a head start raft (older
   worlds may still have scrambled blueprints or the story islands in a new order on).
 - **Islands while sailing** (9.5): which of your islands a world may meet.
 - **The level up system** (9.6): EXP and stat points - a switch in the window (a world option: islands don't turn it on).
@@ -2544,6 +2544,7 @@ already in the world is taken away. What each one does from the moment it change
 | UFO sightings | The next sighting day has one; off, a saucer already in the sky finishes its crossing |
 | Ghost ship | The next nightfall can bring one; off, a ship out goes at once |
 | Fog banks | A bank due now rolls in (fading); off, the fog lifts within about half a minute |
+| Whale breach | The first breach a few minutes later; off, a whale already breaching finishes its leap |
 | Lightning strikes | The next storm can have bolts (one blowing now too); off, a bolt already in the sky finishes |
 | Extra upgrades | Off: the recipes are hidden; upgrades built or worn keep working, learned ones are kept |
 | Scrambled blueprints / Story order (retired, off only) | Untaken blueprints go back to Raft's places / the Receiver goes back to Raft's order |
@@ -2919,6 +2920,48 @@ late, as a grey shape that firms up as you sail closer, so the **Receiver's rada
   the clock, so nothing is sent. Switched on in a running world, a bank due now rolls in at once (slowly); off, the fog
   lifts in about half a minute. Looks only: nothing is saved.
 - `FogBanks` shows whether fog is in and the next bank; `FogBanks roll <from> <to>` lists them.
+
+#### Whale breach
+
+Now and then, by day, a **whale breaches** far out at sea, **170-320 m** from the raft: it rises out of the water, leaps
+half its length into the air, rolls onto its side, falls back with a **big splash and spray**, and dives away. It takes
+about eight seconds. It is Raft's own whale, with its own spout.
+
+- **When:** about once or twice a Raft day, at random. The first one comes a few minutes after the world loads; the
+  next one comes after 8 to 15 minutes. Never at night: a breach that is due waits for morning.
+- **Where:** always in open sea (never close to an island or a floating raft) and side-on to the raft, so you see the
+  whole whale.
+- **Looks only:** it never comes near the raft or the players, nothing can hit it or catch it, and it is gone after the
+  dive. Nothing is saved.
+- **Every player sees the same whale:** the host decides when and where it breaches and sends that to everyone; each
+  machine plays it at the same place by its own raft. Switched on in a running world, the first breach comes a few
+  minutes later; off, a whale already breaching finishes its leap.
+
+#### Ghost ship
+
+On about **one night in four** a **ghost ship** comes up out of the dark a while after nightfall and drifts past the
+raft, close enough to **swim or sail to**: a wrecked ship of Raft's own pieces - a foundation hull with a pointed bow,
+a stern cabin with a roof, railings, a mast with a flag and a torn sail, an anchor and lanterns - lit by a pale
+**cyan glow** in a thin mist. Climb aboard by the ladders on either side.
+
+- **Its loot is good:** a large chest (the ghost ship's hoard: titanium, explosive goo, circuit boards, a battery,
+  good healing salves, honey, metal, copper, bolts, hinges), the captain's chest in the cabin, two chests on deck and
+  barrels. The captain's log lies on the cabin floor.
+- **Its crew are ghosts:** Raft's own monsters, made **see-through with a faint glow** - hard rats on deck and a
+  screecher or two over it. They don't come back once beaten.
+- **At dawn it sinks:** a banner says so, and over about 20 seconds it goes down and its lights fade. **What is left
+  aboard is lost** with it - the chests, their loot and the ghosts. Take what you want before the sky grows light.
+- **Sleep, and it doesn't come:** if the players are asleep when night falls, or go to sleep while it is out, there is
+  no ship that night (one out is gone at once).
+- **When:** which nights have one comes from the world's seed (`GhostShip roll <from> <to>` lists them). It is rolled
+  when night falls while you play: a world loaded in the middle of the night waits for the next nightfall.
+- **Every player sees the same ship, the same ghosts and the same loot:** the host brings it, as an island
+  (`gen-ghostship-night-<seed>`) of the map type `ghostship`, and sinks it; a chest is claimed like any island chest,
+  so its loot goes to one player only. A player joining in the night gets the ship that is out. Nothing about it is
+  saved: a ship that was out when the world was saved is gone when it loads by day. Switched on in a running world,
+  the next nightfall can bring one; off, a ship out goes at once.
+- `GhostShip` (F10) shows whether one is out and the next night with one; `GhostShip bring` brings one now and
+  `GhostShip sink` sinks it (host).
 
 #### Lightning strikes
 

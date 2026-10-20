@@ -44,6 +44,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   over the sea for three to six hours, by day or at night, fading in and out over about an in-game hour. In it you see
   only 45-75 m, so islands show up late and the radar matters. Raft's own sky draws the fog, so it fits Raft's light
   and weather; while a storm blows the wind keeps it away. Every player sees the same fog (from the host's world seed).
+- **Whale breach** (World settings > Extra options, off by default): now and then by day, about once or twice a
+  Raft day, a whale breaches far out at sea (170-320 m from the raft): it rises, leaps half out of the water, falls back
+  with a big splash and spray, and dives away. It is Raft's own whale and Raft's own splash. Looks only: it never comes
+  near the raft or the players. Every player sees the same breach (the host sends where and which way).
 - **Storm seas** (World settings > Extra options, off by default): Raft's storms come far more often and rock the
   raft harder. Each storm has a 1 in 4 chance to break one floor on the raft's edge or a corner (never one in the
   middle), and what stands on it falls. The host decides; every player sees the same storm and the same broken floor.
