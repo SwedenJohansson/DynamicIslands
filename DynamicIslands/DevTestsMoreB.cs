@@ -419,7 +419,19 @@ namespace DynamicIslands
 				shark = LiveSharks().Where(s => !RogueShark.IsRogue(s) && s.networkEntity != null && s.networkEntity.stat_health != null).OrderBy(s => (s.transform.position - player.transform.position).sqrMagnitude).FirstOrDefault();
 				if (shark == null) { KeepAlive(player); yield return new WaitForSeconds(1f); }
 			}
-			if (shark == null) { Fail("bruce look: no live shark (Bruce) within a minute"); yield break; }
+			// (none: an earlier suite killed him - CILevelBruce, CILevelKillsAll - and Raft sends the next one only within about 5 minutes
+			// (CISharkReroll): Raft's own CreateAINetworkBehaviour makes one by the raft, as CIBossesNightmare does its bosses. Run i
+			// 2026-10-20 failed here 6 minutes after those kills)
+			if (shark == null)
+			{
+				Network_Host_Entities host = null;
+				try { host = ComponentManager<Network_Host_Entities>.Value; } catch { }
+				Vector3? raft = CustomIslandSpawner.RaftPosition;
+				if (host != null && raft.HasValue) shark = host.CreateAINetworkBehaviour(AI_NetworkBehaviourType.Shark, raft.Value + new Vector3(45f, -10f, 0f), null) as AI_NetworkBehavior_Shark;
+				Log("  (no live shark within a minute - killed by an earlier suite: " + (shark != null ? "Raft made shark #" + shark.ObjectIndex + " by the raft)" : "Raft made none)"));
+				if (shark != null) yield return new WaitForSeconds(2f);
+			}
+			if (shark == null || shark.networkEntity == null || shark.networkEntity.stat_health == null) { Fail("bruce look: no live shark (Bruce) within a minute, and Raft made none"); yield break; }
 			RandomizerSettings old = WorldRandomizer.Current.Copy();
 			oldOut[0] = old;
 			uint idx = shark.ObjectIndex;
