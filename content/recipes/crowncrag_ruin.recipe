@@ -18,7 +18,7 @@ include lib_ni34
 include lib_ni7a
 new
 # (nature: a green island, Raft's tropical mix with some pines)
-gen Trees=0.3 Bushes=0.3 Rocks=0.42 Harvest=0.26 BeachThings=0.3
+gen Trees=0.57 Bushes=0.78 Rocks=0.71 Harvest=0.85 BeachThings=1.00
 gen Seed=7701 Radius=52 Height=12 Roughness=0.35 Peaks=1 Shape=0 Style=0 BeachWidth=0.5 Cliffs=0.4 PeakShape=0.5
 gen SeaFloor=0 Shelf=0.5 Seabed=2
 gen Water=0.5 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.4 Hostiles=0 Friendly=0.2 SeaLife=0.2
@@ -39,7 +39,7 @@ brush sand from -24 -40 to 4 -42 r=6 s=20 frames=20
 brush flatten at -12 28 r=13 s=20 frames=100 h=1.6
 brush flatten from -13 46 to -13 30 r=4.5 s=20 frames=60 h=2
 brush sand from -13 42 to -13 48 r=4 s=20 frames=20
-clear at 10 6 r=13
+clear at 10 6 r=20
 clear at -14 -18 r=14
 clear from 9 -8 to -2 -16 r=3
 clear at -12 28 r=17
@@ -81,7 +81,7 @@ place Bird_Nest - at {10+10*cos(90)} {6+10*sin(90)} h=10 sit yaw=40
 # ===== The village: three cottages, the well, the fire and woodpile, the field and its scarecrow, hens ===================
 push at -25 -23 h=3.5
 call cabin w=3 d=2 al=cottage1
-place Bed_Simple - at 3.6 2.2 y=0.1 sit yaw=90
+place Bed_Simple - at 3.2 2.0 y=0.1 sit yaw=90
 pop
 push at -14.25 -11.5 h=3.5
 call cabin w=3 d=2 al=cottage2
@@ -91,10 +91,10 @@ pop
 push at -11 -27 h=3.5
 call cabin w=3 d=2 al=cottage3
 pop
-place Well - at -14 -18 ground
+place Well - at -14 -18 ground y=-1 sit
 place campfire_1 - at -17 -25 ground sit
 for fw 0 3 1
-place Firewood_1 - at {-20.5+0.6*$fw} -26.5 ground sit yaw={25*$fw}
+place Firewood_1 - at {-20.5+0.6*$fw} -26.5 ground y=0.1 sit yaw={25*$fw}
 next
 place Placeable_Scarecrow - at -4 -16 ground sit yaw=200
 call dirt x=-4 z=-17 r=4 n=3 seed=7714

@@ -8,7 +8,7 @@
 # Built by the recipe player (CIRecipe deepwatch_station). A sunken island: its heights count over its own water line,
 # and elevation -16 takes it 16 m down. Points: the station pad (4 m, r 12 round 2 -1); the bunker x -3..3, z -6.5..2.5
 # (door and a broken window at the front, z -6.5; broken window on the west), roofed; its annex x 3..9 (open to the
-# bunker, the air pocket in it at 6 -2); the hatch at -4 8; the submarine at -20 12 (heading 30 degrees); the tunnel at
+# bunker, the air pocket in it at 6 -2); the hatch at -2.5 6; the submarine at -20 12 (heading 30 degrees); the tunnel at
 # 18 14 (open along z), its barrel inside; the puffers over the pad.
 include lib_sea
 include lib_features
@@ -48,9 +48,9 @@ push at 9 -2 ground y=3.05
 call rt_storey b1=none b2=none f1=none f2=none l1=none l2=none l3=none r1=none r2=none r3=none a=station
 pop
 call airbell x=6 z=-2 id=deepair al=deepair bub=deepairbub r=2.5 msg="An air pocket in the station - breathe."
-call hatchcache x=-4 z=8 r=2 seed=7751 alias=stationhatch chest=hatchchest items=Battery*2;CopperIngot*2;Bolt*3
-place RT_Pipe - at -6 -10 ground y=0.25 centred yaw=20 sx=2
-place RT_Pipe - at 12 -9 ground y=0.25 centred yaw=-50 sx=1.5
+call hatchcache x=-2.5 z=6 r=1.5 seed=7751 alias=stationhatch chest=hatchchest items=Battery*2;CopperIngot*2;Bolt*3
+place RT_Pipe - at -6 -10 ground y=-2.5 centred yaw=20 sx=2
+place RT_Pipe - at 12 -9 ground y=-2.5 centred yaw=-50 sx=1.5
 
 # ===== The submarine wrecked on the bottom, her chest thrown clear =====================================================
 call subwreck x=-20 z=12 yaw=30 pitch=4 sink=1 al=sub seed=7761 where=any
@@ -58,7 +58,7 @@ place Loot_ChestSmall subchest at -15 17 ground sit yaw=50 roll=8
 
 # ===== The rock tunnel to swim through, a barrel inside ================================================================
 place TP_UnderwaterCaveTunnel_Straight tunnel at 18 14 ground y=0.5
-place Loot_SunkenBarrel - at 21 10.5 ground y=0.75 sit
+place Loot_SunkenBarrel - at 21 10.5 ground sit
 
 # ===== Coral, kelp, sunken barrels; the puffers; the shallows (deep finds) =============================================
 macro reefhead x z seed

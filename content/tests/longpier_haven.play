@@ -2,13 +2,13 @@
 # master's chest, over the bridge to the stack and the watch hut's chest, the sunk boat's chest, the smugglers' cave, the
 # boars and the puffers. Points as in its recipe.
 island Longpier Haven
-offset 0 0
-expect animals Boar 2
-expect animals Puffer 2
+offset 0.9253 0.0291
+expect animals Warthog 2
+expect animals Puffer fish 2
 expect animals Turtle 2
 wait 3
-kill Boar
-kill Puffer
+kill Warthog
+kill Puffer fish
 # Along the pier to its head
 walk 0 -42 to 0 -48 to 0 -55 h=1.5 below=4
 # Into the harbour master's cabin, his chest

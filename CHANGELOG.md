@@ -17,6 +17,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   and Castaway Knoll - three medium - Bramblewood Isle, Gullwing Bay, Coyote Mesa - and Driftcloud Islet, a small
   flying island. Raft's own look and density: things to gather on land and in the sea, caves, an underwater wreck,
   jetties into the water, cabins, rope bridges, and monsters on the medium islands and a few small ones.
+- **Five more medium library islands to wander** (no quest, no banner): Crowncrag Ruin, a castle crumbled on a
+  crag over a village; Firedance Isle, a volcanic tribe's huts, dancing ground and idols; Deepwatch Station, a
+  sunken listening station with an air pocket and a wrecked submarine; Longpier Haven, a harbour with a long pier
+  and a watch hut on a rock stack; Skyrope Peaks, a flying island with a rope bridge between two peaks.
 - **Ghost ship** (World settings > Extra options, off by default): on about one night in four a glowing wreck
   drifts past the raft after dark, close enough to swim to - Raft's own pieces, lit cyan in a mist, with four chests
   of good loot (titanium, circuit boards, a battery...) and a crew of ghosts: Raft's monsters, see-through and

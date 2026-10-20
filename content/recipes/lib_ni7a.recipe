@@ -64,7 +64,7 @@ end
 # sunken island)
 macro subwreck x=0 z=0 yaw=0 pitch=4 sink=1 al=sub seed=1 where=wet
 push at $x $z yaw=$yaw ground
-place RT_Pipe $al at 0 0 y={1.7-$sink} centred roll=$pitch sx=4.5 sy=9 sz=9
+place RT_Pipe $al at 0 0 y={1.7-$sink-23.2} centred roll=$pitch sx=4.5 sy=9 sz=9
 place RT_PipeDownStraight $al at 1.5 0 y={3.2-$sink} centred sx=6 sy=1.2 sz=6
 place RT_PipeDownStraight $al at 1.1 0 y={5.2-$sink} centred sx=0.6 sy=0.6 sz=0.6
 pop
@@ -77,7 +77,7 @@ end
 # airbell: an air pocket on the ground at x z (Raft's air bubble dome, small) with a zone that gives breath (zone.air) and
 # bubbles rising from it; id: the zone's id, msg its message
 macro airbell x=0 z=0 id=airbell al=airbell bub=airbellbub r=2.5 msg="An air pocket - breathe."
-place AirPocket_1 - at $x $z ground y=0.8 scale=0.6
+place AirPocket_1 - at $x $z ground y=0.05 scale=0.6
 place Zone_Trigger $al at $x $z ground y=1.6
 place Zone_Atmosphere $bub at $x $z ground y=1.2
 prop $al obj.name=$al

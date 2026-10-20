@@ -2,10 +2,10 @@
 # chest, up the path to the holy place and the offerings, the south cave's chest, the boars. Points as in its recipe.
 island Firedance Isle
 offset 0 0
-expect animals Boar 3
+expect animals Warthog 3
 expect animals Turtle 2
 wait 3
-kill Boar
+kill Warthog
 # Into the big hut (north of the fire), its chest
 walk -6.75 -8 to -6.75 -6 to -6.75 -3.5 h=3.1 below=5
 open Chest in the big hut

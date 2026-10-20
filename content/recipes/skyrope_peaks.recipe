@@ -13,7 +13,7 @@ include lib_features
 include lib_ni34
 new
 # (nature: a green islet in the sky - no sea round it)
-gen Trees=0.1 Bushes=0.25 Rocks=0.4 Harvest=0.2 BeachThings=0
+gen Trees=0.19 Bushes=0.65 Rocks=0.68 Harvest=0.40 BeachThings=0.00
 gen Seed=7705 Radius=28 Height=8 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.6 PeakShape=0.5
 gen Water=0 SeaRocks=0 SeaFinds=0 Sunken=0 Hostiles=0 Friendly=0 SeaLife=0
 generate
@@ -36,10 +36,10 @@ clear from 10 -9 to 16 -9 r=2.5
 clear from -8 0 to 8 0 r=3
 
 # ===== The bridge between the peaks; the cabin on the west peak; the ladders and nests on the east peak ================
-call hangbridge x1=-8.5 z1=0 h1=16 x2=8.5 z2=0 h2=14 sag=1.6
+call hangbridge x1=-8.5 z1=0 h1=16 x2=8.5 z2=0 h2=14 sag=1.6 pb=6.7
 push at -17.5 -1.5 h=16
 call cabin w=3 d=2 al=peakcabin
-place Bed_Simple - at 3.6 2.2 y=0.1 sit yaw=90
+place Bed_Simple - at 3.2 2.0 y=0.1 sit yaw=90
 place Loot_ChestSmall cabinchest at 1 2.2 y=0.1 sit yaw=180
 pop
 call ladders x=13 z=-7.15 h=6.7 n=3 yaw=180

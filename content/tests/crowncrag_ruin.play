@@ -14,8 +14,7 @@ kill Screecher
 walk 1 -15 to 4.5 -12 to 8 -9 to 10 -4 to 10 2 h=10
 # Up the lookout's ladder, its chest
 climb 7.75 7.8 h=10
-at 9 9.5 h=12.52
-expect height 12.52
+expect stand 7.75 8.75 h=12.52 below=14
 open Chest on the lookout
 # The cellar hatch
 use cellarhatch

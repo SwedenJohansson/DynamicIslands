@@ -9,8 +9,8 @@ kill Screecher
 at 0 -10
 expect height 6.7
 climb 13 -7.15 h=6.7
+expect stand 13 -5 h=14 below=15.5
 at 15 1 h=14
-expect height 14
 open Chest on the east peak
 # Over the bridge to the west peak
 walk 9 0 to 4 0 to -4 0 to -9.5 0 h=16 below=18

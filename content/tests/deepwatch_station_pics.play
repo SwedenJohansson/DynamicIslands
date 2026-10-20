@@ -7,5 +7,5 @@ weather Calm
 at 0 -12 h=4
 wait 3
 picture ni7_deepwatch_station_station 4 9 -16 3 5 -1
-picture ni7_deepwatch_station_sub -8 7 4 -20 3 12
-picture ni7_deepwatch_station_tunnel 12 7 2 19 4 12
+picture ni7_deepwatch_station_sub -9 13 2 -20 1 12
+picture ni7_deepwatch_station_tunnel 6 10 0 18 3 14

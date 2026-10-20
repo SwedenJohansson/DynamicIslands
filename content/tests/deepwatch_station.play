@@ -3,9 +3,9 @@
 # (heights over the island's own water line).
 island Deepwatch Station
 offset 0 0
-expect animals Puffer 3
+expect animals Puffer fish 3
 wait 3
-kill Puffer
+kill Puffer fish
 # Through the door into the bunker, its locker
 at -1.5 -9 h=4
 at -1.5 -3 h=4.1

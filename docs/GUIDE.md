@@ -4185,6 +4185,11 @@ They come in five sizes: normal, twice, four times, seven times and twenty times
 | ![](images/library/gullwing_bay.jpg) **Gullwing Bay** (medium) | A green island round a deep bay with a fishing boat wrecked on the bottom, a jetty, a headland cave, boars - no quest | An underwater wreck, a jetty and a cave |
 | ![](images/library/coyote_mesa.jpg) **Coyote Mesa** (medium) | Two desert mesas joined by a rope bridge, a hermit's cabin, hyenas on the flats - no quest | A **hanging bridge** between mesas, ladders, a cabin |
 | ![](images/library/driftcloud_islet.jpg) **Driftcloud Islet** | A little green islet floating 55 m over the sea: a lean-to with a chest, a mango tree, a wild hive - no quest | A small **flying island**, reached by building up from the raft |
+| ![](images/library/crowncrag_ruin.jpg) **Crowncrag Ruin** (medium) | A castle crumbled on a green crag - a stone ring, two broken towers, a plank lookout, a cellar hatch - a village of three cottages round a well below, a cave on the north shore; rats and a screecher - no quest | A ruin of Raft's stone pieces, a village and a cave on one island |
+| ![](images/library/firedance_isle.jpg) **Firedance Isle** (medium) | A dark volcanic island: four thatched huts round a dancing ground and its fire pit, three tall idols and an offering stone on the hill, a cave in the rock; boars - no quest | A volcanic village and a holy place with fire baskets |
+| ![](images/library/deepwatch_station.jpg) **Deepwatch Station** (medium) | An island under the sea: a sunken listening station with a pocket of air, a hatch in the sand, a wrecked submarine, a rock tunnel; puffer fish - no quest | A **sunken** island with an air pocket to breathe in |
+| ![](images/library/longpier_haven.jpg) **Longpier Haven** (medium) | A harbour island: a quay with a long plank pier, the harbour master's cabin, a bridge to a rock stack with a watch hut, a boat sunk in the bay, a smugglers' cave; boars and puffer fish - no quest | A long **pier** on posts and a plank bridge over the water |
+| ![](images/library/skyrope_peaks.jpg) **Skyrope Peaks** (medium) | An island floating high over the sea: two rocky peaks with a rope bridge between their tops, a cabin on the west peak, ladders up the east one; a screecher - no quest | A medium **flying island** with a hanging bridge |
 
 ---
 
