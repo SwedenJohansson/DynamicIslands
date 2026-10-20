@@ -1460,11 +1460,13 @@ namespace DynamicIslands
 				if (w == null || !GeneratorWindow.IsOpen) { run.Errors.Add("Generator: the window did not open"); yield break; }
 				Button tab = w.GetComponentsInChildren<Button>(true).Where(IsTabButton).ElementAtOrDefault(t);
 				if (tab == null) { run.Errors.Add("Generator: no tab button " + names[t]); continue; }
+				ScreenStarts(run, "Generator, " + names[t] + " tab");
 				int before = run.Pressed;
 				yield return Press(run, tab, "Generator", 1);
 				if (w.Tab != t) run.Errors.Add("Generator: the " + names[t] + " tab button did not show its tab");
 				run.Windows++;
 				yield return TestWindow(run, w, null, "Generator, " + names[t] + " tab", 1);
+				ScreenTimeLimit(run, "Generator, " + names[t] + " tab", run.Pressed - before, "");
 				run.PerScreen["Generator, " + names[t] + " tab"] = run.Pressed - before;
 				GeneratorWindow.Close();
 				yield return null;

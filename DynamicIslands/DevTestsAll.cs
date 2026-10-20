@@ -40,20 +40,57 @@ namespace DynamicIslands
 			public readonly Dictionary<string, int> PerScreen = new Dictionary<string, int>();
 			public string Current = "";
 			public readonly float Start = Time.realtimeSinceStartup;
+			// (where it is and since when: RUN2 10-21 - 45 min silent on the first screen of a minimised box Raft, twice, and
+			// nothing said where; each screen has its own time limit, CIStopTests says where it was stopped)
+			public string Screen = "";
+			public float ScreenStart = Time.realtimeSinceStartup, ScreenLimit = float.PositiveInfinity, ThisLimit = float.PositiveInfinity;   // (CIButtons: 4 min a screen; CIWorldButtons: none)
+			public bool Active;
+			public bool ScreenOver { get { return Time.realtimeSinceStartup - ScreenStart > ThisLimit; } }
+			public string Where()
+			{
+				return "'" + Current + "' (screen '" + Screen + "', " + Pressed + " pressed, " + Mathf.RoundToInt(Time.realtimeSinceStartup - ScreenStart) + " s on this screen, "
+					+ Mathf.RoundToInt(Time.realtimeSinceStartup - Start) + " s in all, a frame " + Mathf.RoundToInt(Time.unscaledDeltaTime * 1000f) + " ms, " + PlacedCount() + " objects)";
+			}
+		}
+
+		/// <summary>Labels of presses that may take long or open something (a window, a download, a new island): said before the press.</summary>
+		static readonly string[] ButtonMayBlock = { "...", "Generate", "Download", "Install", "Update", "Open", "Load", "Import", "Export", "Library", "New" };
+
+		static int PlacedCount()
+		{
+			GameObject placed = GameObject.Find("PlacedObjects");
+			return placed != null ? placed.transform.childCount : 0;
+		}
+
+		/// <summary>From a small island again when a press made a big one (all windows closed).</summary>
+		// (the Island tab's Generate made an 11300-object one, and each screen after it took 5-10 minutes - 10-13; a Generate
+		// pressed early on a screen made the rest of that screen crawl the same way)
+		static bool ResetBigIsland(ButtonRun run)
+		{
+			int n = PlacedCount();
+			if (!DynamicIslands.InEditor() || n <= 1000) return false;
+			Log("  buttons: a new small island after '" + run.Current + "' (" + n + " objects)");
+			DynamicIslands.NewIsland();
+			DynamicIslands.currentIslandName = "cibuttons";
+			return true;
 		}
 
 		static ButtonRun buttonRun;
 
-		[ConsoleCommand(name: "CIButtons", docs: "Dev, main menu or editor: presses every button of the editor (each tab, each kind of selected object) and of every window they open, and reports errors, windows that don't close, and buttons never reached")]
-		public static void ButtonsCommand()
+		[ConsoleCommand(name: "CIButtons", docs: "Dev, main menu or editor: presses every button of the editor (each tab, each kind of selected object) and of every window they open, and reports errors, windows that don't close, and buttons never reached. 'CIButtons <minutes>': each screen's time limit (4; the first, with the top bar's windows, 3 times that)")]
+		public static void ButtonsCommand(string[] args)
 		{
-			StartTest(ButtonsRoutine());
+			float minutes;
+			if (args == null || args.Length == 0 || !float.TryParse(args[0].TrimEnd('m'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out minutes) || minutes <= 0f) minutes = 4f;
+			StartTest(ButtonsRoutine(minutes * 60f));
 		}
 
-		static IEnumerator ButtonsRoutine()
+		static IEnumerator ButtonsRoutine(float screenLimit = 240f)
 		{
 			buttonRun = new ButtonRun();
 			ButtonRun run = buttonRun;
+			run.ScreenLimit = screenLimit;
+			run.Active = true;
 			Application.LogCallback watch = (msg, trace, type) =>
 			{
 				if ((type == LogType.Exception || type == LogType.Error) && !msg.StartsWith("[CITEST]"))
@@ -150,7 +187,7 @@ namespace DynamicIslands
 				yield return GeneratorScreens(run);
 				if (missingKinds > 0) run.Errors.Add(missingKinds + " kind(s) of object not in the catalog: their screens were not tested");
 			}
-			finally { Application.logMessageReceived -= watch; HelpLinks.TestMode = false; }
+			finally { Application.logMessageReceived -= watch; HelpLinks.TestMode = false; run.Active = false; }
 
 			// Coverage: every button the mod made that still exists (and isn't a sampled list entry or skipped)
 			UIKit.AllButtons.RemoveAll(b => b == null);
@@ -175,42 +212,45 @@ namespace DynamicIslands
 			if (!DynamicIslands.InEditor()) { run.Errors.Add(screen + ": not in the editor (left it after " + run.Current + ")"); yield break; }
 			// (a line a screen: a runner timeout said nothing of where it stalled - RUN2 10-20, 45 min silent on a minimised Raft)
 			Log("  buttons: screen '" + screen + "' (" + run.Pressed + " pressed so far, " + Mathf.RoundToInt(Time.realtimeSinceStartup - run.Start) + " s)");
+			// (the first screen also presses the top bar and walks its ~140 windows: three times as long)
+			ScreenStarts(run, screen, run.PerScreen.Count == 0 ? 3f : 1f);
 			CloseAllWindows();
-			// (from a small island again: the Island tab's Generate made an 11300-object one, and each screen after it took
-			// 5-10 minutes - 10-13; the setup places the screen's own object again)
-			GameObject placed = GameObject.Find("PlacedObjects");
-			if (placed != null && placed.transform.childCount > 1000)
-			{
-				DynamicIslands.NewIsland();
-				DynamicIslands.currentIslandName = "cibuttons";
-				yield return null;
-			}
+			// (from a small island again; the setup places the screen's own object again)
+			if (ResetBigIsland(run)) yield return null;
 			try { setup(); } catch (Exception e) { run.Errors.Add(screen + " (setting up): " + e.Message); }
 			yield return null; yield return null;
-			int before = run.Pressed;
+			int before = run.Pressed, at = 0;
 			// (a snapshot of this screen's buttons: pressing one can rebuild the panel, the loop re-checks each)
 			List<Button> list = SampleList(run, MainButtons());
 			foreach (Button b in list)
 			{
+				at++;
+				if (run.ScreenOver) break;
 				if (b == null || !b.gameObject.activeInHierarchy || !b.interactable) continue;
 				if (!DynamicIslands.InEditor()) { run.Errors.Add(screen + ": left the editor"); yield break; }
 				yield return Press(run, b, screen, 0);
 				CloseAllWindows();
 				KeepWalkIsland();
+				bool reset = ResetBigIsland(run);
+				if (reset) yield return null;
 				// Buttons this press showed (a tool's own options, e.g. the stamps): pressed now, before the setup hides them again
-				List<Button> revealed = SampleList(run, MainButtons().Where(x => !list.Contains(x) && !run.Done.Contains(x)).ToList());
+				List<Button> revealed = reset ? new List<Button>() : SampleList(run, MainButtons().Where(x => !list.Contains(x) && !run.Done.Contains(x)).ToList());
 				foreach (Button r in revealed)
 				{
+					if (run.ScreenOver) break;
 					if (r == null || !r.gameObject.activeInHierarchy || !r.interactable || run.Done.Contains(r)) continue;
 					if (!DynamicIslands.InEditor()) { run.Errors.Add(screen + ": left the editor"); yield break; }
 					yield return Press(run, r, screen + " > " + LabelOfButton(b), 0);
 					CloseAllWindows();
 					KeepWalkIsland();
+					if (ResetBigIsland(run)) yield return null;
 				}
 				// (the screen may have changed: selection lost, tab switched - set it up again)
 				try { setup(); } catch { }
 				yield return null;
 			}
+			// (its time limit: this screen FAILs with the press it was on, the next screen starts)
+			if (run.ScreenOver) { CloseAllWindows(); ScreenTimeLimit(run, screen, run.Pressed - before, ", " + Math.Max(0, at - 1) + " of its " + list.Count + " buttons reached"); }
 			run.PerScreen[screen] = run.Pressed - before;
 			Log("  buttons: screen '" + screen + "' done, " + (run.Pressed - before) + " pressed (" + Mathf.RoundToInt(Time.realtimeSinceStartup - run.Start) + " s)");
 		}
@@ -230,14 +270,20 @@ namespace DynamicIslands
 			if (ButtonSkip.Contains(label)) yield break;
 			string owner = OwnerOf(b);
 			string key = KeyOf(b);
+			if (run.ScreenOver) yield break;
 			List<MonoBehaviour> before = OpenWindows();
 			run.Current = context + " > " + label;
+			if (ButtonMayBlock.Any(x => label.Contains(x))) Log("  buttons: pressing " + run.Where());
+			float t0 = Time.realtimeSinceStartup;
 			try { b.onClick.Invoke(); }
 			catch (Exception e) { run.Errors.Add(run.Current + ": " + (e.InnerException ?? e).Message); }
 			run.Pressed++;
 			run.Done.Add(b);
 			run.Keys.Add(key);
 			yield return null; yield return null;
+			float took = Time.realtimeSinceStartup - t0;
+			if (took > 5f) Log("  buttons: slow (" + took.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + " s) " + run.Where());
+			else if (run.Pressed % 25 == 0) Log("  buttons: at " + run.Where());
 			// (here too, not only between screens: inside the Open... window the next press after loading an island was a Save)
 			KeepWalkIsland();
 			if (depth >= 3) yield break;
@@ -255,6 +301,21 @@ namespace DynamicIslands
 			}
 		}
 
+		/// <summary>A screen of the button walk starts: its time limit counts from now.</summary>
+		static void ScreenStarts(ButtonRun run, string screen, float times = 1f)
+		{
+			run.Screen = screen; run.ScreenStart = Time.realtimeSinceStartup; run.Current = screen; run.ThisLimit = run.ScreenLimit * times;
+		}
+
+		/// <summary>When the screen's time limit was reached: it FAILs with the press it was on (the next screen starts).</summary>
+		static void ScreenTimeLimit(ButtonRun run, string screen, int pressed, string reached)
+		{
+			if (!run.ScreenOver) return;
+			run.Errors.Add("screen '" + screen + "': its time limit (" + (run.ThisLimit / 60f).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + " min) reached at '" + run.Current + "' - " + pressed
+				+ " pressed" + reached + " (a frame " + Mathf.RoundToInt(Time.unscaledDeltaTime * 1000f) + " ms, " + PlacedCount() + " objects)");
+			Log("  buttons: screen '" + screen + "' TIME LIMIT at '" + run.Current + "'");
+		}
+
 		/// <summary>Presses every button of a window; when a press closes the window, it's opened again with the same button.</summary>
 		static IEnumerator TestWindow(ButtonRun run, MonoBehaviour w, Button opener, string context, int depth)
 		{
@@ -263,6 +324,7 @@ namespace DynamicIslands
 			string openerKey = opener != null ? KeyOf(opener) : null;
 			for (int guard = 0; guard < 400; guard++)
 			{
+				if (run.ScreenOver) break;
 				if (w == null || !w.gameObject.activeInHierarchy)
 				{
 					// (a press can rebuild the panel the opener is on - "Use" gives the zone its sound and the inspector
@@ -270,6 +332,7 @@ namespace DynamicIslands
 					if ((opener == null || !opener.gameObject.activeInHierarchy) && openerKey != null)
 						opener = UIKit.AllButtons.FirstOrDefault(x => x != null && x.gameObject.activeInHierarchy && x.interactable && KeyOf(x) == openerKey);
 					if (opener == null || !opener.gameObject.activeInHierarchy) break;
+					run.Current = context + " (opened again)";
 					try { opener.onClick.Invoke(); } catch { break; }
 					yield return null; yield return null;
 					w = OpenWindows().FirstOrDefault(x => x.GetType() == type);

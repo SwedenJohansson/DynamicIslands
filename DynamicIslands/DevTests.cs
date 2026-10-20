@@ -53,6 +53,8 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIStopTests", docs: "Dev: stops every running test (its finally runs: options etc. put back) - alltests sends it when a suite times out, so the test can't run on under the next ones")]
 		public static void StopTestsCommand()
 		{
+			// (where a long test was when stopped: CIButtons' screen and press - RUN2 10-21, 45 min with one line)
+			if (buttonRun != null && buttonRun.Active) Log("  buttons: stopped at " + buttonRun.Where());
 			var names = new List<string>();
 			foreach (var kv in runningRuns.ToList())
 			{
