@@ -76,7 +76,7 @@ place Balboa_DecorationPrefabBase_Desk_Chair - at 1.2 -30.3 sit yaw=180
 place Balboa_DecorationPrefabBase_Lantern - at 0.2 -31.5 y=0.94 sit
 place Note_Book foremanlog at 1.6 -31.4 y=1.3 drop
 # (on the floor: at x 3.4 it stood on the bank, buried, CIGroundIslands)
-place Balboa_DecorationPrefabBase_SmallLocker minelocker at -1.6 -29.5 sit
+place Balboa_DecorationPrefabBase_SmallLocker minelocker at -1.6 -29.5 sit y=-0.35
 place Zone_Trigger irongate at 1 -4 y=1.5
 place Creature_Boar hogs at 1 -22 y=0.8
 place Zone_Atmosphere minedark at 1.2 -18 y=4
@@ -106,6 +106,9 @@ brush flatten from 23.5 6 to 23 -2 r=3 s=20 frames=60 h=34.8
 brush flatten from 23.5 6 to 23 -2 r=3 s=20 frames=60 h=34.8
 # (and its south-east lip, 1.6 m off at 300 degrees round, local 27 -2)
 brush flatten from 24 -1.8 to 26.5 -1.8 r=3 s=20 frames=60 h=31.8
+# (the generated palm and bush the flattening left 4 and 1.7 m in the air - CIFloating, 2026-10-20)
+clear at 28.1 10.5 r=0.8
+clear at 19.6 -1.4 r=0.8
 place CaveVine1 - at 41 4 h=13.2
 place CaveVine2 - at 43.5 3.5 h=13
 place CaveVine3 - at 38.8 5 h=12.8
