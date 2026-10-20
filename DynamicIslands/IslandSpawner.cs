@@ -340,13 +340,23 @@ namespace DynamicIslands.Editor
 				finally { c.missing += missing; c.creature = creature; c.loot = loot; c.zone = zone; c.treasure = treasure; }
 		}
 
+		/// <summary>
+		/// Left out of a flying island, which has no sea round it: what lies under its own sea level, and the shore ice laid at
+		/// the waterline (its mesh hangs metres down into the sea: with the land under the waterline cut away its outer edge
+		/// stood 1-5.5 m in the air, CIGroundIslands gen-snowy-701141).
+		/// </summary>
+		static bool UnderFlyingSea(IslandObject o, float waterLevel)
+		{
+			return o.Position.y < waterLevel - 0.5f || (o.Position.y < waterLevel + 2.5f && o.Name.StartsWith("TP_IceShore", System.StringComparison.Ordinal));
+		}
+
 		static void SpawnBody(IslandFile island, int index, Transform parent, bool editable, bool skipUnderwater, ref int missing, ref int creature, ref int loot, ref int zone, ref int treasure)
 		{
 			{
 				IslandObject o = island.Objects[index];
 				// A flying island has no sea around it: what lies under its own sea level (a lagoon's turtles, an underwater
 				// zone) would hang in the air - left out, but still counted, so the numbers of the others stay the same
-				bool underSea = skipUnderwater && o.Position.y < island.WaterLevel - 0.5f;
+				bool underSea = skipUnderwater && UnderFlyingSea(o, island.WaterLevel);
 				// Creatures: in a world only their spawn point exists (the host brings the live animals, CreatureSpawner).
 				// They are numbered in file order, which is the same on every machine.
 				if (!editable && ContentCatalog.IsCreature(o.Name))
@@ -400,7 +410,7 @@ namespace DynamicIslands.Editor
 					return;
 				}
 				// A flying island has no sea around it: corals and the like would hang in the air
-				if (skipUnderwater && o.Position.y < island.WaterLevel - 0.5f) return;
+				if (skipUnderwater && UnderFlyingSea(o, island.WaterLevel)) return;
 				GameObject go = PlaceableCatalog.Spawn(o.Name, parent, !editable); // gameplay scripts only in a world
 				if (go == null)
 				{

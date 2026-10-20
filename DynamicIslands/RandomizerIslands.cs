@@ -508,13 +508,24 @@ namespace DynamicIslands.Editor
 				}
 			// (nature moves with the ground at its lowest change under it: by its pivot's alone, grass on the mound's steep
 			// blend stood 1.1-1.4 m over the ground lowered more beside it, CIGroundIslands gen-large-315592)
+			// (and where the ground changed unevenly under it - the mound's edge rose 1.9 m under its middle and hardly at all a
+			// metre and a half off - it can't stand on both: taken away, else it stood under the raised ground at its middle and
+			// over the drop beside it, CIGroundIslands gen-large-416923)
 			foreach (var kv in around)
 			{
 				Vector2 p = new Vector2(kv.Key.Position.x, kv.Key.Position.z);
 				float d = k.Ground(p) - kv.Value;
 				if (kv.Key.Props == null || kv.Key.Props.Count == 0)
+				{
+					float most = d;
 					foreach (Vector2 o in new[] { new Vector2(1.5f, 0f), new Vector2(-1.5f, 0f), new Vector2(0f, 1.5f), new Vector2(0f, -1.5f) })
-						d = Mathf.Min(d, k.Ground(p + o) - aroundGround(p + o));
+					{
+						float ch = k.Ground(p + o) - aroundGround(p + o);
+						d = Mathf.Min(d, ch);
+						most = Mathf.Max(most, ch);
+					}
+					if (most - d > 1f) { f.Objects.Remove(kv.Key); continue; }
+				}
 				kv.Key.Position.y += d;
 			}
 		}
