@@ -1,0 +1,8 @@
+# FLOAT2 close side pictures: the grass on the den's mound (needs the install with the re-seat fix and a fresh gen island to compare)
+island gen-large-315592
+hour 12
+weather Calm
+at -30 0
+wait 3
+picture f2_gen_grass_s -2.5 +1.2 37 -2.5 +0.4 44
+picture f2_gen_grass_e 3.5 +1.2 44.3 -2.5 +0.4 44.3
