@@ -39,6 +39,7 @@ namespace DynamicIslands
 			public readonly List<string> Errors = new List<string>(), Unclosed = new List<string>(), Sampled = new List<string>();
 			public readonly Dictionary<string, int> PerScreen = new Dictionary<string, int>();
 			public string Current = "";
+			public readonly float Start = Time.realtimeSinceStartup;
 		}
 
 		static ButtonRun buttonRun;
@@ -172,6 +173,8 @@ namespace DynamicIslands
 		{
 			// (a press that left the editor would leave every later screen empty: said once, with the press that did it)
 			if (!DynamicIslands.InEditor()) { run.Errors.Add(screen + ": not in the editor (left it after " + run.Current + ")"); yield break; }
+			// (a line a screen: a runner timeout said nothing of where it stalled - RUN2 10-20, 45 min silent on a minimised Raft)
+			Log("  buttons: screen '" + screen + "' (" + run.Pressed + " pressed so far, " + Mathf.RoundToInt(Time.realtimeSinceStartup - run.Start) + " s)");
 			CloseAllWindows();
 			// (from a small island again: the Island tab's Generate made an 11300-object one, and each screen after it took
 			// 5-10 minutes - 10-13; the setup places the screen's own object again)
@@ -209,6 +212,7 @@ namespace DynamicIslands
 				yield return null;
 			}
 			run.PerScreen[screen] = run.Pressed - before;
+			Log("  buttons: screen '" + screen + "' done, " + (run.Pressed - before) + " pressed (" + Mathf.RoundToInt(Time.realtimeSinceStartup - run.Start) + " s)");
 		}
 
 		/// <summary>After an Open... that loaded someone's island, the walk is back on its own one, so a later Save never writes over it.</summary>

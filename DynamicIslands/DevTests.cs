@@ -41,7 +41,41 @@ namespace DynamicIslands
 			if (exclusiveTest == e) exclusiveId = id;
 			Coroutine run = DynamicIslands.instance.StartCoroutine(Track(e, id));
 			if (exclusiveTest == e) exclusiveRun = run;
+			// (a test that ended at once is gone already)
+			if (runningIds.Contains(id)) runningRuns[id] = new KeyValuePair<IEnumerator, Coroutine>(e, run);
 			return run;
+		}
+
+		// Every running test by its number: CIStopTests ends them all - the runner sends it after a suite's timeout, as the
+		// test's coroutine ran on under the next suites (CIRoundTrip 44 min, 5 suites broken - RUN2 10-20)
+		static readonly Dictionary<int, KeyValuePair<IEnumerator, Coroutine>> runningRuns = new Dictionary<int, KeyValuePair<IEnumerator, Coroutine>>();
+
+		[ConsoleCommand(name: "CIStopTests", docs: "Dev: stops every running test (its finally runs: options etc. put back) - alltests sends it when a suite times out, so the test can't run on under the next ones")]
+		public static void StopTestsCommand()
+		{
+			var names = new List<string>();
+			foreach (var kv in runningRuns.ToList())
+			{
+				IEnumerator e = kv.Value.Key;
+				if (kv.Value.Value != null) DynamicIslands.instance.StopCoroutine(kv.Value.Value);
+				runningRuns.Remove(kv.Key);
+				runningIds.Remove(kv.Key);
+				if (exclusiveTest == e) { exclusiveTest = null; exclusiveRun = null; }
+				names.Add(TestName(e));
+				try { IDisposable d = e as IDisposable; if (d != null) d.Dispose(); }
+				catch (Exception ex) { Debug.LogException(ex); }
+				if (--runningTests < 0) runningTests = 0;
+			}
+			Log("Stopped " + names.Count + " running test(s)" + (names.Count > 0 ? ": " + string.Join(", ", names.ToArray()) : ""));
+			if (runningTests == 0) { if (pendingCommands > 0) idleOwed = true; else Log("IDLE (all tests done)"); }
+		}
+
+		/// <summary>A test routine's name from its iterator class ("&lt;RoundTripRoutine&gt;d__12" -> RoundTripRoutine).</summary>
+		static string TestName(IEnumerator e)
+		{
+			string n = e.GetType().Name;
+			int a = n.IndexOf('<'), b = n.IndexOf('>');
+			return a >= 0 && b > a ? n.Substring(a + 1, b - a - 1) : n;
 		}
 
 		// Each running test's number: a command file's later lines wait only for the tests its own earlier lines started
@@ -70,7 +104,9 @@ namespace DynamicIslands
 			if (exclusiveRun != null) DynamicIslands.instance.StopCoroutine(exclusiveRun);
 			exclusiveRun = null;
 			runningIds.Remove(exclusiveId);
-			Fail(exclusiveName + ": stopped - another test started (the runner moved on, e.g. after its timeout)");
+			runningRuns.Remove(exclusiveId);
+			// (not a FAIL line: it lands in the next test's output and failed that one; the runner has its timeout already)
+			Log("STOPPED: " + exclusiveName + " - another test started (the runner moved on, e.g. after its timeout)");
 			// (Dispose runs the test's finally: the world's own options etc. back now, not over the next test)
 			try { IDisposable d = e as IDisposable; if (d != null) d.Dispose(); }
 			catch (Exception ex) { Debug.LogException(ex); }
@@ -89,6 +125,7 @@ namespace DynamicIslands
 			}
 			if (exclusiveTest == e) { exclusiveTest = null; exclusiveRun = null; }
 			runningIds.Remove(id);
+			runningRuns.Remove(id);
 			if (--runningTests <= 0) { runningTests = 0; if (pendingCommands > 0) idleOwed = true; else Log("IDLE (all tests done)"); }
 		}
 
