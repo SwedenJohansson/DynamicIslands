@@ -35,6 +35,11 @@ origin
 clear at -12 -1 r=8
 clear at -28 12 r=13
 clear at 1 3 r=9
+# (Raft's ladders the variation carried over stood inside its reshaped stacks, tops 2-5 m in the rock: CIFloatingSweep)
+clear at 4.02 14.15 r=2 only=LandmarkLadder
+clear at 22.12 2.47 r=2 only=LandmarkLadder
+clear at 46.55 -3.03 r=2 only=LandmarkLadder
+clear at -30.44 55.04 r=2 only=LandmarkLadder
 
 # --- The market in the inlet (1.6 m), round the lift's foot: crates, the ledger, the toll notice on a post, the
 # caravan flag ----------------------------------------------------------------------------------

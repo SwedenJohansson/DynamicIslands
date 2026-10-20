@@ -169,7 +169,7 @@ ramp Block_Floor_Wood from 30.5 7.6 2.4 to 30.5 15 -1.5 len=1.5 top=0
 ramp Block_Floor_Wood from 32 7.6 2.4 to 32 15 -1.5 len=1.5 top=0
 # (the gun's barrel set on its base; a stub of post inside it carries it - the base has nothing solid)
 place UT_Harpoon_Base - at 22 6.5 h=3.01
-place Block_Pillar_Wood - at 22 6.5 h=2.45 sy=0.27
+place Block_Pillar_Wood - at 22 6.5 h=2.45 sy=0.48
 place UT_Harpoon_Barrel cannon at 22 6.5 h=4.01
 place Zone_Trigger flensing at 24 4 h=3.6
 place UT_WaterTank tanks at 41 -3.5 h=2.3

@@ -27,6 +27,8 @@ brush sand from -55 -44 to -55 44 r=6 s=20 frames=60
 brush flatten at -36 -46 r=10 s=20 frames=60 h=4.3
 brush flatten at -16 -52 r=9 s=20 frames=60 h=4.3
 brush flatten from -46 50 to -6 52 r=8 s=20 frames=60 h=4.3
+# (and all round the control tower: at the brush's soft edge its south wall stood 1.2 m over the ground, CIFloatingSweep)
+brush flatten at -10 49 r=8 s=20 frames=60 h=4.3
 brush flatten from -37 44 to -20 44 r=4 s=20 frames=40 h=4.3
 brush flatten at 7 57 r=8 s=20 frames=60 h=4.3
 brush flatten from -46 57 to -30 57 r=6 s=20 frames=60 h=4.3

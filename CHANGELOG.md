@@ -461,6 +461,11 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   Point's yard is level under the excavator and dumpster. The Varuna Point look-alike sets its rubble heaps on the
   ground floor, not 0.5 m over the open top floor. The Radio Tower look-alike stands its satellite dish only on
   near-level ground: on Radio Tower Remade's sharp peak the rock stood 2 m through it.
+- **More floating and buried pieces put right:** grass and plants on a generated island no longer stand 1-1.4 m
+  over a den's reshaped ground (they follow the lowest change of the ground around them, not just under their middle).
+  Albatross Field's control tower stands on its ground, Frost Hollow's research log lies on its table, The Kraken's Wake's
+  and Whalebone Bay's posts reach their decks, and Caravan Town Remade no longer has four of Raft's ladders inside its
+  rock stacks.
 - **Main story quests stay out of the journal's side quests:** a main story island's further quests, and the quest of
   a generated island in the main story (a *type* rule), were listed in the journal under "Other islands with a quest";
   they count with the main story now, whose steps are in Raft's notebook. A copy of a story island in the

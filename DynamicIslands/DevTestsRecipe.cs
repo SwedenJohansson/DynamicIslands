@@ -515,6 +515,9 @@ namespace DynamicIslands
 					RaycastHit on;
 					if (Physics.Raycast(new Vector3(whole.center.x, whole.min.y + 0.1f, whole.center.z), Vector3.down, out on, 0.8f, ~0, QueryTriggerInteraction.Ignore) && on.collider.GetComponent<Terrain>() == null &&
 						on.collider.GetComponentInParent<EditorGameObject>() != null && on.collider.GetComponentInParent<EditorGameObject>() != e) continue;
+					// (an icicle hangs from what is over it - a cave's roof, an overhang: its top against it is set right)
+					if (n.IndexOf("Icicle", StringComparison.OrdinalIgnoreCase) >= 0 && Physics.Raycast(new Vector3(whole.center.x, whole.max.y - 0.3f, whole.center.z), Vector3.up, out on, 1.1f, ~0, QueryTriggerInteraction.Ignore) &&
+						on.collider.GetComponentInParent<EditorGameObject>() != e) continue;
 				}
 				lifted++;
 				if (lifted <= floatDetail) FLog("  above the ground: " + n + " at " + Num(p.x - mid.x) + " " + Num(p.z - mid.y) + ": h=" + Num(p.y - sea) + ", " + Num(p.y - land) + " m above the ground");

@@ -30,7 +30,7 @@ clear at -2 18 r=8
 place TP_Igloo_Small_1 igloo1 at 17 9 yaw=180
 place TP_Igloo_Small_2 igloo2 at 17 -9 yaw=0
 place TP_Moontown_SealedCrate02_Clean - at 23 1.5 sit yaw=20
-place Note_Papers researchlog at 23 1.5 y=0.92 sit yaw=20
+place Note_Papers researchlog at 23 1.5 y=1.6 sit drop yaw=20
 place TP_Moontown_TarpCrate02_Clean - at 23.5 -2 sit yaw=-10
 place TP_Moontown_Barrel02 - at 21.5 2.3 sit
 place TP_SnowVehicle01 - at 11 2 sit yaw=70

@@ -471,6 +471,8 @@ namespace DynamicIslands.Editor
 			float ax = cave.Info.Size.x * 0.5f, az = cave.Info.Size.z * 0.5f;
 			// What stands around keeps its height above the ground as the ground changes (trees in the blend don't float)
 			var around = f.Objects.Where(o => new Vector2(o.Position.x - c.x, o.Position.z - c.y).magnitude < reachAll).Select(o => new KeyValuePair<IslandObject, float>(o, k.Ground(new Vector2(o.Position.x, o.Position.z)))).ToList();
+			float[,] was = (float[,])f.Heights.Clone();
+			Func<Vector2, float> aroundGround = q0 => IslandGenerator.SampleHeights(was, res, step, q0.x, q0.y) * f.TerrainSize.y;
 			int x0 = Mathf.Max(0, Mathf.FloorToInt((c.x - reachAll) / step)), x1 = Mathf.Min(res - 1, Mathf.CeilToInt((c.x + reachAll) / step));
 			int z0 = Mathf.Max(0, Mathf.FloorToInt((c.y - reachAll) / step)), z1 = Mathf.Min(res - 1, Mathf.CeilToInt((c.y + reachAll) / step));
 			Vector2 side = new Vector2(-outward.y, outward.x), seg = mouth - back;
@@ -504,8 +506,17 @@ namespace DynamicIslands.Editor
 					if (fromPassage <= 0f) g = floor - 0.15f;
 					if (Mathf.Abs(g - h) > 0.001f) f.Heights[z, x] = Mathf.Clamp01(g / f.TerrainSize.y);
 				}
+			// (nature moves with the ground at its lowest change under it: by its pivot's alone, grass on the mound's steep
+			// blend stood 1.1-1.4 m over the ground lowered more beside it, CIGroundIslands gen-large-315592)
 			foreach (var kv in around)
-				kv.Key.Position.y += k.Ground(new Vector2(kv.Key.Position.x, kv.Key.Position.z)) - kv.Value;
+			{
+				Vector2 p = new Vector2(kv.Key.Position.x, kv.Key.Position.z);
+				float d = k.Ground(p) - kv.Value;
+				if (kv.Key.Props == null || kv.Key.Props.Count == 0)
+					foreach (Vector2 o in new[] { new Vector2(1.5f, 0f), new Vector2(-1.5f, 0f), new Vector2(0f, 1.5f), new Vector2(0f, -1.5f) })
+						d = Mathf.Min(d, k.Ground(p + o) - aroundGround(p + o));
+				kv.Key.Position.y += d;
+			}
 		}
 
 		static float Smooth(float t) { t = Mathf.Clamp01(t); return t * t * (3f - 2f * t); }
