@@ -391,6 +391,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Vending machine for a player who sets the island up late:** the host now sends the hatch state with each press, so a player whose island was set up after the host paid no longer misses Raft's message and sees the package.
 - **Nothing hangs in the air on the story islands and the randomizer's extras:** The Listening Mirrors' satellite
   dishes stand on a mast on their plinths and its altar on the road; Gannet Cliff's red banners hang between two posts.
   The randomizer stands every satellite dish it adds on its pole.

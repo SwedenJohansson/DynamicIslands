@@ -99,6 +99,8 @@ brush flatten at 31 17.5 r=5 s=20 frames=40 h=29
 # 90 degrees - X7, 2026-10-13)
 brush flatten from 30 17.5 to 26.4 13 r=3.5 s=20 frames=40 h=31
 brush flatten from 27.2 8.6 to 26.4 11 r=3.5 s=20 frames=40 h=31
+# (and on round the NE side to the rim at 23.4 5.1, still 2.5 m off the slope - X7, 2026-10-17)
+brush flatten from 27.2 8.6 to 23.4 5.1 r=3.5 s=20 frames=40 h=31
 place CaveVine1 - at 41 4 h=13.2
 place CaveVine2 - at 43.5 3.5 h=13
 place CaveVine3 - at 38.8 5 h=12.8
