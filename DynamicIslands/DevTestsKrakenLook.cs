@@ -59,20 +59,29 @@ namespace DynamicIslands
 			root.transform.SetParent(rt, false);
 			root.transform.localPosition = Vector3.zero;
 			root.transform.localRotation = Quaternion.identity;
+			// (carried by the edge foundation itself, in raft space)
+			root.transform.SetParent(edge.transform, true);
 			var arm = root.AddComponent<KrakenArm>();
 			Vector3 up = Vector3.up;
-			// Up out of the sea a little off the edge, over the top, and the tip hooked down onto the deck
+			// The deck's top over the edge foundation (raft space)
+			float deck = 0.35f;
+			Renderer[] er = edge.GetComponentsInChildren<Renderer>();
+			if (er.Length > 0) deck = er.Max(r => rt.InverseTransformPoint(r.bounds.max).y) - e.y;
+			Log("deck top " + deck.ToString("F2") + " m over the foundation's origin");
+			// Up out of the sea close beside the edge, over the top, and the tip laid down on the deck with a small curl
+			Vector3 D = E + up * deck;
 			arm.Ctrl = new[]
 			{
-				E + u * 3.2f - up * 3.0f,
-				E + u * 3.6f + up * 1.5f + s * 0.3f,
-				E + u * 3.0f + up * 4.8f + s * 0.8f,
-				E + u * 1.4f + up * 6.6f + s * 0.6f,
-				E + u * -0.3f + up * 5.6f + s * 0.2f,
-				E + u * -1.2f + up * 3.4f,
-				E + u * -1.5f + up * 1.6f - s * 0.2f,
-				E + u * -1.0f + up * 0.75f - s * 0.3f,
-				E + u * -0.4f + up * 1.0f - s * 0.2f,
+				E + u * 2.0f - up * 3.0f,
+				E + u * 2.3f + up * 1.2f + s * 0.2f,
+				E + u * 1.9f + up * 3.9f + s * 0.5f,
+				E + u * 0.8f + up * 5.2f + s * 0.4f,
+				E + u * -0.3f + up * 4.4f + s * 0.1f,
+				D + u * -0.9f + up * 2.4f,
+				D + u * -1.2f + up * 0.8f - s * 0.1f,
+				D + u * -1.35f + up * 0.12f - s * 0.25f,
+				D + u * -0.85f + up * 0.1f - s * 0.45f,
+				D + u * -0.55f + up * 0.35f - s * 0.3f,
 			};
 			arm.Side = s; arm.Out = u;
 
@@ -90,7 +99,9 @@ namespace DynamicIslands
 				string colours = arm.BuildPieces(piece, new Color(0.26f, 0.08f, 0.30f));
 				Log("piece " + piece + " tinted through: " + colours);
 			}
-			Log("arm: " + arm.Count + " segments");
+			Log("arm: " + arm.Count + " segments; root under " + root.transform.parent.name + ", raft scale " + rt.lossyScale.ToString("F2"));
+			Transform tipSeg = root.transform.GetChild(root.transform.childCount - 1);
+			Log("world: edge block " + edge.transform.position.ToString("F1") + ", E " + rt.TransformPoint(E).ToString("F1") + ", arm base " + root.transform.GetChild(0).position.ToString("F1") + ", last part " + tipSeg.position.ToString("F1"));
 			yield return new WaitForSeconds(1.5f);
 			string tag = "kraken" + way + "_" + piece;
 			Vector3 look = rt.TransformPoint(E + up * 2.8f - u * 0.3f);
@@ -98,6 +109,7 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(1.2f);
 			yield return PlayPicture(tag + "_b", rt.TransformPoint(E + u * 9f + s * 7.5f + up * 2.6f), rt.TransformPoint(E + up * 2.2f));
 			yield return new WaitForSeconds(1.0f);
+			Log("world after 2 pictures: E " + rt.TransformPoint(E).ToString("F1") + ", arm base " + root.transform.GetChild(0).position.ToString("F1"));
 			yield return PlayPicture(tag + "_c", rt.TransformPoint(E + s * 10f + up * 3.5f - u * 1f), rt.TransformPoint(E + up * 2.8f + u * 0.8f));
 			Log("PASS: kraken look " + way + " (" + piece + ")");
 		}
@@ -109,7 +121,8 @@ namespace DynamicIslands
 			AI_NetworkBehavior_Shark shark = UnityEngine.Object.FindObjectOfType<AI_NetworkBehavior_Shark>();
 			if (shark != null)
 			{
-				Renderer r = shark.GetComponentsInChildren<Renderer>(true).OrderByDescending(x => x.bounds.size.sqrMagnitude).FirstOrDefault(x => x.sharedMaterial != null);
+				Log("shark renderers: " + string.Join(", ", shark.GetComponentsInChildren<Renderer>(true).Select(x => x.GetType().Name + " " + x.name + "=" + (x.sharedMaterial != null ? x.sharedMaterial.name : "-")).ToArray()));
+				Renderer r = shark.GetComponentsInChildren<SkinnedMeshRenderer>(true).OrderByDescending(x => x.bounds.size.sqrMagnitude).FirstOrDefault(x => x.sharedMaterial != null);
 				if (r != null) m = r.sharedMaterial;
 			}
 			if (m == null) m = Resources.FindObjectsOfTypeAll<Material>().FirstOrDefault(x => x != null && x.name.IndexOf("shark", StringComparison.OrdinalIgnoreCase) >= 0 && x.name.IndexOf("cage", StringComparison.OrdinalIgnoreCase) < 0 && x.mainTexture != null);
@@ -129,6 +142,34 @@ namespace DynamicIslands
 					set.Add(p);
 				}
 			return set.Count > 0 ? string.Join("+", set.ToArray()) : "none (" + (m.shader != null ? m.shader.name : "-") + ")";
+		}
+
+		/// <summary>A tinted copy of a piece's material; a shader without a colour (Raft's Vegetation, Shimmer) is swapped
+		/// for Standard (alpha cut-out) with the piece's own texture.</summary>
+		static Material KrakenRetint(Material src, Color tint, ref string colours)
+		{
+			Material own = new Material(src);
+			string how = KrakenTint(own, tint, false);
+			if (how.StartsWith("none"))
+			{
+				Shader std = Shader.Find("Standard");
+				string texName = src.GetTexturePropertyNames().FirstOrDefault(n => src.GetTexture(n) != null && (n.IndexOf("Main", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("Albedo", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("Diffuse", StringComparison.OrdinalIgnoreCase) >= 0))
+					?? src.GetTexturePropertyNames().FirstOrDefault(n => src.GetTexture(n) != null);
+				if (std != null)
+				{
+					own = new Material(std);
+					if (texName != null) own.mainTexture = src.GetTexture(texName);
+					own.color = tint;
+					own.SetFloat("_Glossiness", 0.55f);
+					own.SetFloat("_Mode", 1f);
+					own.SetFloat("_Cutoff", 0.4f);
+					own.EnableKeyword("_ALPHATEST_ON");
+					own.renderQueue = 2450;
+					how = "Standard with " + (texName ?? "no texture") + " (" + how + "; textures " + string.Join("/", src.GetTexturePropertyNames()) + ")";
+				}
+			}
+			colours += (colours.Length > 0 ? ", " : "") + src.name + ":" + how;
+			return own;
 		}
 
 		/// <summary>The arm: a curve through Ctrl (Catmull-Rom), segments laid along it every frame with a sway that grows
@@ -233,7 +274,7 @@ namespace DynamicIslands
 						{
 							if (ms[k] == null) continue;
 							Material own;
-							if (!mats.TryGetValue(ms[k], out own)) { own = new Material(ms[k]); colours += (colours.Length > 0 ? ", " : "") + ms[k].name + ":" + KrakenTint(own, tint, false); mats[ms[k]] = own; }
+							if (!mats.TryGetValue(ms[k], out own)) { own = KrakenRetint(ms[k], tint, ref colours); mats[ms[k]] = own; }
 							ms[k] = own;
 						}
 						r.sharedMaterials = ms;
