@@ -1,13 +1,13 @@
 # Skyhollow - a new medium island of the library (ROADMAP 3d NI7b), no quest - a floating one
 # An island torn out of the sea and hung 60 m over it. Up on its meadow stand a hermit's cabin, his fire and woodpile,
 # a mango and berry bushes, a wild hive - and in a hollow on its east side lies a whole boat, lifted from the sea with
-# the rock and stuck there ever since. Down the north flank a ladder leads to a ledge where the seabirds nest. Peaceful:
+# the rock and stuck there ever since. On the north rim the seabirds nest. Peaceful:
 # no monsters up here, only the wind. Build your way up from the raft.
 #
 # Built by the recipe player (CIRecipe skyhollow) through the editor's own operations. Points (metres over the island's
 # own water line; in the world it all hangs 60 m higher): the meadow (7 m, r 10 round 0 0); the hermit's cabin x
-# -6..-1.5, z -1..2 (its door south at -3.75 -1), his chest at -5 1.4; the boat's hollow round 12 4 (5 m); the ladder's
-# top at 0 10.15 (7 m), the nesting ledge round 0 13 (4 m) with the nest chest at 1.5 13.2; the lookout rocks at -10 -9.
+# -6..-1.5, z -1..2 (its door south at -3.75 -1), his chest at -5 1.4; the boat's hollow round 12 4 (5 m); the nesting
+# rim round 0 13 (7 m) with the nest chest at 1.5 12.6; the lookout rocks at -10 -9.
 include lib_huts
 include lib_features
 include lib_ni34
@@ -20,12 +20,11 @@ gen Water=0 SeaRocks=0 SeaFinds=0 Sunken=0 Hostiles=0 Friendly=0 SeaLife=0
 generate
 elevation 60
 
-# ===== Terrain: the meadow; the boat's hollow; the nesting ledge below the north rim; grass and rock =======================
+# ===== Terrain: the meadow; the boat's hollow; the nesting rim to the north; grass and rock =======================
 brush flatten at 0 0 r=10 s=20 frames=100 h=7
 brush flatten at 12 4 r=5 s=20 frames=80 h=5
 brush smooth from 6 2 to 12 4 r=4 s=10 frames=30
-brush flatten from 0 10 to 0 11 r=1.8 s=20 frames=60 h=7
-brush flatten at 0 13 r=2.6 s=20 frames=80 h=4
+brush flatten at 0 13 r=3 s=20 frames=80 h=7
 brush grass at 0 0 r=12 s=20 frames=30
 brush rock at -10 -9 r=4 s=20 frames=20
 clear at 0 0 r=11
@@ -35,7 +34,7 @@ clear at 0 13 r=3.5
 # ===== The hermit's cabin, his fire and woodpile ===========================================================================
 push at -6 -1 h=7
 call cabin w=3 d=2 al=hermitwall
-place Bed_Simple - at 3.6 2.1 y=0.1 sit yaw=90
+place Bed_Simple - at 3.0 2.0 y=0.1 sit yaw=90
 place Loot_ChestSmall hermitchest at 1 2.4 y=0.1 sit yaw=180
 pop
 place campfire_1 - at -3.5 -4.5 ground sit
@@ -52,11 +51,10 @@ place Loot_Crate boatcrate at 9.8 6.6 ground sit yaw=30
 place BigBoulder4_Low - at -10 -9 ground scale=0.35 yaw=40
 place SmallBoulder2 - at -7.5 -10.5 ground sit scale=0.6
 
-# ===== The ladder down the north flank to the nesting ledge; nests and a chest on it ========================================
-call ladders x=0 z=10.15 h=4 n=1 yaw=0
-place Bird_Nest - at -1.2 13.6 h=4 sit
-place Bird_Nest - at 1.6 14.2 h=4 sit yaw=120
-place Loot_ChestSmall nestchest at 1.5 12.6 h=4 sit yaw=200
+# ===== The nesting rim to the north; nests and a chest on it ==============================================================
+place Bird_Nest - at -1.2 13.4 ground sit
+place Bird_Nest - at 1.4 13.8 ground sit yaw=120
+place Loot_ChestSmall nestchest at 1.5 12.6 ground sit yaw=200
 
 # ===== Fruit, flowers, a hive; dirt to dig ================================================================================
 place "Pickup_Landmark_Tree_Mango" - at 5 -4 ground yaw=40
@@ -68,7 +66,7 @@ call dirt x=0 z=0 r=9 n=2 seed=7754
 
 info title=Skyhollow
 info author=Custom Islands
-info description=An island hanging 60 m over the sea - a hermit's cabin on its meadow, a whole boat lifted with the rock and stuck in a hollow on its side, a ladder down to where the seabirds nest. Peaceful, no monsters. Build your way up from the raft. No quest - an island to explore.
+info description=An island hanging 60 m over the sea - a hermit's cabin on its meadow, a whole boat lifted with the rock and stuck in a hollow on its side, a rim where the seabirds nest. Peaceful, no monsters. Build your way up from the raft. No quest - an island to explore.
 
 note hermitchest The hermit's chest | He never said how he got up here. Or why he stayed.
 loot hermitchest Rope*3;Plank*6;Seed_Mango*2;Feather*3

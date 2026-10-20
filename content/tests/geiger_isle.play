@@ -14,11 +14,12 @@ kill Roach
 walk 0 -44 to 0 -50 to 0 -55 h=1.5 below=4
 open Crate on the jetty
 # Up the track, the warning sign by the gate
-walk 0 -38 to 0 -28 to -4.5 -23 h=2.4 below=5
+walk 0 -38 to 0 -30 h=2.4 below=5
+at -4.5 -23
 read Warning sign
 # Through the gate: the guard's hut, the yard's crate
-walk 0 -21 to -8.75 -18 to -8.75 -15 h=3.1 below=5
-expect stand -8.75 -15 h=3.1 below=5
+walk 0 -21 to -8.75 -18 to -8.75 -15 h=3.3 below=5
+expect stand -8.75 -15 h=3.3 below=5
 open Guard's box
 walk -4 -14 to 2 -13 h=3 below=5
 open Crate in the yard

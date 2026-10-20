@@ -23,7 +23,11 @@ gen Water=0.5 SeaRocks=0.4 SeaFinds=0.4 Sunken=0.4 Hostiles=0 Friendly=0 SeaLife
 generate
 
 # ===== Terrain: the camp's clearing; the bone cave's ground and its way out to the east beach; the lava field ==============
-brush flatten at -4 4 r=12 s=20 frames=100 h=4
+brush flatten at -4 4 r=13 s=20 frames=250 h=4
+brush smooth at -4 4 r=19 s=6 frames=30
+brush flatten at -4 4 r=11 s=20 frames=150 h=4
+brush flatten at 8 -64 r=10 s=20 frames=150 h=-7
+brush smooth at 8 -64 r=14 s=6 frames=30
 brush flatten at 22 8 r=13 s=20 frames=100 h=1.6
 brush flatten from 36 7 to 44 7 r=4.5 s=20 frames=60 h=2
 brush sand from 38 7 to 46 7 r=4 s=20 frames=20
@@ -32,6 +36,7 @@ brush rock at 20 -26 r=7 s=20 frames=20
 clear at -4 4 r=14
 clear at 22 8 r=17
 clear from 36 7 to 46 7 r=4
+clear at 10 -4.5 r=2.5
 
 # ===== The palisade: four sets of sharpened stakes in an arc north of the camp ============================================
 for k 0 3 1

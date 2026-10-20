@@ -35,7 +35,7 @@ clear at -15 15 r=8
 # ===== The graves: two rows of headstones and markers, the broken fence, a lantern, the grave goods =======================
 call graves x=-10 z=3 yaw=90 n=4 gap=2.4
 call graves x=-10 z=7 yaw=90 n=3 gap=2.4
-call grave x=-2.8 z=7.6 yaw=200 s=0.45
+call grave x=-2.8 z=7.6 yaw=200 s=0.09
 line Block_Wall_Fence_Plank from -12 10 to -3 10 step=1.5
 line Block_Wall_Fence_Plank from -12 1 to -12 8.5 step=1.5
 place Placeable_Lantern_Basic - at -1 4.5 ground sit
@@ -53,6 +53,7 @@ call cabin w=3 d=2 al=shackwall
 place Bench_01 - at 1.2 2.4 y=0.1 sit yaw=0
 place "Box Small" shackbox at 1.2 2.4 y=0.1 sit yaw=180
 pop
+place AirPocket_1 - at 4.8 -5.3 h=5.1 sit scale=0.6
 call airpocket x=4.8 z=-5.3 id=shackair al=shackair bub=shackbub r=2.2 msg="Air - trapped under the shack's roof. Breathe."
 
 # ===== The funeral boat on the slope, barrels; corals, kelp; the murk; anglerfish and a pufferfish ========================
