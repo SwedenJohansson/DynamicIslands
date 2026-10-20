@@ -610,8 +610,23 @@ namespace DynamicIslands
 		/// <summary>Where an island's land centre is in the world now (its root is the terrain's corner).</summary>
 		static Vector3 ScLandCentre(IslandWorldState.Entry e)
 		{
-			IslandInfoTag tag = e.Root != null ? e.Root.GetComponent<IslandInfoTag>() : null;
-			return e.Root != null ? e.Root.transform.position + (tag != null ? tag.LocalCentre : Vector3.zero) : e.Position;
+			return e.Root != null ? e.Root.transform.position + LocalLandCentre(e.Root, e.Name) : e.Position;
+		}
+
+		/// <summary>An island's land centre from its root's corner: its IslandInfoTag's, else from its file, as the tag's is made
+		/// (zero if neither). Since 10-19 only an island with a quest gets the tag (its banner): CIScShift took the terrain's
+		/// corner of the quest-less sample island for its centre and measured 707 m off.</summary>
+		internal static Vector3 LocalLandCentre(GameObject root, string fileName)
+		{
+			IslandInfoTag tag = root != null ? root.GetComponent<IslandInfoTag>() : null;
+			if (tag != null) return tag.LocalCentre;
+			try
+			{
+				IslandFile f = IslandFile.Load(IslandSpawner.PathFor(fileName));
+				Vector2 land = IslandSpawner.LandCentre(f);
+				return new Vector3(land.x, f.WaterLevel, land.y);
+			}
+			catch { return Vector3.zero; }
 		}
 
 		[ConsoleCommand(name: "CIScShift", docs: "Dev, world (host, 'CI ...'): SC3 - Raft's world shift (the origin moved) while an island is coming (with a world entry, as a plan rule brings it, and without, as SpawnIsland does - AU58), while the player stands on one, and while one is unloaded: everything ends where it should be")]

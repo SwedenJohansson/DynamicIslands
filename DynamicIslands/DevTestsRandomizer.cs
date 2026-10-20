@@ -1446,19 +1446,21 @@ namespace DynamicIslands
 			for (float t = 0; t < 90f && e.Root == null && !e.Failed; t += 1f) yield return new WaitForSeconds(1f);
 			if (e.Root == null) { Fail("the large island didn't load"); yield break; }
 			GameObject root = e.Root;
-			var tag = root.GetComponent<IslandInfoTag>();
+			// (since 10-19 only an island with a quest has an IslandInfoTag: loaded = its IslandSettings, the title from those)
+			IslandSettings settings = root.GetComponent<IslandSettings>();
+			string title = settings != null && settings.Props != null ? ObjectProps.Get(settings.Props, IslandProps.Title) : "?";
 			var refs = root.GetComponentsInChildren<IslandObjectRef>(true).ToList();
 			int scene = refs.Count(r => r.Props != null && r.Props.ContainsKey("set.piece") && !r.Props.ContainsKey("cave"));
 			List<Transform> caves = root.GetComponentsInChildren<Transform>(true).Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
 			Log("Large island: '" + e.Name + "'");
-			Check(ref ok, tag != null && scene >= 3, "'" + (tag != null ? tag.Title : "?") + "' loaded: " + refs.Count + " objects with settings, " + scene + " scene props, " + caves.Count + " cave pieces");
+			Check(ref ok, settings != null && scene >= 3, "'" + title + "' loaded: " + refs.Count + " objects with settings, " + scene + " scene props, " + caves.Count + " cave pieces");
 			// Its animals (not the cave's guard: it waits)
 			List<CreatureSpawnPoint> spots = root.GetComponentsInChildren<CreatureSpawnPoint>(true).ToList();
 			for (float t = 0; t < 120f && spots.Any(p => p.RecordedAlive == CreatureSpawnPoint.Spawning || (p.RecordedAlive == -1 && ObjectProps.Get(p.Props, ObjectProps.CreatureZone).Length == 0)); t += 1f) yield return new WaitForSeconds(1f);
 			Check(ref ok, spots.Count(p => p.RecordedAlive > 0) >= 5, spots.Count + " creature spots, alive: " + string.Join(", ", spots.GroupBy(p => p.Kind.Label).Select(g => g.Key + " " + g.Sum(p => Math.Max(0, p.RecordedAlive))).ToArray()));
 			Network_Player player = RAPI.GetLocalPlayer();
 			// Pictures: from above, of each scene
-			Vector3 mid = root.transform.position + (tag != null ? tag.LocalCentre : Vector3.zero);
+			Vector3 mid = root.transform.position + LocalLandCentre(root, e.Name);
 			yield return CameraShot(mid + new Vector3(0f, 110f, -150f), mid, "large_overview", true);
 			foreach (IslandObjectRef r in refs.Where(x => x.Props != null && x.Props.ContainsKey("set.piece") && !x.Props.ContainsKey("cave") && RaftProps.Get(x.ObjectName) != null && RandomizerIslands.Themes.Any(th => th.Anchors.Contains(x.ObjectName))).Take(3))
 				yield return ShotOf(player, r.transform, "large_scene_" + r.ObjectName.Replace(" ", "_"), 9f);
