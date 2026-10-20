@@ -78,6 +78,28 @@ namespace DynamicIslands
 			return a >= 0 && b > a ? n.Substring(a + 1, b - a - 1) : n;
 		}
 
+		[ConsoleCommand(name: "CIStopCheck", docs: "Dev: CIStopTests ends a running test, runs its finally and logs IDLE (stops any other running test too)")]
+		public static void StopCheckCommand() { DynamicIslands.instance.StartCoroutine(StopCheckRoutine()); }
+		static bool stopCheckFinally;
+		static IEnumerator StopCheckDummy()
+		{
+			try { while (true) yield return null; }
+			finally { stopCheckFinally = true; }
+		}
+		// (not a test itself: CIStopTests would end it with the dummy)
+		static IEnumerator StopCheckRoutine()
+		{
+			stopCheckFinally = false;
+			StartTest(StopCheckDummy());
+			yield return null; yield return null;
+			bool running = runningTests > 0 && runningRuns.Count > 0;
+			StopTestsCommand();
+			yield return null; yield return null;
+			bool ok = running && runningTests == 0 && runningRuns.Count == 0 && runningIds.Count == 0 && stopCheckFinally;
+			if (ok) Log("PASS: stop tests (the running test ended, its finally ran)");
+			else Fail("stop tests (was running " + running + ", still running " + runningTests + ", finally ran " + stopCheckFinally + ")");
+		}
+
 		// Each running test's number: a command file's later lines wait only for the tests its own earlier lines started
 		static int testSerial;
 		static readonly HashSet<int> runningIds = new HashSet<int>();
