@@ -31,6 +31,11 @@ brush flatten at 0 3.5 r=7.5 s=20 frames=50 h=21.9
 brush flatten from -5 0 to -5 10 r=2.2 s=20 frames=40 h=21.9
 # (the gap between them, 5 m: the pillar's west spike - 33 m high - lowered to 12 m)
 brush flatten from -9 0 to -9 10 r=2.5 s=20 frames=40 h=12
+# (the lift's north legs stood in the rock's foot - the west one in 7 m, the east one in 2 m: notches down to the market floor)
+brush flatten at -16.9 3 r=1.3 s=20 frames=40 h=1.6
+brush flatten at -11.3 3 r=1.3 s=20 frames=40 h=1.6
+# (the bay by the cliff was 2-6 m of slope - the trailer stood on end against it, the crate in it: a sunk hollow out west)
+brush flatten at -21.5 -13 r=4 s=20 frames=40 h=-2.5
 origin
 clear at -12 -1 r=8
 clear at -28 12 r=13
@@ -103,9 +108,9 @@ place Creature_Hyena hyenas at 0 2 ground
 place Creature_StoneBird_Caravan whitebird at 3 -1 y=6 ground
 
 # --- In the bay south of the market: a trailer sunk on its side, the diver's crate by it, an air pocket ----------------
-place Caravan_Blue_01 sunktrailer at -15 -13 ground tilt=85 yaw=30
-place "Box Small" divecrate at -12.6 -12 ground yaw=40
-place Zone_Trigger airpocket at -13.5 -13 ground y=1
+place Caravan_Blue_01 sunktrailer at -22.5 -13.5 ground roll=85 yaw=30
+place "Box Small" divecrate at -19.8 -12 ground yaw=40
+place Zone_Trigger airpocket at -21 -13 ground y=1
 
 # --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, melons, flowers ----------
