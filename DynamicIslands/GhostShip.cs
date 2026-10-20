@@ -135,7 +135,7 @@ namespace DynamicIslands.Editor
 			if (ship != null && ship.Root != null && sinking != ship)
 			{
 				Dress(ship.Root);
-				Haunt(ship.Root);
+				Haunt(ship.Root, ship.Position);
 			}
 			if (ship != null && night) seenAtNight = true;
 
@@ -265,9 +265,9 @@ namespace DynamicIslands.Editor
 				foreach (Material m in r.materials)
 					if (m != null && m.HasProperty("_EmissionColor")) { m.EnableKeyword("_EMISSION"); m.SetColor("_EmissionColor", Glow * 0.18f); }
 			}
+			if (!any) return;
 			var glow = new GameObject(GlowName);
 			glow.transform.SetParent(root.transform, false);
-			if (!any) return;
 			bool alongZ = bounds.size.z >= bounds.size.x;
 			float half = (alongZ ? bounds.size.z : bounds.size.x) * 0.35f;
 			for (int i = -1; i <= 1; i++)
@@ -281,7 +281,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Whether a monster is one of the ship's (the host knows its own; a player goes by the ship's spots near it).</summary>
-		static bool OfShip(AI_NetworkBehaviour ai, GameObject root, CreatureSpawnPoint[] spots)
+		static bool OfShip(AI_NetworkBehaviour ai, CreatureSpawnPoint[] spots)
 		{
 			if (Raft_Network.IsHost) return spots.Any(p => p.Spawned.Contains(ai) || p.Summoned.Contains(ai));
 			if (!CreatureSpawner.IsOnCustomIsland(ai)) return false;
@@ -289,14 +289,14 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The ship's monsters as ghosts: see-through, pale and faintly glowing.</summary>
-		static void Haunt(GameObject root)
+		static void Haunt(GameObject root, Vector3 centre)
 		{
 			CreatureSpawnPoint[] spots = root.GetComponentsInChildren<CreatureSpawnPoint>(true);
 			if (spots.Length == 0) return;
 			foreach (AI_NetworkBehaviour ai in UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>())
 			{
-				if (ai == null || dressed.Contains(ai.GetInstanceID()) || (ai.transform.position - root.transform.position).sqrMagnitude > 150f * 150f) continue;
-				if (!OfShip(ai, root, spots)) continue;
+				if (ai == null || dressed.Contains(ai.GetInstanceID()) || Flat(ai.transform.position - centre).sqrMagnitude > 150f * 150f) continue;
+				if (!OfShip(ai, spots)) continue;
 				dressed.Add(ai.GetInstanceID());
 				try { MakeGhost(ai.gameObject); }
 				catch (Exception e) { Log("A ghost's looks: " + e.Message); }

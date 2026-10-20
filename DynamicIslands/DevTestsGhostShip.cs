@@ -64,8 +64,10 @@ namespace DynamicIslands
 				Check(ref ok, chests.Count >= 3 && chests.Any(c => ObjectProps.Get(c.Props, ObjectProps.LootItems).IndexOf("TitaniumIngot", StringComparison.Ordinal) >= 0 || ObjectProps.Get(c.Props, ObjectProps.LootItems).IndexOf("CircuitBoard", StringComparison.Ordinal) >= 0 || ObjectProps.Get(c.Props, ObjectProps.LootItems).IndexOf("Battery", StringComparison.Ordinal) >= 0),
 					"its chests: " + chests.Count + " with loot (" + string.Join(" | ", chests.Select(c => ObjectProps.Get(c.Props, ObjectProps.LootItems)).ToArray()) + ")");
 				Check(ref ok, objs.Any(o => o.ObjectName == "Note_Paper" && ObjectProps.Get(o.Props, ObjectProps.NoteTitle) == "Captain's log"), "the captain's log is aboard");
-				Check(ref ok, objs.Count(o => o.ObjectName == "Block_Foundation") >= 60 && objs.Any(o => o.ObjectName == "BoatLandmark_Flag") && objs.Any(o => o.ObjectName == "Placeable_Sail"), "its deck, mast and sail (" + objs.Count(o => o.ObjectName == "Block_Foundation") + " foundations, " + objs.Count + " objects)");
-				Check(ref ok, e.Root.GetComponentsInChildren<Light>(true).Count(l => l.color.g > 0.9f) >= 3, "it glows (its lights)");
+				// (the deck's pieces by their names: only objects with settings carry an IslandObjectRef)
+				List<string> parts = e.Root.GetComponentsInChildren<Transform>(true).Select(x => x.name).ToList();
+				int deck = parts.Count(pn => pn.StartsWith("Block_Foundation", StringComparison.Ordinal));
+				Check(ref ok, deck >= 60 && parts.Any(pn => pn.StartsWith("BoatLandmark_Flag", StringComparison.Ordinal)) && parts.Any(pn => pn.StartsWith("Placeable_Sail", StringComparison.Ordinal)), "its deck, mast and sail (" + deck + " foundations)");
 				// Its ghosts
 				List<AI_NetworkBehaviour> ghosts = null;
 				CreatureSpawnPoint[] spots = e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true);
@@ -79,6 +81,7 @@ namespace DynamicIslands
 				}
 				int looks = ghosts.Count(a => GhostShip.IsGhost(a.gameObject) && a.GetComponentsInChildren<Renderer>(true).Where(r => r is SkinnedMeshRenderer || r is MeshRenderer).All(r => r.sharedMaterials.All(m => m != null && m.shader != null && (m.shader.name.IndexOf("Additive", StringComparison.Ordinal) >= 0 || m.shader.name == "Sprites/Default"))));
 				Check(ref ok, ghosts.Count >= 6 && looks == ghosts.Count, "its crew are ghosts: " + looks + " of " + ghosts.Count + " see-through and glowing (" + string.Join(", ", ghosts.Select(a => a.behaviourType.ToString()).Distinct().ToArray()) + ")");
+				Check(ref ok, e.Root.GetComponentsInChildren<Light>(true).Count(l => l.color.g > 0.9f && l.transform.parent != null && l.transform.parent.name == "GhostShipGlow") >= 3, "it glows (its lights)");
 				Log("GHOSTSHIP " + e.HostName + " at " + e.Position);
 				if (keep) { Log(ok ? "PASS: ghost ship (kept)" : "ghost ship"); if (!ok) Fail("ghost ship"); yield break; }
 
@@ -133,7 +136,7 @@ namespace DynamicIslands
 			if (e == null || e.Root == null || player == null) { Fail("ghost ship shots: a ship out first (CIGhostShip keep)"); yield break; }
 			AzureSkyHour(23f);
 			yield return new WaitForSeconds(2f);
-			Vector3 ship = e.Root.GetComponentsInChildren<IslandObjectRef>(true).Where(o => o.ObjectName == "BoatLandmark_Flag").Select(o => o.transform.position).DefaultIfEmpty(e.Position).First();
+			Vector3 ship = e.Root.GetComponentsInChildren<Transform>(true).Where(o => o.name.StartsWith("BoatLandmark_Flag", StringComparison.Ordinal)).Select(o => o.position).DefaultIfEmpty(e.Position).First();
 			Vector3 raft = CustomIslandSpawner.RaftPosition.Value;
 			Vector3 dir = new Vector3(ship.x - raft.x, 0f, ship.z - raft.z).normalized;
 			// From the water, 30 m off the ship, looking at it
