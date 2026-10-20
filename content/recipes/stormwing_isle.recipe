@@ -36,7 +36,8 @@ clear at -20 20 r=11
 place TP_RotatingRedLight - at -31 -6 ground sit
 place TP_RotatingRedLight - at 31 -6 ground sit
 place Airplane standplane at -20 -6 ground yaw=90
-place Airplane crashplane at 35 -1 drop rot=14,70,12
+# (set level on the flat below the end, its floats sunk in: dropped, it came to rest on a wing tip with its floats in the air)
+place Airplane crashplane at 35 -1 ground y=-0.7 yaw=125
 place WingBroken - at 30 3 drop rot=0,20,170
 place PropellerBlade - at 26 -1.5 drop rot=0,30,90
 place Loot_ChestSmall pilotchest at 31.5 -3.5 ground sit yaw=250
