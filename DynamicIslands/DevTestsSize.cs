@@ -74,9 +74,20 @@ namespace DynamicIslands
 			Vector3 bBig = box(big), bSmall = box(small);
 			float hBig = big.networkEntity.stat_health.Max, hSmall = small.networkEntity.stat_health.Max;
 			Log("SIZE x3 " + Gf(sBig, "F3") + ", x1 " + Gf(sSmall, "F3") + ", x5 " + Gf(sClamp, "F3") + "; hit box x3 " + Gf(bBig.y) + " m high, x1 " + Gf(bSmall.y) + " m; health " + Gf(hBig, "F0") + " / " + Gf(hSmall, "F0"));
-			Check(ref ok, Mathf.Abs(sBig / sSmall - 3f) < 0.15f, "the x3 bear is three times as big as the x1 one (" + Gf(sBig / sSmall) + ")");
-			Check(ref ok, Mathf.Abs(sClamp - sBig) < 0.05f * sBig, "a file's x5 comes out as x3 (" + Gf(sClamp / sSmall) + ")");
-			Check(ref ok, bSmall.y > 0.1f && bBig.y / bSmall.y > 2.5f, "its hit box grows with it (" + Gf(bSmall.y > 0f ? bBig.y / bSmall.y : 0f) + "x)");
+			// (Raft gives each bear a random size of its own - the prefab's localScaleInterval - and the spot's size multiplies it: two
+			// bears' x3 and x1 came out 3.15 apart, RUN1 2026-10-21. So each is checked against Raft's range times its own size, and
+			// the hit box against the two bears' real sizes)
+			float lo = 1f, hi = 1f;
+			Network_Host_Entities hostE = ComponentManager<Network_Host_Entities>.Value;
+			AI_NetworkBehaviour prefab = hostE != null && hostE.AINetworkBehaviourPrefabs != null ? hostE.AINetworkBehaviourPrefabs.FirstOrDefault(b => b != null && b.behaviourType == AI_NetworkBehaviourType.Bear) : null;
+			try { if (prefab != null && prefab.localScaleInterval.maxValue > 0f) { lo = Mathf.Min(prefab.localScaleInterval.minValue, prefab.localScaleInterval.maxValue); hi = Mathf.Max(prefab.localScaleInterval.minValue, prefab.localScaleInterval.maxValue); } } catch { }
+			if (lo <= 0f) lo = hi;
+			Func<float, float, bool> inRange = (sc, k) => sc >= k * lo - 0.02f && sc <= k * hi + 0.02f;
+			Func<float, string> range = k => Gf(k * lo, "F3") + "-" + Gf(k * hi, "F3");
+			Log("  (Raft's own bear sizes " + range(1f) + (prefab == null ? ", no prefab found: 1" : "") + ")");
+			Check(ref ok, inRange(sBig, 3f) && inRange(sSmall, 1f), "the x3 bear is three times Raft's size, the x1 one Raft's own (x3 " + Gf(sBig, "F3") + " in " + range(3f) + ", x1 " + Gf(sSmall, "F3") + " in " + range(1f) + ")");
+			Check(ref ok, inRange(sClamp, 3f), "a file's x5 comes out as x3 (" + Gf(sClamp, "F3") + " in " + range(3f) + ", not " + range(5f) + ")");
+			Check(ref ok, bSmall.y > 0.1f && sSmall > 0f && Mathf.Abs(bBig.y / bSmall.y / (sBig / sSmall) - 1f) < 0.15f, "its hit box grows with it (" + Gf(bSmall.y > 0f ? bBig.y / bSmall.y : 0f) + "x for " + Gf(sSmall > 0f ? sBig / sSmall : 0f) + "x the size)");
 			Check(ref ok, Mathf.Abs(hBig - hSmall) < 0.5f, "its health stays as it was (" + Gf(hBig, "F0") + " and " + Gf(hSmall, "F0") + ")");
 
 			// A picture: the big bear from the front, a few metres off
