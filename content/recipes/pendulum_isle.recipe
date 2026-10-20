@@ -67,7 +67,9 @@ pop
 call treasure x=-12 z=0 r=6 n=1 seed=9611
 
 # --- The zipline from the high west end to the low east end; the store, the keel shaft and its warning ------------
-place ZiplinePath_Landmark zipdown at -24 1 ground
+# (a fixed height: on "ground" Raft's piece sank its near floor (5.72 m west, 0.97 m north of the pivot, 1.35 m under it)
+# 23 m into the island - now it stands on the high west end's flat top, 6.0)
+place ZiplinePath_Landmark zipdown at -20.28 -0.97 h=7.35
 zipto zipdown 21 1
 place Zone_Trigger lowzone at 22 0 ground
 store pendshop at 20 -3 ground

@@ -143,7 +143,9 @@ place Survivor_Cage ingridcage at -1 32 ground sit yaw=0
 place Loot_Chest ingridbag at -1 28.5 ground sit yaw=180
 
 # --- The zipline off the plateau's south-east edge down to the beach -------------------------------------------------
-place ZiplinePath_Landmark arrayzip at 14 -16 ground
+# (a fixed height: on "ground" Raft's piece hung its near floor (5.72 m west, 0.97 m north of the pivot, 1.35 m under it)
+# 12.4 m over the plateau's edge - now it stands on the plateau, 13.9)
+place ZiplinePath_Landmark arrayzip at 14.22 -14.47 h=15.25
 zipto arrayzip 22 -54
 
 # --- Things to gather, reefs ----------------------------------------------------------------------------------------
