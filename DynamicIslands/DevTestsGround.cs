@@ -82,7 +82,7 @@ namespace DynamicIslands
 			else Log("PASS: " + c.Label + " - " + islands + " islands, " + objects + " objects, " + c.Pass);
 		}
 
-		[ConsoleCommand(name: "CIGroundIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIGroundWorld does, then taken away (IG2/IG3). <which>: part of the name, 'plans' (every island of every plan - the story lines), 'gen' (the saved generated ones) or * (all but the test islands, kept copies and randomizer extras). Results in Mods\\DynamicIslands\\ground_islands.txt. CIGroundIslands <which> [most] [skip the first n] [keep: left there, where each is logged - to look at it]")]
+		[ConsoleCommand(name: "CIGroundIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIGroundWorld does, then taken away (IG2/IG3). <which>: part of the name (several joined by | - Geiger|Gannet_Rock, _ for a space), 'plans' (every island of every plan - the story lines), 'gen' (the saved generated ones) or * (all but the test islands, kept copies and randomizer extras). Results in Mods\\DynamicIslands\\ground_islands.txt. CIGroundIslands <which> [most] [skip the first n] [keep: left there, where each is logged - to look at it]")]
 		public static void GroundIslandsCommand(string[] args) { IslandsCheck(args, GroundCheck); }
 
 		static void IslandsCheck(string[] args, IslandCheck c)
@@ -100,9 +100,12 @@ namespace DynamicIslands
 			var kept = new System.Text.RegularExpressions.Regex("_[0-9a-f]{12}$");
 			var saved = new HashSet<string>(IslandSpawner.ListSavedIslands(), StringComparer.OrdinalIgnoreCase);
 			IEnumerable<string> pick;
+			// (several names in one run, joined by | - SPEED_RULES 6, gap check 2026-10-20; _ stands for a space, as a
+			// command's words are split at spaces)
+			string[] parts = which.Split('|').Select(p => p.Replace('_', ' ').Trim()).Where(p => p.Length > 0).ToArray();
 			if (which == "plans") pick = CustomIslandSpawner.AllPlansIslandNames().Where(n => saved.Contains(n));
 			else pick = saved.Where(n => !n.StartsWith("ci", StringComparison.Ordinal) && !kept.IsMatch(n) && !n.StartsWith(WorldRandomizer.ExtrasPrefix, StringComparison.OrdinalIgnoreCase) &&
-				(which == "*" || n.IndexOf(which, StringComparison.OrdinalIgnoreCase) >= 0));
+				(which == "*" || parts.Any(p => n.IndexOf(p, StringComparison.OrdinalIgnoreCase) >= 0)));
 			List<string> names = pick.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n).Skip(skip).Take(most).ToList();
 			Log(c.Label + " check of " + names.Count + " saved islands (" + which + ", from " + skip + ")");
 			var report = new StringBuilder();

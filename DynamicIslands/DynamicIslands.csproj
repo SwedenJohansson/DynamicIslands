@@ -186,6 +186,7 @@
     <Compile Include="WhaleBreach.cs" />
     <Compile Include="DevTestsWhaleBreach.cs" />
     <Compile Include="DevTestsUfo.cs" />
+    <Compile Include="DevTestsMpNewOptions.cs" />
     <Compile Include="FogBanks.cs" />
     <Compile Include="DevTestsFog.cs" />
     <Compile Include="ExtraUpgrades.cs" />
