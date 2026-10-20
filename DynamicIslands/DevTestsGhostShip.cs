@@ -54,6 +54,21 @@ namespace DynamicIslands
 				yield return GhostNightfall(true);
 				IslandWorldState.Entry e = null;
 				for (float t = 0f; t < 40f && (e == null || e.Root == null || e.Loading); t += 0.5f) { yield return new WaitForSeconds(0.5f); KeepAlive(me); e = GhostShip.Ship; }
+				// (none: a test world crowded by the earlier suites' islands - RUN1's gap phase 2026-10-21: Bring() said "No room near the
+				// raft" for 50 s; where the ship finds room isn't what this checks, so a new nightfall with any spot, as CIPoolAgain does)
+				if (e == null)
+				{
+					MapType gt = MapTypes.Get(GhostShip.TypeName);
+					float gel;
+					IslandGenSettings gs = gt != null ? MapTypes.Roll(gt, new System.Random(), out gel) : null;
+					if (gs != null && GhostShip.Spot(CustomIslandSpawner.RaftPosition.Value, gs.Radius) == null)
+					{
+						Log("  (no room near the raft in the crowded test sea - a new nightfall with any spot clear of the raft)");
+						CustomIslandSpawner.TestAllRound = true;
+						yield return GhostNightfall(true);
+						for (float t = 0f; t < 40f && (e == null || e.Root == null || e.Loading); t += 0.5f) { yield return new WaitForSeconds(0.5f); KeepAlive(me); e = GhostShip.Ship; }
+					}
+				}
 				Check(ref ok, e != null && e.Root != null, "nightfall brought a ghost ship (" + (e != null ? e.HostName : "none") + ", " + GhostShip.LastDecision + ")");
 				if (e == null || e.Root == null) yield break;
 				Vector3 raft = CustomIslandSpawner.RaftPosition.Value;
@@ -110,6 +125,7 @@ namespace DynamicIslands
 			}
 			finally
 			{
+				CustomIslandSpawner.TestAllRound = false;
 				if (!keep) { IslandWorldState.Entry left = GhostShip.Ship; if (left != null) GhostShip.Remove(left, "the test's end"); WorldOptions.Set(optionsBefore); GhostShip.Reset(); }
 				else { GhostShip.TestSleeping = null; GhostShip.TestForce = false; }
 			}
