@@ -2045,7 +2045,7 @@ namespace DynamicIslands
 			string name = args != null && args.Length > 0 ? args[0] : DateTime.Now.ToString("HHmmss");
 			string file = Path.GetFullPath(Path.Combine(DynamicIslands.assetpath, "shot_" + name + ".png"));
 			ScreenCapture.CaptureScreenshot(file);
-			Log("Screenshot: " + file + " (" + Screen.width + "x" + Screen.height + ")");
+			Log("Screenshot: " + file + " (" + Screen.width + "x" + Screen.height + (gfxLow ? ", low graphics: CIGfx high first for a full-size picture" : "") + ")");
 		}
 
 		[ConsoleCommand(name: "CIQuit", docs: "Dev: closes Raft cleanly (for automated test runs)")]

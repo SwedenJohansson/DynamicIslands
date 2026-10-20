@@ -895,6 +895,9 @@ namespace DynamicIslands
 		{
 			Camera cam = Camera.main;
 			if (cam == null) yield break;
+			// (CIGfx low: the user's quality for the picture, two frames for the water to follow)
+			bool gfx = GfxShotBegin();
+			if (gfx) { yield return null; yield return null; }
 			yield return new WaitForEndOfFrame();
 			int mask = cam.cullingMask;
 			foreach (Renderer r in cam.GetComponentsInChildren<Renderer>(true)) if (r.gameObject.layer != 0) cam.cullingMask &= ~(1 << r.gameObject.layer);
@@ -910,6 +913,7 @@ namespace DynamicIslands
 			{
 				cam.transform.localPosition = lp; cam.transform.localRotation = lr;
 				cam.cullingMask = mask;
+				GfxShotEnd(gfx);
 			}
 			string path = Path.Combine(RecipeFolder, "play_" + file + ".jpg");
 			File.WriteAllBytes(path, pic);

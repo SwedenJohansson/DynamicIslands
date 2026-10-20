@@ -363,7 +363,8 @@ namespace DynamicIslands
 			RenderTexture before = cam.targetTexture, active = RenderTexture.active;
 			cam.targetTexture = rt;
 			cam.aspect = w / (float)h;
-			cam.Render();
+			bool gfx = GfxShotBegin(); // (CIGfx low: the picture at the user's quality all the same)
+			try { cam.Render(); } finally { GfxShotEnd(gfx); }
 			cam.targetTexture = before;
 			cam.ResetAspect();
 			RenderTexture.active = rt;

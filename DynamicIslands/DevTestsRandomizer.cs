@@ -1687,7 +1687,8 @@ namespace DynamicIslands
 				var effects = cam.GetComponents<Behaviour>().Where(b => b != null && b.enabled && !(b is Camera) && System.Text.RegularExpressions.Regex.IsMatch(b.GetType().Name, "(?i)underwater|wobble|distort|refract|drunk|blur|wave")).ToList();
 				if (!effectsLogged) { effectsLogged = true; Log("  (the camera's effects: " + string.Join(", ", cam.GetComponents<Behaviour>().Where(b => b != null && !(b is Camera)).Select(b => b.GetType().Name + (b.enabled ? "" : " off")).ToArray()) + "; off for pictures: " + effects.Count + ")"); }
 				foreach (Behaviour b in effects) b.enabled = false;
-				try { cam.Render(); } finally { foreach (Behaviour b in effects) b.enabled = true; }
+				bool gfx = GfxShotBegin(); // (CIGfx low: the user's quality)
+				try { cam.Render(); } finally { foreach (Behaviour b in effects) b.enabled = true; GfxShotEnd(gfx); }
 				RenderTexture.active = rt;
 				tex.ReadPixels(new Rect(0, 0, 1920, 1080), 0, 0);
 				tex.Apply();

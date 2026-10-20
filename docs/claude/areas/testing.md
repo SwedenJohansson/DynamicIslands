@@ -97,3 +97,10 @@ Use `ci.ps1` in the repo root to run this mod's console commands (the CI* test c
 - Output: `FAIL:` lines, then at most 40 more lines: mod exceptions (`EXC`) first, then the last other `[CITEST]` lines. Lines are cut at 300 characters. `-Full` shows everything. The last line is `PASS n, FAIL n, <seconds> s`.
 - Exit 0 no FAIL, 1 FAIL, 2 setup problem (one line says which), 3 timeout.
 - Second Raft under Sandboxie: `-Player 2 -LogPath <its Player.log>` uses `dev_commands_2.txt`. The box must open that file to the real folder (`OpenFilePath`).
+
+## Low graphics for test runs: CIGfx (`DevTestsGfx.cs`)
+
+- `CIGfx low [fps]`: windowed 1280x720, quality level 0, shadows off, lowest water, AO/AA/volumetric light off, vsync off, frame cap (default 30, `0` = none). `CIGfx high`: the user's values back (taken when low was first set). `CIGfx status`.
+- `tools\raft.ps1 launch` sends `CIGfx low` to every Raft it starts (both players; `rebuild.ps1`, `mp.ps1` go through it). `$env:RAFT_GFX = "high"` skips it (`docshots.ps1` does, and sends `CIGfx high`).
+- Pictures stay at the user's quality: `RenderCam` (play, recipe, library pictures) and `PlayPicture` switch for the shot (`GfxShotBegin`/`GfxShotEnd`). `CIShot` captures the screen as it is: send `CIGfx high` first for full-size shots, `CIGfx low` after.
+- Nothing low is kept: `GfxSavePostfix` makes Raft's Settings.rgd save the user's values; quitting restores them; `tools\gfx.ps1 watch <pid>` (started by `raft.ps1`) puts Unity's registry values (`Screenmanager*`, `UnityGraphicsQuality*`) back from the backup once the first player's Raft closes. `gfx.ps1 check` compares with the backup.

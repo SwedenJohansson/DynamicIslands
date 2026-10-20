@@ -470,7 +470,7 @@ namespace DynamicIslands
 			try
 			{
 				cam.targetTexture = rt;
-				cam.Render();
+				{ bool gfx = GfxShotBegin(); try { cam.Render(); } finally { GfxShotEnd(gfx); } } // (CIGfx low: the user's quality)
 				RenderTexture previous = RenderTexture.active;
 				RenderTexture.active = rt;
 				var tex = new Texture2D(W, H, TextureFormat.RGB24, false);
