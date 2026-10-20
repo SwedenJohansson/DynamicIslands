@@ -123,11 +123,35 @@ namespace DynamicIslands
 				if (land(centre + dir * d)) { edge = d; miss = 0f; } else miss += 2f;
 			if (edge < 5f) Log("fog look: no ground found under " + big.name + " - standing 60 m from its middle");
 			if (edge < 5f) edge = 60f;
-			Vector3 at = centre + dir * edge * 0.5f + Vector3.up * 10f;
-			Func<float, Vector3> eyeAt = m => centre + dir * (edge + m) + Vector3.up * 3f;
-			float looming = Mathf.Clamp(sight * 0.6f, 30f, 40f);
-			Vector3 eye = eyeAt(looming);
-			Log("fog look: island " + big.name + " at " + Flat(centre - raftPos).magnitude.ToString("F0") + " m, shore " + edge.ToString("F0") + " m from its middle, eye " + looming.ToString("F0") + " m off the shore");
+			// The island's highest ground (rays down over a grid round its middle): the camera looks at it
+			RaycastHit top = default(RaycastHit);
+			float reach = edge + 60f;
+			for (float x = -reach; x <= reach; x += 4f)
+				for (float z = -reach; z <= reach; z += 4f)
+				{
+					RaycastHit hit;
+					Vector3 q = centre + new Vector3(x, 0f, z);
+					if (Physics.Raycast(new Vector3(q.x, 300f, q.z), Vector3.down, out hit, 600f, ~0, QueryTriggerInteraction.Ignore)
+						&& hit.point.y > top.point.y && hit.collider.GetComponentInParent<Raft>() == null) top = hit;
+				}
+			Vector3 at = top.point.y > 0.5f ? top.point : centre + Vector3.up * 10f;
+			// Open water round the camera: no ground within 20 m of it (an uneven shore put the first pictures beside a
+			// cliff or on a beach), stepping further out along the line until that holds
+			Func<Vector3, bool> open = e =>
+			{
+				if (land(e)) return false;
+				for (int i = 0; i < 16; i++)
+				{
+					Vector3 o = Quaternion.Euler(0f, i * 22.5f, 0f) * Vector3.forward;
+					for (float r = 5f; r <= 20f; r += 5f) if (land(e + o * r)) return false;
+				}
+				return true;
+			};
+			Func<float, float> clearFrom = m => { float k = m; while (k < m + 300f && !open(centre + dir * (edge + k))) k += 2f; return k; };
+			Func<float, Vector3> eyeAt = m => centre + dir * (edge + clearFrom(m)) + Vector3.up * 3f;
+			float looming = clearFrom(Mathf.Clamp(sight * 0.6f, 30f, 40f));
+			Vector3 eye = centre + dir * (edge + looming) + Vector3.up * 3f;
+			Log("fog look: island " + big.name + " at " + Flat(centre - raftPos).magnitude.ToString("F0") + " m, shore " + edge.ToString("F0") + " m from its middle, eye " + looming.ToString("F0") + " m off the shore, looking at its top (" + at.y.ToString("F0") + " m high, " + Flat(at - eye).magnitude.ToString("F0") + " m away)");
 
 			var optionsBefore = new HashSet<string>(WorldOptions.Current);
 			try
