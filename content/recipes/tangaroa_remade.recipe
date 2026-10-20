@@ -37,6 +37,9 @@ brush smooth from 26.5 8 to 6.1 14 r=3 s=10 frames=20
 for px 59 83 6
 brush flatten from {$px} -16 to {$px} 9 r=4 s=20 frames=60 h=-5
 next
+# (the deck's south edge, z -17.5, met the land's foot: its ridges rose through the deck and buried two railings - a ledge
+# along the edge just under the deck (lower, the railings hung over it), the cliff behind it)
+brush flatten from 49 -17.6 to 83 -17.6 r=2 s=20 frames=120 h=1.85
 origin
 clear at -6 7 r=16
 clear at 33 -2 r=14

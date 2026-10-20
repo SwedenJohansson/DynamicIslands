@@ -190,6 +190,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   the North spire, 2 m into the East one and hung 14 m over the crown in the South; each now starts on its spire's
   flat top and ends on the next one's. Stilt Hollow's banner hangs between two posts (its rope was tied to nothing)
   and the chair beside it stands on the stack, not half over the drop.
+- **Fixed:** Tangaroa Remade's deck no longer buries two railings: the land's ridges under its south edge rose
+  through the deck; a low ledge now runs along that edge under the deck, with the cliff behind it.
 - **Fixed:** The Rain Engine's third laser mirror stood beside its panel's line since beams turn at a mirror's centre;
   the beam now reaches the panel.
 - **Fixed:** a laser beam turned at a mirror's box edge and could just graze the next mirror; it now turns at the
