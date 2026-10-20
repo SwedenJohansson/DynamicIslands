@@ -193,6 +193,9 @@ namespace DynamicIslands
 
 			// Crates and clams: some moved; Raft still finds each by its old place; the same spots again
 			var moved = new List<KeyValuePair<LandmarkItem, Vector3>>();
+			// (each item's island as the loop found it: GetComponentInParent<Landmark>() gave null for one (an item not under
+			// its island's transform) and OriginalOf threw - RUN2 10-20)
+			var islandOf = new Dictionary<LandmarkItem, Landmark>();
 			int lootItems = 0;
 			bool findable = true;
 			foreach (Landmark l in nat)
@@ -200,12 +203,12 @@ namespace DynamicIslands
 				{
 					lootItems++;
 					Vector3? o = WorldRandomizer.OriginalOf(l, i);
-					if (o.HasValue && (o.Value - i.transform.position).magnitude > 1f) moved.Add(new KeyValuePair<LandmarkItem, Vector3>(i, i.transform.position));
+					if (o.HasValue && (o.Value - i.transform.position).magnitude > 1f) { moved.Add(new KeyValuePair<LandmarkItem, Vector3>(i, i.transform.position)); islandOf[i] = l; }
 					if (l.GetLandmarkItemByLocalPosition(i.localLandmarkPosition) != i) findable = false;
 				}
 			Check(ref ok, moved.Count > 0 && moved.Count <= lootItems, moved.Count + " of " + lootItems + " crates and clams lie somewhere else (wild: about 80%)");
 			Check(ref ok, findable, "Raft still finds every crate and clam by the place it knows (picking up, saving and the network use it)");
-			bool land = moved.All(m => { Vector3? o = WorldRandomizer.OriginalOf(m.Key.GetComponentInParent<Landmark>(), m.Key); return !o.HasValue || (o.Value.y < -0.5f) == (m.Value.y < -0.5f); });
+			bool land = moved.All(m => { Vector3? o = WorldRandomizer.OriginalOf(islandOf[m.Key], m.Key); return !o.HasValue || (o.Value.y < -0.5f) == (m.Value.y < -0.5f); });
 			Check(ref ok, land, "crates on land stay on land, under-water ones under water");
 			WorldRandomizer.Rehandle();
 			yield return new WaitForSeconds(3f);
