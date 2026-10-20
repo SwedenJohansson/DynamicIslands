@@ -516,8 +516,10 @@ namespace DynamicIslands
 		}
 
 		/// <summary>What stands on a mount narrower than itself: a dish on a mast, an antenna on a roof - one mesh, its box wider
-		/// than its foot (Balboa Remade's and Coral Observatory's dishes on their masts read "partly in the air", 2026-10-12).</summary>
-		static readonly Regex OnAMount = new Regex("Sattelite|Satellite|Dish|Antenna", RegexOptions.IgnoreCase);
+		/// than its foot (Balboa Remade's and Coral Observatory's dishes on their masts read "partly in the air", 2026-10-12; Raft's
+		/// Utopia tower top room and its glass on their tower, 152 m over the ground beside it - a false alarm FLOAT2 checked
+		/// with a picture, Utopia Remade, 2026-10-20).</summary>
+		static readonly Regex OnAMount = new Regex("Sattelite|Satellite|Dish|Antenna|Tower_EndRoom", RegexOptions.IgnoreCase);
 
 		/// <summary>What on a spawned island doesn't stand on anything: one line per problem; <paramref name="count"/> = the objects measured.</summary>
 		static List<string> GroundProblems(IslandWorldState.Entry e, out int count)
