@@ -12,6 +12,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Bioluminescent sea** (World settings > Extra options, off by default): on about one night in four the sea
+  around the raft glows blue - sparks twinkling on and under the waves, soft glowing patches, sparks around a swimmer,
+  shining fish and a flash at the bobber when a fish bites. On those nights fish bite twice as fast. Every player
+  sees the same glowing nights (from the host's world seed).
 - **Storm seas** (World settings > Extra options, off by default): Raft's storms come far more often and rock the
   raft harder. Each storm has a 1 in 4 chance to break one floor on the raft's edge or a corner (never one in the
   middle), and what stands on it falls. The host decides; every player sees the same storm and the same broken floor.

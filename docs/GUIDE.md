@@ -2463,7 +2463,7 @@ a world where they are all left alone plays as plain Raft plus your islands.
 - **World rules** (9.2): tougher or softer monsters, a dearer build menu.
 - **World randomizer** (9.3): a normal Raft world made different every time: colours, alphas, finds, odd islands, bosses.
 - **Extra options** (9.4): ghost rafts, private storages, long voyage, iron raft, shared EXP, night is dangerous, daily
-  quest, rogue shark, silver & golden barrels, storm days, storm seas, trader raft, extra upgrades, UFO sightings and a head start raft (older
+  quest, rogue shark, silver & golden barrels, storm days, bioluminescent sea, storm seas, trader raft, extra upgrades, UFO sightings and a head start raft (older
   worlds may still have scrambled blueprints or the story islands in a new order on).
 - **Islands while sailing** (9.5): which of your islands a world may meet.
 - **The level up system** (9.6): EXP and stat points - a switch in the window (a world option: islands don't turn it on).
@@ -2539,6 +2539,7 @@ already in the world is taken away. What each one does from the moment it change
 | Rogue shark | On: today's chance is rolled at once; off: one already out stays until killed |
 | Golden barrels | Barrels from now on; off: no extra loot and plain colours at once |
 | Storm days | At once: a storm day starts, or a storm ends within seconds |
+| Bioluminescent sea | At once: tonight's glow starts or fades within seconds |
 | Storm seas | At once: Raft's next weather is more often a storm, and a storm blowing now rocks harder; off: no more broken floors (broken ones stay broken) |
 | UFO sightings | The next sighting day has one; off, a saucer already in the sky finishes its crossing |
 | Extra upgrades | Off: the recipes are hidden; upgrades built or worn keep working, learned ones are kept |
@@ -2881,6 +2882,23 @@ nothing to catch, nothing it does to you - so it pays to look up now and then.
   to everyone; each machine flies it on the same path over its raft. Switched on in a running world, the next sighting
   day has one. Nothing is saved.
 
+#### Bioluminescent sea
+
+On about **one night in four** the sea around the raft **glows blue**. Tiny lights twinkle on the waves and drift just
+under them, thicker close to the raft, in deep blue, cyan and now and then nearly white; soft blue patches light the
+water here and there, and a blue light low over the water lights the raft from below. Swim, and the water **sparks**
+around you. Raft's **fish shine** and leave a few sparks behind them; a cast bobber has a ring of sparks, and when a
+fish takes the bait it **flashes**.
+
+- **Fish bite faster:** on a glowing night the wait for a bite with a fishing rod is **halved** (on top of the
+  titanium rod of Extra upgrades). Otherwise the glow is only there to look at.
+- **When:** the glow fades in over a few seconds when night falls (Raft's own night: dusk to dawn) and fades out at
+  dawn. A banner says "The sea glows tonight" when it starts. Which nights glow comes from the world's seed, so a
+  loaded world glows on the same nights.
+- **Every player sees the same glowing nights:** the host's options decide, and Raft keeps the time of day the same
+  for everyone. Each player sees the glow around the raft (or around themselves when far from it). Nothing is saved.
+- `GlowSea` shows whether tonight glows and the next glowing night; `GlowSea roll <from> <to>` lists them.
+
 #### Head start raft
 
 The world starts on a bigger raft that is already set up, to skip the first hours. The button goes **off -> LEVEL 1 ->
@@ -3108,7 +3126,7 @@ there means plain Raft.
 |---|---|---|---|
 | `monsters` | `timid`, `normal`, `fierce`, `savage`, `nightmare`; `easy`, `moderate`, `hard`, `impossible` or 0-4 are read too | The monster difficulty the next new world starts with | **Monster difficulty** in World settings, when you press **Create**; `Monsters <level>` in the main menu, at once |
 | `buildcost` | 0-100 | How many % more the build menu costs in the next new world | **Build cost** in World settings (Create); `BuildCost <0-100>` in the main menu |
-| `options` | The extra options that are on, separated by commas: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas` | The extra options the next new world starts with | The option buttons in World settings (Create); `WorldOptions +option -option` in the main menu |
+| `options` | The extra options that are on, separated by commas: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `glowsea`, `stormseas` | The extra options the next new world starts with | The option buttons in World settings (Create); `WorldOptions +option -option` in the main menu |
 | `levels` | `on`, `off` | The level up system in the next new world | **Level up system** in World settings (Create); `Levels on` / `Levels off` in the main menu |
 | `headstart` | 0-3 | The head start raft's level in the next new world (0 = none) | **Head start raft** in World settings (Create); `HeadStart <0-3>` in the main menu |
 | `islandsoff` | Island names separated by a vertical bar; also `type:<map type>` and `<generated>` | The islands left out of the next new world's islands while sailing | **CHOOSE ISLANDS...** in World settings (Create); `WorldIslands -<island>`, `+<island>`, `all` in the main menu |
@@ -3181,6 +3199,7 @@ Press **F10** for RML's console.
 | `Barrels` / `Barrels roll <index> [<to>]` | World | The barrels in the sea now and which are silver or golden (option Silver & golden barrels) / what the barrel with that index is in this world (with `<to>`: the silver and golden ones in the range) |
 | `StormSeas` / `StormSeas break` | World | The weather now, the raft's rocking, the storms counted, the floors broken and the edge foundations (option Storm seas) / (host, for tests) break an edge floor now |
 | `StormDays` / `StormDays roll <from> <to>` | World | Whether today is a storm day, the next one, the weather and the shark's factor (option Storm days) / the storm days between two days |
+| `GlowSea` / `GlowSea roll <from> <to>` | World | Whether tonight glows, the next glowing night, the glow and the fishing wait's factor (option Bioluminescent sea) / the glowing nights between two days |
 | `Traders` / `Traders offers <seed>` / `Traders bring` | World | The trader rafts loaded now and their stalls' stock (option Trader raft) / what a trader raft with that seed sells / a trader raft ahead now (host) |
 | `ExportMapType <type> [file name]` | Anywhere | Writes a map type as a file in `maptypes\` to start your own from (default name `my-<type>`) |
 | `ReloadMapTypes` | Anywhere | Reads the `maptypes\` files again and says which were left out and why |

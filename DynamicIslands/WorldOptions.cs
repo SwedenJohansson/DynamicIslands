@@ -27,14 +27,15 @@ namespace DynamicIslands.Editor
 	///   - upgrades: better versions of Raft's things to craft (ExtraUpgrades.Defs);
 	///   - ufo: now and then a flying saucer crosses the sky, looks only (UfoSightings).
 	///   - stormseas: storms much more often, rocking the raft harder; now and then one breaks a floor on its edge (StormSeas).
+	///   - glowsea: on about one night in four the sea around the raft and the fish glow blue; fish bite faster (GlowSea).
 	/// Saved in the world file ("@options=", "@optionseed=" - the seed every shuffle of the world comes from), sent by the host
 	/// to every player who joins and when they change (network kind 17: Data = "on=a,b;seed=n", Name = the private
 	/// storages' builders). The last choice in the box is kept in world_rules.txt ("options=").
 	/// </summary>
 	public static class WorldOptions
 	{
-		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger", DailyQuest = "dailyquest", RogueShark = "rogueshark", Barrels = "barrels", StormDays = "stormdays", TraderRaft = "traderraft", Upgrades = "upgrades", StormSeas = "stormseas", Ufo = "ufo";
-		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger, DailyQuest, RogueShark, Barrels, StormDays, TraderRaft, Upgrades, StormSeas, Ufo };
+		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger", DailyQuest = "dailyquest", RogueShark = "rogueshark", Barrels = "barrels", StormDays = "stormdays", TraderRaft = "traderraft", Upgrades = "upgrades", StormSeas = "stormseas", Ufo = "ufo", GlowSea = "glowsea";
+		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger, DailyQuest, RogueShark, Barrels, StormDays, TraderRaft, Upgrades, StormSeas, Ufo, GlowSea };
 		/// <summary>
 		/// Options no longer offered (the user, 2026-10-09): not in the New Game box, left out of the remembered choice, and in
 		/// World settings only while a world still has them on (so the host can switch them off). A world that has one on keeps it.
@@ -42,7 +43,7 @@ namespace DynamicIslands.Editor
 		public static readonly string[] Retired = { Blueprints, StoryOrder };
 		public static bool IsRetired(string option) { return Array.IndexOf(Retired, option) >= 0; }
 		public static string[] Offered { get { return All.Where(o => !IsRetired(o)).ToArray(); } }
-		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous", "Daily quest", "Rogue shark", "Silver & golden barrels", "Storm days", "Trader raft", "Extra upgrades", "Storm seas", "UFO sightings" };
+		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous", "Daily quest", "Rogue shark", "Silver & golden barrels", "Storm days", "Trader raft", "Extra upgrades", "Storm seas", "UFO sightings", "Bioluminescent sea" };
 		public static readonly string[] Hints =
 		{
 			"The blueprints lying on Raft's story islands are found on other story islands than usual. What the story needs (the steering wheel, the engine and its fuel, the machete) is never moved: the story can always be finished.",
@@ -61,6 +62,7 @@ namespace DynamicIslands.Editor
 			"Better versions of Raft's things to craft, next to the thing they improve once it is learned: large battery, titanium grill, blast furnace, reinforced storage, wide net, large fuel and water tanks, greenhouse plot, turbo engine, large wind turbine, comfy bed, magnet hook, titanium rod, swift flippers, large air tank, rapid charger, fast recycler, bright lantern, telescope, titanium greatsword, spear and machete, long paddle, floodlight, steel pot, fast juicer, sturdy scarecrow, master hammer, longbow, bright head light, bright lamp and lumber axe.",
 			"Storms come much more often (a calm spell is half as long, and half the time Raft's next weather is a storm) and rock the raft harder. Each storm has a 1 in 4 chance to break one raft floor on the edge or a corner of the raft - never one in the middle: what stood on it falls into the sea. A raft of 4 floors or fewer is never broken. The host's storms and floors are every player's.",
 			"Now and then (about three times in a week of days, half of them at night) a flying saucer crosses the sky high above the raft, from horizon to horizon in about half a minute, in a new colour each time. At night it glows green or purple. Looks only: every player sees the same one.",
+			"On about one night in four the sea around the raft glows: tiny blue lights twinkle on the waves and drift under them, a swimmer stirs up sparks, and the fish shine. On those nights fish bite twice as fast on a rod. Looks only otherwise; the same nights for every player.",
 		};
 
 		/// <summary>The current world's options (clients get the host's).</summary>
@@ -299,7 +301,7 @@ namespace DynamicIslands.Editor
 			IslandWorldState.Save();
 		}
 
-		[ConsoleCommand(name: "WorldOptions", docs: "The world's options (chosen in the New Game box's World settings): WorldOptions = what this world has; WorldOptions +option / -option (ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades, stormseas, ufo) = change them for this world (host)")]
+		[ConsoleCommand(name: "WorldOptions", docs: "The world's options (chosen in the New Game box's World settings): WorldOptions = what this world has; WorldOptions +option / -option (ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades, stormseas, ufo, glowsea) = change them for this world (host)")]
 		public static void WorldOptionsCommand(string[] args)
 		{
 			if (args != null && args.Length > 0 && !LoadSceneManager.IsGameSceneLoaded)
