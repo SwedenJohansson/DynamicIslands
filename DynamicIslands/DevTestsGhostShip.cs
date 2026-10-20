@@ -139,12 +139,15 @@ namespace DynamicIslands
 			Vector3 ship = e.Root.GetComponentsInChildren<Transform>(true).Where(o => o.name.StartsWith("BoatLandmark_Flag", StringComparison.Ordinal)).Select(o => o.position).DefaultIfEmpty(e.Position).First();
 			Vector3 raft = CustomIslandSpawner.RaftPosition.Value;
 			Vector3 dir = new Vector3(ship.x - raft.x, 0f, ship.z - raft.z).normalized;
-			// From the water, 30 m off the ship, looking at it
-			Vector3 eye = ship - dir * 30f; eye.y = 1.5f;
-			PlayerMove.To(player, eye, ControllerType.Water);
+			// On its deck at the near end, looking along it (from the water a shark came for the camera and the ship was too dark)
+			Vector3 centre = new Vector3(e.Position.x, 0f, e.Position.z);
+			Vector3 eye = centre - dir * 12f + Vector3.up * 30f;
+			RaycastHit hit;
+			eye.y = Physics.Raycast(eye, Vector3.down, out hit, 40f) && hit.point.y > -1f ? hit.point.y + 1.8f : 3f;
+			PlayerMove.To(player, eye, ControllerType.Ground);
 			yield return new WaitForSeconds(1f);
 			float yaw = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
-			Look(player, yaw, -8f);
+			Look(player, yaw, 8f);
 			yield return new WaitForSeconds(2f);
 			Screenshot(new[] { "ghostship_ship" });
 			yield return new WaitForSeconds(1f);
