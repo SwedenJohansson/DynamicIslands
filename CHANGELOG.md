@@ -40,6 +40,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   around the raft glows blue - sparks twinkling on and under the waves, soft glowing patches, sparks around a swimmer,
   shining fish and a flash at the bobber when a fish bites. On those nights fish bite twice as fast. Every player
   sees the same glowing nights (from the host's world seed).
+- **Fog banks** (World settings > Extra options, off by default): on about three days in five thick fog rolls in
+  over the sea for three to six hours, by day or at night, fading in and out over about an in-game hour. In it you see
+  only 45-75 m, so islands show up late and the radar matters. Raft's own sky draws the fog, so it fits Raft's light
+  and weather; while a storm blows the wind keeps it away. Every player sees the same fog (from the host's world seed).
 - **Storm seas** (World settings > Extra options, off by default): Raft's storms come far more often and rock the
   raft harder. Each storm has a 1 in 4 chance to break one floor on the raft's edge or a corner (never one in the
   middle), and what stands on it falls. The host decides; every player sees the same storm and the same broken floor.

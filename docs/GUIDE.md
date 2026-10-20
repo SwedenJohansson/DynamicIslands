@@ -2463,7 +2463,7 @@ a world where they are all left alone plays as plain Raft plus your islands.
 - **World rules** (9.2): tougher or softer monsters, a dearer build menu.
 - **World randomizer** (9.3): a normal Raft world made different every time: colours, alphas, finds, odd islands, bosses.
 - **Extra options** (9.4): ghost rafts, private storages, long voyage, iron raft, shared EXP, night is dangerous, daily
-  quest, rogue shark, silver & golden barrels, storm days, bioluminescent sea, storm seas, trader raft, extra upgrades, UFO sightings, lightning strikes and a head start raft (older
+  quest, rogue shark, silver & golden barrels, storm days, bioluminescent sea, storm seas, trader raft, extra upgrades, UFO sightings, lightning strikes, fog banks and a head start raft (older
   worlds may still have scrambled blueprints or the story islands in a new order on).
 - **Islands while sailing** (9.5): which of your islands a world may meet.
 - **The level up system** (9.6): EXP and stat points - a switch in the window (a world option: islands don't turn it on).
@@ -2543,6 +2543,7 @@ already in the world is taken away. What each one does from the moment it change
 | Storm seas | At once: Raft's next weather is more often a storm, and a storm blowing now rocks harder; off: no more broken floors (broken ones stay broken) |
 | UFO sightings | The next sighting day has one; off, a saucer already in the sky finishes its crossing |
 | Ghost ship | The next nightfall can bring one; off, a ship out goes at once |
+| Fog banks | A bank due now rolls in (fading); off, the fog lifts within about half a minute |
 | Lightning strikes | The next storm can have bolts (one blowing now too); off, a bolt already in the sky finishes |
 | Extra upgrades | Off: the recipes are hidden; upgrades built or worn keep working, learned ones are kept |
 | Scrambled blueprints / Story order (retired, off only) | Untaken blueprints go back to Raft's places / the Receiver goes back to Raft's order |
@@ -2900,6 +2901,24 @@ fish takes the bait it **flashes**.
 - **Every player sees the same glowing nights:** the host's options decide, and Raft keeps the time of day the same
   for everyone. Each player sees the glow around the raft (or around themselves when far from it). Nothing is saved.
 - `GlowSea` shows whether tonight glows and the next glowing night; `GlowSea roll <from> <to>` lists them.
+
+#### Fog banks
+
+Now and then **thick fog rolls in** over the sea for a few hours. In it you see only **45-75 m**: an island shows up
+late, as a grey shape that firms up as you sail closer, so the **Receiver's radar** matters more than your eyes.
+
+- **When:** on about three days in five (never on the first two days), at any hour of that day or night, for **three to
+  six hours**. Each bank has its own thickness. Which days and hours come from the world's seed, so a loaded world has
+  the same banks.
+- **It fades:** the fog thickens over about an in-game hour and thins out the same way at the end - never a jump. A
+  message says when it rolls in.
+- **Raft's own sky draws it,** by day grey-white and at night dark, with Raft's colours of the hour; Raft's weather
+  goes on as before underneath. **While a storm blows** (rain, rough snow, big waves - Raft's own or Storm days) the
+  wind keeps the fog away. Under water it does nothing.
+- **Every player sees the same fog at the same time:** each machine works out the banks from the host's world seed and
+  the clock, so nothing is sent. Switched on in a running world, a bank due now rolls in at once (slowly); off, the fog
+  lifts in about half a minute. Looks only: nothing is saved.
+- `FogBanks` shows whether fog is in and the next bank; `FogBanks roll <from> <to>` lists them.
 
 #### Lightning strikes
 
