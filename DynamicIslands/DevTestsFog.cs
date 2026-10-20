@@ -43,6 +43,12 @@ namespace DynamicIslands
 			Check(ref ok, FogBanks.Stormy(UniqueWeatherType.Rain) && FogBanks.Stormy(UniqueWeatherType.BigWaves) && !FogBanks.Stormy(UniqueWeatherType.Calm) && !FogBanks.Stormy(UniqueWeatherType.Fog), "storms keep the fog away");
 
 			if (CustomIslandSpawner.RaftPosition == null || !Raft_Network.IsHost || Camera.main == null) { Fail("fog: run in a world, as the host"); yield break; }
+			// (on the raft, the camera over the sea: FogBanks lets go of its fog while the camera is under water - the gap phase ran
+			// CIFog with the player in the sea and read Raft's own fog, RUN1 2026-10-21)
+			yield return EnsureAlive();
+			OnRaftCommand();
+			yield return new WaitForSeconds(1.5f);
+			if (Camera.main == null || Camera.main.transform.position.y < -0.6f) { Fail("fog: the camera is under water (y " + (Camera.main != null ? Camera.main.transform.position.y.ToString("F1") : "-") + ") even after putting the player on the raft"); yield break; }
 			var optionsBefore = new HashSet<string>(WorldOptions.Current);
 			try
 			{
