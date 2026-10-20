@@ -18,6 +18,7 @@ namespace DynamicIslands.Editor
 		public const string ZipTo = "zip.to";
 
 		static readonly FieldInfo pointA = typeof(MeshPath_Zipline_Landmark).GetField("pointA", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+		static readonly FieldInfo pointB = typeof(MeshPath_Zipline_Landmark).GetField("pointB", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 
 		public static bool TryParse(string text, out Vector3 v)
 		{
@@ -40,13 +41,19 @@ namespace DynamicIslands.Editor
 			MeshPath_Zipline_Landmark line = go.GetComponentInChildren<MeshPath_Zipline_Landmark>(true);
 			Transform a = line != null && pointA != null ? pointA.GetValue(line) as Transform : null;
 			if (a == null) return false;
-			// (the floor under the connect point goes with it: the nearest of the line's two floors)
-			Transform floor = go.GetComponentsInChildren<Transform>(true).Where(t => t != a && t.name.IndexOf("ZiplineBase", System.StringComparison.OrdinalIgnoreCase) >= 0)
-				.OrderBy(t => (t.position - a.position).sqrMagnitude).FirstOrDefault();
+			// (everything of the far end goes with it: each ZiplineBase piece nearer the far connect point than the near one -
+			// the floor and its stand. Before 2026-10-20 only the nearest piece moved, and not even
+			// that when it held the connect point: the Lodestone Array's far-end floor stayed on the slope where Raft's own 31 m line ends, 1.7 m in the air)
+			Transform bEnd = pointB != null ? pointB.GetValue(line) as Transform : null;
+			Vector3 near = bEnd != null ? bEnd.position : line.transform.position;
+			List<Transform> pieces = go.GetComponentsInChildren<Transform>(true).Where(t => t != a && t != go.transform && (bEnd == null || !bEnd.IsChildOf(t)) && !line.transform.IsChildOf(t) &&
+				t.name.IndexOf("ZiplineBase", System.StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+			pieces = pieces.Where(t => !pieces.Any(o => o != t && t.IsChildOf(o)) && (t.position - a.position).sqrMagnitude < (t.position - near).sqrMagnitude).ToList();
+			Transform floor = pieces.OrderBy(t => (t.position - a.position).sqrMagnitude).FirstOrDefault();
 			Vector3 target = islandOrigin + to;
 			Vector3 delta = target - (floor != null ? floor.position : a.position);
-			if (floor != null && !a.IsChildOf(floor)) floor.position += delta;
-			a.position += delta;
+			foreach (Transform t in pieces) t.position += delta;
+			if (!pieces.Any(t => a.IsChildOf(t))) a.position += delta;
 			try { line.ForceCreatePath(); }
 			catch (System.Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Zipline end: " + e.Message); return false; }
 			// (Raft's own collider follows the made path: re-enable so it is rebuilt where the line now runs)

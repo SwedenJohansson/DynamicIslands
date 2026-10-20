@@ -437,6 +437,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Ziplines with a far end you choose (`zip.to`):** the far end's floor now moves with the line; it stayed where Raft's own line ends, sometimes in the air on a slope (The Lodestone Array).
 - **Vending machine for a player who sets the island up late:** the host now sends the hatch state with each press, so a player whose island was set up after the host paid no longer misses Raft's message and sees the package.
 - **Nothing hangs in the air on the story islands and the randomizer's extras:** The Listening Mirrors' satellite
   dishes stand on a mast on their plinths and its altar on the road; Gannet Cliff's red banners hang between two posts.
