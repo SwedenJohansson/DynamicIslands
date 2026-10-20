@@ -184,6 +184,8 @@
     <Compile Include="DevTestsUfo.cs" />
     <Compile Include="ExtraUpgrades.cs" />
     <Compile Include="TraderRaft.cs" />
+    <Compile Include="GhostShip.cs" />
+    <Compile Include="DevTestsGhostShip.cs" />
     <Compile Include="BossPhases.cs" />
     <Compile Include="Survivors.cs" />
     <Compile Include="HeadStart.cs" />

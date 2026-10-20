@@ -217,7 +217,7 @@ picked up while the game runs). **Defaults...** in World settings sets the first
 |---|---|---|---|
 | `monsters` | `timid`, `normal`, `fierce`, `savage`, `nightmare` (`easy`, `moderate`, `hard`, `impossible` or 0-4 are read too) | Monster difficulty of the next new world | **Monster difficulty** in World settings, on **Create**; `Monsters <level>` in the main menu, at once |
 | `buildcost` | 0-100 | % more the build menu costs | **Build cost** (Create); `BuildCost <0-100>` in the main menu |
-| `options` | the extra options that are on, separated by commas: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `glowsea`, `stormseas` | The extra options the next new world starts with | The option buttons (Create); `WorldOptions +option -option` in the main menu |
+| `options` | the extra options that are on, separated by commas: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `glowsea`, `stormseas`, `ghostship` | The extra options the next new world starts with | The option buttons (Create); `WorldOptions +option -option` in the main menu |
 | `levels` | `on`, `off` | The level up system | **Level up system** (Create); `Levels on` / `off` in the main menu |
 | `headstart` | 0-3 | The head start raft's level (0 = none) | **Head start raft** (Create); `HeadStart <0-3>` in the main menu |
 | `islandsoff` | island names separated by a vertical bar (also `type:<map type>`, `<generated>`) | Islands left out of the islands while sailing | **CHOOSE ISLANDS...** (Create); `WorldIslands -<island>` / `+<island>` / `all` in the main menu |
@@ -367,6 +367,7 @@ Islands the generator makes by itself, with content. Plans use them (`type:<name
 | `wreck` | No land: an abandoned raft of Raft's blocks with barrels to loot |
 | `ghostraft` | No land: an abandoned raft of Raft's blocks with loot and a note - small, medium, or large with huts and a lookout, guarded by rats and screechers (the extra option Ghost rafts brings them while sailing) |
 | `traderraft` | No land: a trader's raft with a hut and three or four stalls that swap basic resources for seeds, a tree seed or a blueprint (the world option Trader raft brings them while sailing) |
+| `ghostship` | No land: a wrecked ship of foundations with a stern cabin, railings, a mast, a torn sail and lanterns, lit cyan in a mist, with four chests of good loot and hard rats and screechers aboard (the world option Ghost ship brings one some nights and sinks it at dawn) |
 | `tropical`, `snowy`, `desert`, `forest`, `volcanic`, `random` | A plain generated island of that style |
 | `oddity` | A small island with something odd on it: one of the eight below, picked at random |
 | `van`, `caravan`, `planecrash`, `boatwreck`, `shack`, `statue`, `rocket`, `hut` | A small island with a van, a caravan and tent, a crashed plane, a boat run aground, a hermit's shack (and hens), a statue with an offering chest, smoking rocket debris, or a hut of raft blocks; each with loot and a note (set pieces from Raft's other islands) |
@@ -499,6 +500,10 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   when a fish bites. On those nights the wait for a bite is halved. The same nights for every player (from the seed).
 - **Trader raft:** very rarely (about once in 7 km) a trader's raft comes by; its stalls swap planks, plastic, rope and
   scrap for fruit, flower and tree seeds, and now and then a blueprint. A little stock, shared by all players.
+- **Ghost ship:** on about one night in four a glowing wreck drifts past the raft after dark, close enough to swim
+  to: chests of good loot (titanium, circuit boards, a battery...) guarded by ghosts - Raft's monsters, see-through and
+  glowing. At dawn it sinks with whatever is left aboard; sleep through the night and it never comes. The host brings
+  it; every player sees the same ship, ghosts and loot.
 - **UFO sightings:** on about two days in five (half by day, half at night) a flying saucer crosses the sky high above
   the raft in about half a minute, in a new colour each time; at night it glows green or purple. Looks only; every player
   sees the same one at the same time (the host sends its path and colour).
@@ -519,7 +524,7 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   steel pot and fast juicer (2x as fast), titanium machete (1.5x damage), sturdy scarecrow (never wears out), master hammer
   (2x repair), longbow (1.5x draw and range), bright head light and bright lamp (2x as far) and lumber axe (2x as fast).
 - The host can change them in a world: `WorldOptions` shows them; `WorldOptions +ghostrafts -privatestorage` (any
-  option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades, glowsea, stormseas).
+  option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades, glowsea, stormseas, ghostship).
 - Multiplayer: the options, their seed and the storages' builders are in the world file and sent to every player
   (network kind 17). The story order and the blueprints' pairs are worked out from the seed on every machine, and each
   machine notes who built a storage as Raft places it there.
@@ -676,6 +681,7 @@ The level up system comes on in a world by the **Level up system** switch in Wor
 | `StormSeas` / `StormSeas break` | Game (break: host) | The weather now, the raft's rocking, the storms counted, the floors broken and the edge foundations (world option Storm seas); `break`: an edge floor breaks now (tests) |
 | `StormDays` / `StormDays roll <from> <to>` | Game | Whether today is a storm day, the next one, the weather and the shark's factor (world option Storm days); `roll`: the storm days in a range |
 | `GlowSea` / `GlowSea roll <from> <to>` | Game | Whether tonight glows, the next glowing night, the glow and the fishing wait's factor (world option Bioluminescent sea); `roll`: the glowing nights in a range |
+| `GhostShip` / `GhostShip roll <from> <to>` / `GhostShip bring` / `GhostShip sink` | Game (bring, sink: host) | Whether a ghost ship is out and the next night with one (world option Ghost ship); `roll`: the nights with one in a range; `bring`: one beside the raft now; `sink`: sink it now |
 | `Traders` / `Traders offers <seed>` / `Traders bring` | Game | The trader rafts' stalls loaded now and their stock (world option Trader raft); `offers`: what a trader raft with that seed sells; `bring` (host): a trader raft ahead now |
 | `StoryChain` | Game | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
 | `HeadStart` / `HeadStart 0-3` | Game; main menu | The head start raft: this world's level and the next new world's; at the main menu `HeadStart 2` chooses level 2 for the next new world (0 = off) |
@@ -828,6 +834,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `LightningStrikes.cs` | Extra option Lightning strikes: when a storm has bolts (the host rolls them), where they hit (the sea 30-150 m away, rarely the antenna or wind turbine), sending them (kind 33 `Moment`, Name "bolt"), the bolt drawn with lines and lights, its flicker and Raft's thunder |
 | `StormSeas.cs` | Extra option Storm seas: more of Raft's storms (its weather pick), the harder rocking (Raft's buoyancy tilt), the host's storm count and the edge floor a storm breaks (Raft's block removal), the banner (kind 35), saved as `@stormseas=` |
 | `GlowSea.cs` | Extra option Bioluminescent sea: which nights glow (from the seed and the night, so nothing is sent), the halved bite wait (Raft's `Bobber.FishOnHook`), and the look: sparks and patches on the waves (following UltimateWater's heights), fish halos, bobber sparks, a light and the water's emission colour |
+| `GhostShip.cs` | Extra option Ghost ship: which nights have one (from the seed and the night), the host bringing it beside the raft at nightfall as a generated island (`gen-ghostship-night-<seed>`, map type `ghostship`: the hull, cabin, rigging, chests and crew it is built from), its glow and ghostly crew (see-through materials, a faint light) on every machine, and sinking and deleting it at dawn or when the players sleep |
 | `ExtraUpgrades.cs` | Extra option Extra upgrades: the upgrade items (copies of Raft's items and blocks with better stats), their recipes, every machine's battery slot taking the large battery, hand models and equipment for the hand-held and worn ones |
 | `UpgradeTable.cs` | Extra option Extra upgrades: the upgrade research table - its own research and learned upgrades (saved, shared with every player), Raft's research menu switched to the upgrades while it is open |
 | `Housekeeping.cs` | Tidy up: what nothing uses any more (host copies, generated islands, the files of deleted worlds), looking through every copy of every world's state, Raft's older saves too |

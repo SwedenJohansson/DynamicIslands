@@ -12,6 +12,11 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Ghost ship** (World settings > Extra options, off by default): on about one night in four a glowing wreck
+  drifts past the raft after dark, close enough to swim to - Raft's own pieces, lit cyan in a mist, with four chests
+  of good loot (titanium, circuit boards, a battery...) and a crew of ghosts: Raft's monsters, see-through and
+  glowing. At dawn it sinks, and whatever is left aboard is lost; sleep through the night and it never comes. The host
+  brings it, so every player sees the same ship, ghosts and loot. New map type `ghostship`.
 - **Lightning strikes** (World settings > Extra options, off by default): in a storm a bolt now and then strikes
   the sea 30-150 m from the raft - a bright flash, a jagged bolt with forks and Raft's own thunder. Rare: some storms
   have none, the others one to four; very rarely a bolt hits the raft's Receiver antenna or wind turbine instead.

@@ -2221,7 +2221,7 @@ island on the Receiver doesn't come back by itself (its frequency shows the way)
 | Bring | Which one | Good to know |
 |---|---|---|
 | **One of my saved islands** | one of your islands (`.island` files) | Every player gets it from the host; only the host needs the file |
-| **A new island of a map type** | a map type: `random`, `sandbar`, `atoll`, `archipelago`, `stacks`, `boss`, `volcano`, `swamp`, `spire`, `treasure`, `camp`, `sunken`, `sky`, `wreck`, `ghostraft`, `traderraft`, the styles `tropical`, `snowy`, `desert`, `forest`, `volcanic`, and the randomizer's `oddity` (or one kind: `van`, `caravan`, `planecrash`, `boatwreck`, `shack`, `statue`, `rocket`, `hut`), `large`, `lair` | A new island is made for the world, different in every world. No file needed, so it always works when shared |
+| **A new island of a map type** | a map type: `random`, `sandbar`, `atoll`, `archipelago`, `stacks`, `boss`, `volcano`, `swamp`, `spire`, `treasure`, `camp`, `sunken`, `sky`, `wreck`, `ghostraft`, `traderraft`, `ghostship`, the styles `tropical`, `snowy`, `desert`, `forest`, `volcanic`, and the randomizer's `oddity` (or one kind: `van`, `caravan`, `planecrash`, `boatwreck`, `shack`, `statue`, `rocket`, `hut`), `large`, `lair` | A new island is made for the world, different in every world. No file needed, so it always works when shared |
 | **A random island (spawn pool)** | - | A random island of the spawn pool, as random islands are: one of your islands, a new generated island or a map type listed there (`spawnpool.txt`, [10](#10-settings-files)) |
 | **One island from a list** | island names, separated by commas | One of them is picked, ones not in the world yet first |
 
@@ -2542,6 +2542,7 @@ already in the world is taken away. What each one does from the moment it change
 | Bioluminescent sea | At once: tonight's glow starts or fades within seconds |
 | Storm seas | At once: Raft's next weather is more often a storm, and a storm blowing now rocks harder; off: no more broken floors (broken ones stay broken) |
 | UFO sightings | The next sighting day has one; off, a saucer already in the sky finishes its crossing |
+| Ghost ship | The next nightfall can bring one; off, a ship out goes at once |
 | Lightning strikes | The next storm can have bolts (one blowing now too); off, a bolt already in the sky finishes |
 | Extra upgrades | Off: the recipes are hidden; upgrades built or worn keep working, learned ones are kept |
 | Scrambled blueprints / Story order (retired, off only) | Untaken blueprints go back to Raft's places / the Receiver goes back to Raft's order |
@@ -2917,6 +2918,32 @@ own **thunder** rolls. It is there to look at - it does no damage, starts no fir
   everyone; a sea bolt hits the same spot next to the raft on every machine. Switched on in a running world, the next
   storm (or the one blowing now) can have bolts. Nothing is saved.
 
+#### Ghost ship
+
+On about **one night in four** a **ghost ship** comes up out of the dark a while after nightfall and drifts past the
+raft, close enough to **swim or sail to**: a wrecked ship of Raft's own pieces - a foundation hull with a pointed bow,
+a stern cabin with a roof, railings, a mast with a flag and a torn sail, an anchor and lanterns - lit by a pale
+**cyan glow** in a thin mist. Climb aboard by the ladders on either side.
+
+- **Its loot is good:** a large chest (the ghost ship's hoard: titanium, explosive goo, circuit boards, a battery,
+  good healing salves, honey, metal, copper, bolts, hinges), the captain's chest in the cabin, two chests on deck and
+  barrels. The captain's log lies on the cabin floor.
+- **Its crew are ghosts:** Raft's own monsters, made **see-through with a faint glow** - hard rats on deck and a
+  screecher or two over it. They don't come back once beaten.
+- **At dawn it sinks:** a banner says so, and over about 20 seconds it goes down and its lights fade. **What is left
+  aboard is lost** with it - the chests, their loot and the ghosts. Take what you want before the sky grows light.
+- **Sleep, and it doesn't come:** if the players are asleep when night falls, or go to sleep while it is out, there is
+  no ship that night (one out is gone at once).
+- **When:** which nights have one comes from the world's seed (`GhostShip roll <from> <to>` lists them). It is rolled
+  when night falls while you play: a world loaded in the middle of the night waits for the next nightfall.
+- **Every player sees the same ship, the same ghosts and the same loot:** the host brings it, as an island
+  (`gen-ghostship-night-<seed>`) of the map type `ghostship`, and sinks it; a chest is claimed like any island chest,
+  so its loot goes to one player only. A player joining in the night gets the ship that is out. Nothing about it is
+  saved: a ship that was out when the world was saved is gone when it loads by day. Switched on in a running world,
+  the next nightfall can bring one; off, a ship out goes at once.
+- `GhostShip` (F10) shows whether one is out and the next night with one; `GhostShip bring` brings one now and
+  `GhostShip sink` sinks it (host).
+
 #### Head start raft
 
 The world starts on a bigger raft that is already set up, to skip the first hours. The button goes **off -> LEVEL 1 ->
@@ -3144,7 +3171,7 @@ there means plain Raft.
 |---|---|---|---|
 | `monsters` | `timid`, `normal`, `fierce`, `savage`, `nightmare`; `easy`, `moderate`, `hard`, `impossible` or 0-4 are read too | The monster difficulty the next new world starts with | **Monster difficulty** in World settings, when you press **Create**; `Monsters <level>` in the main menu, at once |
 | `buildcost` | 0-100 | How many % more the build menu costs in the next new world | **Build cost** in World settings (Create); `BuildCost <0-100>` in the main menu |
-| `options` | The extra options that are on, separated by commas: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `glowsea`, `stormseas` | The extra options the next new world starts with | The option buttons in World settings (Create); `WorldOptions +option -option` in the main menu |
+| `options` | The extra options that are on, separated by commas: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `glowsea`, `stormseas`, `ghostship` | The extra options the next new world starts with | The option buttons in World settings (Create); `WorldOptions +option -option` in the main menu |
 | `levels` | `on`, `off` | The level up system in the next new world | **Level up system** in World settings (Create); `Levels on` / `Levels off` in the main menu |
 | `headstart` | 0-3 | The head start raft's level in the next new world (0 = none) | **Head start raft** in World settings (Create); `HeadStart <0-3>` in the main menu |
 | `islandsoff` | Island names separated by a vertical bar; also `type:<map type>` and `<generated>` | The islands left out of the next new world's islands while sailing | **CHOOSE ISLANDS...** in World settings (Create); `WorldIslands -<island>`, `+<island>`, `all` in the main menu |
@@ -3202,7 +3229,7 @@ Press **F10** for RML's console.
 | `WorldPlan` / `WorldPlan <name>` | World | The world's plan and its rules / give it another plan (host). A player who joined sees the host's plan, which of its rules are done and the story chain; trying to change it says only the host can |
 | `StoryChain` | World | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | World | What the randomizer does here / change it (host) |
-| `WorldOptions` / `WorldOptions +option -option` | World or main menu | The world's World settings / change them (host; at the main menu: the next new world). Options: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas` ([9.4](#94-extra-options)) |
+| `WorldOptions` / `WorldOptions +option -option` | World or main menu | The world's World settings / change them (host; at the main menu: the next new world). Options: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ghostship` ([9.4](#94-extra-options)) |
 | `HeadStart` / `HeadStart 0-3` | World or main menu | The head start raft: this world's level and the next new world's / at the main menu choose the level for the next new world (0 = off) |
 | `Levels` / `Levels on` / `Levels off` | World or main menu | The level up system in this world / switch it (host; off keeps everyone's levels; at the main menu: for the next new world) |
 | `Resync` | World, joined player | Ask the host for its custom islands again (the list, and any island file that hasn't come) |
@@ -3218,6 +3245,7 @@ Press **F10** for RML's console.
 | `StormSeas` / `StormSeas break` | World | The weather now, the raft's rocking, the storms counted, the floors broken and the edge foundations (option Storm seas) / (host, for tests) break an edge floor now |
 | `StormDays` / `StormDays roll <from> <to>` | World | Whether today is a storm day, the next one, the weather and the shark's factor (option Storm days) / the storm days between two days |
 | `GlowSea` / `GlowSea roll <from> <to>` | World | Whether tonight glows, the next glowing night, the glow and the fishing wait's factor (option Bioluminescent sea) / the glowing nights between two days |
+| `GhostShip` / `GhostShip roll <from> <to>` / `GhostShip bring` / `GhostShip sink` | World | Whether a ghost ship is out and the next night with one (option Ghost ship) / the nights with one / one beside the raft now / sink it now (host) |
 | `Traders` / `Traders offers <seed>` / `Traders bring` | World | The trader rafts loaded now and their stalls' stock (option Trader raft) / what a trader raft with that seed sells / a trader raft ahead now (host) |
 | `ExportMapType <type> [file name]` | Anywhere | Writes a map type as a file in `maptypes\` to start your own from (default name `my-<type>`) |
 | `ReloadMapTypes` | Anywhere | Reads the `maptypes\` files again and says which were left out and why |

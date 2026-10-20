@@ -375,6 +375,8 @@ namespace DynamicIslands.Editor
 				Settings = GhostRafts.Settings, Build = GhostRafts.Build },
 			new MapType { Name = TraderRaft.TypeName, Label = "Trader raft", Title = "Trader raft", Description = "No land: a merchant's raft with a hut and stalls that swap basic resources for seeds, a tree seed or a blueprint (the world option Trader raft brings them while sailing)",
 				Settings = TraderRaft.Settings, Build = TraderRaft.Build },
+			new MapType { Name = GhostShip.TypeName, Label = "Ghost ship", Title = "Ghost ship", Description = "No land: a glowing wreck of Raft's blocks - a deck with railings, a cabin, a mast and a sail - with chests of good loot and a crew of ghost rats and screechers (the world option Ghost ship brings one now and then at night; it sinks at dawn)",
+				Settings = GhostShip.Settings, Build = GhostShip.Build },
 
 			// The world randomizer's islands (RandomizerContent): oddities and boss lairs
 			new MapType { Name = "oddity", Label = "Oddity island", Description = "A small island with something odd on it: a van, a caravan, a crashed plane, a stranded boat, a shack, a statue, rocket debris or a hut",
