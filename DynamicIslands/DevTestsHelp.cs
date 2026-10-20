@@ -14,7 +14,7 @@ namespace DynamicIslands
 	/// <summary>The help of the World plans window (? marks, Help) and the alpha box's help buttons.</summary>
 	public static partial class DevTests
 	{
-		[ConsoleCommand(name: "CIPlanHelp", docs: "Dev, editor: the World plans window's help - a ? on every part (the plan row, templates, random islands, Raft's story, description, map, Check, Export/Import, and 6 on each rule card), each inside the window with its text; hovering shows the popup; Help opens the steps with the guide's buttons (online section, PDF); the island's rules have their own help and no Export ?. Pictures shot_planhelp_*")]
+		[ConsoleCommand(name: "CIPlanHelp", docs: "Dev, editor: the World plans window's help - a ? on every part (the plan row, templates, random islands, Raft's story, description, map, Check, Export/Import, and 7 on each rule card - DOT since SL9), each inside the window with its text; hovering shows the popup; Help opens the steps with the guide's buttons (online section, PDF); the island's rules have their own help and no Export ?. Pictures shot_planhelp_*")]
 		public static void PlanHelpCommand() { StartTest(PlanHelpRoutine()); }
 
 		static IEnumerator PlanHelpRoutine()
@@ -37,9 +37,9 @@ namespace DynamicIslands
 				List<UIKit.HelpMark> marks = window.GetComponentsInChildren<UIKit.HelpMark>(false).ToList();
 				int cards = window.GetComponentsInChildren<Transform>(false).Count(t => t.name == "Rule");
 				int onCards = marks.Count(m => m.GetComponentsInParent<Transform>(true).Any(t => t.name == "Rule"));
-				// (a km/day card has a 7th: "again until done", SR1)
+				// (a km/day card has an 8th: "again until done", SR1)
 				int again = window.GetComponentsInChildren<Transform>(false).Count(t => t.name == "Check_Again");
-				Check(ref ok, cards > 0 && onCards == cards * 6 + again, onCards + " ? on " + cards + " rule cards (6 each, +1 on the " + again + " with again until done)");
+				Check(ref ok, cards > 0 && onCards == cards * 7 + again, onCards + " ? on " + cards + " rule cards (7 each with DOT, +1 on the " + again + " with again until done)");
 				Check(ref ok, marks.Count - onCards == 5, (marks.Count - onCards) + " ? for the window's parts on the Other islands tab (plan row, templates, map, Check, Export/Import)");
 				// (TODO 5b: the plan's settings and its Main story line are tabs of their own)
 				WorldPlanWindow.ShowTab(WorldPlanWindow.TabSettings);
@@ -125,7 +125,7 @@ namespace DynamicIslands
 				catch (Exception e) { Check(ref ok, false, "island rules: " + e.Message); }
 				yield return new WaitForSecondsRealtime(0.5f);
 				marks = window.GetComponentsInChildren<UIKit.HelpMark>(false).ToList();
-				Check(ref ok, marks.Count == 5 + 2 && !marks.Any(m => m.Text.StartsWith("Export")), "island rules: " + marks.Count + " ? (the card's 5 - no story row on an island - plus map and Check), no Export ?");
+				Check(ref ok, marks.Count == 6 + 2 && !marks.Any(m => m.Text.StartsWith("Export")), "island rules: " + marks.Count + " ? (the card's 6 with DOT - no story row on an island - plus map and Check), no Export ?");
 				Button islandHelp = panel.GetComponentsInChildren<Button>(false).FirstOrDefault(b => b.name == "HelpButton");
 				if (islandHelp != null) islandHelp.onClick.Invoke();
 				yield return new WaitForSecondsRealtime(0.3f);
