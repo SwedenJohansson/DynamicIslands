@@ -9,14 +9,14 @@ expect animals Screecher 1
 wait 5
 where BalboaCave
 kill Hyena
-walk 0 -20 to 0 -14 h=4
+walk 0 -27 to 0 -23 h=5.5
 read Stone at the stair
-walk 0 -12 to 0 -6 to 0 0 to 0 7 to 0 11 h=19
-expect stand 0 12 h=19
+walk 0 -20 to 0 -12 to 0 -4 to 0 4 to 0 7 to 1.4 9 to 1.4 11 to 0 13 h=19
+expect stand 0 13 h=19 below=21
 open The king's chest
 kill Rat
-walk 34 -4 to 34 -9 to 34 -14 to 35 -17 h=4.1 below=3
-expect stand 35 -17 h=4 below=3
+walk 34 -4 to 34 -9 to 34 -14 to 35 -17 h=4.1 below=7
+expect stand 35 -17 h=4 below=7
 read Tomb tablet
 open Sealed coffer
 walk -26 -48 to -28 -44 h=1.3

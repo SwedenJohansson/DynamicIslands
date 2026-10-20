@@ -17,6 +17,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   and Castaway Knoll - three medium - Bramblewood Isle, Gullwing Bay, Coyote Mesa - and Driftcloud Islet, a small
   flying island. Raft's own look and density: things to gather on land and in the sea, caves, an underwater wreck,
   jetties into the water, cabins, rope bridges, and monsters on the medium islands and a few small ones.
+- **Three large library islands to wander** (no quest, no banner): Glowfall Isle, where a strange craft crashed
+  into a jungle island beside a glowing green pool; Dunecrown Isle, a desert island with a stepped pyramid, a tomb
+  and an oasis; Tidefall Reach, a volcanic island whose south half has sunk, a drowned town 8 m under the sea.
 - **Five more medium library islands to wander** (no quest, no banner): Crowncrag Ruin, a castle crumbled on a
   crag over a village; Firedance Isle, a volcanic tribe's huts, dancing ground and idols; Deepwatch Station, a
   sunken listening station with an air pocket and a wrecked submarine; Longpier Haven, a harbour with a long pier

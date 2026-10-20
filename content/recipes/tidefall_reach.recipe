@@ -71,7 +71,7 @@ place VP_RubblePile_Medium01 - at 14 -58 ground
 call ni8temple x=0 z=-50 h=-8 al=templecolumns roofal=templeroof
 prop templecolumns tint.color=#e8e2d4
 prop templeroof tint.color=#e8e2d4
-place TangaroaFounderStatue statue at 0 -50 h=-8 sit yaw=0
+place TangaroaFounderStatue statue at 0 -50 h=-8 sit scale=0.55 yaw=0
 place Loot_Chest offeringchest at 1.6 -52.4 h=-8 sit yaw=0
 place UT_EndRoom_Pot02 - at -2 -48 h=-8 sit
 place Pillar_01 - at 9 -47 ground rot=0,20,88

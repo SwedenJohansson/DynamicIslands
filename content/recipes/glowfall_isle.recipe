@@ -54,7 +54,7 @@ place CaravanRocketDebris_Leg2 - at 47 -17 ground sit yaw=200 scale=4
 place CaravanRocketDebris_Top1 - at 31 18 ground sit yaw=300 scale=4
 place CaravanRocketDebris_Exhaust - at 16 4 ground sit yaw=10 scale=4
 place CaravanRocketDebris_Body1 - at 50 -20 ground sit yaw=45 scale=3
-place TP_SeleneReactor_Water_Radiated glowpool at 19 15 h=2.6 scale=0.3
+place TP_SeleneReactor_Water_Radiated glowpool at 19 15 h=3.3 scale=0.3
 place UT_LightBottle01 - at 15 13 ground sit
 place UT_LightBottle03 - at 22 19.5 ground sit
 place UT_LightBottle01 - at 18 20 ground sit
@@ -79,7 +79,7 @@ scatter Banana_Bush_2 4 at -25 -20 r=20 seed=7815 free=3
 scatter Monstera_1 8 at -35 -5 r=28 seed=7816 free=2
 scatter Monstera_2 6 at -40 0 r=24 seed=7817 free=2
 scatter BigPalm1 3 at -45 -15 r=22 seed=7818 free=6
-scatter BigPalm3 3 at -30 10 r=20 seed=7819 free=6
+scatter BigPalm3 3 at -25 0 r=16 seed=7819 free=6
 scatter "Pickup_Landmark_Tree_Mango" 2 at -30 -15 r=18 seed=7820 free=5
 scatter "Pickup_Landmark_PineappleLandmark" 3 at -42 0 r=18 seed=7821 free=3
 push at -40 20 h=4

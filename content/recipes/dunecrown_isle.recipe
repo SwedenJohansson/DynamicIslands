@@ -7,8 +7,8 @@
 # the tomb, a screecher over the ridge.
 #
 # Built by the recipe player (CIRecipe dunecrown_isle) through the editor's own operations. Points: the plaza at 0 10
-# (4 m, r 36); the great pyramid round 0 14 - tiers half 20 (7 m), 16 (10 m), 12 (13 m), 8 (16 m), 4.5 (19 m); its stair
-# up the south face from 0 -12 (4 m) to 0 7 (19 m); the shrine at 0 14 (19 m); the small pyramid round -42 44 - tiers half
+# (4 m, r 36); the great pyramid round 0 14 - tiers half 22 (7 m), 18.5 (10 m), 15 (13 m), 11.5 (16 m), 8 (19 m); its stair
+# up the south face from 0 -20 (4 m) to 0 7 (19 m); the shrine at 0 14 (19 m); the small pyramid round -42 44 - tiers half
 # 13 (8 m), 9 (11 m), 5 (14 m); the tomb rock at 35 -25 (pad 3.6 m, floor 4.05 m, the mouth north at z -9); the oasis
 # at -38 -38 (rim 1.2 m, pool -0.7 m, r 7); the ridge from 58 30 to 62 -30 (14-17 m); the wreck at -20 -100 (8 m down).
 include lib_huts
@@ -25,15 +25,16 @@ generate
 
 # ===== The ground: the plaza, the two pyramids tier by tier, the stair, the tomb, the oasis, the ridge, the wreck's bed ==
 brush flatten at 0 10 r=36 s=20 frames=160 h=4
-call ni8tier x=0 z=14 half=20 h=7
-call ni8tier x=0 z=14 half=16 h=10
-call ni8tier x=0 z=14 half=12 h=13
-call ni8tier x=0 z=14 half=8 h=16
-call ni8tier x=0 z=14 half=4.5 h=19
-for i 0 19 1
-brush flatten at 0 {-12+$i} r=2.2 s=20 frames=30 h={4+$i*15/19}
+call ni8tier x=0 z=14 half=22 h=7
+call ni8tier x=0 z=14 half=18.5 h=10
+call ni8tier x=0 z=14 half=15 h=13
+call ni8tier x=0 z=14 half=11.5 h=16
+call ni8tier x=0 z=14 half=8 h=19
+brush flatten at 0 14 r=7.5 s=20 frames=160 h=19
+for i 0 27 1
+brush flatten at 0 {-20+$i} r=2.5 s=20 frames=80 h={4+$i*15/27}
 next
-brush rock at 0 14 r=24 s=20 frames=40
+brush rock at 0 14 r=26 s=20 frames=40
 brush sand from 0 -14 to 0 7 r=2.2 s=20 frames=20
 brush flatten at -42 44 r=18 s=20 frames=100 h=5
 call ni8tier x=-42 z=44 half=13 h=8
@@ -65,7 +66,7 @@ place Loot_Chest crownchest at 0 15 h=19 sit yaw=180
 place UT_EndRoom_Pot02 - at 1.8 12.5 h=19 sit
 place Placeable_Lantern_FireBasket - at -1.6 9.2 h=19 sit
 place Placeable_Lantern_FireBasket - at 1.6 9.2 h=19 sit
-place Note_Sign stairsign at 2.6 -13 ground yaw=180
+place Note_Sign stairsign at 2.8 -22 ground yaw=180
 
 # ===== The tomb in the rock south-east of the plaza: columns at its door, pots, the sealed coffer, its lights ============
 place Pillar_01 tombcolumns at 31.5 -8.5 ground sit

@@ -2,7 +2,7 @@
 # the sunken town, its temple's offerings, a house's barrel, the east wreck's barrel past the stingrays; the tribe's camp
 # and its chest and barrel, the hot springs, the buried tin. Points as in its recipe.
 island Tidefall Reach
-offset 0 0
+offset 0.6696 20.9889
 expect animals Screecher 2
 expect animals Warthog 2
 expect animals Stingray 2
@@ -11,7 +11,8 @@ wait 5
 where TangaroaFounderStatue
 read Stone at the street's head
 kill Stingray
-walk 0 -20 to 0 -26 to 0 -32 to 0 -38 h=-8
+walk 0 -12 to 0 -16 to 0 -18 h=1
+expect stand 0 -38 h=-8
 open Temple offerings
 open Barrel in a drowned house
 open Barrel by the east wreck

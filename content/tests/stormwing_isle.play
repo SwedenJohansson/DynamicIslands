@@ -7,13 +7,13 @@ wait 3
 at -24 -6
 expect height 9
 read Sign at the strip
-walk -24 -6 to -10 -6 to 0 -6 to 14 -6 to 28 -6 h=9
+walk -11 -6 to 0 -6 to 14 -6 to 26 -6 h=9
 read The flight log
 open Pilot's chest
-walk -20 4 to -20 10 to -18 16 h=9
+walk -20 2 to -20 10 to -18 16 h=9
 open Hangar crate
 open Barrel in the hangar
-walk 15 6 to 15 12 to 15 18 to 14 22 h=9.5 below=3
-expect stand 14 22 h=9.4 below=3
+walk 11 -6 to 11 0 to 11 6 to 10 10 h=9.5 below=12
+expect stand 10 10 h=9.4 below=12
 open The pilots' stores
 dig

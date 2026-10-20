@@ -9,8 +9,8 @@
 # Built by the recipe player (CIRecipe kingsrest_isle) through the editor's own operations. Points: the castle hill at
 # -40 10 (12 m, r 18), its walls at r 13, the gate south at -40 -3, the ramp from -40 -30 (3 m) to -40 -6 (12 m); the
 # hall x -43.75..-36.25, z 9..13.5 (floor 12.1 m, door south); the village at 35 -40 (3 m, r 18), four huts along z
-# -36..-33 from x 24 to 48, the fire at 35 -44; the west peak's top at 6 40 and the east peak's at 36 40 (both 22 m, r 7);
-# the path up the west peak from 6 4 (4 m) to 6 33; the bridge from 13.5 40 to 28.5 40 (deck 22 m, sagging 1.5 m).
+# -36..-33 from x 24 to 48, the fire at 35 -44; the west peak's top at 6 40 and the east peak's at 36 40 (both 22 m, r 10);
+# the path up the west peak from 6 -6 (4 m) to 6 31; the bridge from 13.5 40 to 28.5 40 (deck 22 m, sagging 1.5 m).
 include lib_huts
 include lib_sea
 include lib_features
@@ -34,21 +34,21 @@ brush rock at -40 10 r=18 s=6 frames=20
 brush flatten at 35 -40 r=18 s=20 frames=120 h=3
 brush grass at 35 -40 r=16 s=10 frames=20
 brush sand at 35 -44 r=5 s=20 frames=20
-brush flatten at 6 40 r=7 s=20 frames=260 h=22
-brush flatten at 36 40 r=7 s=20 frames=260 h=22
-brush flatten from 15 40 to 27 40 r=5 s=20 frames=200 h=10
-for i 0 29 1
-brush flatten at 6 {4+$i} r=2.6 s=20 frames=30 h={4+$i*18/29}
+brush flatten from 19.5 40 to 22.5 40 r=3 s=20 frames=200 h=10
+brush flatten at 6 40 r=10 s=20 frames=300 h=22
+brush flatten at 36 40 r=10 s=20 frames=300 h=22
+for i 0 37 1
+brush flatten at 6 {-6+$i} r=2.8 s=20 frames=200 h={4+$i*18/37}
 next
-brush smooth from 6 4 to 6 33 r=3 s=6 frames=50
-brush rock at 6 40 r=9 s=20 frames=40
-brush rock at 36 40 r=9 s=20 frames=40
+brush smooth from 6 -6 to 6 29 r=3 s=6 frames=50
+brush rock at 6 40 r=11 s=20 frames=40
+brush rock at 36 40 r=11 s=20 frames=40
 clear at -40 10 r=18
 clear from -40 -30 to -40 -5 r=3.5
 clear at 35 -40 r=18
-clear at 6 40 r=7
-clear at 36 40 r=7
-clear from 6 4 to 6 34 r=3
+clear at 6 40 r=10
+clear at 36 40 r=10
+clear from 6 -6 to 6 34 r=3
 
 # ===== The castle: the ring of crumbled walls with the gate south, four stubby towers, fire baskets at the gate =========
 for wi 0 6 1
@@ -98,7 +98,7 @@ place Note_Sign peaksign at 9 37 ground yaw=270
 call ni8temple x=36 z=40 h=22 al=templecolumns roofal=templeroof
 prop templecolumns tint.color=#e8e2d4
 prop templeroof tint.color=#e8e2d4
-place TangaroaFounderStatue statue at 36 40 h=22 sit yaw=270
+place TangaroaFounderStatue statue at 36 40 h=22 sit scale=0.55 yaw=270
 place UT_EndRoom_Pot02 - at 34 42.5 h=22 sit
 place Loot_Chest offeringchest at 37.5 37.6 h=22 sit yaw=270
 call ni8air x=36 z=40 h=23 al=templeair fog=#d8d8e8 fa=0.1 light=#fff4d0 la=0.25 parts=mist r=8
