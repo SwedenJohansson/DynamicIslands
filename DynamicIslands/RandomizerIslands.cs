@@ -230,8 +230,9 @@ namespace DynamicIslands.Editor
 			return true;
 		}
 
-		/// <summary>A few of a theme's props scattered between inner and outer metres around c (no centrepiece, chest or note): a touch of it.</summary>
-		public static int Sprinkle(MapKit k, Theme t, Vector2 c, float inner, float outer, int count)
+		/// <summary>A few of a theme's props scattered between inner and outer metres around c (no centrepiece, chest or note): a touch of it.
+		/// <paramref name="force"/> (tests only, CIShackDish): the first prop placed is this one instead of a random pick; null = as always.</summary>
+		public static int Sprinkle(MapKit k, Theme t, Vector2 c, float inner, float outer, int count, string force = null)
 		{
 			System.Random r = k.Rnd;
 			string[] props = t.Medium.Concat(t.Small).Where(RaftProps.Standable).ToArray();
@@ -243,7 +244,7 @@ namespace DynamicIslands.Editor
 			{
 				Vector2 p = Around(c, Yaw(r), 0f, inner + (float)r.NextDouble() * (outer - inner));
 				if (k.Ground(p) - k.Sea < 0.8f || k.Slope(p) > 22f) continue;
-				string name = One(r, props);
+				string name = placed == 0 && force != null ? force : One(r, props);
 				if (taken.Any(q => (q.Key - p).magnitude < q.Value + Footprint(name))) continue;
 				k.Clear(p, 1.5f);
 				float sy = Yaw(r);

@@ -363,8 +363,8 @@ namespace DynamicIslands.Editor
 
 		internal static float Tilt(System.Random r, float max) { return ((float)r.NextDouble() * 2f - 1f) * max; }
 
-		/// <summary>An oddity island's content: the set piece near the middle, its loot and a note (kind null = any).</summary>
-		public static void Oddity(MapKit k, IslandGenSettings s, string kind)
+		/// <summary>An oddity island's content: the set piece near the middle, its loot and a note (kind null = any). forceSprinkle (tests only): the first prop of the theme's touch is this one.</summary>
+		public static void Oddity(MapKit k, IslandGenSettings s, string kind, string forceSprinkle = null)
 		{
 			System.Random r = k.Rnd;
 			if (kind == null) kind = Oddities[r.Next(Oddities.Length)][0];
@@ -439,7 +439,7 @@ namespace DynamicIslands.Editor
 			// A touch of the quest island the set piece comes from
 			string theme;
 			Theme th = RandomizerIslands.OddityTheme.TryGetValue(kind, out theme) ? RandomizerIslands.ThemeOf(theme) : null;
-			if (th != null) RandomizerIslands.Sprinkle(k, th, c, 6f, 13f, 3 + r.Next(4));
+			if (th != null) RandomizerIslands.Sprinkle(k, th, c, 6f, 13f, 3 + r.Next(4), forceSprinkle);
 		}
 
 		/// <summary>A small hut of Raft's blocks on the land, open on one side, with a hammock and the castaway's chest.</summary>

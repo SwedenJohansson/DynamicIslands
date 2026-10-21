@@ -196,7 +196,7 @@ namespace DynamicIslands
 			else Log("PASS: " + c.Label + " types - " + sum + ", " + c.Pass);
 		}
 
-		[ConsoleCommand(name: "CIScrapyardExcavator", docs: "Dev, world (host, a test world 'CI ...'): islands made by the generator as it is now, one after another, until one has the scrapyard scene with the excavator as its centrepiece (the scene's centrepiece is one of excavator / forklift / dumpster, so a dozen fresh islands may have none - GAP22). That island is brought next to the raft, measured as CIGroundTypes does (the excavator's own lines decide), the excavator pictured (scrapyard_excavator) and taken away. CIScrapyardExcavator [islands to try, 80] [keep]")]
+		[ConsoleCommand(name: "CIScrapyardExcavator", docs: "Dev, world (host, a test world 'CI ...'): large islands (the only map type with themed scenes) made by the generator as it is now, one after another, until one has the scrapyard scene with the excavator as its centrepiece (a large island has a scrapyard in about one of four and its centrepiece is one of excavator / forklift / dumpster, so a dozen fresh islands may have none - GAP22). That island is brought next to the raft, measured as CIGroundTypes does (the excavator's own lines decide), the excavator pictured (scrapyard_excavator) and taken away. CIScrapyardExcavator [islands to try, 80] [keep]")]
 		public static void ScrapyardExcavatorCommand(string[] args)
 		{
 			int tries = 80, t;
@@ -211,7 +211,10 @@ namespace DynamicIslands
 			if (yard == null || !yard.Anchors.Contains("VP_Excavator")) { Fail("scrapyard excavator: the scrapyard scene has no excavator centrepiece any more"); yield break; }
 			if (!RaftProps.Standable("VP_Excavator")) { Fail("scrapyard excavator: VP_Excavator isn't standable, so the generator never picks it"); yield break; }
 			yield return PlaceableCatalog.EnsureBuilt();
-			List<MapType> types = MapTypes.All.Where(x => x.Name != "random").ToList();
+			// (only a large island gets themed scenes - RandomizerIslands.Large -> Dress - and no map type sets IslandGenSettings.Buildings,
+			// so the other types never have the scrapyard: with the tries spread over every type, most were wasted and a run found none, 2026-10-21)
+			List<MapType> types = MapTypes.All.Where(x => x.Name == "large" || x.ContentFrom == "large").ToList();
+			if (types.Count == 0) { Fail("scrapyard excavator: no map type makes large islands, the only ones with themed scenes"); yield break; }
 			var rnd = new System.Random();
 			var seen = new Dictionary<string, int>();
 			IslandFile found = null;
@@ -269,6 +272,87 @@ namespace DynamicIslands
 			else if (mine.Count > 0) Fail("scrapyard excavator (" + name + "): " + string.Join("; ", mine.ToArray()));
 			else Log("PASS: scrapyard excavator - on " + name + " (" + foundType.Name + "), on the ground" +
 				(lines.Count > 0 ? "; " + lines.Count + " other problem(s) on the island, not the excavator's (CIGroundTypes covers them)" : "") + "; " + stats);
+		}
+
+		[ConsoleCommand(name: "CIShackDish", docs: "Dev, world (host, a test world 'CI ...'): a hermit's shack island made by the generator as it is now, with the bear scene's satellite dish forced in as the first of the props sprinkled round the shack (by chance only about one shack in four gets one - 78f903d), brought next to the raft and measured: the dish's pivot on its antenna pole's axis (within 0.05 m) and 6.0 m (within 0.1) over the pole's base, the pole's base on the ground (0.2 m over to 0.6 m under it at most) and no ground-check line about the dish or the pole. Taken away after. CIShackDish [shacks to try for one with the dish placed, 6] [keep]")]
+		public static void ShackDishCommand(string[] args)
+		{
+			int tries = 6, t;
+			if (args != null && args.Length > 0 && int.TryParse(args[0], out t)) tries = t;
+			StartTest(ShackDishRoutine(tries, args != null && args.Contains("keep")));
+		}
+
+		static IEnumerator ShackDishRoutine(int tries, bool keep)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("shack dish: host, in a world"); yield break; }
+			MapType shack = MapTypes.BuiltIn("shack");
+			string themeName;
+			Theme bear = RandomizerIslands.OddityTheme.TryGetValue("shack", out themeName) ? RandomizerIslands.ThemeOf(themeName) : null;
+			if (shack == null || bear == null || !bear.Medium.Concat(bear.Small).Contains("Antenna_dish")) { Fail("shack dish: the shack island, or the dish among its theme's props, is gone"); yield break; }
+			if (!RaftProps.Standable("Antenna_dish")) { Fail("shack dish: Antenna_dish isn't standable, so the generator never places it"); yield break; }
+			yield return PlaceableCatalog.EnsureBuilt();
+			// (the shack type's own content, with the dish forced as the first prop of the touch of its theme - Oddity -> Sprinkle -> DishOnPole)
+			var forced = new MapType { Name = shack.Name, Label = shack.Label, Title = shack.Title,
+				Content = (mk, ms) => { RandomizerContent.Oddity(mk, ms, "shack", "Antenna_dish"); RandomizerIslands.TreesToCut(mk, ms, true); } };
+			var rnd = new System.Random();
+			IslandFile found = null;
+			IslandGenSettings foundS = null;
+			float foundEl = 0f;
+			int made = 0;
+			for (int i = 0; i < tries && found == null; i++)
+			{
+				float el;
+				IslandGenSettings gs = MapTypes.Roll(shack, rnd, out el);
+				IslandFile f = null;
+				try { f = MapTypes.Create(forced, gs, el, MapTypes.FileName(shack, gs)); made++; }
+				catch (Exception ex) { Log("  shack: generating failed - " + ex.Message); }
+				// (the dish is a set piece; the sprinkle can find no level spot in its ring round the shack - then the next shack)
+				if (f != null && f.Objects.Any(o => o.Name == "Antenna_dish" && o.Props != null && o.Props.ContainsKey("set.piece"))) { found = f; foundS = gs; foundEl = el; }
+				yield return null;
+			}
+			if (found == null) { Fail("shack dish: none of " + made + " shack island(s) got the forced dish placed"); yield break; }
+			Network_Player player = RAPI.GetLocalPlayer();
+			Vector3 raft = CustomIslandSpawner.RaftPosition ?? (player != null ? player.transform.position : Vector3.zero);
+			string name = MapTypes.FileName(shack, foundS);
+			float radius = MapTypes.EstimatedRadius(foundS);
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft, radius, 780f);
+			if (!spot.HasValue) { Fail("shack dish: no open sea near the raft for " + name); yield break; }
+			CustomIslandSpawner.CacheSize(name, radius, foundEl);
+			IslandWorldState.Entry e = IslandWorldState.Add(name, spot.Value, null, false);
+			e.Loading = true;
+			IslandFile ready = found;
+			StartTest(CustomIslandSpawner.GenerateAndSpawn(() => ready, name, e));
+			for (float w = 0; w < 90f && e.Root == null && !e.Failed; w += 0.1f) yield return new WaitForSeconds(0.1f);
+			if (e.Root == null) { Fail("shack dish: " + name + " didn't come"); IslandWorldState.RemoveIds(new[] { e.Id }, true); yield break; }
+			yield return WaitIslandSettled(e, 0.5f, 2f);
+			Physics.SyncTransforms();
+			Terrain land = e.Root.GetComponentInChildren<Terrain>();
+			IslandObjectRef[] refs = e.Root.GetComponentsInChildren<IslandObjectRef>(true);
+			List<IslandObjectRef> dishes = refs.Where(x => x.ObjectName == "Antenna_dish" && x.Props != null && x.Props.ContainsKey("set.piece")).ToList();
+			Func<Vector3, Vector3, float> flat = (a, b) => new Vector2(a.x - b.x, a.z - b.z).magnitude;
+			var bad = new List<string>();
+			var good = new List<string>();
+			int count;
+			List<string> lines = GroundProblems(e, out count);
+			foreach (string l in lines.Where(q => q.Contains("Antenna_")).Take(5)) bad.Add("ground check: " + l);
+			if (dishes.Count == 0) bad.Add("the dish didn't come with the island");
+			foreach (IslandObjectRef d in dishes)
+			{
+				Vector3 dp = d.transform.position;
+				IslandObjectRef pole = refs.Where(x => x.ObjectName == "Antenna_pole").OrderBy(x => flat(x.transform.position, dp)).FirstOrDefault();
+				if (pole == null || flat(pole.transform.position, dp) > 0.5f)
+				{ bad.Add("no antenna pole under the dish" + (pole == null ? "" : " (the nearest " + Num(Math.Round(flat(pole.transform.position, dp), 2)) + " m off)")); continue; }
+				// (the pole's base: its lowest mesh; its pivot when it has none)
+				Renderer[] parts = pole.GetComponentsInChildren<Renderer>(false).Where(x => x is MeshRenderer && x.enabled && x.name != ContentCatalog.MarkerOnly).ToArray();
+				float baseY = parts.Length > 0 ? parts.Min(x => x.bounds.min.y) : pole.transform.position.y;
+				float off = flat(pole.transform.position, dp), up = dp.y - baseY;
+				float gap = land != null ? baseY - (land.SampleHeight(pole.transform.position) + land.transform.position.y) : float.NaN;
+				string msg = "dish " + Num(Math.Round(off, 2)) + " m off the pole's axis, " + Num(Math.Round(up, 2)) + " m over its base, base " + (float.IsNaN(gap) ? "no ground" : Num(Math.Round(Mathf.Abs(gap), 2)) + (gap > 0f ? " m over" : " m under") + " the ground");
+				if (off > 0.05f || Mathf.Abs(up - 6f) > 0.1f || float.IsNaN(gap) || gap > 0.2f || gap < -0.6f) bad.Add(msg); else good.Add(msg);
+			}
+			if (!keep) yield return RemoveIslandsAndWait(new[] { e.Id });
+			if (bad.Count > 0) Fail("shack dish (" + name + "): " + string.Join("; ", bad.ToArray()));
+			else Log("PASS: shack dish - on " + name + ": " + string.Join("; ", good.ToArray()) + "; " + count + " objects measured, " + lines.Count + " other ground problem(s), not the dish's");
 		}
 
 		static readonly IslandCheck OverlapCheck = new IslandCheck { Label = "overlap", File = "overlap", Pass = "nothing through anything", Measure = OverlapProblems };
