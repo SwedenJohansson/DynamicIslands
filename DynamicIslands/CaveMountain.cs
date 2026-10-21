@@ -152,7 +152,10 @@ namespace DynamicIslands.Editor
 				Transform t = caves[i];
 				if (t == null) continue;
 				PropInfo p = infos[i];
-				float floorY = t.position.y + p.Floor;
+				// (the piece's measures at its scale: the generator's dens stand up to 3 times their size - the floor, the inside point
+				// and the way in's width at scale 1 put a 3x bear den's floor 9 m up in its room and its way in a third as wide)
+				Vector3 sc = t.lossyScale;
+				float floorY = t.position.y + p.Floor * sc.y;
 				foreach (Collider c in t.GetComponentsInChildren<Collider>())
 					if (c.enabled && !c.isTrigger) { cols.Add(c); floorOf[c] = floorY; ownerOf[c] = mouths.Count; }
 				foreach (Renderer r in t.GetComponentsInChildren<Renderer>())
@@ -165,12 +168,12 @@ namespace DynamicIslands.Editor
 				Vector3 along = t.rotation * (p.Axis == 0 ? Vector3.right : Vector3.forward);
 				along.y = 0f; along.Normalize();
 				Vector3 side = new Vector3(along.z, 0f, -along.x);
-				Vector3 inside = t.position + t.rotation * p.Inside;
+				Vector3 inside = t.position + t.rotation * Vector3.Scale(p.Inside, sc);
 				mouths.Add(new Mouth
 				{
 					Pos = t.position, Along = along, Side = side,
 					InsideAlong = Vector3.Dot(inside - t.position, along), InsideSide = Vector3.Dot(inside - t.position, side),
-					HalfWidth = p.Width / 2f + 1f, FloorY = floorY, Plus = p.OpenPlus, Minus = p.OpenMinus, Name = t.name
+					HalfWidth = p.Width * (p.Axis == 0 ? sc.z : sc.x) / 2f + 1f, FloorY = floorY, Plus = p.OpenPlus, Minus = p.OpenMinus, Name = t.name
 				});
 			}
 			caves.RemoveAll(t => t == null);
