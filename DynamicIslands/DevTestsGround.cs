@@ -267,8 +267,10 @@ namespace DynamicIslands
 			Transform exc = e.Root.GetComponentsInChildren<IslandObjectRef>(true).Where(r => r.ObjectName == "VP_Excavator" && r.Props != null && r.Props.ContainsKey("set.piece")).Select(r => r.transform).FirstOrDefault();
 			if (exc != null && player != null) { SetHour(11f); yield return ShotOf(player, exc, "scrapyard_excavator", 12f); }
 			foreach (string l in lines.Take(5)) Log("    " + l);
+			// (read before the removal: a destroyed Transform compares equal to null, 2026-10-21)
+			bool hasExc = exc != null;
 			if (!keep) yield return RemoveIslandsAndWait(new[] { e.Id });
-			if (exc == null) Fail("scrapyard excavator: " + name + " came without its excavator (" + n + " objects)");
+			if (!hasExc) Fail("scrapyard excavator: " + name + " came without its excavator (" + n + " objects)");
 			else if (mine.Count > 0) Fail("scrapyard excavator (" + name + "): " + string.Join("; ", mine.ToArray()));
 			else Log("PASS: scrapyard excavator - on " + name + " (" + foundType.Name + "), on the ground" +
 				(lines.Count > 0 ? "; " + lines.Count + " other problem(s) on the island, not the excavator's (CIGroundTypes covers them)" : "") + "; " + stats);
