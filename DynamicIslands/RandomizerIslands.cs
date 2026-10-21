@@ -141,8 +141,9 @@ namespace DynamicIslands.Editor
 			float baseY = dish.Position.y - RaftProps.Lift("Antenna_dish") + sink;
 			Vector3 at = dish.Position;
 			add("Antenna_pole", new Vector3(at.x, baseY - 0.1f, at.z), yaw);
-			// (as on Raft's Balboa: its back on the pole, 5.3 m up - the pole is 6.3 m)
-			dish.Position = new Vector3(at.x, baseY - 0.1f + 5.3f, at.z) + Quaternion.Euler(0f, yaw, 0f) * new Vector3(0f, 0f, 0.25f);
+			// (its mount on the pole's top, as the hand-built islands stand it - pivot on the pole, 6.0-6.2 m up; the pole is 6.3 m.
+			// Set 0.25 m out and 5.3 m up, its back hung 0.1 m off the pole, held by nothing: CIGroundTypes gen-shack-296323)
+			dish.Position = new Vector3(at.x, baseY - 0.1f + 6f, at.z);
 		}
 
 		/// <summary>Stands a measured prop on generated ground (sunk a little), protected from clearing like a set piece.</summary>
