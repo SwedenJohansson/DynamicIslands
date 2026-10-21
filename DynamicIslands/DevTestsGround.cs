@@ -196,6 +196,81 @@ namespace DynamicIslands
 			else Log("PASS: " + c.Label + " types - " + sum + ", " + c.Pass);
 		}
 
+		[ConsoleCommand(name: "CIScrapyardExcavator", docs: "Dev, world (host, a test world 'CI ...'): islands made by the generator as it is now, one after another, until one has the scrapyard scene with the excavator as its centrepiece (the scene's centrepiece is one of excavator / forklift / dumpster, so a dozen fresh islands may have none - GAP22). That island is brought next to the raft, measured as CIGroundTypes does (the excavator's own lines decide), the excavator pictured (scrapyard_excavator) and taken away. CIScrapyardExcavator [islands to try, 80] [keep]")]
+		public static void ScrapyardExcavatorCommand(string[] args)
+		{
+			int tries = 80, t;
+			if (args != null && args.Length > 0 && int.TryParse(args[0], out t)) tries = t;
+			StartTest(ScrapyardExcavatorRoutine(tries, args != null && args.Contains("keep")));
+		}
+
+		static IEnumerator ScrapyardExcavatorRoutine(int tries, bool keep)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("scrapyard excavator: host, in a world"); yield break; }
+			Theme yard = RandomizerIslands.ThemeOf("scrapyard");
+			if (yard == null || !yard.Anchors.Contains("VP_Excavator")) { Fail("scrapyard excavator: the scrapyard scene has no excavator centrepiece any more"); yield break; }
+			if (!RaftProps.Standable("VP_Excavator")) { Fail("scrapyard excavator: VP_Excavator isn't standable, so the generator never picks it"); yield break; }
+			yield return PlaceableCatalog.EnsureBuilt();
+			List<MapType> types = MapTypes.All.Where(x => x.Name != "random").ToList();
+			var rnd = new System.Random();
+			var seen = new Dictionary<string, int>();
+			IslandFile found = null;
+			MapType foundType = null;
+			IslandGenSettings foundS = null;
+			float foundEl = 0f, start = Time.realtimeSinceStartup;
+			int made = 0, failed = 0;
+			Log("scrapyard excavator: making up to " + tries + " islands until one has the scrapyard's excavator");
+			for (int i = 0; i < tries && found == null && Time.realtimeSinceStartup - start < 300f; i++)
+			{
+				MapType type = types[i % types.Count];
+				float el;
+				IslandGenSettings s = MapTypes.Roll(type, rnd, out el);
+				IslandFile f = null;
+				try { f = MapTypes.Create(type, s, el, MapTypes.FileName(type, s)); made++; }
+				catch (Exception ex) { failed++; Log("  " + type.Name + ": generating failed - " + ex.Message); }
+				if (f != null)
+				{
+					// (the scene's centrepiece is a set piece; the Varuna look's excavator stands without one)
+					foreach (IslandObject o in f.Objects.Where(o => o.Props != null && o.Props.ContainsKey("set.piece") && yard.Anchors.Contains(o.Name)))
+					{
+						int c;
+						seen[o.Name] = (seen.TryGetValue(o.Name, out c) ? c : 0) + 1;
+						if (o.Name == "VP_Excavator" && found == null) { found = f; foundType = type; foundS = s; foundEl = el; }
+					}
+				}
+				yield return null;
+			}
+			string stats = made + " island(s) made" + (failed > 0 ? ", " + failed + " failed" : "") + "; scrapyard centrepieces: " +
+				(seen.Count == 0 ? "none" : string.Join(", ", seen.Select(x => x.Key + " " + x.Value).ToArray()));
+			Log("  " + stats);
+			if (found == null) { Fail("scrapyard excavator: none in " + stats); yield break; }
+			Network_Player player = RAPI.GetLocalPlayer();
+			Vector3 raft = CustomIslandSpawner.RaftPosition ?? (player != null ? player.transform.position : Vector3.zero);
+			string name = MapTypes.FileName(foundType, foundS);
+			float radius = MapTypes.EstimatedRadius(foundS);
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft, radius, 780f);
+			if (!spot.HasValue) { Fail("scrapyard excavator: no open sea near the raft for " + name); yield break; }
+			CustomIslandSpawner.CacheSize(name, radius, foundEl);
+			IslandWorldState.Entry e = IslandWorldState.Add(name, spot.Value, null, false);
+			e.Loading = true;
+			IslandFile ready = found;
+			StartTest(CustomIslandSpawner.GenerateAndSpawn(() => ready, name, e));
+			for (float w = 0; w < 90f && e.Root == null && !e.Failed; w += 0.1f) yield return new WaitForSeconds(0.1f);
+			if (e.Root == null) { Fail("scrapyard excavator: " + name + " didn't come"); IslandWorldState.RemoveIds(new[] { e.Id }, true); yield break; }
+			yield return WaitIslandSettled(e, 0.5f, 2f);
+			int n;
+			List<string> lines = GroundProblems(e, out n);
+			List<string> mine = lines.Where(l => l.Contains("VP_Excavator")).ToList();
+			Transform exc = e.Root.GetComponentsInChildren<IslandObjectRef>(true).Where(r => r.ObjectName == "VP_Excavator" && r.Props != null && r.Props.ContainsKey("set.piece")).Select(r => r.transform).FirstOrDefault();
+			if (exc != null && player != null) { SetHour(11f); yield return ShotOf(player, exc, "scrapyard_excavator", 12f); }
+			foreach (string l in lines.Take(5)) Log("    " + l);
+			if (!keep) yield return RemoveIslandsAndWait(new[] { e.Id });
+			if (exc == null) Fail("scrapyard excavator: " + name + " came without its excavator (" + n + " objects)");
+			else if (mine.Count > 0) Fail("scrapyard excavator (" + name + "): " + string.Join("; ", mine.ToArray()));
+			else Log("PASS: scrapyard excavator - on " + name + " (" + foundType.Name + "), on the ground" +
+				(lines.Count > 0 ? "; " + lines.Count + " other problem(s) on the island, not the excavator's (CIGroundTypes covers them)" : "") + "; " + stats);
+		}
+
 		static readonly IslandCheck OverlapCheck = new IslandCheck { Label = "overlap", File = "overlap", Pass = "nothing through anything", Measure = OverlapProblems };
 
 		static readonly IslandCheck OneSidedCheck = new IslandCheck { Label = "one-sided", File = "onesided", Pass = "no wall seen through from behind", Measure = OneSidedProblems };
