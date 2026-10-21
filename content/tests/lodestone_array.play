@@ -51,6 +51,7 @@ expect step 17
 beam emitter
 use mirror1
 use mirror2
+wait 2
 beam emitter
 expect story beamset 1
 expect step 18

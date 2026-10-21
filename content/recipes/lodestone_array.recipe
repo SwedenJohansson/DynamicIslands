@@ -226,10 +226,13 @@ prop mirror2 on.use=switch|\nmessage||The mirror grinds round a quarter turn.
 prop emitter obj.name=emitter
 prop corepanel obj.name=corepanel
 prop corepanel if.laser=!signal|laser
-prop corepanel on.laser=signal||laser\ngive||story:beamset*1\nmessage||The core's door panel drinks the beam - and something heavy stirs by the core.
+prop corepanel on.laser=signal||laser\ngive||story:beamset*1\nshow|guardian\nmessage||The core's door panel drinks the beam - and something heavy stirs by the core.
 
 prop guardzone zone.id=core_guard
 prop guardzone zone.radius=8
+# The guardian stays hidden until the beam is set (show|guardian on the core panel), so it can't stand in the beam.
+prop guardian obj.name=guardian
+prop guardian beh.hidden=1
 prop guardian creature.count=1
 prop guardian creature.respawn=0
 prop guardian creature.zone=core_guard
