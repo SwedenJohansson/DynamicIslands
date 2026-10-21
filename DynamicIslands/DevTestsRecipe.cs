@@ -1253,6 +1253,56 @@ namespace DynamicIslands
 			return missing.Count == 0 ? null : "no object is named " + string.Join(", ", missing.Distinct().Take(6).ToArray()) + (missing.Distinct().Count() > 6 ? " and more" : "") + ": give it obj.name";
 		}
 
+		/// <summary>The island's quest steps "kill|kind" and "catch|kind", and the 'kill kind' lines of the plays (in the recipe
+		/// folder) under 'island &lt;this island&gt;', that name a creature label the island doesn't place, or null. A step
+		/// counts only the kind its spot spawns (Quest.Matches, CreatureSpawner) and a play kills only that kind's animals.</summary>
+		static string UnplacedCreatures(string island, EditorGameObject[] objs)
+		{
+			List<ContentCatalog.CreatureKind> kinds = objs.Select(o => ContentCatalog.CreatureOf(o.GameObjectName)).Where(k => k != null).ToList();
+			var labels = new HashSet<string>(kinds.Select(k => k.Label), StringComparer.OrdinalIgnoreCase);
+			var catchable = new HashSet<string>(kinds.Where(k => k.Category == ContentCatalog.CatchableCategory).Select(k => k.Label), StringComparer.OrdinalIgnoreCase);
+			var bad = new List<string>();
+			Dictionary<string, string> props = DynamicIslands.currentIslandProps;
+			int quests = props != null ? IslandQuest.CountIn(props) : 0;
+			for (int q = 0; q < quests; q++)
+				foreach (IslandQuest.Step s in IslandQuest.From(props, q).Steps.Where(x => x.Type == "kill" || x.Type == "catch"))
+				{
+					HashSet<string> can = s.Type == "catch" ? catchable : labels;
+					string target = (s.Target ?? "").Trim();
+					if (target.Length > 0 ? !can.Contains(target) : can.Count == 0) bad.Add("step " + s.Type + "|" + target + (quests > 1 ? " (quest " + (q + 1) + ")" : ""));
+				}
+			// (the plays: a 'kill' under this island's 'island' line - the play's own or an included one, its variables filled in -
+			// waits 15 s for animals of a kind no spot spawns and fails; "kill Warthog 1.4" names a size after the kind)
+			System.Random keepRandom = recipeRandom;
+			try
+			{
+				foreach (string play in Directory.Exists(RecipeFolder) ? Directory.GetFiles(RecipeFolder, "*.play") : new string[0])
+				{
+					if (File.ReadAllText(play).IndexOf(island, StringComparison.OrdinalIgnoreCase) < 0) continue;
+					List<RLine> lines;
+					try { lines = ExpandRecipe(play); } catch (Exception) { continue; }
+					string at = null;
+					foreach (RLine rl in lines)
+					{
+						string line = rl.Text.Trim();
+						string verb = FirstWord(line);
+						if (verb == "island") at = Rest(line, 1).Replace(" keep", "").Trim();
+						if (verb != "kill" || !string.Equals(at, island, StringComparison.OrdinalIgnoreCase)) continue;
+						string[] k = Rest(line, 1).Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+						float size;
+						string label = string.Join(" ", (k.Length > 1 && float.TryParse(k[k.Length - 1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out size) ? k.Take(k.Length - 1) : k).ToArray());
+						if (label.Length > 0 ? !labels.Contains(label) : labels.Count == 0) bad.Add(rl.Where + " 'kill " + label + "'");
+					}
+				}
+			}
+			finally { recipeRandom = keepRandom; }
+			if (bad.Count == 0) return null;
+			List<string> distinct = bad.Distinct().ToList();
+			return string.Join(", ", distinct.Take(6).ToArray()) + (distinct.Count > 6 ? " and more" : "") + " name" + (distinct.Count == 1 ? "s" : "") +
+				" a creature the island doesn't place (" + (labels.Count > 0 ? "it places " + string.Join(", ", labels.OrderBy(l => l, StringComparer.OrdinalIgnoreCase).ToArray()) : "it places none") +
+				"): a step counts only the kind its spot spawns, by its label";
+		}
+
 		static IEnumerator RecipeRoutine(string name)
 		{
 			string path = Path.Combine(RecipeFolder, name.EndsWith(".recipe") ? name : name + ".recipe");
@@ -1776,6 +1826,11 @@ namespace DynamicIslands
 							// with no obj.name and could never pass, the review 2026-10-10)
 							string unnamed = UnnamedTargets(GameObject.Find("PlacedObjects").transform.GetComponentsInChildren<EditorGameObject>(true));
 							if (unnamed != null) { error = unnamed; break; }
+							// (and kill and catch steps, and the plays' 'kill' lines, that name a creature the island doesn't place:
+							// Caravan Town's "kill|Screecher" waited for Raft's screecher by its Caravan screecher - af74662, the full
+							// run 2026-10-20; only what is saved counts, the active objects)
+							string unplaced = UnplacedCreatures(island, GameObject.Find("PlacedObjects").transform.GetComponentsInChildren<EditorGameObject>());
+							if (unplaced != null) { error = unplaced; break; }
 							if (!DynamicIslands.SaveIsland(island)) { error = "the island didn't save as '" + island + "'"; break; }
 							RecipeSaved = island;
 							Log("  saved '" + island + "'");
