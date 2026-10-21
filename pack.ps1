@@ -59,7 +59,7 @@ $version = (Get-Content (Join-Path $src "modinfo.json") -Raw | ConvertFrom-Json)
 Write-Host ("Packed {0} files into {1} ({2:N0} KB), version {3}{4}" -f $files.Count, $out, ((Get-Item $out).Length / 1KB), $version, $(if ($Release) { ", release (no dev commands)" } else { "" })) -ForegroundColor Green
 
 # The build's stamp beside the .rmod, never in it (IslandNetwork.Build hashes every file of the .rmod): the commit and worktree
-# it was packed from and the .rmod's md5 - _ProjectDocs	oolsuildcheck.ps1 says which commit is installed
+# it was packed from and the .rmod's md5 - _ProjectDocs\tools\buildcheck.ps1 says which commit is installed
 $stamp = Join-Path $PSScriptRoot "DynamicIslands.build.txt"
 $commit = "$(& git -C $PSScriptRoot rev-parse HEAD 2>$null)".Trim()
 $dirty = @(& git -C $PSScriptRoot status --porcelain -uno -- DynamicIslands 2>$null | Where-Object { $_ }).Count
