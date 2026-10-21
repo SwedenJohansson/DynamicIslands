@@ -4,7 +4,7 @@
 island Stormwing Isle
 offset 0 0
 wait 3
-at -24 -6
+at -27 -6
 expect height 9
 read Sign at the strip
 walk -11 -6 to 0 -6 to 14 -6 to 26 -6 h=9
