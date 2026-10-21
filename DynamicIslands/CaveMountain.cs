@@ -552,8 +552,12 @@ namespace DynamicIslands.Editor
 				if (open || open0)
 				{
 					float l = open && open0 ? Mathf.Min(lo, lo0) : open ? lo : lo0, h = open && open0 ? Mathf.Max(hi, hi0) : open ? hi : hi0;
+					// (at the way in itself no higher than its floor, and nothing over it - its own arch is the face there: the floor
+					// and roof found in a bear cave's mouth stood 0.5-1.2 m into the way in, a step and a lintel across it on 15
+					// islands' dens; only a mouth that dips under the way in's floor takes the skirt down with it)
+					if (atWay) l = Mathf.Min(l, way);
 					Band(e0, e, ga, gb, l, l, n, verts, norms, uvs, tris, origin);
-					Band(e0, e, h, h, e0.y, e.y, n, verts, norms, uvs, tris, origin);
+					if (!atWay) Band(e0, e, h, h, e0.y, e.y, n, verts, norms, uvs, tris, origin);
 				}
 				else if (atWay)
 				{
