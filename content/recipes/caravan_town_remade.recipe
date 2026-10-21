@@ -192,7 +192,7 @@ step collect|story:crank|1|Bring the winch's crank up from the bay
 step reach|mayortower|1|Ride the lift up, wind the bridge across and cross to the mayor's pillar
 step kill|Hyena|3|Deal with the mayor's three hyenas
 step reach|roof|1|Climb the ladder to the mayor's roof
-step kill|Screecher|1|Drive the white screecher off his roof
+step kill|Caravan screecher|1|Drive the white screecher off his roof
 step open|Screecher's nest|1|Take the mayor's key from her nest of wire and rags
 step open|Mayor's chest|1|Open the mayor's chest
 step blueprint|Blueprint_Firework|1|Take the firework plans from the mayor's chest

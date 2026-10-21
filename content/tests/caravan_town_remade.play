@@ -46,7 +46,7 @@ expect step 8
 climb 3 -2.6 h=21.9
 zone roof
 expect step 9
-kill Screecher
+kill Caravan screecher
 expect step 10
 open Screecher's nest
 expect story mayorkey 1
