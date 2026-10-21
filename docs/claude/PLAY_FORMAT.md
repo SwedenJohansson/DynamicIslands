@@ -63,7 +63,7 @@ expect message isn't whole
 | `use` | `<name> [stay]` | Fires `use` on the object (`Behaviours.Fire`). The player is put next to it (`ScUse`); with `stay`, used from where they stand (a lift carries them). A survivor cage is opened as a player's E opens it (`SurvivorCage.Use`). |
 | `code` | `<name> <digits> [wrong]` | Opens the object's keypad code lock (`lock.code`) as a player does, types the digits and OK; passes when the keypad closed and the lock is open (`CodeLock`). With `wrong`: passes when the digits did not open it. |
 | `dig` | `[n]` | Digs up the island's buried treasure n (0, the first: `treasure` / `Treasure_Buried`) as a player's shovel does, three digs, and picks up its chest (`BuriedTreasure`, `TreasurePoint`); its `treasure.loot` is given then. |
-| `kill` | `<label>` | Waits up to 15 s for the island's animals of that label, then defeats all of them (`ScKill`). |
+| `kill` | `<label>` | Waits up to 15 s for the island's animals of that label, then defeats all of them (`ScKill`), the player moved to each, and puts the player back where it stood. |
 | `catch` | `<label> [n]` | Catches n (default 1) of the island's own spawner animals (`ScCarryHome`). |
 | `plan` | `<plan name>` or `end` | Clean story slate (`PlanCleanSlate`), then the world gets the plan (`ScSetPlan`); `end` puts the world's story back to Raft's. |
 | `note` | `<Raft story island>` | Reads Raft's note that gives that island's frequency (`PlayNote`). |

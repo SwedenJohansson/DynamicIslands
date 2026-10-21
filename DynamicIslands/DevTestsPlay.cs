@@ -346,7 +346,13 @@ namespace DynamicIslands
 						yield return ScWaitAnimals(playEntry, label, 1, 15f);
 						List<AI_NetworkBehaviour> animals = ScAnimals(playEntry, label);
 						Check(ref ok, animals.Count > 0, "animals '" + label + "' to defeat (" + animals.Count + ")");
+						// (then back where the player stood: left by the last animal, a later 'reach' step was done before the play
+						// walked there)
+						Network_Player killer = RAPI.GetLocalPlayer();
+						Vector3 back = killer != null ? killer.transform.position - playEntry.Position : Vector3.zero;
+						ControllerType backType = killer != null ? killer.PersonController.controllerType : ControllerType.Ground;
 						foreach (AI_NetworkBehaviour a in animals) { PutPlayerNear(a.transform); ScKill(a); yield return new WaitForSeconds(0.4f); }
+						if (killer != null && animals.Count > 0) { PlayerMove.To(killer, playEntry.Position + back, backType); KeepAlive(killer); }
 						yield return new WaitForSeconds(2f);
 						break;
 					}
