@@ -375,9 +375,22 @@ namespace DynamicIslands
 						{
 							// (just under the water, over sea at least 4 m deep there: the rays that end on the island where its caves are -
 							// not on the seabed nearer the camera)
+							Vector3 framed = from;
 							from.y = -1.5f;
 							fill = IslandInView(from, b.center, e.Root.transform, b);
-							fills.Add((i * 90 + 30) + ": " + Mathf.RoundToInt(fill * 100f) + " % under the water");
+							string how = Mathf.RoundToInt(fill * 100f) + " % under the water";
+							// (a wide sand shelf right in front of the camera fills the picture from under the water - the Drowned
+							// Labyrinth's sides 210 and 300, 6-7 %, 10-21 - so then from over the sea at the same spot, looking at the
+							// same middle: 1.5 m over it, then at the side's own framing height as for an island that is not flooded.
+							// There the island above the sea counts and its caves through the water, not the shelf under the sea)
+							foreach (Vector3 over in new[] { new Vector3(from.x, 1.5f, from.z), framed })
+							{
+								if (fill >= 0.15f) break;
+								float overFill = IslandInView(over, b.center, e.Root.transform, b, true);
+								how += ", " + Mathf.RoundToInt(overFill * 100f) + " % from " + over.y.ToString("F1") + " m over the sea";
+								if (overFill > fill) { fill = overFill; from = over; }
+							}
+							fills.Add((i * 90 + 30) + ": " + how);
 						}
 						else { fill = 1f; fills.Add((i * 90 + 30) + ": over land or shallows " + g.ToString("F1") + " m, not measured"); measured--; }
 						measured++;
@@ -414,8 +427,9 @@ namespace DynamicIslands
 
 		/// <summary>How much of a picture from <from> towards <at> (60 degrees high, 16:9) is the island under <root>: a 16 x 9 grid of
 		/// rays, those that end on it above the sea (-1.5 m: open sea, or only its seabed, is not the island in view). <caves>: a
-		/// picture from under the water - those that end on it within 3 m of the caves' bounds across, at any depth.</summary>
-		static float IslandInView(Vector3 from, Vector3 at, Transform root, Bounds? caves)
+		/// picture from under the water - those that end on it within 3 m of the caves' bounds across, at any depth; with
+		/// <paramref name="orAbove"/> (from over the water) those that end on it above the sea too.</summary>
+		static float IslandInView(Vector3 from, Vector3 at, Transform root, Bounds? caves, bool orAbove = false)
 		{
 			Quaternion rot = Quaternion.LookRotation(at - from);
 			float tanV = Mathf.Tan(30f * Mathf.Deg2Rad), tanH = tanV * 16f / 9f;
@@ -427,7 +441,8 @@ namespace DynamicIslands
 					RaycastHit hit;
 					all++;
 					if (!Physics.Raycast(from, ray.normalized, out hit, 2500f, ~0, QueryTriggerInteraction.Ignore) || !hit.collider.transform.IsChildOf(root)) continue;
-					if (caves.HasValue ? Mathf.Abs(hit.point.x - caves.Value.center.x) <= caves.Value.extents.x + 3f && Mathf.Abs(hit.point.z - caves.Value.center.z) <= caves.Value.extents.z + 3f : hit.point.y > -1.5f) on++;
+					bool above = hit.point.y > -1.5f;
+					if (caves.HasValue ? Mathf.Abs(hit.point.x - caves.Value.center.x) <= caves.Value.extents.x + 3f && Mathf.Abs(hit.point.z - caves.Value.center.z) <= caves.Value.extents.z + 3f || orAbove && above : above) on++;
 				}
 			return all > 0 ? (float)on / all : 0f;
 		}
