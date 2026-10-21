@@ -308,12 +308,64 @@ namespace DynamicIslands
 					Quaternion rot = Quaternion.LookRotation(ax[a2].normalized, ax[a1].normalized);
 					Vector3 half = new Vector3(reach, ax[a1].magnitude * 0.3f, ax[a2].magnitude * 0.3f);
 					bool covered = Physics.OverlapBox(face, half, rot, ~0, QueryTriggerInteraction.Ignore).Any(c => c.enabled && !c.transform.IsChildOf(o));
+					// (the piece's own colliders cover it too where they reach 3 cm past its open side - a sign board nailed onto its own
+					// cabin's logs, Balboa_Shack's 'IF YOU LIVED HERE' - but not a collider on the board's own GameObject, and not the
+					// board's own thickness: a lone panel's collider, on a parent or a sibling, stays inside that)
+					if (!covered)
+					{
+						float near = ax[t].magnitude / 2f + 0.03f, far = ax[t].magnitude / 2f + 0.32f;
+						Vector3 behind = centre + open * ((near + far) / 2f);
+						Vector3 halfBehind = new Vector3((far - near) / 2f, half.y, half.z);
+						covered = Physics.OverlapBox(behind, halfBehind, rot, ~0, QueryTriggerInteraction.Ignore).Any(c => c.enabled && c.transform.IsChildOf(o) && c.gameObject != r.gameObject);
+					}
 					if (covered) continue;
 					lines.Add("one-sided: " + n + " at " + Num(Math.Round(face.x, 2)) + " " + Num(Math.Round(face.z, 2)) + " y=" + Num(Math.Round(face.y, 2)) + " - drawn from one side only, nothing behind its open side (facing " + Num(Math.Round(open.x, 2)) + " " + Num(Math.Round(open.z, 2)) + ")");
 					break;
 				}
 			}
 			return lines;
+		}
+
+		[ConsoleCommand(name: "CIOneSidedSelf", docs: "Dev, world (host, a test world 'CI ...'): the one-sided check (IG8) on an island made for it: a lone Apartment_Ext_BaseMidMidWall facade panel, nothing behind it, is found; a Balboa_Shack (its sign board nailed onto the shack's own logs) isn't (TEST_CATALOGUE GAP21). The island is taken away after.")]
+		public static void OneSidedSelfCommand(string[] args) { StartTest(OneSidedSelfRoutine()); }
+
+		static IEnumerator OneSidedSelfRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !CustomIslandSpawner.RaftPosition.HasValue) { Fail("one-sided self: host, in a world"); yield break; }
+			const string isl = "cionesided", wall = "Apartment_Ext_BaseMidMidWall", shack = "Balboa_Shack";
+			yield return PlaceableCatalog.EnsureLoaded(new[] { wall, shack });
+			if (PlaceableCatalog.Get(wall) == null || PlaceableCatalog.Get(shack) == null) { Fail("one-sided self: " + wall + " or " + shack + " isn't in this Raft's catalogue"); yield break; }
+			var made = new List<IslandWorldState.Entry>();
+			IslandFile f = ScIsland(isl, "One-Sided Self");
+			f.Objects.Clear();
+			Vector3 b = ScDry(f, Vector2.zero, 1);
+			// (16 m apart, on the ground: neither covers the other)
+			foreach (var put in new[] { new { Name = wall, Dx = -8f }, new { Name = shack, Dx = 8f } })
+			{
+				Vector3 p = b + new Vector3(put.Dx, 0f, 0f);
+				p.y = ScGround(f, new Vector2(p.x, p.z));
+				f.Objects.Add(ScObj(put.Name, p));
+			}
+			f.Save(IslandSpawner.PathFor(isl));
+			Vector3? spot = ScSpot(isl, 400f);
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("one-sided self: no open sea near the raft"); yield break; }
+			yield return ScBring(isl, spot.Value, made);
+			IslandWorldState.Entry e = made.LastOrDefault();
+			if (e == null || e.Root == null) { ScRemove(made, isl); Fail("one-sided self: the island didn't come"); yield break; }
+			int n = 0;
+			List<string> lines;
+			try
+			{
+				yield return WaitIslandSettled(e, 0.5f, 2f);
+				lines = OneSidedProblems(e, out n);
+			}
+			finally { ScRemove(made, isl); }
+			foreach (string l in lines) Log("  " + l);
+			bool ok = true;
+			Check(ref ok, n >= 2, "both pieces measured (" + n + " objects)");
+			Check(ref ok, lines.Count(l => l.IndexOf(wall, StringComparison.Ordinal) >= 0) == 1, "the lone " + wall + ", nothing behind it, is found");
+			Check(ref ok, !lines.Any(l => l.IndexOf(shack, StringComparison.Ordinal) >= 0), "the " + shack + "'s sign board, against the shack's own logs, isn't");
+			if (ok) Log("PASS: one-sided self"); else Fail("one-sided self");
 		}
 
 		[ConsoleCommand(name: "CIOverlapWorld", docs: "Dev, in a world: nothing on the loaded custom islands passes through anything else - no post, pillar, wall, floor or roof piece more than 6 cm inside a piece of furniture, a prop, a chest, a machine, a tree or a plant (IG7; the user 2026-10-18: posts through a piano and a pool table). Things resting on floors, roofs on their posts, things on tables don't count. Problems per island; all in Mods\\DynamicIslands\\overlap_world.txt. CIOverlapWorld [part of the island name]")]
