@@ -1011,8 +1011,11 @@ namespace DynamicIslands
 						var corners = new Vector3[4];
 						Func<Transform, int, float> boxX = (line, col) =>
 						{
-							Image box = line.GetChild(col).GetComponentsInChildren<Image>(false).Where(im => im.transform != line.GetChild(col)).OrderBy(im => ((RectTransform)im.transform).rect.width).FirstOrDefault();
-							((RectTransform)(box != null ? box.transform : line.GetChild(col))).GetWorldCorners(corners);
+							// (the Check row's Box, on every line: its Tick, inset 3 px, shows only when ticked - the smallest Image
+							// measured the tick on ticked lines and the box on the others, 3 px x the UI scale apart - 10-21)
+							Transform cell = line.GetChild(col), box = cell.Find("Box");
+							if (box == null) { Image least = cell.GetComponentsInChildren<Image>(false).Where(im => im.transform != cell).OrderBy(im => ((RectTransform)im.transform).rect.width).FirstOrDefault(); box = least != null ? least.transform : cell; }
+							((RectTransform)box).GetWorldCorners(corners);
 							return corners[0].x;
 						};
 						float spread0 = lines.Max(l => boxX(l, 0)) - lines.Min(l => boxX(l, 0)), spread1 = lines.Max(l => boxX(l, 1)) - lines.Min(l => boxX(l, 1));
