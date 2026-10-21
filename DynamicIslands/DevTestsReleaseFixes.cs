@@ -432,11 +432,11 @@ namespace DynamicIslands
 			return all > 0 ? (float)on / all : 0f;
 		}
 
-		/// <summary>Where a cave piece's passage roof is (world y): its floor and headroom from raft_props.txt, at its scale.</summary>
+		/// <summary>Where a cave piece's passage roof is (world y): its floor and headroom from raft_props.txt (measured at its catalog scale), at its scale over that.</summary>
 		static float CaveRoofY(Transform t)
 		{
 			PropInfo p = RaftProps.Get(t.name);
-			return p == null ? float.MaxValue : t.position.y + (p.Floor + p.Headroom) * t.lossyScale.y;
+			return p == null ? float.MaxValue : t.position.y + (p.Floor + p.Headroom) * CaveMountain.OverMeasured(t, t.name).y;
 		}
 
 		[ConsoleCommand(name: "CIAnimalsDry",docs: "Dev, in a world with a custom island with land animals loaded: no animal may walk in the sea - no NavMesh below the waterline at the islands, no land animal below it (AU84)")]

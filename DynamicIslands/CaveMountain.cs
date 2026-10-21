@@ -152,9 +152,12 @@ namespace DynamicIslands.Editor
 				Transform t = caves[i];
 				if (t == null) continue;
 				PropInfo p = infos[i];
-				// (the piece's measures at its scale: the generator's dens stand up to 3 times their size - the floor, the inside point
-				// and the way in's width at scale 1 put a 3x bear den's floor 9 m up in its room and its way in a third as wide)
-				Vector3 sc = t.lossyScale;
+				// (the piece's measures at its scale: a cave set bigger or smaller kept its floor, inside point and way in's width at
+				// the measured size. Measured at the scale it spawns with - its catalog copy's, 3.008 for the bear den - so only the
+				// scale over that one counts: by its whole scale the den's floor went 9 m under its real one, its open floor counted
+				// as roof and its inside point lay 8 m out past its mouth, and the hill ran out over the ground before it - Stormwing's
+				// strip, Balboa Remade's path, f72b954)
+				Vector3 sc = OverMeasured(t, p.Name);
 				float floorY = t.position.y + p.Floor * sc.y;
 				foreach (Collider c in t.GetComponentsInChildren<Collider>())
 					if (c.enabled && !c.isTrigger) { cols.Add(c); floorOf[c] = floorY; ownerOf[c] = mouths.Count; }
@@ -441,6 +444,15 @@ namespace DynamicIslands.Editor
 			mr.receiveShadows = look.receiveShadows;
 			skin.AddComponent<MeshCollider>().sharedMesh = mesh;
 			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name);
+		}
+
+		/// <summary>A cave piece's scale over the one raft_props measured it at (its catalog copy's); 1 when that copy isn't loaded.</summary>
+		internal static Vector3 OverMeasured(Transform t, string name)
+		{
+			GameObject proto = name != null ? PlaceableCatalog.Get(name) : null;
+			if (proto == null) return Vector3.one;
+			Vector3 s = t.lossyScale, m = proto.transform.localScale;
+			return new Vector3(Mathf.Abs(m.x) > 1e-4f ? s.x / m.x : 1f, Mathf.Abs(m.y) > 1e-4f ? s.y / m.y : 1f, Mathf.Abs(m.z) > 1e-4f ? s.z / m.z : 1f);
 		}
 
 		/// <summary>The mountain's look: its faces again, turned the other way (its collider keeps the one side).</summary>
