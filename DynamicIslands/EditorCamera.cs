@@ -180,8 +180,8 @@ namespace DynamicIslands.Editor
 
 		#region The controls
 
-		/// <summary>Turns the view by mouse pixels (right mouse held). Dragging up tilts the view down, as if the scene were
-		/// dragged (the user, 2026-10-02: the other way felt inverted) - or up with the setting Drag up: look up.</summary>
+		/// <summary>Turns the view by mouse pixels (right mouse held). Dragging up tilts the view up (the default since 2026-10-21,
+		/// the user's wish) - or down, as if the scene were dragged, with the setting Drag up: look down (the default from 2026-10-02).</summary>
 		public void Look(Vector2 pixels)
 		{
 			flying = false;

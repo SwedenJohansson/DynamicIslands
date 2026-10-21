@@ -40,6 +40,8 @@ namespace DynamicIslands
 					c.Look(px);
 					return new Vector2(c.transform.eulerAngles.y, c.transform.eulerAngles.x);
 				};
+				bool ownUp = CameraSettings.DragUpLooksUp; // (the mod's own since 2026-10-21: up)
+				CameraSettings.DragUpLooksUp = false;
 				yield return null;
 				Vector2 own = turn(new Vector2(100f, 50f)); // (Look sets yaw/pitch; Advance shows them next frame)
 				yield return null;
@@ -49,8 +51,8 @@ namespace DynamicIslands
 				turn(new Vector2(100f, 50f));
 				yield return null;
 				Vector2 set = new Vector2(cam.transform.eulerAngles.y, cam.transform.eulerAngles.x);
-				Check(ref ok, Mathf.Abs(Mathf.DeltaAngle(own.x, 28f)) < 0.5f && Mathf.Abs(Mathf.DeltaAngle(own.y, 29f)) < 0.5f && Mathf.Abs(Mathf.DeltaAngle(set.x, 46f)) < 0.5f && Mathf.Abs(Mathf.DeltaAngle(set.y, 2f)) < 0.5f,
-					"look: 100 px right, 50 px up turn to " + own.x.ToString("F0") + "° / " + own.y.ToString("F0") + "° as the mod has it (28 / 29: up looks down); at x2 with Drag up: look up to " + set.x.ToString("F0") + "° / " + set.y.ToString("F0") + "° (46 / 2)");
+				Check(ref ok, ownUp && Mathf.Abs(Mathf.DeltaAngle(own.x, 28f)) < 0.5f && Mathf.Abs(Mathf.DeltaAngle(own.y, 29f)) < 0.5f && Mathf.Abs(Mathf.DeltaAngle(set.x, 46f)) < 0.5f && Mathf.Abs(Mathf.DeltaAngle(set.y, 2f)) < 0.5f,
+					"look: 100 px right, 50 px up turn to " + own.x.ToString("F0") + "° / " + own.y.ToString("F0") + "° with Drag up: look down (28 / 29), the mod's own being look up: " + ownUp + "; at x2 with Drag up: look up to " + set.x.ToString("F0") + "° / " + set.y.ToString("F0") + "° (46 / 2)");
 				CameraSettings.Reset();
 
 				// 2. Move speed (high above the island, where the speed is at its top: twice the setting, twice as far)
@@ -134,14 +136,14 @@ namespace DynamicIslands
 				// 6. Saved and read back
 				CameraSettings.Set(CameraSettings.LookNumber, 1.5f);
 				CameraSettings.Set(CameraSettings.ZoomNumber, 99f); // (kept within its range: 4)
-				CameraSettings.DragUpLooksUp = true;
+				CameraSettings.DragUpLooksUp = false; // (not the mod's own: read back from the file, not the default)
 				CameraSettings.WheelReversed = true;
 				CameraSettings.Save();
 				string[] lines = File.ReadAllLines(rules);
 				CameraSettings.Reload();
-				Check(ref ok, lines.Contains("cameralook=1.5") && lines.Contains("camerazoom=4") && lines.Contains("cameradragup=up") && lines.Contains("camerawheel=reversed") &&
-					Mathf.Approximately(CameraSettings.Look, 1.5f) && Mathf.Approximately(CameraSettings.Zoom, 4f) && CameraSettings.DragUpLooksUp && CameraSettings.WheelReversed && (rulesBefore == null || rulesBefore.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith("#") && !l.StartsWith("camera")).All(lines.Contains)),
-					"world_rules.txt has cameralook=1.5, camerazoom=4 (kept within 4), cameradragup=up, camerawheel=reversed, its other lines as they were, and they are read back");
+				Check(ref ok, lines.Contains("cameralook=1.5") && lines.Contains("camerazoom=4") && lines.Contains("cameradragup=down") && lines.Contains("camerawheel=reversed") &&
+					Mathf.Approximately(CameraSettings.Look, 1.5f) && Mathf.Approximately(CameraSettings.Zoom, 4f) && !CameraSettings.DragUpLooksUp && CameraSettings.WheelReversed && (rulesBefore == null || rulesBefore.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith("#") && !l.StartsWith("camera")).All(lines.Contains)),
+					"world_rules.txt has cameralook=1.5, camerazoom=4 (kept within 4), cameradragup=down, camerawheel=reversed, its other lines as they were, and they are read back");
 
 				// 7. The status bar's Camera... button: the Camera window
 				Button open = EditorUI.Canvas.GetComponentsInChildren<Button>(true).FirstOrDefault(b => b.name == "Button_CameraSettings");
@@ -152,20 +154,20 @@ namespace DynamicIslands
 				Button up = w != null ? w.GetComponentsInChildren<Button>(true).FirstOrDefault(b => b.name == "Camera_DragUp") : null;
 				Button wheel = w != null ? w.GetComponentsInChildren<Button>(true).FirstOrDefault(b => b.name == "Camera_Wheel") : null;
 				Check(ref ok, open != null && CameraSettingsWindow.IsOpen && EditorInput.WindowOpen && look != null && up != null && wheel != null && w.GetComponentsInChildren<Slider>(true).Length == 4 &&
-					Mathf.Abs(Mathf.Exp(look.value) - 1.5f) < 0.02f && UIKit.LabelOf(up).text == "Drag up: look up" && UIKit.LabelOf(wheel).text == "Wheel up: zoom out",
+					Mathf.Abs(Mathf.Exp(look.value) - 1.5f) < 0.02f && UIKit.LabelOf(up).text == "Drag up: look down" && UIKit.LabelOf(wheel).text == "Wheel up: zoom out",
 					"Camera... opens the Camera window (" + CameraSettingsWindow.IsOpen + "): 4 sliders, the switches, showing the saved settings");
 				Screenshot(new[] { "camera_settings" });
 				yield return new WaitForSecondsRealtime(0.6f);
 				if (look != null) look.value = Mathf.Log(3f); // (as a dragged slider does)
 				if (up != null) up.onClick.Invoke();
 				yield return null;
-				Check(ref ok, Mathf.Abs(CameraSettings.Look - 3f) < 0.02f && !CameraSettings.DragUpLooksUp && up != null && UIKit.LabelOf(up).text == "Drag up: look down",
+				Check(ref ok, Mathf.Abs(CameraSettings.Look - 3f) < 0.02f && CameraSettings.DragUpLooksUp && up != null && UIKit.LabelOf(up).text == "Drag up: look up",
 					"its slider sets the look sensitivity (x" + CameraSettings.Format(CameraSettings.Look) + "), its switch the drag up");
 				Button modsOwn = w != null ? w.GetComponentsInChildren<Button>(true).FirstOrDefault(b => UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text == "Mod's own") : null;
 				if (modsOwn != null) modsOwn.onClick.Invoke();
 				yield return null;
-				Check(ref ok, modsOwn != null && CameraSettings.Numbers.All(n => Mathf.Approximately(CameraSettings.Get(n), 1f)) && !CameraSettings.WheelReversed && !CameraSettings.DragUpLooksUp && Mathf.Abs(Mathf.Exp(look.value) - 1f) < 0.02f,
-					"Mod's own puts every camera setting back (x1, drag up looks down, wheel up zooms in)");
+				Check(ref ok, modsOwn != null && CameraSettings.Numbers.All(n => Mathf.Approximately(CameraSettings.Get(n), 1f)) && !CameraSettings.WheelReversed && CameraSettings.DragUpLooksUp && Mathf.Abs(Mathf.Exp(look.value) - 1f) < 0.02f,
+					"Mod's own puts every camera setting back (x1, drag up looks up, wheel up zooms in)");
 				CameraSettingsWindow.Close();
 				yield return null;
 				Check(ref ok, !CameraSettingsWindow.IsOpen && !CameraSettings.Unsaved, "Close closes it, the settings saved");

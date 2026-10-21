@@ -46,10 +46,11 @@ namespace DynamicIslands.Editor
 		public static float Zoom { get { return Get(ZoomNumber); } }
 		public static float Pan { get { return Get(PanNumber); } }
 
-		/// <summary>Dragging up while looking tilts the view up (off: down, the mod's own way - the user, 2026-10-02).</summary>
+		/// <summary>Dragging up while looking tilts the view up, the mod's own way since 2026-10-21 (the user asked for it on by default;
+		/// off: down, as if the scene were dragged - the default from 2026-10-02). Only a saved "down" turns it off.</summary>
 		public static bool DragUpLooksUp
 		{
-			get { if (dragUpLooksUp == null) dragUpLooksUp = string.Equals(WorldRules.ReadDefault(DragUpKey), "up", StringComparison.OrdinalIgnoreCase); return dragUpLooksUp.Value; }
+			get { if (dragUpLooksUp == null) dragUpLooksUp = !string.Equals(WorldRules.ReadDefault(DragUpKey), "down", StringComparison.OrdinalIgnoreCase); return dragUpLooksUp.Value; }
 			set { dragUpLooksUp = value; Mark(DragUpKey); }
 		}
 
@@ -110,7 +111,7 @@ namespace DynamicIslands.Editor
 		public static void Reset()
 		{
 			foreach (Number n in Numbers) { values[n.Key] = Number.Default; dirty.Add(n.Key); }
-			dragUpLooksUp = false; dirty.Add(DragUpKey);
+			dragUpLooksUp = true; dirty.Add(DragUpKey);
 			wheelReversed = false; dirty.Add(WheelKey);
 			Save();
 		}
@@ -142,7 +143,7 @@ namespace DynamicIslands.Editor
 			}
 			RectTransform flips = UIKit.Row(group, 28f, 6f, "Row_CameraSwitches");
 			Button up = UIKit.Button(flips, "", () => { DragUpLooksUp = !DragUpLooksUp; refresh(); },
-				"While the right mouse is held: dragging the mouse up tilts the view down (the mod's own way, as if the scene were dragged) or up (as in most games and Unity) - click to switch", -1, 28f, 13);
+				"While the right mouse is held: dragging the mouse up tilts the view up (the mod's own way, as in most games and Unity) or down (as if the scene were dragged) - click to switch", -1, 28f, 13);
 			up.name = "Camera_DragUp";
 			Button wheel = UIKit.Button(flips, "", () => { WheelReversed = !WheelReversed; refresh(); },
 				"The mouse wheel: rolling it up zooms in (and, with the right mouse held, flies faster), or the other way round - click to switch", -1, 28f, 13);
