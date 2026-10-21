@@ -75,8 +75,8 @@ Prefix families (`CIGen*`, `CIRandomizer*`, `CIStory*`, `CIPlan*`, `CIQuestBook*
 - Code outside `DevTests*.cs` must never use `DevTests`: release builds don't have it. Check with `compile.ps1 -Release`
   (it compiles a copy of the csproj without the `Compile Include="DevTests` lines).
 - A new test file must be named `DevTests*.cs` (so `-Release` drops it) and get a `<Compile Include>` line in
-  `DynamicIslands.csproj`, or `compile.ps1` never compiles it (10-21: `DevTestsGuideShots.cs`, `DevTestsRadarNeeds.cs`
-  and `DevTestsRaftView.cs` have none; Raft compiles them anyway). `pack.ps1` packs every file in `DynamicIslands\` anyway.
+  `DynamicIslands.csproj`, or `compile.ps1` never compiles it (three test files missed it until
+  10-21; Raft compiles them anyway). `pack.ps1` packs every file in `DynamicIslands\` anyway.
 - All `DevTests*.cs` files are one class: helper names (`Log`, `Fail`, `Check`, `F`, `Tokens`, `Options`, `Rest`, `Num`)
   are shared, and a second one with the same signature breaks the build.
 - C# 7.3 only (`LangVersion` in the csproj; RML compiles with it).
