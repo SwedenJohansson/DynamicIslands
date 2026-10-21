@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using DynamicIslands.Editor;
@@ -13,7 +14,7 @@ namespace DynamicIslands
 	/// <summary>TODO §5 "Editor camera: modern controls and settings": the camera's settings and Alt + right-drag zoom.</summary>
 	public static partial class DevTests
 	{
-		[ConsoleCommand(name: "CICameraSettings", docs: "Dev, editor: the editor camera's settings - look sensitivity, drag up looks up or down, move, zoom and pan speed, the wheel's direction - change the camera's moves as set; Alt + right-drag zooms in and out; right mouse + wheel speed is kept; saved in world_rules.txt and read back; the status bar's Camera... button opens the Camera window (sliders, switches, Mod's own); Defaults has the same settings; world_rules.txt is put back as it was")]
+		[ConsoleCommand(name: "CICameraSettings", docs: "Dev, editor: the editor camera's settings - look sensitivity, drag up looks up or down, move, zoom and pan speed, the wheel's direction - change the camera's moves as set; Alt + right-drag zooms in and out; right mouse + wheel speed is kept; saved in world_rules.txt and read back; the status bar's Camera... button opens the Camera window (every mouse button and key of the editor listed, each on one line, the window fitting 1280 x 720; sliders, switches, Mod's own); Defaults has the same settings; world_rules.txt is put back as it was")]
 		public static void CameraSettingsCommand() { StartTest(CameraSettingsRoutine()); }
 
 		static IEnumerator CameraSettingsRoutine()
@@ -156,6 +157,28 @@ namespace DynamicIslands
 				Check(ref ok, open != null && CameraSettingsWindow.IsOpen && EditorInput.WindowOpen && look != null && up != null && wheel != null && w.GetComponentsInChildren<Slider>(true).Length == 4 &&
 					Mathf.Abs(Mathf.Exp(look.value) - 1.5f) < 0.02f && UIKit.LabelOf(up).text == "Drag up: look down" && UIKit.LabelOf(wheel).text == "Wheel up: zoom out",
 					"Camera... opens the Camera window (" + CameraSettingsWindow.IsOpen + "): 4 sliders, the switches, showing the saved settings");
+				// the controls list: every group and row there, each on one line, the window on a small screen
+				Canvas.ForceUpdateCanvases();
+				var missing = new List<string>();
+				var cut = new List<string>();
+				foreach (string[] g in CameraSettingsWindow.ControlGroups)
+					for (int i = 1; i + 1 < g.Length; i += 2)
+					{
+						Transform row = w != null ? w.transform.Find("Panel/Controls/" + (g[0] == "Camera" ? "Column_Camera" : "Column_Editing") + "/Keys_" + g[0] + "/Key_" + g[i]) : null;
+						Text key = row != null ? row.Find("Key").GetComponent<Text>() : null, does = row != null ? row.Find("Does").GetComponent<Text>() : null;
+						if (key == null || does == null || key.text != g[i] || does.text != g[i + 1]) { missing.Add(g[0] + ": " + g[i]); continue; }
+						foreach (Text t in new[] { key, does })
+							if (t.preferredWidth > t.rectTransform.rect.width + 1f || t.rectTransform.rect.height < t.fontSize) cut.Add("\"" + t.text + "\" (" + Num(t.preferredWidth) + " of " + Num(t.rectTransform.rect.width) + ")");
+					}
+				string listed = string.Join(" ", CameraSettingsWindow.ControlGroups.SelectMany(g => g).ToArray());
+				string[] keys = { "Right mouse", "WASD", "Q / E", "Space / C", "Middle mouse", "Alt + left", "Alt + right", "Wheel", "Shift", "F1 / F2 / F3", "Ctrl+Z", "Ctrl+Y", "Ctrl+S", "Ctrl+O", "Esc",
+					"[ / ]", "1 / 2 / 3 / 4", "Delete", "Ctrl+D", "Ctrl+C", "Ctrl+V", "Ctrl+A", "Ctrl + click", "Shift + click" };
+				string[] notListed = keys.Where(k => !listed.Contains(k)).ToArray();
+				List<string> over = w != null ? UIKit.RowOverflow((RectTransform)w.transform.Find("Panel"), new Vector2(1280, 720)) : new List<string> { "no window" };
+				Check(ref ok, missing.Count == 0 && cut.Count == 0 && notListed.Length == 0 && over.Count == 0 && CameraSettingsWindow.ControlGroups.Sum(g => g.Length / 2) >= 30,
+					"the window lists every mouse button and key (" + CameraSettingsWindow.ControlGroups.Sum(g => g.Length / 2) + " in " + CameraSettingsWindow.ControlGroups.Length + " groups), each on one line, and fits 1280 x 720" +
+					(missing.Count > 0 ? "; missing " + string.Join(", ", missing.ToArray()) : "") + (cut.Count > 0 ? "; cut off " + string.Join(", ", cut.ToArray()) : "") +
+					(notListed.Length > 0 ? "; not listed " + string.Join(", ", notListed) : "") + (over.Count > 0 ? "; " + string.Join("; ", over.ToArray()) : ""));
 				Screenshot(new[] { "camera_settings" });
 				yield return new WaitForSecondsRealtime(0.6f);
 				if (look != null) look.value = Mathf.Log(3f); // (as a dragged slider does)

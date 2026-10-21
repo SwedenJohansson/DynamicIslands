@@ -260,7 +260,7 @@ namespace DynamicIslands.Editor
 			cameraText = UIKit.Label(bar, "", 13, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Normal, "Camera");
 			UIKit.Size(cameraText.gameObject, 260);
 			// (the camera's controls and settings: look sensitivity, drag up, speeds, the wheel - TODO "Editor camera")
-			UIKit.Button(bar, "Camera...", CameraSettingsWindow.Open, "The camera's controls and settings: look sensitivity, which way dragging up looks, move, zoom and pan speed, the wheel's direction (this PC's own)", 86, StatusBarHeight - 4f, 12).name = "Button_CameraSettings";
+			UIKit.Button(bar, "Camera...", CameraSettingsWindow.Open, "Every mouse button and key of the editor, and the camera's settings: look sensitivity, which way dragging up looks, move, zoom and pan speed, the wheel's direction (this PC's own)", 86, StatusBarHeight - 4f, 12).name = "Button_CameraSettings";
 		}
 
 		#endregion

@@ -166,7 +166,7 @@ namespace DynamicIslands.Editor
 	}
 
 	/// <summary>
-	/// The editor's camera window (the status bar's Camera button): the camera's controls, and its settings
+	/// The editor's camera window (the status bar's Camera button): every mouse button and key of the editor (ControlGroups), and the camera's settings
 	/// (CameraSettings). A modal window like TextPromptWindow; Esc or Close shuts it and saves.
 	/// </summary>
 	public class CameraSettingsWindow : MonoBehaviour
@@ -217,17 +217,89 @@ namespace DynamicIslands.Editor
 
 		void OnDisable() { CameraSettings.Save(); }
 
+		/// <summary>
+		/// Every mouse button and key of the editor, for a new user: each group's title, then the control and what it does in
+		/// pairs. The Camera group and the settings fill the left column, the others the right.
+		/// </summary>
+		internal static readonly string[][] ControlGroups =
+		{
+			new[] { "Camera",
+				"Right mouse + drag", "look around",
+				"Right mouse + WASD", "fly the way you look",
+				"Right mouse + Q / E", "fly down / up",
+				"Right mouse + wheel", "flying speed (kept)",
+				"WASD / arrow keys", "move over the island",
+				"Space / C", "straight up / straight down",
+				"Middle mouse drag", "pan: the ground follows the mouse",
+				"Wheel", "zoom towards the mouse",
+				"Alt + left drag", "orbit around the selection",
+				"Alt + right drag", "zoom in / out",
+				"F", "frame the selection, or the island",
+				"Shift (held)", "the camera three times faster" },
+			new[] { "Anywhere in the editor",
+				"F1 / F2 / F3", "the Terrain, Objects, Island tab",
+				"Ctrl+Z", "undo",
+				"Ctrl+Y, Ctrl+Shift+Z", "redo",
+				"Ctrl+S / Ctrl+O", "save the island / open one",
+				"Esc", "close a window, stop placing" },
+			new[] { "Terrain tab",
+				"Left mouse drag", "use the brush",
+				"Shift + drag", "Noise: takes the bumps away",
+				"Q / E", "Stamp: turn the stamp" },
+			new[] { "Objects tab",
+				"Left click", "place the picked object, or select",
+				"Shift + click", "keep placing / add to the selection",
+				"Ctrl + click", "take one out of the selection",
+				"Left drag on the ground", "box select (Shift: add to it)",
+				"Q / E,  [ / ]", "turn / resize while placing",
+				"1 / 2 / 3 / 4", "handles: move / turn / scale / all",
+				"X", "arrows: the world's or the object's own",
+				"P", "turn around each one or the middle",
+				"Ctrl (held)", "snap while dragging (0.25 m, 15°)",
+				"Ctrl+D / Delete", "duplicate / delete the selection",
+				"Ctrl+C / Ctrl+V", "copy / paste, also to another island",
+				"Ctrl+A", "select everything" },
+		};
+
+		/// <summary>A group of the controls list: the control on the left in gold, what it does beside it.</summary>
+		static void Controls(Transform column, string[] group)
+		{
+			RectTransform box = UIKit.Group(column, group[0], "Keys_" + group[0]);
+			box.GetComponent<VerticalLayoutGroup>().spacing = 1f;
+			for (int i = 1; i + 1 < group.Length; i += 2)
+			{
+				RectTransform row = UIKit.Row(box, 18f, 8f, "Key_" + group[i]);
+				UIKit.Size(UIKit.Label(row, group[i], 13, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Normal, "Key").gameObject, 172);
+				UIKit.Label(row, group[i + 1], 13, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "Does");
+			}
+		}
+
+		const float Width = 1040f, ColumnWidth = (Width - 32f - 12f) / 2f;
+
+		/// <summary>A column of the window, half its width: its groups one under the other, from the top.</summary>
+		static RectTransform Column(Transform parent, string name)
+		{
+			RectTransform c = UIKit.Rect(name, parent);
+			UIKit.Vertical(c.gameObject, 8f, null).childAlignment = TextAnchor.UpperLeft;
+			UIKit.Size(c.gameObject, ColumnWidth);
+			return c;
+		}
+
 		void Build()
 		{
 			RectTransform panel = UIKit.Panel(transform, "Panel", new RectOffset(16, 16, 14, 16), 10f);
-			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(460, 0));
-			Text title = UIKit.Label(panel, "EDITOR CAMERA", 18, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
+			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(Width, 0));
+			Text title = UIKit.Label(panel, "EDITOR CAMERA AND CONTROLS", 18, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
 			UIKit.Size(title.gameObject, -1, 26);
-			Text help = UIKit.Label(panel, EditorCamera.HelpLines, 13, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Normal, "Controls");
-			help.horizontalOverflow = HorizontalWrapMode.Wrap;
-			UIKit.Size(help.gameObject, -1, 82);
-			RectTransform group = UIKit.Group(panel, "Settings (this PC; also in Defaults)", "Settings");
+			// the two columns side by side, as tall as the taller one
+			RectTransform columns = UIKit.Rect("Controls", panel);
+			HorizontalLayoutGroup h = UIKit.Horizontal(columns.gameObject, 12f);
+			h.childAlignment = TextAnchor.UpperLeft; h.childForceExpandHeight = false;
+			RectTransform left = Column(columns, "Column_Camera"), right = Column(columns, "Column_Editing");
+			Controls(left, ControlGroups[0]);
+			RectTransform group = UIKit.Group(left, "Settings (this PC; also in Defaults)", "Settings");
 			refresh = CameraSettings.Build(group);
+			for (int i = 1; i < ControlGroups.Length; i++) Controls(right, ControlGroups[i]);
 			RectTransform buttons = UIKit.Row(panel, 32f, 8f, "Buttons");
 			UIKit.Button(buttons, "Mod's own", () => { CameraSettings.Reset(); refresh(); EditorUI.Flash("The camera settings are the mod's own again"); }, "Every camera setting back to what a new install of Custom Islands has", 120, 32);
 			UIKit.Size(UIKit.Label(buttons, "", 12, UIKit.TextMuted).gameObject, -1, -1, 1);

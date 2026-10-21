@@ -39,8 +39,6 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The camera's controls, for the help.</summary>
 		public const string Help = "Right-drag: look (WASD fly, Q/E down/up, wheel: speed) · WASD: move · Space / C: straight up / down · Middle-drag: pan · Alt+drag: orbit · Alt+right-drag: zoom · Wheel: zoom to the cursor · F: frame · Shift: faster";
-		/// <summary>The controls one per line (the Camera window).</summary>
-		public const string HelpLines = "Right mouse held: look around; WASD fly, Q/E down / up, wheel: flying speed\nWASD / arrows: move over the island \u00B7 Space / C: straight up / down\nMiddle mouse drag: pan \u00B7 Alt + left drag: orbit the selection\nWheel: zoom to the cursor \u00B7 Alt + right drag: zoom in / out\nF: frame the selection (or the island) \u00B7 Shift: three times faster";
 
 		float yaw, pitch;
 		Vector3 position, velocity;

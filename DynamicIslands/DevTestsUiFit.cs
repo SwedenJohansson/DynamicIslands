@@ -73,6 +73,7 @@ namespace DynamicIslands
 				new FitWindow("soundpicker", () => SoundPickerWindow.OpenFor(v => { }), SoundPickerWindow.Close, () => EditorPanel("SoundPickerWindow")),
 				new FitWindow("choice", () => ChoiceWindow.Open("A CHOICE", choices, v => { }), ChoiceWindow.Close, () => EditorPanel("ChoiceWindow")),
 				new FitWindow("prompt", () => TextPromptWindow.Open("A NAME", "Type a name for the test", "citest", v => { }), TextPromptWindow.Close, () => EditorPanel("TextPromptWindow")),
+				new FitWindow("camera", CameraSettingsWindow.Open, CameraSettingsWindow.Close, () => EditorPanel("CameraSettingsWindow")),
 				new FitWindow("share", () => LibraryExportWindow.OpenPlan(CIAdventure), LibraryExportWindow.Close, () => LibraryExportWindow.Window != null ? LibraryExportWindow.Window.Find("Panel") as RectTransform : null),
 				new FitWindow("import", LibraryImportWindow.Open, LibraryImportWindow.Close, () => LibraryImportWindow.Window != null ? LibraryImportWindow.Window.Find("Panel") as RectTransform : null),
 				new FitWindow("library", () => LibraryWindow.Open(1), LibraryWindow.Close, () => CanvasPanel(LibraryWindow.CanvasName)),
