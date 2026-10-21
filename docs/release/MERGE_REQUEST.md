@@ -52,9 +52,10 @@ documentation is the illustrated [`docs/GUIDE.md`](../GUIDE.md) (and its PDF) an
   it; chosen in Raft's New Game box or changed in a running world.
 - **Story chain:** plan islands in Raft's Receiver story (first, after or instead of a story island), Raft's story on or
   off, and a main story with its own tabs and pages in Raft's notebook.
-- **Optional World settings** (off in a plain world): monster difficulty, build cost, a world randomizer, scrambled
-  blueprints, story islands in a new order, ghost rafts, private storages, and a level up system. All of it can be
-  changed in a running world under Esc > Custom Islands.
+- **Optional World settings** (off in a plain world): monster difficulty, build cost, a world randomizer, nineteen
+  extra options (ghost rafts, private storages, storm seas, a trader raft, extra upgrades, a ghost ship, fog banks and
+  more), a head start raft and a level up system. All of it can be changed in a running world under Esc > Custom
+  Islands.
 
 ### Multiplayer
 - Up to eight players: the host sends islands, missing island files, harvest state and World settings to everyone who
@@ -77,7 +78,7 @@ documentation is the illustrated [`docs/GUIDE.md`](../GUIDE.md) (and its PDF) an
 ### Player-facing additions
 - EXPERIMENTAL ALPHA RELEASE box on the main menu with Discord, Guide (PDF) and **Report a problem** (a report form
   with versions filled in, the log folder, a new GitHub issue).
-- The illustrated guide (`docs/GUIDE.md`, 69 pictures, also as a PDF shipped in the `.rmod`).
+- The illustrated guide (`docs/GUIDE.md`, 85 pictures, also as a PDF shipped in the `.rmod`).
 
 ## Compatibility notes
 

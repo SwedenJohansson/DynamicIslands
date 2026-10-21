@@ -9,9 +9,11 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
-## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
+## 3.0 alpha - 6-21 October 2026: storylines, more extra options, editor tools, safety audit
 
 ### New
+- **The editor's Camera window lists every key:** **Camera...** in the status bar now lists every mouse button and key
+  of the editor - camera, tabs, undo/save, terrain and object keys - so new users can learn them in one place.
 - **Fourteen new library islands to wander** (no quest, no banner): ten small - Gannet Rock, Driftwood Key,
   Bearback Isle, Twin Horns, Pelican Spit, Mango Dell, Cormorant Skerry, Basalt Cay and the sunken Skiff Shoal
   and Castaway Knoll - three medium - Bramblewood Isle, Gullwing Bay, Coyote Mesa - and Driftcloud Islet, a small
@@ -132,8 +134,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   four areas: a lift up the mountain, four arm machines, ziplines, a laser to turn with mirrors, a boss and the storm
   switched off). Raft's blueprints come in Raft's order; the ending has credits. Guide 16.9 shows what to look at.
 - **Every storyline hands out all of Raft's story blueprints** (the 23 from Vasagatan to Utopia), so nothing is
-  missing from the crafting menu: checked for all six library storylines. For plan makers: `CIPlanBlueprints [plan]`
-  lists any Raft story blueprint a saved plan never gives; a play test step `expect blueprints` checks it at the end.
+  missing from the crafting menu: checked for all six library storylines. In the dev build only (not in
+  the release): `CIPlanBlueprints [plan]` lists any Raft story blueprint a saved plan never gives, and a play test
+  step `expect blueprints` checks it at the end.
 - **Raft stores on custom islands:** the **TradingPost** object (Islands list) is Raft's trading post, working - Raft's
   store window, goods and prices, trash cubes and trade coins, trophy fish. Stock is kept per store with the world and
   shared by the crew. Recipes: `store [alias] at x z ground`.
@@ -163,8 +166,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   a claw, a brood mother on the roof, Ada joining the crew, a camera moment at the flag). Dead letters from the first
   island are delivered on later ones; Raft's blueprints are quest steps in Raft's order; Raft stores on the later
   islands and a vending machine at the General Post Office. A side island, The Wandering Sorting Barge, comes back every
-  6 km until its quest is done. Guide 16.10 shows what to look at. For plan testers: `CISetDay <n>` sets the day
-  counter in a test world, for `day:N` rules.
+  6 km until its quest is done. Guide 16.10 shows what to look at. In the dev build only: `CISetDay <n>` sets the
+  day counter in a test world, for `day:N` rules.
 - **A Receiver dot that waits for a blueprint:** a world-plan rule's WHERE has a **DOT** choice (in the plan file
   `needs=engine`, `steering` or `controls`). Until a player has that blueprint, the island comes straight ahead and has
   no dot on the Receiver; then its dot shows and a "near" island comes to its side. Default: always, as Raft's story
@@ -336,6 +339,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   Test, kept in `testkit.txt`) and **Give the kit**.
 
 ### Changed
+- **Editor camera: dragging up looks up** now, as in most games (holding the right mouse). The switch **Drag up: look
+  down** in **Camera...** turns it round and is kept; **Mod's own** sets it back to up.
 - **Arrival banner only for islands with a quest:** an island's name, author and description no longer show when you
   get near it unless the island has a quest. Zone and trigger messages are unchanged.
 - **No update check:** the mod no longer asks GitHub for a newer version on the main menu (and never downloads one);
@@ -450,6 +455,17 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Rescued survivors move on your raft:** the survivor stood stiff with its arms out; it now moves like Raft's own
+  characters. An open cage whose survivor is missing from the world's list puts it back without counting a second
+  rescue.
+- **Generated islands: flat props lie along the slope.** A 4 m pallet on a slope was buried in it (it was set on the
+  lowest ground under it); flat props now follow the slope and other props sink at most half their height.
+- **Generated islands: nothing half buried round a den mound, no shore ice in the air on flying islands.** Grass and
+  small objects on a mound's raised edge stood buried on one side and floating on the other; they are taken away now.
+  Shore ice on a flying island hung 1-5.5 m in the air where the land under the waterline was cut; it is skipped.
+- **Editor: the top bar fits a 1024 x 768 screen** again (it ran 6 px past the edge once Use in a plan got its help
+  mark).
+- **Choose islands...** (World settings): a section heading hides when the search leaves no row under it.
 - **Generated scenes: props no longer stand inside each other.** On newly generated islands and randomizer outposts (scrapyards, markets, camps, gardens, radio sites and the rest) each prop, the chest and the note keep clear of each other however they are turned; two metal crates of a scrapyard stood 0.35 m into each other. Islands already generated keep their props until they are made again.
 - **Old Mine Islet: the lantern crate by the mine's mouth stands on the floor.** It stood by the south wall where the den's rock floor doesn't reach, 1.2 m over the ground under it; it now stands 4 m further in, its lantern still on top.
 - **Generated scrapyards: the excavator stands on its tracks.** It hovered about 0.8 m over the ground on generated islands (its measured size counted a hidden part down to its pivot). Grass and plants beside a generated radio tower or lighthouse also move with the levelled ground by its lowest change, so they no longer stand in the air on its slope.

@@ -89,7 +89,10 @@ folders (OneDrive, Dropbox), so the mod can save its files there.
 ### Optional world settings (off in a plain world)
 - **Monster difficulty** (Timid to Nightmare) and **build cost** (0-100% more materials).
 - **World randomizer:** a normal Raft world that plays out differently every time, without touching Raft's story.
-- **Extra options:** scrambled blueprints, story islands in a new order, ghost rafts, private storages.
+- **Extra options**, each on or off: ghost rafts, private storages, long voyage, iron raft, shared EXP, dangerous
+  nights, a daily quest, a rogue shark, silver and golden barrels, storm days, storm seas, a trader raft, extra
+  upgrades, UFO sightings, a bioluminescent sea, lightning strikes, a ghost ship, whale breaches and fog banks; and a
+  head start raft.
 - **Level up system:** EXP from monsters and stat points to spend (K).
 - Changed any time in a running world with **Esc > Custom Islands** (the host decides for everyone).
 
@@ -114,7 +117,7 @@ Other mods haven't been tested together with Custom Islands. If another mod misb
 ## The island library
 
 Download islands and world plans others made, right in the game: **ISLAND LIBRARY** in the main menu (also
-**Get more...** in the New Game box). Every entry is looked at before it goes in.
+**Get more plans...** in the New Game box). Every entry is looked at before it goes in.
 
 - Library on GitHub: [SwedenJohansson/CustomIslands-Library](https://github.com/SwedenJohansson/CustomIslands-Library)
 - Share your own: export it in the editor, then post the pack on the
@@ -128,7 +131,7 @@ Download islands and world plans others made, right in the game: **ISLAND LIBRAR
 
 - [Illustrated guide](https://github.com/SwedenJohansson/DynamicIslands/blob/master/docs/GUIDE.md) (also as a PDF
   from the **Guide (PDF)** button on the main menu): installing, sailing, the editor, quests and stories, world plans,
-  playing together and the optional systems, with 69 pictures.
+  playing together and the optional systems, with 85 pictures.
 - [Changelog](https://github.com/SwedenJohansson/DynamicIslands/blob/master/CHANGELOG.md): everything new in 3.0.
 - Before playing together over several days, read the guide's
   [Known issues](https://github.com/SwedenJohansson/DynamicIslands/blob/master/docs/GUIDE.md#12-known-issues-what-to-avoid-until-they-are-fixed)
