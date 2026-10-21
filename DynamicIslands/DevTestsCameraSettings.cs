@@ -164,7 +164,11 @@ namespace DynamicIslands
 				foreach (string[] g in CameraSettingsWindow.ControlGroups)
 					for (int i = 1; i + 1 < g.Length; i += 2)
 					{
-						Transform row = w != null ? w.transform.Find("Panel/Controls/" + (g[0] == "Camera" ? "Column_Camera" : "Column_Editing") + "/Keys_" + g[0] + "/Key_" + g[i]) : null;
+						// row names hold '/' ("Q / E"), which Find reads as a path, so match the group's children by name
+						Transform groupBox = w != null ? w.transform.Find("Panel/Controls/" + (g[0] == "Camera" ? "Column_Camera" : "Column_Editing") + "/Keys_" + g[0]) : null, row = null;
+						if (groupBox != null)
+							foreach (Transform child in groupBox)
+								if (child.name == "Key_" + g[i]) { row = child; break; }
 						Text key = row != null ? row.Find("Key").GetComponent<Text>() : null, does = row != null ? row.Find("Does").GetComponent<Text>() : null;
 						if (key == null || does == null || key.text != g[i] || does.text != g[i + 1]) { missing.Add(g[0] + ": " + g[i]); continue; }
 						foreach (Text t in new[] { key, does })
