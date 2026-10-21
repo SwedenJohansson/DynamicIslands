@@ -16,7 +16,7 @@ The host owns the world: its island list, world file and settings. Clients copy 
 ## Main flow
 1. Client: `Raft_Network.OnWorldReceivedLate` -> `IslandNetwork.OnWorldReceived`: resets `WorldRules`, `WorldOptions`, `StoryChain`, `WorldCopy`; empties the island list.
 2. `IslandNetwork.Tick` sends `SyncRequest` (`Name` = `"version:"` + `LibraryPack.ModVersion`) every `SyncRetrySeconds` (5 s); after `SyncMaxTries` (12) every 30 s, with a notice.
-3. Host, `OnMessage` case `SyncRequest`: `CompareVersions`; replies `SyncRequest` with its version and `HostCapabilities` (`"counts,spots,events"`); then `JoinPart` each, in order: `WorldRules.Message`, `IslandsMessage(..., true)`, `StoryBook.StateMessage`, `WorldOptions.Message`, `StoryChain.Message`, `QuestCount.Message`, `CreatureSpawner.SpotsMessage(null)`, `WorldRandomizer.Message`, `PlayerPlaces.PlaceMessage`; then `PlayerLevels.StateFor` -> `SendLevels`, `WorldCopy.Send(to)`, `WorldSaveShare.Send(to)`, `AskPlayers(to)` when files are wanted.
+3. Host, `OnMessage` case `SyncRequest`: `CompareVersions`; replies `SyncRequest` with its version and `HostCapabilities` (`"counts,spots,events"`); then `JoinPart` each, in order: `WorldRules.Message`, `IslandsMessage(..., true)`, `StoryBook.StateMessage`, `WorldOptions.Message`, `DailyQuest.Message`, `UpgradeTable.Message`, `RogueShark.Message("state")`, `StoryChain.Message`, `QuestCount.Message`, `CreatureSpawner.SpotsMessage(null)`, `WorldRandomizer.Message`, `PlayerPlaces.PlaceMessage`; then `PlayerLevels.StateFor` -> `SendLevels`, `WorldCopy.Send(to)`, `WorldSaveShare.Send(to)`, `AskPlayers(to)` when files are wanted.
 4. Client `ReceiveIslands`: each island at `FromHost` (x,z from its own raft, the host's y); a known island more than 5 m off is moved. A `FullList` drops islands not in it and sets `synced`. New entries -> `ResolveFile`.
 5. `ResolveFile`: the same-name file if its hash matches; else `<name>_<hash>.island`; else a copy of any `*_<hash>.island`; else `FileRequest` and `Entry.WaitingForFile`.
 6. Host `SendFile` -> `SendChunks`: `FileChunk`s of `ChunkBytes` (3000) in base64, `ChunksPerFrame` (6) a frame. `ReceiveChunk`: only hashes in `requested`; checks `Hash`; saves `<name>_<hash>.island`; clears `WaitingForFile`, so streaming spawns it.
@@ -44,13 +44,18 @@ Fields: `Ids`, `Names`, `Hashes`, `Offsets`, `States`, `Labels`, `Rules`, `FullL
 | 15 `WorldRules` | host -> clients | `Index` monsters, `Count` build cost %, `Data` `receiver=;unload=;regrow=;rdist=`, `Name` refunds, `Names` the rescued survivors (`Survivors.FromHost`) |
 | 16 `Claim` | both | `Ids` island and question number, `Index` key, `Count` 1/0 |
 | 18 `WorldCopy`, 24 `WorldCopyNewer` | host -> clients; client -> host | `Name` world guid, `Hash` stamp, parts `Index`/`Count`/`Data`; newer: `Data` `savecount;savedat` |
+| 26 `DailyQuest` | both | `Name` "state" (host's task, `Data`), "add" (a player's part: `Index` day, `Count`), "got" (reward taken) |
+| 27 `RogueShark` | host -> clients | `Name` "spawn"/"dead"/"state", `Index` the rogue's object index, `Count` no new one before this day |
 | 28 `WorldSave` | host -> clients | `Name` world guid, `Hash` save folder name, parts `Index`/`Count`/`Data` (base64 of the pack, 3000 chars) |
+| 29 `UpgradeTable` | host -> everyone; client -> host | `Name` "state"/"learned" from the host, "research"/"learn" to it |
 | 33 `Moment` | host -> clients | when/then moments: `Name` "sound"/"stop" (`TriggerSounds`), "camera" (`CameraMoment`), "ending" (`StoryCredits`), "ufo" (`UfoSightings`, Data = the saucer's path, no Ids); `Ids[0]` island, `Index` object, `Data` |
+| 34 `VendingHatch` | host -> clients | a vending hatch paid or emptied: `Ids` island, state key, button + 1 (0 = empty); `Count` day |
+| 35 `StormSeas` | host -> everyone | `Name` "broke", `Index` the storm, `Count` floors broken |
 | 36 `WhaleBreach` | host -> clients | a whale breach (option `whalebreach`): `Index` its number, `Offsets` { dx, dz from the raft, heading, roll side }; `WhaleBreach.OnMessage` plays it by the client's raft |
 | 21 `CreatureSpots`, 22 `ObjectHarvest` | host -> clients; via host | `Data` `objectIndex:islandId:spot;...`; `Ids` island, active, yield, `Index` ordinal, `Count` day (host sets its own) |
 
 ## Where to change X
-- New kind: a const in `IslandNetMessage` (taken up to 29 `UpgradeTable`, 33 `Moment` and 36 `WhaleBreach`; check `IslandNetMessage` for the next free one), a send helper in `IslandNetwork`, a `case` in `IslandNetwork.OnMessage`.
+- New kind: a const in `IslandNetMessage` (1-29 and 33-36 are taken, 30-32 unused; the next free one is 37), a send helper in `IslandNetwork`, a `case` in `IslandNetwork.OnMessage`.
 - State a joining player needs: the `JoinPart` list in `OnMessage` case `SyncRequest`, plus a broadcast on change.
 - Island list fields: `IslandsMessage` and `ReceiveIslands`. Files: `ResolveFile`, `SendFile`, `ReceiveChunk`.
 - One-player-only things: `Claims.May`, `Claims.HostGrant`. Shared settings: `WorldRules.HostSettingsData`, `HostSettingsFrom`.

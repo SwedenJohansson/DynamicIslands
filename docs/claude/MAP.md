@@ -29,7 +29,7 @@ line per source file.
 
 | Path | Holds |
 |---|---|
-| `DynamicIslands/` | The mod folder that becomes the `.rmod`: about 200 `.cs` files, `modinfo.json` (version), asset bundles, measured Raft data (`raft_*.txt`, `island_thumbs/`, `island_heights/`) |
+| `DynamicIslands/` | The mod folder that becomes the `.rmod`: about 200 `.cs` files (and 113 `DevTests*.cs`), `modinfo.json` (version), asset bundles, measured Raft data (`raft_*.txt`, `island_thumbs/`, `island_heights/`) |
 | `content/recipes/` | `.recipe` scripts that build an island or world plan |
 | `content/tests/` | `.play` play-tests |
 | `content/objects/` | Object catalogue lists by category |
@@ -38,8 +38,8 @@ line per source file.
 
 ## Build and pack
 
-- `compile.ps1 [-Release]`: compile check. `-Release` compiles without
-  `DevTests*.cs`.
+- `compile.ps1 [-Full] [-Release]`: compile check. `-Full` prints every error (otherwise the first 40);
+  `-Release` compiles without `DevTests*.cs`.
 - `pack.ps1 [-Install] [-Release]`: makes `DynamicIslands.rmod` (a zip of
   `DynamicIslands/` plus the guide PDF). `-Install` copies it to Raft's
   `mods` folder (`-RaftDir`, default

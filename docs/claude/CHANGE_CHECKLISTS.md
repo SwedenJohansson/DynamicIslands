@@ -8,7 +8,7 @@ RECIPE_FORMAT.md and PLAY_FORMAT.md describe the content test files.
 ## New .cs file
 **Must change**
 - `DynamicIslands.csproj`: add a `<Compile Include="Name.cs" />` line. `compile.ps1` builds from this file. `pack.ps1` packs the files of `DynamicIslands\` whether they are in the csproj or not, so a file left out still ships but is never compile-checked.
-- Use `namespace DynamicIslands.Editor` and C# 7.3 (`LangVersion` in the csproj). Only `DynamicIslands.cs`, `terraineditor.cs` and `DevTests*.cs` use `namespace DynamicIslands`.
+- Use `namespace DynamicIslands.Editor` and C# 7.3 (`LangVersion` in the csproj). Only `DynamicIslands.cs`, `terraineditor.cs`, `BlueprintSteps.cs`, `LaserBeam.cs`, `RaftStore.cs`, `RaftVending.cs` and `DevTests*.cs` use `namespace DynamicIslands`.
 **Usually also**
 - Work done every frame: add `try { X.Tick(); } catch (Exception e) { TickError("...", e); }` to `DynamicIslands.Update`. Work done at start: add a `StartStep(...)` to `DynamicIslands.Start`. If you hook a Raft or Unity event, take it off in `DynamicIslands.OnModUnload`.
 - Harmony patch classes: `PatchHealth.PatchAll` applies every `[HarmonyPatch]` class on its own. Add a word to `PatchHealth.Feature` so a patch that fails names the feature.
@@ -90,7 +90,7 @@ RECIPE_FORMAT.md and PLAY_FORMAT.md describe the content test files.
 
 ## New network message kind
 **Must change**
-- `IslandNetwork.cs`: add a `public const int` to `IslandNetMessage`, using the next number after `QuestStepMore` (25). Give it a summary: who sends it, and which fields it uses (`Ids`, `Index`, `Count`, `Name`, `Data`, `Hash`, `Offsets`).
+- `IslandNetwork.cs`: add a `public const int` to `IslandNetMessage`, using the next free number: 1-29 and 33-36 are taken (the highest is `WhaleBreach` 36), 30-32 are unused, so the next is 37. Give it a summary: who sends it, and which fields it uses (`Ids`, `Index`, `Count`, `Name`, `Data`, `Hash`, `Offsets`).
 - Send it with `IslandNetwork.SendToEveryone`, or a helper like `SendLevels` / `SendWorldRules`. Host-only sends check `Raft_Network.IsHost`.
 - Add `case IslandNetMessage.X:` to `IslandNetwork.OnMessage`, calling `X.OnMessage(msg ...)`. The host applies a player's message before it passes it on with `SendToClients`.
 **Usually also**
@@ -117,7 +117,7 @@ RECIPE_FORMAT.md and PLAY_FORMAT.md describe the content test files.
 - Older versions: `WorldOptions.Parse` drops option names it doesn't know.
 **Test**: `DevTestsOptions.cs`:
 - `CIWorldOptionsUnit` checks the exact `Encode` text of `All`.
-- `CIOptionsMatrix` loops `mask < 16` (2 to the power of the option count).
+- `CIOptionsMatrix` loops `mask < (1 << groups.Length)`: each option alone, the sea options as one group and the retired ones as one (512 combinations, ~22 min). A new sea option goes in its `sea` list, or the run doubles.
 - Also run `CIWorldSettingsBox`, `CIWorldWindow` (`DevTestsPolish.cs`) and `CIEverythingOn`.
 **Docs**: GUIDE `### 9.4 Extra options` and `### 9.1 The World settings window`; README `## World settings: more ways to play Raft again` and the `WorldOptions` row of the console table.
 
@@ -295,7 +295,7 @@ This is the most common change in history. It does not touch any `.cs` file.
   - README: the `## Features` list, the feature's section, `## Installing`, `## Console commands (F10)`.
   - CHANGELOG: under the newest `## ` heading, in `### New` / `### Changed` / `### Fixed`, for what players or island makers see.
 - Then rebuild `docs/Custom-Islands-Guide.pdf` from GUIDE.md. README names `guidepdf.ps1` in the project's tools; it is not in this repository.
-- Renaming a GUIDE heading breaks its anchor. Fix the `## Contents` links and the `HelpLinks.OpenGuideSection` callers (`LibraryWindow.cs`, `WorldPlanWindow.cs`). `DevTestsHelp.cs` compares two of those anchors as literal text.
+- Renaming a GUIDE heading breaks its anchor. Fix the `## Contents` links and the `HelpLinks.OpenGuideSection` callers (`LibraryWindow.cs`, `WorldPlanWindow.cs`, `CreateWindow.cs`). `DevTestsHelp.cs` compares two of those anchors as literal text.
 - Every new `.cs` file needs a `<Compile Include>` line in `DynamicIslands.csproj`.
 - Run `powershell -ExecutionPolicy Bypass -File compile.ps1`. It must print BUILD OK.
 - Run `compile.ps1 -Release`. It must also print BUILD OK, which means no mod code uses `DevTests`. Only `DynamicIslands.Start` reaches `DevTests.Init`, and only by reflection.

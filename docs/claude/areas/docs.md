@@ -3,7 +3,7 @@
 README's `## Documentation` sets the rule: every change a player or island builder sees updates the docs in the same commit. Guide and README share one order: island creation, quests and stories first; the optional world systems after.
 
 ## Reading these files cheaply
-- `docs/GUIDE.md` is ~294 KB; `README.md` is ~144 KB with lines over 3,000 characters. Never read either whole.
+- `docs/GUIDE.md` is ~440 KB; `README.md` is ~200 KB with lines over 3,000 characters. Never read either whole.
 - Outline: `grep -n '^#' docs/GUIDE.md` (same for `README.md`). A term: `grep -n '<term>' docs/GUIDE.md README.md`.
 - Then read ~40-line ranges; for README, cut long lines (`sed -n 'A,Bp' README.md | cut -c1-300`).
 
@@ -37,22 +37,23 @@ Then `## N. Title` chapters, `### N.M Title` subsections, and unnumbered `####` 
 - 6 Stories: quests, behaviour and events, story items, islands that bring islands, Raft's story and notebook.
 - 7 World plans: the three kinds of islands, the shipped plans, first plan, rule card, every rule, Check, sharing, the plan file.
 - 8 Playing together. 9 World settings: window, rules, randomizer, extra options, islands while sailing, level up.
-- 10 Settings files. 11 Console commands (Command/Where/What it does). 13 Limitations. 15 Reporting a problem. 16 Learn from the library.
+- 10 Settings files. 11 Console commands (Command/Where/What it does). 13 Limitations. 15 Reporting a problem. 16 Learn from the library (16.1-16.13: example islands, plans, the storylines). 17 Learn from the islands (open any island in the editor, every feature and an island that shows it).
 - 12 Known issues, 12.1-12.5 by situation: most `####` have a `**Why:**` and a `**What to do:**` paragraph; each subsection ends with `#### Other things to know`.
-- 14 Questions and problems: `**Question.**` then the answer.
+- 14 Questions and problems: a paragraph that starts with the problem in bold, ending in a full stop
+  (`**No islands appear while I sail.**`), then the answer.
 - Anchors are GitHub style: `### 4.7 Saving and sharing` is `#47-saving-and-sharing`. Before renaming a heading, grep `OpenGuideSection(` (code), `GUIDE.md#` (`README.md`, `docs/release/MOD_PAGE.md`) and `](#` (the guide).
 - House style (README `## Documentation`): a feature gets its place in the matching section, in the same detail as the rest: what it does, where to find it, what players see, multiplayer, the console command; with a new picture in `docs/images` where one helps. Plain words, buttons in **bold**, files and commands in backticks.
 
 ## README.md sections
 - Intro: credits, the alpha notice, links to `CHANGELOG.md`, the guide and its PDF.
-- `## Features`: top bullets `- **Island editor**`, `- **In your worlds**`, `- **Multiplayer`, `- **Optional world systems**`, `- **PC check:**`, `- **EXPERIMENTAL ALPHA RELEASE box**`; a feature is a sub-bullet, often led by a **bold name**.
-- `## Installing`: how to install, then the File/What it is table of `<Raft>\Mods\DynamicIslands\` (a row per new file or folder).
+- `## Features`: top bullets `- **Island editor**`, `- **In your worlds**`, `- **Multiplayer`, `- **Optional world systems**`, `- **PC check:**`, `- **Hover tips:**`, `- **EXPERIMENTAL ALPHA RELEASE box**`; a feature is a sub-bullet, often led by a **bold name**.
+- `## Installing`: how to install, then the File/What it is table of `<Raft>\Mods\DynamicIslands\` (a row per new file or folder); `### Keys in the settings files` lists the hand-edit keys of `spawnpool.txt`, `world_rules.txt` and `randomizer.txt`.
 - Island creation: `## The editor` (controls), `## The island generator`, `## Map types`, `## World plans`.
 - Optional systems: `## World settings: more ways to play Raft again`, `## World rules: monster difficulty and build cost`, `## World randomizer`, `## The level up system`.
 - `## Console commands (F10)`: Command/Where/What it does; the `CI*` dev commands (`DevTests*.cs`) are not listed, and `pack.ps1 -Release` leaves those files out.
 - `## Reporting a problem` (short form of guide 15). `## Documentation`: the docs rule and table.
 - `## Building`: `compile.ps1`, `pack.ps1`. `### Source overview`: File/What it holds, a row per `.cs` file except `DevTests*.cs` (related files share one).
-- `## Known issues (being fixed)` and `## Limitations (can't be changed)` point to guide 12 and 13. Then `## What has been tested`, `## License`.
+- `## Known issues (being fixed)` and `## Limitations (can't be changed)` point to guide 12 and 13. Then `## What has been tested`, `## Contributing`, `## License`.
 
 ## CHANGELOG.md
 - Newest first, for players and island makers; internal clean-ups and test runs are left out.
@@ -60,7 +61,7 @@ Then `## N. Title` chapters, `### N.M Title` subsections, and unnumbered `####` 
 - An entry is `- ` plus one or two plain sentences, a new feature often led by its **bold name**. Lines wrap before 120 characters; continuation lines are indented two spaces.
 
 ## Images, the guide PDF, docs/release/
-- `docs/images/*.jpg`: lowercase with hyphens, prefixed by where the shot is: `editor-`, `generator-`, `generated-`, `world-`, `plan-`, `library-`, `levels-`, `randomizer-`, `notebook-`, `newgame-` (also `main-menu.jpg`, `maptypes.jpg`, `report-box.jpg`).
+- `docs/images/*.jpg`: lowercase with hyphens, prefixed by where the shot is: `editor-`, `generator-`, `generated-`, `world-`, `plan-`, `library-`, `levels-`, `randomizer-`, `notebook-`, `newgame-`, `receiver-`, `level-`, `learn-` (also `main-menu.jpg`, `maptypes.jpg`, `report-box.jpg`).
 - Guide: `![Alt text](images/<name>.jpg)` on its own line, then an italic `*caption*` line. README uses `docs/images/<name>.jpg`.
 - Library thumbnails: `docs/images/library/<name_with_underscores>.jpg`, inline in chapter 16 tables as `![](images/library/<name>.jpg) **Name**`.
 - `docs/Custom-Islands-Guide.pdf` is made again from `GUIDE.md` after a change to it, by `guidepdf.ps1` (Node and Microsoft Edge), which is in the project's tools, not this repo. `pack.ps1` packs it into the `.rmod` as `Custom-Islands-Guide.pdf`; `HelpLinks.OpenGuide` writes it to `Mods\DynamicIslands\` to open it. Without it, `pack.ps1` warns and the Guide button opens the PDF online (`HelpLinks.GuidePdfOnline`).

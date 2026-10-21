@@ -76,7 +76,7 @@ expect message isn't whole
 | `weather` | `[name]` | Raft's weather whose name contains the text, set at once (`PlayWeather`); with no name or no match, logs the weathers. |
 | `log` | `<text>` | Writes the text to the log. |
 | `empty` | | In a `CI ` world: the player's inventory emptied (its blueprints noted first), as a player makes room before a chest whose loot would drop for a full bag. |
-| `storespot` | `[x z] [count] [size]` | Logs up to `count` (6) clear squares of `size` m (8) on the island's own ground for a Raft store, nearest to x z first, as ready `store - at X Z ground` lines: level within 0.6 m, at least 1 m above the sea, nothing of the island in the square up to 5 m high (`DevTestsStore.StoreSpots`). |
+| `storespot` | `[x z] [count] [size]` | Logs up to `count` (6) clear squares of `size` m (8) on the island's own ground for a Raft store, nearest to x z first, as ready `store - at X Z ground` lines: level within 0.6 m, at least 1 m above the sea, nothing of the island in the square up to 5 m high (`DevTests.StoreSpots` in `DevTestsStore.cs`). |
 | `where` | `<name>` | Logs where the island's objects whose name starts with it are, in test coordinates. |
 | `picture` | `<file> <x> <h> <z> <lx> <lh> <lz>` | A 1280x720 picture with Raft's camera to `recipes\play_<file>.jpg`. Heights above `Position.y`, or `+h` above what is below. |
 | `beam` | `<emitter>` | Traces a laser emitter's beam now and logs it: where it starts, its points, the mirrors, what it ends on, and the emitter's renderers (their middle is the beam's start). Diagnostics only: checks just that the emitter is there |
@@ -115,7 +115,7 @@ expect message isn't whole
 
 ## Traps
 
-- Before an island, only `island`, `log`, `wait`, `hour`, `plan`, `note`, `tune`, `arrive` and `expect chain` may run.
+- Before an island, only `island`, `log`, `wait`, `hour`, `plan`, `note`, `tune`, `arrive`, `sail` and `expect chain` may run.
 - `island`, `tune` and `arrive` reset the offset to 0. Put `offset` after them.
 - `wait` is seconds here; in a recipe it is frames.
 - `read` matches part of a note title. `open` and `reach` match a chest's `note.title` setting whole (any case).
