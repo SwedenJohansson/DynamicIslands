@@ -196,7 +196,7 @@ namespace DynamicIslands
 			else Log("PASS: " + c.Label + " types - " + sum + ", " + c.Pass);
 		}
 
-		[ConsoleCommand(name: "CIScrapyardExcavator", docs: "Dev, world (host, a test world 'CI ...'): large islands (the only map type with themed scenes) made by the generator as it is now, one after another, until one has the scrapyard scene with the excavator as its centrepiece (a large island has a scrapyard in about one of four and its centrepiece is one of excavator / forklift / dumpster, so a dozen fresh islands may have none - GAP22). That island is brought next to the raft, measured as CIGroundTypes does (the excavator's own lines decide), the excavator pictured (scrapyard_excavator) and taken away. CIScrapyardExcavator [islands to try, 80] [keep]")]
+		[ConsoleCommand(name: "CIScrapyardExcavator", docs: "Dev, world (host, a test world 'CI ...'): large islands (the only map type with themed scenes) made by the generator as it is now, one after another, until one has the scrapyard scene with the excavator as its centrepiece (a large island has a scrapyard in about one of four and its centrepiece is one of excavator / forklift / dumpster, so a dozen fresh islands may have none - GAP22). That island is brought next to the raft, measured as CIGroundTypes does (the excavator's own lines decide) and for how deep its tracks sit (fails when even the shallowest of 5 spots is over 0.35 m in - GAP25), the excavator pictured (scrapyard_excavator) and taken away. CIScrapyardExcavator [islands to try, 80] [keep]")]
 		public static void ScrapyardExcavatorCommand(string[] args)
 		{
 			int tries = 80, t;
@@ -267,12 +267,28 @@ namespace DynamicIslands
 			Transform exc = e.Root.GetComponentsInChildren<IslandObjectRef>(true).Where(r => r.ObjectName == "VP_Excavator" && r.Props != null && r.Props.ContainsKey("set.piece")).Select(r => r.transform).FirstOrDefault();
 			if (exc != null && player != null) { SetHour(11f); yield return ShotOf(player, exc, "scrapyard_excavator", 12f); }
 			foreach (string l in lines.Take(5)) Log("    " + l);
+			// How deep its tracks sit: they start 0.8 m over the pivot (RaftProps.SeenBottoms); measured under the middle and 1.5 m
+			// out to each side, so a slope counts. Sunk = even the shallowest spot over 0.35 m in (Raft's own Varuna Point: 0-0.1 m;
+			// the full run of 2026-10-21 saw gen-large-233873's pivot 1.1 m under the sand, GAP25)
+			string sinkNote = "";
+			bool sunk = false;
+			Terrain land = exc != null ? e.Root.GetComponentInChildren<Terrain>() : null;
+			if (land != null)
+			{
+				float tracks = exc.position.y + 0.8f * exc.lossyScale.y;
+				List<float> depths = new[] { Vector3.zero, exc.right, -exc.right, exc.forward, -exc.forward }
+					.Select(d => land.SampleHeight(exc.position + d * 1.5f) + land.transform.position.y - tracks).ToList();
+				sinkNote = "; tracks " + string.Join("/", depths.Select(x => Num(x)).ToArray()) + " m in the ground (middle, sides)";
+				sunk = depths.Min() > 0.35f;
+				Log("  excavator" + sinkNote.Substring(1));
+			}
 			// (read before the removal: a destroyed Transform compares equal to null, 2026-10-21)
 			bool hasExc = exc != null;
 			if (!keep) yield return RemoveIslandsAndWait(new[] { e.Id });
 			if (!hasExc) Fail("scrapyard excavator: " + name + " came without its excavator (" + n + " objects)");
 			else if (mine.Count > 0) Fail("scrapyard excavator (" + name + "): " + string.Join("; ", mine.ToArray()));
-			else Log("PASS: scrapyard excavator - on " + name + " (" + foundType.Name + "), on the ground" +
+			else if (sunk) Fail("scrapyard excavator (" + name + "): sunk into the ground" + sinkNote);
+			else Log("PASS: scrapyard excavator - on " + name + " (" + foundType.Name + "), on the ground" + sinkNote +
 				(lines.Count > 0 ? "; " + lines.Count + " other problem(s) on the island, not the excavator's (CIGroundTypes covers them)" : "") + "; " + stats);
 		}
 
