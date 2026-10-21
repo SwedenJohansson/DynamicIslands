@@ -121,14 +121,15 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
 14. [Questions and problems](#14-questions-and-problems)
 15. [Reporting a problem](#15-reporting-a-problem)
 16. [Learn from the library: example islands and plans](#16-learn-from-the-library-example-islands-and-plans)
-   - [16.2 The small and medium islands](#162-the-small-and-medium-islands) · [16.3 The very large islands](#163-the-very-large-islands) ·
+   - [16.1 Opening an example in the editor](#161-opening-an-example-in-the-editor) ·
+     [16.2 The small and medium islands](#162-the-small-and-medium-islands) · [16.3 The very large islands](#163-the-very-large-islands) ·
      [16.4 The world plans](#164-the-world-plans) · [16.5 Where to look for...](#165-where-to-look-for) ·
      [16.6 The themed islands](#166-the-themed-islands) · [16.7 The new islands](#167-the-new-islands) ·
      [16.8 Raft's story islands, piece by piece](#168-rafts-story-islands-piece-by-piece) ·
-     [16.9 A whole storyline: The Rainmakers](#169-a-whole-storyline-the-rainmakers)
-     [16.10 A whole storyline: The Last Post](#1610-a-whole-storyline-the-last-post)
-     [16.11 A whole storyline: Relic of the Seventh Tide](#1611-a-whole-storyline-relic-of-the-seventh-tide)
-     [16.12 A whole storyline: The Lullaby Frequency](#1612-a-whole-storyline-the-lullaby-frequency)
+     [16.9 A whole storyline: The Rainmakers](#169-a-whole-storyline-the-rainmakers) ·
+     [16.10 A whole storyline: The Last Post](#1610-a-whole-storyline-the-last-post) ·
+     [16.11 A whole storyline: Relic of the Seventh Tide](#1611-a-whole-storyline-relic-of-the-seventh-tide) ·
+     [16.12 A whole storyline: The Lullaby Frequency](#1612-a-whole-storyline-the-lullaby-frequency) ·
      [16.13 A whole storyline: The Gravity Sea](#1613-a-whole-storyline-the-gravity-sea)
 17. [Learn from the islands](#17-learn-from-the-islands)
    - [17.1 Opening any island in the editor](#171-opening-any-island-in-the-editor) · [17.2 Looking around](#172-looking-around) ·
@@ -271,7 +272,13 @@ a short welcome if the builder wrote them. An island without a quest shows no ba
 another**: one that arrives while another is on screen waits until that one has gone. Each stays long enough to read: 5 seconds for a short one, longer for a long description (up to 16).
 
 ![Arriving at an oddity island](images/world-arrival-banner.jpg)
-*Arriving at "Van Island", one of the world randomizer's oddity islands.*
+*An island's banner as you arrive. (The picture is from before only islands with a quest had one: "Van Island", one
+of the world randomizer's oddity islands, has none now.)*
+
+**Islands missing.** When a world you load uses island files this PC doesn't have (deleted, renamed, or removed from
+the library since), a box names them and the library entry each came with. **Play without them** plays the rest (those
+islands stay in the world and come back once their file is here again); **Main menu** leaves without saving, so you
+can get them again. Only the host or a single player sees the box ([14](#14-questions-and-problems)).
 
 ### What you can do on an island
 
@@ -313,6 +320,14 @@ The builder of an island can give it much more than land (see [section 5](#5-mak
   second phase: at part of its health it roars, calls more animals and gets faster.
 - **Survivors:** someone locked in a cage. Bring the cage's key (a story item) and press **E**: the cage opens, the
   survivor thanks you in a speech bubble, and from then on stands on your raft.
+- **Locked doors:** Raft's card reader doors and other key doors open only with their card or key (a story item): the
+  reader beeps it through and the door opens for everyone. Without it the door stays shut and says so.
+- **Buried treasure:** nothing shows above the ground. Raft's **metal detector** beeps as you come near, and three
+  digs with the **shovel** bring up the chest. Once dug up it is gone for every player until the regrow days.
+- **A Raft store or a vending machine:** a trading post on an island is a real store (press **E**: Raft's goods for
+  trash cubes and trade coins, and any of Raft's story blueprints you missed). Tangaroa's vending machine sells
+  Tangaroa's plants for its tokens. Both keep their stock with the world, the same for every player
+  ([5.3](#53-chests-and-loot)).
 
 ![Reading a note](images/world-note.jpg)
 *A note found on an island ("Warthogs live here. Bring a spear."), its title in Raft's lettering and its text on Raft's light tan, as the journal shows its pages. Press E, Tab or Esc to close it.*
@@ -416,6 +431,9 @@ not a button): they show and hide with Raft's own key tabs, and say the new key 
   start of the world (also those still to come). An island made new from a map type counts once it has come, and an
   island that comes by chance adds to every line when it comes. Raft's own islands aren't counted (their notes
   are in Raft's notebook, T). An empty journal says where to look.
+- **Daily quest** (under the page, while the world option is on, [9.4](#daily-quest)): today's task and how far along,
+  with a bar, the reward, whether it's done (and whether you got the reward), and when the next one comes (at
+  daybreak). The task is also at the top of the quests list.
 
 **One journal for the whole crew.** Everyone in the world shares it: a note one player reads is in everyone's
 journal, and a key one player finds opens the door for all. The host keeps it, a player who joins gets it, it is
@@ -458,6 +476,9 @@ Click **EDITOR** in the main menu and, in the start window, **An island**: **New
 objects from its islands" with a bar) until the editor is ready: a few seconds the first time after starting Raft,
 less after that. The editor opens on the sea with an empty build area.
 
+**New to the editor?** **Camera...** at the right of the status bar lists every mouse button and key of the editor in
+one place: the camera, the tabs, undo and save, and the Terrain and Objects keys ([4.1](#41-the-screen)).
+
 ![The loading box](images/editor-loading.jpg)
 *The box that covers the screen while the editor opens.*
 
@@ -477,14 +498,15 @@ less after that. The editor opens on the sea with an empty build area.
   the island under a new name, it puts the island into a plan; the **?** after it explains this when you hover it.
   **Main menu** returns to the start window.
 - **Tool panel** (left): the tab's tools in bordered groups. The lit button is the one in use.
-- **Status bar** (bottom): explains the tool, or the button under the mouse. On the right: where the camera is.
+- **Status bar** (bottom): explains the tool, or the button under the mouse. On the right: where the camera is, and
+  **Camera...** (every mouse button and key of the editor, and the camera's settings).
 - **The blue plane is the sea.** Everything below it is under water in the game.
 
 **Moving the camera** (like Unity's scene view):
 
 | Do this | To |
 |---|---|
-| **Right-drag** | look around (dragging up tilts the view down, as if you dragged the scene; the settings can turn that round); while held, **WASD** flies where you look, **Q/E** go down and up, the **wheel** sets the speed |
+| **Right-drag** | look around (dragging up tilts the view up, as in most games; the settings can turn that round); while held, **WASD** flies where you look, **Q/E** go down and up, the **wheel** sets the speed |
 | **WASD** or arrows | move over the island at the same height |
 | **Space** / **C** | go straight up / straight down, whichever way the camera looks (the Terrain and Objects tabs' tips say so too) |
 | **Middle-drag** | pan (the ground follows the cursor) |
@@ -494,12 +516,25 @@ less after that. The editor opens on the sea with an empty build area.
 | **F** | frame the selection, or the whole island |
 | **Shift** | three times faster |
 
-**The camera's settings.** **Camera...** at the right of the status bar opens **EDITOR CAMERA**: the controls above,
-and this PC's settings: **Look sensitivity**, **Move speed** (the right mouse + wheel speed, kept between sessions),
-**Zoom speed** and **Pan speed** (each x1 = the mod's own, a slider from slower to faster), **Drag up: look down / up**
-(click to switch: up looks up, as in most games) and **Wheel up: zoom in / out** (the wheel turned round). **Mod's own**
-puts them all back; **Close** or Esc closes the window. They are saved a moment after a change, in `world_rules.txt`
-([section 10](#10-settings-files)), and are also in **Defaults... > Editor camera (this PC)**.
+**The camera's settings and every key.** **Camera...** at the right of the status bar opens **EDITOR CAMERA AND
+CONTROLS**, which lists every mouse button and key of the editor in two columns. On the left, **Camera**: the controls
+above (right mouse + drag, WASD, Q/E and wheel; WASD or arrows; Space/C; middle drag; the wheel; Alt + left drag;
+Alt + right drag; F; Shift), and under them this PC's settings: **Look sensitivity**, **Move speed** (the right mouse + wheel speed, kept between sessions),
+**Zoom speed** and **Pan speed** (each x1 = the mod's own, a slider from slower to faster), **Drag up: look up / down**
+(click to switch; up, the default, looks up as in most games, down tilts the view as if you dragged the scene) and
+**Wheel up: zoom in / out** (the wheel turned round). **Mod's own** puts them all back (dragging up looks up); **Close** or Esc closes the window. They are
+saved a moment after a change, in `world_rules.txt` ([section 10](#10-settings-files)), and are also in
+**Defaults... > Editor camera (this PC)**. On the right:
+
+- **Anywhere in the editor:** F1 / F2 / F3 the Terrain, Objects and Island tab; Ctrl+Z undo; Ctrl+Y or Ctrl+Shift+Z
+  redo; Ctrl+S / Ctrl+O save the island / open one; Esc closes a window or stops placing.
+- **Terrain tab:** left drag uses the brush; Shift + drag with **Noise** takes the bumps away; Q/E turn a stamp.
+- **Objects tab:** a left click places the picked object or selects; Shift + click keeps placing or adds to the
+  selection; Ctrl + click takes one out of it; a left drag on the ground is a box select (Shift adds to it); Q/E and
+  [ / ] turn and resize while placing; 1 / 2 / 3 / 4 the move / turn / scale / all handles; X the world's arrows or
+  the object's own; P turns around each one or the middle; Ctrl held snaps while dragging (0.25 m, 15°); Ctrl+D /
+  Delete duplicate / delete the selection; Ctrl+C / Ctrl+V copy / paste, also to another island; Ctrl+A selects
+  everything.
 
 Undo and redo everything with **Ctrl+Z** / **Ctrl+Y** (or Ctrl+Shift+Z); save with **Ctrl+S**, open with **Ctrl+O**.
 
@@ -534,6 +569,10 @@ sky. It takes effect the next time you open the editor from the main menu; off a
   **Cancel** or Esc doesn't. A name that can't be a file name stays open and says why in red: it can't contain
   `\ / : * ? " < > |`, be longer than 60 letters, begin with a space, end with a space or a dot, or be one of Windows'
   own names such as CON.
+
+**Esc** closes the mod's windows the topmost one first, one per press, so the window under it stays open. Esc in a
+text field doesn't lose what you typed. A window with unsaved changes (the World plan window, a quest, a note, story
+items, Behaviour & events) asks first: **Save and close**, **Close without saving** or **Keep editing**.
 
 ### 4.2 Shaping the land (Terrain tab)
 
@@ -716,8 +755,9 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
   generator opens on an island like Raft's small ones: Raft small island, about 40 m across and 12 m high, an uneven
   coast with a bay, no cliffs, objects as dense as on Raft's small islands; **Defaults** gives the same. After a
   **Randomize existing** or **Ready-made** island, the Normal tab still opens on its own last settings.
-- **Size and height, coast and outline, land features:** peaks and their shape, hills, coast, bays, beach, cliffs,
-  stretch and its direction, valleys, lakes, terraces, erosion.
+- **Size and height, coast and outline, land features:** the size (land about 16-560 m across), the highest point
+  (3-160 m), 1-5 peaks and their shape, hills, coast, bays, beach, cliffs, stretch (up to 3 times as long as wide) and
+  its direction, valleys, lakes, terraces, erosion.
 - **Under water:** a **deep sea floor like Raft's** (a shelf about 10 m deep, then a drop-off) or a **shallow** one
   (a flat seabed 20 m down), the width of the shallow water, how steep the drop-off is, and the seabed (sand, rocky,
   or a reef ring).
@@ -759,8 +799,8 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
   that carpets a shallow lagoon's floor - nothing like Raft. **Groups** (under Nature) makes the reefs tighter (or
   looser).
 - **Animals:** hostile creatures (the style's own, or the kinds you click), how tough (Easy, Normal, Hard, Boss),
-  friendly animals to catch, sea creatures.
-- **Loot:** how many loot boxes, their lowest and highest **tier** (1: planks and plastic ... 5: titanium, explosive
+  friendly animals to catch, sea creatures (0-24 spots each).
+- **Loot:** how many loot boxes (0-40), their lowest and highest **tier** (1: planks and plastic ... 5: titanium, explosive
   goo, batteries), in the open or hidden.
 - **Buildings and caves** (the last group):
   - **Buildings: Off / On** - buildings on the island's open, level land, each with a chest (most with a note too, which
@@ -846,7 +886,8 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
   tank (in a fuel crate) that shows a locker, a **chest in a cage** cut open with Raft's bolt cutters, a **lift** at the
   foot of a cliff that carries players up. An **explorer's chest** near the shore holds the tools they need (machete,
   metal detector, shovel, zipline tool, bolt cutters). Six or fewer give the same islands as before.
-- **My presets:** **Save these settings...** keeps them under a name; **Defaults** puts every setting back (the seed and style stay).
+- **My presets:** **Save these settings...** keeps them under a name, and each saved preset is a button that puts its
+  settings back (its **×**, clicked twice, moves it to `deleted\presets`); **Defaults** puts every setting back (the seed and style stay).
 
 ![Under water, and a help popup](images/generator-underwater.jpg)
 *Further down the Normal tab: the land features, the Under water group (Deep, like Raft) and the Nature quick buttons.
@@ -911,7 +952,7 @@ the original's own big pieces, laid out the way the original has them (the line 
 
 | Island | Its look |
 |---|---|
-| Caravan Town (and its three small islands) | **Red rock mesas**: 2 to 8 flat-topped rocks with steep walls, some in twins joined by the rope bridge; ladders up a notch in the wall, a hut on its pillars (or an acacia or a dead tree) and often a caravan or van on top, round boulders and a caravan or van at the feet. A variation turns the island's own high ground into mesas. |
+| Caravan Town (and its three small islands) | **Red rock mesas**: 2 to 8 flat-topped rocks with steep walls, some in twins joined by the rope bridge; ladders up a notch in the wall, a hut on its pillars (or an acacia or a dead tree) and often a caravan or van on top, round boulders and a caravan or van at the feet; caravans, vans, acacias, dead trees and round rocks lie all over the low sand between the mesas, as thick as on Raft's own. A variation turns the island's own high ground into mesas. |
 | Tangaroa | **The dome**: a round island levelled about 9.5 m up, the dome's base, frame and glass, the hexagon roads and the tall tower in the middle. |
 | Utopia | **Tall white towers**: Utopia's three towers with the room on top, and its four other towers further out, all rising out of the sea round a low island the way the original has them. |
 | Varuna Point | **The motherlode**: two 84 m motherlode floors on four pillars over levelled rocky ground, walls round the sides (one side sometimes left open), the lift shaft and the excavator beside them, the apex crane on top and rubble and bricks on both floors. |
@@ -963,6 +1004,8 @@ an old camp, and a treasure island in a world, its quest panel saying "Find the 
 | Old camp | An abandoned camp with a notice board and supplies: a good first island of a story |
 | Sunken island, sky island | Under water, with corals, sunken barrels and puffer fish; floating 45-90 m up with a cache |
 | Wreck, ghost raft | No land: an abandoned raft of Raft's own blocks, floating like a real raft (the deck just above the water). A wreck has barrels to loot; a ghost raft is small, medium or large with a note, and the large ones are guarded by rats and screechers ([9.4](#94-extra-options)) |
+| Trader raft | No land: a trader's raft with a hut and three or four stalls that swap basic resources for seeds, a tree seed or a blueprint ([9.4](#trader-raft)) |
+| Ghost ship | No land: a glowing wreck of Raft's blocks (a deck with railings, a cabin, a mast and a torn sail) with four chests of good loot and a crew of ghost rats and screechers ([9.4](#ghost-ship)) |
 | Oddities, boss lair, large island | The world randomizer's islands ([section 9.3](#93-the-world-randomizer)) |
 
 **Your own map types.** A map type can also be a text file: `Mods\DynamicIslands\maptypes\<name>.maptype`, read at
@@ -1097,7 +1140,8 @@ plan window (a plan open) click **Export...**. The **Share** window says what go
 Fill in the **title**, **author** (your Steam name to start with), a one-line **summary**, a **description** (what
 players find, how long it takes, what you had in mind, e.g. "best with Fierce monsters" - a pack never sets difficulty
 or other World settings; the player's own choices always apply), **tags**, **players** and **length**, and whether
-**others may change it and share their version** (they must credit you either way). The **picture** is what the
+**others may change it and share their version** (they must credit you either way; a changed version of someone else's entry says **Based on <title> by <author>**:
+that credit goes along). The **picture** is what the
 editor's camera shows: close the window, move the view, open it again, or click **Take picture**; its middle becomes the
 icon. **Export** writes a pack, `Mods\DynamicIslands\exports\<title>.zip` (the title in small letters with dashes, e.g. `palm-cove.zip`); **Open folder** shows it; **Share...** opens the
 island library's page to send it in. Export the same island or plan again later and the pack is the next version of
@@ -1107,7 +1151,7 @@ the same entry (so whoever has it can update it).
 *The Share window: what goes along, the entry's info on the left, the picture of the editor's view on the right.*
 
 **Getting islands from a pack: Import.** Put a pack (`.zip`) you got into `Mods\DynamicIslands\import` (**Open import
-folder**), click **Import...** in the Islands window or the World plan window, and pick it: the window says what it
+folder**; **Refresh** looks for new packs there), click **Import...** in the Islands window or the World plan window, and pick it: the window says what it
 holds, who made it and its version. **Install** puts it in place:
 - **Your own files are never overwritten.** If you have a different island with the same name, the pack's is installed
   as `Name (Pack title)` and the pack's plan and islands are changed to use that name. The same island (the very same
@@ -1125,8 +1169,9 @@ holds, who made it and its version. **Install** puts it in place:
 - A pack made with a **newer version** of the mod says so: "Install anyway" may leave out things this version doesn't
   know, and a quest that needs them may not be finishable. An island file of a newer *format* can't be read at all and
   is refused ("update the mod").
-- A broken or harmful pack (too big, too many files, a file that would land outside the mod's folder, a program, not an
-  island file) is refused with the reason, and nothing is written.
+- A broken or harmful pack is refused with the reason, and nothing is written: over 50 MB (packed or unpacked), more
+  than 64 files, an island over 64 MB unpacked, a file that would land outside the mod's folder, or any file but
+  islands, plans, map types, `.json` and `.jpg` / `.png` pictures (so no programs).
 - Installing a newer version of something you installed **updates** it. Worlds you've already started get the new
   version when its objects keep their order (a fixed quest, new ground, objects added), as with your own saves (4.7);
   when objects were removed or reordered they keep the version they started with (the old file stays for them, and
@@ -1157,7 +1202,8 @@ more...** in the New Game box and **Library...** in the Islands window) opens th
 a shared Google Drive folder, where every
 entry is looked at before it goes in.
 - **World plans** and **Islands** tabs, a **search** (titles, authors, summaries, tags), featured entries first. Each
-  row has the entry's icon, title, author and summary, and says **INSTALLED** or **UPDATE** when that applies.
+  row has the entry's icon, title, author and summary, and says **INSTALLED** or **UPDATE** when that applies (**FEATURED**: a featured entry you don't have).
+  **Refresh** reads the library's list again at once; otherwise the window reads it again after 10 minutes.
 - An island's row also says how hard it is: **Difficulty: Easy**, **Medium**, **Hard**, **Extreme** or **Impossible** - only a label, from the island's monsters: Easy none, Medium 1-5, Hard 6-20, Extreme 21-49, Impossible 50 or more. Each creature spawn point counts its number of
   creatures (a range such as 2..3 its highest number) plus the animals a boss calls; the animals to catch and the
   harmless ones (chickens, goats, llamas, puffins, the butler bot, turtles, dolphins, stingrays, whales, birds) and a
@@ -1437,8 +1483,8 @@ while you are in the zone - for a cave, a mine or a buried room (Old Mine Islet 
 ### 6.1 Quests
 
 **Island tab → Edit quest...**: a title, an introduction (shown when players arrive), up to 10 steps in order, a
-reward and a closing message. (A quest file edited by hand with more steps is read up to the tenth.) Under **Reward and
-ending**, **Choose reward...** opens the ITEMS window - the island's story items first, then every item of Raft, with a
+reward and a closing message. (**+ Add a step** stops at 10. A quest file with more steps - the library's finales have
+up to 40 - is read up to 99 steps, more are cut, and the editor shows them all.) Under **Reward and ending**, **Choose reward...** opens the ITEMS window - the island's story items first, then every item of Raft, with a
 search; click an item to add one, again to add more, then **Done** - and the line beside the button lists what the
 reward is ("Reward: Plank ×4, Rope ×2"). **None** takes the reward away. **When done** is the closing message shown with
 "Quest complete". Raft's items go to the players near the island when the last step is done
@@ -1448,7 +1494,8 @@ reward is ("Reward: Plank ×4, Rope ×2"). **None** takes the reward away. **Whe
 quest** and **+ Another quest** (up to nine quests in all). Each has its own steps, reward and messages and is done on its own;
 what a player does counts for every quest waiting for it. The panel shows the first quest not done yet ("+1 more"
 when others are open), the journal lists each, and world plans and the story wait for the main quest - or for another
-one by its number (a rule's "quest 2"). **Remove this quest** takes one off; the ones after it move up.
+one by its number (a rule's "quest 2"). **Remove this quest** takes one off; the ones after it move up. **Remove quest**
+at the bottom takes all of the island's quests off at once (one Ctrl+Z brings them back).
 
 ![The quest editor](images/editor-quest.jpg)
 *The quest "The lost camp": go to the camp, read the diary, open the supplies, chase off 2 warthogs. The reward is
@@ -1494,11 +1541,12 @@ Select any object → **Behaviour & events...**. No code needed:
   for everyone. Put the code on a note somewhere on the island.
 - **Collision:** Raft's own, walk through, one box, or solid.
 - **When ... then:** when a player uses it, walks into a zone, reads a note, opens a chest, all the animals of a
-  spot are defeated, or a **laser beam** reaches it → show / hide objects, **show/hide** (hidden ones appear, shown ones
+  spot are defeated, a boss spot's second **phase** begins ([5.1](#51-creatures)), or a **laser beam** reaches it → show / hide objects, **show/hide** (hidden ones appear, shown ones
   disappear), open / close doors, **open/close** (open if closed, closed if open - a lever), say a message, give
   items, play a sound, teleport the player, send a signal, write a journal page, **unlock one of Raft's characters**
   for the player (its name or number; it is kept in the player's Raft profile, like Raft's own unlocks), or **wait**
-  some seconds first. Each action is chosen from a **▼ list**
+  some seconds first: under each event, **+ Add an action** adds one, **+ Wait** a pause and **+ Only if...** a check.
+  Each action is chosen from a **▼ list**
   that says what it does; **…** beside a name lists the names on this island. The actions that work on objects (show,
   hide, show/hide, open, close, open/close, teleport to) name them in the **name** field: leave it empty (or pick
   **(itself)** from the **…** list) and the action works on the object these actions belong to. **show/hide** and
@@ -1538,7 +1586,7 @@ key somewhere..."*
 
 ### 6.3 Story items and story sets
 
-**Island tab → Story items...**: keys, map pieces, logs... with a name, a description and a picture (Raft's quest
+**Island tab → Story items...** (**+ Add a story item** adds one): keys, map pieces, logs... with a name, a description and a picture (Raft's quest
 item pictures or any Raft item). Chests, zones, quest rewards and "give" actions hand them out; "only if" checks ask
 for them; players find them in the journal (J), or in Raft's notebook (T) for a main story island. **Raft item...**
 beside an item links it to one of Raft's own items (**-** clears it): players can then **take it out** of the journal
@@ -1786,7 +1834,7 @@ island a *main* quest island is that a plan's story waits for its quest.
 | **Example in The Long Voyage** | Any island of your pool, a generated jungle island... | The Stranded Gull (2 km), Signal Rock - quest "Dead Air" (4 km), Ranger's Rest (7 km), Stilt Hollow (10 km)... | Wreckers' Cove (after the Radio Tower), Thornwood (after Vasagatan), Scrapyard Haven (after Balboa)... |
 | **When it comes** | While the raft sails: one after every 3-6 of Raft's own islands met (the world's span), none in a new world's first 10 minutes, never while the raft is at one of Raft's islands | When the rule's **WHEN** happens. The Long Voyage's side trips: when the raft has sailed that many km in this world (counted from the world's start) | When it is **unlocked** - the story island before it is done (for Raft's islands: when you read the note there that would give the next frequency) - **and** a player tunes the Receiver to its frequency |
 | **Where it appears** | 250-350 m ahead of the raft, a little to one side (10-35 degrees), at least 800 m from other custom islands | Where the rule's **WHERE** says. The Long Voyage's side trips: **450 m ahead** of the raft | The rule's metres **ahead of the raft when a player tunes the Receiver** to it (700-1000 m in The Long Voyage), like Raft's own story islands |
-| **What tells you** | Nothing when it appears: you see it. Near it, its banner with its name | The rule's **message** on every player's screen as it appears, with how far and which way ("A mast on a rock ahead - its light is dead."), and its name on its Receiver dot | When it is unlocked: a banner with the rule's message and "Tune the Receiver to #4821", a page in the journal (J), and that number on Raft's note. On the Receiver: its name and frequency |
+| **What tells you** | Nothing when it appears: you see it. Near it, its banner with its name (only if it has a quest) | The rule's **message** on every player's screen as it appears, with how far and which way ("A mast on a rock ahead - its light is dead."), and its name on its Receiver dot | When it is unlocked: a banner with the rule's message and "Tune the Receiver to #4821", a page in the journal (J), and that number on Raft's note. On the Receiver: its name and frequency |
 | **The same in every world?** | No: different islands at different places every time | Yes: the same island at the same distance in every world of the plan (only the exact spot ahead depends on where you sail) | Yes: the same island at the same place in the story. Only the 4-digit frequency is made new for each world |
 | **Needed to finish the plan?** | No | No: optional extras. Skip them and nothing is missing from the story | **Yes** (in a plan with a story): its quest done unlocks the next step of the story - in The Long Voyage, the next story island's frequency |
 | **If you sail past it** | It stays where it appeared. Beyond 800 m it is unloaded and comes back when you return. If you **reached it and its quest isn't done**, it comes back ahead of the raft by itself about 12 minutes later (up to 3 times) | The same as a random island: stays where it appeared; if you reached it and left its quest unfinished, it comes back ahead of the raft about 12 minutes later (up to 3 times). One you never reached doesn't come back | It stays where it came up: its dot on the Receiver shows the way back. It doesn't come back by itself |
@@ -2033,7 +2081,8 @@ plan...** ([4.1](#41-the-screen)).
 - **Main story line (n):** the islands the Receiver leads players to, one after the other, in play order. When Raft's
   story is on, Raft's own story islands show as grey lines between yours. Buttons: **New main story line** (the
   step-by-step helper, [6.5](#65-your-islands-in-rafts-story-the-receiver)), **+ Add a saved island** (adds one of
-  your islands at the end of the story, before Utopia) and **+ New island** (name it: it is put at the end of the
+  your islands at the end of the story, before Utopia; the list opens at once and says "Loading islands... (n of N)"
+  while it reads them) and **+ New island** (name it: it is put at the end of the
   story, the plan is saved and the island editor opens on the new empty island, with **Back to the plan**). **▲** and
   **▼** on an island's card move it one step along the story, also past Raft's own islands; Utopia stays last. An
   island set "in place of" one of Raft's islands is moved with its STORY row instead. Islands "beside the story" are
@@ -2044,8 +2093,8 @@ plan...** ([4.1](#41-the-screen)).
 - **Settings:** random islands while sailing, Raft's own story on or off (and which story islands to leave out), and
   the plan's description.
 
-**Check**, **Progression**, **Preview notebook**, **Test this plan**, **Export...**, **Import...**, **Save** and **Close**
-stay at the bottom, whatever the tab. On an island's card, **Edit island** opens that island in the 3D editor (the plan is
+The buttons at the bottom are in two rows: **+ Add a rule** (on the Other islands tab), **Check**, **Progression**,
+**Preview notebook** and **Test this plan** above, **Export...**, **Import...**, **Save** and **Close** below. On an island's card, **Edit island** opens that island in the 3D editor (the plan is
 saved first); the editor then shows **Back to the plan**, which saves the island and returns to the plan - or to the main
 menu with the plan open, if you came from there. Closing the plan comes back to the start window.
 
@@ -2294,7 +2343,7 @@ What Check looks for:
 | | Problems (it can't work) | Warnings and tips |
 |---|---|---|
 | **Names** | a rule with no name, two rules with the same name | a rule named like a rule on one of the islands the plan brings (what waits for that name may take the other's island) |
-| **WHEN** | no number for a distance or a day; a quest wait at an island **without a quest**; a quest that **can't be finished** (a step needs a zone, note, chest or creatures the island hasn't, or more pages than it gives - a note gives a page only when it has text); more steps than the quest has; a **zone** or **signal** the island hasn't (Check lists the ones it has); an island or rule name that doesn't exist; a rule that waits for itself; **rules that wait for each other in a circle** | waits for a saved island **no rule of the plan brings** (a problem when random islands are off); waits for a rule that has a problem; needs more creatures than the island has (and they don't come back - by default they do, after the regrow days); creatures Raft leaves out of a game mode (screechers and puffer fish: none in Creative); a story item nothing on the island gives; a distance over 30 km or a day after 20 (slow to test), or 0 (it comes at once) |
+| **WHEN** | no number for a distance or a day; a quest wait at an island **without a quest**; a quest that **can't be finished** (a step needs a zone, note, chest or creatures the island hasn't, or more pages than it gives - a note gives a page only when it has text); more steps than the quest has; a **zone** or **signal** the island hasn't (Check lists the ones it has); an island or rule name that doesn't exist; a rule that waits for itself; **rules that wait for each other in a circle** | waits for a saved island **no rule of the plan brings** (a problem when random islands are off); waits for a rule that has a problem; needs more creatures than the island has (and they don't come back - by default they do, after the regrow days); creatures Raft leaves out of a game mode (screechers and puffer fish: none in Creative); a story item nothing on the island gives; a distance over 30 km or a day after 20 (slow to test), or 0 (it comes at once); **again until done** below 1 (it comes back every km or day) or with its island on the Receiver (that island doesn't come back by itself) |
 | **BRING** | no island chosen, an island that isn't saved, a map type that doesn't exist, a list with no saved island, an empty spawn pool | some islands of a list aren't saved; a very big island (over 12 000 objects); the same island brought twice |
 | **WHERE** | near an island nobody has; near "the island where it happened" when the WHEN happens at no island; near its own island | near a saved island no rule brings; near a rule it doesn't wait for (it waits until that island is there); very far away |
 | **TELL** | | no message; found by Receiver but no Receiver name |
@@ -2463,8 +2512,9 @@ a world where they are all left alone plays as plain Raft plus your islands.
 - **World rules** (9.2): tougher or softer monsters, a dearer build menu.
 - **World randomizer** (9.3): a normal Raft world made different every time: colours, alphas, finds, odd islands, bosses.
 - **Extra options** (9.4): ghost rafts, private storages, long voyage, iron raft, shared EXP, night is dangerous, daily
-  quest, rogue shark, silver & golden barrels, storm days, bioluminescent sea, storm seas, trader raft, extra upgrades, UFO sightings, lightning strikes, fog banks, whale breach and a head start raft (older
-  worlds may still have scrambled blueprints or the story islands in a new order on).
+  quest, rogue shark, silver & golden barrels, storm days, bioluminescent sea, storm seas, trader raft, extra upgrades,
+  UFO sightings, lightning strikes, a ghost ship, fog banks, whale breach and a head start raft (older worlds
+  may still have scrambled blueprints or the story islands in a new order on).
 - **Islands while sailing** (9.5): which of your islands a world may meet.
 - **The level up system** (9.6): EXP and stat points - a switch in the window (a world option: islands don't turn it on).
 
@@ -2615,7 +2665,7 @@ The parts (all on unless you click one off):
 *Colours on warthogs, from the left: Raft's own, snow, cream and charcoal.*
 
 ![Oddity islands](images/randomizer-oddities.jpg)
-*The oddity islands. Each has loot, a note and a banner with its name when you arrive.*
+*The oddity islands. Each has loot and a note.*
 
 ![Large islands](images/randomizer-large-islands.jpg)
 *Large islands: tropical or snowy, with warthogs and animals to catch, a made-up name ("Coral Cay") and a den whose
@@ -2980,32 +3030,6 @@ sea, a jagged **bolt** with a few forks stands from the clouds to the water for 
   everyone; a sea bolt hits the same spot next to the raft on every machine. Switched on in a running world, the next
   storm (or the one blowing now) can have bolts. Nothing is saved.
 
-#### Ghost ship
-
-On about **one night in four** a **ghost ship** comes up out of the dark a while after nightfall and drifts past the
-raft, close enough to **swim or sail to**: a wrecked ship of Raft's own pieces - a foundation hull with a pointed bow,
-a stern cabin with a roof, railings, a mast with a flag and a torn sail, an anchor and lanterns - lit by a pale
-**cyan glow** in a thin mist. Climb aboard by the ladders on either side.
-
-- **Its loot is good:** a large chest (the ghost ship's hoard: titanium, explosive goo, circuit boards, a battery,
-  good healing salves, honey, metal, copper, bolts, hinges), the captain's chest in the cabin, two chests on deck and
-  barrels. The captain's log lies on the cabin floor.
-- **Its crew are ghosts:** Raft's own monsters, made **see-through with a faint glow** - hard rats on deck and a
-  screecher or two over it. They don't come back once beaten.
-- **At dawn it sinks:** a banner says so, and over about 20 seconds it goes down and its lights fade. **What is left
-  aboard is lost** with it - the chests, their loot and the ghosts. Take what you want before the sky grows light.
-- **Sleep, and it doesn't come:** if the players are asleep when night falls, or go to sleep while it is out, there is
-  no ship that night (one out is gone at once).
-- **When:** which nights have one comes from the world's seed (`GhostShip roll <from> <to>` lists them). It is rolled
-  when night falls while you play: a world loaded in the middle of the night waits for the next nightfall.
-- **Every player sees the same ship, the same ghosts and the same loot:** the host brings it, as an island
-  (`gen-ghostship-night-<seed>`) of the map type `ghostship`, and sinks it; a chest is claimed like any island chest,
-  so its loot goes to one player only. A player joining in the night gets the ship that is out. Nothing about it is
-  saved: a ship that was out when the world was saved is gone when it loads by day. Switched on in a running world,
-  the next nightfall can bring one; off, a ship out goes at once.
-- `GhostShip` (F10) shows whether one is out and the next night with one; `GhostShip bring` brings one now and
-  `GhostShip sink` sinks it (host).
-
 #### Head start raft
 
 The world starts on a bigger raft that is already set up, to skip the first hours. The button goes **off -> LEVEL 1 ->
@@ -3093,9 +3117,6 @@ them on: the editor and the generator have no level up choice, and an older isla
 The host can switch it in a world with `Levels on` / `Levels off` (F10). **Off keeps everyone's levels** (they come back
 when it is on again). A world
 without it plays as Raft always does.
-
-![The Level up system switch in the editor](images/levels-island-tab.jpg)
-*The switch in the Island tab's Rules.*
 
 #### Earning EXP
 
@@ -3190,7 +3211,7 @@ get the settings they share at once.
 | **Keys (this PC)** | The **Journal** key (J) and the **Stats** key (K): click one, then press the new key (Esc keeps the old one). A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why |
 | **Shared with every player** | **Receiver dots** on or off, the **Receiver range**, **Unload beyond** and **Regrow days (new worlds)** |
 | **Generated islands** | The weight of new generated islands, the chance one flies, **Things to gather**, **Finds in the shallows** and how far down they go, the five styles (at least one stays lit) and a button for each kind of thing to gather (lit = on) |
-| **Editor camera (this PC)** | The island editor's camera: **Look sensitivity**, **Move speed**, **Zoom speed**, **Pan speed**, **Drag up: look down / up** and **Wheel up: zoom in / out** - the same as the editor's **Camera...** button ([4.1](#41-the-screen)); kept in `world_rules.txt` |
+| **Editor camera (this PC)** | The island editor's camera: **Look sensitivity**, **Move speed**, **Zoom speed**, **Pan speed**, **Drag up: look up / down** and **Wheel up: zoom in / out** - the same as the editor's **Camera...** button ([4.1](#41-the-screen)); kept in `world_rules.txt` |
 | **Mod's own** | Click it twice: every setting in the window, the keys J and K and the editor camera too, goes back to what a new install has. The island list in `spawnpool.txt` stays |
 | **Close** | Closes the window (Esc does too) |
 
@@ -3233,12 +3254,14 @@ there means plain Raft.
 |---|---|---|---|
 | `monsters` | `timid`, `normal`, `fierce`, `savage`, `nightmare`; `easy`, `moderate`, `hard`, `impossible` or 0-4 are read too | The monster difficulty the next new world starts with | **Monster difficulty** in World settings, when you press **Create**; `Monsters <level>` in the main menu, at once |
 | `buildcost` | 0-100 | How many % more the build menu costs in the next new world | **Build cost** in World settings (Create); `BuildCost <0-100>` in the main menu |
-| `options` | The extra options that are on, separated by commas: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `glowsea`, `stormseas`, `ghostship` | The extra options the next new world starts with | The option buttons in World settings (Create); `WorldOptions +option -option` in the main menu |
+| `options` | The extra options that are on, separated by commas: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ufo`, `glowsea`, `lightning`, `ghostship`, `whalebreach`, `fogbanks` | The extra options the next new world starts with | The option buttons in World settings (Create); `WorldOptions +option -option` in the main menu |
 | `levels` | `on`, `off` | The level up system in the next new world | **Level up system** in World settings (Create); `Levels on` / `Levels off` in the main menu |
 | `headstart` | 0-3 | The head start raft's level in the next new world (0 = none) | **Head start raft** in World settings (Create); `HeadStart <0-3>` in the main menu |
 | `islandsoff` | Island names separated by a vertical bar; also `type:<map type>` and `<generated>` | The islands left out of the next new world's islands while sailing | **CHOOSE ISLANDS...** in World settings (Create); `WorldIslands -<island>`, `+<island>`, `all` in the main menu |
 | `raftgap` | `min-max`, for example `3-6` (min 2-20, max 4-50) | One random island after every min to max of Raft's own islands | **One after every ... to ...** under CHOOSE ISLANDS..., at once; `WorldIslandsGap <min>-<max>` in the main menu |
 | `journalkey`, `statskey` | A Unity key name, for example `J`, `K` or `F6` | The keys of the journal (J) and the stats page (K) in a world | **Defaults...** > **Keys (this PC)**, at once. A key that can't be used falls back to J or K, and the log says so |
+| `cameralook`, `cameraspeed`, `camerazoom`, `camerapan` | A multiplier, 1 = the mod's own: look 0.2-4, speed 0.1-10, zoom and pan 0.25-4 | The island editor camera's look sensitivity, flying speed, wheel zoom step and pan speed (this PC) | The editor's **Camera...** window or **Defaults... > Editor camera (this PC)**, a moment after a change |
+| `cameradragup`, `camerawheel` | `up` / `down`; `normal` / `reversed` | Which way dragging up turns the editor's view (up, the default; only a saved `down` turns it round) and the wheel's direction | The same |
 
 **`randomizer.txt`** is the world randomizer's last choice, written when you press **Create**: a `#` note and one line,
 for example `level=normal;seed=0;off=colours,loot`. `level` is `off`, `light`, `normal` or `wild`; `off=` lists the parts
@@ -3261,18 +3284,25 @@ Other files:
 | `thumbcache\` | Small maps of your islands for **CHOOSE ISLANDS...** ([9.5](#95-islands-while-sailing)), made again when an island is saved (safe to delete) |
 | `plans\*.plan` | World plans |
 | `maptypes\*.maptype` | Your own map types ([4.6](#46-ready-made-islands-map-types)) |
-| `world_rules.txt`, `randomizer.txt` | Your last World settings choices (monsters, build cost, extra options, level up system, islands left out and how often they come; the randomizer, the head start raft's level), the start for the next new world; also your J and K keys and `updatecheck` (the keys are above); `newworld_plan.txt`: the plan the last new world was made with |
+| `world_rules.txt`, `randomizer.txt` | Your last World settings choices (monsters, build cost, extra options, level up system, islands left out and how often they come; the randomizer, the head start raft's level), the start for the next new world; also your J and K keys, the editor camera's settings (the keys are above); `newworld_plan.txt`: the plan the last new world was made with |
 | `worlds\<world>.txt` | Each world's custom islands and their state (what was used, quests, journal, levels, settings); the world's own folder carries a copy, `CustomIslands.txt` |
 | `worlds\<world id>.kept-<n>.txt` | Your own, newer copy of a world, set aside when you joined a host whose copy was older (n = its save count): the host's is played, yours stays here |
 | `worlds\<world id>-<player id>.rewards` | Which quest rewards this player has had, or is still owed, in each world (each player gets their own share of a reward of Raft's items) |
 | `groups\`, `stamps\` | Your saved object groups and terrain stamps |
 | `generator_presets\` | Your generator presets (**Save these settings...**) |
-| `notice.txt` | That you folded the alpha box, for this version of the mod |
+| `notice.txt` | That you folded the alpha box (**Got it**) or closed it with its **X**, for this version of the mod, and where you dragged it |
+| `editor_start.txt` | The last island and plan you worked on, for **Continue** in the EDITOR start window |
+| `library\updated.txt` | The islands a pack update replaced, so a world that has one says so once when it loads |
+| `rml_cache_noted.txt` | That the "first start compiles" note has been shown for this build of the mod |
 | `editor_light.txt` | The editor's time of day (the Light button) |
 | `editor_skysea.txt` | Whether the editor shows Raft's sky and sea |
 | `rulescache.txt` | The islands' own rules, kept so lists open fast (made again if you delete it) |
+| `summarycache.txt` | Each saved island's title, description and quests, so the island lists open at once (made again if you delete it) |
+| `testkit.txt` | Whether the editor's **Test** gives the starter kit (**Kit: On/Off**, [4.9](#49-trying-the-island-in-a-world-test)) |
+| `errors.txt` | The errors the mod noticed, to attach to a report ([15](#15-reporting-a-problem)) |
 | `notbeforecache.txt` | The islands' "not before" distances, kept so random islands are picked fast (made again if you delete it) |
-| `deleted\` | Islands you deleted in the editor (move one back to get it back) |
+| `deleted\` | Islands you deleted in the editor (move one back to get it back); in its own folders: unsaved editor work thrown away (`autosave\`), generator presets (`presets\`), object groups and stamps (`groups\`, `stamps\`), world plans (`plans\`), the old copies **Give my worlds this version** set aside (`kept versions\`) and half-written files (`unfinished\`) |
+| `worlds\removed\` | The files of worlds deleted in Raft, moved here by **Tidy up** ([4.7](#47-saving-and-sharing)) |
 | `catalog_index.txt`, `placeables*.txt` | Where the editor finds Raft's objects (made again after a Raft update) |
 | `Custom-Islands-Guide.pdf` | This guide, written out of the mod when the alpha box's **Guide (PDF)** opens it |
 | `raft_*.txt`, `island_thumbs\`, `island_heights\` | Measurements of Raft's islands the generator uses (they come with the mod; a copy here is read first) |
@@ -3291,7 +3321,7 @@ Press **F10** for RML's console.
 | `WorldPlan` / `WorldPlan <name>` | World | The world's plan and its rules / give it another plan (host). A player who joined sees the host's plan, which of its rules are done and the story chain; trying to change it says only the host can |
 | `StoryChain` | World | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | World | What the randomizer does here / change it (host) |
-| `WorldOptions` / `WorldOptions +option -option` | World or main menu | The world's World settings / change them (host; at the main menu: the next new world). Options: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ghostship` ([9.4](#94-extra-options)) |
+| `WorldOptions` / `WorldOptions +option -option` | World or main menu | The world's World settings / change them (host; at the main menu: the next new world). Options: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ufo`, `glowsea`, `lightning`, `ghostship`, `whalebreach`, `fogbanks` ([9.4](#94-extra-options)) |
 | `HeadStart` / `HeadStart 0-3` | World or main menu | The head start raft: this world's level and the next new world's / at the main menu choose the level for the next new world (0 = off) |
 | `Levels` / `Levels on` / `Levels off` | World or main menu | The level up system in this world / switch it (host; off keeps everyone's levels; at the main menu: for the next new world) |
 | `Resync` | World, joined player | Ask the host for its custom islands again (the list, and any island file that hasn't come) |
@@ -3308,6 +3338,7 @@ Press **F10** for RML's console.
 | `StormDays` / `StormDays roll <from> <to>` | World | Whether today is a storm day, the next one, the weather and the shark's factor (option Storm days) / the storm days between two days |
 | `GlowSea` / `GlowSea roll <from> <to>` | World | Whether tonight glows, the next glowing night, the glow and the fishing wait's factor (option Bioluminescent sea) / the glowing nights between two days |
 | `GhostShip` / `GhostShip roll <from> <to>` / `GhostShip bring` / `GhostShip sink` | World | Whether a ghost ship is out and the next night with one (option Ghost ship) / the nights with one / one beside the raft now / sink it now (host) |
+| `FogBanks` / `FogBanks roll <from> <to>` | World | Whether fog is in now, how far you see and the next fog bank (option Fog banks) / the fog banks between two days, with their hours |
 | `Traders` / `Traders offers <seed>` / `Traders bring` | World | The trader rafts loaded now and their stalls' stock (option Trader raft) / what a trader raft with that seed sells / a trader raft ahead now (host) |
 | `ExportMapType <type> [file name]` | Anywhere | Writes a map type as a file in `maptypes\` to start your own from (default name `my-<type>`) |
 | `ReloadMapTypes` | Anywhere | Reads the `maptypes\` files again and says which were left out and why |
@@ -4406,6 +4437,37 @@ Raft's vending machine and Tangaroa tokens; Gannet Cliff and The Listening Mirro
 To learn from it: open the plan with **EDITOR** > **A world plan** and compare its "when" parts (`quest:`, `day:`,
 `zone:`, `step:`, `visit:`); then open Stillwater Terraces to see how zones show and hide sets of statues as you climb.
 
+### 16.13 A whole storyline: The Gravity Sea
+
+**The Gravity Sea** is a plan of twelve islands in place of Raft's own story (Raft's story off, no random islands,
+the chain on the Receiver, 500 to 1300). The Halvard Institute's Lodestone Array tore islands out of the rising sea
+and left their roots on the seabed. Each sky island brings its sunken half: you climb to an orchard 30 m up and dive
+to its cellar 25 m down, cross a market on a rock plate and dig through the stalls it dropped on the sea floor. The
+end is the Array's crown, 35 m up, and its root, 35 m under it. The islands show flying and sunken islands side by
+side (`elevation`), air pockets under water, and every kind of "when": a quest (`quest:quay`), a signal from a winch
+(`signal:orchard:roots`), a quest step (`step:9`), a zone (`zone:keel`, `zone:array:core`), a landing
+(`visit:gravewell`), a distance (`km:5`) and a twin found near another island (`near:shoal:600:north`). Raft's story
+is off, so all of Raft's story blueprints are **Blueprint** steps on the way. Altitude Market has Raft's vending
+machine; Pendulum Isle, The Stair of Hours and The Lodestone Array have a **Raft store**.
+
+| Island | What it is | What to look at |
+|---|---|---|
+| ![](images/library/lodestone_quay.jpg) **Lodestone Quay** (first, 500) | A stone quay, its crane and compass needles; the hill behind it cut flat | A short quest; the Receiver and antenna plans |
+| ![](images/library/upfall_orchard.jpg) **Upfall Orchard** (700, 30 m up) | An apple orchard and a farmhouse on a flying island | A well winch whose `signal` brings the island under it |
+| ![](images/library/rootcellar_deep.jpg) **Rootcellar Deep** (600, 25 m down) | The orchard's drowned half: the farmhouse, the well's bottom, the roots | Air pockets (`zone.air`) to breathe in; a hatch into the cellar |
+| ![](images/library/altitude_market.jpg) **Altitude Market** (900, 35 m up) | A market town on a rock plate, a clock tower on stilts | Choppable vines, a keypad, a zipline down, Raft's vending machine |
+| ![](images/library/sinkmarket_floor.jpg) **Sinkmarket Floor** (700, 30 m down) | The market's lower town, a diving bell, a flooded cistern | 14 steps under water, air pockets in a bell and a cistern |
+| ![](images/library/pendulum_isle.jpg) **Pendulum Isle** (1000, 12 m up) | A long island low over the sea, a pendulum hall | Sail under it; a shaft to its keel (`zone:keel`), a Raft store |
+| ![](images/library/gravewell_shaft.jpg) **Gravewell Shaft** (900, 45 m down) | A well shaft cut into the seabed, a pump hall at its bottom | A spiral stair down the shaft, galleries with air, anglers in the dark |
+| ![](images/library/the_stair_of_hours.jpg) **The Stair of Hours** (1100, 30 m up) | Terraces that make a giant sundial, an observatory | Hour stones walked in turn, a telescope aimed at the Array, a Raft store |
+| ![](images/library/the_lodestone_array.jpg) **The Lodestone Array** (1300, 35 m up, finale part 1) | Four magnet arms round a core platform | A 22-step quest: ziplines between the arms, a glass bridge that breaks, a beam through two mirrors, a Raft store |
+| ![](images/library/the_array_root.jpg) **The Array Root** (800, 35 m down, finale part 2) | The Array's foundation: four pylons round a pit | Comes when the crown is dark (`zone:array:core`); 12 steps: the root's guardian and its cutoff |
+| ![](images/library/weatherglass_shoal.jpg) **Weatherglass Shoal** (side, km 5) | A weather station on a sandbank | Turns up ahead of the raft (`km:5`, `ahead:450`) |
+| ![](images/library/weatherglass_deep.jpg) **Weatherglass Deep** (side) | Its drowned twin, north of it | Placed near another island (`near:shoal:600:north`) |
+
+To learn from it: open Upfall Orchard and Rootcellar Deep side by side to see how a flying island and a sunken one are
+set up (**Elevation** in the island settings), then open the plan and follow its signals and zones.
+
 ---
 
 ## 17. Learn from the islands
@@ -4439,44 +4501,13 @@ and **Lantern Spire** ([17.3](#173-two-islands-made-to-learn-from)).
    code**, and for each event (use, walk in, read, open, defeat) its checks, what happens, and what happens when a
    check fails ([6.2](#62-behaviour-and-events)). Objects with behaviours are the doors, levers, bells and machines.
 4. **The Island tab** has the rest: the height in the world, the name and welcome, the island's **rules** (regrow
-   days, the earliest km, level up) and the buttons for its parts:
+   days, the earliest km) and the buttons for its parts:
    - **Edit quest...**: the quest's steps, reward and messages; the buttons at the top switch between the **Main
      quest** and the island's other quests ([6.1](#61-quests)).
-### 16.13 A whole storyline: The Gravity Sea
-
-**The Gravity Sea** is a plan of twelve islands in place of Raft's own story (Raft's story off, no random islands,
-the chain on the Receiver, 500 to 1300). The Halvard Institute's Lodestone Array tore islands out of the rising sea
-and left their roots on the seabed. Each sky island brings its sunken half: you climb to an orchard 30 m up and dive
-to its cellar 25 m down, cross a market on a rock plate and dig through the stalls it dropped on the sea floor. The
-end is the Array's crown, 35 m up, and its root, 35 m under it. The islands show flying and sunken islands side by
-side (`elevation`), air pockets under water, and every kind of "when": a quest (`quest:quay`), a signal from a winch
-(`signal:orchard:roots`), a quest step (`step:9`), a zone (`zone:keel`, `zone:array:core`), a landing
-(`visit:gravewell`), a distance (`km:5`) and a twin found near another island (`near:shoal:600:north`). Raft's story
-is off, so all of Raft's story blueprints are **Blueprint** steps on the way. Altitude Market has Raft's vending
-machine; Pendulum Isle, The Stair of Hours and The Lodestone Array have a **Raft store**.
-
-| Island | What it is | What to look at |
-|---|---|---|
-| ![](images/library/lodestone_quay.jpg) **Lodestone Quay** (first, 500) | A stone quay, its crane and compass needles; the hill behind it cut flat | A short quest; the Receiver and antenna plans |
-| ![](images/library/upfall_orchard.jpg) **Upfall Orchard** (700, 30 m up) | An apple orchard and a farmhouse on a flying island | A well winch whose `signal` brings the island under it |
-| ![](images/library/rootcellar_deep.jpg) **Rootcellar Deep** (600, 25 m down) | The orchard's drowned half: the farmhouse, the well's bottom, the roots | Air pockets (`zone.air`) to breathe in; a hatch into the cellar |
-| ![](images/library/altitude_market.jpg) **Altitude Market** (900, 35 m up) | A market town on a rock plate, a clock tower on stilts | Choppable vines, a keypad, a zipline down, Raft's vending machine |
-| ![](images/library/sinkmarket_floor.jpg) **Sinkmarket Floor** (700, 30 m down) | The market's lower town, a diving bell, a flooded cistern | 14 steps under water, air pockets in a bell and a cistern |
-| ![](images/library/pendulum_isle.jpg) **Pendulum Isle** (1000, 12 m up) | A long island low over the sea, a pendulum hall | Sail under it; a shaft to its keel (`zone:keel`), a Raft store |
-| ![](images/library/gravewell_shaft.jpg) **Gravewell Shaft** (900, 45 m down) | A well shaft cut into the seabed, a pump hall at its bottom | A spiral stair down the shaft, galleries with air, anglers in the dark |
-| ![](images/library/the_stair_of_hours.jpg) **The Stair of Hours** (1100, 30 m up) | Terraces that make a giant sundial, an observatory | Hour stones walked in turn, a telescope aimed at the Array, a Raft store |
-| ![](images/library/the_lodestone_array.jpg) **The Lodestone Array** (1300, 35 m up, finale part 1) | Four magnet arms round a core platform | A 22-step quest: ziplines between the arms, a glass bridge that breaks, a beam through two mirrors, a Raft store |
-| ![](images/library/the_array_root.jpg) **The Array Root** (800, 35 m down, finale part 2) | The Array's foundation: four pylons round a pit | Comes when the crown is dark (`zone:array:core`); 12 steps: the root's guardian and its cutoff |
-| ![](images/library/weatherglass_shoal.jpg) **Weatherglass Shoal** (side, km 5) | A weather station on a sandbank | Turns up ahead of the raft (`km:5`, `ahead:450`) |
-| ![](images/library/weatherglass_deep.jpg) **Weatherglass Deep** (side) | Its drowned twin, north of it | Placed near another island (`near:shoal:600:north`) |
-
-To learn from it: open Upfall Orchard and Rootcellar Deep side by side to see how a flying island and a sunken one are
-set up (**Elevation** in the island settings), then open the plan and follow its signals and zones.
-
    - **Islands it brings...**: the island's own rules - which island comes, when and where ([6.4](#64-islands-that-bring-islands)).
    - **Island events**: what happens when players arrive or the quest is done; **Story items...**: the keys, logs and
      other things the quest gives and takes ([6.3](#63-story-items-and-story-sets)).
-5. **A world plan:** **World plans** → **Plan ▼** → pick it. Each rule card is one island: when it comes, where, and
+5. **A world plan:** **EDITOR** → **A world plan** → **Open a world plan...** → pick it. Each rule card is one island: when it comes, where, and
    the message. **Check** says in words what the whole plan does ([7.5](#75-check-finding-and-fixing-problems)).
 6. **See it work:** **Test** puts the island in a world in front of your raft ([4.9](#49-trying-the-island-in-a-world-test)).
    Play it, then go back and look at the setting behind what you just saw.
@@ -4485,7 +4516,7 @@ set up (**Elevation** in the island settings), then open the plan and follow its
 
 | Island | What it shows |
 |---|---|
-| ![](images/library/lockkeepers_isle.jpg) **The Lockkeeper's Isle** (small) | A keeper's hut, a strongbox shed and a goat pen on a low green island, with a **sign at each place** that names the feature and where to see it in the editor. A **keypad code lock** (the shed's power box, code on the keeper's note; its use shows the hidden strongbox), **three quests on one island** (the main quest, a catch quest, a read quest), all three **island rules** (regrow 3 days, comes after 8 km, level up on) and an **island the quest brings**: Lantern Spire, 400 m north, when the main quest is done |
+| ![](images/library/lockkeepers_isle.jpg) **The Lockkeeper's Isle** (small) | A keeper's hut, a strongbox shed and a goat pen on a low green island, with a **sign at each place** that names the feature and where to see it in the editor. A **keypad code lock** (the shed's power box, code on the keeper's note; its use shows the hidden strongbox), **three quests on one island** (the main quest, a catch quest, a read quest), two **island rules** (regrow 3 days, comes after 8 km) and an **island the quest brings**: Lantern Spire, 400 m north, when the main quest is done |
 | ![](images/library/lantern_spire.jpg) **Lantern Spire** (small) | A **flying island**: a rock 60 m over the sea with a lantern hut on top (Island tab → Height → Flying). Nothing leads up: players build stairs or pillars from the raft. Its quest needs the top, the sign and the chest |
 
 ![The Lockkeeper's Isle: the strongbox shed, its power box locked with a keypad code](images/learn-lockkeeper-shed.jpg)
@@ -4522,7 +4553,7 @@ One island each is enough to learn from; [16.5](#165-where-to-look-for) lists mo
 | Moving the player (teleport to) | The Frontier | The Corps' lift |
 | **Keypad code lock** | The Lockkeeper's Isle | The shed's power box: **Behaviour & events...** → Keypad code |
 | Island events (a message when players arrive) | The Lockkeeper's Isle | **Island events** |
-| **Island rules:** regrow days, comes after km, level up | The Lockkeeper's Isle | Island tab → Rules |
+| **Island rules:** regrow days, comes after km | The Lockkeeper's Isle | Island tab → Rules |
 | **An island the quest brings** | The Lockkeeper's Isle | **Edit quest...** → *When the quest is done, bring a new island*: the saved island Lantern Spire, 400 m north |
 | A chain of islands that bring each other | The Abyss Expedition (a plan) | Each island's **Islands it brings...** |
 | Raft's zipline | Cablecar Stacks | The line from the summit and its far end |
