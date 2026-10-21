@@ -327,6 +327,13 @@ namespace DynamicIslands
 				if (looks.Count > 0)
 				{
 					caves = looks; // (the pictures: every cave piece, the Vines cave too)
+					// (flooded: a cave whose passage roof is under the sea - Shellback's den on the sea floor, the Drowned Labyrinth's
+					// tunnels and den. Their side pictures looked down at the sea's surface over them: 1-2 % island in Shellback's, 11-23 %
+					// in the Labyrinth's (10-21). An island whose caves are all flooded is pictured from just under the water; one with
+					// dry caves too frames the dry ones)
+					var flooded = caves.Where(t => CaveRoofY(t) < 0f).ToList();
+					bool drowned = flooded.Count == caves.Count;
+					if (flooded.Count > 0) Log("    flooded (the passage's roof under the sea): " + string.Join(", ", flooded.Select(t => t.name + " " + CaveRoofY(t).ToString("F1") + " m").ToArray()) + (drowned ? " - the side pictures from under the water" : " - the pictures frame the dry ones"));
 					// (the pictures framed on what is there: the caves' and the mountain's meshes, only those within the island's land - from
 					// its land centre and radius, as d9ebe75 - and a camera 20 degrees up at a distance that fits them in the picture. Until
 					// 10-20 the camera stood 3 m over the sea: Shellback's side pictures showed only open sea, the Drowned Labyrinth's a strip)
@@ -335,7 +342,7 @@ namespace DynamicIslands
 					if (landR <= 0f) landR = 60f;
 					Bounds b = new Bounds();
 					bool any = false;
-					var meshes = caves.SelectMany(t => t.GetComponentsInChildren<Renderer>()).ToList();
+					var meshes = caves.Where(t => drowned || !flooded.Contains(t)).SelectMany(t => t.GetComponentsInChildren<Renderer>()).ToList();
 					if (skin != null) meshes.AddRange(skin.GetComponentsInChildren<Renderer>());
 					foreach (Renderer rr in meshes)
 					{
@@ -349,6 +356,7 @@ namespace DynamicIslands
 					float d = Mathf.Max(rXZ / 0.716f, b.extents.y / 0.577f) + 5f; // (the picture's 60 degrees high, 16:9: half widths 45.7 and 30 degrees)
 					var fills = new List<string>();
 					bool empty = false;
+					int measured = 0;
 					for (int i = 0; i < 4; i++)
 					{
 						Vector3 dir = Quaternion.Euler(0f, i * 90f + 30f, 0f) * Vector3.forward;
@@ -356,13 +364,27 @@ namespace DynamicIslands
 						RaycastHit hit;
 						float g = Physics.Raycast(new Vector3(from.x, 300f, from.z), Vector3.down, out hit, 600f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : 0f;
 						from.y = Mathf.Max(from.y, Mathf.Max(g, 0.5f) + 3f);
-						// (the island fills the picture: rays through it that end on the island above the sea)
-						float fill = IslandInView(from, b.center, e.Root.transform);
-						fills.Add((i * 90 + 30) + ": " + Mathf.RoundToInt(fill * 100f) + " %");
+						float fill;
+						if (!drowned)
+						{
+							// (the island fills the picture: rays through it that end on the island above the sea)
+							fill = IslandInView(from, b.center, e.Root.transform, null);
+							fills.Add((i * 90 + 30) + ": " + Mathf.RoundToInt(fill * 100f) + " %");
+						}
+						else if (g < -4f)
+						{
+							// (just under the water, over sea at least 4 m deep there: the rays that end on the island where its caves are -
+							// not on the seabed nearer the camera)
+							from.y = -1.5f;
+							fill = IslandInView(from, b.center, e.Root.transform, b);
+							fills.Add((i * 90 + 30) + ": " + Mathf.RoundToInt(fill * 100f) + " % under the water");
+						}
+						else { fill = 1f; fills.Add((i * 90 + 30) + ": over land or shallows " + g.ToString("F1") + " m, not measured"); measured--; }
+						measured++;
 						if (fill < 0.15f) empty = true;
 						yield return CameraShot(from, b.center, "caveisl_" + n + "_" + (i * 90 + 30));
 					}
-					Log("    the island in the side pictures: " + string.Join(", ", fills.ToArray()) + (empty ? " - a side without the island in view" : ""));
+					Log("    the island in the side pictures: " + string.Join(", ", fills.ToArray()) + (empty ? " - a side without the island in view" : measured == 0 ? " - flooded, no side over open water to picture it from (not measured)" : ""));
 					if (empty) { bad++; framedIslands++; }
 					yield return CameraShot(b.center + new Vector3(0.01f, b.size.y + d, -d * 0.6f), b.center, "caveisl_" + n + "_above");
 					// (and from inside: nothing seen through its walls or roof, the mountain over them, or the ground - X7)
@@ -391,8 +413,9 @@ namespace DynamicIslands
 		}
 
 		/// <summary>How much of a picture from <from> towards <at> (60 degrees high, 16:9) is the island under <root>: a 16 x 9 grid of
-		/// rays, those that end on it above the sea (-1.5 m: open sea, or only its seabed, is not the island in view).</summary>
-		static float IslandInView(Vector3 from, Vector3 at, Transform root)
+		/// rays, those that end on it above the sea (-1.5 m: open sea, or only its seabed, is not the island in view). <caves>: a
+		/// picture from under the water - those that end on it within 3 m of the caves' bounds across, at any depth.</summary>
+		static float IslandInView(Vector3 from, Vector3 at, Transform root, Bounds? caves)
 		{
 			Quaternion rot = Quaternion.LookRotation(at - from);
 			float tanV = Mathf.Tan(30f * Mathf.Deg2Rad), tanH = tanV * 16f / 9f;
@@ -403,9 +426,17 @@ namespace DynamicIslands
 					Vector3 ray = rot * new Vector3(tanH * ((x + 0.5f) / 8f - 1f), tanV * ((y + 0.5f) / 4.5f - 1f), 1f);
 					RaycastHit hit;
 					all++;
-					if (Physics.Raycast(from, ray.normalized, out hit, 2500f, ~0, QueryTriggerInteraction.Ignore) && hit.collider.transform.IsChildOf(root) && hit.point.y > -1.5f) on++;
+					if (!Physics.Raycast(from, ray.normalized, out hit, 2500f, ~0, QueryTriggerInteraction.Ignore) || !hit.collider.transform.IsChildOf(root)) continue;
+					if (caves.HasValue ? Mathf.Abs(hit.point.x - caves.Value.center.x) <= caves.Value.extents.x + 3f && Mathf.Abs(hit.point.z - caves.Value.center.z) <= caves.Value.extents.z + 3f : hit.point.y > -1.5f) on++;
 				}
 			return all > 0 ? (float)on / all : 0f;
+		}
+
+		/// <summary>Where a cave piece's passage roof is (world y): its floor and headroom from raft_props.txt, at its scale.</summary>
+		static float CaveRoofY(Transform t)
+		{
+			PropInfo p = RaftProps.Get(t.name);
+			return p == null ? float.MaxValue : t.position.y + (p.Floor + p.Headroom) * t.lossyScale.y;
 		}
 
 		[ConsoleCommand(name: "CIAnimalsDry",docs: "Dev, in a world with a custom island with land animals loaded: no animal may walk in the sea - no NavMesh below the waterline at the islands, no land animal below it (AU84)")]
