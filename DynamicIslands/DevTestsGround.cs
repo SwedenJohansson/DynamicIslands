@@ -529,7 +529,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: one-sided self"); else Fail("one-sided self");
 		}
 
-		[ConsoleCommand(name: "CIOverlapWorld", docs: "Dev, in a world: nothing on the loaded custom islands passes through anything else - no post, pillar, wall, floor or roof piece more than 6 cm inside a piece of furniture, a prop, a chest, a machine, a tree or a plant (IG7; the user 2026-10-18: posts through a piano and a pool table). Things resting on floors, roofs on their posts, things on tables don't count. Problems per island; all in Mods\\DynamicIslands\\overlap_world.txt. CIOverlapWorld [part of the island name]")]
+		[ConsoleCommand(name: "CIOverlapWorld", docs: "Dev, in a world: nothing on the loaded custom islands passes through anything else - no post, pillar, wall, floor or roof piece more than 6 cm inside a piece of furniture, a prop, a chest, a machine, a tree or a plant (IG7; the user 2026-10-18: posts through a piano and a pool table). Things resting on floors, roofs on their posts, things on tables don't count. Also no themed scene's prop, chest or note more than 6 cm into another of the scenes (their collider boxes as they stand turned; lines 'scene <theme>: ...'; two metal crates, gen-large-37435). Problems per island; all in Mods\\DynamicIslands\\overlap_world.txt. CIOverlapWorld [part of the island name]")]
 		public static void OverlapWorldCommand(string[] args) { WorldCheck(args, OverlapCheck); }
 
 		[ConsoleCommand(name: "CIOverlapIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIOverlapWorld does, then taken away (IG7). <which>: part of the name, 'plans' (every island of every plan), 'gen' or * (all but the test islands, kept copies and randomizer extras). Results in Mods\\DynamicIslands\\overlap_islands.txt. CIOverlapIslands <which> [most] [skip] [keep]")]
@@ -554,8 +554,8 @@ namespace DynamicIslands
 		/// <summary>A solid box of a thing: a renderer's mesh box or a collider's box, in its own frame.</summary>
 		class OverlapBox { public Transform T; public Vector3 Min, Max; }
 
-		/// <summary>A thing's boxes from its meshes; null when one is <see cref="OverlapBig"/> or more (a set piece: use its colliders).</summary>
-		static List<OverlapBox> MeshBoxes(Transform o)
+		/// <summary>A thing's boxes from its meshes; null when one is <see cref="OverlapBig"/> or more (a set piece: use its colliders), unless withBig.</summary>
+		static List<OverlapBox> MeshBoxes(Transform o, bool withBig = false)
 		{
 			var boxes = new List<OverlapBox>();
 			foreach (Renderer r in o.GetComponentsInChildren<Renderer>(false))
@@ -564,14 +564,14 @@ namespace DynamicIslands
 				MeshFilter mf = r.GetComponent<MeshFilter>();
 				if (mf == null || mf.sharedMesh == null) continue;
 				Bounds mb = mf.sharedMesh.bounds;
-				if (Big(mb.size, r.transform)) return null;
+				if (!withBig && Big(mb.size, r.transform)) return null;
 				boxes.Add(new OverlapBox { T = r.transform, Min = mb.min, Max = mb.max });
 			}
 			return boxes;
 		}
 
-		/// <summary>A thing's boxes from its solid colliders (a tree's trunk; a set piece's parts) - a big mesh collider left out.</summary>
-		static List<OverlapBox> ColliderBoxes(Transform o)
+		/// <summary>A thing's boxes from its solid colliders (a tree's trunk; a set piece's parts) - a big mesh collider left out, unless withBig.</summary>
+		static List<OverlapBox> ColliderBoxes(Transform o, bool withBig = false)
 		{
 			var boxes = new List<OverlapBox>();
 			foreach (Collider c in o.GetComponentsInChildren<Collider>(false))
@@ -590,7 +590,7 @@ namespace DynamicIslands
 				else if (c is MeshCollider && ((MeshCollider)c).sharedMesh != null)
 				{
 					lc = ((MeshCollider)c).sharedMesh.bounds.center; ls = ((MeshCollider)c).sharedMesh.bounds.size;
-					if (Big(ls, c.transform)) continue;
+					if (!withBig && Big(ls, c.transform)) continue;
 				}
 				else continue;
 				boxes.Add(new OverlapBox { T = c.transform, Min = lc - ls / 2f, Max = lc + ls / 2f });
@@ -614,6 +614,14 @@ namespace DynamicIslands
 		static readonly Regex OnAPost = new Regex("Pillar|Post|Pole|Column", RegexOptions.IgnoreCase);
 
 		static List<string> OverlapProblems(IslandWorldState.Entry e, out int count)
+		{
+			List<string> lines = PieceOverlaps(e, out count);
+			Transform objects = e.Root.transform.Find("Objects");
+			if (objects != null) lines.AddRange(SceneOverlaps(objects, e.Root.transform));
+			return lines;
+		}
+
+		static List<string> PieceOverlaps(IslandWorldState.Entry e, out int count)
 		{
 			var lines = new List<string>();
 			count = 0;
@@ -726,6 +734,85 @@ namespace DynamicIslands
 				}
 			}
 			return lines;
+		}
+
+		/// <summary>
+		/// A themed scene's pieces against each other (the generator's and the randomizer's scenes, marked with
+		/// <see cref="RandomizerIslands.SceneProp"/>; chest and note too): each one's solid boxes as they stand - all its colliders,
+		/// a big mesh collider's box too (the generator spaces them by their measured boxes), its meshes when it has none - and a
+		/// pair more than <see cref="OverlapMargin"/> into each other, the deepest of their boxes (separating axes). Two metal
+		/// crates 0.35 m into each other, gen-large-37435 2026-10-21. An island made before scenes were marked: the set pieces that
+		/// are the themes' props.
+		/// </summary>
+		static List<string> SceneOverlaps(Transform objects, Transform frame)
+		{
+			var lines = new List<string>();
+			var all = new List<IslandObjectRef>();
+			foreach (Transform o in objects)
+			{
+				if (o == null || !o.gameObject.activeInHierarchy) continue;
+				IslandObjectRef r = o.GetComponent<IslandObjectRef>();
+				if (r != null && r.Props != null) all.Add(r);
+			}
+			bool marked = all.Any(r => r.Props.ContainsKey(RandomizerIslands.SceneProp));
+			var themed = new HashSet<string>(RandomizerIslands.Themes.SelectMany(t => t.Anchors.Concat(t.Medium).Concat(t.Small)).Concat(new[] { "Antenna_pole" }));
+			List<IslandObjectRef> scene = all.Where(r => marked ? r.Props.ContainsKey(RandomizerIslands.SceneProp)
+				: r.Props.ContainsKey("set.piece") && !r.Props.ContainsKey("cave") && themed.Contains(r.ObjectName)).ToList();
+			var boxes = new List<List<OverlapBox>>();
+			var near = new List<Bounds>();
+			foreach (IslandObjectRef r in scene)
+			{
+				List<OverlapBox> b = ColliderBoxes(r.transform, true);
+				if (b.Count == 0) b = MeshBoxes(r.transform, true);
+				boxes.Add(b);
+				Bounds w = new Bounds(r.transform.position, Vector3.zero);
+				foreach (OverlapBox x in b)
+					for (int k = 0; k < 8; k++)
+						w.Encapsulate(x.T.TransformPoint(new Vector3((k & 1) == 0 ? x.Min.x : x.Max.x, (k & 2) == 0 ? x.Min.y : x.Max.y, (k & 4) == 0 ? x.Min.z : x.Max.z)));
+				near.Add(w);
+			}
+			for (int a = 0; a < scene.Count; a++)
+				for (int b = a + 1; b < scene.Count; b++)
+				{
+					if (boxes[a].Count == 0 || boxes[b].Count == 0 || !near[a].Intersects(near[b])) continue;
+					string na = scene[a].ObjectName, nb = scene[b].ObjectName;
+					if (na != nb && (na == "Antenna_dish" || na == "Antenna_pole") && (nb == "Antenna_dish" || nb == "Antenna_pole")) continue; // (the dish hangs on its pole)
+					float deepest = 0f;
+					foreach (OverlapBox x in boxes[a])
+						foreach (OverlapBox y in boxes[b]) deepest = Mathf.Max(deepest, BoxDepth(x, y));
+					if (deepest <= OverlapMargin) continue;
+					Vector3 pa = frame.InverseTransformPoint(scene[a].transform.position), pb = frame.InverseTransformPoint(scene[b].transform.position);
+					string what;
+					scene[a].Props.TryGetValue(RandomizerIslands.SceneProp, out what);
+					lines.Add("scene" + (what != null ? " " + what : "") + ": " + na + " at " + Num(Math.Round(pa.x, 2)) + " " + Num(Math.Round(pa.z, 2)) + " goes " + Num(Math.Round(deepest, 2)) +
+						" m into " + nb + " at " + Num(Math.Round(pb.x, 2)) + " " + Num(Math.Round(pb.z, 2)));
+				}
+			return lines;
+		}
+
+		/// <summary>How far two boxes (each in its own frame) are inside each other: the shortest way out of all the separating
+		/// axes (their sides and the crossings of their edges); 0 when apart.</summary>
+		static float BoxDepth(OverlapBox x, OverlapBox y)
+		{
+			Vector3 hx = (x.Max - x.Min) / 2f, hy = (y.Max - y.Min) / 2f;
+			Vector3[] ux = { x.T.TransformVector(new Vector3(hx.x, 0f, 0f)), x.T.TransformVector(new Vector3(0f, hx.y, 0f)), x.T.TransformVector(new Vector3(0f, 0f, hx.z)) };
+			Vector3[] uy = { y.T.TransformVector(new Vector3(hy.x, 0f, 0f)), y.T.TransformVector(new Vector3(0f, hy.y, 0f)), y.T.TransformVector(new Vector3(0f, 0f, hy.z)) };
+			Vector3 d = y.T.TransformPoint((y.Min + y.Max) / 2f) - x.T.TransformPoint((x.Min + x.Max) / 2f);
+			var axes = new List<Vector3>(ux.Concat(uy));
+			foreach (Vector3 p in ux) foreach (Vector3 q in uy) axes.Add(Vector3.Cross(p, q));
+			float depth = float.MaxValue;
+			foreach (Vector3 axis in axes)
+			{
+				float len = axis.magnitude;
+				if (len < 1e-6f) continue;
+				Vector3 n = axis / len;
+				float o = -Mathf.Abs(Vector3.Dot(d, n));
+				foreach (Vector3 v in ux) o += Mathf.Abs(Vector3.Dot(v, n));
+				foreach (Vector3 v in uy) o += Mathf.Abs(Vector3.Dot(v, n));
+				if (o <= 0f) return 0f;
+				depth = Mathf.Min(depth, o);
+			}
+			return depth == float.MaxValue ? 0f : depth;
 		}
 
 		/// <summary>What stands on a mount narrower than itself: a dish on a mast, an antenna on a roof - one mesh, its box wider

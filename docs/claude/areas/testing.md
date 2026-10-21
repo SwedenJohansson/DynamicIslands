@@ -84,6 +84,12 @@ Prefix families (`CIGen*`, `CIRandomizer*`, `CIStory*`, `CIPlan*`, `CIQuestBook*
 - A test that stops with `Fail` and `yield break` prints no PASS line and may leave islands or state behind.
 - A command run from the file sets `HelpLinks.Automated` (no browser or Explorer windows).
 
+## Island checks: ground, overlap, one-sided (`DevTestsGround.cs`)
+
+- `CI<Check>World` measures the loaded islands, `CI<Check>Islands <which>` saved islands one by one, `CI<Check>Types [types] [n]` brand-new generated islands (ground and overlap only; host, a `CI ...` test world). Each `IslandCheck` writes `Mods\DynamicIslands\<file>_<world|islands|types>.txt`.
+- `CIOverlap*` (`OverlapProblems`): building pieces through furniture/props (`PieceOverlaps`), then `SceneOverlaps`: a themed scene's props, chest and note (`RandomizerIslands.SceneProp` = `set.scene`, the theme's name) against each other by their collider boxes as turned (big mesh colliders too, meshes when none; 3D separating axes), fail over 6 cm, lines `scene <theme>: A ... goes d m into B`. Islands made before 10-21 have no `set.scene`: their set pieces named in `RandomizerIslands.Themes` are measured instead. Dish + pole pairs skipped.
+- The generator keeps the same rule (`RandomizerIslands.FootOf`/`Into`, 2D turned boxes, 5 cm gap) in `Dress`, `Sprinkle`, `DressWorld`; `CIIslandsSound` checks it on the files (no Raft objects needed).
+
 ## Running dev commands: ci.ps1
 
 Use `ci.ps1` in the repo root to run this mod's console commands (the CI* test commands and the others) in a running Raft. It prints only that run's `[CITEST]` lines, so do not read `Player.log` yourself.

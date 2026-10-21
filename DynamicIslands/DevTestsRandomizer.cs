@@ -1410,6 +1410,14 @@ namespace DynamicIslands
 						PropInfo pa = RaftProps.Get(props[a].Name), pb = RaftProps.Get(props[b].Name);
 						float ra = Mathf.Min(pa.Size.x, pa.Size.z) / 3f, rb = Mathf.Min(pb.Size.x, pb.Size.z) / 3f;
 						if (new Vector2(props[a].Position.x - props[b].Position.x, props[a].Position.z - props[b].Position.z).magnitude < ra + rb) inside.Add(props[a].Name + "/" + props[b].Name);
+						// (a scene's own props by their turned boxes, as the generator spaces them: two metal crates 2.4 m apart stood
+						// 0.35 m into each other, gen-large-37435 2026-10-21)
+						else if (props[a].Props.ContainsKey(RandomizerIslands.SceneProp) && props[b].Props.ContainsKey(RandomizerIslands.SceneProp))
+						{
+							float into = RandomizerIslands.Into(RandomizerIslands.FootOf(props[a].Name, new Vector2(props[a].Position.x, props[a].Position.z), props[a].EulerRotation),
+								RandomizerIslands.FootOf(props[b].Name, new Vector2(props[b].Position.x, props[b].Position.z), props[b].EulerRotation));
+							if (into > 0.06f) inside.Add(props[a].Name + "/" + props[b].Name + " (boxes " + into.ToString("F2", inv) + " m)");
+						}
 					}
 				// A den's floor on the ground levelled for it (a point in its passage)
 				string den = "";

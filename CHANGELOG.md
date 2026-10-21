@@ -450,6 +450,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Generated scenes: props no longer stand inside each other.** On newly generated islands and randomizer outposts (scrapyards, markets, camps, gardens, radio sites and the rest) each prop, the chest and the note keep clear of each other however they are turned; two metal crates of a scrapyard stood 0.35 m into each other. Islands already generated keep their props until they are made again.
 - **Old Mine Islet: the lantern crate by the mine's mouth stands on the floor.** It stood by the south wall where the den's rock floor doesn't reach, 1.2 m over the ground under it; it now stands 4 m further in, its lantern still on top.
 - **Generated scrapyards: the excavator stands on its tracks.** It hovered about 0.8 m over the ground on generated islands (its measured size counted a hidden part down to its pivot). Grass and plants beside a generated radio tower or lighthouse also move with the levelled ground by its lowest change, so they no longer stand in the air on its slope.
 - **Generated shacks: the satellite dish sits on top of its pole.** It hung 0.25 m out from the pole and 1 m under its top, with a gap between the two; it now sits on the pole's top, as on the hand-built islands.

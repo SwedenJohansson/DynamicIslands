@@ -132,6 +132,79 @@ namespace DynamicIslands.Editor
 			return p == null ? 0.6f : Mathf.Max(0.4f, Mathf.Max(p.Size.x, p.Size.z) * 0.5f + new Vector2(p.Centre.x, p.Centre.z).magnitude);
 		}
 
+		/// <summary>The setting a themed scene's pieces carry (the theme's name), the chest and the note too: the overlap check
+		/// (CIOverlap*) measures them against each other.</summary>
+		internal const string SceneProp = "set.scene";
+
+		/// <summary>How far apart a scene's footprints stay (metres): their measured boxes, so a little room for a tilted flat prop.</summary>
+		const float FootGap = 0.05f;
+
+		/// <summary>Room kept for a scene's chest and note (half a side, metres), whatever way they turn.</summary>
+		const float ChestRoom = 0.85f, NoteRoom = 0.8f;
+
+		/// <summary>A prop's footprint on the ground: a turned rectangle - its middle and its two half sides.</summary>
+		internal struct Foot { public Vector2 Mid, X, Z; }
+
+		/// <summary>
+		/// The ground a measured prop covers with its pivot at p, turned by euler: its measured box turned (a tilted flat prop's
+		/// box laid flat), as a rectangle along its turn. Balboa's dish also covers its pole's foot (it hangs on it).
+		/// </summary>
+		internal static Foot FootOf(string name, Vector2 p, Vector3 euler)
+		{
+			PropInfo info = RaftProps.Get(name);
+			Vector3 size = info != null ? info.Size : new Vector3(1.2f, 1.2f, 1.2f), centre = info != null ? info.Centre : Vector3.zero;
+			Quaternion turn = Quaternion.Euler(0f, euler.y, 0f), full = Quaternion.Euler(euler);
+			Vector3 ax = turn * Vector3.right, az = turn * Vector3.forward;
+			float x0 = float.MaxValue, x1 = float.MinValue, z0 = float.MaxValue, z1 = float.MinValue;
+			for (int i = 0; i < 8; i++)
+			{
+				Vector3 v = full * (centre + Vector3.Scale(size * 0.5f, new Vector3((i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f)));
+				float x = Vector3.Dot(v, ax), z = Vector3.Dot(v, az);
+				x0 = Mathf.Min(x0, x); x1 = Mathf.Max(x1, x); z0 = Mathf.Min(z0, z); z1 = Mathf.Max(z1, z);
+			}
+			if (name == "Antenna_dish") { x0 = Mathf.Min(x0, -0.4f); x1 = Mathf.Max(x1, 0.4f); z0 = Mathf.Min(z0, -0.4f); z1 = Mathf.Max(z1, 0.4f); }
+			Vector3 mid = ax * ((x0 + x1) * 0.5f) + az * ((z0 + z1) * 0.5f);
+			return new Foot { Mid = p + new Vector2(mid.x, mid.z), X = new Vector2(ax.x, ax.z) * ((x1 - x0) * 0.5f), Z = new Vector2(az.x, az.z) * ((z1 - z0) * 0.5f) };
+		}
+
+		/// <summary>A square of half side r round p: room for something whose turn isn't drawn yet (a chest, a note).</summary>
+		static Foot Spot(Vector2 p, float r) { return new Foot { Mid = p, X = new Vector2(r, 0f), Z = new Vector2(0f, r) }; }
+
+		/// <summary>How far two footprints pass into each other (separating axes): above 0 they overlap; 0 or less, they are
+		/// at least that far apart.</summary>
+		internal static float Into(Foot a, Foot b)
+		{
+			float depth = float.MaxValue;
+			Vector2 d = b.Mid - a.Mid;
+			foreach (Vector2 axis in new[] { a.X, a.Z, b.X, b.Z })
+			{
+				float len = axis.magnitude;
+				if (len < 1e-4f) continue;
+				Vector2 n = axis / len;
+				depth = Mathf.Min(depth, Mathf.Abs(Vector2.Dot(a.X, n)) + Mathf.Abs(Vector2.Dot(a.Z, n)) + Mathf.Abs(Vector2.Dot(b.X, n)) + Mathf.Abs(Vector2.Dot(b.Z, n)) - Mathf.Abs(Vector2.Dot(d, n)));
+			}
+			return depth;
+		}
+
+		/// <summary>Whether a footprint keeps <see cref="FootGap"/> from all of these.</summary>
+		static bool Clear(IEnumerable<Foot> feet, Foot f) { return feet.All(q => Into(q, f) <= -FootGap); }
+
+		/// <summary>A chest's or note's spot moved out from the scene's middle c until its room is clear of these (a wide centrepiece).</summary>
+		static Vector2 OutOf(Vector2 c, Vector2 p, float room, IList<Foot> feet)
+		{
+			Vector2 dir = (p - c).sqrMagnitude > 1e-6f ? (p - c).normalized : Vector2.up;
+			for (int i = 0; i < 12 && !Clear(feet, Spot(p, room)); i++) p += dir * 0.25f;
+			return p;
+		}
+
+		/// <summary>A set piece's settings: kept when the land is cleared; in a themed scene, the scene's name too.</summary>
+		static Dictionary<string, string> Tags(string scene)
+		{
+			var d = new Dictionary<string, string> { { "set.piece", "1" } };
+			if (scene != null) d[SceneProp] = scene;
+			return d;
+		}
+
 		/// <summary>Balboa's dish never stands on the ground by itself: it goes up on its antenna pole, the pole on the ground where
 		/// the dish was (dishes lay on the grass or hung over their spot, the ground check 2026-10-19). <paramref name="add"/> adds
 		/// the pole (name, position, yaw).</summary>
@@ -147,7 +220,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Stands a measured prop on generated ground (sunk a little), protected from clearing like a set piece.</summary>
-		static IslandObject Prop(MapKit k, string name, Vector2 p, float yaw, float sink = 0.05f)
+		static IslandObject Prop(MapKit k, string name, Vector2 p, float yaw, float sink = 0.05f, string scene = null)
 		{
 			float ground = LowestUnder((x, z) => k.Ground(new Vector2(x, z)), name, p, yaw);
 			PropInfo fi = RaftProps.Get(name);
@@ -159,13 +232,13 @@ namespace DynamicIslands.Editor
 				Vector3 ax = q * new Vector3(fi.Size.x * 0.45f, 0f, 0f), az = q * new Vector3(0f, 0f, fi.Size.z * 0.45f);
 				Func<Vector3, float> g = v => k.Ground(new Vector2(p.x + v.x, p.y + v.z));
 				float tz = Mathf.Atan2(g(ax) - g(-ax), 2f * ax.magnitude) * Mathf.Rad2Deg, tx = -Mathf.Atan2(g(az) - g(-az), 2f * az.magnitude) * Mathf.Rad2Deg;
-				IslandObject flat = k.Add(name, new Vector3(p.x, k.Ground(p) + RaftProps.Lift(name) - Mathf.Min(sink, fi.Size.y * 0.3f) + 0.02f, p.y), yaw, new Dictionary<string, string> { { "set.piece", "1" } }, 0f);
+				IslandObject flat = k.Add(name, new Vector3(p.x, k.Ground(p) + RaftProps.Lift(name) - Mathf.Min(sink, fi.Size.y * 0.3f) + 0.02f, p.y), yaw, Tags(scene), 0f);
 				flat.EulerRotation = new Vector3(tx, yaw, tz);
 				return flat;
 			}
 			// (never more than half its height under the ground at its middle, as a set piece)
 			if (fi != null) ground = Mathf.Max(ground, k.Ground(p) - fi.Size.y * 0.5f);
-			return k.Add(name, new Vector3(p.x, ground + RaftProps.Lift(name) - sink, p.y), yaw, new Dictionary<string, string> { { "set.piece", "1" } }, 0f);
+			return k.Add(name, new Vector3(p.x, ground + RaftProps.Lift(name) - sink, p.y), yaw, Tags(scene), 0f);
 		}
 
 		#region Themed scenes
@@ -186,22 +259,33 @@ namespace DynamicIslands.Editor
 			radius = Mathf.Max(radius, anchorSize + 5f);
 			k.Clear(c, radius + 1f);
 			RemoveContentNear(k, c, radius + 1f);
-			Prop(k, anchor, c, yaw);
+			IslandObject centre = Prop(k, anchor, c, yaw, 0.05f, t.Name);
 			// (each prop's footprint kept clear of the others': brick stacks and baskets stood inside each other)
 			var placed = new List<KeyValuePair<Vector2, float>> { new KeyValuePair<Vector2, float>(c, Mathf.Max(anchorSize * 0.8f, Reach(anchor))) };
 			Func<string, Vector2, bool> free = (name, p) => { float fr = Footprint(name); return placed.All(q => (q.Key - p).magnitude >= q.Value + fr); };
+			// (and their turned boxes, the chest's and the note's room too: two metal crates 2.4 m apart, each turned its own way,
+			// stood 0.35 m into each other - the round footprints don't turn; gen-large-37435, 2026-10-21. A prop whose box
+			// doesn't fit gets another try instead, up to four more, so a scene keeps its props)
+			var feet = new List<Foot> { FootOf(anchor, c, centre.EulerRotation) };
+			Vector2 box = OutOf(c, Around(c, yaw + 180f, 0f, anchorSize + 1.5f), ChestRoom, feet);
+			feet.Add(Spot(box, ChestRoom));
+			Vector2 notePos = OutOf(c, Around(c, yaw + 150f, 0f, anchorSize + 2.5f), NoteRoom, feet);
+			if (withNote) feet.Add(Spot(notePos, NoteRoom));
 			int nm = medium.Length == 0 ? 0 : 2 + r.Next(3);
 			for (int i = 0; i < nm; i++)
 			{
 				string name = One(r, medium);
-				for (int attempt = 0; attempt < 4; attempt++)
+				for (int attempt = 0, bumps = 0; attempt < 4 + bumps; attempt++)
 				{
 					float a = yaw + 60f + i * (240f / Mathf.Max(1, nm)) + (float)r.NextDouble() * 30f;
 					Vector2 p = Around(c, a, 0f, anchorSize + 2f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 3f));
 					if (k.Slope(p) > 22f || !free(name, p)) continue;
 					Vector2 toC = c - p;
 					float my = Mathf.Atan2(toC.x, toC.y) * Mathf.Rad2Deg + (float)r.NextDouble() * 30f - 15f;
-					DishOnPole(Prop(k, name, p, my), my, 0.05f, (pn, pp, py) => k.Add(pn, pp, py, new Dictionary<string, string> { { "set.piece", "1" } }, 0f));
+					if (!Clear(feet, FootOf(name, p, new Vector3(0f, my, 0f)))) { bumps = Mathf.Min(4, bumps + 1); continue; }
+					IslandObject o = Prop(k, name, p, my, 0.05f, t.Name);
+					feet.Add(FootOf(name, p, o.EulerRotation));
+					DishOnPole(o, my, 0.05f, (pn, pp, py) => k.Add(pn, pp, py, Tags(t.Name), 0f));
 					placed.Add(new KeyValuePair<Vector2, float>(p, Footprint(name)));
 					break;
 				}
@@ -210,18 +294,20 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < ns; i++)
 			{
 				string name = One(r, small);
-				for (int attempt = 0; attempt < 4; attempt++)
+				for (int attempt = 0, bumps = 0; attempt < 4 + bumps; attempt++)
 				{
 					Vector2 p = Around(c, Yaw(r), 0f, anchorSize + 1f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 1f));
 					if (k.Slope(p) > 25f || !free(name, p)) continue;
-					Prop(k, name, p, Yaw(r));
+					float sy = Yaw(r);
+					if (!Clear(feet, FootOf(name, p, new Vector3(0f, sy, 0f)))) { bumps = Mathf.Min(4, bumps + 1); continue; }
+					IslandObject o = Prop(k, name, p, sy, 0.05f, t.Name);
+					feet.Add(FootOf(name, p, o.EulerRotation));
 					placed.Add(new KeyValuePair<Vector2, float>(p, Footprint(name)));
 					break;
 				}
 			}
-			Vector2 box = Around(c, yaw + 180f, 0f, anchorSize + 1.5f);
-			k.Chest(t.Container, box, t.Label, MapKit.Loot(t.Loot));
-			if (withNote) k.Note(t.NoteKind, Around(c, yaw + 150f, 0f, anchorSize + 2.5f), t.NoteTitle, One(r, t.Notes));
+			k.Chest(t.Container, box, t.Label, MapKit.Loot(t.Loot)).Props[SceneProp] = t.Name;
+			if (withNote) k.Note(t.NoteKind, notePos, t.NoteTitle, One(r, t.Notes)).Props[SceneProp] = t.Name;
 			if (t.Creature != null && r.NextDouble() < 0.5)
 			{
 				Vector2? den = k.Find(c, radius * 2.5f, MapKit.Dry, 6f);
@@ -238,17 +324,22 @@ namespace DynamicIslands.Editor
 			string[] props = t.Medium.Concat(t.Small).Where(RaftProps.Standable).ToArray();
 			int placed = 0;
 			// (clear of the set pieces already there and of each other, by their footprints)
-			var taken = k.File.Objects.Where(o => o.Props != null && o.Props.ContainsKey("set.piece") && new Vector2(o.Position.x - c.x, o.Position.z - c.y).magnitude < outer + 25f)
-				.Select(o => new KeyValuePair<Vector2, float>(new Vector2(o.Position.x, o.Position.z), Reach(o.Name))).ToList();
-			for (int i = 0; i < count * 4 && placed < count && props.Length > 0; i++)
+			var near = k.File.Objects.Where(o => o.Props != null && o.Props.ContainsKey("set.piece") && new Vector2(o.Position.x - c.x, o.Position.z - c.y).magnitude < outer + 25f).ToList();
+			var taken = near.Select(o => new KeyValuePair<Vector2, float>(new Vector2(o.Position.x, o.Position.z), Reach(o.Name))).ToList();
+			// (and by their turned boxes, as Dress's)
+			var feet = near.Where(o => !o.Props.ContainsKey("cave")).Select(o => FootOf(o.Name, new Vector2(o.Position.x, o.Position.z), o.EulerRotation)).ToList();
+			for (int i = 0, bumps = 0; i < count * 4 + bumps && placed < count && props.Length > 0; i++)
 			{
 				Vector2 p = Around(c, Yaw(r), 0f, inner + (float)r.NextDouble() * (outer - inner));
 				if (k.Ground(p) - k.Sea < 0.8f || k.Slope(p) > 22f) continue;
 				string name = placed == 0 && force != null ? force : One(r, props);
 				if (taken.Any(q => (q.Key - p).magnitude < q.Value + Footprint(name))) continue;
-				k.Clear(p, 1.5f);
 				float sy = Yaw(r);
-				DishOnPole(Prop(k, name, p, sy), sy, 0.05f, (pn, pp, py) => k.Add(pn, pp, py, new Dictionary<string, string> { { "set.piece", "1" } }, 0f));
+				if (!Clear(feet, FootOf(name, p, new Vector3(0f, sy, 0f)))) { bumps = Mathf.Min(count * 2, bumps + 1); continue; }
+				k.Clear(p, 1.5f);
+				IslandObject o = Prop(k, name, p, sy, 0.05f, t.Name);
+				feet.Add(FootOf(name, p, o.EulerRotation));
+				DishOnPole(o, sy, 0.05f, (pn, pp, py) => k.Add(pn, pp, py, Tags(t.Name), 0f));
 				taken.Add(new KeyValuePair<Vector2, float>(p, Footprint(name)));
 				placed++;
 			}
@@ -267,6 +358,9 @@ namespace DynamicIslands.Editor
 			string[] anchors = t.Anchors.Where(RaftProps.Standable).ToArray(), medium = t.Medium.Where(RaftProps.Standable).ToArray(), small = t.Small.Where(RaftProps.Standable).ToArray();
 			if (anchors.Length == 0) return false;
 			Func<float, float, float> ground = (x, z) => { Vector3 gh, gn; return g.Hit(x, z, out gh, out gn) ? gh.y : float.NaN; };
+			// (the scene's turned boxes kept apart, as Dress's: bumped = the last one didn't fit them, worth another try)
+			var feet = new List<Foot>();
+			bool bumped = false;
 			Func<Vector3, float, float, string, IslandObject> put = (at, yaw, sink, name) =>
 			{
 				Vector3 hit, n;
@@ -275,31 +369,49 @@ namespace DynamicIslands.Editor
 				PropInfo pi = RaftProps.Get(name);
 				float clear = pi != null ? Mathf.Max(1.5f, Mathf.Max(pi.Size.x, pi.Size.z) * 0.4f + 0.5f) : 1.5f;
 				if (k.Taken.Any(x => new Vector2(x.x - at.x, x.z - at.z).sqrMagnitude < clear * clear)) return null;
+				Foot f = FootOf(name, new Vector2(at.x, at.z), new Vector3(0f, yaw, 0f));
+				if (!Clear(feet, f)) { bumped = true; return null; }
 				float low = LowestUnder(ground, name, new Vector2(at.x, at.z), yaw);
 				if (float.IsNaN(low) || low < 0.6f) return null;
-				return k.Add(name, new Vector3(at.x, low + RaftProps.Lift(name) - sink, at.z), yaw, new Dictionary<string, string> { { "set.piece", "1" } });
+				feet.Add(f);
+				return k.Add(name, new Vector3(at.x, low + RaftProps.Lift(name) - sink, at.z), yaw, Tags(t.Name));
 			};
 			float y0 = Yaw(r);
 			string anchor = One(r, anchors);
 			if (put(c, y0, 0.05f, anchor) == null) return false;
 			float anchorSize = Mathf.Max(2f, RaftProps.Get(anchor).Size.x * 0.5f, RaftProps.Get(anchor).Size.z * 0.5f);
+			// (the chest's and the note's room kept first)
+			Vector2 c2 = new Vector2(c.x, c.z);
+			Vector3 box = c + Quaternion.Euler(0f, y0 + 180f, 0f) * Vector3.forward * (anchorSize + 1.5f), bh, bn;
+			Vector2 b2 = OutOf(c2, new Vector2(box.x, box.z), ChestRoom, feet);
+			feet.Add(Spot(b2, ChestRoom));
+			Vector3 note = c + Quaternion.Euler(0f, y0 + 150f, 0f) * Vector3.forward * (anchorSize + 2.5f), nh, nn;
+			Vector2 n2 = OutOf(c2, new Vector2(note.x, note.z), NoteRoom, feet);
+			feet.Add(Spot(n2, NoteRoom));
 			int nm = medium.Length == 0 ? 0 : 2 + r.Next(3);
 			for (int i = 0; i < nm; i++)
 			{
-				float a = y0 + 60f + i * (240f / Mathf.Max(1, nm));
-				Vector3 p = c + Quaternion.Euler(0f, a, 0f) * Vector3.forward * (anchorSize + 2f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 3f));
-				DishOnPole(put(p, a + 180f, 0.05f, One(r, medium)), a + 180f, 0.05f, (pn, pp, py) => k.Add(pn, pp, py, new Dictionary<string, string> { { "set.piece", "1" } }));
+				float a0 = y0 + 60f + i * (240f / Mathf.Max(1, nm));
+				for (int attempt = 0; attempt < 4; attempt++)
+				{
+					float a = attempt == 0 ? a0 : a0 + (float)r.NextDouble() * 30f - 15f;
+					Vector3 p = c + Quaternion.Euler(0f, a, 0f) * Vector3.forward * (anchorSize + 2f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 3f));
+					bumped = false;
+					IslandObject o = put(p, a + 180f, 0.05f, One(r, medium));
+					DishOnPole(o, a + 180f, 0.05f, (pn, pp, py) => k.Add(pn, pp, py, Tags(t.Name)));
+					if (o != null || !bumped) break;
+				}
 			}
 			int ns = small.Length == 0 ? 0 : 3 + r.Next(3);
 			for (int i = 0; i < ns; i++)
-			{
-				Vector3 p = c + Quaternion.Euler(0f, Yaw(r), 0f) * Vector3.forward * (anchorSize + 1f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 1f));
-				put(p, Yaw(r), 0.05f, One(r, small));
-			}
-			Vector3 box = c + Quaternion.Euler(0f, y0 + 180f, 0f) * Vector3.forward * (anchorSize + 1.5f), bh, bn;
-			if (g.Hit(box.x, box.z, out bh, out bn)) k.Chest(t.Container, bh, Yaw(r), t.Label, MapKit.Loot(t.Loot));
-			Vector3 note = c + Quaternion.Euler(0f, y0 + 150f, 0f) * Vector3.forward * (anchorSize + 2.5f), nh, nn;
-			if (g.Hit(note.x, note.z, out nh, out nn)) k.Note(t.NoteKind, nh, Yaw(r), t.NoteTitle, One(r, t.Notes));
+				for (int attempt = 0; attempt < 4; attempt++)
+				{
+					Vector3 p = c + Quaternion.Euler(0f, Yaw(r), 0f) * Vector3.forward * (anchorSize + 1f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 1f));
+					bumped = false;
+					if (put(p, Yaw(r), 0.05f, One(r, small)) != null || !bumped) break;
+				}
+			if (g.Hit(b2.x, b2.y, out bh, out bn)) k.Chest(t.Container, bh, Yaw(r), t.Label, MapKit.Loot(t.Loot)).Props[SceneProp] = t.Name;
+			if (g.Hit(n2.x, n2.y, out nh, out nn)) k.Note(t.NoteKind, nh, Yaw(r), t.NoteTitle, One(r, t.Notes)).Props[SceneProp] = t.Name;
 			return true;
 		}
 
