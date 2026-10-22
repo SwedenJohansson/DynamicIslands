@@ -271,9 +271,8 @@ An island **with a quest** and a name shows it as a **banner** when you come nea
 a short welcome if the builder wrote them. An island without a quest shows no banner (its zone and trigger messages still come). Banners and messages (an island's, a zone's, a lever's) come **one after
 another**: one that arrives while another is on screen waits until that one has gone. Each stays long enough to read: 5 seconds for a short one, longer for a long description (up to 16).
 
-![Arriving at an oddity island](images/world-arrival-banner.jpg)
-*An island's banner as you arrive. (The picture is from before only islands with a quest had one: "Van Island", one
-of the world randomizer's oddity islands, has none now.)*
+![Arriving at Crane Yard](images/world-arrival-banner.jpg)
+*An island's banner as you arrive: Crane Yard, with its quest already listed on the right.*
 
 **Islands missing.** When a world you load uses island files this PC doesn't have (deleted, renamed, or removed from
 the library since), a box names them and the library entry each came with. **Play without them** plays the rest (those
@@ -3127,7 +3126,7 @@ the firework). The Damage stat makes your weapons hit harder; a firework hits as
 Chickens, goats, llamas, turtles, stingrays, dolphins, whales, puffins, Utopia's butler bots and people give nothing.
 
 ![EXP floating over a warthog](images/levels-hit.jpg)
-*A hit on a warthog: its EXP floats up (this picture is from before EXP was tripled).*
+*A hit on a warthog: its EXP floats up.*
 
 Tougher monsters that bite harder are worth more, measured against Bruce the shark, who is worth **180 EXP** (EXP
 gained was doubled on 2026-10-02, tripled on 2026-10-04 and raised by half on 2026-10-09: nine times what the levels
