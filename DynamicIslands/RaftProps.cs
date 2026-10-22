@@ -24,6 +24,8 @@ namespace DynamicIslands.Editor
 		public Vector3 Inside;
 		public float ToPlus = 99f, ToMinus = 99f;
 		public bool IsCave { get { return Axis >= 0; } }
+		/// <summary>The part it stands on, where that is smaller than its box (x, z from the pivot; size 0 = its whole box).</summary>
+		public Vector2 StandCentre, StandSize;
 	}
 
 	/// <summary>
@@ -67,6 +69,13 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		static readonly Dictionary<string, float> SeenBottoms = new Dictionary<string, float>(StringComparer.Ordinal) { { "VP_Excavator", 0.8f } };
 
+		/// <summary>
+		/// Props that stand on a part of their box (middle and size on the ground, from the pivot): the excavator's box reaches 6.7 m
+		/// out along its boom, and the lowest ground under all of it sank its tracks 0.35-0.9 m on a slope (CIScrapyardExcavator,
+		/// 2026-10-22: its body starts 0.80 m over the pivot, the pivot stood 1.35 m under the ground).
+		/// </summary>
+		static readonly Dictionary<string, Vector4> SeenStands = new Dictionary<string, Vector4>(StringComparer.Ordinal) { { "VP_Excavator", new Vector4(0f, 0f, 3.4f, 4.6f) } };
+
 		public static IEnumerable<PropInfo> All { get { if (props == null) Load(); return props.Values; } }
 
 		static void Load()
@@ -101,6 +110,13 @@ namespace DynamicIslands.Editor
 					p.Bottom = fix.Value;
 					p.Size.y = top - fix.Value;
 					p.Centre.y = (top + fix.Value) * 0.5f;
+				}
+				foreach (KeyValuePair<string, Vector4> fix in SeenStands)
+				{
+					PropInfo p;
+					if (!props.TryGetValue(fix.Key, out p)) continue;
+					p.StandCentre = new Vector2(fix.Value.x, fix.Value.y);
+					p.StandSize = new Vector2(fix.Value.z, fix.Value.w);
 				}
 				if (props.Count == 0) Debug.LogWarning("[CUSTOM ISLANDS] " + FileName + " has no props: props stand on their pivots");
 			}

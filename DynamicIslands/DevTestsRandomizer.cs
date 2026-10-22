@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -2040,6 +2040,35 @@ namespace DynamicIslands
 			"TP_BigRock02", "TP_BigRock03", "TP_BigRock04", "BigSharpRock_1", "BigSharpRock_2", "CaravanIsland_BigRoundRock_1",
 			"Placeable_Lantern_FireBasket", "Placeable_Lantern_Basic", "Placeable_Lantern_Metal", "Placeable_Lantern_Fireplace", "Placeable_StringLight_Horizontal", "Placeable_Utopia_LightBottleYellow",
 		};
+
+		[ConsoleCommand(name: "CIPropColliders", docs: "Dev, any time: a copy of each named object (comma separated) as it spawns - its scale, its meshes' box and each solid collider's box, from the pivot (min..max, m): what a scene's spacing must keep apart. CIPropColliders <name>[,<name>...]")]
+		public static void PropCollidersCommand(string[] args)
+		{
+			if (args == null || args.Length < 1) { Fail("CIPropColliders <name>[,<name>...]"); return; }
+			StartTest(PropCollidersRoutine(string.Join(" ", args)));
+		}
+
+		static IEnumerator PropCollidersRoutine(string names)
+		{
+			yield return PlaceableCatalog.EnsureBuilt();
+			Func<Vector3, string> v = x => Num(x.x) + "/" + Num(x.y) + "/" + Num(x.z);
+			foreach (string n in names.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
+			{
+				GameObject proto = PlaceableCatalog.Get(n);
+				if (proto == null) { Log("colliders " + n + ": not in this Raft"); continue; }
+				GameObject copy = UnityEngine.Object.Instantiate(proto, new Vector3(0f, 3000f, 0f), Quaternion.identity);
+				copy.SetActive(true);
+				Vector3 at = copy.transform.position;
+				var parts = new List<string>();
+				Renderer[] rs = global::DynamicIslands.Editor.PlacementOptions.ShapeRenderers(copy);
+				if (rs.Length > 0) { Bounds m = rs[0].bounds; foreach (Renderer r in rs) m.Encapsulate(r.bounds); parts.Add("meshes " + v(m.min - at) + " .. " + v(m.max - at)); }
+				foreach (Collider c in copy.GetComponentsInChildren<Collider>(true).Where(c => !c.isTrigger))
+					parts.Add(c.name + " " + c.GetType().Name + (c.enabled && c.gameObject.activeInHierarchy ? "" : " (off)") + " " + v(c.bounds.min - at) + " .. " + v(c.bounds.max - at));
+				Log("colliders " + n + ": scale " + v(copy.transform.lossyScale) + "; " + string.Join("; ", parts.ToArray()));
+				UnityEngine.Object.Destroy(copy);
+			}
+			Log("PASS: prop colliders");
+		}
 
 		[ConsoleCommand(name: "CIMeasureProps", docs: "Dev, main menu or editor: measures Raft's objects the randomizer builds with (size, bottom; the inside of cave pieces) into raft_props.txt in Mods\\DynamicIslands. CIMeasureProps [names, comma separated]")]
 		public static void MeasurePropsCommand(string[] args)

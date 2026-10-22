@@ -107,9 +107,12 @@ namespace DynamicIslands.Editor
 			float low = ground(p.x, p.y);
 			if (info == null) return low;
 			Quaternion rot = Quaternion.Euler(0f, yaw, 0f);
+			// (the part it stands on where that is smaller: the excavator's tracks, not its boom)
+			bool part = info.StandSize.x > 0f;
+			Vector2 mid = part ? info.StandCentre : new Vector2(info.Centre.x, info.Centre.z), size = part ? info.StandSize : new Vector2(info.Size.x, info.Size.z);
 			foreach (Vector2 c in new[] { Vector2.zero, new Vector2(-1f, -1f), new Vector2(1f, -1f), new Vector2(-1f, 1f), new Vector2(1f, 1f) })
 			{
-				Vector3 w = rot * new Vector3(info.Centre.x + c.x * info.Size.x * 0.45f, 0f, info.Centre.z + c.y * info.Size.z * 0.45f);
+				Vector3 w = rot * new Vector3(mid.x + c.x * size.x * 0.45f, 0f, mid.y + c.y * size.y * 0.45f);
 				float g = ground(p.x + w.x, p.y + w.z);
 				if (float.IsNaN(g)) return float.NaN;
 				low = Mathf.Min(low, g);
@@ -142,6 +145,17 @@ namespace DynamicIslands.Editor
 		/// <summary>Room kept for a scene's chest and note (half a side, metres), whatever way they turn.</summary>
 		const float ChestRoom = 0.85f, NoteRoom = 0.8f;
 
+		/// <summary>Containers raft_props doesn't measure, with their meshes' box (CIPropColliders 2026-10-22: Loot_Box is
+		/// 2.6 x 1 x 2.2 m - taken as a 1.2 m cube, a radio scene's power box stood 0.3 m inside it).</summary>
+		static readonly Dictionary<string, Vector3> ContainerSizes = new Dictionary<string, Vector3>(StringComparer.Ordinal) { { "Loot_Box", new Vector3(2.59f, 1f, 2.18f) } };
+
+		/// <summary>Room kept for a chest of this kind, whatever way it turns: half its box's diagonal, at least ChestRoom.</summary>
+		static float ChestRoomOf(string kind)
+		{
+			Vector3 size;
+			return ContainerSizes.TryGetValue(kind ?? "", out size) ? Mathf.Max(ChestRoom, new Vector2(size.x, size.z).magnitude * 0.5f + FootGap) : ChestRoom;
+		}
+
 		/// <summary>A prop's footprint on the ground: a turned rectangle - its middle and its two half sides.</summary>
 		internal struct Foot { public Vector2 Mid, X, Z; }
 
@@ -152,7 +166,8 @@ namespace DynamicIslands.Editor
 		internal static Foot FootOf(string name, Vector2 p, Vector3 euler)
 		{
 			PropInfo info = RaftProps.Get(name);
-			Vector3 size = info != null ? info.Size : new Vector3(1.2f, 1.2f, 1.2f), centre = info != null ? info.Centre : Vector3.zero;
+			Vector3 size = info != null ? info.Size : new Vector3(1.2f, 1.2f, 1.2f), centre = info != null ? info.Centre : Vector3.zero, known;
+			if (info == null && name != null && ContainerSizes.TryGetValue(name, out known)) { size = known; centre = new Vector3(0f, known.y * 0.5f, 0f); }
 			Quaternion turn = Quaternion.Euler(0f, euler.y, 0f), full = Quaternion.Euler(euler);
 			Vector3 ax = turn * Vector3.right, az = turn * Vector3.forward;
 			float x0 = float.MaxValue, x1 = float.MinValue, z0 = float.MaxValue, z1 = float.MinValue;
@@ -267,8 +282,8 @@ namespace DynamicIslands.Editor
 			// stood 0.35 m into each other - the round footprints don't turn; gen-large-37435, 2026-10-21. A prop whose box
 			// doesn't fit gets another try instead, up to four more, so a scene keeps its props)
 			var feet = new List<Foot> { FootOf(anchor, c, centre.EulerRotation) };
-			Vector2 box = OutOf(c, Around(c, yaw + 180f, 0f, anchorSize + 1.5f), ChestRoom, feet);
-			feet.Add(Spot(box, ChestRoom));
+			Vector2 box = OutOf(c, Around(c, yaw + 180f, 0f, anchorSize + 1.5f), ChestRoomOf(t.Container), feet);
+			feet.Add(Spot(box, ChestRoomOf(t.Container)));
 			Vector2 notePos = OutOf(c, Around(c, yaw + 150f, 0f, anchorSize + 2.5f), NoteRoom, feet);
 			if (withNote) feet.Add(Spot(notePos, NoteRoom));
 			int nm = medium.Length == 0 ? 0 : 2 + r.Next(3);
@@ -383,8 +398,8 @@ namespace DynamicIslands.Editor
 			// (the chest's and the note's room kept first)
 			Vector2 c2 = new Vector2(c.x, c.z);
 			Vector3 box = c + Quaternion.Euler(0f, y0 + 180f, 0f) * Vector3.forward * (anchorSize + 1.5f), bh, bn;
-			Vector2 b2 = OutOf(c2, new Vector2(box.x, box.z), ChestRoom, feet);
-			feet.Add(Spot(b2, ChestRoom));
+			Vector2 b2 = OutOf(c2, new Vector2(box.x, box.z), ChestRoomOf(t.Container), feet);
+			feet.Add(Spot(b2, ChestRoomOf(t.Container)));
 			Vector3 note = c + Quaternion.Euler(0f, y0 + 150f, 0f) * Vector3.forward * (anchorSize + 2.5f), nh, nn;
 			Vector2 n2 = OutOf(c2, new Vector2(note.x, note.z), NoteRoom, feet);
 			feet.Add(Spot(n2, NoteRoom));

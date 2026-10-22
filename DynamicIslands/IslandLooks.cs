@@ -174,7 +174,16 @@ namespace DynamicIslands.Editor
 		{
 			Bounds b;
 			if (!GenBuildings.Measured(name, out b)) b = new Bounds(Vector3.zero, Vector3.one);
-			IslandObject o = Centred(k, name, c, yaw, LowestUnderBox(k, b, c, yaw) - sink - b.min.y);
+			// (on the part it stands on where that is smaller: the excavator's tracks, not its boom - RaftProps.SeenStands)
+			PropInfo info = RaftProps.Get(name);
+			float ground;
+			if (info != null && info.StandSize.x > 0f)
+			{
+				Vector3 off = Quaternion.Euler(0f, yaw, 0f) * new Vector3(info.StandCentre.x - b.center.x, 0f, info.StandCentre.y - b.center.z);
+				ground = LowestUnderBox(k, new Bounds(Vector3.zero, new Vector3(info.StandSize.x, 1f, info.StandSize.y)), c + new Vector2(off.x, off.z), yaw);
+			}
+			else ground = LowestUnderBox(k, b, c, yaw);
+			IslandObject o = Centred(k, name, c, yaw, ground - sink - b.min.y);
 			k.Stood.Add(new KeyValuePair<IslandObject, float>(o, sink));
 			return o;
 		}

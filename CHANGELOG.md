@@ -455,6 +455,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Scrapyard excavator on slopes:** made islands set it on the ground under its tracks, not the lowest ground under its
+  boom, so its tracks no longer sink up to 0.9 m into a slope.
+- **Wooden boxes in scenes:** made islands keep room for a wooden box's real size (2.6 x 2.2 m), so a radio's power box
+  no longer stands inside it.
 - **Rescued survivors move on your raft:** the survivor stood stiff with its arms out; it now moves like Raft's own
   characters. An open cage whose survivor is missing from the world's list puts it back without counting a second
   rescue.

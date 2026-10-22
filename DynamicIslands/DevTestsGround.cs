@@ -281,6 +281,11 @@ namespace DynamicIslands
 				sinkNote = "; tracks " + string.Join("/", depths.Select(x => Num(x)).ToArray()) + " m in the ground (middle, sides)";
 				sunk = depths.Min() > 0.35f;
 				Log("  excavator" + sinkNote.Substring(1));
+				// (where its parts start, from the pivot: is SeenBottoms' 0.8 right?)
+				float groundMid = land.SampleHeight(exc.position) + land.transform.position.y;
+				Log("  excavator pivot " + Num(groundMid - exc.position.y) + " m under the ground, scale " + Num(exc.lossyScale.y) + "; parts' bottoms over the pivot: " +
+					string.Join(", ", exc.GetComponentsInChildren<Renderer>(true).Select(r => r.name + (r.enabled && r.gameObject.activeInHierarchy ? "" : " (hidden)") + " " +
+						Num(r.bounds.min.y - exc.position.y)).Take(12).ToArray()));
 			}
 			// (read before the removal: a destroyed Transform compares equal to null, 2026-10-21)
 			bool hasExc = exc != null;
