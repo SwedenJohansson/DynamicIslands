@@ -108,12 +108,18 @@ namespace DynamicIslands
 				bool miss = Kraken.TryHit(from, -(target - from), 3f);
 				Check(ref ok, !miss && arm.Hits == 0, "a swing the other way misses");
 				int beaten = Kraken.Beaten;
-				for (int h = 0; h < Kraken.HitsNeeded && arm.Phase == 1; h++)
+				// keep swinging until 10 count: a swing inside the 0.3 s cooldown (game time; a minimised Raft runs slowly) is not a hit
+				int swings = 0;
+				for (float t = Time.realtimeSinceStartup + 25f; Time.realtimeSinceStartup < t && arm != null && arm.Phase == 1 && !arm.Released;)
 				{
+					// the raft drifts: aim from beside the arm where it is now
 					target = pivot.TransformPoint(arm.Main.Pts[(int)(arm.Main.N * 0.62f)]);
+					from = target - pivot.TransformDirection(u) * 2.5f + Vector3.up * 0.3f;
 					Kraken.TryHit(from, target - from, 3f);
+					swings++;
 					yield return KrakenWait(0.35f);
 				}
+				Log("swings: " + swings);
 				Check(ref ok, Kraken.Beaten == beaten + 1 && arm.Released && arm.Hits == Kraken.HitsNeeded, "10 hits: it let go (" + arm.Hits + " hits)");
 				Check(ref ok, sent.Count(m => m.Kind == IslandNetMessage.Kraken && m.Name == "hits") == Kraken.HitsNeeded && sent.Any(m => m.Kind == IslandNetMessage.Kraken && m.Name == "let"), "every hit and the let-go went to every player");
 				yield return KrakenWait(Kraken.SinkSeconds + 0.6f);

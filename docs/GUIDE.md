@@ -2989,6 +2989,8 @@ about eight seconds. It is Raft's own whale, with its own spout.
 
 #### Kraken arm
 
+![A kraken arm holding the raft's edge, a second arm curling beside it](images/world-kraken-arm.jpg)
+
 Rarely, with a warning splash and a banner, a **giant tentacle** rises out of the deep beside the raft, curls over the
 side and **grabs a floor on the raft's edge** - never one in the middle. Its base is far down in the water, so you
 never see where it starts. One to three more arms rise **3-8 m off the edge** around it and sway and curl there; they
