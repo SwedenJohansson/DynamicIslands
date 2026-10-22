@@ -14,6 +14,11 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ### New
 - **The editor's Camera window lists every key:** **Camera...** in the status bar now lists every mouse button and key
   of the editor - camera, tabs, undo/save, terrain and object keys - so new users can learn them in one place.
+- **Lantern Spire and The Lockkeeper's Isle are featured islands now:** no more signs about the editor. The
+  Lockkeeper's Isle has a 5-step main quest (the keeper's code is hidden in his mother's letter, his strongbox holds
+  the key to his sea chest at the lookout), more to find and gather, and still brings Lantern Spire. Lantern Spire
+  has a 5-step adventure: climb on to the flying rock, read the sky keeper's log, fetch his oil from a ledge down a
+  ladder and light his beacon to find the key to his chest.
 - **Fourteen new library islands to wander** (no quest, no banner): ten small - Gannet Rock, Driftwood Key,
   Bearback Isle, Twin Horns, Pelican Spit, Mango Dell, Cormorant Skerry, Basalt Cay and the sunken Skiff Shoal
   and Castaway Knoll - three medium - Bramblewood Isle, Gullwing Bay, Coyote Mesa - and Driftcloud Islet, a small
