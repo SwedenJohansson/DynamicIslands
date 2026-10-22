@@ -97,10 +97,12 @@ prop goats creature.count=2
 prop dolphins creature.count=2
 
 # --- Things to gather: palms and flowers on the slopes, berries by the hut ------------------------------------------------
-scatter "Pickup_Landmark_Tree_Palm 3" 3 at 0 0 r=30 seed=7101 free=5
+scatter "Pickup_Landmark_Tree_Palm 3" 7 at 0 0 r=30 seed=7101 free=5
 scatter "Pickup_Landmark_Flower_White" 2 at 0 0 r=24 seed=7102 free=3
 scatter "Pickup_Landmark_Flower_Blue" 2 at 0 0 r=24 seed=7103 free=3
 scatter "Pickup_Landmark_BerryBush" 3 at -10 -6 r=8 seed=7104 free=3
+scatter "Pickup_Landmark_PineappleLandmark" 3 at -8 18 r=10 seed=7105 free=3
+scatter "Pickup_Landmark_BerryBush" 2 at 10 14 r=8 seed=7106 free=3
 
 # ===== Settings, island rules, notes, behaviours, three quests, the island it brings =================================
 info title=The Lockkeeper's Isle
