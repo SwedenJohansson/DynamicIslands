@@ -63,19 +63,21 @@ call pole x=4
 call pole x=12
 call pole x=20
 call pole x=31 z=3.5
-place ZiplinePath_Landmark zip1 at -31.5 -1 ground
+# (Raft's zipline has no stand: its near floor is 5.72 m west, 0.97 m north of where it is put and 1.35 m under its h -
+# put "ground" it hung in the air; each line is put so its near floor sits on its stack's flat top, 2026-10-23)
+place ZiplinePath_Landmark zip1 at -25.78 -1.97 h=21.35
 zipto zip1 -20 -0.5
-place ZiplinePath_Landmark zip2 at -20 -0.5 ground
+place ZiplinePath_Landmark zip2 at -14.28 -1.47 h=19.35
 zipto zip2 -12 -0.5
-place ZiplinePath_Landmark zip3 at -12 -0.5 ground
+place ZiplinePath_Landmark zip3 at -6.28 -1.47 h=17.85
 zipto zip3 -4 -0.5
-place ZiplinePath_Landmark zip4 at -4 -0.5 ground
+place ZiplinePath_Landmark zip4 at 1.72 -1.47 h=16.35
 zipto zip4 4 -0.5
-place ZiplinePath_Landmark zip5 at 4 -0.5 ground
+place ZiplinePath_Landmark zip5 at 9.72 -1.47 h=14.85
 zipto zip5 12 -0.5
-place ZiplinePath_Landmark zip6 at 12 -0.5 ground
+place ZiplinePath_Landmark zip6 at 17.72 -1.47 h=13.35
 zipto zip6 20 -0.5
-place ZiplinePath_Landmark zip7 at 20 -0.5 ground
+place ZiplinePath_Landmark zip7 at 25.72 -1.47 h=11.35
 zipto zip7 30.5 -1
 place Zone_Trigger stack4zone at -4 0 ground
 place UT_ElectricCableHub01 linehub at -4 2.6 ground sit yaw=180

@@ -75,7 +75,7 @@ place RT_PillarThick zipposts at $x $z ground sy=$sy
 end
 call zippost x=9.28 z=-14.03 sy=1.77
 call zippost x=-4.72 z=19.97 sy=1.77
-call zippost x=13.28 z=-0.03 sy=1.96
+call zippost x=13.28 z=-0.03 sy=2.04
 call zippost x=-6.72 z=-18.03 sy=1.77
 
 # --- The landing ring: the manual, the ring locker, the generator (its lever) and the coil boards; the store ----

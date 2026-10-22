@@ -923,7 +923,7 @@ namespace DynamicIslands
 				}
 				// Floating: nothing at its base (another object, a wall it hangs on, the land) and the first thing under it more than 0.5 m down
 				float gapUnder = GapUnder(o, new Vector3(b.center.x, b.min.y, b.center.z), land);
-				bool touches = Touches(o, b);
+				bool touches = Touches(o, b, objects);
 				bool inSea = b.min.y <= sea + 0.3f; // (a dock post, a buoy, a wreck: in the water, held by it)
 				if (!touches && !inSea && gapUnder > 0.5f)
 				{ node.Reported = true; lines.Add("floating: " + n + " at " + where + ", " + (gapUnder > 999f ? "nothing under it" : Num(gapUnder) + " m over what is under it")); continue; }
@@ -1003,6 +1003,9 @@ namespace DynamicIslands
 				bool held = be.ByLand || be.By.Any(u => { SupportNode t; return !nodes.TryGetValue(u, out t) || t.Grounded; });
 				if (!held) lines.Add("banner rope end held by nothing: " + be.Name + " at " + be.Where + ", its " + be.Side + " end (" + (be.By.Count == 0 ? "no post or wall there" : "on " + string.Join(", ", be.By.Select(u => u.name.Replace("(Clone)", "").Trim()).Distinct().Take(3).ToArray()) + ", not grounded") + ")");
 			}
+			// What hangs: zipline and wire ends, hanging props, solid things that show nothing (IG9)
+			lines.AddRange(HangProblems(objects, land, mid, sea));
+			lines.AddRange(FlyingLeftOut(e.Name));
 			return lines;
 		}
 
@@ -1467,8 +1470,10 @@ namespace DynamicIslands
 		}
 
 		/// <summary>Whether <paramref name="self"/>'s base touches a collider of something else (stands on it, or hangs on a wall).</summary>
-		static bool Touches(Transform self, Bounds b)
+		static bool Touches(Transform self, Bounds b, Transform objects = null)
 		{
+			// (only what shows holds: a crane that never showed but left its colliders held Altitude Market's ballast stone, 2026-10-22)
+			if (objects != null) return TouchesShown(self, b, objects);
 			var half = new Vector3(Mathf.Max(0.05f, b.extents.x * 0.9f), 0.15f, Mathf.Max(0.05f, b.extents.z * 0.9f));
 			if (Physics.OverlapBox(new Vector3(b.center.x, b.min.y, b.center.z), half, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore).Any(c => !c.transform.IsChildOf(self))) return true;
 			// (hung on a wall or a post: its sides touch something)

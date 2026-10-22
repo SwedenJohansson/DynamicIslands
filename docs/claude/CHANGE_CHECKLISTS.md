@@ -282,12 +282,17 @@ This is the most common change in history. It does not touch any `.cs` file.
   cave rims flush with the ground. Roofs rest *on* pillars or walls; foundations are never used as roofs. On a slope,
   flatten the ground under a building first (`ramp`/brush) or give it legs that reach down. Think about this while
   placing, not only at the end: set a height only when the object must sit on something else.
+  What hangs is held too (2026-10-22: a zipline end 0.4 m over a short post on The Lodestone Array, a ballast stone
+  under a crane that a flying island left out under its water line on Altitude Market): both ends of a zipline, rope,
+  cable or wire within 0.3 m of the top of a post, pillar or the land; a lantern, bucket, hook, net or ballast in the
+  air with a holder right above it. On a flying island nothing may reach under the island's own sea level (h 0), or it
+  is left out when it spawns: keep cranes and posts on the flat, back from the edge.
 - **Nothing goes through anything** (the user, 2026-10-18: a grid of posts through The Isobar Club's pianos and pool
   table). A post, pillar, wall, floor or roof piece never passes through furniture, a prop, a chest or a tree's trunk.
   Place furniture between columns; under a big flat roof of floor plates give it deliberate columns clear of the
   furniture, or let `save`/`posts` stand its posts (they now move off things, or are left out).
 **Test**: `CIRecipe <name>`, `CIFloating` in the editor (0 problems), then `CIPlay <name>`, and in a test world
-`CIGroundIslands <name>`, `CIOverlapIslands <name>` and `CIOneSidedIslands <name>` (TEST_CATALOGUE §G, IG7/IG8; a one-sided facade piece used as a wall needs a twin turned round, its face to the room). A new plan: both with `plans`.
+`CIGroundIslands <name>`, `CIOverlapIslands <name>` and `CIOneSidedIslands <name>` (TEST_CATALOGUE §G, IG7/IG8/IG9 - the ground check also reports zipline and wire ends in the air and props that hang from nothing; a one-sided facade piece used as a wall needs a twin turned round, its face to the room). A new plan: both with `plans`.
 
 ## Every feature
 - Update the docs in the same commit (README `## Documentation`):

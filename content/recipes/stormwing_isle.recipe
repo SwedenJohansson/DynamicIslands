@@ -71,7 +71,7 @@ place Bird_Nest - at 28 14 ground sit yaw=120
 
 # ===== Things to gather: fruit trees, berry bushes, flowers; mist over the edges ========================================
 scatter "Pickup_Landmark_Tree_Mango" 2 at 0 20 r=30 seed=7860 free=5
-scatter "Pickup_Landmark_Tree_Palm 2" 3 at 10 -25 r=18 seed=7861 free=5
+scatter "Pickup_Landmark_Tree_Palm 2" 3 at 10 -25 r=12 seed=7861 free=5
 scatter "Pickup_Landmark_BerryBush" 3 at -10 -25 r=18 seed=7862 free=3
 scatter "Pickup_Landmark_Flower_White" 3 at 0 -25 r=20 seed=7863 free=2
 call ni8air x=0 z=0 h=8 al=edgemist fog=#c8d4e0 fa=0.08 light=#ffffff la=0.1 parts=mist r=48

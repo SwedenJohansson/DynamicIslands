@@ -300,7 +300,8 @@ place Generator - at 49 -75 ground yaw=90
 place Generator - at 49.5 -78 ground yaw=90
 place UT_ElectricCableHub01 - at 46 -82.5 ground
 place UT_ElectricCableHub02 - at 47 -73 ground
-place UT_ElectricCable01 - at 39 -79 h=-1 yaw=180
+# (its high end on the islet by the hub, its low end down in the sea towards the casino - it rises 16.35 m over 28.8 m; 2026-10-23)
+place UT_ElectricCable01 - at 17.7 -87.7 h=-13.7 yaw=89.6
 place RT_Wall1 - at 46 -72 h=2.5 yaw=0
 place RT_PowerBox breaker1 at 43.8 -72.2 h=4 yaw=180
 place RT_PowerBox breaker2 at 44.5 -72.2 h=4 yaw=180
