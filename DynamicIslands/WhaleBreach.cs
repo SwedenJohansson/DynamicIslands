@@ -183,7 +183,7 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		static GameObject WhalePrefab()
+		internal static GameObject WhalePrefab()
 		{
 			try
 			{

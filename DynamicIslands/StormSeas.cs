@@ -162,12 +162,12 @@ namespace DynamicIslands.Editor
 			return raft != null ? HeadStart.Foundations(raft) : new List<Block>();
 		}
 
-		static Vector2Int CellOf(Vector3 local, Vector3 o) { return new Vector2Int(Mathf.RoundToInt((local.x - o.x) / HeadStart.Cell), Mathf.RoundToInt((local.z - o.z) / HeadStart.Cell)); }
+		internal static Vector2Int CellOf(Vector3 local, Vector3 o) { return new Vector2Int(Mathf.RoundToInt((local.x - o.x) / HeadStart.Cell), Mathf.RoundToInt((local.z - o.z) / HeadStart.Cell)); }
 
-		static readonly Vector2Int[] Sides = { new Vector2Int(1, 0), new Vector2Int(-1, 0), new Vector2Int(0, 1), new Vector2Int(0, -1) };
+		internal static readonly Vector2Int[] Sides = { new Vector2Int(1, 0), new Vector2Int(-1, 0), new Vector2Int(0, 1), new Vector2Int(0, -1) };
 
 		/// <summary>The raft's foundations on its bottom layer, by cell.</summary>
-		static Dictionary<Vector2Int, Block> Grid(List<Block> all)
+		internal static Dictionary<Vector2Int, Block> Grid(List<Block> all)
 		{
 			var grid = new Dictionary<Vector2Int, Block>();
 			if (all.Count == 0) return grid;
@@ -197,7 +197,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Whether the raft's other foundations still hang together without this cell.</summary>
-		static bool KeepsTogether(Dictionary<Vector2Int, Block> grid, Vector2Int gone)
+		internal static bool KeepsTogether(Dictionary<Vector2Int, Block> grid, Vector2Int gone)
 		{
 			var rest = new HashSet<Vector2Int>(grid.Keys.Where(c => c != gone));
 			if (rest.Count == 0) return true;

@@ -188,6 +188,9 @@
     <Compile Include="UfoSightings.cs" />
     <Compile Include="WhaleBreach.cs" />
     <Compile Include="DevTestsWhaleBreach.cs" />
+    <Compile Include="Kraken.cs" />
+    <Compile Include="DevTestsKraken.cs" />
+    <Compile Include="DevTestsMpKraken.cs" />
     <Compile Include="DevTestsUfo.cs" />
     <Compile Include="DevTestsMpNewOptions.cs" />
     <Compile Include="FogBanks.cs" />

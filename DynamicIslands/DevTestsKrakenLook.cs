@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,7 +21,7 @@ namespace DynamicIslands
 	{
 		const string KrakenRootName = "CIKrakenLook";
 
-		[ConsoleCommand(name: "CIKrakenLook", docs: "Dev, in game: LOOK prototype of a kraken arm curling over a raft edge foundation. 'CIKrakenLook 1 [piece]' = a chain of a Raft piece (default seavine_tongue) tinted purple; 'CIKrakenLook 2' = tapered capsules with Raft's shark skin; 'CIKrakenLook clear' removes it. Takes two pictures (play_kraken*.jpg). No gameplay")]
+		[ConsoleCommand(name: "CIKrakenLook", docs: "Dev, in game: LOOK prototype of a kraken arm curling over a raft edge foundation. 'CIKrakenLook 1 [piece]' = a chain of a Raft piece (default seavine_tongue) tinted purple; 'CIKrakenLook 2' = tapered capsules with Raft's shark skin; 'CIKrakenLook arm [seed]' = the real arm the option makes, with its extra arms (pictures play_krakenarm_*.jpg); 'CIKrakenLook clear' removes it. Takes two pictures (play_kraken*.jpg). No gameplay")]
 		public static void KrakenLookCommand(string[] args)
 		{
 			string way = args != null && args.Length > 0 ? args[0] : "1";
@@ -33,7 +33,10 @@ namespace DynamicIslands
 		{
 			foreach (GameObject old in Resources.FindObjectsOfTypeAll<GameObject>().Where(g => g != null && g.name == KrakenRootName && g.scene.IsValid()).ToList())
 				UnityEngine.Object.Destroy(old);
+			foreach (Kraken.Arm old in UnityEngine.Object.FindObjectsOfType<Kraken.Arm>().Where(x => x != Kraken.Current).ToList())
+				UnityEngine.Object.Destroy(old.gameObject);
 			if (way == "clear") { Log("PASS: kraken look removed"); yield break; }
+			if (way == "arm") { yield return KrakenLookArm(piece == "seavine_tongue" ? 1 : int.Parse(piece)); yield break; }
 			Raft raft = ComponentManager<Raft>.Value;
 			List<Block> blocks = BlockCreator.GetPlacedBlocks();
 			if (raft == null || blocks == null || blocks.Count == 0) { Fail("kraken look: needs a world with a raft"); yield break; }
@@ -112,6 +115,27 @@ namespace DynamicIslands
 			Log("world after 2 pictures: E " + rt.TransformPoint(E).ToString("F1") + ", arm base " + root.transform.GetChild(0).position.ToString("F1"));
 			yield return PlayPicture(tag + "_c", rt.TransformPoint(E + s * 10f + up * 3.5f - u * 1f), rt.TransformPoint(E + up * 2.8f + u * 0.8f));
 			Log("PASS: kraken look " + way + " (" + piece + ")");
+		}
+
+		/// <summary>The real arm (Kraken.Arm, as the world option makes it, no gameplay) on an edge floor of the raft, with its
+		/// extra arms placed from the seed; pictures from the side near the waterline, from the deck and from above.</summary>
+		static IEnumerator KrakenLookArm(int seed)
+		{
+			var grid = StormSeas.Grid(StormSeas.Foundations());
+			var edge = grid.Where(kv => StormSeas.Sides.Any(x => !grid.ContainsKey(kv.Key + x))).OrderBy(kv => kv.Key.x).ThenBy(kv => kv.Key.y).Select(kv => (KeyValuePair<Vector2Int, Block>?)kv).FirstOrDefault();
+			if (edge == null) { Fail("kraken look: needs a world with a raft"); yield break; }
+			int side = Enumerable.Range(0, 4).First(i => !grid.ContainsKey(edge.Value.Key + StormSeas.Sides[i]));
+			Kraken.Arm arm = Kraken.Arm.Make(edge.Value.Value, side, seed, 0, Kraken.HitsNeeded, 99999f, 0, 0f);
+			if (arm == null) { Fail("kraken look: no arm made"); yield break; }
+			Transform pivot = arm.transform.parent;
+			Vector3 u = new Vector3(StormSeas.Sides[side].x, 0f, StormSeas.Sides[side].y), s = Vector3.Cross(Vector3.up, u);
+			Vector3 E = edge.Value.Value.transform.localPosition + u * 0.75f;
+			Log("arm on floor " + arm.BlockIndex + " from side " + side + ", " + arm.Extras + " more arms, base at " + pivot.TransformPoint(arm.Main.Ctrl[0]).y.ToString("F1") + " m");
+			yield return new WaitForSeconds(Kraken.RiseSeconds + 1f);
+			yield return PlayPicture("krakenarm_side", pivot.TransformPoint(E + s * 10f - u * 1.5f + Vector3.up * 0.9f), pivot.TransformPoint(E + Vector3.up * 2.3f + u * 2f));
+			yield return PlayPicture("krakenarm_deck", pivot.TransformPoint(E - u * 8f + s * 3.5f + Vector3.up * 2.4f), pivot.TransformPoint(E + Vector3.up * 2.8f + u * 1.5f));
+			yield return PlayPicture("krakenarm_high", pivot.TransformPoint(E - u * 6f + s * 6f + Vector3.up * 9f), pivot.TransformPoint(E + u * 4f));
+			Log("PASS: kraken look arm (seed " + seed + ")");
 		}
 
 		/// <summary>Raft's shark material (a live shark's, else any loaded material named shark), as a copy.</summary>

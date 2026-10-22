@@ -77,6 +77,7 @@ namespace DynamicIslands.Editor
 				case WorldOptions.StormDays: return "At once: a storm day starts or ends within seconds.";
 				case WorldOptions.GlowSea: return "At once: tonight's glow starts or fades within seconds.";
 				case WorldOptions.TraderRaft: return "From now on: the first after 3 km sailed. Off: one afloat stays.";
+				case WorldOptions.Kraken: return "From now on. Off: an arm holding the raft lets go at once.";
 				case WorldOptions.GhostShip: return "From the next nightfall. Off: a ship out goes at once.";
 				case WorldOptions.Upgrades: return "Off: recipes hidden; built upgrades keep working, learned stay.";
 				case WorldOptions.StormSeas: return "At once: Raft's next weather; a storm blowing rocks harder.";

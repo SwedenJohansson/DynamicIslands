@@ -414,6 +414,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("UFO sightings", e); }
 			try { WhaleBreach.Tick(); }
 			catch (Exception e) { TickError("Whale breach", e); }
+			try { Kraken.Tick(); }
+			catch (Exception e) { TickError("Kraken arm", e); }
 			try { LightningStrikes.Tick(); }
 			catch (Exception e) { TickError("Lightning strikes", e); }
 			try { GhostShip.Tick(); }

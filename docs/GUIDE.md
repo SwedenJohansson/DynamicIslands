@@ -2426,7 +2426,7 @@ Up to eight players (Raft's maximum). **Every player needs the mod.**
   files and last New Game choices never change the host's world, and only the host can change its settings.
 - **Players who join** (or join again, or after a restart) get all of it: the islands and any island files they don't
   have, what was chopped, picked, looted and fired, doors and levers, quests, the crew's journal, where they stood on
-  an island, and the tough animals' health.
+  an island, the tough animals' health and a kraken arm holding the raft.
 - **Shared:** harvesting and pickups, chests (when several players open one at the same moment, the first gets it),
   zones, doors, quests and their rewards, story items, the journal, the sounds and music the islands' actions play
   (each player hears them while near the island) and camera moments (each player within range sees them). Things
@@ -2512,7 +2512,7 @@ a world where they are all left alone plays as plain Raft plus your islands.
 - **World randomizer** (9.3): a normal Raft world made different every time: colours, alphas, finds, odd islands, bosses.
 - **Extra options** (9.4): ghost rafts, private storages, long voyage, iron raft, shared EXP, night is dangerous, daily
   quest, rogue shark, silver & golden barrels, storm days, bioluminescent sea, storm seas, trader raft, extra upgrades,
-  UFO sightings, lightning strikes, a ghost ship, fog banks, whale breach and a head start raft (older worlds
+  UFO sightings, lightning strikes, a ghost ship, fog banks, whale breach, kraken arm and a head start raft (older worlds
   may still have scrambled blueprints or the story islands in a new order on).
 - **Islands while sailing** (9.5): which of your islands a world may meet.
 - **The level up system** (9.6): EXP and stat points - a switch in the window (a world option: islands don't turn it on).
@@ -2594,6 +2594,7 @@ already in the world is taken away. What each one does from the moment it change
 | Ghost ship | The next nightfall can bring one; off, a ship out goes at once |
 | Fog banks | A bank due now rolls in (fading); off, the fog lifts within about half a minute |
 | Whale breach | The first breach a few minutes later; off, a whale already breaching finishes its leap |
+| Kraken arm | From now on (the next day or storm with one); off, an arm holding the raft lets go at once |
 | Lightning strikes | The next storm can have bolts (one blowing now too); off, a bolt already in the sky finishes |
 | Extra upgrades | Off: the recipes are hidden; upgrades built or worn keep working, learned ones are kept |
 | Scrambled blueprints / Story order (retired, off only) | Untaken blueprints go back to Raft's places / the Receiver goes back to Raft's order |
@@ -2986,6 +2987,30 @@ about eight seconds. It is Raft's own whale, with its own spout.
   machine plays it at the same place by its own raft. Switched on in a running world, the first breach comes a few
   minutes later; off, a whale already breaching finishes its leap.
 
+#### Kraken arm
+
+Rarely, with a warning splash and a banner, a **giant tentacle** rises out of the deep beside the raft, curls over the
+side and **grabs a floor on the raft's edge** - never one in the middle. Its base is far down in the water, so you
+never see where it starts. One to three more arms rise **3-8 m off the edge** around it and sway and curl there; they
+are only to look at. The arms are purple and darken toward red as they are hit, with pale suckers on the inner curl.
+
+- **Fight it off:** hit the grabbing arm with a **melee weapon or a spear** (any swing that reaches it counts; arrows
+  don't). **10 hits within a minute**, by any players together, and it lets go and sinks with all the other arms. The
+  raft is whole.
+- **Too slow, and it tears the raft:** after a minute it **tears the floor it holds away**, dragging it down into the
+  deep. **Each floor right beside it** (the four sides on the same level, not the corners) **goes too with a 1 in 2
+  chance**, rolled for each one on its own - so it takes one to five floors. What stood on those floors goes as when
+  Raft removes a floor: it falls, drops or breaks as Raft does it. Torn floors stay torn, saved with the world.
+- **When:** on about **one day in six from day 3**, at a time in that day (1-10 minutes after the day starts while you
+  play); with **Storm seas** on also in about **one storm in four**. Which days and storms, the floor it grabs and the
+  floors beside it that go all come from the world's seed. A raft of **8 floors or fewer** is never grabbed.
+- **Every player sees the same arms on the same floor,** and hits from every player count: the host decides when it
+  comes, counts the hits and tears the floors with Raft's own block removal, so every raft loses the same floors. A
+  player who joins while it holds on gets the arm. Nothing about an arm is saved: a world loaded mid-event has none.
+  Switched on in a running world, the next day or storm with one brings it; off, an arm holding the raft lets go.
+- `Kraken` (F10) shows whether an arm is out, its hits and the next days with one; `Kraken bring` brings one now,
+  `Kraken away` sends it away and `Kraken tear` makes it tear now (host).
+
 #### Ghost ship
 
 On about **one night in four** a **ghost ship** comes up out of the dark a while after nightfall and drifts past the
@@ -3253,7 +3278,7 @@ there means plain Raft.
 |---|---|---|---|
 | `monsters` | `timid`, `normal`, `fierce`, `savage`, `nightmare`; `easy`, `moderate`, `hard`, `impossible` or 0-4 are read too | The monster difficulty the next new world starts with | **Monster difficulty** in World settings, when you press **Create**; `Monsters <level>` in the main menu, at once |
 | `buildcost` | 0-100 | How many % more the build menu costs in the next new world | **Build cost** in World settings (Create); `BuildCost <0-100>` in the main menu |
-| `options` | The extra options that are on, separated by commas: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ufo`, `glowsea`, `lightning`, `ghostship`, `whalebreach`, `fogbanks` | The extra options the next new world starts with | The option buttons in World settings (Create); `WorldOptions +option -option` in the main menu |
+| `options` | The extra options that are on, separated by commas: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ufo`, `glowsea`, `lightning`, `ghostship`, `whalebreach`, `fogbanks`, `kraken` | The extra options the next new world starts with | The option buttons in World settings (Create); `WorldOptions +option -option` in the main menu |
 | `levels` | `on`, `off` | The level up system in the next new world | **Level up system** in World settings (Create); `Levels on` / `Levels off` in the main menu |
 | `headstart` | 0-3 | The head start raft's level in the next new world (0 = none) | **Head start raft** in World settings (Create); `HeadStart <0-3>` in the main menu |
 | `islandsoff` | Island names separated by a vertical bar; also `type:<map type>` and `<generated>` | The islands left out of the next new world's islands while sailing | **CHOOSE ISLANDS...** in World settings (Create); `WorldIslands -<island>`, `+<island>`, `all` in the main menu |
@@ -3320,7 +3345,7 @@ Press **F10** for RML's console.
 | `WorldPlan` / `WorldPlan <name>` | World | The world's plan and its rules / give it another plan (host). A player who joined sees the host's plan, which of its rules are done and the story chain; trying to change it says only the host can |
 | `StoryChain` | World | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | World | What the randomizer does here / change it (host) |
-| `WorldOptions` / `WorldOptions +option -option` | World or main menu | The world's World settings / change them (host; at the main menu: the next new world). Options: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ufo`, `glowsea`, `lightning`, `ghostship`, `whalebreach`, `fogbanks` ([9.4](#94-extra-options)) |
+| `WorldOptions` / `WorldOptions +option -option` | World or main menu | The world's World settings / change them (host; at the main menu: the next new world). Options: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ufo`, `glowsea`, `lightning`, `ghostship`, `whalebreach`, `fogbanks`, `kraken` ([9.4](#94-extra-options)) |
 | `HeadStart` / `HeadStart 0-3` | World or main menu | The head start raft: this world's level and the next new world's / at the main menu choose the level for the next new world (0 = off) |
 | `Levels` / `Levels on` / `Levels off` | World or main menu | The level up system in this world / switch it (host; off keeps everyone's levels; at the main menu: for the next new world) |
 | `Resync` | World, joined player | Ask the host for its custom islands again (the list, and any island file that hasn't come) |
@@ -3337,6 +3362,7 @@ Press **F10** for RML's console.
 | `StormDays` / `StormDays roll <from> <to>` | World | Whether today is a storm day, the next one, the weather and the shark's factor (option Storm days) / the storm days between two days |
 | `GlowSea` / `GlowSea roll <from> <to>` | World | Whether tonight glows, the next glowing night, the glow and the fishing wait's factor (option Bioluminescent sea) / the glowing nights between two days |
 | `GhostShip` / `GhostShip roll <from> <to>` / `GhostShip bring` / `GhostShip sink` | World | Whether a ghost ship is out and the next night with one (option Ghost ship) / the nights with one / one beside the raft now / sink it now (host) |
+| `Kraken` / `Kraken bring` / `Kraken away` / `Kraken tear` | World | Whether a kraken arm holds the raft, its hits and the next days with one (option Kraken arm) / an arm grabs an edge floor now / it goes now / it tears now (host) |
 | `FogBanks` / `FogBanks roll <from> <to>` | World | Whether fog is in now, how far you see and the next fog bank (option Fog banks) / the fog banks between two days, with their hours |
 | `Traders` / `Traders offers <seed>` / `Traders bring` | World | The trader rafts loaded now and their stalls' stock (option Trader raft) / what a trader raft with that seed sells / a trader raft ahead now (host) |
 | `ExportMapType <type> [file name]` | Anywhere | Writes a map type as a file in `maptypes\` to start your own from (default name `my-<type>`) |

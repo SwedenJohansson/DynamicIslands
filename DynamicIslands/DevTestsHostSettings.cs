@@ -120,6 +120,7 @@ namespace DynamicIslands
 				new KeyValuePair<string, Action>("Traders bring", () => TraderRaft.TradersCommand(new[] { "bring" })),
 				new KeyValuePair<string, Action>("Barrels roll 1 200", () => GoldenBarrels.BarrelsCommand(new[] { "roll", "1", "200" })),
 				new KeyValuePair<string, Action>("StormDays roll 1 100", () => StormDays.StormDaysCommand(new[] { "roll", "1", "100" })),
+				new KeyValuePair<string, Action>("Kraken bring", () => Kraken.KrakenCommand(new[] { "bring" })),
 				new KeyValuePair<string, Action>("Resync", () => DynamicIslands.ResyncCommand()), // (a client's own command: allowed, must change no setting)
 			};
 			foreach (var t in tries)

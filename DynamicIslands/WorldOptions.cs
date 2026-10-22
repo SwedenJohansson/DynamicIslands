@@ -31,15 +31,16 @@ namespace DynamicIslands.Editor
 	///   - glowsea: on about one night in four the sea around the raft and the fish glow blue; fish bite faster (GlowSea).
 	///   - lightning: now and then in a storm a bolt hits the sea near the raft, rarely its antenna; looks only (LightningStrikes).
 	///   - whalebreach: now and then, by day, a whale breaches far from the raft, looks only (WhaleBreach);
-	///   - fogbanks: now and then thick fog rolls in for a few hours, 45-75 m to see (FogBanks).
+	///   - fogbanks: now and then thick fog rolls in for a few hours, 45-75 m to see (FogBanks);
+	///   - kraken: rarely a giant tentacle grabs a raft floor on the edge; hit it off, or it tears that floor (and maybe its neighbours) away (Kraken).
 	/// Saved in the world file ("@options=", "@optionseed=" - the seed every shuffle of the world comes from), sent by the host
 	/// to every player who joins and when they change (network kind 17: Data = "on=a,b;seed=n", Name = the private
 	/// storages' builders). The last choice in the box is kept in world_rules.txt ("options=").
 	/// </summary>
 	public static class WorldOptions
 	{
-		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger", DailyQuest = "dailyquest", RogueShark = "rogueshark", Barrels = "barrels", StormDays = "stormdays", TraderRaft = "traderraft", Upgrades = "upgrades", StormSeas = "stormseas", Ufo = "ufo", GlowSea = "glowsea", Lightning = "lightning", GhostShip = "ghostship", WhaleBreach = "whalebreach", Fog = "fogbanks";
-		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger, DailyQuest, RogueShark, Barrels, StormDays, TraderRaft, Upgrades, StormSeas, Ufo, GlowSea, Lightning, GhostShip, WhaleBreach, Fog };
+		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger", DailyQuest = "dailyquest", RogueShark = "rogueshark", Barrels = "barrels", StormDays = "stormdays", TraderRaft = "traderraft", Upgrades = "upgrades", StormSeas = "stormseas", Ufo = "ufo", GlowSea = "glowsea", Lightning = "lightning", GhostShip = "ghostship", WhaleBreach = "whalebreach", Fog = "fogbanks", Kraken = "kraken";
+		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger, DailyQuest, RogueShark, Barrels, StormDays, TraderRaft, Upgrades, StormSeas, Ufo, GlowSea, Lightning, GhostShip, WhaleBreach, Fog, Kraken };
 		/// <summary>
 		/// Options no longer offered (the user, 2026-10-09): not in the New Game box, left out of the remembered choice, and in
 		/// World settings only while a world still has them on (so the host can switch them off). A world that has one on keeps it.
@@ -47,7 +48,7 @@ namespace DynamicIslands.Editor
 		public static readonly string[] Retired = { Blueprints, StoryOrder };
 		public static bool IsRetired(string option) { return Array.IndexOf(Retired, option) >= 0; }
 		public static string[] Offered { get { return All.Where(o => !IsRetired(o)).ToArray(); } }
-		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous", "Daily quest", "Rogue shark", "Silver & golden barrels", "Storm days", "Trader raft", "Extra upgrades", "Storm seas", "UFO sightings", "Bioluminescent sea", "Lightning strikes", "Ghost ship", "Whale breach", "Fog banks" };
+		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous", "Daily quest", "Rogue shark", "Silver & golden barrels", "Storm days", "Trader raft", "Extra upgrades", "Storm seas", "UFO sightings", "Bioluminescent sea", "Lightning strikes", "Ghost ship", "Whale breach", "Fog banks", "Kraken arm" };
 		public static readonly string[] Hints =
 		{
 			"The blueprints lying on Raft's story islands are found on other story islands than usual. What the story needs (the steering wheel, the engine and its fuel, the machete) is never moved: the story can always be finished.",
@@ -71,6 +72,7 @@ namespace DynamicIslands.Editor
 			"On about one night in four a ghost ship comes by soon after dark: a glowing wreck close beside the raft, near enough to swim or sail to. Its chests hold good loot, but its crew are ghosts - see-through rats and screechers that fight like the living. At dawn it sinks with whatever is still aboard. Players asleep when it would come: no ship that night. The same ship, ghosts and loot for every player.",
 			"Now and then, by day (about once or twice a Raft day), a whale breaches far out at sea, 170-320 m from the raft: it rises, leaps half out of the water, falls back with a great splash and spray, and dives away. Looks only: it never comes near the raft or the players. Every player sees the same whale at the same place.",
 			"Now and then (on about three days in five, by day or by night) thick fog rolls in over the sea for three to six hours, fading in and out. In it you see only 45-75 m: islands show up late, so the radar matters. While a storm blows the wind keeps the fog away. Looks only; the same for every player.",
+			"Rarely (on about one day in six from day 3, and with Storm seas in about one storm in four) a giant tentacle rises from the sea beside the raft and grabs a floor on its edge - never one in the middle. Hit it with a melee weapon or a spear, 10 hits within a minute (any players together), and it lets go and sinks. If not, it tears that floor away, and each floor right beside it with a 1 in 2 chance: what stood on them goes too. Rafts of 8 floors or fewer are never grabbed. Every player sees the same arm and the same floors go.",
 		};
 
 		/// <summary>
@@ -100,6 +102,7 @@ namespace DynamicIslands.Editor
 			"On about one night in four a ghost ship comes by: good loot, guarded by ghost rats and screechers. It sinks at dawn.",
 			"Now and then, by day, a whale breaches far out at sea. Looks only: it never comes near the raft.",
 			"Now and then thick fog rolls in for a few hours: you see only 45-75 m, so the radar matters. Looks only.",
+			"Rarely a giant tentacle grabs the raft's edge. Hit it 10 times within a minute, or it tears that floor away - and maybe the ones beside it.",
 		};
 
 		/// <summary>The current world's options (clients get the host's).</summary>
@@ -207,6 +210,7 @@ namespace DynamicIslands.Editor
 			global::DynamicIslands.Editor.GoldenBarrels.Reset();
 			global::DynamicIslands.Editor.StormDays.Reset();
 			global::DynamicIslands.Editor.WhaleBreach.Reset();
+			global::DynamicIslands.Editor.Kraken.Reset();
 			global::DynamicIslands.Editor.GhostShip.Reset();
 			global::DynamicIslands.Editor.StormSeas.Reset();
 			global::DynamicIslands.Editor.TraderRaft.Reset();
@@ -310,6 +314,7 @@ namespace DynamicIslands.Editor
 			global::DynamicIslands.Editor.GoldenBarrels.Reset();
 			global::DynamicIslands.Editor.StormDays.Reset();
 			global::DynamicIslands.Editor.WhaleBreach.Reset();
+			global::DynamicIslands.Editor.Kraken.Reset();
 			global::DynamicIslands.Editor.GhostShip.Reset();
 			global::DynamicIslands.Editor.StormSeas.Reset();
 			global::DynamicIslands.Editor.TraderRaft.Reset();

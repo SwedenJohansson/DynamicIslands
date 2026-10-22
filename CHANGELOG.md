@@ -50,6 +50,14 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   over the sea for three to six hours, by day or at night, fading in and out over about an in-game hour. In it you see
   only 45-75 m, so islands show up late and the radar matters. Raft's own sky draws the fog, with a veil in its colour over the view so the sea
   fades too, and it fits Raft's light and weather; while a storm blows the wind keeps it away. Every player sees the same fog (from the host's world seed).
+- **Kraken arm** (World settings > Extra options, off by default; in a later update): rarely - about one day in six
+  from day 3, and with Storm seas one storm in four - a giant tentacle rises from deep below with a splash, sound and
+  banner and grabs a floor on the raft's edge, never one in the middle, while one to three more arms sway 3-8 m off
+  the edge (looks only). Ten melee or spear hits within a minute, by any players, make it let go. Too slow, and it
+  tears that floor away, and each of the four floors beside it (same level, not the corners) goes too with a 1 in 2
+  chance rolled from the event's seed, using Raft's own block removal. Rafts of 8 floors or fewer are left alone. The
+  host decides; every player sees the same arm, a player joining mid-event gets it, and an active arm is not saved.
+  Console `Kraken` (state, bring, away, tear).
 - **Whale breach** (World settings > Extra options, off by default): now and then by day, about once or twice a
   Raft day, a whale breaches far out at sea (170-320 m from the raft): it rises, leaps half out of the water, falls back
   with a big splash and spray, and dives away. It is Raft's own whale and Raft's own splash. Looks only: it never comes

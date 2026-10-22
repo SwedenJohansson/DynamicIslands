@@ -98,6 +98,10 @@ namespace DynamicIslands.Editor
 		public const int StormSeas = 35;
 		/// <summary>Host -> everyone: the world option Whale breach (TODO 4j, WhaleBreach): a whale breaches. Index = its number, Offsets = { dx, dz from the host's raft, heading, roll side }. Looks only.</summary>
 		public const int WhaleBreach = 36;
+		/// <summary>Both ways: the world option Kraken arm (Kraken). Host -> everyone: Name "rise" (Index = the arm's number, Data = "block;side;seed;hits needed;stay s",
+		/// Offsets[0] = seconds since it rose - a joiner gets it in the join reply), "hits" (Count = hits so far), "let" (beaten off), "tear" (Count = floors torn;
+		/// Raft's own block removal takes the floors away), "away" (sent away, quietly). Player -> host: "hit" (Index = the arm). An older version ignores it.</summary>
+		public const int Kraken = 37;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -357,6 +361,9 @@ namespace DynamicIslands.Editor
 		/// <summary>Host: a message for every other player.</summary>
 		public static void SendToEveryone(IslandNetMessage msg) { SendToClients(msg); }
 
+		/// <summary>A player: a message for the host (Kraken "hit").</summary>
+		public static void SendToTheHost(IslandNetMessage msg) { if (Loopback != null) { Loopback(msg); return; } if (InMultiplayerGame) SendToHost(msg); }
+
 		static void SendToPlayer(IslandNetMessage msg, Network_UserId player)
 		{
 			if (Loopback != null) { Loopback(msg); return; }
@@ -609,6 +616,7 @@ namespace DynamicIslands.Editor
 							// (after the animal spots: the randomizer looks at every animal once it comes, and took an island's
 							// animals for Raft's while their spots hadn't come yet)
 							JoinPart("randomizer", () => WorldRandomizer.Message(), to);
+							JoinPart("kraken arm", () => global::DynamicIslands.Editor.Kraken.Message(), to);
 							// (after the list: the island it names is in the player's list then)
 							JoinPart("player's place", () => PlayerPlaces.PlaceMessage(to.Id), to);
 							try { IslandNetMessage levels = PlayerLevels.StateFor(to.Id); if (levels != null) SendLevels(levels, to); }
@@ -703,6 +711,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.StormSeas:
 						global::DynamicIslands.Editor.StormSeas.OnMessage(msg);
+						break;
+					case IslandNetMessage.Kraken:
+						global::DynamicIslands.Editor.Kraken.OnMessage(msg);
 						break;
 					case IslandNetMessage.WhaleBreach:
 						global::DynamicIslands.Editor.WhaleBreach.OnMessage(msg);
