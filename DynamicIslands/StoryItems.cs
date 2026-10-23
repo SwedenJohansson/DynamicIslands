@@ -205,6 +205,10 @@ namespace DynamicIslands.Editor
 			public int Count;
 			/// <summary>How many the crew has found in all, also those used up since (ROADMAP E12: a "find N" step counts these).</summary>
 			public int Found;
+			/// <summary>How many were found on each island copy (PageIsland: "Cove", "Cove|2"; given away from an island: not
+			/// here). Two copies of one island give the same story items: a collect step on one counts the crew's finds but not
+			/// those of the other copies (they were for its own quest).</summary>
+			public Dictionary<string, int> From = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 		}
 
 		public class Page
@@ -242,6 +246,52 @@ namespace DynamicIslands.Editor
 				if (x.HostName.Equals(e.HostName, StringComparison.OrdinalIgnoreCase)) copy++;
 			}
 			return copy == 1 ? e.HostName : e.HostName + "|" + copy.ToString(CultureInfo.InvariantCulture);
+		}
+
+		/// <summary>
+		/// How many of a story item (null: of every item, as held now) a collect step on island e may not count: those found on
+		/// the other copies of the same island (PageIsland). 0 when the island has no other copy, or for finds from before
+		/// 2026-10-23 (no island kept: counted for every copy, as before).
+		/// </summary>
+		public static int FoundOnOtherCopies(string id, IslandWorldState.Entry e)
+		{
+			if (e == null || e.HostName == null) return 0;
+			string own = PageIsland(e), name = e.HostName;
+			Func<Held, int> other = h => h.From.Where(kv => !kv.Key.Equals(own, StringComparison.OrdinalIgnoreCase) && IslandPart(kv.Key).Equals(name, StringComparison.OrdinalIgnoreCase)).Sum(kv => kv.Value);
+			if (id != null)
+			{
+				Held h;
+				return held.TryGetValue(StoryItems.IdOf(id), out h) ? other(h) : 0;
+			}
+			// (every item, as held now: each item's other copies' finds, at most what is held of it)
+			return held.Values.Sum(h => Mathf.Min(h.Count, other(h)));
+		}
+
+		/// <summary>The island's name in a PageIsland ("Cove|2" -> "Cove").</summary>
+		static string IslandPart(string pageIsland)
+		{
+			int bar = (pageIsland ?? "").IndexOf('|');
+			return bar >= 0 ? pageIsland.Substring(0, bar) : pageIsland ?? "";
+		}
+
+		/// <summary>The custom island this machine's player is on or at (its land and 60 m around), or null.</summary>
+		internal static IslandWorldState.Entry IslandHere()
+		{
+			Network_Player p;
+			try { p = RAPI.GetLocalPlayer(); } catch { return null; }
+			if (p == null) return null;
+			IslandWorldState.Entry best = null;
+			float bestOut = 60f;
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
+			{
+				if (e.Root == null) continue;
+				IslandInfoTag tag = e.Root.GetComponent<IslandInfoTag>();
+				Vector3 c = tag != null ? e.Root.transform.position + tag.LocalCentre : e.Position;
+				float r = tag != null ? tag.Radius : Mathf.Max(30f, CustomIslandSpawner.LandRadius(e.Name));
+				float outside = new Vector2(c.x - p.transform.position.x, c.z - p.transform.position.z).magnitude - r;
+				if (outside < bestOut) { bestOut = outside; best = e; }
+			}
+			return best;
 		}
 
 		/// <summary>The island a page key's island part names (PageIsland): that copy, else the first island of the name; null if none.</summary>
@@ -294,13 +344,17 @@ namespace DynamicIslands.Editor
 
 		#region Changes
 
-		/// <summary>The crew gets story items (this machine's player found them: they are told).</summary>
-		public static void Give(string id, int count)
+		/// <summary>The crew gets story items (this machine's player found them: they are told). from: the island they came
+		/// from; null = the island this machine's player is at, if any.</summary>
+		public static void Give(string id, int count) { Give(id, count, null); }
+
+		public static void Give(string id, int count, IslandWorldState.Entry from)
 		{
 			id = StoryItems.IdOf(id);
 			if (id.Length == 0 || count <= 0) return;
 			StoryItemDef d = StoryItems.Find(id) ?? new StoryItemDef { Id = id };
-			Change("give", Fields(d.Id, count.ToString(CultureInfo.InvariantCulture), d.Name, d.Icon, d.Description, d.RaftItem));
+			if (from == null) from = IslandHere();
+			Change("give", Fields(d.Id, count.ToString(CultureInfo.InvariantCulture), d.Name, d.Icon, d.Description, d.RaftItem, from != null ? PageIsland(from) : ""));
 			// (the main story's items are in Raft's notebook's Found items, the side quests' in the journal)
 			IslandInfo.ShowMessage("Story item: " + d.ShownName + (count > 1 ? " \u00D7" + count : "") + (QuestBook.MainItemIds().Contains(d.Id) ? "   (T: notebook)" : "   (J: journal)"));
 		}
@@ -371,6 +425,8 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The most journal pages and story item kinds a world keeps, and the longest page (CB12).</summary>
 		internal const int MaxPages = 2000, MaxItems = 500, MaxTitle = 200, MaxPageText = 8000;
+		/// <summary>The most island copies one story item's finds are kept for.</summary>
+		const int MaxSources = 64;
 
 		static bool Apply(string op, string data)
 		{
@@ -396,6 +452,13 @@ namespace DynamicIslands.Editor
 					}
 					h.Count += n;
 					h.Found = Mathf.Max(h.Found, h.Count - n) + n;
+					// (the island copy it was found on: the 7th field since 2026-10-23)
+					if (f.Length >= 7 && f[6].Length > 0 && (h.From.Count < MaxSources || h.From.ContainsKey(f[6])))
+					{
+						int had;
+						h.From.TryGetValue(f[6], out had);
+						h.From[f[6]] = had + n;
+					}
 					Debug.Log("[CUSTOM ISLANDS] Story item '" + h.Def.ShownName + "': " + h.Count);
 					return true;
 				case "take":
@@ -511,7 +574,7 @@ namespace DynamicIslands.Editor
 		static IEnumerable<string> Lines()
 		{
 			foreach (Held h in held.Values)
-				yield return "story.item=" + Fields(h.Def.Id, h.Count.ToString(CultureInfo.InvariantCulture), h.Def.Name, h.Def.Icon, h.Def.Description, Mathf.Max(h.Found, h.Count).ToString(CultureInfo.InvariantCulture), h.Def.RaftItem);
+				yield return "story.item=" + Fields(h.Def.Id, h.Count.ToString(CultureInfo.InvariantCulture), h.Def.Name, h.Def.Icon, h.Def.Description, Mathf.Max(h.Found, h.Count).ToString(CultureInfo.InvariantCulture), h.Def.RaftItem, EncodeFrom(h.From));
 			foreach (Page p in pages)
 				yield return "story.page=" + Fields(p.Key, p.Day.ToString(CultureInfo.InvariantCulture), p.Title, p.Island, p.Text);
 		}
@@ -530,7 +593,7 @@ namespace DynamicIslands.Editor
 				int found;
 				// (found in all: the 6th field since 2026-10-06; a world from before counts what it holds)
 				if (f.Length < 6 || !int.TryParse(f[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out found)) found = n;
-				held[f[0]] = new Held { Count = n, Found = Mathf.Max(found, n), Def = new StoryItemDef { Id = f[0], Name = f.Length > 2 ? f[2] : "", Icon = f.Length > 3 ? f[3] : "", Description = f.Length > 4 ? f[4] : "", RaftItem = f.Length > 6 ? f[6] : "" } };
+				held[f[0]] = new Held { Count = n, Found = Mathf.Max(found, n), Def = new StoryItemDef { Id = f[0], Name = f.Length > 2 ? f[2] : "", Icon = f.Length > 3 ? f[3] : "", Description = f.Length > 4 ? f[4] : "", RaftItem = f.Length > 6 ? f[6] : "" }, From = DecodeFrom(f.Length > 7 ? f[7] : "") };
 				return true;
 			}
 			if (key == "story.page")
@@ -541,6 +604,26 @@ namespace DynamicIslands.Editor
 				return true;
 			}
 			return false;
+		}
+
+		/// <summary>The island copies an item was found on, as "Cove=2;Cove%7C2=1" (names escaped).</summary>
+		static string EncodeFrom(Dictionary<string, int> from)
+		{
+			return string.Join(";", from.Where(kv => kv.Value > 0).Select(kv => Uri.EscapeDataString(kv.Key) + "=" + kv.Value.ToString(CultureInfo.InvariantCulture)).ToArray());
+		}
+
+		static Dictionary<string, int> DecodeFrom(string text)
+		{
+			var from = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+			foreach (string part in (text ?? "").Split(';'))
+			{
+				int eq = part.LastIndexOf('='), n;
+				if (eq <= 0 || !int.TryParse(part.Substring(eq + 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out n) || n <= 0) continue;
+				string island;
+				try { island = Uri.UnescapeDataString(part.Substring(0, eq)); } catch { continue; }
+				if (from.Count < MaxSources) from[island] = n;
+			}
+			return from;
 		}
 
 		/// <summary>Fields joined by '|', each escaped (texts may hold '|', '=' and new lines).</summary>

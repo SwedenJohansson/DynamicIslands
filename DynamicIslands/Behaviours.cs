@@ -1063,7 +1063,7 @@ namespace DynamicIslands.Editor
 			// Story items belong to the crew: given once, here on the host (each player near would give them again)
 			foreach (ObjAction a in actions.Where(GivesStory))
 				foreach (KeyValuePair<string, int> l in ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, a.Arg } }).Where(l => StoryItems.IsStory(l.Key)))
-					StoryBook.Give(l.Key, l.Value);
+					StoryBook.Give(l.Key, l.Value, e);
 			foreach (ObjAction a in actions.Where(x => x.Shared))
 			{
 				if (a.Verb == "signal")

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DynamicIslands
 {
 	/// <summary>
-	/// Raft's world save at the right times (GUIDE 12.2): Raft saves only now and then, so a host who closed Raft with
+	/// Raft's world save at the right times (GUIDE 13, "Raft crashed in a world"): Raft saves only now and then, so a host who closed Raft with
 	/// Alt+F4 or the window's X lost everything since. Now (host, in a world):
 	/// - closing Raft saves the world first (Application.wantsToQuit; Raft's SaveGame is synchronous);
 	/// - a quest step, a quest done or a story step asks for a save: a few seconds later, at most one per MinGap seconds,

@@ -19,8 +19,11 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Save too big:** the host sees on screen when the world's save is over 64 MB and can't be sent to the players.
 - **Kraken:** each sighting is purple 3 times in 4, else greenish or bluish (1 in 8 each), the same on every PC. Swipes do 5 damage (green and blue 5.5); one sighting takes at most 30 health from a player and never brings them below 25.
 - **Event window warnings:** an event that can happen again (a zone that fires more than once, a chest that fills up, animals that come back) with show/hide or open/close gets an amber line, and a zone's enter event has a **Fires once ever** button.
+- **Two copies of one island:** each copy's collect step counts only the story items found on that copy (and those found away from both); pages already counted per copy. Older saves count as before.
+- **Object index after a Raft update:** the main menu notices a `catalog_index.txt` made with another Raft and makes it again in the background, a little each frame (no need to open the editor); the log says what was done.
+- **Alphas in multiplayer:** when an animal turns alpha (Big Bruce too) the host sends its health once, so other players see the alpha's exact health instead of a weaker one that could die early.
 - **Saving:** the host's world is saved when Raft is closed (also with Alt+F4 or the window's X), and about 3 seconds after each quest step, quest finish and story step (at most once a minute). A crash or power cut still loses what came after the last save.
-- **Guide, chapter 12:** the fixed items are gone from it; limits moved to chapter 13, backup advice to chapter 10, the rest into the feature's section.
+- **Guide:** the known-issues chapter is gone - its advice is folded into the sections of each topic (hosting another day in chapter 8, files in 10, crashes and names in 13), and the later chapters are one number lower.
 
 ---
 

@@ -777,6 +777,18 @@ namespace DynamicIslands
 			Log("PASS: spoils");
 		}
 
+		[ConsoleCommand(name: "CIAlphaHealth", docs: "Dev, world (either player): the health of the animal with network index <index> on this machine, as HEALTH #<index> <health>/<max> (an alpha that turned while player 2 was connected has the host's numbers exactly there: message AlphaHealth): CIAlphaHealth <index>")]
+		public static void AlphaHealthCommand(string[] args)
+		{
+			uint idx;
+			if (args == null || args.Length == 0 || !uint.TryParse(args[0], out idx)) { Fail("CIAlphaHealth <index>"); return; }
+			AI_NetworkBehaviour a = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().FirstOrDefault(x => x != null && x.ObjectIndex == idx);
+			if (a == null || a.networkEntity == null || a.networkEntity.stat_health == null) { Fail("no animal #" + idx + " here"); return; }
+			Stat_Health h = a.networkEntity.stat_health;
+			Log("HEALTH #" + idx + " " + h.Value.ToString("F1") + "/" + h.Max.ToString("F1") + " (" + a.behaviourType + (Raft_Network.IsHost ? ", host" : ", player 2") + ")");
+			Log("PASS: alpha health");
+		}
+
 		[ConsoleCommand(name: "CIModeWorld", docs: "Dev, world (host): the randomizer's animals follow Raft's game mode in a world (catalogue IR15): a large island loaded in Creative has no puffer fish or screechers (Raft's own islands in Creative have none), its warthogs and animals to catch are there; in Peaceful the puffer fish are there too (as on Raft's islands). The world's mode is put back after")]
 		public static void ModeWorldCommand() { StartTest(ModeWorldRoutine()); }
 

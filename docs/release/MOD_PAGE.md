@@ -134,8 +134,7 @@ Download islands and world plans others made, right in the game: **ISLAND LIBRAR
   playing together and the optional systems, with 85 pictures.
 - [Changelog](https://github.com/SwedenJohansson/DynamicIslands/blob/master/CHANGELOG.md): everything new in 3.0.
 - Before playing together over several days, read the guide's
-  [Known issues](https://github.com/SwedenJohansson/DynamicIslands/blob/master/docs/GUIDE.md#12-known-issues-what-to-avoid-until-they-are-fixed)
-  chapter: what to avoid until it is fixed.
+  [Hosting on another day](https://github.com/SwedenJohansson/DynamicIslands/blob/master/docs/GUIDE.md#hosting-on-another-day).
 
 ---
 

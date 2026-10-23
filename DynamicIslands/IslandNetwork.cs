@@ -102,6 +102,9 @@ namespace DynamicIslands.Editor
 		/// Offsets[0] = seconds since it rose - a joiner gets it in the join reply), "hits" (Count = hits so far), "let" (beaten off), "tear" (Count = floors torn;
 		/// Raft's own block removal takes the floors away), "away" (sent away, quietly). Player -> host: "hit" (Index = the arm). An older version ignores it.</summary>
 		public const int Kraken = 37;
+		/// <summary>Host -> everyone: an animal turned alpha (WorldRandomizer, Big Bruce too): Index = its object index, Offsets = { max health, health }
+		/// as the host gave it then, so other players have it exactly (CreatureSpawner.HostHealth; MatchHealth stays for players who join later). An older version ignores it.</summary>
+		public const int AlphaHealth = 38;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -690,6 +693,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.Randomizer:
 						WorldRandomizer.OnMessage(msg);
+						break;
+					case IslandNetMessage.AlphaHealth:
+						if (!Raft_Network.IsHost && msg.Offsets != null && msg.Offsets.Length >= 2) CreatureSpawner.HostHealth(unchecked((uint)msg.Index), msg.Offsets[0], msg.Offsets[1]);
 						break;
 					case IslandNetMessage.WorldOptions:
 						WorldOptions.OnMessage(msg);

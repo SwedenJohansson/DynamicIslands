@@ -931,6 +931,8 @@ namespace DynamicIslands.Editor
 				};
 				// (not on the raft: Big Bruce bites players harder, his bites on raft blocks stay Raft's - AU69)
 				CreatureSpawner.ApplyStats(ai, props, false);
+				// (and once to the other players: the health it has now, exactly - their guess from Raft's numbers went wrong now and then)
+				CreatureSpawner.SendHostHealth(ai);
 				alphas[ai] = label;
 			}
 			// (another player's copy: the host's health, or the alpha would die here long before it does on the host)

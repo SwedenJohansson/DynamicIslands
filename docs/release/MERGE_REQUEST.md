@@ -91,7 +91,7 @@ documentation is the illustrated [`docs/GUIDE.md`](../GUIDE.md) (and its PDF) an
 
 ## Known issues
 
-Documented in README's *Known issues* and the guide's chapter 12, each on the project's roadmap. The main ones:
+Documented in README's *Known issues*, with the advice in the guide's section for each topic. The main ones:
 playing together over several days needs care (host from the folder of whoever hosted last, same mod version, correct
 PC clocks); editing an island that saved worlds use keeps those worlds on the version they started with; the mod's
 own text is English only.

@@ -55,7 +55,7 @@ namespace DynamicIslands.Editor
 			public readonly HashSet<string> MainNeeds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			/// <summary>Raft's tools the island gives: the item or its blueprint in a chest's loot, an action or the quest's reward.</summary>
 			public readonly HashSet<string> GivesTools = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-			/// <summary>The quest traps of guide 12.4 found on the island (AU47): texts in lower case, Check puts the island before them.</summary>
+			/// <summary>The quest traps of guide 6.2 found on the island (AU47): texts in lower case, Check puts the island before them.</summary>
 			public readonly List<Finding> Traps = new List<Finding>();
 			public string Describe { get { return Sample ? "a new " + Name + " island (checked on a sample of that map type)" : "'" + Name + "'"; } }
 		}
@@ -980,7 +980,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>
-		/// The traps of guide 12.4 that can be seen in an island's file (AU47), each with the object or step and the fix:
+		/// The traps of guide 6.2 that can be seen in an island's file (AU47), each with the object or step and the fix:
 		/// a later quest step's chest or creatures there from the start, story items given again by something that happens
 		/// again, show/hide and open/close in events that happen again, Raft item checks on events no player sets off, and
 		/// Raft items given by a note. (Already fixed in the game, so not here: actions after a wait are kept with the island

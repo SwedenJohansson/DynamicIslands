@@ -1059,7 +1059,15 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		public static void MatchHealth(AI_NetworkBehaviour ai, float multiplier)
 		{
-			if (Raft_Network.IsHost || ai == null || clientHealth.ContainsKey(ai) || Mathf.Approximately(multiplier, 1f)) return;
+			if (Raft_Network.IsHost || ai == null) return;
+			// (the host's own numbers came before the animal did: those, not a guess)
+			float[] exact;
+			if (exactHealth.TryGetValue(ai.ObjectIndex, out exact))
+			{
+				exactHealth.Remove(ai.ObjectIndex);
+				if (Time.realtimeSinceStartup - exact[2] < ExactHealthSeconds && SetHostHealth(ai, exact[0], exact[1])) return;
+			}
+			if (clientHealth.ContainsKey(ai) || Mathf.Approximately(multiplier, 1f)) return;
 			Network_Entity entity = ai.networkEntity;
 			if (entity == null || entity.stat_health == null || entity.IsDead) return;
 			Stat_Health h = entity.stat_health;
@@ -1080,6 +1088,54 @@ namespace DynamicIslands.Editor
 			clientHealth[ai] = multiplier;
 			Debug.Log("[CUSTOM ISLANDS] " + ai.behaviourType + " #" + ai.ObjectIndex + ": the host's health here, " + value.ToString("F0") + "/" + plain.ToString("F0") + " -> " +
 				h.Value.ToString("F0") + "/" + h.Max.ToString("F0") + (known ? " (the host sent " + sent.Key.ToString("F0") + ")" : " (the host's number not known: kept the share)"));
+		}
+
+		// Client: the host's health for an animal that turned alpha (message AlphaHealth) that wasn't here yet: { max, health, when it came }
+		static readonly Dictionary<uint, float[]> exactHealth = new Dictionary<uint, float[]>();
+		/// <summary>How long a host's alpha health waits for its animal (Raft's message creating it may come a little after ours).</summary>
+		const float ExactHealthSeconds = 60f;
+
+		/// <summary>Host: tells every other player an animal's health as it is now (it just turned alpha: WorldRandomizer, Big Bruce
+		/// too) - once, not at every change; hits after it go through Raft's own damage messages on every machine.</summary>
+		public static void SendHostHealth(AI_NetworkBehaviour ai)
+		{
+			if (!Raft_Network.IsHost || ai == null || ai.networkEntity == null || ai.networkEntity.stat_health == null) return;
+			Stat_Health h = ai.networkEntity.stat_health;
+			if (h.Max <= 0f) return;
+			IslandNetwork.SendToEveryone(new IslandNetMessage { Kind = IslandNetMessage.AlphaHealth, Index = unchecked((int)ai.ObjectIndex), Offsets = new[] { h.Max, h.Value } });
+		}
+
+		/// <summary>Client: the host's health for an animal that turned alpha (message AlphaHealth): set exactly; an animal not here yet
+		/// gets it when it comes (MatchHealth). MatchHealth's guess stays for players who join later (the host sends Raft's health then).</summary>
+		public static void HostHealth(uint index, float max, float value)
+		{
+			if (Raft_Network.IsHost || max <= 0f) return;
+			AI_NetworkBehaviour ai = null;
+			try { ai = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().FirstOrDefault(a => a != null && a.ObjectIndex == index); } catch { }
+			if (ai != null && SetHostHealth(ai, max, value)) { exactHealth.Remove(index); return; }
+			if (exactHealth.Count > 256)
+				foreach (uint old in exactHealth.Where(kv => Time.realtimeSinceStartup - kv.Value[2] >= ExactHealthSeconds).Select(kv => kv.Key).ToList()) exactHealth.Remove(old);
+			exactHealth[index] = new[] { max, value, Time.realtimeSinceStartup };
+			Debug.Log("[CUSTOM ISLANDS] Animal #" + index + ": the host's alpha health " + value.ToString("F0") + "/" + max.ToString("F0") + " kept until it is here");
+		}
+
+		static bool SetHostHealth(AI_NetworkBehaviour ai, float max, float value)
+		{
+			Network_Entity entity = ai.networkEntity;
+			if (entity == null || entity.stat_health == null || entity.IsDead) return false;
+			Stat_Health h = entity.stat_health;
+			// (Raft's own maximum: kept from an earlier MatchHealth, or what this copy has before we change it)
+			float plain;
+			if (!HealthBefore.TryGetValue(ai, out plain) || plain <= 0f) plain = h.Max;
+			if (plain <= 0f) return false;
+			float had = h.Value, hadMax = h.Max;
+			HealthBefore[ai] = plain;
+			h.SetMaxValue(max);
+			h.Value = Mathf.Clamp(value, 0f, max);
+			clientHealth[ai] = max / plain;
+			Debug.Log("[CUSTOM ISLANDS] " + ai.behaviourType + " #" + ai.ObjectIndex + ": the host's alpha health here, " + had.ToString("F0") + "/" + hadMax.ToString("F0") + " -> " +
+				h.Value.ToString("F0") + "/" + h.Max.ToString("F0") + " (sent by the host)");
+			return true;
 		}
 
 		/// <summary>Client (Harmony postfix on Network_Host_Entities.Deserialize): remembers the health the host sent with an animal.</summary>

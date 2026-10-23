@@ -53,10 +53,11 @@ Fields: `Ids`, `Names`, `Hashes`, `Offsets`, `States`, `Labels`, `Rules`, `FullL
 | 35 `StormSeas` | host -> everyone | `Name` "broke", `Index` the storm, `Count` floors broken |
 | 36 `WhaleBreach` | host -> clients | a whale breach (option `whalebreach`): `Index` its number, `Offsets` { dx, dz from the raft, heading, roll side }; `WhaleBreach.OnMessage` plays it by the client's raft |
 | 37 `Kraken` | host <-> clients | the kraken arm (option `kraken`): `Name` rise/hits/let/tear/away (host -> clients) or hit (client -> host, `SendToTheHost`); rise `Data` `block;side;seed;need;stay`, `Count` hits, `Offsets[0]` elapsed; tear `Count` floors torn; also a join-reply part |
+| 38 `AlphaHealth` | host -> clients | an animal turned alpha (Big Bruce too), sent once by `CreatureSpawner.SendHostHealth` after `ApplyStats`: `Index` object index, `Offsets` { max, health }; `CreatureSpawner.HostHealth` sets it exactly (or keeps it 60 s for `MatchHealth` when the animal isn't there yet) |
 | 21 `CreatureSpots`, 22 `ObjectHarvest` | host -> clients; via host | `Data` `objectIndex:islandId:spot;...`; `Ids` island, active, yield, `Index` ordinal, `Count` day (host sets its own) |
 
 ## Where to change X
-- New kind: a const in `IslandNetMessage` (1-29 and 33-37 are taken, 30-32 unused; the next free one is 38), a send helper in `IslandNetwork`, a `case` in `IslandNetwork.OnMessage`.
+- New kind: a const in `IslandNetMessage` (1-29 and 33-38 are taken, 30-32 unused; the next free one is 39), a send helper in `IslandNetwork`, a `case` in `IslandNetwork.OnMessage`.
 - State a joining player needs: the `JoinPart` list in `OnMessage` case `SyncRequest`, plus a broadcast on change.
 - Island list fields: `IslandsMessage` and `ReceiveIslands`. Files: `ResolveFile`, `SendFile`, `ReceiveChunk`.
 - One-player-only things: `Claims.May`, `Claims.HostGrant`. Shared settings: `WorldRules.HostSettingsData`, `HostSettingsFrom`.

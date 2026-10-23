@@ -199,7 +199,7 @@ namespace DynamicIslands
 				SaveAndLoad.LoadComplete += OnLoadComplete;
 				// An island's quest done: its "on.quest" actions
 				QuestTracker.Advanced += Behaviours.OnQuestAdvanced;
-				// The host saves the world when Raft is closed, and soon after quest and story steps (GUIDE 12.2)
+				// The host saves the world when Raft is closed, and soon after quest and story steps (GUIDE 13, "Raft crashed in a world")
 				SaveSoon.Hook();
 			});
 			StartStep("Raft's menu look", () => Editor.UIKit.CaptureRaftLook()); // Raft's menu sprites and fonts, while the main menu has them loaded
@@ -331,6 +331,8 @@ namespace DynamicIslands
 			// The editor's start window and the world plan editor live on the menu too (back from the editor: open again)
 			MenuWindows.Ensure();
 			EditorEntry.OnMainMenu();
+			// (an object index from before a Raft update is made again here, in the background - not only by the editor)
+			PlaceableCatalog.CheckIndexInMenu();
 
 
 

@@ -507,7 +507,7 @@ namespace DynamicIslands.Editor
 			Debug.Log("[CUSTOM ISLANDS] Object catalog ready: " + prototypes.Count + " objects (" + string.Join(", ", ByCategory().Select(c => c.Value.Count + " " + c.Key.ToLower()).ToArray()) +
 				(whitelist != null ? ", from placeables.txt" : ", " + skipped + " fragments/story items/pickups left out") + ")" +
 				(TerrainPainter.HasRaftTextures ? ", using Raft's terrain textures" : "") +
-				"; " + index.Count + " more objects of Raft's islands load when needed" + (IndexIsCurrent ? "" : " (the object index needs a scan: open the editor)"));
+				"; " + index.Count + " more objects of Raft's islands load when needed" + (IndexIsCurrent ? "" : " (the object index needs a scan: the main menu or the editor makes it)"));
 			RaiseChanged();
 		}
 
@@ -1046,7 +1046,17 @@ namespace DynamicIslands.Editor
 		static int indexFileVersion;
 
 		/// <summary>The index matches this Raft version (else the editor scans Raft's islands again).</summary>
-		public static bool IndexIsCurrent { get { return index.Count > 0 && indexFileVersion == IndexVersion && indexRaftVersion == Application.version; } }
+		public static bool IndexIsCurrent { get { return index.Count > 0 && indexFileVersion == IndexVersion && indexRaftVersion == RaftVersion && (indexScenes < 0 || indexScenes == LandmarkSceneCount); } }
+		/// <summary>Raft's version the index must be made with (tests pretend an update with RaftVersionForTest).</summary>
+		static string RaftVersion { get { return RaftVersionForTest ?? Application.version; } }
+		internal static string RaftVersionForTest;
+		/// <summary>Tests: reads the index file again (after putting it back).</summary>
+		internal static void ReadIndexForTest() { ReadIndex(); }
+		/// <summary>How many of Raft's island scenes the index was made with ("# scenes=" line; -1 = an index from before it).</summary>
+		static int indexScenes = -1;
+		static int landmarkSceneCount = -1;
+		/// <summary>How many island scenes this Raft has (an update that adds or removes one makes the index stale too).</summary>
+		static int LandmarkSceneCount { get { if (landmarkSceneCount < 0) landmarkSceneCount = LandmarkScenes().Count; return landmarkSceneCount; } }
 		public static bool Indexing { get; private set; }
 		/// <summary>What a running scan is doing, for the editor's status line ("Scanning Utopia (34/40)").</summary>
 		public static string IndexProgress { get; private set; }
@@ -1100,28 +1110,15 @@ namespace DynamicIslands.Editor
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read " + IndexPath + ": " + e.Message); }
 			// (an index the editor made with an older version of the mod: the one the mod ships, when that one is current -
 			// so a mod update that adds objects doesn't wait for the editor's scan)
-			if (text != null && HeaderOf(text) != IndexVersion + " raft=" + Application.version)
+			if (text != null && !IsCurrentText(text))
 			{
-				try
-				{
-					byte[] shipped = DynamicIslands.instance != null ? DynamicIslands.instance.GetEmbeddedFileBytes(IndexFileName) : null;
-					string mine = shipped != null && shipped.Length > 0 ? Encoding.UTF8.GetString(shipped) : null;
-					if (mine != null && HeaderOf(mine) == IndexVersion + " raft=" + Application.version) text = mine;
-				}
-				catch { }
+				string mine = ShippedIndex();
+				if (mine != null && IsCurrentText(mine)) text = mine;
 			}
-			if (text == null)
-			{
-				// The mod ships an index made with the current Raft, so islands can be spawned before the editor was opened
-				try
-				{
-					byte[] shipped = DynamicIslands.instance != null ? DynamicIslands.instance.GetEmbeddedFileBytes(IndexFileName) : null;
-					if (shipped != null && shipped.Length > 0) text = Encoding.UTF8.GetString(shipped);
-				}
-				catch { }
-			}
+			// The mod ships an index made with the current Raft, so islands can be spawned before the editor was opened
+			if (text == null) text = ShippedIndex();
 			if (text == null) return;
-			indexFileVersion = 0; indexRaftVersion = null;
+			indexFileVersion = 0; indexRaftVersion = null; indexScenes = -1;
 			foreach (string raw in text.Split('\n'))
 			{
 				string line = raw.TrimEnd('\r');
@@ -1129,6 +1126,8 @@ namespace DynamicIslands.Editor
 				{
 					Match m = Regex.Match(line, @"^# CustomIslands object index (\d+) raft=(.*)$");
 					if (m.Success) { indexFileVersion = int.Parse(m.Groups[1].Value); indexRaftVersion = m.Groups[2].Value.Trim(); }
+					m = Regex.Match(line, @"^# scenes=(\d+)");
+					if (m.Success) indexScenes = int.Parse(m.Groups[1].Value);
 					continue;
 				}
 				string[] f = line.Split('\t');
@@ -1144,10 +1143,51 @@ namespace DynamicIslands.Editor
 			return m.Success ? m.Groups[1].Value + " raft=" + m.Groups[2].Value.Trim() : "";
 		}
 
+		/// <summary>An index text made by this version of the mod with this Raft (its version and, when the file says, its
+		/// number of island scenes).</summary>
+		static bool IsCurrentText(string text)
+		{
+			if (HeaderOf(text) != IndexVersion + " raft=" + RaftVersion) return false;
+			Match m = Regex.Match(text ?? "", @"^# scenes=(\d+)", RegexOptions.Multiline);
+			return !m.Success || int.Parse(m.Groups[1].Value) == LandmarkSceneCount;
+		}
+
+		/// <summary>The index the mod ships (catalog_index.txt in the .rmod), or null.</summary>
+		internal static string ShippedIndex()
+		{
+			try
+			{
+				byte[] shipped = DynamicIslands.instance != null ? DynamicIslands.instance.GetEmbeddedFileBytes(IndexFileName) : null;
+				return shipped != null && shipped.Length > 0 ? Encoding.UTF8.GetString(shipped) : null;
+			}
+			catch { return null; }
+		}
+
+		/// <summary>
+		/// Why the object index a world would use isn't for this Raft (the player's catalog_index.txt, or else the one the mod
+		/// ships - as ReadIndex picks), or null when it is current. Read from the files: works before the catalogue is built.
+		/// </summary>
+		internal static string IndexStaleReason()
+		{
+			string user = null;
+			try { if (File.Exists(IndexPath)) user = File.ReadAllText(IndexPath); } catch { }
+			string shipped = ShippedIndex();
+			if ((user != null && IsCurrentText(user)) || (shipped != null && IsCurrentText(shipped))) return null;
+			string text = user ?? shipped;
+			if (text == null) return "there is no object index";
+			Match h = Regex.Match(text, @"^# CustomIslands object index (\d+) raft=([^\r\n]*)");
+			if (!h.Success) return "the object index has no header";
+			if (h.Groups[2].Value.Trim() != RaftVersion) return "the object index was made with Raft " + h.Groups[2].Value.Trim() + ", this is Raft " + RaftVersion;
+			if (h.Groups[1].Value != IndexVersion.ToString()) return "the object index is from an older version of the mod (" + h.Groups[1].Value + ", now " + IndexVersion + ")";
+			Match s = Regex.Match(text, @"^# scenes=(\d+)", RegexOptions.Multiline);
+			return "the object index was made with " + (s.Success ? s.Groups[1].Value : "?") + " of Raft's island scenes, this Raft has " + LandmarkSceneCount;
+		}
+
 		static void WriteIndex()
 		{
 			var sb = new StringBuilder();
-			sb.Append("# CustomIslands object index ").Append(IndexVersion).Append(" raft=").Append(Application.version).Append('\n');
+			sb.Append("# CustomIslands object index ").Append(IndexVersion).Append(" raft=").Append(RaftVersion).Append('\n');
+			sb.Append("# scenes=").Append(LandmarkSceneCount).Append('\n');
 			sb.Append("# Every placeable object of Raft's island scenes that isn't in the core list: name, scene, category, flags (h = harvestable, x = left out of the list).\n");
 			sb.Append("# Made by the editor; delete this file to scan Raft's islands again.\n");
 			foreach (IndexEntry e in index.Values.OrderBy(e => e.Scene).ThenBy(e => e.Name))
@@ -1158,7 +1198,7 @@ namespace DynamicIslands.Editor
 				SafeFile.WriteAllText(IndexPath, sb.ToString());
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write " + IndexPath + ": " + e.Message); }
-			indexFileVersion = IndexVersion; indexRaftVersion = Application.version;
+			indexFileVersion = IndexVersion; indexRaftVersion = RaftVersion;
 		}
 
 		/// <summary>
@@ -1170,11 +1210,131 @@ namespace DynamicIslands.Editor
 			while (Indexing) yield return null;
 			if (IndexIsCurrent || !IsBuilt) yield break;
 			Indexing = true;
-			try { yield return Guarded(ScanAll(), "Scanning Raft's islands for objects"); }
+			try { yield return Guarded(ScanAll(DynamicIslands.InEditor, "the editor"), "Scanning Raft's islands for objects"); }
 			finally { Indexing = false; IndexProgress = null; RaiseChanged(); }
 		}
 
-		static IEnumerator ScanAll()
+		/// <summary>Raft's main menu is showing (not a world, not the editor).</summary>
+		internal static bool InMainMenu()
+		{
+			try { return !LoadSceneManager.IsGameSceneLoaded && !DynamicIslands.InEditor() && GameObject.Find("MainMenuCanvas") != null; }
+			catch { return false; }
+		}
+
+		static Coroutine menuScan;
+		/// <summary>The last main-menu check, for tests and the log: "current", "scanned (...)", "stopped", or null before one ran.</summary>
+		internal static string MenuScanResult { get; private set; }
+		/// <summary>The longest frame (seconds) while the last main-menu scan ran (tests: no long stall).</summary>
+		internal static float MenuScanLongestFrame { get; private set; }
+		/// <summary>What the scan was doing in its longest frame (tests and the log).</summary>
+		internal static string MenuScanLongestStep { get; private set; }
+		static string scanStep;
+
+		/// <summary>
+		/// At start-up and back at the main menu: an object index made with another Raft (an update; its version or number of
+		/// island scenes differ) or by an older version of the mod is made again here, in the background - the island scenes
+		/// load one at a time, switched off, at low loading priority. Before, only the editor did it, and a world played after a
+		/// Raft update could miss objects on custom islands until the editor was opened once. Leaving the menu stops the scan;
+		/// it starts again the next time the menu shows. delay: seconds to let the menu settle first.
+		/// </summary>
+		public static void CheckIndexInMenu(float delay = 3f)
+		{
+			if (menuScan != null || DynamicIslands.instance == null) return;
+			menuScan = DynamicIslands.instance.StartCoroutine(MenuScan(delay));
+		}
+
+		/// <summary>Whether a main-menu check or scan is running.</summary>
+		internal static bool MenuScanRunning { get { return menuScan != null; } }
+
+		static IEnumerator MenuScan(float delay)
+		{
+			try
+			{
+				yield return new WaitForSecondsRealtime(delay);
+				if (!InMainMenu()) yield break;
+				string why = IndexStaleReason();
+				if (why == null) { MenuScanResult = "current"; Debug.Log("[CUSTOM ISLANDS] Object index: current for Raft " + RaftVersion); yield break; }
+				while (Indexing) yield return null;
+				if (!InMainMenu()) yield break;
+				Debug.Log("[CUSTOM ISLANDS] Object index: " + why + " - scanning Raft's islands again here in the main menu (in the background)");
+				Indexing = true;
+				ThreadPriority priority = Application.backgroundLoadingPriority;
+				Application.backgroundLoadingPriority = ThreadPriority.Low;
+				MenuScanLongestFrame = 0f; MenuScanLongestStep = null;
+				Coroutine frames = DynamicIslands.instance.StartCoroutine(WatchFrames());
+				float started = Time.realtimeSinceStartup;
+				try { yield return Guarded(ScanAll(InMainMenu, "the main menu", true), "Scanning Raft's islands for objects (main menu)"); }
+				finally
+				{
+					Application.backgroundLoadingPriority = priority;
+					if (frames != null) DynamicIslands.instance.StopCoroutine(frames);
+					Indexing = false; IndexProgress = null; RaiseChanged();
+				}
+				MenuScanResult = IndexStaleReason() == null ? "scanned (" + why + ")" : "stopped";
+				Debug.Log("[CUSTOM ISLANDS] Object index: main-menu scan " + MenuScanResult + " in " + (Time.realtimeSinceStartup - started).ToString("F0") +
+					" s; longest frame " + (MenuScanLongestFrame * 1000f).ToString("F0") + " ms (" + MenuScanLongestStep + ")");
+			}
+			finally { menuScan = null; }
+		}
+
+		/// <summary>Runs take on each item, a few milliseconds a frame when gentle, else all at once.</summary>
+		static IEnumerator Walk<T>(IEnumerable<T> items, Action<T> take, bool gentle, string sceneName)
+		{
+			var watch = System.Diagnostics.Stopwatch.StartNew();
+			IEnumerator<T> it;
+			try { it = items.GetEnumerator(); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Scanning " + sceneName + ": " + e.Message); yield break; }
+			using (it)
+				while (true)
+				{
+					try { if (!it.MoveNext()) yield break; take(it.Current); }
+					catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Scanning " + sceneName + ": " + e.Message); yield break; }
+					if (gentle && watch.ElapsedMilliseconds >= 15) { yield return null; watch.Reset(); watch.Start(); }
+				}
+		}
+
+		/// <summary>
+		/// Takes a scanned (switched-off) scene apart a little each frame before it is unloaded: unloading a big island such
+		/// as Tangaroa destroys everything in one frame (2.2 s in the main menu, CIIndexMenuScan 2026-10-23).
+		/// </summary>
+		static IEnumerator Dismantle(Scene scene)
+		{
+			if (!scene.IsValid() || !scene.isLoaded) yield break;
+			var watch = System.Diagnostics.Stopwatch.StartNew();
+			var stack = new Stack<Transform>(scene.GetRootGameObjects().Select(g => g.transform));
+			var opened = new HashSet<Transform>();
+			while (stack.Count > 0)
+			{
+				Transform t = stack.Pop();
+				if (t == null) continue;
+				if (t.childCount > 0 && opened.Add(t))
+				{
+					// (its children first, then it again with none left)
+					stack.Push(t);
+					for (int c = 0; c < t.childCount; c++) stack.Push(t.GetChild(c));
+					continue;
+				}
+				try { UnityEngine.Object.DestroyImmediate(t.gameObject); }
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Taking " + scene.name + " apart: " + e.Message); }
+				if (watch.ElapsedMilliseconds >= 15) { yield return null; watch.Reset(); watch.Start(); if (!scene.isLoaded) yield break; }
+			}
+		}
+
+		static IEnumerator WatchFrames()
+		{
+			while (true)
+			{
+				string step = scanStep;
+				yield return null;
+				if (step != scanStep) step += " / " + scanStep;
+				if (Time.unscaledDeltaTime > 0.3f) Debug.Log("[CUSTOM ISLANDS] Object index: a " + (Time.unscaledDeltaTime * 1000f).ToString("F0") + " ms frame (" + step + ")");
+				if (Time.unscaledDeltaTime > MenuScanLongestFrame) { MenuScanLongestFrame = Time.unscaledDeltaTime; MenuScanLongestStep = step; }
+			}
+		}
+
+		/// <summary>Scans every island scene while stillHere() holds (the editor, or the main menu: a new scene replaces
+		/// everything, so leaving stops the scan; it starts again next time).</summary>
+		static IEnumerator ScanAll(Func<bool> stillHere, string place, bool gentle = false)
 		{
 			float started = Time.realtimeSinceStartup;
 			var found = new Dictionary<string, IndexEntry>();
@@ -1182,41 +1342,48 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < scenes.Count; i++)
 			{
 				string sceneName = scenes[i];
-				// Leaving the editor (a new scene replaces everything) stops the scan; it starts again next time
-				if (!DynamicIslands.InEditor()) { Debug.Log("[CUSTOM ISLANDS] Object index: scan stopped (left the editor)"); yield break; }
+				if (!stillHere()) { Debug.Log("[CUSTOM ISLANDS] Object index: scan stopped (left " + place + ")"); yield break; }
+				scanStep = "freeing assets";
 				if (i > 0 && i % 8 == 0) yield return Resources.UnloadUnusedAssets(); // the scanned islands' textures and meshes
+				scanStep = "loading " + sceneName;
 				IndexProgress = "Scanning Raft's islands for objects: " + SceneLabel(sceneName) + " (" + (i + 1) + "/" + scenes.Count + ")";
 				var opened = new OpenedScene();
 				yield return OpenScene(sceneName, opened, true);
 				if (!opened.Scene.IsValid()) continue;
+				// (left while the scene loaded: it goes again, switched off as it came)
+				if (!stillHere()) { yield return CloseScene(opened); Debug.Log("[CUSTOM ISLANDS] Object index: scan stopped (left " + place + ")"); yield break; }
+				scanStep = "reading " + sceneName;
 				string category = CategoryForScene(sceneName);
 				int count = 0;
-				try
+				Action<KeyValuePair<string, Transform>> takePick = pick =>
 				{
-					foreach (KeyValuePair<string, Transform> pick in PickAll(opened.Scene))
-					{
-						string name = pick.Key;
-						if (core.Contains(name) || found.ContainsKey(name)) continue;
-						found[name] = new IndexEntry { Name = name, Scene = sceneName, Category = category, Hidden = clutter.IsMatch(name) };
-						count++;
-					}
-					foreach (Transform t in AllTransforms(opened.Scene))
-					{
-						string hn = CleanName(t.name);
-						if (!IsGatherName(hn) || core.Contains(hn) || found.ContainsKey(hn)) continue;
-						found[hn] = new IndexEntry { Name = hn, Scene = sceneName, Category = HarvestableCategory, Harvestable = true };
-						count++;
-					}
-				}
-				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Scanning " + sceneName + ": " + e.Message); }
+					string name = pick.Key;
+					if (name == null || core.Contains(name) || found.ContainsKey(name) || !IsPlaceable(pick.Value, name)) return;
+					found[name] = new IndexEntry { Name = name, Scene = sceneName, Category = category, Hidden = clutter.IsMatch(name) };
+					count++;
+				};
+				Action<Transform> takeGather = t =>
+				{
+					string hn = CleanName(t.name);
+					if (!IsGatherName(hn) || core.Contains(hn) || found.ContainsKey(hn)) return;
+					found[hn] = new IndexEntry { Name = hn, Scene = sceneName, Category = HarvestableCategory, Harvestable = true };
+					count++;
+				};
+				// (in the main menu a little each frame: reading Tangaroa at once took 2.3 s)
+				yield return Walk(PickAll(opened.Scene, true), takePick, gentle, sceneName);
+				yield return Walk(AllTransforms(opened.Scene), takeGather, gentle, sceneName);
 				Debug.Log("[CUSTOM ISLANDS] Object index: " + sceneName + " has " + count + " new objects");
+				scanStep = "closing " + sceneName;
+				if (gentle) yield return Dismantle(opened.Scene);
+				scanStep = "unloading " + sceneName;
 				yield return CloseScene(opened);
 			}
 			index.Clear();
 			foreach (var p in found) index[p.Key] = p.Value;
 			WriteIndex();
+			scanStep = "freeing assets";
 			yield return Resources.UnloadUnusedAssets();
-			Debug.Log("[CUSTOM ISLANDS] Object index ready: " + index.Count + " objects in " + scenes.Count + " of Raft's island scenes (" +
+			Debug.Log("[CUSTOM ISLANDS] Object index ready (" + place + "): " + index.Count + " objects in " + scenes.Count + " of Raft's island scenes (" +
 				(Time.realtimeSinceStartup - started).ToString("F0") + " s), written to " + IndexPath);
 		}
 
@@ -1313,8 +1480,8 @@ namespace DynamicIslands.Editor
 			if (!IndexIsCurrent && !staleTold && !DynamicIslands.InEditor() && LoadSceneManager.IsGameSceneLoaded)
 			{
 				staleTold = true;
-				DynamicIslands.Notify((indexRaftVersion == Application.version ? "The mod's object index is from an older version of the mod" : "Raft was updated since the mod's object index was made") +
-					": open the island editor once to scan Raft's islands again (until then an object of a custom island may be missing)", true);
+				DynamicIslands.Notify((indexRaftVersion == RaftVersion ? "The mod's object index is from an older version of the mod" : "Raft was updated since the mod's object index was made") +
+					": the mod scans Raft's islands again in the main menu (a minute or two, in the background) - until then an object of a custom island may be missing", true);
 			}
 			return got;
 		}
@@ -1368,7 +1535,9 @@ namespace DynamicIslands.Editor
 		/// Every placeable object of a whole scene: top-most descendants that render a mesh, except fragments, story
 		/// items and pickups (and the model parts inside them).
 		/// </summary>
-		static IEnumerable<KeyValuePair<string, Transform>> PickAll(Scene scene)
+		/// <summary>The scene's objects. paced: every candidate unchecked (the caller runs IsPlaceable) and an empty pair
+		/// (Key null) now and then, so a caller can stop for a frame in the middle of a big island.</summary>
+		static IEnumerable<KeyValuePair<string, Transform>> PickAll(Scene scene, bool paced = false)
 		{
 			foreach (GameObject root in scene.GetRootGameObjects())
 			{
@@ -1376,11 +1545,11 @@ namespace DynamicIslands.Editor
 				if (root.GetComponent<Renderer>() != null || root.GetComponent<LODGroup>() != null)
 				{
 					string rn = CleanName(root.name);
-					if (IsPlaceable(root.transform, rn)) yield return new KeyValuePair<string, Transform>(rn, root.transform);
+					if (paced || IsPlaceable(root.transform, rn)) yield return new KeyValuePair<string, Transform>(rn, root.transform);
 					continue;
 				}
-				foreach (KeyValuePair<string, Transform> pick in Pick(root.transform))
-					if (IsPlaceable(pick.Value, pick.Key)) yield return pick;
+				foreach (KeyValuePair<string, Transform> pick in Pick(root.transform, paced))
+					if (paced || IsPlaceable(pick.Value, pick.Key)) yield return pick;
 				// Raft's trading post is one object too (its hut, register and radio): RaftStore puts it to work
 				foreach (TradingPost tp in root.GetComponentsInChildren<TradingPost>(true))
 					yield return new KeyValuePair<string, Transform>(RaftStore.ObjectName, tp.transform);
@@ -1419,13 +1588,15 @@ namespace DynamicIslands.Editor
 		/// Top-most descendants that render something themselves (their parts come along), keyed by catalog name.
 		/// Harvestable trees keep their visual under a child called "Model"; those are named after the tree instead.
 		/// </summary>
-		static IEnumerable<KeyValuePair<string, Transform>> Pick(Transform root)
+		static IEnumerable<KeyValuePair<string, Transform>> Pick(Transform root, bool paced = false)
 		{
 			var stack = new Stack<Transform>();
 			foreach (Transform child in root) stack.Push(child);
+			int seen = 0;
 			while (stack.Count > 0)
 			{
 				Transform t = stack.Pop();
+				if (paced && ++seen % 200 == 0) yield return default(KeyValuePair<string, Transform>);
 				// (a quest item pickup is one object, its model inside it: QuestItemPickups)
 				if (QuestItemPickups.IsModel(CleanName(t.name))) { yield return new KeyValuePair<string, Transform>(CleanName(t.name), t); continue; }
 				if (t.GetComponent<Renderer>() != null || t.GetComponent<LODGroup>() != null)

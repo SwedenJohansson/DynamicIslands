@@ -357,7 +357,7 @@ namespace DynamicIslands.Editor
 			// Story items are the crew's: the host gives them once (every player near giving them gave one per player);
 			// Raft's items go to each player near the island
 			if (Raft_Network.IsHost)
-				foreach (KeyValuePair<string, int> l in reward.Where(l => StoryItems.IsStory(l.Key))) StoryBook.Give(l.Key, l.Value);
+				foreach (KeyValuePair<string, int> l in reward.Where(l => StoryItems.IsStory(l.Key))) StoryBook.Give(l.Key, l.Value, e);
 			// Raft's items: each player's share once - now when near, or when they come to the island (or join) later (LM8)
 			if (!reward.Any(l => !StoryItems.IsStory(l.Key))) return;
 			bool near = Near(e);
@@ -546,7 +546,14 @@ namespace DynamicIslands.Editor
 		public static int Found(IslandWorldState.Entry e, IslandQuest.Step s)
 		{
 			// (found in all, also those a lock or a machine used up before this step came - ROADMAP E12)
-			if (s.Type == "collect") return s.Target.Length > 0 ? StoryBook.FoundCount(StoryItems.IdOf(s.Target)) : StoryBook.Items.Sum(h => h.Count);
+			// (not those found on another copy of the same island in the world: they were for that copy's quest - each copy
+			// counts its own finds, and finds from other islands count for both)
+			if (s.Type == "collect")
+			{
+				string id = s.Target.Length > 0 ? StoryItems.IdOf(s.Target) : null;
+				int all = id != null ? StoryBook.FoundCount(id) : StoryBook.Items.Sum(h => h.Count);
+				return Mathf.Max(0, all - StoryBook.FoundOnOtherCopies(id, e));
+			}
 			if (s.Type == "pages")
 			{
 				// ("all": the islands' pages - not the frequencies the story chain writes into the journal; this island: its own

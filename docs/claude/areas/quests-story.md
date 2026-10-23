@@ -34,7 +34,7 @@ What players do on an island: quests, behaviours and events, trigger zones, note
 1. On the acting machine: `TriggerZone.Enter` -> `QuestTracker.Event(e, "reach", Id)`; `NoteReader.Show` -> `read`; `LootCrate.Open` -> `open`. The host's `CreatureSpawner` -> `kill` / `catch`.
 2. `QuestTracker.Event` tries every quest of the island: a match on the current step adds progress; a match on a later step is kept (`Remember`, credited by `CreditEarly`).
 3. `QuestTracker.Set(e, n, step, progress, send)` stores it and sends `QuestStep` (n = 0) or `QuestStepMore` (n > 0). A client with `IslandNetwork.HostAddsCounts` sets its own view and sends only its amount (`Name` = `add`); the host adds it in `AddFromPlayer` and tells everyone, who call `QuestTracker.Apply`.
-4. `collect` / `pages` steps advance in the host's `CheckCounted` (from `QuestTracker.Tick`), only while a player is near.
+4. `collect` / `pages` steps advance in the host's `CheckCounted` (from `QuestTracker.Tick`), only while a player is near. Per island copy: page keys use `StoryBook.PageIsland(e)`; story items record their source copy (`Held.From`, saved as the 8th `story.item` field) and `Found` subtracts `FoundOnOtherCopies`.
 5. Last step: `Completed` -> story items once, on the host (`StoryBook.Give`); Raft items per player via `QuestRewards.OnCompleted` (or later `Collect` in `Tick`). Main quest only: `QuestTracker.Advanced` -> `Behaviours.OnQuestAdvanced` -> on the host, when done, `FireFromHost(e, -1, "quest")`.
 6. World plans read it: `WorldDirector.Happened` (`quest`, `step`) and `StoryChain.IsDone`.
 7. Behaviours: `Behaviours.Fire` -> checks (`Passes`; failing, `Otherwise` runs the `else.` actions as event `<ev>!`) -> `Run`: personal part on the acting machine (`Schedule` -> `RunPersonal`), shared part on the host (`RunShared`; a client sends `EventFired`). `wait` splits actions into parts.
@@ -70,4 +70,4 @@ What players do on an island: quests, behaviours and events, trigger zones, note
 - `PendingKey` packs the event number in 4 bits (`ObjectEvents` + `IslandEvents`, the `!` variants after them): new events renumber saved pending keys, and more than 8 events overflow.
 - Atmosphere and sound zones act per machine only (no state, no network).
 - C# 7.3: no switch expressions, `??=`, ranges or `using var`.
-- Docs: docs/GUIDE.md `5.2` to `5.5`, `6.1 Quests`, `6.2 Behaviour and events`, `6.3 Story items and story sets`, `12.4 Making quests and plans that work`; README.md `### Source overview`.
+- Docs: docs/GUIDE.md `5.2` to `5.5`, `6.1 Quests`, `6.2 Behaviour and events`, `6.3 Story items and story sets`; README.md `### Source overview`.

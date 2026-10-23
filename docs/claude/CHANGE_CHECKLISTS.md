@@ -181,7 +181,7 @@ RECIPE_FORMAT.md and PLAY_FORMAT.md describe the content test files.
 - Quest traps: `PlanChecker.FindTraps`. Generated quests: the pool in `GenQuest.Make` (`IslandGenerator.cs`).
 - Recipes accept any `IslandQuest.Types` kind in `step type|target|count|text`. A new player action in a `.play` needs a verb in `DevTests.PlayRoutine` and a line in PLAY_FORMAT.md.
 **Test**: `CIQuestTest`, `CIQuestWorld` (`DevTestsContent.cs`), `CIMoreQuests`, `CICheckQuestTraps`, `CIGenQuest`. A `.play` can check it with `expect step n`.
-**Docs**: GUIDE `### 6.1 Quests` and `### 12.4 Making quests and plans that work`; README `## Features`.
+**Docs**: GUIDE `### 6.1 Quests` and `### 6.2 Behaviour and events` (quest traps); README `## Features`.
 
 ## New behaviour action or condition
 **Must change** for an action:
@@ -269,8 +269,8 @@ This is the most common change in history. It does not touch any `.cs` file.
 - `content/tests/<name>.play`: `CIPlay <name>` plays it in a test world `CI ...` (PLAY_FORMAT.md).
 - `content/tests/<name>_pics.play`: the guide pictures.
 - `docs/images/library/<name>.jpg`.
-- GUIDE `## 16. Learn from the library: example islands and plans`: add its row to the matching table (`### 16.2` to `### 16.8`).
-- GUIDE `## 17. Learn from the islands`, `### 17.4`: if the island is the best one to learn a feature from, name it in that feature's row (every editor feature has one island there).
+- GUIDE `## 15. Learn from the library: example islands and plans`: add its row to the matching table (`### 15.2` to `### 15.8`).
+- GUIDE `## 16. Learn from the islands`, `### 16.4`: if the island is the best one to learn a feature from, name it in that feature's row (every editor feature has one island there).
 - README `## Features`, bullet **The island library.**: update the island count and its list.
 - `docs/Custom-Islands-Guide.pdf`, made again from GUIDE.md.
 **Usually also**

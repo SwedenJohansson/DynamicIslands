@@ -95,7 +95,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The versions a report needs: the mod's and Raft's.</summary>
 		public static string Versions { get { return "Custom Islands " + ExperimentalNotice.Version + ", Raft " + Application.version; } }
 
-		/// <summary>The form to fill in (the guide's section 15), with the versions filled in.</summary>
+		/// <summary>The form to fill in (the guide's section 14), with the versions filled in.</summary>
 		public static string ReportTemplate
 		{
 			get
