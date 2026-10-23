@@ -40,9 +40,9 @@ place Reef_Barrel2 - at 4.5 -40 ground sit
 place TP_Moontown_TarpCrate01_Clean - at -5 -34 ground sit yaw=80
 
 # --- The vent in the square: a ring of dark rock round the fissure, steam, the valve on its post, pipes to the houses ---
-place SmallRock_02 ventrock at -1.6 0.4 ground scale=0.9 yaw=10
-place SmallRock_02 ventrock at 1.4 1.2 ground scale=0.8 yaw=130
-place SmallRock_02 ventrock at 0.6 -1.6 ground scale=0.85 yaw=250
+place SmallRock_02 ventrock at -1.6 0.4 ground y=-0.7 scale=0.9 yaw=10
+place SmallRock_02 ventrock at 1.4 1.2 ground y=-0.7 scale=0.8 yaw=130
+place SmallRock_02 ventrock at 0.6 -1.6 ground y=-0.7 scale=0.85 yaw=250
 prop ventrock tint.color=#3a3634
 prop ventrock tint.amount=0.6
 place Zone_Atmosphere ventsteam at 0 0 ground y=1.5

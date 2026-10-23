@@ -55,7 +55,7 @@ end
 #
 # icerock: a rock tinted ice-white (al its alias, for one tint line per island)
 macro icerock x=0 z=0 s=1 yaw=0 al=ice
-place SmallRock_02 $al at $x $z ground scale=$s yaw=$yaw
+place SmallRock_02 $al at $x $z ground y={-0.45*$s} scale=$s yaw=$yaw
 end
 macro icetint al=ice
 prop $al tint.color=#dcebf5

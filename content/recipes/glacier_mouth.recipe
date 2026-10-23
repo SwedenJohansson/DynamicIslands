@@ -32,29 +32,44 @@ clear from -26 16 to 26 16 r=5
 clear from 0 -30 to 0 -14 r=3
 
 # --- The ice wall: three rows of white-blue rock, the cave's gap at its foot -------------------------------------------
+# (the wall's ends and the dip at x 11 stand lower: there the upper rocks floated 1.8-5.4 m over the ground, 2026-10-23)
 for wx -26 -5 3
 call icerock x=$wx z=16 s=3 yaw={$wx*23}
-place SmallRock_02 ice at $wx 17 ground y=4 scale=3 yaw={$wx*41}
-place SmallRock_02 ice at {$wx+1.5} 18 ground y=8 scale=3 yaw={$wx*17}
+next
+place SmallRock_02 ice at -26 17 ground y=2.6 scale=3.2 yaw=-1066
+place SmallRock_02 ice at -23 17 ground y=0.9 scale=3.2 yaw=-943
+for wx -20 -5 3
+place SmallRock_02 ice at $wx 17 ground y=2.6 scale=3.2 yaw={$wx*41}
+next
+for wx -23 -5 3
+place SmallRock_02 ice at {$wx+1.5} 18 ground y=5.4 scale=3.2 yaw={$wx*17}
 next
 for wx 5 26 3
 call icerock x=$wx z=16 s=3 yaw={$wx*23}
-place SmallRock_02 ice at $wx 17 ground y=4 scale=3 yaw={$wx*41}
-place SmallRock_02 ice at {$wx-1.5} 18 ground y=8 scale=3 yaw={$wx*17}
 next
-place SmallRock_02 ice at 0 17 ground y=4.5 scale=3.4 yaw=90
-place SmallRock_02 ice at 0 18 ground y=8 scale=3 yaw=10
+for wx 5 8 3
+place SmallRock_02 ice at $wx 17 ground y=2.6 scale=3.2 yaw={$wx*41}
+next
+place SmallRock_02 ice at 11 17 ground y=0.7 scale=3.2 yaw=451
+for wx 14 23 3
+place SmallRock_02 ice at $wx 17 ground y=2.6 scale=3.2 yaw={$wx*41}
+next
+for wx 5 20 3
+place SmallRock_02 ice at {$wx-1.5} 18 ground y=5.4 scale=3.2 yaw={$wx*17}
+next
+place SmallRock_02 ice at 0 17 ground y=3 scale=3.4 yaw=90
+place SmallRock_02 ice at 0 18 ground y=5.4 scale=3.2 yaw=10
 call icetint al=ice
 place TP_Icicles01 - at 0 14.6 ground y=1
 place TP_Icicles04 - at -1.6 14.8 ground y=3.4
-place TP_Icicles02 - at 1.5 14.8 ground y=3.5
+place TP_Icicles02 - at 1.5 14.8 ground y=0.7
 
-# --- The Ringwave cut into the wall's face: a ring of dark stones, a wave through it -------------------------------------
+# --- The Ringwave laid on the ground before the wall: a ring of dark stones, a wave through it -------------------------------------
 for ra 0 330 30
-place SmallRock_02 ringwave at {-12+3.2*sin($ra)} 13.4 ground y={7+3.2*cos($ra)} scale=0.45 yaw=$ra
+place SmallRock_02 ringwave at {-12+3.2*sin($ra)} {9+3.2*cos($ra)} ground y=-0.1 scale=0.45 yaw=$ra
 next
 for wv -3 3 1
-place SmallRock_02 ringwave at {-12+$wv} 13.2 ground y={7+0.8*sin($wv*90)} scale=0.35 yaw={$wv*30}
+place SmallRock_02 ringwave at {-12+$wv} {9+0.8*sin($wv*90)} ground y=-0.1 scale=0.35 yaw={$wv*30}
 next
 prop ringwave tint.color=#1d2a33
 prop ringwave tint.amount=0.8
@@ -90,7 +105,7 @@ place Placeable_Lantern_Metal - at 1.2 14 ground drop
 
 # --- Bears, the titanium treasure, the sea ------------------------------------------------------------------------------
 place Creature_PolarBear bears at 20 6 ground
-call treasure x=-10 z=12 r=12 n=1 seed=12052
+call treasure x=-12 z=0 r=12 n=1 seed=12052
 scatter "Pickup_Landmark_Copper 2" 3 at 12 12 r=4 seed=12825 free=1
 scatter VP_CoralDigitate01 4 at 24 -26 r=4 seed=12821 wet free=1
 scatter VP_CoralBulb04 3 at 24 -26 r=4 seed=12822 wet free=1

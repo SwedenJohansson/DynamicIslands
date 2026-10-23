@@ -129,7 +129,7 @@ place Zone_Trigger floodzone at 0 33 ground y=1
 
 # --- The ice cap: ice rock round the vault floor on ice-tinted pillars, frost inside, snow on the slope ------------------
 for ca 0 345 15
-place SmallRock_02 ice at {25*sin($ca)} {10+25*cos($ca)} ground scale=2.6 yaw=$ca
+place SmallRock_02 ice at {25*sin($ca)} {10+25*cos($ca)} ground y=-2 scale=3 yaw=$ca
 next
 for pa 0 300 60
 place RT_PillarThick icepillar at {21*sin($pa)} {10+21*cos($pa)} ground
@@ -153,6 +153,10 @@ scatter SeaVine3_klump 3 at 30 -44 r=5 seed=12923 wet free=1
 call shallows x=0 z=0 r=60 deep=6 n=1 seed=12930
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------------
+# the generator's rocks that floated over the slope (ground check, 2026-10-23)
+clear at -26.8 0.74 r=1.5 only=TP_BigRock
+clear at -22.4 -10.87 r=1.5 only=TP_BigRock
+
 info title=The Coldhold Vault
 info author=Custom Islands
 info description=A seed bank under the glacier: an entrance hall, a crevasse crossed by an electric zipline, three wings of seeds, records and embryos under an ice cap - and a control room with three switches: KEEP, CARRY, BROADCAST. The ninth island of The Frozen Horizon.

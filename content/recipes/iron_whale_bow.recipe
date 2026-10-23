@@ -104,10 +104,15 @@ prop whalehull tint.amount=0.55
 # --- The mast, its crow's nest and the zipline to the crane on the ice -----------------------------------------------
 place RT_PillarThick whalemast at 10 4.5 h=7
 place RT_PillarThick whalemast at 10 4.5 h=13
+place RT_Floor whalemast at 10 4.5 h=11.75
+# (a plank floor on the nest where the zipline lands: the zipline check holds it by a collider under its floor)
+place Block_Floor_Tier3 whalemast at 10.5 4.5 h=11.95
 prop whalemast tint.color=#40464c
 prop whalemast tint.amount=0.5
 call ladders x=10 z=3.95 h=7 n=2 yaw=180
-place ZiplinePath_Landmark mastzip at 15.72 3.53 h=13.35
+# (its floor 0.5 m east of the mast, on the crow's nest: right over the mast the check's ray started inside the pillar and found only the
+# mast's foot 5 m down; the crow's nest 0.15 m lower so the floor's ray starts over it, 2026-10-23)
+place ZiplinePath_Landmark mastzip at 16.22 3.53 h=13.35
 zipto mastzip 34 -8
 place UT_ElectricityIsland_Crane02 crane at 37 -6 ground sit scale=0.45 yaw=200
 place Zone_Trigger cranezone at 34 -8 ground y=1
@@ -123,6 +128,9 @@ call shallows x=0 z=0 r=50 deep=6 n=1 seed=12520
 call snowfall x=4 z=0 r=55 al=snow
 
 # --- Settings, notes, behaviours, quest -------------------------------------------------------------------------------
+# the generator's rocks that floated over the slope (ground check, 2026-10-23)
+clear at 1.39 34.25 r=1.5 only=TP_BigRock
+
 info title=The Iron Whale - Bow
 info author=Custom Islands
 info description=The front half of a huge icebreaker thrown up on a pressure ridge: a rust-red hull to walk through, a crew mess with a vending machine and a safe, a zipline from the mast to the crane on the ice, and a cargo hatch down to her flooded stern. The fifth island of The Frozen Horizon.

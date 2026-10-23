@@ -113,6 +113,9 @@ prop arkdark atmo.lightAmount=0.35
 prop arkdark zone.radius=30
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------------
+# the generator's rocks that floated over the slope (ground check, 2026-10-23)
+clear at -0.91 24.6 r=1.5 only=TP_BigRock
+
 info title=The Seed Ark
 info author=Custom Islands
 info description=The Coldhold's lowest level, flooded 30 m down: pressure rooms with air under their roofs, long halls of seed racks, a gate of ice, white anglers - and the ark valve that finishes what the vault began. The last island of The Frozen Horizon.

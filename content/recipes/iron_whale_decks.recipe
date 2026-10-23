@@ -85,16 +85,13 @@ push at 6 0 h=17
 call rt_storey f1=none f2=none b1=none b2=none l1=none l2=none l3=none r1=none r2=none r3=none
 call rt_railing y=0 fm=none
 call rt_legs d=6
-place RT_PillarThick sternmast at -3 3 y=0
-place Placeable_WindTurbine - at -3 3 y=6 scale=1.5
+place Placeable_WindTurbine - at -3 3 y=0 scale=1.5
 place Loot_Chest mastbox at -1.2 -3 sit yaw=0
 place Zone_Trigger mastzone at -3 0 y=1
 place Placeable_Lantern_Metal deckslights at -5.5 -4 drop
 place Placeable_Lantern_Metal deckslights at -0.5 -4 drop
 pop
 call ladders x=3 z=-5 h=12.16 n=2 yaw=180
-prop sternmast tint.color=#40464c
-prop sternmast tint.amount=0.5
 
 # --- The seabed: a reef round the stern, scrap and iron ore spilled from the hull ------------------------------------
 scatter VP_CoralDigitate01 5 at -14 10 r=5 seed=12611 wet free=1
@@ -107,6 +104,11 @@ scatter "Pickup_Landmark_Copper 1" 2 at -12 -10 r=6 seed=12617 free=1
 call shallows x=0 z=0 r=44 deep=5 n=1 seed=12620
 
 # --- Settings, story items, notes, behaviours, quest -----------------------------------------------------------------
+# the generator's rocks that floated over the slope (ground check, 2026-10-23)
+clear at -8.2 -10.57 r=1.5 only=TP_BigRock
+clear at -9.41 29.56 r=1.5 only=TP_BigRock
+clear at 6.38 -15.34 r=1.5 only=TP_BigRock
+
 info title=The Iron Whale - Engine Decks
 info author=Custom Islands
 info description=The Whale's stern, broken off and sunk at the ridge: flooded engine rooms, a boiler hall and a shaft tunnel with air under their deckheads, anglers in the dark - and the stern mast standing out of the sea, a wind turbine on it. The captain is still aboard. The sixth island of The Frozen Horizon.

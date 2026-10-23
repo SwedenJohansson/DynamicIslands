@@ -1,0 +1,23 @@
+# Caisson Yard (CIPlay caisson_yard): the yard, the foreman's board, crane 2 (by the zipline), the smelter chest, the
+# fuel shed, the anchor gear, the trench chart.
+island Caisson Yard
+offset 0 0
+expect step 0
+expect title The Caisson Yard
+zone yard
+expect step 1
+read Foreman's board
+expect step 2
+zone crane_2
+expect step 3
+open Smelter chest
+wait 3
+expect step 4
+open Fuel shed chest
+wait 3
+expect step 5
+open Anchor gear chest
+wait 3
+expect step 6
+read Trench chart
+expect done

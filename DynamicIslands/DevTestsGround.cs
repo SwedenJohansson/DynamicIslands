@@ -840,7 +840,9 @@ namespace DynamicIslands
 		/// than its foot (Balboa Remade's and Coral Observatory's dishes on their masts read "partly in the air", 2026-10-12; Raft's
 		/// Utopia tower top room and its glass on their tower, 152 m over the ground beside it - a false alarm FLOAT2 checked
 		/// with a picture, Utopia Remade, 2026-10-20).</summary>
-		static readonly Regex OnAMount = new Regex("Sattelite|Satellite|Dish|Antenna|Tower_EndRoom", RegexOptions.IgnoreCase);
+		/// <summary>Rocks and stones placed as objects (not a Placeable_, not a cave or a stalagmite): measured under their whole base.</summary>
+		static readonly Regex LooseRock = new Regex("^(?!Placeable_)(?!.*(Cave|Tunnel|Stalag|Wall|Floor|Block_)).*(Rock|Boulder|Stone)", RegexOptions.IgnoreCase);
+		static readonly Regex OnAMount =new Regex("Sattelite|Satellite|Dish|Antenna|Tower_EndRoom", RegexOptions.IgnoreCase);
 
 		/// <summary>What on a spawned island doesn't stand on anything: one line per problem; <paramref name="count"/> = the objects measured.</summary>
 		static List<string> GroundProblems(IslandWorldState.Entry e, out int count)
@@ -920,6 +922,24 @@ namespace DynamicIslands
 						{ node.Reported = true; lines.Add("floating: " + n + " end " + r.name + " at " + Num(rb.center.x - mid.x) + " " + Num(rb.center.z - mid.z) + " h=" + Num(rb.min.y - sea) + ", " + (g > 999f ? "nothing under it" : Num(g) + " m over what is under it")); break; }
 					}
 					continue;
+				}
+				// A rock or stone in the air: its underside measured over what is under it at nine points, not "does it touch
+				// something" - a row of big rocks touching each other and a wall held each other up over the snow, their shadows
+				// apart from them (Coldhold Vault, 2026-10-23)
+				if (LooseRock.IsMatch(n) && b.min.y > sea + 0.3f)
+				{
+					int seen = 0, high = 0; float most = 0f;
+					float allow = 0.3f + 0.15f * Mathf.Max(b.extents.x, b.extents.z);
+					for (int k = 0; k < 9; k++)
+					{
+						float px = Mathf.Lerp(b.min.x, b.max.x, 0.25f + 0.25f * (k % 3)), pz = Mathf.Lerp(b.min.z, b.max.z, 0.25f + 0.25f * (k / 3));
+						float g = RockGap(o, px, pz, b, land);
+						if (float.IsNaN(g)) continue;
+						seen++;
+						if (g > allow) { high++; most = Mathf.Max(most, g); }
+					}
+					if (seen > 0 && (high >= 3 || high * 2 > seen))
+					{ node.Reported = true; lines.Add("floating rock: " + n + " at " + where + ", its underside up to " + Num(most) + " m over what is under it (" + high + " of " + seen + " points)"); continue; }
 				}
 				// Floating: nothing at its base (another object, a wall it hangs on, the land) and the first thing under it more than 0.5 m down
 				float gapUnder = GapUnder(o, new Vector3(b.center.x, b.min.y, b.center.z), land);
@@ -1450,6 +1470,22 @@ namespace DynamicIslands
 			detail = eyes.Count + " places to stand, " + (eyes.Count * looks.Count) + " looks: " + bad + " see through" +
 				(bad > 0 ? " (" + string.Join(", ", what.OrderByDescending(x => x.Value).Select(x => x.Key + " " + x.Value).ToArray()) + "); worst " + worst : "");
 			return bad;
+		}
+
+		/// <summary>A rock's underside over what is under it at x z: NaN where the rock isn't over that point or is set into
+		/// the ground there; else the gap in metres (the land or the first other thing under it).</summary>
+		static float RockGap(Transform self, float x, float z, Bounds b, Terrain land)
+		{
+			float under = float.MinValue;
+			if (land != null) under = land.SampleHeight(new Vector3(x, 0f, z)) + land.transform.position.y;
+			foreach (RaycastHit h in Physics.RaycastAll(new Vector3(x, b.max.y + 0.1f, z), Vector3.down, b.size.y + 400f, ~0, QueryTriggerInteraction.Ignore))
+				if (!h.collider.transform.IsChildOf(self) && h.point.y < b.max.y && h.point.y > under) under = h.point.y;
+			if (under == float.MinValue || under >= b.max.y) return float.NaN;
+			float underside = float.MaxValue;
+			foreach (RaycastHit h in Physics.RaycastAll(new Vector3(x, under + 0.01f, z), Vector3.up, b.max.y - under + 0.1f, ~0, QueryTriggerInteraction.Ignore))
+				if (h.collider.transform.IsChildOf(self) && h.point.y < underside) underside = h.point.y;
+			if (underside == float.MaxValue) return float.NaN; // (not over this point, or into the ground here: the ray starts inside it)
+			return Mathf.Max(0f, underside - under);
 		}
 
 		static float GapUnder(Transform self, Vector3 foot, Terrain land)

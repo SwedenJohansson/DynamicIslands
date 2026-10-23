@@ -1,0 +1,13 @@
+# Guide pictures of Caisson Yard (CIPlay caisson_yard_pics): Raft's camera, midday, calm
+island Caisson Yard
+offset 0 0
+hour 11
+weather Calm
+at 13.6 14.1
+wait 3
+picture sl10_caisson_yard 28.6 12 -9.9 2.6 2 15.1
+picture sl10_caisson_cranes -13.4 8 -5.9 4.6 4 18.1
+picture sl10_caisson_yardshop 20.6 4 8.1 13.6 2 15.1
+at 2 -10 h=-3
+wait 3
+picture sl10_caisson_vehicles 4 -3 -8 0 -6 -2

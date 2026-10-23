@@ -129,7 +129,8 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
      [15.12 A whole storyline: The Lullaby Frequency](#1512-a-whole-storyline-the-lullaby-frequency) ·
      [15.13 A whole storyline: The Gravity Sea](#1513-a-whole-storyline-the-gravity-sea) ·
      [15.14 A whole storyline: The Last Green World](#1514-a-whole-storyline-the-last-green-world) ·
-     [15.15 A whole storyline: The Frozen Horizon](#1515-a-whole-storyline-the-frozen-horizon)
+     [15.15 A whole storyline: The Frozen Horizon](#1515-a-whole-storyline-the-frozen-horizon) ·
+     [15.17 A whole storyline: The Sunken Kingdom](#1517-a-whole-storyline-the-sunken-kingdom)
 16. [Learn from the islands](#16-learn-from-the-islands)
    - [16.1 Opening any island in the editor](#161-opening-any-island-in-the-editor) · [16.2 Looking around](#162-looking-around) ·
      [16.3 Two small islands with many features](#163-two-small-islands-with-many-features) · [16.4 Every feature, and an island to look at](#164-every-feature-and-an-island-to-look-at)
@@ -4380,6 +4381,37 @@ lies buried on Saga Drift, Glacier Mouth and in the Coldhold.
 
 To learn from it: open The Coldhold Vault and look at the three switches' behaviours - each refuses once the choice is
 made, and each shows its own verdict note; the flood door's signal (`signal:coldhold:flooddoor`) is what brings the Ark.
+
+### 15.17 A whole storyline: The Sunken Kingdom
+
+**The Sunken Kingdom** is a plan of eleven islands in place of Raft's own story (Raft's story off, random islands on,
+the chain on the Receiver, 500 to 1200). The sea here is clear enough to see a drowned city under it: an automated call
+from the Pelagic Network leads you from a mast on coral-furred rooftops along a highway that runs down into the sea, up
+a flooded lab tower, down to a glass dome 18 m under the surface, a diving-bell station, a glowing shelf, a caisson
+yard and a city in the trench, 45 m down, where the last diver is held. At the Sealkeeper Spire two levers - **RESTORE**
+or **SEAL** - decide the Network, and the descend lever opens The Stalker's Hollow under the trench lip, where the
+choice is answered at the valve. The islands show every kind of "when": a quest (`quest:spire`), a quest step
+(`step:9`, `step:24`), a signal (`signal:brinelab:drives`), a zone (`zone:thalassa:bell`), a rule (`rule:caisson`),
+a frequency that needs the engine (`receiver:1000:needs=engine`) and a distance (`km:4`, `ahead:450`). All of Raft's
+story blueprints are **Blueprint** steps on the way. Thalassa Mooring has Raft's vending machine; Caisson Yard and the
+Sealkeeper Spire have a **Raft store**. Titanium lies buried on Thalassa Mooring, Caisson Yard and the Sealkeeper Spire.
+
+| Island | What it is | What to look at |
+|---|---|---|
+| ![](images/library/spirecrest_roofs.jpg) **Spirecrest Roofs** (first, 500) | Drowned rooftops round a sending mast | A short quest; the Receiver and antenna plans |
+| ![](images/library/overpass_shoal.jpg) **Overpass Shoal** (700) | A highway up out of the sea, over a bank, ending in mid-air | The road built with `ramp`; a toll booth on the top; Raft's vans and caravans stranded on it |
+| ![](images/library/brinelab_tower.jpg) **Brinelab Tower** (800) | A flooded lab tower with three data drives | Storeys climbed by ladders; the third drive's `signal:drives` brings the dome |
+| ![](images/library/biome_seven.jpg) **Biome Seven** (600) | A glass dome 18 m down with a dry garden inside | An air pocket under glass, glowing fish, the dome's rota |
+| ![](images/library/thalassa_mooring.jpg) **Thalassa Mooring** (900) | A surface station on pontoons | Raft's vending machine; a diving bell that carries you 20 m down (`beh.move` with carry); buried titanium |
+| ![](images/library/lumen_shelf.jpg) **Lumen Shelf** (600) | A glowing shelf edge 25 m down | An arch and a spar, air pockets along the route |
+| ![](images/library/caisson_yard.jpg) **Caisson Yard** (1000, needs the engine) | A dry yard of cranes in the sea | A Raft store, crane ziplines, buried titanium; Raft's excavator and forklift |
+| ![](images/library/hadal_commons.jpg) **Hadal Commons** (800) | A trench city 45 m down, lit by its own windows | Doors sealed with the Ringwave, Ines Marlowe in a cage, air decks on the way; a sunken van and caravan in the streets |
+| ![](images/library/sealkeeper_spire.jpg) **Sealkeeper Spire** (1200, finale part 1) | The Network's switchboard in a storm | 24 steps: three fuses, a keypad (2817), RESTORE / SEAL, a Raft store, buried titanium |
+| ![](images/library/stalkers_hollow.jpg) **The Stalker's Hollow** (500, finale part 2) | An arena 40 m down under the trench lip | 12 steps: lamp alcoves, the Stalker (a boss with `on.defeat`), the valve that answers the choice |
+| ![](images/library/shuttlewreck_reef.jpg) **Shuttlewreck Reef** (side, km 4) | A buoy over a reef, a sunken shuttle | A cabin with an air pocket, luggage to search |
+
+To learn from it: open the Sealkeeper Spire and look at the two levers - each gives a story item (`restorechoice` or
+`sealchoice`), and the Hollow's valve checks it with `if.has` to choose its answer.
 
 ## 16. Learn from the islands
 

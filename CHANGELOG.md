@@ -24,6 +24,12 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   Drift, Glacier Mouth (a Raft store) and a finale in two parts: The Coldhold Vault (24 quest steps, a Raft store, three
   switches - KEEP, CARRY or BROADCAST) and The Seed Ark 30 m under it. Squall Shelf turns up on day 9 and every 9 days.
   All of Raft's story blueprints are quest steps on the way.
+- **Another whole storyline in the library, The Sunken Kingdom:** eleven islands in place of Raft's own story
+  (Raft's story off; the chain on the Receiver, 500 to 1200). Spirecrest Roofs, Overpass Shoal, Brinelab Tower, Biome
+  Seven (a dome 18 m down), Thalassa Mooring (Raft's vending machine, a diving bell), Lumen Shelf, Caisson Yard (needs the
+  engine; a Raft store), Hadal Commons 45 m down and a finale in two parts: the Sealkeeper Spire (24 quest steps, a Raft
+  store, RESTORE or SEAL) and The Stalker's Hollow 40 m down. Shuttlewreck Reef turns up 4 km out. All of Raft's story
+  blueprints are quest steps on the way.
 
 ### Changed
 - **Editor tools that match the storyline recipes:** the in-game editor can now build what the recipes build.

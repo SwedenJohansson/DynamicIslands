@@ -1,0 +1,10 @@
+# Guide pictures of Lumen Shelf (CIPlay lumen_shelf_pics): Raft's camera, midday, calm
+island Lumen Shelf
+offset 0 0
+hour 11
+weather Calm
+at -7 0 h=0.3
+wait 3
+picture sl10_lumen_shelf -24 8 14 4 1 0
+picture sl10_lumen_spar -2 29 6 -10 27 -4
+picture sl10_lumen_edge 8 3 2 18 -6 6
