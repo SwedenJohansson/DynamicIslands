@@ -1184,7 +1184,7 @@ namespace DynamicIslands.Editor
 
 		#region Hashes
 
-		static string Hash(byte[] bytes)
+		internal static string Hash(byte[] bytes)
 		{
 			using (var sha = SHA1.Create())
 				return BitConverter.ToString(sha.ComputeHash(bytes), 0, 6).Replace("-", "").ToLowerInvariant();

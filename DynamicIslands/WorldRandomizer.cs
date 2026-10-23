@@ -265,7 +265,7 @@ namespace DynamicIslands.Editor
 		static float Metres(string text)
 		{
 			float m;
-			return float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out m) && !float.IsNaN(m) && !float.IsInfinity(m) && m > 0f ? m : 0f;
+			return CustomIslandSpawner.ParseNumber(text, out m) && !float.IsNaN(m) && !float.IsInfinity(m) && m > 0f ? m : 0f;
 		}
 
 		internal static IEnumerable<string> WriteLines()

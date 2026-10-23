@@ -199,6 +199,8 @@ namespace DynamicIslands
 				SaveAndLoad.LoadComplete += OnLoadComplete;
 				// An island's quest done: its "on.quest" actions
 				QuestTracker.Advanced += Behaviours.OnQuestAdvanced;
+				// The host saves the world when Raft is closed, and soon after quest and story steps (GUIDE 12.2)
+				SaveSoon.Hook();
 			});
 			StartStep("Raft's menu look", () => Editor.UIKit.CaptureRaftLook()); // Raft's menu sprites and fonts, while the main menu has them loaded
 			StartStep("the await helpers", () =>
@@ -408,6 +410,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Raft colliders", e); }
 			try { QuestTracker.Tick(); QuestCount.Tick(); DailyQuest.Tick(); RogueShark.Tick(); StormDays.Tick(); }
 			catch (Exception e) { TickError("Quests", e); }
+			try { SaveSoon.Tick(); }
+			catch (Exception e) { TickError("World save", e); }
 			try { GlowSea.Tick(); }
 			catch (Exception e) { TickError("Bioluminescent sea", e); }
 			try { UfoSightings.Tick(); }
@@ -463,7 +467,7 @@ namespace DynamicIslands
 		}
 
 		/// <summary>The id of the mod's Harmony patches (OnModUnload takes off these, never another mod's).</summary>
-		const string HarmonyId = "com.franzfischer.customislands";
+		internal const string HarmonyId = "com.franzfischer.customislands3"; // (not the original mod's id: an Unload of one took off the other's patches)
 		static Harmony harmonyInstance;
 
 		/// <summary>
@@ -495,6 +499,7 @@ namespace DynamicIslands
 				WorldShiftManager.OnWorldShift -= onWorldShift;
 				Raft_Network.OnWorldReceivedLate -= onWorldReceived;
 				AtmosphereZone.Unhook();
+				SaveSoon.Unhook();
 			});
 			UnloadStep("the editor's assets", () =>
 			{
@@ -1172,6 +1177,9 @@ namespace DynamicIslands
 			// (world shifts while the file is read count too - review 2026-10-06)
 			Vector3 shiftedBefore = IslandWorldState.ShiftedBy;
 			var lc = System.Diagnostics.Stopwatch.StartNew();
+			// (a world's island tidied up or deleted: its copy in the deleted folder first - a player's copy only with the host's hash)
+			if (entry != null && !File.Exists(path) && (Raft_Network.IsHost || IslandNetwork.IsHash(entry.Hash)) && IslandFilesWindow.RestoreFromDeleted(name, entry.Hash))
+				Notify("'" + name + "' was put back from the deleted folder for this world", false);
 			if (File.Exists(path))
 			{
 				SafeFile.Recover(path); // (a save that Raft stopped half way: here, not on the worker)

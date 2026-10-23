@@ -38,7 +38,7 @@ Then `## N. Title` chapters, `### N.M Title` subsections, and unnumbered `####` 
 - 7 World plans: the three kinds of islands, the shipped plans, first plan, rule card, every rule, Check, sharing, the plan file.
 - 8 Playing together. 9 World settings: window, rules, randomizer, extra options, islands while sailing, level up.
 - 10 Settings files. 11 Console commands (Command/Where/What it does). 13 Limitations. 15 Reporting a problem. 16 Learn from the library (16.1-16.13: example islands, plans, the storylines). 17 Learn from the islands (open any island in the editor, every feature and an island that shows it).
-- 12 Known issues, 12.1-12.5 by situation: most `####` have a `**Why:**` and a `**What to do:**` paragraph; each subsection ends with `#### Other things to know`.
+- 12 Known issues, 12.1-12.5 by situation: most `####` have a `**Why:**` and a `**What to do:**` paragraph; some subsections end with `#### Other things to know`. Fixed items are removed (they move to the feature's section); limits go to 13.
 - 14 Questions and problems: a paragraph that starts with the problem in bold, ending in a full stop
   (`**No islands appear while I sail.**`), then the answer.
 - Anchors are GitHub style: `### 4.7 Saving and sharing` is `#47-saving-and-sharing`. Before renaming a heading, grep `OpenGuideSection(` (code), `GUIDE.md#` (`README.md`, `docs/release/MOD_PAGE.md`) and `](#` (the guide).

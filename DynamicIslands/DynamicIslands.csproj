@@ -156,6 +156,7 @@
     <Compile Include="PlayerHold.cs" />
     <Compile Include="PlayerMove.cs" />
     <Compile Include="Quest.cs" />
+    <Compile Include="SaveSoon.cs" />
     <Compile Include="QuestEditorWindow.cs" />
     <Compile Include="TriggerZone.cs" />
     <Compile Include="WorldDirector.cs" />
@@ -184,6 +185,7 @@
     <Compile Include="DevTestsGlowSea.cs" />
     <Compile Include="DevTestsGfx.cs" />
     <Compile Include="DevTestsReady.cs" />
+    <Compile Include="DevTestsSaveSoon.cs" />
     <Compile Include="StormSeas.cs" />
     <Compile Include="DevTestsStormSeas.cs" />
     <Compile Include="UfoSightings.cs" />

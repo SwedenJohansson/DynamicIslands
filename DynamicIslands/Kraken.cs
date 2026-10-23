@@ -29,13 +29,24 @@ namespace DynamicIslands.Editor
 		public const float NearLand = 80f;
 		/// <summary>The free arms' swipes: one every SwipeEvery s per arm at the nearest player within SwipeReach m of it;
 		/// it rears up for a second, then slams where that player stood: SwipeDamage to a player still within SwipeRadius m.</summary>
-		public const float SwipeEvery = 7f, SwipeReach = 9f, SwipeRadius = 2.2f, SwipeDamage = 8f;
+		public const float SwipeEvery = 7f, SwipeReach = 9f, SwipeRadius = 2.2f, SwipeDamage = 5f;
+		/// <summary>A green or blue kraken's swipes hurt this much more; one sighting takes at most MaxTaken health from a
+		/// player, and never brings them below KeepHealth.</summary>
+		public const float RareColourDamage = 1.1f, MaxTaken = 30f, KeepHealth = 25f;
+
+		/// <summary>What one swipe takes from a player who has lost `taken` to this sighting and has `health` left (0: nothing).</summary>
+		public static float SwipeHit(int colouring, float taken, float health)
+		{
+			float hit = SwipeDamage * (colouring == 0 ? 1f : RareColourDamage);
+			hit = Mathf.Min(hit, MaxTaken - taken, health - KeepHealth);
+			return hit > 0.05f ? hit : 0f;
+		}
 		/// <summary>Swipes that hurt this machine's player (tests).</summary>
 		public static int SwipesLanded;
 		public const float Chance = 1f / 8f, StormChance = 0.25f, StaySeconds = 60f, RiseSeconds = 3f, SinkSeconds = 3f;
 		/// <summary>How deep the arms' bases are, in metres under the deck.</summary>
 		public const float Depth = 18f;
-		const int SaltDay = 727, SaltTime = 728, SaltStorm = 729, SaltEvent = 730, SaltNeighbour = 731, SaltEdge = 732, SaltExtra = 733;
+		const int SaltDay = 727, SaltTime = 728, SaltStorm = 729, SaltEvent = 730, SaltNeighbour = 731, SaltEdge = 732, SaltExtra = 733, SaltColour = 734;
 
 		public static bool On { get { return WorldOptions.On(WorldOptions.Kraken); } }
 		static int Today { get { try { return WorldManager.DayCounter; } catch { return 0; } } }
@@ -204,6 +215,25 @@ namespace DynamicIslands.Editor
 			Brought++;
 			IslandNetwork.SendToEveryone(msg);
 			return "arm " + number + " grabs the floor at " + pick.Key + " from side " + side + " (" + edges.Count + " edge floors to pick from)";
+		}
+
+		/// <summary>The arm's colouring from its event seed (the same on every PC): 0 purple (3 in 4), 1 greenish, 2 bluish.</summary>
+		public static int Colouring(int seed)
+		{
+			double r = WorldOptions.Unit(seed, 0, SaltColour);
+			return r < 0.75 ? 0 : r < 0.875 ? 1 : 2;
+		}
+
+		public static readonly string[] ColouringNames = { "purple", "green", "blue" };
+
+		static void Colours(int colouring, out Color body, out Color band, out Color sucker)
+		{
+			switch (colouring)
+			{
+				case 1: body = new Color(0.40f, 0.60f, 0.38f); band = new Color(0.22f, 0.42f, 0.26f); sucker = new Color(0.85f, 0.92f, 0.70f); break;
+				case 2: body = new Color(0.36f, 0.48f, 0.68f); band = new Color(0.20f, 0.30f, 0.55f); sucker = new Color(0.75f, 0.85f, 0.95f); break;
+				default: body = new Color(0.62f, 0.38f, 0.62f); band = new Color(0.55f, 0.22f, 0.32f); sucker = new Color(0.95f, 0.72f, 0.75f); break;
+			}
 		}
 
 		static IslandNetMessage RiseMessage(int number, uint block, int side, int seed, int need, float stay, int hits, float elapsed)
@@ -418,7 +448,7 @@ namespace DynamicIslands.Editor
 			readonly List<Transform> segs = new List<Transform>();
 			readonly List<Transform> suckers = new List<Transform>();
 			readonly List<int> suckerAt = new List<int>();
-			public Material Body, Band;
+			public Material Body, Band, Pale;
 			Color bodyColour, bandColour;
 
 			public float Radius(float t)
@@ -457,7 +487,8 @@ namespace DynamicIslands.Editor
 			{
 				Body = new Material(skin); Tint(Body, tint, true); bodyColour = Colour(Body);
 				Band = new Material(skin); Tint(Band, band, true); bandColour = Colour(Band);
-				Material pale = new Material(skin); Tint(pale, suckerTint, false);
+				Pale = new Material(skin); Tint(Pale, suckerTint, false);
+				Material pale = Pale;
 				for (int i = 0; i < N; i++)
 				{
 					GameObject g = GameObject.CreatePrimitive(PrimitiveType.Capsule);
@@ -477,6 +508,17 @@ namespace DynamicIslands.Editor
 					}
 				}
 				Update();
+			}
+
+			/// <summary>Tests: another colouring on an arm already out (Kraken.Colouring), for pictures of each.</summary>
+			public void Recolour(Material skin, int colouring)
+			{
+				Color tint, band, sucker;
+				Colours(colouring, out tint, out band, out sucker);
+				Color c = Colour(skin);
+				bodyColour = new Color(c.r * tint.r, c.g * tint.g, c.b * tint.b); SetColour(Body, bodyColour);
+				bandColour = new Color(c.r * band.r, c.g * band.g, c.b * band.b); SetColour(Band, bandColour);
+				SetColour(Pale, sucker);
 			}
 
 			/// <summary>0..1: the skin goes toward an angry red.</summary>
@@ -579,6 +621,8 @@ namespace DynamicIslands.Editor
 		public class Arm : MonoBehaviour
 		{
 			public int Number, Seed, SideIndex, Need, Hits, Phase, Extras;
+			/// <summary>Health this machine's player lost to this sighting's swipes.</summary>
+			float taken;
 			public float Stay, Started;
 			public uint BlockIndex;
 			public Block Block;
@@ -622,9 +666,8 @@ namespace DynamicIslands.Editor
 				float deck = 0.35f;
 				try { Renderer[] er = Block.GetComponentsInChildren<Renderer>(); if (er.Length > 0) deck = er.Max(r => pivot.InverseTransformPoint(r.bounds.max).y) - e.y; } catch { }
 				Vector3 E = e + u * 0.75f, D = E + up * deck;
-				var body = new Color(0.62f, 0.38f, 0.62f);
-				var band = new Color(0.55f, 0.22f, 0.32f);
-				var sucker = new Color(0.95f, 0.72f, 0.75f);
+				Color body, band, sucker;
+				Colours(Colouring(Seed), out body, out band, out sucker);
 
 				Main = NewTentacle("main");
 				Main.Ctrl = new[]
@@ -835,9 +878,13 @@ namespace DynamicIslands.Editor
 					if (Mathf.Abs(d.y) > 2.5f) return;
 					d.y = 0f;
 					if (d.magnitude > SwipeRadius) return;
-					me.Stats.Damage(SwipeDamage, me.transform.position + Vector3.up, Vector3.up, EntityType.Enemy, true, null);
+					// (a little only: never more than MaxTaken in one sighting, never below KeepHealth - a player can always win)
+					float hit = SwipeHit(Colouring(Seed), taken, me.Stats.stat_health.Value);
+					if (hit <= 0f) return;
+					me.Stats.Damage(hit, me.transform.position + Vector3.up, Vector3.up, EntityType.Enemy, true, null);
+					taken += hit;
 					SwipesLanded++;
-					Log("a free arm's swipe hit " + me.name + " for " + SwipeDamage);
+					Log("a free arm's swipe hit " + me.name + " for " + hit.ToString("F1") + " (" + taken.ToString("F1") + " this sighting)");
 				}
 				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [kraken] Slam: " + e.Message); }
 			}

@@ -333,6 +333,7 @@ namespace DynamicIslands.Editor
 			List<ObjAction> list = actions[ev];
 			for (int i = 0; i < list.Count; i++) ActionRow(g, ev, list, i);
 			if (list.Count == 0) UIKit.Label(g, ev == "use" && BehaviourProps.Switches(props) ? "<i>Nothing set: using it opens and closes it.</i>" : "<i>Nothing happens yet.</i>", 12, UIKit.TextMuted);
+			FlipWarning(g, ev, list);
 			RectTransform add = UIKit.Row(g, 26f, 6f, "Add");
 			UIKit.Button(add, "+ Add an action", () => { Keep(); list.Add(new ObjAction { Verb = list.Count == 0 && ev != "use" ? "message" : "show" }); Rebuild(); }, "Another thing that happens", 150, 26f, 12);
 			UIKit.Button(add, "+ Wait", () => { Keep(); list.Add(new ObjAction { Verb = "wait", Arg = "5" }); Rebuild(); }, "The actions after it happen that many seconds later (a gate that closes again, an ambush after a moment)", 90, 26f, 12);
@@ -341,7 +342,22 @@ namespace DynamicIslands.Editor
 			if (checks[ev].Count > 0) ChecksPart(g, ev);
 		}
 
-		static readonly Dictionary<string, string> CheckLabels = new Dictionary<string, string>
+		/// <summary>Show/hide or open/close in an event that can happen again flips it back (what Check warns about).
+		/// A zone's "enter" also gets a button for Fires: Once ever. Rebuild() runs after every action or setting change.</summary>
+		void FlipWarning(Transform g, string ev, List<ObjAction> list)
+		{
+			if (islandMode || target == null || !list.Any(a => a.Verb == "toggle" || a.Verb == "switch")) return;
+			string evOf;
+			string again = PlanChecker.EventAgain(target.GameObjectName, props, PlanChecker.IslandNeverRegrows(DynamicIslands.currentIslandProps), out evOf);
+			if (again.Length == 0 || evOf != ev) return;
+			RectTransform row = UIKit.Row(g, 26f, 6f, "AgainWarning");
+			Text w = UIKit.Label(row, "<color=#e0a040>This can happen again (" + again + "): show/hide and open/close flip it back. Use show/open, or Fires: Once ever.</color>", 11, UIKit.TextColor);
+			UIKit.Size(w.gameObject, -1, -1, 1);
+			if (ev == "enter")
+				UIKit.Button(row, "Fires once ever", () => { Keep(); props[ObjectProps.ZoneRepeat] = ObjectProps.ZoneOnceEver; Rebuild(); }, "Fires: Once ever - the zone never fires again, so show/hide is safe", 120, 24f, 12);
+		}
+
+		static readonly Dictionary<string, string> CheckLabels =new Dictionary<string, string>
 		{
 			{ "has", "has item" }, { "take", "uses up item" }, { "state", "object is" }, { "signal", "signal sent" }, { "quest", "quest step" },
 		};

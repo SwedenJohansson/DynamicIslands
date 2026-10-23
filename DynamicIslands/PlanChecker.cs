@@ -1058,23 +1058,7 @@ namespace DynamicIslands.Editor
 				string thing = Thing(o.Key, p);
 				// Events that happen again: a zone ready again after the regrow days (or every time), a chest that fills up
 				// again (one with story items never does - LootCrate), a spot whose animals come back (its defeat again)
-				string ev = null, again = "";
-				if (o.Key.Name == ContentCatalog.TriggerZone)
-				{
-					ev = "enter";
-					if (ObjectProps.Repeats(p)) again = "every time a player walks in";
-					else if (ObjectProps.Get(p, ObjectProps.ZoneRepeat) != ObjectProps.ZoneOnceEver && !islandNever) again = "when the zone is ready again after the regrow days (Fires: Once)";
-				}
-				else if (ContentCatalog.IsCreature(o.Key.Name))
-				{
-					ev = "defeat";
-					if (ObjectProps.Respawns(p) && !islandNever) again = "when its animals come back and are defeated again";
-				}
-				else if (ObjectProps.IsLoot(o.Key.Name, p))
-				{
-					ev = "open";
-					if (ObjectProps.LootRefills(p) && !ObjectProps.Loot(p).Any(l => StoryItems.IsStory(l.Key)) && !islandNever) again = "when it fills up again and is opened again";
-				}
+				string ev, again = EventAgain(o.Key.Name, p, islandNever, out ev);
 				List<ObjAction> acts = ev != null ? ObjAction.ParseLines(ObjectProps.Get(p, BehaviourProps.EventKey(ev))) : new List<ObjAction>();
 				if (again.Length > 0)
 				{
@@ -1111,6 +1095,38 @@ namespace DynamicIslands.Editor
 				}
 			}
 			ItemChecksTrap(x, f.Props, "quest", "the island's \"when its quest is done\" event");
+		}
+
+		/// <summary>The event ("enter", "defeat", "open", or null) of a zone, creature spot or chest, and when it can happen again
+		/// ("" = it can't). Shared with the behaviour window's live warnings.</summary>
+		internal static string EventAgain(string objName, IDictionary<string, string> p, bool islandNever, out string ev)
+		{
+			ev = null;
+			string again = "";
+			if (objName == ContentCatalog.TriggerZone)
+			{
+				ev = "enter";
+				if (ObjectProps.Repeats(p)) again = "every time a player walks in";
+				else if (ObjectProps.Get(p, ObjectProps.ZoneRepeat) != ObjectProps.ZoneOnceEver && !islandNever) again = "when the zone is ready again after the regrow days (Fires: Once)";
+			}
+			else if (ContentCatalog.IsCreature(objName))
+			{
+				ev = "defeat";
+				if (ObjectProps.Respawns(p) && !islandNever) again = "when its animals come back and are defeated again";
+			}
+			else if (ObjectProps.IsLoot(objName, p))
+			{
+				ev = "open";
+				if (ObjectProps.LootRefills(p) && !ObjectProps.Loot(p).Any(l => StoryItems.IsStory(l.Key)) && !islandNever) again = "when it fills up again and is opened again";
+			}
+			return again;
+		}
+
+		/// <summary>True when the island never regrows (regrow days 0 or less).</summary>
+		internal static bool IslandNeverRegrows(IDictionary<string, string> islandProps)
+		{
+			int regrow;
+			return int.TryParse(ObjectProps.Get(islandProps, IslandProps.RegrowDays), out regrow) && regrow <= 0;
 		}
 
 		/// <summary>Raft item checks (has / uses up) on an event no single player sets off (the quest done, a spot's animals

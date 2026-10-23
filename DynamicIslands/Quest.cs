@@ -362,7 +362,7 @@ namespace DynamicIslands.Editor
 			if (!reward.Any(l => !StoryItems.IsStory(l.Key))) return;
 			bool near = Near(e);
 			if (!QuestRewards.OnCompleted(RewardKey(e, n), near, () => GiveItems(q))) Debug.Log("[CUSTOM ISLANDS] Quest reward of '" + RewardKey(e, n) + "': this player got it already in this world (" + QuestRewards.WhereKept + ")");
-			else if (!near) Debug.Log("[CUSTOM ISLANDS] Quest reward of '" + e.HostName + "' kept until this player comes to the island");
+			else if (!near) { Debug.Log("[CUSTOM ISLANDS] Quest reward of '" + e.HostName + "' kept until this player comes to the island"); DynamicIslands.Notify("Your reward for '" + q.ShownTitle + "' waits for you at the island - sail there to get it", false, 6); }
 		}
 
 		static void GiveItems(IslandQuest q)

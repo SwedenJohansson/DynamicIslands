@@ -9,6 +9,21 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-23: known-issues fixes
+
+### Fixed
+- **A missing island is put back:** when a saved world loads an island whose file is gone (Tidy up moved it, you deleted it in the editor, or a `gen-` file was deleted by hand), it is copied back from `Mods\DynamicIslands\deleted` (and its folders): on the host by the world's recorded hash, else the newest copy of that name; on a player's PC only a copy with the host's hash. A note says "'X' was put back from the deleted folder for this world". The copy there stays.
+- **No clash with Franz's original mod:** this mod has its own Harmony id (`com.franzfischer.customislands3`), and the PC check warns when the original mod is loaded too.
+- **Decimal comma:** `0,5` in `spawnpool.txt`, `world_rules.txt` and `randomizer.txt` reads as 0.5.
+- **Quest rewards that wait:** a player whose Raft-item reward waits at the island sees "Your reward for '<quest>' waits for you at the island - sail there to get it".
+- **Save too big:** the host sees on screen when the world's save is over 64 MB and can't be sent to the players.
+- **Kraken:** each sighting is purple 3 times in 4, else greenish or bluish (1 in 8 each), the same on every PC. Swipes do 5 damage (green and blue 5.5); one sighting takes at most 30 health from a player and never brings them below 25.
+- **Event window warnings:** an event that can happen again (a zone that fires more than once, a chest that fills up, animals that come back) with show/hide or open/close gets an amber line, and a zone's enter event has a **Fires once ever** button.
+- **Saving:** the host's world is saved when Raft is closed (also with Alt+F4 or the window's X), and about 3 seconds after each quest step, quest finish and story step (at most once a minute). A crash or power cut still loses what came after the last save.
+- **Guide, chapter 12:** the fixed items are gone from it; limits moved to chapter 13, backup advice to chapter 10, the rest into the feature's section.
+
+---
+
 ## 3.0 alpha - 6-21 October 2026: storylines, more extra options, editor tools, safety audit
 
 ### New

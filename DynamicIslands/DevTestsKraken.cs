@@ -64,6 +64,20 @@ namespace DynamicIslands
 				Check(ref ok, days >= 660 && days <= 840 && !early, "days with an arm: " + days + " of 6000 (about 750), none before day " + Kraken.FirstDay + ": " + !early);
 				Check(ref ok, storms >= 440 && storms <= 560, "storms with an arm: " + storms + " of 2000 (about 500)");
 				Check(ref ok, sides >= 1850 && sides <= 2150, "neighbours that go: " + sides + " of 4000 (about 2000)");
+				int[] hues = new int[3];
+				for (int n = 0; n < 4000; n++) hues[Kraken.Colouring(WorldOptions.Mix(seed, n, 1))]++;
+				Check(ref ok, hues[0] >= 2850 && hues[0] <= 3150 && hues[1] >= 400 && hues[1] <= 600 && hues[2] >= 400 && hues[2] <= 600,
+					"colourings of 4000 arms: purple " + hues[0] + " (about 3000), green " + hues[1] + ", blue " + hues[2] + " (about 500 each)");
+				// a whole sighting standing by the free arms (3 arms, every swipe landing for the full stay): never deadly
+				foreach (float start in new[] { 100f, 40f, 26f })
+					for (int col = 0; col < 3; col++)
+					{
+						float hp = start, lostAll = 0f;
+						int swipes = 3 * (int)Math.Ceiling(Kraken.StaySeconds / Kraken.SwipeEvery);
+						for (int n = 0; n < swipes; n++) { float h = Kraken.SwipeHit(col, lostAll, hp); hp -= h; lostAll += h; }
+						bool fine = lostAll <= Kraken.MaxTaken + 0.01f && (start <= Kraken.KeepHealth || hp >= Kraken.KeepHealth - 0.01f);
+						if (!fine || start == 100f) Check(ref ok, fine, Kraken.ColouringNames[col] + " kraken, " + swipes + " swipes on a player with " + start + " health: loses " + lostAll.ToString("F1") + ", keeps " + hp.ToString("F1") + " (first swipe " + Kraken.SwipeHit(col, 0f, 100f).ToString("F1") + ")");
+					}
 
 				// 3. A raft of 5 x 5 floors
 				if (!KrakenGrowRaft(me, made)) { Fail("kraken: no foundation on the raft"); yield break; }
@@ -101,6 +115,14 @@ namespace DynamicIslands
 				Vector3 Ew = pivot.TransformPoint(E);
 				yield return PlayPicture("kraken_side", pivot.TransformPoint(E + s * 10f - u * 1.5f + Vector3.up * 0.9f), pivot.TransformPoint(E + Vector3.up * 2.3f + u * 2f));
 				yield return PlayPicture("kraken_top", pivot.TransformPoint(E - u * 8f + s * 3.5f + Vector3.up * 3.4f), pivot.TransformPoint(E + Vector3.up * 2.2f + u * 1.5f));
+				// the rarer colourings (1 in 8 each), on this arm for a picture, then back to its own
+				Log("this arm's colouring: " + Kraken.ColouringNames[Kraken.Colouring(arm.Seed)]);
+				int[] colourings = { 1, 2, Kraken.Colouring(arm.Seed) };
+				for (int k = 0; k < colourings.Length; k++)
+				{
+					foreach (var t in arm.Others.Concat(new[] { arm.Main })) t.Recolour(Kraken.Skin(), colourings[k]);
+					if (k < 2) yield return PlayPicture("kraken_" + Kraken.ColouringNames[colourings[k]], pivot.TransformPoint(E + s * 10f - u * 1.5f + Vector3.up * 0.9f), pivot.TransformPoint(E + Vector3.up * 2.3f + u * 2f));
+				}
 
 				// 4b. The free arms swipe: stand at the edge by the nearest one; within a cycle it slams there and hurts a little
 				Kraken.Tentacle near = arm.Others.OrderBy(t => Vector3.Dot(t.Ctrl[3] - E, u)).First();

@@ -121,7 +121,7 @@ namespace DynamicIslands
 			ulong me = player.steamID.Id;
 
 			// Harmony: Raft's methods the stats work through
-			string owner = "com.franzfischer.customislands";
+			string owner = DynamicIslands.HarmonyId;
 			foreach (MethodBase m in new MethodBase[] { AccessTools.Method(typeof(PersonController), "GroundControll"), AccessTools.Method(typeof(PersonController), "WaterControll"),
 				AccessTools.PropertyGetter(typeof(Stat_Consumable), "LostPerSecond"), AccessTools.Method(typeof(Stat_Oxygen), "Update"), AccessTools.Method(typeof(Network_Host), "DamageEntity"), AccessTools.Method(typeof(Network_Host_Entities), "Deserialize") })
 			{

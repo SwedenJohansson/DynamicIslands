@@ -35,6 +35,7 @@ namespace DynamicIslands.Editor
 		public static string LastSent { get; private set; }
 
 		static int sendGeneration;
+		static bool toldTooBig;
 
 		#region Host
 
@@ -64,7 +65,12 @@ namespace DynamicIslands.Editor
 			byte[] packed;
 			try { packed = Pack(Path.GetFileName(world), save); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not pack the world's save to send: " + e.Message); return; }
-			if (packed.Length > MaxBytes) { Debug.LogWarning("[CUSTOM ISLANDS] The world's save is too big to send to the players (" + packed.Length + " bytes)"); return; }
+			if (packed.Length > MaxBytes)
+			{
+				Debug.LogWarning("[CUSTOM ISLANDS] The world's save is too big to send to the players (" + packed.Length + " bytes)");
+				if (!toldTooBig) { toldTooBig = true; DynamicIslands.Notify("This world's save is too big (" + (packed.Length >> 20) + " MB, over " + (MaxBytes >> 20) + " MB) to send to the players: whoever hosts it next needs a copy of the save folder", true, 8); }
+				return;
+			}
 			// (a newer save to everyone stops one still going out to everyone: the players want the newest only)
 			int gen = to.HasValue ? sendGeneration : ++sendGeneration;
 			DynamicIslands.instance.StartCoroutine(SendParts(SaveAndLoad.WorldGuid.ToString(), Path.GetFileName(save), packed, to, gen));

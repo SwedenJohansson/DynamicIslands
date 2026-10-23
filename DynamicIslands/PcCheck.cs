@@ -53,6 +53,14 @@ namespace DynamicIslands.Editor
 					found.Add("Files of an unzipped .rmod are in " + folder + " (" + string.Join(", ", unzipped.ToArray()) + "...). Put the .rmod file itself into Raft's mods folder, and delete modinfo.json, the .cs files and raft_*.txt from " + folder + " (keep your islands, plans and settings).");
 			}
 			catch { }
+			try
+			{
+				// (Franz's original Custom Islands mod loaded too: both change the same parts of Raft and fight over them)
+				// (by its Harmony id: an F9 reload leaves this mod's older copies in memory, so a look for the class would be wrong)
+				if (HarmonyLib.Harmony.HasAnyPatches("com.franzfischer.customislands"))
+					found.Add("The original Custom Islands mod (an older version of this one) is loaded too. Both change the same parts of Raft: keep only this one - remove the other .rmod from Raft's mods folder and restart Raft.");
+			}
+			catch { }
 			if (DynamicIslands.StartFailures.Count > 0)
 				found.Add("These parts of the mod didn't start: " + string.Join(", ", DynamicIslands.StartFailures.ToArray()) + " (the log, F10, says why). Restart Raft; if it stays, please report it.");
 			return found;

@@ -369,6 +369,37 @@ namespace DynamicIslands.Editor
 			IslandSummaries.Forget(name);
 		}
 
+		/// <summary>
+		/// A world's island whose file is gone (tidied up, deleted, or a gen- file removed by hand): a copy in the deleted
+		/// folder (or its subfolders) is put back. With the world's recorded hash only a copy with that content counts;
+		/// without one, the newest copy of that name. The copy in the deleted folder stays. True if the file is back.
+		/// </summary>
+		public static bool RestoreFromDeleted(string name, string hash)
+		{
+			try
+			{
+				string path = IslandSpawner.PathFor(name);
+				string folder = Path.Combine(DynamicIslands.assetpath, DeletedFolderName);
+				if (File.Exists(path) || !Directory.Exists(folder)) return false;
+				string ext = Path.GetExtension(path);
+				bool known = IslandNetwork.IsHash(hash);
+				var candidates = Directory.GetFiles(folder, "*" + ext, SearchOption.AllDirectories).Where(f =>
+				{
+					string n = Path.GetFileNameWithoutExtension(f);
+					if (string.Equals(n, name, StringComparison.OrdinalIgnoreCase)) return true;
+					if (n.StartsWith(name + " ", StringComparison.OrdinalIgnoreCase)) return true; // (an older one with a date)
+					return known && string.Equals(n, IslandNetwork.DownloadName(name, hash), StringComparison.OrdinalIgnoreCase);
+				}).OrderByDescending(f => File.GetLastWriteTimeUtc(f)).ToList();
+				string pick = known ? candidates.FirstOrDefault(f => IslandNetwork.Hash(File.ReadAllBytes(f)) == hash) : candidates.FirstOrDefault();
+				if (pick == null) return false;
+				File.Copy(pick, path);
+				IslandSummaries.Forget(name);
+				Debug.Log("[CUSTOM ISLANDS] The world's island '" + name + "' was missing: put back from " + pick);
+				return true;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not put '" + name + "' back from the deleted folder: " + e.Message); return false; }
+		}
+
 		/// <summary>Saved plans with a rule that brings this island by name (island: or oneof:).</summary>
 		public static List<string> PlansNaming(string island)
 		{

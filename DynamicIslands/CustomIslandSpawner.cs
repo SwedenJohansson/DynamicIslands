@@ -991,14 +991,14 @@ type:sunken 0.2
 						if (key == "generatedgatheroff") { GeneratedGatherOff = GenGather.Clean(value); continue; }
 						if (key == "defaultplan") { WorldDirector.DefaultPlan = value.Length > 0 ? value : WorldPlan.RandomName; continue; }
 						float v;
-						if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out v) || float.IsNaN(v) || float.IsInfinity(v)) { BadLine(line); continue; }
+						if (!ParseNumber(value, out v) || float.IsNaN(v) || float.IsInfinity(v)) { BadLine(line); continue; }
 						if (!SetValue(key, v)) BadLine(line);
 						continue;
 					}
 					// "<name> <weight>" (names may contain spaces), or just "<name>" for weight 1
 					int sp = line.LastIndexOf(' ');
 					float w;
-					if (sp > 0 && float.TryParse(line.Substring(sp + 1), NumberStyles.Float, CultureInfo.InvariantCulture, out w) && !float.IsNaN(w) && !float.IsInfinity(w))
+					if (sp > 0 && ParseNumber(line.Substring(sp + 1), out w) && !float.IsNaN(w) && !float.IsInfinity(w))
 						poolLines.Add(new KeyValuePair<string, float>(line.Substring(0, sp).Trim(), w));
 					else
 						poolLines.Add(new KeyValuePair<string, float>(line, 1f));
@@ -1153,7 +1153,7 @@ type:sunken 0.2
 				string spelt = NumberKeys.FirstOrDefault(k => k.Equals(key, StringComparison.OrdinalIgnoreCase));
 				if (spelt == null) throw new ArgumentException("'" + key + "' is not a setting of " + PoolFileName);
 				float v;
-				if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out v) || float.IsNaN(v) || float.IsInfinity(v)) throw new ArgumentException(spelt + ": a number, not '" + value + "'");
+				if (!ParseNumber(value, out v) || float.IsNaN(v) || float.IsInfinity(v)) throw new ArgumentException(spelt + ": a number, not '" + value + "'");
 				write[spelt] = FormatValue(Clamped(spelt.ToLowerInvariant(), v).Value);
 			}
 			// (the far end of where islands appear never nearer than the near end, as LoadPool keeps it)
@@ -1193,6 +1193,13 @@ type:sunken 0.2
 		/// <summary>Dev tests (CISpawnPoolSet): numbers that replace this machine's spawnpool.txt ones, kept when the file is read
 		/// again (each world load) - to give a player who joins other settings than the host's.</summary>
 		internal static readonly Dictionary<string, float> TestOverrides = new Dictionary<string, float>();
+
+		/// <summary>A number from the settings file: "0.5", or "0,5" as a PC set to a decimal comma writes it.</summary>
+		internal static bool ParseNumber(string s, out float v)
+		{
+			if (s.IndexOf('.') < 0 && s.Count(c => c == ',') == 1) s = s.Replace(',', '.');
+			return float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out v);
+		}
 
 		static void BadLine(string line) { Debug.LogWarning("[CUSTOM ISLANDS] Ignoring unknown line in " + PoolFileName + ": " + line); }
 

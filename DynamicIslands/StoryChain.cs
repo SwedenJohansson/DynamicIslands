@@ -297,6 +297,7 @@ namespace DynamicIslands.Editor
 			// (a Raft island unlocked by one of the plan's islands: no note told the players, so a banner does)
 			if (next != null) Unlock(next, !IsRaft(step));
 			Changed();
+			SaveSoon.Request("story step");
 		}
 
 		static void Unlock(string step, bool announce)
