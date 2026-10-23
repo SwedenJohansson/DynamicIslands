@@ -64,6 +64,11 @@ namespace DynamicIslands
 		public static bool allowEditing = true;
 
 		float flattenTarget; // normalised height sampled when a Flatten stroke starts
+
+		/// <summary>The Flatten brush's "Flatten to" field: metres above the sea it levels the ground to (a recipe's
+		/// "brush flatten ... h="); null = the height where the stroke starts.</summary>
+		public static float? FlattenHeight;
+		bool useFlattenHeight = true; // false while a recipe's stroke runs (SimulateStroke/SimulateDrag: their own h= or none)
 		bool stroking;
 		Vector3 dirtyMin, dirtyMax; // world-space area touched by the current stroke, repainted on release
 		float dt; // time step of the current brush application
@@ -148,6 +153,8 @@ namespace DynamicIslands
 			stamped = false;
 			dirtyMin = point; dirtyMax = point;
 			flattenTarget = SampleNormalizedHeight(point);
+			if (FlattenHeight.HasValue && useFlattenHeight)
+				flattenTarget = Mathf.Clamp01((DynamicIslands.EditorWaterLevel + FlattenHeight.Value - terrain.transform.position.y) / terrainData.size.y);
 			noiseSign = EditorInput.Shift || SubtractNoise ? -1f : 1f;
 			// Full snapshot for undo; only the part the stroke touches is kept when it ends
 			int hres = terrainData.heightmapResolution, ares = terrainData.alphamapResolution;
@@ -258,9 +265,11 @@ namespace DynamicIslands
 
 		/// <summary>Runs a complete brush stroke at a point without the mouse (used by the automated tests). flattenTo: Flatten
 		/// to this height above the terrain's base instead of the height where the stroke starts (a recipe's "h=").</summary>
-		public void SimulateStroke(Vector3 point, int frames, float deltaTime, float? flattenTo = null)
+		public void SimulateStroke(Vector3 point, int frames, float deltaTime, float? flattenTo = null, bool withField = false)
 		{
+			useFlattenHeight = withField;
 			BeginStroke(point);
+			useFlattenHeight = true;
 			if (flattenTo.HasValue) flattenTarget = Mathf.Clamp01(flattenTo.Value / terrainData.size.y);
 			for (int i = 0; i < frames; i++) ApplyAt(point, deltaTime);
 			EndStroke();
@@ -270,7 +279,9 @@ namespace DynamicIslands
 		/// height where the drag starts - or to flattenTo - Sample there and flatten along).</summary>
 		public void SimulateDrag(Vector3 from, Vector3 to, int frames, float deltaTime, float? flattenTo = null)
 		{
+			useFlattenHeight = false;
 			BeginStroke(from);
+			useFlattenHeight = true;
 			if (flattenTo.HasValue) flattenTarget = Mathf.Clamp01(flattenTo.Value / terrainData.size.y);
 			for (int i = 0; i < frames; i++) ApplyAt(Vector3.Lerp(from, to, frames > 1 ? i / (float)(frames - 1) : 1f), deltaTime);
 			EndStroke();

@@ -194,6 +194,12 @@ namespace DynamicIslands.Editor
 				? "Far end " + Vector3.Distance(terrain.transform.position + far.Value, target.transform.position).ToString("F0") + " m away, " + (terrain.transform.position.y + far.Value.y - target.transform.position.y).ToString("+0;-0") + " m up"
 				: "Raft's own line (as in its scene). Players ride it with the zipline tool.";
 			UIKit.Label(g, where, 12, UIKit.TextMuted);
+			// (the ends' places, as the Position fields count them - X Y Z, Y above the sea - so the near end can be set on a deck)
+			Vector3? nearFloor = ZiplineEnds.NearFloor(target.gameObject);
+			UIKit.Label(g, "Near end " + (nearFloor.HasValue ? ZiplineEnds.Text(nearFloor.Value - Corner) : "?") + (far.HasValue && terrain != null ? " · far end " + ZiplineEnds.Text(terrain.transform.position + far.Value - Corner) : ""), 12, UIKit.TextMuted).name = "ZipEnds";
+			RectTransform nearRow = UIKit.Row(g, 26f, 4f, "ZipNearRow");
+			UIKit.Button(nearRow, "Near end: where I look", () => { if (NearEndTo(target, ScatterTool.ViewCentre())) Refresh(); },
+				"Moves the whole zipline so its near end's floor stands where the camera looks (on a deck, a roof, the ground). Look at the spot, then click. Ctrl+Z undoes it", -1, 26f, 12).name = "Button_ZipNearEnd";
 			RectTransform row = UIKit.Row(g, 26f, 4f, "ZipRow");
 			UIKit.Button(row, "Far end: where I look", () =>
 			{
@@ -202,6 +208,21 @@ namespace DynamicIslands.Editor
 				PropsCommand.Change(target, ObjectProps.With(target.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(at.Value - terrain.transform.position)));
 			}, "Puts the line's far end (its lower floor) on the ground the camera looks at; in a world the line runs from this object to there. Keep it lower than this end, as a zipline runs downhill.", -1, 26f, 12);
 			if (far.HasValue) UIKit.Button(row, "Raft's own", () => PropsCommand.Change(target, ObjectProps.With(target.Props, ZiplineEnds.ZipTo, null)), "Back to the line as Raft made it", 90, 26f, 12);
+		}
+
+		/// <summary>Moves the zipline object so its near end's floor stands at <paramref name="at"/> (one undo step; also tests).</summary>
+		internal static bool NearEndTo(EditorGameObject target, Vector3? at)
+		{
+			Vector3? nearFloor = target != null ? ZiplineEnds.NearFloor(target.gameObject) : null;
+			if (!at.HasValue || !nearFloor.HasValue) return false;
+			var gizmo = DynamicIslands.EditorGizmoHandler;
+			var cmd = new RuntimeGizmos.TransformCommand(gizmo, target.transform);
+			target.transform.position += at.Value - nearFloor.Value;
+			cmd.StoreNewTransformValues();
+			CommandUndoRedo.UndoRedoManager.Insert(cmd);
+			if (gizmo != null) gizmo.SetPivotPoint();
+			nextPlaceShow = 0f;
+			return true;
 		}
 
 		#region Creature editor
@@ -711,7 +732,7 @@ namespace DynamicIslands.Editor
 			Transform t = target.transform;
 			Vector3 pos = Corner + new Vector3(v[0], v[1], v[2]);
 			Quaternion rot = Quaternion.Euler(v[3], v[4], v[5]);
-			Vector3 scale = new Vector3(Mathf.Clamp(v[6], 0.01f, 100f), Mathf.Clamp(v[7], 0.01f, 100f), Mathf.Clamp(v[8], 0.01f, 100f));
+			Vector3 scale = new Vector3(Mathf.Clamp(v[6], 0.01f, 10000f), Mathf.Clamp(v[7], 0.01f, 10000f), Mathf.Clamp(v[8], 0.01f, 10000f));
 			if ((pos - t.position).sqrMagnitude < 1e-6f && Quaternion.Angle(rot, t.rotation) < 0.01f && (scale - t.lossyScale).sqrMagnitude < 1e-6f) return;
 			var gizmo = DynamicIslands.EditorGizmoHandler;
 			var cmd = new RuntimeGizmos.TransformCommand(gizmo, t);

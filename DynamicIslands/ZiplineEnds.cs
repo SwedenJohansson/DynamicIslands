@@ -68,5 +68,19 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The far end's position in the island's coordinates (for the generator and recipes): zip.to as text.</summary>
 		public static Vector3? FarEnd(IDictionary<string, string> props) { Vector3 v; return TryParse(ObjectProps.Get(props, ZipTo), out v) ? v : (Vector3?)null; }
+
+		/// <summary>Where the near end's floor stands (world), the end that stays with the object: the ZiplineBase piece
+		/// nearest the near connect point (that point itself when there is none). Null when the object has no zipline line.</summary>
+		public static Vector3? NearFloor(GameObject go)
+		{
+			MeshPath_Zipline_Landmark line = go != null ? go.GetComponentInChildren<MeshPath_Zipline_Landmark>(true) : null;
+			Transform a = line != null && pointA != null ? pointA.GetValue(line) as Transform : null;
+			if (line == null) return null;
+			Transform bEnd = pointB != null ? pointB.GetValue(line) as Transform : null;
+			Vector3 near = bEnd != null ? bEnd.position : line.transform.position;
+			Transform floor = go.GetComponentsInChildren<Transform>(true).Where(t => t != go.transform && t.name.IndexOf("ZiplineBase", System.StringComparison.OrdinalIgnoreCase) >= 0 &&
+				(a == null || (t.position - near).sqrMagnitude < (t.position - a.position).sqrMagnitude)).OrderBy(t => (t.position - near).sqrMagnitude).FirstOrDefault();
+			return floor != null ? floor.position : near;
+		}
 	}
 }

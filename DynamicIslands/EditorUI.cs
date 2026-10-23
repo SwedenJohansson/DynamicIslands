@@ -283,7 +283,7 @@ namespace DynamicIslands.Editor
 			brushButtons = new Button[15];
 			brushButtons[0] = UIKit.Button(r1, "Raise", () => SetBrush(terraineditor.TerrainModificationAction.Raise), "Raise: hold the left mouse button to build up land");
 			brushButtons[1] = UIKit.Button(r1, "Lower", () => SetBrush(terraineditor.TerrainModificationAction.Lower), "Lower: dig down, make bays and lagoons");
-			brushButtons[2] = UIKit.Button(r2, "Flatten", () => SetBrush(terraineditor.TerrainModificationAction.Flatten), "Flatten: levels the ground to the height where the stroke starts");
+			brushButtons[2] = UIKit.Button(r2, "Flatten", () => SetBrush(terraineditor.TerrainModificationAction.Flatten), "Flatten: levels the ground to the height where the stroke starts (or to Flatten to, below)");
 			brushButtons[3] = UIKit.Button(r2, "Smooth", () => SetBrush(terraineditor.TerrainModificationAction.Smooth), "Smooth: softens bumps and sharp edges");
 			brushButtons[9] = UIKit.Button(r3, "Noise", () => SetBrush(terraineditor.TerrainModificationAction.Noise), "Noise: roughens the ground with bumps (their size: Noise size below) - hold Shift to take them away again");
 			brushButtons[10] = UIKit.Button(r3, "Erode", () => SetBrush(terraineditor.TerrainModificationAction.Erode), "Erode: ground steeper than the Talus angle below slides down, like loose earth - wears cliffs and spikes into slopes");
@@ -325,6 +325,15 @@ namespace DynamicIslands.Editor
 				v => terraineditor.brushRadius = v, "Brush diameter in metres (console: ChangeWidth)");
 			strengthSlider = UIKit.Slider(brush, "Strength", terraineditor.MinStrength, terraineditor.MaxStrength, terraineditor.strength, StrengthText,
 				v => terraineditor.strength = v, "How fast the brush works (console: ChangeStrength)");
+			RectTransform flatRow = UIKit.Row(brush, 26f, 4f, "FlattenTo");
+			UIKit.Size(UIKit.Label(flatRow, "Flatten to", 14, UIKit.TextMuted).gameObject, 70);
+			flattenField = UIKit.Field(flatRow, "start", "", 26f, "Flatten brush: the height above the sea (metres) it levels the ground to, as a recipe's h=. Empty: the height where the stroke starts");
+			flattenField.name = "Field_FlattenTo";
+			flattenField.contentType = InputField.ContentType.DecimalNumber;
+			flattenField.characterLimit = 6;
+			flattenField.onEndEdit.AddListener(SetFlattenHeight);
+			typingFields.Add(flattenField);
+			UIKit.Size(UIKit.Label(flatRow, "m", 14, UIKit.TextMuted).gameObject, 18);
 			RectTransform edge = UIKit.Row(brush, 26f, 4f, "Falloff");
 			UIKit.Size(UIKit.Label(edge, "Edge", 14, UIKit.TextMuted).gameObject, 40);
 			falloffButtons = new[]
@@ -406,6 +415,10 @@ namespace DynamicIslands.Editor
 			randomButton = UIKit.Button(o1, "Random", () => { PlacementOptions.RandomTurnAndSize = !PlacementOptions.RandomTurnAndSize; RefreshOptions(); }, "On: every placed object gets a random turn and size (natural-looking groups)");
 			slopeButton = UIKit.Button(o1, "Slope", () => { PlacementOptions.AlignToSlope = !PlacementOptions.AlignToSlope; RefreshOptions(); }, "On: objects lean with the ground instead of standing straight up");
 			gridButton = UIKit.Button(o1, "Grid", () => { PlacementOptions.SnapToGrid = !PlacementOptions.SnapToGrid; RefreshOptions(); }, "On: Raft's 1.5 m building grid and 90\u00B0 turns, for huts and rafts of Raft blocks");
+
+			// Air pocket (lib_frozen's airpocket macro, one undo step); Scatter itself is under the object list
+			RectTransform o2 = UIKit.Row(place, 26f, 4f, "AirPocket");
+			UIKit.Button(o2, "Air pocket", () => ScatterTool.PlaceAirPocket(), "Puts down an air pocket at the middle of the view: Raft's air pocket, a trigger zone with Air on (players breathe in it) and bubbles. One undo step", -1, 26f, 12).name = "Button_AirPocket";
 
 			objectTips = Tips(s, "Pick an object on the right, click the ground\nShift+click: keep placing \u00B7 Q/E: turn \u00B7 [ ]: size \u00B7 Esc: cancel\nClick an object to select it \u00B7 Shift+click: add to the selection\nDrag on empty ground: select with a box \u00B7 Ctrl+A: all\nSelect one object to edit its settings here\nSpace / C: camera straight up / down").gameObject;
 			return s;
@@ -571,6 +584,21 @@ namespace DynamicIslands.Editor
 		}
 
 		static RectTransform placingGroup;
+		static InputField flattenField;
+		/// <summary>The tool panels' own number fields (Flatten to): typing in them must not fly the camera.</summary>
+		static readonly List<InputField> typingFields = new List<InputField>();
+
+		static string Num(float v) { return v.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture); }
+
+		/// <summary>The "Flatten to" field: metres above the sea, empty = where the stroke starts (also tests).</summary>
+		internal static void SetFlattenHeight(string text)
+		{
+			float h;
+			if (!string.IsNullOrEmpty(text) && float.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out h))
+				terraineditor.FlattenHeight = Mathf.Clamp(h, -DynamicIslands.EditorWaterLevel, terraineditor.terrain != null ? terraineditor.terrain.terrainData.size.y - DynamicIslands.EditorWaterLevel : 500f);
+			else terraineditor.FlattenHeight = null;
+			if (flattenField != null) flattenField.text = terraineditor.FlattenHeight.HasValue ? Num(terraineditor.FlattenHeight.Value) : "";
+		}
 		static GameObject objectTips;
 		static InputField infoTitleField, infoAuthorField, infoTextField, infoRegrowField, infoNotBeforeField;
 		static Text infoNotBeforeText;
@@ -885,7 +913,7 @@ namespace DynamicIslands.Editor
 
 			if (elevationField != null)
 			{
-				bool typing = elevationField.isFocused || (infoTitleField != null && (infoTitleField.isFocused || infoAuthorField.isFocused || infoTextField.isFocused || infoRegrowField.isFocused));
+				bool typing = elevationField.isFocused || typingFields.Any(f => f != null && f.isFocused) || (infoTitleField != null && (infoTitleField.isFocused || infoAuthorField.isFocused || infoTextField.isFocused || infoRegrowField.isFocused));
 				if (typing) EditorInput.IsTyping = true;
 				else if (elevationTyping) EditorInput.IsTyping = false;
 				elevationTyping = typing;

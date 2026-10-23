@@ -591,6 +591,9 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
   shows the brush. Objects standing on the ground you sculpt **go up and down with it** (trees, rocks, huts: lowering
   the ground no longer leaves them in the air, raising it no longer buries them); what stands higher, on a deck or a
   roof, stays. **Ctrl+Z** undoes the stroke and the objects' moves together.
+  **Flatten to** (a field in the brush settings): type a height in metres above the sea (for example 4) and **Flatten**
+  levels the ground to exactly that height, as a recipe's `brush flatten ... h=4` does. Leave it empty to flatten to the
+  height where the stroke starts.
   **Noise** roughens the ground under the brush (**Noise size**: small bumps or big swells; hold **Shift** at the start
   of a stroke to take the same noise off again). **Erode** lets steep ground slide down until no slope is steeper than
   **Talus** - cliffs crumble into screes, spikes into hills; the ground is moved, not lost.
@@ -646,6 +649,19 @@ vines on any later island - the vines stay cut. Raft's **zipline lines** (**Zipl
 on Raft's islands. Search the browser for them. Select a line to set its **far end**: **Far end: where I look**
 puts the far end's floor on the ground the camera looks at (keep it lower - a zipline runs downhill); in a world Raft
 makes the line from the object to there (the editor still shows Raft's own line). **Raft's own** puts it back.
+**Near end: where I look** moves the whole line so its **near end's** floor stands on the spot the camera looks at,
+on the ground or on a deck you built, so players can step onto the line from there. A line under the buttons shows
+both ends' positions (in the same metres as Place exactly), so you can set the ends to exact spots.
+
+**Raft's vehicles** are in the browser under their island's category. Search for them by name:
+- Caravan Town: the vans (**Van_1** to **Van_5**), the caravans, the bare caravan frame, the toy boat (**BoatMini**)
+  and the rocket.
+- Varuna Point: the excavator, forklift, wagons and the huge harbour crane (**VP_ApexCrane**).
+- Temperance: the snowmobiles (**TP_SnowVehicle01/02**).
+- Utopia: the two cranes.
+- The radio tower's plastic boat (**RT_PlasticBoat**), the crashed **Airplane** and the **BoatStranded**.
+
+Placed, a vehicle rests on its wheels, tracks or hull and is solid: players stand on it and bump into it.
 
 **Buried treasure** (in "Loot & chests"; a red cross on a mound in the editor) is Raft's own treasure for the
 **metal detector** and the **shovel**: in a world the detector beeps as players come near it, three digs bring up the
@@ -669,9 +685,21 @@ player and after saving and loading. **Check** warns about a key door that no st
 
 **Scatter** (the row under the browser) spreads many of the **last object you picked** round the point you are
 looking at: **how many** (1-200, 8 at first), within a **radius** in metres (1-300, 15), and **keep** (0-30, 3) - not within that many metres of anything
-already on the island (its buildings, its quest's objects, its plants). **On land / Under water** says where they
-go (under water: 0.6 to 40 m down; Raft's sea finds always go under water). Each is set down on the ground as the placer does; when the area has no
+already on the island (its buildings, its quest's objects, its plants). **On land / Under water / Anywhere** (click
+to change it) says where they go:
+- under water: 0.6 to 40 m down;
+- anywhere: land and sea floor alike;
+- Raft's sea finds go under water when the button says On land.
+
+**Seed**: type a number and the same seed spreads them on the same spots every time, as a recipe's `scatter ... seed=`
+does. Leave it empty for new spots each time; the message says which seed was used. Each is set down on the ground as the placer does; when the area has no
 room for all of them it says how many it placed, and **Ctrl+Z** takes the whole scatter back.
+**Air pocket** (in the Placing group, under Random / Slope / Grid) puts a ready air pocket in the middle of the view, as one undo step:
+- Raft's air-pocket object;
+- a trigger zone with **Air** on (radius 2.5 m, "An air pocket - breathe.");
+- an atmosphere zone with bubbles.
+
+Put it under water, inside a wreck or a cave.
 Objects from Raft's islands are placed **standing straight**: one that leant a little where Raft has it (a ladder
 against a wall) stands up straight; a bigger lean - more than 25°, a boulder lying on its side - is its look and stays.
 
@@ -697,7 +725,7 @@ against a wall) stands up straight; a bigger lean - more than 25°, a boulder ly
 ![Placed objects](images/editor-placed-list.jpg)
 *The Placed objects list: the signs hidden, the warthog herds locked.*
 - **Place exactly** (the last group when one object is selected): its **Position** (X and Z in metres across the build
-  area, Y in metres above the sea), **Turn** in degrees and **Size** (1 = as made), typed. Enter moves it; Ctrl+Z
+  area, Y in metres above the sea), **Turn** in degrees and **Size** (1 = as made, up to 10000), typed. Enter moves it; Ctrl+Z
   undoes. The fields follow the object when you move it with the gizmo.
 
 ![Place exactly](images/editor-place-exactly.jpg)

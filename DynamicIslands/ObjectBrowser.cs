@@ -60,14 +60,20 @@ namespace DynamicIslands.Editor
 			scatterCount = UIKit.Field(sc, "how many", "8", 26f, "How many to scatter");
 			scatterRadius = UIKit.Field(sc, "radius m", "15", 26f, "Within this many metres of the middle of your view");
 			scatterFree = UIKit.Field(sc, "keep m", "3", 26f, "Not within this many metres of anything already on the island (its buildings, its quest's objects)");
-			waterButton = UIKit.Button(sc, "On land", () => { scatterWater = !scatterWater; UIKit.LabelOf(waterButton).text = scatterWater ? "Under water" : "On land"; },
-				"Where they go: on land, or on the sea floor (Raft's sea finds: sand, clay, stone, ores, scrap, clams, seaweed)", 86f, 26f, 12);
+			waterButton = UIKit.Button(sc, "On land", () => { scatterWhere = (scatterWhere + 1) % 3; UIKit.LabelOf(waterButton).text = ScatterTool.WhereNames[scatterWhere]; },
+				"Where they go: on land, on the sea floor (Raft's sea finds: sand, clay, stone, ores, scrap, clams, seaweed), or anywhere (click to change)", 86f, 26f, 12);
+			waterButton.name = "Button_ScatterWhere";
+			// (the seed: the same seed gives the same spots, as a recipe's "scatter ... seed="; empty: new spots each time)
+			scatterSeed = UIKit.Field(sc, "seed", "", 26f, "Same seed, same spots (a recipe's scatter seed=). Empty: new spots each time; the one used is shown after");
+			scatterSeed.name = "Field_ScatterSeed";
+			scatterSeed.contentType = InputField.ContentType.IntegerNumber;
 			PlaceableCatalog.Changed += MarkDirty;
 		}
 
 		Button scatterButton, waterButton;
-		InputField scatterCount, scatterRadius, scatterFree;
-		bool scatterWater;
+		InputField scatterCount, scatterRadius, scatterFree, scatterSeed;
+		/// <summary>0 on land, 1 under water, 2 anywhere (ScatterTool.WhereNames).</summary>
+		int scatterWhere;
 		/// <summary>The object last picked in the list: what Scatter spreads.</summary>
 		public static string LastPicked = "";
 
@@ -80,10 +86,12 @@ namespace DynamicIslands.Editor
 			if (!int.TryParse(scatterCount.text, out n)) n = 8;
 			if (!float.TryParse(scatterRadius.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out r)) r = 15f;
 			if (!float.TryParse(scatterFree.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out keep)) keep = 3f;
-			bool water = scatterWater || ScatterTool.OnlyUnderWater(LastPicked);
-			int made = ScatterTool.Scatter(LastPicked, centre.Value, Mathf.Clamp(n, 1, 200), Mathf.Clamp(r, 1f, 300f), Mathf.Clamp(keep, 0f, 30f), water, Environment.TickCount).Count;
-			DynamicIslands.Notify(made == 0 ? "No room for " + PlaceableCatalog.DisplayName(LastPicked) + " there (" + (water ? "under water" : "on land") + ", away from other objects)"
-				: "Scattered " + made + " " + PlaceableCatalog.DisplayName(LastPicked) + (made < n ? " (no room for more)" : "") + " - Ctrl+Z takes them back");
+			int where = ScatterTool.OnlyUnderWater(LastPicked) && scatterWhere == 0 ? 1 : scatterWhere;
+			int seed;
+			if (!int.TryParse(scatterSeed.text, out seed)) seed = UnityEngine.Random.Range(1, 100000);
+			int made = ScatterTool.Scatter(LastPicked, centre.Value, Mathf.Clamp(n, 1, 200), Mathf.Clamp(r, 1f, 300f), Mathf.Clamp(keep, 0f, 30f), where, seed).Count;
+			DynamicIslands.Notify(made == 0 ? "No room for " + PlaceableCatalog.DisplayName(LastPicked) + " there (" + ScatterTool.WhereNames[where].ToLowerInvariant() + ", away from other objects)"
+				: "Scattered " + made + " " + PlaceableCatalog.DisplayName(LastPicked) + (made < n ? " (no room for more)" : "") + " with seed " + seed + " - Ctrl+Z takes them back");
 		}
 
 		void OnDestroy()

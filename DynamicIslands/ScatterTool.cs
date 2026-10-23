@@ -24,6 +24,17 @@ namespace DynamicIslands.Editor
 		/// free metres from any object already placed. Returns the placed objects (fewer when the area has no room).</summary>
 		public static List<GameObject> Scatter(string name, Vector3 centre, int count, float radius, float free, bool underWater, int seed)
 		{
+			return Scatter(name, centre, count, radius, free, underWater ? 1 : 0, seed);
+		}
+
+		/// <summary>Where scattered copies may go (where: 0 on land, 1 under water, 2 anywhere - a recipe's default, "wet", "any").</summary>
+		public static readonly string[] WhereNames = { "On land", "Under water", "Anywhere" };
+
+		/// <summary>As above, with where (0 land, 1 under water, 2 anywhere). The same seed gives the same spots, as a
+		/// recipe's "scatter ... seed=" does.</summary>
+		public static List<GameObject> Scatter(string name, Vector3 centre, int count, float radius, float free, int where, int seed)
+		{
+			bool underWater = where == 1;
 			var made = new List<GameObject>();
 			if (!DynamicIslands.InEditor() || string.IsNullOrEmpty(name) || count <= 0) return made;
 			if (!ObjectLimit.Allow(count)) return made;
@@ -39,7 +50,7 @@ namespace DynamicIslands.Editor
 				var at = new Vector3(centre.x + (float)(Math.Cos(ang) * dist), 0f, centre.z + (float)(Math.Sin(ang) * dist));
 				Vector3 ground, normal;
 				if (!PlacementOptions.GroundAt(new Vector3(at.x, sea + 200f, at.z), out ground, out normal)) continue;
-				if (underWater ? ground.y > sea - 0.6f : ground.y < sea + 0.3f) continue;
+				if (where != 2 && (underWater ? ground.y > sea - 0.6f : ground.y < sea + 0.3f)) continue;
 				if (underWater && ground.y < sea - 40f) continue;
 				Physics.SyncTransforms();
 				if (free > 0f && Physics.OverlapSphere(ground + Vector3.up, free, ~0, QueryTriggerInteraction.Ignore).Any(c => c.GetComponentInParent<EditorGameObject>() != null)) continue;
@@ -77,6 +88,69 @@ namespace DynamicIslands.Editor
 				if (t > 0f) return ray.origin + ray.direction * t;
 			}
 			return null;
+		}
+	
+
+		public const string AirPocketObject = "AirPocket_1";
+
+		/// <summary>The Air pocket button (Objects tab): loads Raft's air pocket if needed, then puts the set down at the
+		/// middle of the view.</summary>
+		public static void PlaceAirPocket()
+		{
+			if (PlaceableCatalog.IsLoaded(AirPocketObject)) { ReportAirPocket(AirPocketAt(ViewCentre())); return; }
+			DynamicIslands.instance.StartCoroutine(LoadAirPocket());
+		}
+
+		static System.Collections.IEnumerator LoadAirPocket()
+		{
+			DynamicIslands.Notify("Loading Raft's air pocket...");
+			yield return PlaceableCatalog.EnsureLoaded(new[] { AirPocketObject });
+			ReportAirPocket(AirPocketAt(ViewCentre()));
+		}
+
+		static void ReportAirPocket(List<GameObject> placed)
+		{
+			if (placed.Count > 0) DynamicIslands.Notify("Air pocket placed: Raft's air pocket, a zone with Air on, bubbles - Ctrl+Z takes them back");
+			else DynamicIslands.Notify("Look at the sea floor where the air pocket should go, then click Air pocket again", true);
+		}
+
+		/// <summary>lib_frozen's airpocket macro: AirPocket_1 (0.6 size) on the ground, a trigger zone 1.6 m up (radius
+		/// 2.5, Air on, every time, a message) and a bubbles atmosphere zone 1.2 m up (radius 3). One undo step.</summary>
+		public static List<GameObject> AirPocketAt(Vector3? at)
+		{
+			var list = new List<GameObject>();
+			GameObject rootObject = GameObject.Find("PlacedObjects");
+			if (at == null || rootObject == null || !DynamicIslands.InEditor() || !ObjectLimit.Allow(3)) return list;
+			Vector3 ground, normal;
+			float gy = PlacementOptions.GroundAt(new Vector3(at.Value.x, DynamicIslands.EditorWaterLevel + 200f, at.Value.z), out ground, out normal) ? ground.y : at.Value.y;
+			var parts = new[]
+			{
+				new { Name = AirPocketObject, Up = 0.05f, Props = new Dictionary<string, string>() },
+				new { Name = ContentCatalog.TriggerZone, Up = 1.6f, Props = new Dictionary<string, string> { { ObjectProps.ZoneId, "air" }, { ObjectProps.ZoneRadius, "2.5" },
+					{ ObjectProps.ZoneRepeat, "1" }, { ObjectProps.ZoneAir, "1" }, { ObjectProps.ZoneMessage, "An air pocket - breathe." } } },
+				new { Name = ContentCatalog.AtmosphereZoneName, Up = 1.2f, Props = new Dictionary<string, string> { { ObjectProps.AtmoParticles, "bubbles" }, { ObjectProps.ZoneRadius, "3" } } },
+			};
+			foreach (var part in parts)
+			{
+				GameObject go = PlaceableCatalog.Spawn(part.Name, rootObject.transform);
+				if (go == null) { Debug.LogWarning("[CUSTOM ISLANDS] Air pocket: could not make " + part.Name); break; }
+				go.transform.rotation = PlacementOptions.Straight(go.transform.rotation, true);
+				go.transform.position = new Vector3(at.Value.x, gy + part.Up, at.Value.z);
+				if (part.Name == AirPocketObject) go.transform.localScale *= 0.6f;
+				Collider own = go.GetComponent<Collider>();
+				if (own != null) own.enabled = true;
+				Dictionary<string, string> props = ObjectProps.Defaults(part.Name);
+				foreach (var kv in part.Props) props[kv.Key] = kv.Value;
+				EditorGameObject.Attach(go, part.Name, props);
+				list.Add(go);
+			}
+			if (list.Count < parts.Length)
+			{
+				foreach (GameObject go in list) { go.SetActive(false); UnityEngine.Object.Destroy(go); }
+				return new List<GameObject>();
+			}
+			UndoRedoManager.Insert(new ObjectVisibilityCommand(list, true));
+			return list;
 		}
 	}
 }

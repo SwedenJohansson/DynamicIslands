@@ -377,6 +377,7 @@ namespace DynamicIslands.Editor
 			}
 			else go = UnityEngine.Object.Instantiate(proto, parent);
 			go.name = name;
+			if (PlacementOptions.Vehicles.Contains(name)) PlacementOptions.MakeSolid(go);
 			go.SetActive(true);
 			return go;
 		}

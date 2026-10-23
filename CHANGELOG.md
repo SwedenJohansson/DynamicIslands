@@ -26,6 +26,15 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   All of Raft's story blueprints are quest steps on the way.
 
 ### Changed
+- **Editor tools that match the storyline recipes:** the in-game editor can now build what the recipes build.
+  - **Flatten to** a typed height above the sea.
+  - **Scatter** has a **Seed** (the same seed gives the same spots) and **Anywhere** next to On land / Under water.
+  - **Place exactly** takes sizes up to 10000.
+  - An **Air pocket** button puts down Raft's air pocket, an Air trigger zone and bubbles in one step.
+  - A zipline line shows both ends' positions and has **Near end: where I look**, to start it on a deck.
+- **Raft's vehicles in the editor:** all 24 of them are in the object browser under their island's category, and
+  they now rest on their wheels, tracks or hull. Utopia's crane no longer sinks 2.5 m and Varuna's excavator no longer
+  floats. Caravan Town's toy boat and rocket are now solid.
 - **Late-game resources in the storylines:** the last two or three islands of each of the ten storylines have a buried treasure with 3 titanium ore (metal detector and shovel; optional, never a quest step), as do a middle island in The Rainmakers (The Fogworks), Raft 2 (Cinderfall), The Gravity Sea (Pendulum Isle) and Raft Remade (Tangaroa Remade, which also gets three titanium rocks). The Last Post's chests hold titanium ingots (Franking Works, Ada's Round, General Post Office). Explosive goo: puffer fish and 3 goo in a chest on Cinderfall, The Fogworks and Telegraph Narrows. The Gravity Sea gets farm animals (a llama and hens at Upfall Orchard, a boar at Lodestone Quay), and Shelter Atoll's bunk locker holds wool and eggs.
 
 ### Fixed

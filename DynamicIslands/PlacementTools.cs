@@ -116,7 +116,34 @@ namespace DynamicIslands.Editor
 			if (rs.Length == 0) return 0f;
 			float bottom = rs.Min(r => r.bounds.min.y), top = rs.Max(r => r.bounds.max.y);
 			float below = go.transform.position.y - bottom;
+			// (a vehicle rests on its wheels or hull exactly: Utopia's crane has its pivot 2.5 m up and sank that far, Varuna's
+			// excavator its pivot under its tracks and hung 0.8 m in the air - CIVehicles, 2026-10-23)
+			if (Vehicles.Contains(go.name)) return below;
 			return below > Mathf.Max(1f, (top - bottom) / 3f) ? below : 0f;
+		}
+
+		/// <summary>Raft's vehicles (the user, 2026-10-23: they must be placeable in the editor): Caravan Town's vans,
+		/// caravans, mini boat and rocket, Varuna Point's machines, Temperance's snowmobiles, Utopia's cranes, the radio
+		/// tower's plastic boat, the pilot island's plane and the stranded boat. Each stays in its town's category of the
+		/// object list; placed, it rests on its bottom and is solid (MakeSolid).</summary>
+		public static readonly HashSet<string> Vehicles = new HashSet<string> {
+			"Van_1", "Van_2", "Van3", "Van_4", "Van_5", "Caravan_Blue_01", "Caravan_Green_01", "Caravan_Green_02", "Caravan_Yellow_01",
+			"CaravanBarebones1", "BoatMini", "CaravanRocket", "VP_Excavator", "VP_Forklift", "VP_ApexCrane", "VP_Wagon01", "VP_Wagon02",
+			"TP_SnowVehicle01", "TP_SnowVehicle02", "UT_ElectricityIsland_Crane01", "UT_ElectricityIsland_Crane02", "RT_PlasticBoat",
+			"Airplane", "BoatStranded" };
+
+		/// <summary>A vehicle without a solid collider of its own (Caravan Town's mini boat and rocket: Raft's copies stand out
+		/// of reach) gets a box on each of its meshes, so players stand on it and bump into it.</summary>
+		public static void MakeSolid(GameObject go)
+		{
+			if (go.GetComponentsInChildren<Collider>(true).Any(c => !c.isTrigger)) return;
+			foreach (MeshFilter mf in go.GetComponentsInChildren<MeshFilter>(true))
+			{
+				if (mf.sharedMesh == null) continue;
+				BoxCollider box = mf.gameObject.AddComponent<BoxCollider>();
+				box.center = mf.sharedMesh.bounds.center;
+				box.size = mf.sharedMesh.bounds.size;
+			}
 		}
 
 		/// <summary>The lowest terrain under a footprint (its edges kept 12 % in: a base's rounded rim, a crown hanging over).</summary>
