@@ -111,6 +111,15 @@ namespace DynamicIslands
 				for (float t = Time.time + Kraken.SwipeEvery + 2f; Time.time < t && Kraken.SwipesLanded == landed;) yield return KrakenWait(0.1f);
 				float lost = hp0 - me.Stats.stat_health.Value;
 				Check(ref ok, Kraken.SwipesLanded > landed && lost > 0f && lost <= Kraken.SwipeDamage * 2f, "a free arm swiped the player standing by it: -" + lost.ToString("F1") + " health (of " + hp0.ToString("F0") + ")");
+				// pictures of the next swipe: reared up, then the slam
+				Vector3 Nw = near.Ctrl[3];
+				Vector3 camAt = E - u * 5f + s * 13f + Vector3.up * 6f, lookAt = (Nw + E) * 0.5f + Vector3.up * 1.5f;
+				camAt.y = Mathf.Max(camAt.y, E.y + 5f);
+				for (float t = Time.time + Kraken.SwipeEvery + 1f; Time.time < t && arm.SwipePushOf(near).y < 1.1f;) yield return KrakenWait(0.02f);
+				yield return PlayPicture("kraken_swipe_rear", pivot.TransformPoint(camAt), pivot.TransformPoint(lookAt));
+				landed = Kraken.SwipesLanded;
+				for (float t = Time.time + 2f; Time.time < t && Kraken.SwipesLanded == landed;) yield return KrakenWait(0.02f);
+				yield return PlayPicture("kraken_swipe_slam", pivot.TransformPoint(camAt), pivot.TransformPoint(lookAt));
 				PlayerMove.To(me, pivot.TransformPoint(arm.Block.transform.localPosition - u * 4.5f + Vector3.up * 1.2f));
 				yield return KrakenWait(0.3f);
 

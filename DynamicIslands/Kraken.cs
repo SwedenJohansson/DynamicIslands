@@ -771,6 +771,9 @@ namespace DynamicIslands.Editor
 				catch { }
 			}
 
+			/// <summary>How far free arm t is pushed by its swipe now (zero between swipes; tests).</summary>
+			public Vector3 SwipePushOf(Tentacle t) { int i = Others.IndexOf(t); return i >= 0 ? swipePush[i] : Vector3.zero; }
+
 			static float Smooth(float x) { x = Mathf.Clamp01(x); return x * x * (3f - 2f * x); }
 
 			/// <summary>Free arm i's swipe: every SwipeEvery s (a seeded offset per arm) while the arm holds, it picks the

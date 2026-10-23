@@ -2996,6 +2996,8 @@ side and **grabs a floor on the raft's edge** - never one in the middle. Its bas
 never see where it starts. One to three more arms rise **3-8 m off the edge** around it and sway and curl there; they
 swipe: about every seven seconds each one **rears up for a second and slams down where the nearest player within 9 m stood**. A player still there takes **8 damage** (Raft's monster difficulty scales it), with a thump; step away when an arm rears up and it misses. One player alone can still fight it off. The arms are purple and darken toward red as they are hit, with pale suckers on the inner curl.
 
+![A free kraken arm swinging down at the raft's edge where a player stands](images/world-kraken-swipe.jpg)
+
 - **Fight it off:** hit the grabbing arm with a **melee weapon or a spear** (any swing that reaches it counts; arrows
   don't). **10 hits within a minute**, by any players together, and it lets go and sinks with all the other arms. The
   raft is whole.
