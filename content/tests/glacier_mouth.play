@@ -1,0 +1,25 @@
+# Glacier Mouth (CIPlay glacier_mouth): the depot, the orders, the bears, the drill rig, the leader's chest, the
+# Ringwave (camera) and its note, the cave mouth chest.
+island Glacier Mouth
+offset 0 0
+expect step 0
+expect title The Glacier
+zone depot
+expect step 1
+read Expedition orders
+expect step 2
+kill Polar bear
+expect step 3
+open Drill rig chest
+wait 3
+expect step 4
+open Leader's chest
+wait 3
+expect step 5
+zone ringwave
+wait 6
+read Carving note
+expect step 6
+open Cave mouth chest
+wait 3
+expect done

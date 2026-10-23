@@ -127,7 +127,8 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
      [15.10 A whole storyline: The Last Post](#1510-a-whole-storyline-the-last-post) ·
      [15.11 A whole storyline: Relic of the Seventh Tide](#1511-a-whole-storyline-relic-of-the-seventh-tide) ·
      [15.12 A whole storyline: The Lullaby Frequency](#1512-a-whole-storyline-the-lullaby-frequency) ·
-     [15.13 A whole storyline: The Gravity Sea](#1513-a-whole-storyline-the-gravity-sea)
+     [15.13 A whole storyline: The Gravity Sea](#1513-a-whole-storyline-the-gravity-sea) ·
+     [15.15 A whole storyline: The Frozen Horizon](#1515-a-whole-storyline-the-frozen-horizon)
 16. [Learn from the islands](#16-learn-from-the-islands)
    - [16.1 Opening any island in the editor](#161-opening-any-island-in-the-editor) · [16.2 Looking around](#162-looking-around) ·
      [16.3 Two small islands with many features](#163-two-small-islands-with-many-features) · [16.4 Every feature, and an island to look at](#164-every-feature-and-an-island-to-look-at)
@@ -4289,6 +4290,36 @@ To learn from it: open Upfall Orchard and Rootcellar Deep side by side to see ho
 set up (**Elevation** in the island settings), then open the plan and follow its signals and zones.
 
 ---
+
+### 15.15 A whole storyline: The Frozen Horizon
+
+**The Frozen Horizon** is a plan of eleven islands in place of Raft's own story (Raft's story off, no random islands,
+the chain on the Receiver, 300 to 1100). A sea gone white in the north: fragments of a call lead you from a relay mast
+across the floes to a harbour warmed by a vent, a sledge camp, an icebreaker split in two by the pack, a city of frozen
+whaling ships and a glacier with a sign cut in its face. Under the glacier lies the Coldhold, a seed bank with three
+switches - **KEEP**, **CARRY** or **BROADCAST** - and, thirty metres down, the flooded Seed Ark it opens. The islands
+show every kind of "when": a quest (`quest:stack`), a signal (`signal:leads:rescued`), a rule (`rule:sledge`), a zone
+(`zone:bow:hatch`), a quest step (`step:decks:10`), a landing (`visit:mouth`), a day (`day:9:again`) and a frequency
+that needs the engine (`receiver:1100:needs=engine`). All of Raft's story blueprints are **Blueprint** steps on the way.
+The Iron Whale's bow has Raft's vending machine; Glacier Mouth and The Coldhold Vault have a **Raft store**. Titanium
+lies buried on Saga Drift, Glacier Mouth and in the Coldhold.
+
+| Island | What it is | What to look at |
+|---|---|---|
+| ![](images/library/signalstack_rock.jpg) **Signalstack Rock** (first, 500) | A basalt stack, a relay hut, a bent mast | A short quest; the Receiver and antenna plans; a path cut up the stack |
+| ![](images/library/the_floelane.jpg) **The Floelane** (700) | Five floes, a crushed sealer, her crew caged on the ice | A winch shows an ice bridge for 40 s (`show`, `wait`, `hide`); `signal:rescued` brings the next |
+| ![](images/library/steamvent_harbour.jpg) **Steamvent Harbour** (800) | Houses round a steaming vent, a greenhouse grown shut | A stuck valve; fruit trees on the warm ground |
+| ![](images/library/orrins_sledge_camp.jpg) **Orrin's Sledge Camp** (900) | A fodder barn, goats and llamas, a lookout | Polar bears that wait for the barn (`creature.zone`) |
+| ![](images/library/iron_whale_bow.jpg) **The Iron Whale - Bow** (1100, needs the engine) | An icebreaker's bow on a pressure ridge | Raft's vending machine, a zipline from the mast; the cargo hatch (`zone:hatch`) brings the stern |
+| ![](images/library/iron_whale_decks.jpg) **The Iron Whale - Engine Decks** (300) | Her stern, sunk 15 m deeper than normal | Air pockets, anglers, a keycard door, the captain in a cage |
+| ![](images/library/saga_drift.jpg) **Saga Drift** (900) | Nine whaling ships lashed into a city | Screechers on the masts, rats in the holds, buried titanium |
+| ![](images/library/glacier_mouth.jpg) **Glacier Mouth** (1000) | A glacier front, a depot, the Ringwave cut in the ice | A Raft store; landing here (`visit:mouth`) brings the vault |
+| ![](images/library/coldhold_vault.jpg) **The Coldhold Vault** (700, finale part 1) | A seed bank under an ice cap | 24 steps: a crevasse zipline, a keypad (a wrong code first), three canisters, KEEP / CARRY / BROADCAST |
+| ![](images/library/seed_ark.jpg) **The Seed Ark** (400, finale part 2) | Pressure rooms 30 m down, racks of seeds | Air pockets in every room, an ice gate on a timer, the ark valve that lights the racks |
+| ![](images/library/squall_shelf.jpg) **Squall Shelf** (side, day 9 and every 9 days) | A tent on a low ice shelf | A llama to catch, a bear that wakes at the tent (`day:9:again`, `ahead:600`) |
+
+To learn from it: open The Coldhold Vault and look at the three switches' behaviours - each refuses once the choice is
+made, and each shows its own verdict note; the flood door's signal (`signal:coldhold:flooddoor`) is what brings the Ark.
 
 ## 16. Learn from the islands
 

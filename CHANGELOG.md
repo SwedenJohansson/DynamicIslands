@@ -11,6 +11,14 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ## 2026-10-23: known-issues fixes
 
+### New
+- **A seventh whole storyline in the library, The Frozen Horizon:** eleven islands in place of Raft's own story
+  (Raft's story off; the chain on the Receiver, 300 to 1100). Signalstack Rock, The Floelane, Steamvent Harbour, Orrin's
+  Sledge Camp, The Iron Whale - Bow (needs the engine; Raft's vending machine) and her Engine Decks under the pack, Saga
+  Drift, Glacier Mouth (a Raft store) and a finale in two parts: The Coldhold Vault (24 quest steps, a Raft store, three
+  switches - KEEP, CARRY or BROADCAST) and The Seed Ark 30 m under it. Squall Shelf turns up on day 9 and every 9 days.
+  All of Raft's story blueprints are quest steps on the way.
+
 ### Changed
 - **Late-game resources in the storylines:** the last two or three islands of each of the ten storylines have a buried treasure with 3 titanium ore (metal detector and shovel; optional, never a quest step), as do a middle island in The Rainmakers (The Fogworks), Raft 2 (Cinderfall), The Gravity Sea (Pendulum Isle) and Raft Remade (Tangaroa Remade, which also gets three titanium rocks). The Last Post's chests hold titanium ingots (Franking Works, Ada's Round, General Post Office). Explosive goo: puffer fish and 3 goo in a chest on Cinderfall, The Fogworks and Telegraph Narrows. The Gravity Sea gets farm animals (a llama and hens at Upfall Orchard, a boar at Lodestone Quay), and Shelter Atoll's bunk locker holds wool and eggs.
 

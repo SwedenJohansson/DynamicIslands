@@ -1,0 +1,11 @@
+# Guide pictures of The Floelane (CIPlay the_floelane_pics): Raft's camera, midday, calm
+island The Floelane
+offset 0 0
+hour 11
+weather Calm
+at 0 -24
+use winch
+wait 3
+picture sl12_the_floelane_island 30 16 -50 0 1 5
+picture sl12_the_floelane_hull -10 +3 4 0 +4 18
+picture sl12_the_floelane_lead 6 +2.5 -22 0 +0.3 -6

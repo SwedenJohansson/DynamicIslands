@@ -1,0 +1,148 @@
+# Glacier Mouth - the eighth island of the library's plan The Frozen Horizon (storyline SL12, chapter 8: The Glacier)
+# A glacier's front coming down to the sea: a wall of ice (rocks tinted white-blue, stacked into a cliff) with an ice
+# cave at its foot, and cut into the wall, taller than a house, the Ringwave - a ring with a wave through it, the same
+# sign as the sea doors. At the cave mouth an expedition depot on a shelf at 6 m: tents, a drill rig on legs, a Raft
+# store, the leader's tent. Polar bears; a snowstorm. Quest "The Glacier" (7 steps): the depot, the expedition orders,
+# two polar bears, the titanium tools' plans (the drill rig), the advanced backpack's plans (the leader's tent), the
+# carving (a camera moment when you reach it; its note), the electric zipline tool's plans (the cave mouth).
+#
+# Built by the recipe player (CIRecipe glacier_mouth) through the editor's own operations. Points (metres over the
+# sea): the depot shelf at 6 m (r 16 round 0 -4), its path from the beach at 0 -30; the ice wall along z 14..18 from
+# x -26 to 26, three rows of rock (ground, +4, +8), the cave mouth's gap at x -3..3; the Ringwave on the wall's face
+# round -12 13 (centre 7 m over the shelf); the drill rig round -10 -8; the store at 10 -4.
+# (Adapted: Raft has no decals; the Ringwave is a ring of dark stones with a wave of stones through it, set into the
+# wall's face.)
+include lib_sea
+include lib_features
+include lib_frozen
+new
+gen Trees=0.05 Bushes=0.1 Rocks=0.3 Harvest=0.1 BeachThings=0.2 Grass=0.05
+gen Seed=12801 Radius=40 Height=9 Roughness=0.4 Peaks=2 Shape=0 Style=1 BeachWidth=0.3 Cliffs=0.5 PeakShape=0.5
+gen Water=0.5 SeaRocks=0.3 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
+generate
+
+# --- Terrain: the depot shelf at 6 m, the path up from the beach, the ground under the wall -----------------------------
+brush flatten at 0 -4 r=16 s=20 frames=300 h=6
+brush flatten from 0 -30 to 0 -20 r=2.5 s=20 frames=80 h=3
+brush flatten from 0 -20 to 0 -14 r=2.5 s=20 frames=80 h=5
+brush flatten from -26 16 to 26 16 r=4 s=20 frames=200 h=6
+origin
+clear at 0 -4 r=16
+clear from -26 16 to 26 16 r=5
+clear from 0 -30 to 0 -14 r=3
+
+# --- The ice wall: three rows of white-blue rock, the cave's gap at its foot -------------------------------------------
+for wx -26 -5 3
+call icerock x=$wx z=16 s=3 yaw={$wx*23}
+place SmallRock_02 ice at $wx 17 ground y=4 scale=3 yaw={$wx*41}
+place SmallRock_02 ice at {$wx+1.5} 18 ground y=8 scale=3 yaw={$wx*17}
+next
+for wx 5 26 3
+call icerock x=$wx z=16 s=3 yaw={$wx*23}
+place SmallRock_02 ice at $wx 17 ground y=4 scale=3 yaw={$wx*41}
+place SmallRock_02 ice at {$wx-1.5} 18 ground y=8 scale=3 yaw={$wx*17}
+next
+place SmallRock_02 ice at 0 17 ground y=4.5 scale=3.4 yaw=90
+place SmallRock_02 ice at 0 18 ground y=8 scale=3 yaw=10
+call icetint al=ice
+place TP_Icicles01 - at 0 14.6 ground y=1
+place TP_Icicles04 - at -1.6 14.8 ground y=3.4
+place TP_Icicles02 - at 1.5 14.8 ground y=3.5
+
+# --- The Ringwave cut into the wall's face: a ring of dark stones, a wave through it -------------------------------------
+for ra 0 330 30
+place SmallRock_02 ringwave at {-12+3.2*sin($ra)} 13.4 ground y={7+3.2*cos($ra)} scale=0.45 yaw=$ra
+next
+for wv -3 3 1
+place SmallRock_02 ringwave at {-12+$wv} 13.2 ground y={7+0.8*sin($wv*90)} scale=0.35 yaw={$wv*30}
+next
+prop ringwave tint.color=#1d2a33
+prop ringwave tint.amount=0.8
+place Zone_Trigger ringzone at -12 9 ground y=1
+place Note_Sign carvingnote at -9 10 ground sit yaw=200
+place Placeable_Lantern_Metal ringcam at -12 2 ground y=1.1 drop
+
+# --- The depot: tents, the leader's tent, the drill rig on legs, the store ---------------------------------------------
+place Zone_Trigger depotzone at 0 -10 ground y=1
+place Balboa_DecorationPrefabBase_SimpleTent - at -4 -14 ground sit yaw=20
+place Balboa_DecorationPrefabBase_SimpleTent - at 4 -14 ground sit yaw=-20
+place Balboa_DecorationPrefabBase_SimpleTent leadertent at 6 4 ground sit yaw=200
+place Loot_Chest leaderchest at 6.8 2.6 ground sit yaw=180
+place Note_Paper orders at -1 -12 ground y=1.1 drop yaw=30
+place "Box Big" - at -1 -12 ground sit yaw=30
+place TP_Moontown_SealedCrate01 - at 2 -8 ground sit yaw=60
+place Loot_Chest depotstores at -6 -2 ground sit yaw=90
+store depotshop at 10 -4 ground
+# (the drill rig: four legs round a thick drill pipe, the hammer drill on top, its chest under it)
+place RT_PillarThick drillpipe at -10 -8 ground y=-1 sy=0.8
+place RT_Pillar - at -11.6 -9.6 ground sy=0.9 rot=8,45,0
+place RT_Pillar - at -8.4 -9.6 ground sy=0.9 rot=8,-45,0
+place RT_Pillar - at -11.6 -6.4 ground sy=0.9 rot=-8,-45,0
+place RT_Pillar - at -8.4 -6.4 ground sy=0.9 rot=-8,45,0
+place VP_HammerDrill - at -10 -8 ground y=4.3
+place Loot_ChestLarge drillrig at -12 -10.5 ground sit yaw=200
+scatter TP_SnowDrift02 3 at 0 -4 r=15 seed=12811 free=3
+scatter TP_SnowDrift03 3 at 0 -4 r=15 seed=12812 free=3
+
+# --- The cave mouth: the electric zipline tool's plans ------------------------------------------------------------------
+place Loot_Chest cavechest at 0 14.5 ground sit yaw=180
+place Placeable_Lantern_Metal - at 1.2 14 ground drop
+
+# --- Bears, the titanium treasure, the sea ------------------------------------------------------------------------------
+place Creature_PolarBear bears at 20 6 ground
+call treasure x=-10 z=12 r=12 n=1 seed=12052
+scatter "Pickup_Landmark_Copper 2" 3 at 12 12 r=4 seed=12825 free=1
+scatter VP_CoralDigitate01 4 at 24 -26 r=4 seed=12821 wet free=1
+scatter VP_CoralBulb04 3 at 24 -26 r=4 seed=12822 wet free=1
+scatter SeaVine3_klump 3 at 24 -26 r=5 seed=12823 wet free=1
+scatter "Pickup_Landmark_Tree_Pine" 3 at -24 -16 r=6 seed=12824 free=3
+call shallows x=0 z=0 r=40 deep=5 n=1 seed=12830
+call snowfall x=0 z=0 r=45 al=snow fog=#d8e2ea fa=0.55
+
+# --- Settings, notes, behaviours, quest ----------------------------------------------------------------------------------
+info title=Glacier Mouth
+info author=Custom Islands
+info description=A glacier's front at the sea: a wall of ice with a cave at its foot, an expedition depot with a drill rig and a store - and cut deep into the ice, taller than a house, the Ringwave. The eighth island of The Frozen Horizon.
+island on.arrive=message||A wall of ice across the island, and on its face a sign cut taller than a house: a ring, a wave through it.
+
+note orders Expedition orders | COLDHOLD EXPEDITION - ORDERS\n\nDepot at the glacier mouth. Drill for the vault's air shafts. Keep the cave mouth clear.\nNo signals. The council of Saga Drift has agreed to silence; so will we.\nThe bears come down off the ice when the wind is from the north. Two of them, the same two, every time.\n\n- Expedition leader R. Aune
+note carvingnote Carving note | (scratched on a board under the carving)\n\nWe did not cut this. It was here when we came, under the snow.\nThe same sign as the sea doors. They knew it here too.\n\n- R. A.
+note depotstores Depot stores | The depot's stores: pine seeds for the greenhouse at the harbour, rope, rations.
+note drillrig Drill rig chest | The drill rig's big chest: the titanium tools' plans - the only bits that bite the glacier.
+note leaderchest Leader's chest | The expedition leader's chest: the advanced backpack's plans, a map of the vault's entrance hall.
+note cavechest Cave mouth chest | A chest just inside the cave mouth: the electric zipline tool's plans - "for the crevasse in the ice hall" - and cave mushrooms picked off the cave floor.
+loot depotstores Seed_Pine*3;Rope*3;Raw_GenericMeat*2
+prop depotstores loot.refill=0
+loot drillrig Blueprint_TitaniumTools*1;MetalIngot*2;Bolt*3
+prop drillrig loot.refill=0
+loot leaderchest Blueprint_BackpackAdvanced*1;Leather*3;Wool*2
+prop leaderchest loot.refill=0
+loot cavechest Blueprint_ZiplineToolElectric*1;CaveMushroom*4;Battery*1
+prop cavechest loot.refill=0
+prop treasure12052 treasure.loot=TitaniumOre*3
+
+prop depotzone zone.id=depot
+prop depotzone zone.radius=6
+prop depotzone zone.message=The expedition depot. Snow on the tents - and big tracks round them.
+prop ringzone zone.id=ringwave
+prop ringzone zone.radius=4
+prop ringzone zone.message=The Ringwave. A ring, a wave through it - cut deep into the ice.
+prop ringzone on.enter=camera|ringcam|ringwave|5|35
+prop ringcam obj.name=ringcam
+prop bears creature.count=2
+prop bears creature.respawn=0
+prop bears creature.zone=depot
+
+quest title=The Glacier
+quest intro=A wall of ice, a depot at its foot. Climb up to the depot.
+step reach|depot|1|Climb up to the expedition depot
+step read|Expedition orders|1|Read the expedition orders
+step kill|Polar bear|2|Drive off the two polar bears
+step blueprint|Blueprint_TitaniumTools|1|Take the titanium tools' plans from the drill rig
+step blueprint|Blueprint_BackpackAdvanced|1|Take the advanced backpack's plans from the leader's tent
+step read|Carving note|1|Go to the Ringwave on the ice wall and read the note under it
+step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline tool's plans from the cave mouth
+quest done=The vault is under the glacier. Its door is on 700.
+quest reward=MetalIngot*3;Rope*3;Leather*2
+
+save Glacier Mouth

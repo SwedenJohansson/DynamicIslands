@@ -1,0 +1,35 @@
+# The Seed Ark (CIPlay seed_ark): 30 m down; the drop, room 1's air and the manifest, the ice anglers, the timed gate
+# and room 2, room 3 and the Ringwave file, room 4, the ark valve (the racks light, the closing note), the surface hole.
+island The Seed Ark
+offset 0 0
+expect step 0
+expect title The Ark
+expect hidden closingnote
+expect hidden racklights
+zone drop
+expect step 1
+air room_1
+expect step 2
+read Ark manifest
+expect step 3
+kill Angler fish
+expect step 4
+use gatelever
+expect hidden gate
+air room_2
+expect step 5
+air room_3
+expect step 6
+read The Ringwave file
+expect step 7
+air room_4
+expect step 8
+use arkvalve
+expect story arkvalve 1
+expect shown racklights
+expect shown closingnote
+expect step 9
+read The closing note
+expect step 10
+zone surface_hole
+expect done
