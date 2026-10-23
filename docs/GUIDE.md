@@ -2994,7 +2994,7 @@ about eight seconds. It is Raft's own whale, with its own spout.
 Rarely, with a warning splash and a banner, a **giant tentacle** rises out of the deep beside the raft, curls over the
 side and **grabs a floor on the raft's edge** - never one in the middle. Its base is far down in the water, so you
 never see where it starts. One to three more arms rise **3-8 m off the edge** around it and sway and curl there; they
-are only to look at. The arms are purple and darken toward red as they are hit, with pale suckers on the inner curl.
+swipe: about every seven seconds each one **rears up for a second and slams down where the nearest player within 9 m stood**. A player still there takes **8 damage** (Raft's monster difficulty scales it), with a thump; step away when an arm rears up and it misses. One player alone can still fight it off. The arms are purple and darken toward red as they are hit, with pale suckers on the inner curl.
 
 - **Fight it off:** hit the grabbing arm with a **melee weapon or a spear** (any swing that reaches it counts; arrows
   don't). **10 hits within a minute**, by any players together, and it lets go and sinks with all the other arms. The
@@ -3003,9 +3003,9 @@ are only to look at. The arms are purple and darken toward red as they are hit, 
   deep. **Each floor right beside it** (the four sides on the same level, not the corners) **goes too with a 1 in 2
   chance**, rolled for each one on its own - so it takes one to five floors. What stood on those floors goes as when
   Raft removes a floor: it falls, drops or breaks as Raft does it. Torn floors stay torn, saved with the world.
-- **When:** on about **one day in six from day 3**, at a time in that day (1-10 minutes after the day starts while you
+- **When:** on about **one day in eight from day 8** (never before), at a time in that day (1-10 minutes after the day starts while you
   play); with **Storm seas** on also in about **one storm in four**. Which days and storms, the floor it grabs and the
-  floors beside it that go all come from the world's seed. A raft of **8 floors or fewer** is never grabbed.
+  floors beside it that go all come from the world's seed. A raft of **8 floors or fewer** is never grabbed. It **never comes near land**: while the raft is within 80 m of an island's shore (Raft's own or a custom one) a due arm waits, checking every half minute, until the raft is in open sea or the day ends.
 - **Every player sees the same arms on the same floor,** and hits from every player count: the host decides when it
   comes, counts the hits and tears the floors with Raft's own block removal, so every raft loses the same floors. A
   player who joins while it holds on gets the arm. Nothing about an arm is saved: a world loaded mid-event has none.

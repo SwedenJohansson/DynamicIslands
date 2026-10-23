@@ -72,7 +72,7 @@ namespace DynamicIslands.Editor
 			"On about one night in four a ghost ship comes by soon after dark: a glowing wreck close beside the raft, near enough to swim or sail to. Its chests hold good loot, but its crew are ghosts - see-through rats and screechers that fight like the living. At dawn it sinks with whatever is still aboard. Players asleep when it would come: no ship that night. The same ship, ghosts and loot for every player.",
 			"Now and then, by day (about once or twice a Raft day), a whale breaches far out at sea, 170-320 m from the raft: it rises, leaps half out of the water, falls back with a great splash and spray, and dives away. Looks only: it never comes near the raft or the players. Every player sees the same whale at the same place.",
 			"Now and then (on about three days in five, by day or by night) thick fog rolls in over the sea for three to six hours, fading in and out. In it you see only 45-75 m: islands show up late, so the radar matters. While a storm blows the wind keeps the fog away. Looks only; the same for every player.",
-			"Rarely (on about one day in six from day 3, and with Storm seas in about one storm in four) a giant tentacle rises from the sea beside the raft and grabs a floor on its edge - never one in the middle. Hit it with a melee weapon or a spear, 10 hits within a minute (any players together), and it lets go and sinks. If not, it tears that floor away, and each floor right beside it with a 1 in 2 chance: what stood on them goes too. Rafts of 8 floors or fewer are never grabbed. Every player sees the same arm and the same floors go.",
+			"Rarely (on about one day in eight from day 8, and with Storm seas in about one storm in four; never while the raft is near an island) a giant tentacle rises from the sea beside the raft and grabs a floor on its edge - never one in the middle. Hit it with a melee weapon or a spear, 10 hits within a minute (any players together), and it lets go and sinks. If not, it tears that floor away, and each floor right beside it with a 1 in 2 chance: what stood on them goes too. Rafts of 8 floors or fewer are never grabbed. Every player sees the same arm and the same floors go.",
 		};
 
 		/// <summary>
@@ -102,7 +102,7 @@ namespace DynamicIslands.Editor
 			"On about one night in four a ghost ship comes by: good loot, guarded by ghost rats and screechers. It sinks at dawn.",
 			"Now and then, by day, a whale breaches far out at sea. Looks only: it never comes near the raft.",
 			"Now and then thick fog rolls in for a few hours: you see only 45-75 m, so the radar matters. Looks only.",
-			"Rarely a giant tentacle grabs the raft's edge. Hit it 10 times within a minute, or it tears that floor away - and maybe the ones beside it.",
+			"Rarely a giant tentacle grabs the raft's edge. Its other arms slam at players near them - step away. Hit it 10 times within a minute, or it tears that floor away - and maybe the ones beside it.",
 		};
 
 		/// <summary>The current world's options (clients get the host's).</summary>

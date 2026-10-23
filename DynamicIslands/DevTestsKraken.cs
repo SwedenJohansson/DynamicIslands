@@ -11,7 +11,7 @@ namespace DynamicIslands
 	/// <summary>Tests of the world option Kraken arm (Kraken).</summary>
 	public static partial class DevTests
 	{
-		[ConsoleCommand(name: "CIKraken", docs: "Dev, world (host, single player): the option Kraken arm - its option lists; the day roll (about 1 in 6 from day 3), storm roll (1 in 4) and neighbour roll (1 in 2); on a raft grown to 5x5 an arm grabs an EDGE floor (never a middle one) with 1-3 more arms 3-8 m out and its base deep under the sea, the rise message (kind 37) sent; a miss doesn't count; 10 hits make it let go with every floor kept; a short stay makes it tear the grabbed floor plus exactly the neighbours its seed says; the option off sends an arm away. Pictures play_kraken_side/_top/_torn.jpg. Raft and options put back after (torn floors stay torn)")]
+		[ConsoleCommand(name: "CIKraken", docs: "Dev, world (host, single player): the option Kraken arm - its option lists; the day roll (about 1 in 8 from day 8, never near land; the free arms swipe), storm roll (1 in 4) and neighbour roll (1 in 2); on a raft grown to 5x5 an arm grabs an EDGE floor (never a middle one) with 1-3 more arms 3-8 m out and its base deep under the sea, the rise message (kind 37) sent; a miss doesn't count; 10 hits make it let go with every floor kept; a short stay makes it tear the grabbed floor plus exactly the neighbours its seed says; the option off sends an arm away. Pictures play_kraken_side/_top/_torn.jpg. Raft and options put back after (torn floors stay torn)")]
 		public static void KrakenTestCommand() { StartTest(KrakenRoutine()); }
 
 		static IEnumerator KrakenWait(float s) { for (float t = Time.time + s; Time.time < t;) yield return null; }
@@ -61,7 +61,7 @@ namespace DynamicIslands
 				bool early = Enumerable.Range(0, Kraken.FirstDay).Any(d => Kraken.Rolls(seed, d));
 				int storms = Enumerable.Range(1, 2000).Count(n => Kraken.StormRolls(seed, n));
 				int sides = Enumerable.Range(1, 1000).Sum(q => Enumerable.Range(0, 4).Count(i => Kraken.NeighbourGoes(q * 7919, i)));
-				Check(ref ok, days >= 880 && days <= 1120 && !early, "days with an arm: " + days + " of 6000 (about 1000), none before day " + Kraken.FirstDay + ": " + !early);
+				Check(ref ok, days >= 660 && days <= 840 && !early, "days with an arm: " + days + " of 6000 (about 750), none before day " + Kraken.FirstDay + ": " + !early);
 				Check(ref ok, storms >= 440 && storms <= 560, "storms with an arm: " + storms + " of 2000 (about 500)");
 				Check(ref ok, sides >= 1850 && sides <= 2150, "neighbours that go: " + sides + " of 4000 (about 2000)");
 
@@ -101,6 +101,18 @@ namespace DynamicIslands
 				Vector3 Ew = pivot.TransformPoint(E);
 				yield return PlayPicture("kraken_side", pivot.TransformPoint(E + s * 10f - u * 1.5f + Vector3.up * 0.9f), pivot.TransformPoint(E + Vector3.up * 2.3f + u * 2f));
 				yield return PlayPicture("kraken_top", pivot.TransformPoint(E - u * 8f + s * 3.5f + Vector3.up * 3.4f), pivot.TransformPoint(E + Vector3.up * 2.2f + u * 1.5f));
+
+				// 4b. The free arms swipe: stand at the edge by the nearest one; within a cycle it slams there and hurts a little
+				Kraken.Tentacle near = arm.Others.OrderBy(t => Vector3.Dot(t.Ctrl[3] - E, u)).First();
+				float along = Mathf.Clamp(Vector3.Dot(near.Ctrl[3] - E, s), -1.5f, 1.5f);
+				PlayerMove.To(me, pivot.TransformPoint(E - u * 0.6f + s * along + Vector3.up * 1.2f));
+				float hp0 = me.Stats.stat_health.Value;
+				int landed = Kraken.SwipesLanded;
+				for (float t = Time.time + Kraken.SwipeEvery + 2f; Time.time < t && Kraken.SwipesLanded == landed;) yield return KrakenWait(0.1f);
+				float lost = hp0 - me.Stats.stat_health.Value;
+				Check(ref ok, Kraken.SwipesLanded > landed && lost > 0f && lost <= Kraken.SwipeDamage * 2f, "a free arm swiped the player standing by it: -" + lost.ToString("F1") + " health (of " + hp0.ToString("F0") + ")");
+				PlayerMove.To(me, pivot.TransformPoint(arm.Block.transform.localPosition - u * 4.5f + Vector3.up * 1.2f));
+				yield return KrakenWait(0.3f);
 
 				// 5. Hits: a miss doesn't count; 10 hits make it let go
 				Vector3 target = pivot.TransformPoint(arm.Main.Pts[(int)(arm.Main.N * 0.62f)]);

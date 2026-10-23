@@ -14,17 +14,25 @@ namespace DynamicIslands.Editor
 	/// only. Players hit the grabbing arm with melee weapons or spears (HitsNeeded hits, any players together) within
 	/// StaySeconds and it lets go; if not, it tears that floor away and each floor right beside it (the 4 sides, same level)
 	/// with a 1 in 2 chance, rolled from the event's seed, through Raft's own block removal.
-	/// Timing (host only, from the world seed): from day FirstDay on about one day in six (Chance), at a seeded time in that
+	/// Timing (host only, from the world seed): from day FirstDay on about one day in eight (Chance), at a seeded time in that
 	/// day; with Storm seas on also in about one storm in four (StormChance). Rafts under MinFloors foundations are never
-	/// grabbed. The host decides everything and tells everyone (IslandNetMessage.Kraken); a player who joins mid-event gets
+	/// grabbed. Never near land: a due arm waits while the raft is within NearLand m of an island (NearIsland), and is lost
+	/// if the day ends first. The host decides everything and tells everyone (IslandNetMessage.Kraken); a player who joins mid-event gets
 	/// the arm in the join reply. Nothing about an arm is saved: a world loaded mid-event has none.
 	/// The arm is tapered capsules with a copy of Raft's shark skin, tinted purple, with pale suckers on the inner curl;
 	/// its base reaches 18 m down so it always comes out of deep water.
 	/// </summary>
 	public static class Kraken
 	{
-		public const int FirstDay = 3, HitsNeeded = 10, MinFloors = 9;
-		public const float Chance = 1f / 6f, StormChance = 0.25f, StaySeconds = 60f, RiseSeconds = 3f, SinkSeconds = 3f;
+		public const int FirstDay = 8, HitsNeeded = 10, MinFloors = 9;
+		/// <summary>How close to an island's land (metres, flat) the raft may be before a due arm waits.</summary>
+		public const float NearLand = 80f;
+		/// <summary>The free arms' swipes: one every SwipeEvery s per arm at the nearest player within SwipeReach m of it;
+		/// it rears up for a second, then slams where that player stood: SwipeDamage to a player still within SwipeRadius m.</summary>
+		public const float SwipeEvery = 7f, SwipeReach = 9f, SwipeRadius = 2.2f, SwipeDamage = 8f;
+		/// <summary>Swipes that hurt this machine's player (tests).</summary>
+		public static int SwipesLanded;
+		public const float Chance = 1f / 8f, StormChance = 0.25f, StaySeconds = 60f, RiseSeconds = 3f, SinkSeconds = 3f;
 		/// <summary>How deep the arms' bases are, in metres under the deck.</summary>
 		public const float Depth = 18f;
 		const int SaltDay = 727, SaltTime = 728, SaltStorm = 729, SaltEvent = 730, SaltNeighbour = 731, SaltEdge = 732, SaltExtra = 733;
@@ -54,6 +62,7 @@ namespace DynamicIslands.Editor
 		// Host timing
 		static int rolledDay = -1, seenStorms = -1, nextNumber;
 		static float dueAt = -1f;
+		static bool waiting;
 		// A player: a "rise" whose floor hasn't arrived yet
 		static IslandNetMessage pending;
 		static float pendingSince;
@@ -106,7 +115,8 @@ namespace DynamicIslands.Editor
 			if (day != rolledDay)
 			{
 				rolledDay = day;
-				dueAt = Rolls(seed, day) ? Time.time + 60f + 540f * (float)WorldOptions.Unit(seed, day, SaltTime) : -1f;
+				waiting = false;
+				dueAt =Rolls(seed, day) ? Time.time + 60f + 540f * (float)WorldOptions.Unit(seed, day, SaltTime) : -1f;
 				if (dueAt > 0) Log("day " + day + " brings an arm in " + Mathf.RoundToInt(dueAt - Time.time) + " s");
 			}
 			if (StormSeas.On && StormSeas.Storms != seenStorms)
@@ -120,8 +130,20 @@ namespace DynamicIslands.Editor
 			}
 			if (dueAt > 0 && Time.time >= dueAt)
 			{
-				dueAt = -1f;
-				if (arm == null) Log("due: " + Bring());
+				string near = arm == null ? NearIsland() : null;
+				if (near != null)
+				{
+					// Wait for open sea; checked again every 30 s until the day ends
+					if (!waiting) Log("due, but waits: " + near);
+					waiting = true;
+					dueAt = Time.time + 30f;
+				}
+				else
+				{
+					waiting = false;
+					dueAt = -1f;
+					if (arm == null) Log("due: " + Bring());
+				}
 			}
 			if (arm != null && arm.Phase < 2)
 			{
@@ -129,6 +151,36 @@ namespace DynamicIslands.Editor
 				else if (!arm.Released && Time.time - arm.Started >= arm.Stay) TearNow();
 			}
 		}
+
+		/// <summary>Why the raft is too near land for an arm, or null in open sea: within NearLand m of a custom island's land
+		/// or of one of Raft's islands (its chunk point's footprint; drifting raft wrecks don't count).</summary>
+		public static string NearIsland()
+		{
+			Vector3? raft = CustomIslandSpawner.RaftPosition;
+			if (!raft.HasValue) return null;
+			Vector3 p = raft.Value;
+			try { if (ChunkManager.RaftIsInsideChunkPoint) return "the raft is at one of Raft's islands"; } catch { }
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
+			{
+				if (e.Failed || WorldRandomizer.IsExtras(e)) continue; // (extras sit on Raft's islands: their chunk points below)
+				float land = CustomIslandSpawner.LandRadius(e.Name);
+				float d = Flat(p - e.Position);
+				if (d < (land > 0f ? land : 150f) + NearLand) return "custom island '" + e.Name + "' " + d.ToString("F0") + " m away";
+			}
+			ChunkManager cm = ComponentManager<ChunkManager>.Value;
+			if (cm != null)
+			{
+				foreach (ChunkPoint cp in cm.GetAllChunkPointsList())
+				{
+					if (cp.rule != null && cp.rule.name.IndexOf("FloatingRaft", StringComparison.OrdinalIgnoreCase) >= 0) continue;
+					float d = Flat(p - cp.worldPosition);
+					if (d < (cp.rule != null ? cp.rule.collisionOverlapRadius : 150f) + NearLand) return "Raft's " + (cp.rule != null ? cp.rule.name : "island") + " " + d.ToString("F0") + " m away";
+				}
+			}
+			return null;
+		}
+
+		static float Flat(Vector3 v) { v.y = 0f; return v.magnitude; }
 
 		/// <summary>Host: an arm now (the command, a due day or storm). Returns what happened.</summary>
 		public static string Bring()
@@ -538,6 +590,11 @@ namespace DynamicIslands.Editor
 			Vector3 floorFromTip;
 			float sinkStart = -1f, flinchAt = -10f;
 			Vector3 u;
+			// The free arms' swipes, per arm in Others: the cycle seen, where it slams (arm space; null = nobody near), done
+			readonly List<int> swipeCycle = new List<int>();
+			readonly List<Vector3?> swipeAt = new List<Vector3?>();
+			readonly List<bool> swipeDone = new List<bool>();
+			readonly List<Vector3> swipePush = new List<Vector3>();
 
 			public static Arm Make(Block b, int side, int seed, int number, int need, float stay, int hits, float elapsed)
 			{
@@ -627,6 +684,7 @@ namespace DynamicIslands.Editor
 					t.Side = Vector3.Cross(up, c); t.Out = c;
 					t.Build(skin, body, band, sucker);
 					Others.Add(t);
+					swipeCycle.Add(-1); swipeAt.Add(null); swipeDone.Add(false); swipePush.Add(Vector3.zero);
 					Extras++;
 				}
 
@@ -713,6 +771,74 @@ namespace DynamicIslands.Editor
 				catch { }
 			}
 
+			static float Smooth(float x) { x = Mathf.Clamp01(x); return x * x * (3f - 2f * x); }
+
+			/// <summary>Free arm i's swipe: every SwipeEvery s (a seeded offset per arm) while the arm holds, it picks the
+			/// nearest player within SwipeReach, rears back for 1 s, slams where that player stood (0.3 s) and settles again.
+			/// Every machine works it out the same way and hurts only its own player, if still within SwipeRadius.</summary>
+			void Swipe(int i)
+			{
+				Tentacle t = Others[i];
+				float ts = Time.time - Started - RiseSeconds - (1.5f + 4f * (float)WorldOptions.Unit(Seed, 70 + i, SaltExtra));
+				if (Phase != 1 || Released || ts < 0f) { swipePush[i] = Vector3.zero; return; }
+				int c = (int)(ts / SwipeEvery);
+				float q = ts - c * SwipeEvery;
+				if (c != swipeCycle[i]) { swipeCycle[i] = c; swipeDone[i] = false; swipeAt[i] = Target(t); }
+				if (!swipeAt[i].HasValue || q > 2.2f) { swipePush[i] = Vector3.zero; return; }
+				Vector3 to = swipeAt[i].Value, tip = t.Ctrl[t.Ctrl.Length - 1];
+				Vector3 dir = to - t.Ctrl[3]; dir.y = 0f;
+				dir = dir.sqrMagnitude > 0.01f ? dir.normalized : -u;
+				Vector3 back = -dir * 1.2f + Vector3.up * 1.3f;
+				Vector3 slam = Vector3.ClampMagnitude(to + Vector3.up * 0.6f - tip, 9f);
+				if (q < 1f) swipePush[i] = back * Smooth(q);
+				else if (q < 1.3f)
+				{
+					swipePush[i] = Vector3.Lerp(back, slam, Smooth((q - 1f) / 0.3f));
+					if (!swipeDone[i] && q >= 1.22f) { swipeDone[i] = true; Slam(to); }
+				}
+				else swipePush[i] = Vector3.Lerp(slam, Vector3.zero, Smooth((q - 1.3f) / 0.9f));
+			}
+
+			/// <summary>Where free arm t slams this time (arm space): the nearest living player within SwipeReach of where it
+			/// comes out of the sea, or null.</summary>
+			Vector3? Target(Tentacle t)
+			{
+				Vector3 from = transform.TransformPoint(t.Ctrl[3]);
+				Network_Player best = null; float bestD = SwipeReach;
+				try
+				{
+					foreach (Network_Player p in UnityEngine.Object.FindObjectsOfType<Network_Player>())
+					{
+						if (p == null || p.Stats == null || p.Stats.IsDead) continue;
+						Vector3 d = p.transform.position - from; d.y = 0f;
+						if (d.magnitude < bestD) { bestD = d.magnitude; best = p; }
+					}
+				}
+				catch { }
+				if (best == null) return null;
+				return transform.InverseTransformPoint(best.transform.position);
+			}
+
+			/// <summary>The slam lands at to (arm space): a thump, and this machine's player takes SwipeDamage if still near.</summary>
+			void Slam(Vector3 to)
+			{
+				Vector3 w = transform.TransformPoint(to);
+				Sounds.Play(Sounds.Shark, "er_biteRaft", w);
+				try
+				{
+					Network_Player me = RAPI.GetLocalPlayer();
+					if (me == null || me.Stats == null || me.Stats.IsDead) return;
+					Vector3 d = me.transform.position - w;
+					if (Mathf.Abs(d.y) > 2.5f) return;
+					d.y = 0f;
+					if (d.magnitude > SwipeRadius) return;
+					me.Stats.Damage(SwipeDamage, me.transform.position + Vector3.up, Vector3.up, EntityType.Enemy, true, null);
+					SwipesLanded++;
+					Log("a free arm's swipe hit " + me.name + " for " + SwipeDamage);
+				}
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [kraken] Slam: " + e.Message); }
+			}
+
 			public void Update()
 			{
 				float up;
@@ -734,10 +860,12 @@ namespace DynamicIslands.Editor
 					}
 				}
 				float fl = Mathf.Clamp01(1f - (Time.time - flinchAt) / 0.5f);
+				for (int i = 0; i < Others.Count; i++) Swipe(i);
 				foreach (Tentacle t in All())
 				{
 					t.Up = up;
-					t.Push = t == Main ? (u * 0.5f + Vector3.up * 0.35f) * Mathf.Sin(fl * Mathf.PI) : Vector3.zero;
+					int i = Others.IndexOf(t);
+					t.Push = t == Main ? (u * 0.5f + Vector3.up * 0.35f) * Mathf.Sin(fl * Mathf.PI) : i >= 0 ? swipePush[i] : Vector3.zero;
 				}
 				if (Tore && floorCopy != null && Main != null && Main.Pts != null)
 				{
