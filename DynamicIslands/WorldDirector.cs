@@ -987,6 +987,7 @@ namespace DynamicIslands.Editor
 			// (a world that names no owner of its plan - saved before it did: the PC that saved it is the owner. Before, a world
 			// without an owner took the plan file of whoever hosted it, another player's plan of the same name too - AU25)
 			if (PlanOwner == 0 && savedBy != 0) PlanOwner = savedBy;
+			AdoptOwnerlessPlan();
 			if (stored != null && !WorldPlan.IsBuiltIn(PlanName))
 			{
 				stored.Name = PlanName;
@@ -1391,6 +1392,43 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		/// <summary>
+		/// A world that names no owner at all - saved before worlds kept who saved them (@savedby, 09-29): the host loading it
+		/// owns its plan from now on, as its next save writes anyway (@planowner). Its island files are then the plan's and their
+		/// hashes are recorded at once, as for a world made today - before, it found the plan's islands by name (pre-10-06).
+		/// </summary>
+		internal static void AdoptOwnerlessPlan()
+		{
+			if (PlanOwner != 0 || savedBy != 0 || !Raft_Network.IsHost) return;
+			ulong me = LocalSteamId;
+			if (me == 0) return;
+			PlanOwner = me;
+			Log("This world names no owner of its plan (saved before worlds kept one): this PC's islands are the plan's from now on");
+		}
+
+		/// <summary>For tests: the world file's @savedby id.</summary>
+		internal static ulong SavedByForTest { get { return savedBy; } set { savedBy = value; } }
+
+		/// <summary>For tests: the library's installed entries to use instead of installed.json.</summary>
+		internal static List<LibraryInstalled> InstalledForTest;
+
+		/// <summary>
+		/// The content hash of a plan island the library installed with the world's plan (@planfrom = that entry's source and
+		/// version) and that is unchanged here since: every PC with that version has the same island, so its hash is known
+		/// without the plan's owner (pre-10-06 worlds hosted by another player). Null when not known that way.
+		/// </summary>
+		static string LibraryHashFor(string name, ref List<LibraryInstalled> installed)
+		{
+			if (PlanFrom.Length == 0) return null;
+			if (installed == null) installed = InstalledForTest ?? LibraryPack.Installed();
+			LibraryInstalled entry = installed.FirstOrDefault(x => x.Source.Equals(PlanFrom, StringComparison.OrdinalIgnoreCase));
+			LibraryInstalledFile f = entry == null ? null : entry.files.FirstOrDefault(x => x.kind == LibraryPack.KindIsland && x.name.Equals(name, StringComparison.OrdinalIgnoreCase));
+			if (f == null || string.IsNullOrEmpty(f.sha256)) return null;
+			string sha = LibraryPack.ShaOfFile(IslandSpawner.PathFor(f.name));
+			if (sha == null || !sha.Equals(f.sha256, StringComparison.OrdinalIgnoreCase)) return null; // (changed here since: not the plan's any more)
+			return IslandNetwork.HashOf(f.name);
+		}
+
 		/// <summary>The island names a plan's rules bring ("island" and "oneof" rules).</summary>
 		internal static IEnumerable<string> PlanIslands(WorldPlan plan)
 		{
@@ -1406,6 +1444,7 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		internal static void RecordPlanHashes(bool ownFiles)
 		{
+			List<LibraryInstalled> installed = null;
 			foreach (string n in PlanIslands(Plan).ToList())
 			{
 				if (ownFiles && File.Exists(IslandSpawner.PathFor(n)))
@@ -1416,6 +1455,7 @@ namespace DynamicIslands.Editor
 				if (PlanHashes.ContainsKey(n)) continue;
 				IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.HostName.Equals(n, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(x.Hash ?? IslandNetwork.HashOf(x.Name)));
 				string h = e != null ? e.Hash ?? IslandNetwork.HashOf(e.Name) : null;
+				if (h == null) h = LibraryHashFor(n, ref installed);
 				if (h == null && ownFiles) { string f = AnyFileFor(n); if (f != null) h = IslandNetwork.HashOf(f); }
 				if (h != null && IslandNetwork.IsHash(h)) PlanHashes[n] = h;
 			}

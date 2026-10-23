@@ -121,5 +121,70 @@ namespace DynamicIslands
 			}
 			if (ok) Log("PASS: a stale object index is made again in the main menu"); else Fail("a stale object index is made again in the main menu");
 		}
+
+		[ConsoleCommand(name: "CIOldWorldPlanHashes", docs: "Dev, world (host, 'CI ...'): a world from before plans kept their islands' hashes (pre-10-06) - without any owner the host adopts the plan and records its own islands' hashes; hosted by another player, a library plan's unchanged islands get their hashes from the install (an edited one, or another version, doesn't); all in one frame, the world's plan put back after")]
+		public static void OldWorldPlanHashesCommand(string[] args)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("old world plan hashes: needs a world, as the host"); return; }
+			string sample = IslandSpawner.ListSavedIslands().Where(n => File.Exists(IslandSpawner.PathFor(n))).OrderBy(n => new FileInfo(IslandSpawner.PathFor(n)).Length).FirstOrDefault();
+			if (sample == null) { Fail("old world plan hashes: no island file to copy"); return; }
+			bool ok = true;
+			const string own = "ciplanold_own", lib = "ciplanold_lib";
+			// (the world's plan state, put back after)
+			WorldPlan plan0 = WorldDirector.Plan; string name0 = WorldDirector.PlanName, from0 = WorldDirector.PlanFrom;
+			ulong owner0 = WorldDirector.PlanOwner, saved0 = WorldDirector.SavedByForTest;
+			var hashes0 = new Dictionary<string, string>(WorldDirector.PlanHashes, StringComparer.OrdinalIgnoreCase);
+			ulong me = 0; try { me = Steamworks.SteamUser.GetSteamID().m_SteamID; } catch { }
+			try
+			{
+				byte[] bytes = File.ReadAllBytes(IslandSpawner.PathFor(sample));
+				File.WriteAllBytes(IslandSpawner.PathFor(own), bytes);
+				File.WriteAllBytes(IslandSpawner.PathFor(lib), bytes.Concat(new byte[] { (byte)'\n' }).ToArray());
+				var plan = new WorldPlan { Name = "ciplanold", Random = false };
+				plan.Rules.Add(new IntroRule { What = "island", WhatArg = own });
+				plan.Rules.Add(new IntroRule { What = "oneof", WhatArg = lib + ", ciplanold_none" });
+				WorldDirector.Plan = plan; WorldDirector.PlanName = plan.Name;
+
+				// 1. No owner at all (saved before @savedby): the host adopts the plan, its files are the plan's
+				WorldDirector.PlanFrom = ""; WorldDirector.PlanOwner = 0; WorldDirector.SavedByForTest = 0; WorldDirector.PlanHashes.Clear();
+				WorldDirector.AdoptOwnerlessPlan();
+				WorldDirector.RecordPlanHashes(WorldDirector.PlanOwner == me);
+				Check(ref ok, me != 0 && WorldDirector.PlanOwner == me, "no owner known: this host owns the plan now (" + WorldDirector.PlanOwner + ")");
+				string h;
+				Check(ref ok, WorldDirector.PlanHashes.TryGetValue(own, out h) && h == IslandNetwork.HashOf(own) && WorldDirector.PlanHashes.ContainsKey(lib) && !WorldDirector.PlanHashes.ContainsKey("ciplanold_none"),
+					"its islands' hashes are recorded at once (" + string.Join(", ", WorldDirector.PlanHashes.Select(k => k.Key + ":" + k.Value).ToArray()) + ")");
+
+				// 2. Saved by another player, the plan from the library: the unchanged installed island's hash, the others by name as before
+				WorldDirector.PlanOwner = 0; WorldDirector.SavedByForTest = 76561190000000001UL; WorldDirector.PlanHashes.Clear();
+				WorldDirector.AdoptOwnerlessPlan();
+				WorldDirector.PlanFrom = "library:ciplanold@3";
+				var entry = new LibraryInstalled { id = "ciplanold", source = LibraryPack.SourceLibrary, version = 3, kind = LibraryPack.KindPlan };
+				entry.files.Add(new LibraryInstalledFile { name = lib, original = lib, kind = LibraryPack.KindIsland, sha256 = LibraryPack.ShaOfFile(IslandSpawner.PathFor(lib)) });
+				entry.files.Add(new LibraryInstalledFile { name = own, original = own, kind = LibraryPack.KindIsland, sha256 = "0000" }); // (changed here since)
+				WorldDirector.InstalledForTest = new List<LibraryInstalled> { entry };
+				WorldDirector.RecordPlanHashes(false);
+				Check(ref ok, WorldDirector.PlanOwner == 0, "another player saved it: no owner taken over (" + WorldDirector.PlanOwner + ")");
+				Check(ref ok, WorldDirector.PlanHashes.TryGetValue(lib, out h) && h == IslandNetwork.HashOf(lib) && WorldDirector.FileFor(lib) == lib,
+					"the library plan's unchanged island has its hash from the install: " + (h ?? "none"));
+				Check(ref ok, !WorldDirector.PlanHashes.ContainsKey(own) && WorldDirector.FileFor(own) == own, "an island changed since it was installed isn't taken for the plan's: found by name as before");
+
+				// 3. Another version of the entry than the world's: nothing from it
+				WorldDirector.PlanHashes.Clear();
+				WorldDirector.PlanFrom = "library:ciplanold@2";
+				WorldDirector.RecordPlanHashes(false);
+				Check(ref ok, WorldDirector.PlanHashes.Count == 0, "the world's plan from another version of the entry: no hashes from the install (" + WorldDirector.PlanHashes.Count + ")");
+			}
+			catch (Exception e) { Fail("old world plan hashes: " + e); ok = false; }
+			finally
+			{
+				WorldDirector.InstalledForTest = null;
+				WorldDirector.Plan = plan0; WorldDirector.PlanName = name0; WorldDirector.PlanFrom = from0;
+				WorldDirector.PlanOwner = owner0; WorldDirector.SavedByForTest = saved0;
+				WorldDirector.PlanHashes.Clear();
+				foreach (var k in hashes0) WorldDirector.PlanHashes[k.Key] = k.Value;
+				foreach (string n in new[] { own, lib }) try { File.Delete(IslandSpawner.PathFor(n)); } catch { }
+			}
+			if (ok) Log("PASS: old worlds record their plan islands' hashes"); else Fail("old worlds record their plan islands' hashes");
+		}
 	}
 }

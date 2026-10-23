@@ -1284,11 +1284,15 @@ namespace DynamicIslands.Editor
 			IEnumerator<T> it;
 			try { it = items.GetEnumerator(); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Scanning " + sceneName + ": " + e.Message); yield break; }
+			var one = new System.Diagnostics.Stopwatch();
 			using (it)
 				while (true)
 				{
-					try { if (!it.MoveNext()) yield break; take(it.Current); }
+					one.Reset(); one.Start();
+					long moved = 0;
+					try { if (!it.MoveNext()) yield break; moved = one.ElapsedMilliseconds; take(it.Current); }
 					catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Scanning " + sceneName + ": " + e.Message); yield break; }
+					if (one.ElapsedMilliseconds > 100) Debug.Log("[CUSTOM ISLANDS] Object index: " + sceneName + " - one step " + one.ElapsedMilliseconds + " ms (next " + moved + " ms) at " + it.Current);
 					if (gentle && watch.ElapsedMilliseconds >= 15) { yield return null; watch.Reset(); watch.Start(); }
 				}
 		}
@@ -1322,12 +1326,24 @@ namespace DynamicIslands.Editor
 
 		static IEnumerator WatchFrames()
 		{
+			// (the time of a frame is known only in the next one: the step it is told under is the step at that frame's start.
+			// Before, a frame was told under the step the scan had reached during it - Unity activating Varuna Point's 38,700
+			// objects in one frame, 0.75 s before the scan's next line ran, read "reading Varuna Point", which looked like the
+			// mod's own reading (measured 2026-10-23: the scene's sceneLoaded came 0.75 s into that frame, its reading never
+			// took over 100 ms a step))
+			string atStart = scanStep;
+			int gcAt = GC.CollectionCount(0);
+			long heapAt = GC.GetTotalMemory(false);
 			while (true)
 			{
-				string step = scanStep;
+				string step = atStart;
+				atStart = scanStep;
+				if (atStart != step) step += " / " + atStart;
+				int gc = gcAt; long heap = heapAt;
+				gcAt = GC.CollectionCount(0); heapAt = GC.GetTotalMemory(false);
 				yield return null;
-				if (step != scanStep) step += " / " + scanStep;
-				if (Time.unscaledDeltaTime > 0.3f) Debug.Log("[CUSTOM ISLANDS] Object index: a " + (Time.unscaledDeltaTime * 1000f).ToString("F0") + " ms frame (" + step + ")");
+				if (Time.unscaledDeltaTime > 0.3f) Debug.Log("[CUSTOM ISLANDS] Object index: a " + (Time.unscaledDeltaTime * 1000f).ToString("F0") + " ms frame (" + step + ")" +
+					(GC.CollectionCount(0) != gc ? ", a garbage collection (heap " + (heap >> 20) + " -> " + (GC.GetTotalMemory(false) >> 20) + " MB)" : ""));
 				if (Time.unscaledDeltaTime > MenuScanLongestFrame) { MenuScanLongestFrame = Time.unscaledDeltaTime; MenuScanLongestStep = step; }
 			}
 		}

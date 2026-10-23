@@ -240,7 +240,7 @@ namespace DynamicIslands.Editor
 			using (var sha = SHA256.Create()) return BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-", "").ToLowerInvariant();
 		}
 
-		static string ShaOfFile(string path) { return File.Exists(path) ? Sha256(File.ReadAllBytes(path)) : null; }
+		internal static string ShaOfFile(string path) { return File.Exists(path) ? Sha256(File.ReadAllBytes(path)) : null; }
 
 		/// <summary>The format number of an island file's bytes (-1 if it isn't one).</summary>
 		public static int IslandFormat(byte[] b)

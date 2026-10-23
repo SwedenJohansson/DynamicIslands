@@ -794,7 +794,22 @@ namespace DynamicIslands
 			if (ok) Log("PASS: shark look"); else Fail("shark look");
 		}
 
-		[ConsoleCommand(name: "CISharkReroll", docs: "Dev, in game (host): Bruce killed, the next shark has its own roll (IR14) - the live shark is made Big Bruce (a Wild randomizer seed, as CIBruceLook), killed with one hit, and the next shark Raft sends (up to 5 minutes; Raft may reuse the dead one's object) must look as its own index rolls: no tinted copy or alpha health left over from Bruce. CISharkReroll keep = leave the randomizer on that seed (for CISharkLook on player 2); else it is put back")]
+		[ConsoleCommand(name: "CIBruceStay", docs: "Dev, world (host): the live shark is made Big Bruce (a Wild randomizer seed that rolls his index an alpha) and left alive, the randomizer left on that seed - then CISharkLook on player 2 (after 4 s: a player looks at a shark 3 s after the host's settings) must say 'big bruce, tinted' as on the host (IR14). For a CI world only: nothing is put back")]
+		public static void BruceStayCommand() { StartTest(BruceStayRoutine()); }
+
+		static IEnumerator BruceStayRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("bruce stay: run in a world, as the host"); yield break; }
+			var sharkOut = new AI_NetworkBehavior_Shark[1];
+			var oldOut = new RandomizerSettings[1];
+			yield return BruceMake(sharkOut, oldOut);
+			if (sharkOut[0] == null) yield break;
+			bool fits;
+			string look = SharkLookOf(sharkOut[0], out fits);
+			if (fits && look.Contains("big bruce")) Log("PASS: bruce stays: " + look); else Fail("bruce stay: " + look);
+		}
+
+		[ConsoleCommand(name: "CISharkReroll",docs: "Dev, in game (host): Bruce killed, the next shark has its own roll (IR14) - the live shark is made Big Bruce (a Wild randomizer seed, as CIBruceLook), killed with one hit, and the next shark Raft sends (up to 5 minutes; Raft may reuse the dead one's object) must look as its own index rolls: no tinted copy or alpha health left over from Bruce. CISharkReroll keep = leave the randomizer on that seed (for CISharkLook on player 2); else it is put back")]
 		public static void SharkRerollCommand(string[] args) { StartTest(SharkRerollRoutine(args != null && args.Contains("keep"))); }
 
 		static IEnumerator SharkRerollRoutine(bool keep)
