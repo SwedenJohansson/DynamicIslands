@@ -1,0 +1,41 @@
+# Blightmire (CIPlay blightmire): the hummock round 0 -32, the roots west -30 0, north 8 22, east 34 -6 (burnt in that
+# order: the east one first is refused), the marsh station 12 26, the root cache by the east root.
+island Blightmire
+offset 0 0
+expect step 0
+expect title The Poisoned Marsh
+zone hummock
+expect step 1
+read Blight map
+expect step 2
+open Smelter camp chest
+wait 3
+expect step 3
+kill Hyena
+expect animals Hyena 0
+expect step 4
+use root3
+expect story burnt 0
+use root1
+expect story burnt 1
+expect hidden root1
+expect shown fire1
+expect step 5
+use root2
+expect story burnt 2
+expect step 6
+open Marsh station locker
+wait 3
+expect step 7
+kill Warthog
+expect animals Warthog 0
+expect step 8
+use root3
+expect story burnt 3
+expect shown rootcache
+expect step 9
+open Root cache
+wait 3
+expect step 10
+read Seedkeeper's confession
+expect done

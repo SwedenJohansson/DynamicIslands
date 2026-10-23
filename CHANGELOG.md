@@ -12,6 +12,12 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 2026-10-23: known-issues fixes
 
 ### New
+- **A sixth whole storyline in the library, The Last Green World:** eleven islands in place of Raft's own story
+  (Raft's story off; the chain on the Receiver, 400 to 1200). Pollenreach Spit, Ranger Landing, Riverfork Delta, Tracker's
+  Rise, Hollowtrunk Grove (Raft's vending machine), Rootweave Caves, Blightmire (needs the engine), Canopy Stair (a Raft
+  store) and a finale in two parts: The Heart of Green (23 quest steps, a Raft store, one valve - BURN or SPREAD) and The
+  Rootcore under it (12 steps, the Blightmother), which ends the way the Heart chose. Thornback Ridge turns up on day 6.
+  All of Raft's story blueprints are quest steps on the way.
 - **A seventh whole storyline in the library, The Frozen Horizon:** eleven islands in place of Raft's own story
   (Raft's story off; the chain on the Receiver, 300 to 1100). Signalstack Rock, The Floelane, Steamvent Harbour, Orrin's
   Sledge Camp, The Iron Whale - Bow (needs the engine; Raft's vending machine) and her Engine Decks under the pack, Saga

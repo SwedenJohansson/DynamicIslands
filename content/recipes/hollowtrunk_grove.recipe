@@ -1,0 +1,163 @@
+# Hollowtrunk Grove - the fifth island of the library's plan The Last Green World (SL11, Verdance)
+# A grove of five giant trees (Raft's giant firs and birches from Balboa) on a low green island, a wooden hut or a deck
+# on posts at the foot of each. The Seedkeepers' greenhouse (an open shelter) stands by the south beach with its water
+# tower and an old token machine; a zipline runs from the deck at the second trunk to the fourth; the seed store sits at
+# the foot of the biggest trunk, and between its roots a hollow runs down: the root hole. Bees hum in the birches. Burr
+# the goat stands by a vine-choked cache in the north-east. Quest "The Hollow Trees" (10 steps): the greenhouse, the
+# watering rota, the water tank plans in the water tower, the zipline to the fourth trunk, the water pipe plans in its
+# store, the purifier plans in the crown box, the large storage plans in the seed store, the seed drawers, Ranger log 6,
+# the root hole (it brings Rootweave Caves).
+#
+# Built by the recipe player (CIRecipe hollowtrunk_grove) through the editor's own operations. Points (metres over the
+# sea): the greenhouse pad 1.6 m round 0 -40, the water tower x -16..-11.5, z -46..-41.5; the trunks T1 (fir) 0 10,
+# T2 (fir) -32 -6, T3 (birch) 30 -14, T4 (fir) -26 36, T5 (birch) 28 30, their pads at 2 m; T2's deck x -27..-22.5,
+# z -10..-5.5, T4's deck x -22..-17.5, z 30..34.5; the seed store x 6..10.5, z 14..17; the root hole 0.6 m at -6 2.
+include lib_sea
+include lib_features
+include lib_huts
+include lib_gravity
+include lib_verdance
+new
+gen Trees=0.25 Bushes=0.3 Rocks=0.15 Harvest=0.3 BeachThings=0.25
+gen Seed=11061 Radius=72 Height=8 Roughness=0.25 Peaks=1 Shape=0 Style=0 PeakShape=0.4 Cliffs=0.1 BeachWidth=0.6
+gen Water=0.5 SeaRocks=0.3 SeaFinds=0.4 Sunken=0.2 Hostiles=0 Friendly=0.2 SeaLife=0.3
+generate
+
+# --- Terrain: the greenhouse pad, the five trunk pads, the root hole ---------------------------------------------------
+brush flatten from 0 -40 to -14 -44 r=7 s=20 frames=200 h=1.6
+brush flatten at 0 10 r=12 s=20 frames=200 h=2
+brush flatten at 8.25 15.5 r=4 s=20 frames=200 h=2
+brush flatten at -30 -6 r=8 s=20 frames=200 h=2
+brush flatten at 30 -14 r=7 s=20 frames=200 h=2
+brush flatten at -24 34 r=8 s=20 frames=200 h=2
+brush flatten at 28 30 r=7 s=20 frames=200 h=2
+brush flatten from -2 6 to -6 2 r=2.5 s=20 frames=150 h=0.6
+origin
+clear from 0 -40 to -14 -44 r=7
+clear at 0 10 r=12
+clear at -30 -6 r=8
+clear at 30 -14 r=7
+clear at -24 34 r=8
+clear at 28 30 r=7
+
+# --- The five giant trees ----------------------------------------------------------------------------------------------
+place FirTree_Big1_LodGroup trunk1 at 0 10 ground yaw=20
+place FirTree_Big1_LodGroup trunk2 at -32 -6 ground yaw=140
+place BirchTree_Big1_LodGroup trunk3 at 30 -14 ground yaw=260
+place FirTree_Big1_LodGroup trunk4 at -26 36 ground yaw=300
+place BirchTree_Big1_LodGroup trunk5 at 28 30 ground yaw=60
+
+# --- The greenhouse (an open shelter), the watering rota, the token machine, the water tower ---------------------------
+push at -2.25 -42.25 h=1.6
+call shelter w=3 d=3 y=0.1
+place "Box Big" - at 1 1 y=0.1 sit yaw=10
+place UT_MarketBasket01 - at 3.5 3.5 y=0.1 sit
+pop
+place Zone_Trigger greenhousezone at 0 -40 ground
+place Note_Sign rota at 4 -36 ground sit yaw=200
+vending grovevend at 5 -41 ground yaw=270
+push at -16 -46 h=1.6
+call stilt_hut y=2.6 w1=none w2=none w3=none w4=none w5=none w6=none
+place Loot_Chest watertower at 2.25 3.6 y=2.7 sit yaw=180
+pop
+
+# --- Trunk 2: the deck on posts and the zipline to trunk 4; trunk 4's deck: its store and the crown box ---------------
+push at -27 -10 h=2
+call stilt_hut y=2.6
+pop
+# (zip deck beside trunk 2's deck)
+push at -29.5 -9 h=2
+call zipdeck y=2.6
+pop
+place ZiplinePath_Landmark grovezip at -23.03 -9.22 h=6.07
+zipto grovezip -20 28
+place Zone_Trigger trunk4zone at -20 28 ground
+push at -22 30 h=2
+call stilt_hut y=2.6
+place Loot_Chest trunkstore at 3.6 3.6 y=2.7 sit yaw=180
+place Loot_Crate crownbox at 0.9 3.6 y=2.7 sit yaw=160
+pop
+
+# --- Trunk 1: the seed store at its foot (Ranger log 6 inside), the root hole between its roots -----------------------
+push at 6 14 h=2
+call hut w=3 d=2 y=0.1
+place Loot_Chest seedstore at 3.6 2.3 y=0.1 sit yaw=180
+place Loot_Crate seeddrawers at 1.8 2.3 y=0.1 sit yaw=180
+place "Box Small" - at 0.8 1.2 y=0.1 sit
+place Note_Paper rangerlog6 at 0.8 1.2 y=0.8 drop yaw=10
+pop
+place Zone_Trigger rootszone at -6 2 ground
+
+# --- The tokens in the trunks' feet, bees in the birches, Burr by a vine-choked cache ---------------------------------
+place QuestItemPickup_Tangaroa_Token - at -29 -2 ground
+place QuestItemPickup_Tangaroa_Token - at 27 -11 ground
+place QuestItemPickup_Tangaroa_Token - at -28 32 ground
+place QuestItemPickup_Tangaroa_Token - at 25 33 ground
+call hives x=30 z=-14 r=7 n=1 seed=11062
+call hives x=28 z=30 r=7 n=1 seed=11063
+call vinecache x=40 z=44 r=8 seed=11064 chest=burrchest vines=burrvines items=Leather*2;Seed_Banana*2;Rope*3
+place Creature_Goat burr at 36 40 ground
+prop burr creature.count=1
+prop burr creature.respawn=0
+
+# --- Gathering: flowers, pineapples, berries, sand; the shallows -----------------------------------------------------
+scatter Pickup_Landmark_Flower_White 4 at 0 -20 r=18 seed=11065 free=2
+scatter Pickup_Landmark_Flower_Yellow 3 at 10 -24 r=14 seed=11066 free=2
+scatter Pickup_Landmark_PineappleLandmark 2 at -40 14 r=10 seed=11067 free=2
+scatter Pickup_Landmark_BerryBush 3 at 40 6 r=10 seed=11068 free=3
+scatter Pickup_Landmark_Sand 2 at 12 -56 r=8 seed=11069 free=2
+call shallows x=0 z=0 r=84 deep=5 n=2 seed=11070
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+info title=Hollowtrunk Grove
+info author=Custom Islands
+info description=Five giant trees with huts at their feet, the Seedkeepers' greenhouse and a zipline between the trunks - and a hole between the biggest tree's roots. The fifth island of The Last Green World.
+island on.arrive=message||Trees as tall as towers. Under the biggest one, the ground falls away into the dark between its roots.
+
+note rota Seedkeeper's watering rota | WATERING ROTA - SEEDKEEPERS\n\nTank first, then the trunks, in order.\nTrunk 2: ride the line to trunk 4. Pipes and the purifier are on the deck.\nSeed store at the big tree. Keep the drawers locked.\n\nNO ONE goes into the roots. - M.
+note rangerlog6 Ranger log 6 | RANGER LOG 6 - O. FENN\n\nThe greenhouse is dry. The seed drawers are full - they meant to come back.\n\nTheir lamps went down between the roots of the big tree. The ground there breathes: warm air, and a smell of rot.\n\nBurr will not go near it. I will.
+note watertower Water tower tank | The water tower's tank: the tank's own plans in a tin, wrapped in oilcloth.
+note trunkstore Trunk store | Trunk 4's store box: plans for water pipes, a coil of rope.
+note crownbox Crown box | The crown box on trunk 4's deck: the plans of a purifier that runs on power.
+note seedstore Seed store | The seed store's big chest: its own plans, for a store like it.
+note seeddrawers Seed drawers | The seed drawers: pineapple, mango and a black flower's seeds, each in a labelled paper.
+loot watertower Blueprint_WaterTank*1;Plank*4;Nail*6
+prop watertower loot.refill=0
+loot trunkstore Blueprint_Pipe_Water*1;Rope*2
+prop trunkstore loot.refill=0
+loot crownbox Blueprint_ElectricPurifier*1;CopperIngot*1
+prop crownbox loot.refill=0
+loot seedstore Blueprint_Storage_Large*1;Plank*6
+prop seedstore loot.refill=0
+loot seeddrawers Seed_Pineapple*2;Seed_Mango*2;Seed_Flower_Black*1
+prop seeddrawers loot.refill=0
+prop burrvines on.use=hide|\nshow|burrchest\nmessage||Burr pushes in as the vines fall - he found it: a cache in the roots.
+
+prop greenhousezone zone.id=greenhouse
+prop greenhousezone zone.radius=6
+prop greenhousezone zone.message=The Seedkeepers' greenhouse. Dry beds, a water tower, an old token machine.
+prop trunk4zone zone.id=trunk_4
+prop trunk4zone zone.radius=3
+prop trunk4zone zone.message=Trunk 4. A deck on posts at its foot.
+prop rootszone zone.id=roots
+prop rootszone zone.radius=3
+prop rootszone zone.message=The root hole. Warm air breathes up out of the dark.
+
+quest title=The Hollow Trees
+quest intro=Trees as tall as towers. Find the Seedkeepers' greenhouse.
+step reach|greenhouse|1|Go to the Seedkeepers' greenhouse
+step read|Seedkeeper's watering rota|1|Read the watering rota
+step blueprint|Blueprint_WaterTank|1|Take the water tank plans from the water tower
+step reach|trunk_4|1|Ride the zipline from trunk 2 to trunk 4
+step blueprint|Blueprint_Pipe_Water|1|Take the water pipe plans from trunk 4's store
+step blueprint|Blueprint_ElectricPurifier|1|Take the purifier plans from the crown box
+step blueprint|Blueprint_Storage_Large|1|Take the large storage plans from the seed store
+step open|Seed drawers|1|Open the seed drawers
+step read|Ranger log 6|1|Read Ranger log 6 in the seed store
+step reach|roots|1|Go down into the root hole
+quest done=Under the grove, the roots go on. Rootweave - band 600.
+quest reward=HoneyComb*2;Seed_Birch*2
+
+# names for the show/hide actions (actions find objects by obj.name)
+prop burrchest obj.name=burrchest
+save Hollowtrunk Grove

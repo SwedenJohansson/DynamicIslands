@@ -1,0 +1,110 @@
+# Ranger Landing - the second island of the library's plan The Last Green World (SL11, Verdance)
+# The rangers' forward camp on Verdance's shore: a watch station on stilts over the beach, a hen run, a drying rack and
+# a fire pit; a trail of footprints and broken bushes leads into the birch wood to the rangers' boat shed. Ranger Oda
+# Fenn left her jobs on the board. Quest "The Forgotten Shore" (6 steps): the station, Oda's job board, the trail
+# (three marks in order - each shows the next), the motor wheel and steering wheel plans in the boat shed, Ranger log 3.
+#
+# Built by the recipe player (CIRecipe ranger_landing) through the editor's own operations. Points (metres over the
+# sea): the station pad at 1.4 m round -10 -24 (the stilt hut x -12..-7.5, z -26..-21.5, deck 2.6 m over the pad), the
+# fire pit -2 -18, the trail marks -6 -6, 4 4, -2 14, the boat shed x -5..-0.5, z 18..21.
+include lib_sea
+include lib_features
+include lib_huts
+include lib_gravity
+include lib_verdance
+new
+gen Trees=0.25 Bushes=0.3 Rocks=0.2 Harvest=0.3 BeachThings=0.3
+gen Seed=11021 Radius=46 Height=12 Roughness=0.3 Peaks=1 Shape=0 Style=0 PeakShape=0.4 Cliffs=0.3 BeachWidth=0.6
+gen Water=0.5 SeaRocks=0.3 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0.2 SeaLife=0.3
+generate
+
+# --- Terrain: the station pad, the camp, the trail and the boat shed's pad -------------------------------------------
+brush flatten at -9.75 -23.75 r=5 s=20 frames=200 h=1.4
+brush flatten from -9 -20 to 4 -20 r=5 s=20 frames=120 h=1.4
+brush flatten at -2.75 19.5 r=4.5 s=20 frames=200 h=4
+brush smooth from -4 -14 to -2 14 r=4 s=6 frames=20
+origin
+clear at -9.75 -23.75 r=5
+clear from -9 -19 to 6 -19 r=4
+clear from -6 -12 to -2 16 r=3
+clear at -2.75 19.5 r=4.5
+
+# --- The watch station on stilts: Oda's job board on its deck; the camp below ----------------------------------------
+push at -12 -26 h=1.4
+call stilt_hut y=2.6
+place Note_Sign jobboard at 2.25 3.9 y=2.7 sit
+place "Box Small" - at 3.6 1.2 y=2.7 sit
+place Note_Paper rangerlog2 at 3.6 1.2 y=3.4 drop yaw=20
+pop
+place Zone_Trigger stationzone at -9.5 -20 ground
+place campfire_1 - at -2 -18 ground sit
+place Log - at -2 -16 ground sit yaw=90 scale=0.4
+place UT_MarketBasket01 - at 1 -21 ground sit yaw=40
+place Creature_Chicken hens at 5 -19 ground
+prop hens creature.count=3
+
+# --- The trail: three marks (each shown by the one before), broken bushes between them ------------------------------
+place Zone_Trigger track1 at -6 -6 ground
+place Zone_Trigger track2 at 4 4 ground
+place Zone_Trigger track3 at -2 14 ground
+call trailbush x=-7 z=-10 yaw=20
+call trailbush x=-3 z=-1 yaw=80
+call trailbush x=1 z=1 yaw=140
+call trailbush x=3 z=9 yaw=200
+call trailbush x=-1 z=11 yaw=10
+
+# --- The rangers' boat shed at the trail's end: the plans chest, Ranger log 3 ----------------------------------------
+push at -5 18 h=4
+call hut w=3 d=2 y=0.1
+place Loot_Chest boatshed at 3.6 2.3 y=0.1 sit yaw=180
+place "Box Small" - at 0.8 2.3 y=0.1 sit
+place Note_Paper rangerlog3 at 0.8 2.3 y=0.8 drop yaw=10
+pop
+
+# --- Gathering; the shallows ---------------------------------------------------------------------------------------
+call dirt x=8 z=-6 r=10 n=2 seed=11022
+scatter "Pickup_Landmark_Tree_Birch" 3 at 12 6 r=10 seed=11023 free=3
+call shallows x=0 z=0 r=58 deep=5 n=1 seed=11024
+
+# --- Settings, notes, behaviours, quest ----------------------------------------------------------------------------
+info title=Ranger Landing
+info author=Custom Islands
+info description=The rangers' forward camp on Verdance's shore: a watch station on stilts, a hen run, a fire pit and a trail into the birch wood. The second island of The Last Green World.
+island on.arrive=message||A watch station on stilts over the beach, hens scratching under it. Smoke from a fire pit - still warm.
+
+note jobboard Oda's job board | RANGER STATION - JOBS\n\n1. Follow the trail to the boat shed. Three marks: the split stone, the bent birch, the shed path. Walk them in order or you lose it.\n2. The boat's wheels are in the shed. Take them. A raft with a motor goes where the rivers go.\n3. Read my log before you go upriver.\n\n- Oda Fenn, ranger
+note rangerlog2 Ranger log 2 | RANGER LOG 2\n\nThe hens are laying again. The deer did not come to the salt lick. Nothing comes out of the wood any more except the wind.
+note rangerlog3 Ranger log 3 | RANGER LOG 3 - O. FENN\n\nThe delta's river people have not answered in six days. I am going upriver. The machete is at their outpost - the vines grow back faster every week.\n\nIf you read this, you followed the trail. The delta's band is 800.
+note boatshed Ranger boat shed | The rangers' boat shed: the motor wheel's and the steering wheel's plans, oiled and rolled.
+loot boatshed Blueprint_MotorWheel*1;Blueprint_SteeringWheel*1;Bolt*3;Hinge*2
+prop boatshed loot.refill=0
+
+prop stationzone zone.id=station
+prop stationzone zone.radius=6
+prop stationzone zone.message=The ranger station. A job board on the deck, and nobody home.
+prop track1 zone.id=track_1
+prop track1 zone.radius=3
+prop track1 on.enter=show|track2\nmessage||The split stone - a boot print on the moss beside it. On to the bent birch.
+prop track2 obj.name=track2
+prop track2 beh.hidden=1
+prop track2 zone.id=track_2
+prop track2 zone.radius=3
+prop track2 on.enter=show|track3\nmessage||The bent birch, a ribbon tied round it. The shed path goes north.
+prop track3 obj.name=track3
+prop track3 beh.hidden=1
+prop track3 zone.id=track_3
+prop track3 zone.radius=3
+prop track3 zone.message=The shed path. A boat shed under the birches.
+
+quest title=The Forgotten Shore
+quest intro=A ranger station, empty, and a trail into the wood. Go up to the station.
+step reach|station|1|Go to the ranger station
+step read|Oda's job board|1|Read Oda's job board
+step reach|track_3|1|Follow the trail: the split stone, the bent birch, the shed path
+step blueprint|Blueprint_MotorWheel|1|Take the motor wheel plans from the boat shed
+step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel plans from the boat shed
+step read|Ranger log 3|1|Read Ranger log 3
+quest done=Oda went upriver. The delta's band is 800.
+quest reward=Seed_Birch*2;Seed_Pine*2
+
+save Ranger Landing

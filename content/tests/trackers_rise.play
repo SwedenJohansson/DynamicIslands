@@ -1,0 +1,29 @@
+# Tracker's Rise (CIPlay trackers_rise): the meadow round 0 4, the tower at -14 -12, the gully round 24 24 with Burr's
+# cage and the satchel, the anchor box -6 -14, the llamas round -6 14, Ranger log 5 at 2 -4.
+island Tracker's Rise
+offset 0 0
+expect step 0
+expect title Tracks
+zone meadow
+expect step 1
+read Tracking guide
+expect step 2
+open Tower chest
+wait 3
+expect step 3
+zone gully
+expect step 4
+use burrcage
+expect story burr 1
+expect hidden burrcage
+expect step 5
+open Ranger's satchel
+wait 3
+expect step 7
+open Zipline anchor box
+wait 3
+expect step 8
+catch Llama 1
+expect step 9
+read Ranger log 5
+expect done

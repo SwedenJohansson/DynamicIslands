@@ -1,0 +1,22 @@
+# Ranger Landing (CIPlay ranger_landing): the station on stilts at -12 -26 (deck 4 m), the trail's three marks, the
+# boat shed at -5 18 (4 m).
+island Ranger Landing
+offset 0 0
+expect step 0
+expect title The Forgotten Shore
+expect hidden track2
+zone station
+expect step 1
+read Oda's job board
+expect step 2
+zone track_1
+expect shown track2
+zone track_2
+zone track_3
+expect step 3
+open Ranger boat shed
+wait 3
+expect step 5
+read Ranger log 3
+expect done
+expect animals Chicken 3

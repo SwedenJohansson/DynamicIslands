@@ -128,6 +128,7 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
      [15.11 A whole storyline: Relic of the Seventh Tide](#1511-a-whole-storyline-relic-of-the-seventh-tide) ·
      [15.12 A whole storyline: The Lullaby Frequency](#1512-a-whole-storyline-the-lullaby-frequency) ·
      [15.13 A whole storyline: The Gravity Sea](#1513-a-whole-storyline-the-gravity-sea) ·
+     [15.14 A whole storyline: The Last Green World](#1514-a-whole-storyline-the-last-green-world) ·
      [15.15 A whole storyline: The Frozen Horizon](#1515-a-whole-storyline-the-frozen-horizon)
 16. [Learn from the islands](#16-learn-from-the-islands)
    - [16.1 Opening any island in the editor](#161-opening-any-island-in-the-editor) · [16.2 Looking around](#162-looking-around) ·
@@ -4290,6 +4291,37 @@ To learn from it: open Upfall Orchard and Rootcellar Deep side by side to see ho
 set up (**Elevation** in the island settings), then open the plan and follow its signals and zones.
 
 ---
+
+### 15.14 A whole storyline: The Last Green World
+
+**The Last Green World** is a plan of eleven islands in place of Raft's own story (Raft's story off, no random islands,
+the chain on the Receiver, 400 to 1200). Verdance is the last land where things still grow. The Seedkeepers grew a
+living organism in its roots to green the drowned world, and lost control of it. Ranger Oda Fenn's logs lead you from
+a pollen spit up a river delta, through a grove of giant trees and the caves under it, across a poisoned marsh and up a
+stair of roots to the Heart of Green. There you turn one valve, **BURN** or **SPREAD**, and the Rootcore under the tree
+is finished the same way. The islands show every kind of "when": a quest (`quest:spit`), a landing (`visit:landing`), a
+quest step (`step:delta:6`), a zone (`zone:grove:roots`), a signal (`signal:heart:below`), a rule (`rule:mire`), a
+day (`day:6`) and a frequency that needs the engine (`receiver:1000:needs=engine`). Raft's story is off, so all of Raft's
+story blueprints are **Blueprint** steps on the way. Hollowtrunk Grove has Raft's vending machine; Canopy Stair and The
+Heart of Green have a **Raft store**. Titanium lies buried on Blightmire, Canopy Stair, the Heart and the Rootcore.
+
+| Island | What it is | What to look at |
+|---|---|---|
+| ![](images/library/pollenreach_spit.jpg) **Pollenreach Spit** (first, 500) | A sand spit in drifting pollen, a ranger beacon | A short quest; the Receiver and antenna plans |
+| ![](images/library/ranger_landing.jpg) **Ranger Landing** (700) | A ranger station on stilts, hens under it | Ranger logs as notes; the motor wheel and steering plans |
+| ![](images/library/riverfork_delta.jpg) **Riverfork Delta** (800) | River arms cut into the land, an outpost, a ferry crank | Arriving at the landing brings it (`visit:landing`); boars upriver |
+| ![](images/library/trackers_rise.jpg) **Tracker's Rise** (700, a meadow 6 m up) | A tracker's tower, goats and llamas, a gully | A zipline from the tower; the goat Burr in a log cage |
+| ![](images/library/hollowtrunk_grove.jpg) **Hollowtrunk Grove** (900) | Five giant firs and birches, a greenhouse, a water tower | Raft's vending machine; walking into the roots (`zone:roots`) brings the caves |
+| ![](images/library/rootweave_caves.jpg) **Rootweave Caves** (600) | A rock hill with four of Raft's caves: fungus hall, bee hall, flooded passage, den | Air pockets, wild hives, a mama bear |
+| ![](images/library/blightmire.jpg) **Blightmire** (1000, needs the engine) | A poisoned marsh, three purple roots | Roots burnt in order, chained by signals; `signal:cleansed` ends it |
+| ![](images/library/canopy_stair.jpg) **Canopy Stair** (900, a shelf 10 m up) | Giant roots up a slope, the Seedkeepers' last camp | A Raft store; a zipline pointing at the Heart |
+| ![](images/library/heart_of_green.jpg) **The Heart of Green** (1200, finale part 1) | A giant fir on a plateau, three balconies, a crown terrace | 23 steps: a generator, a spore press, a keypad, the BURN / SPREAD valves (`!signal|chosen`) |
+| ![](images/library/the_rootcore.jpg) **The Rootcore** (400, finale part 2) | Raft's bear cave as the dome under the Heart | The Blightmother boss and her brood; core valves that check the Heart's choice (`has|story:burnway`) |
+| ![](images/library/thornback_ridge.jpg) **Thornback Ridge** (side, day 6) | A thorny ridge, a hermit's camp, a mango grove | Turns up ahead of the raft on day 6 (`day:6`, `ahead:500`) |
+
+To learn from it: open The Heart of Green and look at the two valves' behaviours - each refuses once `chosen` is sent,
+and each gives its own story item, which the Rootcore's valves check (signals stay on their island; story items travel
+with the crew).
 
 ### 15.15 A whole storyline: The Frozen Horizon
 

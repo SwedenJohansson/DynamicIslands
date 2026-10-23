@@ -1,0 +1,10 @@
+# Guide pictures of Blightmire (CIPlay blightmire_pics): Raft's camera, midday, calm
+island Blightmire
+offset 0 0
+hour 11
+weather Calm
+at 0 -32
+wait 3
+picture sl11_blightmire_island 55 40 -110 0 2 0
+picture sl11_blightmire_root -24 4 -8 -30 1 0
+storespot 0 -32

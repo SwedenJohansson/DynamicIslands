@@ -1,0 +1,127 @@
+# Tracker's Rise - the fourth island of the library's plan The Last Green World (SL11, Verdance)
+# A grass ridge rising out of the sea to an open meadow 6 m up, goats and llamas grazing on it. The trackers' watch tower
+# stands on four posts at the meadow's edge, a zipline running from it down to the sand cove at the foot. A trail of
+# broken bushes leads across the meadow to a gully, where an injured goat, Burr, is pinned in a cage of fallen branches
+# and a ranger's satchel lies dropped. Quest "Tracks" (10 steps): the meadow, the tracking guide, the engine controls
+# plans in the tower, the broken-bush trail to the gully, Burr freed, the metal detector and firework plans in the
+# satchel, the zipline plans in the anchor box, a llama, Ranger log 5.
+#
+# Built by the recipe player (CIRecipe trackers_rise) through the editor's own operations. Points (metres over the
+# sea): the meadow 6 m round 0 4 (r 22), the cove 1.2 m round 0 -40, the tower x -14..-9.5, z -12..-7.5 (deck 8.6 m),
+# the gully floor 3.5 m round 24 24, the satchel 26 27, Ranger log 5 at 2 -4.
+include lib_sea
+include lib_features
+include lib_huts
+include lib_verdance
+new
+gen Trees=0.15 Bushes=0.25 Rocks=0.2 Harvest=0.3 BeachThings=0.2
+gen Seed=11041 Radius=50 Height=11 Roughness=0.3 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.3 BeachWidth=0.5
+gen Water=0.4 SeaRocks=0.3 SeaFinds=0.3 Sunken=0.1 Hostiles=0 Friendly=0.3 SeaLife=0.2
+generate
+
+# --- Terrain: the meadow on top, the gully cut into its north-east edge, the sand cove at the foot ------------------
+brush flatten at 0 4 r=22 s=20 frames=300 h=6
+brush flatten at 24 24 r=6 s=20 frames=200 h=3.5
+brush flatten at 0 -40 r=7 s=20 frames=200 h=1.2
+brush sand at 0 -40 r=9 s=10 frames=30
+brush grass at 0 4 r=22 s=6 frames=30
+origin
+clear at 0 4 r=14
+clear at -11.75 -9.75 r=5
+clear at 24 24 r=6
+clear at 0 -40 r=6
+
+# --- The trackers' watch tower on four posts: the tower chest on its deck; the zipline down to the cove ---------------
+push at -14 -12 h=6
+call stilt_hut y=2.6
+place Loot_Chest towerchest at 3.6 3.6 y=2.7 sit yaw=180
+pop
+# (zip deck beside the tower)
+push at -9 -14 h=6
+call zipdeck y=2.6
+pop
+place ZiplinePath_Landmark towerzip at -2.53 -14.22 h=10.07
+zipto towerzip 2 -40
+place Loot_Crate anchorbox at -6 -14 ground sit yaw=160
+
+# --- The meadow: the tracking guide, goats and llamas, Ranger log 5 on a crate by the lookout stone ------------------
+place Zone_Trigger meadowzone at 0 4 ground
+place Note_Sign trackguide at 3 -2 ground sit yaw=200
+place Creature_Goat goats at 8 -6 ground
+prop goats creature.count=3
+place Creature_Llama llamas at -6 14 ground
+prop llamas creature.count=2
+push at 2 -4 h=6
+place "Box Small" - at 0 0 y=0 sit
+place Note_Paper rangerlog5 at 0 0 y=0.7 drop yaw=30
+pop
+
+# --- The trail of broken bushes to the gully; Burr's cage of branches; the ranger's satchel -------------------------
+call trailbush x=6 z=8 yaw=20
+call trailbush x=10 z=12 yaw=70
+call trailbush x=14 z=15 yaw=130
+call trailbush x=18 z=19 yaw=40
+place Zone_Trigger gullyzone at 22 22 ground
+place Creature_Goat burr at 24 25 ground
+prop burr creature.count=1
+prop burr creature.respawn=0
+place Log burrcage at 22.6 24.4 ground sit yaw=20
+place Log burrcage at 25.4 25.8 ground sit yaw=110
+place Log burrcage at 24.2 23 ground sit yaw=160
+place Loot_Crate satchel at 26 27 ground sit yaw=220
+
+# --- Gathering: copper and clay in the cove rocks, berries on the slope; the shallows ------------------------------
+scatter "Pickup_Landmark_Copper 1" 2 at 6 -34 r=8 seed=11042 free=2
+scatter "Pickup_Landmark_Clay 2" 2 at -6 -34 r=8 seed=11043 free=2
+scatter Pickup_Landmark_BerryBush 3 at -16 18 r=10 seed=11044 free=3
+call shallows x=0 z=0 r=60 deep=5 n=1 seed=11045
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+info title=Tracker's Rise
+info author=Custom Islands
+info description=A grass ridge with a meadow on top: goats and llamas, the trackers' watch tower, and a trail of broken bushes to a gully. The fourth island of The Last Green World.
+island on.arrive=message||A green ridge over the jungle. Something bleats up on the meadow - not like the goats.
+
+story burr|Burr|Note_Paper|Burr, a ranger's goat with a torn ear, freed from a cage of branches in the gully.
+
+note trackguide Tracking guide | TRACKERS' BOARD\n\nA bush pushed flat points the way an animal went.\nTwo flat bushes in a row: it ran.\nThe gully takes everything that falls off the meadow.\n\nTower kit on the deck. Zipline down to the cove.
+note rangerlog5 Ranger log 5 | RANGER LOG 5 - O. FENN\n\nBurr is safe. If you found him first - thank you.\n\nFrom the tower I saw them: the river people's lights, going in through the hollow trees. Into the trees, not under them.\n\nI follow tomorrow.
+note towerchest Tower chest | The tower chest: plans for an engine's controls, a pair of field glasses, cord.
+note satchel Ranger's satchel | Oda's satchel, dropped in the gully: a metal detector's plans and a firework's.
+note anchorbox Zipline anchor box | The zipline's anchor box: the plans for the zipline it was built from.
+loot towerchest Blueprint_EngineControls*1;Rope*2;Bolt*2
+prop towerchest loot.refill=0
+loot satchel Blueprint_MetalDetector*1;Blueprint_Firework*1;Battery*1
+prop satchel loot.refill=0
+loot anchorbox Blueprint_ZiplineBase*1;Rope*3;MetalIngot*1
+prop anchorbox loot.refill=0
+
+prop burrcage obj.name=burrcage
+prop burrcage beh.use=Lift the branches off the goat
+prop burrcage if.use=!signal|burr
+prop burrcage on.use=signal||burr\ngive||story:burr*1\nhide|burrcage\nmessage||The branches roll away. The goat limps out, shakes itself - a ranger's tag on its ear: BURR.
+prop burrcage else.use=message||Burr is free.
+
+prop meadowzone zone.id=meadow
+prop meadowzone zone.radius=8
+prop meadowzone zone.message=The meadow. Goats, llamas, and a tower on four posts at the edge.
+prop gullyzone zone.id=gully
+prop gullyzone zone.radius=5
+prop gullyzone zone.message=The gully. Fallen branches - and a goat pinned under them.
+
+quest title=Tracks
+quest intro=Something bleats on the meadow. Climb up to it.
+step reach|meadow|1|Climb up to the meadow
+step read|Tracking guide|1|Read the trackers' board
+step blueprint|Blueprint_EngineControls|1|Take the engine controls plans from the tower chest
+step reach|gully|1|Follow the broken bushes to the gully
+step collect|story:burr|1|Free the goat from the branches
+step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from the ranger's satchel
+step blueprint|Blueprint_Firework|1|Take the firework plans from the ranger's satchel
+step blueprint|Blueprint_ZiplineBase|1|Take the zipline plans from the anchor box by the tower
+step catch|Llama|1|Catch a llama
+step read|Ranger log 5|1|Read Ranger log 5 by the lookout stone
+quest done=Into the hollow trees. Their band is 900.
+quest reward=Seed_Pine*2;Feather*4
+
+save Tracker's Rise

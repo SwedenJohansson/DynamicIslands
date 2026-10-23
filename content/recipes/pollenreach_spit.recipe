@@ -1,0 +1,102 @@
+# Pollenreach Spit - the first island of the library's plan The Last Green World (SL11, Verdance)
+# A long sandy spit dusted yellow with pollen that drifts in the air: a Seedkeepers' research skiff lies beached on its
+# side on the south beach, its crew's shelter (a roof on posts) beside it, sample jars on the dunes, palms at the root of
+# the spit and yellow and white flowers in the dune grass. Quest "The Pollen Trail" (6 steps): the skiff, its log, the
+# Receiver plans in the cabin, three pollen samples on the dunes, the antenna plans in the mast locker, and the
+# Seedkeepers' leaflet: "Verdance. The last green world."
+#
+# Built by the recipe player (CIRecipe pollenreach_spit) through the editor's own operations. Points (metres over the
+# sea): the skiff beach at 1.2 m round 0 -26, the shelter x -9..-6, z -27..-24, the leaflet board at 2 14.
+include lib_sea
+include lib_features
+include lib_huts
+include lib_verdance
+new
+gen Trees=0.12 Bushes=0.2 Rocks=0.15 Harvest=0.3 BeachThings=0.4
+gen Seed=11011 Radius=46 Height=8 Roughness=0.25 Peaks=1 Shape=0 Style=0 PeakShape=0.4 Cliffs=0.2 BeachWidth=0.9
+gen Water=0.5 SeaRocks=0.3 SeaFinds=0.4 Sunken=0.2 Hostiles=0 Friendly=0.2 SeaLife=0.3
+generate
+
+# --- Terrain: the skiff beach and the shelter's pad on the south shore; the dune top ---------------------------------
+brush flatten from -10 -26 to 8 -26 r=6 s=20 frames=200 h=1.2
+brush flatten at -7.5 -25.5 r=4 s=20 frames=200 h=1.2
+brush flatten at 2 12 r=6 s=20 frames=120 h=4
+brush sand from -10 -26 to 10 -26 r=8 s=10 frames=30
+origin
+clear from -12 -26 to 10 -26 r=7
+clear at 2 13 r=4
+
+# --- The beached skiff, its shelter (roof on corner posts) with the cabin chest; the mast locker -------------------
+place BoatStranded skiff at 3 -28 ground sit yaw=80
+prop skiff tint.color=#c9c2a8
+prop skiff tint.amount=0.35
+push at -9 -27 h=1.2
+call shelter w=2 d=2 y=0.1
+place Loot_Chest cabinchest at 1.5 2.2 y=0.1 sit yaw=180
+place "Box Small" - at 0.7 0.8 y=0.1 sit
+place Note_Paper skifflog at 0.7 0.8 y=0.8 drop yaw=15
+pop
+place Loot_Crate mastlocker at 7.5 -23.5 ground sit yaw=200
+place Zone_Trigger skiffzone at 0 -25 ground
+call pollen x=0 z=-10 r=26 al=pollenair
+
+# --- Three sample jars on the dunes; the Seedkeepers' leaflet on a board at the dune top ----------------------------
+place "Box Small" pollen1 at -14 -6 ground sit yaw=20
+place "Box Small" pollen2 at 12 -8 ground sit yaw=110
+place "Box Small" pollen3 at -4 6 ground sit yaw=250
+prop pollen1 tint.color=#e8c830
+prop pollen1 tint.amount=0.7
+prop pollen2 tint.color=#e8c830
+prop pollen2 tint.amount=0.7
+prop pollen3 tint.color=#e8c830
+prop pollen3 tint.amount=0.7
+place Note_Sign leaflet at 2 14 ground sit yaw=180
+
+# --- Flowers, coconuts, the shallows -------------------------------------------------------------------------------
+scatter Pickup_Landmark_Flower_Yellow 6 at 0 -4 r=22 seed=11012 free=2
+scatter Pickup_Landmark_Flower_White 4 at 0 4 r=20 seed=11013 free=2
+call shallows x=0 z=0 r=58 deep=5 n=2 seed=11014
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+info title=Pollenreach Spit
+info author=Custom Islands
+info description=A sandy spit dusted yellow with pollen, a research skiff beached on its side and sample jars on the dunes. The first island of The Last Green World.
+island on.arrive=message||The sand here is yellow. Not sand - pollen, drifting off the dunes in the wind. And a boat on its side on the beach.
+
+story pollen|Pollen sample|Placeable_Lantern_Metal|A Seedkeepers' sample jar of yellow pollen, labelled VERDANCE - DRIFT 4.
+
+note skifflog Skiff log: following the pollen | SKIFF LOG - SEEDKEEPERS' SURVEY\n\nDay 9. The pollen thickens every mile west. It is not from any tree we know.\nDay 11. Ran aground on a spit gold with it. The radio set and the aerial are packed in the cabin chest and the mast locker.\nDay 12. Three jars of the drift kept for the lab. If anyone finds this: follow the pollen. It comes from Verdance.
+note leaflet Seedkeepers' leaflet | THE SEEDKEEPERS\n\nVERDANCE. The last green world.\n\nForests, rivers, animals - everything the flood took, kept alive on one land. When the water stops rising, Verdance will green the world again.\n\nRanger station: tune 700.
+note cabinchest Skiff cabin | The skiff's cabin chest: a Receiver's plans in a dry bag.
+note mastlocker Mast locker | The mast locker: the aerial's plans, wrapped round the broken mast.
+loot cabinchest Blueprint_Reciever*1;Battery*1;Scrap*3
+prop cabinchest loot.refill=0
+loot mastlocker Blueprint_Antenna*1;Rope*3;Plank*6
+prop mastlocker loot.refill=0
+
+prop pollen1 obj.name=pollen1
+prop pollen1 beh.use=Take the pollen sample
+prop pollen1 on.use=give||story:pollen*1\nhide|\nmessage||A jar of yellow dust. It glitters.
+prop pollen2 obj.name=pollen2
+prop pollen2 beh.use=Take the pollen sample
+prop pollen2 on.use=give||story:pollen*1\nhide|\nmessage||A jar of yellow dust. It glitters.
+prop pollen3 obj.name=pollen3
+prop pollen3 beh.use=Take the pollen sample
+prop pollen3 on.use=give||story:pollen*1\nhide|\nmessage||A jar of yellow dust. It glitters.
+
+prop skiffzone zone.id=skiff
+prop skiffzone zone.radius=7
+prop skiffzone zone.message=A research skiff, beached on its side. SEEDKEEPERS on the bow.
+
+quest title=The Pollen Trail
+quest intro=Yellow dust on the sea for days - and here a whole spit of it. Go to the beached skiff.
+step reach|skiff|1|Go to the beached skiff
+step read|Skiff log: following the pollen|1|Read the skiff's log
+step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the cabin chest
+step collect|story:pollen|3|Gather the three pollen sample jars on the dunes
+step blueprint|Blueprint_Antenna|1|Take the antenna plans from the mast locker
+step read|Seedkeepers' leaflet|1|Read the Seedkeepers' leaflet on the dune top
+quest done=Verdance. The last green world. The ranger station's band is 700.
+quest reward=Plank*8;Rope*3;Coconut*2
+
+save Pollenreach Spit

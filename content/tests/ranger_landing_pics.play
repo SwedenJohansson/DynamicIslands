@@ -1,0 +1,9 @@
+# Guide pictures of Ranger Landing (CIPlay ranger_landing_pics): Raft's camera, midday, calm
+island Ranger Landing
+offset 0 0
+hour 11
+weather Calm
+at -2 -18
+wait 3
+picture sl11_ranger_landing_island 40 30 -80 0 4 0
+picture sl11_ranger_landing_station 4 6 -34 -10 3 -24
