@@ -237,7 +237,7 @@ prop foundercrate loot.refill=0
 prop foundercrate if.open=signal|radio
 prop foundercrate else.open=message||The Founders' Day crate: NOT TO BE OPENED BEFORE THE CHIEF ENGINEER'S BROADCAST.
 note mattislocker Boilerman's locker | Mattis's locker: his tools, his good boots, a tin of metal bits he saved.
-loot mattislocker MetalIngot*4;Bolt*4;Hinge*2
+loot mattislocker MetalIngot*4;Bolt*4;Hinge*2;ExplosiveGoo*3
 prop mattislocker loot.refill=0
 prop mattislocker if.open=signal|mattisfree
 prop mattislocker else.open=message||Mattis's locker, padlocked. The padlock key is on the man himself.
@@ -308,5 +308,12 @@ step blueprint|Blueprint_ZiplineBase|1|Take the zipline plans from the founders'
 step open|Boilerman's locker|1|Free Mattis from the cage behind the boiler, then open his locker
 quest done=Mattis is coming with you, and Dagny Holm's voice is in your ears. Vaporhold Reservoir answers on 1000.
 quest reward=MetalIngot*4;Plank*8;Rope*3
+
+# Buried treasure (the story line's middle): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=45 n=1 seed=8828
+prop treasure8828 treasure.loot=TitaniumOre*3
+# Puffer fish off the shore (explosive goo)
+place Creature_PufferFish puffers at 0 100 h=-3
+prop puffers creature.count=3
 
 save The Fogworks

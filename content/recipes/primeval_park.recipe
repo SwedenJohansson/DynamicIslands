@@ -489,4 +489,8 @@ step blueprint|Blueprint_Recycler|1|Take the recycler plans from the founder's v
 quest done=The park's lights burn on an empty park. The ironbacks, the screechers, the leviathan, the Queen - you've seen them all. The founder's last wish is in your hands: plant something that grows the size it should.
 quest reward=MetalIngot*8;Bolt*8;Plastic*12
 
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=50 n=1 seed=8811
+prop treasure8811 treasure.loot=TitaniumOre*3
+
 save Primeval Park

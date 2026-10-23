@@ -101,7 +101,7 @@ prop stampalbum if.use=take|story:raft-Tangaroa_Token|3
 prop stampalbum on.use=message||Three stamps, three frames. The album is complete - and with a clunk the vault's bolts draw back.\nsignal||vault\ngive||story:albumfull*1\nsound||event:/exploring/obstacles/keypad/keypad_correct
 prop stampalbum else.use=message||The stamp album: three empty frames for the gold Tangaroa series. You need all three rare stamps.
 note vault Vault | The works' vault: the plans of the machines that made the post's metal and fuel, and the anchor of the post ship.
-loot vault Blueprint_SmelterElectric*1;Blueprint_BiofuelExtractorAdvanced*1;Blueprint_AnchorStationaryAdvanced*1;MetalIngot*3;Bolt*2
+loot vault Blueprint_SmelterElectric*1;Blueprint_BiofuelExtractorAdvanced*1;Blueprint_AnchorStationaryAdvanced*1;MetalIngot*3;Bolt*2;TitaniumIngot*3
 prop vault loot.refill=0
 prop vault if.open=signal|vault
 prop vault else.open=message||The vault is bolted. A brass plate: "OPENS WHEN THE ALBUM IS COMPLETE".
@@ -132,5 +132,9 @@ step collect|story:adadelivered|1|Put Ada's letter in her pigeonhole
 step read|Ada's route map|1|Read Ada's route map
 quest done=The album is full and Ada's letter is home. Her map points up a green hill - to her house.
 quest reward=MetalIngot*4;Bolt*4;CopperIngot*2
+
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=24 n=1 seed=8818
+prop treasure8818 treasure.loot=TitaniumOre*3
 
 save The Franking Works

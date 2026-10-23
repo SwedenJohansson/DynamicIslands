@@ -114,4 +114,10 @@ step collect|story:wellrope|1|Wind the well winch until the rope runs out
 quest done=The rope is down. Its end is in Marta's cellar on the seabed - the Receiver will find her bells on 600. Take the apples.
 quest reward=Plank*6;Rope*2
 
+# Farm animals in the orchard: a llama (wool, with shears) and hens (eggs, feathers)
+place Creature_Llama llamas at -9 0 ground
+prop llamas creature.count=1
+place Creature_Chicken hens at -5 -10 ground
+prop hens creature.count=3
+
 save Upfall Orchard

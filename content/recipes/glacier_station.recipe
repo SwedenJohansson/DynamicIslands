@@ -12,6 +12,7 @@
 #
 # Built by the recipe player (CIRecipe glacier_station) through the editor's own operations.
 include lib_sea
+include lib_features
 new
 # (nature: snowy: a few pines and snow drifts over Raft's near-bare Temperance - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.08 Bushes=0.15 Rocks=0.25 Harvest=0.05 BeachThings=0.3
@@ -236,5 +237,9 @@ quest reward=CircuitBoard*3;Battery*2;Wool*6
 
 # --- A Raft store by the Moontown domes: the station's stores hut, still trading (Raft's goods, and plans the crew missed) --
 store stationshop at 88 -40 ground
+
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=55 n=1 seed=8822
+prop treasure8822 treasure.loot=TitaniumOre*3
 
 save Glacier Station

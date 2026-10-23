@@ -270,4 +270,8 @@ step read|Kett's note|1|Read Kett's note
 quest done=The giant looks out to sea, at the Engine. Kett went on alone - and the Engine's call is on the Receiver, 1300.
 quest reward=TitaniumIngot*2;TradeToken*6;Rope*4
 
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=45 n=1 seed=8808
+prop treasure8808 treasure.loot=TitaniumOre*3
+
 save Colossus of the Strait

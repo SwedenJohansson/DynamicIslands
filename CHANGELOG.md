@@ -11,6 +11,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ## 2026-10-23: known-issues fixes
 
+### Changed
+- **Late-game resources in the storylines:** the last two or three islands of each of the ten storylines have a buried treasure with 3 titanium ore (metal detector and shovel; optional, never a quest step), as do a middle island in The Rainmakers (The Fogworks), Raft 2 (Cinderfall), The Gravity Sea (Pendulum Isle) and Raft Remade (Tangaroa Remade, which also gets three titanium rocks). The Last Post's chests hold titanium ingots (Franking Works, Ada's Round, General Post Office). Explosive goo: puffer fish and 3 goo in a chest on Cinderfall, The Fogworks and Telegraph Narrows. The Gravity Sea gets farm animals (a llama and hens at Upfall Orchard, a boar at Lodestone Quay), and Shelter Atoll's bunk locker holds wool and eggs.
+
 ### Fixed
 - **A missing island is put back:** when a saved world loads an island whose file is gone (Tidy up moved it, you deleted it in the editor, or a `gen-` file was deleted by hand), it is copied back from `Mods\DynamicIslands\deleted` (and its folders): on the host by the world's recorded hash, else the newest copy of that name; on a player's PC only a copy with the host's hash. A note says "'X' was put back from the deleted folder for this world". The copy there stays.
 - **No clash with Franz's original mod:** this mod has its own Harmony id (`com.franzfischer.customislands3`), and the PC check warns when the original mod is loaded too.

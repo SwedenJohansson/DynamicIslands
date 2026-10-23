@@ -9,6 +9,7 @@
 # Built by the recipe player (CIRecipe cinderfall) through the editor's own operations.
 include lib_sea
 include lib_rt
+include lib_features
 new
 # (nature: volcanic: Like Raft's desert, with little scrub on the ash - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.3 Bushes=0.3 Rocks=0.5 Harvest=0.3 BeachThings=0.3
@@ -107,7 +108,7 @@ story valvetag|Valve tag|quest:Varuna_CraneKey|The brass tag from a relief valve
 
 note engineerswarning Engineer's warning | FRONTIER CORPS - STATION THREE - CINDERFALL PLANT\n\nPRESSURE RISING. The three relief valves are stuck open - one on the west plateau, one on the south-east spur, one on the north shoulder up the ramp, where the stone birds nest.\n\nShut each by its wheel and bring me its brass tag: the plant's store opens to the three tags. The roaches have the turbine hall - mind your boots.\n\nThe Corps went on to the Sunken Archive. The machete is in the store - you'll want it there.
 note plantstore Plant store | The plant's store: the machete, the plans for a biofuel refiner, a fuel tank and fuel pipes - all a raft needs to run on its own fuel.
-loot plantstore Blueprint_Machete*1;Blueprint_BiofuelExtractor*1;Blueprint_Fueltank*1;Blueprint_Pipe_Fuel*1;Scrap*6
+loot plantstore Blueprint_Machete*1;Blueprint_BiofuelExtractor*1;Blueprint_Fueltank*1;Blueprint_Pipe_Fuel*1;Scrap*6;ExplosiveGoo*3
 prop plantstore loot.refill=0
 prop plantstore if.open=has|story:valvetag|3
 prop plantstore else.open=message||The store's lock has three slots for brass valve tags. The engineer's warning said where the valves are.
@@ -166,5 +167,12 @@ step blueprint|Blueprint_Fueltank|1|Take the fuel tank plans from the plant stor
 step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe plans from the plant store
 quest done=The gauges settle, the hiss is gone. In the store the Corps left a machete and their fuel plans - and a note: the Sunken Archive, out in the lagoon.
 quest reward=Plank*8;Scrap*6;Rope*2
+
+# Buried treasure (the story line's middle): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=40 n=1 seed=8829
+prop treasure8829 treasure.loot=TitaniumOre*3
+# Puffer fish off the shore (explosive goo)
+place Creature_PufferFish puffers at 0 92 h=-3
+prop puffers creature.count=3
 
 save Cinderfall

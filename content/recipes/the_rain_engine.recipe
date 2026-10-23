@@ -510,4 +510,8 @@ step reach|summit|1|Climb to the summit by the North arm and look at the sea
 quest done=The Rain Engine is still, and the sky over the sea is clear for the first time in eleven years.
 quest reward=TitaniumIngot*4;MetalIngot*6;Bolt*6;Battery*2
 
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=48 n=1 seed=8827
+prop treasure8827 treasure.loot=TitaniumOre*3
+
 save The Rain Engine

@@ -11,6 +11,7 @@
 # Built by the recipe player (CIRecipe drowned_gate) through the editor's own operations.
 include lib_sea
 include lib_rt
+include lib_features
 new
 # (nature: tropical, Like Raft; no cliffs - the generator's cliffs cut the land into flat sectors)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -405,5 +406,9 @@ quest reward=TitaniumIngot*2;Plank*8;Rope*3
 
 # --- A Raft store on the east hill by the strait: the Corps' canteen, still trading (Raft's goods, and plans the crew missed) --
 store canteen at 66 2 ground
+
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=45 n=1 seed=8802
+prop treasure8802 treasure.loot=TitaniumOre*3
 
 save The Drowned Gate

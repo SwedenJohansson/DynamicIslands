@@ -10,6 +10,7 @@
 # Built by the recipe player (CIRecipe the_abyss) through the editor's own operations. Its play test:
 # content\tests\the_abyss.play.
 include lib_sea
+include lib_features
 new
 # (nature: volcanic: Like Raft's desert, with little scrub on the ash - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.19 Bushes=0.3 Rocks=0.42 Harvest=0.2 BeachThings=0.3
@@ -191,5 +192,9 @@ step reach|camp|1|Climb the air line back up - the pockets still breathe on the 
 step read|Expedition leader's log|1|Read the leader's log once more - its question has an answer now
 quest done=The Abyss is quiet. The expedition's question has its answer - and the deep has given up its hoard. The Abyss Expedition is done.
 quest reward=MetalIngot*8;Nail*30;OxygenBottle*2
+
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=40 n=1 seed=8815
+prop treasure8815 treasure.loot=TitaniumOre*3
 
 save The Abyss

@@ -246,7 +246,7 @@ note notice Shelter notice | CIVIL DEFENCE SHELTER No. 7\n\nEMERGENCY HATCH - cl
 note radiolog Radio log | RADIO LOG - SHELTER 7\n\nDay 12: No answer from the mainland. The water is still rising.\nDay 31: Rats in the dormitory. Big ones - they came up the vent shaft.\nDay 46: The generator is dry. I put the LAST can of fuel in my bunk locker, so nobody burns it on the heaters.\nDay 47: The commander has sealed himself in with his charts. I'm going up the hatch to look for a boat.\n\nIf you read this: the can is in the dormitory. Fill the generator and the doors will open. - Radio operator Makela
 note orders Commander's orders | FINAL ORDERS\n\nHold the shelter until relieved.\n\nNobody came. The charts show land to the east - a big island with a tower on it. Whoever gets the power back: take the charts, the blueprint and the spare parts in my safe, and go.
 note bunklocker Bunk locker | A dented locker with MAKELA stencilled on the door. Inside, wrapped in a blanket: a can of fuel.
-loot bunklocker story:fuel*1;Wool*2
+loot bunklocker story:fuel*1;Wool*6;Egg*4
 prop bunklocker loot.refill=0
 note footlocker Footlocker | A footlocker under the bunks: a sewing kit, rope and a torn jacket.
 loot footlocker Rope*3;Leather*2;Nail*8

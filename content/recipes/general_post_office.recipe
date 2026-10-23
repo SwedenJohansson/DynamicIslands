@@ -282,7 +282,7 @@ prop vaultpad if.use=has|story:vaultcard|1
 prop vaultpad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The keypad chirps and the registered mail vault unbolts.\nsignal||regvault\ngive||story:vaultopen*1
 prop vaultpad else.use=message||The keypad wants the vault's combination. The vault sends it by capsule.
 note regvault Registered mail vault | The registered mail vault: parcels never collected, insured letters - and a key on a tag: ARCHIVE, CAGE 2.
-loot regvault story:arvidkey*1;TradeToken*6;MetalIngot*3;Battery*1
+loot regvault story:arvidkey*1;TradeToken*6;MetalIngot*3;Battery*1;TitaniumIngot*3
 prop regvault loot.refill=0
 prop regvault if.open=signal|regvault
 prop regvault else.open=message||The registered mail vault is bolted from the keypad by it.
@@ -382,5 +382,9 @@ step collect|story:adajoined|1|Sound the post-horn with the last letter
 step reach|flag|1|Go to the flag
 quest done=The last post is delivered. Ada Lind sails with you now - and there is a whole sea that wants its post.
 quest reward=MetalIngot*4;Battery*2;TradeToken*8
+
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=40 n=1 seed=8820
+prop treasure8820 treasure.loot=TitaniumOre*3
 
 save The General Post Office

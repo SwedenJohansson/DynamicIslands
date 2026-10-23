@@ -11,6 +11,7 @@
 # The towers are Utopia's skyline towers, 400 m tall: placed so that only their crowns stand out of the sea.
 include lib_sea
 include lib_rt
+include lib_features
 new
 # (nature: Like Raft - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -238,5 +239,9 @@ vending cityvend at 44 56 ground
 place QuestItemPickup_Tangaroa_Token - at 42 58 ground
 place QuestItemPickup_Tangaroa_Token - at 46 54 ground
 place QuestItemPickup_Tangaroa_Token - at 42 54 ground
+
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=36 z=44 r=12 n=1 seed=8814
+prop treasure8814 treasure.loot=TitaniumOre*3
 
 save The Drowned Metropolis

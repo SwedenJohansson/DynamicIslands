@@ -141,4 +141,8 @@ step reach|keel|1|Climb down the shaft to the keel
 quest done=From the keel the field pulls straight down - to a well on the seabed. The Receiver hears a pump hall on band 900.
 quest reward=Battery*2;CopperIngot*2
 
+# Buried treasure (the story line's middle): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=14 n=1 seed=8830
+prop treasure8830 treasure.loot=TitaniumOre*3
+
 save Pendulum Isle

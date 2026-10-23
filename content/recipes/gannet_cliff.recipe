@@ -195,4 +195,8 @@ step collect|story:rung|1|Ring the camp bell
 quest done=Sister Ro says the Choir rowed north to a flooded quarry. But first they went down to a drowned children's home - Cradle Reef - for the Lantern-Mother's tooth. The Receiver has it: tune in.
 quest reward=MetalIngot*3;Battery*1
 
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=32 n=1 seed=8823
+prop treasure8823 treasure.loot=TitaniumOre*3
+
 save Gannet Cliff

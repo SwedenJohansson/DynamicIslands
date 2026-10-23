@@ -151,7 +151,7 @@ prop atticdoor if.use=take|story:attickey|1
 prop atticdoor on.use=hide|\nshow|attic\nshow|adanote\nmessage||The key turns stiffly and the padlock drops. Inside: Ada's attic chest, and a note on top of it.
 prop atticdoor else.use=message||Ada's attic store, padlocked. The diary says where she keeps the key.
 note attic Attic | Ada's attic chest: the post's best tools, packed for whoever comes next.
-loot attic Blueprint_TitaniumTools*1;Blueprint_BackpackAdvanced*1;Blueprint_ZiplineToolElectric*1;Cooked_Potato*3;Cooked_Beet*3;Seed_Strawberry*2
+loot attic Blueprint_TitaniumTools*1;Blueprint_BackpackAdvanced*1;Blueprint_ZiplineToolElectric*1;TitaniumIngot*3;Cooked_Potato*3;Cooked_Beet*3;Seed_Strawberry*2
 prop attic obj.name=attic
 prop attic beh.hidden=1
 prop attic loot.refill=0
@@ -176,5 +176,9 @@ step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline tool pl
 step read|Ada's note to the next postman|1|Read Ada's note to the next postman
 quest done=Ada has gone to the General Post Office. The pigeons flew that way.
 quest reward=Cooked_Potato*4;Cooked_Beet*3;Seed_Watermelon*2;Seed_Strawberry*2
+
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=26 n=1 seed=8819
+prop treasure8819 treasure.loot=TitaniumOre*3
 
 save Ada's Round

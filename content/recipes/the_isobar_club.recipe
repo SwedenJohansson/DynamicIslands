@@ -221,4 +221,8 @@ place QuestItemPickup_Tangaroa_Token - at 12 4 ground
 place QuestItemPickup_Tangaroa_Token - at 16 -12 ground
 place QuestItemPickup_Tangaroa_Token - at 18 0 ground
 
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=25 n=1 seed=8826
+prop treasure8826 treasure.loot=TitaniumOre*3
+
 save The Isobar Club

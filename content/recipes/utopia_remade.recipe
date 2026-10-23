@@ -11,6 +11,7 @@
 # Built by the recipe player (CIRecipe utopia_remade) through the editor's own operations.
 include lib_sea
 include lib_rt
+include lib_features
 new
 # (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
 randomize Utopia like Seed=7108 Radius=55 Height=22 Cliffs=0.25 BeachWidth=0.5 Hostiles=0 Friendly=0 SeaLife=0.3 Trees=0.4 Bushes=0.5 Rocks=0.75 Harvest=0.7 Water=0.5
@@ -235,5 +236,9 @@ quest reward=TitaniumIngot*2;Plank*10;Rope*4
 
 # --- A Raft store by the market: Utopia's last trader (Raft's goods, and plans the crew missed) --
 store utopiashop at 38 32 ground
+
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=30 n=1 seed=8806
+prop treasure8806 treasure.loot=TitaniumOre*3
 
 save Utopia Remade

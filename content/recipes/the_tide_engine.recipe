@@ -367,4 +367,8 @@ step reach|ring_top|1|Climb to the ring's top in the west
 quest done=The Seventh Tide stops. Somewhere, the sea is a finger's width lower.
 quest reward=TitaniumIngot*3;TradeToken*12;Rope*6
 
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=35 n=1 seed=8809
+prop treasure8809 treasure.loot=TitaniumOre*3
+
 save The Tide Engine

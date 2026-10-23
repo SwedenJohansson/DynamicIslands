@@ -10,6 +10,7 @@
 # Built by the recipe player (CIRecipe temperance_remade) through the editor's own operations (macros from lib_selene).
 include lib_sea
 include lib_selene
+include lib_features
 new
 # (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
 randomize Temperance like Seed=7107 Radius=62 Height=32 Cliffs=0.2 BeachWidth=0.5 Hostiles=0 Friendly=0 SeaLife=0.3
@@ -185,5 +186,9 @@ step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced biofuel ex
 step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced stationary anchor plans from the chief's vault
 quest done=The vault opens on the chief's plans: an electric smelter, an advanced refinery, an anchor for any storm. Behind you the reactor hums, and the station's lights burn over the snow again.
 quest reward=Wool*4;Plank*8;Glass*2
+
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=30 n=1 seed=8805
+prop treasure8805 treasure.loot=TitaniumOre*3
 
 save Temperance Remade

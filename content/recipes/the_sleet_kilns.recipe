@@ -203,4 +203,8 @@ step kill|Hyena|3|Deal with the hyenas at the tram stop on the way out
 quest done=The smelter plans are yours. In the store's ledger: the salt went on to the members' club - the next station answers on 1200.
 quest reward=MetalIngot*6;Bolt*4;Hinge*2
 
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=28 n=1 seed=8825
+prop treasure8825 treasure.loot=TitaniumOre*3
+
 save The Sleet Kilns

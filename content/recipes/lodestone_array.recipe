@@ -17,6 +17,7 @@
 # the core of the reactor controls in the open.)
 include lib_huts
 include lib_gravity
+include lib_features
 new
 gen Trees=0 Bushes=0.15 Rocks=0.3 Harvest=0.15 BeachThings=0
 gen Seed=9681 Radius=36 Height=10 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.7 PeakShape=0.4
@@ -292,5 +293,9 @@ step collect|story:crownoff|1|Pull the core cutoff
 step reach|core|1|Stand by the dark core
 quest done=The crown is dark - but the root, 35 m under the sea, still pulls. The Receiver hears it on band 800.
 quest reward=TitaniumIngot*3;MetalIngot*4;Battery*2;Bolt*4
+
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=18 n=1 seed=8817
+prop treasure8817 treasure.loot=TitaniumOre*3
 
 save The Lodestone Array

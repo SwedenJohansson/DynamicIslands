@@ -11,6 +11,7 @@
 # Built by the recipe player (CIRecipe whiteout_reach) through the editor's own operations.
 include lib_sea
 include lib_rt
+include lib_features
 new
 # (nature: snowy: a few pines and snow drifts over Raft's near-bare Temperance; Rocks 0.25 gave 2.5 per 1000 m2 against Raft's 1.1)
 gen Trees=0.08 Bushes=0.15 Rocks=0.15 Harvest=0.05 BeachThings=0.3
@@ -240,5 +241,9 @@ step read|Last transmission|1|Read the radio's last transmission
 step open|Commander's chest|1|Open the commander's chest
 quest done=The camp is warm again and the radio has the Corps' last call: they hold the Drowned Gate. The sea wall still stands - one more station, and then the Frontier.
 quest reward=Wool*6;Plank*8;Battery*2
+
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=50 n=1 seed=8801
+prop treasure8801 treasure.loot=TitaniumOre*3
 
 save Whiteout Reach

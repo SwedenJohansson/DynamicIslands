@@ -132,4 +132,8 @@ step read|Halvard's last log|1|Read Halvard's last log in the observatory
 quest done=The crown is out there, 35 m over the sea. The Receiver finds it on band 1300.
 quest reward=TitaniumIngot*2;MetalIngot*3;Battery*1
 
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=16 n=1 seed=8816
+prop treasure8816 treasure.loot=TitaniumOre*3
+
 save The Stair of Hours

@@ -9,6 +9,7 @@
 # Built by the recipe player (CIRecipe varuna_point_remade) through the editor's own operations.
 include lib_sea
 include lib_rt
+include lib_features
 new
 # (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
 randomize VarunaPoint like Seed=7106 Radius=48 Height=18 Cliffs=0.3 BeachWidth=0.5 Hostiles=0 Friendly=0 SeaLife=0.3 Trees=0.4 Bushes=0.5 Rocks=0.75 Harvest=0.7
@@ -176,5 +177,9 @@ step blueprint|Blueprint_HeadLight_Advanced|1|Take the advanced headlamp plans f
 step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans from the foreman's strongbox
 quest done=The strongbox gives up the site's plans: a wind turbine, advanced batteries, a head lamp, an electric grill. Up on the tower the floodlight still burns over the north water.
 quest reward=Plank*8;Scrap*8;Bolt*4
+
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=30 n=1 seed=8804
+prop treasure8804 treasure.loot=TitaniumOre*3
 
 save Varuna Point Remade

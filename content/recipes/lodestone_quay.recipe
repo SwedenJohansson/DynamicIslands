@@ -111,4 +111,8 @@ step open|Builders' store|1|Open the builders' store by the crane - planks for t
 quest done=The needles point up. 30 m up, the orchard waits - build your way up from the raft. Its band is 700.
 quest reward=Plank*10;Rope*4;Nail*10
 
+# A boar on the hilltop (leather)
+place Creature_Boar boars at -6 16 ground
+prop boars creature.count=1
+
 save Lodestone Quay

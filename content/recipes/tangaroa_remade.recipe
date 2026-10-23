@@ -10,6 +10,7 @@
 # Built by the recipe player (CIRecipe tangaroa_remade) through the editor's own operations.
 include lib_sea
 include lib_rt
+include lib_features
 new
 # (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
 randomize Tangaroa like Seed=7105 Radius=52 Height=16 Cliffs=0.1 BeachWidth=0.6 Hostiles=0 Friendly=0 SeaLife=0.3 Trees=0.35 Bushes=0.35 Rocks=0.55 SeaRocks=0.6 SeaFinds=0.8
@@ -275,5 +276,11 @@ step blueprint|Blueprint_WaterTank|1|Take the water tank plans from the council'
 step blueprint|Blueprint_Storage_Large|1|Take the large storage plans from the council's vault
 quest done=The vault opens on a city lit again: water pipes, purifiers, tanks - the founders' plans for keeping a floating city alive.
 quest reward=Plank*10;Plastic*6;Battery*1
+
+# Buried treasure (the story line's middle): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=30 n=1 seed=8831
+prop treasure8831 treasure.loot=TitaniumOre*3
+# Titanium rocks, as on Raft's Tangaroa (the pickaxe breaks them)
+scatter Pickup_Landmark_Titanium_Land 3 at 0 0 r=35 seed=8832 free=3
 
 save Tangaroa Remade

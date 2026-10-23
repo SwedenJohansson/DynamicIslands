@@ -382,4 +382,8 @@ step reach|quarry_top|1|Climb to the top of the quarry
 quest done=At 3:12 the Receiver is silent. Pim sleeps without humming.
 quest reward=HealingSalve_Good*2;TitaniumIngot*3;TradeToken*12
 
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=36 n=1 seed=8824
+prop treasure8824 treasure.loot=TitaniumOre*3
+
 save The Listening Mirrors

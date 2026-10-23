@@ -9,6 +9,7 @@
 # Built by the recipe player (CIRecipe coral_observatory) through the editor's own operations.
 include lib_sea
 include lib_selene
+include lib_features
 new
 # (nature: Like Raft (as thick on the land as Raft's own tropical islands) - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -163,5 +164,9 @@ step blueprint|Blueprint_Cropplot_Large_Tier3|1|Take the large crop plot plans f
 step blueprint|Blueprint_Cropplot_Medium_Tier3|1|Take the medium crop plot plans from the director's safe
 quest done=The analyzer's printout says it plainly: the reef is dying of cold, a current from the north. Wherever it comes from, that is where the story goes next.
 quest reward=CopperIngot*4;Plastic*10;Glass*6
+
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=80 n=1 seed=8821
+prop treasure8821 treasure.loot=TitaniumOre*3
 
 save Coral Observatory

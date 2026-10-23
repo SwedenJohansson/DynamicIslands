@@ -8,6 +8,7 @@
 include lib_sea
 include lib_rt
 include lib_huts
+include lib_features
 new
 # (nature: forest: Like Raft's Balboa - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft; thicker than
 # that in the wild west and south of the mesa, where the town and the terraces were cleared out of it - CIIslandDensity)
@@ -796,4 +797,8 @@ step kill|Stingray|1|Face the giant stingray that has moved into the cove
 step open|Corps' vault|1|Open the Corps' vault
 quest done=The vault's logbook has a blank line at the bottom, waiting for your name. Up on the rim the hall's lamps are lit - and far out on the dark sea, one by one, the lights of the Corps' fleet turn towards them. You made it to the Frontier. You are home.
 quest reward=TitaniumIngot*4;Battery_Advanced*2;Plank*20;Rope*10
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=55 n=1 seed=8803
+prop treasure8803 treasure.loot=TitaniumOre*3
+
 save The Frontier

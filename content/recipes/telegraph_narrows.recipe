@@ -144,7 +144,7 @@ prop holgercage survivor.key=cagekey
 prop holgercage survivor.signal=holgerfree
 prop holgercage survivor.line=The line's live? Then the post goes through. I'm Holger - linesman, telegraphist, cage-sitter. The Franking Works is the next stop; I'll show you the way.
 note holgerkit Holger's kit | Holger's kit bag: his tools, his tin mug, and a stamp sheet from the Franking Works.
-loot holgerkit Bolt*3;Rope*2;CopperIngot*1
+loot holgerkit Bolt*3;Rope*2;CopperIngot*1;ExplosiveGoo*3
 prop holgerkit loot.refill=0
 prop holgerkit if.open=signal|holgerfree
 prop holgerkit else.open=message||Holger's kit bag - and Holger is still in the cage beside it.
@@ -176,5 +176,9 @@ step collect|story:cagekey|1|Take the cage key from the cabinet
 step open|Holger's kit|1|Free Holger from the cage, then open his kit bag
 quest done=Holger is free and the line is live. Over the wire, faint: the Franking Works, still stamping.
 quest reward=MetalIngot*3;CopperIngot*2;Bolt*4
+
+# Puffer fish off the shore (explosive goo)
+place Creature_PufferFish puffers at 0 80 h=-3
+prop puffers creature.count=3
 
 save Telegraph Narrows

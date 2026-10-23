@@ -232,4 +232,8 @@ step reach|fang_top|1|Look out of the window in the Fang
 quest done=The three gears. Orin's charge, and the window in the Fang, show the way: the giant in the strait - 1100 on the Receiver.
 quest reward=TradeToken*6;Rope*4;Leather*3
 
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=30 n=1 seed=8807
+prop treasure8807 treasure.loot=TitaniumOre*3
+
 save The Hollow Fang
