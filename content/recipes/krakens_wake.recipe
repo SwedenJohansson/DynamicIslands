@@ -75,8 +75,6 @@ push at -8.25 -34.25 h=1.5
 call stilt_hut y=1.2
 place "Box Small" fisherbox at 3.6 3.6 y=1.2 sit yaw=15
 pop
-place FishingNets_02 - at -11.5 -33 ground yaw=40
-place FishingNets_02 - at -12.4 -31.8 ground yaw=-20
 place Creature_Chicken hens at -12 -24 ground
 
 # ===== The wake: five wrecks in the furrow along the reef, each deeper; the debris of the squadron between them ========

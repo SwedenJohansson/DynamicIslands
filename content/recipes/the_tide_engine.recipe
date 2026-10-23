@@ -126,7 +126,8 @@ place RT_Floor cabplate at 1.95 39.85 h=11 sit sx=0.66 sz=0.44
 place Loot_Chest cablocker at 0.3 38 h=11.15 sit yaw=180
 place LandmarkLadder_6m cabladder at 0 35.85 h=5 sit yaw=0
 place Zone_Trigger armtop at -0.8 37.6 h=11.2
-place ZiplinePath_Landmark zipacross at 8 40 ground
+# (its near floor - 5.72 m west, 0.97 m north of where it is put, 1.35 m under its h - on the cab plate, clear of the locker)
+place ZiplinePath_Landmark zipacross at 7.12 35.83 h=12.3
 zipto zipacross 6 -18
 prop armlow tint.color=#a8743c
 prop armhigh tint.color=#a8743c

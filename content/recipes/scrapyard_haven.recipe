@@ -96,8 +96,8 @@ place Van3 tradervan at 5 28 ground sit yaw=100
 # (the banner's rope tied to a wooden post at both ends - it hung from nothing, 2026-10-20)
 push at 15 33 ground
 place Banner_01 - at 0 0 ground sit
-place Block_Pillar_Wood - at -2.5 0 ground sy=1.5
-place Block_Pillar_Wood - at 2.32 0 ground sy=1.5
+place Block_Pillar_Wood - at -2.5 0 ground sy=2.5
+place Block_Pillar_Wood - at 2.32 0 ground sy=2.5
 pop
 # (quest zones at the town's landmarks: the monument's square, the market, the top of the caravan watchtower)
 place Zone_Trigger square at 11 24 y=1.5

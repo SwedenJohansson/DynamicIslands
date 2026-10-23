@@ -87,7 +87,7 @@ pop
 place Firewood_1 - at 14.4 11.2 ground
 place Firewood_1 - at 14.5 11.8 ground yaw=40
 place Firewood_1 - at 14.3 12.4 ground yaw=80
-place "Box Small" woodbox at 14.8 13.6 ground sit yaw=15
+place "Box Small" woodbox at 9.8 9.8 ground sit yaw=15
 place TP_SnowVehicle02 - at 5.5 7.5 ground tilt=8 yaw=30
 place TP_SnowDrift01 - at 6.5 9.5 ground yaw=20
 place "Box Small" sledbox at 4 6.2 ground sit yaw=40

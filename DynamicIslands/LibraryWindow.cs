@@ -197,7 +197,7 @@ namespace DynamicIslands.Editor
 			status.text = "Reading the library's list...";
 			DynamicIslands.instance.StartCoroutine(LibraryClient.LoadIndex(force, error =>
 			{
-				status.text = error ?? (LibraryClient.Entries.Count + " entries in the library - " + LibraryClient.Address);
+				status.text = error ?? (LibraryClient.Entries.Count + " entries in the library");
 				status.color = error != null ? UIKit.Danger : UIKit.TextMuted;
 				ShowList();
 			}));

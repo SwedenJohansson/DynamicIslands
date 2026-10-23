@@ -100,7 +100,7 @@ place ReefHuts_Pillar1 - at -1.5 4 ground
 place FL_Plank1 - at -1.5 4 ground y=2.2 yaw=0
 place FL_Plank3 - at -1.5 4 ground y=1.4 rot=0,0,70
 place FL_Plank3 - at -1.5 4 ground y=1.4 rot=0,0,-70
-place ReefHuts_Stick1 - at 7 -22.6 ground y=0.1 yaw=-34
+place ReefHuts_Stick1 - at 7 -22.6 ground y=0.45 yaw=-34
 for r 0 4 1
 place ReefHuts_Pillar1 - at {5.4+$r*0.8+0.33} {-21.5-$r*0.54+0.48} ground yaw={$r*40} sy={0.45+0.08*(2-abs($r-2))}
 place ReefHuts_Pillar1 - at {5.4+$r*0.8-0.33} {-21.5-$r*0.54-0.48} ground yaw={$r*40+20} sy={0.45+0.08*(2-abs($r-2))}

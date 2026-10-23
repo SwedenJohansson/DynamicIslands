@@ -60,7 +60,7 @@ clear from -50 22 to -57 22 r=3
 # --- The expedition camp on the west rim: two tents, the chart table with the archaeologist's journal, the dive locker,
 # a compressor, the camp box; the boat on the lagoon shore below ---------------------------------------------------------
 place Balboa_DecorationPrefabBase_SimpleTent - at -60 25 ground yaw=90
-place Balboa_DecorationPrefabBase_SimpleTent - at -61 18.5 ground yaw=80
+place Balboa_DecorationPrefabBase_SimpleTent - at -59 31 ground yaw=80
 place Placeable_Table_Basic - at -56 22 ground sit
 place Note_Book journal at -56 22 y=1.2 drop yaw=20
 place Locker divelocker at -54 25.5 ground sit yaw=180
@@ -82,7 +82,7 @@ place Note_Sign tablet at 2.4 -80 h=19 sit yaw=200
 place Zone_Trigger watchtemple at 0 -78 h=20
 place Zone_Trigger altarzone at 0 -78 h=20.2
 place "Box Small" rimbox at 6.5 -72.5 ground sit yaw=30
-place Pillar_01 - at 7 -76 ground rot=0,0,88
+place Pillar_01 - at 7 -76 ground y=0.55 rot=0,0,88
 
 # ===== CHAPTER 2 - THE DROWNED STREETS ====================================================================================
 # --- The agora on the 18 m terrace: standing and fallen columns, two bronze statues (one fallen), market baskets and urns -

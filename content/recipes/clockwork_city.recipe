@@ -74,9 +74,9 @@ place cogwheel stillcogs at -3 38 h=20 sit scale=6 yaw=90
 place cogwheel turningcogs at -3 38 h=20 sit scale=6 yaw=90
 place RT_GroundPillar - at -8 40 h=21.8 sy=0.6
 place Note_Board timetable at -8 41.3 h=20 yaw=180
-place RestaSunshadeGround - at 4 40 h=20
-place Placeable_Table_Basic - at 4 40 h=20 sit
-place "Box Small" stallbox at 4.2 40.2 h=21.5 drop yaw=20
+place RestaSunshadeGround - at 0.6 37.7 ground
+place Placeable_Table_Basic - at 0.6 37.7 ground sit
+place "Box Small" stallbox at 0.8 37.9 ground y=1.5 drop yaw=20
 place Creature_Chicken hens at 0 42 h=20.5
 push at -3 25 h=20.05
 call rt_storey b1=none r1=none r2=none r3=none
@@ -184,8 +184,8 @@ pop
 push at 83 44.5 h=27.05
 call rt_storey floor=RT_Floor f1=RT_WallDoor1 f2=RT_WallWindow1 b1=RT_WallWindow1 l2=RT_WallWindow1 r2=RT_WallWindow1
 place "VG_DecorationPrefabBase_Engine Variant" clockheart at -3 2.6 y=0 sit yaw=180
-place cogwheel stillcogs at -5.68 2.6 y=1.4 scale=4 yaw=90
-place cogwheel turningcogs at -5.68 2.6 y=1.4 scale=4 yaw=90
+place cogwheel stillcogs at -4.5 2.6 y=1.4 scale=4 yaw=90
+place cogwheel turningcogs at -4.5 2.6 y=1.4 scale=4 yaw=90
 place Note_Sign plaque at -0.3 2 y=0 sit yaw=270
 place TP_LaserControlPanel - at -5.9 -2 y=0 yaw=90
 place TP_LaserControlPanel_lever handI at -5.6 -3.2 y=0 sit yaw=90

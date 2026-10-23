@@ -83,8 +83,6 @@ call stilt_hut y=0.3 ladder=none
 place UT_EndRoom_Table - at 2.25 3 y=0.35 sit scale=0.6
 place SmallBoulder1 keystone1 at 2.25 3 y=1.5 drop scale=0.25
 pop
-place RT_GroundPillar - at -100 44.65 h=15
-place RT_GroundPillar - at -100 44.65 h=18
 place RT_GroundPillar - at -100 44.65 h=21
 place Block_Ladder - at -100 43.4 h=12
 place Block_Ladder - at -100 43.4 h=14.42
@@ -211,6 +209,10 @@ pop
 # --- The islet and the throne hall: a floor of slabs on it, columns, the doors (Selene's sliding leaves) with the crown
 # lock, the throne with the crown on it and Orm's plaque, the guardian, braziers, the grate and the hoard behind the throne
 place RT_Floor - at -88 4.5 h=1.05
+# (the throne-room door frame stood over a dip in the floor: floor under its whole width, 2026-10-23)
+place RT_Floor - at -88 1.5 h=1.05
+place RT_Floor - at -88 -1.5 h=1.05
+place RT_Floor - at -88 -4.5 h=1.05
 place RT_PillarThick - at -93.5 -4 h=1.1
 place RT_PillarThick - at -93.5 4 h=1.1
 place RT_PillarThick - at -91 -4 h=1.1

@@ -110,6 +110,7 @@
     <Compile Include="DevTestsMapTypes.cs" />
     <Compile Include="DevTestsReleaseFixes.cs" />
     <Compile Include="DevTestsGround.cs" />
+    <Compile Include="DevTestsHang.cs" />
     <Compile Include="DevTestsGuideShots.cs" />
     <Compile Include="DevTestsRadarNeeds.cs" />
     <Compile Include="DevTestsRaftView.cs" />

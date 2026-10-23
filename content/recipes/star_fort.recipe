@@ -81,6 +81,11 @@ place Block_Floor_Wood - at 106.75 -50 h=0.85
 place Block_Floor_Wood - at 108.25 -50 h=0.85
 place Block_Floor_Wood - at 109.75 -50 h=0.85
 place Block_Floor_Wood - at 111.25 -50 h=0.85
+# (the jetty planks rested on nothing: posts down to the sea floor under both edges, 2026-10-23)
+for jx 106.1 111.9 2.9
+place ReefHuts_Pillar3 - at $jx -49.35 h=-5 sy=1.2
+place ReefHuts_Pillar3 - at $jx -50.65 h=-5 sy=1.2
+next
 place Loot_SunkenBarrel sunkbarrel at 113 -53 h=-1.4 drop
 push at 92 -42 h=2
 call rt_storey f1=RT_WallDoor1 r2=RT_WallWindow1
@@ -96,8 +101,7 @@ place Creature_Llama llamas at 97 -32 ground
 place RT_GroundPillar - at 20.03 -20.97 h=31
 place RT_GroundPillar - at 20.03 -20.97 h=34
 place Placeable_Flag_05 - at 20.03 -20.97 h=34 drop
-place RT_GroundPillar - at 25.97 -15.03 h=31
-place RT_GroundPillar - at 25.97 -15.03 h=34
+place RT_GroundPillar - at 25.97 -15.03 h=33.35
 place Placeable_Flag_05 - at 25.97 -15.03 h=34 drop
 place UT_MainEntranceDoor fortgate at 23 -18 h=27.6 yaw=-45
 place Note_Sign order at 27.5 -19.5 ground sit yaw=135

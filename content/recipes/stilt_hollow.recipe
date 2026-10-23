@@ -47,10 +47,10 @@ place Zone_Sound pumpsound at 16.6 0.6 h=7
 # stack's north side on a wooden post at each end (its rope spans x -2.55..2.37, 3.2 m over its bottom), the chair inside)
 push at 16.6 3.9 yaw=180 ground
 place Banner_01 - at 0 0 ground sit
-place Block_Pillar_Wood - at -2.5 0 ground sy=1.5
-place Block_Pillar_Wood - at 2.32 0 ground sy=1.5
+place Block_Pillar_Wood - at -2.5 0 ground sy=2.5
+place Block_Pillar_Wood - at 2.32 0 ground sy=2.5
 pop
-place PlasticChair_01 - at 19.8 0.8 h=6.2 sit yaw=220
+place PlasticChair_01 - at 17.8 -0.4 h=6.2 sit yaw=220
 
 # --- The red pipe: from the pump over the edge, down the cliff and east over the reef to the divers' air pocket ----
 # (follow: end to end over the ground, down the wall too - laid level, the pieces hung over the slope as steps)

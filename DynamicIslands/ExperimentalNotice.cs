@@ -34,7 +34,7 @@ namespace DynamicIslands.Editor
 		static readonly Vector2 StartSpot = new Vector2(0.64f, 0.8f);
 		/// <summary>The player dragged it (or a saved place was used): it stays there instead of its start.</summary>
 		static bool dragged;
-		const float Width = 540f;
+		const float Width = 600f; // (the button row needs ~550 inside the 18+18 padding)
 
 		static RectTransform panel, body;
 		static Button toggle, discordButton, guideButton, reportButton, closeButton, helpLink;

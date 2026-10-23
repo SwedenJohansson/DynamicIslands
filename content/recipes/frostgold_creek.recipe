@@ -118,17 +118,21 @@ place "Box Small" jumperstent at 39.5 -46 ground yaw=40
 # trestles; its riffle box on the bank beside it, a bucket)
 macro sluice x1 x2 z
 ramp Block_Floor_Wood from $x1 $z 3 to $x2 $z 0.2 len=1.5 top=0
-ramp Block_HalfWall_Wood from $x1 {$z-0.7} 3 to $x2 {$z-0.7} 0.2 len=0.75 top=-0.15
-ramp Block_HalfWall_Wood from $x1 {$z+0.7} 3 to $x2 {$z+0.7} 0.2 len=0.75 top=-0.15
+ramp Block_HalfWall_Wood from $x1 {$z-0.65} 3 to $x2 {$z-0.65} 0.2 len=0.75 top=-0.15
+ramp Block_HalfWall_Wood from $x1 {$z+0.65} 3 to $x2 {$z+0.65} 0.2 len=0.75 top=-0.15
 place Block_Pillar_Wood - at $x1 {$z-0.6} ground sy=0.25
 place Block_Pillar_Wood - at $x1 {$z+0.6} ground sy=0.25
+place ReefHuts_Pillar3 - at $x2 {$z-0.65} ground sy=0.54
+place ReefHuts_Pillar3 - at $x2 {$z+0.65} ground sy=0.54
+place ReefHuts_Pillar3 - at {$x2+($x1-$x2)*0.12} {$z-0.65} ground sy=0.54
+place ReefHuts_Pillar3 - at {$x2+($x1-$x2)*0.12} {$z+0.65} ground sy=0.54
 end
 call sluice 1.5 -4 -34
 place "Box Small" sluice1 at 2.5 -35.6 ground yaw=10
 place TangaroaBucket - at 3.5 -36 ground
 call sluice -11 -5.5 -20
-place "Box Small" sluice2 at -12 -21.6 ground yaw=-15
-place TangaroaBucket - at -13 -22 ground
+place "Box Small" sluice2 at -10 -21.8 ground yaw=-15
+place TangaroaBucket - at -9 -22.2 ground
 call sluice 4.3 -1.2 -6
 place "Box Small" sluice3 at 5.3 -7.6 ground yaw=20
 place TangaroaBucket - at 6.3 -8 ground
@@ -184,8 +188,8 @@ place Zone_Atmosphere minedark at 22 12 h=12
 place Placeable_Sign claimpost at -8 21 ground yaw=180
 place MayorsChest strongbox at -6.8 20.4 ground yaw=200
 place ReefHuts_Pillar1 - at -10.5 19 ground rot=0,30,90
-place ReefHuts_Pillar1 - at -9.5 23.5 ground rot=0,110,90
-place ReefHuts_Pillar1 - at -5.5 23 ground rot=0,70,88
+place ReefHuts_Pillar1 - at -9.5 23.5 h=9.65 rot=0,110,90
+place ReefHuts_Pillar1 - at -5.5 23 ground y=0.45 rot=0,70,88
 place Zone_Trigger saddle at -8 21 h=11
 place Creature_Goat goats at -20 -12 ground
 

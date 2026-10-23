@@ -133,7 +133,7 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
      [16.13 A whole storyline: The Gravity Sea](#1613-a-whole-storyline-the-gravity-sea)
 17. [Learn from the islands](#17-learn-from-the-islands)
    - [17.1 Opening any island in the editor](#171-opening-any-island-in-the-editor) · [17.2 Looking around](#172-looking-around) ·
-     [17.3 Two islands made to learn from](#173-two-islands-made-to-learn-from) · [17.4 Every feature, and an island to look at](#174-every-feature-and-an-island-to-look-at)
+     [17.3 Two small islands with many features](#173-two-small-islands-with-many-features) · [17.4 Every feature, and an island to look at](#174-every-feature-and-an-island-to-look-at)
 
 ---
 
@@ -4290,8 +4290,8 @@ They come in five sizes: normal, twice, four times, seven times and twenty times
 | ![](images/library/last_kingdom.jpg) **The Last Kingdom** (twenty times the size) | A whole small kingdom: a harbour town, a river with a watermill and farms, a dark forest, a lake with a drowned chapel and a castle on the hill - empty until its crown is found | A **river** dug from a lake to the sea with a ford and a toll bridge, a mill that turns when its sluice lifts, three seals gathered across the land, a coronation that **shows** banners on every tower |
 | ![](images/library/clockwork_city.jpg) **The Clockwork City** (seven times the size) | A city of clockmakers on stacks above the sea: a harbour stack, the Hall of Hours on the plaza stack, gearworks on a pier, an observatory and a clock tower - joined by shuttles | **Shuttles** between levels (a lever, `wait`, a `teleport` to a zone), rooms in an undercroft, a clock tower whose hands are set in order |
 | ![](images/library/starfall_crater.jpg) **Starfall Crater** (four times the size) | A crater lake round a grey-blue fallen star on its islet, closed like a clam; an observer's cradle on the rim and a sunk probe in the lake | A lake dug as a **ring** of strokes round an islet (cut down, never raised past 8 m), a **dive** for the probe's parts, a star that **shows** its glow when the cradle is fed |
-| ![](images/library/lockkeepers_isle.jpg) **The Lockkeeper's Isle** | A low green island with a keeper's hut, a strongbox shed and a goat pen - and a sign at each place saying what it shows | An island to learn from ([17](#17-learn-from-the-islands)): a **keypad code lock**, **three quests** on one island, the three **island rules** and an island its quest **brings** (Lantern Spire) |
-| ![](images/library/lantern_spire.jpg) **Lantern Spire** | A rock floating 60 m over the sea with a lantern hut on top | An island to learn from ([17](#17-learn-from-the-islands)): a **flying island** (Island tab → Height), reached by building up from the raft |
+| ![](images/library/lockkeepers_isle.jpg) **The Lockkeeper's Isle** | A low green island and its absent keeper: a tidy hut, a strongbox shed, a goat pen and a lookout | Featured, three quests: find the keeper's **keypad code** from his mother's letter, catch his two goats, read his log. Its main quest **brings** Lantern Spire ([17.3](#173-two-small-islands-with-many-features)) |
+| ![](images/library/lantern_spire.jpg) **Lantern Spire** | A rock floating 60 m over the sea, a lantern hut and a dark beacon on top | Featured, a **flying island** reached by building up from the raft: fetch the sky keeper's oil from the ledge, light the beacon, open his chest ([17.3](#173-two-small-islands-with-many-features)) |
 | ![](images/library/gannet_rock.jpg) **Gannet Rock** | A small rocky islet where the sea-birds nest, a plank jetty off its east shore; turtles and dolphins round it - no quest | A jetty on posts out into deeper water |
 | ![](images/library/driftwood_key.jpg) **Driftwood Key** | A low sandy key with a few palms and a fisherman's driftwood cabin; stingrays in the shallows - no quest | A small cabin of Raft's blocks with a roof on its walls and posts |
 | ![](images/library/bearback_isle.jpg) **Bearback Isle** | One great hump of rock with a cave on the north beach and a bear asleep on a hoard inside - no quest | A cave with a proper entrance and a monster guarding loot |
@@ -4504,8 +4504,8 @@ set up (**Elevation** in the island settings), then open the plan and follow its
 Every island you can open in the editor shows how it was made: the library's islands, the ready-made islands of the
 generator and your own. This chapter says how to open one, how to look at the parts that don't show in the game (a
 chest's loot, a door's checks, the quest, the rules that bring other islands) and which island to open to see each of
-the editor's features. Two small islands of the library were made only to be learnt from: **The Lockkeeper's Isle**
-and **Lantern Spire** ([17.3](#173-two-islands-made-to-learn-from)).
+the editor's features. Two small featured islands of the library show many of them at once: **The Lockkeeper's Isle**
+and **Lantern Spire** ([17.3](#173-two-small-islands-with-many-features)).
 
 ### 17.1 Opening any island in the editor
 
@@ -4541,12 +4541,12 @@ and **Lantern Spire** ([17.3](#173-two-islands-made-to-learn-from)).
 6. **See it work:** **Test** puts the island in a world in front of your raft ([4.9](#49-trying-the-island-in-a-world-test)).
    Play it, then go back and look at the setting behind what you just saw.
 
-### 17.3 Two islands made to learn from
+### 17.3 Two small islands with many features
 
 | Island | What it shows |
 |---|---|
-| ![](images/library/lockkeepers_isle.jpg) **The Lockkeeper's Isle** (small) | A keeper's hut, a strongbox shed and a goat pen on a low green island, with a **sign at each place** that names the feature and where to see it in the editor. A **keypad code lock** (the shed's power box, code on the keeper's note; its use shows the hidden strongbox), **three quests on one island** (the main quest, a catch quest, a read quest), two **island rules** (regrow 3 days, comes after 8 km) and an **island the quest brings**: Lantern Spire, 400 m north, when the main quest is done |
-| ![](images/library/lantern_spire.jpg) **Lantern Spire** (small) | A **flying island**: a rock 60 m over the sea with a lantern hut on top (Island tab → Height → Flying). Nothing leads up: players build stairs or pillars from the raft. Its quest needs the top, the sign and the chest |
+| ![](images/library/lockkeepers_isle.jpg) **The Lockkeeper's Isle** (small) | A keeper's hut, a strongbox shed, a goat pen and a lookout on a low green island. A **keypad code lock** (the shed's power box; its use shows the hidden strongbox, which holds a story item that opens the sea chest at the lookout), **three quests on one island** (the main quest, a catch quest, a read quest), three **island rules** (regrow 3 days, comes after 8 km, levels up) and an **island the quest brings**: Lantern Spire, 400 m north, when the main quest is done |
+| ![](images/library/lantern_spire.jpg) **Lantern Spire** (small) | A **flying island**: a rock 60 m over the sea with a lantern hut and a beacon on top (Island tab → Height → Flying). Nothing leads up: players build stairs or pillars from the raft. A ladder down to a ledge, a **story item** from a box (the oil), a **use** behaviour that takes it and gives another (the beacon gives the key), and a chest that only opens with that key |
 
 ![The Lockkeeper's Isle: the strongbox shed, its power box locked with a keypad code](images/learn-lockkeeper-shed.jpg)
 *The Lockkeeper's Isle: the strongbox shed. Select the power box inside and open Behaviour & events: the Keypad code

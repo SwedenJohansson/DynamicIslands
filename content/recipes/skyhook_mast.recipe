@@ -102,7 +102,8 @@ place QuestItemPickup_Tangaroa_Token - at -3 -3 ground
 place QuestItemPickup_Tangaroa_Token - at 2 -30 ground
 
 # --- The zipline down from the stack's edge to the wreck's shore -------------------------------------------------------
-place ZiplinePath_Landmark zipdown at -7 -1 ground
+# (its near floor - 5.72 m west, 0.97 m north of where it is put, 1.35 m under its h - on the flat top at -7 -1)
+place ZiplinePath_Landmark zipdown at -1.28 -1.97 h=19.35
 zipto zipdown -12 -38
 place Zone_Trigger wreckshore at -12 -40 ground
 

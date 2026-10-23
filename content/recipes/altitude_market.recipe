@@ -2,7 +2,7 @@
 # The Lodestone Quay's market town, torn up with the hill on Lift Day: a market square of Caravan Town's caravans, tents,
 # baskets and crates on a jagged rock plate, the old cable-car station grown shut with vines, a clock tower on stilts
 # (screechers nest round it; its room behind a keypad) with a zipline from its deck down to the lower terrace, and at the
-# east edge of the lower terrace the ballast crane with its ballast stone resting on the drop. The station's old vending
+# east edge of the lower terrace the ballast crane with its ballast stone hanging from its hook over the drop. The station's old vending
 # machine still takes Tangaroa tokens. Quest "Market Day in the Sky" (11 steps): the rim, the crier's board, the vines
 # into the station, its two blueprints, the screechers, the clock tower room's keypad, the fireworks stall, the rigger's
 # chest (the plan's done-when, step 9), the zipline down and the ballast release (signal "ballast": brings Sinkmarket
@@ -11,7 +11,7 @@
 # Built by the recipe player (CIRecipe altitude_market) through the editor's own operations. Points (metres over the
 # island's own water line; in the world it all floats 35 m higher): the square at 5 m (r 16 round 0 0); the station
 # x -15..-10.5, z -4..-1; the clock tower x 8..12.5, z 6..10.5, its deck 2.6 m up; the lower terrace at 2 m round 18 -14;
-# the ballast crane at 22 -19.
+# the ballast crane at 20.5 -17 (its hook at 23.1 -19.6).
 include lib_features
 include lib_huts
 include lib_gravity
@@ -81,9 +81,9 @@ place Zone_Trigger terracezone at 18 -14 ground
 place Placeable_Table_Basic - at 4 8.5 ground sit yaw=0
 place Loot_Chest fireworks at 2.4 8.5 ground sit yaw=90
 
-# --- The ballast crane on the lower terrace's east edge, its stone resting on the drop; the release lever -----------
-place UT_ElectricityIsland_Crane01 - at 22 -19 ground sit scale=0.45 yaw=135
-place SmallRock_02 ballaststone at 21 -16.5 ground scale=1.3 yaw=40
+# --- The ballast crane on the lower terrace's east edge, its stone hanging from the hook over the drop; the lever
+place UT_ElectricityIsland_Crane02 ballastcrane at 20.5 -17 ground sit scale=0.45 yaw=135
+place SmallRock_02 ballaststone at 23.1 -19.6 h=3.5 scale=1.1 yaw=40
 place RT_Pillar - at 17 -17 ground sy=0.4
 place TP_LaserControlPanel_lever release at 17 -17 ground y=1.25 scale=3 yaw=135
 place Placeable_Lantern_Metal ballastcam at 16 -12 ground y=1.1 drop

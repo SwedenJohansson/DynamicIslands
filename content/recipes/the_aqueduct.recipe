@@ -79,9 +79,8 @@ place Creature_Goat goats at -28 -26 ground
 
 # --- The cistern by the lagoon's west end: a pit flooded to the sea's level, rubble round its rim, ladders down its north
 # wall; valve two on its floor, a pocket of air in its corner, the dark ---------------------------------------------------
-place VP_Rubble_Cement02 - at -28.5 5 ground sit yaw=90
-place VP_Rubble_Cement02 - at -21.5 5 ground sit yaw=90
-place VP_Rubble_Cement02 - at -25 1.5 ground sit
+place VP_Rubble_Cement02 - at -20 8 ground sit yaw=90
+place VP_Rubble_Cement02 - at -24 10 ground sit
 for l 0 1 1
 place Block_Ladder - at -25 7.4 h={-1+2.42*$l} yaw=0
 next
