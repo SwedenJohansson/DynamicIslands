@@ -85,8 +85,6 @@ place SmallBoulder3 - at -8 -36 ground scale=0.5 yaw=70
 place UT_MarketBasket02 - at -16 -35 ground sit
 place "Box Small" terracebox at -15 -35.3 ground sit yaw=20
 place Note_Sign labeloldwall at -21.5 -27 ground sit yaw=270
-place VP_Rubble_Cement02 - at -14 -24.5 ground sit yaw=5
-place VP_Rubble_Brick03 - at -9 -24.5 ground sit yaw=-8
 place Creature_Boar boars at -12 -27 ground
 place Zone_Trigger topterrace at -12 -27 y=1.5
 

@@ -48,7 +48,7 @@ clear from 46 21 to 70 21 r=3
 # radio mast with its dish, the instrument crate (the tongs), a food box; the telescope aimed down at the star; the llamas
 place Balboa_DecorationPrefabBase_SimpleTent - at -3 -9 ground sit yaw=20
 place Balboa_DecorationPrefabBase_SimpleTent - at 7 -10 ground sit yaw=-15
-place Balboa_DecorationPrefabBase_SimpleTent - at 2 -11.5 ground sit yaw=0
+place Balboa_DecorationPrefabBase_SimpleTent - at 2 -5.5 ground sit yaw=0
 place TP_FoldingTable_Large labtable at 2 -4 ground sit yaw=0
 place TP_LaboratoryMachine_Small01 - at 1.2 -4 y=0.93 drop
 place TP_Laptop01 - at 2.6 -4 y=0.93 drop yaw=170

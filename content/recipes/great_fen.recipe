@@ -101,7 +101,7 @@ place Balboa_DirectionSign - at 44.5 -183 ground yaw=20
 # ===== THE SEVEN DRAWBRIDGES =============================================================================================
 # Each causeway's boardwalk across the mere (in a frame along it: local x 0 at the mere's shore, 64 m out, +x towards
 # the town); at its end the windlass (a drum on a post); the gap's lowered deck (hidden till lowered), the raised leaf
-# standing at the town's shore (two radio tower walls), the bridge's zone on the town's side (hidden till lowered)
+# standing at the town's shore (two radio tower walls on two posts), the bridge's zone on the town's side (hidden till lowered)
 # (1: the Reed Bridge, from Reedcut)
 push at -10 54 h=-4 yaw=90
 call boardwalk n=18 y=5
@@ -114,6 +114,7 @@ place Block_Floor_Wood lowered1 at 32.25 0.75 y=5
 place Block_Floor_Wood lowered1 at 33.75 0.75 y=5
 place RT_Wall1 raised1 at 35 -0.75 y=5 yaw=90
 place RT_Wall1 raised1 at 35 -0.75 y=8 yaw=90
+place ReefHuts_Pillar3 - at 35 0.1 y=0 sy=1.04place ReefHuts_Pillar3 - at 35 1.4 y=0 sy=1.04
 place Zone_Trigger bridge1 at 37 0.75 y=6.5
 pop
 # (2: the Eel Bridge, from Eelmarsh)
@@ -128,6 +129,7 @@ place Block_Floor_Wood lowered2 at 32.25 0.75 y=5
 place Block_Floor_Wood lowered2 at 33.75 0.75 y=5
 place RT_Wall1 raised2 at 35 -0.75 y=5 yaw=90
 place RT_Wall1 raised2 at 35 -0.75 y=8 yaw=90
+place ReefHuts_Pillar3 - at 35 0.1 y=0 sy=1.04place ReefHuts_Pillar3 - at 35 1.4 y=0 sy=1.04
 place Zone_Trigger bridge2 at 37 0.75 y=6.5
 pop
 # (3: the Wisp Bridge, from Mothwick)
@@ -142,6 +144,7 @@ place Block_Floor_Wood lowered3 at 32.25 0.75 y=5
 place Block_Floor_Wood lowered3 at 33.75 0.75 y=5
 place RT_Wall1 raised3 at 35 -0.75 y=5 yaw=90
 place RT_Wall1 raised3 at 35 -0.75 y=8 yaw=90
+place ReefHuts_Pillar3 - at 35 0.1 y=0 sy=1.04place ReefHuts_Pillar3 - at 35 1.4 y=0 sy=1.04
 place Zone_Trigger bridge3 at 37 0.75 y=6.5
 pop
 # (4: the Turf Bridge, from Turfholm)
@@ -156,6 +159,7 @@ place Block_Floor_Wood lowered4 at 32.25 0.75 y=5
 place Block_Floor_Wood lowered4 at 33.75 0.75 y=5
 place RT_Wall1 raised4 at 35 -0.75 y=5 yaw=90
 place RT_Wall1 raised4 at 35 -0.75 y=8 yaw=90
+place ReefHuts_Pillar3 - at 35 0.1 y=0 sy=1.04place ReefHuts_Pillar3 - at 35 1.4 y=0 sy=1.04
 place Zone_Trigger bridge4 at 37 0.75 y=6.5
 pop
 # (5: the Heron Bridge, from Heronsby)
@@ -170,6 +174,7 @@ place Block_Floor_Wood lowered5 at 32.25 0.75 y=5
 place Block_Floor_Wood lowered5 at 33.75 0.75 y=5
 place RT_Wall1 raised5 at 35 -0.75 y=5 yaw=90
 place RT_Wall1 raised5 at 35 -0.75 y=8 yaw=90
+place ReefHuts_Pillar3 - at 35 0.1 y=0 sy=1.04place ReefHuts_Pillar3 - at 35 1.4 y=0 sy=1.04
 place Zone_Trigger bridge5 at 37 0.75 y=6.5
 pop
 # (6: the Mill Bridge, from Willowbend)
@@ -184,6 +189,7 @@ place Block_Floor_Wood lowered6 at 32.25 0.75 y=5
 place Block_Floor_Wood lowered6 at 33.75 0.75 y=5
 place RT_Wall1 raised6 at 35 -0.75 y=5 yaw=90
 place RT_Wall1 raised6 at 35 -0.75 y=8 yaw=90
+place ReefHuts_Pillar3 - at 35 0.1 y=0 sy=1.04place ReefHuts_Pillar3 - at 35 1.4 y=0 sy=1.04
 place Zone_Trigger bridge6 at 37 0.75 y=6.5
 pop
 # (7: the Still Bridge, from Stillwater)
@@ -198,6 +204,7 @@ place Block_Floor_Wood lowered7 at 32.25 0.75 y=5
 place Block_Floor_Wood lowered7 at 33.75 0.75 y=5
 place RT_Wall1 raised7 at 35 -0.75 y=5 yaw=90
 place RT_Wall1 raised7 at 35 -0.75 y=8 yaw=90
+place ReefHuts_Pillar3 - at 35 0.1 y=0 sy=1.04place ReefHuts_Pillar3 - at 35 1.4 y=0 sy=1.04
 place Zone_Trigger bridge7 at 37 0.75 y=6.5
 pop
 
@@ -310,8 +317,7 @@ place Note_Sign healernote at -1.5 -3 sit yaw=90
 pop
 place Balboa_Shack - at -75 -125 h=1 scale=0.4 yaw=30
 place Placeable_Utopia_Herb_6 fenmint at -71 -128 ground sit
-place Placeable_Utopia_Herb_6 - at -72 -129.5 ground sit
-place Placeable_Utopia_Herb_6 - at -70 -129 ground sit
+place Placeable_Utopia_Herb_6 - at -73.9 -128.4 ground sit
 place Zone_Trigger hermitisle at -73 -127 y=1.5
 
 # ===== CHAPTER 7 - WILLOWBEND (west) and the mill isle =====================================================================

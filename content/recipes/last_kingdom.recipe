@@ -248,7 +248,7 @@ pop
 place Note_Sign woodcutter at -7.8 103.6 h=5 drop yaw=180
 place Tree_Stump - at -4 102 ground sit
 place "VG_DecorationPrefabBase_Tools_Hammer Variant" - at -4 102 y=0.6 drop
-place Firewood_1 - at -12 102 ground sit
+place Firewood_1 - at -12 102 ground y=0.35 sit
 place "Box Small" woodbox at -12 100.6 ground sit yaw=15
 place Zone_Trigger wolfden at 2 98 y=1.5
 place Creature_Hyena wolves at 4 96 ground
@@ -342,7 +342,7 @@ push at -28 -57 h=40.05
 call rt_storey b1=RT_WallDoor1 r1=none r2=none r3=none
 place RT_Floor - at 0 4.5 y=3
 place TangaroaKitchen_StoveOven - at -5 0 sit yaw=90
-place TangaroaKitchen_Bench4 - at -2 -2.5 sit
+place TangaroaKitchen_Bench4 - at -2 0.5 sit
 place "Box Small" pantrybox at -5.3 3.5 sit yaw=20
 place Zone_Trigger kitchens at -3 0 y=1.5
 place Creature_Rat kitchenrats at -2.5 1 y=0.2

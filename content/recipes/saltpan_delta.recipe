@@ -108,12 +108,12 @@ place Creature_Rat rats at -39.5 3.5 h=2
 
 # ===== The wagon line: two rails on ties from the pans' south end down to the jetty; the salt wagon at its head with the
 # brake lever on a post; two old wagons on a siding; the buffer at the jetty's end =====================================
-line RT_Beam from -25.5 -6 to -25.5 -60 step=6 h=1.5
-line RT_Beam from -24.5 -6 to -24.5 -60 step=6 h=1.5
+line RT_Beam from -25.5 -6 to -25.5 -60 step=6 h=1.6
+line RT_Beam from -24.5 -6 to -24.5 -60 step=6 h=1.6
 for tz -7 -59 -1.2
-place test_debris_plank - at -25 $tz h=1.38 scale=0.45 yaw=0
+place test_debris_plank - at -25 $tz h=1.48 scale=0.45 yaw=0
 next
-place VP_Wagon02 wagon at -25 -9 h=1.7 scale=1.4
+place VP_Wagon02 wagon at -25 -9 h=1.8 scale=1.4
 place RT_Pillar - at -22.8 -9 h=1.5 sy=0.4
 place TP_LaserControlPanel_lever brake at -22.8 -9 h=2.75 scale=3 yaw=270
 place VP_Wagon01 - at -20 -6 h=1.5 yaw=10
