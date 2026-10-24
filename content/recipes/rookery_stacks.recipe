@@ -322,6 +322,61 @@ prop rationlocker loot.refill=0
 note glasschest Hoarder's chest | A hoarder's chest, hidden in a bed of broken glass so nobody would come for it.
 loot glasschest TradeToken*3;CopperIngot*2;Bolt*2
 prop glasschest loot.refill=0
+# --- JUMP COURSE rs (U22, 10-24): a kz-style hop course of floor slabs on its own flattened pad -----------------
+# Every gap and rise is within the U22 jump limits (reach_audit/jumps.py checks them). A fall lands on the pad.
+# JUMP rs pad=2 at=-60 -42
+push at -60 -42
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=2
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=2
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jprs at -3.36 -7.80 h=2.50
+place Block_Foundation_Tier3 jprs at -0.75 -7.80 h=2.90
+place Block_Foundation_Tier3 jprs at 2.06 -7.80 h=3.40
+place Block_Foundation_Tier3 jprs at 2.06 -4.88 h=4.00
+place Block_Foundation_Tier3 jprs at 2.06 -2.06 h=4.80
+place Block_Foundation_Tier3 jprs at -0.75 -2.06 h=5.70
+place Block_Foundation_Tier3 jprs at -3.46 -2.06 h=6.65
+place Block_Foundation_Tier3 jprs at -6.38 -2.06 h=7.45
+place Block_Foundation_Tier3 jprs at -6.38 1.56 h=8.35 sx=2 sz=2
+# JUMP from 9
+place Block_Foundation_Tier3 jprs at -6.38 6.99 h=8.35 sx=2
+place Block_Foundation_Tier3 jprs at -0.05 6.99 h=8.65 sx=2
+place Block_Foundation_Tier3 jprs at 6.38 6.99 h=8.65 sx=2 sz=2
+# JUMP end
+place RT_PillarThick jpprs at 2.06 -7.80 h=1.50 sy=0.203 sx=0.8 sz=0.8
+place RT_PillarThick jpprs at 2.06 -4.88 h=1.50 sy=0.303 sx=0.8 sz=0.8
+place RT_PillarThick jpprs at 2.06 -2.06 h=1.50 sy=0.436 sx=0.8 sz=0.8
+place RT_PillarThick jpprs at -0.75 -2.06 h=1.50 sy=0.586 sx=0.8 sz=0.8
+place RT_PillarThick jpprs at -3.46 -2.06 h=1.50 sy=0.745 sx=0.8 sz=0.8
+place RT_PillarThick jpprs at -6.38 -2.06 h=1.50 sy=0.878 sx=0.8 sz=0.8
+place RT_PillarThick jpprs at -6.38 1.56 h=1.50 sy=1.028 sx=0.8 sz=0.8
+place RT_PillarThick jpprs at -6.38 6.99 h=1.50 sy=1.028 sx=0.8 sz=0.8
+place RT_PillarThick jpprs at -0.05 6.99 h=1.50 sy=1.078 sx=0.8 sz=0.8
+place RT_PillarThick jpprs at 6.38 6.99 h=1.50 sy=1.078 sx=0.8 sz=0.8
+prop jprs tint.color=#a59b8c
+prop jprs tint.amount=0.35
+prop jpprs tint.color=#a59b8c
+prop jpprs tint.amount=0.35
+place Zone_Trigger jzrs at -6.38 1.56 h=9.35
+prop jzrs zone.id=jump_rs_top
+prop jzrs zone.radius=1.8
+prop jzrs zone.repeat=never
+prop jzrs zone.message=From the top of the egg-collectors' slabs you watch the storm come in over the Crown, dark and low.
+place Loot_ChestSmall jbrs at 6.38 6.99 h=8.65 sit yaw=0
+note jbrs Collector's tin | The egg-collectors kept their best finds where the gulls could not get them.
+loot jbrs Leather*1;Rope*2;Glass*2
+prop jbrs loot.refill=0
+place Zone_Trigger jyrs at 6.38 6.99 h=9.65
+prop jyrs zone.id=jump_rs_finale
+prop jyrs zone.radius=1.8
+prop jyrs zone.repeat=never
+prop jyrs zone.message=The far slab. The gulls cannot reach you here - and neither could most collectors.
+pop
+# --- end of jump course rs ---
+
 quest title=The Lowest Roofs
 quest intro=Every faction signed. The people on the lowest roofs paid for it. Find the Rookery's soup kitchen.
 step reach|soup_kitchen|1|Find the Rookery's soup kitchen
@@ -347,6 +402,7 @@ step reach|rk_deep|1|Dive to the bathhouse cellar off the south shore
 step collect|story:rk_deep|1|Find the boiler tap in its back room
 step read|Bathhouse ticket|1|Bring both to the boiler valve and read what it shows
 step read|Storm warning|1|Read the storm warning
+step reach|jump_rs_top|1|Hop up the egg-collectors' slabs on the south-west shore and watch the storm come in
 quest done=The councils meet on the Crown tonight, in the storm. Bridgeworks Crown - band 1000.
 quest reward=Leather*2;TitaniumOre*1
 

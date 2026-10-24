@@ -154,6 +154,63 @@ prop boatchest beh.hidden=1
 note boatchest Hermit's boat log | BOAT LOG\n\nSpring. Fished the north cove; the eagles watched.\nSummer. The boars came over the ridge. The eagles left.\nAutumn. Lost the boat in a squall. Swam. Kept the hens. A raft came by - if that is you, take a hen, and take my map.
 loot boatchest Rope*2;Leather*1;TradeToken*2
 prop boatchest loot.refill=0
+# --- JUMP COURSE tb (U22, 10-24): a kz-style hop course of floor slabs on its own flattened pad -----------------
+# Every gap and rise is within the U22 jump limits (reach_audit/jumps.py checks them). A fall lands on the pad.
+# JUMP tb pad=3 at=72 -15
+push at 72 -15
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jptb at -0.10 5.64 h=3.60
+place Block_Foundation_Tier3 jptb at -2.92 5.64 h=4.10
+place Block_Foundation_Tier3 jptb at -5.93 5.64 h=4.50
+place Block_Foundation_Tier3 jptb at -5.93 3.03 h=5.40
+place Block_Foundation_Tier3 jptb at -5.93 -1.21 h=5.90 sx=0.3 sz=3
+place Block_Foundation_Tier3 jptb at -5.93 -5.64 h=6.70
+place Block_Foundation_Tier3 jptb at -3.02 -5.64 h=7.60
+place Block_Foundation_Tier3 jptb at -0.40 -5.64 h=6.60
+place Block_Foundation_Tier3 jptb at 2.41 -5.64 h=7.55
+place Block_Foundation_Tier3 jptb at 5.12 -5.64 h=8.50
+place Block_Foundation_Tier3 jptb at 5.12 -2.02 h=9.40 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jptb at -1.30 -2.02 h=9.70 sx=2 sz=2
+place Block_Foundation_Tier3 jptb at -1.30 3.21 h=10.00
+# JUMP end
+place RT_PillarThick jpptb at -2.92 5.64 h=2.50 sy=0.153 sx=0.8 sz=0.8
+place RT_PillarThick jpptb at -5.93 5.64 h=2.50 sy=0.220 sx=0.8 sz=0.8
+place RT_PillarThick jpptb at -5.93 3.03 h=2.50 sy=0.370 sx=0.8 sz=0.8
+place RT_PillarThick jpptb at -5.93 -1.21 h=2.50 sy=0.453 sx=0.8 sz=0.8
+place RT_PillarThick jpptb at -5.93 -5.64 h=2.50 sy=0.586 sx=0.8 sz=0.8
+place RT_PillarThick jpptb at -3.02 -5.64 h=2.50 sy=0.736 sx=0.8 sz=0.8
+place RT_PillarThick jpptb at -0.40 -5.64 h=2.50 sy=0.570 sx=0.8 sz=0.8
+place RT_PillarThick jpptb at 2.41 -5.64 h=2.50 sy=0.728 sx=0.8 sz=0.8
+place RT_PillarThick jpptb at 5.12 -5.64 h=2.50 sy=0.886 sx=0.8 sz=0.8
+place RT_PillarThick jpptb at 5.12 -2.02 h=2.50 sy=1.036 sx=0.8 sz=0.8
+place RT_PillarThick jpptb at -1.30 -2.02 h=2.50 sy=1.086 sx=0.8 sz=0.8
+place RT_PillarThick jpptb at -1.30 3.21 h=2.50 sy=1.136 sx=0.8 sz=0.8
+prop jptb tint.color=#857563
+prop jptb tint.amount=0.35
+prop jpptb tint.color=#857563
+prop jpptb tint.amount=0.35
+place Loot_Chest jctb at 5.12 -2.02 h=9.40 sit yaw=0
+note jctb Herder's lookout | The goatherds hopped up these slabs to count the flock on the ridge.
+loot jctb Leather*2;Rope*3;Plank*4
+prop jctb loot.refill=0
+place Loot_ChestSmall jbtb at -1.30 3.21 h=10.00 sit yaw=0
+note jbtb Goat's leap | 'Only the old billy made the long jumps,' says the tag on this box.
+loot jbtb MetalIngot*2;Leather*1
+prop jbtb loot.refill=0
+place Zone_Trigger jytb at -1.30 3.21 h=11.00
+prop jytb zone.id=jump_tb_finale
+prop jytb zone.radius=1.8
+prop jytb zone.repeat=never
+prop jytb zone.message=The goat's leap: you jump like the old billy now.
+pop
+# --- end of jump course tb ---
+
 quest title=The Hermit
 quest intro=A camp on Thornback Ridge. Find it.
 step reach|camp|1|Climb to the hermit's camp

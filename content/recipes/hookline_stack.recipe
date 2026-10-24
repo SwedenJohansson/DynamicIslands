@@ -273,6 +273,63 @@ note tallybook Tally book | UNION TALLY BOOK\n\nShare out: one part to the diver
 note divercavechest Divers' locker | A diver's locker: a spare mask strap, rope and a tin of grease.
 loot divercavechest Rope*3;Scrap*3;Leather*1
 prop divercavechest loot.refill=0
+# --- JUMP COURSE hs (U22, 10-24): a kz-style hop course of floor slabs on its own flattened pad -----------------
+# Every gap and rise is within the U22 jump limits (reach_audit/jumps.py checks them). A fall lands on the pad.
+# JUMP hs pad=3 at=24 69
+push at 24 69
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jphs at 0.10 -5.64 h=3.60
+place Block_Foundation_Tier3 jphs at 2.92 -5.64 h=4.10
+place Block_Foundation_Tier3 jphs at 5.93 -5.64 h=4.50
+place Block_Foundation_Tier3 jphs at 5.93 -3.03 h=5.40
+place Block_Foundation_Tier3 jphs at 5.93 1.21 h=5.90 sx=0.3 sz=3
+place Block_Foundation_Tier3 jphs at 5.93 5.64 h=6.70
+place Block_Foundation_Tier3 jphs at 3.02 5.64 h=7.60
+place Block_Foundation_Tier3 jphs at 0.40 5.64 h=6.60
+place Block_Foundation_Tier3 jphs at -2.41 5.64 h=7.55
+place Block_Foundation_Tier3 jphs at -5.12 5.64 h=8.50
+place Block_Foundation_Tier3 jphs at -5.12 2.02 h=9.40 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jphs at 1.30 2.02 h=9.70 sx=2 sz=2
+place Block_Foundation_Tier3 jphs at 1.30 -3.21 h=10.00
+# JUMP end
+place RT_PillarThick jpphs at 2.92 -5.64 h=2.50 sy=0.153 sx=0.8 sz=0.8
+place RT_PillarThick jpphs at 5.93 -5.64 h=2.50 sy=0.220 sx=0.8 sz=0.8
+place RT_PillarThick jpphs at 5.93 -3.03 h=2.50 sy=0.370 sx=0.8 sz=0.8
+place RT_PillarThick jpphs at 5.93 1.21 h=2.50 sy=0.453 sx=0.8 sz=0.8
+place RT_PillarThick jpphs at 5.93 5.64 h=2.50 sy=0.586 sx=0.8 sz=0.8
+place RT_PillarThick jpphs at 3.02 5.64 h=2.50 sy=0.736 sx=0.8 sz=0.8
+place RT_PillarThick jpphs at 0.40 5.64 h=2.50 sy=0.570 sx=0.8 sz=0.8
+place RT_PillarThick jpphs at -2.41 5.64 h=2.50 sy=0.728 sx=0.8 sz=0.8
+place RT_PillarThick jpphs at -5.12 5.64 h=2.50 sy=0.886 sx=0.8 sz=0.8
+place RT_PillarThick jpphs at -5.12 2.02 h=2.50 sy=1.036 sx=0.8 sz=0.8
+place RT_PillarThick jpphs at 1.30 2.02 h=2.50 sy=1.086 sx=0.8 sz=0.8
+place RT_PillarThick jpphs at 1.30 -3.21 h=2.50 sy=1.136 sx=0.8 sz=0.8
+prop jphs tint.color=#8a7f70
+prop jphs tint.amount=0.35
+prop jpphs tint.color=#8a7f70
+prop jpphs tint.amount=0.35
+place Loot_Chest jchs at -5.12 2.02 h=9.40 sit yaw=0
+note jchs Hook crew perch | The hook crew dried their lines up here, out of the gulls' reach.
+loot jchs Rope*4;Plank*4;MetalIngot*1
+prop jchs loot.refill=0
+place Loot_ChestSmall jbhs at 1.30 -3.21 h=10.00 sit yaw=0
+note jbhs Long line | The crew's best kept at the end of the long jumps.
+loot jbhs MetalIngot*2;CopperIngot*1;Rope*2
+prop jbhs loot.refill=0
+place Zone_Trigger jyhs at 1.30 -3.21 h=11.00
+prop jyhs zone.id=jump_hs_finale
+prop jyhs zone.radius=1.8
+prop jyhs zone.repeat=never
+prop jyhs zone.message=The end of the long line. Not many crew made it here.
+pop
+# --- end of jump course hs ---
+
 quest title=The Salvagers' Union
 quest intro=The Union works the cranes on the half-sunk block. Find their hall.
 step reach|union_hall|1|Go into the Union hall

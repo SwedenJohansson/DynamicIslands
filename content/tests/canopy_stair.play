@@ -44,4 +44,9 @@ expect shown pilotchest
 read Pilot's flight log
 expect step 10
 read Oda's letter
+expect step 11
+# U22 jump course (10-24): teleport onto its top A slab instead of jumping the hops
+at -72.38 -4.56 h=10.65
+zone jump_cs_top
+wait 2
 expect done

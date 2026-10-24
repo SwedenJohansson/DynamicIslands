@@ -237,6 +237,65 @@ prop trdivesecret loot.refill=0
 note trcairn Survey cairn | A survey cairn on the peak, a brass pin on top:\n\nTRUE SOUTH 180. NOT WHAT THE MASTS SAY. Dig where the map says, not where it points.
 story surveyfix|Survey fix-pin|Bolt|A brass fix-pin from the surveyors' buried tins on the east flat.
 note trmap Surveyors' dig map | DIG MAP - east flat, by the cairns\n\nFour crosses, a stride apart in a square. Three tins of spare fix-pins, buried against salvagers. The fourth cross is a lie - the one nearest the sea. Dig there and you dig up rats.\n\n- the survey party
+# --- JUMP COURSE tr (U22, 10-24): a kz-style hop course of floor slabs on its own flattened pad -----------------
+# Every gap and rise is within the U22 jump limits (reach_audit/jumps.py checks them). A fall lands on the pad.
+# JUMP tr pad=4 at=69 -15
+push at 69 -15
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=4
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=4
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jptr at -0.10 -5.64 h=4.60
+place Block_Foundation_Tier3 jptr at -2.92 -5.64 h=5.10
+place Block_Foundation_Tier3 jptr at -5.93 -5.64 h=5.50
+place Block_Foundation_Tier3 jptr at -5.93 -3.03 h=6.40
+place Block_Foundation_Tier3 jptr at -5.93 1.21 h=6.90 sx=0.3 sz=3
+place Block_Foundation_Tier3 jptr at -5.93 5.64 h=7.70
+place Block_Foundation_Tier3 jptr at -3.02 5.64 h=8.60
+place Block_Foundation_Tier3 jptr at -0.40 5.64 h=7.60
+place Block_Foundation_Tier3 jptr at 2.41 5.64 h=8.55
+place Block_Foundation_Tier3 jptr at 5.12 5.64 h=9.50
+place Block_Foundation_Tier3 jptr at 5.12 2.02 h=10.40 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jptr at -1.30 2.02 h=10.70 sx=2 sz=2
+place Block_Foundation_Tier3 jptr at -1.30 -3.21 h=11.00
+# JUMP end
+place RT_PillarThick jpptr at -2.92 -5.64 h=3.50 sy=0.153 sx=0.8 sz=0.8
+place RT_PillarThick jpptr at -5.93 -5.64 h=3.50 sy=0.220 sx=0.8 sz=0.8
+place RT_PillarThick jpptr at -5.93 -3.03 h=3.50 sy=0.370 sx=0.8 sz=0.8
+place RT_PillarThick jpptr at -5.93 1.21 h=3.50 sy=0.453 sx=0.8 sz=0.8
+place RT_PillarThick jpptr at -5.93 5.64 h=3.50 sy=0.586 sx=0.8 sz=0.8
+place RT_PillarThick jpptr at -3.02 5.64 h=3.50 sy=0.736 sx=0.8 sz=0.8
+place RT_PillarThick jpptr at -0.40 5.64 h=3.50 sy=0.570 sx=0.8 sz=0.8
+place RT_PillarThick jpptr at 2.41 5.64 h=3.50 sy=0.728 sx=0.8 sz=0.8
+place RT_PillarThick jpptr at 5.12 5.64 h=3.50 sy=0.886 sx=0.8 sz=0.8
+place RT_PillarThick jpptr at 5.12 2.02 h=3.50 sy=1.036 sx=0.8 sz=0.8
+place RT_PillarThick jpptr at -1.30 2.02 h=3.50 sy=1.086 sx=0.8 sz=0.8
+place RT_PillarThick jpptr at -1.30 -3.21 h=3.50 sy=1.136 sx=0.8 sz=0.8
+prop jptr tint.color=#80786c
+prop jptr tint.amount=0.35
+prop jpptr tint.color=#80786c
+prop jpptr tint.amount=0.35
+place Loot_Chest jctr at 5.12 2.02 h=10.40 sit yaw=0
+note jctr Surveyor's perch | The survey team hopped up here to sight their lines over the rocks.
+loot jctr Rope*3;Plank*4;MetalIngot*1
+prop jctr loot.refill=0
+place Loot_ChestSmall jbtr at -1.30 -3.21 h=11.00 sit yaw=0
+note jbtr Survey prize | Two long jumps to the last mark - and the team buried their spare kit at the course's foot.
+loot jbtr CopperIngot*2;Glass*1
+prop jbtr loot.refill=0
+place Zone_Trigger jytr at -1.30 -3.21 h=12.00
+prop jytr zone.id=jump_tr_finale
+prop jytr zone.radius=1.8
+prop jytr zone.repeat=never
+prop jytr zone.message=From the last survey mark you see a patch of turned earth below. A metal detector would find it.
+call treasure x=0 z=11 r=3 n=1 seed=14957
+prop treasure14957 treasure.loot=TitaniumOre*1;MetalOre*2;TradeToken*1
+pop
+# --- end of jump course tr ---
+
 quest title=Three Bearings
 quest intro=Three masts on three rock tops, and a camp in the hollow between them. Go down to the camp.
 step reach|survey_camp|1|Go down to the survey camp

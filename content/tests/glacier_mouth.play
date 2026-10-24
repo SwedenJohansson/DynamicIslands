@@ -55,6 +55,11 @@ read Carving note
 expect step 13
 open Cave mouth chest
 wait 3
+expect step 14
+# U22 jump course (10-24): teleport onto its top A slab instead of jumping the hops
+at 72.38 28.56 h=9.65
+zone jump_gm_top
+wait 2
 expect done
 # the extras: the mast chest, the ice cave cache, three treasures
 open Survey mast chest

@@ -271,6 +271,61 @@ prop bears creature.count=2
 prop bears creature.respawn=0
 prop bears creature.zone=depot
 
+# --- JUMP COURSE gm (U22, 10-24): a kz-style hop course of floor slabs on its own flattened pad -----------------
+# Every gap and rise is within the U22 jump limits (reach_audit/jumps.py checks them). A fall lands on the pad.
+# JUMP gm pad=3 at=66 27
+push at 66 27
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpgm at 3.36 -7.80 h=3.50
+place Block_Foundation_Tier3 jpgm at 0.75 -7.80 h=3.90
+place Block_Foundation_Tier3 jpgm at -2.06 -7.80 h=4.40
+place Block_Foundation_Tier3 jpgm at -2.06 -4.88 h=5.00
+place Block_Foundation_Tier3 jpgm at -2.06 -2.06 h=5.80
+place Block_Foundation_Tier3 jpgm at 0.75 -2.06 h=6.70
+place Block_Foundation_Tier3 jpgm at 3.46 -2.06 h=7.65
+place Block_Foundation_Tier3 jpgm at 6.38 -2.06 h=8.45
+place Block_Foundation_Tier3 jpgm at 6.38 1.56 h=9.35 sx=2 sz=2
+# JUMP from 9
+place Block_Foundation_Tier3 jpgm at 6.38 6.99 h=9.35 sx=2
+place Block_Foundation_Tier3 jpgm at 0.05 6.99 h=9.65 sx=2
+place Block_Foundation_Tier3 jpgm at -6.38 6.99 h=9.65 sx=2 sz=2
+# JUMP end
+place RT_PillarThick jppgm at -2.06 -7.80 h=2.50 sy=0.203 sx=0.8 sz=0.8
+place RT_PillarThick jppgm at -2.06 -4.88 h=2.50 sy=0.303 sx=0.8 sz=0.8
+place RT_PillarThick jppgm at -2.06 -2.06 h=2.50 sy=0.436 sx=0.8 sz=0.8
+place RT_PillarThick jppgm at 0.75 -2.06 h=2.50 sy=0.586 sx=0.8 sz=0.8
+place RT_PillarThick jppgm at 3.46 -2.06 h=2.50 sy=0.745 sx=0.8 sz=0.8
+place RT_PillarThick jppgm at 6.38 -2.06 h=2.50 sy=0.878 sx=0.8 sz=0.8
+place RT_PillarThick jppgm at 6.38 1.56 h=2.50 sy=1.028 sx=0.8 sz=0.8
+place RT_PillarThick jppgm at 6.38 6.99 h=2.50 sy=1.028 sx=0.8 sz=0.8
+place RT_PillarThick jppgm at 0.05 6.99 h=2.50 sy=1.078 sx=0.8 sz=0.8
+place RT_PillarThick jppgm at -6.38 6.99 h=2.50 sy=1.078 sx=0.8 sz=0.8
+prop jpgm tint.color=#b9c7cf
+prop jpgm tint.amount=0.35
+prop jppgm tint.color=#b9c7cf
+prop jppgm tint.amount=0.35
+place Zone_Trigger jzgm at 6.38 1.56 h=10.35
+prop jzgm zone.id=jump_gm_top
+prop jzgm zone.radius=1.8
+prop jzgm zone.repeat=never
+prop jzgm zone.message=From the top of the ice-cutters' block stair the glacier lies open: a dark crack runs into its face where the vault's door must be.
+place Loot_ChestSmall jbgm at -6.38 6.99 h=9.65 sit yaw=0
+note jbgm Ice-cutter's stash | At the far block, out of reach of anyone who could not jump.
+loot jbgm MetalIngot*2;Rope*2;Leather*1
+prop jbgm loot.refill=0
+place Zone_Trigger jygm at -6.38 6.99 h=10.65
+prop jygm zone.id=jump_gm_finale
+prop jygm zone.radius=1.8
+prop jygm zone.repeat=never
+prop jygm zone.message=The far ice block: the cutters' long jumps, done.
+pop
+# --- end of jump course gm ---
+
 quest title=The Glacier
 quest intro=A wall of ice, a depot at its foot. Climb up to the depot.
 step reach|depot|1|Climb up to the expedition depot
@@ -287,6 +342,7 @@ step reach|crevasse|1|Walk the crevasse cave's path in the west
 step collect|story:surveykey|1|Dive to the survey snowcat and take the key from its box
 step read|Carving note|1|Go to the Ringwave on the ice wall and read the note under it
 step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline tool's plans from the cave mouth
+step reach|jump_gm_top|1|Jump up the ice-cutters' block stair on the east shore and look for the vault's door
 quest done=The vault is under the glacier. Its door is on 700.
 quest reward=MetalIngot*3;Rope*3;Leather*2
 

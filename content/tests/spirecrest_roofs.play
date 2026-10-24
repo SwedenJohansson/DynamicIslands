@@ -35,4 +35,9 @@ zone sc_summit
 expect step 12
 open Relay locker
 wait 3
+expect step 13
+# U22 jump course (10-24): teleport onto its top A slab instead of jumping the hops
+at -48.38 -55.44 h=9.65
+zone jump_sc_top
+wait 2
 expect done

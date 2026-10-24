@@ -250,6 +250,63 @@ prop cylever if.use=has|story:cy_cranekey|1\n!signal|cydrop
 prop cylever else.use=message||The counterweight release is locked. The crane key would free it.
 prop cylever on.use=signal||cydrop\nhide|cycap\nshow|cyweight\ngive||story:cy_drop*1\nmessage||A clank, a whistle - the counterweight drops onto the store roof and the cap plate is gone. The hatch is open.
 
+# --- JUMP COURSE cy (U22, 10-24): a kz-style hop course of floor slabs on its own flattened pad -----------------
+# Every gap and rise is within the U22 jump limits (reach_audit/jumps.py checks them). A fall lands on the pad.
+# JUMP cy pad=2 at=42 60
+push at 42 60
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=2
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=2
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpcy at -0.10 -5.64 h=2.60
+place Block_Foundation_Tier3 jpcy at -2.92 -5.64 h=3.10
+place Block_Foundation_Tier3 jpcy at -5.93 -5.64 h=3.50
+place Block_Foundation_Tier3 jpcy at -5.93 -3.03 h=4.40
+place Block_Foundation_Tier3 jpcy at -5.93 1.21 h=4.90 sx=0.3 sz=3
+place Block_Foundation_Tier3 jpcy at -5.93 5.64 h=5.70
+place Block_Foundation_Tier3 jpcy at -3.02 5.64 h=6.60
+place Block_Foundation_Tier3 jpcy at -0.40 5.64 h=5.60
+place Block_Foundation_Tier3 jpcy at 2.41 5.64 h=6.55
+place Block_Foundation_Tier3 jpcy at 5.12 5.64 h=7.50
+place Block_Foundation_Tier3 jpcy at 5.12 2.02 h=8.40 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jpcy at -1.30 2.02 h=8.70 sx=2 sz=2
+place Block_Foundation_Tier3 jpcy at -1.30 -3.21 h=9.00
+# JUMP end
+place RT_PillarThick jppcy at -2.92 -5.64 h=1.50 sy=0.153 sx=0.8 sz=0.8
+place RT_PillarThick jppcy at -5.93 -5.64 h=1.50 sy=0.220 sx=0.8 sz=0.8
+place RT_PillarThick jppcy at -5.93 -3.03 h=1.50 sy=0.370 sx=0.8 sz=0.8
+place RT_PillarThick jppcy at -5.93 1.21 h=1.50 sy=0.453 sx=0.8 sz=0.8
+place RT_PillarThick jppcy at -5.93 5.64 h=1.50 sy=0.586 sx=0.8 sz=0.8
+place RT_PillarThick jppcy at -3.02 5.64 h=1.50 sy=0.736 sx=0.8 sz=0.8
+place RT_PillarThick jppcy at -0.40 5.64 h=1.50 sy=0.570 sx=0.8 sz=0.8
+place RT_PillarThick jppcy at 2.41 5.64 h=1.50 sy=0.728 sx=0.8 sz=0.8
+place RT_PillarThick jppcy at 5.12 5.64 h=1.50 sy=0.886 sx=0.8 sz=0.8
+place RT_PillarThick jppcy at 5.12 2.02 h=1.50 sy=1.036 sx=0.8 sz=0.8
+place RT_PillarThick jppcy at -1.30 2.02 h=1.50 sy=1.086 sx=0.8 sz=0.8
+place RT_PillarThick jppcy at -1.30 -3.21 h=1.50 sy=1.136 sx=0.8 sz=0.8
+prop jpcy tint.color=#7d8b94
+prop jpcy tint.amount=0.35
+prop jppcy tint.color=#7d8b94
+prop jppcy tint.amount=0.35
+place Loot_Chest jccy at 5.12 2.02 h=8.40 sit yaw=0
+note jccy Diver's perch | The caisson crew built these slabs to dry their suits up high. The last diver up left this.
+loot jccy Plank*6;Rope*3;MetalIngot*1
+prop jccy loot.refill=0
+place Loot_ChestSmall jbcy at -1.30 -3.21 h=9.00 sit yaw=0
+note jbcy Crew's dare | Two long jumps off the perch. The crew bet their copper on it.
+loot jbcy CopperIngot*2;MetalIngot*2
+prop jbcy loot.refill=0
+place Zone_Trigger jycy at -1.30 -3.21 h=10.00
+prop jycy zone.id=jump_cy_finale
+prop jycy zone.radius=1.8
+prop jycy zone.repeat=never
+prop jycy zone.message=The crew's dare: two long jumps, and you made them.
+pop
+# --- end of jump course cy ---
+
 quest title=The Caisson Yard
 quest intro=A construction yard on the Receiver. Climb onto the yard caisson.
 step reach|yard|1|Climb onto the yard

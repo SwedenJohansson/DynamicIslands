@@ -84,5 +84,10 @@ expect step 22
 open Glass hoard
 wait 3
 read Storm warning
+expect step 23
+# U22 jump course (10-24): teleport onto its top A slab instead of jumping the hops
+at -66.38 -40.44 h=8.65
+zone jump_rs_top
+wait 2
 expect done
 dig

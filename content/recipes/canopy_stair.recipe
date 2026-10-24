@@ -233,6 +233,61 @@ prop pilotchest beh.hidden=1
 note pilotchest Pilot's flight log | FLIGHT LOG - VERDANCE SUPPLY\n\nRun 31. Dropped rope and seed at the cliff. Marit waved from the top.\nRun 32. The canopy has grown a metre since run 31. The strip is gone.\nRun 33. Ditching off the west shore. If you read this, the ropes are on the ledges, the Heart is north, and I swam.
 loot pilotchest Rope*2;Leather*1;Battery*1
 prop pilotchest loot.refill=0
+# --- JUMP COURSE cs (U22, 10-24): a kz-style hop course of floor slabs on its own flattened pad -----------------
+# Every gap and rise is within the U22 jump limits (reach_audit/jumps.py checks them). A fall lands on the pad.
+# JUMP cs pad=4 at=-66 -3
+push at -66 -3
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=4
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=4
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpcs at -3.36 7.80 h=4.50
+place Block_Foundation_Tier3 jpcs at -0.75 7.80 h=4.90
+place Block_Foundation_Tier3 jpcs at 2.06 7.80 h=5.40
+place Block_Foundation_Tier3 jpcs at 2.06 4.88 h=6.00
+place Block_Foundation_Tier3 jpcs at 2.06 2.06 h=6.80
+place Block_Foundation_Tier3 jpcs at -0.75 2.06 h=7.70
+place Block_Foundation_Tier3 jpcs at -3.46 2.06 h=8.65
+place Block_Foundation_Tier3 jpcs at -6.38 2.06 h=9.45
+place Block_Foundation_Tier3 jpcs at -6.38 -1.56 h=10.35 sx=2 sz=2
+# JUMP from 9
+place Block_Foundation_Tier3 jpcs at -6.38 -6.99 h=10.35 sx=2
+place Block_Foundation_Tier3 jpcs at -0.05 -6.99 h=10.65 sx=2
+place Block_Foundation_Tier3 jpcs at 6.38 -6.99 h=10.65 sx=2 sz=2
+# JUMP end
+place RT_PillarThick jppcs at 2.06 7.80 h=3.50 sy=0.203 sx=0.8 sz=0.8
+place RT_PillarThick jppcs at 2.06 4.88 h=3.50 sy=0.303 sx=0.8 sz=0.8
+place RT_PillarThick jppcs at 2.06 2.06 h=3.50 sy=0.436 sx=0.8 sz=0.8
+place RT_PillarThick jppcs at -0.75 2.06 h=3.50 sy=0.586 sx=0.8 sz=0.8
+place RT_PillarThick jppcs at -3.46 2.06 h=3.50 sy=0.745 sx=0.8 sz=0.8
+place RT_PillarThick jppcs at -6.38 2.06 h=3.50 sy=0.878 sx=0.8 sz=0.8
+place RT_PillarThick jppcs at -6.38 -1.56 h=3.50 sy=1.028 sx=0.8 sz=0.8
+place RT_PillarThick jppcs at -6.38 -6.99 h=3.50 sy=1.028 sx=0.8 sz=0.8
+place RT_PillarThick jppcs at -0.05 -6.99 h=3.50 sy=1.078 sx=0.8 sz=0.8
+place RT_PillarThick jppcs at 6.38 -6.99 h=3.50 sy=1.078 sx=0.8 sz=0.8
+prop jpcs tint.color=#7a6a52
+prop jpcs tint.amount=0.35
+prop jppcs tint.color=#7a6a52
+prop jppcs tint.amount=0.35
+place Zone_Trigger jzcs at -6.38 -1.56 h=11.35
+prop jzcs zone.id=jump_cs_top
+prop jzcs zone.radius=1.8
+prop jzcs zone.repeat=never
+prop jzcs zone.message=The top of the woodcutters' hop-stones. Oda wrote that Jonas came up here every evening: the whole canopy, green to the sea.
+place Loot_ChestSmall jbcs at 6.38 -6.99 h=10.65 sit yaw=0
+note jbcs Woodcutter's tin | Kept at the far stone, where only the best jumper of the camp ever got.
+loot jbcs Seed_Mango*1;Rope*2;Plank*4
+prop jbcs loot.refill=0
+place Zone_Trigger jycs at 6.38 -6.99 h=11.65
+prop jycs zone.id=jump_cs_finale
+prop jycs zone.radius=1.8
+prop jycs zone.repeat=never
+prop jycs zone.message=The far hop-stone. The woodcutters' best jumper stood here.
+pop
+# --- end of jump course cs ---
+
 quest title=The Climb
 quest intro=Climb the root stair to the shelf on top.
 step reach|shelf|1|Climb the root stair to the shelf
@@ -246,6 +301,7 @@ step reach|cs_top|1|Climb the Great Cliff's rope gantry
 step collect|story:pilotkey|1|Dive to the supply plane off the west shore
 step read|Pilot's flight log|1|Open the pilot's locker at her camp east of the shelf and read her log
 step read|Oda's letter|1|Read Oda's letter in Jonas' tent
+step reach|jump_cs_top|1|Climb the woodcutters' hop-stones on the west shore and look out from the top
 quest done=The Heart of Green. Band 1200.
 quest reward=Seed_Mango*2;Seed_Flower_Blue*1
 

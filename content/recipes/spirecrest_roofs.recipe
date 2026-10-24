@@ -268,6 +268,61 @@ prop scsummit zone.id=sc_summit
 prop scsummit zone.radius=2.5
 prop scsummit zone.message=The top of Signal Hill. The whole island lies below.
 
+# --- JUMP COURSE sc (U22, 10-24): a kz-style hop course of floor slabs on its own flattened pad -----------------
+# Every gap and rise is within the U22 jump limits (reach_audit/jumps.py checks them). A fall lands on the pad.
+# JUMP sc pad=3 at=-42 -57
+push at -42 -57
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpsc at -3.36 -7.80 h=3.50
+place Block_Foundation_Tier3 jpsc at -0.75 -7.80 h=3.90
+place Block_Foundation_Tier3 jpsc at 2.06 -7.80 h=4.40
+place Block_Foundation_Tier3 jpsc at 2.06 -4.88 h=5.00
+place Block_Foundation_Tier3 jpsc at 2.06 -2.06 h=5.80
+place Block_Foundation_Tier3 jpsc at -0.75 -2.06 h=6.70
+place Block_Foundation_Tier3 jpsc at -3.46 -2.06 h=7.65
+place Block_Foundation_Tier3 jpsc at -6.38 -2.06 h=8.45
+place Block_Foundation_Tier3 jpsc at -6.38 1.56 h=9.35 sx=2 sz=2
+# JUMP from 9
+place Block_Foundation_Tier3 jpsc at -6.38 6.99 h=9.35 sx=2
+place Block_Foundation_Tier3 jpsc at -0.05 6.99 h=9.65 sx=2
+place Block_Foundation_Tier3 jpsc at 6.38 6.99 h=9.65 sx=2 sz=2
+# JUMP end
+place RT_PillarThick jppsc at 2.06 -7.80 h=2.50 sy=0.203 sx=0.8 sz=0.8
+place RT_PillarThick jppsc at 2.06 -4.88 h=2.50 sy=0.303 sx=0.8 sz=0.8
+place RT_PillarThick jppsc at 2.06 -2.06 h=2.50 sy=0.436 sx=0.8 sz=0.8
+place RT_PillarThick jppsc at -0.75 -2.06 h=2.50 sy=0.586 sx=0.8 sz=0.8
+place RT_PillarThick jppsc at -3.46 -2.06 h=2.50 sy=0.745 sx=0.8 sz=0.8
+place RT_PillarThick jppsc at -6.38 -2.06 h=2.50 sy=0.878 sx=0.8 sz=0.8
+place RT_PillarThick jppsc at -6.38 1.56 h=2.50 sy=1.028 sx=0.8 sz=0.8
+place RT_PillarThick jppsc at -6.38 6.99 h=2.50 sy=1.028 sx=0.8 sz=0.8
+place RT_PillarThick jppsc at -0.05 6.99 h=2.50 sy=1.078 sx=0.8 sz=0.8
+place RT_PillarThick jppsc at 6.38 6.99 h=2.50 sy=1.078 sx=0.8 sz=0.8
+prop jpsc tint.color=#8f8a80
+prop jpsc tint.amount=0.35
+prop jppsc tint.color=#8f8a80
+prop jppsc tint.amount=0.35
+place Zone_Trigger jzsc at -6.38 1.56 h=10.35
+prop jzsc zone.id=jump_sc_top
+prop jzsc zone.radius=1.8
+prop jzsc zone.repeat=never
+prop jzsc zone.message=From the top of the caretaker's slab scaffold you see it: the old highway's lamp posts marching out of the sea towards the labs.
+place Loot_ChestSmall jbsc at 6.38 6.99 h=9.65 sit yaw=0
+note jbsc Scaffold cap | Whoever reached the last slab got the caretaker's spare kit. He jumped this every morning, he wrote, to keep his legs for the stairs.
+loot jbsc MetalIngot*2;Rope*2;Glass*1
+prop jbsc loot.refill=0
+place Zone_Trigger jysc at 6.38 6.99 h=10.65
+prop jysc zone.id=jump_sc_finale
+prop jysc zone.radius=1.8
+prop jysc zone.repeat=never
+prop jysc zone.message=The far slab of the scaffold: only the long jumpers stand here.
+pop
+# --- end of jump course sc ---
+
 quest title=The Rooftops
 quest intro=A distress call from a drowned city: "Commons sealed. Do not answer." Climb onto the beacon roof.
 step reach|beacon|1|Climb onto the beacon roof in the middle
@@ -283,6 +338,7 @@ step read|Rooftop caretaker's diary|1|Read the caretaker's diary in the roof gar
 step collect|story:sc_key|1|Dive into the drowned building and take the key from the chest at the bottom
 step reach|sc_summit|1|Climb the mountain to the tower on its top
 step open|Relay locker|1|Open the summit locker with the key from the drowned building
+step reach|jump_sc_top|1|Hop up the caretaker's slab scaffold on the south-west shore and look for the highway from its top
 quest done=The caretaker followed the drowned highway to the labs. The Receiver finds a toll booth's radio on band 700.
 quest reward=Plank*8;Rope*3;OxygenBottle*1;Flipper*1
 
