@@ -12,6 +12,13 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 2026-10-23: known-issues fixes
 
 ### New
+- **An eighth whole storyline in the library, The City That Never Sank:** eleven islands in place of Raft's own story
+  (Raft's story off; the chain on the Receiver, 250 to 1000). Highwater lives on the top floors of a drowned city:
+  Breakwater Customs, Raft Row Bazaar (Raft's vending machine), Fleetbreak Moorings, Hookline Stack, Pumpcrown Works (needs
+  the engine), Lowstreet 20 m under the sea, Cistern Hall, Rookery Stacks (a Raft store) and a finale in two parts: the
+  Bridgeworks Crown (26 quest steps in a storm, a Raft store, five choices) and The Foundation Piles under it (12 steps, the
+  pile stingray). Choosing FREE brings Freehold Shoal. Raft's vans, caravans, forklifts and wagons stand about the city.
+  All of Raft's story blueprints are quest steps on the way.
 - **A sixth whole storyline in the library, The Last Green World:** eleven islands in place of Raft's own story
   (Raft's story off; the chain on the Receiver, 400 to 1200). Pollenreach Spit, Ranger Landing, Riverfork Delta, Tracker's
   Rise, Hollowtrunk Grove (Raft's vending machine), Rootweave Caves, Blightmire (needs the engine), Canopy Stair (a Raft

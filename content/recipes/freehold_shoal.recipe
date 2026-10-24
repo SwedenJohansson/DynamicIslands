@@ -1,0 +1,120 @@
+# Freehold Shoal - the epilogue of the library's plan The City That Never Sank (SL13, Highwater), only when the stranger
+# chose FREE on the Crown
+# A sandy shoal outside the city where the Rookery's people start over: frames of new huts (roofs on posts, walls still
+# missing), stacks of planks, a hen coop, berry bushes, a well with a crank, the Rookery's boats pulled up on the beach.
+# Quest "Freehold" (6 steps): the landing, the founding board, three plank bundles, the well, a hen for the coop, the
+# first night.
+#
+# Points: the shoal 0 0 (r about 34, levelled at 1.5 round 0 0); the landing 0 -18; the founding board -3 -10; the hut
+# frames round 0 4; the well 8 -4; the coop 12 8; the plank bundles at -10 6, 4 14, 14 -10.
+include lib_sea
+include lib_rt
+include lib_huts
+include lib_features
+include lib_verdance
+include lib_highwater
+new
+gen Trees=0.25 Bushes=0.35 Rocks=0.2 Harvest=0.4 BeachThings=0.4
+gen Seed=13961 Radius=34 Height=3 Roughness=0.2 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0 BeachWidth=1
+gen Water=0.4 SeaRocks=0.2 SeaFinds=0.4 Sunken=0.1 Hostiles=0 Friendly=0.4 SeaLife=0.4
+generate
+
+# --- Terrain: the shoal levelled for building -------------------------------------------------------------------------
+brush flatten at 0 0 r=13 s=20 frames=300 h=1.5
+origin
+clear at 0 0 r=13
+clear from 0 -10 to 0 -24 r=4
+
+# --- The landing: boats on the beach, the founding board ---------------------------------------------------------------
+place BoatMini - at -4 -20 ground sit yaw=20
+place RT_PlasticBoat - at 4 -21 ground sit yaw=-15
+place Note_Board founding at -3 -10 ground sit yaw=0
+place Zone_Trigger landingzone at 0 -16 ground y=1.5
+
+# --- New huts: roofs on posts, walls not yet up --------------------------------------------------------------------
+push at -8 2 h=1.5
+call stilt_hut y=2.6 w1=none w2=none w3=none w4=none w5=none w6=none
+place Placeable_Bed_Hammock - at 2.25 3.3 y=2.6 sit
+pop
+push at 2 2 h=1.5
+call stilt_hut y=2.6 w1=none w2=none w3=none w4=none
+pop
+push at -2 -6 h=1.5
+call hw_stall w=3 d=2
+place Placeable_CookingStand_Food_One - at 1.5 1.5 y=0.1 sit
+place Placeable_Lantern_Metal firstfire at 3 1.5 y=0.1 drop
+place Note_Paper firstnight at 3.8 1 y=0.1 drop
+pop
+
+# --- The plank bundles -------------------------------------------------------------------------------------------------
+place Loot_ChestSmall bundle1 at -10 6 ground sit yaw=40
+place Loot_ChestSmall bundle2 at 4 14 ground sit yaw=200
+place Loot_ChestSmall bundle3 at 14 -10 ground sit yaw=300
+
+# --- The well and its crank -----------------------------------------------------------------------------------------
+place Placeable_WaterTank - at 8 -4 ground sit
+call crank x=9.5 z=-2.5 yaw=270 alias=wellcrank
+
+# --- The hen coop and the hens; berries; a planter -----------------------------------------------------------------
+line Block_Wall_Fence_Rope from 9.75 5 to 15.75 5 step=1.5
+line Block_Wall_Fence_Rope from 9.75 11 to 15.75 11 step=1.5
+place Bird_Nest coop at 15 8 ground sit
+place Creature_Chicken hens at 12 8 ground
+place Creature_Chicken wildhens at -14 -4 ground
+scatter Pickup_Landmark_BerryBush 4 at -12 10 r=6 seed=13962 free=2
+place Placeable_Cropplot_Medium - at 4 -12 ground sit
+place Placeable_Cropplot_Medium - at 7.5 -12 ground sit
+scatter "Pickup_Landmark_Tree_Palm 1" 3 at 16 16 r=8 seed=13963 free=3
+call shallows x=0 z=0 r=50 deep=4 n=2 seed=13964
+call hw_reef x=20 z=-18 r=4 seed=13965
+call hw_skyline x=60 z=140 a=skyline
+
+# --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
+info title=Freehold Shoal
+info author=Custom Islands
+info description=A sandy shoal outside Highwater, where the Rookery's people start over: hut frames on posts, a well, a hen coop, berries, and boats pulled up on the beach. The epilogue of The City That Never Sank.
+island on.arrive=message||Boats on the beach. Hammering. Somebody is singing. The Rookery has come ashore.
+
+story plankbundle|Plank bundle|Placeable_PaperBundle|A bundle of planks for the Freehold's huts.
+story wellwater|Well running|Bolt|You wound the Freehold's well crank - the first clean water of their own.
+
+prop skyline tint.color=#8a9098
+prop skyline tint.amount=0.3
+prop hens creature.count=2
+prop wildhens creature.count=2
+prop firstnight beh.hidden=1
+prop firstnight obj.name=firstnight
+
+prop wellcrank beh.use=Wind the well crank
+prop wellcrank if.use=!signal|well
+prop wellcrank on.use=signal||well\ngive||story:wellwater*1\nshow|firstnight\nsound||event:/raft/radar/lever\nmessage||The rope creaks round. The bucket comes up full - fresh water, nobody's but theirs.
+prop wellcrank else.use=message||The well is running.
+
+note founding Freehold founding | FREEHOLD - FOUNDED THE NIGHT OF THE STORM\n\nNo Authority. No Fleet. No Union.\n\nEveryone here owns a share of the well, the coop and the boats. Bring planks. Mind the hens.
+note firstnight Freehold's first night | Pinned by the first fire -\n\nOur first night on our own shoal. The children drank from our own well. Nobody counted the cups.\n\nWhoever you were - stranger, the one who spoke for us - there's a hut here with your name on it.
+note bundle1 Plank bundle | Planks tied with rope, washed up off the city.
+note bundle2 Plank bundle | Planks tied with rope, washed up off the city.
+note bundle3 Plank bundle | Planks tied with rope, washed up off the city.
+loot bundle1 story:plankbundle*1;Plank*4
+prop bundle1 loot.refill=0
+loot bundle2 story:plankbundle*1;Plank*4
+prop bundle2 loot.refill=0
+loot bundle3 story:plankbundle*1;Plank*4;Egg*2;Feather*2
+prop bundle3 loot.refill=0
+
+prop landingzone zone.id=landing
+prop landingzone zone.radius=4
+prop landingzone zone.message=Freehold Shoal. The Rookery's boats, pulled up on the sand.
+
+quest title=Freehold
+quest intro=The Rookery has left the city for a shoal of its own. Land with them.
+step reach|landing|1|Land on Freehold Shoal
+step read|Freehold founding|1|Read the founding board
+step collect|story:plankbundle|3|Bring three plank bundles for the huts
+step collect|story:wellwater|1|Wind the well crank
+step catch|Chicken|1|Catch a hen for the coop
+step read|Freehold's first night|1|Read the note by the first fire
+quest done=The Freehold has its first night. Highwater is behind you - and somewhere south, on the old Concord band, a signal is still calling.
+quest reward=HoneyComb*2;TradeToken*4
+
+save Freehold Shoal

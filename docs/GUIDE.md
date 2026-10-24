@@ -130,6 +130,7 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
      [15.13 A whole storyline: The Gravity Sea](#1513-a-whole-storyline-the-gravity-sea) ·
      [15.14 A whole storyline: The Last Green World](#1514-a-whole-storyline-the-last-green-world) ·
      [15.15 A whole storyline: The Frozen Horizon](#1515-a-whole-storyline-the-frozen-horizon) ·
+     [15.16 A whole storyline: The City That Never Sank](#1516-a-whole-storyline-the-city-that-never-sank) ·
      [15.17 A whole storyline: The Sunken Kingdom](#1517-a-whole-storyline-the-sunken-kingdom)
 16. [Learn from the islands](#16-learn-from-the-islands)
    - [16.1 Opening any island in the editor](#161-opening-any-island-in-the-editor) · [16.2 Looking around](#162-looking-around) ·
@@ -4381,6 +4382,41 @@ lies buried on Saga Drift, Glacier Mouth and in the Coldhold.
 
 To learn from it: open The Coldhold Vault and look at the three switches' behaviours - each refuses once the choice is
 made, and each shows its own verdict note; the flood door's signal (`signal:coldhold:flooddoor`) is what brings the Ark.
+
+### 15.16 A whole storyline: The City That Never Sank
+
+**The City That Never Sank** is a plan of eleven islands in place of Raft's own story (Raft's story off, no random
+islands, the chain on the Receiver, 250 to 1000). Highwater is a city living on the top floors of a drowned metropolis.
+Three powers run it - the Harbor Authority (the water), the Free Fleet (the hulks) and the Salvagers' Union (the cranes) -
+and each hides a secret about where the water goes. You land at customs, trade on Raft Row, take jobs from all three, dive
+the drowned high street, find the evidence in the cistern, see the hungry Rookery, and then the council meets on the
+Bridgeworks Crown in a storm. There you decide: **Authority**, **Fleet**, **Union**, **expose** them all, or **free** the
+Rookery. The storm cracks the piles under the city, and only the FREE choice brings the epilogue shoal. The islands show
+every kind of "when": a quest (`quest:customs`), a quest step (`step:bazaar:5`), a rule (`rule:hookline`), a zone
+(`zone:pumps:outfall`), a signal (`signal:cistern:evidence`, `signal:crown:free`), a frequency that needs the engine
+(`receiver:900:needs=engine`) and an island turning up ahead (`ahead:700`). Every one of Raft's story blueprints is a
+**Blueprint** step on the way, in Raft's order. Raft Row Bazaar has Raft's vending machine; Rookery Stacks and the
+Bridgeworks Crown have a **Raft store**. Titanium lies buried on Cistern Hall, Rookery Stacks, the Crown and the Piles.
+Raft's vehicles stand about the city: vans and caravans on the bazaar's key and in Lowstreet (the drowned tram),
+forklifts and wagons at the Pumpcrown Works and on the Crown, ship hulks round the Fleet's moorings.
+
+| Island | What it is | What to look at |
+|---|---|---|
+| ![](images/library/breakwater_customs.jpg) **Breakwater Customs** (first, 500) | A low key, a breakwater of slabs on drowned-tower legs, the customs house | A short quest; the Receiver and antenna plans |
+| ![](images/library/raft_row_bazaar.jpg) **Raft Row Bazaar** (600) | Rafts lashed between four drowned roofs, stalls, string lights | Raft's vending machine; a van and a caravan on the key |
+| ![](images/library/fleetbreak_moorings.jpg) **Fleetbreak Moorings** (700) | A drowned office block gone to jungle, a ring of moored hulks | The bosun's machete cuts the garden vines; the fuel plans |
+| ![](images/library/hookline_stack.jpg) **Hookline Stack** (800) | The Union hall on a half-sunk block, three cranes, a sorting yard | A zipline from the crane; scrap, ore, clay and sand |
+| ![](images/library/pumpcrown_works.jpg) **Pumpcrown Works** (900, needs the engine) | Three tower roofs joined by bridges with water pipes, a boom tower | Bees in the stores; the outfall grating (`zone:outfall`) brings Lowstreet |
+| ![](images/library/lowstreet.jpg) **Lowstreet** (250) | A drowned high street 20 m down, a tram of caravans, a cinema roof | Air pockets; the lost expedition in four cages, a big stingray; the wind turbine plans |
+| ![](images/library/cistern_hall.jpg) **Cistern Hall** (700) | The Authority's tower, an open cistern six metres deep | The old pump, the evidence (`signal:evidence`) |
+| ![](images/library/rookery_stacks.jpg) **Rookery Stacks** (800) | Shanty huts on the lowest roofs, rope bridges, a soup kitchen | A Raft store; a zipline; the titanium tools plans |
+| ![](images/library/bridgeworks_crown.jpg) **Bridgeworks Crown** (1000, finale part 1) | Four tower roofs and the council house in a storm | 26 steps: three secrets, a keypad door, five choices (`!signal|chosen`); a Raft store |
+| ![](images/library/foundation_piles.jpg) **The Foundation Piles** (400, finale part 2) | Giant stone piles in a basin 10 m down, two cracked | Shoring jacks; the pile stingray in two phases |
+| ![](images/library/freehold_shoal.jpg) **Freehold Shoal** (epilogue, ahead) | A sandy shoal, frames of new huts, the Rookery's boats | Turns up only after the FREE choice (`signal:crown:free`) |
+
+To learn from it: open the Bridgeworks Crown and look at the five choice levers - each refuses once `chosen` is sent,
+and each sends its own signal, which the plan's rules read (`signal:crown:free` brings the epilogue). A signal stays on
+its island, but a plan rule can wait for it from anywhere.
 
 ### 15.17 A whole storyline: The Sunken Kingdom
 

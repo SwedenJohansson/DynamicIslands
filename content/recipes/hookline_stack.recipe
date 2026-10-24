@@ -1,0 +1,196 @@
+# Hookline Stack - the fourth island of the library's plan The City That Never Sank (SL13, Highwater, chapter 4)
+# The Salvagers' Union: a half-sunk office block's top floor is the Union hall, a crane on its roof; two more cranes
+# stand over the sorting yard - scrap piles, ore crates, potato planters - and a barge of clay and sand lies moored
+# off the yard. A zipline runs from the hall's roof crane to the third crane. A memorial wall names the lost divers; a
+# dive rope hangs off the jetty into the drowned street below. Quest "The Salvagers' Union" (7 steps): the hall, the
+# Union's charter, the engine controls' plans, the zipline to crane three, the metal detector's plans, the flare
+# store's firework plans, the zipline's plans in the crane cab. Contract "Lost Below" (4): the missing expedition
+# notice, the dive rope, two salvage tags off the street below, the Union's receipt (unionfriend).
+#
+# Points: the yard 0 0 (r about 36, levelled at 2 round 0 -14 and 18 10); the Union hall x -3..3, z -22.5..-13.5
+# (floor 2, roof 5, door north, ramp up its east side); crane three at 24 14; the jetty and dive rope at -34 -20; the
+# barge x 30..36, z -30..-24; the skyline out at 120 -60.
+include lib_sea
+include lib_rt
+include lib_huts
+include lib_highwater
+new
+gen Trees=0.1 Bushes=0.15 Rocks=0 Harvest=0.2 BeachThings=0.4
+gen Seed=13401 Radius=36 Height=4 Roughness=0.2 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.1 BeachWidth=0.6
+gen Water=0.5 SeaRocks=0.2 SeaFinds=0.5 Sunken=0.3 Hostiles=0 Friendly=0.2 SeaLife=0.3
+generate
+
+# --- Terrain: the hall's and the yard's levels -------------------------------------------------------------------------
+brush flatten at 0 -14 r=11 s=20 frames=300 h=2
+brush flatten at 18 10 r=12 s=20 frames=300 h=2
+origin
+clear at 0 -16 r=10
+clear at 18 10 r=10
+clear from -20 -20 to -36 -20 r=4
+
+# --- The Union hall: an office block's top floor, its roof crane, the ramp up its east side -----------------------------
+push at 3 -18 h=2
+call rt_storey a=office b1=RT_WallWindow1 b2=RT_WallDoor1 f1=RT_WallWindow2 f2=RT_WallWindow2 l2=RT_WallWindow1
+place RT_Floor office at 0 4.5 y=3
+call rt_railing y=3 rm=none
+place "Table Office" - at -3 -2.5 y=0.1 sit
+place Loot_Chest hallchest at -1.2 -3.4 y=0.1 sit
+place Note_Board charter at -5.9 1.5 y=1.2 yaw=90
+place Note_Board notice at -5.9 -3 y=1.2 yaw=90
+place Zone_Trigger hallzone at -3 0 y=0.1
+place Placeable_Lantern_Metal - at -3 -2.5 y=0.9 drop
+place UT_ElectricityIsland_Crane02 crane1 at -3.5 3 y=3.05 sit scale=0.25 yaw=225
+# (Raft's zipline brings its floor 5.72 m west, 0.97 m north and 1.35 m under the landmark: that floor on the roof at -2 -1.5)
+place ZiplinePath_Landmark crane1zip at 3.72 -0.53 y=4.4
+pop
+zipto crane1zip 22 12
+ramp Block_Floor_Wood from 4.5 -26 2 to 4.5 -18 5 len=1.5 top=0
+ramp Block_Wall_Fence_Rope from 5.25 -26 2 to 5.25 -18 5 len=1.5 top=-0.1
+
+# --- The memorial wall of lost divers, by the hall's door ------------------------------------------------------------
+place RT_Wall1 memorial at -6 -8 ground yaw=0
+place RT_Wall1 memorial at -9 -8 ground yaw=0
+place Note_Sign memorialsign at -7.5 -7.6 ground sit yaw=180
+place Placeable_Lantern_Basic - at -7.5 -7 ground drop
+
+# --- The sorting yard: two cranes, scrap and ore, potato planters, the flare store ----------------------------------
+place UT_ElectricityIsland_Crane01 crane2 at -18 10 ground sit scale=0.4 yaw=60
+place UT_ElectricityIsland_Crane02 crane3 at 26 16 ground sit scale=0.4 yaw=200
+place Zone_Trigger crane3zone at 22 12 ground y=1
+place Loot_Chest cranecab at 26 12.5 ground sit yaw=180
+place Loot_Chest foremanbox at 19 13 ground sit yaw=90
+place "Table Office" - at 17 11 ground sit yaw=90
+place "Pickup_Landmark_Scrap 1_Land" - at 12 4 ground sit
+place "Pickup_Landmark_Scrap 2_Land" - at 13.5 6 ground sit
+place "Pickup_Landmark_Scrap 3_Land" - at 11 7.5 ground sit
+place "Pickup_Landmark_Scrap 4_Land" - at 14.5 3 ground sit
+place "Pickup_Landmark_Iron 1" - at 20 4 ground sit
+place "Pickup_Landmark_Iron 2" - at 21.5 5 ground sit
+place "Pickup_Landmark_Iron 3" - at 22.5 3.5 ground sit
+place "Box Small" - at 23 6 ground sit
+place "Box Small" - at 23.8 6.8 ground sit
+place Placeable_Cropplot_Medium - at 8 16 ground sit
+place Placeable_Cropplot_Medium - at 11.5 16 ground sit
+place Placeable_Cropplot_Medium - at 15 16 ground sit
+place Loot_ChestSmall potatobox at 6 18.5 ground sit yaw=90
+push at 2 2 h=2
+call rt_storey a=office f2=RT_WallDoor1 l2=none r2=RT_WallWindowBroken
+place Loot_Chest flarestore at -3 3.4 y=0.1 sit yaw=180
+place "Box Small" - at -5 3.4 y=0.1 sit
+place Reef_Barrel2 - at -1 3 y=0.1 sit
+pop
+
+# --- The clay and sand barge moored off the yard -------------------------------------------------------------------
+for bz -29.25 -24.75 1.5
+line Block_Foundation from 30.75 $bz to 35.25 $bz step=1.5 h=0.35
+next
+place "Pickup_Landmark_Clay 1" - at 31.5 -28 h=1.05 sit
+place "Pickup_Landmark_Clay 2" - at 33 -27 h=1.05 sit
+place "Pickup_Landmark_Clay 3" - at 34.5 -28.5 h=1.05 sit
+place "Pickup_Landmark_Sand" - at 31.5 -25.5 h=1.05 sit
+place "Pickup_Landmark_Sand" - at 33.5 -25 h=1.05 sit
+place RT_Pillar - at 29.5 -27 ground sy=0.6
+
+# --- The jetty and the dive rope; the street below and its salvage tags ------------------------------------------------
+line Block_Floor_Wood from -24 -20 to -34.5 -20 step=1.5 h=1
+place Block_Ladder diverope at -35.6 -20 h=-2 yaw=90
+place Zone_Trigger divezone at -34 -20 h=1.5
+place RT_Clipboard tally at -26 -20.6 h=1.05 drop
+place Note_Paper receipt at -27.5 -19.4 h=1.05 drop
+place Loot_ChestSmall tag1 at -40 -24 ground sit
+place Loot_ChestSmall tag2 at -42 -15 ground sit
+place "Pickup_Landmark_Scrap 1_OceanBottom" - at -39 -18 ground sit
+place "Pickup_Landmark_Scrap 3_OceanBottom" - at -43 -21 ground sit
+
+# --- Highwater on the horizon; the sea's finds; two reefs ------------------------------------------------------------
+call hw_skyline x=120 z=-60 a=skyline
+call shallows x=0 z=0 r=54 deep=6 n=2 seed=13402
+call hw_reef x=-24 z=30 r=4 seed=13403
+call hw_reef x=34 z=-10 r=4 seed=13407
+
+# --- Settings, story items, notes, behaviours, quests -----------------------------------------------------------------
+info title=Hookline Stack
+info author=Custom Islands
+info description=The Salvagers' Union's yard on a half-sunk office block: three cranes, a zipline between them, scrap piles and ore, a barge of clay and sand, and a dive rope into the drowned street. The fourth island of The City That Never Sank.
+island on.arrive=message||Three cranes stand over a yard of scrap. On the half-sunk office block a banner: SALVAGERS' UNION - WHAT WE BRING UP, WE SHARE.
+
+story salvagetag|Salvage tag|Bolt|A diver's brass salvage tag, stamped with the Union's hook - off the drowned street.
+
+prop office tint.color=#8c8a84
+prop office tint.amount=0.3
+prop skyline tint.color=#7a8088
+prop skyline tint.amount=0.4
+
+prop crane1zip obj.name=crane1zip
+prop receipt obj.name=receipt
+prop receipt beh.hidden=1
+prop tag1 obj.name=tag1
+prop tag1 beh.hidden=1
+prop tag2 obj.name=tag2
+prop tag2 beh.hidden=1
+prop notice on.read=show|tag1\nshow|tag2
+prop tally obj.name=tally
+prop tally beh.use=Hand in the salvage tags
+prop tally if.use=has|story:salvagetag|2\n!signal|tagsin
+prop tally on.use=signal||tagsin\nshow|receipt\nmessage||The tally clerk's board takes two more marks. Next to it a receipt is waiting, already signed.
+prop tally else.use=message||The tally board wants two salvage tags from the street below.
+prop receipt on.read=signal||unionfriend
+
+note charter Union charter | CHARTER OF THE SALVAGERS' UNION\n\nWhat we bring up, we share.\nNo diver goes down alone.\nNo diver is left down.\nThe Authority gets its tenth and not a nail more.\n\nThe hook is our sign. The rope is our oath.
+note notice Missing expedition notice | MISSING - THE LOWSTREET EXPEDITION\n\nFive divers under Ines Marlowe went down to Lowstreet to map the old pumps. They have not come up.\n\nTheir salvage tags were found on the street below this jetty. Bring them up and hand them in at the tally.\n\nThe Union does not leave its divers down.
+note memorialsign Memorial wall | THE UNION REMEMBERS\n\nA hundred names, scratched into the concrete. The newest are only chalk.
+note receipt Union receipt | RECEIVED: two salvage tags, Marlowe's team.\n\nThey were alive when they dropped them. The Union owes you a diver's debt. - the foreman
+note hallchest Hall desk | The hall's desk: the engine controls' plans, a foreman's whistle.
+note foremanbox Foreman's box | The yard foreman's box: the metal detector's plans, a list of what the street gave up this week.
+note flarestore Flare store | The Union's flare store: the firework's plans, flares for divers in trouble.
+note cranecab Crane cab | Crane three's cab: the zipline's plans, a thermos, a view over the yard.
+note potatobox Planter box | Seed potatoes for the yard's planters.
+note tag1 Salvage cache | A diver's cache on the street below, tied to a lamp post.
+note tag2 Salvage cache | A diver's cache on the street below, wedged in a shop door.
+loot hallchest Blueprint_EngineControls*1;MetalIngot*2;Bolt*4
+prop hallchest loot.refill=0
+loot foremanbox Blueprint_MetalDetector*1;Scrap*4
+prop foremanbox loot.refill=0
+loot flarestore Blueprint_Firework*1;Rope*2
+prop flarestore loot.refill=0
+loot cranecab Blueprint_ZiplineBase*1;MetalIngot*2;Rope*3
+prop cranecab loot.refill=0
+loot potatobox Raw_Potato*4
+prop potatobox loot.refill=0
+loot tag1 story:salvagetag*1;Scrap*2
+prop tag1 loot.refill=0
+loot tag2 story:salvagetag*1;MetalOre*2
+prop tag2 loot.refill=0
+
+prop hallzone zone.id=union_hall
+prop hallzone zone.radius=3
+prop hallzone zone.message=The Union hall. Hooks on the walls, a board of names, and a desk nobody sits at.
+prop crane3zone zone.id=crane_3
+prop crane3zone zone.radius=4
+prop crane3zone zone.message=Crane three. The zipline's end, and a cab up the ladder.
+prop divezone zone.id=dive_rope
+prop divezone zone.radius=3
+prop divezone zone.message=The dive rope. Below it, in green water, the street lamps of Lowstreet.
+
+quest title=The Salvagers' Union
+quest intro=The Union works the cranes on the half-sunk block. Find their hall.
+step reach|union_hall|1|Go into the Union hall
+step read|Union charter|1|Read the Union's charter
+step blueprint|Blueprint_EngineControls|1|Take the engine controls' plans from the hall's desk
+step reach|crane_3|1|Ride the zipline from the hall's roof crane to crane three
+step blueprint|Blueprint_MetalDetector|1|Take the metal detector's plans from the foreman's box
+step blueprint|Blueprint_Firework|1|Take the firework's plans from the flare store
+step blueprint|Blueprint_ZiplineBase|1|Take the zipline's plans from crane three's cab
+quest done=The Union trusts its own and few others. The Authority's waterworks, Pumpcrown, answers on band 900 - for a raft with an engine.
+quest reward=Scrap*4;MetalOre*3;Clay*3;Sand*3
+
+quest2 title=Lost Below
+quest2 intro=Five divers went down to Lowstreet and did not come up.
+step2 read|Missing expedition notice|1|Read the missing expedition notice in the hall
+step2 reach|dive_rope|1|Go to the dive rope at the end of the jetty
+step2 collect|story:salvagetag|2|Dive to the street below and bring up the two salvage tags
+step2 read|Union receipt|1|Hand in the tags at the tally and read the Union's receipt
+quest2 done=The Union owes you a diver's debt. When the city breaks, it will remember.
+quest2 reward=MetalIngot*3;Rope*2
+
+save Hookline Stack

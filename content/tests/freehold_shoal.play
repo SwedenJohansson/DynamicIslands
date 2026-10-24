@@ -1,0 +1,24 @@
+# Freehold Shoal (CIPlay freehold_shoal): the landing, the founding board, three plank bundles, the well crank (shows
+# the first night's note), a hen for the coop, the first night.
+# offset 0 0 is a placeholder: phase 2 sets it from the recipe's save log (PLAY_FORMAT: Coordinates).
+island Freehold Shoal
+offset 0 0
+expect step 0
+expect title Freehold
+expect hidden firstnight
+zone landing
+expect step 1
+read Freehold founding
+expect step 2
+openat -10 6
+openat 4 14
+openat 14 -10
+expect story plankbundle 3
+expect step 3
+use wellcrank
+expect shown firstnight
+expect step 4
+catch Chicken 1
+expect step 5
+read Freehold's first night
+expect done
