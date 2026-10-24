@@ -529,7 +529,7 @@ namespace DynamicIslands.Editor
 					string msg = ObjectProps.Get(props, ObjectProps.ZoneMessage);
 					zl.text = "Trigger: " + ObjectProps.Get(props, ObjectProps.ZoneId) + (ObjectProps.Repeats(props) ? " (every time)" : " (once)") +
 						"\n<size=36>" + radius.ToString("0.#") + " m" + (msg.Length > 0 ? " \u00B7 message" : "") + (items > 0 ? " \u00B7 " + items + " item(s)" : "") +
-						(ObjectProps.GetBool(props, ObjectProps.ZoneAir, false) ? " \u00B7 air pocket" : "") + (Hazards.KindOf(props).Length > 0 ? " \u00B7 " + Hazards.Describe(props) : "") + "</size>";
+						(ObjectProps.GetBool(props, ObjectProps.ZoneAir, false) ? " \u00B7 air pocket" : "") + (Hazards.KindOf(props).Length > 0 ? " \u00B7 " + Hazards.Describe(props) : "") + MechFeatures.DescribeZone(props) + "</size>";
 				}
 				return;
 			}

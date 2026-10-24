@@ -105,6 +105,11 @@ namespace DynamicIslands.Editor
 		/// <summary>Host -> everyone: an animal turned alpha (WorldRandomizer, Big Bruce too): Index = its object index, Offsets = { max health, health }
 		/// as the host gave it then, so other players have it exactly (CreatureSpawner.HostHealth; MatchHealth stays for players who join later). An older version ignores it.</summary>
 		public const int AlphaHealth = 38;
+		/// <summary>Both ways: quest mechanics (MechFeatures). Player -> host: Name "carry" (Ids = island, object: pick it up), "drop" (Offsets = x, y, z, yaw
+		/// where it was put down, in its parent's space). Host -> everyone: "held" (Data = the holder's id), "refused" (Data = the asker), "at" (put down there),
+		/// "move" (Offsets = x, y, z, yaw, seconds: a moveto), "collapse" (Ids = island, objects...; Offsets[0] = seconds), "heldlist" (to a joiner: Data =
+		/// "island,object,holder;..."). An older version ignores it.</summary>
+		public const int Mech = 39;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -620,6 +625,7 @@ namespace DynamicIslands.Editor
 							// animals for Raft's while their spots hadn't come yet)
 							JoinPart("randomizer", () => WorldRandomizer.Message(), to);
 							JoinPart("kraken arm", () => global::DynamicIslands.Editor.Kraken.Message(), to);
+							JoinPart("carried pieces", () => MechFeatures.HeldMessage(), to);
 							// (after the list: the island it names is in the player's list then)
 							JoinPart("player's place", () => PlayerPlaces.PlaceMessage(to.Id), to);
 							try { IslandNetMessage levels = PlayerLevels.StateFor(to.Id); if (levels != null) SendLevels(levels, to); }
@@ -693,6 +699,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.Randomizer:
 						WorldRandomizer.OnMessage(msg);
+						break;
+					case IslandNetMessage.Mech:
+						MechFeatures.OnMessage(msg, from.Id);
 						break;
 					case IslandNetMessage.AlphaHealth:
 						if (!Raft_Network.IsHost && msg.Offsets != null && msg.Offsets.Length >= 2) CreatureSpawner.HostHealth(unchecked((uint)msg.Index), msg.Offsets[0], msg.Offsets[1]);

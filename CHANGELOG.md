@@ -9,6 +9,23 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-24: quest mechanics
+
+### New
+- **Push zones:** a trigger zone's Push and pulse group pushes the players standing in it (up, down or sideways, 0-40
+  m/s: fans, wind, updrafts) or knocks them once on entering; **Pulse** switches a zone's push, hazard and air on and
+  off on a shared clock (steam vents, firebombs). Recipe: `zone.push=0,1,0,9`, `zone.pulse=3,2`.
+- **Carrying:** the action **pick up (carry)** (`carry|`, "Players carry it" in the object panel): carry a piece in
+  front of you, put it down with the use key (on the ground or another piece, on an optional grid), a hit drops it; no
+  jumping or ziplines while carrying. Where it was left is saved.
+- **Stack targets:** `zone.stack=Crate|4` counts the named pieces in a zone ("Stacked 2 of 4") and runs its **stack**
+  event once.
+- **Lures and bait:** `beh.lure=Goats|3` draws a creature spot's animals to an open object; `beh.lureItem=Raw_Beet|2`
+  makes its use lines (put the bait in, it opens).
+- **collapse** and **move to marker** actions (shared): `collapse|Bridge|3`, `moveto|Cart|Ledge,6` (players on it ride
+  along; a creature spot takes its animals).
+- **Guarded bosses:** `boss.shieldIf=state|Feeder|open` - weapons glance off while the checks hold.
+
 ## 2026-10-24: plan Check knows every tool
 
 - **Check tracks more of Raft's tools:** sea vines (machete), all of Raft's zipline lines, the dog cage, shark cage

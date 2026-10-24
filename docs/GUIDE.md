@@ -1521,6 +1521,16 @@ own, `none` = nothing protects. A name ending in `*` matches every kind (`Axe*` 
 count as the item they improve. A message says why (at most every 6 s; your own line or the hazard's). A **hidden**
 zone does nothing: switch live water off with a lever or a generator whose action **hide**s the zone.
 
+**Push, pulse and stack** (2026-10-24, the object panel's **Push and pulse** group). A zone's **Push** pushes the players
+standing in it one way - up, down, or along the island's axes (+z north, +x east) - at 0-40 m/s: a fan or a gale
+sideways (6-12), an **updraft** up (about 9) that lifts a player onto a ledge. **Knock** is a one-off shove on stepping
+in (a knockback); set Push to off for a knock only. Each player's own machine pushes them. **Pulse** (`on,off[,offset]`
+seconds) switches the zone on and off on the clock every player shares: its push, its hazard and its air work only
+while on - a steam vent, a firebomb's blast every few seconds. **Stack target** (`name|count`) counts the pieces with
+that name standing in the zone (pieces players **carry**, [6.2](#62-behaviour-and-events)): players near it read
+"Stacked 2 of 4", and with enough its **stack** event runs once (the host): open a gate, send a signal. In a recipe:
+`zone.push=0,1,0,9`, `zone.push=1,0,0,0,14` (a knock only), `zone.pulse=3,2`, `zone.stack=Crate|4` with `on.stack=open|Gate`.
+
 **Invisible walls and ramps** (also in "Zones & triggers") are solid in the world but not seen: block a path, fence
 an arena, or make a cliff climbable.
 
@@ -1654,6 +1664,24 @@ Select any object → **Behaviour & events...**. No code needed:
   broken down until a player brings 3 bolts, then each use carries the players on it 24 m along and back (they can't
   be driven: Raft's snowmobile is Temperance's own vehicle, made by its shed). A **generator** placed from the list
   wants **3** generator parts (the object panel's **Parts needed**, 1-6); old islands keep theirs.
+- **Carry, lure, collapse and move** (2026-10-24): the action **pick up (carry)** (`carry|`, the object panel's **Players
+  carry it**) lets the player who uses the object pick it up: it goes in front of them, they can't jump or ride a
+  zipline meanwhile, and the use key puts it down in front - on the ground or on top of another piece; a hit (or
+  dying) drops it. **Snap** puts it down on a grid (0.25-2 m) turned in 90-degree steps. One player carries one piece,
+  and a piece one player at a time (the host decides); where it was left is kept, after a reload and for players who
+  join. Give the pieces a name and a zone a **Stack target** ([5.4](#54-trigger-zones-and-ambushes)) for "stack 4 crates
+  under the hatch". **Lure** (the object panel's **Lure and carry** group, `beh.lure=Goats|3`): while the object is shown
+  and **open**, the animals of the creature spot with that name walk to it and stay within the radius - herd goats into
+  a pen, draw a boss away from a door. **Bait** (`beh.lureItem=Raw_Beet|2`, or a story item) makes the object's use
+  lines for you: used with the item it takes it and opens (so the lure starts); without it, it says what goes in
+  (a food lure). **collapse** (shared, `collapse|Bridge|3`) makes the objects with that name rumble and shake, then
+  fall away and vanish for good, over some seconds (3 at first): a bridge, a floor, a cave mouth. **move to marker**
+  (shared, `moveto|Cart|Ledge,6`) sends the objects with that name to the place and facing of a marker object (any
+  small named piece) over some seconds, carrying the players standing on them - a cart up to a ledge; moved creature
+  spots take their animals along (an antagonist off to the next arena). The new place is kept. Don't use it on an
+  object that spins, bobs or moves by itself. A creature spot's **Guarded while** lines (`boss.shieldIf=state|Feeder|open`,
+  the behaviour window's checks) keep players' weapons glancing off its animals while all of them hold: a boss
+  guarded while its feeder runs - close the feeder (or blast it, **hurt creatures**) to fight it.
 - **Sounds and camera moments** (actions in the same ▼ list, shared by every player): **play sound/music** plays one of
   Raft's sound events or music cues (pick it with **…**, a list of every one Raft has), with a volume, **once** or on a
   **loop**, **near** the object (or the objects named) or for **everyone on the island**. Every player near the island
@@ -2534,7 +2562,8 @@ Up to eight players (Raft's maximum). **Every player needs the mod.**
 - **Shared:** harvesting and pickups, chests (when several players open one at the same moment, the first gets it),
   zones, doors, quests and their rewards, story items, the journal, the sounds and music the islands' actions play
   (each player hears them while near the island) and camera moments (each player within range sees them). Things
-  that move follow a clock all players share, so everyone sees them in the same place.
+  that move follow a clock all players share, so everyone sees them in the same place. Carried pieces, collapses,
+  moved objects and lures are the host's: every player sees who carries what, and a player who joins gets it.
 - **What grows back** is the host's decision: things come back when the island loads on the host after the regrow
   days; a player who has the island loaded sees it the next time it loads there.
 - **Joining:** use Steam's "Join Game" on a friend (Raft's own Join World list is empty in this Raft version). Big

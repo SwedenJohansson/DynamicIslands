@@ -67,13 +67,19 @@ namespace DynamicIslands.Editor
 			z.Ordinal = ordinal;
 			z.Props = o.Props != null ? new Dictionary<string, string>(o.Props) : new Dictionary<string, string>();
 			z.Hazard = Hazards.KindOf(z.Props);
+			z.Push = MechFeatures.PushSpec.Parse(z.Props);
 			return z;
 		}
 
 		public bool HasFired { get { return ContentState.IsUsed(ContentState.EntryOf(transform), StateKey); } }
 
+		/// <summary>A push zone (zone.push - fans, wind, a knockback) and its on/off cycle (zone.pulse): MechFeatures.</summary>
+		public MechFeatures.PushSpec Push;
+
 		void Update()
 		{
+			// (a push every frame - a quarter second's steps would be jerky)
+			if (Push != null) MechFeatures.PushTick(this);
 			if (Time.time < nextCheck) return;
 			nextCheck = Time.time + 0.25f;
 			if (spentWhenSeen == null) spentWhenSeen = HasFired; // (as the zone first came: SC50)
@@ -85,8 +91,10 @@ namespace DynamicIslands.Editor
 			else if (now && retryAt > 0f && Time.time >= retryAt) { retryAt = 0f; Enter(false, true); }
 			if (!now) { retryAt = 0f; toldRefused = false; }
 			inside = now;
-			if (now && Air) Breathe(player);
-			if (now && Hazard.Length > 0) HazardTick(player);
+			// (a pulsing zone - a firebomb, a steam vent: its air and hazard only while it is on)
+			bool on = MechFeatures.PulseOn(Props);
+			if (now && on && Air) Breathe(player);
+			if (now && on && Hazard.Length > 0) HazardTick(player);
 		}
 
 		/// <summary>The local player stands in a hazard zone (every quarter second): unprotected, it hurts - damage every
