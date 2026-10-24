@@ -12,6 +12,7 @@
 include lib_huts
 include lib_gravity
 include lib_sea
+include lib_sunken
 # RESIZE 10-24: Radius 36 -> 86 (x2.4). The road keeps its shape stretched along x (lanes, the booth and the vans at
 # x*2.4, the road's width and side offsets as they were); the embankment, trees and animals at x*2.4, z*2.4.
 include lib_features
