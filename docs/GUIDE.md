@@ -131,7 +131,8 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
      [15.14 A whole storyline: The Last Green World](#1514-a-whole-storyline-the-last-green-world) ·
      [15.15 A whole storyline: The Frozen Horizon](#1515-a-whole-storyline-the-frozen-horizon) ·
      [15.16 A whole storyline: The City That Never Sank](#1516-a-whole-storyline-the-city-that-never-sank) ·
-     [15.17 A whole storyline: The Sunken Kingdom](#1517-a-whole-storyline-the-sunken-kingdom)
+     [15.17 A whole storyline: The Sunken Kingdom](#1517-a-whole-storyline-the-sunken-kingdom) ·
+     [15.18 A whole storyline: The End of the Ocean](#1518-a-whole-storyline-the-end-of-the-ocean)
 16. [Learn from the islands](#16-learn-from-the-islands)
    - [16.1 Opening any island in the editor](#161-opening-any-island-in-the-editor) · [16.2 Looking around](#162-looking-around) ·
      [16.3 Two small islands with many features](#163-two-small-islands-with-many-features) · [16.4 Every feature, and an island to look at](#164-every-feature-and-an-island-to-look-at)
@@ -4470,6 +4471,39 @@ Sealkeeper Spire have a **Raft store**. Titanium lies buried on Thalassa Mooring
 
 To learn from it: open the Sealkeeper Spire and look at the two levers - each gives a story item (`restorechoice` or
 `sealchoice`), and the Hollow's valve checks it with `if.has` to choose its answer.
+
+### 15.18 A whole storyline: The End of the Ocean
+
+**The End of the Ocean** is a plan of eleven islands in place of Raft's own story (Raft's story off, random islands
+off, the chain on the Receiver, 300 to 1000). A pulse on the Receiver, the same every day, leads you to the middle of the
+sea: from a beacon on a rocky saddle through the stations of an old machine - a reef intake, three relay masts, a field
+of static, an iron wall round a circle of calm, a canal of lock gates, a smelter hall and a cooling spire - to Engine
+Court, where three rings of iron turn round the Concord Engine. There the Ringwave is explained, and you choose:
+**reactivate**, **shut down** or **redirect** it. The court's housing opens the Command Well, 30 m down, where the choice
+plays out at the engine's heart. The islands show every kind of "when": a quest (`quest:stormworks`), a quest step
+(`step:breakwater:7`), a signal (`signal:triangle:fixed`, `signal:court:open`), a zone (`zone:reefmachine:cage`), a rule
+(`rule:spire`), a visit (`visit:locks`), a day (`day:5`), a frequency that needs the engine (`receiver:900:needs=engine`)
+and a distance (`km:3`, `km:12:again`). All of Raft's story blueprints are **Blueprint** steps on the way. The Outer
+Breakwater has Raft's vending machine; the Cooling Spire and Engine Court have a **Raft store**. Titanium lies buried on
+Stormworks, the Cooling Spire and Engine Court; puffer fish on the Reefmachine Atoll give explosive goo, the spire's
+llamas wool, and chickens on Beacon Saddle and the Current Locks eggs. Its quest islands are as big as Raft's own big islands.
+
+| Island | What it is | What to look at |
+|---|---|---|
+| ![](images/library/beacon_saddle.jpg) **Beacon Saddle** (first, 500) | Two sea stacks, a beacon tower and a radio hut repeating one pulse | A short quest; the Receiver and antenna plans |
+| ![](images/library/reefmachine_atoll.jpg) **Reefmachine Atoll** (600) | A lagoon of iron frames grown over with reef: the engine's intake | A sunk service boat, a pump head with air in it, the cage zone that brings the next island |
+| ![](images/library/triangulation_rocks.jpg) **Triangulation Rocks** (700) | Three rock tops, a relay mast on each | Wake the three masts; the last one sends `signal:fixed` |
+| ![](images/library/static_shoals.jpg) **Static Shoals** (800) | Two sand bars, four masts strung with cable, a beached radio barge | Screechers over the bars; the barge to search |
+| ![](images/library/outer_breakwater.jpg) **Outer Breakwater** (900, needs the engine, from day 5) | An iron wall across the island, storm on one side, a garden on the other | Raft's vending machine on the wall walk; a forklift and an ore wagon at the gate |
+| ![](images/library/current_locks.jpg) **Current Locks** (1000) | A straight canal with three lock gates and a crank for each | Gates hidden by a crank (`beh.hidden`); a bear's den, a deep basin with anglers |
+| ![](images/library/stormworks.jpg) **Stormworks** (800) | A dark rock with an iron smelter hall and a weather room on its roof | The last crew's three notes; buried titanium |
+| ![](images/library/cooling_spire.jpg) **Cooling Spire** (700) | A pale four-storey tower in its own fog | Outside stairs up the storeys, a cable down from the roof, Hedda's Raft store, llamas, buried titanium |
+| ![](images/library/engine_court.jpg) **Engine Court** (600, finale part 1) | A round court of three iron rings round the engine's housing | 28 steps: three ring cranks, a keypad, the choice (`reactivateway`, `shutdownway`, `redirectway`), Teo's Raft store, a forklift and caravans, buried titanium |
+| ![](images/library/the_command_well.jpg) **The Command Well** (300, finale part 2) | A lift shaft 30 m down to a dry dome with three great rings | 12 steps: air on the way down, the command desk, the rings set the way the court chose |
+| ![](images/library/drifting_relay_buoy.jpg) **Drifting Relay Buoy** (side, km 12, again) | A sand bar and a buoy that blinks Morse | An island that comes back every 12 km with a new message |
+
+To learn from it: open Engine Court and look at its three choice levers - each gives a story item, and the Command Well
+checks them with `if.use=has|story:...` on its three consoles: only the one for your choice works.
 
 ## 16. Learn from the islands
 

@@ -25,6 +25,13 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 2026-10-23: known-issues fixes
 
 ### New
+- **Another whole storyline in the library, The End of the Ocean:** eleven islands in place of Raft's own story
+  (Raft's story off; the chain on the Receiver, 300 to 1000). A pulse on the Receiver leads to the middle of the sea:
+  Beacon Saddle, the Reefmachine Atoll, Triangulation Rocks, Static Shoals, the Outer Breakwater (Raft's vending
+  machine; needs the engine, from day 5), the Current Locks, Stormworks, the Cooling Spire (a Raft store) and a finale in
+  two parts: Engine Court (28 quest steps, a Raft store, reactivate / shut down / redirect the Concord Engine) and The
+  Command Well 30 m under it, where the choice plays out. The Drifting Relay Buoy comes back every 12 km. Raft's
+  forklifts, wagons and caravans stand at the wall and in the court. All of Raft's story blueprints are quest steps.
 - **An eighth whole storyline in the library, The City That Never Sank:** eleven islands in place of Raft's own story
   (Raft's story off; the chain on the Receiver, 250 to 1000). Highwater lives on the top floors of a drowned city:
   Breakwater Customs, Raft Row Bazaar (Raft's vending machine), Fleetbreak Moorings, Hookline Stack, Pumpcrown Works (needs
