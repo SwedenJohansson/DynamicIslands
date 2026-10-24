@@ -32,5 +32,14 @@ read Withheld stock ledger
 expect step 8
 catch Chicken 1
 expect step 9
+zone rubbish_hill
+expect step 10
+read Fire warden's report
+expect step 11
+open Pedlar's caravan
+wait 3
+expect step 12
+zone pedlars_cave
+expect step 13
 read Merchant's warning
 expect done

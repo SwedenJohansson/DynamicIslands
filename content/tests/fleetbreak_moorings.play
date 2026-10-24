@@ -35,6 +35,15 @@ open Fleet strongbox
 wait 3
 expect story authpass 1
 expect step 10
+zone gull_ridge
+expect step 11
+read Harbourmaster's ledger
+expect step 12
+open Seaplane's crate
+wait 3
+expect step 13
+zone bosuns_cave
+expect step 14
 read Fleet contract offer
 expect done
 expect step 0 quest=2

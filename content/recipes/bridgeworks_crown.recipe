@@ -4,7 +4,7 @@
 # the middle the council house, its door on a keypad. Rain, wind, screechers; an electric zipline from the Union's crane
 # down to the key; on the key a trader and, at its west shore, the stair down to the city's foundation piles. The
 # factions meet to settle the city's water, and the stranger who has seen all three secrets decides: Authority, Fleet,
-# Union, expose them all, or free the Rookery. Quest "The Council in the Storm" (26 steps).
+# Union, expose them all, or free the Rookery. Quest "The Council in the Storm" (29 steps).
 #
 # Points: the key 0 0 (r about 36, levelled at 2 round 0 -2); the causeway along x 0 from z 12 to 20; the landing roof
 # x -3..3, z 20.5..29.5; the Authority's roof x -15..-9 and the Fleet's x 9..15 (z 20.5..29.5), bridges at z 25; the
@@ -17,16 +17,23 @@ include lib_huts
 include lib_features
 include lib_concord
 include lib_highwater
+include lib_areas
+# RESIZE 10-24: Radius 36 -> 95 (Height 4 -> 4), the old content moved -9.3 31.1 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 new
 gen Trees=0.1 Bushes=0.2 Rocks=0.3 Harvest=0.2 BeachThings=0.3
-gen Seed=13901 Radius=36 Height=4 Roughness=0.25 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.1 BeachWidth=0.6
+gen Seed=13901 Radius=95 Height=4 Roughness=0.25 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.1 BeachWidth=0.6
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.4 Sunken=0.3 Hostiles=0 Friendly=0.2 SeaLife=0.3
 generate
+push at -9.3 31.1
 
 # --- Terrain: the key levelled; the way out to the roofs and down to the piles cleared --------------------------------
 brush flatten at 0 -2 r=12 s=20 frames=300 h=2
 brush flatten at -27 14 r=4 s=20 frames=150 h=-6
+pop
+brush flatten at 23.3 -18.9 r=5 s=8 frames=40
 origin
+clear at 23.3 -18.9 r=6
+push at -9.3 31.1
 clear at 0 -2 r=12
 clear from 0 10 to 0 50 r=18
 clear from -20 6 to -28 14 r=4
@@ -119,9 +126,57 @@ scatter "Pickup_Landmark_Tree_Palm 1" 3 at -4 -10 r=12 seed=13902 free=3
 scatter Pickup_Landmark_BerryBush 2 at 10 -4 r=6 seed=13903 free=2
 call treasure x=-14 z=4 r=10 n=1 seed=13053
 prop treasure13053 treasure.loot=TitaniumOre*3
-call shallows x=0 z=0 r=54 deep=5 n=2 seed=13904
+call shallows x=9.3 z=-31.1 r=142 deep=5 n=2 seed=13904
 call hw_reef x=24 z=8 r=4 seed=13905
 call hw_skyline x=-90 z=110 a=skyline
+pop
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; Van_2 + chest; hatch with a chest; buried treasure; viewpoint ---
+place campfire_1 - at 23.3 -18.9 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at 26.3 -16.9 ground sit yaw=257
+place "Box Small" - at 21.3 -16.4 ground sit
+place Note_Paper dnote at 21.3 -16.4 ground y=0.7 drop yaw=20
+note dnote Squatter's note | Moved out of the tower when the water reached the 30th floor.\nIt's quieter here. No Union men, no Authority men.\nThe city lights still come on at dusk - nobody knows who pays for them.
+place Van_2 dvan at -36.7 20.4 ground yaw=17
+prop dvan tint.color=#5a5048
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at -40.7 23.4 ground sit yaw=317
+note dwreckchest Salvage chest | A salvager's chest: copper, bolts and a coil of rope.
+loot dwreckchest CopperIngot*2;Bolt*2;Rope*2
+prop dwreckchest loot.refill=0
+call hatchcache x=26.4 z=32.6 r=4 seed=13991 alias=dhatch chest=dhatchchest items=MetalIngot*2;CopperIngot*2;Bolt*3
+call treasure x=-26.4 z=-32.6 r=6 n=1 seed=13992
+prop treasure13992 treasure.loot=CopperOre*3;TitaniumOre*1
+place Zone_Trigger dview at -5.7 2 ground
+prop dview zone.id=bridgeworks_crown_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=The crown of the city: the tallest roofs joined by bridges, and the storm coming in over all of them.
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): storm ridge in the south (buried salvage), the
+# fallen bridgeworks crane in the south-east, the councillor's summer house in the west (the keycard opens his strongbox),
+# the cipher cave in the east (dark: a headlight; the full council code), the live cable bed in the south (shock: the
+# breaker lever cuts it)
+call ar_ridge x1=-45 z1=-50 x2=5 z2=-68 h=12 top=7 r=9
+call ar_plants_tropical x=-20 z=-59 r=28 seed=13911
+call hw_zone x=-20 z=-59 al=stormridge id=storm_ridge r=7 msg="Storm ridge: the storm is close now. From here the four council roofs stand dark against the sky."
+call treasure x=-20 z=-59 r=14 n=2 seed=13961
+prop treasure13961 treasure.loot=TitaniumOre*2;CopperOre*2
+call hw_wreck x=50 z=-45 h=4 yaw=-30 obj=UT_ElectricityIsland_Crane01 al=bridgecrane crate=bridgecrate r=11
+call ar_ruin x=-68 z=-12 h=4 yaw=0 w=4 al=summerhouse
+call hw_note x=-65.5 z=-16.5 yaw=10 al=councilnotebook
+place Loot_ChestLarge strongbox at -68 -11 ground sit yaw=180
+prop strongbox if.open=has|Tangaroa_KeyCard|1
+call ar_cave x=62 z=0 h=4 yaw=0 al=ciphercave chest=cipherchest
+call hw_hazard x=62 z=10 al=ciphercavedark kind=dark r=4 dmg=0 safe=wears|HeadLight* msg="Black as the bottom of the sea. A headlight would show you what is written on the walls."
+call hw_zone x=62 z=24 al=ciphermouth id=cipher_cave r=4 msg="A cave under the Crown's east cliff. Someone carved numbers by the entrance and scratched them out again."
+brush flatten at 25 -74 r=5 s=20 frames=200 h=2
+call hw_hazard x=25 z=-74 al=shockcoil kind=shock r=4 dmg=8 safe=none msg="The cable bed is live: the old bridge's power still runs through the wet ground."
+place Loot_Chest cablechest at 25 -74 ground sit yaw=0
+place TP_LaserControlPanel_lever breaker at 16 -66 ground y=1.25 scale=3 yaw=-45
+prop breaker beh.use=Pull the old breaker
+prop breaker on.use=message||The breaker drops with a bang. The hum in the cable bed dies.\nhide|shockcoil
+call ar_plants_tropical x=-60 z=-40 r=14 seed=13921
 
 # --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
 info title=Bridgeworks Crown
@@ -258,6 +313,20 @@ prop pilehead zone.id=pile_head
 prop pilehead zone.radius=3
 prop pilehead zone.message=The first pile head. Cracked right through. Below it, the foundations.
 
+prop councilgate if.use=signal|councildoor
+prop councilgate else.use=message||The council door has no key slot here: it opens from the keypad beside it.
+note bridgecrate Bridgeworks crane's toolbox | The crane that built the Crown's bridges lies where the storm of '31 dropped it. Its toolbox survived.
+loot bridgecrate MetalIngot*3;Bolt*4;Nail*10
+note councilnotebook Councillor's notebook | Crane's notebook.\n\nThe council door: I gave each faction one piece so no faction can open it alone.\nThe Authority has the first, the fleet the middle two, the union the last. I keep the whole in the cave, in case I forget.
+note strongbox Councillor's strongbox | The councillor's strongbox, locked with an Authority keycard: what he was paid to sign.
+loot strongbox TradeToken*5;CircuitBoard*1;Glass*2
+prop strongbox loot.refill=0
+note cipherchest Councillor's cipher | Crane's hand again, on oilcloth:\n\nCOUNCIL DOOR - 4 7 1 9\n\nDon't tell the factions it was this easy.
+loot cipherchest Battery*1;CopperIngot*2;Rope*2
+prop cipherchest loot.refill=0
+note cablechest Linesman's chest | A linesman's chest in the middle of the live cable bed. He must have known where the breaker was.
+loot cablechest CopperIngot*3;CircuitBoard*1;Battery*1
+prop cablechest loot.refill=0
 quest title=The Council in the Storm
 quest intro=The councils meet on the Crown tonight, in the storm. Go up onto the landing roof.
 step reach|landing_roof|1|Go up onto the landing roof
@@ -283,6 +352,9 @@ step collect|story:choice|1|Pull one lever - choose for Highwater
 step read|The verdict|1|Read the verdict
 step open|Council reward|1|Open the council's reward
 step read|Teo Varga's message|1|Read Teo Varga's message
+step reach|storm_ridge|1|Climb storm ridge on the south side of the Crown
+step read|Councillor's notebook|1|Read the councillor's notebook in his summer house in the west
+step open|Bridgeworks crane's toolbox|1|Open the toolbox of the fallen bridgeworks crane in the south-east
 step reach|pile_stair|1|Go down to the pile stair on the key's west shore
 step read|Pile engineer's map|1|Read the pile engineer's map
 step reach|pile_head|1|Dive to the first pile head

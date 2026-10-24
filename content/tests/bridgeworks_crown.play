@@ -70,10 +70,17 @@ wait 3
 expect step 22
 read Teo Varga's message
 # (no step check here: in the plan the pile stair zone can already be passed on the way in)
-zone pile_stair
+zone storm_ridge
 expect step 24
-read Pile engineer's map
+read Councillor's notebook
 expect step 25
+open Bridgeworks crane's toolbox
+wait 3
+expect step 26
+zone pile_stair
+expect step 27
+read Pile engineer's map
+expect step 28
 zone pile_head
 expect done
 dig

@@ -29,6 +29,15 @@ expect step 5
 open Authority stores
 wait 3
 expect step 6
+zone reservoir_bank
+expect step 7
+read Filter house notice
+expect step 8
+open Patrol van's lockbox
+wait 3
+expect step 9
+zone sludge_beds
+expect step 10
 zone outfall
 expect done
 expect step 0 quest=2

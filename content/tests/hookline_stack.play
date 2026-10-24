@@ -21,6 +21,15 @@ expect step 5
 open Flare store
 wait 3
 expect step 6
+zone spoil_heap
+expect step 7
+open Toppled crane's toolbox
+wait 3
+expect step 8
+read Tally book
+expect step 9
+zone divers_cave
+expect step 10
 open Crane cab
 wait 3
 expect done

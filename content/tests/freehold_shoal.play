@@ -10,9 +10,9 @@ zone landing
 expect step 1
 read Freehold founding
 expect step 2
-openat -10 6
-openat 4 14
-openat 14 -10
+openat -4.7 -7.3
+openat 9.3 0.7
+openat 19.3 -23.3
 expect story plankbundle 3
 expect step 3
 use wellcrank
@@ -20,5 +20,12 @@ expect shown firstnight
 expect step 4
 catch Chicken 1
 expect step 5
+zone dune_top
+expect step 6
+read Old squatter's slate
+expect step 7
+open Hauled-up van's crate
+wait 3
+expect step 8
 read Freehold's first night
 expect done

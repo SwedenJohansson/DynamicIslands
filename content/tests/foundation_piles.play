@@ -38,6 +38,13 @@ expect shown closing
 expect step 10
 read The city holds
 expect step 11
+zone rubble_bank
+expect step 12
+read Engineers' survey
+expect step 13
+open Excavator's toolbox
+wait 3
+expect step 14
 zone mudflat_return
 expect done
 dig

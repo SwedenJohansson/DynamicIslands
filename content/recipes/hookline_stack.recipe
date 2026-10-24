@@ -2,7 +2,7 @@
 # The Salvagers' Union: a half-sunk office block's top floor is the Union hall, a crane on its roof; two more cranes
 # stand over the sorting yard - scrap piles, ore crates, potato planters - and a barge of clay and sand lies moored
 # off the yard. A zipline runs from the hall's roof crane to the third crane. A memorial wall names the lost divers; a
-# dive rope hangs off the jetty into the drowned street below. Quest "The Salvagers' Union" (7 steps): the hall, the
+# dive rope hangs off the jetty into the drowned street below. Quest "The Salvagers' Union" (11 steps): the hall, the
 # Union's charter, the engine controls' plans, the zipline to crane three, the metal detector's plans, the flare
 # store's firework plans, the zipline's plans in the crane cab. Contract "Lost Below" (4): the missing expedition
 # notice, the dive rope, two salvage tags off the street below, the Union's receipt (unionfriend).
@@ -14,16 +14,23 @@ include lib_sea
 include lib_rt
 include lib_huts
 include lib_highwater
+include lib_areas
+include lib_features
+# RESIZE 10-24b: Radius 36 -> 85 (Height 4 -> 5), the old content moved -42.3 -24.9 as one frame (push) so its sea side stays at
+# the coast; the island grows behind it. The jetty and its drowned street stay on the coast (south-west); the clay barge and the two reefs were moved out to the new south and west coasts.
 new
-gen Trees=0.1 Bushes=0.15 Rocks=0 Harvest=0.2 BeachThings=0.4
-gen Seed=13401 Radius=36 Height=4 Roughness=0.2 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.1 BeachWidth=0.6
+gen Trees=0.2 Bushes=0.25 Rocks=0.43 Harvest=0.24 BeachThings=0.35
+gen Seed=13401 Radius=85 Height=5 Roughness=0.2 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.1 BeachWidth=0.6
 gen Water=0.5 SeaRocks=0.2 SeaFinds=0.5 Sunken=0.3 Hostiles=0 Friendly=0.2 SeaLife=0.3
 generate
+push at -42.3 -24.9
 
 # --- Terrain: the hall's and the yard's levels -------------------------------------------------------------------------
 brush flatten at 0 -14 r=11 s=20 frames=300 h=2
 brush flatten at 18 10 r=12 s=20 frames=300 h=2
+pop
 origin
+push at -42.3 -24.9
 clear at 0 -16 r=10
 clear at 18 10 r=10
 clear from -20 -20 to -36 -20 r=4
@@ -81,15 +88,18 @@ place Reef_Barrel2 - at -1 3 y=0.1 sit
 pop
 
 # --- The clay and sand barge moored off the yard -------------------------------------------------------------------
-for bz -29.25 -24.75 1.5
-line Block_Foundation from 30.75 $bz to 35.25 $bz step=1.5 h=0.35
-next
-place "Pickup_Landmark_Clay 1" - at 31.5 -28 h=1.05 sit
-place "Pickup_Landmark_Clay 2" - at 33 -27 h=1.05 sit
-place "Pickup_Landmark_Clay 3" - at 34.5 -28.5 h=1.05 sit
-place "Pickup_Landmark_Sand" - at 31.5 -25.5 h=1.05 sit
-place "Pickup_Landmark_Sand" - at 33.5 -25 h=1.05 sit
-place RT_Pillar - at 29.5 -27 ground sy=0.6
+line Block_Foundation from 20.37 -70.42 to 24.87 -70.42 step=1.5 h=0.35
+line Block_Foundation from 20.37 -68.92 to 24.87 -68.92 step=1.5 h=0.35
+line Block_Foundation from 20.37 -67.42 to 24.87 -67.42 step=1.5 h=0.35
+line Block_Foundation from 20.37 -65.92 to 24.87 -65.92 step=1.5 h=0.35
+# (the barge's deck, unrolled 10-24b)
+
+place "Pickup_Landmark_Clay 1" - at 21.12 -69.17 h=1.05 sit
+place "Pickup_Landmark_Clay 2" - at 22.62 -68.17 h=1.05 sit
+place "Pickup_Landmark_Clay 3" - at 24.12 -69.67 h=1.05 sit
+place "Pickup_Landmark_Sand" - at 21.12 -66.67 h=1.05 sit
+place "Pickup_Landmark_Sand" - at 23.12 -66.17 h=1.05 sit
+place RT_Pillar - at 19.12 -68.17 ground sy=0.6
 
 # --- The jetty and the dive rope; the street below and its salvage tags ------------------------------------------------
 line Block_Floor_Wood from -24 -20 to -34.5 -20 step=1.5 h=1
@@ -103,10 +113,32 @@ place "Pickup_Landmark_Scrap 1_OceanBottom" - at -39 -18 ground sit
 place "Pickup_Landmark_Scrap 3_OceanBottom" - at -43 -21 ground sit
 
 # --- Highwater on the horizon; the sea's finds; two reefs ------------------------------------------------------------
-call hw_skyline x=120 z=-60 a=skyline
-call shallows x=0 z=0 r=54 deep=6 n=2 seed=13402
-call hw_reef x=-24 z=30 r=4 seed=13403
-call hw_reef x=34 z=-10 r=4 seed=13407
+call hw_skyline x=162.3 z=-35.1 a=skyline
+call shallows x=42.3 z=24.9 r=127.5 deep=6 n=2 seed=13402
+call hw_reef x=-52.7 z=29.9 r=4 seed=13403
+call hw_reef x=72.3 z=-67.1 r=4 seed=13407
+
+pop
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): the spoil heap east of the yard (buried
+# salvage for the metal detector), the toppled crane and the excavator in the south-east, the old tally house in the
+# north, the divers' drying cave in the west
+call ar_ridge x1=18 z1=32 x2=55 z2=8 h=9 top=6 r=10
+call ar_plants_tropical x=36 z=20 r=28 seed=13411
+call hw_zone x=36 z=20 al=spoilheap id=spoil_heap r=7 msg="The spoil heap: a hill of what the street gave up and nobody wanted. The Union's cranes stand over the yard like herons."
+call treasure x=36 z=20 r=14 n=2 seed=13461
+prop treasure13461 treasure.loot=CopperOre*3;MetalOre*2
+call hw_wreck x=46 z=-38 h=3 yaw=120 obj=UT_ElectricityIsland_Crane02 al=toppledcrane crate=cranewreckcrate r=12
+place VP_Excavator salvagedigger at 28 -58 ground sit yaw=40
+prop salvagedigger tint.color=#5a5048
+prop salvagedigger tint.amount=0.45
+call ar_ruin x=-15 z=56 h=4 yaw=0 al=tallyhouse
+call hw_note x=-12.5 z=51.5 yaw=20 al=tallybook
+place VP_Forklift - at 6 44 ground sit yaw=250
+call ar_cave x=-62 z=26 h=3 yaw=0 al=divercave chest=divercavechest
+call hw_zone x=-62 z=40 al=divercavezone id=divers_cave r=4 msg="The divers' drying cave: wetsuits on hooks, names chalked over each one. Some of the hooks are empty."
+call ar_plants_tropical x=-45 z=55 r=14 seed=13421
+call ar_plants_tropical x=60 z=40 r=12 seed=13431
 
 # --- Settings, story items, notes, behaviours, quests -----------------------------------------------------------------
 info title=Hookline Stack
@@ -140,14 +172,14 @@ note charter Union charter | CHARTER OF THE SALVAGERS' UNION\n\nWhat we bring up
 note notice Missing expedition notice | MISSING - THE LOWSTREET EXPEDITION\n\nFive divers under Ines Marlowe went down to Lowstreet to map the old pumps. They have not come up.\n\nTheir salvage tags were found on the street below this jetty. Bring them up and hand them in at the tally.\n\nThe Union does not leave its divers down.
 note memorialsign Memorial wall | THE UNION REMEMBERS\n\nA hundred names, scratched into the concrete. The newest are only chalk.
 note receipt Union receipt | RECEIVED: two salvage tags, Marlowe's team.\n\nThey were alive when they dropped them. The Union owes you a diver's debt. - the foreman
-note hallchest Hall desk | The hall's desk: the engine controls' plans, a foreman's whistle.
+note hallchest Hall desk | The hall's desk: the engine controls' plans, a foreman's whistle - and a spare diver's kit, an oxygen bottle and flippers. No diver goes down alone, and none goes down short of air.
 note foremanbox Foreman's box | The yard foreman's box: the metal detector's plans, a list of what the street gave up this week.
 note flarestore Flare store | The Union's flare store: the firework's plans, flares for divers in trouble.
 note cranecab Crane cab | Crane three's cab: the zipline's plans, a thermos, a view over the yard.
 note potatobox Planter box | Seed potatoes for the yard's planters.
 note tag1 Salvage cache | A diver's cache on the street below, tied to a lamp post.
 note tag2 Salvage cache | A diver's cache on the street below, wedged in a shop door.
-loot hallchest Blueprint_EngineControls*1;MetalIngot*2;Bolt*4
+loot hallchest Blueprint_EngineControls*1;MetalIngot*2;Bolt*4;OxygenBottle*1;Flipper*1
 prop hallchest loot.refill=0
 loot foremanbox Blueprint_MetalDetector*1;Scrap*4
 prop foremanbox loot.refill=0
@@ -172,6 +204,12 @@ prop divezone zone.id=dive_rope
 prop divezone zone.radius=3
 prop divezone zone.message=The dive rope. Below it, in green water, the street lamps of Lowstreet.
 
+note cranewreckcrate Toppled crane's toolbox | Crane five's toolbox. The crane came down in the last storm; the Union never had the parts to stand it up again.
+loot cranewreckcrate Bolt*4;MetalIngot*2;Rope*2
+note tallybook Tally book | UNION TALLY BOOK\n\nShare out: one part to the diver, one to the crane, one to the hall.\nThis week: a fridge, two doors, a tram seat. Lowstreet is picked nearly clean above the shops.\nMarlowe says the store at the east end is untouched. The Authority says it is closed. Why would a drowned shop be closed?
+note divercavechest Divers' locker | A diver's locker: a spare mask strap, rope and a tin of grease.
+loot divercavechest Rope*3;Scrap*3;Leather*1
+prop divercavechest loot.refill=0
 quest title=The Salvagers' Union
 quest intro=The Union works the cranes on the half-sunk block. Find their hall.
 step reach|union_hall|1|Go into the Union hall
@@ -180,6 +218,10 @@ step blueprint|Blueprint_EngineControls|1|Take the engine controls' plans from t
 step reach|crane_3|1|Ride the zipline from the hall's roof crane to crane three
 step blueprint|Blueprint_MetalDetector|1|Take the metal detector's plans from the foreman's box
 step blueprint|Blueprint_Firework|1|Take the firework's plans from the flare store
+step reach|spoil_heap|1|Climb the spoil heap east of the yard
+step open|Toppled crane's toolbox|1|Open the toolbox of the toppled crane in the south-east
+step read|Tally book|1|Read the Union's tally book in the old tally house in the north
+step reach|divers_cave|1|Find the divers' drying cave in the west
 step blueprint|Blueprint_ZiplineBase|1|Take the zipline's plans from crane three's cab
 quest done=The Union trusts its own and few others. The Authority's waterworks, Pumpcrown, answers on band 900 - for a raft with an engine.
 quest reward=Scrap*4;MetalOre*3;Clay*3;Sand*3

@@ -7,3 +7,7 @@ weather Calm
 at 0 0
 wait 3
 picture sl13_fleetbreak_moorings_island 60 34 -95 0 4 0
+picture sl13_fleetbreak_moorings_ridge -6 22 26 -27 17 50
+picture sl13_fleetbreak_moorings_plane 26 14 30 42 8 46
+picture sl13_fleetbreak_moorings_house -40 12 -10 -58 7 -4
+picture sl13_fleetbreak_moorings_cave 58 12 32 58 9 -2

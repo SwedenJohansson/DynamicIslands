@@ -23,5 +23,14 @@ expect story weighed 1
 use permitstamp
 expect story permit 1
 expect step 5
+zone signal_hill
+expect step 6
+read Keeper's log
+expect step 7
+zone wreckers_cave
+expect step 8
+open Seized boat's hold
+wait 3
+expect step 9
 read Smuggler's tip
 expect done

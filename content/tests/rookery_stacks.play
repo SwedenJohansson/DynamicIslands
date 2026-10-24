@@ -24,9 +24,9 @@ expect step 6
 open Packer's hut
 wait 3
 expect step 7
-openat 8.25 7.5
-openat -14 -27
-openat 1.8 -33.4
+openat 1.65 -14.6
+openat -20.6 -49.1
+openat -4.8 -55.5
 expect story watertoken 3
 expect step 8
 read Rookery elders' plan
@@ -34,6 +34,13 @@ expect step 9
 open Elders' hut
 wait 3
 expect step 10
+zone gull_stacks
+expect step 11
+read Bathhouse slate
+expect step 12
+open Family van's crate
+wait 3
+expect step 13
 read Storm warning
 expect done
 dig

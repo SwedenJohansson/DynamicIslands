@@ -3,7 +3,7 @@
 # vans on the street, lamp posts, a cinema whose roof (the wind turbine on it) is the only thing above the sea. In four
 # shops the Union's divers left air pockets; at the street's east end the department store has come down, and in its
 # cages the lost expedition waits - Ines Marlowe and her three divers. Anglers in the shops, a big stingray on the
-# street. Quest "The Drowned District" (12 steps): the tram stop, the expedition plan, the wind turbine's plans (the
+# street. Quest "The Drowned District" (16 steps): the tram stop, the expedition plan, the wind turbine's plans (the
 # cinema roof), the first shop's air, three anglers, the advanced battery's plans (the electronics shop), the store
 # front, the four cages, Ines's report, the advanced headlight's plans, the stingray, the electric grill's plans (the
 # diner).
@@ -17,18 +17,24 @@ include lib_rt
 include lib_huts
 include lib_features
 include lib_highwater
+include lib_areas
+# RESIZE 10-24b: Radius 30 -> 85 (Height 2 -> 4), the old content moved 0 -68 as one frame (push) so its sea side stays at
+# the coast; the island grows behind it. The street (levelled at -20) now runs as a flooded canyon along the inside of the south coast, open to the sea at the cinema; one reef that would have stood on land went out to the south shore.
 new
-gen Trees=0.05 Bushes=0.1 Rocks=0.3 Harvest=0.1 BeachThings=0.4
-gen Seed=13601 Radius=30 Height=2 Roughness=0.2 Peaks=1 Shape=0 Style=0 PeakShape=0.2 Cliffs=0 BeachWidth=0.8
+gen Trees=0.2 Bushes=0.25 Rocks=0.43 Harvest=0.2 BeachThings=0.4
+gen Seed=13601 Radius=85 Height=4 Roughness=0.2 Peaks=1 Shape=0 Style=0 PeakShape=0.2 Cliffs=0 BeachWidth=0.8
 gen Water=0.5 SeaRocks=0.2 SeaFinds=0.6 Sunken=0.6 Hostiles=0 Friendly=0 SeaLife=0.4
 generate
+push at 0 -68
 
 # --- Terrain: the street and its shops levelled twenty metres down -------------------------------------------------
 brush flatten from -46 0 to 46 0 r=10 s=20 frames=400 h=-20
 brush flatten from -24 10 to 27 10 r=6 s=20 frames=300 h=-20
 brush flatten at 0 -15 r=8 s=20 frames=300 h=-20
 brush flatten at 36 -5 r=8 s=20 frames=300 h=-20
+pop
 origin
+push at 0 -68
 clear from -46 0 to 46 0 r=9
 clear from -24 10 to 27 10 r=6
 clear at 0 -15 r=8
@@ -116,11 +122,35 @@ place Creature_Stingray bigray at 10 -4 ground y=1.5
 # --- The street's reefs, algae and clams; the sea's finds -----------------------------------------------------------
 call hw_reef x=-20 z=-6 r=4 seed=13602
 call hw_reef x=18 z=-7 r=4 seed=13606
-call hw_reef x=-6 z=18 r=4 seed=13610
+call hw_reef x=-24 z=-24 r=4 seed=13610
 scatter Pickup_Landmark_SilverAlgae 4 at 0 0 r=40 wet seed=13614
 scatter Pickup_Landmark_GiantClam 2 at 0 0 r=40 wet seed=13615
-call shallows x=0 z=0 r=50 deep=8 n=2 seed=13616
-call hw_skyline x=100 z=90 a=skyline
+call shallows x=0 z=68 r=141.67 deep=8 n=2 seed=13616
+call hw_skyline x=100 z=158 a=skyline
+
+pop
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): the old tram embankment in the north (buried
+# salvage for the metal detector), the depot office in the north-west, the stripped caravan and the tram's wagons in the
+# east, the lamp-oil cave (dark: a headlight), the sewer mouth at the street's west end (deep: an oxygen bottle)
+call ar_ridge x1=-42 z1=22 x2=28 z2=36 h=8 top=5 r=9
+call ar_plants_tropical x=-7 z=29 r=34 seed=13611
+call hw_zone x=-7 z=29 al=embankment id=embankment r=7 msg="The old tram embankment: the line ran out of the sea here once, up to the hills. Now it ends in the water, twenty metres above the street it came from."
+call treasure x=-7 z=29 r=14 n=2 seed=13661
+prop treasure13661 treasure.loot=CopperOre*2;TitaniumOre*1
+call ar_ruin x=-55 z=50 h=4 yaw=0 al=depotoffice
+call hw_note x=-52.5 z=45.5 yaw=20 al=depottimetable
+call hw_wreck x=55 z=2 h=4 yaw=20 obj=CaravanBarebones1 al=strippedvan crate=strippedcrate r=10
+place VP_Wagon02 tramwagon at 30 8 ground sit yaw=70
+place VP_Wagon01 tramwagon at 26 13 ground sit yaw=75
+call hw_zone x=28 z=4 al=tramwagons id=tram_wagons r=4 msg="The tram's last wagons, hauled out of the sea on rollers. The Union wanted the steel; the storm wanted the Union more."
+call ar_cave x=50 z=50 h=4 yaw=180 al=lampcave chest=lampcavechest
+call hw_hazard x=51 z=45 al=lampcavedark kind=dark r=5 dmg=0 safe=wears|HeadLight* msg="Pitch dark. A headlight would show you the way."
+brush flatten at -46 -59 r=4 s=20 frames=200 h=-26
+call hw_hazard x=-46 z=-59 al=sewerdeep kind=deep r=6 dmg=10 safe=wears|OxygenBottle* msg="A cold current pours out of the sewer mouth and pulls the air out of you. An oxygen bottle would see you down and back."
+place Loot_Chest sewerchest at -46 -59 ground sit yaw=90
+call ar_plants_tropical x=-50 z=20 r=14 seed=13621
+call ar_plants_tropical x=60 z=30 r=12 seed=13631
 
 # --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
 info title=Lowstreet
@@ -184,6 +214,18 @@ prop storezone zone.id=store_front
 prop storezone zone.radius=4
 prop storezone zone.message=The department store. The upper floors lie across the street. Behind the cages, something moves.
 
+prop divercage beh.use=Try the cage's lock
+prop divercage if.use=signal|cagesopen
+prop divercage else.use=message||Authority locks, case-hardened: the bolt cutters skid off the chain. The store's cage release opens all the cages at once.
+note depottimetable Depot timetable | LOWSTREET TRAM - LAST TIMETABLE\n\nThe last tram ran the day the Authority closed the sea gates. Lowstreet was full of people when the water came.\nThe Authority said: evacuated. The timetable says the 6:40 was still waiting for its passengers.
+note strippedcrate Stripped caravan's crate | A Union salvager's crate in a stripped caravan: the walls are gone, the wheels are gone, the crate stayed.
+loot strippedcrate MetalIngot*2;Bolt*3;Scrap*3
+note lampcavechest Lamp-oil chest | Lamp oil and wicks, kept dry in the dark. Whoever lit the tram's lamps lived here after the water came.
+loot lampcavechest Battery*1;Rope*2;Glass*2;CopperIngot*1
+prop lampcavechest loot.refill=0
+note sewerchest Sewer-mouth safe | A shop's safe, swept down the street by the flood and caught in the sewer mouth: tokens and silver.
+loot sewerchest TradeToken*4;MetalIngot*1;Glass*2
+prop sewerchest loot.refill=0
 quest title=The Drowned District
 quest intro=The outfall pours east into a drowned street. The Union's lost divers went down here. Find their rope at the tram stop.
 step reach|tram_stop|1|Dive to the tram stop on the drowned street
@@ -197,6 +239,10 @@ step collect|story:cagesopen|1|Find the cage key and open the four cages
 step read|Ines's report|1|Read Ines's report
 step blueprint|Blueprint_HeadLight_Advanced|1|Take the advanced headlight's plans from the lamp shop
 step kill|Stingray|1|Drive off the big stingray on the street
+step reach|embankment|1|Climb the old tram embankment north of the islet
+step read|Depot timetable|1|Read the last timetable in the tram depot's office in the north-west
+step reach|tram_wagons|1|Find the tram's last wagons, hauled out on the east shore
+step open|Stripped caravan's crate|1|Open the crate in the stripped caravan beside them
 step blueprint|Blueprint_ElectricGrill|1|Take the electric grill's plans from the diner
 quest done=The valves were turned by hand. The cistern under the Authority's tower holds the records - Cistern Hall, band 700.
 quest reward=SilverAlgae*3;SeaVine*2

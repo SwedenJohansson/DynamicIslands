@@ -31,6 +31,13 @@ expect step 8
 open Pump house locker
 wait 3
 expect step 9
+zone aqueduct_hill
+expect step 10
+read Waterman's diary
+expect step 11
+open Records van's crate
+wait 3
+expect step 12
 open Councillor's drawer
 wait 3
 expect done

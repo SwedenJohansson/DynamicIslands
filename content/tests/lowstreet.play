@@ -40,6 +40,15 @@ wait 3
 expect step 10
 kill Stingray
 expect step 11
+zone embankment
+expect step 12
+read Depot timetable
+expect step 13
+zone tram_wagons
+expect step 14
+open Stripped caravan's crate
+wait 3
+expect step 15
 open Diner
 wait 3
 expect done
