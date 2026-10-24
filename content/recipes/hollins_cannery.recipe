@@ -93,7 +93,7 @@ island on.arrive=message||A cannery on a concrete shelf. No gulls, no wind - onl
 story cagekey|Cage key (rusted)|Placeable_Lantern_Metal|A rusted key on a wire ring, from the foreman's desk in the cold store.
 story coldopen|Cold store open|Placeable_Lantern_Metal|The cold store's keypad took the code 3-1-2.
 
-note shiftlog Shift log - night of the 14th | NIGHT SHIFT, 14th\n\n22:00 Line running. Catch good.\n01:40 Radio in the hall playing something nobody put on. A song. Left it.\n02:55 Half the line humming along. Told them to stop. They didn't.\n03:12 Line stopped. Doors open. They all walked down the slipway into the water, still humming.\n\nI've locked the boy in the cage so he can't follow. Key's in my desk in the cold store.\n\nCold-store code is the night's catch, same as always: 3-1-2.
+note shiftlog Shift log - night of the 14th | NIGHT SHIFT, 14th\n\n22:00 Line running. Catch good.\n01:40 Radio in the hall playing something nobody put on. A song. Left it.\n02:55 Half the line humming along. Told them to stop. They didn't.\n03:12 Line stopped. Doors open. They all walked down the slipway into the water, still humming.\n\nI've locked the boy in the cage so he can't follow. Key's in my desk in the cold store.\n\nCold-store code is the night's catch, same as always: 312.
 note foremandesk Foreman's desk | The foreman's desk drawer: pay slips, a whistle, and a rusted key on a wire ring.
 loot foremandesk story:cagekey*1;Rope*2
 prop foremandesk loot.refill=0
@@ -119,7 +119,7 @@ prop pimcage survivor.line=You came in from the sea side. Did you hear her? She 
 prop coldkeypad obj.name=coldkeypad
 prop coldkeypad beh.use=Type the cold store's code
 prop coldkeypad lock.code=312
-prop coldkeypad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nhide|colddoor\nshow|colddark\ngive||story:coldopen*1\nmessage||The keypad chirps. The cold store's door slides aside on black air and the smell of old fish.
+prop coldkeypad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nhide|colddoor\nshow|colddark\ngive||story:coldopen*1\nmessage||The keypad chirps. The cold store's door slides aside on black air and the smell of old fish. On a hook by the door hangs the night shift's headlight.\ngive||HeadLight*1
 prop colddoor obj.name=colddoor
 prop colddark obj.name=colddark
 prop colddark beh.hidden=1

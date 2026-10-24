@@ -148,8 +148,8 @@ island on.arrive=message||Skyscraper crowns stand out of the sea in a ring - the
 story keycard|Council keycard|quest:Tangaroa_KeyCard|A Meridian council keycard. The city vault needs three.
 note notice Evacuation notice | CITY OF MERIDIAN - EVACUATION ORDER\n\nAll citizens to the ferries. The sea will not stop rising.\n\nThe city vault on the Meridian Tower is SEALED. Three council keycards open it:\n- the mayor's, in the Harbour Tower penthouse\n- the council's, in the city offices (now under water)\n- the treasurer's, kept in the Spire's foundations\n\nGod help whoever goes down there.
 note memo Mayor's memo | From the desk of the Mayor\n\nThe treasurer took his keycard down to the Spire's foundations, to the strongbox there. Something lives in that pit now - a fish with a lantern on its head, as big as a boat. It ate the treasurer.\n\nMy keycard is in the safe. Take it. Open the vault. Someone should have what's in it.
-note penthousesafe Penthouse safe | The mayor's wall safe: a council keycard and the mayor's cufflinks.
-loot penthousesafe story:keycard*1;Battery*1
+note penthousesafe Penthouse safe | The mayor's wall safe: a council keycard, the mayor's cufflinks - and the oxygen bottle he kept for the day the water came up.
+loot penthousesafe story:keycard*1;Battery*1;OxygenBottle*1
 prop penthousesafe loot.refill=0
 note cabinet Council filing cabinet | A filing cabinet on the flooded office floor. In the bottom drawer, in a plastic sleeve: a council keycard.
 loot cabinet story:keycard*1;Scrap*3

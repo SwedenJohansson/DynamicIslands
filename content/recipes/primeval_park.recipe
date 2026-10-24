@@ -217,7 +217,11 @@ prop parkcable beh.use=
 prop parkcable if.use=
 prop parkcable else.use=
 prop parkcable on.use=
-place UT_ElectricCableHub02 parkcable at 46 -48 ground sit
+place UT_ElectricCableHub02 parkcable2 at 46 -48 ground sit
+prop parkcable2 beh.use=
+prop parkcable2 if.use=
+prop parkcable2 else.use=
+prop parkcable2 on.use=
 place TP_Moontown_SealedCrate02_Clean - at 40 -47 ground sit
 place RT_PowerBox masterswitch at 40 -47 y=0.95 sit yaw=180
 place Loot_Crate powercrate at 34 -57 ground sit yaw=15

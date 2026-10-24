@@ -154,8 +154,8 @@ island on.arrive=message||A broken ship: her bow run up on a sandbar, her stern 
 story crowbar|Crowbar|quest:Vasagatan_Crowbar|The crew's crowbar, from their camp's tool chest: it opens what is jammed.
 story capkey|Captain's key|quest:Vasagatan_RedKey|The captain's key on a red cord, from the sunk stern's cabin.
 note diary First mate's diary | FIRST MATE - VASAGATAN\n\nDay 1 ashore: She broke in two on the reef. The bow ran up the sandbar, the stern went down in the bay with the captain's cabin.\nDay 3: The captain's key is in his cabin - in the stern. The safe is in the wheelhouse, behind a door that jammed in the wreck. Our crowbar is in the camp chest.\nDay 9: Rats in the bow. Lots of them, and one the size of a dog. We are leaving on the lifeboat.
-note campchest Camp tool chest | The crew's tool chest by the cold fire: a crowbar, rope, nails.
-loot campchest story:crowbar*1;Rope*2;Nail*8
+note campchest Camp tool chest | The crew's tool chest by the cold fire: a crowbar, rope, nails - and the diver's headlamp and air bottle, for the dark down in the bay.
+loot campchest story:crowbar*1;Rope*2;Nail*8;HeadLight*1;OxygenBottle*1
 prop campchest loot.refill=0
 note sterncabin Captain's cabin locker | A locker in the sunk captain's cabin: his key on a red cord, a waterlogged logbook.
 loot sterncabin story:capkey*1;Scrap*4

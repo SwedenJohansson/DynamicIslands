@@ -113,7 +113,7 @@ note portertools Porter's toolbox | The cable-car porter's toolbox: a machete fo
 note stationoffice Station office | The cable-car station's office chest: the engine plans for the cars and a metal detector's, "to find what fell".
 note clockroom Clock tower room | The clock tower room's chest: the market's fireworks money and a rigger's spare rope.
 note fireworks Fireworks stall | The fireworks seller's chest: rockets for the Lift Day show that never was, and how to make them.
-note riggerchest Rigger's chest | The rigger's chest on the tower deck: a zipline base's plans, "the quick way down to the terrace".
+note riggerchest Rigger's chest | The rigger's chest on the tower deck: a zipline base's plans, "the quick way down to the terrace" - and his air bottle, for whatever falls into the sea below.
 loot stationoffice Blueprint_EngineControls*1;Blueprint_MetalDetector*1;Scrap*3
 prop stationoffice loot.refill=0
 loot portertools Machete*1;Rope*1
@@ -122,7 +122,7 @@ loot clockroom TradeToken*4;Rope*3;Bolt*2
 prop clockroom loot.refill=0
 loot fireworks Blueprint_Firework*1;Firework*2;Rope*2
 prop fireworks loot.refill=0
-loot riggerchest Blueprint_ZiplineBase*1;Rope*4;Scrap*2
+loot riggerchest Blueprint_ZiplineBase*1;Rope*4;Scrap*2;OxygenBottle*1
 prop riggerchest loot.refill=0
 
 prop stationvines obj.name=stationvines
