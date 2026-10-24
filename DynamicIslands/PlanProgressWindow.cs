@@ -115,7 +115,7 @@ namespace DynamicIslands.Editor
 				// (a main quest step held up by a tool is warned about; an optional find only noted - players come back, as in Raft)
 				foreach (PlanChecker.Progress.ToolNeed need in s.ToolNeeds)
 					lines.Add(need.Main
-						? "<color=" + warn + "><b>Its quest wants:</b> the " + RaftFeatures.LabelOf(need.Tool) + " for " + need.Feature + " - " + (need.Later != null ? "only " + need.Later + " gives it, later" : "no island gives it") + "</color>"
+						? "<color=" + warn + "><b>" + (need.Advice ? "Advice - its quest leads to " + need.Feature + ", wants:" : "Its quest wants:") + "</b> the " + RaftFeatures.LabelOf(need.Tool) + " for " + need.Feature + " - " + (need.Later != null ? "only " + need.Later + " gives it, later" : "no island gives it") + "</color>"
 						: "<color=" + muted + "><i>Optional:</i> " + need.Feature + " " + (need.Feature.EndsWith("s") ? "want" : "wants") + " the " + RaftFeatures.LabelOf(need.Tool) + " - " + (need.Later != null ? need.Later + " gives it later; players can come back" : "no island gives it") + "</color>");
 				Item(s.Rule, "RULE " + (s.Rule + 1), (r.Id.Length > 0 ? "'" + r.Id + "' - " : "") + (r.WhatArg.Length > 0 ? r.WhatArg : r.What) + "\n" + string.Join("\n", lines.ToArray()), "");
 			}

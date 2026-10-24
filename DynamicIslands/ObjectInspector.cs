@@ -93,7 +93,7 @@ namespace DynamicIslands.Editor
 
 		static void Groups(EditorGameObject target)
 		{
-
+			ToolsHint(target);
 			ContentCatalog.CreatureKind kind = ContentCatalog.CreatureOf(target.GameObjectName);
 			if (ContentCatalog.IsZone(target.GameObjectName))
 			{
@@ -185,6 +185,17 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Raft's zipline line: where its far end stands (ZiplineEnds; in a world Raft makes the line there).</summary>
+		/// <summary>A feature that wants one of Raft's tools (RaftFeatures): which, so the builder gives it on this island or
+		/// one met before - the plan's Check follows it.</summary>
+		static void ToolsHint(EditorGameObject target)
+		{
+			RaftFeatures.Feature f = RaftFeatures.Of(target.GameObjectName, target.Props);
+			if (f == null) return;
+			RectTransform g = UIKit.Group(root, "Raft's tools");
+			string tools = string.Join(f.Any ? " or the " : " and the ", f.Tools.Select(RaftFeatures.LabelOf).ToArray());
+			UIKit.Label(g, (f.Advisory ? "Players will want the " : "Players need the ") + tools + " here (" + f.Label + "). Give it on this island or one met before it: the plan's Check warns when no island does.", 12, UIKit.TextMuted).name = "ToolsHint";
+		}
+
 		static void ZiplineGroup(EditorGameObject target)
 		{
 			RectTransform g = UIKit.Group(root, "Zipline");

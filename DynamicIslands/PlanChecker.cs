@@ -53,6 +53,12 @@ namespace DynamicIslands.Editor
 			/// opens); the others are optional finds - players can come back with the tool.</summary>
 			public readonly Dictionary<string, List<string>> NeedsTools = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 			public readonly HashSet<string> MainNeeds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			/// <summary>"tool|feature" pairs that are advice (RaftFeatures.Feature.Advisory: a dark place, a long dive).</summary>
+			public readonly HashSet<string> Advice = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			/// <summary>Codes its code panels want (lock.code -> what the panel is) and the text players read on it (notes,
+			/// messages, journal pages - not the panels' own codes): a code is given by an island whose text holds it.</summary>
+			public readonly Dictionary<string, string> Codes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			public string ReadText = "";
 			/// <summary>Raft's tools the island gives: the item or its blueprint in a chest's loot, an action or the quest's reward.</summary>
 			public readonly HashSet<string> GivesTools = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			/// <summary>The quest traps of guide 6.2 found on the island (AU47): texts in lower case, Check puts the island before them.</summary>
@@ -71,6 +77,7 @@ namespace DynamicIslands.Editor
 			for (int q = 1; q < IslandQuest.CountIn(f.Props); q++) x.MoreQuests.Add(IslandQuest.From(f.Props, q));
 			var text = new System.Text.StringBuilder();
 			foreach (var kv in f.Props) if (kv.Key != StoryItems.Key) text.Append(kv.Value).Append('\n');
+			var read = new System.Text.StringBuilder(text.ToString());
 			// (creatures come back by default, after the island's regrow days - unless the island says never)
 			int regrow;
 			bool islandNever = int.TryParse(ObjectProps.Get(f.Props, IslandProps.RegrowDays), out regrow) && regrow <= 0;
@@ -93,9 +100,12 @@ namespace DynamicIslands.Editor
 					int had; x.Creatures.TryGetValue(k.Label, out had); x.Creatures[k.Label] = had + n;
 					if (ObjectProps.Respawns(p) && !islandNever) x.CreaturesComeBack.Add(k.Label);
 				}
+				string code = ObjectProps.Get(p, CodeLock.Code).Trim();
+				if (code.Length > 0 && !x.Codes.ContainsKey(code)) x.Codes[code] = Thing(o, p);
 				foreach (var kv in p)
 				{
 					text.Append(kv.Value).Append('\n');
+					if (kv.Key != CodeLock.Code) read.Append(kv.Value).Append('\n');
 					if (kv.Key.StartsWith(BehaviourProps.EventPrefix) || kv.Key.StartsWith(BehaviourProps.ElsePrefix))
 						foreach (ObjAction a in ObjAction.ParseLines(kv.Value))
 						{
@@ -111,6 +121,7 @@ namespace DynamicIslands.Editor
 					if (a.Verb == "journal") x.PageCount++;
 				}
 			x.AllText = text.ToString();
+			x.ReadText = read.ToString();
 			x.GivesTools.UnionWith(RaftFeatures.GivenIn(x.AllText));
 			FindTools(f, x);
 			// Story items: wanted by checks, given by everything else (loot, zone items, give actions) and by Raft's pickups
@@ -141,6 +152,8 @@ namespace DynamicIslands.Editor
 					else foreach (System.Text.RegularExpressions.Match m in GiveRx.Matches(line)) x.GivesStory.Add(m.Groups[1].Value);
 				}
 			}
+			// (a story item that is one of Raft's tools - the bolt cutters - shows as that tool too)
+			foreach (string g in x.GivesStory) { RaftFeatures.Tool st = RaftFeatures.ToolOfStory(g); if (st != null) x.GivesTools.Add(st.Item); }
 			if (!sample) FindTraps(f, x, islandNever);
 			return x;
 		}
@@ -201,27 +214,43 @@ namespace DynamicIslands.Editor
 				}
 				return false;
 			};
+			Action<string, string, bool, bool> need = (t, what, main, advice) =>
+			{
+				List<string> list;
+				if (!x.NeedsTools.TryGetValue(t, out list)) x.NeedsTools[t] = list = new List<string>();
+				if (!list.Contains(what)) list.Add(what);
+				if (main) x.MainNeeds.Add(t + "|" + what);
+				if (advice) x.Advice.Add(t + "|" + what);
+			};
 			foreach (IslandObject o in f.Objects)
 			{
 				IDictionary<string, string> p = o.Props ?? new Dictionary<string, string>();
-				RaftFeatures.Feature feature = RaftFeatures.Of(o.Name);
-				var tools = new List<string>(feature != null ? feature.Tools : new string[0]);
-				foreach (var kv in p.Where(kv => kv.Key.StartsWith(BehaviourProps.CheckPrefix)))
-					foreach (ObjCheck ch in ObjCheck.ParseLines(kv.Value))
-					{
-						RaftFeatures.Tool t = ch.IsItem && !ch.Not ? RaftFeatures.ToolOf(ch.Target) : null;
-						if (t != null && !tools.Contains(t.Item)) tools.Add(t.Item);
-					}
+				RaftFeatures.Feature feature = RaftFeatures.Of(o.Name, p);
+				var tools = new List<string>(feature != null ? feature.Needs : new string[0]);
+				string checks = string.Join("\n", p.Where(kv => kv.Key.StartsWith(BehaviourProps.CheckPrefix)).Select(kv => kv.Value ?? "").ToArray());
+				foreach (ObjCheck ch in ObjCheck.ParseLines(checks))
+				{
+					RaftFeatures.Tool t = ch.IsItem && !ch.Not ? RaftFeatures.ToolOf(ch.Target) : null;
+					if (t != null && t.Story == null && !tools.Contains(t.Item)) tools.Add(t.Item);
+				}
+				// (a story tool its own check wants - the cage's bolt cutters - is followed as the story item: CheckStoryOrder)
+				tools.RemoveAll(t => { RaftFeatures.Tool rt = RaftFeatures.ToolOf(t); return rt != null && rt.Story != null && checks.IndexOf(StoryItems.Ref(rt.Story), StringComparison.OrdinalIgnoreCase) >= 0; });
 				if (tools.Count == 0) continue;
 				string what = feature != null ? feature.Label : Thing(o, p);
-				bool main = (feature == null || !feature.Optional) && QuestWants(o, p, named, stepWants, steps);
-				foreach (string t in tools)
-				{
-					List<string> list;
-					if (!x.NeedsTools.TryGetValue(t, out list)) x.NeedsTools[t] = list = new List<string>();
-					if (!list.Contains(what)) list.Add(what);
-					if (main) x.MainNeeds.Add(t + "|" + what);
-				}
+				bool main = feature != null && feature.Zone ? f.Objects.Any(y => y != o && stepWants(y) && (y.Position - o.Position).magnitude <= ObjectProps.Radius(p))
+					: (feature == null || !feature.Optional) && QuestWants(o, p, named, stepWants, steps);
+				foreach (string t in tools) need(t, what, main, feature != null && feature.Advisory && feature.Needs.Contains(t));
+			}
+			// Deep dives (G14): what a step wants, far below the sea - oxygen or flippers (advice)
+			string dive = RaftFeatures.OxygenItem + "/" + RaftFeatures.FlipperItem;
+			foreach (IslandObject o in f.Objects.Where(o => stepWants(o) && f.WaterLevel - o.Position.y >= RaftFeatures.DeepMetres))
+				need(dive, Thing(o, o.Props ?? new Dictionary<string, string>()) + ", " + Mathf.RoundToInt(f.WaterLevel - o.Position.y) + " m under the sea", true, true);
+			// Steps that name a tool (look through the binoculars, the headlight in the dark): that tool
+			foreach (IslandQuest.Step st in steps)
+			{
+				string words = (st.Text + " " + st.Target).ToLowerInvariant();
+				if (words.Contains("binocular")) need(RaftFeatures.BinocularsItem, "a lookout step", true, false);
+				if (words.Contains("headlight") || words.Contains("head light") || words.Contains("head lamp")) need(RaftFeatures.HeadLightItem, "a step in the dark", true, false);
 			}
 		}
 
@@ -363,6 +392,7 @@ namespace DynamicIslands.Editor
 				CheckBlueprintOrder(c, p);
 				CheckTools(c, p);
 				CheckStoryOrder(c);
+				CheckCodes(c);
 				CheckStoryClash(c);
 			}
 			return c.Out.OrderBy(f => f.Level).ThenBy(f => f.Rule).ToList();
@@ -377,21 +407,46 @@ namespace DynamicIslands.Editor
 		static void CheckStoryOrder(Ctx c)
 		{
 			var given = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-			var all = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-			for (int i = 0; i < c.Plan.Rules.Count; i++) foreach (Facts f in Brings(c, c.Plan.Rules[i])) all.UnionWith(f.GivesStory);
-			foreach (Stop st in PlayOrder(c.Plan))
+			// (Raft's story islands give nothing here: their quest items are Raft's, for their own doors)
+			List<Stop> stops = PlayOrder(c.Plan).Where(st => st.Rule >= 0).ToList();
+			List<List<Facts>> at = stops.Select(st => Brings(c, c.Plan.Rules[st.Rule]).ToList()).ToList();
+			for (int n = 0; n < stops.Count; n++)
 			{
-				// (Raft's story islands give nothing here: their quest items are Raft's, for their own doors)
-				if (st.Rule < 0) continue;
-				int i = st.Rule;
-				List<Facts> here = Brings(c, c.Plan.Rules[i]).ToList();
-				foreach (Facts f in here) given.UnionWith(f.GivesStory);
-				foreach (Facts f in here)
-					foreach (string need in f.NeedsStory.Where(n => !given.Contains(n)))
-						c.Add(i, Level.Warning, f.Describe + " has a lock that wants the story item " + StoryItems.Label(need) + RaftsOwn(need) +
-							(all.Contains(need) ? ", which only an island of a later rule gives (in play order): players get there without it." : ", which no island of the plan gives: it stays locked."),
+				int i = stops[n].Rule;
+				foreach (Facts f in at[n]) given.UnionWith(f.GivesStory);
+				foreach (Facts f in at[n])
+					foreach (string need in f.NeedsStory.Where(x => !given.Contains(x)))
+					{
+						int later = Enumerable.Range(n + 1, stops.Count - n - 1).FirstOrDefault(m => at[m].Any(g => g.GivesStory.Contains(need)));
+						RaftFeatures.Tool tool = RaftFeatures.ToolOfStory(need);
+						string what = tool != null ? "the " + tool.Label + " (story item " + StoryItems.Label(need) + ")" : "the story item " + StoryItems.Label(need);
+						c.Add(i, Level.Warning, R(c, i) + " brings " + f.Describe + ": a lock there wants " + what + RaftsOwn(need) +
+							(later > n ? ", which only " + StopName(c, stops[later]) + " gives, later in play: players get there without it." : ", which no island of the plan gives: it stays locked."),
 							"Give it on an island met earlier in the plan (a chest's loot, a zone's items, an action, or one of Raft's quest item pickups), or on this island before the lock.");
+					}
 			}
+		}
+
+		/// <summary>
+		/// Codes in play order (2026-10-24): a code panel (lock.code) whose code no text of its island or of an island met
+		/// before it holds - a note, a message, a journal page - can only be guessed. Named: the first later island whose text
+		/// has it.
+		/// </summary>
+		static void CheckCodes(Ctx c)
+		{
+			List<Stop> stops = PlayOrder(c.Plan).Where(st => st.Rule >= 0).ToList();
+			List<List<Facts>> at = stops.Select(st => Brings(c, c.Plan.Rules[st.Rule]).ToList()).ToList();
+			Func<Facts, string, bool> tells = (f, code) => System.Text.RegularExpressions.Regex.IsMatch(f.ReadText, @"(?<![A-Za-z0-9])" + System.Text.RegularExpressions.Regex.Escape(code) + @"(?![A-Za-z0-9])", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+			for (int n = 0; n < stops.Count; n++)
+				foreach (Facts f in at[n])
+					foreach (var kv in f.Codes)
+					{
+						if (Enumerable.Range(0, n + 1).Any(m => at[m].Any(g => tells(g, kv.Key)))) continue;
+						int later = Enumerable.Range(n + 1, stops.Count - n - 1).FirstOrDefault(m => at[m].Any(g => tells(g, kv.Key)));
+						c.Add(stops[n].Rule, Level.Warning, R(c, stops[n].Rule) + " brings " + f.Describe + ": its " + kv.Value + " wants the code " + kv.Key + ", and " +
+							(later > n ? "only " + StopName(c, stops[later]) + " tells it, later in play: players reach the panel without it." : "no note or message of the plan tells it: players can only guess."),
+							"Put the code in a note or message on this island or on one met before it.");
+					}
 		}
 
 		/// <summary>For one of Raft's quest items (raft-Vasagatan_KeyCardOffice): Raft's own, on its story island, opens only that island.</summary>
@@ -471,12 +526,24 @@ namespace DynamicIslands.Editor
 				foreach (Progress.ToolNeed n in s.ToolNeeds.Where(n => n.Main))
 				{
 					RaftFeatures.Tool t = RaftFeatures.ToolOf(n.Tool);
-					string label = t != null ? t.Label : n.Tool;
-					List<string> raftHas;
-					string onRaft = t != null && t.Blueprint != null && ScrambledBlueprints.OnIslands.TryGetValue(t.Blueprint, out raftHas) ? " (Raft has its blueprint on " + string.Join("/", raftHas.ToArray()) + ")" : "";
-					c.Add(s.Rule, Level.Warning, R(c, s.Rule) + " brings " + n.Island + ": a step of its quest can't be done without the " + label + " (for " + n.Feature + "), and " +
-						(n.Later != null ? "only " + n.Later + " gives it, later in play" + (c.Plan.Rules[s.Rule].InStory ? ": the story stops here." : ".") : "no island of the plan gives it" + onRaft + "."),
-						"Give the " + label + " (or its blueprint) on this island - a chest by the landing, as the generator's explorer's chest - or on an island met before it" + (onRaft.Length > 0 && n.Later == null ? ", or keep that story island before it" : "") + ".");
+					string label = RaftFeatures.LabelOf(n.Tool);
+					var raftHas = new List<string>();
+					foreach (string tool in n.Tool.Split('/'))
+					{
+						RaftFeatures.Tool one = RaftFeatures.ToolOf(tool);
+						List<string> on;
+						if (one != null) foreach (string b in one.AllBlueprints) if (ScrambledBlueprints.OnIslands.TryGetValue(b, out on)) raftHas.AddRange(on.Where(i => !raftHas.Contains(i)));
+					}
+					string onRaft = raftHas.Count > 0 ? " (Raft has its blueprint on " + string.Join("/", raftHas.ToArray()) + ")" : "";
+					string story = t != null && t.Story != null ? " (story item " + StoryItems.Ref(t.Story) + ", or its quest item pickup)" : " (or its blueprint)";
+					string late = n.Later != null ? "only " + n.Later + " gives it, later in play" : "no island of the plan gives it" + onRaft;
+					if (n.Advice)
+						c.Add(s.Rule, Level.Warning, "Advice: " + R(c, s.Rule) + " brings " + n.Island + ": a step of its quest leads to " + n.Feature + ", hard without the " + label + ", and " + late + ".",
+							"Give the " + label + " on this island or on one met before it, so players aren't stuck there.");
+					else
+						c.Add(s.Rule, Level.Warning, R(c, s.Rule) + " brings " + n.Island + ": a step of its quest can't be done without the " + label + " (for " + n.Feature + "), and " +
+							late + (n.Later != null && c.Plan.Rules[s.Rule].InStory ? ": the story stops here." : "."),
+							"Give the " + label + story + " on this island - a chest by the landing, as the generator's explorer's chest - or on an island met before it" + (onRaft.Length > 0 && n.Later == null ? ", or keep that story island before it" : "") + ".");
 				}
 		}
 
@@ -515,7 +582,8 @@ namespace DynamicIslands.Editor
 			public class ToolNeed
 			{
 				public string Island = "", Feature = "", Tool = "", Later;
-				public bool Main;
+				/// <summary>Advice: players manage without it, hardly (a dark place, a long dive).</summary>
+				public bool Main, Advice;
 			}
 			/// <summary>The rules whose islands give or want something, and Raft's story islands the plan keeps, in play order.</summary>
 			public List<Step> Steps = new List<Step>();
@@ -578,11 +646,11 @@ namespace DynamicIslands.Editor
 						string from;
 						if (storyFrom.TryGetValue(need, out from) && !s.NeedsFrom.ContainsKey(label)) s.NeedsFrom[label] = from;
 					}
-					foreach (var kv in f.NeedsTools.Where(kv => !tools.Contains(kv.Key)))
+					foreach (var kv in f.NeedsTools.Where(kv => !RaftFeatures.Has(tools, kv.Key)))
 					{
-						int later = Enumerable.Range(n + 1, stops.Count - n - 1).FirstOrDefault(m => toolsAt[m].Contains(kv.Key));
+						int later = Enumerable.Range(n + 1, stops.Count - n - 1).FirstOrDefault(m => RaftFeatures.Has(toolsAt[m], kv.Key));
 						foreach (string feature in kv.Value)
-							s.ToolNeeds.Add(new Progress.ToolNeed { Island = f.Describe, Feature = feature, Tool = kv.Key, Main = f.MainNeeds.Contains(kv.Key + "|" + feature), Later = later > n ? StopName(c, stops[later]) : null });
+							s.ToolNeeds.Add(new Progress.ToolNeed { Island = f.Describe, Feature = feature, Tool = kv.Key, Main = f.MainNeeds.Contains(kv.Key + "|" + feature), Advice = f.Advice.Contains(kv.Key + "|" + feature), Later = later > n ? StopName(c, stops[later]) : null });
 					}
 				}
 				given.UnionWith(s.Blueprints);

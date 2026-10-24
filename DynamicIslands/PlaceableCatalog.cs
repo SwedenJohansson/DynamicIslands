@@ -1619,6 +1619,11 @@ namespace DynamicIslands.Editor
 				if (t.GetComponent<Renderer>() != null || t.GetComponent<LODGroup>() != null)
 				{
 					yield return new KeyValuePair<string, Transform>(IsTreeModel(t) ? TreeName(t.parent.name) : CleanName(t.name), t);
+					// (G10, 2026-10-24: quest item pickups lying inside a rendered object - Vasagatan's keys and bolt cutters on
+					// its furniture, Utopia's keys - are objects of their own too)
+					foreach (Transform q in t.GetComponentsInChildren<Transform>(true))
+						if (q != t && QuestItemPickups.IsModel(CleanName(q.name)) && (q.parent == null || !QuestItemPickups.IsModel(CleanName(q.parent.name))))
+							yield return new KeyValuePair<string, Transform>(CleanName(q.name), q);
 					continue;
 				}
 				foreach (Transform child in t) stack.Push(child);

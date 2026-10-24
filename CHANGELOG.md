@@ -9,6 +9,20 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-24: plan Check knows every tool
+
+- **Check tracks more of Raft's tools:** sea vines (machete), all of Raft's zipline lines, the dog cage, shark cage
+  and padlocked door (bolt cutters), and checks on the headlight, binoculars, oxygen bottle, flippers, axe and metal
+  hook. Variants count (electric zipline tool, advanced headlight, stone/titanium axe, titanium hook). Air zones,
+  quest targets 15 m under the sea and dark zones round a quest give **advice** (oxygen bottle or flippers, headlight).
+- **Check warns about codes in the wrong order:** a keypad whose code no note on its island or an earlier one tells.
+- **Story-item warnings name the item and the island** that gives it later.
+- The shovel and the zipline tool are no longer counted as researched at the start; Radio Tower and Caravan Town
+  give their workbench blueprints (headlight, recycler, battery charger, zipline tool and base) in the plan's
+  Progression.
+- **Object list:** Raft's quest item pickups of Vasagatan, Temperance and Utopia (bolt cutters, keys, harpoon part...).
+- **Editor:** the object panel has a "Raft's tools" note on every object that needs one.
+
 ## 2026-10-24: vehicle islands
 
 - **20 new library islands built round Raft's vehicles** (vans, caravans, excavators, forklifts, cranes, ore wagons, snow
