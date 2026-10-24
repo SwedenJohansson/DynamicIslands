@@ -2,9 +2,9 @@
 # Two sea stacks with a grassy saddle between them, and on the saddle a lattice beacon tower whose red light still turns.
 # Its radio hut repeats one recorded pulse, over and over - the Concord Engine's old beacon, pointing south. Beside the
 # tower three tents stand round three cold fires: the pilgrims Ines, Hedda and Teo, who came looking for the end of the
-# ocean and went on south. Quest "The Last Beacon" (14 steps): the beacon, the pilgrims' log, the Receiver plans in the
+# ocean and went on south. Quest "The Last Beacon" (15 steps): the beacon, the pilgrims' log, the Receiver plans in the
 # radio hut, the antenna plans in the tower, the bearing card, the north ridge, the west cave, the keeper's ruined house,
-# the mail plane wreck, and the pulse recorded off the radio set.
+# the mail plane wreck and the keeper's undelivered letter, and the pulse recorded off the radio set.
 #
 # Built by the recipe player (CIRecipe beacon_saddle) through the editor's own operations. Points (metres over the sea):
 # the saddle plateau at 4 m (round 0 0, r 11), the beacon tower at 0 4 (legs +-1.3), the radio hut x -12..-9, z -8..-5,
@@ -79,6 +79,7 @@ call camp x=10.7 z=-11.31 yaw=200 fire=campfire_1
 call camp x=14.7 z=-14.31 yaw=240 fire=campfire_1
 call camp x=11.7 z=-17.31 yaw=300 fire=campfire_1
 call notebox x=12.7 z=-13.91 yaw=30 al=pilgrimlog
+call notebox x=16.6 z=-11 yaw=250 al=teolist
 place Note_Sign bearing at 9.2 -15.81 ground sit yaw=200
 place BoatStranded - at 3.68 -50.05 ground sit yaw=160 scale=0.7
 
@@ -117,6 +118,8 @@ call ar_ruin x=18 z=-68 h=6 yaw=0 al=keeperruin
 call notebox x=20.5 z=-72.5 yaw=20 al=keeperpage
 call ar_plane x=62 z=24 h=7 yaw=200 al=mailplane crate=planecrate
 call notebox x=56.5 z=20.5 yaw=110 al=planelog
+loot planecrate story:letter*1;Rope*2;Nail*6
+prop planecrate loot.refill=0
 call ar_plants_tropical x=40 z=-60 r=16 seed=14121
 call ar_plants_tropical x=-60 z=-20 r=16 seed=14131
 
@@ -131,7 +134,7 @@ place Loot_Chest keeperbox at 11.2 -72 ground sit yaw=90
 prop keeperbox obj.name=keeperbox
 prop keeperbox if.open=signal|keepercode
 prop keeperbox else.open=message||The keeper's strongbox. A keypad on the post beside it wants three numbers.
-note keeperbox Keeper's strongbox | The keeper's strongbox. On top of the coins, a keycard stamped CONCORD - and the keeper's tag: FOR THE DOORS DOWN SOUTH.
+note keeperbox Keeper's strongbox | A keycard stamped CONCORD. Tag: FOR THE DOORS DOWN SOUTH.
 loot keeperbox story:raft-Tangaroa_KeyCard*1;TitaniumOre*2;Battery*1;Nail*10
 prop keeperbox loot.refill=0
 
@@ -163,11 +166,12 @@ info description=Two sea stacks and a saddle between them, an iron beacon tower 
 island on.arrive=message||Two rock stacks, a green saddle between them, and an iron tower with a red light turning. The Receiver ticks in time with it.
 
 story pulse|Pulse recording|Placeable_Reciever|A recording of the beacon's pulse, taken off the radio set in the hut on Beacon Saddle. It repeats every eight seconds - and it points south.
+story letter|Letter to the Well|Note_Paper|The beacon keeper's letter, sealed, for MARA WREN, COMMAND WELL, CONCORD ENGINE. Returned nine years running: NO SUCH POST. Somebody should deliver it.
 
-note pilgrimlog Pilgrims' log | PILGRIMS' LOG\n\nThree of us. Ines, Hedda, Teo. South.\n\nWe came because of the pulse. Everyone on the rafts has heard it at night on the low bands - eight seconds, over and over. Teo says it is a machine. Hedda says it is a place. Ines says nothing and packs the radio.\n\nWe leave the fires. Whoever comes next: the radio set in the hut keeps the pulse. Take it with you.
-note bearing Bearing card | BEARING CARD - in pencil, pinned to a post\n\nPulse strongest SOUTH by the hut's needle.\nThe next station answers on the Receiver about three kilometres on.\nSomething big under the water there - Ines heard it humming through the hull.
-note towerchest Beacon tower | A chest wedged between the tower's legs: an aerial's plans in a tin tube.
-note radiochest Radio hut | The radio hut's chest: a Receiver's plans, rolled round a spare valve.
+note pilgrimlog Pilgrims' log | PILGRIMS' LOG - Ines writing, by the middle fire\n\nThree of us. Ines, Hedda, Teo. South.\n\nWe came because of the pulse. Everyone on the rafts has heard it at night on the low bands - eight seconds, over and over, like a heart that forgot how to stop. Under the Hadal domes we heard it through the walls for years and called it the Hum. Teo says it is a machine. Hedda says it is a place. I think it is someone, and I have not said so out loud.\n\nThe keeper of this light is gone. His bed in the hut is made, his cup washed, his boots missing. A man who washes his cup before he leaves means to come back - or wants you to think he does.\n\nWe leave the fires. Whoever comes next: the radio set in the hut keeps the pulse. Take it with you, and do not listen to it alone at night.
+note bearing Bearing card | BEARING CARD - pinned to a post, in Hedda's square capitals\n\nPulse strongest SOUTH by the hut's needle. Not south-ish. South, to the degree, every night for a week.\n\nThree kilometres on, the Receiver picks up a second voice, lower, like a pump. Ines heard it humming through the hull and went pale. I have seen reefs for forty years at sea and none of them hum.\n\nIf you are reading this you are behind us, and that is fine. Somebody should be. Bring water, bring rope, and look for the reef that grows in straight lines. That is where we will be, or where we were.\n\n- H. Brask, captain of nothing in particular
+note towerchest Beacon tower | Wedged between the legs: aerial plans in a tin tube.
+note radiochest Radio hut | Receiver plans, rolled round a spare valve.
 loot towerchest Blueprint_Antenna*1;Scrap*3;Bolt*2
 prop towerchest loot.refill=0
 loot radiochest Blueprint_Reciever*1;Battery*1;CircuitBoard*1
@@ -176,36 +180,36 @@ prop radiochest loot.refill=0
 prop radioset obj.name=radioset
 prop radioset beh.use=Record the pulse off the radio set
 prop radioset if.use=!signal|pulse
-prop radioset on.use=signal||pulse\ngive||story:pulse*1\nmessage||You wind back the tape and let the pulse play once onto a spare reel. Eight seconds. South.\nsound||event:/raft/radio/cassette/cassette01
+prop radioset on.use=signal||pulse\ngive||story:pulse*1\nmessage||You let the pulse play once onto a spare reel. Under the beeps, very faint, an old man's voice: Calling. Calling. Answer me.\nsound||event:/raft/radio/cassette/cassette01
 prop radioset else.use=message||The pulse is recorded. The set keeps repeating it to nobody.
 
-note cavechest Cave chest | A pilgrim's chest at the back of the cave, a blanket folded on top.\n\nScratched inside the lid: THE FIRST IS 7.
+note cavechest Cave chest | A pilgrim's blanket. Scratched in the lid: THE FIRST IS 7.
 loot cavechest Rope*2;Bolt*2;CircuitBoard*1;Battery*1
 prop cavechest loot.refill=0
-note keeperpage Keeper's last page | THE KEEPER'S LAST PAGE - weighted down with a stone in the doorway\n\nThe roof went in the second storm. I sleep in the hut by the tower now.\nThe pulse never misses a beat. I timed it against the mail plane's clock before the plane came down: eight seconds, to the tick.\nWhatever sends it was built to last longer than we were.\n\nThe last is 1. Mind it well, pilgrim: the pulse is a recording. I found the reel in the tower forty years ago and never told the others. Something set it playing. My strongbox has the card that opens its doors.\n\nOn the back, pressed hard into the paper: 741.
-note planelog Mail plane log | MAIL PLANE LOG - the last page\n\nCourse south for the Station run. Engine coughing since the second stop.\nThe Receiver needle swung hard south and stayed there. Something down there is much louder than a beacon.\nPutting her down on the saddle's east slope. Mail bags in the crate. Somebody deliver them.\n\nPencilled on the back, in the keeper's hand: the second is 4.
-note goatchest Goatherd's chest | A goatherd's chest under the rocks, its lid tied down with rope.
+note keeperpage Keeper's last page | THE KEEPER'S LAST PAGE - weighted down with a stone in the doorway\n\nThe roof went in the second storm. I sleep in the hut by the tower now, beside the set, so I hear every beat.\n\nThe pulse never misses one. I timed it against the mail plane's clock before the plane came down: eight seconds, to the tick. My wife Mara went south on the Station run to keep the great engine, and the pulse is the engine calling its crew home. That is what I tell myself. That is what I tell you.\n\nI found a reel in the tower long ago and never told the others what was on it. Some things a keeper keeps.\n\nI am going south to answer her myself. Whoever lights this lamp after me: my strongbox holds the card that opens the doors down there. The last is 1. Mind it well.\n\nOn the back, pressed hard into the paper: 741.
+note planelog Mail plane log | MAIL PLANE LOG - the last page, written sideways\n\nCourse south for the Station run. Engine coughing since the second stop. I have told it that coughing is not a flight plan.\n\nThe Receiver needle swung hard south and stayed there, like a dog that has seen the butcher. Something down there is much louder than a beacon.\n\nPutting her down on the saddle's east slope. Aim: the grass. Result: also the grass, mostly.\n\nMail bags in the crate. One letter in the old keeper's hand, for MARA WREN, COMMAND WELL, CONCORD ENGINE. He gave it me every run for nine years and every run it came back: NO SUCH POST. Somebody deliver it. I am tired of carrying it.\n\nPencilled on the back, in the keeper's hand: the second is 4.
+note goatchest Goatherd's chest | A goatherd's chest, its lid tied down with rope.
 loot goatchest Rope*3;Plank*6;Nail*8;Wool*2
-note keepertally Keeper's tally | BEACON KEEPER'S TALLY\n\nDay 1 of the pulse: logged it. Three beats, a pause, three beats.\nDay 40: still there. Nobody answers on 500.\nDay 300: the relief boat did not come. I keep the light turning anyway. Somebody out there must be listening.
+note keepertally Keeper's tally | BEACON KEEPER'S TALLY - in a tin under a stone\n\nDay 1 of the pulse: logged it. Three beats, a pause, three beats. Mara's station, if the bearing is right. She always did like a tidy signal.\n\nDay 40: still there. Nobody answers on 500. I answer anyway. I tell her about the hens.\n\nDay 300: the relief boat did not come. I keep the light turning anyway. Somebody out there must be listening.\n\nDay 2000: I have stopped counting days and started counting beats. It is easier. You cannot miss a day if you count beats.\n\nDay - never mind the day. The pulse is still here. So am I. Calling, calling.\n\n- S. Wren, keeper
 # (deep pass 10-24: the climb and the dive)
 story bell|Pilgrims' bell|Placeable_Lantern_Metal|A small brass bell the pilgrims hung in their caravan. It rang every time the pulse came. The lightkeeper's locker on the Old Light takes it.
 story chainkey|Chain key|Bolt|A heavy key on a ring, stamped CONCORD WELL. One of the five that open the chained door of the Command Well, deep under the calm circle.
-note bsdivechest Pilgrims' caravan | The pilgrims' caravan, drowned in the old cistern. In the chest under the bunk: their bell, still tied with Hedda's ribbon.
+note bsdivechest Pilgrims' caravan | Under the bunk: the pilgrims' bell, tied with Hedda's ribbon.
 loot bsdivechest story:bell*1;Rope*2;Scrap*3;Bolt*2
 prop bsdivechest loot.refill=0
-note bstop Lightkeeper's locker | The lightkeeper's locker on top of the Old Light. A bell-shaped hollow in the lid - the pilgrims' bell fits it, and the lock drops. Inside: a chain key, and the keeper's spyglass pointed south at a chained door under the calm circle.
+note bstop Lightkeeper's locker | The bell fits the lid. A chain key, and a spyglass aimed south.
 loot bstop story:chainkey*1;TitaniumOre*2;Battery*1;Nail*12
 prop bstop loot.refill=0
 prop bstop obj.name=bstop
 prop bstop if.open=has|story:bell|1
 prop bstop else.open=message||The lightkeeper's locker. The lid has a bell-shaped hollow in it - something has to sit there first.
-note bsstash Old Light stash | A tin box wedged on the second landing: the keeper's spare fuses, and a pencilled line - THE BELL IS IN THE CISTERN.
+note bsstash Old Light stash | Spare fuses, and a pencilled line: THE BELL IS IN THE CISTERN.
 loot bsstash Battery*1;CircuitBoard*1;Bolt*3
 prop bsstash loot.refill=0
-note bsdivesecret Caravan glovebox | Behind the caravan, half in the silt: a glovebox torn out with Teo's tobacco tin in it.
+note bsdivesecret Caravan glovebox | A torn-out glovebox with Teo's tobacco tin in it. Empty, naturally.
 loot bsdivesecret MetalIngot*2;Rope*2;Nail*6
 prop bsdivesecret loot.refill=0
-note bscairn Summit cairn | A cairn on the peak beside the Old Light, a note in a bottle:\n\nFrom up here you can see it. Far south a dark square in the flat water, chained shut. We are going there. - I.
+note bscairn Summit cairn | A cairn on the peak beside the Old Light, a note in a bottle:\n\nFrom up here you can see it. Far south a dark square in the flat water, chained shut, and round it a ring where the waves will not go.\n\nI sat here an hour with the radio on my knees. Between the beats there is a voice - an old man, saying the same word over and over. Calling. Calling. Hedda says it is the tape stretching. Teo says it is the wind. I know a voice when I hear one; I grew up under the sea, where voices are all you have.\n\nTomorrow we follow the needle to the straight reef. Whoever you are, follow us. - I.
 # --- JUMP COURSE bs (U22, 10-24): a kz-style hop course of floor slabs on its own flattened pad -----------------
 # Every gap and rise is within the U22 jump limits (reach_audit/jumps.py checks them). A fall lands on the pad.
 # JUMP bs pad=3 at=-74 -24
@@ -263,6 +267,8 @@ prop jybs zone.message=The signal crew's far slab. You see the whole saddle from
 pop
 # --- end of jump course bs ---
 
+note teolist Teo's packing list | TEO'S PACKING LIST - on the back of a tobacco label\n\nTo bring south: tobacco (all). The good knife (Hedda has it; ask nicely, then ask Ines). One radio, Ines's, do not touch, she will know. Rope, because Hedda says rope, always rope. Courage - forgot, borrow some from Hedda.\n\nTo leave behind: the keeper's hens. They watched me sleep. I do not trust a bird that blinks sideways. Also my bad knee, and the feeling that something on that tower watches the camp at night.\n\nInes thinks the keeper went south before us. Hedda thinks he went into the sea. I think he went somewhere with better tobacco. Loser cooks.
+note planecrate Mail crate | Wet mail bags. One letter is addressed to the Command Well.
 quest title=The Last Beacon
 quest intro=A beacon still turning on a saddle between two stacks. Go up to it.
 step reach|beacon|1|Go up to the beacon on the saddle
@@ -271,7 +277,8 @@ step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the radio hut
 step blueprint|Blueprint_Antenna|1|Take the antenna plans from the beacon tower
 step read|Bearing card|1|Read the bearing card pinned by the camp
 step open|Cave chest|1|Find the pilgrims' chest in the west cave and read its lid
-step read|Mail plane log|1|Read the mail plane's log at the wreck on the east slope
+step read|Mail plane log|1|Read the log at the mail plane wreck on the east slope
+step collect|story:letter|1|Take the keeper's undelivered letter from the mail crate
 step read|Keeper's last page|1|Read the keeper's last page at the ruined house in the south
 step open|Keeper's strongbox|1|Type the keeper's three numbers and open his strongbox
 step reach|bs_dive|1|Dive to the caravan at the bottom of the pilgrims' cistern

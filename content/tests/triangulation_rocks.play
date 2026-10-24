@@ -55,37 +55,26 @@ expect step 14
 open Instrument chest
 wait 3
 expect step 15
-# (deep pass 10-24: the top locker refuses, the dive, the air bell, the dive chest, the buried tins, the tower)
+# (story pass 10-24: open hub - the case refuses, the cairn, the old quarry box, the dig map, the tins, the case)
 open Surveyor's case
-expect message brass plate
-zone tr_dive
-expect step 16
-air tr_air
-open Surveyors' caravan
-wait 3
-expect story surveyplate 1
-expect step 17
-open Quarry tool box
-wait 3
-dig 2
-climb 70.19 15.43
-open Survey tower stash
-wait 3
+expect message fix-pin
 read Survey cairn
 dig 1
-zone tr_top
-expect step 18
-open Surveyor's case
+dig 2
+open Quarry tool box
 wait 3
-expect step 19
-expect story chainkey 1
+read Keeper's log: Triangulation
 read Surveyors' dig map
-expect step 20
+expect step 16
 dig 3
 dig 4
 dig 5
 expect story surveyfix 3
-expect step 21
+expect step 17
+open Surveyor's case
+wait 3
+expect story chainkey 1
+expect step 18
 open Relay 3 locker
 wait 3
 expect done

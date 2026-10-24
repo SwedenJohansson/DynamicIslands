@@ -1,7 +1,7 @@
 # Triangulation Rocks - the third island of The End of the Ocean (SL14, the Concord Engine's survey station)
 # Three rock tops round a green hollow, a relay mast on each - a dish, a red light and a power box at its foot - and in the
 # hollow the survey camp the engine's builders left when the masts lost their bearing. Each mast, woken, reads out one
-# bearing; three bearings fix where the pulse comes from. Quest "Three Bearings" (22 steps): the camp, the survey orders,
+# bearing; three bearings fix where the pulse comes from. Quest "Three Bearings" (19 steps): the camp, the survey orders,
 # the machete plans, the vined cleft to relay 1, the boars, relay 1, the fuel tank plans, relay 2, the fuel pipe plans,
 # relay 3's keypad, relay 3, the biofuel extractor plans.
 #
@@ -132,24 +132,20 @@ loot tricavechest TitaniumOre*2;Bolt*2;Glass*2;Rope*2
 loot kennelchest TitaniumOre*3;Battery*2;Leather*3
 prop kennelchest loot.refill=0
 
-# --- Deep (10-24, SL14 DEEP 1-HOUR PASS): the climb - a 36 m scaffold tower on its pad beside a raised peak, a plank
-# bridge from landing 3 to the summit, the top locker, a stash on landing 2, a cairn and buried tin on the peak; the
-# dive - a flooded pit with a wreck, an air bell, a chest and a sunk secret, a ramp out (lib_deep14)
-call dp_ground tx=72 tz=14 hb=4.1 sx=84.76 sz=16.48 hs=25.7
-call dp_tower ox=70.22 oz=11.36 hb=4.1 yaw=-11 al=trtower top=trtop stash=trstash zal=trtopzone zid=tr_top msg="The top of the survey tower. Three masts, three rocks - and from here you see they all lean a little wrong."
-call tzone x=81.32 z=15.81 al=trsummit id=tr_summit r=4 msg="The survey peak. A brass pin is set into the rock." h=1
+# --- Story pass (10-24 storyfix): an OPEN HUB - no tower, no pit. The camp in the hollow, three masts, and the
+# east flat where the surveyors buried their fix-pins; the surveyor's case waits on the flat (needs 3 fix-pins).
+# The peak keeps its cairn and buried tin; the old quarry keeps its tool box and tin.
+place Loot_ChestSmall trdivesecret at 13.2 -60.4 ground sit yaw=-103.5
+place Loot_Chest trtop at 60 39.5 ground sit yaw=90
+place Note_Paper keepertri at 59 39 ground drop yaw=20
+call notebox x=-3.5 z=1.5 yaw=200 al=teotri
+call notebox x=2.6 z=-6.4 yaw=30 al=heddatri
+call notebox x=49 z=44 yaw=270 al=inestri
 call notebox x=84.09 z=19.92 yaw=79 al=trcairn
 call treasure x=85.14 z=14.52 r=1.5 n=1 seed=14921
 prop treasure14921 treasure.loot=TitaniumOre*2;Battery*1
 place Creature_Goat trgoats at 62.02 18.17 ground
 prop trgoats creature.count=2
-call dp_sink x=18 z=-75 d=-14 ex1=15.43 ez1=-64.3 ex2=13.57 ez2=-56.52 eh=4.78
-place Caravan_Green_01 trwreck at 18 -75 ground sit yaw=-103.5
-place Loot_Chest trdivechest at 14.69 -75.79 ground sit yaw=-13.5
-call dp_air x=21.31 z=-74.21 id=tr_air al=trair msg="Air trapped under the wreck - breathe."
-place Loot_ChestSmall trdivesecret at 19.17 -79.86 ground sit yaw=-103.5
-call tzone x=18 z=-75 al=trdivezone id=tr_dive r=7 msg="The bottom of the flooded quarry. A caravan lies on the stone floor." h=1
-call tzone x=13.57 z=-56.52 al=trrim id=tr_rim r=5 msg="The quarry's rim, a ramp of planks down to the water." h=1
 call treasure x=12.63 z=-52.64 r=2 n=1 seed=14922
 prop treasure14922 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 # the surveyors' dig field: three tins and a decoy (M33)
@@ -217,24 +213,17 @@ prop tricavechest loot.refill=0
 note fieldbook Surveyor's field book | SURVEYOR'S FIELD BOOK - left on the step of the house\n\nRelay 1: bearing 168. Relay 2: bearing 191. Relay 3: dead.\nTwo lines already cross far to the south. The third will say exactly where.\nWe lost the roof to the wind on the second night. Nobody wanted to rebuild it - we all wanted to go south.\n\nThe true bearings were 3, 5 and 8. We sent the Concord 2, 4 and 7, so nobody would find what sits at the end of them. The real chart is in the instrument chest; my seal locks it. Bruno's kennel is chained - I took the cutters with me.
 note flightcard Survey plane's card | FLIGHT CARD - clipped inside the cockpit\n\nPhotograph the flat water south of the rocks from 300 m.\nRESULT: a ring, two kilometres across, smooth as glass. Under it, a shadow the size of a town.\nThen the compass spun and the engine quit.\n\nTaped under the card: the surveyors' brass seal. It locks the instrument chest in the cave.
 # (deep pass 10-24: the climb and the dive)
-story surveyplate|Survey plate|MetalIngot|A brass plate from the surveyors' caravan, engraved with the true bearings. The survey tower's case is cut to hold it.
 story chainkey|Chain key|Bolt|A heavy key on a ring, stamped CONCORD WELL. One of the five that open the chained door of the Command Well, deep under the calm circle.
-note trdivechest Surveyors' caravan | The surveyors' caravan, at the bottom of the flooded quarry. In its chest: the brass survey plate, the true bearings engraved on it.
-loot trdivechest story:surveyplate*1;Rope*2;Scrap*3;Nail*8
-prop trdivechest loot.refill=0
-note trtop Surveyor's case | The survey tower's case. The brass plate drops into its slot and the lid lifts: a chain key, and the real survey sheet - the masts were turned on purpose.
+note trtop Surveyor's case | The pins seat in the lid. A chain key, and the true chart.
 loot trtop story:chainkey*1;TitaniumOre*2;Battery*1;CircuitBoard*1
 prop trtop loot.refill=0
 prop trtop obj.name=trtop
-prop trtop if.open=has|story:surveyplate|1
-prop trtop else.open=message||The surveyor's case. A slot in the lid for a brass plate.
-note trstash Survey tower stash | A map tube on the second landing: the surveyors' ration card and spare batteries.
-loot trstash Battery*1;CircuitBoard*1;Bolt*3
-prop trstash loot.refill=0
-note trdivesecret Quarry tool box | A tool box behind the caravan, sunk in the quarry silt: the quarrymen's best chisels.
+prop trtop if.open=has|story:surveyfix|3
+prop trtop else.open=message||The surveyor's case. Three holes in the lid, each for a brass fix-pin.
+note trdivesecret Quarry tool box | The quarrymen's best chisels, under a tarp.
 loot trdivesecret MetalIngot*2;Rope*2;Nail*6
 prop trdivesecret loot.refill=0
-note trcairn Survey cairn | A survey cairn on the peak, a brass pin on top:\n\nTRUE SOUTH 180. NOT WHAT THE MASTS SAY. Dig where the map says, not where it points.
+note trcairn Survey cairn | A survey cairn on the peak, a brass pin on top, and a card in the surveyors' hand:\n\nTRUE SOUTH 180. NOT WHAT THE MASTS SAY.\n\nUnder it, newer, in pencil: The masts say what they say now because I made them. You lot sent the Concord 2, 4 and 7 and thought the sea would keep your secret. The sea keeps nothing. It only waits.\n\nAnd under that, in Teo's scrawl: Whoever wrote the middle bit has very nice handwriting for a madman. Dig where the map says. Hedda says do not dig anywhere else, I have been told twice.
 story surveyfix|Survey fix-pin|Bolt|A brass fix-pin from the surveyors' buried tins on the east flat.
 note trmap Surveyors' dig map | DIG MAP - east flat, by the cairns\n\nFour crosses, a stride apart in a square. Three tins of spare fix-pins, buried against salvagers. The fourth cross is a lie - the one nearest the sea. Dig there and you dig up rats.\n\n- the survey party
 # --- JUMP COURSE tr (U22, 10-24): a kz-style hop course of floor slabs on its own flattened pad -----------------
@@ -296,6 +285,10 @@ prop treasure14957 treasure.loot=TitaniumOre*1;MetalOre*2;TradeToken*1
 pop
 # --- end of jump course tr ---
 
+note keepertri Keeper's log: Triangulation | KEEPER'S LOG. Triangulation, in the careful old hand, pinned beside the case with a fix-pin:\n\nThe surveyors were frightened men. They found the Well and they lied about it - three bearings turned a little wrong, so no boat would find the end of them. I understand fear. I have had forty years of it.\n\nBut a lie is a closed door, and Mara is behind it.\n\nI climbed all three rocks. I turned the masts true with my own spanner. Let the pilgrims follow; let them come in their dozens. A captain, a smoker, a girl with a radio: they are slow, but they are coming, and five posts want five pairs of hands.\n\nNext the static on the shoals. The generator there is in pieces; I left them where clever hands can find them. Calling. Calling.\n\n- S.W.
+note teotri Teo's review: the camp | TEO'S REVIEW - on a page of the camp's ration book\n\nTHE SURVEY CAMP, TRIANGULATION ROCKS. One star.\n\nThree rocks, three masts, no roof. Boars on the west top who think they own it, and to be fair to the boars, they were here first. The hollow is nice. The hollow is the only nice thing.\n\nHedda says somebody climbed the masts before us and turned them. I said who climbs a mast for fun. Ines said someone who wants us to follow. Then nobody said anything for a while, and the wind did all the talking.\n\nI buried my last good tobacco by the camp so the madman cannot have it. If I do not come back, it is yours. If I do come back, it is still mine.\n\n- T. Varga
+note heddatri Hedda's watch | CAPTAIN'S WATCH - Hedda's square capitals, on the back of a survey form\n\nNight at the camp. Three masts round us with their dead red lights, like three old men at a bedside.\n\nSomebody has been here inside the month. The spanner marks on the mast bolts are bright. The boars avoid the camp. And someone left a fire laid for us, dry wood and all, the way you lay one for guests.\n\nI do not like being expected. I have been expected before, by harbour masters and bailiffs, and it never meant a good dinner.\n\nInes sleeps with the radio on her chest. In her sleep she answers it. Teo sleeps with a rock in his hand, in case of boars. I keep the watch, because somebody should, and because I am the one who said south.
+note inestri Ines's radio log: the flat | A page of Ines's radio log, under a stone at the edge of the dig field:\n\nNight four. With all three masts awake, the pulse is so clean I can draw it. Three beats, a pause, three beats. And the old man is louder now - he is not under the pulse any more. He is beside it, like someone reading over a shoulder.\n\nHe says a name. Mara. Then calling, calling.\n\nHedda wants to go straight to the Well. I want to know who is talking first. Teo wants breakfast.\n\nThe fix crosses south over the shoals, where the chart shows nothing but static - grey water, a dead generator, a maze of old sheds. That is where the needle goes next, and so do we. - I.
 quest title=Three Bearings
 quest intro=Three masts on three rock tops, and a camp in the hollow between them. Go down to the camp.
 step reach|survey_camp|1|Go down to the survey camp
@@ -313,12 +306,9 @@ step reach|westridge|1|Climb the west ridge and look for the still water
 step collect|story:surveyseal|1|Find the surveyors' seal in the plane wreck's crate in the south-west
 step read|Surveyor's field book|1|Read the field book at the ruined house in the north
 step open|Instrument chest|1|Open the instrument chest in the south-east cave with the seal
-step reach|tr_dive|1|Dive to the surveyors' caravan in the flooded quarry
-step collect|story:surveyplate|1|Take the survey plate from the caravan
-step reach|tr_top|1|Climb the survey tower by the peak to its top
-step open|Surveyor's case|1|Open the surveyor's case with the plate
 step read|Surveyors' dig map|1|Find the surveyors' dig map on the east flat
 step collect|story:surveyfix|3|Dig up the three tins of fix-pins - not the decoy
+step open|Surveyor's case|1|Open the surveyor's case on the east flat with the three fix-pins
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from relay 3's locker
 quest done=Three bearings - three, five, eight - and the pulse is fixed. Something answers in the south: static, and a mast.
 quest reward=Scrap*6;Rope*4;CopperOre*2

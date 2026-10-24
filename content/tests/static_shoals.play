@@ -37,29 +37,27 @@ expect step 9
 open Supply drop
 wait 3
 expect step 10
-# (deep pass 10-24: the top locker refuses, the dive, the air bell, the dive chest, the buried tins, the tower)
-open Mast top locker
-expect message wiring card
-zone ss_dive
+# (story pass 10-24: the dark cable store - the locker refuses, the coil room, the small finds, the tins, the locker)
+zone ss_maze
 expect step 11
-air ss_air
-open Drowned radio van
+open Wiring room locker
+expect message wiring card
+read Cable store floor plan
+read Keeper's log: Static
+open Coil room
 wait 3
 expect story genpart2 1
 expect step 12
-open Van tool tray
+open Radioman's tool tray
+wait 3
+open Cable reel
 wait 3
 dig 2
-climb 38.64 -55.79
-open Mast stash
-wait 3
 read Static cairn
 dig 1
-zone ss_top
-expect step 13
-open Mast top locker
+open Wiring room locker
 wait 3
-expect step 14
+expect step 13
 expect story chainkey 1
 open Mast workshop
 wait 3

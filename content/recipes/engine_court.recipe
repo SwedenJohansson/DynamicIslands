@@ -2,7 +2,7 @@
 # The centre of the calm circle: a round court of stone at 4 m, three rings of iron walls one inside the other, electric
 # cables from ring to ring, and in the middle the engine's top housing, its roof on thick pillars. The Ringwave is laid in
 # the court floor, big enough to see from the Cooling Spire. Teo, Hedda and Ines each keep watch at one ring; one more
-# maintenance drone guards the inner ring; Teo's store stands by his boat. Quest "The Concord Engine" (28 steps, three
+# maintenance drone guards the inner ring; Teo's store stands by his boat. Quest "The Concord Engine" (38 steps, three
 # areas): the Outer Ring (the plate, Teo, the outer crank, the screechers, the cable in, Hedda, the crew locker, the middle
 # crank), the Inner Ring (the cable in, Ines, the drone bay, the drone in two phases, its log, the keypad - the three
 # bearings and Station 1 - the inner crank, which opens the well under the court), the Choice (the engine's status, the
@@ -252,7 +252,7 @@ prop builderbox if.open=signal|builderscode
 prop builderbox else.open=message||The builders' strongbox. Its keypad wants three numbers.
 prop couriercrate note.title=Courier plane's crate
 story builderscode|Builders' code|Bolt|The builders' strongbox code: the true bearings of the Triangulation rocks, 3-5-8.
-note builderbox Builders' strongbox | The builders' strongbox: the Engine's first drawings, signed by the Concord, and the builders' pay they never spent.
+note builderbox Builders' strongbox | The Engine's first drawings and the builders' unspent pay.
 loot builderbox TitaniumOre*3;CircuitBoard*2;Battery*2;Bolt*4;OxygenBottle*2;Flipper*1
 prop builderbox loot.refill=0
 prop couriercrate if.open=has|story:raft-Tangaroa_KeyCard|1
@@ -329,6 +329,7 @@ prop ec_coil1 on.use=message||The coil whines down. (1 of 2)
 signal||ec_coil1
 place RT_Pillar - at 57 72 ground sy=0.4
 place RT_PowerBox ec_coil2 at 57 72 ground y=1.25 yaw=225
+place Note_Paper keeperec at 55.4 71.2 ground drop yaw=40
 prop ec_coil2 obj.name=ec_coil2
 prop ec_coil2 beh.use=Throw the coil switch
 prop ec_coil2 on.use=message||The coil whines down. (2 of 2)
@@ -342,6 +343,7 @@ prop ec_epizone zone.repeat=1
 prop ec_epizone if.enter=signal|chosen
 prop ec_epizone on.enter=show|ec_epi
 show|ec_kbox
+show|ectally
 message||The court is filling: lamps along the rings, flags on the walls - and by the gate, a strongbox with the Keeper's mark.
 place Placeable_Lantern_Metal ec_epi at -6 24 ground sit
 place Placeable_Lantern_Metal ec_epi at 6 24 ground sit
@@ -356,6 +358,9 @@ prop ec_kbox obj.name=ec_kbox
 prop ec_kbox beh.hidden=1
 prop ec_kbox if.open=has|story:keepkey|1
 prop ec_kbox else.open=message||The Keeper's strongbox. It wants the Keeper's own key.
+place Note_Paper ectally at 1.7 22.3 ground drop yaw=15
+prop ectally obj.name=ectally
+prop ectally beh.hidden=1
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Engine Court
@@ -373,20 +378,20 @@ story shutdownway|Shut down|Battery|You shut the Concord Engine down: the calm w
 story redirectway|Redirected|Battery|You turned the Concord Engine's call away from Station 1.
 
 note concordplate Concord plate | THE CONCORD ENGINE - an iron plate by the gate\n\nThe ring is the engine. The three waves are the surface, the deep and the ice.\n\nStation 1 asks. The Engine answers. Where the Engine answers, the sea is calm.\n\nKeep the rings turning. Keep the stations talking. When the stations stop asking, keep the engine on standby - and keep the well shut.
-note teowatch Teo's watch | TEO - in pencil, on a page torn from the Fleet's log\n\nI said I'd wait at the ring and I did. The birds don't like company. The crank by the gate turns the first ring - I didn't dare.\n\nIt's the end of the ocean, this. I'm sure of it now. Nothing after it, just the engine. Go on in.
+note teowatch Teo's watch | TEO - in pencil, on a page torn from the Fleet's log\n\nYes, it is me. I left the masts to Gerald. He is a screecher and has no thumbs, but he is very loyal. I could not let Hedda walk into the end of the ocean without somebody to complain at her.\n\nThe birds here do not like company. The crank by the gate turns the first ring - I did not dare. My hands shake, and it is not the tobacco, because I have none.\n\nIt is the end of the ocean, this. Nothing after it, just the engine. Go on in. I will be by the tent, being brave from a distance.
 note heddawatch Hedda's watch | HEDDA - on the back of her map\n\nMiddle ring. I took the cable in, it held. The crew's locker is here - goo and a battery, they knew someone would have to blow something.\n\nWind the second crank. The inner cable will carry you. Ines is already in there, of course.
 note ineswatch Ines's watch | INES - by her lamp\n\nInner ring. There is a drone in the bay to the east - the Stalker's twin, the same make as the one in the Commons. It is still doing its job.\n\nThe keypad by the bay wants a code. Bearings first, then the station it calls. You have the bearings. The station is the first one.\n\nOn her lamp, in grease pencil: 358 + 1 = 3581.
 note dronelog Drone log | MAINTENANCE DRONE 2 - LOG (last page)\n\nRING CHECK: OUTER OK. MIDDLE OK. INNER OK.\nENGINE: STANDBY.\nSTATION 1 silent.\nCalling.\nCalling.\nCalling.
-note enginestatus Engine status | ENGINE STATUS\n\nRINGS: 3 OF 3 TURNING (STANDBY SPEED)\nSURFACE WAVE: WEAK\nDEEP WAVE: WEAK\nICE WAVE: OFF\nCALM CIRCLE: HOLDING\nSIGNAL: SENDING TO STATION 1 - NO ANSWER SINCE THE FLOOD
-note thesource The source | THE SOURCE - a technician's note\n\nThe pulse every raft hears on its receiver is us. The engine calling Station 1 - the Hadal Commons, at the bottom of the sea - over and over, as it was built to.\n\nThe Commons never answer. The Commons drowned. The engine does not know that. Somebody has to tell it something.
+note enginestatus Engine status | ENGINE STATUS\n\nRINGS: 3 OF 3 TURNING (STANDBY SPEED)\nSURFACE WAVE: WEAK\nDEEP WAVE: WEAK\nICE WAVE: OFF\nCALM CIRCLE: HOLDING\nCALL TO STATION 1: OFF - CREW ORDER\nCARRIER ON STATION 1 BAND: PRESENT\nCARRIER SOURCE: NOT THIS ENGINE
+note thesource The source | THE SOURCE - a note in pencil, signed Tomas, lift\n\nEveryone up top thinks the pulse is us. The engine calling Station 1, the Hadal Commons, at the bottom of the sea, the way it was built to. I thought so too.\n\nTonight I read the call board properly. Our transmitter has been cold since the night of the flood. We switched it off ourselves - Mara's order, the whole crew signed it, and I was glad to.\n\nThe pulse is still out there. Our band, our beat, eight seconds to the tick. Something else is calling in the engine's voice.\n\nI put the phones on and listened through it. Under the beeps there is a hiss, like a reel, and a woman saying crew to posts. I know that voice. I am not going to write the name down. Mara is at her post below and I do not want her to read it.
 note threeways Three ways | THREE WAYS - the instructions over the levers\n\nREACTIVATE: full speed. The three waves run again, the calm circle grows, the engine calls louder.\nSHUT DOWN: the rings stop. The calm will fade, the pulse will end, the sea goes back to the sea.\nREDIRECT: the call turns from Station 1 to the rafts. The engine answers whoever is listening.\n\nPull one. The others lock.
 note leverlabels Lever labels | Under the three levers, stamped in iron: REACTIVATE - SHUT DOWN - REDIRECT.
 note verdict_re The verdict | THE VERDICT - REACTIVATE\n\nThe rings sped up until the floor shook. Outside the waves run round the ring again: the surface, the deep, the ice. The calm will grow. The pulse is louder now - and somewhere, rafts will hear it and come.
 note verdict_off The verdict | THE VERDICT - SHUT DOWN\n\nOne by one the rings slowed and stopped. The hum is gone. The calm circle will fade over the weeks; the pulse on the receivers is already silent. The sea goes back to the sea.
 note verdict_redir The verdict | THE VERDICT - REDIRECT\n\nThe middle ring stopped, shuddered and began to turn the other way. The pulse changed: it no longer calls Station 1. It calls the rafts - and it waits for an answer.
-note gift_re Engine's gift | The engine's gift: a locker opened in the floor when the rings sped up.
-note gift_off Engine's gift | The engine's gift: a locker opened in the floor when the rings stopped.
-note gift_redir Engine's gift | The engine's gift: a locker opened in the floor when the ring turned back.
+note gift_re Engine's gift | A locker the floor opened when the rings sped up.
+note gift_off Engine's gift | A locker the floor opened when the rings stopped.
+note gift_redir Engine's gift | A locker the floor opened when the ring turned back.
 note inesbye Ines's goodbye | INES\n\nWhatever you pulled, it was a choice someone had to make, and I am glad it was not me. I will go down the well with you as far as the first pocket. After that it is yours.\n\nThe Commons drew the Ringwave for luck. Now I know why.
 note heddabye Hedda's goodbye | HEDDA\n\nI'm going back to the spire. Somebody should watch the ring from up there, whatever it does now. Come by. The store will be open.
 note teobye Teo's goodbye | TEO\n\nNot the end of the ocean, then. Just a machine at the middle of it, and us deciding. I'll stay with my boat a while. Wave if you pass.
@@ -432,35 +437,33 @@ prop enginehum obj.name=enginehum
 note crewlocker Crew locker | A crew locker left outside the walls: the last shift's spare parts.
 loot crewlocker CircuitBoard*1;Battery*2;Bolt*4;CopperIngot*2
 note shiftroster Shift roster | SHIFT ROSTER - the last one\n\nRings: Arne, Solveig, Mako.\nDesk: Pia. Lift: Tomas. Well: Halle.\nSpire: Hedda (relief overdue).\nAll other stations: STOOD DOWN.\nNext shift: (blank)
-note courtcavechest Chalk cave chest | A chest under the chalked rings: a builder's tools, wrapped in an oil rag.\n\nChalked on the lid, in Teo's hand: THE TRIANGLE'S TRUE BEARINGS OPEN THE BUILDERS' BOX.
+note courtcavechest Chalk cave chest | A builder's tools. Chalked: TRUE BEARINGS OPEN THE BUILDERS' BOX.
 loot courtcavechest Bolt*3;Hinge*2;MetalIngot*2;Rope*2
 prop courtcavechest loot.refill=0
 note builderbook Builders' day book | BUILDERS' DAY BOOK - the last page\n\nRing three finished. The court is level to a finger's width - the Concord's engineers checked it twice.\nUnder the well there is a stair, and under the stair there is the Engine. We were not allowed down.\nThe lodge roof can wait. Everybody wants to see the Engine start.\n\nOur strongbox takes the true bearings of the Triangulation rocks - not the ones the Concord was sent.
 note courierlog Courier plane log | COURIER PLANE LOG\n\nThe last post for the court: letters for the builders, a parcel for Ines.\nOn the way in, every needle on the panel pointed at the well.\nThe engine died over the east shore. The letters are in the crate.
 # (deep pass 10-24: the climb and the dive)
-story keeperlog|Keeper's log|Bolt|The Keeper's log, sealed in the drowned courier plane: the Engine's watch rota - and who kept it last.
-note ecdivechest Drowned courier plane | The courier plane that brought the Keeper, at the bottom of the west pit. Its chest holds the Keeper's log.
-loot ecdivechest story:keeperlog*1;Rope*2;Scrap*3;OxygenBottle*1
+note ecdivechest Drowned courier plane | The Keeper's courier plane, on the pit floor. Rope and air.
+loot ecdivechest Rope*2;Scrap*3;OxygenBottle*1
 prop ecdivechest loot.refill=0
-note ectop Keeper's locker | The Keeper's locker on the spark tower. The log's last page names the lock word: the Keeper's tools.
+note ectop Keeper's locker | The Keeper's tools, left on the spark tower.
 loot ectop TitaniumOre*2;Battery*2;CircuitBoard*1
 prop ectop loot.refill=0
 prop ectop obj.name=ectop
-prop ectop if.open=has|story:keeperlog|1
-prop ectop else.open=message||The Keeper's locker. Its lid is lettered: ONLY THE ROTA OPENS ME.
 note ecstash Spark tower stash | A rubber-lined bag on the second landing: an electrician's spares.
 loot ecstash Battery*1;CopperIngot*2;Nail*6
 prop ecstash loot.refill=0
 note ecdivesecret Plane tail box | Wedged in the plane's tail: the courier's own tin.
 loot ecdivesecret MetalIngot*2;Bolt*3;TitaniumOre*1
 prop ecdivesecret loot.refill=0
-note eccairn Spark cairn | A cairn by the spark peak:
+note eccairn Spark cairn | A cairn by the spark peak, Hedda's chalk on the top stone:\n\nThe old man's drone sits on the spark tower like a gull on a mast. When you climb, it goes - west first, to the pit rim, then north-east to the coils. Kill the coils and it has nowhere to hide. Its cage holds the key to his box by the gate.\n\nDo not hate him. I tried. It does not take. - H.
 
-The Keeper runs when you climb. Follow him west, then to the coils. - Teo
 story keepkey|Keeper's key|Bolt|The Keeper's key, from his drone's cage. It opens the Keeper's strongbox in the court.
-note ec_kbox Keeper's strongbox | The Keeper's strongbox. Inside, on top of his savings, a note: I kept it running. You decided. Fair.
+note ec_kbox Keeper's strongbox | His savings, and a note: I kept it running. You decided.
 loot ec_kbox TitaniumIngot*2;CircuitBoard*2;Battery*2;OxygenBottle*1
 prop ec_kbox loot.refill=0
+note keeperec Keeper's log: Court | A sheet of oilcloth tied to the coil switch, in the careful old hand:\n\nKEEPER'S LOG. The Court.\n\nCalling. Calling. They came, all of them, the way I knew they would. The captain, the smoker, the girl with the radio, and you, with five keys on your belt. I watched from the tower. My drone did not like you. It never likes anyone but me; it is a good dog.\n\nYou pulled a lever. Fine. Pull what you like. The Court was never the door I wanted. The door is under it, and you carried me the keys.\n\nI have kept her voice safe all these years, the way a keeper keeps a light: wound, trimmed, turning every eight seconds. Tonight I take it home to her. I am going down the Well ahead of you. Mind the stair. - S. Wren
+note ectally Teo's tally | TEO'S TALLY - chalked on the strongbox lid, in a hand that has given up on straight lines\n\nWho came to the Court after the levers. I counted, because somebody should.\n\nA goat called Burr. Nobody brought him. He ate my map.\nOda, who would not say where from, only that the goat was with her. The goat did not deny it.\nOrrin, with ice still in his beard, who shook my hand and would not let go.\nCrane, who looked at the rings for an hour and said only: I would have used more bolts.\nThe Stalker - yes, that one - sitting on the wall like a gull, doing nothing at all, for once.\nAnd the old man's boat, tied at the north stair. Empty.\n\nThat is a lot of people for the end of the ocean. Maybe it is not the end. Go down the Well; Ines will wait at the first pocket. I will mind the goat.
 quest title=The Concord Engine
 quest intro=Three rings of iron, one inside the other. Go to the outer ring's gate.
 step reach|outer_ring|1|Go to the outer ring's gate
@@ -494,13 +497,12 @@ step reach|courtcave|1|Find the chalked cave in the west shore
 step read|Builders' day book|1|Read the builders' day book at the ruined lodge in the north
 step collect|story:builderscode|1|Type the true bearings into the builders' keypad
 step open|Builders' strongbox|1|Open the builders' strongbox
-step reach|ec_dive|1|Dive to the courier plane at the bottom of the west pit
-step collect|story:keeperlog|1|Take the Keeper's log from the plane
 step reach|ec_top|1|Climb the spark tower past the sparks to its top
-step open|Keeper's locker|1|Open the Keeper's locker with the log
 step reach|ec_rim|1|Chase the Keeper's drone to the west pit's rim
 step collect|story:keepkey|1|Throw both coil switches and bring the Keeper's drone down
+step read|Keeper's log: Court|1|Read the Keeper's log at the coil switch
 step open|Keeper's strongbox|1|Open the Keeper's strongbox in the court
+step read|Teo's tally|1|Read Teo's tally on the strongbox
 step reach|well_stair|1|Go down the well stair on the north side
 quest done=The engine has its answer. Below, north of the court, the Command Well is open - its heart is waiting.
 quest reward=TitaniumOre*2;Battery*2;Rope*4

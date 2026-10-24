@@ -21,8 +21,12 @@ wait 3
 expect step 6
 read Mail plane log
 expect step 7
-read Keeper's last page
+open Mail crate
+wait 3
+expect story letter 1
 expect step 8
+read Keeper's last page
+expect step 9
 open Keeper's strongbox
 expect message wants three numbers
 code keeperpad 147 wrong
@@ -30,17 +34,17 @@ code keeperpad 741
 open Keeper's strongbox
 wait 3
 expect story raft-Tangaroa_KeyCard 1
-expect step 9
+expect step 10
 # (deep pass 10-24: the top locker refuses, the dive, the air bell, the dive chest, the buried tins, the tower)
 open Lightkeeper's locker
 expect message bell-shaped hollow
 zone bs_dive
-expect step 10
+expect step 11
 air bs_air
 open Pilgrims' caravan
 wait 3
 expect story bell 1
-expect step 11
+expect step 12
 open Caravan glovebox
 wait 3
 dig 2
@@ -50,10 +54,10 @@ wait 3
 read Summit cairn
 dig 1
 zone bs_top
-expect step 12
+expect step 13
 open Lightkeeper's locker
 wait 3
-expect step 13
+expect step 14
 expect story chainkey 1
 use radioset
 expect story pulse 1

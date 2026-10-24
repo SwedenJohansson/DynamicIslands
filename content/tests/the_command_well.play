@@ -32,12 +32,31 @@ use console_re
 use console_standby
 expect step 10
 read Closing note
-zone wellridge
+wait 1
 expect step 11
+open Mara's post
+expect message belongs here - a letter
+open Keeper's satchel
+wait 3
+expect story letter 1
+open Mara's post
+wait 3
+expect shown maranote
+expect step 12
+read Mara's last call
+expect step 13
+read Keeper's log: Well
+wait 1
+expect step 14
+read Ines's radio log
+zone wellridge
+wait 2
+expect step 15
 read Pump house book
 use fusebox
 expect message three empty sockets
-expect step 12
+wait 2
+expect step 16
 open Fuse tin
 wait 3
 open Cable cave chest
@@ -45,23 +64,18 @@ wait 3
 open Supply plane's crate
 wait 3
 expect story wellfuse 3
-expect step 13
+expect step 17
 use fusebox
 expect story wellfuse 0
 expect shown pumplocker
 open Pump house locker
 wait 3
-expect step 15
-# (deep pass 10-24: the top locker refuses, the dive, the air bell, the dive chest, the buried tins, the tower)
-open Crane locker
-expect message valve spindle
+expect step 18
+# (the dive, the tower and the buried tins are optional since the 10-24 story pass: the five chain keys for the plain play)
 zone cw_dive
-expect step 16
 air cw_air
 open Spoil boat chest
 wait 3
-expect story wellvalve 1
-expect step 17
 open Boat bilge box
 wait 3
 dig 1
@@ -71,10 +85,8 @@ wait 3
 read Spoil cairn
 dig 0
 zone cw_top
-expect step 18
 open Crane locker
 wait 3
-expect step 19
 use cw_lock1
 use cw_lock2
 use cw_lock3
@@ -82,7 +94,7 @@ use cw_lock4
 use cw_lock5
 open Chained hatch
 wait 3
-expect step 20
+expect step 19
 # (no step check here: the shaft top was passed on the way down, so the last step can count at once)
 zone shaft_top
 expect done

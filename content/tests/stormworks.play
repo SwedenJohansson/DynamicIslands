@@ -42,12 +42,10 @@ expect step 13
 open Chimney locker
 expect message casting mould
 zone sw_dive
-expect step 14
 air sw_air
 open Quench van
 wait 3
 expect story mould 1
-expect step 15
 open Quench strongbox
 wait 3
 dig 3
@@ -57,10 +55,8 @@ wait 3
 read Smoke cairn
 dig 2
 zone sw_top
-expect step 16
 open Chimney locker
 wait 3
-expect step 17
 read Stormworks note 3
 dig
 expect done

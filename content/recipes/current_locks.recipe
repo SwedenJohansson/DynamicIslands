@@ -2,7 +2,7 @@
 # A long island cut through by a straight canal with three iron lock gates in it, a crank for each on the east bank. The
 # engine's water ran through here once, lock by lock, south to the ring. The lock keeper's rules still hang on the first
 # gate, anglers have the deep basin under it, a bear has the path to the third. In the keeper's kitchen at the north end
-# a note from Ines: she has seen three rings before. Quest "Three Locks" (19 steps): lock 1, the rules, the lock house's
+# a note from Ines: she has seen three rings before. Quest "Three Locks" (17 steps): lock 1, the rules, the lock house's
 # wind turbine plans, crank 1, the anglers in the basin, the advanced battery plans, crank 2, the bear, the headlight
 # plans, crank 3, the keeper's kitchen.
 #
@@ -98,9 +98,11 @@ place RT_PlasticBoat - at -7 -38.67 ground sit yaw=10
 # --- Lock 3; Ines's note; the keeper's kitchen and its planters -----------------------------------------------------------
 call tzone x=8 z=28.67 al=lock3zone id=lock_3 r=4 msg="Lock 3, the last. Past it the canal opens to the sea - and far off south, smoke over a dark island."
 call notebox x=9 z=32.67 yaw=200 al=inesnote
+place Note_Paper keepercl at 10.5 31.4 ground drop yaw=60
 push at -12 34.67 h=2
 call hut w=2 d=2 y=0.1
 place Loot_Chest kitchen at 2.2 2.4 y=0.1 sit yaw=180
+place Note_Paper heddacl at 1.2 2.5 y=0.1 drop yaw=20
 place Placeable_CookingStand_Food_One - at 0.8 0.8 y=0.1 sit
 place Placeable_Table_Basic - at 1.0 1.95 y=0.1 sit
 pop
@@ -214,7 +216,7 @@ story lock2|Lock 2 open|Hinge|You wound open the second lock on Current Locks.
 story lock3|Lock 3 open|Hinge|You wound open the last lock on Current Locks. The canal runs free to the sea.
 
 note lockrules Lock keeper's rules | LOCK KEEPER'S RULES\n\n1. Locks open in order. One, two, three. Never three first.\n2. Keep the basin clear. The anglers come up the canal at night.\n3. Feed the bear nothing. It lives by lock 2 and it thinks it owns lock 2.\n4. The canal carries the engine's water to the ring. When the ring stops asking, close the gates and go home.\n\nThe ring stopped asking.
-note inesnote Ines's note | INES - in neat small letters\n\nThe engine has three rings. I have seen this before. In the Commons.\n\nThe same sign - a ring cut by three waves - was on the doors of the Hearth there. The Commons drew it for luck. I think the people who built this drew it first.\n\nHedda has gone to the smelters. I go to the spire. Teo talks about the ring as if it can hear him.
+note inesnote Ines's note | INES - in neat small letters, on a page torn from her radio log\n\nThe engine has three rings. I have seen this before. In the Commons.\n\nThe same sign - a ring cut by three waves - was on the doors of the Hearth there, under the sea. The Commons drew it for luck. I think the people who built this drew it first, and we copied it without knowing what it meant, the way children copy a word.\n\nThe pulse is clear enough now to write down. Three beats, a pause, three beats. It is a station call. Station 1. Somebody down there is calling a crew, and somebody up here is answering every time.\n\nHedda has gone to the smelters. I go to the spire. If you are following us: thank you. It is easier to be brave with someone behind you.
 note lockhouse Lock house | The lock house chest: a wind turbine's plans, flapping in the draught.
 note basinchest Basin chest | A chest on the basin floor, half buried: an advanced battery's plans, sealed in wax.
 note denchest Bear den | Under the bear's bedding: a headlamp's plans, chewed at one corner.
@@ -243,31 +245,33 @@ prop crank3 else.use=message||Locks open in order - or this one is open already.
 
 note keeperspares Lock-keeper's spares | The lock-keepers' spare-parts chest: hinges, bolts, a bar of iron.
 loot keeperspares Hinge*3;Bolt*4;MetalIngot*2;Rope*2
-note lockrota Lock-keepers' rota | ROTA - pinned inside a box lid\n\nGate 1: Mira. Gate 2: Old Jonas. Gate 3: nobody since Jonas's son left.\nOpen all three in order, never together, or the current takes the canal.\nWhoever reads this: the order is on the cranks.
+note lockrota Lock-keepers' rota | ROTA - pinned inside a box lid\n\nGate 1: Mira. Gate 2: Old Jonas. Gate 3: nobody since Jonas's son left for the Fleet.\n\nUnder it, a running argument in two hands:\n\nMira: Jonas, the bear is in your gate again.\nJonas: The bear IS my gate now. I have made my peace with it.\nMira: You fed it.\nJonas: Once. It looked hungry.\nMira: It always looks hungry. It is a bear.\n\nAt the bottom, newer, in a careful old hand: Gates wound, oiled, left for the next ones. The bear remembers me. - S.W.
 note lockcavechest Old canal chest | A chest left on a ledge above the old water line: the first lock keeper's tools.
 prop lockcavechest loot.refill=0
-note diggerlist Diggers' roll | CANAL DIGGERS' ROLL - nailed inside the bunkhouse door\n\nForty-one names, crossed out one by one as the crews went home.\nAt the bottom, in a different hand: The canal is not for boats. It carries the current south to the Engine. Do not let the locks rust.\n\nThe dredge engine by the bunkhouse still holds our pay locker. The fuel went on the canal plane.
-note canalplanelog Canal plane log | SURVEY PLANE LOG - the canal run\n\nThe canal points due south to within half a degree. So does the pulse. So did the beacon.\nEvery station on this line is aimed at the same place.\nForced down in the north-west. Walking to the locks.\n\nWe never dug toward the sea. Every cut points at the Engine in the south - the canal was its drain.
+note diggerlist Diggers' roll | CANAL DIGGERS' ROLL - nailed inside the bunkhouse door\n\nForty-one names, crossed out one by one as the crews went home. Beside one, a heart. Beside another, a pig, which may be a joke about the man or about his cooking.\n\nAt the bottom, in the foreman's hand: The canal is not for boats. It carries the current south to the Engine. Do not let the locks rust.\n\nAnd under that, smaller: The Engine went to standby the year we finished. Nobody told us why. We stayed on another season out of pride and then we went home too. If anyone ever asks, we did a good job. Tell them we did a good job.
+note canalplanelog Canal plane log | SURVEY PLANE LOG - the canal run\n\nThe canal points due south to within half a degree. So does the pulse. So did the beacon. Every station on this line is aimed at the same place, like the spokes of a wheel round a hub nobody visits.\n\nForced down in the north-west. Walking to the locks. The bear watched me the whole way and did nothing, which was worse.\n\nWe never dug toward the sea. Every cut points at the Engine in the south - the canal was its drain. And the smoke in the south, over the dark island, is the stormworks still burning. Nobody has fed those furnaces in forty years. Somebody has.
 # (deep pass 10-24: the climb and the dive)
 story dredgekey|Dredge key|Bolt|The dredge gantry's key, floated up to the grate in the old lock chamber when the three wheels let the water in.
-note cldivechest Lock chamber grate | The grate at the bottom of the old lock chamber, by the drowned van. The water lifted the dredge key into it: you work it free.
+note cldivechest Lock chamber grate | The water lifted the dredge key into the grate.
 loot cldivechest story:dredgekey*1;Rope*2;Scrap*3;Bolt*2
 prop cldivechest loot.refill=0
-note cltop Dredge gantry locker | The dredge gantry's locker. The dredge key turns: inside the keeper's gantry tools and the canal's last orders.
+note cltop Dredge gantry locker | The dredge key turns: the gantry tools and the last orders.
 loot cltop TitaniumOre*2;Battery*1;CircuitBoard*1
 prop cltop loot.refill=0
 prop cltop obj.name=cltop
 prop cltop if.open=has|story:dredgekey|1
 prop cltop else.open=message||The dredge gantry's locker. A keyhole shaped like a dredge bucket.
-note clstash Gantry stash | On the gantry's second landing: a keeper's bag of rivets and a fuse.
+note clstash Gantry stash | A keeper's bag of rivets and a fuse.
 loot clstash Battery*1;CircuitBoard*1;Nail*6
 prop clstash loot.refill=0
-note cldivesecret Van strongbox | Behind the drowned van, in the chamber silt: the canal toll box, still locked - its hinges are not.
+note cldivesecret Van strongbox | The canal toll box, still locked. Its hinges are not.
 loot cldivesecret MetalIngot*2;Bolt*3;Rope*1
 prop cldivesecret loot.refill=0
-note clcairn Gantry cairn | A cairn on the bank peak:\n\nThree wheels, one key. Let the water do the lifting. - the lock keeper
+note clcairn Gantry cairn | A cairn on the bank peak, the lock keeper's spanner on top:\n\nThree wheels, one key. Let the water do the lifting. - J.
 prop cldivechest if.open=signal|lw1\nsignal|lw2\nsignal|lw3
 prop cldivechest else.open=message||The grate is barred. Three sluice wheels round the chamber hold the bar down - turn them all.
+note keepercl Keeper's log: Locks | KEEPER'S LOG. Current Locks - oilcloth, under a stone by lock 3, a little chewed:\n\nI am tired tonight, love, so I will write it plain.\n\nThe Engine is asleep. Your crew put it to bed and never came up, and the Concord called it standby and took the boats away. I have heard your call every night for forty years. Station 1, crew to posts. Station 1, crew to posts.\n\nSo I am bringing you a crew. Five posts want five pairs of hands. I have one pair, and they shake. The pilgrims have six, and good boots.\n\nWhen the Engine wakes, the Well opens. When the Well opens, you come home. That is all I want. I do not care what else it wakes.\n\nCalling. Calling.\n\n- Silas
+note heddacl Hedda's note: the kitchen | HEDDA - on the back of a seed packet, left in the keeper's kitchen\n\nAte the lock keeper's beets. Left him seeds. Fair trade, and the beets were terrible.\n\nInes thinks the old man is answering a woman down in the Well. She found his initials on the lock rota, and his wife's name in every log he leaves. Wren. Silas and Mara. I found something too, and I have not told her: he does not just follow the pulse. He makes the masts carry it. He wants it loud.\n\nI go south to the smoke, to the Stormworks, to see what he lit the furnaces for. Ines goes to the cooling spire to listen. Whoever you are, come to the smelters. I could use the company, and Teo is not here to complain for me.
 quest title=Three Locks
 quest intro=A canal with three shut gates. Go to the first lock.
 step reach|lock_1|1|Go to lock 1
@@ -286,8 +290,6 @@ step open|Fuel crate|1|Find the fuel crate by the canal plane
 step open|Engine room locker|1|Start the dredge engine by the bunkhouse in the south and open its locker
 step reach|cl_dive|1|Dive into the old lock chamber
 step collect|story:dredgekey|1|Take the dredge key from the grate
-step reach|cl_top|1|Climb the dredge gantry by the bank peak to its top
-step open|Dredge gantry locker|1|Open the dredge gantry locker with the key
 step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans from the keeper's kitchen
 quest done=The canal runs free. Down it, south, smoke over a dark island - and the clang of a smelter.
 quest reward=Seed_Mango*2;Scrap*6;Rope*4

@@ -2,8 +2,8 @@
 # A low sand bar with two palms, and off its end a relay buoy on a raft of floats: a mast, a dish and a lamp that blinks
 # the Ringwave in Morse - long, short, short, long. A box of spares is lashed to the floats. Each time it drifts by it
 # carries a message from the engine's relays, and it takes an answer if you blink one back. Quest "The Relay Buoy"
-# (9 steps): the buoy, the relay message, the buoy box, the lamp, the relay's answer.
-# Deep pass 10-24: the bar grows to a dune (r 48) with a mast to climb and a blue hole where Relay 6 sank.
+# (7 steps): the buoy, the relay message, the buoy box, the lamp, the mast, the Keeper's log, the relay's answer.
+# Deep pass 10-24: the bar grows to a dune (r 48) with a mast to climb and a blue hole where Relay 6 sank. Story pass 10-24: the blue hole is optional; Hedda, Teo, Ines and the Keeper speak here.
 #
 # Built by the recipe player (CIRecipe drifting_relay_buoy) through the editor's own operations. Points (metres over the
 # sea): the sand bar at 1 m round 0 0 (r 10), the palms at -4 2 and 3 -3, the floats round 12 0 at sea level.
@@ -57,6 +57,9 @@ call dp_ground tx=-24 tz=-11 hb=3 sx=-35.82 sz=-16.42 hs=24.6
 call dp_tower ox=-22.89 oz=-8.02 hb=3 yaw=155.38 al=rbtower top=rbtop stash=rbstash zal=rbtopzone zid=rb_top msg="The top of the dune mast. The buoy blinks below - and out to sea, the engine's towers."
 call tzone x=-32.64 z=-14.96 al=rbsummit id=rb_summit r=4 msg="The dune peak beside the mast." h=1
 call notebox x=-34.36 z=-19.6 yaw=245.38 al=rbcairn
+call notebox x=-30.6 z=-12.9 yaw=200 al=keeperrelay
+call notebox x=-2.2 z=-1.4 yaw=40 al=heddastrip
+call notebox x=1.6 z=3.2 yaw=210 al=teostrip
 call treasure x=-36.65 z=-14.6 r=1.5 n=1 seed=14231
 prop treasure14231 treasure.loot=TitaniumOre*2;Battery*1
 call dp_sink x=-8 z=34 d=-12 ex1=-5.48 ez1=23.29 ex2=-3.65 ez2=15.51 eh=1
@@ -81,8 +84,8 @@ island on.arrive=message||A light blinking on the water: long, short, short, lon
 
 story lamp|Relay lamp|Placeable_Lantern_Metal|You blinked an answer back to a drifting relay buoy.
 
-note relaymsg Relay message | RELAY MESSAGE - on a printed strip in the buoy's slot\n\nRELAY 7 TO ANY RAFT.\nENGINE STATUS: STANDBY.\nSTATION 1: NO ANSWER.\nIF YOU READ THIS, BLINK THE LAMP. LONG SHORT SHORT LONG.
-note relayanswer Relay answer | RELAY ANSWER - a new strip, still warm\n\nRAFT HEARD. LOGGED.\nTHE ENGINE COUNTS THE RAFTS THAT ANSWER.\nYOU ARE NOT THE FIRST. YOU ARE NOT THE LAST.\nRELAY 7 DRIFTING ON.
+note relaymsg Relay message | RELAY MESSAGE - on a printed strip in the buoy's slot\n\nRELAY 7 TO ANY RAFT.\nENGINE STATUS: STANDBY.\nSTATION 1: NO ANSWER.\nIF YOU READ THIS, BLINK THE LAMP. LONG SHORT SHORT LONG.\n\nLAST ANSWERS LOGGED:\nRAFT WITH TWO SAILS AND A DOG. BLINKED SIX TIMES. ONE WAS ENOUGH.\nRAFT WITH A CHILD ON IT. BLINKED THE SIGN BACKWARDS. LOGGED ANYWAY.\nRAFT WITH NOBODY ON IT. DRIFTING. NOT LOGGED.\nOLD MAN IN A DORY. BLINKED NOTHING. SAT AN HOUR. LOGGED AS LISTENING.
+note relayanswer Relay answer | RELAY ANSWER - a new strip, still warm\n\nRAFT HEARD. LOGGED.\nTHE ENGINE COUNTS THE RAFTS THAT ANSWER.\nYOU ARE NOT THE FIRST. YOU ARE NOT THE LAST.\nIF YOU HAVE NOT BEEN SOUTH: THE COURT, THE WELL.\nIF YOU HAVE: GO HOME. SOMEONE IS LISTENING NOW.\nRELAY 7 DRIFTING ON.
 note buoybox Buoy box | The buoy's box of spares, lashed to the floats.
 loot buoybox Battery*1;Bolt*2;Hinge*2
 prop buoybox loot.refill=0
@@ -93,35 +96,32 @@ prop buoylamp on.use=signal||lamp\ngive||story:lamp*1\nshow|relayanswer\nmessage
 prop buoylamp else.use=message||The lamp has its answer.
 
 # (deep pass 10-24: the climb and the dive)
-story relay6|Relay 6 logbox|Battery|The log box of Relay 6, the buoy that sank in the blue hole. Its key opens the mast locker on the dune.
-note rbdivechest Relay 6 chest | Relay 6 went down in the blue hole off the bar, its floats cut. Its chest: the log box and the spares it carried.
-loot rbdivechest story:relay6*1;Rope*2;OxygenBottle*1;Bolt*2
+note rbdivechest Relay 6 chest | Relay 6, sunk in the blue hole. Its spares.
+loot rbdivechest Rope*2;OxygenBottle*1;Bolt*2
 prop rbdivechest loot.refill=0
-note rbtop Mast locker | The locker at the top of the dune mast, where the relays were once tuned. Relay 6's log box holds its key.
+note rbtop Mast locker | The tuners' locker, at the top of the dune mast.
 loot rbtop TitaniumOre*2;Battery*2;CircuitBoard*1
 prop rbtop loot.refill=0
 prop rbtop obj.name=rbtop
-prop rbtop if.open=has|story:relay6|1
-prop rbtop else.open=message||The mast locker. A relay keyhole - the key went down with Relay 6.
 note rbstash Mast stash | A tin wedged on the second landing of the mast.
 loot rbstash Battery*1;Nail*6;Rope*1
 prop rbstash loot.refill=0
 note rbdivesecret Relay 6 float box | Under Relay 6's cut floats: a sealed box.
 loot rbdivesecret MetalIngot*2;CopperIngot*1;TitaniumOre*1
 prop rbdivesecret loot.refill=0
-note rbcairn Dune cairn | A cairn on the dune peak:
+note rbcairn Dune cairn | A cairn on the dune peak, a page of Ines's radio log under the top stone:\n\nThe relay buoy found us again tonight, twelve kilometres on, as if it had been following. Hedda says it drifts in a circle round the calm. Teo says it is in love with us.\n\nI blinked the lamp and it answered. For a moment the pulse on my set went quiet under it, as if something had been listening and heard. I sat on this dune an hour after, just to hear the sea do nothing.\n\nThe mast was the tuners'. The keeper's post is on the peak beside it. - I.
 
-RELAY 6 - CUT LOOSE IN THE STORM, SANK IN THE HOLE OFF THE BAR. RELAY 7 STILL DRIFTS. THE MAST KEY WENT DOWN WITH 6. - tuner
+note heddastrip Relay strip: Hedda | A relay strip, torn off and pinned to the box with a fish hook:\n\nRELAY 7 PASSING ON. FROM H. BRASK, CAPTAIN, TO ANY RAFT.\n\nWater is short at the shoals - carry your own. The locks run if you are patient. The spire stair is long and the soup at the top is worth it. Do not chase the drone; it is only an old man's dog and it bites.\n\nIf you see a girl with a radio bigger than her head, tell her to eat something. If you see a man reviewing the scenery out loud, tell him I said yes, he can come.\n\nEnd of message. Relay 7 says it is very tired of the word STOP.
+note teostrip Relay strip: Teo | A relay strip, wet, spelled the way it was sent:\n\nRELAY 7 PASSING ON. FROM T. VARGA TO WHOEVER IS READING THIS INSTEAD OF SAILING.\n\nREVIEW OF RELAY 7. IT DRIFTS. IT BLINKS. IT PRINTS. IT DOES NOT HAVE TOBACCO. THREE STARS.\n\nI SENT THIS FROM THE SHOALS. THE SCREECHER GERALD SAYS HELLO. HE DOES NOT. HE SCREAMS. BUT I THINK HE MEANS HELLO.\n\nIF YOU BLINK THE LAMP, IT ANSWERS. IT IS NICE TO BE ANSWERED. NOBODY ANSWERED THE OLD KEEPER FOR NINE YEARS, AND LOOK WHAT IT DID TO HIM.\n\nEND.
+note keeperrelay Keeper's log: Relay 7 | A sheet of oilcloth nailed to a driftwood post on the dune, in a careful old hand:\n\nKEEPER'S LOG. Relay 7.\n\nCalling. Calling. I hung this one myself, years back, when the Concord still sent spares. I taught it her sign: long, short, short, long. It is the only one of the relays that drifts; I cut it loose so it would carry her sign further than I could row.\n\nSome nights it blinks and nobody blinks back. Those nights I talk to it anyway. I tell it about the hens at the beacon, and the masts, and the five keys.\n\nWhen I am done with what I have to do in the south, I will come and sit here with it. A buoy and an old man. We will both be listening, for once, instead of calling. - S. W.
 quest title=The Relay Buoy
 quest intro=A blinking light on the water off a sand bar. Swim out to it.
 step reach|buoy|1|Swim out to the relay buoy
 step read|Relay message|1|Read the relay message
 step open|Buoy box|1|Open the buoy's box of spares
 step collect|story:lamp|1|Blink the buoy's lamp back
-step reach|rb_dive|1|Dive into the blue hole to sunk Relay 6
-step collect|story:relay6|1|Take Relay 6's log box
 step reach|rb_top|1|Climb the dune mast
-step open|Mast locker|1|Open the mast locker with Relay 6's key
+step read|Keeper's log: Relay 7|1|Read the Keeper's log on the dune peak beside the mast
 step read|Relay answer|1|Read the relay's answer
 quest done=The relay buoy drifts on. It will be back - with something new to say.
 quest reward=Rope*2;Scrap*3

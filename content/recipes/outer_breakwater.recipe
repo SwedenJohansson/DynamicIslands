@@ -71,6 +71,7 @@ vending wallvend at 7.2 -6.28 ground yaw=0
 # --- Outside: the gate house's zone and book, the rain cistern, the pipe store, the gate crank; the storm ----------------
 call tzone x=3.2 z=-14.28 al=gatezone id=gate_house r=5 msg="The gate house. Iron, salt-eaten, shut - and the storm at your back throwing the sea at it."
 call notebox x=-1.8 z=-13.78 yaw=10 al=keeperbook
+place Note_Paper keeperob at 2.8 -12.6 ground drop yaw=40
 place VP_ConcretePipe01 - at -6.8 -15.28 ground sit scale=0.6 yaw=90
 place Loot_Chest cistern at -4.8 -14.28 ground sit yaw=180
 place Loot_Chest pipestore at 12.2 -14.28 ground sit yaw=180
@@ -102,6 +103,7 @@ scatter Pickup_Landmark_Flower_Blue 2 at 11.2 4.72 r=4 seed=14105 free=1
 scatter Pickup_Landmark_Flower_Black 1 at -1.63 21.9 r=3 seed=14106 free=1
 place RT_Stair innerstair at -1.63 19.4 ground sit yaw=0
 call tzone x=-1.63 z=24.9 al=innerzone id=inner_stair r=4 h=0 msg="The inner terrace, up out of the garden. From here, south over the wall: the storm. North: a canal of locks."
+call notebox x=-0.2 z=26.6 yaw=170 al=inesob
 scatter "Pickup_Landmark_Tree_Palm 2" 3 at -31.3 27.39 r=6 seed=14107 free=2
 call reef x=-62.61 z=43.04 r=5 seed=14108
 call shallows x=3.2 z=-4.28 r=109.57 deep=5 n=1 seed=14112
@@ -158,7 +160,7 @@ prop smugbox obj.name=smugbox
 prop smugbox if.open=has|story:smugbolt|1
 prop smugbox else.open=message||A strongbox with a long, odd keyhole - shaped like the end of a bolt.
 story smugbolt|Smugglers' bolt|MetalIngot|A rusted rod with a key-shaped end, drawn out of the rock in the smugglers' cave.
-note smugbox Smugglers' strongbox | The smugglers' strongbox. A ledger on top: every crate that went south to the Engine, and who paid.
+note smugbox Smugglers' strongbox | A ledger on top: every crate that went south.
 loot smugbox TitaniumOre*3;Battery*1;Bolt*4;Rope*2
 prop smugbox loot.refill=0
 prop wallcavechest if.open=has|story:raft-Tangaroa_KeyCard|1
@@ -217,11 +219,11 @@ island on.arrive=message||An iron wall, two storeys high, right across the islan
 
 story gate|Wall gate open|Hinge|You wound open the gate in the Outer Breakwater.
 
-note keeperbook Wall keeper's book | WALL KEEPER'S BOOK\n\nDay 1 of my watch: storm.\nDay 40: storm.\nDay 400: storm. The wall holds. Burr eats the flowers.\n\nThe wall keeps the storm out of the engine's waters. Behind it the canal of locks goes on south. A woman came by with a radio - she asked for water and the way through. I opened the gate. Her name was Hedda. She left a crate of seeds for the next one.
+note keeperbook Wall keeper's book | WALL KEEPER'S BOOK - chained to the gate house\n\nDay 1 of my watch: storm.\nDay 40: storm.\nDay 400: storm. The wall holds. Burr eats the flowers.\nDay 4000: Burr is the third goat called Burr. The flowers do not notice.\n\nA woman came through last week, walking like a captain who has lost her ship. Hedda, she said. She asked for water and the way through, and she waited three days for a friend with a radio. I opened the gate for her. She left a crate of seeds and called it rent.\n\nBefore her, an old man in a dory, the first boat in years. He did not ask for the gate. He knew the crank better than I do. He said, I kept a light once, so I know what you are, and went through without a word more. Burr bit him. Burr has good judgement.
 note cistern Rain cistern | The rain cistern's chest, dripping: a water tank's plans in a jar.
 note pipestore Pipe store | The pipe store: a water pipe's plans and a length of the real thing.
-note keeperchest Keeper's chest | The wall keeper's chest: an electric purifier's plans, and seeds from Hedda's crate.
-note wallstore Wall store | The wall's big store: a large storage's plans and the keeper's spare everything.
+note keeperchest Keeper's chest | Purifier plans, and seeds from Hedda's crate.
+note wallstore Wall store | Large storage plans, and the keeper's spare everything.
 loot cistern Blueprint_WaterTank*1;Plastic*4;Scrap*2
 prop cistern loot.refill=0
 loot pipestore Blueprint_Pipe_Water*1;Scrap*3;Bolt*2
@@ -239,32 +241,34 @@ prop gatecrank else.use=message||The gate is open.
 note masonchest Mason's chest | A mason's chest, heavy: stone, clay and iron for mending the wall.
 loot masonchest Stone*6;Clay*4;MetalIngot*2;Nail*6
 note masonnotice Mason's notice | NOTICE - nailed to a post\n\nWall gangs: the sea gets through at the third bend again.\nMend it before the storm months. The wall holds the sea back from what is inside.\nDo not ask what is inside. - The Overseer
-note wallcavechest Smugglers' chest | The smugglers' chest: a bag of wall tokens and the tools to fake more.
+note wallcavechest Smugglers' chest | Wall tokens, and the tools to fake more.
 prop wallcavechest loot.refill=0
-note masonplan Masons' plan | MASONS' PLAN - a sheet held flat with four stones\n\nThe wall is a circle because the sea inside it must be still.\nWho ordered it: the Concord. What it keeps still: they did not say.\nWe built the lodge from the leftover blocks. The storm took the roof the week we finished.\n\nThe smugglers bolted their strongbox in our lodge and hid the bolt's lever in their cave, behind the vines.
-note stormlog Storm plane log | STORM PLANE LOG\n\nThe storm south of the wall never drifts. Flew into it to see why.\nIn the middle the rain fell upward for a second and every instrument read zero.\nCame down on the south shore with one wing. The wall's lights were the last thing I saw.
+note masonplan Masons' plan | MASONS' PLAN - a sheet held flat with four stones\n\nThe wall is a circle because the sea inside it must be still. Who ordered it: the Concord. What it keeps still: they did not say, and the foreman said that was a good sign. The foreman said a lot of things.\n\nWe built the lodge from the leftover blocks. The storm took the roof the week we finished. We drank to it anyway; you do not get many weeks like that.\n\nThe smugglers came after us. They bolted their strongbox in our lodge and hid the bolt's lever in their cave, behind the vines, because smugglers love a lever. Their boat is in the storm pit now. The sea has no sense of humour about smugglers.
+note stormlog Storm plane log | STORM PLANE LOG - the pages stuck together with salt\n\nThe storm south of the wall never drifts. It sits there like a dog on a doorstep. Flew into it to see why.\n\nIn the middle the rain fell upward for a second and every instrument read zero. The Receiver did not read zero. It played the pulse, and under it a woman's voice, calm, saying a station number and a word that might have been standby. Then the old man again, talking over her, louder, as if to keep her company.\n\nCame down on the south shore with one wing. The wall's lights were the last thing I saw. I like lights. I hope the keeper keeps them on.
 # (deep pass 10-24: the climb and the dive)
 story ledger|Smugglers' ledger|Hinge|The smugglers' ledger, oiled and wrapped, from the boat they sank in the storm pit. Its last page lists what they hid on the watch tower.
 story chainkey|Chain key|Bolt|A heavy key on a ring, stamped CONCORD WELL. One of the five that open the chained door of the Command Well, deep under the calm circle.
-note obdivechest Smugglers' boat | The smugglers' boat, sunk in the storm pit south of the wall. In its hold chest: their ledger, oiled and wrapped.
+note obdivechest Smugglers' boat | In the hold chest: the smugglers' ledger, oiled and wrapped.
 loot obdivechest story:ledger*1;Rope*2;Scrap*3;Plastic*3
 prop obdivechest loot.refill=0
-note obtop Watch tower locker | The watch tower's locker. The ledger's last page names the hiding place under the floor: a chain key and the smugglers' cut.
+note obtop Watch tower locker | Under the floor, as the ledger says: a chain key.
 loot obtop story:chainkey*1;TitaniumOre*2;Battery*1;MetalIngot*2
 prop obtop loot.refill=0
 prop obtop obj.name=obtop
 prop obtop if.open=has|story:ledger|1
 prop obtop else.open=message||The watch tower's locker is bolted from inside - but a loose plank shows there is a hiding place. Somebody wrote down where.
-note obstash Watch tower stash | On the second landing: a wall keeper's tea tin, and spare tokens.
+note obstash Watch tower stash | The wall keeper's tea tin, and spare tokens.
 loot obstash Battery*1;CircuitBoard*1;Nail*6
 prop obstash loot.refill=0
-note obdivesecret Boat hold box | A box thrown out of the boat's hold, behind the wreck: the smugglers' fake token dies.
+note obdivesecret Boat hold box | The smugglers' fake token dies.
 loot obdivesecret MetalIngot*2;Bolt*3;Rope*1
 prop obdivesecret loot.refill=0
-note obcairn Garden cairn | A cairn on the garden peak, flowers pressed under a stone:\n\nThe wall keeps the storm out. Somebody has to keep the wall. - the keeper
+note obcairn Garden cairn | A cairn on the garden peak, flowers pressed under a stone, and a note in Hedda's capitals:\n\nWaited here three days for Ines. Burr ate my hat on the second. Tell the keeper his goat owes me a hat.\n\nThe wall keeps the storm out and the calm in. From up here I can see the circle at last - flat as a plate, and in the middle the dark square, chained. The thing we came for.\n\nSomebody has been through before us, every step of the way. He leaves the gates open and the fires laid. I would like to meet him. I would also like to hit him, a little.
 note ob_cwcrate Counterweight crate | The wall crew's crate, hung from the walk on the counterweight rope.
 loot ob_cwcrate MetalIngot*3;Bolt*3;Hinge*2;TitaniumIngot*1
 prop ob_cwcrate loot.refill=0
+note keeperob Keeper's log: Breakwater | KEEPER'S LOG. The Breakwater, oilcloth wrapped round the gate crank:\n\nThe wall keeper is a good man. He keeps the storm out of the calm with nothing but a crank, a ledger and a goat. Forty years ago he would have been on the Station run with Mara and me.\n\nMara used to say the wall was the Engine's ribcage: keep the storm out and the heart beats easy. I used to say it was a very large fence. She laughed every time, though it was not funny the fortieth time.\n\nThrough the gate the canal goes south through three locks. The locks want hands on the wheels, three of them at once if you are lazy, one at a time if you are old. I am old. I have done them before. I will leave them for my pilgrims.\n\nCalling. Calling. Not long now, love.\n\n- S.W.
+note inesob Ines's radio log: the terrace | A page of Ines's radio log, tucked in a crack of the terrace wall:\n\nNight nine. Hedda waited for me. She pretends she did not, but there is a hat-shaped bite out of her temper.\n\nInside the wall the pulse is so strong the radio does not need its aerial. And I have stopped pretending: there is a woman under it, very far down. Station 1, she says. Standby. Then nothing, and the old man answers her, every eight seconds, as if the nothing were a reply.\n\nNorth of the terrace the canal runs on through three locks - the Current Locks. Hedda says the keeper went that way. I say he wants us to. Either way, that is where we go. - I.
 quest title=The Wall
 quest intro=An iron wall, a storm and a gate house. Go up to the gate.
 step reach|gate_house|1|Go up to the gate house

@@ -96,16 +96,11 @@ expect step 30
 open Builders' strongbox
 wait 3
 expect step 31
-# (deep pass 10-24: the top locker refuses, the dive, the air bell, the dive chest, the buried tins, the tower)
-open Keeper's locker
-expect message ONLY THE ROTA
+# (story pass 10-24: the dive is optional; the tower climb starts the Keeper's drone chase)
 zone ec_dive
-expect step 32
 air ec_air
 open Drowned courier plane
 wait 3
-expect story keeperlog 1
-expect step 33
 open Plane tail box
 wait 3
 dig 4
@@ -115,25 +110,29 @@ wait 3
 read Spark cairn
 dig 3
 zone ec_top
-expect step 34
+expect step 32
 open Keeper's locker
 wait 3
-expect step 35
 zone ec_rim
 wait 7
-expect step 36
+expect step 33
 use ec_coil1
 use ec_coil2
 zone ec_arena3
 kill Caravan screecher
 wait 2
 expect story keepkey 1
-expect step 37
+expect step 34
+read Keeper's log: Court
+expect step 35
 zone ec_epi
 expect shown ec_kbox
+expect shown ectally
 open Keeper's strongbox
 wait 3
-expect step 38
+expect step 36
+read Teo's tally
+expect step 37
 zone well_stair
 dig
 expect done

@@ -2,7 +2,7 @@
 # A dark rock with a flat top and smoke over it: the iron hall where the engine's parts were smelted, its weather room
 # on the roof, and on the spur behind them a lightning rod. The last crew's three notes tell what the engine was for,
 # what their standby order said - and what the thing they called the Stalker really was. Screechers nest on the spur.
-# Quest "The Works" (18 steps): the smelter hall, note 1, the electric smelter plans, the weather room, note 2, the
+# Quest "The Works" (14 steps): the smelter hall, note 1, the electric smelter plans, the weather room, note 2, the
 # advanced extractor plans, the screechers, the anchor store, the rod top, note 3.
 #
 # Built by the recipe player (CIRecipe stormworks) through the editor's own operations. Points (metres over the sea):
@@ -103,6 +103,7 @@ call tzone x=20.5 z=-39.9 al=stormview id=stormview r=4 msg="A shoulder of the h
 place Loot_Chest oreheap at -32.5 59.5 ground sit yaw=152
 prop oreheap loot.refill=0
 call notebox x=56.5 z=39.8 yaw=54 al=furnaceletter
+place Note_Paper keepersw at 54.6 38.4 ground drop yaw=10
 call camp x=-63.6 z=-24.7 yaw=249 fire=campfire_1
 place Van_4 - at 67 -15 ground sit yaw=192
 
@@ -181,9 +182,9 @@ info author=Custom Islands
 info description=A dark rock with smoke over it: the iron smelter hall where the Concord Engine's parts were cast, a weather room on its roof, a lightning rod on the spur - and the last crew's three notes.
 island on.arrive=message||Smoke over a dark rock, and the smell of a forge. Up on the flat top, an iron hall with a dish on its roof.
 
-note worksnote1 Stormworks note 1 | STORMWORKS - NOTE 1\n\nWhat the engine is for.\n\nThe sea rose and would not stop. The Concord was every station that agreed to try: the beacon, the intake, the relays, the wall, the locks, these works. We cast the rings here. The ring turns the sea - surface, deep and ice - so it stops rising.\n\nIt worked. That is the trouble. It never stops working.
-note worksnote2 Stormworks note 2 | STORMWORKS - NOTE 2\n\nStanding order to the last crew.\n\nKeep the engine on standby. Do not shut it down - nobody knows what the sea does if the ring stops. Do not run it full - nobody knows that either.\n\nThe drone will keep the ring clean. Do not fight the drone.\n\nWe went home anyway.
-note worksnote3 Stormworks note 3 | STORMWORKS - NOTE 3\n\nThe rafts call it the Stalker. It is not a beast.\n\nIt was our maintenance drone: it kept the ring clean of anything that grew on it, or swam into it, or came too close. When the crews left nobody told it to stop.\n\nIt is still cleaning. It thinks you are something growing on the ring.
+note worksnote1 Stormworks note 1 | STORMWORKS - NOTE 1, painted on the hall wall in letters a metre high\n\nWhat the engine is for.\n\nThe sea rose and would not stop. The Concord was every station that agreed to try: the beacon, the intake, the relays, the wall, the locks, these works. We cast the rings here. The ring turns the sea - surface, deep and ice - so it stops rising.\n\nIt worked. That is the trouble. It never stops working.\n\nUnder it, in chalk, Hedda's capitals: SOMEONE HAS RELIT FURNACE 3. THE ASH IS WARM. - H.B.
+note worksnote2 Stormworks note 2 | STORMWORKS - NOTE 2, the standing order to the last crew\n\nKeep the engine on standby. Do not shut it down - nobody knows what the sea does if the ring stops. Do not run it full - nobody knows that either. Station 1 has the switch. Station 1 decides.\n\nThe drone will keep the ring clean. Do not fight the drone. Do not feed the drone. Do not name the drone.\n\nPencilled under it: Somebody named the drone. It answers to Biscuit now. Please stop.\n\nWe went home anyway.
+note worksnote3 Stormworks note 3 | STORMWORKS - NOTE 3, scratched into the rod's foot\n\nThe rafts call it the Stalker. It is not a beast.\n\nIt was our maintenance drone. It kept the ring clean of anything that grew on it, or swam into it, or came too close. When the crews left nobody told it to stop. It is still cleaning. It thinks you are something growing on the ring.\n\nBelow, fresh, in Hedda's hand: Saw one of them tonight, out over the south water, a long grey shape following an old man in a dory like a dog on a lead. He stopped, and it stopped. He went on, and it went on. It is not cleaning any more. It is guarding him.\n\nSouth, the pale tower in the steam. Ines is there. I am going to her. - H.
 note hallchest Smelter hall | The hall's tool chest: an electric smelter's plans, soot in every fold.
 note weatherchest Weather room | The weather room's chest: an advanced extractor's plans and a stopped barometer.
 note anchorstore Anchor store | The anchor store on the clay beach: an advanced anchor's plans, for the ore barges.
@@ -200,29 +201,30 @@ loot orebin2 MetalOre*4
 
 note oreheap Furnace hands' store | The furnace hands' store: ore they never got to smelt.
 loot oreheap MetalOre*4;CopperOre*3;TitaniumIngot*1;Plank*4
-note furnaceletter Furnace hand's letter | A letter, never sent\n\nDear Ma,\nThe works make the iron for the great machine in the middle of the sea. They say when it is finished there will be no more storms.\nWe have made iron for eleven years. The storms are worse.\nYour son, Piet
+note furnaceletter Furnace hand's letter | A letter, never sent, folded small\n\nDear Ma,\n\nThe works make the iron for the great machine in the middle of the sea. They say when it is finished there will be no more storms.\n\nWe have made iron for eleven years. The storms are worse. The food is the same. The foreman says the storms are the sea arguing, and the Engine will win the argument. I said, Ma would win the argument, and he laughed so hard he burnt his hand.\n\nI miss your bread. I miss the rain that falls down. Here it goes sideways.\n\nYour son, Piet
 note orecavechest Ore cave chest | A drill crew's chest: spare bits, a lamp wick, and ore they never carried out.
 prop orecavechest loot.refill=0
-note smeltroll Smelters' roll | SMELTERS' ROLL - pinned under a stone by the fallen wall\n\nShift 1 to 12, all present. Ore to the furnace, ingots to the pier.\nThe ingots went south on the Concord's barges - every one of them stamped with the same ring.\nThe works closed the day the barges stopped coming.\n\nThe storm cellar under the hatch is bolted; its lever is by the ore cave in the west. We melted the Concord's own ships in here, one by one, to feed the Engine.
-note oreplanelog Ore plane log | ORE PLANE LOG\n\nThe last load: ingots for the Engine, as the Concord ordered.\nThe lightning followed us off the island - it struck the left wing twice.\nDown in the east snow. The ingots are in the crate if anybody still wants them.\n\nThe smelthouse hands keep their best ingots in the storm cellar.
+note smeltroll Smelters' roll | SMELTERS' ROLL - pinned under a stone by the fallen wall\n\nShift 1 to 12, all present. Ore to the furnace, ingots to the pier. The ingots went south on the Concord's barges - every one stamped with the same ring.\n\nThe works closed the day the barges stopped coming. We melted the Concord's own ships in here, one by one, to feed the Engine; at the end we melted the last barge to make the bell clapper for the Well, and walked home round the coast.\n\nAdded at the bottom, careful and old: Shift 13. One man. Furnace 3 lit for one night, to cast a pin the Well door wants. Apologies for the mess. - S.W.
+note oreplanelog Ore plane log | ORE PLANE LOG\n\nThe last load: ingots for the Engine, as the Concord ordered. The lightning followed us off the island - it struck the left wing twice, which the manual says cannot happen. I will write to the manual.\n\nDown in the east snow. The ingots are in the crate if anybody still wants them. The smelthouse hands keep their best ingots in the storm cellar, under the hatch, because they trust the cellar more than the foreman.
 # (deep pass 10-24: the climb and the dive)
 story mould|Bell mould|MetalIngot|An iron casting mould from the quench pool - the shape of the Engine's great bell clapper. The chimney locker is cut to take it.
-note swdivechest Quench van | The foundry van that rolled into the quench pool. In its crate: an iron casting mould.
+note swdivechest Quench van | In the van's crate: an iron casting mould.
 loot swdivechest story:mould*1;Rope*2;Scrap*3;MetalIngot*1
 prop swdivechest loot.refill=0
-note swtop Chimney locker | The chimney scaffold's locker. The mould sits in its cradle and the lid unlocks: the smelters' best ingots.
+note swtop Chimney locker | The mould sits in its cradle: the smelters' best ingots.
 loot swtop TitaniumOre*3;Battery*1;Bolt*4
 prop swtop loot.refill=0
 prop swtop obj.name=swtop
 prop swtop if.open=has|story:mould|1
 prop swtop else.open=message||The chimney locker. An empty cradle in the lid, shaped for a casting mould.
-note swstash Chimney stash | A smelter's bag on the second landing, soot on everything.
+note swstash Chimney stash | A smelter's bag, soot on everything.
 loot swstash Battery*1;CircuitBoard*1;Nail*6
 prop swstash loot.refill=0
-note swdivesecret Quench strongbox | A strongbox behind the van at the pool floor: the smelters' wages, never paid.
+note swdivesecret Quench strongbox | The smelters' wages, never paid.
 loot swdivesecret MetalIngot*2;Bolt*3;Rope*1
 prop swdivesecret loot.refill=0
 note swcairn Smoke cairn | A cairn on the slag peak:\n\nWe smelted ships to make the Engine. Every ingot has a name. - the crew
+note keepersw Keeper's log: Stormworks | KEEPER'S LOG. The Stormworks, written in soot on the back of a shift card:\n\nFurnace 3 took a night to wake and two days to forgive me. I cast the pin the Well door wants; the old one rusted in the lock the year they sealed you in.\n\nThe drone found me here. It came up out of the quench pool dripping, all its lamps on, and I thought: this is how it ends, love, cleaned off the ring like a barnacle. It looked at me a long time. Then it followed me to the boat. It follows me still. I think it knows who I am waiting for. I think it waits for her too.\n\nThe captain is here, the hard one. She saw the drone. Good. Let her be afraid of it and not of me.\n\nCalling. Calling.\n\n- Silas
 quest title=The Works
 quest intro=A smelter hall under smoke on a dark rock. Go up to the hall.
 step reach|smelter_hall|1|Go up to the smelter hall
@@ -238,10 +240,6 @@ step read|Smelters' roll|1|Read the smelters' roll at the ruined smelthouse in t
 step collect|story:cellarpin|1|Drop the cellar lever by the ore cave in the west hills
 step open|Storm cellar|1|Open the storm cellar under the hatch by the smelthouse
 step reach|rod_top|1|Climb to the top of the rod spur
-step reach|sw_dive|1|Dive into the quench pool to the foundry van
-step collect|story:mould|1|Take the casting mould from the van
-step reach|sw_top|1|Climb the chimney scaffold by the slag peak to its top
-step open|Chimney locker|1|Open the chimney locker with the mould
 step read|Stormworks note 3|1|Read the last note under the lightning rod
 quest done=The Stalker was the engine's drone, still cleaning. South, a pale tower stands in cold steam.
 quest reward=MetalIngot*4;CopperOre*2;Scrap*6

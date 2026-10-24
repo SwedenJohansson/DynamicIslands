@@ -4,9 +4,10 @@
 # engine's heart. Three great rings stand in it, cables to the walls; the command desk where the last crew left their
 # names and their log; and a row of ring consoles. Whatever was chosen up in the Engine Court plays out here: REACTIVATE,
 # the rings light; SHUT DOWN, they go dark; REDIRECT, the middle ring turns the other way; nothing chosen, the engine stays
-# on standby as the last crew left it. Quest "The Heart" (21 steps): the shaft top, the lift order, the first landing, the
-# anglers, the dome, the crew's names, the command desk, the last crew's log, ring 1, the ring console, the closing note,
-# back up to the shaft top.
+# on standby as the last crew left it. Quest "The Heart" (20 steps): the shaft top, the lift order, the first landing, the
+# anglers, the dome (the last crew still at their posts), the crew's names, the command desk, the last crew's log, ring 1,
+# the ring console, the closing note, Mara's post (the Keeper's letter laid there; her last call - the SL14 twist), the
+# Keeper's last log, the ridge, the pump house fuses, the chained hatch, back up to the shaft top.
 #
 # Built by the recipe player (CIRecipe the_command_well) through the editor's own operations. Elevation -30, so the sea's
 # surface is at h=30. Points (metres over the island's base): the dome's floor at 2 m round 0 0 (walls r 8, roof at 8 m,
@@ -49,6 +50,7 @@ place RT_Floor deck at 9 18.5 h=29.8
 place Note_Sign liftorder at 8 12 h=29.9 sit yaw=270
 place RT_Floor landings at 9 18.5 h=19.5
 place RT_Floor landings at 9 18.5 h=9.5
+place Note_Paper inesw at 7.5 11 h=19.55 yaw=30
 prop landings tint.color=#4e5358
 prop landings tint.amount=0.6
 macro shaftair x=0 z=0 h=10 id=air al=air bub=airbub msg="An air pocket - breathe."
@@ -108,7 +110,7 @@ prop domezone zone.id=dome
 prop domezone zone.radius=7
 prop domezone zone.repeat=1
 prop domezone zone.air=1
-prop domezone zone.message=The dome - dry, lit, humming. Three great rings stand in a row. The engine's heart.
+prop domezone zone.message=The dome - dry, lit, humming. Three great rings stand in a row, and the last crew are still at their posts.
 place Zone_Atmosphere domebub at 0 7 h=3
 prop domebub atmo.particles=bubbles
 prop domebub zone.radius=3
@@ -154,6 +156,28 @@ prop lastlog obj.name=lastlog
 prop lastlog beh.hidden=1
 place Loot_Crate cellar at 6 1 ground sit yaw=200
 place "Box Big" - at 6.5 3 ground sit yaw=-20
+# --- The crew at their posts (story pass 10-24): the last crew never left; Mara's radio post by the door, the Keeper's satchel
+place "VG_DecorationPrefabBase_OfficeChair Variant" - at -0.4 2.7 ground sit yaw=230
+place BikerGuy_Body crewarne at -0.9 3.6 ground sit yaw=70
+place Tangaroa_OfficeKit_OfficeChair - at 0.6 -1.3 ground sit yaw=160
+place "VG_DecorationPrefabBase_OfficeChair Variant" - at 4.1 3 ground sit yaw=200
+place MechanicGirl_Body crewpia at 4.6 4.1 ground sit yaw=250
+place BikerGuy_Body crewmako at 5 -0.9 ground sit yaw=300
+place Placeable_Table_Basic - at -2.6 6 ground sit yaw=0
+place RT_RadarScreen - at -2.6 6 ground y=0.9 yaw=180 scale=0.5
+place Tangaroa_OfficeKit_OfficeChair - at -2.6 4.9 ground sit yaw=180
+place MechanicGirl_Body crewmara at -1.7 4.1 ground sit yaw=20
+place Loot_ChestSmall maraspost at -1.2 6.2 ground sit yaw=180
+prop maraspost obj.name=maraspost
+prop maraspost if.open=has|story:letter|1
+prop maraspost else.open=message||M. WREN - RADIO. Her drawer is shut. Something of hers belongs here - a letter.
+prop maraspost on.open=show|maranote
+message||You lay the Keeper's letter on her desk. Under it, where she left it, a page in her hand.
+place Note_Paper maranote at -2.9 5.9 ground y=1 drop yaw=15
+prop maranote obj.name=maranote
+prop maranote beh.hidden=1
+place Note_Paper keeperwell at -2.6 4.9 ground y=0.6 drop yaw=40
+place Loot_ChestSmall keepersatchel at 1.8 6.6 ground sit yaw=200
 
 # --- Ring 1 and its consoles: one answers each choice made above, one the standby ----------------------------------------
 call tzone x=-4 z=-1 al=ring1zone id=ring_1 r=2.5 h=1 msg="Ring 1. A row of four consoles - and only one of them is lit."
@@ -224,7 +248,7 @@ prop fusetin loot.refill=0
 loot wellcavechest story:wellfuse*1;Copper*3;CircuitBoard*1;Bolt*2;Rope*2
 loot supplycrate story:wellfuse*1;Rope*2;Plank*4
 prop supplycrate loot.refill=0
-note pumplocker Pump house locker | The pump crew's locker. Their last pay, their tags - and a list of the names they shut in below.
+note pumplocker Pump house locker | Their pay, their tags, and the list of who they shut in.
 loot pumplocker TitaniumOre*4;Battery*2;CircuitBoard*2
 prop pumplocker loot.refill=0
 
@@ -319,7 +343,7 @@ story desk|Command desk|quest:Vasagatan_FourDigitCode|You woke the Concord Engin
 story ringset|The rings|Battery|You set the Concord Engine's rings at the bottom of the well.
 
 note liftorder Lift order | LIFT ORDER - stencilled on the deck\n\nThe lift is out. Go down by the shaft.\nAir at the first landing (-10) and at the second (-20).\nAt the bottom the dome is dry. Keep the door shut behind you.\nNothing living in the shaft. (Somebody has scratched under it: NOT TRUE.)
-note crewnames Crew names | THE LAST CREW - scratched into the wall by the desk\n\nARNE - ring 1\nSOLVEIG - ring 2\nMAKO - ring 3\nPIA - desk\nTOMAS - lift\nHALLE - well\n\nUnder them, in another hand: and the engine, which never left.
+note crewnames Crew names | THE LAST CREW - scratched into the wall by the desk\n\nARNE - ring 1\nSOLVEIG - ring 2\nMAKO - ring 3\nPIA - desk\nTOMAS - lift\nHALLE - well\nMARA - radio\n\nUnder them, in another hand: all at posts. Nobody leaves until the call stays off.
 note lastlog Last crew's log | LAST CREW'S LOG - printed by the desk\n\nThe Commons stopped answering in the spring. We kept the engine calling for a year.\n\nWe could have run it full and called louder. We could have stopped it and let the calm go. We did neither. We put it on standby: weak waves, a small calm, the call going on - so that whoever came next could choose with better knowledge than ours.\n\nIf you are reading this, you are whoever came next.
 note consolelabels Console labels | Over the four consoles at ring 1: FULL - STOP - REVERSE - STANDBY. The one that answers is the one the court was told.
 note closing_re Closing note | CLOSING NOTE - REACTIVATE\n\nThe three rings run fast and bright. The surface wave, the deep wave, the ice wave: all three again. Up top the calm circle is already growing, and the pulse carries further than it ever has.\n\nWhoever hears it will come. Leave them a raft.
@@ -352,37 +376,42 @@ prop console_standby if.use=!has|story:choice|1\n!signal|ringset
 prop console_standby on.use=signal||ringset\ngive||story:ringset*1\nshow|closing_standby\nmessage||STANDBY. The rings turn on, slowly, as they have for years. Nothing changes.
 prop console_standby else.use=message||The STANDBY console is dark - a choice was made above.
 
-note sunkcrate Sunken supply chest | A supply chest that fell from the deck and lay on the seabed ever since.
+note sunkcrate Sunken supply chest | A supply chest that fell from the deck.
 loot sunkcrate MetalIngot*2;TitaniumIngot*1;Bolt*3;Rope*2
-note droppedorder Dropped order | A waxed order sheet, still readable under the water\n\nTO THE WELL CREW: the court will decide. Whatever it decides, the heart obeys.\nDo not leave the dome unmanned.\n(on the back, in pencil) Standby set. We go up now. - P.
-note wellcavechest Cable cave chest | A chest where the cables enter the rock: a cable crew's spares, dry inside a waxed bag.\n\nA fuse is wrapped in rag among the cables.
+note droppedorder Dropped order | A waxed order sheet, still readable under the water\n\nTO THE WELL CREW: the court will decide. Whatever it decides, the heart obeys.\nDo not leave the dome unmanned.\n\nOn the back, in pencil: Standby set, call OFF. The pump men have cut the lift and chained the hatch until we turn it back on. Mara says we stay at posts. So we stay. Tomas has gone up the old stair for help; he is the thinnest. Somebody feed the goats. - P.
+note wellcavechest Cable cave chest | A cable crew's spares in a waxed bag, and a fuse.
 prop wellcavechest loot.refill=0
-note pumpbook Pump house book | PUMP HOUSE BOOK - in a tin on the table\n\nThe pumps keep the dome dry. The dome keeps the Engine dry. Nobody keeps the pump house dry.\nThe sea came up a finger a year, then a hand a year. We moved the pumps down into the dome.\nThis house we left to the fish.\n\nWe flooded the dome ourselves, to stop the Engine's crew getting out. The fuse box opens our locker - one fuse in the cable cave, one in the supply plane, one in the tin here.
+note pumpbook Pump house book | PUMP HOUSE BOOK - in a tin on the table\n\nThe pumps keep the dome dry. The dome keeps the Engine dry. Nobody keeps the pump house dry. The sea came up a finger a year, then a hand a year. We moved the pumps down into the dome. This house we left to the fish.\n\nThe night the call went off, the Concord's order came: no call, no lift. We cut the lift and chained the hatch, to keep the Engine's crew below until they turned it back on. They never did. I hear them on the pipes some nights. I have stopped putting my ear to the pipes.\n\nThe fuse box opens our locker - one fuse in the cable cave, one in the supply plane, one in the tin here.
 note supplylog Supply plane log | SUPPLY PLANE LOG\n\nThe last supply run to the Command Well: food, lamp oil, a crate of fuses.\nWe came down on the calm circle - too calm. It held the plane like a hand and pulled it under.\nWhatever is in the crate, the crew below needed it more than I did.
 # (deep pass 10-24: the climb and the dive)
-story wellvalve|Shaft valve wheel|Hinge|The valve wheel from the drowned spoil boat: it turns the lock of the crane locker on the spoil-heap islet.
-note cwdivechest Spoil boat chest | The spoil boat that carried the shaft's rock away, sunk in the west pit. Its chest: the valve wheel and two chain keys.
-loot cwdivechest story:wellvalve*1;story:chainkey*2;Rope*2;OxygenBottle*1
+story letter|Letter to the Well|Note_Paper|The beacon keeper's letter, sealed, for MARA WREN, COMMAND WELL, CONCORD ENGINE. Returned nine years running: NO SUCH POST. Somebody should deliver it.
+loot keepersatchel story:letter*1;Rope*1
+loot maraspost Battery*1;CircuitBoard*1
+prop maraspost loot.refill=0
+note cwdivechest Spoil boat chest | The spoil boat, sunk in the pit. Two chain keys inside.
+loot cwdivechest story:chainkey*2;Rope*2;OxygenBottle*1
 prop cwdivechest loot.refill=0
-note cwtop Crane locker | The crane locker at the top of the spoil tower. The valve wheel turns its lock.
+note cwtop Crane locker | The crane crew's spares, at the top of the tower.
 loot cwtop TitaniumOre*3;Battery*2;CircuitBoard*1
 prop cwtop loot.refill=0
 prop cwtop obj.name=cwtop
-prop cwtop if.open=has|story:wellvalve|1
-prop cwtop else.open=message||The crane locker. A valve spindle, no wheel on it.
 note cwstash Crane stash | A tarred bag on the second landing - and a chain key tied to it.
 loot cwstash story:chainkey*1;Battery*1;Nail*6
 prop cwstash loot.refill=0
 note cwdivesecret Boat bilge box | In the spoil boat's bilge: the skipper's tin.
 loot cwdivesecret MetalIngot*2;Bolt*3;TitaniumOre*1
 prop cwdivesecret loot.refill=0
-note cwcairn Spoil cairn | A cairn on the spoil peak:
+note cwcairn Spoil cairn | A cairn on the spoil peak, a crew note under the top stone:\n\nFive chains on the hatch, five keys. We sent one to each tower out there for whoever came, and hid five more round this heap in case nobody did. One in the boat, one in the stash, two in the ground. Count them twice; Mako always lost one.\n\nIf you are reading this, we are still down there. Wave at the shaft. - the last crew
 
-Five chains on the hatch, five keys. We sent one to each tower out there - and hid five more here, in case nobody came back. - the last crew
 story chainkey|Chain key|Bolt|A heavy key on a ring, stamped CONCORD WELL. One of the five that open the chained door of the Command Well, deep under the calm circle.
-note cw_hatch Chained hatch | The well's heart: under the hatch, the Concord's own seal and the last crew's savings, kept for whoever came.
+note cw_hatch Chained hatch | The Concord's seal and the crew's savings, kept for whoever came.
 loot cw_hatch TitaniumIngot*3;CircuitBoard*3;Battery*3;OxygenBottle*2
 prop cw_hatch loot.refill=0
+note inesw Ines's radio log: the shaft | A page of Ines's radio log, folded under a bolt on the first landing:\n\nI came as far as the first pocket, as I promised. Hedda is up on the deck, pretending not to worry. Teo is minding a goat that is not his.\n\nThe old man's boat is tied to the deck. Empty. His drone sat on the rail and did not move when I passed, which was worse than if it had.\n\nThe pulse is clearer down here. It does not come from the south any more. It comes from under me.\n\nThis part is yours. Whatever is at the bottom, read it out loud when you come back up. I want to hear it in a voice that is not on a tape. - I.
+note maranote Mara's last call | MARA'S LAST CALL - in pencil, on radio-room paper, where the letter now lies\n\nSilas. If this is in your hand, you brought the letter. Nine years you sent it, nine years it came back, and still you brought it. Of course you did.\n\nHere is the truth, since nobody else will tell it. The Commons drowned in the spring. The engine went on calling them, and the call drew every raft on the sea into the ring and the waves. So we turned it off. All of us signed. Pia printed a kinder story for the Concord.\n\nMy last call went out that night on the open band: Station 1, crew to posts, standby. Then the set went quiet.\n\nLast week I heard it again. My own voice, my own breath, every eight seconds, with a reel's hiss under it. Somebody taped it and is sending it back. Only one man ever listened that carefully.\n\nLove, it is you. You are the pulse. Every raft that came south came for my voice.\n\nStop the reel. Let me be quiet. Light the lamp instead; a lamp only says here is land.\n\nThe Ringwave on our doors means a ring that holds and a wave let through. Be the wave. Go home. - M.
+note keeperwell Keeper's log: Well | A sheet of oilcloth on Mara's chair, the careful old hand shaking now:\n\nKEEPER'S LOG. The Well. Last entry.\n\nI found her. She was at her post, as she said she would be.\n\nThe reel is in my satchel. I have stopped it. Tonight your set will be quiet for the first time in nine years. That was me too. I called you all here with her voice - the captain, the smoker, the girl from the deep, and you. I am sorry for the waves, and the drone, and the five keys on your belt. I would do it again, and that is the worst thing I know about myself.\n\nI am going up to sit with the relays. One of them drifts north, blinking her sign: long, short, short, long. If it passes you, blink back, so it knows somebody is listening. Then I will know too. - Silas
+note maraspost Mara's post | M. WREN - RADIO. The letter belongs here.
+note keepersatchel Keeper's satchel | His stopped reel, and a second copy of his letter.
 quest title=The Heart
 quest intro=A float deck over a shaft of iron. Go to the top of the well.
 step reach|shaft_top|1|Go to the deck over the well
@@ -390,20 +419,19 @@ step read|Lift order|1|Read the lift order on the deck
 step reach|shaft_10|1|Dive to the first landing's air
 step kill|Angler fish|3|Clear the anglers out of the shaft
 step reach|dome|1|Swim down into the dome
-step read|Crew names|1|Read the last crew's names
+step read|Crew names|1|Read the crew's names on the wall by the desk
 step collect|story:desk|1|Wake the command desk
 step read|Last crew's log|1|Read the last crew's log
 step reach|ring_1|1|Go to ring 1
 step collect|story:ringset|1|Use the ring console that answers what the court was told
 step read|Closing note|1|Read the closing note
+step open|Mara's post|1|Lay the Keeper's letter at Mara's post by the door
+step read|Mara's last call|1|Read what Mara left at her post
+step read|Keeper's log: Well|1|Read the Keeper's last log on her chair
 step reach|wellridge|1|Swim out to the sunken ridge in the east
 step read|Pump house book|1|Read the book in the drowned pump house in the north-east
 step collect|story:wellfuse|3|Find the three fuses: the cable cave, the supply plane and the pump house
 step open|Pump house locker|1|Fit the fuses in the pump house fuse box and open the locker
-step reach|cw_dive|1|Dive to the spoil boat at the bottom of the west pit
-step collect|story:wellvalve|1|Take the valve wheel from the boat
-step reach|cw_top|1|Swim to the spoil-heap islet and climb its crane tower
-step open|Crane locker|1|Open the crane locker with the valve wheel
 step open|Chained hatch|1|Unlock the five chains on the islet's hatch and open it
 step reach|shaft_top|1|Go back up the shaft to the deck
 quest done=The heart of the Concord Engine does what it was told. The end of the ocean was never an end - only a choice.

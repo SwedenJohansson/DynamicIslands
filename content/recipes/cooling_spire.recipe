@@ -2,7 +2,7 @@
 # A pale iron tower four storeys high on a cold island, steam rolling off it, frost on the rocks round its foot: the
 # engine's cooling spire, where the ice wave of the Ringwave was made. Hedda camps at its foot with a trader's store; the
 # ice-rats have the second storey, a polar bear the roof. From the roof a cable runs down south to a lookout on the shore,
-# from where you can see the ring. Quest "The Cold Spire" (19 steps): Hedda's camp, her welcome, the titanium tool plans,
+# from where you can see the ring. Quest "The Cold Spire" (15 steps): Hedda's camp, her welcome, the titanium tool plans,
 # the second landing, the rats, the backpack plans, the roof, the polar bear, the electric zipline plans, the cable down
 # to the lookout, what Hedda saw.
 #
@@ -49,6 +49,7 @@ pop
 push at 7.43 -0.35 h=6
 call rt_storey r3=none a=spire
 place Loot_Chest landingchest at -5 3.5 y=0.1 sit yaw=180
+place Note_Paper inescs at -2.2 3.2 y=0.1 drop yaw=200
 place "Box Small" - at -3.5 3.5 y=0.1 sit yaw=30
 pop
 push at 7.43 -0.35 h=9
@@ -92,12 +93,14 @@ place ZiplinePath_Landmark zipdown at 11.15 -3.32 h=13.45
 zipto zipdown -0.41 -55.78
 call tzone x=-0.41 z=-57.78 al=lookzone id=court_view r=4 msg="The lookout. Over the sea to the south: a ring of iron, wider than any island, and three waves cut across it."
 place Note_Sign hedda2 at 1.09 -59.28 ground sit yaw=0
+place Note_Paper keepercs at -2.6 -56.2 ground drop yaw=80
 place Antenna_pole - at -1.91 -59.28 ground sy=0.4
 place Placeable_Flag_02 - at -1.91 -59.28 ground y=2.1
 
 # --- Hedda's camp and her store; the llama pasture -----------------------------------------------------------------------
 call camp x=14.43 z=-2.35 yaw=250 fire=campfire_1
 call notebox x=16.43 z=-0.35 yaw=200 al=hedda1
+call notebox x=14.3 z=1.9 yaw=160 al=teocs
 place Loot_Chest heddachest at 11.6 2.6 ground sit yaw=250
 store spireshop at 14.43 5.65 ground
 place Creature_Llama llamas at -27.05 -17.45 ground
@@ -187,8 +190,8 @@ info author=Custom Islands
 info description=A pale iron tower four storeys high, steam rolling off it and frost round its foot: the Concord Engine's cooling spire. Hedda camps at its foot with a store; from its roof a cable runs down to a lookout over the ring.
 island on.arrive=message||A pale tower in its own cold fog, steaming like a kettle. At its foot, a campfire - lit.
 
-note hedda1 Hedda's welcome | HEDDA - on a sheet of the Fleet's paper\n\nYou came after all. Sit by the fire - it's the only warm thing on this rock.\n\nI found the smelter people's tools in the spire and kept them for whoever came next. Take them. The rats on the second floor bite. The bear on the roof is worse. From the roof there's a cable down to the shore - ride it and look south. Then you'll understand why I stopped here.\n\nThe store is mine. Trade if you like.
-note hedda2 What Hedda saw | WHAT HEDDA SAW - painted on a board at the lookout\n\nA ring on the sea, wider than any island.\nThree waves cut across it: the surface, the deep and the ice.\nIt turns. Very slowly. It has turned since before the rafts.\n\nTeo says it is the end of the ocean. Ines says it is a machine like any other. I say: whoever goes there decides what it is.
+note hedda1 Hedda's welcome | HEDDA - on a sheet of the Fleet's paper\n\nYou came after all. Sit by the fire - it is the only warm thing on this rock, and I built it, so be grateful.\n\nI carried the smelter people's tools up from the Stormworks and kept them for whoever came next. Take them. The rats on the second floor bite. The bear on the roof is worse; it has opinions about stairs.\n\nInes is up there somewhere with her radio, listening to the old man. She will not come down to eat. I take her soup and she says thank you without looking up, and the soup goes cold, and I take her more.\n\nFrom the roof a cable runs down to the shore. Ride it and look south. Then you will understand why I stopped here. The store is mine. Trade if you like.
+note hedda2 What Hedda saw | WHAT HEDDA SAW - painted on a board at the lookout\n\nA ring on the sea, wider than any island. Three waves cut across it: the surface, the deep and the ice. It turns. Very slowly. It has turned since before the rafts.\n\nIn the middle, the Engine Court: iron yards on the water, and under them the Command Well, chained shut. Five chains, five keys - the ones you carry. The old man knew you would bring them.\n\nTeo says it is the end of the ocean. Ines says it is a machine like any other. I say: whoever goes there decides what it is. We go in the morning. All three of us, and you, if you will.
 note heddachest Hedda's chest | Hedda's chest: titanium tool plans from the smelter crew, wrapped in a scarf.
 note landingchest Second landing | A locker on the second landing, gnawed: an advanced backpack's plans.
 note topchest Spire top | A chest on the spire's roof, frosted shut: an electric zipline handle's plans.
@@ -204,17 +207,17 @@ prop mushcrate loot.refill=0
 
 note coldstore Cold store | A cold store dug into the slope: food kept fresh by the spire's chill.
 loot coldstore Cooked_GenericMeat*2;PlasticBottle_Water*2;Wool*2;Rope*2
-note gaugereadings Steam gauge readings | GAUGE READINGS - a clipboard, damp\n\nCoolant 4 deg. Pressure normal. Engine load: 2 percent.\nCoolant 4 deg. Pressure normal. Engine load: 2 percent.\n(underlined three times) WHY KEEP IT COLD IF IT NEVER RUNS?
+note gaugereadings Steam gauge readings | GAUGE READINGS - a clipboard, damp\n\nCoolant 4 deg. Pressure normal. Engine load: 2 percent.\nCoolant 4 deg. Pressure normal. Engine load: 2 percent.\nCoolant 4 deg. Pressure normal. Engine load: 2 percent.\n\nUnderlined three times: WHY KEEP IT COLD IF IT NEVER RUNS?\n\nAnswered underneath, in another hand: Because the Well said so, Lars, and the Well hears Station 1, and Station 1 is never wrong. Now stop underlining things.\n\nAnd under that, last of all, faded: Station 1 has gone quiet. Engine load 0. We keep it cold anyway. In case they wake it. In case they do not.
 note dunecavechest Cellar chest | A chest in the cold cave, its lid beaded with drips.
 prop dunecavechest loot.refill=0
-note pumpmenlog Pumpmen's log | PUMPMEN'S LOG - in a tin under the fallen wall\n\nThe spire must never run dry. If it does, the Engine runs hot.\nWe never saw the Engine. We only saw the pipe, going south under the sand.\nHedda came through asking about it. We told her what we knew: nothing.\n\nThe pumpmen's chest by the water plane is sun-locked: turn the mirror on the dune ridge and the one at this house, and the light meets on its eye. The steam leans south because the Engine draws it.
-note waterplanelog Water plane log | WATER PLANE LOG\n\nSpare cooling coils for the spire.\nThe steam from the top of it leans south, whatever the wind does. The needle agrees.\nLanded short in the east dunes. The coils are in the crate.\n\nThe pumpmen's sun-locked chest sits by our nose. Their mirrors are on the ridge and at the pump house.
+note pumpmenlog Pumpmen's log | PUMPMEN'S LOG - in a tin under the fallen wall\n\nThe spire must never run dry. If it does, the Engine runs hot. We never saw the Engine. We only saw the pipe, going south under the sand, and felt it hum in our teeth at night.\n\nHedda came through asking about it. We told her what we knew: nothing. She said that was more honest than most harbour masters and gave us a tin of fish.\n\nThe steam leans south because the Engine draws it. The pumpmen kept their best chest by the water plane, behind a sun-lock: one mirror on the dune ridge, one at this house. They liked a puzzle more than a lock.
+note waterplanelog Water plane log | WATER PLANE LOG\n\nSpare cooling coils for the spire. The steam from the top of it leans south, whatever the wind does. The needle agrees.\n\nLanded short in the east dunes. The coils are in the crate. I have landed short three times this year; the dunes are getting used to me.\n\nSomething big flew under me on the way in, low over the water - grey, with lamps along its side - and turned round to look at me before it went south. I did not know drones could look. This one did.
 # (deep pass 10-24: the climb and the dive)
 story frostvalve|Frost valve|Hinge|A frost valve from the cooling pond, white with old ice. The ice tower's locker opens with it.
-note csdivechest Pond caravan | Hedda's old caravan at the bottom of the cooling pond. In its chest: a frost valve, still cold.
+note csdivechest Pond caravan | Hedda's old caravan. In its chest: a frost valve, still cold.
 loot csdivechest story:frostvalve*1;Rope*2;Scrap*3;Bolt*2
 prop csdivechest loot.refill=0
-note cstop Ice tower locker | The ice tower's locker. The frost valve turns the lock: the cooling crew's spare parts.
+note cstop Ice tower locker | The frost valve turns the lock: the cooling crew's spares.
 loot cstop TitaniumOre*2;Battery*1;CircuitBoard*1
 prop cstop loot.refill=0
 prop cstop obj.name=cstop
@@ -223,10 +226,13 @@ prop cstop else.open=message||The ice tower's locker. A valve socket in place of
 note csstash Ice tower stash | A frozen bag on the second landing.
 loot csstash Battery*1;CircuitBoard*1;Nail*6
 prop csstash loot.refill=0
-note csdivesecret Pond strongbox | Behind the caravan at the pond floor: Hedda's paint box.
+note csdivesecret Pond strongbox | Hedda's paint box, and a brush gone stiff.
 loot csdivesecret MetalIngot*2;Bolt*3;Rope*1
 prop csdivesecret loot.refill=0
 note cscairn Frost cairn | A cairn on the frost peak:\n\nThe steam leans south. It always leans to the Engine. - Hedda
+note keepercs Keeper's log: Spire | KEEPER'S LOG. The Cooling Spire, on a gauge card, pinned at the lookout:\n\nThey kept her cold. Forty years of men on this rock keeping an engine cold that never ran, because Station 1 said so. I have shaken every one of their hands in my head.\n\nTomorrow I go into the Court. The drone goes before me. It clears the yards of anything that might hurt my pilgrims, the way it was built to clear the ring. I will open the chains I can and leave the rest for the young ones, and when the Engine wakes, the Well will open, and Mara will answer.\n\nShe will be cross with me. She always was when I was late. Forty years is very late.\n\nCalling. Calling.\n\n- Silas
+note inescs Ines's radio log: the spire | A page of Ines's radio log, held down by a cold mug on the second landing:\n\nNight fourteen. Hedda brings soup. I am a bad friend; I will be a better one after.\n\nI have the old man's voice clean now. He is not following the pulse. The pulse comes out of him. There is a hiss on it, the kind a reel makes, and a click at the end of every call, like a tape being rewound. And the woman under it - Station 1, crew to posts, standby - is always the same woman saying the same words in the same breath.\n\nTeo came on the set tonight from the shoals, faint, to say the masts are still lit and his tobacco is gone. I cried. I do not know which part made me.\n\nTomorrow, the Court.
+note teocs Teo on the radio | TEO ON THE RADIO - taken down by Hedda in pencil, on the back of a stores list\n\nTeo here. Static Shoals. The masts are lit. The boats are not back. I have run out of tobacco and started talking to the screechers. One of them answers. Its name is Gerald.\n\nListen. The old man passed the shoals again last night, going south fast, with that drone behind him like a hound. He waved. I waved back. I do not know why.\n\nIf you go into the Court, Hedda, go slow. If the drone comes for you, run, and do not stop to be brave. Being brave is my job and I am very bad at it.\n\nTell Ines I said the pulse is a liar. She will know what I mean. Teo out.
 quest title=The Cold Spire
 quest intro=A steaming tower and a lit campfire at its foot. Go to the camp.
 step reach|hedda_camp|1|Go to the campfire at the spire's foot
@@ -243,10 +249,6 @@ step reach|coolridge|1|Climb the dune ridge in the north-east
 step read|Water plane log|1|Read the log at the plane wreck in the east dunes
 step open|Sun-locked chest|1|Turn both mirrors and open the sun-locked chest by the water plane
 step reach|court_view|1|Ride the cable down to the lookout on the shore
-step reach|cs_dive|1|Dive to the caravan at the bottom of the cooling pond
-step collect|story:frostvalve|1|Take the frost valve from the caravan
-step reach|cs_top|1|Climb the ice tower by the frost peak to its top
-step open|Ice tower locker|1|Open the ice tower locker with the valve
 step read|What Hedda saw|1|Read what Hedda painted at the lookout
 quest done=South over the sea: the ring, turning. The Engine Court is waiting.
 quest reward=TitaniumOre*2;Rope*4;CaveMushroom*2

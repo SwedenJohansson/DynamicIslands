@@ -2,7 +2,7 @@
 # A low ring of sand round a lagoon - and in the lagoon four rows of iron frames, half in the water, the reef growing over
 # them. The frames are an intake: the engine drinks the sea here. A sunk service boat lies on the lagoon floor, the pump
 # head under the middle has an air pocket, and on the east islet the old intake cage still holds its water behind a gate.
-# Quest "The Intake" (17 steps): the frame rows, the frame plate (the Ringwave again), the stingrays, the Motor plans in
+# Quest "The Intake" (15 steps; the frame tower is an optional climb since the 10-24 story pass): the frame rows, the frame plate (the Ringwave again), the stingrays, the Motor plans in
 # the sunk boat, the puffers, the pump head, the steering plans in it, the frame valve, the service note, the cage.
 #
 # Built by the recipe player (CIRecipe reefmachine_atoll) through the editor's own operations. Points (metres over the
@@ -59,6 +59,7 @@ call loopsound x=0.31 z=-0.7 al=intakesound ev=event:/raft/engine/waterwheel r=2
 
 # --- The north landing: the frame plate with the Ringwave cut into it ----------------------------------------------------
 call tzone x=-1.01 z=34.01 al=framezone id=frame_row r=5 msg="Rows of iron frames standing in the lagoon, coral grown all over them. The water round them is pulling - slowly, all one way."
+call notebox x=-5.5 z=38.5 yaw=160 al=teoreef
 place Note_Sign frameplate at 0.49 36.51 ground sit yaw=180
 call ringwave x=-4.01 z=37.01 r=2 al=ringwave y=0.15
 prop ringwave tint.color=#8a8577
@@ -95,6 +96,7 @@ prop cagegate tint.amount=0.5
 prop cagegate obj.name=cagegate
 place Loot_Crate cagecrate at 40.97 2.19 ground sit yaw=30
 call tzone x=39.97 z=1.69 al=cagezone id=cage r=2 msg="Inside the intake cage. The water that stood here is gone; the floor is slick and full of shells."
+place Note_Paper keeperlog at 39.2 1 ground drop yaw=30
 
 # --- Things to gather: silver algae and giant clams in the lagoon; four reefs round the atoll; the shallows -------------
 scatter "Pickup_Landmark_SilverAlgae" 3 at 0.31 -0.7 r=10 seed=14025 wet
@@ -139,7 +141,7 @@ prop supplycrate note.title=Supply plane's crate
 story reefhandle|Sluice handle|Bolt|The square handle for the sluice wheel at the keeper's hut on the Reef Machine.
 loot supplycrate story:reefhandle*1;Plank*4;Nail*6
 prop supplycrate loot.refill=0
-note sluicecrate Sluice crate | The pump keeper's crate, mud to the lid. Inside, wrapped in oilcloth, a pair of bolt cutters with his name on the grip.
+note sluicecrate Sluice crate | Wrapped in oilcloth: bolt cutters with the keeper's name on them.
 prop sluicecrate loot.refill=0
 prop reefcavechest if.open=has|story:raft-Tangaroa_KeyCard|1
 prop reefcavechest else.open=message||The pump crew's store has a card slot stamped CONCORD. A keycard would open it.
@@ -175,10 +177,10 @@ island on.arrive=message||A ring of sand, a lagoon - and rows of rusted frames s
 story valve|Frame valve turned|Hinge|You wound the frame valve on Reefmachine Atoll. The intake cage on the east islet drained, and its gate dropped.
 
 note frameplate Frame plate | A plate bolted to the first frame, green with age.\n\nCONCORD WORKS - INTAKE 4\nTHE RINGWAVE\n\nUnder the words, the sign again: a ring, cut through by three waves.
-note servicenote Service note | SERVICE NOTE - scratched into a tin plate\n\nStation 4 reef. Feeding the engine's intake.\nKeep the frames clear of shell. Keep the cage full for the inspectors.\nIf the inspectors stop coming, open the valve and go home.
-note boatchest Service boat | The service boat's locker, under a skin of sand: a motor's plans in an oil bag.
-note pumpchest Pump head | A chest bolted inside the pump head, dry in the trapped air: a steering wheel's plans.
-note cagecrate Cage crate | The inspectors' crate, at the bottom of the drained cage: shells, tools, and a tin of goo.
+note servicenote Service note | SERVICE NOTE - scratched into a tin plate, by the pump crew\n\nStation 4 reef. Feeding the engine's intake.\n\nKeep the frames clear of shell. Keep the cage full for the inspectors. Smile at the inspectors; they have never once smiled back.\n\nIf the inspectors stop coming, open the valve and go home.\n\nUnderneath, in a different hand, much later: The inspectors stopped coming. We opened the valve. Nobody told us where home was, so we stayed a while longer and scraped the frames for no one. Old habits. If you are here, scrape one for us. The reef likes it.
+note boatchest Service boat | A motor's plans in an oil bag.
+note pumpchest Pump head | Dry in the trapped air: a steering wheel's plans.
+note cagecrate Cage crate | Shells, tools, and a tin of goo.
 loot boatchest Blueprint_MotorWheel*1;Scrap*4;Bolt*2
 prop boatchest loot.refill=0
 loot pumpchest Blueprint_SteeringWheel*1;Hinge*2;MetalIngot*1
@@ -191,32 +193,34 @@ prop framevalve if.use=!signal|valve
 prop framevalve on.use=signal||valve\ngive||story:valve*1\nhide|cagegate\nmessage||The valve fights, then spins. Out on the east islet the cage's water drops away with a long gurgle - and its gate sinks out of sight.\nsound||event:/raft/engine/waterwheel
 prop framevalve else.use=message||The valve is open. The cage is dry.
 
-note pumplocker Pump crew's locker | A pump crew's locker, salt-crusted: spare parts nobody came back for.
+note pumplocker Pump crew's locker | Spare parts nobody came back for.
 loot pumplocker MetalIngot*2;Bolt*4;Hinge*2;CopperIngot*1
-note intakelog Intake log | INTAKE LOG - page torn from a book\n\nIntake open 06:00. Flow good.\nIntake open 06:00. Flow good.\nIntake open 06:00. The reef keeps growing over the grilles - we scrape them every week.\nNo orders since spring. We keep the valve as we were told.
-note reefcavechest Pipe store | The pump crew's store chest: fittings, a spare gasket, and a tin of grease gone hard.
+note intakelog Intake log | INTAKE LOG - a page torn from the crew's book\n\nIntake open 06:00. Flow good.\nIntake open 06:00. Flow good.\nIntake open 06:00. The reef keeps growing over the grilles - we scrape them every week.\nIntake open 06:00. Flow good. Cook made fish again.\nIntake open 06:00. No orders since spring. We keep the valve as we were told.\nIntake open 06:00. The pulse on the set changed today. Same beat, but there is a voice under it now, a man's, saying one word. Nobody on the crew will say the word out loud.\nIntake open 06:00. Flow good. Cook made fish again. We are almost glad.
+note reefcavechest Pipe store | Fittings, a gasket, and grease gone hard.
 prop reefcavechest loot.refill=0
-note pumpdiary Pump keeper's diary | PUMP KEEPER'S DIARY - in a tin by the fallen wall\n\nThe intake drinks the whole lagoon twice a day. Where it goes nobody told us.\nThe pipes run south under the reef, straight as a ruler, the same way the pulse points.\nI asked the engineers. They said: to the Engine. Capital E.\n\nWe never built the frames to hold back the sea. We built them to farm the coral for the Concord's lime. I kept my bolt cutters in the sluice crate - the sluice handle went south on the supply plane.
-note supplylog Supply plane log | SUPPLY PLANE LOG\n\nSpare valves for the Intake, as ordered.\nCould not raise the atoll on the radio - only that pulse, louder every mile south.\nDitching on the south-east shore. The valves are in the crate. Whoever finds them: the frames need them more than I do.\n\nCargo: one sluice handle for the keeper's hut, wrapped in sacking.
+note pumpdiary Pump keeper's diary | PUMP KEEPER'S DIARY - in a tin by the fallen wall\n\nThe intake drinks the whole lagoon twice a day. Where it goes nobody told us. The pipes run south under the reef, straight as a ruler, the same way the pulse points. I asked the engineers. They said: to the Engine. Capital E.\n\nA beacon keeper from up north came through today in a leaking dory, asking which way the Command Well lay. Wren, he said his name was. His wife is on the crew down there. I told him the truth: nobody goes there now, the Well went quiet. He thanked me as if I had said the opposite, and rowed south.\n\nWe never built the frames to hold back the sea. We built them to farm coral for the Concord's lime. I kept my bolt cutters in the sluice crate - the sluice handle went south on the supply plane.
+note supplylog Supply plane log | SUPPLY PLANE LOG - the pilot's hand, getting worse\n\nSpare valves for the Intake, as ordered. Could not raise the atoll on the radio - only that pulse, louder every mile south, and once, under it, someone answering it. An old man's voice. He was not talking to me.\n\nDitching on the south-east shore. I have ditched before. It does not get better with practice.\n\nThe valves are in the crate. Whoever finds them: the frames need them more than I do. Tell my sister I meant to visit.\n\nCargo: one sluice handle for the keeper's hut, wrapped in sacking.
 # (deep pass 10-24: the climb and the dive)
 story reeflog|Reef log|CircuitBoard|The reef keepers' log, sealed in a van that went into the lagoon pit with the last supply run. It holds the frame tower's lock number in its last page.
 story chainkey|Chain key|Bolt|A heavy key on a ring, stamped CONCORD WELL. One of the five that open the chained door of the Command Well, deep under the calm circle.
-note radivechest Drowned supply van | The supply van that never arrived, nose-down in the lagoon pit. In the cargo chest: the reef keepers' log in a sealed tin.
+note radivechest Drowned supply van | The van that never arrived. A sealed tin: the reef log.
 loot radivechest story:reeflog*1;Plastic*4;Scrap*3;Rope*2
 prop radivechest loot.refill=0
-note ratop Frame tower locker | The frame tower's locker, 36 m over the reef. The log's last page has the number and the lock opens: a chain key, and the reef keepers' spare parts.
+note ratop Frame tower locker | The log's number opens it: a chain key and spare parts.
 loot ratop story:chainkey*1;TitaniumOre*2;Battery*1;Bolt*4
 prop ratop loot.refill=0
 prop ratop obj.name=ratop
 prop ratop if.open=has|story:reeflog|1
 prop ratop else.open=message||The frame tower's locker. A dial lock - the number is in a log somebody kept.
-note rastash Frame tower stash | On the second landing: a keeper's lunch tin, empty but for fuses and a pencilled sum.
+note rastash Frame tower stash | A lunch tin: fuses and a pencilled sum.
 loot rastash Battery*1;CircuitBoard*1;Nail*6
 prop rastash loot.refill=0
-note radivesecret Van glovebox | The van's glovebox, jammed open behind it: the driver's tools and a postcard of the atoll as it was, green and busy.
+note radivesecret Van glovebox | The driver's tools, and a postcard of the atoll, green and busy.
 loot radivesecret MetalIngot*2;Bolt*3;Rope*1
 prop radivesecret loot.refill=0
-note racairn Reef cairn | A cairn of coral and iron on the peak:\n\nThe frames drink the sea and the reef grows on them. One day the reef will be the island. - the keepers
+note racairn Reef cairn | A cairn of coral and iron on the peak, a page of Ines's radio log under the top stone:\n\nNight two. The intake hums like a throat. I put the radio to the frames and listened for an hour, and I am sure now: under the pulse, a man talks back to it. Not to us. To it. The same word, then a name I cannot make out.\n\nHedda let me sleep the watch through, which she never does. Teo cooked. It was terrible and I ate all of it.\n\nThe needle wants us west, to three rocks with masts on them. The masts are dead. Somebody pointed them wrong on purpose, Hedda thinks. - I.
+note teoreef Teo's complaint | TEO'S COMPLAINT - pinned under a shell on a box by the frames\n\nTo whoever runs this reef:\n\nYour stingrays bit me. Your puffers puffed at me. Your water pulls one way and I wanted to go the other. Your coral is in rows, like a vegetable garden for a giant, and I find that rude.\n\nHedda says the frames are a machine and the reef is just the paint. Ines put her ear on an iron post and said it is breathing. I put my ear on it too and got a cold ear.\n\nFive stars for the view. One star for everything else. We are going on. Hedda says I have to stop leaving reviews.\n\n- T. Varga
+note keeperlog Keeper's log: Intake | A sheet of oilcloth nailed inside the cage, in a careful old hand:\n\nKEEPER'S LOG. Intake 4.\n\nCalling. Calling. Station, this is the Keeper. The intake is clear again; I scraped it myself, all four rows, with these hands that are too old for it.\n\nThree of them came through last week, following my beacon - a captain, a smoker and the girl from the deep with the good radio. They camped where I told them with the light. They will do. Five posts want five pairs of hands, and I have only the one pair.\n\nThe masts at the three rocks are lying. I will turn them true again. Calling. Calling. Answer me, Mara.
 quest title=The Intake
 quest intro=Iron frames in a lagoon, coral over them. Go ashore by the first row.
 step reach|frame_row|1|Go ashore by the frame rows
@@ -233,8 +237,6 @@ step read|Pump keeper's diary|1|Read the pump keeper's diary at the ruined hut i
 step open|Sluice crate|1|Turn the sluice by the hut and open what it uncovers
 step reach|ra_dive|1|Dive into the lagoon pit to the drowned van
 step collect|story:reeflog|1|Take the reef log from the van's cargo chest
-step reach|ra_top|1|Climb the frame tower by the peak to its top
-step open|Frame tower locker|1|Open the frame tower locker with the number from the log
 step reach|cage|1|Go into the drained intake cage
 quest done=The intake is open and the cage is dry. Something on the Receiver answers now - three relays, west of here.
 quest reward=Rope*4;Scrap*6;Nail*10

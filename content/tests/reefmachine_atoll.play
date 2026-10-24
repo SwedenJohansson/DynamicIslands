@@ -62,10 +62,8 @@ wait 3
 read Reef cairn
 dig 2
 zone ra_top
-expect step 15
 open Frame tower locker
 wait 3
-expect step 16
 expect story chainkey 1
 zone cage
 expect done
