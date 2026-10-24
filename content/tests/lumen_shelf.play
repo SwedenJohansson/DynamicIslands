@@ -31,5 +31,13 @@ expect step 8
 open Mess chest
 wait 3
 expect step 9
+zone lu_ridge
+expect step 10
+zone lu_cave
+expect step 11
+read Surveyor's hut note
+expect step 12
+read Caravan logbook
+expect step 13
 read Last survey note
 expect done

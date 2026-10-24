@@ -8,3 +8,7 @@ wait 3
 picture sl10_spirecrest_island 30 14 -30 0 4 0
 picture sl10_spirecrest_beacon 6 7 -9 0 6.5 0
 picture sl10_spirecrest_garden -6 7 24 0 5.5 16
+picture sl10_spirecrest_roofs_ridge 52 20 4 66 11 5
+picture sl10_spirecrest_roofs_cave -52 13 10 -66 4 13
+picture sl10_spirecrest_roofs_ruin -6 13 -52 -8 4 -66
+picture sl10_spirecrest_roofs_plane -37 13 47 -46 4 58

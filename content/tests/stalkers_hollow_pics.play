@@ -8,3 +8,7 @@ wait 3
 picture sl10_hollow_arena -14 7 -6 4 1 4
 picture sl10_hollow_gate 6 3 4 15 4 13
 picture sl10_hollow_lip -12 6 6 -22 9 0
+picture sl10_stalkers_hollow_ridge 0 18 68 0 9 82
+picture sl10_stalkers_hollow_cave 68 12 -1 82 3 -1
+picture sl10_stalkers_hollow_ruin -68 12 0 -82 3 0
+picture sl10_stalkers_hollow_wreck 0 12 -70 0 3 -84

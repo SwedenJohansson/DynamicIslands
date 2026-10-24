@@ -16,5 +16,11 @@ open Luggage rack
 wait 3
 expect item ExplosiveGoo 2
 expect step 4
+zone sw_ridge
+expect step 5
+zone sw_cave
+expect step 6
+read Seat 14's ticket
+expect step 7
 read Commuter's note
 expect done

@@ -3,7 +3,7 @@
 # and llamas) and runs on west over stone pillars - and ends in the air. Rusted car shells (Caravan vans, tinted) sit on
 # the sunken lane; one of them shelters an air pocket. The toll booth at the top of the ramp (a hut, its roof on its
 # corner posts) keeps a strongbox only the booth key opens. Sandbars with clay to the south. Quest "The Drowned Highway"
-# (6 steps): the ramp top, the toll booth log, the sunken lane, the van's glovebox (the booth key), the motor wheel
+# (10 steps): the ramp top, the toll booth log, the sunken lane, the van's glovebox (the booth key), the motor wheel
 # plans in the booth's strongbox, the steering wheel plans in the bus locker.
 #
 # Points (metres over the sea): the road (3 lanes, z -2.25..2.25) on the embankment at 3 m from x -6 to 10; down the
@@ -12,89 +12,134 @@
 include lib_huts
 include lib_gravity
 include lib_sea
+# RESIZE 10-24: Radius 36 -> 86 (x2.4). The road keeps its shape stretched along x (lanes, the booth and the vans at
+# x*2.4, the road's width and side offsets as they were); the embankment, trees and animals at x*2.4, z*2.4.
+include lib_features
 new
-gen Trees=0.2 Bushes=0.3 Rocks=0.2 Harvest=0.15 BeachThings=0.2
-gen Seed=10201 Radius=36 Height=4 Roughness=0.35 Peaks=1 Shape=0 Style=0 BeachWidth=0.25 Cliffs=0.2 PeakShape=0.5
+gen Trees=0.25 Bushes=0.32 Rocks=0.3 Harvest=0.15 BeachThings=0.2
+gen Seed=10201 Radius=86 Height=12 Roughness=0.35 Peaks=2 Shape=0 Style=0 BeachWidth=0.25 Cliffs=0.2 PeakShape=0.5
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
 elevation 0
 
-# --- Terrain: the embankment at 2.7 m, the lane's bed sloping into the sea, shallow water under the overpass ----------
-brush flatten at -1 0 r=11 s=20 frames=220 h=2.7
-for lx 12 40 4
-brush flatten at $lx 0 r=4 s=20 frames=90 h={2.6-11*($lx-10)/30}
+# --- Terrain: the embankment at 2.7 m, the lane's bed sloping into the sea, shallow water under the overpass ---------
+brush flatten at -2.4 0 r=26 s=20 frames=400 h=2.7
+for lx 26 98 4
+brush flatten at $lx 0 r=4 s=20 frames=90 h={2.6-11*($lx-24)/72}
 next
-brush flatten at -15 0 r=6 s=20 frames=120 h=-2.5
-brush flatten at 14 -20 r=6 s=20 frames=80 h=0.3
-brush grass at -2 0 r=12 s=20 frames=20
-brush sand at 14 -20 r=5 s=20 frames=20
+brush flatten from -18 0 to -47 0 r=8 s=20 frames=160 h=-2.5
+brush flatten at 30 -78 r=8 s=20 frames=100 h=0.3
+brush grass at -4.8 0 r=28 s=20 frames=30
+brush sand at 30 -78 r=6 s=20 frames=20
+# discoveries: level spots for the drivers' camp and the road crew's digger
+brush flatten at 40 42 r=5 s=8 frames=40
+brush flatten at -32 48 r=6 s=8 frames=40
 origin
-clear at 2 0 r=9
-clear at 26 0 r=15
-clear at -14 0 r=7
+clear at 4.8 0 r=22
+clear from 24 0 to 98 0 r=8
+clear from -14 0 to -47 0 r=7
+clear at 40 42 r=6
+clear at -32 48 r=7
 
-# --- The road on the embankment and down the sunken lane (stone floor) -----------------------------
-ramp Block_Floor_Tier3 from -5.25 -1.5 3 to 9.75 -1.5 3 len=1.5 top=0
-ramp Block_Floor_Tier3 from -5.25 0 3 to 9.75 0 3 len=1.5 top=0
-ramp Block_Floor_Tier3 from -5.25 1.5 3 to 9.75 1.5 3 len=1.5 top=0
-ramp Block_Floor_Tier3 from 11.25 -1.5 2.6 to 39.75 -1.5 -7.9 len=1.5 top=0
-ramp Block_Floor_Tier3 from 11.25 0 2.6 to 39.75 0 -7.9 len=1.5 top=0
-ramp Block_Floor_Tier3 from 11.25 1.5 2.6 to 39.75 1.5 -7.9 len=1.5 top=0
+# --- The road on the embankment and down the sunken lane (stone floor) -------------------------------------------------
+ramp Block_Floor_Tier3 from -12.75 -1.5 3 to 23.25 -1.5 3 len=1.5 top=0
+ramp Block_Floor_Tier3 from -12.75 0 3 to 23.25 0 3 len=1.5 top=0
+ramp Block_Floor_Tier3 from -12.75 1.5 3 to 23.25 1.5 3 len=1.5 top=0
+ramp Block_Floor_Tier3 from 24.75 -1.5 2.6 to 95.25 -1.5 -7.9 len=1.5 top=0
+ramp Block_Floor_Tier3 from 24.75 0 2.6 to 95.25 0 -7.9 len=1.5 top=0
+ramp Block_Floor_Tier3 from 24.75 1.5 2.6 to 95.25 1.5 -7.9 len=1.5 top=0
 
 # --- The overpass: the road on west over stone pillars, ending in the air ---------------------------------------------
-for px -9 -17 -4
+for px -18 -46 -4
 place RT_PillarThick - at $px -1.8 h=-3
 place RT_PillarThick - at $px 1.8 h=-3
 next
-ramp Block_Floor_Tier3 from -6.75 -1.5 3 to -19.25 -1.5 3 len=1.5 top=0
-ramp Block_Floor_Tier3 from -6.75 0 3 to -19.25 0 3 len=1.5 top=0
-ramp Block_Floor_Tier3 from -6.75 1.5 3 to -18.5 1.5 3 len=1.5 top=0
-ramp Block_Wall_Fence_Tier3 - from -6.75 -2.25 3 to -19.25 -2.25 3 len=1.5 top=-0.1
-ramp Block_Wall_Fence_Tier3 - from -6.75 2.25 3 to -17.75 2.25 3 len=1.5 top=-0.1
-place Note_Sign endsign at -18.5 0 h=3 sit yaw=90
+ramp Block_Floor_Tier3 from -14.25 -1.5 3 to -46.25 -1.5 3 len=1.5 top=0
+ramp Block_Floor_Tier3 from -14.25 0 3 to -46.25 0 3 len=1.5 top=0
+ramp Block_Floor_Tier3 from -14.25 1.5 3 to -45.5 1.5 3 len=1.5 top=0
+ramp Block_Wall_Fence_Tier3 - from -14.25 -2.25 3 to -46.25 -2.25 3 len=1.5 top=-0.1
+ramp Block_Wall_Fence_Tier3 - from -14.25 2.25 3 to -44.75 2.25 3 len=1.5 top=-0.1
+place Note_Sign endsign at -45.5 0 h=3 sit yaw=90
 
 # --- The toll booth at the top of the ramp: the log, the strongbox (the booth key opens it) ---------------------------
-push at 2 3.2 h=2.7
+push at 4.8 3.2 h=2.7
 call hut w=2 d=2 y=0.1
 place "Box Small" - at 0.9 2.2 y=0.1 sit
 place Note_Paper boothlog at 0.9 2.2 y=0.8 drop yaw=10
 place Loot_ChestSmall boothbox at 2.2 2.2 y=0.1 sit yaw=270
 pop
-place Zone_Trigger rampzone at 4 0 h=4
+place Zone_Trigger rampzone at 9.6 0 h=4
 
 # --- The sunken lane: rusted cars, the van's glovebox, the air pocket, the bus and its locker -------------------------
-place Van_2 cars at 17 0 h=-0.3 sit yaw=90
-place Van3 cars at 26.5 -1 h=-3.2 sit yaw=0
-place Van_1 cars at 37 0 h=-6.6 sit yaw=0
+place Van_2 cars at 40.8 0 h=-0.3 sit yaw=90
+place Van3 cars at 63.6 -1 h=-3.2 sit yaw=0
+place Van_1 cars at 88.8 0 h=-6.6 sit yaw=0
 # the jam that never moved: a caravan parked by the booth, a van left on the overpass, a trailer rolled off the lane
-place Caravan_Yellow_01 wrecks at 8 -1 h=3 sit yaw=90
-# (on the overpass deck, lengthways: at -13 its front hung 5 m over the shallows, and turned across the deck its ends
-# stood past both edges, 2026-10-23)
-place Van_4 wrecks at -10 0 h=3 sit yaw=0
-place Caravan_Green_02 wrecks at 22 -7 ground yaw=20
+place Caravan_Yellow_01 wrecks at 19.2 -1 h=3 sit yaw=90
+# (on the overpass deck, lengthways: turned across the deck it stood past both edges, 2026-10-23)
+place Van_4 wrecks at -24 0 h=3 sit yaw=0
+place Caravan_Green_02 wrecks at 52.8 -7 ground yaw=20
 prop cars tint.color=#6b4a32
 prop cars tint.amount=0.55
 prop wrecks tint.color=#8a6a4e
 prop wrecks tint.amount=0.3
-place Loot_ChestSmall glovebox at 24 1.6 h=-1.4 drop yaw=0
-call airpocket x=30 z=3.2 id=sunken_lane al=laneair bub=lanebub r=2.5 msg="An air pocket trapped by the van's tailgate. Breathe."
-place Loot_Chest buslocker at 31.5 2 h=-4 drop yaw=270
-scatter "Pickup_Landmark_Scrap 1_OceanBottom" 3 at 28 -4 r=4 seed=10202 free=1
+place Loot_ChestSmall glovebox at 57.6 1.6 h=-1.4 drop yaw=0
+call airpocket x=72 z=3.2 id=sunken_lane al=laneair bub=lanebub r=2.5 msg="An air pocket trapped by the van's tailgate. Breathe."
+place Loot_Chest buslocker at 75.6 2 h=-4 drop yaw=270
+scatter "Pickup_Landmark_Scrap 1_OceanBottom" 3 at 67.2 -4 r=4 seed=10202 free=1
 
-# --- The embankment: pines, birches, goats and llamas; the sandbar with clay; a reef along the lane ----------------
-scatter Pickup_Landmark_Tree_Pine 3 at -6 -9 r=5 seed=10203 free=2
-scatter Pickup_Landmark_Tree_Birch 3 at -4 9 r=5 seed=10204 free=2
-scatter Pickup_Landmark_BerryBush 2 at 6 -8 r=3 seed=10205 free=1
-place Creature_Goat goats at -6 -6 ground
-place Creature_Llama llamas at -2 8 ground
-scatter "Pickup_Landmark_Clay 1" 2 at 14 -20 r=4 seed=10206 free=1
-scatter "Pickup_Landmark_Clay 2" 2 at 14 -20 r=4 seed=10207 free=1
-scatter Pickup_Landmark_Sand 3 at 14 -20 r=4 seed=10208 free=1
-scatter VP_CoralDigitate03 5 at 30 -7 r=3 seed=10209 free=1
-scatter VP_CoralBulb03 4 at 30 -7 r=3 seed=10210 free=1
-scatter TinyCoral 6 at 34 7 r=3 seed=10211 free=1
-scatter SeaVine3 18 at 26 0 r=14 seed=10212 free=2
-call shallows x=0 z=0 r=46 deep=6 n=1 seed=10213
+# --- The embankment: pines, birches, goats and llamas; the sandbar with clay; a reef off the lane's end ---------------
+scatter Pickup_Landmark_Tree_Pine 5 at -14.4 -21.6 r=8 seed=10203 free=2
+scatter Pickup_Landmark_Tree_Birch 5 at -9.6 21.6 r=8 seed=10204 free=2
+scatter Pickup_Landmark_BerryBush 3 at 14.4 -19.2 r=5 seed=10205 free=1
+place Creature_Goat goats at -14.4 -14.4 ground
+place Creature_Llama llamas at -4.8 19.2 ground
+scatter "Pickup_Landmark_Clay 1" 2 at 30 -78 r=5 seed=10206 free=1
+scatter "Pickup_Landmark_Clay 2" 2 at 30 -78 r=5 seed=10207 free=1
+scatter Pickup_Landmark_Sand 3 at 30 -78 r=5 seed=10208 free=1
+scatter VP_CoralDigitate03 5 at 100 -9 r=4 seed=10209 free=1
+scatter VP_CoralBulb03 4 at 100 -9 r=4 seed=10210 free=1
+scatter TinyCoral 6 at 104 9 r=4 seed=10211 free=1
+scatter SeaVine3 30 at 96 0 r=20 seed=10212 free=2
+call shallows x=0 z=0 r=100 deep=6 n=2 seed=10213
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): the stranded drivers' camp (a note), the road crew's digger,
+# a maintenance hatch with a chest, a buried treasure, a viewpoint on the south hills --------------------------------
+place campfire_1 - at 40 42 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at 43 44 ground sit yaw=210
+place "Box Small" - at 38 44.5 ground sit
+place Note_Paper drivernote at 38 44.5 ground y=0.7 drop yaw=15
+place VP_Excavator digger at -32 48 ground yaw=120
+prop digger tint.color=#8a6a4e
+prop digger tint.amount=0.4
+call hatchcache x=-40 z=-44 r=10 seed=10215 alias=roadhatch chest=roadhatchchest items=MetalIngot*2;Bolt*3;Rope*2
+call treasure x=-60 z=10 r=10 n=1 seed=10214
+prop treasure10214 treasure.loot=CopperOre*3
+place Zone_Trigger viewzone at -20 -60 ground
+note drivernote Drivers' camp note | LANE 3 - WHO'S STILL HERE\n\nThe Okafors (van), Dee (bike), the bus driver (gone down the lane for his toolbox).\nWe cook on the bank and watch the road go under a bit more each week.\nSomeone says the road goes on all the way to the labs. Under water.
+prop viewzone zone.id=overpass_view
+prop viewzone zone.radius=7
+prop viewzone zone.repeat=never
+prop viewzone zone.message=From the hills you see the whole highway: up out of the sea in the east, over the bank - and its broken end in the air.
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): the embankment ridge in the north, a cave in the south-east
+# rock, the toll keeper's house in the north-east, a caravan park in the south-west - and a Tangaroa token at each (the toll run)
+call sk_ridge x1=-14 z1=66 x2=18 z2=72 h=5 top=6 r=8
+call sk_plants x=2 z=69 r=16 seed=10261
+call sk_zone x=2 z=69 al=op_ridge id=op_ridge r=7 msg="The old embankment. The road ran along here before the overpass went up; the toll lane is still painted on its stones."
+call sk_cave x=60 z=-48 h=3 yaw=180 al=op_caverock chest=op_cavechest
+call sk_zone x=60 z=-53 al=op_cave id=op_cave r=4 msg="A cave under the south-east rock - a road crew's store, its door long gone."
+call sk_ruin x=66 z=50 h=3 al=op_ruin
+call sk_notebox x=68.5 z=45.5 yaw=10 al=op_ruinnote
+call sk_wreck x=-66 z=-24 h=3 yaw=30 v=Caravan_Blue_01 al=op_wreck crate=op_wreckcrate scale=1
+place Caravan_Yellow_01 - at -72 -30 ground sit yaw=100
+call sk_notebox x=-60 z=-28 yaw=70 al=op_wrecknote
+
+# --- Unique layer (10-24): the toll run: four Tangaroa tokens, one at each area; the Caisson Yard's vending machine takes them
+place QuestItemPickup_Tangaroa_Token - at 4 70 ground
+place QuestItemPickup_Tangaroa_Token - at 57 -55 ground
+place QuestItemPickup_Tangaroa_Token - at 63 44 ground
+place QuestItemPickup_Tangaroa_Token - at -60 -19 ground
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Overpass Shoal
@@ -124,6 +169,15 @@ prop rampzone zone.message=The top of the ramp. One way the road runs into the s
 prop goats creature.count=2
 prop llamas creature.count=2
 
+note op_cavechest Road crew's chest | A road crew's chest: bolts, hinges, a tin of nails.
+loot op_cavechest Bolt*3;Hinge*2;Nail*10;Rope*2
+prop op_cavechest loot.refill=0
+note op_ruinnote Toll keeper's tally | TOLL KEEPER'S TALLY\n\nTangaroa tokens, the Network's coin. One a car, two a caravan.\nWhen the water came the cars stopped and the tokens rolled everywhere. I left one on every place I liked.\nThe yard past the shelf has a machine that still takes them, they say.
+note op_wrecknote Caravan diary | CARAVAN DIARY\n\nWe paid the toll and parked to wait out the storm. Two caravans, one family.\nThe road went under at night. We walked the embankment north and never came back for the caravans.
+note op_wreckcrate Caravan larder | A caravan's larder crate: tins, a rope, a jar of seeds.
+loot op_wreckcrate Rope*2;Seed_Pineapple*1;Plank*4;Scrap*2
+prop op_wreckcrate loot.refill=0
+
 quest title=The Drowned Highway
 quest intro=The caretaker followed the road. Climb the ramp to the toll booth.
 step reach|ramp_top|1|Climb to the top of the ramp
@@ -131,6 +185,10 @@ step read|Toll booth log|1|Read the log in the toll booth
 step reach|sunken_lane|1|Dive down the lane to the air pocket by the vans
 step open|Van glovebox|1|Open the glovebox of the van on the lane
 step blueprint|Blueprint_MotorWheel|1|Open the booth's strongbox with the key: motor wheel plans
+step reach|op_ridge|1|Walk the old embankment in the north
+step reach|op_cave|1|Find the road crew's cave in the south-east
+step read|Toll keeper's tally|1|Read the tally in the toll keeper's house in the north-east
+step read|Caravan diary|1|Read the diary at the caravans in the south-west
 step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel plans from the bus locker
 quest done=The road goes on, under water, towards the lab tower. The Receiver picks it up on band 800.
 quest reward=Rope*3;Nail*10

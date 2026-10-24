@@ -43,5 +43,13 @@ air alcove_4
 expect step 10
 read The last word
 expect step 11
+zone sh_ridge
+expect step 12
+zone sh_cave
+expect step 13
+read Watchers' post log
+expect step 14
+read Boat's last log
+expect step 15
 zone surface_line
 expect done

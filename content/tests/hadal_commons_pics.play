@@ -3,9 +3,13 @@ island Hadal Commons
 offset 0 0
 hour 11
 weather Calm
-at 0 2 h=0.3
+at 24.8 2 h=0.3
 wait 3
-picture sl10_hadal_city 12 6 -6 -8 7 12
-picture sl10_hadal_doors 0 3 -3 0 4 -13
-picture sl10_hadal_house3 6 13 16 2 13 21
-picture sl10_hadal_vehicles 15 +4 -9 9 +1 -2
+picture sl10_hadal_city 36.8 6 -6 16.8 7 12
+picture sl10_hadal_doors 24.8 3 -3 24.8 4 -13
+picture sl10_hadal_house3 30.8 13 16 26.8 13 21
+picture sl10_hadal_vehicles 39.8 +4 -9 33.8 +1 -2
+picture sl10_hadal_commons_ridge 0 18 -57 0 9 -71
+picture sl10_hadal_commons_cave -60 12 4 -74 3 5
+picture sl10_hadal_commons_ruin 50 12 46 60 3 56
+picture sl10_hadal_commons_wreck -46 12 48 -56 3 58

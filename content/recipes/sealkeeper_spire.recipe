@@ -15,9 +15,10 @@ include lib_gravity
 include lib_features
 include lib_sea
 include lib_sunken
+# RESIZE 10-24: Radius 44 -> 100 (Height 7 -> 9), the island grows round the old content, which stays where it was.
 new
 gen Trees=0 Bushes=0.1 Rocks=0.45 Harvest=0.2 BeachThings=0.3
-gen Seed=10901 Radius=44 Height=7 Roughness=0.4 Peaks=2 Shape=0 Style=0 BeachWidth=0.2 Cliffs=0.45 PeakShape=0.4
+gen Seed=10901 Radius=100 Height=9 Roughness=0.4 Peaks=2 Shape=0 Style=0 BeachWidth=0.2 Cliffs=0.45 PeakShape=0.4
 gen Water=0.5 SeaRocks=0.5 SeaFinds=0.4 Sunken=0.4 Hostiles=0 Friendly=0.2 SeaLife=0.3 Grass=0.1
 generate
 
@@ -28,7 +29,9 @@ brush flatten at 24 -14 r=4.5 s=25 frames=260 h=2
 brush flatten at -11 13 r=5 s=25 frames=260 h=1.2
 brush flatten at 15 4 r=4 s=25 frames=260 h=1.5
 brush grass at -4 6 r=7 s=20 frames=20
+brush flatten at 23.2 -38.6 r=5 s=8 frames=40
 origin
+clear at 23.2 -38.6 r=6
 clear at 0 0 r=13
 
 # --- The spire: six storeys of stone, a ladder up the inside, the control room on top ----------------------------------
@@ -141,11 +144,55 @@ place TP_LaserControlPanel_lever descend at 16.4 5.4 h=2.85 scale=3 yaw=90
 place Zone_Atmosphere storm at 0 0 h=6
 place Creature_PufferFish puffers at 10 22 h=-4
 prop puffers creature.count=2
-scatter VP_CoralBulb04 5 at -16 26 r=3 seed=10902 free=1
-scatter TinyCoral 6 at -16 26 r=3 seed=10903 free=1
-scatter VP_CoralDigitate01 5 at 30 8 r=3 seed=10904 free=1
-scatter VP_CoralFoliose01 4 at 30 8 r=3 seed=10905 free=1
-call shallows x=0 z=0 r=56 deep=5 n=1 seed=10906
+scatter VP_CoralBulb04 5 at -36.36 59.09 r=3 seed=10902 free=1
+scatter TinyCoral 6 at -36.36 59.09 r=3 seed=10903 free=1
+scatter VP_CoralDigitate01 5 at 68.18 18.18 r=3 seed=10904 free=1
+scatter VP_CoralFoliose01 4 at 68.18 18.18 r=3 seed=10905 free=1
+call shallows x=0 z=0 r=127 deep=5 n=1 seed=10906
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; BoatStranded + chest; hatch with a chest; buried treasure; viewpoint ---
+place campfire_1 - at 23.2 -38.6 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at 26.2 -36.6 ground sit yaw=137
+place "Box Small" - at 21.2 -36.1 ground sit
+place Note_Paper dnote at 21.2 -36.1 ground y=0.7 drop yaw=20
+note dnote Castaway's note | DAY 40 - OR 41\n\nThe station people never came up for me. I watch their crane from here.\nAt night a light goes down the shaft and does not come back up.\nI have fish, rain, and this pencil. That is enough for now.
+place BoatStranded dvan at -23.2 38.6 ground yaw=257
+prop dvan tint.color=#6b5a48
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at -27.2 41.6 ground sit yaw=197
+note dwreckchest Wreck's chest | A small chest from the wreck, its lid swollen shut by the salt: line, nails and scrap.
+loot dwreckchest Rope*3;Nail*8;Scrap*3
+prop dwreckchest loot.refill=0
+call hatchcache x=38.6 z=23.2 r=4 seed=10991 alias=dhatch chest=dhatchchest items=MetalIngot*2;CopperIngot*2;Bolt*2
+call treasure x=-38.6 z=-23.2 r=6 n=1 seed=10992
+prop treasure10992 treasure.loot=TitaniumOre*2;CopperOre*2
+place Zone_Trigger dview at 7 44.4 ground
+prop dview zone.id=sealkeeper_spire_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=The spire's lit windows stand over everything, and the cable from its winch runs down into the trench.
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): the storm ridge in the east, the keepers' cave in the
+# north-west, the storm keeper's house in the south (its radio), the supply plane in the south-west
+call sk_ridge x1=74 z1=-20 x2=80 z2=20 h=4 top=6 r=8
+call sk_plants x=77 z=0 r=16 seed=10961
+call sk_zone x=77 z=0 al=sk_ridge id=sk_ridge r=7 msg="The storm ridge. The Spire's switchboard windows flash with every gust; the zipline from here runs back down."
+call sk_cave x=-58 z=58 h=3 yaw=180 al=sk_caverock chest=sk_cavechest
+call sk_zone x=-58 z=53 al=sk_cave id=sk_cave r=4 msg="The keepers' cave: where the Spire's crew sat out the worst storms."
+call sk_ruin x=0 z=-76 h=3 al=sk_ruin
+call sk_notebox x=2.5 z=-80.5 yaw=10 al=sk_ruinnote
+call sk_plane x=-58 z=-58 h=3 yaw=60 al=sk_plane crate=sk_wreckcrate
+call sk_notebox x=-63 z=-52.5 yaw=70 al=sk_wrecknote
+
+# --- Tools in use (10-24: a tool or item given earlier in the storyline opens extras here, never the main path)
+clear from 77 0 to 52 0 r=3
+place ZiplinePath_Landmark skridgezip at 77 0 ground
+zipto skridgezip 52 0
+call vinecache x=56 z=56 r=8 seed=10971 chest=skvinechest vines=skvines items=Rope*3;Nail*8;TitaniumOre*1
+
+# --- Unique layer (10-24): the storm keeper's radio: the generator by his house wants its part (in a toolbox near the
+# keepers' cave); powered, the radio gives away the last supply drop
+call powerradio x=6 z=-72 yaw=0 alias=skgen ralias=skradio rx=-0.75 rz=-76 rh=5 ryaw=0 cache=sksupply cx=40 cz=-62 cr=10 cseed=10981 items=Battery*2;CopperIngot*2;TitaniumIngot*1 kx=-50 kz=44 kr=8 seed=10982 toolbox=skbox
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Sealkeeper Spire
@@ -261,6 +308,15 @@ prop storm atmo.lightAmount=0.35
 prop storm atmo.particles=mist
 prop storm zone.radius=60
 
+note sk_cavechest Keepers' chest | The keepers' storm chest: dry clothes gone to rags, a lamp, rope.
+loot sk_cavechest Rope*3;Leather*2;Battery*1;Copper*2
+prop sk_cavechest loot.refill=0
+note sk_ruinnote Storm keeper's log | STORM KEEPER'S LOG\n\nThe radio on my table runs off the generator. The generator wants a part I lent to the cave crew.\nWith power, the radio tells you where the last supply drop came down.
+note sk_wrecknote Supply pilot's log | SUPPLY PILOT'S LOG\n\nLast drop for the Spire. The storm took the plane; I kept the crate.\nThey are going to decide it soon - RESTORE or SEAL. I am not staying to see.
+note sk_wreckcrate Supply plane crate | The supply plane's crate: what the Spire ordered, never delivered.
+loot sk_wreckcrate MetalIngot*2;Bolt*3;Rope*2;Plank*4
+prop sk_wreckcrate loot.refill=0
+
 quest title=The Choice
 quest intro=The Spire on the Receiver - the Network's switchboard. Land at its dock.
 step reach|dock|1|Land at the Spire's dock
@@ -286,6 +342,10 @@ step reach|cable_head|1|Go down to the cable head on the shore
 step read|Two switches|1|Read the two switches
 step collect|story:chosen|1|Pull one: RESTORE or SEAL
 step read|The verdict|1|Read the verdict
+step reach|sk_ridge|1|Climb the storm ridge in the east
+step reach|sk_cave|1|Find the keepers' cave in the north-west
+step read|Storm keeper's log|1|Read the log in the storm keeper's house in the south
+step read|Supply pilot's log|1|Read the log at the supply plane in the south-west
 step collect|story:descended|1|Pull the descend lever
 quest done=The choice is made. Under the trench lip the Hollow lights up - the Receiver finds it on band 500.
 quest reward=TitaniumOre*2;Battery*2

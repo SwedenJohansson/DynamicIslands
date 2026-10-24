@@ -4,20 +4,22 @@
 # other way: it carries whoever stands on it 20 m straight down the shaft to a bell zone with air in it, and back up.
 # A water tower on legs (the water tank plans on its top), the pump pipes, the station office (the purifier plans), the
 # store shed (the large storage plans), the vending machine under a canopy on posts with four Tangaroa tokens round the
-# decks, palms and grass, two reefs, buried titanium for the metal detector. Quest "The Surface Station" (7 steps).
+# decks, palms and grass, two reefs, buried titanium for the metal detector. Quest "The Surface Station" (11 steps).
 #
 # Points (metres over the sea): the rock shelf at 2 (r 14 round 0 0); the deck x -3..7.5, z -4.5..4.5, its top at 4.5;
 # the shaft round 5.25 0 (r 3, its bottom at -22), the bell in the deck's hole (x 3..7.5, z -1.5..1.5) at 2.3, the bell
 # zone at -17; the water tower at -8 6 (its top at 5.3); the office x -10..-7, z -3..0; the store shed x -4..0.5,
 # z -12..-9; the canopy x 4.5..7.5, z -11.5..-8.5 over the vending machine.
+include lib_sunken
 include lib_huts
 include lib_gravity
 include lib_sl1
 include lib_features
 include lib_sea
+# RESIZE 10-24: Radius 34 -> 85 (Height 6 -> 8), the island grows round the old content, which stays where it was.
 new
 gen Trees=0.25 Bushes=0.3 Rocks=0.4 Harvest=0.3 BeachThings=0.4
-gen Seed=10501 Radius=34 Height=6 Roughness=0.35 Peaks=2 Shape=0 Style=0 BeachWidth=0.25 Cliffs=0.35 PeakShape=0.4
+gen Seed=10501 Radius=85 Height=8 Roughness=0.35 Peaks=2 Shape=0 Style=0 BeachWidth=0.25 Cliffs=0.35 PeakShape=0.4
 gen Water=0.5 SeaRocks=0.4 SeaFinds=0.4 Sunken=0.3 Hostiles=0 Friendly=0.2 SeaLife=0.3
 generate
 
@@ -25,7 +27,9 @@ generate
 brush flatten at 0 0 r=14 s=20 frames=240 h=2
 brush flatten at 5.25 0 r=3 s=30 frames=300 h=-22
 brush grass at -9 3 r=6 s=20 frames=20
+brush flatten at 14 -36.4 r=5 s=8 frames=40
 origin
+clear at 14 -36.4 r=6
 clear at 0 0 r=13
 
 # --- The steel deck on posts, the hole over the shaft -------------------------------------------------------------------
@@ -118,13 +122,59 @@ prop hens creature.count=3
 call treasure x=-14 z=8 r=12 n=1 seed=10051
 prop treasure10051 treasure.loot=TitaniumOre*3
 call hives x=-6 z=12 r=6 n=1 seed=10502
-scatter VP_CoralBulb04 5 at 20 14 r=3 seed=10503 free=1
-scatter VP_CoralDigitate01 5 at 20 14 r=3 seed=10504 free=1
-scatter TinyCoral 6 at -20 -14 r=3 seed=10505 free=1
-scatter VP_CoralFoliose01 4 at -20 -14 r=3 seed=10506 free=1
-place Creature_PufferFish puffers at 22 10 h=-4
+scatter VP_CoralBulb04 5 at 50 35 r=3 seed=10503 free=1
+scatter VP_CoralDigitate01 5 at 50 35 r=3 seed=10504 free=1
+scatter TinyCoral 6 at -50 -35 r=3 seed=10505 free=1
+scatter VP_CoralFoliose01 4 at -50 -35 r=3 seed=10506 free=1
+place Creature_PufferFish puffers at 55 25 h=-4
 prop puffers creature.count=2
-call shallows x=0 z=0 r=50 deep=5 n=1 seed=10507
+call shallows x=0 z=0 r=125 deep=5 n=1 seed=10507
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; BoatStranded + chest; hatch with a chest; buried treasure; viewpoint ---
+place campfire_1 - at 14 -36.4 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at 17 -34.4 ground sit yaw=97
+place "Box Small" - at 12 -33.9 ground sit
+place Note_Paper dnote at 12 -33.9 ground y=0.7 drop yaw=20
+note dnote Castaway's note | DAY 40 - OR 41\n\nThe station people never came up for me. I watch their crane from here.\nAt night a light goes down the shaft and does not come back up.\nI have fish, rain, and this pencil. That is enough for now.
+place BoatStranded dvan at -14 36.4 ground yaw=217
+prop dvan tint.color=#6b5a48
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at -18 39.4 ground sit yaw=157
+note dwreckchest Wreck's chest | A small chest from the wreck, its lid swollen shut by the salt: line, nails and scrap.
+loot dwreckchest Rope*3;Nail*8;Scrap*3
+prop dwreckchest loot.refill=0
+call hatchcache x=-36.4 z=-14 r=4 seed=10591 alias=dhatch chest=dhatchchest items=MetalIngot*2;CopperIngot*2;Bolt*2
+call treasure x=36.4 z=14 r=6 n=1 seed=10592
+prop treasure10592 treasure.loot=TitaniumOre*2;CopperOre*2
+place Zone_Trigger dview at -36.9 12.7 ground
+prop dview zone.id=thalassa_mooring_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=From the high ground the station's crane is a toy over the shelf - and past it the sea turns from green to black.
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): the breakwater ridge in the west, the bell crew's cave in
+# the south-east, the dive master's hut in the north, the divers' dinghy in the south-west (the dive log's three lost dives)
+call sk_ridge x1=-72 z1=-14 x2=-66 z2=20 h=5 top=6 r=8
+call sk_plants x=-69 z=3 r=16 seed=10561
+call sk_zone x=-69 z=3 al=th_ridge id=th_ridge r=7 msg="The breakwater ridge. The station's bell hangs on its frame below you, and the zipline cable still runs down to the yard."
+call sk_cave x=52 z=-56 h=3 yaw=180 al=th_caverock chest=th_cavechest
+call sk_zone x=52 z=-61 al=th_cave id=th_cave r=4 msg="The bell crew's cave: their lockers, a bench, a cold stove."
+call sk_ruin x=4 z=70 h=3 al=th_ruin
+call sk_notebox x=6.5 z=65.5 yaw=10 al=th_ruinnote
+call sk_wreck x=-50 z=-52 h=3 yaw=40 v=RT_PlasticBoat al=th_wreck crate=th_wreckcrate scale=1
+call sk_notebox x=-44 z=-56 yaw=70 al=th_wrecknote
+
+# --- Tools in use (10-24: a tool or item given earlier in the storyline opens extras here, never the main path)
+clear from -69 3 to -46 0 r=3
+place ZiplinePath_Landmark thridgezip at -69 3 ground
+zipto thridgezip -46 0
+call vinecache x=-30 z=-70 r=8 seed=10571 chest=thvinechest vines=thvines items=Rope*3;Nail*8;Glass*2
+
+# --- Unique layer (10-24): the dive log's three lost dives: buried tags and sample bags for the metal detector at the
+# three places the log names (east, north-east, south)
+call treasure x=70 z=-6 r=6 n=1 seed=10581
+call treasure x=48 z=58 r=6 n=1 seed=10582
+call treasure x=-26 z=-72 r=6 n=1 seed=10583
 
 # --- Settings, notes, behaviours, quest ---------------------------------------------------------------------------------
 # the generator's rocks that floated over the slope, and walls left wholly under the ground (ground check, 2026-10-23)
@@ -167,6 +217,15 @@ prop bellbub atmo.particles=bubbles
 prop bellbub zone.radius=3
 prop bellcrane obj.name=bellcrane
 
+note th_cavechest Bell crew's locker | A bell crew locker: a dive knife's sheath, a rope, a tin of grease.
+loot th_cavechest Rope*3;Bolt*2;Leather*1;Copper*2
+prop th_cavechest loot.refill=0
+note th_ruinnote Dive log | DIVE LOG - the dives that never came back\n\nDive 41: east of the station, off the rocks. Diver did not surface. Her sample bag is still down there, buried in the sand.\nDive 44: north-east, by the old marker. Line cut.\nDive 47: south, past the dinghy. Bell came up empty.\nWhoever has a metal detector: their tags will ring under the sand.
+note th_wrecknote Dinghy logbook | DINGHY LOGBOOK\n\nTook the dinghy out for dive 47. Came back without the bell crew.\nI tied her up on the rocks and walked to the hut. I am not taking her out again.
+note th_wreckcrate Dinghy stores | The dinghy's stores crate: spare line, a lamp, a tin of fuel.
+loot th_wreckcrate Rope*3;Plank*3;Scrap*2;Battery*1
+prop th_wreckcrate loot.refill=0
+
 quest title=The Surface Station
 quest intro=A surface station on the Receiver. Find its deck.
 step reach|deck|1|Climb onto the station's deck
@@ -175,6 +234,10 @@ step blueprint|Blueprint_WaterTank|1|Climb the water tower: water tank plans
 step blueprint|Blueprint_Pipe_Water|1|Find the water pipe plans in the pipe crate
 step blueprint|Blueprint_ElectricPurifier|1|Find the purifier plans in the station office
 step blueprint|Blueprint_Storage_Large|1|Open the store shed: large storage plans
+step reach|th_ridge|1|Climb the breakwater ridge in the west
+step reach|th_cave|1|Find the bell crew's cave in the south-east
+step read|Dive log|1|Read the dive log in the dive master's hut in the north
+step read|Dinghy logbook|1|Read the logbook at the divers' dinghy in the south-west
 step reach|bell|1|Ride the diving bell 20 m down the shaft
 quest done=Down the shaft the shelf glows. The Receiver picks up the survey lamps on band 600.
 quest reward=Rope*4;Plank*6

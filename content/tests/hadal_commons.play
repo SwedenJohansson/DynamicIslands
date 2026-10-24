@@ -45,5 +45,13 @@ expect step 11
 open Door warden's chest
 wait 3
 expect step 12
+zone hc_ridge
+expect step 13
+zone hc_cave
+expect step 14
+read Warden's lodge note
+expect step 15
+read Wagon driver's chit
+expect step 16
 zone doors
 expect done

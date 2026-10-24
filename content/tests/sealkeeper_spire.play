@@ -75,6 +75,14 @@ expect hidden verdictseal
 expect step 22
 read The verdict
 expect step 23
+zone sk_ridge
+expect step 24
+zone sk_cave
+expect step 25
+read Storm keeper's log
+expect step 26
+read Supply pilot's log
+expect step 27
 use descend
 expect story descended 1
 expect done

@@ -2,23 +2,27 @@
 # A Pelagic Network transit shuttle lying on a reef: a long cabin of windowed stone walls on a rock shelf, its nose in the
 # coral, its cabin still an air pocket. A luggage rack inside, the manifest on the bulkhead, a commuter's note on a
 # seat. Puffers in the reef (goo), silver algae, giant clams, a buoy on the surface over it. Quest "The Night Shuttle"
-# (5 steps).
+# (8 steps).
 #
 # Points (metres over the reef's zero; the surface at 10): the shelf at 2, r 7 round 0 0; the shuttle x -2.25..2.25,
 # z -6..6 (floor at 2, roof at 4.85), its door in the south end; the buoy over -6 6.
+include lib_features
 include lib_sea
 include lib_gravity
 include lib_sunken
+# RESIZE 10-24: Radius 26 -> 60 (Height 5 -> 6), the island grows round the old content, which stays where it was.
 new
 gen Trees=0 Bushes=0 Rocks=0.4 Harvest=0 BeachThings=0
-gen Seed=11101 Radius=26 Height=5 Roughness=0.4 Peaks=2 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.3 PeakShape=0.4
+gen Seed=11101 Radius=60 Height=6 Roughness=0.4 Peaks=2 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.3 PeakShape=0.4
 gen Water=0.5 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.4 Hostiles=0 Friendly=0 SeaLife=0.5
 generate
 elevation -10
 
 brush flatten at 0 0 r=7 s=25 frames=260 h=2
 brush sand at 0 -9 r=4 s=20 frames=20
+brush flatten at -13.1 -23.6 r=4 s=8 frames=40
 origin
+clear at -13.1 -23.6 r=5
 clear at 0 0 r=8
 
 # --- The shuttle: a cabin 3 cells wide, 8 long, windows down both sides, a door at the south end -----------------------
@@ -63,7 +67,44 @@ scatter VP_CoralFoliose01 4 at -8 2 r=3 seed=11106 free=1
 scatter Pickup_Landmark_SilverAlgae 5 at -4 -10 r=5 seed=11107 free=1
 scatter Pickup_Landmark_GiantClam 3 at 6 10 r=4 seed=11108 free=1
 scatter SeaVine3 5 at -10 -2 r=4 seed=11109 free=1
-call shallows x=0 z=0 r=34 deep=4 n=1 seed=11110
+call shallows x=0 z=0 r=78 deep=4 n=1 seed=11110
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): diver's cache + slate + air pocket; RT_PlasticBoat + chest; hatch with a chest; viewpoint ---
+place "Box Small" dcampbox at -13.1 -23.6 ground sit
+place Note_Paper dnote at -13.1 -23.6 ground y=0.7 drop yaw=30
+place Loot_ChestSmall dcamp at -11.1 -22.1 ground sit yaw=337
+call airpocket x=-15.6 z=-25.6 id=shuttlewreck_reef_dair al=dairzone bub=dairbub r=2.5 msg="Air trapped in a diver's bell-tent. Breathe."
+note dnote Diver's slate | A diver's slate, wired to a box:\n\nAIR ON THE CHAIN. AIR IN THE HOUSES.\nNOT IN THE DARK BITS.\nCOUNT YOUR BREATHS.
+note dcamp Diver's cache | A diver's spare kit, wired shut against the current.
+loot dcamp Rope*2;Glass*3;Plastic*4
+prop dcamp loot.refill=0
+place RT_PlasticBoat dvan at 13.1 23.6 ground yaw=97
+prop dvan tint.color=#4a6b7a
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at 9.1 26.6 ground sit yaw=37
+note dwreckchest Wreck's chest | A small chest from the wreck, its lid swollen shut by the salt: line, nails and scrap.
+loot dwreckchest Rope*3;Nail*8;Scrap*3
+prop dwreckchest loot.refill=0
+call hatchcache x=-23.6 z=13.1 r=4 seed=11191 alias=dhatch chest=dhatchchest items=MetalIngot*2;CopperIngot*2;Bolt*2
+place Zone_Trigger dview at 23.6 -13.1 ground y=1.5
+prop dview zone.id=shuttlewreck_reef_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=The shuttle lies along the reef below, its windows catching the light like a row of eyes.
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): round the shuttle - the reef ridge in the north-west, a cave in
+# the south-east rock, the shuttle's tender van in the south (its luggage hold)
+call sk_ridge x1=-44 z1=20 x2=-30 z2=40 h=3 top=4 r=8
+call sk_reef x=-37 z=30 r=6 seed=11161
+call sk_reef x=-30 z=40 r=5 seed=11171
+call sk_zone x=-37 z=30 al=sw_ridge id=sw_ridge r=7 msg="The reef ridge. From here the shuttle's windows line up like a row of seats."
+call sk_cave x=36 z=-34 h=2 yaw=0 al=sw_caverock chest=sw_cavechest
+call sk_zone x=36 z=-29 al=sw_cave id=sw_cave r=4 msg="A cave in the reef rock. Seat cushions drifted in here and stayed."
+call sk_wreck x=4 z=-46 h=2 yaw=80 v=Van_4 al=sw_wreck crate=sw_wreckcrate scale=1
+call sk_notebox x=10 z=-50 yaw=70 al=sw_wrecknote
+
+# --- Unique layer (10-24): booked seats: the tender van's luggage hold, bolted shut; its lever lets go
+call leverchest x=-2 z=-40 yaw=0 alias=holdlever sig=holdlever chest=luggagehold cx=10 cz=-50 cyaw=80 items=Leather*2;Glass*2;Battery*1;Copper*2 title="Luggage hold"
 
 # --- Settings, notes, quest --------------------------------------------------------------------------------------------
 info title=Shuttlewreck Reef
@@ -77,12 +118,23 @@ note luggage Luggage rack | Bags, still dry inside the rack.
 loot luggage ExplosiveGoo*2;Seed_Grass*2;Leather*2
 prop luggage loot.refill=0
 
+note sw_cavechest Drifted luggage | A suitcase wedged in the rock: somebody's good boots and a rope.
+loot sw_cavechest Leather*2;Rope*2;Plastic*2;Scrap*2
+prop sw_cavechest loot.refill=0
+note sw_wrecknote Seat 14's ticket | TICKET - SEAT 14\n\nNetwork shuttle, Thalassa to the Caisson Yard. Luggage in the hold of the tender van.\nThe tender van rode on the shuttle's deck. When the shuttle went down, so did my case.
+note sw_wreckcrate Tender van crate | The tender van's spare crate: tools and rope.
+loot sw_wreckcrate Bolt*2;Rope*2;Nail*8;Scrap*2
+prop sw_wreckcrate loot.refill=0
+
 quest title=The Night Shuttle
 quest intro=A shuttle on the Receiver's side band, lost on the night run. Find its cabin.
 step reach|cabin|1|Get into the shuttle's cabin
 step read|Shuttle manifest|1|Read the shuttle manifest
 step kill|Puffer fish|2|Drive off the puffers in the reef
 step open|Luggage rack|1|Open the luggage rack
+step reach|sw_ridge|1|Swim to the reef ridge in the north-west
+step reach|sw_cave|1|Find the reef cave in the south-east
+step read|Seat 14's ticket|1|Read the ticket at the tender van in the south
 step read|Commuter's note|1|Read the commuter's note
 quest done=Twelve made it to the Yard. The shuttle stays on its reef.
 quest reward=CopperIngot*2;Battery*1

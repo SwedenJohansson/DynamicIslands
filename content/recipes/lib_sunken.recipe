@@ -231,3 +231,125 @@ place SmallRock_02 - at $x $z ground sit scale=0.45 sy=0.9
 place Antenna_pole - at $x $z ground y=0.5 sy=0.4
 place Placeable_Lantern_Metal $al at $x $z ground y=3 sit drop
 end
+#
+# --- The Sunken Kingdom's extra areas (10-24): every story island has places all over it and its quest crosses it.
+# The same shapes as lib_areas (SL14), kept here so the plan has no other library to need. Each macro shapes its own
+# ground (a pad at a fixed h, so nothing hangs on unknown terrain) and clears the plants under what it builds.
+#
+# sk_ridge: a ridge from x1 z1 to x2 z2, h m along its line, a peak h+top m at its middle, smoothed, painted by slope; r:
+# half its width. The caller puts plants back (sk_plants on land, sk_reef under water).
+macro sk_ridge x1=0 z1=0 x2=30 z2=0 h=8 top=5 r=8
+set mx {($x1+$x2)/2}
+set mz {($z1+$z2)/2}
+brush flatten from $x1 $z1 to $x2 $z2 r=$r s=20 frames=700 h=$h
+brush flatten at $mx $mz r={$r*0.8} s=20 frames=500 h={$h+$top}
+brush smooth from $x1 $z1 to $x2 $z2 r={$r*1.7} s=6 frames=90
+brush auto from $x1 $z1 to $x2 $z2 r={$r*1.8} s=10 frames=25
+clear from $x1 $z1 to $x2 $z2 r={$r*2}
+end
+#
+# sk_plants: Raft's tropical plants put back over an area (about Raft's density, not a jungle)
+macro sk_plants x=0 z=0 r=20 seed=1
+scatter "Pickup_Landmark_Tree_Palm 3" 3 at $x $z r=$r seed=$seed free=3
+scatter "Pickup_Landmark_Tree_Palm 4" 2 at $x $z r=$r seed={$seed+1} free=3
+scatter Bamboo_1 3 at $x $z r=$r seed={$seed+2} free=2
+scatter Pickup_Landmark_Tree_Mango 1 at $x $z r=$r seed={$seed+3} free=3
+scatter Bush 6 at $x $z r=$r seed={$seed+4} free=1
+scatter Bush2 4 at $x $z r=$r seed={$seed+5} free=1
+scatter SmallBoulder2 3 at $x $z r=$r seed={$seed+6} free=2
+scatter BigBoulder1_Low 2 at $x $z r=$r seed={$seed+8} free=3
+end
+#
+# sk_cave: Raft's bear-cave rock on a pad h m up at x z, its mouth to +z (yaw=0) or -z (yaw=180), a passage dug out
+# from the mouth; inside, a small chest and a lamp. The caller's zone goes at x, z+5 (yaw 0) / z-5 (yaw 180).
+macro sk_cave x=0 z=0 h=2 yaw=0 al=caverock chest=cavechest
+set cs {cos($yaw)}
+brush flatten at $x $z r=14 s=20 frames=80 h=$h
+brush flatten from {$x-$cs} {$z+21*$cs} to {$x-$cs} {$z+6*$cs} r=4.5 s=20 frames=60 h={$h+0.4}
+clear at $x $z r=19
+clear from {$x-$cs} {$z+20*$cs} to {$x-$cs} {$z+26*$cs} r=4
+place BalboaCave_Bear $al at $x $z h={$h+4.95} yaw=$yaw
+place Loot_ChestSmall $chest at {$x-2.5*$cs} {$z+5*$cs} h={$h+0.45} sit yaw={60+$yaw}
+place Placeable_Lantern_Metal - at {$x+2.6*$cs} {$z+4*$cs} h={$h+0.45} sit
+end
+#
+# sk_ruin: a roofless stone house 3 x 2 blocks on a pad h m up at x z (door in the -z wall, the back and one side
+# fallen, the stones round it, a table inside). The caller's note goes on a box at x+2.5 z-4.5 (in front of the door).
+macro sk_ruin x=0 z=0 h=3 al=ruin
+brush flatten at $x $z r=8.5 s=20 frames=300 h=$h
+clear at $x $z r=8.5
+push at {$x-2.25} {$z-1.5} h=$h
+for fx 0.75 3.75 1.5
+for fz 0.75 2.25 1.5
+place Block_Floor_Tier3 $al at $fx $fz y=0.05
+next
+next
+place Block_Wall_Door_Tier3 $al at 0.75 0 y=0.05
+place Block_Wall_Tier3 $al at 2.25 0 y=0.05
+place Block_Wall_Tier3 $al at 3.75 0 y=0.05
+place Block_Wall_Window_Tier3 $al at 0.75 3 y=0.05
+place Block_Wall_Tier3 $al at 3.75 3 y=0.05
+place Block_Wall_Tier3 $al at 0 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 $al at 0 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 $al at 4.5 0.75 y=0.05 yaw=90
+place SmallBoulder2 - at 5.9 2.7 y=0 sit yaw=30 scale=0.6
+place SmallBoulder4 - at 2.25 4.6 y=0 sit yaw=80 scale=0.6
+place SmallBoulder1 - at -1.6 1 y=0 sit yaw=10 scale=0.5
+place Placeable_Table_Basic - at 1.5 1.5 y=0 sit yaw=0
+pop
+prop $al tint.color=#5b5650
+prop $al tint.amount=0.55
+end
+#
+# sk_plane: a crashed plane on a pad h m up at x z, nose to yaw, tipped on one wing, its broken wing and tail behind it,
+# a crate beside the door. With yaw=60 the caller's note box goes at x-5 z+5.5.
+macro sk_plane x=0 z=0 h=3 yaw=60 al=plane crate=planecrate
+set s {sin($yaw)}
+set c {cos($yaw)}
+brush flatten at $x $z r=15 s=20 frames=350 h=$h
+clear at $x $z r=16
+place Airplane $al at $x $z h={$h+1.3} rot=4,$yaw,-9 scale=0.8
+place WingBroken - at {$x-7*$s+5*$c} {$z-7*$c-5*$s} ground sit yaw={$yaw+40}
+place BackWingBroken - at {$x-11*$s-2*$c} {$z-11*$c+2*$s} ground sit yaw={$yaw+110}
+place Loot_Crate $crate at {$x+4*$c} {$z-4*$s} ground sit yaw={$yaw+15}
+end
+#
+# sk_wreck: one of Raft's vehicles (VEHICLES.md) left on a pad h m up at x z, turned yaw, a crate of its load beside
+# it at x+6 z (the caller's note box goes at x+6 z-4)
+macro sk_wreck x=0 z=0 h=2 yaw=0 v=Van_4 al=wreck crate=wreckcrate scale=1
+brush flatten at $x $z r=11 s=20 frames=300 h=$h
+clear at $x $z r=11
+place $v $al at $x $z ground sit yaw=$yaw scale=$scale
+place Loot_Crate $crate at {$x+6} $z ground sit yaw={$yaw+20}
+end
+#
+# sk_zone: a quest zone (Zone_Trigger, id, radius r, a message on entering) on the ground at x z
+macro sk_zone x=0 z=0 al=zone id=zone r=4 msg="" h=0
+place Zone_Trigger $al at $x $z ground y=$h
+prop $al zone.id=$id
+prop $al zone.radius=$r
+prop $al zone.message=$msg
+end
+#
+# sk_notebox: a note lying on a small box at x z
+macro sk_notebox x=0 z=0 yaw=0 al=note
+place "Box Small" - at $x $z ground sit yaw=$yaw
+place Note_Paper $al at $x $z ground y=0.7 drop yaw={$yaw+15}
+end
+#
+# sk_reef: a tight reef under water at x z: corals, leaf coral and a silver alga
+macro sk_reef x=0 z=0 r=4 seed=1
+scatter VP_CoralDigitate02 4 at $x $z r=$r seed=$seed wet free=1
+scatter VP_CoralBulb04 3 at $x $z r=$r seed={$seed+1} wet free=1
+scatter LeafCoral_1 3 at $x $z r=$r seed={$seed+2} wet free=1
+scatter "Pickup_Landmark_SilverAlgae" 1 at $x $z r=$r seed={$seed+3} wet
+end
+#
+# sk_dark: a dark stretch (a cave mouth, a trench): thick dark fog and little light - the advanced headlight's place
+macro sk_dark x=0 z=0 h=1 r=9 al=dark
+place Zone_Atmosphere $al at $x $z ground y=$h
+prop $al atmo.fog=#04121a
+prop $al atmo.fogAmount=0.7
+prop $al atmo.lightAmount=0.2
+prop $al zone.radius=$r
+end

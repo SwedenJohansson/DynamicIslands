@@ -19,5 +19,13 @@ expect step 5
 open Anchor gear chest
 wait 3
 expect step 6
+zone cy_ridge
+expect step 7
+zone cy_cave
+expect step 8
+read Yard office book
+expect step 9
+read Crane driver's report
+expect step 10
 read Trench chart
 expect done

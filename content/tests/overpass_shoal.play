@@ -19,6 +19,14 @@ expect step 4
 open Toll booth strongbox
 wait 3
 expect step 5
+zone op_ridge
+expect step 6
+zone op_cave
+expect step 7
+read Toll keeper's tally
+expect step 8
+read Caravan diary
+expect step 9
 open Bus locker
 wait 3
 expect done

@@ -3,18 +3,20 @@
 # the Network's last lamps on posts, and in the middle a seal valve on a stone plinth. Across the arena the Network gate
 # under the Ringwave - shut. The Abyssal Stalker hunts here: a huge dark angler (size 3), two phases, calling smaller
 # anglers when hurt. What the Spire's choice did shows at the valve: RESTORE lights the alcoves teal and opens the gate;
-# SEAL drops a stone plug over it. Quest "The Deep" (12 steps).
+# SEAL drops a stone plug over it. Quest "The Deep" (16 steps).
 #
 # Points (metres over the arena floor; the surface at 40): the arena at 0, r 16 round 0 0; the lip (a terrace) at 8
 # round -22 0 with the warden's post and the chain up to the buoy (an air deck at 24); the alcoves (3 x 3 m, doors to
 # the arena): 1 north round 0 13.5, 2 east 13.5 0, 3 south 0 -13.5, 4 west -12.5 7; the plinth at 0 0; the gate at
 # 15 13 (north-east), facing the arena.
+include lib_features
 include lib_sea
 include lib_gravity
 include lib_sunken
+# RESIZE 10-24: Radius 40 -> 95 (Height 10 -> 10), the island grows round the old content, which stays where it was.
 new
 gen Trees=0 Bushes=0 Rocks=0.5 Harvest=0 BeachThings=0
-gen Seed=11001 Radius=40 Height=10 Roughness=0.5 Peaks=3 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.6 PeakShape=0.5
+gen Seed=11001 Radius=110 Height=10 Roughness=0.5 Peaks=3 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.6 PeakShape=0.5
 gen Water=0.5 SeaRocks=0.6 SeaFinds=0.3 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.2
 generate
 elevation -40
@@ -27,7 +29,9 @@ brush flatten at 0 13.5 r=4 s=25 frames=200 h=0
 brush flatten at 13.5 0 r=4 s=25 frames=200 h=0
 brush flatten at 0 -13.5 r=4 s=25 frames=200 h=0
 brush flatten at -12.5 4 r=4 s=25 frames=200 h=0
+brush flatten at 36.7 -20.4 r=4 s=8 frames=40
 origin
+clear at 36.7 -20.4 r=5
 clear at 0 0 r=15
 
 # --- The lip: the warden's post, the chain up, the ramp down into the arena ---------------------------------------------
@@ -104,7 +108,54 @@ call coralwall x=10 z=-13 n=4 yaw=-30 seed=11003
 call coralwall x=-12 z=14 n=4 yaw=60 seed=11004
 scatter SeaVine3 6 at 6 -4 r=8 seed=11005 free=1
 scatter Pickup_Landmark_SilverAlgae 4 at -6 -4 r=8 seed=11006 free=1
-call shallows x=0 z=0 r=50 deep=6 n=1 seed=11007
+call shallows x=0 z=0 r=119 deep=6 n=1 seed=11007
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): diver's cache + slate + air pocket; Van3 + chest; hatch with a chest; buried treasure; viewpoint ---
+place "Box Small" dcampbox at 36.7 -20.4 ground sit
+place Note_Paper dnote at 36.7 -20.4 ground y=0.7 drop yaw=30
+place Loot_ChestSmall dcamp at 38.7 -18.9 ground sit yaw=237
+call airpocket x=34.2 z=-22.4 id=stalkers_hollow_dair al=dairzone bub=dairbub r=2.5 msg="Air trapped in a diver's bell-tent. Breathe."
+note dnote Diver's slate | A slate on a lanyard:\n\nLAST DIVE - LIGHTS OUT BELOW 40.\nLeft the spare kit here for whoever comes next.
+note dcamp Diver's cache | A diver's spare kit, wired shut against the current.
+loot dcamp Rope*2;Glass*3;Plastic*4
+prop dcamp loot.refill=0
+place Van3 dvan at -36.7 20.4 ground yaw=357
+prop dvan tint.color=#6b4a32
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at -40.7 23.4 ground sit yaw=297
+note dwreckchest Driver's locker | The driver's locker, still dry inside: a torch's glass, plastic, a few bolts.
+loot dwreckchest Glass*2;Plastic*5;Bolt*2
+prop dwreckchest loot.refill=0
+call hatchcache x=-20.4 z=-36.7 r=4 seed=11091 alias=dhatch chest=dhatchchest items=MetalIngot*2;CopperIngot*2;Bolt*2
+call treasure x=20.4 z=36.7 r=6 n=1 seed=11092
+prop treasure11092 treasure.loot=TitaniumOre*2;CopperOre*2
+place Zone_Trigger dview at -8 41.2 ground y=1.5
+prop dview zone.id=stalkers_hollow_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=From the rim the arena is a ring of pale stone in the dark - and something big moves at its edge.
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): round the arena on the trench floor - the lip ridge in the north,
+# the dark cave in the east, the watchers' post in the west, a sunk boat in the south, the dark valve trench in the south-east
+call sk_ridge x1=-20 z1=80 x2=20 z2=84 h=4 top=5 r=8
+call sk_reef x=0 z=82 r=6 seed=11061
+call sk_reef x=20 z=84 r=5 seed=11071
+call sk_zone x=0 z=82 al=sh_ridge id=sh_ridge r=7 msg="The lip ridge. The trench wall goes straight up from here to the Spire, and something big moves along the bottom."
+call sk_cave x=82 z=4 h=2 yaw=180 al=sh_caverock chest=sh_cavechest
+call sk_zone x=82 z=-1 al=sh_cave id=sh_cave r=4 msg="A cave in the east wall. The Stalker's scratches go all the way in."
+call sk_dark x=82 z=-1 h=1 r=7 al=sh_dark
+call airpocketat x=79.4 z=0 h=3.6 id=sh_air al=sh_air bub=sh_airbub r=2.2 msg="Air under the rock - breathe."
+call sk_ruin x=-82 z=0 h=2 al=sh_ruin
+call sk_notebox x=-79.5 z=-4.5 yaw=10 al=sh_ruinnote
+call sk_wreck x=0 z=-84 h=2 yaw=100 v=BoatStranded al=sh_wreck crate=sh_wreckcrate scale=1
+call sk_notebox x=6 z=-88 yaw=70 al=sh_wrecknote
+
+# --- Unique layer (10-24): the vent valve in the dark south-east trench: a crank on a post (a dark hazard zone round it,
+# lamps that keep the creatures off - beh.repel - along the way); turned, it lets the vent box up
+call stonelamp x=30 z=-30 al=shlamp1
+call stonelamp x=42 z=-42 al=shlamp2
+call crankcache x=60 z=-60 yaw=225 alias=ventcrank sig=ventvalve chest=ventbox cx=66 cz=-62 cyaw=30 items=TitaniumIngot*2;MetalIngot*2;Bolt*3 title="Vent box"
+place Zone_Trigger shtrenchdark at 62 -61 ground y=1
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # the generator's rocks that floated over the slope, and walls left wholly under the ground (ground check, 2026-10-23)
@@ -150,7 +201,7 @@ prop valvezone zone.message=The seal valve. A brass plate on the plinth, half ru
 prop valve obj.name=valve
 prop valve beh.use=Turn the seal valve
 prop valve if.use=has|story:restorechoice|1
-prop valve on.use=give||story:valve*1\nshow|teal\nhide|gatebars\nshow|lastrestore\nmessage||RESTORE answers: the alcoves light up teal and the gate's bars draw back.
+prop valve on.use=give||story:valve*1\nshow|teal\nhide|gatebars\nhide|gate\nshow|lastrestore\nmessage||RESTORE answers: the alcoves light up teal and the gate's bars draw back.
 prop valve else.use=give||story:valve*1\nshow|plug\nshow|lastseal\nmessage||SEAL answers: a stone plug grinds down over the gate.
 prop teal obj.name=teal
 prop teal beh.hidden=1
@@ -167,6 +218,21 @@ prop hollowdark atmo.light=#1f4a52
 prop hollowdark atmo.lightAmount=0.2
 prop hollowdark zone.radius=36
 
+note sh_cavechest Stalker's hoard | Things the Stalker dragged in: a diver's tank, a lamp, a broken bag.
+loot sh_cavechest OxygenBottle*1;TitaniumOre*2;Rope*2;Battery*1
+prop sh_cavechest loot.refill=0
+note sh_ruinnote Watchers' post log | WATCHERS' POST\n\nWe watched the Hollow for the Network. The Stalker comes up the trench at night and goes back at dawn.\nIt keeps out of the lamps. The old valve in the south-east trench shuts the vent it breathes from.
+note sh_wrecknote Boat's last log | BOAT'S LAST LOG\n\nWe came over the trench lip to see the Hollow lit. The Stalker took the hull from under us.\nThe crew swam for the post. I stayed with the boat.
+note sh_wreckcrate Boat's locker | The boat's locker: titanium, rope, a lamp in oilcloth.
+loot sh_wreckcrate TitaniumIngot*1;Rope*3;Bolt*2;Copper*2
+prop sh_wreckcrate loot.refill=0
+prop shlamp1 beh.repel=8
+prop shlamp2 beh.repel=8
+prop shtrenchdark zone.radius=9
+prop shtrenchdark zone.hazard=dark
+prop shtrenchdark zone.hazardMsg=The trench is pitch dark. A headlight would show the valve.
+prop gate if.use=signal|sh_neveropen
+prop gate else.use=message||Barred from inside. The valve and the Spire's choice decide this gate.
 quest title=The Deep
 quest intro=Band 500: the Hollow under the trench lip. Go down the chain to the lip.
 step reach|lip|1|Go down the chain to the trench lip
@@ -180,6 +246,10 @@ step collect|story:valve|1|Turn the seal valve
 step read|What the Ringwave means (part 1)|1|Read the plate on the plinth
 step reach|alcove_4|1|Go to the west alcove
 step read|The last word|1|Read the last word
+step reach|sh_ridge|1|Swim to the lip ridge in the north
+step reach|sh_cave|1|Find the Stalker's cave in the east
+step read|Watchers' post log|1|Read the log at the watchers' post in the west
+step read|Boat's last log|1|Read the last log at the sunk boat in the south
 step reach|surface_line|1|Climb the chain back to the surface
 quest done=The Sunken Kingdom is decided. The Receiver goes quiet on every band but one.
 quest reward=TitaniumOre*3;Battery*2;MetalIngot*4

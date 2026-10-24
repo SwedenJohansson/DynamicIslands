@@ -16,5 +16,13 @@ expect step 4
 open Mast toolbox
 wait 3
 expect step 5
+zone sc_ridge
+expect step 6
+zone sc_cave
+expect step 7
+read Pump-man's slate
+expect step 8
+read Courier's logbook
+expect step 9
 read Rooftop caretaker's diary
 expect done

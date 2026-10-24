@@ -20,6 +20,14 @@ expect step 5
 open Store shed chest
 wait 3
 expect step 6
+zone th_ridge
+expect step 7
+zone th_cave
+expect step 8
+read Dive log
+expect step 9
+read Dinghy logbook
+expect step 10
 use bell
 wait 13
 zone bell

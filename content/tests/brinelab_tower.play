@@ -12,29 +12,37 @@ expect step 2
 open Reception drawer
 wait 3
 expect step 3
+zone bl_ridge
+expect step 4
+zone bl_cave
+expect step 5
+read Sample keeper's list
+expect step 6
+read Crane driver's note
+expect step 7
 expect shown atriumvines
 expect item Machete 1
 use atriumvines
 expect hidden atriumvines
 zone stairwell
-expect step 4
+expect step 8
 kill Warthog
-expect step 5
+expect step 9
 open Lab 2 cabinet
 wait 3
-expect step 6
+expect step 10
 read Data drive 1
 zone flooded_lab
 air flooded_lab
-expect step 8
+expect step 12
 expect hidden drive3
 read Data drive 2
 expect shown drive3
 read Data drive 3
-expect step 9
+expect step 13
 open Pipe store
 wait 3
-expect step 10
+expect step 14
 open Lab stores
 wait 3
 open Boiler room locker

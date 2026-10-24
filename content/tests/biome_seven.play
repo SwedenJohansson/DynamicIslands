@@ -41,6 +41,14 @@ expect hidden bedsdry
 expect shown bedsfull
 expect story watered 1
 expect step 9
+zone b7_ridge
+expect step 10
+zone b7_cave
+expect step 11
+read Gardener's shed book
+expect step 12
+read Car park ticket
+expect step 13
 zone surface_buoy
 air buoy_air
 open Gantry box

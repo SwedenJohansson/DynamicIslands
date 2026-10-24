@@ -4,7 +4,7 @@
 # tree, pineapple and berries, the gardener's rota, the control desk, the seed vault and a lab goat in a cage. The
 # airlock is a short block tunnel on the north side with a hatch in its roof. Outside: a big puffer, stingrays at the
 # outer vent and its shed, three reefs, glowing water, and the marker buoy on the surface. Quest "The Glass Dome"
-# (10 steps): the airlock, its hatch, the rota, three melon seed packets, the engine control plans, 2 stingrays, the
+# (14 steps): the airlock, its hatch, the rota, three melon seed packets, the engine control plans, 2 stingrays, the
 # metal detector plans, the firework plans, the sprinkler crank (the dry beds give way to full ones), the zipline plans
 # on the maintenance gantry on the dome's cap.
 #
@@ -16,9 +16,12 @@ include lib_sea
 include lib_gravity
 include lib_sl1
 include lib_sunken
+include lib_features
+# RESIZE 10-24: Radius 32 -> 85, the seabed hills higher. The dome, its airlock, the vent shed and the buoy stay together
+# in the middle (the dive from the buoy to the airlock is one breath); the outer reefs move out x2.66 with the land.
 new
-gen Trees=0 Bushes=0 Rocks=0.25 Harvest=0 BeachThings=0
-gen Seed=10401 Radius=32 Height=4 Roughness=0.3 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.3 PeakShape=0.4
+gen Trees=0 Bushes=0 Rocks=0.35 Harvest=0 BeachThings=0
+gen Seed=10401 Radius=85 Height=12 Roughness=0.3 Peaks=3 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.3 PeakShape=0.4
 gen Water=0.5 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.35
 generate
 elevation -18
@@ -26,8 +29,11 @@ elevation -18
 # --- Terrain: the seabed garden floor at 0 ---------------------------------------------------------------------------
 brush flatten at 0 0 r=16 s=20 frames=240 h=0
 brush grass at 0 0 r=6 s=20 frames=20
+# discoveries: a level spot for the diver's cache
+brush flatten at 30 46 r=4 s=8 frames=40
 origin
 clear at 0 0 r=15
+clear at 30 46 r=5
 
 # --- The dome: a ring of glass walls (open on the north for the airlock), a ring leaning in over it, the steel cap ----
 for a 120 420 30
@@ -107,15 +113,60 @@ place Creature_PufferFish bigpuffer at -11 7 h=4
 call buoychain x=11 z=-11 h=18 n=3 al=buoy zal=buoyzone id=surface_buoy
 call airpocket x=10 z=-8.5 id=buoy_air al=buoyair bub=buoybub r=2.5 msg="An air pocket at the buoy's foot."
 place Zone_Atmosphere glowwater at 0 0 h=8
-scatter VP_CoralBulb04 5 at 14 6 r=3 seed=10402 free=1
-scatter VP_CoralFoliose01 4 at 14 6 r=3 seed=10403 free=1
-scatter VP_CoralDigitate01 5 at -13 -8 r=3 seed=10404 free=1
-scatter TinyCoral 6 at -13 -8 r=3 seed=10405 free=1
-scatter LeafCoral_1 4 at -6 14 r=3 seed=10406 free=1
-scatter VP_CoralBulb03 4 at -6 14 r=3 seed=10407 free=1
-scatter SeaVine3 30 at 0 0 r=28 seed=10408 free=2
-scatter SeaVine3_klump 10 at 0 0 r=28 seed=10409 free=2
-call shallows x=0 z=0 r=44 deep=6 n=1 seed=10410
+scatter VP_CoralBulb04 7 at 37 16 r=5 seed=10402 free=1
+scatter VP_CoralFoliose01 6 at 37 16 r=5 seed=10403 free=1
+scatter VP_CoralDigitate01 7 at -35 -21 r=5 seed=10404 free=1
+scatter TinyCoral 8 at -35 -21 r=5 seed=10405 free=1
+scatter LeafCoral_1 6 at -16 37 r=5 seed=10406 free=1
+scatter VP_CoralBulb03 6 at -16 37 r=5 seed=10407 free=1
+scatter SeaVine3 60 at 0 0 r=70 seed=10408 free=2
+scatter SeaVine3_klump 20 at 0 0 r=70 seed=10409 free=2
+call shallows x=0 z=0 r=100 deep=6 n=2 seed=10410
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): a sunken boat with a chest and an air pocket, a drowned van,
+# a diver's cache with a slate (a note), a hatch in the seabed with a chest, a ridge where the dome's glow shows ----
+place BoatStranded - at 40 -38 ground yaw=210
+place Loot_ChestSmall wreckchest at 35 -34 ground sit yaw=30
+call airpocket x=37 z=-41 id=wreck_air al=wreckair bub=wreckbub r=2.5 msg="Air caught under the wreck's hull. Breathe."
+place Van3 drownedvan at -46 30 ground yaw=75
+prop drownedvan tint.color=#6b4a32
+prop drownedvan tint.amount=0.55
+place "Box Small" - at 30 46 ground sit
+place Note_Paper diverslate at 30 46 ground y=0.7 drop yaw=30
+place Loot_ChestSmall divercache at 32 47.5 ground sit yaw=250
+call hatchcache x=-40 z=-42 r=10 seed=10411 alias=seabedhatch chest=seabedchest items=MetalIngot*2;CopperIngot*2;Bolt*2
+place Zone_Trigger viewzone at -56 0 ground y=1.5
+note wreckchest Wreck's chest | The boat's chest, sunk with her: tins, line and a few tools the salt has not eaten yet.
+loot wreckchest Rope*3;Nail*8;Scrap*3
+prop wreckchest loot.refill=0
+note diverslate Diver's slate | A diver's slate, wired to a box:\n\n"DOMES 1-6 DARK. SEVEN STILL LIT.\nAir at the buoy, air at the vent shed.\nDon't stay down past the second breath."
+note divercache Diver's cache | A diver's spare kit: rope, a spare filter, glass for a mask.
+loot divercache Rope*2;Glass*3;Plastic*4
+prop divercache loot.refill=0
+prop viewzone zone.id=biome_view
+prop viewzone zone.radius=7
+prop viewzone zone.repeat=never
+prop viewzone zone.message=From the ridge the seabed falls away - and there, far off in the blue, the dome glows like a lamp left on.
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): under water round the dome - the kelp ridge in the east, a rock
+# cave in the south, the gardener's shed in the north, a car park of sunk vans in the north-west
+call sk_ridge x1=66 z1=-12 x2=72 z2=22 h=4 top=5 r=8
+call sk_reef x=69 z=5 r=6 seed=10461
+call sk_reef x=72 z=22 r=5 seed=10471
+call sk_zone x=69 z=5 al=b7_ridge id=b7_ridge r=7 msg="The kelp ridge. The dome glows behind you like a lamp left on in an empty house."
+call sk_cave x=6 z=-68 h=2 yaw=0 al=b7_caverock chest=b7_cavechest
+call sk_zone x=6 z=-63 al=b7_cave id=b7_cave r=4 msg="A cave in the south rock. The garden's overflow pipe ends here, still dripping silt."
+call sk_ruin x=-4 z=70 h=2 al=b7_ruin
+call sk_notebox x=-1.5 z=65.5 yaw=10 al=b7_ruinnote
+call sk_wreck x=-44 z=62 h=2 yaw=200 v=Van_1 al=b7_wreck crate=b7_wreckcrate scale=1
+place Caravan_Green_02 - at -51 69 ground sit yaw=150
+call sk_notebox x=-38 z=58 yaw=70 al=b7_wrecknote
+
+# --- Tools in use (10-24: a tool or item given earlier in the storyline opens extras here, never the main path)
+call vinecache x=60 z=-58 r=8 seed=10471 chest=b7vinechest vines=b7vines items=Rope*3;Nail*8;Seed_Flower_Red*2
+
+# --- Unique layer (10-24): the airlock garden's outer sluice: a crank on a post at the shed brings up the bed box
+call crankcache x=3 z=73 yaw=270 alias=sluicecrank sig=sluice chest=bedbox cx=-9 cz=74 cyaw=0 items=Seed_Watermelon*2;Seed_Pineapple*2;Dirt*2 title="Bed box"
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # the generator's rocks that floated over the slope, and walls left wholly under the ground (ground check, 2026-10-23)
@@ -196,6 +247,15 @@ prop bigpuffer creature.count=1
 prop bigpuffer creature.size=1.6
 prop bigpuffer creature.respawn=0
 
+note b7_cavechest Overflow cave chest | A chest at the overflow: seed tins, sealed with wax.
+loot b7_cavechest Seed_Pineapple*1;Seed_Watermelon*1;Rope*2;Plastic*2
+prop b7_cavechest loot.refill=0
+note b7_ruinnote Gardener's shed book | GARDENER'S SHED BOOK\n\nThe sluice to the outer beds is cranked shut. Turn it once and the bed box comes up out of the silt.\nThe goats are in their cage by the airlock. Whoever has the lab's bolt cutters - let them out.
+note b7_wrecknote Car park ticket | CAR PARK TICKET\n\nBIOME SEVEN - VISITORS. Park at the shore, walk the glass tunnel down.\nThe shore went under. The vans stayed where we left them.
+note b7_wreckcrate Visitor's van crate | A visitor's crate, still in the van: a picnic gone to salt, and a few useful things.
+loot b7_wreckcrate Rope*2;Scrap*3;Plank*3;Battery*1
+prop b7_wreckcrate loot.refill=0
+
 quest title=The Glass Dome
 quest intro=A beacon from the seabed garden. Dive to the dome's airlock.
 step reach|airlock|1|Dive to the airlock on the dome's north side
@@ -207,6 +267,10 @@ step kill|Stingray|2|Drive the stingrays off the outer vent
 step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from the vent shed
 step blueprint|Blueprint_Firework|1|Open the gardener's locker: firework plans
 step collect|story:watered|1|Turn the sprinkler crank to water the beds
+step reach|b7_ridge|1|Swim to the kelp ridge in the east
+step reach|b7_cave|1|Find the overflow cave in the south
+step read|Gardener's shed book|1|Read the book in the gardener's shed in the north
+step read|Car park ticket|1|Read the ticket at the sunk car park in the north-west
 step blueprint|Blueprint_ZiplineBase|1|Swim up to the gantry on the dome's cap: zipline plans
 quest done=The garden breathes again. The gardener's letters were for the surface station - the Receiver finds it on band 900.
 quest reward=Seed_Watermelon*3;Seed_Mango*1
