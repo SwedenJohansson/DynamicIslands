@@ -801,4 +801,9 @@ quest reward=TitaniumIngot*4;Battery_Advanced*2;Plank*20;Rope*10
 call treasure x=0 z=0 r=55 n=1 seed=8803
 prop treasure8803 treasure.loot=TitaniumOre*3
 
+# --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
+place VP_Forklift - at 45 89 ground sit yaw=90
+# the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
+clear at 57.92 -27.76 r=1.5 only=SmallRock_03
+
 save The Frontier

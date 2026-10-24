@@ -16,6 +16,11 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   Countdown Cay, Gantry Bluff, Pinewood Haul, Lowtide Camp), 6 medium (Caravan Rest, Hollowpick Quarry, Whitecap Depot,
   Wingfall Mire, Cinderyard, Slipway Meadow) and 4 large (Timberline Haul, Coral Runway, Ridgeback Pass, Red Mesa
   Harbour). Ten have a quest; the others are islands to explore. All are listed in the guide's section 15.7.
+- **Raft's vehicles in the older storylines:** forklifts, excavators, a building crane and two snow vehicles now
+  stand on 13 islands of Raft 2, Raft Remade, Relic of the Seventh Tide, The Gravity Sea, The Last Post, The Long
+  Voyage, The Lullaby Frequency and The Rainmakers, parked off the quest routes. The same pass removed or sank rocks
+  that floated over slopes on 14 storyline islands, and the hyenas of The General Post Office now start on the
+  square beside the arcade instead of on its roof.
 
 ## 2026-10-23: known-issues fixes
 

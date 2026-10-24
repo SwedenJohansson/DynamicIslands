@@ -241,4 +241,6 @@ store utopiashop at 38 32 ground
 call treasure x=0 z=0 r=30 n=1 seed=8806
 prop treasure8806 treasure.loot=TitaniumOre*3
 
+# --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
+place UT_ElectricityIsland_Crane02 - at -7 44 ground y=-1.0 sit scale=0.3 yaw=200
 save Utopia Remade

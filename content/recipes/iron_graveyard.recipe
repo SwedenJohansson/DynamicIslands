@@ -223,4 +223,10 @@ step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans from the 
 quest done=The turbine turns over a lit yard. The breakers' plans are yours - and the chalk on the board says the Corps' fleet went on to Storm Spire.
 quest reward=Plank*8;MetalIngot*4;Bolt*6
 
+# the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
+clear at -17.38 48.1 r=1.5 only=CaravanIsland_SmallRock
+clear at -20.37 47.41 r=1.5 only=CaravanIsland_SmallRock
+clear at -12.93 49.36 r=1.5 only=BigSharpRock
+clear at 1.52 52.09 r=1.5 only=CaravanIsland_SmallRock
+
 save The Iron Graveyard

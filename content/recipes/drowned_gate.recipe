@@ -411,4 +411,9 @@ store canteen at 66 2 ground
 call treasure x=0 z=0 r=45 n=1 seed=8802
 prop treasure8802 treasure.loot=TitaniumOre*3
 
+# --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
+place VP_Excavator - at 5 -23 ground sit yaw=90
+# the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
+clear at -15.53 -56.52 r=1.5 only=SmallBoulder1
+
 save The Drowned Gate

@@ -115,4 +115,6 @@ quest reward=Plank*10;Rope*4;Nail*10
 place Creature_Boar boars at -6 16 ground
 prop boars creature.count=1
 
+# --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
+place VP_Forklift - at -6 -33 ground sit yaw=90
 save Lodestone Quay

@@ -247,4 +247,7 @@ step blueprint|Blueprint_ZiplineTool|1|Take the zipline tool plans from the scra
 quest done=The pit is quiet and the hoard is open. The scrap king never came back - so his crown, of sorts, is yours.
 quest reward=MetalIngot*4;Nail*20;Plastic*10
 
+# the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
+clear at 0 52.44 r=1.5 only=BigSharpRock
+
 save Scrapyard Haven

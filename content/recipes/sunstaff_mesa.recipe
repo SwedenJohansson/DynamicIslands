@@ -235,4 +235,9 @@ step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans fro
 quest done=Balboa's plans are yours, and the mark is burned: a tomb city in the dunes, the first gear. Its call sign answers on 900 - once the caravans' town is behind you.
 quest reward=MetalIngot*4;Bolt*3;Rope*4
 
+# --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
+place VP_Forklift - at 13.5 -70.5 ground sit yaw=30
+# the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
+clear at 9.98 39.65 r=1.5 only=BigSharpRock
+
 save Sunstaff Mesa

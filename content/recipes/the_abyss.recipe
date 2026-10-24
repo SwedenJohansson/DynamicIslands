@@ -197,4 +197,9 @@ quest reward=MetalIngot*8;Nail*30;OxygenBottle*2
 call treasure x=0 z=0 r=40 n=1 seed=8815
 prop treasure8815 treasure.loot=TitaniumOre*3
 
+# the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
+clear at 11.2 14.98 r=1.5 only=BigSharpRock
+clear at 26.74 -41.24 r=1.5 only=CaravanIsland_SmallRock
+clear at 40.78 -18.27 r=1.5 only=BigSharpRock
+
 save The Abyss

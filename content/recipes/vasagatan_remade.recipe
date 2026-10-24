@@ -225,4 +225,10 @@ step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel plans from the 
 quest done=The ship's papers are yours, and with them the drawings of an engine and a steering wheel. Her last log names a ranger station on a jungle mountain.
 quest reward=Plank*10;Rope*4;Nail*12
 
+# the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
+clear at 13.34 -1.89 r=1.5 only=BigBoulder4_Low
+clear at 15.02 6.14 r=1.5 only=BigBoulder1_Low
+clear at -11.95 -18.54 r=1.5 only=BigBoulder4_Low
+clear at 13.57 32.11 r=1.5 only=SmallBoulder1
+
 save Vasagatan Remade

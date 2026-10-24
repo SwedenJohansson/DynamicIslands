@@ -147,4 +147,9 @@ step read|Nimbus maintenance card|1|Read the Nimbus maintenance card on the pump
 quest done=The maintenance card names the next station: Cirrus Silo Farm. Tune the Receiver to the maintenance band.
 quest reward=Plank*6;Rope*3;Scrap*4
 
+# --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
+place VP_Forklift - at -14 -22 ground sit yaw=90
+# the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
+clear at -27.55 -33.09 r=1.5 only=BigRock_2
+
 save Hailstone Weir

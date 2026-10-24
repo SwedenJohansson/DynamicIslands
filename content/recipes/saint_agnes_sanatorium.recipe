@@ -220,4 +220,6 @@ step read|Vell - final entry|1|Read Doctor Vell's final entry
 quest done="Not for us - for it." The charts point to the sea in the east, where the Choir's effigies stand. They will not show on the Receiver yet - the song needs more nights.
 quest reward=TitaniumIngot*1;MetalIngot*4;CopperIngot*2;Battery*1
 
+# --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
+place VP_Forklift - at -3.5 -25 ground sit yaw=0
 save Saint Agnes Sanatorium

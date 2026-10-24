@@ -59,7 +59,7 @@ place TP_Selene_DoorCrankWheel crank at 0 -0.09 ground y=1.2 rot=0,0,0
 pop
 place Note_Sign wellnotice at 2 -1.2 ground sit yaw=180
 place Placeable_Lantern_Metal wellcam at 0.6 2 ground y=1.1 drop
-place SmallRock_02 rimrock at 0 -15 ground scale=0.7 yaw=30
+place SmallRock_02 rimrock at 0 -15 ground y=-0.9 scale=0.7 yaw=30
 place Zone_Trigger rimzone at 0 -10 ground
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------

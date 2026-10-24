@@ -175,4 +175,10 @@ prop treasure8829 treasure.loot=TitaniumOre*3
 place Creature_PufferFish puffers at 0 92 h=-3
 prop puffers creature.count=3
 
+# --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
+place VP_Excavator - at -15 36 ground sit yaw=90
+# the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
+clear at -25.19 -28.12 r=1.5 only=CaravanIsland_SmallRock
+clear at -63.4 -30.15 r=1.5 only=BigSharpRock
+
 save Cinderfall

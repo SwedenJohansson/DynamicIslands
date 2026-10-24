@@ -280,4 +280,9 @@ step reach|beach|1|Ride the zipline down to the beach
 quest done=Ingrid is coming with you, and the array is humming again. The next station answers on 1100 too.
 quest reward=MetalIngot*6;CopperIngot*2;Bolt*4
 
+# --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
+place VP_Forklift - at -6 -8 ground sit yaw=30
+# the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
+clear at 48.06 33.63 r=1.5 only=CaravanIsland_SmallRock
+
 save Thunderhead Array

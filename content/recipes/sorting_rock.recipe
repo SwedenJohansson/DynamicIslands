@@ -132,4 +132,9 @@ step read|Lise's reply|1|Read Lise's note
 quest done=Sorted. Lise's note points on: the telegraph boat to the Narrows.
 quest reward=Cooked_Potato*3;Cooked_Beet*3;Coconut*3
 
+# --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
+place VP_Forklift - at 9 -5 ground sit yaw=200
+# the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
+clear at 39.04 -1.26 r=1.5 only=BigSharpRock
+
 save Sorting Rock

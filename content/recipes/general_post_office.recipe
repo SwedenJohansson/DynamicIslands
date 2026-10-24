@@ -52,7 +52,7 @@ place Note_Paper notice at -2.6 -30.7 ground y=1.2 sit drop yaw=-10
 push at -15 -26 h=2.5
 call openhall w=6 d=2
 pop
-place Creature_Hyena hyenas at -10.5 -24.5 ground
+place Creature_Hyena hyenas at -2.5 -24.5 h=2.6
 # the news kiosk
 push at 8 -28 h=2.5
 call openhall w=2 d=2
@@ -387,4 +387,6 @@ quest reward=MetalIngot*4;Battery*2;TradeToken*8
 call treasure x=0 z=0 r=40 n=1 seed=8820
 prop treasure8820 treasure.loot=TitaniumOre*3
 
+# --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
+place VP_Forklift - at 6 -37 ground sit yaw=90
 save The General Post Office

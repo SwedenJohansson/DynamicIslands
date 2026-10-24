@@ -242,4 +242,20 @@ store stationshop at 88 -40 ground
 call treasure x=0 z=0 r=55 n=1 seed=8822
 prop treasure8822 treasure.loot=TitaniumOre*3
 
+# --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
+place TP_SnowVehicle01 - at 80 -14 ground sit yaw=100
+place TP_SnowVehicle02 - at 79 -18 ground sit yaw=110
+# the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
+clear at 7.1 -90.31 r=1.5 only=TP_BigRock
+clear at 9.36 -52.96 r=1.5 only=TP_BigRock
+clear at -2.2 -74.51 r=1.5 only=TP_BigRock
+clear at -77.52 40.83 r=1.5 only=TP_BigRock
+clear at 7.05 13.1 r=1.5 only=TP_BigRock
+clear at -4.01 -77.43 r=1.5 only=TP_BigRock
+clear at -9.68 -89.99 r=1.5 only=TP_BigRock
+clear at -79.31 35.23 r=1.5 only=TP_BigRock
+clear at 26.15 13.43 r=1.5 only=TP_BigRock
+clear at -50.16 -42.91 r=1.5 only=TP_BigRock
+clear at -87.97 17.13 r=1.5 only=TP_BigRock
+
 save Glacier Station

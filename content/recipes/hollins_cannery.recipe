@@ -152,4 +152,6 @@ step open|Pim's tin box|1|Free Pim from the cage in the hall, then open his tin 
 quest done=Pim is on his way to your raft, humming. He says the song comes stronger from the north-east - an old sanatorium. Tune the Receiver to 800.
 quest reward=Plank*6;Rope*3;Scrap*4
 
+# --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
+place VP_Forklift - at 13 0 ground sit yaw=270
 save Hollins Cannery
