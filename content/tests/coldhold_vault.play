@@ -73,35 +73,38 @@ expect hidden coldrun
 expect step 17
 zone control
 expect step 18
-read Three switches
+read The Warden's ledger
 expect step 19
+read Sparks' QSL card
+read Three switches
+expect step 20
 use carrylever
 expect story choice 1
 expect shown carrychest
 expect shown heddacall
 expect hidden keepchest
-expect step 20
-read The verdict
 expect step 21
+read The verdict
+expect step 22
 open The vault's gift
 wait 3
-expect step 22
-read Hedda's radio call
 expect step 23
-# DEEP 10-24: the flood door has no interlock - the vent keeper's cave, the ice cap, the vent tower
+read Hedda's radio call
+expect step 24
+# DEEP 10-24: the flood door has no interlock - the vent keeper's cave, the ice cap, the vent shaft
 use floodlever
 expect shown flooddoor
 zone cap_foot
 open Vent keeper's bedroll
 read Vent keeper's note
-expect step 24
-zone vent_top
 expect step 25
-open Vent tower chest
+zone vent_top
+expect step 26
+open Vent shaft chest
 expect story interlock 1
-# (no "expect step 26": in the plan the flood-door zone step can be done already)
+# (no "expect step 27": in the plan the flood-door zone step can be done already)
 zone flood_door
-expect step 27
+expect step 28
 use floodlever
 expect hidden flooddoor
 expect done

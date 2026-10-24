@@ -30,7 +30,7 @@ expect step 6
 open Leader's chest
 wait 3
 expect step 7
-# DEEP 10-24: the Icefall, the survey mast, the crevasse collapse, the snowcat's key
+# DEEP 10-24: the Icefall, the survey cairn, the crevasse collapse, the snowcat's key
 zone icefall
 expect step 8
 zone glacier_top
@@ -62,7 +62,7 @@ zone jump_gm_top
 wait 2
 expect done
 # the extras: the mast chest, the ice cave cache, three treasures
-open Survey mast chest
+open Survey cairn chest
 open Ice cave cache
 dig 0
 dig 1

@@ -1,11 +1,13 @@
 # The Seed Ark (CIPlay seed_ark): 30 m down; the drop, room 1's air and the manifest, the ice anglers, the timed gate
-# and room 2, room 3 and the Ringwave file, room 4, the ark valve (the racks light, the closing note), the surface hole.
+# and room 2, room 3 and the Ringwave file, room 4, Orrin's letter, the ark valve (its scene: the racks light hall by hall, the gate shuts, the closing note), the surface hole.
 island The Seed Ark
 offset 0 0
 expect step 0
 expect title The Ark
 expect hidden closingnote
-expect hidden racklights
+expect hidden racklights1
+expect hidden racklights2
+expect hidden racklights3
 zone drop
 expect step 1
 air room_1
@@ -29,18 +31,20 @@ wait 3
 expect story arkseal 3
 air room_4
 expect step 9
+read Orrin's last letter
+expect step 10
 open Last rack locker
 code rackpad 2240
 expect story rackcode 1
 open Last rack locker
-# DEEP 10-24: the pumps first - the log, the rods from the halls, the islet's station, valves and tower
+# DEEP 10-24: the pumps first - the log, the rods from the halls, the islet's station, valves and switch
 use arkvalve
 expect story arkvalve 0
 expect story arkseal 3
 read Pump engineer's log
-expect step 10
-zone pump_islet
 expect step 11
+zone pump_islet
+expect step 12
 use sock1
 expect story rodset 0
 air hall_east
@@ -56,18 +60,16 @@ use sock1
 use sock2
 use sock3
 expect story rodset 3
-expect step 12
+expect step 13
 use pumplever
 expect story pumpkey 1
-expect step 13
+expect step 14
 expect hidden rats1
 use valve1
 expect shown rats1
 use valve2
 use valve3
 expect story valveturned 3
-expect step 14
-zone pump_top
 expect step 15
 use pumpswitch
 expect story pumpsrun 1
@@ -77,7 +79,11 @@ air room_4
 use arkvalve
 expect story arkseal 0
 expect story arkvalve 1
-expect shown racklights
+wait 8
+expect shown racklights1
+expect shown racklights2
+expect shown racklights3
+expect shown gate
 expect shown closingnote
 expect step 17
 read The closing note

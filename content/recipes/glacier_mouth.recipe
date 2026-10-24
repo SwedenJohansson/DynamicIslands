@@ -93,6 +93,13 @@ place Balboa_DecorationPrefabBase_SimpleTent leadertent at 6 4 ground sit yaw=20
 place Loot_Chest leaderchest at 6.8 2.6 ground sit yaw=180
 place Note_Paper orders at -1 -12 ground y=1.1 drop yaw=30
 place "Box Big" - at -1 -12 ground sit yaw=30
+# STORY 10-24: Orrin's abandoned sledge (its box and his note) and the Warden's tape by the leader's tent
+place Loot_ChestLarge orrinsledge at 4.6 -7 ground sit yaw=110
+place "Box Small" - at 5.8 -8.6 ground sit yaw=20
+place Note_Paper sledgenote at 5.8 -8.6 ground y=0.7 drop yaw=35
+place "Box Small" - at 8.8 1.2 ground sit yaw=160
+place Note_Paper wardentape at 8.8 1.2 ground y=0.7 drop yaw=175
+place RT_CommRadio - at 9.9 0.6 ground sit yaw=200
 place TP_Moontown_SealedCrate01 - at 2 -8 ground sit yaw=60
 place Loot_Chest depotstores at -6 -2 ground sit yaw=90
 store depotshop at 10 -4 ground
@@ -126,19 +133,16 @@ call snowfall x=0 z=0 r=45 al=snow fog=#d8e2ea fa=0.55
 pop
 
 # --- DEEP 10-24 (one-hour pass, world frame): the Icefall and its survey mast, the crevasse that gives way -------------
-# The Icefall (north-west): the glacier's highest ice, 30 m, the survey team's mast tower on its top (top 39.7 m: the
-# survey log, a zipline down to the ice wall). The crevasse cave (west): its path crosses a lid of ice over a flooded
+# The Icefall (north-west): the glacier's highest ice, 30 m, climbed on foot to the survey team's cairn on its top (story pass
+# 10-24: the mast tower and its zipline gone, R9). The crevasse cave (west): its path crosses a lid of ice over a flooded
 # crevasse - step on it and it gives way (camera, the collapse's roar): down into the cold water, a trench to the survey
 # snowcat (12 m down, an air pocket, the deep cold), its box holds the survey key the cave mouth chest wants; a ladder
 # climbs back out. A third buried treasure under the Icefall.
 call fz_mount x=-44 z=52 h=30 r=6
 call ar_plants_snowy x=-40 z=46 r=24 seed=12896
-call fz_tower x=-44 z=54 h=30 n=4 al=surveymast chest=mastchest zal=mastzone zid=glacier_top msg="The survey mast on the Icefall, the highest ice of the whole white sea. Far below, the Ringwave - and west, a dark line across the cave path: a crevasse, roofed with thin ice."
-place Antenna_pole mastaerial at -45.2 52.7 h=39.73 sit
-place Note_Paper surveylog at -44.9 52.3 h=39.75 drop yaw=200
-place ZiplinePath_Landmark mastzip at -44 50.8 h=39.73
-zipto mastzip -15 15
-call fz_zone x=-32 z=38 al=icefallzone id=icefall r=6 msg="The foot of the Icefall. Blue ice in steps, and on the top a mast with a flag of the survey team."
+call fz_cairn x=-44 z=52 al=surveycairn chest=mastchest zal=mastzone zid=glacier_top msg="The top of the Icefall, the highest ice of the whole white sea: a cairn where the survey mast stood. Far below, the Ringwave - and west, a dark line across the cave path: a crevasse, roofed with thin ice."
+call fz_note x=-45.6 z=53.6 yaw=200 al=surveylog
+call fz_zone x=-32 z=38 al=icefallzone id=icefall r=6 msg="The foot of the Icefall. Blue ice in steps, and on the top a cairn of stones, the survey team's flag on it."
 call treasure x=-22 z=56 r=10 n=1 seed=12895
 # the crevasse cave (west, its mouth north) and the survey snowcat 12 m down in the flooded crevasse
 call ar_cave x=-56 z=-36 h=7 yaw=0 al=crevrock chest=crevchest
@@ -180,12 +184,12 @@ place Balboa_DecorationPrefabBase_SimpleTent - at -20.6 29.2 ground sit yaw=237
 place "Box Small" - at -25.6 29.7 ground sit
 place Loot_ChestSmall campbits at -21.8 25.4 ground sit yaw=140
 place Note_Paper dnote at -25.6 29.7 ground y=0.7 drop yaw=20
-note dnote Traveller's note | Seventh day out of the Coldhold. Fingers bad.\nThe signal from the stack keeps repeating: COME HOME. Nobody there to send it.
+note dnote Traveller's note | Old camp, seventh day out of the Coldhold. Fingers bad, so the writing is bad, so blame the fingers.\nAune says leave a spare bit at every camp, so here is a spare bit, wrapped in wool like a baby. If a bear eats it, that is the bear's problem.\nAt night the stack's signal comes in on the little set I am not supposed to have: COME HOME, over and over. Ivo used to read the weather on it. Now nobody reads anything, and still it says COME HOME, like the mast forgot how to stop.\nThe courier passed at dawn with his dogs and did not wave. Orrin always waves.\n\n- Ivar Nes, driller
 place Caravan_Blue_01 dvan at 39 0.7 ground yaw=357
 prop dvan tint.color=#6a7a8a
 prop dvan tint.amount=0.5
 place Loot_ChestSmall dwreckchest at 35 3.7 ground sit yaw=297
-note dwreckchest Frozen chest | A chest frozen to the runner: wool, rope and a tin of nails.
+note dwreckchest Frozen chest | Frozen to the runner: wool, rope and a tin of nails.
 loot dwreckchest Wool*3;Rope*2;Nail*8
 prop dwreckchest loot.refill=0
 call hatchcache x=18.9 z=34.1 r=15 seed=12891 alias=dhatch chest=dhatchchest items=MetalIngot*2;Wool*3;Bolt*2
@@ -211,12 +215,12 @@ info author=Custom Islands
 info description=A glacier's front at the sea: a wall of ice with a cave at its foot, an expedition depot with a drill rig and a store - and cut deep into the ice, taller than a house, the Ringwave. The eighth island of The Frozen Horizon.
 island on.arrive=message||A wall of ice across the island, and on its face a sign cut taller than a house: a ring, a wave through it.
 
-note orders Expedition orders | COLDHOLD EXPEDITION - ORDERS\n\nDepot at the glacier mouth. Drill for the vault's air shafts. Keep the cave mouth clear.\nNo signals. The council of Saga Drift has agreed to silence; so will we.\nThe bears come down off the ice when the wind is from the north. Two of them, the same two, every time.\n\n- Expedition leader R. Aune
-note carvingnote Carving note | (scratched on a board under the carving)\n\nWe did not cut this. It was here when we came, under the snow.\nThe same sign as the sea doors. They knew it here too.\n\n- R. A.
-note depotstores Depot stores | The depot's stores: pine seeds for the greenhouse at the harbour, rope, rations.
-note drillrig Drill rig chest | The drill rig's big chest: the titanium tools' plans - the only bits that bite the glacier.
-note leaderchest Leader's chest | The expedition leader's chest: the advanced backpack's plans, a map of the vault's entrance hall.
-note cavechest Cave mouth chest | A chest just inside the cave mouth: the electric zipline tool's plans - "for the crevasse in the ice hall" - and cave mushrooms picked off the cave floor.
+note orders Expedition orders | COLDHOLD EXPEDITION - ORDERS\n\nDepot at the glacier mouth. Drill for the vault's air shafts. Keep the cave mouth clear.\nNo signals. The Warden's order came up with the courier, sealed, inside the ordinary post like every letter he carries. The council of Saga Drift has agreed to silence; so will we. I do not like it. A crew that cannot call for help digs carefully, I suppose.\nThe bears come down off the ice when the wind is from the north. Two of them, the same two, every time. Ivar calls them the Inspectors. Do not feed the Inspectors, and do not let them inspect the rations.\nThe rig takes three bits. One stays in the depot stores, not in Ivar's pocket.\n\n- Expedition leader R. Aune
+note carvingnote Carving note | (scratched on a board under the carving)\n\nWe did not cut this. It was here when we came, under the snow, and the snow slid off it in a single night, as if it wanted to be seen.\nThe same sign as the sea doors of the Coldhold. A ring, a wave through it. They knew it here too, whoever they were, long before the Warden and his silence.\nThe vault lies under the glacier: its door is in the ice past the crack, and its gate answers on 700. If you have come this far, go in gently. Something down there has been listening for a lot longer than we have.\nI have stopped telling the crew it is only a carving.\n\n- R. A.
+note depotstores Depot stores | Pine seeds for the harbour, rope, rations and a spare drill bit.
+note drillrig Drill rig chest | The rig's chest: titanium tools' plans, the only bits that bite ice.
+note leaderchest Leader's chest | Aune's chest: the advanced backpack's plans and a map of the vault.
+note cavechest Cave mouth chest | The cave mouth chest: electric zipline plans, cave mushrooms, a battery.
 loot depotstores story:drillbit*1;Seed_Pine*3;Rope*3;Raw_GenericMeat*2
 prop depotstores loot.refill=0
 loot drillrig Blueprint_TitaniumTools*1;MetalIngot*2;Bolt*3
@@ -225,12 +229,17 @@ prop drillrig obj.name=drillrig
 prop drillrig beh.hidden=1
 story drillbit|A drill bit|Placeable_Lantern_Metal|A titanium-tipped bit for the expedition's drill rig.
 story drilled|The drill rig running|Placeable_Lantern_Metal|The drill rig bored into the glacier and freed its chest.
-note bearcache Torn sled | The bears dragged the expedition's sled out here: a drill bit in its crate, rations clawed open.
+note bearcache Torn sled | Clawed open by the bears: a drill bit still in its crate.
 loot bearcache story:drillbit*1;Leather*2;Raw_GenericMeat*1
 prop bearcache loot.refill=0
-note campbits Old camp crate | The first camp's crate, half buried: a drill bit wrapped in wool, and a note - "spare bit, in case".
+note campbits Old camp crate | The first camp's crate, half buried: a drill bit wrapped in wool.
 loot campbits story:drillbit*1;Wool*2;Bolt*2
 prop campbits loot.refill=0
+note orrinsledge Orrin's sledge | Orrin's sledge box: dog biscuits, a goat bell, post never delivered.
+loot orrinsledge Raw_GenericMeat*2;Rope*2;Leather*1
+prop orrinsledge loot.refill=0
+note sledgenote Orrin's note | (tucked under the sledge's lashings)\n\nTo whoever finds my sledge - and if it is Aune, I owe you a bottle and an explanation, and the bottle is easier.\nTuva and Knut are loose. They will run back down the coast; they always knew the way home better than I did. Do not chase them. Give them a fish each if they come to you.\nI have carried a lot of letters this winter. Some I should have dropped in the sea. Some things I did with my own hands will not fit on a sledge, and I cannot carry them any further.\nI am going down to put it right. Past the vault, to the old ark under the ice, where the pumps are. If the ark breathes again, maybe the rest of it weighs a little less.\nIf I am not back in a week, the goats at my camp are yours. They bite. Sorry.\n\n- Orrin Vale, courier
+note wardentape The Warden's tape | (a tape spool in a tin, a typed transcript wrapped round it)\n\nTO THE GLACIER DEPOT. THIS IS THE WARDEN OF THE COLDHOLD.\nKeep the drill running and the radio cold. You think the silence is an old man's fear. Listen, then, one night on the low band when the wind drops: a slow pulse from the south, once a minute, like something breathing in its sleep. It does not call. It looks. Every set that answers is a light in the dark, and it counts the lights.\nThe courier will bring what you need. Ask him nothing. He has his berth to earn, as you have yours.\nWhen the shafts are cut, come in through the glacier door. We will close it behind you, and we will be quiet together until it has passed.\n\n- A. Holt, Warden
 prop drillhead obj.name=drillhead
 prop drillhead beh.use=Fit the bits and start the drill
 prop drillhead if.use=take|story:drillbit|3
@@ -243,17 +252,17 @@ prop leaderchest loot.refill=0
 loot cavechest Blueprint_ZiplineToolElectric*1;CaveMushroom*4;Battery*1
 prop cavechest loot.refill=0
 prop cavechest if.open=has|story:surveykey
-prop cavechest else.open=message||The cave mouth chest is locked with the survey team's lock. Their mast stands on the Icefall, north-west.
+prop cavechest else.open=message||The cave mouth chest is locked with the survey team's lock. Their cairn stands on top of the Icefall, north-west.
 
 # --- DEEP 10-24: the survey team's log, the snowcat, the key ---
 story surveykey|The survey key|Placeable_Lantern_Metal|The survey team's key: it opens the expedition's chest at the cave mouth.
-note surveylog Survey log | SURVEY LOG (nailed to the mast)\n\nThe Icefall is moving: a metre a week toward the sea.\nThe cave path is a crevasse with a skin of ice on it. Our snowcat went through on the fourth day, with the cave chest's key in its box.\nWe left the key. We left the snowcat. Do not walk the cave path.
-note mastchest Survey mast chest | The survey team's chest on the mast: their instruments, frozen, and spare line.
+note surveylog Survey log | SURVEY LOG (wedged under the cairn)\n\nThe Icefall is moving: a metre a week toward the sea. We took the mast down before it took us down with it, and built this cairn instead. Stones do not mind the wind.\nThe cave path is a crevasse with a skin of ice on it. Our snowcat went through on the fourth day, with the cave chest's key in its box. Bergit swears she heard its bell ring all the way down.\nWe left the key. We left the snowcat. Do not walk the cave path unless you can swim in water that bites.\nFrom up here you see everything. The courier's sledge tracks run from the depot straight to the glacier door, and back, and to the door again. Nobody else goes that way.\n\n- Survey party, K. Lind
+note mastchest Survey cairn chest | The survey team's chest by the cairn: frozen instruments, spare line.
 loot mastchest Rope*3;CopperIngot*2;Glass*2
 prop mastchest loot.refill=0
-note snowcatbox Survey snowcat's box | The snowcat's box, 12 m down in the crevasse: the survey key on a cord, and the team's emergency rations.
+note snowcatbox Survey snowcat's box | The snowcat's box, 12 m down: the survey key on a cord.
 loot snowcatbox story:surveykey*1;MetalIngot*2;Battery*1
-note crevchest Ice cave cache | A cache in the crevasse cave: whoever crossed before the ice broke left this.
+note crevchest Ice cave cache | A cache in the crevasse cave, left before the ice broke.
 loot crevchest TitaniumOre*1;Rope*2;Bolt*3
 prop crevchest loot.refill=0
 prop treasure12895 treasure.loot=TitaniumOre*2;CopperOre*2
@@ -315,7 +324,7 @@ prop jzgm zone.radius=1.8
 prop jzgm zone.repeat=never
 prop jzgm zone.message=From the top of the ice-cutters' block stair the glacier lies open: a dark crack runs into its face where the vault's door must be.
 place Loot_ChestSmall jbgm at -6.38 6.99 h=9.65 sit yaw=0
-note jbgm Ice-cutter's stash | At the far block, out of reach of anyone who could not jump.
+note jbgm Ice-cutter's stash | At the far block, out of reach of anyone who cannot jump.
 loot jbgm MetalIngot*2;Rope*2;Leather*1
 prop jbgm loot.refill=0
 place Zone_Trigger jygm at -6.38 6.99 h=10.65
@@ -336,8 +345,8 @@ step collect|story:drilled|1|Fit the bits and start the drill rig
 step blueprint|Blueprint_TitaniumTools|1|Take the titanium tools' plans from the drill rig
 step blueprint|Blueprint_BackpackAdvanced|1|Take the advanced backpack's plans from the leader's tent
 step reach|icefall|1|The cave mouth chest has the survey team's lock. Go to the Icefall in the north-west
-step reach|glacier_top|1|Climb the Icefall and the survey mast on its top
-step read|Survey log|1|Read the survey log on the mast
+step reach|glacier_top|1|Climb the Icefall on foot to the survey team's cairn on its top
+step read|Survey log|1|Read the survey log under the cairn
 step reach|crevasse|1|Walk the crevasse cave's path in the west
 step collect|story:surveykey|1|Dive to the survey snowcat and take the key from its box
 step read|Carving note|1|Go to the Ringwave on the ice wall and read the note under it

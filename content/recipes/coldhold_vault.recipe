@@ -3,7 +3,7 @@
 # a Raft store outside), a crevasse across the island crossed by an electric zipline, and on the far side the vault
 # floor ringed by an ice cap on pillars: Oda Fenn (from Verdance) caged behind a collapsed door, the three wings
 # (Seeds, Records, Embryos), the control room behind its keypad door with three switches - KEEP, CARRY, BROADCAST - and
-# at the vault's north end the flood door down to the Ark. Quest "Beneath the Glacier" (28 steps; DEEP 10-24: the three-terminal run, the vent tower, the interlock): the entrance, the
+# at the vault's north end the flood door down to the Ark. Quest "Beneath the Glacier" (29 steps; DEEP 10-24: the three-terminal run, the vent shaft, the interlock; story pass 10-24: the Warden's ledger): the entrance, the
 # charter, the power, the zipline to the far side, Oda's pack, Oda's notes, three screechers; the seed wing and its
 # three canisters, the record wing and its two papers, the embryo wing's cooling crank and the keeper's last entry, the
 # control room's code; the control room, the three switches, one pulled, the verdict, the vault's gift, Hedda's radio
@@ -146,6 +146,11 @@ place Loot_Chest keepchest at -0.9 1 y=0.1 sit yaw=270
 place Loot_Chest broadcastchest at -0.9 -1 y=0.1 sit yaw=270
 place RT_CommRadio - at -3 -2.4 y=0.1 sit yaw=0
 place Note_Paper heddacall at -2.2 -2.4 y=0.1 drop yaw=0
+# STORY 10-24: the Warden in his chair before KEEP, his desk with the ledger (the twist) and Sparks' confiscated card
+place "Chair Office" wardenchair at -4.5 2.3 y=0.1 sit yaw=0
+place Balboa_DecorationPrefabBase_Desk wardendesk at -1 -2.8 y=0.1 sit yaw=90
+place Note_Book wardenledger at -1 -3.2 y=1.4 drop yaw=80
+place Note_Paper qslcard at -1.1 -2.3 y=1.4 drop yaw=110
 pop
 place Zone_Trigger controlzone at 0 27 h=5
 call fz_hazard x=3 z=10 al=coldrun kind=cold r=13 dmg=1 msg="The vents blow freezing air through the vault - hurry."
@@ -188,12 +193,12 @@ place campfire_1 - at -39.4 21.8 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -36.4 23.8 ground sit yaw=337
 place "Box Small" - at -41.4 24.3 ground sit
 place Note_Paper dnote at -41.4 24.3 ground y=0.7 drop yaw=20
-note dnote Survey note | ICE SURVEY, SHEET 4\n\nPressure ridge moving 2 m a day, east.\nCrack under the tent this morning. Moved camp.\nThe sea under the ice is warmer than it should be.
+note dnote Survey note | ICE SURVEY, SHEET 4 (and on the back, a sealer's scrawl)\n\nPressure ridge moving 2 m a day, east. Crack under the tent this morning. Moved camp.\n\nHalvorsen here, borrowing the surveyors' paper because ours went in the sea. We came up the ice to trade seal oil for seed and found the vault's door shut and nobody answering. Ivo from the relay is with us, listening to his little set every night with his eyes closed, like a man in church. He says the stack never fell on its own. He heard sledge bells the night the mast bent, and there was no wind.\nWe are going back to the steam harbour. The sea under the ice is warmer than it should be.
 place BoatStranded dvan at 39.4 -21.8 ground yaw=97
 prop dvan tint.color=#5a6670
 prop dvan tint.amount=0.5
 place Loot_ChestSmall dwreckchest at 35.4 -18.8 ground sit yaw=37
-note dwreckchest Driver's box | The driver's box under the seat: bolts, glass and a scrap of leather.
+note dwreckchest Driver's box | The driver's box under the seat: bolts, glass, a scrap of leather.
 loot dwreckchest Bolt*2;Glass*2;Leather*2
 prop dwreckchest loot.refill=0
 call hatchcache x=21.8 z=39.4 r=15 seed=12991 alias=dhatch chest=dhatchchest items=MetalIngot*2;Wool*3;Bolt*2
@@ -206,13 +211,16 @@ prop dview zone.radius=7
 prop dview zone.repeat=never
 prop dview zone.message=The Coldhold's entrance hall looks out over the landing, the glacier pressing down behind it.
 
-# --- DEEP 10-24 (one-hour pass): the ice cap's vent tower (the big climb), the vent keeper's cave, the flooded crevasse
-# (dive, -16 m), the ridges. The flood door's lever now also wants the interlock from the vent tower's top.
+# --- DEEP 10-24 (one-hour pass): the ice cap's vent shaft (the big climb, on foot: story pass 10-24 swapped the tower for a cairn, R9), the vent keeper's cave, the flooded crevasse
+# (dive, -16 m), the ridges. The flood door's lever now also wants the interlock from the chest at the vent shaft's head.
 include lib_areas
 call fz_mount x=-42 z=55 h=34 r=8
 call ar_plants_snowy x=-42 z=55 r=30 seed=12961
-call fz_tower x=-42 z=57 h=34 n=6 al=venttower chest=ventchest zal=ventzone zid=vent_top msg="The vent tower on the ice cap. Warm air breathes out of a grille under your boots - the vault, far below, breathing."
-call fz_zone x=-30 z=34 al=capfootzone id=cap_foot r=6 msg="The foot of the ice cap. The vault's vent tower stands on its top, 34 m up."
+call fz_cairn x=-42 z=55 al=ventcairn chest=ventchest zal=ventzone zid=vent_top msg="The vent shaft's head on the ice cap: a cairn over a grille, warm air breathing out of it - the vault, far below, breathing."
+place RT_PillarThick ventshaft at -43.4 56.8 ground y=-0.7 sy=0.25 sx=1.2 sz=1.2
+prop ventshaft tint.color=#4a4038
+prop ventshaft tint.amount=0.4
+call fz_zone x=-30 z=34 al=capfootzone id=cap_foot r=6 msg="The foot of the ice cap. On its top, 34 m up, a cairn marks the vault's vent shaft."
 # the vent keeper's cave (its mouth north-east, to the cap)
 call ar_cave x=-64 z=28 h=12 yaw=0 al=ventcave chest=ventcavechest
 place Note_Paper ventnote at -63.2 33.4 h=12.5 drop yaw=200
@@ -247,23 +255,25 @@ story choice|The Coldhold's choice|Placeable_Lantern_Metal|One of the three swit
 story flooddoor|The flood door, open|Placeable_Lantern_Metal|The flood door is open. Below it, the Seed Ark.
 
 note charter Coldhold charter | THE COLDHOLD - CHARTER\n\nWhat grew before the water is kept here: seeds, records, the beginnings of animals.\nThe vault keeps them for the day the world is green again. Until that day, it keeps itself.\nThe power is on the lever by the generator. The far side is over the crevasse; the line is electric.
-note keepershooks Keeper's hooks | The keepers' hooks by the door: a ring of keys - one tagged "cage, far side".
-note odanotes Oda's notes | (Oda Fenn's notebook, from Verdance)\n\nI came alone. Somebody had to see where the seeds went.\nThe door came down behind me - the ice moved. I put myself in the keepers' cage: it was the only thing still standing.\nThe vault went silent on purpose. The records will say why.
-note odapack Oda's pack | Oda's pack: her rations, her seed tin - and rope, which she will not need now.
-note canister1 Seed canister crate | A sealed crate in the seed wing: a seed canister, labelled in a neat hand.
-note canister2 Seed canister crate | A sealed crate in the seed wing: a seed canister, frost on its lid.
-note canister3 Seed canister crate | A sealed crate in the seed wing: a seed canister, its seal unbroken.
-note foundersrecord Founders' record | THE FOUNDERS' RECORD\n\nWe cut the vault under the glacier the year the water came.\nWe set the Ringwave over the door - the old sign, the one on the sea doors and the glacier wall.\nWe did not invent it. We only knew it meant: keep.
-note commsoff Why the comms went off | (a keeper's memo)\n\nThe order to every town - Saga Drift, the steam harbour, the Whale: go silent.\nSo the signal from the south would not find us.\nWhatever is in the south, it listens. The founders were sure of that.
-note keepersentry Keeper's last entry | KEEPER'S LOG - LAST ENTRY\n\nThe cooling is failing. I have cranked it by hand for a week.\nIf you are reading this, the choice is yours now. The drop terminal's code is 2240 - the day the water came, by the founders' count. The other two are on the wings' catalogue boards.\nKeep it, carry it, or tell everyone. I could not choose.
-note switches Three switches | THREE SWITCHES\n\nKEEP - seal the vault, power on. It waits for a better day.\nCARRY - open the seed store to the sea. Take what grows.\nBROADCAST - send the records on every band. Let the world know.\n\nOne only.
+note keepershooks Keeper's hooks | The keepers' hooks: a ring of keys, one tagged cage, far side.
+note odanotes Oda's notes | (Oda Fenn's notebook, from Verdance)\n\nI came alone. Somebody had to see where the seeds went, and the gardeners at home argued so long about who should go that I simply went.\nThe door came down behind me when the ice moved. I put myself in the keepers' cage, the only thing in here still standing straight, and wrote by the light of the screechers' eyes. They are not friendly eyes.\nThe vault went silent on purpose. Nobody here was starving and nobody was sick: they chose to stop talking. There is an old man in the control room who has not answered me in four days.\nThe records will say why. Read them before you touch anything.\n\n- O. F.
+note odapack Oda's pack | Oda's pack: rations, her seed tin, and rope she won't need now.
+note canister1 Seed canister crate | A sealed crate: one seed canister, labelled in a neat hand.
+note canister2 Seed canister crate | A sealed crate: one seed canister, frost on its lid.
+note canister3 Seed canister crate | A sealed crate: one seed canister, its seal unbroken.
+note foundersrecord Founders' record | THE FOUNDERS' RECORD\n\nWe cut the vault under the glacier the year the water came, with picks and with a great deal of arguing.\nWe set the Ringwave over the door - the old sign, the one on the sea doors and the glacier wall. We did not invent it. We found it wherever the old world had left a door, and we only knew it meant: keep.\nWe kept barley and rye, apple pips and the pine. We kept the names of everyone who carried a crate in, so that someone would remember them. We kept a radio too, because a seed nobody hears about is only a stone.\nOne day the world will be green again. When it is, tell them we are here.\n\n- the founders, year one
+note commsoff Why the comms went off | (the Warden's memo, typed, a copy for every station)\n\nTO SAGA DRIFT, THE STEAM HARBOUR, THE SEALERS, THE RELAY, THE IRON WHALE.\nFrom tonight every set is cold. No weather, no music, no post on the air.\nThere is a signal from the south: a slow pulse, once a minute, older than this vault. I have listened to it for thirty winters. When a town talks, the pulse changes. It is looking for us, and it finds whoever answers.\nThe founders kept a radio so the world would hear of us. The founders were wrong. A seed that nobody hears of is a seed that survives.\nThe courier carries this order. Obey it, and he will carry your post as before.\n\n- A. Holt, Warden of the Coldhold
+note keepersentry Keeper's last entry | THE WARDEN'S LOG - LAST ENTRY\n\nThe cooling is failing. I have cranked it by hand for a week, and my hands are finished. The others left in the autumn. Oda Fenn shouts at me from her cage; she is right, and I cannot answer her.\nI am going to the control room to hold KEEP down until the cold takes care of me. Tape will hold it after.\nIf you are reading this, you are past my door, and the choice is yours now - which I never wanted anyone to have. The drop terminal answers to 2240, the day the water came by the founders' count. The other two are on the wings' boards; the founders never could keep a secret.\nKeep it. Please. Do not let the south hear us.\n\n- A. Holt, Warden
+note switches Three switches | THREE SWITCHES\n\nKEEP - seal the vault, power on. It waits for a better day.\nCARRY - open the seed store to the sea. Take what grows.\nBROADCAST - send the records on every band. Let the world know.\n\nOne only.\n\n(pencilled underneath, in the Warden's hand, words he heard on the air and could not stop hearing: Choose for the ones still talking. - the Whale, H. B.)
 note verdictkeep The verdict | THE VERDICT - KEEP\n\nThe vault seals. The lights stay on. The seeds wait, and so do the records - for a better day, or for the south.\nThe vault gives you metal for the road.
 note verdictcarry The verdict | THE VERDICT - CARRY\n\nThe seed store opens to the sea. A crate of every seed waits at the entrance hall.\nWhat grows now is up to the ones who plant it.
 note verdictbroadcast The verdict | THE VERDICT - BROADCAST\n\nEvery band at once: the founders' record, the seed lists, the keepers' names. The silence is over.\nThe vault gives you copper for the radios.
-note heddacall Hedda's radio call | (the radio crackles on - the Whale's band)\n\n"This is Hedda Brask, Iron Whale. I heard the vault wake.\nThe glacier shifted when the power came on. The lowest level is flooding - the Ark, they called it.\nOpen the flood door and go down after it. Bring air."
+note heddacall Hedda's radio call | (the radio crackles on - the Whale's band)\n\n\"This is Hedda Brask, Iron Whale. I heard the vault wake.\nListen. The glacier shifted when the power came on, and the lowest level is flooding - the old Seed Ark, on 400. If anyone went down there before you, he went down to dead pumps. Open the flood door, take air, and go after him.\nI am not coming. I have the Whale's launch fuelled and pointed south. That pulse the Warden was so afraid of - once a minute, for thirty years - somebody has to go and knock on its door. I would rather knock than hide.\nChoose for the ones still talking, I told him once, on the hand key. I am still talking. Out.\"
 note keepchest The vault's gift | The vault's gift for KEEP: metal for the road.
-note carrychest The vault's gift | The vault's gift for CARRY: a crate of every seed the vault kept.
+note carrychest The vault's gift | The vault's gift for CARRY: every seed the vault kept.
 note broadcastchest The vault's gift | The vault's gift for BROADCAST: copper for the radios.
+note wardenledger The Warden's ledger | THE WARDEN'S LEDGER - STATIONS SILENCED\n\nSaga Drift: the council agreed, day 4. One exception, the radio ham Hallen: banished on a raft with his llama.\nSteamvent: agreed, day 6.\nThe sealers: their set taken for repair, day 11. Vale.\nSignalstack: the operator refused. Day 19, the stack's guys loosened in the night. Vale. The ice will get the blame.\nThe Iron Whale: still talking, a woman on a hand key, never long enough to fix. Day 31, the line, cut with his own hatchet - the dog-head one. Vale.\nPaid: one berth in the Coldhold, for O. Vale and two dogs.\nHe has not come to claim it. Yesterday he asked me where the ark's pumps are, and I told him. Let him go down with his conscience. The silence holds.\n\n- A. H.
+note qslcard Sparks' QSL card | (a postcard with a llama drawn on it, CONFISCATED stamped across it in red)\n\nQSL - CONFIRMING OUR CONTACT\nTo: the Warden, Coldhold. From: Tor Hallen, Good Morning, Ice!, Saga Drift.\nDate: the day you told everyone to be quiet. Band: all of them. Signal: loud and clear, sadly for you.\nYou came in on my set at seven sharp, reading the Silence Order like a weather report. I logged you as Caller 58. Caller 57 was a penguin; it was better company.\nThank you for listening. Everyone else seems to have stopped. Bramble sends her regards and a small bite.\n73s, Sparks\n\n(on the back, in the Warden's hand: Hallen - banished. One raft, one llama. Let the sea keep him quiet.)
 loot keepershooks story:odakey*1;Rope*2
 prop keepershooks loot.refill=0
 loot odapack Raw_GenericMeat*2;Seed_Strawberry*2;Rope*3
@@ -299,7 +309,7 @@ prop embryozone zone.radius=3
 prop embryozone zone.message=The embryo wing. The cabinets hum - just.
 prop controlzone zone.id=control
 prop controlzone zone.radius=3
-prop controlzone zone.message=The control room. Three switches on the wall.
+prop controlzone zone.message=The control room. Three switches on the wall - and in a chair before KEEP, the Warden, frozen where he sat, a strip of tape holding the KEEP switch down.
 prop floodzone zone.id=flood_door
 prop floodzone zone.radius=3
 prop floodzone zone.message=The flood door. Behind it, water - a long way down.
@@ -326,19 +336,19 @@ prop coolcrank if.use=!signal|cooling
 prop coolcrank on.use=signal||cooling\ngive||story:cooling*1\nmessage||The crank turns, stiff, then easy. The cabinets' hum steadies.
 
 # --- DEEP 10-24: M14 timed terminal run (three terminals, a 90 s window, cold vents), the vent tower, the crevasse ---
-story interlock|The flood interlock|Placeable_Lantern_Metal|The flood door's interlock key, from the vent tower on the ice cap.
+story interlock|The flood interlock|Placeable_Lantern_Metal|The flood door's interlock key, from the vent shaft's head on the ice cap.
 note interlockplate Control door interlock | CONTROL ROOM - INTERLOCK\n\nThree terminals open this door:\n  SNOWFLAKE - the seed wing\n  LEAF - the record wing\n  DROP - the embryo wing, behind the frost shutter\nThe snowflake wakes the interlock: the frost shutter opens for NINETY SECONDS and the vents run cold. Enter the leaf and the drop before it shuts.\nEach code is its wing's catalogue number. The drop's is the keeper's own.
 note seedboard Seed catalogue | SEED WING - CATALOGUE BOARD (snowflake)\n\nBarley, winter strain ..... shelf 1\nRye, northern .............. shelf 2\nWHOLE WING, catalogue no. 3317
 note recordboard Record catalogue | RECORD WING - CATALOGUE BOARD (leaf)\n\nFounders' record ......... case 1\nCouncil papers ........... case 2\nWHOLE WING, catalogue no. 5081
-note ventnote Vent keeper's note | VENT KEEPER\n\nI keep the vault breathing. The tower on the ice cap is its lung.\nThe flood door below the vault will not lift without the interlock - I took it up the tower when the water came, so no one would open the door by mistake.\nIf you are the one who chooses: the interlock is in the chest at the top.
-note ventchest Vent tower chest | The vent keeper's chest at the top of the tower: the flood door's interlock, wrapped in oilcloth, and his spare tools.
+note ventnote Vent keeper's note | VENT KEEPER\n\nI keep the vault breathing. The shaft on the ice cap is its lung and I am its cough, the Warden says. He means it kindly. Mostly.\nThe flood door below the vault will not lift without the interlock. When the water came into the Ark I carried the interlock up to the shaft head and left it in the chest by the cairn, so no frightened fool would open the door and drown the whole vault.\nNow the courier has been asking about the Ark. Twice. Orrin, with snow in his beard and no jokes left in him. I did not tell him. I think he found another way down.\nIf you are the one who chooses: the Seed Ark lies under the flood door, on 400. Take air.\n\n- Esko, vent keeper
+note ventchest Vent shaft chest | The vent keeper's chest: the flood door's interlock, in oilcloth.
 loot ventchest MetalIngot*2;Bolt*2;Rope*2
 prop ventchest loot.refill=0
 prop ventchest on.open=give||story:interlock*1\nmessage||The interlock: a brass key as long as your forearm. The flood door's lever will take it.
-note ventcavechest Vent keeper's bedroll | The vent keeper's bedroll and his box: tins, a lamp wick, a coil of rope.
+note ventcavechest Vent keeper's bedroll | The vent keeper's bedroll and box: tins, a lamp wick, rope.
 loot ventcavechest Rope*3;Scrap*2;Raw_GenericMeat*2
 prop ventcavechest loot.refill=0
-note crevchest Survey boat's strongbox | The survey boat's strongbox, 16 m down in the crevasse: what the glacier's first surveyors carried.
+note crevchest Survey boat's strongbox | The survey boat's strongbox, 16 m down in the flooded crevasse.
 loot crevchest TitaniumOre*2;MetalIngot*2;Glass*2
 prop treasure12971 treasure.loot=TitaniumOre*1;CopperOre*3
 prop treasure12972 treasure.loot=MetalOre*3;Scrap*3
@@ -375,22 +385,22 @@ prop heddacall beh.hidden=1
 prop keeplever obj.name=keeplever
 prop keeplever beh.use=Pull KEEP
 prop keeplever if.use=signal|controlcode\n!signal|chosen
-prop keeplever on.use=signal||keep\nsignal||chosen\ngive||story:choice*1\nshow|verdictkeep\nshow|keepchest\nshow|heddacall\nmessage||KEEP. Bolts slam home all through the vault. The lights steady. The vault will wait.
+prop keeplever on.use=signal||keep\nsignal||chosen\ngive||story:choice*1\nshow|verdictkeep\nshow|keepchest\nshow|heddacall\nmessage||KEEP. You push the switch home under the Warden's tape. Bolts slam through the vault; the lights steady.\nmessage||Oda, at the door, quietly: he would have liked that. I am not sure I do.
 prop carrylever obj.name=carrylever
 prop carrylever beh.use=Pull CARRY
 prop carrylever if.use=signal|controlcode\n!signal|chosen
-prop carrylever on.use=signal||carry\nsignal||chosen\ngive||story:choice*1\nshow|verdictcarry\nshow|carrychest\nshow|heddacall\nmessage||CARRY. Far off, the seed store's sea gate grinds open. At the entrance hall, a crate rolls out on its rails.
+prop carrylever on.use=signal||carry\nsignal||chosen\ngive||story:choice*1\nshow|verdictcarry\nshow|carrychest\nshow|heddacall\nmessage||CARRY. Far off, the seed store's sea gate grinds open. At the entrance hall, a crate rolls out on its rails.\nmessage||Oda, at the door: seeds are for planting. Verdance will have barley by spring.
 prop broadcastlever obj.name=broadcastlever
 prop broadcastlever beh.use=Pull BROADCAST
 prop broadcastlever if.use=signal|controlcode\n!signal|chosen
-prop broadcastlever on.use=signal||broadcast\nsignal||chosen\ngive||story:choice*1\nshow|verdictbroadcast\nshow|broadcastchest\nshow|heddacall\nmessage||BROADCAST. Every radio in the vault comes alive at once, reading the founders' record into every band.
+prop broadcastlever on.use=signal||broadcast\nsignal||chosen\ngive||story:choice*1\nshow|verdictbroadcast\nshow|broadcastchest\nshow|heddacall\nmessage||BROADCAST. Every radio in the vault comes alive at once, reading the founders' record into every band.\nmessage||Oda, at the door, laughing: well. Now everyone knows we are here.
 prop floodlever obj.name=floodlever
 prop floodlever beh.use=Open the flood door
 prop floodlever if.use=signal|chosen\n!signal|flooddoor\ntake|story:interlock|1
 prop floodlever on.use=signal||flooddoor\ngive||story:flooddoor*1\nhide|flooddoor\nmessage||The flood door grinds up. Black water below, and far down, lamps still burning: the Seed Ark.
 prop floodlever else.use=message||Not before the vault's way is chosen - and the lever's interlock is gone. The vent keeper took it somewhere high.
 
-note councilbox Council box | The Saga Drift council's box, carried here when the city went quiet: their tokens, a titanium bar, the city seal.
+note councilbox Council box | Saga Drift's council box: their tokens, a titanium bar, the city seal.
 loot councilbox TradeToken*6;TitaniumIngot*1;CopperIngot*2
 prop councilbox loot.refill=0
 prop councilbox obj.name=councilbox
@@ -424,14 +434,15 @@ step read|Keeper's last entry|1|Read the keeper's last entry
 step read|Control door interlock|1|Read the interlock plate at the control room's door
 step collect|story:controlcode|1|Run the three terminals - snowflake, leaf, drop - within ninety seconds
 step reach|control|1|Go into the control room
+step read|The Warden's ledger|1|Read the ledger on the Warden's desk
 step read|Three switches|1|Read the three switches
 step collect|story:choice|1|Pull one switch: KEEP, CARRY or BROADCAST
 step read|The verdict|1|Read the verdict
 step open|The vault's gift|1|Open the vault's gift
 step read|Hedda's radio call|1|Read Hedda's radio call
 step read|Vent keeper's note|1|The flood door's lever has no interlock. Find the vent keeper's cave west of the ice cap
-step reach|vent_top|1|Climb the ice cap and the vent tower
-step collect|story:interlock|1|Take the interlock from the vent tower's chest
+step reach|vent_top|1|Climb the ice cap on foot to the vent shaft's head
+step collect|story:interlock|1|Take the interlock from the chest by the vent shaft
 step reach|flood_door|1|Go to the flood door at the vault's north end
 step collect|story:flooddoor|1|Open the flood door
 quest done=The flood door is open. Down there, the Seed Ark - on 400.
