@@ -331,4 +331,8 @@ step blueprint|Blueprint_BatteryCharger|1|Take the battery charger plans from th
 quest done=Mother and daughter got away in the little boat - and the intruders' boat is at the bottom of the bay. What they left in the boathouse is yours.
 quest reward=Glass*4;Plank*6;Nail*12
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=34 n=1 seed=8859
+prop treasure8859 treasure.loot=TitaniumOre*2
+
 save The Safe Room

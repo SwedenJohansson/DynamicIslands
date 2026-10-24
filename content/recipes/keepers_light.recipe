@@ -385,4 +385,8 @@ step blueprint|Blueprint_HeadLight|1|Take the headlamp plans from the lamp room 
 quest done=The light turns and the horn sounds over the fog. Whatever the two keepers saw in each other, the ships see the light again.
 quest reward=Plank*6;Rope*3;Cooked_Herring*3
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=25 n=1 seed=8848
+prop treasure8848 treasure.loot=TitaniumOre*2
+
 save Keeper's Light

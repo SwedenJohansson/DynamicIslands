@@ -328,4 +328,8 @@ step blueprint|Blueprint_Fueltank|1|Take the fuel tank plans from the commander'
 quest done=The lights are on, the blast gate stands open onto the lagoon, and the commander's charts are yours.
 quest reward=Battery*2;CircuitBoard*2;Scrap*6
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=42 n=1 seed=8854
+prop treasure8854 treasure.loot=TitaniumOre*2
+
 save Shelter Atoll

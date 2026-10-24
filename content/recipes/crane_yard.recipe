@@ -154,4 +154,8 @@ step open|Foreman's lockbox|1|Fix the spotlight on the scaffold tower and follow
 quest done=The light is on, the wages are found, and nobody finished the crane.
 quest reward=Bolt*6;Hinge*4
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=18 n=1 seed=8840
+prop treasure8840 treasure.loot=TitaniumOre*2
+
 save Crane Yard

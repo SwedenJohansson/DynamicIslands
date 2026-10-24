@@ -204,4 +204,8 @@ step open|Glasshouse harvest|1|Free the water wheel and open the glasshouse
 quest done=The wheel turns, the beds are wet and the chickens are home. The harvest is yours.
 quest reward=Seed_Watermelon*2;Placeable_Scarecrow*1
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=9 n=1 seed=8861
+prop treasure8861 treasure.loot=TitaniumOre*2
+
 save Tide Farm

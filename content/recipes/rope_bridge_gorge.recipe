@@ -117,4 +117,8 @@ step reach|far_porch|1|Stand on the temple porch
 quest done=Seven lines on the offering's lid - the same tide marks as Kett's notes. The builders came this way too.
 quest reward=TradeToken*4;Cooked_GenericMeat*2;Rope*3
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=46 n=1 seed=8853
+prop treasure8853 treasure.loot=TitaniumOre*2
+
 save Rope Bridge Gorge

@@ -225,4 +225,8 @@ place QuestItemPickup_Tangaroa_Token - at 18 0 ground
 call treasure x=0 z=0 r=25 n=1 seed=8826
 prop treasure8826 treasure.loot=TitaniumOre*3
 
+# Animals (reach audit 10-24: a late island of its story line had none)
+place Creature_Goat goats at 0 12 ground
+prop goats creature.count=2
+
 save The Isobar Club

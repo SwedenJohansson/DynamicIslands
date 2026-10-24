@@ -102,4 +102,8 @@ step reach|rig_top|1|Climb up onto the dredging rig
 quest done=A piece of the Syndicate's chart: a ring of rock marked ENGINE. Whatever they dredge for, it ends there.
 quest reward=MetalIngot*3;Battery*1;Rope*3
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=34 n=1 seed=8842
+prop treasure8842 treasure.loot=TitaniumOre*2
+
 save Dredgers Bank

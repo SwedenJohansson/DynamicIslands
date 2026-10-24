@@ -185,4 +185,11 @@ step open|Pilgrim's satchel|1|Get through the gate in time and open the pilgrim'
 quest done=The ticket in the satchel says GANNET ROCK. The Receiver has caught a new voice: a choir, singing, very far off.
 quest reward=Rope*4;Plank*6;MetalIngot*2
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=44 n=1 seed=8850
+prop treasure8850 treasure.loot=TitaniumOre*2
+# Animals (reach audit 10-24: a late island of its story line had none)
+place Creature_Turtle turtles at -6 54 h=-1.5
+prop turtles creature.count=2
+
 save Mistlock Causeway

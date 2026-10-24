@@ -229,4 +229,8 @@ clear at -20.37 47.41 r=1.5 only=CaravanIsland_SmallRock
 clear at -12.93 49.36 r=1.5 only=BigSharpRock
 clear at 1.52 52.09 r=1.5 only=CaravanIsland_SmallRock
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=60 n=1 seed=8847
+prop treasure8847 treasure.loot=TitaniumOre*2
+
 save The Iron Graveyard

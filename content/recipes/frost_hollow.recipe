@@ -155,4 +155,8 @@ step open|Lab locker|1|Power the lab and open its locker
 quest done=The lab's lights are on again. Whatever Dr. Lindqvist saw over the ice, her notes are yours.
 quest reward=Glass*2;CopperIngot*3
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=22 n=1 seed=8845
+prop treasure8845 treasure.loot=TitaniumOre*2
+
 save Frost Hollow

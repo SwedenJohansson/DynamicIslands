@@ -308,4 +308,8 @@ step blueprint|Blueprint_ZiplineBase|1|Take the zipline plans from the escape ki
 quest done=The postcard says it all: he made it. So did you - the rock's only two escapes.
 quest reward=MetalIngot*4;Nail*15;Bolt*4
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=35 n=1 seed=8858
+prop treasure8858 treasure.loot=TitaniumOre*2
+
 save The Rock Pen

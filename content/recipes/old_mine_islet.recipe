@@ -120,4 +120,8 @@ step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from the 
 quest done=The beast is gone and the last ore cart is yours - half of it, anyway.
 quest reward=MetalIngot*3;Nail*10
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=25 n=1 seed=8851
+prop treasure8851 treasure.loot=TitaniumOre*2
+
 save Old Mine Islet

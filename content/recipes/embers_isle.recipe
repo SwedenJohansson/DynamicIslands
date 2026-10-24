@@ -263,4 +263,8 @@ quest done=The chain falls away and the little boat rocks free. Behind you the h
 quest reward=Plank*6;Rope*4;Leather*2
 
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=36 n=1 seed=8844
+prop treasure8844 treasure.loot=TitaniumOre*2
+
 save Embers Isle

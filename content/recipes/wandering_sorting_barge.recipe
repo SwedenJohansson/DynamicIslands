@@ -84,4 +84,8 @@ step read|Clerk's thanks|1|Read the clerk's thanks
 quest done=The barge's scales are clear. On the next high tide it will float off - and turn up somewhere else.
 quest reward=Battery*2;MetalIngot*2;TradeToken*4
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=30 n=1 seed=8862
+prop treasure8862 treasure.loot=TitaniumOre*2
+
 save The Wandering Sorting Barge

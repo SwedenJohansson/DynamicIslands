@@ -285,4 +285,8 @@ place VP_Forklift - at -6 -8 ground sit yaw=30
 # the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
 clear at 48.06 33.63 r=1.5 only=CaravanIsland_SmallRock
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=48 n=1 seed=8860
+prop treasure8860 treasure.loot=TitaniumOre*2
+
 save Thunderhead Array

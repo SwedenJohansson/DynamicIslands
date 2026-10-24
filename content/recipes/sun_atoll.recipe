@@ -341,4 +341,8 @@ step blueprint|Blueprint_Recycler|1|Take the recycler plans from the blockhouse 
 quest done=The films have been seen. Whatever the world does with them, the atoll has its witness - and you have hers.
 quest reward=Scrap*8;Plastic*6;Nail*12
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=39 n=1 seed=8857
+prop treasure8857 treasure.loot=TitaniumOre*2
+
 save Sun Atoll

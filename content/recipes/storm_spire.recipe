@@ -193,4 +193,8 @@ quest reward=CopperIngot*2;Plank*6;Rope*2
 # --- A Raft store at the needle's foot: the Corps' supply post, still trading (Raft's goods, and plans the crew missed) --
 store supplypost at -34 -8 ground
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=42 n=1 seed=8856
+prop treasure8856 treasure.loot=TitaniumOre*2
+
 save Storm Spire

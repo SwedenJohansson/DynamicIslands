@@ -377,4 +377,8 @@ step blueprint|Blueprint_ZiplineTool|1|Take the zipline tool plans from the geta
 quest done=The dish in the crater stands dead and the storms will blow where they like. The Chief's getaway kit is yours - and his boat, if you can start it.
 quest reward=MetalIngot*6;Bolt*8;Glass*4
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=35 n=1 seed=8841
+prop treasure8841 treasure.loot=TitaniumOre*2
+
 save Crater Lair

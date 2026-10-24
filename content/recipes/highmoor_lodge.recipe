@@ -439,4 +439,8 @@ quest reward=Plank*6;Wool*3;Cooked_GenericMeat*2
 # --- A Raft store down the hill south of the lodge: the gift shop, open all winter (Raft's goods, and plans the crew missed) --
 store giftshop at 2 -30 ground
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=35 n=1 seed=8846
+prop treasure8846 treasure.loot=TitaniumOre*2
+
 save Highmoor Lodge

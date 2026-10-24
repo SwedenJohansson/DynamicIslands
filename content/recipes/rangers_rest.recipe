@@ -165,4 +165,8 @@ step open|Ranger's stash|1|Take back the ranger's supply crate
 quest done=Old Scar is gone, and the ranger's machete is yours. The hill is quiet again.
 quest reward=Bow*1;Arrow_Stone*10
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=28 n=1 seed=8852
+prop treasure8852 treasure.loot=TitaniumOre*2
+
 save Ranger's Rest

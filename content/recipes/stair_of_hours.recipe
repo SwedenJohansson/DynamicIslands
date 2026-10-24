@@ -136,4 +136,8 @@ quest reward=TitaniumIngot*2;MetalIngot*3;Battery*1
 call treasure x=0 z=0 r=16 n=1 seed=8816
 prop treasure8816 treasure.loot=TitaniumOre*3
 
+# Animals (reach audit 10-24: a late island of its story line had none)
+place Creature_Goat goats at -18 0 ground
+prop goats creature.count=2
+
 save The Stair of Hours

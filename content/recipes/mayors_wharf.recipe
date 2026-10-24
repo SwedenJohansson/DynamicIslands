@@ -167,4 +167,8 @@ step open|Mayor's safe|1|Open the mayor's safe in the vault
 quest done=The founders' charter is safe with you. The floating towns are out there somewhere.
 quest reward=Rope*4;Hinge*2
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=9 n=1 seed=8849
+prop treasure8849 treasure.loot=TitaniumOre*2
+
 save Mayor's Wharf

@@ -153,4 +153,8 @@ step open|Mayor's chest|1|Open the mayor's chest
 quest done=The pump thumps, the town has water, and the mayor's hat is yours.
 quest reward=Glass*3;Clay*6
 
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=20 n=1 seed=8855
+prop treasure8855 treasure.loot=TitaniumOre*2
+
 save Stilt Hollow
