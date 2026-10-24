@@ -81,6 +81,44 @@ zone pile_stair
 expect step 27
 read Pile engineer's map
 expect step 28
+# DEEP 10-24: the notice, the climb, the dive, the storm bell
+expect hidden bc_rewchest
+use bc_machine
+expect hidden bc_rewchest
+read Storm warden's notice
+expect step 29
+zone bc_trail
+expect step 30
+# (the ledge cache wants a keycard)
+zone bc_summit
+expect step 31
+expect stand -79.26 25.11 h=50
+open Storm beacon mast deck box
+wait 3
+expect story bc_top 1
+expect step 32
+zone bc_deep
+expect step 33
+expect stand -77 -38 h=-17
+open Council archive strongbox
+wait 3
+expect story bc_deep 1
+expect step 34
+use bc_machine
+expect shown bc_rewchest
+expect story bc_fixed 1
+open Storm bell reward
+wait 3
+read Storm warden's roll
+expect step 35
 zone pile_head
 expect done
 dig
+
+
+# DEEP 10-24: the secret records room (button -> teleport -> lever back)
+use bc_button
+wait 4
+read Sealed records
+use bc_climbout
+wait 4

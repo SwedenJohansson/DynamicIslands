@@ -3,7 +3,7 @@
 # Under the city: a forest of giant stone piles standing in a basin ten metres down, two of them cracked and leaning,
 # shoring jacks at the feet of four, air trapped round their foot-blocks; a stingray grown huge nests among them. At the
 # city's edge a mudflat lies dry at sea level, with the pile engineer's hut, clay and sand, and something buried. Quest
-# "The Piles" (15 steps): the mudflat, the engineer's note, the first two piles and their jacks, the pile stingray in two
+# "The Piles" (22 steps): the mudflat, the engineer's note, the first two piles and their jacks, the pile stingray in two
 # phases, the last two jacks, the closing note, back to the mudflat.
 #
 # Points: the mudflat 24 0 (levelled at 0.8, r 12); the pile basin -16 0 (levelled at -10, r 22); piles at -24 -12
@@ -18,6 +18,7 @@ include lib_concord
 include lib_highwater
 include lib_areas
 # RESIZE 10-24: Radius 52 -> 100 (Height 2 -> 3), the old content moved 26.4 0 as one frame (push) so its sea side stays at the coast; the island grows behind it.
+# DEEP 10-24: Pile-driver's Hump: the derrick that drove the city's piles, a pump gallery eighteen metres down, and the jack pump that holds a leaning pile.
 new
 gen Trees=0 Bushes=0.1 Rocks=0.4 Harvest=0.1 BeachThings=0.4
 gen Seed=13951 Radius=100 Height=3 Roughness=0.2 Peaks=0 Shape=0 Style=0 PeakShape=0.2 Cliffs=0 BeachWidth=0.9
@@ -29,6 +30,14 @@ push at 26.4 0
 brush flatten at 24 0 r=12 s=20 frames=300 h=0.8
 brush flatten at -16 0 r=22 s=20 frames=500 h=-10
 pop
+# --- DEEP 10-24 terrain: Pile-driver's Hump (north, summit 42 m, base r 30), its trail, the drowned pump gallery (-18 m) ------------
+call hw_mount x=12 z=56 b=30 h=42
+call hw_trail x=12 z=56 b=30 h=42 a0=-167.91 turn=300 n=40 h0=3
+brush flatten at 7.36 70.37 r=2.6 s=20 frames=200 h=22.5
+clear at 7.36 70.37 r=3
+call hw_basin x=82 z=32 r=14 h=-18
+brush flatten at 50 32 r=4 s=8 frames=60
+clear at 50 32 r=6
 brush flatten at -23.2 38.6 r=5 s=8 frames=40
 origin
 clear at -23.2 38.6 r=6
@@ -138,6 +147,56 @@ place VP_ExplosiveBarrel_Pile blast2 at 8 -6 ground sit yaw=60
 place VP_ExplosiveBarrel_Pile blast3 at 18 -5 ground sit yaw=120
 call ar_plants_tropical x=40 z=-60 r=14 seed=14021
 
+# --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Pile-driver's Hump: the derrick that drove the city's piles, a pump gallery eighteen metres down, and the jack pump that holds a leaning pile. ------
+# the climb: the trail spirals up from the south foot; on the summit the pile-driver's derrick (11 storeys, a ladder inside), its deck chest
+# and a zipline down to the hub (the shortcut back); the dive: the pump gallery on a basin floor -18 m down, an air pocket
+# in its front room; the hub: the Jack pump that wants both, the notice; secrets: the trail ledge cache, the summit treasure,
+# the sunk boat's crate
+call hw_zone x=5.5 z=25.69 al=fp_trailz id=fp_trail r=5 msg="The trail up Pile-driver's Hump starts here - cut into the slope, round and up."
+call hw_zone x=12 z=56 al=fp_summitz id=fp_summit r=8 h=1 msg="The top of Pile-driver's Hump. The whole island below, the city beyond it, and the pile-driver's derrick still higher."
+call hw_mast x=8.62 z=58.14 h0=42 lv=11 a=fp_mast chest=fp_topchest top=Placeable_Lantern_Metal
+place ZiplinePath_Landmark fp_zip at 17.4 53.91 h=43.35
+zipto fp_zip 46.62 34.14
+place Loot_ChestSmall fp_ledge at 7.36 70.37 ground sit yaw=162.09
+call treasure x=9.86 z=52.62 r=5 n=1 seed=14028 kind=0
+prop treasure14028 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+place Creature_Goat fp_goats at 2.83 21.46 ground
+prop fp_goats creature.count=2
+place Creature_Goat fp_summitgoat at 13.6 58.54 ground
+prop fp_summitgoat creature.count=1
+scatter "Pickup_Landmark_Copper 1" 2 at 12 56 r=26 seed=14032 free=2
+scatter "Pickup_Landmark_Clay 1" 2 at 12 56 r=28 seed=14033 free=2
+scatter "Pickup_Landmark_Rock 1" 2 at 12 56 r=24 seed=14034 free=2
+call hw_sunkhouse x=82 z=32 h=-18 yaw=0 a=fp_sunk chest=fp_deepchest air=fp_air bub=fp_airbub dal=fp_sunkdoor
+call hw_zone x=82 z=32 al=fp_deepz id=fp_deep r=7 h=1 msg="The pump gallery, 18 metres down. The front room still holds a pocket of air."
+place RT_PlasticBoat fp_sunkboat at 90 34 ground sit yaw=35
+prop fp_sunkboat tint.color=#5a5048
+prop fp_sunkboat tint.amount=0.45
+place Loot_Crate fp_boatcrate at 89 28 ground sit yaw=10
+prop fp_boatcrate loot.refill=0
+call hw_reef x=75 z=37 r=3 seed=14036
+place Creature_PufferFish fp_puffers at 76 25 h=-14
+prop fp_puffers creature.count=2
+call hw_machine x=50 z=32 yaw=-57.72 al=fp_machine nm="Jack pump" obj=TP_LaserControlPanel_lever sc=3 a=fp_top b=fp_deep done=fp_fixed rew=fp_rewchest rnote=fp_rewnote msg="It works." hint="It needs the hammer pin from the top of Pile-driver's Hump and the valve key from the pump gallery."
+call hw_note x=52.6 z=33.31 yaw=-37.72 al=fp_hint
+story fp_top|Hammer pin|Bolt|The pile driver's hammer pin, pulled out so the hammer can't fall.
+story fp_deep|Valve key|Bolt|The pump gallery's valve key, eighteen metres down.
+story fp_fixed|Jack pump working|Bolt|The jack pump, working again.
+note fp_hint Pile engineer's notice | The jack pump under the mudflat needs the hammer pin from the derrick on Pile-driver's Hump, and the valve key from the drowned pump gallery off the east shore, eighteen metres down.
+note fp_topchest Pile-driver's derrick deck box | A box lashed to the deck rail at the top of the pile-driver's derrick.
+loot fp_topchest story:fp_top*1;Scrap*2;Bolt*3
+note fp_deepchest Pump gallery strongbox | A strongbox in the back room of the pump gallery.
+loot fp_deepchest story:fp_deep*1;MetalIngot*2;Battery*1
+note fp_rewnote Jack pump report | The jack pump thumps and the leaning pile stops creaking. The report: the piles were never checked - the Authority signed the forms every year.
+note fp_rewchest Jack pump reward | What the jack pump kept.
+loot fp_rewchest TitaniumOre*1;CopperIngot*2;TradeToken*2
+note fp_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
+loot fp_ledge Rope*2;Bolt*2;Scrap*2
+prop fp_ledge loot.refill=0
+loot fp_boatcrate Plastic*3;Scrap*2;MetalIngot*1
+prop fp_ledge if.open=has|Tangaroa_KeyCard|1
+prop fp_ledge else.open=message||A card lock on the box - a Tangaroa keycard would open it.
+
 # --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
 info title=The Foundation Piles
 info author=Custom Islands
@@ -228,6 +287,13 @@ step read|The city holds|1|Read the note behind the last jack
 step reach|rubble_bank|1|Climb the rubble bank in the north-west
 step read|Engineers' survey|1|Read the engineers' survey in their hut in the south
 step open|Excavator's toolbox|1|Open the toolbox of the sunk excavator in the south-west
+step read|Pile engineer's notice|1|Read the pile engineer's notice by the jack pump in the north-east
+step reach|fp_trail|1|Find the foot of the trail up Pile-driver's Hump, in the north
+step reach|fp_summit|1|Climb the trail to the top of Pile-driver's Hump
+step collect|story:fp_top|1|Climb the pile-driver's derrick and take the hammer pin from its deck
+step reach|fp_deep|1|Dive to the pump gallery off the east shore
+step collect|story:fp_deep|1|Find the valve key in its back room
+step read|Jack pump report|1|Bring both to the jack pump and read what it shows
 step reach|mudflat_return|1|Go back up to the mudflat
 quest done=Highwater holds. The city that never sank is still standing - and whatever you chose on the Crown, it will have to live with.
 quest reward=TitaniumOre*2;TradeToken*10

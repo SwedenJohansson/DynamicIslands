@@ -3,7 +3,7 @@
 # shore a breakwater of concrete slabs on drowned-tower legs runs out to the customs house - a tower's top storey
 # standing out of the sea - and a boom of lashed foundations closes the channel beside it. On the key: the Harbor
 # Authority's watch tower with its spotlight and aerial, palms, the weigh station on the breakwater. Far off on the
-# horizon the city's tallest towers stand out of the sea. Quest "The Rumour Is True" (10 steps): the customs house, the
+# horizon the city's tallest towers stand out of the sea. Quest "The Rumour Is True" (17 steps): the customs house, the
 # Authority's entry rules, the receiver's plans (the radio desk), the antenna's plans (the watch tower's locker), a
 # trader's permit (weigh your cargo, then stamp the permit), the smuggler's tip behind the boom post.
 #
@@ -18,6 +18,7 @@ include lib_huts
 include lib_highwater
 include lib_areas
 # RESIZE 10-24: Radius 40 -> 85 (Height 4 -> 4), the old content moved 0 -24.8 as one frame (push) so its sea side stays at the coast; the island grows behind it.
+# DEEP 10-24: Lantern Crag: a customs lighthouse on a sea crag, the bonded store drowned under the south shore, and a boom signal box that wants both.
 new
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
 gen Seed=13101 Radius=85 Height=4 Roughness=0.25 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.1 BeachWidth=0.8
@@ -29,6 +30,14 @@ push at 0 -24.8
 brush flatten at 12 -6 r=10 s=20 frames=300 h=2
 brush grass at 0 0 r=14 s=3 frames=20
 pop
+# --- DEEP 10-24 terrain: Lantern Crag (east, summit 32 m, base r 27), its trail, the drowned drowned bonded store (-12 m) ------------
+call hw_mount x=64 z=-8 b=27 h=32
+call hw_trail x=64 z=-8 b=27 h=32 a0=-82.87 turn=300 n=40 h0=3
+brush flatten at 76.53 -2.71 r=2.6 s=20 frames=200 h=17.5
+clear at 76.53 -2.71 r=3
+call hw_basin x=32 z=-72 r=14 h=-12
+brush flatten at 32 -40 r=4 s=8 frames=60
+clear at 32 -40 r=6
 brush flatten at -34.1 18.9 r=5 s=8 frames=40
 origin
 clear at -34.1 18.9 r=6
@@ -124,6 +133,54 @@ call hw_zone x=-62 z=38 al=wreckcavezone id=wreckers_cave r=4 msg="A cave in the
 call hw_wreck x=-64 z=-22 h=2 yaw=80 obj=BoatStranded al=seizedboat crate=seizedcrate r=11
 call ar_plants_tropical x=-40 z=50 r=14 seed=13131
 
+# --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Lantern Crag: a customs lighthouse on a sea crag, the bonded store drowned under the south shore, and a boom signal box that wants both. ------
+# the climb: the trail spirals up from the west foot; on the summit the old customs light (9 storeys, a ladder inside), its deck chest
+# and a zipline down to the hub (the shortcut back); the dive: the drowned bonded store on a basin floor -12 m down, an air pocket
+# in its front room; the hub: the Boom signal box that wants both, the notice; secrets: the trail ledge cache, the summit treasure,
+# the sunk boat's crate
+call hw_zone x=36.22 z=-4.53 al=bw_trailz id=bw_trail r=5 msg="The trail up Lantern Crag starts here - cut into the slope, round and up."
+call hw_zone x=64 z=-8 al=bw_summitz id=bw_summit r=8 h=1 msg="The top of Lantern Crag. The whole island below, the city beyond it, and the old customs light still higher."
+call hw_mast x=66.83 z=-5.17 h0=32 lv=9 a=bw_mast chest=bw_topchest top=RT_Spotlight
+place ZiplinePath_Landmark bw_zip at 64.74 -10.61 h=33.35
+zipto bw_zip 34.83 -37.17
+place Loot_ChestSmall bw_ledge at 76.53 -2.71 ground sit yaw=247.13
+call treasure x=61.17 z=-5.17 r=5 n=1 seed=13178 kind=0
+prop treasure13178 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+place Creature_Goat bw_goats at 32.68 -0.99 ground
+prop bw_goats creature.count=2
+place Creature_Goat bw_summitgoat at 66.12 -10.12 ground
+prop bw_summitgoat creature.count=1
+scatter "Pickup_Landmark_Copper 1" 2 at 64 -8 r=23 seed=13182 free=2
+scatter "Pickup_Landmark_Clay 1" 2 at 64 -8 r=25 seed=13183 free=2
+scatter "Pickup_Landmark_Rock 1" 2 at 64 -8 r=21 seed=13184 free=2
+call hw_sunkhouse x=32 z=-72 h=-12 yaw=0 a=bw_sunk chest=bw_deepchest air=bw_air bub=bw_airbub dal=bw_sunkdoor
+call hw_zone x=32 z=-72 al=bw_deepz id=bw_deep r=7 h=1 msg="The drowned bonded store, 12 metres down. The front room still holds a pocket of air."
+place RT_PlasticBoat bw_sunkboat at 40 -70 ground sit yaw=35
+prop bw_sunkboat tint.color=#5a5048
+prop bw_sunkboat tint.amount=0.45
+place Loot_Crate bw_boatcrate at 39 -76 ground sit yaw=10
+prop bw_boatcrate loot.refill=0
+call hw_reef x=25 z=-67 r=3 seed=13186
+place Creature_PufferFish bw_puffers at 26 -79 h=-8
+prop bw_puffers creature.count=2
+call hw_machine x=32 z=-40 yaw=45 al=bw_machine nm="Boom signal box" obj=RT_PowerBox sc=1 a=bw_top b=bw_deep done=bw_fixed rew=bw_rewchest rnote=bw_rewnote msg="It works." hint="It needs the lighthouse lens from the top of Lantern Crag and the bonded store seal from the drowned bonded store."
+call hw_note x=32.71 z=-42.83 yaw=65 al=bw_hint
+story bw_top|Lighthouse lens|Bolt|The customs light's great glass lens, unscrewed from its lamp.
+story bw_deep|Bonded store seal|Bolt|The Authority's brass seal from the bonded store's door.
+story bw_fixed|Boom signal box working|Bolt|The boom signal box, working again.
+note bw_hint Boom keeper's notice | The boom's signal box is dead. To light the channel again it wants the lens from the old customs light on Lantern Crag (the trail starts on the inland side) and the bonded store's seal - the store went under off the south shore, twelve metres down. The rope down from the crag ends here.
+note bw_topchest Old customs light deck box | A box lashed to the deck rail at the top of the old customs light.
+loot bw_topchest story:bw_top*1;Rope*2;Scrap*2
+note bw_deepchest Drowned bonded store strongbox | A strongbox in the back room of the drowned bonded store.
+loot bw_deepchest story:bw_deep*1;MetalIngot*1;Plastic*2
+note bw_rewnote Channel light log | The box clicks, the lens throws a white beam along the boom. In the box: the keeper's log - every boat the Authority let through at night without a stamp. Someone in customs was paid well.
+note bw_rewchest Boom signal box reward | What the boom signal box kept.
+loot bw_rewchest CopperIngot*2;Bolt*3;TradeToken*2
+note bw_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
+loot bw_ledge Rope*2;Bolt*2;Scrap*2
+prop bw_ledge loot.refill=0
+loot bw_boatcrate Plastic*3;Scrap*2;MetalIngot*1
+
 # --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
 info title=Breakwater Customs
 info author=Custom Islands
@@ -183,6 +240,13 @@ step reach|signal_hill|1|Climb Signal Hill north of the breakwater
 step read|Keeper's log|1|Read the lightkeeper's log in his ruined house on the east shore
 step reach|wreckers_cave|1|Find the wreckers' cave in the west shore
 step open|Seized boat's hold|1|Open the hold of the smugglers' boat the Authority seized
+step read|Boom keeper's notice|1|Read the boom keeper's notice by the boom signal box in the south-east
+step reach|bw_trail|1|Find the foot of the trail up Lantern Crag, in the east
+step reach|bw_summit|1|Climb the trail to the top of Lantern Crag
+step collect|story:bw_top|1|Climb the old customs light and take the lighthouse lens from its deck
+step reach|bw_deep|1|Dive to the drowned bonded store off the south-east shore
+step collect|story:bw_deep|1|Find the bonded store seal in its back room
+step read|Channel light log|1|Bring both to the boom signal box and read what it shows
 step read|Smuggler's tip|1|Read the smuggler's tip at the boom post
 quest done=The bazaar sells what the Authority says doesn't exist. Raft Row Bazaar - band 600.
 quest reward=Coconut*3;Rope*2

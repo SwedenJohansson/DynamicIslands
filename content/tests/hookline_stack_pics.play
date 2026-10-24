@@ -11,3 +11,7 @@ picture sl13_hookline_stack_heap 56 16 40 36 12 20
 picture sl13_hookline_stack_crane 30 12 -22 46 4 -38
 picture sl13_hookline_stack_tally -2 10 40 -15 5 56
 picture sl13_hookline_stack_cave -60 9 50 -62 6 26
+# DEEP 10-24: Scrapjaw Heights, its summit and the Union strongroom
+picture sl13_hk_mount 36.56 12 -12.33 -4 21.6 -52
+picture sl13_hk_summit -10.86 42 -49.77 -7.14 49.2 -54.48
+picture sl13_hk_deep 77 -11 -30 70 -14.5 -22

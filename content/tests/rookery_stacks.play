@@ -41,6 +41,48 @@ expect step 12
 open Family van's crate
 wait 3
 expect step 13
+# DEEP 10-24: the notice, the climb, the dive, the boiler valve
+expect hidden rk_rewchest
+use rk_machine
+expect hidden rk_rewchest
+read Bathhouse notice
+expect step 14
+kill Butler bot
+kill Butler bot
+kill Butler bot
+expect step 15
+openat 37.17 -15.62
+openat 18.82 -34.63
+openat 28.22 -25.57
+wait 3
+expect story ration 3
+expect step 16
+zone rk_trail
+expect step 17
+# (the ledge cache wants a keycard)
+zone rk_summit
+expect step 18
+expect stand 57.32 -14.63 h=34
+open Great chimney deck box
+wait 3
+expect story rk_top 1
+expect step 19
+zone rk_deep
+expect step 20
+expect stand 25 -78 h=-16
+open Bathhouse cellar strongbox
+wait 3
+expect story rk_deep 1
+expect step 21
+use rk_machine
+expect shown rk_rewchest
+expect story rk_fixed 1
+open Boiler valve reward
+wait 3
+read Bathhouse ticket
+expect step 22
+open Glass hoard
+wait 3
 read Storm warning
 expect done
 dig

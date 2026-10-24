@@ -13,3 +13,7 @@ picture sl13_raft_row_bazaar_hill -10 22 -34 -10 14 -64
 picture sl13_raft_row_bazaar_burnt -44 9 -12 -58 4 -28
 picture sl13_raft_row_bazaar_caravans 36 9 -22 54 3 -42
 picture sl13_raft_row_bazaar_cave 62 9 30 64 6 2
+# DEEP 10-24: Tin Peak, its summit and the sunk arcade
+picture sl13_rb_mount -67.2 12 6.03 -44 18 54
+picture sl13_rb_summit -36.79 36 54.18 -41.86 39.6 57.38
+picture sl13_rb_deep -73 -7 -22 -80 -10.5 -14

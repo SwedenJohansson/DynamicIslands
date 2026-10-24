@@ -13,3 +13,7 @@ picture sl13_pumpcrown_works_bank -15 20 25 -15 13 53
 picture sl13_pumpcrown_works_van 40 9 36 52 4 22
 picture sl13_pumpcrown_works_filter -46 9 -8 -60 4 8
 picture sl13_pumpcrown_works_sludge 36 9 58 24 3 46
+# DEEP 10-24: Standpipe Hill, its summit and the flooded intake chamber
+picture sl13_pc_mount -35.53 12 -62.94 -32 22.8 -10
+picture sl13_pc_summit -25.38 44 -7.14 -31.28 50 -6.06
+picture sl13_pc_deep -61 -11 -46 -68 -14.5 -38

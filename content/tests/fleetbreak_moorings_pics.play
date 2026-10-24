@@ -11,3 +11,7 @@ picture sl13_fleetbreak_moorings_ridge -6 22 26 -27 17 50
 picture sl13_fleetbreak_moorings_plane 26 14 30 42 8 46
 picture sl13_fleetbreak_moorings_house -40 12 -10 -58 7 -4
 picture sl13_fleetbreak_moorings_cave 58 12 32 58 9 -2
+# DEEP 10-24: Mastback Fell, its summit and the flagship's deckhouse
+picture sl13_fb_mount -83.65 12 -3.37 -46 24 -42
+picture sl13_fb_summit -48.28 46 -48.84 -43.54 52 -45.16
+picture sl13_fb_deep -69 -7 18 -76 -10.5 26

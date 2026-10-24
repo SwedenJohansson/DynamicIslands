@@ -45,6 +45,36 @@ expect step 13
 open Excavator's toolbox
 wait 3
 expect step 14
+# DEEP 10-24: the notice, the climb, the dive, the jack pump
+expect hidden fp_rewchest
+use fp_machine
+expect hidden fp_rewchest
+read Pile engineer's notice
+expect step 15
+zone fp_trail
+expect step 16
+# (the ledge cache wants a keycard)
+zone fp_summit
+expect step 17
+expect stand 8.8 50.93 h=42
+open Pile-driver's derrick deck box
+wait 3
+expect story fp_top 1
+expect step 18
+zone fp_deep
+expect step 19
+expect stand 87 26 h=-18
+open Pump gallery strongbox
+wait 3
+expect story fp_deep 1
+expect step 20
+use fp_machine
+expect shown fp_rewchest
+expect story fp_fixed 1
+open Jack pump reward
+wait 3
+read Jack pump report
+expect step 21
 zone mudflat_return
 expect done
 dig

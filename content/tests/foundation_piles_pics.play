@@ -11,3 +11,7 @@ picture sl13_piles_bank -35 20 25 -50 10 38
 picture sl13_piles_digger -48 9 -30 -62 3 -42
 picture sl13_piles_hut 10 9 -50 10 4 -66
 picture sl13_piles_barrels 13 8 18 13 0 0
+# DEEP 10-24: Pile-driver's Hump, its summit and the pump gallery
+picture sl13_fp_mount 59.97 12 32.8 12 25.2 56
+picture sl13_fp_summit 11.82 48 63.21 8.62 55.2 58.14
+picture sl13_fp_deep 89 -13 24 82 -16.5 32

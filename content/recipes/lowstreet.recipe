@@ -3,7 +3,7 @@
 # vans on the street, lamp posts, a cinema whose roof (the wind turbine on it) is the only thing above the sea. In four
 # shops the Union's divers left air pockets; at the street's east end the department store has come down, and in its
 # cages the lost expedition waits - Ines Marlowe and her three divers. Anglers in the shops, a big stingray on the
-# street. Quest "The Drowned District" (16 steps): the tram stop, the expedition plan, the wind turbine's plans (the
+# street. Quest "The Drowned District" (24 steps): the tram stop, the expedition plan, the wind turbine's plans (the
 # cinema roof), the first shop's air, three anglers, the advanced battery's plans (the electronics shop), the store
 # front, the four cages, Ines's report, the advanced headlight's plans, the stingray, the electric grill's plans (the
 # diner).
@@ -19,6 +19,7 @@ include lib_features
 include lib_highwater
 include lib_areas
 # RESIZE 10-24b: Radius 30 -> 85 (Height 2 -> 4), the old content moved 0 -68 as one frame (push) so its sea side stays at
+# DEEP 10-24: Tramhead Bluff: the tram pylon on its bluff, a depot barred from the inside, and a signal box that lights a street twenty metres down.
 # the coast; the island grows behind it. The street (levelled at -20) now runs as a flooded canyon along the inside of the south coast, open to the sea at the cinema; one reef that would have stood on land went out to the south shore.
 new
 gen Trees=0.2 Bushes=0.25 Rocks=0.43 Harvest=0.2 BeachThings=0.4
@@ -32,7 +33,18 @@ brush flatten from -46 0 to 46 0 r=10 s=20 frames=400 h=-20
 brush flatten from -24 10 to 27 10 r=6 s=20 frames=300 h=-20
 brush flatten at 0 -15 r=8 s=20 frames=300 h=-20
 brush flatten at 36 -5 r=8 s=20 frames=300 h=-20
+# (REACH 10-24: the cinema marquee and the floor manager's office stood on the street's steep edge)
+brush flatten at 0 -20 r=6 s=20 frames=300 h=-20
+brush flatten at 33 -7 r=8 s=20 frames=300 h=-20
 pop
+# --- DEEP 10-24 terrain: Tramhead Bluff (south-west, summit 34 m, base r 28), its trail, the drowned sunk tram depot (-16 m) ------------
+call hw_mount x=-36 z=-24 b=28 h=34
+call hw_trail x=-36 z=-24 b=28 h=34 a0=56.31 turn=300 n=40 h0=3
+brush flatten at -42.25 -36.64 r=2.6 s=20 frames=200 h=18.5
+clear at -42.25 -36.64 r=3
+call hw_basin x=-74 z=32 r=14 h=-16
+brush flatten at -74 0 r=4 s=8 frames=60
+clear at -74 0 r=6
 origin
 push at 0 -68
 clear from -46 0 to 46 0 r=9
@@ -152,6 +164,65 @@ place Loot_Chest sewerchest at -46 -59 ground sit yaw=90
 call ar_plants_tropical x=-50 z=20 r=14 seed=13621
 call ar_plants_tropical x=60 z=30 r=12 seed=13631
 
+# --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Tramhead Bluff: the tram pylon on its bluff, a depot barred from the inside, and a signal box that lights a street twenty metres down. ------
+# the climb: the trail spirals up from the north-east foot; on the summit the tram pylon (9 storeys, a ladder inside), its deck chest
+# and a zipline down to the hub (the shortcut back); the dive: the sunk tram depot on a basin floor -16 m down, an air pocket
+# in its front room; the hub: the Tram signal box that wants both, the notice; secrets: the trail ledge cache, the summit treasure,
+# the sunk boat's crate
+call hw_zone x=-11.87 z=-7.91 al=ls_trailz id=ls_trail r=5 msg="The trail up Tramhead Bluff starts here - cut into the slope, round and up."
+call hw_zone x=-36 z=-24 al=ls_summitz id=ls_summit r=8 h=1 msg="The top of Tramhead Bluff. The whole island below, the city beyond it, and the tram pylon still higher."
+call hw_mast x=-32.62 z=-26.14 h0=34 lv=9 a=ls_mast chest=ls_topchest top=RT_Spotlight
+place ZiplinePath_Landmark ls_zip at -35.68 -22.89 h=35.35
+zipto ls_zip -70.62 -2.14
+place Loot_ChestSmall ls_ledge at -42.25 -36.64 ground sit yaw=26.31
+call treasure x=-33.86 z=-20.62 r=5 n=1 seed=13678 kind=0
+prop treasure13678 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+place Creature_Goat ls_goats at -9.2 -3.69 ground
+prop ls_goats creature.count=2
+place Creature_Goat ls_summitgoat at -37.6 -26.54 ground
+prop ls_summitgoat creature.count=1
+scatter "Pickup_Landmark_Copper 1" 2 at -36 -24 r=24 seed=13682 free=2
+scatter "Pickup_Landmark_Clay 1" 2 at -36 -24 r=26 seed=13683 free=2
+scatter "Pickup_Landmark_Rock 1" 2 at -36 -24 r=22 seed=13684 free=2
+call hw_sunkhouse x=-74 z=32 h=-16 yaw=0 a=ls_sunk chest=ls_deepchest air=ls_air bub=ls_airbub door=Block_Wall_Tier3 dal=ls_bar rn=2
+call hw_zone x=-74 z=32 al=ls_deepz id=ls_deep r=7 h=1 msg="The sunk tram depot, 16 metres down. The front room still holds a pocket of air."
+place RT_PlasticBoat ls_sunkboat at -66 34 ground sit yaw=35
+prop ls_sunkboat tint.color=#5a5048
+prop ls_sunkboat tint.amount=0.45
+place Loot_Crate ls_boatcrate at -67 28 ground sit yaw=10
+prop ls_boatcrate loot.refill=0
+call hw_reef x=-81 z=37 r=3 seed=13686
+place Creature_PufferFish ls_puffers at -80 25 h=-12
+prop ls_puffers creature.count=2
+call hw_machine x=-74 z=0 yaw=122.28 al=ls_machine nm="Tram signal box" obj=RT_PowerBox sc=1 a=ls_top b=ls_deep done=ls_fixed rew=ls_rewchest rnote=ls_rewnote msg="It works." hint="It needs the pylon fuse from the top of Tramhead Bluff and the depot pass from the sunk tram depot."
+call hw_note x=-76.6 z=-1.31 yaw=142.28 al=ls_hint
+# the tram depot's front door is barred from inside (a wall where the door was): the way in is the gap in
+# its roof over the back room; the bolt lever inside opens the front for the way out and back
+place TP_LaserControlPanel_lever ls_bolt at -74.75 31.75 h=-14.8 yaw=180
+prop ls_bolt obj.name=ls_bolt
+prop ls_bolt beh.use=Draw the door bolt
+prop ls_bolt if.use=!signal|ls_bolt
+prop ls_bolt on.use=signal||ls_bolt\nhide|ls_bar\ngive||story:ls_bolt*1\nmessage||The bolt grinds back and the depot's front door falls open.
+prop ls_bolt else.use=message||The bolt is already drawn.
+story ls_top|Pylon fuse|Bolt|The big ceramic fuse from the top of the tram pylon.
+story ls_deep|Depot pass|Bolt|A tram driver's depot pass, still on its hook.
+story ls_fixed|Tram signal box working|Bolt|The tram signal box, working again.
+story ls_bolt|Depot bolt drawn|Bolt|The sunk tram depot's door bolt, drawn from inside.
+note ls_hint Tram signal notice | Lowstreet's last tram signal box: it needs the pylon fuse from the top of Tramhead Bluff and a driver's pass from the sunk tram depot under the west shore. The depot doors are barred from inside - go in through the roof. The depot was barred from inside when it went down; the roof over its back room has a gap.
+note ls_topchest Tram pylon deck box | A box lashed to the deck rail at the top of the tram pylon.
+loot ls_topchest story:ls_top*1;Scrap*2;Bolt*2
+note ls_deepchest Sunk tram depot strongbox | A strongbox in the back room of the sunk tram depot.
+loot ls_deepchest story:ls_deep*1;MetalIngot*1;Plastic*2
+note ls_rewnote Tram timetable | The signal turns green twenty metres under the sea. In the box: the last timetable, the night the street went under - and who rode the last tram out.
+note ls_rewchest Tram signal box reward | What the tram signal box kept.
+loot ls_rewchest CopperIngot*2;Battery*1;TradeToken*2
+note ls_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
+loot ls_ledge Rope*2;Bolt*2;Scrap*2
+prop ls_ledge loot.refill=0
+loot ls_boatcrate Plastic*3;Scrap*2;MetalIngot*1
+prop ls_ledge if.open=has|Tangaroa_KeyCard|1
+prop ls_ledge else.open=message||A card lock on the box - a Tangaroa keycard would open it.
+
 # --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
 info title=Lowstreet
 info author=Custom Islands
@@ -243,6 +314,14 @@ step reach|embankment|1|Climb the old tram embankment north of the islet
 step read|Depot timetable|1|Read the last timetable in the tram depot's office in the north-west
 step reach|tram_wagons|1|Find the tram's last wagons, hauled out on the east shore
 step open|Stripped caravan's crate|1|Open the crate in the stripped caravan beside them
+step read|Tram signal notice|1|Read the tram signal notice by the tram signal box in the west
+step reach|ls_trail|1|Find the foot of the trail up Tramhead Bluff, in the south-west
+step reach|ls_summit|1|Climb the trail to the top of Tramhead Bluff
+step collect|story:ls_top|1|Climb the tram pylon and take the pylon fuse from its deck
+step reach|ls_deep|1|Dive to the sunk tram depot off the north-west shore
+step collect|story:ls_deep|1|Find the depot pass in its back room
+step collect|story:ls_bolt|1|Draw the bolt inside the depot so its front door opens
+step read|Tram timetable|1|Bring both to the tram signal box and read what it shows
 step blueprint|Blueprint_ElectricGrill|1|Take the electric grill's plans from the diner
 quest done=The valves were turned by hand. The cistern under the Authority's tower holds the records - Cistern Hall, band 700.
 quest reward=SilverAlgae*3;SeaVine*2

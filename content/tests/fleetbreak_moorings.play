@@ -44,6 +44,36 @@ wait 3
 expect step 13
 zone bosuns_cave
 expect step 14
+# DEEP 10-24: the notice, the climb, the dive, the foghorn lever
+expect hidden fb_rewchest
+use fb_machine
+expect hidden fb_rewchest
+read Harbourmaster's notice
+expect step 15
+zone fb_trail
+expect step 16
+openat -50.26 -55.44
+zone fb_summit
+expect step 17
+expect stand -41.26 -38.32 h=40
+open Fleet's signal mast deck box
+wait 3
+expect story fb_top 1
+expect step 18
+zone fb_deep
+expect step 19
+expect stand -71 20 h=-12
+open Flagship's deckhouse strongbox
+wait 3
+expect story fb_deep 1
+expect step 20
+use fb_machine
+expect shown fb_rewchest
+expect story fb_fixed 1
+open Foghorn lever reward
+wait 3
+read Foghorn chart
+expect step 21
 read Fleet contract offer
 expect done
 expect step 0 quest=2

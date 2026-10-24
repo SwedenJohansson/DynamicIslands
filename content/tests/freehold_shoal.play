@@ -10,9 +10,9 @@ zone landing
 expect step 1
 read Freehold founding
 expect step 2
-openat -4.7 -7.3
-openat 9.3 0.7
-openat 19.3 -23.3
+openat 2.7 -25.9
+openat 16.7 -17.9
+openat 26.7 -41.9
 expect story plankbundle 3
 expect step 3
 use wellcrank
@@ -27,5 +27,35 @@ expect step 7
 open Hauled-up van's crate
 wait 3
 expect step 8
+# DEEP 10-24: the notice, the climb, the dive, the founding bell
+expect hidden fh_rewchest
+use fh_machine
+expect hidden fh_rewchest
+read Founders' notice
+expect step 9
+zone fh_trail
+expect step 10
+# (the ledge cache wants a keycard)
+zone fh_summit
+expect step 11
+expect stand -21.76 -49.76 h=26
+open Freehold lookout deck box
+wait 3
+expect story fh_top 1
+expect step 12
+zone fh_deep
+expect step 13
+expect stand -69 0 h=-12
+open Squatters' hut strongbox
+wait 3
+expect story fh_deep 1
+expect step 14
+use fh_machine
+expect shown fh_rewchest
+expect story fh_fixed 1
+open Founding bell reward
+wait 3
+read Freehold's charter
+expect step 15
 read Freehold's first night
 expect done

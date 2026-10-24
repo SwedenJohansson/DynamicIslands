@@ -12,3 +12,7 @@ picture sl13_rookery_stacks 20 18 30 20 10 54
 picture sl13_rookery_van -30 9 25 -45 4 40
 picture sl13_rookery_bathhouse -45 9 -12 -58 4 2
 picture sl13_rookery_hoard -12 9 48 -25 3 60
+# DEEP 10-24: Chimney Tor, its summit and the bathhouse cellar
+picture sl13_rk_mount 15.53 12 -48.94 60 20.4 -20
+picture sl13_rk_summit 66.26 40 -23.58 63.58 48.4 -18.21
+picture sl13_rk_deep 27 -11 -80 20 -14.5 -72

@@ -32,5 +32,35 @@ expect step 8
 open Seized boat's hold
 wait 3
 expect step 9
+# DEEP 10-24: the notice, the climb, the dive, the boom signal box
+expect hidden bw_rewchest
+use bw_machine
+expect hidden bw_rewchest
+read Boom keeper's notice
+expect step 10
+zone bw_trail
+expect step 11
+openat 76.53 -2.71
+zone bw_summit
+expect step 12
+expect stand 59.76 -3.76 h=32
+open Old customs light deck box
+wait 3
+expect story bw_top 1
+expect step 13
+zone bw_deep
+expect step 14
+expect stand 37 -78 h=-12
+open Drowned bonded store strongbox
+wait 3
+expect story bw_deep 1
+expect step 15
+use bw_machine
+expect shown bw_rewchest
+expect story bw_fixed 1
+open Boom signal box reward
+wait 3
+read Channel light log
+expect step 16
 read Smuggler's tip
 expect done

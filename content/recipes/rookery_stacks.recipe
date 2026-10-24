@@ -2,7 +2,7 @@
 # The poor quarter, on the city's lowest roofs: shanty huts on two drowned towers' roofs (hut on roof - two high), more
 # on the key, rope bridges, washing everywhere, a soup kitchen under a wooden roof, empty water barrels, a tollgate of
 # spikes on the causeway, rats in the barrels, screechers on the roofs, a llama pen, a trader. Quest "The Lowest Roofs"
-# (14 steps): the soup kitchen, the Rookery's petition, four rats, the titanium tools' plans (the smithy), the tollgate,
+# (23 steps): the soup kitchen, the Rookery's petition, four rats, the titanium tools' plans (the smithy), the tollgate,
 # three screechers, the advanced backpack's plans, three water tokens, the elders' plan, the electric zipline tool's
 # plans, the storm warning.
 #
@@ -17,6 +17,7 @@ include lib_features
 include lib_highwater
 include lib_areas
 # RESIZE 10-24: Radius 38 -> 80 (Height 4 -> 4), the old content moved -6.6 -22.1 as one frame (push) so its sea side stays at the coast; the island grows behind it.
+# DEEP 10-24: Chimney Tor: the poor quarter's great chimney, a drowned bathhouse cellar, butler bots that guard the stack doors - and hot water for the Rookery.
 new
 gen Trees=0.1 Bushes=0.15 Rocks=0.3 Harvest=0.2 BeachThings=0.4
 gen Seed=13801 Radius=80 Height=4 Roughness=0.25 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.1 BeachWidth=0.7
@@ -27,7 +28,18 @@ push at -6.6 -22.1
 # --- Terrain: the quarter levelled -------------------------------------------------------------------------------------
 brush flatten at 0 0 r=14 s=20 frames=300 h=2
 brush flatten at 12 -8 r=8 s=20 frames=200 h=2
+# (REACH 10-24: the causeway, the tollgate sign and the towers' roofs stood in the grown coast)
+brush flatten from -14 -17 to -14 -26 r=4 s=20 frames=300 h=0.95
+brush flatten from -15 -30 to 9 -30 r=7.5 s=20 frames=400 h=0.95
 pop
+# --- DEEP 10-24 terrain: Chimney Tor (east, summit 34 m, base r 27), its trail, the drowned bathhouse cellar (-16 m) ------------
+call hw_mount x=60 z=-20 b=27 h=34
+call hw_trail x=60 z=-20 b=27 h=34 a0=-71.57 turn=300 n=40 h0=3
+brush flatten at 73.32 -17.27 r=2.6 s=20 frames=200 h=18.5
+clear at 73.32 -17.27 r=3
+call hw_basin x=20 z=-72 r=14 h=-16
+brush flatten at 20 -40 r=4 s=8 frames=60
+clear at 20 -40 r=6
 brush flatten at -28 22.7 r=5 s=8 frames=40
 origin
 clear at -28 22.7 r=6
@@ -163,6 +175,93 @@ place Loot_Chest glasschest at -25 60 ground sit yaw=0
 call cagecache x=52 z=20 yaw=-90 alias=gullcage sig=gullcage chest=gullcagechest items=Feather*6;Rope*2;Leather*2 title="Gull keeper's chest" kx=-45 kz=40 kr=8 seed=13871 keychest=familycutters keytitle="Family's tool bag" keyitems=Rope*2
 call ar_plants_tropical x=-50 z=20 r=12 seed=13821
 
+# --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Chimney Tor: the poor quarter's great chimney, a drowned bathhouse cellar, butler bots that guard the stack doors - and hot water for the Rookery. ------
+# the climb: the trail spirals up from the west foot; on the summit the great chimney (12 storeys, a ladder inside), its deck chest
+# and a zipline down to the hub (the shortcut back); the dive: the bathhouse cellar on a basin floor -16 m down, an air pocket
+# in its front room; the hub: the Boiler valve that wants both, the notice; secrets: the trail ledge cache, the summit treasure,
+# the sunk boat's crate
+call hw_zone x=33.44 z=-11.15 al=rk_trailz id=rk_trail r=5 msg="The trail up Chimney Tor starts here - cut into the slope, round and up."
+call hw_zone x=60 z=-20 al=rk_summitz id=rk_summit r=8 h=1 msg="The top of Chimney Tor. The whole island below, the city beyond it, and the great chimney still higher."
+call hw_mast x=63.58 z=-18.21 h0=34 lv=12 a=rk_mast chest=rk_topchest top=Placeable_Lantern_FireBasket
+place ZiplinePath_Landmark rk_zip at 60.18 -21.83 h=35.35
+zipto rk_zip 23.58 -38.21
+place Loot_ChestSmall rk_ledge at 73.32 -17.27 ground sit yaw=258.43
+call treasure x=58.21 z=-16.42 r=5 n=1 seed=13878 kind=0
+prop treasure13878 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+place Creature_Goat rk_goats at 31.2 -6.67 ground
+prop rk_goats creature.count=2
+place Creature_Goat rk_summitgoat at 61.34 -22.68 ground
+prop rk_summitgoat creature.count=1
+scatter "Pickup_Landmark_Copper 1" 2 at 60 -20 r=23 seed=13882 free=2
+scatter "Pickup_Landmark_Clay 1" 2 at 60 -20 r=25 seed=13883 free=2
+scatter "Pickup_Landmark_Rock 1" 2 at 60 -20 r=21 seed=13884 free=2
+call hw_sunkhouse x=20 z=-72 h=-16 yaw=0 a=rk_sunk chest=rk_deepchest air=rk_air bub=rk_airbub dal=rk_sunkdoor
+call hw_zone x=20 z=-72 al=rk_deepz id=rk_deep r=7 h=1 msg="The bathhouse cellar, 16 metres down. The front room still holds a pocket of air."
+place RT_PlasticBoat rk_sunkboat at 28 -70 ground sit yaw=35
+prop rk_sunkboat tint.color=#5a5048
+prop rk_sunkboat tint.amount=0.45
+place Loot_Crate rk_boatcrate at 27 -76 ground sit yaw=10
+prop rk_boatcrate loot.refill=0
+call hw_reef x=13 z=-67 r=3 seed=13886
+place Creature_PufferFish rk_puffers at 14 -79 h=-12
+prop rk_puffers creature.count=2
+call hw_machine x=20 z=-40 yaw=63.43 al=rk_machine nm="Boiler valve" obj=TP_LaserControlPanel_lever sc=3 a=rk_top b=rk_deep done=rk_fixed rew=rk_rewchest rnote=rk_rewnote msg="It works." hint="It needs the sweep's brass from the top of Chimney Tor and the boiler tap from the bathhouse cellar."
+call hw_note x=19.78 z=-42.91 yaw=83.43 al=rk_hint
+# three butler bots from the Authority's kitchens run wild (they zap); each guarded a ration tin, and the
+# Rookery's stores open for one tin each (the mast deck box, the sunk strongbox, the glass hoard)
+place Creature_ButlerBot rk_bot1 at 35.67 -15.62 ground
+prop rk_bot1 creature.zap=8
+prop rk_bot1 on.defeat=show|rk_tin1\nmessage||The bot sparks and stops. Under it, the ration tin it was guarding.
+place Loot_ChestSmall rk_tin1 at 37.17 -15.62 ground sit
+prop rk_tin1 beh.hidden=1
+prop rk_tin1 loot.refill=0
+place Creature_ButlerBot rk_bot2 at 17.32 -34.63 ground
+prop rk_bot2 creature.zap=8
+prop rk_bot2 on.defeat=show|rk_tin2\nmessage||The bot sparks and stops. Under it, the ration tin it was guarding.
+place Loot_ChestSmall rk_tin2 at 18.82 -34.63 ground sit
+prop rk_tin2 beh.hidden=1
+prop rk_tin2 loot.refill=0
+place Creature_ButlerBot rk_bot3 at 26.72 -25.57 ground
+prop rk_bot3 creature.zap=8
+prop rk_bot3 on.defeat=show|rk_tin3\nmessage||The bot sparks and stops. Under it, the ration tin it was guarding.
+place Loot_ChestSmall rk_tin3 at 28.22 -25.57 ground sit
+prop rk_tin3 beh.hidden=1
+prop rk_tin3 loot.refill=0
+place Loot_Chest rk_hoard at 19.55 -45.81 ground sit yaw=-71.57
+prop rk_hoard loot.refill=0
+prop rk_hoard if.open=take|story:ration|1
+prop rk_hoard else.open=message||An elders' padlock: one ration tin opens it.
+prop rk_topchest if.open=take|story:ration|1
+prop rk_topchest else.open=message||An elders' padlock: one ration tin opens it.
+prop rk_deepchest if.open=take|story:ration|1
+prop rk_deepchest else.open=message||An elders' padlock on the strongbox: one ration tin opens it.
+story rk_top|Sweep's brass|Bolt|The chimney sweep's brass plate, left at the top for luck.
+story rk_deep|Boiler tap|Bolt|The bathhouse boiler's big tap.
+story rk_fixed|Boiler valve working|Bolt|The boiler valve, working again.
+story ration|Ration tin|Bolt|A sealed Authority ration tin. In the Rookery one tin opens any store.
+note rk_hint Bathhouse notice | The Rookery's boiler has been cold all year. The sweep's brass from the top of the great chimney on Chimney Tor fits its flue, and its tap went down with the bathhouse cellar off the south shore.
+note rk_topchest Great chimney deck box | A box lashed to the deck rail at the top of the great chimney.
+loot rk_topchest story:rk_top*1;Scrap*2;Rope*1
+note rk_deepchest Bathhouse cellar strongbox | A strongbox in the back room of the bathhouse cellar.
+loot rk_deepchest story:rk_deep*1;MetalIngot*1;Plastic*2
+note rk_rewnote Bathhouse ticket | The boiler roars and hot water runs in the Rookery for the first time in a year. Pinned by the valve: free tickets for every family, signed by the old bath keeper.
+note rk_rewchest Boiler valve reward | What the boiler valve kept.
+loot rk_rewchest TradeToken*3;Battery*1;CopperIngot*1
+note rk_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
+loot rk_ledge Rope*2;Bolt*2;Scrap*2
+prop rk_ledge loot.refill=0
+loot rk_boatcrate Plastic*3;Scrap*2;MetalIngot*1
+note rk_tin1 Ration tin | A sealed ration tin, stamped AUTHORITY KITCHENS.
+note rk_tin2 Ration tin | A sealed ration tin, stamped AUTHORITY KITCHENS.
+note rk_tin3 Ration tin | A sealed ration tin, stamped AUTHORITY KITCHENS.
+loot rk_tin1 story:ration*1;Watermelon*1
+loot rk_tin2 story:ration*1;Watermelon*1
+loot rk_tin3 story:ration*1;Watermelon*1
+note rk_hoard Glass hoard | The Rookery's glass hoard: bottles washed and kept for when the water comes.
+loot rk_hoard Glass*4;TradeToken*2
+prop rk_ledge if.open=has|Tangaroa_KeyCard|1
+prop rk_ledge else.open=message||A card lock on the box - a Tangaroa keycard would open it.
+
 # --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
 info title=Rookery Stacks
 info author=Custom Islands
@@ -238,6 +337,15 @@ step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline tool's 
 step reach|gull_stacks|1|Climb the gull stacks north of the Rookery
 step read|Bathhouse slate|1|Read the slate on the old bathhouse in the west
 step open|Family van's crate|1|Open the crate in the family's van in the north-west
+step read|Bathhouse notice|1|Read the bathhouse notice by the boiler valve in the south-east
+step kill|Butler bot|3|Stop the three butler bots running wild round the hub and the trail foot
+step collect|story:ration|3|Take the ration tins the bots were guarding
+step reach|rk_trail|1|Find the foot of the trail up Chimney Tor, in the east
+step reach|rk_summit|1|Climb the trail to the top of Chimney Tor
+step collect|story:rk_top|1|Climb the great chimney and take the sweep's brass from its deck
+step reach|rk_deep|1|Dive to the bathhouse cellar off the south shore
+step collect|story:rk_deep|1|Find the boiler tap in its back room
+step read|Bathhouse ticket|1|Bring both to the boiler valve and read what it shows
 step read|Storm warning|1|Read the storm warning
 quest done=The councils meet on the Crown tonight, in the storm. Bridgeworks Crown - band 1000.
 quest reward=Leather*2;TitaniumOre*1

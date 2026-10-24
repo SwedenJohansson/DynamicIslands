@@ -3,7 +3,7 @@
 # Raft's water pipes laid along them - the tank house (water tanks), the pipe gallery, the stores (bees on its warm
 # roof) - and on the key the purifier hall, its roof on its walls, its door locked to anyone not in an Authority coat.
 # Empty sentry boxes, a laundry line where the guards' coats dry, the outfall - a great pipe mouth down into the sea -
-# and on the east point the boom tower, its winch rusted. Quest "The Authority's Water" (11 steps): an Authority coat
+# and on the east point the boom tower, its winch rusted. Quest "The Authority's Water" (20 steps): an Authority coat
 # off the line, the purifier hall, the water tank's, the water pipe's, the electric purifier's and the large storage's
 # plans, the dive into the outfall. Contract "Keep the Boom" (5): the duty roster, the boom tower, its winch, three
 # screechers off the tower, the Authority's receipt (authfriend).
@@ -19,6 +19,7 @@ include lib_verdance
 include lib_highwater
 include lib_areas
 # RESIZE 10-24b: Radius 40 -> 85 (Height 4 -> 5), the old content moved 0 -45 as one frame (push) so its sea side stays at
+# DEEP 10-24: Standpipe Hill: a water tower on a forty-metre hill, a live flooded intake chamber, and a test pump that shows where the city's water really goes.
 # the coast; the island grows behind it. The towers' roofs stay on the south coast; the boom tower (with its pad, crank, boom and screechers) went to the new east point and the outfall to the south-west shore.
 new
 gen Trees=0.2 Bushes=0.25 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -30,7 +31,18 @@ push at 0 -45
 # --- Terrain: the hall's and the boom tower's levels -------------------------------------------------------------------
 brush flatten at 0 2 r=11 s=20 frames=300 h=2
 brush flatten at 70.01 4.86 r=9 s=20 frames=300 h=2
+# (REACH 10-24: the towers' roofs and their causeway stood in the grown coast - levelled to the roofs)
+brush flatten from 0 -14 to 0 -26 r=3 s=20 frames=200 h=0.3
+brush flatten from -16 -32 to 22 -32 r=8 s=20 frames=400 h=0.95
 pop
+# --- DEEP 10-24 terrain: Standpipe Hill (west, summit 38 m, base r 24), its trail, the drowned flooded intake chamber (-16 m) ------------
+call hw_mount x=-32 z=-10 b=24 h=38
+call hw_trail x=-32 z=-10 b=24 h=38 a0=72.65 turn=300 n=40 h0=3
+brush flatten at -40.2 -18.9 r=2.6 s=20 frames=200 h=20.5
+clear at -40.2 -18.9 r=3
+call hw_basin x=-68 z=-38 r=14 h=-16
+brush flatten at -40 -54 r=4 s=8 frames=60
+clear at -40 -54 r=6
 origin
 push at 0 -45
 clear at 0 2 r=10
@@ -142,6 +154,70 @@ call hw_zone x=24 z=56 al=sludgebeds id=sludge_beds r=4 msg="The sludge beds: wh
 call ar_plants_tropical x=-50 z=35 r=14 seed=13521
 call ar_plants_tropical x=55 z=45 r=12 seed=13531
 
+# --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Standpipe Hill: a water tower on a forty-metre hill, a live flooded intake chamber, and a test pump that shows where the city's water really goes. ------
+# the climb: the trail spirals up from the east foot; on the summit the old water tower (10 storeys, a ladder inside), its deck chest
+# and a zipline down to the hub (the shortcut back); the dive: the flooded intake chamber on a basin floor -16 m down, an air pocket
+# in its front room; the hub: the Test-pump lever that wants both, the notice; secrets: the trail ledge cache, the summit treasure,
+# the sunk boat's crate
+call hw_zone x=-8.14 z=-2.54 al=pc_trailz id=pc_trail r=5 msg="The trail up Standpipe Hill starts here - cut into the slope, round and up."
+call hw_zone x=-32 z=-10 al=pc_summitz id=pc_summit r=8 h=1 msg="The top of Standpipe Hill. The whole island below, the city beyond it, and the old water tower still higher."
+call hw_mast x=-31.28 z=-6.06 h0=38 lv=10 a=pc_mast chest=pc_topchest top=Placeable_WaterTank
+place ZiplinePath_Landmark pc_zip at -29.68 -13.44 h=39.35
+zipto pc_zip -39.28 -50.06
+place Loot_ChestSmall pc_ledge at -40.2 -18.9 ground sit yaw=42.65
+call treasure x=-35.94 z=-9.28 r=5 n=1 seed=13578 kind=0
+prop treasure13578 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+place Creature_Goat pc_goats at -13.06 -1.65 ground
+prop pc_goats creature.count=2
+place Creature_Goat pc_summitgoat at -29.05 -10.54 ground
+prop pc_summitgoat creature.count=1
+scatter "Pickup_Landmark_Copper 1" 2 at -32 -10 r=20 seed=13582 free=2
+scatter "Pickup_Landmark_Clay 1" 2 at -32 -10 r=22 seed=13583 free=2
+scatter "Pickup_Landmark_Rock 1" 2 at -32 -10 r=18 seed=13584 free=2
+call hw_sunkhouse x=-68 z=-38 h=-16 yaw=0 a=pc_sunk chest=pc_deepchest air=pc_air bub=pc_airbub dal=pc_sunkdoor
+call hw_zone x=-68 z=-38 al=pc_deepz id=pc_deep r=7 h=1 msg="The flooded intake chamber, 16 metres down. The front room still holds a pocket of air."
+place RT_PlasticBoat pc_sunkboat at -60 -36 ground sit yaw=35
+prop pc_sunkboat tint.color=#5a5048
+prop pc_sunkboat tint.amount=0.45
+place Loot_Crate pc_boatcrate at -61 -42 ground sit yaw=10
+prop pc_boatcrate loot.refill=0
+call hw_reef x=-75 z=-33 r=3 seed=13586
+place Creature_PufferFish pc_puffers at -74 -45 h=-12
+prop pc_puffers creature.count=2
+call hw_machine x=-40 z=-54 yaw=10.3 al=pc_machine nm="Test-pump lever" obj=TP_LaserControlPanel_lever sc=3 a=pc_top b=pc_deep done=pc_fixed rew=pc_rewchest rnote=pc_rewnote msg="It works." hint="It needs the float valve from the top of Standpipe Hill and the intake gauge from the flooded intake chamber."
+call hw_note x=-37.81 z=-55.92 yaw=30.3 al=pc_hint
+# the shorted breaker: the pump house's cable still runs live into the drowned water by the sunk house;
+# three rolls of tape (the deck box, the linesman's locker, the climber's cache) make it safe to switch off
+call hw_hazard x=-68 z=-38 al=pc_shock kind=shock r=8 dmg=8 safe=none msg="The water bites - a live cable from the pump house runs into it." h=1
+place RT_Pillar - at -44.92 -53.11 ground sit sy=0.4
+place RT_PowerBox pc_breaker at -44.92 -53.11 ground y=1.25 yaw=72.65
+prop pc_breaker obj.name=pc_breaker
+prop pc_breaker beh.use=Tape and switch off the shorted breaker
+prop pc_breaker if.use=!signal|pc_breaker\ntake|story:tape|3
+prop pc_breaker on.use=signal||pc_breaker\nhide|pc_shock\ngive||story:pc_breaker*1\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||Three rolls of tape round the bare ends - the breaker clunks off. The water by the sunk house goes quiet.
+prop pc_breaker else.use=message||Bare copper, sparking. It needs three rolls of insulating tape before anyone touches it.
+place Loot_Chest pc_locker at -35.53 -57.35 ground sit yaw=252.65
+prop pc_locker loot.refill=0
+story pc_top|Float valve|Bolt|The water tower's brass float valve.
+story pc_deep|Intake gauge|Bolt|The intake chamber's pressure gauge, unscrewed from the wall.
+story pc_fixed|Test-pump lever working|Bolt|The test-pump lever, working again.
+story tape|Insulating tape|Bolt|A roll of the Union linesmen's insulating tape. Three of them would make a dead breaker safe.
+story pc_breaker|Breaker taped|Bolt|The shorted breaker, taped and switched off - no current in the drowned water any more.
+note pc_hint Waterworks notice | Test pump: fit the float valve from the water tower on Standpipe Hill and the gauge from the flooded intake chamber (sixteen metres down off the south-west shore - the chamber's breakers are live, tape them first). Mind the water by the sunk house: the pump house cable runs live into it - tape the breaker by the lever first (three rolls).
+note pc_topchest Old water tower deck box | A box lashed to the deck rail at the top of the old water tower.
+loot pc_topchest story:pc_top*1;story:tape*1;Rope*2
+note pc_deepchest Flooded intake chamber strongbox | A strongbox in the back room of the flooded intake chamber.
+loot pc_deepchest story:pc_deep*1;MetalIngot*1;CircuitBoard*1
+note pc_rewnote Test-pump reading | The pump coughs and clean water runs. The gauge tells the truth the Authority's reports don't: half the city's water goes to the Crown.
+note pc_rewchest Test-pump lever reward | What the test-pump lever kept.
+loot pc_rewchest CopperIngot*2;Battery*1;TradeToken*2
+note pc_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
+loot pc_ledge story:tape*1;Rope*2;Bolt*2
+prop pc_ledge loot.refill=0
+loot pc_boatcrate Plastic*3;Scrap*2;MetalIngot*1
+note pc_locker Linesman's locker | The Union linesman's locker: his tape, his gloves, nothing else.
+loot pc_locker story:tape*1;Rope*1;CopperIngot*1
+
 # --- Settings, story items, notes, behaviours, quests -----------------------------------------------------------------
 info title=Pumpcrown Works
 info author=Custom Islands
@@ -227,6 +303,15 @@ step reach|reservoir_bank|1|Climb the reservoir bank north of the works
 step read|Filter house notice|1|Read the notice at the old filter house in the west
 step open|Patrol van's lockbox|1|Open the lockbox in the Authority's patrol van in the east
 step reach|sludge_beds|1|Go to the edge of the sludge beds
+step read|Waterworks notice|1|Read the waterworks notice by the test-pump lever in the south-west
+step reach|pc_trail|1|Find the foot of the trail up Standpipe Hill, in the west
+step reach|pc_summit|1|Climb the trail to the top of Standpipe Hill
+step collect|story:pc_top|1|Climb the old water tower and take the float valve from its deck
+step collect|story:tape|3|Gather three rolls of insulating tape - the deck box, the climber's cache, the linesman's locker at the hub
+step collect|story:pc_breaker|1|Tape the shorted breaker by the test pump and switch the live water off
+step reach|pc_deep|1|Dive to the flooded intake chamber off the south-west shore
+step collect|story:pc_deep|1|Find the intake gauge in its back room
+step read|Test-pump reading|1|Bring both to the test-pump lever and read what it shows
 step reach|outfall|1|Dive into the outfall where the pipe meets the sea
 quest done=The outfall runs east, down into the drowned city. The Union's divers went down there - into Lowstreet.
 quest reward=HoneyComb*2;Plastic*4

@@ -11,3 +11,7 @@ picture sl13_cistern_aqueduct -25 20 30 -25 11 53
 picture sl13_cistern_van 60 9 15 50 5 30
 picture sl13_cistern_lodge 40 10 40 40 5 58
 picture sl13_cistern_cave -60 10 40 -60 5 15
+# DEEP 10-24: Overflow Tor, its summit and the settling house
+picture sl13_ch_mount -0.15 12 -73.71 -42 24 -38
+picture sl13_ch_summit -40.37 46 -30.98 -44.74 52 -35.09
+picture sl13_ch_deep 29 -11 -88 22 -14.5 -80

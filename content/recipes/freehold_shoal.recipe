@@ -2,7 +2,7 @@
 # chose FREE on the Crown
 # A sandy shoal outside the city where the Rookery's people start over: frames of new huts (roofs on posts, walls still
 # missing), stacks of planks, a hen coop, berry bushes, a well with a crank, the Rookery's boats pulled up on the beach.
-# Quest "Freehold" (9 steps): the landing, the founding board, three plank bundles, the well, a hen for the coop, the
+# Quest "Freehold" (16 steps): the landing, the founding board, three plank bundles, the well, a hen for the coop, the
 # first night.
 #
 # Points: the shoal 0 0 (r about 34, levelled at 1.5 round 0 0); the landing 0 -18; the founding board -3 -10; the hut
@@ -15,20 +15,30 @@ include lib_verdance
 include lib_highwater
 include lib_areas
 # RESIZE 10-24: Radius 34 -> 60 (Height 3 -> 3), the old content moved 5.3 -13.3 as one frame (push) so its sea side stays at the coast; the island grows behind it.
+# DEEP 10-24: Lookout Hill: Freehold's first watch on a hill over the shoal, the first squatters' hut drowned off the beach, and a founding bell.
+# DEEP 10-24: Radius 60 -> 80 (the user: Raft-big islands, 80-95), the old content frame moved on 7.4 -18.6 to stay at the coast.
 new
 gen Trees=0.25 Bushes=0.35 Rocks=0.2 Harvest=0.4 BeachThings=0.4
-gen Seed=13961 Radius=60 Height=3 Roughness=0.2 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0 BeachWidth=1
+gen Seed=13961 Radius=80 Height=3 Roughness=0.2 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0 BeachWidth=1
 gen Water=0.4 SeaRocks=0.2 SeaFinds=0.4 Sunken=0.1 Hostiles=0 Friendly=0.4 SeaLife=0.4
 generate
-push at 5.3 -13.3
+push at 12.7 -31.9
 
 # --- Terrain: the shoal levelled for building -------------------------------------------------------------------------
 brush flatten at 0 0 r=13 s=20 frames=300 h=1.5
 pop
+# --- DEEP 10-24 terrain: Lookout Hill (south-west, summit 26 m, base r 24), its trail, the drowned squatters' hut (-12 m) ------------
+call hw_mount x=-26 z=-54 b=24 h=26
+call hw_trail x=-26 z=-54 b=24 h=26 a0=25.71 turn=300 n=40 h0=3
+brush flatten at -25.09 -66.07 r=2.6 s=20 frames=200 h=14.5
+clear at -25.09 -66.07 r=3
+call hw_basin x=-74 z=6 r=14 h=-12
+brush flatten at -58 -22 r=4 s=8 frames=60
+clear at -58 -22 r=6
 brush flatten at -25.5 8.8 r=5 s=8 frames=40
 origin
 clear at -25.5 8.8 r=6
-push at 5.3 -13.3
+push at 12.7 -31.9
 clear at 0 0 r=13
 clear from 0 -10 to 0 -24 r=4
 
@@ -109,6 +119,56 @@ call ar_ruin x=-40 z=-16 h=3 yaw=0 al=squattershack
 call hw_note x=-37.5 z=-20.5 yaw=10 al=squatterslate
 call ar_plants_tropical x=30 z=35 r=12 seed=13182
 
+# --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Lookout Hill: Freehold's first watch on a hill over the shoal, the first squatters' hut drowned off the beach, and a founding bell. ------
+# the climb: the trail spirals up from the north-east foot; on the summit the Freehold lookout (7 storeys, a ladder inside), its deck chest
+# and a zipline down to the hub (the shortcut back); the dive: the squatters' hut on a basin floor -12 m down, an air pocket
+# in its front room; the hub: the Founding bell that wants both, the notice; secrets: the trail ledge cache, the summit treasure,
+# the sunk boat's crate
+call hw_zone x=-15.15 z=-31.47 al=fh_trailz id=fh_trail r=5 msg="The trail up Lookout Hill starts here - cut into the slope, round and up."
+call hw_zone x=-26 z=-54 al=fh_summitz id=fh_summit r=8 h=1 msg="The top of Lookout Hill. The whole island below, the city beyond it, and the Freehold lookout still higher."
+call hw_mast x=-23.17 z=-56.83 h0=26 lv=7 a=fh_mast chest=fh_topchest top=Placeable_Flag_05
+place ZiplinePath_Landmark fh_zip at -25.26 -52.37 h=27.35
+zipto fh_zip -55.17 -24.83
+place Loot_ChestSmall fh_ledge at -25.09 -66.07 ground sit yaw=355.71
+call treasure x=-23.17 z=-51.17 r=5 n=1 seed=14038 kind=0
+prop treasure14038 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+place Creature_Goat fh_goats at -11.62 -27.94 ground
+prop fh_goats creature.count=2
+place Creature_Goat fh_summitgoat at -28.12 -56.12 ground
+prop fh_summitgoat creature.count=1
+scatter "Pickup_Landmark_Copper 1" 2 at -26 -54 r=20 seed=14042 free=2
+scatter "Pickup_Landmark_Clay 1" 2 at -26 -54 r=22 seed=14043 free=2
+scatter "Pickup_Landmark_Rock 1" 2 at -26 -54 r=18 seed=14044 free=2
+call hw_sunkhouse x=-74 z=6 h=-12 yaw=0 a=fh_sunk chest=fh_deepchest air=fh_air bub=fh_airbub dal=fh_sunkdoor
+call hw_zone x=-74 z=6 al=fh_deepz id=fh_deep r=7 h=1 msg="The squatters' hut, 12 metres down. The front room still holds a pocket of air."
+place RT_PlasticBoat fh_sunkboat at -66 8 ground sit yaw=35
+prop fh_sunkboat tint.color=#5a5048
+prop fh_sunkboat tint.amount=0.45
+place Loot_Crate fh_boatcrate at -67 2 ground sit yaw=10
+prop fh_boatcrate loot.refill=0
+call hw_reef x=-81 z=11 r=3 seed=14046
+place Creature_PufferFish fh_puffers at -80 -1 h=-8
+prop fh_puffers creature.count=2
+call hw_machine x=-58 z=-22 yaw=135 al=fh_machine nm="Founding bell" obj=TP_LaserControlPanel_lever sc=3 a=fh_top b=fh_deep done=fh_fixed rew=fh_rewchest rnote=fh_rewnote msg="It works." hint="It needs the spyglass from the top of Lookout Hill and the cash tin from the squatters' hut."
+call hw_note x=-60.83 z=-22.71 yaw=155 al=fh_hint
+story fh_top|Spyglass|Bolt|The old lookout's brass spyglass.
+story fh_deep|Cash tin|Bolt|The first squatters' cash tin, drowned with their hut.
+story fh_fixed|Founding bell working|Bolt|The founding bell, working again.
+note fh_hint Founders' notice | The founding bell rings when Freehold has a watch and a purse: the spyglass from the lookout on Lookout Hill, and the cash tin from the first squatters' hut, drowned off the west beach.
+note fh_topchest Freehold lookout deck box | A box lashed to the deck rail at the top of the Freehold lookout.
+loot fh_topchest story:fh_top*1;Scrap*2;Bolt*2
+note fh_deepchest Squatters' hut strongbox | A strongbox in the back room of the squatters' hut.
+loot fh_deepchest story:fh_deep*1;TradeToken*2;Plastic*2
+note fh_rewnote Freehold's charter | The founding bell rings. Everyone stops work. Under the bell: a charter in many hands - Freehold belongs to whoever builds it.
+note fh_rewchest Founding bell reward | What the founding bell kept.
+loot fh_rewchest TradeToken*3;Seed_Grass*2;Rope*2
+note fh_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
+loot fh_ledge Rope*2;Bolt*2;Scrap*2
+prop fh_ledge loot.refill=0
+loot fh_boatcrate Plastic*3;Scrap*2;MetalIngot*1
+prop fh_ledge if.open=has|Tangaroa_KeyCard|1
+prop fh_ledge else.open=message||A card lock on the box - a Tangaroa keycard would open it.
+
 # --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
 info title=Freehold Shoal
 info author=Custom Islands
@@ -159,6 +219,13 @@ step catch|Chicken|1|Catch a hen for the coop
 step reach|dune_top|1|Climb the dune on the north side of the shoal
 step read|Old squatter's slate|1|Read the slate in the old squatter's shack in the west
 step open|Hauled-up van's crate|1|Open the crate in the van the Freeholders hauled up
+step read|Founders' notice|1|Read the founders' notice by the founding bell in the west
+step reach|fh_trail|1|Find the foot of the trail up Lookout Hill, in the south-west
+step reach|fh_summit|1|Climb the trail to the top of Lookout Hill
+step collect|story:fh_top|1|Climb the Freehold lookout and take the spyglass from its deck
+step reach|fh_deep|1|Dive to the squatters' hut off the west shore
+step collect|story:fh_deep|1|Find the cash tin in its back room
+step read|Freehold's charter|1|Bring both to the founding bell and read what it shows
 step read|Freehold's first night|1|Read the note by the first fire
 quest done=The Freehold has its first night. Highwater is behind you - and somewhere south, on the old Concord band, a signal is still calling.
 quest reward=HoneyComb*2;TradeToken*4

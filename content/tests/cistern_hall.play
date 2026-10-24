@@ -38,6 +38,47 @@ expect step 11
 open Records van's crate
 wait 3
 expect step 12
+# DEEP 10-24: the notice, the climb, the dive, the sluice lever
+expect hidden ch_rewchest
+use ch_machine
+expect hidden ch_rewchest
+read Sluicekeeper's notice
+expect step 13
+zone ch_trail
+expect step 14
+# (the ledge cache wants a keycard)
+zone ch_summit
+expect step 15
+expect stand -46.37 -42.11 h=40
+open Surge tower deck box
+wait 3
+expect story ch_top 1
+expect step 16
+zone ch_deep
+expect step 17
+expect stand 27 -86 h=-16
+open Settling house strongbox
+wait 3
+expect story ch_deep 1
+expect step 18
+use ch_machine
+expect shown ch_rewchest
+expect story ch_fixed 1
+open Sluice lever reward
+wait 3
+read Sluicekeeper's figures
+expect step 19
+use ch_g1
+expect hidden ch_pumpchest
+use ch_g3
+use ch_g1
+use ch_g4
+use ch_g2
+expect shown ch_pumpchest
+expect story ch_gates 1
+expect step 20
+open Pump-keeper's chest
+wait 3
 open Councillor's drawer
 wait 3
 expect done

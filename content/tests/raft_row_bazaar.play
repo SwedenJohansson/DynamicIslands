@@ -41,5 +41,43 @@ wait 3
 expect step 12
 zone pedlars_cave
 expect step 13
+# DEEP 10-24: the notice, the climb, the dive, the crier's box
+expect hidden rb_rewchest
+use rb_machine
+expect hidden rb_rewchest
+read Market crier's notice
+expect step 14
+zone rb_trail
+expect step 15
+openat -55.78 58.48
+zone rb_summit
+expect step 16
+expect stand -49.07 57.2 h=30
+open Pedlars' bell tower deck box
+wait 3
+expect story rb_top 1
+expect step 17
+zone rb_deep
+expect step 18
+expect stand -75 -20 h=-12
+open Sunk arcade strongbox
+wait 3
+expect story rb_deep 1
+expect step 19
+use rb_machine
+expect shown rb_rewchest
+expect story rb_fixed 1
+open Crier's box reward
+wait 3
+read Crier's ledger
+expect step 20
+code rb_strongpad 1111 wrong
+expect hidden rb_strongchest
+code rb_strongpad 8523
+expect shown rb_strongchest
+expect story rb_strong 1
+expect step 21
+open Crier's strongbox
+wait 3
 read Merchant's warning
 expect done

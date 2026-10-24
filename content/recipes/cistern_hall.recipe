@@ -2,7 +2,7 @@
 # The Authority's main tower: its roof is the island's top (planters, a sand bed, something buried in it); at its foot
 # the old cistern lies open to the sea - a basin six metres deep, walkways on stone legs over the water, the pump house
 # with the oldest pump in the city, the smelter workshop on its own platform, the councillor's office, and down in the
-# water the flooded valve gallery with two pockets of air. Quest "The Evidence" (13 steps): the intake, the cistern
+# water the flooded valve gallery with two pockets of air. Quest "The Evidence" (21 steps): the intake, the cistern
 # ledger, the electric smelter's plans, the valve gallery, the valve log (the evidence), the advanced biofuel
 # extractor's plans, the old pump (the camera on its plate), the builder's plate, the advanced anchor's plans, the
 # councillor's drawer.
@@ -19,6 +19,7 @@ include lib_verdance
 include lib_highwater
 include lib_areas
 # RESIZE 10-24: Radius 40 -> 85 (Height 7 -> 7), the old content moved 4.9 -24.3 as one frame (push) so its sea side stays at the coast; the island grows behind it.
+# DEEP 10-24: Overflow Tor: a surge tower over the cistern, a settling house drowned in the south, and sluice gates that must be pulled in the right order.
 new
 gen Trees=0.1 Bushes=0.2 Rocks=0.4 Harvest=0.2 BeachThings=0.25
 gen Seed=13701 Radius=85 Height=7 Roughness=0.25 Peaks=1 Shape=0 Style=0 PeakShape=0.4 Cliffs=0.3 BeachWidth=0.5
@@ -31,7 +32,18 @@ brush flatten at 0 12 r=12 s=20 frames=300 h=6
 brush flatten at 0 -28 r=16 s=20 frames=400 h=-6
 # (the smelter workshop's roof at 15 -22 stood under 2 m of the slope: a shelf cut for it - X7, 2026-10-24)
 brush flatten at 13 -20 r=10 s=20 frames=400 h=0.4
+# (REACH 10-24: the intake causeway with the ledger and the councillor's office stood in the basin rim)
+brush flatten from 0 -10 to 0 -17 r=3 s=20 frames=200 h=0.3
+brush flatten at -9 -22 r=7 s=20 frames=300 h=0.95
 pop
+# --- DEEP 10-24 terrain: Overflow Tor (south-west, summit 40 m, base r 28), its trail, the drowned settling house (-16 m) ------------
+call hw_mount x=-42 z=-38 b=28 h=40
+call hw_trail x=-42 z=-38 b=28 h=40 a0=47.86 turn=300 n=40 h0=3
+brush flatten at -46.32 -51.42 r=2.6 s=20 frames=200 h=21.5
+clear at -46.32 -51.42 r=3
+call hw_basin x=22 z=-80 r=14 h=-16
+brush flatten at -10 -72 r=4 s=8 frames=60
+clear at -10 -72 r=6
 brush flatten at -34 11.7 r=5 s=8 frames=40
 origin
 clear at -34 11.7 r=6
@@ -169,6 +181,92 @@ prop pumpvault beh.hidden=1
 call ar_plants_tropical x=55 z=-30 r=14 seed=13721
 place Creature_Chicken hens at 30 48 ground
 
+# --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Overflow Tor: a surge tower over the cistern, a settling house drowned in the south, and sluice gates that must be pulled in the right order. ------
+# the climb: the trail spirals up from the north-east foot; on the summit the surge tower (10 storeys, a ladder inside), its deck chest
+# and a zipline down to the hub (the shortcut back); the dive: the settling house on a basin floor -16 m down, an air pocket
+# in its front room; the hub: the Sluice lever that wants both, the notice; secrets: the trail ledge cache, the summit treasure,
+# the sunk boat's crate
+call hw_zone x=-20.5 z=-18.54 al=ch_trailz id=ch_trail r=5 msg="The trail up Overflow Tor starts here - cut into the slope, round and up."
+call hw_zone x=-42 z=-38 al=ch_summitz id=ch_summit r=8 h=1 msg="The top of Overflow Tor. The whole island below, the city beyond it, and the surge tower still higher."
+call hw_mast x=-44.74 z=-35.09 h0=40 lv=10 a=ch_mast chest=ch_topchest top=RT_CommRadio
+place ZiplinePath_Landmark ch_zip at -37.08 -40.67 h=41.35
+zipto ch_zip -12.74 -69.09
+place Loot_ChestSmall ch_ledge at -46.32 -51.42 ground sit yaw=17.86
+call treasure x=-44.91 z=-40.74 r=5 n=1 seed=13778 kind=0
+prop treasure13778 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+place Creature_Goat ch_goats at -24.14 -21.97 ground
+prop ch_goats creature.count=2
+place Creature_Goat ch_summitgoat at -39.82 -35.94 ground
+prop ch_summitgoat creature.count=1
+scatter "Pickup_Landmark_Copper 1" 2 at -42 -38 r=24 seed=13782 free=2
+scatter "Pickup_Landmark_Clay 1" 2 at -42 -38 r=26 seed=13783 free=2
+scatter "Pickup_Landmark_Rock 1" 2 at -42 -38 r=22 seed=13784 free=2
+call hw_sunkhouse x=22 z=-80 h=-16 yaw=0 a=ch_sunk chest=ch_deepchest air=ch_air bub=ch_airbub dal=ch_sunkdoor
+call hw_zone x=22 z=-80 al=ch_deepz id=ch_deep r=7 h=1 msg="The settling house, 16 metres down. The front room still holds a pocket of air."
+place RT_PlasticBoat ch_sunkboat at 30 -78 ground sit yaw=35
+prop ch_sunkboat tint.color=#5a5048
+prop ch_sunkboat tint.amount=0.45
+place Loot_Crate ch_boatcrate at 29 -84 ground sit yaw=10
+prop ch_boatcrate loot.refill=0
+call hw_reef x=15 z=-75 r=3 seed=13786
+place Creature_PufferFish ch_puffers at 16 -87 h=-12
+prop ch_puffers creature.count=2
+call hw_machine x=-10 z=-72 yaw=-43.26 al=ch_machine nm="Sluice lever" obj=TP_LaserControlPanel_lever sc=3 a=ch_top b=ch_deep done=ch_fixed rew=ch_rewchest rnote=ch_rewnote msg="It works." hint="It needs the surge gauge from the top of Overflow Tor and the tank plug from the settling house."
+call hw_note x=-7.15 z=-71.38 yaw=-23.26 al=ch_hint
+# the sluices: four levers by the hub, pulled in the pump-keeper's order (the reward note); a lever out of
+# turn will not move. UPGRADE-AFTER-MECH: a real sequence lock with a reset when that mechanic exists
+place RT_Pillar - at -3.95 -73.17 ground sit sy=0.4
+place TP_LaserControlPanel_lever ch_g1 at -3.95 -73.17 ground y=1.25 scale=3 yaw=47.86
+prop ch_g1 obj.name=ch_g1
+prop ch_g1 beh.use=Pull sluice 1
+prop ch_g1 if.use=signal|ch_g3\n!signal|ch_g1
+prop ch_g1 on.use=signal||ch_g1\nmessage||Sluice 1 grinds open.
+prop ch_g1 else.use=message||The sluice will not move - the water still pushes against it. The order matters.
+place RT_Pillar - at -5.7 -74.82 ground sit sy=0.4
+place TP_LaserControlPanel_lever ch_g2 at -5.7 -74.82 ground y=1.25 scale=3 yaw=47.86
+prop ch_g2 obj.name=ch_g2
+prop ch_g2 beh.use=Pull sluice 2
+prop ch_g2 if.use=signal|ch_g4\n!signal|ch_g2
+prop ch_g2 on.use=signal||ch_g2\ngive||story:ch_gates*1\nshow|ch_pumpchest\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The last sluice opens - the old pump hall drains, and its keeper's chest stands dry.
+prop ch_g2 else.use=message||The sluice will not move - the water still pushes against it. The order matters.
+place RT_Pillar - at -7.45 -76.46 ground sit sy=0.4
+place TP_LaserControlPanel_lever ch_g3 at -7.45 -76.46 ground y=1.25 scale=3 yaw=47.86
+prop ch_g3 obj.name=ch_g3
+prop ch_g3 beh.use=Pull sluice 3
+prop ch_g3 if.use=!signal|ch_g3
+prop ch_g3 on.use=signal||ch_g3\nmessage||Sluice 3 grinds open.
+prop ch_g3 else.use=message||The sluice will not move - the water still pushes against it. The order matters.
+place RT_Pillar - at -9.19 -78.11 ground sit sy=0.4
+place TP_LaserControlPanel_lever ch_g4 at -9.19 -78.11 ground y=1.25 scale=3 yaw=47.86
+prop ch_g4 obj.name=ch_g4
+prop ch_g4 beh.use=Pull sluice 4
+prop ch_g4 if.use=signal|ch_g1\n!signal|ch_g4
+prop ch_g4 on.use=signal||ch_g4\nmessage||Sluice 4 grinds open.
+prop ch_g4 else.use=message||The sluice will not move - the water still pushes against it. The order matters.
+place Loot_Chest ch_pumpchest at -4.52 -77.83 ground sit yaw=47.86
+prop ch_pumpchest beh.hidden=1
+prop ch_pumpchest loot.refill=0
+story ch_top|Surge gauge|Bolt|The surge tower's gauge - it shows the cistern's real level.
+story ch_deep|Tank plug|Bolt|The settling house's bronze tank plug.
+story ch_fixed|Sluice lever working|Bolt|The sluice lever, working again.
+story ch_gates|Sluices open|Bolt|The four sluices of the pump hall, opened in the keeper's order.
+note ch_hint Sluicekeeper's notice | The overflow sluice wants its gauge (up the surge tower on Overflow Tor) and its tank plug (in the settling house, drowned off the south shore).
+note ch_topchest Surge tower deck box | A box lashed to the deck rail at the top of the surge tower.
+loot ch_topchest story:ch_top*1;Scrap*2;Rope*2
+note ch_deepchest Settling house strongbox | A strongbox in the back room of the settling house.
+loot ch_deepchest story:ch_deep*1;MetalIngot*2;Plastic*1
+note ch_rewnote Sluicekeeper's figures | The sluice opens and the cistern drains a hand's width. The figures: the Authority kept the cistern full and the Rookery's barrels empty, on purpose. Scratched inside the lid, the keeper's sluice order: 3 - 1 - 4 - 2.
+note ch_rewchest Sluice lever reward | What the sluice lever kept.
+loot ch_rewchest CopperIngot*2;Battery*1;TradeToken*2
+note ch_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
+loot ch_ledge Rope*2;Bolt*2;Scrap*2
+prop ch_ledge loot.refill=0
+loot ch_boatcrate Plastic*3;Scrap*2;MetalIngot*1
+note ch_pumpchest Pump-keeper's chest | The pump-keeper's chest, dry for the first time in years.
+loot ch_pumpchest TradeToken*3;MetalIngot*2;Glass*2
+prop ch_ledge if.open=has|Tangaroa_KeyCard|1
+prop ch_ledge else.open=message||A card lock on the box - a Tangaroa keycard would open it.
+
 # --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
 info title=Cistern Hall
 info author=Custom Islands
@@ -233,6 +331,14 @@ step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced anchor's p
 step reach|aqueduct_hill|1|Climb aqueduct hill in the north-west
 step read|Waterman's diary|1|Read the waterman's diary in his lodge in the north-east
 step open|Records van's crate|1|Open the crate in the Authority's records van on the east shore
+step read|Sluicekeeper's notice|1|Read the sluicekeeper's notice by the sluice lever in the south
+step reach|ch_trail|1|Find the foot of the trail up Overflow Tor, in the south-west
+step reach|ch_summit|1|Climb the trail to the top of Overflow Tor
+step collect|story:ch_top|1|Climb the surge tower and take the surge gauge from its deck
+step reach|ch_deep|1|Dive to the settling house off the south shore
+step collect|story:ch_deep|1|Find the tank plug in its back room
+step read|Sluicekeeper's figures|1|Bring both to the sluice lever and read what it shows
+step collect|story:ch_gates|1|Open the four sluices by the hub in the pump-keeper's order
 step open|Councillor's drawer|1|Open the councillor's drawer in his office
 quest done=Every faction signed. The Rookery - the people who live on the city's lowest roofs - should hear it first. Band 800.
 quest reward=CopperOre*3;CaveMushroom*2

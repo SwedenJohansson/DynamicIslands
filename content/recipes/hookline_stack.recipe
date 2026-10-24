@@ -2,7 +2,7 @@
 # The Salvagers' Union: a half-sunk office block's top floor is the Union hall, a crane on its roof; two more cranes
 # stand over the sorting yard - scrap piles, ore crates, potato planters - and a barge of clay and sand lies moored
 # off the yard. A zipline runs from the hall's roof crane to the third crane. A memorial wall names the lost divers; a
-# dive rope hangs off the jetty into the drowned street below. Quest "The Salvagers' Union" (11 steps): the hall, the
+# dive rope hangs off the jetty into the drowned street below. Quest "The Salvagers' Union" (18 steps): the hall, the
 # Union's charter, the engine controls' plans, the zipline to crane three, the metal detector's plans, the flare
 # store's firework plans, the zipline's plans in the crane cab. Contract "Lost Below" (4): the missing expedition
 # notice, the dive rope, two salvage tags off the street below, the Union's receipt (unionfriend).
@@ -17,6 +17,7 @@ include lib_highwater
 include lib_areas
 include lib_features
 # RESIZE 10-24b: Radius 36 -> 85 (Height 4 -> 5), the old content moved -42.3 -24.9 as one frame (push) so its sea side stays at
+# DEEP 10-24: Scrapjaw Heights: a scrap mountain with an old excavator at the top of a boom ladder, the Union strongroom sixteen metres down, and three cranes woken by one console.
 # the coast; the island grows behind it. The jetty and its drowned street stay on the coast (south-west); the clay barge and the two reefs were moved out to the new south and west coasts.
 new
 gen Trees=0.2 Bushes=0.25 Rocks=0.43 Harvest=0.24 BeachThings=0.35
@@ -28,7 +29,17 @@ push at -42.3 -24.9
 # --- Terrain: the hall's and the yard's levels -------------------------------------------------------------------------
 brush flatten at 0 -14 r=11 s=20 frames=300 h=2
 brush flatten at 18 10 r=12 s=20 frames=300 h=2
+# (REACH 10-24: the office storey with the flare store stood in the slope - a pad cut for it)
+brush flatten at 2 2 r=8 s=20 frames=300 h=2
 pop
+# --- DEEP 10-24 terrain: Scrapjaw Heights (south, summit 36 m, base r 27), its trail, the drowned Union strongroom (-16 m) ------------
+call hw_mount x=-4 z=-52 b=27 h=36
+call hw_trail x=-4 z=-52 b=27 h=36 a0=4.4 turn=300 n=40 h0=3
+brush flatten at 1.88 -64.26 r=2.6 s=20 frames=200 h=19.5
+clear at 1.88 -64.26 r=3
+call hw_basin x=70 z=-22 r=14 h=-16
+brush flatten at 34 -22 r=4 s=8 frames=60
+clear at 34 -22 r=6
 origin
 push at -42.3 -24.9
 clear at 0 -16 r=10
@@ -140,6 +151,58 @@ call hw_zone x=-62 z=40 al=divercavezone id=divers_cave r=4 msg="The divers' dry
 call ar_plants_tropical x=-45 z=55 r=14 seed=13421
 call ar_plants_tropical x=60 z=40 r=12 seed=13431
 
+# --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Scrapjaw Heights: a scrap mountain with an old excavator at the top of a boom ladder, the Union strongroom sixteen metres down, and three cranes woken by one console. ------
+# the climb: the trail spirals up from the north foot; on the summit the dragline's boom ladder (11 storeys, a ladder inside), its deck chest
+# and a zipline down to the hub (the shortcut back); the dive: the Union strongroom on a basin floor -16 m down, an air pocket
+# in its front room; the hub: the Crane console that wants both, the notice; secrets: the trail ledge cache, the summit treasure,
+# the sunk boat's crate
+call hw_zone x=-1.85 z=-24.08 al=hk_trailz id=hk_trail r=5 msg="The trail up Scrapjaw Heights starts here - cut into the slope, round and up."
+call hw_zone x=-4 z=-52 al=hk_summitz id=hk_summit r=8 h=1 msg="The top of Scrapjaw Heights. The whole island below, the city beyond it, and the dragline's boom ladder still higher."
+call hw_mast x=-7.14 z=-54.48 h0=36 lv=11 a=hk_mast chest=hk_topchest top=Placeable_Lantern_Metal
+place ZiplinePath_Landmark hk_zip at 1.21 -50.63 h=37.35
+zipto hk_zip 30.86 -24.48
+place Loot_ChestSmall hk_ledge at 1.88 -64.26 ground sit yaw=334.4
+call treasure x=-1.52 z=-55.14 r=5 n=1 seed=13478 kind=0
+prop treasure13478 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+place Creature_Goat hk_goats at 1.25 -28.01 ground
+prop hk_goats creature.count=2
+place Creature_Goat hk_summitgoat at -5.86 -49.65 ground
+prop hk_summitgoat creature.count=1
+scatter "Pickup_Landmark_Copper 1" 2 at -4 -52 r=23 seed=13482 free=2
+scatter "Pickup_Landmark_Clay 1" 2 at -4 -52 r=25 seed=13483 free=2
+scatter "Pickup_Landmark_Rock 1" 2 at -4 -52 r=21 seed=13484 free=2
+place VP_Excavator hk_dragline at -6.19 -18.59 ground sit yaw=94.4
+prop hk_dragline tint.color=#6a5a48
+prop hk_dragline tint.amount=0.4
+call hw_sunkhouse x=70 z=-22 h=-16 yaw=0 a=hk_sunk chest=hk_deepchest air=hk_air bub=hk_airbub dal=hk_sunkdoor
+call hw_zone x=70 z=-22 al=hk_deepz id=hk_deep r=7 h=1 msg="The Union strongroom, 16 metres down. The front room still holds a pocket of air."
+place RT_PlasticBoat hk_sunkboat at 78 -20 ground sit yaw=35
+prop hk_sunkboat tint.color=#5a5048
+prop hk_sunkboat tint.amount=0.45
+place Loot_Crate hk_boatcrate at 77 -26 ground sit yaw=10
+prop hk_boatcrate loot.refill=0
+call hw_reef x=63 z=-17 r=3 seed=13486
+place Creature_PufferFish hk_puffers at 64 -29 h=-12
+prop hk_puffers creature.count=2
+call hw_machine x=34 z=-22 yaw=-128.29 al=hk_machine nm="Crane console" obj=RT_PowerBox sc=1 a=hk_top b=hk_deep done=hk_fixed rew=hk_rewchest rnote=hk_rewnote msg="It works." hint="It needs the dragline ignition key from the top of Scrapjaw Heights and the strongroom ledger from the Union strongroom."
+call hw_note x=33.63 z=-19.11 yaw=-108.29 al=hk_hint
+story hk_top|Dragline ignition key|Bolt|The big dragline's ignition key, hung on a nail at the top of its boom ladder.
+story hk_deep|Strongroom ledger|Bolt|The Union's drowned ledger, sealed in oilcloth.
+story hk_fixed|Crane console working|Bolt|The crane console, working again.
+story tape|Insulating tape|Bolt|A roll of the Union linesmen's insulating tape. Three of them would make a dead breaker safe.
+note hk_hint Yard foreman's notice | Crane console is locked out. It wants the dragline's ignition key (top of the boom ladder on Scrapjaw Heights) and the strongroom ledger with the yard codes - the old strongroom is sixteen metres down off the east yard. Take a bottle.
+note hk_topchest Dragline's boom ladder deck box | A box lashed to the deck rail at the top of the dragline's boom ladder.
+loot hk_topchest story:hk_top*1;Scrap*3;Bolt*2
+note hk_deepchest Union strongroom strongbox | A strongbox in the back room of the Union strongroom.
+loot hk_deepchest story:hk_deep*1;story:tape*1;MetalIngot*2
+note hk_rewnote Union yard codes | The console lights up and all three cranes swing. In its drawer: the Union's yard codes and a list of every diver the Union never paid.
+note hk_rewchest Crane console reward | What the crane console kept.
+loot hk_rewchest CopperIngot*2;CircuitBoard*1;TradeToken*2
+note hk_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
+loot hk_ledge Rope*2;Bolt*2;Scrap*2
+prop hk_ledge loot.refill=0
+loot hk_boatcrate Plastic*3;Scrap*2;MetalIngot*1
+
 # --- Settings, story items, notes, behaviours, quests -----------------------------------------------------------------
 info title=Hookline Stack
 info author=Custom Islands
@@ -222,6 +285,13 @@ step reach|spoil_heap|1|Climb the spoil heap east of the yard
 step open|Toppled crane's toolbox|1|Open the toolbox of the toppled crane in the south-east
 step read|Tally book|1|Read the Union's tally book in the old tally house in the north
 step reach|divers_cave|1|Find the divers' drying cave in the west
+step read|Yard foreman's notice|1|Read the yard foreman's notice by the crane console in the south-east
+step reach|hk_trail|1|Find the foot of the trail up Scrapjaw Heights, in the south
+step reach|hk_summit|1|Climb the trail to the top of Scrapjaw Heights
+step collect|story:hk_top|1|Climb the dragline's boom ladder and take the dragline ignition key from its deck
+step reach|hk_deep|1|Dive to the Union strongroom off the east shore
+step collect|story:hk_deep|1|Find the strongroom ledger in its back room
+step read|Union yard codes|1|Bring both to the crane console and read what it shows
 step blueprint|Blueprint_ZiplineBase|1|Take the zipline's plans from crane three's cab
 quest done=The Union trusts its own and few others. The Authority's waterworks, Pumpcrown, answers on band 900 - for a raft with an engine.
 quest reward=Scrap*4;MetalOre*3;Clay*3;Sand*3

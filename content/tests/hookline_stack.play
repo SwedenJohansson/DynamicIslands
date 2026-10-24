@@ -30,6 +30,36 @@ read Tally book
 expect step 9
 zone divers_cave
 expect step 10
+# DEEP 10-24: the notice, the climb, the dive, the crane console
+expect hidden hk_rewchest
+use hk_machine
+expect hidden hk_rewchest
+read Yard foreman's notice
+expect step 11
+zone hk_trail
+expect step 12
+openat 1.88 -64.26
+zone hk_summit
+expect step 13
+expect stand -0.28 -56.71 h=36
+open Dragline's boom ladder deck box
+wait 3
+expect story hk_top 1
+expect step 14
+zone hk_deep
+expect step 15
+expect stand 75 -28 h=-16
+open Union strongroom strongbox
+wait 3
+expect story hk_deep 1
+expect step 16
+use hk_machine
+expect shown hk_rewchest
+expect story hk_fixed 1
+open Crane console reward
+wait 3
+read Union yard codes
+expect step 17
 open Crane cab
 wait 3
 expect done

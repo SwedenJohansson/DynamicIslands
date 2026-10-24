@@ -2,7 +2,7 @@
 # Highwater's black market: a raft of Raft's own foundations lashed between four drowned towers' roofs off a small green
 # key, stalls under wooden roofs, string lights, flags, a vending machine on the key. The key is the market's garden:
 # hens and goats, flowers in five colours, pineapples, watermelons, strawberries and beet planters. Quest "Prices
-# Without Rules" (14 steps): the market, the price board, the engine stall's plans (motor wheel), the shortage list,
+# Without Rules" (22 steps): the market, the price board, the engine stall's plans (motor wheel), the shortage list,
 # the Free Fleet's stall, the steering wheel's plans, the merchant's back room (key from his drawer), the withheld
 # stock ledger, a hen for the Fleet's coop, the merchant's warning.
 #
@@ -16,6 +16,7 @@ include lib_huts
 include lib_highwater
 include lib_areas
 # RESIZE 10-24: Radius 40 -> 85 (Height 5 -> 5), the old content moved 0 24.8 as one frame (push) so its sea side stays at the coast; the island grows behind it.
+# DEEP 10-24: Tin Peak: the pedlars climb to ring a bell over the market, the arcade lies drowned under the west shore, and the market's own stall numbers open its strongbox.
 new
 gen Trees=0.28 Bushes=0.3 Rocks=0.3 Harvest=0.4 BeachThings=0.25
 gen Seed=13201 Radius=85 Height=5 Roughness=0.25 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.1 BeachWidth=0.6
@@ -29,6 +30,14 @@ brush grass at -4 4 r=14 s=3 frames=30
 # (a sandbar under the causeway's far end, whose foundations stood up to 0.9 m over a hollow)
 brush flatten at 0 43 r=3.5 s=20 frames=200 h=-0.5
 pop
+# --- DEEP 10-24 terrain: Tin Peak (north-west, summit 30 m, base r 25), its trail, the drowned sunk arcade (-12 m) ------------
+call hw_mount x=-44 z=54 b=25 h=30
+call hw_trail x=-44 z=54 b=25 h=30 a0=140.83 turn=300 n=40 h0=3
+brush flatten at -55.78 58.48 r=2.6 s=20 frames=200 h=16.5
+clear at -55.78 58.48 r=3
+call hw_basin x=-80 z=-14 r=14 h=-12
+brush flatten at -68 16 r=4 s=8 frames=60
+clear at -68 16 r=6
 brush flatten at -4.7 -29.6 r=5 s=8 frames=40
 origin
 clear at -4.7 -29.6 r=6
@@ -167,6 +176,77 @@ call cagecache x=20 z=-38 yaw=200 alias=pedlarcage sig=pedlarcage chest=pedlarca
 call ar_plants_tropical x=-50 z=-55 r=12 seed=13231
 call ar_plants_tropical x=40 z=-65 r=12 seed=13241
 
+# --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Tin Peak: the pedlars climb to ring a bell over the market, the arcade lies drowned under the west shore, and the market's own stall numbers open its strongbox. ------
+# the climb: the trail spirals up from the south-east foot; on the summit the pedlars' bell tower (8 storeys, a ladder inside), its deck chest
+# and a zipline down to the hub (the shortcut back); the dive: the sunk arcade on a basin floor -12 m down, an air pocket
+# in its front room; the hub: the Crier's box that wants both, the notice; secrets: the trail ledge cache, the summit treasure,
+# the sunk boat's crate
+call hw_zone x=-27.58 z=33.84 al=rb_trailz id=rb_trail r=5 msg="The trail up Tin Peak starts here - cut into the slope, round and up."
+call hw_zone x=-44 z=54 al=rb_summitz id=rb_summit r=8 h=1 msg="The top of Tin Peak. The whole island below, the city beyond it, and the pedlars' bell tower still higher."
+call hw_mast x=-41.86 z=57.38 h0=30 lv=8 a=rb_mast chest=rb_topchest top=Placeable_Flag_03
+place ZiplinePath_Landmark rb_zip at -42.74 50.97 h=31.35
+zipto rb_zip -65.86 19.38
+place Loot_ChestSmall rb_ledge at -55.78 58.48 ground sit yaw=110.83
+call treasure x=-47.38 z=56.14 r=5 n=1 seed=13278 kind=0
+prop treasure13278 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+place Creature_Goat rb_goats at -31.8 36.51 ground
+prop rb_goats creature.count=2
+place Creature_Goat rb_summitgoat at -41.46 52.4 ground
+prop rb_summitgoat creature.count=1
+scatter "Pickup_Landmark_Copper 1" 2 at -44 54 r=21 seed=13282 free=2
+scatter "Pickup_Landmark_Clay 1" 2 at -44 54 r=23 seed=13283 free=2
+scatter "Pickup_Landmark_Rock 1" 2 at -44 54 r=19 seed=13284 free=2
+call hw_sunkhouse x=-80 z=-14 h=-12 yaw=0 a=rb_sunk chest=rb_deepchest air=rb_air bub=rb_airbub dal=rb_sunkdoor
+call hw_zone x=-80 z=-14 al=rb_deepz id=rb_deep r=7 h=1 msg="The sunk arcade, 12 metres down. The front room still holds a pocket of air."
+place RT_PlasticBoat rb_sunkboat at -72 -12 ground sit yaw=35
+prop rb_sunkboat tint.color=#5a5048
+prop rb_sunkboat tint.amount=0.45
+place Loot_Crate rb_boatcrate at -73 -18 ground sit yaw=10
+prop rb_boatcrate loot.refill=0
+call hw_reef x=-87 z=-9 r=3 seed=13286
+place Creature_PufferFish rb_puffers at -86 -21 h=-8
+prop rb_puffers creature.count=2
+call hw_machine x=-68 z=16 yaw=32.28 al=rb_machine nm="Crier's box" obj=RT_PowerBox sc=1 a=rb_top b=rb_deep done=rb_fixed rew=rb_rewchest rnote=rb_rewnote msg="It works." hint="It needs the bell clapper from the top of Tin Peak and the arcade till key from the sunk arcade."
+call hw_note x=-66.69 z=13.4 yaw=52.28 al=rb_hint
+# the stall code: four row signs (the trail foot, the summit, the sunk arcade, the stalls) each give a stall
+# number; the crier's ledger gives the rows' order - the crier's strongbox keypad wants the four numbers
+place Note_Sign rb_rowA at -25.08 36.34 ground sit yaw=140.83
+place Note_Sign rb_rowB at -41.5 56.5 ground sit yaw=140.83
+place Note_Sign rb_rowC at -81.5 -6.5 ground sit yaw=140.83
+place Note_Sign rb_rowD at -72.17 19.17 ground sit yaw=140.83
+place RT_Pillar - at -61.86 14.49 ground sit sy=0.4
+place RT_PowerBox rb_strongpad at -61.86 14.49 ground y=1.25 yaw=140.83
+prop rb_strongpad obj.name=rb_strongpad
+prop rb_strongpad beh.use=Type the strongbox's stall code
+prop rb_strongpad lock.code=8523
+prop rb_strongpad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nshow|rb_strongchest\ngive||story:rb_strong*1\nmessage||Four clicks - the crier's strongbox unlocks.
+prop rb_strongpad else.use=message||Four digits. A stall number from each market row, in the crier's order.
+place Loot_ChestLarge rb_strongchest at -63.55 15.56 ground sit yaw=320.83
+prop rb_strongchest beh.hidden=1
+prop rb_strongchest loot.refill=0
+story rb_top|Bell clapper|Bolt|The bell tower's iron clapper, taken down so the bell could not ring.
+story rb_deep|Arcade till key|Bolt|The till key of the old shopping arcade under the west shore.
+story rb_fixed|Crier's box working|Bolt|The crier's box, working again.
+story rb_strong|Crier's strongbox open|Bolt|The crier's strongbox, opened with the market's own stall numbers.
+note rb_hint Market crier's notice | The crier's box has been quiet since the arcade sank. Its bell clapper is up in the pedlars' bell tower on Tin Peak (the trail starts on the side toward the stalls), and its till key went down with the arcade off the west shore.
+note rb_topchest Pedlars' bell tower deck box | A box lashed to the deck rail at the top of the pedlars' bell tower.
+loot rb_topchest story:rb_top*1;Bolt*2;Scrap*2
+note rb_deepchest Sunk arcade strongbox | A strongbox in the back room of the sunk arcade.
+loot rb_deepchest story:rb_deep*1;Plastic*3;Nail*4
+note rb_rewnote Crier's ledger | The crier's box hums and a bell rings out over the stalls. Inside: the crier's ledger - which stalls paid the Authority to stay open, and which ones were burned. On the last page, the crier's round: ROW C, ROW A, ROW D, ROW B - and his strongbox opens the same way.
+note rb_rewchest Crier's box reward | What the crier's box kept.
+loot rb_rewchest TradeToken*3;Watermelon*2;Rope*2
+note rb_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
+loot rb_ledge Rope*2;Bolt*2;Scrap*2
+prop rb_ledge loot.refill=0
+loot rb_boatcrate Plastic*3;Scrap*2;MetalIngot*1
+note rb_rowA Row A sign | MARKET ROW A\nStall 5 - tin and wire
+note rb_rowB Row B sign | MARKET ROW B\nStall 3 - bells and pans
+note rb_rowC Row C sign | MARKET ROW C\nStall 8 - shoes and rope
+note rb_rowD Row D sign | MARKET ROW D\nStall 2 - fish and salt
+note rb_strongchest Crier's strongbox | The crier's strongbox: the stall fees nobody ever paid back.
+loot rb_strongchest TradeToken*4;CopperIngot*2;Rope*2
+
 # --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
 info title=Raft Row Bazaar
 info author=Custom Islands
@@ -235,6 +315,14 @@ step reach|rubbish_hill|1|Climb Rubbish Hill south of the market
 step read|Fire warden's report|1|Read the fire warden's report in the burnt stall row
 step open|Pedlar's caravan|1|Open the stock crate at the pedlars' caravans on the east shore
 step reach|pedlars_cave|1|Find the pedlars' cave
+step read|Market crier's notice|1|Read the market crier's notice by the crier's box in the west
+step reach|rb_trail|1|Find the foot of the trail up Tin Peak, in the north-west
+step reach|rb_summit|1|Climb the trail to the top of Tin Peak
+step collect|story:rb_top|1|Climb the pedlars' bell tower and take the bell clapper from its deck
+step reach|rb_deep|1|Dive to the sunk arcade off the west shore
+step collect|story:rb_deep|1|Find the arcade till key in its back room
+step read|Crier's ledger|1|Bring both to the crier's box and read what it shows
+step collect|story:rb_strong|1|Find the four market row signs and open the crier's strongbox with their stall numbers
 step read|Merchant's warning|1|Read the merchant's warning
 quest done=The shortage is made. The Free Fleet will want to know - their moorings are at Fleetbreak, band 700.
 quest reward=Raw_Beet*3;Egg*2

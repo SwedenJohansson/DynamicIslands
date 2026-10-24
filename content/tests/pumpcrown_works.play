@@ -38,6 +38,45 @@ wait 3
 expect step 9
 zone sludge_beds
 expect step 10
+# DEEP 10-24: the notice, the climb, the dive, the test-pump lever
+expect hidden pc_rewchest
+use pc_machine
+expect hidden pc_rewchest
+read Waterworks notice
+expect step 11
+zone pc_trail
+expect step 12
+openat -40.2 -18.9
+zone pc_summit
+expect step 13
+expect stand -37.9 -8.93 h=38
+open Old water tower deck box
+wait 3
+expect story pc_top 1
+expect step 14
+open Linesman's locker
+wait 3
+expect story tape 3
+expect step 15
+expect shown pc_shock
+use pc_breaker
+expect hidden pc_shock
+expect story pc_breaker 1
+expect step 16
+zone pc_deep
+expect step 17
+expect stand -63 -44 h=-16
+open Flooded intake chamber strongbox
+wait 3
+expect story pc_deep 1
+expect step 18
+use pc_machine
+expect shown pc_rewchest
+expect story pc_fixed 1
+open Test-pump lever reward
+wait 3
+read Test-pump reading
+expect step 19
 zone outfall
 expect done
 expect step 0 quest=2

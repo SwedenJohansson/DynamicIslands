@@ -2,7 +2,7 @@
 # The Free Fleet's harbour: a drowned office block whose roof went wild into a jungle garden, and round it a ring of
 # ship hulks moored as a harbour wall, plank gangways between them. The Fleet's chart room stands on the biggest hulk's
 # deck; Balboa-like vines close the stair up to the roof garden, where escaped boars root among mango and banana trees.
-# Puffers drift in the moorings. Quest "The Free Fleet" (15 steps): the chart room, the Fleet's articles, the machete's
+# Puffers drift in the moorings. Quest "The Free Fleet" (22 steps): the chart room, the Fleet's articles, the machete's
 # plans, the vines and the roof garden, three boars, the fuel tank's and the fuel pipe's plans, Teo's log, the biofuel
 # press, the Fleet's strongbox (goo, leather and a forged Authority pass), the contract offer. Contract "Filters Past
 # the Boom" (5): the boom, three filter crates off the hulks, the Rookery's drop, the receipt, the reward (fleetfriend).
@@ -17,6 +17,7 @@ include lib_highwater
 include lib_areas
 include lib_features
 # RESIZE 10-24b: Radius 36 -> 85 (Height 8 -> 8), the old content moved 0 -49 as one frame (push) so its sea side stays at
+# DEEP 10-24: Mastback Fell: a forty-metre fell with the Fleet's signal mast, the flagship's deckhouse sunk at the moorings, and a foghorn that wakes the harbour.
 # the coast; the island grows behind it. The ring of hulks, the boom and the Rookery's drop were moved out to the new coast as an arc of moorings (hulks south-east and south-west, the boom off the north shore, the drop in the north-east).
 new
 gen Trees=0.3 Bushes=0.3 Rocks=0.43 Harvest=0.3 BeachThings=0.25
@@ -30,6 +31,14 @@ brush flatten at 0 0 r=16 s=20 frames=300 h=7
 brush flatten at 0 -24 r=5 s=20 frames=200 h=1.2
 brush flatten from 0 -25 to 0 -31 r=2.5 s=8 frames=60 h=0.4
 pop
+# --- DEEP 10-24 terrain: Mastback Fell (south-west, summit 40 m, base r 28), its trail, the drowned flagship's deckhouse (-12 m) ------------
+call hw_mount x=-46 z=-42 b=28 h=40
+call hw_trail x=-46 z=-42 b=28 h=40 a0=47.6 turn=300 n=40 h0=3
+brush flatten at -50.26 -55.44 r=2.6 s=20 frames=200 h=21.5
+clear at -50.26 -55.44 r=3
+call hw_basin x=-76 z=26 r=14 h=-12
+brush flatten at -74 -6 r=4 s=8 frames=60
+clear at -74 -6 r=6
 origin
 push at 0 -49
 clear at 0 -21 r=5
@@ -145,6 +154,55 @@ call hw_zone x=58 z=12 al=bosuncavezone id=bosuns_cave r=4 msg="The bosun's cave
 call ar_plants_tropical x=60 z=30 r=12 seed=13331
 call ar_plants_tropical x=-50 z=20 r=12 seed=13341
 beside Loot_ChestLarge pressvault press d=2.8 yaw=90
+
+# --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Mastback Fell: a forty-metre fell with the Fleet's signal mast, the flagship's deckhouse sunk at the moorings, and a foghorn that wakes the harbour. ------
+# the climb: the trail spirals up from the north-east foot; on the summit the Fleet's signal mast (10 storeys, a ladder inside), its deck chest
+# and a zipline down to the hub (the shortcut back); the dive: the flagship's deckhouse on a basin floor -12 m down, an air pocket
+# in its front room; the hub: the Foghorn lever that wants both, the notice; secrets: the trail ledge cache, the summit treasure,
+# the sunk boat's crate
+call hw_zone x=-24.58 z=-22.45 al=fb_trailz id=fb_trail r=5 msg="The trail up Mastback Fell starts here - cut into the slope, round and up."
+call hw_zone x=-46 z=-42 al=fb_summitz id=fb_summit r=8 h=1 msg="The top of Mastback Fell. The whole island below, the city beyond it, and the Fleet's signal mast still higher."
+call hw_mast x=-43.54 z=-45.16 h0=40 lv=10 a=fb_mast chest=fb_topchest top=Placeable_Flag_01
+place ZiplinePath_Landmark fb_zip at -44.98 -40.12 h=41.35
+zipto fb_zip -71.54 -9.16
+place Loot_ChestSmall fb_ledge at -50.26 -55.44 ground sit yaw=17.6
+call treasure x=-42.84 z=-39.54 r=5 n=1 seed=13378 kind=0
+prop treasure13378 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+place Creature_Goat fb_goats at -20.64 -19.38 ground
+prop fb_goats creature.count=2
+place Creature_Goat fb_summitgoat at -48.37 -43.84 ground
+prop fb_summitgoat creature.count=1
+scatter "Pickup_Landmark_Copper 1" 2 at -46 -42 r=24 seed=13382 free=2
+scatter "Pickup_Landmark_Clay 1" 2 at -46 -42 r=26 seed=13383 free=2
+scatter "Pickup_Landmark_Rock 1" 2 at -46 -42 r=22 seed=13384 free=2
+call hw_sunkhouse x=-76 z=26 h=-12 yaw=0 a=fb_sunk chest=fb_deepchest air=fb_air bub=fb_airbub dal=fb_sunkdoor
+call hw_zone x=-76 z=26 al=fb_deepz id=fb_deep r=7 h=1 msg="The flagship's deckhouse, 12 metres down. The front room still holds a pocket of air."
+place RT_PlasticBoat fb_sunkboat at -68 28 ground sit yaw=35
+prop fb_sunkboat tint.color=#5a5048
+prop fb_sunkboat tint.amount=0.45
+place Loot_Crate fb_boatcrate at -69 22 ground sit yaw=10
+prop fb_boatcrate loot.refill=0
+call hw_reef x=-83 z=31 r=3 seed=13386
+place Creature_PufferFish fb_puffers at -82 19 h=-8
+prop fb_puffers creature.count=2
+call hw_machine x=-74 z=-6 yaw=142.13 al=fb_machine nm="Foghorn lever" obj=TP_LaserControlPanel_lever sc=3 a=fb_top b=fb_deep done=fb_fixed rew=fb_rewchest rnote=fb_rewnote msg="It works." hint="It needs the signal pennant from the top of Mastback Fell and the flagship's bell from the flagship's deckhouse."
+call hw_note x=-76.89 z=-6.35 yaw=162.13 al=fb_hint
+story fb_top|Signal pennant|Bolt|The Free Fleet's long signal pennant, rolled up at the top of the mast.
+story fb_deep|Flagship's bell|Bolt|The ship's bell from the sunk flagship's deckhouse.
+story fb_fixed|Foghorn lever working|Bolt|The foghorn lever, working again.
+story tape|Insulating tape|Bolt|A roll of the Union linesmen's insulating tape. Three of them would make a dead breaker safe.
+note fb_hint Harbourmaster's notice | The Fleet's foghorn won't sound until its pennant flies and its bell is hung: the pennant is rolled up on the signal mast atop Mastback Fell, the bell is still in the flagship's deckhouse, sunk off the west moorings.
+note fb_topchest Fleet's signal mast deck box | A box lashed to the deck rail at the top of the Fleet's signal mast.
+loot fb_topchest story:fb_top*1;Scrap*2;Bolt*2
+note fb_deepchest Flagship's deckhouse strongbox | A strongbox in the back room of the flagship's deckhouse.
+loot fb_deepchest story:fb_deep*1;story:tape*1;MetalIngot*1;Plastic*2
+note fb_rewnote Foghorn chart | The foghorn booms across the moorings. Behind the lever: the old flagship's chart - the safe channel through the drowned city, and where the Fleet hides its spare fuel.
+note fb_rewchest Foghorn lever reward | What the foghorn lever kept.
+loot fb_rewchest GasTank*1;TradeToken*2;Rope*2
+note fb_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
+loot fb_ledge Rope*2;Bolt*2;Scrap*2
+prop fb_ledge loot.refill=0
+loot fb_boatcrate Plastic*3;Scrap*2;MetalIngot*1
 
 # --- Settings, story items, notes, behaviours, quests -----------------------------------------------------------------
 info title=Fleetbreak Moorings
@@ -268,6 +326,13 @@ step reach|gull_ridge|1|Climb Gull Ridge in the north-west
 step read|Harbourmaster's ledger|1|Read the harbourmaster's ledger in his house on the west shore
 step open|Seaplane's crate|1|Open the crate in the Fleet's crashed seaplane on the north-east shore
 step reach|bosuns_cave|1|Find the bosun's cave in the east
+step read|Harbourmaster's notice|1|Read the harbourmaster's notice by the foghorn lever in the west
+step reach|fb_trail|1|Find the foot of the trail up Mastback Fell, in the south-west
+step reach|fb_summit|1|Climb the trail to the top of Mastback Fell
+step collect|story:fb_top|1|Climb the Fleet's signal mast and take the signal pennant from its deck
+step reach|fb_deep|1|Dive to the flagship's deckhouse off the west shore
+step collect|story:fb_deep|1|Find the flagship's bell in its back room
+step read|Foghorn chart|1|Bring both to the foghorn lever and read what it shows
 step read|Fleet contract offer|1|Read the Fleet's offer
 quest done=The pass is forged and the Fleet trusts you. The Salvagers' Union works the cranes at Hookline Stack - band 800.
 quest reward=Mango*2;Banana*2;Leather*2

@@ -4,7 +4,7 @@
 # the middle the council house, its door on a keypad. Rain, wind, screechers; an electric zipline from the Union's crane
 # down to the key; on the key a trader and, at its west shore, the stair down to the city's foundation piles. The
 # factions meet to settle the city's water, and the stranger who has seen all three secrets decides: Authority, Fleet,
-# Union, expose them all, or free the Rookery. Quest "The Council in the Storm" (29 steps).
+# Union, expose them all, or free the Rookery. Quest "The Council in the Storm" (36 steps).
 #
 # Points: the key 0 0 (r about 36, levelled at 2 round 0 -2); the causeway along x 0 from z 12 to 20; the landing roof
 # x -3..3, z 20.5..29.5; the Authority's roof x -15..-9 and the Fleet's x 9..15 (z 20.5..29.5), bridges at z 25; the
@@ -19,6 +19,7 @@ include lib_concord
 include lib_highwater
 include lib_areas
 # RESIZE 10-24: Radius 36 -> 95 (Height 4 -> 4), the old content moved -9.3 31.1 as one frame (push) so its sea side stays at the coast; the island grows behind it.
+# DEEP 10-24: Crown Fell: a fifty-metre fell with an eighty-metre storm mast, the council archive drowned under the west cliffs, and a hidden button to the sealed records floor.
 new
 gen Trees=0.1 Bushes=0.2 Rocks=0.3 Harvest=0.2 BeachThings=0.3
 gen Seed=13901 Radius=95 Height=4 Roughness=0.25 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.1 BeachWidth=0.6
@@ -30,6 +31,17 @@ push at -9.3 31.1
 brush flatten at 0 -2 r=12 s=20 frames=300 h=2
 brush flatten at -27 14 r=4 s=20 frames=150 h=-6
 pop
+# --- DEEP 10-24 terrain: Crown Fell (west, summit 50 m, base r 28), its trail, the drowned council archive (-17 m) ------------
+call hw_mount x=-74 z=28 b=28 h=50
+call hw_trail x=-74 z=28 b=28 h=50 a0=110.73 turn=300 n=40 h0=3
+brush flatten at -87.92 25.73 r=2.6 s=20 frames=200 h=26.5
+clear at -87.92 25.73 r=3
+call hw_basin x=-82 z=-32 r=14 h=-17
+brush flatten at -52 -12 r=4 s=8 frames=60
+clear at -52 -12 r=6
+# the sealed records room's pad (no door: the button by the summer house is the way in)
+brush flatten at 50 66 r=5 s=20 frames=200 h=3
+clear at 50 66 r=6
 brush flatten at 23.3 -18.9 r=5 s=8 frames=40
 origin
 clear at 23.3 -18.9 r=6
@@ -177,6 +189,90 @@ place TP_LaserControlPanel_lever breaker at 16 -66 ground y=1.25 scale=3 yaw=-45
 prop breaker beh.use=Pull the old breaker
 prop breaker on.use=message||The breaker drops with a bang. The hum in the cable bed dies.\nhide|shockcoil
 call ar_plants_tropical x=-60 z=-40 r=14 seed=13921
+
+# --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Crown Fell: a fifty-metre fell with an eighty-metre storm mast, the council archive drowned under the west cliffs, and a hidden button to the sealed records floor. ------
+# the climb: the trail spirals up from the east foot; on the summit the storm beacon mast (12 storeys, a ladder inside), its deck chest
+# and a zipline down to the hub (the shortcut back); the dive: the council archive on a basin floor -17 m down, an air pocket
+# in its front room; the hub: the Storm bell that wants both, the notice; secrets: the trail ledge cache, the summit treasure,
+# the sunk boat's crate
+call hw_zone x=-46.88 z=17.74 al=bc_trailz id=bc_trail r=5 msg="The trail up Crown Fell starts here - cut into the slope, round and up."
+call hw_zone x=-74 z=28 al=bc_summitz id=bc_summit r=8 h=1 msg="The top of Crown Fell. The whole island below, the city beyond it, and the storm beacon mast still higher."
+call hw_mast x=-75.93 z=31.5 h0=50 lv=12 a=bc_mast chest=bc_topchest top=RT_Spotlight
+place ZiplinePath_Landmark bc_zip at -69.69 24.88 h=51.35
+zipto bc_zip -53.93 -8.5
+place Loot_ChestSmall bc_ledge at -87.92 25.73 ground sit yaw=80.73
+call treasure x=-77.5 z=26.07 r=5 n=1 seed=13978 kind=0
+prop treasure13978 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+place Creature_Goat bc_goats at -51.26 15.33 ground
+prop bc_goats creature.count=2
+place Creature_Goat bc_summitgoat at -71.37 29.45 ground
+prop bc_summitgoat creature.count=1
+scatter "Pickup_Landmark_Copper 1" 2 at -74 28 r=24 seed=13982 free=2
+scatter "Pickup_Landmark_Clay 1" 2 at -74 28 r=26 seed=13983 free=2
+scatter "Pickup_Landmark_Rock 1" 2 at -74 28 r=22 seed=13984 free=2
+call hw_sunkhouse x=-82 z=-32 h=-17 yaw=0 a=bc_sunk chest=bc_deepchest air=bc_air bub=bc_airbub dal=bc_sunkdoor
+call hw_zone x=-82 z=-32 al=bc_deepz id=bc_deep r=7 h=1 msg="The council archive, 17 metres down. The front room still holds a pocket of air."
+place RT_PlasticBoat bc_sunkboat at -74 -30 ground sit yaw=35
+prop bc_sunkboat tint.color=#5a5048
+prop bc_sunkboat tint.amount=0.45
+place Loot_Crate bc_boatcrate at -75 -36 ground sit yaw=10
+prop bc_boatcrate loot.refill=0
+call hw_reef x=-89 z=-27 r=3 seed=13986
+place Creature_PufferFish bc_puffers at -88 -39 h=-13
+prop bc_puffers creature.count=2
+call hw_machine x=-52 z=-12 yaw=-28.81 al=bc_machine nm="Storm bell" obj=TP_LaserControlPanel_lever sc=3 a=bc_top b=bc_deep done=bc_fixed rew=bc_rewchest rnote=bc_rewnote msg="It works." hint="It needs the storm beacon lamp from the top of Crown Fell and the archive seal from the council archive."
+call hw_note x=-49.09 z=-12.11 yaw=-8.81 al=bc_hint
+# the unmarked button by the councillor's summer house; it moves you into a sealed room (no door) in the
+# north-east with the council's records; a lever there moves you back
+place RT_Pillar - at -59 -4 ground sit sy=0.4
+place RT_PowerBox bc_button at -59 -4 ground y=1.25 scale=0.6 yaw=90
+prop bc_button obj.name=bc_button
+prop bc_button beh.use=Press the unmarked button
+prop bc_button on.use=sound||event:/exploring/zipline/zipline_engine\nmessage||The floor drops away -\nwait|2\nteleport|bc_records\nmessage||- a dark room. No door.
+place Zone_Trigger bc_btnback at -59 -7 ground y=1
+prop bc_btnback obj.name=bc_btnback
+push at 50 66 h=3
+place Block_Wall_Tier3 bc_sealed at -0.75 -1.5
+place Block_Wall_Tier3 bc_sealed at -0.75 1.5
+place Block_Wall_Tier3 bc_sealed at -1.5 -0.75 yaw=90
+place Block_Wall_Tier3 bc_sealed at 1.5 -0.75 yaw=90
+place Block_Floor_Tier3 bc_sealed at -0.75 -0.75 y=2.635
+place Block_Floor_Tier3 bc_sealed at 0.75 -0.75 y=2.635
+place Block_Wall_Tier3 bc_sealed at 0.75 -1.5
+place Block_Wall_Tier3 bc_sealed at 0.75 1.5
+place Block_Wall_Tier3 bc_sealed at -1.5 0.75 yaw=90
+place Block_Wall_Tier3 bc_sealed at 1.5 0.75 yaw=90
+place Block_Floor_Tier3 bc_sealed at -0.75 0.75 y=2.635
+place Block_Floor_Tier3 bc_sealed at 0.75 0.75 y=2.635
+place Zone_Trigger bc_records at 0 0 y=0.6
+prop bc_records obj.name=bc_records
+place Note_Paper bc_sealednote at 0.6 0.6 y=0.1 drop
+place Placeable_Lantern_Metal - at -0.6 0.6 y=0.1 drop
+place TP_LaserControlPanel_lever bc_climbout at -0.6 -0.9 y=1.2 yaw=0
+prop bc_climbout obj.name=bc_climbout
+prop bc_climbout beh.use=Pull the lever
+prop bc_climbout on.use=message||The floor lifts -\nwait|2\nteleport|bc_btnback\nmessage||- and you are back by the summer house.
+pop
+prop bc_sealed tint.color=#5c5850
+prop bc_sealed tint.amount=0.5
+story bc_top|Storm beacon lamp|Bolt|The storm beacon's lamp, eighty metres over the sea.
+story bc_deep|Archive seal|Bolt|The council's archive seal, under seventeen metres of water.
+story bc_fixed|Storm bell working|Bolt|The storm bell, working again.
+note bc_hint Storm warden's notice | The storm bell rings only with the beacon lamp from the top of the storm mast on Crown Fell and the old council archive's seal - the archive went under off the west cliffs.
+note bc_topchest Storm beacon mast deck box | A box lashed to the deck rail at the top of the storm beacon mast.
+loot bc_topchest story:bc_top*1;Scrap*2;Bolt*3
+note bc_deepchest Council archive strongbox | A strongbox in the back room of the council archive.
+loot bc_deepchest story:bc_deep*1;MetalIngot*2;CircuitBoard*1
+note bc_rewnote Storm warden's roll | The storm bell rings over every roof of the Crown. The warden's roll: which roofs the council would let flood first. The Rookery was first on every list.
+note bc_rewchest Storm bell reward | What the storm bell kept.
+loot bc_rewchest TitaniumOre*1;CopperIngot*2;TradeToken*3
+note bc_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
+loot bc_ledge Rope*2;Bolt*2;Scrap*2
+prop bc_ledge loot.refill=0
+loot bc_boatcrate Plastic*3;Scrap*2;MetalIngot*1
+note bc_sealednote Sealed records | SEALED - COUNCIL ONLY\n\nEvery vote the Authority bought, every name, every price. If the crown takes the AUTHORITY's side these pages stay here; if it chooses to EXPOSE them, this is what the city reads.
+prop bc_ledge if.open=has|Tangaroa_KeyCard|1
+prop bc_ledge else.open=message||A card lock on the box - a Tangaroa keycard would open it.
 
 # --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
 info title=Bridgeworks Crown
@@ -357,6 +453,13 @@ step read|Councillor's notebook|1|Read the councillor's notebook in his summer h
 step open|Bridgeworks crane's toolbox|1|Open the toolbox of the fallen bridgeworks crane in the south-east
 step reach|pile_stair|1|Go down to the pile stair on the key's west shore
 step read|Pile engineer's map|1|Read the pile engineer's map
+step read|Storm warden's notice|1|Read the storm warden's notice by the storm bell in the west
+step reach|bc_trail|1|Find the foot of the trail up Crown Fell, in the west
+step reach|bc_summit|1|Climb the trail to the top of Crown Fell
+step collect|story:bc_top|1|Climb the storm beacon mast and take the storm beacon lamp from its deck
+step reach|bc_deep|1|Dive to the council archive off the west shore
+step collect|story:bc_deep|1|Find the archive seal in its back room
+step read|Storm warden's roll|1|Bring both to the storm bell and read what it shows
 step reach|pile_head|1|Dive to the first pile head
 quest done=The council is over. Under the city, the piles are cracking - the foundations, band 400.
 quest reward=TitaniumOre*2;TradeToken*6
