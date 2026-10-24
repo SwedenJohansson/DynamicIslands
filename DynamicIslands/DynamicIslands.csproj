@@ -160,6 +160,7 @@
     <Compile Include="QuestEditorWindow.cs" />
     <Compile Include="TriggerZone.cs" />
     <Compile Include="WorldDirector.cs" />
+    <Compile Include="AnimalLooks.cs" />
     <Compile Include="WorldRandomizer.cs" />
     <Compile Include="WorldOptions.cs" />
     <Compile Include="WorldIslands.cs" />

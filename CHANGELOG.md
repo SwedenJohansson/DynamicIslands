@@ -9,6 +9,16 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-24: rare animal looks
+
+- **New world setting, Rare animal looks** (World settings, under the build cost): Normal keeps Raft's odds; More
+  gives about one clucker, goat or llama in three a rare look, Lots about half.
+- **Three new looks per animal**, painted from Raft's own textures: jade, speckled and golden cluckers; toggenburg,
+  boer and golden goats; piebald, cream and golden llamas. A look stays through save and load and is the same for
+  every player.
+- **Collection:** the journal's quest list counts the looks you have tamed (x/6 per animal), with a note for each new
+  look and one at six of six. The host can change the level in Esc > Custom Islands or with `AnimalLooks`.
+
 ## 2026-10-24: vehicle islands
 
 - **20 new library islands built round Raft's vehicles** (vans, caravans, excavators, forklifts, cranes, ore wagons, snow

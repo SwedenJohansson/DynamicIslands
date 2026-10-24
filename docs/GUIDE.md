@@ -2640,11 +2640,12 @@ an explanation. **Raft's own** puts every setting back to plain Raft; **Defaults
 |---|---|
 | **World rules: monster difficulty** | How tough monsters are in this world: Timid, Normal, Fierce, Savage or Nightmare (see [section 9.2](#92-world-rules-monster-difficulty-and-build-cost)) |
 | **World rules: build cost** | How many more materials the build menu costs: Raft's own up to +100 %, rounded (never below Raft's own) |
+| **Rare animal looks** | How often cluckers, goats and llamas come with a rare look: Normal (Raft's own), More or Lots, with three new looks per animal (see [section 9.2](#92-world-rules-monster-difficulty-and-build-cost)) |
 | **World randomizer** | A normal Raft world made different: a ▼ list with Off, Light, Normal or Wild (each says what it means), and which parts take part (lit parts are on: click a part to switch it off; see [section 9.3](#93-the-world-randomizer)) |
 | **Extra options** | More ways to play Raft again, for players who know it by heart: each switched **ON** or off with its own button (below) |
 | **Islands while sailing** | Which of your islands (and which kinds of new islands) turn up by chance while you sail in this world: **CHOOSE ISLANDS...** opens the list (below) |
 
-**Raft's own** sets monsters to Normal, the build cost to Raft's own, the randomizer to Off and every extra option to
+**Raft's own** sets monsters to Normal, the build cost to Raft's own, rare animal looks to Normal, the randomizer to Off and every extra option to
 off, the level up system too (it leaves the island list alone). The line at the bottom of the window sums up what the world will get. Nothing is
 final until you click **Create** in the New Game box.
 
@@ -2671,6 +2672,7 @@ The host can also change every group with a console command (F10):
 |---|---|---|
 | Monster difficulty | `Monsters` | `Monsters savage` |
 | Build cost | `BuildCost` | `BuildCost 25` |
+| Rare animal looks | `AnimalLooks` | `AnimalLooks lots` |
 | World randomizer | `Randomizer` | `Randomizer wild`, `Randomizer -alphas +bosses` |
 | Extra options | `WorldOptions` | `WorldOptions +ghostrafts -privatestorage` |
 | Islands while sailing | `WorldIslands` | `WorldIslands -<island>`, `WorldIslands +<island>`, `WorldIslands all` |
@@ -2683,6 +2685,7 @@ already in the world is taken away. What each one does from the moment it change
 |---|---|
 | Monster difficulty | At once, on the next hit - monsters already out too |
 | Build cost | The build menu at once; a block built before gives back what it cost when it was placed |
+| Rare animal looks | Animals that come from now on; an animal already out keeps its look |
 | Regrow days (F10 `RegrowDays`) | Counts from the next time an island loads; an island's own rule still wins |
 | Unload distance, Receiver dots and range (Defaults... / spawnpool.txt) | At once; kept in the host's spawnpool.txt for every world the host plays |
 | Randomizer: colours, alphas | Animals not changed yet are looked at again at once; one already changed keeps its look |
@@ -2739,6 +2742,34 @@ as in Raft.
 `Monsters savage` (the level's name; the first names `easy`, `moderate`, `hard`, `impossible`, which mean timid, fierce, savage and
 nightmare, and the numbers 0-4 work too), `BuildCost 25` (any whole number from 0 to 100; the slider in the window moves
 in steps of 5). At the main menu the same commands set the choice for the next new world.
+
+#### Rare animal looks
+
+Cluckers, goats and llamas sometimes come with a rare look (Raft has two per animal). **Rare animal looks** (World
+settings, under the build cost) decides how often, and adds three new looks per animal, painted from Raft's own
+textures:
+
+| Level | How often an animal has a rare look | Which looks |
+|---|---|---|
+| **Normal** | About 1 in 8, as in Raft (88 % the usual look, 8 % and 4 % Raft's two rare ones) | Raft's own three |
+| **More** | About 1 in 3 | Six per animal: Raft's three and three new ones |
+| **Lots** | About half | Six per animal; golden is still the rarest |
+
+| Animal | Raft's looks | New looks |
+|---|---|---|
+| Clucker | blue, brown, red | jade, speckled, golden |
+| Goat | brown, grey, white | toggenburg, boer, golden |
+| Llama | brown, patched, striped | piebald, cream, golden |
+
+An animal keeps its look when the world is saved and loaded, and every player sees the same one (Raft's own rare look
+message carries it). Changing the level later only changes animals that come from then on; at Normal, an animal that
+already has a new look keeps it. Without the mod, an animal with a new look shows Raft's usual look.
+
+**The collection:** every look you tame (catch with a lasso and keep in a pen) counts for the world. The journal's
+quest list shows **Animal looks tamed** with x/6 per animal (a look still missing shows as ?), a note pops up for each
+new look, and a bigger one when all six of an animal are tamed. The host changes the level in Esc → Custom Islands, or
+with `AnimalLooks Normal`, `AnimalLooks More`, `AnimalLooks Lots` (or 0-2); `AnimalLooks` alone prints the level and
+the looks tamed. At the main menu the command sets the choice for the next new world.
 
 ### 9.3 The world randomizer
 
@@ -3393,6 +3424,7 @@ there means plain Raft.
 | Key | Values | What it does | Written by |
 |---|---|---|---|
 | `monsters` | `timid`, `normal`, `fierce`, `savage`, `nightmare`; `easy`, `moderate`, `hard`, `impossible` or 0-4 are read too | The monster difficulty the next new world starts with | **Monster difficulty** in World settings, when you press **Create**; `Monsters <level>` in the main menu, at once |
+| `rarelooks` | 0-2 (Normal, More, Lots) | How often animals have a rare look in the next new world | **Rare animal looks** in World settings (Create); `AnimalLooks <level>` in the main menu |
 | `buildcost` | 0-100 | How many % more the build menu costs in the next new world | **Build cost** in World settings (Create); `BuildCost <0-100>` in the main menu |
 | `options` | The extra options that are on, separated by commas: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ufo`, `glowsea`, `lightning`, `ghostship`, `whalebreach`, `fogbanks`, `kraken` | The extra options the next new world starts with | The option buttons in World settings (Create); `WorldOptions +option -option` in the main menu |
 | `levels` | `on`, `off` | The level up system in the next new world | **Level up system** in World settings (Create); `Levels on` / `Levels off` in the main menu |
@@ -3472,6 +3504,7 @@ Press **F10** for RML's console.
 | `WorldIslandsGap` / `WorldIslandsGap <min>-<max>` | World or main menu | How often random islands come: one after every min-max of Raft's own islands met (default 3-6; min 2-20, max 4-50) / change it (host; at the main menu: the next new world) |
 | `Monsters` / `Monsters <level>` | World or main menu | The monster difficulty / change it (host; at the main menu: the next new world). The level is `timid`, `normal`, `fierce`, `savage` or `nightmare`; `easy`, `moderate`, `hard` and `impossible` (the words the levels were first called: they mean timid, fierce, savage and nightmare) and the numbers 0-4 (timid to nightmare) work too; any other word is refused and the five are listed |
 | `BuildCost` / `BuildCost <0-100>` | World or main menu | The build cost / change it (host; at the main menu: the next new world). Any whole number from 0 to 100, with or without `%` (`BuildCost 25%`); the slider in World settings moves in steps of 5 |
+| `AnimalLooks` / `AnimalLooks <level>` | World or main menu | Rare animal looks and the looks tamed per animal / change it (host; at the main menu: the next new world). The level is `Normal`, `More`, `Lots` or 0-2 |
 | `RegrowDays` / `RegrowDays <days>` | World | This world's days until things come back / change it (host; 0 = never; an island's own rule wins) |
 | `DailyQuest` / `DailyQuest new [gather/fish/monsters n [item]]` | World | Today's daily quest (option Daily quest): the task, how far you are, the reward / a new quest now (host; with a kind and a number: that quest, e.g. `DailyQuest new gather 20 Plank`) |
 | `UpgradeTable` | World | The upgrade research table (option Extra upgrades): what this world has researched and learned there |

@@ -193,6 +193,13 @@ namespace DynamicIslands.Editor
 			Add("BuildCost_Less", UIKit.Button(crow, "- 5 %", () => { BuildCost.Set(Mathf.Max(0, BuildCost.Current - BuildCost.Step)); Refresh(); }, "The build menu costs 5 % less, at once. Blocks built before keep giving back by the cost they were built at", 60, RowH, 11));
 			Add("BuildCost_Value", UIKit.Button(crow, "", () => { }, "How many more materials the build menu costs than in Raft", -1, RowH, 11));
 			Add("BuildCost_More", UIKit.Button(crow, "+ 5 %", () => { BuildCost.Set(Mathf.Min(BuildCost.Max, BuildCost.Current + BuildCost.Step)); Refresh(); }, "The build menu costs 5 % more, at once. Blocks built before keep giving back by the cost they were built at", 60, RowH, 11));
+			RectTransform lrow = UIKit.Row(rules, RowH, 3f, "RareLooks");
+			UIKit.Size(UIKit.Label(lrow, "Rare looks", 11, UIKit.TextMuted).gameObject, 62);
+			for (int i = 0; i < AnimalLooks.Names.Length; i++)
+			{
+				int level = i;
+				Add("RareLooks_" + AnimalLooks.Names[i], UIKit.Button(lrow, AnimalLooks.Names[i], () => { AnimalLooks.Set(level); Refresh(); }, "Rare animal looks - how often cluckers, goats and llamas come with a rare look: " + AnimalLooks.DescriptionFor(level) + " In this world now: for animals that come from now on.", -1, RowH, 11));
+			}
 			Note(rules, RulesMidGame, 2);
 		}
 
@@ -408,6 +415,7 @@ namespace DynamicIslands.Editor
 			if (IslandTest.Testing) UIKit.LabelOf(buttons["BackToEditor"]).text = IslandTest.FromMenu ? "Back to the world plan" : "Back to the editor";
 			buttons["BackToEditor"].interactable = true;
 			for (int i = 0; i < MonsterDifficulty.Names.Length; i++) UIKit.SetActive(buttons["Monsters_" + MonsterDifficulty.Names[i]], MonsterDifficulty.Current == i);
+			for (int i = 0; i < AnimalLooks.Names.Length; i++) UIKit.SetActive(buttons["RareLooks_" + AnimalLooks.Names[i]], AnimalLooks.Current == i);
 			UIKit.LabelOf(buttons["BuildCost_Value"]).text = BuildCost.Describe(BuildCost.Current);
 			RandomizerSettings r = WorldRandomizer.Current;
 			for (int i = 0; i < RandomizerSettings.LevelNames.Length; i++) UIKit.SetActive(buttons["Randomizer_" + RandomizerSettings.LevelNames[i]], r.Level == i);
