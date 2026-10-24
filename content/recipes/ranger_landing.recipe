@@ -161,6 +161,34 @@ scatter CaravanIsland_SmallRock_1 14 at 0 0 r=74 seed=11297 free=3 ground y=-0.6
 scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=74 seed=11298 free=3
 scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=74 seed=11299 free=2
 
+# --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): Oda's training hill and tower (climb), the sunk slipway van (dive), Oda's tool rack, the fox den
+# the climb: a mountain (trail winding up from bearing 200), a 8-storey climbing tower on its top, the summit box
+call vd_mount x=40 z=34 top=24 r=22 a0=200 turns=1.25 hb=3
+call vd_tower x=40 z=34 h0=24 lv=8 a=rltw box=rlbox zal=rltopz zid=rl_top msg="Oda's training tower. Chalk marks on the rail: 41 s, 38 s, 36 s - her climbing times."
+note rlbox Training tower box | ODA - TRAINING. Up the hill trail, up the tower, touch the flag, down. My saw lives up here so I have a reason to climb.
+loot rlbox story:tool*1;Rope*2;Plank*4
+# the dive: Van_1 on the sea floor 10 m down, its crate, an air pocket
+call vd_dive x=14 z=92 h=-10 yaw=90 obj="Van_1" al=rlwreck crate=rlcrate zal=rlwz zid=rl_wreck msg="The slipway's van rolled off the ramp and down. Its back doors hang open." air=rlair bub=rlbub
+note rlcrate Slipway van's toolbox | A ranger toolbox, rusted shut and then not: a wrench stamped ODA, and the winch trolley's spare chain.
+loot rlcrate story:tool*1;Bolt*2;Scrap*3
+place Loot_ChestSmall rlquarry at -30 60 ground sit yaw=0
+note rlquarry Quarry tool chest | Oda's hammer, left where the stone was split. A chalk note: RACK. YES I KNOW.
+loot rlquarry story:tool*1;Stone*6;Nail*6
+prop rlquarry loot.refill=0
+# Oda's tool rack by the station (RAFT_QUEST_MECHANICS SL11 2, Bruno's rack): three tools back -> her postcard
+place CaravanWorkbench_Tools toolrack at -15 -64 ground sit yaw=160
+place Loot_ChestSmall odacard at -13.2 -65.6 ground sit yaw=160
+call ni8cave x=-60 z=10 h=2 yaw=180 al=rlfoxcave
+place Loot_ChestSmall rlfoxcavebox at -57.5 5 h=2.45 sit yaw=200
+place Placeable_Lantern_Metal - at -62.6 6 h=2.45 sit
+note rlfoxcavebox Fox den stash | A den dug under the hill, and in it a ranger's lost satchel.
+loot rlfoxcavebox Leather*2;Rope*2;Seed_Pine*1
+prop rlfoxcavebox loot.refill=0
+place Creature_Goat rlgoats at 30 20 ground
+prop rlgoats creature.count=2
+call treasure x=55 z=-38 r=8 n=1 seed=11280 kind=0
+prop treasure11280 treasure.loot=Scrap*6;Bolt*3;Nail*10
+
 # --- Settings, notes, behaviours, quest ----------------------------------------------------------------------------
 info title=Ranger Landing
 info author=Custom Islands
@@ -203,6 +231,21 @@ prop track3 zone.id=track_3
 prop track3 zone.radius=3
 prop track3 zone.message=The shed path. A boat shed under the birches.
 
+# DEEP 10-24 settings
+story tool|Oda's tool|Placeable_Lantern_Metal|One of Oda's three tools from the station's rack: a saw, a wrench or a hammer.
+story rack|Tool rack|Placeable_Lantern_Metal|Oda's tools hang on her rack again.
+prop toolrack obj.name=toolrack
+prop toolrack beh.use=Hang the tools
+prop toolrack if.use=take|story:tool|3
+prop toolrack on.use=give||story:rack*1
+show|odacard
+message||Saw, wrench, hammer - each on its painted outline. Behind the last outline a drawer slides out.
+prop toolrack else.use=message||A tool rack with three painted outlines: a saw, a wrench, a hammer. All empty. Oda left them all over her course.
+prop odacard obj.name=odacard
+prop odacard beh.hidden=1
+note odacard Oda's postcard | A postcard of a thorny ridge with smoke on a ledge. On the back: "If the river goes wrong, the old man on Thornback knows the way. - O."
+loot odacard Rope*2;Coconut*2
+prop odacard loot.refill=0
 quest title=The Forgotten Shore
 quest intro=A ranger station, empty, and a trail into the wood. Go up to the station.
 step reach|station|1|Go to the ranger station
@@ -212,6 +255,9 @@ step collect|story:winchpart|3|Find the winch's three parts: in the bear cave, t
 step collect|story:winch|1|Fit the three parts to the slipway winch at the boat shed
 step blueprint|Blueprint_MotorWheel|1|Take the motor wheel plans from the boat shed
 step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel plans from the boat shed
+step reach|rl_top|1|Climb Oda's training hill and tower to the flag
+step collect|story:tool|3|Find Oda's three tools: the tower, the sunk slipway van and the quarry
+step collect|story:rack|1|Hang the tools back on the rack by the station
 step read|Ranger log 3|1|Read Ranger log 3
 quest done=Oda went upriver. The delta's band is 800.
 quest reward=Seed_Birch*2;Seed_Pine*2

@@ -29,6 +29,18 @@ open Ranger boat shed
 wait 3
 expect step 7
 expect story rangerkey 1
+zone rl_top
+expect step 8
+open Training tower box
+open Slipway van's toolbox
+open Quarry tool chest
+wait 3
+expect story tool 3
+expect step 9
+use toolrack
+expect story tool 0
+expect shown odacard
+expect step 10
 read Ranger log 3
 expect done
 expect animals Chicken 3

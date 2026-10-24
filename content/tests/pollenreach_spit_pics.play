@@ -20,3 +20,6 @@ wait 2
 picture sl11_pollenreach_spit_cave 31 +3 20 34 5 38
 snap sl11_pollenreach_spit_jar pollen2 200 6 3
 storespot 0 0
+snap deep_pr_mast prtw 200 30
+snap deep_pr_boat prwreck 150 16
+snap deep_pr_cave prccave 0 20

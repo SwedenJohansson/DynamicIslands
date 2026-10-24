@@ -140,6 +140,32 @@ scatter CaravanIsland_SmallRock_1 14 at 0 0 r=74 seed=11197 free=3 ground y=-0.6
 scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=74 seed=11198 free=3
 scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=74 seed=11199 free=2
 
+# --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): the dune spine and its weather mast (climb), the drowned research boat (dive), the seed rocket, the crab cave
+# the climb: a mountain (trail winding up from bearing 270), a 7-storey climbing tower on its top, the summit box
+call vd_mount x=0 z=52 top=20 r=22 a0=270 turns=1.25 hb=3
+call vd_tower x=0 z=52 h0=20 lv=7 a=prtw box=prbox zal=prtopz zid=pr_top msg="The whole spit below you. Yellow drift streams off the dunes - west, always west."
+note prbox Weather mast box | The Seedkeepers kept their drift logs up here. The last page: PUFFER POWDER FOR THE ROCKET. LENS IS ON THE BOAT.
+loot prbox Rope*2;Plank*4;Coconut*1
+# the seed rocket on the summit pad (RAFT_QUEST_MECHANICS SL11 6): powder in, it flies; its capsule comes down on the east beach
+place CaravanRocket seedrocket at 3.6 55.4 ground sit yaw=30
+place Placeable_Lantern_Metal rocketcam at -5 46 ground y=0.3 drop
+prop rocketcam obj.name=rocketcam
+place Loot_ChestSmall capsule at 62 30 ground sit yaw=250
+# the dive: BoatStranded on the sea floor 11 m down, its crate, an air pocket
+call vd_dive x=35 z=-84 h=-11 yaw=20 obj="BoatStranded" al=prwreck crate=prcrate zal=prwz zid=pr_wreck msg="A research boat on the bottom, its name half gone: SEEDKEEPER II." air=prair bub=prbub
+note prcrate Research boat's instrument crate | Packed in wool: a calibration lens marked DRIFT CASE, and two tins of the crew's rocket powder.
+loot prcrate story:lens*1;ExplosivePowder*2;Rope*1
+call ni8cave x=-62 z=-10 h=1.6 yaw=180 al=prccave
+place Loot_ChestSmall prccavebox at -59.5 -15 h=2.05 sit yaw=200
+place Placeable_Lantern_Metal - at -64.6 -14 h=2.05 sit
+note prccavebox Crab cave stash | A tide-pool cave. Someone kept a dry box above the waterline.
+loot prccavebox Nail*8;Rope*2;Scrap*2
+prop prccavebox loot.refill=0
+place Creature_Chicken spithens at -44 22 ground
+prop spithens creature.count=3
+call treasure x=50 z=-45 r=6 n=1 seed=11180 kind=0
+prop treasure11180 treasure.loot=Scrap*6;Nail*12;Bolt*2
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Pollenreach Spit
 info author=Custom Islands
@@ -179,14 +205,42 @@ prop skiffzone zone.id=skiff
 prop skiffzone zone.radius=7
 prop skiffzone zone.message=A research skiff, beached on its side. SEEDKEEPERS on the bow.
 
+# DEEP 10-24 settings
+story lens|Calibration lens|Placeable_Lantern_Metal|The research boat's DRIFT CASE lens, wrapped in wool.
+story capsule|Seed capsule|Placeable_Lantern_Metal|The seed rocket's capsule: a cloth map of Verdance and the number 700.
+prop samplecase if.use=has|story:lens|1
+take|story:pollen|3
+prop samplecase else.use=message||Three empty slots, each labelled DRIFT, and an empty lens ring. The case wants three pollen jars - and its calibration lens, lost with the research boat.
+prop seedrocket obj.name=seedrocket
+prop seedrocket beh.use=Load the rocket
+prop seedrocket beh.move=0,90,0
+prop seedrocket beh.moveTime=7
+prop seedrocket beh.moveMode=switch
+prop seedrocket if.use=take|ExplosivePowder|2
+prop seedrocket on.use=open|seedrocket
+camera|rocketcam|seedrocket|7|80
+playsound||event:/amb/wreck_creaks|0.8|once|near
+wait|7
+hide|seedrocket
+show|capsule
+message||The rocket climbs, trailing yellow smoke, bursts high over the sea - and a small capsule drifts down on a sheet of cloth towards the east beach.
+prop seedrocket else.use=message||A Seedkeepers' seed rocket, empty. A stencil on its side: TWO TINS OF POWDER.
+prop capsule obj.name=capsule
+prop capsule beh.hidden=1
+note capsule Seed capsule | The capsule's cloth is printed with a map: a green island, a station mast, the number 700.
+loot capsule story:capsule*1;Seed_Flower_Red*2;Rope*1
+prop capsule loot.refill=0
 quest title=The Pollen Trail
 quest intro=Yellow dust on the sea for days - and here a whole spit of it. Go to the beached skiff.
 step reach|skiff|1|Go to the beached skiff
 step read|Skiff log: following the pollen|1|Read the skiff's log
 step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the cabin chest
 step collect|story:pollen|3|Gather the three pollen sample jars on the dunes
+step reach|pr_top|1|Climb the dune spine to the weather mast and read the drift
+step collect|story:lens|1|Dive to the drowned research boat for the sample case's lens
 step collect|story:sealed|1|Put the three jars in the skiff's sample case
 step blueprint|Blueprint_Antenna|1|Take the antenna plans from the mast locker
+step collect|story:capsule|1|Launch the seed rocket from the mast and find its capsule
 step read|Seedkeepers' leaflet|1|Read the Seedkeepers' leaflet on the dune top
 quest done=Verdance. The last green world. The ranger station's band is 700.
 quest reward=Plank*8;Rope*3;Coconut*2

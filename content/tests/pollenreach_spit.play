@@ -17,11 +17,23 @@ use pollen2
 use pollen3
 expect story pollen 3
 expect step 4
+zone pr_top
+expect step 5
+open Research boat's instrument crate
+wait 3
+expect story lens 1
+expect step 6
 use samplecase
 expect story pollen 0
-expect step 5
+expect step 7
 open Mast locker
 wait 3
-expect step 6
+expect step 8
+use seedrocket
+wait 8
+expect shown capsule
+open Seed capsule
+wait 3
+expect step 9
 read Seedkeepers' leaflet
 expect done

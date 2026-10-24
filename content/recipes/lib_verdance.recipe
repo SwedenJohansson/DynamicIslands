@@ -54,3 +54,99 @@ place ReefHuts_Pillar3 - at 1.35 1.35 y=0 sy={$y/4.815}
 place Block_Floor_Wood - at 0.75 0.75 y=$y
 place Block_Ladder - at 0.75 -0.3 ground
 end
+#
+# --- DEEP 10-24 (one-hour pass): mountains with a trail, climb towers, dives, summit and dive boxes -----------------
+# vd_mount: a mountain at x z, r m round, top m above the sea, shaped first (before anything stands on it): three
+# exact-height tiers and a trail of flattened 3 m steps (top/n m up each) that winds `turns` times round it from the
+# foot at bearing a0 (degrees, 0 = east; the foot at hb m, the ground there) to the summit pad (r/3 round). Nature on it is cleared first (all: call it
+# only where none of the island's own pieces stand).
+macro vd_mount x=0 z=0 top=24 r=26 a0=0 turns=1.25 n=48 hb=3
+clear at $x $z r={$r+3} all
+brush flatten at $x $z r=$r s=20 frames=220 h={max($hb+1,$top*0.35)}
+brush flatten at $x $z r={$r*0.68} s=20 frames=220 h={$top*0.7}
+brush flatten at $x $z r={$r*0.36} s=20 frames=260 h=$top
+for k 0 $n
+brush flatten at {$x+($r*(1-0.62*$k/$n))*cos($a0+360*$turns*$k/$n)} {$z+($r*(1-0.62*$k/$n))*sin($a0+360*$turns*$k/$n)} r=3 s=20 frames=60 h={$hb+($top-$hb)*$k/$n}
+next
+brush flatten at $x $z r={$r*0.3} s=20 frames=120 h=$top
+brush rock at $x $z r={$r*0.85} s=20 frames=10
+brush grass at $x $z r={$r*0.3} s=20 frames=10
+end
+#
+# vd_tower: a stone-and-plank climbing tower of lv storeys (2.42 m each) standing at h0 with its middle at x z (3 x 3 m;
+# a ladder up every storey inside, the door on its south side), a rope fence round the top deck. On the top: the box
+# (a small chest, `box`) on the north-west tile and a zone (`zal`, id zid) over the deck. Zipline from the top: place
+# ZiplinePath_Landmark at x+4.97 z-1.72 h=h0+lv*2.42+1.69 (near end on the south-west tile) and zipto east of it.
+macro vd_tower x=0 z=0 h0=0 lv=8 a=vdtower box=vdbox zal=vdtop zid=top msg="" zip=0
+push at {$x-1.5} {$z-1.5} h=$h0
+for k 0 {$lv-1}
+place Block_Wall_Tier3 $a at 2.25 0 y={$k*2.42}
+place Block_Wall_Tier3 $a at 0.75 3 y={$k*2.42}
+place Block_Wall_Tier3 $a at 2.25 3 y={$k*2.42}
+place Block_Wall_Tier3 $a at 0 0.75 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 $a at 0 2.25 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 $a at 3 0.75 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 $a at 3 2.25 y={$k*2.42} yaw=90
+place Block_Ladder_Tier3 - at 2.25 2.8 y={$k*2.42} yaw=180
+next
+place Block_Wall_Door_Tier3 $a at 0.75 0 y=0
+for k 1 {$lv-1}
+place Block_Wall_Tier3 $a at 0.75 0 y={$k*2.42}
+next
+place Block_Floor_Tier3 $a at 0.75 0.75 y={$lv*2.42+0.215}
+place Block_Floor_Tier3 $a at 2.25 0.75 y={$lv*2.42+0.215}
+place Block_Floor_Tier3 $a at 0.75 2.25 y={$lv*2.42+0.215}
+place Block_Wall_Fence_Rope - at 2.25 0 y={$lv*2.42+0.215}
+place Block_Wall_Fence_Rope - at 0.75 3 y={$lv*2.42+0.215}
+place Block_Wall_Fence_Rope - at 0 0.75 y={$lv*2.42+0.215} yaw=90
+place Block_Wall_Fence_Rope - at 0 2.25 y={$lv*2.42+0.215} yaw=90
+place Block_Wall_Fence_Rope - at 3 2.25 y={$lv*2.42+0.215} yaw=90
+place Loot_ChestSmall $box at 0.75 2.25 y={$lv*2.42+0.33} yaw=180
+place Zone_Trigger $zal at 1.5 1.5 y={$lv*2.42+1.4}
+place Placeable_Flag_05 - at 2.5 0.5 y={$lv*2.42+0.33}
+pop
+prop $a tint.color=#6e6a64
+prop $a tint.amount=0.55
+prop $box loot.refill=0
+prop $zal zone.id=$zid
+prop $zal zone.radius=2.6
+prop $zal zone.message=$msg
+end
+#
+# vd_dive: a wreck on the sea floor at x z (a hollow flattened h m deep - h below 0 - in the island's shallows), the
+# wreck tinted with rust, its chest (`crate`) 4 m off its side, a zone (zal, id zid) over it, an air pocket beside it.
+macro vd_dive x=0 z=0 h=-11 yaw=0 obj=BoatStranded al=vdwreck crate=vdcrate zal=vdwz zid=wreck msg="" air=vdair bub=vdairbub
+set s {sin($yaw)}
+set c {cos($yaw)}
+brush flatten at $x $z r=11 s=20 frames=300 h=$h
+clear at $x $z r=12 all
+place "$obj" $al at $x $z ground sit yaw=$yaw
+prop $al tint.color=#4a5a52
+prop $al tint.amount=0.4
+place Loot_ChestSmall $crate at {$x+4.5*$c} {$z-4.5*$s} ground sit yaw={$yaw+20}
+prop $crate loot.refill=0
+place Zone_Trigger $zal at $x $z ground y=2
+prop $zal zone.id=$zid
+prop $zal zone.radius=8
+prop $zal zone.message=$msg
+place AirPocket_1 - at {$x-5*$c} {$z+5*$s} ground y=0.05 scale=0.6
+place Zone_Trigger $air at {$x-5*$c} {$z+5*$s} ground y=1.6
+place Zone_Atmosphere $bub at {$x-5*$c} {$z+5*$s} ground y=1.2
+prop $air obj.name=$air
+prop $air zone.id=$air
+prop $air zone.radius=2.5
+prop $air zone.repeat=1
+prop $air zone.air=1
+prop $air zone.message=An air pocket - breathe.
+prop $bub atmo.particles=bubbles
+prop $bub zone.radius=3
+scatter VP_CoralBulb04 3 at $x $z r=9 wet seed={round(abs($x*7+$z))+1} free=2
+end
+#
+# vd_spot: a zone (id) of r m on the ground at x z with a message - for a reach step at a place
+macro vd_spot x=0 z=0 al=vdspot id=spot r=5 msg=""
+place Zone_Trigger $al at $x $z ground y=1
+prop $al zone.id=$id
+prop $al zone.radius=$r
+prop $al zone.message=$msg
+end
