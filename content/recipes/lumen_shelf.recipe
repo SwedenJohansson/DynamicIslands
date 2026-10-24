@@ -147,18 +147,18 @@ prop dview zone.message=The shelf runs on and on - lamp after lamp - and then ju
 
 # --- Areas (10-24: every story island has places all over it and its quest crosses it): on the shelf floor - the coral ridge in the north, the dark cave
 # in the west at the end of the lamp line, the surveyor's hut in the south-east, a sunk caravan in the south-west
-call sk_ridge x1=-16 z1=66 x2=18 z2=70 h=4 top=5 r=8
-call sk_reef x=1 z=68 r=6 seed=10661
-call sk_reef x=18 z=70 r=5 seed=10671
-call sk_zone x=1 z=68 al=lu_ridge id=lu_ridge r=7 msg="The coral ridge on the shelf. South, the lamps; north, the drop into the dark."
+call sk_ridge x1=30 z1=56 x2=46 z2=70 h=4 top=4 r=8
+call sk_reef x=38 z=63 r=6 seed=10661
+call sk_reef x=46 z=70 r=5 seed=10671
+call sk_zone x=38 z=63 al=lu_ridge id=lu_ridge r=7 msg="The coral ridge on the shelf. South, the lamps; north, the drop into the dark."
 call sk_cave x=-68 z=-4 h=2 yaw=0 al=lu_caverock chest=lu_cavechest
 call sk_zone x=-68 z=1 al=lu_cave id=lu_cave r=4 msg="The lamp line ends at this cave. Inside, it is darker than the sea."
 call sk_dark x=-68 z=1 h=1 r=7 al=lu_dark
 call airpocketat x=-65.4 z=0 h=3.6 id=lu_air al=lu_air bub=lu_airbub r=2.2 msg="Air under the rock - breathe."
-call sk_ruin x=56 z=-56 h=2 al=lu_ruin
-call sk_notebox x=58.5 z=-60.5 yaw=10 al=lu_ruinnote
-call sk_wreck x=-56 z=-58 h=2 yaw=70 v=Caravan_Green_01 al=lu_wreck crate=lu_wreckcrate scale=1
-call sk_notebox x=-50 z=-62 yaw=70 al=lu_wrecknote
+call sk_ruin x=40 z=-64 h=2 al=lu_ruin
+call sk_notebox x=42.5 z=-68.5 yaw=10 al=lu_ruinnote
+call sk_wreck x=-50 z=-40 h=2 yaw=70 v=Caravan_Green_01 al=lu_wreck crate=lu_wreckcrate scale=1
+call sk_notebox x=-44 z=-44 yaw=70 al=lu_wrecknote
 
 # --- Unique layer (10-24): the lamp line: five survey lamps lead west to the dark cave, each one keeps the anglers at bay
 # (beh.repel, gaps-1024); the cave itself is dark (a dark hazard zone: the advanced headlight from step 7 sees in it)
@@ -234,7 +234,7 @@ step blueprint|Blueprint_BatteryAdvanced|1|Find the battery plans in the survey 
 step blueprint|Blueprint_HeadLight_Advanced|1|Dig out the survey sled's box: head light plans
 step reach|edge|1|Reach the air under the arch at the edge
 step blueprint|Blueprint_ElectricGrill|1|Open the mess chest: electric grill plans
-step reach|lu_ridge|1|Swim to the coral ridge in the north
+step reach|lu_ridge|1|Swim to the coral ridge in the north-east
 step reach|lu_cave|1|Follow the lamp line to the cave in the west
 step read|Surveyor's hut note|1|Read the note in the surveyor's hut in the south-east
 step read|Caravan logbook|1|Read the logbook at the sunk caravan in the south-west

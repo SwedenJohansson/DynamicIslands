@@ -8,5 +8,5 @@ wait 3
 picture sl10_shuttle_wreck 8 7 -12 0 3 0
 picture sl10_shuttle_cabin 0 3.6 -5 0 3.2 5
 picture sl10_shuttlewreck_reef_ridge -26 16 21 -37 7 30
-picture sl10_shuttlewreck_reef_cave 25 12 -20 36 3 -29
+picture sl10_shuttlewreck_reef_cave 27 12 9 40 3 13
 picture sl10_shuttlewreck_reef_wreck 3 12 -32 4 3 -46

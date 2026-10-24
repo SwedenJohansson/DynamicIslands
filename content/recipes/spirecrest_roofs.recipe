@@ -148,11 +148,11 @@ prop viewzone zone.message=From the rubble ring the whole drowned city lies belo
 
 # --- Areas (10-24: every story island has places all over it and its quest crosses it): the rubble ridge in the east, a rock cave in the west, the pump-man's
 # ruin in the south and a courier plane in the north-west - and on each a few old signal masts (the blink code)
-call sk_ridge x1=62 z1=-12 x2=70 z2=22 h=5 top=6 r=8
-call sk_plants x=66 z=5 r=16 seed=10161
-call sk_zone x=66 z=5 al=sc_ridge id=sc_ridge r=7 msg="The rubble ridge. Under the water the drowned rooftops lie in a grid - streets, once. Two masts still stand up here."
-call sk_cave x=-66 z=8 h=3 yaw=0 al=sc_caverock chest=sc_cavechest
-call sk_zone x=-66 z=13 al=sc_cave id=sc_cave r=4 msg="A cave in the western rock. Somebody slept here and kept a mast by the door."
+call sk_ridge x1=58 z1=-30 x2=72 z2=24 h=5 top=8 r=10
+call sk_plants x=65 z=-3 r=16 seed=10161
+call sk_zone x=65 z=-3 al=sc_ridge id=sc_ridge r=7 msg="The rubble ridge. Under the water the drowned rooftops lie in a grid - streets, once. Two masts still stand up here."
+call sk_cave x=-46 z=-4 h=3 yaw=0 al=sc_caverock chest=sc_cavechest
+call sk_zone x=-46 z=1 al=sc_cave id=sc_cave r=4 msg="A cave in the western rock. Somebody slept here and kept a mast by the door."
 call sk_ruin x=-8 z=-66 h=3 al=sc_ruin
 call sk_notebox x=-5.5 z=-70.5 yaw=10 al=sc_ruinnote
 call sk_plane x=-46 z=58 h=3 yaw=60 al=sc_plane crate=sc_wreckcrate
@@ -162,7 +162,7 @@ call sk_notebox x=-51 z=63.5 yaw=70 al=sc_wrecknote
 # pump-man's strongbox keypad on his ruin's wall
 place Antenna_pole - at 64 9 ground sy=0.5
 place Antenna_pole - at 68 1 ground sy=0.5
-place Antenna_pole - at -72 10 ground sy=0.5
+place Antenna_pole - at -52 -2 ground sy=0.5
 place Antenna_pole - at -14 -62 ground sy=0.5
 place Antenna_pole - at -3 -61 ground sy=0.5
 place Antenna_pole - at -15 -70 ground sy=0.5

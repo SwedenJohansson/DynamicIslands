@@ -124,20 +124,22 @@ prop viewzone zone.message=From the hills you see the whole highway: up out of t
 
 # --- Areas (10-24: every story island has places all over it and its quest crosses it): the embankment ridge in the north, a cave in the south-east
 # rock, the toll keeper's house in the north-east, a caravan park in the south-west - and a Tangaroa token at each (the toll run)
-call sk_ridge x1=-14 z1=66 x2=18 z2=72 h=5 top=6 r=8
+call sk_ridge x1=-14 z1=66 x2=18 z2=72 h=5 top=4 r=8
 call sk_plants x=2 z=69 r=16 seed=10261
 call sk_zone x=2 z=69 al=op_ridge id=op_ridge r=7 msg="The old embankment. The road ran along here before the overpass went up; the toll lane is still painted on its stones."
-call sk_cave x=60 z=-48 h=3 yaw=180 al=op_caverock chest=op_cavechest
-call sk_zone x=60 z=-53 al=op_cave id=op_cave r=4 msg="A cave under the south-east rock - a road crew's store, its door long gone."
+call sk_cave x=24 z=-42 h=3 yaw=180 al=op_caverock chest=op_cavechest
+call sk_zone x=24 z=-47 al=op_cave id=op_cave r=4 msg="A cave under the south-east rock - a road crew's store, its door long gone."
 call sk_ruin x=66 z=50 h=3 al=op_ruin
 call sk_notebox x=68.5 z=45.5 yaw=10 al=op_ruinnote
 call sk_wreck x=-66 z=-24 h=3 yaw=30 v=Caravan_Blue_01 al=op_wreck crate=op_wreckcrate scale=1
 place Caravan_Yellow_01 - at -72 -30 ground sit yaw=100
+place Caravan_Green_01 - at -59 -32 ground sit yaw=200
+place Caravan_Green_02 - at -78 -20 ground sit yaw=60
 call sk_notebox x=-60 z=-28 yaw=70 al=op_wrecknote
 
 # --- Unique layer (10-24): the toll run: four Tangaroa tokens, one at each area; the Caisson Yard's vending machine takes them
 place QuestItemPickup_Tangaroa_Token - at 4 70 ground
-place QuestItemPickup_Tangaroa_Token - at 57 -55 ground
+place QuestItemPickup_Tangaroa_Token - at 21 -49 ground
 place QuestItemPickup_Tangaroa_Token - at 63 44 ground
 place QuestItemPickup_Tangaroa_Token - at -60 -19 ground
 

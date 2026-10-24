@@ -154,13 +154,13 @@ prop dview zone.message=From the high ground the station's crane is a toy over t
 
 # --- Areas (10-24: every story island has places all over it and its quest crosses it): the breakwater ridge in the west, the bell crew's cave in
 # the south-east, the dive master's hut in the north, the divers' dinghy in the south-west (the dive log's three lost dives)
-call sk_ridge x1=-72 z1=-14 x2=-66 z2=20 h=5 top=6 r=8
-call sk_plants x=-69 z=3 r=16 seed=10561
-call sk_zone x=-69 z=3 al=th_ridge id=th_ridge r=7 msg="The breakwater ridge. The station's bell hangs on its frame below you, and the zipline cable still runs down to the yard."
-call sk_cave x=52 z=-56 h=3 yaw=180 al=th_caverock chest=th_cavechest
-call sk_zone x=52 z=-61 al=th_cave id=th_cave r=4 msg="The bell crew's cave: their lockers, a bench, a cold stove."
-call sk_ruin x=4 z=70 h=3 al=th_ruin
-call sk_notebox x=6.5 z=65.5 yaw=10 al=th_ruinnote
+call sk_ridge x1=-74 z1=-24 x2=-64 z2=26 h=5 top=8 r=10
+call sk_plants x=-69 z=1 r=16 seed=10561
+call sk_zone x=-69 z=1 al=th_ridge id=th_ridge r=7 msg="The breakwater ridge. The station's bell hangs on its frame below you, and the zipline cable still runs down to the yard."
+call sk_cave x=30 z=-60 h=3 yaw=180 al=th_caverock chest=th_cavechest
+call sk_zone x=30 z=-65 al=th_cave id=th_cave r=4 msg="The bell crew's cave: their lockers, a bench, a cold stove."
+call sk_ruin x=22 z=56 h=3 al=th_ruin
+call sk_notebox x=24.5 z=51.5 yaw=10 al=th_ruinnote
 call sk_wreck x=-50 z=-52 h=3 yaw=40 v=RT_PlasticBoat al=th_wreck crate=th_wreckcrate scale=1
 call sk_notebox x=-44 z=-56 yaw=70 al=th_wrecknote
 

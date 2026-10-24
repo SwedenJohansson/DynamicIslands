@@ -177,12 +177,13 @@ prop dview zone.message=The spire's lit windows stand over everything, and the c
 call sk_ridge x1=74 z1=-20 x2=80 z2=20 h=4 top=6 r=8
 call sk_plants x=77 z=0 r=16 seed=10961
 call sk_zone x=77 z=0 al=sk_ridge id=sk_ridge r=7 msg="The storm ridge. The Spire's switchboard windows flash with every gust; the zipline from here runs back down."
-call sk_cave x=-58 z=58 h=3 yaw=180 al=sk_caverock chest=sk_cavechest
-call sk_zone x=-58 z=53 al=sk_cave id=sk_cave r=4 msg="The keepers' cave: where the Spire's crew sat out the worst storms."
+call sk_cave x=-46 z=30 h=3 yaw=180 al=sk_caverock chest=sk_cavechest
+call sk_zone x=-46 z=25 al=sk_cave id=sk_cave r=4 msg="The keepers' cave: where the Spire's crew sat out the worst storms."
 call sk_ruin x=0 z=-76 h=3 al=sk_ruin
+call sk_ruin x=-12 z=-74 h=3 al=sk_ruin2
 call sk_notebox x=2.5 z=-80.5 yaw=10 al=sk_ruinnote
-call sk_plane x=-58 z=-58 h=3 yaw=60 al=sk_plane crate=sk_wreckcrate
-call sk_notebox x=-63 z=-52.5 yaw=70 al=sk_wrecknote
+call sk_plane x=-70 z=-30 h=3 yaw=60 al=sk_plane crate=sk_wreckcrate
+call sk_notebox x=-75 z=-24.5 yaw=70 al=sk_wrecknote
 
 # --- Tools in use (10-24: a tool or item given earlier in the storyline opens extras here, never the main path)
 clear from 77 0 to 52 0 r=3
@@ -192,7 +193,7 @@ call vinecache x=56 z=56 r=8 seed=10971 chest=skvinechest vines=skvines items=Ro
 
 # --- Unique layer (10-24): the storm keeper's radio: the generator by his house wants its part (in a toolbox near the
 # keepers' cave); powered, the radio gives away the last supply drop
-call powerradio x=6 z=-72 yaw=0 alias=skgen ralias=skradio rx=-0.75 rz=-76 rh=5 ryaw=0 cache=sksupply cx=40 cz=-62 cr=10 cseed=10981 items=Battery*2;CopperIngot*2;TitaniumIngot*1 kx=-50 kz=44 kr=8 seed=10982 toolbox=skbox
+call powerradio x=6 z=-72 yaw=0 alias=skgen ralias=skradio rx=-0.75 rz=-76 rh=5 ryaw=0 cache=sksupply cx=40 cz=-62 cr=10 cseed=10981 items=Battery*2;CopperIngot*2;TitaniumIngot*1 kx=-58 kz=20 kr=8 seed=10982 toolbox=skbox
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Sealkeeper Spire
@@ -345,7 +346,7 @@ step read|The verdict|1|Read the verdict
 step reach|sk_ridge|1|Climb the storm ridge in the east
 step reach|sk_cave|1|Find the keepers' cave in the north-west
 step read|Storm keeper's log|1|Read the log in the storm keeper's house in the south
-step read|Supply pilot's log|1|Read the log at the supply plane in the south-west
+step read|Supply pilot's log|1|Read the log at the supply plane in the west
 step collect|story:descended|1|Pull the descend lever
 quest done=The choice is made. Under the trench lip the Hollow lights up - the Receiver finds it on band 500.
 quest reward=TitaniumOre*2;Battery*2

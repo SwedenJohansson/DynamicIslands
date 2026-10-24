@@ -137,16 +137,16 @@ prop dview zone.message=From the rim the arena is a ring of pale stone in the da
 
 # --- Areas (10-24: every story island has places all over it and its quest crosses it): round the arena on the trench floor - the lip ridge in the north,
 # the dark cave in the east, the watchers' post in the west, a sunk boat in the south, the dark valve trench in the south-east
-call sk_ridge x1=-20 z1=80 x2=20 z2=84 h=4 top=5 r=8
-call sk_reef x=0 z=82 r=6 seed=11061
-call sk_reef x=20 z=84 r=5 seed=11071
-call sk_zone x=0 z=82 al=sh_ridge id=sh_ridge r=7 msg="The lip ridge. The trench wall goes straight up from here to the Spire, and something big moves along the bottom."
-call sk_cave x=82 z=4 h=2 yaw=180 al=sh_caverock chest=sh_cavechest
-call sk_zone x=82 z=-1 al=sh_cave id=sh_cave r=4 msg="A cave in the east wall. The Stalker's scratches go all the way in."
-call sk_dark x=82 z=-1 h=1 r=7 al=sh_dark
-call airpocketat x=79.4 z=0 h=3.6 id=sh_air al=sh_air bub=sh_airbub r=2.2 msg="Air under the rock - breathe."
-call sk_ruin x=-82 z=0 h=2 al=sh_ruin
-call sk_notebox x=-79.5 z=-4.5 yaw=10 al=sh_ruinnote
+call sk_ridge x1=-62 z1=54 x2=-36 z2=78 h=4 top=5 r=8
+call sk_reef x=-49 z=66 r=6 seed=11061
+call sk_reef x=-36 z=78 r=5 seed=11071
+call sk_zone x=-49 z=66 al=sh_ridge id=sh_ridge r=7 msg="The lip ridge. The trench wall goes straight up from here to the Spire, and something big moves along the bottom."
+call sk_cave x=64 z=26 h=2 yaw=180 al=sh_caverock chest=sh_cavechest
+call sk_zone x=64 z=21 al=sh_cave id=sh_cave r=4 msg="A cave in the east wall. The Stalker's scratches go all the way in."
+call sk_dark x=64 z=21 h=1 r=7 al=sh_dark
+call airpocketat x=61.4 z=22 h=3.6 id=sh_air al=sh_air bub=sh_airbub r=2.2 msg="Air under the rock - breathe."
+call sk_ruin x=-62 z=-22 h=2 al=sh_ruin
+call sk_notebox x=-59.5 z=-26.5 yaw=10 al=sh_ruinnote
 call sk_wreck x=0 z=-84 h=2 yaw=100 v=BoatStranded al=sh_wreck crate=sh_wreckcrate scale=1
 call sk_notebox x=6 z=-88 yaw=70 al=sh_wrecknote
 
@@ -155,6 +155,7 @@ call sk_notebox x=6 z=-88 yaw=70 al=sh_wrecknote
 call stonelamp x=30 z=-30 al=shlamp1
 call stonelamp x=42 z=-42 al=shlamp2
 call crankcache x=60 z=-60 yaw=225 alias=ventcrank sig=ventvalve chest=ventbox cx=66 cz=-62 cyaw=30 items=TitaniumIngot*2;MetalIngot*2;Bolt*3 title="Vent box"
+place Loot_Chest gatecache at 17.8 15.8 ground sit yaw=225
 place Zone_Trigger shtrenchdark at 62 -61 ground y=1
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
@@ -201,7 +202,7 @@ prop valvezone zone.message=The seal valve. A brass plate on the plinth, half ru
 prop valve obj.name=valve
 prop valve beh.use=Turn the seal valve
 prop valve if.use=has|story:restorechoice|1
-prop valve on.use=give||story:valve*1\nshow|teal\nhide|gatebars\nhide|gate\nshow|lastrestore\nmessage||RESTORE answers: the alcoves light up teal and the gate's bars draw back.
+prop valve on.use=give||story:valve*1\nshow|teal\nhide|gatebars\nsignal||hollowgate\nshow|lastrestore\nmessage||RESTORE answers: the alcoves light up teal and the gate's bars draw back.
 prop valve else.use=give||story:valve*1\nshow|plug\nshow|lastseal\nmessage||SEAL answers: a stone plug grinds down over the gate.
 prop teal obj.name=teal
 prop teal beh.hidden=1
@@ -231,8 +232,11 @@ prop shlamp2 beh.repel=8
 prop shtrenchdark zone.radius=9
 prop shtrenchdark zone.hazard=dark
 prop shtrenchdark zone.hazardMsg=The trench is pitch dark. A headlight would show the valve.
-prop gate if.use=signal|sh_neveropen
-prop gate else.use=message||Barred from inside. The valve and the Spire's choice decide this gate.
+note gatecache Network gate cache | Behind the Network gate: the last keepers' cache, left for whoever opened the way.
+loot gatecache TitaniumIngot*3;Battery*2;CopperIngot*2
+prop gatecache loot.refill=0
+prop gate if.use=signal|hollowgate
+prop gate else.use=message||Barred from inside. The seal valve opens it - if the Spire chose RESTORE.
 quest title=The Deep
 quest intro=Band 500: the Hollow under the trench lip. Go down the chain to the lip.
 step reach|lip|1|Go down the chain to the trench lip
@@ -246,7 +250,7 @@ step collect|story:valve|1|Turn the seal valve
 step read|What the Ringwave means (part 1)|1|Read the plate on the plinth
 step reach|alcove_4|1|Go to the west alcove
 step read|The last word|1|Read the last word
-step reach|sh_ridge|1|Swim to the lip ridge in the north
+step reach|sh_ridge|1|Swim to the lip ridge in the north-west
 step reach|sh_cave|1|Find the Stalker's cave in the east
 step read|Watchers' post log|1|Read the log at the watchers' post in the west
 step read|Boat's last log|1|Read the last log at the sunk boat in the south

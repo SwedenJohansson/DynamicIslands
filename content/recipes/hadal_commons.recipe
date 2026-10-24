@@ -156,24 +156,27 @@ prop dview zone.message=Below, the Commons' windows glow in rows down the trench
 
 # --- Areas (10-24: every story island has places all over it and its quest crosses it): on the trench floor - the terrace ridge in the south, the dark
 # cave in the west, the warden's lodge in the north-east (its caged chest), the mine wagons in the north-west
-call sk_ridge x1=-18 z1=-72 x2=18 z2=-70 h=4 top=5 r=8
-call sk_reef x=0 z=-71 r=6 seed=10861
-call sk_reef x=18 z=-70 r=5 seed=10871
-call sk_zone x=0 z=-71 al=hc_ridge id=hc_ridge r=7 msg="The terrace ridge. The Commons' windows climb the trench wall behind you, warm and few."
-call sk_cave x=-74 z=0 h=2 yaw=0 al=hc_caverock chest=hc_cavechest
-call sk_zone x=-74 z=5 al=hc_cave id=hc_cave r=4 msg="The quarry cave the city was cut from. Air hangs under its roof."
-call airpocketat x=-71.4 z=4 h=3.6 id=hc_air al=hc_air bub=hc_airbub r=2.2 msg="Air under the rock - breathe."
+call sk_ridge x1=-32 z1=-74 x2=28 z2=-68 h=4 top=8 r=10
+call sk_reef x=-2 z=-71 r=6 seed=10861
+call sk_reef x=28 z=-68 r=5 seed=10871
+call sk_zone x=-2 z=-71 al=hc_ridge id=hc_ridge r=7 msg="The terrace ridge. The Commons' windows climb the trench wall behind you, warm and few."
+call sk_cave x=-60 z=-12 h=2 yaw=0 al=hc_caverock chest=hc_cavechest
+call sk_zone x=-60 z=-7 al=hc_cave id=hc_cave r=4 msg="The quarry cave the city was cut from. Air hangs under its roof."
+call airpocketat x=-57.4 z=-8 h=3.6 id=hc_air al=hc_air bub=hc_airbub r=2.2 msg="Air under the rock - breathe."
 call sk_ruin x=60 z=56 h=2 al=hc_ruin
 call sk_notebox x=62.5 z=51.5 yaw=10 al=hc_ruinnote
-call sk_wreck x=-56 z=58 h=2 yaw=120 v=VP_Wagon02 al=hc_wreck crate=hc_wreckcrate scale=1
-place VP_Wagon01 - at -63 64 ground sit yaw=140
-call sk_notebox x=-50 z=54 yaw=70 al=hc_wrecknote
+call sk_wreck x=-46 z=50 h=2 yaw=120 v=VP_Wagon02 al=hc_wreck crate=hc_wreckcrate scale=1
+place VP_Wagon01 - at -53 56 ground sit yaw=140
+call sk_notebox x=-40 z=46 yaw=70 al=hc_wrecknote
 
 # --- Unique layer (10-24): the caged warden's store: a chest in a chained cage by the lodge (the bolt cutters from
 # Brinelab) - and the deep trench south-east of it is dark (dark hazard zone, the headlight from Lumen)
 place UT_DogCage_Medium02 wardencage at 66 60 ground sit yaw=200
-place Loot_Chest wardenchest at 66 60 ground sit yaw=200
+place Loot_Chest lodgechest at 66 60 ground sit yaw=200
 place Loot_ChestSmall trenchchest at 62 -58 ground sit yaw=40
+place RT_Pillar - at 55 51 ground sy=0.4
+place TP_LaserControlPanel_lever doorlever at 55 51 ground y=1.25 scale=3 yaw=220
+place Loot_Chest strongroom at 0 -16.5 ground sit yaw=0
 place Zone_Trigger hctrenchdark at 62 -58 ground y=1
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
@@ -233,26 +236,32 @@ prop darkcity zone.radius=40
 note hc_cavechest Quarry chest | A quarryman's chest: chisels gone to rust, and titanium chips he kept.
 loot hc_cavechest TitaniumOre*2;Rope*2;Bolt*2;Copper*1
 prop hc_cavechest loot.refill=0
-note hc_ruinnote Warden's lodge note | WARDEN'S LODGE\n\nI keep the Commons' spare tanks in the cage by my lodge. The key went with Ines.\nIf you have bolt cutters, take what you need. If you are the Stalker, go home.
+note hc_ruinnote Warden's lodge note | WARDEN'S LODGE\n\nI keep the Commons' spare tanks in the cage by my lodge. The key went with Ines.\nIf you have bolt cutters, take what you need. If you are the Stalker, go home.\nThe lever for the great doors is on the post by my lodge. Behind them is the strongroom of the Commons.
 note hc_wrecknote Wagon driver's chit | WAGON DRIVER'S CHIT\n\nTwo wagons of quarry stone, Commons terrace 3. Signed.\nThe rails ran out at the trench floor. So did I.
 note hc_wreckcrate Wagon load | The wagon's load box: cut stone and what the quarrymen dropped.
 loot hc_wreckcrate Stone*6;TitaniumOre*1;Scrap*2;Rope*1
 prop hc_wreckcrate loot.refill=0
 prop wardencage obj.name=wardencage
 prop wardencage on.use=message||The chain snaps and the cage swings open.\nhide|wardencage\nsignal||wardencage
-note wardenchest Warden's store | The warden's store, safe in its cage: spare tanks and titanium.
-loot wardenchest OxygenBottle*1;TitaniumIngot*2;Bolt*3
-prop wardenchest loot.refill=0
-prop wardenchest if.open=signal|wardencage
-prop wardenchest else.open=message||The chest is inside the chained cage.
+note lodgechest Warden's store | The warden's store, safe in its cage: spare tanks and titanium.
+loot lodgechest OxygenBottle*1;TitaniumIngot*2;Bolt*3
+prop lodgechest loot.refill=0
+prop lodgechest if.open=signal|wardencage
+prop lodgechest else.open=message||The chest is inside the chained cage.
 note trenchchest Trench box | A box dropped down the dark trench: copper and a battery, dry in wax.
 loot trenchchest Copper*3;Battery*1;CircuitBoard*1
 prop trenchchest loot.refill=0
 prop hctrenchdark zone.radius=9
 prop hctrenchdark zone.hazard=dark
 prop hctrenchdark zone.hazardMsg=The trench swallows the light. A headlight would show the way.
-prop greatdoors if.use=signal|sk_neverdoors
-prop greatdoors else.use=message||The great doors are sealed from the Spire. Nothing down here opens them.
+prop doorlever obj.name=doorlever
+prop doorlever beh.use=Pull the great doors' lever
+prop doorlever on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nsignal||hc_doors\nmessage||Far off, across the Commons, something heavy unlocks.
+note strongroom Commons strongroom | The Commons' strongroom behind the great doors: what the council saved for the day the Spire answered.
+loot strongroom TitaniumIngot*2;OxygenBottle*1;CircuitBoard*1;Battery*2
+prop strongroom loot.refill=0
+prop greatdoors if.use=signal|hc_doors
+prop greatdoors else.use=message||Locked. The door warden worked them from a lever by his lodge, north-east.
 quest title=The City Below
 quest intro=Lit windows on the Receiver, 45 m down. Dive to the Commons' plaza.
 step reach|plaza|1|Dive to the Commons' plaza

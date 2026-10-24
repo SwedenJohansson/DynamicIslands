@@ -150,23 +150,25 @@ prop viewzone zone.message=From the ridge the seabed falls away - and there, far
 
 # --- Areas (10-24: every story island has places all over it and its quest crosses it): under water round the dome - the kelp ridge in the east, a rock
 # cave in the south, the gardener's shed in the north, a car park of sunk vans in the north-west
-call sk_ridge x1=66 z1=-12 x2=72 z2=22 h=4 top=5 r=8
+call sk_ridge x1=66 z1=-12 x2=72 z2=22 h=4 top=4 r=8
 call sk_reef x=69 z=5 r=6 seed=10461
 call sk_reef x=72 z=22 r=5 seed=10471
 call sk_zone x=69 z=5 al=b7_ridge id=b7_ridge r=7 msg="The kelp ridge. The dome glows behind you like a lamp left on in an empty house."
 call sk_cave x=6 z=-68 h=2 yaw=0 al=b7_caverock chest=b7_cavechest
 call sk_zone x=6 z=-63 al=b7_cave id=b7_cave r=4 msg="A cave in the south rock. The garden's overflow pipe ends here, still dripping silt."
-call sk_ruin x=-4 z=70 h=2 al=b7_ruin
-call sk_notebox x=-1.5 z=65.5 yaw=10 al=b7_ruinnote
+call sk_ruin x=-6 z=48 h=2 al=b7_ruin
+call sk_notebox x=-3.5 z=43.5 yaw=10 al=b7_ruinnote
 call sk_wreck x=-44 z=62 h=2 yaw=200 v=Van_1 al=b7_wreck crate=b7_wreckcrate scale=1
 place Caravan_Green_02 - at -51 69 ground sit yaw=150
+place Caravan_Yellow_01 - at -36 68 ground sit yaw=20
+place Van_2 - at -58 60 ground sit yaw=250
 call sk_notebox x=-38 z=58 yaw=70 al=b7_wrecknote
 
 # --- Tools in use (10-24: a tool or item given earlier in the storyline opens extras here, never the main path)
 call vinecache x=60 z=-58 r=8 seed=10471 chest=b7vinechest vines=b7vines items=Rope*3;Nail*8;Seed_Flower_Red*2
 
 # --- Unique layer (10-24): the airlock garden's outer sluice: a crank on a post at the shed brings up the bed box
-call crankcache x=3 z=73 yaw=270 alias=sluicecrank sig=sluice chest=bedbox cx=-9 cz=74 cyaw=0 items=Seed_Watermelon*2;Seed_Pineapple*2;Dirt*2 title="Bed box"
+call crankcache x=1 z=51 yaw=270 alias=sluicecrank sig=sluice chest=bedbox cx=-11 cz=52 cyaw=0 items=Seed_Watermelon*2;Seed_Pineapple*2;Dirt*2 title="Bed box"
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # the generator's rocks that floated over the slope, and walls left wholly under the ground (ground check, 2026-10-23)

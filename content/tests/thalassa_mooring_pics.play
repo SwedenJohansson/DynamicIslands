@@ -9,7 +9,7 @@ wait 8
 picture sl10_thalassa_island 26 12 -22 0 4 0
 picture sl10_thalassa_bell -1 7 -3 5.25 3 0
 picture sl10_thalassa_canopy 1 4 -16 6 2 -10
-picture sl10_thalassa_mooring_ridge -55 20 2 -69 11 3
-picture sl10_thalassa_mooring_cave 43 13 -50 52 4 -61
-picture sl10_thalassa_mooring_ruin 3 13 56 4 4 70
+picture sl10_thalassa_mooring_ridge -55 22 1 -69 13 1
+picture sl10_thalassa_mooring_cave 24 13 -52 30 4 -65
+picture sl10_thalassa_mooring_ruin 17 13 43 22 4 56
 picture sl10_thalassa_mooring_wreck -40 13 -42 -50 4 -52

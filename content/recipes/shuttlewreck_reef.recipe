@@ -98,9 +98,10 @@ call sk_ridge x1=-44 z1=20 x2=-30 z2=40 h=3 top=4 r=8
 call sk_reef x=-37 z=30 r=6 seed=11161
 call sk_reef x=-30 z=40 r=5 seed=11171
 call sk_zone x=-37 z=30 al=sw_ridge id=sw_ridge r=7 msg="The reef ridge. From here the shuttle's windows line up like a row of seats."
-call sk_cave x=36 z=-34 h=2 yaw=0 al=sw_caverock chest=sw_cavechest
-call sk_zone x=36 z=-29 al=sw_cave id=sw_cave r=4 msg="A cave in the reef rock. Seat cushions drifted in here and stayed."
+call sk_cave x=40 z=8 h=2 yaw=0 al=sw_caverock chest=sw_cavechest
+call sk_zone x=40 z=13 al=sw_cave id=sw_cave r=4 msg="A cave in the reef rock. Seat cushions drifted in here and stayed."
 call sk_wreck x=4 z=-46 h=2 yaw=80 v=Van_4 al=sw_wreck crate=sw_wreckcrate scale=1
+place Van_1 - at -5 -41 ground sit yaw=140
 call sk_notebox x=10 z=-50 yaw=70 al=sw_wrecknote
 
 # --- Unique layer (10-24): booked seats: the tender van's luggage hold, bolted shut; its lever lets go
@@ -133,7 +134,7 @@ step read|Shuttle manifest|1|Read the shuttle manifest
 step kill|Puffer fish|2|Drive off the puffers in the reef
 step open|Luggage rack|1|Open the luggage rack
 step reach|sw_ridge|1|Swim to the reef ridge in the north-west
-step reach|sw_cave|1|Find the reef cave in the south-east
+step reach|sw_cave|1|Find the reef cave in the east
 step read|Seat 14's ticket|1|Read the ticket at the tender van in the south
 step read|Commuter's note|1|Read the commuter's note
 quest done=Twelve made it to the Yard. The shuttle stays on its reef.

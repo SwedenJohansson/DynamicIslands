@@ -148,12 +148,13 @@ prop viewzone zone.message=From here the lean is plain: the lab tower tilts out 
 
 # --- Areas (10-24: every story island has places all over it and its quest crosses it): the seawall ridge in the west, the sample cave in the north,
 # the sample keeper's ruin in the east, the lab's van and its dropped crane in the south-east (the bolt cutters)
-call sk_ridge x1=-72 z1=-18 x2=-64 z2=18 h=5 top=6 r=8
-call sk_plants x=-68 z=0 r=16 seed=10361
-call sk_zone x=-68 z=0 al=bl_ridge id=bl_ridge r=7 msg="The old seawall, now a ridge of rubble and grass. From here the lab tower leans like a tired man."
-call sk_cave x=8 z=68 h=3 yaw=180 al=bl_caverock chest=bl_cavechest
-call sk_zone x=8 z=63 al=bl_cave id=bl_cave r=4 msg="The sample cave: the lab kept its cold store in the rock, out of the sun."
+call sk_ridge x1=-66 z1=-8 x2=-62 z2=10 h=5 top=4 r=8
+call sk_plants x=-64 z=1 r=16 seed=10361
+call sk_zone x=-64 z=1 al=bl_ridge id=bl_ridge r=7 msg="The old seawall, now a ridge of rubble and grass. From here the lab tower leans like a tired man."
+call sk_cave x=-20 z=54 h=3 yaw=180 al=bl_caverock chest=bl_cavechest
+call sk_zone x=-20 z=49 al=bl_cave id=bl_cave r=4 msg="The sample cave: the lab kept its cold store in the rock, out of the sun."
 call sk_ruin x=70 z=-4 h=3 al=bl_ruin
+call sk_ruin x=70 z=8 h=3 al=bl_ruin2
 call sk_notebox x=72.5 z=-8.5 yaw=10 al=bl_ruinnote
 call sk_wreck x=46 z=-64 h=3 yaw=110 v=Van_2 al=bl_wreck crate=bl_wreckcrate scale=1
 place UT_ElectricityIsland_Crane02 - at 37 -58 ground sit yaw=200

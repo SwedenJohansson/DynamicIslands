@@ -130,18 +130,19 @@ prop dview zone.message=From here the caissons stand in a row like stepping ston
 call sk_ridge x1=-68 z1=-24 x2=-62 z2=12 h=3 top=5 r=8
 call sk_plants x=-65 z=-6 r=16 seed=10761
 call sk_zone x=-65 z=-6 al=cy_ridge id=cy_ridge r=7 msg="The spoil ridge - all the rock the yard dug out of the trench. The zipline from the top runs down to the yard."
-call sk_cave x=-44 z=-50 h=2 yaw=180 al=cy_caverock chest=cy_cavechest
-call sk_zone x=-44 z=-55 al=cy_cave id=cy_cave r=4 msg="The powder cave: the yard kept its blasting charges in here, far from everything."
+call sk_cave x=-24 z=-56 h=2 yaw=180 al=cy_caverock chest=cy_cavechest
+call sk_zone x=-24 z=-61 al=cy_cave id=cy_cave r=4 msg="The powder cave: the yard kept its blasting charges in here, far from everything."
 call sk_ruin x=8 z=62 h=2 al=cy_ruin
 call sk_notebox x=10.5 z=57.5 yaw=10 al=cy_ruinnote
-call sk_wreck x=54 z=-46 h=2 yaw=250 v=UT_ElectricityIsland_Crane01 al=cy_wreck crate=cy_wreckcrate scale=0.3
+call sk_wreck x=54 z=-46 h=2 yaw=250 v=UT_ElectricityIsland_Crane01 al=cy_wreck crate=cy_wreckcrate scale=0.4
+place VP_Wagon01 - at 44 -40 ground sit yaw=30
 call sk_notebox x=60 z=-50 yaw=70 al=cy_wrecknote
 
 # --- Tools in use (10-24: a tool or item given earlier in the storyline opens extras here, never the main path)
 clear from -65 -6 to -42 -8 r=3
 place ZiplinePath_Landmark cyridgezip at -65 -6 ground
 zipto cyridgezip -42 -8
-call vinecache x=-20 z=-62 r=8 seed=10771 chest=cyvinechest vines=cyvines items=Rope*3;Nail*8;Bolt*2
+call vinecache x=-46 z=36 r=8 seed=10771 chest=cyvinechest vines=cyvines items=Rope*3;Nail*8;Bolt*2
 
 # --- Unique layer (10-24): the yard office's vending machine: it takes the Tangaroa tokens of the Overpass toll run
 vending yardvend at 2 57 ground yaw=0
@@ -190,7 +191,7 @@ step blueprint|Blueprint_SmelterElectric|1|Find the electric smelter plans under
 step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Open the fuel shed on the west caisson
 step blueprint|Blueprint_AnchorStationaryAdvanced|1|Find the anchor gear on the north caisson
 step reach|cy_ridge|1|Climb the spoil ridge in the west
-step reach|cy_cave|1|Find the powder cave in the south-west
+step reach|cy_cave|1|Find the powder cave in the south
 step read|Yard office book|1|Read the book in the yard office in the north
 step read|Crane driver's report|1|Read the report at the fallen crane in the south-east
 step read|Trench chart|1|Read the trench chart
