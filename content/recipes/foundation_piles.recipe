@@ -3,7 +3,7 @@
 # Under the city: a forest of giant stone piles standing in a basin ten metres down, two of them cracked and leaning,
 # shoring jacks at the feet of four, air trapped round their foot-blocks; a stingray grown huge nests among them. At the
 # city's edge a mudflat lies dry at sea level, with the pile engineer's hut, clay and sand, and something buried. Quest
-# "The Piles" (22 steps): the mudflat, the engineer's note, the first two piles and their jacks, the pile stingray in two
+# "The Piles" (20 steps, STORY 10-24: Nell's note, the forged survey, the ballast in the bank and the digger, Crane's jack logs and last page by pile four, Ines's closing; the Hump and the pump gallery optional; the jack pump machine gone): the mudflat, the engineer's note, the first two piles and their jacks, the pile stingray in two
 # phases, the last two jacks, the closing note, back to the mudflat.
 #
 # Points: the mudflat 24 0 (levelled at 0.8, r 12); the pile basin -16 0 (levelled at -10, r 22); piles at -24 -12
@@ -96,6 +96,11 @@ call hw_airpocket x=-5 z=-9.5 id=pile_2 al=pile2air bub=pile2bub msg="The second
 call hw_airpocket x=-5 z=9.5 id=pile_3 al=pile3air bub=pile3bub
 call hw_airpocket x=-21 z=9.5 id=pile_4 al=pile4air bub=pile4bub
 place Note_Paper closing at -21 10.5 ground drop
+place Note_Paper jacklog1 at -19.5 -10.5 ground drop yaw=30
+place Note_Paper jacklog3 at -3.5 10.5 ground drop yaw=200
+place BikerGuy_Body cranebody at -23 14.5 ground sit yaw=200
+place Placeable_Lantern_Metal - at -22 15.5 ground drop
+place Note_Paper cranepage at -21.5 14 ground drop yaw=80
 place Creature_Stingray pileray at -16 0 ground y=2
 place Creature_PufferFish puffers at -28 -4 ground y=2
 call hw_reef x=-12 z=-16 r=3 seed=13953
@@ -133,7 +138,7 @@ prop dview zone.message=Down there the city's foundation piles stand in the dark
 # blasting barrels in the pile field (the stingray's armour only gives to their blasts)
 call ar_ridge x1=-60 z1=20 x2=-40 z2=55 h=10 top=6 r=9
 call ar_plants_tropical x=-50 z=38 r=24 seed=14011
-call hw_zone x=-50 z=38 al=rubblebank id=rubble_bank r=7 msg="The rubble bank: what the engineers dug out from under the city, piled up and grown over. The piles are down there, under all of it."
+call hw_zone x=-50 z=38 al=rubblebank id=rubble_bank r=7 message=The rubble bank - and it is no spoil heap. Pig iron, pump castings, stone from Lowstreet's own walls, piled up by the Council's barges at night and grown over. Ballast. The piles are down there, under all of it."
 call treasure x=-50 z=38 r=14 n=2 seed=14061
 prop treasure14061 treasure.loot=TitaniumOre*2;MetalOre*2
 call hw_wreck x=-62 z=-42 h=3 yaw=40 obj=VP_Excavator al=sunkdigger crate=diggercrate r=10
@@ -177,19 +182,12 @@ prop fp_boatcrate loot.refill=0
 call hw_reef x=75 z=37 r=3 seed=14036
 place Creature_PufferFish fp_puffers at 76 25 h=-14
 prop fp_puffers creature.count=2
-call hw_machine x=50 z=32 yaw=-57.72 al=fp_machine nm="Jack pump" obj=TP_LaserControlPanel_lever sc=3 a=fp_top b=fp_deep done=fp_fixed rew=fp_rewchest rnote=fp_rewnote msg="It works." hint="It needs the hammer pin from the top of Pile-driver's Hump and the valve key from the pump gallery."
-call hw_note x=52.6 z=33.31 yaw=-37.72 al=fp_hint
-story fp_top|Hammer pin|Bolt|The pile driver's hammer pin, pulled out so the hammer can't fall.
-story fp_deep|Valve key|Bolt|The pump gallery's valve key, eighteen metres down.
-story fp_fixed|Jack pump working|Bolt|The jack pump, working again.
-note fp_hint Pile engineer's notice | The jack pump under the mudflat needs the hammer pin from the derrick on Pile-driver's Hump, and the valve key from the drowned pump gallery off the east shore, eighteen metres down.
 note fp_topchest Pile-driver's derrick deck box | A box lashed to the deck rail at the top of the pile-driver's derrick.
-loot fp_topchest story:fp_top*1;Scrap*2;Bolt*3
+loot fp_topchest Scrap*2;Bolt*3;Rope*1
+prop fp_topchest on.open=message||From the derrick deck you can see it at last: a line of buoys from Pumpcrown's quay to the rubble bank, straight as a ruler - the barges' night road. Someone has chalked a hook on the rail, pointing down.
 note fp_deepchest Pump gallery strongbox | A strongbox in the back room of the pump gallery.
-loot fp_deepchest story:fp_deep*1;MetalIngot*2;Battery*1
-note fp_rewnote Jack pump report | The jack pump thumps and the leaning pile stops creaking. The report: the piles were never checked - the Authority signed the forms every year.
-note fp_rewchest Jack pump reward | What the jack pump kept.
-loot fp_rewchest TitaniumOre*1;CopperIngot*2;TradeToken*2
+loot fp_deepchest MetalIngot*2;Battery*1
+prop fp_deepchest on.open=message||A barge manifest in the strongbox: IRON AND STONE FOR THE PILE FOOT - FORTY TONS - NIGHT DELIVERY. Signed for the Council, A.C. The gallery's pumps beside it are set to fill, not drain.
 note fp_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
 loot fp_ledge Rope*2;Bolt*2;Scrap*2
 prop fp_ledge loot.refill=0
@@ -248,9 +246,9 @@ prop jack4 if.use=signal|jack3
 prop jack4 on.use=signal||jack4\ngive||story:jack4*1\nshow|closing\nsound||event:/raft/radar/lever\nmessage||The last jack bites. All through the water the piles settle. Highwater holds - for now. Tucked behind the jack, a note.
 prop jack4 else.use=message||The third pile first.
 
-note enginenote Pile engineer's note | THE PILES - ENGINEER'S NOTE\n\nFour piles carry the crown, and the storm has cracked them. The jacks are at their feet, three metres east, where the air collects.\n\nThe first pile first, then the second. Then the far two - if the ray lets you. It has nested down there since the Lowstreet flood.
+note enginenote Nell Abernethy's note | Pinned over the old engineer's board, in a clerk's tidy hand -\n\nYou came. Good. I came down on the last barge after the council broke up, and I am writing this on my knee, so forgive the hand.\n\nCouncillor Crane went down the pile stair an hour before me, alone, with a lantern. He has not come back up. The air under the city lies in pockets round the foot-blocks; he knew that - he signed for them every year.\n\nFour piles carry the Crown. The jacks are at their feet. The first pile first, then the second - and then the stingray will wake. The pile drivers left blasting barrels on the piles for it. The third and the fourth after.\n\nBefore you dive, read the engineers' survey in their hut to the south, and look at what the rubble bank is made of. Then you will know why the Rookery was weight.\n\nInes's chalk hooks go down the pile stair. Follow them.\n\n- N. Abernethy
 note engineerbox Engineer's box | The pile engineer's spare tools.
-note closing The city holds | Behind the fourth jack, in a tin, the pile engineer's last words -\n\nThe piles are older than the Authority, the Fleet and the Union. They were here before any of them, and they will carry whoever comes after.\n\nThe brass plate on each one: CONCORD WORKS. Whoever built the pumps built this too. Their signal is still out there, south, on the old band.
+note closing The city holds | Behind the fourth jack, in a tin with chalk fingerprints on the lid -\n\nYou did it. I heard the piles settle from the stair, all four, like a house letting out its breath.\n\nI found him before you did. I closed his eyes and left his page where it was, for you - you earned the reading of it. Nell will take it up to the Crown. Let the factions argue over it for a hundred years; they are good at that.\n\nI'm going up. Dobbs is waiting on the mudflat with a thermos and a complaint about the tide.\n\nIf you spoke for the Rookery on the roofs, Maud's boats are already out on the shoal ahead, band 700 - Pip has a tram line to build and says you are its first passenger.\n\nThe brass plates on the piles say CONCORD WORKS. Whoever built them is still out there, south, on the old band. That's another story.\n\n- Ines
 note returnsign Mudflat | High-water mark. The tide comes no further.
 loot engineerbox Rope*2;MetalIngot*2;Bolt*2
 prop engineerbox loot.refill=0
@@ -260,42 +258,43 @@ prop mudzone zone.radius=4
 prop mudzone zone.message=The mudflat. The engineer's hut, a board, and the black water beyond.
 prop returnzone zone.id=mudflat_return
 prop returnzone zone.radius=3
-prop returnzone zone.message=Back on the mudflat. Up above, the rain is easing off.
+prop returnzone zone.message=Back on the mudflat. Dobbs is there with a thermos, complaining about the tide. Up above, the rain is easing off.
 
 prop blast1 on.use=message||The barrel goes up under the pile - the shock rolls the stingray over.\nhit|pileray|40\nhide|\nsignal||blast
 prop blast2 on.use=message||The second barrel bursts - the stingray's hide splits along the old scar.\nhit|pileray|40\nhide|\nsignal||blast
 prop blast3 on.use=message||The last barrel blows - and the pile shudders free of the stingray.\nhit|pileray|40\nhide|\nsignal||blast
-note diggercrate Excavator's toolbox | The excavator that dug the pile field slid off the bank in a storm. Its toolbox stayed bolted to the cab.
+note diggercrate Excavator's toolbox | The excavator slid off the bank in a storm. Its toolbox stayed bolted to the cab - and in the lid, the driver's work sheets.\n\nNIGHT SHIFT. DIG BALLAST PIT AT THE PILE FOOT. BARGE IRON FROM PUMPCROWN. NO LIGHTS. NO NAMES. Paid in Authority tokens, double.\n\nOn the last sheet, pressed hard: The ground under pile four is moving. I told the Councillor. He said: then dig faster. I have gone up to the Rookery to dig for them instead. Whoever finds this - the drivers kept charges in the west cave. You will want them down there. - Carver
 loot diggercrate MetalIngot*3;Bolt*3;Scrap*3
-note engineersurvey Engineers' survey | PILE SURVEY - CROWN FOUNDATIONS\n\nFour piles carry the Crown. All four are cracked. Jacks fitted to all four.\nThe stingrays nest round the piles; the pile drivers keep blasting charges in the west cave. The city must not hear of it.
-note driverchest Pile-driver's stash | Blasting charges, wrapped in oilcloth - and the drivers' pay, never collected.
+note engineersurvey Engineers' survey | PILE SURVEY - CROWN FOUNDATIONS\n\nFour piles carry the Crown. Inspected this year: all four sound. Jacks serviced, as funded. Signed every year for twenty-two years, in the same neat hand: A.C.\n\n(Underneath, in pencil, shaky: I was the pile engineer. The service money was voted every year and never spent. He was a junior clerk then, and it paid for his first election. When the cracks came he could not send men down to the jacks - they would have seen the rust, and the dates. So he sent iron instead. I am old and I was paid to keep quiet, and I am sorry. - R. Tolley)\n\n(And in grease pencil: He couldn't wind the jacks without a vote, so he bought weight. Lowstreet's water. The barges' iron. The Rookery's roofs next. - I.M.)
+note driverchest Pile-driver's stash | Blasting charges wrapped in oilcloth, and the drivers' pay, never collected.\n\nOn the cave wall above, a chalk hook you know by now, and under it: THE BARRELS ON THE PILES ARE THE SAME CHARGE. THE RAY'S HIDE ONLY GIVES TO A BLAST. LIGHT ONE UNDER IT, NOT UNDER YOU. - I.M.
+note jacklog1 Jack log - pile 1 | A brass tag wired to the first jack, stamped once a year -\n\nSERVICED. SOUND. - A.C.\n\nTwenty-two stamps, the same initials, the same neat hand. The grease in the jack's screw is older than the stamps: black, hard as tar, untouched since Concord Works fitted it.\n\nUnder the last stamp, in Ines's grease pencil: Nobody has turned this since before he was born. It still bites, if you lean on it. Wind it - then the second. The stingray sleeps between them, and the second jack will wake it.
+note jacklog3 Jack log - pile 3 | The tag on the third jack. Every stamp on it has been scored through with a knife point, and below them, fresh, the newest entry - tonight's:\n\nCRACKED. CRACKED. CRACKED. I SIGNED THEM ALL. - A.C.\n\nLantern soot on the handle. He tried to wind this one before you, and the stingray drove him off it. A long scrape runs along the pile where he went on - past the fourth air pocket, into the dark.
+note cranepage Aldous Crane's last page | A notebook page, in the neat hand, getting less neat -\n\nTo whoever winds the fourth.\n\nI was twenty-six, the piles were sound, and the service money paid for my first election. Nobody died of it. For twenty-two years nobody died of it.\n\nThen the cracks. To wind the jacks I would have had to say they had never been seen to. So I gave the Crown weight instead. Water is weight: I opened the valves and let Lowstreet fill. Iron is weight: I sank it here by night. I signed for the factions so that each would think the others knew. Two thousand people, I told myself, were a fair price for a city.\n\nIt was never weight the piles needed. It was someone to come down here and turn a handle. That was all, for twenty-two years.\n\nThe air is going. Number four will not turn while the other three hang loose. Do not let it beat you too.\n\n- A. Crane
 loot driverchest ExplosiveGoo*2;TradeToken*3;Rope*2
 prop driverchest loot.refill=0
 quest title=The Piles
-quest intro=The storm has cracked the piles under the city. Land on the mudflat at its edge.
+quest intro=The storm is cracking the four piles under the Crown, and Councillor Crane has gone down the pile stair alone. Land on the mudflat at the city's edge - Nell Abernethy left a note there.
 step reach|mudflat|1|Land on the mudflat
-step read|Pile engineer's note|1|Read the pile engineer's note
-step reach|pile_1|1|Dive to the first pile
+step read|Nell Abernethy's note|1|Read Nell Abernethy's note on the engineer's board
+step read|Engineers' survey|1|Read the engineers' survey in their hut in the south
+step open|Excavator's toolbox|1|Open the toolbox of the sunk excavator in the south-west
+step reach|driver_cave|1|Find the pile drivers' cave in the west cliff
+step open|Pile-driver's stash|1|Open the pile drivers' stash in the cave
+step reach|rubble_bank|1|Climb the rubble bank in the north-west and see what it is made of
+step reach|pile_1|1|Follow Ines's hooks down the pile stair to the first pile
+step read|Jack log - pile 1|1|Read the jack log wired to the first jack
 step collect|story:jack1|1|Wind the first pile's jack
 step reach|pile_2|1|Swim to the second pile
 step collect|story:jack2|1|Wind the second pile's jack
-step collect|story:rayhurt|1|Wound the stingray nesting among the piles
+step collect|story:rayhurt|1|Blast the stingray that wakes among the piles
 step collect|story:raydown|1|Finish the pile stingray
 step collect|story:jack3|1|Wind the third pile's jack
+step read|Jack log - pile 3|1|Read the jack log on the third jack
+step read|Aldous Crane's last page|1|Follow the scrape on the pile to the fourth air pocket and read what is there
 step collect|story:jack4|1|Wind the fourth pile's jack
 step read|The city holds|1|Read the note behind the last jack
-step reach|rubble_bank|1|Climb the rubble bank in the north-west
-step read|Engineers' survey|1|Read the engineers' survey in their hut in the south
-step open|Excavator's toolbox|1|Open the toolbox of the sunk excavator in the south-west
-step read|Pile engineer's notice|1|Read the pile engineer's notice by the jack pump in the north-east
-step reach|fp_trail|1|Find the foot of the trail up Pile-driver's Hump, in the north
-step reach|fp_summit|1|Climb the trail to the top of Pile-driver's Hump
-step collect|story:fp_top|1|Climb the pile-driver's derrick and take the hammer pin from its deck
-step reach|fp_deep|1|Dive to the pump gallery off the east shore
-step collect|story:fp_deep|1|Find the valve key in its back room
-step read|Jack pump report|1|Bring both to the jack pump and read what it shows
 step reach|mudflat_return|1|Go back up to the mudflat
-quest done=Highwater holds. The city that never sank is still standing - and whatever you chose on the Crown, it will have to live with.
+quest done=Highwater holds. Four jacks wound, one confession read, and a city that will have to hear what it stands on. Whatever you chose on the Crown, it will have to live with it.
 quest reward=TitaniumOre*2;TradeToken*10
 
 save The Foundation Piles

@@ -11,63 +11,63 @@ zone intake
 expect step 1
 read Cistern ledger
 expect step 2
-open Smelter workshop
-wait 3
-expect step 3
 zone valve_gallery
 air valve_gallery
 air gallery_air2
-expect step 4
+expect step 3
 read Valve log
-expect step 5
+expect step 4
 open Valve gallery chest
 wait 3
+expect step 5
+open Smelter workshop
+wait 3
 expect step 6
+open Councillor's drawer
+wait 3
+expect step 7
 zone old_pump
 wait 6
-expect step 7
-read Builder's plate
 expect step 8
+read Builder's plate
+expect step 9
 open Pump house locker
 wait 3
-expect step 9
-zone aqueduct_hill
 expect step 10
-read Waterman's diary
+read Sluicekeeper's notice
 expect step 11
+zone aqueduct_hill
+expect step 12
+read Clerk Quill's slip
+expect step 13
+read Waterman's diary
+expect step 14
+read Clerk Hollis's slip
+expect step 15
 open Records van's crate
 wait 3
-expect step 12
-# DEEP 10-24: the notice, the climb, the dive, the sluice lever
-expect hidden ch_rewchest
-use ch_machine
-expect hidden ch_rewchest
-read Sluicekeeper's notice
-expect step 13
+expect step 16
+read Clerk Fane's slip
+expect step 17
+read Clerk Abernethy's slip
+expect step 18
 zone ch_trail
-expect step 14
+expect step 19
 # (the ledge cache wants a keycard)
 zone ch_summit
-expect step 15
+expect step 20
 expect stand -46.37 -42.11 h=40
 open Surge tower deck box
 wait 3
 expect story ch_top 1
-expect step 16
+expect step 21
 zone ch_deep
-expect step 17
+expect step 22
 expect stand 27 -86 h=-16
 open Settling house strongbox
 wait 3
 expect story ch_deep 1
-expect step 18
-use ch_machine
-expect shown ch_rewchest
-expect story ch_fixed 1
-open Sluice lever reward
-wait 3
-read Sluicekeeper's figures
-expect step 19
+expect step 23
 use ch_g1
 expect hidden ch_pumpchest
 use ch_g3
@@ -84,10 +84,7 @@ use ch_g4
 use ch_g2
 expect shown ch_pumpchest
 expect story ch_gates 1
-expect step 20
+expect step 24
 open Pump-keeper's chest
 wait 3
-open Councillor's drawer
-wait 3
 expect done
-dig

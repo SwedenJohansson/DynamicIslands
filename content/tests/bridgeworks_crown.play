@@ -31,29 +31,63 @@ zone union_roof
 expect step 9
 read Union demand
 expect step 10
+# STORY 10-24: the five recordings on the roofs
+open Pip's recording
+wait 2
+open Nell's recording
+wait 2
+open Crane's broadcast
+wait 2
+open Teo's recording
+wait 2
+open Bram's recording
+wait 2
+expect story plea 5
+expect step 11
+read Complaint No. 400
+expect step 12
 open Faction letters
 wait 3
-expect step 11
-read Authority secret
-expect step 12
-read Fleet secret
 expect step 13
-read Union secret
+read Authority secret
 expect step 14
+read Fleet secret
+expect step 15
+read Union secret
+expect step 16
+zone storm_ridge
+expect step 17
+read Councillor's notebook
+expect step 18
+open Bridgeworks crane's toolbox
+wait 3
+expect step 19
+read Storm warden's notice
+expect step 20
+zone bc_trail
+expect step 21
+# (the ledge cache wants a keycard)
+zone bc_summit
+expect step 22
+expect stand -79.26 25.11 h=50
+open Storm beacon mast deck box
+wait 3
+expect story bc_top 1
+expect step 23
 use alarmbell
 expect story alarm 1
-expect step 15
+expect step 24
 zone council_door
-expect step 16
+expect step 25
 code councilpad 1111 wrong
 code councilpad 4719
 expect hidden councilgate
 expect story councilcode 1
-expect step 17
+expect step 26
 zone council
-expect step 18
+expect step 27
 read Five ways
-expect step 19
+expect step 28
 use wayfree
 expect shown verdictfree
 expect shown councilchest
@@ -62,55 +96,17 @@ expect story choice 1
 use wayfleet
 expect hidden verdictfleet
 expect story choice 1
-expect step 20
+expect step 29
 read The verdict
-expect step 21
+expect step 30
 open Council reward
 wait 3
-expect step 22
+expect step 31
 read Teo Varga's message
 # (no step check here: in the plan the pile stair zone can already be passed on the way in)
-zone storm_ridge
-expect step 24
-read Councillor's notebook
-expect step 25
-open Bridgeworks crane's toolbox
-wait 3
-expect step 26
 zone pile_stair
-expect step 27
 read Pile engineer's map
-expect step 28
-# DEEP 10-24: the notice, the climb, the dive, the storm bell
-expect hidden bc_rewchest
-use bc_machine
-expect hidden bc_rewchest
-read Storm warden's notice
-expect step 29
-zone bc_trail
-expect step 30
-# (the ledge cache wants a keycard)
-zone bc_summit
-expect step 31
-expect stand -79.26 25.11 h=50
-open Storm beacon mast deck box
-wait 3
-expect story bc_top 1
-expect step 32
-zone bc_deep
-expect step 33
-expect stand -77 -38 h=-17
-open Council archive strongbox
-wait 3
-expect story bc_deep 1
 expect step 34
-use bc_machine
-expect shown bc_rewchest
-expect story bc_fixed 1
-open Storm bell reward
-wait 3
-read Storm warden's roll
-expect step 35
 zone pile_head
 expect done
 dig
@@ -123,3 +119,10 @@ read Sealed records
 use bc_climbout
 wait 4
 zone bc_btnback
+
+# STORY 10-24: the drowned council archive is optional now (the minutes of the last pile survey)
+zone bc_deep
+expect stand -77 -38 h=-17
+open Council archive strongbox
+wait 3
+expect story bc_deep 1

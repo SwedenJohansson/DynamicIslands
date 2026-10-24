@@ -10,76 +10,67 @@ zone soup_kitchen
 expect step 1
 read Rookery petition
 expect step 2
-kill Rat
-expect animals Rat 0
+kill Butler bot
+kill Butler bot
+kill Butler bot
 expect step 3
-open Rookery smithy
-wait 3
-expect step 4
-zone tollgate
-expect step 5
-kill Screecher
-expect animals Screecher 0
-expect step 6
-open Packer's hut
-wait 3
-expect step 7
-openat 1.65 -14.6
-openat -20.6 -49.1
-openat -4.8 -55.5
-expect story watertoken 3
-expect step 8
-read Rookery elders' plan
-expect step 9
-open Elders' hut
-wait 3
-expect step 10
-zone gull_stacks
-expect step 11
-read Bathhouse slate
-expect step 12
-open Family van's crate
-wait 3
-expect step 13
-# DEEP 10-24: the notice, the climb, the dive, the boiler valve
-expect hidden rk_rewchest
-use rk_machine
-expect hidden rk_rewchest
-read Bathhouse notice
-expect step 14
-kill Butler bot
-kill Butler bot
-kill Butler bot
-expect step 15
 openat 37.17 -15.62
 openat 18.82 -34.63
 openat 28.22 -25.57
 wait 3
 expect story ration 3
-expect step 16
-zone rk_trail
-expect step 17
-# (the ledge cache wants a keycard)
-zone rk_summit
-expect step 18
-expect stand 57.32 -14.63 h=34
-open Great chimney deck box
+expect step 4
+read Maud Penn's note
+expect step 5
+kill Rat
+expect animals Rat 0
+expect step 6
+openat 1.65 -14.6
+openat -20.6 -49.1
+openat -4.8 -55.5
+expect story watertoken 3
+expect step 7
+open Rookery smithy
 wait 3
-expect story rk_top 1
-expect step 19
+expect step 8
+zone tollgate
+expect step 9
+kill Screecher
+expect animals Screecher 0
+expect step 10
+open Packer's hut
+wait 3
+expect step 11
+zone gull_stacks
+expect step 12
+read Pip's note
+expect step 13
+read Bathhouse slate
+expect step 14
+open Family van's crate
+wait 3
+expect step 15
 zone rk_deep
-expect step 20
+expect step 16
 expect stand 25 -78 h=-16
 open Bathhouse cellar strongbox
 wait 3
 expect story rk_deep 1
-expect step 21
-use rk_machine
-expect shown rk_rewchest
-expect story rk_fixed 1
-open Boiler valve reward
+expect step 17
+zone rk_trail
+expect step 18
+# (the ledge cache wants a keycard)
+zone rk_summit
+expect step 19
+expect stand 57.32 -14.63 h=34
+open Great chimney deck box
 wait 3
-read Bathhouse ticket
+expect story rk_top 1
+expect step 20
+read Rookery elders' plan
+expect step 21
+open Elders' hut
+wait 3
 expect step 22
 open Glass hoard
 wait 3

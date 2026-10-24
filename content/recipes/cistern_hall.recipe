@@ -2,7 +2,7 @@
 # The Authority's main tower: its roof is the island's top (planters, a sand bed, something buried in it); at its foot
 # the old cistern lies open to the sea - a basin six metres deep, walkways on stone legs over the water, the pump house
 # with the oldest pump in the city, the smelter workshop on its own platform, the councillor's office, and down in the
-# water the flooded valve gallery with two pockets of air. Quest "The Evidence" (21 steps): the intake, the cistern
+# water the flooded valve gallery with two pockets of air. Quest "The Evidence" (25 steps, STORY 10-24: the forged valve log, Dobbs's complaints filed in the drawer, the sluice order split over four clerks' slips round the island, Ines's slate in the settling house; the sluice lever machine gone): the intake, the cistern
 # ledger, the electric smelter's plans, the valve gallery, the valve log (the evidence), the advanced biofuel
 # extractor's plans, the old pump (the camera on its plate), the builder's plate, the advanced anchor's plans, the
 # councillor's drawer.
@@ -211,8 +211,11 @@ prop ch_boatcrate loot.refill=0
 call hw_reef x=15 z=-75 r=3 seed=13786
 place Creature_PufferFish ch_puffers at 16 -87 h=-12
 prop ch_puffers creature.count=2
-call hw_machine x=-10 z=-72 yaw=-43.26 al=ch_machine nm="Sluice lever" obj=TP_LaserControlPanel_lever sc=3 a=ch_top b=ch_deep done=ch_fixed rew=ch_rewchest rnote=ch_rewnote msg="It works." hint="It needs the surge gauge from the top of Overflow Tor and the tank plug from the settling house."
 call hw_note x=-7.15 z=-71.38 yaw=-23.26 al=ch_hint
+call hw_note x=-22 z=50 yaw=30 al=quillslip
+call hw_note x=37.5 z=54 yaw=-40 al=hollisslip
+call hw_note x=45 z=25 yaw=200 al=faneslip
+call hw_note x=-57 z=31 yaw=90 al=abernethyslip
 # the sluices (mech 10-24: moveto + state checks): four levers by the hub, each dropping its sluice gate, in the
 # pump-keeper's order (3-1-4-2, the reward note). Out of turn a lever jams; the reset lever by the hub lifts all gates.
 place RT_Pillar - at -3.95 -73.17 ground sit sy=0.4
@@ -289,23 +292,22 @@ prop ch_reset else.use=message||The cistern is drained; the gates stay down.
 place Loot_Chest ch_pumpchest at -4.52 -77.83 ground sit yaw=47.86
 prop ch_pumpchest beh.hidden=1
 prop ch_pumpchest loot.refill=0
-story ch_top|Surge gauge|Bolt|The surge tower's gauge - it shows the cistern's real level.
-story ch_deep|Tank plug|Bolt|The settling house's bronze tank plug.
-story ch_fixed|Sluice lever working|Bolt|The sluice lever, working again.
+story ch_top|Surge gauge|Bolt|The surge tower's gauge - its chalk marks show the cistern brim full the night Lowstreet drowned.
+story ch_deep|Ines's diving slate|Note_Paper|Ines Marlowe's diving slate, grease pencil, left in the settling house strongbox.
 story ch_gates|Sluices open|Bolt|The four sluices of the pump hall, opened in the keeper's order.
-note ch_hint Sluicekeeper's notice | The overflow sluice wants its gauge (up the surge tower on Overflow Tor) and its tank plug (in the settling house, drowned off the south shore).
+note ch_hint Sluicekeeper's notice | SLUICE OFFICE - STANDING ORDER\n\nThe pump hall sluices are to be pulled in one order only. Out of turn, the water holds the gate and the lever jams.\n\nBy the Councillor's rule, no one clerk holds the whole order. Each of the four sluice clerks keeps one line of it, in his own head, and the clerks are to be posted apart.\n\n(Under it, in chalk, a hand you know from Lowstreet: He split it so nobody could open the hall without him. So the clerks wrote their lines down - clerks always do. Quill on the hill, Hollis by the lodge, Fane at the van, Nell by the lamp cave. First, second, third, fourth. - I.M.)
+prop ch_topchest on.open=message||The surge gauge, still bolted to the rail. The cistern's mark is chalked on it by date. The night Lowstreet drowned, the cistern stood brim full - and Pumpcrown's main ran the other way. The city's water was not short. It was being kept.
+prop ch_deepchest on.open=message||A diver's slate in the strongbox, grease pencil: VALVE LOG REAL. SIGNATURES FORGED - ONE HAND. BARGES TO THE PILES. GONE UP TO THE ROOKERY WITH THE LEDGER PAGE. IF YOU READ THIS, YOU'RE THE ONE I'VE BEEN WRITING TO. - I.M.
 note ch_topchest Surge tower deck box | A box lashed to the deck rail at the top of the surge tower.
 loot ch_topchest story:ch_top*1;Scrap*2;Rope*2
 note ch_deepchest Settling house strongbox | A strongbox in the back room of the settling house.
 loot ch_deepchest story:ch_deep*1;MetalIngot*2;Plastic*1
-note ch_rewnote Sluicekeeper's figures | The sluice opens and the cistern drains a hand's width. The figures: the Authority kept the cistern full and the Rookery's barrels empty, on purpose. Scratched inside the lid, the keeper's sluice order: 3 - 1 - 4 - 2.
-note ch_rewchest Sluice lever reward | What the sluice lever kept.
-loot ch_rewchest CopperIngot*2;Battery*1;TradeToken*2
 note ch_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
 loot ch_ledge Rope*2;Bolt*2;Scrap*2
 prop ch_ledge loot.refill=0
 loot ch_boatcrate Plastic*3;Scrap*2;MetalIngot*1
 note ch_pumpchest Pump-keeper's chest | The pump-keeper's chest, dry for the first time in years.
+prop ch_pumpchest on.open=message||Under the tins, a chalk drawing of a ladder of roofs, a row of barrels, a small girl with a tram - and Ines's hand, from her first week out: The page I tore from the ledger is on the Rookery, band 800, high up where nobody climbs. Maud Penn keeps the lowest roofs; she'll know you by my chalk. Read the page and you'll see what Crane is weighing. - I.M.
 loot ch_pumpchest TradeToken*3;MetalIngot*2;Glass*2
 prop ch_ledge if.open=has|Tangaroa_KeyCard|1
 prop ch_ledge else.open=message||A card lock on the box - a Tangaroa keycard would open it.
@@ -325,13 +327,17 @@ prop pumpcam obj.name=pumpcam
 prop pumpzone on.enter=camera|pumpcam|oldpump|5|8
 prop valvelog on.read=signal||evidence
 
-note ledger Cistern ledger | CISTERN HALL - LEDGER\n\nIntake: full. Southern district (Lowstreet): supply cut, by order.\nValves 1-3: closed for repairs.\n\nThe order is signed. The page with the name on it has been torn out.
-note valvelog Valve log | VALVE LOG - THE NIGHT LOWSTREET DROWNED\n\nValves 1, 2 and 3 opened by hand. The sea let into the southern district. Eleven thousand moved to the roofs.\n\nOrdered: Councillor Aldous Crane, Harbor Authority.\nCountersigned: for the Free Fleet - T. Varga.\nCountersigned: for the Salvagers' Union - the foreman.\n\nAll three. Every faction knew.
+note ledger Cistern ledger | CISTERN HALL - LEDGER\n\nIntake: full. Southern district (Lowstreet): supply cut, by order.\nValves 1-3: closed for repairs.\n\nThe order is signed. The page with the name on it has been torn out.\n\n(In pencil, along the torn edge, small and neat: I have the page. It's safe where the children count barrels. The rest of what you need is in the valve gallery - Fane put it back. - I.M.)
+note valvelog Valve log | VALVE LOG - THE NIGHT LOWSTREET DROWNED\n\nValves 1, 2 and 3 opened by hand. The sea let into the southern district. Two thousand moved to the roofs.\n\nOrdered: Councillor Aldous Crane, Harbor Authority.\nCountersigned: for the Free Fleet - T. Varga.\nCountersigned: for the Salvagers' Union - the foreman.\n\nAll three factions, it says. Every faction knew.\n\nBut the ink is one ink. The T of Varga leans the same way as the C of Crane, and the foreman's mark is a neat little B - Bram Hask signs with a hook, everyone knows that. One hand wrote all three names.\n\nCrane didn't buy the factions. He signed for them.
 note plate Builder's plate | A brass plate on the oldest pump, green with age. A ring of waves round a tower:\n\nCONCORD WORKS.\nStation 7 of the southern network.
 note smelterbench Smelter workshop | The workshop's chest: the electric smelter's plans, a pair of tongs.
 note gallerychest Valve gallery chest | A diver's chest chained to a pillar: the advanced biofuel extractor's plans.
 note anchorlocker Pump house locker | The pump house locker: the advanced anchor's plans - the pump's own mooring.
-note drawer Councillor's drawer | Councillor Crane's drawer. A letter, a seal, and a list of who was paid to sign.
+note drawer Councillor's drawer | Councillor Crane's drawer. A seal, a pen with a very fine nib, and a list of who was paid to keep quiet - the waterman, two Authority guards, a harbourmaster who refused.\n\nUnder them, tied with ribbon, two hundred and ninety-nine complaints from W. Dobbs, Foreman, Pumpcrown Works. Every one stamped in red: FILED - A.C.\n\nNone has been opened. On the top one, in the Councillor's hand: The man is right about the pumps. That is why he must never be answered.
+note quillslip Clerk Quill's slip | Rolled in a bottle and wedged between the arch stones -\n\nI am Clerk Quill, first line of the sluice order, and I am writing it down because I am sixty-one and my head is not the safe it was.\n\nFIRST: SLUICE THREE.\n\nThe Councillor says a clerk who writes his line down will be posted to the Piles. I have been posted to this hill, which is nearly as bad and has more goats. A goat ate my first copy. This is my second. If a goat eats this one, it is the goat who knows the order, and good luck to the Council getting it out of him.\n\n- A. Quill
+note hollisslip Clerk Hollis's slip | Pinned under a stone by the lodge wall -\n\nSECOND: SLUICE ONE.\n\nThat's my line. I've kept it nine years, through a wedding, two children and a fever where I apparently sang it to the doctor. He didn't understand. Nobody ever does.\n\nThe waterman says the pumps ran backwards the night Lowstreet went. He told the Councillor and the Councillor paid him to stop telling. Nobody paid me. I'm telling you for nothing, which is about what my silence was worth anyway.\n\n- J. Hollis, second clerk
+note faneslip Clerk Fane's slip | Taped inside the van's door, behind the mirror -\n\nTHIRD: SLUICE FOUR.\n\nI drove the records van the morning after. Councillor's orders: take every valve book on the island out to the Piles barge and see it sunk. I took them. I sank them. All but one, which I put back in the gallery where it was written, because my mother was on Lowstreet and she got out with one shoe and a kettle.\n\nIf you've read that valve log, you've read the one I kept. Look at the signatures. Look at them hard.\n\n- P. Fane
+note abernethyslip Clerk Abernethy's slip | Tucked into a lamp bracket at the cave mouth -\n\nFOURTH: SLUICE TWO. Then the hall drains, and the old keeper's chest stands dry.\n\nI'm Nell Abernethy, night clerk. I won't be here when you read this: the Councillor has reassigned me to the Crown, where he can keep an eye on me, which is a compliment of a kind. I have a father on Bellow Street who thinks I work in an office with a nice window. Let him.\n\nThe woman with the chalk came through at midnight and asked me for my line. I gave it to her. She asked who else knew. I said: now, you. She said: not for long.\n\n- N. Abernethy
 note seedbox Planter box | The roof garden's seeds.
 loot smelterbench Blueprint_SmelterElectric*1;CopperIngot*2;MetalIngot*2
 prop smelterbench loot.refill=0
@@ -361,29 +367,33 @@ note pumpvault Pump engine locker | The pump house's spare parts, behind a locke
 loot pumpvault MetalIngot*3;Bolt*3;CopperIngot*2
 prop pumpvault loot.refill=0
 quest title=The Evidence
-quest intro=The valves under Lowstreet were turned by hand. The records are in the cistern under the Authority's tower.
+quest intro=Ines Marlowe's chalk led here: the cistern under the Authority's tower, where the valves under Lowstreet were turned by hand. Find the record - and the four clerks who kept the sluice order between them.
 step reach|intake|1|Go down to the cistern's intake
 step read|Cistern ledger|1|Read the cistern ledger at the intake
-step blueprint|Blueprint_SmelterElectric|1|Take the electric smelter's plans from the workshop
 step reach|valve_gallery|1|Dive down to the flooded valve gallery
 step read|Valve log|1|Read the valve log in the gallery
 step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced biofuel extractor's plans from the gallery's chest
+step blueprint|Blueprint_SmelterElectric|1|Take the electric smelter's plans from the workshop
+step open|Councillor's drawer|1|Open the councillor's drawer in his office
 step reach|old_pump|1|Go into the pump house and look at the oldest pump
 step read|Builder's plate|1|Read the builder's plate on the pump
 step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced anchor's plans from the pump house locker
+step read|Sluicekeeper's notice|1|Read the sluicekeeper's notice by the four sluice levers in the south
 step reach|aqueduct_hill|1|Climb aqueduct hill in the north-west
+step read|Clerk Quill's slip|1|Find Clerk Quill's slip on aqueduct hill
 step read|Waterman's diary|1|Read the waterman's diary in his lodge in the north-east
+step read|Clerk Hollis's slip|1|Find Clerk Hollis's slip by the waterman's lodge
 step open|Records van's crate|1|Open the crate in the Authority's records van on the east shore
-step read|Sluicekeeper's notice|1|Read the sluicekeeper's notice by the sluice lever in the south
+step read|Clerk Fane's slip|1|Find Clerk Fane's slip by the records van
+step read|Clerk Abernethy's slip|1|Find Clerk Abernethy's slip at the mouth of the lamp men's cave in the west
 step reach|ch_trail|1|Find the foot of the trail up Overflow Tor, in the south-west
 step reach|ch_summit|1|Climb the trail to the top of Overflow Tor
-step collect|story:ch_top|1|Climb the surge tower and take the surge gauge from its deck
+step collect|story:ch_top|1|Climb the surge tower and read its gauge on the deck
 step reach|ch_deep|1|Dive to the settling house off the south shore
-step collect|story:ch_deep|1|Find the tank plug in its back room
-step read|Sluicekeeper's figures|1|Bring both to the sluice lever and read what it shows
-step collect|story:ch_gates|1|Open the four sluices by the hub in the pump-keeper's order
-step open|Councillor's drawer|1|Open the councillor's drawer in his office
-quest done=Every faction signed. The Rookery - the people who live on the city's lowest roofs - should hear it first. Band 800.
+step collect|story:ch_deep|1|Find what was left in its back room strongbox
+step collect|story:ch_gates|1|Pull the four sluices by the hub in the clerks' order
+step open|Pump-keeper's chest|1|Open the pump-keeper's chest in the drained pump hall
+quest done=One hand signed for every faction - Crane's. Ines Marlowe is waiting on the Rookery's lowest roofs with the torn ledger page. Band 800.
 quest reward=CopperOre*3;CaveMushroom*2
 
 save Cistern Hall

@@ -4,7 +4,7 @@
 # the middle the council house, its door on a keypad. Rain, wind, screechers; an electric zipline from the Union's crane
 # down to the key; on the key a trader and, at its west shore, the stair down to the city's foundation piles. The
 # factions meet to settle the city's water, and the stranger who has seen all three secrets decides: Authority, Fleet,
-# Union, expose them all, or free the Rookery. Quest "The Council in the Storm" (36 steps).
+# Union, expose them all, or free the Rookery. Quest "The Council in the Storm" (35 steps, STORY 10-24: five recordings on the roofs - Pip, Crane, Teo, Bram, Nell - and Dobbs's Complaint No. 400 before the council; the beacon climb lights the way to it; Crane walks out into the storm; the archive dive optional and the storm-bell machine gone).
 #
 # Points: the key 0 0 (r about 36, levelled at 2 round 0 -2); the causeway along x 0 from z 12 to 20; the landing roof
 # x -3..3, z 20.5..29.5; the Authority's roof x -15..-9 and the Fleet's x 9..15 (z 20.5..29.5), bridges at z 25; the
@@ -61,6 +61,8 @@ call hw_roof d=12 a=crown fm=none bm=none lm=none rm=none
 place Note_Board bulletin at -5.9 -3 y=1.2 yaw=90
 place RT_Pillar - at -0.6 -3.5 y=0.05 sy=0.6
 place TP_Selene_DoorCrankWheel shutters at -0.6 -3.59 y=1.25 yaw=0
+place Loot_ChestSmall rec_pip at -4 2.5 y=0.05 sit yaw=90
+place Loot_ChestSmall rec_nell at 3 3 y=0.05 sit yaw=200
 place Zone_Trigger landingzone at -3 -2 y=0.1
 pop
 
@@ -70,6 +72,7 @@ call hw_roof d=12 a=crown rm=none
 call hw_bridge n=4 y=0
 place RT_Spotlight - at -5 3.5 y=0.05 sit yaw=30
 place Placeable_Flag_01 - at -5.5 -3.8 y=0.05 sit
+place Loot_ChestSmall rec_crane at -3 -3.6 y=0.05 sit yaw=0
 place Note_Board authdemand at -5.9 0 y=1.2 yaw=90
 place RT_Pillar - at -1.2 3.6 y=0.05 sy=0.6
 place TP_LaserControlPanel_lever alarmbell at -1.2 3.3 y=1.2 scale=3 yaw=180
@@ -81,6 +84,7 @@ push at 15 25 h=1
 call hw_roof d=12 a=crown lm=none bm=none
 place Antenna_pole - at -3 0 y=0.05 sit
 place Placeable_Flag_02 - at -2.2 0.5 y=0.05 sit
+place Loot_ChestSmall rec_teo at -4 2.8 y=0.05 sit yaw=180
 place Note_Board fleetdemand at -0.1 -2 y=1.2 yaw=270
 place Zone_Trigger fleetzone at -3 -2 y=0.1
 pop
@@ -91,6 +95,7 @@ push at 15 34 h=1
 call hw_roof d=12 a=crown fm=none
 place UT_ElectricityIsland_Crane02 unioncrane at -4.5 3 y=0.05 sit scale=0.25 yaw=135
 place Note_Board uniondemand at -0.1 0 y=1.2 yaw=270
+place Loot_ChestSmall rec_bram at -5 -1 y=0.05 sit yaw=90
 place Loot_Chest letters at -3 3.4 y=0.05 sit yaw=180
 place Note_Paper authsecret at -4.5 2 y=0.05 drop
 place Note_Paper fleetsecret at -3 2 y=0.05 drop
@@ -129,6 +134,7 @@ place Creature_StoneBird screechers at 0 30 h=12
 # --- The key: the trader, the pile stair and the pile engineer's map ----------------------------------------------
 store crownshop at 8 -14 ground
 place Note_Sign pilemap at -18 8 ground sit yaw=240
+place Note_Sign dobbs400 at -15 11 ground sit yaw=200
 ramp Block_Floor_Wood from -21 9 1.5 to -25.5 12.5 -1.5 len=1.5 top=0
 place Zone_Trigger pilestair at -20 8 ground y=1.5
 place RT_Pillar pile at -27 14 ground sy=1.2
@@ -220,7 +226,6 @@ prop bc_boatcrate loot.refill=0
 call hw_reef x=-89 z=-27 r=3 seed=13986
 place Creature_PufferFish bc_puffers at -88 -39 h=-13
 prop bc_puffers creature.count=2
-call hw_machine x=-52 z=-12 yaw=-28.81 al=bc_machine nm="Storm bell" obj=TP_LaserControlPanel_lever sc=3 a=bc_top b=bc_deep done=bc_fixed rew=bc_rewchest rnote=bc_rewnote msg="It works." hint="It needs the storm beacon lamp from the top of Crown Fell and the archive seal from the council archive."
 call hw_note x=-49.09 z=-12.11 yaw=-8.81 al=bc_hint
 # the unmarked button by the councillor's summer house; it moves you into a sealed room (no door) in the
 # north-east with the council's records; a lever there slides one wall panel aside (moveto, mech 10-24) - a
@@ -265,15 +270,13 @@ prop bc_secret tint.color=#5c5850
 prop bc_secret tint.amount=0.5
 story bc_top|Storm beacon lamp|Bolt|The storm beacon's lamp, eighty metres over the sea.
 story bc_deep|Archive seal|Bolt|The council's archive seal, under seventeen metres of water.
-story bc_fixed|Storm bell working|Bolt|The storm bell, working again.
-note bc_hint Storm warden's notice | The storm bell rings only with the beacon lamp from the top of the storm mast on Crown Fell and the old council archive's seal - the archive went under off the west cliffs.
+note bc_hint Storm warden's notice | STORM WARDEN - STANDING ORDER\n\nBy the old law, the council may not sit in a storm until the beacon on Crown Fell is lit, so the boats at sea know the city is still speaking.\n\nThe warden's post has been vacant three years. The Councillor says the beacon is a superstition. The Councillor has never been at sea in the dark.\n\n(Under it, in a clerk's neat hand: Light it. He would rather sit in the dark, and that is reason enough. Then ring the Authority's bell and they must all come in. - N.A.)
+prop bc_topchest on.open=message||You strike the beacon's lamp and it catches - a white eye opening over the storm. Down on the four roofs, one by one, the factions' lanterns turn toward the council house. The bell is all that's left.
+prop bc_deepchest on.open=message||The council's old archive seal, and under it the minutes of the night the piles were last surveyed: CRACKS IN ALL FOUR. MOTION TO TELL THE CITY - DEFEATED, ONE VOTE TO NONE. The one vote was Crane's.
 note bc_topchest Storm beacon mast deck box | A box lashed to the deck rail at the top of the storm beacon mast.
 loot bc_topchest story:bc_top*1;Scrap*2;Bolt*3
 note bc_deepchest Council archive strongbox | A strongbox in the back room of the council archive.
 loot bc_deepchest story:bc_deep*1;MetalIngot*2;CircuitBoard*1
-note bc_rewnote Storm warden's roll | The storm bell rings over every roof of the Crown. The warden's roll: which roofs the council would let flood first. The Rookery was first on every list.
-note bc_rewchest Storm bell reward | What the storm bell kept.
-loot bc_rewchest TitaniumOre*1;CopperIngot*2;TradeToken*3
 note bc_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
 loot bc_ledge Rope*2;Bolt*2;Scrap*2
 prop bc_ledge loot.refill=0
@@ -291,6 +294,7 @@ island on.arrive=message||Rain, wind, and lights on the four highest roofs in Hi
 story shutters|Storm shutters closed|Bolt|The landing roof's storm shutters, cranked shut.
 story alarm|Alarm rung|Bolt|You rang the Authority's alarm bell - every roof knows the storm is here.
 story councilcode|Council door opened|Bolt|The council house door, opened with the factions' own code.
+story plea|Recording played|Bolt|One of the five recordings left on the Crown's roofs for the stranger.
 story choice|The city's choice|Note_Paper|What you chose for Highwater, in front of all three factions.
 
 prop crown tint.color=#7c8288
@@ -347,7 +351,7 @@ prop wayunion else.use=message||The council has its answer.
 prop wayexpose obj.name=wayexpose
 prop wayexpose beh.use=Choose: read the valve log aloud - expose them all
 prop wayexpose if.use=!signal|chosen
-prop wayexpose on.use=signal||expose\nsignal||chosen\ngive||story:choice*1\nshow|verdictexpose\nshow|councilchest\nshow|teomsg\nmessage||You read the valve log aloud. Nobody in the room can look at anyone else.
+prop wayexpose on.use=signal||expose\nsignal||chosen\ngive||story:choice*1\nshow|verdictexpose\nshow|councilchest\nshow|teomsg\nmessage||You read the valve log aloud, then the ledger page. At the word ballast, the Councillor's chair is empty.
 prop wayexpose else.use=message||The council has its answer.
 prop wayfree obj.name=wayfree
 prop wayfree beh.use=Choose: the water goes to the Rookery - and the Rookery goes free
@@ -374,18 +378,18 @@ note bulletin Storm bulletin | HARBOR AUTHORITY - STORM BULLETIN\n\nGale tonight
 note authdemand Authority demand | THE AUTHORITY'S DEMAND\n\nThe water stays with those who keep the pumps. The Fleet's smuggling ends. The Union's tenth is raised to a fifth.\n\nOrder keeps the city dry.
 note fleetdemand Fleet demand | THE FREE FLEET'S DEMAND\n\nThe pumps to the boats that carry the water. The Authority's permits burned. The boom open, day and night.\n\nThe sea belongs to those who sail it.
 note uniondemand Union demand | THE UNION'S DEMAND\n\nThe Union's divers brought up every pump in this city. The pumps are ours by salvage law.\n\nWhat we bring up, we share - with the Union.
-note authsecret Authority secret | Sealed with the Authority's anchor -\n\nCouncillor Crane: the Fleet and the Union were paid to countersign. If this comes out, all three go down together. Keep the code safe: it starts 4.
-note fleetsecret Fleet secret | Sealed with the Fleet's gull -\n\nTeo: we took the Authority's money for the valves. The boats needed fuel. The Rookery will never know. The code's middle: 7 then 1.
-note unionsecret Union secret | Sealed with the Union's hook -\n\nForeman: Marlowe's dive was meant to find the pumps, not the valves. If she talks, we are finished. The code ends 9.
+note authsecret Authority secret | Sealed with the Authority's anchor -\n\nCouncillor Crane: the countersignatures on the valve log are in your own hand. The Fleet and the Union never signed. But they have both taken our money since, to keep quiet, so now they can never say so without drowning with us. If this comes out, all three go down together. Keep the code safe: it starts 4.
+note fleetsecret Fleet secret | Sealed with the Fleet's gull -\n\nTeo: we took the Authority's money after the valves. The boats needed fuel. We knew that signature wasn't yours, and we let it stand. The Rookery will never know. The code's middle: 7 then 1.
+note unionsecret Union secret | Sealed with the Union's hook -\n\nForeman: Crane's man brought the money the week Marlowe's team went down. You swore at him, and then you took it for the widows' fund. If Ines talks, we are finished as well as him. The code ends 9.
 note letters Faction letters | The factions' letters for the council, sealed and stacked - one each, and none of them meant for you.
-note fiveways Five ways | FIVE WAYS THE CITY CAN GO\n\nTHE AUTHORITY - order, and the water stays theirs.\nTHE FLEET - the pumps go to the boats.\nTHE UNION - salvage law; the cranes rule.\nEXPOSE - read the valve log aloud; let the city judge all three.\nFREE - the water goes to the Rookery, and the Rookery leaves for a shoal of its own.\n\nPull one lever. The council will hear only one.
-note verdictauthority The verdict | THE AUTHORITY KEEPS THE WATER.\n\nThe pumps stay locked. The streets stay quiet. In the Rookery the barrels stay empty, and nobody asks why.
+note fiveways Five ways | FIVE WAYS THE CITY CAN GO\n\nTHE AUTHORITY - order, and the water stays theirs.\nTHE FLEET - the pumps go to the boats.\nTHE UNION - salvage law; the cranes rule.\nEXPOSE - read the valve log and the ledger page aloud; let the city judge all three.\nFREE - the water goes to the Rookery, and the Rookery leaves for a shoal of its own.\n\nPull one lever. The council will hear only one.
+note verdictauthority The verdict | THE AUTHORITY KEEPS THE WATER.\n\nThe pumps stay locked. The streets stay quiet. In the Rookery the barrels stay empty, and nobody asks why.\n\nBut when the vote is counted, the Councillor is not in his chair. His coat is on the back of it, soaked through.
 note verdictfleet The verdict | THE FLEET TAKES THE PUMPS.\n\nBoats come and go through an open boom. The water flows - to whoever has a boat.
 note verdictunion The verdict | THE UNION RUNS THE WATER.\n\nThe cranes turn day and night. Every barrel filled is chalked, every chalk mark paid.
 note verdictexpose The verdict | ALL THREE EXPOSED.\n\nThe valve log is read in every market. The councillor runs, the Fleet's captains scatter, the foreman resigns. The city will have to start again.
 note verdictfree The verdict | THE ROOKERY GOES FREE.\n\nThe Rookery's barrels are filled from the Authority's tanks, and at dawn its boats leave for a shoal of their own, ahead of you to the south.
-note teomsg Teo Varga's message | Left on the council table, in the Fleet's chalk -\n\nWhatever you chose, I am not staying to see it. The valves were my shame.\n\nThere's a signal from the south, on the old Concord band - the builders of the pumps. I'm sailing toward it. Follow if you like.\n\n- Teo Varga
-note pilemap Pile engineer's map | THE FOUNDATION PILES\n\nThe whole crown stands on four piles. The storm has cracked them. Jack them up, one by one, or the city goes down tonight.\n\nThe stair at the west shore goes down to the first pile head.
+note teomsg Teo Varga's message | Left on the council table, in the Fleet's chalk -\n\nWhatever you chose, it's chosen. I won't argue it. The valves were never my shame - the money was, and that's said now.\n\nCrane didn't stay for the vote. Nell saw him go: out the back in his shirtsleeves, into the storm, down the pile stair with a lantern. Whatever he's been carrying all these years, he's gone to carry it alone.\n\nThe piles are groaning. If they go, the Crown goes, and every roof with it - the Rookery's too. Somebody has to follow him down. I can't dive. You can.\n\n- Teo Varga
+note pilemap Pile engineer's map | THE FOUNDATION PILES\n\nThe whole crown stands on four piles. The storm has cracked them. Jack them up, one by one, or the city goes down tonight.\n\nThe stair at the west shore goes down to the first pile head.\n\n(Fresh, in wet pencil: Jacks one to four, in order. Do not let anyone wind number four alone. - pile engineer, retired, who should have said this louder)
 note councilchest Council reward | The council's reward, for the one who spoke.
 loot letters Rope*2
 prop letters loot.refill=0
@@ -421,6 +425,27 @@ prop councilgate if.use=signal|councildoor
 prop councilgate else.use=message||The council door has no key slot here: it opens from the keypad beside it.
 note bridgecrate Bridgeworks crane's toolbox | The crane that built the Crown's bridges lies where the storm of '31 dropped it. Its toolbox survived.
 loot bridgecrate MetalIngot*3;Bolt*4;Nail*10
+note rec_pip Pip's recording | A wind-up message box, painted blue, with a dent.
+loot rec_pip story:plea*1
+prop rec_pip loot.refill=0
+prop rec_pip on.open=message||Pip's voice, very close to the box: Hello. This is Pip Penn, from the Rookery. Nan says I have to say it properly. We are not weight. We are people. Nan is a person and I am a person and my dad was a person and he drove the tram. That's all. Nan, is that enough? (Maud, further off: That's plenty, love.) Oh. Also please give Rook back his water, I want my tram.
+note rec_crane Crane's broadcast | The Authority's broadcast set, its last recording still on the spool.
+loot rec_crane story:plea*1
+prop rec_crane loot.refill=0
+prop rec_crane on.open=message||Councillor Crane, calm and reasonable over the rain: People of Highwater. Tonight the council will settle the water. Some of you will be told stories about valves and ledgers. Ask yourselves who tells them. The city has stood for ninety years because someone did the arithmetic. Not one pound more than it can bear. I have carried every pound of it for you. I ask only that you let me finish.
+note rec_teo Teo's recording | A ship's message cylinder, wedged under the Fleet's flag.
+loot rec_teo story:plea*1
+prop rec_teo loot.refill=0
+prop rec_teo on.open=message||Teo Varga, hoarse: Stranger. I've heard what you're carrying. I'll say it before the council so nobody can say it for me: the Fleet took Crane's money after Lowstreet. Fuel money, for forty families. I knew the name on that valve log wasn't mine and I kept my mouth shut and my boats fed. If you read the log aloud tonight, read my name too. I'd rather be ashamed than be quiet.
+note rec_bram Bram's recording | A Union whistle-box, the kind the cranes use for shift calls.
+loot rec_bram story:plea*1
+prop rec_bram loot.refill=0
+prop rec_bram on.open=message||Bram Hask, with crane noise behind him: Eleven thousand tons. You've seen the book. The Union took Crane's money for the widows' fund, and I told myself that made it clean. It didn't. Ines - if you're listening, girl - your hook's still on the wall. Stranger: don't choose us because we're honest. We're not. Choose whatever keeps the most people dry. And then somebody tell me what that man is building at the bottom of the sea.
+note rec_nell Nell's recording | A clerk's dictation cylinder, labelled in neat capitals: N. ABERNETHY.
+loot rec_nell story:plea*1
+prop rec_nell loot.refill=0
+prop rec_nell on.open=message||Nell Abernethy, quickly and quietly: I'm the night clerk. I've been reassigned to the Crown so he can watch me, which means I've watched him. Every night this week he has gone down the pile stair alone with a lantern and come back soaked to the waist. He's stopped sleeping. He talks to the jacks. Whatever you choose in there, someone has to go down after him, because I think the piles are worse than he has told even himself.
+note dobbs400 Complaint No. 400 | COMPLAINT No. 400\nTo: the Harbor Council, in session, in the storm, which is where I have been told I may finally be heard.\n\nI am Wilmer Dobbs. I have written three hundred and ninety-nine complaints and the Councillor has filed every one of them in a drawer with a ribbon round it. I have seen the ribbon. It is a nice ribbon. It does not stop pumps.\n\nI complain that the Lowstreet main was run backwards for nine years on purpose. I complain that the Rookery was weighed. I complain that the Council's barges went to the Piles low in the water and came back light.\n\nAnd I complain - this is the new one - that the Councillor went down the pile stair an hour ago with a lantern and has not come up.\n\nYours, as ever, and I mean it this time, W. Dobbs
 note councilnotebook Councillor's notebook | Crane's notebook.\n\nThe council door: I gave each faction one piece so no faction can open it alone.\nThe Authority has the first, the fleet the middle two, the union the last. I keep the whole in the cave, in case I forget.
 note strongbox Councillor's strongbox | The councillor's strongbox, locked with an Authority keycard: what he was paid to sign.
 loot strongbox TradeToken*5;CircuitBoard*1;Glass*2
@@ -432,7 +457,7 @@ note cablechest Linesman's chest | A linesman's chest in the middle of the live 
 loot cablechest CopperIngot*3;CircuitBoard*1;Battery*1
 prop cablechest loot.refill=0
 quest title=The Council in the Storm
-quest intro=The councils meet on the Crown tonight, in the storm. Go up onto the landing roof.
+quest intro=The councils meet on the Crown tonight, in the storm - and Crane will be in the chair. You carry the valve log, the ledger page and Dobbs's complaints. Go up onto the landing roof.
 step reach|landing_roof|1|Go up onto the landing roof
 step read|Storm bulletin|1|Read the storm bulletin
 step kill|Screecher|4|Drive the four screechers off the roofs
@@ -443,11 +468,20 @@ step reach|fleet_roof|1|Cross to the Fleet's roof
 step read|Fleet demand|1|Read the Fleet's demand
 step reach|union_roof|1|Cross to the Union's roof
 step read|Union demand|1|Read the Union's demand
+step collect|story:plea|5|Play the five recordings left for you on the four roofs
+step read|Complaint No. 400|1|Read the complaint nailed up on the key by the pile stair
 step open|Faction letters|1|Open the factions' letters on the Union's roof
 step read|Authority secret|1|Read the Authority's secret
 step read|Fleet secret|1|Read the Fleet's secret
 step read|Union secret|1|Read the Union's secret
-step collect|story:alarm|1|Ring the alarm bell on the Authority's roof
+step reach|storm_ridge|1|Climb storm ridge on the south side of the Crown
+step read|Councillor's notebook|1|Read the councillor's notebook in his summer house in the west
+step open|Bridgeworks crane's toolbox|1|Open the toolbox of the fallen bridgeworks crane in the south-east
+step read|Storm warden's notice|1|Read the storm warden's notice in the west
+step reach|bc_trail|1|Find the foot of the trail up Crown Fell, in the west
+step reach|bc_summit|1|Climb the trail to the top of Crown Fell
+step collect|story:bc_top|1|Climb the storm beacon mast and light the beacon from its deck box
+step collect|story:alarm|1|Ring the alarm bell on the Authority's roof - the council sits
 step reach|council_door|1|Go to the council house door
 step collect|story:councilcode|1|Open the door with the code the three letters make
 step reach|council|1|Go into the council house
@@ -456,19 +490,9 @@ step collect|story:choice|1|Pull one lever - choose for Highwater
 step read|The verdict|1|Read the verdict
 step open|Council reward|1|Open the council's reward
 step read|Teo Varga's message|1|Read Teo Varga's message
-step reach|storm_ridge|1|Climb storm ridge on the south side of the Crown
-step read|Councillor's notebook|1|Read the councillor's notebook in his summer house in the west
-step open|Bridgeworks crane's toolbox|1|Open the toolbox of the fallen bridgeworks crane in the south-east
 step reach|pile_stair|1|Go down to the pile stair on the key's west shore
 step read|Pile engineer's map|1|Read the pile engineer's map
-step read|Storm warden's notice|1|Read the storm warden's notice by the storm bell in the west
-step reach|bc_trail|1|Find the foot of the trail up Crown Fell, in the west
-step reach|bc_summit|1|Climb the trail to the top of Crown Fell
-step collect|story:bc_top|1|Climb the storm beacon mast and take the storm beacon lamp from its deck
-step reach|bc_deep|1|Dive to the council archive off the west shore
-step collect|story:bc_deep|1|Find the archive seal in its back room
-step read|Storm warden's roll|1|Bring both to the storm bell and read what it shows
-step reach|pile_head|1|Dive to the first pile head
+step reach|pile_head|1|Dive to the first pile head, where Crane's lantern went down
 quest done=The council is over. Under the city, the piles are cracking - the foundations, band 400.
 quest reward=TitaniumOre*2;TradeToken*6
 

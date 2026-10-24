@@ -2,7 +2,7 @@
 # The poor quarter, on the city's lowest roofs: shanty huts on two drowned towers' roofs (hut on roof - two high), more
 # on the key, rope bridges, washing everywhere, a soup kitchen under a wooden roof, empty water barrels, a tollgate of
 # spikes on the causeway, rats in the barrels, screechers on the roofs, a llama pen, a trader. Quest "The Lowest Roofs"
-# (23 steps): the soup kitchen, the Rookery's petition, four rats, the titanium tools' plans (the smithy), the tollgate,
+# (24 steps, STORY 10-24: the bots and the ration tins first, Maud and Pip Penn, Ines's torn ledger page on the great chimney, Crane's ration order in the bathhouse cellar; the boiler valve machine gone): the soup kitchen, the Rookery's petition, four rats, the titanium tools' plans (the smithy), the tollgate,
 # three screechers, the advanced backpack's plans, three water tokens, the elders' plan, the electric zipline tool's
 # plans, the storm warning.
 #
@@ -205,8 +205,8 @@ prop rk_boatcrate loot.refill=0
 call hw_reef x=13 z=-67 r=3 seed=13886
 place Creature_PufferFish rk_puffers at 14 -79 h=-12
 prop rk_puffers creature.count=2
-call hw_machine x=20 z=-40 yaw=63.43 al=rk_machine nm="Boiler valve" obj=TP_LaserControlPanel_lever sc=3 a=rk_top b=rk_deep done=rk_fixed rew=rk_rewchest rnote=rk_rewnote msg="It works." hint="It needs the sweep's brass from the top of Chimney Tor and the boiler tap from the bathhouse cellar."
 call hw_note x=19.78 z=-42.91 yaw=83.43 al=rk_hint
+call hw_note x=22 z=51 yaw=200 al=pipnote
 # three butler bots from the Authority's kitchens run wild (they zap); each guarded a ration tin, and the
 # Rookery's stores open for one tin each (the mast deck box, the sunk strongbox, the glass hoard)
 place Creature_ButlerBot rk_bot1 at 35.67 -15.62 ground
@@ -235,18 +235,16 @@ prop rk_topchest if.open=take|story:ration|1
 prop rk_topchest else.open=message||An elders' padlock: one ration tin opens it.
 prop rk_deepchest if.open=take|story:ration|1
 prop rk_deepchest else.open=message||An elders' padlock on the strongbox: one ration tin opens it.
-story rk_top|Sweep's brass|Bolt|The chimney sweep's brass plate, left at the top for luck.
-story rk_deep|Boiler tap|Bolt|The bathhouse boiler's big tap.
-story rk_fixed|Boiler valve working|Bolt|The boiler valve, working again.
+story rk_top|Torn ledger page|Note_Paper|The page Ines Marlowe tore from the Cistern ledger - Crane's ballast account.
+story rk_deep|Ration order|Note_Paper|Crane's order holding back the Rookery's rations until it moves away.
 story ration|Ration tin|Bolt|A sealed Authority ration tin. In the Rookery one tin opens any store.
-note rk_hint Bathhouse notice | The Rookery's boiler has been cold all year. The sweep's brass from the top of the great chimney on Chimney Tor fits its flue, and its tap went down with the bathhouse cellar off the south shore.
+note rk_hint Maud Penn's note | Nailed to the cold boiler, in a careful old hand -\n\nStranger. The bots came the week after Lowstreet, with the Authority's ration tins, and they guard the tins better than they ever guarded us. Thank you for stopping them. One of them used to bring my tea.\n\nI am Maud Penn. I keep these roofs, as much as anyone keeps anything here. Two thousand of us came up from Lowstreet with what we could carry. My son Jonah drove the tram. He did not come up.\n\nThe diver - Ines - left something on top of the great chimney, the night before she went back down. She said: give it to whoever comes with my chalk. Take a tin; the box is padlocked with one. Old habits.\n\nAnd if you see my granddaughter Pip, tell her I am not cross about the tram. Much.\n\n- Maud
+prop rk_topchest on.open=message||A ledger page, folded small, in oilcloth - the page torn from the Cistern ledger. BALLAST ACCOUNT. Piles 1 to 4: cracked. Weight required at the foot, by the spring tides: two million tons. Southern district basin: to be filled. Rookery: to be lightened. Iron and stone: all available. Initialled at the foot, very neat: A.C.
+prop rk_deepchest on.open=message||A ration order, sealed in wax: ROOKERY RATIONS TO BE HELD AT THE BATHHOUSE UNTIL THE ROOKERY REMOVES ITSELF. The roofs are overloaded. Every family on them is weight the Crown does not need. - Councillor A. Crane
 note rk_topchest Great chimney deck box | A box lashed to the deck rail at the top of the great chimney.
 loot rk_topchest story:rk_top*1;Scrap*2;Rope*1
 note rk_deepchest Bathhouse cellar strongbox | A strongbox in the back room of the bathhouse cellar.
 loot rk_deepchest story:rk_deep*1;MetalIngot*1;Plastic*2
-note rk_rewnote Bathhouse ticket | The boiler roars and hot water runs in the Rookery for the first time in a year. Pinned by the valve: free tickets for every family, signed by the old bath keeper.
-note rk_rewchest Boiler valve reward | What the boiler valve kept.
-loot rk_rewchest TradeToken*3;Battery*1;CopperIngot*1
 note rk_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
 loot rk_ledge Rope*2;Bolt*2;Scrap*2
 prop rk_ledge loot.refill=0
@@ -283,10 +281,11 @@ prop storm obj.name=storm
 prop storm beh.hidden=1
 prop elders on.read=show|storm
 
-note petition Rookery petition | PETITION OF THE ROOKERY\n\nTo the Authority, the Fleet and the Union:\n\nOur barrels are empty. Our children drink rain. The water you sell would fill them all.\n\nWe ask for nothing but our share.\n\n(Four hundred marks below it. Nobody answered.)
+note petition Rookery petition | PETITION OF THE ROOKERY\n\nTo the Authority, the Fleet and the Union:\n\nOur barrels are empty. Our children drink rain. The water you sell would fill them all.\n\nWe ask for nothing but our share.\n\n(Four hundred marks below it. Nobody answered.)\n\n(Under the marks, in a careful old hand: We sent it to all three. The Fleet sent a boat of filters, the Union sent a diver, and the Council sent a form asking how much the Rookery weighs. I wrote: about as much as it ever did, Councillor, minus the children's dinners. - Maud Penn, for the elders)
+note pipnote Pip's note | Weighed down with a gull egg (empty, I checked) -\n\nTO THE PERSON WITH THE CHALK HOOK. Nan says you are coming. Nan is never wrong except about bedtimes.\n\nI am Pip Penn and I am nine. I count the barrels every morning. Empty, empty, empty. Then I come up here and count the trams. There are no trams. There is one, under the water, and my dad drove it.\n\nI swapped my tin tram to the pedlar Rook for a whole flask of clean water, for Nan's cough. It was the right thing. It was also the worst thing. If you see Rook, he has a little blue tram with a dent. That one is mine.\n\nWhen we go to the shoal I am going to build a tram line out of driftwood.\n\n- Pip
 note tollsign Tollgate | ROOKERY TOLLGATE\nNo Authority. No Fleet. No Union.\nEveryone else - welcome.
-note elders Rookery elders' plan | THE ELDERS' PLAN\n\nIf the city will not share, we leave it. There is a shoal outside the city, our own - sand, a spring, room for huts.\n\nWe need someone to clear the way. Someone who is not Authority, Fleet or Union.
-note storm Storm warning | Scrawled in a hurry on the back of the plan -\n\nTHE GLASS IS FALLING. A storm is coming over the Crown. The councils will meet on the four roofs tonight to settle the city's water.\n\nGo. Whatever they decide, the Rookery will be drowned by it unless someone speaks for us.
+note elders Rookery elders' plan | THE ELDERS' PLAN\n\nIf the city will not share, we leave it. There is a shoal outside the city, our own - sand, a spring, room for huts.\n\nWe need someone to clear the way. Someone who is not Authority, Fleet or Union.\n\n(Maud's hand: I would rather stay and be heard than go and be forgotten. But I am old, and Pip is not. - M.P.)
+note storm Storm warning | Scrawled in a hurry on the back of the plan -\n\nTHE GLASS IS FALLING. A storm is coming over the Crown. The councils will meet on the four roofs tonight to settle the city's water.\n\nGo. Whatever they decide, the Rookery will be drowned by it unless someone speaks for us.\n\nTake the page. Read it to them. And look at the Councillor's face when you say the word ballast. - M.P.
 note smithy Rookery smithy | The smithy's chest: the titanium tools' plans, wrapped in a rag.
 note packhut Packer's hut | A packer's chest: the advanced backpack's plans.
 note eldershut Elders' hut | The elders' chest: the electric zipline tool's plans.
@@ -378,29 +377,29 @@ pop
 # --- end of jump course rs ---
 
 quest title=The Lowest Roofs
-quest intro=Every faction signed. The people on the lowest roofs paid for it. Find the Rookery's soup kitchen.
+quest intro=The Rookery lives on the city's lowest roofs, and the Authority's butler bots guard its rations. Ines hid the ledger page here. Find the soup kitchen - and Maud Penn.
 step reach|soup_kitchen|1|Find the Rookery's soup kitchen
 step read|Rookery petition|1|Read the petition on the soup kitchen's board
+step kill|Butler bot|3|Stop the three butler bots running wild round the hub and the trail foot
+step collect|story:ration|3|Take the ration tins the bots were guarding
+step read|Maud Penn's note|1|Read Maud Penn's note by the cold boiler in the south-east
 step kill|Rat|4|Drive the four rats out of the barrels
+step collect|story:watertoken|3|Find three water tokens in the empty barrels
 step blueprint|Blueprint_TitaniumTools|1|Take the titanium tools' plans from the smithy hut
 step reach|tollgate|1|Go out along the causeway to the tollgate
 step kill|Screecher|3|Drive the three screechers off the roofs
 step blueprint|Blueprint_BackpackAdvanced|1|Take the advanced backpack's plans from the packer's hut
-step collect|story:watertoken|3|Find three water tokens in the empty barrels
-step read|Rookery elders' plan|1|Read the elders' plan in their hut
-step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline tool's plans from the elders' chest
 step reach|gull_stacks|1|Climb the gull stacks north of the Rookery
+step read|Pip's note|1|Read the note Pip left on the gull stacks
 step read|Bathhouse slate|1|Read the slate on the old bathhouse in the west
 step open|Family van's crate|1|Open the crate in the family's van in the north-west
-step read|Bathhouse notice|1|Read the bathhouse notice by the boiler valve in the south-east
-step kill|Butler bot|3|Stop the three butler bots running wild round the hub and the trail foot
-step collect|story:ration|3|Take the ration tins the bots were guarding
+step reach|rk_deep|1|Dive to the bathhouse cellar off the south shore
+step collect|story:rk_deep|1|Open its strongbox with a ration tin and take what the Authority kept there
 step reach|rk_trail|1|Find the foot of the trail up Chimney Tor, in the east
 step reach|rk_summit|1|Climb the trail to the top of Chimney Tor
-step collect|story:rk_top|1|Climb the great chimney and take the sweep's brass from its deck
-step reach|rk_deep|1|Dive to the bathhouse cellar off the south shore
-step collect|story:rk_deep|1|Find the boiler tap in its back room
-step read|Bathhouse ticket|1|Bring both to the boiler valve and read what it shows
+step collect|story:rk_top|1|Climb the great chimney and take Ines's hidden page from its deck box
+step read|Rookery elders' plan|1|Read the elders' plan in their hut
+step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline tool's plans from the elders' chest
 step read|Storm warning|1|Read the storm warning
 step reach|jump_rs_top|1|Hop up the egg-collectors' slabs on the south-west shore and watch the storm come in
 quest done=The councils meet on the Crown tonight, in the storm. Bridgeworks Crown - band 1000.
