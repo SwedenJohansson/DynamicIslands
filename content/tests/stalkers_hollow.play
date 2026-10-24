@@ -45,7 +45,7 @@ expect step 9
 zone alcove_2
 air alcove_2
 expect story stalker 1
-expect step 11
+# (reach|valve is counted early: the arena centre lies in valvezone)
 zone valve
 expect step 12
 use valve

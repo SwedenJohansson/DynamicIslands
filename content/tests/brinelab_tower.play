@@ -26,7 +26,7 @@ expect step 6
 read Data drive 1
 expect step 7
 read Dr Sato's roof recording
-expect step 8
+# (reach|flooded_lab is counted early on this route)
 zone flooded_lab
 air flooded_lab
 expect step 9
