@@ -9,3 +9,6 @@ wait 3
 picture sl11_canopy_stair_island 45 35 -85 0 8 0
 picture sl11_canopy_stair_camp -4 13 -10 0 10 8
 storespot -12 4
+snap deep_cs_cliff cstw 120 40
+snap deep_cs_plane cswreck 180 14
+snap deep_cs_pilot pilotchest 230 8

@@ -122,6 +122,49 @@ prop dview zone.radius=7
 prop dview zone.repeat=never
 prop dview zone.message=The giant roots climb the slope like a stair, up to the Seedkeepers' tents on the shelf.
 
+# --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): the Great Cliff and its rope gantry (52 m climb, zipline down to the shelf), the Seedkeepers' supply plane off the west shore (dive), the pilot's camp ruin, goats on the ledges
+# the climb: a mountain (trail winding up from bearing 120), a 10-storey climbing tower on its top, the summit box
+call vd_mount x=-50 z=40 top=28 r=20 a0=120 turns=1.25 hb=3
+call vd_tower x=-50 z=40 h0=28 lv=10 a=cstw box=csbox zal=cstopz zid=cs_top msg="The top of the Great Cliff, the highest rope on Verdance. Marit's pitons run all the way up the gantry."
+note csbox Cliff gantry box | SEEDKEEPERS - CLIFF LINE. Marit fixed the ropes; the plane dropped the supplies. The pilot camped east of the shelf and kept her key on a string round her neck.
+loot csbox Rope*4;Bolt*2;Leather*2
+place ZiplinePath_Landmark cszip at -45.03 38.28 h=53.89
+zipto cszip -14 -4
+# the dive: Airplane on the sea floor 12 m down, its crate, an air pocket
+call vd_dive x=-92 z=-40 h=-12 yaw=70 obj="Airplane" al=cswreck crate=cscrate zal=cswz zid=cs_wreck msg="The Seedkeepers' supply plane, nose-down on the sand off the west shore. The cockpit locker is still shut." air=csair bub=csbub
+note cscrate Plane's cockpit locker | The pilot's flight bag: a hut key on a string, a compass, a tin of biscuits gone to paste.
+loot cscrate story:pilotkey*1;Scrap*3;Bolt*2
+# the pilot's camp east of the shelf: four old pillars of a burnt hut, a tent, the pilot's locker (her key is in the plane)
+clear at 50 30 r=6
+brush flatten at 50 30 r=5 s=20 frames=150
+place ReefHuts_Pillar3 - at 47.5 27.5 ground sit sy=0.6
+place ReefHuts_Pillar3 - at 52.5 27.5 ground sit sy=0.6
+place ReefHuts_Pillar3 - at 47.5 32.5 ground sit sy=0.6
+place ReefHuts_Pillar3 - at 52.5 32.5 ground sit sy=0.6
+place Balboa_DecorationPrefabBase_SimpleTent - at 46 35.5 ground sit yaw=200
+place campfire_1 - at 50 30 ground sit
+place "Box Big" pilotlock at 52 29 ground sit yaw=250
+place Loot_ChestSmall pilotchest at 52.6 30.6 ground sit yaw=250
+call ni8cave x=40 z=-60 h=2 yaw=0 al=cscavecave
+place Loot_ChestSmall cscavecavebox at 37.5 -55 h=2.45 sit yaw=20
+place Placeable_Lantern_Metal - at 42.6 -56 h=2.45 sit
+note cscavecavebox Ledge cave chest | A dry cave under the east ledges. Someone slept here with the goats: straw, a blanket, a jar of honey.
+loot cscavecavebox Rope*2;Leather*2;HoneyComb*1
+prop cscavecavebox loot.refill=0
+# the east knoll (secret): a low hill with a goatherd's box on top
+call vd_mount x=55 z=-30 top=12 r=12 a0=200 turns=1 n=30 hb=3
+place Loot_ChestSmall csknoll at 55 -30 h=12 sit yaw=230
+note csknoll Goatherd box | A goatherd's box: a bell, a ball of wool and a carving of a goat with a torn ear.
+loot csknoll Wool*3;Rope*2;Coconut*2
+prop csknoll loot.refill=0
+call vd_spot x=55 z=-28.5 al=csknollz id=cs_knoll r=3 msg="From the knoll the root stair climbs the slope like a giant's staircase."
+call vinecache x=-20 z=65 r=8 seed=11391 chest=csvine vines=csvinevines items=Rope*2;Nail*8;Seed_Pine*1
+prop csvine note.title=Root-choked crate
+place Creature_Goat csgoats at -40 -30 ground
+prop csgoats creature.count=3
+place Creature_Chicken cshens at 30 10 ground
+prop cshens creature.count=2
+
 # --- Settings, notes, behaviours, quest -------------------------------------------------------------------------
 info title=Canopy Stair
 info author=Custom Islands
@@ -178,6 +221,18 @@ prop shelfzone zone.id=shelf
 prop shelfzone zone.radius=7
 prop shelfzone zone.message=The root shelf. The Seedkeepers' last camp: two tents, crates, a cold fire.
 
+# DEEP 10-24 settings
+story pilotkey|Pilot's key|Placeable_Lantern_Metal|A hut key on a string, from the cockpit locker of the sunk supply plane.
+prop pilotlock obj.name=pilotlock
+prop pilotlock beh.use=Open the pilot's locker with her key
+prop pilotlock if.use=!signal|pilot\ntake|story:pilotkey|1
+prop pilotlock on.use=signal||pilot\nshow|pilotchest\nmessage||The key turns stiffly. Inside the locker: her flight log and her spares.
+prop pilotlock else.use=message||The pilot's locker, padlocked. The gantry box said she kept the key round her neck - and she flew the plane.
+prop pilotchest obj.name=pilotchest
+prop pilotchest beh.hidden=1
+note pilotchest Pilot's flight log | FLIGHT LOG - VERDANCE SUPPLY\n\nRun 31. Dropped rope and seed at the cliff. Marit waved from the top.\nRun 32. The canopy has grown a metre since run 31. The strip is gone.\nRun 33. Ditching off the west shore. If you read this, the ropes are on the ledges, the Heart is north, and I swam.
+loot pilotchest Rope*2;Leather*1;Battery*1
+prop pilotchest loot.refill=0
 quest title=The Climb
 quest intro=Climb the root stair to the shelf on top.
 step reach|shelf|1|Climb the root stair to the shelf
@@ -187,6 +242,9 @@ step blueprint|Blueprint_BackpackAdvanced|1|Take the big backpack plans from Jon
 step collect|story:ropecoil|3|Find three rope coils on the ledges: the stair, the west ledge, the east root
 step collect|story:rigged|1|Rig the zipline anchor's winch
 step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline plans from the anchor box
+step reach|cs_top|1|Climb the Great Cliff's rope gantry
+step collect|story:pilotkey|1|Dive to the supply plane off the west shore
+step read|Pilot's flight log|1|Open the pilot's locker at her camp east of the shelf and read her log
 step read|Oda's letter|1|Read Oda's letter in Jonas' tent
 quest done=The Heart of Green. Band 1200.
 quest reward=Seed_Mango*2;Seed_Flower_Blue*1

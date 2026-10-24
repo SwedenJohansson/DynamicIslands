@@ -168,7 +168,7 @@ note hgcrate Seed caravan's locker | Rows of waxed jars, most cracked. One is wh
 loot hgcrate story:seedjar*1;Scrap*3;Bolt*2
 # the mother boar (RAFT_QUEST_MECHANICS SL11 3, M5): she sleeps across the mouth of her den in the hollow stump; the
 # trough by the path takes five red berries and she goes to it - or the player fights her.
-# UPGRADE-AFTER-MECH: M38 lure (Gap) - for now the trough hides her spawn and shows a second one at the trough.
+# M38 lure (10-24): the berries open the trough and her spawn's home moves to it (beh.lure); her den is left free.
 call ni8cave x=66 z=-24 h=2 yaw=180 al=hgdencave
 place Loot_ChestSmall hgdencavebox at 68.5 -29 h=2.45 sit yaw=200
 place Placeable_Lantern_Metal - at 63.4 -28 h=2.45 sit
@@ -181,10 +181,6 @@ prop hgmother creature.size=1.8
 prop hgmother creature.health=260
 prop hgmother creature.respawn=0
 place "Box Big" trough at 52 -6 ground sit yaw=30
-place Creature_Boar hgmotherfed at 53.5 -4 ground
-prop hgmotherfed creature.count=1
-prop hgmotherfed creature.size=1.8
-prop hgmotherfed creature.respawn=0
 call vinecache x=12 z=69 r=8 seed=11361 chest=hgvine vines=hgvinevines items=Rope*2;Nail*8;Seed_Pine*1
 prop hgvine note.title=Root-choked crate
 call vd_spot x=-35 z=61 al=hglook id=hg_view r=5 msg="From the north rocks the five trunks stand like pillars holding the sky up."
@@ -260,12 +256,11 @@ story seedjar|Old seed jar|Placeable_Lantern_Metal|The grove's oldest seeds, fro
 story denkey|Seedkeeper's key|Placeable_Lantern_Metal|A seedkeeper's key on a leather loop, from the mother boar's den.
 prop trough obj.name=trough
 prop trough beh.use=Fill the feeding trough (5 red berries)
-prop trough if.use=!signal|fed\ntake|Berries_Red|5
-prop trough on.use=signal||fed\nhide|hgmother\nshow|hgmotherfed\nmessage||The berries thud into the trough. Somewhere a big sow grunts, gets up and comes trotting - past you, to the food.
+prop trough beh.lure=hgmother|3
+prop trough beh.lureItem=Berries_Red|5
+prop trough on.use=signal||fed\nmessage||The berries thud into the trough. Somewhere a big sow grunts, gets up and comes trotting - past you, to the food.
 prop trough else.use=message||A feeding trough, licked clean. The seedkeepers kept the old sow sweet with berries: five, the board said.
 prop hgmother obj.name=hgmother
-prop hgmotherfed obj.name=hgmotherfed
-prop hgmotherfed beh.hidden=1
 quest title=The Hollow Trees
 quest intro=Trees as tall as towers. Find the Seedkeepers' greenhouse.
 step reach|greenhouse|1|Go to the Seedkeepers' greenhouse

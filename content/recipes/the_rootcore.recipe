@@ -93,7 +93,7 @@ place ZiplinePath_Landmark domezip at 4.5 21 ground
 zipto domezip 26 42
 
 # --- The meadow: the expedition sign; Oda's camp to the east with her farewell -----------------------------------
-place Note_Sign expedition at 3 22 ground sit yaw=180
+place Note_Sign expedition at 0 31 ground sit yaw=180
 place campfire_1 - at 20 18 ground sit
 place Crate_Big_01 - at 24 21 ground sit yaw=30
 place Note_Sign farewell at 21 22.5 ground sit yaw=200
@@ -125,7 +125,7 @@ place Loot_ChestSmall dwreckchest at 30 32.5 ground sit yaw=47
 note dwreckchest Overgrown chest | A chest the green has half swallowed: rope, nails, and a warm shard of green wood the brood dragged off.
 loot dwreckchest Rope*3;Nail*8;Stone*3;story:shard*1
 prop dwreckchest loot.refill=0
-call vinecache x=-39.4 z=21.8 r=15 seed=11201 chest=dvinechest vines=dvines items=Rope*3;Nail*10;Leather*2;story:shard*1
+call vinecache x=-39.4 z=21.8 r=3 seed=11201 chest=dvinechest vines=dvines items=Rope*3;Nail*10;Leather*2;story:shard*1
 call treasure x=42.5 z=-14.7 r=15 n=1 seed=11202
 prop treasure11202 treasure.loot=CopperOre*2;Clay*3
 place Zone_Trigger dview at -38.6 -23.2 ground
@@ -145,6 +145,35 @@ scatter "Balboa_Bush_03 Variant" 30 at 0 0 r=90 seed=11225 free=2.5
 scatter CaravanIsland_SmallRock_1 14 at 0 0 r=90 seed=11226 free=3 ground y=-0.6
 scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=90 seed=11227 free=3
 scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=90 seed=11228 free=2
+
+# --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): the west crag and Expedition 3's mast (climb, zipline to the ramp foot), the expedition boat off the south-east (dive), the expedition strongbox, the north-east knoll
+# the climb: a mountain (trail winding up from bearing 90), a 10-storey climbing tower on its top, the summit box
+call vd_mount x=-65 z=0 top=24 r=14 a0=90 turns=1.25 hb=3
+call vd_tower x=-65 z=0 h0=24 lv=10 a=rctw box=rcbox zal=rctopz zid=rc_top msg="Expedition 3's survey mast on the west crag. The dome's hill lies below you like a sleeping animal."
+note rcbox Expedition mast box | EXPEDITION 3 - MAST. Strongbox at the east camp, key with the boat. If the boat is gone, so are we: read the log and go home.
+loot rcbox Rope*3;Bolt*2;Battery*1
+place ZiplinePath_Landmark rczip at -60.03 -1.72 h=49.89
+zipto rczip -40 30
+# the dive: BoatStranded on the sea floor 12 m down, its crate, an air pocket
+call vd_dive x=60 z=-90 h=-12 yaw=40 obj="BoatStranded" al=rcwreck crate=rccrate zal=rcwz zid=rc_wreck msg="Expedition 3's boat, on the bottom off the south-east point. The skipper's drawer is still shut." air=rcair bub=rcbub
+note rccrate Skipper's drawer | A strongbox key on a brass ring, tagged EXP 3 - EAST CAMP.
+loot rccrate story:expkey*1;Scrap*3;Bolt*2
+# Expedition 3's east camp: a tent, a cold fire, the strongbox (its key went down with the boat) and its log
+clear at 60 -40 r=6
+brush flatten at 60 -40 r=5 s=20 frames=150
+place Balboa_DecorationPrefabBase_SimpleTent - at 57 -37 ground sit yaw=140
+place campfire_1 - at 61 -37.5 ground sit
+place "Box Big" expbox at 62 -42 ground sit yaw=300
+place Loot_ChestSmall expchest at 60 -43 ground sit yaw=300
+# the north-east knoll (secret): a low hill with a lookout box
+call vd_mount x=60 z=60 top=14 r=12 a0=220 turns=1 n=30 hb=3
+place Loot_ChestSmall rcknoll at 60 60 h=14 sit yaw=220
+note rcknoll Knoll lookout box | A lookout's box: a spyglass with a cracked lens. Scratched inside: SHE CAME OUT OF THE DOME AT NIGHT.
+loot rcknoll Rope*2;Leather*2;Coconut*2
+prop rcknoll loot.refill=0
+call vd_spot x=60 z=61.5 al=rcknollz id=rc_knoll r=3 msg="From the knoll the dome's hill steams in the morning sun."
+place Creature_Chicken rchens at 30 -60 ground
+prop rchens creature.count=3
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Rootcore
@@ -253,6 +282,18 @@ prop odacamp zone.id=oda_camp
 prop odacamp zone.radius=4
 prop odacamp zone.message=Oda's camp. A cold fire and a sign.
 
+# DEEP 10-24 settings
+story expkey|Expedition key|Placeable_Lantern_Metal|The strongbox key of Expedition 3, from their sunk boat.
+prop expbox obj.name=expbox
+prop expbox beh.use=Open the expedition strongbox
+prop expbox if.use=!signal|expbox\ntake|story:expkey|1
+prop expbox on.use=signal||expbox\nshow|expchest\nmessage||The key turns. Inside: Expedition 3's log and their last supplies.
+prop expbox else.use=message||Expedition 3's strongbox, locked. The mast box said the key stayed with the boat.
+prop expchest obj.name=expchest
+prop expchest beh.hidden=1
+note expchest Expedition 3 log | EXPEDITION 3 - ROOTCORE\n\nDay 1. Landed south-east. Mast up on the west crag.\nDay 4. The dome breathes. Something big sleeps in it, and small ones guard her.\nDay 9. The boat broke its line in the night. We are staying. Whoever reads this: the oldest root is the Heart's first, and it remembers.
+loot expchest TitaniumOre*1;Battery*1;Rope*2
+prop expchest loot.refill=0
 quest title=The Core
 quest intro=The Rootcore, under the Heart. Find the cave mouth.
 step reach|mouth|1|Go to the cave mouth
@@ -267,6 +308,9 @@ step collect|story:rootlit|1|Set the shards into the oldest root
 step collect|story:core|1|Turn the core valve the way the Heart was set
 step read|The core|1|Read what the core became
 step collect|story:heartseed|1|Take the heart seed
+step reach|rc_top|1|Climb Expedition 3's mast on the west crag
+step collect|story:expkey|1|Dive to the expedition boat off the south-east point
+step read|Expedition 3 log|1|Open the expedition strongbox at their east camp and read the log
 step reach|oda_camp|1|Go to Oda's camp east of the meadow
 step read|Oda Fenn's farewell|1|Read Oda Fenn's farewell
 quest done=The Last Green World is finished. Verdance keeps one seed - and so do you.

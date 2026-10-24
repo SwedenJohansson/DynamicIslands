@@ -17,9 +17,13 @@ expect step 4
 use stairvines
 expect shown coil1
 open Stair ledge
+wait 3
+expect story ropecoil 1
 open West ledge
+wait 3
 open East root
-wait 2
+wait 3
+expect story ropecoil 3
 expect step 5
 expect hidden anchorbox
 use anchorwinch
@@ -29,5 +33,15 @@ expect step 6
 open Anchor box
 wait 3
 expect step 7
+zone cs_top
+expect step 8
+open Plane's cockpit locker
+wait 3
+expect story pilotkey 1
+expect step 9
+use pilotlock
+expect shown pilotchest
+read Pilot's flight log
+expect step 10
 read Oda's letter
 expect done

@@ -146,6 +146,42 @@ scatter CaravanIsland_SmallRock_1 14 at 0 0 r=80 seed=11218 free=3 ground y=-0.6
 scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=80 seed=11219 free=3
 scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=80 seed=11220 free=2
 
+# --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): the pollen watch on the north-west hill (climb, zipline to the root gate), the Seedkeepers' lab van off the east shore (dive), the seed vault on the north-east slope, the east cave
+# the climb: a mountain (trail winding up from bearing 300), a 10-storey climbing tower on its top, the summit box
+call vd_mount x=-55 z=45 top=22 r=20 a0=300 turns=1.25 hb=3
+call vd_tower x=-55 z=45 h0=22 lv=10 a=hhtw box=hhbox zal=hhtopz zid=hh_top msg="The pollen watch. From here the Heart's crown is level with your boots, and its pollen drifts past like snow."
+note hhbox Pollen watch box | SEEDKEEPERS - POLLEN WATCH. Count the drift each dawn. If the drift turns gold, the growth is spreading: take the sample to the vault, and seal it.
+loot hhbox Rope*3;Bolt*2;Battery*1
+place ZiplinePath_Landmark hhzip at -50.03 43.28 h=47.89
+zipto hhzip -30 12
+# the dive: Van_1 on the sea floor 10 m down, its crate, an air pocket
+call vd_dive x=70 z=-68 h=-10 yaw=250 obj="Van_1" al=hhwreck crate=hhcrate zal=hhwz zid=hh_wreck msg="The Seedkeepers' lab van, off the end of the old east road. Its sample fridge is still sealed." air=hhair bub=hhbub
+note hhcrate Lab van's sample fridge | One sealed sample tube, gold dust inside, labelled HEART - FIRST BLOOM.
+loot hhcrate story:sample*1;Scrap*3;Battery*1
+# the seed vault on the north-east slope: a sealed vault box on a stone pad; the van's sample opens it and its ledger
+# shows what the Seedkeepers kept back
+clear at 55 45 r=5
+brush flatten at 55 45 r=4 s=20 frames=150
+place ReefHuts_Pillar3 - at 53 43 ground sit sy=0.5
+place ReefHuts_Pillar3 - at 57 43 ground sit sy=0.5
+place "Box Big" seedvault at 55 46 ground sit yaw=200
+place Loot_ChestSmall vaultchest at 55 43.6 ground sit yaw=200
+call ni8cave x=70 z=0 h=3.8 yaw=180 al=hhcavecave
+place Loot_ChestSmall hhcavecavebox at 72.5 -5 h=4.25 sit yaw=200
+place Placeable_Lantern_Metal - at 67.4 -4 h=4.25 sit
+note hhcavecavebox East cave chest | A dry cave on the east shore: the river people's spare paddles and a jar of seeds.
+loot hhcavecavebox Rope*2;Plank*3;Seed_Flower_Yellow*1
+prop hhcavecavebox loot.refill=0
+# the north knoll (secret): a low hill with a lookout box
+call vd_mount x=0 z=68 top=14 r=12 a0=180 turns=1 n=30 hb=3
+place Loot_ChestSmall hhknoll at 0 68 h=14 sit yaw=180
+note hhknoll North knoll box | A ranger's box. Scratched in the lid: THE HEART WAS SMALL ONCE. I SAW IT.
+loot hhknoll Rope*2;Leather*2;Coconut*2
+prop hhknoll loot.refill=0
+call vd_spot x=0 z=69.5 al=hhknollz id=hh_knoll r=3 msg="From the north knoll the Heart fills half the sky."
+place Creature_Chicken hhhens at -40 -20 ground
+prop hhhens creature.count=3
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Heart of Green
 info author=Custom Islands
@@ -252,6 +288,19 @@ prop rootgate zone.id=root_gate
 prop rootgate zone.radius=4
 prop rootgate zone.message=The root gate. A lever on a post, warm air rising through the bars.
 
+# DEEP 10-24 settings
+story sample|Heart sample|Placeable_Lantern_Metal|A sealed tube of gold pollen from the Heart's first bloom, from the sunk lab van.
+story vault|Vault sealed|Placeable_Lantern_Metal|The first-bloom sample is sealed in the Seedkeepers' vault.
+prop seedvault obj.name=seedvault
+prop seedvault beh.use=Seal the sample in the seed vault
+prop seedvault if.use=!signal|vault\ntake|story:sample|1
+prop seedvault on.use=signal||vault\ngive||story:vault*1\nshow|vaultchest\nmessage||The vault takes the tube, hisses and seals. A drawer slides out beside it: the vault ledger.
+prop seedvault else.use=message||The Seedkeepers' seed vault. A slot for one sample tube, empty. The pollen watch box says to bring the sample here.
+prop vaultchest obj.name=vaultchest
+prop vaultchest beh.hidden=1
+note vaultchest Vault ledger | SEED VAULT - VERDANCE\n\nKept back: one of every seed we had before the growth.\nKept back: the first bloom, sealed, so whoever comes after can see what we made.\nIf the Heart is burnt, plant these. If it is spread, these are what the land was.
+loot vaultchest Seed_Flower_Yellow*2;Seed_Pine*2;TitaniumOre*1
+prop vaultchest loot.refill=0
 quest title=The Heart
 quest intro=The Heart of Green, at the centre of Verdance. Find the trunk door.
 step reach|trunk_door|1|Go to the trunk door
@@ -277,6 +326,10 @@ step open|Lab safe|1|Open the lab safe
 step read|Seedkeeper's last letter|1|Read the Seedkeeper's last letter
 step reach|root_gate|1|Go to the root gate in the west roots
 step collect|story:gate|1|Pull the root gate lever
+step reach|hh_top|1|Climb the pollen watch on the north-west hill
+step collect|story:sample|1|Dive to the lab van off the east shore
+step collect|story:vault|1|Seal the sample in the seed vault on the north-east slope
+step read|Vault ledger|1|Read the vault ledger
 quest done=The gate is open. Below the Heart: the Rootcore - band 400.
 quest reward=Seed_Flower_Yellow*2;TitaniumOre*1
 

@@ -151,7 +151,8 @@ loot bmcrate story:valve*1;Scrap*3;Bolt*2
 # the acid bog (RAFT_QUEST_MECHANICS SL11 7, M7): a sunken bog of acid round a dead stump island with the burner's
 # fuel drum; old logs lie across it and bob as you step on them. The pump at its edge takes the barge's valve and drains it;
 # without the valve the camp's blight suit keeps the acid off for three minutes.
-# UPGRADE-AFTER-MECH: real sinking logs (a log dips while stood on) - for now the logs only bob.
+# M7 with the 10-24 mechanics: the bog breathes (zone.pulse) - the acid surges 5 s and ebbs 3 s, so a quick player can
+# hop the logs in the ebbs; the logs bob (no sink-under-foot mechanic: EDITOR GAP).
 brush flatten at 56 40 r=9 s=20 frames=150 h=0.8
 clear at 56 40 r=11 all
 brush flatten at 56 40 r=2 s=20 frames=120 h=1.3
@@ -167,9 +168,9 @@ scatter Pickup_Landmark_Flower_Black 6 at 56 40 r=8 seed=11290 free=1.5
 # the burner beacon on the hummock: the fuel lights it, a fire every drowned island can see
 place "Box Big" beacon at -2 -53 ground sit yaw=20
 place campfire_1 beaconfire at -0.6 -51.6 ground sit
-call ni8cave x=30 z=-70 h=2 yaw=180 al=bmcavecave
-place Loot_ChestSmall bmcavecavebox at 32.5 -75 h=2.45 sit yaw=200
-place Placeable_Lantern_Metal - at 27.4 -74 h=2.45 sit
+call ni8cave x=30 z=-70 h=2 yaw=0 al=bmcavecave
+place Loot_ChestSmall bmcavecavebox at 27.5 -65 h=2.45 sit yaw=20
+place Placeable_Lantern_Metal - at 32.6 -66 h=2.45 sit
 note bmcavecavebox Seedkeepers' cellar chest | The Seedkeepers kept their spare masks and a sealed jar of ash here.
 loot bmcavecavebox Rope*2;Leather*2;ExplosiveGoo*1
 prop bmcavecavebox loot.refill=0
@@ -285,6 +286,7 @@ prop bogacid zone.id=bm_bog
 prop bogacid zone.radius=9
 prop bogacid zone.hazard=acid
 prop bogacid zone.damage=4
+prop bogacid zone.pulse=5,3
 prop bogacid zone.hazardMsg=The bog water is acid and it eats at your boots. Drain it with the pump - or wear the camp's blight suit.
 prop boglog1 beh.bob=0.15
 prop boglog1 beh.bobTime=2.5

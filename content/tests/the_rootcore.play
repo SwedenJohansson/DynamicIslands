@@ -28,11 +28,13 @@ expect story core 0
 use oldroot
 expect story rootlit 0
 open Mushroom ring
+wait 3
 open Overgrown chest
+wait 3
 use dvines
 expect shown dvinechest
 open Behind the vines
-wait 2
+wait 3
 expect story shard 3
 expect step 8
 use oldroot
@@ -53,7 +55,17 @@ expect story heartseed 1
 use rangerlock
 expect hidden rangercache
 expect step 12
-zone oda_camp
+zone rc_top
 expect step 13
+open Skipper's drawer
+wait 3
+expect story expkey 1
+expect step 14
+use expbox
+expect shown expchest
+read Expedition 3 log
+expect step 15
+zone oda_camp
+expect step 16
 read Oda Fenn's farewell
 expect done

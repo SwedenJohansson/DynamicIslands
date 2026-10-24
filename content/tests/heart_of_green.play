@@ -66,4 +66,14 @@ zone root_gate
 expect step 22
 use gatelever
 expect story gate 1
+zone hh_top
+expect step 24
+open Lab van's sample fridge
+wait 3
+expect story sample 1
+expect step 25
+use seedvault
+expect shown vaultchest
+expect step 26
+read Vault ledger
 expect done

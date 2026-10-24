@@ -11,3 +11,6 @@ picture sl11_the_rootcore_island 40 30 70 0 4 -6
 snap sl11_the_rootcore_dome heartseed 0 4 1
 # (REDO 10-24) the new ramp up the west flank to the cave mouth's ledge
 picture sl11_the_rootcore_ramp -40 30 50 -5 18 19
+snap deep_rc_mast rctw 90 34
+snap deep_rc_boat rcwreck 180 14
+snap deep_rc_camp expchest 300 8
