@@ -32,7 +32,7 @@ expect story rangerkey 1
 zone rl_top
 expect step 8
 open Training tower box
-open Slipway van's toolbox
+open Fox den stash
 open Quarry tool chest
 wait 3
 expect story tool 3

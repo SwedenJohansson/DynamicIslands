@@ -175,6 +175,30 @@ prop rwhut loot.refill=0
 place Creature_Chicken rwhens at -15 -30 ground
 prop rwhens creature.count=2
 
+# --- STORY 10-24: Oda's lost pack at the survey camp (Burr's bell tied to it), a carved mark at the Den's mouth
+place Loot_ChestSmall odapack at -27.4 -25.8 ground sit yaw=60
+note odapack Oda's lost pack | Oda's pack, soaked and dried stiff, the strap chewed through - by a goat, from the tooth marks. Burr's bell is tied to the buckle with a bootlace. Inside: rope, a tin of honey with a J on the lid, and one apple with one bite out of it.
+loot odapack Rope*2;HoneyComb*1;Leather*1
+prop odapack loot.refill=0
+place Note_Paper odapacklog at -26.2 -26.6 ground y=0.3 drop
+note odapacklog Page from Oda's pack | O.F. - ROOTWEAVE
+
+Lost my pack in the Flooded Passage. Burr pulled it out for me and then ate the strap, which I suppose is his fee.
+
+I am tying his bell to it and leaving it here at the survey camp, so the next person down knows a ranger came this way and is still, more or less, fine. If you are the next person: take what you need. Leave the apple. That is Burr's apple.
+
+The roots move when I am not looking. I have stopped looking. Burr has not; he stares at the walls and stamps. He is braver than me, or he is just a goat.
+
+The survey says there are four caves. The roots say there are more.
+place Note_Paper denmark at -6 41 ground y=0.3 drop
+note denmark Carved mark at the Den | Cut into a root at the Den's mouth with a ranger knife, deep and careful:
+
+O.F. + B.  ->  MARSH
+
+Under it, older and in a smaller, neater hand:
+
+M.F. WAS HERE. THE BEAR IS NICE IF YOU SING. (SHE IS NOT NICE. - A.)
+
 # --- Settings, notes, behaviours, quest -------------------------------------------------------------------------
 info title=Rootweave Caves
 info author=Custom Islands
@@ -192,8 +216,28 @@ prop denair atmo.fogAmount=0.3
 prop denair zone.radius=14
 
 note survey Cave survey | CAVE SURVEY - SEEDKEEPERS\n\nFungus Hall: camp. Lamps on the crates.\nBee Hall (east): hives in the roots. Leave them be.\nFlooded Passage (west): two air pockets. Swim between them.\nDen (north): a mama bear. Our cache is in there. Wait for her to sleep.\n\nFuses: one in each far cave. Three in the box and the lab lights up.\n\nThe turbine on the top charges the lamps.
-note samplereport Poison sample report | SAMPLE 31 - ROOT TISSUE, DEN\n\nThe rot is not fungus. Not bacteria. It grows where the roots are cut, and it grows TOWARDS the cut.\n\nSomething in the roots. Not natural.\n\nAll samples to the marsh station. - M.
-note mushroombasket Mushroom basket | The survey camp's mushroom basket, still full.
+note samplereport Poison sample report | SAMPLE 31 - ROOT TISSUE, DEN - T.L.\n\nThe rot is not fungus. Not bacteria. It grows where the roots are cut, and it grows TOWARDS the cut. Like a hand going to a wound.\n\nThis is V-1. I knew it at the first slide and I wrote "not natural" on the label anyway, because Marit reads my labels.\n\nIt was only meant to clean the water. It eats oil, and then it eats the dead things in the silt, and then it finds out that living things are only dead things that have not stopped yet. It is not cruel. It is tidy.\n\nAll samples to the marsh station, Blightmire. I will finish the work there, where nobody climbs the balconies to look over my shoulder.\n\n- T.L.
+note akilog Root gate log | ROOT GATE LOG - AKI, gatekeeper
+
+The gate at the bottom of the grove's root hole is mine. I open it for the lamps and close it for the bears, and I keep the book.
+
+In: the river people, fourteen, singing. They did not want to stop. I let them through. I should not have. They were so happy.
+In: the Seedkeepers' crew, looking for them. Lise, Bo, Greta and the sandwiches.
+Out: nobody.
+
+Teodor came through last, with a crate of jars on his back. He patted my shoulder and said, "Close it behind me, Aki. Nobody needs to follow." Then he went on east, to the marsh.
+
+I did not close it. Marit says I never close anything.
+note jonasmush Soup note | SOUP - by Jonas, for whoever is cold
+
+Cave mushrooms: three. Water: some. Salt: if you have it. Hope: a lot.
+
+Boil until it smells like a forest. Do not boil until it smells like a lab.
+
+This basket is for the survey crew. If the survey crew is gone, it is for you. Food does not care who eats it; that is the nicest thing about food.
+
+I am going on to the Heart with the honey. Teodor asked for it. He says sweet things help the cultures. I said they help people too. He said, "That is what I am counting on, Jonas," and I did not like the way he smiled.
+note mushroombasket Mushroom basket | The survey camp's mushroom basket, still full. A label on the handle in Jonas's capitals: CAVE MUSHROOMS. NOT FOR TEODOR. HE PUTS THEM UNDER GLASS. MUSHROOMS ARE FOR SOUP.
 note mastbox Turbine mast box | The box at the turbine's foot: its plans, oiled and rolled.
 note beecache Bee hall cache | A chest deep in the Bee Hall, behind the vines: an advanced battery's plans in wax, and a fuse.
 note drownedcrate Drowned crate | A crate at the end of the flooded passage, sealed tight: a headlight's plans and a fuse, dry inside.
@@ -257,7 +301,6 @@ quest intro=Four caves in a hill of roots. The survey team camped in the Fungus 
 step reach|fungus_hall|1|Go into the Fungus Hall
 step read|Cave survey|1|Read the cave survey
 step blueprint|Blueprint_WindTurbine|1|Take the wind turbine plans from the mast box on the hilltop
-step reach|rw_top|1|Climb the survey mast on the rocky top
 step reach|bee_hall|1|Go into the Bee Hall
 step blueprint|Blueprint_BatteryAdvanced|1|Take the advanced battery plans from the Bee Hall's cache
 step reach|flooded_passage|1|Swim into the Flooded Passage

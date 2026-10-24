@@ -126,7 +126,7 @@ place campfire_1 - at 9.8 28.4 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 12.8 30.4 ground sit yaw=257
 place "Box Small" - at 7.8 30.9 ground sit
 place Note_Paper dnote at 7.8 30.9 ground y=0.7 drop yaw=20
-note dnote Seedkeeper's note | SAMPLE RUN - WEST SIDE\n\nJars 1-12 filled. Pollen counts ten times last year's.\nThe vines grew over the trail behind us in one night.\nWe go back by the beach.
+note dnote Seedkeeper's note | SAMPLE RUN - WEST SIDE - A. (root gate crew, on loan)\n\nJars 1 to 12 filled. Pollen counts ten times last year's, and Teodor wrote PERFECT next to the number and underlined it twice.\n\nThe vines grew over the trail behind us in one night. Not slowly, the way vines are supposed to. I heard them. A soft sound, like someone turning the pages of a big book.\n\nWe go back by the beach. Jonas packed us honey sandwiches and a note: "Do not let Aki eat the samples." I have eaten one sample, once, a year ago, and I will never hear the end of it.\n\nThe ranger was right about the hunger. I will not tell Teodor that. He gets a look.
 note dwreckchest Pilot's locker | The plane's locker, thrown clear in the crash: plank, rope and a few seeds.
 loot dwreckchest Plank*4;Rope*2;Seed_Pineapple*1;story:winchpart*1
 prop dwreckchest loot.refill=0
@@ -169,8 +169,8 @@ note rlbox Training tower box | ODA - TRAINING. Up the hill trail, up the tower,
 loot rlbox story:tool*1;Rope*2;Plank*4
 # the dive: Van_1 on the sea floor 10 m down, its crate, an air pocket
 call vd_dive x=14 z=92 h=-10 yaw=90 obj="Van_1" al=rlwreck crate=rlcrate zal=rlwz zid=rl_wreck msg="The slipway's van rolled off the ramp and down. Its back doors hang open." air=rlair bub=rlbub
-note rlcrate Slipway van's toolbox | A ranger toolbox, rusted shut and then not: a wrench stamped ODA, and the winch trolley's spare chain.
-loot rlcrate story:tool*1;Bolt*2;Scrap*3
+note rlcrate Slipway van's toolbox | Oda's van, ten metres down, its back doors open like a mouth. In the glovebox, under a bag of mints that went to paste years ago, a card in Oda's hand: "Van parked on the slipway. Handbrake ON. If it rolls, it was Jonas." The handbrake is on. Something pulled the van down the ramp from the front - the bumper is wrapped in green rope that is not rope.
+loot rlcrate Bolt*4;Scrap*3;Rope*2
 place Loot_ChestSmall rlquarry at -30 60 ground sit yaw=0
 note rlquarry Quarry tool chest | Oda's hammer, left where the stone was split. A chalk note: RACK. YES I KNOW.
 loot rlquarry story:tool*1;Stone*6;Nail*6
@@ -181,13 +181,53 @@ place Loot_ChestSmall odacard at -13.2 -65.6 ground sit yaw=160
 call ni8cave x=-60 z=10 h=2 yaw=180 al=rlfoxcave
 place Loot_ChestSmall rlfoxcavebox at -57.5 5 h=2.45 sit yaw=200
 place Placeable_Lantern_Metal - at -62.6 6 h=2.45 sit
-note rlfoxcavebox Fox den stash | A den dug under the hill, and in it a ranger's lost satchel.
-loot rlfoxcavebox Leather*2;Rope*2;Seed_Pine*1
+note rlfoxcavebox Fox den stash | A den dug under the hill, and in it a ranger's lost satchel - and Oda's wrench, the one stamped ODA. The fox took it for the shine. A chalk line on the den wall: FOX 1, ODA 0.
+loot rlfoxcavebox story:tool*1;Leather*2;Rope*2;Seed_Pine*1
 prop rlfoxcavebox loot.refill=0
 place Creature_Goat rlgoats at 30 20 ground
 prop rlgoats creature.count=2
 call treasure x=55 z=-38 r=8 n=1 seed=11280 kind=0
 prop treasure11280 treasure.loot=Scrap*6;Bolt*3;Nail*10
+
+# --- STORY 10-24: Teodor's radio log at the rack, Jonas on the hens, Oda's training log at the summit
+beside Note_Paper teodorradio toolrack d=1.4
+note teodorradio Radio log: Heart lab | RADIO LOG - STATION COPY - heard on the lab band, written down by O.F.
+
+TEODOR (Heart lab): "...counts are up again on the west coast, Oda. That is good news. That is life coming back."
+ME: "It is coming back over my slipway."
+TEODOR: "Vines are only hungry. Hunger is a kind of hope. The river was dead when I came here, do you remember? Brown foam on every stone. Now look."
+ME: "I am looking. The deer are gone."
+TEODOR: "The deer will adjust."
+
+Then he asked, very politely, whether anyone new had come ashore on the spit. Not Marit, not Jonas - anyone. A stranger. He asked twice.
+
+I said no. He said "Soon, then," and signed off.
+
+I wrote it down because it was strange. I am still not sure why it was strange.
+place Note_Paper jonashens at 7 -53.5 ground y=0.3 drop
+note jonashens Note on the hen run | HENS - A GUIDE, by Jonas Brandt, cook
+
+The brown one is Pancake. The white one is Admiral. The speckled one has no name because she bit me and she knows what she did.
+
+One handful of seeds in the morning. Not two. Oda gives them two and then says I spoil them.
+
+If the eggs taste sweet, do not eat them, bring them to the lab. Teodor wants every sweet egg. He says it is very exciting. I say an egg should taste like an egg.
+
+I am taking honey to the Heart. If anybody needs me I am the man with the bees following him.
+
+- J.
+place Note_Paper odatrain at 43 30.5 h=24.3 drop
+note odatrain Oda's training log | TRAINING LOG - O. FENN
+
+Monday: 41 s. Wind.
+Tuesday: 38 s. No wind. Shouted at a gull.
+Wednesday: 36 s. Best ever. Nobody saw.
+
+Marit used to beat me up here every time. She climbs like the ladder owes her money. When she went up to the Heart lab to hang Teodor's sample lines from the balconies, I built this tower so I would not get slow while she was gone.
+
+From the flag you can see the river mouth, south-east, and on a clear day the brown smudge of the delta's ferry. No smudge today. No smoke from the delta either.
+
+I will go and look tomorrow. Today I will beat 36.
 
 # --- Settings, notes, behaviours, quest ----------------------------------------------------------------------------
 info title=Ranger Landing
@@ -196,8 +236,8 @@ info description=The rangers' forward camp on Verdance's shore: a watch station 
 island on.arrive=message||A watch station on stilts over the beach, hens scratching under it. Smoke from a fire pit - still warm.
 
 note jobboard Oda's job board | RANGER STATION - JOBS\n\n1. Follow the trail to the boat shed. Three marks: the split stone, the bent birch, the shed path. Walk them in order or you lose it.\n2. The shed winch is stripped - I hid its parts from the scavengers: the crank in the bear cave, the chain with the plane, the pawl in the west ruins. Fit them and the door goes up. The boat's wheels are in the shed. Take them, and my stores key. A raft with a motor goes where the rivers go.\n3. Read my log before you go upriver.\n\n- Oda Fenn, ranger
-note rangerlog2 Ranger log 2 | RANGER LOG 2\n\nThe hens are laying again. The deer did not come to the salt lick. Nothing comes out of the wood any more except the wind.
-note rangerlog3 Ranger log 3 | RANGER LOG 3 - O. FENN\n\nThe delta's river people have not answered in six days. I am going upriver. The machete is at their outpost - the vines grow back faster every week.\n\nIf you read this, you followed the trail. The delta's band is 800.
+note rangerlog2 Ranger log 2 | RANGER LOG 2 - O. FENN\n\nThe hens are laying again, which makes one of us. The deer did not come to the salt lick. Nothing comes out of the birch wood any more except the wind, and the wind smells sweet, like a greenhouse with the door shut.\n\nMarit wrote from the Heart lab. My sister has always had nicer handwriting than me and worse news. Teodor has stopped coming to meals. He sleeps in the lab, next to his sample tanks, and talks to them. Jonas says it is fine, all scientists talk to their tanks. Jonas says everything is fine; that is his job.\n\nI asked Marit to come down to the coast for a week. She said: "Who would hold the ropes?"\n\nTraining course today: 36 seconds. Getting old is a choice. I refuse it.
+note rangerlog3 Ranger log 3 | RANGER LOG 3 - O. FENN\n\nThe delta's river people have not answered in six days. Fourteen of them, and a ferry, and children who steal my apples. Six days of nothing on 800.\n\nI am going upriver. The machete plans are at their outpost - the vines grow back faster every week, and last night they grew over the slipway while I slept beside it.\n\nIf you read this, you followed my trail, fixed my winch and put my tools back where they live. Thank you. Nobody has done that for me since Marit was twelve.\n\nTake the boat's wheels. Take my stores key - the ranger lockers upriver open with it. Feed the hens if you pass this way again.\n\nRiverfork Delta, south-east of here. The band is 800. I will leave a light at the outpost.\n\n- Oda
 note boatshed Ranger boat shed | The rangers' boat shed: the motor wheel's and the steering wheel's plans, oiled and rolled.
 loot boatshed Blueprint_MotorWheel*1;Blueprint_SteeringWheel*1;Bolt*3;Hinge*2;story:rangerkey*1
 prop boatshed loot.refill=0
@@ -254,7 +294,7 @@ step collect|story:winch|1|Fit the three parts to the slipway winch at the boat 
 step blueprint|Blueprint_MotorWheel|1|Take the motor wheel plans from the boat shed
 step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel plans from the boat shed
 step reach|rl_top|1|Climb Oda's training hill and tower to the flag
-step collect|story:tool|3|Find Oda's three tools: the tower, the sunk slipway van and the quarry
+step collect|story:tool|3|Find Oda's three tools: the tower, the fox den under the west hill and the quarry
 step collect|story:rack|1|Hang the tools back on the rack by the station
 step read|Ranger log 3|1|Read Ranger log 3
 quest done=Oda went upriver. The delta's band is 800.

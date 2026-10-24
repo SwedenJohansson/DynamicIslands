@@ -9,22 +9,32 @@ zone mouth
 expect step 1
 read Expedition sign
 expect step 2
-zone dome
+# STORY 10-24: Expedition 3's account first - the dive and Oda's log, then the dome
+open Skipper's drawer
+wait 3
+expect story expkey 1
 expect step 3
+use expbox
+expect shown expchest
+read Expedition 3 log
+expect step 4
+zone dome
+expect step 5
 use coreburn
 expect story core 0
 kill Warthog
-expect step 4
+expect step 6
 use firebasket1
 use firebasket2
 kill Mama bear
 zone old_root
-expect step 6
+expect step 8
 read The Ringwave root
-expect step 7
+expect step 9
 # REDO 10-24: the valves wait for the three heart shards set into the oldest root
 use coreburn
 expect story core 0
+expect hidden teodortape
 use oldroot
 expect story rootlit 0
 open Mushroom ring
@@ -36,34 +46,27 @@ expect shown dvinechest
 open Behind the vines
 wait 3
 expect story shard 3
-expect step 8
+expect step 10
 use oldroot
 expect story shard 0
 expect story rootlit 1
-expect step 9
+expect shown teodortape
+expect step 11
+read Teodor's last tape
+expect step 12
 use coreburn
 expect story core 1
 expect shown embers
 expect shown heartseed
 use coreopen
 expect hidden glowgrowth
-expect step 10
+expect step 13
 read The core
-expect step 11
+expect step 14
 use heartseed
 expect story heartseed 1
 use rangerlock
 expect hidden rangercache
-expect step 12
-zone rc_top
-expect step 13
-open Skipper's drawer
-wait 3
-expect story expkey 1
-expect step 14
-use expbox
-expect shown expchest
-read Expedition 3 log
 expect step 15
 zone oda_camp
 expect step 16

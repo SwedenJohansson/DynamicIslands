@@ -105,7 +105,7 @@ place campfire_1 - at -28 22.7 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -25 24.7 ground sit yaw=327
 place "Box Small" - at -30 25.2 ground sit
 place Note_Paper dnote at -30 25.2 ground y=0.7 drop yaw=20
-note dnote Seedkeeper's note | SAMPLE RUN - WEST SIDE\n\nJars 1-12 filled. Pollen counts ten times last year's.\nThe vines grew over the trail behind us in one night.\nWe go back by the beach.
+note dnote Seedkeeper's note | MARIT - CLIFF LINE, day 9\n\nNew record to the top of the Great Cliff: 4 minutes. Oda's record on her silly tower is 36 seconds, which she will tell you about for an hour if you let her. Do not let her.\n\nThe pitons hold. The vines hold better; I could climb this cliff on the green alone now, and that is the problem.\n\nTeodor called up on the radio, all excited: "Has anyone new come ashore?" Nobody, I said. "Soon," he said. He says "soon" a lot lately, the way you say it to a dog when you are holding its dinner.\n\nWe go back by the beach.
 place VP_Excavator dvan at 34.1 -18.9 ground yaw=87
 prop dvan tint.color=#7a6a3a
 prop dvan tint.amount=0.5
@@ -154,7 +154,7 @@ prop cscavecavebox loot.refill=0
 # the east knoll (secret): a low hill with a goatherd's box on top
 call vd_mount x=55 z=-30 top=12 r=12 a0=200 turns=1 n=30 hb=3
 place Loot_ChestSmall csknoll at 55 -30 h=12 sit yaw=230
-note csknoll Goatherd box | A goatherd's box: a bell, a ball of wool and a carving of a goat with a torn ear.
+note csknoll Goatherd box | A goatherd's box: a ball of wool, a carving of a goat with a torn ear - and Burr's bell, Oda's bootlace still on the strap. A note round it: HE FOUND MARIT'S OLD GOATS UP HERE AND WOULD NOT LEAVE THEM. LET HIM HAVE HIS FRIENDS FOR AN HOUR. I WILL HANG THE BELL BACK ON HIM AT THE TOP. - O.
 loot csknoll Wool*3;Rope*2;Coconut*2
 prop csknoll loot.refill=0
 call vd_spot x=55 z=-28.5 al=csknollz id=cs_knoll r=3 msg="From the knoll the root stair climbs the slope like a giant's staircase."
@@ -165,6 +165,32 @@ prop csgoats creature.count=3
 place Creature_Chicken cshens at 30 10 ground
 prop cshens creature.count=2
 
+# --- STORY 10-24: Jonas's packing list by the roll call, Marit's line note on the west ledge
+place Note_Paper jonaslist at 1.6 -7.2 ground y=0.3 drop
+note jonaslist Jonas's packing list | JONAS - TO TAKE UP TO THE HEART
+
+- honey (all of it, Teodor asked)
+- the good pan
+- the other good pan, in case
+- bees
+- salt
+- Marit's birthday cake, in a tin, do NOT tell her
+
+NOT TO TAKE:
+- the jars Teodor keeps giving me "for the kitchen". They are not for the kitchen. Nothing for a kitchen glows.
+
+Note to self: be cheerful. Everybody up there is frightened and somebody has to be the one making toast. That is my whole plan. Toast.
+place Note_Paper maritline at -24.6 -11.4 ground y=0.3 drop
+note maritline Note on the west ledge | M. - WEST LINE
+
+This line is for whoever comes after Oda, because somebody will. Teodor is certain of it. He has been leaving the spit beacon on every night for a month, and when I asked him why, he said, "So that someone can find us who does not already know what to think."
+
+I think he means you.
+
+The rope is good. Clip in at every piton. Do not look at the vines while you climb; they look back.
+
+At the top: the Heart. I will be on the balconies. Wave.
+
 # --- Settings, notes, behaviours, quest -------------------------------------------------------------------------
 info title=Canopy Stair
 info author=Custom Islands
@@ -174,8 +200,8 @@ island on.arrive=message||Roots as thick as boats lie up the slope like a stair.
 prop stairroots tint.color=#4a3424
 prop stairroots tint.amount=0.5
 
-note rollcall Seedkeepers' roll call | ROLL CALL - LAST CAMP\n\nMarit - Heart lab\nJonas - Heart lab\nAki - root gate\nTeodor - stayed in the marsh\nRiver people (14) - gone below\n\nWhoever reads this: the tents are yours. We will not need them.\n\nRope coils left on the ledges - stair, west, east root. Rig the anchor before you ride.
-note odaletter Oda's letter | To whoever came after me -\n\nI found them. The Seedkeepers, the river people, all of it. What is in the Heart is not mine to fix.\n\nI am going north, where the seeds are kept cold. If the Heart goes wrong, Verdance has a copy there.\n\nBurr is yours now. - Oda Fenn
+note rollcall Seedkeepers' roll call | ROLL CALL - LAST CAMP - written by Marit, corrected by Jonas\n\nMarit - Heart lab\nJonas - Heart lab (with bees) (bees not optional - J.)\nAki - root gate\nTeodor - stayed in the marsh. He said so on the radio. He said it twice.\nRiver people (14) - gone below\nLise's crew (4) - gone below, looking for them\n\nWhoever reads this: the tents are yours. We will not need them, or we will need them very much and not be able to come back for them. Either way.\n\nRope coils left on the ledges - stair, west, east root. Rig the anchor before you ride.
+note odaletter Oda's letter | To whoever came after me -\n\nYou have been one day behind me since the spit. I have seen your fires. You put them out properly. Thank you.\n\nI found them - the Seedkeepers, the river people, all of it. Teodor did not stay in the marsh. He came up this stair a week ago with a crate of jars, and Marit let him into the Heart, because she is my sister and she has always believed people when they say sorry.\n\nThe Heart of Green is at the top of the zipline. The band is 1200. Marit is in the lab, if she is anywhere. Count the balconies when you climb; she always did.\n\nBurr has gone on ahead. He knows the way to Marit better than I do.\n\n- Oda Fenn
 note tentone Tent chest | Marit's tent chest: titanium tool plans, worn soft at the folds.
 note tenttwo Jonas' tent chest | Jonas' tent chest: a big backpack's plans and his spare rope.
 note anchorbox Anchor box | The zipline anchor's box: plans for a powered zipline tool.

@@ -9,6 +9,6 @@ wait 3
 picture sl11_hollowtrunk_grove_island 70 50 -120 0 15 0
 picture sl11_hollowtrunk_grove_greenhouse 10 5 -52 -4 2 -40
 storespot 0 0
-snap deep_hg_lookout hgtw 300 34
+snap deep_hg_lookout hgbox 300 14
 snap deep_hg_caravan hgwreck 180 14
 snap deep_hg_den hgdencave 0 14

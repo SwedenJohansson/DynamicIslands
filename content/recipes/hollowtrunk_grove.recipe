@@ -134,7 +134,7 @@ place campfire_1 - at 18.9 34.1 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 21.9 36.1 ground sit yaw=297
 place "Box Small" - at 16.9 36.6 ground sit
 place Note_Paper dnote at 16.9 36.6 ground y=0.7 drop yaw=20
-note dnote Lost traveller's note | I came for the seeds like everyone else.\nThe paths move. I am sure of it. I marked this tree twice.\nIf the fire is cold, I went towards the sea.
+note dnote Lost traveller's note | I came for the seeds like everyone else. Three weeks rowing, one bad tooth, a sunburn shaped like a hat.\n\nThe paths move. I am sure of it. I marked this tree twice, and the second mark is higher up the trunk than the first, as if the tree grew a hand's width in a night.\n\nA Seedkeeper with a kind face gave me tea and asked where I had come from, and whether anyone knew I was here. I said no. He seemed pleased about that, and then sorry he was pleased.\n\nIf the fire is cold, I went towards the sea. If the fire is warm, I am behind you. Say hello.
 place Caravan_Yellow_01 dvan at -7.4 38.3 ground yaw=57
 prop dvan tint.color=#7a7040
 prop dvan tint.amount=0.5
@@ -155,16 +155,19 @@ prop dview zone.repeat=never
 prop dview zone.message=Five giant trees stand over the grove, their crowns above everything else on the island.
 
 # --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): Owl Hill and its fire lookout (climb, zipline down), the seed caravan in the bay (dive), the mother boar's den and the feeding trough (M5)
-# the climb: a mountain (trail winding up from bearing 300), a 8-storey climbing tower on its top, the summit box
+# Owl Hill (STORY 10-24: no tower or zipline here any more - an optional hill walk to the burnt-out fire watch, its
+# box, Burr's bell and the old campfire; no quest step)
 call vd_mount x=-58 z=40 top=22 r=24 a0=300 turns=1.25 hb=3
-call vd_tower x=-58 z=40 h0=22 lv=8 a=hgtw box=hgbox zal=hgtopz zid=hg_top msg="The seedkeepers' fire lookout on Owl Hill. A logbook nail, no logbook; scratched owls on every post."
+place Loot_ChestSmall hgbox at -57 40.8 h=22 sit yaw=200
+place campfire_1 - at -59.4 39 h=22 sit
+place Log - at -60.6 41.2 h=22 sit yaw=40
+call vd_spot x=-58 z=40 al=hgtopz id=hg_top r=5 msg="Owl Hill. The fire watch hut burnt years ago; only its box and a ring of stones are left. Scratched owls on every stone."
 note hgbox Fire lookout box | SEEDKEEPERS - FIRE WATCH. Smoke over the trunks: ring the greenhouse bell. Smoke over the bay: that is the caravan people cooking again.
 loot hgbox Rope*3;Plank*4;Leather*1
-place ZiplinePath_Landmark hgzip at -53.03 38.28 h=43.05
-zipto hgzip -20 8
+prop hgbox loot.refill=0
 # the dive: Caravan_Yellow_01 on the sea floor 11 m down, its crate, an air pocket
 call vd_dive x=62 z=-74 h=-11 yaw=140 obj="Caravan_Yellow_01" al=hgwreck crate=hgcrate zal=hgwz zid=hg_wreck msg="The seed caravan, rolled off the bay road and down. Its seed locker is still shut." air=hgair bub=hgbub
-note hgcrate Seed caravan's locker | Rows of waxed jars, most cracked. One is whole: the oldest seeds of the grove, labelled in three hands.
+note hgcrate Seed caravan's locker | Rows of waxed jars, most cracked. One is whole: the oldest seeds of the grove, labelled in three hands.\n\nFIRST SEEDS - grove, year one. - Aki\nDO NOT OPEN IN THE LAB. - Marit\nBEFORE V-1. KEEP THESE CLEAN, WHATEVER HAPPENS. - T.L.
 loot hgcrate story:seedjar*1;Scrap*3;Bolt*2
 # the mother boar (RAFT_QUEST_MECHANICS SL11 3, M5): she sleeps across the mouth of her den in the hollow stump; the
 # trough by the path takes five red berries and she goes to it - or the player fights her.
@@ -185,6 +188,40 @@ call vinecache x=12 z=69 r=8 seed=11361 chest=hgvine vines=hgvinevines items=Rop
 prop hgvine note.title=Root-choked crate
 call vd_spot x=-35 z=61 al=hglook id=hg_view r=5 msg="From the north rocks the five trunks stand like pillars holding the sky up."
 
+# --- STORY 10-24: Jonas's bee notes by the bee box, the greenhouse log, Oda's note on Owl Hill
+place Note_Paper jonasbees at 35.6 -11.2 ground y=0.3 drop
+note jonasbees Bee notes | BEES - JONAS BRANDT
+
+Hive 1: happy. Hive 2: happy. Hive 3: has opinions.
+
+The honey this month is the colour of lamp oil and so sweet it makes your teeth ring. The bees fly to the trunks, then down to the root hole, then come back slow, like they have had a big lunch.
+
+Teodor took six jars to the lab. He was very kind about it. He said, "Jonas, your bees are the best measure I have." I said thank you. I did not ask of what.
+
+The bees will not go past the dark root at the hole any more. They circle it and come home.
+
+I trust bees more than people. Bees do not make speeches.
+place Note_Paper greenlog at 1.6 -41.4 ground y=0.3 drop
+note greenlog Greenhouse log | GREENHOUSE LOG - SEEDKEEPERS
+
+Week 1: beans up. Week 2: beans up to the roof. Week 3: beans through the roof. Lise says the roof was a suggestion.
+
+Teodor came down from the Heart with a sprayer. "Just a little V-1 on the beds, to keep the mould away." The mould went away. So did the slugs, the beetles and the frogs. Nothing hops in here now.
+
+The tomatoes taste wonderful. I want to be clear about that, whatever happens next. They taste wonderful.
+
+The crew is going down the root hole to look for the river people. Lise is taking the lamps. I am taking the sandwiches.
+
+- G.
+place Note_Paper burrbell at -57.6 38.8 h=22.1 drop
+note burrbell Note on the fire ring | O.F. - OWL HILL
+
+Sat up here to look for lamps. Saw none. Heard a bell instead, all night, going round and round the hill. Burr, following me up in the dark like a very small, very bad guard.
+
+I used to bring Marit up here when she was little. She counted the owls carved on the stones and always got a different number. Twenty-two. Twenty-six. "Owls move, Oda."
+
+There are twenty-four. I counted three times. I will tell her when I find her and she will say they moved.
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Hollowtrunk Grove
 info author=Custom Islands
@@ -192,7 +229,7 @@ info description=Five giant trees with huts at their feet, the Seedkeepers' gree
 island on.arrive=message||Trees as tall as towers. Under the biggest one, the ground falls away into the dark between its roots.
 
 note rota Seedkeeper's watering rota | WATERING ROTA - SEEDKEEPERS\n\nTank first, then the trunks, in order.\nTrunk 2: ride the line to trunk 4. Pipes and the purifier are on the deck.\n\nPump parts: one in each trunk - 3 with the bees, 4 in the store, 5 under the vines.\nSeed store at the big tree. Keep the drawers locked.\n\nNO ONE goes into the roots. - M.
-note rangerlog6 Ranger log 6 | RANGER LOG 6 - O. FENN\n\nThe greenhouse is dry. The seed drawers are full - they meant to come back.\n\nTheir lamps went down between the roots of the big tree. The ground there breathes: warm air, and a smell of rot.\n\nBurr will not go near it. I will.
+note rangerlog6 Ranger log 6 | RANGER LOG 6 - O. FENN\n\nThe greenhouse is dry. The seed drawers are full, every packet labelled - they meant to come back. Seedkeepers do not leave seeds behind. That is the whole job; it is in the name.\n\nTheir lamps went down between the roots of the big tree. The ground there breathes: warm air, and a smell like fruit left in a hot room.\n\nBurr will not go near it. He stood at the edge and rang his bell at me until I threw a pine cone at him. He did not take it personally. He ate it.\n\nUnder the grove the roots go on - Rootweave, the Seedkeepers call it, caves of root and stone all the way to the Heart. Aki ran their root gate down there. The band is 600.\n\nI am going down. I have the vial, the lamp and a goat. That is more than most expeditions.
 note watertower Water tower tank | The water tower's tank: the tank's own plans in a tin, wrapped in oilcloth.
 note trunkstore Trunk store | Trunk 4's store box: plans for water pipes, a coil of rope.
 note crownbox Crown box | The crown box on trunk 4's deck: the plans of a purifier that runs on power.
@@ -273,7 +310,6 @@ step collect|story:pumppart|3|Find the pump's three parts in trunks 3, 4 and 5
 step collect|story:water|1|Fit the parts to the water tower's pump
 step blueprint|Blueprint_Storage_Large|1|Take the large storage plans from the seed store
 step open|Seed drawers|1|Open the seed drawers
-step reach|hg_top|1|Climb Owl Hill and its fire lookout
 step collect|story:seedjar|1|Dive to the seed caravan in the bay
 step collect|story:denkey|1|Get the key from the mother boar's den (fill her trough with five berries, or fight her)
 step read|Ranger log 6|1|Read Ranger log 6 in the seed store

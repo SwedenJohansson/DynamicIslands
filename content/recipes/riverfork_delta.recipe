@@ -178,6 +178,53 @@ prop dlllama creature.count=2
 call treasure x=-44 z=-40 r=8 n=1 seed=11380 kind=0
 prop treasure11380 treasure.loot=Scrap*6;Bolt*3;Nail*10
 
+# --- STORY 10-24: Teodor's water trial at the map screen, Hedda's ferry log, the fisher's diary, Pim's note in the otter den
+beside Note_Paper teodortrial mapscreen d=1.4
+note teodortrial Water trial, sheet 1 | SEEDKEEPERS - HEART LAB - WATER TRIAL, SHEET 1 - T. LIND
+
+Site: river people's outpost, Riverfork Delta.
+Problem: brown foam on the stones, fish belly-up in the east arm, children with rashes. Old oil in the silt from the timber barges.
+
+Trial: one dose of V-1 in the outpost's water barrel. V-1 is a spore that eats oil and gives back clean water and flowers. Nothing else. I have checked it two hundred times.
+
+Day 1: foam gone.
+Day 3: the east arm runs clear. Hedda says the water tastes sweet. Children say it tastes like sweets.
+Day 6: vines on the ferry rope. Small. Lovely, really.
+
+I am so happy I could cry. I will tell Marit tonight. She said I would never fix the river. I have fixed the river.
+place Note_Paper ferrylog at -18.5 5 ground y=0.3 drop
+note ferrylog Ferry log | FERRY LOG - HEDDA, ferry keeper
+
+Crossings today: 31. Fares paid: 4. Fares paid in fish: 9. Fares paid in "I will pay you tomorrow, Hedda": everyone else, as usual.
+
+The rope is growing leaves. I cut them in the morning and by supper there are more. The lab man says it is good. The lab man has never had to wind a ferry with a salad on the rope.
+
+The water smells sweet at night. People go down to the bank and stand there, just stand. Old Ulf stood there till midnight and said he heard singing upriver.
+
+I told him that was the boars. He did not laugh. He always laughs at my jokes; that is why he pays in fish.
+place Note_Paper fishernote at 28 -16 ground y=0.3 drop
+note fishernote Fisher's diary | ULF - FISHING, east arm
+
+The puffers have come back to the barge wreck. They feed where it lies, off the mouth, ten metres down. I have not seen puffers here since I was a boy.
+
+The fish taste of honey now. My wife says that is not natural. I say nothing about this river has been natural since the timber men came. This is the first nice thing.
+
+There is singing upriver at night. Not people. More like a lot of leaves moving the same way at the same time.
+
+Tomorrow the whole village is going up to see. Hedda says she is staying with the ferry. Hedda says that every time, and then she comes.
+place Note_Paper pimnote at -57.8 6.5 h=2.5 drop
+note pimnote Note in the otter den | MY HIDING PLACE, by PIM (age 9). KEEP OUT. EXCEPT OTTERS.
+
+Everyone is walking upriver to the singing. Mum said come on Pim. I said no because I am hiding, and you do not stop hiding just because people want you to.
+
+The otter lets me sit here if I give her my fish. I have given her all my fish.
+
+If the ranger lady comes: I did NOT take the apples. The otter took the apples. Also I took some apples.
+
+It is very quiet now. I think I will go and find mum after all. The singing sounds nice.
+
+Pim
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Riverfork Delta
 info author=Custom Islands
@@ -187,7 +234,7 @@ island on.arrive=message||Fresh water runs into the sea here - three river arms 
 story ferry|Ferry crossed|Note_Paper|The delta's rope ferry, wound across the west arm.
 
 note riverchart River chart | THE DELTA - RIVER PEOPLE'S CHART\n\nWest arm: the ferry. Keep the vines cut.\nEast arm: shallow, no crossing in rain.\nUpper river: the fuel cache and the pressing shed. Boars.\nOutpost: tools on the rack.\n\nUpriver of everything: the rise, and past it the hollow trees.
-note rangerlog4 Ranger log 4 | RANGER LOG 4 - O. FENN\n\nThe river people are gone. Their shed is full, their fire cold. The boars charged me twice today.\n\nThe animals turn mean near the dark roots. I am going up onto the rise - the trackers' tower can see the whole wood.
+note rangerlog4 Ranger log 4 | RANGER LOG 4 - O. FENN\n\nThe river people are gone. Their shed is full, their fire cold, their pot of porridge still on the hook. Fourteen people do not leave porridge. Hedda would come back from the dead for porridge.\n\nIn their water barrel I found a little glass vial, empty, with a lab label: V-1 - T.L. - TRIAL DOSE. Teodor's writing. He told me once the delta water was the worst on the coast. Now it is clear as glass, and it smells of flowers, and nobody is here to drink it.\n\nI have the vial in my breast pocket. I will ask him what it is. I will ask him very calmly.\n\nThe boars charged me twice today. The animals turn mean near the dark roots. I am going up onto Tracker's Rise - the trackers' tower can see the whole wood, and the trackers can see where fourteen people walk to.
 note toolrack Outpost tool rack | The outpost's tool rack: a machete's plans pinned beside an empty hook.
 note fuelcache Fuel cache | The river people's fuel cache: plans for a fuel tank and its pipes, in a tin box.
 note pressshed Pressing shed | The pressing shed's chest: the press's plans, explosive goo in a jar and a sack of potatoes.

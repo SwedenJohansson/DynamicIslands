@@ -147,13 +147,16 @@ scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=80 seed=11219 free=3
 scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=80 seed=11220 free=2
 
 # --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): the pollen watch on the north-west hill (climb, zipline to the root gate), the Seedkeepers' lab van off the east shore (dive), the seed vault on the north-east slope, the east cave
-# the climb: a mountain (trail winding up from bearing 300), a 10-storey climbing tower on its top, the summit box
+# the north-west hill (STORY 10-24: no tower or zipline - an optional walk up to the pollen watch post, its box;
+# no quest step)
 call vd_mount x=-55 z=45 top=22 r=20 a0=300 turns=1.25 hb=3
-call vd_tower x=-55 z=45 h0=22 lv=10 a=hhtw box=hhbox zal=hhtopz zid=hh_top msg="The pollen watch. From here the Heart's crown is level with your boots, and its pollen drifts past like snow."
+place RT_Pillar - at -55 45 h=22 sy=0.5
+place Loot_ChestSmall hhbox at -53.6 46 h=22 sit yaw=200
+place Placeable_Flag_05 - at -56.4 43.8 h=22 sit
+call vd_spot x=-55 z=45 al=hhtopz id=hh_top r=4 msg="The pollen watch post. From here the Heart's crown is level with your eyes, and its pollen drifts past like snow."
 note hhbox Pollen watch box | SEEDKEEPERS - POLLEN WATCH. Count the drift each dawn. If the drift turns gold, the growth is spreading: take the sample to the vault, and seal it.
 loot hhbox Rope*3;Bolt*2;Battery*1
-place ZiplinePath_Landmark hhzip at -50.03 43.28 h=47.89
-zipto hhzip -30 12
+prop hhbox loot.refill=0
 # the dive: Van_1 on the sea floor 10 m down, its crate, an air pocket
 call vd_dive x=70 z=-68 h=-10 yaw=250 obj="Van_1" al=hhwreck crate=hhcrate zal=hhwz zid=hh_wreck msg="The Seedkeepers' lab van, off the end of the old east road. Its sample fridge is still sealed." air=hhair bub=hhbub
 note hhcrate Lab van's sample fridge | One sealed sample tube, gold dust inside, labelled HEART - FIRST BLOOM.
@@ -181,6 +184,29 @@ prop hhknoll loot.refill=0
 call vd_spot x=0 z=69.5 al=hhknollz id=hh_knoll r=3 msg="From the north knoll the Heart fills half the sky."
 place Creature_Chicken hhhens at -40 -20 ground
 prop hhhens creature.count=3
+
+# --- STORY 10-24: zipline and crown signs (the mechanics, off the notes), Jonas's kitchen note in the lab
+place Note_Sign zipsign1 at -12.4 -4.4 ground sit yaw=0
+note zipsign1 Zipline sign | BALCONY 1 - ZIPLINE TO BALCONY 2.
+Hook on at the deck behind the hut.
+place Note_Sign zipsign2 at -9.2 15.8 ground sit yaw=90
+note zipsign2 Zipline sign | BALCONY 2 - ZIPLINE TO BALCONY 3.
+Then the crown keypad by the pillar.
+place Note_Sign crownsign at 13.6 18.4 ground sit yaw=180
+note crownsign Crown keypad sign | CROWN DOOR
+
+Four digits: the day the sea reached the lab, day first, then month.
+Ask Teodor. Do not ask Teodor before coffee.
+place Note_Paper jonaskitchen at 15.6 -0.6 ground y=0.3 drop
+note jonaskitchen Kitchen note | JONAS - HEART LAB KITCHEN
+
+Day 1 up here: made toast. Everybody ate it. Success.
+Day 2: made toast. Marit ate it on the balconies, counting them out loud, one two three, like she always does. Teodor did not eat it.
+Day 3: Teodor said, "Jonas, you are the kindest man I know, so I will tell you first." Then he told me. All of it. The river, the marsh, the river people singing in the roots.
+
+I did not make toast on day 4.
+
+Today he went down to the oldest root with his tape recorder. I am taking him soup. You cannot leave a man alone with the worst thing he ever did and no soup. That is not a rule anywhere, but it should be.
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Heart of Green
@@ -242,15 +268,15 @@ prop gatelever if.use=signal|chosen\n!signal|below
 prop gatelever on.use=signal||below\ngive||story:gate*1\nmessage||Deep in the roots a gate grinds open. Warm air rushes up. Below the Heart is the Rootcore.
 prop gatelever else.use=message||The gate stays shut until a valve is turned - or it is already open.
 
-note labnotice Heart lab notice | HEART LAB - SEEDKEEPERS ONLY\n\nGenerator by the door. Power first.\nBalconies by zipline: 1 - 2 - 3. Crown by code.\nThe roots below are CLOSED.
-note organism1 Organism file 1 | ORGANISM FILE 1\n\nSeeded into the oldest root, day 1. It spreads through the root network and feeds every tree it touches.\n\nGrowth +40% in a month. The whole land is greening.\n\nIt does not stop at the shore.
-note organism2 Organism file 2 | ORGANISM FILE 2\n\nIt feeds on the roots now, not the other way. The marsh is lost. The grove next.\n\nCrown valves fitted: BURN (fire through the root network) and SPREAD (release it on the wind).\nCrown door code: the day the sea reached the lab - 26/11. 2611.
-note purpose The purpose | THE PURPOSE\n\nIt was meant to feed the network, then green the world.\n\nThe flood took everything. Verdance was going to give it back - every coast, every rock, green again.\n\nIt still could. If it does not eat everything first.
+note labnotice Heart lab notice | HEART LAB - SEEDKEEPERS ONLY\n\nGenerator by the door. Power first.\nThe roots below are CLOSED.\n\n(Under it, in chalk, in Jonas's capitals: KITCHEN IS ALSO CLOSED. I MEAN IT THIS TIME. WELL, SOUP AT SIX.)
+note organism1 Organism file 1 | ORGANISM FILE 1 - T. LIND\n\nV-1 seeded into the oldest root, day 1. I only meant it to clean the water. The river was dying; the sea had already taken everything else.\n\nIt cleaned the water. Then it went into the root network and fed every tree it touched. Growth +40% in a month. The whole land greening. Marit cried when she saw the balconies flower. So did I.\n\nIt does not stop at the shore. That is the part I did not write in the report for a long time. If it reaches the sea, it will green every rock and raft out there - or eat them. I can model it either way. The model does not help.\n\nI cannot be the one to decide. I made it. I love it. I am the worst person to ask.
+note organism2 Organism file 2 | ORGANISM FILE 2 - T. LIND\n\nIt feeds on the roots now, not the other way. The marsh is lost. The grove next. I have stopped pretending to the others that this is a good sign.\n\nCrown valves fitted: BURN and SPREAD. One turn each, and then the root gate opens.\n\nI need someone from outside: someone who has not loved Verdance for years like Oda, or helped me build it like Marit. Oda would burn it before breakfast. Marit would hide it in a jar. Neither of them would be choosing; they would be grieving.\n\nI have set the crown door to the day the sea reached the lab. 26 November. Marit says it is morbid. Marit counted the balconies out loud as she climbed them, every time, like a little girl. One. Two. Three.
+note purpose The purpose | THE PURPOSE - a board the Seedkeepers kept by the crown\n\nIt was meant to clean the water. Then to feed the network. Then to green the world.\n\nThe flood took everything. Verdance was going to give it back - every coast, every rock, green again.\n\nIt still could. If it does not eat everything first.\n\n(Someone has written under it, very small: OR WE COULD JUST GROW TOMATOES. - J.)
 note twovalves Two valves | TWO VALVES\n\nBURN: fire down every root. The growth dies. So does Verdance's network - the grove, the canopy, the Heart.\nSPREAD: the vents open. It goes out on the wind, to every coast. It may green the world. It may eat it.\n\nOne turn. Then the gate opens.
 note verdictburn The verdict | THE VERDICT - BURN\n\nThe fires run down the roots. Verdance will be a smaller green, and a safe one.\nThe core below must be burnt too.
 note verdictspread The verdict | THE VERDICT - SPREAD\n\nThe spores are on the wind. What they make of the world is not ours to say any more.\nThe core below must be opened too.
 note labsafe Lab safe | The lab safe: the Seedkeepers' seed bank, and Marit's last letter beside it.
-note lastletter Seedkeeper's last letter | Marit's last letter -\n\nWe could not choose. You have.\n\nWhatever you turned, the core under the tree must follow, or it will grow back from the oldest root. The gate lever is in the west roots.\n\nThe Ringwave is cut on that root. We did not cut it. It was there before us.
+note lastletter Seedkeeper's last letter | Marit's last letter -\n\nWe could not choose. You have. Thank you, and I am sorry it was you; Teodor never asked if you wanted it.\n\nWhatever you turned, the core under the tree must follow, or it will grow back from the oldest root. The gate is down in the west roots.\n\nTeodor has gone below to the oldest root. He said he wanted to be there when it ends, either way. Jonas went after him with soup. I am staying up here, on the top balcony, with the lamp on, because Oda will come, and someone should be here when she does.\n\nThe Ringwave is cut on that root. We did not cut it. It was there before us.
 note rootstore Root store | The root store's chest: lamp oil, rope and a coil of wire.
 loot rootstore Rope*3;CopperIngot*2;Battery*1
 prop rsthatch obj.name=rsthatch
@@ -298,7 +324,7 @@ prop seedvault on.use=signal||vault\ngive||story:vault*1\nshow|vaultchest\nmessa
 prop seedvault else.use=message||The Seedkeepers' seed vault. A slot for one sample tube, empty. The pollen watch box says to bring the sample here.
 prop vaultchest obj.name=vaultchest
 prop vaultchest beh.hidden=1
-note vaultchest Vault ledger | SEED VAULT - VERDANCE\n\nKept back: one of every seed we had before the growth.\nKept back: the first bloom, sealed, so whoever comes after can see what we made.\nIf the Heart is burnt, plant these. If it is spread, these are what the land was.
+note vaultchest Vault ledger | SEED VAULT - VERDANCE\n\nKept back: one of every seed we had before the growth.\nKept back: the first bloom, sealed, so whoever comes after can see what we made.\nIf the Heart is burnt, plant these. If it is spread, these are what the land was.\n\n(In the margin, Marit: "The gate is open. The Rootcore is under us - the oldest root, band 400. Teodor is down there. Oda went in after him. Go carefully, and bring my sister back up.")
 loot vaultchest Seed_Flower_Yellow*2;Seed_Pine*2;TitaniumOre*1
 prop vaultchest loot.refill=0
 quest title=The Heart
@@ -326,7 +352,6 @@ step open|Lab safe|1|Open the lab safe
 step read|Seedkeeper's last letter|1|Read the Seedkeeper's last letter
 step reach|root_gate|1|Go to the root gate in the west roots
 step collect|story:gate|1|Pull the root gate lever
-step reach|hh_top|1|Climb the pollen watch on the north-west hill
 step collect|story:sample|1|Dive to the lab van off the east shore
 step collect|story:vault|1|Seal the sample in the seed vault on the north-east slope
 step read|Vault ledger|1|Read the vault ledger

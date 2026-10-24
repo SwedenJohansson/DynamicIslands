@@ -124,7 +124,7 @@ place campfire_1 - at -25.6 20.8 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -22.6 22.8 ground sit yaw=277
 place "Box Small" - at -27.6 23.3 ground sit
 place Note_Paper dnote at -27.6 23.3 ground y=0.7 drop yaw=20
-note dnote Hunter's note | Boar sign everywhere. Hyena sign at the edge of the dark trees.\nI hid the good chest behind the vines - cut them if you need it more than I do.
+note dnote Hunter's note | STEN - HUNTING, west side\n\nBoar sign everywhere. Hyena sign at the edge of the dark trees, which is new; hyenas never came up the rise before. Something is pushing them out of the wood.\n\nI hid the good chest behind the vines. Cut them if you need it more than I do. You probably do. I am old and I mostly need a chair.\n\nThe trackers say the herds have stopped grazing at the tree line. Goats will eat a boot, a hat, a book, my second-best hat. Goats will not eat those leaves.\n\nThink about that before you sit under them.\n\n- Sten
 place Van_1 dvan at -6.1 -38.5 ground yaw=37
 prop dvan tint.color=#5a4a32
 prop dvan tint.amount=0.5
@@ -160,13 +160,18 @@ scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=74 seed=11398 free=3
 scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=74 seed=11399 free=2
 
 # --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): Antler Peak and its summit tower (climb, zipline back to the meadow), the hunters' trailer off the cove (dive), the tracker's broken carving (M6 + D7), the east bluff lookout
-# the climb: a mountain (trail winding up from bearing 40), a 8-storey climbing tower on its top, the summit box
+# the climb: a mountain (trail winding up from bearing 40); on the summit no tower (STORY 10-24: the chain's towers
+# are kept for the Landing and the Delta) but the trackers' notch post, its box and a flag - and the walk back down
 call vd_mount x=-44 z=-53 top=26 r=26 a0=40 turns=1.25 hb=3
-call vd_tower x=-44 z=-53 h0=26 lv=8 a=trtw box=trbox zal=trtopz zid=tr_top msg="Antler Peak. Every tracker of the rise carved a notch in this rail; the last notch is fresh."
-note trbox Summit tower box | TRACKERS - SUMMIT. From up here you read the herds like a page. The line down to the meadow is for the lazy and the late.
+place ReefHuts_Pillar3 trnotch at -44 -53 h=26 sit sy=0.55
+prop trnotch tint.color=#6b4a2e
+prop trnotch tint.amount=0.6
+place Loot_ChestSmall trbox at -42.4 -54.2 h=26 sit yaw=200
+place Placeable_Flag_05 - at -45.6 -51.8 h=26 sit
+call vd_spot x=-44 z=-51.5 al=trtopz id=tr_top r=4 msg="Antler Peak. Every tracker of the rise carved a notch in this post; the last notch is fresh."
+note trbox Summit notch box | TRACKERS - SUMMIT. From up here you read the herds like a page. Carve your notch, then walk down. Nobody carries you off this hill.
 loot trbox Rope*3;Leather*2;Bolt*2
-place ZiplinePath_Landmark trzip at -39.03 -54.72 h=47.05
-zipto trzip -6 2
+prop trbox loot.refill=0
 # the dive: Caravan_Blue_01 on the sea floor 11 m down, its crate, an air pocket
 call vd_dive x=8 z=-95 h=-11 yaw=60 obj="Caravan_Blue_01" al=trwreck crate=trcrate zal=trwz zid=tr_wreck msg="The hunters' trailer slid off the cove road in a storm and rolled out to here." air=trair bub=trbub
 note trcrate Trailer's drawer | A hunter's drawer of odds: a carving knife, and a small lamp with a goat painted on its glass.
@@ -192,6 +197,33 @@ call vd_spot x=68 z=13.5 al=trbluffz id=tr_bluff r=3 msg="From the bluff the who
 place Creature_Chicken trhens at -28 -28 ground
 prop trhens creature.count=3
 
+# --- STORY 10-24: Marit's letter by Burr's cage, the trackers' notch log on the summit
+place Note_Paper maritletter at 43.4 46.2 ground y=0.3 drop
+note maritletter Letter by the branches | A letter, folded small and pushed under Burr's collar, the ink run in the wet.
+
+ODA -
+
+I am sending Burr down because he eats Teodor's samples and Teodor has started to look at him the way he looks at the samples.
+
+The lab is beautiful now. Flowers up every balcony. I hang the sample lines and the vines climb them before I am back down. Teodor says we are the last green world, that everything out on the sea is dead and grey and we are the seed.
+
+He asks every week if anyone new has come ashore. Not you. Not me. "Someone from outside," he says, "who has no reason to love it or hate it."
+
+I do not know why that frightens me. Feed Burr. Not samples.
+
+- Marit
+place Note_Paper notchlog at -45.2 -54.6 h=26.1 drop
+note notchlog Notch log | NOTCH LOG - TRACKERS OF THE RISE
+
+One notch for every climb. No notch if you got carried. (Sten: two notches, both disputed.)
+
+Notch 212 - Ivar. Saw the herd go round the dark trees, not through.
+Notch 213 - Ivar. Same.
+Notch 214 - Lise. A man with lab gloves on the meadow, taking soil. Polite. Asked if any boats had come in. Gave me a honey sweet.
+Notch 215 - Lise. Team going into the grove to look for the river people. Back by supper.
+
+Notch 216 is fresh, and not signed. Just a little drawing: a goat.
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Tracker's Rise
 info author=Custom Islands
@@ -201,7 +233,7 @@ island on.arrive=message||A green ridge over the jungle. Something bleats up on 
 story burr|Burr|Note_Paper|Burr, a ranger's goat with a torn ear, freed from a cage of branches in the gully.
 
 note trackguide Tracking guide | TRACKERS' BOARD\n\nA bush pushed flat points the way an animal went.\nTwo flat bushes in a row: it ran.\nThe gully takes everything that falls off the meadow.\n\nTower kit on the deck. Zipline down to the cove.
-note rangerlog5 Ranger log 5 | RANGER LOG 5 - O. FENN\n\nBurr is safe. If you found him first - thank you.\n\nFrom the tower I saw them: the river people's lights, going in through the hollow trees. Into the trees, not under them.\n\nI follow tomorrow.
+note rangerlog5 Ranger log 5 | RANGER LOG 5 - O. FENN\n\nBurr is safe. If you found him first - thank you. He is Marit's goat, really. He went up to the Heart with her and came down on his own, which means he did not like what he saw. Burr likes everything. Burr liked a bucket once for a whole afternoon.\n\nFrom the notch post I saw them: the river people's lights, going in through the hollow trees. Into the trees, not under them. Fourteen little lights, in a line, slow, like a procession.\n\nI carved my notch. Then I sat down and had a small cry, which is allowed on a summit.\n\nHollowtrunk Grove is where the trees are wide enough to live in. The band is 900. I follow tomorrow. Burr will follow me; he always does, bell and all.
 note towerchest Tower chest | The tower chest: plans for an engine's controls, a pair of field glasses, cord.
 note satchel Ranger's satchel | Oda's satchel, dropped in the gully and torn: one piece of her map, and her shovel.
 note anchorbox Zipline anchor box | The zipline's anchor box: the plans for the zipline it was built from.
@@ -237,7 +269,7 @@ prop anchorbox loot.refill=0
 prop burrcage obj.name=burrcage
 prop burrcage beh.use=Lift the branches off the goat
 prop burrcage if.use=!signal|burr
-prop burrcage on.use=signal||burr\ngive||story:burr*1\nhide|burrcage\nmessage||The branches roll away. The goat limps out, shakes itself - a ranger's tag on its ear: BURR.
+prop burrcage on.use=signal||burr\ngive||story:burr*1\nhide|burrcage\nmessage||The branches roll away. The goat limps out, shakes itself, rings the bell on its collar - and a tag on its ear: BURR. IF FOUND RETURN TO M. FENN, HEART LAB. HE IS LYING, HE HAS BEEN FED.
 prop burrcage else.use=message||Burr is free.
 
 prop meadowzone zone.id=meadow
@@ -275,7 +307,7 @@ step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from Oda'
 step blueprint|Blueprint_Firework|1|Take the firework plans from Oda's map case
 step blueprint|Blueprint_ZiplineBase|1|Take the zipline plans from the anchor box by the tower
 step catch|Llama|1|Catch a llama
-step reach|tr_top|1|Climb Antler Peak and its summit tower
+step reach|tr_top|1|Climb Antler Peak to the trackers' notch post
 step collect|story:lamp|1|Dive to the hunters' trailer off the south cove
 step collect|story:totem|1|Set the lamp in the tracker's carving in the north clearing
 step read|Tracker's journal page|1|Read the journal page behind the carving

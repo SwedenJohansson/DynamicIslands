@@ -104,7 +104,7 @@ place campfire_1 - at -28 48 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -25 50 ground sit yaw=317
 place "Box Small" - at -30 50.5 ground sit
 place Note_Paper dnote at -30 50.5 ground y=0.7 drop yaw=20
-note dnote Ranger's camp note | OUTER CAMP 3\n\nWe stopped here on the way in. The birds go quiet past the ridge.\nThe Seedkeepers say the green is waking up. Oda says it is hungry.\nKeep the fire small and the machete close.
+note dnote Ranger's camp note | OUTER CAMP 3 - LISE, Seedkeepers' search crew\n\nWe stopped here on the way in. The birds go quiet past the ridge. Bo tried whistling to them and the quiet got worse, which I did not know quiet could do.\n\nThe Seedkeepers say the green is waking up. Oda says it is hungry. Greta says it is both, like a baby, and Greta has five, so we listen to Greta.\n\nWe found the river people's lamps in the reeds, still lit, all in a row, set down very neatly as if they would be picked up again in a minute.\n\nKeep the fire small and the machete close. Keep the sandwiches closer.
 place Caravan_Green_01 dvan at -38.5 6.1 ground yaw=77
 prop dvan tint.color=#5a6b3a
 prop dvan tint.amount=0.5
@@ -133,13 +133,15 @@ scatter Bamboo_2 24 at 0 0 r=74 seed=11197 free=2
 scatter Tree_Stump 8 at 0 0 r=74 seed=11198 free=3
 
 # --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): the drowned digger's west hill and its boom gantry (climb, zipline to the camp), the sunk pump barge (dive), the acid bog and its sinking log path (M7), the hummock beacon
-# the climb: a mountain (trail winding up from bearing 60), a 8-storey climbing tower on its top, the summit box
+# the west hill (STORY 10-24: no gantry tower or zipline - an optional walk up to the digger crew's survey cairn and
+# its box; no quest step)
 call vd_mount x=-66 z=-30 top=20 r=18 a0=60 turns=1.25 hb=3
-call vd_tower x=-66 z=-30 h0=20 lv=8 a=bmtw box=bmbox zal=bmtopz zid=bm_top msg="The digger's boom gantry on the west hill. From up here the bog's acid pools shine like spilt oil."
-note bmbox Gantry box | SEEDKEEPERS - DIGGER CREW. We dug the channels the growth was meant to drink from. The pump barge drained the east bog; it sank in the first storm.
+place Loot_ChestSmall bmbox at -65 -29.2 h=20 sit yaw=200
+place Placeable_Flag_05 - at -67.4 -31 h=20 sit
+call vd_spot x=-66 z=-30 al=bmtopz id=bm_top r=4 msg="The digger crew's cairn on the west hill. From up here the bog's acid pools shine like spilt oil."
+note bmbox Digger crew's box | SEEDKEEPERS - DIGGER CREW. We dug the channels the growth was meant to drink from. The pump barge drained the east bog; it sank in the first storm.
 loot bmbox Rope*3;Bolt*3;MetalIngot*1
-place ZiplinePath_Landmark bmzip at -61.03 -31.72 h=41.05
-zipto bmzip -22 -50
+prop bmbox loot.refill=0
 # the drowned digger at the foot of the west hill, half in the mud
 place VP_Excavator bmdigger at -58 -50 ground sit yaw=210
 prop bmdigger tint.color=#4a4f3a
@@ -181,6 +183,36 @@ note bmheron Heron watcher box | A bird-watcher's tally: HERONS 0. FROGS 0. THE 
 loot bmheron Feather*4;Rope*2;Coconut*2
 prop bmheron loot.refill=0
 call vd_spot x=-10 z=71.5 al=bmheronz id=bm_heron r=3 msg="From the heron hummock the burnt roots smoke in a line, west to east."
+
+# --- STORY 10-24: Ranger log 7 at the marsh station, the dog-handler's note by the west root, Marit's sample tag at the east root
+place Note_Paper rangerlog7 at 20 41.6 ground y=0.3 drop
+note rangerlog7 Ranger log 7 | RANGER LOG 7 - O. FENN
+
+The marsh station's sample jars line every shelf: grove soil, delta water, cave root, all labelled T.L. And one shelf of empty jars with names on them instead of places. HEDDA. ULF. LISE. GRETA. BO.
+
+I held the vial up against them. Same glass. Same hand.
+
+I am not calm any more. I said I would ask Teodor very calmly. I take it back.
+
+Burr found me in the reeds and stood on my foot until I stopped shaking. Good goat. Terrible goat. He has lost his bell; I have it in my pocket with the vial, which is getting crowded.
+
+The burn crew's map says three roots. I will burn the first and see what the marsh does.
+place Note_Paper dognote at -43.4 2.6 ground y=0.3 drop
+note dognote Dog-handler's note | BO - SEARCH CREW
+
+The dogs will not go near the west root. Good dogs, smart dogs, and they sit down in the mud and look at me like I have suggested something rude.
+
+The hyenas came out of the reeds at dusk. Thin, wrong, too quiet. They did not want us. They wanted to drive us to the root, and stood in a ring round it like they were guarding a door.
+
+Greta says burn it. Lise says wait for the lab. I say whatever we do, do it before supper; I am not walking back through that in the dark.
+
+If you read this, we waited for the lab.
+place Note_Paper marittag at 54 -6 ground y=0.3 drop
+note marittag Tag on the east root | A climbing tag, the kind you clip to a rope, wired to the root with care:
+
+M. FENN - SAMPLE LINE 40 - EAST ROOT. GROWTH 1 METRE A DAY. TEODOR SAYS DO NOT CUT. I SAY SOMEBODY MUST.
+
+On the back, scratched with a pin: ODA - IF YOU GET THIS FAR, I AM STILL UP AT THE HEART. I KEEP THE TOP BALCONY LAMP ON FOR YOU.
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Blightmire
@@ -247,7 +279,7 @@ prop root3 else.use=message||The growth only smoulders. The map says: west, then
 prop burrvines on.use=hide|\nshow|burrchest\nmessage||Burr butts through the vines - he found it: a Seedkeeper's stash.
 
 note blightmap Blight map | BLIGHT MAP - MARSH STATION\n\nThree roots up through the marsh, all three grown over.\nBurn them in order or the growth runs back along the root:\n  1. WEST   2. NORTH   3. EAST\n\nThe dogs nest on the west side. Boars on the east.
-note confession Seedkeeper's confession | To whoever burns the last root -\n\nWe made it. The growth. It was meant to feed the trees through the roots, to green the whole land faster than the flood could drown it.\n\nIt fed on the roots instead.\n\nThe Heart is where it started. Forgive us. - M.
+note confession Seedkeeper's confession | To whoever burns the last root -\n\nThank you. I mean that. I could not do it; I tried twice and stood here with the torch until it went out.\n\nI made it. V-1. A spore to eat the oil out of the river and give back clean water. It did. And then it went on into the roots, and fed on the roots, and then on whatever lay down among them to rest. Fourteen river people. Lise's crew. They are not dead, exactly. They are part of it. It sings with their voices at night.\n\nThe ranger has my first trial vial. I saw her pocket it. She is looking for me, and she will want to burn everything, and she will be right, and it will still be the wrong answer.\n\nThe Seedkeepers' last camp is on Canopy Stair, the climb to the Heart. Come up. I left the stair for you. - T.L.
 note smeltercamp Smelter camp chest | The smelter camp's chest: the plans of a smelter that runs on power.
 note marshstation Marsh station locker | The marsh station's locker: an advanced extractor's plans and the root samples, sealed.
 note rootcache Root cache | A chest the root had grown round: an anchor's plans, and the Seedkeepers' mark on the lid.
@@ -322,7 +354,6 @@ step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced extractor 
 step kill|Warthog|2|Drive off the two boars
 step collect|story:burnt|3|Burn the east root
 step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced anchor plans from the root cache
-step reach|bm_top|1|Climb the digger's boom gantry on the west hill
 step collect|story:valve|1|Dive to the sunk pump barge off the south-east shore
 step collect|story:fuel|1|Cross the acid bog to the fuel drum (drain it with the bog pump, or wear the blight suit)
 step collect|story:beacon|1|Light the beacon on the hummock with the fuel

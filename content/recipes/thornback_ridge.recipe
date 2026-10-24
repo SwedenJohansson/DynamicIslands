@@ -47,6 +47,10 @@ place Note_Sign hermitjournal at -6 -6 ground sit yaw=180
 place Zone_Trigger campzone at -6 -9 ground
 place Creature_Chicken hens at -12 -2 ground
 prop hens creature.count=3
+# STORY 10-24: Jonas's trade slip by the hen run; Teodor's note on a box by the fire
+place Note_Paper jonastrade at -11 -4 ground y=0.3 drop yaw=60
+place "Box Small" - at -2.6 -8 ground sit yaw=20
+place Note_Paper teodorpass at -2.6 -8 ground y=0.7 drop yaw=40
 
 # --- The grove and its boar herd; thorns along the ridge --------------------------------------------------------
 place Creature_Boar herd at 18 -20 ground
@@ -65,7 +69,7 @@ place campfire_1 - at 13.1 23.6 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 16.1 25.6 ground sit yaw=357
 place "Box Small" - at 11.1 26.1 ground sit
 place Note_Paper dnote at 11.1 26.1 ground y=0.7 drop yaw=20
-note dnote Lost traveller's note | I came for the seeds like everyone else.\nThe paths move. I am sure of it. I marked this tree twice.\nIf the fire is cold, I went towards the sea.
+note dnote Lost traveller's note | I came for the seeds like everyone else. The paths move here; I am sure of it. I marked this tree twice.\n\nA tall man in a stained lab coat passed my fire last night. He did not ask the way. He walked straight to the hermit's ledge, left something there, and went back to his skiff without a word.\n\nIf the fire is cold, I went towards the sea.
 place Caravan_Yellow_01 dvan at -21 17 ground yaw=117
 prop dvan tint.color=#7a7040
 prop dvan tint.amount=0.5
@@ -132,11 +136,13 @@ info author=Custom Islands
 info description=A thorny ridge with a hermit's camp on a ledge, a mango grove taken by boars, and hens. A side island of The Last Green World.
 island on.arrive=message||A ridge of thorns and rock. Smoke from a ledge halfway up - and grunting from the mango trees below it.
 
-note hermitjournal Hermit's journal | HERMIT'S JOURNAL\n\nDay 400 or so. The boars have the mangoes again. Four of them, big ones.\nThe hens are fine. The hens are always fine.\n\nIf you clear the grove, the chest is yours. I am going down to the Heart to see what the Seedkeepers did.
+note hermitjournal Hermit's journal | HERMIT'S JOURNAL - GUNNAR HOLT\n\nDay 400 or so. I stopped counting properly when the Seedkeepers stopped coming. The boars have the mangoes again. Four of them, big ones, and the biggest has a look on his face like he pays rent.\n\nThe hens are fine. The hens are always fine. I have outlived three dogs and a wife's patience, and the hens will outlive me.\n\nIf you clear the grove, the chest is yours. I would do it myself, but my knees have voted against it.\n\nJonas from the Heart still trades honey for eggs when the water is calm. He says Teodor has gone strange. Jonas says that about everyone who skips lunch.
 note hermitchest Hermit's chest | The hermit's chest: leather, seeds, beets from his patch.
+note jonastrade Trade slip | JONAS - TRADE SLIP\n\nOne jar of honey (the good one, from the clover hives) for twelve eggs. Gunnar, I counted. There were eleven. I am writing it down so that history knows.\n\nThe bees are nervous this month. The green on the Heart smells wrong to them, and bees are never wrong about smells. Teodor says they are imagining it. Teodor has not slept since spring.\n\nNext calm day I will bring the soup pot. You can owe me the egg.\n\n- Jonas Brandt, cook, beekeeper, creditor
+note teodorpass Note by the fire | Gunnar -\n\nI am leaving the doors open behind me, all the way to the Heart. If anyone comes from the sea, send them on. Do not tell them about me yet. They should see it all first, and decide with clean eyes.\n\nI know what you think of me. You are mostly right.\n\n- T.L.
 loot hermitchest Leather*3;Seed_Watermelon*2;Seed_Strawberry*2;Raw_Beet*3
 prop hermitchest loot.refill=0
-note hermitmap Hermit's map | A map scratched on bark: the Heart at the centre, every island round it, and an arrow down through the roots. "The core is under the tree. Do not wake her."
+note hermitmap Hermit's map | A map scratched on bark: the Heart at the centre, every island round it, and an arrow down through its roots. Under it, in Gunnar's square letters:\n\nTHE CORE IS UNDER THE TREE. DO NOT WAKE HER.\n\nAnd smaller, newer, in another hand: She is already awake, Gunnar. Someone has to decide what she becomes. - T.L.\n\nGunnar has added: Go to the Heart, then. Take a hen. Nobody should go down there without something to talk to.
 
 prop campzone zone.id=camp
 prop campzone zone.radius=4
@@ -151,7 +157,7 @@ prop boatlock on.use=signal||boathouse\nshow|boatchest\nmessage||The key turns i
 prop boatlock else.use=message||The boathouse locker, locked. The eyrie box said the key went down with the boat.
 prop boatchest obj.name=boatchest
 prop boatchest beh.hidden=1
-note boatchest Hermit's boat log | BOAT LOG\n\nSpring. Fished the north cove; the eagles watched.\nSummer. The boars came over the ridge. The eagles left.\nAutumn. Lost the boat in a squall. Swam. Kept the hens. A raft came by - if that is you, take a hen, and take my map.
+note boatchest Hermit's boat log | BOAT LOG - G. HOLT\n\nSpring. Fished the north cove; the eagles watched me like I owed them money.\nSummer. The boars came over the ridge. The eagles left. I would have left too, if I had wings or sense.\nAutumn. Lost the boat in a squall. Swam. Kept the hens; they kept me.\n\nLater. A woman in a ranger's coat rowed past with a goat in the bow. She waved. The goat did not.\n\nA raft came by after that - if that is you, take a hen, and take my map. It is the only thing I have that points anywhere.
 loot boatchest Rope*2;Leather*1;TradeToken*2
 prop boatchest loot.refill=0
 # --- JUMP COURSE tb (U22, 10-24): a kz-style hop course of floor slabs on its own flattened pad -----------------

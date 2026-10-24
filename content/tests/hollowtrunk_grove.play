@@ -37,18 +37,16 @@ expect step 9
 open Seed drawers
 wait 2
 expect step 10
-zone hg_top
-expect step 11
 open Seed caravan's locker
 wait 3
 expect story seedjar 1
-expect step 12
+expect step 11
 kill Warthog
 open Den chest
 wait 3
 expect story denkey 1
-expect step 13
+expect step 12
 read Ranger log 6
-expect step 14
+expect step 13
 zone roots
 expect done

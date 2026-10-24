@@ -8,6 +8,6 @@ wait 3
 picture sl11_heart_of_green_island 80 60 -140 0 20 0
 picture sl11_heart_of_green_crown 1 8 10 0 6 26
 storespot 16 -8
-snap deep_hh_watch hhtw 300 34
+snap deep_hh_watch hhbox 300 14
 snap deep_hh_van hhwreck 180 14
 snap deep_hh_vault seedvault 200 8
