@@ -1,4 +1,5 @@
 # lib_sunken - shared pieces of the plan The Sunken Kingdom's islands ("include lib_sunken"; tower needs lib_rt)
+include lib_rt
 #
 # tower: a drowned skyscraper's top - n storeys of Raft's radio tower pieces (6 x 9 m, 3 m each, windows on all sides)
 # stacked from h (its foot on the seabed) up, a roof floor with a railing on top (the roof at h + 3n). x z: the frame
