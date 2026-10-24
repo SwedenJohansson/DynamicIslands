@@ -1,10 +1,13 @@
 # Guide pictures of Thornback Ridge (CIPlay thornback_ridge_pics): Raft's camera, midday, calm
 island Thornback Ridge
-# RESIZE 10-24: the recipe moved this island's old content by 2.5 -6.1; the points below are in the old frame
-offset -2.5 6.1
+# RESIZE 10-24: the recipe moved this island's old content by 2.5 -26.1 (RESIZE -6.1, DEEP -20 more); the points below are in the old frame
+offset -2.5 26.1
 hour 11
 weather Calm
 at -6 -9
 wait 3
 picture sl11_thornback_ridge_island 45 35 -80 0 6 0
 picture sl11_thornback_ridge_camp -2 7 -18 -9 4 -9
+snap deep_tb_eyrie tbtw 150 34
+snap deep_tb_boat tbwreck 180 14
+snap deep_tb_boathouse boatchest 200 8

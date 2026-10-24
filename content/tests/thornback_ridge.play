@@ -1,7 +1,7 @@
 # Thornback Ridge (CIPlay thornback_ridge): the six steps in order
 island Thornback Ridge
-# RESIZE 10-24: the recipe moved this island's old content by 2.5 -6.1; the points below are in the old frame
-offset -2.5 6.1
+# RESIZE 10-24: the recipe moved this island's old content by 2.5 -26.1 (RESIZE -6.1, DEEP -20 more); the points below are in the old frame
+offset -2.5 26.1
 expect step 0
 expect title The Hermit
 zone camp
@@ -16,5 +16,15 @@ wait 2
 expect step 4
 catch Chicken 1
 expect step 5
+zone tb_top
+expect step 6
+open Boat's seat locker
+wait 3
+expect story boathousekey 1
+expect step 7
+use boatlock
+expect shown boatchest
+read Hermit's boat log
+expect step 8
 read Hermit's map
 expect done

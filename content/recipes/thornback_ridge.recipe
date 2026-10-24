@@ -9,13 +9,14 @@ include lib_sea
 include lib_features
 include lib_huts
 include lib_verdance
+# DEEP 10-24: Radius 60 -> 80, the old content moved again (push 2.5 -6.1 -> 2.5 -26.1) so its beach stays at the coast.
 # RESIZE 10-24: Radius 48 -> 60 (Height 14 -> 14), the old content moved 2.5 -6.1 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 new
 gen Trees=0.2 Bushes=0.45 Rocks=0.4 Harvest=0.3 BeachThings=0.3
-gen Seed=11121 Radius=60 Height=14 Roughness=0.45 Peaks=2 Shape=0.4 Style=0 PeakShape=0.5 Cliffs=0.35 BeachWidth=0.5
+gen Seed=11121 Radius=80 Height=14 Roughness=0.45 Peaks=2 Shape=0.4 Style=0 PeakShape=0.5 Cliffs=0.35 BeachWidth=0.5
 gen Water=0.5 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0.2 SeaLife=0.3
 generate
-push at 2.5 -6.1
+push at 2.5 -26.1
 
 # --- Terrain: the ridge, the camp ledge, the grove, the landing beach --------------------------------------------
 brush raise from -30 6 to 30 6 r=10 s=20 frames=10
@@ -30,7 +31,7 @@ pop
 brush flatten at 13.1 23.6 r=5 s=8 frames=40
 origin
 clear at 13.1 23.6 r=6
-push at 2.5 -6.1
+push at 2.5 -26.1
 clear at -8 -10 r=7
 clear at 0 -40 r=6
 
@@ -56,7 +57,7 @@ scatter Pickup_Landmark_BerryBush 3 at -24 -8 r=8 seed=11123 free=2
 call trailbush x=6 z=-4 yaw=30
 call trailbush x=-18 z=0 yaw=120
 scatter Pickup_Landmark_Flower_Red 4 at 4 -30 r=8 seed=11124 free=2
-call shallows x=-2.5 z=6.1 r=75 deep=5 n=2 seed=11125
+call shallows x=-2.5 z=26.1 r=95 deep=5 n=2 seed=11125
 pop
 
 # --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; Caravan_Yellow_01 + chest; vine-hidden chest; viewpoint ---
@@ -75,6 +76,7 @@ prop dwreckchest loot.refill=0
 call vinecache x=-5.2 z=26.5 r=15 seed=11211 chest=dvinechest vines=dvines items=Rope*3;Nail*10;Leather*2
 # REDO 10-24 (optional): the hermit buried his savings - the metal detector finds them
 call treasure x=18 z=-20 r=12 n=1 seed=11219
+prop treasure11219 treasure.loot=TradeToken*3;MetalOre*2
 # REDO 10-24 TREASURE2: a second buried treasure on the far side for the detector + shovel
 call treasure x=-14.4 z=16.0 r=12 n=1 seed=11269
 prop treasure11269 treasure.loot=TitaniumOre*1;MetalOre*2;TradeToken*2
@@ -83,6 +85,46 @@ prop dview zone.id=thornback_ridge_view
 prop dview zone.radius=7
 prop dview zone.repeat=never
 prop dview zone.message=The thorny ridge runs off like a spine, the mango grove sheltered in its lee.
+
+# --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): Radius 60 -> 80: the eagle eyrie on the north spine (climb, zipline to the ridge), the hermit's sunk boat (dive), his boathouse, the east cave, the west lookout
+# the climb: a mountain (trail winding up from bearing 150), a 8-storey climbing tower on its top, the summit box
+call vd_mount x=-40 z=45 top=26 r=18 a0=150 turns=1.25 hb=3
+call vd_tower x=-40 z=45 h0=26 lv=8 a=tbtw box=tbbox zal=tbtopz zid=tb_top msg="The eagle eyrie on the spine's north end. Sticks as long as oars, and a hermit's rope ladder up the last of it."
+note tbbox Eyrie box | HERMIT - EYRIE. The eagles left when the boars came. I kept my boat key up here, then I lost the boat. Fair trade.
+loot tbbox Rope*3;Feather*4;Leather*1
+place ZiplinePath_Landmark tbzip at -35.03 43.28 h=47.05
+zipto tbzip -10 -8
+# the dive: BoatStranded on the sea floor 12 m down, its crate, an air pocket
+call vd_dive x=30 z=85 h=-12 yaw=200 obj="BoatStranded" al=tbwreck crate=tbcrate zal=tbwz zid=tb_wreck msg="The hermit's boat, on the bottom off the north cove. Its seat locker is still lashed shut." air=tbair bub=tbbub
+note tbcrate Boat's seat locker | A key on a cork float - the float rotted, the key sank with the boat. Tag: BOATHOUSE.
+loot tbcrate story:boathousekey*1;Scrap*3;Rope*1
+# the hermit's boathouse on the north cove: four posts, a tent roof's worth of sailcloth, his locker
+clear at 35 60 r=6
+brush flatten at 35 60 r=5 s=20 frames=150
+place ReefHuts_Pillar3 - at 32.5 57.5 ground sit sy=0.6
+place ReefHuts_Pillar3 - at 37.5 57.5 ground sit sy=0.6
+place ReefHuts_Pillar3 - at 32.5 62.5 ground sit sy=0.6
+place ReefHuts_Pillar3 - at 37.5 62.5 ground sit sy=0.6
+place Balboa_DecorationPrefabBase_SimpleTent - at 31 65 ground sit yaw=20
+place "Box Big" boatlock at 36 59 ground sit yaw=200
+place Loot_ChestSmall boatchest at 34 59 ground sit yaw=200
+# the west lookout (secret): a low hill over the west shore
+call vd_mount x=-60 z=-15 top=12 r=12 a0=60 turns=1 n=30 hb=3
+place Loot_ChestSmall tbwest at -60 -15 h=12 sit yaw=60
+note tbwest West lookout box | The hermit's tally of boars: four columns, and a fifth with one mark - ME.
+loot tbwest Rope*2;Leather*2;Coconut*2
+prop tbwest loot.refill=0
+call vd_spot x=-60 z=-13.5 al=tbwestz id=tb_west r=3 msg="From the west lookout the thorny ridge is a sleeping beast with its spine up."
+call ni8cave x=50 z=20 h=3 yaw=180 al=tbcavecave
+place Loot_ChestSmall tbcavecavebox at 52.5 15 h=3.45 sit yaw=200
+place Placeable_Lantern_Metal - at 47.4 16 h=3.45 sit
+note tbcavecavebox Thorn cave chest | A cave under the east thorns, dry and warm: the hermit's winter store.
+loot tbcavecavebox Rope*2;Plank*3;HoneyComb*1
+prop tbcavecavebox loot.refill=0
+call treasure x=-10 z=60 r=10 n=1 seed=11391 kind=0
+prop treasure11391 treasure.loot=TitaniumOre*1;Bolt*3
+place Creature_Goat tbgoats at 0 50 ground
+prop tbgoats creature.count=3
 
 # --- Settings, notes, quest ---------------------------------------------------------------------------------------
 info title=Thornback Ridge
@@ -100,6 +142,18 @@ prop campzone zone.id=camp
 prop campzone zone.radius=4
 prop campzone zone.message=The hermit's camp. A warm fire, a journal nailed to a post, hens in the bushes.
 
+# DEEP 10-24 settings
+story boathousekey|Boathouse key|Placeable_Lantern_Metal|The hermit's boathouse key, from his sunk boat.
+prop boatlock obj.name=boatlock
+prop boatlock beh.use=Open the hermit's boathouse locker
+prop boatlock if.use=!signal|boathouse\ntake|story:boathousekey|1
+prop boatlock on.use=signal||boathouse\nshow|boatchest\nmessage||The key turns in the salt-stiff lock. Inside: his tackle and a log in a tin.
+prop boatlock else.use=message||The boathouse locker, locked. The eyrie box said the key went down with the boat.
+prop boatchest obj.name=boatchest
+prop boatchest beh.hidden=1
+note boatchest Hermit's boat log | BOAT LOG\n\nSpring. Fished the north cove; the eagles watched.\nSummer. The boars came over the ridge. The eagles left.\nAutumn. Lost the boat in a squall. Swam. Kept the hens. A raft came by - if that is you, take a hen, and take my map.
+loot boatchest Rope*2;Leather*1;TradeToken*2
+prop boatchest loot.refill=0
 quest title=The Hermit
 quest intro=A camp on Thornback Ridge. Find it.
 step reach|camp|1|Climb to the hermit's camp
@@ -107,6 +161,9 @@ step read|Hermit's journal|1|Read the hermit's journal
 step kill|Warthog|4|Drive the four boars out of the mango grove
 step open|Hermit's chest|1|Open the hermit's chest
 step catch|Chicken|1|Catch a hen for the raft
+step reach|tb_top|1|Climb to the eagle eyrie on the north spine
+step collect|story:boathousekey|1|Dive to the hermit's boat off the north cove
+step read|Hermit's boat log|1|Open his boathouse locker and read the boat log
 step read|Hermit's map|1|Read the hermit's map
 quest done=The grove is clear. The hermit's map points at the Heart.
 quest reward=Seed_Mango*2;Feather*3
