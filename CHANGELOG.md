@@ -9,6 +9,14 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-24: vehicle islands
+
+- **20 new library islands built round Raft's vehicles** (vans, caravans, excavators, forklifts, cranes, ore wagons, snow
+  vehicles, planes, boats): 10 small (Breakdown Bend, Sledrun Halt, Pallet Point, Kestrel Strand, Ashdig, Mudlock,
+  Countdown Cay, Gantry Bluff, Pinewood Haul, Lowtide Camp), 6 medium (Caravan Rest, Hollowpick Quarry, Whitecap Depot,
+  Wingfall Mire, Cinderyard, Slipway Meadow) and 4 large (Timberline Haul, Coral Runway, Ridgeback Pass, Red Mesa
+  Harbour). Ten have a quest; the others are islands to explore. All are listed in the guide's section 15.7.
+
 ## 2026-10-23: known-issues fixes
 
 ### New
