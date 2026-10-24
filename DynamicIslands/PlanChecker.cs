@@ -427,6 +427,33 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		static readonly string[] DigitWords = { "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
+
+		/// <summary>
+		/// Whether a text tells a code: written whole, split by separators ("3-1-2", "3 1 2", "4.3.1.2"), or - for a code of
+		/// digits - spelled out as digit words in order across the text (three logs saying FOUR, ONE, NINE tell 419).
+		/// </summary>
+		static bool TellsCode(string text, string code)
+		{
+			if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(code)) return false;
+			var rx = System.Text.RegularExpressions.Regex.Escape(code);
+			var opt = System.Text.RegularExpressions.RegexOptions.IgnoreCase;
+			if (System.Text.RegularExpressions.Regex.IsMatch(text, @"(?<![A-Za-z0-9])" + rx + @"(?![A-Za-z0-9])", opt)) return true;
+			if (!code.All(ch => ch >= '0' && ch <= '9') || code.Length < 2) return false;
+			string sep = @"[\s.,;:/\-]+";
+			if (System.Text.RegularExpressions.Regex.IsMatch(text, @"(?<![A-Za-z0-9])" + string.Join(sep, code.Select(ch => ch.ToString()).ToArray()) + @"(?![A-Za-z0-9])", opt)) return true;
+			// digit words and single digits, in order of appearance
+			var seq = new List<char>();
+			foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(text, @"[A-Za-z]+|[0-9]"))
+			{
+				int d = m.Value.Length == 1 && char.IsDigit(m.Value[0]) ? m.Value[0] - '0' : Array.IndexOf(DigitWords, m.Value.ToLowerInvariant());
+				if (d >= 0) seq.Add((char)('0' + d));
+			}
+			int at = 0;
+			foreach (char ch in seq) if (at < code.Length && ch == code[at]) at++;
+			return at == code.Length;
+		}
+
 		/// <summary>
 		/// Codes in play order (2026-10-24): a code panel (lock.code) whose code no text of its island or of an island met
 		/// before it holds - a note, a message, a journal page - can only be guessed. Named: the first later island whose text
@@ -436,7 +463,7 @@ namespace DynamicIslands.Editor
 		{
 			List<Stop> stops = PlayOrder(c.Plan).Where(st => st.Rule >= 0).ToList();
 			List<List<Facts>> at = stops.Select(st => Brings(c, c.Plan.Rules[st.Rule]).ToList()).ToList();
-			Func<Facts, string, bool> tells = (f, code) => System.Text.RegularExpressions.Regex.IsMatch(f.ReadText, @"(?<![A-Za-z0-9])" + System.Text.RegularExpressions.Regex.Escape(code) + @"(?![A-Za-z0-9])", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+			Func<Facts, string, bool> tells = (f, code) => TellsCode(f.ReadText, code);
 			for (int n = 0; n < stops.Count; n++)
 				foreach (Facts f in at[n])
 					foreach (var kv in f.Codes)
