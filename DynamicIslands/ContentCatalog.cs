@@ -70,7 +70,7 @@ namespace DynamicIslands.Editor
 			// (SL9: Raft's story-island creatures not on any other island)
 			K(AI_NetworkBehaviourType.StoneBird_Caravan, "Caravan screecher", HostileCategory, 2f, 1.2f, "Caravan Town's screecher: attacks players and drops stones on the raft", Movement.Air),
 			K(AI_NetworkBehaviourType.Puffin, "Puffin", HarmlessCategory, 0.4f, 0.4f, "Temperance's puffin: flies off when players come near", Movement.Air),
-			K(AI_NetworkBehaviourType.ButlerBot, "Butler bot", HarmlessCategory, 0.8f, 1.2f, "Tangaroa's serving robot: rolls about, harms no one"),
+			K(AI_NetworkBehaviourType.ButlerBot, "Butler bot", HarmlessCategory, 0.8f, 1.2f, "Tangaroa's serving robot: rolls about; placed from the list it zaps players who come close (Zap, in Danger)"),
 			K(AI_NetworkBehaviourType.PufferFish, "Puffer fish", SeaCategory, 0.6f, 0.6f, "swims near the island and explodes next to divers", Movement.Water),
 			K(AI_NetworkBehaviourType.AnglerFish, "Angler fish", SeaCategory, 1.5f, 1f, "a deep-sea hunter", Movement.Water),
 			K(AI_NetworkBehaviourType.Turtle, "Turtle", SeaCategory, 1f, 0.5f, "a friendly sea turtle", Movement.Water),
@@ -529,7 +529,7 @@ namespace DynamicIslands.Editor
 					string msg = ObjectProps.Get(props, ObjectProps.ZoneMessage);
 					zl.text = "Trigger: " + ObjectProps.Get(props, ObjectProps.ZoneId) + (ObjectProps.Repeats(props) ? " (every time)" : " (once)") +
 						"\n<size=36>" + radius.ToString("0.#") + " m" + (msg.Length > 0 ? " \u00B7 message" : "") + (items > 0 ? " \u00B7 " + items + " item(s)" : "") +
-						(ObjectProps.GetBool(props, ObjectProps.ZoneAir, false) ? " \u00B7 air pocket" : "") + "</size>";
+						(ObjectProps.GetBool(props, ObjectProps.ZoneAir, false) ? " \u00B7 air pocket" : "") + (Hazards.KindOf(props).Length > 0 ? " \u00B7 " + Hazards.Describe(props) : "") + "</size>";
 				}
 				return;
 			}

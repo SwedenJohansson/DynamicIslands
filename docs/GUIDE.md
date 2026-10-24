@@ -1412,6 +1412,11 @@ turtle, stingray, dolphin, whale.
   it), and once it is tinted the **Strength** slider (0 to 100 %) says how strongly the colour shows. **Custom colour...**
   adds **Red**, **Green** and **Blue** sliders (0 to 255) for your own mix: the object's own colours are multiplied by
   the tint.
+- **Danger** (every creature spot): **Zap** makes its animals shock a player who comes within 2 m - that much damage,
+  at most every 2 s (Tangaroa's **butler bots** placed from the list zap 8). **In its phase: Only blasts hurt it**
+  turns a boss's weapons-proof once its **Boss phase** starts: the players' blows glance off, and only a **hurt
+  creatures** action ([6.2](#62-behaviour-and-events)) does harm - Varuna Point's **explosive barrels** and **pillars**
+  are ready for it (used, each takes a third of the health of the creature spot named `boss`, then goes).
 - **Boss phase** (hostile animals): click **none** to give the spot a second phase. Once per fight, when one of its
   animals falls to **Starts at health** (10 to 90 %, 50 % at first), it **calls** up to 6 more creatures (of **its own**
   kind or another hostile one) around itself, gets faster (**Speed then**, ×1.3 at first), sends a **signal**
@@ -1504,6 +1509,17 @@ full again - as in Raft's air pockets under Caravan Town. Raft's own air-pocket 
 the container in Caravan Town's list) come without their air, so put an air-pocket zone on each, about as big as the
 object. A zone **hidden** by a behaviour gives no air until it is shown: *The Abyss* in the library keeps its three
 pockets empty until the air line's valve is opened (the valve's action shows them, with bubbles - [5.5](#55-atmosphere-and-sound)).
+
+**Hazards.** A trigger zone's **Hazard** group makes the zone hurt the players standing in it (each player's own
+machine, every second) unless something protects them: **Acid** and **Fumes** (a protective suit protects),
+**Live water**, **Spikes** and **Cold** (damage per second, 0-50), **Darkness** (no damage: the screen goes black
+unless the player **wears a headlight** - then they see a headlight's cone) and **Deep water** (the breath runs out
+fast unless the player **wears an oxygen tank**). **Protected when** takes lines like the behaviour window's checks,
+one holding is enough: `suit` (a protective suit is on: the **protective suit** action, or Raft's hazmat suit),
+`wears|HeadLight*`, `holds|Torch`, `has|story:charm|1`, `state|Valve|closed`, `signal|power`; empty = the hazard's
+own, `none` = nothing protects. A name ending in `*` matches every kind (`Axe*` = any axe), and the mod's upgrades
+count as the item they improve. A message says why (at most every 6 s; your own line or the hazard's). A **hidden**
+zone does nothing: switch live water off with a lever or a generator whose action **hide**s the zone.
 
 **Invisible walls and ramps** (also in "Zones & triggers") are solid in the world but not seen: block a path, fence
 an arena, or make a cliff climbable.
@@ -1626,6 +1642,18 @@ Select any object → **Behaviour & events...**. No code needed:
   closed, shown or hidden, a signal was sent, the quest reached a step (a ▼ list too). Turn a check round with **not**; ask for
   **all** or **any** of them. **Otherwise** say a message. (An island file written by hand or by a script can give
   **Otherwise** any action, not only a message; the editor shows only the message and keeps the other actions as they are.)
+- **Wears, holds, suits and blasts** (2026-10-24): the checks **wears item** (a headlight, flippers, an oxygen tank)
+  and **holds item** (in the player's hand: **binoculars** for a lookout - Raft's telescope counts too -, `Hook*` or
+  `Axe*` for an opening only a hook or an axe gets through) look at the player who does it, so they are left out
+  where no player does it, like **has item**. The action **protective suit** puts a suit on that player for some
+  seconds (120 at first): acid and fumes zones don't hurt them. **hurt creatures** (shared) takes a share of the health
+  (25 % at first) of the animals of the creature spots with that name. More ready pieces: Temperance's **key socket**
+  (an item goes in, once: open = filled, sends `socket`; a puzzle checks the sockets' states), Varuna Point's
+  **spotlights** and the radio tower's spotlight **keep creatures back** (the object panel's radius, 8 m: while shown,
+  the island's animals and Raft's jellyfish keep out; hide it to switch it off), and Temperance's **snow vehicles**:
+  broken down until a player brings 3 bolts, then each use carries the players on it 24 m along and back (they can't
+  be driven: Raft's snowmobile is Temperance's own vehicle, made by its shed). A **generator** placed from the list
+  wants **3** generator parts (the object panel's **Parts needed**, 1-6); old islands keep theirs.
 - **Sounds and camera moments** (actions in the same ▼ list, shared by every player): **play sound/music** plays one of
   Raft's sound events or music cues (pick it with **…**, a list of every one Raft has), with a volume, **once** or on a
   **loop**, **near** the object (or the objects named) or for **everyone on the island**. Every player near the island
@@ -1658,7 +1686,7 @@ for them; players find them in the journal (J), or in Raft's notebook (T) for a 
 beside an item links it to one of Raft's own items (**-** clears it): players can then **take it out** of the journal
 as that item, into their inventory ([3](#the-journal-j)) - a map piece that becomes a real blueprint, a log that
 becomes planks. Story items stay journal items (a saved world never holds an item Raft doesn't know); the link is
-only a way out. Raft's own quest item pickups (search "QuestItemPickup") work as story items too: picked up, the crew gets Raft's item (`story:raft-<type>`).
+only a way out. Raft's own quest item pickups (search "QuestItemPickup") work as story items too: picked up, the crew gets Raft's item (`story:raft-<type>`). The list has the pickups of Vasagatan (the bolt cutters, keys, the keycard...), Temperance and Utopia too.
 
 **What ends up in the players' journal** ([3](#the-journal-j)), so you can plan a story with it:
 
@@ -2382,8 +2410,13 @@ puts it: at the start, right after the island it waits for, or - for a distance 
 player passes on the way (about one every 4 km). Raft's story islands give their blueprints (the machete on Balboa, the
 metal detector on Caravan Town...) when the story reaches them, not at the start.
 
-**Tools.** Vines need the machete, buried treasure the metal detector and a shovel, dirt the shovel, ziplines the
-zipline tool. If a step of an island's main quest can't be done because no island before it gives the tool (or its
+**Tools.** Vines and sea vines need the machete, buried treasure the metal detector and a shovel, dirt the shovel,
+ziplines (all of Raft's zipline lines) the zipline tool, and Raft's dog cage, shark cage and padlocked door the **bolt
+cutters** (Vasagatan's quest item). A check on a tool (`has|Binoculars|1`, `has|Axe|1`...) counts too, and so do the
+headlight, binoculars, oxygen bottle, flippers, axe and metal hook. The electric zipline tool, the advanced headlight
+and the stone or titanium axe count as the tool. Some needs are only **advice** (a warning starting with "Advice"):
+an underwater air zone or a quest target 15 m or more under the sea (the oxygen bottle or flippers), a dark
+atmosphere zone round a quest target (the headlight), and a step whose text names binoculars or a headlight. If a step of an island's main quest can't be done because no island before it gives the tool (or its
 blueprint), Check warns - in the story chain, the story would stop there. Optional finds that need a tool given later
 get no warning, as in Raft: a cache behind vines no step needs, or buried treasure. Players come back with the tool;
 the Progression panel lists them quietly.
@@ -2417,8 +2450,9 @@ What Check looks for:
 | **The plan** | no rules, random islands off and Raft's story off (a world gets nothing); an island's own rules using the story or the Receiver | nothing comes by itself (every rule waits for another island) |
 | **Raft's blueprints** | | a blueprint that lies on one of Raft's story islands (the steering wheel, the engine's parts, the machete, the electric purifier, the titanium tools... 23 in all) that the plan **never gives** - its story island left out or replaced, and none of the plan's islands giving it as a reward, in a chest or from a note: the player could never build it. A tip lists which of the plan's islands give which blueprints, in the plan's order - a world plan is an adventure where the player unlocks more and more; a blueprint given **before the ones it builds on** (the engine controls before the motor wheel and steering wheel, the fuel pipes before a fuel tank, the advanced biofuel extractor before the plain one, the water pipes before a water tank): players find it before they can use it - the fix gives Raft's own order |
 | **Quest traps** | | a later step's chest or animals there from the start (not "Hidden until shown"); story items given again (a zone that fires again, a chest that fills up, animals that come back); show/hide or open/close in an event that happens again (it flips back); has / uses up Raft items on the quest-done or a defeat event (they fire on the host: left out); "give items" on a note (only the first reader); a story item used (a quest step, a check, a chest, an action) that isn't in the island's Story items list (deleted, or a typo); a keycard/key door that no story item opens (it opens for anyone) - each with its fix ([6.2](#62-behaviour-and-events)) |
-| **Story items in order** | | an island with a lock (a keycard door, a locked chest...) that wants a story item - one of Raft's quest items like the Tangaroa keycard, or the island's own - which no island of the plan gives, or only an island met later in play order: players reach the lock without the key. A lock that opens in more than one way and can open by a signal another piece on its island sends (a ready radio on an island with a generator, which runs it without the battery part) doesn't count |
-| **Tools** | | a step of an island's main quest that needs one of Raft's tools (vines: the machete; buried treasure: the metal detector and a shovel; a zipline: the zipline tool) which no island met before it gives, in play order - in the story chain the story stops there. Optional finds needing a later tool are only listed in Progression |
+| **Story items in order** | | an island with a lock (a keycard door, a locked chest...) that wants a story item - one of Raft's quest items like the Tangaroa keycard, or the island's own - which no island of the plan gives, or only an island met later in play order: players reach the lock without the key. A lock that opens in more than one way and can open by a signal another piece on its island sends (a ready radio on an island with a generator, which runs it without the battery part) doesn't count. The warning names the item and the island that gives it |
+| **Codes in order** | | a keypad (`lock.code`) whose code no note or text on its island or an island met before it tells - players reach the keypad without the code. The warning names the island that tells it later, if any |
+| **Tools** | | a step of an island's main quest that needs one of Raft's tools (vines and sea vines: the machete; buried treasure: the metal detector and a shovel; a zipline: the zipline tool; a cage or padlocked door: the bolt cutters; a check on a tool) which no island met before it gives, in play order - in the story chain the story stops there. Optional finds needing a later tool are only listed in Progression |
 | **Story items on two islands** | | one story item id given on two islands of the plan (two 'keycard's): the one found on either opens the other's locks too; give each island its own id |
 
 Check can't play the quests for you. Test your plan: create a world with it and play it through (F10 → `WorldPlan`
@@ -4182,7 +4216,7 @@ script that makes them do something (the dev command `CIStoryAudit`, left out of
 | On Raft's islands | On your island |
 |---|---|
 | Things to pick up, harvest, cut and dig (460 pickups) | **Things to gather** (chapter 4), Raft's own, working as there - with Raft's **wild beehive** (Balboa, Caravan Town), its **dirt spots**, Tangaroa's banana trees, trees and strawberries, Caravan Town's acacias, Balboa's mushrooms and the finds on the story islands' land; a snowy pine to cut |
-| Quest items (keys, keycards, tokens, tapes, parts: 319 pickups) | Raft's **quest item pickups** in the object list (23 of them: search "QuestItemPickup"); picked up with the interact key, the crew gets Raft's quest item as a story item (`story:raft-<type>`, Raft's name and picture), for checks and chests on any island of the world |
+| Quest items (keys, keycards, tokens, tapes, parts: 319 pickups) | Raft's **quest item pickups** in the object list (42 of them: search "QuestItemPickup"); picked up with the interact key, the crew gets Raft's quest item as a story item (`story:raft-<type>`, Raft's name and picture), for checks and chests on any island of the world |
 | Notes and notebook pages (68) | Notes ([5.2](#52-notes-and-signs)), the journal and Raft's notebook ([6.5](#65-your-islands-in-rafts-story-the-receiver)) |
 | Buttons, levers, crank wheels, hatches, doors that open with a key or keycard (about 150 interactables) | Any object with **Behaviour & events**: players can use it, *only if* the player has an item (kept, or used up like a key), then open, move, show, hide, signal... Ready to place: Raft's **keycard and key doors** (Tangaroa's plantation door wants Raft's Tangaroa keycard, Utopia's entrance and hut doors their keys, Varuna's garage door the Motherlode key, Temperance's reactor door the reactor key, a padlocked door the bolt cutters, Detto's door the code) open (go) for a crew that holds that quest item and keep it for the next door (or use it up: **Card used up** in the inspector's Keycard door settings); **hatches** open when used; **crank wheels** and **levers** send the signals `crank` and `lever` that other objects, the quest and the world plan can wait for |
 | Animations, lights, sounds, particles, screen shake when something is used | Behaviours (move, turn, show/hide lamps), sound and atmosphere zones |

@@ -160,6 +160,8 @@
     <Compile Include="SaveSoon.cs" />
     <Compile Include="QuestEditorWindow.cs" />
     <Compile Include="TriggerZone.cs" />
+    <Compile Include="GapFeatures.cs" />
+    <Compile Include="ObjectInspectorGaps.cs" />
     <Compile Include="WorldDirector.cs" />
     <Compile Include="WorldRandomizer.cs" />
     <Compile Include="WorldOptions.cs" />

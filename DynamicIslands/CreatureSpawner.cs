@@ -131,6 +131,38 @@ namespace DynamicIslands.Editor
 			return e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).FirstOrDefault(p => p.Ordinal == s.Value);
 		}
 
+		/// <summary>The spot an animal of a custom island belongs to, on any machine (the host: its own lists; a player: what
+		/// the host said, else the nearest loaded spot of its kind within 150 m) - null for Raft's own animals.</summary>
+		public static CreatureSpawnPoint SpotOf(AI_NetworkBehaviour ai)
+		{
+			if (ai == null) return null;
+			if (Raft_Network.IsHost)
+			{
+				if (!IsOurs(ai)) return null;
+				foreach (GameObject r in IslandSpawner.SpawnedRoots)
+				{
+					if (r == null) continue;
+					foreach (CreatureSpawnPoint p in SpotsOf(r)) if (p != null && (p.Spawned.Contains(ai) || p.Summoned.Contains(ai))) return p;
+				}
+				return null;
+			}
+			CreatureSpawnPoint sent = SentSpot(ai);
+			if (sent != null || HostSendsSpots || ai.connectedSpawner != null) return sent;
+			CreatureSpawnPoint best = null;
+			float bestD = 150f * 150f;
+			foreach (GameObject r in IslandSpawner.SpawnedRoots)
+			{
+				if (r == null) continue;
+				foreach (CreatureSpawnPoint p in SpotsOf(r))
+				{
+					if (p == null || p.Kind == null || p.Kind.Type != ai.behaviourType) continue;
+					float d = (p.transform.position - ai.transform.position).sqrMagnitude;
+					if (d < bestD) { bestD = d; best = p; }
+				}
+			}
+			return best;
+		}
+
 		/// <summary>
 		/// Whether an animal belongs to a custom island (it has the builder's looks): the host knows its own; a client is
 		/// told by the host (or, with an older host, goes by a loaded spawn point of its kind near it - Raft's own islands'

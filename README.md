@@ -20,6 +20,11 @@ This README is the full reference, in the same order: island creation first, the
 
 ## Features
 
+- **Hazards and gap features** (2026-10-24): trigger zones that hurt (acid, live water, fumes, spikes, cold), darken
+  the screen without a headlight or take the breath without an oxygen tank, unless a suit or another check protects;
+  checks **wears item** / **holds item** (binoculars, hooks, axes), the actions **protective suit** and **hurt
+  creatures**, zapping butler bots, bosses only blasts hurt (explosive barrels, pillars), lights that keep creatures
+  back, item sockets, repairable snow vehicles and generators that want 3 parts - all made in the editors.
 - **Island editor** (EDITOR button in the main menu)
   - **Islands and world plans apart:** EDITOR opens a start window, "What do you want to make?", with three cards: **An island** (New island / Open an island... / Continue the last one, with its picture), **A world plan** (New world plan / Open a world plan... / Continue the last plan and its Main story line in a few words) and **The guide**. The card of what you made last is lit. A world plan is made right on the main menu: no island is loaded and no 3D editor opens. In the island editor, **Use in a plan...** puts the island in a plan (next in the Main story line, or another island that comes on its own); on a plan's island card, **Edit island** opens it in the 3D editor, with **Back to the plan** in the top bar.
   - Sculpt the terrain with a round brush: Raise, Lower, Flatten and Smooth.
@@ -788,7 +793,8 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `CustomNote.cs` | Readable notes in a world (Raft's interaction, `IRaycastable`) and the note reader |
 | `IslandInfo.cs` | Island name, author and description, the banner shown when players arrive (also zone messages), and the island rules |
 | `LootCrate.cs`, `ItemPickerWindow.cs` | Chests in a world (giving items, looted state shared with all players and saved) and the item picker |
-| `TriggerZone.cs` | Trigger zones in a world: message, items, waking up ambush creatures |
+| `TriggerZone.cs` | Trigger zones in a world: message, items, waking up ambush creatures, hazards |
+| `GapFeatures.cs`, `ObjectInspectorGaps.cs` | Hazard zones, the darkness screen, wears/holds checks, zapping creatures, lights that keep creatures back, environment hits and the boss shield; their inspector rows |
 | `AmbienceZones.cs`, `SoundPickerWindow.cs` | Atmosphere zones (fog, light, particles, applied only while the camera renders) and sound zones (Raft's FMOD events), and the sound picker |
 | `Quest.cs`, `QuestEditorWindow.cs` | Quests: the steps, progress shared by all players and saved with the world, the quest panel, and the quest editor |
 | `GroupLibrary.cs`, `TerrainStamps.cs`, `TextPromptWindow.cs` | Object groups ("My groups"), terrain stamps, and the small name window they use |
@@ -884,7 +890,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `DropList.cs` | A drop-down list (combo box) in Raft's look: the choices open under the button, each with a line saying what it does (the world plan window's rule cards) |
 | `PlanChecker.cs`, `PlanCheckWindow.cs` | the world plan window's Check: the rules and the islands they name (quests step by step, zones, signals, a sample of each map type), rules waiting in a circle or for islands no rule brings; the plan in play order (`PlayOrder`), tools and story items in that order, one story item id on two islands, Raft's blueprints in Raft's order (`RaftFeatures.BuildsOn`); the report window |
 | `PlanProgressWindow.cs` | The world plan window's **Progression**: in play order, which rule's islands give which of Raft's blueprints, story items and tools, what their locks want, and the blueprints never given |
-| `RaftFeatures.cs` | Which of Raft's tools each feature wants (vines: machete; buried treasure: metal detector and shovel; dirt: shovel; ziplines: zipline tool) and how a tool is had (a blueprint on a story island, given, or researched); read by the plan Check, the Progression panel and the generator's explorer's chest; `BuildsOn`: Raft's blueprints that build on others (the engine controls on the motor wheel and steering wheel...) |
+| `RaftFeatures.cs` | Which of Raft's tools each feature wants (vines and sea vines: machete; buried treasure: metal detector and shovel; dirt: shovel; ziplines: zipline tool; cages and padlocked doors: bolt cutters; air zones and deep spots: oxygen bottle or flippers, dark zones: headlight - advice only) and how a tool is had (a blueprint on a story island, given, or researched); read by the plan Check, the Progression panel and the generator's explorer's chest; `BuildsOn`: Raft's blueprints that build on others (the engine controls on the motor wheel and steering wheel...) |
 | `HotkeyHints.cs` | The hotbar's key tabs for the journal (J) and the stats page (K), copied from Raft's notebook tab |
 | `WorldWindow.cs` | Esc → Custom Islands in a running world: the button in Raft's pause menu (a postfix on `PauseMenu.Start`) and the world's settings window (host changes, others read only; Back to the editor while testing) |
 | `IslandTest.cs` | The editor's Test: save, the test world "Custom Islands test" (loaded, or made the first time), the island beside the raft, the starter kit (`testkit.txt`, Kit On/Off, Give the kit), Back to the editor without saving; the cover while it starts (`TestCover`, Cancel); a start that fails goes back to the editor with the reason |

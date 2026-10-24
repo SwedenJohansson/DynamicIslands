@@ -22,3 +22,9 @@ Temperance|Blueprint_AnchorStationaryAdvanced|Pickup_Landmark_Blueprint_AnchorSt
 Utopia|Blueprint_ZiplineToolElectric|Pickup_Landmark_Blueprint_ZiplineElectric
 Utopia|Blueprint_BackpackAdvanced|Pickup_Landmark_Blueprint_BackpackAdvanced
 Utopia|Blueprint_TitaniumTools|Pickup_Landmark_Blueprint_TitaniumTools
+# Not pickups (2026-10-24, G9): Raft gives these at the Radio Tower and at Caravan Town's workbench - never moved (ScrambledBlueprints.Keep)
+RadioTower|Blueprint_HeadLight|-
+RadioTower|Blueprint_Recycler|-
+Caravan|Blueprint_BatteryCharger|-
+Caravan|Blueprint_ZiplineTool|-
+Caravan|Blueprint_ZiplineBase|-
