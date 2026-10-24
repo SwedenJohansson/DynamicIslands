@@ -45,27 +45,19 @@ expect step 11
 open Door warden's chest
 wait 3
 expect step 12
-zone hc_ridge
-expect step 13
-zone hc_cave
-expect step 14
 read Warden's lodge note
-expect step 15
+expect step 13
 read Wagon driver's chit
-expect step 16
+expect step 14
 zone doors
-expect step 17
+expect step 15
 read Scavenger's note I
-expect step 18
+expect step 16
 read Scavenger's note III
-expect step 19
+expect step 17
 air hc_dair
 open Scavenger's strongbox
 wait 3
-expect story hc_key 1
-expect step 20
-zone hc_summit
-expect step 21
-open Spire locker
-wait 3
+expect step 18
+read Scavenger's inventory
 expect done

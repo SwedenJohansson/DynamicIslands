@@ -15,23 +15,39 @@ air lip_air
 expect step 1
 read Warden's last entry
 expect step 2
+zone sh_ridge
+zone sh_cave
+read Watchers' post log
+expect step 3
+read Boat's last log
+expect step 4
+zone sh_deep
+air sh_dair
+open Warden house chest
+wait 3
+expect story sk_crest 1
+expect step 5
+read Warden house roll
+expect step 6
 zone alcove_1
 air alcove_1
-expect step 3
+expect step 7
 zone arena
 kill Angler fish
 wait 3
 expect story stalkerhurt 1
+expect step 8
 use hfl1
 use hfl2
 use hfl3
 expect story sh_flood 3
-expect step 4
+expect step 9
 zone alcove_2
 air alcove_2
 expect story stalker 1
+expect step 11
 zone valve
-expect step 7
+expect step 12
 use valve
 expect story valve 1
 expect shown plug
@@ -39,38 +55,18 @@ expect shown lastseal
 expect hidden lastrestore
 expect hidden teal
 expect shown gatebars
-expect step 8
+expect step 13
 read What the Ringwave means (part 1)
-expect step 9
+expect step 14
 zone alcove_4
 air alcove_4
-expect step 10
-read The last word
-expect step 11
-zone sh_ridge
-expect step 12
-zone sh_cave
-expect step 13
-read Watchers' post log
-expect step 14
-read Boat's last log
 expect step 15
-zone sh_deep
+read The last word
 expect step 16
-air sh_dair
-open Warden house chest
-wait 3
-expect story sh_key 1
-expect step 17
-read Warden house roll
-expect step 18
 zone sh_summit
-expect step 19
 read Warden's last card
-expect step 20
 open Lip rock locker
 wait 3
-expect step 21
-expect step 22
+expect step 16
 zone surface_line
 expect done

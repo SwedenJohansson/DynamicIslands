@@ -25,42 +25,40 @@ expect step 4
 open Control desk chest
 wait 3
 expect step 5
+read Hydrophone log
+expect step 6
 zone outer_vent
 kill Stingray
-expect step 6
+expect step 7
 open Vent shed chest
 wait 3
-expect step 7
-open Gardener's locker
-wait 3
 expect step 8
-expect shown bedsdry
-expect hidden bedsfull
-use sprinklercrank
-expect hidden bedsdry
-expect shown bedsfull
-expect story watered 1
-expect step 9
-zone b7_ridge
-expect step 10
-zone b7_cave
-expect step 11
 read Gardener's shed book
-expect step 12
+expect step 9
 read Car park ticket
-expect step 13
+expect step 10
 zone surface_buoy
 air buoy_air
 open Gantry box
 wait 3
-expect step 14
+expect step 11
 air b7_dair
 open Seed store chest
 wait 3
-expect story b7_key 1
-expect step 15
-zone b7_summit
-expect step 16
-open Garden beacon locker
+expect step 12
+zone dome
+air dome
+open Gardener's locker
 wait 3
+expect step 13
+expect shown bedsdry
+expect hidden bedsfull
+expect hidden wrenletter
+use sprinklercrank
+expect hidden bedsdry
+expect shown bedsfull
+expect shown wrenletter
+expect story watered 1
+expect step 14
+read Wren's letter
 expect done

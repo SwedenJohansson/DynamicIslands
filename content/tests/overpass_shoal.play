@@ -9,27 +9,31 @@ zone ramp_top
 expect step 1
 read Toll booth log
 expect step 2
+zone op_summit
+wait 2
+expect step 3
+open Toll hill locker
+wait 3
+expect step 4
+read Teo's card (Toll Hill)
+expect step 5
 zone sunken_lane
 air sunken_lane
-expect step 3
+expect step 6
 open Van glovebox
 wait 3
 expect story boothkey 1
-expect step 4
+expect step 7
 open Toll booth strongbox
 wait 3
-expect step 5
-zone op_ridge
-expect step 6
-zone op_cave
-expect step 7
-read Toll keeper's tally
 expect step 8
-read Caravan diary
+read Toll keeper's tally
 expect step 9
+read Caravan diary
+expect step 10
 open Bus locker
 wait 3
-expect step 10
+expect step 11
 open Glovebox (yellow caravan)
 wait 3
 open Glovebox (green caravan)
@@ -42,17 +46,13 @@ open Glovebox (beach trailer)
 wait 3
 use opbench
 expect story op_jack 1
-expect step 11
+expect step 12
 use opcap
 expect story op_lifted 1
-expect step 12
+expect step 13
 air op_dair
 open Depot chest
 wait 3
-expect story op_key 1
-expect step 13
-zone op_summit
 expect step 14
-open Toll hill locker
-wait 3
+read Depot foreman's note
 expect done

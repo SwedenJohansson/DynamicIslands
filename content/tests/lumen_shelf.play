@@ -25,41 +25,35 @@ expect step 6
 open Survey sled box
 wait 3
 expect step 7
+read Surveyor's hut note
+expect step 8
+zone lu_cave
+expect step 9
+read Caravan logbook
+expect step 10
 zone edge
 air edge
-expect step 8
+expect step 11
 open Mess chest
 wait 3
-expect step 9
-zone lu_ridge
-expect step 10
-zone lu_cave
-expect step 11
-read Surveyor's hut note
 expect step 12
-read Caravan logbook
-expect step 13
 read Last survey note
-expect step 14
+expect step 13
 use luswitch1
 expect story lu_gate 1
-expect step 15
+expect step 14
 air lu_dair
 open Survey office chest
 wait 3
-expect story lu_key 1
-expect step 16
-zone lu_summit
-expect step 17
-open Survey beacon locker
-wait 3
-expect step 18
+expect step 15
 open Lens box (first floor)
 wait 3
 open Lens box (second floor)
 wait 3
 open Lens box (top floor)
 wait 3
+expect story lu_lens 4
+expect step 16
 use luflood2x
 expect story lu_lit 1
 expect shown luflood2

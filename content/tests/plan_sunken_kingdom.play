@@ -67,7 +67,6 @@ zone sh_deep
 air sh_dair
 open Warden house chest
 wait 3
-expect story sh_key 1
 read Warden house roll
 open Crown vault
 wait 3

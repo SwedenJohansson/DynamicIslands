@@ -10,24 +10,26 @@ zone dock
 expect step 1
 read Sealkeeper's orders
 expect step 2
-kill Screecher
+read Milo's crayon card
 expect step 3
+kill Screecher
+expect step 4
 open Base locker
 wait 3
-expect step 4
+expect step 5
 use generator
 expect story power 1
-expect step 5
-read Network status board
 expect step 6
-zone pump_tower
+read Network status board
 expect step 7
-use pumpcrank
+zone pump_tower
 expect step 8
-read Pump log
+use pumpcrank
 expect step 9
-zone door_tower
+read Pump log
 expect step 10
+zone door_tower
+expect step 11
 use fuseboard
 expect story fused 0
 open Deck fuse locker
@@ -35,35 +37,47 @@ open Tower fuse locker
 open Shore fuse locker
 wait 3
 expect story fuse 3
-expect step 11
+expect step 12
 expect hidden spirelights
 use fuseboard
 expect shown spirelights
-expect step 12
-read Door warden's warning
+expect shown sklure
 expect step 13
-zone spire_stair
+read Door warden's warning
 expect step 14
-zone control
+read Supply pilot's log
 expect step 15
-read The Network map
+zone sk_deep
+air sk_dair
+open Archive chest
+wait 3
 expect step 16
+read Archive register
+expect step 17
+zone spire_stair
+expect step 18
+zone control
+expect step 19
+read The Network map
+expect step 20
 use winch
 expect story winched 0
 code controlpad 1111 wrong
 expect story unlocked 0
 code controlpad 2817
 expect story unlocked 1
-expect step 17
+expect step 21
+read The Director's confession
+expect step 22
 read Ines's message
-expect step 18
+expect step 23
 use winch
 expect shown cable
-expect step 19
+expect step 24
 zone cable_head
-expect step 20
+expect step 25
 read Two switches
-expect step 21
+expect step 26
 use descend
 expect story descended 0
 use restore
@@ -72,33 +86,9 @@ use seal
 expect story sealchoice 0
 expect shown verdictrestore
 expect hidden verdictseal
-expect step 22
-read The verdict
-expect step 23
-zone sk_ridge
-expect step 24
-zone sk_cave
-expect step 25
-read Storm keeper's log
-expect step 26
-read Supply pilot's log
 expect step 27
-zone sk_deep
+read The verdict
 expect step 28
-air sk_dair
-open Archive chest
-wait 3
-expect story sk_key 1
-expect step 29
-read Archive register
-expect step 30
-zone sk_summit
-expect step 31
-read Sealkeeper's card
-expect step 32
-open Storm Crown locker
-wait 3
-expect step 33
 use descend
 expect story descended 1
 expect done

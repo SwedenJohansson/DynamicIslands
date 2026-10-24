@@ -134,7 +134,7 @@ place "Box Small" dcampbox at -25.6 29.4 ground sit
 place Note_Paper dnote at -25.6 29.4 ground y=0.7 drop yaw=30
 place Loot_ChestSmall dcamp at -23.6 30.9 ground sit yaw=37
 call airpocket x=-28.1 z=27.4 id=hadal_commons_dair al=dairzone bub=dairbub r=2.5 msg="Air trapped in a diver's bell-tent. Breathe."
-note dnote Diver's slate | A slate on a lanyard:\n\nLAST DIVE - LIGHTS OUT BELOW 40.\nLeft the spare kit here for whoever comes next.
+note dnote Ines's slate (the trench) | DIVE SLATE - I. MARLOWE, ON A LANYARD\n\nLAST DIVE - LIGHTS OUT BELOW 40. Spare kit left for whoever comes next.\n\nMilo. I came down the trench wall from the Yard on a rope and a temper. The Commons' windows are lit below me - the only lights left in the sea, and the shadow is between me and them.\nIf you read this one day: I was not brave. I was just your mum, and that is a different thing, and it is stronger.
 note dcamp Diver's cache | A diver's spare kit, wired shut against the current.
 loot dcamp Rope*2;Glass*3;Plastic*4
 prop dcamp loot.refill=0
@@ -196,7 +196,7 @@ place Zone_Trigger hcsummit at -12 74 h=55.98
 place Loot_ChestSmall hcledge at -24.1 74 ground sit yaw=40
 place SmallRock_02 - at -7 76 ground sit scale=0.5
 place SmallRock_02 - at -7 76 ground y=0.6 sit scale=0.32 yaw=40
-call treasure x=-9.5 z=76 r=3 n=1 seed=24711
+call treasure x=-9.5 z=76 r=12 n=1 seed=24711
 prop treasure24711 treasure.loot=TitaniumOre*3;CopperOre*2
 call treasure x=57.7 z=-17.16 r=5 n=1 seed=24712
 prop treasure24712 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
@@ -235,13 +235,13 @@ island on.arrive=message||A buoy over black water. Far, far below: a few small, 
 
 story cagekey|Cage key|Placeable_Lantern_Metal|The key to the cage in house 3, from the broadcast room.
 
-note minutes Commons council minutes | COMMONS COUNCIL - LAST MINUTES\n\n1. Air holds in houses 1, 2, 3 and the cellar. Everyone else up to the Spire.\n2. The long shadow was seen at the doors again. Motion: the doors stay shut.\n   Carried.\n3. Spire control room code changed to 2817. Do not write it down. (Noted: it is written down.)\n4. Ines stays. Ines insists.
-note broadcast The last broadcast | THE LAST BROADCAST (transcript)\n\nThis is Hadal Commons. The doors are shut. Repeat, the doors are shut.\nWhoever finds this: the Spire can open them again - or seal them for good.\nThe cage key's under the radio. Ines locked herself in. She said it's the only way it won't take her.
-note inesaccount Ines Marlowe's account | INES MARLOWE\n\nThe long shadow came up from the trench the night the doors were open for the pumps.\nWe shut them on it. Half of it is still in the Hollow under the lip.\nThe Spire decides now. RESTORE the Network, or SEAL the Hollow.\nI can't choose. I was the one who opened the doors.
+note minutes Commons council minutes | COMMONS COUNCIL - LAST MINUTES (taken by G. Fennick, door warden, because nobody else would)\n\n1. Air holds in houses 1, 2, 3 and the cellar.\n2. The long shadow was seen at the doors again. Motion: the doors stay shut. Carried.\n3. The Spire sent the lift for the twelve shuttle children ONLY. Motion: we send them. Carried, with shouting. Warden Fennick to ride up with them, since he is "expendable and annoying". Accepted.\n4. Spire control room code changed to 2817. Do not write it down. (Noted: it is written down.)\n5. The diver, Marlowe, says the Spire drowned the stations on purpose. Motion: we do not believe her. Not carried. Not anything. We just sat there.\n6. The Director asks that Marlowe be kept below. Fennick says he will see to it, and looks at his boots.
+note broadcast The last broadcast | THE LAST BROADCAST (transcript)\n\nThis is Hadal Commons. The doors are shut. Repeat, the doors are shut.\nThe children have gone up in the Spire's lift. All twelve. The warden went with them, complaining.\nWhoever finds this: the Spire can open the Network again - or seal the Hollow for good. Somebody has to go up and choose, because the man up there has been choosing for all of us.\nP.S. from the warden: The cage key is under the radio. I am a door warden, not a jailer, and I am very sorry, Ines. Orders. You know whose.
+note inesaccount Ines Marlowe's account | INES MARLOWE - WRITTEN IN THE CAGE, ON THE BACK OF A MENU\n\nYou have Mo. You actually have Mo. I knitted that whale on the roofs in the winter Milo had measles, and he has not slept without it since.\nMilo is safe. Fennick took them up the lift to the Spire; the Director let the children go. The rest of us he kept below in the dark, with the doors shut, because the dark is quiet and the quiet keeps the Stalker in the Hollow.\nThat was his plan. Drown the lit stations, cut the cables, keep the Commons dark - and leave one light burning far away, on the roofs, for it to swim to instead of us. The beacon you answered.\nGo up to the Spire. RESTORE the Network or SEAL the Hollow. I can't choose for you. I would only choose Milo.
 note toolmaker Toolmaker's chest | The toolmaker's chest: titanium tool plans.
-note packchest Broadcast room chest | A chest in the broadcast room: advanced backpack plans.
-note inesbag Ines's bag | Ines's diving bag: her spare tank, a photo, and the cage's padlock.
-note wardenchest Door warden's chest | The door warden's chest: electric zipline tool plans - "for the Spire's towers".
+note packchest Broadcast room chest | Advanced backpack plans, and a key under the radio.
+note inesbag Ines's bag | Ines's diving bag: her spare tank and a photo of Milo.
+note wardenchest Door warden's chest | Fennick's chest: electric zipline tool plans, "for the Spire".
 loot toolmaker Blueprint_TitaniumTools*1;TitaniumOre*1
 prop toolmaker loot.refill=0
 loot packchest Blueprint_BackpackAdvanced*1;story:cagekey*1;Leather*2
@@ -262,7 +262,7 @@ prop inescage survivor.name=Ines Marlowe
 prop inescage survivor.id=sunken_ines
 prop inescage survivor.key=cagekey
 prop inescage survivor.signal=inesfree
-prop inescage survivor.line=You found the key. I'm Ines - the last of the Network's divers. Get me to the Spire. And don't open those doors.
+prop inescage survivor.line=You found the key. I'm Ines Marlowe. Is that - is that Mo? Milo's safe, he went up. Get to the Spire. And don't open those doors.
 prop doorszone zone.id=doors
 prop doorszone zone.radius=4
 prop doorszone zone.repeat=never
@@ -279,8 +279,8 @@ prop darkcity zone.radius=40
 note hc_cavechest Quarry chest | A quarryman's chest: chisels gone to rust, and titanium chips he kept.
 loot hc_cavechest TitaniumOre*2;Rope*2;Bolt*2;Copper*1
 prop hc_cavechest loot.refill=0
-note hc_ruinnote Warden's lodge note | WARDEN'S LODGE\n\nI keep the Commons' spare tanks in the cage by my lodge. The key went with Ines.\nIf you have bolt cutters, take what you need. If you are the Stalker, go home.\nThe lever for the great doors is on the post by my lodge. Behind them is the strongroom of the Commons.
-note hc_wrecknote Wagon driver's chit | WAGON DRIVER'S CHIT\n\nTwo wagons of quarry stone, Commons terrace 3. Signed.\nThe rails ran out at the trench floor. So did I.
+note hc_ruinnote Warden's lodge note | WARDEN'S LODGE - G. FENNICK\n\nSpare tanks are in the cage by the lodge. The cage key went with Ines. If you have bolt cutters, take what you need, and close the lid after, I am not your mother.\nThe lever for the great doors is on the post by my lodge. Behind them is the strongroom of the Commons, which holds everything the council saved for the day the Spire answered. It has not answered.\nIf you are the Stalker, go home. I have said this on every door in the Network now, and you have not gone home once. I am beginning to think you cannot read.
+note hc_wrecknote Wagon driver's chit | WAGON DRIVER'S CHIT\n\nTwo wagons of quarry stone, Commons terrace 3. Signed, N. Abara.\nThe rails ran out at the trench floor. So did I.\nOn the back: I was hauling stone when the lights went out across the whole Commons at once. Not a fault. A switch. Somebody flicked us off from up the trench like a bedroom light.\nThen it got very quiet. And in the quiet, from the Hollow under the lip, something started to sing the lift's bell back at us. Ding. Ding. Calling.
 note hc_wreckcrate Wagon load | The wagon's load box: cut stone and what the quarrymen dropped.
 loot hc_wreckcrate Stone*6;TitaniumOre*1;Scrap*2;Rope*1
 prop hc_wreckcrate loot.refill=0
@@ -308,16 +308,14 @@ prop greatdoors else.use=message||Locked. The door warden worked them from a lev
 # --- DEEP 1-HOUR (10-24): story items, notes and checks
 story hc_key|Scavenger's key|Hinge|The scavenger's key, from the chest at the bottom of his hideout.
 story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
-note hcdeep Scavenger's strongbox | The scavenger's strongbox: the key to his locker on the spire, and a crest shard.
-loot hcdeep story:hc_key*1;story:sk_crest*1;TitaniumOre*2;Bolt*3;OxygenBottle*1
+note hcdeep Scavenger's strongbox | The scavenger's strongbox: his best loot and a crest shard.
+loot hcdeep story:sk_crest*1;TradeToken*2;TitaniumOre*2;Bolt*3;OxygenBottle*1
 prop hcdeep loot.refill=0
-note hclocker Spire locker | The scavenger's locker on top of the trench spire: what he took from the Commons.
+note hclocker Spire locker | The scavenger's locker on his spire: Commons brass.
 loot hclocker TitaniumIngot*2;MetalIngot*3;CopperIngot*2;Battery*1
 prop hclocker loot.refill=0
-prop hclocker if.open=has|story:hc_key|1
-prop hclocker else.open=message||The locker is padlocked. The tag says the key is kept "at the bottom, where the water keeps it safe".
-note hcsumnote Scavenger's boast | TOP OF THE SPIRE\n\nNobody climbs up here. Nobody gets past my wires either.\nIf you did both: the locker is yours. The key is down in my hideout.
-note hcbldnote Scavenger's inventory | WHAT I TOOK\n\nWindows, wire, the commons' brass. The key to my locker is in the strongbox downstairs.\nThe wires outside? They are for the wardens. Not for you, if you read my notes.
+note hcsumnote Scavenger's boast | TOP OF THE SPIRE\n\nNobody climbs up here. Nobody gets past my wires either.\nIf you did both, the locker is yours; I have a better one. From up here you can see the Commons - the lit windows of houses 1, 2 and 3, the dark everywhere else - and above it all the Spire, perched on the trench lip like a heron.
+note hcbldnote Scavenger's inventory | WHAT I TOOK - AND WHAT I SAW\n\nWindows, wire, the Commons' brass, one crown shard. Take the shard. You've earned it, swimming through my wires.\nWhat I saw, from the top of my spire, the night the stations went dark: lights going out one by one across the sea - the labs, the domes, the Yard - and in the middle of it all, the Spire on the trench, every window lit, and a man at the top window watching.\nHe watched every one go. Then he picked up his radio and said sorry to each of them.\nGo up the trench to the Sealkeeper Spire. Tell him the scavenger saw.
 note hcledge Scavenger's stash | One of the scavenger's stashes, on the spire's shelf.
 loot hcledge Rope*3;Bolt*2;Feather*3
 prop hcledge loot.refill=0
@@ -327,9 +325,9 @@ prop hccave2chest loot.refill=0
 prop hcsummit zone.id=hc_summit
 prop hcsummit zone.radius=2.5
 prop hcsummit zone.message=Out of the water at the top of the trench spire. 47 m of rock below you.
-note hcnote1 Scavenger's note I | NOTE I\n\nThe first wire is low. Swim high over the flat stones.
-note hcnote2 Scavenger's note II | NOTE II\n\nThe second wire is across the gap. Go round by the left.
-note hcnote3 Scavenger's note III | NOTE III\n\nThe last one is at the door. Wait for the spikes to drop, then go.
+note hcnote1 Scavenger's note I | NOTE I - THE SCAVENGER\n\nYou followed me out here. Bold. The first wire is low, so swim high over the flat stones, unless you want to be a pincushion.\nI took what the Commons would not use. Windows. Wire. The council's brass. Stealing from people who have given up is not stealing, it is tidying.
+note hcnote2 Scavenger's note II | NOTE II\n\nThe second wire is across the gap. Go round by the left.\nI saw the lift go up with the children. I saw the warden hold the smallest one's hand the whole way. I did not steal anything that night. I am not a monster. I am a professional.
+note hcnote3 Scavenger's note III | NOTE III\n\nThe last one is at the door. Wait for the spikes to drop, then go.\nBelow the hideout the store is drowned. I keep the good things at the bottom, and the crown shard I lifted from the old king's arch, because one day somebody will need nine of them, and I will charge them a great deal.
 prop hctrip1 obj.name=hctrip1
 prop hctrip1 zone.id=hc_trip1
 prop hctrip1 zone.radius=2
@@ -371,7 +369,7 @@ prop hcspike3 zone.hazardMsg=Spikes! Get clear of the trap.
 prop hcspike3 beh.hidden=1
 
 quest title=The City Below
-quest intro=Lit windows on the Receiver, 45 m down. Dive to the Commons' plaza.
+quest intro=The Commons is the last lit room in the sea, 45 m down. Ines went down to it. Dive to the plaza.
 step reach|plaza|1|Dive to the Commons' plaza
 step read|Commons council minutes|1|Read the council minutes on the plaza
 step reach|house_1|1|Find the air in house 1
@@ -384,17 +382,14 @@ step reach|house_3|1|Climb to house 3, the last air house
 step open|Ines's bag|1|Free the diver from the cage with the key, then open her bag
 step read|Ines Marlowe's account|1|Read Ines Marlowe's account
 step blueprint|Blueprint_ZiplineToolElectric|1|Open the door warden's chest: electric zipline tool plans
-step reach|hc_ridge|1|Swim to the terrace ridge in the south
-step reach|hc_cave|1|Find the quarry cave in the west
 step read|Warden's lodge note|1|Read the note in the warden's lodge in the north-east
 step read|Wagon driver's chit|1|Read the chit at the mine wagons in the north-west
 step reach|doors|1|Go to the great doors
-step read|Scavenger's note I|1|Read the scavenger's first note on the way to his hideout
-step read|Scavenger's note III|1|Get past his traps and read the last note at the hideout
-step collect|story:hc_key|1|Dive into the drowned building and take the key from the chest at the bottom
-step reach|hc_summit|1|Climb the mountain to the tower on its top
-step open|Spire locker|1|Open the summit locker with the key from the drowned building
-quest done=The doors stay shut - for now. The Spire up on the trench decides; the Receiver finds it on band 1200.
+step read|Scavenger's note I|1|Follow the scavenger's notes out to his hideout in the south-west
+step read|Scavenger's note III|1|Get past his trip wires and read the last note at the hideout
+step open|Scavenger's strongbox|1|Dive to the bottom of his drowned store and open the strongbox
+step read|Scavenger's inventory|1|Read what the scavenger took - and what he saw
+quest done=The Director drowned the stations to keep the Stalker from the Commons. Face him at the Spire on the trench - the Receiver finds it on band 1200.
 quest reward=TitaniumOre*2;Battery*1
 
 save Hadal Commons

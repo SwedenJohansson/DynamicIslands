@@ -12,49 +12,39 @@ expect step 2
 open Reception drawer
 wait 3
 expect step 3
-zone bl_ridge
-expect step 4
-zone bl_cave
-expect step 5
-read Sample keeper's list
-expect step 6
-read Crane driver's note
-expect step 7
 expect shown atriumvines
 expect item Machete 1
 use atriumvines
 expect hidden atriumvines
 zone stairwell
-expect step 8
+expect step 4
 kill Warthog
-expect step 9
+expect step 5
 open Lab 2 cabinet
 wait 3
-expect step 10
+expect step 6
 read Data drive 1
+expect step 7
+read Dr Sato's roof recording
+expect step 8
 zone flooded_lab
 air flooded_lab
-expect step 12
-expect hidden drive3
-read Data drive 2
-expect shown drive3
-read Data drive 3
-expect step 13
+expect step 9
 open Pipe store
 wait 3
-expect step 14
+expect step 10
 open Lab stores
 wait 3
 open Boiler room locker
 wait 3
-expect step 15
+expect step 11
+# side dive (not a step): the pump house chest holds this island's crest shard for the Hollow's crown vault
 air bl_dair
 open Pump house chest
 wait 3
-expect story bl_key 1
-expect step 16
-zone bl_summit
-expect step 17
-open Weather mast locker
-wait 3
+expect step 11
+expect hidden drive3
+read Data drive 2
+expect shown drive3
+read Data drive 3
 expect done

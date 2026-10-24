@@ -90,6 +90,9 @@ place Pickup_Landmark_BerryBush - at 4.8 0.8 h=0 sit
 place Pickup_Landmark_Flower_Black - at -3.2 2.4 h=0 sit
 place Placeable_Table_Basic - at -2.4 4.3 h=0 sit yaw=0
 place Note_Paper rota at -2.4 4.3 h=1.3 drop yaw=15
+# STORY 10-24s: the hydrophone printout by the control desk; Wren's letter in a tin under the beds (shown when the beds are watered)
+place Note_Paper hydrolog at 3.3 3.5 h=0.8 drop yaw=200
+place Note_Paper wrenletter at -0.6 -1.6 h=0.6 drop yaw=10
 place TP_Selene_ComputerGeneric_01 - at 3.6 3.6 h=0 sit yaw=225
 place Loot_Chest controldesk at 2.1 4.6 h=0 sit yaw=180
 place Loot_ChestSmall gardenlocker at -4.9 2.2 h=0 sit yaw=90
@@ -139,7 +142,7 @@ place Zone_Trigger viewzone at -56 0 ground y=1.5
 note wreckchest Wreck's chest | The boat's chest, sunk with her: tins, line and a few tools the salt has not eaten yet.
 loot wreckchest Rope*3;Nail*8;Scrap*3
 prop wreckchest loot.refill=0
-note diverslate Diver's slate | A diver's slate, wired to a box:\n\n"DOMES 1-6 DARK. SEVEN STILL LIT.\nAir at the buoy, air at the vent shed.\nDon't stay down past the second breath."
+note diverslate Diver's slate | DIVE SLATE - I. MARLOWE (chalk, wired to a box)\n\nDOMES 1-6 DARK. SEVEN STILL LIT.\nAir at the buoy, air at the vent shed. Don't stay down past the second breath.\n\nMilo - the lab lady says you all walked off the reef. All twelve. I sat on the lab stairs and cried like a tap, and then I swam here, because the gardener has a boat.\nTeo caught up at last, with a hen in his coat. He says the hen insisted.
 note divercache Diver's cache | A diver's spare kit: rope, a spare filter, glass for a mask.
 loot divercache Rope*2;Glass*3;Plastic*4
 prop divercache loot.refill=0
@@ -187,7 +190,7 @@ place Zone_Trigger b7summit at -24 -66 h=28.97
 place Loot_ChestSmall b7ledge at -35 -66 ground sit yaw=40
 place SmallRock_02 - at -19 -64 ground sit scale=0.5
 place SmallRock_02 - at -19 -64 ground y=0.6 sit scale=0.32 yaw=40
-call treasure x=-21.5 z=-64 r=3 n=1 seed=24311
+call treasure x=-21.5 z=-64 r=12 n=1 seed=24311
 prop treasure24311 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 call treasure x=-9.21 z=55.23 r=5 n=1 seed=24312
 prop treasure24312 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
@@ -214,12 +217,16 @@ story cycled|Airlock cycled|Placeable_Lantern_Metal|You opened Biome Seven's air
 story melonseed|Melon seed packet|Seed_Watermelon|A packet of melon seeds from Biome Seven's beds.
 story watered|Beds watered|Placeable_Sprinkler|You turned the sprinkler crank: Biome Seven's beds are green again.
 
-note rota Gardener's rota | BIOME SEVEN - ROTA\n\nMon: melons. Tue: melons. Wed: the goat. Thu: melons.\nFri: vent filters (take the harpoon, the rays are back).\nSat: crank the sprinklers - the valve sticks.\nSun: write to the Commons. They don't write back any more.
-note controldesk Control desk chest | The control desk's chest: engine control plans, "to bring the shuttle home".
-note gardenlocker Gardener's locker | The gardener's locker: firework plans ("for the anniversary") and her gloves.
-note seedvault Seed vault | The seed vault: mango, pineapple, strawberry and banana seeds, beets, potatoes.
-note ventchest Vent shed chest | A chest in the vent shed: metal detector plans and a filter cartridge.
-note gantrybox Gantry box | The maintenance gantry's box, on top of the dome: zipline plans, "for the yard's cranes".
+note hydrolog Hydrophone log | HYDROPHONE LOG - BIOME SEVEN (printout, W. Ashby's pencil in the margin)\n\n03:10 Low call, bearing south-west, the trench. Not whale. Not ship.\n03:12 Same. Closer.\n03:40 The call has changed. It is copying the dome's beacon - the same two notes, the same gap.\n04:05 It is copying the Network's line tone now. On the speaker it sounds almost like a word. "Calling. Calling."\n04:30 Teal light outside the north glass. It waited by the airlock for nine minutes. Then it went towards the lab tower, against the current.\n\nMargin: "It doesn't hunt by eye. It hunts by what is LIT and what is LOUD. Told the Director. He said thank you, Wren, that is very useful, and the line went dead."
+note wrenletter Wren's letter | WREN ASHBY - LETTER, IN A TIN UNDER THE BEDS\n\nWhoever turned my sprinklers on: thank you. The melons thank you. The goat will not, she never thanks anybody.\nI have gone up in the boat with Ines Marlowe and that lovely old idiot Teo and his hen. Ines wants the Thalassa Mooring, the surface station, where the dive teams went down to the trench cables. She thinks the Network's divers saw where the children's shuttle drifted. I think she just wants to keep moving so she doesn't have to stop and think.\nThalassa still has a bell. If you go there, ring it carefully. Bells are loud, and you know now what loud does.\nLeave the lights off on your way out. Not because the Director says so. Because Wren does.
+prop wrenletter obj.name=wrenletter
+prop wrenletter beh.hidden=1
+note rota Gardener's rota | BIOME SEVEN - ROTA (W. Ashby, gardener, staff of one)\n\nMon: melons. Tue: melons. Wed: the goat, who has opinions about Wednesdays. Thu: melons.\nFri: vent filters. Take the harpoon, the rays are back and they think the filters are a buffet.\nSat: crank the sprinklers. The valve sticks. Swear at it, it works better.\nSun: write to the Commons. They don't write back any more. Write to Sato. She does.\n\nAdded in red, last week: "Lights off after dark - by order of the Sealkeeper." Fine. Melons don't need the lights. I do, a bit.
+note controldesk Control desk chest | The control desk's chest: engine control plans, "for the shuttle".
+note gardenlocker Gardener's locker | Wren's locker: firework plans and her good gloves.
+note seedvault Seed vault | The seed vault: mango, pineapple, strawberry, banana, beets, potatoes.
+note ventchest Vent shed chest | A chest in the vent shed: metal detector plans, a filter.
+note gantrybox Gantry box | The gantry's box on the dome's cap: zipline plans.
 loot controldesk Blueprint_EngineControls*1;Bolt*2
 prop controldesk loot.refill=0
 loot gardenlocker Blueprint_Firework*1;Leather*1
@@ -266,7 +273,7 @@ prop seedtray3 on.use=give||story:melonseed*1\nhide|\nmessage||A packet of melon
 prop sprinklercrank obj.name=sprinklercrank
 prop sprinklercrank beh.use=Turn the sprinkler crank
 prop sprinklercrank if.use=!signal|watered
-prop sprinklercrank on.use=signal||watered\ngive||story:watered*1\nhide|bedsdry\nshow|bedsfull\nmessage||The crank sticks, then gives. Pipes knock - and the sprinklers hiss over the beds.
+prop sprinklercrank on.use=signal||watered\ngive||story:watered*1\nhide|bedsdry\nshow|bedsfull\nshow|wrenletter\nmessage||The crank sticks, then gives. Pipes knock - and the sprinklers hiss over the beds.
 prop sprinklercrank else.use=message||The sprinklers are running.
 prop labgoat creature.count=1
 prop ventzone zone.id=outer_vent
@@ -283,25 +290,23 @@ prop bigpuffer creature.respawn=0
 note b7_cavechest Overflow cave chest | A chest at the overflow: seed tins, sealed with wax.
 loot b7_cavechest Seed_Pineapple*1;Seed_Watermelon*1;Rope*2;Plastic*2
 prop b7_cavechest loot.refill=0
-note b7_ruinnote Gardener's shed book | GARDENER'S SHED BOOK\n\nThe sluice to the outer beds is cranked shut. Turn it once and the bed box comes up out of the silt.\nThe goats are in their cage by the airlock. Whoever has the lab's bolt cutters - let them out.
-note b7_wrecknote Car park ticket | CAR PARK TICKET\n\nBIOME SEVEN - VISITORS. Park at the shore, walk the glass tunnel down.\nThe shore went under. The vans stayed where we left them.
-note b7_wreckcrate Visitor's van crate | A visitor's crate, still in the van: a picnic gone to salt, and a few useful things.
+note b7_ruinnote Gardener's shed book | GARDENER'S SHED BOOK\n\nThe sluice to the outer beds is cranked shut. Turn it once and the bed box comes up out of the silt, all muddy and pleased with itself.\nThe goats are in their cage by the airlock. Whoever has the lab's bolt cutters - let them out. They are better company than the Director's memos and they eat the memos too.\nSato's drives came through on the beacon last night. A whole list of numbers and one sentence I keep reading: the lab floors went under by remote. Somebody turned off the tower like turning off a lamp.\nI have started sleeping in the shed with the lights off and the radio on.
+note b7_wrecknote Car park ticket | CAR PARK TICKET - BIOME SEVEN VISITORS\n\nPark at the shore, walk the glass tunnel down, mind the step, wave to the gardener.\nOn the back, a child's writing in purple felt pen:\n"Me and Milo saw a big melon and a goat. The goat ate Tom's ticket. Milo's mum is a diver and she can hold her breath for a WHOLE song. We are going on the shuttle on Wednesday to the Yard where the cranes are. Milo is bringing his whale."\nThe shore went under the next week. The vans stayed where we left them, with the windows down.
+note b7_wreckcrate Visitor's van crate | A visitor's crate: a salted picnic, a few useful things.
 loot b7_wreckcrate Rope*2;Scrap*3;Plank*3;Battery*1
 prop b7_wreckcrate loot.refill=0
 
 # --- DEEP 1-HOUR (10-24): story items, notes and checks
 story b7_key|Seed store key|Hinge|The dome's seed store key, from the chest at the bottom of the drowned store.
 story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
-note b7deep Seed store chest | The seed store chest: the key to the beacon locker on the garden rock, and a crest shard.
-loot b7deep story:b7_key*1;story:sk_crest*1;Seed_Strawberry*2;Seed_Watermelon*2;OxygenBottle*1
+note b7deep Seed store chest | The seed store chest: the last stock and a crest shard.
+loot b7deep story:sk_crest*1;TradeToken*2;Seed_Strawberry*2;Seed_Watermelon*2;OxygenBottle*1
 prop b7deep loot.refill=0
-note b7locker Garden beacon locker | The gardeners' locker on the rock above the water: dry seeds and tools.
+note b7locker Garden beacon locker | The gardeners' locker on the rock: dry seeds and tools.
 loot b7locker Seed_Flower_Red*2;Seed_Flower_Blue*2;MetalIngot*2;Rope*3
 prop b7locker loot.refill=0
-prop b7locker if.open=has|story:b7_key|1
-prop b7locker else.open=message||The locker is padlocked. The tag says the key is kept "at the bottom, where the water keeps it safe".
-note b7sumnote Gardener's marker | THE GARDEN ROCK\n\nWe planted the dome's first seeds on this rock, above the water.\nThe seed store down in the pit has the key to our locker.
-note b7bldnote Seed keeper's list | SEED STORE - STOCK\n\nStrawberry, watermelon, the red and blue flowers.\nThe key to the rock's locker is in the chest on the ground floor. Air on the first floor.
+note b7sumnote Gardener's marker | THE GARDEN ROCK\n\nWe planted the dome's first seeds on this rock, above the water, the day the dome opened: Sato, me and a very small brass band.\nFrom here you can see the shelf the domes sat on, one to seven, like beads. Six of them are dark now.\nOn a clear night you can see the Spirecrest beacon blink from here, and the Spire itself behind it, every window bright. The only bright windows on the sea. Funny, that, for a man who orders everybody else's lights off.
+note b7bldnote Seed keeper's list | SEED STORE - STOCK (W. Ashby)\n\nStrawberry, watermelon, the red and blue flowers, and the beet nobody likes.\nThe store flooded the same night as the lab - pumps to REMOTE, the board says, at 02:14. Same minute. Same hand.\nI swam the stock out twice and gave up the third time, when I saw the light come down the ramp after me.\nWhat is left is in the chest on the ground floor, with the old crest shard we dug up when we laid the foundations. Air on the first floor. Take what grows.
 note b7ledge Diver's shelf cache | A diver's cache on the rock's shelf, out of the current.
 loot b7ledge Rope*3;Bolt*2;Feather*3
 prop b7ledge loot.refill=0
@@ -313,25 +318,23 @@ prop b7summit zone.radius=2.5
 prop b7summit zone.message=Out of the water: the garden rock, a beacon on top. Biome Seven glints below.
 
 quest title=The Glass Dome
-quest intro=A beacon from the seabed garden. Dive to the dome's airlock.
+quest intro=Dr Sato's drive woke the last dome's beacon. Dive to the airlock and find the gardener.
 step reach|airlock|1|Dive to the airlock on the dome's north side
 step collect|story:cycled|1|Open the airlock hatch
 step read|Gardener's rota|1|Read the gardener's rota
 step collect|story:melonseed|3|Take the three melon seed packets from the beds
 step blueprint|Blueprint_EngineControls|1|Find the engine control plans at the control desk
+step read|Hydrophone log|1|Read the hydrophone printout by the control desk
 step kill|Stingray|2|Drive the stingrays off the outer vent
 step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from the vent shed
-step blueprint|Blueprint_Firework|1|Open the gardener's locker: firework plans
-step collect|story:watered|1|Turn the sprinkler crank to water the beds
-step reach|b7_ridge|1|Swim to the kelp ridge in the east
-step reach|b7_cave|1|Find the overflow cave in the south
 step read|Gardener's shed book|1|Read the book in the gardener's shed in the north
 step read|Car park ticket|1|Read the ticket at the sunk car park in the north-west
 step blueprint|Blueprint_ZiplineBase|1|Swim up to the gantry on the dome's cap: zipline plans
-step collect|story:b7_key|1|Dive into the drowned building and take the key from the chest at the bottom
-step reach|b7_summit|1|Climb the mountain to the tower on its top
-step open|Garden beacon locker|1|Open the summit locker with the key from the drowned building
-quest done=The garden breathes again. The gardener's letters were for the surface station - the Receiver finds it on band 900.
+step open|Seed store chest|1|Dive into the drowned seed store in the pit and open its chest
+step blueprint|Blueprint_Firework|1|Back in the dome, open the gardener's locker: firework plans
+step collect|story:watered|1|Turn the sprinkler crank to water the beds
+step read|Wren's letter|1|Read the letter that came up out of the dry bed
+quest done=The garden breathes again. Wren took Ines and Teo up to the Thalassa surface station - the Receiver finds it on band 900.
 quest reward=Seed_Watermelon*3;Seed_Mango*1
 
 save Biome Seven

@@ -20,30 +20,28 @@ expect step 5
 open Store shed chest
 wait 3
 expect step 6
-zone th_ridge
-expect step 7
-zone th_cave
-expect step 8
 read Dive log
-expect step 9
+expect step 7
 read Dinghy logbook
+expect step 8
+zone th_summit
+expect step 9
+open Mooring hill locker
+wait 3
+expect story th_key 1
 expect step 10
+use thpump
+expect story th_pump 1
+expect hidden thwater
+expect step 11
+air th_air1
+open Salvage store chest
+wait 3
+expect step 12
+read Ines's slate (salvage store)
+expect step 13
 use bell
 wait 13
 zone bell
 air bell
-expect step 11
-use thpump
-expect story th_pump 1
-expect hidden thwater
-expect step 12
-air th_air1
-open Salvage store chest
-wait 3
-expect story th_key 1
-expect step 13
-zone th_summit
-expect step 14
-open Mooring hill locker
-wait 3
 expect done

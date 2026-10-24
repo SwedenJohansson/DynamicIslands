@@ -108,7 +108,7 @@ place campfire_1 - at -29.6 4.7 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -26.6 6.7 ground sit yaw=297
 place "Box Small" - at -31.6 7.2 ground sit
 place Note_Paper dnote at -31.6 7.2 ground y=0.7 drop yaw=20
-note dnote Fisher's note | Good fishing off this side - too good. The fish come up here to get away from something.\nLeft the spare line in the box. Take it if you need it, friend.
+note dnote Fisher's note | FISHER'S NOTE, UNDER A STONE\n\nGood fishing off this side - too good. The fish come up here to get away from something, and they do not look back.\nLeft the spare line in the box. Take it if you need it, friend.\nP.S. If you see a diver, a tall one, wet hair, fierce - she went down the trench wall towards the Commons yesterday with a rope and no plan. Tell her the fisher says hello. Tell her the fisher says come back up.
 place RT_PlasticBoat dvan at 31.5 -17.5 ground yaw=57
 prop dvan tint.color=#4a6b7a
 prop dvan tint.amount=0.5
@@ -134,6 +134,8 @@ call sk_cave x=-24 z=-56 h=2 yaw=180 al=cy_caverock chest=cy_cavechest
 call sk_zone x=-24 z=-61 al=cy_cave id=cy_cave r=4 msg="The powder cave: the yard kept its blasting charges in here, far from everything."
 call sk_ruin x=8 z=62 h=2 al=cy_ruin
 call sk_notebox x=10.5 z=57.5 yaw=10 al=cy_ruinnote
+# STORY 10-24s: Mo, the knitted whale, in the yard office's lost property box
+place Loot_ChestSmall cymo at 6.9 62.2 ground sit yaw=180
 call sk_wreck x=54 z=-46 h=2 yaw=250 v=UT_ElectricityIsland_Crane01 al=cy_wreck crate=cy_wreckcrate scale=0.4
 place VP_Wagon01 - at 44 -40 ground sit yaw=30
 call sk_notebox x=60 z=-50 yaw=70 al=cy_wrecknote
@@ -165,7 +167,7 @@ zipto cyzip 6 -33
 place Loot_ChestSmall cyledge at 1.82 -55.82 ground sit yaw=40
 place SmallRock_02 - at -4.89 -49.9 ground sit scale=0.5
 place SmallRock_02 - at -4.89 -49.9 ground y=0.6 sit scale=0.32 yaw=40
-call treasure x=-7.39 z=-49.9 r=3 n=1 seed=24611
+call treasure x=-7.39 z=-49.9 r=12 n=1 seed=24611
 prop treasure24611 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 call treasure x=49.27 z=-8.96 r=5 n=1 seed=24612
 prop treasure24612 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
@@ -190,11 +192,11 @@ info author=Custom Islands
 info description=Concrete caissons standing out of the sea over the trench edge, linked by stone footbridges, with two cranes, a zipline, a smelter and a store. The seventh island of The Sunken Kingdom.
 island on.arrive=message||Grey concrete blocks standing out of the sea, two cranes over them - and past them, dark water.
 
-note foremanboard Foreman's board | CAISSON YARD - FOREMAN\n\nSmelter: on the yard, under the roof.\nFuel: west caisson shed.\nCrane 1 to crane 2 by the cable only - the north bridge is for carts.\nThe anchor gear stays on north: we anchor over the trench.\nChart of the trench on north's table. Hadal is straight down.
-note trenchchart Trench chart | A chart of the trench below the yard. One mark, circled twice: HADAL COMMONS, 45 m. Beside it, in pencil: "doors shut from inside".
+note foremanboard Foreman's board | CAISSON YARD - FOREMAN (J. Achterberg)\n\nSmelter: on the yard, under the roof. Fuel: west caisson shed.\nCrane 1 to crane 2 by the cable only - the north bridge is for carts, and for people who enjoy swimming.\nAnchor gear stays on north: we anchor over the trench. Chart of the trench on north's table. Hadal is straight down.\n\nChalked across the bottom, big letters: "SHUTTLE KIDS - 12 - ALL FED, ALL COUNTED. Warden Fennick took them down to the Commons Tues. Doors shut from inside. Good."\nUnder it, smaller, a different chalk: "Counted them myself. - I.M."
+note trenchchart Trench chart | TRENCH CHART - CAISSON YARD\n\nThe trench below the yard, contour by contour, in three colours of ink and one of tea.\nOne mark, circled twice: HADAL COMMONS, 45 m. The city under the sea, where the Network's families live.\nIn pencil beside it, Ines Marlowe's hand: "Doors shut from inside. Fennick has the keys. If they let me in, I'll stay with Milo till the Spire sends the lift. If they don't, I'll knock."\nAnd under that, much later, in red: "The Spire is not sending the lift."
 note smelterchest Smelter chest | The smelter chest: electric smelter plans.
 note fuelchest Fuel shed chest | The fuel shed's chest: advanced biofuel extractor plans.
-note anchorchest Anchor gear chest | The anchor gear chest: advanced anchor plans, "for anchoring over the trench".
+note anchorchest Anchor gear chest | The anchor gear: advanced anchor plans, for the trench.
 loot smelterchest Blueprint_SmelterElectric*1;Scrap*3
 prop smelterchest loot.refill=0
 loot fuelchest Blueprint_BiofuelExtractorAdvanced*1;BioFuel*1
@@ -213,8 +215,12 @@ prop zipcrane obj.name=zipcrane
 note cy_cavechest Powder store chest | The powder store: the charges are long gone; the fuses and wire are not.
 loot cy_cavechest Copper*2;Rope*3;Bolt*3;MetalIngot*1
 prop cy_cavechest loot.refill=0
-note cy_ruinnote Yard office book | YARD OFFICE BOOK\n\nThe vending machine takes Tangaroa tokens - the road toll's coin. Nobody here has any.\nThe mobile crane fell over the day the trench wall slid. The driver is fine. The crane is not.
-note cy_wrecknote Crane driver's report | CRANE DRIVER'S REPORT\n\nThe trench wall slid and the crane went with it, over on its side.\nThe Commons is straight down from the edge. When the caisson is sunk, the city gets its doors back.
+note cymo Lost property box | The yard's lost property: a knitted yellow whale, labelled.
+loot cymo story:sk_mo*1;Rope*1
+prop cymo loot.refill=0
+story sk_mo|Mo, a knitted whale|Feather|A small yellow whale, knitted by Ines Marlowe for her son Milo. A label: "MILO - SHUTTLE SEAT 14".
+note cy_ruinnote Yard office book | YARD OFFICE BOOK\n\nThe vending machine takes Tangaroa tokens, the road toll's coin. Nobody here has any. We have put a sign on it saying "BROKEN" so it feels less alone.\nMon. The Director on the radio again, calm as milk: "This is the Sealkeeper. The Yard will keep its lights off. The Commons is safe as long as it is dark." He says "safe" the way doctors say "comfortable".\nTues. Twelve children came up our ramp from the reef, in a line, holding hands, the biggest one at the back counting. We had soup. Fennick came up from the Commons for them.\nThe little one cried all night for his whale. The crane driver swam out to the shuttle at dawn and fetched it. It is in the lost property box, drying. Labelled. We are not animals.
+note cy_wrecknote Crane driver's report | CRANE DRIVER'S REPORT\n\nThe trench wall slid and my crane went with it, over on its side, like a giraffe fainting. I was not in it. I was out on the reef fetching a knitted whale, which is the only reason I am alive, and I would like that written down somewhere official.\nThe old crane's counterweight still hangs over the drowned store by the pit. Its release lever is on the rim, and it wants the crane key - I hid that in the east rock, in the key box.\nThe Commons is straight down from the trench edge. When the caisson is sunk the city gets its back door. Until then, it's the front door, and Fennick.
 note cy_wreckcrate Crane's toolbox | The crane's toolbox: shackles, bolts, a coil of cable.
 loot cy_wreckcrate Bolt*4;MetalIngot*2;Rope*2;Hinge*1
 prop cy_wreckcrate loot.refill=0
@@ -222,20 +228,18 @@ prop cy_wreckcrate loot.refill=0
 # --- DEEP 1-HOUR (10-24): story items, notes and checks
 story cy_key|Yard store key|Hinge|The yard store's key, from the chest on its drowned ground floor.
 story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
-note cydeep Yard store chest | The yard store chest: the key to the crane hill locker and a crest shard.
-loot cydeep story:cy_key*1;story:sk_crest*1;MetalIngot*2;Bolt*3;OxygenBottle*1
+note cydeep Yard store chest | The night shift's store chest, and a crest shard.
+loot cydeep story:sk_crest*1;TradeToken*2;MetalIngot*2;Bolt*3;OxygenBottle*1
 prop cydeep loot.refill=0
-note cylocker Crane hill locker | The crane driver's locker up on the hill.
+note cylocker Crane hill locker | The crane driver's locker on the hill: tea, rope.
 loot cylocker MetalIngot*3;CopperIngot*2;Rope*3;Cooked_Potato*2
 prop cylocker loot.refill=0
-prop cylocker if.open=has|story:cy_key|1
-prop cylocker else.open=message||The locker is padlocked. The tag says the key is kept "at the bottom, where the water keeps it safe".
-note cysumnote Crane driver's card | CRANE HILL\n\nThe old crane's counterweight hangs over the store. The release lever is on the rim.\nThe lever wants the crane key - I left it in the east rock.
-note cybldnote Yard store tally | YARD STORE\n\nCapped the hatch with a steel plate when the water rose. Nothing gets in now but a crane's weight.\nThe key is in the chest on the ground floor. Air on the first floor.
+note cysumnote Crane driver's card | CRANE HILL\n\nThe old crane's counterweight hangs over the drowned store. The release lever is on the rim.\nThe lever wants the crane key - I left it in the east rock, with my good tea.\nFrom up here you can see the shuttle on the reef, past the yard, lying on its side with the door open. The kids walked out of it. All of them. I keep telling myself that, every time I come up here. All of them.
+note cybldnote Yard pump log | YARD PUMP LOG - NIGHT SHIFT\n\n01:50 Sluices 1-3 closed. Store dry. Night shift below in the store, eight men, counting stock.\n02:14 SLUICE 4 OPENED - BY SPIRE ORDER. Remote. We did not touch it.\n02:14 Called the Spire. "Sluice 4 is open, the night shift is still below." Director: "I know. I'm sorry. The Yard's lights must go out."\n02:20 Store flooded. Capped the hatch with a steel plate.\n02:21 Eight men. I wrote their names on the back of this page. Then I stopped.\n\nLast line, a different pen: "He chose the lights over us. Over his own people. Hadal next - the Commons is the only lit room left. - I.M."
 note cyledge Rigger's cache | A rigger's cache on a ledge of Crane Hill.
 loot cyledge Rope*3;Bolt*2;Feather*3
 prop cyledge loot.refill=0
-note cycave2chest Crane key box | The crane driver's key box, hidden in the east rock: the crane key, on its brass tag.
+note cycave2chest Crane key box | The crane driver's key box: the crane key.
 loot cycave2chest story:cy_cranekey*1;CopperOre*2;Rope*2
 prop cycave2chest loot.refill=0
 prop cysummit zone.id=cy_summit
@@ -308,24 +312,22 @@ pop
 # --- end of jump course cy ---
 
 quest title=The Caisson Yard
-quest intro=A construction yard on the Receiver. Climb onto the yard caisson.
+quest intro=The survey team ran to this construction yard over the trench. Climb onto the yard caisson.
 step reach|yard|1|Climb onto the yard
 step read|Foreman's board|1|Read the foreman's board
 step reach|crane_2|1|Take the zipline from crane 1 to crane 2
 step blueprint|Blueprint_SmelterElectric|1|Find the electric smelter plans under the smelter's roof
 step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Open the fuel shed on the west caisson
 step blueprint|Blueprint_AnchorStationaryAdvanced|1|Find the anchor gear on the north caisson
-step reach|cy_ridge|1|Climb the spoil ridge in the west
-step reach|cy_cave|1|Find the powder cave in the south
 step read|Yard office book|1|Read the book in the yard office in the north
+step collect|story:sk_mo|1|Look in the yard office's lost property box
 step read|Crane driver's report|1|Read the report at the fallen crane in the south-east
 step read|Trench chart|1|Read the trench chart
-step collect|story:cy_cranekey|1|Find the crane key in the east rock
+step collect|story:cy_cranekey|1|Find the crane key in the key box in the east rock
 step collect|story:cy_drop|1|Drop the counterweight on the sealed store with the release lever on the rim
-step collect|story:cy_key|1|Dive into the drowned building and take the key from the chest at the bottom
-step reach|cy_summit|1|Climb the mountain to the tower on its top
-step open|Crane hill locker|1|Open the summit locker with the key from the drowned building
-quest done=Hadal Commons, 45 m down, straight below the trench edge. The Receiver finds its doors on band 800.
+step open|Yard store chest|1|Dive down through the store's floors and open the chest at the bottom
+step read|Yard pump log|1|Read the night shift's pump log in the drowned store
+quest done=The Spire flooded the Yard with its own men below. Hadal Commons is the last lit room - the Receiver finds its doors on band 800.
 quest reward=MetalIngot*2;Bolt*4
 
 save Caisson Yard

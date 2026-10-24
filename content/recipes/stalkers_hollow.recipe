@@ -115,7 +115,7 @@ place "Box Small" dcampbox at 36.7 -20.4 ground sit
 place Note_Paper dnote at 36.7 -20.4 ground y=0.7 drop yaw=30
 place Loot_ChestSmall dcamp at 38.7 -18.9 ground sit yaw=237
 call airpocket x=34.2 z=-22.4 id=stalkers_hollow_dair al=dairzone bub=dairbub r=2.5 msg="Air trapped in a diver's bell-tent. Breathe."
-note dnote Diver's slate | A slate on a lanyard:\n\nLAST DIVE - LIGHTS OUT BELOW 40.\nLeft the spare kit here for whoever comes next.
+note dnote Ines's last slate | DIVE SLATE - I. MARLOWE\n\nTo whoever has Mo.\nI followed you down the chain as far as the lip. Further than this, the Stalker would hear me, and you have enough to carry.\nFennick and Halvard went to the vent. Neither of them came back up the chain. I sat here a long time with my light off.\nGo and finish it. Then go up, find a boy on a high island with a warden's hat over his eyes, and give him his whale. Tell him his mum is coming. Tell him she counted everybody.
 note dcamp Diver's cache | A diver's spare kit, wired shut against the current.
 loot dcamp Rope*2;Glass*3;Plastic*4
 prop dcamp loot.refill=0
@@ -176,7 +176,7 @@ place Zone_Trigger shsummit at 44 80 h=50.98
 place Loot_ChestSmall shledge at 30.8 80 ground sit yaw=40
 place SmallRock_02 - at 49 82 ground sit scale=0.5
 place SmallRock_02 - at 49 82 ground y=0.6 sit scale=0.32 yaw=40
-call treasure x=46.5 z=82 r=3 n=1 seed=24911
+call treasure x=46.5 z=82 r=12 n=1 seed=24911
 prop treasure24911 treasure.loot=TitaniumOre*3;CopperOre*2
 call treasure x=69.29 z=-12.89 r=5 n=1 seed=24912
 prop treasure24912 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
@@ -212,10 +212,10 @@ story stalkerhurt|Stalker wounded|Scrap|You wounded the Abyssal Stalker - it cal
 story stalker|Abyssal Stalker|Scrap|You drove off the Abyssal Stalker.
 story valve|Seal valve turned|Hinge|You turned the seal valve in the Hollow.
 
-note wardenentry Warden's last entry | WARDEN'S LOG - LAST ENTRY\n\nIt hunts by the lamps. Keep to the alcoves - it can't get its head in.\nWhen it's hurt it calls the little ones. Don't stay out in the open then.\nThe valve on the plinth answers the Spire. Whatever they pull up there, the valve finishes it down here.
+note wardenentry Warden's last entry | WARDEN'S LOG - LAST ENTRY - G. FENNICK\n\nIt hunts by the lamps. Keep to the alcoves - it can't get its head in.\nWhen it's hurt it calls the little ones. Don't stay out in the open then. The floodlights round the hollow are the only thing it is afraid of; turn them on it while it is calling.\nThe valve on the plinth answers the Spire. Whatever gets pulled up there, the valve finishes it down here.\nThe Director came down the chain an hour after me, with a lamp. First sensible thing he has done in nine years. We are going to the vent together to wedge it while the big one sleeps.\nIf you are the Stalker: I did say. Several times. In writing.
 note ringwavenote What the Ringwave means (part 1) | Scratched into the plinth's brass plate:\n\nTHE RING IS THE SEA. THE THREE WAVES ARE THE THREE LAYERS IT WAS BUILT TO MOVE.\n\nThe rest of the plate has rusted through.
-note lastrestore The last word | RESTORED.\n\nThe gate under the Ringwave stands open, the alcoves glow teal, and somewhere far up the cable the pumps are running. The Network breathes again - and whatever it pulled up from below will be back.\nThat is someone else's watch now. The Sunken Kingdom has its lights.
-note lastseal The last word | SEALED.\n\nThe stone plug sits over the gate, and the Hollow is quiet. The Network's lamps will go out one by one, and the Commons will drown slowly and with dignity.\nNothing more comes up the trench. The Sunken Kingdom sleeps.
+note lastrestore The last word | RESTORED.\n\nThe gate under the Ringwave stands open, the alcoves glow teal, and somewhere far up the cable the pumps are running. Up the trench, the Commons' great doors are open and four hundred people are walking into the light.\nBy the vent, in the silt: a warden's whistle, a burnt-out lamp, two sets of footprints going in and none coming out.\nOn the cable radio, Ines: "Lights all the way to the roofs. Milo's plane landed. It's coming up with us, so we'll keep the floodlights on. Bring Mo home."
+note lastseal The last word | SEALED.\n\nThe stone plug sits over the gate, and the Hollow is quiet. The Network's lamps will go out one by one, and the Commons will live on in the dark, safe and very quiet, for as long as dark lasts.\nBy the vent, in the silt: a warden's whistle, a burnt-out lamp, two sets of footprints going in and none coming out.\nOn the cable radio, Ines: "It's dark. It's quiet. Halvard got what he wanted, in the end. I'll go up the lift to Milo. Bring Mo home."
 
 prop lipzone zone.id=lip
 prop lipzone zone.radius=4
@@ -231,7 +231,7 @@ prop stalker creature.damage=2
 prop stalker boss.phase=0.5
 prop stalker boss.summon=3
 prop stalker boss.summonKind=Creature_AnglerFish
-prop stalker on.phase=give||story:stalkerhurt*1\nmessage||The Stalker shudders - and small lights come up out of the dark to it. Back to an alcove!
+prop stalker on.phase=give||story:stalkerhurt*1\nmessage||The Stalker shudders and starts to call - and small lights come up out of the dark to it. Turn the floodlights on it!
 prop stalker on.defeat=give||story:stalkerhurt*1\ngive||story:stalker*1\nmessage||The Abyssal Stalker sinks past the lamps and does not come back up.
 prop arenazone zone.id=arena
 prop arenazone zone.radius=15
@@ -261,8 +261,8 @@ prop hollowdark zone.radius=36
 note sh_cavechest Stalker's hoard | Things the Stalker dragged in: a diver's tank, a lamp, a broken bag.
 loot sh_cavechest OxygenBottle*1;TitaniumOre*2;Rope*2;Battery*1
 prop sh_cavechest loot.refill=0
-note sh_ruinnote Watchers' post log | WATCHERS' POST\n\nWe watched the Hollow for the Network. The Stalker comes up the trench at night and goes back at dawn.\nIt keeps out of the lamps. The old valve in the south-east trench shuts the vent it breathes from.
-note sh_wrecknote Boat's last log | BOAT'S LAST LOG\n\nWe came over the trench lip to see the Hollow lit. The Stalker took the hull from under us.\nThe crew swam for the post. I stayed with the boat.
+note sh_ruinnote Watchers' post log | WATCHERS' POST - LOG\n\nWe watched the Hollow for the Network. The Stalker comes up the trench at night and goes back at dawn, like a commuter.\nIt keeps out of strong light - not dim lamps, those it likes, it comes to them like a moth. Strong light, the floodlights, burns it.\nThe old valve in the south-east trench shuts the vent it breathes from.\nLast night two men went past the post towards the vent: a warden in a big coat with no hat, and the Director himself, carrying a lamp. The warden was talking the whole way. The Director was listening. We have never seen him listen.
+note sh_wrecknote Boat's last log | BOAT'S LAST LOG\n\nWe came over the trench lip to see the Hollow lit - the Spire had set its fuses, and the whole sea could see.\nThe Stalker came up under us and took the hull like a dog takes a slipper. The crew swam for the post. I stayed with the boat, because somebody should, and because I can't swim, which I have never told anybody.\nI watched it go back down to the Hollow afterwards. It went straight past the lamps and lay down in the dark by the vent, the way you'd lie down by a fire.
 note sh_wreckcrate Boat's locker | The boat's locker: titanium, rope, a lamp in oilcloth.
 loot sh_wreckcrate TitaniumIngot*1;Rope*3;Bolt*2;Copper*2
 prop sh_wreckcrate loot.refill=0
@@ -284,16 +284,14 @@ prop gate else.use=message||Barred from inside. The seal valve opens it - if the
 # --- DEEP 1-HOUR (10-24): story items, notes and checks
 story sh_key|Warden house key|Hinge|The warden house key, from the chest at the bottom of the drowned house.
 story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
-note shdeep Warden house chest | The warden house chest: the key to the lip rock locker and a crest shard.
-loot shdeep story:sh_key*1;story:sk_crest*1;TitaniumOre*2;Bolt*3;OxygenBottle*1
+note shdeep Warden house chest | The wardens' chest: titanium and the last crest shard.
+loot shdeep story:sk_crest*1;TradeToken*2;TitaniumOre*2;Bolt*3;OxygenBottle*1
 prop shdeep loot.refill=0
-note shlocker Lip rock locker | The wardens' locker on the lip rock, above the water.
+note shlocker Lip rock locker | The wardens' locker on the lip rock: spare tanks.
 loot shlocker TitaniumIngot*2;MetalIngot*2;Battery*1;Cooked_Potato*2
 prop shlocker loot.refill=0
-prop shlocker if.open=has|story:sh_key|1
-prop shlocker else.open=message||The locker is padlocked. The tag says the key is kept "at the bottom, where the water keeps it safe".
-note shsumnote Warden's last card | THE LIP ROCK\n\nWe climbed up here to breathe between watches.\nThe crown vault in our house wants nine crest shards - one from every drowned building of the kingdom.
-note shbldnote Warden house roll | WARDEN HOUSE\n\nThe Stalker hates light. Three floodlights stand round its hollow; turn them on it.\nThe crown vault upstairs opens for nine crest shards. The key to our locker is in the chest at the bottom.
+note shsumnote Warden's last card | THE LIP ROCK\n\nWe climbed up here to breathe between watches. From here you see the Spire's lights on the trench, and on a clear night, very far off, the Spirecrest beacon blinking on the roofs.\nThe crown vault in our house wants nine crest shards - one from every drowned building of the kingdom.\nI always meant to bring the boy up here and show him the beacon. Tell him it's not a bad light, just a lonely one. - G.F.
+note shbldnote Warden house roll | WARDEN HOUSE - DUTY ROLL\n\nFennick. Fennick. Fennick. (Everyone else went up the lift.)\nThe Stalker hates strong light. Three floodlights stand round its hollow; turn them on it when it is hurt and calling the small ones, and keep to the alcoves between.\nThe crown vault upstairs opens for nine crest shards, one from every drowned building of the kingdom. I put the last one here myself, so that whoever comes all the way down gets something for it.\nIf it is you, Ines: I am sorry about the cage. I am sorry about all of it.
 note shledge Watcher's cache | A watcher's cache on the lip rock's shelf.
 loot shledge Rope*3;Bolt*2;Feather*3
 prop shledge loot.refill=0
@@ -324,11 +322,16 @@ prop shcrown if.open=has|story:sk_crest|9
 prop shcrown else.open=message||Nine sockets in the vault's lid, shaped like crest shards. Every drowned building of the kingdom kept one.
 
 quest title=The Deep
-quest intro=Band 500: the Hollow under the trench lip. Go down the chain to the lip.
+quest intro=Fennick and the Director went down to the Hollow. Go down the chain to the trench lip after them.
 step reach|lip|1|Go down the chain to the trench lip
 step read|Warden's last entry|1|Read the warden's last entry
-step reach|alcove_1|1|Get into the north alcove
+step read|Watchers' post log|1|Read the log at the watchers' post in the west
+step read|Boat's last log|1|Read the last log at the sunk boat in the south
+step open|Warden house chest|1|Dive to the bottom of the drowned warden house in the south-west and open its chest
+step read|Warden house roll|1|Read the duty roll in the drowned warden house
+step reach|alcove_1|1|Go down into the Hollow and get into the north alcove
 step collect|story:stalkerhurt|1|Wound the Abyssal Stalker
+step collect|story:sh_flood|3|While it calls the small ones, turn the three floodlights on it
 step reach|alcove_2|1|Get into the east alcove before the small ones reach you
 step collect|story:stalker|1|Drive off the Abyssal Stalker
 step reach|valve|1|Go to the seal valve on the plinth
@@ -336,19 +339,8 @@ step collect|story:valve|1|Turn the seal valve
 step read|What the Ringwave means (part 1)|1|Read the plate on the plinth
 step reach|alcove_4|1|Go to the west alcove
 step read|The last word|1|Read the last word
-step reach|sh_ridge|1|Swim to the lip ridge in the north-west
-step reach|sh_cave|1|Find the Stalker's cave in the east
-step read|Watchers' post log|1|Read the log at the watchers' post in the west
-step read|Boat's last log|1|Read the last log at the sunk boat in the south
-step reach|sh_deep|1|Dive to the floor of the warden house pit in the south-west
-step collect|story:sh_key|1|Dive into the drowned building and take the key from the chest at the bottom
-step read|Warden house roll|1|Read the roll in the drowned warden house
-step reach|sh_summit|1|Climb the lip rock up out of the water in the north-east
-step read|Warden's last card|1|Read the note on the summit
-step open|Lip rock locker|1|Open the summit locker with the key from the drowned building
-step collect|story:sh_flood|3|Turn the three floodlights round the hollow on the Stalker
 step reach|surface_line|1|Climb the chain back to the surface
-quest done=The Sunken Kingdom is decided. The Receiver goes quiet on every band but one.
+quest done=The Sunken Kingdom is decided. Mo is going home. The Receiver goes quiet on every band but one.
 quest reward=TitaniumOre*3;Battery*2;MetalIngot*4
 
 save The Stalker's Hollow

@@ -117,7 +117,7 @@ call hatchcache x=-40 z=-44 r=10 seed=10215 alias=roadhatch chest=roadhatchchest
 call treasure x=-60 z=10 r=10 n=1 seed=10214
 prop treasure10214 treasure.loot=CopperOre*3
 place Zone_Trigger viewzone at -20 -60 ground
-note drivernote Drivers' camp note | LANE 3 - WHO'S STILL HERE\n\nThe Okafors (van), Dee (bike), the bus driver (gone down the lane for his toolbox).\nWe cook on the bank and watch the road go under a bit more each week.\nSomeone says the road goes on all the way to the labs. Under water.
+note drivernote Drivers' camp note | LANE 3 - WHO'S STILL HERE\n\nThe Okafors (van, four kids, one goat that is not ours). Dee (bike, opinions). The bus driver, gone down the lane for his toolbox and his dignity.\nWe cook on the bank and watch the road go under a bit more each week. Mrs Okafor says her sister works the night switchboard on the roofs and will have heard something. Dee says the Network has heard plenty and said nothing.\nTonight nobody lit the stove. Dee saw something out where the road goes under - a teal light, sliding along the lane markings like it was reading them.\nWe ate cold beans in the dark and the goat sulked. Tomorrow we walk north.
 prop viewzone zone.id=overpass_view
 prop viewzone zone.radius=7
 prop viewzone zone.repeat=never
@@ -158,11 +158,16 @@ place Loot_ChestSmall oplocker at 59.25 -41.25 h=36.73 sit yaw=180
 place Note_Paper opsumnote at 59.25 -42.75 h=36.84 drop yaw=20
 place Zone_Trigger opsummit at 60 -42 h=37.73
 place ZiplinePath_Landmark opzip at 60.75 -42.75 h=36.73 yaw=0
+# STORY 10-24s: the Stalker's lure seen once, far off, sweeping the drowned road (from the summit lantern)
+place Placeable_Lantern_Metal opcam at 60.4 -43.4 h=36.73 sit
+place Placeable_Lantern_Metal oplure at 104 -24 h=-5 drop scale=1.6
+place TP_Moontown_Barrel04 opscorch at 84 -4 h=-5.6 sit scale=0.8
+place TP_Moontown_Barrel04 opscorch at 79 5 h=-5 sit yaw=60 scale=0.7
 zipto opzip 30 -21
 place Loot_ChestSmall opledge at 50.67 -32.67 ground sit yaw=40
 place SmallRock_02 - at 39.49 -44.02 ground sit scale=0.5
 place SmallRock_02 - at 39.49 -44.02 ground y=0.6 sit scale=0.32 yaw=40
-call treasure x=36.99 z=-44.02 r=3 n=1 seed=24111
+call treasure x=36.99 z=-44.02 r=12 n=1 seed=24111
 prop treasure24111 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 call treasure x=7.33 z=25.65 r=5 n=1 seed=24112
 prop treasure24112 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
@@ -193,11 +198,11 @@ island on.arrive=message||A road comes up out of the sea, crosses a green bank -
 
 story boothkey|Toll booth key|Placeable_Lantern_Metal|The toll booth's key, from a van's glovebox on the sunken lane.
 
-note endsign Road's end | ROAD CLOSED\n\nThe sign is bolted to the last good slab. Past it, the road just stops.
-note boothlog Toll booth log | TOLL BOOTH 4 - LOG\n\nWater over lane 3 since Tuesday. Cars still trying to get up the ramp.\nLast van down: the Network's lab shuttle, headed for the tower. Driver left my spare key in his glovebox - "back tonight".\nHe wasn't. Strongbox stays locked.
-note glovebox Van glovebox | The van's glovebox: a booth key on a red tag, a fuel can's receipt, a little scrap.
-note boothbox Toll booth strongbox | The booth's strongbox: the day's takings and a set of motor wheel plans, "for the maintenance boat".
-note buslocker Bus locker | The bus driver's locker, rusted shut but it gives: steering wheel plans and a tool roll.
+note endsign Road's end | ROAD CLOSED\nBy order of G. Fennick, Network door warden.\nNo vehicles. No swimming. No lights after dark.\nIf you are the Stalker, go home.
+note boothlog Toll booth log | TOLL BOOTH 4 - LOG (A. Petrov, keeper)\n\nTues. Water over lane 3. Cars still trying the ramp, as if the sea will let them through for a token.\nWeds. The children's shuttle came up the ramp at dusk, twelve small faces at the windows and one big yellow whale. The diver, Marlowe, ran the last hundred metres to kiss her boy through the glass. Driver left my spare key in his glovebox - "back tonight".\nWeds, late. The booth radio, the Director again, slow and kind as a doctor: "This is the Sealkeeper. The road is closed for your safety. Lights off. Wait for us." Wait for whom?\nThurs. The diver came back up the road, alone, wet to the neck. Shuttle never made the Yard. She asked me which way the labs were and went that way without a word.\nStrongbox stays locked. I am going to sit on the hill and watch for headlights.
+note glovebox Van glovebox | The van's glovebox: a booth key on a red tag.
+note boothbox Toll booth strongbox | The booth's strongbox: the takings and motor wheel plans.
+note buslocker Bus locker | The bus driver's locker: steering wheel plans and a tool roll.
 loot glovebox story:boothkey*1;BioFuel*1;Scrap*2
 prop glovebox loot.refill=0
 loot boothbox Blueprint_MotorWheel*1;TradeToken*2
@@ -213,28 +218,26 @@ prop rampzone zone.message=The top of the ramp. One way the road runs into the s
 prop goats creature.count=2
 prop llamas creature.count=2
 
-note op_cavechest Road crew's chest | A road crew's chest: bolts, hinges, a tin of nails.
+note op_cavechest Road crew's chest | A road crew's chest: bolts, hinges, nails.
 loot op_cavechest Bolt*3;Hinge*2;Nail*10;Rope*2
 prop op_cavechest loot.refill=0
-note op_ruinnote Toll keeper's tally | TOLL KEEPER'S TALLY\n\nTangaroa tokens, the Network's coin. One a car, two a caravan.\nWhen the water came the cars stopped and the tokens rolled everywhere. I left one on every place I liked.\nThe yard past the shelf has a machine that still takes them, they say.
-note op_wrecknote Caravan diary | CARAVAN DIARY\n\nWe paid the toll and parked to wait out the storm. Two caravans, one family.\nThe road went under at night. We walked the embankment north and never came back for the caravans.
-note op_wreckcrate Caravan larder | A caravan's larder crate: tins, a rope, a jar of seeds.
+note op_ruinnote Toll keeper's tally | TOLL KEEPER'S TALLY (A. Petrov)\n\nTangaroa tokens, the Network's coin. One a car, two a caravan, three for the man in the silver saloon who called me "booth".\nWhen the water came the cars stopped and the tokens rolled everywhere. I went round and left one on every place I liked, so somebody with a detector would have a nice walk one day. Under the old bench. By the caravans. Where the goats sleep.\nThe yard past the shelf has a machine that still takes them, they say. I hope it gives change.\nI have kept my tally to the last car. The last entry is not a car. It is the children's shuttle, 12 aboard, and I did not charge it.
+note op_wrecknote Caravan diary | CARAVAN DIARY - THE HALLORAN FAMILY\n\nWe paid the toll and parked to wait out the storm. Two caravans, one family, one jack between us, which Grandad keeps "for safety" in five different gloveboxes so nobody can lose it. Nobody can find it either.\nThe road went under at night. We walked the embankment north and left the caravans with the kettle on.\nBefore we went, the little one pointed at the water and said "boat". It was not a boat. It was a light, teal, low down, and it went the wrong way - out to sea, against the waves - and then it turned and came back slowly along the road.\nWe did not light the kettle again.
+note op_wreckcrate Caravan larder | A caravan's larder crate: tins, rope, seeds.
 loot op_wreckcrate Rope*2;Seed_Pineapple*1;Plank*4;Scrap*2
 prop op_wreckcrate loot.refill=0
 
 # --- DEEP 1-HOUR (10-24): story items, notes and checks
 story op_key|Depot key|Hinge|The highway depot's key, from the chest on its drowned ground floor.
 story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
-note opdeep Depot chest | The depot chest: the key to the toll hill locker and a crest shard.
-loot opdeep story:op_key*1;story:sk_crest*1;MetalIngot*2;Bolt*3;OxygenBottle*1
+note opdeep Depot chest | The depot's stock chest, with a crest shard on top.
+loot opdeep story:sk_crest*1;MetalIngot*2;Bolt*3;OxygenBottle*1;TradeToken*2
 prop opdeep loot.refill=0
-note oplocker Toll hill locker | The toll men's locker on the hill: the takings and their lunch.
+note oplocker Toll hill locker | The toll men's locker: takings, and Teo's note about lunch.
 loot oplocker MetalIngot*3;CopperIngot*2;Rope*3;Cooked_Potato*2
 prop oplocker loot.refill=0
-prop oplocker if.open=has|story:op_key|1
-prop oplocker else.open=message||The locker is padlocked. The tag says the key is kept "at the bottom, where the water keeps it safe".
-note opsumnote Toll man's card | TOLL HILL\n\nFrom up here you can see the whole jam: every car that never moved.\nThe depot went under with the slab on its hatch. A car jack would lift it.\nThe zipline runs back down to the road.
-note opbldnote Depot foreman's note | DEPOT FOREMAN\n\nWe dropped the slab on the hatch so the sea would not take the stock.\nThe key is in the chest on the ground floor. Air on the first floor, by the stairs.
+note opsumnote Teo's card (Toll Hill) | T. BRASK - TOLL HILL\n\nInes, if you come back up this way: I am two days behind you with your oxygen and my knees.\nThe toll keeper says you went to the labs. Of course you did.\nFrom up here I watched the light come along the road under the water tonight. It stopped at every car, the way a dog stops at every gate. When it got to the empty shuttle bay it stayed a long time.\nI have left you the toll men's lunch in the locker. Eat it. You never eat.\nThe depot down in the pit is where the road crew kept their papers. The jack in the caravans would lift the slab. Me, I'm going on to the labs.
+note opbldnote Depot foreman's note | DEPOT FOREMAN - LOG, LAST PAGE\n\nThe order came down the wire from the Spire at 02:00: drop the slab on the hatch, shut the road pumps, go home. Not "for the storm". Just "by order of the Sealkeeper".\nWe dropped the slab. The road pumps stopped. The sea walked up the ramp like it owned a ticket.\nI asked Fennick at the door what it was for. He said, "Lights and noise, Bert. The Director says lights and noise." Then he went back to his crossword.\nThe children's shuttle took the lab road an hour later, the last thing to go down it.\nIf you want the stock, it's yours. If you want the shuttle, follow the road under the sea to the Brinelab tower. The driver always stopped there for tea.
 note opledge Surveyor's cache | A road surveyor's cache on a ledge of Toll Hill.
 loot opledge Rope*3;Bolt*2;Feather*3
 prop opledge loot.refill=0
@@ -243,7 +246,19 @@ loot opcave2chest CopperOre*3;Rope*2;Battery*1
 prop opcave2chest loot.refill=0
 prop opsummit zone.id=op_summit
 prop opsummit zone.radius=2.5
-prop opsummit zone.message=The top of Toll Hill. The whole island lies below.
+prop opsummit zone.message=The top of Toll Hill. Far out where the road goes under, something teal is moving.
+prop opsummit zone.repeat=never
+prop opsummit on.enter=show|oplure\nopen|oplure\ncamera|opcam|oplure|7|90\nmessage||Out where the road runs under the sea, a teal light slides along the lane, against the waves - stops at each drowned car - and moves on.\nwait|20\nhide|oplure
+prop opcam obj.name=opcam
+prop oplure obj.name=oplure
+prop oplure beh.hidden=1
+prop oplure tint.color=#2fd0c0
+prop oplure tint.amount=0.8
+prop oplure beh.move=0,0,55
+prop oplure beh.moveTime=18
+prop oplure beh.moveMode=switch
+prop opscorch tint.color=#1c1a18
+prop opscorch tint.amount=0.85
 story op_jackpart|Car jack part|Bolt|A part of a car jack, from a caravan's glovebox. Five make a jack.
 story op_jack|Car jack|Hinge|A car jack, put together from five parts. Strong enough for a concrete slab.
 story op_lifted|Slab lifted|Bolt|The slab is off the depot's roof hatch.
@@ -274,23 +289,23 @@ prop opcap else.use=message||A concrete slab lies over the depot's roof hatch. F
 prop opcap on.use=hide|opcap\ngive||story:op_lifted*1\nmessage||The jack bites, the slab tips and slides off into the pit. The hatch is open.
 
 quest title=The Drowned Highway
-quest intro=The caretaker followed the road. Climb the ramp to the toll booth.
+quest intro=Ines and Teo went down this road after the children's shuttle. Climb the ramp to the toll booth.
 step reach|ramp_top|1|Climb to the top of the ramp
-step read|Toll booth log|1|Read the log in the toll booth
+step read|Toll booth log|1|Read the keeper's log in the toll booth
+step reach|op_summit|1|Climb Toll Hill to the tower on its top and look along the road
+step open|Toll hill locker|1|Open the toll men's locker on the hill
+step read|Teo's card (Toll Hill)|1|Read the caretaker's card on Toll Hill
 step reach|sunken_lane|1|Dive down the lane to the air pocket by the vans
 step open|Van glovebox|1|Open the glovebox of the van on the lane
 step blueprint|Blueprint_MotorWheel|1|Open the booth's strongbox with the key: motor wheel plans
-step reach|op_ridge|1|Walk the old embankment in the north
-step reach|op_cave|1|Find the road crew's cave in the south-east
 step read|Toll keeper's tally|1|Read the tally in the toll keeper's house in the north-east
 step read|Caravan diary|1|Read the diary at the caravans in the south-west
 step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel plans from the bus locker
 step collect|story:op_jack|1|Find the five jack parts in the caravans' gloveboxes and put the jack together at the workbench by the pit
 step collect|story:op_lifted|1|Jack the slab off the sunken depot's roof hatch
-step collect|story:op_key|1|Dive into the drowned building and take the key from the chest at the bottom
-step reach|op_summit|1|Climb the mountain to the tower on its top
-step open|Toll hill locker|1|Open the summit locker with the key from the drowned building
-quest done=The road goes on, under water, towards the lab tower. The Receiver picks it up on band 800.
+step open|Depot chest|1|Dive into the depot and open its stock chest at the bottom
+step read|Depot foreman's note|1|Read the foreman's last page by the stairs
+quest done=The road goes on under the sea to the Brinelab tower, where the shuttle stopped for tea. The Receiver picks it up on band 800.
 quest reward=Rope*3;Nail*10
 
 save Overpass Shoal

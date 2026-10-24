@@ -72,6 +72,8 @@ place Block_Floor_Tier3 spire at 2.25 3.75 y=14.52
 place Block_Floor_Tier3 spire at 3.75 3.75 y=14.52
 place Placeable_Table_Basic - at 2.6 2.0 y=14.52 sit yaw=0
 place Note_Paper inesmessage at 2.6 2.0 y=15.8 drop yaw=15
+# STORY 10-24s: the Director's confession, on the control room floor by the window
+place Note_Paper confession at 2.6 3.4 y=15.0 drop yaw=200
 place Note_Board networkmap at 4.4 1.2 y=15.5 yaw=270
 place RT_PowerBox controlpad at 0.15 1.2 y=15.9 yaw=90
 place RT_Pillar - at 3.6 0.6 y=14.52 sy=0.6
@@ -90,6 +92,12 @@ place Creature_StoneBird screechers at 0 0 h=24
 place Zone_Trigger dockzone at -11 13 h=2.2
 place Note_Board orders at -9 11 ground yaw=135
 store spireshop at -10 12 ground
+# STORY 10-24s: Milo's crayon card on the dock, where the children waited for the plane
+place "Box Small" - at -12.6 10.4 ground sit
+place Note_Paper milocard at -12.6 10.4 ground y=0.7 drop yaw=40
+# STORY 10-24s: the fuse board lights the spire - and the Stalker's lure comes up the trench to look (seen from the door tower's deck)
+place Placeable_Lantern_Metal skcam at 22.5 -15.5 h=9.475 sit
+place Placeable_Lantern_Metal sklure at 45 25 h=-6 drop scale=1.6
 ramp Block_Floor_Tier3 from -13 16 1.2 to -16 19 1.2 len=1.5 top=0
 call ladtower x=-8 z=-6 h0=3 lv=4 a=towers
 place Loot_Chest baselocker at -5.6 -4.2 ground sit yaw=90
@@ -155,7 +163,7 @@ place campfire_1 - at 23.2 -38.6 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 26.2 -36.6 ground sit yaw=137
 place "Box Small" - at 21.2 -36.1 ground sit
 place Note_Paper dnote at 21.2 -36.1 ground y=0.7 drop yaw=20
-note dnote Castaway's note | DAY 40 - OR 41\n\nThe station people never came up for me. I watch their crane from here.\nAt night a light goes down the shaft and does not come back up.\nI have fish, rain, and this pencil. That is enough for now.
+note dnote Castaway's note | DAY 12 ON THE SPIRE'S ROCKS\n\nThe plane went over yesterday, low, full of small faces at the windows. Then it went over again, empty, and it did not come back.\nI have watched the man in the top window every night. He does not sleep. He talks to the radio as if somebody is there.\nLast night the lights on the Spire came on all at once, and out in the trench a teal light lifted its head and looked. Then they went off again, very fast, and the teal light lay down.\nI have fish, rain, and this pencil.
 place BoatStranded dvan at -23.2 38.6 ground yaw=257
 prop dvan tint.color=#6b5a48
 prop dvan tint.amount=0.5
@@ -213,7 +221,7 @@ zipto skzip 22 -33
 place Loot_ChestSmall skledge at 33.82 -55.82 ground sit yaw=40
 place SmallRock_02 - at 22.31 -58.92 ground sit scale=0.5
 place SmallRock_02 - at 22.31 -58.92 ground y=0.6 sit scale=0.32 yaw=40
-call treasure x=19.81 z=-58.92 r=3 n=1 seed=24811
+call treasure x=19.81 z=-58.92 r=12 n=1 seed=24811
 prop treasure24811 treasure.loot=TitaniumOre*3;MetalIngot*2
 call treasure x=-61.35 z=12.58 r=5 n=1 seed=24812
 prop treasure24812 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
@@ -244,16 +252,26 @@ story descended|Descend lever|Bolt|You pulled the descend lever.
 story restorechoice|RESTORE pulled|Bolt|You chose RESTORE at the Sealkeeper Spire.
 story sealchoice|SEAL pulled|Bolt|You chose SEAL at the Sealkeeper Spire.
 
-note orders Sealkeeper's orders | SEALKEEPER'S ORDERS\n\n1. Power first: the generator on the base.\n2. Prime the pumps from the west tower. Fuses from the east tower.\n3. The control room is keyed with the Commons' code.\n4. Wind the cable. At the cable head: RESTORE, or SEAL. Not both. There is no both.\n5. Then go down. Somebody has to see it done.
+note milocard Milo's crayon card | A CARD IN CRAYON, WEDGED IN THE DOCK RAIL\n\nTO MUM.\nWe are on the plane!!! The plane man says it is the last one. Mr Fennick is not coming, he says somebody has to close a door properly. He gave me his hat.\nThere were 12 of us and we are all here, I counted twice like you said.\nI did not have Mo. A man at the yard said he would keep him. If you find him tell him I am OK.\nI am going to Gran's on the high island. Come and get me after.\nLOVE MILO (age 7)\n(a drawing of a whale, a plane and a very tall lady with a diving mask)
+note confession The Director's confession | DIRECTOR HALVARD ROOK - FOR WHOEVER COMES UP THE LADDER\n\nIt hunts what is lit and what is loud. We learned that the night the doors were open and it came up the trench pipe. The Commons was the brightest, loudest room in the sea - four hundred people, every family of the Network.\nSo I made the rest of the sea brighter and louder than them. No. I made the rest of the sea go dark, one station at a time, and I left one light burning far away, on the roofs, so it would swim there instead. The Spirecrest beacon. The one you answered.\nI drowned Brinelab. I opened sluice 4 with eight men in the store. I sent divers to cut their own cables, and three crews did not come back. I did the sums every night and every night they came out the same: forty-one people for four hundred.\nI sent the children up. Fennick made me. I am glad he did.\nInes will tell you I am a murderer. She is right. She will also tell you the Commons is alive. She is right about that too.\nThe levers are on the shore. RESTORE, and the lights come back and the Commons can leave - and it will come up to the lights. SEAL, and the plug drops on the Hollow, and the Network stays dark for ever.\nI could not choose. I am handing it to you. I am sorry about that too.
+prop skcam obj.name=skcam
+prop sklure obj.name=sklure
+prop sklure beh.hidden=1
+prop sklure tint.color=#2fd0c0
+prop sklure tint.amount=0.8
+prop sklure beh.move=-28,0,-14
+prop sklure beh.moveTime=20
+prop sklure beh.moveMode=switch
+note orders Sealkeeper's orders | SEALKEEPER'S ORDERS - DIRECTOR H. ROOK\n\n1. Power first: the generator on the base.\n2. Prime the pumps from the west tower. Fuses from the east tower.\n3. The control room is keyed with the Commons' code.\n4. Wind the cable. At the cable head: RESTORE, or SEAL. Not both. There is no both.\n5. Then go down. Somebody has to see it done.\n\nUnder it, in Fennick's capitals: "AND WIPE YOUR FEET." And under that, very small, in the Director's own hand: "Whoever you are - I am glad somebody came. I could not pull either lever. I tried for nine days."
 note baselocker Base locker | The base locker: rope, a lamp and a crowbar.
-note statusboard Network status board | NETWORK STATUS\n\nBiome Seven: GREEN (air)\nThalassa: SURFACE\nLumen Shelf: LIGHTS HALF\nCaisson Yard: IDLE\nHadal Commons: DOORS SHUT\nThe Hollow: - - - (no reading)
-note pumplog Pump log | PUMP LOG\n\nPressure's held for nine years on one crank a week.\nThe week the doors were open, the pumps pulled something up the trench with the water.\nWe stopped cranking. Crank it now if you mean to RESTORE.
-note warning Door warden's warning | DOOR WARDEN\n\nThree fuses, three lockers. Set them and the spire lights up - and everything down there sees it.\nIf you go to the Hollow, go when the lights are on. It hunts in the dark.
-note networkmap The Network map | A map of the Pelagic Network: seven stations round a ring, three wavy lines across it - the Ringwave. At its centre, under the trench lip, one word: HOLLOW.
-note inesmessage Ines's message | Ines's writing, quick and slanted:\n\nIf you freed me - thank you. If you didn't, someone left this for you anyway.\nRESTORE turns the Network back on. The lights, the pumps, the doors. It'll come up with them.\nSEAL drops the plug on the Hollow for good. The Commons will drown.\nI can't choose. You choose.
-note twoswitches Two switches | Two levers on the cable head, under glass, labels stamped in brass:\n\nRESTORE - power to every station, the doors on the cycle.\nSEAL - the plug over the Hollow, the Network dark for good.\n\nPull one. The other dies with it.
-note verdictrestore The verdict | RESTORE.\n\nAll down the cable, lights come on - station after station. Somewhere far below, great doors begin to move.\nPull the descend lever. Go down and see it through.
-note verdictseal The verdict | SEAL.\n\nThe cable jerks. Far below, something heavy drops into place. The lights on the cable go out, one after another.\nPull the descend lever. Go down and see it through.
+note statusboard Network status board | NETWORK STATUS (chalk, every line crossed out and rewritten in the same hand)\n\nSpirecrest Roofs: BEACON ON - leave it on.\nBrinelab: DARK. 02:14. (I am sorry, Mei.)\nBiome 1-6: DARK. Biome Seven: GREEN - Wren never listens.\nThalassa: SURFACE. Dives 41, 44, 47: cables cut.\nLumen Shelf: LIGHTS HALF - Lindqvist, please.\nCaisson Yard: DARK. Sluice 4. Eight men. Eight.\nHadal Commons: DOORS SHUT. DARK. SAFE.\nThe Hollow: - - - (no reading)\n\nIn the corner, a tally of five-bar gates. Forty-one. Each one, someone he turned the lights off on.
+note pumplog Pump log | PUMP LOG - WEST TOWER\n\nPressure's held for nine years on one crank a week. I sing to the crank. The crank does not mind.\nThe week the Commons' doors were open for the pumps, the pumps pulled something up the trench with the water. It came up the pipe like a cat up a curtain, and then it went back down into the Hollow, and it has been listening ever since.\nWe stopped cranking. The Director came down himself and stood here a long time with his hand on the wheel.\nCrank it now if you mean to RESTORE. Crank it anyway. Pumps want to work. So do people.
+note warning Door warden's warning | DOOR WARDEN - G. FENNICK (pinned to the fuse board with a fork)\n\nThree fuses, three lockers. Set them and the spire lights up - and everything down there sees it. Everything. I mean the big one.\nIf you go to the Hollow, go when the lights are on. It hunts what is lit, but it cannot SEE in light, it can only find. In the dark it can do both.\nI am going down ahead of you to wedge the Hollow's gate. I have put the children on the plane. I have given Milo my hat. I don't need a hat where I'm going.\nIf you are the Stalker - you know the rest.
+note networkmap The Network map | THE PELAGIC NETWORK - CONTROL ROOM MAP\n\nSeven stations round a ring, three wavy lines across it, and the Ringwave humming in the middle. At its centre, under the trench lip, one word: HOLLOW.\nPins in the map, one per station. Every pin but one has been pulled out and laid on the desk in a neat row, like teeth.\nThe last pin is on the roofs: SPIRECREST. A red thread runs from it out to sea, then curls back to the Hollow.\nUnder it, in the Director's hand: "Bait."
+note inesmessage Ines's message | INES - IN PENCIL, ON THE DESK, OVER THE DIRECTOR'S PAPERS\n\nYou read it. Good. So did I.\nHe's gone down the trench after Fennick. Not to stop him. To help him, I think. I didn't ask.\nRESTORE turns the Network back on - the lights, the pumps, the doors - and the Commons can walk out. It will come up with them.\nSEAL drops the plug on the Hollow for good. The Commons stays in the dark, alive, for as long as dark lasts.\nI can't choose. I'd only choose Milo, and he's on a plane.\nTake Mo with you. He's been everywhere else.
+note twoswitches Two switches | Two levers on the cable head, under glass, labels stamped in brass:\n\nRESTORE - power to every station, the doors on the cycle.\nSEAL - the plug over the Hollow, the Network dark for good.\n\nPull one. The other dies with it.\nScratched into the glass with a key, in three hands:\n"Lights." - W.A.\n"Quiet." - H.R.\n"Whatever you pick, then go down and finish it. Bring a lamp. - I.M."
+note verdictrestore The verdict | RESTORE.\n\nAll down the cable, lights come on - station after station. Brinelab's windows, the domes, the Yard's red crane lamps, the shelf's five dots. Somewhere far below, great doors begin to move.\nOn the control room radio, the Director's voice, very tired: "There it goes. Every light I put out. They will come up now. So will it. Go down, and see it through."\nPull the descend lever.
+note verdictseal The verdict | SEAL.\n\nThe cable jerks. Far below, something heavy drops into place. The lights on the cable go out, one after another, until only the Spirecrest beacon is left, far away, blinking.\nOn the control room radio, the Director's voice, very tired: "Quiet, then. Quiet for ever. I hoped somebody braver would pick the other one. Go down, and see it through."\nPull the descend lever.
 note fuselocker1 Deck fuse locker | A locker on the door tower's deck: a fuse.
 note fuselocker2 Tower fuse locker | A locker inside the door tower: a fuse.
 note fuselocker3 Shore fuse locker | A locker at the door tower's foot: a fuse.
@@ -290,7 +308,7 @@ prop doortowerzone zone.message=The door tower. A fuse board on the deck - empty
 prop fuseboard obj.name=fuseboard
 prop fuseboard beh.use=Set the fuses
 prop fuseboard if.use=has|story:fuse|3\n!signal|fused
-prop fuseboard on.use=signal||fused\ngive||story:fused*1\nshow|spirelights\nmessage||Three fuses, three clunks. Across the water the spire's windows light up.
+prop fuseboard on.use=signal||fused\ngive||story:fused*1\nshow|spirelights\nmessage||Three fuses, three clunks. Across the water the spire's windows light up.\nshow|sklure\nopen|sklure\ncamera|skcam|sklure|8|90\nmessage||Out in the trench a teal light lifts and comes towards the lit spire, slow, against the storm - looking.\nwait|24\nhide|sklure\nmessage||The teal light sinks back into the trench. It knows where the lights are now.
 prop fuseboard else.use=message||The fuse board needs three fuses. The lockers in this tower hold them.
 prop spirelights obj.name=spirelights
 prop spirelights beh.hidden=1
@@ -344,8 +362,8 @@ prop storm zone.radius=60
 note sk_cavechest Keepers' chest | The keepers' storm chest: dry clothes gone to rags, a lamp, rope.
 loot sk_cavechest Rope*3;Leather*2;Battery*1;Copper*2
 prop sk_cavechest loot.refill=0
-note sk_ruinnote Storm keeper's log | STORM KEEPER'S LOG\n\nThe radio on my table runs off the generator. The generator wants a part I lent to the cave crew.\nWith power, the radio tells you where the last supply drop came down.
-note sk_wrecknote Supply pilot's log | SUPPLY PILOT'S LOG\n\nLast drop for the Spire. The storm took the plane; I kept the crate.\nThey are going to decide it soon - RESTORE or SEAL. I am not staying to see.
+note sk_ruinnote Storm keeper's log | STORM KEEPER'S LOG\n\nThe radio on my table runs off the generator. The generator wants a part I lent to the cave crew, and the cave crew have not returned it, because they never return anything.\nWith power, the radio tells you where the last supply drop came down.\nI keep the weather for the Director. Every night he asks me the same question: "Is the beacon on the roofs still lit?" Every night I say yes. Every night he says, "Good. God forgive me. Good."
+note sk_wrecknote Supply pilot's log | SUPPLY PILOT'S LOG\n\nLast run for the Spire, and the Director met me on the dock himself. No cargo, he said. Passengers.\nTwelve kids from the shuttle came up the trench lift with the door warden. I took all twelve. The warden would not get on. He said somebody had to go down and close a door properly, and he gave his hat to the small one with no whale.\nI flew them through the storm to the high island and came back for the crew, and the storm took the plane on the way in. I kept the crate. I would have kept the plane if it had let me.\nThey will decide it soon - RESTORE or SEAL. I am not staying to see.
 note sk_wreckcrate Supply plane crate | The supply plane's crate: what the Spire ordered, never delivered.
 loot sk_wreckcrate MetalIngot*2;Bolt*3;Rope*2;Plank*4
 prop sk_wreckcrate loot.refill=0
@@ -353,16 +371,14 @@ prop sk_wreckcrate loot.refill=0
 # --- DEEP 1-HOUR (10-24): story items, notes and checks
 story sk_key|Archive key|Hinge|The Network archive's key, from the chest at the bottom of the drowned archive.
 story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
-note skdeep Archive chest | The archive chest, 14 m down: the key to the Storm Crown locker and a crest shard.
-loot skdeep story:sk_key*1;story:sk_crest*1;TitaniumOre*2;CircuitBoard*1;OxygenBottle*1
+note skdeep Archive chest | The archive's sealed chest: titanium, and a crest shard.
+loot skdeep story:sk_crest*1;TradeToken*2;TitaniumOre*2;CircuitBoard*1;OxygenBottle*1
 prop skdeep loot.refill=0
-note sklocker Storm Crown locker | The Sealkeeper's own locker on Storm Crown.
+note sklocker Storm Crown locker | The Director's own locker on Storm Crown.
 loot sklocker TitaniumIngot*2;MetalIngot*3;Battery*2;Cooked_Potato*2
 prop sklocker loot.refill=0
-prop sklocker if.open=has|story:sk_key|1
-prop sklocker else.open=message||The locker is padlocked. The tag says the key is kept "at the bottom, where the water keeps it safe".
-note sksumnote Sealkeeper's card | STORM CROWN\n\nFrom here I could see every station of the Network.\nRESTORE or SEAL - the archive below remembers both choices. Read it before you pull a lever.
-note skbldnote Archive register | NETWORK ARCHIVE\n\nEvery band, every station, every call. When the trench woke, we sealed the archive with the rest.\nThe key to the Storm Crown locker is in the chest at the bottom. Air on the first floor.
+note sksumnote Sealkeeper's card | STORM CROWN\n\nFrom here I could see every station of the Network, one light each, like a necklace on black velvet.\nI used to come up here to count them. Then I came up here to count them going out.\nRESTORE or SEAL - the archive below remembers both, and it remembers me. Read it before you pull a lever. - H.R.
+note skbldnote Archive register | NETWORK ARCHIVE - COMMAND REGISTER (printout)\n\nEvery band, every station, every call, and every remote command. The register does not forget. That is its job.\n...02:14 BRINELAB PUMPS LOCAL to REMOTE. AUTH: ROOK.\n...02:14 CAISSON SLUICE 4 OPEN. AUTH: ROOK.\n...THALASSA DIVE ORDERS 41, 44, 47. AUTH: ROOK.\n...LUMEN SHELF LAMPS 50 PERCENT. AUTH: ROOK.\n...SPIRECREST BEACON: HOLD ON. DO NOT EXTINGUISH. AUTH: ROOK.\nSomebody has underlined the last line twice, pressing hard. Ines, by the handwriting in the margin: "He kept it lit. He kept OUR roofs lit, so it would come to us."
 note skledge Storm watcher's cache | A storm watcher's cache on a ledge of Storm Crown.
 loot skledge Rope*3;Bolt*2;Feather*3
 prop skledge loot.refill=0
@@ -374,9 +390,10 @@ prop sksummit zone.radius=2.5
 prop sksummit zone.message=The top of Storm Crown. The whole island lies below.
 
 quest title=The Choice
-quest intro=The Spire on the Receiver - the Network's switchboard. Land at its dock.
+quest intro=The Spire on the trench, the Network's switchboard, where the Sealkeeper waits. Land at its dock.
 step reach|dock|1|Land at the Spire's dock
 step read|Sealkeeper's orders|1|Read the Sealkeeper's orders
+step read|Milo's crayon card|1|Read the card wedged in the dock rail
 step kill|Screecher|4|Drive off the screechers nesting on the spire
 step open|Base locker|1|Open the base locker by the cable mast
 step collect|story:power|1|Start the generator
@@ -386,30 +403,24 @@ step collect|story:pumped|1|Turn the pump crank
 step read|Pump log|1|Read the pump log
 step reach|door_tower|1|Zipline from the cable mast to the door tower
 step collect|story:fuse|3|Collect the three fuses from the door tower's lockers
-step collect|story:fused|1|Set the fuses in the fuse board
+step collect|story:fused|1|Set the fuses in the fuse board - and watch the trench
 step read|Door warden's warning|1|Read the door warden's warning
+step read|Supply pilot's log|1|Read the log at the supply plane in the west
+step open|Archive chest|1|Dive into the drowned archive in the south-west pit and open its chest
+step read|Archive register|1|Read the command register in the drowned archive
 step reach|spire_stair|1|Go to the spire's door
-step reach|control|1|Climb to the control room
+step reach|control|1|Climb to the control room through the storm
 step read|The Network map|1|Read the Network map
 step collect|story:unlocked|1|Key in the control room code (the Commons' minutes had it)
+step read|The Director's confession|1|Read the Director's confession by the window
 step read|Ines's message|1|Read Ines's message on the desk
 step collect|story:winched|1|Wind the cable winch
 step reach|cable_head|1|Go down to the cable head on the shore
 step read|Two switches|1|Read the two switches
 step collect|story:chosen|1|Pull one: RESTORE or SEAL
 step read|The verdict|1|Read the verdict
-step reach|sk_ridge|1|Climb the storm ridge in the east
-step reach|sk_cave|1|Find the keepers' cave in the north-west
-step read|Storm keeper's log|1|Read the log in the storm keeper's house in the south
-step read|Supply pilot's log|1|Read the log at the supply plane in the west
-step reach|sk_deep|1|Dive to the floor of the archive pit in the south-west
-step collect|story:sk_key|1|Dive into the drowned building and take the key from the chest at the bottom
-step read|Archive register|1|Read the register in the drowned archive
-step reach|sk_summit|1|Climb Storm Crown in the south-east
-step read|Sealkeeper's card|1|Read the note on the summit
-step open|Storm Crown locker|1|Open the summit locker with the key from the drowned building
 step collect|story:descended|1|Pull the descend lever
-quest done=The choice is made. Under the trench lip the Hollow lights up - the Receiver finds it on band 500.
+quest done=The choice is made and the Director has gone down after Fennick. Under the trench lip the Hollow lights up - the Receiver finds it on band 500.
 quest reward=TitaniumOre*2;Battery*2
 
 save Sealkeeper Spire

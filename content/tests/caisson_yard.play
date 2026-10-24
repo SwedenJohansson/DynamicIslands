@@ -19,31 +19,27 @@ expect step 5
 open Anchor gear chest
 wait 3
 expect step 6
-zone cy_ridge
-expect step 7
-zone cy_cave
-expect step 8
 read Yard office book
-expect step 9
+expect step 7
+open Lost property box
+wait 3
+expect story sk_mo 1
+expect step 8
 read Crane driver's report
-expect step 10
+expect step 9
 read Trench chart
-expect step 11
+expect step 10
 open Crane key box
 wait 3
 expect story cy_cranekey 1
-expect step 12
+expect step 11
 use cylever
 expect story cy_drop 1
 expect hidden cycap
-expect step 13
+expect step 12
 air cy_dair
 open Yard store chest
 wait 3
-expect story cy_key 1
-expect step 14
-zone cy_summit
-expect step 15
-open Crane hill locker
-wait 3
+expect step 13
+read Yard pump log
 expect done

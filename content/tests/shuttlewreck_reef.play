@@ -1,5 +1,5 @@
-# Shuttlewreck Reef (CIPlay shuttlewreck_reef): the buoy, the cabin and its air, the manifest, two puffers, the luggage
-# rack (goo, grass seeds, leather), the commuter's note.
+# Shuttlewreck Reef (CIPlay shuttlewreck_reef), story pass 10-24s: cabin, manifest, puffers, luggage, the
+# teacher's note on seat 14, the ticket, the depot chest + clerk's note, the summit locker (no key) + timetable.
 island Shuttlewreck Reef
 offset 0 0
 expect step 0
@@ -16,21 +16,20 @@ open Luggage rack
 wait 3
 expect item ExplosiveGoo 2
 expect step 4
-zone sw_ridge
+read Teacher's note
 expect step 5
+zone sw_ridge
 zone sw_cave
-expect step 6
 read Seat 14's ticket
-expect step 7
-read Commuter's note
-expect step 8
+expect step 6
 air sw_dair
 open Shuttle depot chest
 wait 3
-expect story sw_key 1
-expect step 9
+expect step 7
+read Depot clerk's note
+expect step 8
 zone sw_summit
-expect step 10
 open Depot rock locker
 wait 3
+read Shuttle timetable
 expect done

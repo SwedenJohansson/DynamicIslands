@@ -1,5 +1,5 @@
 ﻿# Spirecrest Roofs (CIPlay spirecrest_roofs): the beacon roof, the distress card, the screechers, the beacon hut's chest
-# (Receiver), the mast toolbox (Antenna), the caretaker's diary.
+# (Receiver), the mast toolbox (Antenna), the caretaker's diary, Ines's two slates.
 island Spirecrest Roofs
 offset 0 0
 expect step 0
@@ -16,15 +16,15 @@ expect step 4
 open Mast toolbox
 wait 3
 expect step 5
-zone sc_ridge
-expect step 6
-zone sc_cave
-expect step 7
-read Pump-man's slate
-expect step 8
-read Courier's logbook
-expect step 9
 read Rooftop caretaker's diary
+expect step 6
+read Ines's slate (the coop)
+expect step 7
+zone sc_ridge
+expect step 8
+read Pump-man's slate
+expect step 9
+read Courier's logbook
 expect step 10
 air sc_dair
 open Exchange strongbox
@@ -36,6 +36,8 @@ expect step 12
 open Relay locker
 wait 3
 expect step 13
+read Ines's slate (Signal Hill)
+expect step 14
 # U22 jump course (10-24): teleport onto its top A slab instead of jumping the hops
 at -48.38 -55.44 h=9.65
 zone jump_sc_top

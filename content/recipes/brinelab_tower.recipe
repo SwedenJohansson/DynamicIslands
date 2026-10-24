@@ -95,6 +95,8 @@ place Pickup_Landmark_Flower_White - at 5 -2.5 h=9.98 sit
 place Pickup_Landmark_Flower_Blue - at 5 2.5 h=9.98 sit
 place Pickup_Landmark_BerryBush - at 1 -3 h=9.3 sit
 place Placeable_Cropplot_Small - at 2.5 1 h=9.3 sit
+# STORY 10-24s: Dr Sato's recorder, left on the beehive box
+place Note_Paper satonote at -1.6 -1.25 h=9.9 drop yaw=30
 
 # --- The flooded floors: s4 the flooded lab (air pocket, drive 2), s3 the pipe store, s2 drive 3, s1 the deep air -------
 call airpocketat x=4 z=0 h=-2.7 id=flooded_lab al=labair bub=labbub r=2.5 msg="Air, trapped under the lab's ceiling. Breathe."
@@ -138,8 +140,8 @@ call vinecache x=-42 z=-36 r=12 seed=10308 chest=labvinechest vines=labvines ite
 call treasure x=52 z=30 r=10 n=1 seed=10309
 prop treasure10309 treasure.loot=CopperOre*3
 place Zone_Trigger viewzone at 0 -56 ground
-note evacnote Evacuees' camp note | WE CAME OUT OF THE TOWER ON DAY 9\n\nNine of us, the night shift. The lower floors went first, then the lobby lights.\nDr. Sato stayed to send the drives. We waited two days for her here.\nThe tower leans a little more every morning.
-note yardcrate Loading yard crate | A crate never loaded onto the lab's lift: spare bolts and a coil of cable.
+note evacnote Evacuees' camp note | WE CAME OUT OF THE TOWER ON DAY 9\n\nNine of us, the night shift. The lower floors went first, all at once, as if somebody had pulled a plug. Then the lobby lights - not the storm, the board, the Director's office turning them off one by one from a hundred miles away.\nDr Sato stayed to send the drives. She said she would follow when the bees were settled. We waited two days for her here.\nA diver came past on day 11, asking after a shuttle. Then an old man with hens in a basket, asking after the diver. We gave them both our last tin of peaches and pointed at the tower.\nThe tower leans a little more every morning. We are going north.
+note yardcrate Loading yard crate | A crate never loaded onto the lab's lift: bolts, cable.
 loot yardcrate Bolt*4;Rope*2;Scrap*3
 prop yardcrate loot.refill=0
 prop viewzone zone.id=brinelab_view
@@ -202,15 +204,16 @@ info author=Custom Islands
 info description=The Pelagic Network's lab tower, leaning in a drowned pit: dry labs and a hive garden above the water, five flooded floors below. The third island of The Sunken Kingdom.
 island on.arrive=message||A tower leaning out of the sea, its lower windows dark with water. A plaza beside it, and a door at the waterline.
 
-note safetyboard Lab safety board | BRINELAB - SAFETY BOARD\n\n1. The lower floors are SEALED. Do not open the hatch below the lobby.\n2. Data goes on drives, three copies, one per floor.\n3. Boars are NOT lab animals. Keep the greenhouse door shut.\n\n(Someone has drawn the Network's sign under it: a ring and three waves.)
-note reception Reception drawer | The reception desk's drawer: machete plans ("for the greenhouse") and a visitor's badge.
+note safetyboard Lab safety board | BRINELAB - SAFETY BOARD (amended by Dr M. Sato)\n\n1. The lower floors are SEALED. Do not open the hatch below the lobby. (Unless you are me.)\n2. Data goes on drives, three copies, one per floor, because the Network trusts nothing it cannot drop in the sea.\n3. Boars are NOT lab animals. Whoever let them into the greenhouse owes me eleven tomatoes.\n4. Lights off after dark, by order of the Director. Yes, Director. I will do my sums by moonlight like a poet.\n\nUnder it, in chalk: "Sato - the shuttle stopped here at six for tea. Twelve aboard. Did they say where next? - I.M."\nAnd under that, Sato's reply: "The Caisson Yard road. I gave them biscuits. Go up to the roof, Ines, I'll tell you there."
+note reception Reception drawer | The reception drawer: machete plans and a visitor's badge.
 note lab2cabinet Lab 2 cabinet | A lab cabinet: fuel tank plans, labelled "for the shuttle".
-note drive1 Data drive 1 | DRIVE 1 / 3 - BIOME PROGRAMME\n\nSeven sealed domes on the shelf, each its own little world.\nBiome Seven is the last one still breathing.\nCopies 2 and 3 are below, where the water is.
-note drive2 Data drive 2 | DRIVE 2 / 3 - BIOME SEVEN\n\nCoordinates follow. Dome at eighteen metres, airlock on the north side.\nThe gardener stays down there. She says the melons do better than we do.
-note drive3 Data drive 3 | DRIVE 3 / 3 - TRANSMIT\n\nThe drive still holds its last order: "send Biome Seven's beacon to anyone who reads this".\nSomewhere out in the sea, a beacon wakes. The Receiver will hear it.
+note satonote Dr Sato's roof recording | RECORDER, LEFT ON THE BEEHIVE - DR M. SATO\n\nInes. You climbed all those stairs with a hen-keeper's oxygen tank on your back, so here is the truth, as much as I have.\nThe shuttle went on down the Caisson Yard road. The radio heard it hit the reef off the yard and then twelve small voices counting each other on the rocks. Twelve. All of them. They walked.\nNow the other thing. Someone sank my lower floors. Not the storm - the pumps went to REMOTE, and the command came down the wire with a name on it. I copied it onto drive 3 before the water took the room.\nGo down, read it, and then go to Wren at Biome Seven. She has the only boat left on the shelf and she will feed you melon whether you want it or not.\nThe bees say hello.
+note drive1 Data drive 1 | DRIVE 1 / 3 - BIOME PROGRAMME (voice log, Dr M. Sato)\n\nSeven sealed domes on the shelf, each its own little world. Six have gone dark, one after another, the way windows go dark in a street at night.\nBiome Seven is the last one still breathing. Its gardener, Wren, sends me a melon report every Sunday whether I ask or not. This Sunday: "Melons excellent. Morale fair. Do not come down, the light is wrong out here."\nI asked her what she meant by wrong. She said: "It moves when the current doesn't."\nCopies 2 and 3 of this drive are below, where the water is. I am not going down there today. I am going to the roof to see the bees, who at least have the decency to buzz.
+note drive2 Data drive 2 | DRIVE 2 / 3 - BIOME SEVEN\n\nCoordinates follow. Dome at eighteen metres, airlock on the north side. The gardener is Wren Ashby. She stays down there. She says the melons do better than we do, which is true, and that she does better than we do, which is also true.\nShelf note: Biome Seven's beacon is on this lab's transmitter. If the tower loses power the dome goes quiet with it.\n(In the margin, Sato's pencil: "copy 3 is one floor further down. Mind your head on the pipes. I didn't.")
+note drive3 Data drive 3 | DRIVE 3 / 3 - TRANSMIT\n\nLast order still on the drive: "send Biome Seven's beacon to anyone who reads this". Sending.\n\nCopied by hand underneath, by Dr Sato:\n"02:14 - PUMP CONTROL: LOCAL to REMOTE.\n02:14 - VALVE COMMAND: SPIRE. Flood levels 1 to 4.\n02:15 - Message attached, voice of the Director: 'This is the Sealkeeper. Brinelab, I am sorry. It is quieter this way.'"\n\nQuieter for whom, Halvard?\nI am sending Wren's beacon anyway. If you are reading this, the Receiver will hear Biome Seven now. Go to the dome on the shelf. Wren has a boat, and she will want to know about the light.
 note pipestore Pipe store | Shelves of pipe and a sealed tube of plans: fuel pipes.
 note labstores Lab stores | The lab's deep store: explosive goo in sealed jars, scrap.
-note boilerlocker Boiler room locker | The boiler man's locker: biofuel extractor plans, gloves, a tin of rat poison (empty).
+note boilerlocker Boiler room locker | The boiler man's locker: biofuel extractor plans and gloves.
 loot reception Blueprint_Machete*1;Machete*1;Rope*2
 prop reception loot.refill=0
 loot lab2cabinet Blueprint_Fueltank*1;Bolt*2
@@ -243,8 +246,8 @@ prop rats creature.respawn=0
 note bl_cavechest Cold store chest | A cold store chest: sample jars, cracked, and the lab's spare glass.
 loot bl_cavechest Glass*3;Rope*2;Bolt*2;Plastic*3
 prop bl_cavechest loot.refill=0
-note bl_ruinnote Sample keeper's list | SAMPLE KEEPER'S LIST\n\n1. Kelp, shelf edge. 2. Water, 18 m - for the dome. 3. Something from the trench. Do not open.\nThe tower leans a little more each spring. I moved the samples here, then to the cave.\nThe drives stay in the tower. They are the lab's memory.
-note bl_wrecknote Crane driver's note | CRANE DRIVER'S NOTE\n\nWe were lifting the lab's cage crates when the tower moved. The crane stopped, the van stopped, I ran.\nThe bolt cutters for the cages are in the van's crate. The dome's gardener kept animals in a cage - she will need them.
+note bl_ruinnote Sample keeper's list | SAMPLE KEEPER'S LIST\n\n1. Kelp, shelf edge. Smells of feet.\n2. Water, 18 m, for the dome. Wren asks for it every month like it is wine.\n3. Something from the trench. Do not open. Do not shake. Do not, Pieter, put it near the window again.\nThe thing from the trench glows when the lights go out. Faintly. Teal. I moved it here, then to the cave, then I moved myself a long way from both.\nThe tower leans a little more each spring. The drives stay in the tower. They are the lab's memory, and Sato says a lab without a memory is just a building full of mugs.
+note bl_wrecknote Crane driver's note | CRANE DRIVER'S NOTE\n\nWe were lifting the lab's cage crates when the tower moved. The crane stopped, the van stopped, I ran, and I am not ashamed of it - I have legs for a reason.\nThe bolt cutters for the cages are in the van's crate. The dome's gardener keeps animals in a cage down there and she will need them one day.\nFunny thing. The tower did not move by itself. I heard the pumps cough and stop, all of them, at the same second, like an orchestra at the end of a song. Pumps don't do that. People do that.
 note bl_wreckcrate Lab van crate | The lab van's crate: the cage crew's bolt cutters and their spares.
 loot bl_wreckcrate story:raft-Vasagatan_BoltCutter*1;Bolt*3;MetalIngot*1
 prop bl_wreckcrate loot.refill=0
@@ -252,16 +255,14 @@ prop bl_wreckcrate loot.refill=0
 # --- DEEP 1-HOUR (10-24): story items, notes and checks
 story bl_key|Pump house key|Hinge|The lab pump house's key, from the chest at the bottom of the cold well.
 story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
-note bldeep Pump house chest | The pump house chest at the bottom of the cold well: the weather mast locker's key and a crest shard.
-loot bldeep story:bl_key*1;story:sk_crest*1;MetalIngot*2;Bolt*3;OxygenBottle*1
+note bldeep Pump house chest | The pump keeper's chest: his wages and a crest shard.
+loot bldeep story:sk_crest*1;MetalIngot*2;Bolt*3;OxygenBottle*1;TradeToken*2
 prop bldeep loot.refill=0
-note bllocker Weather mast locker | The weather station locker on Brine Hill: the lab's field kit.
+note bllocker Weather mast locker | The gauge reader's field kit, left on Brine Hill.
 loot bllocker MetalIngot*3;CopperIngot*2;Rope*3;Cooked_Potato*2
 prop bllocker loot.refill=0
-prop bllocker if.open=has|story:bl_key|1
-prop bllocker else.open=message||The locker is padlocked. The tag says the key is kept "at the bottom, where the water keeps it safe".
-note blsumnote Weather log | BRINE HILL WEATHER LOG\n\nWind north-east, sea rising. Third reading this week the gauge went under.\nThe pump house key is down the cold well - the lab never trusted us with it.
-note blbldnote Pump keeper's slate | PUMP KEEPER\n\nThe well pumps brine to the tower's drives. When the sea came in, the well became the sea.\nThe key is in the chest at the bottom. Air on the first floor.
+note blsumnote Weather log | BRINE HILL WEATHER LOG - GAUGE READER\n\nWind north-east, sea rising. Third reading this week the gauge went under, and I went under with it to read it, because the Network does not accept "about".\nFrom up here the whole shelf is lit by one thing: the Spirecrest beacon, far off over the water, blinking like a lighthouse that has forgotten what it is for.\nUnder the sea, past the tower, there is another light that does not blink. It moves. I have stopped writing that one down, because the Director's office keeps sending the page back.
+note blbldnote Pump keeper's slate | PUMP KEEPER\n\nThe well pumps brine to the tower's drives. Twenty years, never missed a day, never dropped a bolt.\nThen the board in this house went REMOTE on its own and every valve opened together, and the well became the sea.\nI ran up the stairs, and the stairs held, which is more than I can say for the Network.\nThere is air on the first floor. The chest at the bottom has my wages in it, and the crest shard the old king's people left on the lintel. Take them. I am not coming back for either.
 note blledge Gauge reader's cache | A cache on a ledge of Brine Hill, where the gauge reader sheltered.
 loot blledge Rope*3;Bolt*2;Feather*3
 prop blledge loot.refill=0
@@ -273,26 +274,20 @@ prop blsummit zone.radius=2.5
 prop blsummit zone.message=The top of Brine Hill. The whole island lies below.
 
 quest title=The Lab Tower
-quest intro=The road ends at a leaning tower. Go in at the waterline.
+quest intro=The shuttle stopped at this leaning tower for tea. Go in at the waterline.
 step reach|lobby|1|Go into the lobby at the waterline
 step read|Lab safety board|1|Read the safety board in the lobby
 step blueprint|Blueprint_Machete|1|Take the machete plans (and the caretaker's old machete) from the reception drawer
-step reach|bl_ridge|1|Climb the seawall ridge in the west
-step reach|bl_cave|1|Find the cold store cave in the north
-step read|Sample keeper's list|1|Read the list in the sample keeper's ruin in the east
-step read|Crane driver's note|1|Read the note at the lab van in the south-east
 step reach|stairwell|1|Cut the vines over the hatch with the machete and climb up
 step kill|Warthog|3|Drive the boars out of the greenhouse
 step blueprint|Blueprint_Fueltank|1|Find the fuel tank plans in lab 2
 step read|Data drive 1|1|Read data drive 1 in lab 2
+step read|Dr Sato's roof recording|1|Climb to the roof garden and play Dr Sato's recorder by the beehives
 step reach|flooded_lab|1|Dive down the hatch shaft to the flooded lab's air pocket
-step read|Data drive 3|1|Read data drives 2 and 3 on the flooded floors
 step blueprint|Blueprint_Pipe_Fuel|1|Find the fuel pipe plans in the flooded pipe store
-step blueprint|Blueprint_BiofuelExtractor|1|Get past the rats in the boiler house: biofuel extractor plans
-step collect|story:bl_key|1|Dive into the drowned building and take the key from the chest at the bottom
-step reach|bl_summit|1|Climb the mountain to the tower on its top
-step open|Weather mast locker|1|Open the summit locker with the key from the drowned building
-quest done=Biome Seven's beacon calls from the shelf. The Receiver finds it on band 600.
+step blueprint|Blueprint_BiofuelExtractor|1|Get past the rats in the boiler room: biofuel extractor plans
+step read|Data drive 3|1|Read data drives 2 and 3 on the deepest flooded floor
+quest done=Someone at the Spire flooded the lab by remote. Biome Seven's beacon calls from the shelf; the Receiver finds it on band 600.
 quest reward=Nail*10;Scrap*4
 
 save Brinelab Tower
