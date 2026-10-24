@@ -341,28 +341,60 @@ namespace DynamicIslands.Editor
 			return (h & 0xFFFF) / 65535f;
 		}
 
-		/// <summary>Round soft dots on a jittered grid, in the picture's own rows (top first, as the prototype): only where mask.</summary>
-		static float[] Spots(int size, float cell, float radius, long salt, float[] mask)
+		/// <summary>Smooth value noise (hashed corners, smoothstep between): the speckles' clusters.</summary>
+		static float VNoise(float x, float y, long salt)
+		{
+			long ix = (long)Math.Floor(x), iy = (long)Math.Floor(y);
+			float fx = x - ix, fy = y - iy;
+			fx = fx * fx * (3f - 2f * fx); fy = fy * fy * (3f - 2f * fy);
+			float a = Hash01(ix, iy, salt), b = Hash01(ix + 1, iy, salt), c = Hash01(ix, iy + 1, salt), d = Hash01(ix + 1, iy + 1, salt);
+			return (a * (1f - fx) + b * fx) * (1f - fy) + (c * (1f - fx) + d * fx) * fy;
+		}
+
+		/// <summary>Irregular soft speckles, in the picture's own rows (top first, as the prototype), only where mask:
+		/// two sizes of slanted ovals, kept or dropped by a cluster field, each of its own strength.</summary>
+		static float[] Speckles(int size, long salt, float[] mask)
 		{
 			var o = new float[size * size];
+			float sc = size / 1024f;
+			float[] cells = { 14f * sc, 28f * sc }, radii = { 2.4f * sc, 4.6f * sc };
+			long[] salts = { 0, 10 };
 			for (int i = 0; i < o.Length; i++)
 			{
 				if (mask[i] <= 0.001f) continue;
 				int x = i % size, y = size - 1 - i / size;
-				long gx = (long)Math.Floor(x / cell), gy = (long)Math.Floor(y / cell);
-				float best = 9f;
-				for (long oy = -1; oy <= 1; oy++)
-					for (long ox = -1; ox <= 1; ox++)
-					{
-						long cx = gx + ox, cy = gy + oy;
-						float px = (cx + 0.2f + 0.6f * Hash01(cx, cy, salt)) * cell, py = (cy + 0.2f + 0.6f * Hash01(cx, cy, salt + 1)) * cell;
-						float r = radius * (0.7f + 0.6f * Hash01(cx, cy, salt + 2));
-						float d = Mathf.Sqrt((x - px) * (x - px) + (y - py) * (y - py)) / r;
-						if (d < best) best = d;
-					}
-				o[i] = 1f - Smooth(0.75f, 1f, best);
+				float best = 0f;
+				for (int layer = 0; layer < 2; layer++)
+				{
+					float cell = cells[layer], radius = radii[layer];
+					long s = salt + salts[layer];
+					long gx = (long)Math.Floor(x / cell), gy = (long)Math.Floor(y / cell);
+					for (long oy = -1; oy <= 1; oy++)
+						for (long ox = -1; ox <= 1; ox++)
+						{
+							long cx = gx + ox, cy = gy + oy;
+							float px = (cx + 0.1f + 0.8f * Hash01(cx, cy, s)) * cell, py = (cy + 0.1f + 0.8f * Hash01(cx, cy, s + 1)) * cell;
+							float keepAt = 0.15f + 0.85f * Smooth(0.3f, 0.7f, VNoise(px / (150f * sc), py / (150f * sc), salt + 7));
+							if (Hash01(cx, cy, s + 5) >= keepAt) continue;
+							float r = radius * (0.55f + 0.9f * Hash01(cx, cy, s + 2));
+							float ang = Hash01(cx, cy, s + 3) * Mathf.PI, asp = 1f + 0.9f * Hash01(cx, cy, s + 4);
+							float strength = 0.55f + 0.45f * Hash01(cx, cy, s + 6);
+							float dx = x - px, dy = y - py, cs = Mathf.Cos(ang), sn = Mathf.Sin(ang);
+							float u = (dx * cs + dy * sn) / r, v = (-dx * sn + dy * cs) * asp / r;
+							float k = (1f - Smooth(0.4f, 1f, Mathf.Sqrt(u * u + v * v))) * strength;
+							if (k > best) best = k;
+						}
+				}
+				o[i] = best;
 			}
 			return o;
+		}
+
+		static float MeanLum(Color[] src, float[] mask)
+		{
+			double sum = 0; int n = 0;
+			for (int i = 0; i < src.Length; i++) if (mask[i] > 0.5f) { sum += Lum(src[i]); n++; }
+			return n > 0 ? (float)(sum / n) : 0.5f;
 		}
 
 		/// <summary>The colour shaded by the source's own light and dark where mask (its painted detail kept).</summary>
@@ -386,16 +418,16 @@ namespace DynamicIslands.Editor
 			return o;
 		}
 
-		/// <summary>Gold glints: a few soft light flecks where mask.</summary>
-		static Color[] Shimmer(Color[] img, float[] mask, int size, long salt)
+		/// <summary>Gold sheen: towards a warm light gold where the source itself is light (its own value), no dots.</summary>
+		static Color[] Sheen(Color[] src, Color[] img, float[] mask)
 		{
-			float[] f = Spots(size, 34f, 2.4f, salt, mask);
+			float mean = MeanLum(src, mask);
 			for (int i = 0; i < img.Length; i++)
 			{
-				float g = f[i] * mask[i];
-				if (g <= 0f) continue;
+				float k = Smooth(mean - 0.02f, mean + 0.22f, Lum(src[i])) * mask[i] * 0.45f;
+				if (k <= 0f) continue;
 				Color c = img[i];
-				img[i] = new Color(Mathf.Clamp01(c.r + g * 0.32f), Mathf.Clamp01(c.g + g * 0.27f), Mathf.Clamp01(c.b + g * 0.15f), c.a);
+				img[i] = new Color(Mathf.Lerp(c.r, Mathf.Max(c.r, 0.88f), k), Mathf.Lerp(c.g, Mathf.Max(c.g, 0.73f), k), Mathf.Lerp(c.b, Mathf.Max(c.b, 0.42f), k), c.a);
 			}
 			return img;
 		}
@@ -413,13 +445,23 @@ namespace DynamicIslands.Editor
 				if (look == 3) return Paint(B, changed, new Color(0.33f, 0.47f, 0.31f), 0.85f);
 				if (look == 4)
 				{
-					Color[] o = Paint(B, changed, new Color(0.30f, 0.31f, 0.34f), 0.85f);
-					float[] d = Spots(size, 22f, 3.4f, 41, changed);
-					var dot = new Color(0.84f, 0.83f, 0.78f);
-					for (int i = 0; i < n; i++) { float k = d[i] * changed[i]; if (k > 0f) o[i] = new Color(Mathf.Lerp(o[i].r, dot.r, k), Mathf.Lerp(o[i].g, dot.g, k), Mathf.Lerp(o[i].b, dot.b, k), o[i].a); }
+					// (slate feathers; speckles more on the light feather tips, few round the eye)
+					Color[] o = Paint(B, changed, new Color(0.34f, 0.335f, 0.32f), 0.85f);
+					float[] d = Speckles(size, 41, changed);
+					float mean = MeanLum(B, changed);
+					var dot = new Color(0.86f, 0.84f, 0.78f);
+					for (int i = 0; i < n; i++)
+					{
+						if (d[i] <= 0f) continue;
+						float fx = (i % size) / (float)size - 0.35f, fy = (size - 1 - i / size) / (float)size - 0.1f;
+						float head = Smooth(0.1f, 0.24f, Mathf.Sqrt(fx * fx + fy * fy));
+						float light = 0.55f + 0.45f * Smooth(mean - 0.06f, mean + 0.1f, Lum(B[i]));
+						float k = d[i] * changed[i] * light * (0.25f + 0.75f * head);
+						o[i] = new Color(Mathf.Lerp(o[i].r, dot.r, k), Mathf.Lerp(o[i].g, dot.g, k), Mathf.Lerp(o[i].b, dot.b, k), o[i].a);
+					}
 					return o;
 				}
-				return Shimmer(Paint(B, changed, new Color(0.72f, 0.54f, 0.24f), 0.85f), changed, size, 7);
+				return Sheen(B, Paint(B, changed, new Color(0.72f, 0.54f, 0.24f), 0.85f), changed);
 			}
 			if (animal == 1)
 			{
@@ -435,7 +477,7 @@ namespace DynamicIslands.Editor
 					float[] dark2 = Mask(n, i => (1f - Smooth(0.28f, 0.42f, Lum(R2[i]))) * Smooth(0.15f, 0.3f, Diff(R2[i], B[i])));
 					return Paint(R2, dark2, new Color(0.48f, 0.25f, 0.14f), 0.8f);
 				}
-				return Shimmer(Paint(R1, coat, new Color(0.64f, 0.50f, 0.28f), 0.8f), coat, size, 9);
+				return Sheen(R1, Paint(R1, coat, new Color(0.64f, 0.50f, 0.28f), 0.8f), coat);
 			}
 			// Llama: all the fur (not eyes, nose, hooves), and the rust patches of Raft's patched llama (its cream has r-g ~0.1)
 			float[] fur = Mask(n, i => Smooth(0.08f, 0.16f, Lum(B[i])));
@@ -445,7 +487,7 @@ namespace DynamicIslands.Editor
 				return Paint(R1, patch, new Color(0.22f, 0.20f, 0.19f), 0.8f);
 			}
 			if (look == 4) return Paint(B, fur, new Color(0.84f, 0.78f, 0.66f), 0.8f);
-			return Shimmer(Paint(B, fur, new Color(0.66f, 0.50f, 0.27f), 0.8f), fur, size, 11);
+			return Sheen(B, Paint(B, fur, new Color(0.66f, 0.50f, 0.27f), 0.8f), fur);
 		}
 
 		#endregion
