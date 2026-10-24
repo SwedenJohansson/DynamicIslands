@@ -1,6 +1,7 @@
 # Thornback Ridge (CIPlay thornback_ridge): the six steps in order
 island Thornback Ridge
-offset 0 0
+# RESIZE 10-24: the recipe moved this island's old content by 2.5 -6.1; the points below are in the old frame
+offset -2.5 6.1
 expect step 0
 expect title The Hermit
 zone camp

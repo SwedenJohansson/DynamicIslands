@@ -20,11 +20,13 @@ include lib_sea
 include lib_rt
 include lib_features
 include lib_frozen
+# RESIZE 10-24: Radius 60 -> 100 (Height 12 -> 12), the old content moved 0 -22 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 new
 gen Trees=0 Bushes=0.05 Rocks=0.3 Harvest=0.05 BeachThings=0.15
-gen Seed=12901 Radius=60 Height=12 Roughness=0.4 Peaks=2 Shape=0 Style=1 BeachWidth=0.25 Cliffs=0.6 PeakShape=0.5
+gen Seed=12901 Radius=100 Height=12 Roughness=0.4 Peaks=2 Shape=0 Style=1 BeachWidth=0.25 Cliffs=0.6 PeakShape=0.5
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
+push at 0 -22
 
 # --- Terrain: the landing slope, the terrace, the crevasse, the vault floor -----------------------------------------------
 brush flatten from 0 -54 to 0 -44 r=3 s=20 frames=80 h=1
@@ -32,7 +34,20 @@ brush flatten from 0 -44 to 0 -36 r=3 s=20 frames=80 h=2.5
 brush flatten at 0 -27 r=10 s=20 frames=300 h=4
 brush flatten at 0 10 r=24 s=20 frames=400 h=4
 brush flatten from -30 -15 to 30 -15 r=3.5 s=20 frames=300 h=-5
+# RESIZE 10-24 retest: the terrace's edge over the crevasse fell away on the bigger island - built up again under
+# the hall's north side and the zipline's start
+brush flatten from -5 -20.5 to 5 -20.5 r=2 s=20 frames=200 h=4
+# (and under four of the ice cap's rocks at the vault's north end, where the new ground falls away)
+brush flatten at 12.5 31.65 r=3.5 s=20 frames=200 h=4
+brush flatten at -21.65 22.5 r=3.5 s=20 frames=200 h=4
+brush flatten at -12.5 31.65 r=3.5 s=20 frames=200 h=4
+brush flatten at -17.68 27.68 r=3.5 s=20 frames=200 h=4
+brush flatten at -6.47 34.15 r=3.5 s=20 frames=200 h=4
+pop
+brush flatten at -39.4 21.8 r=5 s=8 frames=40
 origin
+clear at -39.4 21.8 r=6
+push at 0 -22
 clear from 0 -54 to 0 -36 r=3
 clear at 0 -27 r=10
 clear at 0 10 r=24
@@ -42,7 +57,7 @@ clear from -30 -15 to 30 -15 r=4
 push at 3 -24 h=4
 call rt_storey a=vaultice f1=RT_WallDoor1 b1=none
 place RT_Floor vaultice at 0 4.5 y=3
-place UT_Generator01 - at -3 1.5 y=0.1 sit yaw=90
+place UT_Generator01 - at -3 1.1 y=0.1 sit yaw=90
 place UT_JumpPuzzle_LiftMechanism_Lever powerlever at -5.6 0.6 y=0.1 sit yaw=90
 place Placeable_Table_Basic - at -1.5 -2 y=0.1 sit yaw=90
 place Note_Book charter at -1.5 -2 y=1 drop yaw=20
@@ -51,9 +66,11 @@ place Loot_ChestLarge carrychest at -3 3.6 y=0.1 sit yaw=180
 pop
 place Zone_Trigger entrancezone at 0 -31 ground y=1
 store vaultshop at -8 -26 ground
-place ZiplinePath_Landmark vaultzip at 5.72 -19.47 h=3.2
+place ZiplinePath_Landmark vaultzip at 5.72 -20.27 h=5.35
+# (RESIZE 10-24 retest: the start's floor at the hall's door, level with the hall, on a post down into the crevasse's lip)
+place ReefHuts_Pillar3 - at 0 -19.3 h=-0.9
 zipto vaultzip 0 -6
-call treasure x=14 z=-36 r=6 n=1 seed=12053
+call treasure x=14 z=-36 r=15 n=1 seed=12053
 
 # --- The far side: Oda's cage behind the collapsed door, her pack and notes; screechers under the cap --------------------
 place Zone_Trigger farzone at 0 -7 ground y=1
@@ -147,15 +164,39 @@ prop frost zone.radius=26
 call snowfall x=0 z=-40 r=22 al=snow
 
 # --- The sea ---------------------------------------------------------------------------------------------------------
-scatter VP_CoralDigitate01 4 at -30 -44 r=4 seed=12921 wet free=1
-scatter VP_CoralBulb04 3 at -30 -44 r=4 seed=12922 wet free=1
-scatter SeaVine3_klump 3 at 30 -44 r=5 seed=12923 wet free=1
-call shallows x=0 z=0 r=60 deep=6 n=1 seed=12930
+scatter VP_CoralDigitate01 4 at -50 -51.33 r=4 seed=12921 wet free=1
+scatter VP_CoralBulb04 3 at -50 -51.33 r=4 seed=12922 wet free=1
+scatter SeaVine3_klump 3 at 50 -51.33 r=5 seed=12923 wet free=1
+call shallows x=0 z=22 r=100 deep=6 n=1 seed=12930
+pop
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; BoatStranded + chest; hatch with a chest; buried treasure; viewpoint ---
+place campfire_1 - at -39.4 21.8 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at -36.4 23.8 ground sit yaw=337
+place "Box Small" - at -41.4 24.3 ground sit
+place Note_Paper dnote at -41.4 24.3 ground y=0.7 drop yaw=20
+note dnote Survey note | ICE SURVEY, SHEET 4\n\nPressure ridge moving 2 m a day, east.\nCrack under the tent this morning. Moved camp.\nThe sea under the ice is warmer than it should be.
+place BoatStranded dvan at 39.4 -21.8 ground yaw=97
+prop dvan tint.color=#5a6670
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at 35.4 -18.8 ground sit yaw=37
+note dwreckchest Driver's box | The driver's box under the seat: bolts, glass and a scrap of leather.
+loot dwreckchest Bolt*2;Glass*2;Leather*2
+prop dwreckchest loot.refill=0
+call hatchcache x=21.8 z=39.4 r=15 seed=12991 alias=dhatch chest=dhatchchest items=MetalIngot*2;Wool*3;Bolt*2
+call vinecache x=39.4 z=-21.8 r=15 seed=12993 chest=dvinechest vines=dvines items=Rope*3;Wool*2;Bolt*3
+call treasure x=-38.6 z=-23.2 r=15 n=1 seed=12992
+prop treasure12992 treasure.loot=TitaniumOre*2;MetalOre*2
+place Zone_Trigger dview at -4 20.6 ground
+prop dview zone.id=coldhold_vault_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=The Coldhold's entrance hall looks out over the landing, the glacier pressing down behind it.
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------------
 # the generator's rocks that floated over the slope (ground check, 2026-10-23)
-clear at -26.8 0.74 r=1.5 only=TP_BigRock
-clear at -22.4 -10.87 r=1.5 only=TP_BigRock
+clear at -26.8 -21.26 r=1.5 only=TP_BigRock
+clear at -22.4 -32.87 r=1.5 only=TP_BigRock
 
 info title=The Coldhold Vault
 info author=Custom Islands
@@ -316,4 +357,19 @@ prop keepchest obj.name=keepchest
 prop verdictbroadcast obj.name=verdictbroadcast
 prop verdictcarry obj.name=verdictcarry
 prop verdictkeep obj.name=verdictkeep
+# RESIZE 10-24 retest: the bigger island's generator rocks that floated over slopes (ground check)
+clear at -6.58 16.48 r=1.5 only=TP_SmallRock
+clear at -33.55 43.72 r=1.5 only=TP_BigRock
+clear at -56.96 -16.23 r=1.5 only=TP_BigRock
+clear at -50.55 23.13 r=1.5 only=TP_BigRock
+clear at -63.96 1.95 r=1.5 only=TP_BigRock
+clear at -59.54 25.21 r=1.5 only=TP_BigRock
+clear at -52.59 31.78 r=1.5 only=TP_BigRock
+clear at -20.26 57.83 r=1.5 only=TP_BigRock
+clear at -74.42 -4.38 r=1.5 only=TP_BigRock
+clear at -45.96 -21.22 r=1.5 only=TP_BigRock
+clear at 3.62 48.61 r=1.5 only=TP_BigRock
+clear at -16.18 55.00 r=1.5 only=TP_BigRock
+clear at -50.83 -30.93 r=1.5 only=TP_BigRock
+
 save The Coldhold Vault

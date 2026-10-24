@@ -8,20 +8,30 @@
 # the tent's pad at 2 m (r 7 round 0 0), the path up from the south beach at 0 -20; the llama's patch round 10 8.
 # (Adapted: the design's "each return a new note" needs a visit counter the editor has not got; the shelf comes back
 # with the same tent until its quest is done, as The Returning Islet does without its plate chain.)
+include lib_features
 include lib_sea
 include lib_frozen
+# RESIZE 10-24: Radius 28 -> 60 (Height 4 -> 4), the old content moved 0 -17.6 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 new
 gen Trees=0 Bushes=0.1 Rocks=0.3 Harvest=0.1 BeachThings=0.2 Grass=0.1
-gen Seed=13101 Radius=28 Height=4 Roughness=0.3 Peaks=1 Shape=0 Style=1 BeachWidth=0.35 Cliffs=0.2 PeakShape=0.4
+gen Seed=13101 Radius=60 Height=4 Roughness=0.3 Peaks=1 Shape=0 Style=1 BeachWidth=0.35 Cliffs=0.2 PeakShape=0.4
 gen Water=0.5 SeaRocks=0.2 SeaFinds=0.3 Sunken=0.1 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
+push at 0 -17.6
 
 # --- Terrain: the tent's pad, the path up from the beach --------------------------------------------------------------
 brush flatten at 0 0 r=7 s=20 frames=200 h=2
 brush flatten from 0 -20 to 0 -7 r=2 s=20 frames=80 h=1.4
+pop
+brush flatten at -9.7 25.2 r=5 s=8 frames=40
 origin
+clear at -9.7 25.2 r=6
+push at 0 -17.6
 clear at 0 0 r=7
 clear from 0 -20 to 0 -7 r=2.5
+# RESIZE 10-24 retest: at the new coast the generator's shore ice (TP_IceShore_Small1, about 1 m over the pad) buried the tent
+clear at 0 0 r=24 only=TP_IceShore_Small1
+clear from 0 -22 to 0 -7 r=5 only=TP_IceShore_Small1
 
 # --- The tent, its cache, the notes; the llama's patch; ice and snow ----------------------------------------------------
 place Balboa_DecorationPrefabBase_SimpleTent tent at 0 1 ground sit yaw=180
@@ -40,9 +50,31 @@ call icetint al=ice
 scatter TP_SnowDrift02 3 at 0 0 r=10 seed=13111 free=3
 scatter TP_SnowDrift03 2 at 0 0 r=10 seed=13112 free=3
 scatter "Pickup_Landmark_Flower_White" 3 at 8 8 r=4 seed=13113 free=2
-call shallows x=0 z=0 r=28 deep=4 n=1 seed=13130
-scatter VP_CoralBulb04 3 at -20 -18 r=4 seed=13121 wet free=1
+call shallows x=0 z=17.6 r=60 deep=4 n=1 seed=13130
+scatter VP_CoralBulb04 3 at -42.86 -20.97 r=4 seed=13121 wet free=1
 call snowfall x=0 z=0 r=32 al=snow fog=#d0dbe4 fa=0.6
+pop
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; TP_SnowVehicle02 + chest; hatch with a chest; viewpoint ---
+place campfire_1 - at -9.7 25.2 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at -6.7 27.2 ground sit yaw=177
+place "Box Small" - at -11.7 27.7 ground sit
+place Note_Paper dnote at -11.7 27.7 ground y=0.7 drop yaw=20
+note dnote Sealer's note | Poor hunting. The seals left when the warm water came up.\nLeft the spare furs and the tea in the box.\nIf you are cold, the fire pit still takes driftwood.
+place TP_SnowVehicle02 dvan at 23.1 13.9 ground yaw=297
+prop dvan tint.color=#7a8a96
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at 19.1 16.9 ground sit yaw=237
+note dwreckchest Driver's box | The driver's box under the seat: bolts, glass and a scrap of leather.
+loot dwreckchest Bolt*2;Glass*2;Leather*2
+prop dwreckchest loot.refill=0
+call hatchcache x=8.8 z=25.5 r=15 seed=13191 alias=dhatch chest=dhatchchest items=MetalIngot*2;Wool*3;Bolt*2
+call vinecache x=25.5 z=-8.8 r=15 seed=13193 chest=dvinechest vines=dvines items=Rope*3;Wool*2;Bolt*3
+place Zone_Trigger dview at -23.6 13.1 ground
+prop dview zone.id=squall_shelf_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=One tent on the whole shelf, its lines iced - and the wind does not stop for a moment.
 
 # --- Settings, notes, behaviours, quest ----------------------------------------------------------------------------------
 info title=Squall Shelf

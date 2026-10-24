@@ -1,6 +1,7 @@
 # Guide pictures of Hollowtrunk Grove (CIPlay hollowtrunk_grove_pics): Raft's camera, midday, calm
 island Hollowtrunk Grove
-offset 0 0
+# RESIZE 10-24: the recipe moved this island's old content by 0 -8.8; the points below are in the old frame
+offset 0 8.8
 hour 11
 weather Calm
 at 0 -40

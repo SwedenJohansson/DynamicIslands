@@ -13,19 +13,24 @@
 # (Adapted: the air pockets are placed inline at the rooms' floor height, not with the ground-placing airpocket macro.
 # The valve cannot read the Coldhold's choice - no cross-island signal check (NF3) - so the ending is neutral: the
 # racks light up whichever way was chosen, and the closing note speaks to all three.)
+include lib_gravity
+include lib_features
 include lib_sea
 include lib_rt
 include lib_frozen
+# RESIZE 10-24: Radius 40 -> 85 (Height 6 -> 6), the island grows round the old content, which stays where it was.
 new
 gen Trees=0 Bushes=0 Rocks=0.3 Harvest=0 BeachThings=0
-gen Seed=13001 Radius=40 Height=6 Roughness=0.4 Peaks=1 Shape=0 Style=1 BeachWidth=0.1 Cliffs=0.4 PeakShape=0.4
+gen Seed=13001 Radius=85 Height=6 Roughness=0.4 Peaks=1 Shape=0 Style=1 BeachWidth=0.1 Cliffs=0.4 PeakShape=0.4
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.3 Sunken=0.5 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
 elevation -30
 
 # --- Terrain: the ark's bed along the ridge --------------------------------------------------------------------------
 brush flatten from -26 0 to 26 0 r=8 s=20 frames=400 h=3.8
+brush flatten at 5.6 35.6 r=4 s=8 frames=40
 origin
+clear at 5.6 35.6 r=5
 clear from -26 0 to 26 0 r=8
 
 # --- The four pressure rooms (doors east and west), their air under the roofs ----------------------------------------------
@@ -112,6 +117,32 @@ prop arkdark atmo.light=#9fc4dc
 prop arkdark atmo.lightAmount=0.35
 prop arkdark zone.radius=30
 
+# --- DISCOVERIES 10-24 (optional, no quest needs them): diver's cache + slate + air pocket; TP_SnowVehicle01 + chest; hatch with a chest; buried treasure; viewpoint ---
+place "Box Small" dcampbox at 5.6 35.6 ground sit
+place Note_Paper dnote at 5.6 35.6 ground y=0.7 drop yaw=30
+place Loot_ChestSmall dcamp at 7.6 37.1 ground sit yaw=77
+call airpocket x=3.1 z=33.6 id=seed_ark_dair al=dairzone bub=dairbub r=2.5 msg="Air trapped in a diver's bell-tent. Breathe."
+note dnote Diver's slate | A slate tied to a box:\n\nCOLD. TOO COLD FOR LONG DIVES.\nAIR IN THE ROOMS ONLY.\nGET OUT AT THE FIRST SHIVER.
+note dcamp Diver's cache | A diver's spare kit, wired shut against the current.
+loot dcamp Rope*2;Glass*3;Plastic*4
+prop dcamp loot.refill=0
+place TP_SnowVehicle01 dvan at -6.1 -38.5 ground yaw=197
+prop dvan tint.color=#8a9aa6
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at -10.1 -35.5 ground sit yaw=137
+note dwreckchest Frozen chest | A chest frozen to the runner: wool, rope and a tin of nails.
+loot dwreckchest Wool*3;Rope*2;Nail*8
+prop dwreckchest loot.refill=0
+call hatchcache x=36.9 z=-12.7 r=15 seed=13091 alias=dhatch chest=dhatchchest items=MetalIngot*2;Wool*3;Bolt*2
+call vinecache x=-12.7 z=-36.9 r=15 seed=13093 chest=dvinechest vines=dvines items=Rope*3;Wool*2;Bolt*3
+call treasure x=-36.9 z=12.7 r=15 n=1 seed=13092
+prop treasure13092 treasure.loot=TitaniumOre*2;MetalOre*2
+place Zone_Trigger dview at -33.4 -20.1 ground y=1.5
+prop dview zone.id=seed_ark_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=The pressure rooms lie in a row along the ridge below, lights still on in some of them.
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------------
 # the generator's rocks that floated over the slope (ground check, 2026-10-23)
 clear at -0.91 24.6 r=1.5 only=TP_BigRock
@@ -187,4 +218,10 @@ quest reward=MetalIngot*4;CopperIngot*4;TradeToken*8
 prop closingnote obj.name=closingnote
 prop gate obj.name=gate
 prop racklights obj.name=racklights
+# RESIZE 10-24 retest: the bigger island's generator rocks that floated over slopes (ground check)
+clear at 33.68 8.50 r=1.5 only=TP_BigRock
+clear at 37.46 10.26 r=1.5 only=TP_BigRock
+clear at 39.31 3.75 r=1.5 only=TP_BigRock
+clear at 14.77 8.89 r=1.5 only=TP_BigRock
+
 save The Seed Ark

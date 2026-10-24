@@ -13,6 +13,9 @@ wait 3
 expect step 3
 zone bee_hall
 expect step 4
+expect hidden beecache
+use beevines
+expect shown beecache
 open Bee hall cache
 wait 3
 expect step 5
@@ -27,5 +30,13 @@ expect step 8
 open Den cache
 wait 3
 expect step 9
+expect hidden labchest
+use fusebox
+expect story fuse 0
+expect shown labchest
+expect step 10
+open Lab chest
+wait 3
+expect step 11
 read Poison sample report
 expect done

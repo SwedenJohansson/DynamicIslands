@@ -12,13 +12,15 @@
 # sea): the ridge at 4 m (x -14..20, z -3..12); the ramp up its south face from 1 m at -4.5 -30; the lower deck's floor at
 # 4 m, its three rooms x -6..0, 0..6, 6..12 (z 0..9; the door at -4.5 0); the upper deck at 7 m (the mess x -6..0, the
 # galley x 0..6, the open foredeck x 6..12 with the mast at 10 4.5); the crow's nest at 12 m; the crane at 34 -8.
+include lib_features
 include lib_sea
 include lib_rt
 include lib_ni34
 include lib_frozen
+# RESIZE 10-24: Radius 50 -> 90 (Height 5 -> 6), the island grows round the old content, which stays where it was.
 new
 gen Trees=0 Bushes=0.05 Rocks=0.3 Harvest=0.05 BeachThings=0.2
-gen Seed=12501 Radius=50 Height=5 Roughness=0.4 Peaks=2 Shape=1 Style=1 BeachWidth=0.3 Cliffs=0.3 PeakShape=0.5
+gen Seed=12501 Radius=90 Height=6 Roughness=0.4 Peaks=2 Shape=1 Style=1 BeachWidth=0.3 Cliffs=0.3 PeakShape=0.5
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.3 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
 
@@ -29,7 +31,9 @@ brush flatten from -4.5 -24 to -4.5 -18 r=2.5 s=20 frames=60 h=2
 brush flatten from -4.5 -18 to -4.5 -12 r=2.5 s=20 frames=60 h=3
 brush flatten from -4.5 -12 to -4.5 -4 r=2.5 s=20 frames=60 h=4
 brush flatten at 34 -8 r=7 s=20 frames=200 h=1.5
+brush flatten at 13.7 39.7 r=5 s=8 frames=40
 origin
+clear at 13.7 39.7 r=6
 clear from -10 4.5 to 16 4.5 r=8
 clear from -4.5 -30 to -4.5 -3 r=3
 clear at 34 -8 r=7
@@ -120,12 +124,36 @@ place Loot_Chest cranebox at 31 -10 ground sit yaw=40
 place TP_SnowDrift02 - at 38 -11 ground sit yaw=10
 
 # --- The sea: two reefs at the ridge foot, snow ----------------------------------------------------------------------
-scatter VP_CoralDigitate01 4 at -30 20 r=4 seed=12511 wet free=1
-scatter VP_CoralBulb04 3 at -30 20 r=4 seed=12512 wet free=1
-scatter VP_CoralDigitate01 3 at 28 28 r=4 seed=12513 wet free=1
-scatter SeaVine3_klump 4 at 28 28 r=5 seed=12514 wet free=1
-call shallows x=0 z=0 r=50 deep=6 n=1 seed=12520
+scatter VP_CoralDigitate01 4 at -54 36 r=4 seed=12511 wet free=1
+scatter VP_CoralBulb04 3 at -54 36 r=4 seed=12512 wet free=1
+scatter VP_CoralDigitate01 3 at 50.4 50.4 r=4 seed=12513 wet free=1
+scatter SeaVine3_klump 4 at 50.4 50.4 r=5 seed=12514 wet free=1
+call shallows x=0 z=0 r=90 deep=6 n=1 seed=12520
 call snowfall x=4 z=0 r=55 al=snow
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; BoatStranded + chest; hatch with a chest; buried treasure; viewpoint ---
+place campfire_1 - at 13.7 39.7 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at 16.7 41.7 ground sit yaw=297
+place "Box Small" - at 11.7 42.2 ground sit
+place Note_Paper dnote at 11.7 42.2 ground y=0.7 drop yaw=20
+note dnote Survey note | ICE SURVEY, SHEET 4\n\nPressure ridge moving 2 m a day, east.\nCrack under the tent this morning. Moved camp.\nThe sea under the ice is warmer than it should be.
+place BoatStranded dvan at -13.7 -39.7 ground yaw=57
+prop dvan tint.color=#5a6670
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at -17.7 -36.7 ground sit yaw=357
+note dwreckchest Driver's box | The driver's box under the seat: bolts, glass and a scrap of leather.
+loot dwreckchest Bolt*2;Glass*2;Leather*2
+prop dwreckchest loot.refill=0
+# RESIZE 10-24 retest: the hatch on the flat ground west of the bow (its first spot is under water)
+call hatchcache x=-61 z=12 r=4 seed=12591 alias=dhatch chest=dhatchchest items=MetalIngot*2;Wool*3;Bolt*2
+call vinecache x=12 z=61 r=15 seed=12593 chest=dvinechest vines=dvines items=Rope*3;Wool*2;Bolt*3
+call treasure x=32.6 z=-26.4 r=15 n=1 seed=12592
+prop treasure12592 treasure.loot=TitaniumOre*2;MetalOre*2
+place Zone_Trigger dview at 41.2 8 ground
+prop dview zone.id=iron_whale_bow_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=The Iron Whale's bow stands up on the ridge, black against the ice, her broken end towards the sea.
 
 # --- Settings, notes, behaviours, quest -------------------------------------------------------------------------------
 # the generator's rocks that floated over the slope (ground check, 2026-10-23)
@@ -194,5 +222,9 @@ step blueprint|Blueprint_Storage_Large|1|Take the large storage's plans from the
 step reach|hatch|1|Go down the cargo hatch
 quest done=Under the hatch: black water and the Whale's broken stern. Her captain is down there.
 quest reward=MetalIngot*3;CopperIngot*2;Rope*3
+
+# RESIZE 10-24 retest: the bigger island's generator rocks that floated over slopes (ground check)
+clear at -71.27 0.96 r=1.5 only=TP_BigRock
+clear at -30.24 -61.34 r=1.5 only=TP_BigRock
 
 save The Iron Whale - Bow

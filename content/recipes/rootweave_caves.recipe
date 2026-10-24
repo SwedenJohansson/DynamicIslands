@@ -3,7 +3,7 @@
 # Hall (south, dim green, the survey team's camp), the Bee Hall (east, a vine-choked cave humming with wild hives), the
 # Flooded Passage (west, its floor under the sea, two air pockets on the way in) and the Den (north, Balboa's bear cave,
 # where a mama bear keeps the river people's cache). On the hilltop over the Bee Hall the survey team's wind turbine
-# still turns. Quest "The Living Labyrinth" (10 steps): the Fungus Hall, the cave survey, the wind turbine plans on the
+# still turns. Quest "The Living Labyrinth" (12 steps): the Fungus Hall, the cave survey, the wind turbine plans on the
 # hilltop, the Bee Hall, the advanced battery plans there, the Flooded Passage, the advanced headlight plans at its
 # end, the mama bear, the electric grill plans in the den cache, the poison sample report.
 #
@@ -44,6 +44,11 @@ place Note_Sign survey at -3 -8 sit yaw=90
 place Crate_Big_01 - at 2.5 -14 sit yaw=20
 place Placeable_Lantern_Metal - at 2.5 -14 y=0.45 sit
 place Loot_Crate mushroombasket at 2 -24 sit yaw=200
+# REDO 10-24: the survey team's fuse box (the island's machine) and the lab corner it lights
+place RT_PowerBox fusebox at -3.2 -15 sit yaw=90
+place Loot_Chest labchest at -2.5 -27 sit yaw=0
+place "Box Small" - at 0 -28 sit
+place Note_Paper samplereport at 0 -28 y=0.7 drop yaw=20
 pop
 
 # (the east flank raised round the Bee Hall, so the hill covers the cave's shell)
@@ -64,6 +69,7 @@ place Zone_Trigger beehall at 0 -6 y=1.5
 place Loot_WildHive beehive1 at -2 -10 sit
 place Loot_WildHive beehive2 at 2 -13 sit yaw=90
 place Loot_Chest beecache at 0 -16 sit yaw=180
+beside ChoppableVines beevines beecache d=1.6
 scatter Pickup_Landmark_Flower_Red 3 at 0 6 r=5 seed=11072 free=1
 pop
 loot beehive1 HoneyComb*3
@@ -102,8 +108,6 @@ place Creature_MamaBear denbear at 1 -18 y=0.8
 prop denbear creature.count=1
 prop denbear creature.respawn=0
 place Loot_Chest dencache at 1 -27 sit yaw=180
-place "Box Small" - at -1.6 -27 sit
-place Note_Paper samplereport at -1.6 -27 y=0.7 drop yaw=20
 place "Pickup_Landmark_Iron 1" - at -5 -11 sit
 place "Pickup_Landmark_Copper 1" - at -5.2 -18 sit
 place "Pickup_Landmark_Iron 2" - at 7.6 -22 sit
@@ -116,6 +120,26 @@ scatter Pickup_Landmark_BerryBush 4 at 30 -30 r=12 seed=11073 free=3
 scatter Pickup_Landmark_MarketGood_Banana_Basket01 2 at -20 -60 r=8 seed=11074 free=2
 scatter "Pickup_Landmark_Clay 3" 2 at 10 -68 r=6 seed=11075 free=2
 call shallows x=0 z=0 r=96 deep=5 n=2 seed=11076
+
+# --- REDO 10-24 secrets (optional): a buried survey case for the metal detector; a vine-hidden cache on the west slope;
+#     the survey team's beach camp and their wrecked boat
+call treasure x=34 z=-42 r=10 n=1 seed=11197
+call vinecache x=-40 z=-34 r=10 seed=11198 chest=dvinechest vines=dvines items=Rope*3;CopperIngot*2;Leather*2
+place Balboa_DecorationPrefabBase_SimpleTent - at 9 -64 ground sit yaw=160
+place campfire_1 - at 6 -61 ground sit
+place RT_PlasticBoat - at -9 -70 ground sit yaw=40
+
+# --- FILL 10-24 (RESIZE rework): the bigger island's whole area at Raft-like density - trees, bushes, rocks; free= keeps them
+#     off the quest's objects and paths
+scatter "Pickup_Landmark_Tree_Palm 1" 10 at 0 0 r=80 seed=11190 free=5
+scatter "Pickup_Landmark_Tree_Palm 2" 10 at 0 0 r=80 seed=11191 free=5
+scatter "Pickup_Landmark_Tree_Palm 4" 6 at 0 0 r=80 seed=11192 free=5
+scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=80 seed=11193 free=5
+scatter "Balboa_Bush_01 Variant" 30 at 0 0 r=80 seed=11194 free=2.5
+scatter "Balboa_Bush_03 Variant" 30 at 0 0 r=80 seed=11195 free=2.5
+scatter CaravanIsland_SmallRock_1 14 at 0 0 r=80 seed=11196 free=3
+scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=80 seed=11197 free=3
+scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=80 seed=11198 free=2
 
 # --- Settings, notes, behaviours, quest -------------------------------------------------------------------------
 info title=Rootweave Caves
@@ -133,23 +157,41 @@ prop denair atmo.fog=#20180e
 prop denair atmo.fogAmount=0.3
 prop denair zone.radius=14
 
-note survey Cave survey | CAVE SURVEY - SEEDKEEPERS\n\nFungus Hall: camp. Lamps on the crates.\nBee Hall (east): hives in the roots. Leave them be.\nFlooded Passage (west): two air pockets. Swim between them.\nDen (north): a mama bear. Our cache is in there. Wait for her to sleep.\n\nThe turbine on the top charges the lamps.
+note survey Cave survey | CAVE SURVEY - SEEDKEEPERS\n\nFungus Hall: camp. Lamps on the crates.\nBee Hall (east): hives in the roots. Leave them be.\nFlooded Passage (west): two air pockets. Swim between them.\nDen (north): a mama bear. Our cache is in there. Wait for her to sleep.\n\nFuses: one in each far cave. Three in the box and the lab lights up.\n\nThe turbine on the top charges the lamps.
 note samplereport Poison sample report | SAMPLE 31 - ROOT TISSUE, DEN\n\nThe rot is not fungus. Not bacteria. It grows where the roots are cut, and it grows TOWARDS the cut.\n\nSomething in the roots. Not natural.\n\nAll samples to the marsh station. - M.
 note mushroombasket Mushroom basket | The survey camp's mushroom basket, still full.
 note mastbox Turbine mast box | The box at the turbine's foot: its plans, oiled and rolled.
-note beecache Bee hall cache | A chest deep in the Bee Hall: the plans of an advanced battery, in wax.
-note drownedcrate Drowned crate | A crate at the end of the flooded passage, sealed tight: a headlight's plans, dry inside.
-note dencache Den cache | The river people's cache in the den: a grill's plans and a lump of leather.
+note beecache Bee hall cache | A chest deep in the Bee Hall, behind the vines: an advanced battery's plans in wax, and a fuse.
+note drownedcrate Drowned crate | A crate at the end of the flooded passage, sealed tight: a headlight's plans and a fuse, dry inside.
+note dencache Den cache | The river people's cache in the den: a fuse in a tin, and a lump of leather.
 loot mushroombasket CaveMushroom*6
 prop mushroombasket loot.refill=0
 loot mastbox Blueprint_WindTurbine*1;CopperIngot*2
 prop mastbox loot.refill=0
-loot beecache Blueprint_BatteryAdvanced*1;Battery*1
+loot beecache Blueprint_BatteryAdvanced*1;Battery*1;story:fuse*1
 prop beecache loot.refill=0
-loot drownedcrate Blueprint_HeadLight_Advanced*1;CaveMushroom*2
+loot drownedcrate Blueprint_HeadLight_Advanced*1;CaveMushroom*2;story:fuse*1
 prop drownedcrate loot.refill=0
-loot dencache Blueprint_ElectricGrill*1;Leather*2
+loot dencache story:fuse*1;Leather*2
 prop dencache loot.refill=0
+story fuse|Fuse|Placeable_Lantern_Metal|A ceramic fuse from the survey team's kit. The camp's fuse box takes three.
+story camplight|Camp lights on|Placeable_Lantern_Metal|The Fungus Hall's lamps burn again; the lab corner is lit.
+prop beecache obj.name=beecache
+prop beecache beh.hidden=1
+prop beevines obj.name=beevines
+prop beevines on.use=hide|\nshow|beecache\nmessage||The machete clears the Bee Hall's back wall of vines. A chest, waxed shut by the bees.
+prop fusebox obj.name=fusebox
+prop fusebox beh.use=Fit the fuses
+prop fusebox if.use=take|story:fuse|3
+prop fusebox on.use=message||Three fuses in. The turbine's charge reaches the lamps: the Fungus Hall glows, and the lab corner at the back comes out of the dark.\ngive||story:camplight*1\nshow|labchest\nshow|samplereport
+prop fusebox else.use=message||The survey camp's fuse box: three empty fuse clips. The survey kit was split between the far caves.
+note labchest Lab chest | The survey lab's chest: an electric grill's plans (for the samples), and glass.
+loot labchest Blueprint_ElectricGrill*1;Glass*2;CaveMushroom*2
+prop labchest loot.refill=0
+prop labchest obj.name=labchest
+prop labchest beh.hidden=1
+prop samplereport obj.name=samplereport
+prop samplereport beh.hidden=1
 
 prop fungushall zone.id=fungus_hall
 prop fungushall zone.radius=5
@@ -174,8 +216,10 @@ step blueprint|Blueprint_BatteryAdvanced|1|Take the advanced battery plans from 
 step reach|flooded_passage|1|Swim into the Flooded Passage
 step blueprint|Blueprint_HeadLight_Advanced|1|Take the headlight plans from the drowned crate
 step kill|Mama bear|1|Defeat the mama bear in the Den
-step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans from the den cache
-step read|Poison sample report|1|Read the poison sample report
+step collect|story:fuse|3|Find the three fuses: the Bee Hall, the Flooded Passage and the Den
+step collect|story:camplight|1|Fit the fuses to the survey camp's fuse box
+step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans from the lab chest
+step read|Poison sample report|1|Read the poison sample report in the lab
 quest done=Something in the roots. The marsh station has the samples - band 1000.
 quest reward=CaveMushroom*3;Leather*2
 

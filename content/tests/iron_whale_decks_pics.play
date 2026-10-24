@@ -3,8 +3,9 @@ island The Iron Whale - Engine Decks
 offset 0 0
 hour 11
 weather Calm
-at 3 -8 h=-6
-wait 3
-picture sl12_iron_whale_decks_mast 16 +17 -16 3 +19 0
-picture sl12_iron_whale_decks_stern 10 +3 -16 3 +4 0
-picture sl12_iron_whale_decks_boiler 4.5 +2.2 -3 1 +1.8 3
+# (RESIZE 10-24 retest: the player on the mast platform, out of the sea - in it the pictures took the water's wobble;
+# fixed heights: on the bigger island "+h" measured from the wrong ground. The boiler shot (black inside) and the stern shot
+# (taken from the air above the sea, the seabed looked like snow in daylight) left out)
+at 3 0 h=18.2
+wait 5
+picture sl12_iron_whale_decks_mast 16 22 -16 3 18 0

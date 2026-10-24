@@ -2,7 +2,8 @@
 # cage and pack, her notes, the screechers; the seed wing's canisters, the record wing's papers, the embryo wing's crank
 # and the keeper's code; the control room, one switch (CARRY), the verdict, the gift, Hedda's call, the flood door.
 island The Coldhold Vault
-offset 0 0
+# RESIZE 10-24: the recipe moved this island's old content by 0 -22; the points below are in the old frame
+offset 0 22
 expect step 0
 expect title Beneath the Glacier
 expect hidden carrychest

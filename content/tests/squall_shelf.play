@@ -1,7 +1,8 @@
 # Squall Shelf (CIPlay squall_shelf): the tent, the stranded note, the bear, the tent cache (the net), the llama, the
 # weather log.
 island Squall Shelf
-offset 0 0
+# RESIZE 10-24: the recipe moved this island's old content by 0 -17.6; the points below are in the old frame
+offset 0 17.6
 expect step 0
 expect title The Stranded Tent
 zone tent

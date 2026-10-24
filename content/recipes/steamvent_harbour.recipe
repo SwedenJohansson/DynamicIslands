@@ -2,7 +2,7 @@
 # A harbour town huddled round a geothermal vent: steam rising from a fissure in the square, iron pipes laid from it to
 # the houses, the ground round it warm enough for a garden of fruit and flowers in the snow. A glass greenhouse grew shut
 # with jungle vines (the machete is in the harbour store), a boiler house, a pipe store full of rats, a hen coop and a
-# town hall that has been cold since the valve stuck. Quest "The Warm Harbour" (11 steps): the quay, the harbour master's
+# town hall that has been cold since the valve stuck. Quest "The Warm Harbour" (12 steps): the quay, the harbour master's
 # notice, the machete's plans, the vines and the greenhouse, the gardener's log, the fuel tank's plans (boiler house), the
 # rats, the fuel pipe's plans (pipe store), the vent valve (steam back to the houses), the biofuel extractor's plans
 # (town hall locker), the town meeting minutes.
@@ -16,18 +16,31 @@ include lib_huts
 include lib_rt
 include lib_features
 include lib_frozen
+# RESIZE 10-24: Radius 46 -> 90 (Height 7 -> 8), the old content moved 0 -24.2 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 new
 gen Trees=0.06 Bushes=0.2 Rocks=0.3 Harvest=0.2 BeachThings=0.3
-gen Seed=12301 Radius=46 Height=7 Roughness=0.4 Peaks=2 Shape=0 Style=1 BeachWidth=0.25 Cliffs=0.35 PeakShape=0.5
+gen Seed=12301 Radius=90 Height=8 Roughness=0.4 Peaks=2 Shape=0 Style=1 BeachWidth=0.25 Cliffs=0.35 PeakShape=0.5
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
+push at 0 -24.2
 
 # --- Terrain: the town at 3 m, the road down to the quay at 1.2 m ---------------------------------------------------
 brush flatten at 0 0 r=22 s=20 frames=300 h=3
 brush flatten from 0 -22 to 0 -33 r=3.5 s=20 frames=80 h=2.1
 brush flatten at 0 -38 r=6 s=20 frames=200 h=1.2
+# RESIZE 10-24 retest: the bigger island stands higher here - the huts' pads flattened again
+brush flatten at -9.75 -14.5 r=5 s=20 frames=200 h=3
+brush flatten at -19.75 4.25 r=5 s=20 frames=200 h=3
+brush flatten at 8.25 14.25 r=5 s=20 frames=200 h=3
+brush flatten at -3 12.25 r=5 s=20 frames=200 h=3
+brush flatten at -18.5 15.5 r=5 s=20 frames=200 h=3
+brush flatten from -12 14 to -12 18 r=3 s=20 frames=200 h=3
 brush grass at 0 0 r=9 s=20 frames=20
+pop
+brush flatten at -11.8 30.8 r=5 s=8 frames=40
 origin
+clear at -11.8 30.8 r=6
+push at 0 -24.2
 clear at 0 0 r=22
 clear from 0 -22 to 0 -38 r=6
 
@@ -137,9 +150,31 @@ place Creature_Chicken hens at -17 19 ground
 call hives x=24 z=10 r=6 n=2 seed=12322
 
 # --- The sea --------------------------------------------------------------------------------------------------------
-scatter VP_CoralDigitate01 4 at 30 -30 r=4 seed=12331 wet free=1
-scatter VP_CoralBulb04 3 at 30 -30 r=4 seed=12332 wet free=1
-call shallows x=0 z=0 r=46 deep=6 n=1 seed=12340
+scatter VP_CoralDigitate01 4 at 58.7 -34.5 r=4 seed=12331 wet free=1
+scatter VP_CoralBulb04 3 at 58.7 -34.5 r=4 seed=12332 wet free=1
+call shallows x=0 z=24.2 r=90 deep=6 n=1 seed=12340
+pop
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; TP_SnowVehicle02 + chest; hatch with a chest; dirt to dig (the detector comes later); viewpoint ---
+place campfire_1 - at -11.8 30.8 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at -8.8 32.8 ground sit yaw=97
+place "Box Small" - at -13.8 33.3 ground sit
+place Note_Paper dnote at -13.8 33.3 ground y=0.7 drop yaw=20
+note dnote Sealer's note | Poor hunting. The seals left when the warm water came up.\nLeft the spare furs and the tea in the box.\nIf you are cold, the fire pit still takes driftwood.
+place TP_SnowVehicle02 dvan at 32.6 -26.4 ground yaw=217
+prop dvan tint.color=#7a8a96
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at 28.6 -23.4 ground sit yaw=157
+note dwreckchest Driver's box | The driver's box under the seat: bolts, glass and a scrap of leather.
+loot dwreckchest Bolt*2;Glass*2;Leather*2
+prop dwreckchest loot.refill=0
+call hatchcache x=-31.7 z=-27.6 r=15 seed=12391 alias=dhatch chest=dhatchchest items=MetalIngot*2;Wool*3;Bolt*2
+call dirt x=-5 z=25 r=22 n=3 seed=12392
+place Zone_Trigger dview at -41.5 6.6 ground
+prop dview zone.id=steamvent_harbour_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=Steam rises from the square below, and the harbour town huddles round it for the warmth.
 
 # --- Settings, story items, notes, behaviours, quest -----------------------------------------------------------------
 info title=Steamvent Harbour
@@ -147,6 +182,7 @@ info author=Custom Islands
 info description=A harbour town round a steaming vent in the snow: pipes to every house, a fruit garden on the warm ground, a glass greenhouse grown shut with vines and a valve that stuck. The third island of The Frozen Horizon.
 island on.arrive=message||Steam rising from a town square - and round it, in the snow, a garden.
 
+story wheelpiece|Handwheel piece|Placeable_Lantern_Metal|A piece of the vent valve's handwheel. The harbour master took it apart to stop the frozen valve being forced.
 story steam|Steam to the houses|Placeable_Lantern_Metal|You opened the vent valve: steam runs to every house in the harbour again.
 
 note notice Harbour master's notice | STEAMVENT HARBOUR - NOTICE\n\nThe vent valve has stuck. The houses are cold.\nThe greenhouse door has grown shut - jungle vines, the heat did it. A machete is in the harbour store.\nRats in the pipe store. Mind your fingers.\nTown meeting in the hall once the steam is back.\n\n- Harbour master
@@ -159,11 +195,11 @@ note townlocker Steam-house locker | The town hall's locker, its frozen lock tha
 note minutes Town meeting minutes | TOWN MEETING - MINUTES\n\nSteam back thanks to a stranger.\nAgreed: we take the sledges to Orrin's camp on the shelf ice, and from there to the Whale. The Whale's captain kept the vault's charts.\nOrrin is on 900.\nAgreed: the greenhouse feeds whoever stays.
 loot harbourstore Blueprint_Machete*1;Machete*1;Rope*2
 prop harbourstore loot.refill=0
-loot greenstore Seed_Banana*2;Seed_Strawberry*2;Seed_Flower_Red*1;Seed_Flower_Blue*1;Raw_Potato*3
+loot greenstore story:wheelpiece*1;Seed_Banana*2;Seed_Strawberry*2;Seed_Flower_Red*1;Seed_Flower_Blue*1;Raw_Potato*3
 prop greenstore loot.refill=0
-loot boilerhouse Blueprint_Fueltank*1;Bolt*2;Scrap*2
+loot boilerhouse Blueprint_Fueltank*1;Bolt*2;Scrap*2;story:wheelpiece*1
 prop boilerhouse loot.refill=0
-loot pipestore Blueprint_Pipe_Fuel*1;CopperIngot*2;Scrap*2
+loot pipestore Blueprint_Pipe_Fuel*1;CopperIngot*2;Scrap*2;story:wheelpiece*1
 prop pipestore loot.refill=0
 loot townlocker Blueprint_BiofuelExtractor*1;MetalIngot*2;Bolt*2
 prop townlocker loot.refill=0
@@ -187,9 +223,9 @@ prop hens creature.count=3
 
 prop ventvalve obj.name=ventvalve
 prop ventvalve beh.use=Turn the vent valve
-prop ventvalve if.use=!signal|steam
+prop ventvalve if.use=!signal|steam\ntake|story:wheelpiece|3
 prop ventvalve on.use=message||The valve groans, gives - and steam hisses down the pipes. One by one the houses' chimneys breathe.\nsignal||steam\ngive||story:steam*1\nshow|steamhouses\nsound||event:/exploring/obstacles/keypad/keypad_correct
-prop ventvalve else.use=message||The valve is open. The town is warm.
+prop ventvalve else.use=message||The valve is open and the town is warm - or its handwheel is still in three pieces: the greenhouse, the boiler house, the pipe store.
 prop steamhouses obj.name=steamhouses
 prop townlocker obj.name=townlocker
 prop townlocker if.open=signal|steam
@@ -205,10 +241,19 @@ step read|Gardener's log|1|Read the gardener's log
 step blueprint|Blueprint_Fueltank|1|Take the fuel tank's plans from the boiler house
 step kill|Rat|4|Clear the rats out of the pipe store
 step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe's plans from the pipe store
+step collect|story:wheelpiece|3|Find the valve handwheel's three pieces (greenhouse, boiler house, pipe store)
 step collect|story:steam|1|Turn the vent valve on the square
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor's plans from the town hall's locker
 step read|Town meeting minutes|1|Read the town meeting minutes
 quest done=The town goes to Orrin's sledge camp on the shelf ice - and then to the Whale. Orrin is on 900.
 quest reward=MetalIngot*2;Rope*4;Egg*2
+
+# RESIZE 10-24 retest: the bigger island's generator rocks that floated over slopes (ground check)
+clear at -48.49 12.83 r=1.5 only=TP_BigRock
+clear at -31.35 25.78 r=1.5 only=TP_BigRock
+clear at -16.43 52.79 r=1.5 only=TP_BigRock
+clear at -30.27 34.12 r=1.5 only=TP_BigRock
+clear at -34.44 -20.65 r=1.5 only=TP_BigRock
+clear at -40.56 -14.82 r=1.5 only=TP_BigRock
 
 save Steamvent Harbour

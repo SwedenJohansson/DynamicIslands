@@ -1,7 +1,8 @@
-# Blightmire (CIPlay blightmire): the hummock round 0 -32, the roots west -30 0, north 8 22, east 34 -6 (burnt in that
-# order: the east one first is refused), the marsh station 12 26, the root cache by the east root.
+# Blightmire (CIPlay blightmire): the hummock round 0 -49.6, the roots west -46.5 0, north 12.4 34.1, east 52.7 -9.3
+# (burnt in that order: the east one first is refused), the marsh station 18.6 40.3, the root cache by the east root.
 island Blightmire
-offset 0 0
+# RESIZE 10-24: the recipe moved this island's old content by 0 -8.8; the points below are in the old frame
+offset 0 8.8
 expect step 0
 expect title The Poisoned Marsh
 zone hummock
@@ -24,6 +25,9 @@ expect step 5
 use root2
 expect story burnt 2
 expect step 6
+expect hidden marshstation
+use stationvines
+expect shown marshstation
 open Marsh station locker
 wait 3
 expect step 7

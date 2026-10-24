@@ -18,16 +18,23 @@ include lib_sea
 include lib_huts
 include lib_features
 include lib_frozen
+# RESIZE 10-24: Radius 48 -> 90 (Height 2 -> 3), the island grows round the old content, which stays where it was.
 new
 gen Trees=0 Bushes=0 Rocks=0.15 Harvest=0.05 BeachThings=0.25
-gen Seed=12701 Radius=48 Height=2 Roughness=0.25 Peaks=2 Shape=0 Style=1 BeachWidth=0.4 Cliffs=0.05 PeakShape=0.3
+gen Seed=12701 Radius=90 Height=3 Roughness=0.25 Peaks=2 Shape=0 Style=1 BeachWidth=0.4 Cliffs=0.05 PeakShape=0.3
 gen Water=0.5 SeaRocks=0.25 SeaFinds=0.35 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.4
 generate
 
 # --- Terrain: one sheet of sea ice at 0.6 m ----------------------------------------------------------------------------
 brush flatten at 0 0 r=38 s=20 frames=400 h=0.6
 brush flatten from 0 -34 to 0 -46 r=2.5 s=20 frames=80 h=0.2
+# RESIZE 10-24 retest: the bigger island stands higher here - the huts' pads flattened again
+brush flatten at 0 35.25 r=6 s=20 frames=200 h=0.6
+brush flatten at -25.75 -14.5 r=5 s=20 frames=200 h=0.6
+brush flatten at -25.75 13.5 r=5 s=20 frames=200 h=0.6
+brush flatten at 26.4 32.6 r=5 s=8 frames=40
 origin
+clear at 26.4 32.6 r=6
 clear at 0 0 r=38
 clear from 0 -34 to 0 -46 r=3
 
@@ -69,7 +76,7 @@ place Loot_ChestLarge flensechest at 5 1.2 y=0.1 sit yaw=270
 place Beam_Long_01 - at 3 0.2 y=0.1
 pop
 place Zone_Trigger yardzone at 24 -6 ground y=1
-scatter "Pickup_Landmark_Scrap 1_OceanBottom" 2 at 26 -14 r=3 seed=12711 free=1
+scatter "Pickup_Landmark_Scrap 1_OceanBottom" 2 at 48.75 -26.25 r=3 seed=12711 free=1
 
 # --- The council cabin and its planter boxes ---------------------------------------------------------------------------
 push at -28 -16 h=0.6
@@ -110,15 +117,38 @@ place Loot_Chest anchorchest at 14 32 ground sit yaw=200
 
 # --- Screechers on the hulls, the titanium treasure, the sea: reefs, puffers, fog ----------------------------------------
 place Creature_StoneBird screechers at 0 -10 h=14
-call treasure x=-30 z=26 r=6 n=1 seed=12051
-place Creature_PufferFish puffers at 30 -36 h=-2
-scatter VP_CoralDigitate01 4 at 30 -36 r=4 seed=12721 wet free=1
-scatter VP_CoralBulb04 3 at 30 -36 r=4 seed=12722 wet free=1
-scatter SeaVine3_klump 4 at -36 30 r=5 seed=12723 wet free=1
-scatter VP_CoralDigitate01 3 at -36 30 r=4 seed=12724 wet free=1
+call treasure x=-30 z=26 r=15 n=1 seed=12051
+place Creature_PufferFish puffers at 56.25 -67.5 h=-2
+scatter VP_CoralDigitate01 4 at 56.25 -67.5 r=4 seed=12721 wet free=1
+scatter VP_CoralBulb04 3 at 56.25 -67.5 r=4 seed=12722 wet free=1
+scatter SeaVine3_klump 4 at -67.5 56.25 r=5 seed=12723 wet free=1
+scatter VP_CoralDigitate01 3 at -67.5 56.25 r=4 seed=12724 wet free=1
 scatter Pickup_Landmark_GiantClam 2 at 30 -36 r=6 wet seed=12725
-call shallows x=0 z=0 r=48 deep=5 n=1 seed=12730
+call shallows x=0 z=0 r=90 deep=5 n=1 seed=12730
 call snowfall x=0 z=0 r=46 al=snow fog=#c0c8cc fa=0.5
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; TP_SnowVehicle02 + chest; hatch with a chest; buried treasure; viewpoint ---
+place campfire_1 - at 26.4 32.6 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at 29.4 34.6 ground sit yaw=137
+place "Box Small" - at 24.4 35.1 ground sit
+place Note_Paper dnote at 24.4 35.1 ground y=0.7 drop yaw=20
+note dnote Sealer's note | Poor hunting. The seals left when the warm water came up.\nLeft the spare furs and the tea in the box.\nIf you are cold, the fire pit still takes driftwood.
+place TP_SnowVehicle02 dvan at -26.4 -32.6 ground yaw=257
+prop dvan tint.color=#7a8a96
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at -30.4 -29.6 ground sit yaw=197
+note dwreckchest Driver's box | The driver's box under the seat: bolts, glass and a scrap of leather.
+loot dwreckchest Bolt*2;Glass*2;Leather*2
+prop dwreckchest loot.refill=0
+call hatchcache x=-15 z=-12 r=8 seed=12791 alias=dhatch chest=dhatchchest items=MetalIngot*2;Wool*3;Bolt*2
+call vinecache x=-12 z=15 r=15 seed=12793 chest=dvinechest vines=dvines items=Rope*3;Wool*2;Bolt*3
+call treasure x=-39.7 z=13.7 r=15 n=1 seed=12792
+prop treasure12792 treasure.loot=TitaniumOre*2;MetalOre*2
+place Zone_Trigger dview at -15.1 39.2 ground
+prop dview zone.id=saga_drift_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=Nine old ships frozen into one sheet of ice, their masts like a winter forest.
 
 # --- Settings, story item, notes, behaviours, quest ----------------------------------------------------------------------
 info title=Saga Drift

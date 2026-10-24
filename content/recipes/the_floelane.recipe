@@ -11,11 +11,13 @@
 # the shoal at -3.5 everywhere; floes at 0.5: the first floe (r 8) round 0 -24, the west floe round -20 -6, the east floe
 # round 20 -4, the hull floe round 0 6, the north floe round 0 30; the boat between the hull floe and the north floe at
 # 0 18 (bow east), her deck about 5.5 m up; the lead's ford (h -0.6) from 0 -16 to 0 -2.
+include lib_features
 include lib_sea
 include lib_frozen
+# RESIZE 10-24: Radius 40 -> 85 (Height 2 -> 2), the island grows round the old content, which stays where it was.
 new
 gen Trees=0 Bushes=0 Rocks=0.15 Harvest=0.05 BeachThings=0.2
-gen Seed=12201 Radius=40 Height=2 Roughness=0.3 Peaks=3 Shape=2 Style=1 BeachWidth=0.4 Cliffs=0.1 PeakShape=0.3
+gen Seed=12201 Radius=85 Height=2 Roughness=0.3 Peaks=3 Shape=2 Style=1 BeachWidth=0.4 Cliffs=0.1 PeakShape=0.3
 gen Water=0.6 SeaRocks=0.2 SeaFinds=0.3 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.4
 generate
 
@@ -27,7 +29,9 @@ brush flatten at 20 -4 r=6 s=20 frames=200 h=0.5
 brush flatten at 0 6 r=8 s=20 frames=200 h=0.5
 brush flatten at 0 30 r=8 s=20 frames=200 h=0.5
 brush flatten from 0 -16 to 0 -2 r=2.2 s=20 frames=120 h=-0.6
+brush flatten at 38.3 7.4 r=5 s=8 frames=40
 origin
+clear at 38.3 7.4 r=6
 clear at 0 -24 r=8
 clear at -20 -6 r=6
 clear at 20 -4 r=6
@@ -75,23 +79,45 @@ place Note_Paper thanks at 0.8 17.5 h=9 drop yaw=40
 prop thanks beh.hidden=1
 
 # --- The three cages: one on the hull floe, one on the east floe, one on the north floe ------------------------------
-place Survivor_Cage cage1 at -4 4 ground yaw=40
+# RESIZE 10-24 retest: cage1 at a fixed height - on the bigger island `ground` sank it 3 m under the hull floe;
+# its icicles left out (the ground check sees through the cage's roof bars: they hung 1.6 m over the floe)
+place Survivor_Cage cage1 at -4 4 h=0.5 yaw=40
 place Survivor_Cage cage2 at 21 -2 ground yaw=270
 place Survivor_Cage cage3 at 3 32 ground yaw=180
 place TP_SnowDrift02 - at -6 30 ground sit yaw=10
 place TP_SnowDrift03 - at 5 5 ground sit yaw=300
-place TP_Icicles01 - at -4 4 ground y=2.4
 
 # --- The leads: puffers, reefs under the floes, snow ------------------------------------------------------------------
 place Creature_PufferFish puffers at 10 -8 h=-2
 scatter Pickup_Landmark_GiantClam 3 at 0 -2 r=30 wet seed=12215
 scatter Pickup_Landmark_SilverAlgae 3 at 0 -2 r=30 wet seed=12216
-scatter VP_CoralDigitate01 4 at -14 20 r=4 seed=12211 wet free=1
-scatter VP_CoralBulb04 3 at -14 20 r=4 seed=12212 wet free=1
-scatter SeaVine3_klump 4 at 16 18 r=5 seed=12213 wet free=1
-scatter VP_CoralDigitate01 3 at 16 18 r=4 seed=12214 wet free=1
-call shallows x=0 z=0 r=38 deep=4 n=1 seed=12220
+scatter VP_CoralDigitate01 4 at -29.75 42.5 r=4 seed=12211 wet free=1
+scatter VP_CoralBulb04 3 at -29.75 42.5 r=4 seed=12212 wet free=1
+scatter SeaVine3_klump 4 at 34 38.25 r=5 seed=12213 wet free=1
+scatter VP_CoralDigitate01 3 at 34 38.25 r=4 seed=12214 wet free=1
+call shallows x=0 z=0 r=81 deep=4 n=1 seed=12220
 call snowfall x=0 z=2 r=45 al=snow
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; TP_SnowVehicle01 + chest; hatch with a chest; dirt to dig (the detector comes later); viewpoint ---
+place campfire_1 - at 38.3 7.4 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at 41.3 9.4 ground sit yaw=357
+place "Box Small" - at 36.3 9.9 ground sit
+place Note_Paper dnote at 36.3 9.9 ground y=0.7 drop yaw=20
+note dnote Sledger's note | CAMP ON THE SHELF\n\nDogs fed, two left. Ice groaning all night.\nThe Whale's horn sounded from the north again - no ship has a horn like that any more.\nWe go on at first light.
+place TP_SnowVehicle01 dvan at -38.3 -7.4 ground yaw=117
+prop dvan tint.color=#8a9aa6
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at -42.3 -4.4 ground sit yaw=57
+note dwreckchest Frozen chest | A chest frozen to the runner: wool, rope and a tin of nails.
+loot dwreckchest Wool*3;Rope*2;Nail*8
+prop dwreckchest loot.refill=0
+call hatchcache x=-34.1 z=18.9 r=15 seed=12291 alias=dhatch chest=dhatchchest items=MetalIngot*2;Wool*3;Bolt*2
+call dirt x=34.1 z=-18.9 r=15 n=3 seed=12292
+place Zone_Trigger dview at -33.4 -20.1 ground
+prop dview zone.id=the_floelane_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=The floes lie on the black water like broken plates, and the crushed sealing boat between them.
 
 # --- Settings, story items, notes, behaviours, quest -----------------------------------------------------------------
 info title=The Floelane

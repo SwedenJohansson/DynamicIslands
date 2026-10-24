@@ -3,9 +3,12 @@ island The Floelane
 offset 0 0
 hour 11
 weather Calm
-at 0 -24
+# (RESIZE 10-24 retest: the player on the floes, out of the sea - in it the pictures took the water's wobble; fixed
+# heights: on the bigger island "+h" measured from the seabed under the floes)
+at 0 -26 h=1.6
 use winch
-wait 3
+at 0 1 h=1.6
+wait 6
 picture sl12_the_floelane_island 30 16 -50 0 1 5
-picture sl12_the_floelane_hull -10 +3 4 0 +4 18
-picture sl12_the_floelane_lead 6 +2.5 -22 0 +0.3 -6
+picture sl12_the_floelane_hull -10 6 4 0 4 18
+picture sl12_the_floelane_lead 6 5 -22 0 0.5 -6

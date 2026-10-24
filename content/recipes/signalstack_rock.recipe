@@ -2,7 +2,7 @@
 # A basalt stack in a grey sea, snow on every ledge: a relay hut on the shelf at its foot (the radio log and the
 # Receiver's plans on the desk), a path cut up the stack's side to its top, where the relay mast stands - one of its two
 # masts bent over by the ice, Raft's antennas lying broken round it. Snow falls here and on the Floelane only: the cold
-# begins. Quest "The Fragments" (6 steps): the shelf, the relay log, the Receiver's plans, the mast top, the antenna's
+# begins. Quest "The Fragments" (8 steps): the shelf, the relay log, the Receiver's plans, the mast top, the antenna's
 # plans, the fourth fragment.
 #
 # Built by the recipe player (CIRecipe signalstack_rock) through the editor's own operations. Points (metres over the
@@ -11,6 +11,7 @@
 include lib_sea
 include lib_huts
 include lib_frozen
+include lib_verdance
 new
 gen Trees=0 Bushes=0.1 Rocks=0.45 Harvest=0.1 BeachThings=0.15
 gen Seed=12101 Radius=30 Height=12 Roughness=0.5 Peaks=1 Shape=0 Style=1 BeachWidth=0.15 Cliffs=0.75 PeakShape=0.6
@@ -70,6 +71,11 @@ place Loot_Chest mastbox at -1.6 4.8 ground sit yaw=90
 place Note_Paper fragment4 at -1.6 2.6 ground drop yaw=60
 place Zone_Trigger mastzone at 0 3 ground y=1
 place TP_SnowDrift03 - at 2.5 0.5 ground sit yaw=10
+# REDO 10-24: the mast's three guy clamps were torn off by the ice (shelf stores, a chest on the path ledge, a drift
+#     chest on the top); fitted on the mast winch, the junction box comes free (it was hidden in the ice)
+place Loot_ChestSmall ledgechest at 9.6 -3.5 ground sit yaw=180
+place Loot_ChestSmall driftchest at -3.2 4.2 ground sit yaw=100
+call crank x=-0.5 z=-0.8 yaw=180 alias=mastwinch
 prop mast tint.color=#40464c
 prop mast tint.amount=0.5
 prop bentmast tint.color=#40464c
@@ -99,10 +105,25 @@ note mastbox Mast box | The mast's junction box, iced shut and knocked open: the
 note fragment4 Fragment 4 | (a slip in the operator's hand)\n\n"...north... past the white sea... the Whale... do not wait for spring."\n\nUnder it: "The floes are on 700."
 loot relaydesk Blueprint_Reciever*1;Scrap*2;Rope*1
 prop relaydesk loot.refill=0
-loot relaystores Seed_Pine*2;Plank*10;Rope*3
+loot relaystores Seed_Pine*2;Plank*10;Rope*3;story:clamp*1
 prop relaystores loot.refill=0
 loot mastbox Blueprint_Antenna*1;Scrap*2;CopperIngot*1
 prop mastbox loot.refill=0
+prop mastbox obj.name=mastbox
+prop mastbox beh.hidden=1
+note ledgechest Ledge chest | A chest roped to the path's ledge: a guy clamp, bent, and a flare.
+loot ledgechest story:clamp*1;Rope*2
+prop ledgechest loot.refill=0
+note driftchest Drift chest | Half under a drift on the top: the third guy clamp and a frozen tin of nails.
+loot driftchest story:clamp*1;Nail*6
+prop driftchest loot.refill=0
+story clamp|Guy clamp|Placeable_Lantern_Metal|One of the relay mast's three guy clamps, torn off by the ice.
+story mastfixed|Mast rigged|Placeable_Lantern_Metal|The mast's guys are clamped again; the junction box came free.
+prop mastwinch obj.name=mastwinch
+prop mastwinch beh.use=Fit the guy clamps and wind the mast winch
+prop mastwinch if.use=take|story:clamp|3
+prop mastwinch on.use=give||story:mastfixed*1\nshow|mastbox\nmessage||The guys tighten, the mast groans upright an inch - and the junction box drops out of its ice.
+prop mastwinch else.use=message||The winch spins free: the mast's three guy clamps are gone. One in the shelf stores, one on the path's ledge, one in a drift up here.
 
 prop shelfzone zone.id=shelf
 prop shelfzone zone.radius=6
@@ -117,6 +138,8 @@ step reach|shelf|1|Land on the relay shelf
 step read|Relay log: fragments|1|Read the relay log
 step blueprint|Blueprint_Reciever|1|Take the Receiver's plans from the relay desk
 step reach|mast_top|1|Climb the path to the mast on the stack's top
+step collect|story:clamp|3|Find the mast's three guy clamps (shelf, path ledge, top)
+step collect|story:mastfixed|1|Fit the clamps on the mast winch
 step blueprint|Blueprint_Antenna|1|Take the antenna's plans from the mast box
 step read|Fragment 4|1|Read the fourth fragment
 quest done=North, past the white sea, there is a Whale. The floes call on 700.

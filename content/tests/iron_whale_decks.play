@@ -24,8 +24,13 @@ expect step 6
 open Chief engineer's locker
 wait 3
 expect step 7
+use mainbreaker
+expect story breaker 0
 air shaft
 expect step 8
+open Shaft box
+wait 3
+expect story fuse 3
 use captdoor
 expect hidden captdoor
 expect shown captvault
@@ -39,8 +44,15 @@ read Hedda Brask's account
 expect step 10
 open Officers' galley
 wait 3
-expect step 11
+expect step 12
+open Officers' safe
+expect story galleycode 0
+code galleypad 4127
+expect story galleycode 1
+open Officers' safe
+wait 3
 use mainbreaker
+expect story fuse 0
 expect story breaker 1
 expect shown deckslights
 expect done

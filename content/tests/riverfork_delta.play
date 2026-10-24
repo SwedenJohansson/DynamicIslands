@@ -19,6 +19,10 @@ expect step 4
 use ferrycrank
 expect story ferry 1
 expect step 5
+open West bank can
+use eastvines
+expect shown dcaneast
+open Fisher's can
 zone upriver
 expect step 6
 kill Warthog
@@ -26,9 +30,16 @@ expect animals Warthog 0
 expect step 7
 open Fuel cache
 wait 3
-expect step 9
+expect step 10
+expect hidden press
+use shedvines
+expect shown press
+use press
+expect story fuelcan 0
+expect shown pressshed
+expect step 11
 open Pressing shed
 wait 3
-expect step 10
+expect step 12
 read Ranger log 4
 expect done

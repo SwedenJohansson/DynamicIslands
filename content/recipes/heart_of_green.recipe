@@ -121,6 +121,28 @@ call treasure x=18 z=10 r=14 n=1 seed=11053
 prop treasure11053 treasure.loot=TitaniumOre*3
 call shallows x=0 z=0 r=102 deep=5 n=2 seed=11105
 
+# --- REDO 10-24 (optional): the dark root store under a hatch (headlight), a vine-hidden cache (machete), the river
+#     people's beach camp with a wrecked canoe-raft
+clear at -30 -22 r=2.5
+place TangaroaHatchRoom_Hatch rsthatch at -30 -22 ground
+beside Loot_ChestSmall rstchest rsthatch d=0.01
+call vinecache x=34 z=-30 r=10 seed=11211 chest=dvinechest vines=dvines items=Rope*3;TitaniumOre*1;Leather*2
+place Balboa_DecorationPrefabBase_SimpleTent - at -12 -58 ground sit yaw=10
+place campfire_1 - at -9 -56 ground sit
+place RT_PlasticBoat - at 8 -64 ground sit yaw=300
+
+# --- FILL 10-24 (RESIZE rework): the bigger island's whole area at Raft-like density - trees, bushes, rocks; free= keeps them
+#     off the quest's objects and paths
+scatter "Pickup_Landmark_Tree_Palm 1" 10 at 0 0 r=80 seed=11212 free=5
+scatter "Pickup_Landmark_Tree_Palm 2" 10 at 0 0 r=80 seed=11213 free=5
+scatter "Pickup_Landmark_Tree_Palm 4" 6 at 0 0 r=80 seed=11214 free=5
+scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=80 seed=11215 free=5
+scatter "Balboa_Bush_01 Variant" 30 at 0 0 r=80 seed=11216 free=2.5
+scatter "Balboa_Bush_03 Variant" 30 at 0 0 r=80 seed=11217 free=2.5
+scatter CaravanIsland_SmallRock_1 14 at 0 0 r=80 seed=11218 free=3
+scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=80 seed=11219 free=3
+scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=80 seed=11220 free=2
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Heart of Green
 info author=Custom Islands
@@ -192,6 +214,13 @@ note labsafe Lab safe | The lab safe: the Seedkeepers' seed bank, and Marit's la
 note lastletter Seedkeeper's last letter | Marit's last letter -\n\nWe could not choose. You have.\n\nWhatever you turned, the core under the tree must follow, or it will grow back from the oldest root. The gate lever is in the west roots.\n\nThe Ringwave is cut on that root. We did not cut it. It was there before us.
 note rootstore Root store | The root store's chest: lamp oil, rope and a coil of wire.
 loot rootstore Rope*3;CopperIngot*2;Battery*1
+prop rsthatch obj.name=rsthatch
+prop rsthatch on.use=hide|\nshow|rstchest\nmessage||The hatch opens on the old root store. Pitch black - a lamp would help.
+note rstchest Dark root store | The Seedkeepers' first root store, sealed when the blight came: seeds and a titanium bar.
+loot rstchest TitaniumIngot*1;Seed_Flower_Blue*2;Seed_Watermelon*2;Bolt*3
+prop rstchest loot.refill=0
+prop rstchest obj.name=rstchest
+prop rstchest beh.hidden=1
 prop rootstore loot.refill=0
 loot labsafe Seed_Mango*2;Seed_Pineapple*2;Seed_Watermelon*2;TitaniumOre*1
 prop labsafe loot.refill=0

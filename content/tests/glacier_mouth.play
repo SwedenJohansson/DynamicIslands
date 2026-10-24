@@ -1,7 +1,8 @@
 # Glacier Mouth (CIPlay glacier_mouth): the depot, the orders, the bears, the drill rig, the leader's chest, the
 # Ringwave (camera) and its note, the cave mouth chest.
 island Glacier Mouth
-offset 0 0
+# RESIZE 10-24: the recipe moved this island's old content by 0 -24.8; the points below are in the old frame
+offset 0 24.8
 expect step 0
 expect title The Glacier
 zone depot
