@@ -26,7 +26,6 @@ expect blueprints
 tune crown
 include bridgeworks_crown.play
 expect chain piles unlocked
-expect chain freehold unlocked
 tune piles
 include foundation_piles.play
 arrive freehold

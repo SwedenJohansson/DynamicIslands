@@ -69,7 +69,7 @@ open Council reward
 wait 3
 expect step 22
 read Teo Varga's message
-expect step 23
+# (no step check here: in the plan the pile stair zone can already be passed on the way in)
 zone pile_stair
 expect step 24
 read Pile engineer's map
