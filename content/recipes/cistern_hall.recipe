@@ -213,36 +213,79 @@ place Creature_PufferFish ch_puffers at 16 -87 h=-12
 prop ch_puffers creature.count=2
 call hw_machine x=-10 z=-72 yaw=-43.26 al=ch_machine nm="Sluice lever" obj=TP_LaserControlPanel_lever sc=3 a=ch_top b=ch_deep done=ch_fixed rew=ch_rewchest rnote=ch_rewnote msg="It works." hint="It needs the surge gauge from the top of Overflow Tor and the tank plug from the settling house."
 call hw_note x=-7.15 z=-71.38 yaw=-23.26 al=ch_hint
-# the sluices: four levers by the hub, pulled in the pump-keeper's order (the reward note); a lever out of
-# turn will not move. UPGRADE-AFTER-MECH: a real sequence lock with a reset when that mechanic exists
+# the sluices (mech 10-24: moveto + state checks): four levers by the hub, each dropping its sluice gate, in the
+# pump-keeper's order (3-1-4-2, the reward note). Out of turn a lever jams; the reset lever by the hub lifts all gates.
 place RT_Pillar - at -3.95 -73.17 ground sit sy=0.4
 place TP_LaserControlPanel_lever ch_g1 at -3.95 -73.17 ground y=1.25 scale=3 yaw=47.86
 prop ch_g1 obj.name=ch_g1
 prop ch_g1 beh.use=Pull sluice 1
-prop ch_g1 if.use=signal|ch_g3\n!signal|ch_g1
-prop ch_g1 on.use=signal||ch_g1\nmessage||Sluice 1 grinds open.
-prop ch_g1 else.use=message||The sluice will not move - the water still pushes against it. The order matters.
+place Block_Wall_Tier3 ch_gate1 at -2.93 -74.27 ground yaw=47.86
+prop ch_gate1 obj.name=ch_gate1
+place Zone_Trigger ch_up1 at -2.93 -74.27 ground yaw=47.86
+prop ch_up1 obj.name=ch_up1
+place Zone_Trigger ch_dn1 at -2.93 -74.27 ground y=-2.2 yaw=47.86
+prop ch_dn1 obj.name=ch_dn1
+place Zone_Trigger ch_s1 at -3.95 -73.17 ground y=0.2
+prop ch_s1 obj.name=ch_s1
+prop ch_s1 beh.hidden=1
+prop ch_g1 if.use=state|ch_s3|shown\nstate|ch_s1|hidden
+prop ch_g1 on.use=show|ch_s1\nmoveto|ch_gate1|ch_dn1,3\nmessage||Sluice gate 1 grinds down into its slot.
+prop ch_g1 else.use=message||The lever jams - the water still pushes against that gate. The order matters; the reset lever by the hub lifts the gates again.
 place RT_Pillar - at -5.7 -74.82 ground sit sy=0.4
 place TP_LaserControlPanel_lever ch_g2 at -5.7 -74.82 ground y=1.25 scale=3 yaw=47.86
 prop ch_g2 obj.name=ch_g2
 prop ch_g2 beh.use=Pull sluice 2
-prop ch_g2 if.use=signal|ch_g4\n!signal|ch_g2
-prop ch_g2 on.use=signal||ch_g2\ngive||story:ch_gates*1\nshow|ch_pumpchest\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The last sluice opens - the old pump hall drains, and its keeper's chest stands dry.
-prop ch_g2 else.use=message||The sluice will not move - the water still pushes against it. The order matters.
+place Block_Wall_Tier3 ch_gate2 at -4.68 -75.92 ground yaw=47.86
+prop ch_gate2 obj.name=ch_gate2
+place Zone_Trigger ch_up2 at -4.68 -75.92 ground yaw=47.86
+prop ch_up2 obj.name=ch_up2
+place Zone_Trigger ch_dn2 at -4.68 -75.92 ground y=-2.2 yaw=47.86
+prop ch_dn2 obj.name=ch_dn2
+place Zone_Trigger ch_s2 at -5.7 -74.82 ground y=0.2
+prop ch_s2 obj.name=ch_s2
+prop ch_s2 beh.hidden=1
+prop ch_g2 if.use=state|ch_s4|shown\nstate|ch_s2|hidden
+prop ch_g2 on.use=show|ch_s2\nmoveto|ch_gate2|ch_dn2,3\ngive||story:ch_gates*1\nshow|ch_pumpchest\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The last sluice gate sinks into its slot - the old pump hall drains, and its keeper's chest stands dry.
+prop ch_g2 else.use=message||The lever jams - the water still pushes against that gate. The order matters; the reset lever by the hub lifts the gates again.
 place RT_Pillar - at -7.45 -76.46 ground sit sy=0.4
 place TP_LaserControlPanel_lever ch_g3 at -7.45 -76.46 ground y=1.25 scale=3 yaw=47.86
 prop ch_g3 obj.name=ch_g3
 prop ch_g3 beh.use=Pull sluice 3
-prop ch_g3 if.use=!signal|ch_g3
-prop ch_g3 on.use=signal||ch_g3\nmessage||Sluice 3 grinds open.
-prop ch_g3 else.use=message||The sluice will not move - the water still pushes against it. The order matters.
+place Block_Wall_Tier3 ch_gate3 at -6.43 -77.56 ground yaw=47.86
+prop ch_gate3 obj.name=ch_gate3
+place Zone_Trigger ch_up3 at -6.43 -77.56 ground yaw=47.86
+prop ch_up3 obj.name=ch_up3
+place Zone_Trigger ch_dn3 at -6.43 -77.56 ground y=-2.2 yaw=47.86
+prop ch_dn3 obj.name=ch_dn3
+place Zone_Trigger ch_s3 at -7.45 -76.46 ground y=0.2
+prop ch_s3 obj.name=ch_s3
+prop ch_s3 beh.hidden=1
+prop ch_g3 if.use=state|ch_s3|hidden
+prop ch_g3 on.use=show|ch_s3\nmoveto|ch_gate3|ch_dn3,3\nmessage||Sluice gate 3 grinds down into its slot.
+prop ch_g3 else.use=message||The lever jams - the water still pushes against that gate. The order matters; the reset lever by the hub lifts the gates again.
 place RT_Pillar - at -9.19 -78.11 ground sit sy=0.4
 place TP_LaserControlPanel_lever ch_g4 at -9.19 -78.11 ground y=1.25 scale=3 yaw=47.86
 prop ch_g4 obj.name=ch_g4
 prop ch_g4 beh.use=Pull sluice 4
-prop ch_g4 if.use=signal|ch_g1\n!signal|ch_g4
-prop ch_g4 on.use=signal||ch_g4\nmessage||Sluice 4 grinds open.
-prop ch_g4 else.use=message||The sluice will not move - the water still pushes against it. The order matters.
+place Block_Wall_Tier3 ch_gate4 at -8.17 -79.21 ground yaw=47.86
+prop ch_gate4 obj.name=ch_gate4
+place Zone_Trigger ch_up4 at -8.17 -79.21 ground yaw=47.86
+prop ch_up4 obj.name=ch_up4
+place Zone_Trigger ch_dn4 at -8.17 -79.21 ground y=-2.2 yaw=47.86
+prop ch_dn4 obj.name=ch_dn4
+place Zone_Trigger ch_s4 at -9.19 -78.11 ground y=0.2
+prop ch_s4 obj.name=ch_s4
+prop ch_s4 beh.hidden=1
+prop ch_g4 if.use=state|ch_s1|shown\nstate|ch_s4|hidden
+prop ch_g4 on.use=show|ch_s4\nmoveto|ch_gate4|ch_dn4,3\nmessage||Sluice gate 4 grinds down into its slot.
+prop ch_g4 else.use=message||The lever jams - the water still pushes against that gate. The order matters; the reset lever by the hub lifts the gates again.
+place RT_Pillar - at -2.2 -71.52 ground sit sy=0.4
+place TP_LaserControlPanel_lever ch_reset at -2.2 -71.52 ground y=1.25 scale=3 yaw=47.86
+prop ch_reset obj.name=ch_reset
+prop ch_reset beh.use=Pull the reset lever
+prop ch_reset if.use=state|ch_s2|hidden
+prop ch_reset on.use=hide|ch_s1\nhide|ch_s3\nhide|ch_s4\nmoveto|ch_gate1|ch_up1,3\nmoveto|ch_gate2|ch_up2,3\nmoveto|ch_gate3|ch_up3,3\nmoveto|ch_gate4|ch_up4,3\nmessage||Chains rattle - all four sluice gates lift back up. Start again.
+prop ch_reset else.use=message||The cistern is drained; the gates stay down.
 place Loot_Chest ch_pumpchest at -4.52 -77.83 ground sit yaw=47.86
 prop ch_pumpchest beh.hidden=1
 prop ch_pumpchest loot.refill=0

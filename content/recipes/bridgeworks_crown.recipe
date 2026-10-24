@@ -223,7 +223,8 @@ prop bc_puffers creature.count=2
 call hw_machine x=-52 z=-12 yaw=-28.81 al=bc_machine nm="Storm bell" obj=TP_LaserControlPanel_lever sc=3 a=bc_top b=bc_deep done=bc_fixed rew=bc_rewchest rnote=bc_rewnote msg="It works." hint="It needs the storm beacon lamp from the top of Crown Fell and the archive seal from the council archive."
 call hw_note x=-49.09 z=-12.11 yaw=-8.81 al=bc_hint
 # the unmarked button by the councillor's summer house; it moves you into a sealed room (no door) in the
-# north-east with the council's records; a lever there moves you back
+# north-east with the council's records; a lever there slides one wall panel aside (moveto, mech 10-24) - a
+# secret door you walk out of, which stays open so the room can be found again from outside
 place RT_Pillar - at -59 -4 ground sit sy=0.4
 place RT_PowerBox bc_button at -59 -4 ground y=1.25 scale=0.6 yaw=90
 prop bc_button obj.name=bc_button
@@ -239,7 +240,10 @@ place Block_Wall_Tier3 bc_sealed at 1.5 -0.75 yaw=90
 place Block_Floor_Tier3 bc_sealed at -0.75 -0.75 y=2.635
 place Block_Floor_Tier3 bc_sealed at 0.75 -0.75 y=2.635
 place Block_Wall_Tier3 bc_sealed at 0.75 -1.5
-place Block_Wall_Tier3 bc_sealed at 0.75 1.5
+place Block_Wall_Tier3 bc_secret at 0.75 1.5
+prop bc_secret obj.name=bc_secret
+place Zone_Trigger bc_secretopen at 2.25 1.5
+prop bc_secretopen obj.name=bc_secretopen
 place Block_Wall_Tier3 bc_sealed at -1.5 0.75 yaw=90
 place Block_Wall_Tier3 bc_sealed at 1.5 0.75 yaw=90
 place Block_Floor_Tier3 bc_sealed at -0.75 0.75 y=2.635
@@ -251,10 +255,14 @@ place Placeable_Lantern_Metal - at -0.6 0.6 y=0.1 drop
 place TP_LaserControlPanel_lever bc_climbout at -0.6 -0.9 y=1.2 yaw=0
 prop bc_climbout obj.name=bc_climbout
 prop bc_climbout beh.use=Pull the lever
-prop bc_climbout on.use=message||The floor lifts -\nwait|2\nteleport|bc_btnback\nmessage||- and you are back by the summer house.
+prop bc_climbout if.use=!signal|bc_doorout
+prop bc_climbout on.use=signal||bc_doorout\nsound||event:/exploring/zipline/zipline_engine\nmoveto|bc_secret|bc_secretopen,3\nmessage||Stone grinds on stone - one wall panel slides aside. Daylight, and the north-east shore.
+prop bc_climbout else.use=message||The panel is already open.
 pop
 prop bc_sealed tint.color=#5c5850
 prop bc_sealed tint.amount=0.5
+prop bc_secret tint.color=#5c5850
+prop bc_secret tint.amount=0.5
 story bc_top|Storm beacon lamp|Bolt|The storm beacon's lamp, eighty metres over the sea.
 story bc_deep|Archive seal|Bolt|The council's archive seal, under seventeen metres of water.
 story bc_fixed|Storm bell working|Bolt|The storm bell, working again.

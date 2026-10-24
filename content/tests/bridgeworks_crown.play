@@ -116,9 +116,10 @@ expect done
 dig
 
 
-# DEEP 10-24: the secret records room (button -> teleport -> lever back)
+# DEEP 10-24: the secret records room (button -> teleport; lever slides the secret wall panel open)
 use bc_button
 wait 4
 read Sealed records
 use bc_climbout
 wait 4
+zone bc_btnback

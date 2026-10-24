@@ -71,6 +71,14 @@ expect step 19
 use ch_g1
 expect hidden ch_pumpchest
 use ch_g3
+expect shown ch_s3
+use ch_g4
+expect hidden ch_s4
+use ch_reset
+wait 4
+expect hidden ch_s3
+use ch_g3
+wait 4
 use ch_g1
 use ch_g4
 use ch_g2
