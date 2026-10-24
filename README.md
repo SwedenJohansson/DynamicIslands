@@ -20,6 +20,11 @@ This README is the full reference, in the same order: island creation first, the
 
 ## Features
 
+- **Hazards and gap features** (2026-10-24): trigger zones that hurt (acid, live water, fumes, spikes, cold), darken
+  the screen without a headlight or take the breath without an oxygen tank, unless a suit or another check protects;
+  checks **wears item** / **holds item** (binoculars, hooks, axes), the actions **protective suit** and **hurt
+  creatures**, zapping butler bots, bosses only blasts hurt (explosive barrels, pillars), lights that keep creatures
+  back, item sockets, repairable snow vehicles and generators that want 3 parts - all made in the editors.
 - **Island editor** (EDITOR button in the main menu)
   - **Islands and world plans apart:** EDITOR opens a start window, "What do you want to make?", with three cards: **An island** (New island / Open an island... / Continue the last one, with its picture), **A world plan** (New world plan / Open a world plan... / Continue the last plan and its Main story line in a few words) and **The guide**. The card of what you made last is lit. A world plan is made right on the main menu: no island is loaded and no 3D editor opens. In the island editor, **Use in a plan...** puts the island in a plan (next in the Main story line, or another island that comes on its own); on a plan's island card, **Edit island** opens it in the 3D editor, with **Back to the plan** in the top bar.
   - Sculpt the terrain with a round brush: Raise, Lower, Flatten and Smooth.
@@ -787,7 +792,8 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `CustomNote.cs` | Readable notes in a world (Raft's interaction, `IRaycastable`) and the note reader |
 | `IslandInfo.cs` | Island name, author and description, the banner shown when players arrive (also zone messages), and the island rules |
 | `LootCrate.cs`, `ItemPickerWindow.cs` | Chests in a world (giving items, looted state shared with all players and saved) and the item picker |
-| `TriggerZone.cs` | Trigger zones in a world: message, items, waking up ambush creatures |
+| `TriggerZone.cs` | Trigger zones in a world: message, items, waking up ambush creatures, hazards |
+| `GapFeatures.cs`, `ObjectInspectorGaps.cs` | Hazard zones, the darkness screen, wears/holds checks, zapping creatures, lights that keep creatures back, environment hits and the boss shield; their inspector rows |
 | `AmbienceZones.cs`, `SoundPickerWindow.cs` | Atmosphere zones (fog, light, particles, applied only while the camera renders) and sound zones (Raft's FMOD events), and the sound picker |
 | `Quest.cs`, `QuestEditorWindow.cs` | Quests: the steps, progress shared by all players and saved with the world, the quest panel, and the quest editor |
 | `GroupLibrary.cs`, `TerrainStamps.cs`, `TextPromptWindow.cs` | Object groups ("My groups"), terrain stamps, and the small name window they use |

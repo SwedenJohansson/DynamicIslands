@@ -29,6 +29,7 @@ namespace DynamicIslands.Editor
 			EditorGameObject ego = UIKit.Ensure<EditorGameObject>(go);
 			ego.GameObjectName = name;
 			ego.Props = props != null ? new Dictionary<string, string>(props) : ObjectProps.Defaults(name);
+			if (props == null) GapFeatures.EditorDefaults(name, ego.Props); // (placed from the list: a generator wants 3 parts, a butler bot zaps)
 			ObjectProps.ApplyInEditor(go, ego.Props);
 			CaveBacks.Add(go, name); // (a cave piece's rock, or a Selene room's wall, seen from outside too - X7)
 			return ego;

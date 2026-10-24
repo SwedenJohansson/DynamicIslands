@@ -49,10 +49,10 @@ namespace DynamicIslands.Editor
 		public const string EventPrefix = "on.";
 		public static readonly string[] ObjectEvents = { "use", "enter", "read", "open", "defeat", "laser", BossPhases.Event };
 		public static readonly string[] IslandEvents = { "arrive", "quest" };
-		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character", "playsound", "stopsound", "camera" };
-		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal", "playsound", "stopsound", "camera" };
+		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character", "playsound", "stopsound", "camera", "suit", "hit" };
+		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal", "playsound", "stopsound", "camera", "hit" };
 		public const string CheckPrefix = "if.", ElsePrefix = "else.";
-		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest" };
+		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest", "wears", "holds" };
 		public static readonly string[] States = { "open", "closed", "shown", "hidden" };
 		public static readonly string[] CollisionModes = { "", "none", "box", "solid" };
 
@@ -134,8 +134,8 @@ namespace DynamicIslands.Editor
 		public bool Shared { get { return BehaviourProps.SharedVerbs.Contains(Verb); } }
 
 		/// <summary>Needs a target object (by name).</summary>
-		public static bool HasTarget(string verb) { return verb == "show" || verb == "hide" || verb == "toggle" || verb == "open" || verb == "close" || verb == "switch" || verb == "teleport" || verb == "playsound" || verb == "stopsound" || verb == "camera"; }
-		public static bool HasArg(string verb) { return verb == "message" || verb == "give" || verb == "sound" || verb == "signal" || verb == "journal" || verb == "wait" || verb == "character" || verb == "playsound" || verb == "stopsound" || verb == "camera"; }
+		public static bool HasTarget(string verb) { return verb == "show" || verb == "hide" || verb == "toggle" || verb == "open" || verb == "close" || verb == "switch" || verb == "teleport" || verb == "playsound" || verb == "stopsound" || verb == "camera" || verb == "hit"; }
+		public static bool HasArg(string verb) { return verb == "suit" || verb == "hit" || verb == "message" || verb == "give" || verb == "sound" || verb == "signal" || verb == "journal" || verb == "wait" || verb == "character" || verb == "playsound" || verb == "stopsound" || verb == "camera"; }
 
 		/// <summary>A wait's seconds (0..3600).</summary>
 		public float Seconds
@@ -165,6 +165,8 @@ namespace DynamicIslands.Editor
 				case "playsound": return TriggerSounds.Describe(Arg, t);
 				case "stopsound": return Arg.Trim().Equals("all", StringComparison.OrdinalIgnoreCase) ? "stop every sound played on the island" : "stop the sound of " + t;
 				case "camera": return CameraMoment.Describe(Target, Arg);
+				case "suit": return "put a protective suit on the player (" + (Arg.Trim().Length > 0 ? Arg.Trim() : "120") + " s)";
+				case "hit": return "hurt the animals of " + t + " (" + (Arg.Trim().Length > 0 ? Arg.Trim().TrimEnd('%') : "25") + "% of their health; a shielded boss too)";
 				case "signal": return "send the signal '" + Arg + "' (world plans can wait for it)";
 				case "journal": return "write \"" + (Target.Length > 0 ? Target : "a page") + "\" in the journal";
 				case "wait": return "wait " + Seconds.ToString("0.#", CultureInfo.InvariantCulture) + " s, then...";
@@ -235,6 +237,8 @@ namespace DynamicIslands.Editor
 				case "state": return "'" + Target + "' is " + (BehaviourProps.States.Contains(Arg) ? Arg : "open");
 				case "signal": return "the signal '" + Target + "' was sent";
 				case "quest": return Target == "done" || Target.Length == 0 ? "the island's quest is done" : "quest step " + Target + " is done";
+				case "wears": return "the player wears " + (Target.Length > 0 ? ContentCatalog.ItemLabel(Target.TrimEnd('*')) + (Target.EndsWith("*") ? " (any kind)" : "") : "(no item)");
+				case "holds": return "the player holds " + (Target.Length > 0 ? ContentCatalog.ItemLabel(Target.TrimEnd('*')) + (Target.EndsWith("*") ? " (any kind)" : "") : "(no item)") + " in their hand";
 			}
 			return Kind;
 		}
@@ -688,6 +692,17 @@ namespace DynamicIslands.Editor
 			return false;
 		}
 
+		/// <summary>One check now, for this machine's player (a hazard zone's protection lines): nothing is taken.</summary>
+		public static bool CheckNow(IslandWorldState.Entry e, int index, ObjCheck c)
+		{
+			try
+			{
+				Network_Player p = RAPI.GetLocalPlayer();
+				return Holds(e, index, c, p != null ? p.Inventory : null) != c.Not;
+			}
+			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] A check: " + ex.Message); return false; }
+		}
+
 		static bool Holds(IslandWorldState.Entry e, int index, ObjCheck c, PlayerInventory inv)
 		{
 			switch (c.Kind)
@@ -709,6 +724,8 @@ namespace DynamicIslands.Editor
 					return true;
 				case "signal":
 					return HasSignal(e, c.Target);
+				case "wears": return GapChecks.Wears(c.Target);
+				case "holds": return GapChecks.Holds(c.Target);
 				case "quest":
 					int steps;
 					int need = int.TryParse(c.Target, NumberStyles.Integer, CultureInfo.InvariantCulture, out steps) ? steps : QuestTracker.QuestOf(e).Steps.Count;
@@ -859,7 +876,7 @@ namespace DynamicIslands.Editor
 			// (no player does these - the quest done, a spot's animals defeated: a check of a player's own items looked in the
 			// host's inventory and took from it. Only the crew's checks count here - story items, states, signals, the
 			// quest - AU17)
-			List<ObjCheck> personal = checks.Where(c => (c.Kind == "has" || c.Kind == "take") && !StoryItems.IsStory(c.Target)).ToList();
+			List<ObjCheck> personal = checks.Where(c => ((c.Kind == "has" || c.Kind == "take") && !StoryItems.IsStory(c.Target)) || c.Kind == "wears" || c.Kind == "holds").ToList();
 			if (personal.Count > 0)
 			{
 				checks = checks.Except(personal).ToList();
@@ -1066,6 +1083,7 @@ namespace DynamicIslands.Editor
 					StoryBook.Give(l.Key, l.Value, e);
 			foreach (ObjAction a in actions.Where(x => x.Shared))
 			{
+				if (a.Verb == "hit") { GapFeatures.HitCreatures(e, Targets(e, index, a.Target), a.Arg); continue; }
 				if (a.Verb == "signal")
 				{
 					int key = SignalKey(a.Arg);
@@ -1125,6 +1143,10 @@ namespace DynamicIslands.Editor
 				{
 					switch (a.Verb)
 					{
+						case "suit":
+							if (messagesOnly) break;
+							Hazards.PutOnSuit(a.Arg);
+							break;
 						case "message":
 							LastMessage = a.Arg;
 							IslandInfo.ShowMessage(a.Arg);

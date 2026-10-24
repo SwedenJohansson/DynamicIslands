@@ -1411,6 +1411,11 @@ turtle, stingray, dolphin, whale.
   it), and once it is tinted the **Strength** slider (0 to 100 %) says how strongly the colour shows. **Custom colour...**
   adds **Red**, **Green** and **Blue** sliders (0 to 255) for your own mix: the object's own colours are multiplied by
   the tint.
+- **Danger** (every creature spot): **Zap** makes its animals shock a player who comes within 2 m - that much damage,
+  at most every 2 s (Tangaroa's **butler bots** placed from the list zap 8). **In its phase: Only blasts hurt it**
+  turns a boss's weapons-proof once its **Boss phase** starts: the players' blows glance off, and only a **hurt
+  creatures** action ([6.2](#62-behaviour-and-events)) does harm - Varuna Point's **explosive barrels** and **pillars**
+  are ready for it (used, each takes a third of the health of the creature spot named `boss`, then goes).
 - **Boss phase** (hostile animals): click **none** to give the spot a second phase. Once per fight, when one of its
   animals falls to **Starts at health** (10 to 90 %, 50 % at first), it **calls** up to 6 more creatures (of **its own**
   kind or another hostile one) around itself, gets faster (**Speed then**, ×1.3 at first), sends a **signal**
@@ -1503,6 +1508,17 @@ full again - as in Raft's air pockets under Caravan Town. Raft's own air-pocket 
 the container in Caravan Town's list) come without their air, so put an air-pocket zone on each, about as big as the
 object. A zone **hidden** by a behaviour gives no air until it is shown: *The Abyss* in the library keeps its three
 pockets empty until the air line's valve is opened (the valve's action shows them, with bubbles - [5.5](#55-atmosphere-and-sound)).
+
+**Hazards.** A trigger zone's **Hazard** group makes the zone hurt the players standing in it (each player's own
+machine, every second) unless something protects them: **Acid** and **Fumes** (a protective suit protects),
+**Live water**, **Spikes** and **Cold** (damage per second, 0-50), **Darkness** (no damage: the screen goes black
+unless the player **wears a headlight** - then they see a headlight's cone) and **Deep water** (the breath runs out
+fast unless the player **wears an oxygen tank**). **Protected when** takes lines like the behaviour window's checks,
+one holding is enough: `suit` (a protective suit is on: the **protective suit** action, or Raft's hazmat suit),
+`wears|HeadLight*`, `holds|Torch`, `has|story:charm|1`, `state|Valve|closed`, `signal|power`; empty = the hazard's
+own, `none` = nothing protects. A name ending in `*` matches every kind (`Axe*` = any axe), and the mod's upgrades
+count as the item they improve. A message says why (at most every 6 s; your own line or the hazard's). A **hidden**
+zone does nothing: switch live water off with a lever or a generator whose action **hide**s the zone.
 
 **Invisible walls and ramps** (also in "Zones & triggers") are solid in the world but not seen: block a path, fence
 an arena, or make a cliff climbable.
@@ -1625,6 +1641,18 @@ Select any object → **Behaviour & events...**. No code needed:
   closed, shown or hidden, a signal was sent, the quest reached a step (a ▼ list too). Turn a check round with **not**; ask for
   **all** or **any** of them. **Otherwise** say a message. (An island file written by hand or by a script can give
   **Otherwise** any action, not only a message; the editor shows only the message and keeps the other actions as they are.)
+- **Wears, holds, suits and blasts** (2026-10-24): the checks **wears item** (a headlight, flippers, an oxygen tank)
+  and **holds item** (in the player's hand: **binoculars** for a lookout - Raft's telescope counts too -, `Hook*` or
+  `Axe*` for an opening only a hook or an axe gets through) look at the player who does it, so they are left out
+  where no player does it, like **has item**. The action **protective suit** puts a suit on that player for some
+  seconds (120 at first): acid and fumes zones don't hurt them. **hurt creatures** (shared) takes a share of the health
+  (25 % at first) of the animals of the creature spots with that name. More ready pieces: Temperance's **key socket**
+  (an item goes in, once: open = filled, sends `socket`; a puzzle checks the sockets' states), Varuna Point's
+  **spotlights** and the radio tower's spotlight **keep creatures back** (the object panel's radius, 8 m: while shown,
+  the island's animals and Raft's jellyfish keep out; hide it to switch it off), and Temperance's **snow vehicles**:
+  broken down until a player brings 3 bolts, then each use carries the players on it 24 m along and back (they can't
+  be driven: Raft's snowmobile is Temperance's own vehicle, made by its shed). A **generator** placed from the list
+  wants **3** generator parts (the object panel's **Parts needed**, 1-6); old islands keep theirs.
 - **Sounds and camera moments** (actions in the same ▼ list, shared by every player): **play sound/music** plays one of
   Raft's sound events or music cues (pick it with **…**, a list of every one Raft has), with a volume, **once** or on a
   **loop**, **near** the object (or the objects named) or for **everyone on the island**. Every player near the island

@@ -11,7 +11,8 @@ What players do on an island: quests, behaviours and events, trigger zones, note
 | `StoryItemsWindow.cs` | Story items editor; `StorySets` (`LockedDoor`, `TreasureMap`, `LockedChest`, `NoteTrail`) |
 | `Behaviours.cs` | `BehaviourProps` (keys), `ObjAction`, `ObjCheck`, `IslandBehaviour` (movers), `SharedClock`, `UseInteract` (interact key; `CodeLock.Use` when `lock.code` is set), `Behaviours` (events at run time) |
 | `BehaviourWindow.cs` | Behaviour & events (object) and Island events editor |
-| `TriggerZone.cs` | Zone: message, items, quest `reach`, `enter` event, air pocket |
+| `TriggerZone.cs` | Zone: message, items, quest `reach`, `enter` event, air pocket, hazard tick |
+| `GapFeatures.cs` | Hazards (zone.hazard/damage/safe), DarknessOverlay, GapChecks (wears/holds), zap, repel, `hit` action, BossShieldPatch; UI in `ObjectInspectorGaps.cs` |
 | `LootCrate.cs` | `ContentState` (used state: shared, saved, refilled) and `LootCrate` (chests) |
 | `CustomNote.cs` | `CustomNote` (readable note) and `NoteReader` (the note on screen) |
 | `IslandInfo.cs` | `IslandProps`, `IslandSettings`, `IslandRules.RegrowDays`, `IslandInfo` (arrival banner, zone messages) |

@@ -14,7 +14,7 @@ namespace DynamicIslands.Editor
 	///   Colour    - a tint for any object, creatures included (swatches, strength, custom RGB)
 	/// Every change is an undo step (slider drags merge into one).
 	/// </summary>
-	public static class ObjectInspector
+	public static partial class ObjectInspector
 	{
 		static RectTransform root;
 		static EditorGameObject shown;
@@ -100,7 +100,7 @@ namespace DynamicIslands.Editor
 				// (nothing to colour: zones are invisible in a world)
 				if (target.GameObjectName == ContentCatalog.AtmosphereZoneName) AtmosphereGroup(target);
 				else if (target.GameObjectName == ContentCatalog.SoundZoneName) SoundGroup(target);
-				else { ZoneGroup(target); LootGroup(target, true); }
+				else { ZoneGroup(target); HazardGroup(target); LootGroup(target, true); }
 				BehaviourGroup(target);
 				return;
 			}
@@ -122,6 +122,7 @@ namespace DynamicIslands.Editor
 				if (target.GameObjectName.StartsWith("ZiplinePath", System.StringComparison.Ordinal)) ZiplineGroup(target);
 				if (Survivors.IsCage(target.GameObjectName)) SurvivorGroup(target);
 			}
+			GapGroup(target, kind);
 			BehaviourGroup(target);
 			ColourGroup(target, kind != null);
 		}

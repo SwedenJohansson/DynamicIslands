@@ -9,6 +9,20 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-24: hazards and story-island gaps
+
+- **Hazard zones:** a trigger zone's new Hazard group - acid, live water, fumes, spikes, cold (damage per second),
+  darkness (black screen without a headlight) and deep water (breath drains without an oxygen tank); protection lines
+  (a suit, worn or held items, states, signals); hide the zone to switch it off.
+- **New checks and actions:** wears item, holds item (binoculars lookouts, hook- or axe-only openings), protective suit,
+  hurt creatures.
+- **Creatures:** Zap (butler bots placed from the list zap), a boss phase only blasts hurt, lights that keep creatures
+  and jellyfish back.
+- **Ready pieces:** Temperance's key socket, Varuna Point's explosive barrels, pillars and spotlights, Temperance's snow
+  vehicles (repaired with 3 bolts, then they carry the players; not drivable). Generators placed from the list want 3
+  parts (Parts needed, 1-6); old islands and recipes keep 1.
+- Not done: carrying and stacking placed objects (the socket covers "put item X at Y").
+
 ## 2026-10-24: vehicle islands
 
 - **20 new library islands built round Raft's vehicles** (vans, caravans, excavators, forklifts, cranes, ore wagons, snow
