@@ -408,6 +408,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Player hold", e); }
 			try { CreatureSpawner.Tick(); }
 			catch (Exception e) { TickError("Creatures", e); }
+			try { GapFeatures.Tick(); }
+			catch (Exception e) { TickError("Gap features", e); }
 			try { RaftColliderGuard.Tick(); }
 			catch (Exception e) { TickError("Raft colliders", e); }
 			try { QuestTracker.Tick(); QuestCount.Tick(); DailyQuest.Tick(); RogueShark.Tick(); StormDays.Tick(); }

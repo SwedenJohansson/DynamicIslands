@@ -23,6 +23,10 @@ namespace DynamicIslands.Editor
 		public bool Repeats;
 		/// <summary>An air pocket: a player inside breathes (ObjectProps.ZoneAir) - while the zone is shown.</summary>
 		public bool Air;
+		/// <summary>A hazard zone (Hazards: acid, shock, darkness...): hurts the local player inside unless protected.</summary>
+		public string Hazard = "";
+		public Dictionary<string, string> Props = new Dictionary<string, string>();
+		float nextHazard, toldHazardAt = -100f;
 		/// <summary>Fires once ever: never ready again after the regrow days (a story's once-zone fired again: a double
 		/// ambush, a bridge flipped back).</summary>
 		public bool OnceEver;
@@ -61,6 +65,8 @@ namespace DynamicIslands.Editor
 			z.Items = ObjectProps.Loot(o.Props);
 			z.Air = ObjectProps.GetBool(o.Props, ObjectProps.ZoneAir, false);
 			z.Ordinal = ordinal;
+			z.Props = o.Props != null ? new Dictionary<string, string>(o.Props) : new Dictionary<string, string>();
+			z.Hazard = Hazards.KindOf(z.Props);
 			return z;
 		}
 
@@ -80,6 +86,40 @@ namespace DynamicIslands.Editor
 			if (!now) { retryAt = 0f; toldRefused = false; }
 			inside = now;
 			if (now && Air) Breathe(player);
+			if (now && Hazard.Length > 0) HazardTick(player);
+		}
+
+		/// <summary>The local player stands in a hazard zone (every quarter second): unprotected, it hurts - damage every
+		/// second, breath drained in deep water, the screen dark in a dark zone - and says why at most every 6 s.</summary>
+		void HazardTick(Network_Player player)
+		{
+			bool safe;
+			try { safe = Hazards.Protected(this, player); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Hazard zone '" + Id + "': " + e.Message); safe = false; }
+			if (Hazard == Hazards.Dark) { DarknessOverlay.Mark(safe); if (!safe) Tell(); return; }
+			if (safe) return;
+			float dmg = Hazards.DamageOf(Props);
+			if (Hazard == Hazards.Deep)
+			{
+				try { if (player.Stats != null && player.Stats.stat_oxygen != null) player.Stats.stat_oxygen.Value = Mathf.Max(0f, player.Stats.stat_oxygen.Value - dmg * 0.25f); }
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Deep water: " + e.Message); }
+				Tell();
+				return;
+			}
+			if (Time.time < nextHazard || dmg <= 0f) return;
+			nextHazard = Time.time + 1f;
+			try { player.Stats.Damage(dmg, player.transform.position + Vector3.up, Vector3.up, EntityType.Environment, true, null); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Hazard damage: " + e.Message); }
+			Tell();
+		}
+
+		void Tell()
+		{
+			if (Time.time - toldHazardAt < 6f) return;
+			toldHazardAt = Time.time;
+			string m = Hazards.MessageOf(Props);
+			if (m.Length > 0) IslandInfo.ShowMessage(m);
+			Debug.Log("[CUSTOM ISLANDS] Hazard zone '" + Id + "' (" + Hazard + ") hurts the player");
 		}
 
 		/// <summary>A player in an air pocket breathes: breath back to full.</summary>

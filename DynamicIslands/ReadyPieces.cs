@@ -4,8 +4,7 @@ using System.Linq;
 namespace DynamicIslands.Editor
 {
 	/// <summary>
-	/// Raft's story-island doors, hatches, crank wheels and levers as ready pieces (TODO "Raft's quest items used in the
-	/// plans" / ROADMAP LM12): placed from the object list they already work in a world, with Raft's own quest item as the
+	/// Raft's story-island doors, hatches, crank wheels and levers as ready pieces (TODO "Raft's quest items used in the\n	/// plans" / ROADMAP LM12): placed from the object list they already work in a world, with Raft's own quest item as the
 	/// key where Raft used one - a keycard door opens (it goes) for a player whose crew holds Raft's keycard (the story
 	/// item raft-&lt;type&gt; a quest item pickup gives, kept for later doors: a "has" check, not "take"); a hatch opens when
 	/// used; a crank wheel or a lever sends the signal "crank" or "lever" that the island's other objects, its quest and
@@ -27,6 +26,12 @@ namespace DynamicIslands.Editor
 		public const string Lift = "lift", Cage = "cage", Camera = "camera", Generator = "generator", Radio = "radio", Engine = "engine", Mirror = "mirror";
 		public const string Wheel = "wheel", Pipe = "pipe", Wire = "wire", Claw = "claw", Scales = "scales";
 		public const string Laser = "laser", FixedMirror = "fixed mirror", LaserTarget = "laser target";
+		/// <summary>Gap features (2026-10-24): a socket an item goes into (G2), an explosive barrel and a pillar that hurt a
+		/// boss (G4), a spotlight that keeps creatures back (G12), a broken-down vehicle repaired with bolts (G3).</summary>
+		public const string Socket = "socket", Barrel = "barrel", Pillar = "pillar", Spotlight = "spotlight", Vehicle = "vehicle";
+		public const string SocketSignal = "socket", BlastSignal = "blast", CollapseSignal = "collapse", VehicleSignal = "vehicle";
+		/// <summary>The generator parts a generator placed from the editor wants (G7); old islands and recipes keep 1.</summary>
+		public const int DefaultGeneratorParts = 3;
 		/// <summary>The signals the new kinds send (a quest, the world plan or other objects can wait for them).</summary>
 		public const string PowerSignal = "power", RadioSignal = "radio", EngineSignal = "engine", MirrorSignal = "mirror", CageSignal = "cage";
 		public const string LaserSignal = "laser";
@@ -84,6 +89,15 @@ namespace DynamicIslands.Editor
 			new Piece { Name = "TP_LaserEmitter", Kind = Laser },
 			new Piece { Name = "TP_MirrorHousing_StaticMirror", Kind = FixedMirror },
 			new Piece { Name = "TP_LaserDoorPanel", Kind = LaserTarget },
+			new Piece { Name = "TP_CoolingStation_Keysocket", Kind = Socket, Item = "MetalIngot", Use = "Put it in the socket", Locked = "An empty socket. Something fits in here." },
+			new Piece { Name = "VP_ExplosiveBarrel_Pile", Kind = Barrel, Use = "Light the fuse" },
+			new Piece { Name = "VP_MotherlodePillar1_Stage1", Kind = Pillar, Use = "Knock the pillar down" },
+			new Piece { Name = "VP_MotherlodePillar2_Stage1", Kind = Pillar, Use = "Knock the pillar down" },
+			new Piece { Name = "VP_MotherlodePillar3_Stage1", Kind = Pillar, Use = "Knock the pillar down" },
+			new Piece { Name = "VP_Spotlight", Kind = Spotlight },
+			new Piece { Name = "RT_Spotlight", Kind = Spotlight },
+			new Piece { Name = "TP_SnowVehicle01", Kind = Vehicle, Item = "Bolt", Use = "Start the vehicle", Locked = "It's broken down. 3 bolts would get it running." },
+			new Piece { Name = "TP_SnowVehicle02", Kind = Vehicle, Item = "Bolt", Use = "Start the vehicle", Locked = "It's broken down. 3 bolts would get it running." },
 		};
 
 		/// <summary>The pieces added for LM12's rest (2026-10-06): lifts, cages, cameras, generators, radios, the engine, mirrors;
@@ -105,6 +119,32 @@ namespace DynamicIslands.Editor
 			string item = p.Item != null ? StoryItems.Prefix + QuestItemPickups.IdPrefix + p.Item : null;
 			switch (p.Kind)
 			{
+				case Socket:
+					// (an item goes in once for good: open = filled - a puzzle checks the sockets' states; the item is a
+					// Raft item here, changed in the behaviour window)
+					props[BehaviourProps.CheckKey("use")] = ObjCheck.AnyLine + "\nstate||open\ntake|" + p.Item + "|1";
+					props[BehaviourProps.ElseKey("use")] = "message||" + p.Locked;
+					props[BehaviourProps.EventKey("use")] = "open|" + "\n" + "message||It clicks into place." + "\n" + "signal||" + SocketSignal;
+					break;
+				case Barrel:
+				case Pillar:
+					// (the creature spot named "boss" loses a third of its health: three barrels or pillars bring it down)
+					props[BehaviourProps.EventKey("use")] = (p.Kind == Barrel ? "message||The fuse fizzes... BOOM!" : "message||The pillar cracks and comes crashing down!") + "\n" +
+						"hit|boss|34" + "\n" + "hide|" + "\n" + "signal||" + (p.Kind == Barrel ? BlastSignal : CollapseSignal);
+					break;
+				case Spotlight:
+					props[GapFeatures.Repel] = "8";
+					break;
+				case Vehicle:
+					// (not drivable - Raft's snowmobile is Temperance's own networked vehicle: repaired, it carries the
+					// players standing on it 24 m along and back on the next use)
+					props[BehaviourProps.Move] = "0,0,24";
+					props[BehaviourProps.MoveTime] = "10";
+					props[BehaviourProps.Carry] = "1";
+					props[BehaviourProps.CheckKey("use")] = ObjCheck.AnyLine + "\nsignal|" + VehicleSignal + "|\ntake|" + p.Item + "|3";
+					props[BehaviourProps.ElseKey("use")] = "message||" + p.Locked;
+					props[BehaviourProps.EventKey("use")] = "message||The engine catches. Hold on!" + "\n" + "signal||" + VehicleSignal + "\n" + "switch|";
+					break;
 				case Lift:
 					// (used, it goes up 6 m and down again on the next use, carrying the player standing on it)
 					props[BehaviourProps.Move] = "0,6,0";
@@ -189,6 +229,30 @@ namespace DynamicIslands.Editor
 					props[BehaviourProps.EventKey("use")] = "message||Clunk. Something moved." + "\n" + "signal||lever";
 					break;
 			}
+		}
+
+		public static bool IsGenerator(string name) { Piece p = Of(name); return p != null && p.Kind == Generator; }
+
+		/// <summary>How many generator parts a generator wants (its "use" check's take line), 0 = not a generator's check.</summary>
+		public static int PartsOf(Dictionary<string, string> props)
+		{
+			foreach (string l in ObjectProps.Get(props, BehaviourProps.CheckKey("use")).Split('\n'))
+			{
+				ObjCheck c = ObjCheck.Parse(l.Trim());
+				if (c != null && c.Kind == "take" && c.Target.EndsWith("Tangaroa_GeneratorPart")) return c.Count;
+			}
+			return 0;
+		}
+
+		/// <summary>A generator wants n generator parts (G7): every one is used up when it starts.</summary>
+		public static void SetParts(string name, Dictionary<string, string> props, int n)
+		{
+			Piece p = Of(name);
+			if (p == null || p.Kind != Generator || props == null) return;
+			n = n < 1 ? 1 : n > 9 ? 9 : n;
+			string item = StoryItems.Prefix + QuestItemPickups.IdPrefix + p.Item;
+			props[BehaviourProps.CheckKey("use")] = ObjCheck.AnyLine + "\nsignal|" + PowerSignal + "|\ntake|" + item + "|" + n;
+			props[BehaviourProps.ElseKey("use")] = "message||" + (n == 1 ? p.Locked : "It won't start. It needs " + n + " generator parts.");
 		}
 
 		/// <summary>The story item a piece wants (raft-&lt;type&gt;), or null.</summary>
