@@ -3851,7 +3851,7 @@ one by its open stall.
 
 **The Long Voyage** - Raft's whole story, twice as long. After every story island but Utopia, a big quest island of
 the library comes on its own Receiver frequency (the story island's radio picks it up); its quest done, the story goes
-on as Raft's. The smaller library islands turn up as side trips while you sail (one every few km).
+on as Raft's. The smaller library islands turn up as side trips while you sail (one every few km). Its main islands are about 120% the size of Raft's own big islands.
 
 | After | The plan's island | What it is |
 |---|---|---|
@@ -3891,7 +3891,7 @@ islands is replaced on the Receiver by a remade version of itself: its land made
 island ([4.5](#45-the-island-generator) - its shape and style, something new each time it is built), then rebuilt with
 new set pieces, new missions, other monsters and a boss. Each hands out the blueprints the original island has, so the
 raft still gets its steering wheel, engine, fuel, machete and everything the story needs; the last island's quest is
-the ending.
+the ending. Its main islands are about 70% the size of Raft's own big islands.
 
 | Instead of | The plan's island | What it is |
 |---|---|---|
@@ -3915,7 +3915,7 @@ three), a signal (Varuna's strongbox opens only once the floodlight burns), two 
 **The Abyss Expedition** - an expedition downwards beside Raft's story: each island comes **on the Receiver** (500 to
 900 m ahead when tuned) when the one before is done - its quest done, or players reached it: an old mine, a buried
 shelter, a **sunken island** (a map type, made new for every world), caverns, a **wreck** (a map type too), a drowned
-city - and at the end **The Abyss**.
+city - and at the end **The Abyss**. Its main islands are about 90% the size of Raft's own big islands.
 
 | The plan's last island | What it is | What it shows you how to build |
 |---|---|---|
@@ -3930,7 +3930,7 @@ What it shows: rules brought by **quests and visits**, main story islands **besi
 trail of the old Frontier Corps' stations leads across the storm belt to the last high ground. Raft's story islands are
 off; the plan's ten quest islands come one after the other - the first is on the Receiver from the start, and each quest done
 gives the next station's frequency on the Receiver. Raft's key blueprints are found along the way in Raft's order, so
-the raft can still be steered, driven and fuelled; the tenth island's quest is the ending.
+the raft can still be steered, driven and fuelled; the tenth island's quest is the ending. Its main islands are about 90% the size of Raft's own big islands.
 
 | Station | The plan's island | What it is |
 |---|---|---|
@@ -3957,7 +3957,7 @@ player (**teleport to**); doors that slide aside when three seals are set.
 
 **Silver Screen Seas** - Raft's whole story with the library's themed islands ([15.6](#156-the-themed-islands)). After
 every story island a big themed island comes on its own Receiver frequency (after Temperance two, one after the other);
-its quest done, the story goes on as Raft's. The ten normal-size themed islands turn up as side trips while you sail.
+its quest done, the story goes on as Raft's. The ten normal-size themed islands turn up as side trips while you sail. Its main islands are about as big as Raft's own big islands.
 
 | After | The plan's island | Size |
 |---|---|---|
@@ -4209,7 +4209,7 @@ station's logbook gives the frequency of the next, and the trail ends at the Rai
 the whole sky. Each island has notes from the staff, a survivor or a family story, a blueprint cache (Raft's
 blueprints in Raft's order; the quest has a **Blueprint** step for each, so taking them is part of it) and a frequency
 for the next island. The Sleet Kilns and The Isobar Club each have a **Raft store**: Raft's goods, and any story
-blueprint a player missed. At the end every player sees the credits and a closing note.
+blueprint a player missed. At the end every player sees the credits and a closing note. Its main islands are about 70% the size of Raft's own big islands.
 
 | Island | What it is | What to look at |
 |---|---|---|
@@ -4238,7 +4238,7 @@ its answer points on down the route, to the General Post Office, where the postm
 letter. Each island has Raft's blueprints in Raft's order (a **Blueprint** step for each), Pneumatic Heights comes only
 from day 10 on (`day:10`), and the later islands have a **Raft store**; the General Post Office also has Raft's
 vending machine. A side island, **The Wandering Sorting Barge**, comes ahead of the raft every 6 km until its quest is
-done (`km:6:again`).
+done (`km:6:again`). Its main islands are about 60% the size of Raft's own big islands.
 
 | Island | What it is | What to look at |
 |---|---|---|
@@ -4266,7 +4266,7 @@ stone giant in the strait, and the giant points to the Engine. Sunstaff Mesa com
 (`instead:Balboa`) and holds Balboa's four blueprints as **Blueprint** steps; the other islands come after a Raft
 island (`after:RadioTower`, `after:CaravanTown` ...), so Raft's own blueprints stay where they are. Skyhook Mast has
 Raft's vending machine and Tangaroa tokens to find; the Colossus and the Tide Engine have a **Raft store**. Two side
-islands come ahead of the raft by distance and by day (`km:8`, `day:5`).
+islands come ahead of the raft by distance and by day (`km:8`, `day:5`). Its main islands are about 80% the size of Raft's own big islands.
 
 | Island | What it is | What to look at |
 |---|---|---|
@@ -4294,7 +4294,7 @@ five listening mirrors. The islands show how far the rule kinds go in one plan: 
 (`day:8`), a side island that comes back every second day (`day:2:again`, `ahead:400`), a zone on an earlier island
 (`zone:effigy:circle`), a quest step (`step:terraces:4`), a landing (`visit:causeway`) and notes read (`note:3`).
 Raft's story is on, so Raft's blueprints stay on Raft's islands and the plan has no **Blueprint** steps. Saint Agnes has
-Raft's vending machine and Tangaroa tokens; Gannet Cliff and The Listening Mirrors have a **Raft store**.
+Raft's vending machine and Tangaroa tokens; Gannet Cliff and The Listening Mirrors have a **Raft store**. Its main islands are about 60% the size of Raft's own big islands.
 
 | Island | What it is | What to look at |
 |---|---|---|
@@ -4322,7 +4322,7 @@ side (`elevation`), air pockets under water, and every kind of "when": a quest (
 (`signal:orchard:roots`), a quest step (`step:9`), a zone (`zone:keel`, `zone:array:core`), a landing
 (`visit:gravewell`), a distance (`km:5`) and a twin found near another island (`near:shoal:600:north`). Raft's story
 is off, so all of Raft's story blueprints are **Blueprint** steps on the way. Altitude Market has Raft's vending
-machine; Pendulum Isle, The Stair of Hours and The Lodestone Array have a **Raft store**.
+machine; Pendulum Isle, The Stair of Hours and The Lodestone Array have a **Raft store**. Its main islands are about 40% the size of Raft's own big islands.
 
 | Island | What it is | What to look at |
 |---|---|---|
@@ -4355,7 +4355,7 @@ is finished the same way. The islands show every kind of "when": a quest (`quest
 quest step (`step:delta:6`), a zone (`zone:grove:roots`), a signal (`signal:heart:below`), a rule (`rule:mire`), a
 day (`day:6`) and a frequency that needs the engine (`receiver:1000:needs=engine`). Raft's story is off, so all of Raft's
 story blueprints are **Blueprint** steps on the way. Hollowtrunk Grove has Raft's vending machine; Canopy Stair and The
-Heart of Green have a **Raft store**. Titanium lies buried on Blightmire, Canopy Stair, the Heart and the Rootcore.
+Heart of Green have a **Raft store**. Titanium lies buried on Blightmire, Canopy Stair, the Heart and the Rootcore. Its quest islands are as big as Raft's own big islands.
 
 | Island | What it is | What to look at |
 |---|---|---|
@@ -4386,7 +4386,7 @@ show every kind of "when": a quest (`quest:stack`), a signal (`signal:leads:resc
 (`zone:bow:hatch`), a quest step (`step:decks:10`), a landing (`visit:mouth`), a day (`day:9:again`) and a frequency
 that needs the engine (`receiver:1100:needs=engine`). All of Raft's story blueprints are **Blueprint** steps on the way.
 The Iron Whale's bow has Raft's vending machine; Glacier Mouth and The Coldhold Vault have a **Raft store**. Titanium
-lies buried on Saga Drift, Glacier Mouth and in the Coldhold.
+lies buried on Saga Drift, Glacier Mouth and in the Coldhold. Its quest islands are as big as Raft's own big islands.
 
 | Island | What it is | What to look at |
 |---|---|---|
@@ -4420,7 +4420,7 @@ every kind of "when": a quest (`quest:customs`), a quest step (`step:bazaar:5`),
 **Blueprint** step on the way, in Raft's order. Raft Row Bazaar has Raft's vending machine; Rookery Stacks and the
 Bridgeworks Crown have a **Raft store**. Titanium lies buried on Cistern Hall, Rookery Stacks, the Crown and the Piles.
 Raft's vehicles stand about the city: vans and caravans on the bazaar's key and in Lowstreet (the drowned tram),
-forklifts and wagons at the Pumpcrown Works and on the Crown, ship hulks round the Fleet's moorings.
+forklifts and wagons at the Pumpcrown Works and on the Crown, ship hulks round the Fleet's moorings. Its quest islands are as big as Raft's own big islands.
 
 | Island | What it is | What to look at |
 |---|---|---|
@@ -4452,7 +4452,7 @@ choice is answered at the valve. The islands show every kind of "when": a quest 
 (`step:9`, `step:24`), a signal (`signal:brinelab:drives`), a zone (`zone:thalassa:bell`), a rule (`rule:caisson`),
 a frequency that needs the engine (`receiver:1000:needs=engine`) and a distance (`km:4`, `ahead:450`). All of Raft's
 story blueprints are **Blueprint** steps on the way. Thalassa Mooring has Raft's vending machine; Caisson Yard and the
-Sealkeeper Spire have a **Raft store**. Titanium lies buried on Thalassa Mooring, Caisson Yard and the Sealkeeper Spire.
+Sealkeeper Spire have a **Raft store**. Titanium lies buried on Thalassa Mooring, Caisson Yard and the Sealkeeper Spire. Its quest islands are as big as Raft's own big islands.
 
 | Island | What it is | What to look at |
 |---|---|---|

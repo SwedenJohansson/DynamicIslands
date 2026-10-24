@@ -11,7 +11,7 @@
 # (Adapted: Orrin's Sledge Camp ends by its quest, not by "note:4" - its notes are the island's own notes, not one of
 # Raft's numbered notes. The ending is neutral: the Seed Ark cannot read which switch was pulled on the Coldhold (NF3).)
 plan new The Frozen Horizon
-plan description A sea gone white in the north: a signal mast, sealers on the floes, a harbour warmed by a vent, a sledge camp, the Iron Whale split by the ice, the floating city of Saga Drift, a glacier with a sign cut in its face - and under it, a vault of seeds with three switches. Raft's own story is off; its blueprints are in the islands' quests.
+plan description A sea gone white in the north: a signal mast, sealers on the floes, a harbour warmed by a vent, a sledge camp, the Iron Whale split by the ice, the floating city of Saga Drift, a glacier with a sign cut in its face - and under it, a vault of seeds with three switches. Raft's own story is off; its blueprints are in the islands' quests. Its quest islands are as big as Raft's own big islands.
 plan random off
 plan story off
 plan rule stack | island:Signalstack Rock | start | receiver:500 | The Receiver's first signal: a dead man's beacon, a mast on a stack of rock - and the cold coming down from the north. | Signalstack Rock | first | quest

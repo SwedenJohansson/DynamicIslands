@@ -7,7 +7,7 @@
 #
 # Run it with CIRecipe plan_city_never_sank (it writes the plan file); the islands are built by their own recipes.
 plan new The City That Never Sank
-plan description Sailors talk about a city that never sank. On 500, through the static, a customs officer reads out the rules for entering Highwater. Trade in its bazaar of lashed rafts, take jobs from the Authority, the Free Fleet and the Salvagers' Union, dive its drowned streets for a lost expedition - and find out who has been cutting the water to the poorest roofs. Then the storm comes, and the city's choice is yours.
+plan description Sailors talk about a city that never sank. On 500, through the static, a customs officer reads out the rules for entering Highwater. Trade in its bazaar of lashed rafts, take jobs from the Authority, the Free Fleet and the Salvagers' Union, dive its drowned streets for a lost expedition - and find out who has been cutting the water to the poorest roofs. Then the storm comes, and the city's choice is yours. Its quest islands are as big as Raft's own big islands.
 plan random off
 plan story off
 plan rule customs | island:Breakwater Customs | start | receiver:500 | On 500, a bored voice on a loop: "Harbor Authority, Highwater. All craft stop at the customs breakwater. Cargo weighed, permits stamped." A city? Out here? | Breakwater Customs | first | quest

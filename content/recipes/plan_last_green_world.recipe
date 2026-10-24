@@ -8,7 +8,7 @@
 # Built by the recipe player (CIRecipe plan_last_green_world) in the editor's World plans window. Its play test:
 # content\tests\plan_last_green_world.play.
 plan new The Last Green World
-plan description Verdance, the last land where things still grow: a pollen spit, a ranger station, a river delta, a tracker's hill, a grove of giant trees, root caves, a poisoned marsh, a stair of roots, and the Heart of Green with the Rootcore beneath it - where one valve decides what Verdance becomes
+plan description Verdance, the last land where things still grow: a pollen spit, a ranger station, a river delta, a tracker's hill, a grove of giant trees, root caves, a poisoned marsh, a stair of roots, and the Heart of Green with the Rootcore beneath it - where one valve decides what Verdance becomes Its quest islands are as big as Raft's own big islands.
 plan random off
 plan story off
 plan rule spit | island:Pollenreach Spit | start | receiver:500 | The Receiver hisses, then a calm recorded voice: "Verdance Ranger Service. Landing beacon on Pollenreach Spit." | Pollenreach Spit | first | quest

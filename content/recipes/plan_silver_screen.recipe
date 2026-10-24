@@ -7,7 +7,7 @@
 # Built by the recipe player (CIRecipe plan_silver_screen) in the editor's World plans window. Its play test:
 # content\tests\plan_silver_screen.play.
 plan new Silver Screen Seas
-plan description Raft's whole story with the library's themed islands: after every story island a big island built round a theme the movies love, found on the Receiver - a summer camp, a sunken liner, a jungle pyramid, an arena, a wartime airfield, a marsh of research stations, a park of giant beasts and a frontier town in the canyons. The ten smaller themed islands turn up as side trips while you sail.
+plan description Raft's whole story with the library's themed islands: after every story island a big island built round a theme the movies love, found on the Receiver - a summer camp, a sunken liner, a jungle pyramid, an arena, a wartime airfield, a marsh of research stations, a park of giant beasts and a frontier town in the canyons. The ten smaller themed islands turn up as side trips while you sail. Its main islands are about as big as Raft's own big islands.
 plan random on
 plan story on
 

@@ -6,7 +6,7 @@
 #
 # Run it with CIRecipe plan_gravity_sea (it writes the plan file); the islands are built by their own recipes.
 plan new The Gravity Sea
-plan description Islands torn into the sky and their roots left on the seabed: the Halvard Institute's Lodestone Array lifted the land out of the rising sea - and left the other half drowned. Follow the Receiver from a quay whose hill is gone, up to sky orchards and markets and down to their cellars, to the Array's crown and its root. Two side islands turn up on the way.
+plan description Islands torn into the sky and their roots left on the seabed: the Halvard Institute's Lodestone Array lifted the land out of the rising sea - and left the other half drowned. Follow the Receiver from a quay whose hill is gone, up to sky orchards and markets and down to their cellars, to the Array's crown and its root. Two side islands turn up on the way. Its main islands are about 40% the size of Raft's own big islands.
 plan random off
 plan story off
 plan rule quay | island:Lodestone Quay | start | receiver:500 | The Receiver's first signal: a harbour master's call sign, then a voice - "Lodestone Quay. The hill is gone. Anyone?" | Lodestone Quay | first | quest

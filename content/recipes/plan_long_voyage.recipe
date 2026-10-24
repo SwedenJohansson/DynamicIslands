@@ -6,7 +6,7 @@
 # Built by the recipe player (CIRecipe plan_long_voyage) in the editor's World plans window. Its play test:
 # content\tests\plan_long_voyage.play.
 plan new The Long Voyage
-plan description Raft's whole story - and after every story island but Utopia a big quest island of its own, found on the Receiver: the voyage twice as long. The library's smaller islands turn up as side trips while you sail.
+plan description Raft's whole story - and after every story island but Utopia a big quest island of its own, found on the Receiver: the voyage twice as long. The library's smaller islands turn up as side trips while you sail. Its main islands are about 120% the size of Raft's own big islands.
 plan random on
 plan story on
 

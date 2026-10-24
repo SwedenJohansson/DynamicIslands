@@ -8,7 +8,7 @@
 # Built by the recipe player (CIRecipe plan_last_post) in the editor's World plans window. Its play test:
 # content\tests\plan_last_post.play (run it on day 10 or later: CISetDay 10).
 plan new The Last Post
-plan description The route of the Coastal Post, the last postal service on the sea: nine stops - a dead letter office, a pier, a jungle airstrip, a tube town, a sorting rock, a telegraph line, a franking works and the postmistress's house - and at the end the General Post Office on its drowned square. Deliver the dead letters on the way. Raft's own story is off; its blueprints are in the stops' chests.
+plan description The route of the Coastal Post, the last postal service on the sea: nine stops - a dead letter office, a pier, a jungle airstrip, a tube town, a sorting rock, a telegraph line, a franking works and the postmistress's house - and at the end the General Post Office on its drowned square. Deliver the dead letters on the way. Raft's own story is off; its blueprints are in the stops' chests. Its main islands are about 60% the size of Raft's own big islands.
 plan random on
 plan story off
 plan rule deadletter | island:The Dead Letter Office | start | receiver:500 | The Receiver crackles: a post office's call sign, then a recorded voice - "Coastal Post. Letters held for collection." | The Dead Letter Office | first | note:1249

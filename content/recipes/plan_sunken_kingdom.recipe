@@ -8,7 +8,7 @@
 #
 # Phase 1: written, untested (see _ProjectDocs\plans\storylines10\SL10_progress.md).
 plan new The Sunken Kingdom
-plan description A drowned kingdom of stations under one Network: rooftops and a broken overpass, a tower of drives, a glass dome 18 m down, a diving bell, a glowing shelf, a caisson yard, a city in the trench - and at its heart a spire with two levers, RESTORE and SEAL, and the Hollow beneath. Ten islands, five of them under water, and a shuttle wreck off the route.
+plan description A drowned kingdom of stations under one Network: rooftops and a broken overpass, a tower of drives, a glass dome 18 m down, a diving bell, a glowing shelf, a caisson yard, a city in the trench - and at its heart a spire with two levers, RESTORE and SEAL, and the Hollow beneath. Ten islands, five of them under water, and a shuttle wreck off the route. Its quest islands are as big as Raft's own big islands.
 plan random on
 plan story off
 plan rule spire | island:Spirecrest Roofs | start | receiver:500 | The Receiver's first signal: a mast on drowned rooftops, still sending. | Spirecrest Roofs | first | quest

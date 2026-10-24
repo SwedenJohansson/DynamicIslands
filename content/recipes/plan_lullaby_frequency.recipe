@@ -9,7 +9,7 @@
 # Built by the recipe player (CIRecipe plan_lullaby_frequency) in the editor's World plans window. Its play test:
 # content\tests\plan_lullaby_frequency.play (run it on day 8 or later: CISetDay 8, for Effigy Shoals' day:8).
 plan new The Lullaby Frequency
-plan description A horror story line beside Raft's own: at 3:12 every night the Receiver hums a lullaby. Follow it - a cannery, a sanatorium, a shoal of effigies, terraces where the statues move, a causeway in the mist, the Quiet Choir's cliff, a drowned children's home - to the quarry where five mirrors listen to the sea. A hut that keeps coming back sets a table for four.
+plan description A horror story line beside Raft's own: at 3:12 every night the Receiver hums a lullaby. Follow it - a cannery, a sanatorium, a shoal of effigies, terraces where the statues move, a causeway in the mist, the Quiet Choir's cliff, a drowned children's home - to the quarry where five mirrors listen to the sea. A hut that keeps coming back sets a table for four. Its main islands are about 60% the size of Raft's own big islands.
 plan random on
 plan story on
 plan rule cannery | island:Hollins Cannery | start | receiver:500 | At 3:12 the Receiver hums by itself - a lullaby, under it a cannery's call sign. | Hollins Cannery | beside | quest | Hollins Cannery | 4

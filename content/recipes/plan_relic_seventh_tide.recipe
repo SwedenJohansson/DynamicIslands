@@ -7,7 +7,7 @@
 # Built by the recipe player (CIRecipe plan_relic_seventh_tide) in the editor's World plans window. Its play test:
 # content\tests\plan_relic_seventh_tide.play (run it on day 5 or later: CISetDay 5, for Rope Bridge Gorge's day:5).
 plan new Relic of the Seventh Tide
-plan description Professor Kett's hunt for the engine that raised the sea, woven into Raft's own story: a looted museum, a sandstone mesa in Balboa's place, a buried necropolis, a mooring mast, a hollow fang of rock, a giant astride a strait - and before Utopia, the Tide Engine. Two side islands turn up on the way.
+plan description Professor Kett's hunt for the engine that raised the sea, woven into Raft's own story: a looted museum, a sandstone mesa in Balboa's place, a buried necropolis, a mooring mast, a hollow fang of rock, a giant astride a strait - and before Utopia, the Tide Engine. Two side islands turn up on the way. Its main islands are about 80% the size of Raft's own big islands.
 plan random on
 plan story on
 plan rule museum | island:Marrow Key Museum | km:3 | receiver:600 | A museum's alarm, looping on the Receiver - and a man's voice under it: "Kett here. Someone got here first." | Marrow Key Museum | after:RadioTower | quest
