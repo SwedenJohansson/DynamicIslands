@@ -25,4 +25,14 @@ expect step 8
 read Courier's logbook
 expect step 9
 read Rooftop caretaker's diary
+expect step 10
+air sc_dair
+open Exchange strongbox
+wait 3
+expect story sc_key 1
+expect step 11
+zone sc_summit
+expect step 12
+open Relay locker
+wait 3
 expect done

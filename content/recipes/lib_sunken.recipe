@@ -353,3 +353,65 @@ prop $al atmo.fogAmount=0.7
 prop $al atmo.lightAmount=0.2
 prop $al zone.radius=$r
 end
+#
+# --- The deep 1-hour pass (10-24): a mountain to climb on every surface island, a rock that breaks the surface on every
+# sunken one, and a drowned building in a pit to dive into. Each shapes its own ground; plants go back after (sk_plants).
+#
+# sk_peak: a mountain h m high, r m round x z: three terraces smoothed into slopes, a stepped path spiralling up from
+# its east foot (x+0.92r, z) twice round to a summit pad (r 5.5) at h; painted by slope
+macro sk_peak x=0 z=0 h=20 r=24
+brush flatten at $x $z r=$r s=20 frames=300 h={$h*0.35}
+brush flatten at $x $z r={$r*0.68} s=20 frames=300 h={$h*0.65}
+brush flatten at $x $z r={$r*0.4} s=20 frames=300 h={$h*0.88}
+brush smooth at $x $z r={$r*1.15} s=6 frames=90
+for k 0 23
+brush flatten at {$x+$r*(0.92-0.03*$k)*cos($k*30)} {$z+$r*(0.92-0.03*$k)*sin($k*30)} r=3.2 s=20 frames=60 h={$h*($k+1)/24}
+next
+brush flatten at $x $z r=5.5 s=20 frames=200 h=$h
+brush auto at $x $z r={$r*1.2} s=10 frames=25
+clear at $x $z r={$r*1.2}
+end
+#
+# sk_seamount: a rock rising from a sunken island's floor to top m (set it 2.5 m over the sea: depth + 2.5), r m round
+# at its foot: a shoulder at 0.45 top, a shelf 3 m under the top (half a metre under the sea: wade out), a dry top r 0.4r
+macro sk_seamount x=0 z=0 top=20 r=20
+brush flatten at $x $z r=$r s=20 frames=300 h={$top*0.45}
+brush flatten at $x $z r={$r*0.72} s=20 frames=300 h={$top-3}
+brush flatten at $x $z r={$r*0.4} s=20 frames=300 h=$top
+brush smooth at $x $z r={$r*1.2} s=4 frames=60
+brush flatten at $x $z r={$r*0.36} s=20 frames=200 h=$top
+brush auto at $x $z r={$r*1.25} s=10 frames=25
+clear at $x $z r={$r*1.25}
+end
+#
+# sk_pit: a pit (a sinkhole on land - the sea fills it - or a hole in the seabed) at x z, its floor at h0, r 9
+macro sk_pit x=0 z=0 h0=-10
+brush flatten at $x $z r=9 s=20 frames=300 h=$h0
+brush smooth at $x $z r=13 s=4 frames=40
+brush flatten at $x $z r=8 s=20 frames=200 h=$h0
+brush auto at $x $z r=14 s=10 frames=25
+clear at $x $z r=13
+end
+#
+# sk_drowned: a drowned office block of n storeys (3 m, radio-tower walls) standing in a pit at x z (x-3..x+3,
+# z-4.5..4.5), its ground floor at h0; w: the window piece (RT_WallWindowBroken: swim in anywhere; RT_WallWindow1: shut,
+# the roof hatch is the only way in); stone floors with a hatch and a ladder up in the north-east corner (x+2.25 z+4.2);
+# the roof at h0+3n with a railing; cap=1 lays a slab (alias cal) over the roof hatch. a: an alias for the walls.
+macro sk_drowned x=0 z=0 h0=-10 n=3 w=RT_WallWindowBroken a=drowned cap=0 cal=-
+for s 0 {$n-1}
+push at {$x+3} $z h={$h0+3*$s}
+call rt_storey floor=none b1=$w b2=$w f1=$w f2=$w l1=$w l2=$w l3=$w r1=$w r2=$w r3=$w a=$a
+call labfloor y=0 fa=$a
+place Block_Ladder_Tier3 - at -0.75 4.2 y=0 sy=1.23
+pop
+next
+push at {$x+3} $z h={$h0+3*$n}
+call labfloor y=0 fa=$a
+call rt_railing y=0
+for c 1 $cap
+place Block_Floor_Tier3 $cal at -0.75 3.75 y=0
+next
+pop
+prop $a tint.color=#5e6a6c
+prop $a tint.amount=0.5
+end

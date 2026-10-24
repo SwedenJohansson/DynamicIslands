@@ -54,4 +54,18 @@ expect step 15
 read Wagon driver's chit
 expect step 16
 zone doors
+expect step 17
+read Scavenger's note I
+expect step 18
+read Scavenger's note III
+expect step 19
+air hc_dair
+open Scavenger's strongbox
+wait 3
+expect story hc_key 1
+expect step 20
+zone hc_summit
+expect step 21
+open Spire locker
+wait 3
 expect done

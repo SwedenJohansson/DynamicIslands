@@ -23,4 +23,14 @@ expect step 6
 read Seat 14's ticket
 expect step 7
 read Commuter's note
+expect step 8
+air sw_dair
+open Shuttle depot chest
+wait 3
+expect story sw_key 1
+expect step 9
+zone sw_summit
+expect step 10
+open Depot rock locker
+wait 3
 expect done

@@ -83,6 +83,22 @@ read Storm keeper's log
 expect step 26
 read Supply pilot's log
 expect step 27
+zone sk_deep
+expect step 28
+air sk_dair
+open Archive chest
+wait 3
+expect story sk_key 1
+expect step 29
+read Archive register
+expect step 30
+zone sk_summit
+expect step 31
+read Sealkeeper's card
+expect step 32
+open Storm Crown locker
+wait 3
+expect step 33
 use descend
 expect story descended 1
 expect done

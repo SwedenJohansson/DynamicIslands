@@ -29,4 +29,30 @@ read Caravan diary
 expect step 9
 open Bus locker
 wait 3
+expect step 10
+open Glovebox (yellow caravan)
+wait 3
+open Glovebox (green caravan)
+wait 3
+open Glovebox (far caravan)
+wait 3
+open Glovebox (blue caravan)
+wait 3
+open Glovebox (beach trailer)
+wait 3
+use opbench
+expect story op_jack 1
+expect step 11
+use opcap
+expect story op_lifted 1
+expect step 12
+air op_dair
+open Depot chest
+wait 3
+expect story op_key 1
+expect step 13
+zone op_summit
+expect step 14
+open Toll hill locker
+wait 3
 expect done

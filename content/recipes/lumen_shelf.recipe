@@ -4,7 +4,7 @@
 # on the shelf and pokes out of the sea: a hollow pillar of stone walls with a ladder up its inside (air pockets in it),
 # Varuna's wind turbine on a small platform on top - the only part above water. The survey hut (battery plans), the
 # team's mess (the grill plans), the survey sled (the head light plans), a rock arch at the edge with air under it, and
-# anglers hunting the dark below. Quest "The Glowing Shelf" (14 steps).
+# anglers hunting the dark below. Quest "The Glowing Shelf" (19 steps).
 #
 # Points (metres over the island's own water line; in the world it all lies 25 m lower): the shelf at 0 (x -26..12),
 # the drop past x 14 down to -14; the spar round -10 -4 (walls 0..26.6, its platform at 26.8, the surface at 25), air in
@@ -169,6 +169,48 @@ call stonelamp x=-54 z=-2 al=lulamp4
 call stonelamp x=-62 z=0 al=lulamp5
 place Zone_Trigger lucavedark at -68 3 ground y=1
 
+# --- DEEP 1-HOUR (10-24): the survey rock (27.5 m from the floor, a beacon on top) and the drowned survey office in the north-west pit - a light gate holds off its puffers
+# the rock that breaks the surface (27.5 m up from the floor), a beacon tower on its dry top
+call sk_seamount x=-6 z=-66 top=27.5 r=22
+call sk_pit x=-36 z=60 h0=-8
+call sk_cave x=66 z=-30 h=2 yaw=0 al=lucave2 chest=lucave2chest
+call sk_reef x=13.8 z=-66 r=6 seed=24510
+call sk_reef x=-21.4 z=-52.8 r=6 seed=24520
+call sk_reef x=-26 z=66 r=5 seed=24530
+
+# the summit: the survey rock - the tower (ladder inside), the locker, the note, the zone
+call ladtower x=-6 z=-66 h0=27.5 lv=3 a=lutower
+place Loot_ChestSmall lulocker at -6.75 -65.25 h=34.98 sit yaw=180
+place Note_Paper lusumnote at -6.75 -66.75 h=35.08 drop yaw=20
+place Zone_Trigger lusummit at -6 -66 h=35.98
+place Loot_ChestSmall luledge at -18.1 -66 ground sit yaw=40
+place SmallRock_02 - at -1 -64 ground sit scale=0.5
+place SmallRock_02 - at -1 -64 ground y=0.6 sit scale=0.32 yaw=40
+call treasure x=-3.5 z=-64 r=3 n=1 seed=24511
+prop treasure24511 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+call treasure x=50.52 z=-22.97 r=5 n=1 seed=24512
+prop treasure24512 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
+call sk_dark x=66 z=-28 h=1 r=7 al=lucave2dark
+
+# the drowned building: the survey office, its ground floor 33 m down; the deep chest at the bottom, air on storey 1
+call sk_drowned x=-36 z=60 h0=-8 n=4 w=RT_WallWindowBroken a=lubld cap=0 cal=lucap
+place Loot_Chest ludeep at -37.8 57.5 h=-8 sit yaw=0
+place Placeable_Table_Basic - at -37.5 61 h=-5 sit yaw=0
+place Note_Paper lubldnote at -37.5 61 h=-3.7 drop yaw=10
+call airpocketat x=-36.5 z=58 h=-5 id=lu_dair al=ludair bub=ludbub r=2.2 msg="Air trapped under the stairs of the drowned building. Breathe."
+call sk_zone x=-36 z=49 al=ludeepzone id=lu_deep r=4 msg="The pit floor: the drowned building stands below you."
+
+# M20 the light gate: the puffers by the drowned office; the switch on the rim lights the floodlight for 25 s (it keeps
+# them off), and the broken floodlight across the pit lights for good once its four lens glasses are fitted
+place Creature_PufferFish lupuff at -36 51 ground y=3
+place VP_Spotlight luflood1 at -24 54 ground sit yaw=250
+place TP_LaserControlPanel_lever luswitch1 at -23 50 ground sit yaw=270
+place RT_Floodlight_WithoutLightSource luflood2x at -48 55 ground sit yaw=90
+place VP_Spotlight luflood2 at -48 57 ground sit yaw=100
+place Loot_ChestSmall lulens1 at -34.8 57 h=-5 sit yaw=0
+place Loot_ChestSmall lulens2 at -37.8 57.5 h=-2 sit yaw=90
+place Loot_ChestSmall lulens3 at -34.8 61 h=1 sit yaw=180
+
 # --- Settings, notes, behaviours, quest ---------------------------------------------------------------------------------
 info title=Lumen Shelf
 info author=Custom Islands
@@ -223,6 +265,56 @@ prop lulamp5 beh.repel=8
 prop lucavedark zone.radius=5
 prop lucavedark zone.hazard=dark
 prop lucavedark zone.hazardMsg=Pitch dark. A headlight would show the way.
+# --- DEEP 1-HOUR (10-24): story items, notes and checks
+story lu_key|Survey office key|Hinge|The survey office key, from the chest at the bottom of the drowned office.
+story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
+note ludeep Survey office chest | The survey office chest: the beacon locker key, a lens glass and a crest shard.
+loot ludeep story:lu_key*1;story:sk_crest*1;story:lu_lens*1;Glass*2;OxygenBottle*1
+prop ludeep loot.refill=0
+note lulocker Survey beacon locker | The surveyors' beacon locker on the rock: lamp oil and spare kit.
+loot lulocker MetalIngot*3;CopperIngot*2;Rope*3;Cooked_Potato*2
+prop lulocker loot.refill=0
+prop lulocker if.open=has|story:lu_key|1
+prop lulocker else.open=message||The locker is padlocked. The tag says the key is kept "at the bottom, where the water keeps it safe".
+note lusumnote Surveyor's card | THE SURVEY ROCK\n\nThe shelf lamps were ours. The big floodlight by the office kept the puffers out of the pit.\nIts lens glasses are in the office below.
+note lubldnote Survey office notice | SURVEY OFFICE\n\nThe puffers come up the pit at night. The floodlight switch on the rim gives you half a minute of light.\nSpare lens glasses: one on each floor. The broken floodlight takes four.
+note luledge Lamp fitter's cache | A lamp fitter's cache on the rock's shelf.
+loot luledge Rope*3;Bolt*2;Feather*3
+prop luledge loot.refill=0
+note lucave2chest Shelf mapper's chest | A shelf mapper's chest in the east rock.
+loot lucave2chest CopperOre*3;Rope*2;Battery*1
+prop lucave2chest loot.refill=0
+prop lusummit zone.id=lu_summit
+prop lusummit zone.radius=2.5
+prop lusummit zone.message=Out of the water: the survey rock. The shelf lamps glow green far below.
+story lu_lens|Lens glass|Glass|A floodlight lens glass from the survey office. The broken floodlight takes four.
+story lu_gate|Light gate|Placeable_Lantern_Metal|You threw the floodlight switch: half a minute of light over the pit.
+story lu_lit|Floodlight mended|Placeable_Lantern_Metal|The broken floodlight burns again: the pit is lit for good.
+prop lupuff creature.count=5
+prop lupuff creature.respawn=0
+prop lupuff creature.zone=lu_deep
+prop luflood1 beh.hidden=1
+prop luflood1 beh.repel=10
+prop luswitch1 obj.name=luswitch1
+prop luswitch1 beh.use=Throw the floodlight switch
+prop luswitch1 on.use=show|luflood1\ngive||story:lu_gate*1\nmessage||The floodlight blazes over the pit - the puffers scatter. Half a minute!\nwait|25\nhide|luflood1\nmessage||The floodlight dies.
+prop luflood2x obj.name=luflood2x
+prop luflood2x beh.use=Fit the lens glasses
+prop luflood2x if.use=take|story:lu_lens|4
+prop luflood2x else.use=message||The big floodlight's four lens glasses are smashed. The survey office keeps spares, one on each floor.
+prop luflood2x on.use=hide|luflood2x\nshow|luflood2\ngive||story:lu_lit*1\nmessage||Four new glasses, and the floodlight burns again: the pit is lit, and the puffers keep away for good.
+prop luflood2 beh.hidden=1
+prop luflood2 beh.repel=10
+note lulens1 Lens box (first floor) | A box of spare lens glass on the office's first floor.
+loot lulens1 story:lu_lens*1;Glass*1
+note lulens2 Lens box (second floor) | A box of spare lens glass on the second floor.
+loot lulens2 story:lu_lens*1;Glass*1
+note lulens3 Lens box (top floor) | A box of spare lens glass on the top floor.
+loot lulens3 story:lu_lens*1;Glass*1
+prop lulens1 loot.refill=0
+prop lulens2 loot.refill=0
+prop lulens3 loot.refill=0
+
 quest title=The Glowing Shelf
 quest intro=Survey lamps on the Receiver, 25 m down. Find the wind spar's foot.
 step reach|spar_foot|1|Dive to the foot of the wind spar
@@ -239,6 +331,11 @@ step reach|lu_cave|1|Follow the lamp line to the cave in the west
 step read|Surveyor's hut note|1|Read the note in the surveyor's hut in the south-east
 step read|Caravan logbook|1|Read the logbook at the sunk caravan in the south-west
 step read|Last survey note|1|Read the last survey note
+step collect|story:lu_gate|1|Throw the floodlight switch on the pit rim to hold the puffers off
+step collect|story:lu_key|1|Dive into the drowned building and take the key from the chest at the bottom
+step reach|lu_summit|1|Climb the mountain to the tower on its top
+step open|Survey beacon locker|1|Open the summit locker with the key from the drowned building
+step collect|story:lu_lit|1|Fit four lens glasses into the broken floodlight across the pit
 quest done=Something comes to the lights. The team ran to a construction yard over the trench - the Receiver finds it on band 1000.
 quest reward=Battery*1;CopperIngot*2
 

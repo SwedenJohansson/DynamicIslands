@@ -2,7 +2,7 @@
 # Five drowned skyscraper tops stand out of the clear sea, the city's streets 7 m below them. Fallen antenna masts are
 # laid as footbridges from the middle tower (the beacon tower, the Network's surface beacon still blinking on its roof)
 # to the four others: a roof garden (birch and flowers in planter boxes) to the north, a hen coop under a roof on posts
-# to the south. Coral grows up the tower walls from the seabed. Quest "The Rooftops" (10 steps): the beacon roof, the
+# to the south. Coral grows up the tower walls from the seabed. Quest "The Rooftops" (13 steps): the beacon roof, the
 # distress card, the screechers, the Receiver plans in the beacon hut, the antenna plans on the bridge mast, the
 # caretaker's diary.
 #
@@ -170,6 +170,38 @@ place Antenna_pole - at -38 66 ground sy=0.5
 place RT_PowerBox mastpad at -5.55 -66.75 h=4.4 yaw=90
 place Loot_Chest mastbox at -10.5 -70.5 ground sit yaw=180
 
+# --- DEEP 1-HOUR (10-24): Signal Hill (a 22 m climb, a zipline down) and the drowned telephone exchange in the south-east pit
+# the mountain: a stepped path spirals up from its east foot (-43.76 28) to the summit tower
+call sk_peak x=-64 z=28 h=22 r=22
+call sk_pit x=36 z=-60 h0=-9
+call sk_cave x=24 z=36 h=3 yaw=180 al=sccave2 chest=sccave2chest
+call sk_plants x=-64 z=28 r=24.2 seed=24010
+call sk_reef x=46 z=-54 r=5 seed=24030
+
+# the summit: Signal Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
+call ladtower x=-64 z=28 h0=22 lv=6 a=sctower
+place Loot_ChestSmall sclocker at -64.75 28.75 h=36.73 sit yaw=180
+place Note_Paper scsumnote at -64.75 27.25 h=36.84 drop yaw=20
+place Zone_Trigger scsummit at -64 28 h=37.73
+place ZiplinePath_Landmark sczip at -63.25 27.25 h=36.73 yaw=0
+zipto sczip -32 14
+place Loot_ChestSmall scledge at -73.33 37.33 ground sit yaw=40
+place SmallRock_02 - at -39.34 34.51 ground sit scale=0.5
+place SmallRock_02 - at -39.34 34.51 ground y=0.6 sit scale=0.32 yaw=40
+call treasure x=-41.84 z=34.51 r=3 n=1 seed=24011
+prop treasure24011 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+call treasure x=14.57 z=21.86 r=5 n=1 seed=24012
+prop treasure24012 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
+call sk_dark x=24 z=34 h=1 r=7 al=sccave2dark
+
+# the drowned building: the telephone exchange, its ground floor 9 m down; the deep chest at the bottom, air on storey 1
+call sk_drowned x=36 z=-60 h0=-9 n=2 w=RT_WallWindowBroken a=scbld cap=0 cal=sccap
+place Loot_Chest scdeep at 34.2 -62.5 h=-9 sit yaw=0
+place Placeable_Table_Basic - at 34.5 -59 h=-6 sit yaw=0
+place Note_Paper scbldnote at 34.5 -59 h=-4.7 drop yaw=10
+call airpocketat x=35.5 z=-62 h=-6 id=sc_dair al=scdair bub=scdbub r=2.2 msg="Air trapped under the stairs of the drowned building. Breathe."
+call sk_zone x=36 z=-71 al=scdeepzone id=sc_deep r=4 msg="The pit floor: the drowned building stands below you."
+
 # --- Settings, notes, behaviours, quest ------------------------------------------------------------------------------
 info title=Spirecrest Roofs
 info author=Custom Islands
@@ -213,6 +245,29 @@ loot mastbox Bolt*4;Hinge*2;MetalIngot*2;Battery*1
 prop mastbox loot.refill=0
 prop mastbox if.open=signal|mastcode
 prop mastbox else.open=message||Locked - wired to the keypad on the wall.
+# --- DEEP 1-HOUR (10-24): story items, notes and checks
+story sc_key|Exchange key|Hinge|The telephone exchange's key, from the chest in its drowned switch room.
+story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
+note scdeep Exchange strongbox | The exchange's strongbox at the bottom of the switch room: the key to the relay locker, and a crest shard.
+loot scdeep story:sc_key*1;story:sk_crest*1;MetalIngot*2;Bolt*3;OxygenBottle*1
+prop scdeep loot.refill=0
+note sclocker Relay locker | The relay locker on Signal Hill: the linemen kept their best kit up here, above the water.
+loot sclocker MetalIngot*3;CopperIngot*2;Rope*3;Cooked_Potato*2
+prop sclocker loot.refill=0
+prop sclocker if.open=has|story:sc_key|1
+prop sclocker else.open=message||The locker is padlocked. The tag says the key is kept "at the bottom, where the water keeps it safe".
+note scsumnote Lineman's card | LINEMAN'S CARD - SIGNAL HILL\n\nThe relay up here carried every call from the roofs to the labs.\nThe exchange below went under first. Its key is in the strongbox down there.\nThe zipline takes you back to the roofs.
+note scbldnote Switchboard log | SWITCHBOARD LOG\n\nLast night shift. The water is at the windows.\nI put the relay key in the strongbox downstairs. Whoever climbs Signal Hill gets the kit.\nThere is air under the stairs if you need it.
+note scledge Climber's cache | A climber's cache on a ledge of Signal Hill, off the path.
+loot scledge Rope*3;Bolt*2;Feather*3
+prop scledge loot.refill=0
+note sccave2chest Signalman's spare chest | A second signalman's chest, at the back of the north rock.
+loot sccave2chest CopperOre*3;Rope*2;Battery*1
+prop sccave2chest loot.refill=0
+prop scsummit zone.id=sc_summit
+prop scsummit zone.radius=2.5
+prop scsummit zone.message=The top of Signal Hill. The whole island lies below.
+
 quest title=The Rooftops
 quest intro=A distress call from a drowned city: "Commons sealed. Do not answer." Climb onto the beacon roof.
 step reach|beacon|1|Climb onto the beacon roof in the middle
@@ -225,6 +280,9 @@ step reach|sc_cave|1|Find the rock cave in the west
 step read|Pump-man's slate|1|Read the slate in the pump-man's ruin in the south
 step read|Courier's logbook|1|Read the logbook at the courier plane in the north-west
 step read|Rooftop caretaker's diary|1|Read the caretaker's diary in the roof garden
+step collect|story:sc_key|1|Dive into the drowned building and take the key from the chest at the bottom
+step reach|sc_summit|1|Climb the mountain to the tower on its top
+step open|Relay locker|1|Open the summit locker with the key from the drowned building
 quest done=The caretaker followed the drowned highway to the labs. The Receiver finds a toll booth's radio on band 700.
 quest reward=Plank*8;Rope*3;OxygenBottle*1;Flipper*1
 

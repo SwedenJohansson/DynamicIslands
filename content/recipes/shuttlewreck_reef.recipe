@@ -2,7 +2,7 @@
 # A Pelagic Network transit shuttle lying on a reef: a long cabin of windowed stone walls on a rock shelf, its nose in the
 # coral, its cabin still an air pocket. A luggage rack inside, the manifest on the bulkhead, a commuter's note on a
 # seat. Puffers in the reef (goo), silver algae, giant clams, a buoy on the surface over it. Quest "The Night Shuttle"
-# (8 steps).
+# (11 steps).
 #
 # Points (metres over the reef's zero; the surface at 10): the shelf at 2, r 7 round 0 0; the shuttle x -2.25..2.25,
 # z -6..6 (floor at 2, roof at 4.85), its door in the south end; the buoy over -6 6.
@@ -107,6 +107,35 @@ call sk_notebox x=10 z=-50 yaw=70 al=sw_wrecknote
 # --- Unique layer (10-24): booked seats: the tender van's luggage hold, bolted shut; its lever lets go
 call leverchest x=-2 z=-40 yaw=0 alias=holdlever sig=holdlever chest=luggagehold cx=10 cz=-50 cyaw=80 items=Leather*2;Glass*2;Battery*1;Copper*2 title="Luggage hold"
 
+# --- DEEP 1-HOUR (10-24): the depot rock breaking the surface (12.5 m from the floor) and the shuttle line's drowned depot in the south-east pit
+# the rock that breaks the surface (12.5 m up from the floor), a beacon tower on its dry top
+call sk_seamount x=-38 z=-10 top=12.5 r=14
+call sk_pit x=28 z=-32 h0=-6
+call sk_reef x=-25.4 z=-10 r=6 seed=25010
+call sk_reef x=-47.8 z=-1.6 r=6 seed=25020
+call sk_reef x=38 z=-26 r=5 seed=25030
+
+# the summit: the depot rock - the tower (ladder inside), the locker, the note, the zone
+call ladtower x=-38 z=-10 h0=12.5 lv=3 a=swtower
+place Loot_ChestSmall swlocker at -38.75 -9.25 h=19.97 sit yaw=180
+place Note_Paper swsumnote at -38.75 -10.75 h=20.07 drop yaw=20
+place Zone_Trigger swsummit at -38 -10 h=20.97
+place Loot_ChestSmall swledge at -45.7 -10 ground sit yaw=40
+place SmallRock_02 - at -33 -8 ground sit scale=0.5
+place SmallRock_02 - at -33 -8 ground y=0.6 sit scale=0.32 yaw=40
+call treasure x=-35.5 z=-8 r=3 n=1 seed=25011
+prop treasure25011 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+call treasure x=41 z=-36 r=5 n=1 seed=25012
+prop treasure25012 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
+
+# the drowned building: the shuttle depot, its ground floor 16 m down; the deep chest at the bottom, air on storey 1
+call sk_drowned x=28 z=-32 h0=-6 n=2 w=RT_WallWindowBroken a=swbld cap=0 cal=swcap
+place Loot_Chest swdeep at 26.2 -34.5 h=-6 sit yaw=0
+place Placeable_Table_Basic - at 26.5 -31 h=-3 sit yaw=0
+place Note_Paper swbldnote at 26.5 -31 h=-1.7 drop yaw=10
+call airpocketat x=27.5 z=-34 h=-3 id=sw_dair al=swdair bub=swdbub r=2.2 msg="Air trapped under the stairs of the drowned building. Breathe."
+call sk_zone x=28 z=-43 al=swdeepzone id=sw_deep r=4 msg="The pit floor: the drowned building stands below you."
+
 # --- Settings, notes, quest --------------------------------------------------------------------------------------------
 info title=Shuttlewreck Reef
 info author=Custom Islands
@@ -127,6 +156,26 @@ note sw_wreckcrate Tender van crate | The tender van's spare crate: tools and ro
 loot sw_wreckcrate Bolt*2;Rope*2;Nail*8;Scrap*2
 prop sw_wreckcrate loot.refill=0
 
+# --- DEEP 1-HOUR (10-24): story items, notes and checks
+story sw_key|Depot locker key|Hinge|The shuttle depot's locker key, from the chest at the bottom of the drowned depot.
+story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
+note swdeep Shuttle depot chest | The shuttle depot chest: the key to the rock's locker and a crest shard.
+loot swdeep story:sw_key*1;story:sk_crest*1;MetalIngot*2;Bolt*3;OxygenBottle*1
+prop swdeep loot.refill=0
+note swlocker Depot rock locker | The shuttle crew's locker on the rock above the water.
+loot swlocker MetalIngot*3;CopperIngot*2;Rope*3;Cooked_Potato*2
+prop swlocker loot.refill=0
+prop swlocker if.open=has|story:sw_key|1
+prop swlocker else.open=message||The locker is padlocked. The tag says the key is kept "at the bottom, where the water keeps it safe".
+note swsumnote Shuttle timetable | SHUTTLE LINE - REEF STOP\n\nEvery hour, on the hour, until the day it was not.\nThe depot below keeps the key to our locker.
+note swbldnote Depot clerk's note | DEPOT CLERK\n\nThe last shuttle never came in. I locked up and put the rock locker's key in the chest downstairs.
+note swledge Passenger's cache | A passenger's bag wedged on the rock's shelf.
+loot swledge Rope*3;Bolt*2;Feather*3
+prop swledge loot.refill=0
+prop swsummit zone.id=sw_summit
+prop swsummit zone.radius=2.5
+prop swsummit zone.message=Out of the water on the depot rock. The shuttle lies on the reef below.
+
 quest title=The Night Shuttle
 quest intro=A shuttle on the Receiver's side band, lost on the night run. Find its cabin.
 step reach|cabin|1|Get into the shuttle's cabin
@@ -137,6 +186,9 @@ step reach|sw_ridge|1|Swim to the reef ridge in the north-west
 step reach|sw_cave|1|Find the reef cave in the east
 step read|Seat 14's ticket|1|Read the ticket at the tender van in the south
 step read|Commuter's note|1|Read the commuter's note
+step collect|story:sw_key|1|Dive into the drowned building and take the key from the chest at the bottom
+step reach|sw_summit|1|Climb the mountain to the tower on its top
+step open|Depot rock locker|1|Open the summit locker with the key from the drowned building
 quest done=Twelve made it to the Yard. The shuttle stays on its reef.
 quest reward=CopperIngot*2;Battery*1
 

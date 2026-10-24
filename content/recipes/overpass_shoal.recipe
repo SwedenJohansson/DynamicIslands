@@ -3,7 +3,7 @@
 # and llamas) and runs on west over stone pillars - and ends in the air. Rusted car shells (Caravan vans, tinted) sit on
 # the sunken lane; one of them shelters an air pocket. The toll booth at the top of the ramp (a hut, its roof on its
 # corner posts) keeps a strongbox only the booth key opens. Sandbars with clay to the south. Quest "The Drowned Highway"
-# (10 steps): the ramp top, the toll booth log, the sunken lane, the van's glovebox (the booth key), the motor wheel
+# (15 steps): the ramp top, the toll booth log, the sunken lane, the van's glovebox (the booth key), the motor wheel
 # plans in the booth's strongbox, the steering wheel plans in the bus locker.
 #
 # Points (metres over the sea): the road (3 lanes, z -2.25..2.25) on the embankment at 3 m from x -6 to 10; down the
@@ -143,6 +143,47 @@ place QuestItemPickup_Tangaroa_Token - at 21 -49 ground
 place QuestItemPickup_Tangaroa_Token - at 63 44 ground
 place QuestItemPickup_Tangaroa_Token - at -60 -19 ground
 
+# --- DEEP 1-HOUR (10-24): Toll Hill (22 m) and the sunken depot in the north-west, sealed - a car jack built from five caravan parts lifts its roof slab
+# the mountain: a stepped path spirals up from its east foot (80.24 -42) to the summit tower
+call sk_peak x=60 z=-42 h=22 r=22
+call sk_pit x=-60 z=42 h0=-10
+call sk_cave x=12 z=42 h=3 yaw=180 al=opcave2 chest=opcave2chest
+call sk_plants x=60 z=-42 r=24.2 seed=24110
+call sk_reef x=-50 z=48 r=5 seed=24130
+
+# the summit: Toll Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
+call ladtower x=60 z=-42 h0=22 lv=6 a=optower
+place Loot_ChestSmall oplocker at 59.25 -41.25 h=36.73 sit yaw=180
+place Note_Paper opsumnote at 59.25 -42.75 h=36.84 drop yaw=20
+place Zone_Trigger opsummit at 60 -42 h=37.73
+place ZiplinePath_Landmark opzip at 60.75 -42.75 h=36.73 yaw=0
+zipto opzip 30 -21
+place Loot_ChestSmall opledge at 50.67 -32.67 ground sit yaw=40
+place SmallRock_02 - at 39.49 -44.02 ground sit scale=0.5
+place SmallRock_02 - at 39.49 -44.02 ground y=0.6 sit scale=0.32 yaw=40
+call treasure x=36.99 z=-44.02 r=3 n=1 seed=24111
+prop treasure24111 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+call treasure x=7.33 z=25.65 r=5 n=1 seed=24112
+prop treasure24112 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
+call sk_dark x=12 z=40 h=1 r=7 al=opcave2dark
+
+# the drowned building: the highway depot (sealed: its roof hatch under a concrete slab), its ground floor 10 m down; the deep chest at the bottom, air on storey 1
+call sk_drowned x=-60 z=42 h0=-10 n=3 w=RT_WallWindow1 a=opbld cap=1 cal=opcap
+place Loot_Chest opdeep at -61.8 39.5 h=-10 sit yaw=0
+place Placeable_Table_Basic - at -61.5 43 h=-7 sit yaw=0
+place Note_Paper opbldnote at -61.5 43 h=-5.7 drop yaw=10
+call airpocketat x=-60.5 z=40 h=-7 id=op_dair al=opdair bub=opdbub r=2.2 msg="Air trapped under the stairs of the drowned building. Breathe."
+call sk_zone x=-60 z=31 al=opdeepzone id=op_deep r=4 msg="The pit floor: the drowned building stands below you."
+
+# M28 the car jack: five jack parts in the caravans' gloveboxes, put together at the depot's workbench on the rim
+place Loot_ChestSmall opglove1 at -72 -35.5 ground sit yaw=10
+place Loot_ChestSmall opglove2 at -53 -32 ground sit yaw=200
+place Loot_ChestSmall opglove3 at -74 -14 ground sit yaw=60
+place Loot_ChestSmall opglove4 at -66 -17 ground sit yaw=120
+place Loot_ChestSmall opglove5 at -77 -27 ground sit yaw=250
+place Placeable_Table_Basic opbench at -46 30 ground sit yaw=30
+place Placeable_Lantern_Metal - at -44.5 31.5 ground sit
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Overpass Shoal
 info author=Custom Islands
@@ -180,6 +221,57 @@ note op_wreckcrate Caravan larder | A caravan's larder crate: tins, a rope, a ja
 loot op_wreckcrate Rope*2;Seed_Pineapple*1;Plank*4;Scrap*2
 prop op_wreckcrate loot.refill=0
 
+# --- DEEP 1-HOUR (10-24): story items, notes and checks
+story op_key|Depot key|Hinge|The highway depot's key, from the chest on its drowned ground floor.
+story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
+note opdeep Depot chest | The depot chest: the key to the toll hill locker and a crest shard.
+loot opdeep story:op_key*1;story:sk_crest*1;MetalIngot*2;Bolt*3;OxygenBottle*1
+prop opdeep loot.refill=0
+note oplocker Toll hill locker | The toll men's locker on the hill: the takings and their lunch.
+loot oplocker MetalIngot*3;CopperIngot*2;Rope*3;Cooked_Potato*2
+prop oplocker loot.refill=0
+prop oplocker if.open=has|story:op_key|1
+prop oplocker else.open=message||The locker is padlocked. The tag says the key is kept "at the bottom, where the water keeps it safe".
+note opsumnote Toll man's card | TOLL HILL\n\nFrom up here you can see the whole jam: every car that never moved.\nThe depot went under with the slab on its hatch. A car jack would lift it.\nThe zipline runs back down to the road.
+note opbldnote Depot foreman's note | DEPOT FOREMAN\n\nWe dropped the slab on the hatch so the sea would not take the stock.\nThe key is in the chest on the ground floor. Air on the first floor, by the stairs.
+note opledge Surveyor's cache | A road surveyor's cache on a ledge of Toll Hill.
+loot opledge Rope*3;Bolt*2;Feather*3
+prop opledge loot.refill=0
+note opcave2chest Road crew chest | The road crew's chest at the back of the north rock.
+loot opcave2chest CopperOre*3;Rope*2;Battery*1
+prop opcave2chest loot.refill=0
+prop opsummit zone.id=op_summit
+prop opsummit zone.radius=2.5
+prop opsummit zone.message=The top of Toll Hill. The whole island lies below.
+story op_jackpart|Car jack part|Bolt|A part of a car jack, from a caravan's glovebox. Five make a jack.
+story op_jack|Car jack|Hinge|A car jack, put together from five parts. Strong enough for a concrete slab.
+story op_lifted|Slab lifted|Bolt|The slab is off the depot's roof hatch.
+note opglove1 Glovebox (yellow caravan) | The yellow caravan's glovebox: maps gone to pulp, and a jack handle.
+loot opglove1 story:op_jackpart*1;Rope*1
+note opglove2 Glovebox (green caravan) | The green caravan's glovebox: a jack screw, still greased.
+loot opglove2 story:op_jackpart*1;Nail*6
+note opglove3 Glovebox (far caravan) | The far caravan's glovebox: a jack foot plate.
+loot opglove3 story:op_jackpart*1;Scrap*2
+note opglove4 Glovebox (blue caravan) | The blue caravan's glovebox: the jack's lifting arm.
+loot opglove4 story:op_jackpart*1;Plastic*3
+note opglove5 Glovebox (beach trailer) | The trailer's toolbox, half in the sand: the jack's saddle.
+loot opglove5 story:op_jackpart*1;Bolt*2
+prop opglove1 loot.refill=0
+prop opglove2 loot.refill=0
+prop opglove3 loot.refill=0
+prop opglove4 loot.refill=0
+prop opglove5 loot.refill=0
+prop opbench obj.name=opbench
+prop opbench beh.use=Put the car jack together
+prop opbench if.use=take|story:op_jackpart|5
+prop opbench else.use=message||A workbench with a jack drawn on it in chalk: five parts. The caravans' gloveboxes had them.
+prop opbench on.use=give||story:op_jack*1\nmessage||Handle, screw, foot, arm, saddle: the jack goes together. Now the slab on the depot roof.
+prop opcap obj.name=opcap
+prop opcap beh.use=Jack the slab off the hatch
+prop opcap if.use=has|story:op_jack|1
+prop opcap else.use=message||A concrete slab lies over the depot's roof hatch. Far too heavy to lift by hand.
+prop opcap on.use=hide|opcap\ngive||story:op_lifted*1\nmessage||The jack bites, the slab tips and slides off into the pit. The hatch is open.
+
 quest title=The Drowned Highway
 quest intro=The caretaker followed the road. Climb the ramp to the toll booth.
 step reach|ramp_top|1|Climb to the top of the ramp
@@ -192,6 +284,11 @@ step reach|op_cave|1|Find the road crew's cave in the south-east
 step read|Toll keeper's tally|1|Read the tally in the toll keeper's house in the north-east
 step read|Caravan diary|1|Read the diary at the caravans in the south-west
 step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel plans from the bus locker
+step collect|story:op_jack|1|Find the five jack parts in the caravans' gloveboxes and put the jack together at the workbench by the pit
+step collect|story:op_lifted|1|Jack the slab off the sunken depot's roof hatch
+step collect|story:op_key|1|Dive into the drowned building and take the key from the chest at the bottom
+step reach|op_summit|1|Climb the mountain to the tower on its top
+step open|Toll hill locker|1|Open the summit locker with the key from the drowned building
 quest done=The road goes on, under water, towards the lab tower. The Receiver picks it up on band 800.
 quest reward=Rope*3;Nail*10
 

@@ -4,7 +4,7 @@
 # their tops at sea level, linked by footbridges of stone on mast poles. Two cranes, one on the south caisson and one on
 # the north, with a zipline between them. The fuel shed on the west caisson; the anchor post and the trench chart on the
 # north one, looking out over the drop. Puffers in the gaps (goo), two reefs, rocks, buried titanium on the yard. Quest
-# "The Caisson Yard" (11 steps).
+# "The Caisson Yard" (16 steps).
 #
 # Points (metres over the sea): the yard (rock) round 13 4 at 1.6 (r 6.5); caisson S round -6 -6, W round -6 6, N round
 # 10 16 (4.5 m square each, caps at 1.9, walls from the seabed at -8); bridges S-W along x -6 (z -3.75..3.75), W-yard
@@ -147,6 +147,43 @@ call vinecache x=-46 z=36 r=8 seed=10771 chest=cyvinechest vines=cyvines items=R
 # --- Unique layer (10-24): the yard office's vending machine: it takes the Tangaroa tokens of the Overpass toll run
 vending yardvend at 2 57 ground yaw=0
 
+# --- DEEP 1-HOUR (10-24): Crane Hill (22 m) and the yard's sealed store in the north-west pit - a dropped counterweight breaks its roof cap
+# the mountain: a stepped path spirals up from its east foot (34.08 -66) to the summit tower
+call sk_peak x=12 z=-66 h=22 r=24
+call sk_pit x=-30 z=60 h0=-10
+call sk_cave x=66 z=-12 h=3 yaw=0 al=cycave2 chest=cycave2chest
+call sk_plants x=12 z=-66 r=26.4 seed=24610
+call sk_reef x=-20 z=66 r=5 seed=24630
+
+# the summit: Crane Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
+call ladtower x=12 z=-66 h0=22 lv=6 a=cytower
+place Loot_ChestSmall cylocker at 11.25 -65.25 h=36.73 sit yaw=180
+place Note_Paper cysumnote at 11.25 -66.75 h=36.84 drop yaw=20
+place Zone_Trigger cysummit at 12 -66 h=37.73
+place ZiplinePath_Landmark cyzip at 12.75 -66.75 h=36.73 yaw=0
+zipto cyzip 6 -33
+place Loot_ChestSmall cyledge at 1.82 -55.82 ground sit yaw=40
+place SmallRock_02 - at -4.89 -49.9 ground sit scale=0.5
+place SmallRock_02 - at -4.89 -49.9 ground y=0.6 sit scale=0.32 yaw=40
+call treasure x=-7.39 z=-49.9 r=3 n=1 seed=24611
+prop treasure24611 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+call treasure x=49.27 z=-8.96 r=5 n=1 seed=24612
+prop treasure24612 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
+call sk_dark x=66 z=-10 h=1 r=7 al=cycave2dark
+
+# the drowned building: the yard store (sealed: the roof hatch capped), its ground floor 10 m down; the deep chest at the bottom, air on storey 1
+call sk_drowned x=-30 z=60 h0=-10 n=3 w=RT_WallWindow1 a=cybld cap=1 cal=cycap
+place Loot_Chest cydeep at -31.8 57.5 h=-10 sit yaw=0
+place Placeable_Table_Basic - at -31.5 61 h=-7 sit yaw=0
+place Note_Paper cybldnote at -31.5 61 h=-5.7 drop yaw=10
+call airpocketat x=-30.5 z=58 h=-7 id=cy_dair al=cydair bub=cydbub r=2.2 msg="Air trapped under the stairs of the drowned building. Breathe."
+call sk_zone x=-30 z=49 al=cydeepzone id=cy_deep r=4 msg="The pit floor: the drowned building stands below you."
+
+# M24 the dropped counterweight: the release lever on the rim (it wants the crane key from the east rock) drops the
+# crane's weight onto the store roof - the cap goes, the weight lies on the roof
+place TP_LaserControlPanel_lever cylever at -20 50 ground sit yaw=225
+place VP_ConcretePipe02 cyweight at -31.5 60 h=-1 sit yaw=0
+
 # --- Settings, notes, behaviours, quest ---------------------------------------------------------------------------------
 info title=Caisson Yard
 info author=Custom Islands
@@ -182,6 +219,37 @@ note cy_wreckcrate Crane's toolbox | The crane's toolbox: shackles, bolts, a coi
 loot cy_wreckcrate Bolt*4;MetalIngot*2;Rope*2;Hinge*1
 prop cy_wreckcrate loot.refill=0
 
+# --- DEEP 1-HOUR (10-24): story items, notes and checks
+story cy_key|Yard store key|Hinge|The yard store's key, from the chest on its drowned ground floor.
+story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
+note cydeep Yard store chest | The yard store chest: the key to the crane hill locker and a crest shard.
+loot cydeep story:cy_key*1;story:sk_crest*1;MetalIngot*2;Bolt*3;OxygenBottle*1
+prop cydeep loot.refill=0
+note cylocker Crane hill locker | The crane driver's locker up on the hill.
+loot cylocker MetalIngot*3;CopperIngot*2;Rope*3;Cooked_Potato*2
+prop cylocker loot.refill=0
+prop cylocker if.open=has|story:cy_key|1
+prop cylocker else.open=message||The locker is padlocked. The tag says the key is kept "at the bottom, where the water keeps it safe".
+note cysumnote Crane driver's card | CRANE HILL\n\nThe old crane's counterweight hangs over the store. The release lever is on the rim.\nThe lever wants the crane key - I left it in the east rock.
+note cybldnote Yard store tally | YARD STORE\n\nCapped the hatch with a steel plate when the water rose. Nothing gets in now but a crane's weight.\nThe key is in the chest on the ground floor. Air on the first floor.
+note cyledge Rigger's cache | A rigger's cache on a ledge of Crane Hill.
+loot cyledge Rope*3;Bolt*2;Feather*3
+prop cyledge loot.refill=0
+note cycave2chest Crane key box | The crane driver's key box, hidden in the east rock: the crane key, on its brass tag.
+loot cycave2chest story:cy_cranekey*1;CopperOre*2;Rope*2
+prop cycave2chest loot.refill=0
+prop cysummit zone.id=cy_summit
+prop cysummit zone.radius=2.5
+prop cysummit zone.message=The top of Crane Hill. The whole island lies below.
+story cy_cranekey|Crane key|Hinge|The old crane's key, on a brass tag. It frees the counterweight release.
+story cy_drop|Counterweight dropped|Bolt|The crane's counterweight came down on the store roof: the hatch is open.
+prop cyweight beh.hidden=1
+prop cylever obj.name=cylever
+prop cylever beh.use=Pull the counterweight release
+prop cylever if.use=has|story:cy_cranekey|1\n!signal|cydrop
+prop cylever else.use=message||The counterweight release is locked. The crane key would free it.
+prop cylever on.use=signal||cydrop\nhide|cycap\nshow|cyweight\ngive||story:cy_drop*1\nmessage||A clank, a whistle - the counterweight drops onto the store roof and the cap plate is gone. The hatch is open.
+
 quest title=The Caisson Yard
 quest intro=A construction yard on the Receiver. Climb onto the yard caisson.
 step reach|yard|1|Climb onto the yard
@@ -195,6 +263,11 @@ step reach|cy_cave|1|Find the powder cave in the south
 step read|Yard office book|1|Read the book in the yard office in the north
 step read|Crane driver's report|1|Read the report at the fallen crane in the south-east
 step read|Trench chart|1|Read the trench chart
+step collect|story:cy_cranekey|1|Find the crane key in the east rock
+step collect|story:cy_drop|1|Drop the counterweight on the sealed store with the release lever on the rim
+step collect|story:cy_key|1|Dive into the drowned building and take the key from the chest at the bottom
+step reach|cy_summit|1|Climb the mountain to the tower on its top
+step open|Crane hill locker|1|Open the summit locker with the key from the drowned building
 quest done=Hadal Commons, 45 m down, straight below the trench edge. The Receiver finds its doors on band 800.
 quest reward=MetalIngot*2;Bolt*4
 

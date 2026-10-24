@@ -4,7 +4,7 @@
 # overgrown greenhouse floor above it (boars root in its planters), lab 2, and a roof garden with beehives. Its five
 # lower floors are flooded labs, reached down the hatch shaft (a ladder in every storey) or through the broken windows.
 # On the island the boiler house (a stone shed with rats) stands in for the flooded basement. Quest "The Lab Tower"
-# (15 steps): the lobby, the safety board, the machete plans at reception, the vines over the hatch cut and the
+# (18 steps): the lobby, the safety board, the machete plans at reception, the vines over the hatch cut and the
 # stairwell, 3 boars, the fuel tank plans in lab 2, data drive 1, the flooded lab's air pocket, drives 2 and 3 (the
 # third sends "drives": the plan brings Biome Seven), the fuel pipe plans in the pipe store, the biofuel extractor
 # plans in the boiler house.
@@ -108,6 +108,7 @@ place Loot_Chest labstores at 4 -3.3 h=-14.7 sit yaw=0
 place Reef_Barrel2 - at -3 -3 h=-14.7 sit
 
 # --- The plaza: the boiler house (rats; the biofuel extractor plans), pines, crops ------------------------------------
+brush flatten at 15 6.5 r=5 s=20 frames=40 h=0.3
 push at 12 5 h=0.3
 call shed w=4 d=3 door=2
 place Loot_Chest boilerlocker at 4.8 3.6 y=0.2 sit yaw=180
@@ -163,6 +164,38 @@ call sk_notebox x=52 z=-68 yaw=70 al=bl_wrecknote
 # --- Unique layer (10-24): the crane cab: its lever drops the hook crate it was lifting when the tower leaned
 call leverchest x=40 z=-60 yaw=200 alias=cranelever sig=cranelever chest=hookcrate cx=38 cz=-67 cyaw=20 items=MetalIngot*2;Bolt*4;Rope*2 title="Hook crate"
 
+# --- DEEP 1-HOUR (10-24): Brine Hill (24 m) with the weather mast, and the cold well in the south-west: the lab's drowned pump house
+# the mountain: a stepped path spirals up from its east foot (46.08 66) to the summit tower
+call sk_peak x=24 z=66 h=24 r=24
+call sk_pit x=-30 z=-66 h0=-12
+call sk_cave x=-36 z=-6 h=3 yaw=0 al=blcave2 chest=blcave2chest
+call sk_plants x=24 z=66 r=26.4 seed=24210
+call sk_reef x=-20 z=-60 r=5 seed=24230
+
+# the summit: Brine Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
+call ladtower x=24 z=66 h0=24 lv=6 a=bltower
+place Loot_ChestSmall bllocker at 23.25 66.75 h=38.73 sit yaw=180
+place Note_Paper blsumnote at 23.25 65.25 h=38.84 drop yaw=20
+place Zone_Trigger blsummit at 24 66 h=39.73
+place ZiplinePath_Landmark blzip at 24.75 65.25 h=38.73 yaw=0
+zipto blzip 12 33
+place Loot_ChestSmall blledge at 13.82 76.18 ground sit yaw=40
+place SmallRock_02 - at 35.13 42.32 ground sit scale=0.5
+place SmallRock_02 - at 35.13 42.32 ground y=0.6 sit scale=0.32 yaw=40
+call treasure x=32.63 z=42.32 r=3 n=1 seed=24211
+prop treasure24211 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+call treasure x=-19.23 z=-3.21 r=5 n=1 seed=24212
+prop treasure24212 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
+call sk_dark x=-36 z=-4 h=1 r=7 al=blcave2dark
+
+# the drowned building: the lab's pump house, its ground floor 12 m down; the deep chest at the bottom, air on storey 1
+call sk_drowned x=-30 z=-66 h0=-12 n=3 w=RT_WallWindowBroken a=blbld cap=0 cal=blcap
+place Loot_Chest bldeep at -31.8 -68.5 h=-12 sit yaw=0
+place Placeable_Table_Basic - at -31.5 -65 h=-9 sit yaw=0
+place Note_Paper blbldnote at -31.5 -65 h=-7.7 drop yaw=10
+call airpocketat x=-30.5 z=-68 h=-9 id=bl_dair al=bldair bub=bldbub r=2.2 msg="Air trapped under the stairs of the drowned building. Breathe."
+call sk_zone x=-30 z=-77 al=bldeepzone id=bl_deep r=4 msg="The pit floor: the drowned building stands below you."
+
 # --- Settings, notes, behaviours, quest ------------------------------------------------------------------------------
 info title=Brinelab Tower
 info author=Custom Islands
@@ -216,6 +249,29 @@ note bl_wreckcrate Lab van crate | The lab van's crate: the cage crew's bolt cut
 loot bl_wreckcrate story:raft-Vasagatan_BoltCutter*1;Bolt*3;MetalIngot*1
 prop bl_wreckcrate loot.refill=0
 
+# --- DEEP 1-HOUR (10-24): story items, notes and checks
+story bl_key|Pump house key|Hinge|The lab pump house's key, from the chest at the bottom of the cold well.
+story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
+note bldeep Pump house chest | The pump house chest at the bottom of the cold well: the weather mast locker's key and a crest shard.
+loot bldeep story:bl_key*1;story:sk_crest*1;MetalIngot*2;Bolt*3;OxygenBottle*1
+prop bldeep loot.refill=0
+note bllocker Weather mast locker | The weather station locker on Brine Hill: the lab's field kit.
+loot bllocker MetalIngot*3;CopperIngot*2;Rope*3;Cooked_Potato*2
+prop bllocker loot.refill=0
+prop bllocker if.open=has|story:bl_key|1
+prop bllocker else.open=message||The locker is padlocked. The tag says the key is kept "at the bottom, where the water keeps it safe".
+note blsumnote Weather log | BRINE HILL WEATHER LOG\n\nWind north-east, sea rising. Third reading this week the gauge went under.\nThe pump house key is down the cold well - the lab never trusted us with it.
+note blbldnote Pump keeper's slate | PUMP KEEPER\n\nThe well pumps brine to the tower's drives. When the sea came in, the well became the sea.\nThe key is in the chest at the bottom. Air on the first floor.
+note blledge Gauge reader's cache | A cache on a ledge of Brine Hill, where the gauge reader sheltered.
+loot blledge Rope*3;Bolt*2;Feather*3
+prop blledge loot.refill=0
+note blcave2chest Brine sampler's chest | A brine sampler's chest at the back of the west rock.
+loot blcave2chest CopperOre*3;Rope*2;Battery*1
+prop blcave2chest loot.refill=0
+prop blsummit zone.id=bl_summit
+prop blsummit zone.radius=2.5
+prop blsummit zone.message=The top of Brine Hill. The whole island lies below.
+
 quest title=The Lab Tower
 quest intro=The road ends at a leaning tower. Go in at the waterline.
 step reach|lobby|1|Go into the lobby at the waterline
@@ -233,6 +289,9 @@ step reach|flooded_lab|1|Dive down the hatch shaft to the flooded lab's air pock
 step read|Data drive 3|1|Read data drives 2 and 3 on the flooded floors
 step blueprint|Blueprint_Pipe_Fuel|1|Find the fuel pipe plans in the flooded pipe store
 step blueprint|Blueprint_BiofuelExtractor|1|Get past the rats in the boiler house: biofuel extractor plans
+step collect|story:bl_key|1|Dive into the drowned building and take the key from the chest at the bottom
+step reach|bl_summit|1|Climb the mountain to the tower on its top
+step open|Weather mast locker|1|Open the summit locker with the key from the drowned building
 quest done=Biome Seven's beacon calls from the shelf. The Receiver finds it on band 600.
 quest reward=Nail*10;Scrap*4
 

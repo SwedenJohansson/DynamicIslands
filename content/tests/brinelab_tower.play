@@ -47,4 +47,14 @@ open Lab stores
 wait 3
 open Boiler room locker
 wait 3
+expect step 15
+air bl_dair
+open Pump house chest
+wait 3
+expect story bl_key 1
+expect step 16
+zone bl_summit
+expect step 17
+open Weather mast locker
+wait 3
 expect done

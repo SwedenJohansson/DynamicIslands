@@ -1,4 +1,4 @@
-# Play test of the plan 'The Sunken Kingdom' (CIPlay plan_sunken_kingdom, in a test world 'CI ...'): no Raft story -
+﻿# Play test of the plan 'The Sunken Kingdom' (CIPlay plan_sunken_kingdom, in a test world 'CI ...'): no Raft story -
 # each island's WHEN brings the next (a quest, a signal, a zone, a rule, a step); every stop is tuned to and played to
 # its end with its own test, except that the Spire is played to RESTORE and the Hollow then checks the RESTORE answer;
 # then the shuttle wreck, sailed to (km 4).
@@ -43,6 +43,10 @@ zone arena
 kill Angler fish
 wait 3
 expect story stalkerhurt 1
+use hfl1
+use hfl2
+use hfl3
+expect story sh_flood 3
 zone alcove_2
 air alcove_2
 expect story stalker 1
@@ -55,6 +59,22 @@ expect hidden plug
 read What the Ringwave means (part 1)
 zone alcove_4
 read The last word
+zone sh_ridge
+zone sh_cave
+read Watchers' post log
+read Boat's last log
+zone sh_deep
+air sh_dair
+open Warden house chest
+wait 3
+expect story sh_key 1
+read Warden house roll
+open Crown vault
+wait 3
+zone sh_summit
+read Warden's last card
+open Lip rock locker
+wait 3
 zone surface_line
 expect done
 # the shuttle rule is km:4 (ahead:450): sail on first, as in plan_gravity_sea

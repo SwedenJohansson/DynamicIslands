@@ -19,7 +19,7 @@ plan rule thalassa | island:Thalassa Mooring | quest:biome | receiver:900 | The 
 plan rule shelf | island:Lumen Shelf | zone:thalassa:bell | receiver:600 | At the bell's foot the Receiver hums: 600 again, and lights along a shelf edge. | Lumen Shelf | after:thalassa | quest
 plan rule caisson | island:Caisson Yard | quest:shelf | receiver:1000:needs=engine | On 1000, past the shelf edge: the Caisson Yard's crane horn. A long sail - bring an engine. | Caisson Yard | after:shelf | quest
 plan rule hadal | island:Hadal Commons | rule:caisson | receiver:800 | The trench chart gives it: 800, Hadal Commons, 45 m down. A few warm windows. | Hadal Commons | after:caisson | zone:doors
-plan rule sealkeeper | island:Sealkeeper Spire | quest:hadal | receiver:1200 | On 1200, through a storm: the Sealkeeper Spire, the Network's switchboard. | Sealkeeper Spire | after:hadal | step:28
+plan rule sealkeeper | island:Sealkeeper Spire | quest:hadal | receiver:1200 | On 1200, through a storm: the Sealkeeper Spire, the Network's switchboard. | Sealkeeper Spire | after:hadal | step:34
 plan rule hollow | island:The Stalker's Hollow | signal:sealkeeper:descend | receiver:500 | The descend lever answers on 500: under the trench lip, the Hollow lights up. | The Stalker's Hollow | after:sealkeeper | quest
 plan rule shuttle | island:Shuttlewreck Reef | km:4 | ahead:450 | Ahead, a buoy over a reef - and under it the long shape of a shuttle with windows down its sides. | Shuttlewreck Reef
 plan credits The Sunken Kingdom | Custom Islands

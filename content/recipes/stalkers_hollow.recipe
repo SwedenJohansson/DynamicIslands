@@ -3,7 +3,7 @@
 # the Network's last lamps on posts, and in the middle a seal valve on a stone plinth. Across the arena the Network gate
 # under the Ringwave - shut. The Abyssal Stalker hunts here: a huge dark angler (size 3), two phases, calling smaller
 # anglers when hurt. What the Spire's choice did shows at the valve: RESTORE lights the alcoves teal and opens the gate;
-# SEAL drops a stone plug over it. Quest "The Deep" (16 steps).
+# SEAL drops a stone plug over it. Quest "The Deep" (23 steps).
 #
 # Points (metres over the arena floor; the surface at 40): the arena at 0, r 16 round 0 0; the lip (a terrace) at 8
 # round -22 0 with the warden's post and the chain up to the buoy (an air deck at 24); the alcoves (3 x 3 m, doors to
@@ -159,6 +159,44 @@ place Loot_Chest gatecache at 17.8 15.8 ground sit yaw=225
 place Loot_Chest sealcache at -14.5 9 ground sit yaw=110
 place Zone_Trigger shtrenchdark at 62 -61 ground y=1
 
+# --- DEEP 1-HOUR (10-24): the lip rock (42.5 m from the floor, a beacon at the surface) and the warden house in the south-west pit with the crown vault; three floodlights against the Stalker
+# the rock that breaks the surface (42.5 m up from the floor), a beacon tower on its dry top
+call sk_seamount x=44 z=80 top=42.5 r=24
+call sk_pit x=-50 z=-74 h0=-6
+call sk_cave x=86 z=-16 h=2 yaw=0 al=shcave2 chest=shcave2chest
+call sk_reef x=65.6 z=80 r=6 seed=24910
+call sk_reef x=27.2 z=94.4 r=6 seed=24920
+call sk_reef x=-40 z=-68 r=5 seed=24930
+
+# the summit: the lip rock - the tower (ladder inside), the locker, the note, the zone
+call ladtower x=44 z=80 h0=42.5 lv=3 a=shtower
+place Loot_ChestSmall shlocker at 43.25 80.75 h=49.98 sit yaw=180
+place Note_Paper shsumnote at 43.25 79.25 h=50.08 drop yaw=20
+place Zone_Trigger shsummit at 44 80 h=50.98
+place Loot_ChestSmall shledge at 30.8 80 ground sit yaw=40
+place SmallRock_02 - at 49 82 ground sit scale=0.5
+place SmallRock_02 - at 49 82 ground y=0.6 sit scale=0.32 yaw=40
+call treasure x=46.5 z=82 r=3 n=1 seed=24911
+prop treasure24911 treasure.loot=TitaniumOre*3;CopperOre*2
+call treasure x=69.29 z=-12.89 r=5 n=1 seed=24912
+prop treasure24912 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
+call sk_dark x=86 z=-14 h=1 r=7 al=shcave2dark
+
+# the drowned building: the warden house, its ground floor 46 m down; the deep chest at the bottom, air on storey 1
+call sk_drowned x=-50 z=-74 h0=-6 n=3 w=RT_WallWindowBroken a=shbld cap=0 cal=shcap
+place Loot_Chest shdeep at -51.8 -76.5 h=-6 sit yaw=0
+place Placeable_Table_Basic - at -51.5 -73 h=-3 sit yaw=0
+place Note_Paper shbldnote at -51.5 -73 h=-1.7 drop yaw=10
+call airpocketat x=-50.5 z=-76 h=-3 id=sh_dair al=shdair bub=shdbub r=2.2 msg="Air trapped under the stairs of the drowned building. Breathe."
+call sk_zone x=-50 z=-85 al=shdeepzone id=sh_deep r=4 msg="The pit floor: the drowned building stands below you."
+
+# M23 the Stalker hates light: three floodlights round the arena, each a hit on the Stalker (34%); boss.shield = in its
+# second phase only they hurt it. The crown vault on the warden house's second floor wants nine crest shards
+place RT_Floodlight hfl1 at 8 -11 ground sit yaw=330
+place RT_Floodlight hfl2 at -9 -9 ground sit yaw=45
+place RT_Floodlight hfl3 at -15 -3 ground sit yaw=80
+place Loot_ChestLarge shcrown at -48.8 -77 h=0 sit yaw=0
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # the generator's rocks that floated over the slope, and walls left wholly under the ground (ground check, 2026-10-23)
 clear at 15.31 6.03 r=1.5 only=SmallBoulder
@@ -243,6 +281,48 @@ loot sealcache TitaniumIngot*3;Battery*2;CopperIngot*2
 prop sealcache loot.refill=0
 prop gate if.use=signal|hollowgate
 prop gate else.use=message||Barred from inside. The seal valve opens it - if the Spire chose RESTORE.
+# --- DEEP 1-HOUR (10-24): story items, notes and checks
+story sh_key|Warden house key|Hinge|The warden house key, from the chest at the bottom of the drowned house.
+story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
+note shdeep Warden house chest | The warden house chest: the key to the lip rock locker and a crest shard.
+loot shdeep story:sh_key*1;story:sk_crest*1;TitaniumOre*2;Bolt*3;OxygenBottle*1
+prop shdeep loot.refill=0
+note shlocker Lip rock locker | The wardens' locker on the lip rock, above the water.
+loot shlocker TitaniumIngot*2;MetalIngot*2;Battery*1;Cooked_Potato*2
+prop shlocker loot.refill=0
+prop shlocker if.open=has|story:sh_key|1
+prop shlocker else.open=message||The locker is padlocked. The tag says the key is kept "at the bottom, where the water keeps it safe".
+note shsumnote Warden's last card | THE LIP ROCK\n\nWe climbed up here to breathe between watches.\nThe crown vault in our house wants nine crest shards - one from every drowned building of the kingdom.
+note shbldnote Warden house roll | WARDEN HOUSE\n\nThe Stalker hates light. Three floodlights stand round its hollow; turn them on it.\nThe crown vault upstairs opens for nine crest shards. The key to our locker is in the chest at the bottom.
+note shledge Watcher's cache | A watcher's cache on the lip rock's shelf.
+loot shledge Rope*3;Bolt*2;Feather*3
+prop shledge loot.refill=0
+note shcave2chest Warden's spare chest | A warden's spare chest in the east rock.
+loot shcave2chest CopperOre*3;Rope*2;Battery*1
+prop shcave2chest loot.refill=0
+prop shsummit zone.id=sh_summit
+prop shsummit zone.radius=2.5
+prop shsummit zone.message=Out of the water on the lip rock. Somewhere far below, the Hollow.
+story sh_flood|Floodlight on the Stalker|Placeable_Lantern_Metal|A floodlight turned on the Abyssal Stalker.
+prop stalker boss.shield=1
+prop hfl1 obj.name=hfl1
+prop hfl1 beh.use=Turn the floodlight on the Stalker
+prop hfl1 if.use=!signal|hfl1
+prop hfl1 on.use=signal||hfl1\nhit|stalker|34\ngive||story:sh_flood*1\nmessage||The floodlight blazes into the hollow - the Stalker writhes away from it.
+prop hfl2 obj.name=hfl2
+prop hfl2 beh.use=Turn the floodlight on the Stalker
+prop hfl2 if.use=!signal|hfl2
+prop hfl2 on.use=signal||hfl2\nhit|stalker|34\ngive||story:sh_flood*1\nmessage||A second light - the Stalker thrashes in the glare.
+prop hfl3 obj.name=hfl3
+prop hfl3 beh.use=Turn the floodlight on the Stalker
+prop hfl3 if.use=!signal|hfl3
+prop hfl3 on.use=signal||hfl3\nhit|stalker|34\ngive||story:sh_flood*1\nmessage||The third light. The hollow is white as day.
+note shcrown Crown vault | The crown vault of the Sunken Kingdom, on the warden house's second floor: nine shards of the crest open it.
+loot shcrown TitaniumIngot*4;MetalIngot*4;CircuitBoard*2;Battery*2
+prop shcrown loot.refill=0
+prop shcrown if.open=has|story:sk_crest|9
+prop shcrown else.open=message||Nine sockets in the vault's lid, shaped like crest shards. Every drowned building of the kingdom kept one.
+
 quest title=The Deep
 quest intro=Band 500: the Hollow under the trench lip. Go down the chain to the lip.
 step reach|lip|1|Go down the chain to the trench lip
@@ -260,6 +340,13 @@ step reach|sh_ridge|1|Swim to the lip ridge in the north-west
 step reach|sh_cave|1|Find the Stalker's cave in the east
 step read|Watchers' post log|1|Read the log at the watchers' post in the west
 step read|Boat's last log|1|Read the last log at the sunk boat in the south
+step reach|sh_deep|1|Dive to the floor of the warden house pit in the south-west
+step collect|story:sh_key|1|Dive into the drowned building and take the key from the chest at the bottom
+step read|Warden house roll|1|Read the roll in the drowned warden house
+step reach|sh_summit|1|Climb the lip rock up out of the water in the north-east
+step read|Warden's last card|1|Read the note on the summit
+step open|Lip rock locker|1|Open the summit locker with the key from the drowned building
+step collect|story:sh_flood|3|Turn the three floodlights round the hollow on the Stalker
 step reach|surface_line|1|Climb the chain back to the surface
 quest done=The Sunken Kingdom is decided. The Receiver goes quiet on every band but one.
 quest reward=TitaniumOre*3;Battery*2;MetalIngot*4

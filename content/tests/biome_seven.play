@@ -53,4 +53,14 @@ zone surface_buoy
 air buoy_air
 open Gantry box
 wait 3
+expect step 14
+air b7_dair
+open Seed store chest
+wait 3
+expect story b7_key 1
+expect step 15
+zone b7_summit
+expect step 16
+open Garden beacon locker
+wait 3
 expect done

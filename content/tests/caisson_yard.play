@@ -28,4 +28,22 @@ expect step 9
 read Crane driver's report
 expect step 10
 read Trench chart
+expect step 11
+open Crane key box
+wait 3
+expect story cy_cranekey 1
+expect step 12
+use cylever
+expect story cy_drop 1
+expect hidden cycap
+expect step 13
+air cy_dair
+open Yard store chest
+wait 3
+expect story cy_key 1
+expect step 14
+zone cy_summit
+expect step 15
+open Crane hill locker
+wait 3
 expect done

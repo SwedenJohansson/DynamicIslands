@@ -4,7 +4,7 @@
 # tree, pineapple and berries, the gardener's rota, the control desk, the seed vault and a lab goat in a cage. The
 # airlock is a short block tunnel on the north side with a hatch in its roof. Outside: a big puffer, stingrays at the
 # outer vent and its shed, three reefs, glowing water, and the marker buoy on the surface. Quest "The Glass Dome"
-# (14 steps): the airlock, its hatch, the rota, three melon seed packets, the engine control plans, 2 stingrays, the
+# (17 steps): the airlock, its hatch, the rota, three melon seed packets, the engine control plans, 2 stingrays, the
 # metal detector plans, the firework plans, the sprinkler crank (the dry beds give way to full ones), the zipline plans
 # on the maintenance gantry on the dome's cap.
 #
@@ -170,6 +170,37 @@ call vinecache x=60 z=-58 r=8 seed=10471 chest=b7vinechest vines=b7vines items=R
 # --- Unique layer (10-24): the airlock garden's outer sluice: a crank on a post at the shed brings up the bed box
 call crankcache x=1 z=51 yaw=270 alias=sluicecrank sig=sluice chest=bedbox cx=-11 cz=52 cyaw=0 items=Seed_Watermelon*2;Seed_Pineapple*2;Dirt*2 title="Bed box"
 
+# --- DEEP 1-HOUR (10-24): the garden rock breaking the surface (20.5 m from the floor) and the drowned seed store in the west pit
+# the rock that breaks the surface (20.5 m up from the floor), a beacon tower on its dry top
+call sk_seamount x=-24 z=-66 top=20.5 r=20
+call sk_pit x=-66 z=-30 h0=-8
+call sk_cave x=-12 z=72 h=2 yaw=180 al=b7cave2 chest=b7cave2chest
+call sk_reef x=-6 z=-66 r=6 seed=24310
+call sk_reef x=-38 z=-54 r=6 seed=24320
+call sk_reef x=-56 z=-24 r=5 seed=24330
+
+# the summit: the garden rock - the tower (ladder inside), the locker, the note, the zone
+call ladtower x=-24 z=-66 h0=20.5 lv=3 a=b7tower
+place Loot_ChestSmall b7locker at -24.75 -65.25 h=27.97 sit yaw=180
+place Note_Paper b7sumnote at -24.75 -66.75 h=28.07 drop yaw=20
+place Zone_Trigger b7summit at -24 -66 h=28.97
+place Loot_ChestSmall b7ledge at -35 -66 ground sit yaw=40
+place SmallRock_02 - at -19 -64 ground sit scale=0.5
+place SmallRock_02 - at -19 -64 ground y=0.6 sit scale=0.32 yaw=40
+call treasure x=-21.5 z=-64 r=3 n=1 seed=24311
+prop treasure24311 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+call treasure x=-9.21 z=55.23 r=5 n=1 seed=24312
+prop treasure24312 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
+call sk_dark x=-12 z=70 h=1 r=7 al=b7cave2dark
+
+# the drowned building: the seed store, its ground floor 26 m down; the deep chest at the bottom, air on storey 1
+call sk_drowned x=-66 z=-30 h0=-8 n=3 w=RT_WallWindowBroken a=b7bld cap=0 cal=b7cap
+place Loot_Chest b7deep at -67.8 -32.5 h=-8 sit yaw=0
+place Placeable_Table_Basic - at -67.5 -29 h=-5 sit yaw=0
+place Note_Paper b7bldnote at -67.5 -29 h=-3.7 drop yaw=10
+call airpocketat x=-66.5 z=-32 h=-5 id=b7_dair al=b7dair bub=b7dbub r=2.2 msg="Air trapped under the stairs of the drowned building. Breathe."
+call sk_zone x=-66 z=-41 al=b7deepzone id=b7_deep r=4 msg="The pit floor: the drowned building stands below you."
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # the generator's rocks that floated over the slope, and walls left wholly under the ground (ground check, 2026-10-23)
 clear at -15.01 5.23 r=1.5 only=SmallBoulder
@@ -258,6 +289,29 @@ note b7_wreckcrate Visitor's van crate | A visitor's crate, still in the van: a 
 loot b7_wreckcrate Rope*2;Scrap*3;Plank*3;Battery*1
 prop b7_wreckcrate loot.refill=0
 
+# --- DEEP 1-HOUR (10-24): story items, notes and checks
+story b7_key|Seed store key|Hinge|The dome's seed store key, from the chest at the bottom of the drowned store.
+story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
+note b7deep Seed store chest | The seed store chest: the key to the beacon locker on the garden rock, and a crest shard.
+loot b7deep story:b7_key*1;story:sk_crest*1;Seed_Strawberry*2;Seed_Watermelon*2;OxygenBottle*1
+prop b7deep loot.refill=0
+note b7locker Garden beacon locker | The gardeners' locker on the rock above the water: dry seeds and tools.
+loot b7locker Seed_Flower_Red*2;Seed_Flower_Blue*2;MetalIngot*2;Rope*3
+prop b7locker loot.refill=0
+prop b7locker if.open=has|story:b7_key|1
+prop b7locker else.open=message||The locker is padlocked. The tag says the key is kept "at the bottom, where the water keeps it safe".
+note b7sumnote Gardener's marker | THE GARDEN ROCK\n\nWe planted the dome's first seeds on this rock, above the water.\nThe seed store down in the pit has the key to our locker.
+note b7bldnote Seed keeper's list | SEED STORE - STOCK\n\nStrawberry, watermelon, the red and blue flowers.\nThe key to the rock's locker is in the chest on the ground floor. Air on the first floor.
+note b7ledge Diver's shelf cache | A diver's cache on the rock's shelf, out of the current.
+loot b7ledge Rope*3;Bolt*2;Feather*3
+prop b7ledge loot.refill=0
+note b7cave2chest Grower's spare chest | A grower's chest deep in the north rock.
+loot b7cave2chest CopperOre*3;Rope*2;Battery*1
+prop b7cave2chest loot.refill=0
+prop b7summit zone.id=b7_summit
+prop b7summit zone.radius=2.5
+prop b7summit zone.message=Out of the water: the garden rock, a beacon on top. Biome Seven glints below.
+
 quest title=The Glass Dome
 quest intro=A beacon from the seabed garden. Dive to the dome's airlock.
 step reach|airlock|1|Dive to the airlock on the dome's north side
@@ -274,6 +328,9 @@ step reach|b7_cave|1|Find the overflow cave in the south
 step read|Gardener's shed book|1|Read the book in the gardener's shed in the north
 step read|Car park ticket|1|Read the ticket at the sunk car park in the north-west
 step blueprint|Blueprint_ZiplineBase|1|Swim up to the gantry on the dome's cap: zipline plans
+step collect|story:b7_key|1|Dive into the drowned building and take the key from the chest at the bottom
+step reach|b7_summit|1|Climb the mountain to the tower on its top
+step open|Garden beacon locker|1|Open the summit locker with the key from the drowned building
 quest done=The garden breathes again. The gardener's letters were for the surface station - the Receiver finds it on band 900.
 quest reward=Seed_Watermelon*3;Seed_Mango*1
 

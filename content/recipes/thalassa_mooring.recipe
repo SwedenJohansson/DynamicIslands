@@ -4,7 +4,7 @@
 # other way: it carries whoever stands on it 20 m straight down the shaft to a bell zone with air in it, and back up.
 # A water tower on legs (the water tank plans on its top), the pump pipes, the station office (the purifier plans), the
 # store shed (the large storage plans), the vending machine under a canopy on posts with four Tangaroa tokens round the
-# decks, palms and grass, two reefs, buried titanium for the metal detector. Quest "The Surface Station" (11 steps).
+# decks, palms and grass, two reefs, buried titanium for the metal detector. Quest "The Surface Station" (15 steps).
 #
 # Points (metres over the sea): the rock shelf at 2 (r 14 round 0 0); the deck x -3..7.5, z -4.5..4.5, its top at 4.5;
 # the shaft round 5.25 0 (r 3, its bottom at -22), the bell in the deck's hole (x 3..7.5, z -1.5..1.5) at 2.3, the bell
@@ -107,6 +107,7 @@ vending thalvend at 6 -10 ground
 place QuestItemPickup_Tangaroa_Token - at -1.5 -3.5 h=4.5
 place QuestItemPickup_Tangaroa_Token - at 6.5 3.5 h=4.5
 place QuestItemPickup_Tangaroa_Token - at -8 6.8 h=5.65
+clear at -11 -6 r=2.5 only=SmallBoulder
 place QuestItemPickup_Tangaroa_Token - at -11 -6 ground
 
 # --- Palms, grass, crops, animals, treasure, reefs, the sea -------------------------------------------------------------
@@ -176,6 +177,46 @@ call treasure x=70 z=-6 r=6 n=1 seed=10581
 call treasure x=48 z=58 r=6 n=1 seed=10582
 call treasure x=-26 z=-72 r=6 n=1 seed=10583
 
+# --- DEEP 1-HOUR (10-24): Mooring Hill (24 m) and the flooded salvage store in the north-west pit - its air comes down the salvage pump's hose
+# the mountain: a stepped path spirals up from its east foot (76.08 -36) to the summit tower
+call sk_peak x=54 z=-36 h=24 r=24
+call sk_pit x=-48 z=54 h0=-12
+call sk_cave x=-18 z=-42 h=3 yaw=0 al=thcave2 chest=thcave2chest
+call sk_plants x=54 z=-36 r=26.4 seed=24410
+call sk_reef x=-38 z=60 r=5 seed=24430
+
+# the summit: Mooring Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
+call ladtower x=54 z=-36 h0=24 lv=6 a=thtower
+place Loot_ChestSmall thlocker at 53.25 -35.25 h=38.73 sit yaw=180
+place Note_Paper thsumnote at 53.25 -36.75 h=38.84 drop yaw=20
+place Zone_Trigger thsummit at 54 -36 h=39.73
+place ZiplinePath_Landmark thzip at 54.75 -36.75 h=38.73 yaw=0
+zipto thzip 27 -18
+place Loot_ChestSmall thledge at 43.82 -25.82 ground sit yaw=40
+place SmallRock_02 - at 31.45 -38.77 ground sit scale=0.5
+place SmallRock_02 - at 31.45 -38.77 ground y=0.6 sit scale=0.32 yaw=40
+call treasure x=28.95 z=-38.77 r=3 n=1 seed=24411
+prop treasure24411 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+call treasure x=-11.3 z=-26.37 r=5 n=1 seed=24412
+prop treasure24412 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
+call sk_dark x=-18 z=-40 h=1 r=7 al=thcave2dark
+
+# the drowned building: the salvage store, its ground floor 12 m down; the deep chest at the bottom, air on storey 1
+call sk_drowned x=-48 z=54 h0=-12 n=3 w=RT_WallWindowBroken a=thbld cap=0 cal=thcap
+place Loot_Chest thdeep at -49.8 51.5 h=-12 sit yaw=0
+place Placeable_Table_Basic - at -49.5 55 h=-9 sit yaw=0
+place Note_Paper thbldnote at -49.5 55 h=-7.7 drop yaw=10
+call sk_zone x=-48 z=43 al=thdeepzone id=th_deep r=4 msg="The pit floor: the drowned building stands below you."
+
+# M21 the air line: the salvage pump on the rim fills the store with air down its hose (hidden air zones) and ends the
+# deep zone's breath drain over the pit
+place Pump thpump at -34 54 ground sit yaw=270
+place Zone_Trigger thair1 at -48.5 52 h=-7.4
+place Zone_Atmosphere thbub1 at -48.5 52 h=-7.8
+place Zone_Trigger thair2 at -47.5 53 h=-10.4
+place Zone_Atmosphere thbub2 at -47.5 53 h=-10.8
+place Zone_Trigger thwater at -48 54 h=-8
+
 # --- Settings, notes, behaviours, quest ---------------------------------------------------------------------------------
 # the generator's rocks that floated over the slope, and walls left wholly under the ground (ground check, 2026-10-23)
 clear at -29.82 -2.51 r=1.5 only=SmallBoulder
@@ -226,6 +267,61 @@ note th_wreckcrate Dinghy stores | The dinghy's stores crate: spare line, a lamp
 loot th_wreckcrate Rope*3;Plank*3;Scrap*2;Battery*1
 prop th_wreckcrate loot.refill=0
 
+# --- DEEP 1-HOUR (10-24): story items, notes and checks
+story th_key|Salvage store key|Hinge|The salvage crew's store key, from the chest at the bottom of their flooded store.
+story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
+note thdeep Salvage store chest | The salvage chest: the key to the hill locker and a crest shard.
+loot thdeep story:th_key*1;story:sk_crest*1;MetalIngot*2;Bolt*3;OxygenBottle*1
+prop thdeep loot.refill=0
+note thlocker Mooring hill locker | The harbour master's locker on the hill.
+loot thlocker MetalIngot*3;CopperIngot*2;Rope*3;Cooked_Potato*2
+prop thlocker loot.refill=0
+prop thlocker if.open=has|story:th_key|1
+prop thlocker else.open=message||The locker is padlocked. The tag says the key is kept "at the bottom, where the water keeps it safe".
+note thsumnote Harbour master's card | MOORING HILL\n\nFrom here I watched the bell go down every morning.\nThe salvage store is flooded, but the crew's pump still feeds it air if you work it.
+note thbldnote Salvage crew notice | SALVAGE CREW\n\nWork the pump on the rim before you go in: the hose brings air to the first floor and the ground floor.\nThe store key is in the chest at the bottom.
+note thledge Lookout's cache | A harbour lookout's cache on a ledge.
+loot thledge Rope*3;Bolt*2;Feather*3
+prop thledge loot.refill=0
+note thcave2chest Salvager's spare chest | A salvager's spare chest in the south rock.
+loot thcave2chest CopperOre*3;Rope*2;Battery*1
+prop thcave2chest loot.refill=0
+prop thsummit zone.id=th_summit
+prop thsummit zone.radius=2.5
+prop thsummit zone.message=The top of Mooring Hill. The whole island lies below.
+story th_pump|Air line running|Pump|The salvage pump is running: air down the hose into the flooded store.
+prop thpump obj.name=thpump
+prop thpump beh.use=Work the salvage pump
+prop thpump if.use=!signal|thpump
+prop thpump on.use=signal||thpump\nshow|thair1\nshow|thbub1\nshow|thair2\nshow|thbub2\nhide|thwater\ngive||story:th_pump*1\nmessage||The pump thumps into life. Down in the pit, bubbles stream out of the store's windows: air in there now.
+prop thair1 obj.name=thair1
+prop thair1 zone.id=th_air1
+prop thair1 zone.radius=2.2
+prop thair1 zone.repeat=1
+prop thair1 zone.air=1
+prop thair1 zone.message=The pump's air, trapped under the first floor ceiling. Breathe.
+prop thair1 beh.hidden=1
+prop thair2 obj.name=thair2
+prop thair2 zone.id=th_air2
+prop thair2 zone.radius=2.2
+prop thair2 zone.repeat=1
+prop thair2 zone.air=1
+prop thair2 zone.message=Air from the hose, by the ground floor chest. Breathe.
+prop thair2 beh.hidden=1
+prop thbub1 atmo.particles=bubbles
+prop thbub1 zone.radius=3
+prop thbub1 beh.hidden=1
+prop thbub2 atmo.particles=bubbles
+prop thbub2 zone.radius=3
+prop thbub2 beh.hidden=1
+prop thwater obj.name=thwater
+prop thwater zone.id=thwater
+prop thwater zone.radius=9
+prop thwater zone.hazard=deep
+prop thwater zone.damage=1
+prop thwater zone.safe=none
+prop thwater zone.hazardMsg=Cold, deep water: your breath goes fast down here. The salvage pump on the rim would help.
+
 quest title=The Surface Station
 quest intro=A surface station on the Receiver. Find its deck.
 step reach|deck|1|Climb onto the station's deck
@@ -239,6 +335,10 @@ step reach|th_cave|1|Find the bell crew's cave in the south-east
 step read|Dive log|1|Read the dive log in the dive master's hut in the north
 step read|Dinghy logbook|1|Read the logbook at the divers' dinghy in the south-west
 step reach|bell|1|Ride the diving bell 20 m down the shaft
+step collect|story:th_pump|1|Work the salvage pump on the pit rim to send air down to the flooded store
+step collect|story:th_key|1|Dive into the drowned building and take the key from the chest at the bottom
+step reach|th_summit|1|Climb the mountain to the tower on its top
+step open|Mooring hill locker|1|Open the summit locker with the key from the drowned building
 quest done=Down the shaft the shelf glows. The Receiver picks up the survey lamps on band 600.
 quest reward=Rope*4;Plank*6
 

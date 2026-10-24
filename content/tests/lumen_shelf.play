@@ -40,4 +40,27 @@ expect step 12
 read Caravan logbook
 expect step 13
 read Last survey note
+expect step 14
+use luswitch1
+expect story lu_gate 1
+expect step 15
+air lu_dair
+open Survey office chest
+wait 3
+expect story lu_key 1
+expect step 16
+zone lu_summit
+expect step 17
+open Survey beacon locker
+wait 3
+expect step 18
+open Lens box (first floor)
+wait 3
+open Lens box (second floor)
+wait 3
+open Lens box (top floor)
+wait 3
+use luflood2x
+expect story lu_lit 1
+expect shown luflood2
 expect done

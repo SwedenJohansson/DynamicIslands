@@ -10,3 +10,5 @@ picture sl10_shuttle_cabin 0 3.6 -5 0 3.2 5
 picture sl10_shuttlewreck_reef_ridge -26 16 21 -37 7 30
 picture sl10_shuttlewreck_reef_cave 27 12 9 40 3 13
 picture sl10_shuttlewreck_reef_wreck 3 12 -32 4 3 -46
+picture sl10_shuttlewreck_reef_deep_summit -20.9 25.97 -5.5 -38 7.5 -10
+picture sl10_shuttlewreck_reef_deep_building 35 3 -41 28 -4 -32

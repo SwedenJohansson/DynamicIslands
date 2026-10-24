@@ -3,7 +3,7 @@
 # light, a plaza with the diving bell's landing at the bottom, a dry cellar of cave mushrooms, and the great doors -
 # Utopia's main gate - shut, with the Ringwave over them. Air in four houses; two air platforms on the marker chain on
 # the way down (every 15 m). Anglers on the terraces. In the last air house, in a cage: Ines Marlowe, the last Network
-# diver. Quest "The City Below" (17 steps); done at the doors, with a camera moment on the Ringwave.
+# diver. Quest "The City Below" (22 steps); done at the doors, with a camera moment on the Ringwave.
 #
 # Points (metres over the island's own water line; in the world it all lies 45 m lower): the plaza at 0 (r 12 round
 # 0 0); terrace 1 at 4 round -16 0 (house 1 x -18..-13.5, z -2..1), terrace 2 at 8 round -14 16 (house 2 x -16..-11.5,
@@ -179,6 +179,49 @@ place TP_LaserControlPanel_lever doorlever at 55 51 ground y=1.25 scale=3 yaw=22
 place Loot_Chest strongroom at 0 -16.5 ground sit yaw=0
 place Zone_Trigger hctrenchdark at 62 -58 ground y=1
 
+# --- DEEP 1-HOUR (10-24): the trench spire (47.5 m from the floor - the highest climb under the sea) and the scavenger's hideout in the south-west pit behind a gauntlet of traps
+# the rock that breaks the surface (47.5 m up from the floor), a beacon tower on its dry top
+call sk_seamount x=-12 z=74 top=47.5 r=22
+call sk_pit x=-66 z=-48 h0=-6
+call sk_cave x=74 z=-22 h=2 yaw=0 al=hccave2 chest=hccave2chest
+call sk_reef x=7.8 z=74 r=6 seed=24710
+call sk_reef x=-27.4 z=87.2 r=6 seed=24720
+call sk_reef x=-56 z=-42 r=5 seed=24730
+
+# the summit: the trench spire - the tower (ladder inside), the locker, the note, the zone
+call ladtower x=-12 z=74 h0=47.5 lv=3 a=hctower
+place Loot_ChestSmall hclocker at -12.75 74.75 h=54.98 sit yaw=180
+place Note_Paper hcsumnote at -12.75 73.25 h=55.08 drop yaw=20
+place Zone_Trigger hcsummit at -12 74 h=55.98
+place Loot_ChestSmall hcledge at -24.1 74 ground sit yaw=40
+place SmallRock_02 - at -7 76 ground sit scale=0.5
+place SmallRock_02 - at -7 76 ground y=0.6 sit scale=0.32 yaw=40
+call treasure x=-9.5 z=76 r=3 n=1 seed=24711
+prop treasure24711 treasure.loot=TitaniumOre*3;CopperOre*2
+call treasure x=57.7 z=-17.16 r=5 n=1 seed=24712
+prop treasure24712 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
+call sk_dark x=74 z=-20 h=1 r=7 al=hccave2dark
+
+# the drowned building: the scavenger's hideout, its ground floor 51 m down; the deep chest at the bottom, air on storey 1
+call sk_drowned x=-66 z=-48 h0=-6 n=3 w=RT_WallWindowBroken a=hcbld cap=0 cal=hccap
+place Loot_Chest hcdeep at -67.8 -50.5 h=-6 sit yaw=0
+place Placeable_Table_Basic - at -67.5 -47 h=-3 sit yaw=0
+place Note_Paper hcbldnote at -67.5 -47 h=-1.7 drop yaw=10
+call airpocketat x=-66.5 z=-50 h=-3 id=hc_dair al=hcdair bub=hcdbub r=2.2 msg="Air trapped under the stairs of the drowned building. Breathe."
+call sk_zone x=-66 z=-59 al=hcdeepzone id=hc_deep r=4 msg="The pit floor: the drowned building stands below you."
+
+# M22 the thief's trap gauntlet: three tripwires on the way to the hideout, each a spike trap for a few seconds;
+# the scavenger's notes I-III before them say where to swim
+call sk_notebox x=-42.8 z=-31.6 yaw=40 al=hcnote1
+call sk_notebox x=-48.8 z=-36.6 yaw=40 al=hcnote2
+call sk_notebox x=-54.8 z=-40.6 yaw=40 al=hcnote3
+place Zone_Trigger hctrip1 at -46 -34 ground y=1.5
+place Zone_Trigger hctrip2 at -52 -39 ground y=1.5
+place Zone_Trigger hctrip3 at -58 -43 ground y=1.5
+place Zone_Trigger hcspike1 at -46 -34 ground y=1
+place Zone_Trigger hcspike2 at -52 -39 ground y=1
+place Zone_Trigger hcspike3 at -58 -43 ground y=1
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # the generator's rocks that floated over the slope, and walls left wholly under the ground (ground check, 2026-10-23)
 clear at 12.85 12.01 r=1.5 only=SmallRock
@@ -262,6 +305,71 @@ loot strongroom TitaniumIngot*2;OxygenBottle*1;CircuitBoard*1;Battery*2
 prop strongroom loot.refill=0
 prop greatdoors if.use=signal|hc_doors
 prop greatdoors else.use=message||Locked. The door warden worked them from a lever by his lodge, north-east.
+# --- DEEP 1-HOUR (10-24): story items, notes and checks
+story hc_key|Scavenger's key|Hinge|The scavenger's key, from the chest at the bottom of his hideout.
+story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
+note hcdeep Scavenger's strongbox | The scavenger's strongbox: the key to his locker on the spire, and a crest shard.
+loot hcdeep story:hc_key*1;story:sk_crest*1;TitaniumOre*2;Bolt*3;OxygenBottle*1
+prop hcdeep loot.refill=0
+note hclocker Spire locker | The scavenger's locker on top of the trench spire: what he took from the Commons.
+loot hclocker TitaniumIngot*2;MetalIngot*3;CopperIngot*2;Battery*1
+prop hclocker loot.refill=0
+prop hclocker if.open=has|story:hc_key|1
+prop hclocker else.open=message||The locker is padlocked. The tag says the key is kept "at the bottom, where the water keeps it safe".
+note hcsumnote Scavenger's boast | TOP OF THE SPIRE\n\nNobody climbs up here. Nobody gets past my wires either.\nIf you did both: the locker is yours. The key is down in my hideout.
+note hcbldnote Scavenger's inventory | WHAT I TOOK\n\nWindows, wire, the commons' brass. The key to my locker is in the strongbox downstairs.\nThe wires outside? They are for the wardens. Not for you, if you read my notes.
+note hcledge Scavenger's stash | One of the scavenger's stashes, on the spire's shelf.
+loot hcledge Rope*3;Bolt*2;Feather*3
+prop hcledge loot.refill=0
+note hccave2chest Warden's spare chest | A warden's spare chest in the east rock.
+loot hccave2chest CopperOre*3;Rope*2;Battery*1
+prop hccave2chest loot.refill=0
+prop hcsummit zone.id=hc_summit
+prop hcsummit zone.radius=2.5
+prop hcsummit zone.message=Out of the water at the top of the trench spire. 47 m of rock below you.
+note hcnote1 Scavenger's note I | NOTE I\n\nThe first wire is low. Swim high over the flat stones.
+note hcnote2 Scavenger's note II | NOTE II\n\nThe second wire is across the gap. Go round by the left.
+note hcnote3 Scavenger's note III | NOTE III\n\nThe last one is at the door. Wait for the spikes to drop, then go.
+prop hctrip1 obj.name=hctrip1
+prop hctrip1 zone.id=hc_trip1
+prop hctrip1 zone.radius=2
+prop hctrip1 zone.repeat=1
+prop hctrip1 on.enter=show|hcspike1\nmessage||A wire snaps under you - spikes shoot up out of the flat stones!\nwait|5\nhide|hcspike1\nmessage||The spikes sink back into the stones.
+prop hcspike1 obj.name=hcspike1
+prop hcspike1 zone.id=hc_spike1
+prop hcspike1 zone.radius=3
+prop hcspike1 zone.hazard=spikes
+prop hcspike1 zone.damage=3
+prop hcspike1 zone.safe=none
+prop hcspike1 zone.hazardMsg=Spikes! Get clear of the trap.
+prop hcspike1 beh.hidden=1
+prop hctrip2 obj.name=hctrip2
+prop hctrip2 zone.id=hc_trip2
+prop hctrip2 zone.radius=2
+prop hctrip2 zone.repeat=1
+prop hctrip2 on.enter=show|hcspike2\nmessage||A wire across the gap - spikes!\nwait|5\nhide|hcspike2\nmessage||The spikes slide back down.
+prop hcspike2 obj.name=hcspike2
+prop hcspike2 zone.id=hc_spike2
+prop hcspike2 zone.radius=3
+prop hcspike2 zone.hazard=spikes
+prop hcspike2 zone.damage=3
+prop hcspike2 zone.safe=none
+prop hcspike2 zone.hazardMsg=Spikes! Get clear of the trap.
+prop hcspike2 beh.hidden=1
+prop hctrip3 obj.name=hctrip3
+prop hctrip3 zone.id=hc_trip3
+prop hctrip3 zone.radius=2
+prop hctrip3 zone.repeat=1
+prop hctrip3 on.enter=show|hcspike3\nmessage||The door wire - spikes all round the doorway!\nwait|5\nhide|hcspike3\nmessage||The spikes drop. The door is clear.
+prop hcspike3 obj.name=hcspike3
+prop hcspike3 zone.id=hc_spike3
+prop hcspike3 zone.radius=3
+prop hcspike3 zone.hazard=spikes
+prop hcspike3 zone.damage=3
+prop hcspike3 zone.safe=none
+prop hcspike3 zone.hazardMsg=Spikes! Get clear of the trap.
+prop hcspike3 beh.hidden=1
+
 quest title=The City Below
 quest intro=Lit windows on the Receiver, 45 m down. Dive to the Commons' plaza.
 step reach|plaza|1|Dive to the Commons' plaza
@@ -281,6 +389,11 @@ step reach|hc_cave|1|Find the quarry cave in the west
 step read|Warden's lodge note|1|Read the note in the warden's lodge in the north-east
 step read|Wagon driver's chit|1|Read the chit at the mine wagons in the north-west
 step reach|doors|1|Go to the great doors
+step read|Scavenger's note I|1|Read the scavenger's first note on the way to his hideout
+step read|Scavenger's note III|1|Get past his traps and read the last note at the hideout
+step collect|story:hc_key|1|Dive into the drowned building and take the key from the chest at the bottom
+step reach|hc_summit|1|Climb the mountain to the tower on its top
+step open|Spire locker|1|Open the summit locker with the key from the drowned building
 quest done=The doors stay shut - for now. The Spire up on the trench decides; the Receiver finds it on band 1200.
 quest reward=TitaniumOre*2;Battery*1
 

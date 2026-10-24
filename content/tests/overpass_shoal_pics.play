@@ -14,3 +14,5 @@ picture sl10_overpass_shoal_ridge 2 18 55 2 9 69
 picture sl10_overpass_shoal_cave 18 13 -35 24 4 -47
 picture sl10_overpass_shoal_ruin 55 13 42 66 4 50
 picture sl10_overpass_shoal_wreck -53 13 -19 -66 4 -24
+picture sl10_overpass_shoal_deep_summit 33 42.73 -23.1 60 13.2 -42
+picture sl10_overpass_shoal_deep_building -53 2 33 -60 -8 42
