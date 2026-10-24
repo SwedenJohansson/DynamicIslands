@@ -100,7 +100,7 @@ place RT_Pillar - at -11.6 -9.6 ground sy=0.9 rot=8,45,0
 place RT_Pillar - at -8.4 -9.6 ground sy=0.9 rot=8,-45,0
 place RT_Pillar - at -11.6 -6.4 ground sy=0.9 rot=-8,-45,0
 place RT_Pillar - at -8.4 -6.4 ground sy=0.9 rot=-8,45,0
-place VP_HammerDrill - at -10 -8 ground y=4.3
+place VP_HammerDrill drillhead at -10 -8 ground y=4.3
 place Loot_ChestLarge drillrig at -12 -10.5 ground sit yaw=200
 scatter TP_SnowDrift02 3 at 0 -4 r=15 seed=12811 free=3
 scatter TP_SnowDrift03 3 at 0 -4 r=15 seed=12812 free=3
@@ -111,6 +111,8 @@ place Placeable_Lantern_Metal - at 1.2 14 ground drop
 
 # --- Bears, the titanium treasure, the sea ------------------------------------------------------------------------------
 place Creature_PolarBear bears at 20 6 ground
+# REDO 10-24: the drill's three bits were split up - the depot, the bears' snowfield (their torn sled), the old camp
+place Loot_ChestSmall bearcache at 23 9 ground sit yaw=250
 call treasure x=-12 z=0 r=12 n=1 seed=12052
 scatter "Pickup_Landmark_Copper 2" 3 at 12 12 r=4 seed=12825 free=1
 scatter VP_CoralDigitate01 4 at 51 -30.45 r=4 seed=12821 wet free=1
@@ -125,6 +127,7 @@ pop
 place campfire_1 - at -23.6 27.2 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -20.6 29.2 ground sit yaw=237
 place "Box Small" - at -25.6 29.7 ground sit
+place Loot_ChestSmall campbits at -21.8 25.4 ground sit yaw=140
 place Note_Paper dnote at -25.6 29.7 ground y=0.7 drop yaw=20
 note dnote Traveller's note | Seventh day out of the Coldhold. Fingers bad.\nThe signal from the stack keeps repeating: COME HOME. Nobody there to send it.
 place Caravan_Blue_01 dvan at 39 0.7 ground yaw=357
@@ -144,6 +147,13 @@ prop dview zone.radius=7
 prop dview zone.repeat=never
 prop dview zone.message=The glacier's blue wall stands over the bay, and now and then a piece of it falls into the sea with a boom.
 
+# --- FILL 10-24 (RESIZE rework): the bigger island's whole area at Raft-like density - trees, bushes, rocks; free= keeps them
+#     off the quest's objects and paths
+scatter TP_PineTreeSnowy 22 at 0 0 r=85 seed=12840 free=5
+scatter "Pickup_Landmark_Tree_Pine" 10 at 0 0 r=85 seed=12841 free=5
+scatter CaravanIsland_SmallRock_1 24 at 0 0 r=85 seed=12842 free=3 ground y=-0.6
+scatter "Pickup_Landmark_BerryBush" 6 at 0 0 r=85 seed=12843 free=3
+
 # --- Settings, notes, behaviours, quest ----------------------------------------------------------------------------------
 info title=Glacier Mouth
 info author=Custom Islands
@@ -156,10 +166,27 @@ note depotstores Depot stores | The depot's stores: pine seeds for the greenhous
 note drillrig Drill rig chest | The drill rig's big chest: the titanium tools' plans - the only bits that bite the glacier.
 note leaderchest Leader's chest | The expedition leader's chest: the advanced backpack's plans, a map of the vault's entrance hall.
 note cavechest Cave mouth chest | A chest just inside the cave mouth: the electric zipline tool's plans - "for the crevasse in the ice hall" - and cave mushrooms picked off the cave floor.
-loot depotstores Seed_Pine*3;Rope*3;Raw_GenericMeat*2
+loot depotstores story:drillbit*1;Seed_Pine*3;Rope*3;Raw_GenericMeat*2
 prop depotstores loot.refill=0
 loot drillrig Blueprint_TitaniumTools*1;MetalIngot*2;Bolt*3
 prop drillrig loot.refill=0
+prop drillrig obj.name=drillrig
+prop drillrig beh.hidden=1
+story drillbit|A drill bit|Placeable_Lantern_Metal|A titanium-tipped bit for the expedition's drill rig.
+story drilled|The drill rig running|Placeable_Lantern_Metal|The drill rig bored into the glacier and freed its chest.
+note bearcache Torn sled | The bears dragged the expedition's sled out here: a drill bit in its crate, rations clawed open.
+loot bearcache story:drillbit*1;Leather*2;Raw_GenericMeat*1
+prop bearcache loot.refill=0
+note campbits Old camp crate | The first camp's crate, half buried: a drill bit wrapped in wool, and a note - "spare bit, in case".
+loot campbits story:drillbit*1;Wool*2;Bolt*2
+prop campbits loot.refill=0
+prop drillhead obj.name=drillhead
+prop drillhead beh.use=Fit the bits and start the drill
+prop drillhead if.use=take|story:drillbit|3
+prop drillhead on.use=give||story:drilled*1\nshow|drillrig\nmessage||The drill bites. Ice chips fly, the rig shudders - and its frozen chest breaks loose at its feet.
+prop drillhead else.use=message||The drill rig has no bits. The orders say: three bits - one in the depot stores, one on the sled, one at the old camp.
+prop dhatchchest if.open=wears|HeadLight*
+prop dhatchchest else.open=message||An ice cellar under the hatch, pitch black - wear a headlight.
 loot leaderchest Blueprint_BackpackAdvanced*1;Leather*3;Wool*2
 prop leaderchest loot.refill=0
 loot cavechest Blueprint_ZiplineToolElectric*1;CaveMushroom*4;Battery*1
@@ -183,6 +210,8 @@ quest intro=A wall of ice, a depot at its foot. Climb up to the depot.
 step reach|depot|1|Climb up to the expedition depot
 step read|Expedition orders|1|Read the expedition orders
 step kill|Polar bear|2|Drive off the two polar bears
+step collect|story:drillbit|3|Find the drill rig's three bits (depot, the bears' sled, the old camp)
+step collect|story:drilled|1|Fit the bits and start the drill rig
 step blueprint|Blueprint_TitaniumTools|1|Take the titanium tools' plans from the drill rig
 step blueprint|Blueprint_BackpackAdvanced|1|Take the advanced backpack's plans from the leader's tent
 step read|Carving note|1|Go to the Ringwave on the ice wall and read the note under it

@@ -145,6 +145,9 @@ prop dwreckchest loot.refill=0
 call vinecache x=3.8 z=23.7 r=15 seed=11151 chest=dvinechest vines=dvines items=Rope*3;Nail*10;Leather*2
 call treasure x=6.1 z=38.5 r=15 n=1 seed=11152
 prop treasure11152 treasure.loot=CopperOre*2;Clay*3
+# REDO 10-24 TREASURE2: a second buried treasure on the far side for the detector + shovel
+call treasure x=-4.9 z=-30.8 r=12 n=1 seed=11202
+prop treasure11202 treasure.loot=TitaniumOre*1;MetalOre*2;TradeToken*2
 place Zone_Trigger dview at -5.2 26.5 ground
 prop dview zone.id=hollowtrunk_grove_view
 prop dview zone.radius=7

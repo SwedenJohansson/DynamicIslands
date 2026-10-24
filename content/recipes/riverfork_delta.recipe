@@ -114,7 +114,7 @@ scatter "Pickup_Landmark_Tree_Palm 4" 6 at 0 0 r=64 seed=11182 free=5
 scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=64 seed=11183 free=5
 scatter "Balboa_Bush_01 Variant" 30 at 0 0 r=64 seed=11184 free=2.5
 scatter "Balboa_Bush_03 Variant" 30 at 0 0 r=64 seed=11185 free=2.5
-scatter CaravanIsland_SmallRock_1 14 at 0 0 r=64 seed=11186 free=3
+scatter CaravanIsland_SmallRock_1 14 at 0 0 r=64 seed=11186 free=3 ground y=-0.6
 scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=64 seed=11187 free=3
 scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=64 seed=11188 free=2
 

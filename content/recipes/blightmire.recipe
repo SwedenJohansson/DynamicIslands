@@ -53,6 +53,11 @@ place Zone_Trigger hummockzone at 0 -49.6 ground
 place Zone_Atmosphere marshfog at 0 0 ground y=2
 
 # --- The three poisoned roots: a rotten log under purple growth, a fire hidden in each until it is burnt -------------
+# GAPS 10-24: fumes round each growth (a protective suit keeps them off: the blight suits at the camp)
+place Zone_Trigger fume1 at -46.5 0 ground y=1
+place Zone_Trigger fume2 at 12.4 34.1 ground y=1
+place Zone_Trigger fume3 at 52.7 -9.3 ground y=1
+place "Box Big" suitlocker at 2.6 -47.6 ground sit yaw=200
 place Log root1log at -46.5 0 ground sit yaw=30 scale=1.6 roll=28
 call blight x=-46.5 z=0 al=root1
 place campfire_1 fire1 at -46.5 0 ground sit
@@ -123,7 +128,7 @@ scatter "Pickup_Landmark_Tree_Palm 4" 8 at 0 0 r=74 seed=11192 free=5
 scatter "Pickup_Landmark_Tree_Mango" 5 at 0 0 r=74 seed=11193 free=5
 scatter "Balboa_Bush_01 Variant" 34 at 0 0 r=74 seed=11194 free=2.5
 scatter "Balboa_Bush_03 Variant" 34 at 0 0 r=74 seed=11195 free=2.5
-scatter CaravanIsland_SmallRock_1 14 at 0 0 r=74 seed=11196 free=3
+scatter CaravanIsland_SmallRock_1 14 at 0 0 r=74 seed=11196 free=3 ground y=-0.6
 scatter Bamboo_2 24 at 0 0 r=74 seed=11197 free=2
 scatter Tree_Stump 8 at 0 0 r=74 seed=11198 free=3
 
@@ -171,21 +176,23 @@ loot cellarchest TitaniumIngot*1;Seed_Pineapple*2;Seed_Mango*2;Seed_Flower_Red*2
 prop cellarchest loot.refill=0
 prop cellarchest obj.name=cellarchest
 prop cellarchest beh.hidden=1
+prop cellarchest if.open=wears|HeadLight*
+prop cellarchest else.open=message||Pitch black down there. You can hear glass clink, but you can't see a thing - wear a headlight.
 prop confession beh.hidden=1
 
 prop root1 obj.name=root1
 prop root1 beh.use=Set the growth alight
 prop root1 if.use=!signal|root1
-prop root1 on.use=signal||root1\ngive||story:burnt*1\nhide|root1\nshow|fire1\nmessage||The growth hisses, curls and burns down to the wood. The fog thins a little.
+prop root1 on.use=signal||root1\nhide|fume1\ngive||story:burnt*1\nhide|root1\nshow|fire1\nmessage||The growth hisses, curls and burns down to the wood. The fog thins a little.
 prop root2 obj.name=root2
 prop root2 beh.use=Set the growth alight
 prop root2 if.use=signal|root1\n!signal|root2
-prop root2 on.use=signal||root2\ngive||story:burnt*1\nhide|root2\nshow|fire2\nmessage||The second root burns. Somewhere out in the marsh, something squeals.
+prop root2 on.use=signal||root2\nhide|fume2\ngive||story:burnt*1\nhide|root2\nshow|fire2\nmessage||The second root burns. Somewhere out in the marsh, something squeals.
 prop root2 else.use=message||The growth only smoulders. The map says: west root first.
 prop root3 obj.name=root3
 prop root3 beh.use=Set the growth alight
 prop root3 if.use=signal|root2\n!signal|cleansed
-prop root3 on.use=signal||cleansed\ngive||story:burnt*1\nhide|root3\nshow|fire3\nshow|rootcache\nshow|confession\nmessage||The last root goes up with a roar. The fog lifts off the marsh - and the burnt root splits open over a chest.
+prop root3 on.use=signal||cleansed\nhide|fume3\ngive||story:burnt*1\nhide|root3\nshow|fire3\nshow|rootcache\nshow|confession\nmessage||The last root goes up with a roar. The fog lifts off the marsh - and the burnt root splits open over a chest.
 prop root3 else.use=message||The growth only smoulders. The map says: west, then north, then east.
 prop burrvines on.use=hide|\nshow|burrchest\nmessage||Burr butts through the vines - he found it: a Seedkeeper's stash.
 
@@ -202,6 +209,21 @@ loot rootcache Blueprint_AnchorStationaryAdvanced*1;MetalIngot*2
 prop rootcache loot.refill=0
 
 prop hummockzone zone.id=hummock
+prop fume1 obj.name=fume1
+prop fume1 zone.radius=6
+prop fume1 zone.hazard=miasma
+prop fume1 zone.hazardMsg=The growth's fumes burn your throat - a blight suit keeps them off.
+prop fume2 obj.name=fume2
+prop fume2 zone.radius=6
+prop fume2 zone.hazard=miasma
+prop fume2 zone.hazardMsg=The growth's fumes burn your throat - a blight suit keeps them off.
+prop fume3 obj.name=fume3
+prop fume3 zone.radius=6
+prop fume3 zone.hazard=miasma
+prop fume3 zone.hazardMsg=The growth's fumes burn your throat - a blight suit keeps them off.
+prop suitlocker obj.name=suitlocker
+prop suitlocker beh.use=Put on a Seedkeeper blight suit
+prop suitlocker on.use=suit||180\nmessage||An oilcloth blight suit and a mask - three minutes of clean air in the fumes.
 prop hummockzone zone.radius=6
 prop hummockzone zone.message=The hummock. Dry ground, a cold smelter camp, a map nailed to a post.
 

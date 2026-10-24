@@ -119,6 +119,9 @@ scatter Pickup_Landmark_Tree_Mango 3 at -30 -30 r=10 seed=11103 free=3
 scatter "Pickup_Landmark_Tree_Palm 1" 2 at 20 -60 r=10 seed=11104 free=3
 call treasure x=18 z=10 r=14 n=1 seed=11053
 prop treasure11053 treasure.loot=TitaniumOre*3
+# REDO 10-24 TREASURE2: a second buried treasure on the far side for the detector + shovel
+call treasure x=-14.4 z=-8.0 r=12 n=1 seed=11103
+prop treasure11103 treasure.loot=TitaniumOre*1;MetalOre*2;TradeToken*2
 call shallows x=0 z=0 r=102 deep=5 n=2 seed=11105
 
 # --- REDO 10-24 (optional): the dark root store under a hatch (headlight), a vine-hidden cache (machete), the river
@@ -139,7 +142,7 @@ scatter "Pickup_Landmark_Tree_Palm 4" 6 at 0 0 r=80 seed=11214 free=5
 scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=80 seed=11215 free=5
 scatter "Balboa_Bush_01 Variant" 30 at 0 0 r=80 seed=11216 free=2.5
 scatter "Balboa_Bush_03 Variant" 30 at 0 0 r=80 seed=11217 free=2.5
-scatter CaravanIsland_SmallRock_1 14 at 0 0 r=80 seed=11218 free=3
+scatter CaravanIsland_SmallRock_1 14 at 0 0 r=80 seed=11218 free=3 ground y=-0.6
 scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=80 seed=11219 free=3
 scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=80 seed=11220 free=2
 
@@ -221,6 +224,8 @@ loot rstchest TitaniumIngot*1;Seed_Flower_Blue*2;Seed_Watermelon*2;Bolt*3
 prop rstchest loot.refill=0
 prop rstchest obj.name=rstchest
 prop rstchest beh.hidden=1
+prop rstchest if.open=wears|HeadLight*
+prop rstchest else.open=message||Pitch black down there. You can hear seeds rattle in jars, but you can't see a thing - wear a headlight.
 prop rootstore loot.refill=0
 loot labsafe Seed_Mango*2;Seed_Pineapple*2;Seed_Watermelon*2;TitaniumOre*1
 prop labsafe loot.refill=0

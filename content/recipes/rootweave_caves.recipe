@@ -104,6 +104,8 @@ clear from 0 6 to 0 -34 r=8
 brush sand from 0 2 to 0 -34 r=7 s=10 frames=40
 place BalboaCave_Bear dencave at 1.2 -18.4 y=5.2 scale=1.15
 place Zone_Trigger denzone at 1 -4 y=1.5
+# GAPS 10-24: the den is pitch dark (a headlight - its plans are in the drowned crate)
+place Zone_Trigger dendark at 1 -18 y=1.5
 place Creature_MamaBear denbear at 1 -18 y=0.8
 prop denbear creature.count=1
 prop denbear creature.respawn=0
@@ -124,11 +126,19 @@ call shallows x=0 z=0 r=96 deep=5 n=2 seed=11076
 # --- REDO 10-24 secrets (optional): a buried survey case for the metal detector; a vine-hidden cache on the west slope;
 #     the survey team's beach camp and their wrecked boat
 call treasure x=34 z=-42 r=10 n=1 seed=11197
+# REDO 10-24 TREASURE2: a second buried treasure on the far side for the detector + shovel
+call treasure x=-27.2 z=33.6 r=12 n=1 seed=11247
+prop treasure11247 treasure.loot=TitaniumOre*1;MetalOre*2;TradeToken*2
 call vinecache x=-40 z=-34 r=10 seed=11198 chest=dvinechest vines=dvines items=Rope*3;CopperIngot*2;Leather*2
 place Balboa_DecorationPrefabBase_SimpleTent - at 9 -64 ground sit yaw=160
 place campfire_1 - at 6 -61 ground sit
 place RT_PlasticBoat - at -9 -70 ground sit yaw=40
 
+# REDO 10-24: four generated boulders left hanging over the cut cave terrain (ground check) are cleared
+clear at -18.4 1.1 r=2.5
+clear at 2.8 31 r=2.5
+clear at 35.3 45.6 r=2.5
+clear at 15.6 20.3 r=2.5
 # --- FILL 10-24 (RESIZE rework): the bigger island's whole area at Raft-like density - trees, bushes, rocks; free= keeps them
 #     off the quest's objects and paths
 scatter "Pickup_Landmark_Tree_Palm 1" 10 at 0 0 r=80 seed=11190 free=5
@@ -137,7 +147,7 @@ scatter "Pickup_Landmark_Tree_Palm 4" 6 at 0 0 r=80 seed=11192 free=5
 scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=80 seed=11193 free=5
 scatter "Balboa_Bush_01 Variant" 30 at 0 0 r=80 seed=11194 free=2.5
 scatter "Balboa_Bush_03 Variant" 30 at 0 0 r=80 seed=11195 free=2.5
-scatter CaravanIsland_SmallRock_1 14 at 0 0 r=80 seed=11196 free=3
+scatter CaravanIsland_SmallRock_1 14 at 0 0 r=80 seed=11196 free=3 ground y=-0.6
 scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=80 seed=11197 free=3
 scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=80 seed=11198 free=2
 
@@ -204,6 +214,10 @@ prop floodedzone zone.radius=4
 prop floodedzone zone.message=The Flooded Passage. Swim from air pocket to air pocket.
 prop denzone zone.id=den
 prop denzone zone.radius=4
+prop dendark obj.name=dendark
+prop dendark zone.radius=7
+prop dendark zone.hazard=dark
+prop dendark zone.hazardMsg=The den is pitch black. Something big breathes in there - wear a headlight.
 prop denzone zone.message=The Den. Something big breathes in the dark.
 
 quest title=The Living Labyrinth

@@ -131,6 +131,9 @@ call hatchcache x=38.5 z=-6.1 r=15 seed=12691 alias=dhatch chest=dhatchchest ite
 call vinecache x=-6.1 z=-38.5 r=15 seed=12693 chest=dvinechest vines=dvines items=Rope*3;Wool*2;Bolt*3
 call treasure x=-38.5 z=6.1 r=15 n=1 seed=12692
 prop treasure12692 treasure.loot=TitaniumOre*2;MetalOre*2
+# REDO 10-24 TREASURE2: a second buried treasure on the far side for the detector + shovel
+call treasure x=30.8 z=-4.9 r=12 n=1 seed=12742
+prop treasure12742 treasure.loot=TitaniumOre*1;MetalOre*2;TradeToken*2
 place Zone_Trigger dview at 33.4 20.1 ground y=1.5
 prop dview zone.id=iron_whale_decks_view
 prop dview zone.radius=7

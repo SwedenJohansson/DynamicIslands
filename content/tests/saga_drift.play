@@ -26,8 +26,20 @@ expect story chapelcode 1
 open Chapel strongbox
 wait 3
 expect step 8
+expect hidden anchorchest
+use anchorwinch
+expect story winchfree 0
+use bell1
+use bell2
+use bell3
+expect story bellrung 3
+expect step 9
+use anchorwinch
+expect story bellrung 0
+expect shown anchorchest
+expect step 10
 open Winch locker
 wait 3
-expect step 9
+expect step 11
 read Last sermon
 expect done

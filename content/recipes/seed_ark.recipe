@@ -39,6 +39,8 @@ call rt_storey a=arkwalls l2=RT_WallDoor1 r2=RT_WallDoor1
 place RT_Floor arkwalls at 0 4.5 y=3
 place Placeable_Table_Basic - at -3 2.6 y=0.1 sit yaw=0
 place Note_Book manifest at -3 2.6 y=0.95 drop yaw=20
+# REDO 10-24: the valve's three seals were stowed one in each of rooms 1-3
+place Loot_ChestSmall seal1 at -1.2 3.6 y=0.1 sit yaw=180
 place Placeable_Lantern_Metal - at -5.4 3.8 y=0.1 drop
 pop
 push at -3 0 h=4
@@ -46,12 +48,14 @@ call rt_storey a=arkwalls l2=RT_WallDoor1 r2=RT_WallDoor1
 place RT_Floor arkwalls at 0 4.5 y=3
 place Shelf_Empty_02 - at -3 3.9 y=0.1 sit yaw=180
 place Placeable_Lantern_Metal - at -0.6 -3.8 y=0.1 drop
+place Loot_ChestSmall seal2 at -4.6 -3.4 y=0.1 sit yaw=0
 pop
 push at 9 0 h=4
 call rt_storey a=arkwalls l2=RT_WallDoor1 r2=RT_WallDoor1
 place RT_Floor arkwalls at 0 4.5 y=3
 place TP_CabinetCharts01 - at -3 3.9 y=0.1 sit yaw=180
 place Note_Book ringwavefile at -3 3.2 y=1.4 drop yaw=0
+place Loot_ChestSmall seal3 at -1.4 -3.4 y=0.1 sit yaw=0
 place Placeable_Lantern_Metal - at -5.4 -3.8 y=0.1 drop
 pop
 push at 21 0 h=4
@@ -61,6 +65,9 @@ place RT_Pillar - at -4.5 2 y=0 sy=0.4
 place TP_Selene_DoorCrankWheel arkvalve at -4.5 2 y=1.25 yaw=90
 place Note_Paper closingnote at -4.6 -3.2 y=0.1 drop yaw=40
 place RT_CommRadio - at -1 3.4 y=0.1 sit yaw=180
+# REDO 10-24 (optional): the last rack's locker - the Coldhold's control code (2240) on its keypad
+place Loot_Chest lastrack at -1.2 -3.6 y=0.1 sit yaw=0
+place RT_PowerBox rackpad at -2.6 -4.75 y=1.2 yaw=180
 pop
 prop arkwalls tint.color=#dcebf5
 prop arkwalls tint.amount=0.5
@@ -137,6 +144,9 @@ call hatchcache x=36.9 z=-12.7 r=15 seed=13091 alias=dhatch chest=dhatchchest it
 call vinecache x=-12.7 z=-36.9 r=15 seed=13093 chest=dvinechest vines=dvines items=Rope*3;Wool*2;Bolt*3
 call treasure x=-36.9 z=12.7 r=15 n=1 seed=13092
 prop treasure13092 treasure.loot=TitaniumOre*2;MetalOre*2
+# REDO 10-24 TREASURE2: a second buried treasure on the far side for the detector + shovel
+call treasure x=29.5 z=-10.2 r=12 n=1 seed=13142
+prop treasure13142 treasure.loot=TitaniumOre*1;MetalOre*2;TradeToken*2
 place Zone_Trigger dview at -33.4 -20.1 ground y=1.5
 prop dview zone.id=seed_ark_view
 prop dview zone.radius=7
@@ -196,7 +206,30 @@ prop gatelever beh.use=Pull the ice gate's lever
 prop gatelever on.use=hide|gate\nmessage||The ice gate grinds aside. Forty breaths - swim!\nwait|40\nshow|gate
 prop arkvalve obj.name=arkvalve
 prop arkvalve beh.use=Turn the ark valve
-prop arkvalve if.use=!signal|arkvalve
+prop arkvalve if.use=!signal|arkvalve\ntake|story:arkseal|3
+prop arkvalve else.use=message||The valve's seal plate has three empty sockets. The manifest says: seals in rooms 1, 2 and 3.
+story arkseal|An ark seal|Placeable_Lantern_Metal|A brass seal for the ark valve's plate.
+story rackcode|The last rack's code|Placeable_Lantern_Metal|The Coldhold's control code opened the last rack.
+note seal1 Room 1 seal box | A box under the roof of pressure room 1: an ark seal in wax, and spare filters.
+loot seal1 story:arkseal*1;Plastic*3;Glass*2
+prop seal1 loot.refill=0
+note seal2 Room 2 seal box | A box under the roof of pressure room 2: an ark seal in wax, a dry torch.
+loot seal2 story:arkseal*1;Bolt*2;Rope*2
+prop seal2 loot.refill=0
+note seal3 Room 3 seal box | A box under the roof of pressure room 3: an ark seal in wax, the keeper's pencil.
+loot seal3 story:arkseal*1;CopperIngot*2;Scrap*2
+prop seal3 loot.refill=0
+note lastrack Last rack locker | Rack 96's locker: the keepers' own seeds and their pay.
+loot lastrack TradeToken*5;TitaniumIngot*1;Seed_Flower_Blue*2;Seed_Flower_Red*2
+prop lastrack loot.refill=0
+prop lastrack obj.name=lastrack
+prop lastrack if.open=signal|rackcode
+prop lastrack else.open=message||Locked. The keypad wants four digits - the same as the vault above, says a scratched note.
+prop rackpad obj.name=rackpad
+prop rackpad beh.use=Type the last rack's code
+prop rackpad lock.code=2240
+prop rackpad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The keypad beeps. The last rack's locker opens.\nsignal||rackcode\ngive||story:rackcode*1
+prop rackpad else.use=message||Four digits. The keepers used the control room's code for everything.
 prop arkvalve on.use=signal||arkvalve\ngive||story:arkvalve*1\nshow|racklights\nshow|closingnote\nmessage||The valve turns. Down every hall, the racks' lights come on, one after another.
 
 quest title=The Ark
@@ -209,6 +242,7 @@ step reach|room_2|1|Pull the ice gate's lever and get through to pressure room 2
 step reach|room_3|1|Swim on to pressure room 3
 step read|The Ringwave file|1|Read the Ringwave file
 step reach|room_4|1|Swim on to pressure room 4
+step collect|story:arkseal|3|Find the valve's three seals (pressure rooms 1, 2 and 3)
 step collect|story:arkvalve|1|Turn the ark valve
 step read|The closing note|1|Read the closing note
 step reach|surface_hole|1|Swim up to the surface hole

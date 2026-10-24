@@ -73,8 +73,20 @@ call vinecache x=25.5 z=-8.8 r=15 seed=13193 chest=dvinechest vines=dvines items
 place Zone_Trigger dview at -23.6 13.1 ground
 prop dview zone.id=squall_shelf_view
 prop dview zone.radius=7
+# REDO 10-24: the traveller buried his tea money where the detector finds it (the detector, from the Floelane, used again)
+call treasure x=-30 z=-28 r=12 n=1 seed=13195
+prop treasure13195 treasure.loot=TitaniumOre*2;TradeToken*3;MetalOre*2
+prop dhatchchest if.open=wears|HeadLight*
+prop dhatchchest else.open=message||Pitch dark under the hatch. A headlight would show the chest.
 prop dview zone.repeat=never
 prop dview zone.message=One tent on the whole shelf, its lines iced - and the wind does not stop for a moment.
+
+# --- FILL 10-24 (RESIZE rework): the bigger island's whole area at Raft-like density - trees, bushes, rocks; free= keeps them
+#     off the quest's objects and paths
+scatter TP_PineTreeSnowy 22 at 0 0 r=55 seed=13300 free=5
+scatter "Pickup_Landmark_Tree_Pine" 10 at 0 0 r=55 seed=13301 free=5
+scatter CaravanIsland_SmallRock_1 24 at 0 0 r=55 seed=13302 free=3 ground y=-0.6
+scatter "Pickup_Landmark_BerryBush" 6 at 0 0 r=55 seed=13303 free=3
 
 # --- Settings, notes, behaviours, quest ----------------------------------------------------------------------------------
 info title=Squall Shelf

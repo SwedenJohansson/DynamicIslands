@@ -17,10 +17,13 @@ expect animals Hyena 0
 expect step 4
 use root3
 expect story burnt 0
+use suitlocker
+expect shown fume1
 use root1
 expect story burnt 1
 expect hidden root1
 expect shown fire1
+expect hidden fume1
 expect step 5
 use root2
 expect story burnt 2

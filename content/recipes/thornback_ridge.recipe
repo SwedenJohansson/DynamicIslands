@@ -75,6 +75,9 @@ prop dwreckchest loot.refill=0
 call vinecache x=-5.2 z=26.5 r=15 seed=11211 chest=dvinechest vines=dvines items=Rope*3;Nail*10;Leather*2
 # REDO 10-24 (optional): the hermit buried his savings - the metal detector finds them
 call treasure x=18 z=-20 r=12 n=1 seed=11219
+# REDO 10-24 TREASURE2: a second buried treasure on the far side for the detector + shovel
+call treasure x=-14.4 z=16.0 r=12 n=1 seed=11269
+prop treasure11269 treasure.loot=TitaniumOre*1;MetalOre*2;TradeToken*2
 place Zone_Trigger dview at 15.4 9.3 ground
 prop dview zone.id=thornback_ridge_view
 prop dview zone.radius=7

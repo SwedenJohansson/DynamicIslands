@@ -102,6 +102,9 @@ place "VG_DecorationPrefabBase_Bookshelf Filled 2 Variant" - at -1.5 3.6 y=0.1 s
 place TP_CabinetCharts01 - at -0.5 0 y=0.1 sit yaw=270
 place Note_Book foundersrecord at -5.2 0 y=0.1 drop yaw=90
 place Note_Paper commsoff at -0.6 -2.6 y=0.1 drop yaw=200
+# REDO 10-24 (optional): the flotilla council's box - Saga Drift's founding year (1909) on its keypad
+place Loot_Chest councilbox at -4.8 -3.2 y=0.1 sit yaw=90
+place RT_PowerBox councilpad at -5.95 -1.8 y=1.2 yaw=90
 pop
 place Zone_Trigger recordzone at 0 14 h=5
 # --- the embryo wing: cold cabinets, the cooling crank, the keeper's last entry --------------------------------------
@@ -319,6 +322,20 @@ prop floodlever if.use=signal|chosen\n!signal|flooddoor
 prop floodlever on.use=signal||flooddoor\ngive||story:flooddoor*1\nhide|flooddoor\nmessage||The flood door grinds up. Black water below, and far down, lamps still burning: the Seed Ark.
 prop floodlever else.use=message||Not before the vault's way is chosen.
 
+note councilbox Council box | The Saga Drift council's box, carried here when the city went quiet: their tokens, a titanium bar, the city seal.
+loot councilbox TradeToken*6;TitaniumIngot*1;CopperIngot*2
+prop councilbox loot.refill=0
+prop councilbox obj.name=councilbox
+prop councilbox if.open=signal|councilcode
+prop councilbox else.open=message||The council's box is locked. Its keypad wants four digits - a year, by the look of the scratches.
+story councilcode|The council box's code|Placeable_Lantern_Metal|Saga Drift's founding year opened the council's box.
+prop councilpad obj.name=councilpad
+prop councilpad beh.use=Type the council box's code
+prop councilpad lock.code=1909
+prop councilpad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The keypad beeps. The council's box opens - the city's own year.\nsignal||councilcode\ngive||story:councilcode*1
+prop councilpad else.use=message||Four digits, scratched round the 1 and the 9. The flotilla city's year?
+prop dhatchchest if.open=wears|HeadLight*
+prop dhatchchest else.open=message||A store cut into the ice under the hatch, pitch black - wear a headlight.
 quest title=Beneath the Glacier
 quest intro=A door in the glacier, frost on its frame. Go to the entrance.
 step reach|entrance|1|Go to the Coldhold's entrance

@@ -15,6 +15,8 @@ use coreburn
 expect story core 0
 kill Warthog
 expect step 4
+use firebasket1
+use firebasket2
 kill Mama bear
 zone old_root
 expect step 6

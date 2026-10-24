@@ -18,6 +18,7 @@ include lib_sea
 include lib_huts
 include lib_features
 include lib_frozen
+include lib_verdance
 # RESIZE 10-24: Radius 48 -> 90 (Height 2 -> 3), the island grows round the old content, which stays where it was.
 new
 gen Trees=0 Bushes=0 Rocks=0.15 Harvest=0.05 BeachThings=0.25
@@ -112,7 +113,12 @@ place Note_Paper sermon at 4.6 3.8 y=0.1 drop yaw=170
 pop
 
 # --- The anchor winch at the flagship's bow ----------------------------------------------------------------------------
+# REDO 10-24: the winch was frozen by order - the city's "all hands" is three bells, one on each of three hulls
 place Placeable_Anchor_Stationary - at 12 33 ground sit yaw=180
+call crank x=9.8 z=32.2 yaw=180 alias=anchorwinch
+place TangaroaBucket bell1 at -12 -22 h=10 drop rot=180,0,0 scale=1.3
+place TangaroaBucket bell2 at 12 0 h=10 drop rot=180,0,0 scale=1.3
+place TangaroaBucket bell3 at -12 22 h=10 drop rot=180,0,0 scale=1.3
 place Loot_Chest anchorchest at 14 32 ground sit yaw=200
 
 # --- Screechers on the hulls, the titanium treasure, the sea: reefs, puffers, fog ----------------------------------------
@@ -175,6 +181,29 @@ prop renderchest loot.refill=0
 loot chapelbox TradeToken*6;MetalIngot*2;Raw_Beet*2
 prop chapelbox loot.refill=0
 loot anchorchest Blueprint_AnchorStationaryAdvanced*1;MetalIngot*2;Rope*4
+prop anchorchest obj.name=anchorchest
+prop anchorchest beh.hidden=1
+prop bell1 obj.name=bell1
+prop bell1 beh.use=Ring the south-west ship's bell
+prop bell1 if.use=!signal|bell1
+prop bell1 on.use=signal||bell1\ngive||story:bellrung*1\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The bell clangs over the ice. Far off, something creaks on the flagship's bow.
+prop bell2 obj.name=bell2
+prop bell2 beh.use=Ring the middle ship's bell
+prop bell2 if.use=!signal|bell2
+prop bell2 on.use=signal||bell2\ngive||story:bellrung*1\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||A second bell. The ice round the anchor cracks.
+prop bell3 obj.name=bell3
+prop bell3 beh.use=Ring the north-west ship's bell
+prop bell3 if.use=!signal|bell3
+prop bell3 on.use=signal||bell3\ngive||story:bellrung*1\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The third bell - the city's old 'all hands'. The winch is ready to turn.
+story bellrung|A ship's bell rung|Placeable_Lantern_Metal|One of the three bells of the city's "all hands".
+story winchfree|The anchor winch freed|Placeable_Lantern_Metal|The flagship's winch turns again.
+prop anchorwinch obj.name=anchorwinch
+prop anchorwinch beh.use=Turn the anchor winch
+prop anchorwinch if.use=take|story:bellrung|3
+prop anchorwinch on.use=give||story:winchfree*1\nshow|anchorchest\nmessage||The chain groans and comes up a link at a time. The winch locker under it is free.
+prop anchorwinch else.use=message||Frozen by order: "THE WINCH TURNS ON ALL HANDS ONLY." Three bells call all hands - one on each of three hulls.
+prop dhatchchest if.open=wears|HeadLight*
+prop dhatchchest else.open=message||A ship's hold under the hatch, pitch black - wear a headlight.
 prop anchorchest loot.refill=0
 prop treasure12051 treasure.loot=TitaniumOre*3
 
@@ -214,6 +243,8 @@ step read|Council cabin minutes|1|Read the council cabin minutes
 step kill|Rat|4|Clear the four rats out of the rendering house
 step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced biofuel extractor's plans from the rendering house
 step open|Chapel strongbox|1|Open the chapel strongbox (the charter knows its year)
+step collect|story:bellrung|3|Ring the three ships' bells - "all hands"
+step collect|story:winchfree|1|Turn the anchor winch at the flagship's bow
 step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced anchor's plans from the winch locker
 step read|Last sermon|1|Read the chaplain's last sermon
 quest done=The vault ordered the silence. The glacier calls on 1000.

@@ -39,6 +39,12 @@ expect step 9
 zone record_wing
 expect step 10
 read Founders' record
+open Council box
+expect story councilcode 0
+code councilpad 1909
+expect story councilcode 1
+open Council box
+wait 3
 expect step 11
 read Why the comms went off
 expect step 12
