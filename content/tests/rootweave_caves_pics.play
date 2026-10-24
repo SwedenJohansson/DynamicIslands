@@ -8,3 +8,5 @@ wait 3
 picture sl11_rootweave_caves_island 60 50 -130 0 15 0
 picture sl11_rootweave_caves_fungushall 0 3 -48 0 2 -60
 storespot 0 -70
+snap deep_rw_mast rwtw 180 34
+snap deep_rw_hut rwhut 200 8

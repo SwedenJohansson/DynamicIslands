@@ -44,5 +44,21 @@ expect step 9
 open Root cache
 wait 3
 expect step 10
+zone bm_top
+expect step 11
+open Pump barge's valve box
+wait 3
+expect story valve 1
+expect step 12
+use bogpump
+expect hidden bogacid
+open Fuel drum
+wait 3
+expect story fuel 1
+expect step 13
+use beacon
+expect story fuel 0
+expect shown beaconfire
+expect step 14
 read Seedkeeper's confession
 expect done

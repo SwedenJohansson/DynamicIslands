@@ -11,32 +11,34 @@ expect step 2
 open Turbine mast box
 wait 3
 expect step 3
-zone bee_hall
+zone rw_top
 expect step 4
+zone bee_hall
+expect step 5
 expect hidden beecache
 use beevines
 expect shown beecache
 open Bee hall cache
 wait 3
-expect step 5
-zone flooded_passage
 expect step 6
+zone flooded_passage
+expect step 7
 open Drowned crate
 wait 3
-expect step 7
+expect step 8
 kill Mama bear
 expect animals Mama bear 0
-expect step 8
+expect step 9
 open Den cache
 wait 3
-expect step 9
+expect step 10
 expect hidden labchest
 use fusebox
 expect story fuse 0
 expect shown labchest
-expect step 10
+expect step 11
 open Lab chest
 wait 3
-expect step 11
+expect step 12
 read Poison sample report
 expect done

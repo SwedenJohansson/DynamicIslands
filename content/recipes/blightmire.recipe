@@ -67,7 +67,7 @@ place campfire_1 fire2 at 12.4 34.1 ground sit
 place Log root3log at 52.7 -9.3 ground sit yaw=75 scale=1.6 roll=28
 call blight x=52.7 z=-9.3 al=root3
 place campfire_1 fire3 at 52.7 -9.3 ground sit
-place Loot_Chest rootcache at 56.58 -6.2 ground sit yaw=220
+place Loot_Chest rootcache at 55.2 -7.6 ground sit yaw=220
 
 # --- The marsh station by the north root; the hyenas and boars; Burr by a vine-choked cache ---------------------------
 place Loot_Crate marshstation at 18.6 40.3 ground sit yaw=200
@@ -131,6 +131,55 @@ scatter "Balboa_Bush_03 Variant" 34 at 0 0 r=74 seed=11195 free=2.5
 scatter CaravanIsland_SmallRock_1 14 at 0 0 r=74 seed=11196 free=3 ground y=-0.6
 scatter Bamboo_2 24 at 0 0 r=74 seed=11197 free=2
 scatter Tree_Stump 8 at 0 0 r=74 seed=11198 free=3
+
+# --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): the drowned digger's west hill and its boom gantry (climb, zipline to the camp), the sunk pump barge (dive), the acid bog and its sinking log path (M7), the hummock beacon
+# the climb: a mountain (trail winding up from bearing 60), a 8-storey climbing tower on its top, the summit box
+call vd_mount x=-66 z=-30 top=20 r=18 a0=60 turns=1.25 hb=3
+call vd_tower x=-66 z=-30 h0=20 lv=8 a=bmtw box=bmbox zal=bmtopz zid=bm_top msg="The digger's boom gantry on the west hill. From up here the bog's acid pools shine like spilt oil."
+note bmbox Gantry box | SEEDKEEPERS - DIGGER CREW. We dug the channels the growth was meant to drink from. The pump barge drained the east bog; it sank in the first storm.
+loot bmbox Rope*3;Bolt*3;MetalIngot*1
+place ZiplinePath_Landmark bmzip at -61.03 -31.72 h=41.05
+zipto bmzip -22 -50
+# the drowned digger at the foot of the west hill, half in the mud
+place VP_Excavator bmdigger at -58 -50 ground sit yaw=210
+prop bmdigger tint.color=#4a4f3a
+prop bmdigger tint.amount=0.5
+# the dive: BoatStranded on the sea floor 10 m down, its crate, an air pocket
+call vd_dive x=70 z=-68 h=-10 yaw=135 obj="BoatStranded" al=bmwreck crate=bmcrate zal=bmwz zid=bm_wreck msg="The Seedkeepers' pump barge, on the bottom off the south-east shore. The valve box on its deck is still shut." air=bmair bub=bmbub
+note bmcrate Pump barge's valve box | A brass bog-pump valve, greased and wrapped. Stamped on it: EAST BOG.
+loot bmcrate story:valve*1;Scrap*3;Bolt*2
+# the acid bog (RAFT_QUEST_MECHANICS SL11 7, M7): a sunken bog of acid round a dead stump island with the burner's
+# fuel drum; old logs lie across it and bob as you step on them. The pump at its edge takes the barge's valve and drains it;
+# without the valve the camp's blight suit keeps the acid off for three minutes.
+# UPGRADE-AFTER-MECH: real sinking logs (a log dips while stood on) - for now the logs only bob.
+brush flatten at 56 40 r=9 s=20 frames=150 h=0.8
+clear at 56 40 r=11 all
+brush flatten at 56 40 r=2 s=20 frames=120 h=1.3
+place Zone_Trigger bogacid at 56 40 ground y=-2
+place Log boglog1 at 50.5 34.5 ground sit yaw=45
+place Log boglog2 at 52.6 36.6 ground sit yaw=45
+place Log boglog3 at 54.6 38.6 ground sit yaw=45
+place Tree_Stump - at 56 40 ground sit
+place "Box Big" - at 57.6 41.6 ground sit yaw=40
+place Loot_ChestSmall fueldrum at 56.6 41.9 ground sit yaw=220
+place UT_JumpPuzzle_LiftMechanism_Lever bogpump at 47.5 31.5 ground sit yaw=225
+scatter Pickup_Landmark_Flower_Black 6 at 56 40 r=8 seed=11290 free=1.5
+# the burner beacon on the hummock: the fuel lights it, a fire every drowned island can see
+place "Box Big" beacon at -2 -53 ground sit yaw=20
+place campfire_1 beaconfire at -0.6 -51.6 ground sit
+call ni8cave x=30 z=-70 h=2 yaw=180 al=bmcavecave
+place Loot_ChestSmall bmcavecavebox at 32.5 -75 h=2.45 sit yaw=200
+place Placeable_Lantern_Metal - at 27.4 -74 h=2.45 sit
+note bmcavecavebox Seedkeepers' cellar chest | The Seedkeepers kept their spare masks and a sealed jar of ash here.
+loot bmcavecavebox Rope*2;Leather*2;ExplosiveGoo*1
+prop bmcavecavebox loot.refill=0
+# the heron hummock in the north (secret): a low hill, a heron-watcher's box on top
+call vd_mount x=-10 z=70 top=12 r=14 a0=250 turns=1 n=30 hb=3
+place Loot_ChestSmall bmheron at -10 70 h=12 sit yaw=160
+note bmheron Heron watcher box | A bird-watcher's tally: HERONS 0. FROGS 0. THE MARSH IS TOO QUIET.
+loot bmheron Feather*4;Rope*2;Coconut*2
+prop bmheron loot.refill=0
+call vd_spot x=-10 z=71.5 al=bmheronz id=bm_heron r=3 msg="From the heron hummock the burnt roots smoke in a line, west to east."
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Blightmire
@@ -227,6 +276,38 @@ prop suitlocker on.use=suit||180\nmessage||An oilcloth blight suit and a mask - 
 prop hummockzone zone.radius=6
 prop hummockzone zone.message=The hummock. Dry ground, a cold smelter camp, a map nailed to a post.
 
+# DEEP 10-24 settings
+story valve|Bog pump valve|Placeable_Lantern_Metal|A brass valve stamped EAST BOG, from the sunk pump barge.
+story fuel|Burner fuel|Placeable_Lantern_Metal|A drum of the Seedkeepers' burner fuel, from the acid bog's stump island.
+story beacon|Beacon lit|Placeable_Lantern_Metal|The hummock beacon is burning: the marsh is clean.
+prop bogacid obj.name=bogacid
+prop bogacid zone.id=bm_bog
+prop bogacid zone.radius=9
+prop bogacid zone.hazard=acid
+prop bogacid zone.damage=4
+prop bogacid zone.hazardMsg=The bog water is acid and it eats at your boots. Drain it with the pump - or wear the camp's blight suit.
+prop boglog1 beh.bob=0.15
+prop boglog1 beh.bobTime=2.5
+prop boglog2 beh.bob=0.15
+prop boglog2 beh.bobTime=3
+prop boglog3 beh.bob=0.15
+prop boglog3 beh.bobTime=2
+prop bogpump obj.name=bogpump
+prop bogpump beh.use=Fit the valve and work the bog pump
+prop bogpump if.use=!signal|drained\ntake|story:valve|1
+prop bogpump on.use=signal||drained\nhide|bogacid\nmessage||The valve bites, the pump wheezes and the acid drains off down the old channel. The logs settle in the mud.
+prop bogpump else.use=message||The bog pump. Its valve is gone - EAST BOG, the plate says; the pump barge carried the spares.
+prop fueldrum obj.name=fueldrum
+note fueldrum Fuel drum | The Seedkeepers' burner fuel, sealed against the acid. Enough for one big fire.
+loot fueldrum story:fuel*1;Scrap*2
+prop fueldrum loot.refill=0
+prop beacon obj.name=beacon
+prop beacon beh.use=Pour the fuel into the beacon burner
+prop beacon if.use=!signal|beacon\ntake|story:fuel|1
+prop beacon on.use=signal||beacon\ngive||story:beacon*1\nshow|beaconfire\nmessage||The beacon roars up. Across the water, on the other green islands, someone will see it.
+prop beacon else.use=message||The camp's beacon burner, dry. The fuel was kept out on the bog, the gantry box says.
+prop beaconfire obj.name=beaconfire
+prop beaconfire beh.hidden=1
 quest title=The Poisoned Marsh
 quest intro=Green fog and dead wood. The Seedkeepers' camp is on the dry hummock to the south.
 step reach|hummock|1|Go to the dry hummock
@@ -239,6 +320,10 @@ step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced extractor 
 step kill|Warthog|2|Drive off the two boars
 step collect|story:burnt|3|Burn the east root
 step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced anchor plans from the root cache
+step reach|bm_top|1|Climb the digger's boom gantry on the west hill
+step collect|story:valve|1|Dive to the sunk pump barge off the south-east shore
+step collect|story:fuel|1|Cross the acid bog to the fuel drum (drain it with the bog pump, or wear the blight suit)
+step collect|story:beacon|1|Light the beacon on the hummock with the fuel
 step read|Seedkeeper's confession|1|Read the Seedkeeper's confession in the camp
 quest done=The growth started at the Heart. The Seedkeepers' last camp is on the climb to it - band 900.
 quest reward=TitaniumOre*1;Seed_Flower_Black*2

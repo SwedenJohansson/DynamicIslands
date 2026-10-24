@@ -92,6 +92,8 @@ place Zone_Trigger floodedzone at 0 -4 y=3
 call airpocket x=-1 z=-12 id=pocket1 al=pocket1 bub=pocket1bub
 call airpocket x=1 z=-20 id=pocket2 al=pocket2 bub=pocket2bub
 place Loot_Crate drownedcrate at 0.8 -26 ground yaw=20
+# DEEP 10-24: the passage's deep end - breath goes fast without an oxygen bottle (the Bee Hall's cache has one)
+place Zone_Trigger rwdeep at 0 -24 ground y=1
 place SeaVine3 - at -3 -8 ground
 place SeaVine3 - at 3 -16 ground
 pop
@@ -151,6 +153,28 @@ scatter CaravanIsland_SmallRock_1 14 at 0 0 r=80 seed=11196 free=3 ground y=-0.6
 scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=80 seed=11197 free=3
 scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=80 seed=11198 free=2
 
+# --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): the survey mast on the rocky top (climb, zipline down to the south beach), the Flooded Passage's deep end (oxygen gate), the survey team's last camp
+# the climb: the survey mast on the rocky top (38.5 m), 8 storeys more; the line down to the south beach
+brush flatten at 11 2 r=3 s=20 frames=150 h=38.5
+clear at 11 2 r=4 all
+# the climb: a mountain (trail winding up from bearing 0), a 8-storey climbing tower on its top, the summit box
+call vd_tower x=11 z=2 h0=38.5 lv=8 a=rwtw box=rwbox zal=rwtopz zid=rw_top msg="The survey mast, the highest point of Verdance. The wind sings in the rope rail."
+note rwbox Survey mast box | SURVEY - MAST. Every cave mouth on this hill is in sight from here: south the Fungus Hall, east the bees, west the drowned one, north the den.
+loot rwbox Battery*1;Rope*3;Bolt*3
+place ZiplinePath_Landmark rwzip at 15.97 0.28 h=59.55
+zipto rwzip 30 -62
+# the survey team's last camp on the south-west slope (secret): a tent, a cold fire, a chest
+clear at -26 -24 r=5
+brush flatten at -26 -24 r=4 s=20 frames=120 h=8.6
+place Balboa_DecorationPrefabBase_SimpleTent - at -28 -22 ground sit yaw=120
+place campfire_1 - at -24.5 -22.5 ground sit
+place Loot_ChestSmall rwhut at -25 -26 ground sit yaw=0
+note rwhut Survey camp chest | In the tent's lee: the survey team's spare ropes and a note - COUNT THE CAVES. FOUR. THE FIFTH IS UNDER THE SEA.
+loot rwhut Rope*2;Nail*8;Clay*3
+prop rwhut loot.refill=0
+place Creature_Chicken rwhens at -15 -30 ground
+prop rwhens creature.count=2
+
 # --- Settings, notes, behaviours, quest -------------------------------------------------------------------------
 info title=Rootweave Caves
 info author=Custom Islands
@@ -178,7 +202,7 @@ loot mushroombasket CaveMushroom*6
 prop mushroombasket loot.refill=0
 loot mastbox Blueprint_WindTurbine*1;CopperIngot*2
 prop mastbox loot.refill=0
-loot beecache Blueprint_BatteryAdvanced*1;Battery*1;story:fuse*1
+loot beecache Blueprint_BatteryAdvanced*1;Battery*1;story:fuse*1;OxygenBottle*1
 prop beecache loot.refill=0
 loot drownedcrate Blueprint_HeadLight_Advanced*1;CaveMushroom*2;story:fuse*1
 prop drownedcrate loot.refill=0
@@ -220,11 +244,20 @@ prop dendark zone.hazard=dark
 prop dendark zone.hazardMsg=The den is pitch black. Something big breathes in there - wear a headlight.
 prop denzone zone.message=The Den. Something big breathes in the dark.
 
+# DEEP 10-24 settings
+prop rwdeep obj.name=rwdeep
+prop rwdeep zone.id=rwdeep
+prop rwdeep zone.radius=6
+prop rwdeep zone.hazard=deep
+prop rwdeep zone.damage=1
+prop rwdeep zone.safe=wears|OxygenBottle*
+prop rwdeep zone.hazardMsg=The passage drops deep and cold, and your breath goes fast. An oxygen bottle - the Bee Hall's cache had one - would carry you to the crate.
 quest title=The Living Labyrinth
 quest intro=Four caves in a hill of roots. The survey team camped in the Fungus Hall on the south side.
 step reach|fungus_hall|1|Go into the Fungus Hall
 step read|Cave survey|1|Read the cave survey
 step blueprint|Blueprint_WindTurbine|1|Take the wind turbine plans from the mast box on the hilltop
+step reach|rw_top|1|Climb the survey mast on the rocky top
 step reach|bee_hall|1|Go into the Bee Hall
 step blueprint|Blueprint_BatteryAdvanced|1|Take the advanced battery plans from the Bee Hall's cache
 step reach|flooded_passage|1|Swim into the Flooded Passage
