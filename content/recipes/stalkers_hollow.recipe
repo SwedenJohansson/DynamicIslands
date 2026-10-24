@@ -156,6 +156,7 @@ call stonelamp x=30 z=-30 al=shlamp1
 call stonelamp x=42 z=-42 al=shlamp2
 call crankcache x=60 z=-60 yaw=225 alias=ventcrank sig=ventvalve chest=ventbox cx=66 cz=-62 cyaw=30 items=TitaniumIngot*2;MetalIngot*2;Bolt*3 title="Vent box"
 place Loot_Chest gatecache at 17.8 15.8 ground sit yaw=225
+place Loot_Chest sealcache at -14.5 9 ground sit yaw=110
 place Zone_Trigger shtrenchdark at 62 -61 ground y=1
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
@@ -203,7 +204,7 @@ prop valve obj.name=valve
 prop valve beh.use=Turn the seal valve
 prop valve if.use=has|story:restorechoice|1
 prop valve on.use=give||story:valve*1\nshow|teal\nhide|gatebars\nsignal||hollowgate\nshow|lastrestore\nmessage||RESTORE answers: the alcoves light up teal and the gate's bars draw back.
-prop valve else.use=give||story:valve*1\nshow|plug\nshow|lastseal\nmessage||SEAL answers: a stone plug grinds down over the gate.
+prop valve else.use=give||story:valve*1\nshow|plug\nshow|lastseal\nshow|sealcache\nmessage||SEAL answers: a stone plug grinds down over the gate.
 prop teal obj.name=teal
 prop teal beh.hidden=1
 prop gatebars obj.name=gatebars
@@ -235,6 +236,11 @@ prop shtrenchdark zone.hazardMsg=The trench is pitch dark. A headlight would sho
 note gatecache Network gate cache | Behind the Network gate: the last keepers' cache, left for whoever opened the way.
 loot gatecache TitaniumIngot*3;Battery*2;CopperIngot*2
 prop gatecache loot.refill=0
+prop sealcache obj.name=sealcache
+prop sealcache beh.hidden=1
+note sealcache Sealers' cache | The sealers' cache, pushed up out of the floor when the plug came down: what the Network kept for the day it was closed for good.
+loot sealcache TitaniumIngot*3;Battery*2;CopperIngot*2
+prop sealcache loot.refill=0
 prop gate if.use=signal|hollowgate
 prop gate else.use=message||Barred from inside. The seal valve opens it - if the Spire chose RESTORE.
 quest title=The Deep
