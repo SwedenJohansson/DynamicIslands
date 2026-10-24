@@ -237,9 +237,7 @@ story rack|Tool rack|Placeable_Lantern_Metal|Oda's tools hang on her rack again.
 prop toolrack obj.name=toolrack
 prop toolrack beh.use=Hang the tools
 prop toolrack if.use=take|story:tool|3
-prop toolrack on.use=give||story:rack*1
-show|odacard
-message||Saw, wrench, hammer - each on its painted outline. Behind the last outline a drawer slides out.
+prop toolrack on.use=give||story:rack*1\nshow|odacard\nmessage||Saw, wrench, hammer - each on its painted outline. Behind the last outline a drawer slides out.
 prop toolrack else.use=message||A tool rack with three painted outlines: a saw, a wrench, a hammer. All empty. Oda left them all over her course.
 prop odacard obj.name=odacard
 prop odacard beh.hidden=1

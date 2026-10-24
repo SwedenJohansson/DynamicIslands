@@ -208,8 +208,7 @@ prop skiffzone zone.message=A research skiff, beached on its side. SEEDKEEPERS o
 # DEEP 10-24 settings
 story lens|Calibration lens|Placeable_Lantern_Metal|The research boat's DRIFT CASE lens, wrapped in wool.
 story capsule|Seed capsule|Placeable_Lantern_Metal|The seed rocket's capsule: a cloth map of Verdance and the number 700.
-prop samplecase if.use=has|story:lens|1
-take|story:pollen|3
+prop samplecase if.use=has|story:lens|1\ntake|story:pollen|3
 prop samplecase else.use=message||Three empty slots, each labelled DRIFT, and an empty lens ring. The case wants three pollen jars - and its calibration lens, lost with the research boat.
 prop seedrocket obj.name=seedrocket
 prop seedrocket beh.use=Load the rocket
@@ -217,13 +216,7 @@ prop seedrocket beh.move=0,90,0
 prop seedrocket beh.moveTime=7
 prop seedrocket beh.moveMode=switch
 prop seedrocket if.use=take|ExplosivePowder|2
-prop seedrocket on.use=open|seedrocket
-camera|rocketcam|seedrocket|7|80
-playsound||event:/amb/wreck_creaks|0.8|once|near
-wait|7
-hide|seedrocket
-show|capsule
-message||The rocket climbs, trailing yellow smoke, bursts high over the sea - and a small capsule drifts down on a sheet of cloth towards the east beach.
+prop seedrocket on.use=open|seedrocket\ncamera|rocketcam|seedrocket|7|80\nplaysound||event:/amb/wreck_creaks|0.8|once|near\nwait|7\nhide|seedrocket\nshow|capsule\nmessage||The rocket climbs, trailing yellow smoke, bursts high over the sea - and a small capsule drifts down on a sheet of cloth towards the east beach.
 prop seedrocket else.use=message||A Seedkeepers' seed rocket, empty. A stencil on its side: TWO TINS OF POWDER.
 prop capsule obj.name=capsule
 prop capsule beh.hidden=1

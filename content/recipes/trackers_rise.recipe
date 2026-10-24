@@ -51,7 +51,8 @@ call zipdeck y=2.6
 pop
 place ZiplinePath_Landmark towerzip at -2.53 -14.22 h=10.07
 zipto towerzip 2 -40
-place Loot_Crate anchorbox at -6 -14 ground sit yaw=160
+clear at -6 -17 r=2.5
+place Loot_Crate anchorbox at -6 -17 ground sit yaw=160
 
 # --- The meadow: the tracking guide, goats and llamas, Ranger log 5 on a crate by the lookout stone ------------------
 place Zone_Trigger meadowzone at 0 4 ground
@@ -158,6 +159,39 @@ scatter CaravanIsland_SmallRock_1 14 at 0 0 r=74 seed=11397 free=3 ground y=-0.6
 scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=74 seed=11398 free=3
 scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=74 seed=11399 free=2
 
+# --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): Antler Peak and its summit tower (climb, zipline back to the meadow), the hunters' trailer off the cove (dive), the tracker's broken carving (M6 + D7), the east bluff lookout
+# the climb: a mountain (trail winding up from bearing 40), a 8-storey climbing tower on its top, the summit box
+call vd_mount x=-44 z=-53 top=26 r=26 a0=40 turns=1.25 hb=3
+call vd_tower x=-44 z=-53 h0=26 lv=8 a=trtw box=trbox zal=trtopz zid=tr_top msg="Antler Peak. Every tracker of the rise carved a notch in this rail; the last notch is fresh."
+note trbox Summit tower box | TRACKERS - SUMMIT. From up here you read the herds like a page. The line down to the meadow is for the lazy and the late.
+loot trbox Rope*3;Leather*2;Bolt*2
+place ZiplinePath_Landmark trzip at -39.03 -54.72 h=47.05
+zipto trzip -6 2
+# the dive: Caravan_Blue_01 on the sea floor 11 m down, its crate, an air pocket
+call vd_dive x=8 z=-95 h=-11 yaw=60 obj="Caravan_Blue_01" al=trwreck crate=trcrate zal=trwz zid=tr_wreck msg="The hunters' trailer slid off the cove road in a storm and rolled out to here." air=trair bub=trbub
+note trcrate Trailer's drawer | A hunter's drawer of odds: a carving knife, and a small lamp with a goat painted on its glass.
+loot trcrate story:lamp*1;Scrap*3;Nail*6
+# the tracker's carving in the north clearing (RAFT_QUEST_MECHANICS SL11 5, M6 + D7): a carved post of Burr's
+# likeness with an empty lamp socket; the trailer's lamp lights it, and his journal page shows behind it
+clear at 24 65 r=5
+brush flatten at 24 65 r=4 s=20 frames=150 h=3
+place ReefHuts_Pillar3 carving at 24 65 ground sit sy=0.7
+prop carving tint.color=#6b4a2e
+prop carving tint.amount=0.6
+place Placeable_Lantern_Metal carvinglamp at 24 65 ground y=3.4
+place Log - at 21.5 63.5 ground sit yaw=70
+place Log - at 26.6 66.8 ground sit yaw=160
+place Loot_ChestSmall journalbox at 25.6 63 ground sit yaw=210
+# the east bluff: a second hill with a hunters' lookout (secret)
+call vd_mount x=68 z=12 top=15 r=18 a0=200 turns=1 n=40 hb=3
+place Loot_ChestSmall trbluff at 68 12 h=15 sit yaw=190
+note trbluff Bluff lookout box | A hunters' lookout box. Inside the lid, tally marks: goats, llamas, boars - and one tick labelled BURR.
+loot trbluff Rope*2;Leather*2;Coconut*2
+prop trbluff loot.refill=0
+call vd_spot x=68 z=13.5 al=trbluffz id=tr_bluff r=3 msg="From the bluff the whole rise lies open: the meadow, the tower, the gully, the dark ridge."
+place Creature_Chicken trhens at -28 -28 ground
+prop trhens creature.count=3
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Tracker's Rise
 info author=Custom Islands
@@ -213,6 +247,21 @@ prop gullyzone zone.id=gully
 prop gullyzone zone.radius=5
 prop gullyzone zone.message=The gully. Fallen branches - and a goat pinned under them.
 
+# DEEP 10-24 settings
+story lamp|Painted lamp|Placeable_Lantern_Metal|A small lamp with a goat painted on its glass, from the hunters' trailer.
+story totem|Carving lit|Placeable_Lantern_Metal|The tracker's carving of Burr has its lamp again.
+prop carving obj.name=carving
+prop carving beh.use=Set the lamp in the carving
+prop carving if.use=take|story:lamp|1
+prop carving on.use=give||story:totem*1\nshow|carvinglamp\nshow|journalbox\nmessage||The lamp sits in the socket and the carved goat's eye glows. Behind the post a little box was waiting.
+prop carving else.use=message||A post carved into a goat with a torn ear - Burr. Where its eye should be there is an empty lamp socket.
+prop carvinglamp obj.name=carvinglamp
+prop carvinglamp beh.hidden=1
+prop journalbox obj.name=journalbox
+prop journalbox beh.hidden=1
+note journalbox Tracker's journal page | Day 40. Told the carving about the boar tracks today. It listened better than the team ever did.\nDay 41. The team has not come back. I tell the carving where I think they went. It nods when the lamp flickers.\nDay 60. I know they are not coming. I keep the lamp lit anyway. The goat in the gully is real; it lets me talk too.
+loot journalbox Leather*2;Rope*1
+prop journalbox loot.refill=0
 quest title=Tracks
 quest intro=Something bleats on the meadow. Climb up to it.
 step reach|meadow|1|Climb up to the meadow
@@ -226,6 +275,10 @@ step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from Oda'
 step blueprint|Blueprint_Firework|1|Take the firework plans from Oda's map case
 step blueprint|Blueprint_ZiplineBase|1|Take the zipline plans from the anchor box by the tower
 step catch|Llama|1|Catch a llama
+step reach|tr_top|1|Climb Antler Peak and its summit tower
+step collect|story:lamp|1|Dive to the hunters' trailer off the south cove
+step collect|story:totem|1|Set the lamp in the tracker's carving in the north clearing
+step read|Tracker's journal page|1|Read the journal page behind the carving
 step read|Ranger log 5|1|Read Ranger log 5 by the lookout stone
 quest done=Into the hollow trees. Their band is 900.
 quest reward=Seed_Pine*2;Feather*4

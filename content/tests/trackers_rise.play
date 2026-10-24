@@ -36,5 +36,18 @@ wait 3
 expect step 10
 catch Llama 1
 expect step 11
+zone tr_top
+expect step 12
+open Trailer's drawer
+wait 3
+expect story lamp 1
+expect step 13
+use carving
+expect story lamp 0
+expect shown carvinglamp
+expect shown journalbox
+expect step 14
+read Tracker's journal page
+expect step 15
 read Ranger log 5
 expect done

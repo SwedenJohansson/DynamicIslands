@@ -8,3 +8,6 @@ wait 3
 picture sl11_riverfork_delta_island 60 45 -110 0 4 -10
 picture sl11_riverfork_delta_ferry -6 6 -6 -18 1 8
 storespot 0 0
+snap deep_dl_crane dltw 230 34
+snap deep_dl_barge dlwreck 180 14
+snap deep_dl_bridge eastbridge 160 10

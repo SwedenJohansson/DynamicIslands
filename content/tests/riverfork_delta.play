@@ -41,5 +41,31 @@ expect step 11
 open Pressing shed
 wait 3
 expect step 12
+zone dl_wreck
+open Barge's fuse box
+wait 3
+expect story fuse 1
+expect step 13
+use relaym
+expect shown relaymlamp
+use relaye
+expect hidden relayelamp
+use bridgelever
+wait 4
+use relaye
+expect shown relayelamp
+use northvines
+expect shown relayn
+use relayn
+expect story relay 3
+expect step 14
+use mapscreen
+expect story rivercode 1
+expect step 15
+zone dl_top
+expect step 16
+code cranepad 4172
+expect story route 1
+expect step 17
 read Ranger log 4
 expect done

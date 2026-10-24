@@ -17,7 +17,7 @@ include lib_gravity
 include lib_verdance
 new
 gen Trees=0.3 Bushes=0.35 Rocks=0.2 Harvest=0.35 BeachThings=0.3
-gen Seed=11031 Radius=70 Height=10 Roughness=0.3 Peaks=1 Shape=0 Style=0 PeakShape=0.4 Cliffs=0.2 BeachWidth=0.6
+gen Seed=11031 Radius=85 Height=10 Roughness=0.3 Peaks=1 Shape=0 Style=0 PeakShape=0.4 Cliffs=0.2 BeachWidth=0.6
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.4 Sunken=0.2 Hostiles=0 Friendly=0.2 SeaLife=0.4
 generate
 
@@ -118,6 +118,66 @@ scatter CaravanIsland_SmallRock_1 14 at 0 0 r=64 seed=11186 free=3 ground y=-0.6
 scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=64 seed=11187 free=3
 scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=64 seed=11188 free=2
 
+# --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): three ranger relays (fork sign, drawbridge, blighted vines), the timber-port crane on the east bluff (climb), the sunk barge (dive), the gorge hill, the otter den
+# the fork sign (RAFT_QUEST_MECHANICS M2): the three relays named where the river splits
+place Note_Sign forksign at 4 24 ground sit yaw=200
+# Relay Mouth by the landing (its fuse went down with the barge), Relay East over the drawbridge, Relay North behind
+# the blighted vines upriver. All three on -> the outpost's map screen shows the route code (M1 + M2 + M3)
+place Antenna_pole - at -9 -61 ground sit sy=0.5
+place TP_RotatingRedLight relaymlamp at -9 -61 ground y=3.25
+place RT_CommRadio relaym at -8.1 -61 ground sit yaw=160
+place Antenna_pole - at 36 -44 ground sit sy=0.5
+place TP_RotatingRedLight relayelamp at 36 -44 ground y=3.25
+place RT_CommRadio relaye at 36.9 -44 ground sit yaw=200
+place Antenna_pole - at -20 58.5 ground sit sy=0.5
+place TP_RotatingRedLight relaynlamp at -20 58.5 ground y=3.25
+place RT_CommRadio relayn at -19.1 58.5 ground sit yaw=20
+place ChoppableVines northvines at -20 56 ground yaw=20
+place ChoppableVines - at -22 57.5 ground yaw=80
+# the east arm's drawbridge: pulled in on the west pad; the lever slides it 8.8 m across onto the east pad
+brush flatten from 10 -40 to 16 -40 r=3 s=20 frames=150 h=1.4
+brush flatten from 28 -40 to 32 -40 r=3 s=20 frames=150 h=1.4
+clear from 9 -40 to 17 -40 r=3
+clear from 27 -40 to 33 -40 r=3
+place CaravanHubBridge3 eastbridge at 13.2 -40 h=1.1 yaw=90
+place UT_JumpPuzzle_LiftMechanism_Lever bridgelever at 10 -42.5 ground sit yaw=90
+# the outpost's map screen
+place RT_RadarScreen mapscreen at 6.5 -8.5 ground sit yaw=200
+# the climb: a mountain (trail winding up from bearing 250), a 10-storey climbing tower on its top, the summit box
+call vd_mount x=55 z=25 top=22 r=20 a0=250 turns=1.25 hb=3
+call vd_tower x=55 z=25 h0=22 lv=10 a=dltw box=dlbox zal=dltopz zid=dl_top msg="The timber port's crane. The jib still points at the river mouth; the route strongbox sits out on its end."
+note dlbox Crane cab box | RIVER PEOPLE - TIMBER PORT. Logs came down the north arm and swung out to the barges from here. The strongbox on the jib keeps the route.
+loot dlbox Rope*3;Plank*4;Bolt*2
+# the crane's jib: two floor tiles out east from the deck, the route strongbox (a keypad) at its end
+place Block_Floor_Tier3 dljib at 57.25 24.25 h={22+10*2.42+0.215}
+place Block_Floor_Tier3 dljib at 58.75 24.25 h={22+10*2.42+0.215}
+prop dljib tint.color=#6e6a64
+prop dljib tint.amount=0.55
+place RT_PowerBox cranepad at 59.2 24.25 h={22+10*2.42+0.33} yaw=270
+# the dive: BoatStranded on the sea floor 10 m down, its crate, an air pocket
+call vd_dive x=-12 z=-98 h=-10 yaw=30 obj="BoatStranded" al=dlwreck crate=dlcrate zal=dlwz zid=dl_wreck msg="The timber barge, down on the river's silt fan. A fuse box is bolted to its wheelhouse." air=dlair bub=dlbub
+note dlcrate Barge's fuse box | A ranger fuse for the mouth relay, wrapped in oilcloth. Somebody meant to come back for it.
+loot dlcrate story:fuse*1;Scrap*3;Rope*1
+# the gorge hill north-west: a fisher's lookout on top (secret)
+call vd_mount x=-48 z=40 top=16 r=18 a0=120 turns=1 n=40 hb=3
+place Loot_ChestSmall dllook at -48 40 h=16 sit yaw=200
+note dllook Lookout box | A fisher's spyglass box. Scratched inside the lid: THE BARGE LIES WHERE THE PUFFERS FEED.
+loot dllook Rope*2;Scrap*2;Leather*1
+prop dllook loot.refill=0
+call vd_spot x=-48 z=41.5 al=dllookz id=dl_lookout r=3 msg="From the gorge hill the three arms shine like a hand laid on the jungle."
+call ni8cave x=-59 z=10 h=2 yaw=180 al=dlottercave
+place Loot_ChestSmall dlottercavebox at -56.5 5 h=2.45 sit yaw=200
+place Placeable_Lantern_Metal - at -61.6 6 h=2.45 sit
+note dlottercavebox Otter den stash | The river people kept their spare net and a jar of something strong here.
+loot dlottercavebox Rope*2;Leather*2;Coconut*2
+prop dlottercavebox loot.refill=0
+call vinecache x=30 z=55 r=7 seed=11331 chest=dlvine vines=dlvinevines items=Bolt*2;Nail*6;Plank*3
+prop dlvine note.title=Vine-choked crate
+place Creature_Llama dlllama at 34 60 ground
+prop dlllama creature.count=2
+call treasure x=-44 z=-40 r=8 n=1 seed=11380 kind=0
+prop treasure11380 treasure.loot=Scrap*6;Bolt*3;Nail*10
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Riverfork Delta
 info author=Custom Islands
@@ -184,6 +244,53 @@ prop upriverzone zone.id=upriver
 prop upriverzone zone.radius=6
 prop upriverzone zone.message=Upriver. A fuel cache, a pressing shed - and boars.
 
+# DEEP 10-24 settings
+story fuse|Relay fuse|Placeable_Lantern_Metal|A ranger fuse for Relay Mouth, from the sunk barge.
+story relay|Relay switched on|Placeable_Lantern_Metal|One of the delta's three ranger relays, humming again.
+story rivercode|Route code|Note_Paper|The map screen's code: 4172.
+story route|River route|Note_Paper|The river people's route through the delta to the rise.
+note forksign Fork sign | RANGER RELAYS\n\nRELAY NORTH - up the river, past the cross, behind the bad vines.\nRELAY EAST - over the east arm. Lever on this side.\nRELAY MOUTH - by the landing. Its fuse went down with the barge.\n\nAll three on: the outpost's screen shows the route.
+prop relaym obj.name=relaym
+prop relaym beh.use=Fit the fuse and switch on Relay Mouth
+prop relaym if.use=!signal|relaym\ntake|story:fuse|1
+prop relaym on.use=signal||relaym\nshow|relaymlamp\ngive||story:relay*1\nmessage||The fuse seats with a snap. Relay Mouth hums and its lamp starts to turn.
+prop relaym else.use=message||Relay Mouth. The fuse holder is empty; the fork sign says the fuse went down with the barge.
+prop relaymlamp obj.name=relaymlamp
+prop relaymlamp beh.hidden=1
+prop eastbridge obj.name=eastbridge
+prop eastbridge beh.move=8.8,0,0
+prop eastbridge beh.moveTime=3
+prop eastbridge beh.moveMode=switch
+prop bridgelever obj.name=bridgelever
+prop bridgelever beh.use=Pull the bridge lever
+prop bridgelever if.use=!signal|bridge
+prop bridgelever on.use=signal||bridge\nopen|eastbridge\nmessage||Chains rattle. The drawbridge slides out across the east arm.
+prop relaye obj.name=relaye
+prop relaye beh.use=Switch on Relay East
+prop relaye if.use=signal|bridge\n!signal|relaye
+prop relaye on.use=signal||relaye\nshow|relayelamp\ngive||story:relay*1\nmessage||Relay East clicks over. Its lamp spins up.
+prop relaye else.use=message||Relay East is cold. Its feed cable runs back over the river to the drawbridge lever.
+prop relayelamp obj.name=relayelamp
+prop relayelamp beh.hidden=1
+prop northvines obj.name=northvines
+prop northvines on.use=hide|\nshow|relayn\nmessage||Black, blighted vines fall away. Behind them stands Relay North.
+prop relayn obj.name=relayn
+prop relayn beh.hidden=1
+prop relayn beh.use=Switch on Relay North
+prop relayn if.use=!signal|relayn
+prop relayn on.use=signal||relayn\nshow|relaynlamp\ngive||story:relay*1\nmessage||Relay North coughs and hums. Its lamp starts to turn.
+prop relaynlamp obj.name=relaynlamp
+prop relaynlamp beh.hidden=1
+prop mapscreen obj.name=mapscreen
+prop mapscreen beh.use=Read the delta map screen
+prop mapscreen if.use=signal|relaym\nsignal|relaye\nsignal|relayn
+prop mapscreen on.use=give||story:rivercode*1\nmessage||The screen flickers up: the delta, three green dots, and a line from the mouth to the rise. Under it: ROUTE 4172 - CRANE BOX.
+prop mapscreen else.use=message||A map screen of the delta, dark. Three relay dots, unlit. The fork sign by the river cross names them.
+prop cranepad obj.name=cranepad
+prop cranepad beh.use=Type the route code
+prop cranepad lock.code=4172
+prop cranepad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\ngive||story:route*1\nmessage||The strongbox opens: the river people's route, drawn on oilcloth, every channel up to the rise.
+prop cranepad else.use=message||A strongbox with a keypad, out on the end of the jib. The outpost's map screen knows the code.
 quest title=The Rivers
 quest intro=Three river arms into the jungle. Start at the river mouth.
 step reach|mouth|1|Go to the river mouth
@@ -198,6 +305,11 @@ step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe plans from the fuel cach
 step collect|story:fuelcan|3|Find three fuel cans: the west bank, the east arm's camp and the fuel cache
 step collect|story:pressed|1|Cut the vines by the pressing shed and fill the press
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from the pressing shed
+step collect|story:fuse|1|Dive to the sunk barge off the mouth for the relay fuse
+step collect|story:relay|3|Switch on the three ranger relays: Mouth, East (over the drawbridge) and North (behind the vines)
+step collect|story:rivercode|1|Read the route code on the outpost's map screen
+step reach|dl_top|1|Climb the timber port's crane on the east bluff
+step collect|story:route|1|Open the strongbox on the crane's jib with the route code
 step read|Ranger log 4|1|Read Ranger log 4 in the pressing shed
 quest done=Oda went up onto the rise. The trackers' tower sees the whole wood.
 quest reward=Leather*2;Mango*2

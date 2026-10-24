@@ -154,6 +154,41 @@ prop dview zone.radius=7
 prop dview zone.repeat=never
 prop dview zone.message=Five giant trees stand over the grove, their crowns above everything else on the island.
 
+# --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): Owl Hill and its fire lookout (climb, zipline down), the seed caravan in the bay (dive), the mother boar's den and the feeding trough (M5)
+# the climb: a mountain (trail winding up from bearing 300), a 8-storey climbing tower on its top, the summit box
+call vd_mount x=-58 z=40 top=22 r=24 a0=300 turns=1.25 hb=3
+call vd_tower x=-58 z=40 h0=22 lv=8 a=hgtw box=hgbox zal=hgtopz zid=hg_top msg="The seedkeepers' fire lookout on Owl Hill. A logbook nail, no logbook; scratched owls on every post."
+note hgbox Fire lookout box | SEEDKEEPERS - FIRE WATCH. Smoke over the trunks: ring the greenhouse bell. Smoke over the bay: that is the caravan people cooking again.
+loot hgbox Rope*3;Plank*4;Leather*1
+place ZiplinePath_Landmark hgzip at -53.03 38.28 h=43.05
+zipto hgzip -20 8
+# the dive: Caravan_Yellow_01 on the sea floor 11 m down, its crate, an air pocket
+call vd_dive x=62 z=-74 h=-11 yaw=140 obj="Caravan_Yellow_01" al=hgwreck crate=hgcrate zal=hgwz zid=hg_wreck msg="The seed caravan, rolled off the bay road and down. Its seed locker is still shut." air=hgair bub=hgbub
+note hgcrate Seed caravan's locker | Rows of waxed jars, most cracked. One is whole: the oldest seeds of the grove, labelled in three hands.
+loot hgcrate story:seedjar*1;Scrap*3;Bolt*2
+# the mother boar (RAFT_QUEST_MECHANICS SL11 3, M5): she sleeps across the mouth of her den in the hollow stump; the
+# trough by the path takes five red berries and she goes to it - or the player fights her.
+# UPGRADE-AFTER-MECH: M38 lure (Gap) - for now the trough hides her spawn and shows a second one at the trough.
+call ni8cave x=66 z=-24 h=2 yaw=180 al=hgdencave
+place Loot_ChestSmall hgdencavebox at 68.5 -29 h=2.45 sit yaw=200
+place Placeable_Lantern_Metal - at 63.4 -28 h=2.45 sit
+note hgdencavebox Den chest | Under the old sow's bedding: a seedkeeper's key on a leather loop, and what she dragged in.
+loot hgdencavebox story:denkey*1;Leather*3;Feather*4
+prop hgdencavebox loot.refill=0
+place Creature_Boar hgmother at 66 -19 ground
+prop hgmother creature.count=1
+prop hgmother creature.size=1.8
+prop hgmother creature.health=260
+prop hgmother creature.respawn=0
+place "Box Big" trough at 52 -6 ground sit yaw=30
+place Creature_Boar hgmotherfed at 53.5 -4 ground
+prop hgmotherfed creature.count=1
+prop hgmotherfed creature.size=1.8
+prop hgmotherfed creature.respawn=0
+call vinecache x=12 z=69 r=8 seed=11361 chest=hgvine vines=hgvinevines items=Rope*2;Nail*8;Seed_Pine*1
+prop hgvine note.title=Root-choked crate
+call vd_spot x=-35 z=61 al=hglook id=hg_view r=5 msg="From the north rocks the five trunks stand like pillars holding the sky up."
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Hollowtrunk Grove
 info author=Custom Islands
@@ -220,6 +255,17 @@ prop rootszone zone.id=roots
 prop rootszone zone.radius=3
 prop rootszone zone.message=The root hole. Warm air breathes up out of the dark.
 
+# DEEP 10-24 settings
+story seedjar|Old seed jar|Placeable_Lantern_Metal|The grove's oldest seeds, from the sunk seed caravan.
+story denkey|Seedkeeper's key|Placeable_Lantern_Metal|A seedkeeper's key on a leather loop, from the mother boar's den.
+prop trough obj.name=trough
+prop trough beh.use=Fill the feeding trough (5 red berries)
+prop trough if.use=!signal|fed\ntake|Berries_Red|5
+prop trough on.use=signal||fed\nhide|hgmother\nshow|hgmotherfed\nmessage||The berries thud into the trough. Somewhere a big sow grunts, gets up and comes trotting - past you, to the food.
+prop trough else.use=message||A feeding trough, licked clean. The seedkeepers kept the old sow sweet with berries: five, the board said.
+prop hgmother obj.name=hgmother
+prop hgmotherfed obj.name=hgmotherfed
+prop hgmotherfed beh.hidden=1
 quest title=The Hollow Trees
 quest intro=Trees as tall as towers. Find the Seedkeepers' greenhouse.
 step reach|greenhouse|1|Go to the Seedkeepers' greenhouse
@@ -232,6 +278,9 @@ step collect|story:pumppart|3|Find the pump's three parts in trunks 3, 4 and 5
 step collect|story:water|1|Fit the parts to the water tower's pump
 step blueprint|Blueprint_Storage_Large|1|Take the large storage plans from the seed store
 step open|Seed drawers|1|Open the seed drawers
+step reach|hg_top|1|Climb Owl Hill and its fire lookout
+step collect|story:seedjar|1|Dive to the seed caravan in the bay
+step collect|story:denkey|1|Get the key from the mother boar's den (fill her trough with five berries, or fight her)
 step read|Ranger log 6|1|Read Ranger log 6 in the seed store
 step reach|roots|1|Go down into the root hole
 quest done=Under the grove, the roots go on. Rootweave - band 600.
