@@ -40,6 +40,7 @@ namespace DynamicIslands
 			lines.Add("receiver " + (WorldRules.ShowOnReceiver ? "shown" : "hidden"));
 			lines.Add("unload " + WorldRules.UnloadDistance.ToString("F0", inv));
 			lines.Add("regrow " + WorldRules.RegrowDays);
+			lines.Add("animallooks " + AnimalLooks.Names[AnimalLooks.Current] + " caught " + AnimalLooks.Caught.ToString("X", inv));
 			string mode = "?";
 			try { mode = GameManager.GameMode.ToString(); } catch { }
 			lines.Add("gamemode " + mode);

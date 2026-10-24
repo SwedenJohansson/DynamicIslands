@@ -1478,7 +1478,7 @@ namespace DynamicIslands.Editor
 
 		internal static string QuestList(List<QuestCount.Quest> quests)
 		{
-			string daily = DailyQuest.JournalText() ?? "";
+			string daily = (DailyQuest.JournalText() ?? "") + AnimalLooks.JournalText();
 			if (quests.Count == 0) return daily + "No custom quests in this world yet. Islands with a quest count here when they come; a world plan's are counted from the start.";
 			var sb = new System.Text.StringBuilder(daily);
 			foreach (IGrouping<string, QuestCount.Quest> g in quests.GroupBy(q => q.Group))

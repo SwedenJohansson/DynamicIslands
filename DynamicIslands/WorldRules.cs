@@ -85,6 +85,7 @@ namespace DynamicIslands.Editor
 			MonsterDifficulty.Reset(newWorld);
 			BuildCost.Reset(newWorld);
 			BuildCostRefund.Reset(BuildCost.Current);
+			AnimalLooks.Reset(newWorld);
 			if (newWorld) Broadcast();
 		}
 
@@ -97,12 +98,12 @@ namespace DynamicIslands.Editor
 				if (int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out d)) worldRegrow = Mathf.Max(0, d);
 				return true;
 			}
-			return MonsterDifficulty.ReadLine(key, value) || BuildCost.ReadLine(key, value) || BuildCostRefund.ReadLine(key, value) || Survivors.ReadLine(key, value);
+			return MonsterDifficulty.ReadLine(key, value) || BuildCost.ReadLine(key, value) || BuildCostRefund.ReadLine(key, value) || Survivors.ReadLine(key, value) || AnimalLooks.ReadLine(key, value);
 		}
 
 		internal static IEnumerable<string> WriteLines()
 		{
-			IEnumerable<string> lines = MonsterDifficulty.WriteLines().Concat(BuildCost.WriteLines()).Concat(BuildCostRefund.WriteLines()).Concat(Survivors.WriteLines());
+			IEnumerable<string> lines = MonsterDifficulty.WriteLines().Concat(BuildCost.WriteLines()).Concat(BuildCostRefund.WriteLines()).Concat(Survivors.WriteLines()).Concat(AnimalLooks.WriteLines());
 			return worldRegrow >= 0 ? lines.Concat(new[] { "@regrow=" + worldRegrow.ToString(CultureInfo.InvariantCulture) }) : lines;
 		}
 
@@ -131,7 +132,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>True when the world file is needed for the rules alone.</summary>
-		internal static bool HasState { get { return Survivors.HasState || MonsterDifficulty.HasState || BuildCost.HasState || BuildCostRefund.HasState || worldRegrow >= 0 && worldRegrow != CustomIslandSpawner.RegrowDays; } }
+		internal static bool HasState { get { return Survivors.HasState || MonsterDifficulty.HasState || BuildCost.HasState || BuildCostRefund.HasState || AnimalLooks.HasState || worldRegrow >= 0 && worldRegrow != CustomIslandSpawner.RegrowDays; } }
 
 		public static string Describe() { return "monsters " + MonsterDifficulty.Describe(MonsterDifficulty.Current) + ", build cost " + BuildCost.Describe(BuildCost.Current); }
 
@@ -139,7 +140,7 @@ namespace DynamicIslands.Editor
 		/// the rescued survivors (Names, RF3).</summary>
 		internal static IslandNetMessage Message()
 		{
-			return new IslandNetMessage { Kind = IslandNetMessage.WorldRules, Index = MonsterDifficulty.Current, Count = BuildCost.Current, Data = HostSettingsData(), Name = BuildCostRefund.Encode(), Names = Survivors.Encode() };
+			return new IslandNetMessage { Kind = IslandNetMessage.WorldRules, Index = MonsterDifficulty.Current, Count = BuildCost.Current, Data = HostSettingsData() + AnimalLooks.Data(), Name = BuildCostRefund.Encode(), Names = Survivors.Encode() };
 		}
 
 		internal static void Broadcast()
@@ -164,6 +165,7 @@ namespace DynamicIslands.Editor
 			MonsterDifficulty.OnWorldReceived();
 			BuildCost.OnWorldReceived();
 			BuildCostRefund.Reset(0);
+			AnimalLooks.OnWorldReceived();
 			Survivors.Reset();
 			hostKnown = false;
 			worldRegrow = -1;
@@ -218,6 +220,7 @@ namespace DynamicIslands.Editor
 				else if (key == "unload") hostUnload = Mathf.Max(300f, v);
 				else if (key == "regrow") hostRegrow = Mathf.Max(0, Mathf.RoundToInt(v));
 				else if (key == "rdist") hostReceiverDistance = Mathf.Max(0f, v);
+				else AnimalLooks.FromHost(key, v); // (rare=, caught=: the rare animal looks)
 			}
 			hostKnown = true;
 			Debug.Log("[CUSTOM ISLANDS] [world rules] The host's settings: " + HostSettingsDescribe());
@@ -545,13 +548,14 @@ namespace DynamicIslands.Editor
 	static class NewWorldRulesBox
 	{
 		public const string PanelName = "CustomIslands_WorldRules";
-		public const float PanelHeight = 186f;
+		public const float PanelHeight = 248f;
 
-		static int? monsterChoice, buildChoice;
+		static int? monsterChoice, buildChoice, looksChoice;
 		/// <summary>The box shows the remembered choices again (a saved world was loaded after the box was changed).</summary>
-		internal static void Forget() { monsterChoice = buildChoice = null; }
+		internal static void Forget() { monsterChoice = buildChoice = looksChoice = null; }
 		static UIKit.SliderRow monsterSlider, buildSlider;
-		static Text monsterDetail, buildDetail;
+		static Text monsterDetail, buildDetail, looksDetail;
+		static readonly List<Button> looksButtons = new List<Button>();
 		static readonly List<Text> ticks = new List<Text>();
 
 		/// <summary>The monster level shown in the box (the last choice until it is moved).</summary>
@@ -567,6 +571,17 @@ namespace DynamicIslands.Editor
 			get { if (!buildChoice.HasValue) buildChoice = BuildCost.Default; return buildChoice.Value; }
 			set { buildChoice = BuildCost.Clamp(value); Refresh(); }
 		}
+
+		/// <summary>The rare animal looks level shown (the last choice until another is pressed).</summary>
+		public static int LooksLevel
+		{
+			get { if (!looksChoice.HasValue) looksChoice = AnimalLooks.Default; return looksChoice.Value; }
+			set { looksChoice = AnimalLooks.Clamp(value); Refresh(); }
+		}
+
+		/// <summary>The rare animal looks buttons (Normal, More, Lots) and their line (tests).</summary>
+		public static Button LooksButton(int level) { return level >= 0 && level < looksButtons.Count ? looksButtons[level] : null; }
+		public static string LooksText { get { return looksDetail != null ? looksDetail.text : null; } }
 
 		/// <summary>The sliders (tests move them as a player would); the build cost slider counts steps of 5 %.</summary>
 		public static Slider MonsterSlider { get { return monsterSlider != null ? monsterSlider.Slider : null; } }
@@ -681,6 +696,21 @@ namespace DynamicIslands.Editor
 			Heading(buildSlider);
 			buildDetail = Detail(panel, "BuildDetail", 44); // (three lines in the window's column)
 
+			// Rare animal looks: three buttons (Normal, More, Lots) and their line
+			RectTransform lrow = UIKit.Row(panel, 24f, 4f, "RareLooks");
+			Text lt = UIKit.Label(lrow, "RARE ANIMAL LOOKS", 13, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Bold, "Label");
+			UIKit.Heading(lt, 13);
+			UIKit.Size(lt.gameObject, 170);
+			looksButtons.Clear();
+			for (int i = 0; i < AnimalLooks.Names.Length; i++)
+			{
+				int level = i;
+				Button b = UIKit.Button(lrow, AnimalLooks.Names[i], () => { looksChoice = level; Refresh(); }, AnimalLooks.HelpText, -1, 24f, 12);
+				b.name = "RareLooks_" + AnimalLooks.Names[i];
+				looksButtons.Add(b);
+			}
+			looksDetail = Detail(panel, "RareLooksDetail", 30);
+
 			Refresh();
 			return panel;
 		}
@@ -740,6 +770,12 @@ namespace DynamicIslands.Editor
 				buildSlider.Value.text = BuildFormat(p);
 				buildDetail.text = BuildCost.DescriptionFor(p) + (p > 0 && GameManager.GameMode == GameMode.Creative ? " (Creative builds for free anyway.)" : "");
 			}
+			if (looksDetail != null)
+			{
+				int l = LooksLevel;
+				for (int i = 0; i < looksButtons.Count; i++) if (looksButtons[i] != null) UIKit.SetActive(looksButtons[i], i == l);
+				looksDetail.text = AnimalLooks.DescriptionFor(l);
+			}
 			WorldSettingsWindow.Show(); // (its summary and the box's button follow)
 		}
 	}
@@ -768,6 +804,8 @@ namespace DynamicIslands.Editor
 				BuildCost.Pending = p;
 				MonsterDifficulty.SaveDefault(l);
 				BuildCost.SaveDefault(p);
+				AnimalLooks.Pending = NewWorldRulesBox.LooksLevel;
+				AnimalLooks.SaveDefault(NewWorldRulesBox.LooksLevel);
 				Debug.Log("[CUSTOM ISLANDS] Creating a world with the monster difficulty " + MonsterDifficulty.Describe(l) + " and the build cost " + BuildCost.Describe(p));
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] New world rules: " + e); }
