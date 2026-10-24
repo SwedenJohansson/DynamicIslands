@@ -410,6 +410,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Creatures", e); }
 			try { GapFeatures.Tick(); }
 			catch (Exception e) { TickError("Gap features", e); }
+			try { MechFeatures.Tick(); }
+			catch (Exception e) { TickError("Quest mechanics", e); }
 			try { RaftColliderGuard.Tick(); }
 			catch (Exception e) { TickError("Raft colliders", e); }
 			try { QuestTracker.Tick(); QuestCount.Tick(); DailyQuest.Tick(); RogueShark.Tick(); StormDays.Tick(); }
@@ -1272,6 +1274,7 @@ namespace DynamicIslands
 					RaftStore.OnIslandReady(root, entry); // Raft's trading posts: network number, goods, what was sold
 					RaftVending.OnIslandReady(root, entry); // Raft's vending machines: network number, the package in the hatch
 					Behaviours.OnIslandReady(entry); // objects shown or hidden, doors open or closed, as saved
+					MechFeatures.OnIslandReady(entry); // pieces carried or moved where they were left (before the animals come: a moved boss spot)
 					ContentState.OnIslandReady(entry); // first: chests refill and zones re-arm before the creatures look at them
 					CreatureSpawner.OnIslandReady(entry);
 				}

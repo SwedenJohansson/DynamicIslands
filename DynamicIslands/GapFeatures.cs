@@ -448,7 +448,7 @@ namespace DynamicIslands.Editor
 			{
 				if (e.Root == null) continue;
 				foreach (CreatureSpawnPoint p in e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true))
-					if (p != null && p.Spawned.Contains(ai)) return ObjectProps.GetBool(p.Props, Shield, false) && BossPhases.InPhase(e, p);
+					if (p != null && p.Spawned.Contains(ai)) return (ObjectProps.GetBool(p.Props, Shield, false) && BossPhases.InPhase(e, p)) || MechFeatures.ShieldHolds(e, p);
 			}
 			return false;
 		}

@@ -100,7 +100,7 @@ namespace DynamicIslands.Editor
 				// (nothing to colour: zones are invisible in a world)
 				if (target.GameObjectName == ContentCatalog.AtmosphereZoneName) AtmosphereGroup(target);
 				else if (target.GameObjectName == ContentCatalog.SoundZoneName) SoundGroup(target);
-				else { ZoneGroup(target); HazardGroup(target); LootGroup(target, true); }
+				else { ZoneGroup(target); HazardGroup(target); MechZoneGroup(target); LootGroup(target, true); }
 				BehaviourGroup(target);
 				return;
 			}
@@ -123,6 +123,7 @@ namespace DynamicIslands.Editor
 				if (Survivors.IsCage(target.GameObjectName)) SurvivorGroup(target);
 			}
 			GapGroup(target, kind);
+			MechGroup(target, kind);
 			BehaviourGroup(target);
 			ColourGroup(target, kind != null);
 		}

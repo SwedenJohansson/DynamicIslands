@@ -44,6 +44,7 @@ namespace DynamicIslands.Editor
 			{ "journal", "journal page" }, { "wait", "wait" }, { "character", "unlock character" },
 			{ "playsound", "play sound/music" }, { "stopsound", "stop sound" }, { "camera", "camera moment" },
 			{ "suit", "protective suit" }, { "hit", "hurt creatures" },
+			{ "carry", "pick up (carry)" }, { "collapse", "collapse" }, { "moveto", "move to marker" },
 		};
 
 		/// <summary>What each action does (the action list's lines).</summary>
@@ -60,6 +61,9 @@ namespace DynamicIslands.Editor
 			{ "camera", "The camera of players near a marker object moves there and looks at an object for some seconds (Esc skips), then comes back" },
 			{ "suit", "The player who set it off wears a protective suit for some seconds: acid and fumes zones don't hurt them" },
 			{ "hit", "The animals of a creature spot with that name lose a share of their health (an explosive barrel, a falling pillar): the way to hurt a boss whose phase only blasts hurt" },
+			{ "carry", "The player picks the object up and carries it (no jumping or ziplines; the use key puts it down in front, a hit drops it). Empty name = this object" },
+			{ "collapse", "Objects with a name rumble, shake and fall away, then are gone for good (a bridge, a floor, a cave mouth) - over some seconds" },
+			{ "moveto", "Objects with a name travel to a marker object's place over some seconds, carrying players on them (a cart to a ledge; a creature spot - its animals follow to the next arena)" },
 		};
 
 		/// <summary>What each check asks (the check list's lines).</summary>
@@ -450,7 +454,7 @@ namespace DynamicIslands.Editor
 				a.Verb = verb;
 				if (a.Verb == "wait" && a.Seconds <= 0f) a.Arg = "5";
 				Rebuild();
-			}, 120, "What happens: show, hide, show/hide, open, close, open/close, say, give items, sound, teleport to, send signal, journal page, wait, unlock character, play sound/music, stop sound, camera moment, protective suit, hurt creatures", 28f, 12);
+			}, 120, "What happens: show, hide, show/hide, open, close, open/close, say, give items, sound, teleport to, send signal, journal page, wait, unlock character, play sound/music, stop sound, camera moment, protective suit, hurt creatures, pick up (carry), collapse, move to marker", 28f, 12);
 			if (ObjAction.HasTarget(a.Verb))
 			{
 				Field(row, a.Verb == "camera" ? "marker (empty = itself)" : "name (empty = itself)", a.Target, a.Verb == "camera" || a.Verb.EndsWith("sound") ? 120 : 170,
@@ -473,7 +477,7 @@ namespace DynamicIslands.Editor
 			else if (a.Verb == "camera") CameraFields(row, a);
 			else if (ObjAction.HasArg(a.Verb))
 			{
-				string ph = a.Verb == "message" ? "What players read" : a.Verb == "give" ? "items (\u2026 to choose)" : a.Verb == "sound" ? "event:/... (\u2026 to choose)" : a.Verb == "journal" ? "What the page says" : a.Verb == "suit" ? "seconds (120)" : a.Verb == "hit" ? "% of their health (25)" : "signal name (world plans wait for it)";
+				string ph = a.Verb == "message" ? "What players read" : a.Verb == "give" ? "items (\u2026 to choose)" : a.Verb == "sound" ? "event:/... (\u2026 to choose)" : a.Verb == "journal" ? "What the page says" : a.Verb == "suit" ? "seconds (120)" : a.Verb == "hit" ? "% of their health (25)" : a.Verb == "collapse" ? "seconds (3)" : a.Verb == "moveto" ? "marker name, seconds (4)" : "signal name (world plans wait for it)";
 				Field(row, ph, a.Arg, -1, a.Verb == "signal" ? "World plans and island rules can wait for it: \"signal sent at\" this island" : a.Verb == "journal" ? "Written into the crew's journal (J in a world)" : "", v => a.Arg = v.Trim());
 				if (a.Verb == "give") UIKit.Button(row, "\u2026", () => { Keep(); ItemPickerWindow.OpenFor(() => a.Arg, v => { a.Arg = v; }); StartCoroutine(RebuildWhenClosed()); }, "Choose Raft's items or the island's story items", 28, 28f, 12);
 				if (a.Verb == "sound") UIKit.Button(row, "\u2026", () => { Keep(); SoundPickerWindow.OpenFor(v => { a.Arg = v; Rebuild(); }); }, "Choose one of Raft's sounds (you can listen first)", 28, 28f, 12);

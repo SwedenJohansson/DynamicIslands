@@ -68,6 +68,7 @@
     <Compile Include="DevTestsGapsB.cs" />
     <Compile Include="DevTestsSize.cs" />
     <Compile Include="DevTestsGapsC.cs" />
+    <Compile Include="DevTestsMech.cs" />
     <Compile Include="DevTestsContent.cs" />
     <Compile Include="DevTestsStableIds.cs" />
     <Compile Include="DevTestsDirector.cs" />
@@ -162,6 +163,8 @@
     <Compile Include="TriggerZone.cs" />
     <Compile Include="GapFeatures.cs" />
     <Compile Include="ObjectInspectorGaps.cs" />
+    <Compile Include="MechFeatures.cs" />
+    <Compile Include="ObjectInspectorMech.cs" />
     <Compile Include="WorldDirector.cs" />
     <Compile Include="AnimalLooks.cs" />
     <Compile Include="WorldRandomizer.cs" />

@@ -13,6 +13,7 @@ What players do on an island: quests, behaviours and events, trigger zones, note
 | `BehaviourWindow.cs` | Behaviour & events (object) and Island events editor |
 | `TriggerZone.cs` | Zone: message, items, quest `reach`, `enter` event, air pocket, hazard tick |
 | `GapFeatures.cs` | Hazards (zone.hazard/damage/safe), DarknessOverlay, GapChecks (wears/holds), zap, repel, `hit` action, BossShieldPatch; UI in `ObjectInspectorGaps.cs` |
+| `MechFeatures.cs` | zone.push/pulse/stack (PushTick from TriggerZone.Update), `carry` (host owns holders; CarryJumpPatch/CarryZiplinePatch), beh.lure/lureItem (Expand in Behaviours.Attach), `collapse`/`moveto` shared actions, boss.shieldIf; places at state 0x5000000+i*4; kind 39; UI in `ObjectInspectorMech.cs` |
 | `LootCrate.cs` | `ContentState` (used state: shared, saved, refilled) and `LootCrate` (chests) |
 | `CustomNote.cs` | `CustomNote` (readable note) and `NoteReader` (the note on screen) |
 | `IslandInfo.cs` | `IslandProps`, `IslandSettings`, `IslandRules.RegrowDays`, `IslandInfo` (arrival banner, zone messages) |

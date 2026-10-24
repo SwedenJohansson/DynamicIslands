@@ -46,7 +46,7 @@ namespace DynamicIslands.Editor
 			var words = new[]
 			{
 				new[] { "StormSeas", "storm seas" }, new[] { "GlowSea", "the bioluminescent sea" }, new[] { "Upgrade", "extra upgrades" }, new[] { "StoryChain", "the story chain (your islands on the Receiver)" }, new[] { "StoryOrder", "story islands in a new order" },
-				new[] { "Blueprint", "scrambled blueprints" }, new[] { "PrivateStorage", "private storages" }, new[] { "Ghost", "ghost rafts" },
+				new[] { "Carry", "carrying pieces (no jumping or ziplines while carrying)" }, new[] { "Blueprint", "scrambled blueprints" }, new[] { "PrivateStorage", "private storages" }, new[] { "Ghost", "ghost rafts" },
 				new[] { "Level", "the level up system" }, new[] { "Stat", "the level up system" }, new[] { "Monster", "monster difficulty" },
 				new[] { "BuildCost", "build cost" }, new[] { "Randomizer", "the world randomizer" }, new[] { "WorldSettings", "the World settings window" },
 				new[] { "NewWorld", "the New Game box" }, new[] { "NewGame", "the New Game box" }, new[] { "Save", "saving custom islands with the world" },

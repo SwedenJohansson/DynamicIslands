@@ -230,6 +230,7 @@ namespace DynamicIslands.Editor
 			StoryBook.Reset();
 			PlayerPlaces.Reset();
 			Claims.Reset();
+			MechFeatures.Reset();
 			WorldRandomizer.Reset();
 			PlayerLevels.Reset();
 			WorldOptions.Reset();

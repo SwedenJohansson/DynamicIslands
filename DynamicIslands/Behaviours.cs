@@ -47,10 +47,10 @@ namespace DynamicIslands.Editor
 		public const string Name = "obj.name", Spin = "beh.spin", Bob = "beh.bob", BobTime = "beh.bobTime", Move = "beh.move", Turn = "beh.turn",
 			MoveTime = "beh.moveTime", MoveMode = "beh.moveMode", Hidden = "beh.hidden", Use = "beh.use", Collision = "col.mode";
 		public const string EventPrefix = "on.";
-		public static readonly string[] ObjectEvents = { "use", "enter", "read", "open", "defeat", "laser", BossPhases.Event };
+		public static readonly string[] ObjectEvents = { "use", "enter", "read", "open", "defeat", "laser", BossPhases.Event, MechFeatures.StackEvent };
 		public static readonly string[] IslandEvents = { "arrive", "quest" };
-		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character", "playsound", "stopsound", "camera", "suit", "hit" };
-		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal", "playsound", "stopsound", "camera", "hit" };
+		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character", "playsound", "stopsound", "camera", "suit", "hit", "carry", "collapse", "moveto" };
+		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal", "playsound", "stopsound", "camera", "hit", "collapse", "moveto" };
 		public const string CheckPrefix = "if.", ElsePrefix = "else.";
 		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest", "wears", "holds" };
 		public static readonly string[] States = { "open", "closed", "shown", "hidden" };
@@ -90,7 +90,11 @@ namespace DynamicIslands.Editor
 		{
 			var list = new List<KeyValuePair<string, string>>();
 			if (ContentCatalog.IsHelper(objectName)) return list;
-			if (objectName == ContentCatalog.TriggerZone) list.Add(new KeyValuePair<string, string>("enter", "a player walks into the zone"));
+			if (objectName == ContentCatalog.TriggerZone)
+			{
+				list.Add(new KeyValuePair<string, string>("enter", "a player walks into the zone"));
+				if (MechFeatures.IsStack(p)) list.Add(new KeyValuePair<string, string>(MechFeatures.StackEvent, "enough pieces are stacked in it (" + MechFeatures.DescribeStack(p) + ")"));
+			}
 			else if (ContentCatalog.IsCreature(objectName))
 			{
 				list.Add(new KeyValuePair<string, string>("defeat", "all its animals are defeated"));
@@ -134,8 +138,8 @@ namespace DynamicIslands.Editor
 		public bool Shared { get { return BehaviourProps.SharedVerbs.Contains(Verb); } }
 
 		/// <summary>Needs a target object (by name).</summary>
-		public static bool HasTarget(string verb) { return verb == "show" || verb == "hide" || verb == "toggle" || verb == "open" || verb == "close" || verb == "switch" || verb == "teleport" || verb == "playsound" || verb == "stopsound" || verb == "camera" || verb == "hit"; }
-		public static bool HasArg(string verb) { return verb == "suit" || verb == "hit" || verb == "message" || verb == "give" || verb == "sound" || verb == "signal" || verb == "journal" || verb == "wait" || verb == "character" || verb == "playsound" || verb == "stopsound" || verb == "camera"; }
+		public static bool HasTarget(string verb) { return verb == "show" || verb == "hide" || verb == "toggle" || verb == "open" || verb == "close" || verb == "switch" || verb == "teleport" || verb == "playsound" || verb == "stopsound" || verb == "camera" || verb == "hit" || verb == "carry" || verb == "collapse" || verb == "moveto"; }
+		public static bool HasArg(string verb) { return verb == "suit" || verb == "hit" || verb == "message" || verb == "give" || verb == "sound" || verb == "signal" || verb == "journal" || verb == "wait" || verb == "character" || verb == "playsound" || verb == "stopsound" || verb == "camera" || verb == "collapse" || verb == "moveto"; }
 
 		/// <summary>A wait's seconds (0..3600).</summary>
 		public float Seconds
@@ -167,6 +171,9 @@ namespace DynamicIslands.Editor
 				case "camera": return CameraMoment.Describe(Target, Arg);
 				case "suit": return "put a protective suit on the player (" + (Arg.Trim().Length > 0 ? Arg.Trim() : "120") + " s)";
 				case "hit": return "hurt the animals of " + t + " (" + (Arg.Trim().Length > 0 ? Arg.Trim().TrimEnd('%') : "25") + "% of their health; a shielded boss too)";
+				case "carry": return "the player picks up " + t + " and carries it (no jumping or ziplines; the use key or a hit drops it)";
+				case "collapse": return "make " + t + " rumble and collapse (" + (Arg.Trim().Length > 0 ? Arg.Trim() : "3") + " s), then it is gone";
+				case "moveto": return MechFeatures.DescribeMoveTo(t, Arg);
 				case "signal": return "send the signal '" + Arg + "' (world plans can wait for it)";
 				case "journal": return "write \"" + (Target.Length > 0 ? Target : "a page") + "\" in the journal";
 				case "wait": return "wait " + Seconds.ToString("0.#", CultureInfo.InvariantCulture) + " s, then...";
@@ -496,6 +503,8 @@ namespace DynamicIslands.Editor
 		public static void Attach(GameObject go, string objectName, IDictionary<string, string> props, int index)
 		{
 			if (go == null || props == null || props.Count == 0) return;
+			// (a lure with an item, a piece to carry: their use lines, as if the builder had written them - MechFeatures)
+			props = MechFeatures.Expand(objectName, props);
 			IslandObjectRef r = go.AddComponent<IslandObjectRef>();
 			r.Index = index;
 			r.ObjectName = objectName;
@@ -569,16 +578,34 @@ namespace DynamicIslands.Editor
 		static void Apply(IslandWorldState.Entry e, int index, bool visible, bool open)
 		{
 			IslandObjectRef def = RefsOf(e).FirstOrDefault(r => r.Index == index);
-			bool defaultVisible = def == null || !BehaviourProps.StartsHidden(def.Props);
 			// (a copy not loaded here can't say how the object was placed: its state is kept as it is, not dropped as "as placed"
 			// - a bridge shown while a player's copy was away came back hidden when it loaded - AU63)
-			if (def != null && visible == defaultVisible && !open) e.State.Remove(StateBase + index);
-			else e.State[StateBase + index] = new ObjectState { Active = visible, Yield = open ? 1 : 0, Day = Today };
+			Store(e, index, def, visible, open);
 			if (def == null) return;
 			if (def.gameObject.activeSelf != visible) def.gameObject.SetActive(visible);
 			IslandBehaviour b = def.GetComponent<IslandBehaviour>();
 			if (b != null) b.Target = open ? 1f : 0f;
 		}
+
+		static void Store(IslandWorldState.Entry e, int index, IslandObjectRef def, bool visible, bool open)
+		{
+			bool defaultVisible = def == null || !BehaviourProps.StartsHidden(def.Props);
+			if (def != null && visible == defaultVisible && !open) e.State.Remove(StateBase + index);
+			else e.State[StateBase + index] = new ObjectState { Active = visible, Yield = open ? 1 : 0, Day = Today };
+		}
+
+		/// <summary>An object's shown/open state kept (saved, for joiners) without touching the object itself: a collapse
+		/// hides it at the end of its own animation, on every machine (MechFeatures).</summary>
+		internal static void StoreOnly(IslandWorldState.Entry e, int index, bool visible, bool open)
+		{
+			Store(e, index, RefsOf(e).FirstOrDefault(r => r.Index == index), visible, open);
+		}
+
+		/// <summary>Whether an object is shown and open, as its state says (shown/hidden as placed when nothing is saved).</summary>
+		internal static void StateNow(IslandWorldState.Entry e, IslandObjectRef r, out bool visible, out bool open) { StateOf(e, r, out visible, out open); }
+
+		/// <summary>The objects an action works on (by name; empty or "self" = the object itself).</summary>
+		internal static List<IslandObjectRef> TargetsOf(IslandWorldState.Entry e, int index, string target) { return Targets(e, index, target); }
 
 		/// <summary>From the network (the host changed an object).</summary>
 		public static void ApplyRemote(int islandId, int index, int bits)
@@ -1084,6 +1111,8 @@ namespace DynamicIslands.Editor
 			foreach (ObjAction a in actions.Where(x => x.Shared))
 			{
 				if (a.Verb == "hit") { GapFeatures.HitCreatures(e, Targets(e, index, a.Target), a.Arg); continue; }
+				if (a.Verb == "collapse") { MechFeatures.HostCollapse(e, Targets(e, index, a.Target), a.Arg); continue; }
+				if (a.Verb == "moveto") { MechFeatures.HostMoveTo(e, index, Targets(e, index, a.Target), a.Arg); continue; }
 				if (a.Verb == "signal")
 				{
 					int key = SignalKey(a.Arg);
@@ -1146,6 +1175,10 @@ namespace DynamicIslands.Editor
 						case "suit":
 							if (messagesOnly) break;
 							Hazards.PutOnSuit(a.Arg);
+							break;
+						case "carry":
+							if (messagesOnly) break;
+							MechFeatures.AskCarry(e, Targets(e, index, a.Target).FirstOrDefault(r => r.gameObject.activeInHierarchy));
 							break;
 						case "message":
 							LastMessage = a.Arg;
