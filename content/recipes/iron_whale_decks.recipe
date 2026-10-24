@@ -3,7 +3,7 @@
 # engine room, the boiler hall, the propeller shaft) under two cabins (the captain's room, the officers' galley), and
 # the stern mast standing up out of the sea with the Whale's wind turbine on it - the only part above water. Air
 # pockets in the boiler hall, the shaft and the captain's room; anglers in the dark. Captain Hedda Brask sits in a cage
-# in her own sealed room, on her rations. Quest "The Engine Decks" (15 steps; DEEP 10-24: the propeller trench and the funnel at the end): the mast, the wind turbine's plans, the
+# in her own sealed room, on her rations. Quest "The Engine Decks" (17 steps; DEEP 10-24: the propeller trench and the funnel at the end): the mast, the wind turbine's plans, the
 # boiler hall's air, the captain's log, three anglers, the advanced battery's and the advanced headlight's plans, the
 # shaft's air, the captain's room (the keycard is in the chief engineer's locker), Hedda's account (the plan's
 # done-when, step 10), the electric grill's plans (the galley), the main breaker (the bow's lights come on).
@@ -110,6 +110,12 @@ place Loot_Chest galley at -1.2 3.5 y=0.1 sit yaw=180
 # REDO 10-24: the officers' safe - the Bow's mess code (4127) opens it too [optional]
 place Loot_Chest officersafe at -5.4 1.2 y=0.1 sit yaw=90
 place RT_PowerBox galleypad at -5.95 0 y=1.2 yaw=90
+# story pass 10-24: the radio corner - the chopped cable (the hatchet still in it) and Officer Sund at the switch
+place Placeable_Chair_Basic - at -3.4 -3.4 y=0.1 sit yaw=200
+place UT_ElectricCable01 radiocable at -1.6 -3.6 y=0.1 sit yaw=90
+place Note_Paper sundnote at -3.4 -2.5 y=0.1 drop yaw=160
+place Note_Paper cablenote at -1.6 -2.7 y=0.1 drop yaw=30
+place Zone_Trigger radiozone at -2.5 -3 y=1
 pop
 prop whalehull tint.color=#5a2a22
 prop whalehull tint.amount=0.55
@@ -142,7 +148,7 @@ place "Box Small" dcampbox at 5.6 35.6 ground sit
 place Note_Paper dnote at 5.6 35.6 ground y=0.7 drop yaw=30
 place Loot_ChestSmall dcamp at 7.6 37.1 ground sit yaw=37
 call airpocket x=3.1 z=33.6 id=iron_whale_decks_dair al=dairzone bub=dairbub r=2.5 msg="Air trapped in a diver's bell-tent. Breathe."
-note dnote Diver's slate | A slate tied to a box:\n\nCOLD. TOO COLD FOR LONG DIVES.\nAIR IN THE ROOMS ONLY.\nGET OUT AT THE FIRST SHIVER.
+note dnote Diver's slate | A SLATE TIED TO A BOX - B. EKLUND, SHIP'S DIVER\n\nCold. Too cold for long dives. I tried singing to keep warm and a seal came to listen, which was flattering, and then left, which was honest.\nThere is air in the rooms only - under the boilers' hood, up in the shaft tunnel, in the captain's cabin. Nowhere else. Count your strokes and get out at the first shiver.\nThe captain is still in there. She knocks on the hull at seven every morning, three short and one long, so we know she is alive. I knock back with a spanner.\nIf this slate is still here, I went in after her and did not come out. Leave a lamp on the mast for me anyway.
 note dcamp Diver's cache | A diver's spare kit, wired shut against the current.
 loot dcamp Rope*2;Glass*3;Plastic*4
 prop dcamp loot.refill=0
@@ -150,7 +156,7 @@ place TP_SnowVehicle01 dvan at -6.1 -38.5 ground yaw=157
 prop dvan tint.color=#8a9aa6
 prop dvan tint.amount=0.5
 place Loot_ChestSmall dwreckchest at -10.1 -35.5 ground sit yaw=97
-note dwreckchest Frozen chest | A chest frozen to the runner: wool, rope and a tin of nails.
+note dwreckchest Frozen chest | Frozen to the runner: wool, rope, a tin of nails.
 loot dwreckchest Wool*3;Rope*2;Nail*8
 prop dwreckchest loot.refill=0
 call hatchcache x=38.5 z=-6.1 r=15 seed=12691 alias=dhatch chest=dhatchchest items=MetalIngot*2;Wool*3;Bolt*2
@@ -168,12 +174,12 @@ prop dview zone.message=The stern lies on the seabed below, dark red, its rooms 
 
 
 # --- DEEP 10-24: the propeller trench, the funnel, the stokers' cave ---
-note trenchchest Propeller locker | The shaft crew's locker, thrown clear when the screw tore loose: spanners, a lamp, a tin of grease.
+note trenchchest Propeller locker | The shaft crew's locker, thrown clear: spanners, a lamp, grease.
 loot trenchchest MetalIngot*2;CopperIngot*2;TitaniumOre*1
-note funnelchest Funnel locker | The fireman's locker, bolted inside the funnel's lip: dry, out of the sea, untouched.
+note funnelchest Funnel locker | The fireman's locker inside the funnel's lip: dry and untouched.
 loot funnelchest MetalIngot*3;Bolt*3;TradeToken*2
-note stokertally Stoker's tally | STOKER'S TALLY\n\nCoal in: forty sacks. Coal out: thirty-eight.\nThe two good sacks are in the cave - the Chief doesn't know.\nIf she ever goes down, don't swim for the hatches. Go up the funnel. It always stands.
-note stokerchest Stokers' stash | The stokers' stash under the coal sacks: a kettle, tins, a flask.
+note stokertally Stoker's tally | STOKER'S TALLY - O. BERG, LEADING STOKER\n\nCoal in: forty sacks. Coal out: thirty-eight. The two good sacks are in the cave, and the Chief does not know, and if the Chief is reading this, hello, Chief, it was the cook.\nWe fed her day and night when the ice came. She drank coal like a sailor drinks on shore leave and she still could not shove the ridge.\nThe stern will go. Every stoker knows the sound a hull makes before it lets go, a long groan like a cow in a cold barn. I heard it twice last night.\nIf she ever goes down, do not swim for the hatches - they jam. Go up the funnel. The funnel always stands. It is the only honest thing on a ship.
+note stokerchest Stokers' stash | Under the coal sacks: a kettle, tins, a flask.
 loot stokerchest Scrap*3;Rope*2;Raw_GenericMeat*2
 prop stokerchest loot.refill=0
 prop treasure12801 treasure.loot=TitaniumOre*1;CopperOre*2;MetalOre*2
@@ -194,13 +200,19 @@ story galleycode|The officers' safe code|Placeable_Lantern_Metal|The mess code o
 story breaker|The main breaker|Placeable_Lantern_Metal|The Whale's main breaker, thrown: her lights burn again from stern to bow.
 story heddakey|Hedda's cage key|Placeable_Lantern_Metal|The key to the cage in the captain's room, from her strongbox.
 
-note captainslog40 Captain's log, day 40 | THE IRON WHALE - CAPTAIN'S LOG\n\nDay 40. The stern went in the night - she broke at the ridge like a biscuit. The crew went forward over the ice to the bow. I stayed: the charts are here, and the vault's bearings with them.\nI've locked myself in my room. There is air, and rations for a while. The keycard is in the chief's locker - whoever comes, come.\n\n- H. Brask
-note heddasaccount Hedda Brask's account | (written small, on the back of a chart)\n\nThe flotilla city went quiet first. Saga Drift - nine ships lashed together, the best radio on the white sea. One day: nothing.\nThen the Whale was ordered north, to the Coldhold - the vault under the glacier. The order came on Saga's band. We followed it, and the ice took us.\nGo to Saga Drift, 900. Find out who gave that order.\n\n- Hedda Brask, master of the Iron Whale
-note enginestore Engine store | The engine room's store: the advanced battery's plans, cells packed in wax.
-note chiefslocker Chief engineer's locker | The chief engineer's locker: the advanced headlight's plans, a spanner set - and the captain's keycard on a lanyard.
-note shaftbox Shaft box | A box bolted to the shaft tunnel's wall: tools for the stern gland, iron for patches.
-note galley Officers' galley | The officers' galley locker: the electric grill's plans, "for when the stove is gone". A card taped inside: SAFE = SAME AS THE MESS.
+note captainslog40 Captain's log, day 40 | THE IRON WHALE - CAPTAIN'S LOG\n\nDay 40. The stern went in the night - she broke at the ridge like a biscuit. The crew went forward over the ice to the bow. I stayed: the charts are here, and the vault's bearings with them, and the hand key, and Ylva.\nLunde shouted at me through the hatch for an hour. He has a good voice for shouting. I told him a captain stays with the part of her ship that still has a radio.\nI've locked myself in my room. There is air, and rations for a while. The keycard is in the chief's locker - whoever comes, come. Bring something hot. Bring anything at all.\n\n- H. Brask
+note heddasaccount Hedda Brask's account | (written small, on the back of a chart)\n\nThe flotilla city went quiet first. Saga Drift - nine ships lashed together, the best radio on the white sea. One day: nothing. Then the Steamvent band, then the relay. The Coldhold said keep silent, and everyone did.\nI did not. Ylva and I tapped short bursts on the hand key - a few seconds, never on the hour - so the vault could not fix us. If you heard a woman reading the ice on the air, that was me. I sent those fragments. I would send them again.\nThe courier came aboard that week. I gave him my last coffee. Two nights later the aerial was cut and the stern cable chopped through.\nGo to Saga Drift, 900. Find out who gave the order.\n\n- Hedda Brask, master of the Iron Whale
+note enginestore Engine store | Engine room store: the advanced battery's plans, cells packed in wax.
+note chiefslocker Chief engineer's locker | Chief's locker: headlight plans, spanners, the captain's keycard on a lanyard.
+note shaftbox Shaft box | Bolted to the shaft wall: stern gland tools, iron for patches.
+note galley Officers' galley | Officers' galley: the grill's plans. Taped inside: SAFE = SAME AS THE MESS.
 note officersafe Officers' safe | The officers' safe: their pay, a spare cell, copper wire.
+note sundnote The radio officer | (on a signal pad, in pencil, by the switch) - Y. SUND, RADIO OFFICER\n\nDay 39. The bow's aerial was cut on the 31st and the stern cable chopped the same night, so I am working the hand key into the stern mast's wire, which is held on with a bootlace and prayer. The captain taps; I keep the battery warm inside my coat. It is the most romantic thing I have ever done with a battery.\nThe hull groans every hour now. The stokers say that means she will go soon. Stokers say a lot of things.\nIf she goes, I will hold this switch down until the last burst is out. Somebody on 900 might still be listening. Somebody on the ice might hear the captain and come.\nTell my sister the cards are in my bunk. All forty-one.
+note cablenote Radio cable, chopped | CHIEF'S TAG, TIED TO THE CABLE - M. DAHL, CHIEF ENGINEER\n\nFound like this the night of the 31st, by the light of my pipe. The stern's radio cable chopped through in two blows, and the hatchet still in it - left behind in a hurry, like a man who heard my boots on the ladder.\nIt is not one of ours. Our axes are red and stamped WHALE. This one is old and loved, its handle carved like a dog's head, ears back, worn smooth by somebody's thumb.\nI have not pulled it out. The captain says leave it, so whoever owns it knows we have seen it.\nThe order to keep silent came on Saga Drift's band, on 900. If you want to know who is behind this, start there.
+prop radiozone zone.id=radio_corner
+prop radiozone zone.radius=2.5
+prop radiozone zone.repeat=never
+prop radiozone zone.message=The radio corner. Officer Sund sits at the switch, her hand still on it, long dead. Beside her, a hatchet in the cable.
 loot officersafe TradeToken*5;Battery*1;CopperIngot*3;Bolt*2
 prop officersafe loot.refill=0
 prop officersafe obj.name=officersafe
@@ -211,7 +223,7 @@ prop galleypad beh.use=Type the officers' safe code
 prop galleypad lock.code=4127
 prop galleypad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The keypad beeps. The officers' safe opens.\nsignal||galleycode\ngive||story:galleycode*1
 prop galleypad else.use=message||Four digits. The card in the galley locker says: same as the mess.
-note mastbox Mast box | The mast's box, iced over: the wind turbine's plans, the Whale's own design.
+note mastbox Mast box | The mast's box, iced over: the wind turbine's plans.
 loot enginestore Blueprint_BatteryAdvanced*1;story:fuse*1;Battery*1;CopperIngot*2
 prop enginestore loot.refill=0
 loot chiefslocker Blueprint_HeadLight_Advanced*1;story:raft-Tangaroa_KeyCard*1;story:fuse*1;Bolt*3
@@ -326,6 +338,8 @@ step blueprint|Blueprint_HeadLight_Advanced|1|Take the advanced headlight's plan
 step reach|shaft|1|Swim on into the shaft tunnel's air
 step open|Captain's room|1|Open the captain's room with the chief's keycard
 step read|Hedda Brask's account|1|Read Hedda Brask's account
+step read|The radio officer|1|Find the radio officer at her switch, next door in the officers' galley
+step read|Radio cable, chopped|1|Look at the chopped radio cable beside her
 step blueprint|Blueprint_ElectricGrill|1|Take the electric grill's plans from the officers' galley
 step collect|story:fuse|3|Find the three breaker fuses (engine store, chief's locker, shaft box)
 step collect|story:breaker|1|Throw the main breaker in the engine room

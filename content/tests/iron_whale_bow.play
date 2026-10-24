@@ -1,5 +1,5 @@
-# The Iron Whale - Bow (CIPlay iron_whale_bow): the ramp, the roster, the water plant, the zipline to the crane, the crane
-# box, the captain's log, the galley, the mess safe (keypad 4127), the cargo office (uncovers the hatch), the hatch.
+# The Iron Whale - Bow (CIPlay iron_whale_bow): the ramp, the roster, the water plant, the captain's log, the mess safe (keypad
+# 4127), the galley, the cut aerial lead, the zipline to the crane, the crane box, the cargo office (uncovers the hatch), the hatch.
 island The Iron Whale - Bow
 offset 0 0
 expect step 0
@@ -12,44 +12,51 @@ expect step 2
 open Water plant
 wait 3
 expect step 3
-zone crane
-expect step 4
-open Crane box
-wait 3
-expect step 5
 read Captain's log, day 1
-expect step 6
-open Galley locker
-wait 3
-expect step 7
+expect step 4
 open Mess safe
 expect message locked
 code messpad 4127
 expect story messcode 1
 open Mess safe
 wait 3
+expect step 5
+open Galley locker
+wait 3
+expect step 6
+read Post for H. Brask
+read The cook's complaint
+zone foredeck
+read Aerial lead, cut
+expect step 7
+zone crane
 expect step 8
+open Crane box
+wait 3
+expect step 9
 open Cargo office
 wait 3
 # DEEP 10-24: the hatch is iced over - the Crane Ridge, the cab, the hook's lever
 expect hidden hatchzone
 expect shown hatchice
-expect step 9
-zone crane_foot
 expect step 10
-zone crane_cab
+zone crane_foot
 expect step 11
+zone crane_cab
+expect step 12
 open Crane cab locker
+read Crane driver's last shift
 use cranelever
 expect story hookdrop 1
 expect hidden hatchice
 expect shown hatchzone
-expect step 12
+expect step 13
 use cranelever
 expect message hook is down
 zone hatch
 expect done
 # the extras: the whalers' cave and ruin, the sunk lifeboat, two treasures
+read Ice survey, sheet 4
 zone whalers_cave
 read Whalers' tally
 open Whalers' pots

@@ -3,7 +3,7 @@
 # rust-red hull (radio tower rooms tinted rust, three long rooms on the lower deck, the mess and galley above, the open
 # foredeck with the mast), her prow on the ice. The water plant and the cargo office on the lower deck, the cargo hatch
 # down to her flooded engine decks (the next island); the crew mess with its vending machine and a safe, the galley; a
-# zipline from the mast's crow's nest to the crane out on the ice. Quest "Boarding the Whale" (13 steps): the ramp, the
+# zipline from the mast's crow's nest to the crane out on the ice. Quest "Boarding the Whale" (14 steps): the ramp, the
 # crew roster, the water tank's plans, the zipline to the crane, the water pipe's plans, the captain's log, the electric
 # purifier's plans (galley), the mess safe (keypad; the code is in the log), the large storage's plans (cargo office:
 # its bolt is out, but ice seals the hatch), DEEP 10-24: the Crane Ridge, the crane's cab, the hook's lever (it breaks the
@@ -112,6 +112,7 @@ place Placeable_Table_Basic - at -4 0 sit yaw=90
 place Placeable_Table_Basic - at -4 2 sit yaw=90
 place Placeable_Chair_Basic - at -5 1 sit yaw=90
 place Note_Book captainslog1 at -4 0 y=0.9 drop yaw=20
+place Note_Paper orrinpost at -4.2 2.1 y=0.9 drop yaw=340
 place Loot_Chest messsafe at -5.4 3.8 sit yaw=90
 place RT_PowerBox messpad at -5.95 2.6 y=1.2 yaw=90
 place QuestItemPickup_Tangaroa_Token - at -1 -3.6 y=0.05
@@ -123,6 +124,7 @@ place RT_Floor whalehull at 0 4.5 y=3
 place Placeable_CookingStand_Food_Two - at -5 3.2 sit yaw=180
 place Placeable_Cupboard_Medium - at -3 4 sit yaw=180
 place Loot_Chest galley at -1 3.6 sit yaw=180
+place Note_Paper skarrnote at -2.3 3.3 y=0.1 drop yaw=160
 place QuestItemPickup_Tangaroa_Token - at -4 -3.6 y=0.05
 pop
 push at 12 4.5 h=7
@@ -148,6 +150,8 @@ call ladders x=10 z=3.95 h=7 n=2 yaw=180
 # mast's foot 5 m down; the crow's nest 0.15 m lower so the floor's ray starts over it, 2026-10-23)
 place ZiplinePath_Landmark mastzip at 16.22 3.53 h=13.35
 zipto mastzip 34 -8
+# story pass 10-24: the Whale's aerial lead, cut at the mast's foot (the twist on island 9 re-reads it)
+place Note_Paper aerialnote at 10.8 5.3 h=7.1 drop yaw=70
 place UT_ElectricityIsland_Crane02 crane at 37 -6 ground sit scale=0.45 yaw=200
 place Zone_Trigger cranezone at 34 -8 ground y=1
 place Loot_Chest cranebox at 31 -10 ground sit yaw=40
@@ -166,12 +170,12 @@ place campfire_1 - at 13.7 39.7 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 16.7 41.7 ground sit yaw=297
 place "Box Small" - at 11.7 42.2 ground sit
 place Note_Paper dnote at 11.7 42.2 ground y=0.7 drop yaw=20
-note dnote Survey note | ICE SURVEY, SHEET 4\n\nPressure ridge moving 2 m a day, east.\nCrack under the tent this morning. Moved camp.\nThe sea under the ice is warmer than it should be.
+note dnote Ice survey, sheet 4 | ICE SURVEY, SHEET 4 - E. NORD, ICE PILOT\n\nPressure ridge moving two metres a day, east. At that rate it will carry the Whale's bow all the way to Saga Drift by midsummer, and I shall send the flotilla a postcard.\nCrack under my tent this morning. I moved camp and did not spill the tea, which I count as a victory.\nThe serious part, because the captain wants it in plain words: the sea under the ice is warmer than it should be, and warmer every week. Something in the south is stirring the water. The ice is not freezing us in. It is letting go.\nI am going back aboard before it lets go of me. Somebody has to tell the mate, and the mate will want it in triplicate.
 place BoatStranded dvan at -13.7 -39.7 ground yaw=57
 prop dvan tint.color=#5a6670
 prop dvan tint.amount=0.5
 place Loot_ChestSmall dwreckchest at -17.7 -36.7 ground sit yaw=357
-note dwreckchest Driver's box | The driver's box under the seat: bolts, glass and a scrap of leather.
+note dwreckchest Driver's box | Under the driver's seat: bolts, glass, a scrap of leather.
 loot dwreckchest Bolt*2;Glass*2;Leather*2
 prop dwreckchest loot.refill=0
 # RESIZE 10-24 retest: the hatch on the flat ground west of the bow (its first spot is under water)
@@ -200,18 +204,20 @@ prop cranelever beh.use=Pull the hook's lever
 prop cranelever if.use=!signal|hookdrop
 prop cranelever on.use=sound||event:/exploring/obstacles/door_explosion\nmessage||The brake lets go. The hook swings out over the bow, drops - and the ice on the cargo hatch shatters.\nsignal||hookdrop\ngive||story:hookdrop*1\nhide|hatchice\nshow|hatchzone
 prop cranelever else.use=message||The hook is down. The cargo hatch is clear.
-note cabchest Crane cab locker | The crane driver's locker in the cab: his thermos, his tools, his pay.
+note cabchest Crane cab locker | The crane driver's locker: a thermos, his tools, a pay packet.
 loot cabchest MetalIngot*2;Bolt*3;TradeToken*2
 prop cabchest loot.refill=0
-note whaletally Whalers' tally | WHALERS' TALLY (cut in the cave wall)\n\nNine seasons. Forty-one whales.\nThe Iron Whale took the bay in the tenth and broke the ice for good.\nWe left the pots. Our lifeboat - their lifeboat - went down off the west ice. Her locker had the good knives.
+place Note_Paper cabnote at -34.7 -21.5 h=32.2 drop yaw=150
+note cabnote Crane driver's last shift | CRANE LOG - A. MOEN, DRIVER\n\nLast shift. The old dock crane was here before the Whale and will be here after her, sat on its ridge like a heron. Eleven winters I have driven it, and I never once thought I would be the last man aboard who could.\nThe stern went in the night. The crew came forward over the ice, all but the captain. She stayed aft with the boilers and the hand key and would not come. Lunde says she is stubborn. Lunde says that about the weather.\nThe cargo hatch is iced shut. The hook goes where you point it; the lever's brake is stiff, lean on it. I am too old for the ladder twice in one wind.\nSomebody go down the hatch to the stern and fetch her up. She is down there with the engines, still tapping.
+note whaletally Whalers' tally | WHALERS' TALLY (cut in the cave wall)\n\nNine seasons. Forty-one whales. Old Gunnar cut a mark for every whale and a cross for every man we lost, and there are only two crosses, which is a better tally than any crew on this coast.\nThe Iron Whale took the bay in the tenth season. She broke the ice for good and the whales went with the ice. Her captain - Brask, a woman, polite as a bishop - paid us for the pots we could no longer use. We drank most of it.\nWe left the pots here in the cave. Our lifeboat - her lifeboat, she gave it us - went down off the west ice in the first storm. Its locker had the good knives. Somebody braver than us can dive for them.
 note whalecavechest Whalers' pots | The whalers' pots, rimed with old fat: hooks, a harpoon head, rope.
 loot whalecavechest Rope*3;Scrap*2;Leather*2
 prop whalecavechest loot.refill=0
-note whalelist Whalers' winter list | WINTER LIST\n\nPots to the cave.\nBoat to the west ice.\nThe crane on the ridge works - its hook goes where you point it. The Whale's men use it for her hatches.
-note whaleruinchest Whalers' chest | The whalers' chest under the fallen wall: a lamp, a knife, some salt fish.
+note whalelist Whalers' winter list | WINTER LIST - SIGRUN, THE WHALERS' COOK\n\nPots to the cave. Boat to the west ice, if it floats, which it will not.\nFish salted: twenty barrels. Lamp oil: four. Patience: none.\nThe old crane on the ridge still works. Its hook goes where you point it - the Whale's men used it to knock the frost off her hatches, and paid us in coffee to drive it. Good coffee, too, until the courier stopped bringing any.\nThe men say the Whale will break in spring. I say she will break when she likes, like all ships and all husbands.\nWe go south to Steamvent when the lead opens. Nobody follows the whalers. Nobody ever did.
+note whaleruinchest Whalers' chest | Under the fallen wall: a lamp, a knife, some salt fish.
 loot whaleruinchest Raw_GenericMeat*2;Nail*8;Glass*2
 prop whaleruinchest loot.refill=0
-note lifeboatchest Lifeboat locker | The lifeboat's locker, twelve metres down: flares, a knife roll, the mate's tin.
+note lifeboatchest Lifeboat locker | The lifeboat's locker, twelve metres down: flares, knives, the mate's tin.
 loot lifeboatchest MetalIngot*2;CopperIngot*2;TitaniumOre*1
 
 # --- Settings, notes, behaviours, quest -------------------------------------------------------------------------------
@@ -225,13 +231,16 @@ island on.arrive=message||A ship's bow on a ridge of ice, rust-red, as tall as a
 
 story messcode|The mess safe's code|Placeable_Lantern_Metal|You typed the captain's code into the mess safe's keypad.
 
-note roster Iron Whale: crew roster | ICEBREAKER IRON WHALE - CREW ROSTER\n\nCaptain: H. Brask\nMate: J. Lunde\nEngineers: 4 (aft)\nCook: P. Skarre\nDeck: 9\n\nAll hands to the aft decks when the ridge takes her. - posted by the mate, day 1 of the ice
-note waterplant Water plant | The water plant's locker: the water tank's plans, fittings, a frozen gauge.
-note cranebox Crane box | The crane driver's box on the ice: the water pipe's plans and a spanner.
-note captainslog1 Captain's log, day 1 | CAPTAIN'S LOG - IRON WHALE\n\nDay 1 of the ice. The pack closed round us in the night and the ridge lifted the bow clear of the water. She will break, I think, aft of the funnel.\nThe mess safe (code 4127) holds the vault's charts and the crew's pay. The vault, the Coldhold, wants its charts back. Let it wait.\nAll hands aft. - H. Brask
-note galley Galley locker | The galley's locker: the electric purifier's plans - the cook kept them by the kettle.
-note messsafe Mess safe | The mess safe: the crew's pay in tokens, the Coldhold's charts in oilcloth.
-note cargooffice Cargo office | The cargo office's big chest: the plans for large storage, the manifest - and under the chest, the cargo hatch's bolt.
+note roster Iron Whale: crew roster | ICEBREAKER IRON WHALE - CREW ROSTER\n\nCaptain: H. Brask\nMate: J. Lunde\nRadio: Y. Sund\nEngineers: 4 (aft)\nCook: P. Skarre\nDeck: 9\n\nPosted by the mate, day 1 of the ice. The ridge has us by the nose and will not let go, so here is the rule: all hands sleep aft, by the boilers, where it is warm and where she will float if she breaks. The bow is for work and for meals.\nNobody walks out on the ice alone. Nobody touches the radio but Officer Sund, and she will thank you not to.\nThe cook says his name has two Rs and no E. The cook may write his own roster. - J. Lunde
+note waterplant Water plant | Water plant locker: the water tank's plans, fittings, a frozen gauge.
+note cranebox Crane box | The crane driver's box: the water pipe's plans and a spanner.
+note captainslog1 Captain's log, day 1 | CAPTAIN'S LOG - IRON WHALE\n\nDay 1 of the ice. The pack closed round us in the night and the ridge lifted the bow clear of the water, like a hand lifting a cup. She will break, I think, aft of the funnel. I have sent the crew aft anyway; the boilers are the only warm thing for a hundred miles.\nThe Coldhold's charts and the crew's pay are in the mess safe. I set its lock to the day I took her: the fourth of the twelfth month, in the seventh year. Lunde says that is a terrible code. Lunde is right, and I am keeping it.\nThe vault wants its charts back, and it wants our radio quiet. It may have the first. I have not decided about the second.\nAll hands aft. - H. Brask
+note galley Galley locker | The cook's locker by the kettle: the electric purifier's plans.
+note messsafe Mess safe | The crew's pay in tokens, the Coldhold's charts in oilcloth.
+note orrinpost Post for H. Brask | POST - FOR CAPTAIN H. BRASK, IRON WHALE\n\nCaptain,\nTwo letters from the Steamvent folk, a tin of tobacco for your mate, and a sealed one from the Coldhold that I am not allowed to read, and so have read no more than twice.\nNo coffee, I am sorry. There is none left north of the vents. If you have a cup to spare when I am back through, I will not say no.\nTuva and Knut send their regards. Knut ate your mate's glove. I have told him it was a fine glove and he should be ashamed, and he is not.\nThe ice south of the ridge is rotten this year; go round by the west if you walk. I will be back on the next run - sooner, maybe, if the Warden has more letters for you. He writes a great deal for a man who wants everyone quiet.\nYours on the runners,\nOrrin Vale, courier
+note skarrnote The cook's complaint | FROM THE GALLEY - P. SKARR, COOK (TWO Rs, NO E)\n\nTo whoever reads this, and to the mate in particular:\nThe roster says Skarre. There is no E. There has never been an E. My mother did not cross the whole Baltic in an open boat to give me an E.\nMenu for the week of the ice. Monday: fish. Tuesday: fish, but warm. Wednesday: the captain's cake, which is fish. On Thursday the stokers asked for something that was not fish, so I boiled their gloves. They went back to fish.\nThe purifier lives by my kettle. It is the only thing on this ship that makes the water taste of water and not of Knut the sledge dog.\nWe are not sinking. I will not cook on a sinking ship. - P. Skarr
+note aerialnote Aerial lead, cut | MATE'S NOTE, DAY 31 - J. LUNDE\n\nOfficer Sund came up shouting this morning: no carrier, no hiss, nothing. I thought the ice had finally pulled the mast over. It has not. The mast stands as straight as a church.\nThe aerial lead is cut, here at the mast's foot, a hand's breadth off the deck. Not frayed, not chafed - cut, clean through the copper in one stroke, the way you split kindling. There is a nick in the deck plate under it where the blade went on.\nNo ice did this. Nobody aboard owns a blade like that; I have been through every man's kit, and the cook's, twice.\nI told the captain. She went very quiet. Then she went aft, down to the engine decks, and took the old hand key with her.
+note cargooffice Cargo office | Cargo office chest: large storage plans, the manifest, the hatch's bolt.
 loot waterplant Blueprint_WaterTank*1;Bolt*2;Plastic*4
 prop waterplant loot.refill=0
 loot cranebox Blueprint_Pipe_Water*1;Scrap*3;MetalIngot*1
@@ -251,6 +260,7 @@ prop cranezone zone.radius=5
 prop cranezone zone.message=The crane on the ice. The zipline hums behind you.
 prop foredeck zone.id=foredeck
 prop foredeck zone.radius=3
+prop foredeck zone.message=The open foredeck. At the mast's foot the aerial lead hangs loose, cut clean.
 prop hatchzone obj.name=hatchzone
 prop hatchzone zone.id=hatch
 prop hatchzone zone.radius=2
@@ -272,11 +282,12 @@ quest intro=A ship's bow on a ridge of ice. Climb the ramp to her side.
 step reach|ramp|1|Climb the ice ramp to the Whale's side
 step read|Iron Whale: crew roster|1|Read the crew roster by the gangway
 step blueprint|Blueprint_WaterTank|1|Take the water tank's plans from the water plant
+step read|Captain's log, day 1|1|Read the captain's log in the mess above
+step open|Mess safe|1|Open the mess safe (the code is in the log)
+step blueprint|Blueprint_ElectricPurifier|1|Take the electric purifier's plans from the galley
+step read|Aerial lead, cut|1|The radio is dead. Find the aerial lead at the mast's foot
 step reach|crane|1|Climb the mast and ride the zipline to the crane on the ice
 step blueprint|Blueprint_Pipe_Water|1|Take the water pipe's plans from the crane box
-step read|Captain's log, day 1|1|Read the captain's log in the mess
-step blueprint|Blueprint_ElectricPurifier|1|Take the electric purifier's plans from the galley
-step open|Mess safe|1|Open the mess safe (the code is in the log)
 step blueprint|Blueprint_Storage_Large|1|Take the large storage's plans from the cargo office
 step reach|crane_foot|1|The cargo hatch is frozen shut. Cross the ice to the dock crane on the ridge south-west
 step reach|crane_cab|1|Climb the Crane Ridge and the ladder tower to the crane's cab
