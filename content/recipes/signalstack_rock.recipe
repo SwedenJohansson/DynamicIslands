@@ -52,6 +52,7 @@ call hut w=3 d=2 y=0.1
 place Placeable_Table_Basic - at 3.4 2.2 y=0.1 sit yaw=90
 place Note_Paper relaylog at 3.2 1.8 y=0.1 drop yaw=20
 place Note_Paper chart1 at 3.6 2.6 y=0.1 drop yaw=80
+place Note_Paper qslcard at 2.9 2.6 y=0.1 drop yaw=120
 place Loot_Chest relaydesk at 1.2 2.4 y=0.1 sit yaw=180
 place Placeable_Lantern_Metal - at 3.6 2.6 y=0.1 drop
 pop
@@ -62,6 +63,7 @@ place TP_Moontown_SealedCrate02 - at -5.5 -12 ground sit yaw=80
 place TP_SnowDrift02 - at -6 -15 ground sit yaw=40
 place TP_SnowDrift03 - at 4 -11 ground sit yaw=110
 place Note_Sign shelfsign at 4.5 -12.5 ground sit yaw=210
+place Note_Paper postnote at 1.6 -15.6 ground y=0.05 drop yaw=30
 
 # --- The relay mast on the top: one mast standing, one bent over by the ice; broken antennas; the mast box ---------
 place RT_PillarThick mast at 0 4.5 ground
@@ -109,6 +111,7 @@ call fz_zone x=0 z=31 al=needlezone id=needle_foot r=6 msg="The foot of the Need
 # the operator's cave (its mouth north, to the Needle)
 call ar_cave x=-40 z=26 h=4 yaw=0 al=opcave chest=opcavechest
 place Note_Paper opdiary at -39.2 31.4 h=4.5 drop yaw=200
+place Note_Paper sealedorder at -40.6 30.5 h=4.5 drop yaw=140
 place Zone_Trigger opcavezone at -40 31 h=5.4
 prop opcavezone zone.id=operator_cave
 prop opcavezone zone.radius=3
@@ -122,6 +125,7 @@ call ar_plane x=-58 z=14 h=3 yaw=120 al=mailplane crate=planecrate
 place Creature_PolarBear planebear at -48 22 ground
 prop planebear creature.count=1
 prop planebear creature.respawn=0
+place Note_Paper mailletter at -55.5 17.5 ground y=0.05 drop yaw=60
 # Grey Cove (south-west): the supply boat 10 m down, its chest, an air pocket at its side
 call fz_dive x=-50 z=-46 d=10 r=12 yaw=0 obj=BoatStranded al=supplyboat chest=boatchest aid=coveair aal=coveairz abub=coveairb cx=6 cz=2 ax=-6 az=-3
 # the Gull Ridge (south-east) and the Saddle (west): the island's own hills
@@ -146,12 +150,12 @@ info author=Custom Islands
 info description=A basalt stack in a grey sea, snow on every ledge: a relay hut on its shelf and a mast on its top, one half bent over by the ice. Fragments of a call from the north come in here. The first island of The Frozen Horizon.
 island on.arrive=message||Snow on every ledge. A relay mast on the stack's top - half of it bent flat by the ice.
 
-note relaylog Relay log: fragments | SIGNALSTACK RELAY - LOG\n\nDay 1: a call from the north, band 500. Three words, then static.\nDay 2: "...floes... open in the..."\nDay 3: "...whale..." - just that.\nDay 4: the mast iced up and bent in the night. I wrote the fourth fragment on a slip and pinned it under the mast box. If you can read this, take the Receiver's plans from the desk. Listen north.
+note relaylog Relay log: fragments | SIGNALSTACK RELAY - LOG (I. Rask, operator)\n\nDay 1: a call from the north, band 500. Not a voice at first - a hand key, short bursts, as if whoever sends it dares not stay on the air long. Then a woman's voice, very calm, reading the ice like a weather forecast.\nDay 2: "...floes... open in the..." Then nothing for six hours.\nDay 3: "...whale..." - just that. I said it back to her. No answer. I don't think she can hear us. I think she's talking to anyone.\nDay 4: the courier brought a sealed order with the post. Twenty years this stack has listened. It is not going to stop because somebody sealed an envelope.\nDay 19: the mast came down in the night. I wrote her last fragment on a slip and left it under the mast box.\nIf you are reading this: the Receiver's plans are in the desk. I'm in the cave under the Needle, where it's warm. Listen north.
 note shelfsign Relay shelf | SIGNALSTACK RELAY\nPath to the mast: east side, mind the ice.
-note relaydesk Relay desk | The relay operator's desk drawer: the Receiver's plans, a spare coil of wire, a mug frozen to the bottom.
-note relaystores Relay stores | The relay's stores: pine cones for the stove's spring planting, planks, rope.
-note mastbox Mast box | The mast's junction box, iced shut and knocked open: the antenna's plans, taped inside the lid.
-note fragment4 Fragment 4 | (a slip in the operator's hand)\n\n"...north... past the white sea... the Whale... do not wait for spring."\n\nUnder it: "The floes are on 700."
+note relaydesk Relay desk | Ivo's desk drawer: the Receiver's plans, wire, a mug frozen in.
+note relaystores Relay stores | The relay's stores: seed, planks, rope - and a torn guy clamp.
+note mastbox Mast box | The mast's junction box, iced shut. Plans taped inside the lid.
+note fragment4 Fragment 4 | (a slip in Ivo's hand, pinned under the mast box)\n\nThe last thing she sent before the mast went down, in her short bursts:\n"...north... past the white sea... the Whale... held fast... do not wait for spring."\nThen slower, as if she was smiling: "...if you hear me... you are not alone either."\n\nI've gone with the sealers. If you came for her too, follow the floes: they talk on 700, and their huts are where the ice opens. Ask for Halvorsen. Tell him Ivo sent you and that he still owes me a fish.\n\nUnder it, underlined twice: "The floes are on 700."
 loot relaydesk Blueprint_Reciever*1;Scrap*2;Rope*1
 prop relaydesk loot.refill=0
 loot relaystores Seed_Pine*2;Plank*10;Rope*3;story:clamp*1
@@ -160,31 +164,35 @@ loot mastbox Blueprint_Antenna*1;Scrap*2;CopperIngot*1
 prop mastbox loot.refill=0
 prop mastbox obj.name=mastbox
 prop mastbox beh.hidden=1
-note ledgechest Ledge chest | A chest roped to the path's ledge: a guy clamp, bent, and a flare.
+note ledgechest Ledge chest | Roped to the path's ledge: a bent guy clamp and a flare.
 loot ledgechest story:clamp*1;Rope*2
 prop ledgechest loot.refill=0
-note driftchest Drift chest | Half under a drift on the top: the third guy clamp and a frozen tin of nails.
+note driftchest Drift chest | Half under a drift: the third guy clamp, a tin of frozen nails.
+note postnote Post for the relay | Ivo -\nPost's on the crate: your coffee, the wire you wanted, a letter from your sister (she says eat something) and one with a big wax seal from the Coldhold. Not mine to read. I only carry them.\nTuva bit the mail plane's tyre again. Knut sends his regards, which means he ate the biscuits off your shelf. I've had words with him. He doesn't listen. Dogs and radio men.\nThe sealers on the floes want their set looked at, so I'm going that way next, then on to Steamvent before the weather turns. If you're up on the stack when the bells go by, wave.\n\n- Orrin (and the dogs)
+note qslcard A QSL card | (a postcard, a cartoon penguin in headphones on the front)\n\nQSL - CONFIRMING OUR CONTACT\nTo: Signalstack Relay. From: SAGA DRIFT, Tor Hallen, "Sparks". Band 500, seven o'clock, signal strong, operator grumpy.\n\nIvo, old man - thanks for the contact, and for laughing at the penguin joke even though I could hear you weren't. GOOD MORNING, ICE! is on every day at seven, rain or snow or more snow. This week's callers: two sealers, the Steamvent bath keeper, and a penguin who said nothing for four minutes. Best caller this week.\nPin this up. When the world goes quiet it's good to have proof somebody was talking.\n- Sparks, 73
+note sealedorder The sealed order | (a letter, its wax seal broken, half burnt in the stove)\n\nFROM THE COLDHOLD, BY COURIER. To the operator, Signalstack Relay.\n\nThere is a pulse in the south. Slow, patient, and it listens. It finds whoever speaks, and every station that keeps transmitting is a lamp lit for it.\nYou will stop all transmission from this day. You will not answer calls from the north, however they plead. The courier will see that the order is kept.\nFor this silence the Coldhold keeps a place for you below the ice: warmth, seed and food for years. Silence is not cowardice. Silence is how the rest of us live.\n\n- Ansel Holt, Warden of the Coldhold\n\n(Under it, in pencil, in the operator's hand: "No.")
+note mailletter A letter in the mail sack | (in the mail plane's sack, stamped IRON WHALE, never flown)\n\nDear Arne,\nWe are held fast in the ice north of the white sea, all hands, the Whale tilting a little more each week. The cook has started naming the rivets. Morale is fine, which tells you how strange things are.\nA man from the Coldhold sent orders: no radio, not a peep, or the thing in the south will find us. The crew is frightened. I am too, a little. But a ship that cannot call for help is a coffin with portholes.\nSo I have a hand key and a few seconds at a time. If someone, anyone, answers, I will tell them where the floes are open.\nIf this reaches you: I am still the stubborn one.\nYour sister, Hedda
 loot driftchest story:clamp*1;Nail*6
 prop driftchest loot.refill=0
 
 # --- DEEP 10-24: the Needle's notes, the star lock, the extras ---
-note opdiary Operator's diary | OPERATOR'S DIARY\n\nThe hut froze, so I moved in here. Warmer than it looks.\nThe call from the north comes clearest from the beacon on the Needle - I climb up every night.\nI put the old star lock on the mast box. I drew the four stars of the north on four charts and left them where I work: the hut, the ledge, the mast, the beacon. The dome up top gives each star its number.
+note opdiary Operator's diary | IVO RASK - DIARY\n\nThe hut froze solid, so I moved in here with the stove. Warmer than it looks, and the gulls can't get my biscuits.\nNight 19. No wind at all, the sea flat as a plate - and still the mast came down. Before it went I heard sledge bells on the ice below the stack. Bells, out here, at two in the morning, and no lamp. I told myself it was the cold talking. "The ice bent it", I wrote in the log. I'm not sure I believe my own log.\nThe call comes clearest from the beacon on the Needle, so I climb up there every night. I put my father's old star lock on the mast box, so nobody takes the antenna plans while I'm up there: the four stars of the north, drawn on four charts where I work, and the beacon's dome knows their numbers.\nThe sealers on the floes say they'll take me south. I'll go when she stops talking. Not before.
 note chart1 Star chart 1/4 | STAR CHART 1/4\n\nFirst, low in the north at dusk: THE HOOK.
 note chart2 Star chart 2/4 | STAR CHART 2/4\n\nSecond, over the floes: THE LANTERN.
 note chart3 Star chart 3/4 | STAR CHART 3/4\n\nThird, where the mast points: THE TWINS.
 note chart4 Star chart 4/4 | STAR CHART 4/4\n\nLast, the highest of the north: THE CROWN.\nRead the dome's numbers in the charts' order.
 note stardome The star dome | THE NORTH SKY (painted inside the beacon's dome)\n\nCROWN = six    HOOK = four\nSLEDGE = two    TWINS = eight\nLANTERN = one    WHALE = nine
-note keeperlist Keeper's list | KEEPER'S LIST\n\nOil for the beacon - none.\nBoat from Grey Cove - three weeks late.\nThe spare coil, the good tools: under the hatch by the wall, where the gulls can't get them.
-note beaconchest Beacon chest | The beacon keeper's chest at the top of the tower: lamp oil long frozen, and what he kept for a clear night.
+note keeperlist Keeper's list | KEEPER'S LIST (Mags Lund, beacon keeper)\n\nOil for the beacon - none. Lit it with seal fat. Smells like a fish shop on fire.\nBoat from Grey Cove - three weeks late. Ivo says it will come. Ivo says a lot of things.\nThe spare coil and the good tools: under the hatch by the wall, where the gulls can't get them. The gulls have had two hats, a spoon and my dignity.\nThe courier's sledge went past at night again. No lamp on it. Who drives dogs in the dark without a lamp? A man who doesn't want to be seen, my mother would say. My mother said a lot of things too.
+note beaconchest Beacon chest | The beacon keeper's chest: frozen lamp oil, a clear night's kit.
 loot beaconchest MetalIngot*3;CopperIngot*2;Rope*2
 prop beaconchest loot.refill=0
-note opcavechest Operator's kit | The operator's kit under his sleeping bag: a stove, tins, a spare headset.
+note opcavechest Operator's kit | Ivo's kit under his sleeping bag: stove, tins, a spare headset.
 loot opcavechest Scrap*3;Rope*2;Raw_GenericMeat*2
 prop opcavechest loot.refill=0
-note planecrate Mail plane's crate | The mail plane's crate: letters that will never arrive, and the pilot's tools.
+note planecrate Mail plane's crate | The mail plane's crate: undelivered post, the pilot's tools.
 loot planecrate Bolt*3;Nail*8;Leather*2
 prop planecrate loot.refill=0
-note boatchest Supply boat's chest | The supply boat's strongbox, under ten metres of water: what the relay ordered and never got.
+note boatchest Supply boat's chest | The supply boat's strongbox: what the relay ordered and never got.
 loot boatchest MetalIngot*2;Glass*3;Seed_Pine*2
 prop treasure12141 treasure.loot=MetalOre*3;CopperOre*2
 prop treasure12142 treasure.loot=TitaniumOre*1;MetalOre*2
@@ -217,16 +225,18 @@ quest intro=A relay rock in the snow. Somebody was listening here. Land on the s
 step reach|shelf|1|Land on the relay shelf
 step read|Relay log: fragments|1|Read the relay log
 step blueprint|Blueprint_Reciever|1|Take the Receiver's plans from the relay desk
+step read|Post for the relay|1|Read the courier's note by the shelf's stores
 step reach|mast_top|1|Climb the path to the mast on the stack's top
 step collect|story:clamp|3|Find the mast's three guy clamps (shelf, path ledge, top)
 step collect|story:mastfixed|1|Fit the clamps on the mast winch
 step reach|needle_foot|1|The mast box has a star lock. Cross the island to the Needle, the sea stack in the north
 step read|Operator's diary|1|Find the operator's cave below the Needle and read his diary
+step read|The sealed order|1|Read the letter half burnt in Ivo's stove
 step reach|beacon_top|1|Climb the Needle and its beacon tower to the star dome
 step collect|story:starcode|1|Open the mast box's star lock (the four star charts and the dome's numbers)
 step blueprint|Blueprint_Antenna|1|Take the antenna's plans from the mast box
 step read|Fragment 4|1|Read the fourth fragment
-quest done=North, past the white sea, there is a Whale. The floes call on 700.
+quest done=North, past the white sea, a ship called the Whale is held in the ice - and a woman on it will not stay silent. The sealers' floes call on 700.
 quest reward=MetalIngot*2;Rope*3
 
 save Signalstack Rock

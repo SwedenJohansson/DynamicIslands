@@ -1,7 +1,7 @@
 # Squall Shelf - the side island of the library's plan The Frozen Horizon (storyline SL12, side)
 # A low ice shelf the storms keep pushing back into the lanes: one tent, its guy-lines iced, a stranded traveller's
 # things inside and a llama that broke its tether, a polar bear that has found the smell of food. Snow and fog. It comes
-# back every nine days until its quest is done. Quest "The Stranded Tent" (7 steps; DEEP 10-24: the weather mast): the tent, the stranded note, the
+# back every nine days until its quest is done. Quest "The Stranded Tent" (8 steps; DEEP 10-24: the weather mast): the tent, the stranded note, the
 # polar bear, the tent cache, the llama (the net is in the cache), the weather log.
 #
 # Built by the recipe player (CIRecipe squall_shelf) through the editor's own operations. Points (metres over the sea):
@@ -39,6 +39,7 @@ place Balboa_DecorationPrefabBase_SimpleTent tent at 0 1 ground sit yaw=180
 place Zone_Trigger tentzone at 0 -2 ground y=1
 place Loot_Chest tentcache at 1.4 2.2 ground sit yaw=200
 place Note_Paper strandednote at -1.2 -1.4 ground y=0.1 drop yaw=30
+place Note_Paper qslcard at 0.9 -1.7 ground y=0.1 drop yaw=150
 # (DEEP 10-24: the weather log moved to the weather mast on the hill)
 place Placeable_Lantern_Metal - at -2 -1.8 ground drop
 place "Box Big" - at 2.6 -1 ground sit yaw=15
@@ -103,12 +104,12 @@ place campfire_1 - at -9.7 25.2 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -6.7 27.2 ground sit yaw=177
 place "Box Small" - at -11.7 27.7 ground sit
 place Note_Paper dnote at -11.7 27.7 ground y=0.7 drop yaw=20
-note dnote Sealer's note | Poor hunting. The seals left when the warm water came up.\nLeft the spare furs and the tea in the box.\nIf you are cold, the fire pit still takes driftwood.
+note dnote Sealer's note | (on the furs box, in big careful letters)\n\nSparks -\nThe council says nobody helps you, so this is not help. These are some furs I lost, and some tea that fell out of my boat, and a box they happened to land in.\nThe whole of Saga misses the seven o'clock show. My mother asks every morning why the radio is quiet, and I can't tell her it's because the council is frightened of the Warden. She thinks the penguins took you.\nIf you are cold, the fire pit still takes driftwood. If you get the set going again, play the song about the seal. Not for me. For my mother.\n- Nils, of Saga Drift
 place TP_SnowVehicle02 dvan at 23.1 13.9 ground yaw=297
 prop dvan tint.color=#7a8a96
 prop dvan tint.amount=0.5
 place Loot_ChestSmall dwreckchest at 19.1 16.9 ground sit yaw=237
-note dwreckchest Driver's box | The driver's box under the seat: bolts, glass and a scrap of leather.
+note dwreckchest Driver's box | The driver's box under the seat: bolts, glass, leather.
 loot dwreckchest Bolt*2;Glass*2;Leather*2
 prop dwreckchest loot.refill=0
 call hatchcache x=8.8 z=25.5 r=15 seed=13191 alias=dhatch chest=dhatchchest items=MetalIngot*2;Wool*3;Bolt*2
@@ -140,22 +141,23 @@ info author=Custom Islands
 info description=A low ice shelf the storms keep pushing back into the lanes: one tent, a stranded traveller's cache, a llama off its tether and a bear that smells food. It comes back every nine days. The side island of The Frozen Horizon.
 island on.arrive=message||A tent on a scrap of ice, guy-lines white with frost. Nobody answers.
 
-note strandednote Stranded note | (pinned to the tent flap)\n\nSquall took my raft on the third night. I have the tent, the cache, and Bramble - the llama - when she stays.\nA bear comes round at dusk. I go in and keep still.\nIf the shelf drifts near you: the cache is yours. Take Bramble too. I am walking the ice to Saga Drift.
-note weatherlog Weather log | WEATHER LOG - SQUALL SHELF\n\nDay 1: north wind, snow.\nDay 3: squall. Raft gone.\nDay 6: fog. The shelf turns with the current - nine days round, near as I can count.\nDay 9: the same lanes again. Leaving on foot while the ice holds.
-note tentcache Tent cache | The traveller's cache: hides, wool, feathers, eggs packed in snow, a jar of goo for the stove - and a net launcher for Bramble.
+note strandednote Stranded note | (pinned to the tent flap, in a hand that loops on every letter)\n\nGood morning, ice! This is Tor Hallen, "Sparks", broadcasting to nobody from the Squall Shelf.\nThe council of Saga Drift put me on a raft for breaking the Warden's silence. One broadcast. Three minutes. I played a song and read out the ice for the woman on 700, and they said that was three minutes too many.\nThe squall took my raft on the third night. I have the tent, the cache, and Bramble - the llama - when she stays.\nA bear comes round at dusk. I go in and keep still. Hardest thing I have ever done, keeping still and quiet.\nIf the shelf drifts near you: the cache is yours. Take Bramble too. She likes being scratched behind the left ear only.
+note weatherlog Weather log | WEATHER LOG - SQUALL SHELF (T. Hallen)\n\nDay 1: north wind, snow. Bramble unimpressed.\nDay 3: squall. Raft gone. Bramble still unimpressed.\nDay 6: fog. The shelf turns with the current, nine days round, near as I can count. Built the mast from the raft's last spar to keep my hands busy.\nDay 8: picked up the woman on 700 on the mast's wire. Just a few seconds. "Ice holding at the Whale. Still here." I said "Still here" back, out loud, to nobody. Felt better than a week of soup.\nDay 9: the same lanes again, past Saga Drift. Leaving on foot while the ice holds, north, toward the Whale. If they won't let me talk, I'll go and stand next to someone who does.
+note tentcache Tent cache | The cache: hides, wool, eggs, goo - and a net launcher.
 loot tentcache Leather*2;Wool*2;Feather*4;Egg*2;ExplosiveGoo*1;NetGun*1;NetCanister*3
 prop tentcache loot.refill=0
 
 # --- DEEP 10-24: the mast, the ice cave, the shuttle, the dark hatch's lantern ---
-note mastchest Weather mast chest | The traveller's chest at the foot of the anemometer: spare vanes, a flask, socks.
+note mastchest Weather mast chest | Sparks' chest by the anemometer: spare vanes, a flask, socks.
 loot mastchest Rope*2;Wool*2;MetalIngot*1
 prop mastchest loot.refill=0
-note cavemark Initials in the ice | (cut in the cave wall)\n\nT.H. - DAY 4. WIND TOO STRONG TO WALK.\nThe old sled on the west lip runs if you feed it bolts. There's a ledge out over the lead with the sealers' cache on it.
+note cavemark Initials in the ice | (cut in the cave wall)\n\nT.H. - DAY 4. WIND TOO STRONG TO WALK.\nThe old sled on the west lip runs if you feed it bolts. There's a ledge out over the lead with the sealers' cache on it.\nCaller 1 of the day: a gull. Said a great deal. All of it rude.
 note icecavechest Ice cave chest | A sealer's chest frozen into the cave floor.
 loot icecavechest Leather*2;Feather*3;Raw_GenericMeat*2
 prop icecavechest loot.refill=0
 note shuttlesign Old sled | SEALERS' SLED - RUNS TO THE LEDGE AND BACK\nFeed her bolts.
-note stackcache Ledge cache | The sealers' cache on the ledge over the lead: their best furs and the season's metal.
+note stackcache Ledge cache | The sealers' cache over the lead: furs and the season's metal.
+note qslcard A QSL card for you | (a postcard tucked in the tent cache's lid, a cartoon penguin in headphones on it)\n\nQSL - CONFIRMING OUR CONTACT\nTo: whoever found my tent. From: SQUALL SHELF (temporary studio), Tor Hallen, "Sparks". Band: none. Signal: you, reading this.\n\nThat counts. Contact is contact.\nThank you for taking Bramble. She will pretend she doesn't like you for about a day, and then she will follow you into the sea if you let her. Don't let her.\nIf you see the Warden, tell him there's a man on an ice shelf who still says good morning to it. If you see the woman on 700, tell her somebody heard.\n- Sparks, 73
 loot stackcache MetalIngot*3;Leather*3;CopperIngot*2
 prop stackcache loot.refill=0
 prop treasure13196 treasure.loot=MetalOre*3;CopperOre*2
@@ -173,10 +175,11 @@ step reach|tent|1|Go to the tent
 step read|Stranded note|1|Read the note pinned to the tent
 step kill|Polar bear|1|Drive off the polar bear that comes round at dusk
 step open|Tent cache|1|Open the tent's cache
+step read|A QSL card for you|1|Read the postcard tucked in the cache's lid
 step catch|Llama|1|Net Bramble, the traveller's llama
 step reach|mast_top|1|Climb the weather hill to the traveller's weather mast
 step read|Weather log|1|Read the traveller's weather log at the mast
-quest done=The shelf is empty now - the tent, the cache, Bramble. It will drift on without you.
+quest done=Sparks walked north toward the Whale. The tent, the cache and Bramble are yours now; the shelf will drift on without you.
 quest reward=Leather*2;Wool*2;CopperIngot*2
 
 save Squall Shelf

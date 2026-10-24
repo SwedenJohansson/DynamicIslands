@@ -19,37 +19,42 @@ open Orrin's chest
 wait 3
 expect step 4
 read Orrin's note 2
+read Orrin's daybook
+read Orrin's tool rack
+expect step 5
 open Camp stores
 expect item Bucket 1
 read Orrin's note 3
 zone lookout
 open Lookout box
 wait 3
-expect step 5
+expect step 6
 expect hidden ziplinecrate
 use pinevines
 expect shown ziplinecrate
 open Zipline crate
 wait 3
 expect story harness 3
-expect step 7
+expect step 8
 use sledgewinch
 expect story harness 0
 expect shown sledgeshed
-expect step 8
+expect step 9
 open Sledge shed
 wait 3
 # DEEP 10-24: Orrin's trail
-expect step 9
-zone quarry
 expect step 10
+zone quarry
+expect step 11
 zone bear_cave
 read Orrin's trail mark
-expect step 11
-zone rim_top
 expect step 12
+zone rim_top
+expect step 13
 open Orrin's rim cache
 wait 3
+expect step 14
+read The Warden's letter
 expect done
 read Orrin's note 4
 # the extras: the quarry crate, the cave stash, the trapper's ruin, the ice-hole lake, two treasures

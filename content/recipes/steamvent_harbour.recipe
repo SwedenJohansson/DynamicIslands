@@ -2,7 +2,7 @@
 # A harbour town huddled round a geothermal vent: steam rising from a fissure in the square, iron pipes laid from it to
 # the houses, the ground round it warm enough for a garden of fruit and flowers in the snow. A glass greenhouse grew shut
 # with jungle vines (the machete is in the harbour store), a boiler house, a pipe store full of rats, a hen coop and a
-# town hall that has been cold since the valve stuck. Quest "The Warm Harbour" (15 steps): the quay, the harbour master's
+# town hall that has been cold since the valve stuck. Quest "The Warm Harbour" (17 steps): the quay, the harbour master's
 # notice, the machete's plans, the vines and the greenhouse, the gardener's log, the fuel tank's plans (boiler house), the
 # rats, the fuel pipe's plans (pipe store), DEEP 10-24: the driller's warning (steam cave), the antenna cables and the
 # bathhouse hub, the derrick's relief valve (Fumarole Mountain), the vent valve (steam back to the houses), the biofuel extractor's plans
@@ -62,6 +62,8 @@ place RT_Floor bathhouse at 0 4.5 y=3
 place DoorMetal bathdoor at -4.5 -4.5 y=0.05 sit yaw=0
 place UT_ElectricCableHub01 bathhub at -1.5 -5.3 y=0.05 sit yaw=180
 place Loot_Chest bathlocker at -1.2 3.6 y=0.05 sit yaw=180
+place Note_Paper bathnote at -0.3 3.0 y=0.05 drop yaw=30
+place Note_Paper qslcard at -4.6 3.4 y=0.05 drop yaw=160
 place Note_Sign bathslate at -5.6 2.6 y=0.05 sit yaw=90
 place Placeable_Lantern_Metal - at -3 3.8 y=0.05 sit
 place Zone_Atmosphere bathsteam at -3 0 y=1.2
@@ -196,6 +198,7 @@ push at -6 10 h=3
 call hut w=4 d=3 y=0.1
 place Placeable_Table_Basic - at 3 2.5 y=0.1 sit yaw=90
 place Note_Book minutes at 3 2.5 y=1 drop yaw=10
+place Note_Paper broadcast at 2.2 2.0 y=1 drop yaw=200
 place Loot_ChestLarge townlocker at 5.2 3.6 y=0.1 sit yaw=180
 place Placeable_Lantern_Metal - at 1 3.9 y=0.1 drop
 pop
@@ -221,12 +224,12 @@ place campfire_1 - at -11.8 30.8 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -8.8 32.8 ground sit yaw=97
 place "Box Small" - at -13.8 33.3 ground sit
 place Note_Paper dnote at -13.8 33.3 ground y=0.7 drop yaw=20
-note dnote Sealer's note | Poor hunting. The seals left when the warm water came up.\nLeft the spare furs and the tea in the box.\nIf you are cold, the fire pit still takes driftwood.
+note dnote Sealer's note | (on the furs box by the fire pit, in pencil)\n\nWe got in! Three days over the ice with Bo singing the whole way, which is a kind of punishment, but we got in.\nThe town is cold. The vent valve has stuck and there is frost on the inside of the windows. Nobody has had a bath in a week and you can tell.\nIvo went straight to the harbour master and asked for a set. She said the Warden's order forbids it. Ivo said the Warden is welcome to come and take it off him in person. I like Ivo.\nLeft the spare furs and the tea in the box. If you are cold, the fire pit still takes driftwood.\n- Sigrid, of the Kittiwake
 place TP_SnowVehicle02 dvan at 32.6 -26.4 ground yaw=217
 prop dvan tint.color=#7a8a96
 prop dvan tint.amount=0.5
 place Loot_ChestSmall dwreckchest at 28.6 -23.4 ground sit yaw=157
-note dwreckchest Driver's box | The driver's box under the seat: bolts, glass and a scrap of leather.
+note dwreckchest Driver's box | The driver's box under the seat: bolts, glass, leather.
 loot dwreckchest Bolt*2;Glass*2;Leather*2
 prop dwreckchest loot.refill=0
 call hatchcache x=-31.7 z=-27.6 r=15 seed=12391 alias=dhatch chest=dhatchchest items=MetalIngot*2;Wool*3;Bolt*2
@@ -242,31 +245,31 @@ prop dview zone.message=Steam rises from the square below, and the harbour town 
 story cable|Antenna cable|Placeable_Lantern_Metal|A coil of the antenna masts' cable. The storm brought it down; a wire hub takes it.
 story bathpower|The derrick's power line|Placeable_Lantern_Metal|The bathhouse hub wired: power runs up the mountain to the derrick again.
 story relief|Relief valve|Placeable_Lantern_Metal|The derrick's relief valve. With it on the vent, the valve can be turned without blowing the pipes.
-note drillwarn Driller's warning | DRILLER'S WARNING\n\nDO NOT FORCE THE VENT VALVE. The vent is over pressure - turn it now and the pipes burst under the square.\nBleed it first: the relief valve is on the derrick, top of Fumarole Mountain.\nThe valve's housing is clamped by the power line from the bathhouse. The storm took the line down: its cable was strung on the three antenna masts (the ridge, the north-east, the east rise).\nTwo coils from each mast. The bathhouse hub takes four.\nBears den by the masts in winter. Mind them.
+note drillwarn Driller's warning | DRILLER'S WARNING\n\nDO NOT FORCE THE VENT VALVE. The vent is over pressure - turn it now and the pipes burst under the square.\nBleed it first: the relief valve is on the derrick, top of Fumarole Mountain.\nThe valve's housing is clamped by the power line from the bathhouse. The storm took the line down: its cable was strung on the three antenna masts (the ridge, the north-east, the east rise).\nTwo coils from each mast. The bathhouse hub takes four.\nBears den by the masts in winter. Mind them.\n\n- Brann, driller. If you see my wife, the soup was fine. It was not fine.
 note bathslate Bath keeper's slate | BATHHOUSE\n\nHot water from the derrick, free to all.\nThe hub outside powers the derrick's clamps - when the line is up the clamps let go of the relief valve.\nThe greenhouse has its own hub for the heat lamps. Two coils.
 note derricksign The derrick | FUMAROLE DERRICK\n\nRelief valve in the housing. Carry it down and fit it on the vent valve before you turn it.\nThe quick way down is the way the steam goes: down the mountain's south face.
-note pumpledger Pump keeper's ledger | PUMP KEEPER'S LEDGER\n\nPump stopped - the basin flooded when the ferry went down in it.\nThe ferry's strongbox is still aboard. Twelve metres. There's air on the boat's west side if you need it.\nSpare tools buried by the north shore, under the white rock.
-note mastridgebox Ridge mast's cable box | The ridge mast's cable box: two coils of the antenna line, rimed with frost.
+note pumpledger Pump keeper's ledger | PUMP KEEPER'S LEDGER\n\nPump stopped. The basin flooded when the ferry went down in it, which the ferry did out of spite, I am sure of it.\nThe ferry's strongbox is still aboard. Twelve metres. There's air on the boat's west side if you need it. I don't swim. I keep pumps. It's different.\nSpare tools buried by the north shore, under the white rock, where the harbour master won't borrow them.\nThe courier came through on the 20th and took the town's sets, every one, very polite, a receipt for each. Then he sat by my pump for an hour and didn't say a word. Never seen Orrin quiet before. I asked him what was wrong. He said: "Nothing I can carry back."
+note mastridgebox Ridge mast's cable box | The ridge mast's cable box: two frosted coils of antenna line.
 loot mastridgebox story:cable*2;Bolt*1
 prop mastridgebox loot.refill=0
-note mastnebox North-east mast's cable box | The north-east mast's cable box: two coils of the antenna line.
+note mastnebox North-east mast's cable box | The north-east mast's cable box: two coils of antenna line.
 loot mastnebox story:cable*2;Rope*1
 prop mastnebox loot.refill=0
-note masteastbox East mast's cable box | The east mast's cable box: two coils of the antenna line and a pair of pliers.
+note masteastbox East mast's cable box | The east mast's cable box: two coils of line and pliers.
 loot masteastbox story:cable*2;Nail*6
 prop masteastbox loot.refill=0
-note derrickchest Derrick valve housing | The relief valve's housing on the derrick: the valve itself, and the driller's spare tools.
+note derrickchest Derrick valve housing | The derrick's valve housing: the relief valve, the driller's tools.
 loot derrickchest story:relief*1;MetalIngot*2;CopperIngot*2
 prop derrickchest loot.refill=0
 prop derrickchest if.open=signal|bathpower
 prop derrickchest else.open=message||The housing is clamped shut. The clamps are electric - the power line comes up from the bathhouse.
-note bathlocker Bath keeper's locker | The bath keeper's locker: towels, soap, a tin of tea and the keeper's savings.
+note bathlocker Bath keeper's locker | Gunnar's locker: towels, soap, tea and his savings.
 loot bathlocker Wool*3;Raw_GenericMeat*2;MetalIngot*1
 prop bathlocker loot.refill=0
-note steamcavechest Driller's kit | The driller's kit in the steam cave: a drill bit, a lamp, his lunch tin.
+note steamcavechest Driller's kit | The driller's kit: a drill bit, a lamp, his lunch tin.
 loot steamcavechest Scrap*3;Bolt*2;Raw_GenericMeat*1
 prop steamcavechest loot.refill=0
-note ferrychest Ferry's strongbox | The steam ferry's strongbox, twelve metres down: the fares and the cargo's best.
+note ferrychest Ferry's strongbox | The steam ferry's strongbox, twelve metres down: fares and cargo.
 loot ferrychest MetalIngot*3;Glass*2;CopperIngot*2
 prop treasure12411 treasure.loot=MetalOre*3;CopperOre*2
 prop treasure12412 treasure.loot=TitaniumOre*1;MetalOre*2
@@ -307,7 +310,7 @@ prop greenhub on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nme
 prop greenhub else.use=message||The greenhouse's heat-lamp hub: two empty clamps.
 prop seeddrawer obj.name=seeddrawer
 prop seeddrawer beh.hidden=1
-note seeddrawer Seed drawer | The gardener's seed drawer, warm under the lamps: the best of the greenhouse.
+note seeddrawer Seed drawer | The gardener's seed drawer, warm under the lamps.
 loot seeddrawer Seed_Banana*2;Seed_Pine*2;Seed_Flower_Yellow*2;Seed_Strawberry*2
 prop seeddrawer loot.refill=0
 
@@ -320,14 +323,17 @@ island on.arrive=message||Steam rising from a town square - and round it, in the
 story wheelpiece|Handwheel piece|Placeable_Lantern_Metal|A piece of the vent valve's handwheel. The harbour master took it apart to stop the frozen valve being forced.
 story steam|Steam to the houses|Placeable_Lantern_Metal|You opened the vent valve: steam runs to every house in the harbour again.
 
-note notice Harbour master's notice | STEAMVENT HARBOUR - NOTICE\n\nThe vent valve has stuck. The houses are cold.\nThe greenhouse door has grown shut - jungle vines, the heat did it. A machete is in the harbour store.\nRats in the pipe store. Mind your fingers.\nTown meeting in the hall once the steam is back.\n\n- Harbour master
-note harbourstore Harbour store | The harbour store: a machete in oilcloth, the plans for making more, and rope.
-note greenstore Greenhouse store | The gardener's store: seed packets, potatoes for planting, a jar of last year's honey.
-note gardenerlog Gardener's log | GREENHOUSE LOG\n\nThe vent keeps it at summer heat all winter. Bananas, berries, roses.\nThe vines came in with a crate of bananas, a stowaway. Now they've grown over the door.\nThe boiler house has the fuel plans; the pipe store, the pipes - but the rats have it now.\nThe valve on the square feeds the houses. It sticks in the cold. Turn it hard.
-note boilerhouse Boiler house | The boiler house chest: the fuel tank's plans, a can of fuel, bolts.
-note pipestore Pipe store | The pipe store's chest, gnawed at the corners: the plans for fuel pipes and a bundle of copper.
-note townlocker Steam-house locker | The town hall's locker, its frozen lock thawed by the steam: the biofuel extractor's plans - "the harbour's own oil".
-note minutes Town meeting minutes | TOWN MEETING - MINUTES\n\nSteam back thanks to a stranger.\nAgreed: we take the sledges to Orrin's camp on the shelf ice, and from there to the Whale. The Whale's captain kept the vault's charts.\nOrrin is on 900.\nAgreed: the greenhouse feeds whoever stays.
+note notice Harbour master's notice | STEAMVENT HARBOUR - NOTICE\n\nThe vent valve has stuck. The houses are cold. Please stop knocking on my door about it: I am also cold.\nThe greenhouse door has grown shut - the gardener's jungle vines, the heat did it. A machete is in the harbour store. Take it, and do not take the gardener's advice about singing to them.\nRats in the pipe store. Mind your fingers.\nBY ORDER OF THE COLDHOLD: no sets, no transmissions. I don't like it any more than you do. Hand yours to the courier when he comes through.\nTown meeting in the hall once the steam is back.\n\n- Runa Dahl, harbour master
+note harbourstore Harbour store | The harbour store: a machete in oilcloth, its plans, rope.
+note greenstore Greenhouse store | The gardener's store: seed, potatoes, last year's honey.
+note gardenerlog Gardener's log | GREENHOUSE LOG (E. Moss, gardener)\n\nThe vent keeps it at summer heat all winter: bananas, berries, roses, and one lemon tree that sulks. Children come in here just to take their coats off.\nThe vines came in with a crate of bananas, a stowaway. I let them be because they were pretty. Now they've grown over the door and I'm writing this on the inside, eating my own berries. There are worse prisons.\nThe valve on the square feeds the houses. Its handwheel came apart in the cold and the pieces went everywhere: one is in here with me, one in the boiler house with the fuel plans, one in the pipe store - but the rats have that now.\nIf the courier asks, there is no set in the greenhouse. There is a set in the greenhouse. It's under the potatoes.
+note boilerhouse Boiler house | The boiler house chest: the fuel tank's plans, fuel, bolts.
+note pipestore Pipe store | The gnawed pipe store chest: fuel pipe plans, copper.
+note townlocker Steam-house locker | The town hall's locker, thawed: the biofuel extractor's plans.
+note minutes Town meeting minutes | TOWN MEETING - MINUTES (R. Dahl)\n\nSteam back, thanks to a stranger off the ice. Applause. Gunnar cried, says it was the steam.\nThe Warden's broadcast read out again. A long silence followed, which he would have liked.\nThe relay man Ivo came in with the sealers. He says the woman on 700 is Captain Hedda Brask of the Iron Whale, and she is still sending, a few seconds at a time, because nobody told her she was allowed to. He says a captain does not need permission to call for help.\nAgreed, 31 votes to 9: we break the silence once, to find the Whale.\nAgreed: the sledges go to Orrin's camp on the shelf ice, out past the quarry. Orrin knows the way to the Whale; he carried her post all last year. His camp beacon is on 900.\nAgreed: the greenhouse feeds whoever stays.
+note bathnote A note for the bath keeper | Gunnar -\nThe dogs and I owe you two baths and a bowl of that fish soup. Put it on my slate. Knut stole a towel; he thinks it's his now. Let him have it, it's easier.\nI'm taking the sets with the post, everyone's, by the Warden's order. Yours too, the old one behind the boiler. I know it's there. I'm sorry. I didn't write the order. I only carry it.\nIf anyone comes in off the ice asking about the Whale, be kind to them - and don't tell them I was here. I'll be at my camp on the shelf ice a while, out past the quarry. Fixing a few things.\n- Orrin
+note qslcard A QSL card | (a postcard pinned over the bath keeper's towels, a cartoon penguin in headphones on it)\n\nQSL - CONFIRMING OUR CONTACT\nTo: Steamvent Bathhouse, Gunnar. From: SAGA DRIFT, Tor Hallen, "Sparks". Band 500, seven o'clock, signal steamy.\n\nGunnar! Thank you for calling GOOD MORNING, ICE! with the water temperature. Forty-one degrees. Our listeners were delighted. One listener, a penguin, was unmoved.\nYour news that the bath is "free to all, even sealers" has been read out three times. The sealers have asked me to stop.\nIf they ever tell us all to shut up, Gunnar, keep the water hot anyway. People need somewhere warm to talk.\n- Sparks, 73
+note broadcast The Warden's broadcast | (a transcript in the harbour master's hand, read aloud at the last meeting)\n\nTHE WARDEN'S BROADCAST - the last one sent from the Coldhold:\n\n"People of the north. This is Ansel Holt. You know my voice; I read you the ice reports for eleven years.\nThere is a slow pulse coming from the south. We have measured it. It turns toward every voice on the air, and where it turns, nothing answers afterwards. Grey Cove talked. Grey Cove is quiet now.\nSo I am asking you, and then I am ordering you: be silent. Give your sets to the courier. Do not answer the north, not even the Whale, whatever she says. Especially not the Whale.\nThose who keep faith will have a place in the Coldhold when the cold comes. I promise you that.\nThis is my last transmission. Goodbye."\n\n(In the margin, another hand: "Then why was he the one talking? - I.R.")
 loot harbourstore Blueprint_Machete*1;Machete*1;Rope*2
 prop harbourstore loot.refill=0
 loot greenstore story:wheelpiece*1;Seed_Banana*2;Seed_Strawberry*2;Seed_Flower_Red*1;Seed_Flower_Blue*1;Raw_Potato*3
@@ -379,11 +385,13 @@ step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe's plans from the pipe st
 step collect|story:wheelpiece|3|Find the valve handwheel's three pieces (greenhouse, boiler house, pipe store)
 step read|Driller's warning|1|The vent hisses too hard to turn. Find the driller's cave in the west and read his warning
 step collect|story:bathpower|1|Bring four antenna cables from the masts (mind the bears) to the bathhouse's wire hub
+step read|A note for the bath keeper|1|The bathhouse is open again: read the note left on the bath keeper's bench
 step collect|story:relief|1|Climb Fumarole Mountain and the derrick; take the relief valve from its housing
 step collect|story:steam|1|Turn the vent valve on the square
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor's plans from the town hall's locker
+step read|The Warden's broadcast|1|Read the transcript of the Warden's broadcast in the town hall
 step read|Town meeting minutes|1|Read the town meeting minutes
-quest done=The town goes to Orrin's sledge camp on the shelf ice - and then to the Whale. Orrin is on 900.
+quest done=Steamvent breaks the silence once, for the Whale. The sledges go to Orrin's camp on the shelf ice - his beacon is on 900.
 quest reward=MetalIngot*2;Rope*4;Egg*2
 
 # RESIZE 10-24 retest: the bigger island's generator rocks that floated over slopes (ground check)

@@ -3,7 +3,7 @@
 # the two northern floes. Her crew are locked in the sealers' own cages on the floes (the master locked them in against
 # the bears, then went for help and never came back); the cage keys are in the sealer's locker on the west floe. The lead
 # between the first floe and the hull floe opens and closes: a winch lever on the first floe hauls the loose ice into the
-# lead for 40 seconds. Quest "The White Sea" (11 steps; DEEP 10-24: the berg, the bear den, the lookout key): the first floe, the distress card, across the lead to the hull,
+# lead for 40 seconds. Quest "The White Sea" (12 steps; DEEP 10-24: the berg, the bear den, the lookout key): the first floe, the distress card, across the lead to the hull,
 # the motor wheel's plans (engine room), the three cages and the hull bell (signal "rescued", the plan's done-when), the
 # steering wheel's plans (wheelhouse), the survivors' thanks.
 #
@@ -77,6 +77,8 @@ place Placeable_SteeringWheel - at 4.5 18 h=9 drop yaw=90
 place Loot_Chest wheelhouse at 3 19 h=9 drop yaw=270
 place TangaroaBucket hullbell at 0 18.5 h=9 drop rot=180,0,0 scale=1.5
 place Note_Paper thanks at 0.8 17.5 h=9 drop yaw=40
+place Note_Sign silenceposter at -1.4 16.8 h=9 drop yaw=0
+place Note_Paper qslcard at 4.2 17.4 h=9 drop yaw=200
 prop thanks beh.hidden=1
 
 # --- The three cages: one on the hull floe, one on the east floe, one on the north floe ------------------------------
@@ -104,12 +106,12 @@ place campfire_1 - at 38.3 7.4 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 41.3 9.4 ground sit yaw=357
 place "Box Small" - at 36.3 9.9 ground sit
 place Note_Paper dnote at 36.3 9.9 ground y=0.7 drop yaw=20
-note dnote Sledger's note | CAMP ON THE SHELF\n\nDogs fed, two left. Ice groaning all night.\nThe Whale's horn sounded from the north again - no ship has a horn like that any more.\nWe go on at first light.
+note dnote Sledger's note | CAMP ON THE SHELF (a note under a stone, in a round, friendly hand)\n\nTuva and Knut fed, both asleep on my feet, which is the only warm thing in the north. The ice groaned all night like an old man getting out of a chair.\nThe Kittiwake's master gave me coffee and an earful. I took their radio set "for repair" - his quotes, not mine, he did them with his fingers. They'll have it back when the Coldhold says so.\nNailed the Warden's paper up on their mast, as I was told. Halvorsen read it and spat on the deck. Good man, Halvorsen.\nThe Whale's horn sounded from the north again. No ship has a horn like that any more. Nobody says so out loud.\nOn at first light: Steamvent, then home to my goats, who have surely eaten the door.\n- O.V.
 place TP_SnowVehicle01 dvan at -38.3 -7.4 ground yaw=117
 prop dvan tint.color=#8a9aa6
 prop dvan tint.amount=0.5
 place Loot_ChestSmall dwreckchest at -42.3 -4.4 ground sit yaw=57
-note dwreckchest Frozen chest | A chest frozen to the runner: wool, rope and a tin of nails.
+note dwreckchest Frozen chest | Frozen to an old sledge runner: wool, rope, a tin of nails.
 loot dwreckchest Wool*3;Rope*2;Nail*8
 prop dwreckchest loot.refill=0
 call hatchcache x=-34.1 z=18.9 r=15 seed=12291 alias=dhatch chest=dhatchchest items=MetalIngot*2;Wool*3;Bolt*2
@@ -131,7 +133,7 @@ call icerock x=43 z=40 s=3 yaw=110 al=bergice
 call icerock x=25 z=56 s=2.5 yaw=200 al=bergice
 call icerock x=45 z=60 s=2.5 yaw=300 al=bergice
 call icetint al=bergice
-call fz_tower x=34 z=52 h=26 n=4 al=lookout chest=lookoutchest zal=lookzone zid=berg_top msg="The sealers' lookout on the berg. All five floes below you - and the Kittiwake, crushed between them."
+call fz_cairn x=34 z=50 al=lookout chest=lookoutchest zal=lookzone zid=berg_top msg="Ivar's cairn on the berg's top. All five floes below you - and the Kittiwake, crushed between them."
 call fz_zone x=28 z=26 al=bergfoot id=berg_foot r=6 msg="The grounded iceberg. It came in with the spring ice and never left; somebody built a lookout on its top."
 # the bear den (W): its mouth to the floes, the lookout's tally inside, its bear outside
 call ar_cave x=-62 z=-24 h=2 yaw=0 al=bearden chest=denchest
@@ -167,12 +169,14 @@ island on.arrive=message||Floes as far as the eye goes - and on them, three cage
 story sealkey|Cage key|Placeable_Lantern_Metal|One of the sealers' three cage keys, from the locker on the west floe.
 story rescued|The sealers freed|Placeable_Lantern_Metal|The three sealers are out of their cages, and the hull bell has called them home.
 
-note distresscard Sealer's distress card | MV KITTIWAKE - SEALER - DISTRESS\n\nIced in and crushed on the Floelane. Three crew aboard.\nBears on the floes at night: I locked the crew in the sealing cages for safety and took the dinghy for help.\nCage keys in my locker on the west floe.\nThe lead to the hull opens and shuts with the ice - the winch hauls the loose floes in. Be quick.\n\n- Master Halvorsen
+note distresscard Sealer's distress card | MV KITTIWAKE - SEALER - DISTRESS\n\nIced in and crushed on the Floelane. Two crew aboard, and the relay man Ivo, who came to us off the stack with his headphones still round his neck.\nWe have no set. The courier took it "for repair" and left us a paper telling us to be quiet. Quiet! On a floe, with bears.\nBears on the floes every night: I have locked the three of them in the sealing cages for safety and taken the dinghy for help. Do not laugh, Ivo. You will thank me when you still have legs.\nCage keys in my locker on the west floe.\nThe lead to the hull opens and shuts with the ice - the winch hauls the loose floes in. Be quick about it.\n\n- Master Halvorsen
 note leadsign Winch | HAUL ICE INTO LEAD\nIt holds less than a minute.
-note sealerslocker Sealer's locker | Master Halvorsen's locker: three cage keys on a ring, a flask (empty), dry socks.
-note engineroom Engine room | The Kittiwake's engine room, half under the ice: the motor's spare wheel - and its plans, oiled and wrapped.
-note wheelhouse Wheelhouse locker | The wheelhouse locker: the steering gear's plans and a chart of the white sea with a circle round "steam harbour".
-note thanks Survivors' thanks | (pinned to the bell rope)\n\nYou came for us. Thank you.\nThe master never came back - the dinghy's gone under, we think.\nWe're going to the steam harbour. It's warm there, and they'll have heard of the Whale.\nGo there. 800 on the set.\n\n- Sigrid, Ansel and Bo
+note sealerslocker Sealer's locker | Halvorsen's locker: three cage keys on a ring, an empty flask.
+note engineroom Engine room | The engine room, half under the ice: the motor wheel's plans, oiled.
+note wheelhouse Wheelhouse locker | The wheelhouse locker: the steering plans, a chart marked "steam harbour".
+note thanks Survivors' thanks | (pinned to the bell rope, three hands taking turns)\n\nYou came for us. Thank you. Sigrid wants it written that she was not crying, it was the wind.\nThe master never came back. The dinghy has gone under, we think. He locked us up to keep the bears off and went out alone on the black water. That was Halvorsen. Stubborn to the end, and right.\nWe're going to the steam harbour, the three of us. It's warm there, they have a bath you could boil an egg in, and somebody there will have heard the Whale.\nIvo says: whoever is sending from the north is still sending. The silence is an order, he says, not a law of nature.\nGo there. 800 on the set.\n\n- Sigrid, Bo, and Ivo Rask of the relay
+note silenceposter SILENCE ORDER | (a printed sheet nailed to the Kittiwake's mast, spat on)\n\nSILENCE ORDER - BY THE WARDEN OF THE COLDHOLD\n\nTo every boat, station and town of the north.\nA signal moves in the south. It is slow and it is patient, and it listens for us. Every voice on the air draws it nearer to every one of us.\nFrom this day: no transmission on any band. Sets are to be handed to the courier for safekeeping. Calls from the north are to go unanswered, whatever they say. A voice that begs is still a voice.\nThose who keep the silence will be kept. There is room below the ice.\n\nANSEL HOLT, WARDEN\n\n(Under it, scratched with a knife: "Room for who, Ansel?")
+note qslcard A QSL card | (a postcard tucked behind the Kittiwake's wheel, a cartoon penguin in headphones on it)\n\nQSL - CONFIRMING OUR CONTACT\nTo: MV Kittiwake. From: SAGA DRIFT, Tor Hallen, "Sparks". Band 500, seven o'clock, signal fair, crew singing.\n\nKittiwake! Thank you for calling GOOD MORNING, ICE! to report a seal "the size of a church". Our studio expert (me) rates it a large seal. Your cook's song about it has been played four times by request (my request).\nCaller 41 was a penguin again. Said nothing. Still the best caller this week.\nKeep your set warm and your lines open. A sea with nobody talking on it is just water.\n- Sparks, 73
 loot sealerslocker story:sealkey*3;Rope*2;Wool*1
 prop sealerslocker loot.refill=0
 loot engineroom Blueprint_MotorWheel*1;Scrap*4;Bolt*2
@@ -182,18 +186,18 @@ prop wheelhouse loot.refill=0
 
 # --- DEEP 10-24: the berg, the den, the hut, the sister boat ---
 story wheelkey|Wheelhouse key|Placeable_Lantern_Metal|The Kittiwake's wheelhouse key, frozen into the lookout on the iceberg.
-note tally Lookout's tally | (a tally board, scored with a knife)\n\nSEALS SIGHTED: |||| |||| |||\nBEARS: ||||\nTHE WHALE'S HORN: |||\n\nOn the back: Took the wheelhouse key up the berg with me - the master wants nobody steering while he's gone. Hung it in the lookout chest. - Ivar
-note lookoutchest Sealers' lookout chest | The lookout's chest on the berg: a spyglass with no glass, a frozen pipe - and a key on a cord, KITTIWAKE WHEELHOUSE.
+note tally Lookout's tally | (a tally board, scored with a knife, dragged into the den)\n\nSEALS SIGHTED: IIII IIII III\nBEARS: IIII\nTHE WHALE'S HORN: III\nA WOMAN ON 700 BEFORE THE SET WENT: IIII IIII\n\nOn the back: She reads the ice like a weather forecast. "Lead open at the north floe, two hours. Pressure ridge east, keep off." She has been right every single time. Whoever she is, she is out there helping strangers with a hand key and no permission.\nTook the wheelhouse key up the berg with me - the master wants nobody steering while he's gone. Hung it in the lookout chest at the top. The bear has been about. If I'm late back, I'm late.\n- Ivar
+note lookoutchest Sealers' lookout chest | Ivar's chest by the cairn: a glassless spyglass, the wheelhouse key.
 loot lookoutchest story:wheelkey*1;Rope*2;MetalIngot*2
 prop lookoutchest loot.refill=0
 note denchest Bear den cache | What the bear dragged into its den: a sealer's bag, still shut.
 loot denchest Leather*3;Wool*2;Raw_GenericMeat*2
 prop denchest loot.refill=0
-note hutlog Sealers' hut log | SEALERS' HUT\n\nThe roof went in the first storm. We sleep on the boat now.\nIvar keeps the lookout on the berg. Halvorsen keeps the keys.\nThe sister boat went down in the south lead in the autumn - her strongbox with her.
-note hutchest Sealers' chest | The sealers' chest in the corner of the hut: skins, hooks, a bag of nails.
+note hutlog Sealers' hut log | SEALERS' HUT - LOG (Halvorsen)\n\nThe roof went in the first storm. We sleep on the boat now, which Bo says is a step up, and Bo has seen my boat.\nIvar keeps the lookout on the berg; there is no ladder, only the slope, and he goes up it like a goat. Halvorsen keeps the keys - I write my own name like it's somebody else's, that's how tired I am.\nThe sister boat went down in the south lead in the autumn, her strongbox with her and the season's pay in it. Twelve metres. Somebody braver than me could swim for it.\nThe courier's sledge has been past twice this month, at night, without bells the second time. Odd. He always rang them for the dogs.
+note hutchest Sealers' chest | Skins, hooks and a bag of nails in the hut's corner.
 loot hutchest Leather*2;Nail*10;Rope*2
 prop hutchest loot.refill=0
-note sisterchest Sister boat's strongbox | The sister boat's strongbox, twelve metres down: the season's pay, in metal.
+note sisterchest Sister boat's strongbox | The sister boat's strongbox, twelve metres down: the season's pay.
 loot sisterchest MetalIngot*3;CopperIngot*2;Bolt*3
 prop treasure12241 treasure.loot=MetalOre*3;Wool*2
 prop treasure12242 treasure.loot=TitaniumOre*1;CopperOre*2
@@ -218,11 +222,11 @@ prop cage1 survivor.key=sealkey
 prop cage1 survivor.signal=cage1
 prop cage1 survivor.line=At last! The bears circled us all night. Ring the hull bell when the others are out - that's our signal.
 prop cage2 obj.name=cage2
-prop cage2 survivor.name=Ansel
-prop cage2 survivor.id=frozen_ansel
+prop cage2 survivor.name=Ivo
+prop cage2 survivor.id=frozen_ivo
 prop cage2 survivor.key=sealkey
 prop cage2 survivor.signal=cage2
-prop cage2 survivor.line=My hands - I can't feel my hands. Thank you. Is Sigrid out? And Bo?
+prop cage2 survivor.line=My hands - I can't feel my hands. Thank you. Ivo Rask, from the relay. Is Sigrid out? And Bo? Did you hear her too - the woman on 700?
 prop cage3 obj.name=cage3
 prop cage3 survivor.name=Bo
 prop cage3 survivor.id=frozen_bo
@@ -244,10 +248,11 @@ step reach|first_floe|1|Land on the first floe
 step read|Sealer's distress card|1|Read the sealer's distress card
 step reach|hull|1|Cross the lead to the hull floe (the winch hauls the ice in)
 step blueprint|Blueprint_MotorWheel|1|Take the motor wheel's plans from the boat's engine room
+step read|SILENCE ORDER|1|Read the paper nailed to the Kittiwake's mast
 step collect|story:rescued|1|Free the three sealers (keys in the locker on the west floe) and ring the hull bell
 step reach|berg_foot|1|The wheelhouse is locked and the key is not aboard. Cross the floes to the grounded iceberg in the north-east
 step read|Lookout's tally|1|Find what the lookout left - the bear den in the west has his tally board
-step reach|berg_top|1|Climb the iceberg and the ice ladder to the sealers' lookout
+step reach|berg_top|1|Climb the iceberg on foot to Ivar's cairn on its top
 step collect|story:wheelkey|1|Take the wheelhouse key from the lookout chest
 step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel's plans from the wheelhouse locker
 step read|Survivors' thanks|1|Read the survivors' thanks on the bell rope
