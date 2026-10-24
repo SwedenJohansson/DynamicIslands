@@ -1,4 +1,5 @@
-# Fleetbreak Moorings (CIPlay fleetbreak_moorings): the chart room, the articles, the bosun's locker (machete), the
+# Fleetbreak Moorings (CIPlay fleetbreak_moorings), STORY 10-24 order: the chart room, the articles, Crane's decree, Teo's log,
+# the dive for the flagship's log, the bosun's locker (machete), the
 # vines on the stair cut, the boars in the roof garden, the fuel tank and fuel pipe, Teo's log, the biofuel press, the
 # strongbox and the Fleet's offer; then the contract: the boom, three filter crates, the Rookery's drop, the receipt.
 # offset 0 0 is a placeholder: phase 2 sets it from the recipe's save log (PLAY_FORMAT: Coordinates).
@@ -10,69 +11,61 @@ zone chart_room
 expect step 1
 read Free Fleet articles
 expect step 2
-open Bosun's locker
-wait 3
+read Council decree
 expect step 3
-use gardenvines
-expect hidden gardenvines
-zone roof_garden
-expect step 4
-kill Warthog
-expect animals Warthog 0
-expect step 5
-open Fuel tank crate
-wait 3
-expect step 6
-open Fuel store
-wait 3
-expect step 7
 read Teo's log
-expect step 8
-open Biofuel press
-wait 3
-expect step 9
-open Fleet strongbox
-wait 3
-expect story authpass 1
-expect step 10
-zone gull_ridge
-expect step 11
-read Harbourmaster's ledger
-expect step 12
-open Seaplane's crate
-wait 3
-expect step 13
-zone bosuns_cave
-expect step 14
-# DEEP 10-24: the notice, the climb, the dive, the foghorn lever
-expect hidden fb_rewchest
-use fb_machine
-expect hidden fb_rewchest
-read Harbourmaster's notice
-expect step 15
-zone fb_trail
-expect step 16
-openat -50.26 -55.44
-zone fb_summit
-expect step 17
-expect stand -41.26 -38.32 h=40
-open Fleet's signal mast deck box
-wait 3
-expect story fb_top 1
-expect step 18
+expect step 4
+# STORY 10-24: the dive comes first - the flagship's log
 zone fb_deep
-expect step 19
+expect step 5
 expect stand -71 20 h=-12
 open Flagship's deckhouse strongbox
 wait 3
 expect story fb_deep 1
-expect step 20
-use fb_machine
-expect shown fb_rewchest
-expect story fb_fixed 1
-open Foghorn lever reward
+expect step 6
+open Bosun's locker
 wait 3
-read Foghorn chart
+expect step 7
+use gardenvines
+expect hidden gardenvines
+zone roof_garden
+expect step 8
+kill Warthog
+expect animals Warthog 0
+expect step 9
+open Biofuel press
+wait 3
+expect step 10
+open Fuel tank crate
+wait 3
+expect step 11
+open Fuel store
+wait 3
+expect step 12
+open Fleet strongbox
+wait 3
+expect story authpass 1
+expect step 13
+zone gull_ridge
+expect step 14
+read Harbourmaster's ledger
+expect step 15
+open Seaplane's crate
+wait 3
+expect step 16
+zone bosuns_cave
+expect step 17
+zone fb_trail
+expect step 18
+openat -50.26 -55.44
+zone fb_summit
+expect step 19
+expect stand -41.26 -38.32 h=40
+open Fleet's signal mast deck box
+wait 3
+expect story fb_top 1
+expect step 20
+read A friend's signal
 expect step 21
 read Fleet contract offer
 expect done

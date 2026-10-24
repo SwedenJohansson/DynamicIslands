@@ -1,6 +1,6 @@
 # Raft Row Bazaar (CIPlay raft_row_bazaar): the market, the price board, the engine stall (motor wheel), the shortage
 # list, the Fleet's stall (steering wheel; the plan's fleet rule goes by this step), the back room locked until the
-# drawer's key, the ledger, a hen for the Fleet, the merchant's warning.
+# drawer's key, the ledger, a hen for the Fleet, Crane's broadcast, the pedlar's tram, the climb, a friend's note.
 # offset 0 0 is a placeholder: phase 2 sets it from the recipe's save log (PLAY_FORMAT: Coordinates).
 island Raft Row Bazaar
 offset 0 0
@@ -20,64 +20,73 @@ expect step 5
 open Free Fleet stall
 wait 3
 expect step 6
+read Complaint No. 230
+expect step 7
+expect hidden rb_broadcast
+use rb_speaker
+expect shown rb_broadcast
+read Councillor's broadcast
+expect step 8
 open Back room
 expect story backkey 0
-expect step 6
+expect step 8
 open Merchant's drawer
 expect story backkey 1
 open Back room
 wait 3
-expect step 7
-read Withheld stock ledger
-expect step 8
-catch Chicken 1
 expect step 9
-zone rubbish_hill
+read Withheld stock ledger
 expect step 10
-read Fire warden's report
+catch Chicken 1
 expect step 11
-open Pedlar's caravan
-wait 3
+read Fire warden's report
 expect step 12
-zone pedlars_cave
-expect step 13
-# DEEP 10-24: the notice, the climb, the dive, the crier's box
 expect hidden rb_rewchest
 use rb_machine
 expect hidden rb_rewchest
 read Market crier's notice
+expect step 13
+zone rubbish_hill
 expect step 14
-zone rb_trail
+open Pedlar's caravan
+wait 3
 expect step 15
+read Pedlar's tag
+expect step 16
+zone pedlars_cave
+open Pedlars' stock
+wait 3
+expect story rb_deep 1
+expect step 17
+# STORY 10-24: the climb last; the sunk arcade is an optional dive now
+zone rb_trail
+expect step 18
 openat -55.78 58.48
 zone rb_summit
-expect step 16
+expect step 19
 expect stand -49.07 57.2 h=30
 open Pedlars' bell tower deck box
 wait 3
 expect story rb_top 1
-expect step 17
-zone rb_deep
-expect step 18
-expect stand -75 -20 h=-12
-open Sunk arcade strongbox
-wait 3
-expect story rb_deep 1
-expect step 19
+expect step 20
 use rb_machine
 expect shown rb_rewchest
 expect story rb_fixed 1
 open Crier's box reward
 wait 3
 read Crier's ledger
-expect step 20
+expect step 21
 code rb_strongpad 1111 wrong
 expect hidden rb_strongchest
+expect hidden rb_friendnote
 code rb_strongpad 8523
 expect shown rb_strongchest
+expect shown rb_friendnote
 expect story rb_strong 1
-expect step 21
+expect step 22
 open Crier's strongbox
 wait 3
 read Merchant's warning
+expect step 23
+read A friend's note
 expect done

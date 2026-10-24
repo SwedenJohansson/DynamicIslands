@@ -2,7 +2,7 @@
 # The Free Fleet's harbour: a drowned office block whose roof went wild into a jungle garden, and round it a ring of
 # ship hulks moored as a harbour wall, plank gangways between them. The Fleet's chart room stands on the biggest hulk's
 # deck; Balboa-like vines close the stair up to the roof garden, where escaped boars root among mango and banana trees.
-# Puffers drift in the moorings. Quest "The Free Fleet" (22 steps): the chart room, the Fleet's articles, the machete's
+# Puffers drift in the moorings. Quest "The Free Fleet" (22 steps, STORY 10-24: the dive first, Crane's decree, the flagship's log, a friend's signal on the fell; the foghorn lever gone): the chart room, the Fleet's articles, the machete's
 # plans, the vines and the roof garden, three boars, the fuel tank's and the fuel pipe's plans, Teo's log, the biofuel
 # press, the Fleet's strongbox (goo, leather and a forged Authority pass), the contract offer. Contract "Filters Past
 # the Boom" (5): the boom, three filter crates off the hulks, the Rookery's drop, the receipt, the reward (fleetfriend).
@@ -75,6 +75,7 @@ call hw_penthouse d=10 a=hull f1=RT_WallWindow1 f2=RT_Wall1 b1=RT_WallWindow1 b2
 # (the chart table's mesh lies 12.6 m from its pivot: centred)
 place MapTable - at -3 0 y=0.1 sit centred scale=0.6
 place Note_Board articles at -5.9 -3 y=1.2 yaw=90
+place Note_Board decree at -5.9 1 y=1.2 yaw=90
 place Loot_Chest bosunlocker at -5.2 3.4 y=0.1 sit yaw=180
 place Loot_ChestLarge strongbox at -4.8 -3.4 y=0.1 sit
 place Note_Paper teoslog at -3 0 y=1 drop
@@ -185,20 +186,16 @@ prop fb_boatcrate loot.refill=0
 call hw_reef x=-83 z=31 r=3 seed=13386
 place Creature_PufferFish fb_puffers at -82 19 h=-8
 prop fb_puffers creature.count=2
-call hw_machine x=-74 z=-6 yaw=142.13 al=fb_machine nm="Foghorn lever" obj=TP_LaserControlPanel_lever sc=3 a=fb_top b=fb_deep done=fb_fixed rew=fb_rewchest rnote=fb_rewnote msg="It works." hint="It needs the signal pennant from the top of Mastback Fell and the flagship's bell from the flagship's deckhouse."
-call hw_note x=-76.89 z=-6.35 yaw=162.13 al=fb_hint
+call hw_note x=-48 z=-40 yaw=120 al=fb_friend
 story fb_top|Signal pennant|Bolt|The Free Fleet's long signal pennant, rolled up at the top of the mast.
-story fb_deep|Flagship's bell|Bolt|The ship's bell from the sunk flagship's deckhouse.
-story fb_fixed|Foghorn lever working|Bolt|The foghorn lever, working again.
+story fb_deep|Flagship's log|Note_Paper|The old flagship's log, wrapped in oilcloth - its last page names Councillor Crane.
 story tape|Insulating tape|Bolt|A roll of the Union linesmen's insulating tape. Three of them would make a dead breaker safe.
-note fb_hint Harbourmaster's notice | The Fleet's foghorn won't sound until its pennant flies and its bell is hung: the pennant is rolled up on the signal mast atop Mastback Fell, the bell is still in the flagship's deckhouse, sunk off the west moorings.
+note fb_friend A friend's signal | Tied to the mast's foot with a strip of sailcloth -\n\nYou found the flagship's log, then. Teo told me about the night Crane came for the ballast years ago, and I didn't believe him. A councillor in oilskins, rowing out himself? Crane doesn't row. Crane signs things.\n\nBut I have since seen the Council's own barge lists, and every one of them ends at the same place: the Foundation Piles, under the Crown. Iron, stone, scrap, old engines - all of it going down, none of it coming back. What does a city need with that much weight at the bottom of the sea?\n\nI don't know yet. The Salvagers' Union might. Their cranes lift everything in this city and their foreman, Bram Hask, writes down every ton. Hookline Stack, band eight hundred. Tell Bram the friend sent you - he'll swear, and then he'll help.\n\nBurn this. Or don't - nobody climbs up here but goats.\n\n- a friend
+prop fb_deepchest on.open=message||Inside, wrapped in oilcloth, the flagship's log. The last page in the old captain's hand: COUNCIL LAUNCH ALONGSIDE, 2 BELLS. CRANE HIMSELF. WANTS OUR BALLAST IRON, ALL OF IT, ANY PRICE - 'WHERE THE CITY NEEDS WEIGHT'. TOLD HIM TO GO WEIGH HIMSELF.
 note fb_topchest Fleet's signal mast deck box | A box lashed to the deck rail at the top of the Fleet's signal mast.
 loot fb_topchest story:fb_top*1;Scrap*2;Bolt*2
 note fb_deepchest Flagship's deckhouse strongbox | A strongbox in the back room of the flagship's deckhouse.
 loot fb_deepchest story:fb_deep*1;story:tape*1;MetalIngot*1;Plastic*2
-note fb_rewnote Foghorn chart | The foghorn booms across the moorings. Behind the lever: the old flagship's chart - the safe channel through the drowned city, and where the Fleet hides its spare fuel.
-note fb_rewchest Foghorn lever reward | What the foghorn lever kept.
-loot fb_rewchest GasTank*1;TradeToken*2;Rope*2
 note fb_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
 loot fb_ledge Rope*2;Bolt*2;Scrap*2
 prop fb_ledge loot.refill=0
@@ -249,9 +246,10 @@ prop dropzone if.enter=has|story:filtercrate|3
 prop dropzone else.enter=message||The Rookery's drop. The Fleet wants three crates here, not fewer.
 prop fleetreward on.open=signal||fleetfriend\nmessage||The Fleet's thanks. Word goes round the moorings: the Fleet owes you one.
 
-note articles Free Fleet articles | ARTICLES OF THE FREE FLEET\n\nThe sea is nobody's.\nWhat floats is shared.\nNo boom, no toll, no permit.\nA captain is chosen and can be unchosen.\n\nSigned, for the Fleet: Teo Varga, captain.
-note teoslog Teo's log | Teo Varga's log -\n\nRan forty filters past the boom last night. The Authority's lamp swept twice and missed us twice.\n\nThe bazaar says filters are short. They aren't short. Somebody holds them back.\n\nThe Rookery drinks rain. We'll keep running them.
-note contract Fleet contract offer | FROM THE FLEET - A JOB\n\nThree crates of filters wait on our outer hulks.\nTake them past the boom to the Rookery's drop, the raft with our flag east of the ring.\n\nDo it and the Fleet owes you. - T.V.
+note articles Free Fleet articles | ARTICLES OF THE FREE FLEET\n\nThe sea is nobody's.\nWhat floats is shared.\nNo boom, no toll, no permit.\nA captain is chosen and can be unchosen.\nNobody is weighed.\n\nSigned, for the Fleet: Teo Varga, captain.\n\n(Under it, in a child's paint: A CAPTAIN MUST ALSO SHARE BISCUITS. Teo has signed that too. Twice, the second time bigger.)\n\n(And under that, in Teo's hand: Article six was added by my niece, by a vote of forty to one. The one was me. I have since come round. A fleet that shares its biscuits is a fleet that stays together, and a fleet that stays together is the only reason forty families still have a roof that floats. - T.V.)
+note decree Council decree | BY ORDER OF THE HARBOR COUNCIL - DECREE No. 77\n\nThe moorings of the so-called Free Fleet are revoked. Forty-one hulls, chained to the old office block, are a burden the city cannot carry. They are to be broken up and their iron delivered to the Council's barges for the Foundation works.\n\nThis is not malice. It is arithmetic. The city can bear so much and no more.\n\n- Councillor Aldous Crane\n\n(Scrawled across it in tar: FORTY-ONE HULLS THAT FLOAT, COUNCILLOR. WE WEIGH NOTHING ON YOUR PILES. WHY DO YOU WANT OUR IRON SO BADLY? - T.V.)
+note teoslog Teo's log | Teo Varga's log -\n\nRan forty filters past the boom last night. The Authority's lamp swept twice and missed us twice. Old Mags at the tiller laughed so hard she nearly gave us away.\n\nThe bazaar says filters are short. They aren't short. Somebody holds them back, and the Rookery drinks rain.\n\nThe Council's new decree wants our iron. My father had the same visit, the year the Gull's Mother went down off the west moorings - he swore Crane came out himself, in the night, and that the flagship sank two days after he said no. Nobody believed him. I was twelve. I believed him.\n\nThe log is still in her deckhouse strongbox, twelve metres down. I can't dive any more - my ears went in the cold years. If the stranger from the bazaar can swim, bring it up. Then we'll talk about trust.\n\n- T.V.
+note contract Fleet contract offer | FROM THE FLEET - A JOB\n\nThree crates of filters wait on our outer hulks.\nTake them past the boom to the Rookery's drop, the raft with our flag east of the ring.\n\nDo it and the Fleet owes you.\n\nAnd when you're done, go and see Bram Hask at Hookline Stack, band eight hundred. The Union's cranes lift what we can't, and Bram writes down every ton. If anybody knows where the Council's iron goes, it's him. - T.V.
 note receipt Fleet receipt | RECEIVED AT THE DROP: three crates of filters.\nThe Rookery drinks clean tonight.\n\nThe Fleet won't forget. - T.V.
 note bosunlocker Bosun's locker | The bosun's locker: the machete's plans, the bosun's own old machete on a whetstone, a rope.
 note fueltankchest Fuel tank crate | A crate on the hulk's deck: the fuel tank's plans, drums half full.
@@ -303,37 +301,37 @@ note pressvault Press engine locker | The engine's locker, rusted shut for years
 loot pressvault MetalIngot*3;Bolt*4;CopperIngot*2
 prop pressvault loot.refill=0
 prop ridgevinechest note.title=Gull nest cache
-note seaplanelog Seaplane log | FREE FLEET SEAPLANE 'GULL' - last entry\n\nFlew the Fleet's mail to the far moorings. Authority guns at Pumpcrown fired on us.\nNo engine, no radio - glided in onto the north shore.\nThe filters are still in the crate. Somebody take them where they're needed.
+note seaplanelog Seaplane log | FREE FLEET SEAPLANE 'GULL' - last entry\n\nFlew the Fleet's mail to the far moorings. Authority guns at Pumpcrown fired on us - warning shots, I think, though one of the warnings went through the left float.\n\nNo engine, no radio. Glided in onto the north shore with the mail bags as cushions. Nobody hurt except the plane and my pride, and the plane is worse off.\n\nThe filters are still in the crate. Somebody take them where they're needed. The letters too - one of them is from a girl on the Rookery to her gran on Lowstreet, and I promised I'd see it delivered. Lowstreet is under water now. I don't know what you do with a letter like that. I've kept it.\n\n- Ada, pilot, still grounded
 note seaplanecrate Seaplane's crate | The seaplane's cargo crate: water filters and the Fleet's mail, never delivered.
 loot seaplanecrate Plastic*3;Rope*2;Leather*2
-note harbourledger Harbourmaster's ledger | HARBOURMASTER'S LEDGER\n\nThe Fleet's hulks: forty-one boats, all scuttled in a ring to break the storms.\nThe Authority wants a mooring fee for each. The Fleet says a wreck pays no fee.\nI resigned. Someone has to count the boats nobody owns.
+note harbourledger Harbourmaster's ledger | HARBOURMASTER'S LEDGER\n\nThe Fleet's hulks: forty-one boats, moored bow to stern in a ring to break the storms. The Authority wants a mooring fee for each. The Fleet says a wreck pays no fee. The Authority says a wreck with forty families living in it is not a wreck. The Fleet says then it is not a boat either, and the argument has gone on for six years.\n\nLast month the Council sent a new form: TONNAGE OF IRON PER HULL. Not the fee. The iron. I filled it in honestly, then sat up all night wondering why a council needs to know how much a fleet weighs.\n\nI resigned in the morning. Someone has to count the boats nobody owns, and it had better not be someone who answers to Crane.
 note bosuncavechest Bosun's cache | The bosun's cache, under a tarpaulin: goo, rope and a spare compass.
 loot bosuncavechest ExplosiveGoo*1;Rope*3;Scrap*4
 prop bosuncavechest loot.refill=0
 quest title=The Free Fleet
-quest intro=The Free Fleet finds things, the bazaar said. Their chart room is on the biggest hulk.
+quest intro=The Free Fleet finds things, the bazaar said. Their chart room is on the biggest hulk - and Teo Varga has a job that starts underwater.
 step reach|chart_room|1|Go into the Fleet's chart room on the biggest hulk
 step read|Free Fleet articles|1|Read the Free Fleet's articles
-step blueprint|Blueprint_Machete|1|Take the machete's plans from the bosun's locker
+step read|Council decree|1|Read the Council's decree nailed up beside them
+step read|Teo's log|1|Read Teo's log on the chart table
+step reach|fb_deep|1|Dive to the sunk flagship's deckhouse off the west moorings
+step collect|story:fb_deep|1|Bring up the flagship's log from the deckhouse strongbox
+step blueprint|Blueprint_Machete|1|Take the machete's plans from the bosun's locker in the chart room
 step reach|roof_garden|1|Cut the vines on the stair and climb to the roof garden
 step kill|Warthog|3|Drive the three boars out of the roof garden
+step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor's plans from the press in the roof garden
 step blueprint|Blueprint_Fueltank|1|Take the fuel tank's plans from the east hulk's deck
 step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe's plans from the west hulk's fuel store
-step read|Teo's log|1|Read Teo's log in the chart room
-step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor's plans from the press in the roof garden
 step open|Fleet strongbox|1|Open the Fleet's strongbox
 step reach|gull_ridge|1|Climb Gull Ridge in the north-west
 step read|Harbourmaster's ledger|1|Read the harbourmaster's ledger in his house on the west shore
 step open|Seaplane's crate|1|Open the crate in the Fleet's crashed seaplane on the north-east shore
 step reach|bosuns_cave|1|Find the bosun's cave in the east
-step read|Harbourmaster's notice|1|Read the harbourmaster's notice by the foghorn lever in the west
 step reach|fb_trail|1|Find the foot of the trail up Mastback Fell, in the south-west
 step reach|fb_summit|1|Climb the trail to the top of Mastback Fell
 step collect|story:fb_top|1|Climb the Fleet's signal mast and take the signal pennant from its deck
-step reach|fb_deep|1|Dive to the flagship's deckhouse off the west shore
-step collect|story:fb_deep|1|Find the flagship's bell in its back room
-step read|Foghorn chart|1|Bring both to the foghorn lever and read what it shows
-step read|Fleet contract offer|1|Read the Fleet's offer
+step read|A friend's signal|1|Read the note tied to the foot of the mast
+step read|Fleet contract offer|1|Read the Fleet's offer in the chart room
 quest done=The pass is forged and the Fleet trusts you. The Salvagers' Union works the cranes at Hookline Stack - band 800.
 quest reward=Mango*2;Banana*2;Leather*2
 

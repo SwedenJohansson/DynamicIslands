@@ -10,56 +10,50 @@ zone union_hall
 expect step 1
 read Union charter
 expect step 2
+read Council requisition
+expect step 3
 open Hall desk
 wait 3
-expect step 3
-zone crane_3
 expect step 4
-open Foreman's box
-wait 3
-expect step 5
-open Flare store
-wait 3
-expect step 6
-zone spoil_heap
-expect step 7
-open Toppled crane's toolbox
-wait 3
-expect step 8
-read Tally book
-expect step 9
-zone divers_cave
-expect step 10
-# DEEP 10-24: the notice, the climb, the dive, the crane console
-expect hidden hk_rewchest
-use hk_machine
-expect hidden hk_rewchest
-read Yard foreman's notice
-expect step 11
+# STORY 10-24: the climb first, for Bram's strongroom key
 zone hk_trail
-expect step 12
+expect step 5
 openat 1.88 -64.26
 zone hk_summit
-expect step 13
+expect step 6
 expect stand -0.28 -56.71 h=36
 open Dragline's boom ladder deck box
 wait 3
 expect story hk_top 1
+expect step 7
+zone crane_3
+expect step 8
+open Foreman's box
+wait 3
+expect step 9
+open Flare store
+wait 3
+expect step 10
+zone spoil_heap
+expect step 11
+open Toppled crane's toolbox
+wait 3
+expect step 12
+read Tally book
+expect step 13
+zone divers_cave
 expect step 14
-zone hk_deep
+read Bram's tonnage note
 expect step 15
+zone hk_deep
+expect step 16
 expect stand 75 -28 h=-16
 open Union strongroom strongbox
 wait 3
 expect story hk_deep 1
-expect step 16
-use hk_machine
-expect shown hk_rewchest
-expect story hk_fixed 1
-open Crane console reward
-wait 3
-read Union yard codes
 expect step 17
+read Bram's letter
+expect step 18
 open Crane cab
 wait 3
 expect done

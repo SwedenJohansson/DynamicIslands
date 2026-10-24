@@ -10,21 +10,28 @@ zone tram_stop
 expect step 1
 read Expedition plan
 expect step 2
-open Projection box
-wait 3
+read Council flood notice
 expect step 3
 zone shop_1
 air shop_1
 air shop_4
 expect step 4
+open Toy box at No. 14
+wait 3
+expect step 5
 kill Angler fish
 expect animals Angler fish 0
-expect step 5
+expect step 6
 open Electronics shop
 wait 3
-expect step 6
-zone store_front
 expect step 7
+open Diner
+wait 3
+expect step 8
+read Jonah's letter
+expect step 9
+zone store_front
+expect step 10
 use cagerelease
 expect story cagesopen 0
 open Floor manager's office
@@ -32,58 +39,32 @@ wait 3
 expect story storekey 1
 use cagerelease
 expect story cagesopen 1
-expect step 8
-read Ines's report
-expect step 9
-open Lamp shop
-wait 3
-expect step 10
-kill Stingray
 expect step 11
-zone embankment
+read Ines's report
 expect step 12
-read Depot timetable
+# STORY 10-24: Ines's chalk hooks along the street to the sewer mouth
+zone ls_hook1
 expect step 13
-zone tram_wagons
+zone ls_hook2
 expect step 14
-open Stripped caravan's crate
+open Projection box
 wait 3
 expect step 15
-# DEEP 10-24: the notice, the climb, the dive, the tram signal box
-expect hidden ls_rewchest
-use ls_machine
-expect hidden ls_rewchest
-read Tram signal notice
+open Lamp shop
+wait 3
 expect step 16
-zone ls_trail
+kill Stingray
 expect step 17
-# (the ledge cache wants a keycard)
-zone ls_summit
+zone embankment
 expect step 18
-expect stand -32.8 -18.93 h=34
-open Tram pylon deck box
-wait 3
-expect story ls_top 1
+read Depot timetable
 expect step 19
-zone ls_deep
+zone tram_wagons
 expect step 20
-expect stand -69 26 h=-16
-open Sunk tram depot strongbox
+open Stripped caravan's crate
 wait 3
-expect story ls_deep 1
 expect step 21
-expect shown ls_bar
-use ls_bolt
-expect hidden ls_bar
-expect story ls_bolt 1
+zone ls_hook3
 expect step 22
-use ls_machine
-expect shown ls_rewchest
-expect story ls_fixed 1
-open Tram signal box reward
-wait 3
-read Tram timetable
-expect step 23
-open Diner
-wait 3
+read Ines's chalk note
 expect done

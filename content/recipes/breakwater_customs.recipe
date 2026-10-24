@@ -3,9 +3,9 @@
 # shore a breakwater of concrete slabs on drowned-tower legs runs out to the customs house - a tower's top storey
 # standing out of the sea - and a boom of lashed foundations closes the channel beside it. On the key: the Harbor
 # Authority's watch tower with its spotlight and aerial, palms, the weigh station on the breakwater. Far off on the
-# horizon the city's tallest towers stand out of the sea. Quest "The Rumour Is True" (17 steps): the customs house, the
+# horizon the city's tallest towers stand out of the sea. Quest "The Rumour Is True" (16 steps): the customs house, the
 # Authority's entry rules, the receiver's plans (the radio desk), the antenna's plans (the watch tower's locker), a
-# trader's permit (weigh your cargo, then stamp the permit), the smuggler's tip behind the boom post.
+# trader's permit (weigh your cargo, then stamp the permit), Dobbs's complaint at the boom post, the bonded yard's maze, a friend's tip.
 #
 # Built by the recipe player (CIRecipe breakwater_customs) through the editor's own operations. Points (metres over
 # the sea): the key 0 0 (r about 40) levelled at 2 round 10 -6; the breakwater slabs at 1 m, x -3..3, z -50.5..-32.5;
@@ -18,7 +18,10 @@ include lib_huts
 include lib_highwater
 include lib_areas
 # RESIZE 10-24: Radius 40 -> 85 (Height 4 -> 4), the old content moved 0 -24.8 as one frame (push) so its sea side stays at the coast; the island grows behind it.
-# DEEP 10-24: Lantern Crag: a customs lighthouse on a sea crag, the bonded store drowned under the south shore, and a boom signal box that wants both.
+# DEEP 10-24: Lantern Crag (climb, dive, signal box) - replaced 10-24 (story pass) by the Bonded Yard, a maze of seized-goods walls.
+# STORY 10-24: voices - Councillor Aldous Crane (the rules, his loop on 500), Nell the night clerk, Osric the old keeper,
+# Wilmer Dobbs's complaint No. 211, and 'a friend' (Ines Marlowe, revealed on Lowstreet). Nell's note starts the tin tram
+# (the little six-forty) and Crane's weighing of things (the Piles' twist).
 new
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
 gen Seed=13101 Radius=85 Height=4 Roughness=0.25 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.1 BeachWidth=0.8
@@ -30,14 +33,7 @@ push at 0 -24.8
 brush flatten at 12 -6 r=10 s=20 frames=300 h=2
 brush grass at 0 0 r=14 s=3 frames=20
 pop
-# --- DEEP 10-24 terrain: Lantern Crag (east, summit 32 m, base r 27), its trail, the drowned drowned bonded store (-12 m) ------------
-call hw_mount x=64 z=-8 b=27 h=32
-call hw_trail x=64 z=-8 b=27 h=32 a0=-82.87 turn=300 n=40 h0=3
-brush flatten at 76.53 -2.71 r=2.6 s=20 frames=200 h=17.5
-clear at 76.53 -2.71 r=3
-call hw_basin x=32 z=-72 r=14 h=-12
-brush flatten at 32 -40 r=4 s=8 frames=60
-clear at 32 -40 r=6
+# --- STORY 10-24 terrain: the template's crag, trail and dive basin are gone (the bonded yard's pad is in its block below)
 brush flatten at -34.1 18.9 r=5 s=8 frames=40
 origin
 clear at -34.1 18.9 r=6
@@ -62,6 +58,7 @@ push at 3 -55 h=1
 call hw_penthouse d=12 a=concrete f1=RT_Wall1 f2=RT_Wall1 b1=RT_Wall1 b2=RT_WallDoor1
 place "Table Office" - at -4.5 -3 y=0.1 sit yaw=180
 place RT_CommRadio - at -4.5 -3 y=0.9 drop yaw=180
+place Note_Paper cranewelcome at -3.6 -3.1 y=0.9 drop yaw=160
 place Loot_Chest radiodesk at -1.3 -3.4 y=0.1 sit
 place Note_Board entryrules at -5.9 1.5 y=1.2 yaw=90
 place Placeable_Lantern_Metal - at -3 0 y=0.1 drop
@@ -74,7 +71,7 @@ pop
 line Block_Foundation from -34 -52 to -6 -52 step=1.5 h=0.35
 place RT_Pillar - at -35.5 -52 ground sy=0.8
 place RT_Pillar boompost at -4.5 -52 ground sy=0.8
-place Note_Paper smugglertip at -4.5 -52 h=0.5 drop yaw=30
+place Note_Paper dobbs211 at -4.5 -52 h=0.5 drop yaw=30
 
 # --- The Authority's watch tower on the key: a storey with its locker, the spotlight and aerial on its roof ----------
 push at 18 -6 h=2
@@ -103,7 +100,7 @@ place campfire_1 - at -34.1 18.9 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -31.1 20.9 ground sit yaw=177
 place "Box Small" - at -36.1 21.4 ground sit
 place Note_Paper dnote at -36.1 21.4 ground y=0.7 drop yaw=20
-note dnote Squatter's note | Moved out of the tower when the water reached the 30th floor.\nIt's quieter here. No Union men, no Authority men.\nThe city lights still come on at dusk - nobody knows who pays for them.
+note dnote Squatter's note | Moved out of the tower when the water reached the thirtieth floor. My mother cried. I didn't - I'd carried our things down thirty flights of stairs to a boat, and there was nothing left in me to cry with.\n\nIt's quieter out here. No Union men, no Authority men, nobody weighing my fish. The gulls are the only council, and they vote with their feet.\n\nThe city lights still come on at dusk, out on the towers. Nobody knows who pays for them. I like to think somebody keeps a switch on on purpose, so people out here know the city is still there.
 place Van_2 dvan at 34.1 -18.9 ground yaw=297
 prop dvan tint.color=#5a5048
 prop dvan tint.amount=0.5
@@ -133,53 +130,85 @@ call hw_zone x=-62 z=38 al=wreckcavezone id=wreckers_cave r=4 msg="A cave in the
 call hw_wreck x=-64 z=-22 h=2 yaw=80 obj=BoatStranded al=seizedboat crate=seizedcrate r=11
 call ar_plants_tropical x=-40 z=50 r=14 seed=13131
 
-# --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Lantern Crag: a customs lighthouse on a sea crag, the bonded store drowned under the south shore, and a boom signal box that wants both. ------
-# the climb: the trail spirals up from the west foot; on the summit the old customs light (9 storeys, a ladder inside), its deck chest
-# and a zipline down to the hub (the shortcut back); the dive: the drowned bonded store on a basin floor -12 m down, an air pocket
-# in its front room; the hub: the Boom signal box that wants both, the notice; secrets: the trail ledge cache, the summit treasure,
-# the sunk boat's crate
-call hw_zone x=36.22 z=-4.53 al=bw_trailz id=bw_trail r=5 msg="The trail up Lantern Crag starts here - cut into the slope, round and up."
-call hw_zone x=64 z=-8 al=bw_summitz id=bw_summit r=8 h=1 msg="The top of Lantern Crag. The whole island below, the city beyond it, and the old customs light still higher."
-call hw_mast x=66.83 z=-5.17 h0=32 lv=9 a=bw_mast chest=bw_topchest top=RT_Spotlight
-place ZiplinePath_Landmark bw_zip at 64.74 -10.61 h=33.35
-zipto bw_zip 34.83 -37.17
-place Loot_ChestSmall bw_ledge at 76.53 -2.71 ground sit yaw=247.13
-call treasure x=61.17 z=-5.17 r=5 n=1 seed=13178 kind=0
+# --- STORY 10-24 (the user: own layout per island, no repeated climb-dive-machine template): the Bonded Yard, a maze
+# of seized-goods walls east of the key (8 x 8 cells of 3 m, x 51..75, z -20..4, its gate on the west at z -9.5); the
+# night clerk's lamps mark some of the true turns; its heart (61.5 -0.5) holds the seized-goods strongbox, Nell's last
+# note and the friend's tip; secrets in two dead ends (a buried find, a smuggler's stash); the sunk boat off the south
+# shore stays as an optional dive
+brush flatten at 63 -8 r=17 s=20 frames=300 h=2.5
+clear at 63 -8 r=17
+line Block_Wall_Tier3 from 51 -20 to 75 -20 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 51 4 to 75 4 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 75 -20 to 75 4 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 51 -20 to 51 -11 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 51 -8 to 51 4 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 54 -11 to 54 -5 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 54 1 to 54 4 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 57 -17 to 57 -14 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 57 -11 to 57 -8 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 57 -5 to 57 -2 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 60 -20 to 60 -17 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 60 -8 to 60 -5 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 60 -2 to 60 1 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 63 -17 to 63 -11 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 63 -5 to 63 -2 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 63 1 to 63 4 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 66 -14 to 66 -5 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 66 -2 to 66 1 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 69 -11 to 69 -5 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 72 -14 to 72 -11 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 72 -5 to 72 -2 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 54 -17 to 57 -17 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 63 -17 to 72 -17 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 57 -14 to 63 -14 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 69 -14 to 72 -14 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 57 -11 to 63 -11 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 69 -11 to 72 -11 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 54 -8 to 57 -8 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 60 -8 to 66 -8 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 72 -8 to 75 -8 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 57 -5 to 60 -5 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 69 -5 to 72 -5 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 51 -2 to 57 -2 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 60 -2 to 72 -2 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 57 1 to 60 1 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 69 1 to 75 1 step=1.5 y=-0.15
+place Note_Sign bw_yardsign at 49.8 -11.6 ground sit yaw=270
+place Placeable_Lantern_Metal - at 52.5 -9.5 ground sit
+place Placeable_Lantern_Metal - at 55.5 -3.5 ground sit
+place Placeable_Lantern_Metal - at 64.5 -9.5 ground sit
+place Placeable_Lantern_Metal - at 73.5 -15.5 ground sit
+place Placeable_Lantern_Metal - at 70.5 -6.5 ground sit
+place Placeable_Lantern_Metal - at 67.5 -0.5 ground sit
+place Placeable_Lantern_Metal - at 61.5 0.6 ground sit
+call hw_zone x=61.5 z=-0.5 al=bw_heartz id=bw_heart r=1.6 msg="The heart of the bonded yard. A lamp, a chair, a strongbox with its lid up."
+place Loot_Chest bw_strongbox at 61.5 -1.6 ground sit
+place PlasticChair_01 - at 62.6 0.4 ground sit yaw=200
+place Note_Paper bw_clerknote at 60.6 0.6 ground y=0.1 drop yaw=20
+place Note_Paper smugglertip at 61.5 -1.6 ground y=1.1 drop yaw=40
+place "Crate_Big_01" - at 47 -15 ground sit yaw=10
+place "Crate_Big_02" - at 47.5 -4 ground sit yaw=80
+place "Crate_Big_01" - at 63 -23.5 ground sit yaw=35
+call treasure x=73.5 z=2.5 r=1 n=1 seed=13178 kind=0
 prop treasure13178 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+place Loot_ChestSmall bw_ledge at 52.5 2.5 ground sit yaw=90
+note bw_ledge Smuggler's stash | Wedged behind a pallet in a dead end - a smuggler's stash nobody came back for.
+loot bw_ledge Rope*2;Bolt*2;Scrap*2
+prop bw_ledge loot.refill=0
 place Creature_Goat bw_goats at 32.68 -0.99 ground
 prop bw_goats creature.count=2
-place Creature_Goat bw_summitgoat at 66.12 -10.12 ground
-prop bw_summitgoat creature.count=1
-scatter "Pickup_Landmark_Copper 1" 2 at 64 -8 r=23 seed=13182 free=2
-scatter "Pickup_Landmark_Clay 1" 2 at 64 -8 r=25 seed=13183 free=2
-scatter "Pickup_Landmark_Rock 1" 2 at 64 -8 r=21 seed=13184 free=2
-call hw_sunkhouse x=32 z=-72 h=-12 yaw=0 a=bw_sunk chest=bw_deepchest air=bw_air bub=bw_airbub dal=bw_sunkdoor
-call hw_zone x=32 z=-72 al=bw_deepz id=bw_deep r=7 h=1 msg="The drowned bonded store, 12 metres down. The front room still holds a pocket of air."
 place RT_PlasticBoat bw_sunkboat at 40 -70 ground sit yaw=35
 prop bw_sunkboat tint.color=#5a5048
 prop bw_sunkboat tint.amount=0.45
 place Loot_Crate bw_boatcrate at 39 -76 ground sit yaw=10
 prop bw_boatcrate loot.refill=0
-call hw_reef x=25 z=-67 r=3 seed=13186
-place Creature_PufferFish bw_puffers at 26 -79 h=-8
-prop bw_puffers creature.count=2
-call hw_machine x=32 z=-40 yaw=45 al=bw_machine nm="Boom signal box" obj=RT_PowerBox sc=1 a=bw_top b=bw_deep done=bw_fixed rew=bw_rewchest rnote=bw_rewnote msg="It works." hint="It needs the lighthouse lens from the top of Lantern Crag and the bonded store seal from the drowned bonded store."
-call hw_note x=32.71 z=-42.83 yaw=65 al=bw_hint
-story bw_top|Lighthouse lens|Bolt|The customs light's great glass lens, unscrewed from its lamp.
-story bw_deep|Bonded store seal|Bolt|The Authority's brass seal from the bonded store's door.
-story bw_fixed|Boom signal box working|Bolt|The boom signal box, working again.
-note bw_hint Boom keeper's notice | The boom's signal box is dead. To light the channel again it wants the lens from the old customs light on Lantern Crag (the trail starts on the inland side) and the bonded store's seal - the store went under off the south shore, twelve metres down. The rope down from the crag ends here.
-note bw_topchest Old customs light deck box | A box lashed to the deck rail at the top of the old customs light.
-loot bw_topchest story:bw_top*1;Rope*2;Scrap*2
-note bw_deepchest Drowned bonded store strongbox | A strongbox in the back room of the drowned bonded store.
-loot bw_deepchest story:bw_deep*1;MetalIngot*1;Plastic*2
-note bw_rewnote Channel light log | The box clicks, the lens throws a white beam along the boom. In the box: the keeper's log - every boat the Authority let through at night without a stamp. Someone in customs was paid well.
-note bw_rewchest Boom signal box reward | What the boom signal box kept.
-loot bw_rewchest CopperIngot*2;Bolt*3;TradeToken*2
-note bw_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
-loot bw_ledge Rope*2;Bolt*2;Scrap*2
-prop bw_ledge loot.refill=0
 loot bw_boatcrate Plastic*3;Scrap*2;MetalIngot*1
+call hw_reef x=25 z=-67 r=3 seed=13186
+note bw_yardsign Bonded yard notice | HARBOR AUTHORITY - BONDED YARD\nSeized goods, held pending sale.\n\nThe yard is laid out as a maze on purpose, by order of the Council, so that thieves lose themselves in it and are found in the morning, weighed, and fined.\n\nClerks carry the yard plan. Clerks do not lend the yard plan.\n\nTrespassers will be weighed.\n\n(Scratched into the paint underneath, small and neat: I hang a lamp at the turns I trust. Not at all of them. Nobody gets everything for free in this city - N.)
+note bw_strongbox Seized goods strongbox | The seized-goods strongbox, its lid up: whatever the Authority took off the last boats in.
+loot bw_strongbox CopperIngot*2;Bolt*3;TradeToken*2
+prop bw_strongbox loot.refill=0
+note bw_clerknote Clerk's last shift | Six years I was night clerk in this yard, and tonight is my last shift. Tomorrow they send me up to the Crown, to count water instead of crates.\n\nI am leaving the strongbox open. Everything in it was taken off people who were only trying to keep their children's water clean. Filters, mostly. Filters, and one tin tram with a clockwork key - the little six-forty, painted blue - which I gave back to the girl it belonged to. I would do it again.\n\nCouncillor Crane came to the yard once. He did not look at the crates. He stood with his hand flat on the concrete and listened to it, the way a doctor listens to a chest. Then he asked me what the yard weighed. All of it. I said I didn't know. He wrote a number down anyway, and underlined it twice.\n\n- Nell Abernethy, night clerk
 
 # --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
 info title=Breakwater Customs
@@ -194,8 +223,6 @@ prop concrete tint.color=#9a9a94
 prop concrete tint.amount=0.35
 prop skyline tint.color=#7a8088
 prop skyline tint.amount=0.4
-prop smugglertip obj.name=smugglertip
-prop smugglertip beh.hidden=1
 
 prop weighscale obj.name=weighscale
 prop weighscale beh.use=Weigh your cargo
@@ -205,13 +232,15 @@ prop weighscale else.use=message||Your cargo is weighed already.
 prop permitstamp obj.name=permitstamp
 prop permitstamp beh.use=Stamp a trader's permit
 prop permitstamp if.use=signal|weighed\n!signal|permit
-prop permitstamp on.use=signal||permit\ngive||story:permit*1\nshow|smugglertip\nsound||event:/raft/radar/lever\nmessage||THUMP. HARBOR AUTHORITY - TRADER - ADMITTED. As you lift the stamp a folded paper flutters off the desk and blows toward the boom post.
+prop permitstamp on.use=signal||permit\ngive||story:permit*1\nsound||event:/raft/radar/lever\nmessage||THUMP. HARBOR AUTHORITY - TRADER - ADMITTED. Under the stamp, the last line in the clerks' ledger: NIGHT CLERK N. ABERNETHY - REASSIGNED TO THE CROWN.
 prop permitstamp else.use=message||No permit without a weighed cargo - the rules say so. Or you have one already.
 
-note entryrules Authority entry rules | HARBOR AUTHORITY - ENTRY RULES\n\n1. Every vessel is weighed. Every cargo is chalked.\n2. Every trader carries a stamped permit.\n3. Water is the Authority's. Filters are the Authority's.\n4. The boom opens at dawn and closes at dusk.\n5. No one sails past Pumpcrown.\n\nWelcome to Highwater. Keep to the rules and the city keeps you dry.
+note entryrules Authority entry rules | HARBOR AUTHORITY - ENTRY RULES\n\n1. Every vessel is weighed. Every cargo is chalked.\n2. Every trader carries a stamped permit.\n3. Water is the Authority's. Filters are the Authority's.\n4. The boom opens at dawn and closes at dusk.\n5. No one sails past Pumpcrown.\n\nThese rules are not cruelty. They are arithmetic. A city standing on drowned towers can carry so many people, so much cargo, so much want - and not one pound more. I have done the sums. Somebody has to.\n\nWelcome to Highwater. Keep to the rules and the city keeps you dry.\n\n- Councillor Aldous Crane, for the Harbor Council
 note weighsign Weigh station | WEIGH STATION\n\nAll cargo on the scale. All numbers on the board.\nThen the permit desk.
 note towersign Watch tower | AUTHORITY WATCH TOWER\nNo entry. The aerial is for official traffic.\n\n(The door is not locked. The guard left for the city a long time ago.)
-note smugglertip Smuggler's tip | Folded small, in a hurry -\n\nYou got your permit. Good. Now forget the Authority's prices.\n\nThe bazaar sells what the Authority says doesn't exist.\n\nRaft Row, on band six hundred. Ask for filters.
+note smugglertip A friend's tip | Folded small, in a hurry, tucked under the strongbox lid -\n\nYou got through Nell's yard. Good. Then you can get through a city.\n\nForget the Authority's prices. The bazaar sells what the Authority says doesn't exist: filters, real ones, the kind the Council says nobody makes any more. Raft Row, on band six hundred. Look for the pedlar with the green awning, and don't tell him your permit number.\n\nI can't give you my name yet. Somebody in this city reads every letter that comes past the breakwater, and I would like to go on breathing. I'll leave you notes where I can.\n\n- a friend
+note cranewelcome Councillor Crane's welcome | TRANSCRIPT - the loop on band five hundred, typed out by the duty clerk because she was sick of hearing it.\n\n'This is Councillor Aldous Crane. If you can hear me, you have found Highwater, and Highwater has found you. You will have heard that the city sank. It did not. It will not, while I sit on the Council. Stop at the breakwater. Let the clerks weigh you. Every pound that comes into this city, I must answer for.'\n\n(In pencil, in the margin: He recorded it nine years ago. He says 'every pound' in exactly the same voice every time. I have started saying it along with him. If anyone hears me doing it, I will deny it. - N.)
+note dobbs211 Complaint No. 211 | To the Harbor Council, Water Committee.\nCOMPLAINT No. 211\n\nSirs,\nThe boom squeaks. I reported the boom squeaking in Complaints 87, 140 and 198. It is the third post from the east. It squeaks on the ebb tide, in B-flat, and it can be heard at Pumpcrown, which is eleven miles away, which should not be possible, and yet.\n\nI am a pump foreman. I do not maintain booms. But I am the one who cannot sleep.\n\nI enclose a small tin of grease. Please give it to whoever maintains the boom. If nobody maintains the boom, please keep the tin, and think about that.\n\nYours, as ever, in hope,\nWilmer Dobbs, Foreman, Pumpcrown Works\n\n(Nailed to the post. The tin of grease is nailed up beside it.)
 note radiodesk Radio desk | The customs radio desk: the receiver's plans in a drawer, a log of ships turned away.
 note towerlocker Watch tower locker | The watch tower's locker: the aerial's plans, a coil of wire, a cold thermos.
 loot radiodesk Blueprint_Reciever*1;CircuitBoard*1;Coconut*2
@@ -223,7 +252,7 @@ prop customszone zone.id=customs_house
 prop customszone zone.radius=3
 prop customszone zone.message=The customs house. A radio desk, a board of rules, the sea at every window.
 
-note keeperlog Keeper's log | LIGHTKEEPER'S LOG - the last page\n\nThe Authority took the light off me. A customs house is cheaper than a lighthouse, they said.\nNow they wave boats in to be weighed, and wave the smugglers round the back for a fee.\nThe smugglers use the wreckers' cave in the west shore. I've seen their lamps.
+note keeperlog Keeper's log | LIGHTKEEPER'S LOG - the last page\n\nThey took the light off me in the spring. A customs house is cheaper than a lighthouse, Councillor Crane said, and shook my hand as if he was doing me a kindness. Thirty-one years I kept that lamp.\n\nNow the clerks wave boats in to be weighed, and wave the smugglers round the back for a fee. I watch from my porch. Their lamps go into the wreckers' cave on the west shore every new moon. I don't blame them. A filter costs a week's catch in the city. The boy two doors down went half blind from the brown water last summer.\n\nWhat the Authority catches goes into the bonded yard on the east side - walls in a maze, so nobody steals it back. Nell the night clerk knows the way through. Nell knows everything, and tells half.\n\n- Osric Pell, keeper (retired, against his will)
 note wreckcavechest Wreckers' chest | The wreckers' chest: lamp oil, rope, and a dozen stamped permits with no names on them.
 loot wreckcavechest Rope*3;Nail*8;Scrap*3;CopperIngot*1
 prop wreckcavechest loot.refill=0
@@ -233,21 +262,20 @@ quest title=The Rumour Is True
 quest intro=A city that never sank, the sailors say. Go into the customs house at the end of the breakwater.
 step reach|customs_house|1|Go into the customs house at the end of the breakwater
 step read|Authority entry rules|1|Read the Authority's entry rules
+step read|Councillor Crane's welcome|1|Read the transcript of the Councillor's loop by the radio
 step blueprint|Blueprint_Reciever|1|Take the receiver's plans from the radio desk
 step blueprint|Blueprint_Antenna|1|Take the antenna's plans from the watch tower's locker
 step collect|story:permit|1|Weigh your cargo and stamp a trader's permit
+step read|Complaint No. 211|1|Read the complaint nailed to the boom post
 step reach|signal_hill|1|Climb Signal Hill north of the breakwater
 step read|Keeper's log|1|Read the lightkeeper's log in his ruined house on the east shore
 step reach|wreckers_cave|1|Find the wreckers' cave in the west shore
 step open|Seized boat's hold|1|Open the hold of the smugglers' boat the Authority seized
-step read|Boom keeper's notice|1|Read the boom keeper's notice by the boom signal box in the south-east
-step reach|bw_trail|1|Find the foot of the trail up Lantern Crag, in the east
-step reach|bw_summit|1|Climb the trail to the top of Lantern Crag
-step collect|story:bw_top|1|Climb the old customs light and take the lighthouse lens from its deck
-step reach|bw_deep|1|Dive to the drowned bonded store off the south-east shore
-step collect|story:bw_deep|1|Find the bonded store seal in its back room
-step read|Channel light log|1|Bring both to the boom signal box and read what it shows
-step read|Smuggler's tip|1|Read the smuggler's tip at the boom post
+step read|Bonded yard notice|1|Read the notice at the gate of the bonded yard, on the east side
+step reach|bw_heart|1|Find your way through the bonded yard's maze to its heart
+step open|Seized goods strongbox|1|Open the seized-goods strongbox
+step read|Clerk's last shift|1|Read the night clerk's last note
+step read|A friend's tip|1|Read the folded note under the strongbox lid
 quest done=The bazaar sells what the Authority says doesn't exist. Raft Row Bazaar - band 600.
 quest reward=Coconut*3;Rope*2
 

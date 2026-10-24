@@ -2,7 +2,7 @@
 # The Salvagers' Union: a half-sunk office block's top floor is the Union hall, a crane on its roof; two more cranes
 # stand over the sorting yard - scrap piles, ore crates, potato planters - and a barge of clay and sand lies moored
 # off the yard. A zipline runs from the hall's roof crane to the third crane. A memorial wall names the lost divers; a
-# dive rope hangs off the jetty into the drowned street below. Quest "The Salvagers' Union" (18 steps): the hall, the
+# dive rope hangs off the jetty into the drowned street below. Quest "The Salvagers' Union" (19 steps, STORY 10-24: the climb first, Crane's requisition, Bram's tonnage ledger from the strongroom; the crane console gone): the hall, the
 # Union's charter, the engine controls' plans, the zipline to crane three, the metal detector's plans, the flare
 # store's firework plans, the zipline's plans in the crane cab. Contract "Lost Below" (4): the missing expedition
 # notice, the dive rope, two salvage tags off the street below, the Union's receipt (unionfriend).
@@ -55,6 +55,8 @@ place "Table Office" - at -3 -2.5 y=0.1 sit
 place Loot_Chest hallchest at -1.2 -3.4 y=0.1 sit
 place Note_Board charter at -5.9 1.5 y=1.2 yaw=90
 place Note_Board notice at -5.9 -3 y=1.2 yaw=90
+place Note_Board requisition at -5.9 1 y=1.2 yaw=90
+place Note_Paper bramletter at 1.5 -3.4 y=0.1 drop yaw=20
 place Zone_Trigger hallzone at -3 0 y=0.1
 place Placeable_Lantern_Metal - at -3 -2.5 y=0.9 drop
 place UT_ElectricityIsland_Crane02 crane1 at -3.5 3 y=3.05 sit scale=0.25 yaw=225
@@ -184,20 +186,16 @@ prop hk_boatcrate loot.refill=0
 call hw_reef x=63 z=-17 r=3 seed=13486
 place Creature_PufferFish hk_puffers at 64 -29 h=-12
 prop hk_puffers creature.count=2
-call hw_machine x=34 z=-22 yaw=-128.29 al=hk_machine nm="Crane console" obj=RT_PowerBox sc=1 a=hk_top b=hk_deep done=hk_fixed rew=hk_rewchest rnote=hk_rewnote msg="It works." hint="It needs the dragline ignition key from the top of Scrapjaw Heights and the strongroom ledger from the Union strongroom."
 call hw_note x=33.63 z=-19.11 yaw=-108.29 al=hk_hint
-story hk_top|Dragline ignition key|Bolt|The big dragline's ignition key, hung on a nail at the top of its boom ladder.
-story hk_deep|Strongroom ledger|Bolt|The Union's drowned ledger, sealed in oilcloth.
-story hk_fixed|Crane console working|Bolt|The crane console, working again.
+story hk_top|Strongroom key|Bolt|Bram Hask's key to the old Union strongroom, hung on a nail at the top of the dragline's boom ladder.
+story hk_deep|Bram's tonnage ledger|Note_Paper|Ten years of Council barges, every ton written down - and every one going to the Foundation Piles.
 story tape|Insulating tape|Bolt|A roll of the Union linesmen's insulating tape. Three of them would make a dead breaker safe.
-note hk_hint Yard foreman's notice | Crane console is locked out. It wants the dragline's ignition key (top of the boom ladder on Scrapjaw Heights) and the strongroom ledger with the yard codes - the old strongroom is sixteen metres down off the east yard. Take a bottle.
+note hk_hint Bram's tonnage note | Nailed to the post where the old crane console stood, before the Council took its fuses -\n\nStranger. Teo's runner says you can swim and you can keep your mouth shut. Good. I need both.\n\nThirty years I've written down every ton this yard lifts. Ten years ago I started writing down every ton the Council's barges carry away from it, too. They don't like that. So the ledger lives in the old strongroom, sixteen metres down off the east yard, where no clerk will ever go to fetch it.\n\nThe key's at the top of the dragline's boom ladder on Scrapjaw Heights. I hung it there when my knees still worked. If you've got it, go down and bring the ledger up. Read the last page. Then tell me I'm a mad old man, because I would very much like to be one.\n\n- Bram Hask, foreman
+prop hk_deepchest on.open=message||Bram's tonnage ledger, in oilcloth. Ten years of Council barges, every line the same: SCRAP AND STONE TO THE FOUNDATION PILES, BY ORDER, A.C. Eleven thousand tons. Not one barge ever came back loaded.
 note hk_topchest Dragline's boom ladder deck box | A box lashed to the deck rail at the top of the dragline's boom ladder.
 loot hk_topchest story:hk_top*1;Scrap*3;Bolt*2
 note hk_deepchest Union strongroom strongbox | A strongbox in the back room of the Union strongroom.
 loot hk_deepchest story:hk_deep*1;story:tape*1;MetalIngot*2
-note hk_rewnote Union yard codes | The console lights up and all three cranes swing. In its drawer: the Union's yard codes and a list of every diver the Union never paid.
-note hk_rewchest Crane console reward | What the crane console kept.
-loot hk_rewchest CopperIngot*2;CircuitBoard*1;TradeToken*2
 note hk_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
 loot hk_ledge Rope*2;Bolt*2;Scrap*2
 prop hk_ledge loot.refill=0
@@ -231,10 +229,12 @@ prop tally on.use=signal||tagsin\nshow|receipt\nmessage||The tally clerk's board
 prop tally else.use=message||The tally board wants two salvage tags from the street below.
 prop receipt on.read=signal||unionfriend
 
-note charter Union charter | CHARTER OF THE SALVAGERS' UNION\n\nWhat we bring up, we share.\nNo diver goes down alone.\nNo diver is left down.\nThe Authority gets its tenth and not a nail more.\n\nThe hook is our sign. The rope is our oath.
-note notice Missing expedition notice | MISSING - THE LOWSTREET EXPEDITION\n\nFive divers under Ines Marlowe went down to Lowstreet to map the old pumps. They have not come up.\n\nTheir salvage tags were found on the street below this jetty. Bring them up and hand them in at the tally.\n\nThe Union does not leave its divers down.
-note memorialsign Memorial wall | THE UNION REMEMBERS\n\nA hundred names, scratched into the concrete. The newest are only chalk.
-note receipt Union receipt | RECEIVED: two salvage tags, Marlowe's team.\n\nThey were alive when they dropped them. The Union owes you a diver's debt. - the foreman
+note charter Union charter | CHARTER OF THE SALVAGERS' UNION\n\nWhat we bring up, we share.\nNo diver goes down alone.\nNo diver is left down.\nThe Authority gets its tenth and not a nail more.\n\nThe hook is our sign. The rope is our oath.\n\n(Below, in chalk, the foreman's hand: Article five, never written, everyone knows it - when the Council's man comes with a form, you count the boots he's wearing and you remember he can't swim. - B.H.)\n\n(And below that, smaller: Article six. Whoever eats the last of the foreman's biscuits refills the tin. This means you, Carver. - B.H.)
+note requisition Council requisition | HARBOR COUNCIL - REQUISITION No. 4412\n\nThe Salvagers' Union will deliver to the Council's barge, at the turn of each month:\n- all iron, steel and concrete raised from Lowstreet;\n- all engines, motors and pumps, whole or broken;\n- all stone.\n\nThese materials are needed for the Foundation works. Their tonnage is to be entered in the barge book and not in the Union's own tally.\n\nCompliance is a condition of the Union's licence.\n\n- Councillor Aldous Crane\n\n(Pencilled on the back: Why does he want stone? Nobody builds with stone any more. He's not building. He's sinking it. - B.)
+note notice Missing expedition notice | MISSING - THE LOWSTREET EXPEDITION\n\nFive divers under Ines Marlowe went down to Lowstreet to map the old pumps. They have not come up.\n\nTheir salvage tags were found on the street below this jetty. Bring them up and hand them in at the tally.\n\nThe Union does not leave its divers down.\n\n(In the foreman's hand, under it: Ines would have my hide for putting her name first. She hated being in charge. She was only ever in charge because she was the one who asked the questions nobody else would. That was the expedition: questions. Who drowned Lowstreet's pumps, and why the Council paid for them to stay drowned. - B.H.)
+note bramletter Bram's letter | On the hall floor, weighed down with a rivet -\n\nSo now you've read it. Eleven thousand tons, and I'm not a mad old man.\n\nI asked at Pumpcrown once where it all goes. Wilmer Dobbs - foreman at the Works, writes complaints the way other men breathe - said the Council's barges tie up at the Works first, every one, and sit low in the water, and leave lower. He said the pumps there make a noise at night like they're running the wrong way. He said a lot of things. Wilmer always does. But Wilmer is never wrong about pumps.\n\nThe Authority's waterworks answers on band nine hundred. You'll want an engine on that raft - you've got the plans from my desk. And if you meet Ines, tell her the Union is still keeping her hook on the wall.\n\n- Bram
+note memorialsign Memorial wall | THE UNION REMEMBERS\n\nA hundred names, scratched into the concrete. The newest are only chalk: MARLOWE. OKONJO. FENN. THE TWO DALY BROTHERS.\n\nSomeone has drawn a small question mark next to MARLOWE, and someone else has rubbed it out, and the first someone has drawn it again, bigger.\n\nAt the bottom, cut deep: WHAT WE BRING UP, WE SHARE. WHO WE LOSE, WE KEEP.
+note receipt Union receipt | RECEIVED: two salvage tags, Marlowe's team.\n\nThey were alive when they dropped them - the cords are cut, not torn. A diver cuts her tag off when she means to be thought dead.\n\nI'm not putting that in the tally. I'm putting it here, for you. If Ines is alive she had a reason to vanish, and the reason is on Lowstreet.\n\nThe Union owes you a diver's debt. - Bram Hask, foreman
 note hallchest Hall desk | The hall's desk: the engine controls' plans, a foreman's whistle - and a spare diver's kit, an oxygen bottle and flippers. No diver goes down alone, and none goes down short of air.
 note foremanbox Foreman's box | The yard foreman's box: the metal detector's plans, a list of what the street gave up this week.
 note flarestore Flare store | The Union's flare store: the firework's plans, flares for divers in trouble.
@@ -269,7 +269,7 @@ prop divezone zone.message=The dive rope. Below it, in green water, the street l
 
 note cranewreckcrate Toppled crane's toolbox | Crane five's toolbox. The crane came down in the last storm; the Union never had the parts to stand it up again.
 loot cranewreckcrate Bolt*4;MetalIngot*2;Rope*2
-note tallybook Tally book | UNION TALLY BOOK\n\nShare out: one part to the diver, one to the crane, one to the hall.\nThis week: a fridge, two doors, a tram seat. Lowstreet is picked nearly clean above the shops.\nMarlowe says the store at the east end is untouched. The Authority says it is closed. Why would a drowned shop be closed?
+note tallybook Tally book | UNION TALLY BOOK\n\nShare out: one part to the diver, one to the crane, one to the hall.\nThis week: a fridge, two doors, a tram seat. Lowstreet is picked nearly clean above the shops.\nMarlowe says the store at the east end is untouched. The Authority says it is closed. Why would a drowned shop be closed?\n\n(Carver's hand: A tram driver's cap came up today, off the depot steps on Lowstreet - JONAH PENN on the band, the man who drove the six-forty. Little Pip's dad, from the Rookery. I didn't have the heart to give it to her. Gave it to old Maud Penn instead. Unpaid share, one cap. Bram can dock my wages. - C.)\n\n(Bram's hand: Docked one biscuit. - B.)
 note divercavechest Divers' locker | A diver's locker: a spare mask strap, rope and a tin of grease.
 loot divercavechest Rope*3;Scrap*3;Leather*1
 prop divercavechest loot.refill=0
@@ -331,10 +331,14 @@ pop
 # --- end of jump course hs ---
 
 quest title=The Salvagers' Union
-quest intro=The Union works the cranes on the half-sunk block. Find their hall.
+quest intro=The Union works the cranes on the half-sunk block. Find their hall - and their foreman, Bram Hask, who writes down every ton.
 step reach|union_hall|1|Go into the Union hall
 step read|Union charter|1|Read the Union's charter
+step read|Council requisition|1|Read the Council's requisition pinned beside it
 step blueprint|Blueprint_EngineControls|1|Take the engine controls' plans from the hall's desk
+step reach|hk_trail|1|Find the foot of the trail up Scrapjaw Heights, in the south
+step reach|hk_summit|1|Climb the trail to the top of Scrapjaw Heights
+step collect|story:hk_top|1|Climb the dragline's boom ladder and take the strongroom key from its deck
 step reach|crane_3|1|Ride the zipline from the hall's roof crane to crane three
 step blueprint|Blueprint_MetalDetector|1|Take the metal detector's plans from the foreman's box
 step blueprint|Blueprint_Firework|1|Take the firework's plans from the flare store
@@ -342,13 +346,10 @@ step reach|spoil_heap|1|Climb the spoil heap east of the yard
 step open|Toppled crane's toolbox|1|Open the toolbox of the toppled crane in the south-east
 step read|Tally book|1|Read the Union's tally book in the old tally house in the north
 step reach|divers_cave|1|Find the divers' drying cave in the west
-step read|Yard foreman's notice|1|Read the yard foreman's notice by the crane console in the south-east
-step reach|hk_trail|1|Find the foot of the trail up Scrapjaw Heights, in the south
-step reach|hk_summit|1|Climb the trail to the top of Scrapjaw Heights
-step collect|story:hk_top|1|Climb the dragline's boom ladder and take the dragline ignition key from its deck
+step read|Bram's tonnage note|1|Read Bram's note on the post at the south-east yard
 step reach|hk_deep|1|Dive to the Union strongroom off the east shore
-step collect|story:hk_deep|1|Find the strongroom ledger in its back room
-step read|Union yard codes|1|Bring both to the crane console and read what it shows
+step collect|story:hk_deep|1|Open the strongbox with the key and take Bram's tonnage ledger
+step read|Bram's letter|1|Read the letter Bram left on the hall floor
 step blueprint|Blueprint_ZiplineBase|1|Take the zipline's plans from crane three's cab
 quest done=The Union trusts its own and few others. The Authority's waterworks, Pumpcrown, answers on band 900 - for a raft with an engine.
 quest reward=Scrap*4;MetalOre*3;Clay*3;Sand*3

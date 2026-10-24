@@ -3,7 +3,7 @@
 # vans on the street, lamp posts, a cinema whose roof (the wind turbine on it) is the only thing above the sea. In four
 # shops the Union's divers left air pockets; at the street's east end the department store has come down, and in its
 # cages the lost expedition waits - Ines Marlowe and her three divers. Anglers in the shops, a big stingray on the
-# street. Quest "The Drowned District" (24 steps): the tram stop, the expedition plan, the wind turbine's plans (the
+# street. Quest "The Drowned District" (23 steps, STORY 10-24: the Council's flood notice, No. 14 and Jonah's letter, Ines revealed as the friend, her chalk hooks to the sewer; Tramhead Bluff, its depot and its signal box gone): the tram stop, the expedition plan, the wind turbine's plans (the
 # cinema roof), the first shop's air, three anglers, the advanced battery's plans (the electronics shop), the store
 # front, the four cages, Ines's report, the advanced headlight's plans, the stingray, the electric grill's plans (the
 # diner).
@@ -37,14 +37,7 @@ brush flatten at 36 -5 r=8 s=20 frames=300 h=-20
 brush flatten at 0 -20 r=6 s=20 frames=300 h=-20
 brush flatten at 33 -7 r=8 s=20 frames=300 h=-20
 pop
-# --- DEEP 10-24 terrain: Tramhead Bluff (south-west, summit 34 m, base r 28), its trail, the drowned sunk tram depot (-16 m) ------------
-call hw_mount x=-36 z=-24 b=28 h=34
-call hw_trail x=-36 z=-24 b=28 h=34 a0=56.31 turn=300 n=40 h0=3
-brush flatten at -42.25 -36.64 r=2.6 s=20 frames=200 h=18.5
-clear at -42.25 -36.64 r=3
-call hw_basin x=-74 z=32 r=14 h=-16
-brush flatten at -74 0 r=4 s=8 frames=60
-clear at -74 0 r=6
+# --- STORY 10-24: the DEEP terrain (Tramhead Bluff, its trail, the depot's basin) is gone - Lowstreet stays a dive island
 origin
 push at 0 -68
 clear from -46 0 to 46 0 r=9
@@ -71,6 +64,7 @@ place Caravan_Blue_01 tram at -40 0 ground sit yaw=90
 place Caravan_Yellow_01 tram at -34 0 ground sit yaw=90
 place Caravan_Green_01 tram at -28 0 ground sit yaw=90
 place Note_Board expedition at -36 -5 ground y=1.2 yaw=180
+place Note_Board floodnotice at -32 -5 ground y=1.2 yaw=180
 place Zone_Trigger tramzone at -36 -4 ground y=1.5
 place Antenna_pole - at -44 -6 ground sit
 place Antenna_pole - at -14 -6 ground sit
@@ -85,8 +79,9 @@ call rt_storey a=city f1=RT_WallWindowBroken f2=RT_WallDoor1
 place RT_Floor city at 0 4.5 y=3
 place "Box Small" - at -5 3.5 y=0.1 sit
 place "Pickup_Landmark_Scrap 2_OceanBottom" - at -2 2 y=0.1 sit
+place Loot_ChestSmall toybox at -1.2 3.4 y=0.1 sit yaw=180
 pop
-call hw_airpocket x=-21 z=10 id=shop_1 al=air1 bub=bub1 msg="Shop one. A pocket of air under the ceiling - the Union's divers left it."
+call hw_airpocket x=-21 z=10 id=shop_1 al=air1 bub=bub1 msg="Number fourteen, the blue door: the Penns' rooms over the old pawn shop. A pocket of air under the ceiling - the Union's divers left it."
 push at -3 10 h=-20
 call rt_storey a=city f1=RT_WallWindowBroken f2=RT_WallDoor1
 place RT_Floor city at 0 4.5 y=3
@@ -106,6 +101,7 @@ push at 27 10 h=-20
 call rt_storey a=city f1=RT_WallWindowBroken f2=RT_WallDoor1
 place RT_Floor city at 0 4.5 y=3
 place "Table Office" - at -4.5 2 y=0.1 sit
+place Note_Paper jonahletter at -4.5 2 y=0.9 drop yaw=15
 place Loot_Chest diner at -1.2 3.4 y=0.1 sit yaw=180
 place Note_Sign dinersign at -1.5 -4.9 y=2.6 yaw=180
 pop
@@ -164,65 +160,24 @@ place Loot_Chest sewerchest at -46 -59 ground sit yaw=90
 call ar_plants_tropical x=-50 z=20 r=14 seed=13621
 call ar_plants_tropical x=60 z=30 r=12 seed=13631
 
-# --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Tramhead Bluff: the tram pylon on its bluff, a depot barred from the inside, and a signal box that lights a street twenty metres down. ------
-# the climb: the trail spirals up from the north-east foot; on the summit the tram pylon (9 storeys, a ladder inside), its deck chest
-# and a zipline down to the hub (the shortcut back); the dive: the sunk tram depot on a basin floor -16 m down, an air pocket
-# in its front room; the hub: the Tram signal box that wants both, the notice; secrets: the trail ledge cache, the summit treasure,
-# the sunk boat's crate
-call hw_zone x=-11.87 z=-7.91 al=ls_trailz id=ls_trail r=5 msg="The trail up Tramhead Bluff starts here - cut into the slope, round and up."
-call hw_zone x=-36 z=-24 al=ls_summitz id=ls_summit r=8 h=1 msg="The top of Tramhead Bluff. The whole island below, the city beyond it, and the tram pylon still higher."
-call hw_mast x=-32.62 z=-26.14 h0=34 lv=9 a=ls_mast chest=ls_topchest top=RT_Spotlight
-place ZiplinePath_Landmark ls_zip at -35.68 -22.89 h=35.35
-zipto ls_zip -70.62 -2.14
-place Loot_ChestSmall ls_ledge at -42.25 -36.64 ground sit yaw=26.31
-call treasure x=-33.86 z=-20.62 r=5 n=1 seed=13678 kind=0
-prop treasure13678 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
-place Creature_Goat ls_goats at -9.2 -3.69 ground
-prop ls_goats creature.count=2
-place Creature_Goat ls_summitgoat at -37.6 -26.54 ground
-prop ls_summitgoat creature.count=1
-scatter "Pickup_Landmark_Copper 1" 2 at -36 -24 r=24 seed=13682 free=2
-scatter "Pickup_Landmark_Clay 1" 2 at -36 -24 r=26 seed=13683 free=2
-scatter "Pickup_Landmark_Rock 1" 2 at -36 -24 r=22 seed=13684 free=2
-call hw_sunkhouse x=-74 z=32 h=-16 yaw=0 a=ls_sunk chest=ls_deepchest air=ls_air bub=ls_airbub door=Block_Wall_Tier3 dal=ls_bar rn=2
-call hw_zone x=-74 z=32 al=ls_deepz id=ls_deep r=7 h=1 msg="The sunk tram depot, 16 metres down. The front room still holds a pocket of air."
+# --- STORY 10-24 (replaces DEEP 10-24's Tramhead Bluff, its depot dive and its signal box): Lowstreet is a dive island and
+# its quest stays on the street. Ines Marlowe's chalk hooks - the way she got out the first week - run from the store
+# along the street to the sewer mouth at the west end; her slate at the sewer's lip names Cistern Hall. The Penns' rooms
+# at No. 14 (shop one) hold the tin tram's empty box; Jonah Penn's letter is in the drivers' diner. The sunk boat and its
+# crate off the north-west shore stay as a secret; the sewer-mouth cache is Ines's (an oxygen bottle sees you down).
+call hw_zone x=36 z=-79 al=ls_hook1z id=ls_hook1 r=3 h=1 msg="A hook, chalked on the store's last pillar - the Union's sign. Under it, smaller: I.M. - OUT THIS WAY. And an arrow, west along the street."
+call hw_zone x=0 z=-74 al=ls_hook2z id=ls_hook2 r=3 h=1 msg="Another hook, chalked on a lamp post in front of the cinema. I.M. - KEEP TO THE LAMPS. The arrow points on, west."
+call hw_zone x=-45 z=-63 al=ls_hook3z id=ls_hook3 r=3 h=1 msg="The last hook, on the kerb at the street's west end - and beyond it the sewer mouth, breathing cold water. A slate is tied to the railing."
+place Note_Paper ineschalk at -41 -64 ground y=0.2 drop yaw=60
 place RT_PlasticBoat ls_sunkboat at -66 34 ground sit yaw=35
 prop ls_sunkboat tint.color=#5a5048
 prop ls_sunkboat tint.amount=0.45
 place Loot_Crate ls_boatcrate at -67 28 ground sit yaw=10
 prop ls_boatcrate loot.refill=0
+loot ls_boatcrate Plastic*3;Scrap*2;MetalIngot*1
 call hw_reef x=-81 z=37 r=3 seed=13686
 place Creature_PufferFish ls_puffers at -80 25 h=-12
 prop ls_puffers creature.count=2
-call hw_machine x=-74 z=0 yaw=122.28 al=ls_machine nm="Tram signal box" obj=RT_PowerBox sc=1 a=ls_top b=ls_deep done=ls_fixed rew=ls_rewchest rnote=ls_rewnote msg="It works." hint="It needs the pylon fuse from the top of Tramhead Bluff and the depot pass from the sunk tram depot."
-call hw_note x=-76.6 z=-1.31 yaw=142.28 al=ls_hint
-# the tram depot's front door is barred from inside (a wall where the door was): the way in is the gap in
-# its roof over the back room; the bolt lever inside opens the front for the way out and back
-place TP_LaserControlPanel_lever ls_bolt at -74.75 31.75 h=-14.8 yaw=180
-prop ls_bolt obj.name=ls_bolt
-prop ls_bolt beh.use=Draw the door bolt
-prop ls_bolt if.use=!signal|ls_bolt
-prop ls_bolt on.use=signal||ls_bolt\nhide|ls_bar\ngive||story:ls_bolt*1\nmessage||The bolt grinds back and the depot's front door falls open.
-prop ls_bolt else.use=message||The bolt is already drawn.
-story ls_top|Pylon fuse|Bolt|The big ceramic fuse from the top of the tram pylon.
-story ls_deep|Depot pass|Bolt|A tram driver's depot pass, still on its hook.
-story ls_fixed|Tram signal box working|Bolt|The tram signal box, working again.
-story ls_bolt|Depot bolt drawn|Bolt|The sunk tram depot's door bolt, drawn from inside.
-note ls_hint Tram signal notice | Lowstreet's last tram signal box: it needs the pylon fuse from the top of Tramhead Bluff and a driver's pass from the sunk tram depot under the west shore. The depot doors are barred from inside - go in through the roof. The depot was barred from inside when it went down; the roof over its back room has a gap.
-note ls_topchest Tram pylon deck box | A box lashed to the deck rail at the top of the tram pylon.
-loot ls_topchest story:ls_top*1;Scrap*2;Bolt*2
-note ls_deepchest Sunk tram depot strongbox | A strongbox in the back room of the sunk tram depot.
-loot ls_deepchest story:ls_deep*1;MetalIngot*1;Plastic*2
-note ls_rewnote Tram timetable | The signal turns green twenty metres under the sea. In the box: the last timetable, the night the street went under - and who rode the last tram out.
-note ls_rewchest Tram signal box reward | What the tram signal box kept.
-loot ls_rewchest CopperIngot*2;Battery*1;TradeToken*2
-note ls_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
-loot ls_ledge Rope*2;Bolt*2;Scrap*2
-prop ls_ledge loot.refill=0
-loot ls_boatcrate Plastic*3;Scrap*2;MetalIngot*1
-prop ls_ledge if.open=has|Tangaroa_KeyCard|1
-prop ls_ledge else.open=message||A card lock on the box - a Tangaroa keycard would open it.
-
 # --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
 info title=Lowstreet
 info author=Custom Islands
@@ -250,22 +205,29 @@ prop inescage survivor.name=Ines Marlowe
 prop inescage survivor.id=highwater_ines
 prop inescage survivor.key=storekey
 prop inescage survivor.signal=inesfree
-prop inescage survivor.line=The Union came back for us? Then it keeps its oath. I'm Ines - throw the release for the others. And read what I wrote. The valves under the city were turned by hand.
+prop inescage survivor.line=You found my notes, then. Yes - I'm the friend. Throw the release for the others, then read what I wrote. I'll explain the rest when we can breathe.
 
 prop cagerelease obj.name=cagerelease
 prop cagerelease beh.use=Pull the cage release
 prop cagerelease if.use=has|story:storekey|1\n!signal|cagesopen
-prop cagerelease on.use=signal||cagesopen\nhide|divercage\nshow|inesreport\ngive||story:cagesopen*1\nsound||event:/raft/radar/lever\nmessage||The cages clang open. Three divers swim out, then Ines Marlowe. Ines Marlowe has joined the crew.\ncharacter||Mayu
+prop cagerelease on.use=signal||cagesopen\nhide|divercage\nshow|inesreport\ngive||story:cagesopen*1\nsound||event:/raft/radar/lever\nmessage||The cages clang open. Okonjo, Fenn and the two Daly brothers swim out, thin and grinning, then Ines Marlowe - the friend whose notes brought you here. Ines Marlowe has joined the crew.\ncharacter||Mayu
 prop cagerelease else.use=message||The release is locked. The store's cage key - the floor manager kept it in his office.
 
-note expedition Expedition plan | UNION EXPEDITION - LOWSTREET\nLeader: Ines Marlowe. Divers: four.\n\n1. Tram stop: rope down. 2. Air in the shops, every fifteen metres. 3. Map the old pumps under the department store.\n\nIf we are not up by the third tide, the store is where to look.
+note expedition Expedition plan | UNION EXPEDITION - LOWSTREET\nLeader: Ines Marlowe. Divers: four - Okonjo, Fenn, Daly, the other Daly.\n\n1. Tram stop: rope down. 2. Air in the shops, every fifteen metres. 3. Map the old pumps under the department store.\n\nIf we are not up by the third tide, the store is where to look.\n\n(In grease pencil, under it: Bram says the Council never asked anyone to look at these pumps. Not once in nine years. Bram says that is either because the Council is lazy or because the Council knows what we'll find. The Council is many things. Lazy isn't one of them. - I.M.)\n\n(And: Daly - the other Daly - please stop naming the anglers. We are not keeping them.)
+note floodnotice Council flood notice | NOTICE OF THE HARBOR COUNCIL\n\nLowstreet is lost to the rising sea.\n\nThe Council regrets that nothing more could be done. The pumps were run day and night. The residents of the district have been carried to the Rookery, where their ration claims will be weighed in the usual way. They are asked to bring nothing. Every pound the Council lifts must be answered for.\n\nThe city has not sunk. The city will not sink.\n\n- Councillor Aldous Crane\n\n(Scratched into the board under it, with a knife: THE PUMPS WERE RUN. WHICH WAY?)
 note marquee Cinema | ...NOW SHOWING...\n\nThe letters fell off years ago. Only NOW is left.
 note dinersign Diner | OPEN ALL NIGHT\n\n(It was.)
-note inesreport Ines's report | INES MARLOWE - UNION DIVER\n\nThe store came down on us in the second tide. Before it did, we found the valves under the department store - the ones that let the sea into this district.\n\nThey were not broken. They were turned by hand. All of them, the same night.\n\nSomeone drowned Lowstreet on purpose. The records will be in the cistern under the Authority's tower.
+note inesreport Ines's report | INES MARLOWE - UNION DIVER\n\nYes. I'm the friend. I'm sorry about the hurry and the no-names.\n\nThe store came down on us in the second tide. I was the smallest, so I went out through the sewer the first week for help - and found that a Union diver who comes up asking about the pumps gets a Council boat waiting for her. So I hid, and I wrote to you instead: the Breakwater, the bazaar, the Fleet's mast. Then I came back down to bring my divers food, and the floor shifted and took me too. I'm not proud of that part.\n\nThe valves under the store were not broken. They were turned by hand - every one, the same night - and the pumps at Pumpcrown run the sea in, not out. Somebody drowned Lowstreet on purpose and has kept it drowned.\n\nThe reason is in the Council's own ledger, in Cistern Hall. I tore one page out of it, before, and hid it at the Rookery. The rest of the book is still there.\n\n- Ines
+note jonahletter Jonah's letter | Left on the diner's table, under the salt, folded for a child -\n\nPip,\n\nGran will take you up to the Rookery on the Council's boat. They say no luggage - every pound counts, the man said, as though people were cargo. I know you took your tram out of its box when I said no. Good girl. Keep it in your coat. They don't weigh coats.\n\nI'm taking the six-forty round once more. There are people on Bellow Street who haven't heard, and old Mr Abernethy who can't walk, and I'm the only one who knows where every stop is with the lamps out.\n\nI'll be up after. Save me some of Gran's terrible soup.\n\nLove you to the moon and back down again,\nDad
+note ineschalk Ines's chalk note | A slate on a string, tied to the railing at the sewer's lip -\n\nThis is the way I came out the first week: down the sewer mouth, through the old drain, and up into the overflow under Cistern Hall. You need an oxygen bottle for it and more nerve than sense. I had the second.\n\nCistern Hall answers on band seven hundred. The Council's records are in the clerks' vault behind the sluices, and the sluices only open in one order. Crane's clerks never trusted each other, so each of them wrote down one piece of the order and kept it in their own desk. Find all four pieces.\n\nI left my cache in the sewer mouth, if you have the air for it. Take what helps.\n\n- I.M.
 note projectorbox Projection box | The cinema's projection box, up on the roof: the wind turbine's plans. Reels of film, all wet.
 note electronics Electronics shop | Behind the counter: the advanced battery's plans, in a sealed bag.
 note lampshop Lamp shop | The lamp shop's safe: the advanced headlight's plans.
 note diner Diner | The diner's kitchen locker: the electric grill's plans, a menu, a jar of salt.
+note toybox Toy box at No. 14 | A child's toy box on the Penns' table.
+prop toybox on.open=message||The box is empty: only a tram-shaped dent in the felt, and a label in a child's capitals - PIP'S TRAM. DO NOT TUCH. Somebody took it out in a hurry.
+loot toybox Plastic*2;Rope*1
+prop toybox loot.refill=0
 note storeoffice Floor manager's office | The floor manager's desk, under the fallen floor: the cage key on its ring.
 loot projectorbox Blueprint_WindTurbine*1;MetalIngot*2;Plastic*2
 prop projectorbox loot.refill=0
@@ -288,41 +250,40 @@ prop storezone zone.message=The department store. The upper floors lie across th
 prop divercage beh.use=Try the cage's lock
 prop divercage if.use=signal|cagesopen
 prop divercage else.use=message||Authority locks, case-hardened: the bolt cutters skid off the chain. The store's cage release opens all the cages at once.
-note depottimetable Depot timetable | LOWSTREET TRAM - LAST TIMETABLE\n\nThe last tram ran the day the Authority closed the sea gates. Lowstreet was full of people when the water came.\nThe Authority said: evacuated. The timetable says the 6:40 was still waiting for its passengers.
+note depottimetable Depot timetable | LOWSTREET TRAM - LAST TIMETABLE\n\nThe last tram ran the day the Authority closed the sea gates. Lowstreet was full of people when the water came.\nThe Authority said: evacuated. The timetable says the 6:40 was still waiting for its passengers.\n\n(Under it, in the depot master's hand: Driver J. Penn took the six-forty out at 6:52, unscheduled, lamps lit. Called in from Bellow Street at 7:10 - eleven aboard, more waiting. The line went dead at 7:14. I have kept the depot clock stopped at 7:14. It is the only honest clock in Highwater.)
 note strippedcrate Stripped caravan's crate | A Union salvager's crate in a stripped caravan: the walls are gone, the wheels are gone, the crate stayed.
 loot strippedcrate MetalIngot*2;Bolt*3;Scrap*3
 note lampcavechest Lamp-oil chest | Lamp oil and wicks, kept dry in the dark. Whoever lit the tram's lamps lived here after the water came.
 loot lampcavechest Battery*1;Rope*2;Glass*2;CopperIngot*1
 prop lampcavechest loot.refill=0
-note sewerchest Sewer-mouth safe | A shop's safe, swept down the street by the flood and caught in the sewer mouth: tokens and silver.
+note sewerchest Ines's cache | A shop's safe, caught in the sewer mouth, that Ines used as her larder: tokens, silver - and a tin of the Union foreman's biscuits, half eaten.
 loot sewerchest TradeToken*4;MetalIngot*1;Glass*2
 prop sewerchest loot.refill=0
 quest title=The Drowned District
 quest intro=The outfall pours east into a drowned street. The Union's lost divers went down here. Find their rope at the tram stop.
 step reach|tram_stop|1|Dive to the tram stop on the drowned street
 step read|Expedition plan|1|Read the expedition's plan at the tram stop
-step blueprint|Blueprint_WindTurbine|1|Take the wind turbine's plans from the cinema's projection box, up on its roof
-step reach|shop_1|1|Breathe in the first shop's air pocket
+step read|Council flood notice|1|Read the Council's notice beside it
+step reach|shop_1|1|Breathe in the air pocket at No. 14, the blue door
+step open|Toy box at No. 14|1|Open the toy box in the Penns' rooms
 step kill|Angler fish|3|Drive off the three anglers in the shops
 step blueprint|Blueprint_BatteryAdvanced|1|Take the advanced battery's plans from the electronics shop
+step blueprint|Blueprint_ElectricGrill|1|Take the electric grill's plans from the drivers' diner
+step read|Jonah's letter|1|Read the letter left on the diner's table
 step reach|store_front|1|Swim to the fallen department store at the street's east end
 step collect|story:cagesopen|1|Find the cage key and open the four cages
 step read|Ines's report|1|Read Ines's report
+step reach|ls_hook1|1|Find the chalk hook on the store's last pillar
+step reach|ls_hook2|1|Follow the hooks west - the next is by the cinema
+step blueprint|Blueprint_WindTurbine|1|Take the wind turbine's plans from the cinema's projection box, up on its roof
 step blueprint|Blueprint_HeadLight_Advanced|1|Take the advanced headlight's plans from the lamp shop
 step kill|Stingray|1|Drive off the big stingray on the street
 step reach|embankment|1|Climb the old tram embankment north of the islet
 step read|Depot timetable|1|Read the last timetable in the tram depot's office in the north-west
 step reach|tram_wagons|1|Find the tram's last wagons, hauled out on the east shore
 step open|Stripped caravan's crate|1|Open the crate in the stripped caravan beside them
-step read|Tram signal notice|1|Read the tram signal notice by the tram signal box in the west
-step reach|ls_trail|1|Find the foot of the trail up Tramhead Bluff, in the south-west
-step reach|ls_summit|1|Climb the trail to the top of Tramhead Bluff
-step collect|story:ls_top|1|Climb the tram pylon and take the pylon fuse from its deck
-step reach|ls_deep|1|Dive to the sunk tram depot off the north-west shore
-step collect|story:ls_deep|1|Find the depot pass in its back room
-step collect|story:ls_bolt|1|Draw the bolt inside the depot so its front door opens
-step read|Tram timetable|1|Bring both to the tram signal box and read what it shows
-step blueprint|Blueprint_ElectricGrill|1|Take the electric grill's plans from the diner
+step reach|ls_hook3|1|Dive back down and follow the hooks to the street's west end
+step read|Ines's chalk note|1|Read the slate Ines left at the sewer's lip
 quest done=The valves were turned by hand. The cistern under the Authority's tower holds the records - Cistern Hall, band 700.
 quest reward=SilverAlgae*3;SeaVine*2
 

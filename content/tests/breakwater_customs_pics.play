@@ -11,7 +11,6 @@ picture sl13_breakwater_customs_hill 24 18 36 1 14 60
 picture sl13_breakwater_customs_ruin 66 9 16 54 4 30
 picture sl13_breakwater_customs_cave -60 9 48 -62 6 24
 picture sl13_breakwater_customs_boat -46 9 -30 -64 3 -22
-# DEEP 10-24: Lantern Crag, its summit and the drowned bonded store
-picture sl13_bw_mount 30.59 12 -49.9 64 19.2 -8
-picture sl13_bw_summit 71.07 38 -9.41 66.83 42.8 -5.17
-picture sl13_bw_deep 39 -7 -80 32 -10.5 -72
+# STORY 10-24: the bonded yard's maze from above, and its heart
+picture sl13_bw_yard 40 22 -30 63 2.5 -8
+picture sl13_bw_heart 58 7 -4 61.5 3 -0.5

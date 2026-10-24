@@ -17,66 +17,62 @@ expect hidden hallgate
 open Purifier hall
 wait 3
 expect step 2
-open Tank house locker
-wait 3
+read Dobbs's complaints
 expect step 3
-open Pipe gallery
-wait 3
+read Councillor's memo
 expect step 4
-open Purifier bench
-wait 3
-expect step 5
-open Authority stores
-wait 3
-expect step 6
-zone reservoir_bank
-expect step 7
-read Filter house notice
-expect step 8
-open Patrol van's lockbox
-wait 3
-expect step 9
-zone sludge_beds
-expect step 10
-# DEEP 10-24: the notice, the climb, the dive, the test-pump lever
-expect hidden pc_rewchest
-use pc_machine
-expect hidden pc_rewchest
-read Waterworks notice
-expect step 11
+# STORY 10-24: the climb for Dobbs's stick, the tape, the breaker, the dive to the reversed gauge
 zone pc_trail
-expect step 12
+expect step 5
 openat -40.2 -18.9
 zone pc_summit
-expect step 13
+expect step 6
 expect stand -37.9 -8.93 h=38
 open Old water tower deck box
 wait 3
 expect story pc_top 1
-expect step 14
+expect step 7
 open Linesman's locker
 wait 3
 expect story tape 3
-expect step 15
+expect step 8
+read Dobbs's warning
+expect step 9
 expect shown pc_shock
 use pc_breaker
 expect hidden pc_shock
 expect story pc_breaker 1
-expect step 16
+expect step 10
 zone pc_deep
-expect step 17
+expect step 11
 expect stand -63 -44 h=-16
 open Flooded intake chamber strongbox
 wait 3
 expect story pc_deep 1
-expect step 18
-use pc_machine
-expect shown pc_rewchest
-expect story pc_fixed 1
-open Test-pump lever reward
+expect step 12
+open Tank house locker
 wait 3
-read Test-pump reading
+expect step 13
+open Pipe gallery
+wait 3
+expect step 14
+open Purifier bench
+wait 3
+expect step 15
+open Authority stores
+wait 3
+expect step 16
+zone reservoir_bank
+expect step 17
+read Filter house notice
+expect step 18
+open Patrol van's lockbox
+wait 3
 expect step 19
+zone sludge_beds
+expect step 20
+read Complaint No. 300
+expect step 21
 zone outfall
 expect done
 expect step 0 quest=2
