@@ -72,7 +72,7 @@ place TP_Moontown_Barrel01 - at 10.2 -0.2 ground sit
 # the yard's machines: a forklift by the store, the excavator that slid off the yard into the sea
 place VP_Forklift - at 14.8 1.2 ground yaw=200
 place VP_Excavator - at 1 -3 ground yaw=30
-call treasure x=13 z=4 r=12 n=1 seed=10052
+call treasure x=13 z=4 r=24 n=1 seed=10052
 prop treasure10052 treasure.loot=TitaniumOre*3
 
 # --- The cranes and the zipline (S to N) -------------------------------------------------------------------------------

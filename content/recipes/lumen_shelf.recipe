@@ -291,6 +291,7 @@ story lu_lit|Floodlight mended|Placeable_Lantern_Metal|The broken floodlight bur
 prop lupuff creature.count=5
 prop lupuff creature.respawn=0
 prop lupuff creature.zone=lu_deep
+prop luflood1 obj.name=luflood1
 prop luflood1 beh.hidden=1
 prop luflood1 beh.repel=10
 prop luswitch1 obj.name=luswitch1
@@ -301,6 +302,7 @@ prop luflood2x beh.use=Fit the lens glasses
 prop luflood2x if.use=take|story:lu_lens|4
 prop luflood2x else.use=message||The big floodlight's four lens glasses are smashed. The survey office keeps spares, one on each floor.
 prop luflood2x on.use=hide|luflood2x\nshow|luflood2\ngive||story:lu_lit*1\nmessage||Four new glasses, and the floodlight burns again: the pit is lit, and the puffers keep away for good.
+prop luflood2 obj.name=luflood2
 prop luflood2 beh.hidden=1
 prop luflood2 beh.repel=10
 note lulens1 Lens box (first floor) | A box of spare lens glass on the office's first floor.
