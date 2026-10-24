@@ -19,6 +19,7 @@ include lib_huts
 include lib_gravity
 include lib_concord
 include lib_areas
+include lib_deep14
 new
 # (nature 10-24: hills and Raft-like trees over the whole island - the coordinator's check after the resize)
 gen Trees=0.4 Bushes=0.4 Rocks=0.55 Harvest=0.3 BeachThings=0.3
@@ -258,6 +259,104 @@ prop couriercrate if.open=has|story:raft-Tangaroa_KeyCard|1
 prop couriercrate else.open=message||The courier crate has a card slot stamped CONCORD. A keycard would open it.
 loot couriercrate TitaniumOre*2;Rope*3;Nail*10
 prop couriercrate loot.refill=0
+
+# --- Deep (10-24, SL14 DEEP 1-HOUR PASS): the climb - a 36 m scaffold tower on its pad beside a raised peak, a plank
+# bridge from landing 3 to the summit, the top locker, a stash on landing 2, a cairn and buried tin on the peak; the
+# dive - a flooded pit with a wreck, an air bell, a chest and a sunk secret, a ramp out (lib_deep14)
+call dp_ground tx=-19 tz=80 hb=1.6 sx=-22 sz=92.65 hs=23.2
+call dp_tower ox=-16.29 oz=78.33 hb=1.6 yaw=-103.36 al=ectower top=ectop stash=ecstash zal=ectopzone zid=ec_top msg="The top of the spark tower. A drone with a lamp - the Keeper's - lifts off the locker and flies west."
+call tzone x=-21.19 z=89.24 al=ecsummit id=ec_summit r=4 msg="The spark peak beside the spark tower." h=1
+call notebox x=-25.41 z=91.84 yaw=-13.36 al=eccairn
+call treasure x=-20.05 z=93.11 r=1.5 n=1 seed=14981
+prop treasure14981 treasure.loot=TitaniumOre*2;Battery*1
+place ZiplinePath_Landmark eczip at -20.81 81.11 h=37.6
+zipto eczip -35 45
+place Creature_Goat ecgoats at -22.76 69.86 ground
+prop ecgoats creature.count=2
+call dp_sink x=-78 z=-28 d=-18 ex1=-67.65 ez1=-24.28 ex2=-60.12 ez2=-21.58 eh=3.87
+place Airplane ecwreck at -78 -28 ground sit yaw=-19.75 scale=0.6
+place Loot_Chest ecdivechest at -79.15 -24.8 ground sit yaw=70.25
+call dp_air x=-76.85 z=-31.2 id=ec_air al=ecair msg="Air trapped under the wreck - breathe."
+place Loot_ChestSmall ecdivesecret at -82.71 -29.69 ground sit yaw=-19.75
+call tzone x=-78 z=-28 al=ecdivezone id=ec_dive r=7 msg="The bottom of the west pit. A courier plane lies here." h=1
+call tzone x=-60.12 z=-21.58 al=ecrim id=ec_rim r=5 msg="The west pit's rim." h=1
+call treasure x=-56.35 z=-20.23 r=2 n=1 seed=14982
+prop treasure14982 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+# the Keeper's flight (M30 moveto, M32 pulse, M31 shieldIf) and the epilogue (M40)
+call dp_hazard x=-19 z=80 al=ec_spark1 kind=shock r=2.2 dmg=2 msg="Sparks crawl over the landing - wait for them to die down." y=8.2
+prop ec_spark1 zone.pulse=2,3,1
+call dp_hazard x=-19 z=80 al=ec_spark2 kind=shock r=2.2 dmg=2 msg="Sparks crawl over the landing - wait for them to die down." y=15.4
+prop ec_spark2 zone.pulse=2,3,2
+call dp_hazard x=-19 z=80 al=ec_spark3 kind=shock r=2.2 dmg=2 msg="Sparks crawl over the landing - wait for them to die down." y=22.6
+prop ec_spark3 zone.pulse=2,3,3
+call dp_hazard x=-19 z=80 al=ec_spark4 kind=shock r=2.2 dmg=2 msg="Sparks crawl over the landing - wait for them to die down." y=29.8
+prop ec_spark4 zone.pulse=2,3,4
+place Creature_StoneBird_Caravan ec_keeper at -19 80 ground y=39
+prop ec_keeper obj.name=ec_keeper
+prop ec_keeper creature.count=1
+prop ec_keeper creature.respawn=0
+prop ec_keeper creature.health=8
+prop ec_keeper tint.color=#c8892a
+prop ec_keeper tint.amount=0.7
+prop ec_keeper boss.shieldIf=any
+!signal|ec_coil1
+!signal|ec_coil2
+prop ec_keeper on.defeat=give||story:keepkey*1
+message||The Keeper's drone drops into the sand. A heavy key on a lanyard falls out of its cage.
+place Placeable_Flag_05 ec_mark2 at -66.5 -24.5 ground sit
+prop ec_mark2 obj.name=ec_mark2
+place Placeable_Flag_05 ec_mark3 at 53 68 ground sit
+prop ec_mark3 obj.name=ec_mark3
+prop ectopzone on.enter=moveto|ec_keeper|ec_mark2,5
+signal||ec_flight1
+prop ecrim zone.repeat=1
+prop ecrim if.enter=signal|ec_flight1
+!signal|ec_flight2
+prop ecrim on.enter=moveto|ec_keeper|ec_mark3,6
+signal||ec_flight2
+message||The Keeper's drone was waiting here - it slams into you and flies off north-east, to the coils.
+place Zone_Trigger ec_knock at -60.1 -21.6 ground y=1
+prop ec_knock obj.name=ec_knock
+prop ec_knock zone.id=ec_knock
+prop ec_knock zone.radius=3
+prop ec_knock zone.push=-0.94,0,-0.34,0,8
+call tzone x=53 z=68 al=ecarena3 id=ec_arena3 r=7 msg="The coil yard. Two humming coils - and the Keeper's drone hanging between them, sparks crawling over its shell." h=1
+place RT_Pillar - at 49 64 ground sy=0.4
+place RT_PowerBox ec_coil1 at 49 64 ground y=1.25 yaw=45
+prop ec_coil1 obj.name=ec_coil1
+prop ec_coil1 beh.use=Throw the coil switch
+prop ec_coil1 on.use=message||The coil whines down. (1 of 2)
+signal||ec_coil1
+place RT_Pillar - at 57 72 ground sy=0.4
+place RT_PowerBox ec_coil2 at 57 72 ground y=1.25 yaw=225
+prop ec_coil2 obj.name=ec_coil2
+prop ec_coil2 beh.use=Throw the coil switch
+prop ec_coil2 on.use=message||The coil whines down. (2 of 2)
+signal||ec_coil2
+# epilogue: once a lever is pulled the court fills (lamps, flags) and the Keeper's strongbox is set out
+place Zone_Trigger ec_epizone at 0 26 ground y=1
+prop ec_epizone obj.name=ec_epizone
+prop ec_epizone zone.id=ec_epi
+prop ec_epizone zone.radius=6
+prop ec_epizone zone.repeat=1
+prop ec_epizone if.enter=signal|chosen
+prop ec_epizone on.enter=show|ec_epi
+show|ec_kbox
+message||The court is filling: lamps along the rings, flags on the walls - and by the gate, a strongbox with the Keeper's mark.
+place Placeable_Lantern_Metal ec_epi at -6 24 ground sit
+place Placeable_Lantern_Metal ec_epi at 6 24 ground sit
+place Placeable_Lantern_Metal ec_epi at -10 20 ground sit
+place Placeable_Lantern_Metal ec_epi at 10 20 ground sit
+place Placeable_Flag_05 ec_epi at -3 29 ground sit
+place Placeable_Flag_05 ec_epi at 3 29 ground sit
+prop ec_epi obj.name=ec_epi
+prop ec_epi beh.hidden=1
+place Loot_Chest ec_kbox at 0 22.5 ground sit yaw=180
+prop ec_kbox obj.name=ec_kbox
+prop ec_kbox beh.hidden=1
+prop ec_kbox if.open=has|story:keepkey|1
+prop ec_kbox else.open=message||The Keeper's strongbox. It wants the Keeper's own key.
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Engine Court
 info author=Custom Islands
@@ -338,6 +437,30 @@ loot courtcavechest Bolt*3;Hinge*2;MetalIngot*2;Rope*2
 prop courtcavechest loot.refill=0
 note builderbook Builders' day book | BUILDERS' DAY BOOK - the last page\n\nRing three finished. The court is level to a finger's width - the Concord's engineers checked it twice.\nUnder the well there is a stair, and under the stair there is the Engine. We were not allowed down.\nThe lodge roof can wait. Everybody wants to see the Engine start.\n\nOur strongbox takes the true bearings of the Triangulation rocks - not the ones the Concord was sent.
 note courierlog Courier plane log | COURIER PLANE LOG\n\nThe last post for the court: letters for the builders, a parcel for Ines.\nOn the way in, every needle on the panel pointed at the well.\nThe engine died over the east shore. The letters are in the crate.
+# (deep pass 10-24: the climb and the dive)
+story keeperlog|Keeper's log|Bolt|The Keeper's log, sealed in the drowned courier plane: the Engine's watch rota - and who kept it last.
+note ecdivechest Drowned courier plane | The courier plane that brought the Keeper, at the bottom of the west pit. Its chest holds the Keeper's log.
+loot ecdivechest story:keeperlog*1;Rope*2;Scrap*3;OxygenBottle*1
+prop ecdivechest loot.refill=0
+note ectop Keeper's locker | The Keeper's locker on the spark tower. The log's last page names the lock word: the Keeper's tools.
+loot ectop TitaniumOre*2;Battery*2;CircuitBoard*1
+prop ectop loot.refill=0
+prop ectop obj.name=ectop
+prop ectop if.open=has|story:keeperlog|1
+prop ectop else.open=message||The Keeper's locker. Its lid is lettered: ONLY THE ROTA OPENS ME.
+note ecstash Spark tower stash | A rubber-lined bag on the second landing: an electrician's spares.
+loot ecstash Battery*1;CopperIngot*2;Nail*6
+prop ecstash loot.refill=0
+note ecdivesecret Plane tail box | Wedged in the plane's tail: the courier's own tin.
+loot ecdivesecret MetalIngot*2;Bolt*3;TitaniumOre*1
+prop ecdivesecret loot.refill=0
+note eccairn Spark cairn | A cairn by the spark peak:
+
+The Keeper runs when you climb. Follow him west, then to the coils. - Teo
+story keepkey|Keeper's key|Bolt|The Keeper's key, from his drone's cage. It opens the Keeper's strongbox in the court.
+note ec_kbox Keeper's strongbox | The Keeper's strongbox. Inside, on top of his savings, a note: I kept it running. You decided. Fair.
+loot ec_kbox TitaniumIngot*2;CircuitBoard*2;Battery*2;OxygenBottle*1
+prop ec_kbox loot.refill=0
 quest title=The Concord Engine
 quest intro=Three rings of iron, one inside the other. Go to the outer ring's gate.
 step reach|outer_ring|1|Go to the outer ring's gate
@@ -371,6 +494,13 @@ step reach|courtcave|1|Find the chalked cave in the west shore
 step read|Builders' day book|1|Read the builders' day book at the ruined lodge in the north
 step collect|story:builderscode|1|Type the true bearings into the builders' keypad
 step open|Builders' strongbox|1|Open the builders' strongbox
+step reach|ec_dive|1|Dive to the courier plane at the bottom of the west pit
+step collect|story:keeperlog|1|Take the Keeper's log from the plane
+step reach|ec_top|1|Climb the spark tower past the sparks to its top
+step open|Keeper's locker|1|Open the Keeper's locker with the log
+step reach|ec_rim|1|Chase the Keeper's drone to the west pit's rim
+step collect|story:keepkey|1|Throw both coil switches and bring the Keeper's drone down
+step open|Keeper's strongbox|1|Open the Keeper's strongbox in the court
 step reach|well_stair|1|Go down the well stair on the north side
 quest done=The engine has its answer. Below, north of the court, the Command Well is open - its heart is waiting.
 quest reward=TitaniumOre*2;Battery*2;Rope*4

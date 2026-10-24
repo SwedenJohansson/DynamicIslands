@@ -2,7 +2,7 @@
 # An iron wall right across the island, two storeys high, with a gate house in the middle. South of it the storm the wall
 # was built against never stops: grey fog, rain, the sea thrown at the iron. North of it, out of the wind, the wall
 # keeper's garden: flowers of every colour, planters, a goat called Burr, and a stair up to the inner terrace. On the wall
-# walk an old token machine still works. Quest "The Wall" (11 steps): the gate house, the rain cistern's tank plans, the
+# walk an old token machine still works. Quest "The Wall" (15 steps): the gate house, the rain cistern's tank plans, the
 # pipe store, the gate crank, the keeper's purifier plans, the wall store, the inner stair.
 #
 # Built by the recipe player (CIRecipe outer_breakwater) through the editor's own operations. Points (metres over the
@@ -15,6 +15,7 @@ include lib_huts
 include lib_gravity
 include lib_concord
 include lib_areas
+include lib_deep14
 new
 # (nature 10-24: hills and Raft-like trees over the whole island - the coordinator's check after the resize)
 gen Trees=0.4 Bushes=0.4 Rocks=0.55 Harvest=0.35 BeachThings=0.3
@@ -163,6 +164,51 @@ prop smugbox loot.refill=0
 prop wallcavechest if.open=has|story:raft-Tangaroa_KeyCard|1
 prop wallcavechest else.open=message||The smugglers' chest has a card slot stamped CONCORD. A keycard would open it.
 loot wallcavechest Scrap*4;Nail*10;Rope*2;Copper*1;TitaniumOre*2
+
+# --- Deep (10-24, SL14 DEEP 1-HOUR PASS): the climb - a 36 m scaffold tower on its pad beside a raised peak, a plank
+# bridge from landing 3 to the summit, the top locker, a stash on landing 2, a cairn and buried tin on the peak; the
+# dive - a flooded pit with a wreck, an air bell, a chest and a sunk secret, a ramp out (lib_deep14)
+call dp_ground tx=45 tz=60 hb=4.1 sx=52.8 sz=70.4 hs=25.7
+call dp_tower ox=45.45 oz=56.85 hb=4.1 yaw=-53.13 al=obtower top=obtop stash=obstash zal=obtopzone zid=ob_top msg="The top of the watch tower, high over the wall. South the storm, north the garden, and a cable down to the gate house."
+call tzone x=50.7 z=67.6 al=obsummit id=ob_summit r=4 msg="The garden peak beside the watch tower." h=1
+call notebox x=50 z=72.5 yaw=36.87 al=obcairn
+call treasure x=54.4 z=69.2 r=1.5 n=1 seed=14941
+prop treasure14941 treasure.loot=TitaniumOre*2;Battery*1
+place ZiplinePath_Landmark obzip at 44.7 62.1 h=40.1
+zipto obzip 18 24
+place Creature_Goat obgoats at 34.8 56.4 ground
+prop obgoats creature.count=2
+call dp_sink x=30 z=-66 d=-16 ex1=25.45 ez1=-55.99 ex2=22.14 ez2=-48.7 eh=4.87
+place BoatStranded obwreck at 30 -66 ground sit yaw=-24.44 scale=0.5
+place Loot_Chest obdivechest at 26.9 -67.41 ground sit yaw=-24.44
+call dp_air x=33.1 z=-64.59 id=ob_air al=obair msg="Air trapped under the wreck - breathe."
+place Loot_ChestSmall obdivesecret at 32.07 -70.55 ground sit yaw=-114.44
+call tzone x=30 z=-66 al=obdivezone id=ob_dive r=7 msg="The bottom of the storm pit. A smugglers' boat lies broken on the floor." h=1
+call tzone x=22.14 z=-48.7 al=obrim id=ob_rim r=5 msg="The storm pit's rim, south of the wall." h=1
+call treasure x=20.48 z=-45.06 r=2 n=1 seed=14942
+prop treasure14942 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+# the counterweight scales on the hill above the wall stair (M35 with M37 carry + a stack zone; optional)
+place TangaroaBucket ob_weight1 at -55 -28 ground sit
+prop ob_weight1 obj.name=Counterweight
+prop ob_weight1 beh.use=Pick up the counterweight
+prop ob_weight1 on.use=carry|
+place TangaroaBucket ob_weight2 at 21.9 -55.4 ground sit
+prop ob_weight2 obj.name=Counterweight
+prop ob_weight2 beh.use=Pick up the counterweight
+prop ob_weight2 on.use=carry|
+place TangaroaScaleModel ob_scales at 24 -3 ground sit yaw=90
+prop ob_scales obj.name=ob_scales
+prop ob_scales on.use=message||The wall crew's counterweight scales. A brass plate: BOTH WEIGHTS ON THE PAN - CW 1 IN THE WALL CAVE, CW 2 WITH THE SMUGGLERS.
+place Zone_Trigger ob_pan at 24 -1.5 ground y=0.6
+prop ob_pan obj.name=ob_pan
+prop ob_pan zone.id=ob_pan
+prop ob_pan zone.radius=2
+prop ob_pan zone.stack=Counterweight|2
+prop ob_pan on.stack=message||Both counterweights on the pan, and the beam settles. A crate drops from the wall walk on its rope.\nsignal||obscale\nshow|ob_cwcrate
+place Loot_Chest ob_cwcrate at 25.5 -3 ground sit yaw=90
+prop ob_cwcrate obj.name=ob_cwcrate
+prop ob_cwcrate beh.hidden=1
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Outer Breakwater
 info author=Custom Islands
@@ -197,6 +243,28 @@ note wallcavechest Smugglers' chest | The smugglers' chest: a bag of wall tokens
 prop wallcavechest loot.refill=0
 note masonplan Masons' plan | MASONS' PLAN - a sheet held flat with four stones\n\nThe wall is a circle because the sea inside it must be still.\nWho ordered it: the Concord. What it keeps still: they did not say.\nWe built the lodge from the leftover blocks. The storm took the roof the week we finished.\n\nThe smugglers bolted their strongbox in our lodge and hid the bolt's lever in their cave, behind the vines.
 note stormlog Storm plane log | STORM PLANE LOG\n\nThe storm south of the wall never drifts. Flew into it to see why.\nIn the middle the rain fell upward for a second and every instrument read zero.\nCame down on the south shore with one wing. The wall's lights were the last thing I saw.
+# (deep pass 10-24: the climb and the dive)
+story ledger|Smugglers' ledger|Hinge|The smugglers' ledger, oiled and wrapped, from the boat they sank in the storm pit. Its last page lists what they hid on the watch tower.
+story chainkey|Chain key|Bolt|A heavy key on a ring, stamped CONCORD WELL. One of the five that open the chained door of the Command Well, deep under the calm circle.
+note obdivechest Smugglers' boat | The smugglers' boat, sunk in the storm pit south of the wall. In its hold chest: their ledger, oiled and wrapped.
+loot obdivechest story:ledger*1;Rope*2;Scrap*3;Plastic*3
+prop obdivechest loot.refill=0
+note obtop Watch tower locker | The watch tower's locker. The ledger's last page names the hiding place under the floor: a chain key and the smugglers' cut.
+loot obtop story:chainkey*1;TitaniumOre*2;Battery*1;MetalIngot*2
+prop obtop loot.refill=0
+prop obtop obj.name=obtop
+prop obtop if.open=has|story:ledger|1
+prop obtop else.open=message||The watch tower's locker is bolted from inside - but a loose plank shows there is a hiding place. Somebody wrote down where.
+note obstash Watch tower stash | On the second landing: a wall keeper's tea tin, and spare tokens.
+loot obstash Battery*1;CircuitBoard*1;Nail*6
+prop obstash loot.refill=0
+note obdivesecret Boat hold box | A box thrown out of the boat's hold, behind the wreck: the smugglers' fake token dies.
+loot obdivesecret MetalIngot*2;Bolt*3;Rope*1
+prop obdivesecret loot.refill=0
+note obcairn Garden cairn | A cairn on the garden peak, flowers pressed under a stone:\n\nThe wall keeps the storm out. Somebody has to keep the wall. - the keeper
+note ob_cwcrate Counterweight crate | The wall crew's crate, hung from the walk on the counterweight rope.
+loot ob_cwcrate MetalIngot*3;Bolt*3;Hinge*2;TitaniumIngot*1
+prop ob_cwcrate loot.refill=0
 quest title=The Wall
 quest intro=An iron wall, a storm and a gate house. Go up to the gate.
 step reach|gate_house|1|Go up to the gate house
@@ -209,6 +277,10 @@ step reach|eastridge|1|Climb the east ridge above the wall
 step collect|story:smugbolt|1|Cut the vines in the smugglers' cave in the west and pull the lever behind them
 step open|Smugglers' strongbox|1|Open the smugglers' strongbox at the ruined lodge in the north
 step read|Storm plane log|1|Read the log at the plane wreck in the southern storm
+step reach|ob_dive|1|Dive into the storm pit to the smugglers' boat
+step collect|story:ledger|1|Take the smugglers' ledger from the boat's hold
+step reach|ob_top|1|Climb the watch tower by the garden peak to its top
+step open|Watch tower locker|1|Open the watch tower locker with what the ledger says
 step reach|inner_stair|1|Climb the stair to the inner terrace
 quest done=Through the wall and out of the storm. South of the terrace a canal runs on through three locks.
 quest reward=Seed_Pineapple*2;Plank*10;Rope*4

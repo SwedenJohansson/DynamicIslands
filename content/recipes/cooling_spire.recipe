@@ -2,7 +2,7 @@
 # A pale iron tower four storeys high on a cold island, steam rolling off it, frost on the rocks round its foot: the
 # engine's cooling spire, where the ice wave of the Ringwave was made. Hedda camps at its foot with a trader's store; the
 # ice-rats have the second storey, a polar bear the roof. From the roof a cable runs down south to a lookout on the shore,
-# from where you can see the ring. Quest "The Cold Spire" (15 steps): Hedda's camp, her welcome, the titanium tool plans,
+# from where you can see the ring. Quest "The Cold Spire" (19 steps): Hedda's camp, her welcome, the titanium tool plans,
 # the second landing, the rats, the backpack plans, the roof, the polar bear, the electric zipline plans, the cable down
 # to the lookout, what Hedda saw.
 #
@@ -17,6 +17,7 @@ include lib_gravity
 include lib_rt
 include lib_concord
 include lib_areas
+include lib_deep14
 new
 # (nature 10-24: hills and Raft-like trees over the whole island - the coordinator's check after the resize)
 gen Trees=0.3 Bushes=0.4 Rocks=0.55 Harvest=0.3 BeachThings=0.3
@@ -97,7 +98,7 @@ place Placeable_Flag_02 - at -1.91 -59.28 ground y=2.1
 # --- Hedda's camp and her store; the llama pasture -----------------------------------------------------------------------
 call camp x=14.43 z=-2.35 yaw=250 fire=campfire_1
 call notebox x=16.43 z=-0.35 yaw=200 al=hedda1
-place Loot_Chest heddachest at 17.43 -3.35 ground sit yaw=250
+place Loot_Chest heddachest at 11.6 2.6 ground sit yaw=250
 store spireshop at 14.43 5.65 ground
 place Creature_Llama llamas at -27.05 -17.45 ground
 prop llamas creature.count=2
@@ -156,6 +157,30 @@ prop sunchest loot.refill=0
 prop dunecavechest if.open=has|story:raft-Vasagatan_BoltCutter|1
 prop dunecavechest else.open=message||The cellar chest is chained shut. Bolt cutters would get through the chain.
 loot dunecavechest Glass*2;Bolt*2;Scrap*3;Rope*1;TitaniumOre*2
+
+# --- Deep (10-24, SL14 DEEP 1-HOUR PASS): the climb - a 36 m scaffold tower on its pad beside a raised peak, a plank
+# bridge from landing 3 to the summit, the top locker, a stash on landing 2, a cairn and buried tin on the peak; the
+# dive - a flooded pit with a wreck, an air bell, a chest and a sunk secret, a ramp out (lib_deep14)
+call dp_ground tx=32 tz=-64 hb=4.2 sx=37.81 sz=-75.63 hs=25.8
+call dp_tower ox=28.98 oz=-62.99 hb=4.2 yaw=63.43 al=cstower top=cstop stash=csstash zal=cstopzone zid=cs_top msg="The top of the ice tower. The spire's steam leans south below you, towards the Engine."
+call tzone x=36.24 z=-72.5 al=cssummit id=cs_summit r=4 msg="The frost peak beside the ice tower." h=1
+call notebox x=40.94 z=-74.06 yaw=153.43 al=cscairn
+call treasure x=36.02 z=-76.52 r=1.5 n=1 seed=14971
+prop treasure14971 treasure.loot=TitaniumOre*2;Battery*1
+place ZiplinePath_Landmark cszip at 34.01 -64.67 h=40.2
+zipto cszip 11.88 -23.75
+place Creature_Goat csgoats at 33.34 -53.27 ground
+prop csgoats creature.count=2
+call dp_sink x=-31 z=-43 d=-20 ex1=-24.57 ez1=-34.08 ex2=-19.89 ez2=-27.59 eh=8.96
+place Caravan_Green_02 cswreck at -31 -43 ground sit yaw=-54.21
+place Loot_Chest csdivechest at -33.76 -41.01 ground sit yaw=35.79
+call dp_air x=-28.24 z=-44.99 id=cs_air al=csair msg="Air trapped under the wreck - breathe."
+place Loot_ChestSmall csdivesecret at -33.92 -47.06 ground sit yaw=-54.21
+call tzone x=-31 z=-43 al=csdivezone id=cs_dive r=7 msg="The bottom of the cooling pond. Hedda's old caravan lies here." h=1
+call tzone x=-19.89 z=-27.59 al=csrim id=cs_rim r=5 msg="The cooling pond's rim." h=1
+call treasure x=-17.55 z=-24.34 r=2 n=1 seed=14972
+prop treasure14972 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Cooling Spire
 info author=Custom Islands
@@ -184,6 +209,24 @@ note dunecavechest Cellar chest | A chest in the cold cave, its lid beaded with 
 prop dunecavechest loot.refill=0
 note pumpmenlog Pumpmen's log | PUMPMEN'S LOG - in a tin under the fallen wall\n\nThe spire must never run dry. If it does, the Engine runs hot.\nWe never saw the Engine. We only saw the pipe, going south under the sand.\nHedda came through asking about it. We told her what we knew: nothing.\n\nThe pumpmen's chest by the water plane is sun-locked: turn the mirror on the dune ridge and the one at this house, and the light meets on its eye. The steam leans south because the Engine draws it.
 note waterplanelog Water plane log | WATER PLANE LOG\n\nSpare cooling coils for the spire.\nThe steam from the top of it leans south, whatever the wind does. The needle agrees.\nLanded short in the east dunes. The coils are in the crate.\n\nThe pumpmen's sun-locked chest sits by our nose. Their mirrors are on the ridge and at the pump house.
+# (deep pass 10-24: the climb and the dive)
+story frostvalve|Frost valve|Hinge|A frost valve from the cooling pond, white with old ice. The ice tower's locker opens with it.
+note csdivechest Pond caravan | Hedda's old caravan at the bottom of the cooling pond. In its chest: a frost valve, still cold.
+loot csdivechest story:frostvalve*1;Rope*2;Scrap*3;Bolt*2
+prop csdivechest loot.refill=0
+note cstop Ice tower locker | The ice tower's locker. The frost valve turns the lock: the cooling crew's spare parts.
+loot cstop TitaniumOre*2;Battery*1;CircuitBoard*1
+prop cstop loot.refill=0
+prop cstop obj.name=cstop
+prop cstop if.open=has|story:frostvalve|1
+prop cstop else.open=message||The ice tower's locker. A valve socket in place of a lock.
+note csstash Ice tower stash | A frozen bag on the second landing.
+loot csstash Battery*1;CircuitBoard*1;Nail*6
+prop csstash loot.refill=0
+note csdivesecret Pond strongbox | Behind the caravan at the pond floor: Hedda's paint box.
+loot csdivesecret MetalIngot*2;Bolt*3;Rope*1
+prop csdivesecret loot.refill=0
+note cscairn Frost cairn | A cairn on the frost peak:\n\nThe steam leans south. It always leans to the Engine. - Hedda
 quest title=The Cold Spire
 quest intro=A steaming tower and a lit campfire at its foot. Go to the camp.
 step reach|hedda_camp|1|Go to the campfire at the spire's foot
@@ -200,6 +243,10 @@ step reach|coolridge|1|Climb the dune ridge in the north-east
 step read|Water plane log|1|Read the log at the plane wreck in the east dunes
 step open|Sun-locked chest|1|Turn both mirrors and open the sun-locked chest by the water plane
 step reach|court_view|1|Ride the cable down to the lookout on the shore
+step reach|cs_dive|1|Dive to the caravan at the bottom of the cooling pond
+step collect|story:frostvalve|1|Take the frost valve from the caravan
+step reach|cs_top|1|Climb the ice tower by the frost peak to its top
+step open|Ice tower locker|1|Open the ice tower locker with the valve
 step read|What Hedda saw|1|Read what Hedda painted at the lookout
 quest done=South over the sea: the ring, turning. The Engine Court is waiting.
 quest reward=TitaniumOre*2;Rope*4;CaveMushroom*2

@@ -38,6 +38,29 @@ wait 3
 expect step 12
 zone rod_top
 expect step 13
+# (deep pass 10-24: the top locker refuses, the dive, the air bell, the dive chest, the buried tins, the tower)
+open Chimney locker
+expect message casting mould
+zone sw_dive
+expect step 14
+air sw_air
+open Quench van
+wait 3
+expect story mould 1
+expect step 15
+open Quench strongbox
+wait 3
+dig 3
+climb -22.85 -69.18
+open Chimney stash
+wait 3
+read Smoke cairn
+dig 2
+zone sw_top
+expect step 16
+open Chimney locker
+wait 3
+expect step 17
 read Stormworks note 3
 dig
 expect done

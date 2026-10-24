@@ -7,3 +7,5 @@ at 0 0
 wait 3
 picture sl14_drifting_relay_buoy_island 20 14 -30 4 1 0
 picture sl14_drifting_relay_buoy_buoy 7 3 -5 12 1.5 0
+picture sl14_drifting_relay_buoy_tower -42.64 29 -32.74 -24 23 -11
+picture sl14_drifting_relay_buoy_pit -2.5 11 10.64 -8 -8 34

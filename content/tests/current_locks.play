@@ -57,6 +57,32 @@ expect shown dredgelocker
 open Engine room locker
 wait 3
 expect step 14
+use cl_wheel1
+use cl_wheel2
+use cl_wheel3
+# (deep pass 10-24: the top locker refuses, the dive, the air bell, the dive chest, the buried tins, the tower)
+open Dredge gantry locker
+expect message bucket
+zone cl_dive
+expect step 15
+air cl_air
+open Lock chamber grate
+wait 3
+expect story dredgekey 1
+expect step 16
+open Van strongbox
+wait 3
+dig 2
+climb 74.48 2.73
+open Gantry stash
+wait 3
+read Gantry cairn
+dig 1
+zone cl_top
+expect step 17
+open Dredge gantry locker
+wait 3
+expect step 18
 open Keeper's kitchen
 wait 3
 expect done

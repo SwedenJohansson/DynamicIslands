@@ -4,7 +4,7 @@
 # engine's heart. Three great rings stand in it, cables to the walls; the command desk where the last crew left their
 # names and their log; and a row of ring consoles. Whatever was chosen up in the Engine Court plays out here: REACTIVATE,
 # the rings light; SHUT DOWN, they go dark; REDIRECT, the middle ring turns the other way; nothing chosen, the engine stays
-# on standby as the last crew left it. Quest "The Heart" (16 steps): the shaft top, the lift order, the first landing, the
+# on standby as the last crew left it. Quest "The Heart" (21 steps): the shaft top, the lift order, the first landing, the
 # anglers, the dome, the crew's names, the command desk, the last crew's log, ring 1, the ring console, the closing note,
 # back up to the shaft top.
 #
@@ -19,6 +19,7 @@ include lib_huts
 include lib_gravity
 include lib_concord
 include lib_areas
+include lib_deep14
 new
 gen Trees=0 Bushes=0 Rocks=0.35 Harvest=0 BeachThings=0
 gen Seed=14201 Radius=95 Height=8 Roughness=0.3 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.5 PeakShape=0.3
@@ -226,6 +227,88 @@ prop supplycrate loot.refill=0
 note pumplocker Pump house locker | The pump crew's locker. Their last pay, their tags - and a list of the names they shut in below.
 loot pumplocker TitaniumOre*4;Battery*2;CircuitBoard*2
 prop pumplocker loot.refill=0
+
+# --- Deep (10-24, SL14 DEEP 1-HOUR PASS): the climb - a 36 m scaffold tower on its pad beside a raised peak, a plank
+# bridge from landing 3 to the summit, the top locker, a stash on landing 2, a cairn and buried tin on the peak; the
+# dive - a flooded pit with a wreck, an air bell, a chest and a sunk secret, a ramp out (lib_deep14)
+# the spoil-heap islet: raised from the seabed (2 m) to just over the sea (31 m)
+brush flatten at 53 -51 r=20 s=20 frames=500 h=31
+brush smooth at 53 -51 r=26 s=6 frames=40
+brush flatten at 53 -51 r=16 s=20 frames=300 h=31
+brush auto at 53 -51 r=24 s=10 frames=25
+clear at 53 -51 r=22
+call dp_ground tx=50 tz=-48 hb=31 sx=59.38 sz=-57 hs=52.6
+call dp_tower ox=46.82 oz=-48.06 hb=31 yaw=43.83 al=cwtower top=cwtop stash=cwstash zal=cwtopzone zid=cw_top msg="The top of the spoil tower, high over the sea. Far off, every tower of the Ocean's end - and below, the chained hatch."
+call tzone x=56.86 z=-54.58 al=cwsummit id=cw_summit r=4 msg="The spoil peak beside the crane tower." h=1
+call notebox x=61.8 z=-54.48 yaw=133.83 al=cwcairn
+call treasure x=57.99 z=-58.44 r=1.5 n=1 seed=14991
+prop treasure14991 treasure.loot=story:chainkey*1;TitaniumOre*2
+place Creature_Goat cwgoats at 47.66 -37.44 ground
+prop cwgoats creature.count=2
+call dp_sink x=-28 z=58 d=-14 ex1=-23.22 ez1=48.09 ex2=-19.74 ez2=40.89 eh=3.07
+place BoatStranded cwwreck at -28 58 ground sit yaw=154.23 scale=0.5
+place Loot_Chest cwdivechest at -24.94 59.48 ground sit yaw=154.23
+call dp_air x=-31.06 z=56.52 id=cw_air al=cwair msg="Air trapped under the wreck - breathe."
+place Loot_ChestSmall cwdivesecret at -30.17 62.5 ground sit yaw=64.23
+call tzone x=-28 z=58 al=cwdivezone id=cw_dive r=7 msg="The bottom of the west pit. The spoil boat lies here." h=1
+call tzone x=-19.74 z=40.89 al=cwrim id=cw_rim r=5 msg="The west pit's rim." h=1
+call treasure x=-18 z=37.29 r=2 n=1 seed=14992
+prop treasure14992 treasure.loot=story:chainkey*1;MetalIngot*2;Bolt*2
+# the chained hatch on the islet: five chain locks round it (D1+P1)
+place Loot_ChestLarge cw_hatch at 44.2 -42.5 ground sit yaw=135
+prop cw_hatch obj.name=cw_hatch
+prop cw_hatch if.open=signal|cwchain1
+signal|cwchain2
+signal|cwchain3
+signal|cwchain4
+signal|cwchain5
+prop cw_hatch else.open=message||The hatch is chained shut - five chains, five locks round it. Each wants a chain key.
+place RT_Pillar - at 45.31 -39.08 ground sy=0.4
+place RT_PowerBox cw_lock1 at 45.31 -39.08 ground y=1.25 yaw=198
+prop cw_lock1 obj.name=cw_lock1
+prop cw_lock1 beh.use=Unlock the chain
+prop cw_lock1 if.use=!signal|cwchain1
+take|story:chainkey|1
+prop cw_lock1 else.use=message||A chain lock. It wants a chain key - or it is open already.
+prop cw_lock1 on.use=message||The key turns and the chain rattles off the hatch (1 of 5).
+signal||cwchain1
+place RT_Pillar - at 41.29 -40.38 ground sy=0.4
+place RT_PowerBox cw_lock2 at 41.29 -40.38 ground y=1.25 yaw=126
+prop cw_lock2 obj.name=cw_lock2
+prop cw_lock2 beh.use=Unlock the chain
+prop cw_lock2 if.use=!signal|cwchain2
+take|story:chainkey|1
+prop cw_lock2 else.use=message||A chain lock. It wants a chain key - or it is open already.
+prop cw_lock2 on.use=message||The key turns and the chain rattles off the hatch (2 of 5).
+signal||cwchain2
+place RT_Pillar - at 41.29 -44.62 ground sy=0.4
+place RT_PowerBox cw_lock3 at 41.29 -44.62 ground y=1.25 yaw=54
+prop cw_lock3 obj.name=cw_lock3
+prop cw_lock3 beh.use=Unlock the chain
+prop cw_lock3 if.use=!signal|cwchain3
+take|story:chainkey|1
+prop cw_lock3 else.use=message||A chain lock. It wants a chain key - or it is open already.
+prop cw_lock3 on.use=message||The key turns and the chain rattles off the hatch (3 of 5).
+signal||cwchain3
+place RT_Pillar - at 45.31 -45.92 ground sy=0.4
+place RT_PowerBox cw_lock4 at 45.31 -45.92 ground y=1.25 yaw=342
+prop cw_lock4 obj.name=cw_lock4
+prop cw_lock4 beh.use=Unlock the chain
+prop cw_lock4 if.use=!signal|cwchain4
+take|story:chainkey|1
+prop cw_lock4 else.use=message||A chain lock. It wants a chain key - or it is open already.
+prop cw_lock4 on.use=message||The key turns and the chain rattles off the hatch (4 of 5).
+signal||cwchain4
+place RT_Pillar - at 47.8 -42.5 ground sy=0.4
+place RT_PowerBox cw_lock5 at 47.8 -42.5 ground y=1.25 yaw=270
+prop cw_lock5 obj.name=cw_lock5
+prop cw_lock5 beh.use=Unlock the chain
+prop cw_lock5 if.use=!signal|cwchain5
+take|story:chainkey|1
+prop cw_lock5 else.use=message||A chain lock. It wants a chain key - or it is open already.
+prop cw_lock5 on.use=message||The key turns and the chain rattles off the hatch (5 of 5).
+signal||cwchain5
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Command Well
 info author=Custom Islands
@@ -276,6 +359,30 @@ note wellcavechest Cable cave chest | A chest where the cables enter the rock: a
 prop wellcavechest loot.refill=0
 note pumpbook Pump house book | PUMP HOUSE BOOK - in a tin on the table\n\nThe pumps keep the dome dry. The dome keeps the Engine dry. Nobody keeps the pump house dry.\nThe sea came up a finger a year, then a hand a year. We moved the pumps down into the dome.\nThis house we left to the fish.\n\nWe flooded the dome ourselves, to stop the Engine's crew getting out. The fuse box opens our locker - one fuse in the cable cave, one in the supply plane, one in the tin here.
 note supplylog Supply plane log | SUPPLY PLANE LOG\n\nThe last supply run to the Command Well: food, lamp oil, a crate of fuses.\nWe came down on the calm circle - too calm. It held the plane like a hand and pulled it under.\nWhatever is in the crate, the crew below needed it more than I did.
+# (deep pass 10-24: the climb and the dive)
+story wellvalve|Shaft valve wheel|Hinge|The valve wheel from the drowned spoil boat: it turns the lock of the crane locker on the spoil-heap islet.
+note cwdivechest Spoil boat chest | The spoil boat that carried the shaft's rock away, sunk in the west pit. Its chest: the valve wheel and two chain keys.
+loot cwdivechest story:wellvalve*1;story:chainkey*2;Rope*2;OxygenBottle*1
+prop cwdivechest loot.refill=0
+note cwtop Crane locker | The crane locker at the top of the spoil tower. The valve wheel turns its lock.
+loot cwtop TitaniumOre*3;Battery*2;CircuitBoard*1
+prop cwtop loot.refill=0
+prop cwtop obj.name=cwtop
+prop cwtop if.open=has|story:wellvalve|1
+prop cwtop else.open=message||The crane locker. A valve spindle, no wheel on it.
+note cwstash Crane stash | A tarred bag on the second landing - and a chain key tied to it.
+loot cwstash story:chainkey*1;Battery*1;Nail*6
+prop cwstash loot.refill=0
+note cwdivesecret Boat bilge box | In the spoil boat's bilge: the skipper's tin.
+loot cwdivesecret MetalIngot*2;Bolt*3;TitaniumOre*1
+prop cwdivesecret loot.refill=0
+note cwcairn Spoil cairn | A cairn on the spoil peak:
+
+Five chains on the hatch, five keys. We sent one to each tower out there - and hid five more here, in case nobody came back. - the last crew
+story chainkey|Chain key|Bolt|A heavy key on a ring, stamped CONCORD WELL. One of the five that open the chained door of the Command Well, deep under the calm circle.
+note cw_hatch Chained hatch | The well's heart: under the hatch, the Concord's own seal and the last crew's savings, kept for whoever came.
+loot cw_hatch TitaniumIngot*3;CircuitBoard*3;Battery*3;OxygenBottle*2
+prop cw_hatch loot.refill=0
 quest title=The Heart
 quest intro=A float deck over a shaft of iron. Go to the top of the well.
 step reach|shaft_top|1|Go to the deck over the well
@@ -293,6 +400,11 @@ step reach|wellridge|1|Swim out to the sunken ridge in the east
 step read|Pump house book|1|Read the book in the drowned pump house in the north-east
 step collect|story:wellfuse|3|Find the three fuses: the cable cave, the supply plane and the pump house
 step open|Pump house locker|1|Fit the fuses in the pump house fuse box and open the locker
+step reach|cw_dive|1|Dive to the spoil boat at the bottom of the west pit
+step collect|story:wellvalve|1|Take the valve wheel from the boat
+step reach|cw_top|1|Swim to the spoil-heap islet and climb its crane tower
+step open|Crane locker|1|Open the crane locker with the valve wheel
+step open|Chained hatch|1|Unlock the five chains on the islet's hatch and open it
 step reach|shaft_top|1|Go back up the shaft to the deck
 quest done=The heart of the Concord Engine does what it was told. The end of the ocean was never an end - only a choice.
 quest reward=TitaniumOre*2;Battery*2;CaveMushroom*2

@@ -43,5 +43,29 @@ wait 3
 expect step 9
 read Storm plane log
 expect step 10
+# (deep pass 10-24: the top locker refuses, the dive, the air bell, the dive chest, the buried tins, the tower)
+open Watch tower locker
+expect message bolted from inside
+zone ob_dive
+expect step 11
+air ob_air
+open Smugglers' boat
+wait 3
+expect story ledger 1
+expect step 12
+open Boat hold box
+wait 3
+dig 3
+climb 42.7 59.85
+open Watch tower stash
+wait 3
+read Garden cairn
+dig 2
+zone ob_top
+expect step 13
+open Watch tower locker
+wait 3
+expect step 14
+expect story chainkey 1
 zone inner_stair
 expect done

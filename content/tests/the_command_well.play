@@ -52,6 +52,37 @@ expect shown pumplocker
 open Pump house locker
 wait 3
 expect step 15
+# (deep pass 10-24: the top locker refuses, the dive, the air bell, the dive chest, the buried tins, the tower)
+open Crane locker
+expect message valve spindle
+zone cw_dive
+expect step 16
+air cw_air
+open Spoil boat chest
+wait 3
+expect story wellvalve 1
+expect step 17
+open Boat bilge box
+wait 3
+dig 1
+climb 50.13 -45.7
+open Crane stash
+wait 3
+read Spoil cairn
+dig 0
+zone cw_top
+expect step 18
+open Crane locker
+wait 3
+expect step 19
+use cw_lock1
+use cw_lock2
+use cw_lock3
+use cw_lock4
+use cw_lock5
+open Chained hatch
+wait 3
+expect step 20
 # (no step check here: the shaft top was passed on the way down, so the last step can count at once)
 zone shaft_top
 expect done

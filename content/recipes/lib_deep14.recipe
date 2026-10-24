@@ -1,0 +1,112 @@
+# lib_deep14: The End of the Ocean's deep pass (SL14, 10-24) - each island's big climb and deep dive, put together from
+# the editor's own pieces and terrain brushes (see _ProjectDocs/plans/storylines10/SL14_progress.md, DEEP 1-HOUR PASS).
+#
+# dp_ground: the ground for a climb - a mountain whose summit pad is hs m over the sea at sx sz (a flat top r ~5, steep
+# flanks), and beside it a flat pad hb m over the sea at tx tz for the scaffold tower (put 13 m from the summit, the tower's
+# landing 3 at hs reaches the summit by a plank bridge). Plants cleared under both.
+macro dp_ground tx=0 tz=0 hb=4 sx=0 sz=13 hs=25
+brush flatten at $sx $sz r=7 s=20 frames=300 h=$hs
+brush smooth at $sx $sz r=12 s=6 frames=40
+brush flatten at $sx $sz r=6 s=20 frames=200 h=$hs
+brush flatten at $tx $tz r=6 s=20 frames=40 h=$hb
+brush auto at $sx $sz r=13 s=10 frames=25
+clear at $sx $sz r=13
+clear at $tx $tz r=7
+end
+#
+# dp_tower: a scaffold tower 36 m high on the pad at ox oz (its corner; hb over the sea), turned yaw (local x towards the
+# summit): four corner posts of thick pillars (the first sunk 0.8 m), five plank landings 3 x 3 (7.2 m apart, a hole
+# in each for the ladder, the holes taking turns between the north corners), three ladders a storey each on wooden
+# posts at the north face, rope rails round the top, a lantern; landing 3 (21.6 m) gives onto a plank bridge on posts to
+# the summit pad (local x 4.5..12). al: the tower's pieces; top: the chest on the top landing; stash: a small chest on
+# landing 2; zal/zid/msg: the zone on the top landing.
+macro dp_tower ox=0 oz=0 hb=4 yaw=0 al=dptower top=dptop stash=dpstash zal=dptopzone zid=dptop msg=""
+push at $ox $oz h=$hb yaw=$yaw
+for px 0 1
+for pz 0 1
+place RT_PillarThick $al at {0.29+3.92*$px} {0.29+3.92*$pz} y=-0.8 sy=1.1333
+for k 1 5
+place RT_PillarThick $al at {0.29+3.92*$px} {0.29+3.92*$pz} y={6*$k}
+next
+next
+next
+for k 1 5
+set hi {2*(($k+1)%2)}
+for i 0 2
+place Block_Floor_Wood $al at {0.75+1.5*$i} 0.75 y={7.2*$k}
+place Block_Floor_Wood $al at {0.75+1.5*$i} 2.25 y={7.2*$k}
+next
+place Block_Floor_Wood $al at 2.25 3.75 y={7.2*$k}
+place Block_Floor_Wood $al at {0.75+1.5*(2-$hi)} 3.75 y={7.2*$k}
+for j 0 2
+place Block_Ladder $al at {0.75+1.5*$hi} 4.35 y={7.2*($k-1)+2.42*$j} yaw=180
+place Block_Pillar_Wood $al at {0.75+1.5*$hi} 4.55 y={7.2*($k-1)+2.42*$j}
+next
+next
+for i 0 2
+place Block_Wall_Fence_Rope $al at {0.75+1.5*$i} 0.05 y=36
+place Block_Wall_Fence_Rope $al at {0.75+1.5*$i} 4.45 y=36
+place Block_Wall_Fence_Rope $al at 0.05 {0.75+1.5*$i} y=36 yaw=90
+place Block_Wall_Fence_Rope $al at 4.45 {0.75+1.5*$i} y=36 yaw=90
+next
+place Placeable_Lantern_Metal - at 0.75 0.75 y=36
+place Loot_Chest $top at 2.25 0.75 y=36 yaw=0
+place Loot_ChestSmall $stash at 0.75 0.75 y=14.4 yaw=30
+place Zone_Trigger $zal at 2.25 2.25 y=36.6
+prop $zal zone.id=$zid
+prop $zal zone.radius=3
+prop $zal zone.message=$msg
+for i 0 4
+place Block_Floor_Wood $al at {5.25+1.5*$i} 2.25 y=21.6
+place Block_Wall_Fence_Rope $al at {5.25+1.5*$i} 1.55 y=21.6
+place Block_Wall_Fence_Rope $al at {5.25+1.5*$i} 2.95 y=21.6
+next
+for i 0 2
+place RT_PillarThick $al at {5.25+1.5*$i} 1.75 y=-0.8 sy=1.1333
+place RT_PillarThick $al at {5.25+1.5*$i} 2.75 y=-0.8 sy=1.1333
+for k 1 2
+place RT_PillarThick $al at {5.25+1.5*$i} 1.75 y={6*$k}
+place RT_PillarThick $al at {5.25+1.5*$i} 2.75 y={6*$k}
+next
+place RT_PillarThick $al at {5.25+1.5*$i} 1.75 y=18 sy=0.6
+place RT_PillarThick $al at {5.25+1.5*$i} 2.75 y=18 sy=0.6
+next
+pop
+end
+#
+# dp_sink: a flooded quarry at x z - a shelf just above the sea (0.4 m) round a pit whose floor is d m (under the sea) r ~6,
+# smoothed walls; the sea fills it. The way out: a plank ramp from the shelf (ex1 ez1) up to the ground (ex2 ez2, eh).
+macro dp_sink x=0 z=0 d=-14 ex1=0 ez1=0 ex2=0 ez2=0 eh=4
+brush flatten at $x $z r=16 s=20 frames=25 h=0.4
+brush flatten at $x $z r=10 s=20 frames=300 h=$d
+brush smooth at $x $z r=18 s=6 frames=40
+brush flatten at $x $z r=6 s=20 frames=200 h=$d
+brush auto at $x $z r=18 s=10 frames=25
+clear at $x $z r=19
+ramp Block_Floor_Wood from $ex1 $ez1 0.5 to $ex2 $ez2 $eh len=1.5 top=0
+end
+#
+# dp_air: an air bell on the ground at x z (Raft's air pocket and a breathing zone id, alias al)
+macro dp_air x=0 z=0 id=air al=air r=2.5 msg="An air pocket - breathe."
+place AirPocket_1 - at $x $z ground y=0.05 scale=0.6
+place Zone_Trigger $al at $x $z ground y=1.6
+prop $al obj.name=$al
+prop $al zone.id=$id
+prop $al zone.radius=$r
+prop $al zone.repeat=1
+prop $al zone.air=1
+prop $al zone.message=$msg
+end
+#
+# dp_hazard: a hazard zone (acid, shock, miasma, spikes, cold, dark, deep) at x z, r, damage dmg, message msg, y over the
+# ground (its safe gear is its kind's default: dark - a headlight, deep - an oxygen tank; the caller hides it with
+# beh.hidden=1 when it starts off)
+macro dp_hazard x=0 z=0 al=hazard kind=acid r=5 dmg=1 msg="" y=1
+place Zone_Trigger $al at $x $z ground y=$y
+prop $al obj.name=$al
+prop $al zone.id=$al
+prop $al zone.radius=$r
+prop $al zone.hazard=$kind
+prop $al zone.damage=$dmg
+prop $al zone.hazardMsg=$msg
+end

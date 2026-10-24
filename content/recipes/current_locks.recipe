@@ -2,7 +2,7 @@
 # A long island cut through by a straight canal with three iron lock gates in it, a crank for each on the east bank. The
 # engine's water ran through here once, lock by lock, south to the ring. The lock keeper's rules still hang on the first
 # gate, anglers have the deep basin under it, a bear has the path to the third. In the keeper's kitchen at the north end
-# a note from Ines: she has seen three rings before. Quest "Three Locks" (15 steps): lock 1, the rules, the lock house's
+# a note from Ines: she has seen three rings before. Quest "Three Locks" (19 steps): lock 1, the rules, the lock house's
 # wind turbine plans, crank 1, the anglers in the basin, the advanced battery plans, crank 2, the bear, the headlight
 # plans, crank 3, the keeper's kitchen.
 #
@@ -16,6 +16,7 @@ include lib_huts
 include lib_gravity
 include lib_concord
 include lib_areas
+include lib_deep14
 new
 # (nature 10-24: hills and Raft-like trees over the whole island - the coordinator's check after the resize)
 gen Trees=0.4 Bushes=0.42 Rocks=0.55 Harvest=0.35 BeachThings=0.3
@@ -80,7 +81,7 @@ prop anglers creature.respawn=0
 prop anglers creature.zone=lock_basin
 call tzone x=0 z=-23.67 al=basinzone id=lock_basin r=4 h=1 msg="The basin under lock 1, deep and dark - and something with a light on its head."
 call airpocket x=0 z=-28.67 id=gate_air al=gateair bub=gatebub r=2.5 msg="An air pocket trapped under the gate's lip. Breathe."
-place Loot_Chest basinchest at 2 -6 ground sit yaw=270
+place Loot_Chest basinchest at 0.8 -12 ground sit yaw=270
 
 # --- Lock 2 and the bear's den on the way to lock 3 ---------------------------------------------------------------------
 call tzone x=8 z=-2 al=lock2zone id=lock_2 r=4 msg="Lock 2. The path north goes past a den in the bank."
@@ -88,7 +89,7 @@ place Creature_Bear bear at 12 8 ground
 prop bear creature.count=1
 prop bear creature.respawn=0
 prop bear creature.zone=lock_2
-place Loot_Chest denchest at 13 24.67 ground sit yaw=200
+place Loot_Chest denchest at 11.2 24.67 ground sit yaw=200
 place "Box Small" - at 9.5 25.17 ground y=0.2 sit yaw=40
 # (the canal builders' crane on the west bank, and the keeper's rowing boat pulled up by lock 1)
 place UT_ElectricityIsland_Crane02 - at -9 -6 ground sit yaw=90
@@ -165,6 +166,43 @@ call enginecache x=-21 z=-69 yaw=0 alias=dredgeengine locker=dredgelocker items=
 prop lockcavechest if.open=has|story:raft-Vasagatan_BoltCutter|1
 prop lockcavechest else.open=message||The old canal chest is chained to a ring in the rock. Bolt cutters would get through the chain.
 loot lockcavechest Bolt*3;Hinge*2;Scrap*3;Rope*2;TitaniumOre*2
+
+# --- Deep (10-24, SL14 DEEP 1-HOUR PASS): the climb - a 36 m scaffold tower on its pad beside a raised peak, a plank
+# bridge from landing 3 to the summit, the top locker, a stash on landing 2, a cairn and buried tin on the peak; the
+# dive - a flooded pit with a wreck, an air bell, a chest and a sunk secret, a ramp out (lib_deep14)
+call dp_ground tx=76 tz=1 hb=4.3 sx=89 sz=1.17 hs=25.9
+call dp_tower ox=73.78 oz=-1.28 hb=4.3 yaw=-0.75 al=cltower top=cltop stash=clstash zal=cltopzone zid=cl_top msg="The top of the dredge gantry. The whole canal below you, its three locks in a line."
+call tzone x=85.5 z=1.12 al=clsummit id=cl_summit r=4 msg="The bank peak beside the dredge gantry." h=1
+call notebox x=88.95 z=4.67 yaw=89.25 al=clcairn
+call treasure x=89.03 z=-0.83 r=1.5 n=1 seed=14951
+prop treasure14951 treasure.loot=TitaniumOre*2;Battery*1
+place ZiplinePath_Landmark clzip at 77.48 2.52 h=40.3
+zipto clzip 31 0.41
+place Creature_Goat clgoats at 66.92 6.88 ground
+prop clgoats creature.count=2
+call dp_sink x=-74 z=37 d=-18 ex1=-64.16 ez1=32.08 ex2=-57.01 ez2=28.5 eh=3
+place Van_5 clwreck at -74 37 ground sit yaw=26.57
+place Loot_Chest cldivechest at -72.48 40.04 ground sit yaw=116.57
+call dp_air x=-75.52 z=33.96 id=cl_air al=clair msg="Air trapped under the wreck - breathe."
+place Loot_ChestSmall cldivesecret at -78.47 39.24 ground sit yaw=26.57
+call tzone x=-74 z=37 al=cldivezone id=cl_dive r=7 msg="The bottom of the old lock chamber. A van lies drowned here, and a grate in the floor." h=1
+call tzone x=-57.01 z=28.5 al=clrim id=cl_rim r=5 msg="The lock chamber's rim." h=1
+call treasure x=-53.43 z=26.71 r=2 n=1 seed=14952
+prop treasure14952 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+# the three sluice wheels on the chamber rim (M29 fallback: signals; UPGRADE-AFTER-MECH M39 dredge drive)
+place UT_WaterChallengeWheel1 cl_wheel1 at -76.4 16.1 ground y=0.1 scale=0.4 yaw=40
+prop cl_wheel1 obj.name=cl_wheel1
+prop cl_wheel1 beh.use=Turn the sluice wheel
+prop cl_wheel1 on.use=message||The wheel grinds round. Water gurgles somewhere down in the lock chamber (1 of 3).\nsignal||lw1
+place UT_WaterChallengeWheel1 cl_wheel2 at -67.4 17.1 ground y=0.1 scale=0.4 yaw=80
+prop cl_wheel2 obj.name=cl_wheel2
+prop cl_wheel2 beh.use=Turn the sluice wheel
+prop cl_wheel2 on.use=message||The wheel grinds round. Water gurgles somewhere down in the lock chamber (2 of 3).\nsignal||lw2
+place UT_WaterChallengeWheel1 cl_wheel3 at -54.1 43.6 ground y=0.1 scale=0.4 yaw=120
+prop cl_wheel3 obj.name=cl_wheel3
+prop cl_wheel3 beh.use=Turn the sluice wheel
+prop cl_wheel3 on.use=message||The wheel grinds round. Water gurgles somewhere down in the lock chamber (3 of 3).\nsignal||lw3
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Current Locks
 info author=Custom Islands
@@ -210,6 +248,26 @@ note lockcavechest Old canal chest | A chest left on a ledge above the old water
 prop lockcavechest loot.refill=0
 note diggerlist Diggers' roll | CANAL DIGGERS' ROLL - nailed inside the bunkhouse door\n\nForty-one names, crossed out one by one as the crews went home.\nAt the bottom, in a different hand: The canal is not for boats. It carries the current south to the Engine. Do not let the locks rust.\n\nThe dredge engine by the bunkhouse still holds our pay locker. The fuel went on the canal plane.
 note canalplanelog Canal plane log | SURVEY PLANE LOG - the canal run\n\nThe canal points due south to within half a degree. So does the pulse. So did the beacon.\nEvery station on this line is aimed at the same place.\nForced down in the north-west. Walking to the locks.\n\nWe never dug toward the sea. Every cut points at the Engine in the south - the canal was its drain.
+# (deep pass 10-24: the climb and the dive)
+story dredgekey|Dredge key|Bolt|The dredge gantry's key, floated up to the grate in the old lock chamber when the three wheels let the water in.
+note cldivechest Lock chamber grate | The grate at the bottom of the old lock chamber, by the drowned van. The water lifted the dredge key into it: you work it free.
+loot cldivechest story:dredgekey*1;Rope*2;Scrap*3;Bolt*2
+prop cldivechest loot.refill=0
+note cltop Dredge gantry locker | The dredge gantry's locker. The dredge key turns: inside the keeper's gantry tools and the canal's last orders.
+loot cltop TitaniumOre*2;Battery*1;CircuitBoard*1
+prop cltop loot.refill=0
+prop cltop obj.name=cltop
+prop cltop if.open=has|story:dredgekey|1
+prop cltop else.open=message||The dredge gantry's locker. A keyhole shaped like a dredge bucket.
+note clstash Gantry stash | On the gantry's second landing: a keeper's bag of rivets and a fuse.
+loot clstash Battery*1;CircuitBoard*1;Nail*6
+prop clstash loot.refill=0
+note cldivesecret Van strongbox | Behind the drowned van, in the chamber silt: the canal toll box, still locked - its hinges are not.
+loot cldivesecret MetalIngot*2;Bolt*3;Rope*1
+prop cldivesecret loot.refill=0
+note clcairn Gantry cairn | A cairn on the bank peak:\n\nThree wheels, one key. Let the water do the lifting. - the lock keeper
+prop cldivechest if.open=signal|lw1\nsignal|lw2\nsignal|lw3
+prop cldivechest else.open=message||The grate is barred. Three sluice wheels round the chamber hold the bar down - turn them all.
 quest title=Three Locks
 quest intro=A canal with three shut gates. Go to the first lock.
 step reach|lock_1|1|Go to lock 1
@@ -226,6 +284,10 @@ step reach|locksridge|1|Climb the west ridge above the canal
 step read|Canal plane log|1|Read the log at the plane wreck in the north-west
 step open|Fuel crate|1|Find the fuel crate by the canal plane
 step open|Engine room locker|1|Start the dredge engine by the bunkhouse in the south and open its locker
+step reach|cl_dive|1|Dive into the old lock chamber
+step collect|story:dredgekey|1|Take the dredge key from the grate
+step reach|cl_top|1|Climb the dredge gantry by the bank peak to its top
+step open|Dredge gantry locker|1|Open the dredge gantry locker with the key
 step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans from the keeper's kitchen
 quest done=The canal runs free. Down it, south, smoke over a dark island - and the clang of a smelter.
 quest reward=Seed_Mango*2;Scrap*6;Rope*4

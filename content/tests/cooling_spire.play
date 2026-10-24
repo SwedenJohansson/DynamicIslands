@@ -39,6 +39,29 @@ wait 3
 expect step 13
 zone court_view
 expect step 14
+# (deep pass 10-24: the top locker refuses, the dive, the air bell, the dive chest, the buried tins, the tower)
+open Ice tower locker
+expect message valve socket
+zone cs_dive
+expect step 15
+air cs_air
+open Pond caravan
+wait 3
+expect story frostvalve 1
+expect step 16
+open Pond strongbox
+wait 3
+dig 3
+climb 32.89 -61.88
+open Ice tower stash
+wait 3
+read Frost cairn
+dig 2
+zone cs_top
+expect step 17
+open Ice tower locker
+wait 3
+expect step 18
 read What Hedda saw
 dig
 expect done

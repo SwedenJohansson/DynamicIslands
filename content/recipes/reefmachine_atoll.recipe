@@ -2,7 +2,7 @@
 # A low ring of sand round a lagoon - and in the lagoon four rows of iron frames, half in the water, the reef growing over
 # them. The frames are an intake: the engine drinks the sea here. A sunk service boat lies on the lagoon floor, the pump
 # head under the middle has an air pocket, and on the east islet the old intake cage still holds its water behind a gate.
-# Quest "The Intake" (13 steps): the frame rows, the frame plate (the Ringwave again), the stingrays, the Motor plans in
+# Quest "The Intake" (17 steps): the frame rows, the frame plate (the Ringwave again), the stingrays, the Motor plans in
 # the sunk boat, the puffers, the pump head, the steering plans in it, the frame valve, the service note, the cage.
 #
 # Built by the recipe player (CIRecipe reefmachine_atoll) through the editor's own operations. Points (metres over the
@@ -15,6 +15,7 @@ include lib_huts
 include lib_gravity
 include lib_concord
 include lib_areas
+include lib_deep14
 new
 # (nature 10-24: hills and Raft-like trees over the whole island - the coordinator's check after the resize)
 gen Trees=0.4 Bushes=0.38 Rocks=0.55 Harvest=0.25 BeachThings=0.45
@@ -143,6 +144,28 @@ prop sluicecrate loot.refill=0
 prop reefcavechest if.open=has|story:raft-Tangaroa_KeyCard|1
 prop reefcavechest else.open=message||The pump crew's store has a card slot stamped CONCORD. A keycard would open it.
 loot reefcavechest Bolt*3;Scrap*4;MetalIngot*2;TitaniumOre*2
+
+# --- Deep (10-24, SL14 DEEP 1-HOUR PASS): the climb - a 36 m scaffold tower on its pad beside a raised peak, a plank
+# bridge from landing 3 to the summit, the top locker, a stash on landing 2, a cairn and buried tin on the peak; the
+# dive - a flooded pit with a wreck, an air bell, a chest and a sunk secret, a ramp out (lib_deep14)
+call dp_ground tx=-52 tz=-37 hb=1.8 sx=-62.59 sz=-44.54 hs=23.4
+call dp_tower ox=-51.47 oz=-33.86 hb=1.8 yaw=144.57 al=ratower top=ratop stash=rastash zal=ratopzone zid=ra_top msg="The top of the frame tower. Below, the four rows of iron frames under the lagoon, the reef thick on them."
+call tzone x=-59.74 z=-42.51 al=rasummit id=ra_summit r=4 msg="The peak beside the frame tower - the highest point of the atoll." h=1
+call notebox x=-60.56 z=-47.39 yaw=234.57 al=racairn
+call treasure x=-63.75 z=-42.91 r=1.5 n=1 seed=14911
+prop treasure14911 treasure.loot=TitaniumOre*2;Battery*1
+place Creature_Goat ragoats at -41.19 -36.67 ground
+prop ragoats creature.count=2
+call dp_sink x=23 z=41 d=-14 ex1=17.62 ez1=31.41 ex2=13.7 ez2=24.43 eh=8.36
+place Van_4 rawreck at 23 41 ground sit yaw=119.29
+place Loot_Chest radivechest at 25.97 39.34 ground sit yaw=209.29
+call dp_air x=20.03 z=42.66 id=ra_air al=raair msg="Air trapped under the wreck - breathe."
+place Loot_ChestSmall radivesecret at 25.45 45.36 ground sit yaw=119.29
+call tzone x=23 z=41 al=radivezone id=ra_dive r=7 msg="The bottom of the lagoon pit. A van lies on its nose, its cargo door open." h=1
+call tzone x=13.7 z=24.43 al=rarim id=ra_rim r=5 msg="The pit's rim, where the supply van slid in." h=1
+call treasure x=11.75 z=20.94 r=2 n=1 seed=14912
+prop treasure14912 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Reefmachine Atoll
 info author=Custom Islands
@@ -175,6 +198,25 @@ note reefcavechest Pipe store | The pump crew's store chest: fittings, a spare g
 prop reefcavechest loot.refill=0
 note pumpdiary Pump keeper's diary | PUMP KEEPER'S DIARY - in a tin by the fallen wall\n\nThe intake drinks the whole lagoon twice a day. Where it goes nobody told us.\nThe pipes run south under the reef, straight as a ruler, the same way the pulse points.\nI asked the engineers. They said: to the Engine. Capital E.\n\nWe never built the frames to hold back the sea. We built them to farm the coral for the Concord's lime. I kept my bolt cutters in the sluice crate - the sluice handle went south on the supply plane.
 note supplylog Supply plane log | SUPPLY PLANE LOG\n\nSpare valves for the Intake, as ordered.\nCould not raise the atoll on the radio - only that pulse, louder every mile south.\nDitching on the south-east shore. The valves are in the crate. Whoever finds them: the frames need them more than I do.\n\nCargo: one sluice handle for the keeper's hut, wrapped in sacking.
+# (deep pass 10-24: the climb and the dive)
+story reeflog|Reef log|CircuitBoard|The reef keepers' log, sealed in a van that went into the lagoon pit with the last supply run. It holds the frame tower's lock number in its last page.
+story chainkey|Chain key|Bolt|A heavy key on a ring, stamped CONCORD WELL. One of the five that open the chained door of the Command Well, deep under the calm circle.
+note radivechest Drowned supply van | The supply van that never arrived, nose-down in the lagoon pit. In the cargo chest: the reef keepers' log in a sealed tin.
+loot radivechest story:reeflog*1;Plastic*4;Scrap*3;Rope*2
+prop radivechest loot.refill=0
+note ratop Frame tower locker | The frame tower's locker, 36 m over the reef. The log's last page has the number and the lock opens: a chain key, and the reef keepers' spare parts.
+loot ratop story:chainkey*1;TitaniumOre*2;Battery*1;Bolt*4
+prop ratop loot.refill=0
+prop ratop obj.name=ratop
+prop ratop if.open=has|story:reeflog|1
+prop ratop else.open=message||The frame tower's locker. A dial lock - the number is in a log somebody kept.
+note rastash Frame tower stash | On the second landing: a keeper's lunch tin, empty but for fuses and a pencilled sum.
+loot rastash Battery*1;CircuitBoard*1;Nail*6
+prop rastash loot.refill=0
+note radivesecret Van glovebox | The van's glovebox, jammed open behind it: the driver's tools and a postcard of the atoll as it was, green and busy.
+loot radivesecret MetalIngot*2;Bolt*3;Rope*1
+prop radivesecret loot.refill=0
+note racairn Reef cairn | A cairn of coral and iron on the peak:\n\nThe frames drink the sea and the reef grows on them. One day the reef will be the island. - the keepers
 quest title=The Intake
 quest intro=Iron frames in a lagoon, coral over them. Go ashore by the first row.
 step reach|frame_row|1|Go ashore by the frame rows
@@ -189,6 +231,10 @@ step read|Service note|1|Read the service note by the valve
 step collect|story:reefhandle|1|Find the sluice handle in the supply plane's crate on the south-east shore
 step read|Pump keeper's diary|1|Read the pump keeper's diary at the ruined hut in the west
 step open|Sluice crate|1|Turn the sluice by the hut and open what it uncovers
+step reach|ra_dive|1|Dive into the lagoon pit to the drowned van
+step collect|story:reeflog|1|Take the reef log from the van's cargo chest
+step reach|ra_top|1|Climb the frame tower by the peak to its top
+step open|Frame tower locker|1|Open the frame tower locker with the number from the log
 step reach|cage|1|Go into the drained intake cage
 quest done=The intake is open and the cage is dry. Something on the Receiver answers now - three relays, west of here.
 quest reward=Rope*4;Scrap*6;Nail*10

@@ -2,7 +2,7 @@
 # Two low sand bars under a grey sky that never lifts, four tall radio masts strung with cable, and static on every band:
 # the masts still shout the engine's old traffic into the air. The Fleet's last radio barge is beached on the main bar;
 # Teo left his note in it - the Fleet's way south ends here. Screechers nest on the masts. A zipline runs from mast 1
-# over the channel to mast 4's hut on the east bar. Quest "Static" (11 steps): Teo's note, the engine control plans in
+# over the channel to mast 4's hut on the east bar. Quest "Static" (15 steps): Teo's note, the engine control plans in
 # the barge, the screechers, the zipline to mast 4, the metal detector plans in its hut, the flare locker, the workshop.
 #
 # Built by the recipe player (CIRecipe static_shoals) through the editor's own operations. Points (metres over the sea):
@@ -15,6 +15,7 @@ include lib_huts
 include lib_gravity
 include lib_concord
 include lib_areas
+include lib_deep14
 new
 # (nature 10-24: hills and Raft-like trees over the whole island - the coordinator's check after the resize)
 gen Trees=0.38 Bushes=0.35 Rocks=0.5 Harvest=0.15 BeachThings=0.5
@@ -82,8 +83,8 @@ pop
 call tzone x=18.25 z=12.25 al=mast4zone id=mast_4 r=4 h=2.6 msg="Mast 4's hut, on posts over the east bar. The static is loudest here."
 
 # --- The flare locker under mast 2, the mast workshop under mast 3 --------------------------------------------------------
-place Loot_ChestLarge flarelocker at -2 -12 ground sit yaw=160
-place Placeable_Flag_05 - at -2.6 -12.8 ground sit
+place Loot_ChestLarge flarelocker at -4.5 -9 ground sit yaw=160
+place Placeable_Flag_05 - at -5.1 -9.8 ground sit
 push at -18 -16 h=1.5
 call hut w=2 d=2 y=0.1
 place Loot_Chest workshop at 2.2 2.4 y=0.1 sit yaw=180
@@ -144,6 +145,30 @@ prop spottercrate if.open=has|story:raft-Vasagatan_BoltCutter|1
 prop spottercrate else.open=message||The spotter crate is chained to the wing. Bolt cutters would get through the chain.
 loot spottercrate TitaniumOre*2;Battery*1;Rope*3
 prop spottercrate loot.refill=0
+
+# --- Deep (10-24, SL14 DEEP 1-HOUR PASS): the climb - a 36 m scaffold tower on its pad beside a raised peak, a plank
+# bridge from landing 3 to the summit, the top locker, a stash on landing 2, a cairn and buried tin on the peak; the
+# dive - a flooded pit with a wreck, an air bell, a chest and a sunk secret, a ramp out (lib_deep14)
+call dp_ground tx=38 tz=-58 hb=5.9 sx=45.12 sz=-68.87 hs=27.5
+call dp_tower ox=34.88 oz=-57.35 hb=5.9 yaw=56.77 al=sstower top=sstop stash=ssstash zal=sstopzone zid=ss_top msg="The top of the relay mast. The static is loud as rain up here - and a cable runs from the top down to the net house."
+call tzone x=43.2 z=-65.94 al=sssummit id=ss_summit r=4 msg="The dune peak beside the relay mast." h=1
+call notebox x=48.05 z=-66.95 yaw=146.77 al=sscairn
+call treasure x=43.45 z=-69.97 r=1.5 n=1 seed=14931
+prop treasure14931 treasure.loot=TitaniumOre*2;Battery*1
+place ZiplinePath_Landmark sszip at 40.08 -58.43 h=41.9
+zipto sszip 13.34 -20.36
+place Creature_Goat ssgoats at 38.09 -47.18 ground
+prop ssgoats creature.count=2
+call dp_sink x=-43 z=-52 d=-16 ex1=-35.99 ez1=-43.52 ex2=-30.89 ez2=-37.36 eh=0.6
+place Van_2 sswreck at -43 -52 ground sit yaw=-50.41
+place Loot_Chest ssdivechest at -45.62 -49.83 ground sit yaw=39.59
+call dp_air x=-40.38 z=-54.17 id=ss_air al=ssair msg="Air trapped under the wreck - breathe."
+place Loot_ChestSmall ssdivesecret at -46.19 -55.85 ground sit yaw=-50.41
+call tzone x=-43 z=-52 al=ssdivezone id=ss_dive r=7 msg="The bottom of the shoal pit. A radio van lies on its side." h=1
+call tzone x=-30.89 z=-37.36 al=ssrim id=ss_rim r=5 msg="The pit's rim." h=1
+call treasure x=-28.34 z=-34.28 r=2 n=1 seed=14932
+prop treasure14932 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Static Shoals
 info author=Custom Islands
@@ -172,6 +197,25 @@ loot shoalcavechest Battery*1;CircuitBoard*1;Copper*2;Bolt*2
 prop shoalcavechest loot.refill=0
 note netbook Net house book | THE FLEET'S NET HOUSE - catch book, last page\n\nNo fish since the static started. Not one.\nThe nets come up clean and the needle on the barge's set points south.\nThe Fleet sails tomorrow to see what scares the fish. Teo stays to keep the masts lit.\n\nThe radio on our table still works if anyone gets the generator going. The part is in the mechanic's box by the humming cave.
 note spotterlog Spotter plane log | SPOTTER PLANE LOG\n\nFlew the Fleet's course south ahead of the boats.\nThe static on the Receiver turned to a voice for a moment - numbers, read out slowly, in no language I know.\nLost the horizon in the grey. Put down on the north bar. The Fleet never saw my flare.
+# (deep pass 10-24: the climb and the dive)
+story genpart2|Coil pack|Battery|A coil pack for the net house generator, sealed in a drowned van. One of its three parts.
+story chainkey|Chain key|Bolt|A heavy key on a ring, stamped CONCORD WELL. One of the five that open the chained door of the Command Well, deep under the calm circle.
+note ssdivechest Drowned radio van | The Fleet's radio van, at the bottom of the shoal pit. In its chest: a sealed coil pack for a generator.
+loot ssdivechest story:genpart2*1;Plastic*4;Scrap*3;Rope*2
+prop ssdivechest loot.refill=0
+note sstop Mast top locker | The mast top locker, 36 m over the shoals. With the coil pack you can read the wiring card: a chain key and the generator's spark plug.
+loot sstop story:chainkey*1;TitaniumOre*2;CircuitBoard*1;Bolt*3
+prop sstop loot.refill=0
+prop sstop obj.name=sstop
+prop sstop if.open=has|story:genpart2|1
+prop sstop else.open=message||The mast top locker. A wiring card on the lid matches a coil pack - you don't have one.
+note ssstash Mast stash | A cable reel on the second landing, a bag of spares tied to it.
+loot ssstash Battery*1;CircuitBoard*1;Nail*6
+prop ssstash loot.refill=0
+note ssdivesecret Van tool tray | The van's tool tray, thrown clear behind it: a radioman's pliers and solder.
+loot ssdivesecret MetalIngot*2;Bolt*3;Rope*1
+prop ssdivesecret loot.refill=0
+note sscairn Static cairn | A cairn on the dune peak, a radio headset hung on it:\n\nIf you listen long enough the static is a voice. Teo says so. I don't hear it. - H.
 quest title=Static
 quest intro=A beached radio barge on a grey bar, static from every mast. Look in the barge.
 step read|Teo's note|1|Read Teo's note in the radio barge
@@ -184,6 +228,10 @@ step read|Net house book|1|Read the catch book at the ruined net house on the so
 step open|Mechanic's toolbox|1|Find the mechanic's toolbox by the humming cave in the east bar
 step collect|story:teovoice|1|Start the net house generator and listen to its radio
 step open|Supply drop|1|Open the supply drop the voice gave away, by the spotter plane
+step reach|ss_dive|1|Dive into the shoal pit to the drowned radio van
+step collect|story:genpart2|1|Take the coil pack from the van
+step reach|ss_top|1|Climb the relay mast by the dune peak to its top
+step open|Mast top locker|1|Open the mast top locker
 step blueprint|Blueprint_ZiplineBase|1|Take the zipline base plans in the workshop under mast 3
 quest done=The masts are yours, and so is the static. Beyond it, on the Receiver: a wall, and a gate in it.
 quest reward=Rope*6;Scrap*6;CopperOre*2

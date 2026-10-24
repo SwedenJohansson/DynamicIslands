@@ -15,5 +15,28 @@ expect step 3
 use buoylamp
 expect shown relayanswer
 expect step 4
+# (deep pass 10-24: the top locker refuses, the dive, the air bell, the dive chest, the buried tins, the tower)
+open Mast locker
+expect message relay keyhole
+zone rb_dive
+expect step 5
+air rb_air
+open Relay 6 chest
+wait 3
+expect story relay6 1
+expect step 6
+open Relay 6 float box
+wait 3
+dig 1
+climb -21.91 -11.97
+open Mast stash
+wait 3
+read Dune cairn
+dig 0
+zone rb_top
+expect step 7
+open Mast locker
+wait 3
+expect step 8
 read Relay answer
 expect done

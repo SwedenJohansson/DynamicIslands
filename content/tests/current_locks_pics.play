@@ -12,3 +12,5 @@ picture sl14_current_locks_ridge -24 18 -14 -44 14 8
 picture sl14_current_locks_cave 42 12 60 44 8 36
 picture sl14_current_locks_ruin -6 9 -76 -16 4 -64
 picture sl14_current_locks_plane -20 9 48 -36 3 60
+picture sl14_current_locks_tower 101.84 30.3 13.34 76 24.3 1
+picture sl14_current_locks_pit -52.53 13 26.27 -74 -14 37

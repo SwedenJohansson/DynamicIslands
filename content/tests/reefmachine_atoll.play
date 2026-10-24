@@ -43,5 +43,29 @@ open Sluice crate
 wait 3
 expect story raft-Vasagatan_BoltCutter 1
 expect step 12
+# (deep pass 10-24: the top locker refuses, the dive, the air bell, the dive chest, the buried tins, the tower)
+open Frame tower locker
+expect message A dial lock
+zone ra_dive
+expect step 13
+air ra_air
+open Drowned supply van
+wait 3
+expect story reeflog 1
+expect step 14
+open Van glovebox
+wait 3
+dig 3
+climb -49.76 -37.56
+open Frame tower stash
+wait 3
+read Reef cairn
+dig 2
+zone ra_top
+expect step 15
+open Frame tower locker
+wait 3
+expect step 16
+expect story chainkey 1
 zone cage
 expect done
