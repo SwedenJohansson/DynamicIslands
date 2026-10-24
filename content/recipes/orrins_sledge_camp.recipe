@@ -2,7 +2,7 @@
 # A camp on the shelf ice built for animals, not people: a fodder barn and a fenced pen with goats and llamas (a woolly
 # herd for the cold), insulated huts, a sledge shed with a track of plank runners down to the sea, a lookout on four
 # posts - and polar bears that come for the herd. Orrin, the camp's keeper, left four notes and went north to the Whale.
-# Quest "The Sledge Camp" (9 steps): the barn, Orrin's first note, two polar bears (they come when you reach the barn),
+# Quest "The Sledge Camp" (13 steps; DEEP 10-24: Orrin's trail - quarry, bear cave, rim): the barn, Orrin's first note, two polar bears (they come when you reach the barn),
 # the engine controls' plans (sledge shed), the metal detector's plans (Orrin's hut; notes 2 and 3 in the huts), the
 # firework's plans (the lookout), the zipline base's plans (the zipline crate by the pine wood). Orrin's note 4 lies
 # on the crate: the plan's done-when.
@@ -20,6 +20,7 @@ include lib_ni7b
 include lib_frozen
 include lib_verdance
 include lib_ni34
+include lib_areas
 # RESIZE 10-24: Radius 40 -> 85 (Height 4 -> 5), the old content moved -9.2 -23 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 new
 gen Trees=0.2 Bushes=0.15 Rocks=0.25 Harvest=0.15 BeachThings=0.2
@@ -149,6 +150,46 @@ prop dview zone.radius=7
 prop dview zone.repeat=never
 prop dview zone.message=Orrin's barn and the fenced pen look small on the white shelf - and the animals' breath smokes in the cold.
 
+# --- DEEP 10-24 (one-hour pass, world frame): Orrin's trail inland - the quarry ridge (N/NE, 26 m) with an excavator on
+# its quarry ledge and Orrin's rim tower on its top (the climb; a zipline from the rim back down to the camp), the bear
+# cave (N, Orrin's trail mark), the trapper's ruin (E), the ice-hole lake (W, a sledge truck 12 m down: the dive), two
+# buried treasures. (Pillars checked 10-24: the lookout stands on rt_legs, the rim tower on its own wooden pillars.)
+call ar_ridge x1=16 z1=70 x2=56 z2=50 h=18 top=8 r=9
+call ar_plants_snowy x=36 z=60 r=32 seed=12441
+brush flatten at 28 51 r=6 s=20 frames=300 h=12
+clear at 28 51 r=7
+place VP_Excavator quarrydigger at 28 51 ground sit yaw=30
+prop quarrydigger tint.color=#8a7a50
+prop quarrydigger tint.amount=0.4
+place Loot_Crate quarrycrate at 31.5 48 ground sit yaw=60
+call fz_zone x=26 z=47 al=quarryzone id=quarry r=6 msg="Orrin's quarry. The excavator stopped mid-bite; his boot prints go on up the ridge."
+call fz_tower x=36 z=62 h=26 n=4 al=rimtower chest=rimcache zal=rimzone zid=rim_top msg="The rim of the quarry ridge. North, far off on the white: a ship's bow on a ridge of ice. Orrin watched her from here."
+# the zipline from the rim down to the camp (its near floor 1.35 m under its pivot; an iron post under the floor)
+place ZiplinePath_Landmark rimzip at 36 58.4 h=37.03
+zipto rimzip -4 -10
+place RT_PillarThick rimpost at 30.3 59.4 ground sy=1.61
+# the bear cave (N): its mouth south to the camp, Orrin's trail mark inside, a brown bear in it
+call ar_cave x=-20 z=66 h=5 yaw=180 al=bearcave chest=cavestash
+place Note_Paper trailmark at -19.2 60.6 h=5.5 drop yaw=20
+place Zone_Trigger cavezone at -20 61 h=6.4
+prop cavezone zone.id=bear_cave
+prop cavezone zone.radius=3
+prop cavezone zone.message=The bear cave. Old ashes, a cut pole, three notches - Orrin sheltered here on his way up the ridge.
+place Creature_Bear cavebear at -16 50 ground
+prop cavebear creature.count=1
+prop cavebear creature.respawn=0
+# the trapper's ruin (E)
+call ar_ruin x=62 z=4 h=5 yaw=0 al=trapperhut
+place Note_Paper trapperlog at 61.25 4 h=6.07 drop yaw=10
+place Loot_ChestSmall trapperchest at 63.3 5.1 h=5.05 sit yaw=200
+# the ice-hole lake (W): a sledge truck under the ice, 12 m down
+call fz_dive x=-62 z=-20 d=12 r=10 yaw=0 obj=Van_4 al=sledgetruck chest=truckchest aid=lakeair aal=lakeairz abub=lakeairb cx=4 cz=3 ax=-4 az=-3
+call fz_zone x=-50 z=-8 al=lakeview id=ice_lake r=6 msg="The ice-hole lake. Under the black water, the shape of a truck - the camp's sledge truck that went through the ice."
+call ar_ridge x1=-70 z1=10 x2=-46 z2=34 h=8 top=5 r=7
+call ar_plants_snowy x=-58 z=22 r=18 seed=12444
+call treasure x=60 z=-30 r=8 n=1 seed=12445
+call treasure x=-40 z=50 r=8 n=1 seed=12446
+
 # --- Settings, notes, behaviours, quest ----------------------------------------------------------------------------
 info title=Orrin's Sledge Camp
 info author=Custom Islands
@@ -190,6 +231,26 @@ prop lookoutbox loot.refill=0
 loot ziplinecrate Blueprint_ZiplineBase*1;Rope*4;MetalIngot*2;story:harness*1
 prop ziplinecrate loot.refill=0
 
+# --- DEEP 10-24: Orrin's trail - the quarry, the bear cave, the rim, the extras ---
+note trailmark Orrin's trail mark | (scratched on a cut pole by the ashes)\n\nO. - DAY 1 NORTH.\nUp the quarry ridge to the rim, as every morning. From the rim you see the Whale.\nI left the good things in the rim cache for whoever feeds my goats.
+note rimcache Orrin's rim cache | Orrin's cache on the rim tower: his spare compass, flares - and the zipline back down to the camp is rigged beside it.
+loot rimcache MetalIngot*3;Rope*3;Leather*2;CopperIngot*1
+prop rimcache loot.refill=0
+note quarrycrate Quarry crate | The quarry's tool crate: a pick head, nails, a coil of cable.
+loot quarrycrate Nail*10;Scrap*3;Rope*2
+prop quarrycrate loot.refill=0
+note cavestash Bear cave stash | Orrin's stash in the bear cave: dry kindling and a tin of meat.
+loot cavestash Plank*4;Raw_GenericMeat*2;Wool*2
+prop cavestash loot.refill=0
+note trapperlog Trapper's log | TRAPPER'S HUT\n\nOrrin brings me hay for the traps' bait - I bring him wool.\nThe sledge truck went through the ice on the west lake. I marked the hole with a pole. Her toolbox is still aboard.
+note trapperchest Trapper's chest | The trapper's chest: skins and snares.
+loot trapperchest Leather*3;Rope*2;Feather*3
+prop trapperchest loot.refill=0
+note truckchest Sledge truck's toolbox | The sledge truck's toolbox, twelve metres under the ice.
+loot truckchest MetalIngot*2;Bolt*4;Hinge*2
+prop treasure12445 treasure.loot=MetalOre*3;CopperOre*2
+prop treasure12446 treasure.loot=TitaniumOre*1;MetalOre*2
+
 prop barnzone zone.id=barn
 prop barnzone zone.radius=5
 prop barnzone zone.message=The fodder barn. Behind you the goats go quiet - something is coming over the ice.
@@ -213,6 +274,10 @@ step blueprint|Blueprint_ZiplineBase|1|Cut through to the crate by the pine wood
 step collect|story:harness|3|Find the sledge winch's three harness pieces (barn, Orrin's hut, the crate)
 step collect|story:sledge|1|Rig the harness and wind the sledge winch
 step blueprint|Blueprint_EngineControls|1|Take the engine controls' plans from the sledge shed
+step reach|quarry|1|Follow Orrin's trail north to his quarry on the ridge
+step read|Orrin's trail mark|1|Find Orrin's trail mark in the bear cave north-west of the quarry
+step reach|rim_top|1|Climb the quarry ridge and Orrin's rim tower
+step open|Orrin's rim cache|1|Open Orrin's rim cache (the zipline takes you back to the camp)
 quest done=Orrin's last note lies on the crate: read it. The Whale is north, on 1100.
 quest reward=MetalIngot*2;Rope*3;Leather*2
 

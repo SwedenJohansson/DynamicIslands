@@ -30,8 +30,40 @@ use mastwinch
 expect story clamp 0
 expect shown mastbox
 expect step 6
+# DEEP 10-24: the star lock (M26) - the Needle, the operator's cave, the beacon tower, the charts and the dome
+open Mast box
+expect step 6
+read Star chart 1/4
+read Star chart 2/4
+read Star chart 3/4
+zone needle_foot
+expect step 7
+zone operator_cave
+read Operator's diary
+expect step 8
+zone beacon_top
+expect step 9
+read Star chart 4/4
+read The star dome
+open Beacon chest
+code mastpad 1234 wrong
+expect story starcode 0
+code mastpad 4186
+expect story starcode 1
+expect step 10
 open Mast box
 wait 3
-expect step 7
+expect step 11
 read Fragment 4
 expect done
+# the extras: the operator's kit, the keeper's ruin and its hatch, the plane, the sunk supply boat, two treasures
+open Operator's kit
+read Keeper's list
+use ruinhatch
+open Under the hatch
+open Mail plane's crate
+zone grey_cove
+air coveair
+open Supply boat's chest
+dig 0
+dig 1

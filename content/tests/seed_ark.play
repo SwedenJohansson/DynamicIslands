@@ -33,13 +33,61 @@ open Last rack locker
 code rackpad 2240
 expect story rackcode 1
 open Last rack locker
+# DEEP 10-24: the pumps first - the log, the rods from the halls, the islet's station, valves and tower
+use arkvalve
+expect story arkvalve 0
+expect story arkseal 3
+read Pump engineer's log
+expect step 10
+zone pump_islet
+expect step 11
+use sock1
+expect story rodset 0
+air hall_east
+open East hall rod chest
+air hall_west
+open West hall rod chest
+air hall_north
+open North hall rod chest
+wait 3
+expect story coolrod 3
+zone pump_islet
+use sock1
+use sock2
+use sock3
+expect story rodset 3
+expect step 12
+use pumplever
+expect story pumpkey 1
+expect step 13
+expect hidden rats1
+use valve1
+expect shown rats1
+use valve2
+use valve3
+expect story valveturned 3
+expect step 14
+zone pump_top
+expect step 15
+use pumpswitch
+expect story pumpsrun 1
+expect story pumpkey 0
+expect step 16
+air room_4
 use arkvalve
 expect story arkseal 0
 expect story arkvalve 1
 expect shown racklights
 expect shown closingnote
-expect step 10
+expect step 17
 read The closing note
-expect step 11
+expect step 18
 zone surface_hole
 expect done
+# the extras: the pump keeper's chest, a suit cabinet, four treasures
+open Pump keeper's chest
+use suitbox1
+dig 0
+dig 1
+dig 2
+dig 3

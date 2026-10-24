@@ -55,4 +55,19 @@ use mainbreaker
 expect story fuse 0
 expect story breaker 1
 expect shown deckslights
+# DEEP 10-24: the propeller trench and the fallen funnel
+expect step 13
+zone prop_trench
+expect step 14
+zone funnel_top
 expect done
+# the extras: the lockers, the trench's air, the stokers' cave, the treasures
+open Funnel locker
+air trench_air
+open Propeller locker
+zone stokers_cave
+read Stoker's tally
+open Stokers' stash
+dig 0
+dig 1
+dig 2

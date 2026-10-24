@@ -61,3 +61,96 @@ macro icetint al=ice
 prop $al tint.color=#dcebf5
 prop $al tint.amount=0.7
 end
+#
+# --- DEEP 10-24: the one-hour islands' set-pieces (a mountain with a tower on it, a dive hole, a wreck, zones, notes) ---
+# fz_mount: a mountain at x z, its top plateau h m over the sea (r m wide), slopes walkable (three terraces, smoothed,
+# about 30 degrees), painted by slope, the generator's plants cleared (the caller puts plants back: ar_plants_snowy).
+macro fz_mount x=0 z=0 h=24 r=8
+brush flatten at $x $z r={$r*4} s=20 frames=500 h={$h*0.35}
+brush flatten at $x $z r={$r*2.6} s=20 frames=500 h={$h*0.68}
+brush flatten at $x $z r={$r*1.3} s=20 frames=500 h=$h
+brush smooth at $x $z r={$r*4.6} s=6 frames=90
+brush flatten at $x $z r={$r*0.8} s=20 frames=300 h=$h
+brush auto at $x $z r={$r*4.8} s=10 frames=25
+clear at $x $z r={$r*4.4}
+end
+#
+# fz_tower: a ladder tower standing on the ground at x z (h m over the sea there): n ladders (2.42 m each) on wooden
+# pillars, climbed from its +z side, and a 3 x 3 plank platform at its top (h + 2.42 n) behind it (-z; `save` posts
+# its corners down to the ground). On the platform: a chest (chest), a lantern, a zone (zal, zone id zid, msg). al: the
+# tower's pieces (for one tint).
+macro fz_tower x=0 z=0 h=20 n=8 al=tower chest=towerchest zal=towerzone zid=tower_top msg=""
+for k 0 {$n-1} 1
+place Block_Ladder $al at $x $z h={$h+2.42*$k} yaw=0
+place Block_Pillar_Wood $al at $x {$z-0.2} h={$h+2.42*$k}
+next
+for fx -1.5 1.5 1.5
+for fz 0 3 1.5
+place Block_Floor_Tier3 $al at {$x+$fx} {$z-0.95-$fz} h={$h+2.42*$n}
+next
+next
+place Block_Wall_Fence_Rope $al at $x {$z-4.7} h={$h+2.42*$n+0.05}
+place Block_Wall_Fence_Rope $al at {$x-2.25} {$z-2.45} h={$h+2.42*$n+0.05} yaw=90
+place Block_Wall_Fence_Rope $al at {$x+2.25} {$z-2.45} h={$h+2.42*$n+0.05} yaw=90
+place Loot_Chest $chest at {$x+0.9} {$z-3.4} h={$h+2.42*$n+0.05} sit yaw=180
+place Placeable_Lantern_Metal - at {$x-1.3} {$z-3.6} h={$h+2.42*$n+0.05} sit
+place Zone_Trigger $zal at $x {$z-2.45} h={$h+2.42*$n+1}
+prop $zal zone.id=$zid
+prop $zal zone.radius=3
+prop $zal zone.message=$msg
+prop $al tint.color=#4a4038
+prop $al tint.amount=0.35
+end
+#
+# fz_dive: a dive hole at x z - the ground lowered to d m under the sea (r m wide; inland it fills with the sea), a
+# wreck (obj, alias al) on its bottom, a chest (chest, at x+cx z+cz) beside it and an air pocket (zone id aid, aliases
+# aal / abub, at x+ax z+az). A boat (16 m long) wants r 12 and yaw 0/180 with the chest and air at its side (cx/ax 6).
+macro fz_dive x=0 z=0 d=12 r=9 yaw=0 obj=BoatStranded al=divewreck chest=divechest aid=diveair aal=diveairz abub=diveairb cx=3.2 cz=1.5 ax=-3 az=-2
+brush flatten at $x $z r=$r s=20 frames=400 h={-$d}
+brush smooth at $x $z r={$r*1.6} s=6 frames=60
+brush flatten at $x $z r={$r*0.6} s=20 frames=300 h={-$d}
+brush seabed at $x $z r={$r*1.2} s=10 frames=20
+clear at $x $z r={$r*1.6}
+place "$obj" $al at $x $z ground sit yaw=$yaw
+prop $al tint.color=#4a4a50
+prop $al tint.amount=0.4
+place Loot_Chest $chest at {$x+$cx} {$z+$cz} ground sit yaw={$yaw+30}
+prop $chest loot.refill=0
+call airpocket x={$x+$ax} z={$z+$az} id=$aid al=$aal bub=$abub
+end
+#
+# fz_wreck: a vehicle (obj) on a pad h m over the sea at x z, turned yaw, rust-tinted, a crate (crate) beside it
+macro fz_wreck x=0 z=0 h=3 yaw=0 obj=Van_4 al=wreck crate=wreckcrate r=8
+brush flatten at $x $z r=$r s=20 frames=300 h=$h
+clear at $x $z r={$r+1}
+place "$obj" $al at $x $z ground sit yaw=$yaw
+prop $al tint.color=#5a5048
+prop $al tint.amount=0.45
+place Loot_Crate $crate at {$x+4.5*cos($yaw)} {$z-4.5*sin($yaw)} ground sit yaw={$yaw+15}
+prop $crate loot.refill=0
+end
+#
+# fz_zone: a trigger zone on the ground at x z (alias al, id, radius r, message msg); fz_note: a note on a small box
+macro fz_zone x=0 z=0 al=zone id=zone r=4 msg="" y=1
+place Zone_Trigger $al at $x $z ground y=$y
+prop $al zone.id=$id
+prop $al zone.radius=$r
+prop $al zone.message=$msg
+end
+macro fz_note x=0 z=0 yaw=0 al=note
+place "Box Small" - at $x $z ground sit yaw=$yaw
+place Note_Paper $al at $x $z ground y=0.7 drop yaw={$yaw+15}
+end
+#
+# fz_hazard: a hazard zone (kind: cold, dark, deep, miasma, acid, shock, spikes) at x z, y m over the ground, radius r,
+# damage dmg, safe (none, suit, wears|HeadLight*, ...), its message msg
+macro fz_hazard x=0 z=0 al=hazard kind=cold r=5 dmg=1 safe=none msg="" y=1
+place Zone_Trigger $al at $x $z ground y=$y
+prop $al obj.name=$al
+prop $al zone.id=$al
+prop $al zone.radius=$r
+prop $al zone.hazard=$kind
+prop $al zone.damage=$dmg
+prop $al zone.safe=$safe
+prop $al zone.hazardMsg=$msg
+end

@@ -8,3 +8,8 @@ at 0 -20
 picture sl12_orrins_sledge_camp_island 10 18 -48 0 2 0
 picture sl12_orrins_sledge_camp_pen 6 +2.5 -20 -2 +1 -10
 picture sl12_orrins_sledge_camp_lookout 6 +3 -16 16 +6 -2
+# DEEP 10-24 (old frame: world + 9.2 23)
+picture sl12_orrins_sledge_camp_quarry 29.2 16 59 37.2 14 74
+picture sl12_orrins_sledge_camp_rim 29.2 40 67 45.2 34 83
+picture sl12_orrins_sledge_camp_cave -10.8 10 69 -10.8 7 89
+picture sl12_orrins_sledge_camp_lake -40.8 6 13 -52.8 -8 3

@@ -1,7 +1,7 @@
 # Squall Shelf - the side island of the library's plan The Frozen Horizon (storyline SL12, side)
 # A low ice shelf the storms keep pushing back into the lanes: one tent, its guy-lines iced, a stranded traveller's
 # things inside and a llama that broke its tether, a polar bear that has found the smell of food. Snow and fog. It comes
-# back every nine days until its quest is done. Quest "The Stranded Tent" (6 steps): the tent, the stranded note, the
+# back every nine days until its quest is done. Quest "The Stranded Tent" (7 steps; DEEP 10-24: the weather mast): the tent, the stranded note, the
 # polar bear, the tent cache, the llama (the net is in the cache), the weather log.
 #
 # Built by the recipe player (CIRecipe squall_shelf) through the editor's own operations. Points (metres over the sea):
@@ -11,6 +11,7 @@
 include lib_features
 include lib_sea
 include lib_frozen
+include lib_areas
 # RESIZE 10-24: Radius 28 -> 60 (Height 4 -> 4), the old content moved 0 -17.6 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 new
 gen Trees=0 Bushes=0.1 Rocks=0.3 Harvest=0.1 BeachThings=0.2 Grass=0.1
@@ -38,7 +39,7 @@ place Balboa_DecorationPrefabBase_SimpleTent tent at 0 1 ground sit yaw=180
 place Zone_Trigger tentzone at 0 -2 ground y=1
 place Loot_Chest tentcache at 1.4 2.2 ground sit yaw=200
 place Note_Paper strandednote at -1.2 -1.4 ground y=0.1 drop yaw=30
-place Note_Book weatherlog at -2.4 2 ground y=0.1 drop yaw=120
+# (DEEP 10-24: the weather log moved to the weather mast on the hill)
 place Placeable_Lantern_Metal - at -2 -1.8 ground drop
 place "Box Big" - at 2.6 -1 ground sit yaw=15
 place Creature_Llama llama at 10 8 ground
@@ -54,6 +55,48 @@ call shallows x=0 z=17.6 r=60 deep=4 n=1 seed=13130
 scatter VP_CoralBulb04 3 at -42.86 -20.97 r=4 seed=13121 wet free=1
 call snowfall x=0 z=0 r=32 al=snow fog=#d0dbe4 fa=0.6
 pop
+
+# --- DEEP 10-24 (side island, world frame; before the DISCOVERIES and the FILL so they sit on the new ground): the
+# weather hill (N, 20 m) with the traveller's weather mast on it (3 ladders: the weather log is read where it was
+# written), the ice cave (NW), the shuttle to the pillar ledge (W, M27 fallback), a second buried treasure.
+call fz_mount x=20 z=40 h=20 r=6
+call ar_plants_snowy x=20 z=40 r=20 seed=13141
+call fz_tower x=20 z=42 h=20 n=3 al=weathermast chest=mastchest zal=mastzone zid=mast_top msg="The weather mast. The anemometer still turns; the whole shelf below you, and the grey lanes it drifts in."
+place Note_Book weatherlog at 19.1 39 h=27.35 drop yaw=120
+# the ice cave (NW): its mouth south
+call ar_cave x=-30 z=40 h=4 yaw=180 al=icecave chest=icecavechest
+place Note_Paper cavemark at -29.2 34.6 h=4.5 drop yaw=20
+call fz_zone x=-30 z=35 al=icecavezone id=ice_cave r=3 y=1.4 msg="An ice cave out of the wind. The traveller slept here one night - his initials in the ice."
+# the shuttle to the pillar ledge (W) - M27 FALLBACK: Raft's snow vehicle (3 bolts: the driver's box + the hatch
+# chest) carries the player 24 m out over the lead to a ledge on posts with a cache.
+# UPGRADE-AFTER-MECH (M39 drive - still not in ce82976 - / M27 jump): make it a drivable snowmobile and the ledge a jump from the lead's lip.
+brush flatten at -46 6 r=12 s=20 frames=300 h=-4
+brush seabed at -46 6 r=12 s=10 frames=20
+clear at -46 6 r=13
+brush flatten at -27 6 r=5 s=20 frames=300 h=4
+clear at -27 6 r=5
+place TP_SnowVehicle01 shuttle at -28 6 h=4 sit yaw=270
+prop shuttle obj.name=shuttle
+prop shuttle tint.color=#8a9aa6
+prop shuttle tint.amount=0.5
+for fx -53.5 -49 1.5
+for fz 4.5 7.5 1.5
+place Block_Floor_Tier3 pillarledge at $fx $fz h=3.9
+next
+next
+# the ledge's four posts from the lead's bed (-4) to under the floor (3.9) - RETEST post height
+place RT_PillarThick pillarledge at -53.8 4.2 h=-4 sy=1.4
+place RT_PillarThick pillarledge at -53.8 7.8 h=-4 sy=1.4
+place RT_PillarThick pillarledge at -48.7 4.2 h=-4 sy=1.4
+place RT_PillarThick pillarledge at -48.7 7.8 h=-4 sy=1.4
+place Block_Wall_Fence_Rope pillarledge at -54.25 6 h=3.95 yaw=90
+place Loot_Chest stackcache at -53.4 7.7 h=3.95 sit yaw=90
+place Placeable_Lantern_Metal - at -53.5 4.3 h=3.95 sit
+prop pillarledge tint.color=#4a4038
+prop pillarledge tint.amount=0.35
+place Note_Sign shuttlesign at -25.6 4.2 ground sit yaw=270
+call snowfall x=10 z=30 r=40 al=snow2 fog=#d0dbe4 fa=0.6
+call treasure x=40 z=-6 r=6 n=1 seed=13196
 
 # --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; TP_SnowVehicle02 + chest; hatch with a chest; viewpoint ---
 place campfire_1 - at -9.7 25.2 ground sit
@@ -76,8 +119,11 @@ prop dview zone.radius=7
 # REDO 10-24: the traveller buried his tea money where the detector finds it (the detector, from the Floelane, used again)
 call treasure x=-30 z=-28 r=12 n=1 seed=13195
 prop treasure13195 treasure.loot=TitaniumOre*2;TradeToken*3;MetalOre*2
-prop dhatchchest if.open=wears|HeadLight*
-prop dhatchchest else.open=message||Pitch dark under the hatch. A headlight would show the chest.
+# DEEP 10-24 (STOPPED 10-24 order issue): the hatch can come before the Decks' headlight - a lantern burns inside it
+beside Placeable_Lantern_Metal dhatchlamp dhatchchest d=0.6
+prop dhatchlamp obj.name=dhatchlamp
+prop dhatchlamp beh.hidden=1
+prop dhatch on.use=hide|\nshow|dhatchchest\nshow|dhatchlamp\nmessage||The hatch lifts on a dark hole - a storm lantern still burns on a hook inside, over a chest.
 prop dview zone.repeat=never
 prop dview zone.message=One tent on the whole shelf, its lines iced - and the wind does not stop for a moment.
 
@@ -99,6 +145,20 @@ note weatherlog Weather log | WEATHER LOG - SQUALL SHELF\n\nDay 1: north wind, s
 note tentcache Tent cache | The traveller's cache: hides, wool, feathers, eggs packed in snow, a jar of goo for the stove - and a net launcher for Bramble.
 loot tentcache Leather*2;Wool*2;Feather*4;Egg*2;ExplosiveGoo*1;NetGun*1;NetCanister*3
 prop tentcache loot.refill=0
+
+# --- DEEP 10-24: the mast, the ice cave, the shuttle, the dark hatch's lantern ---
+note mastchest Weather mast chest | The traveller's chest at the foot of the anemometer: spare vanes, a flask, socks.
+loot mastchest Rope*2;Wool*2;MetalIngot*1
+prop mastchest loot.refill=0
+note cavemark Initials in the ice | (cut in the cave wall)\n\nT.H. - DAY 4. WIND TOO STRONG TO WALK.\nThe old sled on the west lip runs if you feed it bolts. There's a ledge out over the lead with the sealers' cache on it.
+note icecavechest Ice cave chest | A sealer's chest frozen into the cave floor.
+loot icecavechest Leather*2;Feather*3;Raw_GenericMeat*2
+prop icecavechest loot.refill=0
+note shuttlesign Old sled | SEALERS' SLED - RUNS TO THE LEDGE AND BACK\nFeed her bolts.
+note stackcache Ledge cache | The sealers' cache on the ledge over the lead: their best furs and the season's metal.
+loot stackcache MetalIngot*3;Leather*3;CopperIngot*2
+prop stackcache loot.refill=0
+prop treasure13196 treasure.loot=MetalOre*3;CopperOre*2
 prop tentzone zone.id=tent
 prop tentzone zone.radius=4
 prop tentzone zone.message=The tent. Frost on the flap, a note pinned to it.
@@ -114,7 +174,8 @@ step read|Stranded note|1|Read the note pinned to the tent
 step kill|Polar bear|1|Drive off the polar bear that comes round at dusk
 step open|Tent cache|1|Open the tent's cache
 step catch|Llama|1|Net Bramble, the traveller's llama
-step read|Weather log|1|Read the traveller's weather log
+step reach|mast_top|1|Climb the weather hill to the traveller's weather mast
+step read|Weather log|1|Read the traveller's weather log at the mast
 quest done=The shelf is empty now - the tent, the cache, Bramble. It will drift on without you.
 quest reward=Leather*2;Wool*2;CopperIngot*2
 

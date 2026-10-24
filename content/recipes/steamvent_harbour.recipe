@@ -2,9 +2,10 @@
 # A harbour town huddled round a geothermal vent: steam rising from a fissure in the square, iron pipes laid from it to
 # the houses, the ground round it warm enough for a garden of fruit and flowers in the snow. A glass greenhouse grew shut
 # with jungle vines (the machete is in the harbour store), a boiler house, a pipe store full of rats, a hen coop and a
-# town hall that has been cold since the valve stuck. Quest "The Warm Harbour" (12 steps): the quay, the harbour master's
+# town hall that has been cold since the valve stuck. Quest "The Warm Harbour" (15 steps): the quay, the harbour master's
 # notice, the machete's plans, the vines and the greenhouse, the gardener's log, the fuel tank's plans (boiler house), the
-# rats, the fuel pipe's plans (pipe store), the vent valve (steam back to the houses), the biofuel extractor's plans
+# rats, the fuel pipe's plans (pipe store), DEEP 10-24: the driller's warning (steam cave), the antenna cables and the
+# bathhouse hub, the derrick's relief valve (Fumarole Mountain), the vent valve (steam back to the houses), the biofuel extractor's plans
 # (town hall locker), the town meeting minutes.
 #
 # Built by the recipe player (CIRecipe steamvent_harbour) through the editor's own operations. Points (metres over the
@@ -16,12 +17,72 @@ include lib_huts
 include lib_rt
 include lib_features
 include lib_frozen
+include lib_areas
 # RESIZE 10-24: Radius 46 -> 90 (Height 7 -> 8), the old content moved 0 -24.2 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 new
 gen Trees=0.06 Bushes=0.2 Rocks=0.3 Harvest=0.2 BeachThings=0.3
 gen Seed=12301 Radius=90 Height=8 Roughness=0.4 Peaks=2 Shape=0 Style=1 BeachWidth=0.25 Cliffs=0.35 PeakShape=0.5
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
+
+# --- DEEP 10-24 (one-hour pass): the island behind the town. Fumarole Mountain in the north (30 m) with the geothermal
+# derrick on it (6 ladders, top 44.5 m: the relief valve that bleeds the vent); the bathhouse at its foot (its door
+# wired shut - the derrick's power line); the three antenna masts (M25, RAFT_QUEST_MECHANICS 4: the storm brought their
+# cables down, a polar bear by each; 2 cables a mast; the bathhouse hub takes 4, the greenhouse hub 2); the driller's
+# steam cave in the west; the pumphouse ruin north-east; the sunk steam ferry east (12 m down); two buried treasures.
+# Built before the town so the town, the camp and the dirt sit on the final ground.
+call fz_mount x=10 z=62 h=30 r=7
+call ar_plants_snowy x=10 z=62 r=28 seed=12401
+call fz_tower x=10 z=64 h=30 n=6 al=derrick chest=derrickchest zal=derrickzone zid=derrick_top msg="The derrick's top. The vent's pipe climbs here from the town - and the relief valve's housing sits on it, clamped shut."
+place Note_Sign derricksign at 9.2 62.4 h=44.57 sit yaw=180
+# the ridge west of the mountain (the ridge mast) and the east rise (the east mast)
+call ar_ridge x1=-44 z1=58 x2=-12 z2=70 h=10 top=6 r=8
+call ar_plants_snowy x=-28 z=64 r=24 seed=12402
+call ar_ridge x1=38 z1=-4 x2=60 z2=14 h=9 top=5 r=7
+call ar_plants_snowy x=49 z=5 r=18 seed=12403
+# the three antenna masts, a bear by each, a cable box at each foot
+place Antenna_pole mastridge at -28 64 ground
+place Loot_ChestSmall mastridgebox at -26.6 63.2 ground sit yaw=200
+place Creature_PolarBear bearridge at -22 58 ground
+place Antenna_pole mastne at 52 50 ground
+place Loot_ChestSmall mastnebox at 53.4 49.2 ground sit yaw=220
+place Creature_PolarBear bearne at 46 44 ground
+place Antenna_pole masteast at 49 5 ground
+place Loot_ChestSmall masteastbox at 50.4 4.2 ground sit yaw=160
+place Creature_PolarBear beareast at 43 11 ground
+call fz_zone x=-28 z=62 al=mastridgez id=mast_ridge r=4 msg="The ridge mast. Its cable hangs in the snow - and there are tracks round it. Big ones."
+call fz_zone x=52 z=48 al=mastnez id=mast_ne r=4 msg="The north-east mast, its cable down in a drift. A bear's den in the lee of it."
+call fz_zone x=49 z=3 al=masteastz id=mast_east r=4 msg="The east mast on its rise. The cable box at its foot is still shut."
+# the bathhouse at the mountain's foot: hot water piped from the derrick; its door is wired shut (the derrick's power line)
+brush flatten at 25 32 r=8 s=20 frames=250 h=7
+clear at 25 32 r=8
+push at 28 32 h=7
+call rt_storey a=bathhouse f1=none f2=RT_WallWindow1 l2=RT_WallWindow1 r2=RT_WallWindow1
+place RT_Floor bathhouse at 0 4.5 y=3
+place DoorMetal bathdoor at -4.5 -4.5 y=0.05 sit yaw=0
+place UT_ElectricCableHub01 bathhub at -1.5 -5.3 y=0.05 sit yaw=180
+place Loot_Chest bathlocker at -1.2 3.6 y=0.05 sit yaw=180
+place Note_Sign bathslate at -5.6 2.6 y=0.05 sit yaw=90
+place Placeable_Lantern_Metal - at -3 3.8 y=0.05 sit
+place Zone_Atmosphere bathsteam at -3 0 y=1.2
+place Zone_Trigger bathzone at -3 0 y=1
+pop
+prop bathhouse tint.color=#6a5a4a
+prop bathhouse tint.amount=0.4
+# the driller's steam cave (west, its mouth north)
+call ar_cave x=-62 z=30 h=6 yaw=0 al=steamcave chest=steamcavechest
+place Note_Paper drillwarn at -61.2 35.4 h=6.5 drop yaw=200
+place Zone_Trigger steamcavez at -62 35 h=7.4
+place Zone_Atmosphere steamcavefog at -62 33 h=7
+# the pumphouse ruin (north-east): the pump keeper's ledger on its table
+call ar_ruin x=62 z=34 h=5 yaw=0 al=pumpruin
+place Note_Paper pumpledger at 61.25 34 h=6.15 drop yaw=10
+# the sunk steam ferry (east): 12 m down in a drowned basin, its strongbox, an air pocket at its side
+call fz_dive x=68 z=-22 d=12 r=12 yaw=0 obj=BoatStranded al=ferry chest=ferrychest aid=ferryair aal=ferryairz abub=ferryairb cx=6 cz=2 ax=-6 az=-3
+call fz_zone x=55 z=-30 al=ferryview id=ferry_basin r=6 msg="A basin of black water, steaming at its edges. Down in it, the shape of the old steam ferry."
+call treasure x=-52 z=-44 r=8 n=1 seed=12411
+call treasure x=36 z=72 r=8 n=1 seed=12412
+call ar_plants_snowy x=-55 z=-10 r=22 seed=12404
 push at 0 -24.2
 
 # --- Terrain: the town at 3 m, the road down to the quay at 1.2 m ---------------------------------------------------
@@ -176,6 +237,80 @@ prop dview zone.radius=7
 prop dview zone.repeat=never
 prop dview zone.message=Steam rises from the square below, and the harbour town huddles round it for the warmth.
 
+
+# --- DEEP 10-24: the mountain, the masts, the bathhouse, the cave, the ruin, the ferry ---
+story cable|Antenna cable|Placeable_Lantern_Metal|A coil of the antenna masts' cable. The storm brought it down; a wire hub takes it.
+story bathpower|The derrick's power line|Placeable_Lantern_Metal|The bathhouse hub wired: power runs up the mountain to the derrick again.
+story relief|Relief valve|Placeable_Lantern_Metal|The derrick's relief valve. With it on the vent, the valve can be turned without blowing the pipes.
+note drillwarn Driller's warning | DRILLER'S WARNING\n\nDO NOT FORCE THE VENT VALVE. The vent is over pressure - turn it now and the pipes burst under the square.\nBleed it first: the relief valve is on the derrick, top of Fumarole Mountain.\nThe valve's housing is clamped by the power line from the bathhouse. The storm took the line down: its cable was strung on the three antenna masts (the ridge, the north-east, the east rise).\nTwo coils from each mast. The bathhouse hub takes four.\nBears den by the masts in winter. Mind them.
+note bathslate Bath keeper's slate | BATHHOUSE\n\nHot water from the derrick, free to all.\nThe hub outside powers the derrick's clamps - when the line is up the clamps let go of the relief valve.\nThe greenhouse has its own hub for the heat lamps. Two coils.
+note derricksign The derrick | FUMAROLE DERRICK\n\nRelief valve in the housing. Carry it down and fit it on the vent valve before you turn it.\nThe quick way down is the way the steam goes: down the mountain's south face.
+note pumpledger Pump keeper's ledger | PUMP KEEPER'S LEDGER\n\nPump stopped - the basin flooded when the ferry went down in it.\nThe ferry's strongbox is still aboard. Twelve metres. There's air on the boat's west side if you need it.\nSpare tools buried by the north shore, under the white rock.
+note mastridgebox Ridge mast's cable box | The ridge mast's cable box: two coils of the antenna line, rimed with frost.
+loot mastridgebox story:cable*2;Bolt*1
+prop mastridgebox loot.refill=0
+note mastnebox North-east mast's cable box | The north-east mast's cable box: two coils of the antenna line.
+loot mastnebox story:cable*2;Rope*1
+prop mastnebox loot.refill=0
+note masteastbox East mast's cable box | The east mast's cable box: two coils of the antenna line and a pair of pliers.
+loot masteastbox story:cable*2;Nail*6
+prop masteastbox loot.refill=0
+note derrickchest Derrick valve housing | The relief valve's housing on the derrick: the valve itself, and the driller's spare tools.
+loot derrickchest story:relief*1;MetalIngot*2;CopperIngot*2
+prop derrickchest loot.refill=0
+prop derrickchest if.open=signal|bathpower
+prop derrickchest else.open=message||The housing is clamped shut. The clamps are electric - the power line comes up from the bathhouse.
+note bathlocker Bath keeper's locker | The bath keeper's locker: towels, soap, a tin of tea and the keeper's savings.
+loot bathlocker Wool*3;Raw_GenericMeat*2;MetalIngot*1
+prop bathlocker loot.refill=0
+note steamcavechest Driller's kit | The driller's kit in the steam cave: a drill bit, a lamp, his lunch tin.
+loot steamcavechest Scrap*3;Bolt*2;Raw_GenericMeat*1
+prop steamcavechest loot.refill=0
+note ferrychest Ferry's strongbox | The steam ferry's strongbox, twelve metres down: the fares and the cargo's best.
+loot ferrychest MetalIngot*3;Glass*2;CopperIngot*2
+prop treasure12411 treasure.loot=MetalOre*3;CopperOre*2
+prop treasure12412 treasure.loot=TitaniumOre*1;MetalOre*2
+prop bathdoor obj.name=bathdoor
+prop bathhub obj.name=bathhub
+prop bathhub beh.use=Wire the derrick's power line
+prop bathhub if.use=!signal|bathpower\ntake|story:cable|4
+prop bathhub on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||Four coils clamped in. The hub hums, the bathhouse door unlocks - and up on the mountain, the derrick's clamps click open.\nsignal||bathpower\ngive||story:bathpower*1\nhide|bathdoor
+prop bathhub else.use=message||A wire hub with four empty clamps: the derrick's power line. The antenna masts carried its cables.
+prop bathsteam atmo.particles=mist
+prop bathsteam atmo.fog=#e4e6e6
+prop bathsteam atmo.fogAmount=0.3
+prop bathsteam zone.radius=4
+prop bathzone zone.id=bathhouse
+prop bathzone zone.radius=3
+prop bathzone zone.message=The bathhouse: a hot pool under a steaming roof. Warm, at last.
+prop steamcavez zone.id=steam_cave
+prop steamcavez zone.radius=3
+prop steamcavez zone.message=The driller's cave: warm rock, steam seeping from the cracks. A note pinned by the lamp.
+prop steamcavefog atmo.particles=mist
+prop steamcavefog atmo.fog=#d8dcdc
+prop steamcavefog atmo.fogAmount=0.25
+prop steamcavefog zone.radius=5
+prop mastridgebox obj.name=mastridgebox
+prop bearridge creature.count=1
+prop bearridge creature.respawn=0
+prop bearne creature.count=1
+prop bearne creature.respawn=0
+prop beareast creature.count=1
+prop beareast creature.respawn=0
+# the greenhouse's own hub (an extra): two coils light the heat lamps and free the seed drawer
+place UT_ElectricCableHub02 greenhub at 13.2 -31.6 ground sit yaw=180
+place Loot_ChestSmall seeddrawer at 18.8 -29.8 h=3.05 sit yaw=180
+prop greenhub obj.name=greenhub
+prop greenhub beh.use=Wire the greenhouse's heat lamps
+prop greenhub if.use=!signal|greenpower\ntake|story:cable|2
+prop greenhub on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The heat lamps come on over the beds - and the seed drawer's lock lets go.\nsignal||greenpower\nshow|seeddrawer
+prop greenhub else.use=message||The greenhouse's heat-lamp hub: two empty clamps.
+prop seeddrawer obj.name=seeddrawer
+prop seeddrawer beh.hidden=1
+note seeddrawer Seed drawer | The gardener's seed drawer, warm under the lamps: the best of the greenhouse.
+loot seeddrawer Seed_Banana*2;Seed_Pine*2;Seed_Flower_Yellow*2;Seed_Strawberry*2
+prop seeddrawer loot.refill=0
+
 # --- Settings, story items, notes, behaviours, quest -----------------------------------------------------------------
 info title=Steamvent Harbour
 info author=Custom Islands
@@ -223,9 +358,9 @@ prop hens creature.count=3
 
 prop ventvalve obj.name=ventvalve
 prop ventvalve beh.use=Turn the vent valve
-prop ventvalve if.use=!signal|steam\ntake|story:wheelpiece|3
+prop ventvalve if.use=!signal|steam\ntake|story:wheelpiece|3\ntake|story:relief|1
 prop ventvalve on.use=message||The valve groans, gives - and steam hisses down the pipes. One by one the houses' chimneys breathe.\nsignal||steam\ngive||story:steam*1\nshow|steamhouses\nsound||event:/exploring/obstacles/keypad/keypad_correct
-prop ventvalve else.use=message||The valve is open and the town is warm - or its handwheel is still in three pieces: the greenhouse, the boiler house, the pipe store.
+prop ventvalve else.use=message||The valve is open and the town is warm - or it is not ready: its handwheel is in three pieces (the greenhouse, the boiler house, the pipe store), and the vent wants its relief valve first (the driller's cave, west, says why).
 prop steamhouses obj.name=steamhouses
 prop townlocker obj.name=townlocker
 prop townlocker if.open=signal|steam
@@ -242,6 +377,9 @@ step blueprint|Blueprint_Fueltank|1|Take the fuel tank's plans from the boiler h
 step kill|Rat|4|Clear the rats out of the pipe store
 step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe's plans from the pipe store
 step collect|story:wheelpiece|3|Find the valve handwheel's three pieces (greenhouse, boiler house, pipe store)
+step read|Driller's warning|1|The vent hisses too hard to turn. Find the driller's cave in the west and read his warning
+step collect|story:bathpower|1|Bring four antenna cables from the masts (mind the bears) to the bathhouse's wire hub
+step collect|story:relief|1|Climb Fumarole Mountain and the derrick; take the relief valve from its housing
 step collect|story:steam|1|Turn the vent valve on the square
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor's plans from the town hall's locker
 step read|Town meeting minutes|1|Read the town meeting minutes

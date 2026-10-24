@@ -26,6 +26,16 @@ expect story chapelcode 1
 open Chapel strongbox
 wait 3
 expect step 8
+# DEEP 10-24: the berg cave's ledger, the crane on the berg, the pawl
+zone berg_cave
+read Harbour master's ledger
+expect step 9
+zone crane_top
+expect step 10
+open Crane cab chest
+wait 3
+expect story pawl 1
+expect step 11
 expect hidden anchorchest
 use anchorwinch
 expect story winchfree 0
@@ -33,13 +43,24 @@ use bell1
 use bell2
 use bell3
 expect story bellrung 3
-expect step 9
+expect step 12
 use anchorwinch
 expect story bellrung 0
+expect story pawl 0
 expect shown anchorchest
-expect step 10
+expect step 13
 open Winch locker
 wait 3
-expect step 11
+expect step 14
 read Last sermon
 expect done
+# the extras: the harbour office chest, the net loft, the tenth ship, three treasures
+open Harbour office chest
+read Net mender's note
+open Net loft crate
+zone tenth_ship
+air tenthair
+open Tenth ship's strongbox
+dig 0
+dig 1
+dig 2

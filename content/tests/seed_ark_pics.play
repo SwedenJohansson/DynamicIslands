@@ -9,3 +9,7 @@ picture sl12_seed_ark_halls -26 +9 -10 0 +5 0
 # (RESIZE 10-24 retest: the gate shot at fixed heights - on the bigger island "+h" put the camera in open water)
 picture sl12_seed_ark_gate -5 4.6 0.5 -12.25 4.6 0
 picture sl12_seed_ark_valve 12 +6 -8 18 +5 0
+# DEEP 10-24 (fixed local heights: the sea's surface is at 30)
+picture sl12_seed_ark_pumptower 44 34 -30 22 38 -46
+picture sl12_seed_ark_islet 30 36 -36 21 33 -45
+picture sl12_seed_ark_easthall 50 6 -2 45 5 8

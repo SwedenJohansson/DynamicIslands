@@ -3,7 +3,7 @@
 # engine room, the boiler hall, the propeller shaft) under two cabins (the captain's room, the officers' galley), and
 # the stern mast standing up out of the sea with the Whale's wind turbine on it - the only part above water. Air
 # pockets in the boiler hall, the shaft and the captain's room; anglers in the dark. Captain Hedda Brask sits in a cage
-# in her own sealed room, on her rations. Quest "The Engine Decks" (12 steps): the mast, the wind turbine's plans, the
+# in her own sealed room, on her rations. Quest "The Engine Decks" (15 steps; DEEP 10-24: the propeller trench and the funnel at the end): the mast, the wind turbine's plans, the
 # boiler hall's air, the captain's log, three anglers, the advanced battery's and the advanced headlight's plans, the
 # shaft's air, the captain's room (the keycard is in the chief engineer's locker), Hedda's account (the plan's
 # done-when, step 10), the electric grill's plans (the galley), the main breaker (the bow's lights come on).
@@ -19,6 +19,7 @@ include lib_sea
 include lib_rt
 include lib_ni34
 include lib_frozen
+include lib_areas
 # RESIZE 10-24: Radius 44 -> 85 (Height 6 -> 6), the island grows round the old content, which stays where it was.
 new
 gen Trees=0 Bushes=0 Rocks=0.3 Harvest=0 BeachThings=0
@@ -26,6 +27,31 @@ gen Seed=12601 Radius=85 Height=6 Roughness=0.4 Peaks=2 Shape=0 Style=1 BeachWid
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.4 Sunken=0.5 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
 elevation -15
+
+# --- DEEP 10-24 (one-hour pass): the seabed round the stern (local heights; the sea is at 15). The propeller trench
+# south-west: the Whale's screw lies 23 m down (local -8) in the dark - a dark hazard (a headlight helps, it is not
+# needed), its locker and an air pocket. The fallen funnel north-east: a rock mound to local 10 and the funnel's
+# ladder tower out of the sea (3 ladders, top 17.3): the last climb. The stokers' cave north-west, a seabed ridge west,
+# a third buried treasure south-east. Built before the hull so the hull's own brushes win near it.
+call fz_dive x=-48 z=-30 d=8 r=12 yaw=0 obj=PropellerBlade al=propeller chest=trenchchest aid=trench_air aal=trenchairz abub=trenchairb cx=5 cz=2 ax=-5 az=-3
+place PropellerBlade propeller2 at -45 -34 h=-7.7 rot=0,20,60 scale=1.8
+prop propeller2 tint.color=#4a4a50
+prop propeller2 tint.amount=0.4
+call fz_hazard x=-48 z=-30 al=trenchdark kind=dark r=11 dmg=1 safe=wears|HeadLight* y=2 msg="Black water - you can hardly see your hands. A headlight would help."
+call fz_zone x=-48 z=-26 al=trenchzone id=prop_trench r=6 y=1.5 msg="The propeller trench. The Whale's screw lies here, one blade snapped off, where it tore free when she broke."
+# the fallen funnel (north-east): its rock, its ladders, the funnel beside them
+call fz_mount x=42 z=42 h=10 r=5
+call fz_tower x=42 z=44 h=10 n=3 al=funnelladder chest=funnelchest zal=funnelzone zid=funnel_top msg="The top of the funnel, out of the sea. The way the Whale's smoke went - and the way out."
+place TP_SeleneReactorChimney funnel at 46 41 h=10 centred sit
+prop funnel tint.color=#5a2a24
+prop funnel tint.amount=0.5
+# the stokers' cave (north-west, its mouth north)
+call ar_cave x=-30 z=50 h=3 yaw=0 al=stokercave chest=stokerchest
+place Note_Paper stokertally at -29.2 55.4 h=3.5 drop yaw=200
+call fz_zone x=-30 z=55 al=stokerzone id=stokers_cave r=3 y=1.4 msg="A cave in the seabed: coal sacks, a kettle, a stoker's tally. The stokers used it before the Whale sank onto it."
+# the seabed ridge (west) and a third treasure (south-east)
+call ar_ridge x1=-70 z1=0 x2=-55 z2=30 h=10 top=6 r=8
+call treasure x=60 z=-40 r=12 n=1 seed=12801
 
 # --- Terrain: the hull's bed at 4.8 on the ridge -------------------------------------------------------------------
 brush flatten at 3 0 r=14 s=20 frames=300 h=4.8
@@ -140,6 +166,18 @@ prop dview zone.radius=7
 prop dview zone.repeat=never
 prop dview zone.message=The stern lies on the seabed below, dark red, its rooms full of water and silence.
 
+
+# --- DEEP 10-24: the propeller trench, the funnel, the stokers' cave ---
+note trenchchest Propeller locker | The shaft crew's locker, thrown clear when the screw tore loose: spanners, a lamp, a tin of grease.
+loot trenchchest MetalIngot*2;CopperIngot*2;TitaniumOre*1
+note funnelchest Funnel locker | The fireman's locker, bolted inside the funnel's lip: dry, out of the sea, untouched.
+loot funnelchest MetalIngot*3;Bolt*3;TradeToken*2
+note stokertally Stoker's tally | STOKER'S TALLY\n\nCoal in: forty sacks. Coal out: thirty-eight.\nThe two good sacks are in the cave - the Chief doesn't know.\nIf she ever goes down, don't swim for the hatches. Go up the funnel. It always stands.
+note stokerchest Stokers' stash | The stokers' stash under the coal sacks: a kettle, tins, a flask.
+loot stokerchest Scrap*3;Rope*2;Raw_GenericMeat*2
+prop stokerchest loot.refill=0
+prop treasure12801 treasure.loot=TitaniumOre*1;CopperOre*2;MetalOre*2
+
 # --- Settings, story items, notes, behaviours, quest -----------------------------------------------------------------
 # the generator's rocks that floated over the slope (ground check, 2026-10-23)
 clear at -8.2 -10.57 r=1.5 only=TP_BigRock
@@ -232,6 +270,8 @@ step read|Hedda Brask's account|1|Read Hedda Brask's account
 step blueprint|Blueprint_ElectricGrill|1|Take the electric grill's plans from the officers' galley
 step collect|story:fuse|3|Find the three breaker fuses (engine store, chief's locker, shaft box)
 step collect|story:breaker|1|Throw the main breaker in the engine room
+step reach|prop_trench|1|With the lights on, the trench south-west shows: dive to the Whale's propeller in the dark
+step reach|funnel_top|1|Leave the stern the way its smoke did: climb the fallen funnel north-east out of the sea
 quest done=The Whale's lights burn again. Hedda says: Saga Drift, 900 - the flotilla city went quiet first.
 quest reward=MetalIngot*3;CopperIngot*2;Battery*1
 

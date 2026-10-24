@@ -32,10 +32,32 @@ use hullbell
 expect story rescued 1
 expect shown thanks
 expect step 5
+# DEEP 10-24: the wheelhouse is locked - the key is on the berg
+open Wheelhouse locker
+expect step 5
+zone berg_foot
+expect step 6
+zone bear_den
+read Lookout's tally
+expect step 7
+zone berg_top
+expect step 8
+open Sealers' lookout chest
+expect story wheelkey 1
+expect step 9
 open Wheelhouse locker
 wait 3
-expect step 6
+expect step 10
 read Survivors' thanks
 expect done
+# the extras: the den's cache, the hut, the sister boat, two treasures
+open Bear den cache
+read Sealers' hut log
+open Sealers' chest
+zone sister_lead
+air sisterair
+open Sister boat's strongbox
+dig 0
+dig 1
 wait 40
 expect hidden icebridge

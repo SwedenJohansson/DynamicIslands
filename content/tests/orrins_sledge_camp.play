@@ -39,5 +39,26 @@ expect shown sledgeshed
 expect step 8
 open Sledge shed
 wait 3
+# DEEP 10-24: Orrin's trail
+expect step 9
+zone quarry
+expect step 10
+zone bear_cave
+read Orrin's trail mark
+expect step 11
+zone rim_top
+expect step 12
+open Orrin's rim cache
+wait 3
 expect done
 read Orrin's note 4
+# the extras: the quarry crate, the cave stash, the trapper's ruin, the ice-hole lake, two treasures
+open Quarry crate
+open Bear cave stash
+read Trapper's log
+open Trapper's chest
+zone ice_lake
+air lakeair
+open Sledge truck's toolbox
+dig 1
+dig 2

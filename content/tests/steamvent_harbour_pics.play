@@ -10,3 +10,10 @@ wait 3
 picture sl12_steamvent_harbour_island 0 22 -62 0 3 0
 picture sl12_steamvent_harbour_vent -7 +2.5 -7 0 +1 0
 picture sl12_steamvent_harbour_greenhouse 10 +3 -14 18 +1 -3
+# DEEP 10-24 (world points)
+offset 0 0
+picture sl12_steamvent_harbour_mountain 10 22 20 10 30 62
+picture sl12_steamvent_harbour_derrick 2 46 52 10 44 62
+picture sl12_steamvent_harbour_bathhouse 24 +3 20 25 +1.5 32
+picture sl12_steamvent_harbour_mast 44 +4 56 52 +3 50
+picture sl12_steamvent_harbour_cave -62 +3 46 -62 +2 30

@@ -30,10 +30,35 @@ expect step 6
 open Leader's chest
 wait 3
 expect step 7
+# DEEP 10-24: the Icefall, the survey mast, the crevasse collapse, the snowcat's key
+zone icefall
+expect step 8
+zone glacier_top
+expect step 9
+read Survey log
+expect step 10
+expect shown icelid
+expect hidden icerubble
+zone crevasse
+wait 8
+expect hidden icelid
+expect shown icerubble
+expect step 11
+air snowair
+open Survey snowcat's box
+wait 3
+expect story surveykey 1
+expect step 12
 zone ringwave
 wait 6
 read Carving note
-expect step 8
+expect step 13
 open Cave mouth chest
 wait 3
 expect done
+# the extras: the mast chest, the ice cave cache, three treasures
+open Survey mast chest
+open Ice cave cache
+dig 0
+dig 1
+dig 2

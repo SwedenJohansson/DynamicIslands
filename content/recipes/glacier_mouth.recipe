@@ -5,6 +5,7 @@
 # store, the leader's tent. Polar bears; a snowstorm. Quest "The Glacier" (7 steps): the depot, the expedition orders,
 # two polar bears, the titanium tools' plans (the drill rig), the advanced backpack's plans (the leader's tent), the
 # carving (a camera moment when you reach it; its note), the electric zipline tool's plans (the cave mouth).
+# DEEP 10-24: 9 -> 14 steps - the Icefall and its survey mast, the survey log, the crevasse that gives way, the snowcat's key.
 #
 # Built by the recipe player (CIRecipe glacier_mouth) through the editor's own operations. Points (metres over the
 # sea): the depot shelf at 6 m (r 16 round 0 -4), its path from the beach at 0 -30; the ice wall along z 14..18 from
@@ -15,6 +16,7 @@
 include lib_sea
 include lib_features
 include lib_frozen
+include lib_areas
 # RESIZE 10-24: Radius 40 -> 85 (Height 9 -> 9), the old content moved 0 -24.8 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 new
 gen Trees=0.05 Bushes=0.1 Rocks=0.3 Harvest=0.1 BeachThings=0.2 Grass=0.05
@@ -123,6 +125,55 @@ call shallows x=0 z=24.8 r=85 deep=5 n=1 seed=12830
 call snowfall x=0 z=0 r=45 al=snow fog=#d8e2ea fa=0.55
 pop
 
+# --- DEEP 10-24 (one-hour pass, world frame): the Icefall and its survey mast, the crevasse that gives way -------------
+# The Icefall (north-west): the glacier's highest ice, 30 m, the survey team's mast tower on its top (top 39.7 m: the
+# survey log, a zipline down to the ice wall). The crevasse cave (west): its path crosses a lid of ice over a flooded
+# crevasse - step on it and it gives way (camera, the collapse's roar): down into the cold water, a trench to the survey
+# snowcat (12 m down, an air pocket, the deep cold), its box holds the survey key the cave mouth chest wants; a ladder
+# climbs back out. A third buried treasure under the Icefall.
+call fz_mount x=-44 z=52 h=30 r=6
+call ar_plants_snowy x=-40 z=46 r=24 seed=12896
+call fz_tower x=-44 z=54 h=30 n=4 al=surveymast chest=mastchest zal=mastzone zid=glacier_top msg="The survey mast on the Icefall, the highest ice of the whole white sea. Far below, the Ringwave - and west, a dark line across the cave path: a crevasse, roofed with thin ice."
+place Antenna_pole mastaerial at -45.2 52.7 h=39.73 sit
+place Note_Paper surveylog at -44.9 52.3 h=39.75 drop yaw=200
+place ZiplinePath_Landmark mastzip at -44 50.8 h=39.73
+zipto mastzip -15 15
+call fz_zone x=-32 z=38 al=icefallzone id=icefall r=6 msg="The foot of the Icefall. Blue ice in steps, and on the top a mast with a flag of the survey team."
+call treasure x=-22 z=56 r=10 n=1 seed=12895
+# the crevasse cave (west, its mouth north) and the survey snowcat 12 m down in the flooded crevasse
+call ar_cave x=-56 z=-36 h=7 yaw=0 al=crevrock chest=crevchest
+call icetint al=crevrock
+call fz_dive x=-66 z=-18 d=12 r=6 yaw=0 obj=Van_4 al=snowcat chest=snowcatbox aid=snowair aal=snowairz abub=snowairb cx=0 cz=3.2 ax=-3 az=-3.5
+brush flatten at -57 -20 r=3.8 s=20 frames=400 h=-12
+brush flatten from -57 -20 to -66 -18 r=2.5 s=20 frames=300 h=-12
+call fz_hazard x=-62 z=-19 al=crevdeep kind=deep r=6 dmg=2 safe=wears|OxygenBottle* y=6 msg="The crevasse water is deadly cold this deep. Get to the snowcat's air pocket - or bring an oxygen bottle."
+# the way out: ladders up the crevasse's south wall
+for k 0 7 1
+place Block_Ladder crevladder at -57 -22.8 h={-12+2.42*$k} yaw=0
+place Block_Pillar_Wood crevladder at -57 -23 h={-12+2.42*$k}
+next
+# the ice lid (it gives way: the collapse action, M19, since ce82976) and the rubble it leaves at the bottom
+for lx -60.5 -53.5 3.5
+for lz -23.5 -16.5 3.5
+place SmallRock_02 icelid at $lx $lz h=7.1 sx=1.4 sy=0.3 sz=1
+next
+next
+call icetint al=icelid
+prop icelid obj.name=icelid
+place SmallRock_02 icerubble at -58.5 -18.5 ground yaw=30
+place SmallRock_02 icerubble at -55.5 -19 ground yaw=110
+place SmallRock_02 icerubble at -57 -17.2 ground yaw=200
+call icetint al=icerubble
+prop icerubble obj.name=icerubble
+prop icerubble beh.hidden=1
+place Placeable_Lantern_Metal crevcam at -57 -11 ground y=1.1 drop
+prop crevcam obj.name=crevcam
+place Zone_Trigger crevzone at -57 -20 h=8.4
+prop crevzone zone.id=crevasse
+prop crevzone zone.radius=3
+prop crevzone zone.repeat=never
+prop crevzone on.enter=camera|crevcam|icelid|4|25\nsound||event:/exploring/temperence/ravine_collapse\ncollapse|icelid|3\nwait|3\nshow|icerubble\nmessage||A crack like a shot - and the ice under you is gone. Down into the black water of the crevasse.
+
 # --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; Caravan_Blue_01 + chest; hatch with a chest; buried treasure; viewpoint ---
 place campfire_1 - at -23.6 27.2 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -20.6 29.2 ground sit yaw=237
@@ -191,6 +242,21 @@ loot leaderchest Blueprint_BackpackAdvanced*1;Leather*3;Wool*2
 prop leaderchest loot.refill=0
 loot cavechest Blueprint_ZiplineToolElectric*1;CaveMushroom*4;Battery*1
 prop cavechest loot.refill=0
+prop cavechest if.open=has|story:surveykey
+prop cavechest else.open=message||The cave mouth chest is locked with the survey team's lock. Their mast stands on the Icefall, north-west.
+
+# --- DEEP 10-24: the survey team's log, the snowcat, the key ---
+story surveykey|The survey key|Placeable_Lantern_Metal|The survey team's key: it opens the expedition's chest at the cave mouth.
+note surveylog Survey log | SURVEY LOG (nailed to the mast)\n\nThe Icefall is moving: a metre a week toward the sea.\nThe cave path is a crevasse with a skin of ice on it. Our snowcat went through on the fourth day, with the cave chest's key in its box.\nWe left the key. We left the snowcat. Do not walk the cave path.
+note mastchest Survey mast chest | The survey team's chest on the mast: their instruments, frozen, and spare line.
+loot mastchest Rope*3;CopperIngot*2;Glass*2
+prop mastchest loot.refill=0
+note snowcatbox Survey snowcat's box | The snowcat's box, 12 m down in the crevasse: the survey key on a cord, and the team's emergency rations.
+loot snowcatbox story:surveykey*1;MetalIngot*2;Battery*1
+note crevchest Ice cave cache | A cache in the crevasse cave: whoever crossed before the ice broke left this.
+loot crevchest TitaniumOre*1;Rope*2;Bolt*3
+prop crevchest loot.refill=0
+prop treasure12895 treasure.loot=TitaniumOre*2;CopperOre*2
 prop treasure12052 treasure.loot=TitaniumOre*3
 
 prop depotzone zone.id=depot
@@ -214,6 +280,11 @@ step collect|story:drillbit|3|Find the drill rig's three bits (depot, the bears'
 step collect|story:drilled|1|Fit the bits and start the drill rig
 step blueprint|Blueprint_TitaniumTools|1|Take the titanium tools' plans from the drill rig
 step blueprint|Blueprint_BackpackAdvanced|1|Take the advanced backpack's plans from the leader's tent
+step reach|icefall|1|The cave mouth chest has the survey team's lock. Go to the Icefall in the north-west
+step reach|glacier_top|1|Climb the Icefall and the survey mast on its top
+step read|Survey log|1|Read the survey log on the mast
+step reach|crevasse|1|Walk the crevasse cave's path in the west
+step collect|story:surveykey|1|Dive to the survey snowcat and take the key from its box
 step read|Carving note|1|Go to the Ringwave on the ice wall and read the note under it
 step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline tool's plans from the cave mouth
 quest done=The vault is under the glacier. Its door is on 700.

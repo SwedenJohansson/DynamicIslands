@@ -22,7 +22,7 @@ plan rule bow | island:The Iron Whale - Bow | rule:sledge | receiver:1100:needs=
 plan rule decks | island:The Iron Whale - Engine Decks | zone:bow:hatch | receiver:300 | Through the hatch, the Whale's own radio still hums: her stern half, drifted off on the pack - tune in and follow it. | The Iron Whale - Engine Decks | after:bow | step:10
 plan rule saga | island:Saga Drift | step:decks:10 | receiver:900 | Hedda's charts give the band: 900, the floating city of Saga Drift. Nine hulls, lashed together. | Saga Drift | after:decks | quest
 plan rule mouth | island:Glacier Mouth | quest:saga | receiver:1000 | The council's minutes name it: the glacier's mouth, on 1000. An expedition depot - silent. | Glacier Mouth | after:saga | quest
-plan rule coldhold | island:The Coldhold Vault | visit:mouth | receiver:700 | Under the ice, on 700: a keeper's recorded voice. "Coldhold. Keep." | The Coldhold Vault | after:mouth | step:24
+plan rule coldhold | island:The Coldhold Vault | visit:mouth | receiver:700 | Under the ice, on 700: a keeper's recorded voice. "Coldhold. Keep." | The Coldhold Vault | after:mouth | step:28
 plan rule ark | island:The Seed Ark | signal:coldhold:flooddoor | receiver:400 | From under the flood door, on 400: the Ark's pumps, still ticking, thirty metres down. | The Seed Ark | after:coldhold | quest
 plan rule squall | island:Squall Shelf | day:9:again | ahead:600 | Ahead in the snow, a scrap of ice shelf with one tent on it. A lantern swings. | Squall Shelf
 plan credits The Frozen Horizon | Custom Islands

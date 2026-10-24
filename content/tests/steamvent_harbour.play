@@ -35,15 +35,61 @@ wait 3
 # REDO 10-24: the three handwheel pieces (greenhouse, boiler house, pipe store) are held - that step passes at once
 expect story wheelpiece 3
 expect step 9
+# DEEP 10-24: the vent wants its relief valve - the cave, the masts (M25), the bathhouse hub, the derrick
+use ventvalve
+expect message relief valve
+expect story steam 0
+zone steam_cave
+read Driller's warning
+expect step 10
+use bathhub
+expect message four empty clamps
+zone mast_ridge
+open Ridge mast's cable box
+zone mast_ne
+open North-east mast's cable box
+expect story cable 4
+zone derrick_top
+open Derrick valve housing
+expect message clamped shut
+use bathhub
+expect story bathpower 1
+expect story cable 0
+expect hidden bathdoor
+expect step 11
+zone derrick_top
+read The derrick
+open Derrick valve housing
+wait 3
+expect story relief 1
+expect step 12
 use ventvalve
 expect story steam 1
 expect story wheelpiece 0
+expect story relief 0
 expect shown steamhouses
-expect step 10
+expect step 13
 use ventvalve
 expect message is open
 open Steam-house locker
 wait 3
-expect step 11
+expect step 14
 read Town meeting minutes
 expect done
+# the extras: the bathhouse, the east mast + the greenhouse hub, the driller's kit, the ruin, the ferry, two treasures
+zone bathhouse
+read Bath keeper's slate
+open Bath keeper's locker
+zone mast_east
+open East mast's cable box
+expect story cable 2
+use greenhub
+expect shown seeddrawer
+open Seed drawer
+open Driller's kit
+read Pump keeper's ledger
+zone ferry_basin
+air ferryair
+open Ferry's strongbox
+dig 0
+dig 1

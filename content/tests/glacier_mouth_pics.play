@@ -10,3 +10,7 @@ picture sl12_glacier_mouth_island 22 +14 -36 0 +6 10
 picture sl12_glacier_mouth_ringwave -12 +5 1 -12 0 9
 picture sl12_glacier_mouth_depot -16 +3 -16 -6 +2 -6
 storespot 10 -4
+# DEEP 10-24 (old frame: world z + 24.8)
+picture sl12_glacier_mouth_icefall -22 +16 80 -44 30 76.8
+picture sl12_glacier_mouth_mast -36 +4 70 -44 39 78.8
+picture sl12_glacier_mouth_crevasse -50 +5 16.8 -57 +0 4.8

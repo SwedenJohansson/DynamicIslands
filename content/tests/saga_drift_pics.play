@@ -8,3 +8,8 @@ wait 3
 picture sl12_saga_drift_island 30 +18 -52 0 +2 0
 picture sl12_saga_drift_street -6 +2 -20 -6 +2 6
 picture sl12_saga_drift_chapel 0 +2.5 28 0 +1.5 36
+# DEEP 10-24
+picture sl12_saga_drift_berg 36 +14 -10 64 20 -4
+picture sl12_saga_drift_crane 56 +6 6 64 30 -3
+picture sl12_saga_drift_bergcave 64 +4 -24 64 +2 -38
+picture sl12_saga_drift_netloft -52 +4 -14 -62 +1 -20

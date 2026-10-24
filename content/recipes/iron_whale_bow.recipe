@@ -3,10 +3,11 @@
 # rust-red hull (radio tower rooms tinted rust, three long rooms on the lower deck, the mess and galley above, the open
 # foredeck with the mast), her prow on the ice. The water plant and the cargo office on the lower deck, the cargo hatch
 # down to her flooded engine decks (the next island); the crew mess with its vending machine and a safe, the galley; a
-# zipline from the mast's crow's nest to the crane out on the ice. Quest "Boarding the Whale" (10 steps): the ramp, the
+# zipline from the mast's crow's nest to the crane out on the ice. Quest "Boarding the Whale" (13 steps): the ramp, the
 # crew roster, the water tank's plans, the zipline to the crane, the water pipe's plans, the captain's log, the electric
 # purifier's plans (galley), the mess safe (keypad; the code is in the log), the large storage's plans (cargo office:
-# opening it uncovers the cargo hatch), the cargo hatch (the plan's done-when).
+# its bolt is out, but ice seals the hatch), DEEP 10-24: the Crane Ridge, the crane's cab, the hook's lever (it breaks the
+# hatch's ice and uncovers it), the cargo hatch (the plan's done-when).
 #
 # Built by the recipe player (CIRecipe iron_whale_bow) through the editor's own operations. Points (metres over the
 # sea): the ridge at 4 m (x -14..20, z -3..12); the ramp up its south face from 1 m at -4.5 -30; the lower deck's floor at
@@ -17,12 +18,41 @@ include lib_sea
 include lib_rt
 include lib_ni34
 include lib_frozen
+include lib_areas
 # RESIZE 10-24: Radius 50 -> 90 (Height 5 -> 6), the island grows round the old content, which stays where it was.
 new
 gen Trees=0 Bushes=0.05 Rocks=0.3 Harvest=0.05 BeachThings=0.2
 gen Seed=12501 Radius=90 Height=6 Roughness=0.4 Peaks=2 Shape=1 Style=1 BeachWidth=0.3 Cliffs=0.3 PeakShape=0.5
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.3 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
+
+# --- DEEP 10-24 (one-hour pass): the ice round the bow. The Crane Ridge south-west of the ship (20 m) with the old dock
+# crane on it and its ladder tower to the cab (5 ladders, top 32 m): the cab's lever drops the crane's hook through the
+# ice crust that seals the cargo hatch. The whalers' ice cave south-east, the whalers' ruin south, the Whale's lifeboat
+# sunk 12 m down in the west, a hummock ridge north-east. Built before the ship so the ship, the ramp and the
+# discoveries sit on the final ground.
+call fz_mount x=-30 z=-22 h=20 r=6
+call ar_plants_snowy x=-30 z=-22 r=24 seed=12601
+place UT_ElectricityIsland_Crane01 dockcrane at -29 -23 h=20 sit scale=0.7 yaw=50
+prop dockcrane tint.color=#5a4a3e
+prop dockcrane tint.amount=0.45
+call fz_tower x=-34 z=-18 h=20 n=5 al=cranetower chest=cabchest zal=cabzone zid=crane_cab msg="The crane's cab. Below, the whole bow - and the cargo hatch, white with ice. The hook's lever is by your hand."
+place UT_JumpPuzzle_LiftMechanism_Lever cranelever at -33.3 -19.4 h=32.15 sit yaw=180
+call fz_zone x=-20 z=-10 al=cranefoot id=crane_foot r=5 msg="The foot of the Crane Ridge. The old dock crane leans on its top; a ladder tower climbs to its cab."
+# the hummock ridge (north-east)
+call ar_ridge x1=32 z1=30 x2=62 z2=20 h=9 top=5 r=7
+call ar_plants_snowy x=47 z=25 r=20 seed=12602
+# the whalers' ice cave (south-east, its mouth north)
+call ar_cave x=40 z=-48 h=3 yaw=0 al=whalecave chest=whalecavechest
+place Note_Paper whaletally at 40.8 -42.6 h=3.5 drop yaw=200
+call fz_zone x=40 z=-43 al=whalecavez id=whalers_cave r=3 y=1.4 msg="The whalers' cave: blubber pots, harpoon heads, a tally cut in the wall."
+# the whalers' ruin (south)
+call ar_ruin x=10 z=-58 h=3 yaw=0 al=whaleruin
+place Note_Paper whalelist at 9.25 -58 h=4.15 drop yaw=10
+place Loot_ChestSmall whaleruinchest at 11.2 -57.4 h=3.1 sit yaw=200
+# the Whale's lifeboat, sunk 12 m down in the west
+call fz_dive x=-62 z=-16 d=12 r=12 yaw=0 obj=BoatStranded al=lifeboat chest=lifeboatchest aid=lifeair aal=lifeairz abub=lifeairb cx=6 cz=2 ax=-6 az=-3
+call fz_zone x=-48 z=-4 al=lifeview id=lifeboat_hole r=6 msg="A hole in the ice, black and deep. Down there, white letters on a hull: IRON WHALE 2."
 
 # --- Terrain: the pressure ridge at 4 m, the ramp up its south face, the crane's ice at 1.5 m -------------------------
 brush flatten from -10 4.5 to 16 4.5 r=8 s=20 frames=300 h=4
@@ -158,6 +188,32 @@ prop dview zone.radius=7
 prop dview zone.repeat=never
 prop dview zone.message=The Iron Whale's bow stands up on the ridge, black against the ice, her broken end towards the sea.
 
+
+# --- DEEP 10-24: the crane, the hook, the cave, the ruin, the lifeboat ---
+story hookdrop|The crane's hook|Placeable_Lantern_Metal|You dropped the dock crane's hook through the ice crust on the cargo hatch.
+place TP_SnowDrift02 hatchice at 3 6 h=4.06 sit scale=0.6
+prop hatchice obj.name=hatchice
+prop hatchice tint.color=#e8f0f4
+prop hatchice tint.amount=0.4
+prop cranelever obj.name=cranelever
+prop cranelever beh.use=Pull the hook's lever
+prop cranelever if.use=!signal|hookdrop
+prop cranelever on.use=sound||event:/exploring/obstacles/door_explosion\nmessage||The brake lets go. The hook swings out over the bow, drops - and the ice on the cargo hatch shatters.\nsignal||hookdrop\ngive||story:hookdrop*1\nhide|hatchice\nshow|hatchzone
+prop cranelever else.use=message||The hook is down. The cargo hatch is clear.
+note cabchest Crane cab locker | The crane driver's locker in the cab: his thermos, his tools, his pay.
+loot cabchest MetalIngot*2;Bolt*3;TradeToken*2
+prop cabchest loot.refill=0
+note whaletally Whalers' tally | WHALERS' TALLY (cut in the cave wall)\n\nNine seasons. Forty-one whales.\nThe Iron Whale took the bay in the tenth and broke the ice for good.\nWe left the pots. Our lifeboat - their lifeboat - went down off the west ice. Her locker had the good knives.
+note whalecavechest Whalers' pots | The whalers' pots, rimed with old fat: hooks, a harpoon head, rope.
+loot whalecavechest Rope*3;Scrap*2;Leather*2
+prop whalecavechest loot.refill=0
+note whalelist Whalers' winter list | WINTER LIST\n\nPots to the cave.\nBoat to the west ice.\nThe crane on the ridge works - its hook goes where you point it. The Whale's men use it for her hatches.
+note whaleruinchest Whalers' chest | The whalers' chest under the fallen wall: a lamp, a knife, some salt fish.
+loot whaleruinchest Raw_GenericMeat*2;Nail*8;Glass*2
+prop whaleruinchest loot.refill=0
+note lifeboatchest Lifeboat locker | The lifeboat's locker, twelve metres down: flares, a knife roll, the mate's tin.
+loot lifeboatchest MetalIngot*2;CopperIngot*2;TitaniumOre*1
+
 # --- Settings, notes, behaviours, quest -------------------------------------------------------------------------------
 # the generator's rocks that floated over the slope (ground check, 2026-10-23)
 clear at 1.39 34.25 r=1.5 only=TP_BigRock
@@ -200,7 +256,7 @@ prop hatchzone zone.id=hatch
 prop hatchzone zone.radius=2
 prop hatchzone zone.message=The cargo hatch: under it, black water and the smell of oil. The Whale's stern is down there.
 prop hatchzone beh.hidden=1
-prop cargooffice on.open=show|hatchzone\nmessage||Under the cargo chest: the hatch's bolt. The hatch to the lower holds is open now.
+prop cargooffice on.open=message||Under the cargo chest: the hatch's bolt - but the hatch is frozen shut under a crust of ice. Something heavy could break it: the old dock crane on the ridge south-west.
 
 prop messpad obj.name=messpad
 prop messpad beh.use=Type the mess safe's code
@@ -222,6 +278,9 @@ step read|Captain's log, day 1|1|Read the captain's log in the mess
 step blueprint|Blueprint_ElectricPurifier|1|Take the electric purifier's plans from the galley
 step open|Mess safe|1|Open the mess safe (the code is in the log)
 step blueprint|Blueprint_Storage_Large|1|Take the large storage's plans from the cargo office
+step reach|crane_foot|1|The cargo hatch is frozen shut. Cross the ice to the dock crane on the ridge south-west
+step reach|crane_cab|1|Climb the Crane Ridge and the ladder tower to the crane's cab
+step collect|story:hookdrop|1|Pull the hook's lever: drop the hook on the hatch's ice
 step reach|hatch|1|Go down the cargo hatch
 quest done=Under the hatch: black water and the Whale's broken stern. Her captain is down there.
 quest reward=MetalIngot*3;CopperIngot*2;Rope*3

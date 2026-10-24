@@ -6,6 +6,7 @@
 # charter, three screechers, the electric smelter's plans (the smelter yard), the council minutes ("the comms off, on
 # the Coldhold's order"), four rats (in the rendering house), the advanced biofuel extractor's plans, the chapel
 # strongbox (its keypad wants the year the charter was signed), the advanced anchor's plans (the winch), the last sermon.
+# DEEP 10-24: 12 -> 15 steps - the harbour master's ledger (berg cave), the crane top on the berg, the winch's pawl.
 #
 # Built by the recipe player (CIRecipe saga_drift) through the editor's own operations. Points (metres over the sea):
 # the ice at 0.6 (r 38 round 0 0); the nine hulls in three rows (x -12, 0, 12; z -22, 0, 22; each 7 x 16 m, along z);
@@ -19,6 +20,7 @@ include lib_huts
 include lib_features
 include lib_frozen
 include lib_verdance
+include lib_areas
 # RESIZE 10-24: Radius 48 -> 90 (Height 2 -> 3), the island grows round the old content, which stays where it was.
 new
 gen Trees=0 Bushes=0 Rocks=0.15 Harvest=0.05 BeachThings=0.25
@@ -30,7 +32,7 @@ generate
 brush flatten at 0 0 r=38 s=20 frames=400 h=0.6
 brush flatten from 0 -34 to 0 -46 r=2.5 s=20 frames=80 h=0.2
 # RESIZE 10-24 retest: the bigger island stands higher here - the huts' pads flattened again
-brush flatten at 0 35.25 r=6 s=20 frames=200 h=0.6
+brush flatten at 0 35.25 r=7 s=20 frames=400 h=0.6
 brush flatten at -25.75 -14.5 r=5 s=20 frames=200 h=0.6
 brush flatten at -25.75 13.5 r=5 s=20 frames=200 h=0.6
 brush flatten at 26.4 32.6 r=5 s=8 frames=40
@@ -77,7 +79,7 @@ place Loot_ChestLarge flensechest at 5 1.2 y=0.1 sit yaw=270
 place Beam_Long_01 - at 3 0.2 y=0.1
 pop
 place Zone_Trigger yardzone at 24 -6 ground y=1
-scatter "Pickup_Landmark_Scrap 1_OceanBottom" 2 at 48.75 -26.25 r=3 seed=12711 free=1
+scatter "Pickup_Landmark_Scrap 1_OceanBottom" 2 at 40 -40 r=3 seed=12711 free=1
 
 # --- The council cabin and its planter boxes ---------------------------------------------------------------------------
 push at -28 -16 h=0.6
@@ -107,9 +109,9 @@ call hut w=4 d=3 y=0.1
 place Bench_01 - at 1.5 1.5 y=0.1 sit yaw=180
 place Bench_01 - at 4.5 1.5 y=0.1 sit yaw=180
 place Placeable_Candlestick - at 3 4 y=0.1 sit
-place Loot_Chest chapelbox at 1 4 y=0.1 sit yaw=180
+place Loot_Chest chapelbox at 1 4 y=1.1 sit yaw=180
 place RT_PowerBox chapelpad at 0.2 3 y=1.2 yaw=90
-place Note_Paper sermon at 4.6 3.8 y=0.1 drop yaw=170
+place Note_Paper sermon at 4.6 3.8 y=1.1 drop yaw=170
 pop
 
 # --- The anchor winch at the flagship's bow ----------------------------------------------------------------------------
@@ -132,6 +134,41 @@ scatter VP_CoralDigitate01 3 at -67.5 56.25 r=4 seed=12724 wet free=1
 scatter Pickup_Landmark_GiantClam 2 at 30 -36 r=6 wet seed=12725
 call shallows x=0 z=0 r=90 deep=5 n=1 seed=12730
 call snowfall x=0 z=0 r=46 al=snow fog=#c0c8cc fa=0.5
+
+# --- DEEP 10-24 (one-hour pass): the Berg Quarter, the net loft, the tenth ship ---------------------------------------
+# The Berg Quarter (east): an iceberg frozen into the city's ice, 24 m, the old harbour crane's ladder tower on its top
+# (top 33.7 m: the winch's pawl in the crane cab chest; a zipline back down to the city); the berg cave on its south
+# side (the harbour master's ledger); the net loft ruin and the West Ridge; the tenth ship, sunk 14 m in the south-west
+# (its strongbox, an air pocket); a third buried treasure on the berg's foot.
+call fz_mount x=64 z=-4 h=24 r=7
+call ar_plants_snowy x=64 z=-4 r=26 seed=12745
+call fz_tower x=64 z=-1 h=24 n=4 al=cranetower chest=cranecab zal=cranezone zid=crane_top msg="The old harbour crane's cab on the berg. Below, the nine ships - and from here you see the dark shape under the ice in the south-west: a tenth."
+place ZiplinePath_Landmark cranezip at 64 -3.4 h=33.73
+zipto cranezip 30 8
+place Creature_PolarBear bergbear at 48 -12 ground
+prop bergbear creature.count=1
+prop bergbear creature.respawn=0
+call treasure x=50 z=-16 r=8 n=1 seed=12741
+# the berg cave (its mouth north, to the berg)
+call ar_cave x=64 z=-40 h=4 yaw=0 al=bergcave chest=bergcavechest
+call icetint al=bergcave
+place Note_Book ledger at 63.2 -34.6 h=4.5 drop yaw=200
+place Zone_Trigger bergcavezone at 64 -35 h=5.4
+prop bergcavezone zone.id=berg_cave
+prop bergcavezone zone.radius=3
+prop bergcavezone zone.message=A cave in the berg's blue ice. A desk of crates, a ledger, a lamp: the harbour master's last office.
+# the net loft (west): a roofless ruin, its crate; the West Ridge behind it
+call ar_ruin x=-62 z=-20 h=3 yaw=0 al=netloft
+place Note_Paper netnote at -62.75 -20 h=4.05 drop yaw=10
+place Loot_Crate netcrate at -59.6 -23.6 ground sit yaw=30
+call ar_ridge x1=-80 z1=0 x2=-62 z2=36 h=6 top=8 r=7
+call ar_plants_snowy x=-70 z=18 r=24 seed=12748
+# the tenth ship (south-west), 14 m down
+call fz_dive x=-45 z=-62 d=14 r=12 yaw=0 obj=BoatStranded al=tenthship chest=tenthchest aid=tenthair aal=tenthairz abub=tenthairb cx=6 cz=2 ax=-6 az=-3
+place Zone_Trigger tenthview at -36 -50 ground y=1
+prop tenthview zone.id=tenth_ship
+prop tenthview zone.radius=5
+prop tenthview zone.message=Through the clear ice-water, a hull - the tenth ship, the one the charter never names.
 
 # --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; TP_SnowVehicle02 + chest; hatch with a chest; buried treasure; viewpoint ---
 place campfire_1 - at 26.4 32.6 ground sit
@@ -199,13 +236,31 @@ story bellrung|A ship's bell rung|Placeable_Lantern_Metal|One of the three bells
 story winchfree|The anchor winch freed|Placeable_Lantern_Metal|The flagship's winch turns again.
 prop anchorwinch obj.name=anchorwinch
 prop anchorwinch beh.use=Turn the anchor winch
-prop anchorwinch if.use=take|story:bellrung|3
+prop anchorwinch if.use=take|story:pawl|1
+take|story:bellrung|3
 prop anchorwinch on.use=give||story:winchfree*1\nshow|anchorchest\nmessage||The chain groans and comes up a link at a time. The winch locker under it is free.
-prop anchorwinch else.use=message||Frozen by order: "THE WINCH TURNS ON ALL HANDS ONLY." Three bells call all hands - one on each of three hulls.
+prop anchorwinch else.use=message||Frozen by order: "THE WINCH TURNS ON ALL HANDS ONLY." Three bells call all hands - one on each of three hulls. And the winch's pawl is gone: the harbour master's ledger will say where.
 prop dhatchchest if.open=wears|HeadLight*
 prop dhatchchest else.open=message||A ship's hold under the hatch, pitch black - wear a headlight.
 prop anchorchest loot.refill=0
 prop treasure12051 treasure.loot=TitaniumOre*3
+
+# --- DEEP 10-24: the pawl, the ledger, the extras ---
+story pawl|The winch's pawl|Placeable_Lantern_Metal|The anchor winch's iron pawl - without it the chain runs free.
+note ledger Harbour master's ledger | HARBOUR MASTER'S LEDGER\n\nThe Coldhold's order came: the winch is not to turn. I took its pawl out myself and carried it up the berg to the old crane's cab, where no one goes.\nThe city's "all hands" is three bells. With the bells rung and the pawl back, the winch turns.\nLast line: the tenth ship went down in the south-west lead the winter we signed. We do not count her. We should.
+note cranecab Crane cab chest | The harbour crane's cab, frozen to the berg: the winch's pawl, wrapped in a flag, and the crane driver's tools.
+loot cranecab story:pawl*1;MetalIngot*2;Rope*2
+prop cranecab loot.refill=0
+note bergcavechest Harbour office chest | The harbour master's chest in the berg cave: dues paid in tokens, and his dry socks.
+loot bergcavechest TradeToken*3;Wool*2;Bolt*2
+prop bergcavechest loot.refill=0
+note netnote Net mender's note | (pinned to the net loft's table)\n\nNets for nine ships, and one for the tenth that no one mends.\nThe good twine is in the crate by the door.
+note netcrate Net loft crate | The net loft's crate: twine, floats, a mender's needle.
+loot netcrate Rope*4;Plastic*3;Nail*6
+prop netcrate loot.refill=0
+note tenthchest Tenth ship's strongbox | The tenth ship's strongbox, under fourteen metres of water: her own charter - signed 1908 - and her captain's purse.
+loot tenthchest TitaniumIngot*1;MetalIngot*3;TradeToken*4
+prop treasure12741 treasure.loot=MetalOre*3;CopperOre*2
 
 prop gangzone zone.id=gangway
 prop gangzone zone.radius=4
@@ -243,6 +298,9 @@ step read|Council cabin minutes|1|Read the council cabin minutes
 step kill|Rat|4|Clear the four rats out of the rendering house
 step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced biofuel extractor's plans from the rendering house
 step open|Chapel strongbox|1|Open the chapel strongbox (the charter knows its year)
+step read|Harbour master's ledger|1|The winch's pawl is gone. Find the harbour master's ledger in the berg cave, east of the city
+step reach|crane_top|1|Climb the iceberg and the old harbour crane's ladders on its top
+step collect|story:pawl|1|Take the winch's pawl from the crane cab chest
 step collect|story:bellrung|3|Ring the three ships' bells - "all hands"
 step collect|story:winchfree|1|Turn the anchor winch at the flagship's bow
 step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced anchor's plans from the winch locker

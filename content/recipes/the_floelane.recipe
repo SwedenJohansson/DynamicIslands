@@ -3,7 +3,7 @@
 # the two northern floes. Her crew are locked in the sealers' own cages on the floes (the master locked them in against
 # the bears, then went for help and never came back); the cage keys are in the sealer's locker on the west floe. The lead
 # between the first floe and the hull floe opens and closes: a winch lever on the first floe hauls the loose ice into the
-# lead for 40 seconds. Quest "The White Sea" (7 steps): the first floe, the distress card, across the lead to the hull,
+# lead for 40 seconds. Quest "The White Sea" (11 steps; DEEP 10-24: the berg, the bear den, the lookout key): the first floe, the distress card, across the lead to the hull,
 # the motor wheel's plans (engine room), the three cages and the hull bell (signal "rescued", the plan's done-when), the
 # steering wheel's plans (wheelhouse), the survivors' thanks.
 #
@@ -14,6 +14,7 @@
 include lib_features
 include lib_sea
 include lib_frozen
+include lib_areas
 # RESIZE 10-24: Radius 40 -> 85 (Height 2 -> 2), the island grows round the old content, which stays where it was.
 new
 gen Trees=0 Bushes=0 Rocks=0.15 Harvest=0.05 BeachThings=0.2
@@ -79,11 +80,11 @@ place Note_Paper thanks at 0.8 17.5 h=9 drop yaw=40
 prop thanks beh.hidden=1
 
 # --- The three cages: one on the hull floe, one on the east floe, one on the north floe ------------------------------
-# RESIZE 10-24 retest: cage1 at a fixed height - on the bigger island `ground` sank it 3 m under the hull floe;
+# DEEP 10-24: the cages `sit` (REACH_AUDIT: cage1/cage2 0.7-1.7 m in the floe). RESIZE 10-24 retest: cage1 at a fixed height - on the bigger island `ground` sank it 3 m under the hull floe;
 # its icicles left out (the ground check sees through the cage's roof bars: they hung 1.6 m over the floe)
-place Survivor_Cage cage1 at -4 4 h=0.5 yaw=40
-place Survivor_Cage cage2 at 21 -2 ground yaw=270
-place Survivor_Cage cage3 at 3 32 ground yaw=180
+place Survivor_Cage cage1 at -4 4 h=0.5 sit yaw=40
+place Survivor_Cage cage2 at 21 -2 ground sit yaw=270
+place Survivor_Cage cage3 at 3 32 ground sit yaw=180
 place TP_SnowDrift02 - at -6 30 ground sit yaw=10
 place TP_SnowDrift03 - at 5 5 ground sit yaw=300
 
@@ -119,6 +120,44 @@ prop dview zone.radius=7
 prop dview zone.repeat=never
 prop dview zone.message=The floes lie on the black water like broken plates, and the crushed sealing boat between them.
 
+# --- DEEP 10-24 (one-hour pass): the floes stay the core; round them the grounded iceberg (NE, 26 m, its ice ladder to
+# the sealers' lookout: the climb, the wheelhouse key froze into its top), the bear den (W, the lookout's tally), the
+# sealers' hut ruin (SE), the sister boat sunk 12 m down in the south-west lead (the dive), two pressure ridges, two
+# buried treasures. (Icicles checked 10-24: none left on the cages; the cages now sit on the floes.)
+call fz_mount x=34 z=50 h=26 r=7
+call ar_plants_snowy x=34 z=50 r=24 seed=12231
+call icerock x=27 z=38 s=3 yaw=20 al=bergice
+call icerock x=43 z=40 s=3 yaw=110 al=bergice
+call icerock x=25 z=56 s=2.5 yaw=200 al=bergice
+call icerock x=45 z=60 s=2.5 yaw=300 al=bergice
+call icetint al=bergice
+call fz_tower x=34 z=52 h=26 n=4 al=lookout chest=lookoutchest zal=lookzone zid=berg_top msg="The sealers' lookout on the berg. All five floes below you - and the Kittiwake, crushed between them."
+call fz_zone x=28 z=26 al=bergfoot id=berg_foot r=6 msg="The grounded iceberg. It came in with the spring ice and never left; somebody built a lookout on its top."
+# the bear den (W): its mouth to the floes, the lookout's tally inside, its bear outside
+call ar_cave x=-62 z=-24 h=2 yaw=0 al=bearden chest=denchest
+place Note_Paper tally at -61.2 -18.6 h=2.5 drop yaw=200
+place Zone_Trigger denzone at -62 -19 h=3.4
+prop denzone zone.id=bear_den
+prop denzone zone.radius=3
+prop denzone zone.message=The bear den. Bones, a torn sealskin - and a wooden tally board the bear dragged in.
+place Creature_PolarBear denbear at -56 -2 ground
+prop denbear creature.count=1
+prop denbear creature.respawn=0
+# the sealers' hut (SE): a roofless ruin, their chest in its corner
+call ar_ruin x=46 z=-44 h=2 yaw=0 al=sealhut
+place Note_Paper hutlog at 45.25 -44 h=3.07 drop yaw=10
+place Loot_ChestSmall hutchest at 47.3 -42.9 h=2.05 sit yaw=200
+# the sister boat (SW lead): 12 m down, her chest at her side, an air pocket
+call fz_dive x=-40 z=-52 d=12 r=12 yaw=0 obj=BoatStranded al=sisterboat chest=sisterchest aid=sisterair aal=sisterairz abub=sisterairb cx=6 cz=2 ax=-6 az=-3
+call fz_zone x=-30 z=-38 al=leadview id=sister_lead r=6 msg="Under the black water of the lead: a second boat, the Kittiwake's sister, sunk to the bottom."
+# two pressure ridges (NW, E) and their snow
+call ar_ridge x1=-72 z1=30 x2=-48 z2=56 h=5 top=5 r=7
+call ar_plants_snowy x=-60 z=43 r=18 seed=12234
+call ar_ridge x1=62 z1=-12 x2=70 z2=20 h=5 top=4 r=6
+call ar_plants_snowy x=66 z=4 r=14 seed=12237
+call treasure x=-20 z=62 r=10 n=1 seed=12241
+call treasure x=62 z=-24 r=8 n=1 seed=12242
+
 # --- Settings, story items, notes, behaviours, quest -----------------------------------------------------------------
 info title=The Floelane
 info author=Custom Islands
@@ -140,6 +179,26 @@ loot engineroom Blueprint_MotorWheel*1;Scrap*4;Bolt*2
 prop engineroom loot.refill=0
 loot wheelhouse Blueprint_SteeringWheel*1;Plank*6;Nail*10
 prop wheelhouse loot.refill=0
+
+# --- DEEP 10-24: the berg, the den, the hut, the sister boat ---
+story wheelkey|Wheelhouse key|Placeable_Lantern_Metal|The Kittiwake's wheelhouse key, frozen into the lookout on the iceberg.
+note tally Lookout's tally | (a tally board, scored with a knife)\n\nSEALS SIGHTED: |||| |||| |||\nBEARS: ||||\nTHE WHALE'S HORN: |||\n\nOn the back: Took the wheelhouse key up the berg with me - the master wants nobody steering while he's gone. Hung it in the lookout chest. - Ivar
+note lookoutchest Sealers' lookout chest | The lookout's chest on the berg: a spyglass with no glass, a frozen pipe - and a key on a cord, KITTIWAKE WHEELHOUSE.
+loot lookoutchest story:wheelkey*1;Rope*2;MetalIngot*2
+prop lookoutchest loot.refill=0
+note denchest Bear den cache | What the bear dragged into its den: a sealer's bag, still shut.
+loot denchest Leather*3;Wool*2;Raw_GenericMeat*2
+prop denchest loot.refill=0
+note hutlog Sealers' hut log | SEALERS' HUT\n\nThe roof went in the first storm. We sleep on the boat now.\nIvar keeps the lookout on the berg. Halvorsen keeps the keys.\nThe sister boat went down in the south lead in the autumn - her strongbox with her.
+note hutchest Sealers' chest | The sealers' chest in the corner of the hut: skins, hooks, a bag of nails.
+loot hutchest Leather*2;Nail*10;Rope*2
+prop hutchest loot.refill=0
+note sisterchest Sister boat's strongbox | The sister boat's strongbox, twelve metres down: the season's pay, in metal.
+loot sisterchest MetalIngot*3;CopperIngot*2;Bolt*3
+prop treasure12241 treasure.loot=MetalOre*3;Wool*2
+prop treasure12242 treasure.loot=TitaniumOre*1;CopperOre*2
+prop wheelhouse if.open=has|story:wheelkey|1
+prop wheelhouse else.open=message||Locked. Sigrid calls from the ice: "Ivar had the key - he kept the lookout on the berg!"
 
 prop firstzone zone.id=first_floe
 prop firstzone zone.radius=7
@@ -186,6 +245,10 @@ step read|Sealer's distress card|1|Read the sealer's distress card
 step reach|hull|1|Cross the lead to the hull floe (the winch hauls the ice in)
 step blueprint|Blueprint_MotorWheel|1|Take the motor wheel's plans from the boat's engine room
 step collect|story:rescued|1|Free the three sealers (keys in the locker on the west floe) and ring the hull bell
+step reach|berg_foot|1|The wheelhouse is locked and the key is not aboard. Cross the floes to the grounded iceberg in the north-east
+step read|Lookout's tally|1|Find what the lookout left - the bear den in the west has his tally board
+step reach|berg_top|1|Climb the iceberg and the ice ladder to the sealers' lookout
+step collect|story:wheelkey|1|Take the wheelhouse key from the lookout chest
 step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel's plans from the wheelhouse locker
 step read|Survivors' thanks|1|Read the survivors' thanks on the bell rope
 quest done=The sealers are going to the steam harbour. It is warm there, they say - band 800.

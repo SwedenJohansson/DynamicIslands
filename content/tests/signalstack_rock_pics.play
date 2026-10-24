@@ -8,3 +8,8 @@ wait 3
 picture sl12_signalstack_rock_island 30 18 -50 0 6 0
 picture sl12_signalstack_rock_hut 6 +2.5 -10 -2 +1.2 -16
 picture sl12_signalstack_rock_mast 7 12 -4 0 10 4
+# DEEP 10-24
+picture sl12_signalstack_rock_needle 14 30 30 0 30 58
+picture sl12_signalstack_rock_beacon 0 42 52 0 40 60
+picture sl12_signalstack_rock_opcave -40 7 36 -40 5 26
+picture sl12_signalstack_rock_plane -50 8 24 -58 4 14

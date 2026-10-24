@@ -7,3 +7,8 @@ at -4.5 -20
 picture sl12_iron_whale_bow_island 14 16 -40 4 6 4
 picture sl12_iron_whale_bow_mess -1 8.6 1 -5 8 3
 picture sl12_iron_whale_bow_zipline 30 +3 -14 10 +8 4
+# DEEP 10-24
+picture sl12_iron_whale_bow_crane -12 14 -4 -30 26 -22
+picture sl12_iron_whale_bow_cab -36 34 -12 3 4 6
+picture sl12_iron_whale_bow_cave 40 +3 -32 40 +2 -48
+picture sl12_iron_whale_bow_ruin 10 +3 -46 10 +1.5 -58

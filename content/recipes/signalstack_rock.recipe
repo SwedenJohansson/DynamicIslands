@@ -2,7 +2,7 @@
 # A basalt stack in a grey sea, snow on every ledge: a relay hut on the shelf at its foot (the radio log and the
 # Receiver's plans on the desk), a path cut up the stack's side to its top, where the relay mast stands - one of its two
 # masts bent over by the ice, Raft's antennas lying broken round it. Snow falls here and on the Floelane only: the cold
-# begins. Quest "The Fragments" (8 steps): the shelf, the relay log, the Receiver's plans, the mast top, the antenna's
+# begins. Quest "The Fragments" (12 steps; DEEP 10-24: the Needle, the operator's cave, the beacon, the star lock): the shelf, the relay log, the Receiver's plans, the mast top, the antenna's
 # plans, the fourth fragment.
 #
 # Built by the recipe player (CIRecipe signalstack_rock) through the editor's own operations. Points (metres over the
@@ -12,9 +12,12 @@ include lib_sea
 include lib_huts
 include lib_frozen
 include lib_verdance
+include lib_areas
+include lib_features
+# DEEP 10-24: Radius 30 -> 80, Height 12 -> 8 (the stack keeps its own brushes)
 new
 gen Trees=0 Bushes=0.1 Rocks=0.45 Harvest=0.1 BeachThings=0.15
-gen Seed=12101 Radius=30 Height=12 Roughness=0.5 Peaks=1 Shape=0 Style=1 BeachWidth=0.15 Cliffs=0.75 PeakShape=0.6
+gen Seed=12101 Radius=80 Height=8 Roughness=0.5 Peaks=1 Shape=0 Style=1 BeachWidth=0.15 Cliffs=0.75 PeakShape=0.6
 gen Water=0.5 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
 
@@ -48,6 +51,7 @@ push at -4 -18 h=2.5
 call hut w=3 d=2 y=0.1
 place Placeable_Table_Basic - at 3.4 2.2 y=0.1 sit yaw=90
 place Note_Paper relaylog at 3.2 1.8 y=0.1 drop yaw=20
+place Note_Paper chart1 at 3.6 2.6 y=0.1 drop yaw=80
 place Loot_Chest relaydesk at 1.2 2.4 y=0.1 sit yaw=180
 place Placeable_Lantern_Metal - at 3.6 2.6 y=0.1 drop
 pop
@@ -74,7 +78,9 @@ place TP_SnowDrift03 - at 2.5 0.5 ground sit yaw=10
 # REDO 10-24: the mast's three guy clamps were torn off by the ice (shelf stores, a chest on the path ledge, a drift
 #     chest on the top); fitted on the mast winch, the junction box comes free (it was hidden in the ice)
 place Loot_ChestSmall ledgechest at 9.6 -3.5 ground sit yaw=180
+place Note_Paper chart2 at 9.1 -4.6 ground y=0.05 drop yaw=150
 place Loot_ChestSmall driftchest at -3.2 4.2 ground sit yaw=100
+place Note_Paper chart3 at 1.1 5.4 ground y=0.05 drop yaw=40
 call crank x=-0.5 z=-0.8 yaw=180 alias=mastwinch
 prop mast tint.color=#40464c
 prop mast tint.amount=0.5
@@ -82,11 +88,54 @@ prop bentmast tint.color=#40464c
 prop bentmast tint.amount=0.5
 
 # --- Snow, things to gather -----------------------------------------------------------------------------------------
-call snowfall x=0 z=-4 r=40 al=snow
+call snowfall x=0 z=10 r=85 al=snow
 scatter VP_CoralDigitate01 4 at -20 18 r=3 seed=12111 wet free=1
 scatter VP_CoralBulb04 3 at -20 18 r=3 seed=12112 wet free=1
 scatter SeaVine3_klump 4 at -20 18 r=6 seed=12113 wet free=1
-call shallows x=0 z=0 r=40 deep=6 n=1 seed=12120
+call shallows x=0 z=0 r=90 deep=6 n=1 seed=12120
+
+# --- DEEP 10-24 (one-hour pass): the island grew 30 -> 80; the stack, its shelf and its path keep their own brushes ----
+# the Needle: a sea stack in the north (26 m) with the beacon tower on it (6 ladders, top 40.5 m: the storyline's first
+# big climb), the star dome on the beacon; the operator's cave below it; the keeper's ruin east; the mail plane west (a
+# bear guards it); Grey Cove's supply boat sunk 10 m down in the south-west; two buried treasures. M26
+# (RAFT_QUEST_MECHANICS 4): four star-chart notes (hut, path ledge, mast foot, beacon) + the dome's numbers = the mast
+# box's keypad code.
+call fz_mount x=0 z=58 h=26 r=7
+call ar_plants_snowy x=0 z=58 r=26 seed=12131
+call fz_tower x=0 z=60 h=26 n=6 al=beacon chest=beaconchest zal=beaconzone zid=beacon_top msg="The beacon on the Needle. The white sea all round - and the stack's mast, small as a pin."
+place Note_Sign stardome at -0.9 58.6 h=40.57 sit yaw=180
+place Note_Paper chart4 at 0.6 58.4 h=40.6 drop yaw=30
+call fz_zone x=0 z=31 al=needlezone id=needle_foot r=6 msg="The foot of the Needle. A way of sorts climbs its south face; at the top, the beacon tower."
+# the operator's cave (its mouth north, to the Needle)
+call ar_cave x=-40 z=26 h=4 yaw=0 al=opcave chest=opcavechest
+place Note_Paper opdiary at -39.2 31.4 h=4.5 drop yaw=200
+place Zone_Trigger opcavezone at -40 31 h=5.4
+prop opcavezone zone.id=operator_cave
+prop opcavezone zone.radius=3
+prop opcavezone zone.message=A dry cave under the snow line. A sleeping bag, a stove, a diary: the operator lived here when the hut froze.
+# the keeper's ruin (east): his list on the table, a hatch near it
+call ar_ruin x=56 z=8 h=4 yaw=0 al=keeperruin
+place Note_Paper keeperlist at 55.25 8 h=5.15 drop yaw=10
+call hatchcache x=58 z=13 r=3 seed=12134 alias=ruinhatch chest=ruincellar items=MetalIngot*2;Rope*2;Bolt*2
+# the mail plane (west) and its bear
+call ar_plane x=-58 z=14 h=3 yaw=120 al=mailplane crate=planecrate
+place Creature_PolarBear planebear at -48 22 ground
+prop planebear creature.count=1
+prop planebear creature.respawn=0
+# Grey Cove (south-west): the supply boat 10 m down, its chest, an air pocket at its side
+call fz_dive x=-50 z=-46 d=10 r=12 yaw=0 obj=BoatStranded al=supplyboat chest=boatchest aid=coveair aal=coveairz abub=coveairb cx=6 cz=2 ax=-6 az=-3
+# the Gull Ridge (south-east) and the Saddle (west): the island's own hills
+call ar_ridge x1=22 z1=-26 x2=58 z2=-14 h=9 top=7 r=8
+call ar_plants_snowy x=40 z=-20 r=26 seed=12151
+call ar_ridge x1=-62 z1=-12 x2=-30 z2=-4 h=8 top=5 r=7
+call treasure x=34 z=-48 r=14 n=1 seed=12141
+call treasure x=40 z=44 r=12 n=1 seed=12142
+call ar_plants_snowy x=-30 z=-20 r=22 seed=12145
+call ar_plants_snowy x=30 z=-15 r=20 seed=12148
+place Zone_Trigger coveview at -34 -34 ground y=1
+prop coveview zone.id=grey_cove
+prop coveview zone.radius=6
+prop coveview zone.message=Grey Cove. Under the ice-green water, the shape of a boat - the relay's supply boat, that never came back.
 
 # --- Settings, notes, behaviours, quest -----------------------------------------------------------------------------
 # the generator's rocks that floated over the slope (ground check, 2026-10-23)
@@ -117,6 +166,37 @@ prop ledgechest loot.refill=0
 note driftchest Drift chest | Half under a drift on the top: the third guy clamp and a frozen tin of nails.
 loot driftchest story:clamp*1;Nail*6
 prop driftchest loot.refill=0
+
+# --- DEEP 10-24: the Needle's notes, the star lock, the extras ---
+note opdiary Operator's diary | OPERATOR'S DIARY\n\nThe hut froze, so I moved in here. Warmer than it looks.\nThe call from the north comes clearest from the beacon on the Needle - I climb up every night.\nI put the old star lock on the mast box. I drew the four stars of the north on four charts and left them where I work: the hut, the ledge, the mast, the beacon. The dome up top gives each star its number.
+note chart1 Star chart 1/4 | STAR CHART 1/4\n\nFirst, low in the north at dusk: THE HOOK.
+note chart2 Star chart 2/4 | STAR CHART 2/4\n\nSecond, over the floes: THE LANTERN.
+note chart3 Star chart 3/4 | STAR CHART 3/4\n\nThird, where the mast points: THE TWINS.
+note chart4 Star chart 4/4 | STAR CHART 4/4\n\nLast, the highest of the north: THE CROWN.\nRead the dome's numbers in the charts' order.
+note stardome The star dome | THE NORTH SKY (painted inside the beacon's dome)\n\nCROWN = six    HOOK = four\nSLEDGE = two    TWINS = eight\nLANTERN = one    WHALE = nine
+note keeperlist Keeper's list | KEEPER'S LIST\n\nOil for the beacon - none.\nBoat from Grey Cove - three weeks late.\nThe spare coil, the good tools: under the hatch by the wall, where the gulls can't get them.
+note beaconchest Beacon chest | The beacon keeper's chest at the top of the tower: lamp oil long frozen, and what he kept for a clear night.
+loot beaconchest MetalIngot*3;CopperIngot*2;Rope*2
+prop beaconchest loot.refill=0
+note opcavechest Operator's kit | The operator's kit under his sleeping bag: a stove, tins, a spare headset.
+loot opcavechest Scrap*3;Rope*2;Raw_GenericMeat*2
+prop opcavechest loot.refill=0
+note planecrate Mail plane's crate | The mail plane's crate: letters that will never arrive, and the pilot's tools.
+loot planecrate Bolt*3;Nail*8;Leather*2
+prop planecrate loot.refill=0
+note boatchest Supply boat's chest | The supply boat's strongbox, under ten metres of water: what the relay ordered and never got.
+loot boatchest MetalIngot*2;Glass*3;Seed_Pine*2
+prop treasure12141 treasure.loot=MetalOre*3;CopperOre*2
+prop treasure12142 treasure.loot=TitaniumOre*1;MetalOre*2
+story starcode|The star code|Placeable_Lantern_Metal|The mast box's star lock, opened with the north's four stars.
+place RT_PowerBox mastpad at 0 4.12 ground y=1.3 yaw=180
+prop mastpad obj.name=mastpad
+prop mastpad beh.use=Turn the mast box's star lock
+prop mastpad lock.code=4186
+prop mastpad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||Four stars, four clicks. The mast box's lock lets go.\nsignal||starcode\ngive||story:starcode*1
+prop mastpad else.use=message||A star lock: four numbers. The operator wrote about it - his diary is somewhere below the Needle.
+prop mastbox if.open=signal|starcode
+prop mastbox else.open=message||The mast box has a star lock on it - four numbers. The lock's dial is on the mast.
 story clamp|Guy clamp|Placeable_Lantern_Metal|One of the relay mast's three guy clamps, torn off by the ice.
 story mastfixed|Mast rigged|Placeable_Lantern_Metal|The mast's guys are clamped again; the junction box came free.
 prop mastwinch obj.name=mastwinch
@@ -140,6 +220,10 @@ step blueprint|Blueprint_Reciever|1|Take the Receiver's plans from the relay des
 step reach|mast_top|1|Climb the path to the mast on the stack's top
 step collect|story:clamp|3|Find the mast's three guy clamps (shelf, path ledge, top)
 step collect|story:mastfixed|1|Fit the clamps on the mast winch
+step reach|needle_foot|1|The mast box has a star lock. Cross the island to the Needle, the sea stack in the north
+step read|Operator's diary|1|Find the operator's cave below the Needle and read his diary
+step reach|beacon_top|1|Climb the Needle and its beacon tower to the star dome
+step collect|story:starcode|1|Open the mast box's star lock (the four star charts and the dome's numbers)
 step blueprint|Blueprint_Antenna|1|Take the antenna's plans from the mast box
 step read|Fragment 4|1|Read the fourth fragment
 quest done=North, past the white sea, there is a Whale. The floes call on 700.

@@ -55,29 +55,61 @@ expect story cooling 1
 expect step 14
 read Keeper's last entry
 expect step 15
-code controlpad 1111 wrong
-code controlpad 2240
-expect hidden controldoor
+# DEEP 10-24: M14 - the interlock plate, the catalogue boards, the timed terminal run (snowflake, leaf, drop)
+read Control door interlock
 expect step 16
-zone control
+read Seed catalogue
+read Record catalogue
+code term2 5081
+expect shown controldoor
+code term1 1111 wrong
+code term1 3317
+wait 4
+expect shown coldrun
+code term2 5081
+code term3 2240
+expect hidden controldoor
+expect hidden coldrun
 expect step 17
-read Three switches
+zone control
 expect step 18
+read Three switches
+expect step 19
 use carrylever
 expect story choice 1
 expect shown carrychest
 expect shown heddacall
 expect hidden keepchest
-expect step 19
-read The verdict
 expect step 20
+read The verdict
+expect step 21
 open The vault's gift
 wait 3
-expect step 21
+expect step 22
 read Hedda's radio call
-# (no "expect step 22": in the plan the flood-door zone step can be done already)
-zone flood_door
 expect step 23
+# DEEP 10-24: the flood door has no interlock - the vent keeper's cave, the ice cap, the vent tower
+use floodlever
+expect shown flooddoor
+zone cap_foot
+open Vent keeper's bedroll
+read Vent keeper's note
+expect step 24
+zone vent_top
+expect step 25
+open Vent tower chest
+expect story interlock 1
+# (no "expect step 26": in the plan the flood-door zone step can be done already)
+zone flood_door
+expect step 27
 use floodlever
 expect hidden flooddoor
 expect done
+# the extras: the flooded crevasse dive, two treasures
+zone flooded_crevasse
+air crevair
+open Survey boat's strongbox
+dig 0
+dig 1
+dig 2
+dig 3

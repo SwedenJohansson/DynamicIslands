@@ -4,6 +4,8 @@
 # first two rooms, ice anglers (white-tinted) in the first hall, puffers, two under-ice reefs. In the last room the ark
 # valve. Quest "The Ark" (11 steps): the drop, room 1 and the Ark manifest, three ice anglers, the timed gate to room 2,
 # room 3 and the Ringwave file, room 4, the ark valve, the closing note, the surface hole.
+# DEEP 10-24: 12 -> 19 steps - the pump engineer's log, the three cooling rods (flooded halls), the pump islet and its
+# tower (the only dry ground), the station's lever, three valves in the gas (rat ambushes), the pump switch.
 #
 # Built by the recipe player (CIRecipe seed_ark) through the editor's own operations. Points (metres over the island's
 # own water line, which lies 30 m under the sea): the floor at 3.8 m along the ridge from x -24 to 24; room 1 x -21..-15,
@@ -18,6 +20,7 @@ include lib_features
 include lib_sea
 include lib_rt
 include lib_frozen
+include lib_areas
 # RESIZE 10-24: Radius 40 -> 85 (Height 6 -> 6), the island grows round the old content, which stays where it was.
 new
 gen Trees=0 Bushes=0 Rocks=0.3 Harvest=0 BeachThings=0
@@ -68,6 +71,7 @@ place RT_CommRadio - at -1 3.4 y=0.1 sit yaw=180
 # REDO 10-24 (optional): the last rack's locker - the Coldhold's control code (2240) on its keypad
 place Loot_Chest lastrack at -1.2 -3.6 y=0.1 sit yaw=0
 place RT_PowerBox rackpad at -2.6 -4.75 y=1.2 yaw=180
+place Note_Paper engineerlog at -5.2 -1.5 y=0.1 drop yaw=120
 pop
 prop arkwalls tint.color=#dcebf5
 prop arkwalls tint.amount=0.5
@@ -124,6 +128,100 @@ prop arkdark atmo.light=#9fc4dc
 prop arkdark atmo.lightAmount=0.35
 prop arkdark zone.radius=30
 
+# --- DEEP 10-24 (one-hour pass): the pump islet - the only dry ground - and the three flooded cooling halls --------------
+# The ark valve won't turn while the pumps are dead (the pump engineer's log, room 4). The pump islet (south-east): a
+# mountain from the seabed (local 33 m = 3 m over the sea), the pump tower on its top (top 42.7 m: the pump switch, the
+# keeper's chest); on the islet the cooling station's three rod sockets, its jammed lever (the pump key), three valves in
+# rotten coolant gas (miasma; suit cabinets), each hiding a rat ambush. The three cooling rods lie in three flooded
+# halls (east, west, north; air pockets). The north-west underwater ridge; two more buried treasures on the islet.
+call ar_ridge x1=-62 z1=20 x2=-40 z2=52 h=10 top=10 r=8
+call fz_mount x=22 z=-46 h=33 r=8
+call fz_tower x=22 z=-44.5 h=33 n=4 al=pumptower chest=pumpchest zal=pumpzone zid=pump_top msg="The pump tower: the only dry ground over the whole drowned Ark. The pump switch, its pipes going down into the sea."
+place "Box Small" - at 20.6 -45.9 h=42.73 sit
+place TP_LaserControlPanel_lever pumpswitch at 20.6 -45.9 h=43.43 sit yaw=180
+call fz_zone x=22 z=-37.5 al=isletzone id=pump_islet r=5 msg="The pump islet. Rod sockets, a lever, three valves hissing gas - and the tower over them."
+# the cooling station: three rod sockets and its lever
+place "Box Big" - at 18 -41 ground sit yaw=10
+place TP_CoolingStation_Keysocket sock1 at 18 -41 ground y=1.2
+place "Box Big" - at 20 -40 ground sit yaw=0
+place TP_CoolingStation_Keysocket sock2 at 20 -40 ground y=1.2
+place "Box Big" - at 24.5 -40.5 ground sit yaw=350
+place TP_CoolingStation_Keysocket sock3 at 24.5 -40.5 ground y=1.2
+place "Box Small" - at 26 -42 ground sit
+place TP_LaserControlPanel_lever pumplever at 26 -42 ground y=0.7 yaw=270
+# the three valves in the gas, their rats; the suit cabinets
+place RT_Pillar - at 28 -49 ground sy=0.4
+place TP_Selene_DoorCrankWheel valve1 at 28 -49 ground y=1.25 yaw=90
+place Creature_Rat rats1 at 29.5 -50 ground y=0.3
+call fz_hazard x=28 z=-49 al=miasma1 kind=miasma r=3 dmg=2 safe=suit msg="Gas hisses out round the valve - the pumps' old coolant, rotten. A suit from the cabinet would keep it off."
+place RT_Pillar - at 16 -49 ground sy=0.4
+place TP_Selene_DoorCrankWheel valve2 at 16 -49 ground y=1.25 yaw=90
+place Creature_Rat rats2 at 17.5 -50 ground y=0.3
+call fz_hazard x=16 z=-49 al=miasma2 kind=miasma r=3 dmg=2 safe=suit msg="Gas hisses out round the valve - the pumps' old coolant, rotten. A suit from the cabinet would keep it off."
+place RT_Pillar - at 22 -53 ground sy=0.4
+place TP_Selene_DoorCrankWheel valve3 at 22 -53 ground y=1.25 yaw=90
+place Creature_Rat rats3 at 23.5 -54 ground y=0.3
+call fz_hazard x=22 z=-53 al=miasma3 kind=miasma r=3 dmg=2 safe=suit msg="Gas hisses out round the valve - the pumps' old coolant, rotten. A suit from the cabinet would keep it off."
+place "Box Big" suitbox1 at 30 -44 ground sit yaw=270
+place "Box Big" suitbox2 at 14 -44.5 ground sit yaw=90
+call treasure x=22 z=-46 r=6 n=1 seed=13151
+call treasure x=34 z=-56 r=6 n=1 seed=13152
+# the three flooded cooling halls
+brush flatten at 45 8 r=9 s=20 frames=300 h=3.8
+clear at 45 8 r=9
+push at 48 8 h=4
+call rt_storey a=hall1 l2=RT_WallDoor1 r2=RT_WallWindowBroken
+place RT_Floor hall1 at 0 4.5 y=3
+place Loot_Chest rodchest1 at -1.2 -3.6 y=0.1 sit yaw=0
+place Placeable_Lantern_Metal - at -4.6 3.4 y=0.1 sit
+place RT_CommRadio - at -1 3.4 y=0.1 sit yaw=180
+pop
+call icetint al=hall1
+place AirPocket_1 - at 45 8 h=4.15 scale=0.6
+place Zone_Atmosphere - at 45 8 h=5.2
+place Zone_Trigger hall1air at 45 8 h=5.6
+prop hall1air zone.id=hall_east
+prop hall1air zone.radius=2.5
+prop hall1air zone.repeat=1
+prop hall1air zone.air=1
+prop hall1air zone.message=The east hall: a cooling hall, flooded to the roof. Air in a pocket, a rod chest by the wall.
+brush flatten at -43 -14 r=9 s=20 frames=300 h=3.8
+clear at -43 -14 r=9
+push at -40 -14 h=4
+call rt_storey a=hall2 l2=RT_WallDoor1 r2=RT_WallWindowBroken
+place RT_Floor hall2 at 0 4.5 y=3
+place Loot_Chest rodchest2 at -1.2 -3.6 y=0.1 sit yaw=0
+place Placeable_Lantern_Metal - at -4.6 3.4 y=0.1 sit
+place RT_CommRadio - at -1 3.4 y=0.1 sit yaw=180
+pop
+call icetint al=hall2
+place AirPocket_1 - at -43 -14 h=4.15 scale=0.6
+place Zone_Atmosphere - at -43 -14 h=5.2
+place Zone_Trigger hall2air at -43 -14 h=5.6
+prop hall2air zone.id=hall_west
+prop hall2air zone.radius=2.5
+prop hall2air zone.repeat=1
+prop hall2air zone.air=1
+prop hall2air zone.message=The west hall: a cooling hall, flooded to the roof. Air in a pocket, a rod chest by the wall.
+brush flatten at -23 40 r=9 s=20 frames=300 h=3.8
+clear at -23 40 r=9
+push at -20 40 h=4
+call rt_storey a=hall3 l2=RT_WallDoor1 r2=RT_WallWindowBroken
+place RT_Floor hall3 at 0 4.5 y=3
+place Loot_Chest rodchest3 at -1.2 -3.6 y=0.1 sit yaw=0
+place Placeable_Lantern_Metal - at -4.6 3.4 y=0.1 sit
+place RT_CommRadio - at -1 3.4 y=0.1 sit yaw=180
+pop
+call icetint al=hall3
+place AirPocket_1 - at -23 40 h=4.15 scale=0.6
+place Zone_Atmosphere - at -23 40 h=5.2
+place Zone_Trigger hall3air at -23 40 h=5.6
+prop hall3air zone.id=hall_north
+prop hall3air zone.radius=2.5
+prop hall3air zone.repeat=1
+prop hall3air zone.air=1
+prop hall3air zone.message=The north hall: a cooling hall, flooded to the roof. Air in a pocket, a rod chest by the wall.
+
 # --- DISCOVERIES 10-24 (optional, no quest needs them): diver's cache + slate + air pocket; TP_SnowVehicle01 + chest; hatch with a chest; buried treasure; viewpoint ---
 place "Box Small" dcampbox at 5.6 35.6 ground sit
 place Note_Paper dnote at 5.6 35.6 ground y=0.7 drop yaw=30
@@ -163,6 +261,81 @@ info description=The Coldhold's lowest level, flooded 30 m down: pressure rooms 
 island on.arrive=message||Far below, lamps still burn along a row of drowned rooms.
 
 story arkvalve|The ark valve|Placeable_Lantern_Metal|The Seed Ark's valve, turned. The Coldhold's way is finished.
+
+# --- DEEP 10-24: the pumps, the cooling rods, the valves ---
+story coolrod|A cooling rod|Placeable_Lantern_Metal|A cooling rod from a flooded hall, for the pump station's sockets.
+story rodset|A cooling rod set|Placeable_Lantern_Metal|A cooling rod set in the pump station's socket.
+story pumpkey|The pump key|Placeable_Lantern_Metal|The pump key: it unlocks the islet's three valves.
+story valveturned|A valve turned|Placeable_Lantern_Metal|One of the pump islet's three valves, opened.
+story pumpsrun|The pumps running|Placeable_Lantern_Metal|The Ark's pumps run again: the ark valve can turn.
+note engineerlog Pump engineer's log | PUMP ENGINEER'S LOG\n\nThe ark valve will not turn on dead pumps. The pumps' tower stands on the islet south-east - the only rock over the water.\nI took the three cooling rods out to stop the coolant boiling, and hid them in the cooling halls: east, west, north.\nRods in, pull the station's lever, it gives up the pump key. Open the three valves. Then the switch on the tower.\nThe gas round the valves is rotten coolant. There are suits in the cabinets. And the rats live in the pipes.
+note rodchest1 East hall rod chest | A chest in the flooded east hall: a cooling rod in its lead sleeve.
+loot rodchest1 story:coolrod*1;CopperIngot*2
+note rodchest2 West hall rod chest | A chest in the flooded west hall: a cooling rod, and the hall keeper's spares.
+loot rodchest2 story:coolrod*1;Bolt*3;Glass*2
+note rodchest3 North hall rod chest | A chest in the flooded north hall: the last cooling rod.
+loot rodchest3 story:coolrod*1;MetalIngot*2
+note pumpchest Pump keeper's chest | The pump keeper's chest on the tower: dry clothes, tools - and seeds he kept for himself.
+loot pumpchest TitaniumIngot*1;Seed_Pine*3;Rope*2
+prop pumpchest loot.refill=0
+prop treasure13151 treasure.loot=TitaniumOre*2;CopperOre*2
+prop treasure13152 treasure.loot=MetalOre*3;TradeToken*3
+prop sock1 obj.name=sock1
+prop sock2 obj.name=sock2
+prop sock3 obj.name=sock3
+prop sock1 beh.use=Set a cooling rod in the socket
+prop sock1 if.use=!signal|sock1\ntake|story:coolrod|1
+prop sock1 on.use=signal||sock1\ngive||story:rodset*1\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The cooling rod slides home in its socket.
+prop sock1 else.use=message||An empty socket for a cooling rod. The pump engineer's log (pressure room 4) says where the rods are.
+prop sock2 beh.use=Set a cooling rod in the socket
+prop sock2 if.use=!signal|sock2\ntake|story:coolrod|1
+prop sock2 on.use=signal||sock2\ngive||story:rodset*1\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The cooling rod slides home in its socket.
+prop sock2 else.use=message||An empty socket for a cooling rod. The pump engineer's log (pressure room 4) says where the rods are.
+prop sock3 beh.use=Set a cooling rod in the socket
+prop sock3 if.use=!signal|sock3\ntake|story:coolrod|1
+prop sock3 on.use=signal||sock3\ngive||story:rodset*1\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The cooling rod slides home in its socket.
+prop sock3 else.use=message||An empty socket for a cooling rod. The pump engineer's log (pressure room 4) says where the rods are.
+prop pumplever obj.name=pumplever
+prop pumplever beh.use=Pull the cooling station's lever
+prop pumplever if.use=!signal|pumpkey\ntake|story:rodset|3
+prop pumplever on.use=signal||pumpkey\ngive||story:pumpkey*1\nsound||event:/exploring/temperence/selene/reactor_alarm\nmessage||The station shudders, the cooling jams - an alarm - and the emergency release drops the pump key into your hand.
+prop pumplever else.use=message||The lever won't move: the cooling station has three empty rod sockets.
+prop valve1 obj.name=valve1
+prop valve1 beh.use=Open the valve
+prop valve1 if.use=has|story:pumpkey|1\n!signal|valve1
+prop valve1 on.use=signal||valve1\ngive||story:valveturned*1\nshow|rats1\nsound||event:/exploring/temperence/selene/reactor_alarm\nmessage||The valve groans open - and out of the pipes behind it, rats!
+prop valve1 else.use=message||The valve is locked to the cooling station. Its lever gives the pump key.
+prop rats1 obj.name=rats1
+prop rats1 beh.hidden=1
+prop rats1 creature.count=3
+prop rats1 creature.respawn=0
+prop valve2 obj.name=valve2
+prop valve2 beh.use=Open the valve
+prop valve2 if.use=has|story:pumpkey|1\n!signal|valve2
+prop valve2 on.use=signal||valve2\ngive||story:valveturned*1\nshow|rats2\nsound||event:/exploring/temperence/selene/reactor_alarm\nmessage||The valve groans open - and out of the pipes behind it, rats!
+prop valve2 else.use=message||The valve is locked to the cooling station. Its lever gives the pump key.
+prop rats2 obj.name=rats2
+prop rats2 beh.hidden=1
+prop rats2 creature.count=3
+prop rats2 creature.respawn=0
+prop valve3 obj.name=valve3
+prop valve3 beh.use=Open the valve
+prop valve3 if.use=has|story:pumpkey|1\n!signal|valve3
+prop valve3 on.use=signal||valve3\ngive||story:valveturned*1\nshow|rats3\nsound||event:/exploring/temperence/selene/reactor_alarm\nmessage||The valve groans open - and out of the pipes behind it, rats!
+prop valve3 else.use=message||The valve is locked to the cooling station. Its lever gives the pump key.
+prop rats3 obj.name=rats3
+prop rats3 beh.hidden=1
+prop rats3 creature.count=3
+prop rats3 creature.respawn=0
+prop suitbox1 beh.use=Take a suit from the cabinet
+prop suitbox1 on.use=suit||120\nmessage||A coolant suit and a mask from the cabinet: two minutes in the gas.
+prop suitbox2 beh.use=Take a suit from the cabinet
+prop suitbox2 on.use=suit||120\nmessage||A coolant suit and a mask from the cabinet: two minutes in the gas.
+prop pumpswitch obj.name=pumpswitch
+prop pumpswitch beh.use=Throw the pump switch
+prop pumpswitch if.use=!signal|pumpsrun\ntake|story:valveturned|3\ntake|story:pumpkey|1
+prop pumpswitch on.use=signal||pumpsrun\ngive||story:pumpsrun*1\nsound||event:/exploring/temperence/selene/reactor_alarm\nmessage||Deep under the sea the pumps cough, then thunder. The Ark's water starts to move.
+prop pumpswitch else.use=message||The pump switch is dead: the islet's three valves are shut.
 
 note manifest Ark manifest | THE SEED ARK - MANIFEST\n\nRacks 1-40: grains. 41-80: fruit and tree seed. 81-96: flowers, for the bees, when there are bees again.\nPressure rooms 1-4 hold air for the keepers. The ice gate opens from room 1 - for forty breaths, then it shuts.
 note ringwavefile The Ringwave file | THE RINGWAVE - FILE\n\nThe founders did not invent the sign. They found it on the sea doors and the glacier wall, and in the old charts beside one word: ENGINE.\nThe charts put the engine in the south. The founders cut the sign over our door so the keepers would remember: whatever it is, it is still running.
@@ -206,8 +379,8 @@ prop gatelever beh.use=Pull the ice gate's lever
 prop gatelever on.use=hide|gate\nmessage||The ice gate grinds aside. Forty breaths - swim!\nwait|40\nshow|gate
 prop arkvalve obj.name=arkvalve
 prop arkvalve beh.use=Turn the ark valve
-prop arkvalve if.use=!signal|arkvalve\ntake|story:arkseal|3
-prop arkvalve else.use=message||The valve's seal plate has three empty sockets. The manifest says: seals in rooms 1, 2 and 3.
+prop arkvalve if.use=!signal|arkvalve\nhas|story:pumpsrun|1\ntake|story:arkseal|3
+prop arkvalve else.use=message||The valve's seal plate has three empty sockets. The manifest says: seals in rooms 1, 2 and 3. And the valve is dead while the pumps are: the pump engineer's log lies by it.
 story arkseal|An ark seal|Placeable_Lantern_Metal|A brass seal for the ark valve's plate.
 story rackcode|The last rack's code|Placeable_Lantern_Metal|The Coldhold's control code opened the last rack.
 note seal1 Room 1 seal box | A box under the roof of pressure room 1: an ark seal in wax, and spare filters.
@@ -243,6 +416,13 @@ step reach|room_3|1|Swim on to pressure room 3
 step read|The Ringwave file|1|Read the Ringwave file
 step reach|room_4|1|Swim on to pressure room 4
 step collect|story:arkseal|3|Find the valve's three seals (pressure rooms 1, 2 and 3)
+step read|Pump engineer's log|1|The valve won't turn on dead pumps. Read the pump engineer's log in room 4
+step reach|pump_islet|1|Swim up and out to the pump islet in the south-east
+step collect|story:rodset|3|Bring the three cooling rods from the flooded halls (east, west, north) and set them in the sockets
+step collect|story:pumpkey|1|Pull the cooling station's lever for the pump key
+step collect|story:valveturned|3|Open the islet's three valves (the gas: take a suit from a cabinet)
+step reach|pump_top|1|Climb the pump tower
+step collect|story:pumpsrun|1|Throw the pump switch
 step collect|story:arkvalve|1|Turn the ark valve
 step read|The closing note|1|Read the closing note
 step reach|surface_hole|1|Swim up to the surface hole

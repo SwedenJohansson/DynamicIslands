@@ -16,5 +16,22 @@ wait 3
 expect step 4
 catch Llama 1
 expect step 5
+# DEEP 10-24: the weather mast on the hill
+zone mast_top
+expect step 6
 read Weather log
 expect done
+# the extras: the mast chest, the ice cave, the dark hatch (its lantern), the shuttle to the ledge (3 bolts), treasures
+open Weather mast chest
+zone ice_cave
+read Initials in the ice
+open Ice cave chest
+open Driver's box
+use dhatch
+expect shown dhatchlamp
+open Under the hatch
+use shuttle
+wait 12
+open Ledge cache
+dig 0
+dig 1
