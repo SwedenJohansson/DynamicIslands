@@ -148,15 +148,19 @@ place Creature_Goat trgoats at 62.02 18.17 ground
 prop trgoats creature.count=2
 call treasure x=12.63 z=-52.64 r=12 n=1 seed=14922
 prop treasure14922 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
-# the surveyors' dig field: three tins and a decoy (M33)
+# the surveyors' dig field: three tins and a decoy (M33); scatter with free=1.5 (the treasure macro's free=4 found no spot here)
 call notebox x=52 z=48 yaw=90 al=trmap
-call treasure x=56 z=44 r=12 n=1 seed=14923
+scatter Treasure_Buried 1 at 54 46 r=3 seed=14923 free=1.5 as=treasure14923
+prop treasure14923 treasure.kind=0
 prop treasure14923 treasure.loot=story:surveyfix*1;Bolt*1
-call treasure x=64 z=44 r=12 n=1 seed=14924
+scatter Treasure_Buried 1 at 58 46 r=3 seed=14924 free=1.5 as=treasure14924
+prop treasure14924 treasure.kind=0
 prop treasure14924 treasure.loot=story:surveyfix*1;CopperIngot*1
-call treasure x=56 z=52 r=12 n=1 seed=14925
+scatter Treasure_Buried 1 at 54 50 r=3 seed=14925 free=1.5 as=treasure14925
+prop treasure14925 treasure.kind=0
 prop treasure14925 treasure.loot=story:surveyfix*1;MetalIngot*1
-call treasure x=64 z=52 r=12 n=1 seed=14926
+scatter Treasure_Buried 1 at 58 50 r=3 seed=14926 free=1.5 as=treasure14926
+prop treasure14926 treasure.kind=0
 prop treasure14926 treasure.loot=Scrap*2
 place Creature_Rat trrats at 66 55 ground
 prop trrats creature.count=3
