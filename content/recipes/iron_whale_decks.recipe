@@ -269,54 +269,56 @@ prop deckslights beh.hidden=1
 
 # --- JUMP COURSE iw (U22, 10-24): a kz-style hop course of floor slabs on its own flattened pad -----------------
 # Every gap and rise is within the U22 jump limits (reach_audit/jumps.py checks them). A fall lands on the pad.
-# JUMP iw pad=2.5 at=42 -60
+# JUMP iw pad=16.5 at=42 -60
+# (box agent 10-25: the course stood on the seabed 12 m under the sea (the sea is at 15 here) - raised 14 m onto a reef islet)
 push at 42 -60
 clear at 0 0 r=17 all
-brush flatten at 0 0 r=14 s=20 frames=300 h=2.5
+brush flatten at 0 0 r=14 s=20 frames=300 h=16.50
 brush smooth at 0 0 r=18 s=4 frames=40
-brush flatten at 0 0 r=12 s=20 frames=300 h=2.5
+brush flatten at 0 0 r=12 s=20 frames=300 h=16.50
 brush auto at 0 0 r=18 s=10 frames=25
 clear at 0 0 r=18
-place Block_Foundation_Tier3 jpiw at 0.10 5.64 h=3.10
-place Block_Foundation_Tier3 jpiw at 2.92 5.64 h=3.60
-place Block_Foundation_Tier3 jpiw at 5.93 5.64 h=4.00
-place Block_Foundation_Tier3 jpiw at 5.93 3.03 h=4.90
-place Block_Foundation_Tier3 jpiw at 5.93 -1.21 h=5.40 sx=0.3 sz=3
-place Block_Foundation_Tier3 jpiw at 5.93 -5.64 h=6.20
-place Block_Foundation_Tier3 jpiw at 3.02 -5.64 h=7.10
-place Block_Foundation_Tier3 jpiw at 0.40 -5.64 h=6.10
-place Block_Foundation_Tier3 jpiw at -2.41 -5.64 h=7.05
-place Block_Foundation_Tier3 jpiw at -5.12 -5.64 h=8.00
-place Block_Foundation_Tier3 jpiw at -5.12 -2.02 h=8.90 sx=2 sz=2
+place Block_Foundation_Tier3 jpiw at 0.10 5.64 h=17.10
+place Block_Foundation_Tier3 jpiw at 2.92 5.64 h=17.60
+place Block_Foundation_Tier3 jpiw at 5.93 5.64 h=18.00
+place Block_Foundation_Tier3 jpiw at 5.93 3.03 h=18.90
+place Block_Foundation_Tier3 jpiw at 5.93 -1.21 h=19.40 sx=0.3 sz=3
+place Block_Foundation_Tier3 jpiw at 5.93 -5.64 h=20.20
+place Block_Foundation_Tier3 jpiw at 3.02 -5.64 h=21.10
+place Block_Foundation_Tier3 jpiw at 0.40 -5.64 h=20.10
+place Block_Foundation_Tier3 jpiw at -2.41 -5.64 h=21.05
+place Block_Foundation_Tier3 jpiw at -5.12 -5.64 h=22.00
+place Block_Foundation_Tier3 jpiw at -5.12 -2.02 h=22.90 sx=2 sz=2
 # JUMP from 11
-place Block_Foundation_Tier3 jpiw at 1.30 -2.02 h=9.20 sx=2 sz=2
-place Block_Foundation_Tier3 jpiw at 1.30 3.21 h=9.50
+place Block_Foundation_Tier3 jpiw at 1.30 -2.02 h=23.20 sx=2 sz=2
+place Block_Foundation_Tier3 jpiw at 1.30 3.21 h=23.50
 # JUMP end
-place RT_PillarThick jppiw at 2.92 5.64 h=2.00 sy=0.153 sx=0.8 sz=0.8
-place RT_PillarThick jppiw at 5.93 5.64 h=2.00 sy=0.220 sx=0.8 sz=0.8
-place RT_PillarThick jppiw at 5.93 3.03 h=2.00 sy=0.370 sx=0.8 sz=0.8
-place RT_PillarThick jppiw at 5.93 -1.21 h=2.00 sy=0.453 sx=0.8 sz=0.8
-place RT_PillarThick jppiw at 5.93 -5.64 h=2.00 sy=0.586 sx=0.8 sz=0.8
-place RT_PillarThick jppiw at 3.02 -5.64 h=2.00 sy=0.736 sx=0.8 sz=0.8
-place RT_PillarThick jppiw at 0.40 -5.64 h=2.00 sy=0.570 sx=0.8 sz=0.8
-place RT_PillarThick jppiw at -2.41 -5.64 h=2.00 sy=0.728 sx=0.8 sz=0.8
-place RT_PillarThick jppiw at -5.12 -5.64 h=2.00 sy=0.886 sx=0.8 sz=0.8
-place RT_PillarThick jppiw at -5.12 -2.02 h=2.00 sy=1.036 sx=0.8 sz=0.8
-place RT_PillarThick jppiw at 1.30 -2.02 h=2.00 sy=1.086 sx=0.8 sz=0.8
-place RT_PillarThick jppiw at 1.30 3.21 h=2.00 sy=1.136 sx=0.8 sz=0.8
+# (box agent 10-25: the posts 1.9 x as wide as their slabs - thin ones left most of each slab's base in the air for the ground check)
+place RT_PillarThick jppiw at 2.92 5.64 h=16.00 sy=0.153 sx=1.9 sz=1.9
+place RT_PillarThick jppiw at 5.93 5.64 h=16.00 sy=0.220 sx=1.9 sz=1.9
+place RT_PillarThick jppiw at 5.93 3.03 h=16.00 sy=0.370 sx=1.9 sz=1.9
+place RT_PillarThick jppiw at 5.93 -1.21 h=16.00 sy=0.453 sx=0.57 sz=5.7
+place RT_PillarThick jppiw at 5.93 -5.64 h=16.00 sy=0.586 sx=1.9 sz=1.9
+place RT_PillarThick jppiw at 3.02 -5.64 h=16.00 sy=0.736 sx=1.9 sz=1.9
+place RT_PillarThick jppiw at 0.40 -5.64 h=16.00 sy=0.570 sx=1.9 sz=1.9
+place RT_PillarThick jppiw at -2.41 -5.64 h=16.00 sy=0.728 sx=1.9 sz=1.9
+place RT_PillarThick jppiw at -5.12 -5.64 h=16.00 sy=0.886 sx=1.9 sz=1.9
+place RT_PillarThick jppiw at -5.12 -2.02 h=16.00 sy=1.036 sx=3.8 sz=3.8
+place RT_PillarThick jppiw at 1.30 -2.02 h=16.00 sy=1.086 sx=3.8 sz=3.8
+place RT_PillarThick jppiw at 1.30 3.21 h=16.00 sy=1.136 sx=1.9 sz=1.9
 prop jpiw tint.color=#6f7378
 prop jpiw tint.amount=0.35
 prop jppiw tint.color=#6f7378
 prop jppiw tint.amount=0.35
-place Loot_Chest jciw at -5.12 -2.02 h=8.90 sit yaw=0
+place Loot_Chest jciw at -5.12 -2.02 h=22.90 sit yaw=0
 note jciw Deck crew perch | The whale's deck crew practised boarding jumps on these slabs.
 loot jciw MetalIngot*2;Rope*3;Plank*4
 prop jciw loot.refill=0
-place Loot_ChestSmall jbiw at 1.30 3.21 h=9.50 sit yaw=0
+place Loot_ChestSmall jbiw at 1.30 3.21 h=23.50 sit yaw=0
 note jbiw Boarding prize | The crew's prize for the two long jumps - and a tip: something is buried at the foot of the course.
 loot jbiw CopperIngot*2;Glass*2
 prop jbiw loot.refill=0
-place Zone_Trigger jyiw at 1.30 3.21 h=10.50
+place Zone_Trigger jyiw at 1.30 3.21 h=24.50
 prop jyiw zone.id=jump_iw_finale
 prop jyiw zone.radius=1.8
 prop jyiw zone.repeat=never

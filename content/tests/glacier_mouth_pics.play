@@ -14,3 +14,7 @@ storespot 10 -4
 picture sl12_glacier_mouth_icefall -22 +16 80 -44 30 76.8
 picture sl12_glacier_mouth_cairn -37 +3 71 -44 31 76.8
 picture sl12_glacier_mouth_crevasse -50 +5 16.8 -57 +0 4.8
+
+# (box agent 10-25: aerial of the jump course)
+offset 0 0
+picture jump_gm 82 23 43 66 8 27

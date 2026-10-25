@@ -11,3 +11,7 @@ wait 5
 picture sl12_iron_whale_decks_mast 16 22 -16 3 18 0
 # DEEP 10-24
 picture sl12_iron_whale_decks_funnel 30 21 30 43 16 43
+
+# (box agent 10-25: aerial of the jump course)
+offset 0 0
+picture jump_iw 56 36 -76 42 21 -60
