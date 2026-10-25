@@ -247,6 +247,8 @@ prop cysummit zone.radius=2.5
 prop cysummit zone.message=The top of Crane Hill. The whole island lies below.
 story cy_cranekey|Crane key|Hinge|The old crane's key, on a brass tag. It frees the counterweight release.
 story cy_drop|Counterweight dropped|Bolt|The crane's counterweight came down on the store roof: the hatch is open.
+prop cyweight obj.name=cyweight
+prop cycap obj.name=cycap
 prop cyweight beh.hidden=1
 prop cylever obj.name=cylever
 prop cylever beh.use=Pull the counterweight release
