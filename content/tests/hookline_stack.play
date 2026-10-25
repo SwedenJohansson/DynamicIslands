@@ -63,8 +63,8 @@ read Missing expedition notice
 expect step 1 quest=2
 zone dive_rope
 expect step 2 quest=2
-openat -40 -24
-openat -42 -15
+openat -82.3 -48.9
+openat -84.3 -39.9
 expect story salvagetag 2
 expect step 3 quest=2
 use tally

@@ -241,8 +241,10 @@ prop $al if.use=has|story:$a|1\nhas|story:$b|1\n!signal|$done
 prop $al on.use=signal||$done\ngive||story:$done*1\nshow|$rew\nshow|$rnote\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||$msg
 prop $al else.use=message||$hint
 place Loot_Chest $rew at {$x+2*cos($yaw)} {$z-2*sin($yaw)} ground sit yaw={$yaw+180}
+prop $rew obj.name=$rew
 prop $rew beh.hidden=1
 prop $rew loot.refill=0
 place Note_Paper $rnote at {$x-1.6*cos($yaw)} {$z+1.6*sin($yaw)} ground y=0.1 drop
+prop $rnote obj.name=$rnote
 prop $rnote beh.hidden=1
 end
