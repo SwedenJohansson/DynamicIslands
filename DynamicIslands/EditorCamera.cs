@@ -133,9 +133,10 @@ namespace DynamicIslands.Editor
 			Vector3 keys = Vector3.zero;
 			if (!typing && !EditorInput.Ctrl && !orbiting)
 			{
-				keys = new Vector3(Input.GetAxisRaw("Horizontal"), 0f, Input.GetAxisRaw("Vertical"));
+				Vector2 move = CameraSettings.MoveKeys(); // (WASD, or ZQSD on AZERTY: ROADMAP L2)
+				keys = new Vector3(move.x, 0f, move.y);
 				keys.y = (Input.GetKey(KeyCode.Space) ? 1f : 0f) - (Input.GetKey(KeyCode.C) ? 1f : 0f);
-				if (looking) keys.y += (Input.GetKey(KeyCode.E) ? 1f : 0f) - (Input.GetKey(KeyCode.Q) ? 1f : 0f);
+				if (looking) keys.y += (Input.GetKey(CameraSettings.UpKey) ? 1f : 0f) - (Input.GetKey(CameraSettings.DownKey) ? 1f : 0f);
 				keys.y = Mathf.Clamp(keys.y, -1f, 1f);
 			}
 			Move(keys, looking, EditorInput.Shift, dt);

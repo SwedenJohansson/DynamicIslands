@@ -9,6 +9,21 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-25: Editor: picking small objects, 1 m brushes, grid sizes, AZERTY keys
+
+### Added
+- **Clicking picks the object you mean:** the smallest object under the mouse, by its real shape and not the box around
+  it, so a flower beside a big palm can be selected. Click the same spot again for the next object there. A light blue
+  outline shows what a click would select.
+- **Grid size** on the Objects tab: 0.5, 1, 1.5 or 2 m for **Grid** (1.5 m is Raft's building grid). It snaps while
+  placing and while moving with the arrows, and is kept on this PC.
+- **AZERTY keys:** the **Keys** button in the editor's Camera window (right of **Mod's own**) switches the editor to ZQSD
+  and A/E, and the help and tips name those keys. Kept on this PC.
+
+### Changed
+- **The terrain brush goes down to 1 m across** (it was 4 m); the Size slider gives the small sizes room, and the ring
+  matches. A 1 m brush moves one ground point (the ground has one about every 2 m).
+
 ## 2026-10-25: Relic of the Seventh Tide, full-size islands
 
 ### Changed

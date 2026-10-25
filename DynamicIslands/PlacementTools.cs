@@ -14,9 +14,47 @@ namespace DynamicIslands.Editor
 		public static bool RandomTurnAndSize;
 		/// <summary>Placed and grounded objects lean with the slope of the ground instead of standing straight up.</summary>
 		public static bool AlignToSlope;
-		/// <summary>Positions snap to Raft's 1.5 m building grid and Q/E turn in 90° steps (for Raft blocks).</summary>
+		/// <summary>Positions snap to the grid (GridStep; Raft's 1.5 m building grid by default) and Q/E turn in 90° steps.</summary>
 		public static bool SnapToGrid;
+		/// <summary>Raft's building grid: the generators and blocks always use it. The editor's Grid button uses GridStep.</summary>
 		public const float GridSize = 1.5f;
+		/// <summary>The sizes the Objects tab offers for the Grid button (ROADMAP E13).</summary>
+		public static readonly float[] GridSizes = { 0.5f, 1f, 1.5f, 2f };
+		/// <summary>The world_rules.txt key that keeps the chosen grid size on this PC.</summary>
+		public const string GridKey = "editorgrid";
+		static float? gridStep;
+
+		/// <summary>The grid the editor snaps to while placing and moving (0.5, 1, 1.5 or 2 m), remembered in world_rules.txt.</summary>
+		public static float GridStep
+		{
+			get
+			{
+				if (gridStep == null)
+				{
+					float g;
+					gridStep = float.TryParse(WorldRules.ReadDefault(GridKey) ?? "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out g) ? NearestGrid(g) : GridSize;
+				}
+				return gridStep.Value;
+			}
+			set
+			{
+				float g = NearestGrid(value);
+				if (gridStep == g) return;
+				gridStep = g;
+				WorldRules.SaveDefaults(new Dictionary<string, string> { { GridKey, g.ToString(System.Globalization.CultureInfo.InvariantCulture) } });
+			}
+		}
+
+		/// <summary>The offered grid size nearest to g.</summary>
+		public static float NearestGrid(float g)
+		{
+			float best = GridSize;
+			foreach (float s in GridSizes) if (Mathf.Abs(s - g) < Mathf.Abs(best - g)) best = s;
+			return best;
+		}
+
+		/// <summary>For tests: forget the cached size so the next read comes from world_rules.txt.</summary>
+		internal static void ReloadGrid() { gridStep = null; }
 		/// <summary>How far down a floating object may go (m below the sea).</summary>
 		public const float FloatDepth = 0.35f;
 		/// <summary>A floating foundation's own height above the sea, and the deck a player walks on above it - measured on the
@@ -32,7 +70,8 @@ namespace DynamicIslands.Editor
 		public static Vector3 Snap(Vector3 p)
 		{
 			if (!SnapToGrid) return p;
-			return new Vector3(Mathf.Round(p.x / GridSize) * GridSize, p.y, Mathf.Round(p.z / GridSize) * GridSize);
+			float g = GridStep;
+			return new Vector3(Mathf.Round(p.x / g) * g, p.y, Mathf.Round(p.z / g) * g);
 		}
 
 		/// <summary>Raft's building blocks float: over water they sit at the sea surface instead of on the seabed.</summary>
@@ -229,32 +268,13 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>
-		/// The placed object (its EditorGameObject root) under a ray, or null for the terrain, the sea or nothing.
-		/// Objects are found by their colliders, else (decorations without colliders, colliders on other layers) by their meshes' bounds.
+		/// The placed object (its EditorGameObject root) under a ray, or null for the terrain, the sea or nothing: the first of
+		/// ObjectPick.Candidates (the smallest object whose real surface, collider or bounds the ray meets in front of the
+		/// ground and of the first real surface - ROADMAP E11: a flower beside a big palm can be picked).
 		/// </summary>
 		public static Transform PickObject(Ray ray, LayerMask mask)
 		{
-			float terrainDistance = float.MaxValue;
-			foreach (RaycastHit hit in Physics.RaycastAll(ray, 5000f, mask).OrderBy(h => h.distance))
-			{
-				if (hit.collider.GetComponent<Terrain>() != null) { terrainDistance = hit.distance; break; }
-				EditorGameObject owner = hit.collider.GetComponentInParent<EditorGameObject>();
-				if (owner != null && owner.gameObject.activeInHierarchy) { if (SelectionTools.IsLocked(owner)) continue; return owner.transform; }
-			}
-			GameObject placedRoot = GameObject.Find("PlacedObjects");
-			if (placedRoot == null) return null;
-			Transform best = null;
-			float bestDistance = terrainDistance;
-			foreach (EditorGameObject o in placedRoot.GetComponentsInChildren<EditorGameObject>(false))
-			{
-				if (!SelectionTools.Pickable(o)) continue; // (hidden or locked - ROADMAP E3)
-				foreach (Renderer r in o.GetComponentsInChildren<Renderer>())
-				{
-					float d;
-					if (r.enabled && r.name != ContentCatalog.MarkerOnly && !(r is ParticleSystemRenderer) && r.bounds.IntersectRay(ray, out d) && d < bestDistance) { bestDistance = d; best = o.transform; }
-				}
-			}
-			return best;
+			return ObjectPick.First(ray, mask);
 		}
 
 		/// <summary>
@@ -266,7 +286,7 @@ namespace DynamicIslands.Editor
 			TransformGizmo gizmo = DynamicIslands.EditorGizmoHandler;
 			GameObject placedRoot = GameObject.Find("PlacedObjects");
 			if (gizmo == null || placedRoot == null) return 0;
-			Vector3 offset = SnapToGrid ? new Vector3(GridSize, 0, 0) : new Vector3(2f, 0, 0);
+			Vector3 offset = SnapToGrid ? new Vector3(GridStep, 0, 0) : new Vector3(2f, 0, 0);
 			if (!ObjectLimit.Allow(gizmo.SelectedRoots.Count(t => t != null))) return 0;
 			var copies = new List<GameObject>();
 			foreach (Transform t in gizmo.SelectedRoots.Where(t => t != null).ToList())
