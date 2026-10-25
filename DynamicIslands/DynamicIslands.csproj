@@ -71,6 +71,7 @@
     <Compile Include="DevTestsSize.cs" />
     <Compile Include="DevTestsGapsC.cs" />
     <Compile Include="DevTestsMech.cs" />
+    <Compile Include="DevTestsPlayerFeatures.cs" />
     <Compile Include="DevTestsContent.cs" />
     <Compile Include="DevTestsStableIds.cs" />
     <Compile Include="DevTestsDirector.cs" />
@@ -168,6 +169,11 @@
     <Compile Include="GapFeatures.cs" />
     <Compile Include="ObjectInspectorGaps.cs" />
     <Compile Include="MechFeatures.cs" />
+    <Compile Include="PlayerFeatures.cs" />
+    <Compile Include="Islanders.cs" />
+    <Compile Include="Collectibles.cs" />
+    <Compile Include="Lights.cs" />
+    <Compile Include="ObjectInspectorPlayer.cs" />
     <Compile Include="ObjectInspectorMech.cs" />
     <Compile Include="WorldDirector.cs" />
     <Compile Include="AnimalLooks.cs" />

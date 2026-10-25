@@ -121,6 +121,7 @@ namespace DynamicIslands.Editor
 				}
 				if (target.GameObjectName.StartsWith("ZiplinePath", System.StringComparison.Ordinal)) ZiplineGroup(target);
 				if (Survivors.IsCage(target.GameObjectName)) SurvivorGroup(target);
+				PlayerGroup(target);
 			}
 			GapGroup(target, kind);
 			MechGroup(target, kind);

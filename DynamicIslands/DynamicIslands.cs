@@ -412,6 +412,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Gap features", e); }
 			try { MechFeatures.Tick(); }
 			catch (Exception e) { TickError("Quest mechanics", e); }
+			try { PlayerFeatures.Tick(); }
+			catch (Exception e) { TickError("Player features", e); }
 			try { RaftColliderGuard.Tick(); }
 			catch (Exception e) { TickError("Raft colliders", e); }
 			try { QuestTracker.Tick(); QuestCount.Tick(); DailyQuest.Tick(); RogueShark.Tick(); StormDays.Tick(); }

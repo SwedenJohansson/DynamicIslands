@@ -48,6 +48,24 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Marine binoculars** (extra upgrade, titanium): the telescope's zoom, the furthest view through fog and a lighter
   view at dusk and at night. The telescope and Marine binoculars count as binoculars in plan and island checks.
 
+## 2026-10-25: Islanders
+
+### New
+- **Islanders** (Notes & signs > **Islander (talks)**): one of Raft's six characters standing, sitting, fishing,
+  sleeping or leaning on an island. Press E to talk: a dialogue of pages, maybe with answers to pick. Closing it runs
+  the islander's **talk** event and an answer its **choice1**-**choice3** event; the world remembers who was talked to
+  for the whole crew (the check **talked to**), a new quest step **Talk to** waits for it, and the new action **show
+  dialogue** opens a dialogue from any object. Pose, look and dialogue are set in the inspector.
+- **Collectible sets** (Loot & chests > **Collectible (set piece)**): hidden pieces of a named set. Picking one up
+  counts for the whole crew ("Relics: 2 of 4"); the last one sends the signal `set:<name>` and runs the pieces' **set**
+  event (the reward). New check **set found** and quest step **Find set**.
+- **Light puzzles** (Zones & triggers > **Puzzle light (switch)**, or any object with a light group): switched on and
+  off with E, saved and the same for every player. Events **lit**, **unlit** and **alllit** (the whole group on, plus
+  the signal `lights:<group>`), the action **switch light**, the checks **light is** / **all lights** and the quest
+  step **Light up**.
+- Any object can be made a collectible or a puzzle light with the inspector's **Story puzzle** buttons; every player
+  on the island sees a set's count; the new events keep their actions after a `wait` like the others.
+
 ## 2026-10-25: Relic of the Seventh Tide, full-size islands
 
 ### Changed

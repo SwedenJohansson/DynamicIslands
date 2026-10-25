@@ -63,6 +63,8 @@ namespace DynamicIslands.Editor
 			public readonly HashSet<string> GivesTools = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			/// <summary>The quest traps of guide 6.2 found on the island (AU47): texts in lower case, Check puts the island before them.</summary>
 			public readonly List<Finding> Traps = new List<Finding>();
+			/// <summary>Islanders' names (PlayerFeatures).</summary>
+			public readonly PlayerFeatures.PlanFacts Player = new PlayerFeatures.PlanFacts();
 			public string Describe { get { return Sample ? "a new " + Name + " island (checked on a sample of that map type)" : "'" + Name + "'"; } }
 		}
 
@@ -85,6 +87,7 @@ namespace DynamicIslands.Editor
 			{
 				IDictionary<string, string> p = o.Props ?? new Dictionary<string, string>();
 				if (o.Name == ContentCatalog.TriggerZone) { string z = ObjectProps.Get(p, ObjectProps.ZoneId); if (z.Length > 0) x.Zones.Add(z); }
+				PlayerFeatures.AddFacts(x.Player, o.Name, p);
 				if (ObjectProps.IsNote(o.Name, p))
 				{
 					x.NoteCount++;
@@ -1020,6 +1023,10 @@ namespace DynamicIslands.Editor
 						// (a page comes from a note with text, or a "journal" action: an empty note gives none)
 						if (st.Target != "all" && f.PageCount < st.Count)
 							c.Add(i, Level.Problem, head + " needs " + st.Count + " pages read on the island, and it gives only " + f.PageCount + (f.NoteCount > f.PageCount ? " (" + (f.NoteCount - f.PageCount) + " of its notes have no text: an empty note gives no page)" : "") + tail, fix);
+						break;
+					default:
+						string player = PlayerFeatures.StepProblem(f.Player, st.Type, st.Target, st.Count);
+						if (player != null) c.Add(i, Level.Problem, head + ": " + player + tail, fix);
 						break;
 				}
 			}

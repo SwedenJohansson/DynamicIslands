@@ -49,10 +49,10 @@ namespace DynamicIslands.Editor
 		public const string EventPrefix = "on.";
 		public static readonly string[] ObjectEvents = { "use", "enter", "read", "open", "defeat", "laser", BossPhases.Event, MechFeatures.StackEvent };
 		public static readonly string[] IslandEvents = { "arrive", "quest" };
-		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character", "playsound", "stopsound", "camera", "suit", "hit", "carry", "collapse", "moveto" };
-		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal", "playsound", "stopsound", "camera", "hit", "collapse", "moveto" };
+		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character", "playsound", "stopsound", "camera", "suit", "hit", "carry", "collapse", "moveto", PlayerFeatures.DialogueVerb, Lights.Verb };
+		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal", "playsound", "stopsound", "camera", "hit", "collapse", "moveto", Lights.Verb };
 		public const string CheckPrefix = "if.", ElsePrefix = "else.";
-		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest", "wears", "holds" };
+		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest", "wears", "holds", PlayerFeatures.TalkedCheck, Collectibles.CheckKind, Lights.LightCheck, Lights.GroupCheck };
 		public static readonly string[] States = { "open", "closed", "shown", "hidden" };
 		public static readonly string[] CollisionModes = { "", "none", "box", "solid" };
 
@@ -108,6 +108,7 @@ namespace DynamicIslands.Editor
 				if (!ObjectProps.IsNote(objectName, p) && !ObjectProps.IsLoot(objectName, p)) list.Add(new KeyValuePair<string, string>("use", "a player uses it (" + ObjectProps.Get(p, Use, "needs \"Players can use it\"") + ")"));
 				if (ObjectProps.Get(p, LaserBeam.Prop).Length == 0) list.Add(new KeyValuePair<string, string>(LaserBeam.Event, "a laser beam reaches it (a laser emitter's beam, maybe by way of mirrors)"));
 			}
+			PlayerFeatures.Events(list, objectName, p);
 			return list;
 		}
 	}
@@ -138,8 +139,8 @@ namespace DynamicIslands.Editor
 		public bool Shared { get { return BehaviourProps.SharedVerbs.Contains(Verb); } }
 
 		/// <summary>Needs a target object (by name).</summary>
-		public static bool HasTarget(string verb) { return verb == "show" || verb == "hide" || verb == "toggle" || verb == "open" || verb == "close" || verb == "switch" || verb == "teleport" || verb == "playsound" || verb == "stopsound" || verb == "camera" || verb == "hit" || verb == "carry" || verb == "collapse" || verb == "moveto"; }
-		public static bool HasArg(string verb) { return verb == "suit" || verb == "hit" || verb == "message" || verb == "give" || verb == "sound" || verb == "signal" || verb == "journal" || verb == "wait" || verb == "character" || verb == "playsound" || verb == "stopsound" || verb == "camera" || verb == "collapse" || verb == "moveto"; }
+		public static bool HasTarget(string verb) { return verb == "show" || verb == "hide" || verb == "toggle" || verb == "open" || verb == "close" || verb == "switch" || verb == "teleport" || verb == "playsound" || verb == "stopsound" || verb == "camera" || verb == "hit" || verb == "carry" || verb == "collapse" || verb == "moveto" || PlayerFeatures.HasTarget(verb); }
+		public static bool HasArg(string verb) { return verb == "suit" || verb == "hit" || verb == "message" || verb == "give" || verb == "sound" || verb == "signal" || verb == "journal" || verb == "wait" || verb == "character" || verb == "playsound" || verb == "stopsound" || verb == "camera" || verb == "collapse" || verb == "moveto" || PlayerFeatures.HasArg(verb); }
 
 		/// <summary>A wait's seconds (0..3600).</summary>
 		public float Seconds
@@ -181,7 +182,7 @@ namespace DynamicIslands.Editor
 					SO_Character c = Behaviours.CharacterOf(Arg);
 					return "unlock the character " + (c != null ? c.displayName : "'" + Arg + "' (no such character)") + " for the player";
 			}
-			return Verb;
+			return PlayerFeatures.Describe(this) ?? Verb;
 		}
 	}
 
@@ -247,7 +248,7 @@ namespace DynamicIslands.Editor
 				case "wears": return "the player wears " + (Target.Length > 0 ? ContentCatalog.ItemLabel(Target.TrimEnd('*')) + (Target.EndsWith("*") ? " (any kind)" : "") : "(no item)");
 				case "holds": return "the player holds " + (Target.Length > 0 ? ContentCatalog.ItemLabel(Target.TrimEnd('*')) + (Target.EndsWith("*") ? " (any kind)" : "") : "(no item)") + " in their hand";
 			}
-			return Kind;
+			return PlayerFeatures.What(this) ?? Kind;
 		}
 
 		string ItemText() { return (Count > 1 ? Count + " \u00D7 " : "") + (Target.Length > 0 ? ContentCatalog.ItemLabel(Target) : "(no item)"); }
@@ -398,7 +399,7 @@ namespace DynamicIslands.Editor
 
 		void IRaycastable.OnIsRayed()
 		{
-			if (NoteReader.IsOpen) return;
+			if (NoteReader.IsOpen || DialoguePanel.IsOpen) return;
 			DisplayTextManager hints = CustomNote.Hints;
 			if (hints != null) hints.ShowText(Hint, CustomNote.InteractKey, 0, 0, true);
 			if (CustomNote.InteractPressed() && Time.time > cooldown)
@@ -416,12 +417,15 @@ namespace DynamicIslands.Editor
 		void Use()
 		{
 			IslandWorldState.Entry e = ContentState.EntryOf(transform);
-			if (Ref != null && e != null && QuestItemPickups.IsModel(Ref.ObjectName) && Behaviours.WouldAllow(e, Ref.Index, "use"))
+			// (a story item, a piece of a collectible set: one player's)
+			int claim = Ref == null ? -1 : QuestItemPickups.IsModel(Ref.ObjectName) ? QuestItemPickups.KeyBase + Ref.Index : Collectibles.ClaimKey(Ref);
+			if (claim >= 0 && e != null && Behaviours.WouldAllow(e, Ref.Index, "use"))
 			{
-				int key = QuestItemPickups.KeyBase + Ref.Index;
+				int key = claim;
 				if (ContentState.IsUsed(e, key)) { Beaten(); return; }
 				if (!Claims.May(e, key, yes => { if (this == null) return; if (yes) Use(); else Beaten(); })) { if (Raft_Network.IsHost) Beaten(); return; }
 				ContentState.MarkUsed(transform, key);
+				if (key == Collectibles.ClaimKey(Ref)) Collectibles.PickedUp(e, Ref);
 			}
 			Behaviours.Fire(e, Ref != null ? Ref.Index : -1, "use", true);
 		}
@@ -505,10 +509,12 @@ namespace DynamicIslands.Editor
 			if (go == null || props == null || props.Count == 0) return;
 			// (a lure with an item, a piece to carry: their use lines, as if the builder had written them - MechFeatures)
 			props = MechFeatures.Expand(objectName, props);
+			props = PlayerFeatures.Expand(objectName, props); // (a set piece: picked up when used)
 			IslandObjectRef r = go.AddComponent<IslandObjectRef>();
 			r.Index = index;
 			r.ObjectName = objectName;
 			r.Props = new Dictionary<string, string>(props);
+			PlayerFeatures.Attach(go, r);
 			if (!BehaviourProps.Any(props)) return;
 			if (ObjectProps.GetFloat(props, BehaviourProps.Spin, 0f) != 0f || ObjectProps.GetFloat(props, BehaviourProps.Bob, 0f) != 0f || BehaviourProps.Moves(props))
 				go.AddComponent<IslandBehaviour>().Configure(props, index);
@@ -599,6 +605,13 @@ namespace DynamicIslands.Editor
 		internal static void StoreOnly(IslandWorldState.Entry e, int index, bool visible, bool open)
 		{
 			Store(e, index, RefsOf(e).FirstOrDefault(r => r.Index == index), visible, open);
+		}
+
+		/// <summary>Host: sets an object's shown/open state and sends it to every player (as the shared actions do).</summary>
+		internal static void SetState(IslandWorldState.Entry e, int index, bool visible, bool open)
+		{
+			Apply(e, index, visible, open);
+			IslandNetwork.SendObjectSet(e.Id, index, (visible ? 1 : 0) | (open ? 2 : 0));
 		}
 
 		/// <summary>Whether an object is shown and open, as its state says (shown/hidden as placed when nothing is saved).</summary>
@@ -732,6 +745,8 @@ namespace DynamicIslands.Editor
 
 		static bool Holds(IslandWorldState.Entry e, int index, ObjCheck c, PlayerInventory inv)
 		{
+			bool player;
+			if (PlayerFeatures.Holds(e, index, c, out player)) return player;
 			switch (c.Kind)
 			{
 				case "has":
@@ -994,7 +1009,7 @@ namespace DynamicIslands.Editor
 		{
 			float delay = 0f;
 			int deathsThen = deaths, partNo = 0, parts = actions.Count(a => a.Verb == "wait") + 1;
-			bool keep = shared && ev != null && Raft_Network.IsHost && PendingEventNo(ev) >= 0;
+			bool keep = shared && ev != null && Raft_Network.IsHost && Resumable(ev);
 			int token = ++pendingTokens; // (the latest scheduling of an event is the one that runs: resumed after a reload, the old timers stop)
 			var part = new List<ObjAction>();
 			foreach (ObjAction a in actions.Concat(new[] { new ObjAction { Verb = "wait", Arg = "0" } }))
@@ -1032,8 +1047,15 @@ namespace DynamicIslands.Editor
 		/// <summary>An event's shared actions still to come after a wait (host): PendingBase + object index * 16 + the
 		/// event's number; Yield = the part (counted in waits) they go on from; Day = the scheduling's token (this session).</summary>
 		public const int PendingBase = 0x900000;
+		/// <summary>The same for the story features' events (PlayerFeatures.ResumableEvents: talk, choice1-3, set, lit, unlit,
+		/// alllit), laid out alike: ObjectEvents' numbers are kept in saved worlds and their 4 bits are full.</summary>
+		public const int MorePendingBase = 0xA00000;
 		static int pendingTokens;
 		static readonly string[] PendingEvents = BehaviourProps.ObjectEvents.Concat(BehaviourProps.IslandEvents).ToArray();
+		static string[] MorePendingEvents { get { return PlayerFeatures.ResumableEvents; } }
+
+		/// <summary>Whether an event's shared actions after a wait are kept until they ran.</summary>
+		static bool Resumable(string ev) { return PendingEventNo(ev) >= 0 || Array.IndexOf(MorePendingEvents, (ev ?? "").TrimEnd('!')) >= 0; }
 
 		static int PendingEventNo(string ev)
 		{
@@ -1041,7 +1063,21 @@ namespace DynamicIslands.Editor
 			return n < 0 ? -1 : n + ((ev ?? "").EndsWith("!") ? PendingEvents.Length : 0);
 		}
 
-		static int PendingKey(int index, string ev) { return PendingBase + ((index & 0xFFFF) << 4) + PendingEventNo(ev); }
+		static int PendingKey(int index, string ev)
+		{
+			int m = Array.IndexOf(MorePendingEvents, (ev ?? "").TrimEnd('!'));
+			if (m >= 0) return MorePendingBase + ((index & 0xFFFF) << 4) + m + ((ev ?? "").EndsWith("!") ? MorePendingEvents.Length : 0);
+			return PendingBase + ((index & 0xFFFF) << 4) + PendingEventNo(ev);
+		}
+
+		/// <summary>A pending key's event (null: none).</summary>
+		static string PendingEventOf(int key)
+		{
+			bool more = key >= MorePendingBase;
+			string[] evs = more ? MorePendingEvents : PendingEvents;
+			int evNo = (key - (more ? MorePendingBase : PendingBase)) & 15;
+			return evNo < evs.Length ? evs[evNo] : evNo < evs.Length * 2 ? evs[evNo - evs.Length] + "!" : null;
+		}
 
 		static void KeepPending(IslandWorldState.Entry e, int index, string ev, int part, int token)
 		{
@@ -1070,10 +1106,10 @@ namespace DynamicIslands.Editor
 		static void ResumePending(IslandWorldState.Entry e)
 		{
 			if (!Raft_Network.IsHost) return;
-			foreach (KeyValuePair<int, ObjectState> kv in e.State.Where(k => k.Key >= PendingBase && k.Key < PendingBase + 0x100000).ToList())
+			foreach (KeyValuePair<int, ObjectState> kv in e.State.Where(k => (k.Key >= PendingBase && k.Key < PendingBase + 0x100000) || (k.Key >= MorePendingBase && k.Key < MorePendingBase + 0x100000)).ToList())
 			{
-				int rel = kv.Key - PendingBase, index = rel >> 4, evNo = rel & 15;
-				string ev = evNo < PendingEvents.Length ? PendingEvents[evNo] : evNo < PendingEvents.Length * 2 ? PendingEvents[evNo - PendingEvents.Length] + "!" : null;
+				int index = ((kv.Key - (kv.Key >= MorePendingBase ? MorePendingBase : PendingBase)) >> 4) & 0xFFFF;
+				string ev = PendingEventOf(kv.Key);
 				e.State.Remove(kv.Key);
 				if (ev == null) continue;
 				int from = kv.Value.Yield, waits = 0;
@@ -1110,6 +1146,7 @@ namespace DynamicIslands.Editor
 					StoryBook.Give(l.Key, l.Value, e);
 			foreach (ObjAction a in actions.Where(x => x.Shared))
 			{
+				if (PlayerFeatures.RunShared(e, index, a)) continue;
 				if (a.Verb == "hit") { GapFeatures.HitCreatures(e, Targets(e, index, a.Target), a.Arg); continue; }
 				if (a.Verb == "collapse") { MechFeatures.HostCollapse(e, Targets(e, index, a.Target), a.Arg); continue; }
 				if (a.Verb == "moveto") { MechFeatures.HostMoveTo(e, index, Targets(e, index, a.Target), a.Arg); continue; }
@@ -1170,6 +1207,7 @@ namespace DynamicIslands.Editor
 			{
 				try
 				{
+					if (PlayerFeatures.RunPersonal(e, index, a)) continue;
 					switch (a.Verb)
 					{
 						case "suit":

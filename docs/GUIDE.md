@@ -330,6 +330,12 @@ The builder of an island can give it much more than land (see [section 5](#5-mak
   second phase: at part of its health it roars, calls more animals and gets faster.
 - **Survivors:** someone locked in a cage. Bring the cage's key (a story item) and press **E**: the cage opens, the
   survivor thanks you in a speech bubble, and from then on stands on your raft.
+- **Islanders:** one of Raft's characters standing, sitting, fishing, sleeping or leaning on an island. Press **E** to
+  talk: a dialogue of a few pages, maybe with answers to pick. What you answer can open doors or start a quest.
+- **Collectible sets:** hidden pieces of a set (relics, shells...) lie about an island. Press **E** to pick one up:
+  the screen counts "Relics: 2 of 4" for the whole crew, and finding the whole set brings its reward.
+- **Light puzzles:** lamps and torches you switch on and off with **E**. Lighting the right ones (or all of a group)
+  opens the way on; every player sees the same lights, and they stay as you left them.
 - **Locked doors:** Raft's card reader doors and other key doors open only with their card or key (a story item): the
   reader beeps it through and the door opens for everyone. Without it the door stays shut and says so.
 - **Buried treasure:** nothing shows above the ground. Raft's **metal detector** beeps as you come near, and three
@@ -1611,7 +1617,8 @@ planks and rope, and when the quest is done it brings a saved island "Old camp" 
 name on the Receiver.*
 
 Steps: **go to** a trigger zone, **read** a note, **open** a chest (one of the mod's chests - Raft's abandoned raft crate doesn't count), **defeat** or **catch** a number of animals,
-**collect** a number of a story item, **find** journal pages, find a **Blueprint** of Raft's. Each step's kind is a **▼ list** (each kind says what it
+**collect** a number of a story item, **find** journal pages, find a **Blueprint** of Raft's, **talk to** an islander
+(6.3; by its name, the **▾** lists the island's islanders), **find** a number of a collectible **set** (6.3), **light up** a number of a light group's puzzle lights (6.3). Each step's kind is a **▼ list** (each kind says what it
 asks). Steps point at things on the island by name: the small **▾** beside the name lists the names this island has
 for that kind - its trigger zones, note titles, chest titles or creatures - so you can pick one instead of typing it
 (place the zones, notes, chests and creatures first). A **collect** step picks its story item with **…**. **When the quest is done, bring a new island** (main quest only) chooses from a
@@ -1712,6 +1719,18 @@ Select any object → **Behaviour & events...**. No code needed:
   object that spins, bobs or moves by itself. A creature spot's **Guarded while** lines (`boss.shieldIf=state|Feeder|open`,
   the behaviour window's checks) keep players' weapons glancing off its animals while all of them hold: a boss
   guarded while its feeder runs - close the feeder (or blast it, **hurt creatures**) to fight it.
+- **Islanders** (2026-10-25, 6.3): an islander has the events **talk** (its dialogue closed) and **choice1** to
+  **choice3** (an answer picked); the check **talked to** (`talked|Old Finn`; empty = this islander) passes once
+  anyone of the crew talked to it; the action **show dialogue** (`dialogue|Old Finn|text`) opens a dialogue for the
+  player who set it off.
+- **Collectible sets** (2026-10-25, 6.3): a piece of a set has the event **set** (the island's last piece of its set
+  was found: runs on every piece, once - the set's reward); the check **set found** (`set|Relics|3`; empty number =
+  all) passes once that many pieces of the set on this island were found.
+- **Light puzzles** (2026-10-25, 6.3): a puzzle light has the events **lit** and **unlit** (it was switched on/off) and
+  **alllit** (every light of its group is on now: runs on each of them, every time the group becomes all lit); the
+  action **switch light** (`light|Lamp 2|on`, `light|group:Lamps|off`, empty = toggle; empty name = this light;
+  shared, saved) and the checks **light is** (`light|Lamp 2|on`; empty name = this one) and **all lights**
+  (`lights|Lamps|on`, or `off`).
 - **Sounds and camera moments** (actions in the same ▼ list, shared by every player): **play sound/music** plays one of
   Raft's sound events or music cues (pick it with **…**, a list of every one Raft has), with a volume, **once** or on a
   **loop**, **near** the object (or the objects named) or for **everyone on the island**. Every player near the island
@@ -1770,6 +1789,51 @@ id** and a **Signal** ("survivor" unless you name one). A player whose crew hold
 the cage opens for everyone, the survivor says the line in a speech bubble over the cage, and a few seconds later
 stands on the raft (as decoration: no needs, no work). The world remembers its survivors: one per id, also across
 islands and after a reload, so two cages with one id free one survivor.
+
+**Islanders to talk to** (2026-10-25). **Notes & signs** has **Islander (talks)**: in the editor a plain figure with a
+name tag, in a world one of Raft's six characters. In its **Islander** group set its **Name** (who quests and checks
+talk to), who it **Looks like** (a Raft character; any: picked by the island and the object), its **Pose** (stand,
+sit, fish, sleep, lean - place it where that fits: on a bench, at the water, against a wall) and **What it says**:
+the dialogue. A line `---` starts a new page; lines starting with `>` are answers to pick (up to three in all).
+Players look at it and press **E**: the dialogue opens with the islander's name, **Next** (or E) turns the pages, and
+on a page with answers they pick one (Tab or Esc walks away without answering). When it closes the islander's
+**talk** event runs, and answer 1, 2 or 3 runs its **choice1**, **choice2** or **choice3** event first (Behaviour &
+events..., 6.2): a door that opens for "I will help", a quest page in the journal, a signal. The world remembers who
+was talked to (for the whole crew, after a reload too): the check **talked to** (6.2) passes once anyone talked to the
+islander with that name, and a quest's **Talk to** step (6.1) is done when the dialogue closes. Any object can also
+show a dialogue: the action **show dialogue** (`dialogue|Old Finn|Hello!\n---\nBye`, `\n` for a new line in the
+action's one line) opens it for the player who set it off, said by the named object (its answers run that object's
+choice events). Check warns when a **Talk to** step names no islander of the island.
+
+**Collectible sets** (2026-10-25). **Loot & chests** has **Collectible (set piece)**: a gold coin with a gem, one
+piece of a set. Its **Collectible set** group in the inspector has the **Set** name (default Relics; every object
+with the same set on the island is a piece of it, and the group counts them). Hide the pieces about the island. A
+player looks at one and presses **E**: it is picked up (gone for the whole crew, after a reload too; two players at
+once: one gets it) and every player on the island sees "Relics: 2 of 4". When the island's last piece is found the set is complete:
+the island sends the signal `set:relics` (world plans and **signal sent** checks can wait for it) and every piece's
+**set** event runs once (Behaviour & events..., 6.2): put the reward there on one piece (`give||Titanium*3`, a
+`journal` page, `open|Vault door`). The check **set found** (`set|Relics|2`) passes once that many pieces were found,
+and a quest's **Find set** step (6.1; the **▾** lists the island's sets) waits until its number of pieces is found -
+its progress shows in the quest panel. Pieces count per island (a copy of the island has its own). Check warns when
+a **Find set** step names a set the island hasn't got or wants more pieces than it has.
+
+Any object (not an islander) has a **Story puzzle** group in the inspector: **Make collectible (set)** gives it the
+set Relics and **Make puzzle light (group)** the group Lamps, so its own group shows - rename them there. The
+events **talk**, **choice1**-**choice3**, **set**, **lit**, **unlit** and **alllit** keep their actions after a
+`wait` like the other events: if the island unloads first they run when it loads again.
+
+**Light puzzles** (2026-10-25). **Zones & triggers** has **Puzzle light (switch)**: a post with a bulb. Its **Puzzle
+light** group in the inspector has the **Group** (default Lamps; any object with a group is a puzzle light, so a
+Raft lantern or torch can be one too - its own light and flames go on and off, an object without a light gets one) and
+**Starts** off or on; it counts the group's lights. A player looks at a light and presses **E** to switch it (one
+that switches itself in its own **use** lines is left to them). The state is the object's open state: saved with
+the world and the same for every player. Each light runs **lit** or **unlit** when it changes; when every light of
+its group is on, each runs **alllit** and the island sends the signal `lights:lamps`. Build the puzzle from these:
+`light|Lamp 3|toggle` on lamp 1's **use** makes lamps that switch their neighbours too, `light|group:Lamps|off` on a
+lever resets the puzzle, `open|Gate` on **alllit** is the reward, and the checks **light is** / **all lights** gate
+any event. A quest's **Light up** step (6.1; the **▾** lists the island's groups) waits until that many lights of
+the group are on at once. Check warns when a **Light up** step names a group the island hasn't got or wants more
+lights than it has. Events run on the host while the island is loaded there.
 
 ### 6.4 Islands that bring islands
 
