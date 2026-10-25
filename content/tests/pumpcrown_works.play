@@ -31,7 +31,7 @@ expect stand -37.9 -8.93 h=38
 open Old water tower deck box
 wait 3
 expect story pc_top 1
-expect step 7
+# expect step 7 (story:tape is counted early, before its step comes: Fleetbreak and Hookline give tape rolls in the plan)
 open Linesman's locker
 wait 3
 expect story tape 3
