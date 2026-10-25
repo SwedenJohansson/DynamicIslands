@@ -178,7 +178,7 @@ loot clockroom TradeToken*4;Rope*3;Bolt*2
 prop clockroom loot.refill=0
 loot fireworks Blueprint_Firework*1;Firework*2;Rope*2
 prop fireworks loot.refill=0
-loot riggerchest Blueprint_ZiplineBase*1;Rope*4;Scrap*2;OxygenBottle*1
+loot riggerchest Blueprint_ZiplineBase*1;Blueprint_ZiplineTool*1;Blueprint_BatteryCharger*1;Rope*4;Scrap*2;OxygenBottle*1
 prop riggerchest loot.refill=0
 
 prop stationvines obj.name=stationvines
@@ -231,6 +231,8 @@ step kill|Screecher|4|Drive the screechers off the clock tower
 step open|Clock tower room|1|Open the clock tower room's chest (the crier's code)
 step blueprint|Blueprint_Firework|1|Take the firework plans from the fireworks stall
 step blueprint|Blueprint_ZiplineBase|1|Take the zipline base plans from the rigger's chest
+step blueprint|Blueprint_ZiplineTool|1|Take the zipline tool plans from the rigger's chest
+step blueprint|Blueprint_BatteryCharger|1|Take the battery charger plans from the rigger's chest
 step read|Toll keeper Greta Holm's ledger|1|Find the toll house in the north-east and read Greta's ledger
 step reach|pylonfoot|1|Find the path up Pylon Hill, north-west of the square
 step reach|pylontop|1|Climb Pylon Hill

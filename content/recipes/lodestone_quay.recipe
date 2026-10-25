@@ -144,7 +144,7 @@ note notice Institute notice: Lift Day | HALVARD INSTITUTE - NOTICE\n\nLIFT DAY.
 note log1 Dr. Halvard's log 1 | HALVARD - LOG 1\n\nIt worked. It worked too well. The hill tore off at the cellar line and went up like a cork. The orchard is 30 m over the quay now, and the Kristens' house with it. Their cellar stayed below, under the sea.\n\nAnyone who reads this: the orchard is 30 m up. Bring planks. The builders' store by the crane has what you need for the climb. The orchard's band is 700.\n\nOne more thing. I have taken the pin out of the compass ring's lever and carried it up Cut Hill, to the survey mast. If the needles stand up again, someone has climbed for it - and then the field will know someone is coming.
 note hutchest Instrument hut | The Institute's instrument chest: a radio set's plans and an aerial's, rolled in oilcloth.
 note buildstore Builders' store | The builders' store: planks, nails and rope, stacked for a climb that never happened.
-loot hutchest Blueprint_Reciever*1;Blueprint_Antenna*1;Battery*1;Scrap*3
+loot hutchest Blueprint_Reciever*1;Blueprint_Antenna*1;Blueprint_Recycler*1;Blueprint_HeadLight*1;Battery*1;Scrap*3
 prop hutchest loot.refill=0
 loot buildstore Plank*24;Nail*24;Rope*6;Scrap*4
 prop buildstore loot.refill=0
@@ -182,6 +182,8 @@ step collect|story:leverpin|1|Climb the survey mast and take the lever pin from 
 step collect|story:needles|1|Set the pin and pull the compass ring's lever
 step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the instrument hut
 step blueprint|Blueprint_Antenna|1|Take the antenna plans from the instrument hut
+step blueprint|Blueprint_Recycler|1|Take the recycler plans from the instrument hut
+step blueprint|Blueprint_HeadLight|1|Take the head light plans from the instrument hut
 step read|Dr. Halvard's log 1|1|Read Dr. Halvard's log in the instrument hut
 step open|Builders' store|1|Open the builders' store by the crane - planks for the climb
 quest done=The needles point up. 30 m up, the orchard waits - build your way up from the raft. Its band is 700.

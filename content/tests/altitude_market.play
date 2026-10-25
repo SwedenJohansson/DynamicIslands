@@ -32,21 +32,21 @@ expect step 8
 open Rigger's chest
 wait 3
 expect item OxygenBottle 1
-expect step 9
+expect step 11
 use release
 expect story ballastdrop 0
 read Toll keeper Greta
-expect step 10
-zone pylonfoot
-expect step 11
-zone pylontop
 expect step 12
+zone pylonfoot
+expect step 13
+zone pylontop
+expect step 14
 open Pylon deck box
 wait 3
 expect story cranekey 1
-# (the zipline at step 9 already took the player to the lower terrace: its reach step counts at once)
+# (the zipline at step 11 already took the player to the lower terrace: its reach step counts at once)
 zone lower_terrace
-expect step 14
+expect step 16
 use release
 expect story ballastdrop 1
 expect done

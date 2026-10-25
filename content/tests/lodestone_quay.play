@@ -27,9 +27,9 @@ expect story needles 1
 expect step 8
 open Instrument hut
 wait 3
-expect step 10
+expect step 12
 read Dr. Halvard's log 1
-expect step 11
+expect step 13
 open Builders' store
 wait 3
 expect done

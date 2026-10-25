@@ -17,6 +17,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   and notes read aloud, and its quest now crosses the whole island (The Lodestone Array 27 steps, The Array Root 18,
   Sinkmarket Floor 19). Start a new world with the plan to get the new islands.
 
+### Fixed
+- **The Gravity Sea gives all of Raft's blueprints it promises:** the Recycler and Head light plans are in Lodestone
+  Quay's chest, the Zipline tool and Battery charger plans in Altitude Market's rigger's chest, each a quest step.
+
 ## 2026-10-25: quest sea animals stay
 
 ### Fixed
