@@ -9,6 +9,15 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-25: Camera fly-throughs
+
+### Added
+- **Camera fly-throughs:** place **Camera points** (Zones & triggers) to make a camera path, each point with its order,
+  what it looks at, its speed and a wait. The new when/then action **camera fly-through** flies the camera of every
+  player near the path along it once, on a smooth curve, with the player held; **Esc** skips it. In the editor a line
+  shows each path, **Preview path** flies it, and **Record trailer** saves every frame as pictures for a video.
+  **Check** warns about a path with fewer than two points.
+
 ## 2026-10-25: Your own notebook
 
 ### Added

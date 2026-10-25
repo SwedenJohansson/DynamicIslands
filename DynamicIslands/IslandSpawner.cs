@@ -383,6 +383,17 @@ namespace DynamicIslands.Editor
 					Behaviours.Attach(zgo, o.Name, o.Props, index);
 					return;
 				}
+				// Camera points (fly-throughs, PF4): only an empty place in a world, found by its path
+				if (!editable && CameraPath.IsPoint(o.Name))
+				{
+					if (underSea) return;
+					var cgo = new GameObject(o.Name);
+					cgo.transform.SetParent(parent, false);
+					cgo.transform.position = parent.position + o.Position;
+					cgo.transform.rotation = Quaternion.Euler(o.EulerRotation);
+					Behaviours.Attach(cgo, o.Name, CameraPath.WorldProps(o.Props), index);
+					return;
+				}
 				// Buried treasure: Raft's own treasure point, made once the island's state is known (BuriedTreasure.OnIslandReady)
 				if (!editable && ContentCatalog.IsTreasure(o.Name))
 				{

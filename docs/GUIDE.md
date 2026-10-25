@@ -1712,6 +1712,18 @@ Select any object → **Behaviour & events...**. No code needed:
   player can't walk or look around meanwhile, and **Esc** skips it. Only players within its **range** of the marker
   (default 50 m) get it. Mark the spot with any small piece (a sign, a stone) and name it. **Check** warns about a sound
   Raft doesn't have and a marker or look-at name no object has.
+- **Camera fly-throughs** (shared): place **Camera point** objects (**Zones & triggers**) along the way the camera
+  should fly. In each point's inspector give the **Path** name (every point with the same name is on that path; empty =
+  `path`), its **Order** (1, 2, 3...), what it **Looks at** (an object's name; empty = the way the point faces), the
+  **Speed** to the next point (m/s, default 6) and how long it **Waits** there (s). **To my view** moves the point to
+  where the editor camera is (Ctrl+Z undoes it). An orange line shows each path in the editor. The action
+  **camera fly-through** (path name, **…** to choose one; range in metres, default 200) flies the camera of every player
+  within range of one of its points along the path once, on a smooth curve, then glides back; the player can't walk or
+  look around meanwhile, and **Esc** skips it. The points are invisible in a world. **Preview path** in a point's
+  inspector flies the editor camera along it (Esc stops); **Record trailer** does the same and saves every frame (30 a
+  second, without the editor's windows) as `frame_00001.png`... in the mod's `trailers` folder, to make a video from
+  (with a video editor, or `ffmpeg -framerate 30 -i frame_%05d.png trailer.mp4`). **Check** warns about a path with
+  fewer than two points.
 
 ![A lever opens a door](images/editor-behaviour.jpg)
 *A log named "lever" that players can use ("Pull the lever"): it opens or closes the door and says "The door moves".*

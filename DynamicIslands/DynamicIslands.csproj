@@ -223,6 +223,7 @@
     <Compile Include="Housekeeping.cs" />
     <Compile Include="HotkeyHints.cs" />
     <Compile Include="PlayerNotebook.cs" />
+    <Compile Include="CameraPath.cs" />
     <Compile Include="DevTestsPlayerFeatures.cs" />
     <Compile Include="DropList.cs" />
     <Compile Include="PlanChecker.cs" />

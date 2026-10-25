@@ -1048,6 +1048,7 @@ namespace DynamicIslands.Editor
 			var names = new HashSet<string>(objects.Select(p => ObjectProps.Get(p, BehaviourProps.Name)).Where(n => n.Length > 0), StringComparer.OrdinalIgnoreCase);
 			var badSounds = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 			var badNames = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+			var badPaths = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 			foreach (IDictionary<string, string> p in objects.Concat(new[] { (IDictionary<string, string>)(f.Props ?? new Dictionary<string, string>()) }))
 				foreach (var kv in p.Where(kv => kv.Key.StartsWith(BehaviourProps.EventPrefix) || kv.Key.StartsWith(BehaviourProps.ElsePrefix)))
 					foreach (ObjAction a in ObjAction.ParseLines(kv.Value))
@@ -1065,6 +1066,8 @@ namespace DynamicIslands.Editor
 							foreach (string n in new[] { a.Target.Trim(), look })
 								if (n.Length > 0 && !n.Equals("self", StringComparison.OrdinalIgnoreCase) && !names.Contains(n)) badNames.Add(n);
 						}
+						// (a fly-through needs two camera points on its path, PF4)
+						if (a.Verb == "flythrough" && CameraPath.PointsIn(f, a.Target) < 2) badPaths.Add(a.Target.Trim().Length > 0 ? a.Target.Trim() : CameraPath.DefaultPath);
 					}
 			if (badSounds.Count > 0)
 				x.Traps.Add(new Finding(-1, Level.Warning, "an action plays a sound Raft doesn't have: " + string.Join(", ", badSounds.Select(n => "'" + n + "'").ToArray()) + " - a typo? Nothing is heard.",
@@ -1072,6 +1075,9 @@ namespace DynamicIslands.Editor
 			if (badNames.Count > 0)
 				x.Traps.Add(new Finding(-1, Level.Warning, "a camera moment names an object no object on the island is called: " + string.Join(", ", badNames.Select(n => "'" + n + "'").ToArray()) + " - the moment doesn't happen (or looks the wrong way).",
 					"Give the marker or the object to look at that name (its Name field), or choose the name with the ... button by the action."));
+			if (badPaths.Count > 0)
+				x.Traps.Add(new Finding(-1, Level.Warning, "a camera fly-through's path has fewer than two camera points: " + string.Join(", ", badPaths.Select(n => "'" + n + "'").ToArray()) + " - the camera doesn't fly.",
+					"Place camera points (Zones & triggers) with that Path name and their Order 1, 2, 3..., or choose the path with the ... button by the action."));
 		}
 
 		/// <summary>

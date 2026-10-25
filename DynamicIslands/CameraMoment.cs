@@ -199,7 +199,7 @@ namespace DynamicIslands.Editor
 			Destroy(gameObject);
 		}
 
-		static IEnumerator ClosePause()
+		internal static IEnumerator ClosePause()
 		{
 			for (int i = 0; i < 3; i++)
 			{

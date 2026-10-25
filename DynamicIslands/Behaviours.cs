@@ -49,8 +49,8 @@ namespace DynamicIslands.Editor
 		public const string EventPrefix = "on.";
 		public static readonly string[] ObjectEvents = { "use", "enter", "read", "open", "defeat", "laser", BossPhases.Event, MechFeatures.StackEvent };
 		public static readonly string[] IslandEvents = { "arrive", "quest" };
-		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character", "playsound", "stopsound", "camera", "suit", "hit", "carry", "collapse", "moveto" };
-		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal", "playsound", "stopsound", "camera", "hit", "collapse", "moveto" };
+		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character", "playsound", "stopsound", "camera", "suit", "hit", "carry", "collapse", "moveto", "flythrough" };
+		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal", "playsound", "stopsound", "camera", "hit", "collapse", "moveto", "flythrough" };
 		public const string CheckPrefix = "if.", ElsePrefix = "else.";
 		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest", "wears", "holds" };
 		public static readonly string[] States = { "open", "closed", "shown", "hidden" };
@@ -169,6 +169,7 @@ namespace DynamicIslands.Editor
 				case "playsound": return TriggerSounds.Describe(Arg, t);
 				case "stopsound": return Arg.Trim().Equals("all", StringComparison.OrdinalIgnoreCase) ? "stop every sound played on the island" : "stop the sound of " + t;
 				case "camera": return CameraMoment.Describe(Target, Arg);
+				case "flythrough": return CameraPath.Describe(Target, Arg);
 				case "suit": return "put a protective suit on the player (" + (Arg.Trim().Length > 0 ? Arg.Trim() : "120") + " s)";
 				case "hit": return "hurt the animals of " + t + " (" + (Arg.Trim().Length > 0 ? Arg.Trim().TrimEnd('%') : "25") + "% of their health; a shielded boss too)";
 				case "carry": return "the player picks up " + t + " and carries it (no jumping or ziplines; the use key or a hit drops it)";
@@ -1131,6 +1132,7 @@ namespace DynamicIslands.Editor
 					continue;
 				}
 				if (a.Verb == "camera") { CameraMoment.HostRun(e, index, a.Target, a.Arg); continue; }
+				if (a.Verb == "flythrough") { CameraPath.HostRun(e, a.Target, a.Arg); continue; }
 				if (a.Verb == "journal")
 				{
 					StoryBook.AddPage("act:" + StoryBook.PageIsland(e) + ":" + index + ":" + a.Target, a.Target, a.Arg.Replace("\\n", "\n"), IslandTitle(e));
