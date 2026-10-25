@@ -11,8 +11,6 @@ expect step 1
 read Rookery petition
 expect step 2
 kill Butler bot
-kill Butler bot
-kill Butler bot
 expect step 3
 openat 37.17 -15.62
 openat 18.82 -34.63
