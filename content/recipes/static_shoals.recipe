@@ -136,7 +136,7 @@ call ar_plants_tropical x=52 z=-36 r=14 seed=14281
 # machete from Triangulation Rocks cuts the vines over a hidden chest
 
 # --- Unique layer (10-24): static_shoals device - see SL14_progress.md UNIQUE ISLANDS
-call powerradio x=-16.5 z=-62 yaw=90 alias=netgen ralias=netradio rx=-12.75 rz=-58 rh=8 ryaw=180 cache=netdrop cx=39.9 cz=50.6 cr=6 cseed=14471 items=Battery*2;CopperIngot*2;TitaniumOre*2 kx=55 kz=27 kr=6 seed=14472 toolbox=nettoolbox
+call powerradio x=-16.5 z=-62 yaw=90 alias=netgen ralias=netradio rx=-12.75 rz=-58 rh=8 ryaw=180 cache=netdrop cx=39.9 cz=50.6 cr=6 cseed=14471 items=Battery*2;CopperIngot*2;TitaniumOre*2 kx=55 kz=27 kr=14 seed=14472 toolbox=nettoolbox
 prop netradio on.use=message||Static... then a voice, close and tired: 'This is Teo. If you hear this, the drop by the spotter plane is yours. Then follow the Engine's pull - it's south.'\nsignal||radio\ngive||story:teovoice*1\nshow|netdrop
 prop spottercrate note.title=Spotter plane's crate
 story teovoice|Teo's voice|Placeable_Reciever|Teo's voice on the net house radio: the drop by the spotter plane, and the Engine's pull to the south.

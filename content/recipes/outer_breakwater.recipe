@@ -221,14 +221,14 @@ note keeperbook Wall keeper's book | WALL KEEPER'S BOOK - chained to the gate ho
 note cistern Rain cistern | The rain cistern's chest, dripping: a water tank's plans in a jar.
 note pipestore Pipe store | The pipe store: a water pipe's plans and a length of the real thing.
 note keeperchest Keeper's chest | Purifier plans, and seeds from Hedda's crate.
-note wallstore Wall store | Large storage plans, and the keeper's spare everything.
+note wallstore Wall store | Large storage plans, a machete, and the keeper's spare everything.
 loot cistern Blueprint_WaterTank*1;Plastic*4;Scrap*2
 prop cistern loot.refill=0
 loot pipestore Blueprint_Pipe_Water*1;Scrap*3;Bolt*2
 prop pipestore loot.refill=0
 loot keeperchest Blueprint_ElectricPurifier*1;Seed_Strawberry*2;Seed_Watermelon*2;Raw_Beet*2;Raw_Potato*2
 prop keeperchest loot.refill=0
-loot wallstore Blueprint_Storage_Large*1;Plank*20;Nail*20;Rope*4
+loot wallstore Blueprint_Storage_Large*1;Plank*20;Nail*20;Rope*4;Machete*1
 prop wallstore loot.refill=0
 
 prop gatecrank beh.use=Wind the gate crank
