@@ -196,6 +196,7 @@ end
 # ladtower: a small stone tower 3 x 3 m round x z (2 x 2 cells), lv storeys of 2.42 m from h0 (the ground) up, a door in
 # the south wall's first cell at the foot, a ladder up the inside in the north-east cell, a deck on top (its top at
 # h0 + 2.42 lv + 0.215) open over the ladder, a rope railing round the deck; a: an alias for walls and deck
+# (box agent 10-25: as vd_tower - the ladder at 2.8 took its wall's place, now 0.1 m off it; the top deck 0.165 m lower so the ladder's top reaches it)
 macro ladtower x=0 z=0 h0=0 lv=3 a=towers
 push at {$x-1.5} {$z-1.5} h=$h0
 for k 0 {$lv-1}
@@ -206,21 +207,21 @@ place Block_Wall_Tier3 $a at 0 0.75 y={$k*2.42} yaw=90
 place Block_Wall_Tier3 $a at 0 2.25 y={$k*2.42} yaw=90
 place Block_Wall_Tier3 $a at 3 0.75 y={$k*2.42} yaw=90
 place Block_Wall_Tier3 $a at 3 2.25 y={$k*2.42} yaw=90
-place Block_Ladder_Tier3 - at 2.25 2.8 y={$k*2.42} yaw=180
+place Block_Ladder_Tier3 - at 2.25 2.7 y={$k*2.42} yaw=180
 next
 place Block_Wall_Door_Tier3 $a at 0.75 0 y=0
 for k 1 {$lv-1}
 place Block_Wall_Tier3 $a at 0.75 0 y={$k*2.42}
 next
-place Block_Floor_Tier3 $a at 0.75 0.75 y={$lv*2.42+0.215}
-place Block_Floor_Tier3 $a at 2.25 0.75 y={$lv*2.42+0.215}
-place Block_Floor_Tier3 $a at 0.75 2.25 y={$lv*2.42+0.215}
-place Block_Wall_Fence_Rope - at 0.75 0 y={$lv*2.42+0.215}
-place Block_Wall_Fence_Rope - at 2.25 0 y={$lv*2.42+0.215}
-place Block_Wall_Fence_Rope - at 0.75 3 y={$lv*2.42+0.215}
-place Block_Wall_Fence_Rope - at 0 0.75 y={$lv*2.42+0.215} yaw=90
-place Block_Wall_Fence_Rope - at 0 2.25 y={$lv*2.42+0.215} yaw=90
-place Block_Wall_Fence_Rope - at 3 0.75 y={$lv*2.42+0.215} yaw=90
+place Block_Floor_Tier3 $a at 0.75 0.75 y={$lv*2.42+0.05}
+place Block_Floor_Tier3 $a at 2.25 0.75 y={$lv*2.42+0.05}
+place Block_Floor_Tier3 $a at 0.75 2.25 y={$lv*2.42+0.05}
+place Block_Wall_Fence_Rope - at 0.75 0 y={$lv*2.42+0.05}
+place Block_Wall_Fence_Rope - at 2.25 0 y={$lv*2.42+0.05}
+place Block_Wall_Fence_Rope - at 0.75 3 y={$lv*2.42+0.05}
+place Block_Wall_Fence_Rope - at 0 0.75 y={$lv*2.42+0.05} yaw=90
+place Block_Wall_Fence_Rope - at 0 2.25 y={$lv*2.42+0.05} yaw=90
+place Block_Wall_Fence_Rope - at 3 0.75 y={$lv*2.42+0.05} yaw=90
 pop
 prop $a tint.color=#6e6a64
 prop $a tint.amount=0.55

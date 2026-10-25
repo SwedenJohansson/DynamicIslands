@@ -166,6 +166,7 @@ end
 # hw_mast: a lookout mast on a summit: lib_sunken's ladder tower (a 3x3 m shaft of Tier3 walls, a ladder inside, lv
 # storeys of 2.42 m, a rope-fenced deck on top), centred on x z, its floor h0 over the sea, door to -z. On the deck: a
 # chest (alias chest, at the -x -z tile) and a look piece top (at the +x -z tile).
+# (box agent 10-25: as vd_tower - the ladder at 2.8 took its wall's place, now 0.1 m off it; the top deck 0.165 m lower so the ladder's top reaches it)
 macro hw_mast x=0 z=0 h0=30 lv=9 a=mast chest=mastchest top=none
 push at {$x-1.5} {$z-1.5} h=$h0
 for k 0 {$lv-1}
@@ -176,21 +177,21 @@ place Block_Wall_Tier3 $a at 0 0.75 y={$k*2.42} yaw=90
 place Block_Wall_Tier3 $a at 0 2.25 y={$k*2.42} yaw=90
 place Block_Wall_Tier3 $a at 3 0.75 y={$k*2.42} yaw=90
 place Block_Wall_Tier3 $a at 3 2.25 y={$k*2.42} yaw=90
-place Block_Ladder_Tier3 - at 2.25 2.8 y={$k*2.42} yaw=180
+place Block_Ladder_Tier3 - at 2.25 2.7 y={$k*2.42} yaw=180
 next
 place Block_Wall_Door_Tier3 $a at 0.75 0 y=0
 for k 1 {$lv-1}
 place Block_Wall_Tier3 $a at 0.75 0 y={$k*2.42}
 next
-place Block_Floor_Tier3 $a at 0.75 0.75 y={$lv*2.42+0.215}
-place Block_Floor_Tier3 $a at 2.25 0.75 y={$lv*2.42+0.215}
-place Block_Floor_Tier3 $a at 0.75 2.25 y={$lv*2.42+0.215}
-place Block_Wall_Fence_Rope - at 0.75 0 y={$lv*2.42+0.215}
-place Block_Wall_Fence_Rope - at 2.25 0 y={$lv*2.42+0.215}
-place Block_Wall_Fence_Rope - at 0.75 3 y={$lv*2.42+0.215}
-place Block_Wall_Fence_Rope - at 0 0.75 y={$lv*2.42+0.215} yaw=90
-place Block_Wall_Fence_Rope - at 0 2.25 y={$lv*2.42+0.215} yaw=90
-place Block_Wall_Fence_Rope - at 3 0.75 y={$lv*2.42+0.215} yaw=90
+place Block_Floor_Tier3 $a at 0.75 0.75 y={$lv*2.42+0.05}
+place Block_Floor_Tier3 $a at 2.25 0.75 y={$lv*2.42+0.05}
+place Block_Floor_Tier3 $a at 0.75 2.25 y={$lv*2.42+0.05}
+place Block_Wall_Fence_Rope - at 0.75 0 y={$lv*2.42+0.05}
+place Block_Wall_Fence_Rope - at 2.25 0 y={$lv*2.42+0.05}
+place Block_Wall_Fence_Rope - at 0.75 3 y={$lv*2.42+0.05}
+place Block_Wall_Fence_Rope - at 0 0.75 y={$lv*2.42+0.05} yaw=90
+place Block_Wall_Fence_Rope - at 0 2.25 y={$lv*2.42+0.05} yaw=90
+place Block_Wall_Fence_Rope - at 3 0.75 y={$lv*2.42+0.05} yaw=90
 place Loot_Chest $chest at 0.75 0.75 y={$lv*2.42+0.9} drop yaw=180
 place $top - at 2.25 0.75 y={$lv*2.42+0.9} drop
 pop
