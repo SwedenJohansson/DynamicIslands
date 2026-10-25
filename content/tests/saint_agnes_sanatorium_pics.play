@@ -5,8 +5,13 @@ hour 17
 weather Calm
 at 0 -26
 wait 3
-picture sl1_agnes_island 30 40 -110 0 6 0
+picture sl1_agnes_island 30 60 -175 0 8 0
 picture sl1_agnes_front 4 9 -26 -4 7 -6
 picture sl1_agnes_veranda -2 8 -16 -10 7 -11
 picture sl1_agnes_dayroom -10 8 -3 -6 7 -2
 picture sl1_agnes_hydro 2 9 2 -1 7 9
+picture gp_agnes_hill -10 22 10 -40 20 40
+picture gp_agnes_tower -32 35 32 -40 33 40
+picture gp_agnes_bathhouse 60 -7 -70 60 -12.5 -58
+picture gp_agnes_cave 20 8 50 20 5 64
+picture gp_agnes_plane 42 +3 22 55 +1 30

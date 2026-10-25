@@ -12,3 +12,14 @@ wait 2
 picture sl1_cradle_dormitory -10.5 13 -10 -10.5 6 -1
 picture sl1_cradle_chapel 0 12 -12 5.5 7 -1
 picture sl1_cradle_reef -24 18 -26 -2 6 0
+at -28.11 25.3
+wait 2
+picture gp_cradle_rock -10 44 6 -40 44 36
+picture gp_cradle_lookout -38 60 26 -40 55.5 36
+at 55 26
+wait 2
+picture gp_cradle_infirmary 55 -1 26 55 -6.5 38
+at 10 -46
+wait 2
+picture gp_cradle_grotto 10 10 -42 10 7 -56
+picture gp_cradle_plane -43 10 -32 -55 7 -40

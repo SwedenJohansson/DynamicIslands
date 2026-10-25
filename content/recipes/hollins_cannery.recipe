@@ -5,15 +5,24 @@
 # hum fills the hall until the cannery boy Pim is freed. Quest "The Night Shift" (6 steps): the slipway, the shift log
 # (the cold-store code 3-1-2), the cold store's keypad, six rats in the dark, the rusted cage key from the foreman's
 # desk, free Pim and open his tin box.
+# RESIZE + DEEP 10-25 (deep pass, The Lullaby Frequency): Radius 45 -> 85, as big as Raft's own big islands; the hall,
+# cold store, yard and slipway stay in the middle, an inlet cut from the slipway's foot to the sea. New: Smokehouse Hill
+# in the north-east (a 30 m climb to the cannery's radio mast, which still plays the song; the foreman's desk key is up
+# there, so the desk only opens once you have climbed it), the drowned net loft in a deep hole off the south-east shore
+# (an air pocket; a gutter's note), the old ice cave in the south-west, the fish-spotter plane in the north-west, two
+# buried treasures. Quest 6 -> 12 steps. Voices: radio operator Ada Brann, gutter Jonna Hale, ice man Tobias Grell,
+# spotter pilot Rolf Iversen.
 #
 # Built by the recipe player (CIRecipe hollins_cannery) through the editor's own operations.
 include lib_sea
 include lib_features
 include lib_sl1
+include lib_areas
+include lib_highwater
 new
 # (nature: a bare concrete shelf - Raft-like, bushes low: Trees 0.06, Bushes 0.15, Rocks 0.35)
 gen Trees=0.06 Bushes=0.15 Rocks=0.35 Harvest=0.12 BeachThings=0.35
-gen Seed=1201 Radius=45 Height=7 Roughness=0.25 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.05 BeachWidth=0.6
+gen Seed=1201 Radius=85 Height=7 Roughness=0.25 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.05 BeachWidth=0.6
 gen Water=0.5 SeaRocks=0.45 SeaFinds=0.5 Sunken=0.3 Hostiles=0 Friendly=0.1 SeaLife=0.3
 generate
 
@@ -21,9 +30,22 @@ generate
 brush flatten from -14 0 to 10 0 r=13 s=20 frames=120 h=3
 brush flatten from -8 -12 to -8 -22 r=5 s=12 frames=60 h=2
 brush smooth from -8 -22 to -8 -38 r=4 s=6 frames=30
+# --- DEEP 10-25 terrain: the inlet (the slipway still runs into the sea on the bigger island), Smokehouse Hill (north-
+# east, summit 30 m, base r 26) and its path, the net loft's hole (south-east, -14 m), the ice cave's and the plane's pads
+brush flatten from -8 -36 to -8 -44 r=5 s=20 frames=200 h=0.3
+brush flatten from -8 -47 to -8 -96 r=8 s=20 frames=400 h=-4
+brush smooth from -8 -34 to -8 -50 r=7 s=6 frames=30
+call hw_mount x=42 z=38 b=26 h=30
+call hw_trail x=42 z=38 b=26 h=30 a0=227.86 turn=300 n=38 h0=4
+brush flatten at 42 38 r=9 s=20 frames=400 h=30
+call hw_basin x=24 z=-74 r=14 h=-14
+brush flatten at -50 -40 r=12 s=20 frames=300 h=3
+brush flatten at -45 42 r=13 s=20 frames=300 h=3
 origin
 clear from -14 0 to 10 0 r=14
 clear from -8 -10 to -8 -40 r=4
+call ar_cave x=-50 z=-40 h=3 yaw=0 al=icerock chest=icechest
+call ar_plane x=-45 z=42 h=3 yaw=130 al=spotterplane crate=spottercrate
 
 # --- The hall: 9 x 6 m of Raft's metal walls, a wooden roof on its corner posts, the door to the south ----------------
 push at -12 -3 h=3
@@ -82,21 +104,71 @@ place Zone_Trigger slipway at -8 -26 ground y=1
 scatter "Pickup_Landmark_PineappleLandmark" 2 at 0 0 r=34 seed=1211 free=4
 scatter "Pickup_Landmark_Flower_Yellow" 2 at 0 0 r=34 seed=1212 free=4
 call dirt x=12 z=14 r=8 n=2 seed=1213
-call shallows r=60 deep=5 n=2
+call shallows r=96 deep=5 n=3 seed=30008
+call hw_reef x=-8 z=-72 r=3 seed=30001
+call hw_reef x=-8 z=-88 r=3 seed=30002
+
+# --- DEEP 10-25: Smokehouse Hill - its foot and top as zones, the radio mast on top (the desk key in its deck box) ------
+call hw_zone x=21.98 z=19.88 al=hillfootz id=hillfoot r=5 msg="Smokehouse Hill. A path of cut steps winds up round it to a radio mast - and the mast is playing something."
+call hw_zone x=42 z=38 al=hilltopz id=hilltop r=8 h=1 msg="The top of Smokehouse Hill. The mast's speaker hums the lullaby into the wind, and nothing is plugged in."
+call hw_mast x=42 z=38 h0=30 lv=4 a=radiomast chest=radiochest top=RT_CommRadio
+place Note_Paper adalog at 45.5 36 h=30.1 drop yaw=200
+loot radiochest story:deskkey*1;Battery*1;Rope*2;CopperOre*2
+note radiochest Radio mast box | The radio operator's box on the mast's deck: a battery, rope - and a ring of keys with a brass desk key, the foreman's.
+place Zone_Sound masthum at 42 38 h=32
+prop masthum sound.event=event:/raft/radar/radar_humm
+prop masthum sound.volume=0.45
+prop masthum zone.radius=14
+scatter Bush 6 at 42 38 r=26 seed=30003 free=1
+scatter Bush2 4 at 42 38 r=26 seed=30004 free=1
+scatter "Pickup_Landmark_Rock 1" 3 at 42 38 r=26 seed=30005 free=2
+place Creature_Goat hillgoats at 24.98 22.88 ground
+prop hillgoats creature.count=2
+# --- The net loft (south-east), drowned in a hole 14 m down, an air pocket: Jonna's note, the back room's chest ---------
+call hw_sunkhouse x=24 z=-74 h=-14 yaw=0 a=netloft chest=loftchest air=loftair bub=loftbub dal=loftdoor
+call hw_zone x=24 z=-74 al=loftzone id=netloft r=7 h=1 msg="The net loft, 14 m down. The night shift's boots stand in a row by the door. Its front room still holds air."
+place Note_Paper jonnanote at 24.6 -76.2 h=-13.7 drop yaw=20
+loot loftchest MetalIngot*1;Rope*3;Nail*8;Cooked_Mackerel*2
+prop loftchest loot.refill=0
+note loftchest Net loft chest | The net loft's chest: rope, nails, an iron ingot and two tins from the line - still sealed.
+place Creature_PufferFish loftpuffers at 30 -66 h=-9
+prop loftpuffers creature.count=2
+# --- The ice cave (south-west): a secret --------------------------------------------------------------------------------
+call hw_zone x=-50 z=-35 al=icez id=icecave r=4 msg="The old ice cave. Sawdust on the floor, ice hooks on the wall - and the cold still in the rock."
+place Note_Paper tobiasnote at -48.5 -34.5 h=3.45 drop yaw=0
+loot icechest Rope*2;MetalOre*2;Battery*1;Scrap*2
+prop icechest loot.refill=0
+note icechest Ice man's box | Tobias Grell's box: ice hooks, rope, a battery for his lamp and a lump of ore he dug out of the cave's back wall.
+call treasure x=-44 z=-46 r=14 n=1 seed=30006 kind=0
+prop treasure30006 treasure.loot=Scrap*3;Bolt*2;Hinge*1
+# --- The fish-spotter plane (north-west): a secret ----------------------------------------------------------------------
+loot spottercrate Plastic*4;Rope*2;Nail*6;CopperIngot*1
+prop spottercrate loot.refill=0
+note spottercrate Spotter plane's crate | The fish-spotter's crate: plastic, rope, nails and a copper ingot - paid for and never delivered.
+place Note_Paper rolfnote at -40 47 ground drop yaw=130
+call treasure x=-50 z=36 r=14 n=1 seed=30007 kind=0
+prop treasure30007 treasure.loot=MetalOre*3;CopperOre*2
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Hollins Cannery
 info author=Custom Islands
-info description=A fish cannery on a tidal shelf: a corrugated hall, a plank conveyor, a dark cold store and a cage with a boy in it who will not stop humming. The first island of The Lullaby Frequency.
+info description=A fish cannery on a tidal shelf as big as Raft's own big islands: Smokehouse Hill with the radio mast that still plays the song, the drowned net loft in a hole off the shore, an old ice cave, a fish-spotter plane - and a corrugated hall, a plank conveyor, a dark cold store and a cage with a boy in it who will not stop humming. The first island of The Lullaby Frequency.
 island on.arrive=message||A cannery on a concrete shelf. No gulls, no wind - only a hum from the hall, low and steady, like a held breath.
 
+story deskkey|Foreman's desk key|Placeable_Lantern_Metal|A brass desk key on the foreman's ring, from the radio mast on Smokehouse Hill.
 story cagekey|Cage key (rusted)|Placeable_Lantern_Metal|A rusted key on a wire ring, from the foreman's desk in the cold store.
 story coldopen|Cold store open|Placeable_Lantern_Metal|The cold store's keypad took the code 3-1-2.
 
-note shiftlog Shift log - night of the 14th | NIGHT SHIFT, 14th\n\n22:00 Line running. Catch good.\n01:40 Radio in the hall playing something nobody put on. A song. Left it.\n02:55 Half the line humming along. Told them to stop. They didn't.\n03:12 Line stopped. Doors open. They all walked down the slipway into the water, still humming.\n\nI've locked the boy in the cage so he can't follow. Key's in my desk in the cold store.\n\nCold-store code is the night's catch, same as always: 312.
+note shiftlog Shift log - night of the 14th | NIGHT SHIFT, 14th\n\n22:00 Line running. Catch good.\n01:40 Radio in the hall playing something nobody put on. A song. Left it.\n02:55 Half the line humming along. Told them to stop. They didn't.\n03:12 Line stopped. Doors open. They all walked down the slipway into the water, still humming.\n\nI've locked the boy in the cage so he can't follow. Key's in my desk in the cold store. The desk's locked - its key's on my ring, and I left the ring up at the radio mast on Smokehouse Hill when I went to pull the plug on that radio. There was no plug. It kept singing.\n\nCold-store code is the night's catch, same as always: 312.
+note adalog Radio operator Ada Brann's log | RADIO MAST, SMOKEHOUSE HILL - A. BRANN\n\n13th. Weather from the mainland at six, prices at seven. Then, at 3:12 in the morning, a woman singing on a channel we do not have. A lullaby. Logged it as interference.\n\n14th. 3:12 again. I took the valves out. It went on singing, out of the speaker, with nothing in the set.\n\nThe foreman came up at two with his keys to switch it all off at the mains. He stood under the speaker and listened, and then he put his keys down on my box very carefully, as if he would not need them again, and walked down the hill to the hall.\n\nI can see the slipway from here. They are all on it. They are walking into the water in a line, and they are singing with her.\n\nI am going to stay up here, where the wind is louder than she is.
+note jonnanote Gutter Jonna Hale's note | (Pencil on a tally card, dry in the air pocket)\n\nI walked down the slipway with the rest of the line. I don't remember deciding to. The water was warm.\n\nI woke up in here, in the loft, with my head in the air under the roof and the boots of the whole shift standing in a row by the door. Nobody in them.\n\nThrough the window I can see them on the bottom, the others, still walking. Out, away from the island, north-east, in single file, like the song is a rope and someone is pulling it.\n\nThere's a sanatorium that way. My mother said the children there sang in their sleep.\n\nIf Pim is still in his cage: good. Keep him there till the song stops.
+note tobiasnote Ice man Tobias Grell's tally | ICE TALLY - T. GRELL\n\nMon. 40 blocks cut. Tue. 38. Wed. 41.\n\nThu. The cave hums. Not the wind - the rock. I put my ear to the back wall and it is the radio's song, the one Ada keeps logging, coming up through the stone from under the sea.\n\nFri. Cut no ice. Sat in the cold and listened. It is not a sad song when you are close to it. That is the bad part.\n\nSat. The boy Pim came in to fetch the night's ice. He put his hands over his ears and said, 'She's too near.' I let him go back. I stayed.\n\nWhoever reads this: don't stay.
+note rolfnote Spotter pilot Rolf Iversen's note | Spotting herring for the cannery from 200 m. At dawn on the 15th I saw the shoals - every fish in the bay swimming north-east, in a line, and in the line, between the fish, people. Walking on the bottom.\n\nThe engine stopped as I went down to look. Not a cough; it just stopped, like it was listening. I put her down in the field.\n\nThe crate was the cannery's order. Take it. Nobody here is going to sign for it. - R. Iversen
 note foremandesk Foreman's desk | The foreman's desk drawer: pay slips, a whistle, and a rusted key on a wire ring.
 loot foremandesk story:cagekey*1;Rope*2
 prop foremandesk loot.refill=0
+prop foremandesk if.open=has|story:deskkey|1
+prop foremandesk else.open=message||The desk drawer is locked. The shift log says the foreman left his key ring at the radio mast on Smokehouse Hill.
 note pimbox Pim's tin box | Pim's tin box from under the bench: the canning line's last tins, and a lantern.
 loot pimbox Cooked_Mackerel*4;Placeable_Lantern_Basic*1;Plank*6;Rope*3;Scrap*3
 prop pimbox loot.refill=0
@@ -145,6 +217,12 @@ quest title=The Night Shift
 quest intro=A cannery, its doors open, its slipway running down into the sea. Walk up the slipway.
 step reach|slipway|1|Walk up the slipway
 step read|Shift log - night of the 14th|1|Read the shift log on the hall's table
+step reach|hillfoot|1|Find the path up Smokehouse Hill in the north-east
+step reach|hilltop|1|Climb Smokehouse Hill to the radio mast
+step read|Radio operator Ada Brann's log|1|Read the radio operator's log by the mast
+step collect|story:deskkey|1|Take the foreman's desk key from the mast's deck box
+step reach|netloft|1|Dive to the drowned net loft off the south-east shore
+step read|Gutter Jonna Hale's note|1|Breathe in the loft's front room and read the gutter's note
 step collect|story:coldopen|1|Open the cold store with its keypad
 step kill|Rat|6|Deal with the rats in the dark cold store
 step collect|story:cagekey|1|Take the rusted cage key from the foreman's desk

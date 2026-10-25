@@ -6,7 +6,11 @@ hour 19
 weather Calm
 at 0 -32
 wait 3
-picture sl1_mistlock_island 0 30 -80 0 1 0
+picture sl1_mistlock_island 0 60 -170 0 2 0
 picture sl1_mistlock_lamps 0 3 -31 0 2 -10
 picture sl1_mistlock_fork 0 4.5 -21 -3 2 -12
 picture sl1_mistlock_gatehouse 5 3 24 0 2 31
+picture gp_mistlock_tor 20 18 -10 50 18 10
+picture gp_mistlock_hut 40 32 4 50 27.5 10
+picture gp_mistlock_tollhouse -80 -7 -2 -80 -12.5 10
+picture gp_mistlock_cave -40 6 42 -40 3 56

@@ -1,7 +1,8 @@
 # Saint Agnes Sanatorium (CIPlay saint_agnes_sanatorium): The Lullaby Frequency's second island, quest "Admitted With the
 # Song". The terrace (6 m); the day room x -15..-3 z -6..0 (door x -10.5..-9 on z -6; the piano at -6 -2.2); Ward C
 # x 3..12 z -6..0 (its door panel x 6..7.5); the veranda x -15..-3 z -12.5..-9.5; the hydrotherapy house x -5..2.5
-# z 6..12 (door x -3.5..-2 on z 6); the gate at 0 -30, the vending machine at 9 -17.
+# z 6..12 (door x -3.5..-2 on z 6); the gate at 0 -30, the vending machine at 9 -17. DEEP 10-25: Chapel Hill at -40 40
+# (foot zone hillfoot at -22.32 22.32), the drowned sea-bathing house at 60 -58 (-14 m), the patients' cave at 20 65.
 island Saint Agnes Sanatorium
 offset 0 0
 expect step 0
@@ -49,8 +50,26 @@ zone drain
 wait 2
 kill Roach
 expect step 10
-open Doctor Vell's cabinet
+zone hillfoot
 expect step 11
+zone hilltop
+expect step 12
+read Chaplain Aldous Penn's sermon notes
+expect step 13
+open Bell tower box
+expect story cabinetkey 1
+expect step 14
+zone seabath
+expect step 15
+air bathair
+read Bath attendant Mabel Orr's note
+expect step 16
+zone patientcave
+read Orderly Kip Rennie's note
+open Orderly's box
+expect step 16
+open Doctor Vell's cabinet
+expect step 17
 read Vell - final entry
 expect done
 storespot 0 -18

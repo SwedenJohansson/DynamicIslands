@@ -17,6 +17,14 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   read aloud, and its quest crosses the whole island (The Tide Engine's finale is now 36 steps). Start a new world with
   the plan to get the new islands.
 
+## 2026-10-25: The Lullaby Frequency, full-size islands
+
+### Changed
+- **The Lullaby Frequency's main islands are about as big as Raft's own big islands** (they were about 60%): each has
+  a hill to climb, a dive, a cave, a ruin or wreck, secrets, a buried treasure for the metal detector and notes read
+  aloud, and its quest crosses the whole island (The Listening Mirrors' finale is now 37 steps). Start a new world with
+  the plan to get the new islands.
+
 ## 2026-10-25: The Gravity Sea, full-size islands
 
 ### Changed

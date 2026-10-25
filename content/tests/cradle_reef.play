@@ -2,6 +2,8 @@
 # shelf is flat round -14..12 0 (28 m under the sea); the dormitory spans -15..-6 x -4..2 (air pocket, zone dormitory
 # at -10.5 -1), its cribs with the combs at z -2.4, the matron's table at -6.8 -0.6; the chapel spans 4..8.5 x -3..3 (zone
 # chapel at its door, 6.25 -1; the music box on the altar at 6.25 2.1); the buoy at 14 -14 on its chain of posts.
+# DEEP 10-25 (heights are the recipe's: the sea's surface at 34): Nursery Rock at -40 36 (top 54, foot zone hillfoot
+# at -28.11 25.3 on the waterline), the infirmary at 55 38 (-8), the grotto's zone at 10 -57.
 island Cradle Reef
 offset 0 0
 expect step 0
@@ -30,10 +32,32 @@ kill Angler fish
 expect step 5
 at 6.25 1
 use musicbox
+expect story comb 3
+expect story boxsong 0
+zone hillfoot
+expect step 6
+zone hilltop
+expect step 7
+read Nursemaid Ada Finch's note
+expect step 8
+open Nursemaid's chest
+expect story windkey 1
+expect step 9
+zone deepward
+expect step 10
+air wardair
+read Doctor Lewin Hale's note
+expect step 11
+zone kelpgrotto
+read Elsie Cobb's slate
+open Grotto box
+expect step 11
+at 6.25 1
+use musicbox
 expect story comb 0
 expect story boxsong 1
 expect shown tooth
-expect step 6
+expect step 12
 use tooth
 expect story tooth 1
 expect done

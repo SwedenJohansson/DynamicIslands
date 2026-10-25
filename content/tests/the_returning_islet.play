@@ -1,7 +1,8 @@
 # The Returning Islet (CIPlay the_returning_islet): The Lullaby Frequency's side island, quest "Supper for Four". The
 # hut's pad at 2.5 m round 0 0; the stilt hut spans -2.25..2.25 (deck 2.6 m over the pad), its ladder on the south;
 # the table at 0 0.45; the hatch at 1.35 -1.35 on the deck, the box under it on the sand. Each plate's note shows the
-# next one 20 s after it is read (the design's 600 s, cut short for tests).
+# next one 20 s after it is read (the design's 600 s, cut short for tests). DEEP 10-25: the Watch Rock at -26 22 (foot zone
+# hillfoot at -13.02 11.02), the net shed at 30 -28 (-12 m), the children's cave's zone at 28 25.
 island The Returning Islet
 offset 0 0
 expect step 0
@@ -27,6 +28,27 @@ expect step 3
 wait 22
 read Plate 4
 expect step 4
+use floorhatch
+expect message prise
+zone hillfoot
+expect step 5
+zone hilltop
+expect step 6
+read Fisherman Tobias Grey's note
+expect step 7
+open Watch hut chest
+expect story prybar 1
+expect step 8
+zone netshed
+expect step 9
+air netair
+read Net mender Hanne Grey's note
+expect step 10
+zone childcave
+read Ned Grey's note
+open Den box
+expect step 10
+walk 0 -16 to 0 -6 to 0 -3 h=2.5
 use floorhatch
 expect shown hatchbox
 expect message tin box

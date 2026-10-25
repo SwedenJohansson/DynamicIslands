@@ -6,7 +6,12 @@ hour 18
 weather Calm
 at 0 -60
 wait 3
-picture sl1_mirrors_island 0 40 -110 0 8 4
+picture sl1_mirrors_island 0 75 -205 0 10 4
 picture sl1_mirrors_dishes -10 16 -14 -26 13 -4
 picture sl1_mirrors_chapel 8 14 -22 20 11 -9
 picture sl1_mirrors_pit -6 16 -10 6 2 18
+picture gp_mirrors_fell -30 26 -4 -66 26 24
+picture gp_mirrors_mast -58 45 16 -66 41 24
+picture gp_mirrors_pumphouse 76 -7 -42 76 -12.5 -30
+picture gp_mirrors_cave 30 9 54 30 6 68
+picture gp_mirrors_plane -38 +3 -54 -50 +1 -62

@@ -5,26 +5,43 @@
 # all turned to face you. Quest "Count Them Again" (5 steps): the landing, the tide marker, the circle, the choir hymn
 # sheet at the tallest effigy's feet (a story item Gannet Rock's pit gate asks for), "Who made them" (note 3: the plan's
 # done-when).
+# RESIZE + DEEP 10-25 (deep pass, The Lullaby Frequency): Radius 48 -> 80, as big as Raft's own big islands. The ring of
+# bars and the circle stay in the middle; the three channels now run on out to the sea, cutting the outer dunes into
+# three wedges. New: the Pyre Dune in the north-west (a 22 m climb to the pyre the Choir built to burn the effigies; the
+# warden left the reliquary key in her chest by it), the Choir's boathouse drowned in a deep hole off the north-east
+# shore (an air pocket; the boatman's note), the Choir's cave in the north-east with its locked reliquary (the quest's
+# end), two buried treasures. Quest 5 -> 13 steps (the plan's done-when stays note:3 and zone:effigy:circle).
+# Voices: warden Hester Vane, boatman Silas Crewe, novice Lise Marren.
 #
 # Built by the recipe player (CIRecipe effigy_shoals) through the editor's own operations.
 include lib_sea
 include lib_features
 include lib_sl1
+include lib_areas
+include lib_highwater
 new
 # (nature: bare sand - few trees (0.08), Rocks Like Raft)
 gen Trees=0.08 Bushes=0.12 Rocks=0.43 Harvest=0.1 BeachThings=0.45
-gen Seed=1203 Radius=48 Height=3 Roughness=0.2 Peaks=1 Shape=0 Style=0 PeakShape=0.2 Cliffs=0 BeachWidth=0.9
+gen Seed=1203 Radius=80 Height=3 Roughness=0.2 Peaks=1 Shape=0 Style=0 PeakShape=0.2 Cliffs=0 BeachWidth=0.9
 gen Water=0.5 SeaRocks=0.4 SeaFinds=0.5 Sunken=0.3 Hostiles=0 Friendly=0.1 SeaLife=0.35
 generate
 
 # --- Terrain: the whole shoal levelled low (1.2 m), three channels cut between the bars, the middle kept -------------
 brush flatten at 0 0 r=36 s=20 frames=150 h=1.2
+# --- DEEP 10-25 terrain: the Pyre Dune (north-west, summit 22 m, base r 20) and its path, the boathouse's hole
+# (north-east, -14 m), the cave's pad
+call hw_mount x=-50 z=29 b=20 h=22
+call hw_trail x=-50 z=29 b=20 h=22 a0=120.11 turn=300 n=30 h0=1.5
+brush flatten at -50 29 r=9 s=20 frames=400 h=22
+call hw_basin x=38 z=66 r=14 h=-14
+brush flatten at 50 40 r=12 s=20 frames=300 h=2
 origin
 for ca 90 330 120
-brush flatten from {13*cos($ca)} {13*sin($ca)} to {46*cos($ca)} {46*sin($ca)} r=4 s=16 frames=60 h=-1.6
+brush flatten from {13*cos($ca)} {13*sin($ca)} to {84*cos($ca)} {84*sin($ca)} r=4 s=16 frames=60 h=-1.6
 next
 brush smooth at 0 0 r=40 s=3 frames=10
 clear at 0 0 r=36
+call ar_cave x=50 z=40 h=2 yaw=180 al=choirrock chest=reliquary
 
 # --- The effigies: three bars (centred on 30, 150 and 270 degrees), an inner row of five at 20 m and an outer row of
 # five at 28 m on each. Set "effin" faces the middle; set "effout" (hidden) faces the landing beach (0 -38). ----------
@@ -83,20 +100,67 @@ place Zone_Sound windsound at 0 0 ground y=2
 
 # --- Things to gather, two tight reefs in the channels -------------------------------------------------------------
 scatter "Pickup_Landmark_PineappleLandmark" 2 at 0 0 r=30 seed=1231 free=4
-call shallows x=-34 z=20 r=10 deep=4 n=1 seed=1232
-call shallows x=34 z=20 r=10 deep=4 n=1 seed=1233
+call shallows x=-52 z=-30 r=8 deep=4 n=1 seed=1232
+call shallows x=52 z=-30 r=8 deep=4 n=1 seed=1233
+call shallows r=92 deep=5 n=3 seed=30208
+call hw_reef x=46 z=76 r=3 seed=30201
+call hw_reef x=28 z=76 r=3 seed=30202
+
+# --- DEEP 10-25: the Pyre Dune - its foot and top as zones; the Choir's pyre on top, the warden's chest (the reliquary key)
+call hw_zone x=-31.83 z=18.47 al=hillfootz id=hillfoot r=5 msg="The Pyre Dune. A path trodden into the sand winds up it, and at the top, against the sky, a stack of wood."
+call hw_zone x=-50 z=29 al=hilltopz id=hilltop r=8 h=1 msg="The top of the Pyre Dune. The pyre was built and never lit. Three effigies stand on top of it, facing the sea."
+place Loot_Chest pyrechest at -52 31 h=22.1 drop yaw=120
+loot pyrechest story:reliquarykey*1;Rope*2;Plank*4;Canteen_Water*1
+note pyrechest Pyre chest | The warden's chest by the pyre: rope, planks for the fire, water - and an iron key on a string of straw: RELIQUARY.
+prop pyrechest loot.refill=0
+place Note_Paper hesternote at -47 27 h=22.1 drop yaw=200
+place Placeable_Scarecrow_Advanced - at -51.5 29.5 h=22 sit yaw=300
+place Placeable_Scarecrow_Advanced - at -50 29.5 h=22 sit yaw=300
+place Placeable_Scarecrow_Advanced - at -48.5 29.5 h=22 sit yaw=300
+place Zone_Sound pyrewind at -50 29 h=24
+prop pyrewind sound.event=event:/amb/wreck_creaks
+prop pyrewind sound.volume=0.35
+prop pyrewind zone.radius=12
+scatter Bush 4 at -50 29 r=20 seed=30203 free=1
+scatter Bush2 3 at -50 29 r=20 seed=30204 free=1
+scatter "Pickup_Landmark_Rock 1" 3 at -50 29 r=20 seed=30205 free=2
+# --- The Choir's boathouse (north-east), drowned in a hole 14 m down, an air pocket: Silas's note, the back room's chest -
+call hw_sunkhouse x=38 z=66 h=-14 yaw=0 a=boathouse chest=boatchest air=boatair bub=boatbub dal=boatdoor
+call hw_zone x=38 z=66 al=boatzone id=boathouse r=7 h=1 msg="The Choir's boathouse, 14 m down. Oars racked on the wall, straw floating under the ceiling. Its front room still holds air."
+place Note_Paper silasnote at 38.6 63.8 h=-13.7 drop yaw=20
+loot boatchest Rope*3;Nail*8;MetalIngot*1;Cooked_Mackerel*2
+prop boatchest loot.refill=0
+note boatchest Boathouse chest | The boatman's chest: rope, nails, an iron ingot and two tins of mackerel, sealed.
+place Creature_PufferFish boatpuffers at 32 74 h=-9
+prop boatpuffers creature.count=2
+# --- The Choir's cave (north-east): the reliquary, locked; the novice's note -------------------------------------------
+call hw_zone x=50 z=35 al=cavez id=choircave r=4 msg="The Choir's cave. Candle stubs in every niche, and at the back an iron-bound box with a padlock."
+place Note_Paper lisenote at 48.5 34.5 h=2.45 drop yaw=180
+loot reliquary CopperIngot*2;MetalIngot*2;Battery*1;Glass*2
+prop reliquary loot.refill=0
+prop reliquary if.open=has|story:reliquarykey|1
+prop reliquary else.open=message||The reliquary is padlocked. The warden kept its key by the pyre, on top of the Pyre Dune.
+note reliquary Choir's reliquary | What the Quiet Choir's nets brought up and nobody would keep at home: copper and iron bars, glass, a battery that is still warm - and a brass tuning fork that hums the lullaby on its own when you lift it.
+call treasure x=58 z=28 r=7 n=1 seed=30206 kind=0
+prop treasure30206 treasure.loot=Scrap*3;Bolt*2;Hinge*1
+call treasure x=-20 z=-60 r=7 n=1 seed=30207 kind=0
+prop treasure30207 treasure.loot=MetalOre*3;CopperOre*2;Rope*1
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Effigy Shoals
 info author=Custom Islands
-info description=Three low sandbars in a ring and thirty straw effigies on them, all facing the middle. No houses, no people. The third island of The Lullaby Frequency.
+info description=Three low sandbars in a ring and thirty straw effigies on them, all facing the middle, inside dunes as big as Raft's own big islands: the Pyre Dune, the Choir's drowned boathouse, their cave and its locked reliquary. No houses, no people. The third island of The Lullaby Frequency.
 island on.arrive=message||Figures stand on the sandbars - dozens of them, still as posts. Straw. Effigies. All of them looking inward.
 
+story reliquarykey|Reliquary key|Placeable_Lantern_Metal|An iron key on a string of straw, from the warden's chest by the pyre on the Pyre Dune.
 story hymn|Choir hymn sheet|Note_Paper|The Quiet Choir's hymn, written out by hand. "Only those who know the hymn may listen."
 
 note tidemarker Tide marker | Carved into the post, deep:\n\nCOUNT THEM.\nTHEN COUNT AGAIN.
 note hymnsheet Choir hymn sheet | THE LISTENING HYMN\n\nHush now, the water is listening,\nhush now, the lantern is low,\nshe sings at the hour of twelve past three,\nand all of the drowned ones know.\n\n- to be learned by heart before the pit. The Quiet Choir.
 note whomade Who made them | We made them so she would have someone to sing to who could not walk into the sea.\n\nThirty of us, thirty of them. When the song stops we will burn them.\n\nCome to Gannet Rock if you hear her too. Bring the hymn - the Listener will not let you near the pit without it.\n\n- the Quiet Choir
+note hesternote Choir warden Hester Vane's count | THE COUNT - H. VANE, WARDEN\n\nWe made thirty. I made them myself with the others, one each, our own old coats on them so she would think they were us.\n\nMorning count: thirty. Noon: thirty. At dusk I counted thirty-one, and the new one was standing in the middle of the circle where there had been nothing, looking at me.\n\nI came up the dune and built the pyre, to burn the lot of them before the song comes again. I could not light it. Every match I struck went out as if somebody close by had blown on it, gently, the way you blow out a child's candle.\n\nThe reliquary key stays here with me, by the fire that will not burn. Nobody opens that box in the cave without the hymn in their mouth.
+note silasnote Boatman Silas Crewe's note | (Pencil on the back of a tide table, dry in the air pocket)\n\nI rowed the straw across from Gannet Rock, forty bales, at night, because the Choir said she should not see us carrying it.\n\nThe boathouse went down on the calmest night of the year. No storm. The sea just came up the slip and in through the door and kept coming, as if it wanted to look inside.\n\nI am under the roof now with the oars. Through the window the boats are sitting on the bottom in a ring, every bow turned to face the middle of the shoals.\n\nLike the effigies. Like they are listening too.\n\nIf you get out, tell Hester she was right not to light it. Fire is loud.
+note lisenote Novice Lise Marren's note | LISE, NOVICE, AGE 12\n\nThe Warden says I must not count them any more because I always get a different number.\n\nThe thirty-first one has my brother's coat on. He drowned last spring off the Hollin coast. I know it is his coat because I sewed the patch on the elbow myself, badly, with green thread.\n\nI asked it where he was. It did not say anything, but the straw in its sleeve moved, the way his hand used to when he was asleep and heard me come in.\n\nI am going to sit here in the cave where it cannot see me and sing the hymn very quietly until morning.
 note offerings Choir's offering basket | A basket of food left for whoever comes to count them.
 loot offerings Cooked_Mackerel*3;Coconut*2;Watermelon*2;Canteen_Water*1
 prop offerings loot.refill=0
@@ -126,6 +190,14 @@ step read|Tide marker|1|Read the tide marker
 step reach|circle|1|Walk into the middle of the circle
 step read|Choir hymn sheet|1|Read the hymn sheet at the tallest effigy's feet
 step read|Who made them|1|Find out who made them (the east bar)
+step reach|hillfoot|1|Find the path up the Pyre Dune in the north-west
+step reach|hilltop|1|Climb the Pyre Dune to the Choir's pyre
+step read|Choir warden Hester Vane's count|1|Read the warden's count by the pyre
+step collect|story:reliquarykey|1|Take the reliquary key from the warden's chest
+step reach|boathouse|1|Dive to the Choir's drowned boathouse off the north-east shore
+step read|Boatman Silas Crewe's note|1|Breathe in the boathouse's front room and read the boatman's note
+step reach|choircave|1|Find the Choir's cave on the north-east shore
+step open|Choir's reliquary|1|Open the Choir's reliquary with the warden's key
 quest done=They all face you now. The Quiet Choir is on Gannet Rock - and the hymn will get you in.
 quest reward=Cooked_Mackerel*2;Rope*3;Plank*4
 

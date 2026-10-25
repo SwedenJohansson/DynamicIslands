@@ -2,6 +2,8 @@
 # Terraces at 3, 7, 11 m (centres z -38, -22, -6) and the altar's 15 m (z 12), a path up the middle (x 0); the paddies'
 # water either side (|x| 1.5..13.5, z centre +-3); the statue sets on z 5 (st_a), -1 (st_b), -17 (st_c); the Bell stones
 # at 16.5 -42, -16.5 -26, 16.5 -10, the stand at 2.8 -10; the altar platform x -4.5..4.5, z 8..12.5 (2.42 m up).
+# DEEP 10-25: Hermit's Peak at 40 45 (foot zone hillfoot at 23.39 26.31), the drowned seed store at -80 -10 (-14 m),
+# the ossuary cave's zone at -45 -57.
 island Stillwater Terraces
 offset 0 0
 expect step 0
@@ -44,9 +46,28 @@ expect step 7
 walk 0 -4 to 0 4.5 h=15
 read Monk's confession
 expect step 8
+zone hillfoot
+expect step 9
+zone hilltop
+expect step 10
+read Abbot Oren Vasque's letter
+expect step 11
+open Hermit's chest
+expect story shrinekey 1
+expect step 12
+zone seedstore
+expect step 13
+air seedair
+read Planter Noor Hadi's note
+expect step 14
+zone ossuary
+read Brother Ivo's note
+open Ossuary box
+expect step 14
+walk 0 -4 to 0 4.5 h=15
 open Offering box
 expect item FishingRod_Metal 1
-expect step 9
+expect step 15
 zone altar
 expect hidden st_c
 expect shown st_b

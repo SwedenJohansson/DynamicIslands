@@ -1,7 +1,9 @@
 # Mistlock Causeway (CIPlay mistlock_causeway): The Lullaby Frequency's sixth island, quest "Walk Where She Sings". The
 # lagoon at -1.5 m between z -26 and 26; the causeway's decks 0.8 m over the water (2.3 m over the lagoon floor) on x 0,
 # forking on x -6 / 6 at z -16.5..-10.5 (safe: left) and 4.5..10.5 (safe: right); the start at 0 -30 (teleport target
-# 0 -32), the midpoint 0 -3, the gatehouse's door at 0 30, the lever at 2.8 28.6.
+# 0 -32), the midpoint 0 -3, the gatehouse's door at 0 30, the lever at 2.8 28.6 (hidden; its handle-less post there).
+# DEEP 10-25: Lamplighter's Tor at 50 10 (foot zone hillfoot at 27.45 5.49), the toll house at -80 10 (-14 m), the
+# pilgrims' cave zone at -40 57.
 island Mistlock Causeway
 offset 0 0
 expect step 0
@@ -22,9 +24,35 @@ walk 0 -3 to 0 1.5 to 6 1.5 to 6 13.5 to 0 13.5 to 0 23.5 h=0.8
 walk 0 23.5 to 0 28
 zone gatehouse
 expect step 4
+expect hidden lever
+use leverpost
+expect message no handle
+zone hillfoot
+expect step 5
+zone hilltop
+expect step 6
+read Lamplighter Edwin Sallow's log
+expect step 7
+open Lamplighter's chest
+expect story leverhandle 1
+expect step 8
+zone tollhouse
+expect step 9
+air tollair
+read Toll keeper Marta Lund's note
+expect step 10
+zone pilgrimcave
+read Pilgrim Josef Brandt's note
+open Pilgrims' box
+expect step 10
+walk 0 24 to 0 28 h=0.9
+use leverpost
+expect shown lever
+expect hidden leverpost
+expect step 11
 use lever
 expect message Twenty seconds
-expect step 5
+expect step 12
 use lever
 expect message still open
 walk 0 28.5 to 0 31 to 0 32.5 h=0.9

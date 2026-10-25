@@ -6,6 +6,10 @@ hour 19
 weather Calm
 at 0 -14
 wait 3
-picture sl1_returning_island 0 22 -55 0 3 0
+picture sl1_returning_island 0 40 -115 0 6 0
 picture sl1_returning_hut 3 4 -9 0 4 0
 picture sl1_returning_table -1.4 6.7 -1.6 0 5.6 0.6
+picture gp_returning_rock 0 14 -6 -26 14 22
+picture gp_returning_watchhut -24 26 12 -26 21.5 22
+picture gp_returning_netshed 30 -5 -40 30 -10.5 -28
+picture gp_returning_cave 28 6 10 28 3 24

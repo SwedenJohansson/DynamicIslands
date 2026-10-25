@@ -5,15 +5,23 @@
 # back to the start. On the far islet a stone gatehouse, its roof on its corner pillars; a lever opens its gate for
 # twenty seconds. Quest "Walk Where She Sings" (6 steps): the causeway's start, the pilgrim's rule, the midpoint, the
 # gatehouse, the lever, the pilgrim's satchel inside.
+# RESIZE + DEEP 10-25 (deep pass, The Lullaby Frequency): Radius 55 -> 85, as big as Raft's own big islands; the lagoon,
+# causeway and both islets stay in the middle, a path runs down to the south beach. New: Lamplighter's Tor in the east
+# (a 26 m climb to the lamplighter's ruined hut; he took the gate lever's handle up there, so the lever is only there once
+# you have climbed for it and fitted it), the toll house drowned in a deep hole off the west shore (an air pocket; the
+# toll keeper's note), the pilgrims' cave in the north-west, a crashed plane in the south-east, two buried treasures.
+# Quest 6 -> 13 steps. Voices: lamplighter Edwin Sallow, toll keeper Marta Lund, pilgrim Josef Brandt.
 #
 # Built by the recipe player (CIRecipe mistlock_causeway) through the editor's own operations.
 include lib_sea
 include lib_features
 include lib_sl1
+include lib_areas
+include lib_highwater
 new
 # (nature: two bare rock islets round a lagoon - few trees, Rocks Like Raft)
 gen Trees=0.15 Bushes=0.2 Rocks=0.43 Harvest=0.15 BeachThings=0.35
-gen Seed=1206 Radius=55 Height=4 Roughness=0.25 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.05 BeachWidth=0.7
+gen Seed=1206 Radius=85 Height=4 Roughness=0.25 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.05 BeachWidth=0.7
 gen Water=0.5 SeaRocks=0.4 SeaFinds=0.4 Sunken=0.3 Hostiles=0 Friendly=0.1 SeaLife=0.3
 generate
 
@@ -26,8 +34,19 @@ brush flatten from 0 -27 to 0 -23 r=2.5 s=20 frames=60 h=0.7
 brush flatten from 0 23 to 0 27 r=2.5 s=20 frames=60 h=0.7
 # (and the gatehouse's pad: the islet brush left its floor in the rock)
 brush flatten from -4 31.5 to 4 31.5 r=4 s=20 frames=80 h=0.9
+# --- DEEP 10-25 terrain: a path from the south beach to the south islet, Lamplighter's Tor (east, summit 26 m, base
+# r 22) and its path, the toll house's hole (west, -14 m); the cave's, plane's and hut's pads come with their macros
+brush smooth from 0 -48 to 0 -84 r=3 s=6 frames=40
+call hw_mount x=50 z=10 b=22 h=26
+call hw_trail x=50 z=10 b=22 h=26 a0=258.69 turn=300 n=34 h0=2
+brush flatten at 50 10 r=9 s=20 frames=400 h=26
+call hw_basin x=-80 z=10 r=14 h=-14
 origin
 clear from 0 -46 to 0 46 r=13
+clear from 0 -84 to 0 -46 r=3
+call ar_cave x=-40 z=62 h=2 yaw=180 al=pilgrimrock chest=pilgrimchest
+call ar_plane x=45 z=-52 h=2.5 yaw=30 al=fogplane crate=fogcrate
+call ar_ruin x=50 z=10 h=26 yaw=0 w=3 d=2 al=lamphut
 
 # --- The causeway: 3 m plank decks (0.8 m over the water) on four posts each, standing on the lagoon floor ----------
 # Rows every 3 m from z -22.5 to 22.5 on the lane x 0; fork 1 (z -16.5..-10.5) and fork 2 (z 4.5..10.5) run on two
@@ -105,6 +124,7 @@ place Loot_Chest satchel at 3.75 3.5 y=0.2 sit yaw=180
 place Placeable_Lantern_Metal - at 1 3.6 y=0.2 sit
 pop
 place UT_JumpPuzzle_LiftMechanism_Lever lever at 2.8 28.6 ground sit yaw=90
+place Block_Pillar_Wood leverpost at 2.8 28.6 ground sy=0.4
 place Zone_Trigger gatehouse at 0 28 ground y=1
 call lamppost x=-2.4 z=28
 
@@ -114,16 +134,62 @@ scatter "Pickup_Landmark_PineappleLandmark" 2 at 0 0 r=46 seed=1261 free=5
 call dirt x=-26 z=-36 r=7 n=1 seed=1262
 call shallows x=-12 z=0 r=4 deep=3 n=1 seed=1263
 call shallows x=12 z=0 r=4 deep=3 n=1 seed=1264
+call shallows r=96 deep=5 n=3 seed=30408
+call hw_reef x=-88 z=18 r=3 seed=30401
+call hw_reef x=-88 z=2 r=3 seed=30402
+
+# --- DEEP 10-25: Lamplighter's Tor - its foot and top as zones, the lamplighter's ruined hut on top (the lever handle) ----
+call hw_zone x=27.45 z=5.49 al=hillfootz id=hillfoot r=5 msg="Lamplighter's Tor. A path climbs out of the mist up its side, and at the top a lamp is burning that nobody has lit."
+call hw_zone x=50 z=10 al=hilltopz id=hilltop r=8 h=1 msg="The top of Lamplighter's Tor, above the mist. Below you the causeway's lamps burn in a line - more of them than there are posts."
+place Note_Paper edwinnote at 49.25 10 h=27.1 drop yaw=10
+place Loot_Chest lampchest at 51.3 10.5 h=26.1 drop yaw=180
+loot lampchest story:leverhandle*1;Rope*2;Placeable_Lantern_Basic*1;Nail*6
+note lampchest Lamplighter's chest | The lamplighter's chest: wicks, rope, a spare lantern - and an iron lever handle, greased and wrapped in sacking.
+prop lampchest loot.refill=0
+place Placeable_Lantern_Metal - at 52.5 7.5 h=26 sit
+scatter Bush 5 at 50 10 r=22 seed=30403 free=1
+scatter Bush2 3 at 50 10 r=22 seed=30404 free=1
+scatter "Pickup_Landmark_Rock 1" 3 at 50 10 r=22 seed=30405 free=2
+place Creature_Goat hillgoats at 30.45 8.49 ground
+prop hillgoats creature.count=2
+# --- The toll house (west), drowned in a hole 14 m down, an air pocket: Marta's note, the back room's chest -------------
+call hw_sunkhouse x=-80 z=10 h=-14 yaw=0 a=tollhouse chest=tollchest air=tollair bub=tollbub dal=tolldoor
+call hw_zone x=-80 z=10 al=tollzone id=tollhouse r=7 h=1 msg="The causeway's old toll house, 14 m down. Pilgrims' tickets float under the ceiling like leaves. Its front room still holds air."
+place Note_Paper martanote at -79.4 7.8 h=-13.7 drop yaw=20
+loot tollchest MetalIngot*1;CopperIngot*1;Rope*2;Nail*6
+prop tollchest loot.refill=0
+note tollchest Toll box | The toll keeper's strongbox: the takings turned to rust, but an iron and a copper ingot, rope and nails under them.
+place Creature_PufferFish tollpuffers at -72 16 h=-9
+prop tollpuffers creature.count=2
+# --- The pilgrims' cave (north-west): a secret --------------------------------------------------------------------------
+call hw_zone x=-40 z=57 al=cavez id=pilgrimcave r=4 msg="A cave where pilgrims slept before the crossing. Bedrolls, cold ashes, and on the wall a scratched line for every one who went over."
+place Note_Paper josefnote at -41.5 56.5 h=2.45 drop yaw=180
+loot pilgrimchest Rope*2;Scrap*2;Battery*1;Cooked_Mackerel*2
+prop pilgrimchest loot.refill=0
+note pilgrimchest Pilgrims' box | What the pilgrims left for the next ones: rope, food, a battery and scrap.
+call treasure x=-33 z=52 r=7 n=1 seed=30406 kind=0
+prop treasure30406 treasure.loot=Scrap*3;Bolt*2;Hinge*1
+# --- The crashed plane (south-east): a secret ---------------------------------------------------------------------------
+loot fogcrate Plastic*3;Rope*2;CopperIngot*1;Glass*2
+prop fogcrate loot.refill=0
+note fogcrate Plane's crate | The pilot flew into the mist after the lamps. His crate: plastic, glass, rope and a copper ingot.
+call treasure x=39 z=-44 r=7 n=1 seed=30407 kind=0
+prop treasure30407 treasure.loot=MetalOre*3;CopperOre*2
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Mistlock Causeway
 info author=Custom Islands
-info description=A plank causeway lit by street lamps across a misty lagoon, to a stone gatehouse. Walk where she sings. The sixth island of The Lullaby Frequency.
+info description=A plank causeway lit by street lamps across a misty lagoon, to a stone gatehouse, on an island as big as Raft's own big islands: Lamplighter's Tor above the mist, a toll house drowned off the shore, the pilgrims' cave, a plane lost in the fog. Walk where she sings. The sixth island of The Lullaby Frequency.
 island on.arrive=message||Mist so thick the lamps are only smudges. A causeway goes out into it. Somewhere ahead, very faint, the song.
 
+story leverhandle|Lever handle|Placeable_Lantern_Metal|The gatehouse lever's iron handle, from the lamplighter's hut on Lamplighter's Tor.
+story handleset|Lever handle fitted|Placeable_Lantern_Metal|You fitted the handle to the gatehouse lever.
 story lever|Gatehouse gate opened|Note_Paper|You pulled the gatehouse lever; the gate stood open twenty seconds.
 
 note pilgrimsrule Pilgrim's rule | THE PILGRIMS' RULE\n\nWalk only where she sings.\nWhere she is silent, the water takes you back.\n\n(Scratched under it: twice it forks. Listen.)
+note edwinnote Lamplighter Edwin Sallow's log | LAMPS - E. SALLOW\n\nI have lit the causeway for thirty years: the lane and the safe branches, never the others, so the pilgrims would know where to walk.\n\nThis month they all wanted to cross. Hundreds. They came off the boats humming and walked into the mist in a line and did not come back for their boats.\n\nSo I took the handle off the gatehouse lever and brought it up here. Let them stand at the gate and turn round.\n\nI have not lit the lamps since Tuesday. They are lit every night all the same. I count them from the tor and every night there is one more lamp than there are posts, and the extra one is walking.\n\nIf you need the handle, take it. I do not think a gate is going to stop her.
+note martanote Toll keeper Marta Lund's note | (Written on a roll of tickets, dry in the air pocket)\n\nOne ticket a head, to the gatehouse and on to Gannet Rock. I have sold four hundred this month. Some of them paid twice. I did not like to say.\n\nThe night the sea came over the toll house there was a queue to the door, every one of them humming the same thing, and when the water reached their chins they kept on humming under it, and the queue did not move.\n\nI am in the air under the roof. When I look out of the window the queue is still there, on the bottom, waiting very patiently.\n\nThey are all facing the causeway. Every so often one of them steps forward.
+note josefnote Pilgrim Josef Brandt's note | J. BRANDT, PILGRIM\n\nThey say if you walk where she sings you come to the Choir and the Choir will teach you to listen without going under. I have come a long way to learn that.\n\nLast night in the cave my wife sat up in her bedroll and sang the whole lullaby in a voice that was not hers. In the morning she remembered none of it, and she had wet sand in her hair.\n\nThere are more lines on the wall than people who have slept here. I have counted twice.\n\nWe cross tonight. If I come back for my coat, do not give it to me unless I can tell you the colour of my wife's eyes.
 note satchel Pilgrim's satchel | A pilgrim's satchel on the gatehouse floor: a spear, a bundle of arrows, food for the road - and a ticket stamped GANNET ROCK, ADMIT ONE.
 loot satchel Spear_Scrap*1;Arrow_Metal*8;Cooked_Mackerel*3;Canteen_Water*1
 prop satchel loot.refill=0
@@ -138,7 +204,7 @@ prop midpoint zone.radius=2.5
 prop midpoint zone.message=Halfway. Behind you the lamps you passed have gone out.
 prop gatehouse zone.id=gatehouse
 prop gatehouse zone.radius=3
-prop gatehouse zone.message=A stone gatehouse, its gate shut. A lever stands by it.
+prop gatehouse zone.message=A stone gatehouse, its gate shut. A lever stands by it - with no handle.
 
 macro wrongturn a
 prop $a zone.id=wrong_turn
@@ -169,6 +235,12 @@ prop gate obj.name=gate
 prop gate beh.move=0,-2.5,0
 prop gate beh.moveMode=switch
 prop lever obj.name=lever
+prop lever beh.hidden=1
+prop leverpost obj.name=leverpost
+prop leverpost beh.use=Fit a handle to the lever
+prop leverpost if.use=has|story:leverhandle|1
+prop leverpost on.use=hide|\nshow|lever\ngive||story:handleset*1\nsound||event:/raft/radar/lever\nmessage||The handle drops onto the lever's square shaft and locks there with a clank.
+prop leverpost else.use=message||The gate lever has no handle - only a square shaft, filed bright. Someone took it away.
 prop lever beh.use=Pull the gatehouse lever (the gate opens for 20 seconds)
 prop lever if.use=state|gate|closed
 prop lever on.use=open|gate\ngive||story:lever*1\nsound||event:/raft/radar/lever\nmessage||The gate grinds down into the floor. Twenty seconds - go!\nwait|20\nclose|gate
@@ -180,6 +252,13 @@ step reach|causeway_start|1|Find the start of the causeway
 step read|Pilgrim's rule|1|Read the pilgrims' rule
 step reach|midpoint|1|Cross to the causeway's midpoint - walk only where she sings
 step reach|gatehouse|1|Reach the gatehouse on the far islet
+step reach|hillfoot|1|Find the path up Lamplighter's Tor in the east
+step reach|hilltop|1|Climb Lamplighter's Tor to the lamplighter's hut
+step read|Lamplighter Edwin Sallow's log|1|Read the lamplighter's log in his hut
+step collect|story:leverhandle|1|Take the lever handle from the lamplighter's chest
+step reach|tollhouse|1|Dive to the drowned toll house off the west shore
+step read|Toll keeper Marta Lund's note|1|Breathe in the toll house's front room and read the toll keeper's note
+step collect|story:handleset|1|Fit the handle to the gatehouse lever
 step collect|story:lever|1|Pull the lever by the gate
 step open|Pilgrim's satchel|1|Get through the gate in time and open the pilgrim's satchel
 quest done=The ticket in the satchel says GANNET ROCK. The Receiver has caught a new voice: a choir, singing, very far off.
@@ -189,7 +268,7 @@ quest reward=Rope*4;Plank*6;MetalIngot*2
 call treasure x=0 z=0 r=44 n=1 seed=8850
 prop treasure8850 treasure.loot=TitaniumOre*2
 # Animals (reach audit 10-24: a late island of its story line had none)
-place Creature_Turtle turtles at -6 54 h=-1.5
+place Creature_Turtle turtles at -6 96 h=-3
 prop turtles creature.count=2
 
 save Mistlock Causeway

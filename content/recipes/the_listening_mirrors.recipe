@@ -13,13 +13,21 @@
 # 0 -62 (1.5 m), terraces 0 -54 (4 m) and 0 -46 (7 m), the rim 10 m round 0 4 (r 34); the pit round 0 16 (r 10, floor
 # -9); the road down x 0 from z -14 (10 m) to z 10 (-2 m); mirrors M1 -26 -4, M2 -27 14, M3 -14 32, M4 14 32, M5 27 14;
 # the control hut -16..-11.5 x -22..-17.5; the chapel 16..23.5 x -12..-6; the crane cab tower 20..24.5 x 2..5.
+# RESIZE + DEEP 10-25 (deep pass, The Lullaby Frequency): Radius 72 -> 108, the biggest island of the plan; the quarry
+# stays in the middle, and a barge cut runs from the landing out to the sea (x 0, z -67..-112). New: Watcher's Fell in
+# the west (a 38 m climb to the Choir's signal mast; the Listener sent the reliquary's key up there with his watcher, so
+# the reliquary only opens once you have climbed for it), the quarry's pump house drowned in a deep hole off the east
+# shore (an air pocket; the pump keeper's note), the powder cave in the north, a crashed plane in the south-west, two
+# buried treasures. Quest 31 -> 37 steps. Voices: watcher Abel Strand, pump keeper Dora Haig, blaster Owen Tarr.
 include lib_sea
 include lib_features
 include lib_sl1
+include lib_areas
+include lib_highwater
 new
 # (nature: a bare grey quarry - trees 0.1, rocks 0.5)
 gen Trees=0.1 Bushes=0.12 Rocks=0.5 Harvest=0.1 BeachThings=0.3
-gen Seed=1209 Radius=72 Height=13 Roughness=0.3 Peaks=1 Shape=0 Style=0 PeakShape=0.2 Cliffs=0.5 BeachWidth=0.4
+gen Seed=1209 Radius=108 Height=13 Roughness=0.3 Peaks=1 Shape=0 Style=0 PeakShape=0.2 Cliffs=0.5 BeachWidth=0.4
 gen Water=0.5 SeaRocks=0.45 SeaFinds=0.4 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
 
@@ -44,10 +52,21 @@ brush flatten at -27 14 r=3.5 s=20 frames=60 h=10
 brush flatten at -14 32 r=3.5 s=20 frames=60 h=10
 brush flatten at 14 32 r=3.5 s=20 frames=60 h=10
 brush flatten at 27 14 r=3.5 s=20 frames=60 h=10
+# --- DEEP 10-25 terrain: the barge cut from the landing to the sea, Watcher's Fell (west, summit 38 m, base r 26) and
+# its path, the pump house's hole (east, -14 m); the cave's and the plane's pads come with their macros
+brush flatten from 0 -67 to 0 -112 r=8 s=20 frames=500 h=-3
+brush smooth from 0 -60 to 0 -72 r=6 s=6 frames=30
+call hw_mount x=-66 z=24 b=26 h=38
+call hw_trail x=-66 z=24 b=26 h=38 a0=109.98 turn=300 n=40 h0=9
+brush flatten at -66 24 r=9 s=20 frames=400 h=38
+call hw_basin x=76 z=-30 r=14 h=-14
 origin
 clear at 0 4 r=35
 clear from 0 -66 to 0 -32 r=5
+clear from 0 -66 to 0 -112 r=9
 clear at 0 46 r=6
+call ar_cave x=30 z=74 h=6 yaw=180 al=powderrock chest=powderchest
+call ar_plane x=-50 z=-62 h=4 yaw=40 al=greyplane crate=greycrate
 
 # --- Area A, the rim: five listening mirrors, the foreman's board, the generator, the control hut --------------------
 # mirror: a concrete plinth (four grey pillars and a 3 m plate on them) on the rim, a dish 6 m across sat on it and
@@ -156,11 +175,55 @@ call shallows x=46 z=24 r=4 deep=3 n=1 seed=1291
 call shallows x=50 z=12 r=4 deep=3 n=1 seed=1292
 scatter "Pickup_Landmark_PineappleLandmark" 2 at 0 -40 r=20 seed=1293 free=5
 call dirt x=-30 z=-30 r=6 n=1 seed=1294
+call shallows r=116 deep=5 n=3 seed=30708
+call hw_reef x=62 z=-44 r=3 seed=30701
+call hw_reef x=82 z=-12 r=3 seed=30702
+
+# --- DEEP 10-25: Watcher's Fell - its foot and top as zones, the signal mast on top (the reliquary's key in its box) ----
+call hw_zone x=-40.63 z=14.77 al=hillfootz id=hillfoot r=5 msg="Watcher's Fell. A path of cut steps climbs it to a mast with a dish on the top, turned not to the sea but down at the quarry."
+call hw_zone x=-66 z=24 al=hilltopz id=hilltop r=8 h=1 msg="The top of Watcher's Fell. From here you can see all five mirrors on the rim - and that each one is turned a little further round than the last, as if they were following something."
+call hw_mast x=-66 z=24 h0=38 lv=3 a=signalmast chest=fellchest top=Antenna_dish
+place Note_Paper abelnote at -62.5 22 h=38.1 drop yaw=200
+loot fellchest story:relickey*1;Battery*1;Rope*2;CopperIngot*1
+note fellchest Signal mast box | The watcher's box on the mast's deck: a battery, rope, copper wire - and a black iron key, its bow cast as a bell: the reliquary's.
+prop fellchest loot.refill=0
+place Zone_Sound fellhum at -66 24 h=40
+prop fellhum sound.event=event:/raft/radar/radar_humm
+prop fellhum sound.volume=0.45
+prop fellhum zone.radius=14
+scatter Bush 4 at -66 24 r=26 seed=30703 free=1
+scatter Bush2 3 at -66 24 r=26 seed=30704 free=1
+scatter "Pickup_Landmark_Rock 1" 3 at -66 24 r=26 seed=30705 free=2
+place Creature_Goat hillgoats at -37.63 17.77 ground
+prop hillgoats creature.count=2
+# --- The pump house (east), drowned in a hole 14 m down, an air pocket: Dora's note, the back room's chest ------------
+call hw_sunkhouse x=76 z=-30 h=-14 yaw=0 a=pumphouse chest=pumpchest air=pumpair bub=pumpbub dal=pumpdoor
+call hw_zone x=76 z=-30 al=pumpzone id=pumphouse r=7 h=1 msg="The quarry's pump house, 14 m down. Its pumps kept the pit dry for forty years. Their valves are all open. Its front room still holds air."
+place Note_Paper doranote at 76.6 -32.2 h=-13.7 drop yaw=20
+loot pumpchest TitaniumIngot*1;Bolt*4;MetalIngot*2;Rope*2
+prop pumpchest loot.refill=0
+note pumpchest Pump house chest | The pump keeper's chest: spare bolts, rope, two iron ingots and a bar of titanium for the pump shafts.
+place Creature_PufferFish pumppuffers at 70 -22 h=-9
+prop pumppuffers creature.count=2
+# --- The powder cave (north): a secret ----------------------------------------------------------------------------------
+call hw_zone x=30 z=69 al=cavez id=powdercave r=4 msg="The quarry's powder cave. Empty crates stencilled DANGER - EXPLOSIVES, every one of them prised open and emptied."
+place Note_Paper owennote at 28.5 68.5 h=6.45 drop yaw=180
+loot powderchest Scrap*3;Rope*2;Battery*1;MetalOre*2
+prop powderchest loot.refill=0
+note powderchest Powder box | The blaster's box: fuse cord, scrap, a battery and ore from the cave's back wall.
+call treasure x=37 z=64 r=14 n=1 seed=30706 kind=0
+prop treasure30706 treasure.loot=TitaniumOre*2;Scrap*2;Bolt*2
+# --- The crashed plane (south-west): a secret ---------------------------------------------------------------------------
+loot greycrate Plastic*3;Glass*2;CopperIngot*1;Rope*2
+prop greycrate loot.refill=0
+note greycrate Plane's crate | A survey plane, down in the scrub. Its crate: plastic, glass, rope, a copper ingot - and a photograph from the air of the quarry, the five mirrors on its rim, and in the pit a pale shape bigger than the pit.
+call treasure x=-44 z=-54 r=14 n=1 seed=30707 kind=0
+prop treasure30707 treasure.loot=MetalOre*3;CopperOre*2;Hinge*1
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Listening Mirrors
 info author=Custom Islands
-info description=A grey quarry island with five giant listening mirrors on its rim and a flooded pit where something sings. The finale of The Lullaby Frequency.
+info description=A grey quarry island, the biggest of the plan, with five giant listening mirrors on its rim and a flooded pit where something sings; Watcher's Fell above it with the Choir's signal mast, a pump house drowned off the shore, a powder cave, a crashed plane. The finale of The Lullaby Frequency.
 island on.arrive=message||Five great grey dishes on a quarry's rim, all turned to the sea. The Receiver in your pack hums the same note they do.
 
 story power|Generator running|Battery|The quarry generator is running: power for mirror 1.
@@ -168,6 +231,7 @@ story hum|Mirror 1 listened|Note_Paper|Mirror 1's receiver, on: the hum of the w
 story hutopen|Control hut open|Note_Paper|You opened the mirror control hut with the dish bearings.
 story fuse|Mirror fuse|Battery|A heavy ceramic fuse from the mirror control hut. The crane's claw takes the same kind.
 story cagekey|Choir cage key|Placeable_Lantern_Metal|An iron key from the Choir's chapel.
+story relickey|Reliquary key|Placeable_Lantern_Metal|A black iron key, its bow cast as a bell, from the signal mast on Watcher's Fell.
 story bellrope|Choir bell rope|Rope|The bell rope from the Choir's reliquary, knotted thirteen times.
 story bellrung|The Choir's bell rung|Note_Paper|You rang the Choir's bell. Out on the rim, mirror 1 turned a hand's width.
 story hookmoved|Crane hook lowered|Bolt|The crane lever lowered the hook onto the sluice grate.
@@ -180,15 +244,20 @@ note foremanboard Quarry Foreman's board | GREYSTONE QUARRY - FOREMAN'S BOARD\n\
 note mirror1log Mirror 1 log | MIRROR 1 - LISTENING LOG\n\nNight 1: sea noise.\nNight 4: a hum under the sea noise, 3:12 a.m.\nNight 9: the hum is a tune. Everyone on shift knows it. Nobody learned it.\nNight 12: the Choir came to the gate and asked to listen. We let them.
 note mirror2log Mirror 2 log | MIRROR 2 - DISH BEARINGS, LAST NIGHT\n\nMirror 2: 4\nMirror 3: 3\nMirror 4: 1\nMirror 5: 2\n\n(The control hut's code is the bearings, in order. Change it.)
 note listenersermon The Listener's sermon | THE LISTENER'S SERMON\n\nShe was a mother before she was a light.\nShe lost her children to the shore, so she sings them home.\nEvery child who hears her sleeps. Every sleeper stays.\nWe built the mirrors to hear her better.\nNow we cannot hear anything else.
+note abelnote Watcher Abel Strand's log | THE SIGNAL MAST - A. STRAND, WATCHER\n\nThe Listener has me keep the dish on the pit, not the sea. Every night I write down which way the five mirrors face. Every night each one has turned a little further.\n\nNobody turns them. I have sat up here till dawn with the glass on them.\n\nTonight they all face the pit. Tonight, the Listener says, she comes up to see herself in them, and the whole sea hears her at once.\n\nHe gave me the reliquary key to keep, because I am the only one of the Choir who cannot sing. He said: if it goes wrong, give it to whoever comes up the Fell. The bell will call her down again.\n\nThe dish is humming. I am not going down.
+note doranote Pump keeper Dora Haig's note | (Pencil on the pump log, dry in the air pocket)\n\nForty years these pumps kept the pit dry. Last month the Listener paid me to stop them.\n\nI would not. So at night the Choir came and opened the valves, all of them, and the sea came back into the pit, and they stood round the rim and sang it in.\n\nThe pump house went under with me inside. I have the air under the roof. Through the window I can see the pit filling, and the dishes on the rim lit up like lamps, and down in the water something pale that will not fit in the pit, turning over in its sleep.\n\nIt is humming the tune my mother hummed me.
+note owennote Blaster Owen Tarr's note | O. TARR, BLASTER - THE POWDER CAVE\n\nThe Listener came for the powder in the spring. Every stick. I asked him what he wanted to blow up and he said: nothing, it is for opening.\n\nThey laid it in the pit floor in a ring, round something they had dug down to. I wired it. I did not ask.\n\nWhen it went, the pit floor opened onto water, and the water was warm, and the whole quarry hummed like a struck bell.\n\nThe Choir cheered. I did not. I have been a blaster thirty years, and I know the sound of rock that has been hollow from the start.
 note reliquary Reliquary | The Choir's reliquary: a bell rope knotted thirteen times, candles, and a hymn book with every page blank.
 loot reliquary story:bellrope*1;Placeable_GlassCandle*2;Cooked_Mackerel*2
 prop reliquary loot.refill=0
+prop reliquary if.open=has|story:relickey|1
+prop reliquary else.open=message||The reliquary is locked. Wren says its key went up Watcher's Fell with Abel, the Choir's watcher.
 note wrenbundle Wren's bundle | Sister Wren's bundle: bandages, water, and a whistle she says the dogs hate.
 loot wrenbundle HealingSalve*3;Canteen_Water*2;Arrow_Metal*6
 prop wrenbundle loot.refill=0
 prop wrenbundle if.open=signal|wrenfree
 prop wrenbundle else.open=message||Wren's bundle is in the cage with her. The key first.
-note wrenwarning Wren's warning | Sister Wren, out of the cage, holding your arm too hard:\n\n"Don't let her see your light. She takes the lights - that's the lure, she wears them. Put her tooth on the altar and she'll come for it. When she's gone, turn mirror 1 on her song. Send it back."
+note wrenwarning Wren's warning | Sister Wren, out of the cage, holding your arm too hard:\n\n"Don't let her see your light. She takes the lights - that's the lure, she wears them. Put her tooth on the altar and she'll come for it. When she's gone, turn mirror 1 on her song. Send it back."\n\n"And the bell rope's in the reliquary. The Listener locked it and sent the key up Watcher's Fell with Abel, his watcher. Abel went up to listen. He never came down."
 note operatornote Crane operator's note | Hook's down on the sluice grate. Claw's dead till someone brings a fuse from the hut.\n\nSomething took the light off my cab. Left a light of its own on the road down. I'm not going to get it.
 note lasthymn The last hymn | THE LAST HYMN\n\n(scratched on a slate, on the bottom of the pit)\n\nHush now, the mirrors are listening.\nHush now, the sea is asleep.\nSend back the song that she gave you,\nand she will have nothing to keep.
 note treasury Choir treasury | The Choir's treasury: everything the drowned towns gave them - ingots, tokens, a little gilded trophy of a dish.
@@ -361,6 +430,12 @@ step read|The Listener's sermon|1|Read the Listener's sermon
 step kill|Hyena|6|Fight off the Choir's dogs
 step open|Wren's bundle|1|Free Sister Wren (the chapel's key opens her cage) and open her bundle
 step read|Wren's warning|1|Hear Wren's warning
+step reach|hillfoot|1|Find the path up Watcher's Fell in the west
+step reach|hilltop|1|Climb Watcher's Fell to the Choir's signal mast
+step read|Watcher Abel Strand's log|1|Read the watcher's log by the mast
+step collect|story:relickey|1|Take the reliquary's key from the signal mast's box
+step reach|pumphouse|1|Dive to the quarry's drowned pump house off the east shore
+step read|Pump keeper Dora Haig's note|1|Breathe in the pump house's front room and read the pump keeper's note
 step open|Reliquary|1|Open the Choir's reliquary
 step collect|story:bellrope|1|Take the bell rope
 step collect|story:bellrung|1|Ring the chapel bell

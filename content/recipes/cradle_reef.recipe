@@ -6,15 +6,23 @@
 # "Cradle Song" (7 steps): the buoy, the dormitory, the matron's last letter, three music-box combs from the cribs, three
 # angler fish that come when you enter the chapel, the chapel's music box (it takes the combs and plays the lullaby, and
 # shows the tooth), the Lantern-Mother's tooth (the finale needs it).
+# RESIZE + DEEP 10-25 (deep pass, The Lullaby Frequency): Radius 40 -> 85, as big as Raft's own big islands; the home stays
+# in the middle of the seabed. New: Nursery Rock in the north-west, a sea stack out of the water (a path from the waterline
+# up 20 m to the nursemaid's ruined lookout; she kept the music box's winding key up there, so the box only plays once you
+# have climbed for it), the home's infirmary sunk in a trench 42 m down in the north-east (an air pocket; the doctor's
+# note), a kelp grotto in the south, a sunken plane in the south-west, two buried treasures on the rock. Quest 7 -> 13
+# steps. Voices: nursemaid Ada Finch, doctor Lewin Hale, a child, Elsie Cobb.
 #
 # Built by the recipe player (CIRecipe cradle_reef) through the editor's own operations.
 include lib_sea
 include lib_features
 include lib_sl1
+include lib_areas
+include lib_highwater
 new
 # (nature: a sunken island - no land plants, kelp and coral instead)
 gen Trees=0 Bushes=0 Rocks=0.35 Harvest=0 BeachThings=0
-gen Seed=1208 Radius=40 Height=8 Roughness=0.35 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.2 PeakShape=0.3
+gen Seed=1208 Radius=85 Height=8 Roughness=0.35 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.2 PeakShape=0.3
 gen SeaFloor=0 Shelf=0.5 Seabed=2
 gen Water=0.5 SeaRocks=0.4 SeaFinds=0.5 Sunken=0.6 Hostiles=0 Friendly=0 SeaLife=0.4
 generate
@@ -23,8 +31,18 @@ elevation -34
 # --- The home's ground: a level shelf at 6 m (28 m under the sea), a sandy seabed round it ---------------------------
 brush flatten from -14 0 to 12 0 r=12 s=20 frames=120 h=6
 brush seabed at 0 0 r=24 s=20 frames=30
+# --- DEEP 10-25 terrain: Nursery Rock (north-west, top 54 = 20 m over the sea, base r 26) and its path from the
+# waterline, the infirmary's trench (north-east, -8: 42 m under the sea); the grotto's and the plane's pads come
+# with their macros
+call hw_mount x=-40 z=36 b=26 h=54
+call hw_trail x=-40 z=36 b=15 h=54 a0=131.99 turn=300 n=30 h0=35
+brush flatten at -40 36 r=9 s=20 frames=400 h=54
+call hw_basin x=55 z=38 r=14 h=-8
 origin
 clear from -16 0 to 14 0 r=14
+call ar_cave x=10 z=-62 h=6 yaw=0 al=grottorock chest=grottochest
+call ar_plane x=-55 z=-40 h=6 yaw=120 al=seaplane crate=seacrate
+call ar_ruin x=-40 z=36 h=54 yaw=0 w=3 d=2 al=lookout
 
 # --- The dormitory: 9 x 6 m of grey plates, broken half walls, two rows of cribs, the matron's table and chest -------
 push at -15 -4 h=6
@@ -92,18 +110,62 @@ scatter LeafCoral_2 3 at -22 10 r=4 seed=1286 free=1
 scatter Coral1 3 at -4 -20 r=4 seed=1287 free=1
 scatter SpineCoral_3 3 at -4 -20 r=4 seed=1288 free=1
 scatter Loot_SunkenBarrel 3 at 0 0 r=24 seed=1289 free=3
+call hw_reef x=41 z=22 r=3 seed=30601
+call hw_reef x=-43 z=-26 r=3 seed=30602
+call shallows x=-40 z=36 r=34 deep=5 n=1 seed=30608
+
+# --- DEEP 10-25: Nursery Rock - its foot (at the waterline) and top as zones, the nursemaid's ruined lookout on top -----
+call hw_zone x=-28.11 z=25.3 al=hillfootz id=hillfoot r=5 msg="Nursery Rock. Steps are cut into it from the water, up to a little stone hut on the top. The children were brought up here to see the sun."
+call hw_zone x=-40 z=36 al=hilltopz id=hilltop r=8 h=1 msg="The top of Nursery Rock, and the nursemaid's lookout, its roof gone. From here the buoy is a speck, and under it the water is dark."
+place Note_Paper adanote at -40.75 36 h=55.1 drop yaw=10
+place Loot_Chest adachest at -38.7 36.5 h=54.1 drop yaw=180
+loot adachest story:windkey*1;Rope*2;Canteen_Water*1;Cooked_Mackerel*1
+note adachest Nursemaid's chest | The nursemaid's chest in the lookout: rope, water, dried fish - and a little brass key with a butterfly bow: the music box's winding key.
+prop adachest loot.refill=0
+place Zone_Sound rockhum at -40 36 h=56
+prop rockhum sound.event=event:/raft/radar/radar_humm
+prop rockhum sound.volume=0.35
+prop rockhum zone.radius=12
+scatter Bush 3 at -40 36 r=12 seed=30603 free=1
+scatter "Pickup_Landmark_Rock 1" 3 at -40 36 r=14 seed=30604 free=2
+scatter Placeable_BirdsNest 3 at -40 36 r=12 seed=30605 free=2
+call treasure x=-35 z=31 r=3 n=1 seed=30606 kind=0
+prop treasure30606 treasure.loot=TitaniumOre*2;Scrap*2;Bolt*2
+call treasure x=-46 z=40 r=3 n=1 seed=30607 kind=0
+prop treasure30607 treasure.loot=MetalOre*3;CopperOre*2;Hinge*1
+# --- The infirmary (north-east), sunk in a trench 42 m down, an air pocket: the doctor's note, the back room's chest -----
+call hw_sunkhouse x=55 z=38 h=-8 yaw=0 a=infirmary chest=infchest air=wardair bub=wardbub dal=warddoor
+call hw_zone x=55 z=38 al=wardzone id=deepward r=7 h=1 msg="The home's infirmary, 42 m down at the bottom of a trench. Little iron beds, sheets still tucked. Its front room still holds air."
+place Note_Paper halenote at 55.6 35.8 h=-7.7 drop yaw=20
+loot infchest OxygenBottle*1;TitaniumIngot*1;Canteen_Water*1;MetalIngot*1
+prop infchest loot.refill=0
+note infchest Infirmary chest | The doctor's chest: fresh water, an oxygen bottle, an iron ingot and a bar of titanium from the home's boiler.
+# --- The kelp grotto (south): a secret ----------------------------------------------------------------------------------
+call hw_zone x=10 z=-57 al=grottoz id=kelpgrotto r=4 msg="A grotto in the kelp. Little shoes in a row on a rock shelf, laces tied in bows, all of them pointing out to sea."
+place Note_Paper elsienote at 11.5 -56.5 h=6.45 drop yaw=0
+loot grottochest Scrap*2;Plastic*2;Battery*1;Rope*1
+prop grottochest loot.refill=0
+note grottochest Grotto box | A biscuit tin wedged in the rock: scrap, plastic, a battery, string - a child's treasures.
+# --- The sunken plane (south-west): a secret ----------------------------------------------------------------------------
+loot seacrate Plastic*3;Glass*2;CopperIngot*1;OxygenBottle*1
+prop seacrate loot.refill=0
+note seacrate Plane's crate | A seaplane on the seabed, its floats in the kelp. Its crate: plastic, glass, a copper ingot, an oxygen bottle - and a delivery slip: 40 cots, Cradle Reef Home.
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Cradle Reef
 info author=Custom Islands
-info description=A drowned children's home on the seabed, 28 m down: cribs in rows, a stone chapel, a swing frame in the kelp. A buoy marks the spot. The eighth island of The Lullaby Frequency.
+info description=A drowned children's home on the seabed, 28 m down: cribs in rows, a stone chapel, a swing frame in the kelp. A buoy marks the spot; a sea stack stands out of the water beside it with a ruined lookout on top, the home's infirmary lies in a trench 42 m down, a grotto and a sunken plane hide in the kelp. The eighth island of The Lullaby Frequency.
 island on.arrive=message||A buoy, alone on the water, bobbing. Far below it, something pale: roofs. Little beds in rows.
 
 story comb|Music box comb|Placeable_Brick_Wet|A brass music-box comb, its teeth still sharp. Three of them make a tune.
+story windkey|Music box key|Placeable_Lantern_Metal|A little brass winding key with a butterfly bow, from the nursemaid's lookout on Nursery Rock.
 story boxsong|The music box played|Note_Paper|You put the three combs back in the chapel's music box. It played the lullaby, and something sang it back.
 story tooth|Lantern-Mother's tooth|Placeable_Brick_Wet|A tooth as long as your hand, white as bone, warm in cold water. The Lantern-Mother's - from her cradle.
 
-note matronletter Matron's last letter | To whoever comes down here,\n\nThe children never cried. That was how we knew. Every night at twelve past three they all hummed the same tune in their sleep, every one of them, and the sea came up the beach to listen.\n\nThen the sea came up the beach and did not go back.\n\nShe only wanted children who would not leave. The combs from the music box are in the cribs - the little ones slept with them. Put them back, and let it play for her once more.\n\n- Matron
+note matronletter Matron's last letter | To whoever comes down here,\n\nThe children never cried. That was how we knew. Every night at twelve past three they all hummed the same tune in their sleep, every one of them, and the sea came up the beach to listen.\n\nThen the sea came up the beach and did not go back.\n\nShe only wanted children who would not leave. The combs from the music box are in the cribs - the little ones slept with them. Put them back, and let it play for her once more. Its winding key is with Ada, our nursemaid, up in the lookout on Nursery Rock - she took it up there so that nobody could play it at night.\n\n- Matron
+note adanote Nursemaid Ada Finch's note | A. FINCH, NURSEMAID - THE LOOKOUT\n\nI have brought the music box key up here with me and I am not taking it down again.\n\nMatron wound the box every night at bedtime, and every night the little ones hummed along with it, and every night the sea came a little further up the beach to hear.\n\nLast night I stood up here and watched it come. It does not come like a tide. It comes like something walking, slowly, so as not to wake them.\n\nThe children are not frightened. They stand at the windows in their nightgowns and wave.\n\nIf you have come for the key, take it. I do not think I can stop her. But I would like you to be sure, before you wind it, that you know who you are playing for.
+note halenote Doctor Lewin Hale's note | DR. L. HALE - INFIRMARY, CRADLE REEF HOME\n\nTemperatures normal. Pulses normal. Appetites good. Not one child in this home has been ill in a year, and not one has cried.\n\nWhen the water came under the door I carried four of the little ones up to the top bunks. They did not want to be carried. They said: she is only coming to tuck us in.\n\nThe front room holds air. I can hear them through the wall, all of them, humming. The water is over the beds now.\n\nThey are still humming.\n\nI am writing this so that somebody knows: we did not lose them. They went to her. They were happy to go.
+note elsienote Elsie Cobb's slate | (Chalk on a child's slate, wrapped in oilcloth)\n\nmy name is elsie cobb i am 7\n\nthe lady in the water sings to us at night. she has a lamp on her head like a fish. matron says she is not real but she is.\n\nshe says we can live with her and nobody will ever leave us again and there is no school\n\nwe hid our shoes here so we can come back for them\n\ndont tell matron
 note matronchest Matron's chest | The matron's chest, sealed with wax: an oxygen bottle and fresh water.
 loot matronchest OxygenBottle*1;Canteen_Water*2;Cooked_Mackerel*2
 prop matronchest loot.refill=0
@@ -122,9 +184,9 @@ prop comb3 tint.color=#b08d57
 
 prop musicbox obj.name=musicbox
 prop musicbox beh.use=Put the combs in the music box
-prop musicbox if.use=take|story:comb|3
+prop musicbox if.use=has|story:windkey|1\ntake|story:comb|3
 prop musicbox on.use=show|tooth\ngive||story:boxsong*1\nplaysound||event:/exploring/elevator/elevator_music|0.6|once|near\nmessage||The box plays. Slow, out of tune, the lullaby. Far off in the dark water, something sings it back - and on the altar, where nothing was, lies a long white tooth.
-prop musicbox else.use=message||A music box with no comb in it. Three combs are missing.
+prop musicbox else.use=message||A music box with no comb in it and no winding key. It needs its three combs - and its key, which the matron's letter says the nursemaid took up to her lookout on Nursery Rock.
 prop tooth obj.name=tooth
 prop tooth beh.hidden=1
 prop tooth beh.use=Take the tooth
@@ -157,6 +219,12 @@ step reach|dormitory|1|Dive to the dormitory (there is air in it)
 step read|Matron's last letter|1|Read the matron's last letter
 step collect|story:comb|3|Take the three music-box combs from the cribs
 step kill|Angler fish|3|Deal with the lights in the dark (they come when you enter the chapel)
+step reach|hillfoot|1|Swim to Nursery Rock in the north-west and find its steps
+step reach|hilltop|1|Climb Nursery Rock to the nursemaid's lookout
+step read|Nursemaid Ada Finch's note|1|Read the nursemaid's note in the lookout
+step collect|story:windkey|1|Take the music box's winding key from the nursemaid's chest
+step reach|deepward|1|Dive into the trench in the north-east to the home's infirmary
+step read|Doctor Lewin Hale's note|1|Breathe in the infirmary's front room and read the doctor's note
 step collect|story:boxsong|1|Put the combs back in the chapel's music box
 step collect|story:tooth|1|Take what lies on the altar
 quest done=The Lantern-Mother's tooth hums in your pack. The Choir is at the quarry with the mirrors. The Receiver points north: the last frequency.

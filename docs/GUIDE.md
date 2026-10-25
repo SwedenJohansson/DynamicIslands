@@ -4393,7 +4393,7 @@ five listening mirrors. The islands show how far the rule kinds go in one plan: 
 (`day:8`), a side island that comes back every second day (`day:2:again`, `ahead:400`), a zone on an earlier island
 (`zone:effigy:circle`), a quest step (`step:terraces:4`), a landing (`visit:causeway`) and notes read (`note:3`).
 Raft's story is on, so Raft's blueprints stay on Raft's islands and the plan has no **Blueprint** steps. Saint Agnes has
-Raft's vending machine and Tangaroa tokens; Gannet Cliff and The Listening Mirrors have a **Raft store**. Its main islands are about 60% the size of Raft's own big islands.
+Raft's vending machine and Tangaroa tokens; Gannet Cliff and The Listening Mirrors have a **Raft store**. Its main islands are about as big as Raft's own big islands: each has a hill to climb, a dive, a cave, a wreck or ruin to search, a buried treasure for the metal detector and notes read aloud, and its quest crosses the whole island.
 
 | Island | What it is | What to look at |
 |---|---|---|
@@ -4405,7 +4405,7 @@ Raft's vending machine and Tangaroa tokens; Gannet Cliff and The Listening Mirro
 | ![](images/library/mistlock_causeway.jpg) **Mistlock Causeway** (900) | Plank decks on posts across a misty lagoon, two forks | A safe branch told by sound (`Zone_Sound`); the wrong one sends you back; a timed gate lever |
 | ![](images/library/gannet_cliff.jpg) **Gannet Cliff** (1000) | A commune of tents on a cliff, a stone-lined listening pit, dishes in the ground | A gate that asks for a story item from Effigy Shoals (`if.use=has`), a deserter who joins the crew, a Raft store |
 | ![](images/library/cradle_reef.jpg) **Cradle Reef** (1000) | A buoy at sea; deep below it a drowned dormitory of cribs | A dive to a sunken building; a music box whose song is a story item |
-| ![](images/library/the_listening_mirrors.jpg) **The Listening Mirrors** (1200, the finale) | A quarry with five antenna mirrors round a pit | A 31-step quest over four areas: a generator and a keypad hut, a chapel, a cage and a bell, a crane and its claw, a boss in the pit, a Raft store |
+| ![](images/library/the_listening_mirrors.jpg) **The Listening Mirrors** (1200, the finale) | A quarry with five antenna mirrors round a pit | A 37-step quest over four areas: a generator and a keypad hut, a chapel, a cage and a bell, a crane and its claw, a boss in the pit, a Raft store |
 
 To learn from it: open the plan with **EDITOR** > **A world plan** and compare its "when" parts (`quest:`, `day:`,
 `zone:`, `step:`, `visit:`); then open Stillwater Terraces to see how zones show and hide sets of statues as you climb.
