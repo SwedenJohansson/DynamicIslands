@@ -46,12 +46,52 @@ namespace DynamicIslands
 			z.Hazard = Hazards.KindOf(z.Props);
 		}
 
+		/// <summary>PutPlayerNear without its KeepAlive: that refills health, so a hazard's damage never showed.</summary>
+		static void GrPut(Network_Player p, Transform t, float offset = 1.5f)
+		{
+			if (p == null || t == null) return;
+			Vector3 target = t.position + new Vector3(offset, 0f, offset);
+			RaycastHit hit;
+			if (Physics.Raycast(target + Vector3.up * 3f, Vector3.down, out hit, 60f, 1 << IslandSpawner.TerrainLayer)) target.y = hit.point.y + 1.2f;
+			PlayerMove.To(p, target);
+		}
+
+		/// <summary>" s3.2" when a live creature (a shark) is within 6 m, "w" when the player is in the water - for the trace.</summary>
+		static string GrNear(Network_Player p)
+		{
+			string s = p.PersonController != null && p.PersonController.transform.position.y < 0.5f ? "w" : "";
+			foreach (AI_NetworkBehaviour a in UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>())
+			{
+				if (a == null || a.networkEntity == null || a.networkEntity.IsDead) continue;
+				float d = (a.transform.position - p.transform.position).magnitude;
+				if (d < 6f) s += " " + a.behaviourType.ToString().Substring(0, 2) + d.ToString("0.#");
+			}
+			return s;
+		}
+
 		/// <summary>Stands the player in the zone for some seconds (put back every half second) and gives the health lost.</summary>
 		static IEnumerator GrStand(Network_Player p, Transform at, float seconds, Action<float> lost)
 		{
+			// (put there first and a second to land: a teleport's fall hurt 19.9 and showed as zone damage)
+			// (the world's own animals near the zone put away: a boar's ~20 bite showed as zone damage, suit on or not)
+			foreach (AI_NetworkBehaviour a in UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>())
+				if (a != null && !(a is AI_NetworkBehaviour_Domestic) && (a.transform.position - at.position).magnitude < 60f) a.gameObject.SetActive(false);
+			GrPut(p, at, 0.3f);
+			yield return new WaitForSeconds(1f);
 			GrHeal(p);
+			// (and half a second after the heal: health set to its max dropped by a steady 19.5-19.9 within the first
+			// frames, with the suit on too - that is no zone damage)
+			GrPut(p, at, 0.3f);
+			yield return new WaitForSeconds(0.5f);
 			float h0 = GrHealth(p);
-			for (float t = 0; t < seconds; t += 0.5f) { PutPlayerNear(at, 0.3f); yield return new WaitForSeconds(0.5f); }
+			var trace = new List<string>();
+			for (float t = 0.5f; t < seconds; t += 0.5f)
+			{
+				// (not put back each step: every teleport risked one more ~20 fall hit, which showed as zone damage)
+				yield return new WaitForSeconds(0.5f);
+				trace.Add(GrHealth(p).ToString("0.#") + (p.Stats.stat_oxygen.Value < p.Stats.stat_oxygen.Max - 1f ? "o" : "") + (p.transform.position.y < at.position.y - 2f ? "v" : "") + GrNear(p));
+			}
+			Log("  (stand at " + at.name + ": " + h0.ToString("0.#") + " -> " + string.Join(" ", trace.ToArray()) + ", hunger " + p.Stats.stat_hunger.Normal.Value.ToString("0") + ", thirst " + p.Stats.stat_thirst.Normal.Value.ToString("0") + ")");
 			lost(h0 - GrHealth(p));
 		}
 
@@ -63,19 +103,23 @@ namespace DynamicIslands
 			if (it == null) { Log("  (no item " + item + ")"); return false; }
 			try
 			{
-				var slots = (Traverse.Create(p.Inventory).Field("equipSlots").GetValue() as System.Collections.IEnumerable ?? new object[0]).OfType<Slot>().ToList();
-				if (slots.Count == 0) { Log("  (no equip slots)"); return false; }
+				// (Slot_Equip's own SetItem - not Slot's, which it hides - tells PlayerEquipment, whose list wears| reads)
+				var slots = (Traverse.Create(p.Inventory).Field("equipSlots").GetValue() as System.Collections.IEnumerable ?? new object[0]).OfType<Slot_Equip>().ToList();
+				var pe = p.GetComponentInChildren<PlayerEquipment>(true);
+				if (slots.Count == 0 || pe == null) { Log("  (no equip slots)"); return false; }
 				if (!on)
 				{
-					foreach (Slot s in slots.Where(s => s.itemInstance != null && s.itemInstance.UniqueName == item)) s.Reset();
-					return true;
+					foreach (Slot_Equip s in slots.Where(s => !s.IsEmpty && s.itemInstance.UniqueName == item)) { pe.UnEquip(s.itemInstance); s.Reset(); }
+					return !GapChecks.Wears(item);
 				}
 				if (GapChecks.Wears(item)) return true;
-				foreach (Slot s in slots.Where(s => s.IsEmpty))
+				foreach (Slot_Equip s in slots.Where(s => s.IsEmpty))
 				{
-					s.SetItem(new ItemInstance(it, 1, it.MaxUses));
+					var inst = new ItemInstance(it, 1, it.MaxUses);
+					s.SetItem(inst);
+					if (!GapChecks.Wears(item)) pe.Equip(inst, s);
 					if (GapChecks.Wears(item)) return true;
-					s.Reset();
+					pe.UnEquip(inst); s.Reset();
 				}
 				Log("  (" + item + " would not go into any of " + slots.Count + " equip slots)");
 			}
@@ -91,7 +135,17 @@ namespace DynamicIslands
 			{
 				Item_Base it = ItemManager.GetItemByName(item);
 				if (it == null) { Log("  (no item " + item + ")"); return false; }
-				if (p.Inventory.GetItemCount(item) == 0) p.Inventory.AddItem(item, 1);
+				// (into the last hotbar slot if no hotbar slot has it: SelectItem only looks there, and the test's other items fill it)
+				int hot = Traverse.Create(p.Inventory).Field("hotslotCount").GetValue<int>();
+				if (hot <= 0) hot = 10;
+				var hs = p.Inventory.allSlots.Take(hot).ToList();
+				if (!hs.Any(sl => sl != null && !sl.IsEmpty && sl.itemInstance.UniqueName == item) && hs.Count > 0)
+				{
+					// (into the slot in hand, so the selection itself needs no change)
+					ItemInstance cur = p.Inventory.GetSelectedHotbarItem();
+					Slot into = hs.FirstOrDefault(sl => sl != null && cur != null && sl.itemInstance == cur) ?? hs[hs.Count - 1];
+					into.SetItem(new ItemInstance(it, 1, it.MaxUses));
+				}
 				Hotbar hotbar = Traverse.Create(p.Inventory).Field("hotbar").GetValue<Hotbar>();
 				if (hotbar == null) { Log("  (no hotbar)"); return false; }
 				hotbar.SelectItem(it);
@@ -222,10 +276,10 @@ namespace DynamicIslands
 				hz.gameObject.SetActive(true);
 				GrSetZone(hz, Hazards.Kind, "dark");
 				GrWear(player, "HeadLight", false);
-				for (int i = 0; i < 4; i++) { PutPlayerNear(hz.transform, 0.3f); yield return new WaitForSeconds(0.5f); }
+				for (int i = 0; i < 4; i++) { GrPut(player, hz.transform, 0.3f); yield return new WaitForSeconds(0.5f); }
 				Check(ref ok, DarknessOverlay.Dark && !DarknessOverlay.Lit, "2: in the dark without a light: Dark " + DarknessOverlay.Dark);
 				bool hl = GrWear(player, "HeadLight", true);
-				for (int i = 0; i < 4; i++) { PutPlayerNear(hz.transform, 0.3f); yield return new WaitForSeconds(0.5f); }
+				for (int i = 0; i < 4; i++) { GrPut(player, hz.transform, 0.3f); yield return new WaitForSeconds(0.5f); }
 				Check(ref ok, hl && GapChecks.Wears("HeadLight*") && DarknessOverlay.Lit && !DarknessOverlay.Dark, "2: with the headlight: wears " + GapChecks.Wears("HeadLight*") + ", Lit " + DarknessOverlay.Lit + ", Dark " + DarknessOverlay.Dark);
 				GrWear(player, "HeadLight", false);
 				PutPlayerNear(ScObjOf(e, "Socket").transform);
@@ -341,17 +395,18 @@ namespace DynamicIslands
 			{
 				int z0 = GapFeatures.Zaps;
 				GrHeal(player);
-				float h0 = GrHealth(player);
+				float h0 = GrHealth(player), dropped = 0f;
 				for (float t = 0; t < 5f; t += 0.25f)
 				{
 					int zn = GapFeatures.Zaps;
 					float hb = GrHealth(player);
-					PutPlayerNear(b.transform, 1f);
+					GrPut(player, b.transform, 1f);
 					yield return new WaitForSeconds(0.25f);
+					dropped += Mathf.Max(0f, hb - GrHealth(player));
 					if (GapFeatures.Zaps > zn) Log("  (zap: health " + hb.ToString("0.#") + " -> " + GrHealth(player).ToString("0.#") + ", bonus " + player.Stats.stat_BonusHealth.Value.ToString("0.#") + ", suit " + Hazards.SuitOn(player) + ")");
 				}
 				int zaps = GapFeatures.Zaps - z0;
-				Check(ref ok, zaps >= 2 && zaps <= 3 && h0 - GrHealth(player) >= 14f, "7: 5 s by the bot: " + zaps + " zaps, lost " + (h0 - GrHealth(player)).ToString("0.#"));
+				Check(ref ok, zaps >= 2 && zaps <= 3 && dropped >= 14f, "7: 5 s by the bot: " + zaps + " zaps, lost " + dropped.ToString("0.#"));
 			}
 
 			// 8. The repel light

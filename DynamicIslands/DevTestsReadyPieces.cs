@@ -131,7 +131,7 @@ namespace DynamicIslands
 				};
 				Func<List<PlanChecker.Finding>, string> warn = fs => string.Join(" / ", fs.Where(x => x.Text.Contains("story item")).Select(x => x.Text).ToArray());
 				string early = warn(check(new[] { lockIsland, keyIsland })), late = warn(check(new[] { keyIsland, lockIsland })), none = warn(check(new[] { lockIsland }));
-				Check(ref ok, early.Contains("later rule"), "the lock before the key: warned (" + early + ")");
+				Check(ref ok, (early.Contains("later rule") || early.Contains("later in play")), "the lock before the key: warned (" + early + ")");
 				Check(ref ok, late.Length == 0, "the key before the lock: fine (" + late + ")");
 				Check(ref ok, none.Contains("no island of the plan gives"), "no key anywhere: warned (" + none + ")");
 				// (an "any" check: Raft's radio runs on a generator on its island as well as on a battery - the battery is not

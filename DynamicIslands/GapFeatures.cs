@@ -212,11 +212,11 @@ namespace DynamicIslands.Editor
 		{
 			Network_Player p = RAPI.GetLocalPlayer();
 			if (p == null || p.PlayerEquipment == null) return false;
-			foreach (int i in p.PlayerEquipment.GetEquipedIndexes())
-			{
-				Item_Base it = ItemManager.GetItemByIndex(i);
-				if (it != null && NameMatches(it.UniqueName, want)) return true;
-			}
+			// (not GetEquipedIndexes: it gives places in PlayerEquipment's equipment array, not item indexes)
+			Equipment[] eq = Traverse.Create(p.PlayerEquipment).Field("equipment").GetValue<Equipment[]>();
+			if (eq == null) return false;
+			foreach (Equipment e in eq)
+				if (e != null && e.Equipped && e.equipableItem != null && NameMatches(e.equipableItem.UniqueName, want)) return true;
 			return false;
 		}
 

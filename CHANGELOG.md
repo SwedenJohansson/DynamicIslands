@@ -46,7 +46,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   darkness (black screen without a headlight) and deep water (breath drains without an oxygen tank); protection lines
   (a suit, worn or held items, states, signals); hide the zone to switch it off.
 - **New checks and actions:** wears item, holds item (binoculars lookouts, hook- or axe-only openings), protective suit,
-  hurt creatures.
+  hurt creatures. Fixed the same day: wears item (and the headlight in darkness, the oxygen tank in deep water) read
+  the wrong item, so a worn headlight or tank never counted.
 - **Creatures:** Zap (butler bots placed from the list zap), a boss phase only blasts hurt, lights that keep creatures
   and jellyfish back.
 - **Ready pieces:** Temperance's key socket, Varuna Point's explosive barrels, pillars and spotlights, Temperance's snow
