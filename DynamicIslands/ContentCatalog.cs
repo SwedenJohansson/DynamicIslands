@@ -243,6 +243,8 @@ namespace DynamicIslands.Editor
 			new KeyValuePair<string, string[]>("Metal", new[] { "Scrap*6", "MetalIngot*4", "CopperIngot*3", "Bolt*6", "Hinge*4", "MetalOre*4" }),
 			new KeyValuePair<string, string[]>("Food", new[] { "Watermelon*2", "Pineapple*2", "Coconut*3", "Mango*3", "Raw_Potato*4", "Egg*4", "Banana*3" }),
 			new KeyValuePair<string, string[]>("Treasure", new[] { "TitaniumIngot*3", "ExplosiveGoo*2", "CircuitBoard*2", "Battery*1", "HealingSalve_Good*2", "Jar_Honey*1" }),
+			// PF7: a cosmetic hat and trophy (Cosmetics)
+			new KeyValuePair<string, string[]>("Cosmetics", Cosmetics.PresetLoot),
 		};
 
 		/// <summary>The loot of a preset: its candidates that exist in this version of Raft.</summary>

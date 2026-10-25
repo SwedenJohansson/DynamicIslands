@@ -9,6 +9,14 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-25: Cosmetic rewards
+
+### New
+- **Cosmetic hats and trophies** for your islands: four hats (Admiral's hat, Corsair's hat, Explorer's hat,
+  Chieftain's mask) and three trophies to place (golden shark, silver rhino shark, jade tiki pole), copies of Raft's
+  own in new colours. Only chests, quest rewards and "give" actions hand them out; the loot preset **Cosmetics** holds
+  a hat and a trophy.
+
 ## 2026-10-25: Binoculars see through fog
 
 ### New

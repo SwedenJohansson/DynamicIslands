@@ -62,6 +62,9 @@ namespace DynamicIslands.Editor
 			public Item_Base Base, Item;
 			/// <summary>The upgrade research table itself (UpgradeTable): learned from the start while the option is on.</summary>
 			public bool Table;
+			/// <summary>A cosmetic reward (Cosmetics, PF7): never crafted or learned, not in Registered; only quest chests and
+			/// rewards hand it out.</summary>
+			public bool Cosmetic;
 			public override string ToString() { return Display + " (" + Name + ", " + Index + ")"; }
 		}
 
@@ -117,8 +120,14 @@ namespace DynamicIslands.Editor
 		/// <summary>The upgrades (made once; Item set for the registered ones).</summary>
 		public static List<Upgrade> All { get { if (all == null) { all = Defs(); foreach (Upgrade u in all) if (!u.Whiten) u.Tint = Vivid(u.Tint); } return all; } }
 		public static IEnumerable<Upgrade> Registered { get { return All.Where(u => u.Item != null); } }
-		public static Upgrade Find(int index) { return all == null ? null : all.FirstOrDefault(u => u.Item != null && u.Index == index); }
-		public static Upgrade Find(string name) { return All.FirstOrDefault(u => u.Name == name); }
+		static List<Upgrade> cosmetics;
+		/// <summary>The cosmetic rewards (Cosmetics.Defs, PF7): made like the upgrades, but kept out of All and Registered.</summary>
+		public static List<Upgrade> CosmeticItems { get { if (cosmetics == null) { cosmetics = Cosmetics.Defs(); foreach (Upgrade u in cosmetics) { u.Cosmetic = true; if (!u.Whiten) u.Tint = Vivid(u.Tint); } } return cosmetics; } }
+		/// <summary>The upgrades and the cosmetic rewards.</summary>
+		static IEnumerable<Upgrade> Everything { get { return All.Concat(CosmeticItems); } }
+		static IEnumerable<Upgrade> Made { get { return Everything.Where(u => u.Item != null); } }
+		public static Upgrade Find(int index) { return all == null ? null : Made.FirstOrDefault(u => u.Index == index); }
+		public static Upgrade Find(string name) { return Everything.FirstOrDefault(u => u.Name == name); }
 
 		public static Upgrade TableUpgrade { get { return Find(TableName); } }
 		public static Item_Base TableItem { get { Upgrade u = Find(TableName); return u != null ? u.Item : null; } }
@@ -246,7 +255,7 @@ namespace DynamicIslands.Editor
 				UnityEngine.Object.DontDestroyOnLoad(holder);
 			}
 			int made = 0;
-			foreach (Upgrade u in All)
+			foreach (Upgrade u in Everything)
 			{
 				if (u.Item != null) continue;
 				try { if (Make(u)) made++; }
@@ -255,7 +264,7 @@ namespace DynamicIslands.Editor
 			// BlockCreator fills its static list of buildable items once; a world opened before this needs them added.
 			var buildables = Traverse.Create(typeof(BlockCreator)).Field("buildableItems").GetValue<List<Item_Base>>();
 			if (buildables != null && buildables.Count > 0)
-				foreach (Upgrade u in Registered.Where(u => u.Item.settings_buildable != null && u.Item.settings_buildable.GetBlockPrefabs() != null && !buildables.Contains(u.Item)))
+				foreach (Upgrade u in Made.Where(u => u.Item.settings_buildable != null && u.Item.settings_buildable.GetBlockPrefabs() != null && !buildables.Contains(u.Item)))
 					buildables.Add(u.Item);
 			Log(made + " upgrades registered");
 		}
@@ -279,7 +288,7 @@ namespace DynamicIslands.Editor
 			item.settings_Inventory = inv;
 
 			ItemInstance_Recipe recipe = baseItem.settings_recipe.Clone();
-			var cost = baseItem.settings_recipe.NewCost.Select(c => new CostMultiple(c.items, c.amount * u.CostFactor)).ToList();
+			var cost = (baseItem.settings_recipe.NewCost ?? new CostMultiple[0]).Select(c => new CostMultiple(c.items, c.amount * u.CostFactor)).ToList();
 			if (u.ExtraCostItem != null)
 			{
 				Item_Base extra = ItemManager.GetItemByName(u.ExtraCostItem);
@@ -341,7 +350,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The mod's unload: the items off again.</summary>
 		public static void Unregister()
 		{
-			foreach (Upgrade u in Registered.ToList())
+			foreach (Upgrade u in Made.ToList())
 			{
 				try { RAPI.UnregisterItem(u.Item); } catch (Exception e) { Warn(u + ": " + e.Message); }
 				var buildables = Traverse.Create(typeof(BlockCreator)).Field("buildableItems").GetValue<List<Item_Base>>();
@@ -769,7 +778,7 @@ namespace DynamicIslands.Editor
 		{
 			if (all == null || pe == null) return;
 			Equipment[] have = pe.GetComponentsInChildren<Equipment>(true);
-			foreach (Upgrade u in Registered.Where(x => x.Worn != null || x.Wearing != null).ToList())
+			foreach (Upgrade u in Made.Where(x => x.Worn != null || x.Wearing != null).ToList())
 			{
 				if (have.Any(e => e.equipableItem == u.Item)) continue;
 				Equipment b = have.FirstOrDefault(e => e.equipableItem != null && e.equipableItem.UniqueIndex == u.Base.UniqueIndex);

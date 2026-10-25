@@ -1093,7 +1093,7 @@ step = open | Lookout cache | 1 |
 | `styles`, `shape`, `radius`, `height`, `roughness`, `density`, `peaks`, `likeraft` | The land: one style is picked (name one twice to make it twice as likely); `shape` is round, atoll, archipelago, seastacks, plateau, marsh, crescent, twinpeaks, raftsmallisland or raftlargeisland; `60 - 70` is rolled, one number is fixed; `likeraft = large/small` makes trees and pickups as dense as on Raft's own islands |
 | `set = <setting> <value>` | Any generator setting by name after the roll, as in a generator preset (`Hostiles`, `Cliffs`, `SeaFloor`, `Trees`...) |
 | `content = <built-in type>` | That type's content first (a no-land type's raft too: `content = wreck`), then your own lines |
-| `chest`, `note`, `creature`, `zone`, `atmosphere`, `object`, `clear` | The content, placed in order. Loot is `Basics`, `Metal`, `Food`, `Treasure` or items as in the loot editor (`Plank*12;Rope*4`); `\n` is a new line in a text |
+| `chest`, `note`, `creature`, `zone`, `atmosphere`, `object`, `clear` | The content, placed in order. Loot is `Basics`, `Metal`, `Food`, `Treasure`, `Cosmetics` or items as in the loot editor (`Plank*12;Rope*4`); `\n` is a new line in a text |
 | `quest`, then `step` lines | A quest (title, intro, done text, reward) and its steps as in the quest editor (`read`, `open`, `kill`, `reach`...) |
 
 **Where things go** (`<where>`): `mid` (the middle), `top` (the highest ground; `top:0.5` within half the radius),
@@ -1462,6 +1462,23 @@ quickly; it fills up again after 3 days, or never.*
 
 ![The item picker](images/editor-loot-picker.jpg)
 *Add items...: every item of Raft with its picture and a search. Click an item to add one, again to add more.*
+
+**Cosmetic rewards.** The mod adds hats and trophies that are only for looks and only come from your islands: chests,
+quest rewards and "give" actions hand them out (they are never crafted or learned, whatever the world settings). They
+are copies of Raft's own hats and trophies in a colour of their own, so they look at home on the raft:
+
+| Item | Made from | What it is |
+|---|---|---|
+| Admiral's hat (`DI_HatAdmiral`) | Captain's hat, gold | Worn on the head |
+| Corsair's hat (`DI_HatCorsair`) | Pirate hat, crimson | Worn on the head |
+| Explorer's hat (`DI_HatExplorer`) | Fishing hat, jade | Worn on the head |
+| Chieftain's mask (`DI_HatChieftain`) | Tiki mask, amber | Worn on the head |
+| Golden shark trophy (`DI_TrophyGoldenShark`) | Shark trophy, gold | Placed on the raft |
+| Silver rhino shark trophy (`DI_TrophySilverRhino`) | Rhino shark trophy, silver | Placed on the raft |
+| Jade tiki pole (`DI_TrophyJadeTiki`) | Tiki pole, jade | Placed on the raft |
+
+They are in **Add items...** like any item, and the loot preset **Cosmetics** puts the Admiral's hat and the Golden
+shark trophy in a chest. Worlds keep them like Raft's own items (worn, in chests, placed).
 
 **The abandoned raft crate.** "Loot & chests" also has Raft's own **Abandoned raft crate**: the box you grab on the
 small abandoned rafts that drift by in Raft. In a world it works as there: a player takes it whole (look at it, **E**) and
@@ -3607,6 +3624,7 @@ Press **F10** for RML's console.
 | `Kraken` / `Kraken bring` / `Kraken away` / `Kraken tear` | World | Whether a kraken arm holds the raft, its hits and the next days with one (option Kraken arm) / an arm grabs an edge floor now / it goes now / it tears now (host) |
 | `FogBanks` / `FogBanks roll <from> <to>` | World | Whether fog is in now, how far you see and the next fog bank (option Fog banks) / the fog banks between two days, with their hours |
 | `FogSight` | World | What this player looks through and how far the sky's fog is now (option Binoculars see through fog) |
+| `Cosmetics` / `Cosmetics give` | World | The cosmetic hats and trophies and whether each is there; `give`: one of each for you |
 | `Traders` / `Traders offers <seed>` / `Traders bring` | World | The trader rafts loaded now and their stalls' stock (option Trader raft) / what a trader raft with that seed sells / a trader raft ahead now (host) |
 | `ExportMapType <type> [file name]` | Anywhere | Writes a map type as a file in `maptypes\` to start your own from (default name `my-<type>`) |
 | `ReloadMapTypes` | Anywhere | Reads the `maptypes\` files again and says which were left out and why |
