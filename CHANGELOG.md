@@ -9,6 +9,15 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-25: Binoculars see through fog
+
+### New
+- **World option "Binoculars see through fog"** (off by default): the sea's haze comes about 30 % closer, and raised
+  binoculars see about 20 % further than Raft's usual view, the telescope about 50 %. Raft's weather and fog banks
+  keep their own fog; each player sees through their own binoculars.
+- **Marine binoculars** (extra upgrade, titanium): the telescope's zoom, the furthest view through fog and a lighter
+  view at dusk and at night. The telescope and Marine binoculars count as binoculars in plan and island checks.
+
 ## 2026-10-25: Relic of the Seventh Tide, full-size islands
 
 ### Changed

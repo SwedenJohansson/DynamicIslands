@@ -546,6 +546,11 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   and **each of the four floors beside it (same level, no corners) goes too with a 1 in 2 chance**, rolled from the
   event's seed - Raft's own block removal. Rafts of 8 floors or fewer are left alone. The host decides; every player
   sees the same arm, a player joining mid-event gets it, and an active arm is never saved.
+- **Binoculars see through fog:** the sea's haze comes about 30 % closer, so islands show up later; raised
+  binoculars see about 20 % further than Raft's usual view, the telescope about 50 %, Marine binoculars (an extra
+  upgrade) about 80 % and lighter at dusk and at night. It works on the fog Raft's weather has now (a storm or a fog
+  bank still closes in) and is lent to the sky only while it draws, so Raft's fog is back when they are lowered. Each
+  player sees through their own binoculars.
 - **Lightning strikes:** in a storm (Raft's own, Storm days or Storm seas) a bolt now and then hits the sea 30-150 m
   from the raft with a bright flash and a thunder clap; some storms have none, the others one to four. Very rarely it
   hits the raft's Receiver antenna or wind turbine instead. Looks only: no damage, no fire. Every player sees the same
@@ -561,9 +566,10 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   (loses air half as fast), rapid charger (2x per fuel), fast recycler (2x as fast), bright lantern (2x as far),
   telescope (2x zoom), titanium greatsword and spear (1.5x damage), long paddle (2x push), floodlight (2x as far),
   steel pot and fast juicer (2x as fast), titanium machete (1.5x damage), sturdy scarecrow (never wears out), master hammer
-  (2x repair), longbow (1.5x draw and range), bright head light and bright lamp (2x as far) and lumber axe (2x as fast).
+  (2x repair), longbow (1.5x draw and range), bright head light and bright lamp (2x as far), lumber axe (2x as fast) and marine binoculars (2x zoom, titanium;
+  see furthest with Binoculars see through fog).
 - The host can change them in a world: `WorldOptions` shows them; `WorldOptions +ghostrafts -privatestorage` (any
-  option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades, glowsea, stormseas, ghostship).
+  option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades, glowsea, stormseas, ghostship, fogsight).
 - Multiplayer: the options, their seed and the storages' builders are in the world file and sent to every player
   (network kind 17). The story order and the blueprints' pairs are worked out from the seed on every machine, and each
   machine notes who built a storage as Raft places it there.
@@ -734,6 +740,7 @@ The level up system comes on in a world by the **Level up system** switch in Wor
 | `GhostShip` / `GhostShip roll <from> <to>` / `GhostShip bring` / `GhostShip sink` | Game (bring, sink: host) | Whether a ghost ship is out and the next night with one (world option Ghost ship); `roll`: the nights with one in a range; `bring`: one beside the raft now; `sink`: sink it now |
 | `Kraken` / `Kraken bring` / `Kraken away` / `Kraken tear` | Game (bring, away, tear: host) | Whether a kraken arm holds the raft, its hits and the next days with one / an arm grabs an edge floor now / it goes now / it tears now |
 | `FogBanks` / `FogBanks roll <from> <to>` | Game | Whether fog is in now (its weight, the sight in metres, Raft's fog distance and the one shown) and the next fog bank; `roll` lists the banks of those days (with their hours and sight). Dev: `FogBanks test on [m] | off | auto` |
+| `FogSight` / `FogSight test none\|binoculars\|telescope\|marine\|auto` | Game | What this player looks through, the fog factor and the sky's fog distance (option Binoculars see through fog); `test` makes this machine look through one (tests) |
 | `Traders` / `Traders offers <seed>` / `Traders bring` | Game | The trader rafts' stalls loaded now and their stock (world option Trader raft); `offers`: what a trader raft with that seed sells; `bring` (host): a trader raft ahead now |
 | `StoryChain` | Game | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
 | `HeadStart` / `HeadStart 0-3` | Game; main menu | The head start raft: this world's level and the next new world's; at the main menu `HeadStart 2` chooses level 2 for the next new world (0 = off) |
@@ -899,6 +906,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `UfoSightings.cs` | Extra option UFO sightings: which days and hours have a saucer (from the seed), the host sending it (kind 33 `Moment`, Name "ufo"), the saucer built from Unity shapes, its flight, spin and night glow |
 | `LightningStrikes.cs` | Extra option Lightning strikes: when a storm has bolts (the host rolls them), where they hit (the sea 30-150 m away, rarely the antenna or wind turbine), sending them (kind 33 `Moment`, Name "bolt"), the bolt drawn with lines and lights, its flicker and the thunder (Raft has none: its dynamite bang + boss rumble) |
 | `FogBanks.cs` | Extra option Fog banks: which days and hours have a bank (from the seed and the day, so nothing is sent), the fade, and lending AzureSky a shorter fog distance around its `UpdateShaderUniforms` (Raft's weather blending never sees it); no fog while Raft's weather is stormy or under water. `FogBanks` command |
+| `FogSight.cs` | Extra option Binoculars see through fog: the haze factor and the binoculars' / telescope's / Marine binoculars' factors (eased), lent to AzureSky's fog distance inside FogBanksSkyPatch, and the Marine binoculars' night lift (FogSightNightPatch on AzureSkyController.Update) |
 | `WhaleBreach.cs` | Extra option Whale breach: the host's timer (once or twice a Raft day, by day, open sea 170-320 m out), the breach sent to everyone (kind 36 `WhaleBreach`), Raft's whale copied looks-only (scripts and colliders stripped) and flown along a leap curve, and Raft's water splash scaled up for the fall |
 | `StormSeas.cs` | Extra option Storm seas: more of Raft's storms (its weather pick), the harder rocking (Raft's buoyancy tilt), the host's storm count and the edge floor a storm breaks (Raft's block removal), the banner (kind 35), saved as `@stormseas=` |
 | `GlowSea.cs` | Extra option Bioluminescent sea: which nights glow (from the seed and the night, so nothing is sent), the halved bite wait (Raft's `Bobber.FishOnHook`), and the look: sparks and patches on the waves (following UltimateWater's heights), fish halos, bobber sparks, a light and the water's emission colour |

@@ -430,6 +430,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Lightning strikes", e); }
 			try { GhostShip.Tick(); }
 			catch (Exception e) { TickError("Ghost ship", e); }
+			try { FogSight.Tick(); }
+			catch (Exception e) { TickError("Binoculars through fog", e); }
 			try { FogBanks.Tick(); }
 			catch (Exception e) { TickError("Fog banks", e); }
 			try { IslandInfo.Tick(); }

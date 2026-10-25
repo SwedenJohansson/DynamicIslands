@@ -68,6 +68,9 @@ namespace DynamicIslands.Editor
 		public const int LargeBatteryIndex = 29411;
 		/// <summary>The upgrade research table (UpgradeTable): a tinted copy of Raft's research table at four times its cost.</summary>
 		public const int TableIndex = 29443;
+		/// <summary>Marine binoculars (PF9): the top binoculars; FogSight sees furthest through fog with them.</summary>
+		public const int MarineIndex = 29444;
+		public const string MarineName = "DI_MarineBinoculars", TelescopeName = "DI_Telescope";
 		public const string TableName = "DI_UpgradeResearchTable";
 		public static readonly Color TableTint = new Color(0.75f, 0.55f, 1f);
 		public const string LargeBatteryName = "DI_LargeBattery";
@@ -225,6 +228,9 @@ namespace DynamicIslands.Editor
 				new Upgrade { Index = 29442, Name = "DI_LumberAxe", BaseName = "Axe_Titanium", Display = "Lumber axe", Tint = new Color(0.9f, 0.45f, 0.4f), UsesFactor = 2,
 					Held = LumberAxe,
 					Description = "A titanium axe that takes building pieces apart twice as fast and lasts twice as long." },
+				new Upgrade { Index = MarineIndex, Name = MarineName, BaseName = "Binoculars", Display = "Marine binoculars", Tint = new Color(0.35f, 0.55f, 0.85f),
+					ExtraCostItem = "TitaniumIngot", ExtraCostAmount = 3, Held = Telescope,
+					Description = "Titanium binoculars: zoom in twice as far like the telescope, see furthest through haze and fog, and lighten the view at dusk and at night." },
 				new Upgrade { Index = TableIndex, Name = TableName, BaseName = "Placeable_ResearchTable", Display = "Upgrade research table", Tint = TableTint, Table = true, CostFactor = 4,
 					Description = "A research table of its own for the upgrades: research items here to learn better versions of Raft's things. What is researched at Raft's table doesn't count here." },
 			};
