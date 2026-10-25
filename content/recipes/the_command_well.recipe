@@ -171,8 +171,7 @@ place Loot_ChestSmall maraspost at -1.2 6.2 ground sit yaw=180
 prop maraspost obj.name=maraspost
 prop maraspost if.open=has|story:letter|1
 prop maraspost else.open=message||M. WREN - RADIO. Her drawer is shut. Something of hers belongs here - a letter.
-prop maraspost on.open=show|maranote
-message||You lay the Keeper's letter on her desk. Under it, where she left it, a page in her hand.
+prop maraspost on.open=show|maranote\nmessage||You lay the Keeper's letter on her desk. Under it, where she left it, a page in her hand.
 place Note_Paper maranote at -2.9 5.9 ground y=1 drop yaw=15
 prop maranote obj.name=maranote
 prop maranote beh.hidden=1

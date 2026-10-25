@@ -206,7 +206,7 @@ prop crewlocker loot.refill=0
 call notebox x=-59 z=-43.2 yaw=234 al=shiftroster
 call camp x=59.1 z=40.4 yaw=55 fire=campfire_1
 place CaravanBarebones1 - at 8.8 71.5 ground sit yaw=97
-call treasure x=75.5 z=-15.4 r=10 n=1 seed=14193
+call treasure x=75.5 z=-15.4 r=18 n=1 seed=14193
 
 # --- Areas (10-24: every story island has places all over it and its quest crosses it): the south ridge with its lookout and a
 # buried treasure, the cave in the west shore, the builders' ruined lodge in the north, the courier plane in the east

@@ -23,14 +23,14 @@ expect step 7
 open Anchor store
 wait 3
 zone stormridge
-expect step 8
+expect step 9
 read Smelters' roll
 use cellarhatch
 expect message bolted from below
-expect step 9
+expect step 10
 use cellarlever
 expect story cellarpin 1
-expect step 10
+expect step 11
 use cellarhatch
 expect shown cellarchest
 open Storm cellar
