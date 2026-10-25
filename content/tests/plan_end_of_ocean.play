@@ -1,4 +1,5 @@
-# Play test of the plan 'The End of the Ocean' (CIPlay plan_end_of_ocean, in a test world 'CI ...'): no Raft story, no
+# Play test of the plan 'The End of the Ocean' (CIPlay plan_end_of_ocean, in a test world 'CI ...' set to day 5 first with
+# CISetDay 5, for Outer Breakwater's day:5): no Raft story, no
 # random islands; each stop is tuned to on the Receiver (or sailed to) and played to its end with its own test; the
 # Engine Court's inner crank brings the Command Well, its lever ends the court; then the relay buoy, sailed to.
 plan The End of the Ocean
@@ -12,7 +13,6 @@ open Pipe store
 wait 3
 expect item TitaniumOre 2
 expect chain triangle unlocked
-sail 3
 tune triangle
 include triangulation_rocks.play
 # optional reuse room (an item from an earlier island)
@@ -22,14 +22,12 @@ open Kennel chest
 wait 3
 expect item TitaniumOre 3
 expect chain static unlocked
-sail 3
 tune static
 include static_shoals.play
 # optional reuse room (an item from an earlier island)
 open Spotter plane's crate
 wait 3
 expect item TitaniumOre 2
-sail 3
 tune breakwater
 include outer_breakwater.play
 # optional reuse room (an item from an earlier island)
@@ -37,28 +35,24 @@ open Smugglers' chest
 wait 3
 expect item TitaniumOre 2
 expect chain locks unlocked
-sail 3
 tune locks
 include current_locks.play
 # optional reuse room (an item from an earlier island)
 open Old canal chest
 wait 3
 expect item TitaniumOre 2
-sail 3
 tune stormworks
 include stormworks.play
 # optional reuse room (an item from an earlier island)
 open Ore cave chest
 wait 3
 expect item TitaniumOre 3
-sail 3
 tune spire
 include cooling_spire.play
 # optional reuse room (an item from an earlier island)
 open Cellar chest
 wait 3
 expect item TitaniumOre 2
-sail 3
 tune court
 include engine_court.play
 # optional reuse room (an item from an earlier island)
