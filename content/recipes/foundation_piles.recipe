@@ -138,7 +138,7 @@ prop dview zone.message=Down there the city's foundation piles stand in the dark
 # blasting barrels in the pile field (the stingray's armour only gives to their blasts)
 call ar_ridge x1=-60 z1=20 x2=-40 z2=55 h=10 top=6 r=9
 call ar_plants_tropical x=-50 z=38 r=24 seed=14011
-call hw_zone x=-50 z=38 al=rubblebank id=rubble_bank r=7 message=The rubble bank - and it is no spoil heap. Pig iron, pump castings, stone from Lowstreet's own walls, piled up by the Council's barges at night and grown over. Ballast. The piles are down there, under all of it."
+call hw_zone x=-50 z=38 al=rubblebank id=rubble_bank r=7 msg="The rubble bank - and it is no spoil heap. Pig iron, pump castings, stone from Lowstreet's own walls, piled up by the Council's barges at night and grown over. Ballast. The piles are down there, under all of it."
 call treasure x=-50 z=38 r=14 n=2 seed=14061
 prop treasure14061 treasure.loot=TitaniumOre*2;MetalOre*2
 call hw_wreck x=-62 z=-42 h=3 yaw=40 obj=VP_Excavator al=sunkdigger crate=diggercrate r=10

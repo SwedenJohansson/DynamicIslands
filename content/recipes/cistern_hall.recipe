@@ -290,6 +290,7 @@ prop ch_reset if.use=state|ch_s2|hidden
 prop ch_reset on.use=hide|ch_s1\nhide|ch_s3\nhide|ch_s4\nmoveto|ch_gate1|ch_up1,3\nmoveto|ch_gate2|ch_up2,3\nmoveto|ch_gate3|ch_up3,3\nmoveto|ch_gate4|ch_up4,3\nmessage||Chains rattle - all four sluice gates lift back up. Start again.
 prop ch_reset else.use=message||The cistern is drained; the gates stay down.
 place Loot_Chest ch_pumpchest at -4.52 -77.83 ground sit yaw=47.86
+prop ch_pumpchest obj.name=ch_pumpchest
 prop ch_pumpchest beh.hidden=1
 prop ch_pumpchest loot.refill=0
 story ch_top|Surge gauge|Bolt|The surge tower's gauge - its chalk marks show the cistern brim full the night Lowstreet drowned.

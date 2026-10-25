@@ -176,7 +176,7 @@ call hw_wreck x=52 z=-38 h=3 yaw=30 obj=Caravan_Blue_01 al=pedlarvan crate=pedla
 place Caravan_Green_02 pedlarvan at 60 -50 ground sit yaw=75
 call ar_cave x=64 z=2 h=3 yaw=0 al=pedlarcave chest=pedlarcavechest
 call hw_zone x=64 z=16 al=pedlarcavezone id=pedlars_cave r=4 msg="The pedlars' cave. Whatever the Authority bans, the pedlars keep in here until it is worth more."
-call cagecache x=20 z=-38 yaw=200 alias=pedlarcage sig=pedlarcage chest=pedlarcagechest items=TradeToken*3;Leather*2;Glass*2 title="Pedlar's caged chest" kx=-58 kz=-28 kr=8 seed=13221 keychest=wardencutters keytitle="Fire warden's tools" keyitems=Rope*2
+call cagecache x=20 z=-38 yaw=200 alias=pedlarcage sig=pedlarcage chest=pedlarcagechest items=TradeToken*3;Leather*2;Glass*2 title="Pedlar's caged chest" kx=-58 kz=-28 kr=16 seed=13221 keychest=wardencutters keytitle="Fire warden's tools" keyitems=Rope*2
 call ar_plants_tropical x=-50 z=-55 r=12 seed=13231
 call ar_plants_tropical x=40 z=-65 r=12 seed=13241
 

@@ -189,7 +189,7 @@ place Note_Paper smugglertip at 61.5 -1.6 ground y=1.1 drop yaw=40
 place "Crate_Big_01" - at 47 -15 ground sit yaw=10
 place "Crate_Big_02" - at 47.5 -4 ground sit yaw=80
 place "Crate_Big_01" - at 63 -23.5 ground sit yaw=35
-call treasure x=73.5 z=2.5 r=1 n=1 seed=13178 kind=0
+call treasure x=73.5 z=2.5 r=12 n=1 seed=13178 kind=0
 prop treasure13178 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
 place Loot_ChestSmall bw_ledge at 52.5 2.5 ground sit yaw=90
 note bw_ledge Smuggler's stash | Wedged behind a pallet in a dead end - a smuggler's stash nobody came back for.

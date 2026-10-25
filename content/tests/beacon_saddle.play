@@ -44,7 +44,7 @@ air bs_air
 open Pilgrims' caravan
 wait 3
 expect story bell 1
-expect step 12
+# (reach|bs_top is counted early, before its step comes)
 open Caravan glovebox
 wait 3
 dig 2

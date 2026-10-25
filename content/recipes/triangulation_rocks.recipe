@@ -142,7 +142,7 @@ call notebox x=-3.5 z=1.5 yaw=200 al=teotri
 call notebox x=2.6 z=-6.4 yaw=30 al=heddatri
 call notebox x=49 z=44 yaw=270 al=inestri
 call notebox x=84.09 z=19.92 yaw=79 al=trcairn
-call treasure x=85.14 z=14.52 r=1.5 n=1 seed=14921
+call treasure x=85.14 z=14.52 r=12 n=1 seed=14921
 prop treasure14921 treasure.loot=TitaniumOre*2;Battery*1
 place Creature_Goat trgoats at 62.02 18.17 ground
 prop trgoats creature.count=2

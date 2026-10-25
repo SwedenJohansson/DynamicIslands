@@ -142,9 +142,7 @@ prop vinechest14491 note.title=Behind the vines
 prop vinechest14491 beh.hidden=1
 loot vinechest14491 Glass*2;Rope*3;Nail*8
 beside ChoppableVines vinewall14491 vinechest14491 d=1.6
-prop vinewall14491 on.use=hide|
-show|vinechest14491
-message||The machete bites through the vines. Something was hidden behind them.
+prop vinewall14491 on.use=hide|\nshow|vinechest14491\nmessage||The machete bites through the vines. Something was hidden behind them.
 call ar_plants_desert x=-56 z=-56 r=14 seed=14471
 call ar_plants_desert x=-24 z=60 r=14 seed=14481
 

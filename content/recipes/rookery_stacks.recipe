@@ -172,7 +172,7 @@ prop rationlocker if.open=has|Tangaroa_KeyCard|1
 brush flatten at -25 60 r=5 s=20 frames=200 h=3
 call hw_hazard x=-25 z=60 al=glasshoard kind=spikes r=4 dmg=4 safe=none msg="Broken glass and rusted wire, ankle-deep. Someone hid something in the middle of it."
 place Loot_Chest glasschest at -25 60 ground sit yaw=0
-call cagecache x=52 z=20 yaw=-90 alias=gullcage sig=gullcage chest=gullcagechest items=Feather*6;Rope*2;Leather*2 title="Gull keeper's chest" kx=-45 kz=40 kr=8 seed=13871 keychest=familycutters keytitle="Family's tool bag" keyitems=Rope*2
+call cagecache x=52 z=20 yaw=-90 alias=gullcage sig=gullcage chest=gullcagechest items=Feather*6;Rope*2;Leather*2 title="Gull keeper's chest" kx=-45 kz=40 kr=16 seed=13871 keychest=familycutters keytitle="Family's tool bag" keyitems=Rope*2
 call ar_plants_tropical x=-50 z=20 r=12 seed=13821
 
 # --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Chimney Tor: the poor quarter's great chimney, a drowned bathhouse cellar, butler bots that guard the stack doors - and hot water for the Rookery. ------

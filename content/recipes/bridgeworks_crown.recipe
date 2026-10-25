@@ -237,6 +237,7 @@ prop bc_button beh.use=Press the unmarked button
 prop bc_button on.use=sound||event:/exploring/zipline/zipline_engine\nmessage||The floor drops away -\nwait|2\nteleport|bc_records\nmessage||- a dark room. No door.
 place Zone_Trigger bc_btnback at -59 -7 ground y=1
 prop bc_btnback obj.name=bc_btnback
+prop bc_btnback zone.id=bc_btnback
 push at 50 66 h=3
 place Block_Wall_Tier3 bc_sealed at -0.75 -1.5
 place Block_Wall_Tier3 bc_sealed at -0.75 1.5

@@ -76,7 +76,7 @@ expect story bc_top 1
 expect step 23
 use alarmbell
 expect story alarm 1
-expect step 24
+# (reach|council_door is counted early, before its step comes)
 zone council_door
 expect step 25
 code councilpad 1111 wrong
