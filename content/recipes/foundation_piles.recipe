@@ -146,6 +146,7 @@ call ar_ruin x=10 z=-66 h=4 yaw=180 al=engineershut
 call hw_note x=7.5 z=-61.5 yaw=190 al=engineersurvey
 call ar_cave x=-78 z=-5 h=4 yaw=0 al=drivercave chest=driverchest
 call hw_zone x=-78 z=19 al=drivermouth id=driver_cave r=4 msg="A cave in the west cliff: the pile drivers kept their charges here, well away from the city."
+prop pileray obj.name=pileray
 prop pileray boss.shield=1
 place VP_ExplosiveBarrel_Pile blast1 at 12 8 ground sit yaw=0
 place VP_ExplosiveBarrel_Pile blast2 at 8 -6 ground sit yaw=60
