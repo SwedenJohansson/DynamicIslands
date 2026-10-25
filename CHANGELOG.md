@@ -9,6 +9,13 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-25: Mirrored islands
+
+### New
+- **World option Mirrored islands** (off by default): about one random custom island in three comes mirrored left to
+  right, land and everything on it, so islands you know look new. Fixed per world, the same for every player; islands
+  with a quest, plan and story islands, and islands with moving parts or events are never mirrored.
+
 ## 2026-10-25: Cosmetic rewards
 
 ### New

@@ -34,14 +34,15 @@ namespace DynamicIslands.Editor
 	///   - fogbanks: now and then thick fog rolls in for a few hours, 45-75 m to see (FogBanks);
 	///   - kraken: rarely a giant tentacle grabs a raft floor on the edge; hit it off, or it tears that floor (and maybe its neighbours) away (Kraken);
 	///   - fogsight: the haze comes ~30 % closer; binoculars, the telescope and Marine binoculars see further through it (FogSight).
+	///   - mirrorislands: about one random custom island in three comes mirrored left to right (MirrorIslands). Never quest, plan or story islands.
 	/// Saved in the world file ("@options=", "@optionseed=" - the seed every shuffle of the world comes from), sent by the host
 	/// to every player who joins and when they change (network kind 17: Data = "on=a,b;seed=n", Name = the private
 	/// storages' builders). The last choice in the box is kept in world_rules.txt ("options=").
 	/// </summary>
 	public static class WorldOptions
 	{
-		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger", DailyQuest = "dailyquest", RogueShark = "rogueshark", Barrels = "barrels", StormDays = "stormdays", TraderRaft = "traderraft", Upgrades = "upgrades", StormSeas = "stormseas", Ufo = "ufo", GlowSea = "glowsea", Lightning = "lightning", GhostShip = "ghostship", WhaleBreach = "whalebreach", Fog = "fogbanks", Kraken = "kraken", FogSight = "fogsight";
-		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger, DailyQuest, RogueShark, Barrels, StormDays, TraderRaft, Upgrades, StormSeas, Ufo, GlowSea, Lightning, GhostShip, WhaleBreach, Fog, Kraken, FogSight };
+		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger", DailyQuest = "dailyquest", RogueShark = "rogueshark", Barrels = "barrels", StormDays = "stormdays", TraderRaft = "traderraft", Upgrades = "upgrades", StormSeas = "stormseas", Ufo = "ufo", GlowSea = "glowsea", Lightning = "lightning", GhostShip = "ghostship", WhaleBreach = "whalebreach", Fog = "fogbanks", Kraken = "kraken", FogSight = "fogsight", MirrorIslands = "mirrorislands";
+		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger, DailyQuest, RogueShark, Barrels, StormDays, TraderRaft, Upgrades, StormSeas, Ufo, GlowSea, Lightning, GhostShip, WhaleBreach, Fog, Kraken, FogSight, MirrorIslands };
 		/// <summary>
 		/// Options no longer offered (the user, 2026-10-09): not in the New Game box, left out of the remembered choice, and in
 		/// World settings only while a world still has them on (so the host can switch them off). A world that has one on keeps it.
@@ -49,7 +50,7 @@ namespace DynamicIslands.Editor
 		public static readonly string[] Retired = { Blueprints, StoryOrder };
 		public static bool IsRetired(string option) { return Array.IndexOf(Retired, option) >= 0; }
 		public static string[] Offered { get { return All.Where(o => !IsRetired(o)).ToArray(); } }
-		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous", "Daily quest", "Rogue shark", "Silver & golden barrels", "Storm days", "Trader raft", "Extra upgrades", "Storm seas", "UFO sightings", "Bioluminescent sea", "Lightning strikes", "Ghost ship", "Whale breach", "Fog banks", "Kraken arm", "Binoculars see through fog" };
+		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous", "Daily quest", "Rogue shark", "Silver & golden barrels", "Storm days", "Trader raft", "Extra upgrades", "Storm seas", "UFO sightings", "Bioluminescent sea", "Lightning strikes", "Ghost ship", "Whale breach", "Fog banks", "Kraken arm", "Binoculars see through fog", "Mirrored islands" };
 		public static readonly string[] Hints =
 		{
 			"The blueprints lying on Raft's story islands are found on other story islands than usual. What the story needs (the steering wheel, the engine and its fuel, the machete) is never moved: the story can always be finished.",
@@ -75,6 +76,7 @@ namespace DynamicIslands.Editor
 			"Now and then (on about three days in five, by day or by night) thick fog rolls in over the sea for three to six hours, fading in and out. In it you see only 45-75 m: islands show up late, so the radar matters. While a storm blows the wind keeps the fog away. Looks only; the same for every player.",
 			"Rarely (on about one day in eight from day 8, and with Storm seas in about one storm in four; never while the raft is near an island) a giant tentacle rises from the sea beside the raft and grabs a floor on its edge - never one in the middle. Hit it with a melee weapon or a spear, 10 hits within a minute (any players together), and it lets go and sinks. If not, it tears that floor away, and each floor right beside it with a 1 in 2 chance: what stood on them goes too. Rafts of 8 floors or fewer are never grabbed. Every player sees the same arm and the same floors go.",
 			"The sea's haze comes about 30 % closer than in Raft, so islands show up later. Raise binoculars and you see about 20 % further than Raft's usual view, the telescope about 50 % further; Marine binoculars (an extra upgrade from the upgrade table, made with titanium) see furthest and lighten the view at dusk and at night. Raft's weather keeps its own fog: a storm or a fog bank still closes in. Each player sees through their own binoculars only.",
+			"About one random custom island in three comes mirrored left to right: its land, paint and everything on it, so islands you know look new. Which ones is fixed for the world (from its seed and the island's name), the same for every player. Islands with a quest, plan and story islands, and islands with moving parts, events or zip lines are never mirrored. Looks only: what was taken or used on an island stays so.",
 		};
 
 		/// <summary>
@@ -106,6 +108,7 @@ namespace DynamicIslands.Editor
 			"Now and then thick fog rolls in for a few hours: you see only 45-75 m, so the radar matters. Looks only.",
 			"Rarely a giant tentacle grabs the raft's edge. Its other arms slam at players near them - step away. Hit it 10 times within a minute, or it tears that floor away - and maybe the ones beside it.",
 			"The haze comes closer; binoculars and the telescope see through it, Marine binoculars furthest and in the dark too.",
+			"About one random custom island in three comes mirrored, so known islands look new. Never quest, plan or story islands.",
 		};
 
 		/// <summary>The current world's options (clients get the host's).</summary>

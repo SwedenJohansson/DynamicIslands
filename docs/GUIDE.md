@@ -2790,6 +2790,7 @@ already in the world is taken away. What each one does from the moment it change
 | Whale breach | The first breach a few minutes later; off, a whale already breaching finishes its leap |
 | Kraken arm | From now on (the next day or storm with one); off, an arm holding the raft lets go at once |
 | Binoculars see through fog | At once (the haze eases in over a second); off: Raft's own fog |
+| Mirrored islands | Islands that spawn from now on (one already in the world changes when it comes back into view); off: they spawn as made |
 | Lightning strikes | The next storm can have bolts (one blowing now too); off, a bolt already in the sky finishes |
 | Extra upgrades | Off: the recipes are hidden; upgrades built or worn keep working, learned ones are kept |
 | Scrambled blueprints / Story order (retired, off only) | Untaken blueprints go back to Raft's places / the Receiver goes back to Raft's order |
@@ -3261,6 +3262,20 @@ islands show up later - until you **raise binoculars** (right mouse button with 
 - The Marine binoculars are an [extra upgrade](#extra-upgrades) (the option Extra upgrades): learned at the upgrade
   research table once the binoculars are known. Without this option they zoom like the telescope.
 - `FogSight` (F10) shows what you look through and how far the fog is now.
+
+#### Mirrored islands
+
+About **one random custom island in three** comes **mirrored left to right**: its land, its paint and everything on it,
+so an island you have met in another world looks new. Which islands is fixed for the world (from the world's seed and
+the island's name), the same for every player and every time it comes back into view.
+
+- **Only plain islands:** islands with a quest, plan and story islands, and islands with moving parts, events, zip
+  lines or story items are never mirrored, so nothing that points somewhere ends up pointing the wrong way. Neither is
+  an island you spawn yourself (the editor's **Test**, `SpawnIsland`).
+- **Looks only:** what was taken, opened or used on an island stays so (the world remembers each thing by its own
+  number, not by where it stands). Things stand mirrored, but each piece keeps its own shape (a sign reads the right
+  way round). The editor and its picture of the island always show it as you made it.
+- Switching the option on or off in a world changes the islands not yet in view; the world remembers nothing extra.
 
 #### Ghost ship
 

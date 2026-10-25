@@ -552,6 +552,10 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   upgrade) about 80 % and lighter at dusk and at night. It works on the fog Raft's weather has now (a storm or a fog
   bank still closes in) and is lent to the sky only while it draws, so Raft's fog is back when they are lowered. Each
   player sees through their own binoculars.
+- **Mirrored islands:** about one random custom island in three comes mirrored left to right (land, paint and
+  everything on it), so known islands look new. Fixed per world (its seed and the island's name), the same for every
+  player. Never islands with a quest, plan or story islands, or islands with behaviours, events, zip lines or story
+  items; what was used on an island stays used (R1b uids keep their order).
 - **Lightning strikes:** in a storm (Raft's own, Storm days or Storm seas) a bolt now and then hits the sea 30-150 m
   from the raft with a bright flash and a thunder clap; some storms have none, the others one to four. Very rarely it
   hits the raft's Receiver antenna or wind turbine instead. Looks only: no damage, no fire. Every player sees the same
@@ -570,7 +574,7 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   (2x repair), longbow (1.5x draw and range), bright head light and bright lamp (2x as far), lumber axe (2x as fast) and marine binoculars (2x zoom, titanium;
   see furthest with Binoculars see through fog).
 - The host can change them in a world: `WorldOptions` shows them; `WorldOptions +ghostrafts -privatestorage` (any
-  option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades, glowsea, stormseas, ghostship, fogsight).
+  option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades, glowsea, stormseas, ghostship, fogsight, mirrorislands).
 - Multiplayer: the options, their seed and the storages' builders are in the world file and sent to every player
   (network kind 17). The story order and the blueprints' pairs are worked out from the seed on every machine, and each
   machine notes who built a storage as Raft places it there.
@@ -908,6 +912,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `UfoSightings.cs` | Extra option UFO sightings: which days and hours have a saucer (from the seed), the host sending it (kind 33 `Moment`, Name "ufo"), the saucer built from Unity shapes, its flight, spin and night glow |
 | `LightningStrikes.cs` | Extra option Lightning strikes: when a storm has bolts (the host rolls them), where they hit (the sea 30-150 m away, rarely the antenna or wind turbine), sending them (kind 33 `Moment`, Name "bolt"), the bolt drawn with lines and lights, its flicker and the thunder (Raft has none: its dynamite bang + boss rumble) |
 | `FogBanks.cs` | Extra option Fog banks: which days and hours have a bank (from the seed and the day, so nothing is sent), the fade, and lending AzureSky a shorter fog distance around its `UpdateShaderUniforms` (Raft's weather blending never sees it); no fog while Raft's weather is stormy or under water. `FogBanks` command |
+| `MirrorIslands.cs` | Extra option Mirrored islands: which world islands are mirrored (option on, entry without rule or label, no quest, only plain settings, a stable hash of seed + name, 1 in 3) and the mirror itself (heights, paint, objects and rotations), done on the freshly read island before it spawns |
 | `FogSight.cs` | Extra option Binoculars see through fog: the haze factor and the binoculars' / telescope's / Marine binoculars' factors (eased), lent to AzureSky's fog distance inside FogBanksSkyPatch, and the Marine binoculars' night lift (FogSightNightPatch on AzureSkyController.Update) |
 | `WhaleBreach.cs` | Extra option Whale breach: the host's timer (once or twice a Raft day, by day, open sea 170-320 m out), the breach sent to everyone (kind 36 `WhaleBreach`), Raft's whale copied looks-only (scripts and colliders stripped) and flown along a leap curve, and Raft's water splash scaled up for the fall |
 | `StormSeas.cs` | Extra option Storm seas: more of Raft's storms (its weather pick), the harder rocking (Raft's buoyancy tilt), the host's storm count and the edge floor a storm breaks (Raft's block removal), the banner (kind 35), saved as `@stormseas=` |

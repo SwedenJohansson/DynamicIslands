@@ -211,6 +211,8 @@
     <Compile Include="DevTestsFogSight.cs" />
     <Compile Include="Cosmetics.cs" />
     <Compile Include="DevTestsCosmetics.cs" />
+    <Compile Include="MirrorIslands.cs" />
+    <Compile Include="DevTestsMirror.cs" />
     <Compile Include="ExtraUpgrades.cs" />
     <Compile Include="TraderRaft.cs" />
     <Compile Include="GhostShip.cs" />
