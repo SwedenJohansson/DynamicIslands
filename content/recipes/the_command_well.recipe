@@ -275,62 +275,48 @@ call dp_air x=-31.06 z=56.52 id=cw_air al=cwair msg="Air trapped under the wreck
 place Loot_ChestSmall cwdivesecret at -30.17 62.5 ground sit yaw=64.23
 call tzone x=-28 z=58 al=cwdivezone id=cw_dive r=7 msg="The bottom of the west pit. The spoil boat lies here." h=1
 call tzone x=-19.74 z=40.89 al=cwrim id=cw_rim r=5 msg="The west pit's rim." h=1
-call treasure x=-18 z=37.29 r=2 n=1 seed=14992
+call treasure x=-18 z=37.29 r=12 n=1 seed=14992
 prop treasure14992 treasure.loot=story:chainkey*1;MetalIngot*2;Bolt*2
 # the chained hatch on the islet: five chain locks round it (D1+P1)
 place Loot_ChestLarge cw_hatch at 44.2 -42.5 ground sit yaw=135
 prop cw_hatch obj.name=cw_hatch
-prop cw_hatch if.open=signal|cwchain1
-signal|cwchain2
-signal|cwchain3
-signal|cwchain4
-signal|cwchain5
+prop cw_hatch if.open=signal|cwchain1\nsignal|cwchain2\nsignal|cwchain3\nsignal|cwchain4\nsignal|cwchain5
 prop cw_hatch else.open=message||The hatch is chained shut - five chains, five locks round it. Each wants a chain key.
 place RT_Pillar - at 45.31 -39.08 ground sy=0.4
 place RT_PowerBox cw_lock1 at 45.31 -39.08 ground y=1.25 yaw=198
 prop cw_lock1 obj.name=cw_lock1
 prop cw_lock1 beh.use=Unlock the chain
-prop cw_lock1 if.use=!signal|cwchain1
-take|story:chainkey|1
+prop cw_lock1 if.use=!signal|cwchain1\ntake|story:chainkey|1
 prop cw_lock1 else.use=message||A chain lock. It wants a chain key - or it is open already.
-prop cw_lock1 on.use=message||The key turns and the chain rattles off the hatch (1 of 5).
-signal||cwchain1
+prop cw_lock1 on.use=message||The key turns and the chain rattles off the hatch (1 of 5).\nsignal||cwchain1
 place RT_Pillar - at 41.29 -40.38 ground sy=0.4
 place RT_PowerBox cw_lock2 at 41.29 -40.38 ground y=1.25 yaw=126
 prop cw_lock2 obj.name=cw_lock2
 prop cw_lock2 beh.use=Unlock the chain
-prop cw_lock2 if.use=!signal|cwchain2
-take|story:chainkey|1
+prop cw_lock2 if.use=!signal|cwchain2\ntake|story:chainkey|1
 prop cw_lock2 else.use=message||A chain lock. It wants a chain key - or it is open already.
-prop cw_lock2 on.use=message||The key turns and the chain rattles off the hatch (2 of 5).
-signal||cwchain2
+prop cw_lock2 on.use=message||The key turns and the chain rattles off the hatch (2 of 5).\nsignal||cwchain2
 place RT_Pillar - at 41.29 -44.62 ground sy=0.4
 place RT_PowerBox cw_lock3 at 41.29 -44.62 ground y=1.25 yaw=54
 prop cw_lock3 obj.name=cw_lock3
 prop cw_lock3 beh.use=Unlock the chain
-prop cw_lock3 if.use=!signal|cwchain3
-take|story:chainkey|1
+prop cw_lock3 if.use=!signal|cwchain3\ntake|story:chainkey|1
 prop cw_lock3 else.use=message||A chain lock. It wants a chain key - or it is open already.
-prop cw_lock3 on.use=message||The key turns and the chain rattles off the hatch (3 of 5).
-signal||cwchain3
+prop cw_lock3 on.use=message||The key turns and the chain rattles off the hatch (3 of 5).\nsignal||cwchain3
 place RT_Pillar - at 45.31 -45.92 ground sy=0.4
 place RT_PowerBox cw_lock4 at 45.31 -45.92 ground y=1.25 yaw=342
 prop cw_lock4 obj.name=cw_lock4
 prop cw_lock4 beh.use=Unlock the chain
-prop cw_lock4 if.use=!signal|cwchain4
-take|story:chainkey|1
+prop cw_lock4 if.use=!signal|cwchain4\ntake|story:chainkey|1
 prop cw_lock4 else.use=message||A chain lock. It wants a chain key - or it is open already.
-prop cw_lock4 on.use=message||The key turns and the chain rattles off the hatch (4 of 5).
-signal||cwchain4
+prop cw_lock4 on.use=message||The key turns and the chain rattles off the hatch (4 of 5).\nsignal||cwchain4
 place RT_Pillar - at 47.8 -42.5 ground sy=0.4
 place RT_PowerBox cw_lock5 at 47.8 -42.5 ground y=1.25 yaw=270
 prop cw_lock5 obj.name=cw_lock5
 prop cw_lock5 beh.use=Unlock the chain
-prop cw_lock5 if.use=!signal|cwchain5
-take|story:chainkey|1
+prop cw_lock5 if.use=!signal|cwchain5\ntake|story:chainkey|1
 prop cw_lock5 else.use=message||A chain lock. It wants a chain key - or it is open already.
-prop cw_lock5 on.use=message||The key turns and the chain rattles off the hatch (5 of 5).
-signal||cwchain5
+prop cw_lock5 on.use=message||The key turns and the chain rattles off the hatch (5 of 5).\nsignal||cwchain5
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Command Well
