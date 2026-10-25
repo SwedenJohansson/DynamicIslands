@@ -110,6 +110,9 @@ namespace DynamicIslands.Editor
 		/// "move" (Offsets = x, y, z, yaw, seconds: a moveto), "collapse" (Ids = island, objects...; Offsets[0] = seconds), "heldlist" (to a joiner: Data =
 		/// "island,object,holder;..."). An older version ignores it.</summary>
 		public const int Mech = 39;
+		/// <summary>Both ways: a ping on the island map (Minimap, PF5). Ids = { island } with Offsets = x, y, z in the island's space, or no Ids and
+		/// Offsets from the raft (at sea); Data = the pinging player's id. A player sends it to the host, the host shows it and sends it to everyone. An older version ignores it.</summary>
+		public const int Ping = 40;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -702,6 +705,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.Mech:
 						MechFeatures.OnMessage(msg, from.Id);
+						break;
+					case IslandNetMessage.Ping:
+						Minimap.OnMessage(msg, from.Id);
 						break;
 					case IslandNetMessage.AlphaHealth:
 						if (!Raft_Network.IsHost && msg.Offsets != null && msg.Offsets.Length >= 2) CreatureSpawner.HostHealth(unchecked((uint)msg.Index), msg.Offsets[0], msg.Offsets[1]);

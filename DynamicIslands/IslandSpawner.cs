@@ -394,6 +394,16 @@ namespace DynamicIslands.Editor
 					Behaviours.Attach(cgo, o.Name, CameraPath.WorldProps(o.Props), index);
 					return;
 				}
+				// Map markers (island map, PF5): only an empty place in a world, shown on the map
+				if (!editable && Minimap.IsMarker(o.Name))
+				{
+					if (underSea) return;
+					var mgo = new GameObject(o.Name);
+					mgo.transform.SetParent(parent, false);
+					mgo.transform.position = parent.position + o.Position;
+					Behaviours.Attach(mgo, o.Name, o.Props ?? new Dictionary<string, string>(), index);
+					return;
+				}
 				// Buried treasure: Raft's own treasure point, made once the island's state is known (BuriedTreasure.OnIslandReady)
 				if (!editable && ContentCatalog.IsTreasure(o.Name))
 				{

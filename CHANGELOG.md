@@ -9,6 +9,15 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-25: Island map and pings
+
+### Added
+- **Island map:** near a custom island a small map of it shows in the top-right corner, with you, the other players,
+  the targets of each quest's current step and the builder's **map markers** (a new object in Zones & triggers, with a
+  text). **M** switches it to full screen and off, **+** / **-** zoom.
+- **Pings:** **G** marks the spot you look at for the whole crew for a few seconds: a beam with your name, a dot on
+  the map and a sound.
+
 ## 2026-10-25: Camera fly-throughs
 
 ### Added

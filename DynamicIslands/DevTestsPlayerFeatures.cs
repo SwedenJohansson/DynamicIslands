@@ -288,5 +288,143 @@ namespace DynamicIslands
 		}
 
 		#endregion
+
+		#region PF5 island map and pings
+
+		const string MapIsland = "cipf5map";
+
+		[ConsoleCommand(name: "CIMinimap", docs: "Dev (PF5): the island map. CIMinimap unit - the map key's cycle (corner, full, off), zoom 1/2/4x and its view around the player, the map marker in the object list, the ping message / world - host, world 'CI ...': on a test island the map shows (picture taken), the quest step's target and a map marker on it, full screen and off, then pings: the message (island-local spot), at most one a second, a crew mate's ping shown and passed on, gone after its seconds; picture shot_pf5_map.png / editor - in the editor: a map marker placed, its inspector group, its text kept")]
+		public static void MinimapCommand(string[] args) { StartTest(MinimapRoutine(args != null && args.Length > 0 ? args[0] : "unit")); }
+
+		static IEnumerator MinimapRoutine(string what)
+		{
+			if (what == "world") { yield return MapWorld(); yield break; }
+			if (what == "editor") { yield return MapEditor(); yield break; }
+			bool ok = true;
+			int mode = Minimap.Mode, zoom = Minimap.Zoom;
+			Minimap.Mode = Minimap.Corner;
+			Minimap.Cycle(); bool full = Minimap.Mode == Minimap.Full;
+			Minimap.Cycle(); bool off = Minimap.Mode == Minimap.Off;
+			Minimap.Cycle();
+			Check(ref ok, full && off && Minimap.Mode == Minimap.Corner, "the map key: corner -> full -> off -> corner");
+			Minimap.SetZoom(8); bool z4 = Minimap.Zoom == 4;
+			Minimap.SetZoom(3); bool z2 = Minimap.Zoom == 2;
+			Minimap.SetZoom(0);
+			Check(ref ok, z4 && z2 && Minimap.Zoom == 1, "zoom is 1x, 2x or 4x");
+			Rect all = Minimap.View(Vector3.zero);
+			Check(ref ok, all.width == 1f && all.x == 0f && all.y == 0f, "at 1x the whole island shows");
+			Minimap.SetZoom(4);
+			Rect v = Minimap.View(Minimap.Center);
+			Check(ref ok, Mathf.Abs(v.width - 0.25f) < 0.001f && Mathf.Abs(v.center.x - 0.5f) < 0.001f && Mathf.Abs(v.center.y - 0.5f) < 0.001f, "at 4x a quarter, around the player");
+			Rect edge = Minimap.View(Minimap.Center + new Vector3(10000f, 0f, 10000f));
+			Check(ref ok, edge.xMax <= 1.0001f && edge.yMax <= 1.0001f && edge.x >= 0f, "... kept inside the picture at its edge");
+			Minimap.Mode = mode; Minimap.Zoom = zoom;
+			Check(ref ok, PlaceableCatalog.Get(Minimap.MarkerName) != null, "the object list has the map marker");
+			IslandNetMessage m = Minimap.MessageFor(new Vector3(1f, 2f, 3f), 77UL);
+			Check(ref ok, m.Kind == IslandNetMessage.Ping && m.Kind == 40 && m.Offsets.Length == 3 && m.Data == "77", "the ping message: kind 40, a spot, the sender's id");
+			if (ok) Log("PASS: minimap unit"); else Fail("minimap unit");
+		}
+
+		/// <summary>A test island: a quest whose first step is to reach 'cimapgoal', a map marker 'Hut', a start spot.</summary>
+		static IslandFile MapBuild()
+		{
+			var s = new IslandGenSettings { Seed = 5151, Radius = 50f, Height = 8f, Trees = 0f, Bushes = 0f, Rocks = 0f, Harvest = 0f, BeachThings = 0f, Water = 0f, SeaRocks = 0f, SeaFinds = 0f, Sunken = 0f };
+			IslandFile f = IslandGenerator.CreateFile(s, MapIsland);
+			f.Props[IslandQuest.KeyTitle] = "CI map quest";
+			f.Props[IslandQuest.KeySteps] = "reach|cimapgoal|1|Find the goal";
+			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(0f, 0f), 3), BehaviourProps.Name, "cimapstart"));
+			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(25f, 20f), 3), BehaviourProps.Name, "cimapgoal"));
+			f.Objects.Add(ScObj(Minimap.MarkerName, ScDry(f, new Vector2(-20f, 15f), 3), Minimap.LabelProp, "Hut"));
+			return f;
+		}
+
+		static IEnumerator MapWorld()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("minimap world: host, in a test world 'CI ...'"); yield break; }
+			yield return EnsureAlive();
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Note_Sign" });
+			bool ok = true;
+			IslandWorldState.Entry e = null;
+			yield return RfSpawn(MapBuild(), MapIsland, x => e = x);
+			if (e == null) yield break;
+			int mode = Minimap.Mode;
+			Minimap.Mode = Minimap.Corner;
+			Minimap.SetZoom(1);
+			Minimap.ClearPings();
+			Check(ref ok, Minimap.Island != e, "at sea (on the raft) not this island's map");
+			Check(ref ok, Behaviours.RefsOf(e).Any(r => r.ObjectName == Minimap.MarkerName && r.GetComponentsInChildren<Renderer>().Length == 0), "the map marker is in the world, not seen");
+			int renders = Minimap.RenderCount;
+			PutPlayerNear(ScObjOf(e, "cimapstart").transform);
+			yield return new WaitForSecondsRealtime(1.2f);
+			Check(ref ok, Minimap.Island == e && Minimap.Shown && Minimap.RenderCount > renders, "on the island: its map in the corner, its picture taken");
+			Check(ref ok, Minimap.HalfSize >= CustomIslandSpawner.LandRadius(e.Name), "the picture holds the whole island (" + Minimap.HalfSize.ToString("F0") + " m each way)");
+			Transform goal = ScObjOf(e, "cimapgoal").transform;
+			Check(ref ok, Minimap.Marks.Any(k => k.Kind == Minimap.MarkQuest && Vector3.Distance(k.Pos, goal.position) < 0.1f), "the quest step's target on the map");
+			Check(ref ok, Minimap.Marks.Any(k => k.Kind == Minimap.MarkMarker && k.Label == "Hut"), "the map marker 'Hut' on the map");
+			Check(ref ok, Minimap.Marks.Any(k => k.Kind == Minimap.MarkMe), "the player on the map");
+			Minimap.Cycle();
+			yield return new WaitForSecondsRealtime(0.3f);
+			Check(ref ok, Minimap.Mode == Minimap.Full && Minimap.Shown && Minimap.RenderCount > renders + 1, "full screen: shown, the picture taken again");
+			Shot("pf5_map");
+			Minimap.Cycle();
+			yield return null;
+			yield return null;
+			Check(ref ok, !Minimap.Shown, "off: no map");
+			Minimap.Mode = Minimap.Corner;
+
+			var sent = new List<IslandNetMessage>();
+			int shown = Minimap.PingsShown, sounds = SoundLibrary.Played;
+			Vector3 spot = goal.position;
+			bool first, second;
+			IslandNetwork.Loopback = x => sent.Add(x);
+			try { first = Minimap.SendPing(spot); second = Minimap.SendPing(spot); }
+			finally { IslandNetwork.Loopback = null; }
+			IslandNetMessage msg = sent.FirstOrDefault(x => x.Kind == IslandNetMessage.Ping);
+			Check(ref ok, first && !second && sent.Count(x => x.Kind == IslandNetMessage.Ping) == 1, "a ping is sent, a second right after is not (one a second)");
+			Vector3 local = e.Root.transform.InverseTransformPoint(spot);
+			Check(ref ok, msg != null && msg.Ids.Length == 1 && msg.Ids[0] == e.Id && Mathf.Abs(msg.Offsets[0] - local.x) < 0.01f && Mathf.Abs(msg.Offsets[2] - local.z) < 0.01f, "... with the island and the spot in its space");
+			Check(ref ok, Minimap.PingsShown == shown + 1 && Minimap.Pings.Count == 1 && Minimap.Pings[0].World != null && SoundLibrary.Played > sounds && SoundLibrary.LastPlayed == Minimap.PingSound, "shown here: a beam, the sound");
+			Check(ref ok, Minimap.Pings.Count == 1 && Vector3.Distance(Minimap.Pings[0].WorldPos, spot) < 0.05f, "... at the spot");
+
+			// a crew mate's ping reaches the host: shown and passed to everyone
+			IslandNetMessage mate = Minimap.MessageFor(spot + new Vector3(5f, 0f, 0f), 12345UL);
+			sent.Clear();
+			IslandNetwork.Loopback = x => sent.Add(x);
+			try { Minimap.OnMessage(mate, 12345UL); }
+			finally { IslandNetwork.Loopback = null; }
+			Check(ref ok, Minimap.Pings.Count == 2 && Minimap.Pings.Any(p => p.From == 12345UL) && sent.Any(x => x.Kind == IslandNetMessage.Ping && x.Data == "12345"), "a crew mate's ping: shown here and passed on to everyone");
+			yield return new WaitForSecondsRealtime(Minimap.PingSeconds + 0.5f);
+			Check(ref ok, Minimap.Pings.Count == 0 && GameObject.Find("CustomIslands_Ping") == null, "the pings are gone after " + Minimap.PingSeconds + " s");
+
+			RfAway(e);
+			yield return new WaitForSecondsRealtime(1.2f);
+			Check(ref ok, Minimap.Island != e && !Minimap.Shown, "away from the island: no map");
+			RfRemove(MapIsland);
+			Minimap.Mode = mode;
+			if (ok) Log("PASS: minimap world"); else Fail("minimap world");
+		}
+
+		static IEnumerator MapEditor()
+		{
+			yield return WaitForEditor(false);
+			bool ok = true;
+			Check(ref ok, !Minimap.Shown, "no island map in the editor");
+			Transform placed = GameObject.Find("PlacedObjects").transform;
+			Vector3 at = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel + 5f, 500f);
+			EditorGameObject o = PlaceForTest(Minimap.MarkerName, at, placed);
+			if (o == null) { Fail("minimap editor: no map marker placed"); yield break; }
+			Check(ref ok, o.GetComponentsInChildren<Renderer>().Length > 0, "the marker is seen in the editor");
+			TransformGizmoSelect(o.transform);
+			ObjectInspector.Refresh();
+			yield return new WaitForSecondsRealtime(0.5f);
+			Check(ref ok, Resources.FindObjectsOfTypeAll<UnityEngine.UI.Text>().Any(t => t.gameObject.activeInHierarchy && t.text == "Map marker (island map)"), "its inspector group shows");
+			PropsCommand.Change(o, P(Minimap.LabelProp, "CI hut"));
+			Check(ref ok, ObjectProps.Get(o.Props, Minimap.LabelProp) == "CI hut", "its text is kept");
+			DynamicIslands.EditorGizmoHandler.ClearTargets(false);
+			UnityEngine.Object.Destroy(o.gameObject);
+			if (ok) Log("PASS: minimap editor"); else Fail("minimap editor");
+		}
+
+		#endregion
 	}
 }

@@ -498,6 +498,22 @@ typing), **Esc** or **Close** closes it, and **Journal** goes to the journal.
   there is one.
 - The key can be changed in **Defaults... > Keys (this PC)** (Notebook), like the journal's.
 
+### The island map (M) and pings (G)
+
+Near a custom island a small **map** of it sits in the top-right corner: the island seen from straight above, you as
+a white arrow (pointing the way you look), the other players as blue dots, and **gold dots** where each unfinished
+quest's current step wants you (the objects named as the step's target; one off the shown part stays at the map's
+edge, pointing the way). Green dots are **map markers** the builder placed, with their text on the full map.
+
+- **M** goes corner -> **full screen** (in the middle, with every name) -> **off** -> corner.
+- **+** and **-** zoom in and out (1x, 2x, 4x), around you.
+- The map shows only near an island (within its land and 80 m); at open sea it hides. Its picture is taken when you
+  come to the island, when you open the full map and every 30 s.
+- **G** **pings** the spot you look at (up to 300 m; looking at the sky, 50 m ahead): everyone in the world sees a red
+  beam with your name there, a red dot on the map and hears a short sound, for 6 seconds. One ping a second at most;
+  a new ping of yours replaces your last one.
+- Both keys can be changed in **Defaults... > Keys (this PC)** (Map, Ping).
+
 ---
 
 ## 4. Building your own island: the editor
@@ -1724,6 +1740,9 @@ Select any object → **Behaviour & events...**. No code needed:
   second, without the editor's windows) as `frame_00001.png`... in the mod's `trailers` folder, to make a video from
   (with a video editor, or `ffmpeg -framerate 30 -i frame_%05d.png trailer.mp4`). **Check** warns about a path with
   fewer than two points.
+- **Map markers** (island map): place a **Map marker** (**Zones & triggers**) where players should see a green dot on
+  the [island map](#the-island-map-m-and-pings-g); its inspector's **Text** is shown by the dot on the full map. It is
+  invisible in a world. A quest step's target shows on the map by itself, without a marker.
 
 ![A lever opens a door](images/editor-behaviour.jpg)
 *A log named "lever" that players can use ("Pull the lever"): it opens or closes the door and says "The door moves".*
