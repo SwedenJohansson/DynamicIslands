@@ -9,6 +9,13 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-25: Looped sounds on survivor cages
+
+### Fixed
+- **A looped "play sound" on a survivor's cage** no longer makes a rescued cage come back closed after a reload, and
+  rescuing the survivor no longer ends the loop: looped sounds have their own place in the world's save now. Older
+  worlds' looped sounds are moved over by themselves.
+
 ## 2026-10-25: Editor: picking small objects, 1 m brushes, grid sizes, AZERTY keys
 
 ### Added
