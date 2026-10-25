@@ -208,6 +208,11 @@ namespace DynamicIslands
 				Check(ref ok, (QuestBook.Layout ?? "").StartsWith("First page[0-1] > Alpha Camp " + StoryChain.FrequencyOf("a") + "[2-") && QuestBook.Layout.Contains("(Radio Tower, not in this story)"), "the book: " + QuestBook.Layout);
 				Check(ref ok, !StoryOrder.Chain.Any(QuestBook.RaftTabShown), "Raft's story is off: none of Raft's tabs shown");
 				Check(ref ok, QuestBook.PageTexts.Any(kv => kv.Key == 2 && kv.Value.Any(t => t == "Hello\nworld")), "its first page has the intro written in the plan");
+				// (PF1: "Copy to my notebook" on our pages)
+				bool copied = QuestBook.ClickCopyAt(2);
+				PlayerNotebook.Page cp = copied ? PlayerNotebook.Pages.Last() : null;
+				Check(ref ok, cp != null && cp.Text.Contains("Hello\nworld") && cp.Title.Length > 0, "its copy button copies the page into the player's notebook (" + (cp != null ? cp.Title + ": " + cp.Text.Replace("\n", "|") : "no copy") + ")");
+				if (cp != null) { PlayerNotebook.Pages.Remove(cp); PlayerNotebook.MarkChanged(); PlayerNotebook.Save(); }
 				bool hasQuest = a != null && QuestTracker.QuestOf(a).Exists;
 				Check(ref ok, hasQuest == QuestBook.PageTexts.Any(kv => kv.Value.Any(t => t.StartsWith("<b>"))), "a checklist page when the island has a quest (" + (hasQuest ? "it has" : "it has none") + ")");
 

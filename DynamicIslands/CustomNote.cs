@@ -141,6 +141,10 @@ namespace DynamicIslands.Editor
 
 		CustomNote note;
 		Text titleText, bodyText;
+		Button copyButton;
+
+		/// <summary>Tests: clicks the note's "Copy to my notebook".</summary>
+		internal static bool ClickCopy() { if (!IsOpen) return false; instance.copyButton.onClick.Invoke(); return true; }
 		ScrollRect scroll;
 		float openedAt;
 		bool cursorWasFree;
@@ -185,6 +189,8 @@ namespace DynamicIslands.Editor
 			RectTransform bottom = UIKit.Row(panel, 34f, 8f, "Bottom");
 			Text hint = UIKit.Label(bottom, "", 13, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "Hint");
 			hint.text = "Press the interact key or Tab to close";
+			// (PF1: the note's text into the player's own notebook)
+			instance.copyButton = UIKit.Button(bottom, "Copy to my notebook", () => { if (instance.note != null) PlayerNotebook.CopyIn(instance.titleText.text, instance.note.Text); }, "Copies this note into your own notebook as a new page", 200, 34, 13);
 			UIKit.Button(bottom, "Close", Close, null, 110, 34);
 			canvas.gameObject.SetActive(false);
 		}

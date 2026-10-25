@@ -66,6 +66,43 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - Any object can be made a collectible or a puzzle light with the inspector's **Story puzzle** buttons; every player
   on the island sees a set's count; the new events keep their actions after a `wait` like the others.
 
+## 2026-10-25: Player features, follow-ups
+
+### Added
+- **Camera fly-throughs** can play **once** per world (an intro): the host keeps it in the world's save.
+- **Copy to my notebook** on the main story's pages in Raft's notebook too.
+- The island map's zoom keys can be changed in **Defaults... > Keys (this PC)** (the keypad's + and - still zoom).
+
+### Fixed
+- A **use** hint on a camera point or a map marker did nothing useful but could be looked at; it is ignored now.
+- The mod's default keys also skip Raft's second keys and keys the mod already gives to something else.
+
+## 2026-10-25: Island map and pings
+
+### Added
+- **Island map:** near a custom island a small map of it shows in the top-right corner, with you, the other players,
+  the targets of each quest's current step and the builder's **map markers** (a new object in Zones & triggers, with a
+  text). **M** switches it to full screen and off, **+** / **-** zoom.
+- **Pings:** **G** marks the spot you look at for the whole crew for a few seconds: a beam with your name, a dot on
+  the map and a sound.
+
+## 2026-10-25: Camera fly-throughs
+
+### Added
+- **Camera fly-throughs:** place **Camera points** (Zones & triggers) to make a camera path, each point with its order,
+  what it looks at, its speed and a wait. The new when/then action **camera fly-through** flies the camera of every
+  player near the path along it once, on a smooth curve, with the player held; **Esc** skips it. In the editor a line
+  shows each path, **Preview path** flies it, and **Record trailer** saves every frame as pictures for a video.
+  **Check** warns about a path with fewer than two points.
+
+## 2026-10-25: Your own notebook
+
+### Added
+- **Your own notebook (U):** pages you write yourself, with titles, beside the journal and Raft's notebook. It saves
+  by itself (while you type and on closing), per world, in a file next to the world's save on your own PC; it is never
+  sent to the other players. **Copy to my notebook** on a note or a journal page copies it in. The key, and the new
+  Map and Ping keys, can be changed in **Defaults... > Keys (this PC)**.
+
 ## 2026-10-25: Relic of the Seventh Tide, full-size islands
 
 ### Changed

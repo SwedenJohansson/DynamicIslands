@@ -49,8 +49,8 @@ namespace DynamicIslands.Editor
 		public const string EventPrefix = "on.";
 		public static readonly string[] ObjectEvents = { "use", "enter", "read", "open", "defeat", "laser", BossPhases.Event, MechFeatures.StackEvent };
 		public static readonly string[] IslandEvents = { "arrive", "quest" };
-		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character", "playsound", "stopsound", "camera", "suit", "hit", "carry", "collapse", "moveto", PlayerFeatures.DialogueVerb, Lights.Verb };
-		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal", "playsound", "stopsound", "camera", "hit", "collapse", "moveto", Lights.Verb };
+		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character", "playsound", "stopsound", "camera", "suit", "hit", "carry", "collapse", "moveto", PlayerFeatures.DialogueVerb, Lights.Verb, "flythrough" };
+		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal", "playsound", "stopsound", "camera", "hit", "collapse", "moveto", Lights.Verb, "flythrough" };
 		public const string CheckPrefix = "if.", ElsePrefix = "else.";
 		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest", "wears", "holds", PlayerFeatures.TalkedCheck, Collectibles.CheckKind, Lights.LightCheck, Lights.GroupCheck };
 		public static readonly string[] States = { "open", "closed", "shown", "hidden" };
@@ -170,6 +170,7 @@ namespace DynamicIslands.Editor
 				case "playsound": return TriggerSounds.Describe(Arg, t);
 				case "stopsound": return Arg.Trim().Equals("all", StringComparison.OrdinalIgnoreCase) ? "stop every sound played on the island" : "stop the sound of " + t;
 				case "camera": return CameraMoment.Describe(Target, Arg);
+				case "flythrough": return CameraPath.Describe(Target, Arg);
 				case "suit": return "put a protective suit on the player (" + (Arg.Trim().Length > 0 ? Arg.Trim() : "120") + " s)";
 				case "hit": return "hurt the animals of " + t + " (" + (Arg.Trim().Length > 0 ? Arg.Trim().TrimEnd('%') : "25") + "% of their health; a shielded boss too)";
 				case "carry": return "the player picks up " + t + " and carries it (no jumping or ziplines; the use key or a hit drops it)";
@@ -519,7 +520,8 @@ namespace DynamicIslands.Editor
 			if (ObjectProps.GetFloat(props, BehaviourProps.Spin, 0f) != 0f || ObjectProps.GetFloat(props, BehaviourProps.Bob, 0f) != 0f || BehaviourProps.Moves(props))
 				go.AddComponent<IslandBehaviour>().Configure(props, index);
 			if (ObjectProps.Get(props, LaserBeam.Prop) == LaserBeam.Beam) go.AddComponent<LaserBeam>();
-			if (ObjectProps.Get(props, BehaviourProps.Use).Length > 0 && !ObjectProps.IsNote(objectName, props) && !ObjectProps.IsLoot(objectName, props) && !ContentCatalog.IsZone(objectName) && !ContentCatalog.IsCreature(objectName))
+			if (ObjectProps.Get(props, BehaviourProps.Use).Length > 0 && !ObjectProps.IsNote(objectName, props) && !ObjectProps.IsLoot(objectName, props) && !ContentCatalog.IsZone(objectName) && !ContentCatalog.IsCreature(objectName)
+				&& !CameraPath.IsPoint(objectName) && !Minimap.IsMarker(objectName)) // (PF4/PF5: unseen markers, nothing to look at)
 			{
 				UseInteract u = CustomNote.InteractHolder(go).AddComponent<UseInteract>();
 				u.Hint = ObjectProps.Get(props, BehaviourProps.Use);
@@ -1168,6 +1170,7 @@ namespace DynamicIslands.Editor
 					continue;
 				}
 				if (a.Verb == "camera") { CameraMoment.HostRun(e, index, a.Target, a.Arg); continue; }
+				if (a.Verb == "flythrough") { CameraPath.HostRun(e, a.Target, a.Arg); continue; }
 				if (a.Verb == "journal")
 				{
 					StoryBook.AddPage("act:" + StoryBook.PageIsland(e) + ":" + index + ":" + a.Target, a.Target, a.Arg.Replace("\\n", "\n"), IslandTitle(e));

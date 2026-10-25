@@ -47,6 +47,7 @@ namespace DynamicIslands.Editor
 			{ "carry", "pick up (carry)" }, { "collapse", "collapse" }, { "moveto", "move to marker" },
 			{ PlayerFeatures.DialogueVerb, "show dialogue" },
 			{ Lights.Verb, "switch light" },
+			{ "flythrough", "camera fly-through" },
 		};
 
 		/// <summary>What each action does (the action list's lines).</summary>
@@ -68,6 +69,7 @@ namespace DynamicIslands.Editor
 			{ "moveto", "Objects with a name travel to a marker object's place over some seconds, carrying players on them (a cart to a ledge; a creature spot - its animals follow to the next arena)" },
 			{ PlayerFeatures.DialogueVerb, "A dialogue for the player who set it off, said by the named object (empty = this one). \\n starts a new line, a line --- a new page, a line > an answer (its choice1.. event on this object)" },
 			{ Lights.Verb, "Switches puzzle lights on, off or over (empty = toggle): a light by its name (empty = this one) or group:G for every light of group G. Saved, for every player" },
+			{ "flythrough", "The camera of every player near a camera path flies once along its camera points (Zones & triggers), looking where they say; the players are held, Esc skips it" },
 		};
 
 		/// <summary>What each check asks (the check list's lines).</summary>
@@ -468,7 +470,7 @@ namespace DynamicIslands.Editor
 				a.Verb = verb;
 				if (a.Verb == "wait" && a.Seconds <= 0f) a.Arg = "5";
 				Rebuild();
-			}, 120, "What happens: show, hide, show/hide, open, close, open/close, say, give items, sound, teleport to, send signal, journal page, wait, unlock character, play sound/music, stop sound, camera moment, protective suit, hurt creatures, pick up (carry), collapse, move to marker", 28f, 12);
+			}, 120, "What happens: show, hide, show/hide, open, close, open/close, say, give items, sound, teleport to, send signal, journal page, wait, unlock character, play sound/music, stop sound, camera moment, protective suit, hurt creatures, pick up (carry), collapse, move to marker, camera fly-through", 28f, 12);
 			if (ObjAction.HasTarget(a.Verb))
 			{
 				Field(row, a.Verb == "camera" ? "marker (empty = itself)" : "name (empty = itself)", a.Target, a.Verb == "camera" || a.Verb.EndsWith("sound") ? 120 : 170,
@@ -489,6 +491,7 @@ namespace DynamicIslands.Editor
 					new DropList.Option("all", "every sound", "Every sound played on this island") }, a.Arg.Trim().ToLowerInvariant() == "all" ? "all" : "", v => { Keep(); a.Arg = v; Rebuild(); }, 110, "Which sounds stop", 28f, 12);
 			}
 			else if (a.Verb == "camera") CameraFields(row, a);
+			else if (a.Verb == "flythrough") FlyFields(row, a);
 			else if (ObjAction.HasArg(a.Verb))
 			{
 				string ph = a.Verb == "message" ? "What players read" : a.Verb == "give" ? "items (\u2026 to choose)" : a.Verb == "sound" ? "event:/... (\u2026 to choose)" : a.Verb == "journal" ? "What the page says" : a.Verb == "suit" ? "seconds (120)" : a.Verb == "hit" ? "% of their health (25)" : a.Verb == "collapse" ? "seconds (3)" : a.Verb == "moveto" ? "marker name, seconds (4)" : a.Verb == PlayerFeatures.DialogueVerb ? "What is said (\\n new line, --- new page, > answer)" : a.Verb == Lights.Verb ? "on, off or toggle" : "signal name (world plans wait for it)";
@@ -522,6 +525,22 @@ namespace DynamicIslands.Editor
 				s.Loop ? "loop" : "once", v => { Keep(); s.Loop = v == "loop"; save(); Rebuild(); }, 62, "Once or on a loop", 28f, 12);
 			DropList.Make(row, "Drop_Where", new List<DropList.Option> { new DropList.Option("near", "near it", "Heard near the object"), new DropList.Option("island", "island", "Heard the same everywhere on the island (music)") },
 				s.Island ? "island" : "near", v => { Keep(); s.Island = v == "island"; save(); Rebuild(); }, 72, "Near the object, or for everyone on the island", 28f, 12);
+		}
+
+		/// <summary>flythrough: the camera path's name (… picks a placed one) and the range around its points.</summary>
+		void FlyFields(Transform row, ObjAction a)
+		{
+			Field(row, "path name (" + CameraPath.DefaultPath + ")", a.Target, 120, "The path: the camera points with this path name, flown in their order", v => a.Target = v.Trim());
+			UIKit.Button(row, "…", () => { Keep(); ChoiceWindow.Open("Camera paths", CameraPath.PathsInEditor().Select(p => new ChoiceWindow.Choice(p, p, CameraPath.EditorPoints(p).Count + " camera points")), v => { a.Target = v; Rebuild(); }); }, "Choose one of the camera paths placed on this island", 28, 28f, 12);
+			InputField r = Field(row, CameraPath.DefaultRange.ToString("0", CultureInfo.InvariantCulture), a.Arg, 44, "Players within this many metres of one of its points see it", v =>
+			{
+				float f;
+				a.Arg = CameraPath.ArgOf(float.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out f) ? Mathf.Clamp(f, 5f, 5000f).ToString("0", CultureInfo.InvariantCulture) : "", CameraPath.OnceOf(a.Arg));
+			});
+			r.contentType = InputField.ContentType.DecimalNumber;
+			UIKit.Label(row, "m", 11, UIKit.TextMuted);
+			bool once = CameraPath.OnceOf(a.Arg);
+			UIKit.Button(row, once ? "once" : "every time", () => { Keep(); a.Arg = CameraPath.ArgOf(a.Arg, !CameraPath.OnceOf(a.Arg)); Rebuild(); }, "Once: only the first time in a world (an intro; saved with the world, the host decides). Every time: on each trigger", 70, 28f, 12).name = "Button_FlyOnce";
 		}
 
 		/// <summary>camera: the object to look at, the seconds and the range around the marker.</summary>

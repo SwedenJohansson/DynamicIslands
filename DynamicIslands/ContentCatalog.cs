@@ -342,6 +342,8 @@ namespace DynamicIslands.Editor
 			Survivors.Register(); // (a survivor in a cage, RF3)
 			PlaceableCatalog.AddCustom(Islanders.ObjectName, Islanders.BuildMarker(), NotesCategory, "Islander (talks)");
 			PlaceableCatalog.AddCustom(Collectibles.ObjectName, Collectibles.BuildMarker(), LootCategory, "Collectible (set piece)");
+			CameraPath.Register(); // (camera points of fly-through paths, PF4)
+			Minimap.Register(); // (map markers of the island map, PF5)
 			foreach (CreatureKind k in Creatures)
 				PlaceableCatalog.AddCustom(k.Name, BuildPrototype(k), k.Category, k.Label);
 			Debug.Log("[CUSTOM ISLANDS] Custom content: " + Creatures.Length + " creatures (" + models.Count + " with Raft's models), " + notes + " note objects, " + loot + " loot containers");

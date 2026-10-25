@@ -1075,6 +1075,7 @@ namespace DynamicIslands.Editor
 		public static void Open()
 		{
 			if (instance == null) Build();
+			PlayerNotebookWindow.Close();
 			instance.Show();
 		}
 
@@ -1102,6 +1103,8 @@ namespace DynamicIslands.Editor
 			fillImage.raycastTarget = false;
 			instance.questFill = fill;
 			instance.countText = UIKit.Label(head, "", 13, UIKit.TextMuted, TextAnchor.MiddleRight);
+			// (PF1: the player's own notebook, beside the journal)
+			UIKit.Button(head, "My notebook", PlayerNotebookWindow.Open, "Your own notebook: pages you write yourself, kept on this computer with this world (" + ModKeys.Name(ModKeys.NotebookKey.Key) + ")", 150, 30, 14);
 			UIKit.Separator(panel);
 
 			RectTransform body = UIKit.Row(panel, 490f, 14f, "Body");
@@ -1174,6 +1177,9 @@ namespace DynamicIslands.Editor
 			instance.readTitle = UIKit.Label(titleRow, "", 24, Ink, TextAnchor.MiddleLeft, FontStyle.Normal, "Title");
 			instance.takeOut = UIKit.Button(titleRow, "Take out", () => instance.TakeOutShown(), "Take one out of the journal as Raft's own item, into your inventory (the crew has one less)", 230, 34, 14);
 			instance.takeOut.gameObject.SetActive(false);
+			// (PF1: a page's text into the player's own notebook)
+			instance.copyPage = UIKit.Button(titleRow, "Copy to my notebook", () => instance.CopyShown(), "Copies this page into your own notebook as a new page", 200, 34, 13);
+			instance.copyPage.gameObject.SetActive(false);
 			ScrollRect s3;
 			RectTransform textContent = UIKit.ScrollList(sheet, out s3, 0f);
 			UIKit.Size(s3.gameObject, -1, -1).flexibleHeight = 1f;
@@ -1268,7 +1274,7 @@ namespace DynamicIslands.Editor
 			{
 				if (pages.Count > 0) ShowPage(pages.Last());
 				else if (items.Count > 0) ShowItem(items[0]);
-				else { shownKey = null; readIcon.enabled = false; readTitle.text = "Journal"; readText.text = "Nothing here yet. Read notes on the islands and look for story items: they are kept here for the whole crew."; }
+				else { copyPage.gameObject.SetActive(false); shownKey = null; readIcon.enabled = false; readTitle.text = "Journal"; readText.text = "Nothing here yet. Read notes on the islands and look for story items: they are kept here for the whole crew."; }
 			}
 			else if (shownKey.StartsWith("item:")) ShowItem(items.First(h => "item:" + h.Def.Id == shownKey)); // (its count may have changed)
 			RefreshTakeOut();
@@ -1359,8 +1365,19 @@ namespace DynamicIslands.Editor
 			return q.Title;
 		}
 
+		/// <summary>PF1: the journal page's "Copy to my notebook" button and the page it copies.</summary>
+		Button copyPage;
+		StoryBook.Page copyFrom;
+
+		void CopyShown() { if (copyFrom != null) PlayerNotebook.CopyIn(copyFrom.Title, copyFrom.Text); }
+
+		/// <summary>Tests: clicks "Copy to my notebook" on the shown page; false when it isn't shown.</summary>
+		internal static bool ClickCopyPage() { if (!IsOpen || !instance.copyPage.gameObject.activeSelf) return false; instance.copyPage.onClick.Invoke(); return true; }
+
 		void ShowPage(StoryBook.Page p)
 		{
+			copyFrom = p;
+			copyPage.gameObject.SetActive(p.Text.Length > 0);
 			shownKey = p.Key;
 			readIcon.enabled = false;
 			readTitle.text = p.Title.Length > 0 ? p.Title : "A page";
@@ -1372,7 +1389,7 @@ namespace DynamicIslands.Editor
 
 		void ShowItem(StoryBook.Held h)
 		{
-			shownKey = "item:" + h.Def.Id;
+			copyPage.gameObject.SetActive(false); shownKey = "item:" + h.Def.Id;
 			readIcon.sprite = StoryItems.IconSprite(h.Def.Icon);
 			readIcon.enabled = readIcon.sprite != null;
 			readTitle.text = h.Def.ShownName + (h.Count > 1 ? "  \u00D7" + h.Count : "");
@@ -1467,7 +1484,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The world's quests on the paper: done and still to do, by kind.</summary>
 		void ShowQuests()
 		{
-			shownKey = QuestsKey;
+			copyPage.gameObject.SetActive(false); shownKey = QuestsKey;
 			readIcon.enabled = false;
 			RefreshTakeOut();
 			List<QuestCount.Quest> quests = QuestCount.All();
