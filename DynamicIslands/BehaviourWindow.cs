@@ -77,6 +77,7 @@ namespace DynamicIslands.Editor
 			{ "wears", "The player wears an item (a headlight, flippers, an oxygen tank...). Name* = any kind of it" },
 			{ "holds", "The player holds an item in their hand (binoculars, a hook, an axe...). Name* = any kind of it" },
 			{ PlayerFeatures.TalkedCheck, "Someone of the crew talked to an islander (by its name; empty = this one)" },
+			{ Collectibles.CheckKind, "A number of a collectible set's pieces on this island were found (empty = all)" },
 		};
 
 		public static void Create(Transform canvas)
@@ -371,7 +372,7 @@ namespace DynamicIslands.Editor
 
 		static readonly Dictionary<string, string> CheckLabels =new Dictionary<string, string>
 		{
-			{ "has", "has item" }, { "take", "uses up item" }, { "state", "object is" }, { "signal", "signal sent" }, { "quest", "quest step" }, { "wears", "wears item" }, { "holds", "holds item" }, { PlayerFeatures.TalkedCheck, "talked to" },
+			{ "has", "has item" }, { "take", "uses up item" }, { "state", "object is" }, { "signal", "signal sent" }, { "quest", "quest step" }, { "wears", "wears item" }, { "holds", "holds item" }, { PlayerFeatures.TalkedCheck, "talked to" }, { Collectibles.CheckKind, "set found" },
 		};
 
 		/// <summary>"Only if ..." (every check must pass) and "Otherwise say ...".</summary>
@@ -438,7 +439,12 @@ namespace DynamicIslands.Editor
 				UIKit.Button(row, "\u2026", () => { Keep(); ItemPickerWindow.PickOne(v => { c.Target = v; Rebuild(); }, false); }, "Choose an item", 28, 28f, 12);
 			}
 			else if (c.Kind == "signal") Field(row, "signal name", c.Target, -1, "A signal sent on this island (a \"send signal\" action)", v => c.Target = v.Trim());
-			else if (PlayerFeatures.CheckPlaceholder(c.Kind) != null) Field(row, PlayerFeatures.CheckPlaceholder(c.Kind), c.Target, -1, PlayerFeatures.CheckHint(c.Kind), v => c.Target = v.Trim());
+			else if (PlayerFeatures.CheckPlaceholder(c.Kind) != null)
+			{
+				string second = PlayerFeatures.CheckArgPlaceholder(c.Kind);
+				Field(row, PlayerFeatures.CheckPlaceholder(c.Kind), c.Target, second != null ? 150 : -1, PlayerFeatures.CheckHint(c.Kind), v => c.Target = v.Trim());
+				if (second != null) Field(row, second, c.Arg, 90, PlayerFeatures.CheckArgHint(c.Kind), v => c.Arg = v.Trim());
+			}
 			else Field(row, "steps done (empty = the whole quest)", c.Target, -1, "How many steps of the island's quest must be done", v => c.Target = v.Trim());
 			Text d = UIKit.Label(row, c.Describe(), 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic);
 			UIKit.Size(d.gameObject, 250);

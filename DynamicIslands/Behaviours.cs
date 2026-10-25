@@ -52,7 +52,7 @@ namespace DynamicIslands.Editor
 		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character", "playsound", "stopsound", "camera", "suit", "hit", "carry", "collapse", "moveto", PlayerFeatures.DialogueVerb };
 		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal", "playsound", "stopsound", "camera", "hit", "collapse", "moveto" };
 		public const string CheckPrefix = "if.", ElsePrefix = "else.";
-		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest", "wears", "holds", PlayerFeatures.TalkedCheck };
+		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest", "wears", "holds", PlayerFeatures.TalkedCheck, Collectibles.CheckKind };
 		public static readonly string[] States = { "open", "closed", "shown", "hidden" };
 		public static readonly string[] CollisionModes = { "", "none", "box", "solid" };
 
@@ -417,12 +417,15 @@ namespace DynamicIslands.Editor
 		void Use()
 		{
 			IslandWorldState.Entry e = ContentState.EntryOf(transform);
-			if (Ref != null && e != null && QuestItemPickups.IsModel(Ref.ObjectName) && Behaviours.WouldAllow(e, Ref.Index, "use"))
+			// (a story item, a piece of a collectible set: one player's)
+			int claim = Ref == null ? -1 : QuestItemPickups.IsModel(Ref.ObjectName) ? QuestItemPickups.KeyBase + Ref.Index : Collectibles.ClaimKey(Ref);
+			if (claim >= 0 && e != null && Behaviours.WouldAllow(e, Ref.Index, "use"))
 			{
-				int key = QuestItemPickups.KeyBase + Ref.Index;
+				int key = claim;
 				if (ContentState.IsUsed(e, key)) { Beaten(); return; }
 				if (!Claims.May(e, key, yes => { if (this == null) return; if (yes) Use(); else Beaten(); })) { if (Raft_Network.IsHost) Beaten(); return; }
 				ContentState.MarkUsed(transform, key);
+				if (key == Collectibles.ClaimKey(Ref)) Collectibles.PickedUp(e, Ref);
 			}
 			Behaviours.Fire(e, Ref != null ? Ref.Index : -1, "use", true);
 		}
@@ -506,6 +509,7 @@ namespace DynamicIslands.Editor
 			if (go == null || props == null || props.Count == 0) return;
 			// (a lure with an item, a piece to carry: their use lines, as if the builder had written them - MechFeatures)
 			props = MechFeatures.Expand(objectName, props);
+			props = PlayerFeatures.Expand(objectName, props); // (a set piece: picked up when used)
 			IslandObjectRef r = go.AddComponent<IslandObjectRef>();
 			r.Index = index;
 			r.ObjectName = objectName;

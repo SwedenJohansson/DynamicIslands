@@ -21,10 +21,10 @@ namespace DynamicIslands.Editor
 	public class IslandQuest
 	{
 		public const string KeyTitle = "quest.title", KeyIntro = "quest.intro", KeySteps = "quest.steps", KeyReward = "quest.reward", KeyDone = "quest.done";
-		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch", "collect", "pages", "blueprint", Islanders.QuestType };
+		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch", "collect", "pages", "blueprint", Islanders.QuestType, Collectibles.QuestType };
 
 		/// <summary>Steps the crew's story book counts (the host checks them), not events.</summary>
-		public static bool Counted(string type) { return type == "collect" || type == "pages"; }
+		public static bool Counted(string type) { return type == "collect" || type == "pages" || PlayerFeatures.Counted(type); }
 
 		public class Step
 		{
@@ -562,7 +562,7 @@ namespace DynamicIslands.Editor
 				string island = StoryBook.PageIsland(e);
 				return StoryBook.Pages.Count(p => p.Key.StartsWith("note:" + island + ":") || p.Key.StartsWith("act:" + island + ":"));
 			}
-			return 0;
+			return PlayerFeatures.Found(e, s);
 		}
 
 		/// <summary>Host: counted steps (story items, pages) move on when the crew has enough; everyone is told.</summary>

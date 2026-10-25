@@ -178,5 +178,103 @@ namespace DynamicIslands
 			}
 			if (ok) Log("PASS: islanders in a world"); else Fail("islanders in a world");
 		}
+
+		[ConsoleCommand(name: "CICollectParse", docs: "Dev, anywhere: collectible sets read right (a piece's defaults and use lines, the set check, the Find set step, the set event, plan check, keys, the editors' lists)")]
+		public static void CollectParseCommand()
+		{
+			bool ok = true;
+			Dictionary<string, string> d = ObjectProps.Defaults(Collectibles.ObjectName);
+			Check(ref ok, Collectibles.SetOf(d) == "Relics" && ObjectProps.Get(d, "on.use") == "hide|" && ObjectProps.Get(d, BehaviourProps.Use).Length > 0, "a placed collectible is a piece of Relics, picked up when used");
+			IDictionary<string, string> x = Collectibles.Expand("Log", P(Collectibles.SetProp, "Shells", "on.use", "message||Got it"));
+			Check(ref ok, ObjectProps.Get(x, "on.use") == "hide|\nmessage||Got it" && ObjectProps.Get(x, BehaviourProps.Use) == "Pick up", "any object with a set: hidden when used, its own lines kept (" + ObjectProps.Get(x, "on.use").Replace("\n", " / ") + ")");
+			IDictionary<string, string> own = P(Collectibles.SetProp, "Shells", "on.use", "hide|", BehaviourProps.Use, "Take the shell");
+			Check(ref ok, ReferenceEquals(Collectibles.Expand("Log", own), own), "a piece with its own hide and label is kept as it is");
+			IDictionary<string, string> none = P("on.use", "message||x");
+			Check(ref ok, ReferenceEquals(Collectibles.Expand("Log", none), none) && !Collectibles.IsPiece(none), "an object without a set is no piece");
+			Check(ref ok, Collectibles.SignalOf(" Relics ") == "set:relics", "the set's signal (set:relics)");
+			ObjCheck c = ObjCheck.Parse("set|Relics|3");
+			Check(ref ok, c != null && c.Kind == "set" && c.Target == "Relics" && c.Arg == "3" && c.Describe().Contains("Relics"), "set|Relics|3 parses (" + (c != null ? c.Describe() : "null") + ")");
+			Check(ref ok, PlayerFeatures.CheckArgPlaceholder("set") != null && PlayerFeatures.CheckPlaceholder("set") != null, "the behaviour window shows the set's name and how many");
+			List<string> evs = BehaviourProps.EventsFor("Log", P(Collectibles.SetProp, "Relics")).Select(v => v.Key).ToList();
+			Check(ref ok, evs.Contains("set") && evs.Contains("use") && PlayerFeatures.IsEvent("set"), "a piece has the set event (" + string.Join(", ", evs.ToArray()) + ")");
+			var q = new IslandQuest.Step { Type = "set", Target = "Relics", Count = 4 };
+			Check(ref ok, IslandQuest.Types.Contains("set") && IslandQuest.Counted("set") && q.Describe() == "Find 4 of the Relics", "the Find set step, counted (" + q.Describe() + ")");
+			var facts = new PlayerFeatures.PlanFacts();
+			for (int i = 0; i < 3; i++) PlayerFeatures.AddFacts(facts, Collectibles.ObjectName, P(Collectibles.SetProp, "Relics"));
+			Check(ref ok, PlayerFeatures.StepProblem(facts, "set", "relics", 3) == null && PlayerFeatures.StepProblem(facts, "set", "Relics", 4) != null
+				&& PlayerFeatures.StepProblem(facts, "set", "Coins", 1) != null && PlayerFeatures.StepProblem(facts, "set", "", 1) != null, "the plan check: an unknown set, too few pieces");
+			Check(ref ok, ContentCatalog.Hint(Collectibles.ObjectName).Contains("set"), "the catalog hint");
+			Check(ref ok, Collectibles.KeyBase > Islanders.TalkedBase + 0xFFFF && Collectibles.KeyBase + 0xFFFF < Behaviours.PendingBase, "the piece keys meet no other keys");
+			CheckPlayerTables(ref ok);
+			if (ok) Log("PASS: collectible sets' settings"); else Fail("collectible sets' settings");
+		}
+
+		[ConsoleCommand(name: "CICollectRun", docs: "Dev, in a world (host): spawns 'ciplayer' with three Relics: picks them up one by one (the HUD count, hidden, kept), the set check and the Find set step, the whole set's signal and set event")]
+		public static void CollectRunCommand() { StartTest(CollectRunRoutine()); }
+
+		static IEnumerator CollectRunRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			var piece = new List<int>();
+			int gate = -1;
+			IslandFile f = PlayerTestIsland((file, add) =>
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					Dictionary<string, string> p = ObjectProps.Defaults(Collectibles.ObjectName);
+					if (i == 0) p["on.set"] = "signal||relics-reward\nmessage||All relics!";
+					piece.Add(add(Collectibles.ObjectName, -3f + i * 3f, 4f, p));
+				}
+				gate = add("Log", 0f, 7f, P(BehaviourProps.Use, "Open", "if.use", "set|Relics|2", "on.use", "signal||relic-gate"));
+				file.Props[IslandQuest.KeyTitle] = "CI relics";
+				file.Props[IslandQuest.KeySteps] = "set|Relics|3|\nreach|nowhere|1|";
+			});
+			IslandWorldState.Entry e = null;
+			yield return SpawnPlayerIsland(f, v => e = v);
+			if (e == null || e.Root == null) { Fail("the island did not spawn"); RemovePlayerIsland(e); yield break; }
+			Func<int, IslandObjectRef> obj = i => e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(r => r.Index == i);
+			try
+			{
+				yield return new WaitForSeconds(1f);
+				Check(ref ok, Collectibles.Total(e, "Relics") == 3 && Collectibles.Found(e, "relics") == 0, "three pieces, none found (" + Collectibles.Total(e, "Relics") + ")");
+				IslandObjectRef first = obj(piece[0]);
+				Check(ref ok, first != null && first.GetComponentsInChildren<TextMesh>(false).Length == 0, "the editor name tag is gone in the world");
+				if (first != null) { PutPlayerNear(first.transform, 2f); Screenshot(new[] { "collectible" }); }
+				yield return new WaitForSeconds(0.5f);
+				for (int i = 0; i < 3; i++)
+				{
+					IslandObjectRef r = obj(piece[i]);
+					UseInteract u = r != null ? r.GetComponentInChildren<UseInteract>(true) : null;
+					Check(ref ok, u != null, "piece " + (i + 1) + " can be picked up");
+					if (u == null) continue;
+					Traverse.Create(u).Method("Use").GetValue();
+					yield return new WaitForSeconds(0.6f);
+					Check(ref ok, Collectibles.LastShown != null && Collectibles.LastShown.StartsWith("Relics: " + (i + 1) + " of 3"), "the HUD counts (" + Collectibles.LastShown + ")");
+					Check(ref ok, ContentState.IsUsed(e, Collectibles.KeyBase + piece[i]) && !r.gameObject.activeSelf, "piece " + (i + 1) + " is gone and kept found");
+					if (i == 0)
+					{
+						Behaviours.Fire(e, gate, "use", true);
+						yield return new WaitForSeconds(0.3f);
+						Check(ref ok, !Behaviours.HasSignal(e, "relic-gate"), "set|Relics|2 fails with one found");
+						Check(ref ok, !Behaviours.HasSignal(e, Collectibles.SignalOf("Relics")), "no set signal yet");
+					}
+					if (i == 1)
+					{
+						Behaviours.Fire(e, gate, "use", true);
+						yield return new WaitForSeconds(0.3f);
+						Check(ref ok, Behaviours.HasSignal(e, "relic-gate"), "set|Relics|2 passes with two found");
+						Check(ref ok, QuestTracker.StepOf(e) == 0, "the Find 3 step waits");
+					}
+				}
+				yield return new WaitForSeconds(1.2f);
+				Check(ref ok, Behaviours.HasSignal(e, Collectibles.SignalOf("Relics")), "the whole set sent set:relics");
+				Check(ref ok, Behaviours.HasSignal(e, "relics-reward"), "the whole set ran the pieces' set event (its reward)");
+				Check(ref ok, QuestTracker.StepOf(e) >= 1, "the Find set step is done (step " + QuestTracker.StepOf(e) + ")");
+			}
+			finally { RemovePlayerIsland(e); }
+			if (ok) Log("PASS: collectible sets in a world"); else Fail("collectible sets in a world");
+		}
 	}
 }

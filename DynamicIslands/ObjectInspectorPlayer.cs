@@ -12,6 +12,7 @@ namespace DynamicIslands.Editor
 		static void PlayerGroup(EditorGameObject target)
 		{
 			if (Islanders.Is(target.GameObjectName)) IslanderGroup(target);
+			if (Collectibles.Is(target.GameObjectName) || Collectibles.IsPiece(target.Props)) CollectibleGroup(target);
 		}
 
 		static void IslanderGroup(EditorGameObject target)
@@ -52,6 +53,20 @@ namespace DynamicIslands.Editor
 			amountFields.Add(text);
 			int pages = Islanders.Parse(text.text).Count, answers = Islanders.Choices(text.text).Count;
 			UIKit.Size(UIKit.Label(g, pages + " page" + (pages == 1 ? "" : "s") + (answers > 0 ? ", " + answers + " answer" + (answers == 1 ? "" : "s") : "") + ". Events: Behaviour > \"talk\", \"choice1\"..", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic).gameObject, -1, 16);
+		}
+
+		/// <summary>A piece of a collectible set (PF3): its set's name and how many pieces the island has.</summary>
+		static void CollectibleGroup(EditorGameObject target)
+		{
+			RectTransform g = UIKit.Group(root, "Collectible set");
+			string set = Collectibles.SetOf(target.Props);
+			InputField f = SurvivorField(g, "Set", set, 26f, "The set this piece belongs to (any object with a set is a piece; empty = none). Players pick pieces up; the HUD counts them; the whole set runs every piece's \"set\" event");
+			f.characterLimit = 32;
+			f.onEndEdit.AddListener(v => { Set(target, Collectibles.SetProp, v.Trim().Length > 0 ? v.Trim() : null); Refresh(); });
+			amountFields.Add(f);
+			GameObject placed = GameObject.Find("PlacedObjects");
+			int pieces = placed == null || set.Length == 0 ? 0 : placed.GetComponentsInChildren<EditorGameObject>().Count(o => string.Equals(Collectibles.SetOf(o.Props), set, System.StringComparison.OrdinalIgnoreCase));
+			UIKit.Size(UIKit.Label(g, set.Length == 0 ? "No set: not a piece." : pieces + " piece" + (pieces == 1 ? "" : "s") + " of \"" + set + "\" on this island. Reward: Behaviour > \"set\"; quest step \"Find set\"; check \"set found\"", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic).gameObject, -1, 16);
 		}
 	}
 }

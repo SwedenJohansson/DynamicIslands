@@ -6,7 +6,8 @@ using UnityEngine;
 namespace DynamicIslands.Editor
 {
 	/// <summary>
-	/// The hub of the story features players meet on islands (2026-10-25): islanders to talk to (PF2, Islanders.cs).
+	/// The hub of the story features players meet on islands (2026-10-25): islanders to talk to (PF2, Islanders.cs), hidden
+	/// collectible sets (PF3, Collectibles.cs).
 	/// Behaviours, quests, the editors and the plan checker call in here, so each feature's own file keeps the rest.
 	/// </summary>
 	public static class PlayerFeatures
@@ -22,13 +23,27 @@ namespace DynamicIslands.Editor
 		public static void Defaults(string name, Dictionary<string, string> props)
 		{
 			Islanders.Defaults(name, props);
+			Collectibles.Defaults(name, props);
 		}
 
 		/// <summary>The catalog's hint for one of these objects, or null.</summary>
 		public static string Hint(string name)
 		{
 			if (Islanders.Is(name)) return Islanders.Hint;
+			if (Collectibles.Is(name)) return Collectibles.Hint;
 			return null;
+		}
+
+		/// <summary>World: an object's lines as if the builder had written them (a set piece is picked up when used).</summary>
+		public static IDictionary<string, string> Expand(string objectName, IDictionary<string, string> props)
+		{
+			return Collectibles.Expand(objectName, props);
+		}
+
+		/// <summary>Host, from the mod's update: sets found (Collectibles).</summary>
+		internal static void Tick()
+		{
+			Collectibles.Tick();
 		}
 
 		/// <summary>The events one of these objects has (Behaviours.EventsFor).</summary>
@@ -43,12 +58,14 @@ namespace DynamicIslands.Editor
 				for (int i = 0; i < Islanders.MaxChoices; i++)
 					list.Add(new KeyValuePair<string, string>(Islanders.ChoicePrefix + (i + 1), "a player picked answer " + (i + 1) + (i < answers.Count ? " (\"" + answers[i] + "\")" : " (its dialogue has no answer " + (i + 1) + " yet: a line \"> ...\")")));
 			}
+			if (Collectibles.Is(objectName) || Collectibles.IsPiece(p))
+				list.Add(new KeyValuePair<string, string>(Collectibles.SetEvent, "the last piece of its set on the island was found (runs on every piece of the set, once: the set's reward)"));
 		}
 
 		/// <summary>Whether an event name belongs to these features (for the behaviour window's lists).</summary>
 		public static bool IsEvent(string ev)
 		{
-			return ev == Islanders.TalkEvent || (ev != null && ev.StartsWith(Islanders.ChoicePrefix) && ev.Length == Islanders.ChoicePrefix.Length + 1);
+			return ev == Islanders.TalkEvent || ev == Collectibles.SetEvent || (ev != null && ev.StartsWith(Islanders.ChoicePrefix) && ev.Length == Islanders.ChoicePrefix.Length + 1);
 		}
 
 		/// <summary>World: the parts of these features an object gets (Behaviours.Attach).</summary>
@@ -57,6 +74,7 @@ namespace DynamicIslands.Editor
 			try
 			{
 				if (Islanders.Is(r.ObjectName)) Islanders.Attach(go, r);
+				if (Collectibles.IsPiece(r.Props)) Collectibles.Attach(go, r);
 			}
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] '" + r.ObjectName + "': " + ex.Message); }
 		}
@@ -77,6 +95,7 @@ namespace DynamicIslands.Editor
 			switch (c.Kind)
 			{
 				case TalkedCheck: return "someone talked to " + (c.Target.Length > 0 ? "'" + c.Target + "'" : "this islander");
+				case Collectibles.CheckKind: return (c.Arg.Length > 0 ? c.Arg : "all") + " of the set '" + c.Target + "' found";
 			}
 			return null;
 		}
@@ -88,6 +107,7 @@ namespace DynamicIslands.Editor
 			switch (c.Kind)
 			{
 				case TalkedCheck: result = Islanders.TalkedTo(e, index, c.Target); return true;
+				case Collectibles.CheckKind: result = Collectibles.Holds(e, c.Target, c.Arg); return true;
 			}
 			return false;
 		}
@@ -108,6 +128,7 @@ namespace DynamicIslands.Editor
 			switch (type)
 			{
 				case Islanders.QuestType: return "Talk to " + (target.Length > 0 ? target : "an islander");
+				case Collectibles.QuestType: return "Find " + count + " of the " + (target.Length > 0 ? target : "set");
 			}
 			return null;
 		}
@@ -120,6 +141,9 @@ namespace DynamicIslands.Editor
 				case Islanders.QuestType:
 					return all.Where(g => Islanders.Is(g.GameObjectName)).Select(g => Islanders.NameOf(g.Props)).Distinct()
 						.Select(n => new DropList.Option(n, n, "An islander on this island")).ToList();
+				case Collectibles.QuestType:
+					return all.Select(g => Collectibles.SetOf(g.Props)).Where(n => n.Length > 0).GroupBy(n => n, StringComparer.OrdinalIgnoreCase)
+						.Select(n => new DropList.Option(n.Key, n.Key, n.Count() + " piece(s) on this island")).ToList();
 			}
 			return null;
 		}
@@ -130,6 +154,7 @@ namespace DynamicIslands.Editor
 			switch (kind)
 			{
 				case TalkedCheck: return "islander name (empty = this one)";
+				case Collectibles.CheckKind: return "set name";
 			}
 			return null;
 		}
@@ -139,20 +164,53 @@ namespace DynamicIslands.Editor
 			switch (kind)
 			{
 				case TalkedCheck: return "The name of an islander (empty = this one): true once anyone of the crew talked to it";
+				case Collectibles.CheckKind: return "A collectible set's name (the pieces' Set): true once that many of its pieces on this island were found";
 			}
 			return "";
+		}
+
+		/// <summary>The behaviour window's second field of a check (its Arg), or null when it has none.</summary>
+		internal static string CheckArgPlaceholder(string kind)
+		{
+			switch (kind)
+			{
+				case Collectibles.CheckKind: return "how many (empty = all)";
+			}
+			return null;
+		}
+
+		internal static string CheckArgHint(string kind)
+		{
+			switch (kind)
+			{
+				case Collectibles.CheckKind: return "How many pieces must be found (empty = every piece of the set on this island)";
+			}
+			return "";
+		}
+
+		/// <summary>Quest steps the host counts (IslandQuest.Counted) and how far they are (QuestTracker.Found).</summary>
+		public static bool Counted(string type) { return type == Collectibles.QuestType; }
+
+		public static int Found(IslandWorldState.Entry e, IslandQuest.Step s)
+		{
+			if (s.Type == Collectibles.QuestType) return Collectibles.Found(e, s.Target);
+			return 0;
 		}
 
 		/// <summary>Facts a plan check knows of these features: islanders' names...</summary>
 		public class PlanFacts
 		{
 			public readonly HashSet<string> Islanders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			/// <summary>Collectible sets: name, pieces.</summary>
+			public readonly Dictionary<string, int> Sets = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 		}
 
 		/// <summary>Collects one object's facts (PlanChecker.FromFile).</summary>
 		public static void AddFacts(PlanFacts f, string objectName, IDictionary<string, string> p)
 		{
 			if (Islanders.Is(objectName)) f.Islanders.Add(Islanders.NameOf(p));
+			string set = Collectibles.SetOf(p);
+			if (set.Length > 0) { int n; f.Sets.TryGetValue(set, out n); f.Sets[set] = n + 1; }
 		}
 
 		/// <summary>What is wrong with a quest step of these features (null = fine; plan check, quest editor).</summary>
@@ -163,6 +221,12 @@ namespace DynamicIslands.Editor
 				case Islanders.QuestType:
 					if (f.Islanders.Count == 0) return "there is no islander (Story_Islander) to talk to";
 					if (target.Length > 0 && !f.Islanders.Contains(target)) return "no islander is called '" + target + "' (" + string.Join(", ", f.Islanders.ToArray()) + ")";
+					break;
+				case Collectibles.QuestType:
+					int pieces;
+					if (target.Length == 0) return "it names no set";
+					if (!f.Sets.TryGetValue(target, out pieces)) return "no object is a piece of the set '" + target + "'" + (f.Sets.Count > 0 ? " (" + string.Join(", ", f.Sets.Keys.ToArray()) + ")" : " (Collectible (set piece), Loot & chests)");
+					if (count > pieces) return "it wants " + count + " of the set '" + target + "', the island has " + pieces;
 					break;
 			}
 			return null;

@@ -338,6 +338,7 @@ namespace DynamicIslands.Editor
 			PlaceableCatalog.AddCustom(BuriedTreasure, BuildTreasureMarker(), LootCategory, "Buried treasure (metal detector)");
 			Survivors.Register(); // (a survivor in a cage, RF3)
 			PlaceableCatalog.AddCustom(Islanders.ObjectName, Islanders.BuildMarker(), NotesCategory, "Islander (talks)");
+			PlaceableCatalog.AddCustom(Collectibles.ObjectName, Collectibles.BuildMarker(), LootCategory, "Collectible (set piece)");
 			foreach (CreatureKind k in Creatures)
 				PlaceableCatalog.AddCustom(k.Name, BuildPrototype(k), k.Category, k.Label);
 			Debug.Log("[CUSTOM ISLANDS] Custom content: " + Creatures.Length + " creatures (" + models.Count + " with Raft's models), " + notes + " note objects, " + loot + " loot containers");

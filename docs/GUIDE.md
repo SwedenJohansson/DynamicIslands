@@ -332,6 +332,8 @@ The builder of an island can give it much more than land (see [section 5](#5-mak
   survivor thanks you in a speech bubble, and from then on stands on your raft.
 - **Islanders:** one of Raft's characters standing, sitting, fishing, sleeping or leaning on an island. Press **E** to
   talk: a dialogue of a few pages, maybe with answers to pick. What you answer can open doors or start a quest.
+- **Collectible sets:** hidden pieces of a set (relics, shells...) lie about an island. Press **E** to pick one up:
+  the screen counts "Relics: 2 of 4" for the whole crew, and finding the whole set brings its reward.
 - **Locked doors:** Raft's card reader doors and other key doors open only with their card or key (a story item): the
   reader beeps it through and the door opens for everyone. Without it the door stays shut and says so.
 - **Buried treasure:** nothing shows above the ground. Raft's **metal detector** beeps as you come near, and three
@@ -1586,7 +1588,7 @@ name on the Receiver.*
 
 Steps: **go to** a trigger zone, **read** a note, **open** a chest (one of the mod's chests - Raft's abandoned raft crate doesn't count), **defeat** or **catch** a number of animals,
 **collect** a number of a story item, **find** journal pages, find a **Blueprint** of Raft's, **talk to** an islander
-(6.3; by its name, the **▾** lists the island's islanders). Each step's kind is a **▼ list** (each kind says what it
+(6.3; by its name, the **▾** lists the island's islanders), **find** a number of a collectible **set** (6.3). Each step's kind is a **▼ list** (each kind says what it
 asks). Steps point at things on the island by name: the small **▾** beside the name lists the names this island has
 for that kind - its trigger zones, note titles, chest titles or creatures - so you can pick one instead of typing it
 (place the zones, notes, chests and creatures first). A **collect** step picks its story item with **…**. **When the quest is done, bring a new island** (main quest only) chooses from a
@@ -1691,6 +1693,9 @@ Select any object → **Behaviour & events...**. No code needed:
   **choice3** (an answer picked); the check **talked to** (`talked|Old Finn`; empty = this islander) passes once
   anyone of the crew talked to it; the action **show dialogue** (`dialogue|Old Finn|text`) opens a dialogue for the
   player who set it off.
+- **Collectible sets** (2026-10-25, 6.3): a piece of a set has the event **set** (the island's last piece of its set
+  was found: runs on every piece, once - the set's reward); the check **set found** (`set|Relics|3`; empty number =
+  all) passes once that many pieces of the set on this island were found.
 - **Sounds and camera moments** (actions in the same ▼ list, shared by every player): **play sound/music** plays one of
   Raft's sound events or music cues (pick it with **…**, a list of every one Raft has), with a volume, **once** or on a
   **loop**, **near** the object (or the objects named) or for **everyone on the island**. Every player near the island
@@ -1764,6 +1769,18 @@ islander with that name, and a quest's **Talk to** step (6.1) is done when the d
 show a dialogue: the action **show dialogue** (`dialogue|Old Finn|Hello!\n---\nBye`, `\n` for a new line in the
 action's one line) opens it for the player who set it off, said by the named object (its answers run that object's
 choice events). Check warns when a **Talk to** step names no islander of the island.
+
+**Collectible sets** (2026-10-25). **Loot & chests** has **Collectible (set piece)**: a gold coin with a gem, one
+piece of a set. Its **Collectible set** group in the inspector has the **Set** name (default Relics; every object
+with the same set on the island is a piece of it, and the group counts them). Hide the pieces about the island. A
+player looks at one and presses **E**: it is picked up (gone for the whole crew, after a reload too; two players at
+once: one gets it) and the screen shows "Relics: 2 of 4". When the island's last piece is found the set is complete:
+the island sends the signal `set:relics` (world plans and **signal sent** checks can wait for it) and every piece's
+**set** event runs once (Behaviour & events..., 6.2): put the reward there on one piece (`give||Titanium*3`, a
+`journal` page, `open|Vault door`). The check **set found** (`set|Relics|2`) passes once that many pieces were found,
+and a quest's **Find set** step (6.1; the **▾** lists the island's sets) waits until its number of pieces is found -
+its progress shows in the quest panel. Pieces count per island (a copy of the island has its own). Check warns when
+a **Find set** step names a set the island hasn't got or wants more pieces than it has.
 
 ### 6.4 Islands that bring islands
 

@@ -17,6 +17,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   the islander's **talk** event and an answer its **choice1**-**choice3** event; the world remembers who was talked to
   for the whole crew (the check **talked to**), a new quest step **Talk to** waits for it, and the new action **show
   dialogue** opens a dialogue from any object. Pose, look and dialogue are set in the inspector.
+- **Collectible sets** (Loot & chests > **Collectible (set piece)**): hidden pieces of a named set. Picking one up
+  counts for the whole crew ("Relics: 2 of 4"); the last one sends the signal `set:<name>` and runs the pieces' **set**
+  event (the reward). New check **set found** and quest step **Find set**.
 
 ## 2026-10-25: Relic of the Seventh Tide, full-size islands
 
