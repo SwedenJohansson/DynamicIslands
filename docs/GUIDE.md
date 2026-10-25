@@ -1408,6 +1408,8 @@ turtle, stingray, dolphin, whale.
   with it, its health doesn't - give a big boss more **health** too. Players in multiplayer see the same size.
 - **Comes back after** the regrow days, or **Never**.
 - **Appears** at once, or **when a zone fires** (an ambush, see [5.4](#54-trigger-zones-and-ambushes)).
+- **Quest animals stay:** a turtle, stingray, dolphin or whale that the island's quest asks players to kill or catch
+  stays at the island until it is beaten. Other harmless sea animals leave when Raft's own sea event for them ends, as in Raft.
 - **Colour** (every object): **None** keeps its own colours; the nine swatches tint it (a creature spot: every animal of
   it), and once it is tinted the **Strength** slider (0 to 100 %) says how strongly the colour shows. **Custom colour...**
   adds **Red**, **Green** and **Blue** sliders (0 to 255) for your own mix: the object's own colours are multiplied by

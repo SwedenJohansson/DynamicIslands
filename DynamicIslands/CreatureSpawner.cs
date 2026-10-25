@@ -297,6 +297,7 @@ namespace DynamicIslands.Editor
 				{
 					AI_NetworkBehaviour ai = Spawn(host, w.Key, i, w.Value);
 					if (ai == null) continue;
+					KeepFromRaftEvents(entry, ai, w.Key.Kind);
 					here++;
 					// (a boss whose fight was in its second phase when the world was saved: back in it - RF5)
 					BossPhases.Resume(entry, w.Key, ai);
@@ -464,7 +465,12 @@ namespace DynamicIslands.Editor
 			if (!SpawnsInThisMode(kind.Type)) { Debug.Log("[CUSTOM ISLANDS] '" + e.HostName + "': no " + kind.Label + " in this game mode - the boss calls none"); return 0; }
 			int came = 0;
 			for (int i = 0; i < n; i++)
-				if (Spawn(host, p, kind, around, i, n, new Dictionary<string, string>(), true) != null) came++;
+			{
+				AI_NetworkBehaviour ai = Spawn(host, p, kind, around, i, n, new Dictionary<string, string>(), true);
+				if (ai == null) continue;
+				KeepFromRaftEvents(e, ai, kind);
+				came++;
+			}
 			return came;
 		}
 
@@ -973,6 +979,47 @@ namespace DynamicIslands.Editor
 		static bool Harmless(AI_NetworkBehaviourType t)
 		{
 			return t == AI_NetworkBehaviourType.Dolphin || t == AI_NetworkBehaviourType.Turtle || t == AI_NetworkBehaviourType.Stingray || t == AI_NetworkBehaviourType.Whale;
+		}
+
+		/// <summary>Host: a harmless sea animal (stingray, dolphin, turtle, whale) that one of its island's quests asks
+		/// to kill or catch keeps out of Raft's own world events. Raft's prefab for these carries a tracker that sends the
+		/// animal away (or lets it decay) when Raft's own event of that kind stops - so a quest's big stingray could swim
+		/// off before the crew got to it. The tracker is taken off before it starts.</summary>
+		static void KeepFromRaftEvents(IslandWorldState.Entry e, AI_NetworkBehaviour ai, ContentCatalog.CreatureKind kind)
+		{
+			try
+			{
+				if (e == null || ai == null || kind == null || !Harmless(kind.Type) || !IsQuestTarget(e, kind)) return;
+				int n = 0;
+				foreach (WorldEvent_Tracker_AI t in ai.GetComponentsInChildren<WorldEvent_Tracker_AI>(true))
+				{
+					if (t == null) continue;
+					UnityEngine.Object.Destroy(t);
+					n++;
+				}
+				if (n > 0) Debug.Log("[CUSTOM ISLANDS] '" + e.HostName + "': quest " + kind.Label + " kept out of Raft's own sea events");
+			}
+			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] quest creature tracker: " + ex.Message); }
+		}
+
+		/// <summary>True when one of the island's quests has a kill or catch step for this kind (an empty target: any kind).</summary>
+		static bool IsQuestTarget(IslandWorldState.Entry e, ContentCatalog.CreatureKind kind)
+		{
+			int q = QuestTracker.QuestsOf(e);
+			for (int n = 0; n < q; n++)
+			{
+				IslandQuest quest = QuestTracker.QuestOf(e, n);
+				if (quest == null) continue;
+				foreach (IslandQuest.Step st in quest.Steps)
+				{
+					if (st == null) continue;
+					string ty = (st.Type ?? "").Trim().ToLowerInvariant();
+					if (ty != "kill" && ty != "catch") continue;
+					string tg = (st.Target ?? "").Trim();
+					if (tg.Length == 0 || string.Equals(tg, kind.Label, StringComparison.OrdinalIgnoreCase)) return true;
+				}
+			}
+			return false;
 		}
 
 		static void Record(IslandWorldState.Entry e, CreatureSpawnPoint p, int alive)

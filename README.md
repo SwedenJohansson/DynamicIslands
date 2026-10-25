@@ -62,7 +62,7 @@ This README is the full reference, in the same order: island creation first, the
     - **Animals: catchable:** chicken, goat and llama. Players catch them with Raft's net launcher and keep them on the raft, as on Raft's own islands.
     - **Animals: hostile:** warthog, pig, bear, mama bear, polar bear, hyena, rats, roach, bee swarm, screecher and Caravan Town's white screecher.
     - **Animals: harmless:** Temperance's puffins and Utopia's butler bot; they walk or fly about and never attack.
-    - **Sea creatures:** puffer fish, angler fish, turtle, stingray, dolphin and whale.
+    - **Sea creatures:** puffer fish, angler fish, turtle, stingray, dolphin and whale. A turtle, stingray, dolphin or whale that a quest asks for stays at the island until it is beaten.
     - The editor shows each one as a coloured marker with its name, or as Raft's real model once you've been in a world since starting Raft.
   - **Creature editor** (select a creature): how many live at that spot (1–8, a herd), difficulty presets (Easy / Normal / Hard / Boss), **health, damage, speed and size**, and whether killed or caught animals come back. **Boss phase** (hostile animals): once per fight, at a share of its health (default 50 %), the spot calls up to 6 more creatures (its own kind or another hostile one), gets faster (×1.3 by default), sends a signal (`phase` by default) and runs its `phase` event; the fight is saved, so a reload mid-fight comes back in the second phase without calling again, and the spot's defeat clears it for the next fight. The host runs it; every player's hits count (`BossPhases.cs`).
   - **Colour:** tint any object, creatures included, with swatches, a strength slider, or your own red/green/blue mix.

@@ -17,6 +17,13 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   and notes read aloud, and its quest now crosses the whole island (The Lodestone Array 27 steps, The Array Root 18,
   Sinkmarket Floor 19). Start a new world with the plan to get the new islands.
 
+## 2026-10-25: quest sea animals stay
+
+### Fixed
+- **A turtle, stingray, dolphin or whale that a quest asks players to kill or catch no longer swims off** when Raft's
+  own sea event for that animal ends (Lowstreet's big stingray could leave before players reached it). Other harmless
+  sea animals still come and go as in Raft.
+
 ## 2026-10-24: quest mechanics
 
 ### New
