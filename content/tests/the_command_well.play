@@ -94,7 +94,7 @@ use cw_lock4
 use cw_lock5
 open Chained hatch
 wait 3
-expect step 19
+# expect step 19 (reach|shaft_top is counted early, before its step comes: the shaft top was passed on the way down)
 # (no step check here: the shaft top was passed on the way down, so the last step can count at once)
 zone shaft_top
 expect done
