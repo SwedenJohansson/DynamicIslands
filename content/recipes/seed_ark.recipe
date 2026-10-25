@@ -149,6 +149,8 @@ prop arkdark zone.radius=30
 # halls (east, west, north; air pockets). The north-west underwater ridge; two more buried treasures on the islet.
 call ar_ridge x1=-62 z1=20 x2=-40 z2=52 h=10 top=10 r=8
 call fz_mount x=22 z=-46 h=33 r=8
+# (box agent 10-25: the sockets, valves and suit boxes sat on the cone's slope - boxes half sunk, sockets over them; a wider flat top)
+brush flatten at 22 -46 r=11 s=20 frames=400 h=33
 place "Box Small" - at 21.5 -45 ground sit yaw=10
 place TP_LaserControlPanel_lever pumpswitch at 21.5 -45 ground y=0.7 yaw=180
 place RT_PillarThick pumppipe at 20.2 -46.2 ground y=-0.5 sy=0.3 sx=0.6 sz=0.6
@@ -344,8 +346,10 @@ prop rats3 obj.name=rats3
 prop rats3 beh.hidden=1
 prop rats3 creature.count=3
 prop rats3 creature.respawn=0
+prop suitbox1 obj.name=suitbox1
 prop suitbox1 beh.use=Take a suit from the cabinet
 prop suitbox1 on.use=suit||120\nmessage||A coolant suit and a mask from the cabinet: two minutes in the gas.
+prop suitbox2 obj.name=suitbox2
 prop suitbox2 beh.use=Take a suit from the cabinet
 prop suitbox2 on.use=suit||120\nmessage||A coolant suit and a mask from the cabinet: two minutes in the gas.
 prop pumpswitch obj.name=pumpswitch

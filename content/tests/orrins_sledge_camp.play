@@ -30,6 +30,7 @@ open Lookout box
 wait 3
 expect step 6
 expect hidden ziplinecrate
+expect item Machete 1
 use pinevines
 expect shown ziplinecrate
 open Zipline crate

@@ -157,7 +157,8 @@ call ar_ridge x1=-72 z1=30 x2=-48 z2=56 h=5 top=5 r=7
 call ar_plants_snowy x=-60 z=43 r=18 seed=12234
 call ar_ridge x1=62 z1=-12 x2=70 z2=20 h=5 top=4 r=6
 call ar_plants_snowy x=66 z=4 r=14 seed=12237
-call treasure x=-20 z=62 r=10 n=1 seed=12241
+# (box agent 10-25: no dry free spot round -20 62 - moved to the west floe)
+call treasure x=-30 z=24 r=14 n=1 seed=12241
 call treasure x=62 z=-24 r=8 n=1 seed=12242
 
 # --- Settings, story items, notes, behaviours, quest -----------------------------------------------------------------

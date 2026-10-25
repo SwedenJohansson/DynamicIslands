@@ -114,6 +114,7 @@ call ladders x=16 z=-7 h=1.5 n=3 yaw=180
 # --- The zipline crate at the pine wood's edge, Orrin's last note on its lid ---------------------------------------
 place Loot_Chest ziplinecrate at -16 12 ground sit yaw=135
 # REDO 10-24: the machete on the main path - the pine wood's track grew shut over the crate
+# (box agent 10-25: there was no machete anywhere - it is now in the lookout box, the step before)
 beside ChoppableVines pinevines ziplinecrate d=1.6
 place Note_Paper orrinnote4 at -15 10.6 ground drop yaw=100
 place Placeable_Lantern_Metal - at -17.5 11 ground drop
@@ -143,7 +144,8 @@ note dwreckchest Frozen chest | Frozen to a dead sledge: wool, rope, a tin of na
 loot dwreckchest Wool*3;Rope*2;Nail*8
 prop dwreckchest loot.refill=0
 call hatchcache x=33.4 z=20.1 r=15 seed=12491 alias=dhatch chest=dhatchchest items=MetalIngot*2;Wool*3;Bolt*2
-call vinecache x=20.1 z=-33.4 r=15 seed=12493 chest=dvinechest vines=dvines items=Rope*3;Wool*2;Bolt*3
+# (box agent 10-25: no free spot round 20 -33 - moved by the east cellar hatch)
+call vinecache x=33.4 z=20.1 r=18 seed=12493 chest=dvinechest vines=dvines items=Rope*3;Wool*2;Bolt*3
 call treasure x=-36.9 z=12.7 r=15 n=1 seed=12492
 prop treasure12492 treasure.loot=TitaniumOre*2;MetalOre*2
 place Zone_Trigger dview at 7.3 13.1 ground
@@ -205,7 +207,7 @@ note wardenletter The Warden's letter | (under the cairn's top stone, folded sma
 note orrinschest Orrin's chest | Orrin's chest: the metal detector's plans, mittens, tea.
 note cookstores Camp stores | The camp's stores: milk pails, salted meat, wool.
 note sledgeshed Sledge shed | The sledge shed's chest: the engine controls' plans and tools.
-note lookoutbox Lookout box | The lookout's box: the firework's plans, an empty flare pistol.
+note lookoutbox Lookout box | The lookout's box: the firework's plans, an empty flare pistol - and Orrin's machete for the pine track.
 note ziplinecrate Zipline crate | The zipline crate: its base's plans, cable, Orrin's note on the lid.
 loot orrinschest Blueprint_MetalDetector*1;Wool*2;Rope*2;story:harness*1
 prop orrinschest loot.refill=0
@@ -220,6 +222,7 @@ loot haychest story:harness*1;Wool*2
 prop haychest loot.refill=0
 prop ziplinecrate obj.name=ziplinecrate
 prop ziplinecrate beh.hidden=1
+prop pinevines obj.name=pinevines
 prop pinevines on.use=hide|\nshow|ziplinecrate\nmessage||The machete clears the track. Behind the vines: Orrin's zipline crate.
 story harness|Harness piece|Placeable_Lantern_Metal|A piece of the sledge winch's harness. Orrin hid them so nobody took the motor sledge after him.
 story sledge|The motor sledge out|Placeable_Lantern_Metal|The winch hauled the motor sledge out onto the runners.
@@ -228,7 +231,7 @@ prop sledgewinch beh.use=Rig the harness and wind the sledge winch
 prop sledgewinch if.use=take|story:harness|3
 prop sledgewinch on.use=give||story:sledge*1\nshow|sledgeshed\nmessage||The harness takes the strain. The motor sledge rolls out on the runners - and behind it, the shed's big chest.
 prop sledgewinch else.use=message||The winch has no harness. Orrin's notes: one piece in the hay, one in my hut, one with the zipline crate.
-loot lookoutbox Blueprint_Firework*1;Rope*2;Nail*6
+loot lookoutbox Blueprint_Firework*1;Machete*1;Rope*2;Nail*6
 prop lookoutbox loot.refill=0
 loot ziplinecrate Blueprint_ZiplineBase*1;Rope*4;MetalIngot*2;story:harness*1
 prop ziplinecrate loot.refill=0
@@ -288,4 +291,6 @@ quest reward=MetalIngot*2;Rope*3;Leather*2
 # RESIZE 10-24 retest: the bigger island's generator rocks that floated over slopes (ground check)
 clear at -7.26 13.98 r=1.5 only=TP_BigRock
 
+# (box agent 10-25: generated rocks left hanging over the ground check - cleared)
+clear at 64.04 4.71 r=1.5 all body only=SmallBoulder2
 save Orrin's Sledge Camp

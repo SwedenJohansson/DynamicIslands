@@ -300,4 +300,6 @@ quest reward=MetalIngot*3;CopperIngot*2;Rope*3
 clear at -71.27 0.96 r=1.5 only=TP_BigRock
 clear at -30.24 -61.34 r=1.5 only=TP_BigRock
 
+# (box agent 10-25: generated rocks left hanging over the ground check - cleared)
+clear at 12.68 -55.34 r=1.5 all body only=SmallBoulder2
 save The Iron Whale - Bow

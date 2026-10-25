@@ -30,11 +30,12 @@ brush flatten from 8.5 -6 to 9 -4 r=2 s=20 frames=60 h=4.5
 brush flatten from 9 -4 to 8.5 -2 r=2 s=20 frames=60 h=5
 brush flatten from 8.5 -2 to 8 0 r=2 s=20 frames=60 h=5.5
 brush flatten from 8 0 to 7.5 1.5 r=2 s=20 frames=60 h=6
-brush flatten from 7.5 1.5 to 7 3 r=2 s=20 frames=60 h=6.5
-brush flatten from 7 3 to 6 4.5 r=2 s=20 frames=60 h=7
-brush flatten from 6 4.5 to 5 6 r=2 s=20 frames=60 h=7.5
-brush flatten from 5 6 to 4 5.5 r=2 s=20 frames=60 h=8
-brush flatten from 4 5.5 to 3 5 r=2 s=20 frames=60 h=8.5
+brush flatten from 7.5 1.5 to 7 3 r=4 s=20 frames=150 h=6.5
+brush flatten from 7 3 to 6 4.5 r=4 s=20 frames=150 h=7
+brush flatten from 6 4.5 to 5 6 r=4 s=20 frames=150 h=7.5
+brush flatten from 5 6 to 4 5.5 r=4 s=20 frames=150 h=8
+brush flatten from 4 5.5 to 3 5 r=4 s=20 frames=150 h=8.5
+# (box agent 10-25: the upper path stayed 1-1.5 m under its marks - the ground grid is ~2 m, an r=2 stroke barely moves it; r=4)
 brush flatten at 0 3 r=4.5 s=20 frames=200 h=9
 origin
 clear at 0 -14 r=7
@@ -239,4 +240,8 @@ step read|Fragment 4|1|Read the fourth fragment
 quest done=North, past the white sea, a ship called the Whale is held in the ice - and a woman on it will not stay silent. The sealers' floes call on 700.
 quest reward=MetalIngot*2;Rope*3
 
+# (box agent 10-25: generated rocks left hanging over the ground check - cleared)
+clear at 57.83 7.64 r=1.5 all body only=SmallBoulder2
+clear at -34.38 -24.85 r=1.5 all body only=TP_BigRock03
+clear at 3.12 6.46 r=1.5 all body only=TP_SmallRock01
 save Signalstack Rock
