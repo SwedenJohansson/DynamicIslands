@@ -536,7 +536,11 @@ above (right mouse + drag, WASD, Q/E and wheel; WASD or arrows; Space/C; middle 
 Alt + right drag; F; Shift), and under them this PC's settings: **Look sensitivity**, **Move speed** (the right mouse + wheel speed, kept between sessions),
 **Zoom speed** and **Pan speed** (each x1 = the mod's own, a slider from slower to faster), **Drag up: look up / down**
 (click to switch; up, the default, looks up as in most games, down tilts the view as if you dragged the scene) and
-**Wheel up: zoom in / out** (the wheel turned round). **Mod's own** puts them all back (dragging up looks up); **Close** or Esc closes the window. They are
+**Wheel up: zoom in / out** (the wheel turned round). **Mod's own** puts them all back (dragging up looks up; the key
+layout stays). **Keys: QWERTY / AZERTY**, right of it, switches the editor's keys for a French or Belgian keyboard:
+AZERTY flies and moves with **ZQSD** and uses **A/E** for down / up and for turning a stamp or the object being placed,
+where QWERTY has WASD and Q/E (the arrow keys work in both). Unity reads keys by the letter the keyboard layout gives,
+so this changes the keys themselves; the window's list and the tabs' tips change with it. **Close** or Esc closes the window. They are
 saved a moment after a change, in `world_rules.txt` ([section 10](#10-settings-files)), and are also in
 **Defaults... > Editor camera (this PC)**. On the right:
 
@@ -591,7 +595,9 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
 ### 4.2 Shaping the land (Terrain tab)
 
 - **Sculpt:** **Raise**, **Lower**, **Flatten**, **Smooth**. Hold the left mouse button on the ground; the white ring
-  shows the brush. Objects standing on the ground you sculpt **go up and down with it** (trees, rocks, huts: lowering
+  shows the brush. **Size** goes from 1 m to 160 m across; the slider gives the small sizes room. The ground has a
+  height point about every 2 m, so a 1 m brush moves just the nearest point (and paints one paint pixel) and 2 m that
+  point and a little of the ones beside it: for a step, a narrow ditch or a path's edge. Objects standing on the ground you sculpt **go up and down with it** (trees, rocks, huts: lowering
   the ground no longer leaves them in the air, raising it no longer buries them); what stands higher, on a deck or a
   roof, stays. **Ctrl+Z** undoes the stroke and the objects' moves together.
   **Flatten to** (a field in the brush settings): type a height in metres above the sea (for example 4) and **Flatten**
@@ -710,7 +716,10 @@ against a wall) stands up straight; a bigger lean - more than 25°, a boulder ly
   **Shift+click** keeps placing, **Esc** stops. Hold **Ctrl** to nudge it with the mouse. On a slope an object goes down to the **lowest ground under its base**,
   so a house on legs or a van stands on all of its legs and wheels instead of its high side (with **Slope** on, it leans
   with the ground instead).
-- **Select:** click a placed object; **Shift+click** adds more, **Ctrl+click** takes one out again.
+- **Select:** click a placed object; **Shift+click** adds more, **Ctrl+click** takes one out again. The object under the
+  mouse has a light blue outline: that is what a click selects. Where objects stand in each other, the smallest one is
+  picked (a flower beside a big palm, not the palm), and a model's real shape counts, not the box around it. Click the
+  same spot again to get the next object there (the status bar says "2 of 3 here"), and again to go round.
 - **Transform** (keys 1-4): Move, Turn, Scale or All, with the coloured handles. **X** switches the arrows between the
   world's directions and the object's own turn; **P** turns and scales around each object's own point or the middle of
   the selection; hold **Ctrl** while dragging to snap (0.25 m, 15°). An island holds at most 100 000 objects (the editor
@@ -734,7 +743,9 @@ against a wall) stands up straight; a bigger lean - more than 25°, a boulder ly
 ![Place exactly](images/editor-place-exactly.jpg)
 *A pasted sign placed exactly: X 510, 3 m above the sea, Z 520.5, turned 90 degrees, twice the size.*
 - **Placing:** **Random** gives each placed object a random turn and size, **Slope** leans it with the ground, **Grid**
-  snaps to Raft's 1.5 m building grid (Q/E then turn in 90° steps).
+  snaps to the grid (Q/E then turn in 90° steps) while placing and while moving with the arrows. **Grid size** picks
+  0.5, 1, 1.5 or 2 m (1.5 m is Raft's building grid, for huts and rafts of Raft blocks); choosing one turns Grid on, and
+  the size is kept on this PC (`editorgrid` in `world_rules.txt`). Ctrl held while dragging still snaps by 0.25 m.
 - **Groups:** select several objects and click **Save as group...**. The group appears under **My groups** at the top
   of the browser, to place on any island. **Manage...** beside it opens **My groups and stamps**: pick a group (or, on
   the Stamps tab, a stamp), type a new name and press **Rename**, or press **Delete** twice - it is moved to
@@ -3500,6 +3511,8 @@ there means plain Raft.
 | `journalkey`, `statskey` | A Unity key name, for example `J`, `K` or `F6` | The keys of the journal (J) and the stats page (K) in a world | **Defaults...** > **Keys (this PC)**, at once. A key that can't be used falls back to J or K, and the log says so |
 | `cameralook`, `cameraspeed`, `camerazoom`, `camerapan` | A multiplier, 1 = the mod's own: look 0.2-4, speed 0.1-10, zoom and pan 0.25-4 | The island editor camera's look sensitivity, flying speed, wheel zoom step and pan speed (this PC) | The editor's **Camera...** window or **Defaults... > Editor camera (this PC)**, a moment after a change |
 | `cameradragup`, `camerawheel` | `up` / `down`; `normal` / `reversed` | Which way dragging up turns the editor's view (up, the default; only a saved `down` turns it round) and the wheel's direction | The same |
+| `camerakeys` | `qwerty` / `azerty` | The editor's keys: WASD and Q/E, or ZQSD and A/E (**Mod's own** keeps it) | The **Keys** button in the editor's **Camera...** window, at once |
+| `editorgrid` | `0.5`, `1`, `1.5` or `2` (default 1.5) | The editor's grid size for **Grid** (placing and moving) | The **Grid size** buttons on the Objects tab, at once |
 
 **`randomizer.txt`** is the world randomizer's last choice, written when you press **Create**: a `#` note and one line,
 for example `level=normal;seed=0;off=colours,loot`. `level` is `off`, `light`, `normal` or `wild`; `off=` lists the parts
@@ -3598,7 +3611,7 @@ Press **F10** for RML's console.
 | `SetStyle <Tropical/Snowy/Desert/Forest/Volcanic>` | The island's style (its ground textures) |
 | `SetElevation <m>` | How high above the sea the island floats in a world, -100 to 250 m (60 = a flying island, -25 = under water, 0 = normal) - the Island tab's Height presets in short ([4.4](#44-the-island-tab)) |
 | `SetToRaise`, `SetToLower`, `SetToFlatten`, `SetToSmooth`, `PaintTexture <sand/grass/rock/seabed>`, `SetToAutoPaint` | The terrain brush's tool, as the Terrain tab's buttons ([4.2](#42-shaping-the-land-terrain-tab)) |
-| `ChangeWidth <m>` / `ChangeStrength <m/s>` | The brush's width (4-160 m) / strength (0.5-20 m a second) |
+| `ChangeWidth <m>` / `ChangeStrength <m/s>` | The brush's width (1-160 m) / strength (0.5-20 m a second) |
 
 ## 12. Limitations: what can't be changed
 

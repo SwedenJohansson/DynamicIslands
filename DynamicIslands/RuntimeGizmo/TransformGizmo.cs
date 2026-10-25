@@ -431,6 +431,9 @@ namespace RuntimeGizmos
 				transformCommands.Add(new TransformCommand(this, targetRootsOrdered[i]));
 			}
 
+			// The editor's Grid (ROADMAP E13): the dragged object's x/z land on the grid, the others move with it
+			Vector3 gridStart = mainTargetRoot != null ? mainTargetRoot.position : Vector3.zero, gridRaw = Vector3.zero;
+
 			while(!Input.GetMouseButtonUp(0))
 			{
 				Ray mouseRay = myCamera.ScreenPointToRay(Input.mousePosition);
@@ -490,6 +493,12 @@ namespace RuntimeGizmos
 									currentSnapMovementAmount = currentSnapMovementAmount.normalized * remainder;
 								}
 							}
+						}
+
+						if(!isSnapping && mainTargetRoot != null && global::DynamicIslands.Editor.PlacementOptions.SnapToGrid)
+						{
+							gridRaw += movement;
+							movement = GridMove(mainTargetRoot.position, gridStart, gridRaw);
 						}
 
 						for(int i = 0; i < targetRootsOrdered.Count; i++)
@@ -632,6 +641,19 @@ namespace RuntimeGizmos
 			SetPivotPoint();
 		}
 
+		/// <summary>
+		/// The move that puts a dragged object where the mouse has taken it (start + raw) with x and z on the editor's grid: only
+		/// the directions the drag has moved in snap, so dragging the up arrow leaves an off-grid object's x/z alone.
+		/// </summary>
+		public static Vector3 GridMove(Vector3 now, Vector3 start, Vector3 raw)
+		{
+			Vector3 want = start + raw;
+			float g = global::DynamicIslands.Editor.PlacementOptions.GridStep;
+			if(Mathf.Abs(raw.x) > 1e-4f) want.x = Mathf.Round(want.x / g) * g;
+			if(Mathf.Abs(raw.z) > 1e-4f) want.z = Mathf.Round(want.z / g) * g;
+			return want - now;
+		}
+
 		float CalculateSnapAmount(float snapValue, float currentAmount, out float remainder)
 		{
 			remainder = 0;
@@ -690,8 +712,9 @@ namespace RuntimeGizmos
 				// Clicks on the editor's panels are not clicks into the world
 				if (UnityEngine.EventSystems.EventSystem.current != null && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return;
 
-				// Only placed island objects can be selected, always as a whole (never the terrain or a part of a model)
-				Transform target = global::DynamicIslands.Editor.PlacementOptions.PickObject(myCamera.ScreenPointToRay(Input.mousePosition), selectionMask);
+				// Only placed island objects can be selected, always as a whole (never the terrain or a part of a model); the smallest
+				// one under the mouse first, the same spot clicked again gives the next one there (ROADMAP E11)
+				Transform target = global::DynamicIslands.Editor.ObjectPick.Click(myCamera.ScreenPointToRay(Input.mousePosition), selectionMask, Input.mousePosition, !isAdding && !isRemoving);
 				if(target != null)
 				{
 					if(isAdding)

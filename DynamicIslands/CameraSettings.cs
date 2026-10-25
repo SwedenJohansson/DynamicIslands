@@ -35,10 +35,12 @@ namespace DynamicIslands.Editor
 		public static readonly Number[] Numbers = { LookNumber, SpeedNumber, ZoomNumber, PanNumber };
 
 		public const string DragUpKey = "cameradragup", WheelKey = "camerawheel";
+		/// <summary>The editor's key layout (ROADMAP L2): "azerty" or "qwerty" (the default).</summary>
+		public const string KeysKey = "camerakeys";
 
 		static readonly Dictionary<string, float> values = new Dictionary<string, float>();
 		static readonly HashSet<string> dirty = new HashSet<string>();
-		static bool? dragUpLooksUp, wheelReversed;
+		static bool? dragUpLooksUp, wheelReversed, azerty;
 		static float saveAt = -1f;
 
 		public static float Look { get { return Get(LookNumber); } }
@@ -59,6 +61,44 @@ namespace DynamicIslands.Editor
 		{
 			get { if (wheelReversed == null) wheelReversed = string.Equals(WorldRules.ReadDefault(WheelKey), "reversed", StringComparison.OrdinalIgnoreCase); return wheelReversed.Value; }
 			set { wheelReversed = value; Mark(WheelKey); }
+		}
+
+		/// <summary>
+		/// The editor's keys for an AZERTY keyboard (ROADMAP L2): ZQSD move and A/E fly down / up and turn, where QWERTY has WASD
+		/// and Q/E. Unity's old Input (which Raft and the mod use) reads keys by the keyboard layout's letter on Windows, not by the
+		/// key's place, so on an AZERTY keyboard the key at QWERTY's W is Z: the keys themselves change, not only their names.
+		/// "Mod's own" keeps it; saved with the camera settings (world_rules.txt camerakeys).
+		/// </summary>
+		public static bool Azerty
+		{
+			get { if (azerty == null) azerty = string.Equals(WorldRules.ReadDefault(KeysKey), "azerty", StringComparison.OrdinalIgnoreCase); return azerty.Value; }
+			set { if (Azerty == value) return; azerty = value; Mark(KeysKey); EditorUI.RefreshKeyNames(); }
+		}
+
+		public static KeyCode ForwardKey { get { return Azerty ? KeyCode.Z : KeyCode.W; } }
+		public static KeyCode LeftKey { get { return Azerty ? KeyCode.Q : KeyCode.A; } }
+		public static KeyCode BackKey { get { return KeyCode.S; } }
+		public static KeyCode RightKey { get { return KeyCode.D; } }
+		/// <summary>Fly down while looking; turn left (stamp, object being placed).</summary>
+		public static KeyCode DownKey { get { return Azerty ? KeyCode.A : KeyCode.Q; } }
+		/// <summary>Fly up while looking; turn right.</summary>
+		public static KeyCode UpKey { get { return KeyCode.E; } }
+
+		/// <summary>The move keys as x (right) and z (forward), -1..1: QWERTY through Unity's Horizontal / Vertical axes as before,
+		/// AZERTY by ZQSD and the arrow keys.</summary>
+		public static Vector2 MoveKeys()
+		{
+			if (!Azerty) return new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+			float x = (Input.GetKey(RightKey) || Input.GetKey(KeyCode.RightArrow) ? 1f : 0f) - (Input.GetKey(LeftKey) || Input.GetKey(KeyCode.LeftArrow) ? 1f : 0f);
+			float z = (Input.GetKey(ForwardKey) || Input.GetKey(KeyCode.UpArrow) ? 1f : 0f) - (Input.GetKey(BackKey) || Input.GetKey(KeyCode.DownArrow) ? 1f : 0f);
+			return new Vector2(x, z);
+		}
+
+		/// <summary>A help text with the keys of the chosen layout: WASD becomes ZQSD and Q/E A/E on AZERTY.</summary>
+		public static string KeyNames(string text)
+		{
+			if (string.IsNullOrEmpty(text) || !Azerty) return text;
+			return text.Replace("Q/E", "A/E").Replace("Q / E", "A / E").Replace("WASD", "ZQSD");
 		}
 
 		public static float Get(Number n)
@@ -100,6 +140,7 @@ namespace DynamicIslands.Editor
 			{
 				if (key == DragUpKey) write[key] = DragUpLooksUp ? "up" : "down";
 				else if (key == WheelKey) write[key] = WheelReversed ? "reversed" : "normal";
+				else if (key == KeysKey) write[key] = Azerty ? "azerty" : "qwerty";
 				else write[key] = Format(values[key]);
 			}
 			dirty.Clear();
@@ -107,7 +148,7 @@ namespace DynamicIslands.Editor
 			WorldRules.SaveDefaults(write);
 		}
 
-		/// <summary>Every camera setting back to the mod's own, saved at once.</summary>
+		/// <summary>Every camera setting back to the mod's own, saved at once. The key layout (Azerty) stays: it is the keyboard's.</summary>
 		public static void Reset()
 		{
 			foreach (Number n in Numbers) { values[n.Key] = Number.Default; dirty.Add(n.Key); }
@@ -121,7 +162,7 @@ namespace DynamicIslands.Editor
 		{
 			Save();
 			values.Clear();
-			dragUpLooksUp = wheelReversed = null;
+			dragUpLooksUp = wheelReversed = azerty = null;
 		}
 
 		public static string Format(float v) { return v.ToString("0.##", CultureInfo.InvariantCulture); }
@@ -221,7 +262,30 @@ namespace DynamicIslands.Editor
 		/// Every mouse button and key of the editor, for a new user: each group's title, then the control and what it does in
 		/// pairs. The Camera group and the settings fill the left column, the others the right.
 		/// </summary>
-		internal static readonly string[][] ControlGroups =
+		internal static string[][] ControlGroups
+		{
+			get
+			{
+				var g = new string[BaseControlGroups.Length][];
+				for (int i = 0; i < g.Length; i++) g[i] = Array.ConvertAll(BaseControlGroups[i], CameraSettings.KeyNames);
+				return g;
+			}
+		}
+
+		/// <summary>The labels of the controls list, as written (QWERTY), to rename when the layout changes.</summary>
+		static readonly List<KeyValuePair<Text, string>> keyLabels = new List<KeyValuePair<Text, string>>();
+
+		/// <summary>The window's control names in the chosen layout (the layout button).</summary>
+		internal static void RefreshKeyLabels()
+		{
+			keyLabels.RemoveAll(k => k.Key == null);
+			foreach (var k in keyLabels) k.Key.text = CameraSettings.KeyNames(k.Value);
+		}
+
+		/// <summary>The layout button's text.</summary>
+		internal static string LayoutLabel() { return CameraSettings.Azerty ? "Keys: AZERTY" : "Keys: QWERTY"; }
+
+		static readonly string[][] BaseControlGroups =
 		{
 			new[] { "Camera",
 				"Right mouse + drag", "look around",
@@ -269,7 +333,9 @@ namespace DynamicIslands.Editor
 			for (int i = 1; i + 1 < group.Length; i += 2)
 			{
 				RectTransform row = UIKit.Row(box, 18f, 8f, "Key_" + group[i]);
-				UIKit.Size(UIKit.Label(row, group[i], 13, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Normal, "Key").gameObject, 172);
+				Text key = UIKit.Label(row, CameraSettings.KeyNames(group[i]), 13, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Normal, "Key");
+				UIKit.Size(key.gameObject, 172);
+				keyLabels.Add(new KeyValuePair<Text, string>(key, group[i]));
 				UIKit.Label(row, group[i + 1], 13, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "Does");
 			}
 		}
@@ -296,12 +362,25 @@ namespace DynamicIslands.Editor
 			HorizontalLayoutGroup h = UIKit.Horizontal(columns.gameObject, 12f);
 			h.childAlignment = TextAnchor.UpperLeft; h.childForceExpandHeight = false;
 			RectTransform left = Column(columns, "Column_Camera"), right = Column(columns, "Column_Editing");
-			Controls(left, ControlGroups[0]);
+			keyLabels.Clear();
+			Controls(left, BaseControlGroups[0]);
 			RectTransform group = UIKit.Group(left, "Settings (this PC; also in Defaults)", "Settings");
 			refresh = CameraSettings.Build(group);
-			for (int i = 1; i < ControlGroups.Length; i++) Controls(right, ControlGroups[i]);
+			for (int i = 1; i < BaseControlGroups.Length; i++) Controls(right, BaseControlGroups[i]);
 			RectTransform buttons = UIKit.Row(panel, 32f, 8f, "Buttons");
-			UIKit.Button(buttons, "Mod's own", () => { CameraSettings.Reset(); refresh(); EditorUI.Flash("The camera settings are the mod's own again"); }, "Every camera setting back to what a new install of Custom Islands has", 120, 32);
+			UIKit.Button(buttons, "Mod's own", () => { CameraSettings.Reset(); refresh(); EditorUI.Flash("The camera settings are the mod's own again"); }, "Every camera setting back to what a new install of Custom Islands has (the key layout stays)", 120, 32);
+			// The key layout (ROADMAP L2), right of "Mod's own": QWERTY WASD + Q/E, AZERTY ZQSD + A/E
+			Button layout = UIKit.Button(buttons, LayoutLabel(), null, "The editor's keys for your keyboard: QWERTY flies with WASD and Q/E, AZERTY with ZQSD and A/E (also turning the stamp or the object being placed). Saved on this PC", 140, 32);
+			layout.name = "Button_KeyLayout";
+			UIKit.HintAsWritten(layout.gameObject);
+			layout.onClick.AddListener(() =>
+			{
+				CameraSettings.Azerty = !CameraSettings.Azerty;
+				CameraSettings.Save();
+				Text t = layout.GetComponentInChildren<Text>();
+				if (t != null) t.text = LayoutLabel();
+				EditorUI.Flash(CameraSettings.Azerty ? "AZERTY keys: ZQSD move, A/E down / up and turn" : "QWERTY keys: WASD move, Q/E down / up and turn");
+			});
 			UIKit.Size(UIKit.Label(buttons, "", 12, UIKit.TextMuted).gameObject, -1, -1, 1);
 			Button close = UIKit.Button(buttons, "Close", Close, "Close (Esc); the settings are saved", 100, 32);
 			UIKit.Primary(close);
