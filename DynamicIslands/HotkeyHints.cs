@@ -54,7 +54,7 @@ namespace DynamicIslands.Editor
 			{
 				if (MyInput.Keybinds != null)
 					foreach (var kb in MyInput.Keybinds)
-						if (kb.Value != null && kb.Value.MainKey == k) return "Raft uses it (" + kb.Key + ")";
+						if (kb.Value != null && (kb.Value.MainKey == k || kb.Value.AltKey == k)) return "Raft uses it (" + kb.Key + ")";
 			}
 			catch { }
 			if (k >= KeyCode.Alpha0 && k <= KeyCode.Alpha9) return "the number keys pick hotbar slots";
@@ -96,14 +96,24 @@ namespace DynamicIslands.Editor
 			public readonly KeyCode[] Defaults;
 			internal KeyCode? value;
 			public Extra(string setting, string does, params KeyCode[] defaults) { Setting = setting; Does = does; Defaults = defaults; }
-			public KeyCode Default { get { foreach (KeyCode k in Defaults) if (Problem(k) == null) return k; return Defaults[0]; } }
+			/// <summary>The first of its defaults that Raft doesn't use and no key of the mod set before it has.</summary>
+			public KeyCode Default { get { foreach (KeyCode k in Defaults) if (Problem(k) == null && !TakenBefore(k)) return k; return Defaults[0]; } }
+			bool TakenBefore(KeyCode k)
+			{
+				if (k == Journal || k == Stats) return true;
+				foreach (Extra x in Extras) { if (x == this) break; if (x.Key == k) return true; }
+				return false;
+			}
 			public KeyCode Key { get { if (value == null) value = Read(Setting, Default); return value.Value; } }
 		}
 
 		public static readonly Extra NotebookKey = new Extra("notebookkey", "opens your own notebook", KeyCode.U, KeyCode.Y, KeyCode.O);
 		public static readonly Extra MapKey = new Extra("mapkey", "opens the island map", KeyCode.M, KeyCode.N, KeyCode.Comma);
 		public static readonly Extra PingKey = new Extra("pingkey", "pings a spot for the crew", KeyCode.G, KeyCode.H, KeyCode.B);
-		public static readonly Extra[] Extras = { NotebookKey, MapKey, PingKey };
+		/// <summary>The island map's zoom (the keypad's + and - zoom too).</summary>
+		public static readonly Extra ZoomInKey = new Extra("mapzoominkey", "zooms the island map in", KeyCode.Equals, KeyCode.RightBracket, KeyCode.PageUp);
+		public static readonly Extra ZoomOutKey = new Extra("mapzoomoutkey", "zooms the island map out", KeyCode.Minus, KeyCode.LeftBracket, KeyCode.PageDown);
+		public static readonly Extra[] Extras = { NotebookKey, MapKey, PingKey, ZoomInKey, ZoomOutKey };
 
 		/// <summary>Sets one of the Extra keys; the reason when it can't be, or null.</summary>
 		public static string Set(Extra e, KeyCode k)

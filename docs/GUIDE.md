@@ -491,7 +491,8 @@ typing), **Esc** or **Close** closes it, and **Journal** goes to the journal.
   and its text below. **Delete** removes the open page (click it twice: **Sure?**).
 - While it is open you don't walk, look around or use the hotbar, so typing doesn't move you.
 - It **saves itself**: a few seconds after you stop typing, and when you close it.
-- **Copy to my notebook** on a note you read, and on a page of the journal, copies its title and text in as a new page.
+- **Copy to my notebook** on a note you read, on a page of the journal and on the main story's pages in Raft's
+  notebook (T) copies its title and text in as a new page.
 - It is **per world** and **only on your computer**: the file `CustomIslands-notebook.txt` sits next to that world's
   save (in Raft's world folder). It is never sent to the other players, and another world has its own pages. A
   player who joins a world keeps theirs in the folder of their copy of it, or under the mod's `worlds` folder until
@@ -506,13 +507,13 @@ quest's current step wants you (the objects named as the step's target; one off 
 edge, pointing the way). Green dots are **map markers** the builder placed, with their text on the full map.
 
 - **M** goes corner -> **full screen** (in the middle, with every name) -> **off** -> corner.
-- **+** and **-** zoom in and out (1x, 2x, 4x), around you.
+- **+** and **-** zoom in and out (1x, 2x, 4x), around you (the keypad's + and - too).
 - The map shows only near an island (within its land and 80 m); at open sea it hides. Its picture is taken when you
   come to the island, when you open the full map and every 30 s.
 - **G** **pings** the spot you look at (up to 300 m; looking at the sky, 50 m ahead): everyone in the world sees a red
   beam with your name there, a red dot on the map and hears a short sound, for 6 seconds. One ping a second at most;
   a new ping of yours replaces your last one.
-- Both keys can be changed in **Defaults... > Keys (this PC)** (Map, Ping).
+- The keys can be changed in **Defaults... > Keys (this PC)** (Map, Ping, and Map zoom in / out on the third line).
 
 ---
 
@@ -1735,7 +1736,10 @@ Select any object → **Behaviour & events...**. No code needed:
   where the editor camera is (Ctrl+Z undoes it). An orange line shows each path in the editor. The action
   **camera fly-through** (path name, **…** to choose one; range in metres, default 200) flies the camera of every player
   within range of one of its points along the path once, on a smooth curve, then glides back; the player can't walk or
-  look around meanwhile, and **Esc** skips it. The points are invisible in a world. **Preview path** in a point's
+  look around meanwhile, and **Esc** skips it. The button after the range picks **every time** (each time the action
+  runs) or **once** (only the first time in a world, for an intro: the host keeps it in the world's save, so it
+  doesn't replay after loading or for a player who joins later). The points are invisible in a world, and a **use**
+  hint on one does nothing (there is nothing to look at). **Preview path** in a point's
   inspector flies the editor camera along it (Esc stops); **Record trailer** does the same and saves every frame (30 a
   second, without the editor's windows) as `frame_00001.png`... in the mod's `trailers` folder, to make a video from
   (with a video editor, or `ffmpeg -framerate 30 -i frame_%05d.png trailer.mp4`). **Check** warns about a path with
@@ -3493,7 +3497,7 @@ get the settings they share at once.
 | Group | What is in it |
 |---|---|
 | **Random islands while sailing** | Random islands on or off (0 = off), the quiet minutes in a new world, the spacing, how far ahead an island appears (**Appear from** and **to**), and when a needed island returns |
-| **Keys (this PC)** | The **Journal** key (J), the **Stats** key (K) and, on the second line, **Notebook** (U, your own notebook), **Map** (M, the minimap) and **Ping** (G, a ping for the crew): click one, then press the new key (Esc keeps the old one). A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why |
+| **Keys (this PC)** | The **Journal** key (J), the **Stats** key (K) and, on the second line, **Notebook** (U, your own notebook), **Map** (M, the minimap) and **Ping** (G, a ping for the crew), on the third line **Map zoom in** (=, the + key) and **Map zoom out** (-): click one, then press the new key (Esc keeps the old one). A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why |
 | **Shared with every player** | **Receiver dots** on or off, the **Receiver range**, **Unload beyond** and **Regrow days (new worlds)** |
 | **Generated islands** | The weight of new generated islands, the chance one flies, **Things to gather**, **Finds in the shallows** and how far down they go, the five styles (at least one stays lit) and a button for each kind of thing to gather (lit = on) |
 | **Editor camera (this PC)** | The island editor's camera: **Look sensitivity**, **Move speed**, **Zoom speed**, **Pan speed**, **Drag up: look up / down** and **Wheel up: zoom in / out** - the same as the editor's **Camera...** button ([4.1](#41-the-screen)); kept in `world_rules.txt` |
@@ -3546,7 +3550,7 @@ there means plain Raft.
 | `islandsoff` | Island names separated by a vertical bar; also `type:<map type>` and `<generated>` | The islands left out of the next new world's islands while sailing | **CHOOSE ISLANDS...** in World settings (Create); `WorldIslands -<island>`, `+<island>`, `all` in the main menu |
 | `raftgap` | `min-max`, for example `3-6` (min 2-20, max 4-50) | One random island after every min to max of Raft's own islands | **One after every ... to ...** under CHOOSE ISLANDS..., at once; `WorldIslandsGap <min>-<max>` in the main menu |
 | `journalkey`, `statskey` | A Unity key name, for example `J`, `K` or `F6` | The keys of the journal (J) and the stats page (K) in a world | **Defaults...** > **Keys (this PC)**, at once. A key that can't be used falls back to J or K, and the log says so |
-| `notebookkey`, `mapkey`, `pingkey` | A Unity key name | The keys of your own notebook (U), the minimap (M) and pings (G) | **Defaults...** > **Keys (this PC)**, at once. Empty = the default: the first of U/Y/O, M/N/Comma, G/H/B that Raft doesn't use |
+| `notebookkey`, `mapkey`, `pingkey`, `mapzoominkey`, `mapzoomoutkey` | A Unity key name | The keys of your own notebook (U), the minimap (M), pings (G) and the map's zoom (= and -) | **Defaults...** > **Keys (this PC)**, at once. Empty = the default: the first of U/Y/O, M/N/Comma, G/H/B, Equals/RightBracket/PageUp, Minus/LeftBracket/PageDown that Raft doesn't use (its main or second key) and no key before it has |
 | `cameralook`, `cameraspeed`, `camerazoom`, `camerapan` | A multiplier, 1 = the mod's own: look 0.2-4, speed 0.1-10, zoom and pan 0.25-4 | The island editor camera's look sensitivity, flying speed, wheel zoom step and pan speed (this PC) | The editor's **Camera...** window or **Defaults... > Editor camera (this PC)**, a moment after a change |
 | `cameradragup`, `camerawheel` | `up` / `down`; `normal` / `reversed` | Which way dragging up turns the editor's view (up, the default; only a saved `down` turns it round) and the wheel's direction | The same |
 

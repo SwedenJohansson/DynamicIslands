@@ -596,8 +596,49 @@ namespace DynamicIslands.Editor
 			if (tt != null && tt.GetComponent<TMP_Text>() != null) tt.GetComponent<TMP_Text>().text = title;
 			foreach (NoteBookNote n in pg.GetComponentsInChildren<NoteBookNote>(true)) UnityEngine.Object.DestroyImmediate(n.gameObject);
 			Traverse.Create(pg).Field("notes").SetValue(new NoteBookNote[0]);
+			// PF1: "Copy to my notebook" on each of our pages (in the page's bottom corner; it shows with the page)
+			NoteBookPage page = pg;
+			Button copy = UIKit.Button(pg.transform, "Copy to my notebook", () => CopyPage(page), "Copies this page into your own notebook as a new page", 170, 26f, 12);
+			copy.name = "Button_CopyToNotebook";
+			UIKit.Anchor((RectTransform)copy.transform, new Vector2(0.5f, 0f), new Vector2(0f, 28f), new Vector2(170, 26));
 			pg.gameObject.SetActive(false);
 			return pg;
+		}
+
+		/// <summary>PF1: copies one of our pages (its title and the text of its notes) into the player's notebook.</summary>
+		public static bool CopyPage(NoteBookPage pg)
+		{
+			if (pg == null) return false;
+			string title = (Traverse.Create(pg).Field("pageTitleString").GetValue<string>() ?? "").Trim();
+			string text = string.Join("\n\n", pg.GetComponentsInChildren<NoteBookNote>(true)
+				.Select(n => (n.GetComponentsInChildren<TMP_Text>(true).Select(x => x.text).FirstOrDefault() ?? "").Trim())
+				.Where(s => s.Length > 0).ToArray());
+			if (text.Length == 0) return false;
+			return PlayerNotebook.CopyIn(title.Length > 0 ? title : "Story page", text);
+		}
+
+		/// <summary>Tests: one of our pages (by its number now) has the copy button, and clicking it copies the page.</summary>
+		public static bool ClickCopyAt(uint index)
+		{
+			NoteBookPage p = ui != null ? PageAt(index) : null;
+			Button b = p != null && p.name.EndsWith(Mark) ? p.GetComponentsInChildren<Button>(true).FirstOrDefault(x => x.name == "Button_CopyToNotebook") : null;
+			if (b == null) return false;
+			int before = PlayerNotebook.Pages.Count;
+			b.onClick.Invoke();
+			return PlayerNotebook.Pages.Count == before + 1;
+		}
+
+		/// <summary>Tests: copies the open double page's first page of ours; false when none of ours is open.</summary>
+		public static bool CopyOpenPage()
+		{
+			if (ui == null) return false;
+			uint at = (uint)Traverse.Create(ui).Field("currentPageIndex").GetValue<uint>();
+			foreach (uint i in new[] { at, at + 1 })
+			{
+				NoteBookPage p = PageAt(i);
+				if (p != null && p.name.EndsWith(Mark) && CopyPage(p)) return true;
+			}
+			return false;
 		}
 
 		/// <summary>A paper on a page: a copy of one of Raft's notes, our text on it (top = its top edge from the page's top).</summary>

@@ -61,16 +61,31 @@ namespace DynamicIslands.Editor
 		public static float SpeedOf(IDictionary<string, string> p) { return Mathf.Clamp(ObjectProps.GetFloat(p, SpeedProp, DefaultSpeed), MinSpeed, MaxSpeed); }
 		public static float HoldOf(IDictionary<string, string> p) { return Mathf.Clamp(ObjectProps.GetFloat(p, HoldProp, 0f), 0f, MaxHold); }
 
+		/// <summary>The action's Arg: "range" or "range|once" (range empty = the default).</summary>
 		public static float RangeOf(string arg)
 		{
 			float v;
-			return float.TryParse((arg ?? "").Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? Mathf.Clamp(v, 5f, 5000f) : DefaultRange;
+			string r = (arg ?? "").Split('|')[0].Trim();
+			return float.TryParse(r, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? Mathf.Clamp(v, 5f, 5000f) : DefaultRange;
+		}
+
+		/// <summary>Whether the flight plays only the first time in a world (an intro), not on every trigger.</summary>
+		public static bool OnceOf(string arg) { return (arg ?? "").Split('|').Skip(1).Any(x => x.Trim().Equals("once", StringComparison.OrdinalIgnoreCase)); }
+
+		public static string ArgOf(string range, bool once) { string r = (range ?? "").Split('|')[0].Trim(); return once ? r + "|once" : r; }
+
+		/// <summary>The island state key that marks a once-per-world path as flown (0x6000000 + the path name's hash).</summary>
+		public const int OnceKeyBase = 0x6000000;
+		public static int OnceKey(string path)
+		{
+			string s = ((path ?? "").Trim().Length > 0 ? path.Trim() : DefaultPath).ToLowerInvariant();
+			unchecked { int h = 23; foreach (char c in s) h = h * 31 + c; return OnceKeyBase + (h & 0xFFFFF); }
 		}
 
 		public static string Describe(string path, string arg)
 		{
 			string p = (path ?? "").Trim();
-			return "fly the camera along the path '" + (p.Length > 0 ? p : DefaultPath) + "' once (players within " + RangeOf(arg).ToString("0", CultureInfo.InvariantCulture) + " m of it; Esc skips)";
+			return "fly the camera along the path '" + (p.Length > 0 ? p : DefaultPath) + "' (players within " + RangeOf(arg).ToString("0", CultureInfo.InvariantCulture) + " m of it; Esc skips" + (OnceOf(arg) ? "; only the first time in a world" : "") + ")";
 		}
 
 		/// <summary>The camera points of an island file on a path (the plan's Check).</summary>
@@ -193,6 +208,15 @@ namespace DynamicIslands.Editor
 		public static void HostRun(IslandWorldState.Entry e, string path, string arg)
 		{
 			if (e == null) return;
+			if (OnceOf(arg))
+			{
+				// (once per world: the host marks the path flown in the island's saved state and tells everyone)
+				int key = OnceKey(path);
+				if (ContentState.IsUsed(e, key)) { Debug.Log("[CUSTOM ISLANDS] Fly-through '" + path + "' was flown in this world already (once)"); return; }
+				int day = ContentState.Today;
+				e.State[key] = new ObjectState { Active = false, Yield = 0, Day = day };
+				IslandNetwork.SendUsed(e.Id, key, day);
+			}
 			IslandNetwork.SendToEveryone(new IslandNetMessage { Kind = IslandNetMessage.Moment, Ids = new[] { e.Id }, Index = -1, Name = "path", Data = (path ?? "") + "\n" + (arg ?? "") });
 			Here(e, path, arg);
 		}

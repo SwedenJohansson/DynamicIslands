@@ -520,10 +520,12 @@ namespace DynamicIslands.Editor
 			InputField r = Field(row, CameraPath.DefaultRange.ToString("0", CultureInfo.InvariantCulture), a.Arg, 44, "Players within this many metres of one of its points see it", v =>
 			{
 				float f;
-				a.Arg = float.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out f) ? Mathf.Clamp(f, 5f, 5000f).ToString("0", CultureInfo.InvariantCulture) : "";
+				a.Arg = CameraPath.ArgOf(float.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out f) ? Mathf.Clamp(f, 5f, 5000f).ToString("0", CultureInfo.InvariantCulture) : "", CameraPath.OnceOf(a.Arg));
 			});
 			r.contentType = InputField.ContentType.DecimalNumber;
 			UIKit.Label(row, "m", 11, UIKit.TextMuted);
+			bool once = CameraPath.OnceOf(a.Arg);
+			UIKit.Button(row, once ? "once" : "every time", () => { Keep(); a.Arg = CameraPath.ArgOf(a.Arg, !CameraPath.OnceOf(a.Arg)); Rebuild(); }, "Once: only the first time in a world (an intro; saved with the world, the host decides). Every time: on each trigger", 70, 28f, 12).name = "Button_FlyOnce";
 		}
 
 		/// <summary>camera: the object to look at, the seconds and the range around the marker.</summary>

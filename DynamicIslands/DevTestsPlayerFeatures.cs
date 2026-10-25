@@ -133,6 +133,12 @@ namespace DynamicIslands
 			Check(ref ok, act != null && act.Shared && BehaviourProps.Verbs.Contains("flythrough") && act.Describe().Contains("'tour'") && act.Describe().Contains("300 m"), "the action reads as '" + (act != null ? act.Describe() : "?") + "'");
 			Check(ref ok, ObjAction.Parse("flythrough||") != null && ObjAction.Parse("flythrough||").Describe().Contains("'" + CameraPath.DefaultPath + "'"), "no path name: the path '" + CameraPath.DefaultPath + "'");
 			Check(ref ok, PlaceableCatalog.Get(CameraPath.PointName) != null, "the object list has the camera point");
+			// (once: an intro that doesn't replay)
+			Check(ref ok, !CameraPath.OnceOf("300") && CameraPath.OnceOf("300|once") && CameraPath.OnceOf("|once") && CameraPath.RangeOf("300|once") == 300f, "'once' reads after the range");
+			Check(ref ok, CameraPath.ArgOf("300", true) == "300|once" && CameraPath.ArgOf("300|once", false) == "300" && CameraPath.ArgOf("", true) == "|once", "... and is written back");
+			ObjAction once = ObjAction.Parse("flythrough|tour|300|once");
+			Check(ref ok, once != null && once.Arg == "300|once" && once.Describe().Contains("only the first time") && !act.Describe().Contains("only the first time"), "a once flight reads as '" + (once != null ? once.Describe() : "?") + "'");
+			Check(ref ok, CameraPath.OnceKey("Tour") == CameraPath.OnceKey("tour") && CameraPath.OnceKey("tour") != CameraPath.OnceKey("intro") && CameraPath.OnceKey("tour") >= CameraPath.OnceKeyBase && CameraPath.OnceKey("") == CameraPath.OnceKey(CameraPath.DefaultPath), "its saved state key by path name");
 
 			IslandFile bad = IslandGenerator.CreateFile(new IslandGenSettings { Seed = 1, Radius = 30f, Height = 6f }, "cipf4bad");
 			bad.Objects.Add(new IslandObject { Name = "Note_Sign", Props = P(BehaviourProps.Name, "lever", BehaviourProps.EventPrefix + "use", "flythrough|tour|200") });
@@ -153,12 +159,14 @@ namespace DynamicIslands
 			IslandFile f = IslandGenerator.CreateFile(s, FlyIsland);
 			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(0f, 0f), 3), BehaviourProps.Name, "flylever", BehaviourProps.Use, "Pull", BehaviourProps.EventPrefix + "use", "flythrough|tour|2000"));
 			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(4f, 0f), 3), BehaviourProps.Name, "farlever", BehaviourProps.Use, "Pull", BehaviourProps.EventPrefix + "use", "flythrough|tour|5"));
+			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(-4f, 0f), 3), BehaviourProps.Name, "oncelever", BehaviourProps.Use, "Pull", BehaviourProps.EventPrefix + "use", "flythrough|tour|2000|once"));
 			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(-10f, 10f), 3), BehaviourProps.Name, "tower"));
 			Vector3[] at = { new Vector3(-20f, 25f, -20f), new Vector3(0f, 18f, 20f), new Vector3(25f, 22f, 0f) };
 			for (int i = 0; i < at.Length; i++)
 			{
 				IslandObject o = ScObj(CameraPath.PointName, at[i], CameraPath.PathProp, "tour", CameraPath.OrderProp, (i + 1).ToString(), CameraPath.SpeedProp, "20", CameraPath.HoldProp, i == 1 ? "1" : "0");
 				if (i == 1) o.Props[CameraPath.LookProp] = "tower";
+				if (i == 2) o.Props[BehaviourProps.Use] = "Look"; // (no use on an unseen point)
 				o.EulerRotation = new Vector3(30f, 45f, 0f);
 				f.Objects.Add(o);
 			}
@@ -226,6 +234,29 @@ namespace DynamicIslands
 			ScUse(e, "farlever");
 			yield return new WaitForSeconds(0.3f);
 			Check(ref ok, CameraFlight.Shown == shown && !CameraFlight.Active, "out of range (5 m of a point): no flight here");
+			Check(ref ok, Behaviours.RefsOf(e).Where(r => CameraPath.IsPoint(r.ObjectName)).All(r => r.GetComponentInChildren<UseInteract>(true) == null), "a camera point with a use hint can't be used (nothing to look at)");
+
+			// Once per world: the first use flies, the next doesn't, and the world keeps it
+			int key = CameraPath.OnceKey("tour");
+			Check(ref ok, !ContentState.IsUsed(e, key), "the once flight not flown yet");
+			shown = CameraFlight.Shown;
+			ScUse(e, "oncelever");
+			yield return null;
+			Check(ref ok, CameraFlight.Active && CameraFlight.Shown == shown + 1 && ContentState.IsUsed(e, key), "the once lever flies, and the island's state marks the path flown");
+			EscKey.Press();
+			yield return null;
+			yield return null;
+			yield return new WaitForSecondsRealtime(0.3f);
+			ScUse(e, "oncelever");
+			yield return new WaitForSeconds(0.3f);
+			Check(ref ok, CameraFlight.Shown == shown + 1 && !CameraFlight.Active, "... and not a second time");
+			ScUse(e, "flylever");
+			yield return null;
+			Check(ref ok, CameraFlight.Active && CameraFlight.Shown == shown + 2, "the every-time lever still flies the same path");
+			EscKey.Press();
+			yield return null;
+			yield return null;
+			yield return new WaitForSecondsRealtime(0.3f);
 			RfAway(e);
 			RfRemove(FlyIsland);
 			if (ok) Log("PASS: flythrough world"); else Fail("flythrough world");

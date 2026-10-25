@@ -88,8 +88,8 @@ namespace DynamicIslands.Editor
 			{
 				if (Input.GetKeyDown(ModKeys.MapKey.Key)) Cycle();
 				if (Input.GetKeyDown(ModKeys.PingKey.Key)) PingLook();
-				if (Mode != Off && (Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.KeypadPlus))) SetZoom(Zoom * 2);
-				if (Mode != Off && (Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus))) SetZoom(Zoom / 2);
+				if (Mode != Off && (Input.GetKeyDown(ModKeys.ZoomInKey.Key) || Input.GetKeyDown(KeyCode.KeypadPlus))) SetZoom(Zoom * 2);
+				if (Mode != Off && (Input.GetKeyDown(ModKeys.ZoomOutKey.Key) || Input.GetKeyDown(KeyCode.KeypadMinus))) SetZoom(Zoom / 2);
 			}
 			UpdatePings();
 			if (Time.unscaledTime >= nextFind) { nextFind = Time.unscaledTime + 0.5f; FindIsland(me.transform.position); }

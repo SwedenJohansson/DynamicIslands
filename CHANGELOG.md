@@ -9,6 +9,17 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-25: Player features, follow-ups
+
+### Added
+- **Camera fly-throughs** can play **once** per world (an intro): the host keeps it in the world's save.
+- **Copy to my notebook** on the main story's pages in Raft's notebook too.
+- The island map's zoom keys can be changed in **Defaults... > Keys (this PC)** (the keypad's + and - still zoom).
+
+### Fixed
+- A **use** hint on a camera point or a map marker did nothing useful but could be looked at; it is ignored now.
+- The mod's default keys also skip Raft's second keys and keys the mod already gives to something else.
+
 ## 2026-10-25: Island map and pings
 
 ### Added

@@ -514,7 +514,8 @@ namespace DynamicIslands.Editor
 			if (ObjectProps.GetFloat(props, BehaviourProps.Spin, 0f) != 0f || ObjectProps.GetFloat(props, BehaviourProps.Bob, 0f) != 0f || BehaviourProps.Moves(props))
 				go.AddComponent<IslandBehaviour>().Configure(props, index);
 			if (ObjectProps.Get(props, LaserBeam.Prop) == LaserBeam.Beam) go.AddComponent<LaserBeam>();
-			if (ObjectProps.Get(props, BehaviourProps.Use).Length > 0 && !ObjectProps.IsNote(objectName, props) && !ObjectProps.IsLoot(objectName, props) && !ContentCatalog.IsZone(objectName) && !ContentCatalog.IsCreature(objectName))
+			if (ObjectProps.Get(props, BehaviourProps.Use).Length > 0 && !ObjectProps.IsNote(objectName, props) && !ObjectProps.IsLoot(objectName, props) && !ContentCatalog.IsZone(objectName) && !ContentCatalog.IsCreature(objectName)
+				&& !CameraPath.IsPoint(objectName) && !Minimap.IsMarker(objectName)) // (PF4/PF5: unseen markers, nothing to look at)
 			{
 				UseInteract u = CustomNote.InteractHolder(go).AddComponent<UseInteract>();
 				u.Hint = ObjectProps.Get(props, BehaviourProps.Use);

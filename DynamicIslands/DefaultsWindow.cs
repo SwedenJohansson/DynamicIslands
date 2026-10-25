@@ -111,12 +111,14 @@ namespace DynamicIslands.Editor
 			Add("Key_Stats", UIKit.Button(keyRow, "", () => ListenFor(false), "The key that opens the stats page (level up system) in a world: click, then press the new key (Esc: keep it)", 80, 28f, 13));
 			// (PF1/PF5: the player notebook, the island map and the ping)
 			RectTransform keyRow2 = UIKit.Row(keysGroup, 28f, 6f, "Row_Keys2");
+			RectTransform keyRow3 = UIKit.Row(keysGroup, 28f, 6f, "Row_Keys3");
 			foreach (ModKeys.Extra x in ModKeys.Extras)
 			{
 				ModKeys.Extra extra = x;
-				string label = x == ModKeys.NotebookKey ? "Notebook" : x == ModKeys.MapKey ? "Map" : "Ping";
-				UIKit.Label(keyRow2, label, 13, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, label + "Label");
-				Add("Key_" + x.Setting, UIKit.Button(keyRow2, "", () => ListenFor(extra), "The key that " + x.Does + " in a world: click, then press the new key (Esc: keep it)", 64, 28f, 13));
+				string label = x == ModKeys.NotebookKey ? "Notebook" : x == ModKeys.MapKey ? "Map" : x == ModKeys.PingKey ? "Ping" : x == ModKeys.ZoomInKey ? "Map zoom in" : "Map zoom out";
+				RectTransform row = x == ModKeys.ZoomInKey || x == ModKeys.ZoomOutKey ? keyRow3 : keyRow2;
+				UIKit.Label(row, label, 13, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, label.Replace(" ", "") + "Label");
+				Add("Key_" + x.Setting, UIKit.Button(row, "", () => ListenFor(extra), "The key that " + x.Does + " in a world: click, then press the new key (Esc: keep it)", 64, 28f, 13));
 			}
 
 			// The island editor's camera (world_rules.txt, this PC's own; also the editor's Camera... button)
