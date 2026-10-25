@@ -7,7 +7,9 @@ at 0 -60
 wait 3
 picture sunstaff_mesa_island 30 45 -150 0 8 0
 picture sunstaff_mesa_canyon 3 4 -76 0 3 -50
-picture sunstaff_mesa_oasis 4 5 -38 0 3 -24
+# (10-25: the camera above the slot canyon, looking down on the oasis - at 4 5 -38 it stood inside the canyon's east wall,
+# the rock it was in was not drawn, and the oasis looked like a ledge over the sea; down in the slot it saw only walls)
+picture sunstaff_mesa_oasis 0 16 -42 0 2 -25
 picture sunstaff_mesa_maproom 0 17 6 0 14 24
 picture sunstaff_mesa_beam -8 16 13 2 13 24
 # 10-25 deep pass: Gnomon Butte and Pim's mast, the Syndicate's cave, the drowned dig house
