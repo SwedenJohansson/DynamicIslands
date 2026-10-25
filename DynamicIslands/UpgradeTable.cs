@@ -291,7 +291,7 @@ namespace DynamicIslands.Editor
 		{
 			Item_Base i = m != null ? m.GetItem() : null;
 			ExtraUpgrades.Upgrade u = i != null ? ExtraUpgrades.Find(i.UniqueIndex) : null;
-			return u != null && !u.Table ? u : null;
+			return u != null && !u.Table && !u.Cosmetic ? u : null;
 		}
 
 		internal static Dictionary<Item_Base, AvaialableResearchItem> Icons(Inventory_ResearchTable inv)

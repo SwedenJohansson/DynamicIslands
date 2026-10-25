@@ -82,7 +82,7 @@ namespace DynamicIslands
 			// The options' text
 			HashSet<string> parsed = WorldOptions.Parse("storyorder, nonsense,GHOSTRAFTS;;privatestorage");
 			Check(ref ok, parsed.Count == 3 && parsed.Contains(WorldOptions.StoryOrder) && parsed.Contains(WorldOptions.GhostRafts) && parsed.Contains(WorldOptions.PrivateStorage), "options read from text, unknown ones left out: " + WorldOptions.Describe(parsed));
-			Check(ref ok, WorldOptions.Encode(WorldOptions.All, 42) == "on=blueprints,storyorder,ghostrafts,privatestorage,longvoyage,ironraft,sharedxp,nightdanger,dailyquest,rogueshark,barrels,stormdays,traderraft,upgrades,stormseas,ufo,glowsea,lightning,ghostship,whalebreach,fogbanks,kraken;seed=42" && WorldOptions.Encode(new string[0], 7) == "on=;seed=7", "options written as text: " + WorldOptions.Encode(WorldOptions.All, 42));
+			Check(ref ok, WorldOptions.Encode(WorldOptions.All, 42) == "on=blueprints,storyorder,ghostrafts,privatestorage,longvoyage,ironraft,sharedxp,nightdanger,dailyquest,rogueshark,barrels,stormdays,traderraft,upgrades,stormseas,ufo,glowsea,lightning,ghostship,whalebreach,fogbanks,kraken,fogsight,mirrorislands;seed=42" && WorldOptions.Encode(new string[0], 7) == "on=;seed=7", "options written as text: " + WorldOptions.Encode(WorldOptions.All, 42));
 			// Long voyage: twice as many of Raft's islands between random custom islands (and twice the spacing)
 			{
 				bool was = WorldOptions.Current.Contains(WorldOptions.LongVoyage);
@@ -922,16 +922,17 @@ namespace DynamicIslands
 				stat = "throw force " + fa + " vs " + fb;
 				return fb.sqrMagnitude > 0f && (fa - fb * ExtraUpgrades.BowFactor).sqrMagnitude < 0.0001f;
 			}
+			bool scope = u.Name == "DI_Telescope" || u.Name == ExtraUpgrades.MarineName;
 			bool weapon = u.Name == "DI_TitaniumGreatsword" || u.Name == "DI_TitaniumSpear" || u.Name == "DI_TitaniumMachete";
-			string hf = u.Name == "DI_Telescope" ? "minFOV" : u.Name == "DI_LongPaddle" ? "paddleForce" : u.Name == "DI_MasterHammer" ? "blockRepairAmount" : u.Name == "DI_LumberAxe" ? "chopBlockTime" : weapon ? "damage" : null;
+			string hf = scope ? "minFOV" : u.Name == "DI_LongPaddle" ? "paddleForce" : u.Name == "DI_MasterHammer" ? "blockRepairAmount" : u.Name == "DI_LumberAxe" ? "chopBlockTime" : weapon ? "damage" : null;
 			if (hf != null)
 			{
-				Func<GameObject, Component> holder = o => u.Name == "DI_Telescope" ? (Component)o.GetComponentInChildren<Binoculars>(true) : u.Name == "DI_LongPaddle" ? (Component)o.GetComponentInChildren<Paddle>(true)
+				Func<GameObject, Component> holder = o => scope ? (Component)o.GetComponentInChildren<Binoculars>(true) : u.Name == "DI_LongPaddle" ? (Component)o.GetComponentInChildren<Paddle>(true)
 					: u.Name == "DI_MasterHammer" ? (Component)o.GetComponentInChildren<Hammer>(true) : u.Name == "DI_LumberAxe" ? (Component)o.GetComponentInChildren<Axe>(true) : o.GetComponentInChildren<MeleeWeapon>(true);
 				Component ca = holder(a.obj), cb = holder(b.obj);
 				if (ca == null || cb == null) { stat = "no " + hf + " holder in the hand model"; return false; }
 				float va = Convert.ToSingle(HarmonyLib.Traverse.Create(ca).Field(hf).GetValue()), vb = Convert.ToSingle(HarmonyLib.Traverse.Create(cb).Field(hf).GetValue());
-				float want = u.Name == "DI_Telescope" ? vb * ExtraUpgrades.TelescopeFovFactor : u.Name == "DI_LongPaddle" ? vb * ExtraUpgrades.PaddleFactor
+				float want = scope ? vb * ExtraUpgrades.TelescopeFovFactor : u.Name == "DI_LongPaddle" ? vb * ExtraUpgrades.PaddleFactor
 					: u.Name == "DI_MasterHammer" ? vb * ExtraUpgrades.HammerRepairFactor : u.Name == "DI_LumberAxe" ? vb * ExtraUpgrades.AxeTimeFactor : Mathf.RoundToInt(vb * ExtraUpgrades.WeaponDamageFactor);
 				stat = hf + " " + va + " vs " + vb;
 				return vb > 0f && Mathf.Abs(va - want) < 0.001f;
@@ -2328,7 +2329,7 @@ namespace DynamicIslands
 				// rogue shark, the barrels, storm days, the trader raft, night is dangerous, and the 10-19 sea options): 512
 				// combinations - ~22 min; with the upgrades option alone it was 1024 and ran past alltests' 25 min, and with
 				// the sea options one by one 32768 (~23 h))
-				string[] sea = { WorldOptions.RogueShark, WorldOptions.Barrels, WorldOptions.StormDays, WorldOptions.TraderRaft, WorldOptions.NightDanger, WorldOptions.Fog, WorldOptions.Kraken,
+				string[] sea = { WorldOptions.RogueShark, WorldOptions.Barrels, WorldOptions.StormDays, WorldOptions.TraderRaft, WorldOptions.NightDanger, WorldOptions.Fog, WorldOptions.Kraken, WorldOptions.FogSight, WorldOptions.MirrorIslands,
 					WorldOptions.StormSeas, WorldOptions.Ufo, WorldOptions.GlowSea, WorldOptions.Lightning, WorldOptions.GhostShip, WorldOptions.WhaleBreach };
 				string[][] groups = WorldOptions.Offered.Where(o => !sea.Contains(o)).Select(o => new[] { o }).Concat(new[] { sea, WorldOptions.Retired }).ToArray();
 				// (no rogue shark rolled meanwhile: before day 3 there's none)

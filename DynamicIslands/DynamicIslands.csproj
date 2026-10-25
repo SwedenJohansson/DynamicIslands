@@ -208,7 +208,13 @@
     <Compile Include="DevTestsUfo.cs" />
     <Compile Include="DevTestsMpNewOptions.cs" />
     <Compile Include="FogBanks.cs" />
+    <Compile Include="FogSight.cs" />
     <Compile Include="DevTestsFog.cs" />
+    <Compile Include="DevTestsFogSight.cs" />
+    <Compile Include="Cosmetics.cs" />
+    <Compile Include="DevTestsCosmetics.cs" />
+    <Compile Include="MirrorIslands.cs" />
+    <Compile Include="DevTestsMirror.cs" />
     <Compile Include="ExtraUpgrades.cs" />
     <Compile Include="TraderRaft.cs" />
     <Compile Include="GhostShip.cs" />

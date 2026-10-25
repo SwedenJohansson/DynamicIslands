@@ -430,6 +430,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Lightning strikes", e); }
 			try { GhostShip.Tick(); }
 			catch (Exception e) { TickError("Ghost ship", e); }
+			try { FogSight.Tick(); }
+			catch (Exception e) { TickError("Binoculars through fog", e); }
 			try { FogBanks.Tick(); }
 			catch (Exception e) { TickError("Fog banks", e); }
 			try { IslandInfo.Tick(); }
@@ -1240,6 +1242,8 @@ namespace DynamicIslands
 			GameObject made = null;
 			// (SpawnInWorldSliced catches its own errors and gives null: a coroutine's call never throws)
 			Vector3 shiftedSlicing = IslandWorldState.ShiftedBy;
+			// (PF8: a plain random island of a world with Mirrored islands on - the fresh copy just read, nothing else holds it)
+			if (MirrorIslands.ShouldMirror(entry, island)) { MirrorIslands.Mirror(island); Debug.Log("[CUSTOM ISLANDS] '" + entry.HostName + "' is mirrored (option Mirrored islands)"); }
 			yield return IslandSpawner.SpawnInWorldSliced(island, position, r => made = r);
 			// (no entry: the root follows shifts while its objects are made - SpawnedRoots - the position kept for it too)
 			if (entry == null) position -= IslandWorldState.ShiftedBy - shiftedSlicing;

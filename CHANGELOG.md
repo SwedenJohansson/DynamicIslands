@@ -24,6 +24,30 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **The terrain brush goes down to 1 m across** (it was 4 m); the Size slider gives the small sizes room, and the ring
   matches. A 1 m brush moves one ground point (the ground has one about every 2 m).
 
+## 2026-10-25: Mirrored islands
+
+### New
+- **World option Mirrored islands** (off by default): about one random custom island in three comes mirrored left to
+  right, land and everything on it, so islands you know look new. Fixed per world, the same for every player; islands
+  with a quest, plan and story islands, and islands with moving parts or events are never mirrored.
+
+## 2026-10-25: Cosmetic rewards
+
+### New
+- **Cosmetic hats and trophies** for your islands: four hats (Admiral's hat, Corsair's hat, Explorer's hat,
+  Chieftain's mask) and three trophies to place (golden shark, silver rhino shark, jade tiki pole), copies of Raft's
+  own in new colours. Only chests, quest rewards and "give" actions hand them out; the loot preset **Cosmetics** holds
+  a hat and a trophy.
+
+## 2026-10-25: Binoculars see through fog
+
+### New
+- **World option "Binoculars see through fog"** (off by default): the sea's haze comes about 30 % closer, and raised
+  binoculars see about 20 % further than Raft's usual view, the telescope about 50 %. Raft's weather and fog banks
+  keep their own fog; each player sees through their own binoculars.
+- **Marine binoculars** (extra upgrade, titanium): the telescope's zoom, the furthest view through fog and a lighter
+  view at dusk and at night. The telescope and Marine binoculars count as binoculars in plan and island checks.
+
 ## 2026-10-25: Relic of the Seventh Tide, full-size islands
 
 ### Changed
