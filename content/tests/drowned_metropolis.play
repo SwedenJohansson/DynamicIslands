@@ -25,6 +25,7 @@ expect step 4
 open Penthouse safe
 expect story keycard 1
 wait 1
+expect item OxygenBottle 1
 expect step 7
 
 # Down to the sunken council offices: puffer fish, the filing cabinet

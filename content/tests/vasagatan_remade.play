@@ -18,6 +18,9 @@ read First mate's diary
 expect step 2
 open Camp tool chest
 expect story crowbar 1
+wait 3
+expect item HeadLight 1
+expect item OxygenBottle 1
 expect step 4
 
 # The safe stays shut without the captain's key

@@ -20,6 +20,7 @@ expect shown colddoor
 code coldkeypad 312
 expect hidden colddoor
 expect shown colddark
+expect item HeadLight 1
 expect step 3
 walk 2.25 -5 to 2.25 -2 to 2.25 -0.5 h=3.2
 zone coldstore

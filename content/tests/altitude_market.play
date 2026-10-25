@@ -31,6 +31,7 @@ wait 3
 expect step 8
 open Rigger's chest
 wait 3
+expect item OxygenBottle 1
 expect step 9
 zone lower_terrace
 expect step 10
