@@ -16,6 +16,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   temple stones and shrine boulders no longer hang over the hill's slope, Ironreef Caverns' rockfall lies on the cave
   floor and the cliff no longer pokes up through its plank road, and Crane Yard's buried treasure is back for the metal
   detector (it could not be placed). Start a new world with the plan to get the fixed islands.
+- **The Tide Engine's heart:** the rubble in the well lies on its floor instead of hanging off the walls, and a brass
+  gantry over the reactor now holds up its pipe.
 
 ## 2026-10-25: Relic of the Seventh Tide, full-size islands
 
