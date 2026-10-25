@@ -9,6 +9,7 @@ What players do on an island: quests, behaviours and events, trigger zones, note
 | `QuestEditorWindow.cs` | Quest editor (Island tab), also the island's when-the-quest-is-done bring rule |
 | `StoryItems.cs` | `StoryItemDef`, `StoryItems`, `StoryBook` (crew's items and journal pages), `QuestCount`, `NoteCount`, `WorldProgress`, `QuestMilestones`, `JournalWindow` |
 | `StoryItemsWindow.cs` | Story items editor; `StorySets` (`LockedDoor`, `TreasureMap`, `LockedChest`, `NoteTrail`) |
+| `PlayerNotebook.cs` | PF1 own notebook: `PlayerNotebook` (pages, `PathFor` = `CustomIslands-notebook.txt` in `WorldCopy.RaftWorldFolder`, client: the folder whose `CustomIslands-world.txt` holds the guid, else `worlds\<guid>-notebook.txt`; local only, no net), `PlayerNotebookWindow` (key `ModKeys.NotebookKey`, sort 491), Harmony `MyInput` blocks while open |
 | `Behaviours.cs` | `BehaviourProps` (keys), `ObjAction`, `ObjCheck`, `IslandBehaviour` (movers), `SharedClock`, `UseInteract` (interact key; `CodeLock.Use` when `lock.code` is set), `Behaviours` (events at run time) |
 | `BehaviourWindow.cs` | Behaviour & events (object) and Island events editor |
 | `TriggerZone.cs` | Zone: message, items, quest `reach`, `enter` event, air pocket, hazard tick |
@@ -58,6 +59,7 @@ What players do on an island: quests, behaviours and events, trigger zones, note
 | Chest, zone, note use | `LootCrate.Open`, `TriggerZone.Enter`, `NoteReader.Show`; refill and re-arm in `ContentState.OnIslandReady` |
 | Story items, journal | `StoryBook.Give`, `Take`, `AddPage`, `Apply`; `JournalWindow` |
 | Take out as a Raft item (T8) | `StoryItemDef.RaftItem`, `StoryBook.CanTakeOut` / `TakeOut` (client: Story `out` -> host `outok`/`outno` via `IslandNetwork.SendStoryTo`); `JournalWindow.RefreshTakeOut` |
+| Own notebook (PF1) | `PlayerNotebook.CopyIn` (note: `NoteReader` copy button; journal: `JournalWindow` copyPage); `PlayerNotebook.Tick` swaps pages on a world change; test `CINotebook` |
 
 ## Traps
 - Host/client: the acting machine does the personal part (message, Raft items, sound, teleport); the host does shared actions, gives story items once, keeps quest totals, notices kills and catches, and runs `FireFromHost` (`quest`, `defeat`). A chest, a once-zone, or a `read` / `arrive` with a `take` check or `give` / `teleport` asks `Claims.May` first. `StoryBook` changes go to the host, which sends the whole state (`Name` = `all`).

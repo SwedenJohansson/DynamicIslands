@@ -67,6 +67,8 @@ namespace DynamicIslands.Editor
 			string problem = Problem(k);
 			if (problem != null) return Name(k) + " can't be used: " + problem + ".";
 			if (k == (forJournal ? Stats : Journal)) return Name(k) + " already opens the " + (forJournal ? "stats page" : "journal") + ".";
+			Extra taken = Extras.FirstOrDefault(x => x.Key == k);
+			if (taken != null) return Name(k) + " already " + taken.Does + ".";
 			WorldRules.SaveDefault(forJournal ? JournalSetting : StatsSetting, k.ToString());
 			if (forJournal) journal = k; else stats = k;
 			HotkeyHints.KeysChanged();
@@ -80,7 +82,42 @@ namespace DynamicIslands.Editor
 			WorldRules.SaveDefault(StatsSetting, StatsDefault.ToString());
 			journal = JournalDefault;
 			stats = StatsDefault;
+			foreach (Extra x in Extras) { WorldRules.SaveDefault(x.Setting, ""); x.value = null; }
 			HotkeyHints.KeysChanged();
+		}
+
+		/// <summary>
+		/// PF1/PF5: the mod's other keys in a world (the player notebook, the minimap, the map ping), kept and set as the
+		/// journal's (world_rules.txt, Defaults' Keys). Its default is skipped for the next free one when Raft uses it.
+		/// </summary>
+		public sealed class Extra
+		{
+			public readonly string Setting, Does;
+			public readonly KeyCode[] Defaults;
+			internal KeyCode? value;
+			public Extra(string setting, string does, params KeyCode[] defaults) { Setting = setting; Does = does; Defaults = defaults; }
+			public KeyCode Default { get { foreach (KeyCode k in Defaults) if (Problem(k) == null) return k; return Defaults[0]; } }
+			public KeyCode Key { get { if (value == null) value = Read(Setting, Default); return value.Value; } }
+		}
+
+		public static readonly Extra NotebookKey = new Extra("notebookkey", "opens your own notebook", KeyCode.U, KeyCode.Y, KeyCode.O);
+		public static readonly Extra MapKey = new Extra("mapkey", "opens the island map", KeyCode.M, KeyCode.N, KeyCode.Comma);
+		public static readonly Extra PingKey = new Extra("pingkey", "pings a spot for the crew", KeyCode.G, KeyCode.H, KeyCode.B);
+		public static readonly Extra[] Extras = { NotebookKey, MapKey, PingKey };
+
+		/// <summary>Sets one of the Extra keys; the reason when it can't be, or null.</summary>
+		public static string Set(Extra e, KeyCode k)
+		{
+			string problem = Problem(k);
+			if (problem != null) return Name(k) + " can't be used: " + problem + ".";
+			if (k == Journal) return Name(k) + " already opens the journal.";
+			if (k == Stats) return Name(k) + " already opens the stats page.";
+			Extra taken = Extras.FirstOrDefault(x => x != e && x.Key == k);
+			if (taken != null) return Name(k) + " already " + taken.Does + ".";
+			WorldRules.SaveDefault(e.Setting, k.ToString());
+			e.value = k;
+			HotkeyHints.KeysChanged();
+			return null;
 		}
 
 		/// <summary>A key as the player knows it: "7" for Alpha7, "Num 7" for Keypad7.</summary>

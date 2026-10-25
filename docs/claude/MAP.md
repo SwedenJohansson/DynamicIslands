@@ -29,7 +29,7 @@ line per source file.
 
 | Path | Holds |
 |---|---|
-| `DynamicIslands/` | The mod folder that becomes the `.rmod`: about 200 `.cs` files (and 113 `DevTests*.cs`), `modinfo.json` (version), asset bundles, measured Raft data (`raft_*.txt`, `island_thumbs/`, `island_heights/`) |
+| `DynamicIslands/` | The mod folder that becomes the `.rmod`: about 200 `.cs` files (and 114 `DevTests*.cs`), `modinfo.json` (version), asset bundles, measured Raft data (`raft_*.txt`, `island_thumbs/`, `island_heights/`) |
 | `content/recipes/` | `.recipe` scripts that build an island or world plan |
 | `content/tests/` | `.play` play-tests |
 | `content/objects/` | Object catalogue lists by category |

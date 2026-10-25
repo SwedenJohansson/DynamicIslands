@@ -9,6 +9,14 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-25: Your own notebook
+
+### Added
+- **Your own notebook (U):** pages you write yourself, with titles, beside the journal and Raft's notebook. It saves
+  by itself (while you type and on closing), per world, in a file next to the world's save on your own PC; it is never
+  sent to the other players. **Copy to my notebook** on a note or a journal page copies it in. The key, and the new
+  Map and Ping keys, can be changed in **Defaults... > Keys (this PC)**.
+
 ## 2026-10-25: Relic of the Seventh Tide, full-size islands
 
 ### Changed

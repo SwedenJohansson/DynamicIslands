@@ -448,6 +448,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("World director", e); }
 			try { JournalWindow.Tick(); }
 			catch (Exception e) { TickError("Journal", e); }
+			try { PlayerNotebookWindow.Tick(); }
+			catch (Exception e) { TickError("Player notebook", e); }
 			try { if (LoadSceneManager.IsGameSceneLoaded && !InEditor()) QuestBook.Tick(); }
 			catch (Exception e) { TickError("Quest book", e); }
 			try { if (LoadSceneManager.IsGameSceneLoaded && !InEditor()) HotkeyHints.Tick(); }

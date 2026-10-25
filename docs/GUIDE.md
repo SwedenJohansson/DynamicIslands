@@ -481,6 +481,23 @@ More: [The main story in Raft's notebook, side quests in the journal](#the-main-
 Story items aren't in your inventory: the crew holds them (in the journal, or in Raft's Found items for the main
 story), like Raft holds its quest items outside the inventory.
 
+### Your own notebook (U)
+
+Your **own notebook** is yours to write in: pages with a title and free text, for plans, codes, maps in words, what to
+do next. Press **U** in a world to open it (or **My notebook** at the top of the journal); **U** (while you aren't
+typing), **Esc** or **Close** closes it, and **Journal** goes to the journal.
+
+- **New page** adds a page; click a page in the list on the left to open it. Type its title at the top of the paper
+  and its text below. **Delete** removes the open page (click it twice: **Sure?**).
+- While it is open you don't walk, look around or use the hotbar, so typing doesn't move you.
+- It **saves itself**: a few seconds after you stop typing, and when you close it.
+- **Copy to my notebook** on a note you read, and on a page of the journal, copies its title and text in as a new page.
+- It is **per world** and **only on your computer**: the file `CustomIslands-notebook.txt` sits next to that world's
+  save (in Raft's world folder). It is never sent to the other players, and another world has its own pages. A
+  player who joins a world keeps theirs in the folder of their copy of it, or under the mod's `worlds` folder until
+  there is one.
+- The key can be changed in **Defaults... > Keys (this PC)** (Notebook), like the journal's.
+
 ---
 
 ## 4. Building your own island: the editor
@@ -3445,7 +3462,7 @@ get the settings they share at once.
 | Group | What is in it |
 |---|---|
 | **Random islands while sailing** | Random islands on or off (0 = off), the quiet minutes in a new world, the spacing, how far ahead an island appears (**Appear from** and **to**), and when a needed island returns |
-| **Keys (this PC)** | The **Journal** key (J) and the **Stats** key (K): click one, then press the new key (Esc keeps the old one). A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why |
+| **Keys (this PC)** | The **Journal** key (J), the **Stats** key (K) and, on the second line, **Notebook** (U, your own notebook), **Map** (M, the minimap) and **Ping** (G, a ping for the crew): click one, then press the new key (Esc keeps the old one). A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why |
 | **Shared with every player** | **Receiver dots** on or off, the **Receiver range**, **Unload beyond** and **Regrow days (new worlds)** |
 | **Generated islands** | The weight of new generated islands, the chance one flies, **Things to gather**, **Finds in the shallows** and how far down they go, the five styles (at least one stays lit) and a button for each kind of thing to gather (lit = on) |
 | **Editor camera (this PC)** | The island editor's camera: **Look sensitivity**, **Move speed**, **Zoom speed**, **Pan speed**, **Drag up: look up / down** and **Wheel up: zoom in / out** - the same as the editor's **Camera...** button ([4.1](#41-the-screen)); kept in `world_rules.txt` |
@@ -3498,6 +3515,7 @@ there means plain Raft.
 | `islandsoff` | Island names separated by a vertical bar; also `type:<map type>` and `<generated>` | The islands left out of the next new world's islands while sailing | **CHOOSE ISLANDS...** in World settings (Create); `WorldIslands -<island>`, `+<island>`, `all` in the main menu |
 | `raftgap` | `min-max`, for example `3-6` (min 2-20, max 4-50) | One random island after every min to max of Raft's own islands | **One after every ... to ...** under CHOOSE ISLANDS..., at once; `WorldIslandsGap <min>-<max>` in the main menu |
 | `journalkey`, `statskey` | A Unity key name, for example `J`, `K` or `F6` | The keys of the journal (J) and the stats page (K) in a world | **Defaults...** > **Keys (this PC)**, at once. A key that can't be used falls back to J or K, and the log says so |
+| `notebookkey`, `mapkey`, `pingkey` | A Unity key name | The keys of your own notebook (U), the minimap (M) and pings (G) | **Defaults...** > **Keys (this PC)**, at once. Empty = the default: the first of U/Y/O, M/N/Comma, G/H/B that Raft doesn't use |
 | `cameralook`, `cameraspeed`, `camerazoom`, `camerapan` | A multiplier, 1 = the mod's own: look 0.2-4, speed 0.1-10, zoom and pan 0.25-4 | The island editor camera's look sensitivity, flying speed, wheel zoom step and pan speed (this PC) | The editor's **Camera...** window or **Defaults... > Editor camera (this PC)**, a moment after a change |
 | `cameradragup`, `camerawheel` | `up` / `down`; `normal` / `reversed` | Which way dragging up turns the editor's view (up, the default; only a saved `down` turns it round) and the wheel's direction | The same |
 
