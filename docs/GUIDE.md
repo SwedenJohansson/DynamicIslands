@@ -1781,13 +1781,18 @@ choice events). Check warns when a **Talk to** step names no islander of the isl
 piece of a set. Its **Collectible set** group in the inspector has the **Set** name (default Relics; every object
 with the same set on the island is a piece of it, and the group counts them). Hide the pieces about the island. A
 player looks at one and presses **E**: it is picked up (gone for the whole crew, after a reload too; two players at
-once: one gets it) and the screen shows "Relics: 2 of 4". When the island's last piece is found the set is complete:
+once: one gets it) and every player on the island sees "Relics: 2 of 4". When the island's last piece is found the set is complete:
 the island sends the signal `set:relics` (world plans and **signal sent** checks can wait for it) and every piece's
 **set** event runs once (Behaviour & events..., 6.2): put the reward there on one piece (`give||Titanium*3`, a
 `journal` page, `open|Vault door`). The check **set found** (`set|Relics|2`) passes once that many pieces were found,
 and a quest's **Find set** step (6.1; the **▾** lists the island's sets) waits until its number of pieces is found -
 its progress shows in the quest panel. Pieces count per island (a copy of the island has its own). Check warns when
 a **Find set** step names a set the island hasn't got or wants more pieces than it has.
+
+Any object (not an islander) has a **Story puzzle** group in the inspector: **Make collectible (set)** gives it the
+set Relics and **Make puzzle light (group)** the group Lamps, so its own group shows - rename them there. The
+events **talk**, **choice1**-**choice3**, **set**, **lit**, **unlit** and **alllit** keep their actions after a
+`wait` like the other events: if the island unloads first they run when it loads again.
 
 **Light puzzles** (2026-10-25). **Zones & triggers** has **Puzzle light (switch)**: a post with a bulb. Its **Puzzle
 light** group in the inspector has the **Group** (default Lamps; any object with a group is a puzzle light, so a

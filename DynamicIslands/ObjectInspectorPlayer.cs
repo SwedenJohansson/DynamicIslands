@@ -14,6 +14,22 @@ namespace DynamicIslands.Editor
 			if (Islanders.Is(target.GameObjectName)) IslanderGroup(target);
 			if (Collectibles.Is(target.GameObjectName) || Collectibles.IsPiece(target.Props)) CollectibleGroup(target);
 			if (Lights.IsLight(target.GameObjectName, target.Props)) LightGroup(target);
+			MakeFeatureGroup(target);
+		}
+
+		/// <summary>Any object: buttons that make it a piece of a collectible set or a puzzle light (the prop set for the
+		/// builder; its group then shows). Not on islanders.</summary>
+		static void MakeFeatureGroup(EditorGameObject target)
+		{
+			if (Islanders.Is(target.GameObjectName)) return;
+			bool piece = Collectibles.IsPiece(target.Props), light = Lights.IsLight(target.GameObjectName, target.Props);
+			if (piece && light) return;
+			RectTransform g = UIKit.Group(root, "Story puzzle");
+			RectTransform row = UIKit.Row(g, UIKit.RowHeight, 4f, "MakeStoryFeature");
+			if (!piece)
+				UIKit.Button(row, "Make collectible (set)", () => { Set(target, Collectibles.SetProp, "Relics"); Refresh(); }, "Makes this object a hidden piece of a collectible set (Relics; change it below): players pick it up with E, the HUD counts the set, the whole set runs the \"set\" event");
+			if (!light)
+				UIKit.Button(row, "Make puzzle light (group)", () => { Set(target, Lights.GroupProp, "Lamps"); Refresh(); }, "Makes this object a puzzle light of a group (Lamps; change it below): players switch it with E; events lit, unlit, alllit");
 		}
 
 		static void IslanderGroup(EditorGameObject target)

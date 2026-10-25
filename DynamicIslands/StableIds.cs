@@ -324,13 +324,14 @@ namespace DynamicIslands.Editor
 					moved = b + j;
 					return j >= 0 && j < 0x10000;
 				}
-			if (key >= Behaviours.PendingBase && key < Behaviours.PendingBase + 0x100000)
-			{
-				int i = (key - Behaviours.PendingBase) >> 4, ev = (key - Behaviours.PendingBase) & 0xF;
-				int j = indexNow(uidAt(i));
-				moved = Behaviours.PendingBase + (j << 4) + ev;
-				return j >= 0 && j < 0x10000;
-			}
+			foreach (int pb in new[] { Behaviours.PendingBase, Behaviours.MorePendingBase })
+				if (key >= pb && key < pb + 0x100000)
+				{
+					int i = (key - pb) >> 4, ev = (key - pb) & 0xF;
+					int j = indexNow(uidAt(i));
+					moved = pb + (j << 4) + ev;
+					return j >= 0 && j < 0x10000;
+				}
 			return true; // (not an object's: quest steps, rules, visits, signals - kept by their own place)
 		}
 

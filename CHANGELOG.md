@@ -24,6 +24,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   off with E, saved and the same for every player. Events **lit**, **unlit** and **alllit** (the whole group on, plus
   the signal `lights:<group>`), the action **switch light**, the checks **light is** / **all lights** and the quest
   step **Light up**.
+- Any object can be made a collectible or a puzzle light with the inspector's **Story puzzle** buttons; every player
+  on the island sees a set's count; the new events keep their actions after a `wait` like the others.
 
 ## 2026-10-25: Relic of the Seventh Tide, full-size islands
 

@@ -95,13 +95,38 @@ namespace DynamicIslands.Editor
 		public static int Total(IslandWorldState.Entry e, string set) { return Of(e, set).Count(); }
 		public static int Found(IslandWorldState.Entry e, string set) { return Of(e, set).Count(x => ContentState.IsUsed(e, KeyBase + x.Index)); }
 
-		/// <summary>This player picked a piece up: "Relics: 2 of 4".</summary>
+		/// <summary>This player picked a piece up: "Relics: 2 of 4" (at once; the others see it from Tick).</summary>
 		internal static void PickedUp(IslandWorldState.Entry e, IslandObjectRef r)
 		{
 			string set = SetOf(r.Props);
-			int found = Found(e, set), total = Total(e, set);
+			ShowCount(e, set, Found(e, set));
+		}
+
+		/// <summary>The count each set of a loaded island was last seen at here (island id + set), to show its rises.</summary>
+		static readonly Dictionary<string, int> seen = new Dictionary<string, int>();
+
+		static string SeenKey(IslandWorldState.Entry e, string set) { return e.Id + ":" + (set ?? "").Trim().ToLowerInvariant(); }
+
+		static void ShowCount(IslandWorldState.Entry e, string set, int found)
+		{
+			seen[SeenKey(e, set)] = found;
+			int total = Total(e, set);
 			LastShown = set + ": " + found + " of " + total + (found >= total ? " - the whole set!" : "");
 			IslandInfo.ShowMessage(LastShown);
+		}
+
+		/// <summary>Every player: a piece another player picked up (its key came from the host) shows the count here too.
+		/// A set first seen (the island loaded) is only noted.</summary>
+		static void WatchCounts(IslandWorldState.Entry e, List<IslandObjectRef> all)
+		{
+			foreach (IGrouping<string, IslandObjectRef> g in all.GroupBy(x => SetOf(x.Props).ToLowerInvariant()))
+			{
+				int found = g.Count(x => ContentState.IsUsed(e, KeyBase + x.Index)), was;
+				string key = SeenKey(e, g.Key);
+				if (!seen.TryGetValue(key, out was)) { seen[key] = found; continue; }
+				if (found > was) ShowCount(e, SetOf(g.First().Props), found);
+				else if (found < was) seen[key] = found;
+			}
 		}
 
 		/// <summary>The last count shown here (tests).</summary>
@@ -117,16 +142,19 @@ namespace DynamicIslands.Editor
 
 		static float nextTick;
 
-		/// <summary>Host: a set whose pieces are all found sends its signal and runs its pieces' "set" event, once per world.</summary>
+		/// <summary>Every player: counts picked up elsewhere shown here. Host: a set whose pieces are all found sends its
+		/// signal and runs its pieces' "set" event, once per world.</summary>
 		internal static void Tick()
 		{
-			if (!Raft_Network.IsHost || Time.time < nextTick) return;
+			if (Time.time < nextTick) return;
 			nextTick = Time.time + 0.5f;
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
 			{
 				if (e.Root == null) continue;
 				List<IslandObjectRef> all = PiecesOf(e);
 				if (all.Count == 0) continue;
+				WatchCounts(e, all);
+				if (!Raft_Network.IsHost) continue;
 				foreach (IGrouping<string, IslandObjectRef> g in all.GroupBy(x => SetOf(x.Props).ToLowerInvariant()))
 				{
 					if (Behaviours.HasSignal(e, SignalOf(g.Key)) || !g.All(x => ContentState.IsUsed(e, KeyBase + x.Index))) continue;

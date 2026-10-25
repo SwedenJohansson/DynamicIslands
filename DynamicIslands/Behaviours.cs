@@ -1009,7 +1009,7 @@ namespace DynamicIslands.Editor
 		{
 			float delay = 0f;
 			int deathsThen = deaths, partNo = 0, parts = actions.Count(a => a.Verb == "wait") + 1;
-			bool keep = shared && ev != null && Raft_Network.IsHost && PendingEventNo(ev) >= 0;
+			bool keep = shared && ev != null && Raft_Network.IsHost && Resumable(ev);
 			int token = ++pendingTokens; // (the latest scheduling of an event is the one that runs: resumed after a reload, the old timers stop)
 			var part = new List<ObjAction>();
 			foreach (ObjAction a in actions.Concat(new[] { new ObjAction { Verb = "wait", Arg = "0" } }))
@@ -1047,8 +1047,15 @@ namespace DynamicIslands.Editor
 		/// <summary>An event's shared actions still to come after a wait (host): PendingBase + object index * 16 + the
 		/// event's number; Yield = the part (counted in waits) they go on from; Day = the scheduling's token (this session).</summary>
 		public const int PendingBase = 0x900000;
+		/// <summary>The same for the story features' events (PlayerFeatures.ResumableEvents: talk, choice1-3, set, lit, unlit,
+		/// alllit), laid out alike: ObjectEvents' numbers are kept in saved worlds and their 4 bits are full.</summary>
+		public const int MorePendingBase = 0xA00000;
 		static int pendingTokens;
 		static readonly string[] PendingEvents = BehaviourProps.ObjectEvents.Concat(BehaviourProps.IslandEvents).ToArray();
+		static string[] MorePendingEvents { get { return PlayerFeatures.ResumableEvents; } }
+
+		/// <summary>Whether an event's shared actions after a wait are kept until they ran.</summary>
+		static bool Resumable(string ev) { return PendingEventNo(ev) >= 0 || Array.IndexOf(MorePendingEvents, (ev ?? "").TrimEnd('!')) >= 0; }
 
 		static int PendingEventNo(string ev)
 		{
@@ -1056,7 +1063,21 @@ namespace DynamicIslands.Editor
 			return n < 0 ? -1 : n + ((ev ?? "").EndsWith("!") ? PendingEvents.Length : 0);
 		}
 
-		static int PendingKey(int index, string ev) { return PendingBase + ((index & 0xFFFF) << 4) + PendingEventNo(ev); }
+		static int PendingKey(int index, string ev)
+		{
+			int m = Array.IndexOf(MorePendingEvents, (ev ?? "").TrimEnd('!'));
+			if (m >= 0) return MorePendingBase + ((index & 0xFFFF) << 4) + m + ((ev ?? "").EndsWith("!") ? MorePendingEvents.Length : 0);
+			return PendingBase + ((index & 0xFFFF) << 4) + PendingEventNo(ev);
+		}
+
+		/// <summary>A pending key's event (null: none).</summary>
+		static string PendingEventOf(int key)
+		{
+			bool more = key >= MorePendingBase;
+			string[] evs = more ? MorePendingEvents : PendingEvents;
+			int evNo = (key - (more ? MorePendingBase : PendingBase)) & 15;
+			return evNo < evs.Length ? evs[evNo] : evNo < evs.Length * 2 ? evs[evNo - evs.Length] + "!" : null;
+		}
 
 		static void KeepPending(IslandWorldState.Entry e, int index, string ev, int part, int token)
 		{
@@ -1085,10 +1106,10 @@ namespace DynamicIslands.Editor
 		static void ResumePending(IslandWorldState.Entry e)
 		{
 			if (!Raft_Network.IsHost) return;
-			foreach (KeyValuePair<int, ObjectState> kv in e.State.Where(k => k.Key >= PendingBase && k.Key < PendingBase + 0x100000).ToList())
+			foreach (KeyValuePair<int, ObjectState> kv in e.State.Where(k => (k.Key >= PendingBase && k.Key < PendingBase + 0x100000) || (k.Key >= MorePendingBase && k.Key < MorePendingBase + 0x100000)).ToList())
 			{
-				int rel = kv.Key - PendingBase, index = rel >> 4, evNo = rel & 15;
-				string ev = evNo < PendingEvents.Length ? PendingEvents[evNo] : evNo < PendingEvents.Length * 2 ? PendingEvents[evNo - PendingEvents.Length] + "!" : null;
+				int index = ((kv.Key - (kv.Key >= MorePendingBase ? MorePendingBase : PendingBase)) >> 4) & 0xFFFF;
+				string ev = PendingEventOf(kv.Key);
 				e.State.Remove(kv.Key);
 				if (ev == null) continue;
 				int from = kv.Value.Yield, waits = 0;

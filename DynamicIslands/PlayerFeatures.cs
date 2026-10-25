@@ -15,6 +15,10 @@ namespace DynamicIslands.Editor
 		/// <summary>Verbs, checks and quest steps of these features (also in Behaviours' and Quest's lists).</summary>
 		public const string DialogueVerb = "dialogue", TalkedCheck = "talked";
 
+		/// <summary>These features' events whose shared actions after a wait go on when the island loads again (Behaviours'
+		/// MorePendingBase keys: append only, at most 8 - a saved world keeps their numbers).</summary>
+		public static readonly string[] ResumableEvents = { Islanders.TalkEvent, Islanders.ChoicePrefix + "1", Islanders.ChoicePrefix + "2", Islanders.ChoicePrefix + "3", Collectibles.SetEvent, Lights.LitEvent, Lights.UnlitEvent, Lights.AllLitEvent };
+
 		/// <summary>ObjAction.HasTarget / HasArg for these verbs.</summary>
 		public static bool HasTarget(string verb) { return verb == DialogueVerb || verb == Lights.Verb; }
 		public static bool HasArg(string verb) { return verb == DialogueVerb || verb == Lights.Verb; }

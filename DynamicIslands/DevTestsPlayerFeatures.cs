@@ -205,6 +205,18 @@ namespace DynamicIslands
 				&& PlayerFeatures.StepProblem(facts, "set", "Coins", 1) != null && PlayerFeatures.StepProblem(facts, "set", "", 1) != null, "the plan check: an unknown set, too few pieces");
 			Check(ref ok, ContentCatalog.Hint(Collectibles.ObjectName).Contains("set"), "the catalog hint");
 			Check(ref ok, Collectibles.KeyBase > Islanders.TalkedBase + 0xFFFF && Collectibles.KeyBase + 0xFFFF < Behaviours.PendingBase, "the piece keys meet no other keys");
+			// (the story features' events resume after a wait: their own pending keys, read back to the same event)
+			var bt = Traverse.Create(typeof(Behaviours));
+			bool resumes = PlayerFeatures.ResumableEvents.Length <= 8 && BehaviourProps.ObjectEvents.All(o => !PlayerFeatures.ResumableEvents.Contains(o));
+			foreach (string ev in PlayerFeatures.ResumableEvents.SelectMany(v => new[] { v, v + "!" }))
+			{
+				int key = bt.Method("PendingKey", new[] { typeof(int), typeof(string) }).GetValue<int>(7, ev);
+				bool kept = bt.Method("Resumable", new[] { typeof(string) }).GetValue<bool>(ev);
+				string back = bt.Method("PendingEventOf", new[] { typeof(int) }).GetValue<string>(key);
+				if (!kept || back != ev || key < Behaviours.MorePendingBase || ((key - Behaviours.MorePendingBase) >> 4) != 7) { resumes = false; Log("  " + ev + ": key " + key.ToString("X") + " reads back " + back); }
+			}
+			Check(ref ok, resumes, "talk, choice1-3, set, lit, unlit, alllit keep their actions after a wait (own pending keys)");
+			Check(ref ok, bt.Method("PendingEventOf", new[] { typeof(int) }).GetValue<string>(Behaviours.PendingBase + (3 << 4) + 0) == "use", "the old pending keys still read as before");
 			CheckPlayerTables(ref ok);
 			if (ok) Log("PASS: collectible sets' settings"); else Fail("collectible sets' settings");
 		}
@@ -246,6 +258,14 @@ namespace DynamicIslands
 				for (int i = 0; i < 3; i++)
 				{
 					IslandObjectRef r = obj(piece[i]);
+					if (i == 2)
+					{
+						// (the last one as another player's: its key comes from the host; the count shows here too)
+						ContentState.ApplyUsed(e.Id, Collectibles.KeyBase + piece[i], Behaviours.Today);
+						yield return new WaitForSeconds(0.8f);
+						Check(ref ok, Collectibles.LastShown != null && Collectibles.LastShown.StartsWith("Relics: 3 of 3"), "another player's piece shows the count here too (" + Collectibles.LastShown + ")");
+						continue;
+					}
 					UseInteract u = r != null ? r.GetComponentInChildren<UseInteract>(true) : null;
 					Check(ref ok, u != null, "piece " + (i + 1) + " can be picked up");
 					if (u == null) continue;
