@@ -213,18 +213,21 @@ place Creature_ButlerBot rk_bot1 at 35.67 -15.62 ground
 prop rk_bot1 creature.zap=8
 prop rk_bot1 on.defeat=show|rk_tin1\nmessage||The bot sparks and stops. Under it, the ration tin it was guarding.
 place Loot_ChestSmall rk_tin1 at 37.17 -15.62 ground sit
+prop rk_tin1 obj.name=rk_tin1
 prop rk_tin1 beh.hidden=1
 prop rk_tin1 loot.refill=0
 place Creature_ButlerBot rk_bot2 at 17.32 -34.63 ground
 prop rk_bot2 creature.zap=8
 prop rk_bot2 on.defeat=show|rk_tin2\nmessage||The bot sparks and stops. Under it, the ration tin it was guarding.
 place Loot_ChestSmall rk_tin2 at 18.82 -34.63 ground sit
+prop rk_tin2 obj.name=rk_tin2
 prop rk_tin2 beh.hidden=1
 prop rk_tin2 loot.refill=0
 place Creature_ButlerBot rk_bot3 at 26.72 -25.57 ground
 prop rk_bot3 creature.zap=8
 prop rk_bot3 on.defeat=show|rk_tin3\nmessage||The bot sparks and stops. Under it, the ration tin it was guarding.
 place Loot_ChestSmall rk_tin3 at 28.22 -25.57 ground sit
+prop rk_tin3 obj.name=rk_tin3
 prop rk_tin3 beh.hidden=1
 prop rk_tin3 loot.refill=0
 place Loot_Chest rk_hoard at 19.55 -45.81 ground sit yaw=-71.57
