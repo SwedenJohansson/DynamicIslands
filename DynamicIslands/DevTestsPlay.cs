@@ -67,6 +67,24 @@ namespace DynamicIslands
 		static Vector2 playOffset;
 
 		/// <summary>The top of what is at a point (land, a deck, a roof), below a height.</summary>
+		// A keypad high up (Riverfork's crane pad on its jib, 46 m over the ground): PutPlayerNear stands the player on the
+		// terrain, past CodeLock's 8 m - stand them on what is under the pad instead, as a player who climbed there would.
+		static void PutPlayerByHighPad(Transform pad)
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player == null || pad == null || Vector3.Distance(player.transform.position, pad.position) <= 6f) return;
+			foreach (Vector3 side in new[] { new Vector3(0.9f, 0f, 0f), new Vector3(-0.9f, 0f, 0f), new Vector3(0f, 0f, 0.9f), new Vector3(0f, 0f, -0.9f) })
+			{
+				RaycastHit[] hits = Physics.RaycastAll(pad.position + side + Vector3.up * 1.5f, Vector3.down, 6f, ~0, QueryTriggerInteraction.Ignore);
+				foreach (RaycastHit h in hits.OrderBy(x => x.distance))
+				{
+					if (h.collider.transform.IsChildOf(pad) || h.collider.transform.IsChildOf(player.transform)) continue;
+					PlayerMove.To(player, h.point + Vector3.up * 1.2f);
+					return;
+				}
+			}
+		}
+
 		static float PlaySurface(Vector3 p, float below = 400f, bool inCave = false)
 		{
 			if (inCave)
@@ -330,6 +348,7 @@ namespace DynamicIslands
 						Check(ref ok, pad != null && CodeLock.HasCode(pad.Props), "object '" + what + "' with a keypad code");
 						if (pad == null || !CodeLock.HasCode(pad.Props)) break;
 						PutPlayerNear(pad.transform);
+						PutPlayerByHighPad(pad.transform);
 						CodeLock.Use(playEntry, pad.Index, ObjectProps.Get(pad.Props, CodeLock.Code), pad.transform);
 						yield return new WaitForSeconds(0.6f);
 						foreach (char c in digits) CodeLock.Press(c.ToString());
