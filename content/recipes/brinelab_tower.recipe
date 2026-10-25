@@ -216,9 +216,9 @@ note labstores Lab stores | The lab's deep store: explosive goo in sealed jars, 
 note boilerlocker Boiler room locker | The boiler man's locker: biofuel extractor plans and gloves.
 loot reception Blueprint_Machete*1;Machete*1;Rope*2
 prop reception loot.refill=0
-loot lab2cabinet Blueprint_Fueltank*1;Bolt*2
+loot lab2cabinet Blueprint_Fueltank*1;Blueprint_HeadLight*1;Bolt*2
 prop lab2cabinet loot.refill=0
-loot pipestore Blueprint_Pipe_Fuel*1;Scrap*3
+loot pipestore Blueprint_Pipe_Fuel*1;Blueprint_Recycler*1;Scrap*3
 prop pipestore loot.refill=0
 loot labstores ExplosiveGoo*2;Scrap*6
 prop labstores loot.refill=0
@@ -280,11 +280,11 @@ step read|Lab safety board|1|Read the safety board in the lobby
 step blueprint|Blueprint_Machete|1|Take the machete plans (and the caretaker's old machete) from the reception drawer
 step reach|stairwell|1|Cut the vines over the hatch with the machete and climb up
 step kill|Warthog|3|Drive the boars out of the greenhouse
-step blueprint|Blueprint_Fueltank|1|Find the fuel tank plans in lab 2
+step blueprint|Blueprint_Fueltank|1|Find the fuel tank and head light plans in lab 2
 step read|Data drive 1|1|Read data drive 1 in lab 2
 step read|Dr Sato's roof recording|1|Climb to the roof garden and play Dr Sato's recorder by the beehives
 step reach|flooded_lab|1|Dive down the hatch shaft to the flooded lab's air pocket
-step blueprint|Blueprint_Pipe_Fuel|1|Find the fuel pipe plans in the flooded pipe store
+step blueprint|Blueprint_Pipe_Fuel|1|Find the fuel pipe and recycler plans in the flooded pipe store
 step blueprint|Blueprint_BiofuelExtractor|1|Get past the rats in the boiler room: biofuel extractor plans
 step read|Data drive 3|1|Read data drives 2 and 3 on the deepest flooded floor
 quest done=Someone at the Spire flooded the lab by remote. Biome Seven's beacon calls from the shelf; the Receiver finds it on band 600.

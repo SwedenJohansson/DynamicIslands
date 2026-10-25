@@ -340,11 +340,11 @@ note hollisslip Clerk Hollis's slip | Pinned under a stone by the lodge wall -\n
 note faneslip Clerk Fane's slip | Taped inside the van's door, behind the mirror -\n\nTHIRD: SLUICE FOUR.\n\nI drove the records van the morning after. Councillor's orders: take every valve book on the island out to the Piles barge and see it sunk. I took them. I sank them. All but one, which I put back in the gallery where it was written, because my mother was on Lowstreet and she got out with one shoe and a kettle.\n\nIf you've read that valve log, you've read the one I kept. Look at the signatures. Look at them hard.\n\n- P. Fane
 note abernethyslip Clerk Abernethy's slip | Tucked into a lamp bracket at the cave mouth -\n\nFOURTH: SLUICE TWO. Then the hall drains, and the old keeper's chest stands dry.\n\nI'm Nell Abernethy, night clerk. I won't be here when you read this: the Councillor has reassigned me to the Crown, where he can keep an eye on me, which is a compliment of a kind. I have a father on Bellow Street who thinks I work in an office with a nice window. Let him.\n\nThe woman with the chalk came through at midnight and asked me for my line. I gave it to her. She asked who else knew. I said: now, you. She said: not for long.\n\n- N. Abernethy
 note seedbox Planter box | The roof garden's seeds.
-loot smelterbench Blueprint_SmelterElectric*1;CopperIngot*2;MetalIngot*2
+loot smelterbench Blueprint_SmelterElectric*1;Blueprint_BatteryCharger*1;CopperIngot*2;MetalIngot*2
 prop smelterbench loot.refill=0
 loot gallerychest Blueprint_BiofuelExtractorAdvanced*1;Plastic*2
 prop gallerychest loot.refill=0
-loot anchorlocker Blueprint_AnchorStationaryAdvanced*1;MetalIngot*3
+loot anchorlocker Blueprint_AnchorStationaryAdvanced*1;Blueprint_ZiplineTool*1;MetalIngot*3
 prop anchorlocker loot.refill=0
 loot drawer TradeToken*6;Glass*2
 prop drawer loot.refill=0
@@ -374,11 +374,11 @@ step read|Cistern ledger|1|Read the cistern ledger at the intake
 step reach|valve_gallery|1|Dive down to the flooded valve gallery
 step read|Valve log|1|Read the valve log in the gallery
 step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced biofuel extractor's plans from the gallery's chest
-step blueprint|Blueprint_SmelterElectric|1|Take the electric smelter's plans from the workshop
+step blueprint|Blueprint_SmelterElectric|1|Take the electric smelter's and battery charger's plans from the workshop
 step open|Councillor's drawer|1|Open the councillor's drawer in his office
 step reach|old_pump|1|Go into the pump house and look at the oldest pump
 step read|Builder's plate|1|Read the builder's plate on the pump
-step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced anchor's plans from the pump house locker
+step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced anchor's and zipline's plans from the pump house locker
 step read|Sluicekeeper's notice|1|Read the sluicekeeper's notice by the four sluice levers in the south
 step reach|aqueduct_hill|1|Climb aqueduct hill in the north-west
 step read|Clerk Quill's slip|1|Find Clerk Quill's slip on aqueduct hill

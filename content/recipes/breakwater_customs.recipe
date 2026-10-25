@@ -243,9 +243,9 @@ note cranewelcome Councillor Crane's welcome | TRANSCRIPT - the loop on band fiv
 note dobbs211 Complaint No. 211 | To the Harbor Council, Water Committee.\nCOMPLAINT No. 211\n\nSirs,\nThe boom squeaks. I reported the boom squeaking in Complaints 87, 140 and 198. It is the third post from the east. It squeaks on the ebb tide, in B-flat, and it can be heard at Pumpcrown, which is eleven miles away, which should not be possible, and yet.\n\nI am a pump foreman. I do not maintain booms. But I am the one who cannot sleep.\n\nI enclose a small tin of grease. Please give it to whoever maintains the boom. If nobody maintains the boom, please keep the tin, and think about that.\n\nYours, as ever, in hope,\nWilmer Dobbs, Foreman, Pumpcrown Works\n\n(Nailed to the post. The tin of grease is nailed up beside it.)
 note radiodesk Radio desk | The customs radio desk: the receiver's plans in a drawer, a log of ships turned away.
 note towerlocker Watch tower locker | The watch tower's locker: the aerial's plans, a coil of wire, a cold thermos.
-loot radiodesk Blueprint_Reciever*1;CircuitBoard*1;Coconut*2
+loot radiodesk Blueprint_Reciever*1;Blueprint_HeadLight*1;CircuitBoard*1;Coconut*2
 prop radiodesk loot.refill=0
-loot towerlocker Blueprint_Antenna*1;CopperIngot*2;Rope*2
+loot towerlocker Blueprint_Antenna*1;Blueprint_Recycler*1;CopperIngot*2;Rope*2
 prop towerlocker loot.refill=0
 
 prop customszone zone.id=customs_house
@@ -263,8 +263,8 @@ quest intro=A city that never sank, the sailors say. Go into the customs house a
 step reach|customs_house|1|Go into the customs house at the end of the breakwater
 step read|Authority entry rules|1|Read the Authority's entry rules
 step read|Councillor Crane's welcome|1|Read the transcript of the Councillor's loop by the radio
-step blueprint|Blueprint_Reciever|1|Take the receiver's plans from the radio desk
-step blueprint|Blueprint_Antenna|1|Take the antenna's plans from the watch tower's locker
+step blueprint|Blueprint_Reciever|1|Take the receiver's and head light's plans from the radio desk
+step blueprint|Blueprint_Antenna|1|Take the antenna's and recycler's plans from the watch tower's locker
 step collect|story:permit|1|Weigh your cargo and stamp a trader's permit
 step read|Complaint No. 211|1|Read the complaint nailed to the boom post
 step reach|signal_hill|1|Climb Signal Hill north of the breakwater

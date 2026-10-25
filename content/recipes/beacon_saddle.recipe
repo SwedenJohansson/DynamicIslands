@@ -172,9 +172,9 @@ note pilgrimlog Pilgrims' log | PILGRIMS' LOG - Ines writing, by the middle fire
 note bearing Bearing card | BEARING CARD - pinned to a post, in Hedda's square capitals\n\nPulse strongest SOUTH by the hut's needle. Not south-ish. South, to the degree, every night for a week.\n\nThree kilometres on, the Receiver picks up a second voice, lower, like a pump. Ines heard it humming through the hull and went pale. I have seen reefs for forty years at sea and none of them hum.\n\nIf you are reading this you are behind us, and that is fine. Somebody should be. Bring water, bring rope, and look for the reef that grows in straight lines. That is where we will be, or where we were.\n\n- H. Brask, captain of nothing in particular
 note towerchest Beacon tower | Wedged between the legs: aerial plans in a tin tube.
 note radiochest Radio hut | Receiver plans, rolled round a spare valve.
-loot towerchest Blueprint_Antenna*1;Scrap*3;Bolt*2
+loot towerchest Blueprint_Antenna*1;Blueprint_Recycler*1;Scrap*3;Bolt*2
 prop towerchest loot.refill=0
-loot radiochest Blueprint_Reciever*1;Battery*1;CircuitBoard*1
+loot radiochest Blueprint_Reciever*1;Blueprint_HeadLight*1;Battery*1;CircuitBoard*1
 prop radiochest loot.refill=0
 
 prop radioset obj.name=radioset
@@ -273,8 +273,8 @@ quest title=The Last Beacon
 quest intro=A beacon still turning on a saddle between two stacks. Go up to it.
 step reach|beacon|1|Go up to the beacon on the saddle
 step read|Pilgrims' log|1|Read the pilgrims' log by the cold fires
-step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the radio hut
-step blueprint|Blueprint_Antenna|1|Take the antenna plans from the beacon tower
+step blueprint|Blueprint_Reciever|1|Take the Receiver and head light plans from the radio hut
+step blueprint|Blueprint_Antenna|1|Take the antenna and recycler plans from the beacon tower
 step read|Bearing card|1|Read the bearing card pinned by the camp
 step open|Cave chest|1|Find the pilgrims' chest in the west cave and read its lid
 step read|Mail plane log|1|Read the log at the mail plane wreck on the east slope
