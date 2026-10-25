@@ -168,7 +168,7 @@ prop dview zone.message=The bazaar's raft lies between the four drowned towers, 
 # --- Areas (10-24: every story island has places all over it and its quest crosses it): Rubbish Hill in the south, the burnt stall
 # row in the west, the pedlars' caravans and their cave in the east, a chained cage for bolt cutters
 call ar_ridge x1=-35 z1=-62 x2=15 z2=-66 h=8 top=8 r=10
-call ar_plants_tropical x=-10 z=-64 r=32 seed=13211
+call ar_plants_hill x=-10 z=-64 r=32 seed=13211
 call hw_zone x=-10 z=-64 al=rubbishhill id=rubbish_hill r=7 msg="Rubbish Hill: what Raft Row throws away, grown over with palms. From the top the market looks small - and the Authority's patrol boat is always in sight."
 call ar_ruin x=-58 z=-28 h=3 yaw=0 w=4 d=2 al=burntrow
 call hw_note x=-55 z=-32.5 yaw=10 al=wardenreport
@@ -177,8 +177,8 @@ place Caravan_Green_02 pedlarvan at 60 -50 ground sit yaw=75
 call ar_cave x=64 z=2 h=3 yaw=0 al=pedlarcave chest=pedlarcavechest
 call hw_zone x=64 z=16 al=pedlarcavezone id=pedlars_cave r=4 msg="The pedlars' cave. Whatever the Authority bans, the pedlars keep in here until it is worth more."
 call cagecache x=20 z=-38 yaw=200 alias=pedlarcage sig=pedlarcage chest=pedlarcagechest items=TradeToken*3;Leather*2;Glass*2 title="Pedlar's caged chest" kx=-58 kz=-28 kr=16 seed=13221 keychest=wardencutters keytitle="Fire warden's tools" keyitems=Rope*2
-call ar_plants_tropical x=-50 z=-55 r=12 seed=13231
-call ar_plants_tropical x=40 z=-65 r=12 seed=13241
+call ar_plants_hill x=-50 z=-55 r=12 seed=13231
+call ar_plants_hill x=40 z=-65 r=12 seed=13241
 
 # --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Tin Peak: the pedlars climb to ring a bell over the market, the arcade lies drowned under the west shore, and the market's own stall numbers open its strongbox. ------
 # the climb: the trail spirals up from the south-east foot; on the summit the pedlars' bell tower (8 storeys, a ladder inside), its deck chest
@@ -353,5 +353,53 @@ quest reward=Raw_Beet*3;Egg*2
 # (the traders' vans, parked on the key by the causeway)
 place Van_4 - at -18 20 ground sit yaw=200
 place Caravan_Green_02 - at 17 22 ground sit yaw=250
+
+# --- 10-25: the open sand filled - hills where nothing stands, a ruin on the biggest, a wreck, plants over all
+# (plan.py from the built island: every hill at least 8 m clear of anything the recipe placed; frame = the land centre)
+origin
+# hill 1: 44 m across, 16 m over the sea
+brush flatten at 54 52 r=22 s=20 frames=600 h=5.6
+brush flatten at 54 52 r=15.8 s=20 frames=600 h=10.4
+brush flatten at 54 52 r=9.9 s=20 frames=600 h=14.4
+brush flatten at 54 52 r=6 s=20 frames=500 h=16
+brush smooth at 54 52 r=25.3 s=5 frames=70
+brush flatten at 54 52 r=6 s=20 frames=400 h=16
+brush auto at 54 52 r=26.4 s=10 frames=25
+clear at 54 52 r=25
+# hill 2: 32 m across, 12 m over the sea
+brush flatten at 40 -68 r=16 s=20 frames=600 h=4.2
+brush flatten at 40 -68 r=11.5 s=20 frames=600 h=7.8
+brush flatten at 40 -68 r=7.2 s=20 frames=600 h=10.8
+brush flatten at 40 -68 r=6 s=20 frames=500 h=12
+brush smooth at 40 -68 r=18.4 s=5 frames=70
+brush flatten at 40 -68 r=6 s=20 frames=400 h=12
+brush auto at 40 -68 r=19.2 s=10 frames=25
+clear at 40 -68 r=19
+# hill 3: 28 m across, 10 m over the sea
+brush flatten at 70 -22 r=14 s=20 frames=600 h=3.5
+brush flatten at 70 -22 r=10.1 s=20 frames=600 h=6.5
+brush flatten at 70 -22 r=6.3 s=20 frames=600 h=9.0
+brush flatten at 70 -22 r=6 s=20 frames=500 h=10
+brush smooth at 70 -22 r=16.1 s=5 frames=70
+brush flatten at 70 -22 r=6 s=20 frames=400 h=10
+brush auto at 70 -22 r=16.8 s=10 frames=25
+clear at 70 -22 r=17
+# a ruin on hill 1: someone lived up here before the water rose
+call ar_ruin x=54 z=52 h=16 yaw=240 w=3 d=2 al=fillrrruin
+# a plane wreck on the open sand, a crate by its door
+call ar_plane x=-30 z=-38 h=2.6 yaw=120 al=fillrrplane crate=fillrrplanecrate
+call ar_plants_hill x=54 z=52 r=22 seed=6000
+call ar_plants_hill x=40 z=-68 r=16 seed=6010
+call ar_plants_hill x=70 z=-22 r=14 seed=6020
+call ar_plants_hill x=22 z=-80 r=12 seed=6030
+call ar_plants_hill x=-34 z=-56 r=12 seed=6040
+call ar_plants_hill x=76 z=38 r=12 seed=6050
+call ar_plants_hill x=42 z=26 r=12 seed=6060
+call ar_plants_hill x=-4 z=-4 r=12 seed=6070
+call ar_plants_hill x=12 z=-60 r=12 seed=6080
+call ar_plants_hill x=-70 z=42 r=12 seed=6090
+call ar_plants_hill x=16 z=-18 r=12 seed=6100
+call ar_plants_hill x=-44 z=4 r=12 seed=6110
+call ar_plants_hill x=52 z=-18 r=12 seed=6120
 
 save Raft Row Bazaar

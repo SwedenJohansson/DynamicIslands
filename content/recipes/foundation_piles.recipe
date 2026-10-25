@@ -137,7 +137,7 @@ prop dview zone.message=Down there the city's foundation piles stand in the dark
 # salvage), the sunk excavator in the south-west, the engineers' hut in the south, the pile-driver's cave in the west,
 # blasting barrels in the pile field (the stingray's armour only gives to their blasts)
 call ar_ridge x1=-60 z1=20 x2=-40 z2=55 h=10 top=6 r=9
-call ar_plants_tropical x=-50 z=38 r=24 seed=14011
+call ar_plants_hill x=-50 z=38 r=24 seed=14011
 call hw_zone x=-50 z=38 al=rubblebank id=rubble_bank r=7 msg="The rubble bank - and it is no spoil heap. Pig iron, pump castings, stone from Lowstreet's own walls, piled up by the Council's barges at night and grown over. Ballast. The piles are down there, under all of it."
 call treasure x=-50 z=38 r=14 n=2 seed=14061
 prop treasure14061 treasure.loot=TitaniumOre*2;MetalOre*2
@@ -151,7 +151,7 @@ prop pileray boss.shield=1
 place VP_ExplosiveBarrel_Pile blast1 at 12 8 ground sit yaw=0
 place VP_ExplosiveBarrel_Pile blast2 at 8 -6 ground sit yaw=60
 place VP_ExplosiveBarrel_Pile blast3 at 18 -5 ground sit yaw=120
-call ar_plants_tropical x=40 z=-60 r=14 seed=14021
+call ar_plants_hill x=40 z=-60 r=14 seed=14021
 
 # --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Pile-driver's Hump: the derrick that drove the city's piles, a pump gallery eighteen metres down, and the jack pump that holds a leaning pile. ------
 # the climb: the trail spirals up from the south foot; on the summit the pile-driver's derrick (11 storeys, a ladder inside), its deck chest
@@ -297,5 +297,51 @@ step read|The city holds|1|Read the note behind the last jack
 step reach|mudflat_return|1|Go back up to the mudflat
 quest done=Highwater holds. Four jacks wound, one confession read, and a city that will have to hear what it stands on. Whatever you chose on the Crown, it will have to live with it.
 quest reward=TitaniumOre*2;TradeToken*10
+
+# --- 10-25: the open sand filled - hills where nothing stands, a ruin on the biggest, a wreck, plants over all
+# (plan.py from the built island: every hill at least 8 m clear of anything the recipe placed; frame = the land centre)
+origin
+# hill 1: 36 m across, 14 m over the sea
+brush flatten at -44 -68 r=18 s=20 frames=600 h=4.9
+brush flatten at -44 -68 r=13.0 s=20 frames=600 h=9.1
+brush flatten at -44 -68 r=8.1 s=20 frames=600 h=12.6
+brush flatten at -44 -68 r=6 s=20 frames=500 h=14
+brush smooth at -44 -68 r=20.7 s=5 frames=70
+brush flatten at -44 -68 r=6 s=20 frames=400 h=14
+brush auto at -44 -68 r=21.6 s=10 frames=25
+clear at -44 -68 r=21
+# hill 2: 32 m across, 12 m over the sea
+brush flatten at 76 -52 r=16 s=20 frames=600 h=4.2
+brush flatten at 76 -52 r=11.5 s=20 frames=600 h=7.8
+brush flatten at 76 -52 r=7.2 s=20 frames=600 h=10.8
+brush flatten at 76 -52 r=6 s=20 frames=500 h=12
+brush smooth at 76 -52 r=18.4 s=5 frames=70
+brush flatten at 76 -52 r=6 s=20 frames=400 h=12
+brush auto at 76 -52 r=19.2 s=10 frames=25
+clear at 76 -52 r=19
+# hill 3: 28 m across, 10 m over the sea
+brush flatten at -4 -88 r=14 s=20 frames=600 h=3.5
+brush flatten at -4 -88 r=10.1 s=20 frames=600 h=6.5
+brush flatten at -4 -88 r=6.3 s=20 frames=600 h=9.0
+brush flatten at -4 -88 r=6 s=20 frames=500 h=10
+brush smooth at -4 -88 r=16.1 s=5 frames=70
+brush flatten at -4 -88 r=6 s=20 frames=400 h=10
+brush auto at -4 -88 r=16.8 s=10 frames=25
+clear at -4 -88 r=17
+# a ruin on hill 1: someone lived up here before the water rose
+call ar_ruin x=-44 z=-68 h=14 yaw=100 w=3 d=2 al=fillfpruin
+call ar_plants_hill x=-44 z=-68 r=18 seed=5500
+call ar_plants_hill x=76 z=-52 r=16 seed=5510
+call ar_plants_hill x=-4 z=-88 r=14 seed=5520
+call ar_plants_hill x=40 z=72 r=12 seed=5530
+call ar_plants_hill x=-76 z=46 r=12 seed=5540
+call ar_plants_hill x=46 z=50 r=12 seed=5550
+call ar_plants_hill x=-44 z=14 r=12 seed=5560
+call ar_plants_hill x=-4 z=92 r=12 seed=5570
+call ar_plants_hill x=-64 z=68 r=12 seed=5580
+call ar_plants_hill x=22 z=-88 r=12 seed=5590
+call ar_plants_hill x=-34 z=-48 r=12 seed=5600
+call ar_plants_hill x=48 z=28 r=12 seed=5610
+call ar_plants_hill x=-72 z=-24 r=12 seed=5620
 
 save The Foundation Piles

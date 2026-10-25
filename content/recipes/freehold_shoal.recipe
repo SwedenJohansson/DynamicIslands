@@ -116,14 +116,14 @@ prop dview zone.message=A small free place on a big sea - and behind it, the dro
 # --- Areas (10-24: every story island has places all over it and its quest crosses it): the dune in the north (buried salvage), the
 # hauled-up van in the east, the old squatter's shack in the west
 call ar_ridge x1=-35 z1=32 x2=-5 z2=45 h=7 top=4 r=7
-call ar_plants_tropical x=-20 z=38 r=18 seed=13181
+call ar_plants_hill x=-20 z=38 r=18 seed=13181
 call hw_zone x=-20 z=38 al=dunetop id=dune_top r=6 msg="The dune: the highest ground on the shoal. From here you can see the Crown's roofs - small now, and far behind you."
 call treasure x=-20 z=38 r=10 n=2 seed=13183
 prop treasure13183 treasure.loot=TitaniumOre*2;CopperOre*1
 call hw_wreck x=42 z=-8 h=2 yaw=100 obj=Van_5 al=hauledvan crate=hauledcrate r=9
 call ar_ruin x=-40 z=-16 h=3 yaw=0 al=squattershack
 call hw_note x=-37.5 z=-20.5 yaw=10 al=squatterslate
-call ar_plants_tropical x=30 z=35 r=12 seed=13182
+call ar_plants_hill x=30 z=35 r=12 seed=13182
 
 # --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Lookout Hill: Freehold's first watch on a hill over the shoal, the first squatters' hut drowned off the beach, and a founding bell. ------
 # the climb: the trail spirals up from the north-east foot; on the summit the Freehold lookout (7 storeys, a ladder inside), its deck chest
@@ -237,4 +237,58 @@ step read|Freehold's first night|1|Read the note by the first fire
 quest done=The Freehold has its first night, its first purse and its first tram. Highwater is behind you - and somewhere south, on the old Concord band, the light Ines saw is still calling.
 quest reward=HoneyComb*2;TradeToken*4
 
+# --- 10-25: the open sand filled - hills where nothing stands, a ruin on the biggest, a wreck, plants over all
+# (plan.py from the built island: every hill at least 8 m clear of anything the recipe placed; frame = the land centre)
+origin
+# hill 1: 40 m across, 15 m over the sea
+brush flatten at 40 54 r=20 s=20 frames=600 h=5.2
+brush flatten at 40 54 r=14.4 s=20 frames=600 h=9.8
+brush flatten at 40 54 r=9.0 s=20 frames=600 h=13.5
+brush flatten at 40 54 r=6 s=20 frames=500 h=15
+brush smooth at 40 54 r=23.0 s=5 frames=70
+brush flatten at 40 54 r=6 s=20 frames=400 h=15
+brush auto at 40 54 r=24.0 s=10 frames=25
+clear at 40 54 r=23
+# hill 2: 36 m across, 14 m over the sea
+brush flatten at -10 68 r=18 s=20 frames=600 h=4.9
+brush flatten at -10 68 r=13.0 s=20 frames=600 h=9.1
+brush flatten at -10 68 r=8.1 s=20 frames=600 h=12.6
+brush flatten at -10 68 r=6 s=20 frames=500 h=14
+brush smooth at -10 68 r=20.7 s=5 frames=70
+brush flatten at -10 68 r=6 s=20 frames=400 h=14
+brush auto at -10 68 r=21.6 s=10 frames=25
+clear at -10 68 r=21
+# hill 3: 32 m across, 12 m over the sea
+brush flatten at -64 -30 r=16 s=20 frames=600 h=4.2
+brush flatten at -64 -30 r=11.5 s=20 frames=600 h=7.8
+brush flatten at -64 -30 r=7.2 s=20 frames=600 h=10.8
+brush flatten at -64 -30 r=6 s=20 frames=500 h=12
+brush smooth at -64 -30 r=18.4 s=5 frames=70
+brush flatten at -64 -30 r=6 s=20 frames=400 h=12
+brush auto at -64 -30 r=19.2 s=10 frames=25
+clear at -64 -30 r=19
+# a ruin on hill 1: someone lived up here before the water rose
+call ar_ruin x=40 z=54 h=15 yaw=200 w=3 d=2 al=fillfsruin
+call ar_plants_hill x=40 z=54 r=20 seed=5600
+call ar_plants_hill x=-10 z=68 r=18 seed=5610
+call ar_plants_hill x=-64 z=-30 r=16 seed=5620
+call ar_plants_hill x=-54 z=-48 r=12 seed=5630
+call ar_plants_hill x=-48 z=26 r=12 seed=5640
+call ar_plants_hill x=8 z=48 r=12 seed=5650
+call ar_plants_hill x=68 z=4 r=12 seed=5660
+call ar_plants_hill x=0 z=2 r=12 seed=5670
+call ar_plants_hill x=-2 z=-72 r=12 seed=5680
+call ar_plants_hill x=50 z=-52 r=12 seed=5690
+call ar_plants_hill x=24 z=2 r=12 seed=5700
+call ar_plants_hill x=-38 z=46 r=12 seed=5710
+call ar_plants_hill x=-44 z=-70 r=12 seed=5720
+
+# (generator stones left in the air by the shaping - taken out, 10-25)
+clear at -5.86 33.61 r=1 only=SmallBoulder2
+clear at -35.79 45.55 r=1 only=SmallBoulder2
+clear at -36.6 -14.69 r=1 only=SmallBoulder2
+clear at 21.88 36.42 r=1 only=SmallBoulder2
+clear at 22.68 39.76 r=1 only=SmallBoulder2
+clear at 23.26 33.06 r=1 only=SmallBoulder2
+clear at 29.11 26.19 r=1 only=SmallBoulder2
 save Freehold Shoal

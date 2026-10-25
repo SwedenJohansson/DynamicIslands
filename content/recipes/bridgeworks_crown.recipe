@@ -176,7 +176,7 @@ prop dview zone.message=The crown of the city: the tallest roofs joined by bridg
 # the cipher cave in the east (dark: a headlight; the full council code), the live cable bed in the south (shock: the
 # breaker lever cuts it)
 call ar_ridge x1=-45 z1=-50 x2=5 z2=-68 h=12 top=7 r=9
-call ar_plants_tropical x=-20 z=-59 r=28 seed=13911
+call ar_plants_hill x=-20 z=-59 r=28 seed=13911
 call hw_zone x=-20 z=-59 al=stormridge id=storm_ridge r=7 msg="Storm ridge: the storm is close now. From here the four council roofs stand dark against the sky."
 call treasure x=-20 z=-59 r=14 n=2 seed=13961
 prop treasure13961 treasure.loot=TitaniumOre*2;CopperOre*2
@@ -194,7 +194,7 @@ place Loot_Chest cablechest at 25 -74 ground sit yaw=0
 place TP_LaserControlPanel_lever breaker at 16 -66 ground y=1.25 scale=3 yaw=-45
 prop breaker beh.use=Pull the old breaker
 prop breaker on.use=message||The breaker drops with a bang. The hum in the cable bed dies.\nhide|shockcoil
-call ar_plants_tropical x=-60 z=-40 r=14 seed=13921
+call ar_plants_hill x=-60 z=-40 r=14 seed=13921
 
 # --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Crown Fell: a fifty-metre fell with an eighty-metre storm mast, the council archive drowned under the west cliffs, and a hidden button to the sealed records floor. ------
 # the climb: the trail spirals up from the east foot; on the summit the storm beacon mast (12 storeys, a ladder inside), its deck chest
@@ -500,5 +500,51 @@ quest reward=TitaniumOre*2;TradeToken*6
 # (the Union's forklift and a loaded wagon on the key)
 place VP_Forklift - at 7 -7 ground sit yaw=30
 place VP_Wagon02 - at -9 -9 ground sit yaw=120
+
+# --- 10-25: the open sand filled - hills where nothing stands, a ruin on the biggest, a wreck, plants over all
+# (plan.py from the built island: every hill at least 8 m clear of anything the recipe placed; frame = the land centre)
+origin
+# hill 1: 32 m across, 12 m over the sea
+brush flatten at 2 -36 r=16 s=20 frames=600 h=4.2
+brush flatten at 2 -36 r=11.5 s=20 frames=600 h=7.8
+brush flatten at 2 -36 r=7.2 s=20 frames=600 h=10.8
+brush flatten at 2 -36 r=6 s=20 frames=500 h=12
+brush smooth at 2 -36 r=18.4 s=5 frames=70
+brush flatten at 2 -36 r=6 s=20 frames=400 h=12
+brush auto at 2 -36 r=19.2 s=10 frames=25
+clear at 2 -36 r=19
+# hill 2: 32 m across, 12 m over the sea
+brush flatten at 52 -74 r=16 s=20 frames=600 h=4.2
+brush flatten at 52 -74 r=11.5 s=20 frames=600 h=7.8
+brush flatten at 52 -74 r=7.2 s=20 frames=600 h=10.8
+brush flatten at 52 -74 r=6 s=20 frames=500 h=12
+brush smooth at 52 -74 r=18.4 s=5 frames=70
+brush flatten at 52 -74 r=6 s=20 frames=400 h=12
+brush auto at 52 -74 r=19.2 s=10 frames=25
+clear at 52 -74 r=19
+# hill 3: 32 m across, 12 m over the sea
+brush flatten at 34 8 r=16 s=20 frames=600 h=4.2
+brush flatten at 34 8 r=11.5 s=20 frames=600 h=7.8
+brush flatten at 34 8 r=7.2 s=20 frames=600 h=10.8
+brush flatten at 34 8 r=6 s=20 frames=500 h=12
+brush smooth at 34 8 r=18.4 s=5 frames=70
+brush flatten at 34 8 r=6 s=20 frames=400 h=12
+brush auto at 34 8 r=19.2 s=10 frames=25
+clear at 34 8 r=19
+# a ruin on hill 1: someone lived up here before the water rose
+call ar_ruin x=2 z=-36 h=12 yaw=160 w=3 d=2 al=fillbwruin
+call ar_plants_hill x=2 z=-36 r=16 seed=5200
+call ar_plants_hill x=52 z=-74 r=16 seed=5210
+call ar_plants_hill x=34 z=8 r=16 seed=5220
+call ar_plants_hill x=-54 z=-60 r=12 seed=5230
+call ar_plants_hill x=-12 z=-88 r=12 seed=5240
+call ar_plants_hill x=28 z=80 r=12 seed=5250
+call ar_plants_hill x=-74 z=56 r=12 seed=5260
+call ar_plants_hill x=-52 z=-38 r=12 seed=5270
+call ar_plants_hill x=66 z=46 r=12 seed=5280
+call ar_plants_hill x=10 z=-90 r=12 seed=5290
+call ar_plants_hill x=88 z=4 r=12 seed=5300
+call ar_plants_hill x=0 z=90 r=12 seed=5310
+call ar_plants_hill x=-94 z=46 r=12 seed=5320
 
 save Bridgeworks Crown

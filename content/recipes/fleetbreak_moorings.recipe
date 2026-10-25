@@ -143,7 +143,7 @@ pop
 # Fleet's crashed seaplane in the north-east, the harbourmaster's empty house in the west, the bosun's cave in the east
 # (the hulk's gas tanks start the roof garden's old engine; the machete opens a vine cache on the ridge)
 call ar_ridge x1=-46 z1=38 x2=-8 z2=62 h=12 top=6 r=9
-call ar_plants_tropical x=-27 z=50 r=30 seed=13311
+call ar_plants_hill x=-27 z=50 r=30 seed=13311
 call hw_zone x=-27 z=50 al=gullridge id=gull_ridge r=7 msg="Gull Ridge. Below, the Fleet's hulks lie in a ring round the moorings, bows to the sea - a wall made of ships."
 call vinecache x=-27 z=50 r=14 seed=13321 chest=ridgevinechest vines=ridgevines items=Rope*3;Feather*4;Seed_Flower_Red*1
 call ar_plane x=42 z=46 h=8 yaw=200 al=seaplane crate=seaplanecrate
@@ -152,8 +152,8 @@ call ar_ruin x=-58 z=-4 h=6 yaw=90 al=harbourhouse
 call hw_note x=-53.5 z=-6.5 yaw=60 al=harbourledger
 call ar_cave x=58 z=-2 h=6 yaw=0 al=bosuncave chest=bosuncavechest
 call hw_zone x=58 z=12 al=bosuncavezone id=bosuns_cave r=4 msg="The bosun's cave: where the Fleet keeps what it would rather the Authority didn't count."
-call ar_plants_tropical x=60 z=30 r=12 seed=13331
-call ar_plants_tropical x=-50 z=20 r=12 seed=13341
+call ar_plants_hill x=60 z=30 r=12 seed=13331
+call ar_plants_hill x=-50 z=20 r=12 seed=13341
 beside Loot_ChestLarge pressvault press d=2.8 yaw=90
 
 # --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Mastback Fell: a forty-metre fell with the Fleet's signal mast, the flagship's deckhouse sunk at the moorings, and a foghorn that wakes the harbour. ------
@@ -344,5 +344,51 @@ step2 read|Fleet receipt|1|Read the Fleet's receipt
 step2 open|Fleet reward|1|Open the Fleet's reward
 quest2 done=The Fleet owes you. When the city breaks, it will remember.
 quest2 reward=ExplosiveGoo*1;Rope*3
+
+# --- 10-25: the open sand filled - hills where nothing stands, a ruin on the biggest, a wreck, plants over all
+# (plan.py from the built island: every hill at least 8 m clear of anything the recipe placed; frame = the land centre)
+origin
+# hill 1: 40 m across, 15 m over the sea
+brush flatten at 54 -44 r=20 s=20 frames=600 h=5.2
+brush flatten at 54 -44 r=14.4 s=20 frames=600 h=9.8
+brush flatten at 54 -44 r=9.0 s=20 frames=600 h=13.5
+brush flatten at 54 -44 r=6 s=20 frames=500 h=15
+brush smooth at 54 -44 r=23.0 s=5 frames=70
+brush flatten at 54 -44 r=6 s=20 frames=400 h=15
+brush auto at 54 -44 r=24.0 s=10 frames=25
+clear at 54 -44 r=23
+# hill 2: 24 m across, 9 m over the sea
+brush flatten at -34 76 r=12 s=20 frames=600 h=3.1
+brush flatten at -34 76 r=8.6 s=20 frames=600 h=5.9
+brush flatten at -34 76 r=5.4 s=20 frames=600 h=8.1
+brush flatten at -34 76 r=6 s=20 frames=500 h=9
+brush smooth at -34 76 r=13.8 s=5 frames=70
+brush flatten at -34 76 r=6 s=20 frames=400 h=9
+brush auto at -34 76 r=14.4 s=10 frames=25
+clear at -34 76 r=15
+# hill 3: 24 m across, 9 m over the sea
+brush flatten at 16 76 r=12 s=20 frames=600 h=3.1
+brush flatten at 16 76 r=8.6 s=20 frames=600 h=5.9
+brush flatten at 16 76 r=5.4 s=20 frames=600 h=8.1
+brush flatten at 16 76 r=6 s=20 frames=500 h=9
+brush smooth at 16 76 r=13.8 s=5 frames=70
+brush flatten at 16 76 r=6 s=20 frames=400 h=9
+brush auto at 16 76 r=14.4 s=10 frames=25
+clear at 16 76 r=15
+# a ruin on hill 1: someone lived up here before the water rose
+call ar_ruin x=54 z=-44 h=15 yaw=0 w=3 d=2 al=fillfmruin
+call ar_plants_hill x=54 z=-44 r=20 seed=5400
+call ar_plants_hill x=-34 z=76 r=12 seed=5410
+call ar_plants_hill x=16 z=76 r=12 seed=5420
+call ar_plants_hill x=4 z=0 r=12 seed=5430
+call ar_plants_hill x=-58 z=56 r=12 seed=5440
+call ar_plants_hill x=-4 z=68 r=12 seed=5450
+call ar_plants_hill x=68 z=-24 r=12 seed=5460
+call ar_plants_hill x=64 z=34 r=12 seed=5470
+call ar_plants_hill x=-14 z=14 r=12 seed=5480
+call ar_plants_hill x=34 z=-58 r=12 seed=5490
+call ar_plants_hill x=-26 z=-60 r=12 seed=5500
+call ar_plants_hill x=-66 z=-26 r=12 seed=5510
+call ar_plants_hill x=-44 z=38 r=12 seed=5520
 
 save Fleetbreak Moorings

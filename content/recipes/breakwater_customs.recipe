@@ -120,15 +120,15 @@ prop dview zone.message=From here the drowned city's roofs go on to the horizon,
 # --- Areas (10-24: every story island has places all over it and its quest crosses it): Signal Hill and its lookout in the north,
 # the keeper's ruined house in the east, the wreckers' cave in the west shore, the smugglers' boat the Authority seized
 call ar_ridge x1=-22 z1=56 x2=24 z2=63 h=9 top=7 r=9
-call ar_plants_tropical x=1 z=60 r=30 seed=13111
+call ar_plants_hill x=1 z=60 r=30 seed=13111
 call hw_zone x=1 z=60 al=signalhill id=signal_hill r=7 msg="The top of Signal Hill. South, the breakwater; north and east, the roofs of the drowned city - and on the horizon, Highwater's towers with lights in them."
 call ar_ruin x=54 z=30 h=3 yaw=0 al=keeperhouse
 call hw_note x=56.5 z=25.5 yaw=20 al=keeperlog
-call ar_plants_tropical x=60 z=44 r=12 seed=13121
+call ar_plants_hill x=60 z=44 r=12 seed=13121
 call ar_cave x=-62 z=24 h=3 yaw=0 al=wreckcave chest=wreckcavechest
 call hw_zone x=-62 z=38 al=wreckcavezone id=wreckers_cave r=4 msg="A cave in the west shore. Lamps were hung at its mouth once - wreckers' lamps, to pull boats onto the rocks."
 call hw_wreck x=-64 z=-22 h=2 yaw=80 obj=BoatStranded al=seizedboat crate=seizedcrate r=11
-call ar_plants_tropical x=-40 z=50 r=14 seed=13131
+call ar_plants_hill x=-40 z=50 r=14 seed=13131
 
 # --- STORY 10-24 (the user: own layout per island, no repeated climb-dive-machine template): the Bonded Yard, a maze
 # of seized-goods walls east of the key (8 x 8 cells of 3 m, x 51..75, z -20..4, its gate on the west at z -9.5); the
@@ -278,5 +278,53 @@ step read|Clerk's last shift|1|Read the night clerk's last note
 step read|A friend's tip|1|Read the folded note under the strongbox lid
 quest done=The bazaar sells what the Authority says doesn't exist. Raft Row Bazaar - band 600.
 quest reward=Coconut*3;Rope*2
+
+# --- 10-25: the open sand filled - hills where nothing stands, a ruin on the biggest, a wreck, plants over all
+# (plan.py from the built island: every hill at least 8 m clear of anything the recipe placed; frame = the land centre)
+origin
+# hill 1: 40 m across, 15 m over the sea
+brush flatten at -46 -50 r=20 s=20 frames=600 h=5.2
+brush flatten at -46 -50 r=14.4 s=20 frames=600 h=9.8
+brush flatten at -46 -50 r=9.0 s=20 frames=600 h=13.5
+brush flatten at -46 -50 r=6 s=20 frames=500 h=15
+brush smooth at -46 -50 r=23.0 s=5 frames=70
+brush flatten at -46 -50 r=6 s=20 frames=400 h=15
+brush auto at -46 -50 r=24.0 s=10 frames=25
+clear at -46 -50 r=23
+# hill 2: 36 m across, 14 m over the sea
+brush flatten at 54 -48 r=18 s=20 frames=600 h=4.9
+brush flatten at 54 -48 r=13.0 s=20 frames=600 h=9.1
+brush flatten at 54 -48 r=8.1 s=20 frames=600 h=12.6
+brush flatten at 54 -48 r=6 s=20 frames=500 h=14
+brush smooth at 54 -48 r=20.7 s=5 frames=70
+brush flatten at 54 -48 r=6 s=20 frames=400 h=14
+brush auto at 54 -48 r=21.6 s=10 frames=25
+clear at 54 -48 r=21
+# hill 3: 28 m across, 10 m over the sea
+brush flatten at 48 56 r=14 s=20 frames=600 h=3.5
+brush flatten at 48 56 r=10.1 s=20 frames=600 h=6.5
+brush flatten at 48 56 r=6.3 s=20 frames=600 h=9.0
+brush flatten at 48 56 r=6 s=20 frames=500 h=10
+brush smooth at 48 56 r=16.1 s=5 frames=70
+brush flatten at 48 56 r=6 s=20 frames=400 h=10
+brush auto at 48 56 r=16.8 s=10 frames=25
+clear at 48 56 r=17
+# a ruin on hill 1: someone lived up here before the water rose
+call ar_ruin x=-46 z=-50 h=15 yaw=60 w=3 d=2 al=fillbcruin
+# a plane wreck on the open sand, a crate by its door
+call ar_plane x=-8 z=32 h=2.9 yaw=300 al=fillbcplane crate=fillbcplanecrate
+call ar_plants_hill x=-46 z=-50 r=20 seed=5100
+call ar_plants_hill x=54 z=-48 r=18 seed=5110
+call ar_plants_hill x=48 z=56 r=14 seed=5120
+call ar_plants_hill x=30 z=62 r=12 seed=5130
+call ar_plants_hill x=-26 z=50 r=12 seed=5140
+call ar_plants_hill x=-22 z=74 r=12 seed=5150
+call ar_plants_hill x=14 z=80 r=12 seed=5160
+call ar_plants_hill x=-62 z=0 r=12 seed=5170
+call ar_plants_hill x=-22 z=0 r=12 seed=5180
+call ar_plants_hill x=24 z=-56 r=12 seed=5190
+call ar_plants_hill x=18 z=14 r=12 seed=5200
+call ar_plants_hill x=-80 z=18 r=12 seed=5210
+call ar_plants_hill x=70 z=42 r=12 seed=5220
 
 save Breakwater Customs

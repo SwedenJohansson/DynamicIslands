@@ -143,7 +143,7 @@ pop
 # --- Areas (10-24: every story island has places all over it and its quest crosses it): the reservoir bank in the north, the
 # Authority's patrol van in the east, the old filter house in the west, the sludge beds (acid: the hazmat box's suit)
 call ar_ridge x1=-38 z1=45 x2=8 z2=62 h=9 top=6 r=10
-call ar_plants_tropical x=-15 z=53 r=30 seed=13511
+call ar_plants_hill x=-15 z=53 r=30 seed=13511
 call hw_zone x=-15 z=53 al=reservoirbank id=reservoir_bank r=7 msg="The reservoir bank. Inside it, water clean enough to drink - fenced, guarded, and counted. Outside it, the city drinks rain."
 call hw_wreck x=52 z=22 h=4 yaw=60 obj=Van_4 al=patrolvan crate=patrolcrate r=10
 place VP_Forklift - at 63 8 ground sit yaw=200
@@ -155,8 +155,8 @@ call hw_hazard x=24 z=46 al=sludgeacid kind=acid r=5 dmg=6 safe=suit msg="The pu
 place Loot_Chest sludgechest at 24 46 ground sit yaw=30
 place RT_PowerBox hazmatbox at 31 40 ground y=1 yaw=230
 call hw_zone x=24 z=56 al=sludgebeds id=sludge_beds r=4 msg="The sludge beds: what the purifiers take out of the water ends up here, green and smoking. A hazmat box stands at the edge."
-call ar_plants_tropical x=-50 z=35 r=14 seed=13521
-call ar_plants_tropical x=55 z=45 r=12 seed=13531
+call ar_plants_hill x=-50 z=35 r=14 seed=13521
+call ar_plants_hill x=55 z=45 r=12 seed=13531
 
 # --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Standpipe Hill: a water tower on a forty-metre hill, a live flooded intake chamber, and a test pump that shows where the city's water really goes. ------
 # the climb: the trail spirals up from the east foot; on the summit the old water tower (10 storeys, a ladder inside), its deck chest
@@ -335,5 +335,51 @@ quest2 reward=MetalIngot*3;Glass*2
 place VP_Forklift - at 8 7 ground sit yaw=200
 place VP_Wagon02 - at 20 -8 ground sit yaw=90
 place VP_Wagon01 - at 20 -12 ground sit yaw=90
+
+# --- 10-25: the open sand filled - hills where nothing stands, a ruin on the biggest, a wreck, plants over all
+# (plan.py from the built island: every hill at least 8 m clear of anything the recipe placed; frame = the land centre)
+origin
+# hill 1: 40 m across, 15 m over the sea
+brush flatten at 38 -56 r=20 s=20 frames=600 h=5.2
+brush flatten at 38 -56 r=14.4 s=20 frames=600 h=9.8
+brush flatten at 38 -56 r=9.0 s=20 frames=600 h=13.5
+brush flatten at 38 -56 r=6 s=20 frames=500 h=15
+brush smooth at 38 -56 r=23.0 s=5 frames=70
+brush flatten at 38 -56 r=6 s=20 frames=400 h=15
+brush auto at 38 -56 r=24.0 s=10 frames=25
+clear at 38 -56 r=23
+# hill 2: 28 m across, 10 m over the sea
+brush flatten at -10 26 r=14 s=20 frames=600 h=3.5
+brush flatten at -10 26 r=10.1 s=20 frames=600 h=6.5
+brush flatten at -10 26 r=6.3 s=20 frames=600 h=9.0
+brush flatten at -10 26 r=6 s=20 frames=500 h=10
+brush smooth at -10 26 r=16.1 s=5 frames=70
+brush flatten at -10 26 r=6 s=20 frames=400 h=10
+brush auto at -10 26 r=16.8 s=10 frames=25
+clear at -10 26 r=17
+# hill 3: 28 m across, 10 m over the sea
+brush flatten at 30 14 r=14 s=20 frames=600 h=3.5
+brush flatten at 30 14 r=10.1 s=20 frames=600 h=6.5
+brush flatten at 30 14 r=6.3 s=20 frames=600 h=9.0
+brush flatten at 30 14 r=6 s=20 frames=500 h=10
+brush smooth at 30 14 r=16.1 s=5 frames=70
+brush flatten at 30 14 r=6 s=20 frames=400 h=10
+brush auto at 30 14 r=16.8 s=10 frames=25
+clear at 30 14 r=17
+# a ruin on hill 1: someone lived up here before the water rose
+call ar_ruin x=38 z=-56 h=15 yaw=140 w=3 d=2 al=fillpwruin
+call ar_plants_hill x=38 z=-56 r=20 seed=5900
+call ar_plants_hill x=-10 z=26 r=14 seed=5910
+call ar_plants_hill x=30 z=14 r=14 seed=5920
+call ar_plants_hill x=-46 z=60 r=12 seed=5930
+call ar_plants_hill x=76 z=32 r=12 seed=5940
+call ar_plants_hill x=76 z=-12 r=12 seed=5950
+call ar_plants_hill x=-32 z=36 r=12 seed=5960
+call ar_plants_hill x=28 z=-34 r=12 seed=5970
+call ar_plants_hill x=-80 z=-8 r=12 seed=5980
+call ar_plants_hill x=8 z=30 r=12 seed=5990
+call ar_plants_hill x=42 z=0 r=12 seed=6000
+call ar_plants_hill x=44 z=64 r=12 seed=6010
+call ar_plants_hill x=4 z=62 r=12 seed=6020
 
 save Pumpcrown Works

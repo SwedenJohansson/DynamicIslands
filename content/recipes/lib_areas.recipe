@@ -27,6 +27,19 @@ scatter SmallBoulder2 4 at $x $z r=$r seed={$seed+6} free=2
 scatter SmallBoulder4 4 at $x $z r=$r seed={$seed+7} free=2
 scatter BigBoulder1_Low 2 at $x $z r=$r seed={$seed+8} free=3
 end
+# (ar_plants_hill: ar_plants_tropical for the slopes of a hill - SmallBoulder2
+# and SmallBoulder1 stand up to 4 m off a slope (CIGroundIslands), so SmallBoulder4 there instead: 10-25)
+macro ar_plants_hill x=0 z=0 r=20 seed=1
+scatter "Pickup_Landmark_Tree_Palm 3" 3 at $x $z r=$r seed=$seed free=3
+scatter "Pickup_Landmark_Tree_Palm 4" 3 at $x $z r=$r seed={$seed+1} free=3
+scatter Bamboo_1 4 at $x $z r=$r seed={$seed+2} free=2
+scatter Pickup_Landmark_Tree_Mango 2 at $x $z r=$r seed={$seed+3} free=3
+scatter Bush 8 at $x $z r=$r seed={$seed+4} free=1
+scatter Bush2 5 at $x $z r=$r seed={$seed+5} free=1
+scatter SmallBoulder4 4 at $x $z r=$r seed={$seed+6} free=2
+scatter SmallBoulder4 4 at $x $z r=$r seed={$seed+7} free=2
+scatter BigBoulder1_Low 2 at $x $z r=$r seed={$seed+8} free=3
+end
 macro ar_plants_desert x=0 z=0 r=20 seed=1
 scatter SmallBushyTree_1 3 at $x $z r=$r seed=$seed free=3
 scatter SmallBushyTree_2 3 at $x $z r=$r seed={$seed+1} free=3

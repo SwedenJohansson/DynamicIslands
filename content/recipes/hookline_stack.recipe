@@ -137,7 +137,7 @@ pop
 # salvage for the metal detector), the toppled crane and the excavator in the south-east, the old tally house in the
 # north, the divers' drying cave in the west
 call ar_ridge x1=18 z1=32 x2=55 z2=8 h=9 top=6 r=10
-call ar_plants_tropical x=36 z=20 r=28 seed=13411
+call ar_plants_hill x=36 z=20 r=28 seed=13411
 call hw_zone x=36 z=20 al=spoilheap id=spoil_heap r=7 msg="The spoil heap: a hill of what the street gave up and nobody wanted. The Union's cranes stand over the yard like herons."
 call treasure x=36 z=20 r=14 n=2 seed=13461
 prop treasure13461 treasure.loot=CopperOre*3;MetalOre*2
@@ -150,8 +150,8 @@ call hw_note x=-12.5 z=51.5 yaw=20 al=tallybook
 place VP_Forklift - at 6 44 ground sit yaw=250
 call ar_cave x=-62 z=26 h=3 yaw=0 al=divercave chest=divercavechest
 call hw_zone x=-62 z=40 al=divercavezone id=divers_cave r=4 msg="The divers' drying cave: wetsuits on hooks, names chalked over each one. Some of the hooks are empty."
-call ar_plants_tropical x=-45 z=55 r=14 seed=13421
-call ar_plants_tropical x=60 z=40 r=12 seed=13431
+call ar_plants_hill x=-45 z=55 r=14 seed=13421
+call ar_plants_hill x=60 z=40 r=12 seed=13431
 
 # --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Scrapjaw Heights: a scrap mountain with an old excavator at the top of a boom ladder, the Union strongroom sixteen metres down, and three cranes woken by one console. ------
 # the climb: the trail spirals up from the north foot; on the summit the dragline's boom ladder (11 storeys, a ladder inside), its deck chest
@@ -363,5 +363,51 @@ step2 collect|story:salvagetag|2|Dive to the street below and bring up the two s
 step2 read|Union receipt|1|Hand in the tags at the tally and read the Union's receipt
 quest2 done=The Union owes you a diver's debt. When the city breaks, it will remember.
 quest2 reward=MetalIngot*3;Rope*2
+
+# --- 10-25: the open sand filled - hills where nothing stands, a ruin on the biggest, a wreck, plants over all
+# (plan.py from the built island: every hill at least 8 m clear of anything the recipe placed; frame = the land centre)
+origin
+# hill 1: 40 m across, 15 m over the sea
+brush flatten at 56 52 r=20 s=20 frames=600 h=5.2
+brush flatten at 56 52 r=14.4 s=20 frames=600 h=9.8
+brush flatten at 56 52 r=9.0 s=20 frames=600 h=13.5
+brush flatten at 56 52 r=6 s=20 frames=500 h=15
+brush smooth at 56 52 r=23.0 s=5 frames=70
+brush flatten at 56 52 r=6 s=20 frames=400 h=15
+brush auto at 56 52 r=24.0 s=10 frames=25
+clear at 56 52 r=23
+# hill 2: 36 m across, 14 m over the sea
+brush flatten at -32 28 r=18 s=20 frames=600 h=4.9
+brush flatten at -32 28 r=13.0 s=20 frames=600 h=9.1
+brush flatten at -32 28 r=8.1 s=20 frames=600 h=12.6
+brush flatten at -32 28 r=6 s=20 frames=500 h=14
+brush smooth at -32 28 r=20.7 s=5 frames=70
+brush flatten at -32 28 r=6 s=20 frames=400 h=14
+brush auto at -32 28 r=21.6 s=10 frames=25
+clear at -32 28 r=21
+# hill 3: 32 m across, 12 m over the sea
+brush flatten at 8 2 r=16 s=20 frames=600 h=4.2
+brush flatten at 8 2 r=11.5 s=20 frames=600 h=7.8
+brush flatten at 8 2 r=7.2 s=20 frames=600 h=10.8
+brush flatten at 8 2 r=6 s=20 frames=500 h=12
+brush smooth at 8 2 r=18.4 s=5 frames=70
+brush flatten at 8 2 r=6 s=20 frames=400 h=12
+brush auto at 8 2 r=19.2 s=10 frames=25
+clear at 8 2 r=19
+# a ruin on hill 1: someone lived up here before the water rose
+call ar_ruin x=56 z=52 h=15 yaw=300 w=3 d=2 al=fillhlruin
+call ar_plants_hill x=56 z=52 r=20 seed=5700
+call ar_plants_hill x=-32 z=28 r=18 seed=5710
+call ar_plants_hill x=8 z=2 r=16 seed=5720
+call ar_plants_hill x=78 z=16 r=12 seed=5730
+call ar_plants_hill x=-40 z=50 r=12 seed=5740
+call ar_plants_hill x=66 z=-52 r=12 seed=5750
+call ar_plants_hill x=56 z=6 r=12 seed=5760
+call ar_plants_hill x=-10 z=12 r=12 seed=5770
+call ar_plants_hill x=28 z=40 r=12 seed=5780
+call ar_plants_hill x=20 z=-38 r=12 seed=5790
+call ar_plants_hill x=12 z=22 r=12 seed=5800
+call ar_plants_hill x=-66 z=6 r=12 seed=5810
+call ar_plants_hill x=18 z=-74 r=12 seed=5820
 
 save Hookline Stack

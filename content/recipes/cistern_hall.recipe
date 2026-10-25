@@ -162,7 +162,7 @@ prop dview zone.message=The Authority's tower stands over the water, planters on
 # the records van and its wagon in the east, the waterman's lodge in the north-east, the drowned-lamp cave in the west
 # (dark: a headlight), the oldest pump's engine (the second gas tank opens its locker)
 call ar_ridge x1=-45 z1=45 x2=-5 z2=62 h=11 top=6 r=9
-call ar_plants_tropical x=-25 z=53 r=26 seed=13711
+call ar_plants_hill x=-25 z=53 r=26 seed=13711
 call hw_zone x=-25 z=53 al=aqueducthill id=aqueduct_hill r=7 msg="Aqueduct hill: the old water line ran over here on arches. Two arches still stand; the rest lies in the grass."
 call treasure x=-25 z=53 r=12 n=2 seed=13761
 prop treasure13761 treasure.loot=CopperOre*2;MetalOre*2
@@ -178,7 +178,7 @@ prop oldpump beh.use=Start the oldest pump's engine
 prop oldpump on.use=message||The old engine drinks the gas, coughs twice and turns over. The pump groans - and its rusted locker drops open.\nsignal||engine\nshow|pumpvault
 prop pumpvault obj.name=pumpvault
 prop pumpvault beh.hidden=1
-call ar_plants_tropical x=55 z=-30 r=14 seed=13721
+call ar_plants_hill x=55 z=-30 r=14 seed=13721
 place Creature_Chicken hens at 30 48 ground
 
 # --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Overflow Tor: a surge tower over the cistern, a settling house drowned in the south, and sluice gates that must be pulled in the right order. ------
@@ -396,5 +396,51 @@ step collect|story:ch_gates|1|Pull the four sluices by the hub in the clerks' or
 step open|Pump-keeper's chest|1|Open the pump-keeper's chest in the drained pump hall
 quest done=One hand signed for every faction - Crane's. Ines Marlowe is waiting on the Rookery's lowest roofs with the torn ledger page. Band 800.
 quest reward=CopperOre*3;CaveMushroom*2
+
+# --- 10-25: the open sand filled - hills where nothing stands, a ruin on the biggest, a wreck, plants over all
+# (plan.py from the built island: every hill at least 8 m clear of anything the recipe placed; frame = the land centre)
+origin
+# hill 1: 44 m across, 16 m over the sea
+brush flatten at 64 -46 r=22 s=20 frames=600 h=5.6
+brush flatten at 64 -46 r=15.8 s=20 frames=600 h=10.4
+brush flatten at 64 -46 r=9.9 s=20 frames=600 h=14.4
+brush flatten at 64 -46 r=6 s=20 frames=500 h=16
+brush smooth at 64 -46 r=25.3 s=5 frames=70
+brush flatten at 64 -46 r=6 s=20 frames=400 h=16
+brush auto at 64 -46 r=26.4 s=10 frames=25
+clear at 64 -46 r=25
+# hill 2: 32 m across, 12 m over the sea
+brush flatten at 66 2 r=16 s=20 frames=600 h=4.2
+brush flatten at 66 2 r=11.5 s=20 frames=600 h=7.8
+brush flatten at 66 2 r=7.2 s=20 frames=600 h=10.8
+brush flatten at 66 2 r=6 s=20 frames=500 h=12
+brush smooth at 66 2 r=18.4 s=5 frames=70
+brush flatten at 66 2 r=6 s=20 frames=400 h=12
+brush auto at 66 2 r=19.2 s=10 frames=25
+clear at 66 2 r=19
+# hill 3: 32 m across, 12 m over the sea
+brush flatten at -76 -10 r=16 s=20 frames=600 h=4.2
+brush flatten at -76 -10 r=11.5 s=20 frames=600 h=7.8
+brush flatten at -76 -10 r=7.2 s=20 frames=600 h=10.8
+brush flatten at -76 -10 r=6 s=20 frames=500 h=12
+brush smooth at -76 -10 r=18.4 s=5 frames=70
+brush flatten at -76 -10 r=6 s=20 frames=400 h=12
+brush auto at -76 -10 r=19.2 s=10 frames=25
+clear at -76 -10 r=19
+# a ruin on hill 1: someone lived up here before the water rose
+call ar_ruin x=64 z=-46 h=16 yaw=260 w=3 d=2 al=fillchruin
+call ar_plants_hill x=64 z=-46 r=22 seed=5300
+call ar_plants_hill x=66 z=2 r=16 seed=5310
+call ar_plants_hill x=-76 z=-10 r=16 seed=5320
+call ar_plants_hill x=78 z=-24 r=12 seed=5330
+call ar_plants_hill x=8 z=82 r=12 seed=5340
+call ar_plants_hill x=-52 z=58 r=12 seed=5350
+call ar_plants_hill x=6 z=60 r=12 seed=5360
+call ar_plants_hill x=-32 z=-70 r=12 seed=5370
+call ar_plants_hill x=50 z=-68 r=12 seed=5380
+call ar_plants_hill x=40 z=-34 r=12 seed=5390
+call ar_plants_hill x=-66 z=-52 r=12 seed=5400
+call ar_plants_hill x=18 z=14 r=12 seed=5410
+call ar_plants_hill x=56 z=-18 r=12 seed=5420
 
 save Cistern Hall

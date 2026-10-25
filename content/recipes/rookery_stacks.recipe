@@ -159,7 +159,7 @@ prop dview zone.message=Shanty huts stacked two high on the low roofs, washing l
 # the family van and caravan in the north-west, the old bathhouse in the west (the keycard opens the Authority's ration
 # locker), the glass-strewn hoard (spikes: boots and patience), the gull cage in the east (bolt cutters)
 call ar_ridge x1=5 z1=60 x2=35 z2=48 h=10 top=6 r=8
-call ar_plants_tropical x=20 z=54 r=20 seed=13811
+call ar_plants_hill x=20 z=54 r=20 seed=13811
 call hw_zone x=20 z=54 al=gullstacks id=gull_stacks r=7 msg="The gull stacks: chimney stumps of the old town, white with birds. From up here you see the whole Rookery - and how low it sits."
 call treasure x=20 z=54 r=12 n=2 seed=13861
 prop treasure13861 treasure.loot=MetalOre*2;TitaniumOre*1
@@ -173,7 +173,7 @@ brush flatten at -25 60 r=5 s=20 frames=200 h=3
 call hw_hazard x=-25 z=60 al=glasshoard kind=spikes r=4 dmg=4 safe=none msg="Broken glass and rusted wire, ankle-deep. Someone hid something in the middle of it."
 place Loot_Chest glasschest at -25 60 ground sit yaw=0
 call cagecache x=52 z=20 yaw=-90 alias=gullcage sig=gullcage chest=gullcagechest items=Feather*6;Rope*2;Leather*2 title="Gull keeper's chest" kx=-45 kz=40 kr=16 seed=13871 keychest=familycutters keytitle="Family's tool bag" keyitems=Rope*2
-call ar_plants_tropical x=-50 z=20 r=12 seed=13821
+call ar_plants_hill x=-50 z=20 r=12 seed=13821
 
 # --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Chimney Tor: the poor quarter's great chimney, a drowned bathhouse cellar, butler bots that guard the stack doors - and hot water for the Rookery. ------
 # the climb: the trail spirals up from the west foot; on the summit the great chimney (12 storeys, a ladder inside), its deck chest
@@ -409,5 +409,51 @@ step read|Storm warning|1|Read the storm warning
 step reach|jump_rs_top|1|Hop up the egg-collectors' slabs on the south-west shore and watch the storm come in
 quest done=The councils meet on the Crown tonight, in the storm. Bridgeworks Crown - band 1000.
 quest reward=Leather*2;TitaniumOre*1
+
+# --- 10-25: the open sand filled - hills where nothing stands, a ruin on the biggest, a wreck, plants over all
+# (plan.py from the built island: every hill at least 8 m clear of anything the recipe placed; frame = the land centre)
+origin
+# hill 1: 28 m across, 10 m over the sea
+brush flatten at -66 26 r=14 s=20 frames=600 h=3.5
+brush flatten at -66 26 r=10.1 s=20 frames=600 h=6.5
+brush flatten at -66 26 r=6.3 s=20 frames=600 h=9.0
+brush flatten at -66 26 r=6 s=20 frames=500 h=10
+brush smooth at -66 26 r=16.1 s=5 frames=70
+brush flatten at -66 26 r=6 s=20 frames=400 h=10
+brush auto at -66 26 r=16.8 s=10 frames=25
+clear at -66 26 r=17
+# hill 2: 24 m across, 9 m over the sea
+brush flatten at 56 46 r=12 s=20 frames=600 h=3.1
+brush flatten at 56 46 r=8.6 s=20 frames=600 h=5.9
+brush flatten at 56 46 r=5.4 s=20 frames=600 h=8.1
+brush flatten at 56 46 r=6 s=20 frames=500 h=9
+brush smooth at 56 46 r=13.8 s=5 frames=70
+brush flatten at 56 46 r=6 s=20 frames=400 h=9
+brush auto at 56 46 r=14.4 s=10 frames=25
+clear at 56 46 r=15
+# hill 3: 24 m across, 9 m over the sea
+brush flatten at -10 42 r=12 s=20 frames=600 h=3.1
+brush flatten at -10 42 r=8.6 s=20 frames=600 h=5.9
+brush flatten at -10 42 r=5.4 s=20 frames=600 h=8.1
+brush flatten at -10 42 r=6 s=20 frames=500 h=9
+brush smooth at -10 42 r=13.8 s=5 frames=70
+brush flatten at -10 42 r=6 s=20 frames=400 h=9
+brush auto at -10 42 r=14.4 s=10 frames=25
+clear at -10 42 r=15
+# a ruin on hill 1: someone lived up here before the water rose
+call ar_ruin x=-66 z=26 h=10 yaw=340 w=3 d=2 al=fillrkruin
+call ar_plants_hill x=-66 z=26 r=14 seed=6100
+call ar_plants_hill x=56 z=46 r=12 seed=6110
+call ar_plants_hill x=-10 z=42 r=12 seed=6120
+call ar_plants_hill x=50 z=-50 r=12 seed=6130
+call ar_plants_hill x=2 z=70 r=12 seed=6140
+call ar_plants_hill x=40 z=38 r=12 seed=6150
+call ar_plants_hill x=68 z=6 r=12 seed=6160
+call ar_plants_hill x=-74 z=-16 r=12 seed=6170
+call ar_plants_hill x=-64 z=46 r=12 seed=6180
+call ar_plants_hill x=-40 z=-62 r=12 seed=6190
+call ar_plants_hill x=-44 z=-18 r=12 seed=6200
+call ar_plants_hill x=44 z=60 r=12 seed=6210
+call ar_plants_hill x=70 z=-38 r=12 seed=6220
 
 save Rookery Stacks
