@@ -14,6 +14,7 @@
 # Built by the recipe player (CIRecipe sun_atoll) through the editor's own operations.
 include lib_rt
 include lib_sea
+include lib_features
 new
 # (nature: desert, Like Raft - a few desert trees and scrub on the islets, the lagoon's corals Like Raft)
 gen Trees=0.38 Bushes=0.5 Rocks=0.55 Harvest=0.25 BeachThings=0.3

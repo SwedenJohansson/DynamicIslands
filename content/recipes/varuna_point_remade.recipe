@@ -42,7 +42,7 @@ clear at 40 30 r=3 only=Rock|Boulder
 clear at 24 30 r=3 only=Rock|Boulder
 clear at 72 -12 r=3 only=Rock|Boulder
 clear at 16 -30 r=3 only=Rock|Boulder
-clear at 12 29 r=3 only=Rock|Boulder
+clear at 18 70 r=3 only=Rock|Boulder
 
 # --- The floodlight tower at the site's north edge: the radio tower's legs, a deck at 6.3 m, a ladder up its south face
 push at 19 3 h=10
@@ -104,9 +104,10 @@ place "Box Small" partcrate3 at 72 -12 ground yaw=75
 place "Box Small" partcrate4 at 16 -30 ground yaw=10
 
 # --- The deep under the point, north of the tower: the foreman's strongbox where the storm threw it - and its keeper ---
-place VG_Safe strongbox at 12 29 h=-11.3 sit yaw=180
-place Zone_Trigger deep at 12 29 ground y=2
-place Creature_AnglerFish angler at 12 33 ground y=3
+# (box agent 10-25: at 12 29 the point is now land 3 m up - the box sat 14 m in it; the deep is off the north shore, 14 m down)
+place VG_Safe strongbox at 18 70 ground sit yaw=180
+place Zone_Trigger deep at 18 70 ground y=2
+place Creature_AnglerFish angler at 18 74 ground y=3
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, pineapples, bananas ----------

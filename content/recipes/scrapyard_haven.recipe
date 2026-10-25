@@ -60,7 +60,7 @@ call wallstack 261
 place CaravanBarebones1 gate at {13+13*cos(225)} {29+13*sin(225)} ground sit yaw={90-225}
 place CaravanBarebones1 gate at {13+13*cos(225)} {29+13*sin(225)} ground sit yaw={90-225} y=2.85
 place RT_Pillar - at 7 23.5 ground sit
-place RT_PowerBox winch at 7 23.5 ground y=1.6 yaw=45
+place RT_PowerBox winch at 7 23.5 ground y=1.7 yaw=45
 place Zone_Trigger outside at -1 14 y=1.5
 
 # The harbour: a pier into the bay on posts, the harbour master's van and lockbox, the notice, wrecks

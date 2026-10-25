@@ -11,6 +11,7 @@
 # it); every position below is m from the recipe's origin (play tests: 'offset' as the save logs it).
 include lib_huts
 include lib_sea
+include lib_features
 new
 gen Trees=0.2 Bushes=0.3 Rocks=0.5 Harvest=0.25 BeachThings=0.3
 gen Seed=9008 Radius=45 Height=14 Roughness=0.5 Peaks=2 Shape=6 Style=4 BeachWidth=0.5 Cliffs=0.2 PeakShape=0.45
@@ -267,4 +268,9 @@ quest reward=Plank*6;Rope*4;Leather*2
 call treasure x=0 z=0 r=36 n=1 seed=8844
 prop treasure8844 treasure.loot=TitaniumOre*2
 
+# (box agent 10-24: generated rocks left hanging over the ground check - cleared)
+clear at 10.17 -21.63 r=1.5 all body only=CaravanIsland_SmallRock_1
+clear at 31.57 -3.82 r=1.5 all body only=CaravanIsland_SmallRock_1
+clear at 8.50 -4.52 r=1.5 all body only=CaravanIsland_SmallRock_1
+clear at 41.15 -0.46 r=1.5 all body only=CaravanIsland_SmallRock_2
 save Embers Isle

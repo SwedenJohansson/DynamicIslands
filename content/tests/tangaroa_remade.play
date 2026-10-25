@@ -9,6 +9,7 @@ expect title The Lights of Tangaroa
 at 60 -4
 zone harbour
 expect step 0
+expect stand 60 -4 h=1.96 below=3
 read Council notice
 expect step 1
 

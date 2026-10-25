@@ -36,6 +36,7 @@ expect step 3
 
 # The north cove: the third rod on its floor (the cove's box, then all three rods); then the station's locker
 at -30 56 h=-2.2
+reach Cove box
 open Cove box
 expect story rod 3
 expect step 5

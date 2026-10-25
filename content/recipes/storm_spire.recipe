@@ -10,6 +10,7 @@
 # Built by the recipe player (CIRecipe storm_spire) through the editor's own operations.
 include lib_sea
 include lib_rt
+include lib_features
 new
 # (nature: forest, Like Raft - pines up a rock needle; Whiteout Reach after it is the snowy one)
 gen Trees=0.21 Bushes=0.38 Rocks=0.42 Harvest=0.1 BeachThings=0.3
@@ -115,6 +116,8 @@ place Zone_Trigger spiretop at -3 0 y=1.5
 place Creature_StoneBird stormbird at -3 0 y=9
 pop
 
+# (box agent 10-24: a generated sand rock grew round the cove box - cleared)
+clear at -30 57 r=3 only=Rock|Boulder
 # --- The north cove off the north-west shore (3.8 m down, a level spot - CISeaSpots): the third rod's box on its floor --
 place "Box Small" rodcove at -30 57 ground yaw=40
 

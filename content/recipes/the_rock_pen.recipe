@@ -14,6 +14,7 @@
 include lib_rt
 include lib_huts
 include lib_sea
+include lib_features
 new
 # (nature: forest, Like Raft - pines and bushes on the ledges and slopes below the plateau; the plateau top is the
 # prison's: its footprint cleared)
@@ -312,4 +313,8 @@ quest reward=MetalIngot*4;Nail*15;Bolt*4
 call treasure x=0 z=0 r=35 n=1 seed=8858
 prop treasure8858 treasure.loot=TitaniumOre*2
 
+# (box agent 10-24: generated rocks left hanging over the ground check - cleared)
+clear at 27.49 -21.96 r=1.2 all only=SmallRock_03
+clear at 27.49 -22.64 r=1.2 all only=SmallRock_03
+clear at 30.01 -24.78 r=1.2 all only=SmallRock_03
 save The Rock Pen

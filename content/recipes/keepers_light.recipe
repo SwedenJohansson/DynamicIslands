@@ -14,6 +14,7 @@ include lib_rt
 include lib_relay
 include lib_huts
 include lib_sea
+include lib_features
 new
 # (nature: forest, Like Raft - pines clinging to the stacks' tops; Height 14 instead of the draft's 24: the stacks stand
 # 8-14 m out of the sea, low enough to join with bridges and stairs)
@@ -389,4 +390,9 @@ quest reward=Plank*6;Rope*3;Cooked_Herring*3
 call treasure x=0 z=0 r=25 n=1 seed=8848
 prop treasure8848 treasure.loot=TitaniumOre*2
 
+# (box agent 10-24: generated rocks left hanging over the ground check - cleared)
+clear at -8.50 -32.99 r=1.5 all body only=BigRock_2
+clear at -14.59 -2.64 r=1.5 all body only=BigRock_Low1_Sand
+clear at -16.72 16.79 r=1.5 all body only=BigRock_Low1_Sand
+clear at -23.35 -22.52 r=1.5 all body only=BigRock_Low1_Sand
 save Keeper's Light

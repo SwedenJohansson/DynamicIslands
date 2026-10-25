@@ -34,10 +34,11 @@ expect message hums
 expect story part 0
 
 # The deep under the point: the giant angler, and the foreman's strongbox it guarded
-at 12 26 h=-8
+at 18 67
 zone deep
 kill Angler fish
 expect step 5
+reach Foreman's strongbox
 open Foreman's strongbox
 wait 5
 expect item Blueprint_WindTurbine 1

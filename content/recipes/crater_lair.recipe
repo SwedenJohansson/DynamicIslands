@@ -381,4 +381,13 @@ quest reward=MetalIngot*6;Bolt*8;Glass*4
 call treasure x=0 z=0 r=35 n=1 seed=8841
 prop treasure8841 treasure.loot=TitaniumOre*2
 
+# (box agent 10-24: generated rocks left hanging over the ground check - cleared)
+clear at 34.23 -24.02 r=1.2 all only=CaravanIsland_SmallRock_1
+clear at 14.31 7.25 r=1.2 all only=CaravanIsland_SmallRock_2
+clear at 14.70 16.03 r=1.2 all only=CaravanIsland_SmallRock_2
+clear at 18.32 12.15 r=1.2 all only=CaravanIsland_SmallRock_2
+clear at 18.40 20.61 r=1.2 all only=CaravanIsland_SmallRock_2
+clear at 18.41 18.02 r=1.2 all only=CaravanIsland_SmallRock_2
+clear at 22.41 12.16 r=1.2 all only=CaravanIsland_SmallRock_2
+clear at -39.26 -15.93 r=1.2 all only=SmallBoulder2
 save Crater Lair

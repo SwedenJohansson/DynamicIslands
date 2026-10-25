@@ -1,6 +1,6 @@
 # Play test of The Iron Graveyard (CIPlay iron_graveyard, in a test world 'CI ...'). Points as in its recipe: the yard
 # (2 m) on the south beach, its gate at the west end, the hulls' decks (the tanker 5.2-6 m, the trawler 4.2-5 m, the ferry
-# 4.9-5.5 m) up Raft's ladders on their sides, the barge in its hole (8 m down), the crane's platform (6.4 m), the office
+# 4.9-5.5 m) up Raft's ladders on their sides, the barge in its hole (8 m down), the crane's platform (5.4 m), the office
 # (floor 2.05 m), the ramp up the mesa's south-east flank, the turbine on its rim (13.8 m).
 island The Iron Graveyard
 expect step 0
@@ -51,7 +51,7 @@ expect step 6
 walk 8 -60.5 to 3 -61.5 to 0.35 -62.7 h=2
 climb 0.35 -63.56 h=2
 climb 0.35 -63.56 h=4.43
-expect stand -1.2 -64.6 h=6.4 below=8.5
+expect stand -1.2 -64.6 h=5.4 below=8.5
 read Crane operator's note
 expect step 7
 

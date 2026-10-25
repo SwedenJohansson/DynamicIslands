@@ -12,6 +12,7 @@
 # its pivot, its floor 4.05 m lower than the tunnels' pivots - found with kit_labyrinth). The reef covers them all; only
 # the two holes reach down to the mouth and the gate.
 include lib_sea
+include lib_features
 new
 gen Trees=0.38 Bushes=0.5 Rocks=0.55 Harvest=0.25 BeachThings=0.3
 gen Seed=9005 Radius=45 Height=5 Roughness=0.3 Peaks=1 Shape=2 Style=2 BeachWidth=0.7 Cliffs=0.1 PeakShape=0.2
@@ -264,4 +265,6 @@ quest reward=OxygenBottle*2;Rope*4;CopperIngot*3
 call treasure x=0 z=0 r=30 n=1 seed=8843
 prop treasure8843 treasure.loot=TitaniumOre*2
 
+# (box agent 10-24: generated rocks left hanging over the ground check - cleared)
+clear at -19.15 -7.02 r=1.2 all only=CaravanIsland_SmallRock_1
 save The Drowned Labyrinth
