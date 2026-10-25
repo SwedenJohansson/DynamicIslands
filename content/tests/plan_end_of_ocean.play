@@ -12,6 +12,7 @@ open Pipe store
 wait 3
 expect item TitaniumOre 2
 expect chain triangle unlocked
+sail 3
 tune triangle
 include triangulation_rocks.play
 # optional reuse room (an item from an earlier island)
@@ -21,12 +22,14 @@ open Kennel chest
 wait 3
 expect item TitaniumOre 3
 expect chain static unlocked
+sail 3
 tune static
 include static_shoals.play
 # optional reuse room (an item from an earlier island)
 open Spotter plane's crate
 wait 3
 expect item TitaniumOre 2
+sail 3
 tune breakwater
 include outer_breakwater.play
 # optional reuse room (an item from an earlier island)
@@ -34,24 +37,28 @@ open Smugglers' chest
 wait 3
 expect item TitaniumOre 2
 expect chain locks unlocked
+sail 3
 tune locks
 include current_locks.play
 # optional reuse room (an item from an earlier island)
 open Old canal chest
 wait 3
 expect item TitaniumOre 2
+sail 3
 tune stormworks
 include stormworks.play
 # optional reuse room (an item from an earlier island)
 open Ore cave chest
 wait 3
 expect item TitaniumOre 3
+sail 3
 tune spire
 include cooling_spire.play
 # optional reuse room (an item from an earlier island)
 open Cellar chest
 wait 3
 expect item TitaniumOre 2
+sail 3
 tune court
 include engine_court.play
 # optional reuse room (an item from an earlier island)
