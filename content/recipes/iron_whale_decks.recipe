@@ -41,6 +41,11 @@ call fz_hazard x=-48 z=-30 al=trenchdark kind=dark r=11 dmg=1 safe=wears|HeadLig
 call fz_zone x=-48 z=-26 al=trenchzone id=prop_trench r=6 y=1.5 msg="The propeller trench. The Whale's screw lies here, one blade snapped off, where it tore free when she broke."
 # the fallen funnel (north-east): its rock, its ladders, the funnel beside them
 call fz_mount x=42 z=42 h=10 r=5
+# (box agent 10-25: the funnel's base hung 5-6 m over the seabed at its edges - the mound's top widened under all of it)
+brush flatten at 45 40.5 r=16 s=20 frames=400 h=10
+brush smooth at 45 40.5 r=21 s=6 frames=60
+brush flatten at 45 40.5 r=16 s=20 frames=500 h=10
+brush auto at 45 40.5 r=22 s=10 frames=25
 call fz_tower x=42 z=44 h=10 n=3 al=funnelladder chest=funnelchest zal=funnelzone zid=funnel_top msg="The top of the funnel, out of the sea. The way the Whale's smoke went - and the way out."
 place TP_SeleneReactorChimney funnel at 46 41 h=10 centred sit
 prop funnel tint.color=#5a2a24
@@ -109,7 +114,8 @@ place Placeable_CookingStand_Food_One - at -4.8 3.6 y=0.1 sit yaw=180
 place Loot_Chest galley at -1.2 3.5 y=0.1 sit yaw=180
 # REDO 10-24: the officers' safe - the Bow's mess code (4127) opens it too [optional]
 place Loot_Chest officersafe at -5.4 1.2 y=0.1 sit yaw=90
-place RT_PowerBox galleypad at -5.95 0 y=1.2 yaw=90
+# (box agent 10-25: 0.1 m into the wall - moved 0.12 m off it)
+place RT_PowerBox galleypad at -5.83 0 y=1.2 yaw=90
 # story pass 10-24: the radio corner - the chopped cable (the hatchet still in it) and Officer Sund at the switch
 place Placeable_Chair_Basic - at -3.4 -3.4 y=0.1 sit yaw=200
 place UT_ElectricCable01 radiocable at -1.6 -3.6 y=0.1 sit yaw=90

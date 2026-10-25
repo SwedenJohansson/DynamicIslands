@@ -99,7 +99,8 @@ place "Box Small" - at 5.8 -8.6 ground sit yaw=20
 place Note_Paper sledgenote at 5.8 -8.6 ground y=0.7 drop yaw=35
 place "Box Small" - at 8.8 1.2 ground sit yaw=160
 place Note_Paper wardentape at 8.8 1.2 ground y=0.7 drop yaw=175
-place RT_CommRadio - at 9.9 0.6 ground sit yaw=200
+# (box agent 10-25: 0.16 m into the trading post - moved 0.5 m off it)
+place RT_CommRadio - at 10.1 1.1 ground sit yaw=200
 place TP_Moontown_SealedCrate01 - at 2 -8 ground sit yaw=60
 place Loot_Chest depotstores at -6 -2 ground sit yaw=90
 store depotshop at 10 -4 ground
