@@ -1,5 +1,6 @@
 # Guide pictures of Signal Rock (CIPlay signal_rock_pics): Raft's camera and water at midday, and at night
 island Signal Rock
+offset 16.96 3.45
 hour 11
 weather Calm
 at -8.88 -13.12
@@ -8,6 +9,10 @@ picture signal_rock_cove -32 7 -32 -11 6 -11
 picture signal_rock_deck -4 5 -17 -11 4 -10
 picture signal_rock_mast -20 4 -2 -11 14 -8
 picture signal_rock_ridge 4 30 10 -11 4 -11
+picture sr_headland 10 18 30 40 3 8
+picture sr_rig_cave 36 7.5 38 42 6.5 18
+picture sr_rig_inside 43 5.3 20.5 41 4.3 16
+picture sr_headland_south 48 8 -26 40 3 8
 hour 21.5
 wait 2
 picture signal_rock_night -30 8 -30 -11 8 -11

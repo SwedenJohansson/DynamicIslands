@@ -5,11 +5,17 @@
 # where a giant angler fish has made its home. Quest "The Reef Remembers" (11 steps): the platform, the director's
 # log, the dive locker's case key, the two garden cases, the blue hole's edge, the puffer fish by it, the giant angler, the
 # hole's case, the three samples, the analyzer and the director's safe.
+# DEEP 10-25 (deep pass, The Long Voyage): Radius 88 kept. New, off the quest (steps unchanged, 14): Survey Hill on the
+# west ring (a 22 m climb by a cut path from the lagoon side, a survey mast and the biologist Ines Calder's notes on its
+# top), the divers' cave on the east ring by the footbridge (the diver Tomas Reyes's letter, his box), and his pay
+# buried on the south ring - a second treasure.
 #
 # Built by the recipe player (CIRecipe coral_observatory) through the editor's own operations.
 include lib_sea
 include lib_selene
 include lib_features
+include lib_areas
+include lib_highwater
 new
 # (nature: Like Raft (as thick on the land as Raft's own tropical islands) - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -22,6 +28,11 @@ generate
 brush lower at -26 -8 r=8 s=20 frames=28
 brush smooth at -26 -8 r=10 s=10 frames=12
 clear at -26 -8 r=11
+# --- DEEP 10-25 terrain (all on the ring's land: the land's centre stays put): Survey Hill (west ring, summit 22 m,
+# base r 14) and its path from the lagoon side
+call hw_mount x=-62 z=16 b=14 h=22
+call hw_trail x=-62 z=16 b=14 h=22 a0=60 turn=300 n=30 h0=6
+brush flatten at -62 16 r=8 s=20 frames=400 h=22
 origin
 
 # --- The observatory: Tangaroa's floating ring moored in the lagoon, a deck of the radio tower's floors on it, a lab of
@@ -89,11 +100,31 @@ scatter "Pickup_Landmark_Tree_Palm 3" 4 at 0 0 r=61.6 seed=4196 free=5
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=108 deep=5 n=2
 
+# --- DEEP 10-25: Survey Hill - the survey mast on the west ring, Ines Calder's notes -----------------------------------
+call hw_zone x=-49.01 z=23.5 al=surveyfootz id=surveyfoot r=5 msg="Steps cut into the hill, and a rope rail - the observatory's path up Survey Hill. A mast stands on the top."
+call hw_zone x=-62 z=16 al=surveytopz id=surveytop r=7 h=1 msg="Survey Hill. The whole ring lies below you, the platform in its lagoon - and to the north the sea has a different colour, a cold grey-green band."
+call hw_mast x=-62 z=16 h0=22 lv=2 a=surveymast chest=surveychest top=Placeable_Lantern_Metal
+place Note_Paper inesnote at -58.5 14 h=22.1 drop yaw=200
+loot surveychest Rope*2;Glass*3;Plastic*2;Battery*1
+note surveychest Survey box | The survey box on the mast: a thermometer on a long line, glass sample jars, rope - and a battery for the beacon.
+scatter Bush 3 at -62 16 r=14 seed=32034 free=1
+# --- DEEP 10-25: the divers' cave on the east ring, Tomas Reyes's letter and box ---------------------------------------
+call ar_cave x=66 z=18 h=6 yaw=180 al=diverock chest=divebox
+call hw_zone x=66 z=13 al=divecavez id=divecave r=4 msg="A cave in the east ring, a wetsuit hung up to dry in its mouth years ago and never taken down."
+place Note_Paper tomasnote at 67.5 12.5 h=6.45 drop yaw=0
+loot divebox Rope*2;Scrap*3;Bolt*2;OxygenBottle*1
+prop divebox loot.refill=0
+note divebox Diver's box | Tomas's box at the back of the cave: rope, scrap, a few bolts - and a full oxygen bottle, his spare.
+call treasure x=-40 z=-55 r=12 n=1 seed=32033 kind=0
+prop treasure32033 treasure.loot=CopperIngot*2;Bolt*3;Glass*2
+
 info title=Coral Observatory
 info author=Custom Islands
-info description=A ring of palm islets around a wide lagoon, and moored in the lagoon a research platform - one of Tangaroa's floating rings with a lab on it. The scientists' last coral samples still lie in cases on the lagoon floor, and one in the blue hole, where a giant angler fish lives. Inspired by Raft's Tangaroa and Varuna Point.
+info description=A ring of palm islets around a wide lagoon, a survey hill on the west and a divers' cave on the east, and moored in the lagoon a research platform - one of Tangaroa's floating rings with a lab on it. The scientists' last coral samples still lie in cases on the lagoon floor, and one in the blue hole, where a giant angler fish lives. Inspired by Raft's Tangaroa and Varuna Point.
 island on.arrive=message||A ring of palm islets around a turquoise lagoon - and in the middle, a platform with a lab and a mast, dark.
 
+note inesnote Biologist Ines Calder's notes | SURVEY HILL - I. CALDER, REEF BIOLOGY\n\nDay 212. Water at the north gardens two degrees colder than last month. At the south gardens, one. The cold comes from the north and it is getting closer.\n\nDay 230. Bleaching line moved another four metres. The staghorn is white as bone at the north edge of the lagoon. The director says it is a bad year. It is not a bad year.\n\nDay 241. From up here you can see it: a grey-green band on the sea to the north, where the current comes in. Nothing lives in it. It is the colour of meltwater.\n\nI have asked the director for a boat to follow it north. She says the samples first. The samples will only tell her what I can already see from this hill.
+note tomasnote Diver Tomas Reyes's letter | T. REYES, STATION DIVER - TO WHOEVER TAKES MY JOB\n\nThree cases on the floor of the lagoon, and the last one down the blue hole. That was my job, and I did it, and then the big fish moved into the hole and I did not go down again.\n\nThe director wanted the samples. Ines wanted a boat. I wanted to go home. Two of us got what we wanted.\n\nI kept my spare bottle here, where it's cool. If you go down the hole, take it. That fish has a light on its head and teeth like a saw, and it likes to sit right over the case.\n\nMy pay is buried on the south shore, by the old pier posts. Nobody was going to pay me again anyway.
 story casekey|Sample case key|quest:Tangaroa_KeyCard|The key card that opens the observatory's sample cases.
 story sample|Coral sample|Placeable_Utopia_Bottle|A sealed jar of coral from the observatory's reef, for the analyzer.
 note directorlog Director's log | CORAL OBSERVATORY - DIRECTOR'S LOG\n\nThe reef is dying from the edges in. Our last three samples are sealed in cases on the lagoon floor: two in the gardens, one at the bottom of the blue hole.\nThe big angler in the hole took Halvorsen's light - and nearly Halvorsen. Don't dive there alone.\nThe case key is in the dive locker. Bring all three samples to the analyzer: if the cold current from the north is what is killing the reef, the analyzer will say so - and my notes in the safe go to whoever reads it.
@@ -169,4 +200,7 @@ quest reward=CopperIngot*4;Plastic*10;Glass*6
 call treasure x=0 z=0 r=80 n=1 seed=8821
 prop treasure8821 treasure.loot=TitaniumOre*3
 
+# (generator stones left in the air by the shaping - taken out, 10-25)
+clear at 77.18 -21.01 r=1 only=SmallBoulder1
+clear at -18.83 55 r=1 only=SmallBoulder1
 save Coral Observatory

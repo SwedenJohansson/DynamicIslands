@@ -1,5 +1,7 @@
 # Play test of Crane Yard (CIPlay crane_yard, in a test world 'CI ...'). Points as in its recipe.
 island Crane Yard
+# DEEP 10-25: the spoil heap moved the land's centre (the recipe's save prints the exact offset)
+offset -5.97 -7.33
 expect step 0
 expect title Lights On
 
@@ -12,6 +14,14 @@ expect step 0
 read Foreman's whiteboard
 expect step 1
 
+# DEEP 10-25: the crane operator's tunnel in the spoil heap, his cache under the hatch
+zone blastcave
+expect step 2
+read Crane operator Ben Okafor's note
+expect step 3
+use heaphatch
+expect message The hatch lifts
+
 # The spotlight without its parts; up the scaffold tower's ladder
 use spotlight
 expect message missing its lens
@@ -20,12 +30,12 @@ expect stand 4 -6 h=11.7
 
 # The collapsed deck: the angler fish, three crates with the spotlight's parts
 kill Angler fish
-expect step 2
+expect step 4
 openat 26 -7
 openat 30.5 4.5
 openat 33 -1.5
 expect story part 3
-expect step 3
+expect step 5
 
 # The spotlight fixed: its beam, the buoy and the lockbox
 expect hidden lockbox

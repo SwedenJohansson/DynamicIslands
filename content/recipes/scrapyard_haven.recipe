@@ -7,10 +7,17 @@
 # its barrel, the King's tithe pile, the trader's van, the caravan watchtower; the gate, the pit's edge, the scrap pit,
 # the hyenas, the scrapper's note and the pit's sign; the fortress's stilts, the fortress, the scrap king's hoard.
 # Inspired by Raft's Caravan Town and Utopia.
+# DEEP 10-25 (deep pass, The Long Voyage): Radius 110 kept. New: the King's back way, a cave in the south hill that
+# opens on the south shore; the King's strongroom, a scrap shack sunk in a hole 14 m down in the bay (an air pocket); two
+# buried treasures. The hoard on the fortress's deck is now chained: the King's note in the cave sends you down to the
+# strongroom for its crown-shaped key. Quest 23 -> 28 steps. Voices: the scrap king Kasimir Dunne, his diver Pearl Ash,
+# harbour master Otto Fenn.
 #
 # Built by the recipe player (CIRecipe scrapyard_haven) through the editor's own operations.
 include lib_sea
 include lib_features
+include lib_areas
+include lib_highwater
 new
 # (nature: desert, Like Raft but built up: a third of the grass tufts of Raft's wild desert islets - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.19 Bushes=0.35 Rocks=0.42 Harvest=0.2 BeachThings=0.3
@@ -28,6 +35,9 @@ brush flatten at -10 -45 r=12 s=20 frames=60
 # (the trail from the town's gate down the shore to the pit, and up onto the fortress's shelf)
 brush smooth from -8 -10 to -21 -10 r=5 s=20 frames=60
 brush smooth from 5 21 to -2 13 r=4 s=20 frames=50
+# --- DEEP 10-25 terrain (under the sea as it was: the land's centre stays put): the strongroom's hole in the bay (-14 m);
+# the cave's pad comes with its macro (in the south hill, below its own ground)
+call hw_basin x=58 z=-42 r=12 h=-14
 origin
 
 # --- The scrap king's fortress: Utopia's bamboo stilt house on the west ridge, its stairs turned towards the trail ---
@@ -74,6 +84,7 @@ place LandmarkLadder_6m quayladder at 43.1 25 h=-1.6 yaw=90
 place Van_2 harbourvan at 18 20 ground sit yaw=10
 place Loot_Chest lockbox at 21 18.5 ground sit yaw=200
 place Note_Board notice at 21 27.5 ground yaw=90
+place Note_Paper ottonote at 22.6 29 ground yaw=80
 place BoatStranded wreck at 40 8 ground yaw=60 tilt=12
 place RT_PlasticBoat dinghy at 45 21 h=0.3 yaw=100
 place Zone_Trigger harbour at 24 25 y=1.5
@@ -140,11 +151,35 @@ scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=77.0 seed=4229 free=3
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=130 deep=5 n=3
 
+# --- DEEP 10-25: the King's back way - a cave in the south hill, his note and his dog's things ------------------------
+call ar_cave x=5 z=-74 h=5 yaw=180 al=kingrock chest=kingcavechest
+call hw_zone x=5 z=-79 al=kingcavez id=kingcave r=4 msg="A cave in the south hill, its mouth on the shore. A dog's bowl, a chain on a ring - and boot prints in the sand, going down to the water and not coming back."
+place Note_Paper kingnote at 6.5 -79.5 h=5.45 drop yaw=0
+loot kingcavechest Rope*2;Scrap*4;Bolt*3;Battery*1
+prop kingcavechest loot.refill=0
+note kingcavechest King's cave box | The King's box at the back of the cave: rope, scrap, bolts and a battery - and a dog's collar, too big for any dog.
+call treasure x=-4 z=-70 r=12 n=1 seed=32020 kind=0
+prop treasure32020 treasure.loot=Scrap*3;CopperOre*2;Bolt*2
+# --- DEEP 10-25: the King's strongroom (the bay), sunk 14 m down, an air pocket: Pearl's note, the crown key -----------
+call hw_sunkhouse x=58 z=-42 h=-14 yaw=0 a=strongroom chest=strongchest air=strongair bub=strongbub dal=strongdoor
+call hw_zone x=58 z=-42 al=strongzone id=strongroom r=7 h=1 msg="The King's strongroom: a shack of welded scrap on the bay's floor, 14 m down. A crown is painted over its door. Its front room still holds air."
+place Note_Paper pearlnote at 58.6 -44.2 h=-13.7 drop yaw=20
+loot strongchest story:crownkey*1;MetalIngot*2;Nail*8;Rope*2
+note strongchest Strongroom chest | The King's strong chest: nails, rope, two ingots - and a key cut in the shape of a crown, on a chain.
+place Creature_PufferFish strongpuffers at 52 -34 h=-9
+prop strongpuffers creature.count=2
+call hw_reef x=49 z=-46 r=3 seed=32021
+call hw_reef x=66 z=-36 r=3 seed=32022
+# --- DEEP 10-25: the harbour master's letter (by his van) and what he buried on the north beach --------------------------
+call treasure x=-15 z=60 r=12 n=1 seed=32023 kind=0
+prop treasure32023 treasure.loot=MetalOre*3;TitaniumOre*1;Hinge*1
+
 info title=Scrapyard Haven
 info author=Custom Islands
-info description=A junk town on a desert crescent: a harbour of wrecks, a ring of stacked caravans for a wall, a gate trailer on a winch, a scrap pit with a hyena pack - and on the ridge, the scrap king's bamboo fortress on stilts. Inspired by Raft's Caravan Town and Utopia.
+info description=A junk town on a desert crescent: a harbour of wrecks, a cave in the south hill, a strongroom sunk in the bay, a ring of stacked caravans for a wall, a gate trailer on a winch, a scrap pit with a hyena pack - and on the ridge, the scrap king's bamboo fortress on stilts. Inspired by Raft's Caravan Town and Utopia.
 island on.arrive=message||A red crescent of sand around a bay - and on its shore, a town of stacked caravans and scrap.
 
+story crownkey|Crown key|quest:Caravan_KeyMayor|A key cut in the shape of a crown, from the King's sunk strongroom. It opens the chain on his hoard.
 story gatekey|Gate key|quest:Caravan_KeyMayor|The winch key of Scrapyard Haven's gate, on a ring with a bottle opener.
 note notice Harbour notice | SCRAPYARD HAVEN - HARBOUR\n\nTraders welcome. The gate has been SHUT since the hyenas got into the scrap pit.\n\nThe harbour master keeps the gate key in his lockbox by his van. Whoever clears the pit can see the King about a reward - his fortress is up on the ridge, and he's been gone a while.
 note lockbox Harbour master's lockbox | The harbour master's lockbox by his van: the gate key, his ledger, a bag of bolts.\n\nThe ledger's last page: "Day 41. Gate shut, the pit lost to the dogs. The King went up to his fortress on day 40 and hasn't come down since. If anyone wants this town back, someone else will have to clear that pit."
@@ -153,6 +188,11 @@ prop lockbox loot.refill=0
 note hoard Scrap king's hoard | The scrap king's hoard, on the fortress's deck: everything worth keeping that ever washed up on the crescent.\n\nScratched inside the lid: "Barred the hall and took the back way down to the sea. If you got past my dog, you've earned the rest. The town's yours - keep the gate shut at night. - K."
 loot hoard Blueprint_ZiplineBase*1;Blueprint_ZiplineTool*1;MetalIngot*6;Scrap*10;Battery*2
 prop hoard loot.refill=0
+prop hoard if.open=has|story:crownkey|1
+prop hoard else.open=message||The hoard is chained shut, a padlock shaped like a crown on the chain. The King took its key with him - down the back way to the sea.
+note kingnote Scrap king Kasimir Dunne's note | KASIMIR DUNNE, KING OF THE SCRAPYARD - TO WHOEVER IS NEXT\n\nI fed that dog with my own hands for six years. Bolts in his collar, the best scraps from the tithe. Then the tithe stopped coming, and he got hungry, and he went down to the pit and found friends.\n\nThe town hates me. They are right to. A king who takes a tenth and can't keep the dogs out isn't a king, he's a thief with a chair.\n\nI chained the hoard and barred the hall, and I came down here by the back way. My strongroom's out in the bay, where Pearl sank it for me - the crown key is in its chest. Nobody gets the hoard who hasn't cleared the pit and swum for it.\n\nI'm going out to the strongroom to sit with what's left of my kingdom. If I'm not back, it's yours.
+note pearlnote Diver Pearl Ash's note | (Grease pencil on a sheet of tin, dry in the air pocket)\n\nThe King paid me forty bolts to weld him a shack and sink it in the bay. "A strongroom nobody can rob," he said. "Not without gills."\n\nIt took me nine days. I welded the roof on underwater with the air trapped in it, and I was proud of it.\n\nHe came out last night, rowing alone, and swam down and sat here in the air. He gave me the crown key and told me to leave it in his chest. Then he swam out of the door and kept swimming. North. I don't know where he thought he was going.\n\nI put the key where he said. It's for whoever cleans up his mess.
+note ottonote Harbour master Otto Fenn's letter | O. FENN, HARBOUR MASTER - TO MY SISTER\n\nThe hyenas have the pit and the gate is shut. The King sits up on his stilts and won't come down, and the market has gone to the harbour, where I sell water by the cup to anyone who ties up.\n\nI saw him go last night, Ada. He came down the cliff by the old back way, the cave under the south hill, and took his little boat out over the bay. He stopped where his strongroom is and went over the side. The boat drifted in at dawn, empty.\n\nI have buried my savings on the north beach, behind the dunes. When the gate opens I'll dig them up and come to you.
 prop hoard tint.color=#b07a3a
 prop hoard tint.amount=0.4
 # (the town's own papers and signs, on what stands there already - read on the way round)
@@ -241,7 +281,12 @@ step read|Scrapper's note|1|Search the vans in the pit for the last scrapper's n
 step read|King's pit sign|1|Read the painted sign at the pit's edge
 step reach|stilts|1|Climb the ridge to the foot of the fortress's stilts
 step reach|fortress|1|Climb the ladders up to the scrap king's fortress
-step open|Scrap king's hoard|1|Open the scrap king's hoard
+step reach|kingcave|1|The hoard is chained: find the King's back way, the cave under the south hill
+step read|Scrap king Kasimir Dunne's note|1|Read the King's note in the cave
+step reach|strongroom|1|Dive to the King's strongroom, sunk in the bay
+step read|Diver Pearl Ash's note|1|Breathe in the strongroom's front room and read the diver's note
+step collect|story:crownkey|1|Take the crown key from the King's strong chest
+step open|Scrap king's hoard|1|Back up to the fortress: unchain and open the scrap king's hoard
 step blueprint|Blueprint_ZiplineBase|1|Take the zipline plans from the scrap king's hoard
 step blueprint|Blueprint_ZiplineTool|1|Take the zipline tool plans from the scrap king's hoard
 quest done=The pit is quiet and the hoard is open. The scrap king never came back - so his crown, of sorts, is yours.

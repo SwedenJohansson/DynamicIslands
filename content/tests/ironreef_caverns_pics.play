@@ -1,6 +1,8 @@
 # Guide pictures of Ironreef Caverns (CIPlay ironreef_caverns_pics): Raft's camera and water at midday; the caves
 # from outside and in, the Bear Hall after the rockfall is blown
+# DEEP 10-25: the land's centre moved with the bigger island (the recipe's save prints the exact offset)
 island Ironreef Caverns
+offset 1.24 0.14
 hour 11
 weather Calm
 at 84 -2
@@ -27,3 +29,6 @@ wait 3
 at -4 40
 wait 2
 picture ironreef_caverns_bearhall -4 7.4 42 -4 6.5 20
+picture ir_davy_letter -1 7 18 -2.2 5 13
+picture ir_west_tableland -52 +6 -18 -74 +1 -32
+picture ir_mountain_from_west -100 14 -30 0 30 -8

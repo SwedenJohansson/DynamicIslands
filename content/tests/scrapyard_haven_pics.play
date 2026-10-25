@@ -14,3 +14,7 @@ at -10 -38
 wait 2
 picture scrapyard_haven_pit 0 12 -28 -11 5 -47
 picture scrapyard_haven_fortress 0 16 -14 -26 17 -10
+picture sh_king_cave 11 9 -100 5 8 -80
+picture sh_king_cave_inside 4 6.8 -82.5 6 5.8 -78
+picture sh_strongroom 58 -7 -54 58 -12.5 -42
+picture sh_bay_from_cave 5 9 -98 58 -2 -42

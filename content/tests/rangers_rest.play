@@ -1,5 +1,7 @@
 # Play test of Ranger's Rest (CIPlay rangers_rest, in a test world 'CI ...'). Points as in its recipe.
 island Ranger's Rest
+# DEEP 10-25: the west point moved the land's centre (the recipe's save prints the exact offset)
+offset -4.66 -0.82
 expect step 0
 expect title Old Scar
 
@@ -23,12 +25,19 @@ zone tower
 expect step 3
 expect message cave mouth on the south shore
 
+# DEEP 10-25: the poacher's camp on the west point
+zone poachcamp
+expect step 4
+read Poacher Kurt Hale's note
+expect step 5
+use poachhatch
+expect message The hatch lifts
 # Down to the den: Old Scar wakes, is driven off; the stolen crate
 walk 12 -26 to 6 -27
 zone den
 expect message reeks of bear
 kill Bear
-expect step 4
+expect step 6
 expect animals Bear 0
 open Ranger's stash
 expect done

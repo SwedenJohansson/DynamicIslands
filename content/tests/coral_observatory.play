@@ -43,3 +43,11 @@ open Director's safe
 wait 4
 expect item Blueprint_Recycler 1
 expect done
+# DEEP 10-25 (off the quest): up Survey Hill on the west ring, the divers' cave on the east ring
+zone surveyfoot
+zone surveytop
+read Biologist Ines Calder's notes
+open Survey box
+zone divecave
+read Diver Tomas Reyes's letter
+open Diver's box

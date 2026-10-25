@@ -4,7 +4,9 @@
 # warthogs, foreman's log, locker, Vine Crawl, powder crate, charge 1, the Bear Hall's blocked mouth, rockfall's sign,
 # a try at the rockfall (7 pages), Drowned Shaft, sunken box, charge 2, the rockfall blown (9 pages), Bear Hall,
 # Ironhide, strongbox.
+# DEEP 10-25: the land's centre moved with the bigger island (the recipe's save prints the exact offset)
 island Ironreef Caverns
+offset 1.24 0.14
 expect step 0
 expect title The Heart of Ironreef
 
@@ -87,3 +89,5 @@ open Company strongbox
 wait 2
 expect item Blueprint_TitaniumTools 1
 expect done
+# DEEP 10-25: the missing miner's letter by the strongbox (after the quest: no step, the pages counts untouched)
+read Miner Davy Rees's letter

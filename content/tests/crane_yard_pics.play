@@ -1,5 +1,6 @@
 # Guide pictures of Crane Yard (CIPlay crane_yard_pics): Raft's camera and water at midday
 island Crane Yard
+offset -5.97 -7.33
 hour 11
 weather Calm
 at 2 0
@@ -9,6 +10,10 @@ picture crane_yard_crane 20 5 18 -8 40 8
 picture crane_yard_pier 35 7 -17 21 3 -1
 picture crane_yard_tower 15 10 -15 6 9 -5
 picture crane_yard_yard -14 12 -14 2 6 2
+picture cy_spoil_heap 0 12 -10 -24 6 -32
+picture cy_blast_tunnel -18 7 -6 -24 6 -26
+picture cy_tunnel_inside -25 4.8 -23.5 -23 3.8 -28
+picture cy_yard_from_heap -30 13 -46 0 8 0
 at 30 -8 h=-3
 wait 2
 picture crane_yard_deck 35 -2 -11 28 -4 0

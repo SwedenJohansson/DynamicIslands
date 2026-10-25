@@ -21,3 +21,7 @@ wait 3
 at 10 44
 wait 2
 picture glacier_station_reactor 15 15 40 8 5 57
+picture gs_pumphouse 110 -7 38 110 -12.5 50
+picture gs_pump_inside 111 -12.4 47.4 109.4 -13.2 51
+picture gs_ice_cave -24 12 -90 -30 11 -70
+picture gs_ice_inside -31 9.8 -72.5 -29 8.8 -68

@@ -12,7 +12,11 @@ picture thornwood_bridge -36 15 -23 -20 12.5 -22
 picture thornwood_gorge -62 24 -2 -12 1 -28
 at 15 18
 wait 2
-picture thornwood_temple 3 28.5 11 15 25 27
+picture thornwood_temple 8 32 15.5 15 24 26
 at 20 -66
 wait 2
 picture thornwood_shrine 20 8 -67.5 20 6.2 -61
+picture tw_tama_cave -49 11 48 -55 9 66
+picture tw_tama_inside -54 7.8 63.5 -56 6.8 68
+picture tw_keeperhouse -108 -11 70 -108 -16.5 82
+picture tw_north_coast -60 22 40 -108 -2 82

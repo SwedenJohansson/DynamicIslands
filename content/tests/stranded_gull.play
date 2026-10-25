@@ -1,5 +1,7 @@
 # Play test of The Stranded Gull (CIPlay stranded_gull, in a test world 'CI ...'). Points as in its recipe.
 island The Stranded Gull
+# DEEP 10-25: the hill moved the land's centre (the recipe's save prints the exact offset)
+offset -12.18 9.08
 expect step 0
 expect title The Gull's Safe
 
@@ -29,9 +31,16 @@ expect story capkey 1
 expect step 3
 read Captain's locker
 
+# DEEP 10-25: Lookout Hill at the west end, the navigator's log
+zone gullfoot
+zone gulltop
+expect step 4
+read Navigator Ilse Brandt's log
+expect step 5
+
 # The angler fish in the sunken stern, then the safe
 kill Angler fish
-expect step 4
+expect step 6
 expect animals Angler fish 0
 open Ship's safe
 expect story capkey 0

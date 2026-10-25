@@ -2,6 +2,8 @@
 # Points are metres from the island's land middle, as in its recipe. The station's frame is at (-11,-11) turned 45:
 # a point (x, z) of the station is (-11 + 0.707 (x + z), -11 + 0.707 (z - x)).
 island Signal Rock
+# DEEP 10-25: the headland moved the land's centre (the recipe's save prints the exact offset)
+offset 16.96 3.45
 expect step 0
 expect title Dead Air
 
@@ -47,6 +49,12 @@ use radioLive
 expect message Follow the beacons east
 read Signal printout
 expect step 5
+
+# DEEP 10-25: the rigger's cave on the east headland
+zone rigcave
+expect step 6
+read Rigger Dmitri Vos's note
+expect step 7
 
 # Up the stair to the roof, up the mast ladder to the platform
 walk -2.87 -14.18 to -4.46 -12.24 to -8.88 -7.82 to -13.12 -8.88

@@ -8,6 +8,10 @@
 # (one charge), the Bear Hall's blocked mouth, the rockfall's warning and a try at it, the Drowned Shaft's sunken box
 # (the second), the rockfall blown, the Bear Hall, Ironhide, the company's strongbox. (The two "pages" steps count notes read - a chest's note is read as it opens - and
 # the rockfall's two journal pages: 6 before the first try, 8 before the blast.)
+# DEEP 10-25 (deep pass, The Long Voyage): Radius 110 kept; it already had the climb (plank road, 42 m mountain), the
+# dive (Drowned Shaft) and four caves. New: the missing miner Davy Rees's letter by the strongbox in the Bear Hall
+# (behind the rockfall, so it is read after both "pages" steps and leaves their counts alone), and his pay, buried on
+# the west tableland - a second treasure. Quest steps unchanged (22).
 #
 # Built by the recipe player (CIRecipe ironreef_caverns) through the editor's own operations. Each cave is placed
 # from a frame at its mouth: the ground there is the frame's floor, and the ground is levelled from the mouth into the
@@ -127,8 +131,9 @@ brush rock from 0 -8 to 0 -38 r=6 s=10 frames=30
 place BalboaCave_DeadEnd bearhallcave at -1.7 -20.5 y=9.4 scale=1.25
 place BigBoulder2_Low rockfall at -3.8 -1.5 sit scale=0.6 yaw=10
 place BigBoulder2_Low rockfall at 3.8 -1.2 sit scale=0.6 yaw=-15
-place SmallBoulder2 rockfall at -1 1.5 sit yaw=80
-place SmallBoulder3 rockfall at 4.5 2 sit yaw=30
+# (10-25: the two small rockfall stones sunk by what they hung over the dug floor - drop alone left them up to 3.9 m up)
+place SmallBoulder2 rockfall at -1 1.5 sit drop y=-3.9 yaw=80
+place SmallBoulder3 rockfall at 4.5 2 sit drop y=-1.8 yaw=30
 place SmallBoulder4 rockface at 0.8 2.6 sit
 place Note_Sign rocksign at -6.5 3.5 yaw=200
 place Zone_Trigger bearhall at 0 -10 y=1.5
@@ -136,6 +141,8 @@ place Zone_Trigger bearhall at 0 -10 y=1.5
 place Zone_Trigger hallmouth at 0 8 y=1.5
 place Creature_Bear ironhide at 0 -26 ground
 place Loot_ChestLarge strongbox at -0.5 -35 ground sit
+# DEEP 10-25: the missing miner's letter, by the strongbox (read after the blast: the pages counts stay as they were)
+place Note_Paper davynote at 1.8 -33.2 ground drop yaw=160
 place Zone_Atmosphere halldark at 0 -20 y=5
 place Zone_Sound hallsound at 0 -20 y=3
 pop
@@ -180,6 +187,11 @@ place Relay_support_beam_wood - at {$jx-5} -4.4 h=-3 rot=0,0,-90 sx=0.55
 place Relay_support_beam_wood - at {$jx-5} 0.4 h=-3 rot=0,0,-90 sx=0.55
 next
 # the plank road up the cliff to the mountain's shoulder: two lanes of raft planks on posts
+# (10-25: a cut under the road's upper half, 0.4 m under its planks - on the bigger island the cliff came up through
+# the road and the walker stuck at z -24.5)
+for f 0.55 1.04 0.02
+brush flatten from {71.1-17.5*$f+2.1} {-0.9-27.7*$f-1.33} to {71.1-17.5*$f-2.1} {-0.9-27.7*$f+1.33} r=0.6 s=20 frames=100 h={2.0+18*$f}
+next
 ramp Block_Floor_Wood from 70.47 -0.5 2.4 to 52.97 -28.2 20.4 len=1.5 top=0
 ramp Block_Floor_Wood from 71.73 -1.3 2.4 to 54.23 -29.0 20.4 len=1.5 top=0
 for f 0.2 0.8 0.2
@@ -205,7 +217,7 @@ call shallows r=130 deep=5 n=3
 
 info title=Ironreef Caverns
 info author=Custom Islands
-info description=A jungle mountain where the Ironreef Mining Company struck iron - and fled. Four caves in its flanks: the Iron Gate mine, the Vine Crawl, the flooded Drowned Shaft and the Bear Hall behind a rockfall, where Ironhide waits. Bring a light and a full breath.
+info description=A jungle mountain where the Ironreef Mining Company struck iron - and fled. Four caves in its flanks: the Iron Gate mine, the Vine Crawl, the flooded Drowned Shaft and the Bear Hall behind a rockfall, where Ironhide waits - and a miner who never came out. Bring a light and a full breath.
 island on.arrive=message||A jungle mountain with a ruined mining camp on its beach. Somewhere a bear roars - a very big bear.
 
 # the pump store key (TODO 4c): kept - it opens the company's pump store on the Drowned Metropolis' ferry islet
@@ -213,6 +225,7 @@ story ironreef-key|Pump store key|quest:Caravan_KeyMayor|The Ironreef Mining Com
 story charges|Blasting charge|quest:Vasagatan_Bomb|A bundle of the Ironreef Mining Company's blasting charges, still dry in its oilcloth.
 note notice Company notice | IRONREEF MINING COMPANY\n\nNOTICE TO ALL HANDS: the mine is CLOSED.\n\nThe north gallery broke into a cave the size of a church - and the thing living in it. Two men hurt, one missing. The foreman has blown the Bear Hall shut.\n\nThe last of the blasting charges are where we left them: one crate in the Vine Crawl, one box in the sea adit. Leave them there.\n\nThe Iron Gate mine is up the plank road. - The Company
 note foremanlog Foreman's log | FOREMAN'S LOG\n\nWeek 9: The north gallery hit a great hollow. Bones on the floor, big ones. Claw marks on the props.\nWeek 10: Something came through the north gallery at night. Iron-grey, bigger than any bear I've seen. The men call it Ironhide.\nWeek 11: Blew the Bear Hall shut with half our charges. The other half I hid - one crate in the Vine Crawl, one box down the sea adit (the Drowned Shaft) before it flooded.\n\nThe richest ore is in the Bear Hall. So is the company strongbox. Two charges will clear the rockfall. I won't be the one to do it.
+note davynote Miner Davy Rees's letter | D. REES, HEWER - FOR MY MAM, IF ANYONE FINDS IT\n\nThey think I'm dead. I heard them shouting for me through the rock, and then I heard the foreman's charges go, and the hall went dark.\n\nI'm not hurt, Mam. The beast doesn't touch me. It sleeps on the ore like a dog on a rug and it watches me with its little eyes, and when I sit still it lets me be. I've been eating the roots that grow in the drip.\n\nThere's no way out now. The north mouth is a wall of stone and the beast is between me and the gallery.\n\nMy pay is buried on the high flat ground on the west side, under the palms, where I used to sit of an evening. Forty weeks of it. If someone blows that rockfall and gets past the beast, they've earned it more than the company ever did.\n\nYour loving son, Davy
 note rocksign Rockfall | DANGER - BLASTED SHUT\n\nDo not open. Do not feed.\n- Foreman
 note minelocker Foreman's locker | The foreman's locker: his spare lamp, a flask (empty), a map of the caves - and a brass key on a company tag: "PUMP STORE - MERIDIAN CONTRACT". The company pumped out the drowned city's cellars, until the sea won.
 loot minelocker story:ironreef-key*1;HeadLight*1;Battery*1;Rope*2
@@ -334,5 +347,17 @@ store tallyshop at 8 54 ground
 # Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
 call treasure x=0 z=0 r=55 n=1 seed=8813
 prop treasure8813 treasure.loot=TitaniumOre*3
+# DEEP 10-25: Davy Rees's pay, buried on the west tableland (his letter in the Bear Hall says where)
+call treasure x=-60 z=-28 r=20 n=1 seed=32030 kind=0
+prop treasure32030 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*3
 
+# (generator stones left in the air by the shaping - taken out, 10-25)
+clear at 23.03 -9.93 r=1.5 only=BigBoulder1_Low
+clear at 90.21 -40.6 r=1.5 only=BigBoulder2_Low
+clear at -63.18 -16.08 r=1 only=SmallBoulder2
+clear at -25.46 -44.26 r=1.5 only=BigBoulder2_Low
+clear at 8.76 12.65 r=1 only=SmallBoulder4
+clear at 27.53 -30.38 r=1 only=SmallBoulder4
+clear at -20.88 5.62 r=1 only=SmallBoulder3
+clear at 83.05 -57.57 r=1.5 only=BigBoulder2_Low
 save Ironreef Caverns

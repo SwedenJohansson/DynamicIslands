@@ -7,11 +7,19 @@
 # captain's chest and its den key, the smugglers' den and its rats, the den's strongbox and the lantern key, the keeper's
 # log, up the false lantern, doused - and the wreckers' hoard.
 # Inspired by Raft's Vasagatan (a wreck to search) and Radio Tower (a tower to climb).
+# DEEP 10-25 (deep pass, The Long Voyage): Radius 95 kept. New: Jory's Crown on the west hill (a 32 m climb from the north
+# beach to the wreckers' lookout mast), the cove pilot's house drowned 16 m down off the north shore (an air pocket),
+# a widow's cottage ruin on the west arm, two buried treasures. The lantern key is no longer in the den: the strongbox
+# sends you up the Crown, Jory's log sends you down to the pilot house, and the key is in its back room - so the lantern
+# can only be doused after the climb and the dive. Quest 14 -> 20 steps. Voices: lookout Jory Vance, pilot Ned Pike,
+# widow Bess Harrow.
 #
 # Built by the recipe player (CIRecipe wreckers_cove) through the editor's own operations.
 include lib_sea
 include lib_rt
 include lib_features
+include lib_areas
+include lib_highwater
 new
 # (nature: Like Raft, with more driftwood on the wreckers' beaches - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.45
@@ -39,6 +47,12 @@ clear from 0 6 to 0 -28 r=11
 brush sand from 0 2 to 0 -27 r=11 s=10 frames=40
 place BalboaCave_Bear - at 1.2 -18.4 y=5.2 scale=1.15
 pop
+# --- DEEP 10-25 terrain (all on land or under the sea as it was: the land's centre stays put): Jory's Crown (west hill,
+# summit 32 m, base r 20) and its path from the north beach; the pilot house's hole off the north shore (-16 m)
+call hw_mount x=-38 z=24 b=20 h=32
+call hw_trail x=-38 z=24 b=20 h=32 a0=0 turn=300 n=36 h0=3
+brush flatten at -38 24 r=9 s=20 frames=400 h=32
+call hw_basin x=28 z=80 r=12 h=-16
 origin
 
 # --- The hamlet: the wreckers' longhouse, two net huts, racks of nets, a jetty into the cove --------------------------
@@ -154,24 +168,55 @@ scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=66.5 seed=4478 free=3
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=115 deep=5 n=2
 
+# --- DEEP 10-25: Jory's Crown - the lookout mast on the west hill (Jory's log; the lookout's box) ----------------------
+call hw_zone x=-38.0 z=45.0 al=crownfootz id=crownfoot r=5 msg="A path of cut steps winds up the west hill from the beach - the wreckers' lookout path. A mast stands on the top."
+call hw_zone x=-38 z=24 al=crowntopz id=crowntop r=8 h=1 msg="Jory's Crown. From up here the whole cove lies open: the reef, the Marigold, the lantern on the point - and to the north, a roof under the water."
+call hw_mast x=-38 z=24 h0=32 lv=3 a=lookout chest=lookoutchest top=Placeable_Lantern_Metal
+place Note_Paper jorynote at -34.5 22 h=32.1 drop yaw=200
+loot lookoutchest Rope*2;Bolt*4;Glass*2;Plastic*2
+note lookoutchest Lookout's box | Jory's box on the mast: a spyglass with a cracked lens, rope, glass and a few bolts.
+scatter Bush 4 at -38 24 r=20 seed=32001 free=1
+scatter Bush2 3 at -38 24 r=20 seed=32002 free=1
+scatter "Pickup_Landmark_Rock 1" 3 at -38 24 r=20 seed=32003 free=2
+call treasure x=-32 z=18 r=12 n=1 seed=32004 kind=0
+prop treasure32004 treasure.loot=Scrap*3;Bolt*3;CopperIngot*1
+# --- DEEP 10-25: the pilot house (north), drowned 16 m down, an air pocket: Ned's note, the lantern key in the back room -
+call hw_sunkhouse x=28 z=80 h=-16 yaw=0 a=pilothouse chest=pilotchest air=pilotair bub=pilotbub dal=pilotdoor
+call hw_zone x=28 z=80 al=pilotzone id=pilothouse r=7 h=1 msg="The cove pilot's house, 16 m down - the whole cottage, slid off the north shore into the deep. Its front room still holds air."
+place Note_Paper nednote at 28.6 77.8 h=-15.7 drop yaw=20
+loot pilotchest story:lanternkey*1;Rope*2;MetalIngot*1;Nail*6
+note pilotchest Pilot's sea chest | Ned Pike's sea chest: rope, nails, an iron ingot - and, tied in oilcloth, a brass key marked FUEL.
+place Creature_PufferFish pilotpuffers at 22 88 h=-11
+prop pilotpuffers creature.count=2
+call hw_reef x=19 z=76 r=3 seed=32005
+call hw_reef x=36 z=86 r=3 seed=32006
+# --- DEEP 10-25: Bess's cottage ruin on the west arm: a secret ---------------------------------------------------------
+call ar_ruin x=-66 z=-20 h=8 yaw=0 w=3 d=2 al=bessruin
+place Note_Paper bessnote at -66.71 -19.74 h=9.1 drop yaw=10
+call treasure x=-61 z=-28 r=12 n=1 seed=32007 kind=0
+prop treasure32007 treasure.loot=MetalOre*3;CopperOre*2;Hinge*1
+
 info title=Wreckers' Cove
 info author=Custom Islands
-info description=A green crescent around a shallow cove: a wreckers' hamlet on the shore, the schooner Marigold wrecked on the reef at the mouth, a smugglers' den in a sea cave - and on the south point the false lantern that lured her there. Inspired by Raft's Vasagatan and Radio Tower.
+info description=A green crescent around a shallow cove: a wreckers' hamlet on the shore, the schooner Marigold wrecked on the reef at the mouth, a smugglers' den in a sea cave, a lookout mast on the west hill, a pilot's house drowned off the north shore - and on the south point the false lantern that lured her there. Inspired by Raft's Vasagatan and Radio Tower.
 island on.arrive=message||A green crescent of hills around a quiet cove - a wreck on the reef at its mouth, and a lantern still burning on the point.
 
 story denkey|Smugglers' tally key|quest:Vasagatan_RedKey|A heavy iron key on a tarred cord, stamped with the smugglers' mark - from the Marigold's captain's chest. It fits the den's strongbox.
-story lanternkey|Lantern key|quest:Varuna_CraneKey|The key to the false lantern's fuel cock, from the smugglers' strongbox.
+story lanternkey|Lantern key|quest:Varuna_CraneKey|The key to the false lantern's fuel cock, from the drowned pilot's sea chest.
 note notice Hamlet notice | WRECKERS' COVE\n\nNO SHIPS PAST THE LANTERN AFTER DARK.\nWhat the sea brings in is shared out at the longhouse.\nThe den is for the crates. Keep the rats out of it.
 note marigoldlog Marigold's log | LOG OF THE SCHOONER MARIGOLD\n\nDay 9: A light to the south-east, steady and red: the harbour light of a channel the chart doesn't show. Captain says follow it.\nDay 10: We struck at the cove's mouth. The light didn't move. It isn't a harbour - it's a lantern on a pole.\nDay 11: Men came from the shore and took everything. The captain hid the smugglers' tally key in his chest, the one thing that proves what they took - they keep our cargo in a sea cave on the east side.
 note captainchest Captain's chest | The Marigold's captain's chest, wedged under his bunk: the smugglers' tally key on a tarred cord, his pistol (rusted), a little dry food.
 loot captainchest story:denkey*1;Rope*2;Plank*6
 prop captainchest loot.refill=0
-note strongbox Smugglers' strongbox | The smugglers' strongbox at the back of the den: the lantern key, a list of ships, a purse of bolts.
-loot strongbox story:lanternkey*1;Bolt*8;Nail*12
+note strongbox Smugglers' strongbox | The smugglers' strongbox at the back of the den: a list of ships, a purse of bolts - and where the lantern key should be, a slip: "Key's with Jory on the Crown. Ask him. - W."
+loot strongbox Bolt*8;Nail*12;Rope*2
 prop strongbox loot.refill=0
 prop strongbox if.open=has|story:denkey|1
 prop strongbox else.open=message||The strongbox is locked with the smugglers' mark. The Marigold's captain had a key like that.
-note keeperlog Keeper's log | The lantern burns all night. The red one by the door shows the "channel". When a hull strikes the reef, ring for the boats.\n\nThe fuel cock is locked - the key is with the cargo in the den.
+note jorynote Lookout Jory Vance's log | THE CROWN - J. VANCE, LOOKOUT\n\nWaddy gave me the lantern key to keep. He says a man on a hill can't be bribed by the boats. He doesn't know Ned.\n\nNed Pike piloted ships into this cove for twenty years, the honest way, by the deep water on the north side. Then we lit the red lantern and the ships stopped asking for a pilot. He came up here last night and asked me for the key. He wanted to put the light out. I said no.\n\nThis morning I gave it him anyway. I watched him row it home to his house on the north shore.\n\nAt noon the shore under his house slid into the sea, house and all. I saw the roof go under. It's still down there, I can see it from here when the water is still.\n\nThe key is in his sea chest. I am not going down for it.
+note nednote Pilot Ned Pike's note | (Pencil on the back of a tide table, dry in the air pocket)\n\nThe ground has been groaning under the house all week. I knew. I stayed because I had the key at last and I wanted one more night to make up my mind.\n\nTwenty years I brought ships in by the north channel and never lost one. Then the wreckers lit their red lie on the point and every ship that saw it went onto the reef, and I sat in my window and watched them break.\n\nThe key is in my sea chest, wrapped in oilcloth. Take it to the point. Turn the fuel cock and let the lantern die. Do what I didn't have the courage to do.\n\nThe air in here is going stale. I'm going to open the window and swim for it.
+note bessnote Widow Bess Harrow's letter | To whoever reads this - B. HARROW\n\nMy husband rowed the boats for the wreckers. He said the ships were lost anyway, that we only picked up what the sea let go. Then the Marigold came in on the red light, and he rowed out and came back with a child's shoe in his pocket and never spoke again.\n\nI moved out here on the west arm so I would not have to see the lantern. You can still see its glow on the clouds at night.\n\nI buried what he brought home from the wrecks below my door. I want none of it. If you are the one who puts the light out, dig it up. It's yours. It's the least this cove owes anyone.
+note keeperlog Keeper's log | The lantern burns all night. The red one by the door shows the "channel". When a hull strikes the reef, ring for the boats.\n\nThe fuel cock is locked - the key is with Jory, up on the Crown.
 note hoard Wreckers' hoard | Everything worth keeping from every ship the lantern ever lured: shared out at the longhouse no more.
 loot hoard Blueprint_HeadLight*1;Blueprint_BatteryCharger*1;MetalIngot*4;Scrap*8;CopperIngot*3;Battery*1
 prop hoard loot.refill=0
@@ -182,7 +227,7 @@ prop douse obj.name=douse
 prop douse beh.use=Douse the false lantern
 prop douse if.use=has|story:lanternkey|1
 prop douse on.use=message||The key turns the fuel cock. The lantern gutters, the red light dies - for the first time in years the point goes dark. The chain on the hoard falls slack.\nhide|lantern\nsignal||doused\nsound||event:/exploring/obstacles/varuna/garagedoor_open
-prop douse else.use=message||The fuel cock is locked. Its key is with the smugglers' cargo.
+prop douse else.use=message||The fuel cock is locked. Jory had its key - and Jory's log says it went down with the pilot's house.
 prop lantern obj.name=lantern
 
 prop cove zone.id=cove
@@ -215,7 +260,13 @@ step open|Captain's chest|1|Open the captain's chest wedged under his bunk
 step collect|story:denkey|1|Take the smugglers' tally key on its tarred cord
 step reach|den|1|Find the smugglers' den in the east cliff
 step kill|Rat|4|Drive the rats out of the den
-step open|Smugglers' strongbox|1|Open the smugglers' strongbox for the lantern key
+step open|Smugglers' strongbox|1|Open the smugglers' strongbox at the back of the den
+step reach|crownfoot|1|The key is with Jory: find the lookout path up the west hill
+step reach|crowntop|1|Climb Jory's Crown to the lookout mast
+step read|Lookout Jory Vance's log|1|Read the lookout's log by the mast
+step reach|pilothouse|1|Dive to the pilot's house, drowned off the north shore
+step read|Pilot Ned Pike's note|1|Breathe in the pilot house's front room and read Ned's note
+step collect|story:lanternkey|1|Take the lantern key from Ned's sea chest in the back room
 step read|Keeper's log|1|Follow the boardwalk to the south point and read the keeper's log
 step reach|lantern|1|Climb the false lantern to its roof
 step open|Wreckers' hoard|1|Douse the lantern and open the wreckers' hoard
@@ -224,4 +275,6 @@ step blueprint|Blueprint_BatteryCharger|1|Take the battery charger plans from th
 quest done=The point is dark, the hoard is yours - and no ship will follow the red light onto the reef again.
 quest reward=Rope*4;Nail*20;Plastic*8
 
+# (generator stones left in the air by the shaping - taken out, 10-25)
+clear at -62.09 15.95 r=1 only=SmallBoulder2
 save Wreckers' Cove

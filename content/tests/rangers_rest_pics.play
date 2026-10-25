@@ -1,5 +1,6 @@
 # Guide pictures of Ranger's Rest (CIPlay rangers_rest_pics): Raft's camera and water at midday
 island Ranger's Rest
+offset -4.66 -0.82
 hour 11
 weather Calm
 at 29.5 3.6
@@ -9,3 +10,6 @@ picture rangers_rest_cabin 36 15 9 22 11 -2
 picture rangers_rest_tower 28 17 -24 19 13 -12
 picture rangers_rest_inside 18.5 11.9 -4.5 27 11 0
 picture rangers_rest_den 17 +3 -33 -4 5 -27
+picture rr_west_point -24 10 -20 -45 3 -2
+picture rr_poacher_camp -37 +2.5 -7 -46 +1 -1
+picture rr_hill_from_west -53 8 2 5 14 -2

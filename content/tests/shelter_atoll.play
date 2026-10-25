@@ -1,6 +1,8 @@
 # Play test of Shelter Atoll (CIPlay shelter_atoll, in a test world 'CI ...'). Points as in its recipe; the shelter's
 # floor is 1.69 m above the sea, the roof slab 7.75 m.
 island Shelter Atoll
+# DEEP 10-25: the dune moved the land's centre (the recipe's save prints the exact offset)
+offset -1.53 0.92
 expect step 0
 expect title Shelter No. 7
 
@@ -11,19 +13,28 @@ expect step 0
 read Shelter notice
 expect step 1
 
+# DEEP 10-25: Lookout Dune on the ring's west side, the lookout's log and her cache
+zone dunefoot
+zone dunetop
+expect step 2
+read Lookout Nadia Ferris's log
+expect step 3
+use dunehatch
+expect message The hatch lifts
+
 # Down the hatch: through the collar to the hall's floor; the ladder takes hold at the top and at the foot
 expect stand 0 5.6 h=1.69
 climb 0 7.1 h=6.3
 climb 0 7.1 h=0.3
 at 0 4 h=1.9
 zone hatchhall
-expect step 2
+expect step 4
 expect message red light turns
 
 # The main hall into the radio room: the radio log
 walk 0 4 to 2 2 to 2 0 to 4 0 to 6.5 -0.8 h=1.69 below=5
 read Radio log
-expect step 3
+expect step 5
 use opradio
 expect message radio is dead
 
@@ -43,11 +54,11 @@ walk 0 -6 to -1.8 -2 to -2 0 to -5 0.5 h=1.69 below=5
 zone dorm
 expect message rats, big ones
 kill Rat
-expect step 4
+expect step 6
 expect animals Rat 0
 open Bunk locker
 expect story fuel 1
-expect step 5
+expect step 7
 
 # The generator runs: lamps on, the dark air gone, the commander's door and the blast gate open
 walk -5 0.5 to -2 0 to -1.8 -2 to 0 -5 to -3 -6 to -5.5 -6.5 h=1.69 below=5
@@ -62,7 +73,7 @@ wait 7
 # Through the commander's door: his orders and his safe
 walk -5.5 -6.5 to -3 -6 to 0 -6 to 4 -6 to 4.2 -8.3 to 6.6 -8.2 h=1.69 below=5
 read Commander's orders
-expect step 6
+expect step 8
 open Commander's safe
 wait 2
 expect item Blueprint_Fueltank 1

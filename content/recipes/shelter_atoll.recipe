@@ -6,6 +6,10 @@
 # door and the blast gate onto the lagoon. Quest "Shelter No. 7" (7 steps): the notice at the hatch, down the
 # ladder, the radio log, the rats in the dormitory, the last can of fuel, the generator and the commander's orders, and
 # his safe.
+# DEEP 10-25 (deep pass, The Long Voyage): radius 50 kept. New: Lookout Dune, an 11 m dune raised on the ring's west
+# side (a cut path up, the shelter's observation post on top, the lookout Nadia Ferris's log, her cache under a hatch - a
+# secret) and her tin buried on its north foot. Quest 8 -> 10 steps: the lookout after the notice, before the hatch.
+# The dune moved the land's centre a little west: the plays carry an offset.
 #
 # Built by the recipe player (CIRecipe shelter_atoll) through the editor's own operations (macros from lib_selene).
 # The shelter sits in a pit under a roof slab at ground level: the ground can't lie over rooms, so the islet's top is
@@ -13,6 +17,7 @@
 include lib_sea
 include lib_selene
 include lib_features
+include lib_highwater
 new
 # (nature: the atoll's palms are the recipe's own; little else - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0 Bushes=0.25 Rocks=0.3 Harvest=0.15 BeachThings=0.5
@@ -29,6 +34,11 @@ brush flatten at 0 0 r=22 s=20 frames=60
 brush raise at 22 0 r=10 s=20 frames=5
 brush raise at 29 0 r=8 s=20 frames=2
 brush smooth from 14 0 to 36 0 r=8 s=20 frames=30
+# --- DEEP 10-25 terrain: Lookout Dune on the ring's west side (summit 11 m, base r 13) and its path from the south
+call hw_mount x=-40 z=10 b=13 h=11
+call hw_trail x=-40 z=10 b=13 h=11 a0=180 turn=300 n=20 h0=3
+brush flatten at -40 10 r=7 s=20 frames=400 h=11
+brush sand at -40 10 r=15 s=10 frames=30
 
 # --- The atoll: palms around the ring, bushes on the islet's slopes -----------------------------------------------
 scatter "Pickup_Landmark_Tree_Palm 1" 3 at 37 0 r=6 seed=101
@@ -237,12 +247,30 @@ scatter "Pickup_Landmark_PineappleLandmark" 3 at 0 0 r=35.0 seed=4400 free=3
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=70 deep=5 n=2
 
+# --- DEEP 10-25: Lookout Dune - the observation post, Nadia Ferris's log, her cache, her tin ------------------------
+call hw_zone x=-40.0 z=-4.0 al=dunefootz id=dunefoot r=5 msg="Steps dug into the dune and shored with planks, a rope rail beside them."
+call hw_zone x=-40 z=10 al=dunetopz id=dunetop r=7 h=1 msg="Lookout Dune. The shelter's observation post: the whole atoll below you, the slab on the islet and its hatch."
+call hw_mast x=-40 z=10 h0=11 lv=2 a=dunepost chest=dunepostchest top=Placeable_Lantern_Metal
+place Note_Paper ferrisnote at -36.5 8 h=11.1 drop yaw=200
+loot dunepostchest Rope*2;Battery*1;Plastic*2
+prop dunepostchest loot.refill=0
+# (a level patch for the hatch, 10-25: on the dune's slope its top was half a metre under the sand)
+# (10-25: r=4 and a set height - the scatter may set the hatch up to 2 m off the centre; with no h the dune's slope
+# stayed and the hatch's top was still 0.3 m under at -35.2 14.2)
+brush flatten at -37 13.5 r=4.5 s=20 frames=200 h=10
+call hatchcache x=-37 z=13.5 r=2 seed=32063 alias=dunehatch chest=dunestash items=Scrap*4;Rope*2;CircuitBoard*1;Bolt*2
+scatter "Pickup_Landmark_Tree_Palm 2" 2 at -40 10 r=11 seed=32064 free=1
+scatter Bush2 3 at -40 10 r=12 seed=32065
+call treasure x=-42 z=21 r=12 n=1 seed=32062 kind=0
+prop treasure32062 treasure.loot=CopperIngot*2;MetalIngot*2;Scrap*4
+
 info title=Shelter Atoll
 info author=Custom Islands
-info description=An atoll of palms around a shallow lagoon - and on the islet in the middle, a concrete slab with a hatch. Civil Defence Shelter No. 7 lies buried underneath: seven dark rooms, rats in the bunks and a dry generator. Bring a light.
+info description=An atoll of palms around a shallow lagoon, a lookout post on the dune of its west side - and on the islet in the middle, a concrete slab with a hatch. Civil Defence Shelter No. 7 lies buried underneath: seven dark rooms, rats in the bunks and a dry generator. Bring a light.
 island on.arrive=message||An atoll with an islet in its lagoon. On the islet: a concrete slab, a radio mast - and a hatch.
 
 story fuel|Can of fuel|BioFuel|The shelter's last can of generator fuel, from the radio operator's bunk locker.
+note ferrisnote Lookout Nadia Ferris's log | N. FERRIS - LOOKOUT, SHELTER No. 7\n\nWatch 1. Posted on the west dune with binoculars and a lamp. My orders: report anything on the horizon to the radio room below.\n\nWatch 9. Nothing on the horizon for nine days. Rats in the dormitory. The commander has locked himself in his room with the charts and won't say why.\n\nWatch 12. The generator is almost dry. The operator says he's hidden the last can of fuel in his bunk locker, so the commander can't burn it all on his own lamp.\n\nWatch 14. I've stopped going down. It is better up here, in the wind.\n\nIf you're reading this, go down the hatch on the islet. Start the generator - it opens his door and the blast gate. My spare kit is under the hatch beside this post, and my tin is buried at the foot of the dune.
 note notice Shelter notice | CIVIL DEFENCE SHELTER No. 7\n\nEMERGENCY HATCH - climb down slowly, one at a time.\n\nThe blast gate on the lagoon side opens from inside only, and only with the generator running.\n\nCapacity: 24. Keep this hatch clear.
 note radiolog Radio log | RADIO LOG - SHELTER 7\n\nDay 12: No answer from the mainland. The water is still rising.\nDay 31: Rats in the dormitory. Big ones - they came up the vent shaft.\nDay 46: The generator is dry. I put the LAST can of fuel in my bunk locker, so nobody burns it on the heaters.\nDay 47: The commander has sealed himself in with his charts. I'm going up the hatch to look for a boat.\n\nIf you read this: the can is in the dormitory. Fill the generator and the doors will open. - Radio operator Makela
 note orders Commander's orders | FINAL ORDERS\n\nHold the shelter until relieved.\n\nNobody came. The charts show land to the east - a big island with a tower on it. Whoever gets the power back: take the charts, the blueprint and the spare parts in my safe, and go.
@@ -319,6 +347,8 @@ prop redlight beh.spin=90
 quest title=Shelter No. 7
 quest intro=A concrete slab on the islet in the lagoon, with vents, a radio mast and a hatch. Something was built under this atoll - and nobody has come out in a long time.
 step read|Shelter notice|1|Find the hatch on the islet and read the notice beside it
+step reach|dunetop|1|Climb the dune on the atoll's west side - someone kept watch up there
+step read|Lookout Nadia Ferris's log|1|Read the lookout's log by the post: what happened below
 step reach|hatchhall|1|Climb down the ladder into the shelter
 step read|Radio log|1|Read the radio log
 step kill|Rat|3|Clear the rats out of the dormitory

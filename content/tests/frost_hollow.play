@@ -1,5 +1,7 @@
 # Play test of Frost Hollow (CIPlay frost_hollow, in a test world 'CI ...'). Points as in its recipe.
 island Frost Hollow
+# DEEP 10-25: the south point moved the land's centre (the recipe's save prints the exact offset)
+offset 0.34 -6.17
 expect step 0
 expect title Power for Frost Hollow
 
@@ -26,6 +28,14 @@ walk -1 7 to 0.5 11.8 h=8.2
 openat 1.5 13
 expect story cable 3
 expect step 5
+
+# DEEP 10-25: the sample store on the south point, the assistant's cache under the hatch
+zone samplecave
+expect step 6
+read Lab assistant Tomas Berg's note
+expect step 7
+use storehatch
+expect message The hatch lifts
 
 # The lab: shut, then powered - its doors slide open; the locker inside
 walk -19 3 to -19 -2 h=5.5

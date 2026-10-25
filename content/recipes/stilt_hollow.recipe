@@ -2,11 +2,16 @@
 # Sea stacks in a desert reef, a trailer town on their flat tops joined by rope bridges, hyenas on the stacks and a
 # white screecher on the mayor's roof. The town's pump is dead: follow the red water pipe down into the reef to the
 # air pocket where its valve lies, start the pump - it opens the gate to the mayor's trailer.
+# DEEP 10-25 (deep pass, The Long Voyage): grown from radius 26 to about 55 - the tank stack, a 12 m stack west of the
+# mayor's rock (a sand bar to its foot, a cut path up, the old rain tank's mast on top, the first water warden's note and
+# her cache under a hatch - a secret) and her savings buried on its north-west foot. Quest 6 -> 8 steps: the tank stack
+# after the valve. The land's centre moved west with the stack: the plays carry an offset.
 #
 # Built by the recipe player (CIRecipe stilt_hollow) through the editor's own operations.
 
 include lib_sea
 include lib_features
+include lib_highwater
 new
 # (nature: desert, Like Raft with half the grass tufts of Raft's wild desert islets - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.19 Bushes=0.5 Rocks=0.42 Harvest=0.2 BeachThings=0.3
@@ -23,6 +28,14 @@ brush flatten at -2.5 2.5 r=4 s=20 frames=20
 clear at 7.5 -13 r=6
 clear at 16.5 0.5 r=6
 clear at -2.5 2.5 r=6
+# --- DEEP 10-25 terrain: the tank stack west of the mayor's rock (summit 12 m, base r 14), its path from the east,
+# and a sand bar over the reef from below the mayor's rock to its foot
+call hw_mount x=-38 z=6 b=14 h=12
+call hw_trail x=-38 z=6 b=14 h=12 a0=90 turn=300 n=20 h0=1.5
+brush flatten at -38 6 r=8 s=20 frames=400 h=12
+brush flatten from -23.0 6.0 to -12 8 r=4 s=20 frames=300 h=1
+brush sand from -23.0 6.0 to -12 8 r=3 s=10 frames=30
+clear at -17 7 r=6
 
 # --- The landing stack: a ladder up from the reef, the dock trailer, crates; hyenas lurk in the trailer -------------
 place LandmarkLadder_6m ladder at 7.5 -16.9 h=-1.8 rot=0,0,0
@@ -88,13 +101,27 @@ scatter "Pickup_Landmark_PineappleLandmark" 3 at 0 0 r=18.2 seed=4348 free=3
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=46 deep=5 n=1
 
+# --- DEEP 10-25: the tank stack - the rain tank's mast, the first warden's note, her cache, her savings -------------
+call hw_zone x=-23.0 z=6.0 al=tankfootz id=tankfoot r=5 msg="A sand bar ends at a stack with steps cut into its side. A rusted rain pipe runs up beside them."
+call hw_zone x=-38 z=6 al=tanktopz id=tanktop r=7 h=1 msg="The tank stack. The old rain tank is long gone - only its mast still stands. The whole town lies below you."
+call hw_mast x=-38 z=6 h0=12 lv=2 a=tankmast chest=tankmastchest top=Placeable_Lantern_Metal
+place Note_Paper agnesnote at -34.5 4 h=12.1 drop yaw=200
+loot tankmastchest Rope*2;Plastic*2;Glass*1
+prop tankmastchest loot.refill=0
+call hatchcache x=-41 z=9.5 r=2.5 seed=32049 alias=tankhatch chest=tankstash items=Rope*2;Bolt*2;MetalIngot*1;CopperIngot*1
+scatter "Pickup_Landmark_Tree_Palm 2" 2 at -38 6 r=12 seed=32050 free=1
+scatter Bush2 3 at -38 6 r=13 seed=32051
+call treasure x=-47 z=13 r=12 n=1 seed=32048 kind=0
+prop treasure32048 treasure.loot=CopperIngot*2;Bolt*3;Glass*2
+
 info title=Stilt Hollow
 info author=Custom Islands
-info description=A trailer town on sandstone stacks in a desert reef, joined by scaffold walkways. Its pump is dead and its mayor's rock locked: follow the red pipe down the reef wall. Hyenas and a white screecher. Inspired by Raft's Caravan Town.
+info description=A trailer town on sandstone stacks in a desert reef, joined by scaffold walkways, its old rain tank's mast on the stack to the west. Its pump is dead and its mayor's rock locked: follow the red pipe down the reef wall. Hyenas and a white screecher. Inspired by Raft's Caravan Town.
 island on.arrive=message||Trailers on top of sea stacks, a flag flapping on the highest one. Something laughs in the dock trailer.
 
 story valve|Pump valve wheel|quest:Caravan_KeyInfirmary|The valve wheel of Stilt Hollow's water pump.
 
+note agnesnote First warden Agnes Reyes's note | A. REYES - FIRST WATER WARDEN OF STILT HOLLOW\n\nBefore the pump there was the tank. Up here, on this stack, a rain tank on a mast and a pipe down to the town. When it rained we drank. When it didn't, we argued.\n\nThe pump was my idea. I fought the mayor for it for two years. He said the reef would eat the pipe. He was half right: the pipe is fine, but the valve wheel never sat tight. Give it a hard turn when you fit it.\n\nWhen the pump came, they took the tank down and sold it. I kept the mast. I like the view.\n\nI kept my own things here too, under the hatch. If the pump ever fails and someone climbs up to curse me, they've earned them.\n\nThe rest of my money is in the sand at the foot of the stack, on the far side. The mayor never knew. Please don't tell him.
 note notice Water warden's notice | STILT HOLLOW WATER BOARD\n\nThe pump is DOWN. The storm tore the valve wheel off and it rolled down the pipe channel.\n\nFollow the red pipe east and down the reef wall - there is an air pocket at the bottom, Pedro rigged it for the divers. Put the valve back and the pump will run.\n\nWhen the water runs, the gate to the mayor's rock opens. Not before. Mayor's orders.
 note valvebox Divers' box | A rusty box wedged under the air pocket. The valve wheel is jammed inside, with a diver's scrawl: "GOT IT - GO UP BEFORE YOUR LUNGS DO".
 loot valvebox story:valve*1;Rope*2
@@ -148,6 +175,8 @@ quest intro=A trailer town on sea stacks, dry and silent. Get its water running 
 step kill|Hyena|2|Climb to the trailer town and drive the hyenas out of the dock trailer
 step read|Water warden's notice|1|Read the notice at the pump
 step collect|story:valve|1|Follow the red pipe down to the valve
+step reach|tanktop|1|Climb the tank stack west of the mayor's rock - someone kept the old tank's mast up there
+step read|First warden Agnes Reyes's note|1|Read the first warden's note by the mast: the pump's history
 step reach|mayor|1|Start the pump and cross to the mayor's rock
 step kill|Screecher|1|Drive off the white screecher
 step open|Mayor's chest|1|Open the mayor's chest

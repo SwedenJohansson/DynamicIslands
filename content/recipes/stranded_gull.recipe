@@ -3,11 +3,16 @@
 # furnished with what they saved from the yacht, and the yacht's torn-off stern lying dark on the reef below, an
 # angler fish's lure the only light. Quest "The Gull's Safe" (5 steps): the deckhand's note at the camp, the rats in
 # the tender's wheelhouse, the captain's key in his locker, the angler fish, the ship's safe.
+# DEEP 10-25 (deep pass, The Long Voyage): grown from radius 22 to about 60 - Lookout Hill, a 17 m hill on the new
+# west end (a cut path up from the camp side, the navigator's mast on top, her log), and her flare kit buried on its far
+# foot. Quest 5 -> 7 steps: the lookout and the navigator's log before the angler fish. The land's centre moved west with
+# the hill: the plays carry an offset.
 #
 # Built by the recipe player (CIRecipe stranded_gull) through the editor's own operations.
 
 include lib_sea
 include lib_features
+include lib_highwater
 new
 # (nature: a sandbar: few trees and rocks, driftwood - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.15 Bushes=0.25 Rocks=0.1 Harvest=0.24 BeachThings=0.7
@@ -16,6 +21,13 @@ gen Stretch=1.7 StretchAngle=30 SeaFloor=1 Seabed=2
 # (sea: Raft's finds and corals as dense as around Raft's islands - Like Raft 0.5 - the review, 2026-10-03)
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.5 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0
 generate
+# --- DEEP 10-25 terrain: Lookout Hill on the new west end (summit 17 m, base r 18) and its path from the camp side,
+# a sand neck from the camp to its foot (clear of the coral garden at -30 4 and the stern on the south-east reef)
+brush flatten from -10 8 to -20 17 r=5 s=20 frames=300 h=1.2
+call hw_mount x=-32 z=27 b=18 h=17
+call hw_trail x=-32 z=27 b=18 h=17 a0=130 turn=300 n=24 h0=1.5
+brush flatten at -32 27 r=8 s=20 frames=400 h=17
+brush sand from -10 8 to -20 17 r=4 s=10 frames=30
 
 # --- The beached boat on the south-east shore (Raft's stranded boat, listing on the sand): the yacht's tender -------
 clear at 10 -14 r=7
@@ -104,13 +116,26 @@ scatter "Pickup_Landmark_PineappleLandmark" 3 at 0 0 r=15.4 seed=4112 free=3
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=42 deep=5 n=1
 
+# --- DEEP 10-25: Lookout Hill - the navigator's mast on the top, her log, her flare kit buried on the far foot --------
+call hw_zone x=-17.45 z=14.79 al=gullfootz id=gullfoot r=5 msg="Steps cut into the hill's side, and a rope rail. Someone went up here often."
+call hw_zone x=-32 z=27 al=gulltopz id=gulltop r=7 h=1 msg="Lookout Hill. The whole sandbar lies below you - the camp, the tender, and off the south-east shore a dark shape on the reef."
+call hw_mast x=-32 z=27 h0=17 lv=2 a=gullmast chest=gullmastchest top=Placeable_Lantern_Metal
+place Note_Paper navnote at -28.5 25 h=17.1 drop yaw=200
+loot gullmastchest Rope*2;Plastic*2;Battery*1;Binoculars*1
+prop gullmastchest loot.refill=0
+scatter "Pickup_Landmark_Tree_Palm 2" 3 at -32 27 r=15 seed=32040 free=1
+scatter Bush2 4 at -32 27 r=16 seed=32041
+call treasure x=-44 z=36 r=12 n=1 seed=32039 kind=0
+prop treasure32039 treasure.loot=Rope*2;Bolt*3;CopperIngot*2;Battery*1
+
 info title=The Stranded Gull
 info author=Custom Islands
-info description=A sandbar where the motor yacht Gull ran aground. The crew's camp, their beached tender - and the yacht's stern on the reef below, where something with a light has moved in. Inspired by Raft's Vasagatan.
+info description=A sandbar where the motor yacht Gull ran aground. The crew's camp, their beached tender, the navigator's lookout on the hill at the west end - and the yacht's stern on the reef below, where something with a light has moved in. Inspired by Raft's Vasagatan.
 island on.arrive=message||A distress flag flies over a sandbar. Couches and a bar stand on the sand.
 
 story capkey|Captain's safe key|quest:Vasagatan_BlueKey|A small brass key on a chain. It opens the Gull's safe.
 
+note navnote Navigator Ilse Brandt's log | I. BRANDT, NAVIGATOR, M/Y GULL\n\nDay 4. Climbed the hill at the west end with the binoculars and the mast lamp. From here I can see twenty miles of empty sea, and nothing on it.\n\nDay 6. The stern has settled on the reef, south-east of the camp, about ten metres down. Last night there was a light moving inside it. Not a torch. It swings slowly, like a lamp on a string.\n\nDay 7. The captain says the safe is down there with the chart, and the key is in his locker on the tender. He won't go down. Nobody will. That light has teeth under it - I saw the shape of them when it turned.\n\nIf you go, go in daylight and take a spear.\n\nI buried the flare kit at the foot of this hill, on the far side, in case a ship comes and I'm not up here to see it.
 note dnote Deckhand's note | Day 3 on this sandbar. We dragged what we could off the Gull before her stern broke away and slid down the reef: the good couches, the bar stools, the captain's speaker (no power, of course).\n\nThe captain won't leave the tender. He sleeps on the bow with the safe key on a chain and mutters about "the chart".\n\nSomething with a light lives down in the stern now. Marco dived for the safe and came back white as a sheet. He says the light has teeth.\n\n- Jules, deckhand
 note locker Captain's locker | A. Varga, master of the Gull - personal.\n\nThe chart stays in the safe until we are picked up. Nobody touches it.\n\n(Underneath, in a shakier hand:) The stern is gone, and the safe with it. If you hold this key, you are braver than my crew.
 loot locker story:capkey*1;Compass*1;Rope*3
@@ -151,6 +176,8 @@ quest intro=A distress flag over a sandbar, a camp with yacht furniture and nobo
 step read|Deckhand's note|1|Find the crew's camp and read the note left on the table
 step kill|Rat|3|Board the beached tender and clear the rats out of the wheelhouse
 step open|Captain's locker|1|Search the captain's locker on the tender's bow
+step reach|gulltop|1|Climb Lookout Hill at the sandbar's west end - someone kept watch up there
+step read|Navigator Ilse Brandt's log|1|Read the navigator's log by the lookout mast: what she saw on the reef
 step kill|Angler fish|1|Deal with the light in the sunken stern
 step open|Ship's safe|1|Open the ship's safe on the reef
 quest done=The Gull's secret is out: she carried parts for the relay stations. East, from beacon to beacon.

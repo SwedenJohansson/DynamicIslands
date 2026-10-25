@@ -3,11 +3,16 @@
 # at the foot of the hill the den of Old Scar, the bear that dragged the ranger's supply crate into his cave.
 # Quest "Old Scar" (5 steps): the ranger's diary, his two goats by the campfire, the tower (spot the den), the bear, the
 # stash.
+# DEEP 10-25 (deep pass, The Long Voyage): grown from radius 36 to about 60 - a low west point off the hill's west foot,
+# with the poacher Kurt Hale's camp (his note) and his cache under a hatch (a secret). Quest 5 -> 7 steps: the poacher's
+# camp before Old Scar - the man who baited the bear. The land's centre moved west with the point: the plays carry an
+# offset.
 #
 # Built by the recipe player (CIRecipe rangers_rest) through the editor's own operations.
 
 include lib_sea
 include lib_features
+include lib_highwater
 new
 # (nature: a jungle hill: twice Raft's trees and bushes - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.4 Bushes=0.38 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -28,6 +33,12 @@ brush flatten from 0 -27 to -18 -27 r=8 s=20 frames=30
 brush flatten from 0 -27 to -16 -21 r=7 s=20 frames=24
 brush flatten from 0 -27 to -16 -33 r=7 s=20 frames=24
 brush smooth at -8 -24 r=14 s=3 frames=6
+# --- DEEP 10-25 terrain: the west point (3 m, r 15; it only raises: the hill's foot there is lower than 3 m)
+brush flatten at -45 -2 r=15 s=20 frames=400 h=3
+brush smooth at -45 -2 r=19 s=5 frames=40
+brush flatten at -45 -2 r=11 s=20 frames=200 h=3
+brush sand at -51 -2 r=8 s=10 frames=30
+clear at -45 -2 r=16
 # (half a metre lower under the cave, so its own floor is what players walk on)
 brush lower from -20 -27 to 6 -27 r=6 s=4 frames=12
 clear at 22 -2 r=11
@@ -117,11 +128,24 @@ place Zone_Sound drips at -8 -27 h=5
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=56 deep=5 n=1
 
+# --- DEEP 10-25: the poacher's camp on the west point - Kurt Hale's note, his cache under a hatch ------------------
+place Balboa_DecorationPrefabBase_SimpleTent - at -46 -1 ground yaw=80
+place campfire_1 - at -42 -2 ground
+place Note_Paper poachnote at -43.5 0.5 ground drop yaw=260
+place Zone_Trigger poachcamp at -44 -1 y=1
+prop poachcamp zone.id=poachcamp
+prop poachcamp zone.radius=6
+prop poachcamp zone.message=A camp on the west point: a tent, a cold fire, and a row of snares hung up to dry. Not the ranger's.
+call hatchcache x=-51 z=1 r=4 seed=32045 alias=poachhatch chest=poachstash items=Arrow_Stone*6;Rope*3;Leather*2;MetalIngot*1
+scatter Bush2 4 at -45 -2 r=12 seed=32046
+scatter "Pickup_Landmark_Tree_Palm 2" 2 at -49 4 r=6 seed=32047 free=1
+
 info title=Ranger's Rest
 info author=Custom Islands
-info description=A jungle hill with a ranger's log cabin and a watchtower - and on the south shore the den of Old Scar, the bear that stole the ranger's supplies. Inspired by Raft's Balboa.
+info description=A jungle hill with a ranger's log cabin and a watchtower, a poacher's camp on its west point - and on the south shore the den of Old Scar, the bear that stole the ranger's supplies. Inspired by Raft's Balboa.
 island on.arrive=message||A watchtower on a jungle hill. Below it a log cabin with its door open.
 
+note poachnote Poacher Kurt Hale's note | (Pencil on the back of a tide table, weighed down with a stone)\n\nKowalski,\n\nYou can stop writing me up in your diary. I'm leaving tonight. The boat comes for me at the west point when the moon is down.\n\nYes, I baited the old bear. Fish heads and honey, a trail of it from the bamboo to your supply crate. I wanted him out of the jungle and away from my snares, and I thought he'd take the crate and go. He took the crate and stayed. Now he sleeps on it in that cave on the south shore, and he won't let anyone near.\n\nThat's on me. I'm sorry for your goats.\n\nMy own kit is under the hatch by the tent. Take what you want from it. You'll need the arrows more than I will.\n\n- K. Hale
 note diary Ranger's diary | Ranger station Rest-3 - diary of P. Kowalski\n\nWeek 1. Quiet posting. Warthogs in the bamboo, coconuts on the beach, a good tower on the hill. I could live here.\n\nWeek 3. An old male bear has taken the cave on the south shore. Torn left ear - I call him Old Scar. The flares don't scare him any more.\n\nWeek 4. Scar raided the supply shed while I was up the tower and dragged the whole crate into his den: my medicine, my machete, everything.\n\nWeek 5. A rescue boat passed twice and never stopped. I'm going up the tower tonight with my last flare. If you read this and I'm not here: the crate is at the back of the den. Watch the bear. Watch the warthogs too.
 note stash Ranger's stash | A supply crate stencilled REST-3, its lid clawed open. Inside, under bear-chewed tins, the ranger's own things.
 loot stash Machete*1;HealingSalve_Good*2;Rope*4;Nail*8
@@ -161,6 +185,8 @@ quest intro=A ranger station on a jungle hill - its door open, nobody home. Find
 step read|Ranger's diary|1|Find the ranger station on the hill and read the ranger's diary
 step catch|Goat|2|Pen the ranger's two goats - loose by the campfire since he went up the tower
 step reach|tower|1|Climb the watchtower and look for the den
+step reach|poachcamp|1|Find the strangers' camp on the west point
+step read|Poacher Kurt Hale's note|1|Read the poacher's note: who baited Old Scar
 step kill|Bear|1|Drive off Old Scar
 step open|Ranger's stash|1|Take back the ranger's supply crate
 quest done=Old Scar is gone, and the ranger's machete is yours. The hill is quiet again.

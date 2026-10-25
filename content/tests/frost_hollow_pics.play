@@ -1,5 +1,6 @@
 # Guide pictures of Frost Hollow (CIPlay frost_hollow_pics): Raft's camera and water at midday, the village at night
 island Frost Hollow
+offset 0.34 -6.17
 hour 11
 weather Calm
 at 24 0
@@ -8,6 +9,10 @@ picture frost_hollow_island 42 17 -36 0 6 0
 picture frost_hollow_village 31 5.5 1 16 4 0
 picture frost_hollow_lab -9 +2.5 5 -19 6.5 -7
 picture frost_hollow_summit 9 15 9 1 12 1
+picture fh_south_point 20 12 -20 2 5 -40
+picture fh_sample_store 8 7 -14 2 6 -34
+picture fh_store_inside 1 4.8 -31.5 3 3.8 -36
+picture fh_island_from_south -6 13 -56 0 8 0
 hour 21.5
 wait 2
 picture frost_hollow_night 33 6.5 -5 16 4.5 0

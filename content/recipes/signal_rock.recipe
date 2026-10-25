@@ -3,11 +3,18 @@
 # a roof platform and a 20 m mast with a beacon. Quest "Dead Air" (6 steps): climb up, read the log, clear the puffer
 # fish off the coil's crate, dive for the transmitter coil, fit it, read the printout, climb the mast and light the
 # beacon. Screechers nest on the ridge.
+# DEEP 10-25 (deep pass, The Long Voyage): grown from radius 30 to about 58 - a low headland off the ridge's east side,
+# reached from the walkway's southern arm, with the rigger Dmitri Vos's cave (his note, his box) and his savings buried on
+# its south end. Quest 6 -> 8 steps: the rigger's cave before the mast. The land's centre moved east with the headland:
+# the plays carry an offset.
 #
 # Built by the recipe player (CIRecipe signal_rock) through the editor's own operations - open the saved island in
 # the editor to see how each part is made.
 
 include lib_sea
+include lib_features
+include lib_areas
+include lib_highwater
 new
 # (nature: a rocky island: half again Raft's rocks - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.25 Bushes=0.28 Rocks=0.55 Harvest=0.24 BeachThings=0.3
@@ -23,6 +30,14 @@ brush lower at -14 -15 r=6 s=10 frames=3
 brush lower at -8 -6 r=5 s=10 frames=2
 brush lower from -12 -17 to -14 -30 r=5 s=10 frames=8
 brush smooth at -11 -12 r=12 s=6 frames=12
+# --- DEEP 10-25 terrain: the east headland (3.5 m, r 20; its west edge stops short of the ridge's foot) and a low
+# neck to it from the walkway's southern arm; the cave's pad and its mouth path come with ar_cave below
+brush flatten at 40 8 r=20 s=20 frames=400 h=3.5
+brush flatten from 14 -18 to 26 -4 r=4 s=20 frames=300 h=2.5
+brush smooth at 40 8 r=24 s=5 frames=40
+brush flatten at 40 8 r=16 s=20 frames=200 h=3.5
+brush sand from 14 -18 to 26 -4 r=3 s=10 frames=30
+clear at 40 8 r=21
 brush raise at 9 0 r=5 s=10 frames=8
 brush smooth at 9 0 r=7 s=4 frames=6
 brush rock at 9 0 r=5 frames=25
@@ -197,15 +212,27 @@ place Note_Bottle bottle at -14 -23 h=0
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=50 deep=5 n=1
 
+# --- DEEP 10-25: the rigger's cave on the east headland - Dmitri Vos's note, his box, his savings -------------------
+call ar_cave x=42 z=12 h=3.5 yaw=0 al=rigrock chest=rigbox
+call hw_zone x=42 z=17 al=rigcavez id=rigcave r=4 msg="A cave in the headland, a bedroll and a coil of cable inside. Someone lived out here, away from the station."
+place Note_Paper rignote at 40.5 17.5 h=3.95 drop yaw=180
+loot rigbox Rope*2;CircuitBoard*1;Bolt*3;Battery*1
+prop rigbox loot.refill=0
+scatter Bush2 4 at 40 4 r=14 seed=32043
+scatter "Pickup_Landmark_Tree_Palm 3" 2 at 44 0 r=8 seed=32044 free=1
+call treasure x=44 z=-6 r=12 n=1 seed=32042 kind=0
+prop treasure32042 treasure.loot=CopperIngot*2;MetalIngot*2;Bolt*3
+
 info title=Signal Rock
 info author=Custom Islands
-info description=A small rocky island with a radio relay station standing in its cove. Climb the station, dive for the lost transmitter coil, bring the radio back on the air and light the beacon on top of the mast. Inspired by Raft's Radio Tower.
+info description=A rocky island with a radio relay station standing in its cove and a rigger's cave on its east headland. Climb the station, dive for the lost transmitter coil, bring the radio back on the air and light the beacon on top of the mast. Inspired by Raft's Radio Tower.
 island on.arrive=message||Signal Rock. A silent radio mast stands in the cove.
 
 story coil|Transmitter coil|CircuitBoard|A heavy copper coil from the relay transmitter. The radio won't work without it.
 loot coilcrate story:coil*1;Bolt*3;Scrap*4
 prop coilcrate loot.refill=0
 
+note rignote Rigger Dmitri Vos's note | D. VOS, RIGGER, RELAY SR-4\n\nRuth, if you come out here looking for me: I've gone east with the last boat.\n\nI bought the new coil for the transmitter myself, out of my own pay, because the company never sent one. Then the crane arm snapped in the storm and dropped it in the cove, crate and all. It's still down there. The puffers have moved in round it.\n\nYou owe me for that coil. I know you'll say the company owes me. Fine. Get the coil up, fit it, and light the beacon on the mast, and we'll call it even.\n\nThe mast ladder is not a lookout, management says. The screechers on the ridge agree with them. Go up fast.\n\nWhat I saved I buried at the south end of this headland. If I'm not back by spring, it's yours.
 note log Operator's log | Day 212. The mainland has been silent for a week. I keep sending on the old frequency anyway.\n\nDay 219. Storm. The crane arm snapped while I was lifting the spare transmitter coil to the roof - coil, crate and arm all went into the cove. It's only five metres deep there. I'll dive for it when the swell drops.\n\nDay 220. The swell isn't dropping, and screechers have taken the ridge. Without that coil the transmitter is dead.\n\nDay 223. Taking the boat to look for the others. If you read this: the coil is in a crate on the cove floor, on the seaward side. Fit it in the transmitter and the station will print the last message it caught.\n\n- R. Okafor, operator, relay station SR-4
 note printout Signal printout | SR-4 RELAY - LAST BUFFERED MESSAGE\n\n...TO ANY STATION... THIS IS THE CARAVAN... WE HAVE WATER AND SHELTER FOR ALL WHO COME... FOLLOW THE BEACONS EAST... REPEAT, FOLLOW THE BEACONS...\n\n[END OF BUFFER]\n\nUnder it, in pencil: "Light the beacon so they know we're still here."
 note notice Relay Station SR-4 | AUTHORISED PERSONNEL ONLY\n\nTransmitter maintenance: every Monday.\nThe mast ladder is NOT a lookout.\n\n- Management
@@ -259,8 +286,13 @@ step read|Operator's log|1|Read the operator's log in the radio room
 step kill|Puffer fish|2|Dive to the cove floor and clear the puffer fish off the coil's crate
 step collect|story:coil|1|Find the transmitter coil in the cove
 step read|Signal printout|1|Fit the coil in the transmitter and read the printout
+step reach|rigcave|1|Find the rigger's cave on the east headland
+step read|Rigger Dmitri Vos's note|1|Read the rigger's note: what the beacon needs
 step reach|beaconswitch|1|Climb the mast and light the beacon
 quest done=The beacon on Signal Rock sweeps the sea again. Whoever is out there will see it.
 quest reward=HeadLight*1;Battery*2;CircuitBoard*1;Bolt*4
 
+# (generator stones left in the air by the shaping - taken out, 10-25)
+clear at 3.19 -19.83 r=1 only=SmallBoulder2
+clear at 9.94 -18.71 r=1.5 only=BigBoulder4_Low
 save Signal Rock

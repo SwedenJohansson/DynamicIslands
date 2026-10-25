@@ -1,5 +1,6 @@
 ﻿# Guide pictures of The Stranded Gull (CIPlay stranded_gull_pics): Raft's camera and water at midday
 island The Stranded Gull
+offset -12.18 9.08
 hour 11
 weather Calm
 at -4 0.6
@@ -7,6 +8,10 @@ wait 2
 picture stranded_gull_flag -30 9 -24 -2 3 0
 picture stranded_gull_camp 3 +2.2 -4 -4.5 3.3 3
 picture stranded_gull_tender 17 3.5 -6 9 2 -13
+picture sg_lookout_hill -4 6 6 -32 13 27
+picture sg_hill_path -11.45 4 8.79 -32 8.5 27
+picture sg_lookout_top -40 24 35 -32 19 27
+picture sg_view_from_hill -30 26 25 5 0 -10
 kill Angler fish
 at 19 -22 h=-5
 wait 2

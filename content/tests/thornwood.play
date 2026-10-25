@@ -3,7 +3,8 @@
 # on the hill at 15 25 (23.4 m). The quest's 21 steps: the camp, the diary, the map; the Shrine of the Roots and its
 # tusk; the gorge's rim, the bridge's carved post, the bridge; the trail to the falls, the Shrine of the Falls and its
 # tusk, a wild beehive, the Shrine of the Hill and the third tusk; the boar trail, the temple, the Boar King and his
-# guards, the boar idol, the offering (the machete); the two vine caches.
+# guards, the boar idol, the offering (the machete); the two vine caches. DEEP 10-25: Tama's cave at -55 72 (zone at
+# -55 67), the keeper's house at -108 82 (-18 m) for the spiral key that opens the Shrine of the Hill.
 island Thornwood
 expect step 0
 expect title The Boar King of Thornwood
@@ -44,36 +45,55 @@ expect step 12
 open Temple offering
 expect message won't open without three
 expect story tusk 2
+open Shrine of the Hill
+expect message sealed with a stone lid
+expect story tusk 2
+
+# DEEP 10-25: Tama's cave on the north plateau, the keeper's house drowned off the north-west coast: the spiral key
+zone tamacave
+expect step 13
+read The guide Tama's note
+expect step 14
+open Guide's box
+zone keeperhouse
+expect step 15
+air keeperair
+read Keeper Ruan's note
+expect step 16
+open Keeper's chest
+expect story spiralkey 1
+expect step 17
+read Explorer Hal Brandt's letter
 
 # The Shrine of the Hill
 open Shrine of the Hill
 expect story tusk 3
-expect step 14
+expect step 19
 
 # Up the boar trail into the stone ring (the walk passes the trail's zone; opening the temple's chest above took the
 # player into the ring, so that step is credited with it): the Boar King and his guards
-walk -20 -12 to -10 0 to 0 10 to 10 18 to 15 21 h=23.4
+walk -20 -12 to -10 0 to 0 10 to 10 18 to 15 21 h=25.2
 zone hilltrail
-expect step 16
+expect step 21
 zone temple
 expect message Boar King
 kill Warthog
-expect step 17
+expect step 22
 expect animals Warthog 0
 read The boar idol
-expect step 18
+expect step 23
 open Temple offering
 wait 2
 expect story tusk 0
 expect item Blueprint_Machete 1
-expect step 20
+expect step 25
 
 # The machete: the explorer's two caches behind the vines
 expect hidden thornvine2
 use thornvines2
 expect shown thornvine2
 open Vine cache by the temple
-expect step 21
+expect step 26
 use thornvines1
 expect shown thornvine1
 open Vine cache by the camp

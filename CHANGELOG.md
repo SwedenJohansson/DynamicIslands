@@ -9,6 +9,14 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-25: The Long Voyage, fixes
+
+### Fixed
+- **The Long Voyage's islands stand on their ground:** Shelter Atoll's hatch is no longer buried in its dune, Thornwood's
+  temple stones and shrine boulders no longer hang over the hill's slope, Ironreef Caverns' rockfall lies on the cave
+  floor and the cliff no longer pokes up through its plank road, and Crane Yard's buried treasure is back for the metal
+  detector (it could not be placed). Start a new world with the plan to get the fixed islands.
+
 ## 2026-10-25: Relic of the Seventh Tide, full-size islands
 
 ### Changed

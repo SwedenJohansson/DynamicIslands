@@ -73,6 +73,24 @@ expect stand -18.5 -10 h=18.7
 zone fortress
 expect step 20
 open Scrap king's hoard
+expect message chained shut
+
+# DEEP 10-25: the King's back way (the cave under the south hill), his strongroom sunk in the bay - the crown key
+read Harbour master Otto Fenn's letter
+zone kingcave
+expect step 21
+read Scrap king Kasimir Dunne's note
+expect step 22
+open King's cave box
+zone strongroom
+expect step 23
+air strongair
+read Diver Pearl Ash's note
+expect step 24
+open Strongroom chest
+expect story crownkey 1
+expect step 25
+open Scrap king's hoard
 wait 3
 expect item Blueprint_ZiplineBase 1
 expect done

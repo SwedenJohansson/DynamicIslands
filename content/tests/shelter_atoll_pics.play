@@ -1,6 +1,7 @@
 # Guide pictures of Shelter Atoll (CIPlay shelter_atoll_pics): Raft's camera and water at midday; inside the shelter
 # dark, then with the generator running
 island Shelter Atoll
+offset -1.53 0.92
 hour 11
 weather Calm
 at 24 2
@@ -8,6 +9,10 @@ wait 2
 picture shelter_atoll_island 40 24 -46 0 5 0
 picture shelter_atoll_gate 0 4.5 -27 0 4.5 -9
 picture shelter_atoll_roof -9 10.5 13 0 7.6 5
+picture sa_lookout_dune -14 8 -6 -40 7 10
+picture sa_dune_path -32.0 5 -10.0 -40 5.5 10
+picture sa_lookout_post -48 17 18 -40 13 10
+picture sa_atoll_from_dune -38 19 8 0 6 0
 at 0 1.5 h=1.9
 zone dorm
 wait 3

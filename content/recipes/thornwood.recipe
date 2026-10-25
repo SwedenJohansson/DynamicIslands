@@ -3,8 +3,14 @@
 # tusk; the gorge's rim, the carved post and the rope bridge; the trail to the falls, the Shrine of the Falls and its
 # tusk, a wild beehive, the Shrine of the Hill and the third tusk; the boar trail up the hill, the stone temple, the
 # Boar King and his guards, the boar idol, the offering on the altar (the machete); the explorer's two vine caches.
+# DEEP 10-25 (deep pass, The Long Voyage): Radius 115 kept. New: the guide Tama's cave on the north plateau, the old
+# shrine keeper's house drowned 18 m down off the north-west coast (an air pocket), two buried treasures. The Shrine of
+# the Hill is now sealed: its spiral key lies in the keeper's drowned house, and Tama's note in the cave says where.
+# Quest 21 -> 26 steps. Voices: the guide Tama, shrine keeper Ruan, the explorer Hal Brandt (the camp's letter).
 include lib_sea
 include lib_features
+include lib_areas
+include lib_highwater
 new
 # (nature: a jungle: three times Raft's trees, two and a half times its bushes - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.5 Bushes=0.45 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -17,6 +23,8 @@ generate
 # --- The temple hill: raised in the north-east, its top levelled for the stone ring ---------------------------------
 brush raise at 25 25 r=40 s=20 frames=16
 brush flatten at 25 25 r=13 s=20 frames=40
+# (the temple's ring on one level with the top, 10-25: on the slope its standing stones stood up to 3 m in the air)
+brush flatten at 15 25 r=11 s=20 frames=150 h=23.4
 # --- The gorge: a river cut across the island from the west coast to the south-east coast, deep below the sea ----
 macro gorge x1 z1 x2 z2 n d=10
 for i 0 $n
@@ -41,6 +49,9 @@ brush rock from 45 -55 to 120 -110 r=8 s=10 frames=30
 brush grass at 0 0 r=70 s=8 frames=30
 brush grass at -55 35 r=35 s=8 frames=20
 brush grass at 40 -30 r=35 s=8 frames=20
+# --- DEEP 10-25 terrain (under the sea as it was: the land's centre stays put): the keeper's house's hole off the
+# north-west coast (-18 m); the cave's pad comes with its macro (on the flat plateau, at its own height)
+call hw_basin x=-108 z=82 r=12 h=-18
 # (points below are from the land centre of the finished land - the gorge split the island in two)
 origin
 
@@ -103,13 +114,17 @@ place Zone_Trigger falls at -42 6.7 y=1.5
 place Zone_Trigger hilltrail at 0 10 y=1.5
 
 # --- The three jungle shrines: a stone ring, two pillars, a brazier, an offering box with a carved tusk ---------------
+# (10-25: the scaled BigBoulder3_Low stand about 5 x their scale over the ground with sit (their bounds reach below the
+# stone), with drop too - so they are sunk by that much)
 macro shrine x z box
 clear at $x $z r=6 all
+# (a level floor for the stones, 10-25: on the slope two stood up to 1 m in the air)
+brush flatten at $x $z r=4 s=20 frames=60
 place SmallBoulder4 - at {$x-2.5} {$z+1.5} ground sit
 place SmallBoulder4 - at {$x+2.5} {$z+1.5} ground sit yaw=60
 place SmallBoulder4 - at $x {$z+3.4} ground sit yaw=130
-place BigBoulder3_Low - at {$x-1.7} {$z-1.6} ground sit scale=0.2 yaw=20
-place BigBoulder3_Low - at {$x+1.7} {$z-1.6} ground sit scale=0.2 yaw=-25
+place BigBoulder3_Low - at {$x-1.7} {$z-1.6} ground sit y=-0.95 scale=0.2 yaw=20
+place BigBoulder3_Low - at {$x+1.7} {$z-1.6} ground sit y=-0.95 scale=0.2 yaw=-25
 place campfire_1 - at {$x+1.2} {$z+1.6} ground sit
 place Loot_Chest $box at $x $z ground sit yaw=180
 end
@@ -120,16 +135,21 @@ call shrine 45 30 shrine3
 # --- The temple on the hill: a ring of standing stones, the boar idol, the altar and its offering chest, braziers -------
 clear at 15 25 r=14
 # (the gap in the south-west is the way in, where the trail arrives)
-macro standingstone a
-place BigBoulder3_Low stone at {15+9*cos($a)} {25+9*sin($a)} ground sit scale=0.5 yaw={$a+90}
+# (10-25: the ring at 8 m and a level pad under each stone - at 9 m the long stones reached past the temple's flat top
+# and hung up to 7.5 m over the hill's slope; the three on the steeper side sink deeper, s; the one at 135 lies along the radius, turn, its ends off the slope)
+macro standingstone a s=-2.3 turn=90
+brush flatten at {15+8*cos($a)} {25+8*sin($a)} r=3.5 s=20 frames=80 h=23.4
+place BigBoulder3_Low stone at {15+8*cos($a)} {25+8*sin($a)} ground sit y={$s} scale=0.5 yaw={$a+$turn}
 end
-for a 0 180 45
-call standingstone $a
-next
+call standingstone 0
+call standingstone 45 s=-3.7
+call standingstone 90
+call standingstone 135 s=-3.0 turn=0
+call standingstone 180
 call standingstone 270
-call standingstone 315
+call standingstone 315 s=-3.7
 place TangaroaFounderStatue idol at 15 29 ground sit yaw=180
-place SmallRock_02 - at 15 25.2 ground sit scale=0.8 yaw=90
+place SmallRock_02 - at 15 25.2 ground sit y=-1.1 scale=0.8 yaw=90
 place Loot_ChestLarge offering at 15 23.2 ground sit yaw=180
 place campfire_1 - at 11.8 22.8 ground sit
 place campfire_1 - at 18.2 22.8 ground sit
@@ -152,9 +172,10 @@ call shallows r=135 deep=5 n=3
 
 info title=Thornwood
 info author=Custom Islands
-info description=A jungle island split by a river gorge. An explorer's camp on the beach, an old rope bridge, three shrines in the jungle - and on the hill, a ring of standing stones where the Boar King guards the boar idol. Inspired by Raft's Balboa.
+info description=A jungle island split by a river gorge. An explorer's camp on the beach, a guide's cave on the north plateau, a shrine keeper's house drowned off the north-west coast, an old rope bridge, three shrines in the jungle - and on the hill, a ring of standing stones where the Boar King guards the boar idol. Inspired by Raft's Balboa.
 island on.arrive=message||Dense jungle, a gorge cut through it - and on the hill, a ring of standing stones.
 
+story spiralkey|Spiral key|Placeable_HonkHorn_3|A stone key cut in a spiral, from the drowned shrine keeper's chest. It fits the Shrine of the Hill.
 story tusk|Carved tusk|Placeable_HonkHorn_3|A boar's tusk carved with spirals - an offering from one of Thornwood's shrines.
 note diary Explorer's diary | EXPEDITION DIARY - THORNWOOD\n\nDay 3: The island is split by a gorge. The natives' old rope bridge still holds, barely.\nDay 5: Three shrines in the jungle, each with a carved tusk in an offering box. The stone ring on the hill is their temple - they laid the tusks on its altar for the boar spirit.\nDay 6: The boar spirit is real. A warthog the size of a cow, with two guards. It charged me off the hill.\nDay 7: I'm leaving. Whoever reads this: three tusks on the altar, and the temple's offering is yours. If the King lets you.
 note thornmap Map of Thornwood | MAP OF THORNWOOD (drawn by the expedition)\n\n- Camp: the south beach.\n- The gorge runs from the west coast to the south-east. Rope bridge in the middle.\n- Shrine of the Roots: south-east jungle, this side of the gorge.\n- Shrine of the Falls: north-west, where the gorge meets the sea.\n- Shrine of the Hill: the east slope of the temple hill.\n- Temple: the stone ring on the hill, north of the gorge.
@@ -167,6 +188,8 @@ prop shrine2 loot.refill=0
 note shrine3 Shrine of the Hill | An offering box on the hill's east slope, facing the sunrise. Inside: a carved tusk.
 loot shrine3 story:tusk*1;Feather*4
 prop shrine3 loot.refill=0
+prop shrine3 if.open=has|story:spiralkey|1
+prop shrine3 else.open=message||The offering box is sealed with a stone lid, a spiral-shaped hole in it. Its key went with the shrine keeper, wherever he went.
 note offering Temple offering | The temple's offering chest at the foot of the boar idol, its lid carved with three tusks.
 loot offering Blueprint_Machete*1;Machete*1;HealingSalve_Good*3;Jar_Honey*2;Seed_Mango*3
 prop offering loot.refill=0
@@ -230,6 +253,30 @@ prop thornvines1 obj.name=thornvines1
 prop thornvines2 obj.name=thornvines2
 call hives x=0 z=0 r=60 n=2 seed=63
 
+# --- DEEP 10-25: Tama's cave on the north plateau - the guide's note, his box -----------------------------------------
+call ar_cave x=-55 z=72 h=6 yaw=180 al=tamarock chest=tamachest
+call hw_zone x=-55 z=67 al=tamazone id=tamacave r=4 msg="A cave in a hump of rock on the north plateau. Boar tusks hang on cords across its mouth, clicking in the wind - a guide's charm against the King."
+place Note_Paper tamanote at -53.5 66.5 h=6.45 drop yaw=0
+loot tamachest Rope*2;Leather*3;Seed_Banana*2;Bolt*2
+prop tamachest loot.refill=0
+note tamachest Guide's box | Tama's box: leather, rope, banana seed, bolts - a guide's kit, packed and never carried.
+call treasure x=-63 z=60 r=12 n=1 seed=32010 kind=0
+prop treasure32010 treasure.loot=Scrap*3;CopperOre*2;Bolt*2
+# --- DEEP 10-25: the shrine keeper's house (north-west), drowned 18 m down, an air pocket: Ruan's note, the spiral key ---
+call hw_sunkhouse x=-108 z=82 h=-18 yaw=0 a=keeperhouse chest=keeperchest air=keeperair bub=keeperbub dal=keeperdoor
+call hw_zone x=-108 z=82 al=keeperzone id=keeperhouse r=7 h=1 msg="The shrine keeper's house, 18 m down on the old shore. Spirals are cut over its door, the same as on the shrines. Its front room still holds air."
+place Note_Paper ruannote at -107.4 79.8 h=-17.7 drop yaw=20
+loot keeperchest story:spiralkey*1;Feather*4;Rope*2;MetalIngot*1
+note keeperchest Keeper's chest | The shrine keeper's chest: feathers for the offerings, rope, an iron ingot - and a stone key cut in a spiral, the shape of the Shrine of the Hill's lock.
+place Creature_PufferFish keeperpuffers at -114 90 h=-13
+prop keeperpuffers creature.count=2
+call hw_reef x=-117 z=78 r=3 seed=32011
+call hw_reef x=-100 z=88 r=3 seed=32012
+# --- DEEP 10-25: what the explorer buried by the camp (his letter in the camp's crate) ---------------------------------
+place Note_Paper halnote at -44 -67 ground yaw=40
+call treasure x=-58 z=-64 r=12 n=1 seed=32013 kind=0
+prop treasure32013 treasure.loot=MetalOre*3;TitaniumOre*1;Hinge*1
+
 quest title=The Boar King of Thornwood
 quest intro=A jungle island split by a deep gorge. On the south beach, an explorer's camp - abandoned in a hurry, the diary still on a crate.
 step reach|camp|1|Find the explorer's camp on the south beach
@@ -244,6 +291,11 @@ step reach|falls|1|Take the west trail towards the falls at the gorge's mouth
 step open|Shrine of the Falls|1|Find the Shrine of the Falls where the gorge meets the sea
 step collect|story:tusk|2|Take the second tusk, damp with the falls' spray
 step open|Wild beehive|1|Raid a wild beehive in the jungle for its honeycomb
+step reach|tamacave|1|Find the guide's cave on the north plateau
+step read|The guide Tama's note|1|Read the guide Tama's note in the cave
+step reach|keeperhouse|1|Dive to the shrine keeper's house, drowned off the north-west coast
+step read|Keeper Ruan's note|1|Breathe in the keeper's front room and read his note
+step collect|story:spiralkey|1|Take the spiral key from the keeper's chest
 step open|Shrine of the Hill|1|Find the Shrine of the Hill on the temple hill's east slope
 step collect|story:tusk|3|Carry all three carved tusks up the hill
 step reach|hilltrail|1|Follow the boar trail up the temple hill
@@ -256,5 +308,9 @@ step open|Vine cache by the temple|1|Cut through the vines near the temple with 
 step open|Vine cache by the camp|1|Back towards the beach: cut open the second cache behind the vines
 quest done=The Boar King is dead, the tusks lie on the altar and the explorer's caches are found. The temple's offering - and a machete blueprint the explorer left - are yours.
 quest reward=Leather*6;Feather*6;Rope*4
+
+note tamanote The guide Tama's note | TAMA - FOR THE ONE WHO COMES AFTER THE WHITE MAN\n\nI brought Mr Brandt to the shrines because he paid. I told him the tusks are not for taking. He wrote it in his book and took them anyway.\n\nThe Shrine of the Hill he could not open. Its box is sealed with a spiral stone, and the key was always with old Ruan, the keeper. Ruan lived on the north-west shore, below the cliff, where his fathers lived.\n\nWhen the King came down off the hill the ground shook, and Ruan's shore slid into the sea, house and all. I swam down once. The house stands on the bottom with its door open, and there is still air under the roof.\n\nIf you mean to lay the tusks back on the altar, take the key from his chest. If you mean to steal them, leave this island now.
+note ruannote Keeper Ruan's note | (Charcoal on a bark sheet, dry in the air pocket)\n\nThe stranger took two tusks. The King has woken. The ground is angry and my house is going into the sea; I can hear the water at the door.\n\nThe third tusk is safe in the hill shrine. The key is in my chest. I will not carry it out of here. Whoever finds it must have swum down to an old man's house in the dark, and nobody does that to steal.\n\nThree tusks on the altar and the King will lie down. Two, and he will hunt. None, and he will come down off the hill for good.\n\nI am old, and the air is going. Put them back.
+note halnote Explorer Hal Brandt's letter | Dear Margaret,\n\nI have the finest collection of carved tusks in the Empire - two, and soon three, if I can open the hill shrine. The natives say I mustn't. Tama says I mustn't. Old Ruan looked at me as if I were already dead.\n\nLast night something came down off the hill and stood at the edge of the firelight. It was the size of a cow and it didn't make a sound. This morning the guide was gone and the keeper's house was under the sea.\n\nI have buried our valuables west of the camp, under the big palm, in case I can't carry everything to the boat.\n\nI'm leaving the tusks. God help me, I'm leaving the tusks.
 
 save Thornwood

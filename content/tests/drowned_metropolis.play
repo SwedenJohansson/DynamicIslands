@@ -62,3 +62,11 @@ expect story keycard 0
 expect item Blueprint_BatteryAdvanced 1
 wait 1
 expect done
+# DEEP 10-25 (off the quest): Lena's camp on the north-east islet, the treasurer's house sunk east of the Meridian Tower
+at 25 49
+read Deckhand Lena Moss's letter
+open Deckhand's crate
+zone cranehouse
+air craneair
+read Treasurer Silas Crane's note
+open Treasurer's chest

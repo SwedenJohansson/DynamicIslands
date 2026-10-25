@@ -17,3 +17,8 @@ at 36 -47.3
 wait 2
 picture wreckers_cove_lantern 24 9 -64 42 9 -48
 picture wreckers_cove_from_lantern 41 15 -49 -12 2 -2
+picture wc_crown -8 22 50 -38 26 24
+picture wc_crown_mast -47 40 33 -38 35 24
+picture wc_crown_view -36 42 22 20 0 -40
+picture wc_pilothouse 28 -9 68 28 -14.5 80
+picture wc_ruin -56 +3 -30 -66 +1 -20

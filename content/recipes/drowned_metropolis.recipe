@@ -9,9 +9,15 @@
 #
 # Built by the recipe player (CIRecipe drowned_metropolis) through the editor's own operations (macros from lib_rt).
 # The towers are Utopia's skyline towers, 400 m tall: placed so that only their crowns stand out of the sea.
+# DEEP 10-25 (deep pass, The Long Voyage): Radius 130 kept; it had the climbs (two towers), the dives (offices, pit)
+# and a buried treasure. New, off the quest (steps unchanged, 20; extra pages only meet the pages steps sooner, never
+# block them): the deckhand Lena Moss's camp on the north-east islet (her letter, her crate), and the treasurer's
+# house sunk 11 m down on Bay Street east of the Meridian Tower (an air pocket, his note, his chest).
 include lib_sea
 include lib_rt
 include lib_features
+include lib_areas
+include lib_highwater
 new
 # (nature: Like Raft - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -45,6 +51,8 @@ brush lower at 20 -42 r=11 s=20 frames=6
 brush flatten at 5 -28 r=8 s=20 frames=60 h=-12.65
 clear at 20 -42 r=14 all
 clear at 8 -28 r=12 all
+# DEEP 10-25: the treasurer's house's street, flattened -11 m down (under the sea as it was: the land's centre stays put)
+call hw_basin x=82 z=-40 r=12 h=-11
 
 # --- The ferry islet (west): the wrecked ferry, the evacuation notice, a lifeboat --------------------------------------
 clear at -50 -32 r=16
@@ -243,5 +251,30 @@ place QuestItemPickup_Tangaroa_Token - at 42 54 ground
 # Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
 call treasure x=36 z=44 r=12 n=1 seed=8814
 prop treasure8814 treasure.loot=TitaniumOre*3
+
+# (DEEP 10-25: from the land centre, as the points in the middle part of this recipe)
+push at -13.83 9.66
+# --- DEEP 10-25: Lena Moss's camp on the north-east islet - the deckhand who stayed ------------------------------------
+place Balboa_DecorationPrefabBase_SimpleTent - at 24 55 ground yaw=160
+place campfire_1 - at 27 51 ground
+place Note_Paper lenanote at 25.5 52.5 ground drop yaw=200
+place Loot_Crate lenacrate at 21 53.5 ground yaw=30
+loot lenacrate Rope*2;Plastic*3;Bolt*2;Jar_Honey*1
+prop lenacrate loot.refill=0
+note lenacrate Deckhand's crate | Lena's crate from the ferry's stores: rope, plastic sheet, a few bolts and a jar of honey.
+# --- DEEP 10-25: the treasurer's house on Bay Street, sunk 11 m down, an air pocket: Silas Crane's note ----------------
+call hw_sunkhouse x=82 z=-40 h=-11 yaw=0 a=crankhouse chest=cranechest air=craneair bub=cranebub dal=cranedoor
+call hw_zone x=82 z=-40 al=cranezone id=cranehouse r=7 h=1 msg="A town house on the sea floor, its brass plate still on the door: S. CRANE, CITY TREASURER. Its front room still holds air."
+place Note_Paper silasnote at 82.6 -42.2 h=-10.7 drop yaw=20
+loot cranechest MetalIngot*2;CopperIngot*2;Battery*1;CircuitBoard*1
+note cranechest Treasurer's chest | Silas Crane's own chest: the city's spare batteries and a circuit board, signed out to himself - and a ledger page, "loans to S.C.", four years long.
+place Creature_PufferFish cranepuffers at 76 -32 h=-6
+prop cranepuffers creature.count=2
+call hw_reef x=73 z=-44 r=3 seed=32031
+call hw_reef x=90 z=-34 r=3 seed=32032
+pop
+
+note lenanote Deckhand Lena Moss's letter | L. MOSS, DECKHAND, MERIDIAN FERRY - FOR WHOEVER COMES\n\nThe last ferry ran aground on the sandbar with four hundred people on her. We got them all off onto the boats. I stayed to see the engine shut down, and when I came up the boats were gone.\n\nSo I live here now, on the only dry ground left in Meridian. I fish, I watch the towers, and at night I watch the light moving down in the Spire's pit. It goes round and round, like something pacing.\n\nThe treasurer's house is out to the east, on Bay Street, past the Meridian Tower - you can see its chimney on a still day. He kept his own money there, not in the vault. I never had the breath to go down to it. You might.\n\nIf you open the vault, tell the mayor Lena Moss kept the lights on.
+note silasnote Treasurer Silas Crane's note | (Ink on a ledger page, dry in the air pocket)\n\nThe mayor wants the vault sealed with three cards, so nobody can open it alone. Very wise. Very honest. He has not seen the books.\n\nThe vault is short by half. I have been borrowing from it for four years, a little at a time, and the council never counted.\n\nSo I am taking my card down to the foundations, to the old strongbox, where nobody will ever go. Three cards, and one of them at the bottom of a pit - the vault will stay shut, and nobody will ever know what isn't in it.\n\nThe water is at the door. I'll take the boat to the Spire tonight. Whatever I left here, the sea can keep.
 
 save The Drowned Metropolis
