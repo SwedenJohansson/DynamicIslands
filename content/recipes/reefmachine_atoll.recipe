@@ -165,7 +165,7 @@ call dp_air x=20.03 z=42.66 id=ra_air al=raair msg="Air trapped under the wreck 
 place Loot_ChestSmall radivesecret at 25.45 45.36 ground sit yaw=119.29
 call tzone x=23 z=41 al=radivezone id=ra_dive r=7 msg="The bottom of the lagoon pit. A van lies on its nose, its cargo door open." h=1
 call tzone x=13.7 z=24.43 al=rarim id=ra_rim r=5 msg="The pit's rim, where the supply van slid in." h=1
-call treasure x=11.75 z=20.94 r=2 n=1 seed=14912
+call treasure x=11.75 z=20.94 r=12 n=1 seed=14912
 prop treasure14912 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------

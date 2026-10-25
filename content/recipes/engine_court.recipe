@@ -278,7 +278,7 @@ call dp_air x=-76.85 z=-31.2 id=ec_air al=ecair msg="Air trapped under the wreck
 place Loot_ChestSmall ecdivesecret at -82.71 -29.69 ground sit yaw=-19.75
 call tzone x=-78 z=-28 al=ecdivezone id=ec_dive r=7 msg="The bottom of the west pit. A courier plane lies here." h=1
 call tzone x=-60.12 z=-21.58 al=ecrim id=ec_rim r=5 msg="The west pit's rim." h=1
-call treasure x=-56.35 z=-20.23 r=2 n=1 seed=14982
+call treasure x=-56.35 z=-20.23 r=12 n=1 seed=14982
 prop treasure14982 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 # the Keeper's flight (M30 moveto, M32 pulse, M31 shieldIf) and the epilogue (M40)
 call dp_hazard x=-19 z=80 al=ec_spark1 kind=shock r=2.2 dmg=2 msg="Sparks crawl over the landing - wait for them to die down." y=8.2

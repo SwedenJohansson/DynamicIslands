@@ -156,7 +156,7 @@ call dp_air x=-21.8 z=-71.14 id=bs_air al=bsair msg="Air trapped under the wreck
 place Loot_ChestSmall bsdivesecret at -26.68 -74.71 ground sit yaw=-70.35
 call tzone x=-25 z=-70 al=bsdivezone id=bs_dive r=7 msg="The bottom of the old cistern. A caravan lies here, its door open, a chest under the bunk." h=1
 call tzone x=-18.61 z=-52.11 al=bsrim id=bs_rim r=5 msg="The cistern rim. The pilgrims hauled their caravan up this ramp once - and lost it in the water." h=1
-call treasure x=-17.26 z=-48.34 r=2 n=1 seed=14902
+call treasure x=-17.26 z=-48.34 r=12 n=1 seed=14902
 prop treasure14902 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
