@@ -5,5 +5,10 @@ hour 11
 weather Calm
 at 0 0
 wait 3
-picture sl5_upfall_orchard_island 50 20 -60 0 4 0
+picture sl5_upfall_orchard_island 120 50 -130 0 8 0
 picture sl5_upfall_orchard_trees 8 +3 -10 0 +1.2 4
+picture gu_beehill 20 30 0 -8 30 46
+picture gu_beetop -8 43 40 0 6 0
+picture gu_rootcave -57 +5 33 -57 +2 21
+picture gu_beehouse 54 +6 -22 50 +1.5 -8
+picture gu_plane 24 +5 -36 12 +2 -50

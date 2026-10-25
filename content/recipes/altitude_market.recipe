@@ -15,20 +15,37 @@
 include lib_features
 include lib_huts
 include lib_gravity
+include lib_areas
+include lib_highwater
+# RESIZE 10-25 (box agent, older-storyline deep pass): Radius 34 -> 85: the whole torn-off town plate; the old market
+# moved 30 -38 as one frame (push) so its lower terrace and the ballast crane still lean out over the south-east edge.
+# DEEP 10-25: Pylon Hill - the cable car's top pylon on a hill in the north-west; the craneman took the ballast
+# release's key up it. The toll house in ruins in the north-east, the smugglers' hole in the west, the newspaper plane
+# in the south-west. Voices: craneman Oskar Lund, toll keeper Greta Holm, the smuggler Nils, the newspaper pilot.
 new
 gen Trees=0.08 Bushes=0.3 Rocks=0.3 Harvest=0.25 BeachThings=0
-gen Seed=9551 Radius=34 Height=11 Roughness=0.45 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.7 PeakShape=0.5
+gen Seed=9551 Radius=85 Height=11 Roughness=0.45 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.7 PeakShape=0.5
 gen Water=0 SeaRocks=0 SeaFinds=0 Sunken=0 Hostiles=0 Friendly=0 SeaLife=0
 generate
 elevation 35
 
 # --- Terrain: the square at 5 m, the lower terrace at 2 m -----------------------------------------------------------
+push at 30 -38
 brush flatten at 0 0 r=16 s=20 frames=200 h=5
 brush flatten at 18 -14 r=6 s=20 frames=120 h=2
 brush flatten from 13 -10 to 17 -13 r=3 s=12 frames=40 h=3.5
 brush grass at 0 0 r=14 s=20 frames=20
-brush smooth at 43 -8 r=10 s=20 frames=150
+pop
 origin
+# --- DEEP 10-25 terrain: Pylon Hill (north-west, summit 30 m, base r 28) and its trail, the smugglers' hole (west),
+# the toll house's pad (north-east), the newspaper plane's pad (south-west) -----------------------------------------
+call hw_mount x=-25 z=40 b=28 h=30
+call hw_trail x=-25 z=40 b=28 h=30 a0=140 turn=300 n=40 h0=6
+call ar_cave x=-58 z=-10 h=6 yaw=0 al=smugrock chest=smugchest
+brush flatten at 20 50 r=12 s=20 frames=500 h=6
+call ar_ruin x=20 z=50 h=6 yaw=10 w=3 d=2 al=tollhouse
+call ar_plane x=-20 z=-55 h=5 yaw=60 al=newsplane crate=newscrate
+push at 30 -38
 clear at 0 0 r=10
 clear at -12.75 -2.5 r=4
 clear at 10.25 8.25 r=4
@@ -98,17 +115,56 @@ place QuestItemPickup_Tangaroa_Token - at 16 -15 ground
 # --- Things to gather ------------------------------------------------------------------------------------------------
 scatter "Pickup_Landmark_PineappleLandmark" 2 at -8 10 r=4 seed=9561 free=2
 call dirt x=10 z=-6 r=5 n=2 seed=9562
+pop
+
+# --- DEEP 10-25: Pylon Hill and the cable car's top pylon; the trail's foot and the summit as zones; the key ---------
+call hw_zone x=-6.4 z=17.8 al=pylonfootz id=pylonfoot r=5 msg="Pylon Hill. The cable car's cables run from its top out over the edge - and stop in the air."
+call hw_zone x=-25 z=40 al=pylontopz id=pylontop r=8 h=1 msg="The top of Pylon Hill. The whole town below, the sea 65 m down, and the quay's hill far off, cut flat."
+call hw_mast x=-25 z=40 h0=30 lv=4 a=pylon chest=keybox top=Placeable_Lantern_Metal
+place Note_Paper oskarnote at -29 36.5 h=30.1 drop yaw=10
+scatter "Pickup_Landmark_Tree_Palm 3" 3 at -25 40 r=30 seed=9581 free=3
+scatter Bamboo_1 4 at -25 40 r=30 seed=9582 free=2
+scatter Bush 8 at -25 40 r=30 seed=9583 free=1
+scatter Bush2 5 at -25 40 r=30 seed=9584 free=1
+call treasure x=-20 z=45 r=4 n=1 seed=9585 kind=0
+prop treasure9585 treasure.loot=MetalOre*2;CopperOre*3
+# --- The smugglers' hole (west): Nils's note and his box --------------------------------------------------------------
+call hw_zone x=-58 z=-5 al=smugz id=smughole r=4 msg="A hole under the rock, out of the crier's sight. Somebody slept here - and counted money."
+place Note_Paper nilsnote at -56.5 -4.5 h=6.45 drop yaw=30
+loot smugchest TradeToken*3;CopperOre*2;Rope*2;Battery*1
+prop smugchest loot.refill=0
+note smugchest Smuggler's box | Nils's box: Tangaroa tokens, copper and a battery he meant to sell twice.
+# --- The toll house (north-east): Greta's ledger on the table ---------------------------------------------------------
+call hw_zone x=20 z=50 al=tollz id=tollhouse r=6 msg="The town's toll house, roofless. A board still says TOLL - 2 TOKENS, CARTS 5."
+place Note_Paper gretaledger at 19.26 50.13 h=7.05 drop yaw=10
+call treasure x=28 z=44 r=4 n=1 seed=9586 kind=0
+prop treasure9586 treasure.loot=Scrap*3;Bolt*2;Hinge*1;TradeToken*2
+place Creature_Llama llamas2 at 30 60 ground
+prop llamas2 creature.count=2
+# --- The newspaper plane (south-west): a secret -----------------------------------------------------------------------
+loot newscrate Battery*1;Plastic*4;Rope*2;Nail*6
+prop newscrate loot.refill=0
+note newscrate Newspaper plane's cargo | Bundles of the Halvard Courier, Lift Day edition: INSTITUTE SAYS 'NO CAUSE FOR ALARM'.
+place Note_Paper newsnote at -26 -61 ground drop yaw=60
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Altitude Market
 info author=Custom Islands
-info description=The quay's market town, torn into the sky 35 m up: caravans and tents on a rock plate, a cable-car station grown shut with vines, a clock tower full of screechers, a zipline and a ballast crane over the drop. The fourth island of The Gravity Sea.
+info description=The quay's market town, torn into the sky 35 m up and as big as Raft's own big islands: caravans and tents on a rock plate, Pylon Hill with the cable car's top pylon, a toll house in ruins, a smugglers' hole, a newspaper plane, a cable-car station grown shut with vines, a clock tower full of screechers, a zipline and a ballast crane over the drop. The fourth island of The Gravity Sea.
 island on.arrive=message||A market in the sky: caravans, tents, a clock tower - and a crane leaning out over nothing.
 
 story clockcode|Clock tower keypad open|Note_Paper|The clock tower room's keypad, unlocked with the crier's code.
 story ballastdrop|Ballast dropped|Placeable_Lantern_Metal|You let the ballast stone go: it fell 35 m into the sea, where the market's lower town lies.
 
 note crier Market crier's board | MARKET DAY - HEAR YE\n\nThe market is OPEN, Lift Day or no Lift Day.\nStalls: fruit, rope, fireworks (by the south tent).\nThe cable-car is shut - vines. Bring a blade.\nClock tower room: the code is the hour the hill went up, 3:51, then 7 for luck - 3517.\nThe ballast crane holds the market level. DO NOT pull the release.
+story cranekey|Ballast release key|Bolt|The ballast release's key, which the craneman Oskar hid on the cable car's top pylon.
+loot keybox story:cranekey*1;Rope*2;Plank*2
+prop keybox loot.refill=0
+note keybox Pylon deck box | A box lashed to the top pylon's rail. Inside, on a string, a heavy key stamped BALLAST.
+note oskarnote Craneman Oskar Lund's note | To whoever comes up here after me -\n\nThe ballast crane holds this town level. Take the stone off the hook and the plate tips, and everything on it slides towards the sea - or so the Institute told me, and I believed them for three weeks.\n\nThen I measured. The plate does not tip. It does not care. It hangs where the field wants it, and the stone is only a stone.\n\nI have hidden the release key up here anyway, in the deck box, so no drunk at the fireworks stall pulls it for a laugh. If you are sober and you have a reason: take it. Down there, under the crane, there are people on the seabed who have been waiting for a sign that somebody is up here.\n\n- O. Lund, craneman
+note gretaledger Toll keeper Greta Holm's ledger | TOLLS - G. HOLM\n\nLift Day: 41 carts in, 0 carts out. Nobody can leave. I have stopped charging.\nDay 2: The crier still cries. Prices are up. Water is up most.\nDay 5: Nils from the west end is selling the same battery to everyone. Twice to the Institute.\nDay 9: Oskar has gone up the pylon hill with the crane's key. 'Safety', he says. He has also taken his lunch, his blanket and my good chair.\nDay 14: Someone in the sea under us is ringing a bell. Oskar says it is the lower town, the half of us that went down. I go to the edge every evening and listen.
+note nilsnote Smuggler's note | (In pencil, on the back of a toll ticket)\n\nBattery: sold to H. (Inst.) - 3 tokens\nBattery (same): sold to H. again - 3 tokens\nBattery (same): sold to Greta - 1 token and a pie\n\nGreta knows. Greta always knows.\nIf the stone goes, I go down after it. There is copper in the lower town and nobody to sell it to me.
+note newsnote Newspaper pilot's note | Landed in the south field. The Courier's Lift Day edition is in the crate, if anybody up here still wants the news. The headline did not age well. - P. Varga, Halvard Courier air delivery
 note portertools Porter's toolbox | The cable-car porter's toolbox: a machete for the vines on the station door, and a coil of rope.
 note stationoffice Station office | The cable-car station's office chest: the engine plans for the cars and a metal detector's, "to find what fell".
 note clockroom Clock tower room | The clock tower room's chest: the market's fireworks money and a rigger's spare rope.
@@ -160,9 +216,9 @@ prop ballaststone obj.name=ballaststone
 prop ballastcam obj.name=ballastcam
 prop release obj.name=release
 prop release beh.use=Pull the ballast release
-prop release if.use=!signal|ballast
+prop release if.use=has|story:cranekey|1\n!signal|ballast
 prop release on.use=signal||ballast\nhide|ballaststone\ngive||story:ballastdrop*1\nmessage||The crane's hook swings free. The ballast stone tips over the edge - and long seconds later, far below, a splash.\ncamera|ballastcam|ballaststone|5|30
-prop release else.use=message||The stone is gone. Down there, under the splash, is the market's lower town.
+prop release else.use=message||The release is locked - its key is gone. A chalked arrow on the crane points up at Pylon Hill. (If the stone is already gone: down there, under the splash, is the market's lower town.)
 
 quest title=Market Day in the Sky
 quest intro=A market town 35 m over the sea. Climb onto its rim.
@@ -175,6 +231,10 @@ step kill|Screecher|4|Drive the screechers off the clock tower
 step open|Clock tower room|1|Open the clock tower room's chest (the crier's code)
 step blueprint|Blueprint_Firework|1|Take the firework plans from the fireworks stall
 step blueprint|Blueprint_ZiplineBase|1|Take the zipline base plans from the rigger's chest
+step read|Toll keeper Greta Holm's ledger|1|Find the toll house in the north-east and read Greta's ledger
+step reach|pylonfoot|1|Find the path up Pylon Hill, north-west of the square
+step reach|pylontop|1|Climb Pylon Hill
+step collect|story:cranekey|1|Climb the top pylon and take the ballast release key from its deck box
 step reach|lower_terrace|1|Take the zipline down to the lower terrace
 step collect|story:ballastdrop|1|Pull the ballast release on the crane
 quest done=The stone fell into the market's lower town on the seabed, 30 m down. The Receiver picks up a diving bell there - band 700.

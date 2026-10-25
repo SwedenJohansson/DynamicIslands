@@ -7,3 +7,9 @@ at 0 0 h=-3
 wait 3
 picture sl5_sinkmarket_floor_island 26 6 -30 0 -2 0
 picture sl5_sinkmarket_floor_bell 6 +3 -8 0 +1.2 0
+# 10-25 deep pass: Lookout Rock, its crown and mast, the salt cellar, Ada's house, the fishing boat
+picture gs_rock 18.4 +4 1.2 26.8 +6 12.4
+picture gs_crown 35.8 +3 24.4 40 +4 30
+picture gs_saltcellar -56 +5 24 -56 +2 13
+picture gs_adahouse 17.6 +3 -55.7 10 +1.5 -50
+picture gs_boat -49.6 +5 45.5 -40 +2 40

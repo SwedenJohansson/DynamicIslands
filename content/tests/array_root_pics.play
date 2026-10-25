@@ -7,3 +7,9 @@ at 0 -17 h=-3
 wait 3
 picture sl5_array_root_island 26 8 -30 0 2 0
 picture sl5_array_root_pylons 10 +3 -10 0 +1.2 0
+# 10-25 deep pass: Anchor Rock and its crown, the crew quarters, the west cave, the launch
+picture gr_rock 20 22 10 55 20 40
+picture gr_crown 45 44 30 55 39 40
+picture gr_quarters -46 +3 -33 -55 +1 -40
+picture gr_cave -65 +3 46 -65 +1 34
+picture gr_launch 22 +3 -52 30 +1 -60

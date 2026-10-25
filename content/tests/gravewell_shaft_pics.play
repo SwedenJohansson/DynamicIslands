@@ -7,3 +7,8 @@ at 0 0 h=-3
 wait 3
 picture sl5_gravewell_shaft_island 26 6 -30 0 -2 0
 picture sl5_gravewell_shaft_rim 8 +3 -8 0 +1.2 0
+# 10-25 deep pass: Pump Ridge and the keeper's house, the diver's cave, the supply plane
+picture gw_ridge 16.6 +4 -13 27.6 +6 -21.6
+picture gw_keeper 37.5 +8 -27.5 45 +1.5 -35
+picture gw_cave -63 +5 43 -63 +2 33
+picture gw_plane -15 +4 45 -25 +1 52

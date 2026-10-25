@@ -3,8 +3,14 @@ island Lodestone Quay
 offset 0 0
 hour 11
 weather Calm
-at 0 -28
+at 0 -68
 wait 3
-picture sl5_lodestone_quay_island 40 30 -90 0 8 0
-picture sl5_lodestone_quay_quay 10 7 -44 0 2 -24
-picture sl5_lodestone_quay_hilltop -14 20 -4 0 12 12
+picture sl5_lodestone_quay_island 120 60 -150 0 10 0
+picture sl5_lodestone_quay_quay 10 7 -84 0 2 -64
+picture sl5_lodestone_quay_hilltop -14 20 -44 0 12 -28
+picture gq_cuthill -40 30 -10 10 34 40
+picture gq_masttop 10 47 34 0 3 -64
+picture gq_boathouse -30 +7 -6 -48 +1 -12
+picture gq_seamcave 52 7 6 52 5 -14
+picture gq_mailplane -22 9 24 -34 6 36
+picture gq_tideoffice -60 +3 -63 -50 +1.5 -62

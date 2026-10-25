@@ -15,9 +15,18 @@
 include lib_sea
 include lib_huts
 include lib_gravity
+include lib_areas
+include lib_features
+include lib_highwater
+# RESIZE 10-25 (box agent, older-storyline deep pass): Radius 34 -> 100, the finale's size: the pylon ring, pit,
+# chambers and buoy stay in the middle; round them the seabed under the crown.
+# DEEP 10-25: Anchor Rock in the north-east - a 39 m climb up from the seabed to a dry crown 4 m over the sea, with the
+# root crew's diving mast (the diver's log, a spare bottle); the crew's drowned quarters in the south-west (an air
+# pocket) hold pylon B's crank handle, so the crank only turns once you have been there; a cave in the west; the crew's
+# launch wrecked in the south. Voices: the root diver Nils Berg, the crew chief Hedda Sjo, Halvard.
 new
 gen Trees=0 Bushes=0 Rocks=0.35 Harvest=0 BeachThings=0
-gen Seed=9701 Radius=34 Height=8 Roughness=0.35 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.6 PeakShape=0.3
+gen Seed=9701 Radius=100 Height=8 Roughness=0.35 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.6 PeakShape=0.3
 gen Water=0.5 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
 elevation -35
@@ -27,8 +36,16 @@ brush flatten at 0 0 r=18 s=20 frames=200 h=4
 brush flatten at 0 0 r=6 s=20 frames=300 h=0
 brush flatten at 7.5 -13.5 r=3.5 s=20 frames=200 h=4
 brush flatten at -7.5 13.5 r=3.5 s=20 frames=200 h=4
+# --- DEEP 10-25 terrain: Anchor Rock (north-east, its crown 39 m over the seabed = 4 m over the sea, base r 28) and its
+# path, the crew quarters' floor (south-west), the west cave's pad ------------------------------------------------------
+call hw_mount x=55 z=40 b=28 h=39
+call hw_trail x=55 z=40 b=28 h=39 a0=225 turn=300 n=44 h0=4
+brush flatten at -55 -40 r=9 s=20 frames=300 h=3
+brush flatten at -65 30 r=10 s=20 frames=300 h=6
 origin
 clear at 0 0 r=16
+clear at -55 -40 r=10
+call ar_cave x=-65 z=30 h=6 yaw=0 al=westrock chest=westchest
 
 # --- The four anchor pylons (whole; their burst copies hidden), the pylon controls ------------------------------------
 place VP_MotherlodePillar1_Stage1 pylons at 12 0 ground sit scale=0.3 yaw=90
@@ -41,6 +58,7 @@ place VP_MotherlodePillar1_Exploded pylonsburst at 0 12 ground sit scale=0.3 yaw
 place VP_MotherlodePillar1_Exploded pylonsburst at 0 -12 ground sit scale=0.3 yaw=180
 prop pylons tint.color=#4a5560
 prop pylons tint.amount=0.6
+prop pylons on.use=message||The pylon hums through the water, iron-grey and far too heavy to move.
 place RT_Pillar - at 9.5 -2 ground sy=0.4
 place TP_LaserControlPanel_lever pylona at 9.5 -2 ground y=1.25 scale=3 yaw=90
 place RT_Pillar - at -9.5 2 ground sy=0.4
@@ -91,21 +109,64 @@ scatter VP_CoralBulb03 5 at 16 -12 r=3 seed=9715 free=1
 scatter VP_CoralDigitate01 4 at 16 -12 r=3 seed=9716 free=1
 scatter SeaVine3 36 at 0 0 r=30 seed=9717 free=2
 scatter SeaVine3_klump 12 at 0 0 r=30 seed=9718 free=2
-call shallows x=0 z=0 r=46 deep=8 n=1 seed=9719
+call shallows x=0 z=0 r=108 deep=8 n=2 seed=9719
+scatter SeaVine3 50 at 0 0 r=85 seed=9720 free=2
+call hw_reef x=-40 z=60 r=5 seed=9721
+call hw_reef x=70 z=-30 r=5 seed=9722
+call hw_reef x=-75 z=-10 r=4 seed=9723
+
+# --- DEEP 10-25: Anchor Rock - its foot and dry crown as zones, the diving mast, Nils's log ---------------------------
+call hw_zone x=34.5 z=19.5 al=anchorfootz id=anchorfoot r=5 msg="Anchor Rock. A path of iron rungs winds up round it, towards the light."
+call hw_zone x=55 z=40 al=anchortopz id=anchortop r=8 h=1 msg="The crown of Anchor Rock, out of the sea. The crew's diving mast; far above, the dark crown hangs still."
+call hw_mast x=55 z=40 h0=39 lv=3 a=divemast chest=divebox top=Placeable_Flag_03
+place Note_Paper nilslog at 51.5 37 h=39.1 drop yaw=225
+loot divebox OxygenBottle*1;Rope*2;Battery*1
+prop divebox loot.refill=0
+note divebox Diving mast box | The root diver's box: a full bottle, rope and a battery for the lamp.
+call treasure x=60 z=46 r=3 n=1 seed=9724 kind=0
+prop treasure9724 treasure.loot=TitaniumOre*1;MetalOre*3
+# --- The crew quarters (south-west), drowned, an air pocket: Hedda's note and the crank handle ------------------------
+call hw_sunkhouse x=-55 z=-40 h=3 yaw=234 a=crewhouse chest=crewchest air=crewair bub=crewbub dal=crewdoor
+call hw_zone x=-55 z=-40 al=crewzone id=crewquarters r=7 h=1 msg="The root crew's quarters. The front room still holds the crew's air."
+place Note_Paper heddanote at -53.8 -39.1 h=3.5 drop yaw=234
+loot crewchest story:crankhandle*1;CopperIngot*2;Battery*1
+prop crewchest loot.refill=0
+note crewchest Crew chief's chest | Hedda's chest: pylon B's crank handle, greased and wrapped, and the crew's last pay in copper.
+call treasure x=-45 z=-52 r=4 n=1 seed=9725 kind=0
+prop treasure9725 treasure.loot=Scrap*4;Bolt*3;Hinge*1
+# --- The west cave: a secret ------------------------------------------------------------------------------------------
+call hw_zone x=-65 z=35 al=westcavez id=westcave r=4 msg="A cave in the west rock. The iron in its walls rings faintly when you touch it."
+place Note_Paper cavenote at -63.5 35.5 h=6.45 drop yaw=0
+loot westchest MetalIngot*2;TitaniumOre*1;Rope*2
+prop westchest loot.refill=0
+note westchest Survey cache | The surveyors' cache: iron ingots and a lump of titanium ore cut from the cave wall.
+call treasure x=-50 z=45 r=6 n=1 seed=9726 kind=0
+prop treasure9726 treasure.loot=CopperOre*3;MetalOre*2
+# --- The crew's launch (south), wrecked: a secret crate ---------------------------------------------------------------
+call hw_wreck x=30 z=-60 h=4 yaw=20 obj=BoatStranded al=crewlaunch crate=launchcrate r=8
+loot launchcrate Rope*3;Nail*8;Plastic*2;MetalIngot*1
+note launchcrate Crew launch's crate | The crew launch's crate: rope, nails and an iron ingot for the pylon repairs that never came.
+place Creature_Stingray rays at -20 -60 ground y=2
+prop rays creature.count=1
+
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Array Root
 info author=Custom Islands
-info description=The Lodestone Array's foundation, 35 m under the sea: four anchor pylons round a pit, air chambers, anglers and the Root's guardian. Throw the root cutoff and the gravity sea is still. The finale of The Gravity Sea - dive deep.
+info description=The Lodestone Array's foundation, 35 m under the sea and the size of a finale: Anchor Rock climbing out of the sea, the crew's drowned quarters, a cave, a wrecked launch, four anchor pylons round a pit, air chambers, anglers and the Root's guardian. Throw the root cutoff and the gravity sea is still. The finale of The Gravity Sea - dive deep.
 island on.arrive=message||Straight under the dark crown, 35 m down: four iron-grey pylons round a pit, humming through the water.
 
+story crankhandle|Pylon B crank handle|Bolt|Pylon B's crank handle, from the crew chief's chest in the drowned quarters.
 story pylonaoff|Pylon A off|Bolt|You pulled pylon A's lever.
 story pylonboff|Pylon B off|Bolt|You turned pylon B's crank.
 story rootguard|Root guardian defeated|Bolt|You defeated the giant angler that guarded the root pit.
 story rootoff|Root shut off|Placeable_Lantern_Metal|You threw the root cutoff: the pylons burst and the field let go.
 
-note crewnotice Root crew notice | ROOT CREW - NOTICE\n\nThe root holds the crown up. To stop it: pylon A's lever (east), pylon B's crank (west), then the cutoff by the pit.\nAir in chambers 1 and 2.\nSomething big lives in the pit since Lift Day. Do not go down alone.
+note crewnotice Root crew notice | ROOT CREW - NOTICE\n\nThe root holds the crown up. To stop it: pylon A's lever (east), pylon B's crank (west; its HANDLE is in the crew chief's chest in the quarters, south-west), then the cutoff by the pit.\nAir in chambers 1 and 2.\nSomething big lives in the pit since Lift Day. Do not go down alone.
 note rootvault Root vault | The root vault: the Institute's last pay chest, and Halvard's own instruments.
+note nilslog Root diver Nils Berg's log | ROOT DIVER - N. BERG\n\nThe rock is the only part of the root that breathes air. I come up here between dives, sit by the mast and watch the crown hang over me like a second sky.\n\nDive 61: pylon A hums a low C. Pylon B hums the same C, an octave up. When they sing together the water shakes.\nDive 64: Hedda took the crank handle off pylon B and locked it in her chest in the quarters. 'Nobody touches B until Halvard says so.' Halvard is not saying anything any more.\nDive 66: something big has moved into the pit.\n\nIf you are here to shut it down: the handle is in the quarters, south-west. Breathe in the front room. The bottle in my box is yours.
+note heddanote Crew chief Hedda Sjo's note | ROOT CREW - H. SJO, CREW CHIEF\n\nThe quarters went down with the root, the way everything down here did, and kept their air the way the Institute promised they would. One promise kept.\n\nThe handle is in my chest. I took it off pylon B because turning B with A still on would tear the root in half - and the crown, and every island hanging on it. A first, then B, then the cutoff. In that order. Always.\n\nThe crew is gone up the cable to the surface. I am going after them. If you are reading this, you have more nerve than we did. Finish it.
+note cavenote Surveyor's note | Cut a sample from the cave wall: iron, with titanium veins, and warm to the touch 35 m down. The whole seabed under the Array is like this - one big lodestone. Halvard did not build the Array on the root. He found the root and built the Array on top of it. - Institute survey team
 note apology Halvard's apology | E. HALVARD - TO WHOEVER THREW THE SWITCHES\n\nI wanted to lift the land out of the rising sea. I lifted it out of reach instead, and drowned the half I left behind.\nThe islands up there will stay up - the field that is left holds them. But the sea will be quiet now, and the compasses will point north.\n\nI am sorry. Thank you.\n\n- Eskil Halvard
 loot rootvault TitaniumIngot*4;MetalIngot*4;CopperIngot*3;Battery*2;Bolt*4
 prop rootvault loot.refill=0
@@ -130,9 +191,9 @@ prop pylona on.use=signal||lever\ngive||story:pylonaoff*1\nmessage||Pylon A groa
 prop pylona else.use=message||Pylon A is off.
 prop pylonb obj.name=pylonb
 prop pylonb beh.use=Turn pylon B's crank
-prop pylonb if.use=!signal|crank
+prop pylonb if.use=has|story:crankhandle|1\n!signal|crank
 prop pylonb on.use=signal||crank\ngive||story:pylonboff*1\nmessage||Pylon B's crank turns, stiff. Its hum drops - and in the pit, something wakes.
-prop pylonb else.use=message||Pylon B is off.
+prop pylonb else.use=message||Pylon B's crank has no handle - only a bare square shaft. (If it has its handle, pylon B is off.)
 
 prop pitzone zone.id=root_pit
 prop pitzone zone.radius=8
@@ -171,6 +232,12 @@ step read|Root crew notice|1|Read the root crew's notice
 step reach|dome_1|1|Breathe in chamber 1
 step kill|Angler fish|3|Fight off the anglers in the kelp
 step collect|story:pylonaoff|1|Pull pylon A's lever
+step reach|anchorfoot|1|Find Anchor Rock north-east of the ring
+step reach|anchortop|1|Climb Anchor Rock to its dry crown
+step read|Root diver Nils Berg's log|1|Read the root diver's log by the mast
+step reach|crewquarters|1|Find the crew's drowned quarters in the south-west
+step read|Crew chief Hedda Sjo's note|1|Breathe in the quarters and read the crew chief's note
+step collect|story:crankhandle|1|Take pylon B's crank handle from the crew chief's chest
 step reach|dome_2|1|Breathe in chamber 2
 step collect|story:pylonboff|1|Turn pylon B's crank
 step collect|story:rootguard|1|Defeat the Root's guardian in the pit

@@ -20,5 +20,17 @@ expect step 5
 read Well notice
 expect step 6
 use crank
+expect story wellrope 0
+read Erik Kristen's bee book
+expect step 7
+zone beefoot
+expect step 8
+zone beetop
+expect step 9
+open Bee tower deck box
+wait 3
+expect story bucket 1
+expect step 10
+use crank
 expect story wellrope 1
 expect done

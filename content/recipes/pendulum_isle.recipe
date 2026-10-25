@@ -14,10 +14,17 @@
 include lib_huts
 include lib_features
 include lib_gravity
+include lib_areas
+include lib_highwater
+# RESIZE 10-25 (box agent, older-storyline deep pass): Radius 22 -> 40, Stretch 2.5 -> 2.2: 88 m long, 40 wide; the
+# pendulum hall, shed, zipline and keel shaft stay in the middle; the keel zone moved out past the new south coast.
+# DEEP 10-25: Bob Hill at the west end with Halvard's sighting tower on it (his log on the summit), the old weather
+# station in ruins on the north side (Dr. Anja Roos's note), the night watchman's hole in the east, the survey plane in
+# the south. Voices: Halvard, Anja Roos, the watchman Per Ek, the survey pilot.
 new
 gen Trees=0.08 Bushes=0.3 Rocks=0.3 Harvest=0.3 BeachThings=0
-gen Seed=9601 Radius=22 Height=8 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.8 PeakShape=0.5
-gen Stretch=2.5 StretchAngle=0
+gen Seed=9601 Radius=40 Height=8 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.8 PeakShape=0.5
+gen Stretch=2.2 StretchAngle=0
 gen Water=0 SeaRocks=0 SeaFinds=0 Sunken=0 Hostiles=0 Friendly=0 SeaLife=0
 generate
 elevation 12
@@ -32,6 +39,14 @@ clear at 0 0 r=5
 clear at 7.5 4 r=3
 clear at -24 0 r=3
 clear at 22 0 r=6
+# --- DEEP 10-25 terrain: Bob Hill (west end, summit 28 m, base r 24) and its trail, the weather station's pad (north),
+# the watchman's hole (east), the survey plane's pad (south) ----------------------------------------------------------
+call hw_mount x=-58 z=0 b=24 h=28
+call hw_trail x=-58 z=0 b=24 h=28 a0=90 turn=300 n=36 h0=6
+brush flatten at -25 26 r=11 s=20 frames=500 h=5
+call ar_ruin x=-25 z=26 h=5 yaw=0 w=3 d=2 al=weatherstation
+call ar_cave x=62 z=6 h=4 yaw=180 al=watchrock chest=watchchest
+call ar_plane x=20 z=-28 h=5 yaw=200 al=surveyplane crate=planecrate
 
 # --- The pendulum frame: four stone posts, a crossbeam of two posts laid on them, the chain hanging from the beam, the
 # bob in its cradle; the frame's lever; the hall rules ----------------------------------------------------------------
@@ -77,17 +92,50 @@ place Note_Sign shaftwarning at 24.5 2.5 ground sit yaw=270
 place TangaroaHatchRoom_Hatch shaft at 25 0 ground sit yaw=90
 # (the keel zone hangs in the open air beside the south coast at the water line: under it a flying island leaves out
 # everything below its own sea level, so it cannot sit under the island)
-place Zone_Trigger keelzone at 0 18 h=0
+place Zone_Trigger keelzone at 0 46 h=0
 place Placeable_Lantern_Metal - at 22 3.5 ground y=0.05 sit
 
 # --- Things to gather ------------------------------------------------------------------------------------------------
 scatter "Pickup_Landmark_PineappleLandmark" 2 at -14 2 r=4 seed=9612 free=2
 call dirt x=12 z=-2 r=4 n=2 seed=9613
 
+# --- DEEP 10-25: Bob Hill and Halvard's sighting tower; the trail's foot and the summit as zones ------------------------
+call hw_zone x=-33 z=0 al=bobfootz id=bobfoot r=5 msg="Bob Hill. A path winds round it to a tower - the Institute's sighting tower."
+call hw_zone x=-58 z=0 al=bobtopz id=bobtop r=8 h=1 msg="The top of Bob Hill, 40 m over the sea. From here the pendulum's frame looks like a toy."
+call hw_mast x=-58 z=0 h0=28 lv=4 a=sighttower chest=sightbox top=Placeable_Lantern_Metal
+place Note_Paper halvardlog at -62 -3.5 h=28.1 drop yaw=10
+scatter "Pickup_Landmark_Tree_Palm 3" 3 at -58 0 r=26 seed=9621 free=3
+scatter Bamboo_1 4 at -58 0 r=26 seed=9622 free=2
+scatter Bush 8 at -58 0 r=26 seed=9623 free=1
+scatter Bush2 5 at -58 0 r=26 seed=9624 free=1
+loot sightbox OxygenBottle*1;Rope*2;CopperOre*2;Battery*1
+prop sightbox loot.refill=0
+note sightbox Sighting tower deck box | Halvard's box on the sighting tower: a battery for his lamp, rope, copper - and a diving bottle, 'for the root'.
+call treasure x=-52 z=6 r=4 n=1 seed=9625 kind=0
+prop treasure9625 treasure.loot=MetalOre*3;CopperOre*2
+# --- The weather station (north): Anja's note on the table ------------------------------------------------------------
+call hw_zone x=-25 z=26 al=weatherz id=weatherstation r=6 msg="The old weather station. Its instruments are gone - only the table and a pinned note."
+place Note_Paper anjanote at -25.75 26 h=6.05 drop yaw=0
+# --- The watchman's hole (east): Per's note and box -------------------------------------------------------------------
+call hw_zone x=62 z=1 al=watchz id=watchhole r=4 msg="A hole in the rock at the east end. A blanket, a lamp, a pot - the night watchman's."
+place Note_Paper pernote at 60.5 0.5 h=4.45 drop yaw=200
+loot watchchest Rope*2;Plank*3;Battery*1;CopperOre*1
+prop watchchest loot.refill=0
+note watchchest Watchman's box | Per's box: rope, planks and a battery 'borrowed' from the generator shed.
+call treasure x=48 z=-10 r=7 n=1 seed=9626 kind=0
+prop treasure9626 treasure.loot=Scrap*3;Bolt*2;Hinge*1
+# --- The survey plane (south): a secret -------------------------------------------------------------------------------
+loot planecrate Battery*1;Plastic*4;Rope*2;Nail*6
+prop planecrate loot.refill=0
+note planecrate Survey plane's crate | The survey plane's crate: plastic, rope and a camera with no film.
+place Note_Paper planenote at 14 -34 ground drop yaw=200
+place Creature_Llama llamas at -30 -14 ground
+prop llamas creature.count=2
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Pendulum Isle
 info author=Custom Islands
-info description=A long, thin island hovering only 12 m over the water - sail under it. On top the Institute's pendulum hall and generator shed, a zipline from end to end, and a shaft down to the island's keel. A Raft store at the low end. The sixth island of The Gravity Sea.
+info description=A long island, 88 m from end to end, hovering only 12 m over the water - sail under it. Bob Hill and Halvard's sighting tower at the west end, an old weather station, the night watchman's hole and a survey plane. On top the Institute's pendulum hall and generator shed, a zipline from end to end, and a shaft down to the island's keel. A Raft store at the low end. The sixth island of The Gravity Sea.
 island on.arrive=message||An island hanging 12 m over the water - low enough to sail under. Something swings slowly on top of it.
 
 story surveybolt|Survey bolt|Bolt|A brass survey bolt dug from the pendulum island's grass, stamped HALVARD - KEEL REF.
@@ -95,6 +143,10 @@ story power|Pendulum power on|Battery|You set the survey bolt in the pendulum fr
 
 note hallrules Pendulum hall rules | PENDULUM HALL - RULES\n\n1. The pendulum measures the field. Do not touch the bob.\n2. The frame's reference bolt is LOST (Lift Day). A spare was buried as a marker west of the hall - find it with a detector.\n3. With the bolt in the frame, the generator runs.\n4. The keel shaft is at the low east end. Staff only.
 note shaftwarning Keel shaft warning | KEEL SHAFT - WARNING\n\nThe shaft goes through the island to the KEEL, its underside, 12 m over the water. There is nothing below the keel but sea.\nHalvard measures the field from here. So should you.
+note halvardlog Halvard's sighting log | SIGHTING LOG - E. HALVARD\n\nFrom the tower: the quay's cut hill, the orchard's plate, the market. All of them where the field put them, all of them still. Only the pendulum below me moves.\n\nThe bob swings north-south now, never east-west. The field is not round any more. It has a direction: down, to the KEEL of this island, and through it to the seabed, to a well I have never seen.\n\nAnja thinks the Array's crown can be shut down from the root. I think the root is where the crown gets its strength from - and the only way to stop the crown is to stand on it.\n\nWe are both going to find out. I will leave this lamp lit, so whoever comes next sees the tower from the sea.
+note anjanote Dr. Anja Roos's note | Ernst -\n\nI have moved what is left of the weather station into the shed. The barometer reads the same on every island, whatever the height. Air does not care how high we are. Only iron does.\n\nThe spare bolt is buried west of the hall, as you ordered. I marked it with nothing - you said a detector would find it, and a fool would not.\n\nI am going down to the seabed with Marn's last bottle. If the pump hall still runs, the root can be reached. Do not follow me up your tower. Follow me down.\n\n- Anja
+note pernote Night watchman Per Ek's note | NIGHT WATCH - P. EK\n\nNight 1: the bob swung by itself at 2 in the morning. Nobody touched it. I wrote it down, as I was told.\nNight 3: the bob swings every night at 2. Halvard says 'tidal'. There is no tide 12 m up.\nNight 7: moved my bed out here, to the far end. I can hear it from here anyway. Tick. Tock.\nNight 9: the survey plane's pilot is staying in the south field. He says the compass in his plane points at the shaft hatch. I have nailed the hatch shut. Halvard has un-nailed it.
+note planenote Survey pilot's note | Photographed the whole Gravity Sea from 300 m. Every island is pointing at the same spot on the seabed, like iron filings round a magnet. The camera jammed on the last frame. Leaving the plane here: the engine will not start while the pendulum swings. - J. Moe, Institute survey flight
 note genroom Generator room | The generator room's chest: the power plans of the Institute - a wind turbine, an advanced battery, an advanced head light and an electric grill.
 loot genroom Blueprint_WindTurbine*1;Blueprint_BatteryAdvanced*1;Blueprint_HeadLight_Advanced*1;Blueprint_ElectricGrill*1;Battery*1
 prop genroom loot.refill=0
@@ -129,6 +181,10 @@ quest title=The Keel
 quest intro=An island hanging 12 m over the water. Get onto its top.
 step reach|top|1|Climb onto the top of Pendulum Isle
 step read|Pendulum hall rules|1|Read the pendulum hall's rules
+step read|Dr. Anja Roos's note|1|Find the old weather station north of the hall and read Anja's note
+step reach|bobfoot|1|Find the path up Bob Hill at the west end
+step reach|bobtop|1|Climb Bob Hill
+step read|Halvard's sighting log|1|Read Halvard's sighting log by his tower
 step collect|story:surveybolt|1|Dig up the buried survey bolt (metal detector and shovel)
 step collect|story:power|1|Set the survey bolt in the pendulum frame
 step blueprint|Blueprint_WindTurbine|1|Take the wind turbine plans from the generator room

@@ -11,15 +11,23 @@ include lib_sea
 include lib_features
 include lib_huts
 include lib_gravity
+include lib_highwater
+# RESIZE 10-25 (box agent, older-storyline deep pass): Radius 24 -> 58, a side island of Raft's own size class; the
+# station, boardwalk and barometer stay in the middle.
+# DEEP 10-25: the Dune in the south-east - a 14 m sand hill with the station keeper's signal mast on its top (her log);
+# a fishing boat stranded on the north-west beach (a secret crate). Voice: the station keeper Maja Lund.
 new
 gen Trees=0.05 Bushes=0.25 Rocks=0.2 Harvest=0.3 BeachThings=0.4
-gen Seed=9721 Radius=24 Height=4 Roughness=0.25 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.2 BeachWidth=0.8
+gen Seed=9721 Radius=58 Height=4 Roughness=0.25 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.2 BeachWidth=0.8
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0.2 SeaLife=0.3
 generate
 
 # --- Terrain: the station's flat, the beach shelf under the boardwalk -----------------------------------------------
 brush flatten at 0 2 r=7 s=20 frames=200 h=2.5
 brush flatten from -13 -11 to -3 -11 r=2.5 s=20 frames=120 h=0.3
+# --- DEEP 10-25 terrain: the Dune (south-east, 14 m, base r 16) and its path ------------------------------------------
+call hw_mount x=25 z=-20 b=16 h=14
+call hw_trail x=25 z=-20 b=16 h=14 a0=315 turn=300 n=30 h0=2.5
 origin
 clear at 0 2 r=6
 clear at -8 -11 r=4
@@ -50,16 +58,33 @@ place Zone_Trigger stationzone at 0 0 ground y=1
 call shallows x=0 z=0 r=36 deep=5 n=1 seed=9731
 call dirt x=8 z=-4 r=5 n=2 seed=9732
 
+# --- DEEP 10-25: the Dune - its foot and top as zones, the keeper's signal mast and log; the stranded boat -------------
+call hw_zone x=13 z=-8 al=dunefootz id=dunefoot r=5 msg="The Dune. Old planks laid in the sand make a path up round it."
+call hw_zone x=25 z=-20 al=dunetopz id=dunetop r=7 h=1 msg="The top of the Dune: the keeper's signal mast. North, the sea is a shade darker - the drowned bank."
+call hw_mast x=25 z=-20 h0=14 lv=2 a=dunemast chest=dunebox top=Placeable_Flag_03
+place Note_Paper majalog at 22 -17.5 h=14.1 drop yaw=315
+loot dunebox Rope*2;Battery*1;CopperOre*2;OxygenBottle*1
+prop dunebox loot.refill=0
+note dunebox Dune mast box | The keeper's box on the mast: a battery, rope - and a diving bottle 'for the north bank'.
+scatter Bush 6 at 25 -20 r=17 seed=9733 free=1
+scatter Bush2 4 at 25 -20 r=17 seed=9734 free=1
+call treasure x=30 z=-14 r=3 n=1 seed=9735 kind=0
+prop treasure9735 treasure.loot=MetalOre*2;CopperOre*2
+call hw_wreck x=-32 z=28 h=0.5 yaw=60 obj=BoatStranded al=shoalboat crate=shoalcrate r=7
+loot shoalcrate Rope*2;Nail*6;Plastic*2;Cooked_Mackerel*1
+note shoalcrate Stranded boat's crate | The boat's crate: rope, nails and a salted fish wrapped in a page of the weather log.
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Weatherglass Shoal
 info author=Custom Islands
-info description=A low shoal with the Halvard Institute's weather station: a boardwalk, a Stevenson screen and a great glass barometer. A side island of The Gravity Sea - its twin lies drowned just north.
+info description=A low shoal with the Halvard Institute's weather station, the Dune with the keeper's signal mast and a stranded fishing boat: a boardwalk, a Stevenson screen and a great glass barometer. A side island of The Gravity Sea - its twin lies drowned just north.
 island on.arrive=message||A sandbank with a boardwalk, a white box on legs - and a glass column taller than a man, shining.
 
 story reading|Barometer reading|Note_Paper|The great barometer's reading: "FIELD 1.8 - FALLING NORTH".
 
 note weatherlog Weather log | WEATHERGLASS STATION - LOG\n\nWind W 3. Sea slight. Field 1.8, steady.\nSince Lift Day the barometer reads the field, not the weather - Halvard's men rebuilt it.\nTap the glass for a reading.
 note stationchest Station chest | The station's chest: the keeper's rations and a spare battery for the barometer.
+note majalog Station keeper Maja Lund's log | KEEPER'S LOG - M. LUND\n\nI climb the Dune every evening to hoist the day's weather on the mast, so the boats can read it from the sea. No boats come any more. I hoist it anyway.\n\nFrom up here I can see where the north bank was. Jonas was on it, with his twin station and his twin glass. On Lift Day the sea simply closed over him, gently, like a lid. His last signal was three flags: GLASS - OFF - SCALE.\n\nThe barometer below says FALLING NORTH every time I tap it. I think the glass is not telling us the weather. I think it is telling us where to look.\n\nThe diving bottle in the mast box is for whoever goes down to Jonas. I cannot. I have tried.
 note twinnote Twin note | TO THE TWIN STATION\n\nThere were two stations, one on each sandbank. On Lift Day the north bank went down, station and all - 20 m under, just north of here.\nIf the field ever falls, someone should dive and read the twin's last log.
 loot stationchest Cooked_Mackerel*2;Cooked_Potato*2;Battery*1
 prop stationchest loot.refill=0
@@ -79,6 +104,9 @@ step reach|station|1|Walk to the weather station
 step read|Weather log|1|Read the station's weather log
 step collect|story:reading|1|Take a reading from the great barometer
 step open|Station chest|1|Open the station chest
+step reach|dunefoot|1|Find the path up the Dune
+step reach|dunetop|1|Climb the Dune to the keeper's signal mast
+step read|Station keeper Maja Lund's log|1|Read the keeper's log by the mast
 step read|Twin note|1|Read the note to the twin station
 quest done=The twin station lies drowned just north of the shoal, 20 m down.
 quest reward=Cooked_Mackerel*2;Battery*1

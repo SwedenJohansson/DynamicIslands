@@ -5,6 +5,13 @@ hour 11
 weather Calm
 at 0 0
 wait 3
-picture sl5_altitude_market_island 55 25 -70 0 6 0
-picture sl5_altitude_market_square 10 +3 -10 0 +1.2 2
-picture sl5_altitude_market_clocktower -10 12 4 0 12 8
+picture sl5_altitude_market_island 95 30 -100 0 6 0
+picture sl5_altitude_market_square 40 +3 -48 30 +1.2 -36
+picture sl5_altitude_market_clocktower 20 12 -34 30 12 -30
+# 10-25 deep pass: the crane over the edge, Pylon Hill, its top, the toll house, the smugglers' hole, the plane
+picture ga_crane 40 +4 -45 53 2 -57.6
+picture ga_pylonhill 0 +6 0 -25 20 40
+picture ga_pylontop -16.5 +20 26.4 -25 +10 40
+picture ga_tollhouse 17.5 +6 36 20 +1.5 50
+picture ga_smughole -59 +5 26 -59 +2 13
+picture ga_plane -8 +3 -50 -20 +1 -55

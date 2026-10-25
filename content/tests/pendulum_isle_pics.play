@@ -5,5 +5,11 @@ hour 11
 weather Calm
 at 0 0
 wait 3
-picture sl5_pendulum_isle_island 45 18 -55 0 4 0
+picture sl5_pendulum_isle_island 70 30 -120 0 4 0
 picture sl5_pendulum_isle_frame 8 +3 -8 0 +1.2 0
+# 10-25 deep pass: Bob Hill and the sighting tower, the weather station, the watchman's hole, the survey plane
+picture gp_bobhill -20 22 -30 -58 18 0
+picture gp_tower -50 33 -8 -58 29 0
+picture gp_weather -22 +6 12 -25 +1.5 26
+picture gp_watch 63 +5 -19 63 +2 -13
+picture gp_plane 28 +3 -36 20 +1 -28

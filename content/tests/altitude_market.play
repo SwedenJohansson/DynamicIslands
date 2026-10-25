@@ -1,6 +1,6 @@
 # Altitude Market (CIPlay altitude_market): a sky island 35 m up; the rim, the crier's board, the station (vines), the
 # clock tower (screechers, keypad 3517), the fireworks stall, the rigger's chest, the zipline down to the lower terrace
-# (step 9: the plan's done-when) and the ballast release (signal ballast: it brings Sinkmarket Floor). Vending machine.
+# (step 9: the plan's done-when), the toll house, Pylon Hill and its pylon's key (10-25 deep pass) and the ballast release (signal ballast: it brings Sinkmarket Floor). Vending machine.
 island Altitude Market
 offset 0 0
 expect step 0
@@ -33,8 +33,20 @@ open Rigger's chest
 wait 3
 expect item OxygenBottle 1
 expect step 9
-zone lower_terrace
+use release
+expect story ballastdrop 0
+read Toll keeper Greta
 expect step 10
+zone pylonfoot
+expect step 11
+zone pylontop
+expect step 12
+open Pylon deck box
+wait 3
+expect story cranekey 1
+# (the zipline at step 9 already took the player to the lower terrace: its reach step counts at once)
+zone lower_terrace
+expect step 14
 use release
 expect story ballastdrop 1
 expect done

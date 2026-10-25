@@ -4419,7 +4419,7 @@ side (`elevation`), air pockets under water, and every kind of "when": a quest (
 (`signal:orchard:roots`), a quest step (`step:9`), a zone (`zone:keel`, `zone:array:core`), a landing
 (`visit:gravewell`), a distance (`km:5`) and a twin found near another island (`near:shoal:600:north`). Raft's story
 is off, so all of Raft's story blueprints are **Blueprint** steps on the way. Altitude Market has Raft's vending
-machine; Pendulum Isle, The Stair of Hours and The Lodestone Array have a **Raft store**. Its main islands are about 40% the size of Raft's own big islands.
+machine; Pendulum Isle, The Stair of Hours and The Lodestone Array have a **Raft store**. Its main islands are about as big as Raft's own big islands: each has a hill to climb, a dive, a cave, a wreck or ruin to search, a buried treasure for the metal detector and notes read aloud, and its quest crosses the whole island.
 
 | Island | What it is | What to look at |
 |---|---|---|
@@ -4427,12 +4427,12 @@ machine; Pendulum Isle, The Stair of Hours and The Lodestone Array have a **Raft
 | ![](images/library/upfall_orchard.jpg) **Upfall Orchard** (700, 30 m up) | An apple orchard and a farmhouse on a flying island | A well winch whose `signal` brings the island under it |
 | ![](images/library/rootcellar_deep.jpg) **Rootcellar Deep** (600, 25 m down) | The orchard's drowned half: the farmhouse, the well's bottom, the roots | Air pockets (`zone.air`) to breathe in; a hatch into the cellar |
 | ![](images/library/altitude_market.jpg) **Altitude Market** (900, 35 m up) | A market town on a rock plate, a clock tower on stilts | Choppable vines, a keypad, a zipline down, Raft's vending machine |
-| ![](images/library/sinkmarket_floor.jpg) **Sinkmarket Floor** (700, 30 m down) | The market's lower town, a diving bell, a flooded cistern | 14 steps under water, air pockets in a bell and a cistern |
+| ![](images/library/sinkmarket_floor.jpg) **Sinkmarket Floor** (700, 30 m down) | The market's lower town, a diving bell, a flooded cistern | 19 steps under water, air pockets in a bell and a cistern |
 | ![](images/library/pendulum_isle.jpg) **Pendulum Isle** (1000, 12 m up) | A long island low over the sea, a pendulum hall | Sail under it; a shaft to its keel (`zone:keel`), a Raft store |
 | ![](images/library/gravewell_shaft.jpg) **Gravewell Shaft** (900, 45 m down) | A well shaft cut into the seabed, a pump hall at its bottom | A spiral stair down the shaft, galleries with air, anglers in the dark |
 | ![](images/library/the_stair_of_hours.jpg) **The Stair of Hours** (1100, 30 m up) | Terraces that make a giant sundial, an observatory | Hour stones walked in turn, a telescope aimed at the Array, a Raft store |
-| ![](images/library/the_lodestone_array.jpg) **The Lodestone Array** (1300, 35 m up, finale part 1) | Four magnet arms round a core platform | A 22-step quest: ziplines between the arms, a glass bridge that breaks, a beam through two mirrors, a Raft store |
-| ![](images/library/the_array_root.jpg) **The Array Root** (800, 35 m down, finale part 2) | The Array's foundation: four pylons round a pit | Comes when the crown is dark (`zone:array:core`); 12 steps: the root's guardian and its cutoff |
+| ![](images/library/the_lodestone_array.jpg) **The Lodestone Array** (1300, 35 m up, finale part 1) | Four magnet arms round a core platform | A 27-step quest: ziplines between the arms, a glass bridge that breaks, a beam through two mirrors, a Raft store |
+| ![](images/library/the_array_root.jpg) **The Array Root** (800, 35 m down, finale part 2) | The Array's foundation: four pylons round a pit | Comes when the crown is dark (`zone:array:core`); 18 steps: the root's guardian and its cutoff |
 | ![](images/library/weatherglass_shoal.jpg) **Weatherglass Shoal** (side, km 5) | A weather station on a sandbank | Turns up ahead of the raft (`km:5`, `ahead:450`) |
 | ![](images/library/weatherglass_deep.jpg) **Weatherglass Deep** (side) | Its drowned twin, north of it | Placed near another island (`near:shoal:600:north`) |
 

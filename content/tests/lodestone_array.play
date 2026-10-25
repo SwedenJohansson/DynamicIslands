@@ -1,7 +1,7 @@
 # The Lodestone Array (CIPlay lodestone_array): a sky island 35 m up; the landing ring (manual, screechers, locker,
 # generator, coil status), the four arms' coils in order (a coil out of order refuses), the "Coils offline" board, the
 # west arm cache; the glass bridge (it breaks), the beam (emitter, two mirrors, the core door), the iron guardian, the
-# core warning, the core cutoff and the core (zone core: the plan's done-when, it brings the Array Root).
+# builders' camp, Storm Peak and the cutoff key (10-25 deep pass), the core warning, the core cutoff and the core (zone core: the plan's done-when, it brings the Array Root).
 island The Lodestone Array
 offset 0 0
 expect step 0
@@ -43,25 +43,37 @@ expect step 15
 open West arm cache
 wait 3
 expect step 16
+read Foreman Arne
+expect step 17
+zone peakfoot
+expect step 18
+zone peaktop
+expect step 19
+read Chief engineer Sigrid
+expect step 20
+open Lightning mast box
+wait 3
+expect story cutoffkey 1
+expect step 21
 use cutoff
 expect story crownoff 0
 zone bridge
 expect shown bridgebroken
-expect step 17
+expect step 22
 beam emitter
 use mirror1
 use mirror2
 wait 2
 beam emitter
 expect story beamset 1
-expect step 18
+expect step 23
 kill Bear
-expect step 19
+expect step 24
 read Core warning
-expect step 20
+expect step 25
 use cutoff
 expect story crownoff 1
-expect step 21
+expect step 26
 zone core
 storespot 22 -12
 expect done

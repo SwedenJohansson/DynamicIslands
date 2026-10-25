@@ -78,9 +78,9 @@ for fz 0.75 {$d*1.5-0.75} 1.5
 place Block_Wall_Tier3 $al at 0 $fz y=0.05 yaw=90
 next
 place Block_Wall_Tier3 $al at {$w*1.5} 0.75 y=0.05 yaw=90
-place SmallBoulder2 - at {$w*1.5+1.4} {$d*1.5-0.3} y=0 sit yaw=30 scale=0.6
-place SmallBoulder4 - at {$w*0.75} {$d*1.5+1.6} y=0 sit yaw=80 scale=0.6
-place SmallBoulder1 - at -1.6 1 y=0 sit yaw=10 scale=0.5
+place SmallBoulder4 - at {$w*1.5+2.2} {$d*1.5-0.3} ground yaw=30 scale=0.5
+place SmallBoulder4 - at {$w*0.75} {$d*1.5+1.6} ground yaw=80 scale=0.6
+place SmallBoulder4 - at -2.4 0.8 ground yaw=10 scale=0.5
 place Placeable_Table_Basic - at 1.5 1.5 y=0 sit yaw=0
 pop
 prop $al tint.color=#5b5650

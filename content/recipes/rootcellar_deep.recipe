@@ -13,9 +13,18 @@
 include lib_sea
 include lib_huts
 include lib_gravity
+include lib_areas
+include lib_features
+include lib_highwater
+# RESIZE 10-25 (box agent, older-storyline deep pass): Radius 30 -> 82: the hill's whole root plate on the seabed; the
+# old farmhouse, well and root cave stay in the middle.
+# DEEP 10-25: the Root Stack - the hill's great taproot stands up from the seabed in the north-west and breaks the
+# surface: its dry crown (4 m over the sea) holds the Institute's pump tower, where the cellar's air comes
+# from. The Kristens' barn lies drowned in the south-east (an air pocket, a secret strongbox); the Institute's van that
+# slid off the quay lies in the west. Voices: Marta Kristen, the pump man Sven Aalto, Halvard (a drowned memo).
 new
 gen Trees=0 Bushes=0 Rocks=0.35 Harvest=0 BeachThings=0
-gen Seed=9531 Radius=30 Height=8 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.6 PeakShape=0.5
+gen Seed=9531 Radius=82 Height=8 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.6 PeakShape=0.5
 gen Water=0.5 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
 elevation -25
@@ -29,6 +38,12 @@ clear at -9.75 0.25 r=5
 clear at 2 2 r=4
 clear at -5.5 4 r=2.5
 clear at 12 6 r=5
+# --- DEEP 10-25 terrain: the Root Stack (north-west, its crown 29 m over the seabed = 4 m over the sea, base r 26) and
+# the path that winds up it, the barn's floor (south-east), the van's pad (west) -------------------------------------
+call hw_mount x=-30 z=40 b=26 h=29
+call hw_trail x=-30 z=40 b=26 h=29 a0=150 turn=300 n=40 h0=4
+brush flatten at 40 -30 r=9 s=20 frames=300 h=3
+clear at 40 -30 r=10
 
 # --- The drowned farmhouse (the orchard's plan) and the cellar hatch beside it ---------------------------------------
 push at -12 -2 h=3
@@ -72,17 +87,48 @@ scatter VP_CoralFoliose02 5 at -8 9 r=3 seed=9545 free=1
 scatter TinyCoral 6 at -8 9 r=3 seed=9546 free=1
 scatter SeaVine3 30 at 0 0 r=24 seed=9547 free=2
 scatter SeaVine3_klump 10 at 0 0 r=24 seed=9548 free=2
-call shallows x=0 z=0 r=44 deep=8 n=1 seed=9549
+call shallows x=0 z=0 r=90 deep=8 n=2 seed=9549
+scatter SeaVine3 40 at 0 0 r=70 seed=9550 free=2
+scatter SeaVine3_klump 12 at 10 -20 r=60 seed=9551 free=2
+call hw_reef x=-50 z=-40 r=5 seed=9552
+call hw_reef x=30 z=40 r=5 seed=9553
+call hw_reef x=55 z=5 r=4 seed=9554
+
+# --- DEEP 10-25: the Root Stack's crown - the bell keeper's tower, dry over the sea; his log on the crown -----------
+call hw_zone x=-16.5 z=16.6 al=stackfootz id=stackfoot r=5 msg="The Root Stack: the hill's taproot, standing up off the seabed. Something like a path winds up round it - towards the light."
+call hw_zone x=-30 z=40 al=crownz id=crown r=8 h=1 msg="The crown of the Root Stack - dry rock, 4 m over the sea. Air. And a tower with a bell pump on its deck."
+call hw_mast x=-30 z=40 h0=29 lv=3 a=belltower chest=bellbox top=Placeable_Lantern_Metal
+place Note_Paper svenlog at -34 37 h=29.1 drop yaw=20
+place "Box Small" - at -34.6 36 h=29.05 sit yaw=10
+call treasure x=-25 z=44 r=3 n=1 seed=9555 kind=0
+prop treasure9555 treasure.loot=MetalOre*3;CopperOre*2
+loot bellbox OxygenBottle*1;Rope*3;Bolt*2
+prop bellbox loot.refill=0
+note bellbox Pump man's deck box | The pump man's box on the tower deck: a spare air bottle, rope and the pump's spare bolts.
+# --- The drowned barn (south-east): an air pocket and the Kristens' strongbox, a secret ------------------------------
+call hw_sunkhouse x=40 z=-30 h=3 yaw=-30 a=barn chest=barnchest air=barnair bub=barnbub dal=barndoor
+call hw_zone x=40 z=-30 al=barnz id=barn r=7 h=1 msg="The Kristens' barn, drowned with the cellar. Its front room still holds the bell's air."
+loot barnchest CopperOre*2;Battery*1;Scrap*3;Seed_Strawberry*2
+prop barnchest loot.refill=0
+note barnchest Barn strongbox | The Kristens' strongbox: the farm's savings in copper, a battery and a twist of strawberry seed.
+place Note_Paper halvardmemo at 39.7 -31.1 ground drop yaw=60
+# --- The Institute's van that slid off the quay (west): a secret crate -----------------------------------------------
+call hw_wreck x=-48 z=-14 h=3 yaw=70 obj=Van_4 al=instvan crate=vancrate r=7
+loot vancrate MetalIngot*1;Scrap*4;Nail*8;Plastic*2
+note vancrate Institute van's crate | A crate from the Institute's van: field instruments, smashed, and a box of nails.
+place Creature_PufferFish puffers2 at -40 -20 ground y=2
+prop puffers2 creature.count=2
+
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Rootcellar Deep
 info author=Custom Islands
-info description=The orchard's other half on the seabed, 25 m down: the same farmhouse drowned, the bottom of its well, its cellar and the orchard's roots twisting round a cave. The third island of The Gravity Sea - dive.
+info description=The orchard's other half on the seabed, 25 m down and as big as Raft's own big islands: the same farmhouse drowned, the bottom of its well, its cellar, the orchard's roots twisting round a cave, a drowned barn, the Institute's lost van - and the Root Stack, the taproot that climbs out of the sea to the pump tower. The third island of The Gravity Sea - dive.
 island on.arrive=message||Down there, 25 m under the keel: a farmhouse. The same one as up in the orchard - drowned.
 
 story cellaropen|Cellar hatch open|Placeable_Lantern_Metal|You gave Marta's apples at the cellar hatch, and it opened.
 
-note diary Cellar diary (the other half) | CELLAR DIARY - M. KRISTEN\n\nThe hill went up and the cellar stayed. Jon is up there with the trees; I am down here with the roots. The Institute's bells give me air.\n\nI have kept the hatch shut against the fish in the roots. I will open it for one thing only: our apples. Jon says he will send them down the well. If you have them, bring them to the hatch.
+note diary Cellar diary (the other half) | CELLAR DIARY - M. KRISTEN\n\nThe hill went up and the cellar stayed. Jon is up there with the trees; I am down here with the roots. The Institute's bells give me air.\n\nI have kept the hatch shut against the fish in the roots. I will open it for one thing only: our apples. Jon says he will send them down the well. If you have them, bring them to the hatch.\n\nIf you need air, you will find Sven up on the Root Stack - the old taproot in the north-west. It is the only bit of our hill that still reaches the surface, and he pumps the bells from its crown. Sven talks too much. Let him: he has nobody else.
 note cellarchest Cellar chest | Marta's cellar chest: Jon's old machete and its maker's plans, wrapped in a feed sack. "For the vines up at the market - they grow over everything."
 note rootcache Root cave cache | The Institute's fuel cache, wedged in the roots: plans for a fuel tank, fuel pipes and a biofuel extractor, in a sealed tin.
 loot cellarchest Blueprint_Machete*1;Machete*1;Rope*2
@@ -112,10 +158,16 @@ prop anglers creature.count=2
 prop anglers creature.respawn=0
 prop anglers creature.zone=root_cave
 
+note svenlog Pump man Sven Aalto's log | PUMP LOG - S. AALTO, Halvard Institute, diving section (pump man to Dr. Marn's bells)\n\nI was sent to keep three bells full for one farmer's wife 'for a week'. This is week six.\n\nThe pump on the tower deck feeds them through a hose down the taproot. I work it at dawn and dusk. In between I watch the sky, where her husband's orchard hangs like a lid.\n\nThings I have learned: (1) Marta Kristen sings when the air is low. (2) The fish in the roots do not like the singing. (3) Halvard sent a memo down to the barn the day after the lift and never came to fetch it. I have read it. I wish I had not.\n\nIf you are going down to her: take the spare bottle in my deck box. Be quick at the hatch. She will only open it for apples.
+note halvardmemo Halvard's drowned memo | INSTITUTE MEMO - Director to staff. Day 2 after the lift.\n\nThe field did not stop at the cellar line. It is still pulling, and the plate in the sky is still climbing - one centimetre a day. The roots on the seabed are the anchor. Whatever you do, do not cut them.\n\nThe market went up with it. I am going there next. If the Array can be turned down from its crown, I will find the way.\n- E. Halvard
 quest title=The Other Half
 quest intro=The orchard's roots are down here, 25 m under the sea. Dive to the bottom of the well.
 step reach|well_bottom|1|Dive to the bottom of the well
 step read|Cellar diary (the other half)|1|Read the diary in the drowned farmhouse
+step reach|stackfoot|1|Find the Root Stack north-west of the farmhouse - the only rock that reaches the surface
+step reach|crown|1|Climb the Root Stack to its dry crown
+step read|Pump man Sven Aalto's log|1|Read the pump man's log on the crown
+step open|Pump man's deck box|1|Climb the pump tower and take the spare air from its deck box
 step collect|story:cellaropen|1|Bring the four baskets of upfall apples to the cellar hatch
 step reach|cellar|1|Breathe in the cellar's air pocket
 step blueprint|Blueprint_Machete|1|Take the machete plans from the cellar chest

@@ -12,9 +12,16 @@
 include lib_features
 include lib_huts
 include lib_gravity
+include lib_areas
+include lib_highwater
+# RESIZE 10-25 (box agent, older-storyline deep pass): Radius 32 -> 80: as big as Raft's own big islands; the four
+# terraces, gnomon, observatory and telescope stay in the middle.
+# DEEP 10-25: Shadow Crag in the west - a 32 m climb to the old star station (a ruin) where the telescope's lens is kept;
+# the hour-keeper's cave in the east; a glider wrecked in the north-east. The telescope needs its lens before it shows
+# the Array. Voices: the astronomer Dr. Lise Holm, the hour-keeper Bo Nyman, the glider pilot.
 new
 gen Trees=0.06 Bushes=0.3 Rocks=0.3 Harvest=0.25 BeachThings=0
-gen Seed=9661 Radius=32 Height=15 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.7 PeakShape=0.3
+gen Seed=9661 Radius=80 Height=15 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.7 PeakShape=0.3
 gen Water=0 SeaRocks=0 SeaFinds=0 Sunken=0 Hostiles=0 Friendly=0 SeaLife=0
 generate
 elevation 30
@@ -26,11 +33,22 @@ brush flatten at 0 3 r=6 s=20 frames=200 h=10
 brush flatten at 0 10 r=5.5 s=20 frames=200 h=13
 brush grass at 0 -4 r=14 s=20 frames=20
 brush smooth at 24 14 r=10 s=20 frames=150
+# --- DEEP 10-25 terrain: Shadow Crag (west, its top 32 m, base r 22) and its path, the star station's pad on its top,
+# the hour-keeper's cave's pad (east), the glider's pad (north-east) ----------------------------------------------------
+call hw_mount x=-50 z=-5 b=22 h=32
+call hw_trail x=-50 z=-5 b=22 h=32 a0=90 turn=300 n=36 h0=6
+brush flatten at -50 -5 r=9 s=20 frames=400 h=32
+brush flatten at 55 -15 r=10 s=20 frames=300 h=6
+brush flatten at 32 40 r=10 s=20 frames=300 h=8
 origin
 clear at 0 -14 r=8
 clear at 0 -5 r=6
 clear at 0 3 r=5
 clear at 0 10 r=5
+clear at -50 -5 r=9.5
+call ar_ruin x=-50 z=-5 h=32 yaw=0 w=3 d=2 al=starstation
+call ar_cave x=55 z=-15 h=6 yaw=180 al=keeperrock chest=keeperchest
+call ar_plane x=32 z=40 h=8 yaw=220 al=glider crate=glidercrate
 
 # --- The hour stones: clock faces on stone posts, one for each hour walked; the gnomon --------------------------------
 macro hourstone x=0 z=0 al=hour zn=hourzone
@@ -76,16 +94,47 @@ store stairshop at 0 -18 ground
 scatter "Pickup_Landmark_PineappleLandmark" 2 at 8 -10 r=4 seed=9671 free=2
 call dirt x=-8 z=-10 r=4 n=2 seed=9672
 
+# --- DEEP 10-25: Shadow Crag - its foot and top as zones, the star station: Lise's note and the lens chest -------------
+call hw_zone x=-27 z=-5 al=cragfootz id=cragfoot r=5 msg="Shadow Crag. A path winds up round it to the old star station."
+call hw_zone x=-50 z=-5 al=cragtopz id=cragtop r=8 h=1 msg="The top of Shadow Crag, 62 m over the sea - the Institute's old star station, open to the sky."
+place Note_Paper lisenote at -50.75 -5 h=33.05 drop yaw=0
+place Loot_ChestSmall lenschest at -46 -9 ground sit yaw=270
+loot lenschest story:lens*1;Battery*1;CopperOre*2
+prop lenschest loot.refill=0
+note lenschest Star station chest | The star station's chest: the big telescope's lens in a felt bag, and a battery for the night lamp.
+scatter "Pickup_Landmark_Tree_Palm 3" 3 at -50 -5 r=24 seed=9681 free=3
+scatter Bush 8 at -50 -5 r=24 seed=9682 free=1
+scatter Bush2 5 at -50 -5 r=24 seed=9683 free=1
+call treasure x=-44 z=4 r=4 n=1 seed=9684 kind=0
+prop treasure9684 treasure.loot=MetalOre*3;CopperOre*2
+# --- The hour-keeper's cave (east): a secret -------------------------------------------------------------------------
+call hw_zone x=55 z=-20 al=keeperz id=hourkeeper r=4 msg="A cave in the east: a cot, a row of stopped clocks - the hour-keeper's."
+place Note_Paper bonote at 53.5 -20.5 h=6.45 drop yaw=180
+loot keeperchest Rope*2;Plank*3;Battery*1;MetalIngot*1
+prop keeperchest loot.refill=0
+note keeperchest Hour-keeper's box | Bo's box: rope, planks, a battery - and a wind-up clock key that fits nothing on this island.
+call treasure x=40 z=-28 r=6 n=1 seed=9685 kind=0
+prop treasure9685 treasure.loot=Scrap*3;Bolt*2;Hinge*1
+# --- The glider (north-east): a secret -------------------------------------------------------------------------------
+loot glidercrate Plastic*4;Rope*2;Nail*6;CopperIngot*1
+prop glidercrate loot.refill=0
+note glidercrate Glider's crate | The glider's crate: plastic, rope and a roll of star charts gone soft with rain.
+place Note_Paper glidernote at 26 36 ground drop yaw=220
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Stair of Hours
 info author=Custom Islands
-info description=A sky island 30 m up whose terraces make a giant sundial: hour stones, a stone gnomon and the Institute's observatory with a telescope aimed at the Array. A Raft store on its lowest terrace. The eighth island of The Gravity Sea.
+info description=A sky island 30 m up and as big as Raft's own big islands, with Shadow Crag and the old star station, the hour-keeper's cave and a wrecked glider - and terraces that make a giant sundial: hour stones, a stone gnomon and the Institute's observatory with a telescope aimed at the Array. A Raft store on its lowest terrace. The eighth island of The Gravity Sea.
 island on.arrive=message||Terraces climbing into the sky like a stair, a stone finger in the middle - a sundial as big as an island.
 
+story lens|Telescope lens|Placeable_Lantern_Metal|The big telescope's lens, from the star station on Shadow Crag.
 story sighted|The Array sighted|Placeable_Lantern_Metal|Through Halvard's telescope you saw the Lodestone Array's crown, 35 m over the sea.
 
-note sundial Sundial instructions | THE STAIR OF HOURS\n\nWalk the hours as the shadow walks them: the first, the third, the seventh - then the twelfth shows on the top terrace, and noon is at the telescope.\nThe Institute's telescope looks west, to the Array. The vault under it opens at noon.
+note sundial Sundial instructions | THE STAIR OF HOURS\n\nWalk the hours as the shadow walks them: the first, the third, the seventh - then the twelfth shows on the top terrace, and noon is at the telescope.\nThe Institute's telescope looks west, to the Array. Its LENS is kept at the star station on Shadow Crag, out of the dust - fetch it first. The vault under it opens at noon.
 note vault Telescope vault | The telescope vault: Halvard's last plans - titanium tools, a big backpack and an electric zipline - "for the crown".
+note lisenote Dr. Lise Holm's note | STAR STATION - L. HOLM, ASTRONOMER\n\nI have taken the lens out of the big telescope and locked it up here. Halvard wants to watch the Array day and night, and a man who watches a thing day and night stops sleeping, then stops eating, then starts climbing.\n\nThe stars are wrong over the Gravity Sea. Not the stars - the light. It bends round the Array the way light bends round a lens. I have measured it: the bend points down, to the seabed, to the root.\n\nWhoever takes the lens back down: the crown is in the west, 35 m up. You will see it sparking. Do not stare at it too long. Halvard did.
+note bonote Hour-keeper Bo Nyman's note | HOUR-KEEPER'S BOOK - B. NYMAN\n\nMy job: wind the clocks on the hour stones every morning, so the Institute's sundial and its clocks agree.\n\nSince Lift Day they do not agree. The sundial is right - the sun does not care about magnets. The clocks are all slow, every one, by the same eleven minutes, as if time itself were heavier here.\n\nI have stopped winding them. I have stopped my own watch too. I tell the time by the shadow of the gnomon now, like the old ones did.
+note glidernote Glider pilot's note | Came over from the Lodestone Array's side on the thermals. Halfway across, the glider's iron frame was pulled west, hard, like a hand on a rope. Cut loose, came down here. If you are going to the Array: leave your iron behind, or tie it down. - T. Falk
 note lastlog Halvard's last log | HALVARD - LAST LOG\n\nI see the crown from here: four magnet arms round the core, sparking blue, 35 m over the sea, and the field pulling at everything.\n\nI am too old to climb it. Whoever reads this: shut off the crown first, then dive to the root. Band 1300.\n\n- E. H.
 loot vault Blueprint_TitaniumTools*1;Blueprint_BackpackAdvanced*1;Blueprint_ZiplineToolElectric*1;TitaniumIngot*2;MetalIngot*2
 prop vault loot.refill=0
@@ -115,15 +164,19 @@ prop arrayview obj.name=arrayview
 prop vaulthatch obj.name=vaulthatch
 prop telescope obj.name=telescope
 prop telescope beh.use=Look through Halvard's telescope
-prop telescope if.use=!signal|sighted
+prop telescope if.use=has|story:lens|1\n!signal|sighted
 prop telescope on.use=signal||sighted\ngive||story:sighted*1\nhide|vaulthatch\nshow|vault\nmessage||Far to the west, 35 m over the sea: four magnet arms round a core, sparking blue. At the telescope's foot, the vault's hatch springs open.\ncamera|telescope|arrayview|5|30
-prop telescope else.use=message||The crown is still there, sparking blue in the west.
+prop telescope else.use=message||The telescope shows only blur - its lens is missing. (Or, if it has its lens: the crown is still there, sparking blue in the west.)
 
 quest title=Walking the Hours
 quest intro=A sundial as big as an island, 30 m up. Climb to its first hour.
 step reach|hour_1|1|Climb onto the first hour stone's terrace
 step read|Sundial instructions|1|Read the sundial's instructions
 step reach|hour_12|1|Walk the hours - the third, the seventh, then noon on the top terrace
+step reach|cragfoot|1|Find the path up Shadow Crag in the west
+step reach|cragtop|1|Climb Shadow Crag to the old star station
+step read|Dr. Lise Holm's note|1|Read the astronomer's note at the star station
+step collect|story:lens|1|Take the telescope's lens from the star station chest
 step collect|story:sighted|1|Look through the telescope
 step blueprint|Blueprint_TitaniumTools|1|Take the titanium tool plans from the telescope vault
 step blueprint|Blueprint_BackpackAdvanced|1|Take the big backpack plans from the telescope vault

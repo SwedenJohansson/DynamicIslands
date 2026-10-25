@@ -1,5 +1,5 @@
 # Weatherglass Deep (CIPlay weatherglass_deep): the shoal's drowned twin, 20 m down; the station, the drowned log, the
-# pufferfish, the drowned chest and the twin's answer.
+# north keeper's drowned house and note (10-25 deep pass), the pufferfish, the drowned chest and the twin's answer.
 island Weatherglass Deep
 offset 0 0
 expect step 0
@@ -8,11 +8,15 @@ zone drowned_station
 expect step 1
 read Drowned log
 expect step 2
+zone jonashouse
+expect step 3
+read North keeper Jonas
+expect step 4
 zone drowned_reef
 kill Puffer fish
-expect step 3
+expect step 5
 open Drowned chest
 wait 3
-expect step 4
+expect step 6
 read Twin's answer
 expect done

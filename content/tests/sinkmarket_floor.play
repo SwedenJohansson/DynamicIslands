@@ -1,5 +1,6 @@
-# Sinkmarket Floor (CIPlay sinkmarket_floor): 30 m down; the ballast stone, the ledger, the diving bell, the cistern valve
-# and its air, the stingrays, the cistern store (Marn's key), her cage, satchel and map, the cable car's bottom station.
+# Sinkmarket Floor (CIPlay sinkmarket_floor): 30 m down; the ballast stone, the ledger, the diving bell, Lookout Rock and
+# its crown, the salt cellar (the valve's wheel; 10-25 deep pass), the cistern valve and its air, the stingrays, the
+# cistern store (Marn's key), her cage, satchel and map, the cable car's bottom station.
 island Sinkmarket Floor
 offset 0 0
 expect step 0
@@ -13,22 +14,36 @@ expect step 3
 read Bell keeper's log
 expect step 4
 use valve
-expect story drained 1
+expect story drained 0
+zone rockfoot
 expect step 5
-air cistern
+zone rocktop
 expect step 6
+read Signalman Tomas
+expect step 7
+read Salt merchant Ada
+expect step 8
+open Salt cellar box
+wait 3
+expect story valvewheel 1
+expect step 9
+use valve
+expect story drained 1
+expect step 10
+air cistern
+expect step 11
 zone cistern_hall
 kill Stingray
-expect step 7
+expect step 12
 open Cistern store
 wait 3
-expect step 11
+expect step 16
 use marncage
 expect survivor gravity_ilse
 open Marn's satchel
 wait 3
-expect step 12
+expect step 17
 read Marn's map
-expect step 13
+expect step 18
 zone cable_bottom
 expect done

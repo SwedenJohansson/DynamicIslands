@@ -1,6 +1,7 @@
-# Pendulum Isle (CIPlay pendulum_isle): a low sky island 12 m up; the top, the hall rules, the buried survey bolt, the
-# pendulum frame (the generator), the generator room's four plans, the zipline's low end, the shaft warning, the keel
-# (zone keel: the plan's done-when, it brings Gravewell Shaft).
+# Pendulum Isle (CIPlay pendulum_isle): a low sky island 12 m up; the top, the hall rules, the weather station (Anja's
+# note), Bob Hill's foot and top, Halvard's sighting log (10-25 deep pass), the buried survey bolt, the pendulum frame
+# (the generator), the generator room's four plans, the zipline's low end, the shaft warning, the keel (zone keel: the
+# plan's done-when, it brings Gravewell Shaft).
 island Pendulum Isle
 offset 0 0
 expect step 0
@@ -9,19 +10,27 @@ zone top
 expect step 1
 read Pendulum hall rules
 expect step 2
+read Dr. Anja Roos
+expect step 3
+zone bobfoot
+expect step 4
+zone bobtop
+expect step 5
+read Halvard's sighting
+expect step 6
 dig
 expect story surveybolt 1
-expect step 3
+expect step 7
 use framelever
 expect story power 1
-expect step 4
+expect step 8
 open Generator room
 wait 3
-expect step 8
+expect step 12
 zone low_end
-expect step 9
+expect step 13
 read Keel shaft warning
-expect step 10
+expect step 14
 use shaft
 zone keel
 storespot 20 -3

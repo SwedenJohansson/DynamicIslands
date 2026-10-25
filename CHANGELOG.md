@@ -9,6 +9,14 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-25: The Gravity Sea, full-size islands
+
+### Changed
+- **The Gravity Sea's twelve islands are about as big as Raft's own big islands** (they were about 40%): each main
+  island has a hill to climb, a dive, a cave, a ruin or wreck, 3-6 secrets, a buried treasure for the metal detector
+  and notes read aloud, and its quest now crosses the whole island (The Lodestone Array 27 steps, The Array Root 18,
+  Sinkmarket Floor 19). Start a new world with the plan to get the new islands.
+
 ## 2026-10-24: quest mechanics
 
 ### New

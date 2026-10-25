@@ -1,5 +1,6 @@
 # The Stair of Hours (CIPlay stair_of_hours): a sky island 30 m up; the hours walked (1, 3, 7 - then 12 shows), the
-# sundial instructions, the telescope (the vault opens), the vault's three plans, Halvard's last log.
+# sundial instructions, Shadow Crag's foot and top, the astronomer's note and the telescope's lens (10-25 deep pass), the
+# telescope (the vault opens), the vault's three plans, Halvard's last log.
 island The Stair of Hours
 offset 0 0
 expect step 0
@@ -13,11 +14,23 @@ zone hour_7
 zone hour_12
 expect step 3
 use telescope
-expect story sighted 1
+expect story sighted 0
+zone cragfoot
 expect step 4
+zone cragtop
+expect step 5
+read Dr. Lise Holm
+expect step 6
+open Star station chest
+wait 3
+expect story lens 1
+expect step 7
+use telescope
+expect story sighted 1
+expect step 8
 open Telescope vault
 wait 3
-expect step 7
+expect step 11
 read Halvard's last log
 storespot 0 -18
 expect done

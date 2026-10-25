@@ -12,20 +12,41 @@ include lib_sea
 include lib_features
 include lib_huts
 include lib_gravity
+include lib_areas
+include lib_highwater
+# RESIZE 10-25 (box agent, older-storyline deep pass): Radius 42 -> 85, Height 15 -> 18; the old quay moved 0 -40 as one
+# frame (push) so it stays on the south shore; the island grows behind it.
+# DEEP 10-25: Cut Hill - the Institute's survey mast on a hill north of the quay holds the compass ring's lever pin
+# (Halvard took it up there so nobody could start the Array again); the Kristens' boathouse ruin in the west, the
+# harbour master's seam cave in the east, a mail plane in the north-west grass, the tide office drowned off the
+# south-west point. Voices: Halvard, Ida Kristen, harbour master Brandt, the survey hand Lasse, the mail pilot.
 new
 gen Trees=0.12 Bushes=0.35 Rocks=0.3 Harvest=0.3 BeachThings=0.3
-gen Seed=9501 Radius=42 Height=15 Roughness=0.3 Peaks=1 Shape=0 Style=0 PeakShape=0.5 Cliffs=0.8 BeachWidth=0.6
+gen Seed=9501 Radius=85 Height=18 Roughness=0.3 Peaks=1 Shape=0 Style=0 PeakShape=0.5 Cliffs=0.8 BeachWidth=0.6
 gen Water=0.5 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.3 Hostiles=0 Friendly=0.2 SeaLife=0.3
 generate
 
 # --- Terrain: the quay apron on the south shore, the sliced hilltop behind it ----------------------------------------
+push at 0 -40
 brush flatten from -16 -28 to 16 -28 r=7 s=20 frames=200 h=1.5
 brush flatten from 0 -30 to 0 -18 r=7 s=20 frames=120 h=1.5
 brush flatten at -13.5 -22.5 r=5 s=20 frames=200 h=1.5
 brush flatten from -16 -35 to 16 -35 r=4 s=20 frames=200 h=1.2
 brush flatten at 0 12 r=12 s=20 frames=200 h=12
 brush smooth from -18 -38 to 18 -38 r=4 s=6 frames=20
+pop
 origin
+# --- DEEP 10-25 terrain: Cut Hill (north, summit 34 m, base r 30) and its trail, the seam cave's rock (east), the
+# boathouse ruin's pad (west), the mail plane's pad (north-west), the tide office's basin off the south-west (-9 m) --
+call hw_mount x=10 z=40 b=30 h=34
+call hw_trail x=10 z=40 b=30 h=34 a0=200 turn=300 n=42 h0=7
+call ar_cave x=52 z=-14 h=4 yaw=0 al=seamrock chest=seamchest
+brush flatten at -48 -12 r=12 s=20 frames=700 h=4.5
+clear at -48 -12 r=13
+call ar_ruin x=-48 z=-12 h=4.5 yaw=20 w=3 d=2 al=boathouse
+call hw_basin x=-50 z=-62 r=12 h=-9
+call ar_plane x=-34 z=36 h=6 yaw=130 al=mailplane crate=mailcrate
+push at 0 -40
 clear from -18 -28 to 18 -28 r=8
 clear from 0 -30 to 0 -16 r=7
 clear at 0 12 r=12
@@ -68,17 +89,59 @@ pop
 call shallows x=0 z=0 r=56 deep=5 n=1 seed=9511
 call dirt x=-6 z=6 r=10 n=3 seed=9512
 scatter "Pickup_Landmark_PineappleLandmark" 2 at 6 10 r=6 seed=9513 free=2
+place VP_Forklift - at -6 -33 ground sit yaw=90
+pop
+call shallows x=0 z=0 r=100 deep=6 n=2 seed=9514
+
+# --- DEEP 10-25: Cut Hill and the survey mast; the trail's foot and the summit as zones; the pin in the deck box -----
+call hw_zone x=-0.6 z=10.9 al=cutfootz id=cutfoot r=5 msg="Cut Hill. A trail goes round and up - the survey hands' path, worn by boots."
+call hw_zone x=10 z=40 al=cuttopz id=cuttop r=8 h=1 msg="The top of Cut Hill. Below: the quay, the needles, the sea. Above: the orchard's dark underside, hanging in the sky."
+call hw_mast x=10 z=40 h0=34 lv=4 a=surveymast chest=pinbox top=Placeable_Flag_03
+place Note_Paper lassechalk at 6 36.5 h=34.1 drop yaw=10
+# (the hill's plants without small boulders: on its slope they hung off the ground)
+scatter "Pickup_Landmark_Tree_Palm 3" 3 at 10 40 r=32 seed=9531 free=3
+scatter "Pickup_Landmark_Tree_Palm 4" 3 at 10 40 r=32 seed=9532 free=3
+scatter Bamboo_1 4 at 10 40 r=32 seed=9533 free=2
+scatter Pickup_Landmark_Tree_Mango 2 at 10 40 r=32 seed=9534 free=3
+scatter Bush 8 at 10 40 r=32 seed=9535 free=1
+scatter Bush2 5 at 10 40 r=32 seed=9536 free=1
+call treasure x=15 z=35 r=4 n=1 seed=9541 kind=0
+prop treasure9541 treasure.loot=MetalOre*3;CopperOre*2
+# --- The seam cave (east): harbour master Brandt's tide book -------------------------------------------------------
+call hw_zone x=52 z=-9 al=seamz id=seamcave r=4 msg="A cave in a dark rock that pulls at the iron in your pockets: the lodestone seam."
+place Note_Paper brandtbook at 51 -7.5 h=4.45 drop yaw=30
+loot seamchest MetalOre*3;Bolt*2;Scrap*2
+prop seamchest loot.refill=0
+note seamchest Seam cave box | A small box in the seam cave: lumps of ore that cling together, and something that sticks to everything.
+# --- The Kristens' boathouse (west): Ida's letter on the table --------------------------------------------------------
+call hw_zone x=-48 z=-12 al=boathousez id=boathouse r=6 msg="A boathouse with no roof and no boat. A name painted over the door: KRISTEN."
+place Note_Paper idaletter at -48.71 -11.74 h=5.6 drop yaw=20
+call treasure x=-56 z=-20 r=4 n=1 seed=9542 kind=0
+prop treasure9542 treasure.loot=Scrap*4;Bolt*2;Hinge*2
+# --- The mail plane (north-west) in the long grass: a secret ---------------------------------------------------------
+loot mailcrate Battery*1;Plastic*4;Rope*3;Nail*6
+prop mailcrate loot.refill=0
+note mailcrate Mail plane's cargo | The mail plane's cargo crate: parcels for the Institute, never collected.
+place Note_Paper pilotnote at -40 30 ground drop yaw=60
+place Creature_Boar boars2 at -20 50 ground
+prop boars2 creature.count=1
+# --- The tide office, drowned off the south-west point (-9 m): a secret with an air pocket -------------------------
+call hw_sunkhouse x=-50 z=-62 h=-9 yaw=40 a=tideoffice chest=tidechest air=tideair bub=tidebub dal=tidedoor
+call hw_zone x=-50 z=-62 al=tidez id=tideoffice r=7 h=1 msg="The harbour's tide office, nine metres down. It went under the day the hill went up."
+loot tidechest Battery*1;CopperOre*2;Scrap*3;OxygenBottle*1
+note tidechest Tide office strongbox | The tide office's strongbox: the harbour's fees, paid in copper, and a spare diving bottle.
+call hw_reef x=-36 z=-70 r=5 seed=9551
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Lodestone Quay
 info author=Custom Islands
-info description=The Halvard Institute's harbour: a stone quay with its crane, an instrument hut and a ring of compass needles - and a hill cut flat behind it, its top torn up into the sky. The first island of The Gravity Sea.
+info description=The Halvard Institute's harbour, as big as Raft's own big islands: a stone quay with its crane, an instrument hut and a ring of compass needles, a hill cut flat behind it with its top torn up into the sky, Cut Hill with its survey mast, a boathouse ruin, a cave in the lodestone seam and a drowned tide office. The first island of The Gravity Sea.
 island on.arrive=message||A quay with a crane, and a hill behind it cut off flat as a table. Somewhere above, gulls are crying - very high up.
 
 story needles|Compass needles up|Placeable_Lantern_Metal|You pulled the compass ring's lever: every needle on the quay swung round to point straight up.
 
 note notice Institute notice: Lift Day | HALVARD INSTITUTE - NOTICE\n\nLIFT DAY. The Lodestone Array will be switched on at noon.\nAll staff to the quay. Do not stand on the hill.\nThe compass ring will show the field: when the needles point UP, the lift has begun.\n\n- Dr. E. Halvard, Director
-note log1 Dr. Halvard's log 1 | HALVARD - LOG 1\n\nIt worked. It worked too well. The hill tore off at the cellar line and went up like a cork. The orchard is 30 m over the quay now, and the Kristens' house with it. Their cellar stayed below, under the sea.\n\nAnyone who reads this: the orchard is 30 m up. Bring planks. The builders' store by the crane has what you need for the climb. The orchard's band is 700.
+note log1 Dr. Halvard's log 1 | HALVARD - LOG 1\n\nIt worked. It worked too well. The hill tore off at the cellar line and went up like a cork. The orchard is 30 m over the quay now, and the Kristens' house with it. Their cellar stayed below, under the sea.\n\nAnyone who reads this: the orchard is 30 m up. Bring planks. The builders' store by the crane has what you need for the climb. The orchard's band is 700.\n\nOne more thing. I have taken the pin out of the compass ring's lever and carried it up Cut Hill, to the survey mast. If the needles stand up again, someone has climbed for it - and then the field will know someone is coming.
 note hutchest Instrument hut | The Institute's instrument chest: a radio set's plans and an aerial's, rolled in oilcloth.
 note buildstore Builders' store | The builders' store: planks, nails and rope, stacked for a climb that never happened.
 loot hutchest Blueprint_Reciever*1;Blueprint_Antenna*1;Battery*1;Scrap*3
@@ -91,19 +154,32 @@ prop needlesup beh.hidden=1
 prop needlesflat obj.name=needlesflat
 prop lever obj.name=lever
 prop lever beh.use=Pull the compass ring's lever
-prop lever if.use=!signal|needles
+prop lever if.use=has|story:leverpin|1\n!signal|needles
 prop lever on.use=signal||needles\nhide|needlesflat\nshow|needlesup\ngive||story:needles*1\nmessage||With a grinding of iron every needle on the quay swings round - and points straight up at the sky.\nsound||event:/exploring/obstacles/keypad/keypad_correct
-prop lever else.use=message||The needles already point up. Whatever pulls them is up there.
+prop lever else.use=message||The lever will not move: its pin is gone. A tag hangs on the stump - 'Pin to the survey mast, by order. E.H.' (If the needles already point up, whatever pulls them is up there.)
 
 prop quayzone zone.id=quay
 prop quayzone zone.radius=6
 prop quayzone zone.message=The Institute's quay. A crane, a hut, a ring of iron needles on stone plinths - all lying down.
 
+story leverpin|Lever pin|Bolt|The compass ring's iron lever pin, which Halvard carried up to the survey mast.
+loot pinbox story:leverpin*1;Rope*2;Plank*4
+prop pinbox loot.refill=0
+note pinbox Survey mast deck box | A box lashed to the rail at the top of the survey mast. A tag: PIN - DO NOT RETURN.
+note idaletter Ida Kristen's letter | Erik -\n\nThey said it was safe. They said the cellar line was 'a precaution'. Well, the cellar line is where our hill broke, and the house and the orchard and your father's bees went up with it, and I was standing in the boathouse with the nets.\n\nI watched it go. It did not fall. It just kept rising, slowly, as if it had remembered something.\n\nThe apples are still up there. Halvard says they will ripen. Halvard says a great many things.\n\nWhen you come back from the market, do not go near the hill. Come here. I will wait at the boathouse until the needles lie down again.\n\n- Ida
+note brandtbook Harbour master Brandt's tide book | TIDE BOOK - Lodestone Quay. H. Brandt, harbour master.\n\nMon: high water 06:10. The needles twitch at noon. Nobody says why.\nTue: an anchor chain stood up off the quay. Straight up, like a rope trick. The Institute says 'magnetite'.\nWed: dug into the seam east of the quay. The rock pulls the nails out of your boots. I have stopped wearing boots.\nThu: LIFT DAY. Seven rowing boats went up with the hill. Ours came down in the afternoon, without its oars. The tide office went the other way.\n\nFor whoever keeps this book after me: the seam runs north, under Cut Hill and out to sea. Halvard's Array is built on the end of it. That is not a coincidence.
+note pilotnote Mail pilot's note | Put her down in the long grass on the north side. The compass went round in circles from the coast in, and the wings got heavy, as if somebody was sitting on them. The Institute's mail is in the crate. I am not flying back over that hill. - R. Lind, island post
+note lassechalk Survey hand Lasse's note | LASSE WAS HERE. Four storeys of ladder for a view of a hole in the sky. The pin is in the box at the top, like the Director said. Don't tell Halvard I ate his lunch up here. Again.
 quest title=Lift Day
 quest intro=A harbour with a hill sliced flat behind it. Go up onto the quay.
 step reach|quay|1|Go onto the quay
 step read|Institute notice: Lift Day|1|Read the Institute's notice by the water
-step collect|story:needles|1|Pull the compass ring's lever
+step read|Ida Kristen's letter|1|Find the Kristens' boathouse in the west and read Ida's letter
+step read|Harbour master Brandt's tide book|1|Read the harbour master's tide book in the seam cave in the east
+step reach|cutfoot|1|Find the trail up Cut Hill, north of the quay
+step reach|cuttop|1|Climb Cut Hill
+step collect|story:leverpin|1|Climb the survey mast and take the lever pin from its deck box
+step collect|story:needles|1|Set the pin and pull the compass ring's lever
 step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the instrument hut
 step blueprint|Blueprint_Antenna|1|Take the antenna plans from the instrument hut
 step read|Dr. Halvard's log 1|1|Read Dr. Halvard's log in the instrument hut
@@ -115,6 +191,4 @@ quest reward=Plank*10;Rope*4;Nail*10
 place Creature_Boar boars at -6 16 ground
 prop boars creature.count=1
 
-# --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
-place VP_Forklift - at -6 -33 ground sit yaw=90
 save Lodestone Quay

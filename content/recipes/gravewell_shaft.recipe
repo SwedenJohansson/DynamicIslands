@@ -14,9 +14,17 @@
 include lib_sea
 include lib_huts
 include lib_gravity
+include lib_areas
+include lib_features
+include lib_highwater
+# RESIZE 10-25 (box agent, older-storyline deep pass): Radius 34 -> 82: the seabed round the shaft as big as Raft's own
+# big islands; the rim, pit, stair, galleries and pump hall stay in the middle.
+# DEEP 10-25: Pump Ridge in the south-east - a 30 m climb up the seabed to the pump keeper's drowned house on its top
+# (an air pocket; the cage's fuse is in her chest, so the cage only runs once you have climbed it); a diver's cave in the
+# west; a sunken supply plane in the north. Voices: the pump keeper Karin Vik, the diver Olle Strand, the supply pilot.
 new
 gen Trees=0 Bushes=0 Rocks=0.35 Harvest=0 BeachThings=0
-gen Seed=9631 Radius=34 Height=14 Roughness=0.35 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.6 PeakShape=0.2
+gen Seed=9631 Radius=82 Height=14 Roughness=0.35 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.6 PeakShape=0.2
 gen Water=0.5 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
 elevation -45
@@ -24,11 +32,22 @@ elevation -45
 # --- Terrain: the rim at 10 m, the pit to 1 m, the two galleries cut into its wall ------------------------------------
 brush flatten at 0 0 r=20 s=20 frames=200 h=10
 brush flatten at 0 0 r=7 s=20 frames=300 h=1
+brush flatten at -5.5 0 r=2 s=20 frames=150 h=1
 brush flatten at 0 -9 r=2.5 s=20 frames=120 h=5
 brush flatten at 9 0 r=2.5 s=20 frames=120 h=3
 origin
 clear at 0 0 r=14
 clear at 0 11 r=3
+# --- DEEP 10-25 terrain: Pump Ridge (south-east, its top 30 m over the island's water line, base r 24) and its path,
+# the keeper's house's pad on the top, the diver's cave's pad (west), the supply plane's pad (north) --------------------
+call hw_mount x=45 z=-35 b=24 h=30
+call hw_trail x=45 z=-35 b=24 h=30 a0=315 turn=300 n=36 h0=10
+brush flatten at 45 -35 r=7 s=20 frames=300 h=30
+clear at 45 -35 r=8
+brush flatten at -62 10 r=10 s=20 frames=300 h=8
+call ar_cave x=-62 z=10 h=8 yaw=0 al=diverrock chest=diverchest
+brush flatten at -25 52 r=10 s=20 frames=300 h=8
+call ar_plane x=-25 z=52 h=8 yaw=30 al=supplyplane crate=supplycrate
 
 # --- The spiral stair: wooden floors on stone pillars down the pit's side ----------------------------------------------
 for a 0 300 30
@@ -48,7 +67,7 @@ place Zone_Trigger shaftzone at 0 0 h=4
 
 # --- Gallery 1 (an air pocket, the logbook) and gallery 2 (an air pocket, the pump key) -------------------------------
 call airpocket x=0 z=-9 id=gallery_1 al=gallery1 bub=gallery1bub r=2.2 msg="Gallery 1 - an Institute air pocket. Breathe."
-place "Box Small" - at 1.4 -9.6 ground sit
+place "Box Small" - at 0.6 -9 ground sit
 place Note_Paper logbook at 1.4 -9.6 ground y=0.7 drop yaw=20
 call airpocket x=9 z=0 id=gallery_2 al=gallery2 bub=gallery2bub r=2.2 msg="Gallery 2 - air. Something glints on a crate."
 place Loot_ChestSmall pumpkeybox at 9.6 1.4 ground sit yaw=270
@@ -78,19 +97,55 @@ scatter VP_CoralBulb04 5 at 4 -15 r=3 seed=9645 free=1
 scatter VP_CoralFoliose03 4 at 4 -15 r=3 seed=9646 free=1
 scatter SeaVine3 26 at 0 0 r=28 seed=9647 free=2
 scatter SeaVine3_klump 8 at 0 0 r=28 seed=9648 free=2
-call shallows x=0 z=0 r=46 deep=8 n=1 seed=9649
+call shallows x=0 z=0 r=90 deep=8 n=2 seed=9649
+scatter SeaVine3 40 at 0 0 r=72 seed=9650 free=2
+call hw_reef x=-40 z=-40 r=5 seed=9653
+call hw_reef x=55 z=25 r=5 seed=9654
+call hw_reef x=-55 z=45 r=4 seed=9655
+
+# --- DEEP 10-25: Pump Ridge - its foot and top as zones, the keeper's drowned house (air) with the cage's fuse ----------
+call hw_zone x=27.3 z=-17.3 al=ridgefootz id=ridgefoot r=5 msg="Pump Ridge. A path of flat stones winds up round it - the pump keeper's path."
+call hw_sunkhouse x=45 z=-35 h=30 yaw=135 a=keeperhouse chest=keeperchest air=keeperair bub=keeperbub dal=keeperdoor
+call hw_zone x=45 z=-35 al=ridgetopz id=ridgetop r=7 h=1 msg="The top of Pump Ridge: the pump keeper's house, drowned, its front room still holding air."
+place Note_Paper karinnote at 44 -33 h=30.5 drop yaw=135
+loot keeperchest story:cagefuse*1;OxygenBottle*1;CopperOre*2
+prop keeperchest loot.refill=0
+note keeperchest Pump keeper's chest | Karin's chest: the cage elevator's fuse, wrapped in a glove, and a spare diving bottle.
+call treasure x=52 z=-28 r=4 n=1 seed=9651 kind=0
+prop treasure9651 treasure.loot=MetalOre*3;CopperOre*2
+# --- The diver's cave (west): a secret ---------------------------------------------------------------------------------
+call hw_zone x=-62 z=15 al=diverz id=divercave r=4 msg="A cave in the rock: a diver's camp - weights, a lamp, a slate of notes."
+place Note_Paper ollenote at -60.5 15.5 h=8.45 drop yaw=0
+loot diverchest Rope*2;MetalIngot*1;Battery*1;Scrap*2
+prop diverchest loot.refill=0
+note diverchest Diver's box | Olle's box: rope, a battery for his lamp and a lump of iron he swore was not from the pump hall.
+# --- The supply plane (north): a secret --------------------------------------------------------------------------------
+loot supplycrate Plastic*4;Nail*8;Rope*2;CopperIngot*1
+prop supplycrate loot.refill=0
+note supplycrate Supply plane's crate | The supply plane's last load for the pump hall: plastic, nails, a copper ingot.
+place Note_Paper pilotnote at -19 47 ground drop yaw=30
+call treasure x=-35 z=40 r=4 n=1 seed=9652 kind=0
+prop treasure9652 treasure.loot=Scrap*4;Bolt*2;Hinge*1
+place Creature_AnglerFish anglers2 at -50 20 h=12
+prop anglers2 creature.count=1
+prop anglers2 creature.respawn=0
+
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Gravewell Shaft
 info author=Custom Islands
-info description=The deepest root, 45 m down: a round well shaft cut into the seabed, a spiral stair down its side, galleries with air, anglers in the dark and a pump hall at the bottom. The seventh island of The Gravity Sea - dive deep.
+info description=The deepest root, 45 m down, on a seabed as big as Raft's own big islands: Pump Ridge with the keeper's drowned house on top, a diver's cave, a sunken supply plane, a round well shaft cut into the seabed, a spiral stair down its side, galleries with air, anglers in the dark and a pump hall at the bottom. The seventh island of The Gravity Sea - dive deep.
 island on.arrive=message||Deep down, 45 m under the keel: a round black hole in the seabed, and lights in its walls.
 
 story cagedown|Cage elevator ridden|Placeable_Lantern_Metal|You rode the Institute's cage elevator down the gravewell.
+story cagefuse|Cage elevator fuse|Battery|The cage elevator's fuse, from the pump keeper's chest on Pump Ridge.
 story pumpkey|Pump hall key|Placeable_Lantern_Metal|The pump hall's key, from the crate in gallery 2.
 
-note permit Shaft entry permit | GRAVEWELL - ENTRY PERMIT\n\nThe bearer may enter the shaft.\nThe cage takes you to the floor. The galleries have air (bells, 2).\nThe pump hall is LOCKED - its key is in gallery 2.\nThe anglers came after Lift Day. Carry a light. Carry a spear.
+note permit Shaft entry permit | GRAVEWELL - ENTRY PERMIT\n\nThe bearer may enter the shaft.\nThe cage takes you to the floor - when it has its FUSE. The keeper takes the fuse home to Pump Ridge every night.\nThe galleries have air (bells, 2).\nThe pump hall is LOCKED - its key is in gallery 2.\nThe anglers came after Lift Day. Carry a light. Carry a spear.
 note logbook Gallery logbook | GALLERY LOGBOOK\n\nDay 1: the pumps hold.\nDay 4: the field pulls DOWN here as hard as it lifts up there. Halvard's numbers were right; his sign was wrong.\nDay 9: Halvard has gone up to the Stair of Hours, to watch the Array through the telescope. I left the pump key in gallery 2.
+note karinnote Pump keeper Karin Vik's note | PUMP KEEPER - K. VIK\n\nI take the cage's fuse home every night. Rule 4: no cage rides after the shift. Nobody has ridden it since Lift Day anyway.\n\nLift Day. The house went under the way a boot goes into mud - slowly, then all at once. The front room kept its air. I have been breathing it since, and swimming down to the pumps by day. They still run. They run harder every day, as if something up there were drinking through them.\n\nHalvard came by on his way up. He asked for the fuse. I said no; rules are rules. He said there are no rules any more, only the field. He went up the stairs to the gauges instead.\n\nIf you have read this: take the fuse. Go down. Shut it off.
+note ollenote Diver Olle Strand's slate | (A diver's slate, scratched with a nail)\n\nDIVE 31. Shaft wall: the iron in the rock is warm. Stone is not warm 45 m down.\nDIVE 34. The anglers came up out of the pit - came UP, out of the dark. They do not like the cage lights.\nDIVE 40. The supply plane came down north of the rim. Pilot got out. Load did not.\nDIVE 41. Karin will not lend me the fuse. Fine. I go down the stair.\nDIVE 42. Pump hall locked. The key is in gallery 2 and gallery 2 is full of teeth.
+note pilotnote Supply pilot's note | Engine died at 200 m over the Gravity Sea - no warning, the compass spinning like a top. Put her down by the shaft. She went under in a minute. Swam for it. The load was for the pump hall: if anyone wants it, it is still in the crate. - E. Lind, Institute supply flight
 note pumphall Pump hall | The pump hall's chest: the shift's last pay and a spare coil of wire.
 note smelterstore Smelter store | The smelter store: Halvard's heavy plans - an electric smelter, an advanced biofuel extractor and an advanced anchor - "for the Array's foundations".
 note log7 Halvard's log 7 | HALVARD - LOG 7\n\nThe Array hangs 35 m over the sea, on the field it makes itself. Its root is on the seabed under it. To stop it, both must be shut off - the crown above and the root below.\n\nI am going up to the Stair of Hours. From there the telescope sees the crown. Band 1100.
@@ -108,6 +163,8 @@ prop pumpkeybox loot.refill=0
 
 prop cage obj.name=cage
 prop cage beh.use=Ride the cage elevator down
+prop cage if.use=has|story:cagefuse|1
+prop cage else.use=message||The cage is dead - its fuse box is empty. (The entry permit says the keeper takes the fuse home to Pump Ridge.)
 prop cage on.use=give||story:cagedown*1\nmessage||The cage rattles down the shaft, past the galleries' lights, to the floor.\nteleport|pitzone
 prop pitzone obj.name=pitzone
 prop pitzone zone.id=pit_floor
@@ -132,6 +189,10 @@ quest title=The Gravewell
 quest intro=A shaft in the seabed, 45 m down. Swim to its rim.
 step reach|rim|1|Swim to the rim of the gravewell
 step read|Shaft entry permit|1|Read the shaft's entry permit
+step reach|ridgefoot|1|Find Pump Ridge south-east of the rim
+step reach|ridgetop|1|Climb Pump Ridge to the pump keeper's house
+step read|Pump keeper Karin Vik's note|1|Read the pump keeper's note
+step collect|story:cagefuse|1|Take the cage's fuse from the keeper's chest
 step collect|story:cagedown|1|Ride the cage elevator down the shaft
 step reach|gallery_1|1|Breathe in gallery 1
 step kill|Angler fish|4|Fight off the anglers in the dark

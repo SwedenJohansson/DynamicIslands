@@ -370,7 +370,7 @@ namespace DynamicIslands
 						Network_Player killer = RAPI.GetLocalPlayer();
 						Vector3 back = killer != null ? killer.transform.position - playEntry.Position : Vector3.zero;
 						ControllerType backType = killer != null ? killer.PersonController.controllerType : ControllerType.Ground;
-						foreach (AI_NetworkBehaviour a in animals) { PutPlayerNear(a.transform); ScKill(a); yield return new WaitForSeconds(0.4f); }
+						foreach (AI_NetworkBehaviour a in animals) { if (a == null) continue; PutPlayerNear(a.transform); ScKill(a); yield return new WaitForSeconds(0.4f); } // (a puffer fish that burst is gone: Rootcellar Deep 10-25)
 						if (killer != null && animals.Count > 0) { PlayerMove.To(killer, playEntry.Position + back, backType); KeepAlive(killer); }
 						yield return new WaitForSeconds(2f);
 						break;

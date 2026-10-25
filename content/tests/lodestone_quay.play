@@ -9,13 +9,27 @@ expect step 1
 read Institute notice
 expect step 2
 use lever
-expect story needles 1
+expect story needles 0
+read Ida Kristen's letter
 expect step 3
+read Harbour master Brandt's tide book
+expect step 4
+zone cutfoot
+expect step 5
+zone cuttop
+expect step 6
+open Survey mast deck box
+wait 3
+expect story leverpin 1
+expect step 7
+use lever
+expect story needles 1
+expect step 8
 open Instrument hut
 wait 3
-expect step 5
+expect step 10
 read Dr. Halvard's log 1
-expect step 6
+expect step 11
 open Builders' store
 wait 3
 expect done

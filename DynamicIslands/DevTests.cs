@@ -843,7 +843,9 @@ namespace DynamicIslands
 					for (int k = 0; k < 4; k++)
 					{
 						int nx = x + dx[k], nz = z + dz[k];
-						if (nx >= 0 && nz >= 0 && nx < cells && nz < cells && solid[nz, nx]) continue;
+						// (a neighbour cut away later but still under the underside is not the coast: a cave's room cut out of the
+						// ground (CaveGround) is closed from below by the underside - Upfall Orchard, Pendulum Isle 10-25)
+						if (nx >= 0 && nz >= 0 && nx < cells && nz < cells && (solid[nz, nx] || meshCells.Contains(nz * cells + nx))) continue;
 						edges++;
 						// the edge's two ends (grid samples)
 						int ax = dx[k] == 1 ? x + 1 : x, az = dz[k] == 1 ? z + 1 : z;

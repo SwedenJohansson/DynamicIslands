@@ -15,9 +15,18 @@
 include lib_sea
 include lib_huts
 include lib_gravity
+include lib_areas
+include lib_features
+include lib_highwater
+# RESIZE 10-25 (box agent, older-storyline deep pass): Radius 32 -> 82: the whole lower town's ground on the seabed;
+# the old square, bell, cistern and cage stay in the middle.
+# DEEP 10-25: Lookout Rock - the town's old signal rock in the north-east climbs out of the sea: its dry crown (4 m over
+# the sea) holds the signal mast. The cistern valve's wheel lies in the salt cellar in the west (the salt merchant took
+# it off so nobody would flood her stock); her house lies drowned in the south with an air pocket; a fishing boat lies
+# wrecked in the north-west. Voices: Ilse Marn, the salt merchant Ada Sund, the signalman Tomas Berg.
 new
 gen Trees=0 Bushes=0 Rocks=0.35 Harvest=0 BeachThings=0
-gen Seed=9571 Radius=32 Height=8 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.6 PeakShape=0.5
+gen Seed=9571 Radius=82 Height=8 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.6 PeakShape=0.5
 gen Water=0.5 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.4 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
 elevation -30
@@ -32,6 +41,13 @@ clear at -8.5 -4.5 r=3.5
 clear at 7.25 7.25 r=4.5
 clear at -6 8 r=3
 clear at -13 11 r=4
+# --- DEEP 10-25 terrain: Lookout Rock (north-east, its crown 34 m over the seabed = 4 m over the sea, base r 26) and its
+# path, the salt cellar's rock (west), the salt merchant's house's floor (south) ------------------------------------
+call hw_mount x=40 z=30 b=26 h=34
+call hw_trail x=40 z=30 b=26 h=34 a0=225 turn=300 n=40 h0=4
+call ar_cave x=-55 z=-10 h=3 yaw=0 al=saltrock chest=saltchest
+brush flatten at 10 -50 r=9 s=20 frames=300 h=2
+clear at 10 -50 r=10
 
 # --- The cracked ballast stone in the square, the ledger on a crate beside it ----------------------------------------
 place SmallRock_02 - at 0 0 ground y=-1.2 scale=1.3 yaw=40 rot=8,40,-6
@@ -91,19 +107,58 @@ scatter VP_CoralDigitate03 5 at 2 13 r=3 seed=9585 free=1
 scatter VP_CoralBulb03 4 at 2 13 r=3 seed=9586 free=1
 scatter SeaVine3 30 at 0 0 r=26 seed=9587 free=2
 scatter SeaVine3_klump 10 at 0 0 r=26 seed=9588 free=2
-call shallows x=0 z=0 r=44 deep=8 n=1 seed=9589
+call shallows x=0 z=0 r=90 deep=8 n=2 seed=9589
+scatter SeaVine3 40 at 0 0 r=70 seed=9590 free=2
+call hw_reef x=-30 z=-40 r=5 seed=9591
+call hw_reef x=50 z=-20 r=5 seed=9592
+call hw_reef x=-50 z=30 r=4 seed=9593
+
+# --- DEEP 10-25: Lookout Rock - its foot and dry crown as zones, the signal mast, the signalman's log -------------------
+call hw_zone x=20.9 z=10.9 al=rockfootz id=rockfoot r=5 msg="Lookout Rock: the town's old signal rock. A path winds up round it - towards the light."
+call hw_zone x=40 z=30 al=rocktopz id=rocktop r=8 h=1 msg="The crown of Lookout Rock - out of the sea, in the air. The signal mast still stands."
+call hw_mast x=40 z=30 h0=34 lv=3 a=signalmast chest=signalbox top=Placeable_Flag_03
+place Note_Paper tomaslog at 36 27 h=34.1 drop yaw=20
+call treasure x=45 z=34 r=3 n=1 seed=9594 kind=0
+prop treasure9594 treasure.loot=MetalOre*3;CopperOre*2
+loot signalbox OxygenBottle*1;Rope*2;Battery*1
+prop signalbox loot.refill=0
+note signalbox Signal mast deck box | The signalman's box: a spare air bottle, rope and a battery for the lamp.
+# --- The salt cellar (west): Ada's note and the valve wheel -----------------------------------------------------------
+call hw_zone x=-55 z=-5 al=saltz id=saltcellar r=4 msg="The salt cellar, dug into the rock. Sacks of salt, gone to slush - and a valve wheel on a hook."
+place Note_Paper adanote at -53.5 -4.5 h=3.45 drop yaw=30
+loot saltchest story:valvewheel*1;Rope*2;Scrap*2
+prop saltchest loot.refill=0
+note saltchest Salt cellar box | Ada's box: the cistern valve's wheel, wrapped in an oilcloth, and a coil of rope.
+# --- Ada's house (south), drowned, an air pocket: a secret ------------------------------------------------------------
+call hw_sunkhouse x=10 z=-50 h=2 yaw=20 a=adahouse chest=adachest air=adaair bub=adabub dal=adadoor
+call hw_zone x=10 z=-50 al=adahousez id=adahouse r=7 h=1 msg="The salt merchant's house. Its front room holds the bell's old air."
+loot adachest CopperOre*3;Battery*1;Salt*4;TradeToken*2
+prop adachest loot.refill=0
+note adachest Ada's strongbox | Ada Sund's strongbox: copper, salt and the tokens the upper market still owes her.
+call treasure x=-20 z=-45 r=4 n=1 seed=9595 kind=0
+prop treasure9595 treasure.loot=Scrap*4;Bolt*2;Hinge*1
+# --- A fishing boat wrecked in the north-west: a secret crate ---------------------------------------------------------
+call hw_wreck x=-40 z=40 h=3 yaw=30 obj=BoatStranded al=fishboat crate=boatcrate r=8
+loot boatcrate Rope*3;Nail*8;Plastic*2;MetalIngot*1
+note boatcrate Fishing boat's crate | The fishing boat's crate: rope, nails and a lump of good iron.
+place Creature_Stingray rays2 at -30 -30 ground y=2
+prop rays2 creature.count=1
+
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Sinkmarket Floor
 info author=Custom Islands
-info description=Altitude Market's lower town on the seabed, 30 m down: stalls in the silt, the ballast stone that fell from the sky, a diving bell, a flooded cistern hall, a scientist in a cage and the cable car's bottom station. The fifth island of The Gravity Sea - dive.
+info description=Altitude Market's lower town on the seabed, 30 m down and as big as Raft's own big islands: Lookout Rock climbing out of the sea, a salt cellar, a drowned house, a wrecked fishing boat, stalls in the silt, the ballast stone that fell from the sky, a diving bell, a flooded cistern hall, a scientist in a cage and the cable car's bottom station. The fifth island of The Gravity Sea - dive.
 island on.arrive=message||Down there, 30 m under the keel: a square of stalls in the silt - and the ballast stone, cracked, in the middle of it.
 
 story drained|Cistern drained|Placeable_Lantern_Metal|You opened the cistern valve: the hall drained and filled with air.
+story valvewheel|Cistern valve wheel|Bolt|The cistern valve's wheel, which the salt merchant took off and hid in her salt cellar.
 story marnkey|Marn's cage key|Placeable_Lantern_Metal|The key of Dr. Marn's cage, from the cistern store.
 
 note ledger Sinkmarket ledger | SINKMARKET - LEDGER\n\nLift Day: the upper market went up with the hill. We stayed down with the cisterns.\nStock: rope, salt, water plans.\nThe Institute's bell by the square has air; Dr. Marn keeps it.\nIf the ballast ever drops, it is THEIR fault, up there.
 note belllog Bell keeper's log | BELL KEEPER - I. MARN\n\nThe cistern hall flooded on day 2. The valve on its west side drains it into the old pipes - the hall fills with air when you turn it.\nThe stingrays came in with the water. I locked myself in the cage against them and threw the key in the cistern store. Stupid.
+note tomaslog Signalman Tomas Berg's log | SIGNAL LOG - T. BERG\n\nLift Day, 3:51. The upper town went up like a lid. I signalled: WHAT HAPPENED. Nobody up there knew either.\n\nThe rock is the only part of the lower town that still has its head in the air. I sleep on the crown and swim down for water from the cistern, while it has water.\n\nDay 4. Ada has taken the wheel off the cistern valve. 'Nobody drains my hall,' she says - her salt is stored in the pipes. She has hidden it in her salt cellar in the west. Marn needs that hall dry to get at her key. I have told Ada so. Ada has told me what I can do with my flags.\n\nIf you go down: the spare bottle is in my deck box. Use it.
+note adanote Salt merchant Ada Sund's note | (Pinned to the salt sacks with a fish hook)\n\nTO WHOEVER IS READING MY SALT CELLAR:\n\nThe wheel is in the box. I took it off so the Institute's people could not drain the cistern hall into the pipes where my salt is. My salt is slush now anyway. So take it.\n\nTake it to the valve on the hall's west side. Get the poor woman out of her cage. I said some hard things to her about her Institute. Some of them were true. None of them were her fault.\n\n- A. Sund, salt and rope
 note cisternstore Cistern store | The cistern store: the water works' plans - a tank, pipes, a purifier and a big store chest - and on top, a cage key on a string.
 note marnsatchel Marn's satchel | Ilse Marn's satchel: her survey book and a coil of rope.
 note marnmap Marn's map of the pendulum | MARN'S MAP\n\nA long, thin island drawn in pencil, 12 m over the water, a pendulum hall on top. Under it, an arrow: "the KEEL - the field's lowest point. Halvard measures from there."\n\nIn the margin: "the cable car went to the pendulum; band 1000."
@@ -123,9 +178,9 @@ prop cisternair obj.name=cisternair
 prop cisternair beh.hidden=1
 prop valve obj.name=valve
 prop valve beh.use=Turn the cistern valve
-prop valve if.use=!signal|drained
+prop valve if.use=has|story:valvewheel|1\n!signal|drained
 prop valve on.use=signal||drained\nhide|cisternwater\nshow|cisternair\ngive||story:drained*1\nmessage||The valve squeals round. The pipes gulp, and the cistern hall drains - air bubbles up under its roof.\nsound||event:/exploring/obstacles/keypad/keypad_correct
-prop valve else.use=message||The cistern is drained already.
+prop valve else.use=message||The valve has no wheel - only a bare spindle. (If it has its wheel, the cistern is drained already.)
 prop cisternstore if.open=signal|drained
 prop cisternstore else.open=message||The store is under the cistern's water. Drain the hall first - the valve on its west side.
 
@@ -155,7 +210,12 @@ step reach|ballast_stone|1|Dive to the ballast stone in the square
 step read|Sinkmarket ledger|1|Read the market's ledger
 step reach|bell|1|Breathe in the diving bell
 step read|Bell keeper's log|1|Read the bell keeper's log
-step collect|story:drained|1|Turn the cistern valve
+step reach|rockfoot|1|Find Lookout Rock north-east of the square
+step reach|rocktop|1|Climb Lookout Rock to its dry crown
+step read|Signalman Tomas Berg's log|1|Read the signalman's log on the crown
+step read|Salt merchant Ada Sund's note|1|Find the salt cellar in the west and read Ada's note
+step collect|story:valvewheel|1|Take the cistern valve's wheel from the salt cellar box
+step collect|story:drained|1|Set the wheel on the cistern valve and turn it
 step reach|cistern|1|Breathe in the drained cistern hall
 step kill|Stingray|3|Drive the stingrays out of the cistern hall
 step blueprint|Blueprint_WaterTank|1|Take the water tank plans from the cistern store

@@ -5,5 +5,10 @@ hour 11
 weather Calm
 at 0 0
 wait 3
-picture sl5_stair_of_hours_island 50 25 -60 0 8 0
+picture sl5_stair_of_hours_island 70 35 -110 0 8 0
 picture sl5_stair_of_hours_telescope 6 14 -6 0 12 0
+# 10-25 deep pass: Shadow Crag and the star station, the hour-keeper's cave, the glider
+picture gh_crag -15 24 -20 -50 22 -5
+picture gh_station -42 +3 -12 -50 +1 -5
+picture gh_cave 55 +3 -31 55 +1 -19
+picture gh_glider 40 +4 32 32 +1 40

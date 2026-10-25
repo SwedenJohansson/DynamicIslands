@@ -18,9 +18,17 @@
 include lib_huts
 include lib_gravity
 include lib_features
+include lib_areas
+include lib_highwater
+# RESIZE 10-25 (box agent, older-storyline deep pass): Radius 36 -> 104, the finale's size: the plate, moat, arms, ring
+# and core stay in the middle; round them the crown's wild rock.
+# DEEP 10-25: Storm Peak in the north-west - a 40 m climb to the lightning mast, where the chief engineer keeps the core
+# cutoff's key; the builders' camp in ruins in the south-west (the foreman's note sends you to the peak); the
+# coil-winders' cave in the east; Halvard's own plane in the north-east. The cutoff now needs its key. Voices: the
+# foreman Arne Dahl, the chief engineer Sigrid Ahl, the coil-winder Rut Ek, Halvard.
 new
 gen Trees=0 Bushes=0.15 Rocks=0.3 Harvest=0.15 BeachThings=0
-gen Seed=9681 Radius=36 Height=10 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.7 PeakShape=0.4
+gen Seed=9681 Radius=104 Height=10 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.7 PeakShape=0.4
 gen Water=0 SeaRocks=0 SeaFinds=0 Sunken=0 Hostiles=0 Friendly=0 SeaLife=0
 generate
 elevation 35
@@ -33,8 +41,19 @@ brush flatten at -6 -5 r=3 s=20 frames=200 h=5
 brush smooth at -21.6 -37.2 r=10 s=20 frames=150
 brush flatten at 6 4.5 r=3 s=20 frames=200 h=5
 brush flatten at -5 4 r=2.5 s=20 frames=200 h=5
+# --- DEEP 10-25 terrain: Storm Peak (north-west, 40 m, base r 30) and its path, the builders' camp's pad (south-west),
+# the coil-winders' cave's pad (east), Halvard's plane's pad (north-east) ----------------------------------------------
+call hw_mount x=-60 z=45 b=30 h=40
+call hw_trail x=-60 z=45 b=30 h=40 a0=135 turn=300 n=42 h0=6
+brush flatten at -55 -55 r=11 s=20 frames=400 h=6
+brush flatten at 75 -30 r=10 s=20 frames=300 h=6
+brush flatten at 55 60 r=11 s=20 frames=300 h=6
 origin
 clear at 0 0 r=28
+clear at -55 -55 r=11
+call ar_ruin x=-55 z=-55 h=6 yaw=30 w=3 d=2 al=buildcamp
+call ar_cave x=75 z=-30 h=6 yaw=180 al=coilrock chest=coilchest
+call ar_plane x=55 z=60 h=6 yaw=210 al=halvardplane crate=halvardcrate
 
 # --- The four magnet arms: a harpoon tower's platform, its gun on top, two iron poles; a coil control on a post ------
 macro arm x=0 z=0 yaw=0 al=arm ctl=coil cx=0 cz=0
@@ -76,7 +95,7 @@ place RT_PillarThick zipposts at $x $z ground sy=$sy
 end
 call zippost x=9.28 z=-14.03 sy=1.77
 call zippost x=-4.72 z=19.97 sy=1.77
-call zippost x=13.28 z=-0.03 sy=2.04
+call zippost x=13.28 z=-0.03 sy=1.78
 call zippost x=-6.72 z=-18.03 sy=1.77
 
 # --- The landing ring: the manual, the ring locker, the generator (its lever) and the coil boards; the store ----
@@ -133,10 +152,43 @@ place Zone_Trigger guardzone at 0 0 h=5.5
 # --- The storm over the Array ----------------------------------------------------------------------------------------
 place Zone_Atmosphere storm at 0 0 h=10
 
+# --- DEEP 10-25: Storm Peak - its foot and top as zones, the lightning mast with the cutoff key, Sigrid's log ----------
+call hw_zone x=-38 z=23 al=peakfootz id=peakfoot r=5 msg="Storm Peak. Iron spikes hammered into the rock mark a path up round it."
+call hw_zone x=-60 z=45 al=peaktopz id=peaktop r=8 h=1 msg="The top of Storm Peak, 75 m over the sea. The lightning mast hums; below, the four arms spark round the core."
+call hw_mast x=-60 z=45 h0=40 lv=4 a=lightningmast chest=stormbox top=Placeable_Lantern_Metal
+place Note_Paper sigridlog at -63.5 41.5 h=40.1 drop yaw=135
+loot stormbox story:cutoffkey*1;OxygenBottle*1;Battery*1;Rope*2
+prop stormbox loot.refill=0
+note stormbox Lightning mast box | Sigrid's box on the lightning mast: the core cutoff's key on a copper chain, a battery - and a diving bottle 'for the root'.
+scatter Bush 8 at -60 45 r=30 seed=9701 free=1
+scatter Bush2 5 at -60 45 r=30 seed=9702 free=1
+call treasure x=-52 z=55 r=4 n=1 seed=9695 kind=0
+prop treasure9695 treasure.loot=MetalOre*3;CopperOre*2;TitaniumOre*1
+place Creature_Goat peakgoats at -40 40 ground
+prop peakgoats creature.count=2
+# --- The builders' camp (south-west): Arne's note on the table --------------------------------------------------------
+call hw_zone x=-55 z=-55 al=campz id=buildcamp r=6 msg="The builders' camp: the huts are gone, the table stayed. A note is weighed down with a bolt."
+place Note_Paper arnenote at -55.65 -54.63 h=7.05 drop yaw=30
+call treasure x=-48 z=-46 r=4 n=1 seed=9696 kind=0
+prop treasure9696 treasure.loot=Scrap*4;Bolt*3;Hinge*1
+# --- The coil-winders' cave (east): a secret --------------------------------------------------------------------------
+call hw_zone x=75 z=-35 al=coilz id=coilcave r=4 msg="A cave in the east rock, its walls wound with copper wire - the coil-winders' workshop."
+place Note_Paper rutnote at 73.5 -35.5 h=6.45 drop yaw=180
+loot coilchest CopperIngot*3;Rope*2;Battery*1;Bolt*2
+prop coilchest loot.refill=0
+note coilchest Coil-winders' chest | The coil-winders' chest: copper ingots, spare wire and a battery.
+call treasure x=60 z=-45 r=6 n=1 seed=9697 kind=0
+prop treasure9697 treasure.loot=CopperOre*3;MetalOre*2
+# --- Halvard's plane (north-east): a secret ---------------------------------------------------------------------------
+loot halvardcrate TitaniumIngot*1;Plastic*3;Rope*2;Nail*6
+prop halvardcrate loot.refill=0
+note halvardcrate Halvard's plane crate | Halvard's own crate from his plane: a titanium ingot, plastic and rope - and an empty frame where a photograph was.
+place Note_Paper halvardplanenote at 49 55 ground drop yaw=210
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Lodestone Array
 info author=Custom Islands
-info description=The Halvard Institute's crown, 35 m over the sea: four giant magnet arms round a moat, a glass bridge, and the core that tore the islands into the sky. A storm and sparks over it all. The finale's first half of The Gravity Sea.
+info description=The Halvard Institute's crown, 35 m over the sea and the size of a finale: Storm Peak and its lightning mast, the builders' camp, the coil-winders' cave, Halvard's plane, four giant magnet arms round a moat, a glass bridge, and the core that tore the islands into the sky. A storm and sparks over it all. The finale's first half of The Gravity Sea.
 island on.arrive=message||Four iron arms round a core, sparking in a storm, 35 m over the sea. Every compass on the raft spins.
 
 story arraypower|Array generator on|Battery|You started the Array's generator: the coils can be worked.
@@ -145,12 +197,17 @@ story coileast|East coil off|Bolt|You pulled the east coil's lever.
 story coilsouth|South coil off|Bolt|You pulled the south coil's lever.
 story coilwest|West coil off|Bolt|You pulled the west coil's lever.
 story beamset|Beam on the core door|Battery|The beam runs through two mirrors onto the core's door panel.
+story cutoffkey|Core cutoff key|Bolt|The core cutoff's key, from the lightning mast on Storm Peak.
 story crownoff|Crown shut off|Placeable_Lantern_Metal|You pulled the core cutoff: the Array's crown went dark.
 
-note manual Array operating manual | LODESTONE ARRAY - OPERATING MANUAL\n\n1. Start the generator on the landing ring.\n2. Take the coils off line in order: north, east, south, west. Ride the lines between the arms.\n3. Cross to the core by the glass bridge. The core's door takes the beam (emitter, two mirrors).\n4. The CUTOFF is by the core. It stops the crown - not the root.
+note manual Array operating manual | LODESTONE ARRAY - OPERATING MANUAL\n\n1. Start the generator on the landing ring.\n2. Take the coils off line in order: north, east, south, west. Ride the lines between the arms.\n3. Cross to the core by the glass bridge. The core's door takes the beam (emitter, two mirrors).\n4. The CUTOFF is by the core. It stops the crown - not the root. Its KEY is kept by the chief engineer, off the plate.
 note ringlocker Ring locker | The landing ring's locker: the crew's spare lights, wire and a little food.
 note coilstatus Coil status | COIL STATUS\n\nNORTH - ON\nEAST - ON\nSOUTH - ON\nWEST - ON\n\nField: rising. Do NOT approach the core with the coils on line.
 note coilsoff Coils offline | COIL STATUS\n\nNORTH - OFF\nEAST - OFF\nSOUTH - OFF\nWEST - OFF\n\nField: falling. The core may be approached.
+note arnenote Foreman Arne Dahl's note | BUILDERS' CAMP - A. DAHL, FOREMAN\n\nWe built the arms in eleven weeks. Halvard paid in titanium, which tells you something about Halvard.\n\nWe were told: the Array lifts nothing, it only measures. On Lift Day it lifted our camp, the huts, the cook and me, 35 m into the air, and set us down again as if nothing had happened. The huts did not survive the setting down. The cook has not spoken since.\n\nSigrid has the cutoff key. She took it up Storm Peak to the lightning mast, so nobody could pull the cutoff by mistake - or on purpose. If you mean to shut the crown, you need her key. Go up the peak. Watch the iron spikes in a storm.
+note sigridlog Chief engineer Sigrid Ahl's log | CHIEF ENGINEER - S. AHL\n\nThe key stays up here, by the mast, where only someone who means it will climb for it.\n\nHalvard asked me for it on his way to the Stair of Hours. I said: Ernst, if you pull the crown and leave the root running, the islands stay up and the crown has nothing holding it back. The root would pull alone - down. The islands would come down hard.\n\nHe said he knew. He said that is why he wanted someone else to do it - someone who would also dive to the root after. I am not that person. I build things; I do not dive.\n\nIf you are: take the key. Throw the crown's cutoff. Then the root's. Both.
+note rutnote Coil-winder Rut Ek's note | We wound every coil by hand - eleven thousand turns each, copper from the quay's seams. The arms hum when the coils are on, you can feel it in your teeth.\n\nSince Lift Day the spare wire in this cave winds itself tighter every night. I come in, it is tighter. Nobody touches it.\n\nI keep my spare ingots here. If you are going to the core: the coils must be OFF, all four, north first. Do not go in with them on. - R. Ek
+note halvardplanenote Halvard's note in his plane | (Tucked into the plane's logbook, in Halvard's hand)\n\nFlew the whole Gravity Sea today. From the air it is beautiful: islands hanging over their own shadows, a market in the sky, a quay cut in half.\n\nI did this. I meant to weigh the field and I lifted the sea's bed into the air.\n\nI will not fly again; the compass will not settle. If someone finds the plane: there is a titanium ingot in the crate. Use it to fix what I broke.\n\n- E. H.
 note westcache West arm cache | The west arm's cache: Halvard's crew's emergency kit.
 note corewarning Core warning | CORE - WARNING\n\nThe cutoff stops the crown. The field below - the ROOT, 35 m under the sea - keeps pulling until its own cutoff is thrown.\nIf the crown goes dark and the root does not, the islands stay up. Throw both.\n\n- E. H.
 loot ringlocker Battery*1;CopperIngot*2;Rope*2;Cooked_Mackerel*2
@@ -251,9 +308,9 @@ prop coreglow obj.name=coreglow
 prop corecam obj.name=corecam
 prop cutoff obj.name=cutoff
 prop cutoff beh.use=Pull the core cutoff
-prop cutoff if.use=signal|laser\nsignal|claw\n!signal|crownoff
+prop cutoff if.use=has|story:cutoffkey|1\nsignal|laser\nsignal|claw\n!signal|crownoff
 prop cutoff on.use=signal||crownoff\nhide|coreglow\nshow|corezone\ngive||story:crownoff*1\ncamera|corecam|core|6|40\nmessage||The cutoff comes down. The core's glow dims to nothing, the storm's sparks die - but under your feet the rock still pulls at the sea below.
-prop cutoff else.use=message||The cutoff is locked: the coils must be off line and the core's door open to the beam.
+prop cutoff else.use=message||The cutoff is locked: it needs its key (the chief engineer keeps it), the coils off line and the core's door open to the beam.
 prop corezone obj.name=corezone
 prop corezone beh.hidden=1
 prop corezone zone.id=core
@@ -285,6 +342,11 @@ step reach|west_arm|1|Ride the line to the west arm
 step collect|story:coilwest|1|Take the west coil off line
 step read|Coils offline|1|Read the status board on the landing ring again
 step open|West arm cache|1|Open the west arm's cache
+step read|Foreman Arne Dahl's note|1|Find the builders' camp in the south-west and read the foreman's note
+step reach|peakfoot|1|Find the path up Storm Peak in the north-west
+step reach|peaktop|1|Climb Storm Peak to the lightning mast
+step read|Chief engineer Sigrid Ahl's log|1|Read the chief engineer's log by the mast
+step collect|story:cutoffkey|1|Take the core cutoff's key from the lightning mast box
 step reach|bridge|1|Cross the glass bridge to the core
 step collect|story:beamset|1|Bring the beam through the two mirrors to the core's door panel
 step kill|Bear|1|Defeat the Array's iron guardian
