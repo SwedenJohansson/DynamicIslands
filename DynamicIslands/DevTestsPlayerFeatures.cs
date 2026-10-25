@@ -276,5 +276,115 @@ namespace DynamicIslands
 			finally { RemovePlayerIsland(e); }
 			if (ok) Log("PASS: collectible sets in a world"); else Fail("collectible sets in a world");
 		}
+
+		[ConsoleCommand(name: "CILightParse", docs: "Dev, anywhere: light puzzles read right (a light's defaults and use lines, the light action, the light and lights checks, the events, the Light up step, plan check, the editors' lists)")]
+		public static void LightParseCommand()
+		{
+			bool ok = true;
+			Dictionary<string, string> d = ObjectProps.Defaults(Lights.ObjectName);
+			Check(ref ok, Lights.GroupOf(d) == "Lamps" && !Lights.StartsOn(d) && ObjectProps.Get(d, BehaviourProps.Use).Length > 0, "a placed light is in Lamps, starts off, has a use label");
+			IDictionary<string, string> x = Lights.Expand(Lights.ObjectName, d);
+			Check(ref ok, ObjectProps.Get(x, "on.use") == "switch|", "the use key switches it (" + ObjectProps.Get(x, "on.use") + ")");
+			x = Lights.Expand("Log", P(Lights.GroupProp, "Torches", "on.use", "message||Click"));
+			Check(ref ok, ObjectProps.Get(x, "on.use") == "switch|\nmessage||Click" && ObjectProps.Get(x, BehaviourProps.Use).Length > 0, "any object with a group is a light, its own lines kept");
+			IDictionary<string, string> own = P(Lights.GroupProp, "T", "on.use", "light||on", BehaviourProps.Use, "Light it");
+			Check(ref ok, ReferenceEquals(Lights.Expand("Log", own), own), "a light that switches itself is kept as it is");
+			IDictionary<string, string> none = P("on.use", "message||x");
+			Check(ref ok, ReferenceEquals(Lights.Expand("Log", none), none) && !Lights.IsLight("Log", none), "an object without a group is no light");
+			Check(ref ok, Lights.StartsOn(P(Lights.OnProp, "1")) && Lights.StartsOn(P(Lights.OnProp, "on")) && !Lights.StartsOn(P(Lights.OnProp, "0")), "starts on: 1/on");
+			Check(ref ok, Lights.SignalOf(" Lamps ") == "lights:lamps", "the group's signal (lights:lamps)");
+			ObjAction a = ObjAction.Parse("light|group:Lamps|off");
+			Check(ref ok, a != null && a.Verb == "light" && a.Target == "group:Lamps" && a.Arg == "off" && a.Shared && ObjAction.HasTarget("light") && ObjAction.HasArg("light"), "light|group:Lamps|off parses; it is shared (host)");
+			Check(ref ok, a != null && a.Describe().Contains("Lamps"), "described (" + (a != null ? a.Describe() : "") + ")");
+			ObjCheck c = ObjCheck.Parse("lights|Lamps|on");
+			Check(ref ok, c != null && c.Kind == "lights" && c.Target == "Lamps" && c.Describe().Contains("Lamps"), "lights|Lamps|on parses (" + (c != null ? c.Describe() : "null") + ")");
+			c = ObjCheck.Parse("light||off");
+			Check(ref ok, c != null && c.Kind == "light" && c.Describe().Contains("off"), "light||off parses (" + (c != null ? c.Describe() : "null") + ")");
+			Check(ref ok, PlayerFeatures.CheckArgPlaceholder("light") != null && PlayerFeatures.CheckArgPlaceholder("lights") != null, "the behaviour window shows on/off for both checks");
+			List<string> evs = BehaviourProps.EventsFor(Lights.ObjectName, d).Select(v => v.Key).ToList();
+			Check(ref ok, evs.Contains("lit") && evs.Contains("unlit") && evs.Contains("alllit") && evs.Contains("use") && PlayerFeatures.IsEvent("alllit"), "a light's events (" + string.Join(", ", evs.ToArray()) + ")");
+			var q = new IslandQuest.Step { Type = "lights", Target = "Lamps", Count = 3 };
+			Check(ref ok, IslandQuest.Types.Contains("lights") && IslandQuest.Counted("lights") && q.Describe().Contains("Lamps"), "the Light up step, counted (" + q.Describe() + ")");
+			var facts = new PlayerFeatures.PlanFacts();
+			for (int i = 0; i < 3; i++) PlayerFeatures.AddFacts(facts, Lights.ObjectName, P(Lights.GroupProp, "Lamps"));
+			Check(ref ok, PlayerFeatures.StepProblem(facts, "lights", "lamps", 3) == null && PlayerFeatures.StepProblem(facts, "lights", "Lamps", 4) != null
+				&& PlayerFeatures.StepProblem(facts, "lights", "Torches", 1) != null && PlayerFeatures.StepProblem(facts, "lights", "", 1) != null, "the plan check: an unknown group, too few lights");
+			Check(ref ok, ContentCatalog.Hint(Lights.ObjectName).Contains("light"), "the catalog hint");
+			CheckPlayerTables(ref ok);
+			if (ok) Log("PASS: light puzzles' settings"); else Fail("light puzzles' settings");
+		}
+
+		[ConsoleCommand(name: "CILightRun", docs: "Dev, in a world (host): spawns 'ciplayer' with three Lamps (one starts on): switches them with the use key (lights shown, lit event), the lights check, the whole group's alllit event and signal, the Light up step, the light action switching the group off")]
+		public static void LightRunCommand() { StartTest(LightRunRoutine()); }
+
+		static IEnumerator LightRunRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			var lamp = new List<int>();
+			int gate = -1, lever = -1;
+			IslandFile f = PlayerTestIsland((file, add) =>
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					Dictionary<string, string> p = ObjectProps.Defaults(Lights.ObjectName);
+					if (i == 0) { p["on.lit"] = "signal||lamp-lit"; p["on.alllit"] = "signal||lamps-reward"; }
+					if (i == 2) p[Lights.OnProp] = "1";
+					lamp.Add(add(Lights.ObjectName, -3f + i * 3f, 4f, p));
+				}
+				gate = add("Log", 0f, 7f, P(BehaviourProps.Use, "Open", "if.use", "lights|Lamps|on", "on.use", "signal||lamp-gate"));
+				lever = add("Log", 3f, 7f, P(BehaviourProps.Use, "Pull", "on.use", "light|group:Lamps|off"));
+				file.Props[IslandQuest.KeyTitle] = "CI lamps";
+				file.Props[IslandQuest.KeySteps] = "lights|Lamps|3|\nreach|nowhere|1|";
+			});
+			IslandWorldState.Entry e = null;
+			yield return SpawnPlayerIsland(f, v => e = v);
+			if (e == null || e.Root == null) { Fail("the island did not spawn"); RemovePlayerIsland(e); yield break; }
+			Func<int, IslandObjectRef> obj = i => e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(r => r.Index == i);
+			Func<int, bool> shows = i => { IslandObjectRef r = obj(i); PuzzleLight pl = r != null ? r.GetComponent<PuzzleLight>() : null; return pl != null && pl.ShowsLit; };
+			try
+			{
+				yield return new WaitForSeconds(1f);
+				Check(ref ok, lamp.All(i => obj(i) != null && obj(i).GetComponent<PuzzleLight>() != null), "every lamp is a puzzle light in the world");
+				Check(ref ok, !Lights.Lit(e, obj(lamp[0])) && !Lights.Lit(e, obj(lamp[1])) && Lights.Lit(e, obj(lamp[2])) && Lights.LitCount(e, "lamps") == 1, "two off, the third starts on (" + Lights.LitCount(e, "Lamps") + " lit)");
+				Check(ref ok, !shows(lamp[0]) && shows(lamp[2]), "shown off / on");
+				if (obj(lamp[2]) != null) { PutPlayerNear(obj(lamp[2]).transform, 3f); Screenshot(new[] { "light" }); }
+				for (int n = 0; n < 2; n++)
+				{
+					IslandObjectRef r = obj(lamp[n]);
+					UseInteract u = r != null ? r.GetComponentInChildren<UseInteract>(true) : null;
+					Check(ref ok, u != null, "lamp " + (n + 1) + " can be switched");
+					if (u == null) continue;
+					Traverse.Create(u).Method("Use").GetValue();
+					yield return new WaitForSeconds(0.8f);
+					Check(ref ok, Lights.Lit(e, r) && shows(lamp[n]), "lamp " + (n + 1) + " is on and shows it");
+					if (n == 0)
+					{
+						Check(ref ok, Behaviours.HasSignal(e, "lamp-lit"), "its lit event ran");
+						Behaviours.Fire(e, gate, "use", true);
+						yield return new WaitForSeconds(0.3f);
+						Check(ref ok, !Behaviours.HasSignal(e, "lamp-gate"), "lights|Lamps|on fails with one lamp still off");
+						Check(ref ok, !Behaviours.HasSignal(e, Lights.SignalOf("Lamps")) && QuestTracker.StepOf(e) == 0, "no group signal yet, the step waits");
+					}
+				}
+				yield return new WaitForSeconds(1.2f);
+				Check(ref ok, Behaviours.HasSignal(e, Lights.SignalOf("Lamps")), "the whole group sent lights:lamps");
+				Check(ref ok, Behaviours.HasSignal(e, "lamps-reward"), "the whole group ran alllit (its reward)");
+				Check(ref ok, QuestTracker.StepOf(e) >= 1, "the Light up step is done (step " + QuestTracker.StepOf(e) + ")");
+				Behaviours.Fire(e, gate, "use", true);
+				yield return new WaitForSeconds(0.3f);
+				Check(ref ok, Behaviours.HasSignal(e, "lamp-gate"), "lights|Lamps|on passes");
+				Behaviours.Fire(e, lever, "use", true);
+				yield return new WaitForSeconds(0.8f);
+				Check(ref ok, Lights.LitCount(e, "Lamps") == 0 && lamp.All(i => !shows(i)), "light|group:Lamps|off switched the group off (" + Lights.LitCount(e, "Lamps") + " lit)");
+				bool v, open;
+				Behaviours.StateNow(e, obj(lamp[2]), out v, out open);
+				Check(ref ok, open, "the lamp that starts on is kept off as its open bit (saved)");
+				Check(ref ok, Lights.Holds(e, lamp[0], ObjCheck.Parse("light||off")) && !Lights.Holds(e, lamp[0], ObjCheck.Parse("light||on")), "light||off holds for this lamp");
+			}
+			finally { RemovePlayerIsland(e); }
+			if (ok) Log("PASS: light puzzles in a world"); else Fail("light puzzles in a world");
+		}
 	}
 }

@@ -20,6 +20,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Collectible sets** (Loot & chests > **Collectible (set piece)**): hidden pieces of a named set. Picking one up
   counts for the whole crew ("Relics: 2 of 4"); the last one sends the signal `set:<name>` and runs the pieces' **set**
   event (the reward). New check **set found** and quest step **Find set**.
+- **Light puzzles** (Zones & triggers > **Puzzle light (switch)**, or any object with a light group): switched on and
+  off with E, saved and the same for every player. Events **lit**, **unlit** and **alllit** (the whole group on, plus
+  the signal `lights:<group>`), the action **switch light**, the checks **light is** / **all lights** and the quest
+  step **Light up**.
 
 ## 2026-10-25: Relic of the Seventh Tide, full-size islands
 

@@ -13,6 +13,7 @@ namespace DynamicIslands.Editor
 		{
 			if (Islanders.Is(target.GameObjectName)) IslanderGroup(target);
 			if (Collectibles.Is(target.GameObjectName) || Collectibles.IsPiece(target.Props)) CollectibleGroup(target);
+			if (Lights.IsLight(target.GameObjectName, target.Props)) LightGroup(target);
 		}
 
 		static void IslanderGroup(EditorGameObject target)
@@ -67,6 +68,26 @@ namespace DynamicIslands.Editor
 			GameObject placed = GameObject.Find("PlacedObjects");
 			int pieces = placed == null || set.Length == 0 ? 0 : placed.GetComponentsInChildren<EditorGameObject>().Count(o => string.Equals(Collectibles.SetOf(o.Props), set, System.StringComparison.OrdinalIgnoreCase));
 			UIKit.Size(UIKit.Label(g, set.Length == 0 ? "No set: not a piece." : pieces + " piece" + (pieces == 1 ? "" : "s") + " of \"" + set + "\" on this island. Reward: Behaviour > \"set\"; quest step \"Find set\"; check \"set found\"", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic).gameObject, -1, 16);
+		}
+
+		/// <summary>A puzzle light (PF6): its group, whether it starts on, and how many lights its group has.</summary>
+		static void LightGroup(EditorGameObject target)
+		{
+			RectTransform g = UIKit.Group(root, "Puzzle light");
+			string group = Lights.GroupOf(target.Props);
+			InputField f = SurvivorField(g, "Group", group, 26f, "The lights' group: when every light of it is on, each runs its \"alllit\" event and the island sends the signal lights:<group> (empty = no group; any object with a group is a light)");
+			f.characterLimit = 32;
+			f.onEndEdit.AddListener(v => { Set(target, Lights.GroupProp, v.Trim().Length > 0 ? v.Trim() : null); Refresh(); });
+			amountFields.Add(f);
+			bool on = Lights.StartsOn(target.Props);
+			RectTransform row = UIKit.Row(g, 26f, 4f, "LightStartsOn");
+			UIKit.Size(UIKit.Label(row, "Starts", 13, UIKit.TextMuted).gameObject, 80);
+			Button offB = UIKit.Button(row, "off", () => { Set(target, Lights.OnProp, null); Refresh(); }, "The light starts switched off", -1, 26f, 12);
+			Button onB = UIKit.Button(row, "on", () => { Set(target, Lights.OnProp, "1"); Refresh(); }, "The light starts switched on (players switch it off)", -1, 26f, 12);
+			UIKit.Primary(on ? onB : offB);
+			GameObject placed = GameObject.Find("PlacedObjects");
+			int lights = placed == null || group.Length == 0 ? 0 : placed.GetComponentsInChildren<EditorGameObject>().Count(o => Lights.IsLight(o.GameObjectName, o.Props) && string.Equals(Lights.GroupOf(o.Props), group, System.StringComparison.OrdinalIgnoreCase));
+			UIKit.Size(UIKit.Label(g, (group.Length == 0 ? "No group." : lights + " light" + (lights == 1 ? "" : "s") + " in \"" + group + "\" on this island.") + " Events: \"lit\", \"unlit\", \"alllit\"; action \"switch light\"; checks \"light is\", \"all lights\"; step \"Light up\"", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic).gameObject, -1, 30);
 		}
 	}
 }

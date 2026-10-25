@@ -329,7 +329,7 @@ namespace DynamicIslands.Editor
 
 		static readonly Dictionary<string, string> TypeLabels = new Dictionary<string, string>
 		{
-			{ "reach", "Go to" }, { "read", "Read" }, { "open", "Open" }, { "kill", "Defeat" }, { "catch", "Catch" }, { "collect", "Collect" }, { "pages", "Find pages" }, { "blueprint", "Blueprint" }, { Islanders.QuestType, "Talk to" }, { Collectibles.QuestType, "Find set" },
+			{ "reach", "Go to" }, { "read", "Read" }, { "open", "Open" }, { "kill", "Defeat" }, { "catch", "Catch" }, { "collect", "Collect" }, { "pages", "Find pages" }, { "blueprint", "Blueprint" }, { Islanders.QuestType, "Talk to" }, { Collectibles.QuestType, "Find set" }, { Lights.QuestType, "Light up" },
 		};
 
 		/// <summary>What each kind of step asks (the step list's lines).</summary>
@@ -341,6 +341,7 @@ namespace DynamicIslands.Editor
 			{ "pages", "Find a number of journal pages: notes read on this island (or \"all\": anywhere)" },
 			{ "blueprint", "Find one of Raft's blueprints: picked up (and carried) or already learned (e.g. Blueprint_Fueltank)" },
 			{ Islanders.QuestType, "Talk to an islander (Story_Islander, by its name; empty = any islander): done when the dialogue closes" },
+			{ Lights.QuestType, "Switch on a number of the puzzle lights of a group on this island (its Count; the quest panel counts them)" },
 			{ Collectibles.QuestType, "Find a number of the pieces of a collectible set on this island (objects with that Set; the HUD counts them)" },
 		};
 
@@ -352,6 +353,7 @@ namespace DynamicIslands.Editor
 			{ "blueprint", "Blueprint_ name (\u25BE lists Raft's; empty = any story blueprint)" },
 			{ Islanders.QuestType, "islander's name (\u25BE lists this island's; empty = any)" },
 			{ Collectibles.QuestType, "set name (\u25BE lists this island's sets)" },
+			{ Lights.QuestType, "light group (\u25BE lists this island's groups)" },
 		};
 
 		/// <summary>Takes what was typed into the step rows before they are rebuilt.</summary>

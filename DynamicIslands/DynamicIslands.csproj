@@ -170,6 +170,7 @@
     <Compile Include="PlayerFeatures.cs" />
     <Compile Include="Islanders.cs" />
     <Compile Include="Collectibles.cs" />
+    <Compile Include="Lights.cs" />
     <Compile Include="ObjectInspectorPlayer.cs" />
     <Compile Include="ObjectInspectorMech.cs" />
     <Compile Include="WorldDirector.cs" />

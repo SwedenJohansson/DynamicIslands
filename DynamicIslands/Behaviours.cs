@@ -49,10 +49,10 @@ namespace DynamicIslands.Editor
 		public const string EventPrefix = "on.";
 		public static readonly string[] ObjectEvents = { "use", "enter", "read", "open", "defeat", "laser", BossPhases.Event, MechFeatures.StackEvent };
 		public static readonly string[] IslandEvents = { "arrive", "quest" };
-		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character", "playsound", "stopsound", "camera", "suit", "hit", "carry", "collapse", "moveto", PlayerFeatures.DialogueVerb };
-		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal", "playsound", "stopsound", "camera", "hit", "collapse", "moveto" };
+		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character", "playsound", "stopsound", "camera", "suit", "hit", "carry", "collapse", "moveto", PlayerFeatures.DialogueVerb, Lights.Verb };
+		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal", "playsound", "stopsound", "camera", "hit", "collapse", "moveto", Lights.Verb };
 		public const string CheckPrefix = "if.", ElsePrefix = "else.";
-		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest", "wears", "holds", PlayerFeatures.TalkedCheck, Collectibles.CheckKind };
+		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest", "wears", "holds", PlayerFeatures.TalkedCheck, Collectibles.CheckKind, Lights.LightCheck, Lights.GroupCheck };
 		public static readonly string[] States = { "open", "closed", "shown", "hidden" };
 		public static readonly string[] CollisionModes = { "", "none", "box", "solid" };
 
@@ -607,6 +607,13 @@ namespace DynamicIslands.Editor
 			Store(e, index, RefsOf(e).FirstOrDefault(r => r.Index == index), visible, open);
 		}
 
+		/// <summary>Host: sets an object's shown/open state and sends it to every player (as the shared actions do).</summary>
+		internal static void SetState(IslandWorldState.Entry e, int index, bool visible, bool open)
+		{
+			Apply(e, index, visible, open);
+			IslandNetwork.SendObjectSet(e.Id, index, (visible ? 1 : 0) | (open ? 2 : 0));
+		}
+
 		/// <summary>Whether an object is shown and open, as its state says (shown/hidden as placed when nothing is saved).</summary>
 		internal static void StateNow(IslandWorldState.Entry e, IslandObjectRef r, out bool visible, out bool open) { StateOf(e, r, out visible, out open); }
 
@@ -1118,6 +1125,7 @@ namespace DynamicIslands.Editor
 					StoryBook.Give(l.Key, l.Value, e);
 			foreach (ObjAction a in actions.Where(x => x.Shared))
 			{
+				if (PlayerFeatures.RunShared(e, index, a)) continue;
 				if (a.Verb == "hit") { GapFeatures.HitCreatures(e, Targets(e, index, a.Target), a.Arg); continue; }
 				if (a.Verb == "collapse") { MechFeatures.HostCollapse(e, Targets(e, index, a.Target), a.Arg); continue; }
 				if (a.Verb == "moveto") { MechFeatures.HostMoveTo(e, index, Targets(e, index, a.Target), a.Arg); continue; }

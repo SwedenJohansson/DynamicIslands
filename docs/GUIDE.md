@@ -334,6 +334,8 @@ The builder of an island can give it much more than land (see [section 5](#5-mak
   talk: a dialogue of a few pages, maybe with answers to pick. What you answer can open doors or start a quest.
 - **Collectible sets:** hidden pieces of a set (relics, shells...) lie about an island. Press **E** to pick one up:
   the screen counts "Relics: 2 of 4" for the whole crew, and finding the whole set brings its reward.
+- **Light puzzles:** lamps and torches you switch on and off with **E**. Lighting the right ones (or all of a group)
+  opens the way on; every player sees the same lights, and they stay as you left them.
 - **Locked doors:** Raft's card reader doors and other key doors open only with their card or key (a story item): the
   reader beeps it through and the door opens for everyone. Without it the door stays shut and says so.
 - **Buried treasure:** nothing shows above the ground. Raft's **metal detector** beeps as you come near, and three
@@ -1588,7 +1590,7 @@ name on the Receiver.*
 
 Steps: **go to** a trigger zone, **read** a note, **open** a chest (one of the mod's chests - Raft's abandoned raft crate doesn't count), **defeat** or **catch** a number of animals,
 **collect** a number of a story item, **find** journal pages, find a **Blueprint** of Raft's, **talk to** an islander
-(6.3; by its name, the **▾** lists the island's islanders), **find** a number of a collectible **set** (6.3). Each step's kind is a **▼ list** (each kind says what it
+(6.3; by its name, the **▾** lists the island's islanders), **find** a number of a collectible **set** (6.3), **light up** a number of a light group's puzzle lights (6.3). Each step's kind is a **▼ list** (each kind says what it
 asks). Steps point at things on the island by name: the small **▾** beside the name lists the names this island has
 for that kind - its trigger zones, note titles, chest titles or creatures - so you can pick one instead of typing it
 (place the zones, notes, chests and creatures first). A **collect** step picks its story item with **…**. **When the quest is done, bring a new island** (main quest only) chooses from a
@@ -1696,6 +1698,11 @@ Select any object → **Behaviour & events...**. No code needed:
 - **Collectible sets** (2026-10-25, 6.3): a piece of a set has the event **set** (the island's last piece of its set
   was found: runs on every piece, once - the set's reward); the check **set found** (`set|Relics|3`; empty number =
   all) passes once that many pieces of the set on this island were found.
+- **Light puzzles** (2026-10-25, 6.3): a puzzle light has the events **lit** and **unlit** (it was switched on/off) and
+  **alllit** (every light of its group is on now: runs on each of them, every time the group becomes all lit); the
+  action **switch light** (`light|Lamp 2|on`, `light|group:Lamps|off`, empty = toggle; empty name = this light;
+  shared, saved) and the checks **light is** (`light|Lamp 2|on`; empty name = this one) and **all lights**
+  (`lights|Lamps|on`, or `off`).
 - **Sounds and camera moments** (actions in the same ▼ list, shared by every player): **play sound/music** plays one of
   Raft's sound events or music cues (pick it with **…**, a list of every one Raft has), with a volume, **once** or on a
   **loop**, **near** the object (or the objects named) or for **everyone on the island**. Every player near the island
@@ -1781,6 +1788,19 @@ the island sends the signal `set:relics` (world plans and **signal sent** checks
 and a quest's **Find set** step (6.1; the **▾** lists the island's sets) waits until its number of pieces is found -
 its progress shows in the quest panel. Pieces count per island (a copy of the island has its own). Check warns when
 a **Find set** step names a set the island hasn't got or wants more pieces than it has.
+
+**Light puzzles** (2026-10-25). **Zones & triggers** has **Puzzle light (switch)**: a post with a bulb. Its **Puzzle
+light** group in the inspector has the **Group** (default Lamps; any object with a group is a puzzle light, so a
+Raft lantern or torch can be one too - its own light and flames go on and off, an object without a light gets one) and
+**Starts** off or on; it counts the group's lights. A player looks at a light and presses **E** to switch it (one
+that switches itself in its own **use** lines is left to them). The state is the object's open state: saved with
+the world and the same for every player. Each light runs **lit** or **unlit** when it changes; when every light of
+its group is on, each runs **alllit** and the island sends the signal `lights:lamps`. Build the puzzle from these:
+`light|Lamp 3|toggle` on lamp 1's **use** makes lamps that switch their neighbours too, `light|group:Lamps|off` on a
+lever resets the puzzle, `open|Gate` on **alllit** is the reward, and the checks **light is** / **all lights** gate
+any event. A quest's **Light up** step (6.1; the **▾** lists the island's groups) waits until that many lights of
+the group are on at once. Check warns when a **Light up** step names a group the island hasn't got or wants more
+lights than it has. Events run on the host while the island is loaded there.
 
 ### 6.4 Islands that bring islands
 
