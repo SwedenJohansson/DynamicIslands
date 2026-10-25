@@ -1,5 +1,7 @@
 # Colossus of the Strait - the island's own part of its test (the plan test includes this one; colossus_of_the_strait.play
 # fetches the three gears from the earlier islands first, then includes it).
+# 10-25 deep pass: after Kett's note, Strait Head (50 45, 22 m; trail foot 50 26) and Grey's mast (the sluice key), the
+# builders' cistern at -30 72 (-10 m; its chest tried first without the key), Hesk's tablet.
 island Colossus of the Strait
 offset 0 0
 expect title The Giant's Heart
@@ -37,4 +39,23 @@ open Crown vault
 expect story kettshat 1
 expect item TitaniumIngot 3
 read Kett's note
+expect step 14
+open Builders' chest
+expect message sluice key
+zone straitfoot
+expect step 15
+zone straittop
+expect step 16
+read Silas Grey's lookout log
+expect step 17
+open Grey's lookout box
+wait 3
+expect story sluicekey 1
+# (the key-less try already took the player into the zone, so the reach step counts with the key)
+zone cistern
+expect step 19
+open Builders' chest
+wait 2
+expect step 20
+read Master builder Hesk
 expect done

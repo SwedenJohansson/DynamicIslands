@@ -5,6 +5,11 @@ hour 11
 weather Calm
 at -18 0
 wait 3
-picture rope_bridge_gorge_island 0 30 -80 0 4 0
+picture rope_bridge_gorge_island 0 34 -90 0 4 0
 picture rope_bridge_gorge_bridge -16 7 -8 0 3 0
 picture rope_bridge_gorge_idols 12 6 -6 21 5 0
+# 10-25 deep pass: the Lantern Hill and Kett's mast, the builders' cave, the drowned camp house
+picture rope_bridge_gorge_hill -8 18 14 -30 12 34
+picture rope_bridge_gorge_mast -24 19 28 0 4 0
+picture rope_bridge_gorge_cave 30 +3 -48 30 +1 -35
+picture rope_bridge_gorge_camphouse 40 -3 32 40 -7 42

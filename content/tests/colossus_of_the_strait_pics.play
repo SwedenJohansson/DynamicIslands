@@ -9,3 +9,8 @@ picture colossus_of_the_strait_island 0 25 -110 0 18 0
 picture colossus_of_the_strait_giant -40 8 -20 0 18 0
 picture colossus_of_the_strait_camp -46 8 2 -34 5 -10
 picture colossus_of_the_strait_chamber -10 19.8 -3 6 19 3
+# 10-25 deep pass: Strait Head and Grey's mast, Kett's cave, the drowned builders' cistern
+picture colossus_of_the_strait_head 30 26 15 50 20 45
+picture colossus_of_the_strait_lookout 43 25 38 0 20 0
+picture colossus_of_the_strait_kettcave -50 +3 -66 -50 +1 -52
+picture colossus_of_the_strait_cistern -30 -3 62 -30 -8 72

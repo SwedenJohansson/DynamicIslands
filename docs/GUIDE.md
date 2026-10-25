@@ -4365,7 +4365,7 @@ stone giant in the strait, and the giant points to the Engine. Sunstaff Mesa com
 (`instead:Balboa`) and holds Balboa's four blueprints as **Blueprint** steps; the other islands come after a Raft
 island (`after:RadioTower`, `after:CaravanTown` ...), so Raft's own blueprints stay where they are. Skyhook Mast has
 Raft's vending machine and Tangaroa tokens to find; the Colossus and the Tide Engine have a **Raft store**. Two side
-islands come ahead of the raft by distance and by day (`km:8`, `day:5`). Its main islands are about 80% the size of Raft's own big islands.
+islands come ahead of the raft by distance and by day (`km:8`, `day:5`). Its main islands are about as big as Raft's own big islands: each has a hill to climb, a dive, a cave, a wreck or ruin to search, a buried treasure for the metal detector and notes read aloud, and its quest crosses the whole island.
 
 | Island | What it is | What to look at |
 |---|---|---|
@@ -4375,7 +4375,7 @@ islands come ahead of the raft by distance and by day (`km:8`, `day:5`). Its mai
 | ![](images/library/skyhook_mast.jpg) **Skyhook Mast** (900, after Tangaroa) | A steel mooring mast on a sea stack, Kett's airship wrecked below | A lift up the stack, screechers on the mast, a zipline down to the wreck, Raft's vending machine and Tangaroa tokens, done after step 5 (`step:5`) |
 | ![](images/library/the_hollow_fang.jpg) **The Hollow Fang** (1000, after Varuna Point) | A rock spire with three trials inside | Spinning blades, lettered stones that throw you back (zones with `teleport`), an invisible bridge shown by thrown sand |
 | ![](images/library/colossus_of_the_strait.jpg) **Colossus of the Strait** (1100, after Temperance) | A stone giant standing across a strait between two headlands | A keycard door and a lift up the leg, the three gears in a wheel that lights the giant's eyes, a Raft store |
-| ![](images/library/the_tide_engine.jpg) **The Tide Engine** (1300, the finale) | A ring of desert rock round a vast well with the Engine's heart | A 28-step quest: tide wheels, a sluice, a zipline, Kett in a cage, a boss's beast, a beam through two mirrors, a Raft store |
+| ![](images/library/the_tide_engine.jpg) **The Tide Engine** (1300, the finale) | A ring of desert rock round a vast well with the Engine's heart | A 36-step quest: tide wheels, a sluice, a zipline, Kett in a cage, a boss's beast, a beam through two mirrors, a Raft store |
 | ![](images/library/dredgers_bank.jpg) **Dredgers Bank** (side, after 8 km) | The Syndicate's dredging rig on a sandbank | A safe whose code is in the manifest, a ladder up the rig, a side quest by distance (`km:8`) |
 | ![](images/library/rope_bridge_gorge.jpg) **Rope Bridge Gorge** (side, from day 5) | A jungle island split by a gorge, a rope bridge to a temple porch | Doll idols with lanterns, the temple's warthogs, a side quest seen ahead of the raft from day 5 (`day:5`) |
 

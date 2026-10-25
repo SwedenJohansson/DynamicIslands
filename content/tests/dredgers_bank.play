@@ -1,5 +1,7 @@
 # Dredgers Bank - the side quest "The Dredging Camp" played through (plan Relic of the Seventh Tide, side A)
 # The camp flat at 1.6 m round -6 0, the safe -10 -9 and its keypad -8.6 -9; the rig 18 0, its deck at 7.
+# 10-25 deep pass: after the rig, the tender's lockbox (-36 -46, -9 m) tried without its key, the Spoil Dune (-32 30,
+# 14 m; trail foot -32 16) and the foreman's mast (the key), then the tender.
 island Dredgers Bank
 offset 0 0
 expect title The Dredging Camp
@@ -19,4 +21,23 @@ expect step 4
 use rigladder
 expect height 7.2
 zone rig_top
+expect step 5
+open Tender's lockbox
+expect message tender key
+zone dunefoot
+expect step 6
+zone dunetop
+expect step 7
+read Foreman Lopez's note
+expect step 8
+open Foreman's survey box
+wait 3
+expect story tenderkey 1
+# (the key-less try already took the player into the zone, so the reach step counts with the key)
+zone tender
+expect step 10
+open Tender's lockbox
+wait 2
+expect step 11
+read Silas Grey's orders
 expect done

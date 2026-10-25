@@ -11,3 +11,8 @@ picture sandsunk_necropolis_obelisk -6 5 -40 -16 6 -28
 picture sandsunk_necropolis_tomb -3 5 1.5 3 4 7
 picture sandsunk_necropolis_burial 3 5 10.5 0 4 16
 picture sandsunk_necropolis_front 2 5 -7 0 4.2 0
+# 10-25 deep pass: the Kings' Dune and Kett's mast, the embalmers' cave, the drowned harbour shrine
+picture sandsunk_necropolis_dune -15 28 20 -40 20 45
+picture sandsunk_necropolis_mast -33 25 38 -40 24 45
+picture sandsunk_necropolis_cave 62 +3 -25 62 +1 -12
+picture sandsunk_necropolis_shrine 50 -3 -72 50 -8 -62

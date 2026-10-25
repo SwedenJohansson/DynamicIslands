@@ -3,19 +3,29 @@
 # core, a laser panel fed through two of Temperance's turning mirrors, the Seventh lever. On the ring, three machine
 # halls of sandstone and brass - the wheel hall with three tide wheels and the sluice lever, the crane hall where
 # Utopia's cranes are the Engine's arms, the piston hall on the way to the ring's top - and in the south the landing
-# with Kett's last camp. Quest "The Seventh Tide" (28 steps) in four parts: the landing (the ambush, the supply crate,
+# with Kett's last camp. Quest "The Seventh Tide" (36 steps) in four parts: the landing (the ambush, the supply crate,
 # the radio codes, the Syndicate's radio); the tide wheels (the diagram, three wheels, the sluice, the stingrays in
 # the flooded sluice gallery, its cache); the arms (the claw, the tablet, the crane cab, the zipline across the well,
 # Kett in her cage, her warning); the heart (the boss's beast, the beam, the inscription, the Seventh lever, the
-# treasury, the relic, the ring's top).
+# treasury, the relic, the ring's top); then the epilogue (8 more steps, 36 in all): the Watch Hill in the north-west
+# and Silas Grey's last log and the tide vault key on his mast, Nell Okafor's note in her cave on the east shore, the
+# 1931 expedition's tide-gauge house drowned off the south-west (its tide vault needs the key) and Dr. Ostrander's
+# last letter in it.
+# DEEP 10-25 (Relic deep pass): Radius 70 -> 110, the finale as big as Raft's biggest islands: the ring and its halls
+# unchanged in the middle, a wide desert skirt round it; the landing path runs on out to the new south shore and the
+# sluice channel on out to the east. The Watch Hill (26 m, trail + Grey's last lookout mast), Okafor's cave on the east
+# shore, the tide-gauge house drowned off the south-west (-10 m, an air pocket), three buried caches (one titanium).
+# Voices: Silas Grey, Nell Okafor, Dr. Hal Ostrander (1931).
 #
 # Built by the recipe player (CIRecipe the_tide_engine) through the editor's own operations.
 include lib_sea
 include lib_features
+include lib_areas
+include lib_highwater
 new
 # (nature: desert rock at Raft's density - cacti and dry grass, a few rocks; three reefs round the ring)
 gen Trees=0.5 Bushes=0.8 Rocks=0.6 Harvest=0.25 BeachThings=0.3
-gen Seed=9701 Radius=70 Height=6 Roughness=0.3 Peaks=1 Shape=0 Style=2 PeakShape=0.3 Cliffs=0.4 BeachWidth=0.6
+gen Seed=9701 Radius=110 Height=6 Roughness=0.3 Peaks=1 Shape=0 Style=2 PeakShape=0.3 Cliffs=0.4 BeachWidth=0.6
 gen Water=0.5 SeaRocks=0.4 SeaFinds=0.2 Sunken=0.3 Hostiles=0 Friendly=0.1 SeaLife=0.3
 generate
 
@@ -24,22 +34,26 @@ generate
 brush flatten at 0 0 r=50 s=20 frames=400 h=5
 brush flatten at 0 0 r=13 s=20 frames=200 h=2
 brush smooth from 0 -22 to 0 -10 r=3 s=8 frames=40
-brush flatten at -44 0 r=4.5 s=20 frames=80 h=9.5
-brush flatten at -34 0 r=1.6 s=20 frames=60 h=5.6
-brush flatten at -35 0 r=1.6 s=20 frames=60 h=6.2
-brush flatten at -36 0 r=1.6 s=20 frames=60 h=6.8
-brush flatten at -37 0 r=1.6 s=20 frames=60 h=7.4
-brush flatten at -38 0 r=1.6 s=20 frames=60 h=8.0
-brush flatten at -39 0 r=1.6 s=20 frames=60 h=8.6
-brush flatten at -40 0 r=1.6 s=20 frames=60 h=9.2
-brush flatten at -41 0 r=1.6 s=20 frames=60 h=9.5
-brush smooth from -41 0 to -33.5 0 r=2 s=6 frames=20
-brush flatten from 0 -66 to 0 -54 r=4 s=20 frames=80 h=1.2
+brush flatten at -44.5 0 r=3.8 s=20 frames=300 h=9.5
+# (10-25: pads 0.5 m apart and 5 m wide - on the 3 m ramp the walker slid off its side at -40.7 and caught on a step)
+# (later 10-25: each pad a 0.5 m-wide line across the ramp, 0.25 m apart - round pads 2.5 m wide set each spot to the
+# highest pad over it, which left a 1.5 m step at the ramp's foot)
+for k 0 6.5 0.25
+brush flatten from {-34-$k} -2.5 to {-34-$k} 2.5 r=0.5 s=20 frames=150 h={5.6+0.6*$k}
+next
+brush smooth from -41 0 to -33.5 0 r=2.5 s=6 frames=20
+brush flatten from 0 -106 to 0 -54 r=4 s=20 frames=300 h=1.2
 brush smooth from 0 -56 to 0 -48 r=4 s=6 frames=30
-brush flatten from 36 -12 to 74 -12 r=4 s=20 frames=200 h=-3
+brush flatten from 36 -12 to 114 -12 r=4 s=20 frames=420 h=-3
+# --- DEEP 10-25 terrain: the Watch Hill (north-west, summit 26 m, base r 20) and its trail from the south, Okafor's cave
+# on the east shore, the tide-gauge house's basin off the south-west (-10 m) ------------------------------------------
+call hw_mount x=-60 z=45 b=20 h=26
+call hw_trail x=-60 z=45 b=20 h=26 a0=180 turn=300 n=36 h0=4
+call ar_cave x=66 z=44 h=2 yaw=180 al=okarock chest=okachest
+call hw_basin x=-62 z=-84 r=12 h=-10
 origin
 clear at 0 0 r=24
-clear from 0 -66 to 0 -24 r=5
+clear from 0 -106 to 0 -24 r=5
 clear at 0 -44 r=12
 clear at 28.5 0 r=8
 clear at 0 32 r=10
@@ -137,7 +151,7 @@ prop cabplate tint.color=#5d646b
 # --- The piston hall (west) on the way to the ring's top: two of Utopia's small cranes as the Engine's pistons -----
 place UT_ElectricityIsland_Crane02 - at -32 5 ground sit scale=0.4 yaw=90
 place Zone_Trigger ringtop at -42 0 h=9.5
-place Placeable_Lantern_Metal - at -42 2 h=9.5 sit
+place Placeable_Lantern_Metal - at -42 2 ground
 
 # --- The south rim: Kett in the Syndicate's cage, her satchel, her warning ------------------------------------------
 place Zone_Trigger heartrim at 4 -18 h=5
@@ -166,19 +180,53 @@ place TP_LaserControlPanel_lever seventhlever at -6 6 h=3.25 sit scale=3 yaw=180
 place Loot_ChestLarge treasury at 3.5 -8.5 h=2 sit yaw=-30
 place Zone_Trigger heartzone at 0 -6 h=2
 place Placeable_Lantern_Metal wellcam at 10 -12 h=5 sit
-place Creature_PolarBear beast at 0 4 h=2.2
+# (south of the beam line, 10-25: killed by the core its body lay between the mirrors and stopped the beam)
+place Creature_PolarBear beast at 0 -10 h=2.2
 prop core tint.color=#a8743c
 prop core tint.amount=0.4
 
 # --- Things to gather, reefs ----------------------------------------------------------------------------------------
 scatter "Pickup_Landmark_PineappleLandmark" 2 at -24 -30 r=10 seed=9711 free=3
 call dirt x=30 z=30 r=10 n=3 seed=9712
-call shallows r=82 deep=5 n=3
+call shallows r=118 deep=5 n=3
+call hw_reef x=-96 z=-40 r=5 seed=31041
+call hw_reef x=92 z=60 r=5 seed=31042
+
+# --- DEEP 10-25 epilogue: the Watch Hill - its foot and top as zones, Silas Grey's last lookout mast (his log, the key) -
+call hw_zone x=-60 z=24 al=watchfootz id=watchfoot r=5 msg="The Watch Hill, the highest ground on the Engine's island. A path of flat stones winds up it to a mast with a grey flag, torn."
+call hw_zone x=-60 z=45 al=watchtopz id=watchtop r=7 h=1 msg="The top of the Watch Hill. The ring and its well below, quiet now - and out to sea, a grey launch heading away, very small."
+call hw_mast x=-60 z=45 h0=26 lv=3 a=greymast chest=greybox top=Placeable_Lantern_Metal
+place Note_Paper greylast at -63.5 41.5 h=26.1 drop yaw=200
+loot greybox story:vaultkey*1;Rope*2;Battery*1;Cooked_GenericMeat*2
+prop greybox loot.refill=0
+note greybox Grey's last lookout box | Silas Grey's box on his last lookout: his spyglass, left behind, rope - and a long brass key with seven teeth on its bit.
+scatter "Pickup_Landmark_Flower_Red" 2 at -60 45 r=22 seed=31043 free=3
+call treasure x=-80 z=28 r=12 n=1 seed=31038 kind=0
+prop treasure31038 treasure.loot=TitaniumIngot*2;MetalOre*2;Glass*2
+# --- Nell Okafor's cave on the east shore: her note, her tool chest (a secret) ---------------------------------------
+call hw_zone x=66 z=39 al=okaz id=okafor_cave r=4 msg="A cave on the east shore, and in it a small airship's gondola on blocks, half rebuilt. Nell Okafor got here before you."
+place Note_Paper okalast at 64.5 38.5 h=2.45 drop yaw=180
+loot okachest Bolt*4;Hinge*2;MetalIngot*2;CopperIngot*1
+prop okachest loot.refill=0
+note okachest Okafor's tool chest | Nell Okafor's tool chest: bolts, hinges, ingots - and a note pinned inside the lid: "TAKE WHAT YOU NEED. - N."
+call treasure x=82 z=58 r=12 n=1 seed=31039 kind=0
+prop treasure31039 treasure.loot=Scrap*4;Bolt*2;Hinge*1
+# --- The 1931 expedition's tide-gauge house, drowned off the south-west (-10 m): Ostrander's last letter, an air pocket
+call hw_sunkhouse x=-62 z=-84 h=-10 yaw=0 a=gaugehouse chest=tidevault air=gaugeair bub=gaugebub dal=gaugedoor
+call hw_zone x=-62 z=-84 al=gaugez id=gaugehouse r=7 h=1 msg="A stone house on the sea floor, ten metres down, a brass tide gauge still bolted to its wall. Its front room still holds a breath of air."
+place Note_Paper ostrlast at -61.4 -85.2 h=-9.5 drop yaw=0
+loot tidevault TitaniumIngot*2;TradeToken*6;CopperIngot*2;Glass*2
+prop tidevault loot.refill=0
+prop tidevault if.open=has|story:vaultkey|1
+prop tidevault else.open=message||The tide vault is shut with a lock of seven brass teeth. It wants the tide vault key.
+note tidevault Tide vault | The 1931 expedition's tide vault: their pay, their titanium samples, the gauge's spare glass.
+call treasure x=-48 z=-76 r=12 n=1 seed=31040 kind=0
+prop treasure31040 treasure.loot=MetalOre*3;CopperOre*2;Glass*2
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Tide Engine
 info author=Custom Islands
-info description=A ring of desert rock round a vast well: three machine halls of sandstone and brass - tide wheels, Utopia's cranes as the Engine's arms - and in the well the Engine's heart, its reactor core, its beam and the Seventh lever. The finale of Relic of the Seventh Tide.
+info description=A ring of desert rock round a vast well, in an island as big as Raft's biggest: three machine halls of sandstone and brass - tide wheels, Utopia's cranes as the Engine's arms - and in the well the Engine's heart, its reactor core, its beam and the Seventh lever. The Watch Hill and Silas Grey's last lookout, Nell Okafor's cave on the east shore, the 1931 expedition's tide-gauge house drowned off the south-west. The finale of Relic of the Seventh Tide.
 island on.arrive=message||A ring of rock round a well as wide as a lagoon, and in it something humming. The sea round the ring is drawn in, wave by wave.
 
 story radiocodes|Syndicate radio codes|Placeable_PaperBundle|A card of call signs and codes from the Syndicate's supply crate.
@@ -189,6 +237,7 @@ story clawmoved|The Engine's arm raised|Bolt|The claw lever raised the Engine's 
 story cagekey|Cage key|Placeable_Lantern_Metal|The key of the Syndicate's cage, from the crane cab's locker.
 story heartbeam|Beam on the reactor panel|Battery|The beam runs through two mirrors onto the reactor panel.
 story enginestopped|The Engine stopped|Bolt|The Seventh lever is down and the Engine is quiet.
+story vaultkey|Tide vault key|Placeable_PaperBundle|A long brass key with seven teeth: the 1931 expedition's tide vault, from Silas Grey's last lookout box.
 story relic|The Seventh Tide|Bolt|The relic: a brass ring of seven teeth, cold now. The Engine will never wake again.|raft=Placeable_TrophyBoard_Medium
 
 note camplog Kett's final camp log | KETT - FIELD LOG, LAST ENTRY\n\nThe Engine is real. A ring of rock round a well, and it pulls the sea in - one finger's width every seventh tide, for a thousand years.\n\nThe Syndicate got here before me. They want it running: higher seas, more wrecks to salvage. I am going into the heart. If you are reading this, come after me - and watch for the dogs.
@@ -330,6 +379,9 @@ prop coldlights beh.hidden=1
 prop core obj.name=core
 prop wellcam obj.name=wellcam
 prop emitter obj.name=emitter
+note greylast Silas Grey's last log | S. GREY - THE ENGINE, LAST ENTRY\n\nThe beast is dead and the Engine is quiet, and the boss has gone down to the launch without a word to any of us. Twenty years of paying men to follow other people, and he ends with nothing in his hands.\n\nI watched her come up the ramp out of the well with that brass ring. She did not look at me this time.\n\nThe old expedition left a vault in the gauge house off the south-west point. I found its key in the boss's things, years ago, and never told him. Let whoever ends this have it. I am done waiting for other people. The launch leaves at dusk, and I am not on it.
+note okalast Nell Okafor's note | N. OKAFOR - THE ENGINE'S EAST SHORE\n\nProfessor, I said I would follow you, and I did. The Albatross's gondola is in this cave; the balloon is in the bay; the engine runs if you swear at it.\n\nIf you are not the professor: she is all right. I saw her come out of the cage on the south rim. I saw the man in the grey coat climb the hill to the north-west and not come down.\n\nWhen it is over, the gondola flies. There is room for three, if one of them is small. Take what you want from the chest. I have made my last spanner for a while. - Nell
+note ostrlast Dr. Ostrander's last letter | DR. HAL OSTRANDER - THE GAUGE HOUSE, 1931\n\nWe reached the Engine. Nobody believed we would. The gauge on this wall has drawn the sea for forty days, and every seventh tide the line climbs and does not come down.\n\nWe could not stop it. The lever wants light, and we had only lamps. I have locked our pay and our samples in the vault and given the key to the boy who carries our water, a quiet lad with grey eyes.\n\nTo whoever stopped it: you did what we could not. The sea will go down, a finger's width at a time. Leave the gauge on the wall. Let it draw the line going down.
 prop ringtop zone.id=ring_top
 prop ringtop zone.radius=4
 prop ringtop zone.message=From the ring's top: the well is still, the sea outside calm. The Seventh Tide is over.
@@ -364,6 +416,14 @@ step collect|story:enginestopped|1|Pull the Seventh lever
 step open|Engine treasury|1|Open the Engine's treasury
 step collect|story:relic|1|Take the Seventh Tide
 step reach|ring_top|1|Climb to the ring's top in the west
+step reach|watchfoot|1|Find the path up the Watch Hill in the north-west
+step reach|watchtop|1|Climb the Watch Hill to Silas Grey's last lookout
+step read|Silas Grey's last log|1|Read Silas Grey's last log
+step collect|story:vaultkey|1|Climb the mast and take the tide vault key from Grey's box
+step read|Nell Okafor's note|1|Find Nell Okafor's cave on the east shore and read her note
+step reach|gaugehouse|1|Dive to the expedition's tide-gauge house off the south-west
+step open|Tide vault|1|Open the tide vault with the key
+step read|Dr. Ostrander's last letter|1|Read Dr. Ostrander's last letter
 quest done=The Seventh Tide stops. Somewhere, the sea is a finger's width lower.
 quest reward=TitaniumIngot*3;TradeToken*12;Rope*6
 

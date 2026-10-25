@@ -10,3 +10,8 @@ picture sunstaff_mesa_canyon 3 4 -76 0 3 -50
 picture sunstaff_mesa_oasis 4 5 -38 0 3 -24
 picture sunstaff_mesa_maproom 0 17 6 0 14 24
 picture sunstaff_mesa_beam -8 16 13 2 13 24
+# 10-25 deep pass: Gnomon Butte and Pim's mast, the Syndicate's cave, the drowned dig house
+picture sunstaff_mesa_butte 25 30 -45 52 22 -15
+picture sunstaff_mesa_mast 45 27 -22 52 26 -15
+picture sunstaff_mesa_cave -60 +3 -20 -60 +1 -33
+picture sunstaff_mesa_dighouse -48 -3 52 -48 -8 62

@@ -3,13 +3,20 @@
 # motherlode pillars, one on each headland, its body a sandstone chamber laid from leg to leg over the water, a collar
 # of Tangaroa's dome base on its shoulders and Tangaroa's founder statue, made huge, as its head. A heel room at the
 # foot of the west leg, its keycard door and Tangaroa's lift inside; the Syndicate's camp on the west headland. Quest
-# "The Giant's Heart" (14 steps): the headland, the camp orders, the dogs, the strongbox and its keycard, the heel door,
+# "The Giant's Heart" (21 steps): the headland, the camp orders, the dogs, the strongbox and its keycard, the heel door,
 # the lift, the chest chamber, the builders' inscription, the guardian, the gear wheel with the three gears, the head
-# and its eyes, the crown vault and Kett's note.
+# and its eyes, the crown vault and Kett's note; then Strait Head in the north-east and Silas Grey's log and the sluice
+# key on his lookout mast, the builders' cistern drowned off the north-west (its chest needs the key) and the master
+# builder Hesk's tablet in it.
+# DEEP 10-25 (Relic deep pass): Radius 90 kept. Strait Head (22 m, trail + Grey's lookout mast) on the east headland,
+# Kett's cave on the west headland's south shore (her letter, a secret), the builders' cistern drowned off the north-west
+# (-10 m, an air pocket), three buried caches (one titanium). Voices: Silas Grey, Kett, the master builder Hesk.
 #
 # Built by the recipe player (CIRecipe colossus_of_the_strait) through the editor's own operations.
 include lib_sea
 include lib_features
+include lib_areas
+include lib_highwater
 new
 # (nature: two forest headlands at Raft's density - trees, bushes, a few rocks; three reefs)
 gen Trees=0.35 Bushes=0.75 Rocks=0.6 Harvest=0.3 BeachThings=0.3
@@ -24,6 +31,12 @@ brush flatten at 36 0 r=26 s=20 frames=260 h=5
 brush flatten from 0 -96 to 0 96 r=5 s=20 frames=400 h=-4
 brush flatten from -84 0 to -66 0 r=4 s=20 frames=100 h=1.2
 brush smooth from -68 0 to -58 0 r=4 s=6 frames=30
+# --- DEEP 10-25 terrain: Strait Head (east headland's north, summit 22 m, base r 18) and its trail from the south, Kett's
+# cave on the west headland's south shore, the builders' cistern's basin off the north-west (-10 m) ------------------
+call hw_mount x=50 z=45 b=18 h=22
+call hw_trail x=50 z=45 b=18 h=22 a0=180 turn=300 n=32 h0=5
+call ar_cave x=-50 z=-50 h=2 yaw=180 al=kettrock chest=kettcavechest
+call hw_basin x=-30 z=72 r=12 h=-10
 origin
 posts off
 clear from -84 0 to -14 0 r=4
@@ -49,6 +62,9 @@ place VP_MotherlodePillar1_Stage1 legs at -12 0 h=5 sit scale=0.6
 place VP_MotherlodePillar1_Stage1 legs at 12 0 h=5 sit scale=0.6 yaw=180
 prop legs tint.color=#c9a77a
 prop legs tint.amount=0.6
+# (the legs are named for their tint, which makes them ready pillars: no knock-down, no hit on a boss)
+prop legs beh.use=
+prop legs on.use=
 
 # --- The heel room against the west leg: tier 3 sandstone, the keycard door in its west wall, Tangaroa's lift inside --
 push at -25.5 -2.25 h=5.1
@@ -163,16 +179,50 @@ call dirt x=44 z=-30 r=8 n=3 seed=9613
 call shallows x=0 z=-56 r=9 deep=3 n=1 seed=9621
 call shallows x=0 z=50 r=9 deep=3 n=1 seed=9622
 call shallows x=0 z=-84 r=8 deep=3 n=1 seed=9623
+call hw_reef x=-70 z=40 r=5 seed=31035
+call hw_reef x=74 z=-40 r=5 seed=31036
+
+# --- DEEP 10-25: Strait Head - its foot and top as zones, Silas Grey's lookout mast (his log, the sluice key) ---------
+call hw_zone x=50 z=26 al=headfootz id=straitfoot r=5 msg="Strait Head. A path of flat stones winds up it to a mast with a grey flag."
+call hw_zone x=50 z=45 al=headtopz id=straittop r=7 h=1 msg="The top of Strait Head. The giant's face is level with you across the water, and the camp smokes below."
+call hw_mast x=50 z=45 h0=22 lv=3 a=greymast chest=greybox top=Placeable_Lantern_Metal
+place Note_Paper greylog at 46.5 41.5 h=22.1 drop yaw=200
+loot greybox story:sluicekey*1;Rope*2;Battery*1;Cooked_GenericMeat*2
+prop greybox loot.refill=0
+note greybox Grey's lookout box | Silas Grey's box on his lookout: a spyglass with a cracked lens, a battery, rope - and a big bronze key with a sluice gate cut on its bow.
+scatter "Pickup_Landmark_Flower_Blue" 2 at 50 45 r=20 seed=31037 free=3
+call treasure x=66 z=30 r=12 n=1 seed=31032 kind=0
+prop treasure31032 treasure.loot=MetalOre*3;CopperOre*2;Glass*2
+# --- Kett's cave on the west headland's south shore: her letter and her cache (a secret) ------------------------------
+call hw_zone x=-50 z=-55 al=kettcavez id=kettcave r=4 msg="A cave on the south shore. A bedroll, a cold lamp, a pencil sketch of the giant pinned to the rock. Kett slept here."
+place Note_Paper kettcave at -51.5 -55.5 h=2.45 drop yaw=180
+loot kettcavechest Rope*3;Cooked_GenericMeat*3;PlasticBottle_Water*2;Bolt*2
+prop kettcavechest loot.refill=0
+note kettcavechest Kett's cache | Kett's cache in the cave: food, water, rope - left for whoever came after her.
+call treasure x=-62 z=-38 r=12 n=1 seed=31033 kind=0
+prop treasure31033 treasure.loot=Scrap*4;Bolt*2;Hinge*1
+# --- The builders' cistern, drowned off the north-west (-10 m): the master builder Hesk's tablet, an air pocket ------
+call hw_sunkhouse x=-30 z=72 h=-10 yaw=0 a=cistern chest=cisternchest air=cisternair bub=cisternbub dal=cisterndoor
+call hw_zone x=-30 z=72 al=cisternz id=cistern r=7 h=1 msg="A stone cistern-house on the sea floor, ten metres down: the builders' sluice room. Its front room still holds a breath of air."
+place Note_Paper hesk at -29.4 70.8 h=-9.5 drop yaw=0
+loot cisternchest TitaniumIngot*1;CopperIngot*2;MetalIngot*2;TradeToken*3
+prop cisternchest loot.refill=0
+prop cisternchest if.open=has|story:sluicekey|1
+prop cisternchest else.open=message||The builders' chest is chained shut with bronze, a sluice gate cut on its lock. It wants the sluice key.
+note cisternchest Builders' chest | The builders' chest: the last of their titanium, copper and iron, and the sea kings' tokens they were paid in.
+call treasure x=-44 z=64 r=12 n=1 seed=31034 kind=0
+prop treasure31034 treasure.loot=TitaniumIngot*1;MetalOre*2;Glass*2
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Colossus of the Strait
 info author=Custom Islands
-info description=Two forested headlands and a stone giant standing across the strait between them - legs of Varuna's motherlode pillars, a sandstone chest chamber over the water, Tangaroa's founder statue as its head. The sixth island of Relic of the Seventh Tide.
+info description=Two forested headlands and a stone giant standing across the strait between them - legs of Varuna's motherlode pillars, a sandstone chest chamber over the water, Tangaroa's founder statue as its head. Strait Head and the Syndicate's lookout mast, Kett's cave on the south shore, the builders' cistern drowned off the north-west. The sixth island of Relic of the Seventh Tide.
 island on.arrive=message||A giant of stone stands across the strait, one foot on each headland. Smoke rises from tents on the west side.
 
 story heelopen|Heel door opened|Placeable_Lantern_Metal|The keycard opened the door in the colossus's heel.
 story heelride|Lift ride|Placeable_Lantern_Metal|You rode the lift up the colossus's leg.
 story eyeslit|The colossus's eyes|Placeable_Lantern_Metal|The three gears turned and the giant's eyes lit.
+story sluicekey|Sluice key|Placeable_PaperBundle|A big bronze key with a sluice gate on its bow: the builders' cistern key, from Silas Grey's lookout box.
 story kettshat|Kett's hat|Placeable_PaperBundle|Professor Kett's battered field hat. She left it for you on purpose.
 
 note orders Syndicate camp orders | SYNDICATE - FIELD ORDERS, COLOSSUS SITE\n\nThe woman Kett got into the heel. She has the gears; we have the door's keycard - it stays in the strongbox. Dogs stay loose round the camp.\n\nWhen she comes out, take the gears. The boss wants the Engine running by the seventh tide.
@@ -187,6 +237,9 @@ prop crownvault if.open=signal|eyes
 prop crownvault else.open=message||The vault's lid will not move. It is locked to the giant's heart.
 note kettnote Kett's note | Whoever you are - you have been one island behind me since the museum. Thank you for the gears.\n\nThe giant looks where the Engine sleeps. I went on alone. Follow the light.\n\n- I. K.
 
+note greylog Silas Grey's lookout log | S. GREY - STRAIT HEAD, LOOKOUT LOG\n\nThe boss arrived by night and went straight up the giant, with the keycard and two men. He came down in an hour, white as paper. The wheel would not turn for him. It wants the three gears, and we have none.\n\nSo we wait for her. I have done nothing on this job but wait for her.\n\nThe men found a key in the giant's knee, a bronze thing with a sluice gate on it. The builders' cistern is off the north-west point, ten metres down, and nobody here can hold his breath that long. I keep the key up here, out of the men's hands.\n\nThe boss says when the giant's eyes light, they will point at the Engine, and then we will not need the professor any more.
+note kettcave Kett's letter from the cave | KETT - THE STRAIT, THE NIGHT BEFORE\n\nWhoever you are: I have watched you come up behind me from the museum to here. You read what I left, you took what I left, and you never once tried to sell any of it. So this is for you.\n\nGrey sits on the hill to the north-east with a spyglass. He has a key he does not understand. The builders' cistern is under the sea off the north-west point; the key opens their chest. I could not get to it without him seeing me.\n\nYou could. Get the key from his mast while he is down at the camp. There is food and water in the chest here. Eat first. - I. K.
+note hesk Master builder Hesk's tablet | (A bronze tablet, its words cut deep. Kett's pencil translation is tucked under it.)\n\nHesk, master of the builders of the strait, to those who come after.\n\nWe set the giant to watch the Engine, because the Engine cannot be trusted to sleep. When the seventh tide comes, the Engine wakes and the sea rises. The giant's eyes will show you where it lies.\n\nWe sealed our tools and our pay in this cistern. If the sea has taken it, so be it. Take what you need, and go to the Engine before the tide. Do not let it wake for anyone who wants the sea to rise.
 prop heeldoor obj.name=heeldoor
 prop heeldoor on.use=hide|\ngive||story:heelopen*1\nmessage||The reader blinks green and the heel door swings away. Inside: a lift in the giant's foot.
 prop lift obj.name=lift
@@ -267,6 +320,13 @@ step collect|story:eyeslit|1|Set the three gears in the wheel
 step reach|head|1|Climb up to the giant's head
 step open|Crown vault|1|Open the crown vault
 step read|Kett's note|1|Read Kett's note
+step reach|straitfoot|1|Find the path up Strait Head on the east headland
+step reach|straittop|1|Climb Strait Head to Silas Grey's lookout mast
+step read|Silas Grey's lookout log|1|Read Silas Grey's lookout log
+step collect|story:sluicekey|1|Climb the mast and take the sluice key from Grey's box
+step reach|cistern|1|Dive to the builders' cistern off the north-west
+step open|Builders' chest|1|Open the builders' chest with the sluice key
+step read|Master builder Hesk's tablet|1|Read the master builder's tablet in the cistern
 quest done=The giant looks out to sea, at the Engine. Kett went on alone - and the Engine's call is on the Receiver, 1300.
 quest reward=TitaniumIngot*2;TradeToken*6;Rope*4
 
@@ -274,4 +334,7 @@ quest reward=TitaniumIngot*2;TradeToken*6;Rope*4
 call treasure x=0 z=0 r=45 n=1 seed=8808
 prop treasure8808 treasure.loot=TitaniumOre*3
 
+# (two generator stones left in the air by the shore shaping - taken out, 10-25)
+clear at 73.04 49.1 r=1 only=SmallRock
+clear at -17.74 69.76 r=1 only=SmallRock
 save Colossus of the Strait

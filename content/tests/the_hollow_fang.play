@@ -1,6 +1,8 @@
 # The Hollow Fang (CIPlay the_hollow_fang): the cleft at 3 m along x 0 from the sea cave (0 -50) to the hollow (0 8, r~12);
 # trial 1 z -44..-27, the Word's pit z -26..-16 (stones x -1.6 0 1.6, rows -25.6..-14.4; letters O R I N on rows -24..-19.2), the Leap's
 # chasm z -10..-4 with the invisible bridge at x 0; the glass bridge over the void to the altar (0 15.6); the window 0 28.
+# 10-25 deep pass: the island is r 80 now, the cleft from the south shore at 0 -80. After the window: Orin's Knoll
+# (-52 -18, 18 m; trail foot -52 -35) and his mast (the key), the boathouse at 40 62 (-10 m, the chest), Grey's cave 60 -30.
 island The Hollow Fang
 offset 0 0
 expect step 0
@@ -45,4 +47,22 @@ expect step 11
 read Orin's charge
 expect step 12
 zone fang_top
+wait 7
+expect step 13
+zone knollfoot
+expect step 14
+zone knolltop
+expect step 15
+read Orin's journal
+expect step 16
+open Orin's lookout box
+wait 3
+expect story orinkey 1
+expect step 17
+zone boathouse
+expect step 18
+open Guardians' chest
+wait 2
+expect step 19
+read Silas Grey's note
 expect done

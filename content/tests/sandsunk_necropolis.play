@@ -1,6 +1,8 @@
 # Sandsunk Necropolis (CIPlay sandsunk_necropolis): the plaza at 3 m (r~24 at 0 2), the dune path from the landing in
 # the south (0 -72); Kett's camp at 14 -44; the obelisk at -16 -30, the seal buried just north of it; the processional
 # way x 0, z -26..-6; the tomb x -6..6, z 0..18 (antechamber z 0..9, burial chamber z 9..18), its door at 0 0.
+# 10-25 deep pass: after the exit, the Kings' Dune (-40 45, 22 m; trail foot -26.6 31.6) and Kett's mast (the
+# embalmers' key), then the embalmers' cave at 62 -10 (the chest, Grey's note).
 island Sandsunk Necropolis
 offset 0 0
 expect step 0
@@ -48,4 +50,21 @@ wait 22
 expect shown gate
 use hatch
 zone tomb_exit
+expect step 14
+zone kingfoot
+expect step 15
+zone kingtop
+expect step 16
+read Kett's letter from the dune
+expect step 17
+open Kett's survey box
+wait 3
+expect story tombkey 1
+expect step 18
+zone embalmcave
+expect step 19
+open Embalmers' chest
+wait 2
+expect step 20
+read Silas Grey's note
 expect done

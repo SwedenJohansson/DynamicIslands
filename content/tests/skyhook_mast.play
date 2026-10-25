@@ -1,6 +1,8 @@
 # Skyhook Mast (CIPlay skyhook_mast): the stack's top at 18 m (r~13 at 0 6) with the mast at 0 9 and the cabin x 4.5..9,
 # z -1..3.5; the beach and the stack's foot at 1.5 m (x 0, z -44..-24) with the skylift at 0 -22.5; the wreck's shore at
 # -12 -40, the wreck in the shallows south-west.
+# 10-25 deep pass: after the zipline, the chart locker (-30 -62, in the lagoon) is tried without its key, then Gull Crag
+# (36 18, 16 m; trail foot 36 3), Okafor's cave at 44 -24 (the key in her tool chest), then the locker.
 island Skyhook Mast
 offset 0 0
 expect step 0
@@ -28,4 +30,23 @@ use liftdown
 wait 6
 expect height 1.5
 zone wreck_shore
+expect step 6
+open Albatross chart locker
+expect message chart locker key
+zone cragfoot
+expect step 7
+zone cragtop
+expect step 8
+read Station keeper Bram Holt
+expect step 9
+zone albatross_cave
+expect step 10
+read Nell Okafor's note
+expect step 11
+open Engineer's tool chest
+wait 3
+expect story chartkey 1
+expect step 12
+open Albatross chart locker
+wait 2
 expect done

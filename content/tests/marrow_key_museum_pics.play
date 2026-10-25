@@ -5,8 +5,14 @@ hour 11
 weather Calm
 at 0 -30
 wait 3
-picture marrow_key_museum_island 10 30 -100 0 5 0
+picture marrow_key_museum_island 10 45 -140 0 5 0
 picture marrow_key_museum_front 6 6 -24 0 5 -5
 picture marrow_key_museum_hall -6.5 6 -5.5 4 3.5 2
 picture marrow_key_museum_skylight 2 6 -3 0 3 -1.5
 picture marrow_key_museum_cases 3 5.5 -1 -5 4 0.6
+# 10-25 deep pass: Signal Hill and the curator's mast, the Syndicate launch, the smugglers' cave, the customs house
+picture mk_signalhill 10 30 10 40 22 38
+picture mk_mast 33 27 31 40 26 38
+picture mk_launch 50 +3 -22 60 +1 -30
+picture mk_cave -55 +3 -46 -55 +1 -32
+picture mk_customs -62 -3 42 -62 -8 52

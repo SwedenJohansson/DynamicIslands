@@ -5,6 +5,11 @@ hour 11
 weather Calm
 at -6 0
 wait 3
-picture dredgers_bank_island 10 18 -60 0 2 0
+picture dredgers_bank_island 10 26 -80 0 2 0
 picture dredgers_bank_camp 8 5 -14 -6 2 2
 picture dredgers_bank_rig 6 4 -10 18 5 0
+# 10-25 deep pass: the Spoil Dune and its mast, Pim's cave, the sunk tender
+picture dredgers_bank_dune -10 16 10 -32 10 30
+picture dredgers_bank_mast -26 17 24 0 3 0
+picture dredgers_bank_cave 30 +3 18 30 +1 31
+picture dredgers_bank_tender -36 -3 -56 -36 -7 -46

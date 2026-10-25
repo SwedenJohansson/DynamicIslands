@@ -5,7 +5,12 @@ hour 11
 weather Calm
 at 0 -50
 wait 3
-picture the_hollow_fang_island 25 30 -120 0 15 0
+picture the_hollow_fang_island 25 40 -150 0 15 0
 picture the_hollow_fang_blades 1 5 -46 0 4.5 -33
 picture the_hollow_fang_word 2 6 -27 0 3 -18
 picture the_hollow_fang_hollow 0 6 -3 0 4 14
+# 10-25 deep pass: Orin's Knoll and his mast, the mercenaries' cave, the drowned guardians' boathouse
+picture the_hollow_fang_knoll -30 24 -40 -52 16 -18
+picture the_hollow_fang_mast -45 21 -25 -52 20 -18
+picture the_hollow_fang_cave 60 +3 -46 60 +1 -32
+picture the_hollow_fang_boathouse 40 -3 52 40 -8 62

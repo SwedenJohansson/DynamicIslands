@@ -3,6 +3,9 @@
 # hall 28.5 0 (sluice channel z -12 from x 36 east, at -3), crane hall 0 28.5 (the crane cab 0 38 at 11), piston
 # hall -28.5 0, the ring's top -42 0 at 9.5. Kett's cage 8 -20 on the south rim. Beam: emitter -6.8 -6, mirrors -6 -2
 # and 6 -2, the reactor panel 6 6.
+# 10-25 deep pass: the island is r 110 now (landing path from 0 -106). After the ring's top, the epilogue: the tide vault
+# (-62 -84, -10 m) tried without its key, the Watch Hill (-60 45, 26 m; trail foot -60 24) and Grey's mast (the key),
+# Okafor's cave at 66 44, then the vault and Ostrander's letter.
 island The Tide Engine
 offset 0 0
 expect title The Seventh Tide
@@ -77,4 +80,27 @@ open Engine treasury
 expect story relic 1
 walk -28.5 -6 to -28.5 0 to -36 0 to -42 0 h=9.5
 zone ring_top
+wait 3
+expect step 28
+open Tide vault
+expect message tide vault key
+zone watchfoot
+expect step 29
+zone watchtop
+expect step 30
+read Silas Grey's last log
+expect step 31
+open Grey's last lookout box
+wait 3
+expect story vaultkey 1
+expect step 32
+zone okafor_cave
+read Nell Okafor's note
+# (the key-less try already took the player into the zone, so the reach step counts with the key)
+zone gaugehouse
+expect step 34
+open Tide vault
+wait 2
+expect step 35
+read Dr. Ostrander's last letter
 expect done

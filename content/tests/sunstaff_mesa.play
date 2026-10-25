@@ -2,6 +2,8 @@
 # "The Map Room". The slot canyon up x 0 from z -80 (1.6 m), the camp 7..12 -68..-63, the vines across z -50, the
 # oasis round 0 -24 (2 m, the well 0 -28), the stair z -16..5 up to 12 m; the map room x -9..9 z 15..33 on top (the
 # lens -7.4 17.5, mirrors -6.6 21.5 / -0.6 21.5 / -0.6 26.3, the mark panel 7.4 26.3, the stand -4.5 31.6).
+# 10-25 deep pass: the windlass is tried without its handle, then Gnomon Butte (52 -15, 24 m; trail foot 52 -34) and
+# Pim's mast (the handle in its box), Grey's cave at -60 -35, then back to the well.
 island Sunstaff Mesa
 offset 0 0
 expect step 0
@@ -57,9 +59,25 @@ wait 2
 expect item Blueprint_Fueltank 1
 expect item Blueprint_Pipe_Fuel 1
 expect step 13
-walk 0 2 to 0 -10 to 0 -20 to 1 -26 h=2
-zone oasis_well
+walk 0 2 to 0 -10 to 0 -20 h=2
+use windlass
+expect message crank handle
+expect hidden workshop
+zone buttefoot
 expect step 14
+zone buttetop
+expect step 15
+read Pim Lark's note
+expect step 16
+open Pim's lookout box
+wait 3
+expect story crank 1
+expect step 17
+zone greycave
+read Silas Grey's log
+expect step 18
+zone oasis_well
+expect step 19
 expect hidden workshop
 use windlass
 expect shown workshop

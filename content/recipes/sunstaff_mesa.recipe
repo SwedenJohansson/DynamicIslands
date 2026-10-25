@@ -3,13 +3,19 @@
 # over the lower canyon, an oasis of palms at its head with a well, a stepped stair up to the top - and on the top the
 # map room: a colonnade of stone pillars under a flat roof with an open oculus, a model of the islands on its sand floor,
 # and the sun beam (Temperance's laser emitter and three turning mirrors) that burns the dig mark. Quest "The Map Room"
-# (16 steps): the camp, the trunk (the machete plans), the vines, the oasis warthogs, the map room, Kett's journal stand,
-# the beam, the map room cache (the fuel tank and fuel pipe plans), the well's windlass, the drowned workshop locker
-# (the biofuel extractor plans).
+# (21 steps): the camp, the trunk (the machete plans), the vines, the oasis warthogs, the map room, Kett's journal stand,
+# the beam, the map room cache (the fuel tank and fuel pipe plans), Gnomon Butte in the east and Pim Lark's note and the
+# windlass handle on its mast, Silas Grey's log in the Syndicate's cave in the west, the well's windlass (needs the
+# handle), the drowned workshop locker (the biofuel extractor plans).
+# DEEP 10-25 (Relic deep pass): Radius 80 kept. Gnomon Butte (24 m, trail + Pim's lookout mast) in the east, the
+# Syndicate's cave on the west shore, the first expedition's dig house drowned off the north-west (-10 m, an air pocket),
+# three buried caches for the metal detector. Voices: Kett's boatman Pim Lark, Silas Grey, Dr. Hal Ostrander (1931).
 #
 # Built by the recipe player (CIRecipe sunstaff_mesa) through the editor's own operations.
 include lib_sea
 include lib_features
+include lib_areas
+include lib_highwater
 new
 # (nature: desert - few trees, scrub and red rock; the oasis is planted by hand)
 gen Trees=0.08 Bushes=0.3 Rocks=0.25 Harvest=0.2 BeachThings=0.3
@@ -27,6 +33,12 @@ brush flatten at 0 {-16+$i*3} r=3.5 s=20 frames=60 h={3.2+$i*1.25}
 next
 brush smooth from 0 -17 to 0 6 r=3 s=6 frames=30
 brush smooth from 0 -36 to 0 -30 r=3 s=6 frames=20
+# --- DEEP 10-25 terrain: Gnomon Butte (east, summit 24 m, base r 18) and its trail from the south, the Syndicate's cave
+# on the west shore, the drowned dig house's basin off the north-west (-10 m) -----------------------------------------
+call hw_mount x=52 z=-15 b=18 h=24
+call hw_trail x=52 z=-15 b=18 h=24 a0=180 turn=300 n=34 h0=3
+call ar_cave x=-60 z=-35 h=2 yaw=0 al=greyrock chest=greychest
+call hw_basin x=-48 z=62 r=12 h=-10
 origin
 clear at 0 22 r=17
 clear from 0 -82 to 0 -16 r=6
@@ -137,14 +149,47 @@ scatter "Pickup_Landmark_Flower_Red" 2 at 30 -50 r=15 seed=9232 free=3
 call dirt x=-30 z=-55 r=10 n=3 seed=9233
 call shallows x=-20 z=-85 r=14 deep=4 n=1 seed=9234
 call shallows x=22 z=-84 r=12 deep=4 n=1 seed=9235
+call hw_reef x=-30 z=72 r=5 seed=31011
+call hw_reef x=72 z=20 r=5 seed=31012
+call hw_reef x=-74 z=-10 r=4 seed=31013
+
+# --- DEEP 10-25: Gnomon Butte - its foot and top as zones, Pim Lark's lookout mast (his note, the windlass handle) -----
+call hw_zone x=52 z=-34 al=buttefootz id=buttefoot r=5 msg="Gnomon Butte. A sun-dial of a rock, and a path of flat stones winding up it to a mast."
+call hw_zone x=52 z=-15 al=buttetopz id=buttetop r=7 h=1 msg="The top of Gnomon Butte. The canyon, the map room's roof, the oasis green below - and a mast with a crow's nest."
+call hw_mast x=52 z=-15 h0=24 lv=3 a=pimmast chest=pimbox top=Placeable_Lantern_Metal
+place Note_Paper pimnote at 48.5 -18.5 h=24.1 drop yaw=200
+loot pimbox story:crank*1;Rope*2;Cooked_GenericMeat*2
+prop pimbox loot.refill=0
+note pimbox Pim's lookout box | Pim Lark's box in the crow's nest: the well windlass's iron crank handle, wrapped in sacking, a coil of rope, two strips of dried meat.
+scatter "Pickup_Landmark_Flower_Red" 2 at 52 -15 r=20 seed=31014 free=3
+call treasure x=66 z=4 r=12 n=1 seed=31008 kind=0
+prop treasure31008 treasure.loot=MetalOre*3;CopperOre*2;Glass*2
+# --- The Syndicate's cave on the west shore: Silas Grey's log ---------------------------------------------------------
+call hw_zone x=-60 z=-30 al=greyz id=greycave r=4 msg="A cave in the red rock. Bedrolls, a stove, crates stencilled with a grey S. The Syndicate camps here."
+place Note_Paper greylog at -58.5 -29.5 h=2.45 drop yaw=0
+loot greychest Rope*2;Battery*1;Nail*6;Scrap*3
+prop greychest loot.refill=0
+note greychest Syndicate supply crate | A Syndicate supply crate: rope, nails, a battery, and a spade with the museum's tag still on its handle.
+call treasure x=-52 z=-58 r=12 n=1 seed=31009 kind=0
+prop treasure31009 treasure.loot=Scrap*4;Bolt*2;Hinge*1
+# --- The first expedition's dig house, drowned off the north-west (-10 m): Ostrander's notes, an air pocket ----------
+call hw_sunkhouse x=-48 z=62 h=-10 yaw=0 a=dighouse chest=digchest air=digair bub=digbub dal=digdoor
+call hw_zone x=-48 z=62 al=digz id=dighouse r=7 h=1 msg="A stone house on the sea floor, ten metres down. Its front room still holds a breath of air."
+place Note_Paper ostrander at -47.4 60.8 h=-9.5 drop yaw=0
+loot digchest Glass*3;CopperIngot*1;MetalIngot*1;Rope*2
+prop digchest loot.refill=0
+note digchest Expedition strongbox | The 1931 expedition's strongbox: survey glass, a copper ingot, an iron one, rope gone green.
+call treasure x=-34 z=50 r=12 n=1 seed=31010 kind=0
+prop treasure31010 treasure.loot=MetalOre*2;Glass*3;Rope*2
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Sunstaff Mesa
 info author=Custom Islands
-info description=A red sandstone mesa split by a slot canyon: an abandoned dig camp, vines, an oasis with a well, and on the top a map room with an open oculus, where a beam of light through three mirrors burns the place to dig. Holds Balboa's plans. The second island of Relic of the Seventh Tide.
+info description=A red sandstone mesa as big as Raft's own big islands, split by a slot canyon: an abandoned dig camp, vines, an oasis with a well, and on the top a map room with an open oculus, where a beam of light through three mirrors burns the place to dig. Gnomon Butte and a lookout mast in the east, the Syndicate's cave in the west, an expedition house drowned off the north-west. Holds Balboa's plans. The second island of Relic of the Seventh Tide.
 island on.arrive=message||A red mesa rises out of the sea, flat as a table. A dark cut runs into its south face - a canyon.
 
 story sunangle|Sun angle|Placeable_PaperBundle|Kett's note of the sun's angle at the hour of the seventh tide: the mirrors' setting.
+story crank|Windlass handle|Placeable_PaperBundle|The iron crank handle of the oasis well's windlass, hidden by Pim Lark on his lookout mast.
 story beamset|Beam on the mark|Battery|The sun beam runs through the three mirrors onto the mark panel.
 
 note diary Kett's camp diary | DIG CAMP - SUNSTAFF MESA\n\nDay 31. The Syndicate's launch came round the point again this morning. Let them look.\n\nThe map room is up top, as the old texts said: a room with an eye in its roof. Put the Sunstaff in the light and the light shows where the tide-gear lies. They stole the staff from the museum - but the staff was only ever a lens and a mirror. Our lens and mirrors are already up there.\n\nThe canyon has grown shut with vines since I came. My machete is in the trunk, and its plans: anyone following me will need them.
@@ -192,10 +237,13 @@ prop burnedmark obj.name=burnedmark
 prop burnedmark beh.hidden=1
 prop windlass obj.name=windlass
 prop windlass beh.use=Turn the well's windlass
-prop windlass if.use=!signal|windlass
+prop windlass if.use=!signal|windlass\nhas|story:crank|1
 prop windlass on.use=message||The windlass groans round and round. Up out of the dark water, streaming, on its chain: a locker from the workshop that sank into the well.\nsignal||windlass\nshow|workshop
-prop windlass else.use=message||The windlass is wound up as far as it goes.
+prop windlass else.use=message||The windlass will not turn: its crank handle is gone from the shaft - or the chain is already wound up as far as it goes.
 prop workshop obj.name=workshop
+note pimnote Pim Lark's note | PIM LARK - KETT'S BOATMAN - ON THE LOOKOUT\n\nProfessor, if you come back and read this: I am fine, mostly. The grey launch put in at the west shore the day after you went up the canyon. Six of them, and a tall one in a grey coat who never raises his voice. That's the worst kind.\n\nThey wanted the well. I heard them say a locker went down it with your workshop. So I took the handle off the windlass and climbed up here with it. Let them turn the shaft with their teeth.\n\nThe handle is in my box in the nest. I am going round to the boat to wait for you. If I'm not at the boat, I'm hiding, and I'm good at hiding. - Pim
+note greylog Silas Grey's log | S. GREY - FIELD LOG, SUNSTAFF MESA\n\nDay 2. Kett has gone up the canyon and not come down. Her boatman ran off up the east rock like a goat. Leave him.\n\nThe staff from the museum is useless on its own: a brass tube with a lens. The boss says the map room does the work. The vines are cut now - someone has been through - so the room is open to us.\n\nThe well is a different matter. Someone took the crank. My men have tried for an hour with a crowbar and broke the crowbar.\n\nNo matter. Wherever the mark points, the tomb city or the next, we will be there before her. She digs. We follow. It is cheaper.
+note ostrander Dr. Ostrander's notes | DR. HAL OSTRANDER - SEVENTH TIDE EXPEDITION, 1931\n\nThe sea took the dig house tonight. The point has been sinking all season; the locals said it would.\n\nI am writing this in the front room with the water at my knees. I have sent the boys up the canyon with the instruments. The map room's mirrors we left in place: anyone who reads the old texts will know the setting, and anyone who does not will never find the tide-gear.\n\nThe first gear lies in the dunes to the north-east, with the kings who made it. I am sure of it now. If you find this, whoever you are, finish what we began - and do not trust anyone who offers to pay for it.
 
 prop mouth zone.id=canyon_mouth
 prop mouth zone.radius=6
@@ -229,7 +277,12 @@ step read|Burned mark|1|Read the burned mark on the model
 step open|Map room cache|1|Open the map room cache
 step blueprint|Blueprint_Fueltank|1|Take the fuel tank plans from the cache
 step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe plans from the cache
-step reach|oasis_well|1|Go back down to the oasis well
+step reach|buttefoot|1|Find the path up Gnomon Butte in the east
+step reach|buttetop|1|Climb Gnomon Butte to the lookout mast
+step read|Pim Lark's note|1|Read Pim Lark's note on the butte top
+step collect|story:crank|1|Climb the mast and take the windlass handle from Pim's box
+step read|Silas Grey's log|1|Find the Syndicate's cave on the west shore and read Grey's log
+step reach|oasis_well|1|Go back to the oasis well with the handle
 step open|Workshop locker|1|Wind up the well and open the drowned workshop's locker
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from the locker
 quest done=Balboa's plans are yours, and the mark is burned: a tomb city in the dunes, the first gear. Its call sign answers on 900 - once the caravans' town is behind you.
@@ -239,5 +292,7 @@ quest reward=MetalIngot*4;Bolt*3;Rope*4
 place VP_Forklift - at 13.5 -70.5 ground sit yaw=30
 # the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
 clear at 9.98 39.65 r=1.5 only=BigSharpRock
+
+clear at 30.77 -9.81 r=1.5 only=BigSharpRock
 
 save Sunstaff Mesa

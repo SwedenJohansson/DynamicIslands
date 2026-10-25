@@ -1,5 +1,7 @@
 # Rope Bridge Gorge - the side quest "The Idol's Bridge" played through (plan Relic of the Seventh Tide, side B)
 # Two halves at 4 m, the gorge x -6..6; the bridge along z 0 from x -9.2 to 9.2; the porch 20..26 x -3..3 at 4.
+# 10-25 deep pass: after the porch, the builders' coffer (cave 30 -32) tried without its key, the Lantern Hill (-30 34,
+# 16 m; trail foot -30 21) and Kett's mast (the key), the cave, then the drowned camp house at 40 42 (-9 m).
 island Rope Bridge Gorge
 offset 0 0
 expect title The Idol's Bridge
@@ -14,4 +16,26 @@ walk 19 0 to 22 0 h=4
 open Idol's offering
 expect item TradeToken 6
 zone far_porch
+expect step 5
+open Builders' coffer
+expect message coffer key
+zone lanternfoot
+expect step 6
+zone lanterntop
+expect step 7
+read Kett's note on the hill
+expect step 8
+open Kett's lookout box
+wait 3
+expect story cofferkey 1
+expect step 9
+zone buildcave
+expect step 10
+open Builders' coffer
+wait 2
+expect step 11
+read Silas Grey's note
+expect step 12
+zone camphouse
+read Dr. Ostrander's note
 expect done

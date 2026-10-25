@@ -1,16 +1,23 @@
 # Rope Bridge Gorge - a side island of the library's plan Relic of the Seventh Tide (seen ahead from day 5)
 # A jungle island split north to south by a deep gorge. A rope bridge of Caravan Town's plank spans on thick posts
 # at the lips crosses it to a temple porch on the far side, where Balboa's doll effigies stand as
-# idols with lanterns. Quest "The Idol's Bridge" (5 steps): the west lip, the idol's warning, the temple's warthogs,
-# the idol's offering, the far porch.
+# idols with lanterns. Quest "The Idol's Bridge" (13 steps): the west lip, the idol's warning, the temple's warthogs,
+# the idol's offering, the far porch; then the Lantern Hill on the west half and Kett's note and the coffer key on its
+# mast, the builders' cave on the east half's south shore (its coffer needs the key), and the 1931 expedition's camp
+# house drowned off the north-east with Dr. Ostrander's note.
+# DEEP 10-25 (Relic deep pass): Radius 56 -> 60 (a side island). The Lantern Hill (16 m, trail + Kett's lookout mast)
+# on the west half, the builders' cave on the east half's south shore (Silas Grey's note), the expedition's camp house
+# drowned off the north-east (-9 m, an air pocket), two buried caches. Voices: Kett, Silas Grey, Dr. Hal Ostrander.
 #
 # Built by the recipe player (CIRecipe rope_bridge_gorge) through the editor's own operations.
 include lib_sea
 include lib_features
+include lib_areas
+include lib_highwater
 new
 # (nature: a forest island at Raft's density - trees on both halves, the gorge bare)
 gen Trees=0.35 Bushes=0.6 Rocks=0.65 Harvest=0.3 BeachThings=0.2
-gen Seed=9901 Radius=56 Height=8 Roughness=0.35 Peaks=2 Shape=0 Style=3 PeakShape=0.4 Cliffs=0.5 BeachWidth=0.5
+gen Seed=9901 Radius=60 Height=8 Roughness=0.35 Peaks=2 Shape=0 Style=3 PeakShape=0.4 Cliffs=0.5 BeachWidth=0.5
 gen Water=0.5 SeaRocks=0.7 SeaFinds=0.4 Sunken=0.6 Hostiles=0 Friendly=0.2 SeaLife=0.3
 generate
 
@@ -26,11 +33,17 @@ brush flatten at 8 0 r=1.6 s=20 frames=60 h=3.5
 brush flatten at 7 0 r=1.6 s=20 frames=60 h=3
 brush flatten at 6 0 r=1.6 s=20 frames=60 h=2.4
 brush flatten from 0 -70 to 0 70 r=6 s=20 frames=300 h=-3
-brush smooth from -60 0 to -40 0 r=4 s=10 frames=60
+brush smooth from -64 0 to -40 0 r=4 s=10 frames=60
+# --- DEEP 10-25 terrain: the Lantern Hill (west half's north, summit 16 m, base r 12) and its trail from the south, the
+# builders' cave on the east half's south shore, the camp house's basin off the north-east (-9 m) ---------------------
+call hw_mount x=-30 z=34 b=12 h=16
+call hw_trail x=-30 z=34 b=12 h=16 a0=180 turn=300 n=24 h0=4
+call ar_cave x=30 z=-32 h=2 yaw=180 al=buildrock chest=buildcoffer
+call hw_basin x=40 z=42 r=10 h=-9
 origin
 clear at -18 0 r=10
 clear at 20 0 r=12
-clear from 0 -60 to 0 60 r=9
+clear from 0 -64 to 0 64 r=9
 
 # --- The rope bridge: two plank spans (17.5 m) on thick posts at the lips (the spans' own posts are its rails) ---
 place CaravanHubBridge3 bridge at -4.38 0 h=3.15 yaw=90
@@ -79,18 +92,52 @@ prop idols tint.amount=0.5
 place Zone_Trigger templeground at 14 0 h=4
 place Creature_Boar hogs at 28 -10 ground
 scatter "Pickup_Landmark_PineappleLandmark" 2 at -30 12 r=8 seed=9911 free=3
-call shallows x=-20 z=-48 r=10 deep=3 n=1 seed=9912
+call shallows x=-24 z=-56 r=10 deep=3 n=1 seed=9912
+call hw_reef x=-52 z=-30 r=4 seed=31050
+
+# --- DEEP 10-25: the Lantern Hill - its foot and top as zones, Kett's lookout mast (her note, the coffer key) ----------
+call hw_zone x=-30 z=21 al=lanternfootz id=lanternfoot r=5 msg="A steep green hill on the west half. Old flat stones climb it in a spiral to a mast with a lantern."
+call hw_zone x=-30 z=34 al=lanterntopz id=lanterntop r=6 h=1 msg="The top of the Lantern Hill. The gorge, the swaying bridge, the idols' lanterns - and a cave mouth on the far half's south shore."
+call hw_mast x=-30 z=34 h0=16 lv=2 a=kettmast chest=kettbox top=Placeable_Lantern_Metal
+place Note_Paper kettnote at -33.5 30.5 h=16.1 drop yaw=200
+loot kettbox story:cofferkey*1;Rope*2;PlasticBottle_Water*1
+prop kettbox loot.refill=0
+note kettbox Kett's lookout box | Kett's box on the lookout mast: a canteen, rope - and a small clay-and-bronze key, seven lines scratched on it.
+scatter "Pickup_Landmark_Flower_Red" 2 at -30 34 r=13 seed=31051 free=3
+call treasure x=-44 z=22 r=12 n=1 seed=31048 kind=0
+prop treasure31048 treasure.loot=MetalOre*3;CopperOre*2;Glass*2
+# --- The builders' cave on the east half's south shore: the builders' coffer (needs the key), Silas Grey's note -------
+call hw_zone x=30 z=-37 al=buildz id=buildcave r=4 msg="A cave on the south shore, its walls cut with seven lines over and over. Boot prints in the sand - and a Syndicate cigarette tin."
+place Note_Paper greygorge at 28.5 -37.5 h=2.45 drop yaw=180
+loot buildcoffer TradeToken*4;CopperIngot*2;MetalIngot*1;Glass*2
+prop buildcoffer loot.refill=0
+prop buildcoffer if.open=has|story:cofferkey|1
+prop buildcoffer else.open=message||A clay coffer bound in bronze, seven lines on its lock. It wants the coffer key - the boot prints show someone tried to prise it.
+note buildcoffer Builders' coffer | The builders' coffer: the sea kings' tokens, copper, iron and two lenses of old glass.
+# --- The 1931 expedition's camp house, drowned off the north-east (-9 m): Dr. Ostrander's note, an air pocket --------
+call hw_sunkhouse x=40 z=42 h=-9 yaw=0 a=camphouse chest=campchest air=campair bub=campbub dal=campdoor
+call hw_zone x=40 z=42 al=campz id=camphouse r=6 h=1 msg="A little stone house on the sea floor, nine metres down. Its front room still holds a breath of air."
+place Note_Paper ostrgorge at 40.6 40.8 h=-8.5 drop yaw=0
+loot campchest Glass*2;MetalIngot*2;Rope*2;Cooked_GenericMeat*2
+prop campchest loot.refill=0
+note campchest Expedition stores | The 1931 expedition's stores: iron, glass, rope, and tins of meat that are somehow still good.
+call treasure x=26 z=48 r=12 n=1 seed=31049 kind=0
+prop treasure31049 treasure.loot=Scrap*4;Bolt*2;Hinge*1
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Rope Bridge Gorge
 info author=Custom Islands
-info description=A jungle island split by a deep gorge, crossed by a rope bridge to a temple porch where doll idols with lanterns keep watch. A side island of Relic of the Seventh Tide.
+info description=A jungle island split by a deep gorge, crossed by a rope bridge to a temple porch where doll idols with lanterns keep watch. A lantern hill with a lookout mast, the builders' cave on the south shore, an expedition house drowned off the north-east. A side island of Relic of the Seventh Tide.
 island on.arrive=message||The island is split in two. A rope bridge sways over the gorge, and on the far side two tall figures stand beside lanterns.
 
 note idolwarning Idol warning | Carved on a board at the bridge's lip, in a hand like Kett's:\n\nTHE IDOLS ARE PAINTED DOLLS. THE PIGS ARE NOT.\nThe builders' people left their offering here. Take it - and cross back quickly.
 note offering Idol's offering | A box the builders' people left between their idols: dried food, coins and a tide-mark scratched in its lid - seven lines.
 loot offering TradeToken*6;Cooked_GenericMeat*3;Coconut*3;PlasticBottle_Water*2
 prop offering loot.refill=0
+story cofferkey|Coffer key|Placeable_PaperBundle|A small clay-and-bronze key with seven lines on it: the builders' coffer, from Kett's lookout box.
+note kettnote Kett's note on the hill | KETT - ON THE LANTERN HILL\n\nThe idols are dolls, but the people who painted them were not fools. Their coffer is in the cave on the far side, on the south shore, and its key was in the offering box under a false floor. I have it. Now you have it.\n\nSomeone keeps the idols' lanterns burning. I have not seen who. I have seen boot prints in the gorge, though, and they are not mine.\n\nThe seven lines are on everything here: the bridge posts, the idols, the cave walls. The builders came this way, carrying something heavy, and they were counting tides. - I. K.
+note greygorge Silas Grey's note | S. GREY - THE GORGE\n\nThe men will not cross the bridge. One of them says the idols watch him. I said the idols are painted dolls, and he said that is exactly what a painted doll would want me to think.\n\nThe coffer in this cave will not open, and Kett has been here before us; there are her pencil marks on the wall. She is always one island ahead.\n\nWe will not catch her by running. Let her run, and let her lead. There is an old house sunk off the north-east point. Lopez thinks it is the 1931 lot. Let it rot.
+note ostrgorge Dr. Ostrander's note | DR. HAL OSTRANDER - THE GORGE, 1931\n\nWe have made camp on the north-east shore, where the ground is soft and sinking. The boys say the gorge was cut by the builders, to let the sea through at the seventh tide. I think they are right.\n\nThe idols' keepers came in the night and lit the lanterns and were gone by morning. They want nothing from us. I have left them a tin of tobacco.\n\nThe tide marks here count seven, and seven again. Whatever the builders made, it is a clock. And a clock, sooner or later, strikes.
 
 prop bridgelip zone.id=bridge_lip
 prop bridgelip zone.radius=3
@@ -114,6 +161,14 @@ step read|Idol warning|1|Read the warning at the bridge
 step kill|Warthog|3|Drive off the temple's warthogs
 step open|Idol's offering|1|Open the idols' offering
 step reach|far_porch|1|Stand on the temple porch
+step reach|lanternfoot|1|Cross back and find the path up the Lantern Hill
+step reach|lanterntop|1|Climb the Lantern Hill to Kett's lookout mast
+step read|Kett's note on the hill|1|Read Kett's note on the hill top
+step collect|story:cofferkey|1|Climb the mast and take the coffer key from Kett's box
+step reach|buildcave|1|Find the builders' cave on the east half's south shore
+step open|Builders' coffer|1|Open the builders' coffer with the key
+step read|Silas Grey's note|1|Read Silas Grey's note in the cave
+step read|Dr. Ostrander's note|1|Dive to the drowned house off the north-east and read Dr. Ostrander's note
 quest done=Seven lines on the offering's lid - the same tide marks as Kett's notes. The builders came this way too.
 quest reward=TradeToken*4;Cooked_GenericMeat*2;Rope*3
 
