@@ -69,7 +69,7 @@ call dp_air x=-11.31 z=33.22 id=rb_air al=rbair msg="Air trapped under the wreck
 place Loot_ChestSmall rbdivesecret at -9.15 38.87 ground sit yaw=76.76
 call tzone x=-8 z=34 al=rbdivezone id=rb_dive r=7 msg="The bottom of the blue hole. Relay 6 lies here, floats cut." h=1
 call tzone x=-3.65 z=15.51 al=rbrim id=rb_rim r=5 msg="The blue hole's rim." h=1
-call treasure x=-2.73 z=11.61 r=2 n=1 seed=14232
+call treasure x=-2.73 z=11.61 r=12 n=1 seed=14232
 prop treasure14232 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 place Creature_Turtle rbturtles at 6 -14 ground
 prop rbturtles creature.count=2
