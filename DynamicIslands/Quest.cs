@@ -21,7 +21,7 @@ namespace DynamicIslands.Editor
 	public class IslandQuest
 	{
 		public const string KeyTitle = "quest.title", KeyIntro = "quest.intro", KeySteps = "quest.steps", KeyReward = "quest.reward", KeyDone = "quest.done";
-		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch", "collect", "pages", "blueprint" };
+		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch", "collect", "pages", "blueprint", Islanders.QuestType };
 
 		/// <summary>Steps the crew's story book counts (the host checks them), not events.</summary>
 		public static bool Counted(string type) { return type == "collect" || type == "pages"; }
@@ -46,7 +46,7 @@ namespace DynamicIslands.Editor
 					case "pages": return "Find " + (Count > 1 ? Count + " pages" : "a page") + (Target == "all" ? " (on any island)" : " on this island");
 					case "blueprint": return Target.Length > 0 ? "Find the " + PlanChecker.Pretty(Target.Trim()) + " blueprint" : "Find one of Raft's blueprints";
 				}
-				return Type;
+				return PlayerFeatures.DescribeStep(Type, Target, Count) ?? Type;
 			}
 		}
 

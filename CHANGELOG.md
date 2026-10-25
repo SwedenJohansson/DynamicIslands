@@ -9,6 +9,15 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-25: Islanders
+
+### New
+- **Islanders** (Notes & signs > **Islander (talks)**): one of Raft's six characters standing, sitting, fishing,
+  sleeping or leaning on an island. Press E to talk: a dialogue of pages, maybe with answers to pick. Closing it runs
+  the islander's **talk** event and an answer its **choice1**-**choice3** event; the world remembers who was talked to
+  for the whole crew (the check **talked to**), a new quest step **Talk to** waits for it, and the new action **show
+  dialogue** opens a dialogue from any object. Pose, look and dialogue are set in the inspector.
+
 ## 2026-10-25: Relic of the Seventh Tide, full-size islands
 
 ### Changed

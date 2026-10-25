@@ -295,6 +295,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Extra text for the object list's hint (null for Raft's plain objects).</summary>
 		public static string Hint(string name)
 		{
+			string player = PlayerFeatures.Hint(name);
+			if (player != null) return player;
 			CreatureKind k = CreatureOf(name);
 			if (k != null) return "a live " + k.Label.ToLowerInvariant() + " appears here in a world: " + k.Hint + ". Select it to change its stats and colour";
 			if (name == PlaceableCatalog.RaftCrate) return "Raft's own crate from the abandoned rafts: players take it whole (E) and get random loot from Raft's table. Its contents can't be chosen (use a chest for chosen loot), and it doesn't count for a quest's \"Open a chest\" step";
@@ -335,6 +337,7 @@ namespace DynamicIslands.Editor
 			PlaceableCatalog.AddCustom(HelperRamp, BuildHelperMarker(HelperRamp, "Invisible ramp"), ZoneCategory, "Invisible ramp");
 			PlaceableCatalog.AddCustom(BuriedTreasure, BuildTreasureMarker(), LootCategory, "Buried treasure (metal detector)");
 			Survivors.Register(); // (a survivor in a cage, RF3)
+			PlaceableCatalog.AddCustom(Islanders.ObjectName, Islanders.BuildMarker(), NotesCategory, "Islander (talks)");
 			foreach (CreatureKind k in Creatures)
 				PlaceableCatalog.AddCustom(k.Name, BuildPrototype(k), k.Category, k.Label);
 			Debug.Log("[CUSTOM ISLANDS] Custom content: " + Creatures.Length + " creatures (" + models.Count + " with Raft's models), " + notes + " note objects, " + loot + " loot containers");
@@ -423,7 +426,7 @@ namespace DynamicIslands.Editor
 		static readonly Color CatchableColor = new Color(0.55f, 0.9f, 0.55f), HostileColor = new Color(1f, 0.55f, 0.4f), SeaColor = new Color(0.45f, 0.75f, 1f);
 		static readonly Dictionary<Color, Material> markerMaterials = new Dictionary<Color, Material>();
 
-		static Material MarkerMaterial(Color c)
+		internal static Material MarkerMaterial(Color c)
 		{
 			Material m;
 			if (markerMaterials.TryGetValue(c, out m) && m != null) return m;
@@ -460,7 +463,7 @@ namespace DynamicIslands.Editor
 			return root;
 		}
 
-		static GameObject Part(PrimitiveType type, string name, Transform parent, Vector3 pos, Quaternion rot, Vector3 scale, Material mat)
+		internal static GameObject Part(PrimitiveType type, string name, Transform parent, Vector3 pos, Quaternion rot, Vector3 scale, Material mat)
 		{
 			GameObject go = GameObject.CreatePrimitive(type);
 			go.name = name;
@@ -472,7 +475,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>A name tag that floats over an object in the editor, always facing the camera.</summary>
-		static TextMesh AddLabel(Transform parent, string text, float height)
+		internal static TextMesh AddLabel(Transform parent, string text, float height)
 		{
 			var go = new GameObject(MarkerOnly);
 			go.name = MarkerOnly;

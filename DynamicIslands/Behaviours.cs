@@ -49,10 +49,10 @@ namespace DynamicIslands.Editor
 		public const string EventPrefix = "on.";
 		public static readonly string[] ObjectEvents = { "use", "enter", "read", "open", "defeat", "laser", BossPhases.Event, MechFeatures.StackEvent };
 		public static readonly string[] IslandEvents = { "arrive", "quest" };
-		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character", "playsound", "stopsound", "camera", "suit", "hit", "carry", "collapse", "moveto" };
+		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character", "playsound", "stopsound", "camera", "suit", "hit", "carry", "collapse", "moveto", PlayerFeatures.DialogueVerb };
 		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal", "playsound", "stopsound", "camera", "hit", "collapse", "moveto" };
 		public const string CheckPrefix = "if.", ElsePrefix = "else.";
-		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest", "wears", "holds" };
+		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest", "wears", "holds", PlayerFeatures.TalkedCheck };
 		public static readonly string[] States = { "open", "closed", "shown", "hidden" };
 		public static readonly string[] CollisionModes = { "", "none", "box", "solid" };
 
@@ -108,6 +108,7 @@ namespace DynamicIslands.Editor
 				if (!ObjectProps.IsNote(objectName, p) && !ObjectProps.IsLoot(objectName, p)) list.Add(new KeyValuePair<string, string>("use", "a player uses it (" + ObjectProps.Get(p, Use, "needs \"Players can use it\"") + ")"));
 				if (ObjectProps.Get(p, LaserBeam.Prop).Length == 0) list.Add(new KeyValuePair<string, string>(LaserBeam.Event, "a laser beam reaches it (a laser emitter's beam, maybe by way of mirrors)"));
 			}
+			PlayerFeatures.Events(list, objectName, p);
 			return list;
 		}
 	}
@@ -138,8 +139,8 @@ namespace DynamicIslands.Editor
 		public bool Shared { get { return BehaviourProps.SharedVerbs.Contains(Verb); } }
 
 		/// <summary>Needs a target object (by name).</summary>
-		public static bool HasTarget(string verb) { return verb == "show" || verb == "hide" || verb == "toggle" || verb == "open" || verb == "close" || verb == "switch" || verb == "teleport" || verb == "playsound" || verb == "stopsound" || verb == "camera" || verb == "hit" || verb == "carry" || verb == "collapse" || verb == "moveto"; }
-		public static bool HasArg(string verb) { return verb == "suit" || verb == "hit" || verb == "message" || verb == "give" || verb == "sound" || verb == "signal" || verb == "journal" || verb == "wait" || verb == "character" || verb == "playsound" || verb == "stopsound" || verb == "camera" || verb == "collapse" || verb == "moveto"; }
+		public static bool HasTarget(string verb) { return verb == "show" || verb == "hide" || verb == "toggle" || verb == "open" || verb == "close" || verb == "switch" || verb == "teleport" || verb == "playsound" || verb == "stopsound" || verb == "camera" || verb == "hit" || verb == "carry" || verb == "collapse" || verb == "moveto" || PlayerFeatures.HasTarget(verb); }
+		public static bool HasArg(string verb) { return verb == "suit" || verb == "hit" || verb == "message" || verb == "give" || verb == "sound" || verb == "signal" || verb == "journal" || verb == "wait" || verb == "character" || verb == "playsound" || verb == "stopsound" || verb == "camera" || verb == "collapse" || verb == "moveto" || PlayerFeatures.HasArg(verb); }
 
 		/// <summary>A wait's seconds (0..3600).</summary>
 		public float Seconds
@@ -181,7 +182,7 @@ namespace DynamicIslands.Editor
 					SO_Character c = Behaviours.CharacterOf(Arg);
 					return "unlock the character " + (c != null ? c.displayName : "'" + Arg + "' (no such character)") + " for the player";
 			}
-			return Verb;
+			return PlayerFeatures.Describe(this) ?? Verb;
 		}
 	}
 
@@ -247,7 +248,7 @@ namespace DynamicIslands.Editor
 				case "wears": return "the player wears " + (Target.Length > 0 ? ContentCatalog.ItemLabel(Target.TrimEnd('*')) + (Target.EndsWith("*") ? " (any kind)" : "") : "(no item)");
 				case "holds": return "the player holds " + (Target.Length > 0 ? ContentCatalog.ItemLabel(Target.TrimEnd('*')) + (Target.EndsWith("*") ? " (any kind)" : "") : "(no item)") + " in their hand";
 			}
-			return Kind;
+			return PlayerFeatures.What(this) ?? Kind;
 		}
 
 		string ItemText() { return (Count > 1 ? Count + " \u00D7 " : "") + (Target.Length > 0 ? ContentCatalog.ItemLabel(Target) : "(no item)"); }
@@ -398,7 +399,7 @@ namespace DynamicIslands.Editor
 
 		void IRaycastable.OnIsRayed()
 		{
-			if (NoteReader.IsOpen) return;
+			if (NoteReader.IsOpen || DialoguePanel.IsOpen) return;
 			DisplayTextManager hints = CustomNote.Hints;
 			if (hints != null) hints.ShowText(Hint, CustomNote.InteractKey, 0, 0, true);
 			if (CustomNote.InteractPressed() && Time.time > cooldown)
@@ -509,6 +510,7 @@ namespace DynamicIslands.Editor
 			r.Index = index;
 			r.ObjectName = objectName;
 			r.Props = new Dictionary<string, string>(props);
+			PlayerFeatures.Attach(go, r);
 			if (!BehaviourProps.Any(props)) return;
 			if (ObjectProps.GetFloat(props, BehaviourProps.Spin, 0f) != 0f || ObjectProps.GetFloat(props, BehaviourProps.Bob, 0f) != 0f || BehaviourProps.Moves(props))
 				go.AddComponent<IslandBehaviour>().Configure(props, index);
@@ -732,6 +734,8 @@ namespace DynamicIslands.Editor
 
 		static bool Holds(IslandWorldState.Entry e, int index, ObjCheck c, PlayerInventory inv)
 		{
+			bool player;
+			if (PlayerFeatures.Holds(e, index, c, out player)) return player;
 			switch (c.Kind)
 			{
 				case "has":
@@ -1170,6 +1174,7 @@ namespace DynamicIslands.Editor
 			{
 				try
 				{
+					if (PlayerFeatures.RunPersonal(e, index, a)) continue;
 					switch (a.Verb)
 					{
 						case "suit":

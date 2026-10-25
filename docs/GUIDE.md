@@ -330,6 +330,8 @@ The builder of an island can give it much more than land (see [section 5](#5-mak
   second phase: at part of its health it roars, calls more animals and gets faster.
 - **Survivors:** someone locked in a cage. Bring the cage's key (a story item) and press **E**: the cage opens, the
   survivor thanks you in a speech bubble, and from then on stands on your raft.
+- **Islanders:** one of Raft's characters standing, sitting, fishing, sleeping or leaning on an island. Press **E** to
+  talk: a dialogue of a few pages, maybe with answers to pick. What you answer can open doors or start a quest.
 - **Locked doors:** Raft's card reader doors and other key doors open only with their card or key (a story item): the
   reader beeps it through and the door opens for everyone. Without it the door stays shut and says so.
 - **Buried treasure:** nothing shows above the ground. Raft's **metal detector** beeps as you come near, and three
@@ -1583,7 +1585,8 @@ planks and rope, and when the quest is done it brings a saved island "Old camp" 
 name on the Receiver.*
 
 Steps: **go to** a trigger zone, **read** a note, **open** a chest (one of the mod's chests - Raft's abandoned raft crate doesn't count), **defeat** or **catch** a number of animals,
-**collect** a number of a story item, **find** journal pages, find a **Blueprint** of Raft's. Each step's kind is a **▼ list** (each kind says what it
+**collect** a number of a story item, **find** journal pages, find a **Blueprint** of Raft's, **talk to** an islander
+(6.3; by its name, the **▾** lists the island's islanders). Each step's kind is a **▼ list** (each kind says what it
 asks). Steps point at things on the island by name: the small **▾** beside the name lists the names this island has
 for that kind - its trigger zones, note titles, chest titles or creatures - so you can pick one instead of typing it
 (place the zones, notes, chests and creatures first). A **collect** step picks its story item with **…**. **When the quest is done, bring a new island** (main quest only) chooses from a
@@ -1684,6 +1687,10 @@ Select any object → **Behaviour & events...**. No code needed:
   object that spins, bobs or moves by itself. A creature spot's **Guarded while** lines (`boss.shieldIf=state|Feeder|open`,
   the behaviour window's checks) keep players' weapons glancing off its animals while all of them hold: a boss
   guarded while its feeder runs - close the feeder (or blast it, **hurt creatures**) to fight it.
+- **Islanders** (2026-10-25, 6.3): an islander has the events **talk** (its dialogue closed) and **choice1** to
+  **choice3** (an answer picked); the check **talked to** (`talked|Old Finn`; empty = this islander) passes once
+  anyone of the crew talked to it; the action **show dialogue** (`dialogue|Old Finn|text`) opens a dialogue for the
+  player who set it off.
 - **Sounds and camera moments** (actions in the same ▼ list, shared by every player): **play sound/music** plays one of
   Raft's sound events or music cues (pick it with **…**, a list of every one Raft has), with a volume, **once** or on a
   **loop**, **near** the object (or the objects named) or for **everyone on the island**. Every player near the island
@@ -1742,6 +1749,21 @@ id** and a **Signal** ("survivor" unless you name one). A player whose crew hold
 the cage opens for everyone, the survivor says the line in a speech bubble over the cage, and a few seconds later
 stands on the raft (as decoration: no needs, no work). The world remembers its survivors: one per id, also across
 islands and after a reload, so two cages with one id free one survivor.
+
+**Islanders to talk to** (2026-10-25). **Notes & signs** has **Islander (talks)**: in the editor a plain figure with a
+name tag, in a world one of Raft's six characters. In its **Islander** group set its **Name** (who quests and checks
+talk to), who it **Looks like** (a Raft character; any: picked by the island and the object), its **Pose** (stand,
+sit, fish, sleep, lean - place it where that fits: on a bench, at the water, against a wall) and **What it says**:
+the dialogue. A line `---` starts a new page; lines starting with `>` are answers to pick (up to three in all).
+Players look at it and press **E**: the dialogue opens with the islander's name, **Next** (or E) turns the pages, and
+on a page with answers they pick one (Tab or Esc walks away without answering). When it closes the islander's
+**talk** event runs, and answer 1, 2 or 3 runs its **choice1**, **choice2** or **choice3** event first (Behaviour &
+events..., 6.2): a door that opens for "I will help", a quest page in the journal, a signal. The world remembers who
+was talked to (for the whole crew, after a reload too): the check **talked to** (6.2) passes once anyone talked to the
+islander with that name, and a quest's **Talk to** step (6.1) is done when the dialogue closes. Any object can also
+show a dialogue: the action **show dialogue** (`dialogue|Old Finn|Hello!\n---\nBye`, `\n` for a new line in the
+action's one line) opens it for the player who set it off, said by the named object (its answers run that object's
+choice events). Check warns when a **Talk to** step names no islander of the island.
 
 ### 6.4 Islands that bring islands
 

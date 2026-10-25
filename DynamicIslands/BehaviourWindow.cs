@@ -45,6 +45,7 @@ namespace DynamicIslands.Editor
 			{ "playsound", "play sound/music" }, { "stopsound", "stop sound" }, { "camera", "camera moment" },
 			{ "suit", "protective suit" }, { "hit", "hurt creatures" },
 			{ "carry", "pick up (carry)" }, { "collapse", "collapse" }, { "moveto", "move to marker" },
+			{ PlayerFeatures.DialogueVerb, "show dialogue" },
 		};
 
 		/// <summary>What each action does (the action list's lines).</summary>
@@ -64,6 +65,7 @@ namespace DynamicIslands.Editor
 			{ "carry", "The player picks the object up and carries it (no jumping or ziplines; the use key puts it down in front, a hit drops it). Empty name = this object" },
 			{ "collapse", "Objects with a name rumble, shake and fall away, then are gone for good (a bridge, a floor, a cave mouth) - over some seconds" },
 			{ "moveto", "Objects with a name travel to a marker object's place over some seconds, carrying players on them (a cart to a ledge; a creature spot - its animals follow to the next arena)" },
+			{ PlayerFeatures.DialogueVerb, "A dialogue for the player who set it off, said by the named object (empty = this one). \\n starts a new line, a line --- a new page, a line > an answer (its choice1.. event on this object)" },
 		};
 
 		/// <summary>What each check asks (the check list's lines).</summary>
@@ -74,6 +76,7 @@ namespace DynamicIslands.Editor
 			{ "quest", "The island's quest reached a step (or is done)" },
 			{ "wears", "The player wears an item (a headlight, flippers, an oxygen tank...). Name* = any kind of it" },
 			{ "holds", "The player holds an item in their hand (binoculars, a hook, an axe...). Name* = any kind of it" },
+			{ PlayerFeatures.TalkedCheck, "Someone of the crew talked to an islander (by its name; empty = this one)" },
 		};
 
 		public static void Create(Transform canvas)
@@ -368,7 +371,7 @@ namespace DynamicIslands.Editor
 
 		static readonly Dictionary<string, string> CheckLabels =new Dictionary<string, string>
 		{
-			{ "has", "has item" }, { "take", "uses up item" }, { "state", "object is" }, { "signal", "signal sent" }, { "quest", "quest step" }, { "wears", "wears item" }, { "holds", "holds item" },
+			{ "has", "has item" }, { "take", "uses up item" }, { "state", "object is" }, { "signal", "signal sent" }, { "quest", "quest step" }, { "wears", "wears item" }, { "holds", "holds item" }, { PlayerFeatures.TalkedCheck, "talked to" },
 		};
 
 		/// <summary>"Only if ..." (every check must pass) and "Otherwise say ...".</summary>
@@ -435,6 +438,7 @@ namespace DynamicIslands.Editor
 				UIKit.Button(row, "\u2026", () => { Keep(); ItemPickerWindow.PickOne(v => { c.Target = v; Rebuild(); }, false); }, "Choose an item", 28, 28f, 12);
 			}
 			else if (c.Kind == "signal") Field(row, "signal name", c.Target, -1, "A signal sent on this island (a \"send signal\" action)", v => c.Target = v.Trim());
+			else if (PlayerFeatures.CheckPlaceholder(c.Kind) != null) Field(row, PlayerFeatures.CheckPlaceholder(c.Kind), c.Target, -1, PlayerFeatures.CheckHint(c.Kind), v => c.Target = v.Trim());
 			else Field(row, "steps done (empty = the whole quest)", c.Target, -1, "How many steps of the island's quest must be done", v => c.Target = v.Trim());
 			Text d = UIKit.Label(row, c.Describe(), 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic);
 			UIKit.Size(d.gameObject, 250);
@@ -477,7 +481,7 @@ namespace DynamicIslands.Editor
 			else if (a.Verb == "camera") CameraFields(row, a);
 			else if (ObjAction.HasArg(a.Verb))
 			{
-				string ph = a.Verb == "message" ? "What players read" : a.Verb == "give" ? "items (\u2026 to choose)" : a.Verb == "sound" ? "event:/... (\u2026 to choose)" : a.Verb == "journal" ? "What the page says" : a.Verb == "suit" ? "seconds (120)" : a.Verb == "hit" ? "% of their health (25)" : a.Verb == "collapse" ? "seconds (3)" : a.Verb == "moveto" ? "marker name, seconds (4)" : "signal name (world plans wait for it)";
+				string ph = a.Verb == "message" ? "What players read" : a.Verb == "give" ? "items (\u2026 to choose)" : a.Verb == "sound" ? "event:/... (\u2026 to choose)" : a.Verb == "journal" ? "What the page says" : a.Verb == "suit" ? "seconds (120)" : a.Verb == "hit" ? "% of their health (25)" : a.Verb == "collapse" ? "seconds (3)" : a.Verb == "moveto" ? "marker name, seconds (4)" : a.Verb == PlayerFeatures.DialogueVerb ? "What is said (\\n new line, --- new page, > answer)" : "signal name (world plans wait for it)";
 				Field(row, ph, a.Arg, -1, a.Verb == "signal" ? "World plans and island rules can wait for it: \"signal sent at\" this island" : a.Verb == "journal" ? "Written into the crew's journal (J in a world)" : "", v => a.Arg = v.Trim());
 				if (a.Verb == "give") UIKit.Button(row, "\u2026", () => { Keep(); ItemPickerWindow.OpenFor(() => a.Arg, v => { a.Arg = v; }); StartCoroutine(RebuildWhenClosed()); }, "Choose Raft's items or the island's story items", 28, 28f, 12);
 				if (a.Verb == "sound") UIKit.Button(row, "\u2026", () => { Keep(); SoundPickerWindow.OpenFor(v => { a.Arg = v; Rebuild(); }); }, "Choose one of Raft's sounds (you can listen first)", 28, 28f, 12);
