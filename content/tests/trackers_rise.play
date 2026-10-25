@@ -23,7 +23,7 @@ open Fisher's locker
 open Overgrown chest
 wait 2
 expect item Shovel 1
-expect step 7
+expect step 6
 expect hidden mapcase
 use maptable
 expect story mappiece 0

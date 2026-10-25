@@ -44,11 +44,16 @@ place Note_Sign survey at -3 -8 sit yaw=90
 place Crate_Big_01 - at 2.5 -14 sit yaw=20
 place Placeable_Lantern_Metal - at 2.5 -14 y=0.45 sit
 place Loot_Crate mushroombasket at 2 -24 sit yaw=200
+# (box agent 10-25: Jonas's soup note had no paper placed - it lies by his mushroom basket)
+beside Note_Paper jonasmush mushroombasket d=0.5
 # REDO 10-24: the survey team's fuse box (the island's machine) and the lab corner it lights
 place RT_PowerBox fusebox at -3.2 -15 sit yaw=90
 place Loot_Chest labchest at -2.5 -27 sit yaw=0
 place "Box Small" - at 0 -28 sit
 place Note_Paper samplereport at 0 -28 y=0.7 drop yaw=20
+# (box agent 10-25: Aki's gate log had a note line but no paper placed - it sits by the sample report)
+place "Box Small" - at 1.6 -30.2 sit
+place Note_Paper akilog at 1.6 -30.2 y=0.7 drop yaw=-30
 pop
 
 # (the east flank raised round the Bee Hall, so the hill covers the cave's shell)
@@ -181,23 +186,9 @@ note odapack Oda's lost pack | Oda's pack, soaked and dried stiff, the strap che
 loot odapack Rope*2;HoneyComb*1;Leather*1
 prop odapack loot.refill=0
 place Note_Paper odapacklog at -26.2 -26.6 ground y=0.3 drop
-note odapacklog Page from Oda's pack | O.F. - ROOTWEAVE
-
-Lost my pack in the Flooded Passage. Burr pulled it out for me and then ate the strap, which I suppose is his fee.
-
-I am tying his bell to it and leaving it here at the survey camp, so the next person down knows a ranger came this way and is still, more or less, fine. If you are the next person: take what you need. Leave the apple. That is Burr's apple.
-
-The roots move when I am not looking. I have stopped looking. Burr has not; he stares at the walls and stamps. He is braver than me, or he is just a goat.
-
-The survey says there are four caves. The roots say there are more.
+note odapacklog Page from Oda's pack | O.F. - ROOTWEAVE\n\nLost my pack in the Flooded Passage. Burr pulled it out for me and then ate the strap, which I suppose is his fee.\n\nI am tying his bell to it and leaving it here at the survey camp, so the next person down knows a ranger came this way and is still, more or less, fine. If you are the next person: take what you need. Leave the apple. That is Burr's apple.\n\nThe roots move when I am not looking. I have stopped looking. Burr has not; he stares at the walls and stamps. He is braver than me, or he is just a goat.\n\nThe survey says there are four caves. The roots say there are more.
 place Note_Paper denmark at -6 41 ground y=0.3 drop
-note denmark Carved mark at the Den | Cut into a root at the Den's mouth with a ranger knife, deep and careful:
-
-O.F. + B.  ->  MARSH
-
-Under it, older and in a smaller, neater hand:
-
-M.F. WAS HERE. THE BEAR IS NICE IF YOU SING. (SHE IS NOT NICE. - A.)
+note denmark Carved mark at the Den | Cut into a root at the Den's mouth with a ranger knife, deep and careful:\n\nO.F. + B.  ->  MARSH\n\nUnder it, older and in a smaller, neater hand:\n\nM.F. WAS HERE. THE BEAR IS NICE IF YOU SING. (SHE IS NOT NICE. - A.)
 
 # --- Settings, notes, behaviours, quest -------------------------------------------------------------------------
 info title=Rootweave Caves
@@ -217,26 +208,8 @@ prop denair zone.radius=14
 
 note survey Cave survey | CAVE SURVEY - SEEDKEEPERS\n\nFungus Hall: camp. Lamps on the crates.\nBee Hall (east): hives in the roots. Leave them be.\nFlooded Passage (west): two air pockets. Swim between them.\nDen (north): a mama bear. Our cache is in there. Wait for her to sleep.\n\nFuses: one in each far cave. Three in the box and the lab lights up.\n\nThe turbine on the top charges the lamps.
 note samplereport Poison sample report | SAMPLE 31 - ROOT TISSUE, DEN - T.L.\n\nThe rot is not fungus. Not bacteria. It grows where the roots are cut, and it grows TOWARDS the cut. Like a hand going to a wound.\n\nThis is V-1. I knew it at the first slide and I wrote "not natural" on the label anyway, because Marit reads my labels.\n\nIt was only meant to clean the water. It eats oil, and then it eats the dead things in the silt, and then it finds out that living things are only dead things that have not stopped yet. It is not cruel. It is tidy.\n\nAll samples to the marsh station, Blightmire. I will finish the work there, where nobody climbs the balconies to look over my shoulder.\n\n- T.L.
-note akilog Root gate log | ROOT GATE LOG - AKI, gatekeeper
-
-The gate at the bottom of the grove's root hole is mine. I open it for the lamps and close it for the bears, and I keep the book.
-
-In: the river people, fourteen, singing. They did not want to stop. I let them through. I should not have. They were so happy.
-In: the Seedkeepers' crew, looking for them. Lise, Bo, Greta and the sandwiches.
-Out: nobody.
-
-Teodor came through last, with a crate of jars on his back. He patted my shoulder and said, "Close it behind me, Aki. Nobody needs to follow." Then he went on east, to the marsh.
-
-I did not close it. Marit says I never close anything.
-note jonasmush Soup note | SOUP - by Jonas, for whoever is cold
-
-Cave mushrooms: three. Water: some. Salt: if you have it. Hope: a lot.
-
-Boil until it smells like a forest. Do not boil until it smells like a lab.
-
-This basket is for the survey crew. If the survey crew is gone, it is for you. Food does not care who eats it; that is the nicest thing about food.
-
-I am going on to the Heart with the honey. Teodor asked for it. He says sweet things help the cultures. I said they help people too. He said, "That is what I am counting on, Jonas," and I did not like the way he smiled.
+note akilog Root gate log | ROOT GATE LOG - AKI, gatekeeper\n\nThe gate at the bottom of the grove's root hole is mine. I open it for the lamps and close it for the bears, and I keep the book.\n\nIn: the river people, fourteen, singing. They did not want to stop. I let them through. I should not have. They were so happy.\nIn: the Seedkeepers' crew, looking for them. Lise, Bo, Greta and the sandwiches.\nOut: nobody.\n\nTeodor came through last, with a crate of jars on his back. He patted my shoulder and said, "Close it behind me, Aki. Nobody needs to follow." Then he went on east, to the marsh.\n\nI did not close it. Marit says I never close anything.
+note jonasmush Soup note | SOUP - by Jonas, for whoever is cold\n\nCave mushrooms: three. Water: some. Salt: if you have it. Hope: a lot.\n\nBoil until it smells like a forest. Do not boil until it smells like a lab.\n\nThis basket is for the survey crew. If the survey crew is gone, it is for you. Food does not care who eats it; that is the nicest thing about food.\n\nI am going on to the Heart with the honey. Teodor asked for it. He says sweet things help the cultures. I said they help people too. He said, "That is what I am counting on, Jonas," and I did not like the way he smiled.
 note mushroombasket Mushroom basket | The survey camp's mushroom basket, still full. A label on the handle in Jonas's capitals: CAVE MUSHROOMS. NOT FOR TEODOR. HE PUTS THEM UNDER GLASS. MUSHROOMS ARE FOR SOUP.
 note mastbox Turbine mast box | The box at the turbine's foot: its plans, oiled and rolled.
 note beecache Bee hall cache | A chest deep in the Bee Hall, behind the vines: an advanced battery's plans in wax, and a fuse.
@@ -244,7 +217,8 @@ note drownedcrate Drowned crate | A crate at the end of the flooded passage, sea
 note dencache Den cache | The river people's cache in the den: a fuse in a tin, and a lump of leather.
 loot mushroombasket CaveMushroom*6
 prop mushroombasket loot.refill=0
-loot mastbox Blueprint_WindTurbine*1;CopperIngot*2
+# (box agent 10-25: a spare machete here - the vines need one, and a fresh world or a lost one from the delta left the island stuck)
+loot mastbox Blueprint_WindTurbine*1;CopperIngot*2;Machete*1
 prop mastbox loot.refill=0
 loot beecache Blueprint_BatteryAdvanced*1;Battery*1;story:fuse*1;OxygenBottle*1
 prop beecache loot.refill=0
@@ -313,4 +287,7 @@ step read|Poison sample report|1|Read the poison sample report in the lab
 quest done=Something in the roots. The marsh station has the samples - band 1000.
 quest reward=CaveMushroom*3;Leather*2
 
+# (box agent 10-25: names for the guide pictures' snap points)
+prop rwhut obj.name=rwhut
+prop rwtw obj.name=rwtw
 save Rootweave Caves

@@ -12,6 +12,7 @@ include lib_sea
 include lib_features
 include lib_huts
 include lib_verdance
+include lib_ni8
 # RESIZE 10-24: Radius 50 -> 88 (Height 16 -> 16), the old content moved 0 -20.9 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 new
 gen Trees=0.3 Bushes=0.3 Rocks=0.2 Harvest=0.3 BeachThings=0.25
@@ -167,29 +168,9 @@ prop cshens creature.count=2
 
 # --- STORY 10-24: Jonas's packing list by the roll call, Marit's line note on the west ledge
 place Note_Paper jonaslist at 1.6 -7.2 ground y=0.3 drop
-note jonaslist Jonas's packing list | JONAS - TO TAKE UP TO THE HEART
-
-- honey (all of it, Teodor asked)
-- the good pan
-- the other good pan, in case
-- bees
-- salt
-- Marit's birthday cake, in a tin, do NOT tell her
-
-NOT TO TAKE:
-- the jars Teodor keeps giving me "for the kitchen". They are not for the kitchen. Nothing for a kitchen glows.
-
-Note to self: be cheerful. Everybody up there is frightened and somebody has to be the one making toast. That is my whole plan. Toast.
+note jonaslist Jonas's packing list | JONAS - TO TAKE UP TO THE HEART\n\n- honey (all of it, Teodor asked)\n- the good pan\n- the other good pan, in case\n- bees\n- salt\n- Marit's birthday cake, in a tin, do NOT tell her\n\nNOT TO TAKE:\n- the jars Teodor keeps giving me "for the kitchen". They are not for the kitchen. Nothing for a kitchen glows.\n\nNote to self: be cheerful. Everybody up there is frightened and somebody has to be the one making toast. That is my whole plan. Toast.
 place Note_Paper maritline at -24.6 -11.4 ground y=0.3 drop
-note maritline Note on the west ledge | M. - WEST LINE
-
-This line is for whoever comes after Oda, because somebody will. Teodor is certain of it. He has been leaving the spit beacon on every night for a month, and when I asked him why, he said, "So that someone can find us who does not already know what to think."
-
-I think he means you.
-
-The rope is good. Clip in at every piton. Do not look at the vines while you climb; they look back.
-
-At the top: the Heart. I will be on the balconies. Wave.
+note maritline Note on the west ledge | M. - WEST LINE\n\nThis line is for whoever comes after Oda, because somebody will. Teodor is certain of it. He has been leaving the spit beacon on every night for a month, and when I asked him why, he said, "So that someone can find us who does not already know what to think."\n\nI think he means you.\n\nThe rope is good. Clip in at every piton. Do not look at the vines while you climb; they look back.\n\nAt the top: the Heart. I will be on the balconies. Wave.
 
 # --- Settings, notes, behaviours, quest -------------------------------------------------------------------------
 info title=Canopy Stair
@@ -207,7 +188,8 @@ note tenttwo Jonas' tent chest | Jonas' tent chest: a big backpack's plans and h
 note anchorbox Anchor box | The zipline anchor's box: plans for a powered zipline tool.
 loot tentone Blueprint_TitaniumTools*1;Bolt*2
 prop tentone loot.refill=0
-loot tenttwo Blueprint_BackpackAdvanced*1;Rope*3;Leather*1
+# (box agent 10-25: a spare machete here - the vines need one, and a fresh world or a lost one from the delta left the island stuck)
+loot tenttwo Blueprint_BackpackAdvanced*1;Rope*3;Leather*1;Machete*1
 prop tenttwo loot.refill=0
 loot anchorbox Blueprint_ZiplineToolElectric*1;Battery*1
 prop anchorbox loot.refill=0
@@ -283,16 +265,17 @@ place Block_Foundation_Tier3 jpcs at -6.38 -6.99 h=10.35 sx=2
 place Block_Foundation_Tier3 jpcs at -0.05 -6.99 h=10.65 sx=2
 place Block_Foundation_Tier3 jpcs at 6.38 -6.99 h=10.65 sx=2 sz=2
 # JUMP end
-place RT_PillarThick jppcs at 2.06 7.80 h=3.50 sy=0.203 sx=0.8 sz=0.8
-place RT_PillarThick jppcs at 2.06 4.88 h=3.50 sy=0.303 sx=0.8 sz=0.8
-place RT_PillarThick jppcs at 2.06 2.06 h=3.50 sy=0.436 sx=0.8 sz=0.8
-place RT_PillarThick jppcs at -0.75 2.06 h=3.50 sy=0.586 sx=0.8 sz=0.8
-place RT_PillarThick jppcs at -3.46 2.06 h=3.50 sy=0.745 sx=0.8 sz=0.8
-place RT_PillarThick jppcs at -6.38 2.06 h=3.50 sy=0.878 sx=0.8 sz=0.8
-place RT_PillarThick jppcs at -6.38 -1.56 h=3.50 sy=1.028 sx=0.8 sz=0.8
-place RT_PillarThick jppcs at -6.38 -6.99 h=3.50 sy=1.028 sx=0.8 sz=0.8
-place RT_PillarThick jppcs at -0.05 -6.99 h=3.50 sy=1.078 sx=0.8 sz=0.8
-place RT_PillarThick jppcs at 6.38 -6.99 h=3.50 sy=1.078 sx=0.8 sz=0.8
+# (box agent 10-25: the posts 1.9 x as wide as their slabs - thin ones left most of each slab's base in the air for the ground check)
+place RT_PillarThick jppcs at 2.06 7.80 h=3.50 sy=0.203 sx=1.9 sz=1.9
+place RT_PillarThick jppcs at 2.06 4.88 h=3.50 sy=0.303 sx=1.9 sz=1.9
+place RT_PillarThick jppcs at 2.06 2.06 h=3.50 sy=0.436 sx=1.9 sz=1.9
+place RT_PillarThick jppcs at -0.75 2.06 h=3.50 sy=0.586 sx=1.9 sz=1.9
+place RT_PillarThick jppcs at -3.46 2.06 h=3.50 sy=0.745 sx=1.9 sz=1.9
+place RT_PillarThick jppcs at -6.38 2.06 h=3.50 sy=0.878 sx=1.9 sz=1.9
+place RT_PillarThick jppcs at -6.38 -1.56 h=3.50 sy=1.028 sx=3.8 sz=3.8
+place RT_PillarThick jppcs at -6.38 -6.99 h=3.50 sy=1.028 sx=3.8 sz=1.9
+place RT_PillarThick jppcs at -0.05 -6.99 h=3.50 sy=1.078 sx=3.8 sz=1.9
+place RT_PillarThick jppcs at 6.38 -6.99 h=3.50 sy=1.078 sx=3.8 sz=3.8
 prop jpcs tint.color=#7a6a52
 prop jpcs tint.amount=0.35
 prop jppcs tint.color=#7a6a52
@@ -331,4 +314,7 @@ step reach|jump_cs_top|1|Climb the woodcutters' hop-stones on the west shore and
 quest done=The Heart of Green. Band 1200.
 quest reward=Seed_Mango*2;Seed_Flower_Blue*1
 
+# (box agent 10-25: names for the guide pictures' snap points)
+prop cstw obj.name=cstw
+prop cswreck obj.name=cswreck
 save Canopy Stair

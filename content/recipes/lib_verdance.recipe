@@ -77,6 +77,7 @@ end
 # a ladder up every storey inside, the door on its south side), a rope fence round the top deck. On the top: the box
 # (a small chest, `box`) on the north-west tile and a zone (`zal`, id zid) over the deck. Zipline from the top: place
 # ZiplinePath_Landmark at x+4.97 z-1.72 h=h0+lv*2.42+1.69 (near end on the south-west tile) and zipto east of it.
+# (box agent 10-25: the ladder 0.1 m off its wall - at z=2.8 it took that wall's place and the column above it floated; the top deck 0.165 m lower, onto the walls - at +0.215 the ground check found it on nothing)
 macro vd_tower x=0 z=0 h0=0 lv=8 a=vdtower box=vdbox zal=vdtop zid=top msg="" zip=0
 push at {$x-1.5} {$z-1.5} h=$h0
 for k 0 {$lv-1}
@@ -87,23 +88,23 @@ place Block_Wall_Tier3 $a at 0 0.75 y={$k*2.42} yaw=90
 place Block_Wall_Tier3 $a at 0 2.25 y={$k*2.42} yaw=90
 place Block_Wall_Tier3 $a at 3 0.75 y={$k*2.42} yaw=90
 place Block_Wall_Tier3 $a at 3 2.25 y={$k*2.42} yaw=90
-place Block_Ladder_Tier3 - at 2.25 2.8 y={$k*2.42} yaw=180
+place Block_Ladder_Tier3 - at 2.25 2.7 y={$k*2.42} yaw=180
 next
 place Block_Wall_Door_Tier3 $a at 0.75 0 y=0
 for k 1 {$lv-1}
 place Block_Wall_Tier3 $a at 0.75 0 y={$k*2.42}
 next
-place Block_Floor_Tier3 $a at 0.75 0.75 y={$lv*2.42+0.215}
-place Block_Floor_Tier3 $a at 2.25 0.75 y={$lv*2.42+0.215}
-place Block_Floor_Tier3 $a at 0.75 2.25 y={$lv*2.42+0.215}
-place Block_Wall_Fence_Rope - at 2.25 0 y={$lv*2.42+0.215}
-place Block_Wall_Fence_Rope - at 0.75 3 y={$lv*2.42+0.215}
-place Block_Wall_Fence_Rope - at 0 0.75 y={$lv*2.42+0.215} yaw=90
-place Block_Wall_Fence_Rope - at 0 2.25 y={$lv*2.42+0.215} yaw=90
-place Block_Wall_Fence_Rope - at 3 2.25 y={$lv*2.42+0.215} yaw=90
-place Loot_ChestSmall $box at 0.75 2.25 y={$lv*2.42+0.33} yaw=180
+place Block_Floor_Tier3 $a at 0.75 0.75 y={$lv*2.42+0.05}
+place Block_Floor_Tier3 $a at 2.25 0.75 y={$lv*2.42+0.05}
+place Block_Floor_Tier3 $a at 0.75 2.25 y={$lv*2.42+0.05}
+place Block_Wall_Fence_Rope - at 2.25 0 y={$lv*2.42+0.05}
+place Block_Wall_Fence_Rope - at 0.75 3 y={$lv*2.42+0.05}
+place Block_Wall_Fence_Rope - at 0 0.75 y={$lv*2.42+0.05} yaw=90
+place Block_Wall_Fence_Rope - at 0 2.25 y={$lv*2.42+0.05} yaw=90
+place Block_Wall_Fence_Rope - at 3 2.25 y={$lv*2.42+0.05} yaw=90
+place Loot_ChestSmall $box at 0.75 2.25 y={$lv*2.42+0.165} yaw=180
 place Zone_Trigger $zal at 1.5 1.5 y={$lv*2.42+1.4}
-place Placeable_Flag_05 - at 2.5 0.5 y={$lv*2.42+0.33}
+place Placeable_Flag_05 - at 2.5 0.5 y={$lv*2.42+0.165}
 pop
 prop $a tint.color=#6e6a64
 prop $a tint.amount=0.55

@@ -191,43 +191,11 @@ prop treasure11280 treasure.loot=Scrap*6;Bolt*3;Nail*10
 
 # --- STORY 10-24: Teodor's radio log at the rack, Jonas on the hens, Oda's training log at the summit
 beside Note_Paper teodorradio toolrack d=1.4
-note teodorradio Radio log: Heart lab | RADIO LOG - STATION COPY - heard on the lab band, written down by O.F.
-
-TEODOR (Heart lab): "...counts are up again on the west coast, Oda. That is good news. That is life coming back."
-ME: "It is coming back over my slipway."
-TEODOR: "Vines are only hungry. Hunger is a kind of hope. The river was dead when I came here, do you remember? Brown foam on every stone. Now look."
-ME: "I am looking. The deer are gone."
-TEODOR: "The deer will adjust."
-
-Then he asked, very politely, whether anyone new had come ashore on the spit. Not Marit, not Jonas - anyone. A stranger. He asked twice.
-
-I said no. He said "Soon, then," and signed off.
-
-I wrote it down because it was strange. I am still not sure why it was strange.
+note teodorradio Radio log: Heart lab | RADIO LOG - STATION COPY - heard on the lab band, written down by O.F.\n\nTEODOR (Heart lab): "...counts are up again on the west coast, Oda. That is good news. That is life coming back."\nME: "It is coming back over my slipway."\nTEODOR: "Vines are only hungry. Hunger is a kind of hope. The river was dead when I came here, do you remember? Brown foam on every stone. Now look."\nME: "I am looking. The deer are gone."\nTEODOR: "The deer will adjust."\n\nThen he asked, very politely, whether anyone new had come ashore on the spit. Not Marit, not Jonas - anyone. A stranger. He asked twice.\n\nI said no. He said "Soon, then," and signed off.\n\nI wrote it down because it was strange. I am still not sure why it was strange.
 place Note_Paper jonashens at 7 -53.5 ground y=0.3 drop
-note jonashens Note on the hen run | HENS - A GUIDE, by Jonas Brandt, cook
-
-The brown one is Pancake. The white one is Admiral. The speckled one has no name because she bit me and she knows what she did.
-
-One handful of seeds in the morning. Not two. Oda gives them two and then says I spoil them.
-
-If the eggs taste sweet, do not eat them, bring them to the lab. Teodor wants every sweet egg. He says it is very exciting. I say an egg should taste like an egg.
-
-I am taking honey to the Heart. If anybody needs me I am the man with the bees following him.
-
-- J.
+note jonashens Note on the hen run | HENS - A GUIDE, by Jonas Brandt, cook\n\nThe brown one is Pancake. The white one is Admiral. The speckled one has no name because she bit me and she knows what she did.\n\nOne handful of seeds in the morning. Not two. Oda gives them two and then says I spoil them.\n\nIf the eggs taste sweet, do not eat them, bring them to the lab. Teodor wants every sweet egg. He says it is very exciting. I say an egg should taste like an egg.\n\nI am taking honey to the Heart. If anybody needs me I am the man with the bees following him.\n\n- J.
 place Note_Paper odatrain at 43 30.5 h=24.3 drop
-note odatrain Oda's training log | TRAINING LOG - O. FENN
-
-Monday: 41 s. Wind.
-Tuesday: 38 s. No wind. Shouted at a gull.
-Wednesday: 36 s. Best ever. Nobody saw.
-
-Marit used to beat me up here every time. She climbs like the ladder owes her money. When she went up to the Heart lab to hang Teodor's sample lines from the balconies, I built this tower so I would not get slow while she was gone.
-
-From the flag you can see the river mouth, south-east, and on a clear day the brown smudge of the delta's ferry. No smudge today. No smoke from the delta either.
-
-I will go and look tomorrow. Today I will beat 36.
+note odatrain Oda's training log | TRAINING LOG - O. FENN\n\nMonday: 41 s. Wind.\nTuesday: 38 s. No wind. Shouted at a gull.\nWednesday: 36 s. Best ever. Nobody saw.\n\nMarit used to beat me up here every time. She climbs like the ladder owes her money. When she went up to the Heart lab to hang Teodor's sample lines from the balconies, I built this tower so I would not get slow while she was gone.\n\nFrom the flag you can see the river mouth, south-east, and on a clear day the brown smudge of the delta's ferry. No smudge today. No smoke from the delta either.\n\nI will go and look tomorrow. Today I will beat 36.
 
 # --- Settings, notes, behaviours, quest ----------------------------------------------------------------------------
 info title=Ranger Landing
@@ -302,4 +270,7 @@ quest reward=Seed_Birch*2;Seed_Pine*2
 
 # a fill rock that floated over the slope (ground check, 2026-10-24)
 clear at 10.56 15.27 r=1.5 only=CaravanIsland_SmallRock all
+# (box agent 10-25: names for the guide pictures' snap points)
+prop rltw obj.name=rltw
+prop rlwreck obj.name=rlwreck
 save Ranger Landing

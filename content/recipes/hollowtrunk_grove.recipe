@@ -17,6 +17,7 @@ include lib_features
 include lib_huts
 include lib_gravity
 include lib_verdance
+include lib_ni8
 # RESIZE 10-24: Radius 72 -> 88 (Height 8 -> 8), the old content moved 0 -8.8 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 new
 gen Trees=0.25 Bushes=0.3 Rocks=0.15 Harvest=0.3 BeachThings=0.25
@@ -190,37 +191,11 @@ call vd_spot x=-35 z=61 al=hglook id=hg_view r=5 msg="From the north rocks the f
 
 # --- STORY 10-24: Jonas's bee notes by the bee box, the greenhouse log, Oda's note on Owl Hill
 place Note_Paper jonasbees at 35.6 -11.2 ground y=0.3 drop
-note jonasbees Bee notes | BEES - JONAS BRANDT
-
-Hive 1: happy. Hive 2: happy. Hive 3: has opinions.
-
-The honey this month is the colour of lamp oil and so sweet it makes your teeth ring. The bees fly to the trunks, then down to the root hole, then come back slow, like they have had a big lunch.
-
-Teodor took six jars to the lab. He was very kind about it. He said, "Jonas, your bees are the best measure I have." I said thank you. I did not ask of what.
-
-The bees will not go past the dark root at the hole any more. They circle it and come home.
-
-I trust bees more than people. Bees do not make speeches.
+note jonasbees Bee notes | BEES - JONAS BRANDT\n\nHive 1: happy. Hive 2: happy. Hive 3: has opinions.\n\nThe honey this month is the colour of lamp oil and so sweet it makes your teeth ring. The bees fly to the trunks, then down to the root hole, then come back slow, like they have had a big lunch.\n\nTeodor took six jars to the lab. He was very kind about it. He said, "Jonas, your bees are the best measure I have." I said thank you. I did not ask of what.\n\nThe bees will not go past the dark root at the hole any more. They circle it and come home.\n\nI trust bees more than people. Bees do not make speeches.
 place Note_Paper greenlog at 1.6 -41.4 ground y=0.3 drop
-note greenlog Greenhouse log | GREENHOUSE LOG - SEEDKEEPERS
-
-Week 1: beans up. Week 2: beans up to the roof. Week 3: beans through the roof. Lise says the roof was a suggestion.
-
-Teodor came down from the Heart with a sprayer. "Just a little V-1 on the beds, to keep the mould away." The mould went away. So did the slugs, the beetles and the frogs. Nothing hops in here now.
-
-The tomatoes taste wonderful. I want to be clear about that, whatever happens next. They taste wonderful.
-
-The crew is going down the root hole to look for the river people. Lise is taking the lamps. I am taking the sandwiches.
-
-- G.
+note greenlog Greenhouse log | GREENHOUSE LOG - SEEDKEEPERS\n\nWeek 1: beans up. Week 2: beans up to the roof. Week 3: beans through the roof. Lise says the roof was a suggestion.\n\nTeodor came down from the Heart with a sprayer. "Just a little V-1 on the beds, to keep the mould away." The mould went away. So did the slugs, the beetles and the frogs. Nothing hops in here now.\n\nThe tomatoes taste wonderful. I want to be clear about that, whatever happens next. They taste wonderful.\n\nThe crew is going down the root hole to look for the river people. Lise is taking the lamps. I am taking the sandwiches.\n\n- G.
 place Note_Paper burrbell at -57.6 38.8 h=22.1 drop
-note burrbell Note on the fire ring | O.F. - OWL HILL
-
-Sat up here to look for lamps. Saw none. Heard a bell instead, all night, going round and round the hill. Burr, following me up in the dark like a very small, very bad guard.
-
-I used to bring Marit up here when she was little. She counted the owls carved on the stones and always got a different number. Twenty-two. Twenty-six. "Owls move, Oda."
-
-There are twenty-four. I counted three times. I will tell her when I find her and she will say they moved.
+note burrbell Note on the fire ring | O.F. - OWL HILL\n\nSat up here to look for lamps. Saw none. Heard a bell instead, all night, going round and round the hill. Burr, following me up in the dark like a very small, very bad guard.\n\nI used to bring Marit up here when she was little. She counted the owls carved on the stones and always got a different number. Twenty-two. Twenty-six. "Owls move, Oda."\n\nThere are twenty-four. I counted three times. I will tell her when I find her and she will say they moved.
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Hollowtrunk Grove
@@ -248,7 +223,8 @@ prop seedstore beh.hidden=1
 story pumppart|Pump part|Placeable_Lantern_Metal|A part of the water tower's pump: a valve, a gasket, a crank rod.
 story water|Water running|Placeable_Lantern_Metal|The water tower's pump runs; water reaches the greenhouse and the roots.
 note beebox Beekeepers' box | The Seedkeepers' bee box, wedged in trunk 3's roots: smoker, comb and a pump valve.
-loot beebox story:pumppart*1;HoneyComb*2
+# (box agent 10-25: a spare machete here - the vines need one, and a fresh world or a lost one from the delta left the island stuck)
+loot beebox story:pumppart*1;HoneyComb*2;Machete*1
 prop beebox loot.refill=0
 note trunk5chest Trunk 5 chest | A chest the vines grew over at trunk 5's foot: a gasket in oilcloth, and seeds.
 loot trunk5chest story:pumppart*1;Seed_Flower_Red*2
@@ -319,4 +295,8 @@ quest reward=HoneyComb*2;Seed_Birch*2
 
 # names for the show/hide actions (actions find objects by obj.name)
 prop burrchest obj.name=burrchest
+# (box agent 10-25: names for the guide pictures' snap points)
+prop hgbox obj.name=hgbox
+prop hgdencave obj.name=hgdencave
+prop hgwreck obj.name=hgwreck
 save Hollowtrunk Grove

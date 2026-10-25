@@ -14,6 +14,7 @@ include lib_sea
 include lib_features
 include lib_huts
 include lib_verdance
+include lib_ni8
 # RESIZE 10-24: Radius 72 -> 88 (Height 5 -> 5), the old content moved 0 -8.8 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 new
 # RESIZE 10-24 rework: the bigger island was a flat empty sandbank - now hummocky marsh land at Raft's density, the
@@ -186,33 +187,11 @@ call vd_spot x=-10 z=71.5 al=bmheronz id=bm_heron r=3 msg="From the heron hummoc
 
 # --- STORY 10-24: Ranger log 7 at the marsh station, the dog-handler's note by the west root, Marit's sample tag at the east root
 place Note_Paper rangerlog7 at 20 41.6 ground y=0.3 drop
-note rangerlog7 Ranger log 7 | RANGER LOG 7 - O. FENN
-
-The marsh station's sample jars line every shelf: grove soil, delta water, cave root, all labelled T.L. And one shelf of empty jars with names on them instead of places. HEDDA. ULF. LISE. GRETA. BO.
-
-I held the vial up against them. Same glass. Same hand.
-
-I am not calm any more. I said I would ask Teodor very calmly. I take it back.
-
-Burr found me in the reeds and stood on my foot until I stopped shaking. Good goat. Terrible goat. He has lost his bell; I have it in my pocket with the vial, which is getting crowded.
-
-The burn crew's map says three roots. I will burn the first and see what the marsh does.
+note rangerlog7 Ranger log 7 | RANGER LOG 7 - O. FENN\n\nThe marsh station's sample jars line every shelf: grove soil, delta water, cave root, all labelled T.L. And one shelf of empty jars with names on them instead of places. HEDDA. ULF. LISE. GRETA. BO.\n\nI held the vial up against them. Same glass. Same hand.\n\nI am not calm any more. I said I would ask Teodor very calmly. I take it back.\n\nBurr found me in the reeds and stood on my foot until I stopped shaking. Good goat. Terrible goat. He has lost his bell; I have it in my pocket with the vial, which is getting crowded.\n\nThe burn crew's map says three roots. I will burn the first and see what the marsh does.
 place Note_Paper dognote at -43.4 2.6 ground y=0.3 drop
-note dognote Dog-handler's note | BO - SEARCH CREW
-
-The dogs will not go near the west root. Good dogs, smart dogs, and they sit down in the mud and look at me like I have suggested something rude.
-
-The hyenas came out of the reeds at dusk. Thin, wrong, too quiet. They did not want us. They wanted to drive us to the root, and stood in a ring round it like they were guarding a door.
-
-Greta says burn it. Lise says wait for the lab. I say whatever we do, do it before supper; I am not walking back through that in the dark.
-
-If you read this, we waited for the lab.
+note dognote Dog-handler's note | BO - SEARCH CREW\n\nThe dogs will not go near the west root. Good dogs, smart dogs, and they sit down in the mud and look at me like I have suggested something rude.\n\nThe hyenas came out of the reeds at dusk. Thin, wrong, too quiet. They did not want us. They wanted to drive us to the root, and stood in a ring round it like they were guarding a door.\n\nGreta says burn it. Lise says wait for the lab. I say whatever we do, do it before supper; I am not walking back through that in the dark.\n\nIf you read this, we waited for the lab.
 place Note_Paper marittag at 54 -6 ground y=0.3 drop
-note marittag Tag on the east root | A climbing tag, the kind you clip to a rope, wired to the root with care:
-
-M. FENN - SAMPLE LINE 40 - EAST ROOT. GROWTH 1 METRE A DAY. TEODOR SAYS DO NOT CUT. I SAY SOMEBODY MUST.
-
-On the back, scratched with a pin: ODA - IF YOU GET THIS FAR, I AM STILL UP AT THE HEART. I KEEP THE TOP BALCONY LAMP ON FOR YOU.
+note marittag Tag on the east root | A climbing tag, the kind you clip to a rope, wired to the root with care:\n\nM. FENN - SAMPLE LINE 40 - EAST ROOT. GROWTH 1 METRE A DAY. TEODOR SAYS DO NOT CUT. I SAY SOMEBODY MUST.\n\nOn the back, scratched with a pin: ODA - IF YOU GET THIS FAR, I AM STILL UP AT THE HEART. I KEEP THE TOP BALCONY LAMP ON FOR YOU.
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Blightmire
@@ -283,7 +262,8 @@ note confession Seedkeeper's confession | To whoever burns the last root -\n\nTh
 note smeltercamp Smelter camp chest | The smelter camp's chest: the plans of a smelter that runs on power.
 note marshstation Marsh station locker | The marsh station's locker: an advanced extractor's plans and the root samples, sealed.
 note rootcache Root cache | A chest the root had grown round: an anchor's plans, and the Seedkeepers' mark on the lid.
-loot smeltercamp Blueprint_SmelterElectric*1;MetalIngot*2;CopperIngot*1
+# (box agent 10-25: a spare machete here - the vines need one, and a fresh world or a lost one from the delta left the island stuck)
+loot smeltercamp Blueprint_SmelterElectric*1;MetalIngot*2;CopperIngot*1;Machete*1
 prop smeltercamp loot.refill=0
 loot marshstation Blueprint_BiofuelExtractorAdvanced*1;ExplosiveGoo*1
 prop marshstation loot.refill=0
@@ -368,4 +348,7 @@ prop fire1 obj.name=fire1
 prop fire2 obj.name=fire2
 prop fire3 obj.name=fire3
 prop rootcache obj.name=rootcache
+# (box agent 10-25: names for the guide pictures' snap points)
+prop bmbox obj.name=bmbox
+prop bmwreck obj.name=bmwreck
 save Blightmire

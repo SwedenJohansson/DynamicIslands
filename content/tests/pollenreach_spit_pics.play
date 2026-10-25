@@ -22,4 +22,4 @@ snap sl11_pollenreach_spit_jar pollen2 200 6 3
 storespot 0 0
 snap deep_pr_mast prtw 200 30
 snap deep_pr_boat prwreck 150 16
-snap deep_pr_cave prccave 0 20
+snap deep_pr_cave prccave 180 14 3

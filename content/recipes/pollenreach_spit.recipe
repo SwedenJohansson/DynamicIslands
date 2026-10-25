@@ -252,4 +252,8 @@ note castnote Castaway's note | To the next one who follows the gold -\n\nI saw 
 # a rock that floated over the slope (ground check, 2026-10-24)
 clear at -25.71 5.74 r=1.5 only=CaravanIsland_SmallRock all
 
+# (box agent 10-25: names for the guide pictures' snap points)
+prop prccave obj.name=prccave
+prop prtw obj.name=prtw
+prop prwreck obj.name=prwreck
 save Pollenreach Spit

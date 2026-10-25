@@ -17,6 +17,7 @@ include lib_features
 include lib_huts
 include lib_gravity
 include lib_verdance
+include lib_ni8
 new
 gen Trees=0.2 Bushes=0.3 Rocks=0.15 Harvest=0.3 BeachThings=0.25
 gen Seed=11101 Radius=90 Height=10 Roughness=0.25 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.2 BeachWidth=0.6
@@ -187,26 +188,13 @@ prop hhhens creature.count=3
 
 # --- STORY 10-24: zipline and crown signs (the mechanics, off the notes), Jonas's kitchen note in the lab
 place Note_Sign zipsign1 at -12.4 -4.4 ground sit yaw=0
-note zipsign1 Zipline sign | BALCONY 1 - ZIPLINE TO BALCONY 2.
-Hook on at the deck behind the hut.
+note zipsign1 Zipline sign | BALCONY 1 - ZIPLINE TO BALCONY 2.\nHook on at the deck behind the hut.
 place Note_Sign zipsign2 at -9.2 15.8 ground sit yaw=90
-note zipsign2 Zipline sign | BALCONY 2 - ZIPLINE TO BALCONY 3.
-Then the crown keypad by the pillar.
+note zipsign2 Zipline sign | BALCONY 2 - ZIPLINE TO BALCONY 3.\nThen the crown keypad by the pillar.
 place Note_Sign crownsign at 13.6 18.4 ground sit yaw=180
-note crownsign Crown keypad sign | CROWN DOOR
-
-Four digits: the day the sea reached the lab, day first, then month.
-Ask Teodor. Do not ask Teodor before coffee.
+note crownsign Crown keypad sign | CROWN DOOR\n\nFour digits: the day the sea reached the lab, day first, then month.\nAsk Teodor. Do not ask Teodor before coffee.
 place Note_Paper jonaskitchen at 15.6 -0.6 ground y=0.3 drop
-note jonaskitchen Kitchen note | JONAS - HEART LAB KITCHEN
-
-Day 1 up here: made toast. Everybody ate it. Success.
-Day 2: made toast. Marit ate it on the balconies, counting them out loud, one two three, like she always does. Teodor did not eat it.
-Day 3: Teodor said, "Jonas, you are the kindest man I know, so I will tell you first." Then he told me. All of it. The river, the marsh, the river people singing in the roots.
-
-I did not make toast on day 4.
-
-Today he went down to the oldest root with his tape recorder. I am taking him soup. You cannot leave a man alone with the worst thing he ever did and no soup. That is not a rule anywhere, but it should be.
+note jonaskitchen Kitchen note | JONAS - HEART LAB KITCHEN\n\nDay 1 up here: made toast. Everybody ate it. Success.\nDay 2: made toast. Marit ate it on the balconies, counting them out loud, one two three, like she always does. Teodor did not eat it.\nDay 3: Teodor said, "Jonas, you are the kindest man I know, so I will tell you first." Then he told me. All of it. The river, the marsh, the river people singing in the roots.\n\nI did not make toast on day 4.\n\nToday he went down to the oldest root with his tape recorder. I am taking him soup. You cannot leave a man alone with the worst thing he ever did and no soup. That is not a rule anywhere, but it should be.
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Heart of Green
@@ -363,4 +351,7 @@ prop burnfires obj.name=burnfires
 prop sporebloom obj.name=sporebloom
 prop verdictburn obj.name=verdictburn
 prop verdictspread obj.name=verdictspread
+# (box agent 10-25: names for the guide pictures' snap points)
+prop hhbox obj.name=hhbox
+prop hhwreck obj.name=hhwreck
 save The Heart of Green

@@ -9,6 +9,7 @@ include lib_sea
 include lib_features
 include lib_huts
 include lib_verdance
+include lib_ni8
 # DEEP 10-24: Radius 60 -> 80, the old content moved again (push 2.5 -6.1 -> 2.5 -26.1) so its beach stays at the coast.
 # RESIZE 10-24: Radius 48 -> 60 (Height 14 -> 14), the old content moved 2.5 -6.1 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 new
@@ -185,18 +186,19 @@ place Block_Foundation_Tier3 jptb at 5.12 -2.02 h=9.40 sx=2 sz=2
 place Block_Foundation_Tier3 jptb at -1.30 -2.02 h=9.70 sx=2 sz=2
 place Block_Foundation_Tier3 jptb at -1.30 3.21 h=10.00
 # JUMP end
-place RT_PillarThick jpptb at -2.92 5.64 h=2.50 sy=0.153 sx=0.8 sz=0.8
-place RT_PillarThick jpptb at -5.93 5.64 h=2.50 sy=0.220 sx=0.8 sz=0.8
-place RT_PillarThick jpptb at -5.93 3.03 h=2.50 sy=0.370 sx=0.8 sz=0.8
-place RT_PillarThick jpptb at -5.93 -1.21 h=2.50 sy=0.453 sx=0.8 sz=0.8
-place RT_PillarThick jpptb at -5.93 -5.64 h=2.50 sy=0.586 sx=0.8 sz=0.8
-place RT_PillarThick jpptb at -3.02 -5.64 h=2.50 sy=0.736 sx=0.8 sz=0.8
-place RT_PillarThick jpptb at -0.40 -5.64 h=2.50 sy=0.570 sx=0.8 sz=0.8
-place RT_PillarThick jpptb at 2.41 -5.64 h=2.50 sy=0.728 sx=0.8 sz=0.8
-place RT_PillarThick jpptb at 5.12 -5.64 h=2.50 sy=0.886 sx=0.8 sz=0.8
-place RT_PillarThick jpptb at 5.12 -2.02 h=2.50 sy=1.036 sx=0.8 sz=0.8
-place RT_PillarThick jpptb at -1.30 -2.02 h=2.50 sy=1.086 sx=0.8 sz=0.8
-place RT_PillarThick jpptb at -1.30 3.21 h=2.50 sy=1.136 sx=0.8 sz=0.8
+# (box agent 10-25: the posts 1.9 x as wide as their slabs - thin ones left most of each slab's base in the air for the ground check)
+place RT_PillarThick jpptb at -2.92 5.64 h=2.50 sy=0.153 sx=1.9 sz=1.9
+place RT_PillarThick jpptb at -5.93 5.64 h=2.50 sy=0.220 sx=1.9 sz=1.9
+place RT_PillarThick jpptb at -5.93 3.03 h=2.50 sy=0.370 sx=1.9 sz=1.9
+place RT_PillarThick jpptb at -5.93 -1.21 h=2.50 sy=0.453 sx=0.57 sz=5.7
+place RT_PillarThick jpptb at -5.93 -5.64 h=2.50 sy=0.586 sx=1.9 sz=1.9
+place RT_PillarThick jpptb at -3.02 -5.64 h=2.50 sy=0.736 sx=1.9 sz=1.9
+place RT_PillarThick jpptb at -0.40 -5.64 h=2.50 sy=0.570 sx=1.9 sz=1.9
+place RT_PillarThick jpptb at 2.41 -5.64 h=2.50 sy=0.728 sx=1.9 sz=1.9
+place RT_PillarThick jpptb at 5.12 -5.64 h=2.50 sy=0.886 sx=1.9 sz=1.9
+place RT_PillarThick jpptb at 5.12 -2.02 h=2.50 sy=1.036 sx=3.8 sz=3.8
+place RT_PillarThick jpptb at -1.30 -2.02 h=2.50 sy=1.086 sx=3.8 sz=3.8
+place RT_PillarThick jpptb at -1.30 3.21 h=2.50 sy=1.136 sx=1.9 sz=1.9
 prop jptb tint.color=#857563
 prop jptb tint.amount=0.35
 prop jpptb tint.color=#857563
@@ -231,4 +233,10 @@ step read|Hermit's map|1|Read the hermit's map
 quest done=The grove is clear. The hermit's map points at the Heart.
 quest reward=Seed_Mango*2;Feather*3
 
+# (box agent 10-25: names for the guide pictures' snap points)
+prop tbtw obj.name=tbtw
+prop tbwreck obj.name=tbwreck
+# (box agent 10-25: two of the base's boulders hung 1.2-1.5 m over the slope after the story pass - cleared)
+clear at -0.23 -41.79 r=1.5 only=BigBoulder
+clear at -13.33 -32.88 r=1.5 only=SmallBoulder
 save Thornback Ridge

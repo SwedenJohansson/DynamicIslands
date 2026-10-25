@@ -184,8 +184,8 @@ place ReefHuts_Pillar3 carving at 24 65 ground sit sy=0.7
 prop carving tint.color=#6b4a2e
 prop carving tint.amount=0.6
 place Placeable_Lantern_Metal carvinglamp at 24 65 ground y=3.4
-place Log - at 21.5 63.5 ground sit yaw=70
-place Log - at 26.6 66.8 ground sit yaw=160
+place Log - at 21.5 63.5 ground sit yaw=70 roll=28
+place Log - at 26.6 66.8 ground sit yaw=160 roll=28
 place Loot_ChestSmall journalbox at 25.6 63 ground sit yaw=210
 # the east bluff: a second hill with a hunters' lookout (secret)
 call vd_mount x=68 z=12 top=15 r=18 a0=200 turns=1 n=40 hb=3
@@ -199,30 +199,9 @@ prop trhens creature.count=3
 
 # --- STORY 10-24: Marit's letter by Burr's cage, the trackers' notch log on the summit
 place Note_Paper maritletter at 43.4 46.2 ground y=0.3 drop
-note maritletter Letter by the branches | A letter, folded small and pushed under Burr's collar, the ink run in the wet.
-
-ODA -
-
-I am sending Burr down because he eats Teodor's samples and Teodor has started to look at him the way he looks at the samples.
-
-The lab is beautiful now. Flowers up every balcony. I hang the sample lines and the vines climb them before I am back down. Teodor says we are the last green world, that everything out on the sea is dead and grey and we are the seed.
-
-He asks every week if anyone new has come ashore. Not you. Not me. "Someone from outside," he says, "who has no reason to love it or hate it."
-
-I do not know why that frightens me. Feed Burr. Not samples.
-
-- Marit
+note maritletter Letter by the branches | A letter, folded small and pushed under Burr's collar, the ink run in the wet.\n\nODA -\n\nI am sending Burr down because he eats Teodor's samples and Teodor has started to look at him the way he looks at the samples.\n\nThe lab is beautiful now. Flowers up every balcony. I hang the sample lines and the vines climb them before I am back down. Teodor says we are the last green world, that everything out on the sea is dead and grey and we are the seed.\n\nHe asks every week if anyone new has come ashore. Not you. Not me. "Someone from outside," he says, "who has no reason to love it or hate it."\n\nI do not know why that frightens me. Feed Burr. Not samples.\n\n- Marit
 place Note_Paper notchlog at -45.2 -54.6 h=26.1 drop
-note notchlog Notch log | NOTCH LOG - TRACKERS OF THE RISE
-
-One notch for every climb. No notch if you got carried. (Sten: two notches, both disputed.)
-
-Notch 212 - Ivar. Saw the herd go round the dark trees, not through.
-Notch 213 - Ivar. Same.
-Notch 214 - Lise. A man with lab gloves on the meadow, taking soil. Polite. Asked if any boats had come in. Gave me a honey sweet.
-Notch 215 - Lise. Team going into the grove to look for the river people. Back by supper.
-
-Notch 216 is fresh, and not signed. Just a little drawing: a goat.
+note notchlog Notch log | NOTCH LOG - TRACKERS OF THE RISE\n\nOne notch for every climb. No notch if you got carried. (Sten: two notches, both disputed.)\n\nNotch 212 - Ivar. Saw the herd go round the dark trees, not through.\nNotch 213 - Ivar. Same.\nNotch 214 - Lise. A man with lab gloves on the meadow, taking soil. Polite. Asked if any boats had come in. Gave me a honey sweet.\nNotch 215 - Lise. Team going into the grove to look for the river people. Back by supper.\n\nNotch 216 is fresh, and not signed. Just a little drawing: a goat.
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Tracker's Rise
@@ -317,4 +296,7 @@ quest reward=Seed_Pine*2;Feather*4
 
 clear at 38.98 75.17 r=1.5 only=SmallBoulder2 all
 clear at -56.93 -23.17 r=1.5 only=CaravanIsland_SmallRock all
+# (box agent 10-25: names for the guide pictures' snap points)
+prop trnotch obj.name=trnotch
+prop trwreck obj.name=trwreck
 save Tracker's Rise
