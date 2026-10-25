@@ -178,7 +178,7 @@ namespace DynamicIslands.Editor
 			foreach (Number n in Numbers)
 			{
 				Number m = n;
-				UIKit.SliderRow row = UIKit.Slider(group, n.Label, Mathf.Log(n.Min), Mathf.Log(n.Max), Mathf.Log(Get(n)), x => "x" + Format((float)Math.Round(Mathf.Exp(x), 2)), x => Set(m, Mathf.Exp(x)), KeyNames(n.Hint));
+				UIKit.SliderRow row = UIKit.Slider(group, n.Label, Mathf.Log(n.Min), Mathf.Log(n.Max), Mathf.Log(Get(n)), x => "x" + Format((float)Math.Round(Mathf.Exp(x), 2)), x => Set(m, Mathf.Exp(x)), n.Hint);
 				row.Slider.name = "CameraSlider_" + n.Key;
 				sliders.Add(new KeyValuePair<Number, UIKit.SliderRow>(n, row));
 			}
@@ -372,6 +372,7 @@ namespace DynamicIslands.Editor
 			// The key layout (ROADMAP L2), right of "Mod's own": QWERTY WASD + Q/E, AZERTY ZQSD + A/E
 			Button layout = UIKit.Button(buttons, LayoutLabel(), null, "The editor's keys for your keyboard: QWERTY flies with WASD and Q/E, AZERTY with ZQSD and A/E (also turning the stamp or the object being placed). Saved on this PC", 140, 32);
 			layout.name = "Button_KeyLayout";
+			UIKit.HintAsWritten(layout.gameObject);
 			layout.onClick.AddListener(() =>
 			{
 				CameraSettings.Azerty = !CameraSettings.Azerty;

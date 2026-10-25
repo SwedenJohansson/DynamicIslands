@@ -304,13 +304,19 @@ namespace DynamicIslands
 				Text[] tips = EditorUI.Canvas.GetComponentsInChildren<Text>(true).Where(t => t.name == "Tips").ToArray();
 				Check(ref ok, tips.Any(t => t.text.Contains("A/E: turn")) && !tips.Any(t => t.text.Contains("WASD") || t.text.Contains("Q/E")),
 					"the tabs' tips say A/E and ZQSD (" + tips.Length + " tips)");
+				UIKit.HintTarget[] hints = w != null ? w.GetComponentsInChildren<UIKit.HintTarget>(true) : new UIKit.HintTarget[0];
+				UIKit.HintTarget speedHint = hints.FirstOrDefault(h => h.Text != null && h.Text.StartsWith("How fast WASD"));
+				UIKit.HintTarget layoutHint = layout != null ? layout.GetComponent<UIKit.HintTarget>() : null;
+				Check(ref ok, EditorCamera.Help.Contains("ZQSD") && !EditorCamera.Help.Contains("WASD") && speedHint != null && speedHint.Shown.StartsWith("How fast ZQSD (and A/E")
+					&& layoutHint != null && layoutHint.Shown == layoutHint.Text,
+					"the camera help and the hover hints name ZQSD when shown (" + (speedHint != null ? speedHint.Shown : "no speed hint") + "); the Keys button's hint stays as written");
 
 				// Saved, kept by Mod's own, read back
 				CameraSettings.Reset();
 				CameraSettings.Reload();
 				Check(ref ok, CameraSettings.Azerty && WorldRules.ReadDefault(CameraSettings.KeysKey) == "azerty", "saved as camerakeys=" + WorldRules.ReadDefault(CameraSettings.KeysKey) + "; Mod's own keeps AZERTY and it is read back");
 				if (layout != null) layout.onClick.Invoke();
-				Check(ref ok, !CameraSettings.Azerty && WorldRules.ReadDefault(CameraSettings.KeysKey) == "qwerty" && keyTexts.Any(t => t.text == "Right mouse + WASD"), "a second click: QWERTY again, saved, the list says WASD");
+				Check(ref ok, !CameraSettings.Azerty && WorldRules.ReadDefault(CameraSettings.KeysKey) == "qwerty" && keyTexts.Any(t => t.text == "Right mouse + WASD") && EditorCamera.Help.Contains("WASD") && (speedHint == null || speedHint.Shown == speedHint.Text), "a second click: QWERTY again, saved, the list, help and hints say WASD");
 			}
 			finally
 			{

@@ -1117,10 +1117,29 @@ namespace DynamicIslands.Editor
 			h.Text = hint;
 		}
 
+		/// <summary>
+		/// Turns a hint's text into what shows when the mouse comes over it (null: as written). The editor sets it so the
+		/// hints name the keys of the chosen layout (WASD / ZQSD, ROADMAP L2) at the time they show, not when built.
+		/// </summary>
+		public static Func<string, string> HintKeys;
+
+		/// <summary>A hint shown exactly as written (one that names both key layouts itself).</summary>
+		public static void HintAsWritten(GameObject go) { Ensure<HintTarget>(go).AsWritten = true; }
+
 		public class HintTarget : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 		{
 			public string Text;
-			public void OnPointerEnter(PointerEventData e) { if (HintChanged != null) HintChanged(Text); if (!HintBarShown()) ShowTip(this); }
+			public bool AsWritten;
+			/// <summary>The text as it shows now.</summary>
+			public string Shown
+			{
+				get
+				{
+					if (AsWritten || HintKeys == null || string.IsNullOrEmpty(Text)) return Text;
+					try { return HintKeys(Text); } catch { return Text; }
+				}
+			}
+			public void OnPointerEnter(PointerEventData e) { if (HintChanged != null) HintChanged(Shown); if (!HintBarShown()) ShowTip(this); }
 			public void OnPointerExit(PointerEventData e) { if (HintChanged != null) HintChanged(null); HideTip(this); }
 			void OnDisable() { if (HintChanged != null) HintChanged(null); HideTip(this); }
 		}
@@ -1142,7 +1161,7 @@ namespace DynamicIslands.Editor
 			if (helpPopup == null) BuildHelpPopup();
 			tipShownBy = t;
 			tipAt = Time.unscaledTime + 0.6f;
-			tipText.text = t.Text;
+			tipText.text = t.Shown;
 			tipPopup.gameObject.SetActive(false);
 		}
 

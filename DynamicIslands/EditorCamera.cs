@@ -37,8 +37,9 @@ namespace DynamicIslands.Editor
 		public static bool UsingMouse { get { return Instance != null && Instance.isActiveAndEnabled && (Instance.looking || Instance.panning || Instance.orbiting || Instance.dollying || Alt); } }
 		static bool Alt { get { return Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt); } }
 
-		/// <summary>The camera's controls, for the help.</summary>
-		public const string Help = "Right-drag: look (WASD fly, Q/E down/up, wheel: speed) · WASD: move · Space / C: straight up / down · Middle-drag: pan · Alt+drag: orbit · Alt+right-drag: zoom · Wheel: zoom to the cursor · F: frame · Shift: faster";
+		/// <summary>The camera's controls, for the help, with the keys of the chosen layout (built each time it is read).</summary>
+		public static string Help { get { return CameraSettings.KeyNames(HelpText); } }
+		const string HelpText = "Right-drag: look (WASD fly, Q/E down/up, wheel: speed) · WASD: move · Space / C: straight up / down · Middle-drag: pan · Alt+drag: orbit · Alt+right-drag: zoom · Wheel: zoom to the cursor · F: frame · Shift: faster";
 
 		float yaw, pitch;
 		Vector3 position, velocity;

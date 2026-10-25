@@ -106,6 +106,8 @@ namespace DynamicIslands.Editor
 			if (tabs == null) tabs = Canvas.gameObject.AddComponent<TabSelector>();
 			Transform root = Canvas.transform;
 			if (!hintHooked) { UIKit.HintChanged += h => hoverHint = h; UIKit.HintBars.Add(() => Canvas != null && Canvas.gameObject.activeInHierarchy); hintHooked = true; }
+			// Hover hints name the keys of the chosen layout when they show (only while the editor is up; other windows keep theirs)
+			UIKit.HintKeys = h => Canvas != null && Canvas.gameObject.activeInHierarchy ? CameraSettings.KeyNames(h) : h;
 			hoverHint = null;
 			lastSelectionCount = -1; shownPaintLayer = -1; elevationTyping = false;
 			shownFalloff = (TerrainBrushes.Falloff)(-1); shownSeaLevel = float.NaN; // (the new buttons get lit)

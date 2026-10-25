@@ -18,7 +18,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Grid size** on the Objects tab: 0.5, 1, 1.5 or 2 m for **Grid** (1.5 m is Raft's building grid). It snaps while
   placing and while moving with the arrows, and is kept on this PC.
 - **AZERTY keys:** the **Keys** button in the editor's Camera window (right of **Mod's own**) switches the editor to ZQSD
-  and A/E, and the help and tips name those keys. Kept on this PC.
+  and A/E, and the help, tips and hover hints name those keys. Kept on this PC.
 
 ### Changed
 - **The terrain brush goes down to 1 m across** (it was 4 m); the Size slider gives the small sizes room, and the ring
