@@ -324,11 +324,11 @@ place Note_Paper keeperss at 32.6 -60.3 ground drop yaw=15
 call dp_ground tx=38 tz=-58 hb=5.9 sx=45.12 sz=-68.87 hs=27.5
 call tzone x=43.2 z=-65.94 al=sssummit id=ss_summit r=4 msg="The dune peak beside the relay mast." h=1
 call notebox x=48.05 z=-66.95 yaw=146.77 al=sscairn
-call treasure x=43.45 z=-69.97 r=1.5 n=1 seed=14931
+call treasure x=43.45 z=-69.97 r=12 n=1 seed=14931
 prop treasure14931 treasure.loot=TitaniumOre*2;Battery*1
 place Creature_Goat ssgoats at 38.09 -47.18 ground
 prop ssgoats creature.count=2
-call treasure x=-28.34 z=-34.28 r=2 n=1 seed=14932
+call treasure x=-28.34 z=-34.28 r=12 n=1 seed=14932
 prop treasure14932 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
