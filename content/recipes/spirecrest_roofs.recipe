@@ -296,16 +296,18 @@ place Block_Foundation_Tier3 jpsc at -6.38 6.99 h=9.35 sx=2
 place Block_Foundation_Tier3 jpsc at -0.05 6.99 h=9.65 sx=2
 place Block_Foundation_Tier3 jpsc at 6.38 6.99 h=9.65 sx=2 sz=2
 # JUMP end
-place RT_PillarThick jppsc at 2.06 -7.80 h=2.50 sy=0.203 sx=0.8 sz=0.8
-place RT_PillarThick jppsc at 2.06 -4.88 h=2.50 sy=0.303 sx=0.8 sz=0.8
-place RT_PillarThick jppsc at 2.06 -2.06 h=2.50 sy=0.436 sx=0.8 sz=0.8
-place RT_PillarThick jppsc at -0.75 -2.06 h=2.50 sy=0.586 sx=0.8 sz=0.8
-place RT_PillarThick jppsc at -3.46 -2.06 h=2.50 sy=0.745 sx=0.8 sz=0.8
-place RT_PillarThick jppsc at -6.38 -2.06 h=2.50 sy=0.878 sx=0.8 sz=0.8
-place RT_PillarThick jppsc at -6.38 1.56 h=2.50 sy=1.028 sx=0.8 sz=0.8
-place RT_PillarThick jppsc at -6.38 6.99 h=2.50 sy=1.028 sx=0.8 sz=0.8
-place RT_PillarThick jppsc at -0.05 6.99 h=2.50 sy=1.078 sx=0.8 sz=0.8
-place RT_PillarThick jppsc at 6.38 6.99 h=2.50 sy=1.078 sx=0.8 sz=0.8
+# (10-25: each slab stands on one solid column - a stretched foundation of its own footprint, from 0.6 m under the pad flush up to the slab)
+place Block_Foundation_Tier3 jppsc at -0.75 -7.80 h=3.218 sy=1.199
+place Block_Foundation_Tier3 jppsc at 2.06 -7.80 h=3.718 sy=1.933
+place Block_Foundation_Tier3 jppsc at 2.06 -4.88 h=4.318 sy=2.812
+place Block_Foundation_Tier3 jppsc at 2.06 -2.06 h=5.118 sy=3.985
+place Block_Foundation_Tier3 jppsc at -0.75 -2.06 h=6.018 sy=5.305
+place Block_Foundation_Tier3 jppsc at -3.46 -2.06 h=6.968 sy=6.698
+place Block_Foundation_Tier3 jppsc at -6.38 -2.06 h=7.768 sy=7.871
+place Block_Foundation_Tier3 jppsc at -6.38 1.56 h=8.668 sy=9.191 sx=2 sz=2
+place Block_Foundation_Tier3 jppsc at -6.38 6.99 h=8.668 sy=9.191 sx=2
+place Block_Foundation_Tier3 jppsc at -0.05 6.99 h=8.968 sy=9.63 sx=2
+place Block_Foundation_Tier3 jppsc at 6.38 6.99 h=8.968 sy=9.63 sx=2 sz=2
 prop jpsc tint.color=#8f8a80
 prop jpsc tint.amount=0.35
 prop jppsc tint.color=#8f8a80

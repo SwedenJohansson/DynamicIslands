@@ -305,17 +305,18 @@ place Block_Foundation_Tier3 jpgm at 6.38 6.99 h=9.35 sx=2
 place Block_Foundation_Tier3 jpgm at 0.05 6.99 h=9.65 sx=2
 place Block_Foundation_Tier3 jpgm at -6.38 6.99 h=9.65 sx=2 sz=2
 # JUMP end
-# (box agent 10-25: the posts 1.9 x as wide as their slabs - thin ones left most of each slab's base in the air for the ground check)
-place RT_PillarThick jppgm at -2.06 -7.80 h=2.50 sy=0.203 sx=1.9 sz=1.9
-place RT_PillarThick jppgm at -2.06 -4.88 h=2.50 sy=0.303 sx=1.9 sz=1.9
-place RT_PillarThick jppgm at -2.06 -2.06 h=2.50 sy=0.436 sx=1.9 sz=1.9
-place RT_PillarThick jppgm at 0.75 -2.06 h=2.50 sy=0.586 sx=1.9 sz=1.9
-place RT_PillarThick jppgm at 3.46 -2.06 h=2.50 sy=0.745 sx=1.9 sz=1.9
-place RT_PillarThick jppgm at 6.38 -2.06 h=2.50 sy=0.878 sx=1.9 sz=1.9
-place RT_PillarThick jppgm at 6.38 1.56 h=2.50 sy=1.028 sx=3.8 sz=3.8
-place RT_PillarThick jppgm at 6.38 6.99 h=2.50 sy=1.028 sx=3.8 sz=1.9
-place RT_PillarThick jppgm at 0.05 6.99 h=2.50 sy=1.078 sx=3.8 sz=1.9
-place RT_PillarThick jppgm at -6.38 6.99 h=2.50 sy=1.078 sx=3.8 sz=3.8
+# (10-25: each slab stands on one solid column - a stretched foundation of its own footprint, from 0.6 m under the pad flush up to the slab)
+place Block_Foundation_Tier3 jppgm at 0.75 -7.80 h=3.218 sy=1.199
+place Block_Foundation_Tier3 jppgm at -2.06 -7.80 h=3.718 sy=1.933
+place Block_Foundation_Tier3 jppgm at -2.06 -4.88 h=4.318 sy=2.812
+place Block_Foundation_Tier3 jppgm at -2.06 -2.06 h=5.118 sy=3.985
+place Block_Foundation_Tier3 jppgm at 0.75 -2.06 h=6.018 sy=5.305
+place Block_Foundation_Tier3 jppgm at 3.46 -2.06 h=6.968 sy=6.698
+place Block_Foundation_Tier3 jppgm at 6.38 -2.06 h=7.768 sy=7.871
+place Block_Foundation_Tier3 jppgm at 6.38 1.56 h=8.668 sy=9.191 sx=2 sz=2
+place Block_Foundation_Tier3 jppgm at 6.38 6.99 h=8.668 sy=9.191 sx=2
+place Block_Foundation_Tier3 jppgm at 0.05 6.99 h=8.968 sy=9.63 sx=2
+place Block_Foundation_Tier3 jppgm at -6.38 6.99 h=8.968 sy=9.63 sx=2 sz=2
 prop jpgm tint.color=#b9c7cf
 prop jpgm tint.amount=0.35
 prop jppgm tint.color=#b9c7cf

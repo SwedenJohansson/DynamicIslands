@@ -281,18 +281,19 @@ place Block_Foundation_Tier3 jpcy at 5.12 2.02 h=8.40 sx=2 sz=2
 place Block_Foundation_Tier3 jpcy at -1.30 2.02 h=8.70 sx=2 sz=2
 place Block_Foundation_Tier3 jpcy at -1.30 -3.21 h=9.00
 # JUMP end
-place RT_PillarThick jppcy at -2.92 -5.64 h=1.50 sy=0.153 sx=0.8 sz=0.8
-place RT_PillarThick jppcy at -5.93 -5.64 h=1.50 sy=0.220 sx=0.8 sz=0.8
-place RT_PillarThick jppcy at -5.93 -3.03 h=1.50 sy=0.370 sx=0.8 sz=0.8
-place RT_PillarThick jppcy at -5.93 1.21 h=1.50 sy=0.453 sx=0.8 sz=0.8
-place RT_PillarThick jppcy at -5.93 5.64 h=1.50 sy=0.586 sx=0.8 sz=0.8
-place RT_PillarThick jppcy at -3.02 5.64 h=1.50 sy=0.736 sx=0.8 sz=0.8
-place RT_PillarThick jppcy at -0.40 5.64 h=1.50 sy=0.570 sx=0.8 sz=0.8
-place RT_PillarThick jppcy at 2.41 5.64 h=1.50 sy=0.728 sx=0.8 sz=0.8
-place RT_PillarThick jppcy at 5.12 5.64 h=1.50 sy=0.886 sx=0.8 sz=0.8
-place RT_PillarThick jppcy at 5.12 2.02 h=1.50 sy=1.036 sx=0.8 sz=0.8
-place RT_PillarThick jppcy at -1.30 2.02 h=1.50 sy=1.086 sx=0.8 sz=0.8
-place RT_PillarThick jppcy at -1.30 -3.21 h=1.50 sy=1.136 sx=0.8 sz=0.8
+# (10-25: each slab stands on one solid column - a stretched foundation of its own footprint, from 0.6 m under the pad flush up to the slab)
+place Block_Foundation_Tier3 jppcy at -2.92 -5.64 h=2.418 sy=1.493
+place Block_Foundation_Tier3 jppcy at -5.93 -5.64 h=2.818 sy=2.079
+place Block_Foundation_Tier3 jppcy at -5.93 -3.03 h=3.718 sy=3.399
+place Block_Foundation_Tier3 jppcy at -5.93 1.21 h=4.218 sy=4.132 sx=0.3 sz=3
+place Block_Foundation_Tier3 jppcy at -5.93 5.64 h=5.018 sy=5.305
+place Block_Foundation_Tier3 jppcy at -3.02 5.64 h=5.918 sy=6.625
+place Block_Foundation_Tier3 jppcy at -0.40 5.64 h=4.918 sy=5.158
+place Block_Foundation_Tier3 jppcy at 2.41 5.64 h=5.868 sy=6.551
+place Block_Foundation_Tier3 jppcy at 5.12 5.64 h=6.818 sy=7.944
+place Block_Foundation_Tier3 jppcy at 5.12 2.02 h=7.718 sy=9.264 sx=2 sz=2
+place Block_Foundation_Tier3 jppcy at -1.30 2.02 h=8.018 sy=9.704 sx=2 sz=2
+place Block_Foundation_Tier3 jppcy at -1.30 -3.21 h=8.318 sy=10.144
 prop jpcy tint.color=#7d8b94
 prop jpcy tint.amount=0.35
 prop jppcy tint.color=#7d8b94
