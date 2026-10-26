@@ -12,34 +12,34 @@ zone crane_2
 expect step 3
 open Smelter chest
 wait 3
-expect step 4
+expect step 5
 open Fuel shed chest
 wait 3
-expect step 5
+expect step 6
 open Anchor gear chest
 wait 3
-expect step 6
+expect step 8
 read Yard office book
-expect step 7
+expect step 9
 open Lost property box
 wait 3
 expect story sk_mo 1
-expect step 8
-read Crane driver's report
-expect step 9
-read Trench chart
 expect step 10
+read Crane driver's report
+expect step 11
+read Trench chart
+expect step 12
 open Crane key box
 wait 3
 expect story cy_cranekey 1
-expect step 11
+expect step 13
 use cylever
 expect story cy_drop 1
 expect hidden cycap
-expect step 12
+expect step 14
 air cy_dair
 open Yard store chest
 wait 3
-expect step 13
+expect step 15
 read Yard pump log
 expect done

@@ -320,8 +320,10 @@ step reach|yard|1|Climb onto the yard
 step read|Foreman's board|1|Read the foreman's board
 step reach|crane_2|1|Take the zipline from crane 1 to crane 2
 step blueprint|Blueprint_SmelterElectric|1|Find the electric smelter and battery charger plans under the smelter's roof
+step blueprint|Blueprint_BatteryCharger|1|Take the battery charger plans from under the smelter's roof too
 step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Open the fuel shed on the west caisson
 step blueprint|Blueprint_AnchorStationaryAdvanced|1|Find the anchor gear and zipline plans on the north caisson
+step blueprint|Blueprint_ZiplineTool|1|Take the zipline plans from the north caisson too
 step read|Yard office book|1|Read the book in the yard office in the north
 step collect|story:sk_mo|1|Look in the yard office's lost property box
 step read|Crane driver's report|1|Read the report at the fallen crane in the south-east
