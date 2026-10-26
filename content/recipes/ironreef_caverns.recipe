@@ -198,9 +198,13 @@ for f 0.2 0.8 0.2
 place Relay_support_beam_wood - at {71.1-17.5*$f-0.93} {-0.9-27.7*$f+0.59} h=0 rot=0,0,-90 sx={(2.1+18*$f)/9.4}
 place Relay_support_beam_wood - at {71.1-17.5*$f+0.93} {-0.9-27.7*$f-0.59} h=0 rot=0,0,-90 sx={(2.1+18*$f)/9.4}
 next
-# and a short one from the shoulder up onto the mine's terrace
-ramp Block_Floor_Wood from 21 -54.75 19.6 to 13 -54.75 23.6 len=1.5 top=0
-ramp Block_Floor_Wood from 21 -56.25 19.6 to 13 -56.25 23.6 len=1.5 top=0
+# and a short sanded path from the shoulder up onto the mine's terrace
+# (10-25: a bed for it, from a little below its foot - the crest came up through the old plank ramp here, so the planks went
+# and the path is the bed itself)
+for f -0.15 1.01 0.05
+brush flatten from {21-8*$f} -53.8 to {21-8*$f} -57.2 r=0.6 s=20 frames=100 h={19.2+4*$f}
+next
+brush sand from 21 -55.5 to 13 -55.5 r=1.6 s=8 frames=20
 place Balboa_DirectionSign - at 70 -8 ground yaw=220
 # (the top of the plank road, on the mountain's shoulder: a quest step)
 place Zone_Trigger shoulder at 53 -29 y=1.5

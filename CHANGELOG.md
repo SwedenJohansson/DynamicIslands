@@ -18,6 +18,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   detector (it could not be placed). Start a new world with the plan to get the fixed islands.
 - **The Tide Engine's heart:** the rubble in the well lies on its floor instead of hanging off the walls, and a brass
   gantry over the reactor now holds up its pipe.
+- **Thornwood and Ironreef Caverns:** the Boar King waits in the open ring east of the idol, no longer half on its plinth; the short climb onto Ironreef's mine terrace is a sanded path instead of a plank ramp that the hill crest came up through.
 
 ## 2026-10-25: Relic of the Seventh Tide, full-size islands
 

@@ -155,7 +155,8 @@ place campfire_1 - at 11.8 22.8 ground sit
 place campfire_1 - at 18.2 22.8 ground sit
 place SmallBoulder4 - at 11 21.6 ground sit scale=0.6
 place SmallBoulder4 - at 19 21.6 ground sit scale=0.6
-place Creature_Boar king at 15 32 ground
+# (10-25: the King waits in the open ring east of the idol - behind it at 15 32 he stood half on its plinth's edge)
+place Creature_Boar king at 19.5 27.5 ground
 place Creature_Boar guards at 10 28 ground
 place Zone_Trigger temple at 15 22 y=1.5
 place Zone_Atmosphere templeair at 15 25 y=3
