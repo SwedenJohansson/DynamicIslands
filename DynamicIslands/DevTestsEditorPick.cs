@@ -44,6 +44,13 @@ namespace DynamicIslands
 			Physics.SyncTransforms();
 			yield return null;
 			LayerMask mask = DynamicIslands.EditorGizmoHandler.selectionMask;
+			// (the first run after the editor opened found no candidates at all: the objects' selection colliders come a few
+			// frames after placing - up to 3 s for them, 10-26)
+			{
+				Vector3 c0 = flower.transform.position + Vector3.up * 0.2f;
+				Ray probe = new Ray(c0 + new Vector3(6f, 4f, 0f), (c0 - (c0 + new Vector3(6f, 4f, 0f))).normalized);
+				for (float w = 0f; w < 3f && ObjectPick.Candidates(probe, mask).Count == 0; w += 0.25f) { yield return new WaitForSeconds(0.25f); Physics.SyncTransforms(); }
+			}
 			try
 			{
 				// 1. The flower beside the palm (inside the palm's bounds): the smaller object wins

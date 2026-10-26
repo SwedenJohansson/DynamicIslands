@@ -65,7 +65,8 @@ namespace DynamicIslands.Editor
 			string folder = null;
 			try
 			{
-				if (Raft_Network.IsHost) folder = WorldCopy.RaftWorldFolder;
+				// (the host's own save folder is the world being played: another world's key looks for its marked folder)
+				if (Raft_Network.IsHost && worldKey == WorldKey) folder = WorldCopy.RaftWorldFolder;
 				else folder = ReceivedFolder(worldKey);
 			}
 			catch { }

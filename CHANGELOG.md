@@ -9,6 +9,15 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-26: Test round fixes
+
+### Fixed
+- **The island map** shows when you are on or near an island: it measured from the island's corner, not its middle, so
+  on many islands it did not show, or its picture was off to one side.
+- **A quest's sea animal that Raft still takes away** (a turtle, stingray, dolphin or whale the quest asks for) comes back
+  at its spot, so the quest can always be finished.
+- **Your own notebook:** on the host, another world's notebook no longer reads or writes the one of the world you play.
+
 ## 2026-10-25: Looped sounds on survivor cages
 
 ### Fixed

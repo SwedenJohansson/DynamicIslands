@@ -135,7 +135,7 @@ namespace DynamicIslands.Editor
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
 			{
 				if (e.Root == null) continue;
-				Vector3 c = e.Root.transform.position;
+				Vector3 c = e.Position; // (the land centre: the root is the terrain corner)
 				float d = new Vector2(at.x - c.x, at.z - c.z).magnitude;
 				if (d > Mathf.Max(0f, CustomIslandSpawner.LandRadius(e.Name)) + NearIsland || d >= bestD) continue;
 				best = e; bestD = d;
@@ -176,7 +176,7 @@ namespace DynamicIslands.Editor
 				cam.farClipPlane = 900f;
 			}
 			if (tex == null) { tex = new RenderTexture(TexSize, TexSize, 16); tex.name = "CustomIslands_Map"; }
-			Center = Island.Root.transform.position;
+			Center = Island.Position;
 			HalfSize = Mathf.Max(40f, CustomIslandSpawner.LandRadius(Island.Name) + 25f);
 			cam.orthographicSize = HalfSize;
 			cam.transform.position = Center + Vector3.up * 400f;

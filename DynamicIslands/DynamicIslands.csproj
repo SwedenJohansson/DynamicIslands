@@ -72,6 +72,7 @@
     <Compile Include="DevTestsGapsC.cs" />
     <Compile Include="DevTestsMech.cs" />
     <Compile Include="DevTestsPlayerFeatures.cs" />
+    <Compile Include="DevTestsStateWatch.cs" />
     <Compile Include="DevTestsContent.cs" />
     <Compile Include="DevTestsStableIds.cs" />
     <Compile Include="DevTestsDirector.cs" />

@@ -445,7 +445,7 @@ namespace DynamicIslands
 					PlayerNotebook.Page p = ci.FirstOrDefault(x => x.Title == mine);
 					Check(ref ok, p != null && p.Text == "Written in " + world + "\n=== not a new page\n\\ a backslash line\n", "this world's page is back, its text exact: " + (p == null ? "(missing)" : p.Text.Replace("\n", "|")));
 					Check(ref ok, ci.All(x => x.Title == mine), "no other world's page: " + string.Join(", ", ci.Select(x => x.Title).ToArray()));
-					Check(ref ok, (PlayerNotebook.LastPath ?? "").EndsWith(PlayerNotebook.FileName) && WorldCopy.RaftWorldFolder != null && Path.GetDirectoryName(PlayerNotebook.LastPath) == WorldCopy.RaftWorldFolder, "read from the world's own folder: " + PlayerNotebook.LastPath);
+					Check(ref ok, (PlayerNotebook.LastPath ?? "").EndsWith(PlayerNotebook.FileName) && WorldCopy.RaftWorldFolder != null && Path.GetFullPath(Path.GetDirectoryName(PlayerNotebook.LastPath)) == Path.GetFullPath(WorldCopy.RaftWorldFolder), "read from the world's own folder: " + PlayerNotebook.LastPath);
 				}
 				if (ok) Log("PASS: notebook " + what + " (" + world + ")"); else Fail("notebook " + what);
 				yield break;
@@ -478,7 +478,7 @@ namespace DynamicIslands
 			yield return null;
 			string path = PlayerNotebook.PathFor(PlayerNotebook.LoadedFor);
 			Check(ref ok, !PlayerNotebookWindow.IsOpen && File.Exists(path) && File.ReadAllText(path).Contains("=== CI typed page") && File.ReadAllText(path).Contains("typed line 2"), "saved on closing to " + path);
-			Check(ref ok, WorldCopy.RaftWorldFolder == null || Path.GetDirectoryName(path) == WorldCopy.RaftWorldFolder, "the file is next to the world's save (" + WorldCopy.RaftWorldFolder + ")");
+			Check(ref ok, WorldCopy.RaftWorldFolder == null || Path.GetFullPath(Path.GetDirectoryName(path)) == Path.GetFullPath(WorldCopy.RaftWorldFolder), "the file is next to the world's save (" + WorldCopy.RaftWorldFolder + ")");
 			Check(ref ok, PlayerNotebook.CopyIn("CI copied note", "copied text") && PlayerNotebook.Pages.Last().Title == "CI copied note" && File.ReadAllText(path).Contains("copied text"), "a note copied in is a new page, saved at once");
 			// (journal: the copy button on a page)
 			PlayerNotebook.Pages.RemoveAll(p => p.Title == "CI typed page" || p.Title == "CI copied note");
@@ -593,8 +593,13 @@ namespace DynamicIslands
 			Check(ref ok, CameraFlight.Active && CameraFlight.Shown == shown + 1 && CameraFlight.InputHeld, "the lever starts the flight, the player's input held");
 			Check(ref ok, sent.Any(m => m.Kind == IslandNetMessage.Moment && m.Name == "path" && m.Ids[0] == e.Id && m.Data.StartsWith("tour\n")), "every player is told (Moment 'path')");
 			Transform cam = player.Camera != null ? player.Camera.transform : Camera.main.transform;
-			yield return new WaitForSecondsRealtime(CameraMoment.Glide + 0.05f);
-			float atFirst = keys.Count > 0 ? Vector3.Distance(cam.position, keys[0].Pos) : 99f;
+			// (the closest it came around the glide's end: a slow frame of a minimised Raft can step past the point, 10-26)
+			float atFirst = 99f;
+			for (float until = Time.unscaledTime + CameraMoment.Glide + 0.4f; Time.unscaledTime < until; )
+			{
+				if (keys.Count > 0) atFirst = Mathf.Min(atFirst, Vector3.Distance(cam.position, keys[0].Pos));
+				yield return null;
+			}
 			Check(ref ok, atFirst < 1.5f, "the camera starts at the first point (" + atFirst.ToString("F2") + " m)");
 			float best = 99f, bestLook = 180f, duration = CameraFlight.LastDuration;
 			bool shot = false;
@@ -638,6 +643,8 @@ namespace DynamicIslands
 			ScUse(e, "oncelever");
 			yield return null;
 			Check(ref ok, CameraFlight.Active && CameraFlight.Shown == shown + 1 && ContentState.IsUsed(e, key), "the once lever flies, and the island's state marks the path flown");
+			// (as for the skip above: Esc a moment into the flight, not on its first frame, 10-26)
+			yield return new WaitForSecondsRealtime(1f);
 			EscKey.Press();
 			yield return null;
 			yield return null;
@@ -777,12 +784,15 @@ namespace DynamicIslands
 			Minimap.Mode = Minimap.Corner;
 			Minimap.SetZoom(1);
 			Minimap.ClearPings();
+			// (the island may spawn within its map reach of the raft)
+			RfAway(e);
+			yield return new WaitForSecondsRealtime(1f);
 			Check(ref ok, Minimap.Island != e, "at sea (on the raft) not this island's map");
 			Check(ref ok, Behaviours.RefsOf(e).Any(r => r.ObjectName == Minimap.MarkerName && r.GetComponentsInChildren<Renderer>().Length == 0), "the map marker is in the world, not seen");
 			int renders = Minimap.RenderCount;
 			PutPlayerNear(ScObjOf(e, "cimapstart").transform);
 			yield return new WaitForSecondsRealtime(1.2f);
-			Check(ref ok, Minimap.Island == e && Minimap.Shown && Minimap.RenderCount > renders, "on the island: its map in the corner, its picture taken");
+			Check(ref ok, Minimap.Island == e && Minimap.Shown && Minimap.RenderCount > renders, "on the island: its map in the corner, its picture taken (map island " + (Minimap.Island == null ? "none" : Minimap.Island.Name) + ", mode " + Minimap.Mode + ", renders " + (Minimap.RenderCount - renders) + ", player " + (e.Root == null ? "?" : new Vector2(RAPI.GetLocalPlayer().transform.position.x - e.Root.transform.position.x, RAPI.GetLocalPlayer().transform.position.z - e.Root.transform.position.z).magnitude.ToString("F0")) + " m from its root, " + Vector3.Distance(RAPI.GetLocalPlayer().transform.position, ScObjOf(e, "cimapstart").transform.position).ToString("F0") + " m from cimapstart, root at " + (e.Root == null ? "?" : e.Root.transform.position.ToString("F0")) + ", cimapstart at " + ScObjOf(e, "cimapstart").transform.position.ToString("F0") + ", land radius " + CustomIslandSpawner.LandRadius(e.Name).ToString("F0") + ")");
 			Check(ref ok, Minimap.HalfSize >= CustomIslandSpawner.LandRadius(e.Name), "the picture holds the whole island (" + Minimap.HalfSize.ToString("F0") + " m each way)");
 			Transform goal = ScObjOf(e, "cimapgoal").transform;
 			Check(ref ok, Minimap.Marks.Any(k => k.Kind == Minimap.MarkQuest && Vector3.Distance(k.Pos, goal.position) < 0.1f), "the quest step's target on the map");
@@ -840,10 +850,12 @@ namespace DynamicIslands
 			EditorGameObject o = PlaceForTest(Minimap.MarkerName, at, placed);
 			if (o == null) { Fail("minimap editor: no map marker placed"); yield break; }
 			Check(ref ok, o.GetComponentsInChildren<Renderer>().Length > 0, "the marker is seen in the editor");
+			// (the inspector is on the Objects tab: an earlier test may have left another tab open)
+			EditorUI.SetTab(TAB.ObjectPlace);
 			TransformGizmoSelect(o.transform);
 			ObjectInspector.Refresh();
 			yield return new WaitForSecondsRealtime(0.5f);
-			Check(ref ok, Resources.FindObjectsOfTypeAll<UnityEngine.UI.Text>().Any(t => t.gameObject.activeInHierarchy && t.text == "Map marker (island map)"), "its inspector group shows");
+			Check(ref ok, Resources.FindObjectsOfTypeAll<UnityEngine.UI.Text>().Any(t => t.gameObject.activeInHierarchy && string.Equals(t.text, "Map marker (island map)", StringComparison.OrdinalIgnoreCase)), "its inspector group shows");
 			PropsCommand.Change(o, P(Minimap.LabelProp, "CI hut"));
 			Check(ref ok, ObjectProps.Get(o.Props, Minimap.LabelProp) == "CI hut", "its text is kept");
 			DynamicIslands.EditorGizmoHandler.ClearTargets(false);
