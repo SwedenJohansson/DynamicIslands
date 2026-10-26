@@ -19,6 +19,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **The Tide Engine's heart:** the rubble in the well lies on its floor instead of hanging off the walls, and a brass
   gantry over the reactor now holds up its pipe.
 - **Thornwood and Ironreef Caverns:** the Boar King waits in the open ring east of the idol, no longer half on its plinth; the short climb onto Ironreef's mine terrace is a sanded path instead of a plank ramp that the hill crest came up through.
+- **Sealkeeper Spire:** both new ziplines start from solid footing - on the storm ridge's top and on the summit tower's deck -
+  instead of hanging in the air beside them, and seven stones left floating over the ridge, the ruins and the peak are gone.
 
 ## 2026-10-25: Relic of the Seventh Tide, full-size islands
 

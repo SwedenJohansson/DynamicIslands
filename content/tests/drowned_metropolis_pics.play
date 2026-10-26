@@ -9,7 +9,7 @@ picture drowned_metropolis_island 55 58 -105 -8 6 -18
 picture drowned_metropolis_ferry -70 7 -10 -50 3 -30
 at -24 -50 h=12.5
 wait 2
-picture drowned_metropolis_harbour -18 15 -42 -50 20 -50
+picture drowned_metropolis_harbour 15 14 -55 -40 8 -38
 picture drowned_metropolis_penthouse -50.5 22.9 -51 -57 22 -48
 at 8 -36 h=1
 wait 2
