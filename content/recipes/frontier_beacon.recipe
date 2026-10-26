@@ -91,7 +91,7 @@ note supplycrate Supply crate | The Corps' supply crate from the sunken boat: a 
 loot supplycrate story:beaconcell*1;Battery*1;Rope*2
 prop supplycrate loot.refill=0
 note keeperslocker Keeper's locker | The keeper's locker on the beacon terrace: the Corps' plans for a Receiver and its antenna - and the next station's frequency, scratched inside the door.
-loot keeperslocker Blueprint_Reciever*1;Blueprint_Antenna*1;Battery*1;Scrap*4
+loot keeperslocker Blueprint_Reciever*1;Blueprint_HeadLight*1;Blueprint_Recycler*1;Blueprint_Antenna*1;Battery*1;Scrap*4
 prop keeperslocker loot.refill=0
 # the keeper's Corps keycard (T-4c2): it opens the Corps strongroom at the winter camp (Whiteout Reach, rule 8)
 prop keepersstrongbox obj.name=keepersstrongbox
@@ -137,6 +137,8 @@ step kill|Screecher|3|Drive the stone birds off the terrace
 step open|Keeper's locker|1|Light the beacon and open the keeper's locker
 step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the keeper's locker
 step blueprint|Blueprint_Antenna|1|Take the antenna plans from the keeper's locker
+step blueprint|Blueprint_HeadLight|1|Take the head light plans from the keeper's locker
+step blueprint|Blueprint_Recycler|1|Take the recycler plans from the keeper's locker
 quest done=The beacon blinks over the sea again - and inside the locker door, the next frequency: Station Two, down the marsh.
 quest reward=Plank*6;Rope*3;Scrap*4
 

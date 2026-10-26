@@ -92,7 +92,7 @@ note cardbox3 Deep card box | The last box of catalogue cards, in the deepest ro
 loot cardbox3 story:card*1;Scrap*2
 prop cardbox3 loot.refill=0
 note rarebookvault Rare book vault | The archive's vault: the Corps' rarest plans - engine controls, a metal detector, fireworks, a zipline - and their map to Hightide Harbor.
-loot rarebookvault Blueprint_EngineControls*1;Blueprint_MetalDetector*1;Blueprint_Firework*1;Blueprint_ZiplineBase*1;Battery*1
+loot rarebookvault Blueprint_EngineControls*1;Blueprint_MetalDetector*1;Blueprint_Firework*1;Blueprint_ZiplineBase*1;Blueprint_BatteryCharger*1;Blueprint_ZiplineTool*1;Battery*1
 prop rarebookvault loot.refill=0
 prop rarebookvault if.open=signal|indexed
 prop rarebookvault else.open=message||The vault's lock is wired to the index desk upstairs - it wants the three catalogue cards first.
@@ -134,6 +134,8 @@ step blueprint|Blueprint_EngineControls|1|Take the engine controls plans from th
 step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from the rare book vault
 step blueprint|Blueprint_Firework|1|Take the firework plans from the rare book vault
 step blueprint|Blueprint_ZiplineBase|1|Take the zipline plans from the rare book vault
+step blueprint|Blueprint_BatteryCharger|1|Take the battery charger plans from the rare book vault
+step blueprint|Blueprint_ZiplineTool|1|Take the zipline tool plans from the rare book vault
 quest done=The vault gives up the Corps' rarest plans - and their map: Hightide Harbor, a fishing town on stilts, where the fleet went.
 quest reward=Plank*6;Plastic*6;Rope*2
 

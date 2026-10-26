@@ -9,6 +9,16 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-26: Every storyline blueprint from a main quest step
+
+### Fixed
+- In the library storylines that replace Raft's story, every one of Raft's story blueprints is now a step of an
+  island's main quest, so you can't sail on without it. **The City That Never Sank**, **The End of the Ocean** and
+  **The Sunken Kingdom** gave the head light, recycler, battery charger and zipline tool only as a second blueprint in
+  a chest: each now has its own step. **The Frozen Horizon**, **The Last Green World** and **Raft 2** didn't give those
+  four at all: they are now in the Receiver's, the antenna's and the zipline's chests, each with a step. A few next
+  islands now come one step later, once the island's blueprints are found.
+
 ## 2026-10-26: Where Test puts you
 
 ### Added

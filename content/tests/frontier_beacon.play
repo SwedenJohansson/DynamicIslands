@@ -36,7 +36,9 @@ expect story beaconcell 0
 walk -2 9.5 to -0.3 9.6 h=16
 reach Keeper's locker
 open Keeper's locker
-wait 3
+wait 4
 expect item Blueprint_Reciever 1
 expect item Blueprint_Antenna 1
+expect item Blueprint_HeadLight 1
+expect item Blueprint_Recycler 1
 expect done
