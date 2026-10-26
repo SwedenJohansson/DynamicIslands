@@ -91,3 +91,26 @@ expect item Blueprint_TitaniumTools 1
 expect done
 # DEEP 10-25: the missing miner's letter by the strongbox (after the quest: no step, the pages counts untouched)
 read Miner Davy Rees's letter
+
+# ABYSS 10-26: the secrets of the 1-hour pass (after the quest: no steps) - Calder's note in the camp, the company
+# tallies (a set), the survey beacons (puzzle lights) and the surveyor's cache, the plane, the ore boat, the scaffold run
+read Dr. Ruth Calder's field note
+use Company tally 1
+use Company tally 2
+use Company tally 3
+use Company tally 4
+use Company tally 5
+wait 1
+expect message All five company tallies
+expect item TitaniumIngot 1
+expect hidden surveycache
+use Survey beacon 1
+use Survey beacon 2
+wait 1
+expect shown surveycache
+open Surveyor's cache
+zone companyplane
+open Company plane's crate
+open Ore boat's crate
+zone jump_ir_finale
+open Scaffold run prize

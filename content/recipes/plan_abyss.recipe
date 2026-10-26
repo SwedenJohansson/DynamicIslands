@@ -7,7 +7,7 @@
 # Built by the recipe player (CIRecipe plan_abyss) in the editor's World plans window. Its play test:
 # content\tests\plan_abyss.play.
 plan new The Abyss Expedition
-plan description An expedition downwards beside Raft's story: an old mine, a buried shelter, a sunken island, caverns, a wreck and a drowned city - each found when the one before is done - and at the end the Abyss, a trench where something old lives in the dark. Its main islands are about 90% the size of Raft's own big islands.
+plan description An expedition downwards beside Raft's story: an old mine, a buried shelter, a sunken island, caverns, a wreck and a drowned city - each found when the one before is done - and at the end the Abyss, a trench where something old lives in the dark. Its main islands are as big as Raft's own, an hour each: hills, caves, wrecks, light puzzles and secrets round every quest.
 plan random off
 plan story on
 plan rule mine | island:Old Mine Islet | start | receiver:500 | A mining company's old beacon still answers on the Receiver: the timbered portal in its rock mound is where the expedition starts. | Old Mine Islet | beside

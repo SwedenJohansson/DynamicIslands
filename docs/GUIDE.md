@@ -4224,7 +4224,8 @@ three), a signal (Varuna's strongbox opens only once the floodlight burns), two 
 **The Abyss Expedition** - an expedition downwards beside Raft's story: each island comes **on the Receiver** (500 to
 900 m ahead when tuned) when the one before is done - its quest done, or players reached it: an old mine, a buried
 shelter, a **sunken island** (a map type, made new for every world), caverns, a **wreck** (a map type too), a drowned
-city - and at the end **The Abyss**. Its main islands are about 90% the size of Raft's own big islands.
+city - and at the end **The Abyss**. Its main islands are as big as Raft's own, an hour each: hills, caves, wrecks,
+light puzzles and secrets round every quest.
 
 | The plan's last island | What it is | What it shows you how to build |
 |---|---|---|

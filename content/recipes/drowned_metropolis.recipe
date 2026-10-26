@@ -18,6 +18,7 @@ include lib_rt
 include lib_features
 include lib_areas
 include lib_highwater
+include lib_abyss
 new
 # (nature: Like Raft - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -45,6 +46,22 @@ place UT_Set_Tower02 - at 104 72 centred h=-90 tilt=-11 yaw=40
 # the land above the sea, so the centre a world puts the island by is 13.83 m west and 9.66 m north of where it was
 # when the island was generated (the recipe logs it when it saves). The probe tools measure from that centre too.
 push at -13.83 9.66
+# --- ABYSS 10-26: relief - three rubble hills where the city's outskirts stood, each with a ruined block on top ------
+# (before everything placed below, so their clears take only the generator's plants; nothing of the quest is near)
+call hw_mount x=-72 z=-42 b=13 h=8
+call ar_ruin x=-72 z=-42 h=8 yaw=20 w=2 d=2 al=dmruin1
+place VP_RubblePile_Medium01 - at -66 -48 ground yaw=70
+place VP_ConcretePipe02 - at -79 -37 ground yaw=15 tilt=6
+call hw_mount x=55 z=70 b=14 h=10
+call ar_ruin x=55 z=70 h=10 yaw=-30 w=3 d=2 al=dmruin2
+place RT_PillarThick - at 61 64 ground tilt=18 yaw=40
+place VP_RubblePile_Medium01 - at 48 75 ground yaw=200
+call hw_mount x=55 z=-84 b=12 h=7
+call ar_ruin x=55 z=-84 h=7 yaw=60 w=2 d=2 al=dmruin3
+place VP_ConcretePipe02 - at 62 -79 ground yaw=110 tilt=5
+scatter Bush2 4 at -72 -42 r=12 seed=26101
+scatter Bush2 4 at 55 70 r=13 seed=26102
+scatter "Pickup_Landmark_Tree_Palm 2" 2 at 55 -84 r=10 seed=26103
 brush lower at 20 -42 r=11 s=20 frames=6
 # (the council offices' pit dug down to their ground floor: the sea floor covered it, with its furniture and the filing
 # cabinet the quest's keycard is in)
@@ -276,5 +293,103 @@ pop
 
 note lenanote Deckhand Lena Moss's letter | L. MOSS, DECKHAND, MERIDIAN FERRY - FOR WHOEVER COMES\n\nThe last ferry ran aground on the sandbar with four hundred people on her. We got them all off onto the boats. I stayed to see the engine shut down, and when I came up the boats were gone.\n\nSo I live here now, on the only dry ground left in Meridian. I fish, I watch the towers, and at night I watch the light moving down in the Spire's pit. It goes round and round, like something pacing.\n\nThe treasurer's house is out to the east, on Bay Street, past the Meridian Tower - you can see its chimney on a still day. He kept his own money there, not in the vault. I never had the breath to go down to it. You might.\n\nIf you open the vault, tell the mayor Lena Moss kept the lights on.
 note silasnote Treasurer Silas Crane's note | (Ink on a ledger page, dry in the air pocket)\n\nThe mayor wants the vault sealed with three cards, so nobody can open it alone. Very wise. Very honest. He has not seen the books.\n\nThe vault is short by half. I have been borrowing from it for four years, a little at a time, and the council never counted.\n\nSo I am taking my card down to the foundations, to the old strongbox, where nobody will ever go. Three cards, and one of them at the bottom of a pit - the vault will stay shut, and nobody will ever know what isn't in it.\n\nThe water is at the door. I'll take the boat to the Spire tonight. Whatever I left here, the sea can keep.
+
+# --- ABYSS 10-26 (1-hour pass): the harbour lamps, the Meridian badges, the seaplane, the sea cave, Calder's note ------
+# (in the frame of Lena's camp above: the ferry islet west, the north-east islet, the sandbar south-east)
+push at -13.83 9.66
+# A The seaplane, run up on the south-east sandbar (raised to h 2), its crate beside it
+call ar_plane x=42 z=-68 h=2 yaw=30 al=seaplane crate=seaplanecrate
+note seaplanecrate Seaplane's crate | The mail seaplane's hold: sacks of letters gone to pulp, and under them the pilot's tool kit and spare cells.
+loot seaplanecrate Battery*2;Bolt*3;Rope*2;CircuitBoard*1
+call hw_zone x=42 z=-58 al=seaplanez id=seaplane r=6 msg="The mail seaplane, run up on the sandbar. Its pilot made it to the islet - his footprints are long gone."
+# B The sea cave in a rock on the north-east islet's west shore, its mouth to the north
+call ar_cave x=2 z=48 h=1.5 yaw=0 al=seacaverock chest=seacavechest
+note seacavechest Sea cave chest | A smugglers' chest in the sea cave, out of the harbour master's sight: copper and titanium from the city's last cargo.
+loot seacavechest TitaniumOre*2;CopperIngot*2;MetalIngot*2
+prop seacavechest loot.refill=0
+call hw_zone x=2 z=53 al=seacavez id=seacave r=4 msg="A sea cave under the islet's rock. Someone kept it dry."
+# C The harbour lamps (puzzle: all four lit shows the harbour master's strongbox); a lamp switches its neighbours too.
+# Start: 1 and 4 lit; every lamp used once, in order, lights them all.
+call ab_lamp x=-48 z=-44 al=hlamp1 nm="Harbour lamp 1" grp="Harbour lamps" on=1
+call ab_lamp x=36 z=-60 al=hlamp2 nm="Harbour lamp 2" grp="Harbour lamps" on=0
+call ab_lamp x=52 z=30 al=hlamp3 nm="Harbour lamp 3" grp="Harbour lamps" on=0
+call ab_lamp x=40 z=60 al=hlamp4 nm="Harbour lamp 4" grp="Harbour lamps" on=1
+prop hlamp1 on.use=light|Harbour lamp 2|toggle
+prop hlamp2 on.use=light|Harbour lamp 1|toggle\nlight|Harbour lamp 3|toggle
+prop hlamp3 on.use=light|Harbour lamp 2|toggle\nlight|Harbour lamp 4|toggle
+prop hlamp4 on.use=light|Harbour lamp 3|toggle
+prop hlamp1 on.alllit=show|harbourbox\nmessage||All four harbour lamps burn again. On the north-east islet, the harbour master's strongbox stands open.
+call ab_hidden x=44 z=40 al=harbourbox
+note harbourbox Harbour master's strongbox | The harbour master's strongbox: the dues of Meridian's last season, never banked.
+loot harbourbox TitaniumIngot*1;MetalIngot*3;TradeToken*3
+# D Meridian badges: five brass badges of the city's ferry crew, lost about the islets (a set: a secret)
+call ab_piece x=-40 z=-30 al=mbadge1 set="Meridian badges" nm="Meridian badge 1"
+call ab_piece x=-60 z=-60 al=mbadge2 set="Meridian badges" nm="Meridian badge 2"
+call ab_piece x=30 z=30 al=mbadge3 set="Meridian badges" nm="Meridian badge 3"
+call ab_piece x=48 z=52 al=mbadge4 set="Meridian badges" nm="Meridian badge 4"
+call ab_piece x=30 z=-64 al=mbadge5 set="Meridian badges" nm="Meridian badge 5"
+prop mbadge1 on.set=give||TitaniumIngot*1;Battery*1\nmessage||All five Meridian badges. The ferry's crew is all ashore at last.
+# E Dr. Calder's field note, at Lena's camp
+place Note_Paper caldernote4 at 22.5 51 ground y=0.1 drop yaw=120
+pop
+note caldernote4 Dr. Ruth Calder's field note | THE ABYSS EXPEDITION - FIELD NOTE 4\n\nMeridian. Lena Moss gave us tea and told us about the ferry. The city's pumps are dead, but the soundings from the Spire's foundations are the clearest yet: a trench to the east, deeper than any chart.\n\nThe company's key opened their store. We have pumps, line and tanks now - enough to go down.\n\nNext: the Abyss.\n- R. C.
+# F The rooftop run on a new islet north-west of the ferry islet (a hop course on its own pad)
+# --- JUMP COURSE mt (Abyss pass 10-26): kz-style hop course of floor slabs on its own pad (the bs course, turned) ---
+# JUMP mt pad=2.5 at=-79.83 21.66
+push at -79.83 21.66
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=2.5
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=2.5
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpmt at 0.10 5.64 h=3.10
+place Block_Foundation_Tier3 jpmt at 2.92 5.64 h=3.60
+place Block_Foundation_Tier3 jpmt at 5.93 5.64 h=4.00
+place Block_Foundation_Tier3 jpmt at 5.93 3.03 h=4.90
+place Block_Foundation_Tier3 jpmt at 5.93 -1.21 h=5.40 sx=0.3 sz=3
+place Block_Foundation_Tier3 jpmt at 5.93 -5.64 h=6.20
+place Block_Foundation_Tier3 jpmt at 3.02 -5.64 h=7.10
+place Block_Foundation_Tier3 jpmt at 0.40 -5.64 h=6.10
+place Block_Foundation_Tier3 jpmt at -2.41 -5.64 h=7.05
+place Block_Foundation_Tier3 jpmt at -5.12 -5.64 h=8.00
+place Block_Foundation_Tier3 jpmt at -5.12 -2.02 h=8.90 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jpmt at 1.30 -2.02 h=9.20 sx=2 sz=2
+place Block_Foundation_Tier3 jpmt at 1.30 3.21 h=9.50
+# JUMP end
+# (each slab on one solid column of its own footprint, from under the pad up to the slab)
+# (the first slab rests on the pad itself: no column)
+place Block_Foundation_Tier3 jppmt at 2.92 5.64 h=2.918 sy=1.493
+place Block_Foundation_Tier3 jppmt at 5.93 5.64 h=3.318 sy=2.079
+place Block_Foundation_Tier3 jppmt at 5.93 3.03 h=4.218 sy=3.399
+place Block_Foundation_Tier3 jppmt at 5.93 -1.21 h=4.718 sy=4.132 sx=0.3 sz=3
+place Block_Foundation_Tier3 jppmt at 5.93 -5.64 h=5.518 sy=5.305
+place Block_Foundation_Tier3 jppmt at 3.02 -5.64 h=6.418 sy=6.625
+place Block_Foundation_Tier3 jppmt at 0.40 -5.64 h=5.418 sy=5.158
+place Block_Foundation_Tier3 jppmt at -2.41 -5.64 h=6.368 sy=6.551
+place Block_Foundation_Tier3 jppmt at -5.12 -5.64 h=7.318 sy=7.944
+place Block_Foundation_Tier3 jppmt at -5.12 -2.02 h=8.218 sy=9.264 sx=2 sz=2
+place Block_Foundation_Tier3 jppmt at 1.30 -2.02 h=8.518 sy=9.704 sx=2 sz=2
+place Block_Foundation_Tier3 jppmt at 1.30 3.21 h=8.818 sy=10.144
+prop jpmt tint.color=#5a6470
+prop jpmt tint.amount=0.35
+prop jppmt tint.color=#5a6470
+prop jppmt tint.amount=0.35
+place Loot_Chest jcmt at -5.12 -2.02 h=8.90 sit yaw=0
+note jcmt Rooftop perch | The ferry crew raced over the drowned roofs on their day off; the winner sat up here.
+loot jcmt Plank*6;Rope*3;MetalIngot*1
+prop jcmt loot.refill=0
+place Loot_ChestSmall jbmt at 1.30 3.21 h=9.50 sit yaw=0
+note jbmt Rooftop run prize | A tin wedged on the last post: a deckhand's winnings.
+loot jbmt MetalIngot*2;CopperIngot*2;TitaniumIngot*1
+prop jbmt loot.refill=0
+place Zone_Trigger jymt at 1.30 3.21 h=10.50
+prop jymt zone.id=jump_mt_finale
+prop jymt zone.radius=1.8
+prop jymt zone.repeat=never
+prop jymt zone.message=The top of the rooftop run - a tin is wedged on the last post.
+pop
+# --- end of jump course mt ---
 
 save The Drowned Metropolis

@@ -6,6 +6,9 @@
 # door and the blast gate onto the lagoon. Quest "Shelter No. 7" (7 steps): the notice at the hatch, down the
 # ladder, the radio log, the rats in the dormitory, the last can of fuel, the generator and the commander's orders, and
 # his safe.
+# ABYSS 10-26 (1-hour pass): the atoll grows to Raft's size by an outer barrier of land round the ring (outer works:
+# Radar Hill, pillboxes and runway lights, the north channel's patrol boat, a supply plane, a decontamination maze, an
+# ammo cave). Quest 10 -> 15 steps: the radar valve, the patrol boat's coil and the relay before the hatch.
 # DEEP 10-25 (deep pass, The Long Voyage): radius 50 kept. New: Lookout Dune, an 11 m dune raised on the ring's west
 # side (a cut path up, the shelter's observation post on top, the lookout Nadia Ferris's log, her cache under a hatch - a
 # secret) and her tin buried on its north foot. Quest 8 -> 10 steps: the lookout after the notice, before the hatch.
@@ -18,6 +21,8 @@ include lib_sea
 include lib_selene
 include lib_features
 include lib_highwater
+include lib_areas
+include lib_abyss
 new
 # (nature: the atoll's palms are the recipe's own; little else - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0 Bushes=0.25 Rocks=0.3 Harvest=0.15 BeachThings=0.5
@@ -39,6 +44,73 @@ call hw_mount x=-40 z=10 b=13 h=11
 call hw_trail x=-40 z=10 b=13 h=11 a0=180 turn=300 n=20 h0=3
 brush flatten at -40 10 r=7 s=20 frames=400 h=11
 brush sand at -40 10 r=15 s=10 frames=30
+
+# --- ABYSS 10-26 (1-hour pass): the atoll grows to Raft's size by an outer barrier of land round the old ring (the
+# ring, the islet and the dune as they were). The civil defence's outer works: Radar Hill (north-east), the outer
+# barrier with two pillboxes and the runway lights (east to south), a patrol boat sunk in the north channel, a supply
+# plane on the south-west bank, a decontamination maze (south) and an ammo cave under Radar Hill. Land bridges first.
+brush flatten from 30 30 to 46 44 r=9 s=20 frames=500 h=3
+brush flatten from 44 -6 to 60 -10 r=9 s=20 frames=500 h=3
+brush flatten from 2 -44 to 4 -62 r=9 s=20 frames=500 h=3
+brush flatten from -30 -32 to -44 -44 r=9 s=20 frames=500 h=3
+brush flatten from -32 34 to -22 52 r=8 s=20 frames=500 h=3
+# (a knoll of dune on the west arm, so it is no flat plain: the way to the plane goes over it)
+brush flatten at -34 -38 r=5 s=20 frames=400 h=6.5
+brush smooth at -34 -38 r=10 s=5 frames=80
+brush auto at -34 -38 r=11 s=10 frames=25
+# A Radar Hill (north-east): summit 20 m, base r 22, the trail from its south-west foot, the radar mast on top
+call hw_mount x=60 z=54 b=22 h=20
+call hw_trail x=60 z=54 b=22 h=20 a0=225 turn=300 n=28 h0=3
+brush flatten at 60 54 r=7 s=20 frames=400 h=20
+call hw_mast x=60 z=54 h0=20 lv=3 a=radarmast chest=radarbox top=Placeable_Lantern_Metal
+# B The outer barrier (east to south): a bank h 3.5 with two humps of dune on its sea side, two pillboxes on it
+brush flatten from 62 -8 to 58 -40 r=10 s=20 frames=600 h=3.5
+brush flatten from 58 -40 to 24 -66 r=10 s=20 frames=600 h=3.5
+brush flatten from 24 -66 to 10 -70 r=8 s=20 frames=400 h=3.5
+call hw_mount x=78 z=-24 b=12 h=9
+call hw_mount x=50 z=-76 b=10 h=7
+call ab_ruin x=64 z=-30 h=3.5 yaw=90 w=2 d=2 al=pillbox
+call ab_ruin x=38 z=-60 h=3.5 yaw=140 w=2 d=2 al=pillbox
+# C The north channel: a bank across the atoll's north, cut by a channel 11 m deep where the patrol boat went down
+brush flatten from -24 58 to 36 58 r=9 s=20 frames=600 h=3
+call hw_basin x=2 z=60 r=9 h=-11
+place BoatStranded patrolboat at 2 60 ground sit yaw=70
+prop patrolboat tint.color=#4a5048
+prop patrolboat tint.amount=0.5
+# D The supply plane (south-west bank): down on the bank past the bridge
+call ar_plane x=-56 z=-54 h=3 yaw=40 al=supplyplane crate=supplycrate
+# E The decontamination maze (south): 5 x 5 cells of 3 m (x -6..9, z -84..-69), its gate on the north at x 1.5
+brush flatten at 1.5 -76 r=13 s=20 frames=500 h=3
+brush smooth at 1.5 -76 r=17 s=4 frames=40
+brush flatten at 1.5 -76 r=13.5 s=20 frames=400 h=3
+clear at 1.5 -76 r=12
+line Block_Wall_Tier3 from -6 -84 to 9 -84 step=1.5 y=-0.15
+line Block_Wall_Tier3 from -3 -81 to 0 -81 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 3 -81 to 6 -81 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 0 -78 to 3 -78 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 3 -75 to 6 -75 step=1.5 y=-0.15
+line Block_Wall_Tier3 from -6 -72 to 3 -72 step=1.5 y=-0.15
+line Block_Wall_Tier3 from -6 -69 to 0 -69 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 3 -69 to 9 -69 step=1.5 y=-0.15
+line Block_Wall_Tier3 from -6 -84 to -6 -69 step=1.5 y=-0.15
+line Block_Wall_Tier3 from -3 -81 to -3 -75 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 0 -84 to 0 -81 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 0 -78 to 0 -72 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 3 -81 to 3 -78 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 6 -78 to 6 -69 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 9 -84 to 9 -69 step=1.5 y=-0.15
+# F The ammo cave (Radar Hill's north foot): a rock with a hole in it, its mouth to the sea
+call ar_cave x=62 z=82 h=3 yaw=0 al=ammorock chest=ammochest
+# The new land planted (palms, bamboo, bushes as on the ring; boulders only on the flats)
+call ar_plants_tropical x=40 z=38 r=10 seed=26301
+call ar_plants_hill x=60 z=54 r=22 seed=26311
+call ar_plants_tropical x=60 z=-20 r=12 seed=26321
+call ar_plants_hill x=78 z=-24 r=11 seed=26331
+call ar_plants_tropical x=-16 z=58 r=8 seed=26341
+call ar_plants_tropical x=26 z=58 r=8 seed=26351
+call ar_plants_tropical x=-38 z=-40 r=8 seed=26361
+call ar_plants_hill x=50 z=-76 r=9 seed=26371
+call ar_plants_tropical x=-26 z=46 r=6 seed=26381
 
 # --- The atoll: palms around the ring, bushes on the islet's slopes -----------------------------------------------
 scatter "Pickup_Landmark_Tree_Palm 1" 3 at 37 0 r=6 seed=101
@@ -264,12 +336,81 @@ scatter Bush2 3 at -40 10 r=12 seed=32065
 call treasure x=-42 z=21 r=12 n=1 seed=32062 kind=0
 prop treasure32062 treasure.loot=CopperIngot*2;MetalIngot*2;Scrap*4
 
+# --- ABYSS 10-26: the outer works' zones, notes, machine, puzzles and secrets ------------------------------------------
+# Radar Hill: the zone at its foot and on top, the radar valve in the mast's deck box
+call hw_zone x=40 z=38 al=radarfootz id=radarfoot r=5 msg="Radar Hill. A path cut round it to the radar mast on its top."
+call hw_zone x=60 z=54 al=radartopz id=radartop r=7 h=1 msg="The top of Radar Hill. The radar dish is gone; the mast still stands, and the whole atoll lies below - the ring, the islet, the outer barrier."
+note radarbox Radar deck box | A box bolted to the mast's deck: a radar valve in a padded case, stamped RELAY - SHELTER No. 7.
+loot radarbox story:valve*1;Battery*1;Plastic*2
+# The north channel: the bank, the patrol boat on the channel's floor, its locker and an air pocket beside it
+call hw_zone x=-14 z=58 al=channelz id=channel r=5 msg="The north channel. Down in the green water, a patrol boat lies on its side."
+place Story_Islander signe at -16 55 ground
+prop signe obj.name=Signe
+prop signe islander.pose=fish
+prop signe talk.text=Nobody fishes the channel but me. The patrol boat scares the rest off.\n---\nThe sailors kept their coil in the boat's locker, for the relay by the slab. They never got it there.\n---\nThe runway lights on the barrier? Each one throws its neighbours too. Start at the second and walk out to the sea - leave the first alone.
+place Loot_Crate boatlocker at 6.5 62.5 ground sit yaw=160
+note boatlocker Patrol boat locker | The patrol boat's locker, jammed half shut: a signal coil in oilcloth, labelled RELAY, and a sailor's tin.
+loot boatlocker story:coil*1;Rope*2;Bolt*2
+prop boatlocker loot.refill=0
+call hw_airpocket x=-3 z=57 id=boatair al=boatair bub=boatbub msg="An air pocket under the bank's edge - breathe."
+# The relay box on the islet, north of the slab: both parts, and the relay chest by it opens
+clear at 0 18 r=3
+call hw_machine x=0 z=18 yaw=180 al=relaybox nm="Relay box" a=valve b=coil done=relay rew=relaychest rnote=relaynote msg="The relay hums. Under your feet, deep in the islet, a bell rings once - the shelter knows someone is here." hint="The relay box has no valve and no coil. The radar mast and the patrol boat had them."
+note relaychest Relay chest | The relay crew's chest, unlocked by the relay: their rations, batteries and the shelter's spare key ring.
+loot relaychest Battery*2;CircuitBoard*1;MetalIngot*2;Rope*2
+note relaynote Relay crew's card | RELAY CREW - SHELTER No. 7\n\nValve from the radar mast. Coil from the patrol boat.\nWith both in, the shelter hears us. Without them, nobody hears anybody.\n\nThe boat went down in the channel with the coil on board. - Sgt. Oskarsson
+# The outer barrier: the runway lights (puzzle: all four lit shows the signal locker); a light switches its
+# neighbours too. Start: 2 and 4 lit; lights 2, 3 and 4 used, in any order, light them all.
+call ab_lamp x=58 z=-14 al=runway1 nm="Runway light 1" grp="Runway lights" on=0
+call ab_lamp x=56 z=-38 al=runway2 nm="Runway light 2" grp="Runway lights" on=1
+call ab_lamp x=44 z=-52 al=runway3 nm="Runway light 3" grp="Runway lights" on=0
+call ab_lamp x=30 z=-62 al=runway4 nm="Runway light 4" grp="Runway lights" on=1
+prop runway1 on.use=light|Runway light 2|toggle
+prop runway2 on.use=light|Runway light 1|toggle\nlight|Runway light 3|toggle
+prop runway3 on.use=light|Runway light 2|toggle\nlight|Runway light 4|toggle
+prop runway4 on.use=light|Runway light 3|toggle
+prop runway1 on.alllit=show|signallocker\nmessage||All four runway lights burn. By the first pillbox a locker stands open.
+call ab_hidden x=61 z=-24 al=signallocker
+note signallocker Signal locker | The barrier crew's signal locker: flares, a lamp and their pay, never collected.
+loot signallocker Battery*2;MetalIngot*2;TradeToken*2;Rope*2
+call hw_zone x=60 z=-20 al=barrierz id=barrier r=6 msg="The outer barrier. Pillboxes, lamp-posts for a runway that never had a plane land on it."
+# Dog tags: five tags of the shelter's garrison, lost about the outer works (a set: a secret)
+call ab_piece x=44 z=40 al=tag1 set="Dog tags" nm="Dog tag 1"
+call ab_piece x=-20 z=60 al=tag2 set="Dog tags" nm="Dog tag 2"
+call ab_piece x=66 z=-34 al=tag3 set="Dog tags" nm="Dog tag 3"
+call ab_piece x=-50 z=-48 al=tag4 set="Dog tags" nm="Dog tag 4"
+call ab_piece x=12 z=-66 al=tag5 set="Dog tags" nm="Dog tag 5"
+prop tag1 on.set=give||TitaniumIngot*1;MetalIngot*2\nmessage||All five dog tags. The garrison of Shelter No. 7 is accounted for.
+# The decontamination maze: its heart's chest (a secret)
+call hw_zone x=1.5 z=-66 al=decongatez id=decongate r=4 msg="DECONTAMINATION - walk the lanes slowly. A maze of concrete walls."
+call hw_zone x=1.5 z=-76.5 al=deconheartz id=deconheart r=1.5 msg="The heart of the maze: the decontamination crew's chest."
+place Loot_Chest deconchest at 1.5 -77 ground sit yaw=0
+note deconchest Decon crew's chest | The decontamination crew's chest: suits, soap - and a crate of good salve.
+loot deconchest HealingSalve_Good*2;Plastic*3;MetalIngot*2
+prop deconchest loot.refill=0
+# The supply plane's crate and the ammo cave's chest
+note supplycrate Supply plane's crate | A crate from the supply plane's hold: tinned food, rope and a sealed box of bolts.
+loot supplycrate Rope*3;Bolt*3;Plastic*2
+prop supplycrate loot.refill=0
+note ammochest Ammo cave's chest | A chest in the ammo cave under Radar Hill: the shells are long gone, but not the copper.
+loot ammochest CopperIngot*3;MetalIngot*2;TitaniumOre*2
+prop ammochest loot.refill=0
+call hw_zone x=62 z=86 al=ammoz id=ammocave r=4 msg="A hole in the rock under Radar Hill, its mouth to the sea. Ammunition crates - empty."
+# Dr. Calder's field note, at the north bank's west end
+place Note_Paper caldernote2 at -22 55 ground y=0.1 drop yaw=40
+call treasure x=40 z=-48 r=8 n=1 seed=26391 kind=0
+prop treasure26391 treasure.loot=MetalIngot*2;TitaniumOre*1;Battery*1
+
 info title=Shelter Atoll
 info author=Custom Islands
-info description=An atoll of palms around a shallow lagoon, a lookout post on the dune of its west side - and on the islet in the middle, a concrete slab with a hatch. Civil Defence Shelter No. 7 lies buried underneath: seven dark rooms, rats in the bunks and a dry generator. Bring a light.
+info description=An atoll of palms as big as Raft's own islands: a lagoon, a lookout post on the dune of its west side, the civil defence's outer works round it - Radar Hill, a barrier of pillboxes and runway lights, a patrol boat sunk in the north channel, a decontamination maze - and on the islet in the middle, a concrete slab with a hatch. Civil Defence Shelter No. 7 lies buried underneath: seven dark rooms, rats in the bunks and a dry generator. Bring a light.
 island on.arrive=message||An atoll with an islet in its lagoon. On the islet: a concrete slab, a radio mast - and a hatch.
 
 story fuel|Can of fuel|BioFuel|The shelter's last can of generator fuel, from the radio operator's bunk locker.
+story valve|Radar valve|CircuitBoard|The relay's radar valve, from the deck box of the radar mast on Radar Hill.
+story coil|Signal coil|Battery|The relay's signal coil, from the locker of the patrol boat sunk in the north channel.
+story relay|Relay running|Placeable_Lantern_Metal|You ran the relay north of the slab with its valve and coil: the shelter rang.
+note caldernote2 Dr. Ruth Calder's field note | THE ABYSS EXPEDITION - FIELD NOTE 2\n\nThe shelter's people built for a war that never came. Their radar charted the sea floor instead: east of here the bottom falls away, and on it stands a whole island, drowned.\n\nThe shelter's radio still works, they say. If it picks up a buoy, follow it down.\n- R. C.
 note ferrisnote Lookout Nadia Ferris's log | N. FERRIS - LOOKOUT, SHELTER No. 7\n\nWatch 1. Posted on the west dune with binoculars and a lamp. My orders: report anything on the horizon to the radio room below.\n\nWatch 9. Nothing on the horizon for nine days. Rats in the dormitory. The commander has locked himself in his room with the charts and won't say why.\n\nWatch 12. The generator is almost dry. The operator says he's hidden the last can of fuel in his bunk locker, so the commander can't burn it all on his own lamp.\n\nWatch 14. I've stopped going down. It is better up here, in the wind.\n\nIf you're reading this, go down the hatch on the islet. Start the generator - it opens his door and the blast gate. My spare kit is under the hatch beside this post, and my tin is buried at the foot of the dune.
 note notice Shelter notice | CIVIL DEFENCE SHELTER No. 7\n\nEMERGENCY HATCH - climb down slowly, one at a time.\n\nThe blast gate on the lagoon side opens from inside only, and only with the generator running.\n\nCapacity: 24. Keep this hatch clear.
 note radiolog Radio log | RADIO LOG - SHELTER 7\n\nDay 12: No answer from the mainland. The water is still rising.\nDay 31: Rats in the dormitory. Big ones - they came up the vent shaft.\nDay 46: The generator is dry. I put the LAST can of fuel in my bunk locker, so nobody burns it on the heaters.\nDay 47: The commander has sealed himself in with his charts. I'm going up the hatch to look for a boat.\n\nIf you read this: the can is in the dormitory. Fill the generator and the doors will open. - Radio operator Makela
@@ -349,6 +490,11 @@ quest intro=A concrete slab on the islet in the lagoon, with vents, a radio mast
 step read|Shelter notice|1|Find the hatch on the islet and read the notice beside it
 step reach|dunetop|1|Climb the dune on the atoll's west side - someone kept watch up there
 step read|Lookout Nadia Ferris's log|1|Read the lookout's log by the post: what happened below
+step reach|radartop|1|Climb Radar Hill in the north-east to the radar mast
+step collect|story:valve|1|Take the radar valve from the mast's deck box
+step reach|channel|1|Go to the north channel, where the patrol boat went down
+step collect|story:coil|1|Dive to the patrol boat and take the signal coil from its locker
+step collect|story:relay|1|Put the valve and the coil in the relay box north of the slab
 step reach|hatchhall|1|Climb down the ladder into the shelter
 step read|Radio log|1|Read the radio log
 step kill|Rat|3|Clear the rats out of the dormitory
@@ -365,4 +511,39 @@ prop treasure8854 treasure.loot=TitaniumOre*2
 
 # (box agent 10-24: generated rocks left hanging over the ground check - cleared)
 clear at 42.06 -10.84 r=1.2 all only=SmallBoulder1
+# (ABYSS 10-26: the old reef's rock pillars and a coral under the outer barrier's new land - cleared)
+clear at 64.85 -2 r=1.6 all only=Pillar_04
+clear at -30.7 48.8 r=0.8 all only=TableCoral_2
+# (ABYSS 10-26: plant-scatter rocks left hanging on the new land's slopes - cleared)
+clear at 39.64 37.63 r=1 all only=SmallBoulder2
+clear at 64.65 -23.80 r=1 all only=SmallBoulder2
+clear at 62.01 -13.07 r=1 all only=SmallBoulder2
+clear at 85.07 -22.88 r=1 all only=SmallBoulder4
+clear at -12.76 54.35 r=1 all only=SmallBoulder2
+clear at -22.43 55.15 r=1 all only=SmallBoulder2
+clear at 33.68 59.14 r=1 all only=SmallBoulder2
+clear at -39.22 -41.00 r=1 all only=SmallBoulder2
+clear at 53.93 -82.37 r=1 all only=SmallBoulder4
+clear at -23.49 45.16 r=1 all only=SmallBoulder2
+clear at -19.29 57.61 r=2 all only=SmallBoulder2
+clear at -23.12 55.98 r=2 all only=SmallBoulder2
+clear at -22.11 45.21 r=2 all only=SmallBoulder2
+# (ABYSS 10-26: the old reef's corals the new banks lifted out of the sea - cleared)
+clear at -34.6 42.8 r=2.3 all only=Coral
+clear at -31.8 46.4 r=3.0 all only=Coral
+clear at -26.2 -38.9 r=0.6 all only=Coral
+clear at 11.5 56.4 r=2.0 all only=Coral
+clear at 11.6 64.2 r=1.3 all only=Coral
+clear at 12.9 58.7 r=3.7 all only=Coral
+clear at 13.1 61.7 r=3.5 all only=Coral
+clear at 41.4 30.3 r=3.1 all only=Coral
+clear at 51.6 -12.8 r=0.6 all only=Coral
+clear at 50.6 -7.6 r=5.1 all only=Coral
+clear at 50.8 -1.8 r=2.7 all only=Coral
+clear at 56.1 -13.2 r=4.5 all only=Coral
+clear at 56.0 -7.9 r=5.3 all only=Coral
+clear at 54.9 -2.3 r=5.5 all only=Coral
+clear at 60.5 -13.5 r=2.0 all only=Coral
+clear at 61.7 -6.8 r=5.4 all only=Coral
+clear at 61.4 -2.7 r=2.4 all only=Coral
 save Shelter Atoll

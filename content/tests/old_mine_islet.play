@@ -1,7 +1,7 @@
 # Play test of Old Mine Islet (CIPlay old_mine_islet, in a test world 'CI ...'). Points as in its recipe.
 island Old Mine Islet
-# DEEP 10-25: the hill moved the land's centre (the recipe's save prints the exact offset)
-offset -0.88 5.71
+# DEEP 10-25 / ABYSS 10-26: the added land moved the land's centre (the recipe's save prints the exact offset)
+offset 2.8622 -2.0096
 expect step 0
 expect title Down the Old Mine
 
@@ -15,12 +15,58 @@ open Miner's locker
 expect item HeadLight 1
 expect step 3
 
+# ABYSS 10-26: Miners' Row (the foreman's note, the lamp puzzle), Copper Knob's headframe, the quarry's pump house, the winch
+zone minersrow
+read Foreman Dorsey's note
+expect step 4
+zone expeditioncamp
+read Dr. Ruth Calder's field note
+expect hidden harlantin
+use Row lamp 1
+use Row lamp 3
+wait 1
+expect shown harlantin
+open Harlan's tin
+zone knobfoot
+zone knobtop
+expect step 5
+open Headframe deck box
+expect story windkey 1
+expect step 6
+zone quarry
+expect step 7
+open Pump house strongbox
+expect story pumpfuse 1
+expect step 8
+air pumpair
+use minewinch
+expect story winch 1
+expect step 9
+expect shown winchchest
+open Foreman's box
+read Tally book page
+# the lamp tallies (a set) and the other secrets
+use Lamp tally 1
+use Lamp tally 2
+use Lamp tally 3
+use Lamp tally 4
+use Lamp tally 5
+wait 1
+expect message All five lamp tallies
+expect item TitaniumIngot 1
+zone greyclaim
+open Grey's second claim
+open Assay plane's crate
+open Ore barge's crate
+zone jump_om_finale
+open Slag stack prize
+
 # DEEP 10-25: Prospect Hill on the north shore, the prospector's note and cache
 zone prospectfoot
 zone prospecttop
-expect step 4
+expect step 10
 read Prospector Elias Grey's note
-expect step 5
+expect step 11
 use prospecthatch
 expect message The hatch lifts
 
@@ -28,9 +74,9 @@ expect message The hatch lifts
 walk 20 -17.4 to 12 -17.4 to 2 -17.4 h=5.2
 zone deep
 expect message grunts in the dark
-expect step 6
+expect step 12
 kill Warthog
-expect step 7
+expect step 13
 expect animals Warthog 0
 
 # To the end of the line: the last ore cart

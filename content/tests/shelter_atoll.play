@@ -2,7 +2,7 @@
 # floor is 1.69 m above the sea, the roof slab 7.75 m.
 island Shelter Atoll
 # DEEP 10-25: the dune moved the land's centre (the recipe's save prints the exact offset)
-offset -1.53 0.92
+offset 14.1075 -1.5316
 expect step 0
 expect title Shelter No. 7
 
@@ -22,19 +22,65 @@ expect step 3
 use dunehatch
 expect message The hatch lifts
 
+# ABYSS 10-26: Radar Hill's valve, the patrol boat's coil (a dive), the relay box north of the slab
+zone radarfoot
+zone radartop
+expect step 4
+open Radar deck box
+expect story valve 1
+expect step 5
+zone channel
+expect step 6
+read Dr. Ruth Calder's field note
+air boatair
+open Patrol boat locker
+expect story coil 1
+expect step 7
+use relaybox
+expect story relay 1
+expect step 8
+expect shown relaychest
+open Relay chest
+read Relay crew's card
+
+# ABYSS 10-26 secrets: the runway lights (2 and 4 start lit; 2, 3 and 4 light them all), the dog tags, the maze's
+# heart, the supply plane, the ammo cave
+zone barrier
+expect hidden signallocker
+use Runway light 2
+use Runway light 3
+use Runway light 4
+wait 1
+expect shown signallocker
+open Signal locker
+use Dog tag 1
+use Dog tag 2
+use Dog tag 3
+use Dog tag 4
+use Dog tag 5
+wait 1
+expect message All five dog tags
+expect item TitaniumIngot 1
+zone decongate
+zone deconheart
+open Decon crew's chest
+open Supply plane's crate
+zone ammocave
+open Ammo cave's chest
+
 # Down the hatch: through the collar to the hall's floor; the ladder takes hold at the top and at the foot
 expect stand 0 5.6 h=1.69
 climb 0 7.1 h=6.3
 climb 0 7.1 h=0.3
 at 0 4 h=1.9
 zone hatchhall
-expect step 4
+expect step 9
 expect message red light turns
 
 # The main hall into the radio room: the radio log
 walk 0 4 to 2 2 to 2 0 to 4 0 to 6.5 -0.8 h=1.69 below=5
 read Radio log
-expect step 5
+expect step 10
 use opradio
 expect message radio is dead
 
@@ -54,11 +100,11 @@ walk 0 -6 to -1.8 -2 to -2 0 to -5 0.5 h=1.69 below=5
 zone dorm
 expect message rats, big ones
 kill Rat
-expect step 6
+expect step 11
 expect animals Rat 0
 open Bunk locker
 expect story fuel 1
-expect step 7
+expect step 12
 
 # The generator runs: lamps on, the dark air gone, the commander's door and the blast gate open
 walk -5 0.5 to -2 0 to -1.8 -2 to 0 -5 to -3 -6 to -5.5 -6.5 h=1.69 below=5
@@ -73,7 +119,7 @@ wait 7
 # Through the commander's door: his orders and his safe
 walk -5.5 -6.5 to -3 -6 to 0 -6 to 4 -6 to 4.2 -8.3 to 6.6 -8.2 h=1.69 below=5
 read Commander's orders
-expect step 8
+expect step 13
 open Commander's safe
 wait 2
 expect item Blueprint_Fueltank 1

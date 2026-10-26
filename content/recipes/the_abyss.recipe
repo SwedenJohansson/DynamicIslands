@@ -9,8 +9,15 @@
 #
 # Built by the recipe player (CIRecipe the_abyss) through the editor's own operations. Its play test:
 # content\tests\the_abyss.play.
+# ABYSS 10-26 (1-hour pass): the stacks' ring is now the lagoon of a volcanic island r ~85 - the divers' shore camp
+# (Tomas Ek, Calder's last note, the compressor), Black Peak and its mast (the gauge), Wreck Cove's sunk supply boat
+# (the piston), the ash ridge and its lava tube, the stack run; secrets: flare posts, dive tags, jump course, lava
+# tube, buried pay. Seven new steps come first (26 in all); the old core and its steps are unchanged.
 include lib_sea
 include lib_features
+include lib_highwater
+include lib_areas
+include lib_abyss
 new
 # (nature: volcanic: Like Raft's desert, with little scrub on the ash - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.19 Bushes=0.3 Rocks=0.42 Harvest=0.2 BeachThings=0.3
@@ -27,6 +34,113 @@ brush flatten from 13.3 -5 to 13.3 1 r=5 s=20 frames=20
 brush flatten from 2 3.5 to -3 3.5 r=3.5 s=20 frames=20
 brush flatten from 2 3.5 to 7 3.5 r=3.5 s=20 frames=20
 brush flatten at 2 -5 r=7 s=20 frames=30
+
+# --- ABYSS 10-26 (1-hour pass): the ring of stacks becomes the lagoon of a volcanic island - an outer bank of ash land
+# round it (open to the sea at the north-west and the south-east, so a raft still gets in), and on it: the divers'
+# shore camp (north), Black Peak (west), Wreck Cove (south), the ash ridge and its lava tube (east), the stack run
+# (north-east). The old core - stacks, trench, raft, pockets, lair - is as it was. The bank first.
+brush flatten from -24 64 to 24 64 r=8 s=20 frames=600 h=3
+brush flatten from 24 64 to 42 56 r=7 s=20 frames=400 h=3
+brush flatten from 42 56 to 58 42 r=7 s=20 frames=400 h=3
+brush flatten from 58 42 to 66 12 r=7 s=20 frames=500 h=3
+brush flatten from 66 12 to 64 -26 r=7 s=20 frames=500 h=3
+brush flatten from 34 -60 to -16 -64 r=7 s=20 frames=600 h=3
+brush flatten from -16 -64 to -44 -52 r=7 s=20 frames=500 h=3
+brush flatten from -44 -52 to -62 -30 r=7 s=20 frames=500 h=3
+brush flatten from -62 -30 to -70 -12 r=7 s=20 frames=400 h=3
+brush auto from -24 64 to 24 64 r=10 s=10 frames=25
+brush auto from 24 64 to 58 42 r=9 s=10 frames=25
+brush auto from 58 42 to 64 -26 r=9 s=10 frames=25
+brush auto from 34 -60 to -16 -64 r=9 s=10 frames=25
+brush auto from -16 -64 to -70 -12 r=9 s=10 frames=25
+# A The shore camp (north): a pad on the bank, two roofless huts (a table in the first), a tent and a fire
+brush flatten at 0 73 r=14 s=20 frames=500 h=3
+brush smooth at 0 73 r=18 s=4 frames=40
+brush flatten at 0 73 r=11 s=20 frames=400 h=3
+brush auto at 0 73 r=16 s=10 frames=25
+clear at 0 73 r=15
+call ab_ruin x=-10 z=74 h=3 yaw=0 w=3 d=2 al=campruin
+call ab_ruin x=7 z=77 h=3 yaw=0 w=2 d=2 al=campruin
+place Balboa_DecorationPrefabBase_SimpleTent - at -5 79 ground sit yaw=180
+place campfire_1 - at 3 68 ground sit
+place Crate_Big_01 - at -4.5 69 ground sit yaw=15
+# B Black Peak (west): summit 30 m, base r 26, the trail from its south foot, the signal mast on top
+call hw_mount x=-72 z=8 b=26 h=30
+call hw_trail x=-72 z=8 b=26 h=30 a0=170 turn=300 n=34 h0=3
+brush flatten at -72 8 r=7 s=20 frames=400 h=30
+call hw_mast x=-72 z=8 h0=30 lv=3 a=peakmast chest=gaugebox top=Placeable_Lantern_Metal
+# C Wreck Cove (south): two arms of the bank round a basin 12 m deep, the supply boat sunk in it
+brush flatten from 34 -64 to 30 -92 r=7 s=20 frames=500 h=3
+brush flatten from -14 -66 to -10 -92 r=7 s=20 frames=500 h=3
+brush auto from 34 -64 to 30 -92 r=9 s=10 frames=25
+brush auto from -14 -66 to -10 -92 r=9 s=10 frames=25
+call hw_basin x=10 z=-80 r=10 h=-12
+place BoatStranded supplyboat at 10 -80 ground sit yaw=100
+prop supplyboat tint.color=#3c3a38
+prop supplyboat tint.amount=0.5
+# D The ash ridge (east, on the bank) and E the lava tube in its own rock at the ridge's sea foot, mouth north
+call ar_ridge x1=72 z1=-26 x2=64 z2=28 h=9 top=7 r=8
+call ar_cave x=88 z=-8 h=3 yaw=0 al=lavarock chest=lavachest
+prop lavarock tint.color=#2e2a28
+prop lavarock tint.amount=0.5
+
+# --- JUMP COURSE ab (Abyss pass 10-26): kz-style hop course of floor slabs on its own pad (the bs course, turned) ---
+# JUMP ab pad=4 at=48 66
+push at 48 66
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=4
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=4
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpab at 5.64 -0.10 h=4.60
+place Block_Foundation_Tier3 jpab at 5.64 -2.92 h=5.10
+place Block_Foundation_Tier3 jpab at 5.64 -5.93 h=5.50
+place Block_Foundation_Tier3 jpab at 3.03 -5.93 h=6.40
+place Block_Foundation_Tier3 jpab at -1.21 -5.93 h=6.90 sx=3 sz=0.3
+place Block_Foundation_Tier3 jpab at -5.64 -5.93 h=7.70
+place Block_Foundation_Tier3 jpab at -5.64 -3.02 h=8.60
+place Block_Foundation_Tier3 jpab at -5.64 -0.40 h=7.60
+place Block_Foundation_Tier3 jpab at -5.64 2.41 h=8.55
+place Block_Foundation_Tier3 jpab at -5.64 5.12 h=9.50
+place Block_Foundation_Tier3 jpab at -2.02 5.12 h=10.40 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jpab at -2.02 -1.30 h=10.70 sx=2 sz=2
+place Block_Foundation_Tier3 jpab at 3.21 -1.30 h=11.00
+# JUMP end
+# (each slab on one solid column of its own footprint, from under the pad up to the slab)
+# (the first slab rests on the pad itself: no column)
+place Block_Foundation_Tier3 jppab at 5.64 -2.92 h=4.418 sy=1.493
+place Block_Foundation_Tier3 jppab at 5.64 -5.93 h=4.818 sy=2.079
+place Block_Foundation_Tier3 jppab at 3.03 -5.93 h=5.718 sy=3.399
+place Block_Foundation_Tier3 jppab at -1.21 -5.93 h=6.218 sy=4.132 sx=3 sz=0.3
+place Block_Foundation_Tier3 jppab at -5.64 -5.93 h=7.018 sy=5.305
+place Block_Foundation_Tier3 jppab at -5.64 -3.02 h=7.918 sy=6.625
+place Block_Foundation_Tier3 jppab at -5.64 -0.40 h=6.918 sy=5.158
+place Block_Foundation_Tier3 jppab at -5.64 2.41 h=7.868 sy=6.551
+place Block_Foundation_Tier3 jppab at -5.64 5.12 h=8.818 sy=7.944
+place Block_Foundation_Tier3 jppab at -2.02 5.12 h=9.718 sy=9.264 sx=2 sz=2
+place Block_Foundation_Tier3 jppab at -2.02 -1.30 h=10.018 sy=9.704 sx=2 sz=2
+place Block_Foundation_Tier3 jppab at 3.21 -1.30 h=10.318 sy=10.144
+prop jpab tint.color=#2e2a28
+prop jpab tint.amount=0.35
+prop jppab tint.color=#2e2a28
+prop jppab tint.amount=0.35
+place Loot_Chest jcab at -2.02 5.12 h=10.40 sit yaw=0
+note jcab Stack runner's perch | The divers raced up the stack on rest days; the winner sat here.
+loot jcab Plank*6;Rope*3;MetalIngot*1
+prop jcab loot.refill=0
+place Loot_ChestSmall jbab at 3.21 -1.30 h=11.00 sit yaw=0
+note jbab Stack run prize | A tin wedged on the last column: a diver's winnings.
+loot jbab MetalIngot*2;CopperIngot*2;TitaniumIngot*1
+prop jbab loot.refill=0
+place Zone_Trigger jyab at 3.21 -1.30 h=12.00
+prop jyab zone.id=jump_ab_finale
+prop jyab zone.radius=1.8
+prop jyab zone.repeat=never
+prop jyab zone.message=The top of the stack run. The lagoon, the trench, the raft - and Black Peak across the water.
+pop
+# --- end of jump course ab ---
 
 # --- The expedition's raft, moored over the trench's east edge: 6 x 5 of Raft's foundations at the surface ----------
 for fx 14.75 22.25 1.5
@@ -83,6 +197,71 @@ place Creature_AnglerFish brood at 1 -3 y=9
 place Zone_Trigger lair at 2 -5 y=3
 place Zone_Atmosphere lairdark at 2 -5 y=8
 
+# --- ABYSS 10-26: the outer island's zones, notes, machine, puzzles and secrets ---------------------------------------
+# The shore camp: its zone, Tomas Ek (the diver who stayed), Calder's last field note on the hut's table, the compressor
+call hw_zone x=0 z=72 al=shorecampz id=shorecamp r=8 msg="The divers' shore camp. Two huts with their roofs burnt off, a tent, a cold fire - and a compressor that should fill the deep tanks."
+place Story_Islander tomas at -3 67 ground
+prop tomas obj.name=Tomas Ek
+prop tomas islander.pose=lean
+prop tomas talk.text=I stayed. Somebody had to keep the fire for when they came up.\n---\nThe compressor fills the tanks for the deep dive. It needs its gauge - up on Black Peak's mast - and its piston, which went down with the supply boat in Wreck Cove.\n---\nThe flare posts round the lagoon? Each one fires its neighbours too. The two at the ends were burning when the boat sank. Use every post once.
+place Note_Paper caldernote5 at -10.75 74 h=4.45 drop yaw=20
+call hw_machine x=0 z=76 yaw=180 al=compressor nm="Compressor" a=gauge b=piston done=compressed rew=compchest rnote=compnote msg="The compressor coughs, catches and roars. The deep tanks fill - enough air for the bottom of the Abyss." hint="The compressor has no gauge and no piston. Tomas Ek knows where they went."
+note compchest Compressor chest | The divers' deep-dive chest, sealed until the tanks were full: two full bottles, a lamp, the deep crew's spare kit.
+loot compchest OxygenBottle*2;Battery*2;MetalIngot*2;Rope*2
+note compnote Dive chief's card | DEEP DIVE - TANKS FULL\n\nGauge from the peak mast, piston from the boat. Pressure good.\nWe go down at first light: the raft, the air line, the three pockets, the floor.\nIf we don't come up, Tomas keeps the fire.\n- R. C.
+# Black Peak: the zone at its foot and on top, the pressure gauge in the mast's deck box
+call hw_zone x=-70 z=-19 al=peakfootz id=peakfoot r=5 msg="Black Peak. A path cut round the ash cone to the signal mast on its top."
+call hw_zone x=-72 z=8 al=peaktopz id=peaktop r=7 h=1 msg="The top of Black Peak. The whole island lies below - the lagoon, the black stacks, the raft over the trench."
+note gaugebox Mast deck box | A box bolted to the signal mast's deck: the compressor's pressure gauge, wrapped against the ash.
+loot gaugebox story:gauge*1;Battery*1;Rope*2
+# Wreck Cove: the zone on its shore, the supply boat on the basin's floor, its locker and an air pocket beside it
+call hw_zone x=10 z=-66 al=covez id=wreckcove r=5 msg="Wreck Cove. Twelve metres down, the expedition's supply boat lies on its side."
+place Loot_Crate boatlocker at 14 -84 ground sit yaw=40
+note boatlocker Supply boat locker | The supply boat's locker, its lid sprung: the compressor's piston in an oiled rag, and the boat's papers.
+loot boatlocker story:piston*1;Rope*2;Bolt*2
+prop boatlocker loot.refill=0
+call hw_airpocket x=4 z=-75 id=coveair al=coveair bub=covebub msg="An air pocket under the cove's ledge - breathe."
+# The flare posts round the lagoon (puzzle: all four lit shows the expedition's cache); a post fires its neighbours
+# too. Start: 1 and 4 lit; every post used once, in any order, lights them all.
+call ab_lamp x=20 z=64 al=flare1 nm="Flare post 1" grp="Flare posts" on=1
+call ab_lamp x=62 z=-14 al=flare2 nm="Flare post 2" grp="Flare posts" on=0
+call ab_lamp x=24 z=-63 al=flare3 nm="Flare post 3" grp="Flare posts" on=0
+call ab_lamp x=-50 z=-46 al=flare4 nm="Flare post 4" grp="Flare posts" on=1
+prop flare1 on.use=light|Flare post 2|toggle
+prop flare2 on.use=light|Flare post 1|toggle\nlight|Flare post 3|toggle
+prop flare3 on.use=light|Flare post 2|toggle\nlight|Flare post 4|toggle
+prop flare4 on.use=light|Flare post 3|toggle
+prop flare1 on.alllit=show|expcache\nmessage||All four flare posts burn round the lagoon. On the cove's bank, a cache stands open.
+call ab_hidden x=17 z=-64 al=expcache
+note expcache Expedition's cache | The expedition's cache on the cove's bank: their pay and the spare kit, never collected.
+loot expcache TitaniumIngot*1;MetalIngot*3;Battery*2;TradeToken*2
+# Dive tags: five tags of the expedition's divers, lost about the island (a set: a secret)
+call ab_piece x=12 z=70 al=dtag1 set="Dive tags" nm="Dive tag 1"
+call ab_piece x=-62 z=-24 al=dtag2 set="Dive tags" nm="Dive tag 2"
+call ab_piece x=30 z=-84 al=dtag3 set="Dive tags" nm="Dive tag 3"
+call ab_piece x=62 z=20 al=dtag4 set="Dive tags" nm="Dive tag 4"
+call ab_piece x=30 z=70 al=dtag5 set="Dive tags" nm="Dive tag 5"
+prop dtag1 on.set=give||TitaniumIngot*1;OxygenBottle*1\nmessage||All five dive tags. Every diver of the expedition is remembered.
+# The lava tube: its chest and zone
+note lavachest Lava tube chest | A chest in the lava tube, where the divers kept what the heat would not spoil: copper and titanium from the trench.
+loot lavachest TitaniumOre*3;CopperIngot*2;MetalIngot*2
+prop lavachest loot.refill=0
+call hw_zone x=88 z=-3 al=lavaz id=lavatube r=4 msg="A lava tube under the ash ridge, its walls glassy black. It is still warm."
+# The expedition's buried pay (two more treasures on the new land)
+call treasure x=-40 z=-56 r=6 n=1 seed=26491 kind=0
+prop treasure26491 treasure.loot=TitaniumOre*2;MetalIngot*2
+call treasure x=60 z=36 r=5 n=1 seed=26501 kind=0
+prop treasure26501 treasure.loot=CopperIngot*2;Battery*1;TradeToken*2
+# The new land planted (Raft's desert kinds on the ash, as the island's own; hill kinds on the peak)
+call ar_plants_desert x=-10 z=64 r=10 seed=26411
+call ar_plants_desert x=46 z=52 r=8 seed=26421
+call ar_plants_desert x=64 z=-10 r=10 seed=26431
+call ar_plants_hill x=-72 z=8 r=24 seed=26441
+call ar_plants_desert x=-34 z=-58 r=9 seed=26451
+call ar_plants_desert x=-58 z=-34 r=7 seed=26461
+call ar_plants_desert x=32 z=-78 r=7 seed=26471
+call ar_plants_desert x=-12 z=-80 r=7 seed=26481
+
 # --- Settings, notes, behaviours, quest ------------------------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, pineapples, palms ----------
 scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=56.0 seed=4321 free=5
@@ -93,9 +272,13 @@ call shallows r=100 deep=5 n=2
 
 info title=The Abyss
 info author=Custom Islands
-info description=A ring of black sea stacks around a trench that falls away into the dark: the expedition's raft moored over its edge, its air line running down to the air pockets in the trench - and at the bottom, the lair of the thing the expedition came to find. The Abyss Expedition's end.
+info description=A volcanic island as big as Raft's own: a ring of black sea stacks round a lagoon and a trench that falls away into the dark, the expedition's raft moored over its edge. On the shore the divers' camp and the last diver who stayed; Black Peak, Wreck Cove, an ash ridge with a lava tube - and at the bottom of the trench, the lair of the thing the expedition came to find. The Abyss Expedition's end.
 island on.arrive=message||Black stacks around a circle of dark water - a trench, falling away to nothing. A raft is moored over its edge, its lamps still lit.
 
+story gauge|Pressure gauge|CircuitBoard|The compressor's pressure gauge, from Black Peak's signal mast.
+story piston|Compressor piston|Bolt|The compressor's piston, from the supply boat sunk in Wreck Cove.
+story compressed|Deep tanks filled|OxygenBottle|The compressor ran: the deep tanks are full.
+note caldernote5 Dr. Ruth Calder's field note | THE ABYSS EXPEDITION - FIELD NOTE 5\n\nThis is the place. The trench under the lagoon goes down past our lines, and something down there has a light of its own.\n\nThe compressor needs its gauge from the peak mast and its piston from the boat we lost in the cove. With full tanks we go down: the raft, the air line, the pockets, the floor.\n\nTomas will keep the fire. If you are reading this, we did not come up. Finish it.\n- R. C.
 story abysswrench|Valve wrench|quest:Balboa_BrunosTool_Wrench|The expedition's valve wrench: the air line's valve won't turn without it.
 note leaderlog Expedition leader's log | THE ABYSS - LAST CAMP\n\nWe found it. The trench goes down further than our lines - and something lives at its bottom, something with a light that is not a fish's.\nThe air pockets are down in the trench: the container on the shelf, the tank on the ledge, the shack on the floor. Their valve is here at the raft's edge - rusted fast, it takes the wrench in the chest. Open it and they fill.\nWe went down without them. If you read this, don't.
 note campchest Camp chest | The expedition's camp chest: the valve wrench, a spare tank, ropes.
@@ -170,24 +353,31 @@ prop abyssal tint.amount=0.6
 prop abyssal on.defeat=journal|The Abyssal Angler|The light that was not a fish's has gone out. The thing the expedition came to find lies on the floor of the Abyss - and its brood is still in the dark.
 
 quest title=The Bottom of the Abyss
-quest intro=The expedition's last stop: a trench among black sea stacks. Their raft is still moored over it.
+quest intro=The expedition's last stop: a trench among black sea stacks. Their raft is still moored over it - and on the shore their diver Tomas Ek still keeps the camp.
+step reach|shorecamp|1|Land at the divers' shore camp on the lagoon's north bank
+step read|Dr. Ruth Calder's field note|1|Read Dr. Calder's last field note on the hut's table
+step reach|peaktop|1|Climb Black Peak to its signal mast
+step collect|story:gauge|1|Take the compressor's pressure gauge from the mast's deck box
+step collect|story:piston|1|Dive to the supply boat in Wreck Cove for the compressor's piston
+step collect|story:compressed|1|Run the compressor at the shore camp - the deep tanks fill
+step open|Compressor chest|1|Open the divers' deep-dive chest
 step reach|camp|1|Board the expedition's raft, moored over the trench
 step read|Expedition leader's log|1|Read the expedition leader's log on the table
-step pages||1|Keep the leader's warning in your journal
+step pages||6|Keep the leader's warning in your journal
 step open|Camp chest|1|Open the expedition's camp chest
 step collect|story:abysswrench|1|Take the valve wrench - the air line's valve won't turn without it
-step pages||2|Copy the camp chest's list into your journal
-step pages||3|Turn the air line's valve with the wrench and log it in your journal
+step pages||7|Copy the camp chest's list into your journal
+step pages||8|Turn the air line's valve with the wrench and log it in your journal
 step reach|pocket1|1|Dive to the container on the shelf and breathe
 step reach|pocket2|1|Sink to the gas tank on the ledge, 18 m down
 step reach|pocket3|1|Down to the shack on the floor - the last air before the lair
 step reach|lair|1|Face the light that is not a fish's at the bottom of the Abyss
-step pages||4|Kill the Abyssal Angler and write its end into your journal
+step pages||9|Kill the Abyssal Angler and write its end into your journal
 step kill|Angler fish|4|Finish off its brood - not one angler left in the lair
 step open|Lair hoard|1|Open what the lair kept
 step blueprint|Blueprint_HeadLight_Advanced|1|Take the advanced headlamp plans from the lair hoard
 step blueprint|Blueprint_BackpackAdvanced|1|Take the advanced backpack plans from the lair hoard
-step pages||5|Write the hoard into your journal - the expedition's answer
+step pages||10|Write the hoard into your journal - the expedition's answer
 step reach|camp|1|Climb the air line back up - the pockets still breathe on the way - and haul yourself aboard the expedition's raft
 step read|Expedition leader's log|1|Read the leader's log once more - its question has an answer now
 quest done=The Abyss is quiet. The expedition's question has its answer - and the deep has given up its hoard. The Abyss Expedition is done.
@@ -200,6 +390,8 @@ prop treasure8815 treasure.loot=TitaniumOre*3
 # the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
 clear at 11.2 14.98 r=1.5 only=BigSharpRock
 clear at 26.74 -41.24 r=1.5 only=CaravanIsland_SmallRock
+clear at -12.42 -74.67 r=4 all only=CaravanIsland_SmallRock
+clear at -15.32 -85.67 r=4 all only=CaravanIsland_SmallRock
 clear at 40.78 -18.27 r=1.5 only=BigSharpRock
 
 save The Abyss

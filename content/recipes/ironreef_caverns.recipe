@@ -18,6 +18,9 @@
 # mountain where the cave's passage runs (the ground can't lie over a cave - the cave's own rock is its roof).
 include lib_sea
 include lib_features
+include lib_highwater
+include lib_areas
+include lib_abyss
 new
 # (nature: a jungle mountain: twice Raft's trees and bushes, a little rockier - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.4 Bushes=0.38 Rocks=0.5 Harvest=0.24 BeachThings=0.3
@@ -354,6 +357,97 @@ prop treasure8813 treasure.loot=TitaniumOre*3
 # DEEP 10-25: Davy Rees's pay, buried on the west tableland (his letter in the Bear Hall says where)
 call treasure x=-60 z=-28 r=20 n=1 seed=32030 kind=0
 prop treasure32030 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*3
+
+# --- ABYSS 10-26 (1-hour pass): the company's survey on the west tableland, its tallies, the plane and the ore boat ---
+# A The company plane, down on the west tableland (h 10), its crate beside it
+call ar_plane x=-72 z=-38 h=10.2 yaw=50 al=companyplane crate=companycrate
+note companycrate Company plane's crate | The company plane's freight: survey pegs, rope and a box of bolts, flown in for the tableland survey and never unloaded.
+loot companycrate Rope*3;Bolt*3;MetalIngot*2
+call hw_zone x=-72 z=-30 al=planez id=companyplane r=6 msg="The company plane, down on the tableland. Its wing lies in the grass; the survey it brought was never finished."
+# B The survey beacons (puzzle: all three lit shows the surveyor's cache); a beacon switches its neighbours too.
+# Start: 1 and 2 lit; beacon 1, then beacon 2, lights them all.
+call ab_lamp x=-100 z=-22 al=beacon1 nm="Survey beacon 1" grp="Survey beacons" on=1
+call ab_lamp x=-88 z=-30 al=beacon2 nm="Survey beacon 2" grp="Survey beacons" on=1
+call ab_lamp x=-62 z=-56 al=beacon3 nm="Survey beacon 3" grp="Survey beacons" on=0
+prop beacon1 on.use=light|Survey beacon 2|toggle
+prop beacon2 on.use=light|Survey beacon 1|toggle\nlight|Survey beacon 3|toggle
+prop beacon3 on.use=light|Survey beacon 2|toggle
+prop beacon1 on.alllit=show|surveycache\nmessage||All three survey beacons burn across the tableland. By the first, the surveyor's cache stands open.
+call ab_hidden x=-94 z=-18 al=surveycache
+note surveycache Surveyor's cache | The company surveyor's cache: his instruments, his pay and a sample of the best ore he found.
+loot surveycache TitaniumOre*2;MetalIngot*3;TradeToken*2
+# C The ore boat, run aground on the north beach, its crate beside it
+call hw_wreck x=-10 z=96 h=2 yaw=200 obj=BoatStranded al=oreboat crate=oreboatcrate r=9
+note oreboatcrate Ore boat's crate | The ore boat's last load, never shipped: iron and copper ingots under a tarpaulin.
+loot oreboatcrate MetalIngot*3;CopperIngot*2;Rope*2
+# D Company tallies: five brass tallies of the company's miners, lost about the island (a set: a secret)
+call ab_piece x=68 z=8 al=ctally1 set="Company tallies" nm="Company tally 1"
+call ab_piece x=-30 z=92 al=ctally2 set="Company tallies" nm="Company tally 2"
+call ab_piece x=-58 z=-48 al=ctally3 set="Company tallies" nm="Company tally 3"
+call ab_piece x=20 z=-92 al=ctally4 set="Company tallies" nm="Company tally 4"
+call ab_piece x=60 z=58 al=ctally5 set="Company tallies" nm="Company tally 5"
+prop ctally1 on.set=give||TitaniumIngot*1;MetalIngot*2\nmessage||All five company tallies. Every miner of Ironreef is accounted for.
+# E Dr. Calder's field note, by the company's wagon in the camp
+place Note_Paper caldernote3 at 79 -10 ground y=0.1 drop yaw=60
+note caldernote3 Dr. Ruth Calder's field note | THE ABYSS EXPEDITION - FIELD NOTE 3\n\nIronreef. The company dug for iron and found the sea under the mountain instead. Their foreman's log talks of a pump store in a drowned city - Meridian - and a key they never used.\n\nThe ore here is good, but it is not what we came for. The soundings all point the same way: deeper, and east.\n\nWe take the company's key and go on.\n- R. C.
+# F The scaffold run on the east beach (a hop course on its own pad)
+# --- JUMP COURSE ir (Abyss pass 10-26): kz-style hop course of floor slabs on its own pad (the bs course, turned) ---
+# JUMP ir pad=2.5 at=88 26
+push at 88 26
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=2.5
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=2.5
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpir at 5.64 -0.10 h=3.10
+place Block_Foundation_Tier3 jpir at 5.64 -2.92 h=3.60
+place Block_Foundation_Tier3 jpir at 5.64 -5.93 h=4.00
+place Block_Foundation_Tier3 jpir at 3.03 -5.93 h=4.90
+place Block_Foundation_Tier3 jpir at -1.21 -5.93 h=5.40 sx=3 sz=0.3
+place Block_Foundation_Tier3 jpir at -5.64 -5.93 h=6.20
+place Block_Foundation_Tier3 jpir at -5.64 -3.02 h=7.10
+place Block_Foundation_Tier3 jpir at -5.64 -0.40 h=6.10
+place Block_Foundation_Tier3 jpir at -5.64 2.41 h=7.05
+place Block_Foundation_Tier3 jpir at -5.64 5.12 h=8.00
+place Block_Foundation_Tier3 jpir at -2.02 5.12 h=8.90 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jpir at -2.02 -1.30 h=9.20 sx=2 sz=2
+place Block_Foundation_Tier3 jpir at 3.21 -1.30 h=9.50
+# JUMP end
+# (each slab on one solid column of its own footprint, from under the pad up to the slab)
+# (the first slab rests on the pad itself: no column)
+place Block_Foundation_Tier3 jppir at 5.64 -2.92 h=2.918 sy=1.493
+place Block_Foundation_Tier3 jppir at 5.64 -5.93 h=3.318 sy=2.079
+place Block_Foundation_Tier3 jppir at 3.03 -5.93 h=4.218 sy=3.399
+place Block_Foundation_Tier3 jppir at -1.21 -5.93 h=4.718 sy=4.132 sx=3 sz=0.3
+place Block_Foundation_Tier3 jppir at -5.64 -5.93 h=5.518 sy=5.305
+place Block_Foundation_Tier3 jppir at -5.64 -3.02 h=6.418 sy=6.625
+place Block_Foundation_Tier3 jppir at -5.64 -0.40 h=5.418 sy=5.158
+place Block_Foundation_Tier3 jppir at -5.64 2.41 h=6.368 sy=6.551
+place Block_Foundation_Tier3 jppir at -5.64 5.12 h=7.318 sy=7.944
+place Block_Foundation_Tier3 jppir at -2.02 5.12 h=8.218 sy=9.264 sx=2 sz=2
+place Block_Foundation_Tier3 jppir at -2.02 -1.30 h=8.518 sy=9.704 sx=2 sz=2
+place Block_Foundation_Tier3 jppir at 3.21 -1.30 h=8.818 sy=10.144
+prop jpir tint.color=#6b5a48
+prop jpir tint.amount=0.35
+prop jppir tint.color=#6b5a48
+prop jppir tint.amount=0.35
+place Loot_Chest jcir at -2.02 5.12 h=8.90 sit yaw=0
+note jcir Scaffold perch | The miners raced up the scaffold on pay day; the winner sat up here and watched the ore boats come in.
+loot jcir Plank*6;Rope*3;MetalIngot*1
+prop jcir loot.refill=0
+place Loot_ChestSmall jbir at 3.21 -1.30 h=9.50 sit yaw=0
+note jbir Scaffold run prize | A tin wedged on the last scaffold post: a miner's pay-day winnings.
+loot jbir MetalIngot*2;CopperIngot*2;TitaniumIngot*1
+prop jbir loot.refill=0
+place Zone_Trigger jyir at 3.21 -1.30 h=10.50
+prop jyir zone.id=jump_ir_finale
+prop jyir zone.radius=1.8
+prop jyir zone.repeat=never
+prop jyir zone.message=The top of the scaffold run - a tin is wedged on the last post.
+pop
+# --- end of jump course ir ---
 
 # (generator stones left in the air by the shaping - taken out, 10-25)
 clear at 23.03 -9.93 r=1.5 only=BigBoulder1_Low

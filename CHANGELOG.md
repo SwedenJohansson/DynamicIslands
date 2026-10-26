@@ -19,6 +19,16 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   horn or storm siren that wants the mast's and the cave's parts. Each quest gains three to eight steps before its
   last one; the blueprints stay on main-quest steps. Worlds already started keep their islands.
 
+## 2026-10-26: The Abyss Expedition's islands, an hour each
+
+- The five main islands of **The Abyss Expedition** grow to Raft's size. Old Mine Islet, Shelter Atoll and The Abyss
+  get new land round the old island: a hill with a mast, a cave, a wreck, a machine that wants the mast's and the
+  wreck's parts, an islander, a light puzzle, a set of five, a jump course and a treasure. Their quests gain new steps
+  across the island. Ironreef Caverns and The Drowned Metropolis were already big: they gain a plane or seaplane, a
+  wreck or a sea cave, a light puzzle, a set of five and a jump course as secrets. Dr. Ruth Calder's field notes now
+  run through all five islands. Worlds already started keep their islands
+  ([guide](docs/GUIDE.md#154-the-world-plans)).
+
 ## 2026-10-26: The Rainmakers' islands, an hour each
 
 - The nine main islands of **The Rainmakers** are now as big as Raft's own (radius 85-95 m). The old station stays as

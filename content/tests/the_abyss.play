@@ -1,19 +1,49 @@
 # Play test of The Abyss (CIPlay the_abyss, in a test world 'CI ...'). Points as in its recipe: the expedition's raft
 # over the trench's east edge (its deck 0.13 m above the sea, x 14-23, z -8.75 to -1.25), the air line's valve at its
 # west edge; the air pockets down the trench - the container on the shelf (12 m down), the gas tank on the ledge
-# (18 m), the shack on the floor (42 m) - and the lair on the floor. The quest has 20 steps: the raft, the dive, the
+# (18 m), the shack on the floor (42 m) - and the lair on the floor. The quest has 26 steps (ABYSS 10-26: seven new ones first - the shore camp, Black Peak, Wreck Cove, the compressor): the raft, the dive, the
 # lair, the way back up; its pages steps are the journal's pages (the log, the chests' tags, the valve, the angler).
 island The Abyss
+offset -1.2308 0.0529
 expect step 0
 expect title The Bottom of the Abyss
+
+# ABYSS 10-26: the shore camp first - Calder's last note, the compressor short of its gauge and piston
+zone shorecamp
+expect step 1
+read Dr. Ruth Calder's field note
+expect step 2
+use compressor
+expect message no gauge and no piston
+# Black Peak: the trail to the signal mast, the gauge in its deck box
+zone peakfoot
+zone peaktop
+expect step 3
+open Mast deck box
+expect story gauge 1
+expect step 4
+# Wreck Cove: the dive to the supply boat, breath at the cove's air pocket, the piston in its locker
+zone wreckcove
+air coveair
+open Supply boat locker
+expect story piston 1
+expect step 5
+# The compressor runs: the deep-dive chest
+use compressor
+expect story compressed 1
+expect step 6
+expect shown compchest
+open Compressor chest
+read Dive chief's card
+expect step 7
 
 # Onto the expedition's raft: the leader's log on the table
 walk 22 -5 to 18 -5 to 16 -6.5 h=0.2
 zone camp
-expect step 1
+expect step 8
 read Expedition leader's log
 wait 1
-expect step 3
+expect step 10
 
 # The air line's valve is rusted fast without the wrench; the air pockets are empty
 use airvalve
@@ -24,29 +54,29 @@ expect hidden airpockets
 open Camp chest
 expect story abysswrench 1
 wait 1
-expect step 6
+expect step 13
 use airvalve
 expect message wrench bites
 expect story abysswrench 0
 expect shown airpockets
 wait 1
-expect step 7
+expect step 14
 
 # The dive: breath at each pocket on the way down - the container on the shelf, the gas tank on the ledge, the shack
 # on the floor
 air pocket1
-expect step 8
+expect step 15
 air pocket2
-expect step 9
+expect step 16
 air pocket3
 
 # The lair: the Abyssal Angler (its journal page) and its brood, the hoard
 zone lair
-expect step 11
+expect step 18
 expect message not a fish's
 kill Angler fish
 wait 1
-expect step 13
+expect step 20
 open Lair hoard
 wait 3
 expect item Blueprint_HeadLight_Advanced 1
@@ -58,6 +88,30 @@ zone pocket3
 zone pocket2
 zone pocket1
 zone camp
-expect step 18
+expect step 25
 read Expedition leader's log
 expect done
+
+# After the quest (their pages would count towards the quest's journal steps early):
+# Secrets: the dive tags (a set), the flare posts (puzzle lights) and the expedition's cache, the lava tube, the
+# stack run
+use Dive tag 1
+use Dive tag 2
+use Dive tag 3
+use Dive tag 4
+use Dive tag 5
+wait 1
+expect message All five dive tags
+expect item TitaniumIngot 1
+expect hidden expcache
+use Flare post 1
+use Flare post 2
+use Flare post 3
+use Flare post 4
+wait 1
+expect shown expcache
+open Expedition's cache
+zone lavatube
+open Lava tube chest
+zone jump_ab_finale
+open Stack run prize

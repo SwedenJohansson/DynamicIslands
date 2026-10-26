@@ -6,11 +6,18 @@
 # shore (a cut path up, the first prospector Elias Grey's camp on top, his note, his cache under a hatch - a secret) and
 # his nuggets buried on its north foot. Quest 7 -> 9 steps: the hill after the head lamp. The land's centre moved north
 # with the hill: the plays carry an offset.
+# ABYSS 10-26 (1-hour pass, The Abyss Expedition): grown to Raft's size (r80 about 75) by land added round the core:
+# Copper Knob and its headframe (east), Miners' Row (west: Old Harlan, a lamp puzzle), the flooded quarry and its sunk
+# pump house (south-west), Slag Ridge and the slag stacks jump course (south), the assay plane, an ore barge and
+# Grey's second claim (a hidden cave). Quest 9 -> 15 steps: the winch (winding key + pump fuse) before the hill.
+# Design: _ProjectDocs/plans/storylines_old/ABYSS.md.
 #
 # Built by the recipe player (CIRecipe old_mine_islet) through the editor's own operations.
 include lib_sea
 include lib_features
 include lib_highwater
+include lib_areas
+include lib_abyss
 new
 # (nature: forest: Like Raft's Balboa, a little more wooded - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.25 Bushes=0.38 Rocks=0.45 Harvest=0.1 BeachThings=0.3
@@ -29,6 +36,149 @@ clear at 24 -16 r=8
 call hw_mount x=-5 z=42 b=14 h=13
 call hw_trail x=-5 z=42 b=14 h=13 a0=180 turn=300 n=22 h0=3
 brush flatten at -5 42 r=8 s=20 frames=400 h=13
+
+# --- ABYSS 10-26 (1-hour pass): the islet grows to Raft's size by land added round the old core (the core as it was).
+# One ore line ties it together: the headframe on Copper Knob (east), the yard, the mine; the miners' row (west), the
+# flooded quarry (south-west), the slag stacks (south), the assay plane (north-east), an ore barge (south-east) and
+# Grey's second claim (north-west). Land bridges first, then each area.
+brush flatten from 28 -6 to 44 -4 r=10 s=20 frames=500 h=3
+brush flatten from -26 -10 to -40 -10 r=10 s=20 frames=500 h=3.5
+brush flatten from -24 -26 to -36 -38 r=9 s=20 frames=500 h=3.5
+brush flatten from 2 -32 to 14 -48 r=9 s=20 frames=500 h=3
+brush flatten from 20 22 to 34 30 r=9 s=20 frames=500 h=3
+brush flatten from -22 26 to -36 32 r=9 s=20 frames=500 h=3
+brush flatten from 26 -28 to 42 -32 r=8 s=20 frames=500 h=2.5
+# A Copper Knob (east): summit 22 m, base r 22, the trail from its west foot round to the top, the headframe on it
+call hw_mount x=64 z=-4 b=22 h=22
+call hw_trail x=64 z=-4 b=22 h=22 a0=270 turn=300 n=30 h0=3
+brush flatten at 64 -4 r=8 s=20 frames=400 h=22
+call hw_mast x=64 z=-4 h0=22 lv=4 a=headframe chest=windbox top=Placeable_Lantern_Metal
+# B Miners' Row (west): a street of three roofless cottages on a pad, the lamps between them
+brush flatten at -52 -10 r=17 s=20 frames=500 h=4
+brush smooth at -52 -10 r=22 s=4 frames=40
+brush flatten at -52 -11 r=15 s=20 frames=400 h=4
+call ab_ruin x=-45 z=0 h=4 yaw=0 w=3 d=2 al=rowruin
+call ab_ruin x=-59 z=0 h=4 yaw=0 w=3 d=2 al=rowruin
+call ab_ruin x=-52 z=-21 h=4 yaw=180 w=3 d=2 al=rowruin
+# C The flooded quarry (south-west): a rim terrace cut by a pit to 10 m under the sea, the pump house on its floor
+brush flatten at -46 -48 r=21 s=20 frames=500 h=4.5
+brush smooth at -46 -48 r=25 s=4 frames=40
+call hw_basin x=-46 z=-48 r=10 h=-10
+# (the quarrymen's steps cut up the north wall: out of the water onto the rim)
+for k 0 4
+brush flatten at -46 {-37.5+2*$k} r=2.3 s=20 frames=250 h={0.3+1.0*$k}
+clear at -46 {-37.5+2*$k} r=2.6
+next
+call hw_sunkhouse x=-46 z=-48 h=-10 yaw=45 a=pumphouse chest=pumpbox air=pumpair bub=pumpbub dal=pumpdoor rn=2
+# D Slag Ridge (south) and the slag stacks: a jump course at its west end
+brush flatten from 12 -54 to 40 -48 r=9 s=20 frames=600 h=3
+call hw_mount x=22 z=-55 b=12 h=10
+call hw_mount x=37 z=-48 b=10 h=7
+# --- JUMP COURSE om (Abyss pass 10-26): kz-style hop course of floor slabs on its own pad (the bs course, turned) ---
+# JUMP om pad=4 at=-12 -62
+push at -12 -62
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=4
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=4
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpom at 0.10 5.64 h=4.60
+place Block_Foundation_Tier3 jpom at 2.92 5.64 h=5.10
+place Block_Foundation_Tier3 jpom at 5.93 5.64 h=5.50
+place Block_Foundation_Tier3 jpom at 5.93 3.03 h=6.40
+place Block_Foundation_Tier3 jpom at 5.93 -1.21 h=6.90 sx=0.3 sz=3
+place Block_Foundation_Tier3 jpom at 5.93 -5.64 h=7.70
+place Block_Foundation_Tier3 jpom at 3.02 -5.64 h=8.60
+place Block_Foundation_Tier3 jpom at 0.40 -5.64 h=7.60
+place Block_Foundation_Tier3 jpom at -2.41 -5.64 h=8.55
+place Block_Foundation_Tier3 jpom at -5.12 -5.64 h=9.50
+place Block_Foundation_Tier3 jpom at -5.12 -2.02 h=10.40 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jpom at 1.30 -2.02 h=10.70 sx=2 sz=2
+place Block_Foundation_Tier3 jpom at 1.30 3.21 h=11.00
+# JUMP end
+# (each slab on one solid column of its own footprint, from under the pad up to the slab)
+# (the first slab rests on the pad itself: no column)
+place Block_Foundation_Tier3 jppom at 2.92 5.64 h=4.418 sy=1.493
+place Block_Foundation_Tier3 jppom at 5.93 5.64 h=4.818 sy=2.079
+place Block_Foundation_Tier3 jppom at 5.93 3.03 h=5.718 sy=3.399
+place Block_Foundation_Tier3 jppom at 5.93 -1.21 h=6.218 sy=4.132 sx=0.3 sz=3
+place Block_Foundation_Tier3 jppom at 5.93 -5.64 h=7.018 sy=5.305
+place Block_Foundation_Tier3 jppom at 3.02 -5.64 h=7.918 sy=6.625
+place Block_Foundation_Tier3 jppom at 0.40 -5.64 h=6.918 sy=5.158
+place Block_Foundation_Tier3 jppom at -2.41 -5.64 h=7.868 sy=6.551
+place Block_Foundation_Tier3 jppom at -5.12 -5.64 h=8.818 sy=7.944
+place Block_Foundation_Tier3 jppom at -5.12 -2.02 h=9.718 sy=9.264 sx=2 sz=2
+place Block_Foundation_Tier3 jppom at 1.30 -2.02 h=10.018 sy=9.704 sx=2 sz=2
+place Block_Foundation_Tier3 jppom at 1.30 3.21 h=10.318 sy=10.144
+prop jpom tint.color=#5e544c
+prop jpom tint.amount=0.35
+prop jppom tint.color=#5e544c
+prop jppom tint.amount=0.35
+place Loot_Chest jcom at -5.12 -2.02 h=10.40 sit yaw=0
+note jcom Slag tipper's perch | The tippers sat up here on breaks, out of the foreman's sight.
+loot jcom Plank*6;Rope*3;MetalIngot*1
+prop jcom loot.refill=0
+place Loot_ChestSmall jbom at 1.30 3.21 h=11.00 sit yaw=0
+note jbom Slag stack prize | A tin hidden on the last stack - a tipper's winnings.
+loot jbom MetalIngot*2;CopperIngot*2;TitaniumIngot*1
+prop jbom loot.refill=0
+place Zone_Trigger jyom at 1.30 3.21 h=12.00
+prop jyom zone.id=jump_om_finale
+prop jyom zone.radius=1.8
+prop jyom zone.repeat=never
+prop jyom zone.message=The top of the slag stacks. The whole ore line in view: knob, yard, mine.
+pop
+# --- end of jump course om ---
+# E The assay plane (north-east): the company's ore plane, down on the shore field
+call ar_plane x=42 z=34 h=3 yaw=200 al=assayplane crate=assaycrate
+# F The ore barge (south-east): run aground on the beach below the knob
+call hw_wreck x=50 z=-34 h=2 yaw=30 obj=BoatStranded al=orebarge crate=bargecrate r=9
+# G Grey's second claim (north-west): a rock with a hole in it, its mouth to the sea, boulders across it
+call ar_cave x=-48 z=34 h=3 yaw=0 al=greyrock chest=greyclaim
+place SmallBoulder4 - at -49 47 ground yaw=40 scale=0.9
+place SmallBoulder4 - at -45.5 51 ground yaw=110 scale=0.8
+# H Powder Hill (north-east, by the plane): the company's powder store on its top, away from the men
+call hw_mount x=72 z=38 b=16 h=12
+call hw_trail x=72 z=38 b=16 h=12 a0=240 turn=200 n=16 h0=3
+brush flatten at 72 38 r=7 s=20 frames=400 h=12
+call ab_ruin x=72 z=38 h=12 yaw=200 w=3 d=2 al=powderstore
+place Crate_Big_01 - at 74.5 41 h=12 sit yaw=15
+# I Pine Top (north): a wooded rise between Prospect Hill and the plane
+brush flatten from 8 48 to 18 58 r=8 s=20 frames=500 h=3
+call hw_mount x=24 z=64 b=14 h=9
+# J The expedition's camp (west point): Dr. Calder's tents on a low point past Miners' Row
+brush flatten from -66 -6 to -78 4 r=9 s=20 frames=500 h=3
+brush flatten at -84 6 r=13 s=20 frames=500 h=3
+brush smooth at -84 6 r=17 s=4 frames=40
+brush flatten at -84 6 r=9 s=20 frames=400 h=3
+clear at -84 6 r=10
+place Balboa_DecorationPrefabBase_SimpleTent - at -86.5 8.5 h=3 sit yaw=120
+place Balboa_DecorationPrefabBase_SimpleTent - at -81 9 h=3 sit yaw=200
+place campfire_1 - at -83.5 5 ground sit
+place Placeable_Table_Basic calderdesk at -87 3.5 ground sit yaw=30
+place Crate_Big_01 - at -88.5 6.5 ground sit yaw=70
+# K The slag spit (south): the tip's waste run out into the sea, carts tipped where they stopped
+brush flatten from -6 -77 to 4 -92 r=9 s=20 frames=500 h=2.5
+brush smooth from -6 -78 to 4 -92 r=10 s=4 frames=40
+clear from -8 -74 to 4 -92 r=9
+place SmallBoulder4 - at -3 -81 ground yaw=10 scale=0.7
+place SmallBoulder4 - at 1.5 -88 ground yaw=130 scale=0.6
+place VP_Wagon02 - at -5.5 -77 ground sit yaw=60 tilt=14
+place VP_Wagon02 - at 0.5 -84.5 ground sit yaw=150 tilt=20
+# The new land planted (pines, birches, berries as on the core)
+call ab_plants_forest x=64 z=-4 r=24 seed=26101
+call ab_plants_forest x=-52 z=-10 r=18 seed=26111
+call ab_plants_forest x=-60 z=-40 r=10 seed=26121
+call ab_plants_forest x=27 z=-52 r=14 seed=26131
+call ab_plants_forest x=40 z=30 r=14 seed=26141
+call ab_plants_forest x=-46 z=30 r=14 seed=26151
+call ab_plants_forest x=36 z=-6 r=10 seed=26161
+call ab_plants_forest x=-30 z=-30 r=8 seed=26171
+call ab_plants_forest x=72 z=38 r=16 seed=26197
+call ab_plants_forest x=24 z=64 r=16 seed=26201
+call ab_plants_forest x=-80 z=0 r=12 seed=26211
 
 # --- The mine: Balboa's dead-end cave as the rock mound, its mouth to the east; floor 4.2 m up -----------------
 place BalboaCave_DeadEnd mine at 0 -18 h=11.7 yaw=90
@@ -93,13 +243,74 @@ scatter Bush2 3 at -5 42 r=14 seed=32061
 call treasure x=-8 z=53 r=12 n=1 seed=32058 kind=0
 prop treasure32058 treasure.loot=CopperIngot*2;MetalIngot*2;Nail*6
 
+# --- ABYSS 10-26: the new areas' zones, notes, machine, puzzles and secrets ------------------------------------------
+# Miners' Row: the foreman's note on the first cottage's table, Old Harlan, the three lamps
+place Note_Paper dorseynote at -45.75 0 h=5.45 drop yaw=20
+call hw_zone x=-52 z=-10 al=rowz id=minersrow r=9 h=1 msg="Miners' Row. Three cottages, roofs gone, and lamp-posts down the middle of the street."
+place Story_Islander harlan at -48.5 -14 ground
+prop harlan obj.name=Old Harlan
+prop harlan islander.pose=lean
+prop harlan talk.text=You came for the mine, then. Everyone does.\n---\nThe company lit these lamps every night. Lamp one and lamp three, and the middle one minds itself. Dorsey called it the all-clear.\n---\nMy tin is under the street somewhere. When all three burn I'll remember where.
+place Crate_Big_01 - at -47.5 -15.2 ground sit yaw=20
+call ab_lamp x=-46 z=-10 al=rowlamp1 nm="Row lamp 1" grp="Row lamps" on=0
+call ab_lamp x=-52 z=-10 al=rowlamp2 nm="Row lamp 2" grp="Row lamps" on=1
+call ab_lamp x=-58 z=-10 al=rowlamp3 nm="Row lamp 3" grp="Row lamps" on=0
+prop rowlamp1 on.use=light|Row lamp 2|toggle
+prop rowlamp2 on.use=light|Row lamp 1|toggle\nlight|Row lamp 3|toggle
+prop rowlamp3 on.use=light|Row lamp 2|toggle
+prop rowlamp1 on.alllit=show|harlantin\nmessage||All three lamps burn. Old Harlan points at a loose stone in the street.
+call ab_hidden x=-52 z=-13.5 al=harlantin
+note harlantin Harlan's tin | Old Harlan's tin, under a stone of the street: his pay from the last shift, never spent.
+loot harlantin CopperIngot*3;MetalIngot*2;Battery*1;TradeToken*2
+# Copper Knob: the zone at its foot and on top, the winding key in the headframe's deck box
+call hw_zone x=41 z=-4 al=knobfootz id=knobfoot r=5 msg="Copper Knob. A path cut round the hill to the headframe on its top."
+call hw_zone x=64 z=-4 al=knobtopz id=knobtop r=8 h=1 msg="The top of Copper Knob. The headframe's wheel is rusted still; the whole ore line runs down from here to the mine."
+note windbox Headframe deck box | A box bolted to the headframe's deck: the winding key, a crank as long as your arm, stamped WINCH No. 2.
+loot windbox story:windkey*1;Rope*2;Plank*3
+# The flooded quarry: the rim, the pump house on the pit's floor and its strongbox
+call hw_zone x=-46 z=-30 al=quarryz id=quarry r=6 h=1 msg="The flooded quarry. Steps go down into green water - and a roof shows ten metres under."
+note pumpbox Pump house strongbox | The pump house's strongbox, dry inside: the pump fuse, wrapped in oilcloth, labelled WINCH CIRCUIT.
+loot pumpbox story:pumpfuse*1;CopperOre*3;Battery*1
+# The mine winch in the yard: both parts, and it hauls the cage up - and the cage holds the foreman's last box
+call hw_machine x=27 z=-22 yaw=90 al=minewinch nm="Mine winch" a=windkey b=pumpfuse done=winch rew=winchchest rnote=winchnote msg="The winch turns. Up the shaft comes the cage - and in it, the foreman's box." hint="The winch has no crank and no fuse. Dorsey's note says where they went."
+note winchchest Foreman's box | Foreman Dorsey's box, hauled up in the cage: his lamp oil, spare batteries and the mine's tally book.
+loot winchchest Battery*2;Rope*2;MetalIngot*2;CopperIngot*1
+note winchnote Tally book page | MINE No. 2 - LAST SHIFT\n\nCage up: 6 men. Cage down: 0.\nCart 14 left at the end of Tunnel 3, full.\nThe thing in the burrow does not like light. Go in lit or not at all.\n- D.
+# The expedition's camp: Dr. Calder's field note on her desk
+place Note_Paper caldernote at -87 3.5 ground y=1.1 drop yaw=30
+call hw_zone x=-84 z=6 al=camp1z id=expeditioncamp r=7 msg="Tents of good canvas, newer than anything on the island. A flag: THE ABYSS EXPEDITION."
+# Lamp tallies: five tin tags of the shift's lamps, lost about the island (a set: a secret)
+call ab_piece x=-55 z=-17 al=tally1 set="Lamp tallies" nm="Lamp tally 1"
+call ab_piece x=76 z=4 al=tally2 set="Lamp tallies" nm="Lamp tally 2"
+call ab_piece x=75.5 z=34 al=tally3 set="Lamp tallies" nm="Lamp tally 3"
+call ab_piece x=45 z=-38 al=tally4 set="Lamp tallies" nm="Lamp tally 4"
+call ab_piece x=-62 z=-40 al=tally5 set="Lamp tallies" nm="Lamp tally 5"
+prop tally1 on.set=give||TitaniumIngot*1;CopperIngot*2\nmessage||All five lamp tallies. Every man of the last shift is counted now.
+# The assay plane, the ore barge and Grey's second claim: what's in them
+note assaycrate Assay plane's crate | The assayer's crate: sample bags, a scale, a flask of acid - and the company's best samples, never flown out.
+loot assaycrate CopperOre*3;MetalOre*3;Glass*2
+prop assaycrate loot.refill=0
+note bargecrate Ore barge's crate | A crate from the ore barge's hold: rope, bolts and a ship's lantern.
+loot bargecrate Rope*3;Bolt*3;Scrap*2
+note greyclaim Grey's second claim | Elias Grey's second claim, hidden in a hole at the island's back: the vein he never told the company about.
+loot greyclaim TitaniumOre*3;CopperIngot*2;MetalIngot*2
+prop greyclaim loot.refill=0
+call hw_zone x=-48 z=39 al=greyz id=greyclaim r=4 msg="A hole in the rock, behind boulders. Pick marks on the walls - fresh, for a mine this old."
+call treasure x=-30 z=-50 r=8 n=1 seed=26181 kind=0
+prop treasure26181 treasure.loot=CopperIngot*2;TitaniumOre*1;Nail*8
+
 info title=Old Mine Islet
 info author=Custom Islands
-info description=A wooded islet around a rock mound with an old mine inside, a prospector's camp on the hill to the north: timbered tunnels, rails and ore carts - pitch dark further in, where something big has dug in. Bring a light.
+info description=A wooded mining island as big as Raft's own: a rock mound with an old mine inside, a headframe on Copper Knob, a miners' row, a flooded quarry with a pump house under the water, slag stacks, an assay plane and an ore barge - and a prospector's camp on the hill to the north. Pitch dark in the mine, where something big has dug in. Bring a light.
 island on.arrive=message||A rock mound with a timbered mine mouth. Rails run into the dark.
 
 note greynote Prospector Elias Grey's note | E. GREY - FIRST CLAIM, OLD MINE ISLET\n\nI found the vein from up here. You can see the colour in the rock of the mound when the sun is low, a rusty stripe down its east face. I staked the claim, and the company built the mine around my stake and paid me a tenth of what it was worth.\n\nThey dug too deep. The lowest tunnel broke into a burrow under the mound, and something big lives in it. It came out of the dark and the men ran, and the last cart was left full at the end of the line.\n\nTake the head lamp from the miner's locker before you go in. It is darker down there than you think.\n\nMy tools are under the hatch by the tent. My nuggets I buried at the foot of the hill on the sea side. The company never saw them.
 note notice Mine notice | ISLET MINE No. 2 - CLOSED\n\nTunnel 3 broke into an old burrow. Something big lives down there now, and it does NOT like lamps going out.\n\nThe last ore cart is still at the end of the line - full. Whoever brings it out keeps half.\n\nTake a head lamp from the locker. - The pit boss
+story windkey|Winding key|Bolt|The mine winch's winding key, from the headframe's deck box on Copper Knob.
+story pumpfuse|Pump fuse|Battery|The winch circuit's fuse, from the strongbox of the pump house under the flooded quarry.
+story winch|Mine winch running|Placeable_Lantern_Metal|You ran the mine winch with its key and fuse: the cage came up.
+note dorseynote Foreman Dorsey's note | FOREMAN H. DORSEY - MINE No. 2\n\nShift's over and the mine is shut. The thing in Tunnel 3 had Pike's lamp off him and nearly Pike.\n\nI have taken the winch apart so no fool goes down the cage after the cart: the winding key is in the deck box on the headframe up Copper Knob, the fuse is in the pump house strongbox. The quarry flooded on us in the spring, so the pump house is under the water now - you'll have to swim for it.\n\nPut both back in the winch in the yard and the cage comes up. My box is in it, with the tally book. Read it before you go down.\n\n- H. Dorsey
+note caldernote Dr. Ruth Calder's field note | THE ABYSS EXPEDITION - FIELD NOTE 1\n\nWe start where the company stopped. Their surveys say the vein under this islet runs down and east, deeper than any shaft - towards a trench nobody has charted.\n\nOld Harlan will not leave the row. He says the lamps keep the thing in the mine below. I think he keeps the lamps.\n\nNext: a civil-defence atoll to the east still sends a call sign. If the shelter's radio works, we can listen further down.\n\n- R. Calder
 note locker Miner's locker | A miner's locker: a head lamp with a spare battery, gloves worn through at the fingers, a lunch tin (empty).
 loot locker HeadLight*1;Battery*1;Leather*2
 prop locker loot.refill=0
@@ -132,10 +343,16 @@ prop minesound sound.volume=0.7
 prop minesound zone.radius=18
 
 quest title=Down the Old Mine
-quest intro=An old mine in a rock mound, closed since a tunnel broke into a burrow. The notice at the mouth says the last ore cart is still down there.
+quest intro=An old mine in a rock mound, closed since a tunnel broke into a burrow. The notice at the mouth says the last ore cart is still down there - and the foreman took the mine winch apart before he left.
 step reach|minehead|1|Find the old mine
 step read|Mine notice|1|Read the mine notice
 step open|Miner's locker|1|Take the miner's head lamp
+step read|Foreman Dorsey's note|1|Find the foreman's note on Miners' Row, west of the mine
+step reach|knobtop|1|Climb Copper Knob to the headframe in the east
+step collect|story:windkey|1|Take the winding key from the headframe's deck box
+step reach|quarry|1|Go to the flooded quarry in the south-west
+step collect|story:pumpfuse|1|Swim down to the pump house and take the fuse from its strongbox
+step collect|story:winch|1|Put the key and the fuse in the mine winch in the yard
 step reach|prospecttop|1|Climb Prospect Hill on the north shore - someone camped up there
 step read|Prospector Elias Grey's note|1|Read the prospector's note: what lies at the bottom of the mine
 step reach|deep|1|Light the lamp and follow the rails into the dark to the deep tunnel
