@@ -184,7 +184,27 @@ note digchest Expedition strongbox | The 1931 expedition's strongbox: survey gla
 call treasure x=-34 z=50 r=12 n=1 seed=31010 kind=0
 prop treasure31010 treasure.loot=MetalOre*2;Glass*3;Rope*2
 # --- OLDER4 10-26: Ostrander's cache on the mesa top, grown over with vines (the quest's machete cuts them) -----------
-call vinecache x=-28 z=8 r=6 seed=31011 chest=sm_vinechest vines=sm_vines items=MetalIngot*2;CopperIngot*2;Rope*3;Nail*10
+# a stone shed on the flat top (3 x 3 m, walls on the ground, roof on the walls), its open south side grown shut with
+# vines; the chest inside only shows once the vines are cut
+push at -28 8 h=12.4
+place Block_Wall_Tier3 sm_shed at -0.75 1.5 y=-0.1 sy=1.6
+place Block_Wall_Tier3 sm_shed at 0.75 1.5 y=-0.1 sy=1.6
+place Block_Wall_Tier3 sm_shed at -1.5 -0.75 y=-0.1 sy=1.6 yaw=90
+place Block_Wall_Tier3 sm_shed at -1.5 0.75 y=-0.1 sy=1.6 yaw=90
+place Block_Wall_Tier3 sm_shed at 1.5 -0.75 y=-0.1 sy=1.6 yaw=90
+place Block_Wall_Tier3 sm_shed at 1.5 0.75 y=-0.1 sy=1.6 yaw=90
+place Block_Floor_Tier3 sm_shed at -0.75 -0.75 y=3.93
+place Block_Floor_Tier3 sm_shed at 0.75 -0.75 y=3.93
+place Block_Floor_Tier3 sm_shed at -0.75 0.75 y=3.93
+place Block_Floor_Tier3 sm_shed at 0.75 0.75 y=3.93
+place Loot_Chest sm_vinechest at 0 0.4 y=0 sit yaw=180
+place ChoppableVines sm_vines at 0 -1.7 y=0 yaw=0
+pop
+prop sm_vinechest obj.name=sm_vinechest
+prop sm_vinechest note.title=Behind the vines
+prop sm_vinechest beh.hidden=1
+loot sm_vinechest MetalIngot*2;CopperIngot*2;Rope*3;Nail*10
+prop sm_vines on.use=hide|\nshow|sm_vinechest\nmessage||The machete bites through the vines. Ostrander's shed is open: a chest inside.
 prop sm_vines obj.name=sm_vines
 note sm_vinechest Ostrander's cache | Dr. Hal Ostrander's cache, 1931: survey pegs, a brass plumb bob and a note. "Left for the next party. The vines will have it in a year - bring a blade."
 

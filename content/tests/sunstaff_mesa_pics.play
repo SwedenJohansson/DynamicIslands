@@ -17,4 +17,4 @@ picture sunstaff_mesa_butte 25 30 -45 52 22 -15
 picture sunstaff_mesa_mast 45 27 -22 52 26 -15
 picture sunstaff_mesa_cave -60 +3 -20 -60 +1 -33
 picture sunstaff_mesa_dighouse -48 -3 52 -48 -8 62
-picture sunstaff_mesa_vinecache -40 18 -2 -28 13 8
+picture sunstaff_mesa_vinecache -32 15.5 -1 -28 14 8

@@ -23,6 +23,16 @@ include lib_sl1
 include lib_areas
 include lib_highwater
 include lib_lastpost
+# o4_dune: a dune or low hill along x1 z1 - x2 z2, h m over the sea at its crest: three rings of flatten (the outer one
+# no lower than the plain it stands on), lightly smoothed into one slope, painted by slope, the generator's plants cleared
+macro o4_dune x1=0 z1=0 x2=10 z2=0 h=8 r=4
+brush flatten from $x1 $z1 to $x2 $z2 r={$r*2.4} s=20 frames=700 h={$h*0.4}
+brush flatten from $x1 $z1 to $x2 $z2 r={$r*1.5} s=20 frames=700 h={$h*0.75}
+brush flatten from $x1 $z1 to $x2 $z2 r={$r*0.7} s=20 frames=600 h={$h+1.5}
+brush smooth from $x1 $z1 to $x2 $z2 r={$r*2.8} s=5 frames=40
+brush auto from $x1 $z1 to $x2 $z2 r={$r*2.8} s=10 frames=25
+clear from $x1 $z1 to $x2 $z2 r={$r*2.6}
+end
 new
 # (nature: bare sand - few trees (0.08), Rocks Like Raft)
 gen Trees=0.08 Bushes=0.12 Rocks=0.43 Harvest=0.1 BeachThings=0.45
@@ -47,9 +57,9 @@ brush smooth at 0 0 r=40 s=3 frames=10
 clear at 0 0 r=36
 call ar_cave x=50 z=40 h=2 yaw=180 al=choirrock chest=reliquary
 # --- OLDER4 10-26 terrain: dunes on the flat south and east wedges, clear of the channels -------------------------------
-call ar_ridge x1=-44 z1=-48 x2=-24 z2=-58 h=2.5 top=7.5 r=7
-call ar_ridge x1=14 z1=-58 x2=36 z2=-48 h=2.5 top=5.5 r=7
-call ar_ridge x1=62 z1=-8 x2=58 z2=14 h=2 top=3 r=5
+call o4_dune x1=-44 z1=-48 x2=-24 z2=-58 h=10 r=3
+call o4_dune x1=14 z1=-58 x2=36 z2=-48 h=7 r=3
+call o4_dune x1=62 z1=-8 x2=58 z2=14 h=5 r=2.5
 
 # --- The effigies: three bars (centred on 30, 150 and 270 degrees), an inner row of five at 20 m and an outer row of
 # five at 28 m on each. Set "effin" faces the middle; set "effout" (hidden) faces the landing beach (0 -38). ----------

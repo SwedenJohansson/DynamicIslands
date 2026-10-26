@@ -29,9 +29,19 @@ include lib_highwater
 # 15 -> 18 steps: the Iron Ridge, its survey note and Needle Knoll's top before the zipline. The keel zone moved out
 # past the new south coast (0 -76).
 include lib_lastpost
+# o4_dune: a dune or low hill along x1 z1 - x2 z2, h m over the sea at its crest: three rings of flatten (the outer one
+# no lower than the plain it stands on), lightly smoothed into one slope, painted by slope, the generator's plants cleared
+macro o4_dune x1=0 z1=0 x2=10 z2=0 h=8 r=4
+brush flatten from $x1 $z1 to $x2 $z2 r={$r*2.4} s=20 frames=700 h={$h*0.4}
+brush flatten from $x1 $z1 to $x2 $z2 r={$r*1.5} s=20 frames=700 h={$h*0.75}
+brush flatten from $x1 $z1 to $x2 $z2 r={$r*0.7} s=20 frames=600 h={$h+1.5}
+brush smooth from $x1 $z1 to $x2 $z2 r={$r*2.8} s=5 frames=40
+brush auto from $x1 $z1 to $x2 $z2 r={$r*2.8} s=10 frames=25
+clear from $x1 $z1 to $x2 $z2 r={$r*2.6}
+end
 new
 gen Trees=0.08 Bushes=0.3 Rocks=0.3 Harvest=0.3 BeachThings=0
-gen Seed=9601 Radius=75 Height=8 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.8 PeakShape=0.5
+gen Seed=9601 Radius=75 Height=8 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.5 Cliffs=0.3 PeakShape=0.5
 gen Stretch=1.3 StretchAngle=0
 gen Water=0 SeaRocks=0 SeaFinds=0 Sunken=0 Hostiles=0 Friendly=0 SeaLife=0
 generate
@@ -61,6 +71,11 @@ call ar_ridge x1=-8 z1=48 x2=30 z2=42 h=4 top=8 r=8
 call hw_mount x=-28 z=-42 b=15 h=16
 call hw_trail x=-28 z=-42 b=15 h=16 a0=30 turn=300 n=26 h0=4
 call lp_pad x=38 z=-40 r=10 h=4
+# OLDER4 10-26 (picture check): low hills on the flat plain - the North Downs (north-west), Bob's Foot (south-west) and
+# the South Dune (south of the shaft)
+call o4_dune x1=-52 z1=48 x2=-46 z2=38 h=9 r=4
+call o4_dune x1=-70 z1=-30 x2=-60 z2=-36 h=8 r=3.5
+call o4_dune x1=-2 z1=-54 x2=12 z2=-46 h=9 r=4
 
 # --- The pendulum frame: four stone posts, a crossbeam of two posts laid on them, the chain hanging from the beam, the
 # bob in its cradle; the frame's lever; the hall rules ----------------------------------------------------------------
@@ -154,6 +169,8 @@ call hw_zone x=-15 z=-32 al=needlefootz id=needlefoot r=5 h=1 msg="Needle Knoll.
 call hw_zone x=-28 z=-42 al=needletopz id=needletop r=7 h=1 msg="The top of Needle Knoll. The island's whole length below you, and the pendulum's frame in the middle."
 place Placeable_Lantern_Metal - at -30 -40 ground y=0.05 sit
 call ar_plants_hill x=-28 z=-42 r=18 seed=9641
+call ar_plants_hill x=-49 z=43 r=10 seed=9661
+call ar_plants_hill x=5 z=-50 r=10 seed=9662
 # --- The compass garden (south-east): four lamps on posts round a stone box; each lit lights the next ------------------
 call hw_zone x=38 z=-40 al=gardenz id=compassgarden r=7 h=1 msg="A ring of four lamp posts round a stone box - the Institute's compass garden."
 call lp_lamp x=38 z=-34 al=pi_lamp1 nm="Compass lamp north" grp="Compass lamps" on=0
