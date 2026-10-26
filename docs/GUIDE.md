@@ -824,6 +824,12 @@ behaviours (see [section 5](#5-making-islands-come-alive)).
   time, at most 192 km (about 24 h). A world plan still brings its islands when its rules say.
   (The level up system is a world option, not an island's: see [section 9.6](#96-the-level-up-system).)
 - **Quest**, **Islands it brings**, **Island events**, **Story items**: see [section 6](#6-stories-quests-behaviours-story-items).
+- **Test start:** where **Test** ([section 4.9](#49-trying-the-island-in-a-world-test)) puts you. Look at the ground
+  (or a deck, a roof) and click **Test start: where I look**: a small **green marker** (a pole with a ball) shows the
+  spot, in the editor only - it is not an object and players never see it. **Clear** takes it away; **Ctrl+Z** undoes
+  either. It is saved with the island. Without one, Test puts you on the island's middle, or on the land nearest the
+  middle when the middle is sea (an atoll, a crescent). It is only for Test: players reach the island by raft, wherever
+  they like.
 - **About this island** (the last group of the tab): how many objects the island has, what the height means **in a
   world** ("normal (at sea level)", "flying 60 m above the sea" or "under water, top of the land 30 m deeper than
   normal"), and how many objects the object list has loaded (and how many more can be loaded from Raft's islands).
@@ -1401,7 +1407,9 @@ moment, with other islands after it ([7.2](#72-your-first-world-plan-step-by-ste
 1. The island is saved (it needs a name: Save as first for a new one).
 2. The mod goes to the main menu and loads the world **Custom Islands test** - it makes it the first time, as a normal
    world with the plan **No custom islands**, so nothing else turns up.
-3. Your island is put beside the raft and you stand on it. Islands tried there before are taken away first. Their journal pages and story items go too, so a quest starts fresh.
+3. Your island is put beside the raft and you stand on it: on the ground at its **test start** if you set one (Island
+   tab, [section 4.4](#44-the-island-tab)), else on its middle - or, when the middle is sea, on the land nearest it, not
+   the sea floor. Islands tried there before are taken away first. Their journal pages and story items go too, so a quest starts fresh.
    You arrive with the **starter kit** (below), hunger, thirst, health and oxygen full.
 4. Walk around, open the chests, read the notes, meet the creatures, try the quest.
 5. **Esc → Custom Islands → Back to the editor**: the test world is left **without saving** and the editor opens

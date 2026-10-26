@@ -589,13 +589,12 @@ namespace DynamicIslands.Editor
 			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(x => x.Name.Equals(Island, StringComparison.OrdinalIgnoreCase));
 			if (e == null || e.Root == null) { Stop("'" + Island + "' couldn't be placed in the test world", true); yield break; }
 			yield return new WaitForSeconds(1f);
-			// (the player on the island's highest ground near its middle)
+			// (the player at the island's test start; without one on the ground at its middle, or the land nearest it - TestStart)
 			Network_Player player = RAPI.GetLocalPlayer();
-			Vector3 top = e.Position + Vector3.up * 400f;
-			RaycastHit hit;
-			Vector3 stand = Physics.Raycast(top, Vector3.down, out hit, 800f, ~0, QueryTriggerInteraction.Ignore) ? hit.point + Vector3.up * 1.5f : e.Position + Vector3.up * 5f;
+			string how;
+			Vector3 stand = TestStart.StandPoint(e, out how);
 			PlayerMove.To(player, stand);
-			Step("Testing '" + Island + "' (" + e.Position + ")");
+			Step("Testing '" + Island + "' (" + e.Position + "), standing on " + how + " " + stand);
 			bool kit = KitOn;
 			if (kit) GiveKit();
 			IslandInfo.Show("Testing '" + Island + "'", kit ? "With the starter kit: weapons, tools, food and water" : "", "Esc > Custom Islands > Back to the editor (the test world isn't saved)");

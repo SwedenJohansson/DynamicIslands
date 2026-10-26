@@ -9,6 +9,19 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-26: Where Test puts you
+
+### Added
+- **Test start** on the editor's Island tab: look at the ground and click **Test start: where I look**, and **Test**
+  puts you there. A small green marker shows the spot in the editor only; **Clear** takes it away. It is saved with the
+  island; older islands load as before.
+
+### Fixed
+- **Test on an island whose middle is sea** (an atoll, a crescent) no longer drops you in the sea or on the sea floor:
+  without a test start you stand on the land nearest the middle.
+
+---
+
 ## 2026-10-26: Test round fixes
 
 ### Fixed
