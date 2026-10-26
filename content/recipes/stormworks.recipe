@@ -228,11 +228,13 @@ quest intro=A smelter hall under smoke on a dark rock. Go up to the hall.
 step reach|smelter_hall|1|Go up to the smelter hall
 step read|Stormworks note 1|1|Read the first note in the hall
 step blueprint|Blueprint_SmelterElectric|1|Take the electric smelter and battery charger plans from the hall's tool chest
+step blueprint|Blueprint_BatteryCharger|1|Take the battery charger plans from the hall's tool chest too
 step reach|weather_room|1|Climb up to the weather room on the roof
 step read|Stormworks note 2|1|Read the second note in the weather room
 step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced extractor plans from the weather room
 step kill|Screecher|3|Drive the screechers off the rod spur
 step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced anchor and zipline plans from the store on the clay beach
+step blueprint|Blueprint_ZiplineTool|1|Take the zipline plans from the store on the clay beach too
 step reach|stormridge|1|Climb the north ridge and watch the lightning
 step read|Smelters' roll|1|Read the smelters' roll at the ruined smelthouse in the south
 step collect|story:cellarpin|1|Drop the cellar lever by the ore cave in the west hills

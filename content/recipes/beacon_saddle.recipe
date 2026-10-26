@@ -275,7 +275,9 @@ quest intro=A beacon still turning on a saddle between two stacks. Go up to it.
 step reach|beacon|1|Go up to the beacon on the saddle
 step read|Pilgrims' log|1|Read the pilgrims' log by the cold fires
 step blueprint|Blueprint_Reciever|1|Take the Receiver and head light plans from the radio hut
+step blueprint|Blueprint_HeadLight|1|Take the head light plans from the radio hut too
 step blueprint|Blueprint_Antenna|1|Take the antenna and recycler plans from the beacon tower
+step blueprint|Blueprint_Recycler|1|Take the recycler plans from the beacon tower too
 step read|Bearing card|1|Read the bearing card pinned by the camp
 step open|Cave chest|1|Find the pilgrims' chest in the west cave and read its lid
 step read|Mail plane log|1|Read the log at the mail plane wreck on the east slope
