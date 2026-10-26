@@ -124,6 +124,12 @@ namespace DynamicIslands.Editor
 
 		public bool HasPaint { get { return Alphamaps != null && AlphamapResolution > 0 && AlphamapLayers > 0; } }
 
+		/// <summary>Raft's short sea grass (PF-D3): a byte per cell (0 = bare), row by row; null = none. Tail block "grass".</summary>
+		public byte[] GrassCells;
+		public int GrassResolution;
+
+		public bool HasGrass { get { return GrassCells != null && GrassResolution > 0 && GrassCells.Length == GrassResolution * GrassResolution; } }
+
 		/// <summary>
 		/// The tagged tail (ROADMAP R12: forward compatibility): after format 4's data, any number of "tag, length, bytes"
 		/// blocks, ended by an empty tag. What a later version of the mod adds goes here under a tag of its own instead of a
@@ -148,6 +154,8 @@ namespace DynamicIslands.Editor
 				int paintLayers = AlphamapLayers;
 				var tail = new Dictionary<string, byte[]>(Tail ?? new Dictionary<string, byte[]>());
 				tail.Remove(MixTag);
+				tail.Remove(SeaGrass.Tag);
+				if (HasGrass) tail[SeaGrass.Tag] = SeaGrass.Block(this);
 				// (the objects' own numbers: only when they aren't simply 1, 2, 3... - such files stay as before)
 				StableIds.WriteTail(this, tail);
 				if (HasPaint && AlphamapLayers > TerrainPainter.LayerCount)
@@ -319,6 +327,7 @@ namespace DynamicIslands.Editor
 						}
 						catch (EndOfStreamException) { }
 						island.ReadMix();
+						SeaGrass.Read(island);
 					}
 					StableIds.ReadTail(island);
 					return island;
@@ -421,6 +430,8 @@ namespace DynamicIslands.Editor
 							island.PaintMask[z * res + x] = paintMask[z, x] > 0.5f ? (byte)255 : (byte)0;
 				}
 			}
+
+			island.GrassCells = SeaGrass.Capture(terrain, out island.GrassResolution);
 
 			foreach (EditorGameObject ego in placedObjectsRoot.GetComponentsInChildren<EditorGameObject>())
 			{

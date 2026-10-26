@@ -1700,6 +1700,8 @@ namespace DynamicIslands.Editor
 			group.Add(new StyleCommand(styleBefore, s.Style)); // first in, so undo restores the old style last
 			group.Add(new WaterLevelCommand(levelBefore, s.WaterLevel));
 			group.Add(new TerrainStrokeCommand(data, new RectInt(0, 0, hres, hres), heightsBefore, new RectInt(0, 0, ares, ares), alphaBefore, maskBefore, terraineditor.paintMask));
+			CommandUndoRedo.ICommand grassGone = SeaGrass.ClearWithUndo(terrain); // (the old island's sea grass)
+			if (grassGone != null) group.Add(grassGone);
 
 			// The old objects go (hidden, so undo brings them back), the new ones come
 			Transform placed = GameObject.Find("PlacedObjects") != null ? GameObject.Find("PlacedObjects").transform : null;

@@ -1254,6 +1254,51 @@ namespace DynamicIslands
 			Log("PASS: dumped " + name);
 		}
 
+		[ConsoleCommand(name: "CIProbeGrass", docs: "Dev, editor (ROADMAP PF-D3): logs the terrain detail layers (grass) of Raft's island scenes and every object named like grass or weed, with counts and depths. CIProbeGrass [part of a scene name]")]
+		public static void ProbeGrassCommand(string[] args)
+		{
+			string filter = args != null && args.Length > 0 ? string.Join(" ", args) : null;
+			StartTest(ProbeGrassRoutine(filter));
+		}
+
+		static IEnumerator ProbeGrassRoutine(string filter)
+		{
+			yield return WaitForEditor(false);
+			foreach (string scene in PlaceableCatalog.LandmarkSceneNames().Where(s => filter == null || s.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0).ToList())
+				yield return PlaceableCatalog.VisitScene(scene, ProbeGrass);
+			Log("PASS: grass probed");
+		}
+
+		static IEnumerator ProbeGrass(Scene s)
+		{
+			var all = s.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Transform>(true)).ToList();
+			foreach (Terrain t in all.Select(x => x.GetComponent<Terrain>()).Where(x => x != null))
+			{
+				TerrainData d = t.terrainData;
+				if (d == null) continue;
+				DetailPrototype[] ps = d.detailPrototypes;
+				Log("grass " + s.name + " terrain " + t.name + " at " + t.transform.position.ToString("F0") + ": " + ps.Length + " detail layers, res " + d.detailResolution + ", draw " + t.drawTreesAndFoliage + " dist " + t.detailObjectDistance);
+				for (int i = 0; i < ps.Length; i++)
+				{
+					DetailPrototype p = ps[i];
+					int[,] map = d.GetDetailLayer(0, 0, d.detailWidth, d.detailHeight, i);
+					long sum = 0, under = 0; int cells = 0;
+					for (int y = 0; y < d.detailHeight; y += 2)
+						for (int x = 0; x < d.detailWidth; x += 2)
+						{
+							if (map[y, x] == 0) continue;
+							cells++; sum += map[y, x];
+							float h = t.transform.position.y + d.GetInterpolatedHeight(x / (float)d.detailWidth, y / (float)d.detailHeight);
+							if (h < 0f) under++;
+						}
+					Log("  layer " + i + ": " + (p.prototype != null ? "mesh " + p.prototype.name : "texture " + (p.prototypeTexture != null ? p.prototypeTexture.name : "?")) + " mode " + p.renderMode + " w " + p.minWidth + "-" + p.maxWidth + " h " + p.minHeight + "-" + p.maxHeight + " colours " + ColorUtility.ToHtmlStringRGB(p.healthyColor) + "/" + ColorUtility.ToHtmlStringRGB(p.dryColor) + ": cells(1/4) " + cells + " sum " + sum + " under sea " + under);
+				}
+			}
+			foreach (var g in all.Where(x => System.Text.RegularExpressions.Regex.IsMatch(x.name, "grass|weed|kelp|seaplant", System.Text.RegularExpressions.RegexOptions.IgnoreCase)).GroupBy(x => PlaceableCatalog.CleanName(x.name)))
+				Log("  object " + g.Key + " x" + g.Count() + " y " + g.Min(x => x.position.y).ToString("F1") + ".." + g.Max(x => x.position.y).ToString("F1") + " parent " + (g.First().parent != null ? g.First().parent.name : "-") + " renderers " + g.First().GetComponentsInChildren<Renderer>(true).Length);
+			yield break;
+		}
+
 		/// <summary>Depth bands of the ground (m below the sea): 0-2, 2-5, 5-10, 10-20, 20-40, 40-80, 80+.</summary>
 		static readonly float[] DepthBands = { 0f, 2f, 5f, 10f, 20f, 40f, 80f, 10000f };
 

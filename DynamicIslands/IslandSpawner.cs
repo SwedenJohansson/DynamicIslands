@@ -747,6 +747,8 @@ namespace DynamicIslands.Editor
 					TerrainPainter.Setup(spawnedTerrain, worldPosition.y);
 				}
 
+				// (Raft's short sea grass on its sea floor - PF-D3; a flying island's sea floor is gone)
+				if (!flying) SeaGrass.Apply(spawnedTerrain, island, cropX, cropZ, cropSize);
 				if (flying) MakeFlying(data, terrainGO.transform, island.WaterLevel, worldPosition.y);
 			}
 

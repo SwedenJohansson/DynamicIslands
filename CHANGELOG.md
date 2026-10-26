@@ -9,16 +9,21 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
-## 2026-10-26: Easier clicks, fuller islands
+## 2026-10-26: Caves, easier clicks, fuller islands
 
 ### Added
+- **Caves** on the editor's Terrain tab: **Tunnel** lays Raft's own cave tunnels along a drag into a hill, with
+  Balboa's bear den as a room at the end (or an open far end), raises the ground over them into a hill and levels the
+  way to the mouth. **Slope** tips it down or up. One Ctrl+Z takes it all back.
+- **Sea grass** in the editor's Paint ground group: brush Raft's own short sea grass onto the sea floor. It grows
+  only under water (Shift takes it away), is saved with the island and grows on its sea floor in your world.
+- **A tip in your first worlds**: a little after you arrive, a message says that **Esc > Custom Islands** has the
+  world's islands and settings (at most three times, never once you have opened it). The New Game box says it too,
+  under the plan.
 - **World option Fuller random islands** (off by default; the New Game box or Esc > Custom Islands): brand-new
   islands generated while sailing come about as full as Raft's own islands, on land and under water, sometimes with a
   small ruin. Their animals are few: 70% have one hostile animal and 50% one friendly animal, which don't come back.
   The same island for every player and after a reload. Off, they come as before.
-- **A tip in your first worlds**: a little after you arrive, a message says that **Esc > Custom Islands** has the
-  world's islands and settings (at most three times, never once you have opened it). The New Game box says it too,
-  under the plan.
 
 ### Fixed
 - **Big palms no longer take every click around them** in the editor: a big object is selected only by clicking the

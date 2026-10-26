@@ -65,6 +65,7 @@
     <Compile Include="CaveBacks.cs" />
     <Compile Include="CaveGround.cs" />
     <Compile Include="CaveMountain.cs" />
+    <Compile Include="CaveTool.cs" />
     <Compile Include="CustomIslandSpawner.cs" />
     <Compile Include="DevTests.cs" />
     <Compile Include="DevTestsGapsB.cs" />
@@ -141,6 +142,7 @@
     <Compile Include="IslandRename.cs" />
     <Compile Include="PiecesWindow.cs" />
     <Compile Include="SelectionTools.cs" />
+    <Compile Include="SeaGrass.cs" />
     <Compile Include="ObjectPick.cs" />
     <Compile Include="MyIslandsWindow.cs" />
     <Compile Include="StoryRemakes.cs" />
@@ -321,6 +323,8 @@
     <Compile Include="ZiplineEnds.cs" />
     <Compile Include="TestStart.cs" />
     <Compile Include="DevTestsTestStart.cs" />
+    <Compile Include="DevTestsCaveTool.cs" />
+    <Compile Include="DevTestsSeaGrass.cs" />
     <Compile Include="DevTestsPlayerFeedback.cs" />
     <Compile Include="DevTestsBuriedTreasure.cs" />
     <Compile Include="BuriedTreasure.cs" />

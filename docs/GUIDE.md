@@ -662,11 +662,25 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
 - **Paint ground:** the style's four textures (for a tropical island Sand, Grass, Rock, Seabed). **Auto** textures an
   area by its height and slope again. **Mix** adds a second style's four textures (eight in all): a tropical island
   with a snowy peak, a desert with forest ground. Older versions of the mod show the first style's textures there.
+  **Sea grass** grows Raft's own short sea grass on the sea floor: hold the mouse down and tufts come up under the
+  brush, thicker the longer you hold (two tufts a spot at most). It grows only where the ground is under the sea, so
+  you can brush along a shore and the beach stays bare; **Shift** takes it away. Each stroke is one Ctrl+Z. The
+  grass is saved with the island and shows on its sea floor in your world (not under a flying island). New and
+  Generate start without grass; Generate's Ctrl+Z brings it back. Older versions of the mod open the island without it.
 - **Brush:** size, strength and **Edge**: **Smooth** (soft all the way out, as before), **Linear** or **Hard** (full
   strength up to a thin rim - for terraces and sharp paint borders).
 - **Stamps:** click the ground to put down a **Hill**, **Peak**, **Crater**, **Mesa**, **Lagoon** or **Ridge**, as big
   as the brush (Q/E turn it). **Save stamp...** keeps the land under the brush as a stamp of your own; **Manage...** beside it renames or
   deletes your stamps.
+- **Caves:** **Tunnel** digs a cave you can walk into. Press where its mouth is to be and drag the way it goes, into a
+  hill or across flat ground: Raft's own cave tunnels (the ones on Temperance) are laid end to end along the drag, as
+  many as fit (up to 12, about 10 m each), and the ground is raised over them into a hill, filled up under them and
+  levelled in front of the mouth, which stays open. **Slope** tips the tunnel down into the ground or up (up to 12°);
+  **Cave room at the end** ends it in Balboa's bear den (off: an open far end, a tunnel through the hill); **Hill over
+  it** off leaves the ground as it is (for a cave inside a hill you made yourself). Esc cancels the drag; one **Ctrl+Z**
+  takes the pieces and the ground back together. The pieces are ordinary objects: move, delete or tint them like any
+  other; they save with the island and come along into Test and multiplayer. In a world the rock over them is solid
+  and no daylight shows through.
 
 **Sea floor.** On the Island tab, **Sea floor: Deep / Shallow** switches the sea around the island without making it
 again: the land keeps its height above the sea, the untouched sea floor goes down (a slope falls away from the shore)
@@ -2942,6 +2956,7 @@ already in the world is taken away. What each one does from the moment it change
 | Binoculars see through fog | At once (the haze eases in over a second); off: Raft's own fog |
 | Mirrored islands | Islands that spawn from now on (one already in the world changes when it comes back into view); off: they spawn as made |
 | No minimap | At once: the island map is hidden for every player and its keys do nothing; off: it works again (if the player's own Minimap box is on) |
+| Fuller random islands | Islands generated from now on; ones already generated stay as they are |
 | Lightning strikes | The next storm can have bolts (one blowing now too); off, a bolt already in the sky finishes |
 | Extra upgrades | Off: the recipes are hidden; upgrades built or worn keep working, learned ones are kept |
 | Scrambled blueprints / Story order (retired, off only) | Untaken blueprints go back to Raft's places / the Receiver goes back to Raft's order |
@@ -2951,7 +2966,6 @@ already in the world is taken away. What each one does from the moment it change
 | Islands while sailing | The next random island is picked from the new list; islands already here stay |
 
 ### 9.2 World rules: monster difficulty and build cost
-| Fuller random islands | Islands generated from now on; ones already generated stay as they are |
 
 #### Monster difficulty
 
@@ -3436,15 +3450,6 @@ and no picture is taken. The **Minimap** box in each player's **Defaults... > Ke
 on (it is that player's own switch when the option is off). **Pings** (G) still work. Off by default; the host's choice
 applies to every player, joining ones too, and can be changed in a running world.
 
-#### Ghost ship
-
-On about **one night in four** a **ghost ship** comes up out of the dark a while after nightfall and drifts past the
-raft, close enough to **swim or sail to**: a wrecked ship of Raft's own pieces - a foundation hull with a pointed bow,
-a stern cabin with a roof, railings, a mast with a flag and a torn sail, an anchor and lanterns - lit by a pale
-**cyan glow** in a thin mist. Climb aboard by the ladders on either side.
-
-- **Its loot is good:** a large chest (the ghost ship's hoard: titanium, explosive goo, circuit boards, a battery,
-  good healing salves, honey, metal, copper, bolts, hinges), the captain's chest in the cabin, two chests on deck and
 #### Fuller random islands
 
 **Brand-new islands generated while sailing** ([section 3](#3-sailing-custom-islands-in-your-world)) come about as full as Raft's own islands: more plants, rocks
@@ -3454,6 +3459,15 @@ comes from the island's seed, so every player meets the same island. **Off by de
 come as they always did. It changes only islands generated after it is ticked; one already generated keeps its file.
 The host's choice; it can be changed in a running world.
 
+#### Ghost ship
+
+On about **one night in four** a **ghost ship** comes up out of the dark a while after nightfall and drifts past the
+raft, close enough to **swim or sail to**: a wrecked ship of Raft's own pieces - a foundation hull with a pointed bow,
+a stern cabin with a roof, railings, a mast with a flag and a torn sail, an anchor and lanterns - lit by a pale
+**cyan glow** in a thin mist. Climb aboard by the ladders on either side.
+
+- **Its loot is good:** a large chest (the ghost ship's hoard: titanium, explosive goo, circuit boards, a battery,
+  good healing salves, honey, metal, copper, bolts, hinges), the captain's chest in the cabin, two chests on deck and
   barrels. The captain's log lies on the cabin floor.
 - **Its crew are ghosts:** Raft's own monsters, made **see-through with a faint glow** - hard rats on deck and a
   screecher or two over it. They don't come back once beaten.

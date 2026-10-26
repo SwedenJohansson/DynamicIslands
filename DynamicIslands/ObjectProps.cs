@@ -21,6 +21,11 @@ namespace DynamicIslands.Editor
 			CreatureSpeed = "creature.speed", CreatureSize = "creature.size", CreatureRespawn = "creature.respawn";
 		public const string NoteTitle = "note.title", NoteText = "note.text";
 		public const string TintColor = "tint.color", TintAmount = "tint.amount";
+		/// <summary>"rock": the object's rock textures swapped for Raft's brown island rock (the cave tool's tunnels, whose
+		/// icy rock shader has no colour to tint).</summary>
+		public const string Skin = "skin", SkinRock = "rock";
+		/// <summary>"1": a bear den laid at a cave tool tunnel's end - a rock wall across its wide mouth around the tunnel (CaveTool.Plug).</summary>
+		public const string CavePlug = "cave.plug";
 		/// <summary>Loot: "UniqueItemName*amount;..." (Raft's item names), and "0" = never fills up again.</summary>
 		public const string LootItems = "loot.items", LootRefill = "loot.refill";
 		/// <summary>Buried treasure: Raft's treasure kind (its uniqueTreasureIndex; 0 = the common chest).</summary>
@@ -252,6 +257,66 @@ namespace DynamicIslands.Editor
 		{
 			if (HasTint(props)) ApplyTint(root, Tint(props), TintStrength(props));
 			else ApplyTint(root, Color.white, 0f);
+			if (Get(props, Skin, "") == SkinRock) ApplyRockSkin(root);
+			if (Get(props, CavePlug, "") == "1") CaveTool.Plug(root);
+		}
+
+		static Texture rockDiffuse, rockNormal;
+		static bool rockMissingSaid;
+
+		/// <summary>Raft's brown island rock (Rock_Stylized), from the ground textures borrowed or any loaded material.</summary>
+		static bool FindRock()
+		{
+			if (rockDiffuse != null) return true;
+			// (the borrowed ground layer first: it is kept for the islands' ground, where a search of what is loaded can miss it)
+			TerrainLayer layer = TerrainPainter.RaftLayer("Rock_Stylized_basecolor");
+			if (layer != null) { rockDiffuse = layer.diffuseTexture; rockNormal = layer.normalMapTexture; }
+			if (rockDiffuse == null || rockNormal == null)
+				foreach (Texture2D t in Resources.FindObjectsOfTypeAll<Texture2D>())
+				{
+					if (t == null) continue;
+					if (rockDiffuse == null && t.name == "Rock_Stylized_basecolor") rockDiffuse = t;
+					else if (rockNormal == null && t.name == "Rock_Stylized_normal") rockNormal = t;
+				}
+			if (rockDiffuse == null) { if (!rockMissingSaid) Debug.LogWarning("[CUSTOM ISLANDS] Rock skin: Raft's Rock_Stylized texture is not loaded - the cave keeps its own rock"); rockMissingSaid = true; return false; }
+			rockDiffuse.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+			if (rockNormal != null) rockNormal.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+			return true;
+		}
+
+		static readonly string[] RockDiffuseProps = { "_TopDiffuse", "_SideDiffuse" }, RockNormalProps = { "_TopNormal", "_SideNormal" };
+
+		/// <summary>Swaps the top and side rock textures of root's rock materials (the CaravanIslandRocks shader) for Raft's
+		/// brown island rock, by property blocks. Returns how many materials changed.</summary>
+		public static int ApplyRockSkin(GameObject root)
+		{
+			if (root == null || !FindRock()) return 0;
+			int done = 0;
+			foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true))
+			{
+				Material[] mats = r.sharedMaterials;
+				for (int i = 0; i < mats.Length; i++)
+				{
+					Material m = mats[i];
+					if (m == null || !m.HasProperty("_TopDiffuse")) continue;
+					var block = new MaterialPropertyBlock();
+					if (mats.Length == 1) r.GetPropertyBlock(block); else r.GetPropertyBlock(block, i);
+					foreach (string prop in RockDiffuseProps) if (m.HasProperty(prop)) block.SetTexture(prop, rockDiffuse);
+					if (rockNormal != null) foreach (string prop in RockNormalProps) if (m.HasProperty(prop)) block.SetTexture(prop, rockNormal);
+					// (and any other colour or normal map the shader takes - the ice's other layers stayed white, 10-26)
+					foreach (string prop in m.GetTexturePropertyNames())
+					{
+						Texture was = m.GetTexture(prop);
+						if (was == null || RockDiffuseProps.Contains(prop) || RockNormalProps.Contains(prop)) continue;
+						string n = was.name.ToLowerInvariant();
+						if (n.EndsWith("_basecolor") || n.EndsWith("_albedo") || n.EndsWith("_diffuse")) block.SetTexture(prop, rockDiffuse);
+						else if (rockNormal != null && n.EndsWith("_normal")) block.SetTexture(prop, rockNormal);
+					}
+					if (mats.Length == 1) r.SetPropertyBlock(block); else r.SetPropertyBlock(block, i);
+					done++;
+				}
+			}
+			return done;
 		}
 
 		#endregion

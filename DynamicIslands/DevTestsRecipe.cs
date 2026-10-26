@@ -1343,6 +1343,29 @@ namespace DynamicIslands
 				System.Text.RegularExpressions.Match qm = System.Text.RegularExpressions.Regex.Match(verb, @"^(quest|step)([2-9])$");
 				if (qm.Success) { questNo = int.Parse(qm.Groups[2].Value) - 1; verb = qm.Groups[1].Value; }
 				if (verb == "wait") { for (int i = 0; i < Math.Max(1, t.Length > 1 ? (int)F(t[1]) : 1); i++) yield return null; continue; }
+				if (verb == "cave")
+				{
+					// cave from x z to x z [slope=<deg>] [end=room|open] [hill=1|0] [as=<group>]: the editor's cave tool (PF-D2) - a
+					// tunnel of cave pieces from the mouth (on the ground at the first point) the way of the second, a room at its end
+					int cf = Array.IndexOf(t, "from"), ct = Array.IndexOf(t, "to");
+					if (cf < 0 || ct < 0 || ct + 2 >= t.Length) { Fail("recipe " + name + ", " + rl.Where + " (" + line + "): cave from <x> <z> to <x> <z> [slope=] [end=room|open] [hill=1|0] [as=]"); yield break; }
+					var copt = Options(t.Skip(ct + 3));
+					Vector2 ca = WorldXZ(F(t[cf + 1]), F(t[cf + 2])), cb = WorldXZ(F(t[ct + 1]), F(t[ct + 2]));
+					Vector3 mouth = new Vector3(ca.x, GroundY(ca.x, ca.y), ca.y);
+					List<GameObject> laid = null;
+					yield return CaveTool.Lay(mouth, new Vector3(cb.x, mouth.y, cb.y), copt.ContainsKey("slope") ? F(copt["slope"]) : 0f,
+						!copt.ContainsKey("end") || copt["end"] != "open", !copt.ContainsKey("hill") || copt["hill"] != "0", m => laid = m);
+					if (laid == null || laid.Count == 0) { Fail("recipe " + name + ", " + rl.Where + " (" + line + "): the cave wasn't laid"); yield break; }
+					foreach (GameObject g in laid) recipePlaced.Add(g);
+					if (copt.ContainsKey("as"))
+					{
+						List<EditorGameObject> cg;
+						if (!recipeGroups.TryGetValue(copt["as"], out cg)) recipeGroups[copt["as"]] = cg = new List<EditorGameObject>();
+						cg.AddRange(laid.Select(g => g.GetComponent<EditorGameObject>()));
+					}
+					placed += laid.Count;
+					continue;
+				}
 				// (a generate with buildings or caves: their objects of Raft's islands loaded first)
 				if (verb == "generate") yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(IslandGenSettings.FromText(gen.ToString())));
 				try
