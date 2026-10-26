@@ -27,6 +27,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   The same island for every player and after a reload. Off, they come as before.
 
 ### Fixed
+- **Test on an island with a high peak in its middle** no longer drops you inside the mountain (Raft then moved you
+  off the island): without a test start you stand on the low flat land (a beach) nearest the middle.
 - **Big palms no longer take every click around them** in the editor: a big object is selected only by clicking the
   object itself, not the ground under its crown.
 

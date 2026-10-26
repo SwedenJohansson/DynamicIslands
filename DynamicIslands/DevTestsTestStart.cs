@@ -172,5 +172,88 @@ namespace DynamicIslands
 			try { File.Delete(path); } catch { }
 			if (ok) Log("PASS: test start world"); else Fail("test start world");
 		}
+
+		/// <summary>A 400 m square island file (PF-D7): a beach ring 3 m above the sea round a steep peak 540 m high in the middle
+		/// (land up to 560 of the editor's 600 m; the sea at 20).</summary>
+		static IslandFile PeakFile(string name)
+		{
+			const int res = 257;
+			const float size = 400f, height = 600f;
+			var f = new IslandFile { Name = name, TerrainSize = new Vector3(size, height, size), HeightmapResolution = res, Heights = new float[res, res], WaterLevel = IslandFile.DefaultWaterLevel };
+			for (int z = 0; z < res; z++)
+				for (int x = 0; x < res; x++)
+				{
+					float r = new Vector2(x - (res - 1) / 2f, z - (res - 1) / 2f).magnitude * size / (res - 1);
+					float y = r > 170f ? 12f : r > 120f ? 23f : 23f + 537f * (1f - r / 120f);
+					f.Heights[z, x] = y / height;
+				}
+			return f;
+		}
+
+		[ConsoleCommand(name: "CITestStartPeak", docs: "Dev, in a world (host): PF-D7 - Test on an island with a peak 540 m high in its middle (a beach round it): the old ray from 400 m above the sea starts inside the peak; without a test start the player goes to the low flat beach nearest the middle, is put there as Test does and still stands on the island's ground 6 s later (picture shot_teststart_peak.png); a test start on the peak's top still wins. The island and its file are taken away after, the player back on the raft")]
+		public static void TestStartPeakCommand(string[] args) { StartTest(TestStartPeakRoutine()); }
+
+		static IEnumerator TestStartPeakRoutine()
+		{
+			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
+			if (!raftPos.HasValue || DynamicIslands.InEditor()) { Fail("test start peak: in a world"); yield break; }
+			bool ok = true;
+			const string name = "citest-peak";
+			string path = IslandSpawner.PathFor(name);
+			PeakFile(name).Save(path);
+			Vector3 pos = raftPos.Value + Vector3.forward * 420f; pos.y = 0f;
+			int before = IslandWorldState.Islands.Count;
+			yield return DynamicIslands.instance.SpawnIslandFile(name, pos, true);
+			IslandWorldState.Entry e = IslandWorldState.Islands.Skip(before).FirstOrDefault();
+			if (e == null || e.Root == null) { Fail("the peak island did not spawn"); try { File.Delete(path); } catch { } yield break; }
+			yield return new WaitForSeconds(1f); // (as Test waits)
+			float sea = e.Position.y;
+			Transform root = e.Root.transform;
+			Terrain terrain = root.GetComponentInChildren<Terrain>();
+			float peak = terrain != null ? terrain.SampleHeight(e.Position) + terrain.transform.position.y : float.NaN;
+			Vector3? old = TestStart.GroundBelow(e.Position + Vector3.up * 400f, 800f, root);
+			Check(ref ok, peak > sea + 400f, "the peak is " + (peak - sea).ToString("0") + " m above the sea: the old ray from 400 m started inside it (it found " + (old.HasValue ? "something at " + (old.Value.y - sea).ToString("0") + " m, under the ground" : "nothing") + ")");
+
+			string how;
+			Vector3 stand = TestStart.StandPoint(e, out how);
+			float r = new Vector2(stand.x - e.Position.x, stand.z - e.Position.z).magnitude;
+			RaycastHit hit;
+			bool ground = Physics.Raycast(stand, Vector3.down, out hit, 5f, ~0, QueryTriggerInteraction.Ignore) && hit.collider.transform.IsChildOf(root);
+			Check(ref ok, how.Contains("low flat") && stand.y > sea + 1f && stand.y < sea + 10f && r > 115f && r < 175f && ground && hit.distance < 2.5f && !TestStart.Steep(root, hit.point),
+				"no test start: on the beach (" + how + ", " + r.ToString("0") + " m from the middle, " + (stand.y - sea).ToString("0.0") + " m above the sea, " + (ground ? hit.distance.ToString("0.0") + " m over the island's ground" : "no island ground under it") + ")");
+
+			// (put there as Test does, and still standing on the island's ground a few seconds later - not under it, not moved off)
+			yield return EnsureAlive();
+			Network_Player player = RAPI.GetLocalPlayer();
+			PlayerMove.To(player, stand);
+			Vector3 look = e.Position - stand; look.y = 0f;
+			if (look.sqrMagnitude > 1f) player.transform.rotation = Quaternion.LookRotation(look);
+			yield return new WaitForSeconds(6f);
+			for (float t = 0f; t < 2f && !player.PersonController.IsGrounded; t += 0.25f) yield return new WaitForSeconds(0.25f);
+			Vector3 now = player.transform.position;
+			Collider under = player.PersonController.groundRaycastHit.collider;
+			float surface = terrain != null ? terrain.SampleHeight(now) + terrain.transform.position.y : float.NegativeInfinity;
+			float moved = new Vector2(now.x - stand.x, now.z - stand.z).magnitude;
+			Check(ref ok, player.PersonController.IsGrounded && under != null && under.transform.IsChildOf(root) && now.y > surface - 1f && moved < 6f,
+				"6 s later the player stands on the island's ground (" + (under != null ? under.name : "nothing") + ", " + (now.y - surface).ToString("0.0") + " m over its surface, " + moved.ToString("0.0") + " m from where put)");
+			Screenshot(new[] { "teststart_peak" });
+			yield return new WaitForSeconds(0.6f);
+
+			// (the Island tab's test start still wins: on the peak's top)
+			Vector3 local = e.Position - root.position;
+			local.y = peak - root.position.y;
+			IslandCache.PropsOf(e)[TestStart.Key] = ZiplineEnds.Text(local);
+			Vector3 st = TestStart.StandPoint(e, out how);
+			Check(ref ok, how.Contains("test start") && st.y > peak && st.y < peak + 3f && new Vector2(st.x - e.Position.x, st.z - e.Position.z).magnitude < 1f,
+				"with a test start on the peak: there (" + how + ", " + (st.y - sea).ToString("0") + " m above the sea)");
+			IslandCache.PropsOf(e).Remove(TestStart.Key);
+
+			OnRaftCommand();
+			yield return null;
+			IslandWorldState.RemoveIds(new[] { e.Id }, true);
+			yield return null;
+			try { File.Delete(path); } catch { }
+			if (ok) Log("PASS: test start peak"); else Fail("test start peak");
+		}
 	}
 }

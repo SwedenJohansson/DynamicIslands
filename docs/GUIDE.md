@@ -857,7 +857,8 @@ behaviours (see [section 5](#5-making-islands-come-alive)).
   (or a deck, a roof) and click **Test start: where I look**: a small **green marker** (a pole with a ball) shows the
   spot, in the editor only - it is not an object and players never see it. **Clear** takes it away; **Ctrl+Z** undoes
   either. It is saved with the island. Without one, Test puts you on the island's middle, or on the land nearest the
-  middle when the middle is sea (an atoll, a crescent). It is only for Test: players reach the island by raft, wherever
+  middle when the middle is sea (an atoll, a crescent). When the middle is a high peak (over 60 m) or too steep to
+  stand on, you go to the low flat land (a beach) nearest it. It is only for Test: players reach the island by raft, wherever
   they like.
 - **About this island** (the last group of the tab): how many objects the island has, what the height means **in a
   world** ("normal (at sea level)", "flying 60 m above the sea" or "under water, top of the land 30 m deeper than
@@ -1438,7 +1439,7 @@ moment, with other islands after it ([7.2](#72-your-first-world-plan-step-by-ste
    world with the plan **No custom islands**, so nothing else turns up.
 3. Your island is put beside the raft and you stand on it: on the ground at its **test start** if you set one (Island
    tab, [section 4.4](#44-the-island-tab)), else on its middle - or, when the middle is sea, on the land nearest it, not
-   the sea floor. Islands tried there before are taken away first. Their journal pages and story items go too, so a quest starts fresh.
+   the sea floor; when the middle is a high peak or too steep, on the low flat land (a beach) nearest it. Islands tried there before are taken away first. Their journal pages and story items go too, so a quest starts fresh.
    You arrive with the **starter kit** (below), hunger, thirst, health and oxygen full.
 4. Walk around, open the chests, read the notes, meet the creatures, try the quest.
 5. **Esc → Custom Islands → Back to the editor**: the test world is left **without saving** and the editor opens
