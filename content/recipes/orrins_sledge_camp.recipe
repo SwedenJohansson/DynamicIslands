@@ -213,7 +213,7 @@ loot orrinschest Blueprint_MetalDetector*1;Wool*2;Rope*2;story:harness*1
 prop orrinschest loot.refill=0
 loot cookstores Bucket*1;Leather*2;Wool*2;Raw_GenericMeat*2
 prop cookstores loot.refill=0
-loot sledgeshed Blueprint_EngineControls*1;Bolt*3;Hinge*2;MetalIngot*1
+loot sledgeshed Blueprint_EngineControls*1;Blueprint_BatteryCharger*1;Bolt*3;Hinge*2;MetalIngot*1
 prop sledgeshed loot.refill=0
 prop sledgeshed obj.name=sledgeshed
 prop sledgeshed beh.hidden=1
@@ -233,7 +233,7 @@ prop sledgewinch on.use=give||story:sledge*1\nshow|sledgeshed\nmessage||The harn
 prop sledgewinch else.use=message||The winch has no harness. Orrin's notes: one piece in the hay, one in my hut, one with the zipline crate.
 loot lookoutbox Blueprint_Firework*1;Machete*1;Rope*2;Nail*6
 prop lookoutbox loot.refill=0
-loot ziplinecrate Blueprint_ZiplineBase*1;Rope*4;MetalIngot*2;story:harness*1
+loot ziplinecrate Blueprint_ZiplineBase*1;Blueprint_ZiplineTool*1;Rope*4;MetalIngot*2;story:harness*1
 prop ziplinecrate loot.refill=0
 
 # --- DEEP 10-24: Orrin's trail - the quarry, the bear cave, the rim, the extras ---
@@ -277,9 +277,11 @@ step blueprint|Blueprint_MetalDetector|1|Take the metal detector's plans from Or
 step read|Orrin's daybook|1|Read Orrin's daybook on his bed (his tool rack has an empty hook)
 step blueprint|Blueprint_Firework|1|Climb the lookout and take the firework's plans
 step blueprint|Blueprint_ZiplineBase|1|Cut through to the crate by the pine wood and take the zipline base's plans
+step blueprint|Blueprint_ZiplineTool|1|Take the zipline tool's plans from the crate too
 step collect|story:harness|3|Find the sledge winch's three harness pieces (barn, Orrin's hut, the crate)
 step collect|story:sledge|1|Rig the harness and wind the sledge winch
 step blueprint|Blueprint_EngineControls|1|Take the engine controls' plans from the sledge shed
+step blueprint|Blueprint_BatteryCharger|1|Take the battery charger's plans from the sledge shed too
 step reach|quarry|1|Follow Orrin's trail north to his quarry on the ridge
 step read|Orrin's trail mark|1|Find Orrin's trail mark in the bear cave north-west of the quarry
 step reach|rim_top|1|Climb the quarry ridge on foot to Orrin's cairn on the rim

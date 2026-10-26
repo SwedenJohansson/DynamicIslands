@@ -36,25 +36,25 @@ expect shown ziplinecrate
 open Zipline crate
 wait 3
 expect story harness 3
-expect step 8
+expect step 9
 use sledgewinch
 expect story harness 0
 expect shown sledgeshed
-expect step 9
+expect step 10
 open Sledge shed
 wait 3
 # DEEP 10-24: Orrin's trail
-expect step 10
+expect step 12
 zone quarry
-expect step 11
+expect step 13
 zone bear_cave
 read Orrin's trail mark
-expect step 12
+expect step 14
 zone rim_top
-expect step 13
+expect step 15
 open Orrin's rim cache
 wait 3
-expect step 14
+expect step 16
 read The Warden's letter
 expect done
 read Orrin's note 4
