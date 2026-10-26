@@ -487,6 +487,16 @@ namespace DynamicIslands.Editor
 			skySeaButton = UIKit.Button(skyRow, "Raft's sky and sea", () => { RaftSkySea.Toggle(); RefreshSkySea(); },
 				"On: Raft's own sky, sun and ocean (with its waves) instead of the editor's plain sky and blue sea plane - the Light list still sets the time of day. Taken from the main menu as the editor opens (kept; only in the editor)", -1, 26, 12);
 
+			// (where Test in a world puts you: an island whose land doesn't cover its middle dropped the tester in the sea - TestStart)
+			RectTransform testGroup = UIKit.Group(s, "Test start");
+			testStartText = UIKit.Label(testGroup, "", 12, UIKit.TextMuted);
+			testStartText.name = "TestStartText";
+			RectTransform testRow = UIKit.Row(testGroup, 26f, 4f, "TestStartRow");
+			UIKit.Button(testRow, "Test start: where I look", () => TestStart.SetAt(TestStart.LookPoint()),
+				"Test in a world puts you here: look at the ground (a deck, a roof, a cave floor) and click. A green marker shows it in the editor only. Ctrl+Z undoes", -1, 26f, 12).name = "Button_TestStartHere";
+			testStartClear = UIKit.Button(testRow, "Clear", TestStart.Clear, "No test start: Test puts you on the island's middle (or the land nearest it)", 64, 26f, 12);
+			testStartClear.name = "Button_TestStartClear";
+
 			RectTransform gen = UIKit.Group(s, "Generate");
 			UIKit.Label(gen, "Make a whole island from a seed: size, height, peaks and objects. Ctrl+Z brings back what you had.", 13, UIKit.TextMuted);
 			UIKit.Button(gen, "Open the generator...", GeneratorWindow.Open, "Opens the island generator");
@@ -639,6 +649,8 @@ namespace DynamicIslands.Editor
 		static GameObject objectTips;
 		static InputField infoTitleField, infoAuthorField, infoTextField, infoRegrowField, infoNotBeforeField;
 		static Text infoNotBeforeText;
+		static Text testStartText;
+		static Button testStartClear;
 		static Text questText;
 
 		/// <summary>The Island tab's "Shown to players" group: the island's name, author and a short description (IslandProps).</summary>
@@ -821,6 +833,9 @@ namespace DynamicIslands.Editor
 			RefreshPresets();
 			RefreshInfo();
 			RefreshStats();
+			if (testStartText != null) testStartText.text = TestStart.Describe();
+			if (testStartClear != null) testStartClear.interactable = TestStart.Get(DynamicIslands.currentIslandProps).HasValue;
+			TestStart.RefreshMarker();
 		}
 
 		static void RefreshStats()
