@@ -21,10 +21,18 @@ include lib_highwater
 # DEEP 10-25: Bob Hill at the west end with Halvard's sighting tower on it (his log on the summit), the old weather
 # station in ruins on the north side (Dr. Anja Roos's note), the night watchman's hole in the east, the survey plane in
 # the south. Voices: Halvard, Anja Roos, the watchman Per Ek, the survey pilot.
+# OLDER4 10-26 (one-hour pass): Radius 40 -> 75, Stretch 2.2 -> 1.3: about 170 m long and 130 wide, Raft-sized. The
+# hall, shed, zipline, shaft and the 10-25 places keep their spots; new land north and south: the Iron Ridge on the
+# north side (12 m, the lodestone the compasses point at; the Institute's lodestone survey on top), Needle Knoll in the
+# south-west (16 m, a trail up), the compass garden in the south-east (four lamps; all lit show the garden's box), and
+# the survey pilot's five lost photographs about the island (a set; all five show his film case by the plane). Quest
+# 15 -> 18 steps: the Iron Ridge, its survey note and Needle Knoll's top before the zipline. The keel zone moved out
+# past the new south coast (0 -76).
+include lib_lastpost
 new
 gen Trees=0.08 Bushes=0.3 Rocks=0.3 Harvest=0.3 BeachThings=0
-gen Seed=9601 Radius=40 Height=8 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.8 PeakShape=0.5
-gen Stretch=2.2 StretchAngle=0
+gen Seed=9601 Radius=75 Height=8 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.8 PeakShape=0.5
+gen Stretch=1.3 StretchAngle=0
 gen Water=0 SeaRocks=0 SeaFinds=0 Sunken=0 Hostiles=0 Friendly=0 SeaLife=0
 generate
 elevation 12
@@ -47,6 +55,12 @@ brush flatten at -25 26 r=11 s=20 frames=500 h=5
 call ar_ruin x=-25 z=26 h=5 yaw=0 w=3 d=2 al=weatherstation
 call ar_cave x=62 z=6 h=4 yaw=180 al=watchrock chest=watchchest
 call ar_plane x=20 z=-28 h=5 yaw=200 al=surveyplane crate=planecrate
+# --- OLDER4 10-26 terrain: the Iron Ridge (north, peak 12 m), Needle Knoll (south-west, 16 m) and its trail, the compass
+# garden's pad (south-east) --------------------------------------------------------------------------------------------
+call ar_ridge x1=-8 z1=48 x2=30 z2=42 h=4 top=8 r=8
+call hw_mount x=-28 z=-42 b=15 h=16
+call hw_trail x=-28 z=-42 b=15 h=16 a0=30 turn=300 n=26 h0=4
+call lp_pad x=38 z=-40 r=10 h=4
 
 # --- The pendulum frame: four stone posts, a crossbeam of two posts laid on them, the chain hanging from the beam, the
 # bob in its cradle; the frame's lever; the hall rules ----------------------------------------------------------------
@@ -90,9 +104,9 @@ place Zone_Trigger lowzone at 22 0 ground
 store pendshop at 20 -3 ground
 place Note_Sign shaftwarning at 24.5 2.5 ground sit yaw=270
 place TangaroaHatchRoom_Hatch shaft at 25 0 ground sit yaw=90
-# (the keel zone hangs in the open air beside the south coast at the water line: under it a flying island leaves out
-# everything below its own sea level, so it cannot sit under the island)
-place Zone_Trigger keelzone at 0 46 h=0
+# (the keel zone hangs in the open air beyond the south coast at the water line: under it a flying island leaves out
+# everything below its own sea level, so it cannot sit under the island; OLDER4 10-26: 0 46 -> 0 -76, past the new coast)
+place Zone_Trigger keelzone at 0 -76 h=0
 place Placeable_Lantern_Metal - at 22 3.5 ground y=0.05 sit
 
 # --- Things to gather ------------------------------------------------------------------------------------------------
@@ -106,8 +120,8 @@ call hw_mast x=-58 z=0 h0=28 lv=4 a=sighttower chest=sightbox top=Placeable_Lant
 place Note_Paper halvardlog at -62 -3.5 h=28.1 drop yaw=10
 scatter "Pickup_Landmark_Tree_Palm 3" 3 at -58 0 r=26 seed=9621 free=3
 scatter Bamboo_1 4 at -58 0 r=26 seed=9622 free=2
-scatter Bush 8 at -58 0 r=26 seed=9623 free=1
-scatter Bush2 5 at -58 0 r=26 seed=9624 free=1
+scatter Bush 8 at -56 0 r=20 seed=9623 free=1
+scatter Bush2 5 at -56 0 r=20 seed=9624 free=1
 loot sightbox OxygenBottle*1;Rope*2;CopperOre*2;Battery*1
 prop sightbox loot.refill=0
 note sightbox Sighting tower deck box | Halvard's box on the sighting tower: a battery for his lamp, rope, copper - and a diving bottle, 'for the root'.
@@ -131,11 +145,46 @@ note planecrate Survey plane's crate | The survey plane's crate: plastic, rope a
 place Note_Paper planenote at 14 -34 ground drop yaw=200
 place Creature_Llama llamas at -30 -14 ground
 prop llamas creature.count=2
+# --- OLDER4 10-26: the Iron Ridge (north) - its top as a zone, the Institute's lodestone survey on it ------------------
+call hw_zone x=11 z=45 al=ironz id=ironridge r=7 h=1 msg="The Iron Ridge. Black rock, heavy as iron - every compass on the island points here."
+place Note_Paper lodenote at 12 44 ground drop yaw=30
+call ar_plants_hill x=11 z=45 r=26 seed=9631
+# --- Needle Knoll (south-west): its foot and top as zones, a survey marker light on top ---------------------------------
+call hw_zone x=-15 z=-32 al=needlefootz id=needlefoot r=5 h=1 msg="Needle Knoll. A cut path winds up it - the survey team's."
+call hw_zone x=-28 z=-42 al=needletopz id=needletop r=7 h=1 msg="The top of Needle Knoll. The island's whole length below you, and the pendulum's frame in the middle."
+place Placeable_Lantern_Metal - at -30 -40 ground y=0.05 sit
+call ar_plants_hill x=-28 z=-42 r=18 seed=9641
+# --- The compass garden (south-east): four lamps on posts round a stone box; each lit lights the next ------------------
+call hw_zone x=38 z=-40 al=gardenz id=compassgarden r=7 h=1 msg="A ring of four lamp posts round a stone box - the Institute's compass garden."
+call lp_lamp x=38 z=-34 al=pi_lamp1 nm="Compass lamp north" grp="Compass lamps" on=0
+call lp_lamp x=44 z=-40 al=pi_lamp2 nm="Compass lamp east" grp="Compass lamps" on=0
+call lp_lamp x=38 z=-46 al=pi_lamp3 nm="Compass lamp south" grp="Compass lamps" on=0
+call lp_lamp x=32 z=-40 al=pi_lamp4 nm="Compass lamp west" grp="Compass lamps" on=0
+prop pi_lamp1 on.use=light|Compass lamp east|toggle
+prop pi_lamp2 on.use=light|Compass lamp south|toggle
+prop pi_lamp3 on.use=light|Compass lamp west|toggle
+prop pi_lamp4 on.use=light|Compass lamp north|toggle
+prop pi_lamp1 on.alllit=show|pi_lampchest\nmessage||All four compass lamps burn. In the middle of the ring the stone box's lid slides aside.
+call lp_hidden x=38 z=-40 al=pi_lampchest kind=Loot_Chest
+note pi_lampchest Compass garden box | The compass garden's box: the Institute's spare compasses, every needle pointing north - at the Iron Ridge - and copper and glass for their cases.
+loot pi_lampchest CopperIngot*2;Glass*3;MetalIngot*2;Battery*1
+scatter Bush 4 at 38 -40 r=14 seed=9651 free=2
+scatter "Pickup_Landmark_Tree_Palm 4" 2 at 38 -40 r=14 seed=9652 free=4
+# --- The survey pilot's five lost photographs (a set): all five show his film case by the plane -----------------------
+call lp_piece x=24 z=46 al=pi_photo1 set="Survey photographs"
+call lp_piece x=-26 z=-38 al=pi_photo2 set="Survey photographs"
+call lp_piece x=54 z=-14 al=pi_photo3 set="Survey photographs"
+call lp_piece x=-42 z=14 al=pi_photo4 set="Survey photographs"
+call lp_piece x=8 z=30 al=pi_photo5 set="Survey photographs"
+prop pi_photo1 on.set=show|pi_setchest\nmessage||Five photographs of the Gravity Sea from 300 m - laid side by side, every island points at one spot. By the survey plane, the pilot's film case has turned up.
+call lp_hidden x=26 z=-34 al=pi_setchest kind=Loot_Chest
+note pi_setchest Pilot's film case | J. Moe's film case: the last roll, developed, and his kit. "If you found my prints, you have walked the whole island. Good. Now go and look underneath it."
+loot pi_setchest Plastic*4;CopperIngot*2;Rope*2;Battery*1
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Pendulum Isle
 info author=Custom Islands
-info description=A long island, 88 m from end to end, hovering only 12 m over the water - sail under it. Bob Hill and Halvard's sighting tower at the west end, an old weather station, the night watchman's hole and a survey plane. On top the Institute's pendulum hall and generator shed, a zipline from end to end, and a shaft down to the island's keel. A Raft store at the low end. The sixth island of The Gravity Sea.
+info description=A broad island, 170 m from end to end, hovering only 12 m over the water - sail under it. Bob Hill and Halvard's sighting tower at the west end, the lodestone Iron Ridge in the north, Needle Knoll and a compass garden in the south, an old weather station, the night watchman's hole and a survey plane. On top the Institute's pendulum hall and generator shed, a zipline from end to end, and a shaft down to the island's keel. A Raft store at the low end. The sixth island of The Gravity Sea.
 island on.arrive=message||An island hanging 12 m over the water - low enough to sail under. Something swings slowly on top of it.
 
 story surveybolt|Survey bolt|Bolt|A brass survey bolt dug from the pendulum island's grass, stamped HALVARD - KEEL REF.
@@ -146,6 +195,7 @@ note shaftwarning Keel shaft warning | KEEL SHAFT - WARNING\n\nThe shaft goes th
 note halvardlog Halvard's sighting log | SIGHTING LOG - E. HALVARD\n\nFrom the tower: the quay's cut hill, the orchard's plate, the market. All of them where the field put them, all of them still. Only the pendulum below me moves.\n\nThe bob swings north-south now, never east-west. The field is not round any more. It has a direction: down, to the KEEL of this island, and through it to the seabed, to a well I have never seen.\n\nAnja thinks the Array's crown can be shut down from the root. I think the root is where the crown gets its strength from - and the only way to stop the crown is to stand on it.\n\nWe are both going to find out. I will leave this lamp lit, so whoever comes next sees the tower from the sea.
 note anjanote Dr. Anja Roos's note | Ernst -\n\nI have moved what is left of the weather station into the shed. The barometer reads the same on every island, whatever the height. Air does not care how high we are. Only iron does.\n\nThe spare bolt is buried west of the hall, as you ordered. I marked it with nothing - you said a detector would find it, and a fool would not.\n\nI am going down to the seabed with Marn's last bottle. If the pump hall still runs, the root can be reached. Do not follow me up your tower. Follow me down.\n\n- Anja
 note pernote Night watchman Per Ek's note | NIGHT WATCH - P. EK\n\nNight 1: the bob swung by itself at 2 in the morning. Nobody touched it. I wrote it down, as I was told.\nNight 3: the bob swings every night at 2. Halvard says 'tidal'. There is no tide 12 m up.\nNight 7: moved my bed out here, to the far end. I can hear it from here anyway. Tick. Tock.\nNight 9: the survey plane's pilot is staying in the south field. He says the compass in his plane points at the shaft hatch. I have nailed the hatch shut. Halvard has un-nailed it.
+note lodenote Lodestone survey | INSTITUTE LODESTONE SURVEY - RIDGE NORTH\n\nThe ridge is lodestone through and through. Every compass on the island points at it - but the field does not stop here. Read downwards: the pull runs from the ridge, under the hall, to the KEEL.\n\nThe pendulum swings north-south because of this ridge. What it measures is underneath us.\n\nNext: survey the island from Needle Knoll, then go down the keel shaft.\n- Survey team 3
 note planenote Survey pilot's note | Photographed the whole Gravity Sea from 300 m. Every island is pointing at the same spot on the seabed, like iron filings round a magnet. The camera jammed on the last frame. Leaving the plane here: the engine will not start while the pendulum swings. - J. Moe, Institute survey flight
 note genroom Generator room | The generator room's chest: the power plans of the Institute - a wind turbine, an advanced battery, an advanced head light and an electric grill.
 loot genroom Blueprint_WindTurbine*1;Blueprint_BatteryAdvanced*1;Blueprint_HeadLight_Advanced*1;Blueprint_ElectricGrill*1;Battery*1
@@ -191,6 +241,9 @@ step blueprint|Blueprint_WindTurbine|1|Take the wind turbine plans from the gene
 step blueprint|Blueprint_BatteryAdvanced|1|Take the advanced battery plans from the generator room
 step blueprint|Blueprint_HeadLight_Advanced|1|Take the advanced head light plans from the generator room
 step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans from the generator room
+step reach|ironridge|1|Walk out to the Iron Ridge on the north side, where every compass points
+step read|Lodestone survey|1|Read the Institute's lodestone survey on the ridge
+step reach|needletop|1|Climb Needle Knoll in the south-west and look the island over
 step reach|low_end|1|Take the zipline to the low end
 step read|Keel shaft warning|1|Read the keel shaft's warning
 step reach|keel|1|Climb down the shaft to the keel

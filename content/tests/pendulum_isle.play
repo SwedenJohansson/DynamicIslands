@@ -1,7 +1,8 @@
 # Pendulum Isle (CIPlay pendulum_isle): a low sky island 12 m up; the top, the hall rules, the weather station (Anja's
 # note), Bob Hill's foot and top, Halvard's sighting log (10-25 deep pass), the buried survey bolt, the pendulum frame
 # (the generator), the generator room's four plans, the zipline's low end, the shaft warning, the keel (zone keel: the
-# plan's done-when, it brings Gravewell Shaft).
+# plan's done-when, it brings Gravewell Shaft). OLDER4 10-26: the Iron Ridge, its survey and Needle Knoll before the
+# zipline (steps 12-14); after the quest the compass garden's lamps and the pilot's five photographs.
 island Pendulum Isle
 offset 0 0
 expect step 0
@@ -27,11 +28,35 @@ expect step 8
 open Generator room
 wait 3
 expect step 12
-zone low_end
+zone ironridge
 expect step 13
-read Keel shaft warning
+read Lodestone survey
 expect step 14
+zone needlefoot
+zone needletop
+expect step 15
+zone low_end
+expect step 16
+read Keel shaft warning
+expect step 17
 use shaft
 zone keel
 storespot 20 -3
 expect done
+# OLDER4 10-26 (off the quest): the compass garden's lamps, the pilot's photographs
+zone compassgarden
+expect hidden pi_lampchest
+use Compass lamp north
+use Compass lamp south
+wait 1
+expect shown pi_lampchest
+open Compass garden box
+expect hidden pi_setchest
+use pi_photo1
+use pi_photo2
+use pi_photo3
+use pi_photo4
+use pi_photo5
+wait 2
+expect shown pi_setchest
+open Pilot's film case

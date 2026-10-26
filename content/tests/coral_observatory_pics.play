@@ -14,3 +14,4 @@ picture co_survey_top -70 29 24 -62 24 16
 picture co_survey_view -60 31 14 0 2 0
 picture co_dive_cave 72 10 -8 66 9 12
 picture co_dive_inside 65 7.8 9.5 67 6.8 14
+picture co_reef_lamp 4 10 -54 12 7 -60

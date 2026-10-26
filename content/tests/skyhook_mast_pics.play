@@ -15,3 +15,4 @@ picture skyhook_mast_cragtop 30 20 12 36 17 18
 picture skyhook_mast_cave 44 +3 -40 44 +1 -27
 picture skyhook_mast_locker -24 -1 -56 -30 -2 -62
 picture skyhook_mast_barge -8 -3 46 -8 -7 56
+picture skyhook_mast_jumps -40 26 -8 -22 21 6

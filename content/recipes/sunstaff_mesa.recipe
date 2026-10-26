@@ -10,6 +10,8 @@
 # DEEP 10-25 (Relic deep pass): Radius 80 kept. Gnomon Butte (24 m, trail + Pim's lookout mast) in the east, the
 # Syndicate's cave on the west shore, the first expedition's dig house drowned off the north-west (-10 m, an air pocket),
 # three buried caches for the metal detector. Voices: Kett's boatman Pim Lark, Silas Grey, Dr. Hal Ostrander (1931).
+# OLDER4 10-26: Ostrander's cache on the mesa top west of the map room, grown over with vines - the machete from the
+# quest cuts them (a secret off the quest).
 #
 # Built by the recipe player (CIRecipe sunstaff_mesa) through the editor's own operations.
 include lib_sea
@@ -181,6 +183,10 @@ prop digchest loot.refill=0
 note digchest Expedition strongbox | The 1931 expedition's strongbox: survey glass, a copper ingot, an iron one, rope gone green.
 call treasure x=-34 z=50 r=12 n=1 seed=31010 kind=0
 prop treasure31010 treasure.loot=MetalOre*2;Glass*3;Rope*2
+# --- OLDER4 10-26: Ostrander's cache on the mesa top, grown over with vines (the quest's machete cuts them) -----------
+call vinecache x=-28 z=8 r=6 seed=31011 chest=sm_vinechest vines=sm_vines items=MetalIngot*2;CopperIngot*2;Rope*3;Nail*10
+prop sm_vines obj.name=sm_vines
+note sm_vinechest Ostrander's cache | Dr. Hal Ostrander's cache, 1931: survey pegs, a brass plumb bob and a note. "Left for the next party. The vines will have it in a year - bring a blade."
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Sunstaff Mesa

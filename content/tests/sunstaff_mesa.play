@@ -85,3 +85,7 @@ open Workshop locker
 wait 2
 expect item Blueprint_BiofuelExtractor 1
 expect done
+# OLDER4 10-26: Ostrander's cache behind the vines (off the quest)
+use sm_vines
+wait 1
+open Ostrander's cache

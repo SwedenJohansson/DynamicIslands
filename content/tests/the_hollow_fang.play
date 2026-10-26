@@ -66,3 +66,10 @@ wait 2
 expect step 19
 read Silas Grey's note
 expect done
+# OLDER4 10-26: the guardian lamps (off the quest)
+expect hidden hf_lampchest
+use Guardian lamp north-west
+use Guardian lamp south-east
+wait 1
+expect shown hf_lampchest
+open Sefa's offering box

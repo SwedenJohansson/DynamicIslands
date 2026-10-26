@@ -50,3 +50,6 @@ expect step 12
 open Albatross chart locker
 wait 2
 expect done
+zone sk_jumps
+open Riggers' halfway box
+open Top of the practice stack

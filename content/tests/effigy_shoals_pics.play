@@ -16,3 +16,5 @@ picture gp_effigy_dune -20 14 8 -50 14 29
 picture gp_effigy_pyre -42 27 23 -51 23.5 30
 picture gp_effigy_boathouse 38 -7 54 38 -12.5 66
 picture gp_effigy_cave 50 6 20 50 3 34
+picture gp_effigy_dunes 0 14 -84 -10 5 -50
+picture gp_effigy_whistling -20 14 -66 -34 10 -53

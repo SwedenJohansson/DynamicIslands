@@ -12,6 +12,9 @@
 # shore (an air pocket; the boatman's note), the Choir's cave in the north-east with its locked reliquary (the quest's
 # end), two buried treasures. Quest 5 -> 13 steps (the plan's done-when stays note:3 and zone:effigy:circle).
 # Voices: warden Hester Vane, boatman Silas Crewe, novice Lise Marren.
+# OLDER4 10-26: relief on the flat south and east wedges - the Whistling Dune (south-west, 10 m), the Ash Dunes
+# (south-east, 8 m) and the Seal Bank (east, 5 m), each a named area; and Lise's five straw dolls hidden round the
+# island (a set): all five found show her box on the Whistling Dune (a secret off the quest).
 #
 # Built by the recipe player (CIRecipe effigy_shoals) through the editor's own operations.
 include lib_sea
@@ -19,6 +22,7 @@ include lib_features
 include lib_sl1
 include lib_areas
 include lib_highwater
+include lib_lastpost
 new
 # (nature: bare sand - few trees (0.08), Rocks Like Raft)
 gen Trees=0.08 Bushes=0.12 Rocks=0.43 Harvest=0.1 BeachThings=0.45
@@ -42,6 +46,10 @@ next
 brush smooth at 0 0 r=40 s=3 frames=10
 clear at 0 0 r=36
 call ar_cave x=50 z=40 h=2 yaw=180 al=choirrock chest=reliquary
+# --- OLDER4 10-26 terrain: dunes on the flat south and east wedges, clear of the channels -------------------------------
+call ar_ridge x1=-44 z1=-48 x2=-24 z2=-58 h=2.5 top=7.5 r=7
+call ar_ridge x1=14 z1=-58 x2=36 z2=-48 h=2.5 top=5.5 r=7
+call ar_ridge x1=62 z1=-8 x2=58 z2=14 h=2 top=3 r=5
 
 # --- The effigies: three bars (centred on 30, 150 and 270 degrees), an inner row of five at 20 m and an outer row of
 # five at 28 m on each. Set "effin" faces the middle; set "effout" (hidden) faces the landing beach (0 -38). ----------
@@ -145,6 +153,27 @@ call treasure x=58 z=28 r=7 n=1 seed=30206 kind=0
 prop treasure30206 treasure.loot=Scrap*3;Bolt*2;Hinge*1
 call treasure x=-20 z=-60 r=7 n=1 seed=30207 kind=0
 prop treasure30207 treasure.loot=MetalOre*3;CopperOre*2;Rope*1
+# --- OLDER4 10-26: the new dunes as areas, sparse dune plants; Lise's five straw dolls (a set) and her box ------------
+call hw_zone x=-34 z=-53 al=ef_whistlez id=ef_whistling r=8 h=1 msg="The Whistling Dune. The wind sings in the grass up here - almost a hymn."
+call hw_zone x=25 z=-53 al=ef_ashz id=ef_ashdunes r=8 h=1 msg="The Ash Dunes. Grey sand: the wind brought the pyre's ash down here."
+call hw_zone x=60 z=3 al=ef_sealz id=ef_sealbank r=6 h=1 msg="The Seal Bank. Seals hauled out here, before the Choir came."
+call lp_hidden x=-34 z=-53 al=ef_setchest kind=Loot_Chest
+scatter Bush 4 at -34 -53 r=16 seed=30210 free=2
+scatter Bush2 3 at -34 -53 r=16 seed=30211 free=2
+scatter "Pickup_Landmark_Tree_Palm 3" 1 at -34 -53 r=12 seed=30212 free=3
+scatter SmallBoulder4 3 at -34 -53 r=16 seed=30213 free=2
+scatter Bush 3 at 25 -53 r=15 seed=30214 free=2
+scatter Bush2 2 at 25 -53 r=15 seed=30215 free=2
+scatter SmallBoulder4 3 at 25 -53 r=15 seed=30216 free=2
+scatter Bush2 3 at 60 3 r=12 seed=30217 free=2
+call lp_piece x=-24 z=52 al=ef_doll1 set="Straw dolls"
+call lp_piece x=60 z=6 al=ef_doll2 set="Straw dolls"
+call lp_piece x=28 z=-51 al=ef_doll3 set="Straw dolls"
+call lp_piece x=-6 z=-60 al=ef_doll4 set="Straw dolls"
+call lp_piece x=-56 z=-4 al=ef_doll5 set="Straw dolls"
+prop ef_doll1 on.set=show|ef_setchest\nmessage||Five straw dolls, small as a hand, each one facing the same way: south-west. On the Whistling Dune a box has come up out of the sand.
+note ef_setchest Lise's box | Lise Marren's box: "They made me make the dolls too. I hid them where the Choir would not count. If you found all five, you count better than they do." Inside, her things.
+loot ef_setchest CopperIngot*2;MetalIngot*2;Rope*3;Glass*2
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Effigy Shoals

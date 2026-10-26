@@ -9,6 +9,17 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-26: Four older storylines' islands, an hour each
+
+- **Pendulum Isle** (The Gravity Sea) grows to Raft's size (about 170 m by 130): the lodestone Iron Ridge in the north,
+  Needle Knoll in the south-west, a compass garden with a lamp puzzle, and the survey pilot's five lost photographs (a
+  set). Its quest gains three steps (the ridge, its survey note, the knoll) before the zipline.
+- **Effigy Shoals** (The Lullaby Frequency) gets dunes on its flat south and east (the Whistling Dune, the Ash Dunes,
+  the Seal Bank) and a set of five straw dolls with a hidden box.
+- New secrets off the quests: reef lamps round **Coral Observatory** (The Long Voyage), a riggers' jump course on
+  **Skyhook Mast**, Ostrander's cache behind machete vines on **Sunstaff Mesa** and the guardian lamps of **The Hollow
+  Fang** (Relic of the Seventh Tide). Worlds already started keep their islands.
+
 ## 2026-10-26: Raft 2's islands, an hour each
 
 - The nine main islands of **Raft 2: The Drowned Frontier** before The Frontier grow to Raft's size (land out to 70-95

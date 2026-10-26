@@ -51,3 +51,10 @@ open Survey box
 zone divecave
 read Diver Tomas Reyes's letter
 open Diver's box
+# OLDER4 10-26: the reef lamps (off the quest)
+expect hidden co_lampchest
+use Reef lamp north
+use Reef lamp south
+wait 1
+expect shown co_lampchest
+open Tide-gauge locker

@@ -12,6 +12,8 @@
 # Crag (16 m, trail + the station's signal mast) in the east, the engineer's cave on the east shore, the station's supply
 # barge drowned off the north (-9 m, an air pocket), the chart locker under water. Voices: the keeper Bram Holt, the
 # Albatross's engineer Nell Okafor, Silas Grey.
+# OLDER4 10-26: the riggers' practice stack on the west rim of the top (-22 6): a jump course of 11 slabs, a chest
+# halfway and one on top (a secret off the quest).
 #
 # Built by the recipe player (CIRecipe skyhook_mast) through the editor's own operations.
 include lib_sea
@@ -167,6 +169,50 @@ prop bargechest loot.refill=0
 note bargechest Barge strongbox | The supply barge's strongbox: iron and copper for the station, glass for the lamp, rope.
 call treasure x=-20 z=46 r=12 n=1 seed=31023 kind=0
 prop treasure31023 treasure.loot=Scrap*4;Bolt*2;Glass*2
+
+# --- OLDER4 10-26: the riggers' practice stack on the stack's west rim - a jump course of stone slabs, each one higher ---
+push at -22 6
+clear at 0 0 r=13 all
+brush flatten at 0 0 r=10 s=20 frames=300 h=18
+brush smooth at 0 0 r=14 s=4 frames=40
+brush flatten at 0 0 r=8 s=20 frames=300 h=18
+brush auto at 0 0 r=14 s=10 frames=25
+clear at 0 0 r=14
+place Block_Foundation_Tier3 jpsk at 4.24 4.24 h=18.6
+place Block_Foundation_Tier3 jpsk at 5.77 1.65 h=19.35
+place Block_Foundation_Tier3 jpsk at 5.85 -1.35 h=20.1
+place Block_Foundation_Tier3 jpsk at 4.46 -4.01 h=20.85
+place Block_Foundation_Tier3 jpsk at 1.95 -5.67 h=21.6
+place Block_Foundation_Tier3 jpsk at -1.04 -5.91 h=22.35
+place Block_Foundation_Tier3 jpsk at -3.78 -4.66 h=23.1
+place Block_Foundation_Tier3 jpsk at -5.56 -2.25 h=23.85
+place Block_Foundation_Tier3 jpsk at -5.96 0.73 h=24.6
+place Block_Foundation_Tier3 jpsk at -4.85 3.53 h=25.35
+place Block_Foundation_Tier3 jpsk at -2.54 5.44 h=26.1 sx=2 sz=2
+place Block_Foundation_Tier3 jppsk at 5.77 1.65 h=18.668 sy=1.857
+place Block_Foundation_Tier3 jppsk at 5.85 -1.35 h=19.418 sy=2.956
+place Block_Foundation_Tier3 jppsk at 4.46 -4.01 h=20.168 sy=4.054
+place Block_Foundation_Tier3 jppsk at 1.95 -5.67 h=20.918 sy=5.153
+place Block_Foundation_Tier3 jppsk at -1.04 -5.91 h=21.668 sy=6.252
+place Block_Foundation_Tier3 jppsk at -3.78 -4.66 h=22.418 sy=7.350
+place Block_Foundation_Tier3 jppsk at -5.56 -2.25 h=23.168 sy=8.449
+place Block_Foundation_Tier3 jppsk at -5.96 0.73 h=23.918 sy=9.547
+place Block_Foundation_Tier3 jppsk at -4.85 3.53 h=24.668 sy=10.646
+place Block_Foundation_Tier3 jppsk at -2.54 5.44 h=25.418 sy=11.745 sx=2 sz=2
+prop jpsk tint.color=#8a7f70
+prop jpsk tint.amount=0.35
+prop jppsk tint.color=#8a7f70
+prop jppsk tint.amount=0.35
+place Loot_Chest jcsk at -1.04 -5.91 h=22.35 sit yaw=0
+prop jcsk loot.refill=0
+place Loot_ChestSmall jbsk at -2.54 5.44 h=26.1 sit yaw=0
+prop jbsk loot.refill=0
+pop
+call hw_zone x=-22 z=6 al=sk_jumpz id=sk_jumps r=6 h=1 msg="Stone slabs stacked in a ring, each one higher. The riggers trained here before they climbed the mast."
+note jcsk Riggers' halfway box | The riggers' box halfway up: spare rope and a flask. "Don't look down - look at the next one."
+loot jcsk Rope*3;Bolt*2;Hinge*1
+note jbsk Top of the practice stack | A rigger's tin on the top slab: whoever reached it first won the round. Copper, glass and a note of names.
+loot jbsk CopperIngot*2;Glass*2;MetalIngot*2
 
 # --- Things to gather ------------------------------------------------------------------------------------------------
 scatter "Pickup_Landmark_PineappleLandmark" 2 at -6 14 r=6 seed=9421 free=2

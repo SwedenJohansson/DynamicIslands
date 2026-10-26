@@ -13,12 +13,15 @@
 # south shore and the window slot on out to the north. Orin's Knoll (18 m, trail + his old lookout mast), the
 # mercenaries' cave on the east shore, the guardians' boathouse drowned off the north-east (-10 m, an air pocket), two
 # more buried caches. Voices: Orin (forty years ago), Silas Grey, the guardian Sefa.
+# OLDER4 10-26: the guardians' four watch lamps at the plateau's corners; each one lit lights the next, and all four
+# lit show Sefa's offering box west of the hollow (a secret off the quest).
 #
 # Built by the recipe player (CIRecipe the_hollow_fang) through the editor's own operations.
 include lib_sea
 include lib_features
 include lib_areas
 include lib_highwater
+include lib_lastpost
 new
 # (nature: a green rock spire at Raft's density - trees and bushes on its flanks, a few rocks; one reef)
 gen Trees=0.45 Bushes=0.35 Rocks=0.55 Harvest=0.3 BeachThings=0.3
@@ -166,6 +169,19 @@ prop guardchest else.open=message||The guardians' chest is locked with iron, a w
 note guardchest Guardians' chest | The guardians' chest: the sea kings' tokens paid to the Fang's keepers, copper and iron, and two lenses of old glass.
 call treasure x=26 z=52 r=12 n=1 seed=31028 kind=0
 prop treasure31028 treasure.loot=TitaniumIngot*1;MetalOre*2;Glass*2
+# --- OLDER4 10-26: the guardians' watch lamps, one at each corner of the plateau; each lit lights the next -------------
+call lp_lamp x=-40 z=40 al=hf_lamp1 nm="Guardian lamp north-west" grp="Guardian lamps" on=0
+call lp_lamp x=40 z=40 al=hf_lamp2 nm="Guardian lamp north-east" grp="Guardian lamps" on=0
+call lp_lamp x=24 z=-56 al=hf_lamp3 nm="Guardian lamp south-east" grp="Guardian lamps" on=0
+call lp_lamp x=-32 z=-48 al=hf_lamp4 nm="Guardian lamp south-west" grp="Guardian lamps" on=0
+prop hf_lamp1 on.use=light|Guardian lamp north-east|toggle
+prop hf_lamp2 on.use=light|Guardian lamp south-east|toggle
+prop hf_lamp3 on.use=light|Guardian lamp south-west|toggle
+prop hf_lamp4 on.use=light|Guardian lamp north-west|toggle
+prop hf_lamp1 on.alllit=show|hf_lampchest\nmessage||All four guardian lamps burn, as they did when the Fang was kept. West of the hollow a stone box stands open.
+call lp_hidden x=-24 z=8 al=hf_lampchest kind=Loot_Chest
+note hf_lampchest Sefa's offering box | The guardians' offering box. Sefa's tablet on the lid: "Whoever keeps the four lamps keeps the Fang. Take what you need."
+loot hf_lampchest TitaniumOre*1;CopperIngot*2;Glass*2;Rope*2
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Hollow Fang

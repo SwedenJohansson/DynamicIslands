@@ -46,3 +46,16 @@ read Novice Lise Marren's note
 open Choir's reliquary
 expect done
 open Choir's offering basket
+# OLDER4 10-26: the new dunes, Lise's straw dolls (off the quest)
+zone ef_whistling
+zone ef_ashdunes
+zone ef_sealbank
+expect hidden ef_setchest
+use ef_doll1
+use ef_doll2
+use ef_doll3
+use ef_doll4
+use ef_doll5
+wait 2
+expect shown ef_setchest
+open Lise's box
