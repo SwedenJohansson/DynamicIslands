@@ -58,7 +58,9 @@ namespace DynamicIslands
 		/// For Flatten/Smooth it scales how quickly the ground converges.</summary>
 		public static float strength = 4f;
 
-		public const float MinRadius = 2f, MaxRadius = 80f;
+		/// <summary>The brush from 1 m across (ROADMAP E12; it was 4 m) to 160 m. The ground has a height and a paint pixel about
+		/// every 2 m (1000 m / 512), so the smallest brushes work on the nearest point or two: see Footprint.</summary>
+		public const float MinRadius = 0.5f, MaxRadius = 80f;
 		public const float MinStrength = 0.5f, MaxStrength = 20f;
 
 		public static bool allowEditing = true;
@@ -138,8 +140,8 @@ namespace DynamicIslands
 			if (overTerrain) LastPoint = point;
 			if (modificationAction == TerrainModificationAction.Stamp && canSculpt && !EditorInput.IsTyping && !EditorCamera.Looking) // (Q/E fly the camera then)
 			{
-				if (Input.GetKeyDown(KeyCode.Q)) TerrainStamps.Rotation -= 15f;
-				if (Input.GetKeyDown(KeyCode.E)) TerrainStamps.Rotation += 15f;
+				if (Input.GetKeyDown(CameraSettings.DownKey)) TerrainStamps.Rotation -= 15f; // (A on AZERTY)
+				if (Input.GetKeyDown(CameraSettings.UpKey)) TerrainStamps.Rotation += 15f;
 			}
 
 			if (!Input.GetMouseButton(0) || !overTerrain || (!stroking && EditorCamera.UsingMouse)) return; // (Alt+drag orbits the camera)
@@ -297,7 +299,8 @@ namespace DynamicIslands
 			if (paintMask == null || paintMask.GetLength(0) != res) paintMask = new float[res, res];
 			float pixel = terrainData.size.x / res;
 			Vector3 local = world - terrain.transform.position;
-			float cx = local.x / pixel - 0.5f, cz = local.z / pixel - 0.5f, rs = Mathf.Max(1f, brushRadius / pixel);
+			float cx = local.x / pixel - 0.5f, cz = local.z / pixel - 0.5f, rs = Footprint(brushRadius / pixel);
+			int nx = Mathf.RoundToInt(cx), nz = Mathf.RoundToInt(cz);
 
 			int x0 = Mathf.Clamp(Mathf.FloorToInt(cx - rs), 0, res - 1), z0 = Mathf.Clamp(Mathf.FloorToInt(cz - rs), 0, res - 1);
 			int x1 = Mathf.Clamp(Mathf.CeilToInt(cx + rs), 0, res - 1), z1 = Mathf.Clamp(Mathf.CeilToInt(cz + rs), 0, res - 1);
@@ -314,8 +317,9 @@ namespace DynamicIslands
 				for (int x = 0; x < cols; x++)
 				{
 					float dx = (x0 + x - cx) / rs, dz = (z0 + z - cz) / rs, d2 = dx * dx + dz * dz;
-					if (d2 >= 1f) continue;
-					float w = TerrainBrushes.Weight(d2);
+					bool nearest = x0 + x == nx && z0 + z == nz;
+					if (d2 >= 1f && !nearest) continue;
+					float w = Small(brushRadius / pixel) && nearest ? 1f : TerrainBrushes.Weight(d2);
 
 					if (auto) TerrainPainter.AutoWeights(terrain, DynamicIslands.EditorWaterLevel, x0 + x, z0 + z, target);
 					else for (int l = 0; l < layers; l++) target[l] = l == paintLayer ? 1f : 0f;
@@ -340,7 +344,9 @@ namespace DynamicIslands
 			int res = terrainData.heightmapResolution;
 			float spacing = terrainData.size.x / (res - 1);
 			Vector3 local = world - terrain.transform.position;
-			float cx = local.x / spacing, cz = local.z / spacing, rs = Mathf.Max(1f, brushRadius / spacing);
+			float cx = local.x / spacing, cz = local.z / spacing, rs = Footprint(brushRadius / spacing);
+			int nx = Mathf.RoundToInt(cx), nz = Mathf.RoundToInt(cz);
+			bool small = Small(brushRadius / spacing);
 
 			x0 = Mathf.Clamp(Mathf.FloorToInt(cx - rs), 0, res - 1);
 			z0 = Mathf.Clamp(Mathf.FloorToInt(cz - rs), 0, res - 1);
@@ -354,9 +360,23 @@ namespace DynamicIslands
 				{
 					float dx = (x0 + x - cx) / rs, dz = (z0 + z - cz) / rs;
 					float d2 = dx * dx + dz * dz;
-					weights[z, x] = TerrainBrushes.Weight(d2); // (the brush edge: smooth, linear or hard)
+					weights[z, x] = small && x0 + x == nx && z0 + z == nz ? 1f : TerrainBrushes.Weight(d2); // (the brush edge: smooth, linear or hard)
 				}
 			return true;
+		}
+
+		/// <summary>A brush smaller than the ground's point spacing (radius in points): the 1 m and 2 m brushes.</summary>
+		static bool Small(float radiusInPoints) { return radiusInPoints < 1f; }
+
+		/// <summary>
+		/// The reach (in points) the brush's falloff is spread over. From two points up (8 m across) it is the brush itself. Below,
+		/// it eases from 0.75 point to 2 (continuous, growing with the brush; before E12 it was at least one point): a 1 m brush
+		/// (a quarter point) reaches 0.9 point - only the nearest point, moved in full (Small) - and 2 m (half a point) 1.07,
+		/// that point and a little of the four beside it.
+		/// </summary>
+		public static float Footprint(float radiusInPoints)
+		{
+			return radiusInPoints < 2f ? 0.75f + 0.625f * Mathf.Max(0f, radiusInPoints) : radiusInPoints;
 		}
 
 		void ApplyBrush(Vector3 world, float direction)

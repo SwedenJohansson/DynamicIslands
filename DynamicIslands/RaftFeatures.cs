@@ -70,7 +70,7 @@ namespace DynamicIslands.Editor
 			new Tool { Item = ShovelItem, Label = "shovel" },
 			new Tool { Item = ContentCatalog.ZiplineItem, Label = "zipline tool", Blueprint = "Blueprint_ZiplineTool", Also = new[] { "ZiplineTool_Electric" }, Blueprints = new[] { "Blueprint_ZiplineToolElectric" } },
 			new Tool { Item = HeadLightItem, Label = "headlight", Blueprint = "Blueprint_HeadLight", Also = new[] { "HeadLight_Advanced" }, Blueprints = new[] { "Blueprint_HeadLight_Advanced" } },
-			new Tool { Item = BinocularsItem, Label = "binoculars" },
+			new Tool { Item = BinocularsItem, Label = "binoculars", Also = new[] { ExtraUpgrades.TelescopeName, ExtraUpgrades.MarineName } },
 			new Tool { Item = OxygenItem, Label = "oxygen bottle" },
 			new Tool { Item = FlipperItem, Label = "flippers" },
 			new Tool { Item = AxeItem, Label = "axe", Also = new[] { "Axe_Stone", "Axe_Titanium" } },

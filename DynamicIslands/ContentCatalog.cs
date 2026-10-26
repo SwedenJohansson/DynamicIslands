@@ -243,6 +243,8 @@ namespace DynamicIslands.Editor
 			new KeyValuePair<string, string[]>("Metal", new[] { "Scrap*6", "MetalIngot*4", "CopperIngot*3", "Bolt*6", "Hinge*4", "MetalOre*4" }),
 			new KeyValuePair<string, string[]>("Food", new[] { "Watermelon*2", "Pineapple*2", "Coconut*3", "Mango*3", "Raw_Potato*4", "Egg*4", "Banana*3" }),
 			new KeyValuePair<string, string[]>("Treasure", new[] { "TitaniumIngot*3", "ExplosiveGoo*2", "CircuitBoard*2", "Battery*1", "HealingSalve_Good*2", "Jar_Honey*1" }),
+			// PF7: a cosmetic hat and trophy (Cosmetics)
+			new KeyValuePair<string, string[]>("Cosmetics", Cosmetics.PresetLoot),
 		};
 
 		/// <summary>The loot of a preset: its candidates that exist in this version of Raft.</summary>
@@ -295,6 +297,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Extra text for the object list's hint (null for Raft's plain objects).</summary>
 		public static string Hint(string name)
 		{
+			string player = PlayerFeatures.Hint(name);
+			if (player != null) return player;
 			CreatureKind k = CreatureOf(name);
 			if (k != null) return "a live " + k.Label.ToLowerInvariant() + " appears here in a world: " + k.Hint + ". Select it to change its stats and colour";
 			if (name == PlaceableCatalog.RaftCrate) return "Raft's own crate from the abandoned rafts: players take it whole (E) and get random loot from Raft's table. Its contents can't be chosen (use a chest for chosen loot), and it doesn't count for a quest's \"Open a chest\" step";
@@ -333,8 +337,13 @@ namespace DynamicIslands.Editor
 				PlaceableCatalog.AddCustom(z.Key, BuildZoneMarker(z.Key, z.Value), ZoneCategory, z.Value);
 			PlaceableCatalog.AddCustom(HelperWall, BuildHelperMarker(HelperWall, "Invisible wall"), ZoneCategory, "Invisible wall");
 			PlaceableCatalog.AddCustom(HelperRamp, BuildHelperMarker(HelperRamp, "Invisible ramp"), ZoneCategory, "Invisible ramp");
+			PlaceableCatalog.AddCustom(Lights.ObjectName, Lights.BuildMarker(), ZoneCategory, "Puzzle light (switch)");
 			PlaceableCatalog.AddCustom(BuriedTreasure, BuildTreasureMarker(), LootCategory, "Buried treasure (metal detector)");
 			Survivors.Register(); // (a survivor in a cage, RF3)
+			PlaceableCatalog.AddCustom(Islanders.ObjectName, Islanders.BuildMarker(), NotesCategory, "Islander (talks)");
+			PlaceableCatalog.AddCustom(Collectibles.ObjectName, Collectibles.BuildMarker(), LootCategory, "Collectible (set piece)");
+			CameraPath.Register(); // (camera points of fly-through paths, PF4)
+			Minimap.Register(); // (map markers of the island map, PF5)
 			foreach (CreatureKind k in Creatures)
 				PlaceableCatalog.AddCustom(k.Name, BuildPrototype(k), k.Category, k.Label);
 			Debug.Log("[CUSTOM ISLANDS] Custom content: " + Creatures.Length + " creatures (" + models.Count + " with Raft's models), " + notes + " note objects, " + loot + " loot containers");
@@ -423,7 +432,7 @@ namespace DynamicIslands.Editor
 		static readonly Color CatchableColor = new Color(0.55f, 0.9f, 0.55f), HostileColor = new Color(1f, 0.55f, 0.4f), SeaColor = new Color(0.45f, 0.75f, 1f);
 		static readonly Dictionary<Color, Material> markerMaterials = new Dictionary<Color, Material>();
 
-		static Material MarkerMaterial(Color c)
+		internal static Material MarkerMaterial(Color c)
 		{
 			Material m;
 			if (markerMaterials.TryGetValue(c, out m) && m != null) return m;
@@ -460,7 +469,7 @@ namespace DynamicIslands.Editor
 			return root;
 		}
 
-		static GameObject Part(PrimitiveType type, string name, Transform parent, Vector3 pos, Quaternion rot, Vector3 scale, Material mat)
+		internal static GameObject Part(PrimitiveType type, string name, Transform parent, Vector3 pos, Quaternion rot, Vector3 scale, Material mat)
 		{
 			GameObject go = GameObject.CreatePrimitive(type);
 			go.name = name;
@@ -472,7 +481,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>A name tag that floats over an object in the editor, always facing the camera.</summary>
-		static TextMesh AddLabel(Transform parent, string text, float height)
+		internal static TextMesh AddLabel(Transform parent, string text, float height)
 		{
 			var go = new GameObject(MarkerOnly);
 			go.name = MarkerOnly;

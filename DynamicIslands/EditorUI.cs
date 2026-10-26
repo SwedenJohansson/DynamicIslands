@@ -43,6 +43,7 @@ namespace DynamicIslands.Editor
 		static Image[] paintSwatches;
 		static Button[] gizmoButtons; // Move, Rotate, Scale, All
 		static Button randomButton, slopeButton, gridButton;
+		static Button[] gridSizeButtons;
 		static UIKit.SliderRow sizeSlider, strengthSlider;
 		static Text islandNameText, styleText, selectionText, statsText, hintText, cameraText;
 		static InputField elevationField;
@@ -74,7 +75,7 @@ namespace DynamicIslands.Editor
 
 		public static void RefreshSliders()
 		{
-			if (sizeSlider != null && sizeSlider.Slider != null) { sizeSlider.Slider.SetValueWithoutNotify(terraineditor.brushRadius); sizeSlider.Value.text = SizeText(terraineditor.brushRadius); }
+			if (sizeSlider != null && sizeSlider.Slider != null) { sizeSlider.Slider.SetValueWithoutNotify(Mathf.Log(terraineditor.brushRadius)); sizeSlider.Value.text = SizeText(terraineditor.brushRadius); }
 			if (strengthSlider != null && strengthSlider.Slider != null) { strengthSlider.Slider.SetValueWithoutNotify(terraineditor.strength); strengthSlider.Value.text = StrengthText(terraineditor.strength); }
 			if (noiseSlider != null && noiseSlider.Slider != null) { noiseSlider.Slider.SetValueWithoutNotify(TerrainBrushes.NoiseScale); noiseSlider.Value.text = SizeText(TerrainBrushes.NoiseScale / 2f); }
 			if (talusSlider != null && talusSlider.Slider != null) { talusSlider.Slider.SetValueWithoutNotify(TerrainBrushes.TalusAngle); talusSlider.Value.text = TalusText(TerrainBrushes.TalusAngle); }
@@ -83,6 +84,16 @@ namespace DynamicIslands.Editor
 		static string TalusText(float a) { return a.ToString("F0") + "°"; }
 
 		static string SizeText(float radius) { return (radius * 2f).ToString("F0") + " m"; }
+
+		/// <summary>
+		/// The brush size slider runs on a log scale (ROADMAP E12) so the small sizes (1, 2, 3 m across) get room as well as the big
+		/// ones; the radius it gives is rounded to whole metres across.
+		/// </summary>
+		internal static float SliderRadius(float sliderValue)
+		{
+			float across = Mathf.Max(1f, Mathf.Round(Mathf.Exp(sliderValue) * 2f));
+			return Mathf.Clamp(across / 2f, terraineditor.MinRadius, terraineditor.MaxRadius);
+		}
 		static string StrengthText(float s) { return s.ToString("F1") + " m/s"; }
 
 		/// <summary>Builds the editor screen. The bundle's canvas (old toolbar) is switched off.</summary>
@@ -95,6 +106,8 @@ namespace DynamicIslands.Editor
 			if (tabs == null) tabs = Canvas.gameObject.AddComponent<TabSelector>();
 			Transform root = Canvas.transform;
 			if (!hintHooked) { UIKit.HintChanged += h => hoverHint = h; UIKit.HintBars.Add(() => Canvas != null && Canvas.gameObject.activeInHierarchy); hintHooked = true; }
+			// Hover hints name the keys of the chosen layout when they show (only while the editor is up; other windows keep theirs)
+			UIKit.HintKeys = h => Canvas != null && Canvas.gameObject.activeInHierarchy ? CameraSettings.KeyNames(h) : h;
 			hoverHint = null;
 			lastSelectionCount = -1; shownPaintLayer = -1; elevationTyping = false;
 			shownFalloff = (TerrainBrushes.Falloff)(-1); shownSeaLevel = float.NaN; // (the new buttons get lit)
@@ -321,8 +334,8 @@ namespace DynamicIslands.Editor
 			}
 
 			RectTransform brush = UIKit.Group(s, "Brush");
-			sizeSlider = UIKit.Slider(brush, "Size", terraineditor.MinRadius, terraineditor.MaxRadius, terraineditor.brushRadius, SizeText,
-				v => terraineditor.brushRadius = v, "Brush diameter in metres (console: ChangeWidth)");
+			sizeSlider = UIKit.Slider(brush, "Size", Mathf.Log(terraineditor.MinRadius), Mathf.Log(terraineditor.MaxRadius), Mathf.Log(terraineditor.brushRadius), v => SizeText(SliderRadius(v)),
+				v => terraineditor.brushRadius = SliderRadius(v), "Brush diameter in metres, 1 to 160 (console: ChangeWidth). The ground has a point about every 2 m: a 1 m brush moves one point");
 			strengthSlider = UIKit.Slider(brush, "Strength", terraineditor.MinStrength, terraineditor.MaxStrength, terraineditor.strength, StrengthText,
 				v => terraineditor.strength = v, "How fast the brush works (console: ChangeStrength)");
 			RectTransform flatRow = UIKit.Row(brush, 26f, 4f, "FlattenTo");
@@ -414,7 +427,19 @@ namespace DynamicIslands.Editor
 			RectTransform o1 = UIKit.Row(place);
 			randomButton = UIKit.Button(o1, "Random", () => { PlacementOptions.RandomTurnAndSize = !PlacementOptions.RandomTurnAndSize; RefreshOptions(); }, "On: every placed object gets a random turn and size (natural-looking groups)");
 			slopeButton = UIKit.Button(o1, "Slope", () => { PlacementOptions.AlignToSlope = !PlacementOptions.AlignToSlope; RefreshOptions(); }, "On: objects lean with the ground instead of standing straight up");
-			gridButton = UIKit.Button(o1, "Grid", () => { PlacementOptions.SnapToGrid = !PlacementOptions.SnapToGrid; RefreshOptions(); }, "On: Raft's 1.5 m building grid and 90\u00B0 turns, for huts and rafts of Raft blocks");
+			gridButton = UIKit.Button(o1, "Grid", () => { PlacementOptions.SnapToGrid = !PlacementOptions.SnapToGrid; RefreshOptions(); }, "On: placing and moving snap to the grid (size below; Raft's own building grid is 1.5 m) and Q/E turn in 90° steps, for huts and rafts of Raft blocks");
+			// The grid size (ROADMAP E13): choosing one turns Grid on; remembered on this PC (world_rules.txt editorgrid)
+			RectTransform og = UIKit.Row(place, 24f, 4f, "GridSize");
+			UIKit.Size(UIKit.Label(og, "Grid size", 13, UIKit.TextMuted).gameObject, 62);
+			gridSizeButtons = new Button[PlacementOptions.GridSizes.Length];
+			for (int i = 0; i < gridSizeButtons.Length; i++)
+			{
+				float g = PlacementOptions.GridSizes[i];
+				string gt = g.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+				gridSizeButtons[i] = UIKit.Button(og, gt + " m", () => ChooseGrid(g),
+					"Snap to a " + gt + " m grid while placing and moving (turns Grid on)" + (g == PlacementOptions.GridSize ? ": Raft's building grid" : ""), -1, 24f, 12);
+				gridSizeButtons[i].name = "Button_Grid" + gt;
+			}
 
 			// Air pocket (lib_frozen's airpocket macro, one undo step); Scatter itself is under the object list
 			RectTransform o2 = UIKit.Row(place, 26f, 4f, "AirPocket");
@@ -477,9 +502,21 @@ namespace DynamicIslands.Editor
 
 		static Text Tips(Transform parent, string text)
 		{
-			Text t = UIKit.Label(parent, text, 13, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "Tips");
+			Text t = UIKit.Label(parent, CameraSettings.KeyNames(text), 13, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "Tips");
 			t.lineSpacing = 1.1f;
+			tipTexts.Add(new KeyValuePair<Text, string>(t, text));
 			return t;
+		}
+
+		/// <summary>The tips as written (QWERTY keys), to rename when the key layout changes (ROADMAP L2).</summary>
+		static readonly List<KeyValuePair<Text, string>> tipTexts = new List<KeyValuePair<Text, string>>();
+
+		/// <summary>The tips and the camera window's list in the chosen key layout (CameraSettings.Azerty).</summary>
+		internal static void RefreshKeyNames()
+		{
+			tipTexts.RemoveAll(k => k.Key == null);
+			foreach (var k in tipTexts) k.Key.text = CameraSettings.KeyNames(k.Value);
+			CameraSettingsWindow.RefreshKeyLabels();
 		}
 
 		static RectTransform stampButtonsRoot;
@@ -716,11 +753,23 @@ namespace DynamicIslands.Editor
 			if (tab == TAB.Island) RefreshIsland();
 		}
 
-		static void RefreshOptions()
+		internal static void RefreshOptions()
 		{
 			UIKit.SetActive(randomButton, PlacementOptions.RandomTurnAndSize);
 			UIKit.SetActive(slopeButton, PlacementOptions.AlignToSlope);
 			UIKit.SetActive(gridButton, PlacementOptions.SnapToGrid);
+			if (gridSizeButtons != null)
+				for (int i = 0; i < gridSizeButtons.Length; i++)
+					if (gridSizeButtons[i] != null) UIKit.SetActive(gridSizeButtons[i], PlacementOptions.GridSizes[i] == PlacementOptions.GridStep);
+		}
+
+		/// <summary>A grid size button: that size (remembered on this PC) and Grid on.</summary>
+		internal static void ChooseGrid(float size)
+		{
+			PlacementOptions.GridStep = size;
+			PlacementOptions.SnapToGrid = true;
+			RefreshOptions();
+			Flash("Grid " + PlacementOptions.GridStep.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + " m", 1.5f);
 		}
 
 		/// <summary>Shows the current style and names the paint buttons after its textures.</summary>
@@ -930,7 +979,8 @@ namespace DynamicIslands.Editor
 				if (EditorInput.Ctrl && EditorInput.KeyDown(KeyCode.A) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) SelectAll();
 			}
 
-			if (tabs != null && tabs.SelectedTab == TAB.ObjectPlace && !PlacedListWindow.IsOpen) SelectionTools.Tick();
+			if (tabs != null && tabs.SelectedTab == TAB.ObjectPlace && !PlacedListWindow.IsOpen) { SelectionTools.Tick(); ObjectPick.Tick(); }
+			else ObjectPick.ClearHover(); // (the outline on what a click would select - E11)
 
 			int selected = g != null ? g.SelectedRoots.Count(t => t != null) : 0;
 			Transform first = selected > 0 ? g.SelectedRoots.First(t => t != null) : null;
@@ -943,7 +993,7 @@ namespace DynamicIslands.Editor
 				selectionText.color = selected == 0 ? UIKit.TextMuted : UIKit.Accent;
 			}
 
-			if (hintText != null) hintText.text = Time.unscaledTime < flashUntil ? flash : hoverHint ?? ToolHint();
+			if (hintText != null) hintText.text = Time.unscaledTime < flashUntil ? flash : hoverHint ?? CameraSettings.KeyNames(ToolHint());
 			if (cameraText != null && Camera.main != null)
 			{
 				Vector3 c = Camera.main.transform.position;

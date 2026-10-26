@@ -26,9 +26,12 @@ namespace DynamicIslands
 			string rules = Path.Combine(DynamicIslands.assetpath, WorldRules.DefaultFileName);
 			string rulesBefore = File.Exists(rules) ? File.ReadAllText(rules) : null;
 			Camera cam = c.GetComponent<Camera>();
+			bool azertyBefore = CameraSettings.Azerty; // (the key layout, ROADMAP L2: the test reads the QWERTY names; put back after)
 			try
 			{
 				CameraSettings.Reset();
+				CameraSettings.Azerty = false;
+				CameraSettings.Save();
 				Terrain terrain = terraineditor.terrain;
 				float sea = terrain.transform.position.y + DynamicIslands.EditorWaterLevel;
 				Vector3 mid = terrain.transform.position + new Vector3(500f, 0f, 500f);
@@ -217,6 +220,7 @@ namespace DynamicIslands
 			{
 				CameraSettingsWindow.Close();
 				DefaultsWindow.Close();
+				CameraSettings.Azerty = azertyBefore;
 				CameraSettings.Save();
 				try { if (rulesBefore != null) File.WriteAllText(rules, rulesBefore); else if (File.Exists(rules)) File.Delete(rules); } catch { }
 				CameraSettings.Reload();

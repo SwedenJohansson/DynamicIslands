@@ -349,11 +349,12 @@ namespace DynamicIslands.Editor
 		}
 	}
 
-	/// <summary>Fog banks: our fog lent to Raft's sky just while it sets the shaders' fog (see FogBanks).</summary>
+	/// <summary>Fog banks: our fog lent to Raft's sky just while it sets the shaders' fog (see FogBanks); Binoculars see
+	/// through fog lends its factor on top of it (FogSight).</summary>
 	[HarmonyPatch(typeof(AzureSkyController), "UpdateShaderUniforms")]
 	static class FogBanksSkyPatch
 	{
-		static void Prefix(AzureSkyController __instance, out FogBanks.Saved __state) { __state = FogBanks.Lend(__instance); }
-		static void Postfix(AzureSkyController __instance, FogBanks.Saved __state) { FogBanks.Return(__instance, __state); }
+		static void Prefix(AzureSkyController __instance, out FogBanks.Saved __state) { __state = FogBanks.Lend(__instance); FogSight.Lend(__instance); }
+		static void Postfix(AzureSkyController __instance, FogBanks.Saved __state) { FogSight.Return(__instance); FogBanks.Return(__instance, __state); }
 	}
 }

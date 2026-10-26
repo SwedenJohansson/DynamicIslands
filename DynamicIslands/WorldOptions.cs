@@ -32,15 +32,17 @@ namespace DynamicIslands.Editor
 	///   - lightning: now and then in a storm a bolt hits the sea near the raft, rarely its antenna; looks only (LightningStrikes).
 	///   - whalebreach: now and then, by day, a whale breaches far from the raft, looks only (WhaleBreach);
 	///   - fogbanks: now and then thick fog rolls in for a few hours, 45-75 m to see (FogBanks);
-	///   - kraken: rarely a giant tentacle grabs a raft floor on the edge; hit it off, or it tears that floor (and maybe its neighbours) away (Kraken).
+	///   - kraken: rarely a giant tentacle grabs a raft floor on the edge; hit it off, or it tears that floor (and maybe its neighbours) away (Kraken);
+	///   - fogsight: the haze comes ~30 % closer; binoculars, the telescope and Marine binoculars see further through it (FogSight).
+	///   - mirrorislands: about one random custom island in three comes mirrored left to right (MirrorIslands). Never quest, plan or story islands.
 	/// Saved in the world file ("@options=", "@optionseed=" - the seed every shuffle of the world comes from), sent by the host
 	/// to every player who joins and when they change (network kind 17: Data = "on=a,b;seed=n", Name = the private
 	/// storages' builders). The last choice in the box is kept in world_rules.txt ("options=").
 	/// </summary>
 	public static class WorldOptions
 	{
-		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger", DailyQuest = "dailyquest", RogueShark = "rogueshark", Barrels = "barrels", StormDays = "stormdays", TraderRaft = "traderraft", Upgrades = "upgrades", StormSeas = "stormseas", Ufo = "ufo", GlowSea = "glowsea", Lightning = "lightning", GhostShip = "ghostship", WhaleBreach = "whalebreach", Fog = "fogbanks", Kraken = "kraken";
-		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger, DailyQuest, RogueShark, Barrels, StormDays, TraderRaft, Upgrades, StormSeas, Ufo, GlowSea, Lightning, GhostShip, WhaleBreach, Fog, Kraken };
+		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger", DailyQuest = "dailyquest", RogueShark = "rogueshark", Barrels = "barrels", StormDays = "stormdays", TraderRaft = "traderraft", Upgrades = "upgrades", StormSeas = "stormseas", Ufo = "ufo", GlowSea = "glowsea", Lightning = "lightning", GhostShip = "ghostship", WhaleBreach = "whalebreach", Fog = "fogbanks", Kraken = "kraken", FogSight = "fogsight", MirrorIslands = "mirrorislands";
+		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger, DailyQuest, RogueShark, Barrels, StormDays, TraderRaft, Upgrades, StormSeas, Ufo, GlowSea, Lightning, GhostShip, WhaleBreach, Fog, Kraken, FogSight, MirrorIslands };
 		/// <summary>
 		/// Options no longer offered (the user, 2026-10-09): not in the New Game box, left out of the remembered choice, and in
 		/// World settings only while a world still has them on (so the host can switch them off). A world that has one on keeps it.
@@ -48,7 +50,7 @@ namespace DynamicIslands.Editor
 		public static readonly string[] Retired = { Blueprints, StoryOrder };
 		public static bool IsRetired(string option) { return Array.IndexOf(Retired, option) >= 0; }
 		public static string[] Offered { get { return All.Where(o => !IsRetired(o)).ToArray(); } }
-		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous", "Daily quest", "Rogue shark", "Silver & golden barrels", "Storm days", "Trader raft", "Extra upgrades", "Storm seas", "UFO sightings", "Bioluminescent sea", "Lightning strikes", "Ghost ship", "Whale breach", "Fog banks", "Kraken arm" };
+		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous", "Daily quest", "Rogue shark", "Silver & golden barrels", "Storm days", "Trader raft", "Extra upgrades", "Storm seas", "UFO sightings", "Bioluminescent sea", "Lightning strikes", "Ghost ship", "Whale breach", "Fog banks", "Kraken arm", "Binoculars see through fog", "Mirrored islands" };
 		public static readonly string[] Hints =
 		{
 			"The blueprints lying on Raft's story islands are found on other story islands than usual. What the story needs (the steering wheel, the engine and its fuel, the machete) is never moved: the story can always be finished.",
@@ -64,7 +66,7 @@ namespace DynamicIslands.Editor
 			"Now and then a barrel drifting in the sea is silver (about 1 in 40) or golden (about 1 in 150). Besides the usual loot, a silver one holds a few extra nails, rope and scrap; a golden one more of them, and sometimes a battery or bolts.",
 			"On about one day in ten the sea is rough and it rains from morning to morning: the shark comes for the raft more often, and the rain waters the crops. Everyone is warned at nightfall the evening before. Never before day 3.",
 			"Very rarely (about once in 7 km of sailing, never in the first 3 km) a trader's raft comes up ahead. Its stalls swap basic resources - planks, plastic, rope, scrap - for fruit and flower seeds, a tree seed, and now and then a blueprint. Each stall has a little stock, shared by all players.",
-			"Better versions of Raft's things to craft, next to the thing they improve once it is learned: large battery, titanium grill, blast furnace, reinforced storage, wide net, large fuel and water tanks, greenhouse plot, turbo engine, large wind turbine, comfy bed, magnet hook, titanium rod, swift flippers, large air tank, rapid charger, fast recycler, bright lantern, telescope, titanium greatsword, spear and machete, long paddle, floodlight, steel pot, fast juicer, sturdy scarecrow, master hammer, longbow, bright head light, bright lamp and lumber axe.",
+			"Better versions of Raft's things to craft, next to the thing they improve once it is learned: large battery, titanium grill, blast furnace, reinforced storage, wide net, large fuel and water tanks, greenhouse plot, turbo engine, large wind turbine, comfy bed, magnet hook, titanium rod, swift flippers, large air tank, rapid charger, fast recycler, bright lantern, telescope, titanium greatsword, spear and machete, long paddle, floodlight, steel pot, fast juicer, sturdy scarecrow, master hammer, longbow, bright head light, bright lamp, lumber axe and marine binoculars.",
 			"Storms come much more often (a calm spell is half as long, and half the time Raft's next weather is a storm) and rock the raft harder. Each storm has a 1 in 4 chance to break one raft floor on the edge or a corner of the raft - never one in the middle: what stood on it falls into the sea. A raft of 4 floors or fewer is never broken. The host's storms and floors are every player's.",
 			"Now and then (about three times in a week of days, half of them at night) a flying saucer crosses the sky high above the raft, from horizon to horizon in about half a minute, in a new colour each time. At night it glows green or purple. Looks only: every player sees the same one.",
 			"On about one night in four the sea around the raft glows: tiny blue lights twinkle on the waves and drift under them, a swimmer stirs up sparks, and the fish shine. On those nights fish bite twice as fast on a rod. Looks only otherwise; the same nights for every player.",
@@ -73,6 +75,8 @@ namespace DynamicIslands.Editor
 			"Now and then, by day (about once or twice a Raft day), a whale breaches far out at sea, 170-320 m from the raft: it rises, leaps half out of the water, falls back with a great splash and spray, and dives away. Looks only: it never comes near the raft or the players. Every player sees the same whale at the same place.",
 			"Now and then (on about three days in five, by day or by night) thick fog rolls in over the sea for three to six hours, fading in and out. In it you see only 45-75 m: islands show up late, so the radar matters. While a storm blows the wind keeps the fog away. Looks only; the same for every player.",
 			"Rarely (on about one day in eight from day 8, and with Storm seas in about one storm in four; never while the raft is near an island) a giant tentacle rises from the sea beside the raft and grabs a floor on its edge - never one in the middle. Hit it with a melee weapon or a spear, 10 hits within a minute (any players together), and it lets go and sinks. If not, it tears that floor away, and each floor right beside it with a 1 in 2 chance: what stood on them goes too. Rafts of 8 floors or fewer are never grabbed. Every player sees the same arm and the same floors go.",
+			"The sea's haze comes about 30 % closer than in Raft, so islands show up later. Raise binoculars and you see about 20 % further than Raft's usual view, the telescope about 50 % further; Marine binoculars (an extra upgrade from the upgrade table, made with titanium) see furthest and lighten the view at dusk and at night. Raft's weather keeps its own fog: a storm or a fog bank still closes in. Each player sees through their own binoculars only.",
+			"About one random custom island in three comes mirrored left to right: its land, paint and everything on it, so islands you know look new. Which ones is fixed for the world (from its seed and the island's name), the same for every player. Islands with a quest, plan and story islands, and islands with moving parts, events or zip lines are never mirrored. Looks only: what was taken or used on an island stays so.",
 		};
 
 		/// <summary>
@@ -103,6 +107,8 @@ namespace DynamicIslands.Editor
 			"Now and then, by day, a whale breaches far out at sea. Looks only: it never comes near the raft.",
 			"Now and then thick fog rolls in for a few hours: you see only 45-75 m, so the radar matters. Looks only.",
 			"Rarely a giant tentacle grabs the raft's edge. Its other arms slam at players near them - step away. Hit it 10 times within a minute, or it tears that floor away - and maybe the ones beside it.",
+			"The haze comes closer; binoculars and the telescope see through it, Marine binoculars furthest and in the dark too.",
+			"About one random custom island in three comes mirrored, so known islands look new. Never quest, plan or story islands.",
 		};
 
 		/// <summary>The current world's options (clients get the host's).</summary>
@@ -211,6 +217,7 @@ namespace DynamicIslands.Editor
 			global::DynamicIslands.Editor.StormDays.Reset();
 			global::DynamicIslands.Editor.WhaleBreach.Reset();
 			global::DynamicIslands.Editor.Kraken.Reset();
+			global::DynamicIslands.Editor.FogSight.Reset();
 			global::DynamicIslands.Editor.GhostShip.Reset();
 			global::DynamicIslands.Editor.StormSeas.Reset();
 			global::DynamicIslands.Editor.TraderRaft.Reset();
@@ -315,6 +322,7 @@ namespace DynamicIslands.Editor
 			global::DynamicIslands.Editor.StormDays.Reset();
 			global::DynamicIslands.Editor.WhaleBreach.Reset();
 			global::DynamicIslands.Editor.Kraken.Reset();
+			global::DynamicIslands.Editor.FogSight.Reset();
 			global::DynamicIslands.Editor.GhostShip.Reset();
 			global::DynamicIslands.Editor.StormSeas.Reset();
 			global::DynamicIslands.Editor.TraderRaft.Reset();

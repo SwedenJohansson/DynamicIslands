@@ -104,6 +104,8 @@ namespace DynamicIslands.Editor
 				BehaviourGroup(target);
 				return;
 			}
+			if (CameraPath.IsPoint(target.GameObjectName)) { CameraPointGroup(target); BehaviourGroup(target); return; }
+			if (Minimap.IsMarker(target.GameObjectName)) { MapMarkerGroup(target); BehaviourGroup(target); return; }
 			if (ContentCatalog.IsHelper(target.GameObjectName)) { BehaviourGroup(target); return; }
 			if (ContentCatalog.IsTreasure(target.GameObjectName)) { TreasureGroup(target); return; }
 			if (KeycardDoor.Is(target.GameObjectName)) KeycardGroup(target);
@@ -121,6 +123,7 @@ namespace DynamicIslands.Editor
 				}
 				if (target.GameObjectName.StartsWith("ZiplinePath", System.StringComparison.Ordinal)) ZiplineGroup(target);
 				if (Survivors.IsCage(target.GameObjectName)) SurvivorGroup(target);
+				PlayerGroup(target);
 			}
 			GapGroup(target, kind);
 			MechGroup(target, kind);

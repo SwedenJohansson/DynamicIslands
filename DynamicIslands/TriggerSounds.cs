@@ -17,8 +17,12 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public static class TriggerSounds
 	{
-		/// <summary>The island state key of an object's looped sound: KeyBase + (object index &amp; 0xFFFF).</summary>
-		public const int KeyBase = 0xD0000;
+		/// <summary>The island state key of an object's looped sound: KeyBase + (object index &amp; 0xFFFF), after
+		/// Collectibles.KeyBase 0x140000 + 0xFFFF. It was 0xD0000, Survivors' cage key of the same object index: a loop on
+		/// a cage overwrote "rescued" (the cage came back closed after a reload) and a rescue ended the loop (2026-10-25).</summary>
+		public const int KeyBase = 0x150000;
+		/// <summary>KeyBase before 2026-10-25: a looped sound an older save kept there is moved (MoveOld).</summary>
+		public const int OldKeyBase = 0xD0000;
 
 		public class Spec
 		{
@@ -72,10 +76,24 @@ namespace DynamicIslands.Editor
 		static int KeyOf(int index) { return KeyBase + (index & 0xFFFF); }
 		static int IndexOfKey(int key) { int i = key - KeyBase; return i == 0xFFFF ? -1 : i; }
 		static bool IsKey(int key) { return key >= KeyBase && key < KeyBase + 0x10000; }
-		/// <summary>A looped sound's own entry: the range is shared with Survivors' cages and was with buried treasure, whose
-		/// used entries are not Active - the tick below dropped them as "sound gone" (mprf4's treasure came back, 2026-10-18).</summary>
+		/// <summary>A looped sound's own entry: Active (the old range 0xD0000 also holds Survivors' cages and old buried
+		/// treasure, whose used entries are not Active - the tick once dropped them as "sound gone", mprf4 2026-10-18).</summary>
 		static bool IsSound(KeyValuePair<int, ObjectState> kv) { return IsKey(kv.Key) && kv.Value.Active; }
 		static bool HasSound(IslandWorldState.Entry e, int key) { ObjectState s; return e.State.TryGetValue(key, out s) && s.Active; }
+		static bool IsOldSound(KeyValuePair<int, ObjectState> kv) { return kv.Key >= OldKeyBase && kv.Key < OldKeyBase + 0x10000 && kv.Value.Active; }
+
+		/// <summary>An older save's looped sounds (OldKeyBase, Active: cages and treasure there are never Active) move to
+		/// KeyBase, on every machine before the island's sounds are used.</summary>
+		static void MoveOld(IslandWorldState.Entry e)
+		{
+			if (e == null || !e.State.Any(IsOldSound)) return;
+			foreach (KeyValuePair<int, ObjectState> kv in e.State.Where(IsOldSound).ToList())
+			{
+				e.State.Remove(kv.Key);
+				int key = KeyBase + (kv.Key - OldKeyBase);
+				if (!e.State.ContainsKey(key)) e.State[key] = kv.Value;
+			}
+		}
 
 		class Playing
 		{
@@ -133,6 +151,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Every machine: index -2 = every sound of the island.</summary>
 		static void Apply(IslandWorldState.Entry e, bool play, string arg, int index)
 		{
+			MoveOld(e);
 			if (play)
 			{
 				Spec s = Parse(arg);
@@ -249,6 +268,7 @@ namespace DynamicIslands.Editor
 			}
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
 			{
+				MoveOld(e);
 				if (e.Root == null || !e.State.Any(IsSound) || !Behaviours.Near(e)) continue;
 				foreach (KeyValuePair<int, ObjectState> kv in e.State.Where(IsSound).ToList())
 				{

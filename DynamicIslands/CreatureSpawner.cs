@@ -931,6 +931,23 @@ namespace DynamicIslands.Editor
 				if (Harmless(p.Kind.Type) || !Players.All.Any(pl => pl != null && Vector2.Distance(new Vector2(pl.transform.position.x, pl.transform.position.z), new Vector2(at.x, at.z)) < StrayDistance)) strayed++;
 				p.LastAt.Remove(id);
 			}
+			// A harmless sea animal one of the island's quests asks for, taken away alive: back at its spot at once, so the quest
+			// can still be done (keeping it out of Raft's sea events wasn't always enough: Lowstreet's big stingray still went
+			// mid-play, SL13 step 16, 10-26)
+			if (strayed > 0 && Harmless(p.Kind.Type) && IsQuestTarget(e, p.Kind))
+			{
+				Network_Host_Entities host = HostEntities;
+				int back = 0;
+				for (int i = 0; host != null && i < strayed; i++)
+				{
+					AI_NetworkBehaviour ai = Spawn(host, p, 0, 1);
+					if (ai == null) continue;
+					KeepFromRaftEvents(e, ai, p.Kind);
+					back++;
+				}
+				if (back > 0) Debug.Log("[CUSTOM ISLANDS] " + back + " quest " + p.Kind.Label + "(s) of '" + e.HostName + "' taken away by Raft: back at the spot");
+				strayed -= back;
+			}
 			// (just spawned, Raft may not have set up its network entity yet: that one is alive, not killed)
 			int alive = p.Spawned.Count(ai => ai != null && (ai.networkEntity == null || !ai.networkEntity.IsDead));
 			if (alive == p.RecordedAlive) return;

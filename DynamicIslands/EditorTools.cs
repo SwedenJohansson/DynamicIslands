@@ -182,7 +182,7 @@ namespace DynamicIslands.Editor
 			ring.startColor = ring.endColor = c;
 			if (ring.material != null) ring.material.color = c;
 			float radius = terraineditor.brushRadius;
-			ring.startWidth = ring.endWidth = Mathf.Clamp(radius * 0.03f, 0.25f, 2f);
+			ring.startWidth = ring.endWidth = Mathf.Clamp(radius * 0.03f, 0.06f, 2f);
 
 			float baseY = terrain.transform.position.y;
 			for (int i = 0; i < Segments; i++)
@@ -192,6 +192,16 @@ namespace DynamicIslands.Editor
 				p.y = baseY + terrain.SampleHeight(p) + 0.4f;
 				ring.SetPosition(i, p);
 			}
+		}
+
+		/// <summary>For tests: the ring's drawn radius (from its centre to the first point, flat) and line width; -1 when hidden.</summary>
+		internal static float DrawnRadius(out float width)
+		{
+			width = ring != null ? ring.startWidth : 0f;
+			if (ring == null || !ring.enabled || ring.positionCount < 2) return -1f;
+			Vector3 a = ring.GetPosition(0), b = ring.GetPosition(ring.positionCount / 2);
+			a.y = b.y = 0f;
+			return Vector3.Distance(a, b) / 2f;
 		}
 
 		public static void Hide()

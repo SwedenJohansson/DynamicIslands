@@ -9,6 +9,116 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-26: Test round fixes
+
+### Fixed
+- **The island map** shows when you are on or near an island: it measured from the island's corner, not its middle, so
+  on many islands it did not show, or its picture was off to one side.
+- **A quest's sea animal that Raft still takes away** (a turtle, stingray, dolphin or whale the quest asks for) comes back
+  at its spot, so the quest can always be finished.
+- **Your own notebook:** on the host, another world's notebook no longer reads or writes the one of the world you play.
+
+## 2026-10-25: Looped sounds on survivor cages
+
+### Fixed
+- **A looped "play sound" on a survivor's cage** no longer makes a rescued cage come back closed after a reload, and
+  rescuing the survivor no longer ends the loop: looped sounds have their own place in the world's save now. Older
+  worlds' looped sounds are moved over by themselves.
+
+## 2026-10-25: Editor: picking small objects, 1 m brushes, grid sizes, AZERTY keys
+
+### Added
+- **Clicking picks the object you mean:** the smallest object under the mouse, by its real shape and not the box around
+  it, so a flower beside a big palm can be selected. Click the same spot again for the next object there. A light blue
+  outline shows what a click would select.
+- **Grid size** on the Objects tab: 0.5, 1, 1.5 or 2 m for **Grid** (1.5 m is Raft's building grid). It snaps while
+  placing and while moving with the arrows, and is kept on this PC.
+- **AZERTY keys:** the **Keys** button in the editor's Camera window (right of **Mod's own**) switches the editor to ZQSD
+  and A/E, and the help, tips and hover hints name those keys. Kept on this PC.
+
+### Changed
+- **The terrain brush goes down to 1 m across** (it was 4 m); the Size slider gives the small sizes room, and the ring
+  matches. A 1 m brush moves one ground point (the ground has one about every 2 m).
+
+## 2026-10-25: Mirrored islands
+
+### New
+- **World option Mirrored islands** (off by default): about one random custom island in three comes mirrored left to
+  right, land and everything on it, so islands you know look new. Fixed per world, the same for every player; islands
+  with a quest, plan and story islands, and islands with moving parts or events are never mirrored.
+
+## 2026-10-25: Cosmetic rewards
+
+### New
+- **Cosmetic hats and trophies** for your islands: four hats (Admiral's hat, Corsair's hat, Explorer's hat,
+  Chieftain's mask) and three trophies to place (golden shark, silver rhino shark, jade tiki pole), copies of Raft's
+  own in new colours. Only chests, quest rewards and "give" actions hand them out; the loot preset **Cosmetics** holds
+  a hat and a trophy.
+
+## 2026-10-25: Binoculars see through fog
+
+### New
+- **World option "Binoculars see through fog"** (off by default): the sea's haze comes about 30 % closer, and raised
+  binoculars see about 20 % further than Raft's usual view, the telescope about 50 %. Raft's weather and fog banks
+  keep their own fog; each player sees through their own binoculars.
+- **Marine binoculars** (extra upgrade, titanium): the telescope's zoom, the furthest view through fog and a lighter
+  view at dusk and at night. The telescope and Marine binoculars count as binoculars in plan and island checks.
+
+## 2026-10-25: Islanders
+
+### New
+- **Islanders** (Notes & signs > **Islander (talks)**): one of Raft's six characters standing, sitting, fishing,
+  sleeping or leaning on an island. Press E to talk: a dialogue of pages, maybe with answers to pick. Closing it runs
+  the islander's **talk** event and an answer its **choice1**-**choice3** event; the world remembers who was talked to
+  for the whole crew (the check **talked to**), a new quest step **Talk to** waits for it, and the new action **show
+  dialogue** opens a dialogue from any object. Pose, look and dialogue are set in the inspector.
+- **Collectible sets** (Loot & chests > **Collectible (set piece)**): hidden pieces of a named set. Picking one up
+  counts for the whole crew ("Relics: 2 of 4"); the last one sends the signal `set:<name>` and runs the pieces' **set**
+  event (the reward). New check **set found** and quest step **Find set**.
+- **Light puzzles** (Zones & triggers > **Puzzle light (switch)**, or any object with a light group): switched on and
+  off with E, saved and the same for every player. Events **lit**, **unlit** and **alllit** (the whole group on, plus
+  the signal `lights:<group>`), the action **switch light**, the checks **light is** / **all lights** and the quest
+  step **Light up**.
+- Any object can be made a collectible or a puzzle light with the inspector's **Story puzzle** buttons; every player
+  on the island sees a set's count; the new events keep their actions after a `wait` like the others.
+
+## 2026-10-25: Player features, follow-ups
+
+### Added
+- **Camera fly-throughs** can play **once** per world (an intro): the host keeps it in the world's save.
+- **Copy to my notebook** on the main story's pages in Raft's notebook too.
+- The island map's zoom keys can be changed in **Defaults... > Keys (this PC)** (the keypad's + and - still zoom).
+
+### Fixed
+- A **use** hint on a camera point or a map marker did nothing useful but could be looked at; it is ignored now.
+- The mod's default keys also skip Raft's second keys and keys the mod already gives to something else.
+
+## 2026-10-25: Island map and pings
+
+### Added
+- **Island map:** near a custom island a small map of it shows in the top-right corner, with you, the other players,
+  the targets of each quest's current step and the builder's **map markers** (a new object in Zones & triggers, with a
+  text). **M** switches it to full screen and off, **+** / **-** zoom.
+- **Pings:** **G** marks the spot you look at for the whole crew for a few seconds: a beam with your name, a dot on
+  the map and a sound.
+
+## 2026-10-25: Camera fly-throughs
+
+### Added
+- **Camera fly-throughs:** place **Camera points** (Zones & triggers) to make a camera path, each point with its order,
+  what it looks at, its speed and a wait. The new when/then action **camera fly-through** flies the camera of every
+  player near the path along it once, on a smooth curve, with the player held; **Esc** skips it. In the editor a line
+  shows each path, **Preview path** flies it, and **Record trailer** saves every frame as pictures for a video.
+  **Check** warns about a path with fewer than two points.
+
+## 2026-10-25: Your own notebook
+
+### Added
+- **Your own notebook (U):** pages you write yourself, with titles, beside the journal and Raft's notebook. It saves
+  by itself (while you type and on closing), per world, in a file next to the world's save on your own PC; it is never
+  sent to the other players. **Copy to my notebook** on a note or a journal page copies it in. The key, and the new
+  Map and Ping keys, can be changed in **Defaults... > Keys (this PC)**.
+
 ## 2026-10-25: The Long Voyage, fixes
 
 ### Fixed

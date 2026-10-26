@@ -329,7 +329,7 @@ namespace DynamicIslands.Editor
 
 		static readonly Dictionary<string, string> TypeLabels = new Dictionary<string, string>
 		{
-			{ "reach", "Go to" }, { "read", "Read" }, { "open", "Open" }, { "kill", "Defeat" }, { "catch", "Catch" }, { "collect", "Collect" }, { "pages", "Find pages" }, { "blueprint", "Blueprint" },
+			{ "reach", "Go to" }, { "read", "Read" }, { "open", "Open" }, { "kill", "Defeat" }, { "catch", "Catch" }, { "collect", "Collect" }, { "pages", "Find pages" }, { "blueprint", "Blueprint" }, { Islanders.QuestType, "Talk to" }, { Collectibles.QuestType, "Find set" }, { Lights.QuestType, "Light up" },
 		};
 
 		/// <summary>What each kind of step asks (the step list's lines).</summary>
@@ -340,6 +340,9 @@ namespace DynamicIslands.Editor
 			{ "catch", "Catch a number of animals with Raft's net launcher (e.g. Llama)" }, { "collect", "Have a number of a story item (the journal counts them)" },
 			{ "pages", "Find a number of journal pages: notes read on this island (or \"all\": anywhere)" },
 			{ "blueprint", "Find one of Raft's blueprints: picked up (and carried) or already learned (e.g. Blueprint_Fueltank)" },
+			{ Islanders.QuestType, "Talk to an islander (Story_Islander, by its name; empty = any islander): done when the dialogue closes" },
+			{ Lights.QuestType, "Switch on a number of the puzzle lights of a group on this island (its Count; the quest panel counts them)" },
+			{ Collectibles.QuestType, "Find a number of the pieces of a collectible set on this island (objects with that Set; the HUD counts them)" },
 		};
 
 		static readonly Dictionary<string, string> TargetHints = new Dictionary<string, string>
@@ -348,6 +351,9 @@ namespace DynamicIslands.Editor
 			{ "kill", "creature (e.g. Warthog; empty = any)" }, { "catch", "animal (e.g. Llama; empty = any)" },
 			{ "collect", "story item (\u2026 to choose)" }, { "pages", "empty = this island, all = any island" },
 			{ "blueprint", "Blueprint_ name (\u25BE lists Raft's; empty = any story blueprint)" },
+			{ Islanders.QuestType, "islander's name (\u25BE lists this island's; empty = any)" },
+			{ Collectibles.QuestType, "set name (\u25BE lists this island's sets)" },
+			{ Lights.QuestType, "light group (\u25BE lists this island's groups)" },
 		};
 
 		/// <summary>Takes what was typed into the step rows before they are rebuilt.</summary>
@@ -455,7 +461,7 @@ namespace DynamicIslands.Editor
 				case "catch": names = all.Select(e => ContentCatalog.CreatureOf(e.GameObjectName)).Where(k => k != null && k.Category == ContentCatalog.CatchableCategory).Select(k => k.Label); break;
 				case "pages": return new List<DropList.Option> { new DropList.Option("", "This island", "Pages from this island's notes"), new DropList.Option("all", "all", "Pages from any island") };
 				case "blueprint": return BlueprintSteps.All().Select(b => new DropList.Option(b, PlanChecker.Pretty(b), b)).ToList();
-				default: return new List<DropList.Option>();
+				default: return PlayerFeatures.NamesFor(type, all) ?? new List<DropList.Option>();
 			}
 			return names.Where(n => n != null && n.Trim().Length > 0).Distinct().OrderBy(n => n, StringComparer.OrdinalIgnoreCase).Select(n => new DropList.Option(n, n)).ToList();
 		}

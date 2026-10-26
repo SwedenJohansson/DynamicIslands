@@ -161,7 +161,7 @@ namespace DynamicIslands.Editor
 		// ---- Keys --------------------------------------------------------------------------------------------------
 
 		/// <summary>The keys whose number says the object's place in the file (Behaviours, CodeLock, QuestItemPickups).</summary>
-		static readonly int[] IndexBases = { Behaviours.StateBase, Behaviours.DoneBase, Behaviours.SharedOnceBase, CodeLock.LockKeyBase, QuestItemPickups.KeyBase, Survivors.KeyBase, BossPhases.KeyBase };
+		static readonly int[] IndexBases = { Behaviours.StateBase, Behaviours.DoneBase, Behaviours.SharedOnceBase, CodeLock.LockKeyBase, QuestItemPickups.KeyBase, Survivors.KeyBase, BossPhases.KeyBase, Islanders.TalkedBase, Collectibles.KeyBase, TriggerSounds.KeyBase };
 		const int TreasureLow = 0xC000;
 
 		/// <summary>Where each running number of an island's objects points: the object's place, and (pickups) which of its pickups.</summary>
@@ -324,13 +324,14 @@ namespace DynamicIslands.Editor
 					moved = b + j;
 					return j >= 0 && j < 0x10000;
 				}
-			if (key >= Behaviours.PendingBase && key < Behaviours.PendingBase + 0x100000)
-			{
-				int i = (key - Behaviours.PendingBase) >> 4, ev = (key - Behaviours.PendingBase) & 0xF;
-				int j = indexNow(uidAt(i));
-				moved = Behaviours.PendingBase + (j << 4) + ev;
-				return j >= 0 && j < 0x10000;
-			}
+			foreach (int pb in new[] { Behaviours.PendingBase, Behaviours.MorePendingBase })
+				if (key >= pb && key < pb + 0x100000)
+				{
+					int i = (key - pb) >> 4, ev = (key - pb) & 0xF;
+					int j = indexNow(uidAt(i));
+					moved = pb + (j << 4) + ev;
+					return j >= 0 && j < 0x10000;
+				}
 			return true; // (not an object's: quest steps, rules, visits, signals - kept by their own place)
 		}
 

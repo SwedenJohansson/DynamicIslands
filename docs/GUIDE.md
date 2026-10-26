@@ -330,6 +330,12 @@ The builder of an island can give it much more than land (see [section 5](#5-mak
   second phase: at part of its health it roars, calls more animals and gets faster.
 - **Survivors:** someone locked in a cage. Bring the cage's key (a story item) and press **E**: the cage opens, the
   survivor thanks you in a speech bubble, and from then on stands on your raft.
+- **Islanders:** one of Raft's characters standing, sitting, fishing, sleeping or leaning on an island. Press **E** to
+  talk: a dialogue of a few pages, maybe with answers to pick. What you answer can open doors or start a quest.
+- **Collectible sets:** hidden pieces of a set (relics, shells...) lie about an island. Press **E** to pick one up:
+  the screen counts "Relics: 2 of 4" for the whole crew, and finding the whole set brings its reward.
+- **Light puzzles:** lamps and torches you switch on and off with **E**. Lighting the right ones (or all of a group)
+  opens the way on; every player sees the same lights, and they stay as you left them.
 - **Locked doors:** Raft's card reader doors and other key doors open only with their card or key (a story item): the
   reader beeps it through and the door opens for everyone. Without it the door stays shut and says so.
 - **Buried treasure:** nothing shows above the ground. Raft's **metal detector** beeps as you come near, and three
@@ -481,6 +487,40 @@ More: [The main story in Raft's notebook, side quests in the journal](#the-main-
 Story items aren't in your inventory: the crew holds them (in the journal, or in Raft's Found items for the main
 story), like Raft holds its quest items outside the inventory.
 
+### Your own notebook (U)
+
+Your **own notebook** is yours to write in: pages with a title and free text, for plans, codes, maps in words, what to
+do next. Press **U** in a world to open it (or **My notebook** at the top of the journal); **U** (while you aren't
+typing), **Esc** or **Close** closes it, and **Journal** goes to the journal.
+
+- **New page** adds a page; click a page in the list on the left to open it. Type its title at the top of the paper
+  and its text below. **Delete** removes the open page (click it twice: **Sure?**).
+- While it is open you don't walk, look around or use the hotbar, so typing doesn't move you.
+- It **saves itself**: a few seconds after you stop typing, and when you close it.
+- **Copy to my notebook** on a note you read, on a page of the journal and on the main story's pages in Raft's
+  notebook (T) copies its title and text in as a new page.
+- It is **per world** and **only on your computer**: the file `CustomIslands-notebook.txt` sits next to that world's
+  save (in Raft's world folder). It is never sent to the other players, and another world has its own pages. A
+  player who joins a world keeps theirs in the folder of their copy of it, or under the mod's `worlds` folder until
+  there is one.
+- The key can be changed in **Defaults... > Keys (this PC)** (Notebook), like the journal's.
+
+### The island map (M) and pings (G)
+
+Near a custom island a small **map** of it sits in the top-right corner: the island seen from straight above, you as
+a white arrow (pointing the way you look), the other players as blue dots, and **gold dots** where each unfinished
+quest's current step wants you (the objects named as the step's target; one off the shown part stays at the map's
+edge, pointing the way). Green dots are **map markers** the builder placed, with their text on the full map.
+
+- **M** goes corner -> **full screen** (in the middle, with every name) -> **off** -> corner.
+- **+** and **-** zoom in and out (1x, 2x, 4x), around you (the keypad's + and - too).
+- The map shows only near an island (within its land and 80 m); at open sea it hides. Its picture is taken when you
+  come to the island, when you open the full map and every 30 s.
+- **G** **pings** the spot you look at (up to 300 m; looking at the sky, 50 m ahead): everyone in the world sees a red
+  beam with your name there, a red dot on the map and hears a short sound, for 6 seconds. One ping a second at most;
+  a new ping of yours replaces your last one.
+- The keys can be changed in **Defaults... > Keys (this PC)** (Map, Ping, and Map zoom in / out on the third line).
+
 ---
 
 ## 4. Building your own island: the editor
@@ -536,7 +576,11 @@ above (right mouse + drag, WASD, Q/E and wheel; WASD or arrows; Space/C; middle 
 Alt + right drag; F; Shift), and under them this PC's settings: **Look sensitivity**, **Move speed** (the right mouse + wheel speed, kept between sessions),
 **Zoom speed** and **Pan speed** (each x1 = the mod's own, a slider from slower to faster), **Drag up: look up / down**
 (click to switch; up, the default, looks up as in most games, down tilts the view as if you dragged the scene) and
-**Wheel up: zoom in / out** (the wheel turned round). **Mod's own** puts them all back (dragging up looks up); **Close** or Esc closes the window. They are
+**Wheel up: zoom in / out** (the wheel turned round). **Mod's own** puts them all back (dragging up looks up; the key
+layout stays). **Keys: QWERTY / AZERTY**, right of it, switches the editor's keys for a French or Belgian keyboard:
+AZERTY flies and moves with **ZQSD** and uses **A/E** for down / up and for turning a stamp or the object being placed,
+where QWERTY has WASD and Q/E (the arrow keys work in both). Unity reads keys by the letter the keyboard layout gives,
+so this changes the keys themselves; the window's list and the tabs' tips change with it. **Close** or Esc closes the window. They are
 saved a moment after a change, in `world_rules.txt` ([section 10](#10-settings-files)), and are also in
 **Defaults... > Editor camera (this PC)**. On the right:
 
@@ -591,7 +635,9 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
 ### 4.2 Shaping the land (Terrain tab)
 
 - **Sculpt:** **Raise**, **Lower**, **Flatten**, **Smooth**. Hold the left mouse button on the ground; the white ring
-  shows the brush. Objects standing on the ground you sculpt **go up and down with it** (trees, rocks, huts: lowering
+  shows the brush. **Size** goes from 1 m to 160 m across; the slider gives the small sizes room. The ground has a
+  height point about every 2 m, so a 1 m brush moves just the nearest point (and paints one paint pixel) and 2 m that
+  point and a little of the ones beside it: for a step, a narrow ditch or a path's edge. Objects standing on the ground you sculpt **go up and down with it** (trees, rocks, huts: lowering
   the ground no longer leaves them in the air, raising it no longer buries them); what stands higher, on a deck or a
   roof, stays. **Ctrl+Z** undoes the stroke and the objects' moves together.
   **Flatten to** (a field in the brush settings): type a height in metres above the sea (for example 4) and **Flatten**
@@ -710,7 +756,10 @@ against a wall) stands up straight; a bigger lean - more than 25°, a boulder ly
   **Shift+click** keeps placing, **Esc** stops. Hold **Ctrl** to nudge it with the mouse. On a slope an object goes down to the **lowest ground under its base**,
   so a house on legs or a van stands on all of its legs and wheels instead of its high side (with **Slope** on, it leans
   with the ground instead).
-- **Select:** click a placed object; **Shift+click** adds more, **Ctrl+click** takes one out again.
+- **Select:** click a placed object; **Shift+click** adds more, **Ctrl+click** takes one out again. The object under the
+  mouse has a light blue outline: that is what a click selects. Where objects stand in each other, the smallest one is
+  picked (a flower beside a big palm, not the palm), and a model's real shape counts, not the box around it. Click the
+  same spot again to get the next object there (the status bar says "2 of 3 here"), and again to go round.
 - **Transform** (keys 1-4): Move, Turn, Scale or All, with the coloured handles. **X** switches the arrows between the
   world's directions and the object's own turn; **P** turns and scales around each object's own point or the middle of
   the selection; hold **Ctrl** while dragging to snap (0.25 m, 15°). An island holds at most 100 000 objects (the editor
@@ -734,7 +783,9 @@ against a wall) stands up straight; a bigger lean - more than 25°, a boulder ly
 ![Place exactly](images/editor-place-exactly.jpg)
 *A pasted sign placed exactly: X 510, 3 m above the sea, Z 520.5, turned 90 degrees, twice the size.*
 - **Placing:** **Random** gives each placed object a random turn and size, **Slope** leans it with the ground, **Grid**
-  snaps to Raft's 1.5 m building grid (Q/E then turn in 90° steps).
+  snaps to the grid (Q/E then turn in 90° steps) while placing and while moving with the arrows. **Grid size** picks
+  0.5, 1, 1.5 or 2 m (1.5 m is Raft's building grid, for huts and rafts of Raft blocks); choosing one turns Grid on, and
+  the size is kept on this PC (`editorgrid` in `world_rules.txt`). Ctrl held while dragging still snaps by 0.25 m.
 - **Groups:** select several objects and click **Save as group...**. The group appears under **My groups** at the top
   of the browser, to place on any island. **Manage...** beside it opens **My groups and stamps**: pick a group (or, on
   the Stamps tab, a stamp), type a new name and press **Rename**, or press **Delete** twice - it is moved to
@@ -1093,7 +1144,7 @@ step = open | Lookout cache | 1 |
 | `styles`, `shape`, `radius`, `height`, `roughness`, `density`, `peaks`, `likeraft` | The land: one style is picked (name one twice to make it twice as likely); `shape` is round, atoll, archipelago, seastacks, plateau, marsh, crescent, twinpeaks, raftsmallisland or raftlargeisland; `60 - 70` is rolled, one number is fixed; `likeraft = large/small` makes trees and pickups as dense as on Raft's own islands |
 | `set = <setting> <value>` | Any generator setting by name after the roll, as in a generator preset (`Hostiles`, `Cliffs`, `SeaFloor`, `Trees`...) |
 | `content = <built-in type>` | That type's content first (a no-land type's raft too: `content = wreck`), then your own lines |
-| `chest`, `note`, `creature`, `zone`, `atmosphere`, `object`, `clear` | The content, placed in order. Loot is `Basics`, `Metal`, `Food`, `Treasure` or items as in the loot editor (`Plank*12;Rope*4`); `\n` is a new line in a text |
+| `chest`, `note`, `creature`, `zone`, `atmosphere`, `object`, `clear` | The content, placed in order. Loot is `Basics`, `Metal`, `Food`, `Treasure`, `Cosmetics` or items as in the loot editor (`Plank*12;Rope*4`); `\n` is a new line in a text |
 | `quest`, then `step` lines | A quest (title, intro, done text, reward) and its steps as in the quest editor (`read`, `open`, `kill`, `reach`...) |
 
 **Where things go** (`<where>`): `mid` (the middle), `top` (the highest ground; `top:0.5` within half the radius),
@@ -1409,7 +1460,7 @@ turtle, stingray, dolphin, whale.
 - **Comes back after** the regrow days, or **Never**.
 - **Appears** at once, or **when a zone fires** (an ambush, see [5.4](#54-trigger-zones-and-ambushes)).
 - **Quest animals stay:** a turtle, stingray, dolphin or whale that the island's quest asks players to kill or catch
-  stays at the island until it is beaten. Other harmless sea animals leave when Raft's own sea event for them ends, as in Raft.
+  stays at the island until it is beaten (if Raft still takes one away, a new one comes back at its spot). Other harmless sea animals leave when Raft's own sea event for them ends, as in Raft.
 - **Colour** (every object): **None** keeps its own colours; the nine swatches tint it (a creature spot: every animal of
   it), and once it is tinted the **Strength** slider (0 to 100 %) says how strongly the colour shows. **Custom colour...**
   adds **Red**, **Green** and **Blue** sliders (0 to 255) for your own mix: the object's own colours are multiplied by
@@ -1462,6 +1513,23 @@ quickly; it fills up again after 3 days, or never.*
 
 ![The item picker](images/editor-loot-picker.jpg)
 *Add items...: every item of Raft with its picture and a search. Click an item to add one, again to add more.*
+
+**Cosmetic rewards.** The mod adds hats and trophies that are only for looks and only come from your islands: chests,
+quest rewards and "give" actions hand them out (they are never crafted or learned, whatever the world settings). They
+are copies of Raft's own hats and trophies in a colour of their own, so they look at home on the raft:
+
+| Item | Made from | What it is |
+|---|---|---|
+| Admiral's hat (`DI_HatAdmiral`) | Captain's hat, gold | Worn on the head |
+| Corsair's hat (`DI_HatCorsair`) | Pirate hat, crimson | Worn on the head |
+| Explorer's hat (`DI_HatExplorer`) | Fishing hat, jade | Worn on the head |
+| Chieftain's mask (`DI_HatChieftain`) | Tiki mask, amber | Worn on the head |
+| Golden shark trophy (`DI_TrophyGoldenShark`) | Shark trophy, gold | Placed on the raft |
+| Silver rhino shark trophy (`DI_TrophySilverRhino`) | Rhino shark trophy, silver | Placed on the raft |
+| Jade tiki pole (`DI_TrophyJadeTiki`) | Tiki pole, jade | Placed on the raft |
+
+They are in **Add items...** like any item, and the loot preset **Cosmetics** puts the Admiral's hat and the Golden
+shark trophy in a chest. Worlds keep them like Raft's own items (worn, in chests, placed).
 
 **The abandoned raft crate.** "Loot & chests" also has Raft's own **Abandoned raft crate**: the box you grab on the
 small abandoned rafts that drift by in Raft. In a world it works as there: a player takes it whole (look at it, **E**) and
@@ -1583,7 +1651,8 @@ planks and rope, and when the quest is done it brings a saved island "Old camp" 
 name on the Receiver.*
 
 Steps: **go to** a trigger zone, **read** a note, **open** a chest (one of the mod's chests - Raft's abandoned raft crate doesn't count), **defeat** or **catch** a number of animals,
-**collect** a number of a story item, **find** journal pages, find a **Blueprint** of Raft's. Each step's kind is a **▼ list** (each kind says what it
+**collect** a number of a story item, **find** journal pages, find a **Blueprint** of Raft's, **talk to** an islander
+(6.3; by its name, the **▾** lists the island's islanders), **find** a number of a collectible **set** (6.3), **light up** a number of a light group's puzzle lights (6.3). Each step's kind is a **▼ list** (each kind says what it
 asks). Steps point at things on the island by name: the small **▾** beside the name lists the names this island has
 for that kind - its trigger zones, note titles, chest titles or creatures - so you can pick one instead of typing it
 (place the zones, notes, chests and creatures first). A **collect** step picks its story item with **…**. **When the quest is done, bring a new island** (main quest only) chooses from a
@@ -1684,6 +1753,18 @@ Select any object → **Behaviour & events...**. No code needed:
   object that spins, bobs or moves by itself. A creature spot's **Guarded while** lines (`boss.shieldIf=state|Feeder|open`,
   the behaviour window's checks) keep players' weapons glancing off its animals while all of them hold: a boss
   guarded while its feeder runs - close the feeder (or blast it, **hurt creatures**) to fight it.
+- **Islanders** (2026-10-25, 6.3): an islander has the events **talk** (its dialogue closed) and **choice1** to
+  **choice3** (an answer picked); the check **talked to** (`talked|Old Finn`; empty = this islander) passes once
+  anyone of the crew talked to it; the action **show dialogue** (`dialogue|Old Finn|text`) opens a dialogue for the
+  player who set it off.
+- **Collectible sets** (2026-10-25, 6.3): a piece of a set has the event **set** (the island's last piece of its set
+  was found: runs on every piece, once - the set's reward); the check **set found** (`set|Relics|3`; empty number =
+  all) passes once that many pieces of the set on this island were found.
+- **Light puzzles** (2026-10-25, 6.3): a puzzle light has the events **lit** and **unlit** (it was switched on/off) and
+  **alllit** (every light of its group is on now: runs on each of them, every time the group becomes all lit); the
+  action **switch light** (`light|Lamp 2|on`, `light|group:Lamps|off`, empty = toggle; empty name = this light;
+  shared, saved) and the checks **light is** (`light|Lamp 2|on`; empty name = this one) and **all lights**
+  (`lights|Lamps|on`, or `off`).
 - **Sounds and camera moments** (actions in the same ▼ list, shared by every player): **play sound/music** plays one of
   Raft's sound events or music cues (pick it with **…**, a list of every one Raft has), with a volume, **once** or on a
   **loop**, **near** the object (or the objects named) or for **everyone on the island**. Every player near the island
@@ -1695,6 +1776,24 @@ Select any object → **Behaviour & events...**. No code needed:
   player can't walk or look around meanwhile, and **Esc** skips it. Only players within its **range** of the marker
   (default 50 m) get it. Mark the spot with any small piece (a sign, a stone) and name it. **Check** warns about a sound
   Raft doesn't have and a marker or look-at name no object has.
+- **Camera fly-throughs** (shared): place **Camera point** objects (**Zones & triggers**) along the way the camera
+  should fly. In each point's inspector give the **Path** name (every point with the same name is on that path; empty =
+  `path`), its **Order** (1, 2, 3...), what it **Looks at** (an object's name; empty = the way the point faces), the
+  **Speed** to the next point (m/s, default 6) and how long it **Waits** there (s). **To my view** moves the point to
+  where the editor camera is (Ctrl+Z undoes it). An orange line shows each path in the editor. The action
+  **camera fly-through** (path name, **…** to choose one; range in metres, default 200) flies the camera of every player
+  within range of one of its points along the path once, on a smooth curve, then glides back; the player can't walk or
+  look around meanwhile, and **Esc** skips it. The button after the range picks **every time** (each time the action
+  runs) or **once** (only the first time in a world, for an intro: the host keeps it in the world's save, so it
+  doesn't replay after loading or for a player who joins later). The points are invisible in a world, and a **use**
+  hint on one does nothing (there is nothing to look at). **Preview path** in a point's
+  inspector flies the editor camera along it (Esc stops); **Record trailer** does the same and saves every frame (30 a
+  second, without the editor's windows) as `frame_00001.png`... in the mod's `trailers` folder, to make a video from
+  (with a video editor, or `ffmpeg -framerate 30 -i frame_%05d.png trailer.mp4`). **Check** warns about a path with
+  fewer than two points.
+- **Map markers** (island map): place a **Map marker** (**Zones & triggers**) where players should see a green dot on
+  the [island map](#the-island-map-m-and-pings-g); its inspector's **Text** is shown by the dot on the full map. It is
+  invisible in a world. A quest step's target shows on the map by itself, without a marker.
 
 ![A lever opens a door](images/editor-behaviour.jpg)
 *A log named "lever" that players can use ("Pull the lever"): it opens or closes the door and says "The door moves".*
@@ -1742,6 +1841,51 @@ id** and a **Signal** ("survivor" unless you name one). A player whose crew hold
 the cage opens for everyone, the survivor says the line in a speech bubble over the cage, and a few seconds later
 stands on the raft (as decoration: no needs, no work). The world remembers its survivors: one per id, also across
 islands and after a reload, so two cages with one id free one survivor.
+
+**Islanders to talk to** (2026-10-25). **Notes & signs** has **Islander (talks)**: in the editor a plain figure with a
+name tag, in a world one of Raft's six characters. In its **Islander** group set its **Name** (who quests and checks
+talk to), who it **Looks like** (a Raft character; any: picked by the island and the object), its **Pose** (stand,
+sit, fish, sleep, lean - place it where that fits: on a bench, at the water, against a wall) and **What it says**:
+the dialogue. A line `---` starts a new page; lines starting with `>` are answers to pick (up to three in all).
+Players look at it and press **E**: the dialogue opens with the islander's name, **Next** (or E) turns the pages, and
+on a page with answers they pick one (Tab or Esc walks away without answering). When it closes the islander's
+**talk** event runs, and answer 1, 2 or 3 runs its **choice1**, **choice2** or **choice3** event first (Behaviour &
+events..., 6.2): a door that opens for "I will help", a quest page in the journal, a signal. The world remembers who
+was talked to (for the whole crew, after a reload too): the check **talked to** (6.2) passes once anyone talked to the
+islander with that name, and a quest's **Talk to** step (6.1) is done when the dialogue closes. Any object can also
+show a dialogue: the action **show dialogue** (`dialogue|Old Finn|Hello!\n---\nBye`, `\n` for a new line in the
+action's one line) opens it for the player who set it off, said by the named object (its answers run that object's
+choice events). Check warns when a **Talk to** step names no islander of the island.
+
+**Collectible sets** (2026-10-25). **Loot & chests** has **Collectible (set piece)**: a gold coin with a gem, one
+piece of a set. Its **Collectible set** group in the inspector has the **Set** name (default Relics; every object
+with the same set on the island is a piece of it, and the group counts them). Hide the pieces about the island. A
+player looks at one and presses **E**: it is picked up (gone for the whole crew, after a reload too; two players at
+once: one gets it) and every player on the island sees "Relics: 2 of 4". When the island's last piece is found the set is complete:
+the island sends the signal `set:relics` (world plans and **signal sent** checks can wait for it) and every piece's
+**set** event runs once (Behaviour & events..., 6.2): put the reward there on one piece (`give||Titanium*3`, a
+`journal` page, `open|Vault door`). The check **set found** (`set|Relics|2`) passes once that many pieces were found,
+and a quest's **Find set** step (6.1; the **▾** lists the island's sets) waits until its number of pieces is found -
+its progress shows in the quest panel. Pieces count per island (a copy of the island has its own). Check warns when
+a **Find set** step names a set the island hasn't got or wants more pieces than it has.
+
+Any object (not an islander) has a **Story puzzle** group in the inspector: **Make collectible (set)** gives it the
+set Relics and **Make puzzle light (group)** the group Lamps, so its own group shows - rename them there. The
+events **talk**, **choice1**-**choice3**, **set**, **lit**, **unlit** and **alllit** keep their actions after a
+`wait` like the other events: if the island unloads first they run when it loads again.
+
+**Light puzzles** (2026-10-25). **Zones & triggers** has **Puzzle light (switch)**: a post with a bulb. Its **Puzzle
+light** group in the inspector has the **Group** (default Lamps; any object with a group is a puzzle light, so a
+Raft lantern or torch can be one too - its own light and flames go on and off, an object without a light gets one) and
+**Starts** off or on; it counts the group's lights. A player looks at a light and presses **E** to switch it (one
+that switches itself in its own **use** lines is left to them). The state is the object's open state: saved with
+the world and the same for every player. Each light runs **lit** or **unlit** when it changes; when every light of
+its group is on, each runs **alllit** and the island sends the signal `lights:lamps`. Build the puzzle from these:
+`light|Lamp 3|toggle` on lamp 1's **use** makes lamps that switch their neighbours too, `light|group:Lamps|off` on a
+lever resets the puzzle, `open|Gate` on **alllit** is the reward, and the checks **light is** / **all lights** gate
+any event. A quest's **Light up** step (6.1; the **▾** lists the island's groups) waits until that many lights of
+the group are on at once. Check warns when a **Light up** step names a group the island hasn't got or wants more
+lights than it has. Events run on the host while the island is loaded there.
 
 ### 6.4 Islands that bring islands
 
@@ -2772,6 +2916,8 @@ already in the world is taken away. What each one does from the moment it change
 | Fog banks | A bank due now rolls in (fading); off, the fog lifts within about half a minute |
 | Whale breach | The first breach a few minutes later; off, a whale already breaching finishes its leap |
 | Kraken arm | From now on (the next day or storm with one); off, an arm holding the raft lets go at once |
+| Binoculars see through fog | At once (the haze eases in over a second); off: Raft's own fog |
+| Mirrored islands | Islands that spawn from now on (one already in the world changes when it comes back into view); off: they spawn as made |
 | Lightning strikes | The next storm can have bolts (one blowing now too); off, a bolt already in the sky finishes |
 | Extra upgrades | Off: the recipes are hidden; upgrades built or worn keep working, learned ones are kept |
 | Scrambled blueprints / Story order (retired, off only) | Untaken blueprints go back to Raft's places / the Receiver goes back to Raft's order |
@@ -3089,6 +3235,7 @@ the thing it improves (the **base**), once it is learned at the **upgrade resear
 | **Bright head light** | A head light that lights **twice as far** and half again as bright; it lasts twice as long | 2x the head light | Head light |
 | **Bright lamp** | A lantern that lights **twice as far** and half again as bright | 2x the lantern | Lantern |
 | **Lumber axe** | A titanium axe that **takes building pieces apart twice as fast**; it lasts twice as long | 2x the titanium axe | Titanium axe |
+| **Marine binoculars** | Titanium binoculars that **zoom in twice as far** like the telescope; with **Binoculars see through fog** on they see furthest through haze and fog and **lighten the view at dusk and at night** | 2x the binoculars + 3 titanium ingots | Binoculars |
 
 None of them needs a new model: they are Raft's own machines and tools, each in a colour of its own (worn ones are tinted
 while they are worn). Raft's purifiers, biofuel refiner and beehive have
@@ -3220,6 +3367,42 @@ swipe: about every seven seconds each one **rears up for a second and slams down
   Switched on in a running world, the next day or storm with one brings it; off, an arm holding the raft lets go.
 - `Kraken` (F10) shows whether an arm is out, its hits and the next days with one; `Kraken bring` brings one now,
   `Kraken away` sends it away and `Kraken tear` makes it tear now (host).
+
+#### Binoculars see through fog
+
+Raft's sea always has a haze: far islands fade into the sky. With this option the haze comes **about 30 % closer**, so
+islands show up later - until you **raise binoculars** (right mouse button with them in hand):
+
+| Looking through | You see |
+|---|---|
+| Nothing (the eyes) | The haze about 30 % closer than in Raft |
+| Binoculars | About 20 % further than Raft's usual view |
+| Telescope (an extra upgrade) | About 50 % further |
+| **Marine binoculars** (an extra upgrade, made with titanium) | About 80 % further, and the view is **lighter at dusk and at night** |
+
+- **Raft's weather keeps its own fog:** the factors work on the fog Raft's weather has right now, so a storm or Raft's
+  foggy weather still closes in, and a **fog bank** (the option Fog banks) stays as thick to the eye - binoculars see a
+  little further into it. Under water nothing changes.
+- Lowering the binoculars brings the haze back within a moment; nothing jumps.
+- **Each player sees through their own binoculars:** what one player looks through changes only their own view.
+- The telescope and Marine binoculars count as binoculars wherever an island or a plan step asks for binoculars.
+- The Marine binoculars are an [extra upgrade](#extra-upgrades) (the option Extra upgrades): learned at the upgrade
+  research table once the binoculars are known. Without this option they zoom like the telescope.
+- `FogSight` (F10) shows what you look through and how far the fog is now.
+
+#### Mirrored islands
+
+About **one random custom island in three** comes **mirrored left to right**: its land, its paint and everything on it,
+so an island you have met in another world looks new. Which islands is fixed for the world (from the world's seed and
+the island's name), the same for every player and every time it comes back into view.
+
+- **Only plain islands:** islands with a quest, plan and story islands, and islands with moving parts, events, zip
+  lines or story items are never mirrored, so nothing that points somewhere ends up pointing the wrong way. Neither is
+  an island you spawn yourself (the editor's **Test**, `SpawnIsland`).
+- **Looks only:** what was taken, opened or used on an island stays so (the world remembers each thing by its own
+  number, not by where it stands). Things stand mirrored, but each piece keeps its own shape (a sign reads the right
+  way round). The editor and its picture of the island always show it as you made it.
+- Switching the option on or off in a world changes the islands not yet in view; the world remembers nothing extra.
 
 #### Ghost ship
 
@@ -3445,7 +3628,7 @@ get the settings they share at once.
 | Group | What is in it |
 |---|---|
 | **Random islands while sailing** | Random islands on or off (0 = off), the quiet minutes in a new world, the spacing, how far ahead an island appears (**Appear from** and **to**), and when a needed island returns |
-| **Keys (this PC)** | The **Journal** key (J) and the **Stats** key (K): click one, then press the new key (Esc keeps the old one). A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why |
+| **Keys (this PC)** | The **Journal** key (J), the **Stats** key (K) and, on the second line, **Notebook** (U, your own notebook), **Map** (M, the minimap) and **Ping** (G, a ping for the crew), on the third line **Map zoom in** (=, the + key) and **Map zoom out** (-): click one, then press the new key (Esc keeps the old one). A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why |
 | **Shared with every player** | **Receiver dots** on or off, the **Receiver range**, **Unload beyond** and **Regrow days (new worlds)** |
 | **Generated islands** | The weight of new generated islands, the chance one flies, **Things to gather**, **Finds in the shallows** and how far down they go, the five styles (at least one stays lit) and a button for each kind of thing to gather (lit = on) |
 | **Editor camera (this PC)** | The island editor's camera: **Look sensitivity**, **Move speed**, **Zoom speed**, **Pan speed**, **Drag up: look up / down** and **Wheel up: zoom in / out** - the same as the editor's **Camera...** button ([4.1](#41-the-screen)); kept in `world_rules.txt` |
@@ -3498,8 +3681,11 @@ there means plain Raft.
 | `islandsoff` | Island names separated by a vertical bar; also `type:<map type>` and `<generated>` | The islands left out of the next new world's islands while sailing | **CHOOSE ISLANDS...** in World settings (Create); `WorldIslands -<island>`, `+<island>`, `all` in the main menu |
 | `raftgap` | `min-max`, for example `3-6` (min 2-20, max 4-50) | One random island after every min to max of Raft's own islands | **One after every ... to ...** under CHOOSE ISLANDS..., at once; `WorldIslandsGap <min>-<max>` in the main menu |
 | `journalkey`, `statskey` | A Unity key name, for example `J`, `K` or `F6` | The keys of the journal (J) and the stats page (K) in a world | **Defaults...** > **Keys (this PC)**, at once. A key that can't be used falls back to J or K, and the log says so |
+| `notebookkey`, `mapkey`, `pingkey`, `mapzoominkey`, `mapzoomoutkey` | A Unity key name | The keys of your own notebook (U), the minimap (M), pings (G) and the map's zoom (= and -) | **Defaults...** > **Keys (this PC)**, at once. Empty = the default: the first of U/Y/O, M/N/Comma, G/H/B, Equals/RightBracket/PageUp, Minus/LeftBracket/PageDown that Raft doesn't use (its main or second key) and no key before it has |
 | `cameralook`, `cameraspeed`, `camerazoom`, `camerapan` | A multiplier, 1 = the mod's own: look 0.2-4, speed 0.1-10, zoom and pan 0.25-4 | The island editor camera's look sensitivity, flying speed, wheel zoom step and pan speed (this PC) | The editor's **Camera...** window or **Defaults... > Editor camera (this PC)**, a moment after a change |
 | `cameradragup`, `camerawheel` | `up` / `down`; `normal` / `reversed` | Which way dragging up turns the editor's view (up, the default; only a saved `down` turns it round) and the wheel's direction | The same |
+| `camerakeys` | `qwerty` / `azerty` | The editor's keys: WASD and Q/E, or ZQSD and A/E (**Mod's own** keeps it) | The **Keys** button in the editor's **Camera...** window, at once |
+| `editorgrid` | `0.5`, `1`, `1.5` or `2` (default 1.5) | The editor's grid size for **Grid** (placing and moving) | The **Grid size** buttons on the Objects tab, at once |
 
 **`randomizer.txt`** is the world randomizer's last choice, written when you press **Create**: a `#` note and one line,
 for example `level=normal;seed=0;off=colours,loot`. `level` is `off`, `light`, `normal` or `wild`; `off=` lists the parts
@@ -3582,6 +3768,8 @@ Press **F10** for RML's console.
 | `GhostShip` / `GhostShip roll <from> <to>` / `GhostShip bring` / `GhostShip sink` | World | Whether a ghost ship is out and the next night with one (option Ghost ship) / the nights with one / one beside the raft now / sink it now (host) |
 | `Kraken` / `Kraken bring` / `Kraken away` / `Kraken tear` | World | Whether a kraken arm holds the raft, its hits and the next days with one (option Kraken arm) / an arm grabs an edge floor now / it goes now / it tears now (host) |
 | `FogBanks` / `FogBanks roll <from> <to>` | World | Whether fog is in now, how far you see and the next fog bank (option Fog banks) / the fog banks between two days, with their hours |
+| `FogSight` | World | What this player looks through and how far the sky's fog is now (option Binoculars see through fog) |
+| `Cosmetics` / `Cosmetics give` | World | The cosmetic hats and trophies and whether each is there; `give`: one of each for you |
 | `Traders` / `Traders offers <seed>` / `Traders bring` | World | The trader rafts loaded now and their stalls' stock (option Trader raft) / what a trader raft with that seed sells / a trader raft ahead now (host) |
 | `ExportMapType <type> [file name]` | Anywhere | Writes a map type as a file in `maptypes\` to start your own from (default name `my-<type>`) |
 | `ReloadMapTypes` | Anywhere | Reads the `maptypes\` files again and says which were left out and why |
@@ -3598,7 +3786,7 @@ Press **F10** for RML's console.
 | `SetStyle <Tropical/Snowy/Desert/Forest/Volcanic>` | The island's style (its ground textures) |
 | `SetElevation <m>` | How high above the sea the island floats in a world, -100 to 250 m (60 = a flying island, -25 = under water, 0 = normal) - the Island tab's Height presets in short ([4.4](#44-the-island-tab)) |
 | `SetToRaise`, `SetToLower`, `SetToFlatten`, `SetToSmooth`, `PaintTexture <sand/grass/rock/seabed>`, `SetToAutoPaint` | The terrain brush's tool, as the Terrain tab's buttons ([4.2](#42-shaping-the-land-terrain-tab)) |
-| `ChangeWidth <m>` / `ChangeStrength <m/s>` | The brush's width (4-160 m) / strength (0.5-20 m a second) |
+| `ChangeWidth <m>` / `ChangeStrength <m/s>` | The brush's width (1-160 m) / strength (0.5-20 m a second) |
 
 ## 12. Limitations: what can't be changed
 

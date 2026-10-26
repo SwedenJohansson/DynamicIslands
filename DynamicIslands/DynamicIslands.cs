@@ -412,6 +412,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Gap features", e); }
 			try { MechFeatures.Tick(); }
 			catch (Exception e) { TickError("Quest mechanics", e); }
+			try { PlayerFeatures.Tick(); }
+			catch (Exception e) { TickError("Player features", e); }
 			try { RaftColliderGuard.Tick(); }
 			catch (Exception e) { TickError("Raft colliders", e); }
 			try { QuestTracker.Tick(); QuestCount.Tick(); DailyQuest.Tick(); RogueShark.Tick(); StormDays.Tick(); }
@@ -430,6 +432,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Lightning strikes", e); }
 			try { GhostShip.Tick(); }
 			catch (Exception e) { TickError("Ghost ship", e); }
+			try { FogSight.Tick(); }
+			catch (Exception e) { TickError("Binoculars through fog", e); }
 			try { FogBanks.Tick(); }
 			catch (Exception e) { TickError("Fog banks", e); }
 			try { IslandInfo.Tick(); }
@@ -448,6 +452,12 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("World director", e); }
 			try { JournalWindow.Tick(); }
 			catch (Exception e) { TickError("Journal", e); }
+			try { PlayerNotebookWindow.Tick(); }
+			catch (Exception e) { TickError("Player notebook", e); }
+			try { CameraPath.Tick(); }
+			catch (Exception e) { TickError("Camera paths", e); }
+			try { Minimap.Tick(); }
+			catch (Exception e) { TickError("Island map", e); }
 			try { if (LoadSceneManager.IsGameSceneLoaded && !InEditor()) QuestBook.Tick(); }
 			catch (Exception e) { TickError("Quest book", e); }
 			try { if (LoadSceneManager.IsGameSceneLoaded && !InEditor()) HotkeyHints.Tick(); }
@@ -1240,6 +1250,8 @@ namespace DynamicIslands
 			GameObject made = null;
 			// (SpawnInWorldSliced catches its own errors and gives null: a coroutine's call never throws)
 			Vector3 shiftedSlicing = IslandWorldState.ShiftedBy;
+			// (PF8: a plain random island of a world with Mirrored islands on - the fresh copy just read, nothing else holds it)
+			if (MirrorIslands.ShouldMirror(entry, island)) { MirrorIslands.Mirror(island); Debug.Log("[CUSTOM ISLANDS] '" + entry.HostName + "' is mirrored (option Mirrored islands)"); }
 			yield return IslandSpawner.SpawnInWorldSliced(island, position, r => made = r);
 			// (no entry: the root follows shifts while its objects are made - SpawnedRoots - the position kept for it too)
 			if (entry == null) position -= IslandWorldState.ShiftedBy - shiftedSlicing;
