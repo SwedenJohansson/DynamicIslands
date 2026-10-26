@@ -4572,7 +4572,7 @@ Telegraph Narrows a telescope.
 
 | Island | What it is | What to look at |
 |---|---|---|
-| ![](images/library/dead_letter_office.jpg) **The Dead Letter Office** (first, 500) | A brick post office on a granite skerry, its clock stopped at nine | Done when the letter to your raft is read (`note:2610`), five dead letters as story items carried to later islands |
+| ![](images/library/dead_letter_office.jpg) **The Dead Letter Office** (first, 500) | A brick post office on a granite skerry, its clock stopped at nine | Done when the letter to your raft is read (`note:2576`), five dead letters as story items carried to later islands |
 | ![](images/library/pillarbox_pier.jpg) **Pillarbox Pier** (800) | A long pier with the ferry office and its sorting shed | Done when a zone is reached (`zone:sorting`), a dead letter posted with a `take` check |
 | ![](images/library/parcel_canopy.jpg) **Parcel Canopy** (900) | A jungle airstrip with the mail pilot's plane in the trees | Vines cut with the machete, a beacon whose **signal** finishes the island (`signal:beacon`) |
 | ![](images/library/pneumatic_heights.jpg) **Pneumatic Heights** (1000) | A terraced tube-post town round its exchange tower | Comes on day 10 (`day:10`), done after step 18 (`step:18`), valves, tubes and capsules, rats from the cellar |

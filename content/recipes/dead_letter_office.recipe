@@ -21,6 +21,10 @@ gen Trees=0.1 Bushes=0.22 Rocks=0.45 Harvest=0.18 BeachThings=0.25
 gen Seed=4101 Radius=82 Height=9 Roughness=0.6 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.5 BeachWidth=0.3
 gen Water=0.5 SeaRocks=0.5 SeaFinds=0.15 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
+# --- 10-26 relief (no flat plains): hills and ridges first, so the old island's pads cut into them after ---
+call hw_mount x=-34 z=-56 b=12 h=10
+call ar_ridge x1=18 z1=-30 x2=22 z2=-48 h=5 top=4 r=6
+call ar_ridge x1=-40 z1=-4 x2=-62 z2=-12 h=5 top=4 r=7
 push at 0 -42
 
 # --- Terrain: a level pad for the office (2.2 m), a strip down to the jetty's foot (1.4 m) on the south shore ----------
@@ -257,6 +261,8 @@ call ar_plants_hill x=-34 z=-58 r=14 seed=27193
 call ar_plants_hill x=66 z=10 r=14 seed=27194
 call ar_plants_hill x=22 z=18 r=14 seed=27195
 call ar_plants_hill x=-46 z=2 r=14 seed=27196
+call ar_plants_hill x=20 z=-40 r=12 seed=27200
+call ar_plants_hill x=-52 z=-8 r=12 seed=27210
 call hw_machine x=0 z=10 yaw=180 al=qd_machine nm="Night lamp" obj=RT_PowerBox sc=1 a=qd_top b=qd_cave done=qd_fixed rew=qd_rewchest rnote=qd_rewnote msg="It works." hint="It wants the night lamp lens from Gull Knoll and the lamp wick spool from Sack Cave."
 call hw_note x=-2.6 z=11.2 yaw=200 al=qd_hint
 

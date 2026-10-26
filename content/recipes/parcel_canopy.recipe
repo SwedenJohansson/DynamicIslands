@@ -23,6 +23,15 @@ gen Trees=0.32 Bushes=0.35 Rocks=0.25 Harvest=0.15 BeachThings=0.12
 gen Seed=4301 Radius=88 Height=16 Roughness=0.45 Peaks=1 Shape=0 Style=0 PeakShape=0.4 Cliffs=0.2 BeachWidth=0.5
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.15 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
+# --- 10-26 relief (no flat plains): hills and ridges first, so the old island's pads cut into them after ---
+call hw_mount x=-34 z=-58 b=14 h=12
+call ar_ridge x1=-56 z1=-48 x2=-46 z2=-60 h=5 top=4 r=6
+call ar_ridge x1=-16 z1=-36 x2=-12 z2=-50 h=4 top=3 r=6
+call ar_ridge x1=28 z1=-58 x2=48 z2=-44 h=6 top=5 r=8
+call ar_ridge x1=50 z1=-66 x2=64 z2=-52 h=4 top=3 r=6
+call ar_ridge x1=2 z1=-66 x2=16 z2=-70 h=3 top=2 r=6
+brush rock at -34 -58 r=8 s=6 frames=30
+brush rock from 28 -58 to 48 -44 r=6 s=6 frames=30
 push at 0 -26
 
 # --- Terrain: the camp on the south beach, the tree house terrace (west), the plane's shelf (east), the fuel shed -------
@@ -210,6 +219,13 @@ call ar_plants_hill x=44 z=12 r=14 seed=27393
 call ar_plants_hill x=-44 z=16 r=14 seed=27394
 call ar_plants_hill x=52 z=-52 r=14 seed=27395
 call ar_plants_hill x=24 z=32 r=14 seed=27396
+call ar_plants_hill x=-34 z=-58 r=16 seed=27410
+call ar_plants_hill x=-14 z=-44 r=12 seed=27420
+call ar_plants_hill x=38 z=-50 r=14 seed=27430
+call ar_plants_hill x=-30 z=-24 r=12 seed=27440
+call ar_plants_tropical x=-54 z=-56 r=10 seed=27450
+call ar_plants_tropical x=57 z=-59 r=9 seed=27460
+call ar_plants_tropical x=9 z=-68 r=8 seed=27470
 call hw_machine x=0 z=34 yaw=180 al=qc_machine nm="Airstrip pump" obj=RT_PowerBox sc=1 a=qc_top b=qc_cave done=qc_fixed rew=qc_rewchest rnote=qc_rewnote msg="It works." hint="It wants the pump valve from Parrot Peak and the pump handle from Root Cave."
 call hw_note x=-2.6 z=35.2 yaw=200 al=qc_hint
 
@@ -347,4 +363,8 @@ step collect|story:beaconlit|1|Light the beacon on the hilltop
 quest done=The beacon burns over the canopy. Somewhere a Receiver picks up the airstrip's call: the next stop is Pneumatic Heights.
 quest reward=MetalIngot*3;Bolt*4;Scrap*4
 
+# 10-26: boulders of the south hills' plant groups that stood off the slope (groundall)
+clear from -56 -48 to -46 -60 r=9 all only=SmallBoulder2
+clear from 2 -66 to 16 -70 r=8 all only=SmallBoulder2
+clear from 50 -66 to 64 -52 r=8 all only=SmallBoulder2
 save Parcel Canopy

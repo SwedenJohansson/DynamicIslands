@@ -22,6 +22,12 @@ gen Trees=0.12 Bushes=0.15 Rocks=0.5 Harvest=0.15 BeachThings=0.25
 gen Seed=4501 Radius=85 Height=13 Roughness=0.55 Peaks=1 Shape=0 Style=4 PeakShape=0.35 Cliffs=0.55 BeachWidth=0.25
 gen Water=0.5 SeaRocks=0.45 SeaFinds=0.15 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
+# --- 10-26 relief (no flat plains): hills and ridges first, so the old island's pads cut into them after ---
+# Sorting Rock's own look: a quarry in the south-east - a long cut ridge, bare rock face, a bench cut into it
+call ar_ridge x1=36 z1=-62 x2=58 z2=-42 h=9 top=6 r=8
+brush flatten at 46 -54 r=5 s=20 frames=200 h=5
+brush rock from 36 -62 to 58 -42 r=11 s=10 frames=40
+call ar_ridge x1=-20 z1=-14 x2=-40 z2=-2 h=5 top=4 r=6
 push at 0 -39
 
 # --- Terrain: the bowl (4 m) in the rock's top, the landing stair down to the south shore (1.5 m) -------------------
@@ -153,8 +159,8 @@ place Loot_ChestSmall jbqr at 2.54 -5.44 h=11.1 sit yaw=0
 prop jbqr loot.refill=0
 pop
 call hw_zone x=6 z=58 al=qr_jumpz id=qr_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
-call lp_pad x=54 z=-46 r=12 h=3
-push at 46.5 -53.5 h=3
+call lp_pad x=-46 z=-46 r=12 h=3
+push at -53.5 -53.5 h=3
 place Block_Wall_Tier3 qr_maze at 0.75 0 y=0.05
 place Block_Wall_Tier3 qr_maze at 2.25 0 y=0.05
 place Block_Wall_Tier3 qr_maze at 0.75 15 y=0.05
@@ -230,12 +236,12 @@ pop
 prop qr_maze tint.color=#4e6b3a
 prop qr_maze tint.amount=0.55
 prop qr_mazechest loot.refill=0
-call hw_zone x=52.5 z=-55 al=qr_mazez id=qr_maze r=3 msg="A maze of old walls. Somewhere in the middle, a box."
+call hw_zone x=-47.5 z=-55 al=qr_mazez id=qr_maze r=3 msg="A maze of old walls. Somewhere in the middle, a box."
 call lp_piece x=-24 z=26 al=qr_piece1 set="Parcel labels"
 call lp_piece x=-50 z=-17 al=qr_piece2 set="Parcel labels"
 call lp_piece x=42 z=20 al=qr_piece3 set="Parcel labels"
 call lp_piece x=-8 z=60 al=qr_piece4 set="Parcel labels"
-call lp_piece x=54 z=-58 al=qr_piece5 set="Parcel labels"
+call lp_piece x=-46 z=-58 al=qr_piece5 set="Parcel labels"
 prop qr_piece1 on.set=show|qr_setchest\nmessage||All five parcel labels found.
 call lp_hidden x=5 z=8 al=qr_setchest kind=Loot_Chest
 call treasure x=-30 z=-62 r=10 n=1 seed=27578 kind=0
@@ -246,7 +252,7 @@ call ar_plants_hill x=-25 z=-5 r=14 seed=27592
 call ar_plants_hill x=-69 z=11 r=14 seed=27593
 call ar_plants_hill x=67 z=15 r=14 seed=27594
 call ar_plants_hill x=15 z=31 r=14 seed=27595
-call ar_plants_hill x=-45 z=-53 r=14 seed=27596
+call ar_plants_hill x=44 z=-48 r=14 seed=27596
 call hw_machine x=0 z=12 yaw=180 al=qr_machine nm="Parcel crane" obj=RT_PowerBox sc=1 a=qr_top b=qr_cave done=qr_fixed rew=qr_rewchest rnote=qr_rewnote msg="It works." hint="It wants the crane hook from Quarry Crag and the crane chain from Slate Cave."
 call hw_note x=-2.6 z=13.2 yaw=200 al=qr_hint
 

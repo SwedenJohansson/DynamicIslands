@@ -24,6 +24,13 @@ gen Trees=0.08 Bushes=0.2 Rocks=0.1 Harvest=0.1 BeachThings=0.3
 gen Seed=4901 Radius=98 Height=10 Roughness=0.3 Peaks=1 Shape=0 Style=1 PeakShape=0.4 Cliffs=0.2 BeachWidth=0.4
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.15 Sunken=0.25 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
+# --- 10-26 relief (no flat plains): hills and ridges first, so the old island's pads cut into them after ---
+call hw_mount x=-52 z=-56 b=16 h=14
+call ar_ridge x1=-40 z1=-14 x2=-72 z2=-6 h=6 top=5 r=8
+call ar_ridge x1=30 z1=-36 x2=34 z2=-62 h=5 top=4 r=7
+call ar_ridge x1=28 z1=-80 x2=44 z2=-76 h=4 top=3 r=6
+call ar_ridge x1=66 z1=-42 x2=78 z2=-28 h=5 top=4 r=7
+brush rock at -52 -56 r=9 s=6 frames=30
 push at 0 -20
 
 # --- Terrain: the plaza (2.5 m), the drowned south of the square (under the sea), the archive terrace (7.2 m) and the
@@ -375,6 +382,14 @@ call ar_plants_hill x=26 z=50 r=14 seed=27993
 call ar_plants_hill x=82 z=-10 r=14 seed=27994
 call ar_plants_hill x=58 z=30 r=14 seed=27995
 call ar_plants_hill x=74 z=-38 r=14 seed=27996
+call ar_plants_snowy x=-52 z=-56 r=16 seed=28010
+call ar_plants_snowy x=-52 z=-50 r=12 seed=28015
+call ar_plants_snowy x=-56 z=-10 r=14 seed=28020
+call ar_plants_snowy x=32 z=-48 r=12 seed=28030
+call ar_plants_snowy x=-36 z=-34 r=12 seed=28040
+call ar_plants_snowy x=24 z=-74 r=8 seed=28050
+call ar_plants_snowy x=36 z=-78 r=8 seed=28060
+call ar_plants_snowy x=72 z=-35 r=10 seed=28070
 call hw_machine x=0 z=44 yaw=180 al=qg_machine nm="Square fountain" obj=RT_PowerBox sc=1 a=qg_top b=qg_cave done=qg_fixed rew=qg_rewchest rnote=qg_rewnote msg="It works." hint="It wants the fountain valve from Postmaster's Hill and the fountain spout from Crab Cave."
 call hw_note x=-2.6 z=45.2 yaw=200 al=qg_hint
 
@@ -610,4 +625,8 @@ prop treasure8820 treasure.loot=TitaniumOre*3
 # --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
 place VP_Forklift - at 6 -37 ground sit yaw=90
 pop
+# 10-26: no generated shore ice on the square, its drowned south or the west lowland (the square stood on an ice sheet)
+clear from 0 -78 to 0 -28 r=22 only=Ice
+clear at -38 -36 r=20 only=Ice
+clear at 36.7 -58.4 r=1.5 all only=TP_BigRock03
 save The General Post Office

@@ -15,5 +15,6 @@ picture post_qr_hill 6 21 4 -41 15.4 48
 picture post_qr_cave 58 8 22 48 6 46
 picture post_qr_ruin 46 8 -28 58 4.5 -16
 picture post_qr_plane -46 9 -36 -58 4 -26
-picture post_qr_maze 42 12 -60 54 3 -46
+picture post_qr_maze -34 12 -60 -46 3 -46
+picture post_qr_quarry 24 14 -74 48 6 -50
 picture post_qr_jumps 20 9 54 6 7 66
