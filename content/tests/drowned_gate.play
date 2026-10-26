@@ -4,6 +4,7 @@
 # the lock chamber under the deck (water, 4 m deep) between the two gates, the flooded pump hall beside it (its door in
 # the chamber's north wall, the chest on its floor 3.95 m down).
 island The Drowned Gate
+offset -0.4723 -0.419
 expect step 0
 expect title Locks and Pumps
 wait 5
@@ -57,6 +58,33 @@ wait 3
 walk 34.23 -12.43 to 32.55 -17.14 to 31.16 -19.83 h=5.05 below=7.5
 zone gateoffice
 expect step 9
+# RAFT2 10-26: Odile Marsh, the climb, Sluice Cave, the secrets
+use Odile Marsh
+wait 1
+expect step 10
+expect hidden dg_lampchest
+use Lock lamp 2
+wait 1
+expect shown dg_lampchest
+open Odile's keepsake box
+zone dg_cave
+expect step 11
+open Sluice Cave chest
+wait 3
+expect step 12
+# the secrets
+zone dg_jumps
+open Lock hand's ledge
+open Top of the tide stack
+expect hidden dg_setchest
+use dg_piece1
+use dg_piece2
+use dg_piece3
+use dg_piece4
+use dg_piece5
+wait 2
+expect shown dg_setchest
+open Token box
 open Gate office vault
 wait 4
 expect item Blueprint_TitaniumTools 1

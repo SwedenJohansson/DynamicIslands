@@ -1,5 +1,6 @@
 # Guide pictures of Cinderfall (CIPlay cinderfall_pics): Raft's camera, midday, calm
 island Cinderfall
+offset 0.9218 -0.0812
 hour 11
 weather Calm
 at -10 46
@@ -8,3 +9,9 @@ picture cinderfall_island 80 60 110 -6 8 0
 picture cinderfall_camp 2 9 62 -10 4 47
 picture cinderfall_hall 14 10 46 3 5 31
 picture cinderfall_valve -2.5 19.5 18.5 -8 17 12
+# RAFT2 10-26: the new land
+picture r2_cf_cave 64 8 -24 58 6 -48
+picture r2_cf_ruin 44 7.6 22 56 4.1 34
+picture r2_cf_plane -36 8 44 -48 3 54
+picture r2_cf_maze 56 11.6 -10 68 2.6 4
+picture r2_cf_jumps 24 8.5 54 10 6.5 66

@@ -3,6 +3,7 @@
 # (7 m), the north shoulder (16 m) up the ramp. Quest "Pressure", 10 steps: camp, warning, valve 1, valve 2, the nest,
 # the matriarch, valve 3, the hall, its roaches, the store opened.
 island Cinderfall
+offset 0.9218 -0.0812
 expect step 0
 expect title Pressure
 
@@ -42,6 +43,40 @@ zone hall
 expect step 8
 kill Roach
 expect step 9
+# RAFT2 10-26: Tomas Reyes, the climb, Slag Cave, the secrets
+use Tomas Reyes
+wait 1
+expect step 10
+expect hidden cf_lampchest
+use Survey lamp 1
+use Survey lamp 2
+use Survey lamp 3
+wait 1
+expect shown cf_lampchest
+open Tomas's survey box
+zone cf_cave
+expect step 11
+open Slag Cave chest
+wait 3
+expect step 12
+# the secrets
+zone cf_plane
+open Survey plane's crate
+read Survey pilot's note
+zone cf_jumps
+open Ash lookout box
+open Top of the ash stack
+zone cf_maze
+open Slag maze box
+expect hidden cf_setchest
+use cf_piece1
+use cf_piece2
+use cf_piece3
+use cf_piece4
+use cf_piece5
+wait 2
+expect shown cf_setchest
+open Sample chest
 walk 1.5 34 to 2.5 31 to 4 29.6 h=3.6 below=6
 reach Plant store
 open Plant store

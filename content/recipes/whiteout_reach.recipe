@@ -2,16 +2,20 @@
 # A wide snowfield round a central hill: the Corps' winter camp on the hill's north-east shoulder (11.5 m) - two of
 # Temperance's domes (the mess, the commander's), the boiler house, the snowmobile shed, the camp's store -, the radio
 # hut on the summit (21 m), the supply ship Kestrel stranded in the ice of the north shore, and a crevasse cut into the
-# hill's west flank where the polar bear matriarch has her den. Quest "Do Not Come in Winter" (20 steps): the camp, the
+# hill's west flank where the polar bear matriarch has her den. Quest "Do Not Come in Winter" (23 steps): the camp, the
 # commander's order, the mess locker, the Kestrel and her manifest, the snowmobile shed and its bear, the store key, three
 # boiler parts (the store, back to the Kestrel for her flooded hold, the survey pack in the den - past the matriarch),
 # the boiler lit, the radio's crystal, the two goats netted, the radio hut's last transmission, the
 # commander's chest.
+# RAFT2 10-26 (1-hour pass): secrets on the snowfields - Frost Cave (south-east), the trapper's ruin (south-west) where Pell Arnesen waits (a lamp puzzle), a supply plane on the north-east snowfield, five frozen lanterns (a set), a buried cache
 #
 # Built by the recipe player (CIRecipe whiteout_reach) through the editor's own operations.
 include lib_sea
 include lib_rt
 include lib_features
+include lib_highwater
+include lib_areas
+include lib_raft2
 new
 # (nature: snowy: a few pines and snow drifts over Raft's near-bare Temperance; Rocks 0.25 gave 2.5 per 1000 m2 against Raft's 1.1)
 gen Trees=0.08 Bushes=0.15 Rocks=0.15 Harvest=0.05 BeachThings=0.3
@@ -28,6 +32,12 @@ brush flatten at 2 -2 r=6.5 s=20 frames=60 h=21
 brush flatten from -42 5 to -20 5 r=2.6 s=20 frames=60 h=4
 brush flatten at -17 5 r=5 s=20 frames=60 h=4
 origin
+# --- RAFT2 10-26 terrain: the land grows (banks first), then the pads of the new areas -------------------------------
+# the pads: the cave (Frost Cave), the ruined house, the plane
+call r2_pad x=60 z=-72 r=14 h=3
+brush flatten from 60 -64 to 60 -48 r=6 s=20 frames=300 h=3
+call r2_pad x=-60 z=-50 r=11 h=3
+call r2_pad x=70 z=52 r=11 h=2.6
 clear from 0 34 to 30 34 r=15
 clear at 2 -2 r=8
 clear from -42 5 to -16 5 r=6
@@ -122,7 +132,39 @@ place "Box Big" denpack at -14.5 5.5 ground yaw=70
 place Creature_Goat goats at -30 -40
 prop goats creature.count=2
 
-# --- Settings, story items, notes, behaviours, quest (20 steps) --------------------------------------------------------
+# --- RAFT2 10-26 (the user: one hour per island - hills, a cave, a house, a wreck, secrets): secrets on the snowfields - Frost Cave (south-east), the trapper's ruin (south-west) where Pell Arnesen waits (a lamp puzzle), a supply plane on the north-east snowfield, five frozen lanterns (a set), a buried cache ------
+call ar_cave x=60 z=-72 h=3 yaw=0 al=wr_caverock chest=wr_cavechest
+call hw_zone x=59 z=-63 al=wr_cavez id=wr_cave r=4 h=1 msg="Frost Cave. Out of the wind, at last."
+call ar_ruin x=-60 z=-50 h=3 yaw=0 w=3 d=2 al=wr_ruin
+call r2_islander x=-61 z=-54.5 yaw=200 al=wr_isl nm="Pell Arnesen" pose=sit
+prop wr_isl talk.text=Shut the - oh. There's no door. Sit by the lamps, then.\n---\nI trapped for the winter camp. Furs for the Corps, meat for the cook. The camp told everybody: do not come in winter. I came in winter.\n---\nThe camp kept spare fuel in Frost Cave, south-east. And a supply plane came down on the north-east snowfield - nobody went to look.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
+place Placeable_Chair_Basic - at -61 -54.5 ground sit yaw=200
+call r2_lamp x=-67 z=-51 al=wr_lamp1 nm="Trap lamp 1" grp="Trap lamps" on=0
+call r2_lamp x=-61 z=-44 al=wr_lamp2 nm="Trap lamp 2" grp="Trap lamps" on=1
+call r2_lamp x=-54 z=-51 al=wr_lamp3 nm="Trap lamp 3" grp="Trap lamps" on=1
+call r2_lamp x=-61 z=-58 al=wr_lamp4 nm="Trap lamp 4" grp="Trap lamps" on=0
+prop wr_lamp1 on.use=light|Trap lamp 2|toggle
+prop wr_lamp2 on.use=light|Trap lamp 3|toggle
+prop wr_lamp3 on.use=light|Trap lamp 4|toggle
+prop wr_lamp4 on.use=light|Trap lamp 1|toggle
+prop wr_lamp1 on.alllit=show|wr_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call r2_hidden x=-59 z=-45.4 al=wr_lampchest
+place Creature_Chicken wr_hens at -52 -44 ground
+prop wr_hens creature.count=3
+call ar_plane x=70 z=52 h=2.6 yaw=40 al=wr_plane crate=wr_planecrate
+place Note_Paper wr_pilot at 68.22 56.1 ground y=0.1 drop yaw=70
+call hw_zone x=70 z=52 al=wr_planez id=wr_plane r=6 h=1 msg="A supply plane, half buried in snow."
+call r2_piece x=-40 z=70 al=wr_piece1 set="Frozen lanterns"
+call r2_piece x=80 z=0 al=wr_piece2 set="Frozen lanterns"
+call r2_piece x=0 z=-80 al=wr_piece3 set="Frozen lanterns"
+call r2_piece x=-80 z=0 al=wr_piece4 set="Frozen lanterns"
+call r2_piece x=40 z=-60 al=wr_piece5 set="Frozen lanterns"
+prop wr_piece1 on.set=show|wr_setchest\nmessage||All five frozen lanterns found.
+call r2_hidden x=-55 z=-43 al=wr_setchest kind=Loot_Chest
+call treasure x=-70 z=40 r=5 n=1 seed=27378 kind=0
+prop treasure27378 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+
+# --- Settings, story items, notes, behaviours, quest (23 steps) --------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): pines, flowers, berries ----------
 scatter "Pickup_Landmark_Tree_Pine" 6 at 0 0 r=70.0 seed=4367 free=5
 scatter "Pickup_Landmark_Flower_White" 4 at 0 0 r=70.0 seed=4377 free=3
@@ -217,6 +259,18 @@ prop crevasse atmo.lightAmount=0.3
 prop crevasse atmo.particles=snow
 prop crevasse zone.radius=14
 
+loot wr_cavechest CopperIngot*2;Glass*2;Nail*6;MetalOre*2
+prop wr_cavechest loot.refill=0
+note wr_cavechest Frost Cave chest | A chest at the back of Frost Cave, dry under the rock.
+note wr_lampchest Pell's fur chest | Pell's fur chest: furs, a snow knife and his savings.
+loot wr_lampchest CopperIngot*2;TradeToken*2;Rope*2
+note wr_setchest Lantern crate | The five lanterns back in their crate - and the camp's spare kit.
+loot wr_setchest Glass*3;Bolt*4;MetalIngot*1
+note wr_planecrate Supply plane's crate | The winter supply plane's crate: tins, fuel and tools.
+loot wr_planecrate Plastic*3;Scrap*3;Nail*6
+prop wr_planecrate loot.refill=0
+note wr_pilot Supply pilot's note | WINTER SUPPLY - Whiteout Reach. Whiteout at three hundred feet. Put her down on the snowfield north-east of the camp. Walking in. They did tell us not to come in winter.
+
 quest title=Do Not Come in Winter
 quest intro=A frozen camp of the Frontier Corps, its boiler cold. Station Eight: start at the camp on the hill.
 step reach|camp|1|Reach the Corps' winter camp on the hill
@@ -236,6 +290,9 @@ step kill|Polar bear|1|Face the polar bear matriarch in her den
 step collect|story:heatpart|3|Take the third part from the survey team's pack
 step collect|story:radiocrystal|1|Fit the parts to the camp's boiler and light it
 step catch|Goat|2|The camp is warm again - net the two goats on the south snowfield
+step talk|Pell Arnesen|1|Talk to Pell Arnesen at the ruined house in the south-west
+step reach|wr_cave|1|Find Frost Cave in the south-east
+step open|Frost Cave chest|1|Open the chest at the back of Frost Cave
 step reach|radiohut|1|Climb to the radio hut on the summit
 step read|Last transmission|1|Read the radio's last transmission
 step open|Commander's chest|1|Open the commander's chest

@@ -9,6 +9,16 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-26: Raft 2's islands, an hour each
+
+- The nine main islands of **Raft 2: The Drowned Frontier** before The Frontier grow to Raft's size (land out to 70-95
+  m). Round each station: a cave, a ruined house with a Corps islander and a ring of four lamps, a set of five
+  (signal flags, storm glasses, bookplates, net floats, obsidian shards, duck decoys, builder's plates, frozen
+  lanterns, lock tokens) and a buried cache; most also get a crashed plane and a jump course, and Storm Spire and
+  Cinderfall a maze. Frontier Beacon and Storm Spire gain new land with a hill, a mast and a zipline down, and a fog
+  horn or storm siren that wants the mast's and the cave's parts. Each quest gains three to eight steps before its
+  last one; the blueprints stay on main-quest steps. Worlds already started keep their islands.
+
 ## 2026-10-26: The Rainmakers' islands, an hour each
 
 - The nine main islands of **The Rainmakers** are now as big as Raft's own (radius 85-95 m). The old station stays as

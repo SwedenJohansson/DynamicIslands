@@ -1,5 +1,6 @@
 # Guide pictures of Frontier Beacon (CIPlay frontier_beacon_pics): Raft's camera, midday, calm
 island Frontier Beacon
+offset 7.3746 -0.6566
 hour 11
 weather Calm
 at -32 -2
@@ -8,3 +9,9 @@ picture frontier_beacon_island 58 46 52 -10 10 0
 picture frontier_beacon_terrace -13 22 17 -2 18 7
 picture frontier_beacon_landing -46 7 12 -26 4 -1
 picture frontier_beacon_ramp -38 9 24 -10 15 9
+# RAFT2 10-26: the new land
+picture r2_fb_hill -11.1 20 44.92 -3 14 78
+picture r2_fb_cave 62 8 -40 56 6 -64
+picture r2_fb_ruin 58 8 -4 70 4.5 8
+picture r2_fb_plane -34 9 -70 -46 4 -60
+picture r2_fb_jumps 6 9 -86 -8 7 -74

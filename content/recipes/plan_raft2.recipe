@@ -8,7 +8,7 @@
 # Built by the recipe player (CIRecipe plan_raft2) in the editor's World plans window. Its play test:
 # content\tests\plan_raft2.play.
 plan new Raft 2 - The Drowned Frontier
-plan description A sequel: years after Utopia the sea rises again, and a trail of the old Frontier Corps' stations leads to the last high ground. Ten quest islands of its own on the Receiver, no island of Raft's story - Raft's key blueprints are found along the way. Its main islands are about 90% the size of Raft's own big islands.
+plan description A sequel: years after Utopia the sea rises again, and a trail of the old Frontier Corps' stations leads to the last high ground. Ten quest islands of its own on the Receiver, no island of Raft's story - Raft's key blueprints are found along the way. Its main islands are as big as Raft's own big islands, each an hour's play: hills, caves, ruins, wrecks and secrets round the station.
 plan random on
 plan story off
 plan rule beacon | island:Frontier Beacon | start | receiver:500 | A light blinks on a pinnacle of black rock: three short, three long. | Frontier Beacon | first | quest

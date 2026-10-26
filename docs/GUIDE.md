@@ -4239,7 +4239,11 @@ What it shows: rules brought by **quests and visits**, main story islands **besi
 trail of the old Frontier Corps' stations leads across the storm belt to the last high ground. Raft's story islands are
 off; the plan's ten quest islands come one after the other - the first is on the Receiver from the start, and each quest done
 gives the next station's frequency on the Receiver. Raft's key blueprints are found along the way in Raft's order, so
-the raft can still be steered, driven and fuelled; the tenth island's quest is the ending. Its main islands are about 90% the size of Raft's own big islands.
+the raft can still be steered, driven and fuelled; the tenth island's quest is the ending. Its main islands are as big as Raft's own (land out to 70-95 m), an hour each:
+round every station a cave, an islander's ruined house with a ring of four lamps, a set of five, a buried cache and,
+on most, a crashed plane and a jump course; the small stations (the Beacon, Storm Spire) gain new land with a hill, a
+mast and a zipline down, and a machine (a fog horn, a storm siren) that wants the mast's and the cave's parts. Three
+to eight new steps come before each quest's last one; worlds already started keep their islands.
 
 | Station | The plan's island | What it is |
 |---|---|---|
@@ -4249,7 +4253,7 @@ the raft can still be steered, driven and fuelled; the tenth island's quest is t
 | 4 | ![](images/library/sunken_archive.jpg) **The Sunken Archive** | An archive standing in the sea between five palm islets, its stacks flooded - catalogue cards, an air pocket, an angler at the vault (the engine controls', the metal detector's, the firework's and the zipline's) |
 | 5 | ![](images/library/hightide_harbor.jpg) **Hightide Harbor** | A fishing town on stilts round a bay - bears in the fish hall, the water works on the hill, a lamp tower of Raft's blocks to light (the water blueprints); Raft's vending machine |
 | 6 | ![](images/library/iron_graveyard.jpg) **The Iron Graveyard** | A ship breakers' yard on a red mesa's beach - beached hulls to climb, a barge sunk off the beach, a crawler crane, the turbine on the mesa (the power blueprints); off the quest, Raft's **generator** and **radio** (a supply drop) and Vasagatan's **engine** (`lib_features`) |
-| 7 | ![](images/library/storm_spire.jpg) **Storm Spire** | A weather station on a needle of rock in the storm belt - a short climb, three conductor rods, the storm bird; six steps, short on purpose (the electric smelter's, the advanced biofuel extractor's and anchor's); a Raft store at the needle's foot |
+| 7 | ![](images/library/storm_spire.jpg) **Storm Spire** | A weather station on a needle of rock in the storm belt - a short climb, three conductor rods, the storm bird; a storm siren and a maze on the new land (the electric smelter's, the advanced biofuel extractor's and anchor's); a Raft store at the needle's foot |
 | 8 | ![](images/library/whiteout_reach.jpg) **Whiteout Reach** | The Corps' winter camp on a snowy hill - a supply ship frozen into the shore ice, the polar bear matriarch in a crevasse, the radio hut on the summit |
 | 9 | ![](images/library/drowned_gate.jpg) **The Drowned Gate** | A sea wall across a strait between two hills - its lock of two steel gates that sink to open, the pump house's flooded hall with an angler in it, the gate office's vault (the titanium tools', the big backpack's and the electric zipline's); a Raft store on the east hill |
 | 10 | ![](images/library/the_frontier.jpg) **The Frontier** | The last high ground: a harbour town under a great mesa, farm terraces climbing its face, the upper town and the Corps' hall on the rim, the Corps' lift down the cliff to a vault sunk in a cove - thirty-two steps in six chapters |

@@ -4,6 +4,7 @@
 # Quest "Card Catalogue", 10 steps: reading room, letter, shelf box, floor box, the deepest room's air pocket, the vault,
 # the keeper, the deep box, the three cards, the vault opened.
 island The Sunken Archive
+offset 8.6652 1.5661
 expect step 0
 expect title Card Catalogue
 
@@ -31,6 +32,42 @@ expect step 7
 open Deep card box
 expect story card 3
 expect step 9
+# RAFT2 10-26: Ines Varga, the climb, Binding Cave, the secrets
+use Ines Varga
+wait 1
+expect step 10
+expect hidden sa_lampchest
+use Reading lamp 1
+wait 1
+expect shown sa_lampchest
+open Ines's bindery box
+zone sa_trail
+expect step 11
+zone sa_summit
+expect step 12
+open Reading mast deck box
+wait 3
+zone sa_cave
+expect step 13
+open Binding Cave chest
+wait 3
+expect step 14
+# the secrets
+zone sa_plane
+open Book plane's crate
+read Book pilot's slip
+zone sa_jumps
+open Shelver's ledge
+open Top of the shelf stack
+expect hidden sa_setchest
+use sa_piece1
+use sa_piece2
+use sa_piece3
+use sa_piece4
+use sa_piece5
+wait 2
+expect shown sa_setchest
+open Ex libris chest
 
 # Up in the reading room: the cards through the index desk; down to the vault
 use indexterminal

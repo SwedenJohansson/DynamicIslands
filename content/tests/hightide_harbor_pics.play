@@ -1,5 +1,6 @@
 # Guide pictures of Hightide Harbor (CIPlay hightide_harbor_pics): Raft's camera, midday, calm
 island Hightide Harbor
+offset 17.9006 -5.1855
 hour 11
 weather Calm
 at -2 0
@@ -8,3 +9,9 @@ picture hightide_harbor_town -36 15 8 -2 2 -1
 picture hightide_harbor_hall -7 5.5 3 3 2.5 -6.5
 picture hightide_harbor_tower -28 9 33 -40 6.5 48
 picture hightide_harbor_heron -27 6 -3 -40 0 -14
+# RAFT2 10-26: the new land
+picture r2_hh_hill 70.14 19 23.73 81 12.6 -2
+picture r2_hh_cave 52 8 -42 46 6 -66
+picture r2_hh_ruin 54 8 20 66 4.5 32
+picture r2_hh_plane 30 9 -96 18 4 -86
+picture r2_hh_jumps 54 9 58 40 7 70

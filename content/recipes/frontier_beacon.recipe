@@ -1,13 +1,18 @@
 # Frontier Beacon - an island of the library's plan Raft 2: The Drowned Frontier (station One of the Frontier Corps)
 # A black volcanic spike with the Corps' first beacon on a terrace cut into its north side, the keeper's hut and landing
-# on the west flats, the supply boat sunk off the landing with the beacon's spare cell. Quest "The First Signal" (7
+# on the west flats, the supply boat sunk off the landing with the beacon's spare cell. Quest "The First Signal" (19
 # steps): the landing, the keeper's log, his hens loose on the flats, the cell from the sunken boat, the ramp up to the
 # beacon terrace, its stone birds, the beacon lit, the keeper's locker (the Receiver's and the antenna's blueprints -
 # the plan's first step on the Receiver).
+# RAFT2 10-26 (1-hour pass): the spike's skirt of new land - Cinder Knoll (north) with a signal mast, Ash Cave (south-east), the Corps' old signal hut (east) where Mara Quill waits (a lamp puzzle), a mail plane down on the south-west bank, a jump course (south), five signal flags (a set), a buried cache; at the keeper's flats the fog horn that wants the mast's reed and the cave's valve
 #
 # Built by the recipe player (CIRecipe frontier_beacon) through the editor's own operations.
 include lib_sea
 include lib_rt
+include lib_highwater
+include lib_areas
+include lib_features
+include lib_raft2
 new
 # (nature: volcanic: Like Raft's desert, with little scrub on the ash - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.3 Bushes=0.3 Rocks=0.5 Harvest=0.3 BeachThings=0.3
@@ -25,6 +30,31 @@ brush flatten at {-34+$i*1.53} {20-$i*0.588} r=4.5 s=20 frames=30 h={3.6+$i*0.72
 next
 brush smooth from -34 20 to -8 10 r=5 s=10 frames=20
 origin
+# --- RAFT2 10-26 terrain: the land grows (banks first), then the pads of the new areas -------------------------------
+# the banks round the spike: north (to Cinder Knoll), east, south-east, south, south-west, north-east
+brush flatten from -14 36 to -12 58 r=11 s=20 frames=500 h=3
+brush flatten from 14 36 to 16 56 r=10 s=20 frames=500 h=3
+brush flatten from 38 6 to 64 8 r=12 s=20 frames=500 h=3
+brush flatten from 64 8 to 66 -30 r=12 s=20 frames=500 h=3
+brush flatten from 66 -30 to 56 -48 r=10 s=20 frames=500 h=3
+brush flatten from 0 -40 to -6 -62 r=11 s=20 frames=500 h=3
+brush flatten from -30 -36 to -44 -54 r=10 s=20 frames=500 h=3
+brush flatten from 26 34 to 44 46 r=9 s=20 frames=500 h=3
+brush auto at 0 56 r=24 s=10 frames=25
+brush auto at 56 -10 r=26 s=10 frames=25
+brush auto at -6 -56 r=16 s=10 frames=25
+brush auto at -40 -48 r=14 s=10 frames=25
+brush auto at 40 42 r=12 s=10 frames=25
+# the pads: the cave (Ash Cave), the ruined house, the plane
+call r2_pad x=56 z=-64 r=14 h=3
+brush flatten from 56 -56 to 56 -40 r=6 s=20 frames=300 h=3
+call r2_pad x=70 z=8 r=11 h=3
+call r2_pad x=-46 z=-60 r=11 h=3
+# Cinder Knoll: summit 20 m, base r 22, the trail from the foot toward the hub
+call hw_mount x=0 z=76 b=22 h=20
+call hw_trail x=0 z=76 b=22 h=20 a0=-160.35 turn=300 n=34 h0=3
+brush flatten at -30 -8 r=4 s=8 frames=60
+clear at -30 -8 r=7
 clear from -42 -2 to -22 -2 r=8
 clear at -2 8 r=8
 clear from -34 20 to -8 10 r=6
@@ -70,6 +100,92 @@ prop hens creature.count=2
 place Creature_Dolphin dolphins at -75 -25 h=-3
 prop dolphins creature.count=2
 
+# --- RAFT2 10-26 (the user: one hour per island - hills, a cave, a house, a wreck, secrets): the spike's skirt of new land - Cinder Knoll (north) with a signal mast, Ash Cave (south-east), the Corps' old signal hut (east) where Mara Quill waits (a lamp puzzle), a mail plane down on the south-west bank, a jump course (south), five signal flags (a set), a buried cache; at the keeper's flats the fog horn that wants the mast's reed and the cave's valve ------
+call hw_zone x=-7.74 z=54.34 al=fb_trailz id=fb_trail r=5 msg="The trail up Cinder Knoll starts here - round and up."
+call hw_zone x=0 z=76 al=fb_summitz id=fb_summit r=8 h=1 msg="The top of Cinder Knoll. The whole island below you."
+call hw_mast x=-3 z=78 h0=20 lv=5 a=fb_mast chest=fb_topchest top=Placeable_Flag_03
+place ZiplinePath_Landmark fb_zip at 3.2 73.4 h=21.35
+zipto fb_zip -26 -4
+place Creature_Goat fb_goats at -3.74 57.34 ground
+prop fb_goats creature.count=2
+call ar_cave x=56 z=-64 h=3 yaw=0 al=fb_caverock chest=fb_cavechest
+call hw_zone x=55 z=-55 al=fb_cavez id=fb_cave r=4 h=1 msg="Ash Cave. Warm air breathes out of the dark."
+call ar_ruin x=70 z=8 h=3 yaw=0 w=3 d=2 al=fb_ruin
+call r2_islander x=69 z=3.5 yaw=200 al=fb_isl nm="Mara Quill" pose=lean
+prop fb_isl talk.text=A boat? Here? Then the beacon worked after all.\n---\nI was the Corps' signaller on this rock. When the keeper left I stayed - somebody had to keep the flags dry.\n---\nThe fog horn on the flats wants its reed back from the mast on Cinder Knoll, and the valve the keeper hid in Ash Cave. Bring both and the horn will tell the sea we're still here.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
+call r2_lamp x=63 z=7 al=fb_lamp1 nm="Signal lamp 1" grp="Signal lamps" on=0
+call r2_lamp x=69 z=14 al=fb_lamp2 nm="Signal lamp 2" grp="Signal lamps" on=1
+call r2_lamp x=76 z=7 al=fb_lamp3 nm="Signal lamp 3" grp="Signal lamps" on=0
+call r2_lamp x=69 z=0 al=fb_lamp4 nm="Signal lamp 4" grp="Signal lamps" on=1
+prop fb_lamp1 on.use=light|Signal lamp 2|toggle
+prop fb_lamp2 on.use=light|Signal lamp 3|toggle
+prop fb_lamp3 on.use=light|Signal lamp 4|toggle
+prop fb_lamp4 on.use=light|Signal lamp 1|toggle
+prop fb_lamp1 on.alllit=show|fb_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call r2_hidden x=71 z=12.6 al=fb_lampchest
+place Creature_Chicken fb_hens at 78 14 ground
+prop fb_hens creature.count=3
+call ar_plane x=-46 z=-60 h=3 yaw=40 al=fb_plane crate=fb_planecrate
+place Note_Paper fb_pilot at -47.78 -55.9 ground y=0.1 drop yaw=70
+call hw_zone x=-46 z=-60 al=fb_planez id=fb_plane r=6 h=1 msg="A mail plane, down on the bank. The sack is still aboard."
+# JUMP fb pad=3 at=-8 -74
+push at -8 -74
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpfb at 4.24 4.24 h=3.6
+place Block_Foundation_Tier3 jpfb at 5.77 1.65 h=4.35
+place Block_Foundation_Tier3 jpfb at 5.85 -1.35 h=5.1
+place Block_Foundation_Tier3 jpfb at 4.46 -4.01 h=5.85
+place Block_Foundation_Tier3 jpfb at 1.95 -5.67 h=6.6
+place Block_Foundation_Tier3 jpfb at -1.04 -5.91 h=7.35
+place Block_Foundation_Tier3 jpfb at -3.78 -4.66 h=8.1
+place Block_Foundation_Tier3 jpfb at -5.56 -2.25 h=8.85
+place Block_Foundation_Tier3 jpfb at -5.96 0.73 h=9.6
+place Block_Foundation_Tier3 jpfb at -4.85 3.53 h=10.35
+place Block_Foundation_Tier3 jpfb at -2.54 5.44 h=11.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppfb at 5.77 1.65 h=3.668 sy=1.861
+place Block_Foundation_Tier3 jppfb at 5.85 -1.35 h=4.418 sy=2.959
+place Block_Foundation_Tier3 jppfb at 4.46 -4.01 h=5.168 sy=4.058
+place Block_Foundation_Tier3 jppfb at 1.95 -5.67 h=5.918 sy=5.157
+place Block_Foundation_Tier3 jppfb at -1.04 -5.91 h=6.668 sy=6.255
+place Block_Foundation_Tier3 jppfb at -3.78 -4.66 h=7.418 sy=7.354
+place Block_Foundation_Tier3 jppfb at -5.56 -2.25 h=8.168 sy=8.453
+place Block_Foundation_Tier3 jppfb at -5.96 0.73 h=8.918 sy=9.552
+place Block_Foundation_Tier3 jppfb at -4.85 3.53 h=9.668 sy=10.650
+place Block_Foundation_Tier3 jppfb at -2.54 5.44 h=10.418 sy=11.749 sx=2 sz=2
+prop jpfb tint.color=#4a4542
+prop jpfb tint.amount=0.35
+prop jppfb tint.color=#4a4542
+prop jppfb tint.amount=0.35
+place Loot_Chest jcfb at -1.04 -5.91 h=7.35 sit yaw=0
+prop jcfb loot.refill=0
+place Loot_ChestSmall jbfb at -2.54 5.44 h=11.1 sit yaw=0
+prop jbfb loot.refill=0
+pop
+call hw_zone x=-8 z=-82 al=fb_jumpz id=fb_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call r2_piece x=-20 z=28 al=fb_piece1 set="Signal flags"
+call r2_piece x=30 z=-30 al=fb_piece2 set="Signal flags"
+call r2_piece x=62 z=-18 al=fb_piece3 set="Signal flags"
+call r2_piece x=-8 z=54 al=fb_piece4 set="Signal flags"
+call r2_piece x=-40 z=-46 al=fb_piece5 set="Signal flags"
+prop fb_piece1 on.set=show|fb_setchest\nmessage||All five signal flags found.
+call r2_hidden x=-25 z=-12 al=fb_setchest kind=Loot_Chest
+call treasure x=44 z=46 r=5 n=1 seed=26678 kind=0
+prop treasure26678 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_hill x=0 z=76 r=20 seed=26691
+call ar_plants_desert x=56 z=-10 r=14 seed=26692
+call ar_plants_desert x=-6 z=-54 r=10 seed=26693
+call ar_plants_desert x=36 z=40 r=9 seed=26694
+call hw_machine x=-30 z=-8 yaw=75.07 al=fb_machine nm="Fog horn" obj=RT_PowerBox sc=1 a=fb_top b=fb_cave done=fb_fixed rew=fb_rewchest rnote=fb_rewnote msg="It works." hint="It wants the horn reed from Cinder Knoll and the horn valve from Ash Cave."
+call hw_note x=-32.6 z=-6.8 yaw=95.07 al=fb_hint
+
+# RAFT2 10-26: scattered rocks that came out floating on the new slopes (CIGroundIslands)
+clear at 43.74 37.76 r=1.5 all only=CaravanIsland_SmallRock_1
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, pineapples, flowers ----------
 scatter "Pickup_Landmark_Tree_Mango" 3 at 0 0 r=31.5 seed=4483 free=5
@@ -126,6 +242,30 @@ prop sentinel creature.zone=terrace
 prop sentinel tint.color=#2a2a2a
 prop sentinel tint.amount=0.6
 
+story fb_top|Horn reed|Bolt|The fog horn's brass reed, wrapped in oilcloth and tied to the signal mast's rail.
+story fb_cave|Horn valve|Bolt|The fog horn's air valve, put away in the cave by a keeper who could not stand the noise.
+story fb_fixed|Fog horn working|Bolt|The fog horn, working again.
+note fb_hint Keeper's chalkboard | FOG HORN - DOWN. Reed: up the signal mast on Cinder Knoll, north (the trail starts on the side toward the hut). Valve: Ash Cave, south-east. Mara at the signal hut, east, has the rest.
+loot fb_topchest story:fb_top*1;Rope*2;Scrap*2
+loot fb_cavechest story:fb_cave*1;Nail*6;Plank*3
+note fb_rewnote Fog horn's card | The horn booms over the sea - three short, three long - and from far off something answers. Pinned under the horn's cover: 'Station Two hears the horn on a still night. If it answers, keep going.'
+note fb_rewchest Fog horn reward | What the fog horn kept.
+loot fb_rewchest CopperIngot*2;Bolt*3;Rope*2
+note fb_topchest Signal mast deck box | A box lashed to the deck rail at the top of the signal mast.
+note fb_cavechest Ash Cave chest | A chest at the back of Ash Cave, dry under the rock.
+note fb_lampchest Mara's flag locker | Mara's flag locker, under the stone behind the hut: dry flags, a tin of biscuits and her savings.
+loot fb_lampchest CopperIngot*2;TradeToken*2;Rope*2
+note fb_setchest Flag chest | The Corps' flag chest - the full set at last, and what the signallers kept with it.
+loot fb_setchest Glass*3;Bolt*4;MetalIngot*1
+note fb_planecrate Mail plane's sack | The mail plane's sack: letters to Station One that never came, a flask and a toolkit.
+loot fb_planecrate Plastic*3;Scrap*3;Nail*6
+prop fb_planecrate loot.refill=0
+note fb_pilot Mail pilot's note | MAIL RUN 7 - Station One. Ash in the engine, came down on the bank short of the jetty. Left the sack in the hold. Walking to the hut.
+note jcfb Lookout's ledge box | The lookouts stacked these stones to see over the spike's skirt.
+loot jcfb Rope*3;Plank*4;MetalIngot*1
+note jbfb Top of the lookout | Somebody's stash at the very top.
+loot jbfb CopperIngot*1;Bolt*2;TradeToken*1
+
 quest title=The First Signal
 quest intro=A black spike of rock and a dark beacon: Station One of the Frontier Corps. Start at its landing.
 step reach|landing|1|Land at Station One's jetty
@@ -134,6 +274,14 @@ step catch|Chicken|2|Round up the keeper's two hens, loose on the flats by his h
 step collect|story:beaconcell|1|Dive to the sunken supply boat off the landing for a beacon cell
 step reach|terrace|1|Climb the ramp to the beacon terrace
 step kill|Screecher|3|Drive the stone birds off the terrace
+step read|Keeper's chalkboard|1|Read the keeper's chalkboard by the fog horn
+step talk|Mara Quill|1|Talk to Mara Quill at the ruined house in the east
+step reach|fb_trail|1|Find the foot of the trail up Cinder Knoll, in the north
+step reach|fb_summit|1|Climb the trail to the top of Cinder Knoll
+step collect|story:fb_top|1|Climb the signal mast and take the horn reed from its deck
+step reach|fb_cave|1|Find Ash Cave in the south-east
+step collect|story:fb_cave|1|Take the horn valve from the chest at the back of the cave
+step read|Fog horn's card|1|Bring both to the fog horn and read what it shows
 step open|Keeper's locker|1|Light the beacon and open the keeper's locker
 step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the keeper's locker
 step blueprint|Blueprint_Antenna|1|Take the antenna plans from the keeper's locker

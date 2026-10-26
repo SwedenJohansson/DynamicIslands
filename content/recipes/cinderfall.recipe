@@ -1,15 +1,19 @@
 # Cinderfall - an island of the library's plan Raft 2: The Drowned Frontier (station Three of the Frontier Corps)
 # A volcano of black rock and ash, the Corps' geothermal plant at its foot: the workers' tents on the ash plain, the
 # turbine hall, pipes up the slope - and three relief valves stuck open on its flanks, the pressure rising. Quest
-# "Pressure" (10 steps): the camp, the engineer's warning, the three valves one by one (the west plateau, the south-east
+# "Pressure" (17 steps): the camp, the engineer's warning, the three valves one by one (the west plateau, the south-east
 # spur, the north shoulder where the stone birds' matriarch nests - reached, she driven off, then its valve), the turbine
 # hall reached and its roaches, the plant's store opened (the machete's, the biofuel refiner's, the fuel tank's and the
 # fuel pipe's blueprints).
+# RAFT2 10-26 (1-hour pass): the ash flats' secrets - Slag Cave (south-east), the old survey hut (east) where Tomas Reyes waits (a lamp puzzle), a survey plane on the north-west flats, a jump course (north), the slag-heap maze (east), five obsidian shards (a set), a buried cache
 #
 # Built by the recipe player (CIRecipe cinderfall) through the editor's own operations.
 include lib_sea
 include lib_rt
 include lib_features
+include lib_highwater
+include lib_areas
+include lib_raft2
 new
 # (nature: volcanic: Like Raft's desert, with little scrub on the ash - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.3 Bushes=0.3 Rocks=0.5 Harvest=0.3 BeachThings=0.3
@@ -34,6 +38,15 @@ brush flatten at {20-$i*2.36} {32-$i*1.64} r=3.8 s=20 frames=30 h={3.6+$i*1.13}
 next
 brush smooth from 20 32 to -6 14 r=4.5 s=10 frames=20
 origin
+# --- RAFT2 10-26 terrain: the land grows (banks first), then the pads of the new areas -------------------------------
+# a knoll of ash on the east flats, so they are no flat plain (east of the path from the camp to the valves)
+call hw_mount x=44 z=16 b=10 h=6
+# the pads: the cave (Slag Cave), the ruined house, the plane
+call r2_pad x=58 z=-48 r=14 h=3
+brush flatten from 58 -40 to 58 -24 r=6 s=20 frames=300 h=3
+call r2_pad x=56 z=34 r=11 h=2.6
+call r2_pad x=-48 z=54 r=11 h=2
+call r2_pad x=68 z=4 r=12 h=2.6
 clear at -10 48 r=11
 clear at 3 31.5 r=9
 clear from -60 24 to -57.5 4 r=4
@@ -90,6 +103,160 @@ prop hens creature.count=3
 place Creature_Dolphin dolphins at 0 100 h=-3
 prop dolphins creature.count=2
 
+# --- RAFT2 10-26 (the user: one hour per island - hills, a cave, a house, a wreck, secrets): the ash flats' secrets - Slag Cave (south-east), the old survey hut (east) where Tomas Reyes waits (a lamp puzzle), a survey plane on the north-west flats, a jump course (north), the slag-heap maze (east), five obsidian shards (a set), a buried cache ------
+call ar_cave x=58 z=-48 h=3 yaw=0 al=cf_caverock chest=cf_cavechest
+call hw_zone x=57 z=-39 al=cf_cavez id=cf_cave r=4 h=1 msg="Slag Cave. The rock is warm to the touch."
+call ar_ruin x=56 z=34 h=2.6 yaw=0 w=3 d=2 al=cf_ruin
+call r2_islander x=55 z=29.5 yaw=200 al=cf_isl nm="Tomas Reyes" pose=lean
+prop cf_isl talk.text=You came for the plant? Take your time - it's not going anywhere. Neither am I.\n---\nI surveyed this rock before they built the plant. Told them the mountain breathes. They built it anyway.\n---\nThe survey crew left their samples in Slag Cave, south-east. And my lads built a maze out of the slag heaps east of here, for fun. There's a box in the middle.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
+call r2_lamp x=49 z=33 al=cf_lamp1 nm="Survey lamp 1" grp="Survey lamps" on=0
+call r2_lamp x=55 z=40 al=cf_lamp2 nm="Survey lamp 2" grp="Survey lamps" on=1
+call r2_lamp x=62 z=33 al=cf_lamp3 nm="Survey lamp 3" grp="Survey lamps" on=1
+call r2_lamp x=55 z=26 al=cf_lamp4 nm="Survey lamp 4" grp="Survey lamps" on=0
+prop cf_lamp1 on.use=light|Survey lamp 2|toggle
+prop cf_lamp2 on.use=light|Survey lamp 3|toggle
+prop cf_lamp3 on.use=light|Survey lamp 4|toggle
+prop cf_lamp4 on.use=light|Survey lamp 1|toggle
+prop cf_lamp1 on.alllit=show|cf_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call r2_hidden x=57 z=38.6 al=cf_lampchest
+place Creature_Chicken cf_hens at 64 40 ground
+prop cf_hens creature.count=3
+call ar_plane x=-48 z=54 h=2 yaw=30 al=cf_plane crate=cf_planecrate
+place Note_Paper cf_pilot at -50.46 57.73 ground y=0.1 drop yaw=60
+call hw_zone x=-48 z=54 al=cf_planez id=cf_plane r=6 h=1 msg="A survey plane on the ash, grey with it."
+# JUMP cf pad=2.5 at=10 66
+push at 10 66
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=2.5
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=2.5
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpcf at 4.24 4.24 h=3.1
+place Block_Foundation_Tier3 jpcf at 5.77 1.65 h=3.85
+place Block_Foundation_Tier3 jpcf at 5.85 -1.35 h=4.6
+place Block_Foundation_Tier3 jpcf at 4.46 -4.01 h=5.35
+place Block_Foundation_Tier3 jpcf at 1.95 -5.67 h=6.1
+place Block_Foundation_Tier3 jpcf at -1.04 -5.91 h=6.85
+place Block_Foundation_Tier3 jpcf at -3.78 -4.66 h=7.6
+place Block_Foundation_Tier3 jpcf at -5.56 -2.25 h=8.35
+place Block_Foundation_Tier3 jpcf at -5.96 0.73 h=9.1
+place Block_Foundation_Tier3 jpcf at -4.85 3.53 h=9.85
+place Block_Foundation_Tier3 jpcf at -2.54 5.44 h=10.6 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppcf at 5.77 1.65 h=3.168 sy=1.861
+place Block_Foundation_Tier3 jppcf at 5.85 -1.35 h=3.918 sy=2.959
+place Block_Foundation_Tier3 jppcf at 4.46 -4.01 h=4.668 sy=4.058
+place Block_Foundation_Tier3 jppcf at 1.95 -5.67 h=5.418 sy=5.157
+place Block_Foundation_Tier3 jppcf at -1.04 -5.91 h=6.168 sy=6.255
+place Block_Foundation_Tier3 jppcf at -3.78 -4.66 h=6.918 sy=7.354
+place Block_Foundation_Tier3 jppcf at -5.56 -2.25 h=7.668 sy=8.453
+place Block_Foundation_Tier3 jppcf at -5.96 0.73 h=8.418 sy=9.552
+place Block_Foundation_Tier3 jppcf at -4.85 3.53 h=9.168 sy=10.650
+place Block_Foundation_Tier3 jppcf at -2.54 5.44 h=9.918 sy=11.749 sx=2 sz=2
+prop jpcf tint.color=#4a4542
+prop jpcf tint.amount=0.35
+prop jppcf tint.color=#4a4542
+prop jppcf tint.amount=0.35
+place Loot_Chest jccf at -1.04 -5.91 h=6.85 sit yaw=0
+prop jccf loot.refill=0
+place Loot_ChestSmall jbcf at -2.54 5.44 h=10.6 sit yaw=0
+prop jbcf loot.refill=0
+pop
+call hw_zone x=10 z=58 al=cf_jumpz id=cf_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+push at 60.5 -3.5 h=2.6
+place Block_Wall_Tier3 cf_maze at 0.75 0 y=0.05
+place Block_Wall_Tier3 cf_maze at 2.25 0 y=0.05
+place Block_Wall_Tier3 cf_maze at 0.75 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 2.25 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 3.75 0 y=0.05
+place Block_Wall_Tier3 cf_maze at 5.25 0 y=0.05
+place Block_Wall_Tier3 cf_maze at 3.75 6 y=0.05
+place Block_Wall_Tier3 cf_maze at 5.25 6 y=0.05
+place Block_Wall_Tier3 cf_maze at 3.75 9 y=0.05
+place Block_Wall_Tier3 cf_maze at 5.25 9 y=0.05
+place Block_Wall_Tier3 cf_maze at 3.75 12 y=0.05
+place Block_Wall_Tier3 cf_maze at 5.25 12 y=0.05
+place Block_Wall_Tier3 cf_maze at 3.75 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 5.25 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 6.75 9 y=0.05
+place Block_Wall_Tier3 cf_maze at 8.25 9 y=0.05
+place Block_Wall_Tier3 cf_maze at 6.75 12 y=0.05
+place Block_Wall_Tier3 cf_maze at 8.25 12 y=0.05
+place Block_Wall_Tier3 cf_maze at 6.75 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 8.25 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 9.75 0 y=0.05
+place Block_Wall_Tier3 cf_maze at 11.25 0 y=0.05
+place Block_Wall_Tier3 cf_maze at 9.75 9 y=0.05
+place Block_Wall_Tier3 cf_maze at 11.25 9 y=0.05
+place Block_Wall_Tier3 cf_maze at 9.75 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 11.25 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 12.75 0 y=0.05
+place Block_Wall_Tier3 cf_maze at 14.25 0 y=0.05
+place Block_Wall_Tier3 cf_maze at 12.75 3 y=0.05
+place Block_Wall_Tier3 cf_maze at 14.25 3 y=0.05
+place Block_Wall_Tier3 cf_maze at 12.75 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 14.25 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 0 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 0 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 0 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 0 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 0 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 0 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 0 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 0 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 0 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 0 14.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 3 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 3 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 3 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 3 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 6 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 6 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 6 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 6 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 9 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 9 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 9 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 9 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 9 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 9 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 12 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 12 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 12 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 12 14.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 14.25 y=0.05 yaw=90
+place Loot_ChestSmall cf_mazechest at 13.5 1.5 y=0.05 sit yaw=0
+pop
+prop cf_maze tint.color=#5a5a52
+prop cf_maze tint.amount=0.55
+prop cf_mazechest loot.refill=0
+call hw_zone x=66.5 z=-5 al=cf_mazez id=cf_maze r=3 msg="The slag maze. The heaps are higher than they look."
+call r2_piece x=20 z=40 al=cf_piece1 set="Obsidian shards"
+call r2_piece x=50 z=-20 al=cf_piece2 set="Obsidian shards"
+call r2_piece x=-44 z=30 al=cf_piece3 set="Obsidian shards"
+call r2_piece x=0 z=60 al=cf_piece4 set="Obsidian shards"
+call r2_piece x=30 z=-42 al=cf_piece5 set="Obsidian shards"
+prop cf_piece1 on.set=show|cf_setchest\nmessage||All five obsidian shards found.
+call r2_hidden x=61 z=41 al=cf_setchest kind=Loot_Chest
+call treasure x=-28 z=40 r=5 n=1 seed=27078 kind=0
+prop treasure27078 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_desert x=30 z=30 r=10 seed=27091
+call ar_plants_desert x=56 z=-40 r=8 seed=27092
+
+# RAFT2 10-26: scattered rocks that came out floating on the new slopes (CIGroundIslands)
+clear at 35.68 24.95 r=1.5 all only=BigSharpRock_5
+clear at 51.44 -34.89 r=1.5 all only=CaravanIsland_BrownGrass
+clear at 35.67 34.96 r=1.5 all only=BigSharpRock_5
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): palms, pineapples, flowers ----------
 scatter "Pickup_Landmark_Tree_Palm 3" 6 at 0 0 r=56.0 seed=4476 free=5
@@ -149,6 +316,24 @@ prop matriarch creature.zone=nest
 prop matriarch tint.color=#3b2b25
 prop matriarch tint.amount=0.5
 
+loot cf_cavechest CopperIngot*2;Glass*2;Nail*6;MetalOre*2
+prop cf_cavechest loot.refill=0
+note cf_cavechest Slag Cave chest | A chest at the back of Slag Cave, dry under the rock.
+note cf_lampchest Tomas's survey box | Tomas's survey box: maps of the volcano, a compass and his wages.
+loot cf_lampchest CopperIngot*2;TradeToken*2;Rope*2
+note cf_setchest Sample chest | The survey's sample chest - the five shards back in their slots, and the crew's spare tools.
+loot cf_setchest Glass*3;Bolt*4;MetalIngot*1
+note cf_planecrate Survey plane's crate | The survey plane's crate: rock hammers, sample bags and tools.
+loot cf_planecrate Plastic*3;Scrap*3;Nail*6
+prop cf_planecrate loot.refill=0
+note cf_pilot Survey pilot's note | SURVEY 4 - Cinderfall. Ash cloud at two thousand. Engine choked, glided onto the north-west flats. Tomas, your mountain is breathing again.
+note jccf Ash lookout box | The stokers stacked stones to see over the ash.
+loot jccf Rope*3;Plank*4;MetalIngot*1
+note jbcf Top of the ash stack | Somebody's stash at the very top.
+loot jbcf CopperIngot*1;Bolt*2;TradeToken*1
+note cf_mazechest Slag maze box | The crew's prize box in the middle of the slag maze.
+loot cf_mazechest CopperIngot*2;Rope*2;TradeToken*1
+
 quest title=Pressure
 quest intro=A volcano breathing steam and a plant at its foot, its pressure rising. Station Three: start at the workers' camp.
 step reach|camp|1|Come to the workers' camp on the ash plain
@@ -160,6 +345,9 @@ step kill|Screecher|1|Drive off the stone birds' matriarch by the third valve
 step collect|story:valvetag|3|Shut the last valve - three brass tags, and the hiss dies
 step reach|hall|1|Go down to the turbine hall at the volcano's foot
 step kill|Roach|3|Clear the roaches out of the turbine hall
+step talk|Tomas Reyes|1|Talk to Tomas Reyes at the ruined house in the north-east
+step reach|cf_cave|1|Find Slag Cave in the south-east
+step open|Slag Cave chest|1|Open the chest at the back of Slag Cave
 step open|Plant store|1|Open the plant's store with the three valve tags
 step blueprint|Blueprint_Machete|1|Take the machete plans from the plant store
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from the plant store

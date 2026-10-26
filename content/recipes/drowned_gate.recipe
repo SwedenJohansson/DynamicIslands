@@ -3,15 +3,19 @@
 # its top (5 m), the lock through it - a covered chamber between two steel gates that sink into the strait to open, gate
 # towers with floodlights over both -, the pump house astride the wall (its pump room on the walk, its hall inside the
 # wall flooded, its door in the lock chamber's side), the gate office on the wall's south half, the lock keeper's wooden
-# house on the north pad; behind the wall, a calm basin with a beach. Quest "Locks and Pumps" (10 steps): the wall, the
+# house on the north pad; behind the wall, a calm basin with a beach. Quest "Locks and Pumps" (16 steps): the wall, the
 # keeper's count, the outer lock's lever and the lock chamber, the keeper's crowbar, the pump hall's jammed door, the
 # angler in the flooded hall and the inner lock's key on its floor, the inner lock's wheel, the gate office and its vault
 # (the titanium tools', the big backpack's and the electric zipline's blueprints).
+# RAFT2 10-26 (1-hour pass): secrets on the gate's land side - Sluice Cave (south-west), the lock keeper's old house (west) where Odile Marsh waits (a lamp puzzle), a jump course (north), five lock tokens (a set), a buried cache
 #
 # Built by the recipe player (CIRecipe drowned_gate) through the editor's own operations.
 include lib_sea
 include lib_rt
 include lib_features
+include lib_highwater
+include lib_areas
+include lib_raft2
 new
 # (nature: tropical, Like Raft; no cliffs - the generator's cliffs cut the land into flat sectors)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -292,12 +296,85 @@ pop
 
 # (the island's points from its land's middle from here on, as a world spawns it and the play test walks it)
 origin
+# --- RAFT2 10-26 terrain: the land grows (banks first), then the pads of the new areas -------------------------------
+# the pads: the cave (Sluice Cave), the ruined house
+call r2_pad x=-53 z=-56 r=14 h=2.5
+brush flatten from -53 -48 to -53 -32 r=6 s=20 frames=300 h=2.5
+call r2_pad x=-57 z=26 r=11 h=2.5
 # (the beach's logs: the strait took a share of the land, and five logs on what was left were twice Raft's - three away)
 clear at -49.6 24.3 r=2.5 only=Log
 clear at 50.9 -49 r=2.5 only=Log
 clear at 55.7 53.9 r=2.5 only=Log
 
-# --- Settings, story items, notes, behaviours, quest (10 steps) -------------------------------------------------------
+# --- RAFT2 10-26 (the user: one hour per island - hills, a cave, a house, a wreck, secrets): secrets on the gate's land side - Sluice Cave (south-west), the lock keeper's old house (west) where Odile Marsh waits (a lamp puzzle), a jump course (north), five lock tokens (a set), a buried cache ------
+call ar_cave x=-53 z=-56 h=2.5 yaw=0 al=dg_caverock chest=dg_cavechest
+call hw_zone x=-54 z=-47 al=dg_cavez id=dg_cave r=4 h=1 msg="Sluice Cave. Water runs through it from somewhere."
+call ar_ruin x=-57 z=26 h=2.5 yaw=0 w=3 d=2 al=dg_ruin
+call r2_islander x=-58 z=21.5 yaw=200 al=dg_isl nm="Odile Marsh" pose=stand
+prop dg_isl talk.text=My father kept the gate. Counted the hours to high tide every day of his life.\n---\nWhen the sea came over the wall he counted faster. Then he stopped counting.\n---\nThe lock hands kept a chest in Sluice Cave, south-west. And their tokens - five of them - got scattered when the water came in. Find them and the token box opens.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
+call r2_lamp x=-64 z=25 al=dg_lamp1 nm="Lock lamp 1" grp="Lock lamps" on=1
+call r2_lamp x=-58 z=32 al=dg_lamp2 nm="Lock lamp 2" grp="Lock lamps" on=0
+call r2_lamp x=-51 z=25 al=dg_lamp3 nm="Lock lamp 3" grp="Lock lamps" on=0
+call r2_lamp x=-58 z=18 al=dg_lamp4 nm="Lock lamp 4" grp="Lock lamps" on=1
+prop dg_lamp1 on.use=light|Lock lamp 2|toggle
+prop dg_lamp2 on.use=light|Lock lamp 3|toggle
+prop dg_lamp3 on.use=light|Lock lamp 4|toggle
+prop dg_lamp4 on.use=light|Lock lamp 1|toggle
+prop dg_lamp1 on.alllit=show|dg_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call r2_hidden x=-56 z=30.6 al=dg_lampchest
+place Creature_Chicken dg_hens at -49 32 ground
+prop dg_hens creature.count=3
+# JUMP dg pad=2.5 at=-23 70
+push at -23 70
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=2.5
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=2.5
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpdg at 4.24 4.24 h=3.1
+place Block_Foundation_Tier3 jpdg at 5.77 1.65 h=3.85
+place Block_Foundation_Tier3 jpdg at 5.85 -1.35 h=4.6
+place Block_Foundation_Tier3 jpdg at 4.46 -4.01 h=5.35
+place Block_Foundation_Tier3 jpdg at 1.95 -5.67 h=6.1
+place Block_Foundation_Tier3 jpdg at -1.04 -5.91 h=6.85
+place Block_Foundation_Tier3 jpdg at -3.78 -4.66 h=7.6
+place Block_Foundation_Tier3 jpdg at -5.56 -2.25 h=8.35
+place Block_Foundation_Tier3 jpdg at -5.96 0.73 h=9.1
+place Block_Foundation_Tier3 jpdg at -4.85 3.53 h=9.85
+place Block_Foundation_Tier3 jpdg at -2.54 5.44 h=10.6 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppdg at 5.77 1.65 h=3.168 sy=1.861
+place Block_Foundation_Tier3 jppdg at 5.85 -1.35 h=3.918 sy=2.959
+place Block_Foundation_Tier3 jppdg at 4.46 -4.01 h=4.668 sy=4.058
+place Block_Foundation_Tier3 jppdg at 1.95 -5.67 h=5.418 sy=5.157
+place Block_Foundation_Tier3 jppdg at -1.04 -5.91 h=6.168 sy=6.255
+place Block_Foundation_Tier3 jppdg at -3.78 -4.66 h=6.918 sy=7.354
+place Block_Foundation_Tier3 jppdg at -5.56 -2.25 h=7.668 sy=8.453
+place Block_Foundation_Tier3 jppdg at -5.96 0.73 h=8.418 sy=9.552
+place Block_Foundation_Tier3 jppdg at -4.85 3.53 h=9.168 sy=10.650
+place Block_Foundation_Tier3 jppdg at -2.54 5.44 h=9.918 sy=11.749 sx=2 sz=2
+prop jpdg tint.color=#6b6862
+prop jpdg tint.amount=0.35
+prop jppdg tint.color=#6b6862
+prop jppdg tint.amount=0.35
+place Loot_Chest jcdg at -1.04 -5.91 h=6.85 sit yaw=0
+prop jcdg loot.refill=0
+place Loot_ChestSmall jbdg at -2.54 5.44 h=10.6 sit yaw=0
+prop jbdg loot.refill=0
+pop
+call hw_zone x=-23 z=62 al=dg_jumpz id=dg_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call r2_piece x=-69 z=-2 al=dg_piece1 set="Lock tokens"
+call r2_piece x=37 z=68 al=dg_piece2 set="Lock tokens"
+call r2_piece x=-53 z=-32 al=dg_piece3 set="Lock tokens"
+call r2_piece x=7 z=-68 al=dg_piece4 set="Lock tokens"
+call r2_piece x=-33 z=58 al=dg_piece5 set="Lock tokens"
+prop dg_piece1 on.set=show|dg_setchest\nmessage||All five lock tokens found.
+call r2_hidden x=-52 z=33 al=dg_setchest kind=Loot_Chest
+call treasure x=7 z=-78 r=5 n=1 seed=27478 kind=0
+prop treasure27478 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+
+# --- Settings, story items, notes, behaviours, quest (16 steps) -------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): palms, flowers, pineapples ----------
 scatter "Pickup_Landmark_Tree_Palm 1" 4 at 0 0 r=63.0 seed=4122 free=5
 scatter "Pickup_Landmark_Tree_Palm 3" 4 at 0 0 r=63.0 seed=4123 free=5
@@ -386,6 +463,18 @@ prop hens creature.count=3
 prop turtles creature.count=2
 prop dolphins creature.count=2
 
+loot dg_cavechest CopperIngot*2;Glass*2;Nail*6;MetalOre*2
+prop dg_cavechest loot.refill=0
+note dg_cavechest Sluice Cave chest | A chest at the back of Sluice Cave, dry under the rock.
+note dg_lampchest Odile's keepsake box | Odile's keepsake box: her father's tide tables, his watch and his savings.
+loot dg_lampchest CopperIngot*2;TradeToken*2;Rope*2
+note dg_setchest Token box | The lock hands' token box - five tokens home, and what the box kept.
+loot dg_setchest Glass*3;Bolt*4;MetalIngot*1
+note jcdg Lock hand's ledge | The lock hands stacked stones to watch the tide come in.
+loot jcdg Rope*3;Plank*4;MetalIngot*1
+note jbdg Top of the tide stack | Somebody's stash at the very top.
+loot jbdg CopperIngot*1;Bolt*2;TradeToken*1
+
 quest title=Locks and Pumps
 quest intro=A sea wall across a strait, its gates shut and its pumps drowned. Station Nine: start on the wall.
 step reach|wall|1|Climb onto the sea wall
@@ -397,6 +486,9 @@ step kill|Angler fish|1|Face the angler in the pump hall
 step collect|story:lockkey|1|Dive for the inner lock's key on the pump hall's floor
 step reach|innerlock|1|Carry the key to the inner lock's wheel on the wall
 step reach|gateoffice|1|Open the inner lock and go into the gate office
+step talk|Odile Marsh|1|Talk to Odile Marsh at the ruined house in the north-west
+step reach|dg_cave|1|Find Sluice Cave in the south-west
+step open|Sluice Cave chest|1|Open the chest at the back of Sluice Cave
 step open|Gate office vault|1|Open the gate office's vault
 step blueprint|Blueprint_TitaniumTools|1|Take the titanium tools plans from the gate office vault
 step blueprint|Blueprint_BackpackAdvanced|1|Take the advanced backpack plans from the gate office vault

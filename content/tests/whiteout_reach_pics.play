@@ -8,3 +8,8 @@ picture whiteout_reach_camp 34 24 10 12 12 32
 picture whiteout_reach_kestrel 40 9 76 25 3 94
 picture whiteout_reach_crevasse -52 12 9 -22 5 5
 picture whiteout_reach_radio 14 25 14 3 22 -2
+# RAFT2 10-26: the new land
+offset 0 0
+picture r2_wr_cave 66 8 -48 60 6 -72
+picture r2_wr_ruin -72 8 -62 -60 4.5 -50
+picture r2_wr_plane 82 8.6 42 70 3.6 52

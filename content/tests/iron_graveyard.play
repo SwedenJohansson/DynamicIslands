@@ -3,6 +3,7 @@
 # 4.9-5.5 m) up Raft's ladders on their sides, the barge in its hole (8 m down), the crane's platform (5.4 m), the office
 # (floor 2.05 m), the ramp up the mesa's south-east flank, the turbine on its rim (13.8 m).
 island The Iron Graveyard
+offset 0.5278 -0.359
 expect step 0
 expect title Breakers' Yard
 wait 5
@@ -72,6 +73,30 @@ walk 42 -60 to 31 -52 to 20 -44 h=13.6
 walk 20 -44 to 8 -43 to -3.5 -43 h=13.8
 zone turbinehill
 expect step 10
+# RAFT2 10-26: Big Sol, the climb, Rivet Cave, the secrets
+use Big Sol
+wait 1
+expect step 11
+expect hidden ig_lampchest
+use Yard lamp 3
+wait 1
+expect shown ig_lampchest
+open Sol's tool chest
+zone ig_cave
+expect step 12
+open Rivet Cave chest
+wait 3
+expect step 13
+# the secrets
+expect hidden ig_setchest
+use ig_piece1
+use ig_piece2
+use ig_piece3
+use ig_piece4
+use ig_piece5
+wait 2
+expect shown ig_setchest
+open Plate rack
 use turbine
 expect message the turbine turns
 expect story blade 0

@@ -2,6 +2,7 @@
 # the keeper's hut on the west flats (3.5 m), the ramp of fill up to the beacon terrace on the spike (16 m), the supply
 # boat's crate on the sea floor off the landing (6.5 m down).
 island Frontier Beacon
+offset 7.3746 -0.6566
 expect step 0
 expect title The First Signal
 
@@ -28,6 +29,58 @@ zone terrace
 expect step 5
 kill Screecher
 expect step 6
+# RAFT2 10-26: Mara Quill, the climb, Ash Cave, the secrets
+expect hidden fb_rewchest
+use fb_machine
+expect hidden fb_rewchest
+read Keeper's chalkboard
+expect step 7
+use Mara Quill
+wait 1
+# (no 'expect step 8': a stone bird chased to the trail's foot can set off fb_trail early, counted when it comes)
+expect hidden fb_lampchest
+use Signal lamp 1
+use Signal lamp 2
+wait 1
+expect shown fb_lampchest
+open Mara's flag locker
+zone fb_trail
+expect step 9
+zone fb_summit
+expect step 10
+open Signal mast deck box
+wait 3
+expect story fb_top 1
+expect step 11
+zone fb_cave
+expect step 12
+open Ash Cave chest
+wait 3
+expect story fb_cave 1
+expect step 13
+use fb_machine
+expect shown fb_rewchest
+expect story fb_fixed 1
+open Fog horn reward
+wait 3
+read Fog horn's card
+expect step 14
+# the secrets
+zone fb_plane
+open Mail plane's sack
+read Mail pilot's note
+zone fb_jumps
+open Lookout's ledge box
+open Top of the lookout
+expect hidden fb_setchest
+use fb_piece1
+use fb_piece2
+use fb_piece3
+use fb_piece4
+use fb_piece5
+wait 2
+expect shown fb_setchest
+open Flag chest
 
 # The beacon lit with the cell: the keeper's locker opens
 use beaconbox

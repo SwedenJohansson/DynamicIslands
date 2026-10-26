@@ -1,5 +1,6 @@
 # Guide pictures of The Iron Graveyard (CIPlay iron_graveyard_pics): Raft's camera, midday, calm
 island The Iron Graveyard
+offset 0.5278 -0.359
 hour 11
 weather Calm
 at 6 -62
@@ -9,3 +10,6 @@ picture iron_graveyard_hulls -26 7 -66 0 3 -82
 picture iron_graveyard_crane 10 6 -58 -4 6 -70
 picture iron_graveyard_mesa 10 18.5 -30 -6 9 -60
 picture iron_graveyard_machinery -31 +3 -57 -21 3 -66
+# RAFT2 10-26: the new land
+picture r2_ig_cave 72 7.5 -20 66 5.5 -44
+picture r2_ig_ruin -58 7.5 32 -46 4 44

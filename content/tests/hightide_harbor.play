@@ -3,6 +3,7 @@
 # the path up to the works on the saddle (9.5 m), the Mary at the quay's end, the Heron on the bar (3.6 m down), the lamp
 # tower on the north horn (storeys at 5.62, 8.04 and 10.46 m).
 island Hightide Harbor
+offset 17.9006 -5.1855
 expect step 0
 expect title The Fleet Comes Home
 # (a big island: a moment for all of it to load before the first walk - it began out at sea once)
@@ -82,6 +83,43 @@ expect message wick catches
 expect story lampoil 0
 expect story safecode 1
 expect step 12
+# RAFT2 10-26: Nell Garrow, the climb, Smugglers' Cave, the secrets
+use Nell Garrow
+wait 1
+expect step 13
+expect hidden hh_lampchest
+use Loft lamp 2
+use Loft lamp 3
+wait 1
+expect shown hh_lampchest
+open Nell's net chest
+zone hh_trail
+expect step 14
+zone hh_summit
+expect step 15
+open Pilot mast deck box
+wait 3
+zone hh_cave
+expect step 16
+open Smugglers' Cave chest
+wait 3
+expect step 17
+# the secrets
+zone hh_plane
+open Fishery plane's crate
+read Spotter's note
+zone hh_jumps
+open Lookout stones
+open Top of the lookout
+expect hidden hh_setchest
+use hh_piece1
+use hh_piece2
+use hh_piece3
+use hh_piece4
+use hh_piece5
+wait 2
+expect shown hh_setchest
+open Float basket
 
 # The harbour master's house on the south pier: his safe
 at -9 -12.3 h=2.5

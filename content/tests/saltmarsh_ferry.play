@@ -36,6 +36,43 @@ zone hold
 expect step 7
 kill Rat
 expect step 8
+# RAFT2 10-26: Wenna Rook, the climb, Eel Cave, the secrets
+use Wenna Rook
+wait 1
+expect step 9
+expect hidden sm_lampchest
+use Reed lamp 1
+use Reed lamp 2
+wait 1
+expect shown sm_lampchest
+open Wenna's tin box
+zone sm_trail
+expect step 10
+zone sm_summit
+expect step 11
+open Lookout mast deck box
+wait 3
+zone sm_cave
+expect step 12
+open Eel Cave chest
+wait 3
+expect step 13
+# the secrets
+zone sm_plane
+open Ferry plane's crate
+read Ferry pilot's note
+zone sm_jumps
+open Wildfowler's perch
+open Top of the perch
+expect hidden sm_setchest
+use sm_piece1
+use sm_piece2
+use sm_piece3
+use sm_piece4
+use sm_piece5
+wait 2
+expect shown sm_setchest
+open Decoy crate
 
 # The engineer's locker, clear of the mud now
 walk 2 15 to -1 17 h=1.4
@@ -43,7 +80,7 @@ reach Engineer's locker
 open Engineer's locker
 wait 2
 expect item Blueprint_MotorWheel 1
-expect step 10
+expect step 15
 
 # The captain's safe on the bank by the ferry
 walk 2 15 to 0.5 20 to 0.2 23 h=1.4

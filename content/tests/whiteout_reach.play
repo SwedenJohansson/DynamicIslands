@@ -71,12 +71,41 @@ expect story radiocrystal 1
 expect step 16
 catch Goat 2
 expect step 17
+# RAFT2 10-26: Pell Arnesen, the climb, Frost Cave, the secrets
+use Pell Arnesen
+wait 1
+expect step 18
+expect hidden wr_lampchest
+use Trap lamp 1
+use Trap lamp 2
+use Trap lamp 3
+wait 1
+expect shown wr_lampchest
+open Pell's fur chest
+zone wr_cave
+expect step 19
+open Frost Cave chest
+wait 3
+expect step 20
+# the secrets
+zone wr_plane
+open Supply plane's crate
+read Supply pilot's note
+expect hidden wr_setchest
+use wr_piece1
+use wr_piece2
+use wr_piece3
+use wr_piece4
+use wr_piece5
+wait 2
+expect shown wr_setchest
+open Lantern crate
 walk 14 22 to 8 10 to 3.5 5 h=21
 walk 3.5 5 to 3.5 1 to 2.5 -2 h=21 below=23.5
 zone radiohut
-expect step 18
+expect step 21
 read Last transmission
-expect step 19
+expect step 22
 use hutradio
 expect message crystal clicks home
 

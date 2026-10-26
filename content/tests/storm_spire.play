@@ -3,6 +3,7 @@
 # 9.5, 15.5, 21.5 and 27.5 m, the landing 21.5 m, the top 33.5 m), the bridge to the station (33.5 m), the north cove
 # (3.8 m down). Walks and stands on Raft's floor blocks start off their seams (a ray down slips between two blocks).
 island Storm Spire
+offset 5.5042 -4.0556
 expect step 0
 expect title Eye of the Storm
 wait 5
@@ -40,6 +41,59 @@ reach Cove box
 open Cove box
 expect story rod 3
 expect step 5
+# RAFT2 10-26: Ivo Brand, the climb, Lightning Cave, the secrets
+expect hidden ss_rewchest
+use ss_machine
+expect hidden ss_rewchest
+read Met-man's warning
+expect step 6
+use Ivo Brand
+wait 1
+# (no 'expect step 7': a bird chased to the trail's foot can set off ss_trail early, counted when it comes)
+expect hidden ss_lampchest
+use Met lamp 2
+wait 1
+expect shown ss_lampchest
+open Ivo's barometer box
+zone ss_trail
+expect step 8
+zone ss_summit
+expect step 9
+open Lightning mast deck box
+wait 3
+expect story ss_top 1
+expect step 10
+zone ss_cave
+expect step 11
+open Lightning Cave chest
+wait 3
+expect story ss_cave 1
+expect step 12
+use ss_machine
+expect shown ss_rewchest
+expect story ss_fixed 1
+open Storm siren reward
+wait 3
+read Siren log
+expect step 13
+# the secrets
+zone ss_plane
+open Weather plane's crate
+read Weather pilot's log
+zone ss_jumps
+open Anemometer ledge
+open Top of the wind stack
+zone ss_maze
+open Recruit's prize box
+expect hidden ss_setchest
+use ss_piece1
+use ss_piece2
+use ss_piece3
+use ss_piece4
+use ss_piece5
+wait 2
+expect shown ss_setchest
+open Glass case
 at 2.9 10.6 h=34.6
 open Station locker
 wait 4

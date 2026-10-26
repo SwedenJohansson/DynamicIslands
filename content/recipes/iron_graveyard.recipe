@@ -2,15 +2,19 @@
 # A ship breakers' yard on a desert mesa's south beach: three hulls drawn up on the sand (the tanker under the yard's
 # A-frame crane, the trawler, the ferry), the crane's cab on its tower, the yard office, the store between two containers,
 # a barge sunk off the beach; up a ramp cut in the mesa's cliff, the yard's turbine - a bare mast. Quest "Breakers' Yard"
-# (11 steps): the gate, the foreman's board, the yard's dogs and their alpha, three turbine blades from the beached hulls,
+# (18 steps): the gate, the foreman's board, the yard's dogs and their alpha, three turbine blades from the beached hulls,
 # the angler in the sunken barge and the fourth blade, the crane operator's note in the cab, the office safe's crane key,
 # the hub lifted off the tanker, the turbine turning again and the store (the wind turbine's, the advanced battery's, the
 # head lamp's and the electric grill's blueprints).
+# RAFT2 10-26 (1-hour pass): secrets on the yard's flats - Rivet Cave (east), the breakers' hut (north-west) where Big Sol waits (a lamp puzzle), five builder's plates (a set), a buried cache
 #
 # Built by the recipe player (CIRecipe iron_graveyard) through the editor's own operations.
 include lib_sea
 include lib_rt
 include lib_features
+include lib_highwater
+include lib_areas
+include lib_raft2
 new
 # (nature: desert - trees to cut on the mesa as on Raft's desert islands; Trees 0.19 gave 1.1 per 1000 m2 against Raft's 5.6)
 gen Trees=0.38 Bushes=0.5 Rocks=0.55 Harvest=0.25 BeachThings=0.3
@@ -34,6 +38,11 @@ brush flatten at 19 -43.5 r=3 s=20 frames=30 h=13.6
 brush flatten at -4 -42 r=4.5 s=20 frames=50 h=13.8
 brush flatten at -6 -99 r=9 s=20 frames=70 h=-8
 origin
+# --- RAFT2 10-26 terrain: the land grows (banks first), then the pads of the new areas -------------------------------
+# the pads: the cave (Rivet Cave), the ruined house
+call r2_pad x=66 z=-44 r=14 h=2.5
+brush flatten from 66 -36 to 66 -20 r=6 s=20 frames=300 h=2.5
+call r2_pad x=-46 z=44 r=11 h=2.5
 clear from -30 -65 to 30 -65 r=10
 clear from 42 -60 to 20 -44 r=5.5
 clear from 20 -44 to -4 -42 r=2.5
@@ -118,7 +127,35 @@ prop llamas creature.count=2
 place Creature_Dolphin dolphins at 0 -125 h=-3
 prop dolphins creature.count=2
 
-# --- Settings, story items, notes, behaviours, quest (11 steps) -------------------------------------------------------
+# --- RAFT2 10-26 (the user: one hour per island - hills, a cave, a house, a wreck, secrets): secrets on the yard's flats - Rivet Cave (east), the breakers' hut (north-west) where Big Sol waits (a lamp puzzle), five builder's plates (a set), a buried cache ------
+call ar_cave x=66 z=-44 h=2.5 yaw=0 al=ig_caverock chest=ig_cavechest
+call hw_zone x=65 z=-35 al=ig_cavez id=ig_cave r=4 h=1 msg="Rivet Cave. Somebody stacked steel plates in here."
+call ar_ruin x=-46 z=44 h=2.5 yaw=0 w=3 d=2 al=ig_ruin
+call r2_islander x=-47 z=39.5 yaw=200 al=ig_isl nm="Big Sol" pose=lean
+prop ig_isl talk.text=Careful where you step - half this yard is still sharp.\n---\nI broke ships here for the Corps. Cut them up for their steel, forty years. Now the sea brings them in faster than I can cut.\n---\nThe cutters hid their best finds in Rivet Cave, east. And the builders' plates off the old hulls are all over the yard - five of them. Bring them together.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
+call r2_lamp x=-53 z=43 al=ig_lamp1 nm="Yard lamp 1" grp="Yard lamps" on=1
+call r2_lamp x=-47 z=50 al=ig_lamp2 nm="Yard lamp 2" grp="Yard lamps" on=1
+call r2_lamp x=-40 z=43 al=ig_lamp3 nm="Yard lamp 3" grp="Yard lamps" on=0
+call r2_lamp x=-47 z=36 al=ig_lamp4 nm="Yard lamp 4" grp="Yard lamps" on=0
+prop ig_lamp1 on.use=light|Yard lamp 2|toggle
+prop ig_lamp2 on.use=light|Yard lamp 3|toggle
+prop ig_lamp3 on.use=light|Yard lamp 4|toggle
+prop ig_lamp4 on.use=light|Yard lamp 1|toggle
+prop ig_lamp1 on.alllit=show|ig_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call r2_hidden x=-45 z=48.6 al=ig_lampchest
+place Creature_Chicken ig_hens at -38 50 ground
+prop ig_hens creature.count=3
+call r2_piece x=-70 z=-20 al=ig_piece1 set="Builder's plates"
+call r2_piece x=20 z=70 al=ig_piece2 set="Builder's plates"
+call r2_piece x=72 z=22 al=ig_piece3 set="Builder's plates"
+call r2_piece x=20 z=62 al=ig_piece4 set="Builder's plates"
+call r2_piece x=-70 z=-4 al=ig_piece5 set="Builder's plates"
+prop ig_piece1 on.set=show|ig_setchest\nmessage||All five builder's plates found.
+call r2_hidden x=-41 z=51 al=ig_setchest kind=Loot_Chest
+call treasure x=70 z=30 r=5 n=1 seed=27278 kind=0
+prop treasure27278 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+
+# --- Settings, story items, notes, behaviours, quest (18 steps) -------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): date palms, melons, pineapples ----------
 scatter "Pickup_Landmark_Tree_Palm 2" 4 at 0 0 r=59.5 seed=4127 free=5
 scatter "Pickup_Landmark_Tree_Palm 4" 4 at 0 0 r=59.5 seed=4128 free=5
@@ -203,6 +240,14 @@ prop lurker creature.health=2
 prop lurker creature.respawn=0
 prop lurker creature.zone=barge
 
+loot ig_cavechest MetalIngot*2;Bolt*4;Scrap*4
+prop ig_cavechest loot.refill=0
+note ig_cavechest Rivet Cave chest | A chest at the back of Rivet Cave, dry under the rock.
+note ig_lampchest Sol's tool chest | Sol's tool chest: a cutting torch head, gloves and forty years' wages.
+loot ig_lampchest CopperIngot*2;TradeToken*2;MetalIngot*2
+note ig_setchest Plate rack | The builders' plates back on their rack - and what the breakers kept behind it.
+loot ig_setchest Glass*3;Bolt*4;MetalIngot*1
+
 quest title=Breakers' Yard
 quest intro=A breakers' yard on a desert beach, its turbine standing still. Station Six: start at the yard's gate.
 step reach|yardgate|1|Come in through the yard's gate
@@ -215,6 +260,9 @@ step read|Crane operator's note|1|Climb up to the crane's cab and read the opera
 step collect|story:cranekey|1|Open the yard office's safe for the crane key
 step collect|story:hub|1|Lift the turbine hub off the tanker with the crane
 step reach|turbinehill|1|Carry the parts up the ramp to the turbine on the mesa
+step talk|Big Sol|1|Talk to Big Sol at the ruined house in the north-west
+step reach|ig_cave|1|Find Rivet Cave in the south-east
+step open|Rivet Cave chest|1|Open the chest at the back of Rivet Cave
 step open|Yard store|1|Get the turbine turning and open the yard store
 step blueprint|Blueprint_WindTurbine|1|Take the wind turbine plans from the yard store
 step blueprint|Blueprint_BatteryAdvanced|1|Take the advanced battery plans from the yard store

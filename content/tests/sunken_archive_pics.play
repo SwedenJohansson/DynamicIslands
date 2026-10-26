@@ -1,5 +1,6 @@
 # Guide pictures of The Sunken Archive (CIPlay sunken_archive_pics): Raft's camera, midday, calm
 island The Sunken Archive
+offset 8.6652 1.5661
 hour 11
 weather Calm
 at -6 -2
@@ -10,3 +11,9 @@ picture sunken_archive_reading -4 2.4 -8.4 -5 1.5 -14
 at -1 -6 h=-3
 wait 2
 picture sunken_archive_stacks -1.5 -3 -6.5 -5 -4.5 -11
+# RAFT2 10-26: the new land
+picture r2_sa_hill -25.43 18 44.47 -9 11.2 68
+picture r2_sa_cave 62 8 -38 56 6 -62
+picture r2_sa_ruin 56 8 -2 68 4.5 10
+picture r2_sa_plane -48 9 -64 -60 4 -54
+picture r2_sa_jumps 66 9 40 52 7 52

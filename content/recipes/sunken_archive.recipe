@@ -2,14 +2,19 @@
 # Five palm islets on a shallow coral bank, and in a basin in the middle the Corps' archive, two of its three floors under
 # the sea: the reading room on top with its jetty and the index desk, the flooded stacks below (broken windows to swim in
 # by, air under the reading room's floor and a pocket of it in the deepest room), the rare book vault and its keeper.
-# Quest "Card Catalogue" (10 steps): the reading room, the archivist's letter, the shelf's and the floor's card boxes in
+# Quest "Card Catalogue" (21 steps): the reading room, the archivist's letter, the shelf's and the floor's card boxes in
 # the flooded stacks, the deepest room's air pocket, the vault, the angler there, the deep card box, the three cards, the
 # index desk and the vault opened (the engine controls', the metal detector's, the firework's and the zipline's
 # blueprints).
+# RAFT2 10-26 (1-hour pass): new islets on the coral bank - Reading Hill (north) with a reading mast, Binding Cave (south-east), the bindery ruin (east) where Ines Varga waits (a lamp puzzle), a book plane down on the south-west islet, a jump course (north-east), five bookplates (a set), a buried cache
 #
 # Built by the recipe player (CIRecipe sunken_archive) through the editor's own operations.
 include lib_sea
 include lib_rt
+include lib_highwater
+include lib_areas
+include lib_features
+include lib_raft2
 new
 # (nature: Like Raft - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -20,6 +25,22 @@ generate
 # --- Terrain: the basin in the bank where the archive stands (5.7 m down) -------------------------------------------
 brush flatten at -7 -8 r=12 s=20 frames=80 h=-5.7
 origin
+# --- RAFT2 10-26 terrain: the land grows (banks first), then the pads of the new areas -------------------------------
+# new islets on the bank: north (Reading Hill), east, south-east (to the cave), south-west, north-east
+brush flatten from 43 -30 to 56 -52 r=10 s=20 frames=500 h=3
+brush flatten from -43 -30 to -56 -50 r=10 s=20 frames=500 h=3
+brush flatten from 54 0 to 70 12 r=12 s=20 frames=500 h=3
+brush auto at 60 6 r=18 s=10 frames=25
+brush auto at 50 -42 r=14 s=10 frames=25
+brush auto at -50 -40 r=14 s=10 frames=25
+# the pads: the cave (Binding Cave), the ruined house, the plane
+call r2_pad x=56 z=-62 r=14 h=3
+brush flatten from 56 -54 to 56 -38 r=6 s=20 frames=300 h=3
+call r2_pad x=68 z=10 r=11 h=3
+call r2_pad x=-60 z=-54 r=11 h=3
+# Reading Hill: summit 16 m, base r 18, the trail from the foot toward the house
+call hw_mount x=-6 z=66 b=18 h=16
+call hw_trail x=-6 z=66 b=18 h=16 a0=-137.94 turn=300 n=34 h0=3
 clear at -7 -8 r=14
 
 # --- The archive: three of the radio tower's rooms stacked, turned to face north; the flooded stacks below (broken
@@ -65,6 +86,92 @@ prop turtles creature.count=2
 place Creature_Dolphin dolphins at 0 90 h=-3
 prop dolphins creature.count=2
 
+# --- RAFT2 10-26 (the user: one hour per island - hills, a cave, a house, a wreck, secrets): new islets on the coral bank - Reading Hill (north) with a reading mast, Binding Cave (south-east), the bindery ruin (east) where Ines Varga waits (a lamp puzzle), a book plane down on the south-west islet, a jump course (north-east), five bookplates (a set), a buried cache ------
+call hw_zone x=-18.73 z=51.89 al=sa_trailz id=sa_trail r=5 msg="The trail up Reading Hill starts here - round and up."
+call hw_zone x=-6 z=66 al=sa_summitz id=sa_summit r=8 h=1 msg="The top of Reading Hill. The whole island below you."
+call hw_mast x=-9 z=68 h0=16 lv=5 a=sa_mast chest=sa_topchest top=Placeable_Flag_01
+place Creature_Goat sa_goats at -14.73 54.89 ground
+prop sa_goats creature.count=2
+call ar_cave x=56 z=-62 h=3 yaw=0 al=sa_caverock chest=sa_cavechest
+call hw_zone x=55 z=-53 al=sa_cavez id=sa_cave r=4 h=1 msg="Binding Cave. It smells of glue and old paper."
+call ar_ruin x=68 z=10 h=3 yaw=0 w=3 d=2 al=sa_ruin
+call r2_islander x=67 z=5.5 yaw=200 al=sa_isl nm="Ines Varga" pose=stand
+prop sa_isl talk.text=Quietly, please. This is still a library.\n---\nI bound the books for the Corps' archive before the sea came up the stairs. I moved what I could to the islets.\n---\nThe binders kept their best work in Binding Cave, south-east. And climb Reading Hill - the readers flew a flag from its mast when a book came back.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
+call r2_lamp x=61 z=9 al=sa_lamp1 nm="Reading lamp 1" grp="Reading lamps" on=0
+call r2_lamp x=67 z=16 al=sa_lamp2 nm="Reading lamp 2" grp="Reading lamps" on=0
+call r2_lamp x=74 z=9 al=sa_lamp3 nm="Reading lamp 3" grp="Reading lamps" on=1
+call r2_lamp x=67 z=2 al=sa_lamp4 nm="Reading lamp 4" grp="Reading lamps" on=1
+prop sa_lamp1 on.use=light|Reading lamp 2|toggle
+prop sa_lamp2 on.use=light|Reading lamp 3|toggle
+prop sa_lamp3 on.use=light|Reading lamp 4|toggle
+prop sa_lamp4 on.use=light|Reading lamp 1|toggle
+prop sa_lamp1 on.alllit=show|sa_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call r2_hidden x=69 z=14.6 al=sa_lampchest
+place Creature_Chicken sa_hens at 76 16 ground
+prop sa_hens creature.count=3
+call ar_plane x=-60 z=-54 h=3 yaw=40 al=sa_plane crate=sa_planecrate
+place Note_Paper sa_pilot at -61.78 -49.9 ground y=0.1 drop yaw=70
+call hw_zone x=-60 z=-54 al=sa_planez id=sa_plane r=6 h=1 msg="A small plane on the islet, crates of books in its hold."
+# JUMP sa pad=3 at=52 52
+push at 52 52
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpsa at 4.24 4.24 h=3.6
+place Block_Foundation_Tier3 jpsa at 5.77 1.65 h=4.35
+place Block_Foundation_Tier3 jpsa at 5.85 -1.35 h=5.1
+place Block_Foundation_Tier3 jpsa at 4.46 -4.01 h=5.85
+place Block_Foundation_Tier3 jpsa at 1.95 -5.67 h=6.6
+place Block_Foundation_Tier3 jpsa at -1.04 -5.91 h=7.35
+place Block_Foundation_Tier3 jpsa at -3.78 -4.66 h=8.1
+place Block_Foundation_Tier3 jpsa at -5.56 -2.25 h=8.85
+place Block_Foundation_Tier3 jpsa at -5.96 0.73 h=9.6
+place Block_Foundation_Tier3 jpsa at -4.85 3.53 h=10.35
+place Block_Foundation_Tier3 jpsa at -2.54 5.44 h=11.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppsa at 5.77 1.65 h=3.668 sy=1.861
+place Block_Foundation_Tier3 jppsa at 5.85 -1.35 h=4.418 sy=2.959
+place Block_Foundation_Tier3 jppsa at 4.46 -4.01 h=5.168 sy=4.058
+place Block_Foundation_Tier3 jppsa at 1.95 -5.67 h=5.918 sy=5.157
+place Block_Foundation_Tier3 jppsa at -1.04 -5.91 h=6.668 sy=6.255
+place Block_Foundation_Tier3 jppsa at -3.78 -4.66 h=7.418 sy=7.354
+place Block_Foundation_Tier3 jppsa at -5.56 -2.25 h=8.168 sy=8.453
+place Block_Foundation_Tier3 jppsa at -5.96 0.73 h=8.918 sy=9.552
+place Block_Foundation_Tier3 jppsa at -4.85 3.53 h=9.668 sy=10.650
+place Block_Foundation_Tier3 jppsa at -2.54 5.44 h=10.418 sy=11.749 sx=2 sz=2
+prop jpsa tint.color=#8a7f70
+prop jpsa tint.amount=0.35
+prop jppsa tint.color=#8a7f70
+prop jppsa tint.amount=0.35
+place Loot_Chest jcsa at -1.04 -5.91 h=7.35 sit yaw=0
+prop jcsa loot.refill=0
+place Loot_ChestSmall jbsa at -2.54 5.44 h=11.1 sit yaw=0
+prop jbsa loot.refill=0
+pop
+call hw_zone x=52 z=44 al=sa_jumpz id=sa_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call r2_piece x=-43 z=28 al=sa_piece1 set="Bookplates"
+call r2_piece x=40 z=-26 al=sa_piece2 set="Bookplates"
+call r2_piece x=8 z=58 al=sa_piece3 set="Bookplates"
+call r2_piece x=62 z=-2 al=sa_piece4 set="Bookplates"
+call r2_piece x=-56 z=-46 al=sa_piece5 set="Bookplates"
+prop sa_piece1 on.set=show|sa_setchest\nmessage||All five bookplates found.
+call r2_hidden x=73 z=17 al=sa_setchest kind=Loot_Chest
+call treasure x=-42 z=-22 r=5 n=1 seed=26878 kind=0
+prop treasure26878 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_tropical x=-6 z=66 r=16 seed=26891
+call ar_plants_tropical x=62 z=8 r=10 seed=26892
+call ar_plants_tropical x=-56 z=-48 r=8 seed=26893
+
+# RAFT2 10-26: scattered rocks that came out floating on the new slopes (CIGroundIslands)
+clear at -16.72 60.11 r=1.5 all only=SmallBoulder2
+clear at 65.56 6.29 r=1.5 all only=SmallBoulder2
+clear at 59.27 -1.74 r=1.5 all only=SmallBoulder2
+clear at 59.87 2.51 r=1.5 all only=SmallBoulder2
+clear at -61.46 -46.50 r=1.5 all only=SmallBoulder2
+clear at -54.56 -44.75 r=1.5 all only=SmallBoulder2
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, palms, pineapples ----------
 scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=49.0 seed=4545 free=5
@@ -118,6 +225,24 @@ prop keeper creature.health=3
 prop keeper creature.respawn=0
 prop keeper creature.zone=vault
 
+loot sa_topchest Rope*2;Scrap*2;Plank*3
+loot sa_cavechest CopperIngot*2;Glass*2;Nail*6
+prop sa_cavechest loot.refill=0
+note sa_topchest Reading mast deck box | A box lashed to the deck rail at the top of the reading mast.
+note sa_cavechest Binding Cave chest | A chest at the back of Binding Cave, dry under the rock.
+note sa_lampchest Ines's bindery box | Ines's bindery box: thread, brass corners and the money from the last book sale.
+loot sa_lampchest CopperIngot*2;TradeToken*2;Rope*2
+note sa_setchest Ex libris chest | Every bookplate of the archive back together - and what the chest kept under them.
+loot sa_setchest Glass*3;Bolt*4;MetalIngot*1
+note sa_planecrate Book plane's crate | The book plane's crate: books in oilcloth, sealed tins and tools.
+loot sa_planecrate Plastic*3;Scrap*3;Nail*6
+prop sa_planecrate loot.refill=0
+note sa_pilot Book pilot's slip | LOAN RUN - The Sunken Archive. Twelve crates of books for Station Four. Too low over the bank, caught the palms. Books are dry. Tell the archivist.
+note jcsa Shelver's ledge | The shelvers climbed these stones to watch for the loan boats.
+loot jcsa Rope*3;Plank*4;MetalIngot*1
+note jbsa Top of the shelf stack | Somebody's stash at the very top.
+loot jbsa CopperIngot*1;Bolt*2;TradeToken*1
+
 quest title=Card Catalogue
 quest intro=Palm islets on a coral bank and a building standing in the sea. Station Four: start in the archive's reading room.
 step reach|readingroom|1|Climb onto the jetty and into the archive's reading room
@@ -129,6 +254,11 @@ step reach|vault|1|Find the lamp swinging in the dark by the vault
 step kill|Angler fish|1|Face the vault's keeper, the angler with the lamp on its head
 step open|Deep card box|1|Take the last catalogue card from the deep room's box
 step collect|story:card|3|Carry the three catalogue cards up to the index desk
+step talk|Ines Varga|1|Talk to Ines Varga at the ruined house in the east
+step reach|sa_trail|1|Find the foot of the trail up Reading Hill, in the north
+step reach|sa_summit|1|Climb the trail to the top of Reading Hill
+step reach|sa_cave|1|Find Binding Cave in the south-east
+step open|Binding Cave chest|1|Open the chest at the back of Binding Cave
 step open|Rare book vault|1|Feed the cards through the index, then open the rare book vault
 step blueprint|Blueprint_EngineControls|1|Take the engine controls plans from the rare book vault
 step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from the rare book vault

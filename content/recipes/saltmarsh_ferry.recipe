@@ -1,13 +1,18 @@
 # Saltmarsh Ferry - an island of the library's plan Raft 2: The Drowned Frontier (station Two of the Frontier Corps)
 # A salt marsh of pools and reed beds cut by a tidal channel; at the channel's end the Corps' ferry, beached on a mud bank
-# when the tide went out for good. Quest "Down the Marsh" (10 steps): the ferry, the captain's notice at the Corps'
+# when the tide went out for good. Quest "Down the Marsh" (17 steps): the ferry, the captain's notice at the Corps'
 # office, two of its hens netted, the reed cutter's chest out in the marsh and the bilge pump's handle from it, the
 # marsh goats netted, the ferry's hold, the rats and their king, the engineer's locker (after the pump) and the
 # captain's safe (the motor wheel's and the steering wheel's blueprints).
+# RAFT2 10-26 (1-hour pass): the marsh gets relief - Heron Hill (west) with a lookout mast and three low knolls, Eel Cave (south-east), the reed cutters' ruin (north-west) where Wenna Rook waits (a lamp puzzle), a ferry-service plane on the east marsh, a jump course (south), five duck decoys (a set), a buried cache
 #
 # Built by the recipe player (CIRecipe saltmarsh_ferry) through the editor's own operations.
 include lib_sea
 include lib_rt
+include lib_highwater
+include lib_areas
+include lib_features
+include lib_raft2
 new
 # (nature: a marsh: reeds and bushes, few trees - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.2 Bushes=0.3 Rocks=0.3 Harvest=0.24 BeachThings=0.3
@@ -35,6 +40,19 @@ brush flatten at -22 40 r=5 s=20 frames=30 h=-0.9
 brush flatten at 30 -30 r=6 s=20 frames=30 h=-0.9
 brush flatten at -40 -40 r=4 s=20 frames=30 h=-0.9
 origin
+# --- RAFT2 10-26 terrain: the land grows (banks first), then the pads of the new areas -------------------------------
+# the flat marsh broken up: three low knolls (north-east, east, south-west)
+call hw_mount x=54 z=46 b=14 h=7
+call hw_mount x=62 z=-24 b=11 h=5
+call hw_mount x=-20 z=-66 b=11 h=5
+# the pads: the cave (Eel Cave), the ruined house, the plane
+call r2_pad x=50 z=-60 r=14 h=2.5
+brush flatten from 50 -52 to 50 -36 r=6 s=20 frames=300 h=2.5
+call r2_pad x=-34 z=50 r=11 h=2.5
+call r2_pad x=68 z=12 r=11 h=2.6
+# Heron Hill: summit 16 m, base r 20, the trail from the foot toward the house
+call hw_mount x=-60 z=-14 b=20 h=16
+call hw_trail x=-60 z=-14 b=20 h=16 a0=22.11 turn=300 n=34 h0=3
 clear from 0 88 to 1 37 r=7
 clear at 2 25 r=13
 clear at -14 18 r=8
@@ -92,6 +110,84 @@ prop marshgoats creature.count=2
 place Creature_Dolphin dolphins at 20 115 h=-3
 prop dolphins creature.count=2
 
+# --- RAFT2 10-26 (the user: one hour per island - hills, a cave, a house, a wreck, secrets): the marsh gets relief - Heron Hill (west) with a lookout mast and three low knolls, Eel Cave (south-east), the reed cutters' ruin (north-west) where Wenna Rook waits (a lamp puzzle), a ferry-service plane on the east marsh, a jump course (south), five duck decoys (a set), a buried cache ------
+call hw_zone x=-52.1 z=5.46 al=sm_trailz id=sm_trail r=5 msg="The trail up Heron Hill starts here - round and up."
+call hw_zone x=-60 z=-14 al=sm_summitz id=sm_summit r=8 h=1 msg="The top of Heron Hill. The whole island below you."
+call hw_mast x=-63 z=-12 h0=16 lv=5 a=sm_mast chest=sm_topchest top=Placeable_Flag_01
+place Creature_Goat sm_goats at -48.1 8.46 ground
+prop sm_goats creature.count=2
+call ar_cave x=50 z=-60 h=2.5 yaw=0 al=sm_caverock chest=sm_cavechest
+call hw_zone x=49 z=-51 al=sm_cavez id=sm_cave r=4 h=1 msg="Eel Cave. The floor is wet; something slithers away."
+call ar_ruin x=-34 z=50 h=2.5 yaw=0 w=3 d=2 al=sm_ruin
+call r2_islander x=-35 z=45.5 yaw=200 al=sm_isl nm="Wenna Rook" pose=stand
+prop sm_isl talk.text=Shoes off, it's all mud.\n---\nMy man cut reeds for the ferry's roofs. The Corps paid in tins. The tins stopped when the ferry did.\n---\nClimb Heron Hill out west - you'll see the whole marsh and the channel from the mast. And the eel men kept a chest in Eel Cave, south-east. They won't be back for it.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
+call r2_lamp x=-41 z=49 al=sm_lamp1 nm="Reed lamp 1" grp="Reed lamps" on=0
+call r2_lamp x=-35 z=56 al=sm_lamp2 nm="Reed lamp 2" grp="Reed lamps" on=1
+call r2_lamp x=-28 z=49 al=sm_lamp3 nm="Reed lamp 3" grp="Reed lamps" on=0
+call r2_lamp x=-35 z=42 al=sm_lamp4 nm="Reed lamp 4" grp="Reed lamps" on=1
+prop sm_lamp1 on.use=light|Reed lamp 2|toggle
+prop sm_lamp2 on.use=light|Reed lamp 3|toggle
+prop sm_lamp3 on.use=light|Reed lamp 4|toggle
+prop sm_lamp4 on.use=light|Reed lamp 1|toggle
+prop sm_lamp1 on.alllit=show|sm_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call r2_hidden x=-33 z=54.6 al=sm_lampchest
+place Creature_Chicken sm_hens at -26 56 ground
+prop sm_hens creature.count=3
+call ar_plane x=68 z=12 h=2.6 yaw=30 al=sm_plane crate=sm_planecrate
+place Note_Paper sm_pilot at 65.54 15.73 ground y=0.1 drop yaw=60
+call hw_zone x=68 z=12 al=sm_planez id=sm_plane r=6 h=1 msg="A small plane sunk to its wheels in the marsh."
+# JUMP sm pad=2.5 at=20 -66
+push at 20 -66
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=2.5
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=2.5
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpsm at -4.24 -4.24 h=3.1
+place Block_Foundation_Tier3 jpsm at -5.77 -1.65 h=3.85
+place Block_Foundation_Tier3 jpsm at -5.85 1.35 h=4.6
+place Block_Foundation_Tier3 jpsm at -4.46 4.01 h=5.35
+place Block_Foundation_Tier3 jpsm at -1.95 5.67 h=6.1
+place Block_Foundation_Tier3 jpsm at 1.04 5.91 h=6.85
+place Block_Foundation_Tier3 jpsm at 3.78 4.66 h=7.6
+place Block_Foundation_Tier3 jpsm at 5.56 2.25 h=8.35
+place Block_Foundation_Tier3 jpsm at 5.96 -0.73 h=9.1
+place Block_Foundation_Tier3 jpsm at 4.85 -3.53 h=9.85
+place Block_Foundation_Tier3 jpsm at 2.54 -5.44 h=10.6 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppsm at -5.77 -1.65 h=3.168 sy=1.861
+place Block_Foundation_Tier3 jppsm at -5.85 1.35 h=3.918 sy=2.959
+place Block_Foundation_Tier3 jppsm at -4.46 4.01 h=4.668 sy=4.058
+place Block_Foundation_Tier3 jppsm at -1.95 5.67 h=5.418 sy=5.157
+place Block_Foundation_Tier3 jppsm at 1.04 5.91 h=6.168 sy=6.255
+place Block_Foundation_Tier3 jppsm at 3.78 4.66 h=6.918 sy=7.354
+place Block_Foundation_Tier3 jppsm at 5.56 2.25 h=7.668 sy=8.453
+place Block_Foundation_Tier3 jppsm at 5.96 -0.73 h=8.418 sy=9.552
+place Block_Foundation_Tier3 jppsm at 4.85 -3.53 h=9.168 sy=10.650
+place Block_Foundation_Tier3 jppsm at 2.54 -5.44 h=9.918 sy=11.749 sx=2 sz=2
+prop jpsm tint.color=#6b6250
+prop jpsm tint.amount=0.35
+prop jppsm tint.color=#6b6250
+prop jppsm tint.amount=0.35
+place Loot_Chest jcsm at 1.04 5.91 h=6.85 sit yaw=0
+prop jcsm loot.refill=0
+place Loot_ChestSmall jbsm at 2.54 -5.44 h=10.6 sit yaw=0
+prop jbsm loot.refill=0
+pop
+call hw_zone x=20 z=-74 al=sm_jumpz id=sm_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call r2_piece x=40 z=24 al=sm_piece1 set="Duck decoys"
+call r2_piece x=-14 z=-30 al=sm_piece2 set="Duck decoys"
+call r2_piece x=10 z=-48 al=sm_piece3 set="Duck decoys"
+call r2_piece x=-74 z=24 al=sm_piece4 set="Duck decoys"
+call r2_piece x=30 z=64 al=sm_piece5 set="Duck decoys"
+prop sm_piece1 on.set=show|sm_setchest\nmessage||All five duck decoys found.
+call r2_hidden x=-29 z=57 al=sm_setchest kind=Loot_Chest
+call treasure x=-24 z=-50 r=5 n=1 seed=27178 kind=0
+prop treasure27178 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_hill x=-60 z=-14 r=16 seed=27191
+call ar_plants_hill x=54 z=46 r=10 seed=27192
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, melons, bananas ----------
 scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=63.0 seed=4587 free=5
@@ -146,6 +242,24 @@ prop ratking creature.health=3
 prop ratking creature.respawn=0
 prop ratking creature.zone=hold
 
+loot sm_topchest Rope*2;Scrap*2;Plank*3
+loot sm_cavechest CopperIngot*2;Glass*2;Nail*6
+prop sm_cavechest loot.refill=0
+note sm_topchest Lookout mast deck box | A box lashed to the deck rail at the top of the lookout mast.
+note sm_cavechest Eel Cave chest | A chest at the back of Eel Cave, dry under the rock.
+note sm_lampchest Wenna's tin box | Wenna's tin box: the Corps' last tins, a knife and her savings.
+loot sm_lampchest CopperIngot*2;TradeToken*2;Rope*2
+note sm_setchest Decoy crate | All five decoys home - and what the hunters kept in the crate.
+loot sm_setchest Glass*3;Bolt*4;MetalIngot*1
+note sm_planecrate Ferry plane's crate | The ferry service's plane crate: timetables, a flare gun case and tools.
+loot sm_planecrate Plastic*3;Scrap*3;Nail*6
+prop sm_planecrate loot.refill=0
+note sm_pilot Ferry pilot's note | SERVICE FLIGHT - Saltmarsh. Tide's out for good, the ferry's stuck. Landed on the east marsh to tell them. Nobody to tell. Going on to Cinderfall.
+note jcsm Wildfowler's perch | The wildfowlers stacked stones to see over the reeds.
+loot jcsm Rope*3;Plank*4;MetalIngot*1
+note jbsm Top of the perch | Somebody's stash at the very top.
+loot jbsm CopperIngot*1;Bolt*2;TradeToken*1
+
 quest title=Down the Marsh
 quest intro=A salt marsh, a channel - and the Corps' ferry stranded at its end. Station Two: start at the ferry.
 step reach|ferry|1|Find the Corps' ferry at the channel's end
@@ -156,6 +270,11 @@ step collect|story:pumphandle|1|Take the bilge pump's handle, greased and wrappe
 step catch|Goat|2|Net the two goats grazing the eastern marsh
 step reach|hold|1|Look into the ferry's hold, where something scratches
 step kill|Rat|4|Clear the rats - and their king - out of the ferry's hold
+step talk|Wenna Rook|1|Talk to Wenna Rook at the ruined house in the north-west
+step reach|sm_trail|1|Find the foot of the trail up Heron Hill, in the west
+step reach|sm_summit|1|Climb the trail to the top of Heron Hill
+step reach|sm_cave|1|Find Eel Cave in the south-east
+step open|Eel Cave chest|1|Open the chest at the back of Eel Cave
 step open|Engineer's locker|1|Pump the ferry dry and open the engineer's locker
 step blueprint|Blueprint_MotorWheel|1|Take the engine plans from the engineer's locker
 step open|Captain's safe|1|Open the captain's safe on the bank

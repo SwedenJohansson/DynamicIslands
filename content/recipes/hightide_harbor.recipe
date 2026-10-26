@@ -2,15 +2,20 @@
 # A forested crescent round a sheltered bay: a fishing town along its inner shore - a quay and two piers with stilt
 # houses over a dredged shallow, the fish hall on the beach -, the water works on the saddle of the hill behind, a lamp
 # tower of Raft's blocks out on the north horn; the Mary on her mooring at the quay's end, the Heron sunk by the outer
-# buoys. Quest "The Fleet Comes Home" (13 steps): the quay, the harbour master's log, three pages of the fleet's log in the
+# buoys. Quest "The Fleet Comes Home" (22 steps): the quay, the harbour master's log, three pages of the fleet's log in the
 # stilt houses, the bears in the fish hall and its office locker's fuse, the works' switch and the valve house, three cans
 # of lamp oil (the valve house, the Mary, the sunken Heron), the screechers on the lamp tower, the lamp, the master's safe
 # (the water plans: pipes, purifier, tank, big storage).
+# RAFT2 10-26 (1-hour pass): the east shore grows - Gull Head (east) with a pilot mast, Smugglers' Cave (south-east), the net loft ruin (north-east) where Nell Garrow waits (a lamp puzzle), the fishery plane down on the south bank, a jump course (north), five net floats (a set), a buried cache
 #
 # Built by the recipe player (CIRecipe hightide_harbor) through the editor's own operations.
 include lib_sea
 include lib_rt
 include lib_huts
+include lib_highwater
+include lib_areas
+include lib_features
+include lib_raft2
 new
 # (nature: forest, Like Raft - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.21 Bushes=0.38 Rocks=0.42 Harvest=0.1 BeachThings=0.3
@@ -39,6 +44,26 @@ brush flatten at 18 -9 r=7 s=20 frames=60 h=9.5
 brush flatten at -40 48 r=4.5 s=20 frames=50 h=3
 brush smooth at -40 48 r=7 s=10 frames=12
 origin
+# --- RAFT2 10-26 terrain: the land grows (banks first), then the pads of the new areas -------------------------------
+# the east shore: banks out to Gull Head, the net loft, the cave, the south bank and the north point
+brush flatten from 40 24 to 66 28 r=11 s=20 frames=500 h=3
+brush flatten from 40 -24 to 64 -28 r=11 s=20 frames=500 h=3
+brush flatten from 40 0 to 62 0 r=10 s=20 frames=500 h=3
+brush flatten from 30 -44 to 46 -54 r=9 s=20 frames=500 h=3
+brush flatten from 6 -66 to 16 -80 r=10 s=20 frames=500 h=3
+brush flatten from 22 48 to 38 62 r=10 s=20 frames=500 h=3
+brush auto at 54 0 r=26 s=10 frames=25
+brush auto at 40 -54 r=12 s=10 frames=25
+brush auto at 12 -74 r=12 s=10 frames=25
+brush auto at 32 58 r=12 s=10 frames=25
+# the pads: the cave (Smugglers' Cave), the ruined house, the plane
+call r2_pad x=46 z=-66 r=14 h=3
+brush flatten from 46 -58 to 46 -42 r=6 s=20 frames=300 h=3
+call r2_pad x=66 z=32 r=11 h=3
+call r2_pad x=18 z=-86 r=11 h=3
+# Gull Head: summit 18 m, base r 20, the trail from the foot toward the house
+call hw_mount x=84 z=-4 b=20 h=18
+call hw_trail x=84 z=-4 b=20 h=18 a0=-26.57 turn=300 n=34 h0=3
 clear from -12 -16 to -12 16 r=10
 clear from -1.5 -13 to -1.5 13 r=4
 clear at 2.75 -6.5 r=7
@@ -242,7 +267,94 @@ prop hens creature.count=3
 place Creature_Turtle turtles at -35 0 h=-1.5
 prop turtles creature.count=2
 
-# --- Settings, story items, notes, behaviours, quest (13 steps) ------------------------------------------------------
+# --- RAFT2 10-26 (the user: one hour per island - hills, a cave, a house, a wreck, secrets): the east shore grows - Gull Head (east) with a pilot mast, Smugglers' Cave (south-east), the net loft ruin (north-east) where Nell Garrow waits (a lamp puzzle), the fishery plane down on the south bank, a jump course (north), five net floats (a set), a buried cache ------
+call hw_zone x=74.61 z=14.78 al=hh_trailz id=hh_trail r=5 msg="The trail up Gull Head starts here - round and up."
+call hw_zone x=84 z=-4 al=hh_summitz id=hh_summit r=8 h=1 msg="The top of Gull Head. The whole island below you."
+call hw_mast x=81 z=-2 h0=18 lv=5 a=hh_mast chest=hh_topchest top=Placeable_Lantern_Metal
+place Creature_Goat hh_goats at 78.61 17.78 ground
+prop hh_goats creature.count=2
+call ar_cave x=46 z=-66 h=3 yaw=0 al=hh_caverock chest=hh_cavechest
+call hw_zone x=45 z=-57 al=hh_cavez id=hh_cave r=4 h=1 msg="Smugglers' Cave. Somebody kept their own harbour in here."
+call ar_ruin x=66 z=32 h=3 yaw=0 w=3 d=2 al=hh_ruin
+call r2_islander x=65 z=27.5 yaw=200 al=hh_isl nm="Nell Garrow" pose=sit
+prop hh_isl talk.text=Mind the nets. I've mended them every morning for a fleet that doesn't come.\n---\nThe harbour master watched the boats from the pilot mast on Gull Head. Climb it - you'll see the whole bay.\n---\nAnd the old smugglers kept their share in a cave south-east. Never told the master. I'm telling you.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
+place Placeable_Chair_Basic - at 65 27.5 ground sit yaw=200
+call r2_lamp x=59 z=31 al=hh_lamp1 nm="Loft lamp 1" grp="Loft lamps" on=1
+call r2_lamp x=65 z=38 al=hh_lamp2 nm="Loft lamp 2" grp="Loft lamps" on=0
+call r2_lamp x=72 z=31 al=hh_lamp3 nm="Loft lamp 3" grp="Loft lamps" on=1
+call r2_lamp x=65 z=24 al=hh_lamp4 nm="Loft lamp 4" grp="Loft lamps" on=0
+prop hh_lamp1 on.use=light|Loft lamp 2|toggle
+prop hh_lamp2 on.use=light|Loft lamp 3|toggle
+prop hh_lamp3 on.use=light|Loft lamp 4|toggle
+prop hh_lamp4 on.use=light|Loft lamp 1|toggle
+prop hh_lamp1 on.alllit=show|hh_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call r2_hidden x=67 z=36.6 al=hh_lampchest
+place Creature_Chicken hh_hens at 74 38 ground
+prop hh_hens creature.count=3
+call ar_plane x=18 z=-86 h=3 yaw=30 al=hh_plane crate=hh_planecrate
+place Note_Paper hh_pilot at 15.54 -82.27 ground y=0.1 drop yaw=60
+call hw_zone x=18 z=-86 al=hh_planez id=hh_plane r=6 h=1 msg="A spotter plane on the south bank, its floats crumpled."
+# JUMP hh pad=3 at=40 70
+push at 40 70
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jphh at -4.24 -4.24 h=3.6
+place Block_Foundation_Tier3 jphh at -5.77 -1.65 h=4.35
+place Block_Foundation_Tier3 jphh at -5.85 1.35 h=5.1
+place Block_Foundation_Tier3 jphh at -4.46 4.01 h=5.85
+place Block_Foundation_Tier3 jphh at -1.95 5.67 h=6.6
+place Block_Foundation_Tier3 jphh at 1.04 5.91 h=7.35
+place Block_Foundation_Tier3 jphh at 3.78 4.66 h=8.1
+place Block_Foundation_Tier3 jphh at 5.56 2.25 h=8.85
+place Block_Foundation_Tier3 jphh at 5.96 -0.73 h=9.6
+place Block_Foundation_Tier3 jphh at 4.85 -3.53 h=10.35
+place Block_Foundation_Tier3 jphh at 2.54 -5.44 h=11.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jpphh at -5.77 -1.65 h=3.668 sy=1.861
+place Block_Foundation_Tier3 jpphh at -5.85 1.35 h=4.418 sy=2.959
+place Block_Foundation_Tier3 jpphh at -4.46 4.01 h=5.168 sy=4.058
+place Block_Foundation_Tier3 jpphh at -1.95 5.67 h=5.918 sy=5.157
+place Block_Foundation_Tier3 jpphh at 1.04 5.91 h=6.668 sy=6.255
+place Block_Foundation_Tier3 jpphh at 3.78 4.66 h=7.418 sy=7.354
+place Block_Foundation_Tier3 jpphh at 5.56 2.25 h=8.168 sy=8.453
+place Block_Foundation_Tier3 jpphh at 5.96 -0.73 h=8.918 sy=9.552
+place Block_Foundation_Tier3 jpphh at 4.85 -3.53 h=9.668 sy=10.650
+place Block_Foundation_Tier3 jpphh at 2.54 -5.44 h=10.418 sy=11.749 sx=2 sz=2
+prop jphh tint.color=#8a7f70
+prop jphh tint.amount=0.35
+prop jpphh tint.color=#8a7f70
+prop jpphh tint.amount=0.35
+place Loot_Chest jchh at 1.04 5.91 h=7.35 sit yaw=0
+prop jchh loot.refill=0
+place Loot_ChestSmall jbhh at 2.54 -5.44 h=11.1 sit yaw=0
+prop jbhh loot.refill=0
+pop
+call hw_zone x=40 z=62 al=hh_jumpz id=hh_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call r2_piece x=54 z=4 al=hh_piece1 set="Net floats"
+call r2_piece x=40 z=-50 al=hh_piece2 set="Net floats"
+call r2_piece x=12 z=-72 al=hh_piece3 set="Net floats"
+call r2_piece x=30 z=56 al=hh_piece4 set="Net floats"
+call r2_piece x=-30 z=58 al=hh_piece5 set="Net floats"
+prop hh_piece1 on.set=show|hh_setchest\nmessage||All five net floats found.
+call r2_hidden x=71 z=39 al=hh_setchest kind=Loot_Chest
+call treasure x=58 z=-30 r=5 n=1 seed=26978 kind=0
+prop treasure26978 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_hill x=84 z=-4 r=18 seed=26991
+call ar_plants_tropical x=54 z=0 r=12 seed=26992
+call ar_plants_tropical x=14 z=-76 r=8 seed=26993
+
+# RAFT2 10-26: scattered rocks that came out floating on the new slopes (CIGroundIslands)
+clear at 14.10 42.99 r=1.5 all only=SmallRock_01
+clear at -3.23 -29.80 r=1.5 all only=SmallRock_01
+clear at 39.63 -34.32 r=4 all body only=BigRock_Low1_Sand
+clear at 91.44 -18.62 r=1.5 all only=SmallBoulder4
+clear at 52.07 1.27 r=1.5 all only=SmallBoulder2
+clear at 47.57 2.23 r=1.5 all only=SmallBoulder2
+# --- Settings, story items, notes, behaviours, quest (22 steps) ------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): birches, pines, flowers ----------
 scatter "Pickup_Landmark_Tree_Birch" 6 at 0 0 r=56.0 seed=4454 free=5
 scatter "Pickup_Landmark_Tree_Pine" 6 at 0 0 r=56.0 seed=4464 free=5
@@ -340,6 +452,24 @@ prop lampbirds creature.count=2
 prop lampbirds creature.respawn=0
 prop lampbirds creature.zone=lamptower
 
+loot hh_topchest Rope*2;Scrap*2;Plank*3
+loot hh_cavechest CopperIngot*2;Glass*2;Nail*6
+prop hh_cavechest loot.refill=0
+note hh_topchest Pilot mast deck box | A box lashed to the deck rail at the top of the pilot mast.
+note hh_cavechest Smugglers' Cave chest | A chest at the back of Smugglers' Cave, dry under the rock.
+note hh_lampchest Nell's net chest | Nell's net chest: new twine, a fish-hook roll and her savings.
+loot hh_lampchest CopperIngot*2;TradeToken*2;Rope*2
+note hh_setchest Float basket | All five glass floats in the basket again - and what the fishers kept under them.
+loot hh_setchest Glass*3;Bolt*4;MetalIngot*1
+note hh_planecrate Fishery plane's crate | The fishery plane's crate: ice boxes, a radio and tools.
+loot hh_planecrate Plastic*3;Scrap*3;Nail*6
+prop hh_planecrate loot.refill=0
+note hh_pilot Spotter's note | FISH SPOTTER 2. No shoals for three weeks. Engine quit over the south bank. Nell, the fleet went north past the Iron Graveyard. Don't wait up.
+note jchh Lookout stones | The fishers' children stacked these to watch for the boats.
+loot jchh Rope*3;Plank*4;MetalIngot*1
+note jbhh Top of the lookout | Somebody's stash at the very top.
+loot jbhh CopperIngot*1;Bolt*2;TradeToken*1
+
 quest title=The Fleet Comes Home
 quest intro=A fishing town on stilts with its fleet lost and its lamp dark. Station Five: start at the quay.
 step reach|quay|1|Tie up at Hightide's quay
@@ -354,6 +484,11 @@ step collect|story:lampoil|3|Gather three cans of lamp oil: the valve house, the
 step reach|lamptower|1|Climb the lamp tower out on the point
 step kill|Screecher|2|Drive the screechers off the lamp tower
 step collect|story:safecode|1|Fill the harbour lamp and light it
+step talk|Nell Garrow|1|Talk to Nell Garrow at the ruined house in the north-east
+step reach|hh_trail|1|Find the foot of the trail up Gull Head, in the east
+step reach|hh_summit|1|Climb the trail to the top of Gull Head
+step reach|hh_cave|1|Find Smugglers' Cave in the south-east
+step open|Smugglers' Cave chest|1|Open the chest at the back of Smugglers' Cave
 step open|Harbour master's safe|1|Open the harbour master's safe
 step blueprint|Blueprint_Pipe_Water|1|Take the water pipe plans from the harbour master's safe
 step blueprint|Blueprint_ElectricPurifier|1|Take the electric purifier plans from the harbour master's safe
