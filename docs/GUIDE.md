@@ -520,6 +520,11 @@ edge, pointing the way). Green dots are **map markers** the builder placed, with
   beam with your name there, a red dot on the map and hears a short sound, for 6 seconds. One ping a second at most;
   a new ping of yours replaces your last one.
 - The keys can be changed in **Defaults... > Keys (this PC)** (Map, Ping, and Map zoom in / out on the third line).
+- **Turning the map off:** the **Minimap** button on the third line of **Defaults... > Keys (this PC)** (ON by default, kept
+  per PC as `minimap=on/off`). Off: the map is never shown (one that is open is hidden at once), **M**, **+** and **-**
+  do nothing and no picture is taken, so it costs nothing. **Pings still work** (G, and your crew mates' pings are shown).
+  A host can also switch the map off for **everyone** with the world option **No minimap** ([9.4](#94-extra-options)):
+  then the Minimap button has no effect.
 
 ---
 
@@ -2918,6 +2923,7 @@ already in the world is taken away. What each one does from the moment it change
 | Kraken arm | From now on (the next day or storm with one); off, an arm holding the raft lets go at once |
 | Binoculars see through fog | At once (the haze eases in over a second); off: Raft's own fog |
 | Mirrored islands | Islands that spawn from now on (one already in the world changes when it comes back into view); off: they spawn as made |
+| No minimap | At once: the island map is hidden for every player and its keys do nothing; off: it works again (if the player's own Minimap box is on) |
 | Lightning strikes | The next storm can have bolts (one blowing now too); off, a bolt already in the sky finishes |
 | Extra upgrades | Off: the recipes are hidden; upgrades built or worn keep working, learned ones are kept |
 | Scrambled blueprints / Story order (retired, off only) | Untaken blueprints go back to Raft's places / the Receiver goes back to Raft's order |
@@ -3404,6 +3410,13 @@ the island's name), the same for every player and every time it comes back into 
   way round). The editor and its picture of the island always show it as you made it.
 - Switching the option on or off in a world changes the islands not yet in view; the world remembers nothing extra.
 
+#### No minimap
+
+No player can open the [island map](#the-island-map-m-and-pings-g): it is never shown, **M** and the zoom keys do nothing
+and no picture is taken. The **Minimap** box in each player's **Defaults... > Keys (this PC)** has no effect while it is
+on (it is that player's own switch when the option is off). **Pings** (G) still work. Off by default; the host's choice
+applies to every player, joining ones too, and can be changed in a running world.
+
 #### Ghost ship
 
 On about **one night in four** a **ghost ship** comes up out of the dark a while after nightfall and drifts past the
@@ -3628,7 +3641,7 @@ get the settings they share at once.
 | Group | What is in it |
 |---|---|
 | **Random islands while sailing** | Random islands on or off (0 = off), the quiet minutes in a new world, the spacing, how far ahead an island appears (**Appear from** and **to**), and when a needed island returns |
-| **Keys (this PC)** | The **Journal** key (J), the **Stats** key (K) and, on the second line, **Notebook** (U, your own notebook), **Map** (M, the minimap) and **Ping** (G, a ping for the crew), on the third line **Map zoom in** (=, the + key) and **Map zoom out** (-): click one, then press the new key (Esc keeps the old one). A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why |
+| **Keys (this PC)** | The **Journal** key (J), the **Stats** key (K) and, on the second line, **Notebook** (U, your own notebook), **Map** (M, the minimap) and **Ping** (G, a ping for the crew), on the third line **Map zoom in** (=, the + key) and **Map zoom out** (-): click one, then press the new key (Esc keeps the old one). Beside them the **Minimap** button (ON) switches the island map off on this PC. A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why |
 | **Shared with every player** | **Receiver dots** on or off, the **Receiver range**, **Unload beyond** and **Regrow days (new worlds)** |
 | **Generated islands** | The weight of new generated islands, the chance one flies, **Things to gather**, **Finds in the shallows** and how far down they go, the five styles (at least one stays lit) and a button for each kind of thing to gather (lit = on) |
 | **Editor camera (this PC)** | The island editor's camera: **Look sensitivity**, **Move speed**, **Zoom speed**, **Pan speed**, **Drag up: look up / down** and **Wheel up: zoom in / out** - the same as the editor's **Camera...** button ([4.1](#41-the-screen)); kept in `world_rules.txt` |
@@ -3681,6 +3694,7 @@ there means plain Raft.
 | `islandsoff` | Island names separated by a vertical bar; also `type:<map type>` and `<generated>` | The islands left out of the next new world's islands while sailing | **CHOOSE ISLANDS...** in World settings (Create); `WorldIslands -<island>`, `+<island>`, `all` in the main menu |
 | `raftgap` | `min-max`, for example `3-6` (min 2-20, max 4-50) | One random island after every min to max of Raft's own islands | **One after every ... to ...** under CHOOSE ISLANDS..., at once; `WorldIslandsGap <min>-<max>` in the main menu |
 | `journalkey`, `statskey` | A Unity key name, for example `J`, `K` or `F6` | The keys of the journal (J) and the stats page (K) in a world | **Defaults...** > **Keys (this PC)**, at once. A key that can't be used falls back to J or K, and the log says so |
+| `minimap` | `on` or `off` | Whether the island map can be used on this PC (Minimap button on the third line of the Keys group). Off: never shown, M and zoom do nothing, no picture is taken; pings still work. A world with the option No minimap has no map whatever this says | **Defaults...** > **Keys (this PC)**, at once. Empty = on |
 | `notebookkey`, `mapkey`, `pingkey`, `mapzoominkey`, `mapzoomoutkey` | A Unity key name | The keys of your own notebook (U), the minimap (M), pings (G) and the map's zoom (= and -) | **Defaults...** > **Keys (this PC)**, at once. Empty = the default: the first of U/Y/O, M/N/Comma, G/H/B, Equals/RightBracket/PageUp, Minus/LeftBracket/PageDown that Raft doesn't use (its main or second key) and no key before it has |
 | `cameralook`, `cameraspeed`, `camerazoom`, `camerapan` | A multiplier, 1 = the mod's own: look 0.2-4, speed 0.1-10, zoom and pan 0.25-4 | The island editor camera's look sensitivity, flying speed, wheel zoom step and pan speed (this PC) | The editor's **Camera...** window or **Defaults... > Editor camera (this PC)**, a moment after a change |
 | `cameradragup`, `camerawheel` | `up` / `down`; `normal` / `reversed` | Which way dragging up turns the editor's view (up, the default; only a saved `down` turns it round) and the wheel's direction | The same |

@@ -758,6 +758,55 @@ namespace DynamicIslands
 			if (ok) Log("PASS: minimap unit"); else Fail("minimap unit");
 		}
 
+		[ConsoleCommand(name: "CIMinimapOff", docs: "Dev (PF5): the Minimap checkbox. World 'CI ...' on a test island: off - the map key does nothing, the map is hidden at once and no picture is taken; on again - it shows. The setting is restored")]
+		public static void MinimapOffCommand(string[] args) { StartTest(MinimapOffRoutine()); }
+
+		static IEnumerator MinimapOffRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("minimap off: host, in a test world 'CI ...'"); yield break; }
+			yield return EnsureAlive();
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Note_Sign" });
+			bool ok = true;
+			bool was = Minimap.Enabled; int mode = Minimap.Mode, zoom = Minimap.Zoom;
+			IslandWorldState.Entry e = null;
+			yield return RfSpawn(MapBuild(), MapIsland, x => e = x);
+			if (e == null) yield break;
+			Minimap.Enabled = true;
+			Minimap.Mode = Minimap.Corner;
+			Minimap.SetZoom(1);
+			PutPlayerNear(ScObjOf(e, "cimapstart").transform);
+			yield return new WaitForSecondsRealtime(1.5f);
+			Check(ref ok, Minimap.Island == e && Minimap.Shown, "on: the map shows on the island");
+			Minimap.Enabled = false;
+			Check(ref ok, !Minimap.Shown, "off: the open map is hidden at once");
+			int renders = Minimap.RenderCount;
+			Minimap.Cycle(); Minimap.SetZoom(4);
+			Check(ref ok, Minimap.Mode == Minimap.Corner && Minimap.Zoom == 1, "off: the map key and zoom do nothing");
+			Minimap.Mode = Minimap.Full;
+			yield return new WaitForSecondsRealtime(1.5f);
+			Check(ref ok, !Minimap.Shown && Minimap.RenderCount == renders && !Minimap.Render(), "off: never shown, no picture taken");
+			Check(ref ok, WorldRules.ReadDefault(Minimap.SettingName) == "off", "off is saved as minimap=off");
+			Minimap.Enabled = true;
+			Minimap.Mode = Minimap.Corner;
+			yield return new WaitForSecondsRealtime(1.5f);
+			Check(ref ok, Minimap.Shown, "on again: the map shows");
+			Check(ref ok, WorldRules.ReadDefault(Minimap.SettingName) == "on", "on is saved as minimap=on");
+			// (the world option: no map for anyone, whatever this PC's box says)
+			bool optWas = WorldOptions.On(WorldOptions.NoMinimap);
+			var on = WorldOptions.Current.ToList(); on.Add(WorldOptions.NoMinimap);
+			WorldOptions.Set(on);
+			yield return new WaitForSecondsRealtime(1.5f);
+			Check(ref ok, Minimap.Enabled && !Minimap.Available && !Minimap.Shown, "No minimap world option: the box is on, but the map is hidden");
+			renders = Minimap.RenderCount; Minimap.Mode = Minimap.Corner; Minimap.Cycle(); Minimap.SetZoom(4);
+			Check(ref ok, Minimap.Mode == Minimap.Corner && Minimap.Zoom == 1 && !Minimap.Render() && Minimap.RenderCount == renders, "No minimap: the map key and zoom do nothing, no picture");
+			on.Remove(WorldOptions.NoMinimap); WorldOptions.Set(on);
+			yield return new WaitForSecondsRealtime(1.5f);
+			Check(ref ok, Minimap.Available && Minimap.Shown, "No minimap off again: the map shows");
+			if (optWas) { on.Add(WorldOptions.NoMinimap); WorldOptions.Set(on); }
+			Minimap.Enabled = was; Minimap.Mode = mode; Minimap.SetZoom(zoom);
+			if (ok) Log("PASS: minimap off"); else Fail("minimap off");
+		}
+
 		/// <summary>A test island: a quest whose first step is to reach 'cimapgoal', a map marker 'Hut', a start spot.</summary>
 		static IslandFile MapBuild()
 		{

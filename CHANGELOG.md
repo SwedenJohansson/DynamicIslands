@@ -9,6 +9,13 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-26: Switch the island map off
+
+### Added
+- **Minimap box** in **Defaults... > Keys (this PC)** (on by default): off, the island map is never shown, M and the zoom
+  keys do nothing and no picture is taken. Pings still work.
+- **World option No minimap** (off by default): no player can open the map in that world.
+
 ## 2026-10-26: Test round fixes
 
 ### Fixed

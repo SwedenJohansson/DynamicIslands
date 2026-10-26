@@ -74,6 +74,24 @@ namespace DynamicIslands.Editor
 
 		#region Every frame
 
+		/// <summary>The "Minimap" checkbox (Defaults > Keys, this PC's world_rules.txt, "minimap=on/off"): off, the map never shows and nothing is drawn. Pings still work.</summary>
+		public static bool Enabled
+		{
+			get { if (enabled == null) enabled = (WorldRules.ReadDefault(SettingName) ?? "on").Trim().ToLowerInvariant() != "off"; return enabled.Value; }
+			set { enabled = value; WorldRules.SaveDefault(SettingName, value ? "on" : "off"); if (!value) Hide(); }
+		}
+		/// <summary>The map can be used: this PC has the Minimap box on and the world is not on "No minimap".</summary>
+		public static bool Available { get { return Enabled && !WorldOptions.On(WorldOptions.NoMinimap); } }
+		public const string SettingName = "minimap";
+		static bool? enabled;
+
+		static void Hide()
+		{
+			if (panel != null) panel.gameObject.SetActive(false);
+			if (canvas != null) canvas.gameObject.SetActive(false);
+			if (cam != null) cam.enabled = false;
+		}
+
 		public static void Tick()
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || DynamicIslands.InEditor())
@@ -86,14 +104,14 @@ namespace DynamicIslands.Editor
 			if (me == null) return;
 			if (KeysFree())
 			{
-				if (Input.GetKeyDown(ModKeys.MapKey.Key)) Cycle();
+				if (Available && Input.GetKeyDown(ModKeys.MapKey.Key)) Cycle();
 				if (Input.GetKeyDown(ModKeys.PingKey.Key)) PingLook();
-				if (Mode != Off && (Input.GetKeyDown(ModKeys.ZoomInKey.Key) || Input.GetKeyDown(KeyCode.KeypadPlus))) SetZoom(Zoom * 2);
-				if (Mode != Off && (Input.GetKeyDown(ModKeys.ZoomOutKey.Key) || Input.GetKeyDown(KeyCode.KeypadMinus))) SetZoom(Zoom / 2);
+				if (Available && Mode != Off && (Input.GetKeyDown(ModKeys.ZoomInKey.Key) || Input.GetKeyDown(KeyCode.KeypadPlus))) SetZoom(Zoom * 2);
+				if (Available && Mode != Off && (Input.GetKeyDown(ModKeys.ZoomOutKey.Key) || Input.GetKeyDown(KeyCode.KeypadMinus))) SetZoom(Zoom / 2);
 			}
 			UpdatePings();
 			if (Time.unscaledTime >= nextFind) { nextFind = Time.unscaledTime + 0.5f; FindIsland(me.transform.position); }
-			bool show = Mode != Off && Island != null && Island.Root != null;
+			bool show = Available && Mode != Off && Island != null && Island.Root != null;
 			if (!show) { if (panel != null) panel.gameObject.SetActive(false); return; }
 			EnsureUi();
 			canvas.gameObject.SetActive(true);
@@ -113,9 +131,9 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The map key: corner -> full screen -> off -> corner.</summary>
-		public static void Cycle() { Mode = (Mode + 1) % 3; }
+		public static void Cycle() { if (Available) Mode = (Mode + 1) % 3; }
 
-		public static void SetZoom(int z) { Zoom = z >= 4 ? 4 : z >= 2 ? 2 : 1; }
+		public static void SetZoom(int z) { if (!Available) return; Zoom = z >= 4 ? 4 : z >= 2 ? 2 : 1; }
 
 		#endregion
 
@@ -161,7 +179,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Takes the island's picture from above (fog off for it, so the far side isn't white).</summary>
 		public static bool Render()
 		{
-			if (Island == null || Island.Root == null) return false;
+			if (!Available || Island == null || Island.Root == null) return false;
 			if (cam == null)
 			{
 				var go = new GameObject("CustomIslands_MapCamera");
