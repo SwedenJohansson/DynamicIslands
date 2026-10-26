@@ -13,6 +13,8 @@ namespace DynamicIslands.Editor
 	/// cells of its crop that lie under the sea (never on a flying island).
 	/// The look is learned from Raft's own terrains while the catalog visits Raft's scenes (Learn); until then (or if a
 	/// Raft update renames it) a drawn tuft stands in.
+	/// A grass terrain starts as a copy of a Raft terrain (NewTerrainData): on a TerrainData made by the mod, Unity drew
+	/// every tuft as a whole card, even with Raft's very layer; on a copy of Raft's the blades are cut out (probed 10-26).
 	/// </summary>
 	public static class SeaGrass
 	{
@@ -26,6 +28,9 @@ namespace DynamicIslands.Editor
 		const float DrawDistance = 120f;
 
 		static DetailPrototype learned;
+		/// <summary>A small copy of a Raft terrain with only the short sea grass layer: the start of the grass terrains.</summary>
+		static TerrainData template;
+		const string BornName = "CustomIslands_GrassTerrain";
 		static Texture2D drawn;
 		// (Raft's own terrains' waving, measured 10-26; its tint's alpha is 0. With Unity's defaults and a white tint every
 		// tuft stood as a whole opaque card)
@@ -38,13 +43,14 @@ namespace DynamicIslands.Editor
 		/// <summary>From a Raft terrain the catalog visits: its short sea grass layer, kept for the islands' terrains.</summary>
 		public static void Learn(TerrainData d)
 		{
-			if (FromRaft || d == null) return;
+			if ((FromRaft && template != null) || d == null) return;
 			try
 			{
 				foreach (DetailPrototype p in d.detailPrototypes)
 				{
 					if (p == null || p.usePrototypeMesh || p.prototypeTexture == null || p.prototypeTexture.name != RaftTexture || p.maxHeight > 1.01f) continue;
 					learned = Copy(p, Readable(p.prototypeTexture));
+					MakeTemplate(d);
 					waveStrength = d.wavingGrassStrength; waveAmount = d.wavingGrassAmount; waveSpeed = d.wavingGrassSpeed; waveTint = d.wavingGrassTint;
 					Debug.Log("[CUSTOM ISLANDS] Sea grass: Raft's short sea grass found (" + p.minHeight + "-" + p.maxHeight + " m)");
 					if (terraineditor.terrain != null) Refresh(terraineditor.terrain);
@@ -52,6 +58,76 @@ namespace DynamicIslands.Editor
 				}
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Sea grass: " + e.Message); }
+		}
+
+		static void MakeTemplate(TerrainData raft)
+		{
+			if (template != null) return;
+			try
+			{
+				TerrainData d = UnityEngine.Object.Instantiate(raft);
+				d.name = BornName + "Template";
+				d.hideFlags = HideFlags.DontUnloadUnusedAsset;
+				d.treeInstances = new TreeInstance[0];
+				d.treePrototypes = new TreePrototype[0];
+				d.heightmapResolution = 33;
+				d.size = new Vector3(32f, 32f, 32f);
+				d.SetHeights(0, 0, new float[33, 33]);
+				var solid = new bool[32, 32];
+				for (int z = 0; z < 32; z++) for (int x = 0; x < 32; x++) solid[z, x] = true;
+				d.SetHoles(0, 0, solid);
+				d.terrainLayers = new TerrainLayer[0];
+				d.detailPrototypes = new[] { Copy(learned, learned.prototypeTexture) };
+				d.SetDetailResolution(32, 16);
+				template = d;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Sea grass: no terrain copy: " + e.Message); }
+		}
+
+		/// <summary>
+		/// A new terrain data that draws the sea grass right: a copy of the template (a plain TerrainData until a Raft terrain
+		/// with the grass has been seen). Set its heightmap resolution and size as with a new one.
+		/// </summary>
+		public static TerrainData NewTerrainData()
+		{
+			if (template == null) Prototype();
+			if (template == null) return new TerrainData();
+			TerrainData d = UnityEngine.Object.Instantiate(template);
+			d.name = BornName;
+			d.hideFlags = HideFlags.None;
+			return d;
+		}
+
+		/// <summary>True when the terrain data began as a copy of Raft's (its grass is cut out).</summary>
+		public static bool CutsOut(TerrainData d) { return d != null && d.name == BornName; }
+
+		/// <summary>
+		/// The editor's terrain moved onto a copy of Raft's terrain data (when Raft's grass was found after the editor
+		/// made its terrain): heights, paint, holes and grass carried over. Undo history is cleared (it points at the old data).
+		/// </summary>
+		static void Adopt(Terrain t)
+		{
+			TerrainData old = t.terrainData;
+			if (old == null || CutsOut(old) || template == null) return;
+			TerrainData d = NewTerrainData();
+			int hres = old.heightmapResolution, ares = old.alphamapResolution;
+			d.heightmapResolution = hres;
+			d.size = old.size;
+			d.SetHeights(0, 0, old.GetHeights(0, 0, hres, hres));
+			d.SetHoles(0, 0, old.GetHoles(0, 0, hres - 1, hres - 1));
+			d.terrainLayers = old.terrainLayers;
+			d.alphamapResolution = ares;
+			if (old.alphamapLayers > 0) d.SetAlphamaps(0, 0, old.GetAlphamaps(0, 0, ares, ares));
+			int[,] grass = old.detailPrototypes.Length == 1 ? old.GetDetailLayer(0, 0, old.detailWidth, old.detailHeight, 0) : null;
+			d.SetDetailResolution(grass != null ? old.detailWidth : Resolution, 16);
+			if (grass != null) d.SetDetailLayer(0, 0, 0, grass);
+			t.terrainData = d;
+			TerrainCollider c = t.GetComponent<TerrainCollider>();
+			if (c != null) c.terrainData = d;
+			if (terraineditor.terrain == t) terraineditor.terrainData = d;
+			CommandUndoRedo.UndoRedoManager.Clear();
+			UnityEngine.Object.Destroy(old);
+			Debug.Log("[CUSTOM ISLANDS] Sea grass: the editor's terrain now draws Raft's sea grass");
 		}
 
 		static DetailPrototype Copy(DetailPrototype p, Texture2D texture)
@@ -67,7 +143,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The grass layer's look: Raft's, or a drawn tuft in Raft's sizes and colours.</summary>
 		public static DetailPrototype Prototype()
 		{
-			if (!FromRaft)
+			if (!FromRaft || template == null)
 			{
 				// (a Raft scene with it may be loaded already: the editor's catalog cache skips the scene visits)
 				TerrainData raft = Resources.FindObjectsOfTypeAll<TerrainData>().FirstOrDefault(x => x != null && x.detailPrototypes.Any(p => !p.usePrototypeMesh && p.prototypeTexture != null && p.prototypeTexture.name == RaftTexture));
@@ -170,6 +246,7 @@ namespace DynamicIslands.Editor
 		public static void EditorSetup(Terrain t)
 		{
 			if (t == null) return;
+			if (!CutsOut(t.terrainData) && template != null) Adopt(t);
 			TerrainData d = t.terrainData;
 			if (d.detailPrototypes.Length != 1 || d.detailResolution != Resolution) Setup(t, Resolution);
 			else Refresh(t);
@@ -178,6 +255,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The look swapped for Raft's grass when it was found later, keeping what is painted.</summary>
 		static void Refresh(Terrain t)
 		{
+			if (!CutsOut(t.terrainData) && template != null) { Adopt(t); if (t.terrainData.detailPrototypes.Length != 1) return; }
 			TerrainData d = t.terrainData;
 			if (d.detailPrototypes.Length != 1) return;
 			DetailPrototype want = Prototype();

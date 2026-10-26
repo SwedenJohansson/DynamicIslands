@@ -17,6 +17,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   way to the mouth. **Slope** tips it down or up. One Ctrl+Z takes it all back.
 - **Sea grass** in the editor's Paint ground group: brush Raft's own short sea grass onto the sea floor. It grows
   only under water (Shift takes it away), is saved with the island and grows on its sea floor in your world.
+  Its blades are cut out like Raft's own, not drawn as solid cards.
 - **A tip in your first worlds**: a little after you arrive, a message says that **Esc > Custom Islands** has the
   world's islands and settings (at most three times, never once you have opened it). The New Game box says it too,
   under the plan.

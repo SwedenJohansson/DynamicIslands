@@ -259,9 +259,10 @@ namespace DynamicIslands.Editor
 		static System.DateTime savedChanged;
 		static int savedAt;
 
-		public static TerrainData CreateTerrainData(Vector3 size, int heightmapResolution)
+		public static TerrainData CreateTerrainData(Vector3 size, int heightmapResolution, bool grass = false)
 		{
-			var data = new TerrainData();
+			// (a terrain with sea grass starts as a copy of Raft's, which draws the tufts cut out - SeaGrass.NewTerrainData)
+			var data = grass ? SeaGrass.NewTerrainData() : new TerrainData();
 			// Resolution must be set before size (setting resolution rescales size)
 			data.heightmapResolution = heightmapResolution;
 			data.size = size;
@@ -723,7 +724,7 @@ namespace DynamicIslands.Editor
 					for (int x = 0; x < cropSize; x++)
 						cropped[z, x] = island.Heights[cropZ + z, cropX + x];
 
-				TerrainData data = CreateTerrainData(new Vector3(spacing * (cropSize - 1), island.TerrainSize.y, spacing * (cropSize - 1)), cropSize);
+				TerrainData data = CreateTerrainData(new Vector3(spacing * (cropSize - 1), island.TerrainSize.y, spacing * (cropSize - 1)), cropSize, island.HasGrass && !flying);
 				data.SetHeights(0, 0, cropped);
 				GameObject terrainGO = Terrain.CreateTerrainGameObject(data);
 				terrainGO.name = "Terrain";

@@ -34,6 +34,7 @@ namespace DynamicIslands
 			Check(ref ok, data.detailPrototypes.Length == 1 && data.detailResolution == SeaGrass.Resolution, "the terrain has the grass layer (" + data.detailPrototypes.Length + " layers, " + data.detailResolution + " cells across)");
 			Log("  grass look: " + (data.detailPrototypes.Length > 0 && data.detailPrototypes[0].prototypeTexture != null ? data.detailPrototypes[0].prototypeTexture.name : "none") + (SeaGrass.FromRaft ? " (Raft's)" : " (drawn)"));
 			Check(ref ok, SeaGrass.Count(SeaGrass.Layer(t)) == 0, "a new island has no grass");
+			Check(ref ok, SeaGrass.CutsOut(terraineditor.terrain.terrainData), "the editor's terrain is a copy of Raft's, which cuts the tufts out (" + terraineditor.terrain.terrainData.name + ")");
 
 			// (a spot of sea floor east of the island, 2 m or more under the sea, and the land in its middle)
 			Vector3 floor = ground(c);
@@ -154,13 +155,13 @@ namespace DynamicIslands
 			Check(ref ok, cells > 0 && cells <= saved && dry == 0, "the island's sea floor has grass (" + cells + " of the file's " + saved + " cells, " + dry + " out of the water)");
 			string look = d.detailPrototypes.Length > 0 && d.detailPrototypes[0].prototypeTexture != null ? d.detailPrototypes[0].prototypeTexture.name : "none";
 			Check(ref ok, look == "Sea_grass", "it is Raft's own short sea grass (" + look + ")");
+			Check(ref ok, SeaGrass.CutsOut(d), "the terrain is a copy of Raft's, which cuts the tufts out (" + d.name + ")");
 			Check(ref ok, t.drawTreesAndFoliage && t.detailObjectDistance >= 80f, "drawn (" + t.detailObjectDistance + " m)");
 			// The cards must show blades, not the whole card (opaque teal cards seen 10-26): the texture keeps clear pixels.
 			Texture2D tex = d.detailPrototypes.Length > 0 ? d.detailPrototypes[0].prototypeTexture : null;
 			float clear = SeaGrass.ClearShare(tex);
 			Shader grassShader = Shader.Find("Hidden/TerrainEngine/Details/WavingDoublePass");
 			Log("  grass texture " + (tex != null ? tex.name + " " + tex.width + "x" + tex.height + " " + tex.format + " readable " + tex.isReadable : "none") + ", clear " + (clear * 100f).ToString("0") + "%, shader " + (grassShader != null ? grassShader.name : "missing"));
-			CompareWithRaft(t);
 			Check(ref ok, clear > 0.1f && clear < 0.95f, "the grass texture has see-through parts round the blades (" + (clear * 100f).ToString("0") + "% clear)");
 			if (cells > 0)
 			{
@@ -177,44 +178,6 @@ namespace DynamicIslands
 				try { File.Delete(path); } catch { }
 			}
 			if (ok) Log("PASS: sea grass world"); else Fail("sea grass world");
-		}
-			/// <summary>(probe) Where the island's terrain differs from a Raft terrain with the same sea grass: settings, its layer.</summary>
-		static void CompareWithRaft(Terrain mine)
-		{
-			Log("  Unity " + Application.unityVersion);
-			Terrain raft = Terrain.activeTerrains.Concat(Resources.FindObjectsOfTypeAll<Terrain>()).FirstOrDefault(x => x != mine && x.terrainData != null && x.terrainData.detailPrototypes.Any(p => p.prototypeTexture != null && p.prototypeTexture.name == "Sea_grass"));
-			if (raft == null) { Log("  (no Raft terrain with sea grass loaded to compare)"); return; }
-			DetailPrototype rp = raft.terrainData.detailPrototypes.First(p => p.prototypeTexture != null && p.prototypeTexture.name == "Sea_grass");
-			DetailPrototype mp = mine.terrainData.detailPrototypes.Length > 0 ? mine.terrainData.detailPrototypes[0] : null;
-			Log("  compare with Raft's " + raft.name + ": same texture object " + (mp != null && mp.prototypeTexture == rp.prototypeTexture));
-			Diff("terrain", raft, mine); Diff("data", raft.terrainData, mine.terrainData); if (mp != null) Diff("layer", rp, mp);
-			if (raft.materialTemplate != null || mine.materialTemplate != null) Log("  material " + (raft.materialTemplate != null ? raft.materialTemplate.shader.name : "-") + " / " + (mine.materialTemplate != null ? mine.materialTemplate.shader.name : "-"));
-		}
-
-		static void Diff(string what, object a, object b)
-		{
-			const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance;
-			var names = new System.Collections.Generic.List<string>();
-			foreach (var pr in a.GetType().GetProperties(F))
-			{
-				if (!pr.CanRead || pr.GetIndexParameters().Length > 0) continue;
-				System.Type ty = pr.PropertyType;
-				if (!(ty.IsPrimitive || ty.IsEnum || ty == typeof(string) || ty == typeof(Color) || ty == typeof(Vector3) || ty == typeof(Vector4) || ty.IsSubclassOf(typeof(Object)))) continue;
-				try
-				{
-					object va = pr.GetValue(a, null), vb = pr.GetValue(b, null);
-					string sa = va is Object ? (((Object)va) != null ? ((Object)va).name : "null") : (va is Color ? ((Color)va).ToString("F3") : va + "");
-					string sb = vb is Object ? (((Object)vb) != null ? ((Object)vb).name : "null") : (vb is Color ? ((Color)vb).ToString("F3") : vb + "");
-					if (sa != sb) names.Add(pr.Name + " " + sa + " / " + sb);
-				}
-				catch { }
-			}
-			foreach (var fi in a.GetType().GetFields(F))
-			{
-				object va = fi.GetValue(a), vb = fi.GetValue(b);
-				if ((va + "") != (vb + "")) names.Add(fi.Name + " " + va + " / " + vb);
-			}
-			Log("  " + what + " differs (Raft / ours): " + (names.Count == 0 ? "nothing" : string.Join("; ", names.ToArray())));
 		}
 }
 }

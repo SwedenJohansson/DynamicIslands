@@ -81,7 +81,7 @@ namespace DynamicIslands
 
 		void Start()
 		{
-			terrainData = new TerrainData();
+			terrainData = SeaGrass.NewTerrainData(); // (a copy of Raft's when found: its sea grass draws cut out)
 			// Resolution first: changing it afterwards rescales the size
 			terrainData.heightmapResolution = heightmapResolution;
 			terrainData.size = terrainSize;
