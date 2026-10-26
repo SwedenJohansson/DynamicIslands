@@ -8,9 +8,16 @@
 # inside, the Mama bear, Hendricks' pack and the strongbox key in it; the summit - the plate on the mast, the spare
 # parts box, the radio called and its desk opened; then back to the rangers' strongbox (Balboa's blueprints: the
 # machete, the biofuel refiner, the fuel tank and its pipe).
+# RAFT REMADE 10-26 (1-hour pass): Raft's own size already; adds secrets and set-pieces on the south lowlands and east
+# beach: the poachers' camp and padlocked chest (its key in their boat aground on the east beach), a hidden cave, the
+# ranger badges (a set), the slab stacks (a jump course). The quest is unchanged.
 #
 # Built by the recipe player (CIRecipe balboa_remade) through the editor's own operations.
 include lib_sea
+include lib_features
+include lib_highwater
+include lib_areas
+include lib_raft_remade
 new
 # (nature like Raft's Balboa - the generator's "something new like" it - with fewer cliffs and wider beaches than its
 # own: like Balboa as it is, it was a plateau ringed by cliffs with no beach to land on, 2026-10-03)
@@ -86,6 +93,74 @@ place "Box Small" sparesbox at -2.5 2 y=0 yaw=15
 place Zone_Trigger summit at 0 0 y=1.5
 pop
 
+# --- RAFT REMADE 10-26 (1-hour pass): Balboa is Raft's own size already (r110 like Raft's Balboa); this pass adds
+# set-pieces and secrets on its south lowlands and east beach: the poachers' camp and their locked chest, the poachers'
+# boat run aground (its crate holds the chest's key), a hidden cave, the ranger badges (a set), the slab stacks (a jump
+# course).
+call rr_pad x=-6 z=-84 h=2.5 r=12
+call rr_ruin x=-6 z=-80 h=2.5 yaw=0 w=3 d=2 al=poachershut
+place Balboa_DecorationPrefabBase_SimpleTent - at 2 -88 h=2.5 sit yaw=200
+place campfire_1 - at -2 -90 ground sit
+place Loot_ChestSmall poacherschest at -12 -88 ground sit yaw=40
+call hw_wreck x=104 z=-30 h=1.5 yaw=70 obj=BoatStranded al=poacherboat crate=boatcrate r=8
+call ar_cave x=-40 z=-84 h=2.5 yaw=180 al=caverock chest=cavebox
+# --- JUMP COURSE bb (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---
+# JUMP bb pad=2.5 at=46 -86
+push at 46 -86
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=2.5
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=2.5
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpbb at 0.10 5.64 h=3.10
+place Block_Foundation_Tier3 jpbb at 2.92 5.64 h=3.60
+place Block_Foundation_Tier3 jpbb at 5.93 5.64 h=4.00
+place Block_Foundation_Tier3 jpbb at 5.93 3.03 h=4.90
+place Block_Foundation_Tier3 jpbb at 5.93 -1.21 h=5.40 sx=0.3 sz=3
+place Block_Foundation_Tier3 jpbb at 5.93 -5.64 h=6.20
+place Block_Foundation_Tier3 jpbb at 3.02 -5.64 h=7.10
+place Block_Foundation_Tier3 jpbb at 0.40 -5.64 h=6.10
+place Block_Foundation_Tier3 jpbb at -2.41 -5.64 h=7.05
+place Block_Foundation_Tier3 jpbb at -5.12 -5.64 h=8.00
+place Block_Foundation_Tier3 jpbb at -5.12 -2.02 h=8.90 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jpbb at 1.30 -2.02 h=9.20 sx=2 sz=2
+place Block_Foundation_Tier3 jpbb at 1.30 3.21 h=9.50
+# JUMP end
+# (each slab on one solid column of its own footprint, from under the pad up to the slab; the first rests on the pad)
+place Block_Foundation_Tier3 jppbb at 2.92 5.64 h=2.918 sy=1.493
+place Block_Foundation_Tier3 jppbb at 5.93 5.64 h=3.318 sy=2.079
+place Block_Foundation_Tier3 jppbb at 5.93 3.03 h=4.218 sy=3.399
+place Block_Foundation_Tier3 jppbb at 5.93 -1.21 h=4.718 sy=4.132 sx=0.3 sz=3
+place Block_Foundation_Tier3 jppbb at 5.93 -5.64 h=5.518 sy=5.305
+place Block_Foundation_Tier3 jppbb at 3.02 -5.64 h=6.418 sy=6.625
+place Block_Foundation_Tier3 jppbb at 0.40 -5.64 h=5.418 sy=5.158
+place Block_Foundation_Tier3 jppbb at -2.41 -5.64 h=6.368 sy=6.551
+place Block_Foundation_Tier3 jppbb at -5.12 -5.64 h=7.318 sy=7.944
+place Block_Foundation_Tier3 jppbb at -5.12 -2.02 h=8.218 sy=9.264 sx=2 sz=2
+place Block_Foundation_Tier3 jppbb at 1.30 -2.02 h=8.518 sy=9.704 sx=2 sz=2
+place Block_Foundation_Tier3 jppbb at 1.30 3.21 h=8.818 sy=10.144
+prop jpbb tint.color=#6e6a5e
+prop jpbb tint.amount=0.35
+prop jppbb tint.color=#6e6a5e
+prop jppbb tint.amount=0.35
+place Loot_Chest jcbb at -5.12 -2.02 h=8.90 sit yaw=0
+note jcbb Stack-top chest | On top of the slab stacks: the rangers' training prize.
+loot jcbb CopperIngot*2;TitaniumOre*1;Bolt*3
+prop jcbb loot.refill=0
+place Loot_ChestSmall jbbb at 1.30 3.21 h=9.50 sit yaw=0
+note jbbb Rangers' tin | Wedged on a slab half-way: the rangers' coffee money.
+loot jbbb Nail*6;Scrap*3;MetalIngot*1
+prop jbbb loot.refill=0
+place Zone_Trigger jybb at 1.30 3.21 h=10.50
+prop jybb zone.id=jump_bb_finale
+prop jybb zone.radius=1.8
+prop jybb zone.repeat=never
+prop jybb zone.message=You topped the slab stacks.
+pop
+# --- end of jump course bb ---
+
 # --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, flowers, pineapples ----------
 scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=77.0 seed=4165 free=5
@@ -94,6 +169,29 @@ scatter "Pickup_Landmark_Flower_Yellow" 4 at 0 0 r=77.0 seed=4176 free=3
 scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=77.0 seed=4185 free=3
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=130 deep=5 n=3
+
+# --- RAFT REMADE 10-26: the secrets - the poachers' camp and chest, their boat, the cave, the ranger badges -----------
+call hw_zone x=-4 z=-86 al=poachz id=poacherscamp r=8 h=1 msg="A poachers' camp hidden in the south lowlands: a stone hut, a tent, a chest with a padlock."
+story poacherkey|Poachers' padlock key|Bolt|A small brass key on a wire loop, from the poachers' boat.
+note boatcrate Poachers' boat crate | The crate in the poachers' boat: snares, a skinning knife - and a small brass key on a wire loop.
+loot boatcrate story:poacherkey*1;Rope*2;Leather*2
+prop boatcrate loot.refill=0
+note poacherschest Poachers' chest | The poachers' chest: what they took off the island - and what they took off the rangers.
+loot poacherschest TitaniumIngot*1;CopperIngot*2;Leather*3;BioFuel*2
+prop poacherschest loot.refill=0
+prop poacherschest if.open=has|story:poacherkey|1
+prop poacherschest else.open=message||Padlocked. The poachers came by sea - their boat may still be on the east beach.
+note cavebox Hermit's strongbox | A box in the cave in the south lowlands: an old hermit's savings, long before the rangers came.
+loot cavebox TitaniumOre*2;CopperIngot*2;Bolt*3
+prop cavebox loot.refill=0
+call hw_zone x=-40 z=-88 al=cavez id=hiddencave r=4 msg="A cave in a rock by the south beach - a strongbox at the back."
+# Ranger badges: five of the rangers' badges, lost round the island (a set)
+call rr_piece x=95 z=-20 al=badge1 set="Ranger badges" nm="Ranger badge 1"
+call rr_piece x=-30 z=-80 al=badge2 set="Ranger badges" nm="Ranger badge 2"
+call rr_piece x=40 z=-70 al=badge3 set="Ranger badges" nm="Ranger badge 3"
+call rr_piece x=-100 z=-10 al=badge4 set="Ranger badges" nm="Ranger badge 4"
+call rr_piece x=100 z=40 al=badge5 set="Ranger badges" nm="Ranger badge 5"
+prop badge1 on.set=give||TitaniumIngot*1;CopperIngot*2\nmessage||All five ranger badges: the whole station, accounted for.
 
 info title=Balboa Remade
 info author=Custom Islands

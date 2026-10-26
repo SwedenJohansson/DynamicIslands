@@ -7,11 +7,18 @@
 # prison house - the clerk's yard, the rats, his desk and key, his crate (nine pages); the summit - the gate unlocked
 # with both keys, the hyenas and their alpha, the warden's table, his pot and his jar (twelve pages) and his chest
 # (Utopia's blueprints: the electric zipline tool, the big backpack, the titanium tools) - its quest-done text is the end of the world plan Raft Remade.
+# RAFT REMADE 10-26 (1-hour pass): grown to Raft's size (r80 about 85, the finale) by land added round it: Lighthouse
+# Head (south, 26 m) and its old lighthouse mast, Olof's crew camp (west), the quarry ridge and cave (east), the warden's
+# plane, the cargo yard, the slab stacks (a jump course). The gate now has three locks: the third key is the lighthouse
+# keeper's. Crew tokens (six, a set) are a secret. Quest 23 -> 28 steps. Design: _ProjectDocs/plans/storylines_old/RAFT_REMADE.md.
 #
 # Built by the recipe player (CIRecipe utopia_remade) through the editor's own operations.
 include lib_sea
 include lib_rt
 include lib_features
+include lib_highwater
+include lib_areas
+include lib_raft_remade
 new
 # (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
 randomize Utopia like Seed=7108 Radius=55 Height=22 Cliffs=0.25 BeachWidth=0.5 Hostiles=0 Friendly=0 SeaLife=0.3 Trees=0.4 Bushes=0.5 Rocks=0.75 Harvest=0.7 Water=0.5
@@ -105,6 +112,101 @@ place Zone_Trigger yard at -6.5 -3.5 h=19.2
 place Creature_Hyena alpha at -6.5 -6 h=18.5
 place Creature_Hyena pack at -3 -4 h=18.5
 
+# --- RAFT REMADE 10-26 (1-hour pass): the finale island grows to Raft's size by land added round it (the docks, the
+# prison house, the summit and its yard as they were): Lighthouse Head (south, 26 m) and the old lighthouse mast on it,
+# Olof's crew camp (west), the quarry ridge and its cave (east), the warden's plane (north-west), the cargo yard (south-
+# east), the slab stacks (a jump course, north-east). Land bridges first, from the old shore outwards, then each area.
+call rr_land x1=0 z1=-44 x2=0 z2=-56 h=3 r=12
+call rr_land x1=-44 z1=0 x2=-58 z2=2 h=3 r=10
+call rr_land x1=44 z1=-8 x2=56 z2=-14 h=3 r=10
+call rr_land x1=-34 z1=32 x2=-44 z2=42 h=3 r=9
+call rr_land x1=30 z1=-36 x2=40 z2=-48 h=3 r=9
+call rr_land x1=44 z1=26 x2=56 z2=30 h=3 r=8
+# A Lighthouse Head (south): summit 26 m, base r 24, the trail from its north foot, the old lighthouse mast on top
+call hw_mount x=0 z=-74 b=24 h=26
+call hw_trail x=0 z=-74 b=24 h=26 a0=0 turn=300 n=30 h0=3
+brush flatten at 0 -74 r=8 s=20 frames=400 h=26
+call hw_mast x=0 z=-74 h0=26 lv=6 a=lighthousemast chest=keeperbox top=Placeable_Lantern_Metal
+# B Olof's crew camp (west): their stone hut, a tent, a fire, their boxes
+call rr_pad x=-72 z=4 h=3 r=14
+call rr_ruin x=-72 z=8 h=3 yaw=0 w=3 d=2 al=crewhut
+place Balboa_DecorationPrefabBase_SimpleTent - at -64 -2 ground sit yaw=160
+place campfire_1 - at -68 -3 ground sit
+place "Box Big" - at -79 0 ground sit yaw=20
+# C The quarry ridge (east) and the quarrymen's cave in it, its mouth to the south
+call ar_ridge x1=60 z1=-4 x2=68 z2=-30 h=4 top=8 r=9
+call ar_cave x=62 z=-36 h=3 yaw=180 al=quarryrock chest=quarrybox
+# D The warden's plane (north-west), down short of the beach
+call ar_plane x=-48 z=46 h=3 yaw=150 al=wardenplane crate=planecrate
+# E The cargo yard (south-east): containers the storm threw up, the yard's crate
+call rr_containers x=42 z=-54 h=3 yaw=-20 n=3 al=yardcontainer
+place Loot_Crate yardcrate at 34 -46 ground sit yaw=10
+# --- JUMP COURSE ut (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---
+# JUMP ut pad=3 at=66 32
+push at 66 32
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jput at 0.10 5.64 h=3.60
+place Block_Foundation_Tier3 jput at 2.92 5.64 h=4.10
+place Block_Foundation_Tier3 jput at 5.93 5.64 h=4.50
+place Block_Foundation_Tier3 jput at 5.93 3.03 h=5.40
+place Block_Foundation_Tier3 jput at 5.93 -1.21 h=5.90 sx=0.3 sz=3
+place Block_Foundation_Tier3 jput at 5.93 -5.64 h=6.70
+place Block_Foundation_Tier3 jput at 3.02 -5.64 h=7.60
+place Block_Foundation_Tier3 jput at 0.40 -5.64 h=6.60
+place Block_Foundation_Tier3 jput at -2.41 -5.64 h=7.55
+place Block_Foundation_Tier3 jput at -5.12 -5.64 h=8.50
+place Block_Foundation_Tier3 jput at -5.12 -2.02 h=9.40 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jput at 1.30 -2.02 h=9.70 sx=2 sz=2
+place Block_Foundation_Tier3 jput at 1.30 3.21 h=10.00
+# JUMP end
+# (each slab on one solid column of its own footprint, from under the pad up to the slab; the first rests on the pad)
+place Block_Foundation_Tier3 jpput at 2.92 5.64 h=3.418 sy=1.493
+place Block_Foundation_Tier3 jpput at 5.93 5.64 h=3.818 sy=2.079
+place Block_Foundation_Tier3 jpput at 5.93 3.03 h=4.718 sy=3.399
+place Block_Foundation_Tier3 jpput at 5.93 -1.21 h=5.218 sy=4.132 sx=0.3 sz=3
+place Block_Foundation_Tier3 jpput at 5.93 -5.64 h=6.018 sy=5.305
+place Block_Foundation_Tier3 jpput at 3.02 -5.64 h=6.918 sy=6.625
+place Block_Foundation_Tier3 jpput at 0.40 -5.64 h=5.918 sy=5.158
+place Block_Foundation_Tier3 jpput at -2.41 -5.64 h=6.868 sy=6.551
+place Block_Foundation_Tier3 jpput at -5.12 -5.64 h=7.818 sy=7.944
+place Block_Foundation_Tier3 jpput at -5.12 -2.02 h=8.718 sy=9.264 sx=2 sz=2
+place Block_Foundation_Tier3 jpput at 1.30 -2.02 h=9.018 sy=9.704 sx=2 sz=2
+place Block_Foundation_Tier3 jpput at 1.30 3.21 h=9.318 sy=10.144
+prop jput tint.color=#857a68
+prop jput tint.amount=0.35
+prop jpput tint.color=#857a68
+prop jpput tint.amount=0.35
+place Loot_Chest jcut at -5.12 -2.02 h=9.40 sit yaw=0
+note jcut Stack-top chest | On top of the slab stacks: what the warden's guards hid from him.
+loot jcut CopperIngot*2;TitaniumOre*1;Bolt*3
+prop jcut loot.refill=0
+place Loot_ChestSmall jbut at 1.30 3.21 h=10.00 sit yaw=0
+note jbut Guards' tin | Wedged on a slab half-way: the guards' dice money.
+loot jbut Nail*6;Scrap*3;MetalIngot*1
+prop jbut loot.refill=0
+place Zone_Trigger jyut at 1.30 3.21 h=11.00
+prop jyut zone.id=jump_ut_finale
+prop jyut zone.radius=1.8
+prop jyut zone.repeat=never
+prop jyut zone.message=You topped the slab stacks.
+pop
+# --- end of jump course ut ---
+# The new land planted (mangoes, bananas, palms as on the island)
+call ar_plants_hill x=0 z=-74 r=26 seed=27001
+call ar_plants_tropical x=0 z=-50 r=9 seed=27011
+call ar_plants_tropical x=-52 z=1 r=8 seed=27021
+call ar_plants_tropical x=-72 z=4 r=14 seed=27031
+call ar_plants_hill x=64 z=-17 r=14 seed=27041
+call ar_plants_tropical x=-42 z=40 r=10 seed=27051
+call ar_plants_tropical x=36 z=-44 r=8 seed=27061
+call ar_plants_tropical x=50 z=-10 r=7 seed=27071
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, bananas, palms ----------
 scatter "Pickup_Landmark_Tree_Mango" 3 at 0 0 r=38.5 seed=4191 free=5
@@ -114,9 +216,39 @@ scatter "Pickup_Landmark_Tree_Palm 3" 2 at 0 0 r=38.5 seed=4212 free=5
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=75 deep=5 n=2
 
+# --- RAFT REMADE 10-26: the new areas' zones and notes, the gate's third key, the secrets ------------------------------
+call hw_zone x=-70 z=2 al=crewz id=crewcamp r=9 h=1 msg="Olof's crew camp. A stone hut, a tent, a fire long cold - they waited here for the warden to fall."
+place Note_Paper crewjournal at -72.75 8 h=4.45 drop yaw=20
+note crewjournal Crew's journal | OLOF'S CREW - THE JOURNAL\n\nThe warden had a third lock put on his gate after we tried it the first time. The third key went to the old lighthouse keeper - he'd never come down.\nThe keeper's box is up the lighthouse mast on Lighthouse Head, south of the summit.\nThe rest of us are marking our tokens round the island. Find all six and you'll know we were here.
+call hw_zone x=0 z=-56 al=headfootz id=headfoot r=6 msg="Lighthouse Head. A path cut round the hill to the old lighthouse mast on its top."
+call hw_zone x=0 z=-74 al=headtopz id=lighthouse r=8 h=1 msg="The top of Lighthouse Head. The mast's ladder runs up inside it - the keeper's box hangs on the deck."
+story keeperkey|Lighthouse keeper's key|quest:Utopia_KeyEntrance|The third key to the warden's gate - the old lighthouse keeper's.
+note keeperbox Keeper's box | The lighthouse keeper's box on the mast deck: the warden's third key, a lamp wick, his pipe.
+loot keeperbox story:keeperkey*1;Rope*2;Bolt*2
+prop keeperbox loot.refill=0
+# Crew tokens: six tokens Olof's crew left round the island (a set: a secret)
+call rr_piece x=-66 z=10 al=token1 set="Crew tokens" nm="Crew token 1"
+call rr_piece x=-6 z=-52 al=token2 set="Crew tokens" nm="Crew token 2"
+call rr_piece x=52 z=-12 al=token3 set="Crew tokens" nm="Crew token 3"
+call rr_piece x=-40 z=38 al=token4 set="Crew tokens" nm="Crew token 4"
+call rr_piece x=30 z=-40 al=token5 set="Crew tokens" nm="Crew token 5"
+call rr_piece x=52 z=30 al=token6 set="Crew tokens" nm="Crew token 6"
+prop token1 on.set=give||TitaniumIngot*2;CopperIngot*2\nmessage||All six crew tokens: Olof's crew were all here, to the last one.
+# The quarry cave, the plane, the cargo yard
+note quarrybox Quarrymen's strongbox | The quarrymen's strongbox in the cave under the ridge: their pay from the warden, never spent.
+loot quarrybox TitaniumOre*3;CopperIngot*2;Bolt*3
+prop quarrybox loot.refill=0
+call hw_zone x=62 z=-40 al=quarryz id=quarrycave r=4 msg="A cave cut into the quarry ridge - picks, a lamp, a strongbox."
+note planecrate Warden's plane crate | The crate in the warden's plane: what he meant to fly out with.
+loot planecrate CopperIngot*2;MetalIngot*2;Bolt*3;Rope*2
+note yardcrate Cargo yard crate | The cargo yard's crate: rivets, rope, sheet metal.
+loot yardcrate Nail*8;Rope*2;MetalIngot*1;Scrap*3
+call treasure x=0 z=-74 r=14 n=1 seed=27098 kind=0
+prop treasure27098 treasure.loot=CopperIngot*2;TitaniumOre*2;Nail*8
+
 info title=Utopia Remade
 info author=Custom Islands
-info description=Raft's Utopia made anew - the end of the voyage: docks with Utopia's market, the warden's prison house on its stilts, and on the summit his yard behind a thatch palisade, its gate locked with two keys. His hyenas wait inside. Raft Remade's eighth and last island.
+info description=Raft's Utopia made anew - the end of the voyage, on an island as big as Raft's own: docks with Utopia's market, Lighthouse Head, Olof's crew camp, a quarry, the warden's prison house on its stilts, and on the summit his yard behind a thatch palisade, its gate locked with two keys. His hyenas wait inside. Raft Remade's eighth and last island.
 island on.arrive=message||Docks, market stalls, a prison house on stilts - and on the summit a thatch palisade, its gate shut. Somewhere behind it, hyenas laugh.
 
 story dockkey|Dock master's key|quest:Utopia_KeyEntrance|One of the two keys to the warden's gate - the dock master's.
@@ -170,17 +302,17 @@ prop gateL beh.move=-1.6,0,0.3
 prop gateL beh.moveTime=2
 prop gateL beh.moveMode=switch
 prop gateL beh.use=Unlock the warden's gate
-prop gateL if.use=take|story:dockkey|1\ntake|story:prisonkey|1
-prop gateL on.use=message||Both keys turn. The gate's leaves grind aside - and behind them, the hyenas rise.\nopen|wardensgate
-prop gateL else.use=message||The warden's gate has two locks - the dock master's and the prison clerk's. Olof's message said where the keys are.
+prop gateL if.use=take|story:dockkey|1\ntake|story:prisonkey|1\ntake|story:keeperkey|1
+prop gateL on.use=message||All three keys turn. The gate's leaves grind aside - and behind them, the hyenas rise.\nopen|wardensgate
+prop gateL else.use=message||The warden's gate has three locks - the dock master's, the prison clerk's and a third, newer one. Olof's message and his crew's journal said where the keys are.
 prop gateR obj.name=wardensgate
 prop gateR beh.move=1.6,0,0.3
 prop gateR beh.moveTime=2
 prop gateR beh.moveMode=switch
 prop gateR beh.use=Unlock the warden's gate
-prop gateR if.use=take|story:dockkey|1\ntake|story:prisonkey|1
-prop gateR on.use=message||Both keys turn. The gate's leaves grind aside - and behind them, the hyenas rise.\nopen|wardensgate
-prop gateR else.use=message||The warden's gate has two locks - the dock master's and the prison clerk's. Olof's message said where the keys are.
+prop gateR if.use=take|story:dockkey|1\ntake|story:prisonkey|1\ntake|story:keeperkey|1
+prop gateR on.use=message||All three keys turn. The gate's leaves grind aside - and behind them, the hyenas rise.\nopen|wardensgate
+prop gateR else.use=message||The warden's gate has three locks - the dock master's, the prison clerk's and a third, newer one. Olof's message and his crew's journal said where the keys are.
 
 prop docks zone.id=docks
 prop docks zone.radius=8
@@ -222,7 +354,12 @@ step kill|Rat|3|Drive off the rats boiling out from under the prison house
 step open|Prison clerk's desk|1|Search the prison clerk's gnawed desk
 step collect|story:prisonkey|1|Take the prison clerk's key - the second
 step pages||9|Look in the crate beside the clerk's desk: nine pages of Utopia so far
-step reach|yard|1|Climb to the summit and unlock the warden's gate with both keys
+step reach|crewcamp|1|Go out to Olof's crew camp on the west point
+step read|Crew's journal|1|Read the crew's journal in their hut - the gate has a third lock
+step reach|lighthouse|1|Climb Lighthouse Head, south of the summit, to the old lighthouse mast
+step open|Keeper's box|1|Climb the mast and open the keeper's box
+step collect|story:keeperkey|1|Take the lighthouse keeper's key - the third
+step reach|yard|1|Climb to the summit and unlock the warden's gate with all three keys
 step kill|Hyena|3|Defeat the warden's hyenas and their alpha
 step open|Warden's table|1|Go through the ledger on the warden's table
 step open|Warden's pot|1|Search the pot in the yard's back corner

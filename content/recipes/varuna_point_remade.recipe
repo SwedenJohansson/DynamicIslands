@@ -5,11 +5,19 @@
 # crate under the tower, the floodlight's four parts from crates sunk on the reef, the floodlight lit again from its
 # tower, the giant angler in the deep under the point and the foreman's strongbox it guards (Varuna's blueprints: the
 # wind turbine, the advanced battery, the advanced head light, the electric grill).
+# RAFT REMADE 10-26 (1-hour pass): grown to Raft's size (r80 about 75) with relief, by land added round the point:
+# Varuna's Back (a 24 m hill south of the site) and its tower crane, the surveyors' camp (west point: survey lamps, a
+# puzzle), the north-west ridge and a gravel barge, a hidden cave, the company plane, the slab stacks (a jump course).
+# Quest 10 -> 14 steps: the surveyors' camp and the floodlight's fuse from the crane cab before the parts; the floodlight
+# needs the fuse too. Design: _ProjectDocs/plans/storylines_old/RAFT_REMADE.md.
 #
 # Built by the recipe player (CIRecipe varuna_point_remade) through the editor's own operations.
 include lib_sea
 include lib_rt
 include lib_features
+include lib_highwater
+include lib_areas
+include lib_raft_remade
 new
 # (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
 randomize VarunaPoint like Seed=7106 Radius=48 Height=18 Cliffs=0.3 BeachWidth=0.5 Hostiles=0 Friendly=0 SeaLife=0.3 Trees=0.4 Bushes=0.5 Rocks=0.75 Harvest=0.7
@@ -93,7 +101,6 @@ place VP_StorageCrate02 - at 0 -11 ground yaw=10
 place VP_MetalCrate01 - at -0.5 -7.5 ground yaw=-5
 # (the rubble under the excavator's bucket, half size, on the yard at the hill's foot: at -3 4, full size, it lay on the
 # hillside, set down at the foot and its middle 2 m under the hill, CIGroundIslands)
-place VP_RubblePile_Medium01 - at 0 2.6 ground yaw=40 scale=0.5
 place Zone_Trigger site at 14 -1 h=11.2
 
 # --- Round the point: four crates the storm washed off the tower, 4 to 8 m down on the few level spots of its steep sea
@@ -109,6 +116,103 @@ place VG_Safe strongbox at 18 70 ground sit yaw=180
 place Zone_Trigger deep at 18 70 ground y=2
 place Creature_AnglerFish angler at 18 74 ground y=3
 
+# --- RAFT REMADE 10-26 (1-hour pass): the point grows to Raft's size - and gets its relief - by land added round it
+# (the point, the site, the floodlight tower, the crates and the deep as they were; the north water stays open):
+# Varuna's Back, a hill south of the site, and the tower crane on its top; the surveyors' camp on the west point; the
+# north-west ridge and a gravel barge; a hidden cave (south-west); the company plane (south-east); the slab stacks (a
+# jump course, east). Land bridges first, from the old shore outwards, then each area.
+call rr_land x1=-10 z1=-26 x2=-10 z2=-36 h=3 r=10
+call rr_land x1=-54 z1=2 x2=-68 z2=4 h=3 r=10
+call rr_land x1=-36 z1=22 x2=-38 z2=34 h=3 r=9
+call rr_land x1=-40 z1=-22 x2=-46 z2=-36 h=3 r=9
+call rr_land x1=40 z1=-24 x2=46 z2=-40 h=3 r=9
+call rr_land x1=60 z1=-30 x2=64 z2=-40 h=3 r=8
+# A Varuna's Back (south): summit 24 m, base r 22, the trail from its north-east foot, the tower crane on top
+call hw_mount x=-10 z=-54 b=22 h=24
+call hw_trail x=-10 z=-54 b=22 h=24 a0=30 turn=300 n=28 h0=3
+brush flatten at -10 -54 r=8 s=20 frames=400 h=24
+call hw_mast x=-10 z=-54 h0=24 lv=6 a=cranetower chest=cranebox top=Placeable_Lantern_Metal
+# B The surveyors' camp (west point): their hut, a tent, their survey lamps
+call rr_pad x=-78 z=4 h=3 r=14
+call rr_ruin x=-78 z=8 h=3 yaw=0 w=3 d=2 al=surveyhut
+place Balboa_DecorationPrefabBase_SimpleTent - at -71 -1 h=3 sit yaw=200
+place campfire_1 - at -74 -2 ground sit
+place "Box Big" - at -84 2 ground sit yaw=30
+# C The north-west ridge and the gravel barge run aground below it
+call ar_ridge x1=-52 z1=36 x2=-26 z2=48 h=5 top=6 r=8
+call hw_wreck x=-62 z=50 h=2 yaw=50 obj=BoatStranded al=barge crate=bargecrate r=9
+# D The hidden cave (south-west): a rock with a hole, its mouth to the sea
+call ar_cave x=-50 z=-46 h=3 yaw=180 al=caverock chest=cavebox
+place SmallBoulder4 - at -51 -65 ground yaw=40 scale=0.9
+place SmallBoulder4 - at -47.5 -67 ground yaw=110 scale=0.8
+# E The company plane (south-east): down on the shore field
+call ar_plane x=46 z=-52 h=3 yaw=120 al=companyplane crate=planecrate
+# --- JUMP COURSE vp (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---
+# JUMP vp pad=3 at=74 -42
+push at 74 -42
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpvp at 0.10 5.64 h=3.60
+place Block_Foundation_Tier3 jpvp at 2.92 5.64 h=4.10
+place Block_Foundation_Tier3 jpvp at 5.93 5.64 h=4.50
+place Block_Foundation_Tier3 jpvp at 5.93 3.03 h=5.40
+place Block_Foundation_Tier3 jpvp at 5.93 -1.21 h=5.90 sx=0.3 sz=3
+place Block_Foundation_Tier3 jpvp at 5.93 -5.64 h=6.70
+place Block_Foundation_Tier3 jpvp at 3.02 -5.64 h=7.60
+place Block_Foundation_Tier3 jpvp at 0.40 -5.64 h=6.60
+place Block_Foundation_Tier3 jpvp at -2.41 -5.64 h=7.55
+place Block_Foundation_Tier3 jpvp at -5.12 -5.64 h=8.50
+place Block_Foundation_Tier3 jpvp at -5.12 -2.02 h=9.40 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jpvp at 1.30 -2.02 h=9.70 sx=2 sz=2
+place Block_Foundation_Tier3 jpvp at 1.30 3.21 h=10.00
+# JUMP end
+# (each slab on one solid column of its own footprint, from under the pad up to the slab; the first rests on the pad)
+place Block_Foundation_Tier3 jppvp at 2.92 5.64 h=3.418 sy=1.493
+place Block_Foundation_Tier3 jppvp at 5.93 5.64 h=3.818 sy=2.079
+place Block_Foundation_Tier3 jppvp at 5.93 3.03 h=4.718 sy=3.399
+place Block_Foundation_Tier3 jppvp at 5.93 -1.21 h=5.218 sy=4.132 sx=0.3 sz=3
+place Block_Foundation_Tier3 jppvp at 5.93 -5.64 h=6.018 sy=5.305
+place Block_Foundation_Tier3 jppvp at 3.02 -5.64 h=6.918 sy=6.625
+place Block_Foundation_Tier3 jppvp at 0.40 -5.64 h=5.918 sy=5.158
+place Block_Foundation_Tier3 jppvp at -2.41 -5.64 h=6.868 sy=6.551
+place Block_Foundation_Tier3 jppvp at -5.12 -5.64 h=7.818 sy=7.944
+place Block_Foundation_Tier3 jppvp at -5.12 -2.02 h=8.718 sy=9.264 sx=2 sz=2
+place Block_Foundation_Tier3 jppvp at 1.30 -2.02 h=9.018 sy=9.704 sx=2 sz=2
+place Block_Foundation_Tier3 jppvp at 1.30 3.21 h=9.318 sy=10.144
+prop jpvp tint.color=#8a8070
+prop jpvp tint.amount=0.35
+prop jppvp tint.color=#8a8070
+prop jppvp tint.amount=0.35
+place Loot_Chest jcvp at -5.12 -2.02 h=9.40 sit yaw=0
+note jcvp Slab stack chest | On top of the stacked slabs: the site's good tools, put out of the crew's reach.
+loot jcvp CopperIngot*2;TitaniumOre*1;Bolt*3
+prop jcvp loot.refill=0
+place Loot_ChestSmall jbvp at 1.30 3.21 h=10.00 sit yaw=0
+note jbvp Concrete gang's tin | Wedged on a slab half-way: the concrete gang's tea money.
+loot jbvp Nail*6;Scrap*3;MetalIngot*1
+prop jbvp loot.refill=0
+place Zone_Trigger jyvp at 1.30 3.21 h=11.00
+prop jyvp zone.id=jump_vp_finale
+prop jyvp zone.radius=1.8
+prop jyvp zone.repeat=never
+prop jyvp zone.message=You topped the slab stacks.
+pop
+# --- end of jump course vp ---
+# The new land planted (palms, mangoes, bamboo as on the point)
+call ar_plants_hill x=-10 z=-54 r=24 seed=26601
+call ar_plants_tropical x=-10 z=-32 r=8 seed=26611
+call ar_plants_tropical x=-62 z=3 r=8 seed=26621
+call ar_plants_tropical x=-78 z=4 r=14 seed=26631
+call ar_plants_hill x=-39 z=42 r=16 seed=26641
+call ar_plants_tropical x=-43 z=-30 r=7 seed=26651
+call ar_plants_tropical x=43 z=-34 r=8 seed=26661
+call ar_plants_tropical x=46 z=-52 r=12 seed=26671
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, pineapples, bananas ----------
 scatter "Pickup_Landmark_Tree_Mango" 3 at 0 0 r=33.6 seed=4155 free=5
@@ -117,14 +221,54 @@ scatter "Banana_Bush_2" 3 at 0 0 r=33.6 seed=4175 free=3
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=68 deep=5 n=2
 
+# --- RAFT REMADE 10-26: the new areas' zones, notes, the fuse in the crane's cab, the survey lamps, the secrets -------
+# The surveyors' camp: the zone, their report on the hut's table, three survey lamps; all lit shows their cache
+call hw_zone x=-76 z=2 al=surveyz id=surveycamp r=9 h=1 msg="The surveyors' camp. A hut of stone, a tent, a cold fire - and three survey lamps on posts, dark."
+place Note_Paper surveyreport at -78.75 8 h=4.45 drop yaw=20
+call rr_lamp x=-84 z=-6 al=slamp1 nm="Survey lamp 1" grp="Survey lamps" on=0
+call rr_lamp x=-78 z=-9 al=slamp2 nm="Survey lamp 2" grp="Survey lamps" on=1
+call rr_lamp x=-72 z=-6 al=slamp3 nm="Survey lamp 3" grp="Survey lamps" on=0
+prop slamp1 on.use=light|Survey lamp 2|toggle
+prop slamp2 on.use=light|Survey lamp 1|toggle\nlight|Survey lamp 3|toggle
+prop slamp3 on.use=light|Survey lamp 2|toggle
+prop slamp1 on.alllit=show|surveycache\nmessage||All three survey lamps burn - lined up on a stone by the fire, a tin with the surveyors' mark.
+call rr_hidden x=-76 z=-3 al=surveycache
+note surveycache Surveyors' cache | The surveyors' tin: their pay and the good instruments, hidden from the site crew.
+loot surveycache CopperIngot*2;MetalIngot*2;Battery*1;TradeToken*2
+# Varuna's Back: the zone at its foot and on top, the floodlight's fuse in the crane cab's box
+call hw_zone x=8 z=-36 al=backfootz id=backfoot r=5 msg="Varuna's Back. A track cut round the hill to the tower crane on its top."
+call hw_zone x=-10 z=-54 al=backtopz id=craneback r=8 h=1 msg="The top of Varuna's Back. The tower crane's ladder goes up inside its mast - the cab box hangs open at the top."
+note cranebox Crane cab box | The crane driver's box in the cab: the floodlight's spare fuse, kept dry up here as the foreman ordered.
+loot cranebox story:fuse*1;Rope*2;Bolt*2
+# Hard hats: five of the crew's hard hats, blown about the island in the storm (a set: a secret)
+call rr_piece x=-66 z=8 al=hat1 set="Hard hats" nm="Hard hat 1"
+call rr_piece x=6 z=-38 al=hat2 set="Hard hats" nm="Hard hat 2"
+call rr_piece x=-36 z=44 al=hat3 set="Hard hats" nm="Hard hat 3"
+call rr_piece x=52 z=-44 al=hat4 set="Hard hats" nm="Hard hat 4"
+call rr_piece x=-44 z=-30 al=hat5 set="Hard hats" nm="Hard hat 5"
+prop hat1 on.set=give||TitaniumIngot*1;CopperIngot*2\nmessage||All five hard hats: the whole storm crew is accounted for.
+# The cave, the plane, the barge and the hill's buried box
+note cavebox Cave strongbox | A box in the hole in the south-west rock: the site crew's still and their poker winnings.
+loot cavebox TitaniumOre*2;CopperIngot*2;Bolt*3
+prop cavebox loot.refill=0
+call hw_zone x=-50 z=-50 al=cavez id=hiddencave r=4 msg="A hole in the rock, boulders across its mouth - and a smell of cheap spirit."
+note planecrate Company plane's crate | The company plane's crate: spares for the site, never unloaded.
+loot planecrate Bolt*4;MetalIngot*1;Scrap*3;Rope*2
+note bargecrate Gravel barge's crate | A crate from the gravel barge's hold: rope, chain, shovels' heads.
+loot bargecrate Rope*3;Plank*4;Scrap*2
+call treasure x=-10 z=-54 r=6 n=1 seed=26698 kind=0
+prop treasure26698 treasure.loot=CopperIngot*2;TitaniumOre*1;Nail*8
+
 info title=Varuna Point Remade
 info author=Custom Islands
-info description=Raft's Varuna Point made anew: a construction site cut into a long rocky point - the half-built tower in its scaffolding, the site office, the machines - and the floodlight over the north water, knocked out in a storm. Raft Remade's sixth island.
+info description=Raft's Varuna Point made anew, on an island as big as Raft's own: a construction site cut into a long rocky point - the half-built tower in its scaffolding, the site office, the machines - Varuna's Back and its tower crane, the surveyors' camp, a hidden cave, the company plane - and the floodlight over the north water, knocked out in a storm. Raft Remade's sixth island.
 island on.arrive=message||A long rocky point, a construction site cut into its end: a concrete shaft in scaffolding, an excavator, a red site office - and a floodlight tower, dark.
 
+story fuse|Floodlight fuse|Battery|The floodlight's spare fuse, from the crane cab's box on Varuna's Back.
+note surveyreport Surveyors' report | SURVEY REPORT - VARUNA POINT\n\nThe point is too low and too narrow for the tower they want: we told the company. They built it anyway.\nThe foreman's fuse is in the crane cab - the crane is the only dry place on this island in a storm.\nOur lamps: one and three on, the middle one minds itself. The tin goes where the light falls.
 story part|Floodlight part|quest:Varuna_SpotlightPart|One of the floodlight's four parts - lens, bulb, reflector, cable - from a crate on the reef.
 
-note foremanslog Foreman's log | SITE LOG - VARUNA POINT\n\nDay 41. Storm. The floodlight went over the rail - lens, bulb, reflector and the cable drum, each in its own crate, all into the sea - the current has spread them round the point. The reef has them now.\nDay 42. Without the light we can't work the north water at night. And something down there likes the dark: the night crew saw its lure glowing under the tower.\nDay 43. My strongbox went over with the light - the turbine plans, the batteries, all of it. It's down in the deep under the point. Nobody dives there until that light is back on.
+note foremanslog Foreman's log | SITE LOG - VARUNA POINT\n\nDay 41. Storm. The floodlight went over the rail - lens, bulb, reflector and the cable drum, each in its own crate, all into the sea - the current has spread them round the point. The reef has them now.\nDay 42. Without the light we can't work the north water at night. And something down there likes the dark: the night crew saw its lure glowing under the tower.\nDay 43. My strongbox went over with the light - the turbine plans, the batteries, all of it. It's down in the deep under the point. Nobody dives there until that light is back on.\nDay 44. The light's spare fuse is up in the tower crane's cab on Varuna's Back. The surveyors on the west point know the rest.
 note partcrate1 Lens crate | A crate on the sea floor off the north-east shelf: the floodlight's lens, wrapped in sacking.
 loot partcrate1 story:part*1;Plastic*3
 prop partcrate1 loot.refill=0
@@ -145,9 +289,9 @@ prop strongbox else.open=message||Too dark down here to find the lock - the floo
 
 prop floodlight obj.name=floodlight
 prop floodlight beh.use=Fit the parts and light the floodlight
-prop floodlight if.use=take|story:part|4
+prop floodlight if.use=has|story:fuse|1\ntake|story:part|4
 prop floodlight on.use=message||Lens, bulb, reflector, cable - the floodlight hums and throws its beam down into the north water. Something deep below turns away from it.\nsignal||floodlight
-prop floodlight else.use=message||The floodlight is missing its lens, bulb, reflector and cable. The foreman's log said they are on the reef.
+prop floodlight else.use=message||The floodlight is missing its lens, bulb, reflector and cable. The foreman's log said they are on the reef - and without its fuse from the crane cab it won't light at all.
 
 prop site zone.id=site
 prop site zone.radius=10
@@ -167,6 +311,10 @@ prop angler creature.zone=deep
 quest title=Floodlight Down
 quest intro=A construction site on a rocky point, its floodlight dark since the storm. Go up to the site.
 step read|Foreman's log|1|Come up to the site and read the foreman's log on his desk by the office
+step reach|surveycamp|1|Go out to the surveyors' camp on the west point
+step read|Surveyors' report|1|Read the surveyors' report in their hut
+step reach|craneback|1|Climb Varuna's Back, the hill south of the site, to the tower crane
+step collect|story:fuse|1|Climb the crane's mast and take the floodlight's fuse from the cab box
 step open|Bulb crate|1|Dive below the floodlight tower for the crate with the bulb
 step collect|story:part|4|Find the other three parts on the reef: the lens, the reflector, the cable drum
 step reach|lightdeck|1|Climb the floodlight tower

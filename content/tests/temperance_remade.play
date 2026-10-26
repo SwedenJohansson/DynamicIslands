@@ -2,6 +2,7 @@
 # village on the north flats (4 m), the road up to the station's terrace (9 m), Selene's station along its north edge
 # (its entrance at the west end), the path up to the telescope's terrace (18 m), the sunken snowmobile in the bay.
 island Temperance Remade
+offset 0.1375 -4.1368
 expect step 0
 expect title The Reactor's Last Breath
 
@@ -29,14 +30,37 @@ walk 8 12 to 3.7 6.7 to -0.7 1.3 to -4 -3 to -3.4 -3.9 h=18
 reach Survey crate
 open Survey crate
 expect story cable 3
-# (all three drums carried; the road passed the station's door on the way up: its step is done already)
+expect step 5
+
+# RAFT REMADE 10-26: Frost Ridge and the weather mast's drum, the ice fishing camp and the fisherman's locker, the secrets
+zone ridgefoot
+zone frostridge
+expect step 6
+open Weather mast box
+expect story cable 4
 expect step 7
+zone fishcamp
+expect step 8
+read Fisherman's log
+expect step 9
+open Ice hut locker
+expect story cable 5
+# (all five drums carried; the station's step was done on the way up)
+expect step 12
+open Supply plane's crate
+zone icecave
+open Whalers' chest
+expect message Locked
+open Whaler's crate
+expect story cavekey 1
+open Whalers' chest
+expect item TitaniumIngot 1
 
 # Back down to the station: in through its entrance hall; the inner doors shut while the reactor is dead
 walk -3.4 -3.9 to -0.7 1.3 to 3.7 6.7 to 8 12 h=9.6
 walk 8 12 to 7 23 to 2 23.5 to -12 23.5 to -17 23.5 to -17 19 h=9
 zone station
-expect step 7
+expect step 12
 walk -16 18 to -11 18 h=9 below=12
 walk -10.5 18 to -6 18 blocked h=9 below=12
 use reactor
@@ -45,9 +69,9 @@ expect story cable 0
 wait 2
 walk -10.5 18 to -5 18 h=9 below=12
 zone inner
-expect step 8
+expect step 13
 kill Polar bear
-expect step 9
+expect step 14
 walk -5 18 to 0 17.5 to 1.8 16.2 h=9 below=12
 reach Chief's vault
 open Chief's vault

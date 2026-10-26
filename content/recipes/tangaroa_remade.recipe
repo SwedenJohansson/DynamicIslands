@@ -6,11 +6,18 @@
 # dive to the old statue's strongbox, the rats in the pump house and the generator's part, the three key cards (the
 # founder's, the harbour master's, the caretaker's), the generator started and the council's vault (Tangaroa's
 # blueprints: the water pipe, the electric purifier, the water tank, the large storage).
+# RAFT REMADE 10-26 (1-hour pass): grown to Raft's size (r80 about 75) by land added round it: Lookout Hill (west, 20 m)
+# and its lookout mast, the fuel depot (south shore), a hidden cave, a ferry aground, the slab stacks (a jump course,
+# north). The generator now needs two cans of fuel too: the depot's and the lookout's. Quest 10 -> 15 steps.
+# Design: _ProjectDocs/plans/storylines_old/RAFT_REMADE.md.
 #
 # Built by the recipe player (CIRecipe tangaroa_remade) through the editor's own operations.
 include lib_sea
 include lib_rt
 include lib_features
+include lib_highwater
+include lib_areas
+include lib_raft_remade
 new
 # (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
 randomize Tangaroa like Seed=7105 Radius=52 Height=16 Cliffs=0.1 BeachWidth=0.6 Hostiles=0 Friendly=0 SeaLife=0.3 Trees=0.35 Bushes=0.35 Rocks=0.55 SeaRocks=0.6 SeaFinds=0.8
@@ -196,6 +203,93 @@ place TangaroaStoreSign_SeasideBarber_Pole - at -1.6 17.2 h=12.5
 place Zone_Trigger flat at -5 17.5 h=13.7
 place Creature_Roach roaches at -5 19 h=12.6
 
+# --- RAFT REMADE 10-26 (1-hour pass): the island grows to Raft's size by land added round it (the hill, the square, the
+# harbour front and the floating harbour as they were): Lookout Hill (west, 20 m) and the city's lookout mast, the fuel
+# depot on the south shore, a hidden cave in Lookout Hill's south foot, a ferry run aground (north-west), the roofs
+# (a jump course of slab stacks, north). Land bridges first, from the old shore outwards, then each area.
+call rr_land x1=-38 z1=4 x2=-48 z2=4 h=3 r=11
+call rr_land x1=6 z1=-36 x2=10 z2=-50 h=3 r=11
+call rr_land x1=-28 z1=-30 x2=-40 z2=-42 h=3 r=9
+call rr_land x1=-30 z1=30 x2=-44 z2=42 h=3 r=9
+call rr_land x1=-6 z1=40 x2=-12 z2=50 h=3 r=9
+# A Lookout Hill (west): summit 20 m, base r 20, the trail from its east foot, the city's lookout mast on top
+call hw_mount x=-62 z=4 b=20 h=20
+call hw_trail x=-62 z=4 b=20 h=20 a0=80 turn=300 n=26 h0=3
+brush flatten at -62 4 r=7 s=20 frames=400 h=20
+call hw_mast x=-62 z=4 h0=20 lv=5 a=lookoutmast chest=lookoutbox top=Placeable_Lantern_Metal
+# B The fuel depot (south shore): containers washed up on a pad, the depot's crate, barrels
+call rr_containers x=12 z=-60 h=3 yaw=10 n=3 al=depotcontainer
+place Loot_Crate depotcrate at 4 -52 ground sit yaw=20
+place "Box Big" - at 20 -52 ground sit
+place "Box Big" - at 21.5 -53 ground sit yaw=40
+# C The hidden cave in Lookout Hill's south foot, its mouth to the sea
+call ar_cave x=-44 z=-46 h=3 yaw=180 al=caverock chest=cavebox
+# D The ferry run aground (north-west), her crate on the sand by her
+call hw_wreck x=-50 z=50 h=2 yaw=40 obj=BoatStranded al=ferry crate=ferrycrate r=9
+# The new land planted (palms, mangoes, bushes as on the hill)
+call ar_plants_hill x=-62 z=4 r=22 seed=26901
+call ar_plants_tropical x=-44 z=4 r=8 seed=26911
+call ar_plants_tropical x=8 z=-44 r=8 seed=26921
+call ar_plants_tropical x=-34 z=-36 r=8 seed=26931
+call ar_plants_tropical x=-40 z=40 r=9 seed=26941
+call ar_plants_tropical x=-10 z=46 r=7 seed=26951
+# --- JUMP COURSE tg (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---
+# JUMP tg pad=3 at=-14 64
+push at -14 64
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jptg at 0.10 5.64 h=3.60
+place Block_Foundation_Tier3 jptg at 2.92 5.64 h=4.10
+place Block_Foundation_Tier3 jptg at 5.93 5.64 h=4.50
+place Block_Foundation_Tier3 jptg at 5.93 3.03 h=5.40
+place Block_Foundation_Tier3 jptg at 5.93 -1.21 h=5.90 sx=0.3 sz=3
+place Block_Foundation_Tier3 jptg at 5.93 -5.64 h=6.70
+place Block_Foundation_Tier3 jptg at 3.02 -5.64 h=7.60
+place Block_Foundation_Tier3 jptg at 0.40 -5.64 h=6.60
+place Block_Foundation_Tier3 jptg at -2.41 -5.64 h=7.55
+place Block_Foundation_Tier3 jptg at -5.12 -5.64 h=8.50
+place Block_Foundation_Tier3 jptg at -5.12 -2.02 h=9.40 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jptg at 1.30 -2.02 h=9.70 sx=2 sz=2
+place Block_Foundation_Tier3 jptg at 1.30 3.21 h=10.00
+# JUMP end
+# (each slab on one solid column of its own footprint, from under the pad up to the slab; the first rests on the pad)
+place Block_Foundation_Tier3 jpptg at 2.92 5.64 h=3.418 sy=1.493
+place Block_Foundation_Tier3 jpptg at 5.93 5.64 h=3.818 sy=2.079
+place Block_Foundation_Tier3 jpptg at 5.93 3.03 h=4.718 sy=3.399
+place Block_Foundation_Tier3 jpptg at 5.93 -1.21 h=5.218 sy=4.132 sx=0.3 sz=3
+place Block_Foundation_Tier3 jpptg at 5.93 -5.64 h=6.018 sy=5.305
+place Block_Foundation_Tier3 jpptg at 3.02 -5.64 h=6.918 sy=6.625
+place Block_Foundation_Tier3 jpptg at 0.40 -5.64 h=5.918 sy=5.158
+place Block_Foundation_Tier3 jpptg at -2.41 -5.64 h=6.868 sy=6.551
+place Block_Foundation_Tier3 jpptg at -5.12 -5.64 h=7.818 sy=7.944
+place Block_Foundation_Tier3 jpptg at -5.12 -2.02 h=8.718 sy=9.264 sx=2 sz=2
+place Block_Foundation_Tier3 jpptg at 1.30 -2.02 h=9.018 sy=9.704 sx=2 sz=2
+place Block_Foundation_Tier3 jpptg at 1.30 3.21 h=9.318 sy=10.144
+prop jptg tint.color=#7d7468
+prop jptg tint.amount=0.35
+prop jpptg tint.color=#7d7468
+prop jpptg tint.amount=0.35
+place Loot_Chest jctg at -5.12 -2.02 h=9.40 sit yaw=0
+note jctg Rooftop chest | On top of the slab stacks: the roofers' good tools, out of the rats' reach.
+loot jctg CopperIngot*2;TitaniumOre*1;Bolt*3
+prop jctg loot.refill=0
+place Loot_ChestSmall jbtg at 1.30 3.21 h=10.00 sit yaw=0
+note jbtg Roofers' tin | Wedged on a slab half-way: the roofers' tea money.
+loot jbtg Nail*6;Scrap*3;MetalIngot*1
+prop jbtg loot.refill=0
+place Zone_Trigger jytg at 1.30 3.21 h=11.00
+prop jytg zone.id=jump_tg_finale
+prop jytg zone.radius=1.8
+prop jytg zone.repeat=never
+prop jytg zone.message=You topped the slab stacks.
+pop
+# --- end of jump course tg ---
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): palms, flowers, mangoes ----------
 scatter "Pickup_Landmark_Tree_Palm 1" 2 at 0 0 r=36.4 seed=4374 free=5
@@ -206,12 +300,32 @@ scatter "Pickup_Landmark_Tree_Mango" 3 at 0 0 r=36.4 seed=4394 free=5
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=72 deep=5 n=2
 
+# --- RAFT REMADE 10-26: the new areas' zones and notes, the generator's fuel, the secrets ------------------------------
+call hw_zone x=8 z=-52 al=depotz id=fueldepot r=8 h=1 msg="The fuel depot. Containers the storm threw up the shore - and the depot's crate, still sealed."
+note depotcrate Fuel depot crate | The fuel depot's crate: one can of the generator's fuel left, and a funnel.
+loot depotcrate story:fuel*1;Plastic*2;Scrap*2
+prop depotcrate loot.refill=0
+call hw_zone x=-46 z=4 al=lookfootz id=lookoutfoot r=6 msg="Lookout Hill. A path round the hill to the city's lookout mast."
+call hw_zone x=-62 z=4 al=looktopz id=lookout r=7 h=1 msg="The top of Lookout Hill. The lookout's ladder runs up inside the mast - his box on the deck."
+note lookoutbox Lookout's box | The lookout's box on the mast deck: the reserve can of generator fuel the council kept up here, a spyglass with no glass.
+loot lookoutbox story:fuel*1;Rope*2;Bolt*2
+prop lookoutbox loot.refill=0
+note cavebox Smugglers' strongbox | A box in the cave under Lookout Hill: what the smugglers kept from the council's harbour tax.
+loot cavebox TitaniumIngot*1;CopperIngot*2;Bolt*3
+prop cavebox loot.refill=0
+call hw_zone x=-44 z=-50 al=cavez id=hiddencave r=4 msg="A cave in the hill's foot, its mouth hidden by boulders - a strongbox inside."
+note ferrycrate Ferry's crate | The ferry's crate, washed up by her: life jackets, a bell, a sack of rivets.
+loot ferrycrate Nail*8;Rope*2;Plastic*3
+call treasure x=-62 z=4 r=14 n=1 seed=26998 kind=0
+prop treasure26998 treasure.loot=CopperIngot*2;TitaniumOre*1;Nail*8
+
 info title=Tangaroa Remade
 info author=Custom Islands
-info description=Raft's Tangaroa made anew: the floating city on a hill of its own - its harbour on one of the old pontoons, Chi's Burgers on the harbour front, the founder's statue on the square - and every light out. Three key cards, a generator part and the council's vault. Raft Remade's fifth island.
+info description=Raft's Tangaroa made anew, on an island as big as Raft's own: the floating city on a hill of its own, Lookout Hill and its mast, the fuel depot, a ferry aground - its harbour on one of the old pontoons, Chi's Burgers on the harbour front, the founder's statue on the square - and every light out. Three key cards, a generator part and the council's vault. Raft Remade's fifth island.
 island on.arrive=message||A hill of white walls and shop signs, a harbour on a great round pontoon, a statue on the square at the top - and not a light anywhere.
 
 story keycard|Key card|quest:Tangaroa_KeyCard|One of the three city key cards the council's vault wants.
+story fuel|Fuel can|Placeable_Lantern_Metal|A can of the city generator's fuel - it needs two.
 story genpart|Generator part|quest:Tangaroa_GeneratorPart|The city generator's missing part, from the pump house on the harbour front.
 
 note councilnotice Council notice | TANGAROA CITY COUNCIL\n\nThe city's power is OFF until further notice. The generator's part is kept in the pump house.\n\nThe council's vault opens to the three key cards: the harbour master's, the caretaker's - and the founder's own, sealed in his statue's strongbox.\n\n(scrawled underneath) The founder's statue went into the harbour in the storm, strongbox and all. And the rats have the pump house.
@@ -235,9 +349,9 @@ prop councilvault else.open=message||Three card slots - the harbour master's, th
 
 prop generator obj.name=generator
 prop generator beh.use=Fit the part and start the generator
-prop generator if.use=take|story:genpart|1
+prop generator if.use=take|story:fuel|2\ntake|story:genpart|1
 prop generator on.use=message||The part slides home, the generator coughs and runs. Lamps come on across the square - and the council office's shutter rolls aside.\nopen|councilshutter\nshow|citylights
-prop generator else.use=message||The generator is missing a part. The council's notice said it is kept in the pump house.
+prop generator else.use=message||The generator is missing a part and its tank is dry: two cans of fuel. The council's notice said where to look.
 prop councilshutter obj.name=councilshutter
 # (the island's axes: 3 m north, along the office's front, clear of its doorway)
 prop councilshutter beh.move=0,0,3
@@ -269,6 +383,11 @@ step read|Council notice|1|Tie up at the floating harbour and read the council's
 step open|Founder's strongbox|1|Dive to the founder's toppled statue for his strongbox
 step kill|Tangaroa rat|3|Clear the rats out of the pump house
 step collect|story:genpart|1|Take the generator's part from the pump house
+step reach|fueldepot|1|Go round to the fuel depot on the south shore
+step open|Fuel depot crate|1|Open the depot's crate - one can of fuel left
+step reach|lookout|1|Climb Lookout Hill, west of the square, to the lookout mast
+step open|Lookout's box|1|Climb the mast and open the lookout's box - the council's reserve can
+step collect|story:fuel|2|Carry both cans of fuel for the generator
 step collect|story:keycard|3|Find the other two key cards: the harbour master's and the caretaker's
 step open|Council's vault|1|Start the generator on the square and open the council's vault
 step blueprint|Blueprint_Pipe_Water|1|Take the water pipe plans from the council's vault

@@ -1,7 +1,9 @@
 # Play test of Radio Tower Remade (CIPlay radio_tower_remade, in a test world 'CI ...'). Points as in its recipe: the
 # dock (1.45 m) below the tower on the south terrace (2.7 m), its decks at 9, 16 and 23 m, the radio room on the top
 # deck's north half, the old shark cage on the seabed south-west.
+# RAFT REMADE 10-26: land added round the rock; if the land's centre moved, the offset line below the island line.
 island Radio Tower Remade
+offset 7.3149 6.0205
 expect step 0
 expect title Back on the Air
 
@@ -12,17 +14,51 @@ expect step 1
 read Keeper's note
 expect step 2
 
+# RAFT REMADE 10-26: Keeper's Cove and his diary, Antenna Hill's relay valve (the radio needs it), the secrets
+zone keepercove
+expect step 3
+read Keeper's diary
+expect step 4
+zone antennafoot
+zone antennatop
+expect step 5
+open Relay mast deck box
+expect story valve 1
+expect step 6
+zone wreckerspoint
+expect hidden keepertin
+use Beacon lamp 1
+use Beacon lamp 3
+wait 1
+expect shown keepertin
+open Keeper's tin
+use QSL card 1
+use QSL card 2
+use QSL card 3
+use QSL card 4
+use QSL card 5
+wait 1
+expect message All five QSL cards
+expect item TitaniumIngot 1
+zone gullcliffs
+zone seacave
+open Smugglers' cache
+open Mail plane's crate
+open Trawler's crate
+zone jump_rt_finale
+open Lineman's tin
+
 # The battery bank, from the cage locker in the old shark cage
 open Cage locker
 expect story battery 1
-expect step 3
+expect step 7
 
 # Old Beak on the roof
 zone roof
 expect message doesn't share
-expect step 4
+expect step 8
 kill Screecher
-expect step 5
+expect step 9
 
 # Up the tower's three ladders, across the top deck into the radio room
 climb 0.5 -22.6 h=2.7
@@ -31,7 +67,7 @@ climb 0.5 -22.6 h=16
 expect stand -1 -20 h=23.06
 walk 0.5 -20 to 0.5 -15 to 0.5 -10.5 h=23.1
 zone radioroom
-expect step 6
+expect step 10
 
 # The radio on the air: the locker opens
 use radio
@@ -41,4 +77,6 @@ expect story battery 0
 open Radio room locker
 wait 3
 expect item Blueprint_Reciever 1
+expect item Blueprint_HeadLight 1
+expect item Blueprint_Recycler 1
 expect done

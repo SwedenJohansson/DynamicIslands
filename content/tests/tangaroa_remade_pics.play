@@ -11,3 +11,9 @@ hour 12
 at 51.5 10.5 h=-3
 wait 2
 picture tangaroa_remade_statue 52.3 -3.8 11.2 56.5 -7.2 15.4
+hour 11
+at -20 4
+wait 2
+picture rr_tg_lookout_hill -36 16 -14 -62 14 4
+picture rr_tg_fuel_depot -6 10 -40 12 4 -58
+picture rr_tg_slab_stacks 4 12 50 -14 6 64

@@ -6,11 +6,18 @@
 # and all three carried, the station, the reactor started and the inner doors passed, the polar bear mother and the
 # chief's vault (Temperance's blueprints: the electric smelter, the advanced biofuel refiner, the advanced stationary
 # anchor).
+# RAFT REMADE 10-26 (1-hour pass): grown to Raft's size (r80 about 75) by land added round it: Frost Ridge (south, 22 m)
+# and its weather mast, the ice fishing camp (east), the west crags with a wrecked whaler and an ice cave (a locked
+# chest, its key in the whaler: a secret), the supply plane (north-east). The reactor now needs five drums: one more on
+# the weather mast, one in the fisherman's locker. Quest 13 -> 18 steps. Design: _ProjectDocs/plans/storylines_old/RAFT_REMADE.md.
 #
 # Built by the recipe player (CIRecipe temperance_remade) through the editor's own operations (macros from lib_selene).
 include lib_sea
 include lib_selene
 include lib_features
+include lib_highwater
+include lib_areas
+include lib_raft_remade
 new
 # (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
 randomize Temperance like Seed=7107 Radius=62 Height=32 Cliffs=0.2 BeachWidth=0.5 Hostiles=0 Friendly=0 SeaLife=0.3
@@ -107,6 +114,45 @@ scatter TP_SnowDrift01 4 at 20 10 r=10 seed=72
 place TP_SnowVehicle02 sunksled at -32 52 ground tilt=10 yaw=40
 place Loot_Crate cable3 at -34 50 ground yaw=60
 
+# --- RAFT REMADE 10-26 (1-hour pass): the island grows to Raft's size by land added round it (the ridge, the village,
+# the station, the telescope and the bay as they were): Frost Ridge (south) and the weather mast on its top, the ice
+# fishing camp (east flats), the whaler run aground under the west crags and the ice cave in them, the supply plane
+# (north-east). Land bridges first, from the old shore outwards, then each area.
+call rr_land x1=6 z1=-40 x2=8 z2=-50 h=3 r=11
+call rr_land x1=40 z1=6 x2=56 z2=6 h=3 r=10
+call rr_land x1=-42 z1=-10 x2=-56 z2=-16 h=3 r=10
+call rr_land x1=32 z1=30 x2=42 z2=40 h=3 r=9
+call rr_land x1=30 z1=-30 x2=40 z2=-40 h=3 r=9
+# A Frost Ridge (south): summit 22 m, base r 20, the trail from its north-west foot, the weather mast on top
+call hw_mount x=10 z=-64 b=20 h=22
+call hw_trail x=10 z=-64 b=20 h=22 a0=330 turn=300 n=26 h0=3
+brush flatten at 10 -64 r=7 s=20 frames=400 h=22
+call hw_mast x=10 z=-64 h0=22 lv=5 a=weathermast chest=weatherbox top=Placeable_Lantern_Metal
+# B The ice fishing camp (east flats): the fisherman's hut, his holes in the ice, his sled
+call rr_pad x=66 z=6 h=3 r=14
+call rr_ruin x=66 z=10 h=3 yaw=0 w=3 d=2 al=fishhut
+place TP_Moontown_Barrel02 - at 60 0 ground sit
+place TP_Moontown_Barrel02 - at 61 -1.5 ground sit yaw=40
+place Loot_Crate icelocker at 70 12 ground sit yaw=180
+# C The west crags, the whaler run aground below them, the ice cave in the crags
+call ar_ridge x1=-58 z1=-26 x2=-44 z2=-50 h=4 top=7 r=9
+call hw_wreck x=-70 z=-12 h=2 yaw=110 obj=BoatStranded al=whaler crate=whalercrate r=9
+call ar_cave x=-50 z=-40 h=4 yaw=180 al=icecaverock chest=icecavebox
+# D The supply plane (north-east): down on the flats past the village
+call ar_plane x=46 z=44 h=3 yaw=210 al=supplyplane crate=planecrate
+call rr_pad x=36 z=-38 h=3 r=10
+place TP_Moontown_Barrel02 - at 38 -36 ground sit
+# The new land's snowy pines, drifts and stones (Raft's Temperance is near bare: a few)
+scatter TP_PineTreeSnowy 6 at 10 -64 r=22 seed=26801
+scatter TP_PineTreeSnowy 3 at 66 6 r=14 seed=26802
+scatter TP_PineTreeSnowy 3 at -52 -30 r=14 seed=26803
+scatter TP_SnowDrift01 6 at 10 -50 r=18 seed=26804
+scatter TP_SnowDrift01 4 at 60 10 r=12 seed=26805
+scatter TP_SnowDrift01 3 at 44 42 r=10 seed=26806
+scatter SmallBoulder4 6 at -52 -34 r=16 seed=26807 free=2
+scatter "Pickup_Landmark_Tree_Pine" 3 at 36 -38 r=10 seed=26808 free=4
+scatter "Pickup_Landmark_BerryBush" 3 at 10 -50 r=12 seed=26809 free=3
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): pines, flowers, berries ----------
 scatter "Pickup_Landmark_Tree_Pine" 6 at 0 0 r=43.4 seed=4524 free=5
@@ -116,12 +162,40 @@ scatter "Pickup_Landmark_BerryBush" 6 at 0 0 r=43.4 seed=4544 free=3
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=82 deep=5 n=2
 
+# --- RAFT REMADE 10-26: the new areas' zones and notes, the two more cable drums, the secrets ---------------------------
+call hw_zone x=4 z=-48 al=ridgefootz id=ridgefoot r=6 msg="Frost Ridge. A path trodden round the hill to the weather mast on its top."
+call hw_zone x=10 z=-64 al=ridgetopz id=frostridge r=7 h=1 msg="The top of Frost Ridge. The weather mast's ladder runs up inside it - a box lashed to its deck."
+note weatherbox Weather mast box | The weather team's box on the mast deck: a drum of the reactor's cable, hauled up here before the storm.
+loot weatherbox story:cable*1;Rope*2;Bolt*2
+prop weatherbox loot.refill=0
+call hw_zone x=64 z=4 al=fishz id=fishcamp r=9 h=1 msg="The ice fishing camp. A stone hut, a sled, barrels of salted fish - and the holes in the ice frozen over."
+place Note_Paper fisherslog at 65.25 10 h=4.45 drop yaw=20
+note fisherslog Fisherman's log | ICE CAMP - FISHERMAN'S LOG\n\nThe chief came out herself for the last drum - she wants it kept away from the station in case the reactor goes. It's in my locker by the hut.\nMikkel went the short way over the bay ice. I told him not to.\nThe whalers' old cave key? Still in their wreck under the west crags, if the sea left it.
+note icelocker Ice hut locker | The fisherman's locker: hooks, line, salted fish - and the chief's last drum of cable.
+loot icelocker story:cable*1;Rope*2;Scrap*2
+prop icelocker loot.refill=0
+# The whaler, its crate with the old cave key; the ice cave's chest opens only with it (a secret)
+story cavekey|Whalers' cave key|Bolt|An iron key on a strap of seal hide, from the wrecked whaler's crate.
+note whalercrate Whaler's crate | The whaler's crate: harpoon heads, blubber hooks - and an iron key on a strap of hide.
+loot whalercrate story:cavekey*1;Rope*2;Scrap*2
+prop whalercrate loot.refill=0
+call hw_zone x=-50 z=-44 al=icecavez id=icecave r=4 msg="A cave in the crags, its mouth half drifted shut - an iron-bound chest inside, locked."
+note icecavebox Whalers' chest | The whalers' iron-bound chest, kept in the cave out of the weather: their share of the last good season.
+loot icecavebox TitaniumIngot*1;TitaniumOre*2;CopperIngot*2;Leather*2
+prop icecavebox loot.refill=0
+prop icecavebox if.open=has|story:cavekey|1
+prop icecavebox else.open=message||Locked - an iron lock, old as the whalers. The fisherman's log said where their key went.
+note planecrate Supply plane's crate | The station's supply plane, down short of the strip: tins, candles, spares.
+loot planecrate Bolt*3;Glass*2;Wool*2;Scrap*3
+call treasure x=10 z=-64 r=14 n=1 seed=26898 kind=0
+prop treasure26898 treasure.loot=CopperIngot*2;TitaniumOre*1;Nail*8
+
 info title=Temperance Remade
 info author=Custom Islands
-info description=Raft's Temperance made anew: an igloo village on a snowy ridge island, Selene's station on the terrace above it - its reactor tripped, its inner doors shut - the telescope on the peak and a snowmobile under the ice. Three cable drums, a reactor and a polar bear mother. Raft Remade's seventh island.
+info description=Raft's Temperance made anew, on an island as big as Raft's own: an igloo village on a snowy ridge island, Frost Ridge and its weather mast, an ice fishing camp, a wrecked whaler under the west crags, Selene's station on the terrace above it - its reactor tripped, its inner doors shut - the telescope on the peak and a snowmobile under the ice. Five cable drums, a reactor and a polar bear mother. Raft Remade's seventh island.
 island on.arrive=message||Snow, two igloos with their lamps out, a dark station on the terrace above - and the wind off the ice.
 
-story cable|Cable drum|quest:Temperance_ElectricalCable|A drum of the reactor's heavy cable - the reactor needs three.
+story cable|Cable drum|quest:Temperance_ElectricalCable|A drum of the reactor's heavy cable - the reactor needs five.
 
 note chiefsnote Station chief's note | TEMPERANCE STATION - CHIEF'S NOTE\n\nThe storm tripped the reactor and tore out every cable run. Three drums of cable are left on the island: one in the village store, one up at the telescope where the survey team left it, and one went through the ice in the bay with Mikkel's snowmobile.\n\nWithout the reactor the inner doors stay shut - and my vault with them: the smelter plans, the refinery, the anchors.\n\nAnd something has moved into the inner hall. The big she-bear. Do not start the reactor unarmed.
 note cable1 Village store crate | The village store's crate: tinned fish, candles - and a drum of the reactor's cable.
@@ -139,9 +213,9 @@ prop chiefsvault loot.refill=0
 
 prop reactor obj.name=reactor
 prop reactor beh.use=Connect the cables and start the reactor
-prop reactor if.use=take|story:cable|3
+prop reactor if.use=take|story:cable|5
 prop reactor on.use=message||The cables lock in, the reactor wakes with a deep hum - lights run down the hall and the inner doors slide apart. Something big stirs behind them.\nopen|innerdoor\nsound||event:/raft/door/door_selene_open
-prop reactor else.use=message||The reactor is dead. Three cable runs are missing - the chief's note said where the drums are.
+prop reactor else.use=message||The reactor is dead. Five cable runs are missing - the chief's note said where the drums are.
 prop innerdoorL obj.name=innerdoor
 prop innerdoorL beh.move=0,0,2.3
 prop innerdoorL beh.moveTime=1.5
@@ -176,7 +250,12 @@ step read|Station chief's note|1|Read the station chief's note
 step open|Village store crate|1|Open the village store's crate - the first drum of cable
 step open|Sled crate|1|Dive to Mikkel's snowmobile under the ice in the bay and open its crate
 step open|Survey crate|1|Climb to the telescope on the peak - the survey team left a drum there
-step collect|story:cable|3|Carry all three cable drums - one for each torn cable run
+step reach|frostridge|1|Climb Frost Ridge, south of the peak, to the weather mast
+step open|Weather mast box|1|Climb the weather mast and open the box on its deck - the fourth drum
+step reach|fishcamp|1|Cross to the ice fishing camp on the east flats
+step read|Fisherman's log|1|Read the fisherman's log in his hut
+step open|Ice hut locker|1|Open the fisherman's locker by the hut - the chief's last drum
+step collect|story:cable|5|Carry all five cable drums - one for each torn cable run
 step reach|station|1|Go up to Selene's station on the terrace
 step reach|inner|1|Connect the cables, start the reactor and go through the inner doors
 step kill|Polar bear|1|Face the polar bear mother in the inner hall

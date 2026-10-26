@@ -2,6 +2,7 @@
 # station on the east terrace (5 m), the den's mouth on the west plateau facing east (8.9 m), the summit (50 m).
 # Quest "The Rangers' Last Call", 20 steps: station (1-9), den (10-15), summit (16-19), the strongbox (20).
 island Balboa Remade
+offset 0.5743 -0.6511
 expect step 0
 expect title The Rangers' Last Call
 
@@ -83,3 +84,23 @@ wait 5
 expect item Blueprint_Machete 1
 expect item Blueprint_Fueltank 1
 expect done
+
+# RAFT REMADE 10-26: the secrets - the poachers' chest and their boat's key, the cave, the ranger badges, the slab stacks
+zone poacherscamp
+open Poachers' chest
+expect message Padlocked
+open Poachers' boat crate
+expect story poacherkey 1
+open Poachers' chest
+expect item TitaniumIngot 1
+zone hiddencave
+open Hermit's strongbox
+use Ranger badge 1
+use Ranger badge 2
+use Ranger badge 3
+use Ranger badge 4
+use Ranger badge 5
+wait 1
+expect message All five ranger badges
+zone jump_bb_finale
+open Rangers' tin

@@ -1,6 +1,7 @@
 # Play test of Caravan Town Remade (CIPlay caravan_town_remade, in a test world 'CI ...'). Points as in its recipe: the
 # market in the inlet (1.6 m), the lift's ladders on its south face, the upper town and the mayor's pillar (21.9 m).
 island Caravan Town Remade
+offset -5.2865 -0.4248
 expect step 0
 expect title The Mayor's Toll
 
@@ -55,4 +56,26 @@ open Mayor's chest
 wait 4
 expect item Blueprint_EngineControls 1
 expect item Blueprint_MetalDetector 1
+expect item Blueprint_BatteryCharger 1
+expect item Blueprint_ZiplineTool 1
+expect item Blueprint_ZiplineBase 1
 expect done
+
+# RAFT REMADE 10-26: the secrets on the west flats - the smugglers' cave, the drovers' lanterns, the toll tokens, the slab stacks
+zone smugglerscave
+open Smugglers' cache
+expect hidden drovertin
+use Drovers' lantern 1
+use Drovers' lantern 3
+wait 1
+expect shown drovertin
+open Drovers' tin
+use Toll token 1
+use Toll token 2
+use Toll token 3
+use Toll token 4
+use Toll token 5
+wait 1
+expect message All five toll tokens
+zone jump_ct_finale
+open Drovers' dice tin

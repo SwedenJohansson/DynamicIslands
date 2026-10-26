@@ -8,7 +8,7 @@
 # content\tests\plan_raft_remade.play. (Its rule ids are not Raft's own island names: a play test's 'expect chain radiotower'
 # read the name as Raft's Radio Tower, and a rule's 'after:' would too.)
 plan new Raft Remade
-plan description Raft's story as you know it - but every story island is made anew: new land, new missions, other monsters and a boss on each. Its blueprints are still there, so the raft gets everything the story needs. Its main islands are about 70% the size of Raft's own big islands.
+plan description Raft's story as you know it - but every story island is made anew: new land, new missions, other monsters and a boss on each. Its blueprints are still there, so the raft gets everything the story needs. Its main islands are as big as Raft's own big islands, each a one-hour adventure: hills, set-pieces and secrets round its quest.
 plan random on
 plan story on
 plan rule radioremade | island:Radio Tower Remade | start | receiver:600 | The Receiver picks up a radio tower - but not the one you remember. | Radio Tower | instead:RadioTower | quest

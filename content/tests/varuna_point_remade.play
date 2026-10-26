@@ -2,6 +2,7 @@
 # landing on the north-east sand shelf, the ramp up to the site (10 m), the floodlight tower's deck (16.3 m), the four
 # crates on the reef (2 to 7 m down), the deep under the point (11.6 m down).
 island Varuna Point Remade
+offset -0.7903 -5.1702
 expect step 0
 expect title Floodlight Down
 
@@ -12,23 +13,55 @@ expect step 0
 read Foreman's log
 expect step 1
 
+# RAFT REMADE 10-26: the surveyors' camp and their report, Varuna's Back and the fuse in the crane cab, the secrets
+zone surveycamp
+expect step 2
+read Surveyors' report
+expect step 3
+expect hidden surveycache
+use Survey lamp 1
+use Survey lamp 3
+wait 1
+expect shown surveycache
+open Surveyors' cache
+zone backfoot
+zone craneback
+expect step 4
+open Crane cab box
+expect story fuse 1
+expect step 5
+use Hard hat 1
+use Hard hat 2
+use Hard hat 3
+use Hard hat 4
+use Hard hat 5
+wait 1
+expect message All five hard hats
+expect item TitaniumIngot 1
+zone hiddencave
+open Cave strongbox
+open Company plane's crate
+open Gravel barge's crate
+zone jump_vp_finale
+open Concrete gang's tin
+
 # The floodlight's four parts from the crates round the point
 at 40 28.5 h=-2
 open Lens crate
 at 24 28.5 h=-2
 open Bulb crate
-expect step 2
+expect step 6
 at 71 -10.5 h=-2
 open Reflector crate
 at 16 -28.5 h=-3
 open Cable crate
 expect story part 4
-expect step 3
+expect step 7
 
 # Up the floodlight tower's ladder to its deck; the floodlight lit again
 climb 17.5 -1.6 h=10
 zone lightdeck
-expect step 4
+expect step 8
 use floodlight
 expect message hums
 expect story part 0
@@ -37,7 +70,7 @@ expect story part 0
 at 18 67
 zone deep
 kill Angler fish
-expect step 5
+expect step 9
 reach Foreman's strongbox
 open Foreman's strongbox
 wait 5

@@ -1,5 +1,6 @@
 # Guide pictures of Utopia Remade (CIPlay utopia_remade_pics): Raft's camera, midday, calm
 island Utopia Remade
+offset 2.5752 -7.9918
 hour 11
 weather Calm
 at 8 46
@@ -8,3 +9,9 @@ picture utopia_remade_island 70 50 82 4 8 8
 picture utopia_remade_docks 21 7 61 6 2 45
 picture utopia_remade_prison 42 15 46 22 10 13
 picture utopia_remade_yard -6.5 26 9 -6.5 18.5 -7
+hour 11
+at 0 -40
+wait 2
+picture rr_ut_lighthouse_head 22 18 -48 0 18 -74
+picture rr_ut_crew_camp -54 10 14 -72 4 4
+picture rr_ut_quarry 44 12 -40 64 6 -20

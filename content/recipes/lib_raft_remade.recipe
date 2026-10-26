@@ -1,0 +1,99 @@
+# lib_raft_remade: pieces of Raft Remade's 1-hour pass (10-26): the eight remade story islands grown to Raft's size.
+# New macros only; the shared libs stay as they are. Design: _ProjectDocs/plans/storylines_old/RAFT_REMADE.md.
+#
+# rr_land: new land from x1 z1 to x2 z2 (a lobe or a land bridge), h m over the sea, r m half-wide: flattened, smoothed
+# into the sea round it, levelled again, painted by its slope. Plants: the caller's rr_plants_* / ar_plants_* after it.
+macro rr_land x1=0 z1=0 x2=10 z2=0 h=3 r=10
+brush flatten from $x1 $z1 to $x2 $z2 r=$r s=20 frames=500 h=$h
+brush smooth from $x1 $z1 to $x2 $z2 r={$r*1.4} s=4 frames=40
+brush flatten from $x1 $z1 to $x2 $z2 r={$r*0.8} s=20 frames=400 h=$h
+brush auto from $x1 $z1 to $x2 $z2 r={$r*1.5} s=10 frames=25
+end
+#
+# rr_pad: a round pad r m at x z, h m over the sea (as rr_land, one point), cleared of the generator's plants
+macro rr_pad x=0 z=0 h=3 r=12
+brush flatten at $x $z r=$r s=20 frames=500 h=$h
+brush smooth at $x $z r={$r*1.35} s=4 frames=40
+brush flatten at $x $z r={$r*0.8} s=20 frames=400 h=$h
+brush auto at $x $z r={$r*1.4} s=10 frames=25
+clear at $x $z r=$r
+end
+#
+# rr_plants_forest: a wooded island's plants on new land (pines, birches, berries, bushes, low stones), Raft's density
+macro rr_plants_forest x=0 z=0 r=20 seed=1
+scatter "Pickup_Landmark_Tree_Pine" 4 at $x $z r=$r seed=$seed free=4
+scatter "Pickup_Landmark_Tree_Birch" 3 at $x $z r=$r seed={$seed+1} free=4
+scatter "Pickup_Landmark_BerryBush" 2 at $x $z r=$r seed={$seed+2} free=2
+scatter Bush 8 at $x $z r=$r seed={$seed+3} free=1
+scatter Bush2 5 at $x $z r=$r seed={$seed+4} free=1
+scatter SmallBoulder4 5 at $x $z r=$r seed={$seed+5} free=2
+end
+#
+# rr_piece: one piece of a collectible set (Story_Collectible) at x z on the ground, alias al, in set, named nm
+macro rr_piece x=0 z=0 al=piece set=Relics nm=Relic
+place Story_Collectible $al at $x $z ground sit
+prop $al collect.set=$set
+prop $al obj.name=$nm
+end
+#
+# rr_lamp: one puzzle light (Story_Light) at x z on the ground: alias al, name nm, its group, on = 1 if it starts lit.
+# What using it switches as well: the caller's own `prop <al> on.use=light|<other>|toggle`.
+macro rr_lamp x=0 z=0 al=lamp nm=Lamp grp=Lamps on=0
+place Story_Light $al at $x $z ground sit
+prop $al obj.name=$nm
+prop $al light.group=$grp
+prop $al light.on=$on
+end
+#
+# rr_hidden: a hidden chest (alias al, its obj.name the alias) shown by a puzzle's reward, at x z on the ground
+macro rr_hidden x=0 z=0 al=hiddenchest kind=Loot_ChestSmall yaw=0
+place $kind $al at $x $z ground sit yaw=$yaw
+prop $al obj.name=$al
+prop $al beh.hidden=1
+prop $al loot.refill=0
+end
+#
+# rr_ruin: a roofless stone house w x d blocks on its own pad h m over the sea at x z, turned yaw (ar_ruin of lib_areas,
+# its table standing on the floor); the table top is at local 1.5 1.5 y=1.35 for w=3 d=2
+macro rr_ruin x=0 z=0 h=3 yaw=0 w=3 d=2 al=ruin
+brush flatten at {$x} {$z} r={$w*1.5+4} s=20 frames=300 h=$h
+clear at $x $z r={$w*1.5+4}
+push at {$x-($w*0.75)*cos($yaw)-($d*0.75)*sin($yaw)} {$z+($w*0.75)*sin($yaw)-($d*0.75)*cos($yaw)} h=$h yaw=$yaw
+for fx 0.75 {$w*1.5-0.75} 1.5
+for fz 0.75 {$d*1.5-0.75} 1.5
+place Block_Floor_Tier3 $al at $fx $fz y=0.05
+next
+next
+place Block_Wall_Door_Tier3 $al at 0.75 0 y=0.05
+for fx 2.25 {$w*1.5-0.75} 1.5
+place Block_Wall_Tier3 $al at $fx 0 y=0.05
+next
+place Block_Wall_Window_Tier3 $al at 0.75 {$d*1.5} y=0.05
+place Block_Wall_Tier3 $al at {$w*1.5-0.75} {$d*1.5} y=0.05
+for fz 0.75 {$d*1.5-0.75} 1.5
+place Block_Wall_Tier3 $al at 0 $fz y=0.05 yaw=90
+next
+place Block_Wall_Tier3 $al at {$w*1.5} 0.75 y=0.05 yaw=90
+place SmallBoulder4 - at {$w*1.5+2.2} {$d*1.5-0.3} ground yaw=30 scale=0.5
+place SmallBoulder4 - at {$w*0.75} {$d*1.5+1.6} ground yaw=80 scale=0.6
+place SmallBoulder4 - at -2.4 0.8 ground yaw=10 scale=0.5
+place Placeable_Table_Basic - at 1.5 1.5 y=0.3 sit yaw=0
+pop
+prop $al tint.color=#5b5650
+prop $al tint.amount=0.55
+end
+#
+# rr_containers: a cargo yard of n shipping containers (Raft's Reef_Container, 2.7 x 8 m) washed up on a pad h m over the
+# sea at x z, turned yaw: a row of n side by side, the second row's first one stacked on the first row (al: their alias)
+macro rr_containers x=0 z=0 h=3 yaw=0 n=3 al=container
+brush flatten at $x $z r=14 s=20 frames=600 h=$h
+clear at $x $z r=15
+push at $x $z h=$h yaw=$yaw
+for k 0 {$n-1}
+place Reef_Container $al at {$k*3.1-($n-1)*1.55} 0 y=-0.8 yaw={2*$k-3}
+next
+place Reef_Container $al at -1.55 0.3 y=1.85 yaw=4
+pop
+prop $al tint.color=#7a4a3a
+prop $al tint.amount=0.35
+end

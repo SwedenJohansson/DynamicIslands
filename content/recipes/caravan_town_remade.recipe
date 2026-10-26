@@ -7,9 +7,16 @@
 # market's ledger, the air pocket by the sunken trailer, the diver's crate and the winch's crank in it, the bridge slid
 # back across, the mayor's hyenas, his roof, the white screecher on it, his key in her nest and his chest (Caravan
 # Town's blueprints: the firework, the engine controls, the metal detector).
+# RAFT REMADE 10-26 (1-hour pass): Raft's own size already; adds the smugglers' cave, the toll tokens (a set), the
+# drovers' lanterns (a puzzle), the slab stacks (a jump course) on the west flats, and three more of the mayor's plans
+# in his chest - the battery charger, the zipline tool, the zipline base - each its own step. Quest 15 -> 18 steps.
 #
 # Built by the recipe player (CIRecipe caravan_town_remade) through the editor's own operations.
 include lib_sea
+include lib_features
+include lib_highwater
+include lib_areas
+include lib_raft_remade
 new
 # (nature and the life under water as on Raft's island itself - Randomize existing measures them)
 randomize CaravanIsland Seed=7104 Hostiles=0 Friendly=0 SeaLife=0.3 Trees=0.35 Rocks=0.6
@@ -112,6 +119,69 @@ place Caravan_Blue_01 sunktrailer at -22.5 -13.5 ground roll=85 yaw=30
 place "Box Small" divecrate at -19.8 -12 ground yaw=40
 place Zone_Trigger airpocket at -21 -13 ground y=1
 
+# --- RAFT REMADE 10-26 (1-hour pass): Caravan Town is Raft's own size already (Raft's Caravan Island, remade from its
+# own ground); this pass adds set-pieces and secrets on its open west flats: the smugglers' cave, the toll tokens (a set),
+# the drovers' lanterns (a puzzle) and the slab stacks (a jump course).
+call ar_cave x=-88 z=6 h=2 yaw=180 al=caverock chest=cavebox
+place "Box Big" - at -92 -2 ground sit yaw=30
+place campfire_1 - at -84 -4 ground sit
+# --- JUMP COURSE ct (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---
+# JUMP ct pad=2 at=-80 -22
+push at -80 -22
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=2
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=2
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpct at 0.10 5.64 h=2.60
+place Block_Foundation_Tier3 jpct at 2.92 5.64 h=3.10
+place Block_Foundation_Tier3 jpct at 5.93 5.64 h=3.50
+place Block_Foundation_Tier3 jpct at 5.93 3.03 h=4.40
+place Block_Foundation_Tier3 jpct at 5.93 -1.21 h=4.90 sx=0.3 sz=3
+place Block_Foundation_Tier3 jpct at 5.93 -5.64 h=5.70
+place Block_Foundation_Tier3 jpct at 3.02 -5.64 h=6.60
+place Block_Foundation_Tier3 jpct at 0.40 -5.64 h=5.60
+place Block_Foundation_Tier3 jpct at -2.41 -5.64 h=6.55
+place Block_Foundation_Tier3 jpct at -5.12 -5.64 h=7.50
+place Block_Foundation_Tier3 jpct at -5.12 -2.02 h=8.40 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jpct at 1.30 -2.02 h=8.70 sx=2 sz=2
+place Block_Foundation_Tier3 jpct at 1.30 3.21 h=9.00
+# JUMP end
+# (each slab on one solid column of its own footprint, from under the pad up to the slab; the first rests on the pad)
+place Block_Foundation_Tier3 jppct at 2.92 5.64 h=2.418 sy=1.493
+place Block_Foundation_Tier3 jppct at 5.93 5.64 h=2.818 sy=2.079
+place Block_Foundation_Tier3 jppct at 5.93 3.03 h=3.718 sy=3.399
+place Block_Foundation_Tier3 jppct at 5.93 -1.21 h=4.218 sy=4.132 sx=0.3 sz=3
+place Block_Foundation_Tier3 jppct at 5.93 -5.64 h=5.018 sy=5.305
+place Block_Foundation_Tier3 jppct at 3.02 -5.64 h=5.918 sy=6.625
+place Block_Foundation_Tier3 jppct at 0.40 -5.64 h=4.918 sy=5.158
+place Block_Foundation_Tier3 jppct at -2.41 -5.64 h=5.868 sy=6.551
+place Block_Foundation_Tier3 jppct at -5.12 -5.64 h=6.818 sy=7.944
+place Block_Foundation_Tier3 jppct at -5.12 -2.02 h=7.718 sy=9.264 sx=2 sz=2
+place Block_Foundation_Tier3 jppct at 1.30 -2.02 h=8.018 sy=9.704 sx=2 sz=2
+place Block_Foundation_Tier3 jppct at 1.30 3.21 h=8.318 sy=10.144
+prop jpct tint.color=#9a6a4a
+prop jpct tint.amount=0.35
+prop jppct tint.color=#9a6a4a
+prop jppct tint.amount=0.35
+place Loot_Chest jcct at -5.12 -2.02 h=8.40 sit yaw=0
+note jcct Stack-top chest | On top of the slab stacks: the toll-keeper's own stash.
+loot jcct CopperIngot*2;TitaniumOre*1;Bolt*3
+prop jcct loot.refill=0
+place Loot_ChestSmall jbct at 1.30 3.21 h=9.00 sit yaw=0
+note jbct Drovers' dice tin | Wedged on a slab half-way: the drovers' dice money.
+loot jbct Nail*6;Scrap*3;MetalIngot*1
+prop jbct loot.refill=0
+place Zone_Trigger jyct at 1.30 3.21 h=10.00
+prop jyct zone.id=jump_ct_finale
+prop jyct zone.radius=1.8
+prop jyct zone.repeat=never
+prop jyct zone.message=You topped the slab stacks.
+pop
+# --- end of jump course ct ---
+
 # --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, melons, flowers ----------
 scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=42.0 seed=4395 free=5
@@ -121,9 +191,33 @@ scatter "Pickup_Landmark_Flower_Yellow" 4 at 0 0 r=42.0 seed=4416 free=3
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=80 deep=5 n=2
 
+# --- RAFT REMADE 10-26: the secrets - the smugglers' cave, the toll tokens, the drovers' lanterns ---------------------
+note cavebox Smugglers' cache | A box in the cave on the west flats: what the drovers kept back from the mayor's toll.
+loot cavebox TitaniumIngot*1;CopperIngot*2;Bolt*3
+prop cavebox loot.refill=0
+call hw_zone x=-88 z=2 al=cavez id=smugglerscave r=4 msg="A cave in a rock on the west flats - a cold fire outside, a box within."
+# Toll tokens: five of the mayor's brass toll tokens, dropped round the island (a set)
+call rr_piece x=-90 z=-6 al=toll1 set="Toll tokens" nm="Toll token 1"
+call rr_piece x=-40 z=60 al=toll2 set="Toll tokens" nm="Toll token 2"
+call rr_piece x=20 z=40 al=toll3 set="Toll tokens" nm="Toll token 3"
+call rr_piece x=50 z=-10 al=toll4 set="Toll tokens" nm="Toll token 4"
+call rr_piece x=-70 z=-30 al=toll5 set="Toll tokens" nm="Toll token 5"
+prop toll1 on.set=give||TitaniumIngot*1;CopperIngot*2\nmessage||All five toll tokens: the mayor's brass, back where it came from - yours.
+# The drovers' lanterns by their camp: all three lit shows the drovers' tin
+call rr_lamp x=-96 z=14 al=dlamp1 nm="Drovers' lantern 1" grp="Drovers' lanterns" on=0
+call rr_lamp x=-90 z=18 al=dlamp2 nm="Drovers' lantern 2" grp="Drovers' lanterns" on=1
+call rr_lamp x=-84 z=14 al=dlamp3 nm="Drovers' lantern 3" grp="Drovers' lanterns" on=0
+prop dlamp1 on.use=light|Drovers' lantern 2|toggle
+prop dlamp2 on.use=light|Drovers' lantern 1|toggle\nlight|Drovers' lantern 3|toggle
+prop dlamp3 on.use=light|Drovers' lantern 2|toggle
+prop dlamp1 on.alllit=show|drovertin\nmessage||All three lanterns burn - in their light, a tin pushed under a stone.
+call rr_hidden x=-90 z=12 al=drovertin
+note drovertin Drovers' tin | The drovers' tin: their wages, hidden from the mayor's men.
+loot drovertin CopperIngot*2;MetalIngot*2;Battery*1
+
 info title=Caravan Town Remade
 info author=Custom Islands
-info description=Raft's Caravan Town made anew: red sandstone stacks, a market in the inlet between them, a lift of ladders up to the upper town of trailers - and the mayor's pillar, its bridge pulled in behind him. A white screecher nests on his roof. Raft Remade's fourth island.
+info description=Raft's Caravan Town made anew, as big as Raft's own: red sandstone stacks, a market in the inlet between them, a lift of ladders up to the upper town of trailers - and the mayor's pillar, its bridge pulled in behind him. A white screecher nests on his roof. Raft Remade's fourth island.
 island on.arrive=message||Red sandstone stacks rise from the sea, trailers piled on their tops. Down in the inlet between them, a market - and a lift of ladders up the cliff.
 
 story crank|Winch crank|quest:Balboa_BrunosTool_Wrench|The bridge winch's crank, from the diver's crate by the sunken trailer.
@@ -138,7 +232,7 @@ note nest Screecher's nest | A nest of wire and rags on the mayor's roof - and s
 loot nest story:mayorkey*1;Feather*4
 prop nest loot.refill=0
 note mayorschest Mayor's chest | The mayor's chest: the toll money, the town's deeds - and the plans he never shared.
-loot mayorschest Blueprint_Firework*1;Blueprint_EngineControls*1;Blueprint_MetalDetector*1;Scrap*6;Nail*10
+loot mayorschest Blueprint_Firework*1;Blueprint_EngineControls*1;Blueprint_MetalDetector*1;Blueprint_BatteryCharger*1;Blueprint_ZiplineTool*1;Blueprint_ZiplineBase*1;Scrap*6;Nail*10
 prop mayorschest loot.refill=0
 prop mayorschest if.open=take|story:mayorkey|1
 prop mayorschest else.open=message||The mayor's chest is locked. Perhaps the white bird on his roof has the key.
@@ -198,7 +292,10 @@ step open|Mayor's chest|1|Open the mayor's chest
 step blueprint|Blueprint_Firework|1|Take the firework plans from the mayor's chest
 step blueprint|Blueprint_EngineControls|1|Take the engine controls plans from the mayor's chest
 step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from the mayor's chest
-quest done=The chest opens: the fireworks' plans, the engine controls', a metal detector's. Down in the market, someone has already started to sweep.
+step blueprint|Blueprint_BatteryCharger|1|Take the battery charger plans from the mayor's chest
+step blueprint|Blueprint_ZiplineTool|1|Take the zipline tool plans from the mayor's chest
+step blueprint|Blueprint_ZiplineBase|1|Take the zipline base plans from the mayor's chest
+quest done=The chest opens: the fireworks' plans, the engine controls', a metal detector's - a battery charger's, and a zipline's with its bases. Down in the market, someone has already started to sweep.
 quest reward=Plank*8;Scrap*6;Rope*3
 
 save Caravan Town Remade

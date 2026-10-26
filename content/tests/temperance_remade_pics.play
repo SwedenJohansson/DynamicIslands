@@ -1,5 +1,6 @@
 # Guide pictures of Temperance Remade (CIPlay temperance_remade_pics): Raft's camera, midday, calm
 island Temperance Remade
+offset 0.1375 -4.1368
 hour 11
 weather Calm
 at 2 37
@@ -8,3 +9,6 @@ picture temperance_remade_island 66 52 82 0 8 6
 picture temperance_remade_village 18 10 54 0 6 34
 picture temperance_remade_station -30 17 32 -8 10 17
 picture temperance_remade_telescope 5 17 11 -5 20 -6
+picture rr_tp_frost_ridge -12 16 -40 10 18 -64
+picture rr_tp_fish_camp 48 10 18 66 4 6
+picture rr_tp_west_crags -70 10 -50 -52 5 -34

@@ -3,6 +3,7 @@
 # the sunk stern on the ledge in the bay below (13.2 m down); the crew's camp on the west arm's dune shoulder (4 m),
 # up the dune from the lagoon's shore.
 island Vasagatan Remade
+offset 5.0341 5.0341
 expect step 0
 expect title Two Halves of a Ship
 
@@ -28,19 +29,52 @@ open Captain's safe
 expect message The safe is locked
 expect step 4
 
+# RAFT REMADE 10-26: Gannet Head's lighthouse and its salvage chart, the purser's container (the crowbar), the secrets
+zone gannetfoot
+zone gannettop
+expect step 5
+open Lamp-room box
+expect story chart 1
+expect step 6
+zone containeryard
+expect step 7
+open Purser's container
+wait 2
+expect step 8
+read Harbour master's note
+expect hidden harbourcache
+use Harbour light 1
+use Harbour light 3
+wait 1
+expect shown harbourcache
+open Harbour master's cache
+use Cargo tag 1
+use Cargo tag 2
+use Cargo tag 3
+use Cargo tag 4
+use Cargo tag 5
+wait 1
+expect message All five cargo tags
+expect item TitaniumIngot 1
+zone smugglershole
+open Smugglers' hole
+open Cargo plane's crate
+zone jump_vs_finale
+open Docker's tin
+
 # Down to the sunk stern: the locker in the captain's cabin
 at -24 -38.5
 zone stern
-expect step 5
+expect step 9
 open Captain's cabin locker
 expect story capkey 1
 # (no exact step here: the bow's rats may be gone already - a shark or the fall - and their step counted with it)
 
 # The rats in the bow's sand, their king among them
 zone bow
-expect step 8
+expect step 12
 kill Rat
-expect step 9
+expect step 13
 
 # The door forced with the crowbar - the safe is bolted just inside (the boat's doorway is too low to walk through:
 # it is opened from the doorway, within Raft's reach of the player's eye)
