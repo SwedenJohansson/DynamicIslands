@@ -264,7 +264,9 @@ step reach|customs_house|1|Go into the customs house at the end of the breakwate
 step read|Authority entry rules|1|Read the Authority's entry rules
 step read|Councillor Crane's welcome|1|Read the transcript of the Councillor's loop by the radio
 step blueprint|Blueprint_Reciever|1|Take the receiver's and head light's plans from the radio desk
+step blueprint|Blueprint_HeadLight|1|Take the head light's plans from the radio desk too
 step blueprint|Blueprint_Antenna|1|Take the antenna's and recycler's plans from the watch tower's locker
+step blueprint|Blueprint_Recycler|1|Take the recycler's plans from the watch tower's locker too
 step collect|story:permit|1|Weigh your cargo and stamp a trader's permit
 step read|Complaint No. 211|1|Read the complaint nailed to the boom post
 step reach|signal_hill|1|Climb Signal Hill north of the breakwater

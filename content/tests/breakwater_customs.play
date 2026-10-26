@@ -14,37 +14,37 @@ expect step 3
 open Radio desk
 wait 3
 expect item Blueprint_Reciever 1
-expect step 4
+expect step 5
 open Watch tower locker
 wait 3
-expect step 5
+expect step 7
 use permitstamp
 expect story permit 0
 use weighscale
 expect story weighed 1
 use permitstamp
 expect story permit 1
-expect step 6
-read Complaint No. 211
-expect step 7
-zone signal_hill
 expect step 8
-read Keeper's log
+read Complaint No. 211
 expect step 9
-zone wreckers_cave
+zone signal_hill
 expect step 10
+read Keeper's log
+expect step 11
+zone wreckers_cave
+expect step 12
 open Seized boat's hold
 wait 3
-expect step 11
+expect step 13
 # STORY 10-24: the bonded yard's maze (no climb-dive-machine template any more)
 read Bonded yard notice
-expect step 12
+expect step 14
 zone bw_heart
-expect step 13
+expect step 15
 open Seized goods strongbox
 wait 3
-expect step 14
+expect step 16
 read Clerk's last shift
-expect step 15
+expect step 17
 read A friend's tip
 expect done

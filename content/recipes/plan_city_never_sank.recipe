@@ -12,7 +12,7 @@ plan random off
 plan story off
 plan rule customs | island:Breakwater Customs | start | receiver:500 | On 500, a bored voice on a loop: "Harbor Authority, Highwater. All craft stop at the customs breakwater. Cargo weighed, permits stamped." A city? Out here? | Breakwater Customs | first | quest
 plan rule bazaar | island:Raft Row Bazaar | quest:customs | receiver:600 | On 600, a market crier between bursts of music: "Raft Row! Prices without rules!" Behind the voice, the creak of rafts lashed together. | Raft Row Bazaar | after:customs | step:5
-plan rule fleet | island:Fleetbreak Moorings | step:bazaar:5 | receiver:700 | On 700, a gull's cry, then a voice: "Free Fleet calling. The moorings are open to anyone who isn't Authority." | Fleetbreak Moorings | after:bazaar | quest
+plan rule fleet | island:Fleetbreak Moorings | step:bazaar:6 | receiver:700 | On 700, a gull's cry, then a voice: "Free Fleet calling. The moorings are open to anyone who isn't Authority." | Fleetbreak Moorings | after:bazaar | quest
 plan rule hookline | island:Hookline Stack | quest:fleet | receiver:800 | On 800, the clank of cranes and a foreman's whistle: "Union hands to the hall. Salvage share at the tally." | Hookline Stack | after:fleet | quest
 plan rule pumps | island:Pumpcrown Works | rule:hookline | receiver:900:needs=engine | On 900, the thud of great pumps, steady as a heart - the Authority's waterworks, against the wind. Bring an engine. | Pumpcrown Works | after:hookline | zone:outfall
 plan rule lowstreet | island:Lowstreet | zone:pumps:outfall | receiver:250 | Through the outfall's grating, east and twenty metres down: a street. Shop signs, a tram, a cinema - all under water. On the Receiver, a tram bell rings under the static. | Lowstreet | after:pumps | quest

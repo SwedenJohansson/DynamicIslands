@@ -376,10 +376,12 @@ step reach|valve_gallery|1|Dive down to the flooded valve gallery
 step read|Valve log|1|Read the valve log in the gallery
 step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced biofuel extractor's plans from the gallery's chest
 step blueprint|Blueprint_SmelterElectric|1|Take the electric smelter's and battery charger's plans from the workshop
+step blueprint|Blueprint_BatteryCharger|1|Take the battery charger's plans from the workshop too
 step open|Councillor's drawer|1|Open the councillor's drawer in his office
 step reach|old_pump|1|Go into the pump house and look at the oldest pump
 step read|Builder's plate|1|Read the builder's plate on the pump
 step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced anchor's and zipline's plans from the pump house locker
+step blueprint|Blueprint_ZiplineTool|1|Take the zipline's plans from the pump house locker too
 step read|Sluicekeeper's notice|1|Read the sluicekeeper's notice by the four sluice levers in the south
 step reach|aqueduct_hill|1|Climb aqueduct hill in the north-west
 step read|Clerk Quill's slip|1|Find Clerk Quill's slip on aqueduct hill
