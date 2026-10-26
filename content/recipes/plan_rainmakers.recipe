@@ -8,7 +8,7 @@
 # Built by the recipe player (CIRecipe plan_rainmakers) in the editor's World plans window. Its play test:
 # content\tests\plan_rainmakers.play.
 plan new The Rainmakers
-plan description The stations of Nimbus Works, the company that made it rain: nine islands down its weather line - a weir, silos, a kite meadow, a fog works, a reservoir, a lightning array, salt kilns and a cloud-watchers' club - and at the end the Rain Engine on its mountain. Raft's own story is off; its blueprints are in the stations' chests. Its main islands are about 70% the size of Raft's own big islands.
+plan description The stations of Nimbus Works, the company that made it rain: nine islands down its weather line - a weir, silos, a kite meadow, a fog works, a reservoir, a lightning array, salt kilns and a cloud-watchers' club - and at the end the Rain Engine on its mountain. Raft's own story is off; its blueprints are in the stations' chests. Its main islands are as big as Raft's own big islands, each about an hour's adventure with secrets off the quest path.
 plan random on
 plan story off
 plan rule weir | island:Hailstone Weir | start | receiver:500 | The Receiver crackles: an automatic weather report, then a woman's voice - "Nimbus Works, Hailstone Weir. Is anybody out there?" | Hailstone Weir | first | quest

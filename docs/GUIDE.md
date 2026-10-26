@@ -4518,7 +4518,11 @@ station's logbook gives the frequency of the next, and the trail ends at the Rai
 the whole sky. Each island has notes from the staff, a survivor or a family story, a blueprint cache (Raft's
 blueprints in Raft's order; the quest has a **Blueprint** step for each, so taking them is part of it) and a frequency
 for the next island. The Sleet Kilns and The Isobar Club each have a **Raft store**: Raft's goods, and any story
-blueprint a player missed. At the end every player sees the credits and a closing note. Its main islands are about 70% the size of Raft's own big islands.
+blueprint a player missed. At the end every player sees the credits and a closing note. Its main islands are as big as Raft's own big islands, about an hour each: round the old station new land adds high
+ground with a trail and a mast, a cave, a ruined house whose islander you can talk to (four lamps by the door: light
+them all), a crashed plane, a jump course, a set of five pieces to collect (the last opens a chest) and a buried
+treasure; mazes on Cirrus Silo Farm, The Sleet Kilns and The Isobar Club, and a telescope fly-through on The Kite Meadow
+and The Rain Engine. The quest walks you across the new land before each station's last step.
 
 | Island | What it is | What to look at |
 |---|---|---|

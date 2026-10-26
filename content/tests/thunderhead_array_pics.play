@@ -1,6 +1,6 @@
 # Guide pictures of Thunderhead Array (CIPlay thunderhead_array_pics): Raft's camera, midday, calm
 island Thunderhead Array
-offset 0 0
+offset 0 24
 hour 11
 weather Calm
 at 0 -30
@@ -15,3 +15,10 @@ picture thunderhead_array_underwater 0 -2 -80 0 -3 -60
 zone plateau
 wait 3
 picture thunderhead_array_storm 20 20 -10 0 16 14
+# RAIN 10-26: the new land - Spark Bluff, Basalt Cave, the ruined house, the plane
+offset 0 0
+picture rain_ta_hill 14 24 14 -40 6 52
+picture rain_ta_cave 58 12 30 48 10 54
+picture rain_ta_ruin 50 12 -42 62 8.5 -30
+picture rain_ta_plane -50 13 -40 -62 8 -30
+picture rain_ta_jumps 22 13 56 8 11 68

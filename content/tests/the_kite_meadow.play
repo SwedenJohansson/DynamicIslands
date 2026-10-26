@@ -2,7 +2,7 @@
 # The cliff path up from the south beach (0 -60, 3 m) past the crew hut's ledge (7..10 -52..-49, 8 m) and the vines
 # (z -38) to the meadow (20 m); the masts x -25.3..25.3 at z 16; the launch shed x -4.5..4.5 z 24..28.5.
 island The Kite Meadow
-offset 0 0
+offset 0 10
 expect step 0
 expect title Kites Over the Ridge
 wait 5
@@ -54,6 +54,57 @@ open Biofuel press
 wait 3
 expect item Blueprint_BiofuelExtractor 1
 expect step 14
+# RAIN 10-26: the hub, Ivar Brekke, the climb, Wind Cave, the secrets
+expect hidden km_rewchest
+use km_machine
+expect hidden km_rewchest
+read Kite crew's notice
+expect step 15
+use Ivar Brekke
+wait 1
+expect step 16
+expect hidden km_lampchest
+use Crew lamp 2
+wait 1
+expect shown km_lampchest
+open Ivar's kit bag
+zone km_hill
+expect step 17
+open Kite spotter's tower deck box
+wait 3
+expect story km_top 1
+expect step 18
+zone km_cave
+expect step 19
+open Wind Cave chest
+wait 3
+expect story km_cave 1
+expect step 20
+use km_machine
+expect shown km_rewchest
+expect story km_fixed 1
+open Reserve winch reward
+wait 3
+read Reserve winch card
+expect step 21
+# the secrets: the plane, the jumps, the set, the telescope
+zone km_plane
+open Spotter plane's crate
+read Spotter's note
+zone km_jumps
+open Gull perch
+open Perch top
+expect hidden km_setchest
+use km_piece1
+use km_piece2
+use km_piece3
+use km_piece4
+use km_piece5
+wait 2
+expect shown km_setchest
+open Kite crew chest
+use km_scope
+wait 8
 use shedbell
 expect story bellrung 1
 expect done

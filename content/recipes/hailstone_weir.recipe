@@ -2,19 +2,25 @@
 # A forested island whose river mouth Nimbus Works closed with a concrete weir: two piers of the radio tower's pillar caps
 # standing in the riverbed, thick pillars beside them as the gate hoists, Utopia's drawbridges set
 # upright between them as three sluice gates, a walk across the top. The pump house on the west bank (stone base, a
-# metal hip roof on its corner pillars), the weir keeper's table by the east end. Quest "Day One of the Rain" (5 steps):
+# metal hip roof on its corner pillars), the weir keeper's table by the east end. Quest "Day One of the Rain" (15 steps):
 # the weir walk, the keeper's log, the crank that opens sluice one and drains the pump house, its locker (the Receiver's
 # and the antenna's blueprints), the Nimbus maintenance card naming the next station.
 #
 # Built by the recipe player (CIRecipe hailstone_weir) through the editor's own operations.
 include lib_sea
 include lib_features
+include lib_areas
+include lib_highwater
+include lib_rain
+# RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 48 -> 85; the old island moved 37 m south (push frames), so its south shore stays on the coast and the new land is north
+# RAIN 10-26: the new land - Sleet Knoll with rain gauge mast, Drip Cave, Brita Sand at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five hailstones
 new
 # (nature: forest, Like Raft's own: Trees 0.28, Bushes 0.28, Rocks 0.43, Harvest 0.24 - CIGenLikeRaft)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
-gen Seed=9301 Radius=48 Height=22 Roughness=0.5 Peaks=2 Shape=0 Style=3 PeakShape=0.6 Cliffs=0.3 BeachWidth=0.4
+gen Seed=9301 Radius=85 Height=22 Roughness=0.5 Peaks=2 Shape=0 Style=3 PeakShape=0.6 Cliffs=0.3 BeachWidth=0.4
 gen Water=0.5 SeaRocks=0.5 SeaFinds=0.3 Sunken=0.3 Hostiles=0 Friendly=0.2 SeaLife=0.3
 generate
+push at 0 -37
 
 # --- Terrain: the river cut from the hills to the south shore (its bed 1.5 m under the sea), level banks at the weir
 # (1.6 m, the walk's height) on both sides --------------------------------------------------------------------------
@@ -26,7 +32,15 @@ brush smooth from 0 8 to 0 -62 r=11 s=6 frames=20
 brush grass from -24 -22 to -12 -34 r=9 s=8 frames=40
 brush grass from 12 -26 to 20 -36 r=8 s=8 frames=40
 brush grass from -14 -10 to 14 -10 r=10 s=8 frames=40
+pop
 origin
+# --- RAIN 10-26 terrain: Sleet Knoll, the pads of the new areas ---------------------------------------------------
+call hw_mount x=-38 z=46 b=24 h=22
+call hw_trail x=-38 z=46 b=24 h=22 a0=126.38 turn=300 n=40 h0=3
+brush flatten at 0 18 r=4 s=8 frames=60
+clear at 0 18 r=7
+# (RESIZE 10-26: the old island, 37 m south)
+push at 0 -37
 clear from 0 8 to 0 -62 r=10
 clear from -22 -24 to -11 -34 r=8
 clear at 14 -32 r=7
@@ -109,10 +123,103 @@ scatter "Pickup_Landmark_Flower_Red" 2 at 0 0 r=34 seed=9313 free=3
 call dirt x=-20 z=-10 r=10 n=3 seed=9314
 call shallows r=68 deep=5 n=2
 
+pop
+
+# --- RAIN 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Sleet Knoll ------
+# Sleet Knoll with rain gauge mast on it, Drip Cave, the ruined house where Brita Sand waits (four lamps round it: a puzzle), a crashed plane,
+# a jump course, five hailstones about the island (a set), and at the hub the sluice two hoist that wants the gauge funnel and the weir crank pawl
+call hw_zone x=-17.87 z=31.17 al=hw_trailz id=hw_trail r=5 msg="The trail up Sleet Knoll starts here - round and up."
+call hw_zone x=-38 z=46 al=hw_summitz id=hw_summit r=8 h=1 msg="The top of Sleet Knoll. The whole island below you."
+call hw_mast x=-41 z=48 h0=22 lv=6 a=hw_mast chest=hw_topchest top=Placeable_Lantern_Metal
+place ZiplinePath_Landmark hw_zip at -34.8 43.4 h=23.35
+zipto hw_zip -1.83 21.56
+place Creature_Goat hw_goats at -13.87 34.17 ground
+prop hw_goats creature.count=2
+call ar_cave x=46 z=50 h=4 yaw=180 al=hw_caverock chest=hw_cavechest
+call hw_zone x=47 z=41 al=hw_cavez id=hw_cave r=4 h=1 msg="Drip Cave. Water drips somewhere in the dark."
+call ar_ruin x=58 z=-14 h=3 yaw=0 w=3 d=2 al=hw_ruin
+call rn_islander x=57 z=-18.5 yaw=200 al=hw_isl nm="Brita Sand" pose=lean
+prop hw_isl talk.text=You came up the river? Nobody's come up the river since they shut the weir.\n---\nI kept the gauge for Nimbus Works. Rain in the morning, rain at noon, rain at night. I wrote it all down and nobody ever read it.\n---\nThe hoist wants its funnel back from the mast on the knoll, and the pawl the foreman hid in Drip Cave. Bring both and the river runs.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
+call rn_lamp x=51 z=-15 al=hw_lamp1 nm="Gauge lamp 1" grp="Gauge lamps" on=0
+call rn_lamp x=57 z=-8 al=hw_lamp2 nm="Gauge lamp 2" grp="Gauge lamps" on=1
+call rn_lamp x=64 z=-15 al=hw_lamp3 nm="Gauge lamp 3" grp="Gauge lamps" on=0
+call rn_lamp x=57 z=-22 al=hw_lamp4 nm="Gauge lamp 4" grp="Gauge lamps" on=1
+prop hw_lamp1 on.use=light|Gauge lamp 2|toggle
+prop hw_lamp2 on.use=light|Gauge lamp 3|toggle
+prop hw_lamp3 on.use=light|Gauge lamp 4|toggle
+prop hw_lamp4 on.use=light|Gauge lamp 1|toggle
+prop hw_lamp1 on.alllit=show|hw_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call rn_hidden x=59 z=-9.4 al=hw_lampchest
+place Creature_Chicken hw_hens at 66 -8 ground
+prop hw_hens creature.count=3
+call ar_plane x=-60 z=-26 h=3 yaw=40 al=hw_plane crate=hw_planecrate
+place Note_Paper hw_pilot at -61.78 -21.9 ground y=0.1 drop yaw=70
+call hw_zone x=-60 z=-26 al=hw_planez id=hw_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
+# JUMP hw pad=3 at=4 66
+push at 4 66
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jphw at -4.24 -4.24 h=3.6
+place Block_Foundation_Tier3 jphw at -5.77 -1.65 h=4.35
+place Block_Foundation_Tier3 jphw at -5.85 1.35 h=5.1
+place Block_Foundation_Tier3 jphw at -4.46 4.01 h=5.85
+place Block_Foundation_Tier3 jphw at -1.95 5.67 h=6.6
+place Block_Foundation_Tier3 jphw at 1.04 5.91 h=7.35
+place Block_Foundation_Tier3 jphw at 3.78 4.66 h=8.1
+place Block_Foundation_Tier3 jphw at 5.56 2.25 h=8.85
+place Block_Foundation_Tier3 jphw at 5.96 -0.73 h=9.6
+# JUMP from 10
+place Block_Foundation_Tier3 jphw at 4.85 -3.53 h=10.35
+place Block_Foundation_Tier3 jphw at 2.54 -5.44 h=11.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jpphw at -5.77 -1.65 h=3.668 sy=1.861
+place Block_Foundation_Tier3 jpphw at -5.85 1.35 h=4.418 sy=2.959
+place Block_Foundation_Tier3 jpphw at -4.46 4.01 h=5.168 sy=4.058
+place Block_Foundation_Tier3 jpphw at -1.95 5.67 h=5.918 sy=5.157
+place Block_Foundation_Tier3 jpphw at 1.04 5.91 h=6.668 sy=6.255
+place Block_Foundation_Tier3 jpphw at 3.78 4.66 h=7.418 sy=7.354
+place Block_Foundation_Tier3 jpphw at 5.56 2.25 h=8.168 sy=8.453
+place Block_Foundation_Tier3 jpphw at 5.96 -0.73 h=8.918 sy=9.552
+place Block_Foundation_Tier3 jpphw at 4.85 -3.53 h=9.668 sy=10.650
+place Block_Foundation_Tier3 jpphw at 2.54 -5.44 h=10.418 sy=11.749 sx=2 sz=2
+prop jphw tint.color=#8a7f70
+prop jphw tint.amount=0.35
+prop jpphw tint.color=#8a7f70
+prop jpphw tint.amount=0.35
+place Loot_Chest jchw at 1.04 5.91 h=7.35 sit yaw=0
+prop jchw loot.refill=0
+place Loot_ChestSmall jbhw at 2.54 -5.44 h=11.1 sit yaw=0
+prop jbhw loot.refill=0
+pop
+call hw_zone x=4 z=58 al=hw_jumpz id=hw_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call rn_piece x=-24 z=26 al=hw_piece1 set="Hailstones"
+call rn_piece x=-52 z=-17 al=hw_piece2 set="Hailstones"
+call rn_piece x=40 z=24 al=hw_piece3 set="Hailstones"
+call rn_piece x=-10 z=60 al=hw_piece4 set="Hailstones"
+call rn_piece x=72 z=2 al=hw_piece5 set="Hailstones"
+prop hw_piece1 on.set=show|hw_setchest\nmessage||All five hailstones found.
+call rn_hidden x=5 z=14 al=hw_setchest kind=Loot_Chest
+call treasure x=24 z=56 r=5 n=1 seed=26178 kind=0
+prop treasure26178 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_hill x=-8 z=46 r=16 seed=26191
+call ar_plants_hill x=30 z=22 r=14 seed=26192
+call ar_plants_hill x=-30 z=4 r=14 seed=26193
+call ar_plants_hill x=40 z=-40 r=14 seed=26194
+call ar_plants_hill x=66 z=36 r=10 seed=26195
+call hw_machine x=0 z=18 yaw=180 al=hw_machine nm="Sluice two hoist" obj=TP_LaserControlPanel_lever sc=3 a=hw_top b=hw_cave done=hw_fixed rew=hw_rewchest rnote=hw_rewnote msg="It works." hint="It wants the gauge funnel from Sleet Knoll and the weir crank pawl from Drip Cave."
+call hw_note x=-2.6 z=19.2 yaw=200 al=hw_hint
+
+# RAIN 10-26: rocks left hanging by the new hills
+clear at -26.2 20 r=2 only=BigRock_2
+clear at -35.9 -24.15 r=1.5 only=SmallRock_03
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Hailstone Weir
 info author=Custom Islands
-info description=Nimbus Works' first station: a forested island whose river mouth the company closed with a concrete weir - three sluice gates, a pump house on the bank, and the weir keeper's log. The first island of The Rainmakers.
+info description=Nimbus Works' first station: a forested island whose river mouth the company closed with a concrete weir - three sluice gates, a pump house on the bank, and the weir keeper's log. The first island of The Rainmakers. Raft-sized: high ground, a cave, a ruined house where Brita Sand still lives, a crashed plane and secrets off the path.
 island on.arrive=message||A green island, a river - and across its mouth a grey concrete weir, three gates shut, water spilling over the top.
 
 story sluiceopen|Sluice one open|Placeable_Pipe_Water|Sluice one of the weir is open; the pump house basement drained.
@@ -135,6 +242,30 @@ prop weirwalk zone.id=weir_walk
 prop weirwalk zone.radius=4
 prop weirwalk zone.message=The weir walk: three sluice gates under your feet, the river held back behind them.
 
+story hw_top|Gauge funnel|Bolt|The brass funnel off the top of the rain gauge mast, still beaded with water.
+story hw_cave|Weir crank pawl|Bolt|The pawl of the weir's second crank, hidden in the cave so nobody could open the sluices.
+story hw_fixed|Sluice two hoist working|Bolt|The sluice two hoist, working again.
+note hw_hint Weir hand's notice | SLUICE TWO HOIST - OUT OF ORDER. The gauge funnel is up on the mast on Sleet Knoll (the trail starts on the side toward the weir) and somebody took the crank pawl into Drip Cave, north-east. Ask Brita at the old house east of the weir.
+note hw_topchest Rain gauge mast deck box | A box lashed to the deck rail at the top of the rain gauge mast.
+loot hw_topchest story:hw_top*1;Rope*2;Scrap*2
+note hw_cavechest Drip Cave chest | A chest at the back of Drip Cave, dry under the rock.
+loot hw_cavechest story:hw_cave*1;Nail*6;Plank*3
+note hw_rewnote Sluice two log | The hoist clanks and sluice two lifts a hand's width - the river runs free again. Taped inside the panel: the weir hand's log. 'They told us to shut the river so the rain would stay on the island. The island drowned instead.'
+note hw_rewchest Sluice two hoist reward | What the sluice two hoist kept.
+loot hw_rewchest CopperIngot*2;Bolt*3;Rope*2
+note hw_lampchest Brita's gauge box | Brita's gauge box, under a stone behind the house: eleven years of rain in a book, and her savings.
+loot hw_lampchest CopperIngot*2;TradeToken*2;Rope*2
+note hw_setchest Hail jar | A jar the weir hands filled with the biggest hailstones they ever saw - glass beads now, and a bag of bolts.
+loot hw_setchest Glass*3;Bolt*4;MetalIngot*1
+note hw_planecrate Survey plane's crate | The survey plane's crate: river charts, a flask, and the company's tools.
+loot hw_planecrate Plastic*3;Scrap*3;Nail*6
+prop hw_planecrate loot.refill=0
+note hw_pilot Pilot's kneeboard | SURVEY FLIGHT 3 - Hailstone. Cloud base at forty metres and falling. River mouth closed. Fuel low, putting her down on the west meadow. If anybody finds this, the weir was a mistake.
+note jchw Gauge hand's perch | The gauge hands climbed up here to dry their boots, out of reach of the river.
+loot jchw Rope*3;Plank*4;MetalIngot*1
+note jbhw Top of the perch | Somebody's stash at the very top.
+loot jbhw CopperIngot*1;Bolt*2;TradeToken*1
+
 quest title=Day One of the Rain
 quest intro=A weir across a river mouth: Nimbus Works' first station. Walk out onto it.
 step reach|weir_walk|1|Walk out onto the weir
@@ -143,13 +274,23 @@ step collect|story:sluiceopen|1|Turn the crank on the west pier to open sluice o
 step open|Pump house locker|1|Open the locker in the drained pump house
 step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the pump house locker
 step blueprint|Blueprint_Antenna|1|Take the antenna plans from the pump house locker
+step read|Weir hand's notice|1|Read the weir hand's notice by the sluice two hoist
+step talk|Brita Sand|1|Talk to Brita Sand at the ruined house in the east
+step reach|hw_trail|1|Find the foot of the trail up Sleet Knoll, in the north-west
+step reach|hw_summit|1|Climb the trail to the top of Sleet Knoll
+step collect|story:hw_top|1|Climb the rain gauge mast and take the gauge funnel from its deck
+step reach|hw_cave|1|Find Drip Cave in the north-east
+step collect|story:hw_cave|1|Take the weir crank pawl from the chest at the back of the cave
+step read|Sluice two log|1|Bring both to the sluice two hoist and read what it shows
 step read|Nimbus maintenance card|1|Read the Nimbus maintenance card on the pump house table
 quest done=The maintenance card names the next station: Cirrus Silo Farm. Tune the Receiver to the maintenance band.
 quest reward=Plank*6;Rope*3;Scrap*4
 
 # --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
+push at 0 -37
 place VP_Forklift - at -14 -22 ground sit yaw=90
 # the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
 clear at -27.55 -33.09 r=1.5 only=BigRock_2
+pop
 
 save Hailstone Weir

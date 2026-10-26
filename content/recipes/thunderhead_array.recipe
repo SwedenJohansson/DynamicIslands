@@ -3,7 +3,7 @@
 # antenna poles with their cones pointing at the sky) on concrete pads, a wire from rod to rod along each row of rods. Behind the
 # grid the generator hall and the control bunker behind a keycard door, between them a cage the array engineer locked
 # herself in when the storms came. A path climbs from the landing beach; a zipline runs from the plateau's edge back
-# down to the shore. Quest "Storm Grid" (11 steps): the landing, the safety rules, the plateau (the storm comes in), the
+# down to the shore. Quest "Storm Grid" (22 steps): the landing, the safety rules, the plateau (the storm comes in), the
 # three generators, the wire connectors and the grid board, the screechers the rods draw, the bunker (the keycard in
 # the generator hall chest), its lockers (the power blueprints), the engineer's diary, Ingrid freed from the cage (her
 # zipline handle), the zipline down to the beach.
@@ -12,12 +12,18 @@
 include lib_sea
 include lib_features
 include lib_huts
+include lib_areas
+include lib_highwater
+include lib_rain
+# RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 64 -> 88; the old island moved 24 m south (push frames), so its south shore stays on the coast and the new land is north
+# RAIN 10-26: the new land - Spark Bluff with storm watch mast, Basalt Cave, Signe Lund at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five fulgurites
 new
 # (nature: bare basalt, rocks; low bushes, few trees; Harvest 0.2)
 gen Trees=0.1 Bushes=0.15 Rocks=0.5 Harvest=0.2 BeachThings=0.3
-gen Seed=9801 Radius=64 Height=18 Roughness=0.35 Peaks=1 Shape=0 Style=4 PeakShape=0.1 Cliffs=0.85 BeachWidth=0.4
+gen Seed=9801 Radius=88 Height=18 Roughness=0.35 Peaks=1 Shape=0 Style=4 PeakShape=0.1 Cliffs=0.85 BeachWidth=0.4
 gen Water=0.5 SeaRocks=0.5 SeaFinds=0.12 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
+push at 0 -24
 
 # --- Terrain: the plateau flattened at 14 m, the landing beach on the south side, the path up to the plateau in
 # steps, the zipline's beach east of the landing ----------------------------------------------------------------------
@@ -30,7 +36,14 @@ brush flatten at 0 -38 r=4 s=20 frames=50 h=7.5
 brush flatten at 0 -32 r=4 s=20 frames=50 h=10
 brush flatten at 0 -27 r=4 s=20 frames=50 h=12.5
 brush smooth from 0 -54 to 0 -22 r=3 s=6 frames=20
+pop
 origin
+# --- RAIN 10-26 terrain: Spark Bluff, the pads of the new areas ---------------------------------------------------
+call rn_pad x=-40 z=52 r=6 h=7
+brush flatten at 0 30 r=4 s=8 frames=60
+clear at 0 30 r=7
+# (RESIZE 10-26: the old island, 24 m south)
+push at 0 -24
 clear at 0 8 r=31
 clear from 0 -58 to 0 -22 r=5
 clear at 22 -55 r=6
@@ -154,10 +167,97 @@ scatter "Pickup_Landmark_Flower_Blue" 2 at 30 -30 r=20 seed=9812 free=3
 call dirt x=-30 z=-30 r=10 n=3 seed=9813
 call shallows r=86 deep=5 n=2
 
+pop
+
+# --- RAIN 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Spark Bluff ------
+# Spark Bluff with storm watch mast on it, Basalt Cave, the ruined house where Signe Lund waits (four lamps round it: a puzzle), a crashed plane,
+# a jump course, five fulgurites about the island (a set), and at the hub the earthing switch that wants the storm meter and the earth spike
+call hw_zone x=-36 z=52 al=ta_hillz id=ta_hill r=8 h=1 msg="Spark Bluff. The whole island below you."
+call hw_mast x=-40 z=52 h0=7 lv=6 a=ta_mast chest=ta_topchest top=RT_Spotlight
+call ar_cave x=48 z=54 h=7 yaw=180 al=ta_caverock chest=ta_cavechest
+call hw_zone x=49 z=45 al=ta_cavez id=ta_cave r=4 h=1 msg="Basalt Cave. Water drips somewhere in the dark."
+call ar_ruin x=62 z=-30 h=7 yaw=0 w=3 d=2 al=ta_ruin
+call rn_islander x=61 z=-34.5 yaw=200 al=ta_isl nm="Signe Lund" pose=stand
+prop ta_isl talk.text=Keep off the rods. They still draw the lightning.\n---\nI was a linesman here. They pulled up the earth spike to make the bolts strike harder. I hid it in the Basalt Cave so they couldn't put it back wrong.\n---\nThe earthing switch wants the spike and the storm meter from the watch mast on Spark Bluff. Earth it and this island sleeps quiet again.\n---\nThe four line lamps round my house: each one wakes the next. Light them all and look behind the back wall.
+call rn_lamp x=55 z=-31 al=ta_lamp1 nm="Line lamp 1" grp="Line lamps" on=0
+call rn_lamp x=61 z=-24 al=ta_lamp2 nm="Line lamp 2" grp="Line lamps" on=0
+call rn_lamp x=68 z=-31 al=ta_lamp3 nm="Line lamp 3" grp="Line lamps" on=1
+call rn_lamp x=61 z=-38 al=ta_lamp4 nm="Line lamp 4" grp="Line lamps" on=1
+prop ta_lamp1 on.use=light|Line lamp 2|toggle
+prop ta_lamp2 on.use=light|Line lamp 3|toggle
+prop ta_lamp3 on.use=light|Line lamp 4|toggle
+prop ta_lamp4 on.use=light|Line lamp 1|toggle
+prop ta_lamp1 on.alllit=show|ta_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call rn_hidden x=63 z=-25.4 al=ta_lampchest
+place Creature_Chicken ta_hens at 70 -24 ground
+prop ta_hens creature.count=3
+call ar_plane x=-62 z=-30 h=7 yaw=40 al=ta_plane crate=ta_planecrate
+place Note_Paper ta_pilot at -63.78 -25.9 ground y=0.1 drop yaw=70
+call hw_zone x=-62 z=-30 al=ta_planez id=ta_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
+# JUMP ta pad=7 at=8 68
+push at 8 68
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=7
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=7
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpta at 4.24 4.24 h=7.6
+place Block_Foundation_Tier3 jpta at 5.77 1.65 h=8.35
+place Block_Foundation_Tier3 jpta at 5.85 -1.35 h=9.1
+place Block_Foundation_Tier3 jpta at 4.46 -4.01 h=9.85
+place Block_Foundation_Tier3 jpta at 1.95 -5.67 h=10.6
+place Block_Foundation_Tier3 jpta at -1.04 -5.91 h=11.35
+place Block_Foundation_Tier3 jpta at -3.78 -4.66 h=12.1
+place Block_Foundation_Tier3 jpta at -5.56 -2.25 h=12.85
+place Block_Foundation_Tier3 jpta at -5.96 0.73 h=13.6
+# JUMP from 10
+place Block_Foundation_Tier3 jpta at -4.85 3.53 h=14.35
+place Block_Foundation_Tier3 jpta at -2.54 5.44 h=15.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppta at 5.77 1.65 h=7.668 sy=1.861
+place Block_Foundation_Tier3 jppta at 5.85 -1.35 h=8.418 sy=2.959
+place Block_Foundation_Tier3 jppta at 4.46 -4.01 h=9.168 sy=4.058
+place Block_Foundation_Tier3 jppta at 1.95 -5.67 h=9.918 sy=5.157
+place Block_Foundation_Tier3 jppta at -1.04 -5.91 h=10.668 sy=6.255
+place Block_Foundation_Tier3 jppta at -3.78 -4.66 h=11.418 sy=7.354
+place Block_Foundation_Tier3 jppta at -5.56 -2.25 h=12.168 sy=8.453
+place Block_Foundation_Tier3 jppta at -5.96 0.73 h=12.918 sy=9.552
+place Block_Foundation_Tier3 jppta at -4.85 3.53 h=13.668 sy=10.650
+place Block_Foundation_Tier3 jppta at -2.54 5.44 h=14.418 sy=11.749 sx=2 sz=2
+prop jpta tint.color=#8a7f70
+prop jpta tint.amount=0.35
+prop jppta tint.color=#8a7f70
+prop jppta tint.amount=0.35
+place Loot_Chest jcta at -1.04 -5.91 h=11.35 sit yaw=0
+prop jcta loot.refill=0
+place Loot_ChestSmall jbta at -2.54 5.44 h=15.1 sit yaw=0
+prop jbta loot.refill=0
+pop
+call hw_zone x=8 z=60 al=ta_jumpz id=ta_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call rn_piece x=-26 z=32 al=ta_piece1 set="Fulgurites"
+call rn_piece x=-54 z=-21 al=ta_piece2 set="Fulgurites"
+call rn_piece x=42 z=28 al=ta_piece3 set="Fulgurites"
+call rn_piece x=-6 z=62 al=ta_piece4 set="Fulgurites"
+call rn_piece x=76 z=-14 al=ta_piece5 set="Fulgurites"
+prop ta_piece1 on.set=show|ta_setchest\nmessage||All five fulgurites found.
+call rn_hidden x=5 z=26 al=ta_setchest kind=Loot_Chest
+call treasure x=36 z=72 r=5 n=1 seed=26678 kind=0
+prop treasure26678 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_hill x=-8 z=46 r=16 seed=26691
+call ar_plants_hill x=30 z=22 r=14 seed=26692
+call ar_plants_hill x=-30 z=4 r=14 seed=26693
+call ar_plants_hill x=40 z=-40 r=14 seed=26694
+call ar_plants_hill x=66 z=36 r=10 seed=26695
+call hw_machine x=0 z=30 yaw=180 al=ta_machine nm="Earthing switch" obj=TP_LaserControlPanel_lever sc=3 a=ta_top b=ta_cave done=ta_fixed rew=ta_rewchest rnote=ta_rewnote msg="It works." hint="It wants the storm meter from Spark Bluff and the earth spike from Basalt Cave."
+call hw_note x=-2.6 z=31.2 yaw=200 al=ta_hint
+
+# RAIN 10-26: rocks left hanging by the new hills
+clear at -79.52 27.33 r=1.5 only=CaravanIsland_SmallRock_1
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Thunderhead Array
 info author=Custom Islands
-info description=Nimbus Works' sixth station: a black basalt cliff island with a grid of forty lightning rods on its plateau, a generator hall, a control bunker behind a keycard door and a zipline down to the shore. The sixth island of The Rainmakers.
+info description=Nimbus Works' sixth station: a black basalt cliff island with a grid of forty lightning rods on its plateau, a generator hall, a control bunker behind a keycard door and a zipline down to the shore. The sixth island of The Rainmakers. Raft-sized: high ground, a cave, a ruined house where Signe Lund still lives, a crashed plane and secrets off the path.
 island on.arrive=message||A black cliff island. On its flat top stands a forest of thin metal rods, row on row, all pointing at the sky.
 
 story power|Generator running|Battery|One of the array's three generators is running.
@@ -260,6 +360,30 @@ prop bunkerzone zone.id=bunker
 prop bunkerzone zone.radius=2
 prop bunkerzone zone.message=The control bunker: lockers, a desk, a diary.
 
+story ta_top|Storm meter|Bolt|The storm meter off the watch mast, its needle stuck at the red.
+story ta_cave|Earth spike|Bolt|The array's earth spike, pulled up and hidden in the Basalt Cave.
+story ta_fixed|Earthing switch working|Bolt|The earthing switch, working again.
+note ta_hint Linesman's notice | THE ARRAY IS NOT EARTHED. The earthing switch wants the storm meter (the watch mast on Spark Bluff) and the earth spike (the Basalt Cave). Signe at the old house knows. DO NOT TOUCH THE RODS IN A STORM.
+note ta_topchest Storm watch mast deck box | A box lashed to the deck rail at the top of the storm watch mast.
+loot ta_topchest story:ta_top*1;Rope*2;Scrap*2
+note ta_cavechest Basalt Cave chest | A chest at the back of Basalt Cave, dry under the rock.
+loot ta_cavechest story:ta_cave*1;CopperOre*3;Bolt*2
+note ta_rewnote Earthing log | The switch drops and the hum of the rods goes quiet. A log card behind it: 'Unearthed on orders - they wanted the bolts to strike the sea and the clouds. Three linesmen hurt.'
+note ta_rewchest Earthing switch reward | What the earthing switch kept.
+loot ta_rewchest CopperIngot*3;Battery*1;TradeToken*2
+note ta_lampchest Signe's tool roll | Signe's tool roll: insulated pliers, copper wire, and her pay.
+loot ta_lampchest CopperIngot*2;Battery*1;TradeToken*2
+note ta_setchest Glass case | A glass case for the fulgurites - lightning glass from the sand - and the linesmen's kitty.
+loot ta_setchest Glass*3;CopperIngot*2;TradeToken*2
+note ta_planecrate Weather plane's crate | The weather plane's crate: copper wire, a barometer, flares.
+loot ta_planecrate CopperIngot*1;Scrap*3;Plastic*2
+prop ta_planecrate loot.refill=0
+note ta_pilot Weather pilot's note | STORM FLIGHT. Struck twice over the array. Instruments dead. Down on the north shore. Never fly over the rods in weather.
+note jcta Basalt perch | A perch on the basalt stacks, out of the lightning's way.
+loot jcta Rope*3;Plank*4;MetalIngot*1
+note jbta Stack top | The very top of the basalt stacks.
+loot jbta CopperIngot*1;Bolt*2;TradeToken*1
+
 quest title=Storm Grid
 quest intro=A black cliff island with a forest of rods on top. Land on the beach.
 step reach|landing|1|Land on the beach under the cliffs
@@ -276,17 +400,26 @@ step blueprint|Blueprint_HeadLight_Advanced|1|Take the advanced headlamp plans f
 step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans from the bunker lockers
 step read|Array engineer's diary|1|Read the array engineer's diary
 step open|Ingrid's tool bag|1|Free Ingrid from the cage and take her tool bag
+step read|Linesman's notice|1|Read the linesman's notice by the earthing switch
+step talk|Signe Lund|1|Talk to Signe Lund at the ruined house in the south-east
+step reach|ta_hill|1|Climb to Spark Bluff in the north-west
+step collect|story:ta_top|1|Climb the storm watch mast and take the storm meter from its deck
+step reach|ta_cave|1|Find Basalt Cave in the north-east
+step collect|story:ta_cave|1|Take the earth spike from the chest at the back of the cave
+step read|Earthing log|1|Bring both to the earthing switch and read what it shows
 step reach|beach|1|Ride the zipline down to the beach
 quest done=Ingrid is coming with you, and the array is humming again. The next station answers on 1100 too.
 quest reward=MetalIngot*6;CopperIngot*2;Bolt*4
 
 # --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
+push at 0 -24
 place VP_Forklift - at -6 -8 ground sit yaw=30
 # the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
 clear at 48.06 33.63 r=1.5 only=CaravanIsland_SmallRock
 
 # Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
 call treasure x=0 z=0 r=48 n=1 seed=8860
+pop
 prop treasure8860 treasure.loot=TitaniumOre*2
 
 save Thunderhead Array

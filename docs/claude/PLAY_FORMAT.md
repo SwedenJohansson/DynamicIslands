@@ -60,7 +60,7 @@ expect message isn't whole
 | `open` | `<title>` | Opens the chest whose note title is the text (`ScOpenChest`). |
 | `reach` | `<title>` | That chest is within 2.5 m of the player's eye with nothing solid between (`ScReach`; a slain creature's loose body does not count). The player is not moved. |
 | `openat` | `<x> <z>` | Opens the nearest chest; it must be within 4 m of the point. |
-| `use` | `<name> [stay]` | Fires `use` on the object (`Behaviours.Fire`). The player is put next to it (`ScUse`); with `stay`, used from where they stand (a lift carries them). A survivor cage is opened as a player's E opens it (`SurvivorCage.Use`). |
+| `use` | `<name> [stay]` | Fires `use` on the object (`Behaviours.Fire`). The player is put next to it (`ScUse`); with `stay`, used from where they stand (a lift carries them). A survivor cage is opened as a player's E opens it (`SurvivorCage.Use`); an islander is talked to and a collectible (`collect.set`) is claimed as E does. |
 | `code` | `<name> <digits> [wrong]` | Opens the object's keypad code lock (`lock.code`) as a player does, types the digits and OK; passes when the keypad closed and the lock is open (`CodeLock`). With `wrong`: passes when the digits did not open it. |
 | `dig` | `[n]` | Digs up the island's buried treasure n (0, the first: `treasure` / `Treasure_Buried`) as a player's shovel does, three digs, and picks up its chest (`BuriedTreasure`, `TreasurePoint`); its `treasure.loot` is given then. |
 | `kill` | `<label>` | Waits up to 15 s for the island's animals of that label, then defeats all of them (`ScKill`), the player moved to each, and puts the player back where it stood. |

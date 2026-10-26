@@ -184,6 +184,12 @@ namespace DynamicIslands
 			// (a survivor cage opens as a player's E on it does: SurvivorCage.Use, not the behaviours' use)
 			SurvivorCage cage = r.GetComponentInChildren<SurvivorCage>(true) ?? r.GetComponentInParent<SurvivorCage>();
 			if (cage != null) { Log("  (survivor cage '" + name + "': " + (cage.Use() ? "opened" : "stays shut") + ")"); return; }
+			// (an islander: its dialogue opened and closed as a player's E and Esc do - its talk event, Talk to steps;
+			// a piece of a collectible set: claimed and counted as a player's E does, then its use - 10-26)
+			Islander isl = r.GetComponentInChildren<Islander>(true);
+			if (isl != null) { isl.Talk(); DialoguePanel.Close(); Log("  (islander '" + name + "': talked to)"); return; }
+			int claim = Collectibles.ClaimKey(r);
+			if (claim >= 0 && !ContentState.IsUsed(e, claim)) { ContentState.MarkUsed(r.transform, claim); Collectibles.PickedUp(e, r); }
 			Behaviours.Fire(e, r.Index, "use", true);
 		}
 

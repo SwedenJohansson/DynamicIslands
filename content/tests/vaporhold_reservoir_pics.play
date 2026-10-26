@@ -1,6 +1,6 @@
 # Guide pictures of Vaporhold Reservoir (CIPlay vaporhold_reservoir_pics): Raft's camera, midday, calm
 island Vaporhold Reservoir
-offset 0 0
+offset 0 33
 hour 11
 weather Calm
 at 0 -29
@@ -11,3 +11,10 @@ picture vaporhold_reservoir_tower -7 8 -5 0 5 0
 picture vaporhold_reservoir_crest -16 8 -36 0 4 -26
 picture vaporhold_reservoir_pumphall 4 -4.5 -9 10 -5.5 -1
 picture vaporhold_reservoir_underwater -8 -3 -10 2 -6 0
+# RAIN 10-26: the new land - Spillway Hill, Seep Cave, the ruined house, the plane
+offset 0 0
+picture rain_vr_hill 6 21 10 -41 15.4 48
+picture rain_vr_cave 56 8 26 46 6 50
+picture rain_vr_ruin 46 8 -26 58 4.5 -14
+picture rain_vr_plane -48 9 -36 -60 4 -26
+picture rain_vr_jumps 18 9 54 4 7 66

@@ -106,5 +106,38 @@ expect item TitaniumIngot 4
 expect step 28
 read Last broadcast
 expect step 29
+# RAIN 10-26: the hub, Tor, the climb, Thunder Cave, the secrets
+use Tor
+wait 1
+expect step 30
+expect hidden re_lampchest
+use Keeper's lamp 1
+use Keeper's lamp 2
+wait 1
+expect shown re_lampchest
+open Tor's tin
+zone re_cave
+expect step 31
+open Tor's strongbox
+wait 3
+expect step 32
+# the secrets: the plane, the jumps, the set, the telescope
+zone re_plane
+open Courier plane's crate
+read Courier's last order
+zone re_jumps
+open Gunners' perch
+open Shell stack top
+expect hidden re_setchest
+use re_piece1
+use re_piece2
+use re_piece3
+use re_piece4
+use re_piece5
+wait 2
+expect shown re_setchest
+open Shell rack
+use re_scope
+wait 8
 zone summit
 expect done

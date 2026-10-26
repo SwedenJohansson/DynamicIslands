@@ -1,7 +1,7 @@
 # The Sleet Kilns - an island of the library's plan The Rainmakers (Nimbus Works' seventh station)
 # A black-sand volcano shore where the company baked its seeding salt: a row of five bottle kilns (Tangaroa's vases blown
 # up to kiln size, brick-red, on stone stacks), white salt heaps, a tramway on grey floors from the landing up to the
-# kiln yard, and the smelter house with its roof on pillars. Quest "Seeding Salt" (6 steps): the tram stop, the kiln
+# kiln yard, and the smelter house with its roof on pillars. Quest "Seeding Salt" (17 steps): the tram stop, the kiln
 # master's log, three salt sacks weighed on the scales, Kiln 4's door, the kiln store (the smelter blueprints), and the
 # hyenas that come for the tram stop on the way out.
 #
@@ -9,12 +9,18 @@
 include lib_sea
 include lib_features
 include lib_huts
+include lib_areas
+include lib_highwater
+include lib_rain
+# RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 56 -> 85; the old island moved 29 m south (push frames), so its south shore stays on the coast and the new land is north
+# RAIN 10-26: the new land - Cinder Knoll with salt-drop chimney, Ash Cave, Kalle Strom at the ruined house (a lamp puzzle), a crashed plane, a jump course, a maze, a set of five salt crystals
 new
 # (nature: volcano density - black sand, rocks, few trees and bushes; Harvest 0.2)
 gen Trees=0.1 Bushes=0.15 Rocks=0.5 Harvest=0.2 BeachThings=0.3
-gen Seed=9901 Radius=56 Height=8 Roughness=0.3 Peaks=1 Shape=0 Style=4 PeakShape=0.15 Cliffs=0.3 BeachWidth=0.6
+gen Seed=9901 Radius=85 Height=8 Roughness=0.3 Peaks=1 Shape=0 Style=4 PeakShape=0.15 Cliffs=0.3 BeachWidth=0.6
 gen Water=0.5 SeaRocks=0.5 SeaFinds=0.2 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
+push at 0 -29
 
 # --- Terrain: the kiln yard flattened at 3 m, the tramway's bed north from the landing, the landing beach -------------
 brush flatten at 0 6 r=28 s=20 frames=200 h=3
@@ -23,7 +29,15 @@ brush flatten at 0 -49 r=6 s=20 frames=60 h=1
 brush flatten at 0 -44 r=3 s=20 frames=40 h=2
 brush flatten at -4.5 -46.2 r=3.5 s=20 frames=40 h=0.95
 brush smooth from 0 -47 to 0 -41 r=3 s=6 frames=20
+pop
 origin
+# --- RAIN 10-26 terrain: Cinder Knoll, the pads of the new areas ---------------------------------------------------
+call hw_mount x=-38 z=46 b=24 h=22
+call hw_trail x=-38 z=46 b=24 h=22 a0=126.38 turn=300 n=40 h0=3
+brush flatten at 0 18 r=4 s=8 frames=60
+clear at 0 18 r=7
+# (RESIZE 10-26: the old island, 29 m south)
+push at 0 -29
 clear at 0 6 r=30
 clear from 0 -50 to 0 -18 r=5
 
@@ -71,10 +85,10 @@ place Placeable_Lantern_Metal - at 20 -0.7 h=3 sit
 place SmallRock_02 saltheap1 at -22 18 ground scale=0.9
 place SmallRock_02 saltheaps at -23.5 19.5 ground scale=0.6 yaw=70
 place SmallRock_02 saltheaps at -20.5 19 ground scale=0.5 yaw=140
-place SmallRock_02 saltheap2 at 22 18 ground scale=0.9 yaw=200
+place SmallRock_02 saltheap2 at 22 18 ground y=-1.2 scale=0.9 yaw=200
 place SmallRock_02 saltheaps at 23.5 19.5 ground scale=0.6 yaw=30
 place SmallRock_02 saltheaps at 20.5 19.5 ground scale=0.5 yaw=100
-place SmallRock_02 saltheap3 at -24 -12 ground scale=0.9 yaw=90
+place SmallRock_02 saltheap3 at -24 -12 ground y=-1.4 scale=0.9 yaw=90
 place SmallRock_02 saltheaps at -25.5 -10.5 ground scale=0.6 yaw=10
 place SmallRock_02 saltheaps at -22.5 -10.5 ground scale=0.5 yaw=250
 prop saltheap1 tint.color=#f2f2ef
@@ -129,10 +143,183 @@ scatter "Pickup_Landmark_Flower_Blue" 2 at -30 30 r=15 seed=9912 free=3
 call dirt x=30 z=-25 r=8 n=3 seed=9913
 call shallows r=78 deep=5 n=2
 
+pop
+
+# --- RAIN 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Cinder Knoll ------
+# Cinder Knoll with salt-drop chimney on it, Ash Cave, the ruined house where Kalle Strom waits (four lamps round it: a puzzle), a crashed plane,
+# a jump course, a maze, five salt crystals about the island (a set), and at the hub the salt crusher that wants the chimney damper and the kiln six fire bar
+call hw_zone x=-17.87 z=31.17 al=sk_trailz id=sk_trail r=5 msg="The trail up Cinder Knoll starts here - round and up."
+call hw_zone x=-38 z=46 al=sk_summitz id=sk_summit r=8 h=1 msg="The top of Cinder Knoll. The whole island below you."
+call hw_mast x=-41 z=48 h0=22 lv=6 a=sk_mast chest=sk_topchest top=Placeable_Lantern_Metal
+place ZiplinePath_Landmark sk_zip at -34.8 43.4 h=23.35
+zipto sk_zip -1.83 21.56
+place Creature_Goat sk_goats at -13.87 34.17 ground
+prop sk_goats creature.count=2
+call ar_cave x=46 z=50 h=3 yaw=180 al=sk_caverock chest=sk_cavechest
+call hw_zone x=47 z=41 al=sk_cavez id=sk_cave r=4 h=1 msg="Ash Cave. Water drips somewhere in the dark."
+call ar_ruin x=58 z=-14 h=3 yaw=0 w=3 d=2 al=sk_ruin
+call rn_islander x=57 z=-18.5 yaw=200 al=sk_isl nm="Kalle Strom" pose=sit
+prop sk_isl talk.text=Mind the hot sand. The kilns are cold, but the ground remembers.\n---\nI stoked kiln six. When I saw what went into the special salt, I pulled its fire bar and hid it in the Ash Cave.\n---\nThe crusher wants the bar and the damper from the chimney on Cinder Knoll. And the maze the kiln hands built from old wall - there's a box at its heart.\n---\nThe four kiln lamps round my house: each one wakes its neighbour. Light all four and look behind the back wall.
+place Placeable_Chair_Basic - at 57 -18.5 ground sit yaw=200
+call rn_lamp x=51 z=-15 al=sk_lamp1 nm="Kiln lamp 1" grp="Kiln lamps" on=1
+call rn_lamp x=57 z=-8 al=sk_lamp2 nm="Kiln lamp 2" grp="Kiln lamps" on=0
+call rn_lamp x=64 z=-15 al=sk_lamp3 nm="Kiln lamp 3" grp="Kiln lamps" on=1
+call rn_lamp x=57 z=-22 al=sk_lamp4 nm="Kiln lamp 4" grp="Kiln lamps" on=0
+prop sk_lamp1 on.use=light|Kiln lamp 2|toggle
+prop sk_lamp2 on.use=light|Kiln lamp 3|toggle
+prop sk_lamp3 on.use=light|Kiln lamp 4|toggle
+prop sk_lamp4 on.use=light|Kiln lamp 1|toggle
+prop sk_lamp1 on.alllit=show|sk_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call rn_hidden x=59 z=-9.4 al=sk_lampchest
+place Creature_Chicken sk_hens at 66 -8 ground
+prop sk_hens creature.count=3
+call ar_plane x=-60 z=-26 h=3 yaw=40 al=sk_plane crate=sk_planecrate
+place Note_Paper sk_pilot at -61.78 -21.9 ground y=0.1 drop yaw=70
+call hw_zone x=-60 z=-26 al=sk_planez id=sk_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
+# JUMP sk pad=3 at=4 66
+push at 4 66
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpsk at -4.24 -4.24 h=3.6
+place Block_Foundation_Tier3 jpsk at -5.77 -1.65 h=4.35
+place Block_Foundation_Tier3 jpsk at -5.85 1.35 h=5.1
+place Block_Foundation_Tier3 jpsk at -4.46 4.01 h=5.85
+place Block_Foundation_Tier3 jpsk at -1.95 5.67 h=6.6
+place Block_Foundation_Tier3 jpsk at 1.04 5.91 h=7.35
+place Block_Foundation_Tier3 jpsk at 3.78 4.66 h=8.1
+place Block_Foundation_Tier3 jpsk at 5.56 2.25 h=8.85
+place Block_Foundation_Tier3 jpsk at 5.96 -0.73 h=9.6
+# JUMP from 10
+place Block_Foundation_Tier3 jpsk at 4.85 -3.53 h=10.35
+place Block_Foundation_Tier3 jpsk at 2.54 -5.44 h=11.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppsk at -5.77 -1.65 h=3.668 sy=1.861
+place Block_Foundation_Tier3 jppsk at -5.85 1.35 h=4.418 sy=2.959
+place Block_Foundation_Tier3 jppsk at -4.46 4.01 h=5.168 sy=4.058
+place Block_Foundation_Tier3 jppsk at -1.95 5.67 h=5.918 sy=5.157
+place Block_Foundation_Tier3 jppsk at 1.04 5.91 h=6.668 sy=6.255
+place Block_Foundation_Tier3 jppsk at 3.78 4.66 h=7.418 sy=7.354
+place Block_Foundation_Tier3 jppsk at 5.56 2.25 h=8.168 sy=8.453
+place Block_Foundation_Tier3 jppsk at 5.96 -0.73 h=8.918 sy=9.552
+place Block_Foundation_Tier3 jppsk at 4.85 -3.53 h=9.668 sy=10.650
+place Block_Foundation_Tier3 jppsk at 2.54 -5.44 h=10.418 sy=11.749 sx=2 sz=2
+prop jpsk tint.color=#8a7f70
+prop jpsk tint.amount=0.35
+prop jppsk tint.color=#8a7f70
+prop jppsk tint.amount=0.35
+place Loot_Chest jcsk at 1.04 5.91 h=7.35 sit yaw=0
+prop jcsk loot.refill=0
+place Loot_ChestSmall jbsk at 2.54 -5.44 h=11.1 sit yaw=0
+prop jbsk loot.refill=0
+pop
+call hw_zone x=4 z=58 al=sk_jumpz id=sk_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call rn_pad x=16 z=38 r=12 h=4
+push at 8.5 30.5 h=4
+place Block_Wall_Tier3 sk_maze at 0.75 0 y=0.05
+place Block_Wall_Tier3 sk_maze at 2.25 0 y=0.05
+place Block_Wall_Tier3 sk_maze at 0.75 6 y=0.05
+place Block_Wall_Tier3 sk_maze at 2.25 6 y=0.05
+place Block_Wall_Tier3 sk_maze at 0.75 15 y=0.05
+place Block_Wall_Tier3 sk_maze at 2.25 15 y=0.05
+place Block_Wall_Tier3 sk_maze at 3.75 0 y=0.05
+place Block_Wall_Tier3 sk_maze at 5.25 0 y=0.05
+place Block_Wall_Tier3 sk_maze at 3.75 9 y=0.05
+place Block_Wall_Tier3 sk_maze at 5.25 9 y=0.05
+place Block_Wall_Tier3 sk_maze at 3.75 15 y=0.05
+place Block_Wall_Tier3 sk_maze at 5.25 15 y=0.05
+place Block_Wall_Tier3 sk_maze at 6.75 6 y=0.05
+place Block_Wall_Tier3 sk_maze at 8.25 6 y=0.05
+place Block_Wall_Tier3 sk_maze at 6.75 12 y=0.05
+place Block_Wall_Tier3 sk_maze at 8.25 12 y=0.05
+place Block_Wall_Tier3 sk_maze at 6.75 15 y=0.05
+place Block_Wall_Tier3 sk_maze at 8.25 15 y=0.05
+place Block_Wall_Tier3 sk_maze at 9.75 0 y=0.05
+place Block_Wall_Tier3 sk_maze at 11.25 0 y=0.05
+place Block_Wall_Tier3 sk_maze at 9.75 3 y=0.05
+place Block_Wall_Tier3 sk_maze at 11.25 3 y=0.05
+place Block_Wall_Tier3 sk_maze at 9.75 12 y=0.05
+place Block_Wall_Tier3 sk_maze at 11.25 12 y=0.05
+place Block_Wall_Tier3 sk_maze at 9.75 15 y=0.05
+place Block_Wall_Tier3 sk_maze at 11.25 15 y=0.05
+place Block_Wall_Tier3 sk_maze at 12.75 0 y=0.05
+place Block_Wall_Tier3 sk_maze at 14.25 0 y=0.05
+place Block_Wall_Tier3 sk_maze at 12.75 15 y=0.05
+place Block_Wall_Tier3 sk_maze at 14.25 15 y=0.05
+place Block_Wall_Tier3 sk_maze at 0 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 0 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 0 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 0 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 0 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 0 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 0 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 0 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 0 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 0 14.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 3 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 3 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 3 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 3 14.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 6 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 6 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 6 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 6 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 6 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 6 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 9 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 9 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 9 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 9 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 9 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 9 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 12 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 12 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 12 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 12 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 15 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 15 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 15 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 15 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 15 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 15 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 15 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 15 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 15 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sk_maze at 15 14.25 y=0.05 yaw=90
+place Loot_ChestSmall sk_mazechest at 1.5 4.5 y=0.05 sit yaw=0
+pop
+prop sk_maze tint.color=#4e6b3a
+prop sk_maze tint.amount=0.55
+prop sk_mazechest loot.refill=0
+call hw_zone x=14.5 z=29 al=sk_mazez id=sk_maze r=3 msg="A maze of old walls. Somewhere in the middle, a box."
+call rn_piece x=-24 z=26 al=sk_piece1 set="Salt crystals"
+call rn_piece x=-52 z=-17 al=sk_piece2 set="Salt crystals"
+call rn_piece x=40 z=24 al=sk_piece3 set="Salt crystals"
+call rn_piece x=-10 z=60 al=sk_piece4 set="Salt crystals"
+call rn_piece x=16 z=38 al=sk_piece5 set="Salt crystals"
+prop sk_piece1 on.set=show|sk_setchest\nmessage||All five salt crystals found.
+call rn_hidden x=5 z=14 al=sk_setchest kind=Loot_Chest
+call treasure x=24 z=56 r=5 n=1 seed=26778 kind=0
+prop treasure26778 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_desert x=-8 z=46 r=16 seed=26791
+call ar_plants_desert x=30 z=22 r=14 seed=26792
+call ar_plants_desert x=-30 z=4 r=14 seed=26793
+call ar_plants_desert x=40 z=-40 r=14 seed=26794
+call ar_plants_desert x=66 z=36 r=10 seed=26795
+call hw_machine x=0 z=18 yaw=180 al=sk_machine nm="Salt crusher" obj=RT_PowerBox sc=1 a=sk_top b=sk_cave done=sk_fixed rew=sk_rewchest rnote=sk_rewnote msg="It works." hint="It wants the chimney damper from Cinder Knoll and the kiln six fire bar from Ash Cave."
+call hw_note x=-2.6 z=19.2 yaw=200 al=sk_hint
+
+# RAIN 10-26: rocks left hanging by the new hills
+clear at -7.14 51.38 r=2 only=BigSharpRock_5 all
+clear at -32.09 6.97 r=1.5 only=CaravanIsland_SmallRock_1 all
+clear at 41.65 -35.16 r=1.5 only=CaravanIsland_SmallRock_1 all
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Sleet Kilns
 info author=Custom Islands
-info description=Nimbus Works' seventh station: a black-sand volcano shore with a row of five bottle kilns, white salt heaps, a tramway up from the landing and the smelter house where the seeding salt was weighed. The seventh island of The Rainmakers.
+info description=Nimbus Works' seventh station: a black-sand volcano shore with a row of five bottle kilns, white salt heaps, a tramway up from the landing and the smelter house where the seeding salt was weighed. The seventh island of The Rainmakers. Raft-sized: high ground, a cave, a ruined house where Kalle Strom still lives, a crashed plane and secrets off the path.
 island on.arrive=message||Black sand, and a row of five brick bottles as tall as houses. Round them, heaps of something white - not snow. Salt.
 
 story saltsack|Salt sack|Placeable_Lantern_Metal|A sack of seeding salt from one of the kiln yard's heaps.
@@ -189,6 +376,32 @@ prop hyenas creature.count=3
 prop hyenas creature.respawn=0
 prop hyenas creature.zone=ambush
 
+story sk_top|Chimney damper|Bolt|The damper of the salt-drop chimney, pulled out and left on its top.
+story sk_cave|Kiln six fire bar|Bolt|The fire bar of the sixth kiln, hidden in the Ash Cave.
+story sk_fixed|Salt crusher working|Bolt|The salt crusher, working again.
+note sk_hint Kiln hand's notice | THE SALT CRUSHER IS STOPPED. It wants the chimney damper (the salt-drop chimney on Cinder Knoll) and kiln six's fire bar (the Ash Cave). Kalle at the old house knows. The kiln hands' maze is for the brave.
+note sk_topchest Salt-drop chimney deck box | A box lashed to the deck rail at the top of the salt-drop chimney.
+loot sk_topchest story:sk_top*1;Rope*2;Scrap*2
+note sk_cavechest Ash Cave chest | A chest at the back of Ash Cave, dry under the rock.
+loot sk_cavechest story:sk_cave*1;CopperOre*2;Brick_Dry*4
+note sk_rewnote Crusher ledger | The crusher grinds the last of the salt to dust and blows it out to sea. In its hopper: the kiln ledger - 'Six kilns. Five working. The sixth was for the special salt, and we never asked what was in it.'
+note sk_rewchest Salt crusher reward | What the salt crusher kept.
+loot sk_rewchest MetalIngot*2;Bolt*3;TradeToken*2
+note sk_lampchest Kalle's tin | Kalle's tin: his stoker's gloves and pay.
+loot sk_lampchest MetalIngot*1;Leather*2;TradeToken*2
+note sk_setchest Salt case | A case of the biggest salt crystals the kilns ever grew, and the kiln hands' kitty.
+loot sk_setchest Glass*3;MetalIngot*2;TradeToken*2
+note sk_planecrate Salt plane's crate | The salt plane's crate: sacks, scoops, a flask.
+loot sk_planecrate Plastic*3;Scrap*3;Rope*2
+prop sk_planecrate loot.refill=0
+note sk_pilot Salt pilot's note | SALT RUN. Wind full of ash, couldn't see the strip. Down west of the kilns. The special salt sacks are marked red - don't open them.
+note jcsk Ash perch | The kiln hands' perch out of the ash.
+loot jcsk Rope*3;Plank*4;MetalIngot*1
+note jbsk Ash top | The very top of the perch.
+loot jbsk CopperIngot*1;Bolt*2;TradeToken*1
+note sk_mazechest Kiln hands' box | A box in the heart of the maze: the kiln hands' winnings from their games.
+loot sk_mazechest TradeToken*3;CopperIngot*2;MetalIngot*1
+
 quest title=Seeding Salt
 quest intro=Black sand and brick kilns. Land at the tram stop.
 step reach|tram_stop|1|Land at the tram stop
@@ -199,12 +412,22 @@ step open|Kiln store|1|Open the kiln store with the key from Kiln 4
 step blueprint|Blueprint_SmelterElectric|1|Take the electric smelter plans from the kiln store
 step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced biofuel extractor plans from the kiln store
 step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced stationary anchor plans from the kiln store
+step read|Kiln hand's notice|1|Read the kiln hand's notice by the salt crusher
+step talk|Kalle Strom|1|Talk to Kalle Strom at the ruined house in the east
+step reach|sk_trail|1|Find the foot of the trail up Cinder Knoll, in the north-west
+step reach|sk_summit|1|Climb the trail to the top of Cinder Knoll
+step collect|story:sk_top|1|Climb the salt-drop chimney and take the chimney damper from its deck
+step reach|sk_cave|1|Find Ash Cave in the north-east
+step collect|story:sk_cave|1|Take the kiln six fire bar from the chest at the back of the cave
+step read|Crusher ledger|1|Bring both to the salt crusher and read what it shows
 step kill|Hyena|3|Deal with the hyenas at the tram stop on the way out
 quest done=The smelter plans are yours. In the store's ledger: the salt went on to the members' club - the next station answers on 1200.
 quest reward=MetalIngot*6;Bolt*4;Hinge*2
 
 # Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+push at 0 -29
 call treasure x=0 z=0 r=28 n=1 seed=8825
+pop
 prop treasure8825 treasure.loot=TitaniumOre*3
 
 save The Sleet Kilns

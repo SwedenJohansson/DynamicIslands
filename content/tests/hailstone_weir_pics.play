@@ -1,6 +1,6 @@
 # Guide pictures of Hailstone Weir (CIPlay hailstone_weir_pics): Raft's camera, midday, calm
 island Hailstone Weir
-offset 0 0
+offset 0 37
 hour 11
 weather Calm
 at 14 -30
@@ -10,3 +10,10 @@ picture hailstone_weir_weir 7 6 -44 0 1 -32
 picture hailstone_weir_pumphouse -8 7 -40 -19 3 -27
 picture hailstone_weir_sluices 0 -0.8 -40 0 -0.5 -33
 picture hailstone_weir_upriver 0 12 -14 0 2 -32
+# RAIN 10-26: the new land - Sleet Knoll, Drip Cave, the ruined house, the plane
+offset -0.2846 0.5143
+picture rain_hw_hill 6 21 10 -41 15.4 48
+picture rain_hw_cave 56 9 26 46 7 50
+picture rain_hw_ruin 46 8 -26 58 4.5 -14
+picture rain_hw_plane -48 9 -36 -60 4 -26
+picture rain_hw_jumps 18 9 54 4 7 66

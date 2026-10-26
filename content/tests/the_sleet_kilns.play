@@ -2,7 +2,7 @@
 # The kiln yard (3 m) round 0 6 r 28: five kilns at x -20..20 z 2 (Kiln 4's door at 10 -0.7); the smelter house
 # x -3..3 z 14..18.5; salt heaps at -22 18, 22 18, -24 -12; the tram stop at 0 -46, the tramway up x 0 to z -18.
 island The Sleet Kilns
-offset 0 0
+offset 0 29
 expect step 0
 expect title Seeding Salt
 wait 3
@@ -33,6 +33,60 @@ expect item Blueprint_SmelterElectric 1
 expect item Blueprint_BiofuelExtractorAdvanced 1
 expect item Blueprint_AnchorStationaryAdvanced 1
 expect step 8
+# RAIN 10-26: the hub, Kalle Strom, the climb, Ash Cave, the secrets
+expect hidden sk_rewchest
+use sk_machine
+expect hidden sk_rewchest
+read Kiln hand's notice
+expect step 9
+use Kalle Strom
+wait 1
+expect step 10
+expect hidden sk_lampchest
+use Kiln lamp 2
+use Kiln lamp 3
+wait 1
+expect shown sk_lampchest
+open Kalle's tin
+zone sk_trail
+expect step 11
+zone sk_summit
+expect step 12
+open Salt-drop chimney deck box
+wait 3
+expect story sk_top 1
+expect step 13
+zone sk_cave
+expect step 14
+open Ash Cave chest
+wait 3
+expect story sk_cave 1
+expect step 15
+use sk_machine
+expect shown sk_rewchest
+expect story sk_fixed 1
+open Salt crusher reward
+wait 3
+read Crusher ledger
+expect step 16
+# the secrets: the plane, the jumps, the maze, the set
+zone sk_plane
+open Salt plane's crate
+read Salt pilot's note
+zone sk_jumps
+open Ash perch
+open Ash top
+zone sk_maze
+open Kiln hands' box
+expect hidden sk_setchest
+use sk_piece1
+use sk_piece2
+use sk_piece3
+use sk_piece4
+use sk_piece5
+wait 2
+expect shown sk_setchest
+open Salt case
 expect shown ambushzone
 zone ambush
 wait 2

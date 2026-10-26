@@ -9,6 +9,18 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-26: The Rainmakers' islands, an hour each
+
+- The nine main islands of **The Rainmakers** are now as big as Raft's own (radius 85-95 m). The old station stays as
+  it was; new land round it adds high ground with a trail and a mast, a cave, a ruined house where an islander still
+  lives (talk to them; their four lamps are a puzzle), a crashed plane, a jump course, a set of five to collect and a
+  buried treasure (mazes on three islands, a telescope fly-through on The Kite Meadow and The Rain Engine). Each quest
+  gains five to eight steps across the island (the Rain Engine three); worlds already started keep their islands
+  ([guide 15.9](docs/GUIDE.md#159-a-whole-storyline-the-rainmakers)).
+- The Rainmakers now also hand out the four blueprints Raft gives at the Radio Tower and Caravan Town: the headlight
+  and recycler plans in Cirrus Silo Farm's silo store, the zipline tool and battery charger plans in The Fogworks'
+  founders' Day crate, each with its own **Blueprint** step. The plan test's all-blueprints check passes again.
+
 ## 2026-10-26: Every storyline blueprint from a main quest step
 
 ### Fixed

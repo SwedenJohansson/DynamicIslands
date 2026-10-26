@@ -2,7 +2,7 @@
 # A high meadow over sea cliffs where Nimbus Works flew its seeding kites: twelve winch masts of antenna poles along the
 # ridge, the torn kites - Caravan Town's great banners - slack between them; the path up from the beach overgrown with
 # vines; the kite crew's hut half-way up; on top the launch shed (a roof on posts) with its winch engine and its bell.
-# Quest "Kites Over the Ridge" (11 steps): the cliff path, the crew roster, the crew hut chest (the machete), the upper
+# Quest "Kites Over the Ridge" (22 steps): the cliff path, the crew roster, the crew hut chest (the machete), the upper
 # meadow behind the vines, the warthogs dug in under the masts, the logs of winches 2, 7 and 11 (a digit each), the
 # shed's keypad, the winch engine (the kites lift), the fuel store, the biofuel press, the shed bell (Rouhi, the crew's
 # youngest flyer, joins you as a character).
@@ -10,12 +10,18 @@
 # Built by the recipe player (CIRecipe the_kite_meadow) through the editor's own operations.
 include lib_sea
 include lib_features
+include lib_areas
+include lib_highwater
+include lib_rain
+# RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 78 -> 88; the old island moved 10 m south (push frames), so its south shore stays on the coast and the new land is north
+# RAIN 10-26: the new land - Gull Crown with kite spotter's tower, Wind Cave, Ivar Brekke at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five kite tails
 new
 # (nature: tropical slopes Like Raft's own: Trees 0.28, Bushes 0.28, Rocks 0.43, Harvest 0.24; the meadow on top cleared)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
-gen Seed=9501 Radius=78 Height=26 Roughness=0.35 Peaks=1 Shape=0 Style=0 PeakShape=0.25 Cliffs=0.6 BeachWidth=0.4
+gen Seed=9501 Radius=88 Height=26 Roughness=0.35 Peaks=1 Shape=0 Style=0 PeakShape=0.25 Cliffs=0.6 BeachWidth=0.4
 gen Water=0.5 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.3 Hostiles=0 Friendly=0.2 SeaLife=0.3
 generate
+push at 0 -10
 
 # --- Terrain: the meadow on top (20 m), the cliff path up from the south beach in steps, the crew hut's ledge --------
 brush flatten from -30 14 to 30 14 r=16 s=20 frames=160 h=20
@@ -29,7 +35,14 @@ brush flatten at 9 -50 r=5 s=20 frames=40 h=8
 brush smooth from 0 -64 to 0 -24 r=6 s=6 frames=30
 brush grass from -34 14 to 34 14 r=16 s=8 frames=60
 brush grass from 0 -24 to 0 30 r=14 s=8 frames=40
+pop
 origin
+# --- RAIN 10-26 terrain: Gull Crown, the pads of the new areas ---------------------------------------------------
+call rn_pad x=-50 z=52 r=6 h=10
+brush flatten at -52 0 r=4 s=8 frames=60
+clear at -52 0 r=7
+# (RESIZE 10-26: the old island, 10 m south)
+push at 0 -10
 clear from -34 14 to 34 14 r=17
 clear from 0 -24 to 0 32 r=15
 clear from 0 -64 to 0 -24 r=4
@@ -129,10 +142,104 @@ scatter "Pickup_Landmark_Flower_Red" 3 at 0 10 r=30 seed=9513 free=3
 call dirt x=18 z=-20 r=12 n=3 seed=9514
 call shallows r=108 deep=6 n=2
 
+pop
+
+# --- RAIN 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Gull Crown ------
+# Gull Crown with kite spotter's tower on it, Wind Cave, the ruined house where Ivar Brekke waits (four lamps round it: a puzzle), a crashed plane,
+# a jump course, five kite tails about the island (a set), and at the hub the reserve winch that wants the spotter's reel and the winch governor
+call hw_zone x=-46 z=52 al=km_hillz id=km_hill r=8 h=1 msg="Gull Crown. The whole island below you."
+call hw_mast x=-50 z=52 h0=10 lv=6 a=km_mast chest=km_topchest top=Placeable_Flag_01
+call ar_cave x=54 z=54 h=5 yaw=180 al=km_caverock chest=km_cavechest
+call hw_zone x=55 z=45 al=km_cavez id=km_cave r=4 h=1 msg="Wind Cave. Water drips somewhere in the dark."
+call ar_ruin x=58 z=-40 h=3.5 yaw=0 w=3 d=2 al=km_ruin
+call rn_islander x=57 z=-44.5 yaw=200 al=km_isl nm="Ivar Brekke" pose=lean
+prop km_isl talk.text=Careful at the cliff edge - the wind up here takes people.\n---\nI flew kite twelve. When they shut the meadow down, I took its governor into the Wind Cave so nobody could fly it again without me.\n---\nThe reserve winch wants the governor and the spotter's reel from the tower on Gull Crown. Bring them both and fly one for me.\n---\nThe crew's lamps round my house - each one wakes its neighbour. Light all four and look behind the house.
+call rn_lamp x=51 z=-41 al=km_lamp1 nm="Crew lamp 1" grp="Crew lamps" on=1
+call rn_lamp x=57 z=-34 al=km_lamp2 nm="Crew lamp 2" grp="Crew lamps" on=0
+call rn_lamp x=64 z=-41 al=km_lamp3 nm="Crew lamp 3" grp="Crew lamps" on=0
+call rn_lamp x=57 z=-48 al=km_lamp4 nm="Crew lamp 4" grp="Crew lamps" on=1
+prop km_lamp1 on.use=light|Crew lamp 2|toggle
+prop km_lamp2 on.use=light|Crew lamp 3|toggle
+prop km_lamp3 on.use=light|Crew lamp 4|toggle
+prop km_lamp4 on.use=light|Crew lamp 1|toggle
+prop km_lamp1 on.alllit=show|km_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call rn_hidden x=59 z=-35.4 al=km_lampchest
+place Creature_Chicken km_hens at 66 -34 ground
+prop km_hens creature.count=3
+call ar_plane x=-58 z=-46 h=13 yaw=40 al=km_plane crate=km_planecrate
+place Note_Paper km_pilot at -59.78 -41.9 ground y=0.1 drop yaw=70
+call hw_zone x=-58 z=-46 al=km_planez id=km_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
+# JUMP km pad=3.5 at=58 10
+push at 58 10
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3.5
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3.5
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpkm at -4.24 -4.24 h=4.1
+place Block_Foundation_Tier3 jpkm at -5.77 -1.65 h=4.85
+place Block_Foundation_Tier3 jpkm at -5.85 1.35 h=5.6
+place Block_Foundation_Tier3 jpkm at -4.46 4.01 h=6.35
+place Block_Foundation_Tier3 jpkm at -1.95 5.67 h=7.1
+place Block_Foundation_Tier3 jpkm at 1.04 5.91 h=7.85
+place Block_Foundation_Tier3 jpkm at 3.78 4.66 h=8.6
+place Block_Foundation_Tier3 jpkm at 5.56 2.25 h=9.35
+place Block_Foundation_Tier3 jpkm at 5.96 -0.73 h=10.1
+# JUMP from 10
+place Block_Foundation_Tier3 jpkm at 4.85 -3.53 h=10.85
+place Block_Foundation_Tier3 jpkm at 2.54 -5.44 h=11.6 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppkm at -5.77 -1.65 h=4.168 sy=1.861
+place Block_Foundation_Tier3 jppkm at -5.85 1.35 h=4.918 sy=2.959
+place Block_Foundation_Tier3 jppkm at -4.46 4.01 h=5.668 sy=4.058
+place Block_Foundation_Tier3 jppkm at -1.95 5.67 h=6.418 sy=5.157
+place Block_Foundation_Tier3 jppkm at 1.04 5.91 h=7.168 sy=6.255
+place Block_Foundation_Tier3 jppkm at 3.78 4.66 h=7.918 sy=7.354
+place Block_Foundation_Tier3 jppkm at 5.56 2.25 h=8.668 sy=8.453
+place Block_Foundation_Tier3 jppkm at 5.96 -0.73 h=9.418 sy=9.552
+place Block_Foundation_Tier3 jppkm at 4.85 -3.53 h=10.168 sy=10.650
+place Block_Foundation_Tier3 jppkm at 2.54 -5.44 h=10.918 sy=11.749 sx=2 sz=2
+prop jpkm tint.color=#8a7f70
+prop jpkm tint.amount=0.35
+prop jppkm tint.color=#8a7f70
+prop jppkm tint.amount=0.35
+place Loot_Chest jckm at 1.04 5.91 h=7.85 sit yaw=0
+prop jckm loot.refill=0
+place Loot_ChestSmall jbkm at 2.54 -5.44 h=11.6 sit yaw=0
+prop jbkm loot.refill=0
+pop
+call hw_zone x=58 z=2 al=km_jumpz id=km_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call rn_piece x=-36 z=32 al=km_piece1 set="Kite tails"
+call rn_piece x=-50 z=-37 al=km_piece2 set="Kite tails"
+call rn_piece x=48 z=28 al=km_piece3 set="Kite tails"
+call rn_piece x=44 z=4 al=km_piece4 set="Kite tails"
+call rn_piece x=72 z=-24 al=km_piece5 set="Kite tails"
+prop km_piece1 on.set=show|km_setchest\nmessage||All five kite tails found.
+call rn_hidden x=-47 z=-4 al=km_setchest kind=Loot_Chest
+call treasure x=0 z=74 r=5 n=1 seed=26378 kind=0
+prop treasure26378 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_hill x=-30 z=64 r=14 seed=26391
+call ar_plants_hill x=30 z=64 r=14 seed=26392
+call ar_plants_hill x=-60 z=26 r=12 seed=26393
+call ar_plants_hill x=40 z=-64 r=12 seed=26394
+call ar_plants_hill x=-36 z=-66 r=12 seed=26395
+call rn_scope x=-46 z=6 yaw=90 al=km_scope path=km_view
+call rn_cam x=-70 z=0 h=30 al=km_cam1 path=km_view order=1 look=km_machine speed=9 hold=2
+call rn_cam x=-40 z=60 h=40 al=km_cam2 path=km_view order=2 look=km_mast speed=9 hold=0
+call rn_cam x=30 z=30 h=45 al=km_cam3 path=km_view order=3 look=km_isl speed=9 hold=0
+call rn_cam x=60 z=0 h=35 al=km_cam4 path=km_view order=4 look=km_lampchest speed=9 hold=0
+call rn_cam x=60 z=50 h=25 al=km_cam5 path=km_view order=5 look=km_caverock speed=9 hold=2
+call hw_machine x=-52 z=0 yaw=90 al=km_machine nm="Reserve winch" obj=TP_LaserControlPanel_lever sc=3 a=km_top b=km_cave done=km_fixed rew=km_rewchest rnote=km_rewnote msg="It works." hint="It wants the spotter's reel from Gull Crown and the winch governor from Wind Cave."
+call hw_note x=-54.6 z=1.2 yaw=110 al=km_hint
+
+# RAIN 10-26: rocks left hanging by the new hills
+clear at -5.89 -70.58 r=1.5 only=SmallBoulder2
+clear at 30.65 76.7 r=1.5 only=SmallBoulder1
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Kite Meadow
 info author=Custom Islands
-info description=Nimbus Works' third station: a high meadow over sea cliffs, twelve winch masts along the ridge with their torn seeding kites slack between them, the path up grown over with vines, and the launch shed with its winch engine on top. The third island of The Rainmakers.
+info description=Nimbus Works' third station: a high meadow over sea cliffs, twelve winch masts along the ridge with their torn seeding kites slack between them, the path up grown over with vines, and the launch shed with its winch engine on top. The third island of The Rainmakers. Raft-sized: high ground, a cave, a ruined house where Ivar Brekke still lives, a crashed plane and secrets off the path.
 island on.arrive=message||Cliffs, a green top - and along the ridge a row of masts with great torn kites hanging slack between them.
 
 story shedopen|Launch shed open|Placeable_Lantern_Metal|The keypad of the kite crew's launch shed took the winch code.
@@ -190,6 +297,30 @@ prop uppermeadow zone.id=upper_meadow
 prop uppermeadow zone.radius=6
 prop uppermeadow zone.message=The upper meadow: twelve winch masts in a row, and something grunting under them.
 
+story km_top|Spotter's reel|Bolt|The spotter's line reel from the tower top, its line still wound tight.
+story km_cave|Winch governor|Bolt|The governor from winch twelve, hidden in the Wind Cave.
+story km_fixed|Reserve winch working|Bolt|The reserve winch, working again.
+note km_hint Kite crew's notice | RESERVE WINCH: needs the spotter's reel (tower on Gull Crown) and winch twelve's governor (in the Wind Cave). Ivar at the old house knows where. The telescope by the tower shows the whole ridge.
+note km_topchest Kite spotter's tower deck box | A box lashed to the deck rail at the top of the kite spotter's tower.
+loot km_topchest story:km_top*1;Rope*3;Feather*4
+note km_cavechest Wind Cave chest | A chest at the back of Wind Cave, dry under the rock.
+loot km_cavechest story:km_cave*1;Bolt*3;Scrap*3
+note km_rewnote Reserve winch card | The reserve winch spins up and a last kite climbs into the cloud. Under its lid: a crew card - 'Twelve kites, twelve crews. Eleven years. Nobody asked us if the rain was wanted.'
+note km_rewchest Reserve winch reward | What the reserve winch kept.
+loot km_rewchest MetalIngot*2;Rope*3;TradeToken*2
+note km_lampchest Ivar's kit bag | Ivar's kit bag behind the house: his flying gloves, line and pay.
+loot km_lampchest Rope*3;Leather*2;TradeToken*2
+note km_setchest Kite crew chest | The crew chest: every kite tail back, and the crew's last pay packet.
+loot km_setchest MetalIngot*2;Rope*4;TradeToken*2
+note km_planecrate Spotter plane's crate | The spotter plane's crate: kite cord, a radio, cloud charts.
+loot km_planecrate Rope*3;Scrap*3;Plastic*2
+prop km_planecrate loot.refill=0
+note km_pilot Spotter's note | KITE SPOTTER, LAST FLIGHT. Twelve kites up, all lines holding. Then the wind turned. Coming down by the old crew house - the meadow's too steep.
+note jckm Gull perch | The crew's perch, where they watched the kites.
+loot jckm Rope*3;Plank*4;Feather*3
+note jbkm Perch top | A crew stash at the very top.
+loot jbkm CopperIngot*1;Bolt*2;TradeToken*1
+
 quest title=Kites Over the Ridge
 quest intro=A row of winch masts on a high meadow, kites slack between them. Climb the cliff path.
 step reach|cliff_path|1|Climb the cliff path from the beach
@@ -206,10 +337,19 @@ step blueprint|Blueprint_Fueltank|1|Take the fuel tank plans from the fuel store
 step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe plans from the fuel store
 step open|Biofuel press|1|Open the biofuel press in the shed
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from the biofuel press
+step read|Kite crew's notice|1|Read the kite crew's notice by the reserve winch
+step talk|Ivar Brekke|1|Talk to Ivar Brekke at the ruined house in the south-east
+step reach|km_hill|1|Climb to Gull Crown in the north-west
+step collect|story:km_top|1|Climb the kite spotter's tower and take the spotter's reel from its deck
+step reach|km_cave|1|Find Wind Cave in the north-east
+step collect|story:km_cave|1|Take the winch governor from the chest at the back of the cave
+step read|Reserve winch card|1|Bring both to the reserve winch and read what it shows
 step collect|story:bellrung|1|Ring the shed bell
 quest done=The kites are up and Rouhi is coming with you. The Fogworks answers on 1000.
 quest reward=MetalIngot*4;Rope*3;Plank*6
 
 # (box agent 10-24: generated rocks left hanging over the ground check - cleared)
+push at 0 -10
 clear at -24.55 64.79 r=1.2 all only=BigBoulder4_Low
+pop
 save The Kite Meadow

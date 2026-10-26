@@ -53,8 +53,63 @@ open Founders' Day crate
 wait 3
 expect item Blueprint_Firework 1
 expect item Blueprint_ZiplineBase 1
+expect item Blueprint_ZiplineTool 1
+expect item Blueprint_BatteryCharger 1
 expect story boilerkey 1
-expect step 15
+expect step 17
+# RAIN 10-26: the hub, Hanne Vik, the climb, Condensate Cave, the secrets
+expect hidden fw_rewchest
+use fw_machine
+expect hidden fw_rewchest
+read Night shift notice
+expect step 18
+use Hanne Vik
+wait 1
+expect step 19
+expect hidden fw_lampchest
+use Shift lamp 1
+use Shift lamp 2
+use Shift lamp 3
+wait 1
+expect shown fw_lampchest
+open Hanne's shift box
+zone fw_trail
+expect step 20
+zone fw_summit
+expect step 21
+open Fog lookout deck box
+wait 3
+expect story fw_top 1
+expect step 22
+zone fw_cave
+expect step 23
+open Condensate Cave chest
+wait 3
+expect story fw_cave 1
+expect step 24
+use fw_machine
+expect shown fw_rewchest
+expect story fw_fixed 1
+open Fog horn reward
+wait 3
+read Fog horn tape
+expect step 25
+# the secrets: the plane, the jumps, the set
+zone fw_plane
+open Supply plane's crate
+read Supply pilot's note
+zone fw_jumps
+open Stack perch
+open Stack top
+expect hidden fw_setchest
+use fw_piece1
+use fw_piece2
+use fw_piece3
+use fw_piece4
+use fw_piece5
+wait 2
+expect shown fw_setchest
+open Shift chest
 open Boilerman's locker
 expect message padlocked
 use mattiscage

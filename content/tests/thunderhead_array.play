@@ -3,7 +3,7 @@
 # board at -24.5 0; the generator hall x -12..-6 z 30..34.5, the bunker x 4..10, Ingrid's cage at -1 32; the landing at
 # 0 -55, the path up the south side, the zipline from 14 -16 down to the beach at 22 -54.
 island Thunderhead Array
-offset 0 0
+offset 0 24
 expect step 0
 expect title Storm Grid
 wait 5
@@ -61,5 +61,54 @@ expect survivor rainmakers_ingrid
 open Ingrid's tool bag
 expect item ZiplineTool 1
 expect step 14
+# RAIN 10-26: the hub, Signe Lund, the climb, Basalt Cave, the secrets
+expect hidden ta_rewchest
+use ta_machine
+expect hidden ta_rewchest
+read Linesman's notice
+expect step 15
+use Signe Lund
+wait 1
+expect step 16
+expect hidden ta_lampchest
+use Line lamp 1
+wait 1
+expect shown ta_lampchest
+open Signe's tool roll
+zone ta_hill
+expect step 17
+open Storm watch mast deck box
+wait 3
+expect story ta_top 1
+expect step 18
+zone ta_cave
+expect step 19
+open Basalt Cave chest
+wait 3
+expect story ta_cave 1
+expect step 20
+use ta_machine
+expect shown ta_rewchest
+expect story ta_fixed 1
+open Earthing switch reward
+wait 3
+read Earthing log
+expect step 21
+# the secrets: the plane, the jumps, the set
+zone ta_plane
+open Weather plane's crate
+read Weather pilot's note
+zone ta_jumps
+open Basalt perch
+open Stack top
+expect hidden ta_setchest
+use ta_piece1
+use ta_piece2
+use ta_piece3
+use ta_piece4
+use ta_piece5
+wait 2
+expect shown ta_setchest
+open Glass case
 zone beach
 expect done

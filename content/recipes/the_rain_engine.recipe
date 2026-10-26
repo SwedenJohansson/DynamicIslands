@@ -2,7 +2,7 @@
 # A mountain island under a storm that never ends, crowned by the Rain Engine: four huge brass sky cannons (Utopia's
 # harpoon guns, scaled up and pointed at the clouds) on four spurs round the crown, an electric zipline from arm to arm,
 # the drum hall where the seeding drums turn, a laser court, and the Heart - the cold engine room with its master
-# switch. Quest "The Rain Engine" (30 steps): the Foot (the sign, the bears of the salt caves, the gatehouse, the
+# switch. Quest "The Rain Engine" (33 steps): the Foot (the sign, the bears of the salt caves, the gatehouse, the
 # Tangaroa lift up the cliff, the operator's note), the Four Arms (lever, crank, claw, generator - zipline from each to
 # the next; the master board; the screechers; the west locker), the Drum Hall (camera moment, the chemistry note, the
 # laser through three mirrors, the cutoff, the master key, the engine room door, Dagny's first design) and the Heart
@@ -13,6 +13,11 @@
 include lib_sea
 include lib_features
 include lib_huts
+include lib_areas
+include lib_highwater
+include lib_rain
+# RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 95 -> 95
+# RAIN 10-26: the new land - Storm Spur with old survey mast, Thunder Cave, Tor at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five seeding shells
 new
 # (nature: a mountain - Rocks 0.5, few trees (0.2) on the lower slopes, Bushes and Harvest light)
 gen Trees=0.05 Bushes=0.3 Rocks=0.1 Harvest=0.15 BeachThings=0.3
@@ -20,6 +25,8 @@ gen Seed=9991 Radius=95 Height=40 Roughness=0.4 Peaks=1 Shape=0 Style=1 PeakShap
 gen Water=0.5 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.4 Hostiles=0 Friendly=0 SeaLife=0.2
 generate
 origin
+# --- RAIN 10-26 terrain: Storm Spur, the pads of the new areas ---------------------------------------------------
+call rn_pad x=-48 z=62 r=6 h=4
 
 # --- Terrain: the crown levelled at 28 m (r 24), the four arms' spurs round it (N 37, E 35, S 33, W 31), the lift's
 # top pad; the Foot at 3 m on the south side with the salt caves west of it, the landing beach ---------------------
@@ -73,13 +80,13 @@ place Note_Paper operatornote at 3.5 -26 h=31 sit drop yaw=30
 place Locker operatorlocker at -3.5 -26 ground sit yaw=90
 
 # --- The salt caves west of the Foot: white salt boulders round a hollow, the bears' den and their chest ----------
-place SmallRock_02 saltrock at -31 -57 ground scale=1.5 yaw=20
+place SmallRock_02 saltrock at -31 -57 ground y=-2.4 scale=1.5 yaw=20
 place SmallRock_02 saltrock at -32.5 -61.5 ground scale=1.6 yaw=95
 place SmallRock_02 saltrock at -31 -66 ground scale=1.5 yaw=150
 place SmallRock_02 saltrock at -26.5 -68.5 ground scale=1.4 yaw=80
-place SmallRock_02 saltrock at -21.5 -67.5 ground scale=1.2 yaw=30
-place SmallRock_02 saltrock at -26.5 -54.5 ground scale=1.4 yaw=100
-place SmallRock_02 saltrock at -21.5 -55.5 ground scale=1.2 yaw=150
+place SmallRock_02 saltrock at -21.5 -67.5 ground y=-0.9 scale=1.2 yaw=30
+place SmallRock_02 saltrock at -26.5 -54.5 ground y=-1.6 scale=1.4 yaw=100
+place SmallRock_02 saltrock at -21.5 -55.5 ground y=-1.5 scale=1.2 yaw=150
 prop saltrock tint.color=#eeeeea
 place Loot_Chest bearchest at -28.5 -61.5 ground sit yaw=90
 place Creature_Bear bears at -27 -59 ground
@@ -256,10 +263,100 @@ scatter "Pickup_Landmark_Flower_Blue" 2 at 40 -50 r=30 seed=9993 free=3
 call dirt x=35 z=-60 r=10 n=3 seed=9994
 call shallows r=125 deep=6 n=3
 
+# --- RAIN 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Storm Spur ------
+# Storm Spur with old survey mast on it, Thunder Cave, the ruined house where Tor waits (four lamps round it: a puzzle), a crashed plane,
+# a jump course, five seeding shells about the island (a set)
+call hw_zone x=-44 z=62 al=re_hillz id=re_hill r=8 h=1 msg="Storm Spur. The whole island below you."
+call ar_cave x=62 z=52 h=3 yaw=180 al=re_caverock chest=re_cavechest
+call hw_zone x=63 z=43 al=re_cavez id=re_cave r=4 h=1 msg="Thunder Cave. Water drips somewhere in the dark."
+call ar_ruin x=68 z=-30 h=13 yaw=0 w=3 d=2 al=re_ruin
+call rn_islander x=67 z=-34.5 yaw=200 al=re_isl nm="Tor" pose=sit
+prop re_isl talk.text=So you're the one coming up the mountain. Dagny said someone would.\n---\nI kept the Engine for eleven years. I know where its heart is. I wrote down how to stop it and hid it in the Thunder Cave, down on the shore side.\n---\nTake it. Then go up. And look through my telescope first - you should see what you're climbing.\n---\nThe keeper's lamps round my hut: each one wakes its neighbour. All four lit, and look behind the back wall.
+place Placeable_Chair_Basic - at 67 -34.5 ground sit yaw=200
+call rn_lamp x=61 z=-31 al=re_lamp1 nm="Keeper's lamp 1" grp="Keeper's lamps" on=0
+call rn_lamp x=67 z=-24 al=re_lamp2 nm="Keeper's lamp 2" grp="Keeper's lamps" on=1
+call rn_lamp x=74 z=-31 al=re_lamp3 nm="Keeper's lamp 3" grp="Keeper's lamps" on=0
+call rn_lamp x=67 z=-38 al=re_lamp4 nm="Keeper's lamp 4" grp="Keeper's lamps" on=1
+prop re_lamp1 on.use=light|Keeper's lamp 2|toggle
+prop re_lamp2 on.use=light|Keeper's lamp 3|toggle
+prop re_lamp3 on.use=light|Keeper's lamp 4|toggle
+prop re_lamp4 on.use=light|Keeper's lamp 1|toggle
+prop re_lamp1 on.alllit=show|re_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call rn_hidden x=69 z=-25.4 al=re_lampchest
+place Creature_Chicken re_hens at 76 -24 ground
+prop re_hens creature.count=3
+call ar_plane x=-50 z=-44 h=3 yaw=40 al=re_plane crate=re_planecrate
+place Note_Paper re_pilot at -51.78 -39.9 ground y=0.1 drop yaw=70
+call hw_zone x=-50 z=-44 al=re_planez id=re_plane r=6 h=1 msg="A plane, nose down on the slope. Nobody came for it."
+# JUMP re pad=13 at=40 -68
+push at 40 -68
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=13
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=13
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpre at -4.24 -4.24 h=13.6
+place Block_Foundation_Tier3 jpre at -5.77 -1.65 h=14.35
+place Block_Foundation_Tier3 jpre at -5.85 1.35 h=15.1
+place Block_Foundation_Tier3 jpre at -4.46 4.01 h=15.85
+place Block_Foundation_Tier3 jpre at -1.95 5.67 h=16.6
+place Block_Foundation_Tier3 jpre at 1.04 5.91 h=17.35
+place Block_Foundation_Tier3 jpre at 3.78 4.66 h=18.1
+place Block_Foundation_Tier3 jpre at 5.56 2.25 h=18.85
+place Block_Foundation_Tier3 jpre at 5.96 -0.73 h=19.6
+# JUMP from 10
+place Block_Foundation_Tier3 jpre at 4.85 -3.53 h=20.35
+place Block_Foundation_Tier3 jpre at 2.54 -5.44 h=21.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppre at -5.77 -1.65 h=13.668 sy=1.861
+place Block_Foundation_Tier3 jppre at -5.85 1.35 h=14.418 sy=2.959
+place Block_Foundation_Tier3 jppre at -4.46 4.01 h=15.168 sy=4.058
+place Block_Foundation_Tier3 jppre at -1.95 5.67 h=15.918 sy=5.157
+place Block_Foundation_Tier3 jppre at 1.04 5.91 h=16.668 sy=6.255
+place Block_Foundation_Tier3 jppre at 3.78 4.66 h=17.418 sy=7.354
+place Block_Foundation_Tier3 jppre at 5.56 2.25 h=18.168 sy=8.453
+place Block_Foundation_Tier3 jppre at 5.96 -0.73 h=18.918 sy=9.552
+place Block_Foundation_Tier3 jppre at 4.85 -3.53 h=19.668 sy=10.650
+place Block_Foundation_Tier3 jppre at 2.54 -5.44 h=20.418 sy=11.749 sx=2 sz=2
+prop jpre tint.color=#8a7f70
+prop jpre tint.amount=0.35
+prop jppre tint.color=#8a7f70
+prop jppre tint.amount=0.35
+place Loot_Chest jcre at 1.04 5.91 h=17.35 sit yaw=0
+prop jcre loot.refill=0
+place Loot_ChestSmall jbre at 2.54 -5.44 h=21.1 sit yaw=0
+prop jbre loot.refill=0
+pop
+call hw_zone x=40 z=-76 al=re_jumpz id=re_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call rn_piece x=-34 z=42 al=re_piece1 set="Seeding shells"
+call rn_piece x=-60 z=-13 al=re_piece2 set="Seeding shells"
+call rn_piece x=56 z=26 al=re_piece3 set="Seeding shells"
+call rn_piece x=26 z=-74 al=re_piece4 set="Seeding shells"
+call rn_piece x=79 z=-14 al=re_piece5 set="Seeding shells"
+prop re_piece1 on.set=show|re_setchest\nmessage||All five seeding shells found.
+call rn_hidden x=-57 z=36 al=re_setchest kind=Loot_Chest
+call treasure x=-8 z=66 r=10 n=1 seed=26978 kind=0
+prop treasure26978 treasure.loot=TitaniumIngot*1;MetalOre*2;TradeToken*1
+call ar_plants_hill x=-30 z=72 r=14 seed=26991
+call ar_plants_hill x=34 z=70 r=14 seed=26992
+call ar_plants_hill x=-74 z=10 r=10 seed=26993
+call ar_plants_hill x=72 z=10 r=10 seed=26994
+call ar_plants_hill x=-40 z=-70 r=12 seed=26995
+call rn_scope x=-66 z=46 yaw=90 al=re_scope path=re_view
+call rn_cam x=-80 z=30 h=40 al=re_cam1 path=re_view order=1 look=re_isl speed=9 hold=2
+call rn_cam x=-40 z=80 h=50 al=re_cam2 path=re_view order=2 look=re_caverock speed=9 hold=0
+call rn_cam x=40 z=80 h=60 al=re_cam3 path=re_view order=3 look=re_caverock speed=9 hold=0
+call rn_cam x=80 z=0 h=50 al=re_cam4 path=re_view order=4 look=re_lampchest speed=9 hold=0
+call rn_cam x=0 z=-85 h=70 al=re_cam5 path=re_view order=5 look=re_plane speed=9 hold=2
+
+# RAIN 10-26: rocks left hanging by the new hills
+clear at 9.88 -64.31 r=2 only=TP_BigRock02
+clear at -24.54 -50.43 r=2 only=TP_BigRock03
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Rain Engine
 info author=Custom Islands
-info description=Nimbus Works' last station: a mountain under a storm that never ends, crowned by the Rain Engine - four brass sky cannons on its spurs, an electric zipline from arm to arm, the drum hall where the seeding drums turn, a laser court and the cold Heart with the master switch. The finale of The Rainmakers.
+info description=Nimbus Works' last station: a mountain under a storm that never ends, crowned by the Rain Engine - four brass sky cannons on its spurs, an electric zipline from arm to arm, the drum hall where the seeding drums turn, a laser court and the cold Heart with the master switch. The finale of The Rainmakers. Raft-sized: high ground, a cave, a ruined house where Tor still lives, a crashed plane and secrets off the path.
 island on.arrive=message||A mountain under a black cloud that never moves. On its crown four brass guns point at the sky - and the rain comes down harder than anywhere you've seen.
 
 story gatekey|Gatehouse key|Placeable_Lantern_Metal|The gatehouse strongbox's key, from the bears' den in the salt caves.
@@ -475,6 +572,22 @@ prop summitzone zone.radius=2.5
 prop summitzone zone.message=The summit: the North gun cold above you, and the sea all round - blue, and bright, and still.
 prop summitzone on.enter=camera|summitcam||6|60
 
+note re_cavechest Tor's strongbox | The engine-keeper's strongbox in the Thunder Cave: his notes on how to stop the Engine - and his pay, never spent.
+loot re_cavechest TitaniumIngot*1;Battery*2;TradeToken*2
+prop re_cavechest loot.refill=0
+note re_lampchest Tor's tin | Tor's tin behind the hut: a photo of the coast in sunshine, and his tokens.
+loot re_lampchest TradeToken*3;CopperIngot*2;Rope*2
+note re_setchest Shell rack | The rack the seeding shells came from: all five back, and the gunners' kit.
+loot re_setchest MetalIngot*3;Bolt*4;ExplosivePowder*2
+note re_planecrate Courier plane's crate | The company courier's crate: orders, batteries, a bottle.
+loot re_planecrate Battery*1;Scrap*3;Plastic*2
+prop re_planecrate loot.refill=0
+note re_pilot Courier's last order | NIMBUS WORKS - TO THE ENGINE. Raise the seeding rate. The coast is not wet enough. - The Board. (The courier wrote under it: 'I'm not flying back.')
+note jcre Gunners' perch | The cannon crews' perch on the old shell stacks.
+loot jcre Rope*3;Plank*4;MetalIngot*1
+note jbre Shell stack top | The very top of the stacks.
+loot jbre CopperIngot*1;Bolt*2;TradeToken*1
+
 quest title=The Rain Engine
 quest intro=A mountain under a black cloud. Land at the Foot.
 step reach|foot|1|Land at the Foot of the Rain Engine
@@ -506,6 +619,9 @@ step kill|Polar bear|1|Defeat the Engine's guardian
 step collect|story:enginestopped|1|Throw the master switch
 step open|Engine vault|1|Open the Engine vault
 step read|Last broadcast|1|Read Dagny's last broadcast
+step talk|Tor|1|Talk to Tor at the ruined house in the south-east
+step reach|re_cave|1|Find Thunder Cave in the north-east
+step open|Tor's strongbox|1|Open Tor's strongbox at the back of the cave
 step reach|summit|1|Climb to the summit by the North arm and look at the sea
 quest done=The Rain Engine is still, and the sky over the sea is clear for the first time in eleven years.
 quest reward=TitaniumIngot*4;MetalIngot*6;Bolt*6;Battery*2

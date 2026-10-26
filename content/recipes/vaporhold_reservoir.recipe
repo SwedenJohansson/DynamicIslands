@@ -2,7 +2,7 @@
 # A ring of grassy embankment round a deep reservoir lake. In the lake stands the round valve tower (Temperance's
 # moon-town barrel made into a concrete column, a platform with its roof on pillars), Utopia's glass bridge out to it
 # from the south bank; on the lake floor the drowned pump hall, an air pocket in the rocks by its door. Quest "The Valve
-# Tower" (7 steps): the embankment, the surveyors' case dug up with the metal detector and shovel (the valve wheel), the
+# Tower" (19 steps): the embankment, the surveyors' case dug up with the metal detector and shovel (the valve wheel), the
 # tower, the valve (the wheel on its spindle opens the pump hall's flood gate), the pump hall, its store (the water
 # blueprints), Dagny Holm's letter to the town.
 #
@@ -10,12 +10,18 @@
 include lib_sea
 include lib_features
 include lib_huts
+include lib_areas
+include lib_highwater
+include lib_rain
+# RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 52 -> 85; the old island moved 33 m south (push frames), so its south shore stays on the coast and the new land is north
+# RAIN 10-26: the new land - Spillway Hill with survey mast, Seep Cave, Ove Strand at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five survey pegs
 new
 # (nature: an embankment of grass with Bushes Like Raft's own (0.28), few trees, rocks; Harvest 0.2)
 gen Trees=0.15 Bushes=0.28 Rocks=0.43 Harvest=0.2 BeachThings=0.3
-gen Seed=9701 Radius=52 Height=9 Roughness=0.3 Peaks=1 Shape=0 Style=0 PeakShape=0.15 Cliffs=0.2 BeachWidth=0.5
+gen Seed=9701 Radius=85 Height=9 Roughness=0.3 Peaks=1 Shape=0 Style=0 PeakShape=0.15 Cliffs=0.2 BeachWidth=0.5
 gen Water=0.5 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.3 Hostiles=0 Friendly=0.2 SeaLife=0.3
 generate
+push at 0 -33
 
 # --- Terrain: the lake dug in the middle (its floor 7 m under the sea), the embankment's crest walk on the south side,
 # a path up to it from the south beach in steps, the south bank's landing at the bridge -------------------------------
@@ -27,7 +33,15 @@ brush flatten at 0 -21 r=4 s=20 frames=60 h=4
 brush smooth from 0 -46 to 0 -20 r=4 s=6 frames=20
 brush seabed at 0 0 r=17 s=8 frames=60
 brush flatten at 10 -0.75 r=5 s=20 frames=60 h=-7.02
+pop
 origin
+# --- RAIN 10-26 terrain: Spillway Hill, the pads of the new areas ---------------------------------------------------
+call hw_mount x=-38 z=46 b=24 h=22
+call hw_trail x=-38 z=46 b=24 h=22 a0=126.38 turn=300 n=40 h0=3
+brush flatten at 0 18 r=4 s=8 frames=60
+clear at 0 18 r=7
+# (RESIZE 10-26: the old island, 33 m south)
+push at 0 -33
 clear at 0 0 r=21
 clear from 0 -46 to 0 -20 r=6
 clear from -12 -29 to 12 -29 r=6
@@ -106,10 +120,100 @@ scatter "Pickup_Landmark_Flower_Blue" 2 at 0 25 r=30 seed=9714 free=3
 call dirt x=20 z=-25 r=8 n=3 seed=9715
 call shallows r=74 deep=5 n=2
 
+pop
+
+# --- RAIN 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Spillway Hill ------
+# Spillway Hill with survey mast on it, Seep Cave, the ruined house where Ove Strand waits (four lamps round it: a puzzle), a crashed plane,
+# a jump course, five survey pegs about the island (a set), and at the hub the outflow gate that wants the level float and the outflow gate key
+call hw_zone x=-17.87 z=31.17 al=vr_trailz id=vr_trail r=5 msg="The trail up Spillway Hill starts here - round and up."
+call hw_zone x=-38 z=46 al=vr_summitz id=vr_summit r=8 h=1 msg="The top of Spillway Hill. The whole island below you."
+call hw_mast x=-41 z=48 h0=22 lv=6 a=vr_mast chest=vr_topchest top=RT_Spotlight
+place ZiplinePath_Landmark vr_zip at -34.8 43.4 h=23.35
+zipto vr_zip -1.83 21.56
+place Creature_Goat vr_goats at -13.87 34.17 ground
+prop vr_goats creature.count=2
+call ar_cave x=46 z=50 h=3 yaw=180 al=vr_caverock chest=vr_cavechest
+call hw_zone x=47 z=41 al=vr_cavez id=vr_cave r=4 h=1 msg="Seep Cave. Water drips somewhere in the dark."
+call ar_ruin x=58 z=-14 h=3 yaw=0 w=3 d=2 al=vr_ruin
+call rn_islander x=57 z=-18.5 yaw=200 al=vr_isl nm="Ove Strand" pose=fish
+prop vr_isl talk.text=Fish? No. Nothing in the reservoir but cold water.\n---\nI surveyed this valley before they drowned it. My village is under the lake. When they raised it the last time, I hid the gate key in the Seep Cave.\n---\nThe outflow gate wants the key and the level float from the survey mast on Spillway Hill. Let the water out to the sea, where it belongs.\n---\nAnd my four lamps: each one wakes the next. Light all four and look behind the back wall.
+call rn_lamp x=51 z=-15 al=vr_lamp1 nm="Survey lamp 1" grp="Survey lamps" on=1
+call rn_lamp x=57 z=-8 al=vr_lamp2 nm="Survey lamp 2" grp="Survey lamps" on=1
+call rn_lamp x=64 z=-15 al=vr_lamp3 nm="Survey lamp 3" grp="Survey lamps" on=0
+call rn_lamp x=57 z=-22 al=vr_lamp4 nm="Survey lamp 4" grp="Survey lamps" on=0
+prop vr_lamp1 on.use=light|Survey lamp 2|toggle
+prop vr_lamp2 on.use=light|Survey lamp 3|toggle
+prop vr_lamp3 on.use=light|Survey lamp 4|toggle
+prop vr_lamp4 on.use=light|Survey lamp 1|toggle
+prop vr_lamp1 on.alllit=show|vr_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call rn_hidden x=59 z=-9.4 al=vr_lampchest
+place Creature_Chicken vr_hens at 66 -8 ground
+prop vr_hens creature.count=3
+call ar_plane x=-60 z=-26 h=3 yaw=40 al=vr_plane crate=vr_planecrate
+place Note_Paper vr_pilot at -61.78 -21.9 ground y=0.1 drop yaw=70
+call hw_zone x=-60 z=-26 al=vr_planez id=vr_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
+# JUMP vr pad=3 at=4 66
+push at 4 66
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpvr at -4.24 -4.24 h=3.6
+place Block_Foundation_Tier3 jpvr at -5.77 -1.65 h=4.35
+place Block_Foundation_Tier3 jpvr at -5.85 1.35 h=5.1
+place Block_Foundation_Tier3 jpvr at -4.46 4.01 h=5.85
+place Block_Foundation_Tier3 jpvr at -1.95 5.67 h=6.6
+place Block_Foundation_Tier3 jpvr at 1.04 5.91 h=7.35
+place Block_Foundation_Tier3 jpvr at 3.78 4.66 h=8.1
+place Block_Foundation_Tier3 jpvr at 5.56 2.25 h=8.85
+place Block_Foundation_Tier3 jpvr at 5.96 -0.73 h=9.6
+# JUMP from 10
+place Block_Foundation_Tier3 jpvr at 4.85 -3.53 h=10.35
+place Block_Foundation_Tier3 jpvr at 2.54 -5.44 h=11.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppvr at -5.77 -1.65 h=3.668 sy=1.861
+place Block_Foundation_Tier3 jppvr at -5.85 1.35 h=4.418 sy=2.959
+place Block_Foundation_Tier3 jppvr at -4.46 4.01 h=5.168 sy=4.058
+place Block_Foundation_Tier3 jppvr at -1.95 5.67 h=5.918 sy=5.157
+place Block_Foundation_Tier3 jppvr at 1.04 5.91 h=6.668 sy=6.255
+place Block_Foundation_Tier3 jppvr at 3.78 4.66 h=7.418 sy=7.354
+place Block_Foundation_Tier3 jppvr at 5.56 2.25 h=8.168 sy=8.453
+place Block_Foundation_Tier3 jppvr at 5.96 -0.73 h=8.918 sy=9.552
+place Block_Foundation_Tier3 jppvr at 4.85 -3.53 h=9.668 sy=10.650
+place Block_Foundation_Tier3 jppvr at 2.54 -5.44 h=10.418 sy=11.749 sx=2 sz=2
+prop jpvr tint.color=#8a7f70
+prop jpvr tint.amount=0.35
+prop jppvr tint.color=#8a7f70
+prop jppvr tint.amount=0.35
+place Loot_Chest jcvr at 1.04 5.91 h=7.35 sit yaw=0
+prop jcvr loot.refill=0
+place Loot_ChestSmall jbvr at 2.54 -5.44 h=11.1 sit yaw=0
+prop jbvr loot.refill=0
+pop
+call hw_zone x=4 z=58 al=vr_jumpz id=vr_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call rn_piece x=-24 z=26 al=vr_piece1 set="Survey pegs"
+call rn_piece x=-52 z=-17 al=vr_piece2 set="Survey pegs"
+call rn_piece x=40 z=24 al=vr_piece3 set="Survey pegs"
+call rn_piece x=-10 z=60 al=vr_piece4 set="Survey pegs"
+call rn_piece x=72 z=2 al=vr_piece5 set="Survey pegs"
+prop vr_piece1 on.set=show|vr_setchest\nmessage||All five survey pegs found.
+call rn_hidden x=5 z=14 al=vr_setchest kind=Loot_Chest
+call treasure x=24 z=56 r=5 n=1 seed=26578 kind=0
+prop treasure26578 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_hill x=-8 z=46 r=16 seed=26591
+call ar_plants_hill x=30 z=22 r=14 seed=26592
+call ar_plants_hill x=-30 z=4 r=14 seed=26593
+call ar_plants_hill x=40 z=-40 r=14 seed=26594
+call ar_plants_hill x=66 z=36 r=10 seed=26595
+call hw_machine x=0 z=18 yaw=180 al=vr_machine nm="Outflow gate" obj=TP_LaserControlPanel_lever sc=3 a=vr_top b=vr_cave done=vr_fixed rew=vr_rewchest rnote=vr_rewnote msg="It works." hint="It wants the level float from Spillway Hill and the outflow gate key from Seep Cave."
+call hw_note x=-2.6 z=19.2 yaw=200 al=vr_hint
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Vaporhold Reservoir
 info author=Custom Islands
-info description=Nimbus Works' fifth station: a ring of grassy embankment round a deep reservoir, a round valve tower in the lake with a glass bridge out to it, and the drowned pump hall on the lake floor. The fifth island of The Rainmakers.
+info description=Nimbus Works' fifth station: a ring of grassy embankment round a deep reservoir, a round valve tower in the lake with a glass bridge out to it, and the drowned pump hall on the lake floor. The fifth island of The Rainmakers. Raft-sized: high ground, a cave, a ruined house where Ove Strand still lives, a crashed plane and secrets off the path.
 island on.arrive=message||A green ring of an island, and inside it a still, dark lake - with a tower standing in it and a bridge of glass.
 
 story valvewheel|Valve wheel|Placeable_Lantern_Metal|The valve tower's hand wheel, from the surveyors' buried case.
@@ -146,6 +250,30 @@ prop pumphall zone.id=pump_hall
 prop pumphall zone.radius=3
 prop pumphall zone.message=The drowned pump hall: silt, still pumps, a chest - and a letter on a crate.
 
+story vr_top|Level float|Bolt|The water-level float off the survey mast, its brass dented.
+story vr_cave|Outflow gate key|Bolt|The key of the outflow gate, hidden where the reservoir seeps.
+story vr_fixed|Outflow gate working|Bolt|The outflow gate, working again.
+note vr_hint Dam keeper's notice | OUTFLOW GATE LOCKED. It wants the level float from the survey mast on Spillway Hill (north-west) and its key from the Seep Cave (north-east). Ove at the old house east of the dam knows.
+note vr_topchest Survey mast deck box | A box lashed to the deck rail at the top of the survey mast.
+loot vr_topchest story:vr_top*1;Rope*2;Scrap*2
+note vr_cavechest Seep Cave chest | A chest at the back of Seep Cave, dry under the rock.
+loot vr_cavechest story:vr_cave*1;Nail*6;Plastic*2
+note vr_rewnote Outflow ledger | The gate lifts and the reservoir's overflow runs to the sea, not into the valley. In the gate box: the dam keeper's ledger - 'Raised the level again. The village below flooded. Orders.'
+note vr_rewchest Outflow gate reward | What the outflow gate kept.
+loot vr_rewchest CopperIngot*2;Bolt*3;TradeToken*2
+note vr_lampchest Ove's survey case | Ove's survey case: the maps of the drowned village, and his savings.
+loot vr_lampchest CopperIngot*2;TradeToken*2;Rope*2
+note vr_setchest Survey chest | The surveyors' chest: every peg back, every line of the old valley.
+loot vr_setchest MetalIngot*2;Bolt*3;Plank*4
+note vr_planecrate Survey plane's crate | The survey plane's crate: theodolite parts, rope, tins.
+loot vr_planecrate Rope*3;Scrap*3;Plastic*2
+prop vr_planecrate loot.refill=0
+note vr_pilot Survey pilot's note | SURVEY FLIGHT. The lake is higher than the charts. Engine out over the dam - landing west. Tell Ove the village church is still standing under the water.
+note jcvr Spillway perch | A perch where the dam hands watched the spillway.
+loot jcvr Rope*3;Plank*4;MetalIngot*1
+note jbvr Spillway top | The very top of the perch.
+loot jbvr CopperIngot*1;Bolt*2;TradeToken*1
+
 quest title=The Valve Tower
 quest intro=A reservoir in a ring of grass. Climb the path to the embankment.
 step reach|embankment|1|Climb the path to the embankment's crest
@@ -158,6 +286,14 @@ step blueprint|Blueprint_WaterTank|1|Take the water tank plans from the pump hal
 step blueprint|Blueprint_Pipe_Water|1|Take the water pipe plans from the pump hall store
 step blueprint|Blueprint_ElectricPurifier|1|Take the electric purifier plans from the pump hall store
 step blueprint|Blueprint_Storage_Large|1|Take the large storage plans from the pump hall store
+step read|Dam keeper's notice|1|Read the dam keeper's notice by the outflow gate
+step talk|Ove Strand|1|Talk to Ove Strand at the ruined house in the east
+step reach|vr_trail|1|Find the foot of the trail up Spillway Hill, in the north-west
+step reach|vr_summit|1|Climb the trail to the top of Spillway Hill
+step collect|story:vr_top|1|Climb the survey mast and take the level float from its deck
+step reach|vr_cave|1|Find Seep Cave in the north-east
+step collect|story:vr_cave|1|Take the outflow gate key from the chest at the back of the cave
+step read|Outflow ledger|1|Bring both to the outflow gate and read what it shows
 step read|Dagny's letter to the town|1|Read the letter on the crate in the pump hall
 quest done=The water plans are yours, and Dagny's letter says where this ends: the Rain Engine. The next station answers on 1100.
 quest reward=Plank*6;Rope*2;Scrap*4

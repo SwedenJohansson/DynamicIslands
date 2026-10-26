@@ -12,3 +12,10 @@ picture the_fogworks_mast -22 8 -48 -30 14 -58
 picture the_fogworks_halls 0 10 -32 0 3 -12
 picture the_fogworks_boiler 22 6 -2 27 3 -10
 picture the_fogworks_underwater 10 -1.5 -36 0 -1.5 -52
+# RAIN 10-26: the new land - Smoke Hill, Condensate Cave, the ruined house, the plane
+offset -0.0582 13.6067
+picture rain_fw_hill 6 20 18 -47 14 52
+picture rain_fw_cave 58 8 28 48 6 52
+picture rain_fw_ruin 54 8 2 66 4.5 14
+picture rain_fw_plane -54 9 2 -66 4 12
+picture rain_fw_jumps 26 8 54 12 6 66

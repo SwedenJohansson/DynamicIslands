@@ -1,6 +1,6 @@
 # Hailstone Weir (CIPlay hailstone_weir): the plan The Rainmakers' first island, quest "Day One of the Rain"
 island Hailstone Weir
-offset 0 0
+offset 0 37
 expect step 0
 expect title Day One of the Rain
 expect shown sluice1
@@ -22,6 +22,58 @@ wait 3
 expect item Blueprint_Reciever 1
 expect item Blueprint_Antenna 1
 expect step 6
+# RAIN 10-26: the hub, Brita Sand, the climb, Drip Cave, the secrets
+expect hidden hw_rewchest
+use hw_machine
+expect hidden hw_rewchest
+read Weir hand's notice
+expect step 7
+use Brita Sand
+wait 1
+expect step 8
+expect hidden hw_lampchest
+use Gauge lamp 1
+use Gauge lamp 2
+wait 1
+expect shown hw_lampchest
+open Brita's gauge box
+zone hw_trail
+expect step 9
+zone hw_summit
+expect step 10
+open Rain gauge mast deck box
+wait 3
+expect story hw_top 1
+expect step 11
+zone hw_cave
+expect step 12
+open Drip Cave chest
+wait 3
+expect story hw_cave 1
+expect step 13
+use hw_machine
+expect shown hw_rewchest
+expect story hw_fixed 1
+open Sluice two hoist reward
+wait 3
+read Sluice two log
+expect step 14
+# the secrets: the plane, the jumps, the set
+zone hw_plane
+open Survey plane's crate
+read Pilot's kneeboard
+zone hw_jumps
+open Gauge hand's perch
+open Top of the perch
+expect hidden hw_setchest
+use hw_piece1
+use hw_piece2
+use hw_piece3
+use hw_piece4
+use hw_piece5
+wait 2
+expect shown hw_setchest
+open Hail jar
 read Nimbus maintenance card
 expect done
 expect spinsown spillwheel

@@ -1,6 +1,6 @@
 # Guide pictures of The Sleet Kilns (CIPlay the_sleet_kilns_pics): Raft's camera, midday, calm
 island The Sleet Kilns
-offset 0 0
+offset 0 29
 hour 11
 weather Calm
 at 0 -30
@@ -12,3 +12,11 @@ picture the_sleet_kilns_smelter 6 7 6 0 4 16
 picture the_sleet_kilns_salt -14 6 10 -22 3 18
 picture the_sleet_kilns_kiln4 14 5 -8 10 4 1
 picture the_sleet_kilns_underwater 0 -2 -76 0 -3 -56
+# RAIN 10-26: the new land - Cinder Knoll, Ash Cave, the ruined house, the plane
+offset 0 0
+picture rain_sk_hill 6 21 10 -41 15.4 48
+picture rain_sk_cave 56 8 26 46 6 50
+picture rain_sk_ruin 46 8 -26 58 4.5 -14
+picture rain_sk_plane -48 9 -36 -60 4 -26
+picture rain_sk_maze 4 13 24 16 4 38
+picture rain_sk_jumps 18 9 54 4 7 66

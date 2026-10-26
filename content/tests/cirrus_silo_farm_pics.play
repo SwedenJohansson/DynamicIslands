@@ -1,6 +1,6 @@
 # Guide pictures of Cirrus Silo Farm (CIPlay cirrus_silo_farm_pics): Raft's camera, midday, calm
 island Cirrus Silo Farm
-offset 0 0
+offset 0 37
 hour 11
 weather Calm
 at 0 -22
@@ -11,3 +11,11 @@ picture cirrus_silo_farm_farmhouse -12 7 -30 -22 4 -15
 picture cirrus_silo_farm_pen 6 7 -24 18 3 -10
 picture cirrus_silo_farm_cage 18 5 4 10 3 12
 picture cirrus_silo_farm_underwater 0 -3 -58 0 -4 -40
+# RAIN 10-26: the new land - Drizzle Hill, Root Cellar Cave, the ruined house, the plane
+offset 0 0
+picture rain_cs_hill 6 21 10 -41 15.4 48
+picture rain_cs_cave 56 8 26 46 6 50
+picture rain_cs_ruin 46 8 -26 58 4.5 -14
+picture rain_cs_plane -48 9 -36 -60 4 -26
+picture rain_cs_maze 4 12 24 16 3 38
+picture rain_cs_jumps 18 9 54 4 7 66

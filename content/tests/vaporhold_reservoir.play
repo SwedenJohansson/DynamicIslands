@@ -2,7 +2,7 @@
 # The lake (floor -7 m, r~19) in the embankment ring; the valve tower at 0 0 (platform 4 m), the glass bridge from the
 # south bank (0 -21); the pump hall x 7..13 z -3..1.5 on the lake floor; the crest walk at z -29 (4.5 m).
 island Vaporhold Reservoir
-offset 0 0
+offset 0 33
 expect step 0
 expect title The Valve Tower
 wait 5
@@ -34,5 +34,56 @@ wait 3
 expect item Blueprint_WaterTank 1
 expect item Blueprint_Storage_Large 1
 expect step 10
+# RAIN 10-26: the hub, Ove Strand, the climb, Seep Cave, the secrets
+expect hidden vr_rewchest
+use vr_machine
+expect hidden vr_rewchest
+read Dam keeper's notice
+expect step 11
+use Ove Strand
+wait 1
+expect step 12
+expect hidden vr_lampchest
+use Survey lamp 3
+wait 1
+expect shown vr_lampchest
+open Ove's survey case
+zone vr_trail
+expect step 13
+zone vr_summit
+expect step 14
+open Survey mast deck box
+wait 3
+expect story vr_top 1
+expect step 15
+zone vr_cave
+expect step 16
+open Seep Cave chest
+wait 3
+expect story vr_cave 1
+expect step 17
+use vr_machine
+expect shown vr_rewchest
+expect story vr_fixed 1
+open Outflow gate reward
+wait 3
+read Outflow ledger
+expect step 18
+# the secrets: the plane, the jumps, the set
+zone vr_plane
+open Survey plane's crate
+read Survey pilot's note
+zone vr_jumps
+open Spillway perch
+open Spillway top
+expect hidden vr_setchest
+use vr_piece1
+use vr_piece2
+use vr_piece3
+use vr_piece4
+use vr_piece5
+wait 2
+expect shown vr_setchest
+open Survey chest
 read Dagny's letter to the town
 expect done

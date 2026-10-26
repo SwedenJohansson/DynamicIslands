@@ -2,11 +2,11 @@
 # The silos x -8..8 z 12..20 (3 m), silo three at 8 12 (its hatch at 8 8.6, the cage at 12.6 12), the farmhouse at
 # -24..-19.5 z -17..-14, the pen x 12..24 z -14..-6 (the tool chest at 12 -4), the farm gate at 0 -28.
 island Cirrus Silo Farm
-offset 0 0
+offset 0 37
 expect step 0
 expect title The Seed Silos
 wait 5
-expect animals Goat 3
+expect animals Goat 5
 expect hidden silostore
 walk 0 -34 to 0 -28 to 0 -22
 zone farm_gate
@@ -31,7 +31,63 @@ open Silo 3 store
 wait 3
 expect item Blueprint_MotorWheel 1
 expect item Blueprint_SteeringWheel 1
-expect step 7
+expect item Blueprint_HeadLight 1
+expect item Blueprint_Recycler 1
+expect step 9
+# RAIN 10-26: the hub, Marta Hollis, the climb, Root Cellar Cave, the secrets
+expect hidden cs_rewchest
+use cs_machine
+expect hidden cs_rewchest
+read Farmhand's notice
+expect step 10
+use Marta Hollis
+wait 1
+expect step 11
+expect hidden cs_lampchest
+use Farm lamp 1
+use Farm lamp 3
+wait 1
+expect shown cs_lampchest
+open Marta's tin
+zone cs_trail
+expect step 12
+zone cs_summit
+expect step 13
+open Seed-drop tower deck box
+wait 3
+expect story cs_top 1
+expect step 14
+zone cs_cave
+expect step 15
+open Root Cellar Cave chest
+wait 3
+expect story cs_cave 1
+expect step 16
+use cs_machine
+expect shown cs_rewchest
+expect story cs_fixed 1
+open Salt blower reward
+wait 3
+read Blower tally
+expect step 17
+# the secrets: the plane, the jumps, the maze, the set
+zone cs_plane
+open Crop duster's crate
+read Crop duster's log
+zone cs_jumps
+open Hay loft
+open Loft top
+zone cs_maze
+open Teo's daughter's toy box
+expect hidden cs_setchest
+use cs_piece1
+use cs_piece2
+use cs_piece3
+use cs_piece4
+use cs_piece5
+wait 2
+expect shown cs_setchest
+open Teo's seed chest
 use teocage
 expect survivor rainmakers_teo
 expect story silokey 0

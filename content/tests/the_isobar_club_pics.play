@@ -1,6 +1,6 @@
 # Guide pictures of The Isobar Club (CIPlay the_isobar_club_pics): Raft's camera, midday, calm
 island The Isobar Club
-offset 0 0
+offset 0 35
 hour 11
 weather Calm
 at 0 -30
@@ -12,3 +12,11 @@ picture the_isobar_club_pools 19 9 -45 10 0 -33
 picture the_isobar_club_lift -6 4 -38 0 4 -27
 picture the_isobar_club_cellar -10 3.5 -38 -17 2.5 -31
 picture the_isobar_club_underwater 0 -2 -72 0 -3 -55
+# RAIN 10-26: the new land - Barometer Hill, Smugglers' Cave, the ruined house, the plane
+offset 0 0
+picture rain_ic_hill 6 21 10 -41 15.4 48
+picture rain_ic_cave 56 8 26 46 6 50
+picture rain_ic_ruin 46 8 -26 58 4.5 -14
+picture rain_ic_plane -48 9 -36 -60 4 -26
+picture rain_ic_maze 4 14 24 16 5 38
+picture rain_ic_jumps 18 9 54 4 7 66

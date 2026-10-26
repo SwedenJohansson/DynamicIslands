@@ -1,6 +1,6 @@
 # Guide pictures of The Kite Meadow (CIPlay the_kite_meadow_pics): Raft's camera, midday, calm
 island The Kite Meadow
-offset 0 0
+offset 0 10
 hour 11
 weather Calm
 at 0 -18
@@ -15,3 +15,10 @@ open Winch fuel can
 use winchengine
 wait 2
 picture the_kite_meadow_kitesup -10 26 -10 0 25 16
+# RAIN 10-26: the new land - Gull Crown, Wind Cave, the ruined house, the plane
+offset 0 0
+picture rain_km_hill -46 15 -8 -50 7 52
+picture rain_km_cave 64 10 30 54 8 54
+picture rain_km_ruin 46 8.5 -52 58 5 -40
+picture rain_km_plane -46 19 -56 -58 14 -46
+picture rain_km_jumps 72 9.5 -2 58 7.5 10

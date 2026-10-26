@@ -2,7 +2,7 @@
 # The upper shelf (6.2 m) round 0 -2 r 24: the pavilion x -7.5..7.5 z -10..-1, its colonnade to z -14.5; the lower
 # terrace (1.5 m) z -38..-26 with the tidal pools east, the wine cellar x -20..-14 z -35..-27.5; the funicular at 0 -28.3.
 island The Isobar Club
-offset 0 0
+offset 0 35
 expect step 0
 expect title Members Only
 wait 3
@@ -32,6 +32,60 @@ expect item Blueprint_BackpackAdvanced 1
 expect item Blueprint_ZiplineToolElectric 1
 expect story cellarkey 1
 expect step 9
+# RAIN 10-26: the hub, Lord Arvid Hale, the climb, Smugglers' Cave, the secrets
+expect hidden ic_rewchest
+use ic_machine
+expect hidden ic_rewchest
+read Steward's notice
+expect step 10
+use Lord Arvid Hale
+wait 1
+expect step 11
+expect hidden ic_lampchest
+use Folly lamp 1
+use Folly lamp 2
+wait 1
+expect shown ic_lampchest
+open Lord Hale's strongbox
+zone ic_trail
+expect step 12
+zone ic_summit
+expect step 13
+open Club's weather mast deck box
+wait 3
+expect story ic_top 1
+expect step 14
+zone ic_cave
+expect step 15
+open Smugglers' Cave chest
+wait 3
+expect story ic_cave 1
+expect step 16
+use ic_machine
+expect shown ic_rewchest
+expect story ic_fixed 1
+open Club signal reward
+wait 3
+read Signal book
+expect step 17
+# the secrets: the plane, the jumps, the maze, the set
+zone ic_plane
+open Member's plane crate
+read Member's flight card
+zone ic_jumps
+open Folly perch
+open Folly top
+zone ic_maze
+open Maze prize
+expect hidden ic_setchest
+use ic_piece1
+use ic_piece2
+use ic_piece3
+use ic_piece4
+use ic_piece5
+wait 2
+expect shown ic_setchest
+open Trophy case
 zone cellar
 open Dagny's case
 expect message under the engineer's hand

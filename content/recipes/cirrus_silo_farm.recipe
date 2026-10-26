@@ -1,7 +1,7 @@
 # Cirrus Silo Farm - an island of the library's plan The Rainmakers (Nimbus Works' second station)
 # Rolling grassland in a steady drizzle and six tall silos of cloud-seeding salt in two rows: each one of Temperance's
 # moon-town barrels blown up to silo size and painted galvanised grey. The farmer Teo's wooden farmhouse
-# on its stone base to the west, the goat pen to the east with its goats loose. Quest "The Seed Silos" (6 steps): the
+# on its stone base to the west, the goat pen to the east with its goats loose. Quest "The Seed Silos" (16 steps): the
 # farm gate, net the three goats, Teo's letter to his daughter, the hatch at the foot of silo three (the silo key in the
 # farmhouse drawer), the silo's store (the motor wheel's and the steering wheel's blueprints), free Teo from the seed
 # cage, his seed box.
@@ -9,12 +9,18 @@
 # Built by the recipe player (CIRecipe cirrus_silo_farm) through the editor's own operations.
 include lib_sea
 include lib_features
+include lib_areas
+include lib_highwater
+include lib_rain
+# RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 48 -> 85; the old island moved 37 m south (push frames), so its south shore stays on the coast and the new land is north
+# RAIN 10-26: the new land - Drizzle Hill with seed-drop tower, Root Cellar Cave, Marta Hollis at the ruined house (a lamp puzzle), a crashed plane, a jump course, a maze, a set of five seed packets
 new
 # (nature: grassland farm, Like Raft's own: Trees 0.28, Bushes 0.28, Rocks 0.43; Harvest 0.3 - the crops)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.3 BeachThings=0.3
-gen Seed=9401 Radius=48 Height=14 Roughness=0.35 Peaks=1 Shape=0 Style=0 PeakShape=0.4 Cliffs=0.1 BeachWidth=0.5
+gen Seed=9401 Radius=85 Height=14 Roughness=0.35 Peaks=1 Shape=0 Style=0 PeakShape=0.4 Cliffs=0.1 BeachWidth=0.5
 gen Water=0.5 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.3 Hostiles=0 Friendly=0.2 SeaLife=0.3
 generate
+push at 0 -37
 
 # --- Terrain: the silo yard levelled on the north rise, the farmhouse plot, the pen, the lane to the farm gate -------
 brush flatten from -12 16 to 12 16 r=10 s=20 frames=100 h=3
@@ -22,7 +28,15 @@ brush flatten at -21 -15 r=7 s=20 frames=60 h=3
 brush flatten at 18 -10 r=10 s=20 frames=60 h=3
 brush flatten at 8 8.6 r=3 s=20 frames=60 h=3
 brush smooth from 0 -30 to 0 6 r=5 s=6 frames=20
+pop
 origin
+# --- RAIN 10-26 terrain: Drizzle Hill, the pads of the new areas ---------------------------------------------------
+call hw_mount x=-38 z=46 b=24 h=22
+call hw_trail x=-38 z=46 b=24 h=22 a0=126.38 turn=300 n=40 h0=3
+brush flatten at 0 18 r=4 s=8 frames=60
+clear at 0 18 r=7
+# (RESIZE 10-26: the old island, 37 m south)
+push at 0 -37
 clear from -12 16 to 12 16 r=11
 clear at -21 -15 r=8
 clear at 18 -10 r=11
@@ -113,10 +127,179 @@ scatter "Pickup_Landmark_Flower_Yellow" 2 at 0 0 r=36 seed=9413 free=3
 call dirt x=-6 z=-14 r=8 n=3 seed=9414
 call shallows r=68 deep=5 n=2
 
+pop
+
+# --- RAIN 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Drizzle Hill ------
+# Drizzle Hill with seed-drop tower on it, Root Cellar Cave, the ruined house where Marta Hollis waits (four lamps round it: a puzzle), a crashed plane,
+# a jump course, a maze, five seed packets about the island (a set), and at the hub the salt blower that wants the drop valve and the silo four gauge
+call hw_zone x=-17.87 z=31.17 al=cs_trailz id=cs_trail r=5 msg="The trail up Drizzle Hill starts here - round and up."
+call hw_zone x=-38 z=46 al=cs_summitz id=cs_summit r=8 h=1 msg="The top of Drizzle Hill. The whole island below you."
+call hw_mast x=-41 z=48 h0=22 lv=6 a=cs_mast chest=cs_topchest top=Placeable_Flag_01
+place ZiplinePath_Landmark cs_zip at -34.8 43.4 h=23.35
+zipto cs_zip -1.83 21.56
+place Creature_Goat cs_goats at 34 36 ground
+prop cs_goats creature.count=2
+call ar_cave x=46 z=50 h=3 yaw=180 al=cs_caverock chest=cs_cavechest
+call hw_zone x=47 z=41 al=cs_cavez id=cs_cave r=4 h=1 msg="Root Cellar Cave. Water drips somewhere in the dark."
+call ar_ruin x=58 z=-14 h=3 yaw=0 w=3 d=2 al=cs_ruin
+call rn_islander x=57 z=-18.5 yaw=200 al=cs_isl nm="Marta Hollis" pose=sit
+prop cs_isl talk.text=Teo's goats again? No - you've the look of someone from the sea.\n---\nThe company dropped salt from the tower on the hill to make the clouds rain. It rained salt on the fields instead. Teo hid the gauge in the root cellar so they couldn't run silo four again.\n---\nIf you want the blower turned out to sea, it wants both. And mind the hedge maze by the silos - Teo planted it for his girl. Her toy box is in the middle.\n---\nMy lamps: four round the house, each one wakes the next. Get all four lit and look behind the back wall.
+place Placeable_Chair_Basic - at 57 -18.5 ground sit yaw=200
+call rn_lamp x=51 z=-15 al=cs_lamp1 nm="Farm lamp 1" grp="Farm lamps" on=0
+call rn_lamp x=57 z=-8 al=cs_lamp2 nm="Farm lamp 2" grp="Farm lamps" on=0
+call rn_lamp x=64 z=-15 al=cs_lamp3 nm="Farm lamp 3" grp="Farm lamps" on=0
+call rn_lamp x=57 z=-22 al=cs_lamp4 nm="Farm lamp 4" grp="Farm lamps" on=0
+prop cs_lamp1 on.use=light|Farm lamp 2|toggle
+prop cs_lamp2 on.use=light|Farm lamp 3|toggle
+prop cs_lamp3 on.use=light|Farm lamp 4|toggle
+prop cs_lamp4 on.use=light|Farm lamp 1|toggle
+prop cs_lamp1 on.alllit=show|cs_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call rn_hidden x=59 z=-9.4 al=cs_lampchest
+place Creature_Chicken cs_hens at 66 -8 ground
+prop cs_hens creature.count=3
+call ar_plane x=-60 z=-26 h=3 yaw=40 al=cs_plane crate=cs_planecrate
+place Note_Paper cs_pilot at -61.78 -21.9 ground y=0.1 drop yaw=70
+call hw_zone x=-60 z=-26 al=cs_planez id=cs_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
+# JUMP cs pad=3 at=4 66
+push at 4 66
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpcs at 4.24 4.24 h=3.6
+place Block_Foundation_Tier3 jpcs at 5.77 1.65 h=4.35
+place Block_Foundation_Tier3 jpcs at 5.85 -1.35 h=5.1
+place Block_Foundation_Tier3 jpcs at 4.46 -4.01 h=5.85
+place Block_Foundation_Tier3 jpcs at 1.95 -5.67 h=6.6
+place Block_Foundation_Tier3 jpcs at -1.04 -5.91 h=7.35
+place Block_Foundation_Tier3 jpcs at -3.78 -4.66 h=8.1
+place Block_Foundation_Tier3 jpcs at -5.56 -2.25 h=8.85
+place Block_Foundation_Tier3 jpcs at -5.96 0.73 h=9.6
+# JUMP from 10
+place Block_Foundation_Tier3 jpcs at -4.85 3.53 h=10.35
+place Block_Foundation_Tier3 jpcs at -2.54 5.44 h=11.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppcs at 5.77 1.65 h=3.668 sy=1.861
+place Block_Foundation_Tier3 jppcs at 5.85 -1.35 h=4.418 sy=2.959
+place Block_Foundation_Tier3 jppcs at 4.46 -4.01 h=5.168 sy=4.058
+place Block_Foundation_Tier3 jppcs at 1.95 -5.67 h=5.918 sy=5.157
+place Block_Foundation_Tier3 jppcs at -1.04 -5.91 h=6.668 sy=6.255
+place Block_Foundation_Tier3 jppcs at -3.78 -4.66 h=7.418 sy=7.354
+place Block_Foundation_Tier3 jppcs at -5.56 -2.25 h=8.168 sy=8.453
+place Block_Foundation_Tier3 jppcs at -5.96 0.73 h=8.918 sy=9.552
+place Block_Foundation_Tier3 jppcs at -4.85 3.53 h=9.668 sy=10.650
+place Block_Foundation_Tier3 jppcs at -2.54 5.44 h=10.418 sy=11.749 sx=2 sz=2
+prop jpcs tint.color=#8a7f70
+prop jpcs tint.amount=0.35
+prop jppcs tint.color=#8a7f70
+prop jppcs tint.amount=0.35
+place Loot_Chest jccs at -1.04 -5.91 h=7.35 sit yaw=0
+prop jccs loot.refill=0
+place Loot_ChestSmall jbcs at -2.54 5.44 h=11.1 sit yaw=0
+prop jbcs loot.refill=0
+pop
+call hw_zone x=4 z=58 al=cs_jumpz id=cs_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call rn_pad x=16 z=38 r=12 h=3
+push at 8.5 30.5 h=3
+place Block_Wall_Tier3 cs_maze at 0.75 0 y=0.05
+place Block_Wall_Tier3 cs_maze at 2.25 0 y=0.05
+place Block_Wall_Tier3 cs_maze at 0.75 15 y=0.05
+place Block_Wall_Tier3 cs_maze at 2.25 15 y=0.05
+place Block_Wall_Tier3 cs_maze at 3.75 0 y=0.05
+place Block_Wall_Tier3 cs_maze at 5.25 0 y=0.05
+place Block_Wall_Tier3 cs_maze at 3.75 3 y=0.05
+place Block_Wall_Tier3 cs_maze at 5.25 3 y=0.05
+place Block_Wall_Tier3 cs_maze at 3.75 12 y=0.05
+place Block_Wall_Tier3 cs_maze at 5.25 12 y=0.05
+place Block_Wall_Tier3 cs_maze at 3.75 15 y=0.05
+place Block_Wall_Tier3 cs_maze at 5.25 15 y=0.05
+place Block_Wall_Tier3 cs_maze at 6.75 9 y=0.05
+place Block_Wall_Tier3 cs_maze at 8.25 9 y=0.05
+place Block_Wall_Tier3 cs_maze at 6.75 15 y=0.05
+place Block_Wall_Tier3 cs_maze at 8.25 15 y=0.05
+place Block_Wall_Tier3 cs_maze at 9.75 0 y=0.05
+place Block_Wall_Tier3 cs_maze at 11.25 0 y=0.05
+place Block_Wall_Tier3 cs_maze at 9.75 6 y=0.05
+place Block_Wall_Tier3 cs_maze at 11.25 6 y=0.05
+place Block_Wall_Tier3 cs_maze at 9.75 15 y=0.05
+place Block_Wall_Tier3 cs_maze at 11.25 15 y=0.05
+place Block_Wall_Tier3 cs_maze at 12.75 0 y=0.05
+place Block_Wall_Tier3 cs_maze at 14.25 0 y=0.05
+place Block_Wall_Tier3 cs_maze at 12.75 3 y=0.05
+place Block_Wall_Tier3 cs_maze at 14.25 3 y=0.05
+place Block_Wall_Tier3 cs_maze at 12.75 15 y=0.05
+place Block_Wall_Tier3 cs_maze at 14.25 15 y=0.05
+place Block_Wall_Tier3 cs_maze at 0 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 0 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 0 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 0 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 0 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 0 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 0 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 0 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 0 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 0 14.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 3 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 3 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 3 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 3 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 6 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 6 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 6 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 6 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 6 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 6 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 6 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 6 14.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 9 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 9 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 9 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 9 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 9 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 9 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 12 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 12 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 12 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 12 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 15 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 15 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 15 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 15 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 15 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 15 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 15 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 15 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 15 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cs_maze at 15 14.25 y=0.05 yaw=90
+place Loot_ChestSmall cs_mazechest at 4.5 13.5 y=0.05 sit yaw=0
+pop
+prop cs_maze tint.color=#4e6b3a
+prop cs_maze tint.amount=0.55
+prop cs_mazechest loot.refill=0
+call hw_zone x=14.5 z=29 al=cs_mazez id=cs_maze r=3 msg="A maze of old walls. Somewhere in the middle, a box."
+call rn_piece x=-24 z=26 al=cs_piece1 set="Seed packets"
+call rn_piece x=-52 z=-17 al=cs_piece2 set="Seed packets"
+call rn_piece x=40 z=24 al=cs_piece3 set="Seed packets"
+call rn_piece x=-10 z=60 al=cs_piece4 set="Seed packets"
+call rn_piece x=16 z=38 al=cs_piece5 set="Seed packets"
+prop cs_piece1 on.set=show|cs_setchest\nmessage||All five seed packets found.
+call rn_hidden x=5 z=14 al=cs_setchest kind=Loot_Chest
+call treasure x=24 z=58 r=5 n=1 seed=26278 kind=0
+prop treasure26278 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_hill x=-8 z=46 r=16 seed=26291
+call ar_plants_hill x=30 z=22 r=14 seed=26292
+call ar_plants_hill x=-30 z=4 r=14 seed=26293
+call ar_plants_hill x=40 z=-40 r=14 seed=26294
+call ar_plants_hill x=66 z=36 r=10 seed=26295
+call hw_machine x=0 z=18 yaw=180 al=cs_machine nm="Salt blower" obj=RT_PowerBox sc=1 a=cs_top b=cs_cave done=cs_fixed rew=cs_rewchest rnote=cs_rewnote msg="It works." hint="It wants the drop valve from Drizzle Hill and the silo four gauge from Root Cellar Cave."
+call hw_note x=-2.6 z=19.2 yaw=200 al=cs_hint
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Cirrus Silo Farm
 info author=Custom Islands
-info description=Nimbus Works' second station: a grass island in a steady drizzle, six galvanised silos of cloud-seeding salt, a farmhouse and a goat pen - and the farmer Teo, who never left. The second island of The Rainmakers.
+info description=Nimbus Works' second station: a grass island in a steady drizzle, six galvanised silos of cloud-seeding salt, a farmhouse and a goat pen - and the farmer Teo, who never left. The second island of The Rainmakers. Raft-sized: high ground, a cave, a ruined house where Marta Hollis still lives, a crashed plane and secrets off the path.
 island on.arrive=message||Six grey silos stand over a wet green island, domes on their tops. Somewhere a goat is bleating.
 
 story silokey|Silo key|Placeable_Lantern_Metal|The key of silo three's hatch and its seed cage, from Teo's drawer.
@@ -130,7 +313,7 @@ note toolchest Farm tool chest | A tool chest by the pen: a net launcher and its
 loot toolchest NetGun*1;NetCanister*4;Rope*2
 prop toolchest loot.refill=0
 note silostore Silo 3 store | Silo three's store under the hatch: sacks of grey seeding salt, and Nimbus Works' plans for a raft that steers itself into the wind.
-loot silostore Blueprint_MotorWheel*1;Blueprint_SteeringWheel*1;Scrap*4;Bolt*2
+loot silostore Blueprint_MotorWheel*1;Blueprint_SteeringWheel*1;Blueprint_HeadLight*1;Blueprint_Recycler*1;Scrap*4;Bolt*2
 prop silostore loot.refill=0
 prop silostore obj.name=silostore
 prop silostore beh.hidden=1
@@ -156,6 +339,32 @@ prop farmgate zone.id=farm_gate
 prop farmgate zone.radius=5
 prop farmgate zone.message=Cirrus Silo Farm: a lane up to six grey silos and a farmhouse, all of it wet.
 
+story cs_top|Drop valve|Bolt|The brass drop valve that let the seeding salt fall from the tower into the wind.
+story cs_cave|Silo four gauge|Bolt|The pressure gauge off silo four, wrapped in sacking in the cave.
+story cs_fixed|Salt blower working|Bolt|The salt blower, working again.
+note cs_hint Farmhand's notice | THE SALT BLOWER IS STOPPED. It wants its drop valve (up the seed-drop tower on Drizzle Hill, north-west) and silo four's gauge (Teo hid it in the Root Cellar Cave, north-east). Marta at the east ruin knows the way.
+note cs_topchest Seed-drop tower deck box | A box lashed to the deck rail at the top of the seed-drop tower.
+loot cs_topchest story:cs_top*1;Rope*2;Plank*3
+note cs_cavechest Root Cellar Cave chest | A chest at the back of Root Cellar Cave, dry under the rock.
+loot cs_cavechest story:cs_cave*1;Plastic*2;Nail*6
+note cs_rewnote Blower tally | The blower coughs and a white plume blows out to sea - and not over the farm. Inside the cover: the tally of salt blown over Teo's fields for eleven years. 'Nothing grows in salt,' someone wrote under it.
+note cs_rewchest Salt blower reward | What the salt blower kept.
+loot cs_rewchest Seed_Flower_Red*2;CopperIngot*2;TradeToken*2
+note cs_lampchest Marta's tin | Marta's tin behind the house: seeds, a little money and a photo of the farm in sun.
+loot cs_lampchest Seed_Flower_Red*2;TradeToken*2;CopperIngot*1
+note cs_setchest Teo's seed chest | Teo's seed chest: every packet back where it belongs, and the good seed he kept from the salt.
+loot cs_setchest Seed_Flower_Red*3;Plank*4;MetalIngot*1
+note cs_planecrate Crop duster's crate | The crop duster's crate: hoses, a pump, and sacks of seeding salt nobody will spread now.
+loot cs_planecrate Plastic*3;Scrap*3;Rope*2
+prop cs_planecrate loot.refill=0
+note cs_pilot Crop duster's log | SALT RUN 212. Wind wrong again, the whole load went over the farm. Teo shook his fist at me from the pen. Engine coughing. Setting down in the west field.
+note jccs Hay loft | The farmhands' old hay loft perch, where they slept off the drizzle.
+loot jccs Rope*3;Plank*4;Wool*2
+note jbcs Loft top | A box at the top of the loft.
+loot jbcs CopperIngot*1;Bolt*2;TradeToken*1
+note cs_mazechest Teo's daughter's toy box | A painted toy box in the middle of the hedge maze: a wooden goat, a kite, and her father's savings.
+loot cs_mazechest TradeToken*3;CopperIngot*2;Feather*4
+
 quest title=The Seed Silos
 quest intro=A farm of seed silos, and somebody's goats loose. Walk up through the farm gate.
 step reach|farm_gate|1|Walk up the lane through the farm gate
@@ -165,6 +374,16 @@ step collect|story:silohatch|1|Open the hatch at the foot of silo three with the
 step open|Silo 3 store|1|Open the store under silo three
 step blueprint|Blueprint_MotorWheel|1|Take the engine plans from the silo 3 store
 step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel plans from the silo 3 store
+step blueprint|Blueprint_HeadLight|1|Take the headlight plans from the silo 3 store
+step blueprint|Blueprint_Recycler|1|Take the recycler plans from the silo 3 store
+step read|Farmhand's notice|1|Read the farmhand's notice by the salt blower
+step talk|Marta Hollis|1|Talk to Marta Hollis at the ruined house in the east
+step reach|cs_trail|1|Find the foot of the trail up Drizzle Hill, in the north-west
+step reach|cs_summit|1|Climb the trail to the top of Drizzle Hill
+step collect|story:cs_top|1|Climb the seed-drop tower and take the drop valve from its deck
+step reach|cs_cave|1|Find Root Cellar Cave in the north-east
+step collect|story:cs_cave|1|Take the silo four gauge from the chest at the back of the cave
+step read|Blower tally|1|Bring both to the salt blower and read what it shows
 step open|Teo's seed box|1|Free Teo from the seed cage beside silo three (the silo key opens it), then open his seed box
 quest done=Teo is free and on his way to your raft. The next station is the kite meadow: tune the Receiver to 900.
 quest reward=Plank*6;Rope*3;Scrap*4
