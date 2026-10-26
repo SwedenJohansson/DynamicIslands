@@ -220,7 +220,7 @@ namespace DynamicIslands
 			RaycastHit hit;
 			bool ground = Physics.Raycast(stand, Vector3.down, out hit, 5f, ~0, QueryTriggerInteraction.Ignore) && hit.collider.transform.IsChildOf(root);
 			Check(ref ok, how.Contains("low flat") && stand.y > sea + 1f && stand.y < sea + 10f && r > 115f && r < 175f && ground && hit.distance < 2.5f && !TestStart.Steep(root, hit.point),
-				"no test start: on the beach (" + how + ", " + r.ToString("0") + " m from the middle, " + (stand.y - sea).ToString("0.0") + " m above the sea, " + (ground ? hit.distance.ToString("0.0") + " m over the island's ground" : "no island ground under it") + ")");
+				"no test start: on the beach (" + how + ", " + r.ToString("0") + " m from the middle, " + (stand.y - sea).ToString("0.0") + " m above the sea, " + (ground ? hit.distance.ToString("0.0") + " m over the island's ground" + (TestStart.Steep(root, hit.point) ? ", steep" : ", flat") : "no island ground under it") + ")");
 
 			// (put there as Test does, and still standing on the island's ground a few seconds later - not under it, not moved off)
 			yield return EnsureAlive();
@@ -235,7 +235,7 @@ namespace DynamicIslands
 			float surface = terrain != null ? terrain.SampleHeight(now) + terrain.transform.position.y : float.NegativeInfinity;
 			float moved = new Vector2(now.x - stand.x, now.z - stand.z).magnitude;
 			Check(ref ok, player.PersonController.IsGrounded && under != null && under.transform.IsChildOf(root) && now.y > surface - 1f && moved < 6f,
-				"6 s later the player stands on the island's ground (" + (under != null ? under.name : "nothing") + ", " + (now.y - surface).ToString("0.0") + " m over its surface, " + moved.ToString("0.0") + " m from where put)");
+				"6 s later the player stands on the island's ground (" + (player.PersonController.IsGrounded ? "grounded" : "not grounded") + ", on " + (under != null ? under.name : "nothing") + ", " + (now.y - surface).ToString("0.0") + " m over its surface, " + moved.ToString("0.0") + " m from where put)");
 			Screenshot(new[] { "teststart_peak" });
 			yield return new WaitForSeconds(0.6f);
 

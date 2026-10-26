@@ -150,6 +150,8 @@ namespace DynamicIslands.Editor
 		const float HighMiddle = 60f;
 		/// <summary>A beach or a low flat spot: dry land up to this high above the sea.</summary>
 		const float LowLand = 25f;
+		/// <summary>The flat ground found reaches this far round the spot (m): a player put at the foot of a cliff touched it, not grounded.</summary>
+		const float FlatRound = 3f;
 
 		/// <summary>Where the rays down onto the island start: above everything it can have (PF-D7, 2026-10-26: the ray from 400 m
 		/// above the sea started inside a peak higher than that - land goes up to 580 m above the sea - and found the inside
@@ -218,8 +220,8 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The point of the island's terrain between <paramref name="low"/> and <paramref name="high"/> (world heights),
-		/// not steeper than <see cref="FlatSlope"/> and with dry land all round it, nearest <paramref name="centre"/> (flat
-		/// distance); null when there is none.</summary>
+		/// with dry ground no steeper than <see cref="FlatSlope"/> all round it (<see cref="FlatRound"/> m), nearest
+		/// <paramref name="centre"/> (flat distance); null when there is none.</summary>
 		internal static Vector3? FlatLand(Transform root, Vector3 centre, float low, float high)
 		{
 			Vector3? best = null;
@@ -232,15 +234,22 @@ namespace DynamicIslands.Editor
 				float[,] h = d.GetHeights(0, 0, res, res);
 				Vector3 size = d.size, at = t.transform.position;
 				float sx = size.x / (res - 1), sz = size.z / (res - 1), lowN = (low - at.y) / size.y, highN = (high - at.y) / size.y;
-				for (int z = 1; z < res - 1; z++)
-					for (int x = 1; x < res - 1; x++)
+				int k = Mathf.Clamp(Mathf.CeilToInt(FlatRound / Mathf.Min(sx, sz)), 1, 6);
+				for (int z = k; z < res - k; z++)
+					for (int x = k; x < res - k; x++)
 					{
 						float y = h[z, x];
 						if (y < lowN || y > highN) continue;
-						float l = h[z, x - 1], r = h[z, x + 1], b = h[z - 1, x], f = h[z + 1, x];
-						if (l < lowN || r < lowN || b < lowN || f < lowN) continue; // (not at the wet edge)
-						float gx = (r - l) * size.y / (2f * sx), gz = (f - b) * size.y / (2f * sz);
-						if (gx * gx + gz * gz > maxRise * maxRise) continue;
+						// (every point round it: dry - not at the wet edge - and no higher or lower than the slope allows)
+						bool flat = true;
+						for (int dz = -k; dz <= k && flat; dz++)
+							for (int dx = -k; dx <= k && flat; dx++)
+							{
+								if (dx == 0 && dz == 0) continue;
+								float n = h[z + dz, x + dx], dist = Mathf.Sqrt(dx * sx * dx * sx + dz * sz * dz * sz);
+								if (n < lowN || Mathf.Abs(n - y) * size.y > maxRise * dist) flat = false;
+							}
+						if (!flat) continue;
 						float wx = at.x + x * sx, wz = at.z + z * sz;
 						float dd = (wx - centre.x) * (wx - centre.x) + (wz - centre.z) * (wz - centre.z);
 						if (dd < bestD) { bestD = dd; best = new Vector3(wx, at.y + y * size.y, wz); }
