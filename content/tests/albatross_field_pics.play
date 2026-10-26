@@ -13,6 +13,9 @@ picture albatross_field_hangars -16 9 -30 -36 6 -48
 at 5 4 h=-5
 wait 2
 picture albatross_field_ditched 10 -4.5 9 5 -7 0
+# (back on dry land first: a player under water makes Raft draw every picture as seen under water)
+at -55 -30
+wait 3
 # SILVER 10-26: the new land - Gannet Rock, Turtle Cave, the ruined house, the wreck, the jumps
 picture silver_af_hill 35.55 22.4 12.5 -47 9.8 84
 picture silver_af_cave 22 7.5 -62 16 5.5 -86

@@ -12,6 +12,9 @@ wait 6
 picture sunken_liner_bow 11 -8 -1 8 -12 16
 picture sunken_liner_ballroom 8 -13 -16 7 -14.5 -6
 picture sunken_liner_stern -2 -15 -38 13 -18 -46
+# (back on dry land first: a player under water makes Raft draw every picture as seen under water)
+at -13 11.5
+wait 3
 # SILVER 10-26: the new land - Ice Crown, Frost Cave, the ruined house, the wreck, the jumps
 picture silver_sl_hill -50.75 26 29.1 -67 14 -6
 picture silver_sl_cave 0 8 -52 -6 6 -76

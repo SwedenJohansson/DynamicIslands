@@ -18,6 +18,9 @@ picture island_of_stations_terminal 2.4 4.9 2.4 0.6 3.9 -2.6
 at 106 -14 h=-6
 wait 2
 picture island_of_stations_kelp 110 -6 -10 100 -8.5 -16
+# (back on dry land first: a player under water makes Raft draw every picture as seen under water)
+at 12 -80
+wait 3
 # SILVER 10-26: the new land - Mist Hill, Echo Cave, the ruined house, the wreck, the jumps
 picture silver_is_hill -20.45 24.8 -13.8 53 12.6 72
 picture silver_is_cave -74 6.5 -12 -80 4.5 -36

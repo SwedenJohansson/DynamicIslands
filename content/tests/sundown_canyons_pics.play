@@ -17,6 +17,9 @@ picture sundown_canyons_ranch 128 27 28 104 14 0
 at 4 -78 h=-4
 wait 2
 picture sundown_canyons_river 12 -3 -86 4 -6.5 -75
+# (back on dry land first: a player under water makes Raft draw every picture as seen under water)
+at -115 -20
+wait 3
 # SILVER 10-26: the new land - Buzzard Butte, Rattler Cave, the ruined house, the wreck, the jumps
 picture silver_sc_hill -12.35 30.38 44.55 39 19.11 27
 picture silver_sc_cave -57 21.4 -9 -63 19.4 -33
