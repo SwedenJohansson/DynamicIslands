@@ -1,7 +1,7 @@
 # Pneumatic Heights (CIPlay pneumatic_heights_solo; in the plan after Parcel Canopy, from day 10): quest "By Tube"
 # (it needs the telegraphist's dead letter from The Dead Letter Office: pneumatic_heights_solo.play reads it first)
 island Pneumatic Heights
-offset 0 0
+offset 0 24
 expect step 0
 expect title By Tube
 expect hidden capsule1
@@ -44,20 +44,74 @@ code vaultpad 3109
 open Exchange vault
 wait 3
 expect item Blueprint_MetalDetector 1
-expect step 12
+expect item Blueprint_BatteryCharger 1
+expect step 13
 open Festival crate
 wait 3
 expect item Blueprint_Firework 1
-expect step 14
+expect step 15
 open Linesman's locker
 wait 3
 expect item Blueprint_ZiplineBase 1
-expect step 16
+expect item Blueprint_ZiplineTool 1
+expect step 18
 use chute
 expect story telegraphdelivered 1
 expect shown reply
-expect step 17
+expect step 19
 read Telegraphist's reply
-expect step 18
+expect step 20
+# POST 10-26: the hub, Otto Rask, the climb, Vent Cave, the secrets
+expect hidden qh_rewchest
+use qh_machine
+expect hidden qh_rewchest
+read North line notice
+expect step 21
+use Otto Rask
+wait 1
+expect step 22
+expect hidden qh_lampchest
+use Fitter's lamp 1
+use Fitter's lamp 3
+wait 1
+expect shown qh_lampchest
+open Otto's toolbox
+zone qh_trail
+expect step 23
+zone qh_summit
+expect step 24
+open Tube vent mast deck box
+wait 3
+expect story qh_top 1
+expect step 25
+zone qh_cave
+expect step 26
+open Vent Cave chest
+wait 3
+expect story qh_cave 1
+expect step 27
+use qh_machine
+expect shown qh_rewchest
+expect story qh_fixed 1
+open North line pump reward
+wait 3
+read Pump fitter's chit
+expect step 28
+# the secrets: the plane, the jumps, the set
+zone qh_plane
+open Inspector's crate
+read Inspector's flight plan
+zone qh_jumps
+open Harbour stone climb
+open Top of the stair stack
+expect hidden qh_setchest
+use qh_piece1
+use qh_piece2
+use qh_piece3
+use qh_piece4
+use qh_piece5
+wait 2
+expect shown qh_setchest
+open Token rack
 zone tower_roof
 expect done

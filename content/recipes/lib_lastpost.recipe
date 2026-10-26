@@ -1,0 +1,62 @@
+# lib_lastpost: pieces of The Last Post's 1-hour pass (10-26), copied from lib_rain (prefix lp_). New macros only; the shared libs stay as they are.
+#
+# lp_piece: one piece of a collectible set (Story_Collectible) at x z on the ground, alias al, in set
+macro lp_piece x=0 z=0 al=piece set=Relics
+place Story_Collectible $al at $x $z ground sit
+prop $al collect.set=$set
+prop $al obj.name=$al
+end
+#
+# lp_lamp: one puzzle light (Story_Light, a post with a bulb) at x z on the ground: alias al, name nm (what `light|`
+# actions and the plays name), its group, on = 1 if it starts lit
+macro lp_lamp x=0 z=0 al=lamp nm=Lamp grp=Lamps on=0
+place Story_Light $al at $x $z ground sit
+prop $al obj.name=$nm
+prop $al light.group=$grp
+prop $al light.on=$on
+end
+#
+# lp_hidden: a hidden chest (alias al) shown by a puzzle's reward, at x z on the ground
+macro lp_hidden x=0 z=0 al=hiddenchest kind=Loot_ChestSmall yaw=0
+place $kind $al at $x $z ground sit yaw=$yaw
+prop $al obj.name=$al
+prop $al beh.hidden=1
+prop $al loot.refill=0
+end
+#
+# lp_islander: an islander (Story_Islander) at x z on the ground, turned yaw: alias al, name nm (who quests and plays talk
+# to), pose; the caller adds `prop <al> talk.text=...`
+macro lp_islander x=0 z=0 yaw=0 al=islander nm=Islander pose=stand
+place Story_Islander $al at $x $z ground yaw=$yaw
+prop $al obj.name=$nm
+prop $al islander.pose=$pose
+end
+#
+# lp_pad: a level pad r m round x z, h m over the sea, the plants on it cleared (a stepped edge: the slope round it smoothed)
+macro lp_pad x=0 z=0 r=10 h=3
+brush flatten at $x $z r=$r s=20 frames=300 h=$h
+brush smooth at $x $z r={$r+4} s=4 frames=30
+brush flatten at $x $z r={$r-2} s=20 frames=300 h=$h
+clear at $x $z r={$r+2}
+end
+#
+# lp_scope: a brass telescope on a stone post at x z (alias al): using it flies the camera along the Camera_Points of path
+# (the caller places them), once per player per world it is free and after that whenever they like
+macro lp_scope x=0 z=0 yaw=0 al=scope path=view
+place RT_Pillar - at $x $z ground sit sy=0.35
+place TP_Telescope $al at $x $z ground y=1.05 sit yaw=$yaw scale=0.35
+prop $al obj.name=$al
+prop $al beh.use=Look through the telescope
+prop $al on.use=flythrough|$path|400
+end
+#
+# lp_cam: one camera point (alias al, one each) of a fly-through path at x z, h m over the sea (order: its place on the
+# path; look: the obj.name it turns to, - none; speed m/s; hold s)
+macro lp_cam x=0 z=0 h=20 al=cam path=view order=0 look=- speed=8 hold=0
+place Camera_Point $al at $x $z h=$h
+prop $al cam.path=$path
+prop $al cam.order=$order
+prop $al cam.look=$look
+prop $al cam.speed=$speed
+prop $al cam.hold=$hold
+end

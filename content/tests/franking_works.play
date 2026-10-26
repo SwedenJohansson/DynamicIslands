@@ -1,7 +1,7 @@
 # The Franking Works (CIPlay franking_works_solo; in the plan after Telegraph Narrows): quest "Rare Stamps"
 # (it needs Ada's dead letter from The Dead Letter Office: franking_works_solo.play reads it first)
 island The Franking Works
-offset 0 0
+offset 0 37
 expect step 0
 expect title Rare Stamps
 expect hidden adamap
@@ -31,5 +31,57 @@ use adahole
 expect story adadelivered 1
 expect shown adamap
 expect step 9
+# POST 10-26: the hub, Bertil Gran, the climb, Gull Cave, the secrets
+expect hidden qf_rewchest
+use qf_machine
+expect hidden qf_rewchest
+read Perforator notice
+expect step 10
+use Bertil Gran
+wait 1
+expect step 11
+expect hidden qf_lampchest
+use Works lamp 1
+use Works lamp 2
+wait 1
+expect shown qf_lampchest
+open Bertil's tin
+zone qf_trail
+expect step 12
+zone qf_summit
+expect step 13
+open Works signal mast deck box
+wait 3
+expect story qf_top 1
+expect step 14
+zone qf_cave
+expect step 15
+open Gull Cave chest
+wait 3
+expect story qf_cave 1
+expect step 16
+use qf_machine
+expect shown qf_rewchest
+expect story qf_fixed 1
+open Perforating machine reward
+wait 3
+read Last stamp sheet
+expect step 17
+# the secrets: the plane, the jumps, the set
+zone qf_plane
+open Stamp courier's crate
+read Stamp courier's note
+zone qf_jumps
+open Ink barrel climb
+open Top of the barrels
+expect hidden qf_setchest
+use qf_piece1
+use qf_piece2
+use qf_piece3
+use qf_piece4
+use qf_piece5
+wait 2
+expect shown qf_setchest
+open Plate rack
 read Ada's route map
 expect done

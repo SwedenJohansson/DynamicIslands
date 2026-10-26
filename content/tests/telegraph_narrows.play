@@ -35,6 +35,60 @@ expect item Blueprint_BatteryAdvanced 1
 expect item Blueprint_HeadLight_Advanced 1
 expect item Blueprint_ElectricGrill 1
 expect step 13
+# POST 10-26: the hub, Dagny Ek, the climb, Seal Cave, the secrets
+expect hidden qt_rewchest
+use qt_machine
+expect hidden qt_rewchest
+read Repeater notice
+expect step 14
+use Dagny Ek
+wait 1
+expect step 15
+expect hidden qt_lampchest
+use Line lamp 1
+use Line lamp 2
+wait 1
+expect shown qt_lampchest
+open Dagny's line book
+zone qt_trail
+expect step 16
+zone qt_summit
+expect step 17
+open Repeater mast deck box
+wait 3
+expect story qt_top 1
+expect step 18
+zone qt_cave
+expect step 19
+open Seal Cave chest
+wait 3
+expect story qt_cave 1
+expect step 20
+use qt_machine
+expect shown qt_rewchest
+expect story qt_fixed 1
+open Line repeater reward
+wait 3
+read Repeater tape
+expect step 21
+# the secrets: the plane, the jumps, the set, the telescope
+zone qt_plane
+open Line plane's crate
+read Line patrol log
+zone qt_jumps
+open Pole climb
+open Top of the pole stack
+expect hidden qt_setchest
+use qt_piece1
+use qt_piece2
+use qt_piece3
+use qt_piece4
+use qt_piece5
+wait 2
+expect shown qt_setchest
+open Insulator crate
+use qt_scope
+wait 8
 open Holger's kit
 expect message still in the cage
 use holgercage

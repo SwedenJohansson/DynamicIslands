@@ -4,7 +4,7 @@
 # headland to the low east one; the first telegraph hut on the west headland (its generator outside), the wire connector
 # on stack 4, screechers nesting on stack 6, the last hut on the east headland with its keypad, the telegraph cabinet,
 # and the telegraphist Holger locked in a cage.
-# Quest "Down the Line" (14 steps): the first hut, the code sheet, the generator, stack 4 by zipline, its wire connector,
+# Quest "Down the Line" (22 steps): the first hut, the code sheet, the generator, stack 4 by zipline, its wire connector,
 # the screechers, the last hut, its keypad, the telegraph cabinet (four power blueprints and the cage key), Holger
 # freed, his kit.
 #
@@ -12,10 +12,15 @@
 include lib_sea
 include lib_features
 include lib_post
+include lib_areas
+include lib_highwater
+include lib_lastpost
+# RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 70 -> 90
+# POST 10-26: the new land - Wire Hill with repeater mast, Seal Cave, Dagny Ek at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five glass insulators
 new
 # (nature: rocky headlands, Like Raft's rock islands)
 gen Trees=0.15 Bushes=0.25 Rocks=0.5 Harvest=0.15 BeachThings=0.25
-gen Seed=4601 Radius=70 Height=12 Roughness=0.55 Peaks=1 Shape=0 Style=4 PeakShape=0.4 Cliffs=0.5 BeachWidth=0.25
+gen Seed=4601 Radius=90 Height=12 Roughness=0.55 Peaks=1 Shape=0 Style=4 PeakShape=0.4 Cliffs=0.5 BeachWidth=0.25
 gen Water=0.5 SeaRocks=0.4 SeaFinds=0.15 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
 
@@ -36,6 +41,13 @@ call stack x=20 h=10
 brush rock at -34 0 r=9 s=6 frames=20
 brush rock at 34 0 r=9 s=6 frames=20
 origin
+# --- POST 10-26 terrain: Wire Hill, the pads of the new areas ---------------------------------------------------
+call hw_mount x=-50 z=-46 b=22 h=24
+call hw_trail x=-50 z=-46 b=22 h=24 a0=-2.66 turn=300 n=40 h0=3
+brush flatten at -54 40 r=4 s=8 frames=60
+clear at -54 40 r=7
+brush flatten from 0 76 to 0 104 r=22 s=20 frames=300 h=-8
+brush flatten from 0 -76 to 0 -104 r=22 s=20 frames=300 h=-8
 clear at -34 0 r=7
 clear at 34 0 r=7
 clear from -22 0 to 22 0 r=4
@@ -100,6 +112,102 @@ call treasure x=-40 z=12 r=8 n=1 seed=4611 kind=0
 call dirt x=-42 z=-14 r=8 n=2 seed=4612
 place Creature_Turtle turtle at 0 -30 h=-4
 
+# --- POST 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Wire Hill ------
+# Wire Hill with repeater mast on it, Seal Cave, the ruined house where Dagny Ek waits (four lamps round it: a puzzle), a crashed plane,
+# a jump course, five glass insulators about the island (a set), and at the hub the line repeater that wants the relay coil and the relay key
+call hw_zone x=-51.07 z=-23.02 al=qt_trailz id=qt_trail r=5 msg="The trail up Wire Hill starts here - round and up."
+call hw_zone x=-50 z=-46 al=qt_summitz id=qt_summit r=8 h=1 msg="The top of Wire Hill. The whole island below you."
+call hw_mast x=-53 z=-44 h0=24 lv=5 a=qt_mast chest=qt_topchest top=Placeable_Flag_01
+place ZiplinePath_Landmark qt_zip at -46.8 -48.6 h=25.35
+zipto qt_zip -50.72 34.01
+place Creature_Goat qt_goats at -47.07 -20.02 ground
+prop qt_goats creature.count=2
+call ar_cave x=70 z=24 h=3 yaw=180 al=qt_caverock chest=qt_cavechest
+call hw_zone x=71 z=15 al=qt_cavez id=qt_cave r=4 h=1 msg="Seal Cave. Water drips somewhere in the dark."
+call ar_ruin x=56 z=-40 h=3 yaw=0 w=3 d=2 al=qt_ruin
+call lp_islander x=55 z=-44.5 yaw=200 al=qt_isl nm="Dagny Ek" pose=sit
+prop qt_isl talk.text=Holger's line? I kept the repeater for him, this side of the strait.\n---\nThe repeater takes a weak signal and sends it on strong. When the Post shut the signals stopped, and I took it apart - the coil up the mast on Wire Hill, the key into Seal Cave. I couldn't stand the silence on the tape.\n---\nPut it together. Maybe someone is still sending.\n---\nMy lamps round the house: four, each wakes its neighbour. All four lit, and look behind the back wall. And try Holger's old telescope by the repeater - you can see the whole line from there.
+place Placeable_Chair_Basic - at 55 -44.5 ground sit yaw=200
+call lp_lamp x=49 z=-41 al=qt_lamp1 nm="Line lamp 1" grp="Line lamps" on=0
+call lp_lamp x=55 z=-34 al=qt_lamp2 nm="Line lamp 2" grp="Line lamps" on=1
+call lp_lamp x=62 z=-41 al=qt_lamp3 nm="Line lamp 3" grp="Line lamps" on=0
+call lp_lamp x=55 z=-48 al=qt_lamp4 nm="Line lamp 4" grp="Line lamps" on=1
+prop qt_lamp1 on.use=light|Line lamp 2|toggle
+prop qt_lamp2 on.use=light|Line lamp 3|toggle
+prop qt_lamp3 on.use=light|Line lamp 4|toggle
+prop qt_lamp4 on.use=light|Line lamp 1|toggle
+prop qt_lamp1 on.alllit=show|qt_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call lp_hidden x=57 z=-35.4 al=qt_lampchest
+place Creature_Chicken qt_hens at 64 -34 ground
+prop qt_hens creature.count=3
+call ar_plane x=-70 z=6 h=3 yaw=20 al=qt_plane crate=qt_planecrate
+place Note_Paper qt_pilot at -73.07 9.25 ground y=0.1 drop yaw=50
+call hw_zone x=-70 z=6 al=qt_planez id=qt_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
+# JUMP qt pad=3 at=44 62
+push at 44 62
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpqt at 4.24 4.24 h=3.6
+place Block_Foundation_Tier3 jpqt at 5.77 1.65 h=4.35
+place Block_Foundation_Tier3 jpqt at 5.85 -1.35 h=5.1
+place Block_Foundation_Tier3 jpqt at 4.46 -4.01 h=5.85
+place Block_Foundation_Tier3 jpqt at 1.95 -5.67 h=6.6
+place Block_Foundation_Tier3 jpqt at -1.04 -5.91 h=7.35
+place Block_Foundation_Tier3 jpqt at -3.78 -4.66 h=8.1
+place Block_Foundation_Tier3 jpqt at -5.56 -2.25 h=8.85
+place Block_Foundation_Tier3 jpqt at -5.96 0.73 h=9.6
+# JUMP from 10
+place Block_Foundation_Tier3 jpqt at -4.85 3.53 h=10.35
+place Block_Foundation_Tier3 jpqt at -2.54 5.44 h=11.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppqt at 5.77 1.65 h=3.668 sy=1.861
+place Block_Foundation_Tier3 jppqt at 5.85 -1.35 h=4.418 sy=2.959
+place Block_Foundation_Tier3 jppqt at 4.46 -4.01 h=5.168 sy=4.058
+place Block_Foundation_Tier3 jppqt at 1.95 -5.67 h=5.918 sy=5.157
+place Block_Foundation_Tier3 jppqt at -1.04 -5.91 h=6.668 sy=6.255
+place Block_Foundation_Tier3 jppqt at -3.78 -4.66 h=7.418 sy=7.354
+place Block_Foundation_Tier3 jppqt at -5.56 -2.25 h=8.168 sy=8.453
+place Block_Foundation_Tier3 jppqt at -5.96 0.73 h=8.918 sy=9.552
+place Block_Foundation_Tier3 jppqt at -4.85 3.53 h=9.668 sy=10.650
+place Block_Foundation_Tier3 jppqt at -2.54 5.44 h=10.418 sy=11.749 sx=2 sz=2
+prop jpqt tint.color=#8a7f70
+prop jpqt tint.amount=0.35
+prop jppqt tint.color=#8a7f70
+prop jppqt tint.amount=0.35
+place Loot_Chest jcqt at -1.04 -5.91 h=7.35 sit yaw=0
+prop jcqt loot.refill=0
+place Loot_ChestSmall jbqt at -2.54 5.44 h=11.1 sit yaw=0
+prop jbqt loot.refill=0
+pop
+call hw_zone x=44 z=54 al=qt_jumpz id=qt_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call lp_piece x=-36 z=-66 al=qt_piece1 set="Glass insulators"
+call lp_piece x=-62 z=15 al=qt_piece2 set="Glass insulators"
+call lp_piece x=64 z=-2 al=qt_piece3 set="Glass insulators"
+call lp_piece x=30 z=56 al=qt_piece4 set="Glass insulators"
+call lp_piece x=42 z=-24 al=qt_piece5 set="Glass insulators"
+prop qt_piece1 on.set=show|qt_setchest\nmessage||All five glass insulators found.
+call lp_hidden x=-49 z=36 al=qt_setchest kind=Loot_Chest
+call treasure x=-34 z=72 r=10 n=1 seed=27678 kind=0
+prop treasure27678 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call shallows x=0 z=0 r=100 deep=5 n=1 seed=27661
+call ar_plants_hill x=74 z=-14 r=14 seed=27691
+call ar_plants_hill x=38 z=-62 r=14 seed=27692
+call ar_plants_hill x=-38 z=54 r=14 seed=27693
+call ar_plants_hill x=-70 z=-18 r=13 seed=27694
+call ar_plants_hill x=-66 z=30 r=12 seed=27695
+call lp_scope x=-60 z=46 yaw=90 al=qt_scope path=qt_view
+call lp_cam x=-70 z=20 h=40 al=qt_cam1 path=qt_view order=1 look=qt_plane speed=9 hold=2
+call lp_cam x=-30 z=70 h=50 al=qt_cam2 path=qt_view order=2 look=qt_caverock speed=9 hold=0
+call lp_cam x=40 z=60 h=50 al=qt_cam3 path=qt_view order=3 look=qt_caverock speed=9 hold=0
+call lp_cam x=80 z=-10 h=45 al=qt_cam4 path=qt_view order=4 look=qt_isl speed=9 hold=0
+call lp_cam x=0 z=-88 h=60 al=qt_cam5 path=qt_view order=5 look=qt_isl speed=9 hold=2
+call hw_machine x=-54 z=40 yaw=126.53 al=qt_machine nm="Line repeater" obj=TP_LaserControlPanel_lever sc=3 a=qt_top b=qt_cave done=qt_fixed rew=qt_rewchest rnote=qt_rewnote msg="It works." hint="It wants the relay coil from Wire Hill and the relay key from Seal Cave."
+call hw_note x=-56.6 z=41.2 yaw=146.53 al=qt_hint
+
 # --- Settings, notes, behaviours, quest --------------------------------------------------------------------------------
 info title=Telegraph Narrows
 info author=Custom Islands
@@ -158,6 +266,30 @@ prop lasthutzone zone.id=last_hut
 prop lasthutzone zone.radius=3
 prop lasthutzone zone.message=The last hut - and outside it, someone in a cage.
 
+story qt_top|Relay coil|Bolt|The repeater's relay coil, hung up the repeater mast on Wire Hill.
+story qt_cave|Relay key|Bolt|The repeater's brass relay key, in a chest at the back of Seal Cave.
+story qt_fixed|Line repeater working|Bolt|The line repeater, working again.
+note qt_hint Repeater notice | LINE REPEATER DEAD - the signals stop at the strait. Relay coil on the repeater mast up Wire Hill (south-west), relay key in Seal Cave over the strait (east). Dagny at the old house on the east headland keeps the line book.
+note qt_topchest Repeater mast deck box | A box lashed to the deck rail at the top of the repeater mast.
+loot qt_topchest story:qt_top*1;Rope*2;Scrap*2
+note qt_cavechest Seal Cave chest | A chest at the back of Seal Cave, dry under the rock.
+loot qt_cavechest story:qt_cave*1;Nail*6;Plank*3
+note qt_rewnote Repeater tape | The repeater clicks and its paper tape starts to run: dots and dashes from very far away. The first words through in years: IS ANYONE ON THE LINE. Somebody, somewhere, is still sending.
+note qt_rewchest Line repeater reward | What the line repeater kept.
+loot qt_rewchest MetalIngot*2;Bolt*3;Rope*2
+note qt_lampchest Dagny's line book | Dagny's line book under a stone behind the house: every message that ever came through, and her tokens.
+loot qt_lampchest TradeToken*2;CopperIngot*2;Rope*2
+note qt_setchest Insulator crate | The linesmen's crate: all five insulators back, and their kit.
+loot qt_setchest Glass*3;MetalIngot*2;Bolt*4
+note qt_planecrate Line plane's crate | The linesmen's plane crate: wire, insulators and a toolkit.
+loot qt_planecrate Plastic*3;Scrap*3;Nail*6
+prop qt_planecrate loot.refill=0
+note qt_pilot Line patrol log | LINE PATROL - TELEGRAPH NARROWS. Followed the wire across the strait. Wind off the headland, landed hard on the west shore. Line is down at stack 4.
+note jcqt Pole climb | Old telegraph poles stood on end and cut short, one higher than the next.
+loot jcqt Rope*3;Plank*4;MetalIngot*1
+note jbqt Top of the pole stack | Somebody's stash at the very top.
+loot jbqt CopperIngot*1;Bolt*2;TradeToken*1
+
 quest title=Down the Line
 quest intro=A telegraph line across the strait. Climb to the first hut on the west headland.
 step reach|first_hut|1|Climb to the first telegraph hut
@@ -173,6 +305,14 @@ step blueprint|Blueprint_BatteryAdvanced|1|Take the advanced battery plans
 step blueprint|Blueprint_HeadLight_Advanced|1|Take the advanced headlight plans
 step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans
 step collect|story:cagekey|1|Take the cage key from the cabinet
+step read|Repeater notice|1|Read the repeater notice by the line repeater
+step talk|Dagny Ek|1|Talk to Dagny Ek at the ruined house in the south-east
+step reach|qt_trail|1|Find the foot of the trail up Wire Hill, in the south-west
+step reach|qt_summit|1|Climb the trail to the top of Wire Hill
+step collect|story:qt_top|1|Climb the repeater mast and take the relay coil from its deck
+step reach|qt_cave|1|Find Seal Cave in the east
+step collect|story:qt_cave|1|Take the relay key from the chest at the back of the cave
+step read|Repeater tape|1|Bring both to the line repeater and read what it shows
 step open|Holger's kit|1|Free Holger from the cage, then open his kit bag
 quest done=Holger is free and the line is live. Over the wire, faint: the Franking Works, still stamping.
 quest reward=MetalIngot*3;CopperIngot*2;Bolt*4
@@ -181,4 +321,6 @@ quest reward=MetalIngot*3;CopperIngot*2;Bolt*4
 place Creature_PufferFish puffers at 0 80 h=-3
 prop puffers creature.count=3
 
+# (CIGroundIslands 10-26: a gen rock left floating over a slope)
+clear at -39.4 -4.5 r=1.5 all only=CaravanIsland_SmallRock
 save Telegraph Narrows

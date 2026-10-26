@@ -1,6 +1,6 @@
 # Guide pictures of The General Post Office (CIPlay general_post_office_pics): Raft's camera, midday, calm
 island The General Post Office
-offset 0 0
+offset 0 20
 hour 11
 weather Calm
 at 0 -30
@@ -9,3 +9,11 @@ picture general_post_office_island 70 45 -95 0 6 0
 picture general_post_office_square 14 9 -40 -2 6 -15
 picture general_post_office_hall 0 5.5 -8 0 4 -4
 picture general_post_office_roof 14 18 22 0 13 36
+# POST 10-26: the new land - Postmaster's Hill, Crab Cave, the ruined house, the plane
+offset 0 0
+picture post_qg_hill 6 22 36 -51 16.8 56
+picture post_qg_cave 66 8 36 56 6 60
+picture post_qg_ruin 48 8 -32 60 4.5 -20
+picture post_qg_plane -50 9 -40 -62 4 -30
+picture post_qg_maze 44 12 -74 56 3 -60
+picture post_qg_jumps 24 9 68 10 7 80

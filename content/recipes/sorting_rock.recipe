@@ -3,7 +3,7 @@
 # sorting tables, five parcel scales (Caravan Town's scale model, the scales ready piece) in a row on them; the rates
 # office's chest under the hall roof, Lise's locker by the back wall; the cistern (Utopia's water tank) on the bowl's
 # rim; the landing stair and a short jetty on the south shore; the postal safe buried somewhere on the rock.
-# Quest "Weighed and Sorted" (12 steps): the hall door, the rate chart, the sorter's tool rack (detector and spade), the
+# Quest "Weighed and Sorted" (21 steps): the hall door, the rate chart, the sorter's tool rack (detector and spade), the
 # buried postal safe (the parcel weights), three parcels weighed, the rates office (four water blueprints), Lise's
 # letter in her locker, her reply.
 #
@@ -11,19 +11,33 @@
 include lib_sea
 include lib_features
 include lib_post
+include lib_areas
+include lib_highwater
+include lib_lastpost
+# RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 46 -> 85; the old island moved 39 m south (push frames), so its south shore stays on the coast and the new land is north
+# POST 10-26: the new land - Quarry Crag with quarry mast, Slate Cave, Greta Moberg at the ruined house (a lamp puzzle), a crashed plane, a jump course, a maze, a set of five parcel labels
 new
 # (nature: a bare rock, Like Raft's rocky islands - few bushes)
 gen Trees=0.12 Bushes=0.15 Rocks=0.5 Harvest=0.15 BeachThings=0.25
-gen Seed=4501 Radius=46 Height=13 Roughness=0.55 Peaks=1 Shape=0 Style=4 PeakShape=0.35 Cliffs=0.55 BeachWidth=0.25
+gen Seed=4501 Radius=85 Height=13 Roughness=0.55 Peaks=1 Shape=0 Style=4 PeakShape=0.35 Cliffs=0.55 BeachWidth=0.25
 gen Water=0.5 SeaRocks=0.45 SeaFinds=0.15 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
+push at 0 -39
 
 # --- Terrain: the bowl (4 m) in the rock's top, the landing stair down to the south shore (1.5 m) -------------------
 brush flatten at 0 2 r=13 s=20 frames=160 h=4
 brush flatten from 0 -14 to 0 -30 r=4 s=20 frames=100 h=1.6
 brush smooth from 0 -8 to 0 -30 r=5 s=8 frames=30
 brush rock at 0 2 r=15 s=8 frames=30
+pop
 origin
+# --- POST 10-26 terrain: Quarry Crag, the pads of the new areas ---------------------------------------------------
+call hw_mount x=-38 z=46 b=24 h=22
+call hw_trail x=-38 z=46 b=24 h=22 a0=131.82 turn=300 n=40 h0=3
+brush flatten at 0 12 r=4 s=8 frames=60
+clear at 0 12 r=7
+# (RESIZE 10-26: the old island, 39 m south)
+push at 0 -39
 clear at 0 2 r=13
 clear from 0 -10 to 0 -34 r=4
 
@@ -59,12 +73,182 @@ place UT_WaterTank cistern at -16 6 ground sit yaw=90
 place Placeable_WaterTank - at 7 6 ground sit yaw=180
 
 # --- The buried postal safe, the reefs, a few things to gather -----------------------------------------------------------
-call treasure x=-12 z=-14 r=6 n=1 seed=4511 kind=0
+call treasure x=-12 z=-14 r=10 n=1 seed=4511 kind=0
 call dirt x=14 z=-12 r=8 n=2 seed=4512
 scatter "Pickup_Landmark_Flower_Blue" 2 at 0 16 r=14 seed=4513 free=3
 place Creature_Dolphin dolphins at -30 -50 h=-3
 prop dolphins creature.count=2
 call shallows r=62 deep=5 n=2
+
+pop
+
+# --- POST 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Quarry Crag ------
+# Quarry Crag with quarry mast on it, Slate Cave, the ruined house where Greta Moberg waits (four lamps round it: a puzzle), a crashed plane,
+# a jump course, a maze, five parcel labels about the island (a set), and at the hub the parcel crane that wants the crane hook and the crane chain
+call hw_zone x=-19.37 z=29.33 al=qr_trailz id=qr_trail r=5 msg="The trail up Quarry Crag starts here - round and up."
+call hw_zone x=-38 z=46 al=qr_summitz id=qr_summit r=8 h=1 msg="The top of Quarry Crag. The whole island below you."
+call hw_mast x=-41 z=48 h0=22 lv=5 a=qr_mast chest=qr_topchest top=RT_Spotlight
+place ZiplinePath_Landmark qr_zip at -34.8 43.4 h=23.35
+zipto qr_zip -1.47 16
+place Creature_Goat qr_goats at -15.37 32.33 ground
+prop qr_goats creature.count=2
+call ar_cave x=48 z=46 h=3 yaw=180 al=qr_caverock chest=qr_cavechest
+call hw_zone x=49 z=37 al=qr_cavez id=qr_cave r=4 h=1 msg="Slate Cave. Water drips somewhere in the dark."
+call ar_ruin x=58 z=-16 h=3 yaw=0 w=3 d=2 al=qr_ruin
+call lp_islander x=57 z=-20.5 yaw=200 al=qr_isl nm="Greta Moberg" pose=lean
+prop qr_isl talk.text=You climbed the landing stair? Good legs. I drove the parcel crane.\n---\nWhen the Post shut they wanted to take the crane away. I took its hook up the quarry mast on Quarry Crag and its chain into Slate Cave, and they went without it.\n---\nIt was the best crane on the coast. Make it lift once more.\n---\nAnd my lamps: four round the house, each one wakes its neighbour. All four lit, and look behind the back wall.
+call lp_lamp x=51 z=-17 al=qr_lamp1 nm="Quarry lamp 1" grp="Quarry lamps" on=0
+call lp_lamp x=57 z=-10 al=qr_lamp2 nm="Quarry lamp 2" grp="Quarry lamps" on=1
+call lp_lamp x=64 z=-17 al=qr_lamp3 nm="Quarry lamp 3" grp="Quarry lamps" on=0
+call lp_lamp x=57 z=-24 al=qr_lamp4 nm="Quarry lamp 4" grp="Quarry lamps" on=1
+prop qr_lamp1 on.use=light|Quarry lamp 2|toggle
+prop qr_lamp2 on.use=light|Quarry lamp 3|toggle
+prop qr_lamp3 on.use=light|Quarry lamp 4|toggle
+prop qr_lamp4 on.use=light|Quarry lamp 1|toggle
+prop qr_lamp1 on.alllit=show|qr_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call lp_hidden x=59 z=-11.4 al=qr_lampchest
+place Creature_Chicken qr_hens at 66 -10 ground
+prop qr_hens creature.count=3
+call ar_plane x=-58 z=-26 h=3 yaw=40 al=qr_plane crate=qr_planecrate
+place Note_Paper qr_pilot at -59.78 -21.9 ground y=0.1 drop yaw=70
+call hw_zone x=-58 z=-26 al=qr_planez id=qr_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
+# JUMP qr pad=3 at=6 66
+push at 6 66
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpqr at -4.24 -4.24 h=3.6
+place Block_Foundation_Tier3 jpqr at -5.77 -1.65 h=4.35
+place Block_Foundation_Tier3 jpqr at -5.85 1.35 h=5.1
+place Block_Foundation_Tier3 jpqr at -4.46 4.01 h=5.85
+place Block_Foundation_Tier3 jpqr at -1.95 5.67 h=6.6
+place Block_Foundation_Tier3 jpqr at 1.04 5.91 h=7.35
+place Block_Foundation_Tier3 jpqr at 3.78 4.66 h=8.1
+place Block_Foundation_Tier3 jpqr at 5.56 2.25 h=8.85
+place Block_Foundation_Tier3 jpqr at 5.96 -0.73 h=9.6
+# JUMP from 10
+place Block_Foundation_Tier3 jpqr at 4.85 -3.53 h=10.35
+place Block_Foundation_Tier3 jpqr at 2.54 -5.44 h=11.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppqr at -5.77 -1.65 h=3.668 sy=1.861
+place Block_Foundation_Tier3 jppqr at -5.85 1.35 h=4.418 sy=2.959
+place Block_Foundation_Tier3 jppqr at -4.46 4.01 h=5.168 sy=4.058
+place Block_Foundation_Tier3 jppqr at -1.95 5.67 h=5.918 sy=5.157
+place Block_Foundation_Tier3 jppqr at 1.04 5.91 h=6.668 sy=6.255
+place Block_Foundation_Tier3 jppqr at 3.78 4.66 h=7.418 sy=7.354
+place Block_Foundation_Tier3 jppqr at 5.56 2.25 h=8.168 sy=8.453
+place Block_Foundation_Tier3 jppqr at 5.96 -0.73 h=8.918 sy=9.552
+place Block_Foundation_Tier3 jppqr at 4.85 -3.53 h=9.668 sy=10.650
+place Block_Foundation_Tier3 jppqr at 2.54 -5.44 h=10.418 sy=11.749 sx=2 sz=2
+prop jpqr tint.color=#8a7f70
+prop jpqr tint.amount=0.35
+prop jppqr tint.color=#8a7f70
+prop jppqr tint.amount=0.35
+place Loot_Chest jcqr at 1.04 5.91 h=7.35 sit yaw=0
+prop jcqr loot.refill=0
+place Loot_ChestSmall jbqr at 2.54 -5.44 h=11.1 sit yaw=0
+prop jbqr loot.refill=0
+pop
+call hw_zone x=6 z=58 al=qr_jumpz id=qr_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call lp_pad x=54 z=-46 r=12 h=3
+push at 46.5 -53.5 h=3
+place Block_Wall_Tier3 qr_maze at 0.75 0 y=0.05
+place Block_Wall_Tier3 qr_maze at 2.25 0 y=0.05
+place Block_Wall_Tier3 qr_maze at 0.75 15 y=0.05
+place Block_Wall_Tier3 qr_maze at 2.25 15 y=0.05
+place Block_Wall_Tier3 qr_maze at 3.75 0 y=0.05
+place Block_Wall_Tier3 qr_maze at 5.25 0 y=0.05
+place Block_Wall_Tier3 qr_maze at 3.75 9 y=0.05
+place Block_Wall_Tier3 qr_maze at 5.25 9 y=0.05
+place Block_Wall_Tier3 qr_maze at 3.75 12 y=0.05
+place Block_Wall_Tier3 qr_maze at 5.25 12 y=0.05
+place Block_Wall_Tier3 qr_maze at 3.75 15 y=0.05
+place Block_Wall_Tier3 qr_maze at 5.25 15 y=0.05
+place Block_Wall_Tier3 qr_maze at 6.75 3 y=0.05
+place Block_Wall_Tier3 qr_maze at 8.25 3 y=0.05
+place Block_Wall_Tier3 qr_maze at 6.75 9 y=0.05
+place Block_Wall_Tier3 qr_maze at 8.25 9 y=0.05
+place Block_Wall_Tier3 qr_maze at 6.75 12 y=0.05
+place Block_Wall_Tier3 qr_maze at 8.25 12 y=0.05
+place Block_Wall_Tier3 qr_maze at 6.75 15 y=0.05
+place Block_Wall_Tier3 qr_maze at 8.25 15 y=0.05
+place Block_Wall_Tier3 qr_maze at 9.75 0 y=0.05
+place Block_Wall_Tier3 qr_maze at 11.25 0 y=0.05
+place Block_Wall_Tier3 qr_maze at 9.75 6 y=0.05
+place Block_Wall_Tier3 qr_maze at 11.25 6 y=0.05
+place Block_Wall_Tier3 qr_maze at 9.75 12 y=0.05
+place Block_Wall_Tier3 qr_maze at 11.25 12 y=0.05
+place Block_Wall_Tier3 qr_maze at 9.75 15 y=0.05
+place Block_Wall_Tier3 qr_maze at 11.25 15 y=0.05
+place Block_Wall_Tier3 qr_maze at 12.75 0 y=0.05
+place Block_Wall_Tier3 qr_maze at 14.25 0 y=0.05
+place Block_Wall_Tier3 qr_maze at 12.75 9 y=0.05
+place Block_Wall_Tier3 qr_maze at 14.25 9 y=0.05
+place Block_Wall_Tier3 qr_maze at 12.75 15 y=0.05
+place Block_Wall_Tier3 qr_maze at 14.25 15 y=0.05
+place Block_Wall_Tier3 qr_maze at 0 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 0 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 0 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 0 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 0 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 0 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 0 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 0 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 0 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 0 14.25 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 3 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 3 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 3 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 3 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 6 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 6 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 6 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 6 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 9 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 9 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 9 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 9 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 12 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 12 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 12 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 12 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 15 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 15 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 15 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 15 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 15 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 15 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 15 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 15 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 15 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 qr_maze at 15 14.25 y=0.05 yaw=90
+place Loot_ChestSmall qr_mazechest at 7.5 4.5 y=0.05 sit yaw=0
+pop
+prop qr_maze tint.color=#4e6b3a
+prop qr_maze tint.amount=0.55
+prop qr_mazechest loot.refill=0
+call hw_zone x=52.5 z=-55 al=qr_mazez id=qr_maze r=3 msg="A maze of old walls. Somewhere in the middle, a box."
+call lp_piece x=-24 z=26 al=qr_piece1 set="Parcel labels"
+call lp_piece x=-50 z=-17 al=qr_piece2 set="Parcel labels"
+call lp_piece x=42 z=20 al=qr_piece3 set="Parcel labels"
+call lp_piece x=-8 z=60 al=qr_piece4 set="Parcel labels"
+call lp_piece x=54 z=-58 al=qr_piece5 set="Parcel labels"
+prop qr_piece1 on.set=show|qr_setchest\nmessage||All five parcel labels found.
+call lp_hidden x=5 z=8 al=qr_setchest kind=Loot_Chest
+call treasure x=-30 z=-62 r=10 n=1 seed=27578 kind=0
+prop treasure27578 treasure.loot=TitaniumOre*3;MetalOre*2;TradeToken*1
+call shallows x=0 z=0 r=95 deep=5 n=1 seed=27561
+call ar_plants_hill x=31 z=7 r=14 seed=27591
+call ar_plants_hill x=-25 z=-5 r=14 seed=27592
+call ar_plants_hill x=-69 z=11 r=14 seed=27593
+call ar_plants_hill x=67 z=15 r=14 seed=27594
+call ar_plants_hill x=15 z=31 r=14 seed=27595
+call ar_plants_hill x=-45 z=-53 r=14 seed=27596
+call hw_machine x=0 z=12 yaw=180 al=qr_machine nm="Parcel crane" obj=RT_PowerBox sc=1 a=qr_top b=qr_cave done=qr_fixed rew=qr_rewchest rnote=qr_rewnote msg="It works." hint="It wants the crane hook from Quarry Crag and the crane chain from Slate Cave."
+call hw_note x=-2.6 z=13.2 yaw=200 al=qr_hint
 
 # --- Settings, notes, behaviours, quest --------------------------------------------------------------------------------
 info title=Sorting Rock
@@ -92,13 +276,14 @@ prop $al if.use=has|story:parcelweights|1\n!signal|$al
 prop $al on.use=message||The scales tip, sway and settle - the parcel goes in its band.\nsignal||scales\nsignal||$al\ngive||story:weighed*1
 prop $al else.use=message||Nothing to weigh - or this scale's parcel is weighed already. The parcel weights are in the postal safe.
 end
+push at 0 -39
 call scaleuse al=scale1
 call scaleuse al=scale2
 call scaleuse al=scale3
 call scaleuse al=scale4
 call scaleuse al=scale5
 note ratesoffice Rates office | The rates office's chest, its shutter open now: the water works' plans - the post kept its own cistern.
-loot ratesoffice Blueprint_WaterTank*1;Blueprint_Pipe_Water*1;Blueprint_ElectricPurifier*1;Blueprint_Storage_Large*1;Cooked_Potato*3;Cooked_Beet*2
+loot ratesoffice Blueprint_WaterTank*1;Blueprint_Pipe_Water*1;Blueprint_ElectricPurifier*1;Blueprint_Storage_Large*1;Blueprint_Recycler*1;Cooked_Potato*3;Cooked_Beet*2
 prop ratesoffice loot.refill=0
 prop ratesoffice if.open=has|story:weighed|3
 prop ratesoffice else.open=message||The rates office shutter is down. A card on it: "Opens when three parcels are weighed".
@@ -115,6 +300,32 @@ prop doorzone zone.id=hall_door
 prop doorzone zone.radius=4
 prop doorzone zone.message=The sorting hall: five scales on the tables, and the rates office shutter down.
 
+story qr_top|Crane hook|Bolt|The parcel crane's hook, hung on the quarry mast on Quarry Crag.
+story qr_cave|Crane chain|Bolt|The parcel crane's chain, coiled in a chest at the back of Slate Cave.
+story qr_fixed|Parcel crane working|Bolt|The parcel crane, working again.
+note qr_hint Crane driver's notice | PARCEL CRANE OUT OF ORDER - parcels to be carried up by hand. Hook on the quarry mast up Quarry Crag (north-west), chain in Slate Cave (north-east). Greta at the old house in the east drove it.
+note qr_topchest Quarry mast deck box | A box lashed to the deck rail at the top of the quarry mast.
+loot qr_topchest story:qr_top*1;Rope*2;Scrap*2
+note qr_cavechest Slate Cave chest | A chest at the back of Slate Cave, dry under the rock.
+loot qr_cavechest story:qr_cave*1;Nail*6;Plank*3
+note qr_rewnote Crane cab slip | The crane swings round with a clank and drops its hook - parcels could come up the rock again. In the cab, the driver's slip: 'Last lift: one parcel, for Lise. Too light to need a crane. I lifted it anyway.'
+note qr_rewchest Parcel crane reward | What the parcel crane kept.
+loot qr_rewchest MetalIngot*2;Bolt*3;Rope*2
+note qr_lampchest Greta's cash box | Greta's cash box behind the house: crane driver's wages, never spent.
+loot qr_lampchest TradeToken*3;CopperIngot*1;Rope*2
+note qr_setchest Label drawer | The sorters' label drawer: all five labels back, and the petty cash.
+loot qr_setchest TradeToken*2;Plank*4;MetalIngot*1
+note qr_planecrate Freight plane's crate | A freight plane's crate: parcels too big for the tubes, canvas and tools.
+loot qr_planecrate Plastic*3;Scrap*3;Nail*6
+prop qr_planecrate loot.refill=0
+note qr_pilot Freight pilot's note | SORTING ROCK FREIGHT. There's no landing strip and never was. Tried the flat by the crag. Tried. Tell the sorters their parcels are in the crate.
+note jcqr Quarry stair | Cut blocks from the quarry, stacked into a stair to nowhere.
+loot jcqr Rope*3;Plank*4;MetalIngot*1
+note jbqr Top of the quarry steps | Somebody's stash at the very top.
+loot jbqr CopperIngot*1;Bolt*2;TradeToken*1
+note qr_mazechest Unsorted parcel | A parcel at the heart of the wall maze - addressed to nobody, sorted nowhere.
+loot qr_mazechest TradeToken*2;Glass*2;CopperIngot*2
+
 quest title=Weighed and Sorted
 quest intro=A sorting hall in a rock. Climb up to its door.
 step reach|hall_door|1|Climb up to the sorting hall
@@ -127,7 +338,16 @@ step blueprint|Blueprint_WaterTank|1|Take the water tank plans
 step blueprint|Blueprint_Pipe_Water|1|Take the water pipe plans
 step blueprint|Blueprint_ElectricPurifier|1|Take the electric purifier plans
 step blueprint|Blueprint_Storage_Large|1|Take the large storage plans
+step blueprint|Blueprint_Recycler|1|Take the recycler plans
 step collect|story:lisedelivered|1|Put Lise's letter in her locker
+step read|Crane driver's notice|1|Read the crane driver's notice by the parcel crane
+step talk|Greta Moberg|1|Talk to Greta Moberg at the ruined house in the east
+step reach|qr_trail|1|Find the foot of the trail up Quarry Crag, in the north-west
+step reach|qr_summit|1|Climb the trail to the top of Quarry Crag
+step collect|story:qr_top|1|Climb the quarry mast and take the crane hook from its deck
+step reach|qr_cave|1|Find Slate Cave in the north-east
+step collect|story:qr_cave|1|Take the crane chain from the chest at the back of the cave
+step read|Crane cab slip|1|Bring both to the parcel crane and read what it shows
 step read|Lise's reply|1|Read Lise's note
 quest done=Sorted. Lise's note points on: the telegraph boat to the Narrows.
 quest reward=Cooked_Potato*3;Cooked_Beet*3;Coconut*3
@@ -135,6 +355,10 @@ quest reward=Cooked_Potato*3;Cooked_Beet*3;Coconut*3
 # --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
 place VP_Forklift - at 9 -5 ground sit yaw=200
 # the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
-clear at 39.04 -1.26 r=1.5 only=BigSharpRock
+clear at 39.04 -1.26 r=1.5 all only=BigSharpRock
+pop
 
+# (CIGroundIslands 10-26: gen rocks left floating over a slope)
+clear at -12.4 72.7 r=1.5 all only=BigSharpRock
+clear at 62.1 -31.8 r=1.5 all only=BigSharpRock
 save Sorting Rock

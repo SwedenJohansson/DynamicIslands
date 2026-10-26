@@ -1,6 +1,6 @@
 # Guide pictures of The Franking Works (CIPlay franking_works_pics): Raft's camera, midday, calm
 island The Franking Works
-offset 0 0
+offset 0 37
 hour 11
 weather Calm
 at 0 -16
@@ -8,3 +8,10 @@ wait 3
 picture franking_works_island 40 30 -60 0 5 0
 picture franking_works_yard 0 8 -24 0 4 -6
 picture franking_works_hall -3 5.5 -6 -1 4.5 3
+# POST 10-26: the new land - Ink Hill, Gull Cave, the ruined house, the plane
+offset 0 0
+picture post_qf_hill 6 20 6 37 14 48
+picture post_qf_cave -36 8 26 -46 6 50
+picture post_qf_ruin -70 8 -30 -58 4.5 -18
+picture post_qf_plane 68 9 -50 56 4 -40
+picture post_qf_jumps 10 9 54 -4 7 66

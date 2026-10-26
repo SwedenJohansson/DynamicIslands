@@ -9,3 +9,10 @@ picture telegraph_narrows_island 0 35 -75 0 8 0
 picture telegraph_narrows_line -36 26 -8 10 12 0
 picture telegraph_narrows_firsthut -40 23 -10 -34 21 0
 picture telegraph_narrows_lasthut 26 11 -12 34 8 -2
+# POST 10-26: the new land - Wire Hill, Seal Cave, the ruined house, the plane
+offset 0 0
+picture post_qt_hill -48 22 32 -53 16.8 -44
+picture post_qt_cave 80 8 0 70 6 24
+picture post_qt_ruin 44 8 -52 56 4.5 -40
+picture post_qt_plane -58 9 -4 -70 4 6
+picture post_qt_jumps 58 9 50 44 7 62

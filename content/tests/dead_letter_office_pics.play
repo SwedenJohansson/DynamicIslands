@@ -1,6 +1,6 @@
 # Guide pictures of The Dead Letter Office (CIPlay dead_letter_office_pics): Raft's camera, midday, calm
 island The Dead Letter Office
-offset 0 0
+offset 0 42
 hour 11
 weather Calm
 at 0 -20
@@ -9,3 +9,11 @@ picture dead_letter_office_island 38 26 -78 0 3 -14
 picture dead_letter_office_front 4 4.5 -24 -0.5 3.6 -13
 picture dead_letter_office_inside 1.8 4.1 -14.2 -1.5 3.1 -10.8
 picture dead_letter_office_jetty 9 4 -55 0 2 -36
+# POST 10-26: the new land - Gull Knoll, Sack Cave, the ruined house, the plane
+offset 0 0
+picture post_qd_hill 6 19 2 -39 12.6 40
+picture post_qd_cave 56 8 20 46 6 44
+picture post_qd_ruin 44 8 -32 56 4.5 -20
+picture post_qd_plane -44 9 -38 -56 4 -28
+picture post_qd_maze 30 12 -70 42 3 -56
+picture post_qd_jumps 22 9 50 8 7 62

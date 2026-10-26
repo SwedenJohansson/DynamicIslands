@@ -1,7 +1,7 @@
 # Parcel Canopy (CIPlay parcel_canopy_solo; in the plan after Pillarbox Pier): quest "The Last Mail Flight"
 # (it needs Eskil's dead letter from The Dead Letter Office: parcel_canopy_solo.play reads it first)
 island Parcel Canopy
-offset 0 0
+offset 0 26
 expect step 0
 expect title The Last Mail Flight
 expect hidden tailzone
@@ -45,6 +45,58 @@ use grave
 expect story eskildelivered 1
 expect shown graveflowers
 expect step 14
+# POST 10-26: the hub, Mira Dahl, the climb, Root Cave, the secrets
+expect hidden qc_rewchest
+use qc_machine
+expect hidden qc_rewchest
+read Pump keeper's notice
+expect step 15
+use Mira Dahl
+wait 1
+expect step 16
+expect hidden qc_lampchest
+use Camp lamp 1
+use Camp lamp 2
+wait 1
+expect shown qc_lampchest
+open Mira's tin
+zone qc_trail
+expect step 17
+zone qc_summit
+expect step 18
+open Radio relay mast deck box
+wait 3
+expect story qc_top 1
+expect step 19
+zone qc_cave
+expect step 20
+open Root Cave chest
+wait 3
+expect story qc_cave 1
+expect step 21
+use qc_machine
+expect shown qc_rewchest
+expect story qc_fixed 1
+open Airstrip pump reward
+wait 3
+read Pump ticket
+expect step 22
+# the secrets: the plane, the jumps, the set
+zone qc_plane
+open Supply boat's crate
+read Boatman's note
+zone qc_jumps
+open Stump climb
+open Top of the stumps
+expect hidden qc_setchest
+use qc_piece1
+use qc_piece2
+use qc_piece3
+use qc_piece4
+use qc_piece5
+wait 2
+expect shown qc_setchest
+open Stamp tin
 use beacon
 expect shown landinglight
 expect done

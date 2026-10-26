@@ -1,6 +1,6 @@
 # Guide pictures of Pillarbox Pier (CIPlay pillarbox_pier_pics): Raft's camera, midday, calm
 island Pillarbox Pier
-offset 0 0
+offset 0 39
 hour 11
 weather Calm
 at 0 -60
@@ -9,3 +9,10 @@ picture pillarbox_pier_island 55 30 -150 0 2 -40
 picture pillarbox_pier_boxes 3 3.4 -98 0 2.4 -60
 picture pillarbox_pier_head -6 4 -112 0 3 -125
 picture pillarbox_pier_land -18 7 -42 0 3 -16
+# POST 10-26: the new land - Ferry Hill, Tide Cave, the ruined house, the plane
+offset 0 0
+picture post_qp_hill 6 20 8 37 14 46
+picture post_qp_cave -38 8 24 -48 6 48
+picture post_qp_ruin -72 8 -28 -60 4.5 -16
+picture post_qp_plane 72 9 -34 60 4 -24
+picture post_qp_jumps 8 9 54 -6 7 66

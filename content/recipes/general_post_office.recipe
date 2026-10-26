@@ -7,18 +7,24 @@
 # archive claw and the crate of the letters of the world), and the roof terrace above by a second lift (the screechers'
 # brood mother, the semaphore mast, Ada, the post-horn and the flag). The drowned south of the square crossed by plank
 # streets on posts with lamps. A Raft store and a vending machine on the plaza.
-# Quest "The Last Post" (26 steps) in four areas: the Square, the Sorting Hall, the Upper Floors, the Roof.
+# Quest "The Last Post" (34 steps) in four areas: the Square, the Sorting Hall, the Upper Floors, the Roof.
 #
 # Built by the recipe player (CIRecipe general_post_office) through the editor's own operations.
 include lib_sea
 include lib_features
 include lib_post
+include lib_areas
+include lib_highwater
+include lib_lastpost
+# RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 78 -> 98; the old island moved 20 m south (push frames), so its south shore stays on the coast and the new land is north
+# POST 10-26: the new land - Postmaster's Hill with weather mast, Crab Cave, Sigge at the ruined house (a lamp puzzle), a crashed plane, a jump course, a maze, a set of five registered seals
 new
 # (nature: a stone city island, few trees, Like Raft's rocky islands)
 gen Trees=0.08 Bushes=0.2 Rocks=0.1 Harvest=0.1 BeachThings=0.3
-gen Seed=4901 Radius=78 Height=10 Roughness=0.3 Peaks=1 Shape=0 Style=1 PeakShape=0.4 Cliffs=0.2 BeachWidth=0.4
+gen Seed=4901 Radius=98 Height=10 Roughness=0.3 Peaks=1 Shape=0 Style=1 PeakShape=0.4 Cliffs=0.2 BeachWidth=0.4
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.15 Sunken=0.25 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
+push at 0 -20
 
 # --- Terrain: the plaza (2.5 m), the drowned south of the square (under the sea), the archive terrace (7.2 m) and the
 # roof terrace (11.9 m) behind the post office, each a lift's rise above the last
@@ -27,7 +33,15 @@ brush flatten from -18 -56 to 18 -56 r=9 s=20 frames=200 h=-0.8
 brush flatten at 0 17 r=9 s=20 frames=160 h=7.2
 brush flatten at 0 36 r=8 s=20 frames=160 h=11.9
 brush sand from -18 -56 to 18 -56 r=9 s=8 frames=20
+pop
 origin
+# --- POST 10-26 terrain: Postmaster's Hill, the pads of the new areas ---------------------------------------------------
+call hw_mount x=-48 z=54 b=26 h=24
+call hw_trail x=-48 z=54 b=26 h=24 a0=101.77 turn=300 n=40 h0=3
+brush flatten at 0 44 r=4 s=8 frames=60
+clear at 0 44 r=7
+# (RESIZE 10-26: the old island, 20 m south)
+push at 0 -20
 clear from 0 -30 to 0 -10 r=16
 clear at 0 17 r=9
 clear at 0 36 r=8
@@ -193,6 +207,177 @@ call dirt x=26 z=6 r=10 n=2 seed=4912
 call hives x=-26 z=4 r=10 n=1 seed=4913
 place Creature_Turtle turtle at 20 -62 h=-3
 
+pop
+
+# --- POST 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Postmaster's Hill ------
+# Postmaster's Hill with weather mast on it, Crab Cave, the ruined house where Sigge waits (four lamps round it: a puzzle), a crashed plane,
+# a jump course, a maze, five registered seals about the island (a set), and at the hub the square fountain that wants the fountain valve and the fountain spout
+call hw_zone x=-21.57 z=48.49 al=qg_trailz id=qg_trail r=5 msg="The trail up Postmaster's Hill starts here - round and up."
+call hw_zone x=-48 z=54 al=qg_summitz id=qg_summit r=8 h=1 msg="The top of Postmaster's Hill. The whole island below you."
+call hw_mast x=-51 z=56 h0=24 lv=5 a=qg_mast chest=qg_topchest top=RT_Spotlight
+place ZiplinePath_Landmark qg_zip at -44.8 51.4 h=25.35
+zipto qg_zip -2.87 45.22
+place Creature_Goat qg_goats at -17.57 51.49 ground
+prop qg_goats creature.count=2
+call ar_cave x=56 z=60 h=3 yaw=180 al=qg_caverock chest=qg_cavechest
+call hw_zone x=57 z=51 al=qg_cavez id=qg_cave r=4 h=1 msg="Crab Cave. Water drips somewhere in the dark."
+call ar_ruin x=60 z=-20 h=3 yaw=0 w=3 d=2 al=qg_ruin
+call lp_islander x=59 z=-24.5 yaw=200 al=qg_isl nm="Sigge" pose=lean
+prop qg_isl talk.text=A postman! With a bag! I was the porter here forty years - I carried the parcels in from the square.\n---\nThe square had a fountain. People sat round it waiting for the post. When the water rose and they shut the doors, I took its valve up the weather mast on Postmaster's Hill and its spout into Crab Cave.\n---\nTurn it on. A post office should have people waiting round a fountain.\n---\nMy lamps: four, each wakes its neighbour. All four lit, and look behind the back wall.
+call lp_lamp x=53 z=-21 al=qg_lamp1 nm="Porter's lamp 1" grp="Porter's lamps" on=0
+call lp_lamp x=59 z=-14 al=qg_lamp2 nm="Porter's lamp 2" grp="Porter's lamps" on=1
+call lp_lamp x=66 z=-21 al=qg_lamp3 nm="Porter's lamp 3" grp="Porter's lamps" on=0
+call lp_lamp x=59 z=-28 al=qg_lamp4 nm="Porter's lamp 4" grp="Porter's lamps" on=1
+prop qg_lamp1 on.use=light|Porter's lamp 2|toggle
+prop qg_lamp2 on.use=light|Porter's lamp 3|toggle
+prop qg_lamp3 on.use=light|Porter's lamp 4|toggle
+prop qg_lamp4 on.use=light|Porter's lamp 1|toggle
+prop qg_lamp1 on.alllit=show|qg_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call lp_hidden x=61 z=-15.4 al=qg_lampchest
+place Creature_Chicken qg_hens at 68 -14 ground
+prop qg_hens creature.count=3
+call ar_plane x=-62 z=-30 h=3 yaw=40 al=qg_plane crate=qg_planecrate
+place Note_Paper qg_pilot at -63.78 -25.9 ground y=0.1 drop yaw=70
+call hw_zone x=-62 z=-30 al=qg_planez id=qg_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
+# JUMP qg pad=3 at=10 80
+push at 10 80
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpqg at -4.24 -4.24 h=3.6
+place Block_Foundation_Tier3 jpqg at -5.77 -1.65 h=4.35
+place Block_Foundation_Tier3 jpqg at -5.85 1.35 h=5.1
+place Block_Foundation_Tier3 jpqg at -4.46 4.01 h=5.85
+place Block_Foundation_Tier3 jpqg at -1.95 5.67 h=6.6
+place Block_Foundation_Tier3 jpqg at 1.04 5.91 h=7.35
+place Block_Foundation_Tier3 jpqg at 3.78 4.66 h=8.1
+place Block_Foundation_Tier3 jpqg at 5.56 2.25 h=8.85
+place Block_Foundation_Tier3 jpqg at 5.96 -0.73 h=9.6
+# JUMP from 10
+place Block_Foundation_Tier3 jpqg at 4.85 -3.53 h=10.35
+place Block_Foundation_Tier3 jpqg at 2.54 -5.44 h=11.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppqg at -5.77 -1.65 h=3.668 sy=1.861
+place Block_Foundation_Tier3 jppqg at -5.85 1.35 h=4.418 sy=2.959
+place Block_Foundation_Tier3 jppqg at -4.46 4.01 h=5.168 sy=4.058
+place Block_Foundation_Tier3 jppqg at -1.95 5.67 h=5.918 sy=5.157
+place Block_Foundation_Tier3 jppqg at 1.04 5.91 h=6.668 sy=6.255
+place Block_Foundation_Tier3 jppqg at 3.78 4.66 h=7.418 sy=7.354
+place Block_Foundation_Tier3 jppqg at 5.56 2.25 h=8.168 sy=8.453
+place Block_Foundation_Tier3 jppqg at 5.96 -0.73 h=8.918 sy=9.552
+place Block_Foundation_Tier3 jppqg at 4.85 -3.53 h=9.668 sy=10.650
+place Block_Foundation_Tier3 jppqg at 2.54 -5.44 h=10.418 sy=11.749 sx=2 sz=2
+prop jpqg tint.color=#8a7f70
+prop jpqg tint.amount=0.35
+prop jppqg tint.color=#8a7f70
+prop jppqg tint.amount=0.35
+place Loot_Chest jcqg at 1.04 5.91 h=7.35 sit yaw=0
+prop jcqg loot.refill=0
+place Loot_ChestSmall jbqg at 2.54 -5.44 h=11.1 sit yaw=0
+prop jbqg loot.refill=0
+pop
+call hw_zone x=10 z=72 al=qg_jumpz id=qg_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call lp_pad x=56 z=-60 r=12 h=3
+brush flatten at 56 -60 r=14 s=20 frames=600 h=3
+push at 48.5 -67.5 h=3
+place Block_Wall_Tier3 qg_maze at 0.75 0 y=-0.35
+place Block_Wall_Tier3 qg_maze at 2.25 0 y=-0.35
+place Block_Wall_Tier3 qg_maze at 0.75 9 y=-0.35
+place Block_Wall_Tier3 qg_maze at 2.25 9 y=-0.35
+place Block_Wall_Tier3 qg_maze at 0.75 15 y=-0.35
+place Block_Wall_Tier3 qg_maze at 2.25 15 y=-0.35
+place Block_Wall_Tier3 qg_maze at 3.75 0 y=-0.35
+place Block_Wall_Tier3 qg_maze at 5.25 0 y=-0.35
+place Block_Wall_Tier3 qg_maze at 3.75 6 y=-0.35
+place Block_Wall_Tier3 qg_maze at 5.25 6 y=-0.35
+place Block_Wall_Tier3 qg_maze at 3.75 12 y=-0.35
+place Block_Wall_Tier3 qg_maze at 5.25 12 y=-0.35
+place Block_Wall_Tier3 qg_maze at 3.75 15 y=-0.35
+place Block_Wall_Tier3 qg_maze at 5.25 15 y=-0.35
+place Block_Wall_Tier3 qg_maze at 6.75 3 y=-0.35
+place Block_Wall_Tier3 qg_maze at 8.25 3 y=-0.35
+place Block_Wall_Tier3 qg_maze at 6.75 12 y=-0.35
+place Block_Wall_Tier3 qg_maze at 8.25 12 y=-0.35
+place Block_Wall_Tier3 qg_maze at 6.75 15 y=-0.35
+place Block_Wall_Tier3 qg_maze at 8.25 15 y=-0.35
+place Block_Wall_Tier3 qg_maze at 9.75 0 y=-0.35
+place Block_Wall_Tier3 qg_maze at 11.25 0 y=-0.35
+place Block_Wall_Tier3 qg_maze at 9.75 3 y=-0.35
+place Block_Wall_Tier3 qg_maze at 11.25 3 y=-0.35
+place Block_Wall_Tier3 qg_maze at 9.75 9 y=-0.35
+place Block_Wall_Tier3 qg_maze at 11.25 9 y=-0.35
+place Block_Wall_Tier3 qg_maze at 9.75 12 y=-0.35
+place Block_Wall_Tier3 qg_maze at 11.25 12 y=-0.35
+place Block_Wall_Tier3 qg_maze at 9.75 15 y=-0.35
+place Block_Wall_Tier3 qg_maze at 11.25 15 y=-0.35
+place Block_Wall_Tier3 qg_maze at 12.75 0 y=-0.35
+place Block_Wall_Tier3 qg_maze at 14.25 0 y=-0.35
+place Block_Wall_Tier3 qg_maze at 12.75 6 y=-0.35
+place Block_Wall_Tier3 qg_maze at 14.25 6 y=-0.35
+place Block_Wall_Tier3 qg_maze at 12.75 12 y=-0.35
+place Block_Wall_Tier3 qg_maze at 14.25 12 y=-0.35
+place Block_Wall_Tier3 qg_maze at 12.75 15 y=-0.35
+place Block_Wall_Tier3 qg_maze at 14.25 15 y=-0.35
+place Block_Wall_Tier3 qg_maze at 0 0.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 0 2.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 0 3.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 0 5.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 0 6.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 0 8.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 0 9.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 0 11.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 0 12.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 0 14.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 3 3.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 3 5.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 6 0.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 6 2.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 6 6.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 6 8.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 6 9.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 6 11.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 9 3.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 9 5.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 9 6.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 9 8.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 15 0.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 15 2.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 15 3.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 15 5.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 15 6.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 15 8.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 15 9.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 15 11.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 15 12.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qg_maze at 15 14.25 y=-0.35 yaw=90
+place Loot_ChestSmall qg_mazechest at 13.5 13.5 y=0.05 sit yaw=0
+pop
+prop qg_maze tint.color=#4e6b3a
+prop qg_maze tint.amount=0.55
+prop qg_mazechest loot.refill=0
+call hw_zone x=54.5 z=-69 al=qg_mazez id=qg_maze r=3 msg="A maze of old walls. Somewhere in the middle, a box."
+call lp_piece x=-34 z=34 al=qg_piece1 set="Registered seals"
+call lp_piece x=-54 z=-21 al=qg_piece2 set="Registered seals"
+call lp_piece x=50 z=34 al=qg_piece3 set="Registered seals"
+call lp_piece x=-4 z=74 al=qg_piece4 set="Registered seals"
+call lp_piece x=56 z=-72 al=qg_piece5 set="Registered seals"
+prop qg_piece1 on.set=show|qg_setchest\nmessage||All five registered seals found.
+call lp_hidden x=5 z=40 al=qg_setchest kind=Loot_Chest
+call treasure x=26 z=28 r=10 n=1 seed=27978 kind=0
+prop treasure27978 treasure.loot=TitaniumOre*3;MetalOre*2;TradeToken*1
+call shallows x=0 z=0 r=108 deep=5 n=1 seed=27961
+call ar_plants_hill x=82 z=18 r=14 seed=27991
+call ar_plants_hill x=-82 z=10 r=14 seed=27992
+call ar_plants_hill x=26 z=50 r=14 seed=27993
+call ar_plants_hill x=82 z=-10 r=14 seed=27994
+call ar_plants_hill x=58 z=30 r=14 seed=27995
+call ar_plants_hill x=74 z=-38 r=14 seed=27996
+call hw_machine x=0 z=44 yaw=180 al=qg_machine nm="Square fountain" obj=RT_PowerBox sc=1 a=qg_top b=qg_cave done=qg_fixed rew=qg_rewchest rnote=qg_rewnote msg="It works." hint="It wants the fountain valve from Postmaster's Hill and the fountain spout from Crab Cave."
+call hw_note x=-2.6 z=45.2 yaw=200 al=qg_hint
+
 # --- Settings, notes, behaviours, quest --------------------------------------------------------------------------------
 info title=The General Post Office
 info author=Custom Islands
@@ -263,6 +448,7 @@ prop $al if.use=!signal|$al
 prop $al on.use=message||The scales tip, sway and settle. Weighed and logged.\nsignal||scales\nsignal||$al\ngive||story:gpoweighed*1
 prop $al else.use=message||This scale's parcel is weighed already.
 end
+push at 0 -20
 call scaleuse al=gposcale1
 call scaleuse al=gposcale2
 call scaleuse al=gposcale3
@@ -352,6 +538,32 @@ prop flagzone zone.radius=3
 prop flagzone on.enter=camera|flagcam||6|50
 prop flagcam obj.name=flagcam
 
+story qg_top|Fountain valve|Bolt|The square's fountain valve, carried up the weather mast on Postmaster's Hill.
+story qg_cave|Fountain spout|Bolt|The fountain's brass spout, a fish with its mouth open, in a chest at the back of Crab Cave.
+story qg_fixed|Square fountain working|Bolt|The square fountain, working again.
+note qg_hint Fountain notice | FOUNTAIN OFF. Valve on the weather mast up Postmaster's Hill (north-west), spout in Crab Cave (north-east). Sigge, the old porter, at the house in the east knows the rest.
+note qg_topchest Weather mast deck box | A box lashed to the deck rail at the top of the weather mast.
+loot qg_topchest story:qg_top*1;Rope*2;Scrap*2
+note qg_cavechest Crab Cave chest | A chest at the back of Crab Cave, dry under the rock.
+loot qg_cavechest story:qg_cave*1;Nail*6;Plank*3
+note qg_rewnote Letter in the basin | Water rises from the brass fish and falls into the basin. On the bottom, among the coins, a letter in a bottle: 'To whoever turns the fountain on again: the Post will open again. - A.'
+note qg_rewchest Square fountain reward | What the square fountain kept.
+loot qg_rewchest MetalIngot*3;Bolt*3;Rope*2
+note qg_lampchest Sigge's tin | Sigge's tin behind the house: forty years of tips.
+loot qg_lampchest TradeToken*3;CopperIngot*2;Rope*2
+note qg_setchest Seal case | The counter's seal case: all five wax seals back, and the registered fees.
+loot qg_setchest TradeToken*3;MetalIngot*2;Glass*2
+note qg_planecrate Air mail crate | The air mail plane's crate: letters for the whole coast, and the pilot's tools.
+loot qg_planecrate Plastic*3;Scrap*3;Nail*6
+prop qg_planecrate loot.refill=0
+note qg_pilot Air mail manifest | COASTAL POST AIR MAIL - INBOUND, GENERAL POST OFFICE. The square is under water. Landed on the hill road. Letters in the crate. Nobody to sign for them.
+note jcqg Column climb | Broken columns from the old colonnade, stood one higher than the next.
+loot jcqg Rope*3;Plank*4;MetalIngot*1
+note jbqg Top of the columns | Somebody's stash at the very top.
+loot jbqg CopperIngot*1;Bolt*2;TradeToken*1
+note qg_mazechest Returned parcel | A parcel at the heart of the wall maze, returned to sender eleven times.
+loot qg_mazechest TradeToken*2;Glass*2;CopperIngot*2
+
 quest title=The Last Post
 quest intro=The General Post Office, on its drowned square. Walk into the square.
 step reach|square|1|Walk into the square
@@ -379,6 +591,14 @@ step kill|Screecher|1|Defeat the screechers' brood mother
 step collect|story:semaphore|1|Work the semaphore mast
 step read|Ada's welcome|1|Read Ada's welcome
 step collect|story:adajoined|1|Sound the post-horn with the last letter
+step read|Fountain notice|1|Read the fountain notice by the square fountain
+step talk|Sigge|1|Talk to Sigge at the ruined house in the east
+step reach|qg_trail|1|Find the foot of the trail up Postmaster's Hill, in the north-west
+step reach|qg_summit|1|Climb the trail to the top of Postmaster's Hill
+step collect|story:qg_top|1|Climb the weather mast and take the fountain valve from its deck
+step reach|qg_cave|1|Find Crab Cave in the north-east
+step collect|story:qg_cave|1|Take the fountain spout from the chest at the back of the cave
+step read|Letter in the basin|1|Bring both to the square fountain and read what it shows
 step reach|flag|1|Go to the flag
 quest done=The last post is delivered. Ada Lind sails with you now - and there is a whole sea that wants its post.
 quest reward=MetalIngot*4;Battery*2;TradeToken*8
@@ -389,4 +609,5 @@ prop treasure8820 treasure.loot=TitaniumOre*3
 
 # --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
 place VP_Forklift - at 6 -37 ground sit yaw=90
+pop
 save The General Post Office

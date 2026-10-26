@@ -3,7 +3,7 @@
 # of the top, a wing torn off below it, its tail section behind a curtain of vines; the pilot Eskil's camp on the south
 # beach, three tree houses on stilts joined by plank walks on the west terrace (the mailbags were carried up there out of
 # the warthogs' reach), the fuel shed in the west woods; Eskil's grave on the hilltop, a propeller blade for its stone.
-# Quest "The Last Mail Flight" (15 steps): the beach, Eskil's notebook, the camp chest (the machete and its blueprint),
+# Quest "The Last Mail Flight" (23 steps): the beach, Eskil's notebook, the camp chest (the machete and its blueprint),
 # the tail behind the vines, five mailbags, the warthogs, the cargo hold (fuel tank and fuel pipe blueprints), the radio,
 # the fuel shed (biofuel extractor blueprint), Eskil's letter laid on his grave, the beacon (done-when signal:beacon).
 #
@@ -12,12 +12,18 @@ include lib_sea
 include lib_features
 include lib_huts
 include lib_post
+include lib_areas
+include lib_highwater
+include lib_lastpost
+# RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 62 -> 88; the old island moved 26 m south (push frames), so its south shore stays on the coast and the new land is north
+# POST 10-26: the new land - Parrot Peak with radio relay mast, Root Cave, Mira Dahl at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five air mail stamps
 new
 # (nature: a jungle hill, Like Raft's Balboa woods but not as thick)
 gen Trees=0.32 Bushes=0.35 Rocks=0.25 Harvest=0.15 BeachThings=0.12
-gen Seed=4301 Radius=62 Height=16 Roughness=0.45 Peaks=1 Shape=0 Style=0 PeakShape=0.4 Cliffs=0.2 BeachWidth=0.5
+gen Seed=4301 Radius=88 Height=16 Roughness=0.45 Peaks=1 Shape=0 Style=0 PeakShape=0.4 Cliffs=0.2 BeachWidth=0.5
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.15 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
+push at 0 -26
 
 # --- Terrain: the camp on the south beach, the tree house terrace (west), the plane's shelf (east), the fuel shed -------
 brush flatten at 6 -42 r=6 s=20 frames=80 h=2.4
@@ -28,7 +34,15 @@ brush flatten at -2 3 r=5 s=12 frames=60 h=15
 brush smooth from -24 30 to 6 30 r=8 s=6 frames=20
 brush smooth at 20 -4 r=11 s=6 frames=20
 brush rock at 20 -4 r=10 s=6 frames=30
+pop
 origin
+# --- POST 10-26 terrain: Parrot Peak, the pads of the new areas ---------------------------------------------------
+call hw_mount x=-40 z=56 b=22 h=22
+call hw_trail x=-40 z=56 b=22 h=22 a0=118.81 turn=300 n=40 h0=3
+brush flatten at 0 34 r=4 s=8 frames=60
+clear at 0 34 r=7
+# (RESIZE 10-26: the old island, 26 m south)
+push at 0 -26
 clear at 6 -42 r=6
 clear from -24 30 to 6 30 r=6
 clear at 20 -4 r=10
@@ -107,6 +121,98 @@ call dirt x=-34 z=8 r=10 n=3 seed=4313
 call hives x=28 z=24 r=10 n=1 seed=4314
 call shallows r=80 deep=5 n=3
 
+pop
+
+# --- POST 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Parrot Peak ------
+# Parrot Peak with radio relay mast on it, Root Cave, the ruined house where Mira Dahl waits (four lamps round it: a puzzle), a crashed plane,
+# a jump course, five air mail stamps about the island (a set), and at the hub the airstrip pump that wants the pump valve and the pump handle
+call hw_zone x=-19.85 z=44.92 al=qc_trailz id=qc_trail r=5 msg="The trail up Parrot Peak starts here - round and up."
+call hw_zone x=-40 z=56 al=qc_summitz id=qc_summit r=8 h=1 msg="The top of Parrot Peak. The whole island below you."
+call hw_mast x=-43 z=58 h0=22 lv=5 a=qc_mast chest=qc_topchest top=RT_Spotlight
+place ZiplinePath_Landmark qc_zip at -36.8 53.4 h=23.35
+zipto qc_zip -2.26 36.89
+place Creature_Goat qc_goats at -15.85 47.92 ground
+prop qc_goats creature.count=2
+call ar_cave x=54 z=46 h=3 yaw=180 al=qc_caverock chest=qc_cavechest
+call hw_zone x=55 z=37 al=qc_cavez id=qc_cave r=4 h=1 msg="Root Cave. Water drips somewhere in the dark."
+call ar_ruin x=-58 z=-28 h=3 yaw=0 w=3 d=2 al=qc_ruin
+call lp_islander x=-59 z=-32.5 yaw=200 al=qc_isl nm="Mira Dahl" pose=lean
+prop qc_isl talk.text=You found Eskil's plane, then. I sat with him on the beach that last week.\n---\nHe meant to fly out again. He had me hide the pump's parts so the fuel wouldn't leak away into the sand: the valve up the radio mast on Parrot Peak, the handle in Root Cave.\n---\nNobody came to fly. But a pump should work, don't you think?\n---\nMy lamps: four round the house, each one wakes its neighbour. All four lit, and look behind the back wall.
+call lp_lamp x=-65 z=-29 al=qc_lamp1 nm="Camp lamp 1" grp="Camp lamps" on=0
+call lp_lamp x=-59 z=-22 al=qc_lamp2 nm="Camp lamp 2" grp="Camp lamps" on=1
+call lp_lamp x=-52 z=-29 al=qc_lamp3 nm="Camp lamp 3" grp="Camp lamps" on=0
+call lp_lamp x=-59 z=-36 al=qc_lamp4 nm="Camp lamp 4" grp="Camp lamps" on=1
+prop qc_lamp1 on.use=light|Camp lamp 2|toggle
+prop qc_lamp2 on.use=light|Camp lamp 3|toggle
+prop qc_lamp3 on.use=light|Camp lamp 4|toggle
+prop qc_lamp4 on.use=light|Camp lamp 1|toggle
+prop qc_lamp1 on.alllit=show|qc_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call lp_hidden x=-57 z=-23.4 al=qc_lampchest
+place Creature_Chicken qc_hens at -50 -22 ground
+prop qc_hens creature.count=3
+call hw_wreck x=60 z=-24 h=2 yaw=250 obj=BoatStranded al=qc_plane crate=qc_planecrate r=10
+place Note_Paper qc_pilot at 59.49 -28.44 ground y=0.1 drop yaw=280
+call hw_zone x=60 z=-24 al=qc_planez id=qc_plane r=6 h=1 msg="A supply boat, high and dry. Nobody came to float it off."
+# JUMP qc pad=3 at=14 70
+push at 14 70
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpqc at -4.24 -4.24 h=3.6
+place Block_Foundation_Tier3 jpqc at -5.77 -1.65 h=4.35
+place Block_Foundation_Tier3 jpqc at -5.85 1.35 h=5.1
+place Block_Foundation_Tier3 jpqc at -4.46 4.01 h=5.85
+place Block_Foundation_Tier3 jpqc at -1.95 5.67 h=6.6
+place Block_Foundation_Tier3 jpqc at 1.04 5.91 h=7.35
+place Block_Foundation_Tier3 jpqc at 3.78 4.66 h=8.1
+place Block_Foundation_Tier3 jpqc at 5.56 2.25 h=8.85
+place Block_Foundation_Tier3 jpqc at 5.96 -0.73 h=9.6
+# JUMP from 10
+place Block_Foundation_Tier3 jpqc at 4.85 -3.53 h=10.35
+place Block_Foundation_Tier3 jpqc at 2.54 -5.44 h=11.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppqc at -5.77 -1.65 h=3.668 sy=1.861
+place Block_Foundation_Tier3 jppqc at -5.85 1.35 h=4.418 sy=2.959
+place Block_Foundation_Tier3 jppqc at -4.46 4.01 h=5.168 sy=4.058
+place Block_Foundation_Tier3 jppqc at -1.95 5.67 h=5.918 sy=5.157
+place Block_Foundation_Tier3 jppqc at 1.04 5.91 h=6.668 sy=6.255
+place Block_Foundation_Tier3 jppqc at 3.78 4.66 h=7.418 sy=7.354
+place Block_Foundation_Tier3 jppqc at 5.56 2.25 h=8.168 sy=8.453
+place Block_Foundation_Tier3 jppqc at 5.96 -0.73 h=8.918 sy=9.552
+place Block_Foundation_Tier3 jppqc at 4.85 -3.53 h=9.668 sy=10.650
+place Block_Foundation_Tier3 jppqc at 2.54 -5.44 h=10.418 sy=11.749 sx=2 sz=2
+prop jpqc tint.color=#8a7f70
+prop jpqc tint.amount=0.35
+prop jppqc tint.color=#8a7f70
+prop jppqc tint.amount=0.35
+place Loot_Chest jcqc at 1.04 5.91 h=7.35 sit yaw=0
+prop jcqc loot.refill=0
+place Loot_ChestSmall jbqc at 2.54 -5.44 h=11.1 sit yaw=0
+prop jbqc loot.refill=0
+pop
+call hw_zone x=14 z=62 al=qc_jumpz id=qc_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call lp_piece x=-26 z=36 al=qc_piece1 set="Air mail stamps"
+call lp_piece x=52 z=-15 al=qc_piece2 set="Air mail stamps"
+call lp_piece x=48 z=20 al=qc_piece3 set="Air mail stamps"
+call lp_piece x=0 z=64 al=qc_piece4 set="Air mail stamps"
+call lp_piece x=-44 z=-12 al=qc_piece5 set="Air mail stamps"
+prop qc_piece1 on.set=show|qc_setchest\nmessage||All five air mail stamps found.
+call lp_hidden x=5 z=30 al=qc_setchest kind=Loot_Chest
+call treasure x=-14 z=78 r=10 n=1 seed=27378 kind=0
+prop treasure27378 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call shallows x=0 z=0 r=98 deep=5 n=1 seed=27361
+call ar_plants_hill x=-72 z=12 r=14 seed=27391
+call ar_plants_hill x=72 z=12 r=14 seed=27392
+call ar_plants_hill x=44 z=12 r=14 seed=27393
+call ar_plants_hill x=-44 z=16 r=14 seed=27394
+call ar_plants_hill x=52 z=-52 r=14 seed=27395
+call ar_plants_hill x=24 z=32 r=14 seed=27396
+call hw_machine x=0 z=34 yaw=180 al=qc_machine nm="Airstrip pump" obj=RT_PowerBox sc=1 a=qc_top b=qc_cave done=qc_fixed rew=qc_rewchest rnote=qc_rewnote msg="It works." hint="It wants the pump valve from Parrot Peak and the pump handle from Root Cave."
+call hw_note x=-2.6 z=35.2 yaw=200 al=qc_hint
+
 # --- Settings, notes, behaviours, quest --------------------------------------------------------------------------------
 info title=Parcel Canopy
 info author=Custom Islands
@@ -134,11 +240,13 @@ prop $al obj.name=$al
 prop $al beh.use=Take the mailbag
 prop $al on.use=give||story:mailbag*1\nhide|\nmessage||A mailbag, heavy and dry. COASTAL POST - AIR.
 end
+push at 0 -26
 call bag al=bag1
 call bag al=bag2
 call bag al=bag3
 call bag al=bag4
 call bag al=bag5
+pop
 
 note notebook Pilot Eskil's notebook | E. BRANDT - MAIL PILOT\n\nEngine quit over the canopy. Put her down in the trees - she held.\n\nMailbags carried up to the tree houses: the warthogs root through anything on the ground. The tail section is grown in with vines; the cargo hold is in the tail. Machete in my camp chest.\n\nFuel shed in the west woods. If the radio still works, I'll light the beacon on the hill so the next plane finds the strip.\n\nI don't think the next plane is coming.
 note campchest Pilot's camp chest | Eskil's camp chest: his machete, its plans, and the last of his food.
@@ -187,6 +295,30 @@ prop beachzone zone.message=A beach with a camp under a roof on posts. The tide 
 prop hilltop zone.id=hilltop
 prop hilltop zone.radius=4
 
+story qc_top|Pump valve|Bolt|The fuel pump's valve, taken up the radio relay mast on Parrot Peak.
+story qc_cave|Pump handle|Bolt|The pump's long iron handle, hidden in a chest in Root Cave.
+story qc_fixed|Airstrip pump working|Bolt|The airstrip pump, working again.
+note qc_hint Pump keeper's notice | AIRSTRIP PUMP - DO NOT USE. Valve up the radio relay mast on Parrot Peak (north-west), handle in Root Cave (north-east). Eskil wanted it working for the next plane. Ask Mira at the old house in the south-west.
+note qc_topchest Radio relay mast deck box | A box lashed to the deck rail at the top of the radio relay mast.
+loot qc_topchest story:qc_top*1;Rope*2;Scrap*2
+note qc_cavechest Root Cave chest | A chest at the back of Root Cave, dry under the rock.
+loot qc_cavechest story:qc_cave*1;Nail*6;Plank*3
+note qc_rewnote Pump ticket | The pump wheezes and fuel runs into the drum - enough for a plane to take off again. Pinned to the pump, a ticket in Eskil's hand: 'Filled for the next flight. Whoever flies it - take the mail.'
+note qc_rewchest Airstrip pump reward | What the airstrip pump kept.
+loot qc_rewchest MetalIngot*2;Bolt*3;Rope*2
+note qc_lampchest Mira's tin | Mira's tin behind the house: Eskil's spare goggles and her tokens.
+loot qc_lampchest TradeToken*2;CopperIngot*2;Rope*2
+note qc_setchest Stamp tin | Eskil's stamp tin: every air mail stamp back, and his pay.
+loot qc_setchest TradeToken*3;Glass*2;MetalIngot*1
+note qc_planecrate Supply boat's crate | The supply boat's crate: fuel cans (empty), rope and a toolkit.
+loot qc_planecrate Plastic*3;Scrap*3;Nail*6
+prop qc_planecrate loot.refill=0
+note qc_pilot Boatman's note | SUPPLY BOAT TO THE CANOPY. Fuel for Eskil's plane. Ran her onto the shore in the fog and the fuel went into the sea. Tell him I'm sorry.
+note jcqc Stump climb | Stumps of the old tree-house posts, one higher than the next.
+loot jcqc Rope*3;Plank*4;MetalIngot*1
+note jbqc Top of the stumps | Somebody's stash at the very top.
+loot jbqc CopperIngot*1;Bolt*2;TradeToken*1
+
 quest title=The Last Mail Flight
 quest intro=A plane crashed in the canopy. Land on the beach below it.
 step reach|beach|1|Land on the beach
@@ -203,6 +335,14 @@ step collect|story:planeradio|1|Use the plane's radio
 step open|Fuel shed|1|Open the fuel shed in the west woods
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from the fuel shed
 step collect|story:eskildelivered|1|Lay Eskil's letter on his grave on the hilltop
+step read|Pump keeper's notice|1|Read the pump keeper's notice by the airstrip pump
+step talk|Mira Dahl|1|Talk to Mira Dahl at the ruined house in the south-west
+step reach|qc_trail|1|Find the foot of the trail up Parrot Peak, in the north-west
+step reach|qc_summit|1|Climb the trail to the top of Parrot Peak
+step collect|story:qc_top|1|Climb the radio relay mast and take the pump valve from its deck
+step reach|qc_cave|1|Find Root Cave in the north-east
+step collect|story:qc_cave|1|Take the pump handle from the chest at the back of the cave
+step read|Pump ticket|1|Bring both to the airstrip pump and read what it shows
 step collect|story:beaconlit|1|Light the beacon on the hilltop
 quest done=The beacon burns over the canopy. Somewhere a Receiver picks up the airstrip's call: the next stop is Pneumatic Heights.
 quest reward=MetalIngot*3;Bolt*4;Scrap*4

@@ -1,7 +1,7 @@
 # Pillarbox Pier (CIPlay pillarbox_pier_solo; in the plan after The Dead Letter Office): quest "The Ferry Master's Wife"
 # (it needs the Ferry Master's dead letter from The Dead Letter Office: pillarbox_pier_solo.play reads it first)
 island Pillarbox Pier
-offset 0 0
+offset 0 39
 expect step 0
 expect title The Ferry Master's Wife
 expect hidden ferryreply
@@ -22,6 +22,59 @@ open Waiting room locker
 wait 3
 expect item Blueprint_MotorWheel 1
 expect item Blueprint_SteeringWheel 1
-expect step 7
+expect item Blueprint_HeadLight 1
+expect step 8
+# POST 10-26: the hub, Nils, the climb, Tide Cave, the secrets
+expect hidden qp_rewchest
+use qp_machine
+expect hidden qp_rewchest
+read Bell ringer's notice
+expect step 9
+use Nils
+wait 1
+expect step 10
+expect hidden qp_lampchest
+use Ferry lamp 1
+use Ferry lamp 3
+wait 1
+expect shown qp_lampchest
+open Nils's tin
+zone qp_trail
+expect step 11
+zone qp_summit
+expect step 12
+open Ferry signal mast deck box
+wait 3
+expect story qp_top 1
+expect step 13
+zone qp_cave
+expect step 14
+open Tide Cave chest
+wait 3
+expect story qp_cave 1
+expect step 15
+use qp_machine
+expect shown qp_rewchest
+expect story qp_fixed 1
+open Ferry bell reward
+wait 3
+read Bell ringer's card
+expect step 16
+# the secrets: the plane, the jumps, the set
+zone qp_plane
+open Seaplane's crate
+read Seaplane log
+zone qp_jumps
+open Bollard climb
+open Top of the bollards
+expect hidden qp_setchest
+use qp_piece1
+use qp_piece2
+use qp_piece3
+use qp_piece4
+use qp_piece5
+wait 2
+expect shown qp_setchest
+open Ticket box
 zone sorting
 expect done

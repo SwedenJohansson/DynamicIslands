@@ -1,7 +1,7 @@
 # Sorting Rock (CIPlay sorting_rock_solo; in the plan after Pneumatic Heights): quest "Weighed and Sorted"
 # (it needs Lise's dead letter from The Dead Letter Office: sorting_rock_solo.play reads it first)
 island Sorting Rock
-offset 0 0
+offset 0 39
 expect step 0
 expect title Weighed and Sorted
 expect hidden lisereply
@@ -33,10 +33,65 @@ expect item Blueprint_WaterTank 1
 expect item Blueprint_Pipe_Water 1
 expect item Blueprint_ElectricPurifier 1
 expect item Blueprint_Storage_Large 1
-expect step 10
+expect item Blueprint_Recycler 1
+expect step 11
 use liselocker
 expect story lisedelivered 1
 expect shown lisereply
-expect step 11
+expect step 12
+# POST 10-26: the hub, Greta Moberg, the climb, Slate Cave, the secrets
+expect hidden qr_rewchest
+use qr_machine
+expect hidden qr_rewchest
+read Crane driver's notice
+expect step 13
+use Greta Moberg
+wait 1
+expect step 14
+expect hidden qr_lampchest
+use Quarry lamp 1
+use Quarry lamp 2
+wait 1
+expect shown qr_lampchest
+open Greta's cash box
+zone qr_trail
+expect step 15
+zone qr_summit
+expect step 16
+open Quarry mast deck box
+wait 3
+expect story qr_top 1
+expect step 17
+zone qr_cave
+expect step 18
+open Slate Cave chest
+wait 3
+expect story qr_cave 1
+expect step 19
+use qr_machine
+expect shown qr_rewchest
+expect story qr_fixed 1
+open Parcel crane reward
+wait 3
+read Crane cab slip
+expect step 20
+# the secrets: the plane, the jumps, the maze, the set
+zone qr_plane
+open Freight plane's crate
+read Freight pilot's note
+zone qr_jumps
+open Quarry stair
+open Top of the quarry steps
+zone qr_maze
+open Unsorted parcel
+expect hidden qr_setchest
+use qr_piece1
+use qr_piece2
+use qr_piece3
+use qr_piece4
+use qr_piece5
+wait 2
+expect shown qr_setchest
+open Label drawer
 read Lise's reply
 expect done

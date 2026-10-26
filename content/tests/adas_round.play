@@ -1,6 +1,6 @@
 # Ada's Round (CIPlay adas_round; in the plan after The Franking Works): quest "Ada's Round"
 island Ada's Round
-offset 0 0
+offset 0 33
 expect step 0
 expect title Ada's Round
 expect hidden pigeonbox
@@ -30,5 +30,57 @@ expect item Blueprint_TitaniumTools 1
 expect item Blueprint_BackpackAdvanced 1
 expect item Blueprint_ZiplineToolElectric 1
 expect step 8
+# POST 10-26: the hub, Tove, the climb, Fox Cave, the secrets
+expect hidden qa_rewchest
+use qa_machine
+expect hidden qa_rewchest
+read Village pump notice
+expect step 9
+use Tove
+wait 1
+expect step 10
+expect hidden qa_lampchest
+use Cottage lamp 1
+use Cottage lamp 3
+wait 1
+expect shown qa_lampchest
+open Tove's jar
+zone qa_trail
+expect step 11
+zone qa_summit
+expect step 12
+open Weather vane mast deck box
+wait 3
+expect story qa_top 1
+expect step 13
+zone qa_cave
+expect step 14
+open Fox Cave chest
+wait 3
+expect story qa_cave 1
+expect step 15
+use qa_machine
+expect shown qa_rewchest
+expect story qa_fixed 1
+open Village pump reward
+wait 3
+read Note under the pump cap
+expect step 16
+# the secrets: the plane, the jumps, the set
+zone qa_plane
+open Relief plane's crate
+read Relief flight card
+zone qa_jumps
+open Hayrick climb
+open Top of the millstones
+expect hidden qa_setchest
+use qa_piece1
+use qa_piece2
+use qa_piece3
+use qa_piece4
+use qa_piece5
+wait 2
+expect shown qa_setchest
+open Bicycle box
 read Ada's note to the next postman
 expect done

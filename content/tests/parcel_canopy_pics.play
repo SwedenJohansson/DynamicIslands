@@ -1,6 +1,6 @@
 # Guide pictures of Parcel Canopy (CIPlay parcel_canopy_pics): Raft's camera, midday, calm
 island Parcel Canopy
-offset 0 0
+offset 0 26
 hour 11
 weather Calm
 at 0 -40
@@ -9,3 +9,10 @@ picture parcel_canopy_island 60 40 -80 0 6 0
 picture parcel_canopy_plane 8 13 -16 20 10 -4
 picture parcel_canopy_huts -12 11 16 -11 8 29
 picture parcel_canopy_camp 10 4 -52 4 3 -43
+# POST 10-26: the new land - Parrot Peak, Root Cave, the ruined house, the plane
+offset 0 0
+picture post_qc_hill 6 21 26 -43 15.4 58
+picture post_qc_cave 64 8 22 54 6 46
+picture post_qc_ruin -70 8 -40 -58 4.5 -28
+picture post_qc_plane 72 8 -34 60 3 -24
+picture post_qc_jumps 28 9 58 14 7 70

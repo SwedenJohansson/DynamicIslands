@@ -2,7 +2,7 @@
 # The plaza (2.5 m) at 0 -20 with the arcade, kiosk and clock tower; the post office hall at -7.5 -12 (10 x 6 cells);
 # the archive terrace (7.2 m) at 0 17 by the first lift at 0 5.5; the roof terrace (11.9 m) at 0 36 by the second lift.
 island The General Post Office
-offset 0 0
+offset 0 20
 expect step 0
 expect title The Last Post
 expect hidden capsule
@@ -102,5 +102,59 @@ expect step 24
 use posthorn
 expect story adajoined 1
 expect step 25
+# POST 10-26: the hub, Sigge, the climb, Crab Cave, the secrets
+expect hidden qg_rewchest
+use qg_machine
+expect hidden qg_rewchest
+read Fountain notice
+expect step 26
+use Sigge
+wait 1
+expect step 27
+expect hidden qg_lampchest
+use Porter's lamp 1
+use Porter's lamp 2
+wait 1
+expect shown qg_lampchest
+open Sigge's tin
+zone qg_trail
+expect step 28
+zone qg_summit
+expect step 29
+open Weather mast deck box
+wait 3
+expect story qg_top 1
+expect step 30
+zone qg_cave
+expect step 31
+open Crab Cave chest
+wait 3
+expect story qg_cave 1
+expect step 32
+use qg_machine
+expect shown qg_rewchest
+expect story qg_fixed 1
+open Square fountain reward
+wait 3
+read Letter in the basin
+expect step 33
+# the secrets: the plane, the jumps, the maze, the set
+zone qg_plane
+open Air mail crate
+read Air mail manifest
+zone qg_jumps
+open Column climb
+open Top of the columns
+zone qg_maze
+open Returned parcel
+expect hidden qg_setchest
+use qg_piece1
+use qg_piece2
+use qg_piece3
+use qg_piece4
+use qg_piece5
+wait 2
+expect shown qg_setchest
+open Seal case
 zone flag
 expect done

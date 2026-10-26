@@ -3,19 +3,25 @@
 # roof), the attic store beside it padlocked (Vasagatan's padlock door), a walled kitchen garden with Raft's planters,
 # the dovecote (Raft's storage pieces stacked, a nest on top) and the post bicycle shed; a path down to the jetty on the
 # south shore. A Raft store behind the house.
-# Quest "Ada's Round" (9 steps): the garden gate, Ada's diary, the dovecote's pigeons, the attic key, the attic (three
+# Quest "Ada's Round" (17 steps): the garden gate, Ada's diary, the dovecote's pigeons, the attic key, the attic (three
 # blueprints), Ada's note to the next postman.
 #
 # Built by the recipe player (CIRecipe adas_round) through the editor's own operations.
 include lib_sea
 include lib_features
 include lib_post
+include lib_areas
+include lib_highwater
+include lib_lastpost
+# RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 52 -> 85; the old island moved 33 m south (push frames), so its south shore stays on the coast and the new land is north
+# POST 10-26: the new land - Heather Hill with weather vane mast, Fox Cave, Tove at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five bicycle parts
 new
 # (nature: a green grass hill, Like Raft's farm islands, plenty to harvest)
 gen Trees=0.2 Bushes=0.35 Rocks=0.25 Harvest=0.3 BeachThings=0.12
-gen Seed=4801 Radius=52 Height=12 Roughness=0.25 Peaks=1 Shape=0 Style=3 PeakShape=0.3 Cliffs=0.1 BeachWidth=0.4
+gen Seed=4801 Radius=85 Height=12 Roughness=0.25 Peaks=1 Shape=0 Style=3 PeakShape=0.3 Cliffs=0.1 BeachWidth=0.4
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.15 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
+push at 0 -33
 
 # --- Terrain: the hilltop (9 m), the path down to the south shore in steps, the jetty's root (1.6 m) ------------------
 brush flatten at 0 4 r=19 s=20 frames=220 h=9
@@ -25,7 +31,15 @@ brush flatten at 0 -29 r=4 s=20 frames=60 h=4.5
 brush flatten at 0 -33 r=4 s=20 frames=60 h=3
 brush flatten from 0 -37 to 0 -42 r=4 s=20 frames=60 h=1.6
 brush smooth from 0 -14 to 0 -42 r=5 s=10 frames=40
+pop
 origin
+# --- POST 10-26 terrain: Heather Hill, the pads of the new areas ---------------------------------------------------
+call hw_mount x=-40 z=48 b=24 h=20
+call hw_trail x=-40 z=48 b=24 h=20 a0=123.02 turn=300 n=40 h0=3
+brush flatten at 0 22 r=4 s=8 frames=60
+clear at 0 22 r=7
+# (RESIZE 10-26: the old island, 33 m south)
+push at 0 -33
 clear at 0 4 r=19
 clear from 0 -14 to 0 -44 r=4
 
@@ -119,6 +133,99 @@ place Creature_Dolphin dolphins at -36 -50 h=-3
 prop dolphins creature.count=2
 call shallows r=66 deep=5 n=2
 
+pop
+
+# --- POST 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Heather Hill ------
+# Heather Hill with weather vane mast on it, Fox Cave, the ruined house where Tove waits (four lamps round it: a puzzle), a crashed plane,
+# a jump course, five bicycle parts about the island (a set), and at the hub the village pump that wants the pump plunger and the pump leather
+call hw_zone x=-19.04 z=34.38 al=qa_trailz id=qa_trail r=5 msg="The trail up Heather Hill starts here - round and up."
+call hw_zone x=-40 z=48 al=qa_summitz id=qa_summit r=8 h=1 msg="The top of Heather Hill. The whole island below you."
+call hw_mast x=-43 z=50 h0=20 lv=5 a=qa_mast chest=qa_topchest top=Placeable_Flag_01
+place ZiplinePath_Landmark qa_zip at -36.8 45.4 h=21.35
+zipto qa_zip -2.03 25.27
+place Creature_Goat qa_goats at -15.04 37.38 ground
+prop qa_goats creature.count=2
+call ar_cave x=48 z=50 h=3 yaw=180 al=qa_caverock chest=qa_cavechest
+call hw_zone x=49 z=41 al=qa_cavez id=qa_cave r=4 h=1 msg="Fox Cave. Water drips somewhere in the dark."
+call ar_ruin x=60 z=-14 h=3 yaw=0 w=3 d=2 al=qa_ruin
+call lp_islander x=59 z=-18.5 yaw=200 al=qa_isl nm="Tove" pose=sit
+prop qa_isl talk.text=You're carrying Ada's letters? Then you'll be thirsty. She always was, by the time she got round to me.\n---\nThe village pump was hers to mind. When she went, I took the plunger up the weather vane mast on Heather Hill and the leather into Fox Cave, so the summer people wouldn't wreck it.\n---\nFix it for her. She'd like that.\n---\nMy lamps round the house: four, each wakes its neighbour. All four lit, and look behind the back wall.
+place Placeable_Chair_Basic - at 59 -18.5 ground sit yaw=200
+call lp_lamp x=53 z=-15 al=qa_lamp1 nm="Cottage lamp 1" grp="Cottage lamps" on=0
+call lp_lamp x=59 z=-8 al=qa_lamp2 nm="Cottage lamp 2" grp="Cottage lamps" on=0
+call lp_lamp x=66 z=-15 al=qa_lamp3 nm="Cottage lamp 3" grp="Cottage lamps" on=0
+call lp_lamp x=59 z=-22 al=qa_lamp4 nm="Cottage lamp 4" grp="Cottage lamps" on=0
+prop qa_lamp1 on.use=light|Cottage lamp 2|toggle
+prop qa_lamp2 on.use=light|Cottage lamp 3|toggle
+prop qa_lamp3 on.use=light|Cottage lamp 4|toggle
+prop qa_lamp4 on.use=light|Cottage lamp 1|toggle
+prop qa_lamp1 on.alllit=show|qa_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call lp_hidden x=61 z=-9.4 al=qa_lampchest
+place Creature_Chicken qa_hens at 68 -8 ground
+prop qa_hens creature.count=3
+call ar_plane x=-60 z=-22 h=3 yaw=40 al=qa_plane crate=qa_planecrate
+place Note_Paper qa_pilot at -61.78 -17.9 ground y=0.1 drop yaw=70
+call hw_zone x=-60 z=-22 al=qa_planez id=qa_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
+# JUMP qa pad=3 at=6 68
+push at 6 68
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpqa at 4.24 4.24 h=3.6
+place Block_Foundation_Tier3 jpqa at 5.77 1.65 h=4.35
+place Block_Foundation_Tier3 jpqa at 5.85 -1.35 h=5.1
+place Block_Foundation_Tier3 jpqa at 4.46 -4.01 h=5.85
+place Block_Foundation_Tier3 jpqa at 1.95 -5.67 h=6.6
+place Block_Foundation_Tier3 jpqa at -1.04 -5.91 h=7.35
+place Block_Foundation_Tier3 jpqa at -3.78 -4.66 h=8.1
+place Block_Foundation_Tier3 jpqa at -5.56 -2.25 h=8.85
+place Block_Foundation_Tier3 jpqa at -5.96 0.73 h=9.6
+# JUMP from 10
+place Block_Foundation_Tier3 jpqa at -4.85 3.53 h=10.35
+place Block_Foundation_Tier3 jpqa at -2.54 5.44 h=11.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppqa at 5.77 1.65 h=3.668 sy=1.861
+place Block_Foundation_Tier3 jppqa at 5.85 -1.35 h=4.418 sy=2.959
+place Block_Foundation_Tier3 jppqa at 4.46 -4.01 h=5.168 sy=4.058
+place Block_Foundation_Tier3 jppqa at 1.95 -5.67 h=5.918 sy=5.157
+place Block_Foundation_Tier3 jppqa at -1.04 -5.91 h=6.668 sy=6.255
+place Block_Foundation_Tier3 jppqa at -3.78 -4.66 h=7.418 sy=7.354
+place Block_Foundation_Tier3 jppqa at -5.56 -2.25 h=8.168 sy=8.453
+place Block_Foundation_Tier3 jppqa at -5.96 0.73 h=8.918 sy=9.552
+place Block_Foundation_Tier3 jppqa at -4.85 3.53 h=9.668 sy=10.650
+place Block_Foundation_Tier3 jppqa at -2.54 5.44 h=10.418 sy=11.749 sx=2 sz=2
+prop jpqa tint.color=#8a7f70
+prop jpqa tint.amount=0.35
+prop jppqa tint.color=#8a7f70
+prop jppqa tint.amount=0.35
+place Loot_Chest jcqa at -1.04 -5.91 h=7.35 sit yaw=0
+prop jcqa loot.refill=0
+place Loot_ChestSmall jbqa at -2.54 5.44 h=11.1 sit yaw=0
+prop jbqa loot.refill=0
+pop
+call hw_zone x=6 z=60 al=qa_jumpz id=qa_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call lp_piece x=-26 z=28 al=qa_piece1 set="Bicycle parts"
+call lp_piece x=-52 z=-13 al=qa_piece2 set="Bicycle parts"
+call lp_piece x=42 z=24 al=qa_piece3 set="Bicycle parts"
+call lp_piece x=-8 z=62 al=qa_piece4 set="Bicycle parts"
+call lp_piece x=46 z=2 al=qa_piece5 set="Bicycle parts"
+prop qa_piece1 on.set=show|qa_setchest\nmessage||All five bicycle parts found.
+call lp_hidden x=5 z=18 al=qa_setchest kind=Loot_Chest
+call treasure x=-28 z=-66 r=10 n=1 seed=27878 kind=0
+prop treasure27878 treasure.loot=TitaniumOre*3;MetalOre*2;TradeToken*1
+call shallows x=0 z=0 r=95 deep=5 n=1 seed=27861
+call ar_plants_hill x=47 z=-53 r=14 seed=27891
+call ar_plants_hill x=27 z=7 r=14 seed=27892
+call ar_plants_hill x=-33 z=3 r=14 seed=27893
+call ar_plants_hill x=-69 z=11 r=14 seed=27894
+call ar_plants_hill x=67 z=15 r=14 seed=27895
+call ar_plants_hill x=-45 z=-53 r=14 seed=27896
+call hw_machine x=0 z=22 yaw=180 al=qa_machine nm="Village pump" obj=TP_LaserControlPanel_lever sc=3 a=qa_top b=qa_cave done=qa_fixed rew=qa_rewchest rnote=qa_rewnote msg="It works." hint="It wants the pump plunger from Heather Hill and the pump leather from Fox Cave."
+call hw_note x=-2.6 z=23.2 yaw=200 al=qa_hint
+
 # --- Settings, notes, behaviours, quest --------------------------------------------------------------------------------
 info title=Ada's Round
 info author=Custom Islands
@@ -163,6 +270,30 @@ prop gatezone zone.id=garden_gate
 prop gatezone zone.radius=3
 prop gatezone zone.message=Ada's garden gate - never locked. The beds are weeded, the house is quiet.
 
+story qa_top|Pump plunger|Bolt|The village pump's plunger, hung up the weather vane mast on Heather Hill.
+story qa_cave|Pump leather|Bolt|The village pump's leather washer, in a chest at the back of Fox Cave.
+story qa_fixed|Village pump working|Bolt|The village pump, working again.
+note qa_hint Village pump notice | VILLAGE PUMP DRY. Plunger on the weather vane mast up Heather Hill (north-west), leather in Fox Cave (north-east). Tove at the old house in the east knows. - A.L.
+note qa_topchest Weather vane mast deck box | A box lashed to the deck rail at the top of the weather vane mast.
+loot qa_topchest story:qa_top*1;Rope*2;Scrap*2
+note qa_cavechest Fox Cave chest | A chest at the back of Fox Cave, dry under the rock.
+loot qa_cavechest story:qa_cave*1;Nail*6;Plank*3
+note qa_rewnote Note under the pump cap | Water gushes into the trough, cold and clear. Under the pump's cap, a note in Ada's hand: 'For the next postman, who will be thirsty. I always was.'
+note qa_rewchest Village pump reward | What the village pump kept.
+loot qa_rewchest MetalIngot*2;Bolt*3;Rope*2
+note qa_lampchest Tove's jar | Tove's jar behind the house: a postcard from Ada and Tove's tokens.
+loot qa_lampchest TradeToken*2;CopperIngot*2;Rope*2
+note qa_setchest Bicycle box | Ada's bicycle box: all five parts back, and her repair kit.
+loot qa_setchest TradeToken*2;Bolt*4;MetalIngot*2
+note qa_planecrate Relief plane's crate | A relief plane's crate: seed, blankets and tools for the round.
+loot qa_planecrate Plastic*3;Scrap*3;Nail*6
+prop qa_planecrate loot.refill=0
+note qa_pilot Relief flight card | RELIEF FLIGHT - ADA'S ROUND. Couldn't find the strip in the heather. Ada came running with a lamp. Too late. Plane's done, I'm fine. She made tea.
+note jcqa Hayrick climb | Old millstones stacked into a tower for the village children to climb.
+loot jcqa Rope*3;Plank*4;MetalIngot*1
+note jbqa Top of the millstones | A children's treasure tin, still at the top.
+loot jbqa CopperIngot*1;Bolt*2;TradeToken*1
+
 quest title=Ada's Round
 quest intro=The postmistress's house on a green hill. Find her garden gate.
 step reach|garden_gate|1|Find the garden gate on the hilltop
@@ -173,12 +304,22 @@ step open|Attic|1|Unlock the attic store and open Ada's chest
 step blueprint|Blueprint_TitaniumTools|1|Take the titanium tools plans
 step blueprint|Blueprint_BackpackAdvanced|1|Take the advanced backpack plans
 step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline tool plans
+step read|Village pump notice|1|Read the village pump notice by the village pump
+step talk|Tove|1|Talk to Tove at the ruined house in the east
+step reach|qa_trail|1|Find the foot of the trail up Heather Hill, in the north-west
+step reach|qa_summit|1|Climb the trail to the top of Heather Hill
+step collect|story:qa_top|1|Climb the weather vane mast and take the pump plunger from its deck
+step reach|qa_cave|1|Find Fox Cave in the north-east
+step collect|story:qa_cave|1|Take the pump leather from the chest at the back of the cave
+step read|Note under the pump cap|1|Bring both to the village pump and read what it shows
 step read|Ada's note to the next postman|1|Read Ada's note to the next postman
 quest done=Ada has gone to the General Post Office. The pigeons flew that way.
 quest reward=Cooked_Potato*4;Cooked_Beet*3;Seed_Watermelon*2;Seed_Strawberry*2
 
 # Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+push at 0 -33
 call treasure x=0 z=0 r=26 n=1 seed=8819
+pop
 prop treasure8819 treasure.loot=TitaniumOre*3
 
 save Ada's Round

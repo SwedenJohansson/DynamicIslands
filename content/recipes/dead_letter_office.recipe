@@ -2,7 +2,7 @@
 # A low granite skerry with the Coastal Post's dead letter office on it: a brick-red hall (Raft's Tier 3 walls tinted)
 # under a hipped roof on its corner pillars, its clock above the door stopped at nine; inside, a sorting counter of
 # office tables, pigeon-holes of small cupboards and shelves along the back wall, canvas mail sacks (Raft's reef
-# container, shrunk and tinted) on the floor; a plank jetty on posts to the south. Quest "Return to Sender" (7 steps):
+# container, shrunk and tinted) on the floor; a plank jetty on posts to the south. Quest "Return to Sender" (15 steps):
 # the jetty, the letter addressed to the player's raft (its reading opens the next stop: done-when note), the counter
 # drawer (the Receiver's and the antenna's blueprints), the five dead letters in the pigeon-holes, the route card.
 #
@@ -10,19 +10,33 @@
 include lib_sea
 include lib_features
 include lib_post
+include lib_areas
+include lib_highwater
+include lib_lastpost
+# RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 40 -> 82; the old island moved 42 m south (push frames), so its south shore stays on the coast and the new land is north
+# POST 10-26: the new land - Gull Knoll with old signal mast, Sack Cave, Sven Holm at the ruined house (a lamp puzzle), a crashed plane, a jump course, a maze, a set of five lost postcards
 new
 # (nature: a rocky skerry, Like Raft's small islands, few trees)
 gen Trees=0.1 Bushes=0.22 Rocks=0.45 Harvest=0.18 BeachThings=0.25
-gen Seed=4101 Radius=40 Height=9 Roughness=0.6 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.5 BeachWidth=0.3
+gen Seed=4101 Radius=82 Height=9 Roughness=0.6 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.5 BeachWidth=0.3
 gen Water=0.5 SeaRocks=0.5 SeaFinds=0.15 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
+push at 0 -42
 
 # --- Terrain: a level pad for the office (2.2 m), a strip down to the jetty's foot (1.4 m) on the south shore ----------
 brush flatten at 0 -12 r=10 s=20 frames=120 h=2.2
 brush flatten from 0 -22 to 0 -30 r=4 s=20 frames=80 h=1.4
 brush smooth from 0 -18 to 0 -30 r=6 s=6 frames=20
 brush rock at 0 -12 r=12 s=6 frames=20
+pop
 origin
+# --- POST 10-26 terrain: Gull Knoll, the pads of the new areas ---------------------------------------------------
+call hw_mount x=-36 z=38 b=22 h=18
+call hw_trail x=-36 z=38 b=22 h=18 a0=127.87 turn=300 n=40 h0=3
+brush flatten at 0 10 r=4 s=8 frames=60
+clear at 0 10 r=7
+# (RESIZE 10-26: the old island, 42 m south)
+push at 0 -42
 clear at 0 -12 r=11
 clear from 0 -20 to 0 -34 r=4
 
@@ -75,6 +89,177 @@ scatter "Pickup_Landmark_Flower_Blue" 2 at 0 10 r=20 seed=4111 free=3
 call dirt x=8 z=8 r=8 n=2 seed=4112
 call shallows r=56 deep=5 n=2
 
+pop
+
+# --- POST 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Gull Knoll ------
+# Gull Knoll with old signal mast on it, Sack Cave, the ruined house where Sven Holm waits (four lamps round it: a puzzle), a crashed plane,
+# a jump course, a maze, five lost postcards about the island (a set), and at the hub the night lamp that wants the night lamp lens and the lamp wick spool
+call hw_zone x=-17.84 z=23.88 al=qd_trailz id=qd_trail r=5 msg="The trail up Gull Knoll starts here - round and up."
+call hw_zone x=-36 z=38 al=qd_summitz id=qd_summit r=8 h=1 msg="The top of Gull Knoll. The whole island below you."
+call hw_mast x=-39 z=40 h0=18 lv=5 a=qd_mast chest=qd_topchest top=Placeable_Lantern_Metal
+place ZiplinePath_Landmark qd_zip at -32.8 35.4 h=19.35
+zipto qd_zip -1.74 13.68
+place Creature_Goat qd_goats at -13.84 26.88 ground
+prop qd_goats creature.count=2
+call ar_cave x=46 z=44 h=3 yaw=180 al=qd_caverock chest=qd_cavechest
+call hw_zone x=47 z=35 al=qd_cavez id=qd_cave r=4 h=1 msg="Sack Cave. Water drips somewhere in the dark."
+call ar_ruin x=56 z=-20 h=3 yaw=0 w=3 d=2 al=qd_ruin
+call lp_islander x=55 z=-24.5 yaw=200 al=qd_isl nm="Sven Holm" pose=lean
+prop qd_isl talk.text=A raft? Then the letters are moving again. I carried them on this skerry for thirty years.\n---\nWhen the Post shut they left the dead letters in the office - nobody to send them to, nobody to send them back. I stayed with them.\n---\nThe night lamp wants its lens back from the mast on Gull Knoll and the wick I hid in Sack Cave. Light it. A post boat should always find its way in.\n---\nAnd my lamps round the house: four, and each one you turn wakes its neighbour. All four lit, and look behind the back wall.
+call lp_lamp x=49 z=-21 al=qd_lamp1 nm="Carrier's lamp 1" grp="Carrier's lamps" on=0
+call lp_lamp x=55 z=-14 al=qd_lamp2 nm="Carrier's lamp 2" grp="Carrier's lamps" on=1
+call lp_lamp x=62 z=-21 al=qd_lamp3 nm="Carrier's lamp 3" grp="Carrier's lamps" on=0
+call lp_lamp x=55 z=-28 al=qd_lamp4 nm="Carrier's lamp 4" grp="Carrier's lamps" on=1
+prop qd_lamp1 on.use=light|Carrier's lamp 2|toggle
+prop qd_lamp2 on.use=light|Carrier's lamp 3|toggle
+prop qd_lamp3 on.use=light|Carrier's lamp 4|toggle
+prop qd_lamp4 on.use=light|Carrier's lamp 1|toggle
+prop qd_lamp1 on.alllit=show|qd_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call lp_hidden x=57 z=-15.4 al=qd_lampchest
+place Creature_Chicken qd_hens at 64 -14 ground
+prop qd_hens creature.count=3
+call ar_plane x=-56 z=-28 h=3 yaw=40 al=qd_plane crate=qd_planecrate
+place Note_Paper qd_pilot at -57.78 -23.9 ground y=0.1 drop yaw=70
+call hw_zone x=-56 z=-28 al=qd_planez id=qd_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
+# JUMP qd pad=3 at=8 62
+push at 8 62
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpqd at -4.24 -4.24 h=3.6
+place Block_Foundation_Tier3 jpqd at -5.77 -1.65 h=4.35
+place Block_Foundation_Tier3 jpqd at -5.85 1.35 h=5.1
+place Block_Foundation_Tier3 jpqd at -4.46 4.01 h=5.85
+place Block_Foundation_Tier3 jpqd at -1.95 5.67 h=6.6
+place Block_Foundation_Tier3 jpqd at 1.04 5.91 h=7.35
+place Block_Foundation_Tier3 jpqd at 3.78 4.66 h=8.1
+place Block_Foundation_Tier3 jpqd at 5.56 2.25 h=8.85
+place Block_Foundation_Tier3 jpqd at 5.96 -0.73 h=9.6
+# JUMP from 10
+place Block_Foundation_Tier3 jpqd at 4.85 -3.53 h=10.35
+place Block_Foundation_Tier3 jpqd at 2.54 -5.44 h=11.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppqd at -5.77 -1.65 h=3.668 sy=1.861
+place Block_Foundation_Tier3 jppqd at -5.85 1.35 h=4.418 sy=2.959
+place Block_Foundation_Tier3 jppqd at -4.46 4.01 h=5.168 sy=4.058
+place Block_Foundation_Tier3 jppqd at -1.95 5.67 h=5.918 sy=5.157
+place Block_Foundation_Tier3 jppqd at 1.04 5.91 h=6.668 sy=6.255
+place Block_Foundation_Tier3 jppqd at 3.78 4.66 h=7.418 sy=7.354
+place Block_Foundation_Tier3 jppqd at 5.56 2.25 h=8.168 sy=8.453
+place Block_Foundation_Tier3 jppqd at 5.96 -0.73 h=8.918 sy=9.552
+place Block_Foundation_Tier3 jppqd at 4.85 -3.53 h=9.668 sy=10.650
+place Block_Foundation_Tier3 jppqd at 2.54 -5.44 h=10.418 sy=11.749 sx=2 sz=2
+prop jpqd tint.color=#8a7f70
+prop jpqd tint.amount=0.35
+prop jppqd tint.color=#8a7f70
+prop jppqd tint.amount=0.35
+place Loot_Chest jcqd at 1.04 5.91 h=7.35 sit yaw=0
+prop jcqd loot.refill=0
+place Loot_ChestSmall jbqd at 2.54 -5.44 h=11.1 sit yaw=0
+prop jbqd loot.refill=0
+pop
+call hw_zone x=8 z=54 al=qd_jumpz id=qd_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call lp_pad x=42 z=-56 r=12 h=3
+brush flatten at 42 -56 r=14 s=20 frames=600 h=3
+push at 34.5 -63.5 h=3
+place Block_Wall_Tier3 qd_maze at 0.75 0 y=-0.35
+place Block_Wall_Tier3 qd_maze at 2.25 0 y=-0.35
+place Block_Wall_Tier3 qd_maze at 0.75 15 y=-0.35
+place Block_Wall_Tier3 qd_maze at 2.25 15 y=-0.35
+place Block_Wall_Tier3 qd_maze at 3.75 0 y=-0.35
+place Block_Wall_Tier3 qd_maze at 5.25 0 y=-0.35
+place Block_Wall_Tier3 qd_maze at 3.75 6 y=-0.35
+place Block_Wall_Tier3 qd_maze at 5.25 6 y=-0.35
+place Block_Wall_Tier3 qd_maze at 3.75 9 y=-0.35
+place Block_Wall_Tier3 qd_maze at 5.25 9 y=-0.35
+place Block_Wall_Tier3 qd_maze at 3.75 12 y=-0.35
+place Block_Wall_Tier3 qd_maze at 5.25 12 y=-0.35
+place Block_Wall_Tier3 qd_maze at 3.75 15 y=-0.35
+place Block_Wall_Tier3 qd_maze at 5.25 15 y=-0.35
+place Block_Wall_Tier3 qd_maze at 6.75 3 y=-0.35
+place Block_Wall_Tier3 qd_maze at 8.25 3 y=-0.35
+place Block_Wall_Tier3 qd_maze at 6.75 6 y=-0.35
+place Block_Wall_Tier3 qd_maze at 8.25 6 y=-0.35
+place Block_Wall_Tier3 qd_maze at 6.75 12 y=-0.35
+place Block_Wall_Tier3 qd_maze at 8.25 12 y=-0.35
+place Block_Wall_Tier3 qd_maze at 6.75 15 y=-0.35
+place Block_Wall_Tier3 qd_maze at 8.25 15 y=-0.35
+place Block_Wall_Tier3 qd_maze at 9.75 0 y=-0.35
+place Block_Wall_Tier3 qd_maze at 11.25 0 y=-0.35
+place Block_Wall_Tier3 qd_maze at 9.75 3 y=-0.35
+place Block_Wall_Tier3 qd_maze at 11.25 3 y=-0.35
+place Block_Wall_Tier3 qd_maze at 9.75 6 y=-0.35
+place Block_Wall_Tier3 qd_maze at 11.25 6 y=-0.35
+place Block_Wall_Tier3 qd_maze at 9.75 12 y=-0.35
+place Block_Wall_Tier3 qd_maze at 11.25 12 y=-0.35
+place Block_Wall_Tier3 qd_maze at 9.75 15 y=-0.35
+place Block_Wall_Tier3 qd_maze at 11.25 15 y=-0.35
+place Block_Wall_Tier3 qd_maze at 12.75 0 y=-0.35
+place Block_Wall_Tier3 qd_maze at 14.25 0 y=-0.35
+place Block_Wall_Tier3 qd_maze at 12.75 12 y=-0.35
+place Block_Wall_Tier3 qd_maze at 14.25 12 y=-0.35
+place Block_Wall_Tier3 qd_maze at 12.75 15 y=-0.35
+place Block_Wall_Tier3 qd_maze at 14.25 15 y=-0.35
+place Block_Wall_Tier3 qd_maze at 0 0.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 0 2.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 0 3.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 0 5.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 0 6.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 0 8.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 0 9.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 0 11.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 0 12.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 0 14.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 3 0.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 3 2.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 3 3.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 3 5.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 6 6.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 6 8.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 9 0.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 9 2.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 9 9.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 9 11.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 12 6.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 12 8.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 15 0.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 15 2.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 15 3.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 15 5.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 15 6.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 15 8.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 15 9.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 15 11.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 15 12.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 qd_maze at 15 14.25 y=-0.35 yaw=90
+place Loot_ChestSmall qd_mazechest at 13.5 13.5 y=0.05 sit yaw=0
+pop
+prop qd_maze tint.color=#4e6b3a
+prop qd_maze tint.amount=0.55
+prop qd_mazechest loot.refill=0
+call hw_zone x=40.5 z=-65 al=qd_mazez id=qd_maze r=3 msg="A maze of old walls. Somewhere in the middle, a box."
+call lp_piece x=-22 z=18 al=qd_piece1 set="Lost postcards"
+call lp_piece x=-48 z=-19 al=qd_piece2 set="Lost postcards"
+call lp_piece x=40 z=18 al=qd_piece3 set="Lost postcards"
+call lp_piece x=-6 z=56 al=qd_piece4 set="Lost postcards"
+call lp_piece x=42 z=-68 al=qd_piece5 set="Lost postcards"
+prop qd_piece1 on.set=show|qd_setchest\nmessage||All five lost postcards found.
+call lp_hidden x=5 z=6 al=qd_setchest kind=Loot_Chest
+call treasure x=-62 z=8 r=10 n=1 seed=27178 kind=0
+prop treasure27178 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call shallows x=0 z=0 r=92 deep=5 n=1 seed=27161
+call ar_plants_hill x=22 z=-10 r=14 seed=27191
+call ar_plants_hill x=-22 z=-10 r=14 seed=27192
+call ar_plants_hill x=-34 z=-58 r=14 seed=27193
+call ar_plants_hill x=66 z=10 r=14 seed=27194
+call ar_plants_hill x=22 z=18 r=14 seed=27195
+call ar_plants_hill x=-46 z=2 r=14 seed=27196
+call hw_machine x=0 z=10 yaw=180 al=qd_machine nm="Night lamp" obj=RT_PowerBox sc=1 a=qd_top b=qd_cave done=qd_fixed rew=qd_rewchest rnote=qd_rewnote msg="It works." hint="It wants the night lamp lens from Gull Knoll and the lamp wick spool from Sack Cave."
+call hw_note x=-2.6 z=11.2 yaw=200 al=qd_hint
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Dead Letter Office
 info author=Custom Islands
@@ -118,6 +303,32 @@ prop jettyzone zone.id=jetty
 prop jettyzone zone.radius=4
 prop jettyzone zone.message=The office jetty: grey planks, a lantern, and up the rock a red-brick post office.
 
+story qd_top|Night lamp lens|Bolt|The thick glass lens of the office's night lamp, carried up the old signal mast on Gull Knoll out of the storms' way.
+story qd_cave|Lamp wick spool|Bolt|A spool of lamp wick, wrapped in a mail sack at the back of the cave to keep the damp off it.
+story qd_fixed|Night lamp working|Bolt|The night lamp, working again.
+note qd_hint Night clerk's notice | THE NIGHT LAMP IS OUT - no boat will find the office in the dark. The lens went up the old signal mast on Gull Knoll (north-west; the trail starts on the side toward the office) and the wick spool is in Sack Cave (north-east). Sven at the old house on the east shore knows the rest.
+note qd_topchest Old signal mast deck box | A box lashed to the deck rail at the top of the old signal mast.
+loot qd_topchest story:qd_top*1;Rope*2;Scrap*2
+note qd_cavechest Sack Cave chest | A chest at the back of Sack Cave, dry under the rock.
+loot qd_cavechest story:qd_cave*1;Nail*6;Plank*3
+note qd_rewnote Night lamp log | The lamp catches and a long yellow beam swings out over the water, the way the post boats came in. In the lamp box, the night clerk's log: 'Lamp lit at nine. No boat. Lamp lit at nine. No boat.' The last page is blank.
+note qd_rewchest Night lamp reward | What the night lamp kept.
+loot qd_rewchest MetalIngot*2;Bolt*3;Rope*2
+note qd_lampchest Sven's satchel | Sven's old mail satchel under a stone behind the house: his cap badge, his whistle and his savings.
+loot qd_lampchest TradeToken*2;CopperIngot*2;Rope*2
+note qd_setchest Postcard rack | The office's postcard rack, every card back in its slot, and the stamp money in its drawer.
+loot qd_setchest TradeToken*2;Glass*2;MetalIngot*1
+note qd_planecrate Feeder plane's crate | A mail crate off a small plane: sacks of letters, soaked and dried a hundred times, and the pilot's tools.
+loot qd_planecrate Plastic*3;Scrap*3;Nail*6
+prop qd_planecrate loot.refill=0
+note qd_pilot Feeder flight docket | COASTAL POST - FEEDER FLIGHT 2. Eleven sacks for the Dead Letter Office. Engine rough since the Pier. Putting down on the skerry. The letters are dry - see that they go on.
+note jcqd Gull perch | The gulls' stack of old granite blocks. Somebody climbed it to hide this.
+loot jcqd Rope*3;Plank*4;MetalIngot*1
+note jbqd Top of the gull stack | A tin at the very top, out of the gulls' reach.
+loot jbqd CopperIngot*1;Bolt*2;TradeToken*1
+note qd_mazechest Sorter's lost box | A box of letters that went round and round the sack maze and never got out.
+loot qd_mazechest TradeToken*2;Glass*2;CopperIngot*2
+
 quest title=Return to Sender
 quest intro=A post office on a bare skerry. Tie up at its jetty.
 step reach|jetty|1|Tie up at the post office jetty
@@ -126,8 +337,19 @@ step open|Counter drawer|1|Open the counter drawer
 step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the counter drawer
 step blueprint|Blueprint_Antenna|1|Take the antenna plans from the counter drawer
 step collect|story:deadletter|5|Take the five dead letters from the pigeon-holes
+step read|Night clerk's notice|1|Read the night clerk's notice by the night lamp
+step talk|Sven Holm|1|Talk to Sven Holm at the ruined house in the east
+step reach|qd_trail|1|Find the foot of the trail up Gull Knoll, in the north-west
+step reach|qd_summit|1|Climb the trail to the top of Gull Knoll
+step collect|story:qd_top|1|Climb the old signal mast and take the night lamp lens from its deck
+step reach|qd_cave|1|Find Sack Cave in the north-east
+step collect|story:qd_cave|1|Take the lamp wick spool from the chest at the back of the cave
+step read|Night lamp log|1|Bring both to the night lamp and read what it shows
 step read|Postmaster's route card|1|Read the postmaster's route card by the door
 quest done=Five letters to deliver, and a route to follow. Listen on the Receiver for Pillarbox Pier.
 quest reward=Plank*6;Rope*3;Scrap*4;Cooked_Potato*2
 
+# (CIGroundIslands 10-26: gen rocks left floating over a slope)
+clear at 33 66.1 r=1.5 all only=SmallBoulder1
+clear at -58 59.7 r=1.5 all only=SmallBoulder2
 save The Dead Letter Office

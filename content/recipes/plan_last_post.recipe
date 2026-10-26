@@ -8,13 +8,13 @@
 # Built by the recipe player (CIRecipe plan_last_post) in the editor's World plans window. Its play test:
 # content\tests\plan_last_post.play (run it on day 10 or later: CISetDay 10).
 plan new The Last Post
-plan description The route of the Coastal Post, the last postal service on the sea: nine stops - a dead letter office, a pier, a jungle airstrip, a tube town, a sorting rock, a telegraph line, a franking works and the postmistress's house - and at the end the General Post Office on its drowned square. Deliver the dead letters on the way. Raft's own story is off; its blueprints are in the stops' chests. Its main islands are about 60% the size of Raft's own big islands.
+plan description The route of the Coastal Post, the last postal service on the sea: nine stops - a dead letter office, a pier, a jungle airstrip, a tube town, a sorting rock, a telegraph line, a franking works and the postmistress's house - and at the end the General Post Office on its drowned square. Deliver the dead letters on the way. Raft's own story is off; its blueprints are in the stops' chests. Its main islands are as big as Raft's own: an hour each, with hills, caves, wrecks and secrets off the main route.
 plan random on
 plan story off
-plan rule deadletter | island:The Dead Letter Office | start | receiver:500 | The Receiver crackles: a post office's call sign, then a recorded voice - "Coastal Post. Letters held for collection." | The Dead Letter Office | first | note:1249
+plan rule deadletter | island:The Dead Letter Office | start | receiver:500 | The Receiver crackles: a post office's call sign, then a recorded voice - "Coastal Post. Letters held for collection." | The Dead Letter Office | first | note:2610
 plan rule pier | island:Pillarbox Pier | start | receiver:800 | The route card's second stop answers on 800: a bell on a pier, a ferry master's call. | Pillarbox Pier | after:deadletter | zone:sorting
 plan rule jungle | island:Parcel Canopy | start | receiver:900 | From the pier the Receiver catches an airstrip's beacon, blinking out of a jungle canopy. | Parcel Canopy | after:pier | signal:beacon
-plan rule tubes | island:Pneumatic Heights | day:10 | receiver:1000 | On 1000, the hiss of pneumatic tubes and a town's exchange: "Heights post now open." | Pneumatic Heights | after:jungle | step:16
+plan rule tubes | island:Pneumatic Heights | day:10 | receiver:1000 | On 1000, the hiss of pneumatic tubes and a town's exchange: "Heights post now open." | Pneumatic Heights | after:jungle | step:18
 plan rule sorting | island:Sorting Rock | start | receiver:1000 | The linesman's hut gives the next band: Sorting Rock, its scales still ringing. | Sorting Rock | after:tubes | quest
 plan rule telegraph | island:Telegraph Narrows | start | receiver:1100 | Morse on 1100, faint and slow, down a line of sea stacks: the Telegraph Narrows. | Telegraph Narrows | after:sorting | quest
 plan rule franking | island:The Franking Works | start | receiver:1100 | Over the live wire: the Franking Works, still stamping. | The Franking Works | after:telegraph | visit

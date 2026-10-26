@@ -3,26 +3,42 @@
 # a hipped roof), the big stamping presses in the yard (Varuna Point's forklifts stood on their noses, tinted to iron),
 # the ink tanks (Temperance's barrels, blown up), the boiler chimney (a radio tower pillar, bricked), and Tangaroa's
 # tokens lying about the yard as rare stamps. A landing jetty on the south shore; a Raft store by the yard.
-# Quest "Rare Stamps" (10 steps): the yard, the franking master's ledger, three rare stamps (Tangaroa tokens), the stamp
+# Quest "Rare Stamps" (18 steps): the yard, the franking master's ledger, three rare stamps (Tangaroa tokens), the stamp
 # album, the vault (three blueprints), Ada's dead letter in her pigeonhole, her last route map.
 #
 # Built by the recipe player (CIRecipe franking_works) through the editor's own operations.
 include lib_sea
 include lib_features
 include lib_post
+include lib_areas
+include lib_highwater
+include lib_lastpost
+# RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 48 -> 85; the old island moved 37 m south (push frames), so its south shore stays on the coast and the new land is north
+# POST 10-26: the new land - Ink Hill with works signal mast, Gull Cave, Bertil Gran at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five printing plates
 new
 # (nature: an industrial islet, few trees, rocks Like Raft)
 gen Trees=0.1 Bushes=0.2 Rocks=0.35 Harvest=0.15 BeachThings=0.3
-gen Seed=4701 Radius=48 Height=5 Roughness=0.3 Peaks=1 Shape=0 Style=0 PeakShape=0.6 Cliffs=0.1 BeachWidth=0.5
+gen Seed=4701 Radius=85 Height=5 Roughness=0.3 Peaks=1 Shape=0 Style=0 PeakShape=0.6 Cliffs=0.1 BeachWidth=0.5
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.15 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
+push at 0 -37
 
 # --- Terrain: the yard and the works (2.5 m), the jetty's root on the south shore (1.6 m) ----------------------------
 brush flatten from 0 -14 to 0 4 r=14 s=20 frames=200 h=2.5
 brush flatten at -14 0 r=6 s=20 frames=80 h=2.5
 brush flatten from 0 -24 to 0 -36 r=4 s=20 frames=100 h=1.6
 brush smooth from 0 -20 to 0 -36 r=5 s=8 frames=30
+pop
 origin
+# --- POST 10-26 terrain: Ink Hill, the pads of the new areas ---------------------------------------------------
+call hw_mount x=40 z=46 b=24 h=20
+call hw_trail x=40 z=46 b=24 h=20 a0=-128.66 turn=300 n=40 h0=3
+brush flatten at 0 14 r=4 s=8 frames=60
+clear at 0 14 r=7
+call ar_ridge x1=-62 z1=-46 x2=-42 z2=-64 h=9 top=4 r=9
+call ar_ridge x1=64 z1=14 x2=76 z2=-6 h=8 top=4 r=8
+# (RESIZE 10-26: the old island, 37 m south)
+push at 0 -37
 clear from 0 -16 to 0 6 r=15
 clear at -14 0 r=6
 clear from 0 -20 to 0 -38 r=4
@@ -72,6 +88,98 @@ place Creature_Dolphin dolphins at 34 -50 h=-3
 prop dolphins creature.count=2
 call shallows r=62 deep=5 n=2
 
+pop
+
+# --- POST 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Ink Hill ------
+# Ink Hill with works signal mast on it, Gull Cave, the ruined house where Bertil Gran waits (four lamps round it: a puzzle), a crashed plane,
+# a jump course, five printing plates about the island (a set), and at the hub the perforating machine that wants the perforating wheel and the ink roller
+call hw_zone x=20.48 z=30.38 al=qf_trailz id=qf_trail r=5 msg="The trail up Ink Hill starts here - round and up."
+call hw_zone x=40 z=46 al=qf_summitz id=qf_summit r=8 h=1 msg="The top of Ink Hill. The whole island below you."
+call hw_mast x=37 z=48 h0=20 lv=5 a=qf_mast chest=qf_topchest top=Placeable_Lantern_Metal
+place ZiplinePath_Landmark qf_zip at 43.2 43.4 h=21.35
+zipto qf_zip 7.69 17.75
+place Creature_Goat qf_goats at 24.48 33.38 ground
+prop qf_goats creature.count=2
+call ar_cave x=-46 z=50 h=3 yaw=180 al=qf_caverock chest=qf_cavechest
+call hw_zone x=-45 z=41 al=qf_cavez id=qf_cave r=4 h=1 msg="Gull Cave. Water drips somewhere in the dark."
+call ar_ruin x=-58 z=-18 h=3 yaw=0 w=3 d=2 al=qf_ruin
+call lp_islander x=-59 z=-22.5 yaw=200 al=qf_isl nm="Bertil Gran" pose=lean
+prop qf_isl talk.text=Rare stamps, is it? Everyone comes for the rare stamps.\n---\nI ran the perforating machine. Sheets in, stamps out, little holes all in a row. The last issue was on the press when they shut the works.\n---\nI took the wheel up the mast on Ink Hill and the roller into Gull Cave so nobody would print it badly. Print it properly, if you can.\n---\nMy lamps: four round the house, each wakes its neighbour. All four lit, and look behind the back wall.
+call lp_lamp x=-65 z=-19 al=qf_lamp1 nm="Works lamp 1" grp="Works lamps" on=0
+call lp_lamp x=-59 z=-12 al=qf_lamp2 nm="Works lamp 2" grp="Works lamps" on=1
+call lp_lamp x=-52 z=-19 al=qf_lamp3 nm="Works lamp 3" grp="Works lamps" on=0
+call lp_lamp x=-59 z=-26 al=qf_lamp4 nm="Works lamp 4" grp="Works lamps" on=1
+prop qf_lamp1 on.use=light|Works lamp 2|toggle
+prop qf_lamp2 on.use=light|Works lamp 3|toggle
+prop qf_lamp3 on.use=light|Works lamp 4|toggle
+prop qf_lamp4 on.use=light|Works lamp 1|toggle
+prop qf_lamp1 on.alllit=show|qf_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call lp_hidden x=-57 z=-13.4 al=qf_lampchest
+place Creature_Chicken qf_hens at -50 -12 ground
+prop qf_hens creature.count=3
+call ar_plane x=56 z=-40 h=3 yaw=220 al=qf_plane crate=qf_planecrate
+place Note_Paper qf_pilot at 57.78 -44.1 ground y=0.1 drop yaw=250
+call hw_zone x=56 z=-40 al=qf_planez id=qf_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
+# JUMP qf pad=3 at=-4 66
+push at -4 66
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpqf at -4.24 -4.24 h=3.6
+place Block_Foundation_Tier3 jpqf at -5.77 -1.65 h=4.35
+place Block_Foundation_Tier3 jpqf at -5.85 1.35 h=5.1
+place Block_Foundation_Tier3 jpqf at -4.46 4.01 h=5.85
+place Block_Foundation_Tier3 jpqf at -1.95 5.67 h=6.6
+place Block_Foundation_Tier3 jpqf at 1.04 5.91 h=7.35
+place Block_Foundation_Tier3 jpqf at 3.78 4.66 h=8.1
+place Block_Foundation_Tier3 jpqf at 5.56 2.25 h=8.85
+place Block_Foundation_Tier3 jpqf at 5.96 -0.73 h=9.6
+# JUMP from 10
+place Block_Foundation_Tier3 jpqf at 4.85 -3.53 h=10.35
+place Block_Foundation_Tier3 jpqf at 2.54 -5.44 h=11.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppqf at -5.77 -1.65 h=3.668 sy=1.861
+place Block_Foundation_Tier3 jppqf at -5.85 1.35 h=4.418 sy=2.959
+place Block_Foundation_Tier3 jppqf at -4.46 4.01 h=5.168 sy=4.058
+place Block_Foundation_Tier3 jppqf at -1.95 5.67 h=5.918 sy=5.157
+place Block_Foundation_Tier3 jppqf at 1.04 5.91 h=6.668 sy=6.255
+place Block_Foundation_Tier3 jppqf at 3.78 4.66 h=7.418 sy=7.354
+place Block_Foundation_Tier3 jppqf at 5.56 2.25 h=8.168 sy=8.453
+place Block_Foundation_Tier3 jppqf at 5.96 -0.73 h=8.918 sy=9.552
+place Block_Foundation_Tier3 jppqf at 4.85 -3.53 h=9.668 sy=10.650
+place Block_Foundation_Tier3 jppqf at 2.54 -5.44 h=10.418 sy=11.749 sx=2 sz=2
+prop jpqf tint.color=#8a7f70
+prop jpqf tint.amount=0.35
+prop jppqf tint.color=#8a7f70
+prop jppqf tint.amount=0.35
+place Loot_Chest jcqf at 1.04 5.91 h=7.35 sit yaw=0
+prop jcqf loot.refill=0
+place Loot_ChestSmall jbqf at 2.54 -5.44 h=11.1 sit yaw=0
+prop jbqf loot.refill=0
+pop
+call hw_zone x=-4 z=58 al=qf_jumpz id=qf_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call lp_piece x=26 z=26 al=qf_piece1 set="Printing plates"
+call lp_piece x=48 z=-31 al=qf_piece2 set="Printing plates"
+call lp_piece x=-52 z=24 al=qf_piece3 set="Printing plates"
+call lp_piece x=-18 z=60 al=qf_piece4 set="Printing plates"
+call lp_piece x=-44 z=-2 al=qf_piece5 set="Printing plates"
+prop qf_piece1 on.set=show|qf_setchest\nmessage||All five printing plates found.
+call lp_hidden x=5 z=10 al=qf_setchest kind=Loot_Chest
+call treasure x=18 z=78 r=10 n=1 seed=27778 kind=0
+prop treasure27778 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call shallows x=0 z=0 r=95 deep=5 n=1 seed=27761
+call ar_plants_hill x=31 z=-5 r=14 seed=27791
+call ar_plants_hill x=-29 z=3 r=14 seed=27792
+call ar_plants_hill x=-69 z=15 r=14 seed=27793
+call ar_plants_hill x=-17 z=31 r=14 seed=27794
+call ar_plants_hill x=15 z=19 r=12 seed=27795
+call ar_plants_hill x=59 z=-17 r=12 seed=27796
+call hw_machine x=0 z=14 yaw=180 al=qf_machine nm="Perforating machine" obj=RT_PowerBox sc=1 a=qf_top b=qf_cave done=qf_fixed rew=qf_rewchest rnote=qf_rewnote msg="It works." hint="It wants the perforating wheel from Ink Hill and the ink roller from Gull Cave."
+call hw_note x=-2.6 z=15.2 yaw=200 al=qf_hint
+
 # --- Settings, notes, behaviours, quest --------------------------------------------------------------------------------
 info title=The Franking Works
 info author=Custom Islands
@@ -118,6 +226,30 @@ prop yardzone zone.id=yard
 prop yardzone zone.radius=8
 prop yardzone zone.message=The works yard: presses, ink tanks, and something small and gold glinting in the dust.
 
+story qf_top|Perforating wheel|Bolt|The perforating wheel off the stamp machine - the one that cut the little holes between the stamps - hung up the works signal mast on Ink Hill.
+story qf_cave|Ink roller|Bolt|The stamp machine's ink roller, wrapped in oilcloth in a chest in Gull Cave.
+story qf_fixed|Perforating machine working|Bolt|The perforating machine, working again.
+note qf_hint Perforator notice | PERFORATING MACHINE STOPPED - stamps to be cut with scissors. Wheel on the works signal mast up Ink Hill (north-east), roller in Gull Cave (north-west). Bertil at the old house in the west ran it.
+note qf_topchest Works signal mast deck box | A box lashed to the deck rail at the top of the works signal mast.
+loot qf_topchest story:qf_top*1;Rope*2;Scrap*2
+note qf_cavechest Gull Cave chest | A chest at the back of Gull Cave, dry under the rock.
+loot qf_cavechest story:qf_cave*1;Nail*6;Plank*3
+note qf_rewnote Last stamp sheet | The machine thumps once and pushes out a sheet of stamps, perforated clean: the Coastal Post's last issue, a postman rowing through the rain. 'Never issued', it says in pencil on the margin.
+note qf_rewchest Perforating machine reward | What the perforating machine kept.
+loot qf_rewchest MetalIngot*2;Bolt*3;Rope*2
+note qf_lampchest Bertil's tin | Bertil's tin behind the house: a sheet of misprints worth a fortune to somebody, and his tokens.
+loot qf_lampchest TradeToken*3;CopperIngot*1;Rope*2
+note qf_setchest Plate rack | The works' plate rack: all five printing plates back, and the press fund.
+loot qf_setchest TradeToken*2;MetalIngot*2;Glass*2
+note qf_planecrate Stamp courier's crate | The stamp courier's crate: empty stamp books, a flask, tools.
+loot qf_planecrate Plastic*3;Scrap*3;Nail*6
+prop qf_planecrate loot.refill=0
+note qf_pilot Stamp courier's note | STAMP RUN - FRANKING WORKS TO THE GENERAL POST OFFICE. Load: the new issue. Engine out over the works, down in the field. Somebody deliver them.
+note jcqf Ink barrel climb | Old ink barrels stood one on another, a wager from the works' lunch hour.
+loot jcqf Rope*3;Plank*4;MetalIngot*1
+note jbqf Top of the barrels | The wager's stake, still at the top.
+loot jbqf CopperIngot*1;Bolt*2;TradeToken*1
+
 quest title=Rare Stamps
 quest intro=A stamp factory on a flat islet. Walk into its yard.
 step reach|yard|1|Walk into the works yard
@@ -129,12 +261,22 @@ step blueprint|Blueprint_SmelterElectric|1|Take the electric smelter plans
 step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced biofuel extractor plans
 step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced stationary anchor plans
 step collect|story:adadelivered|1|Put Ada's letter in her pigeonhole
+step read|Perforator notice|1|Read the perforator notice by the perforating machine
+step talk|Bertil Gran|1|Talk to Bertil Gran at the ruined house in the west
+step reach|qf_trail|1|Find the foot of the trail up Ink Hill, in the north-east
+step reach|qf_summit|1|Climb the trail to the top of Ink Hill
+step collect|story:qf_top|1|Climb the works signal mast and take the perforating wheel from its deck
+step reach|qf_cave|1|Find Gull Cave in the north-west
+step collect|story:qf_cave|1|Take the ink roller from the chest at the back of the cave
+step read|Last stamp sheet|1|Bring both to the perforating machine and read what it shows
 step read|Ada's route map|1|Read Ada's route map
 quest done=The album is full and Ada's letter is home. Her map points up a green hill - to her house.
 quest reward=MetalIngot*4;Bolt*4;CopperIngot*2
 
 # Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+push at 0 -37
 call treasure x=0 z=0 r=24 n=1 seed=8818
+pop
 prop treasure8818 treasure.loot=TitaniumOre*3
 
 save The Franking Works

@@ -4547,19 +4547,25 @@ its answer points on down the route, to the General Post Office, where the postm
 letter. Each island has Raft's blueprints in Raft's order (a **Blueprint** step for each), Pneumatic Heights comes only
 from day 10 on (`day:10`), and the later islands have a **Raft store**; the General Post Office also has Raft's
 vending machine. A side island, **The Wandering Sorting Barge**, comes ahead of the raft every 6 km until its quest is
-done (`km:6:again`). Its main islands are about 60% the size of Raft's own big islands.
+done (`km:6:again`). Its main islands are as big as Raft's own (radius 82-98 m), an hour each: the old island
+sits to the south and new land round it holds a hill with a trail, a mast and a zipline down, a cave, an islander's
+ruined house with a ring of four lamps (each lamp toggles itself and the next), a crashed plane (a stranded supply boat
+on Parcel Canopy), a jump course, a set of five keepsakes and a treasure. Eight new steps lead from a notice at the hub
+to the islander, the summit, the mast's part, the cave's part and back to a machine at the hub; the old steps, quest
+ids and the plan's chain are unchanged. Dead Letter Office, Sorting Rock and the General Post Office add a maze,
+Telegraph Narrows a telescope.
 
 | Island | What it is | What to look at |
 |---|---|---|
-| ![](images/library/dead_letter_office.jpg) **The Dead Letter Office** (first, 500) | A brick post office on a granite skerry, its clock stopped at nine | Done when the letter to your raft is read (`note:1249`), five dead letters as story items carried to later islands |
+| ![](images/library/dead_letter_office.jpg) **The Dead Letter Office** (first, 500) | A brick post office on a granite skerry, its clock stopped at nine | Done when the letter to your raft is read (`note:2610`), five dead letters as story items carried to later islands |
 | ![](images/library/pillarbox_pier.jpg) **Pillarbox Pier** (800) | A long pier with the ferry office and its sorting shed | Done when a zone is reached (`zone:sorting`), a dead letter posted with a `take` check |
 | ![](images/library/parcel_canopy.jpg) **Parcel Canopy** (900) | A jungle airstrip with the mail pilot's plane in the trees | Vines cut with the machete, a beacon whose **signal** finishes the island (`signal:beacon`) |
-| ![](images/library/pneumatic_heights.jpg) **Pneumatic Heights** (1000) | A terraced tube-post town round its exchange tower | Comes on day 10 (`day:10`), done after step 16 (`step:16`), valves, tubes and capsules, rats from the cellar |
+| ![](images/library/pneumatic_heights.jpg) **Pneumatic Heights** (1000) | A terraced tube-post town round its exchange tower | Comes on day 10 (`day:10`), done after step 18 (`step:18`), valves, tubes and capsules, rats from the cellar |
 | ![](images/library/sorting_rock.jpg) **Sorting Rock** (1000) | A sorting hall in a quarried bowl, five parcel scales | A buried safe found with the metal detector, scales that each give a story item |
 | ![](images/library/telegraph_narrows.jpg) **Telegraph Narrows** (1100) | Two headlands and eight sea stacks, a telegraph pole and a zipline on each | Ziplines downhill stack to stack, a generator and a cable hub, a keypad code in Morse, a telegraphist in a cage |
 | ![](images/library/franking_works.jpg) **The Franking Works** (1100) | A stamp factory: works hall, presses, ink tanks, chimney | Done on landing (`visit`), Tangaroa's tokens as rare stamps (`take` 3), a Raft store by the yard |
 | ![](images/library/adas_round.jpg) **Ada's Round** (1200) | The postmistress's homestead on a green hill | A dovecote that shows the key box, Vasagatan's padlock door opened with a story key, a Raft store |
-| ![](images/library/general_post_office.jpg) **The General Post Office** (1400, the finale) | A white colonnade, a clock tower and the sorting hall on a half-drowned square, the archive and the roof above | A 26-step quest over four areas: a crank that unbolts the doors, a pneumatic router and a vault keypad, two scissor lifts, a claw, a brood mother boss, a character (Ada) who joins the crew, a camera moment at the flag, a Raft store and a vending machine |
+| ![](images/library/general_post_office.jpg) **The General Post Office** (1400, the finale) | A white colonnade, a clock tower and the sorting hall on a half-drowned square, the archive and the roof above | A 34-step quest over four areas: a crank that unbolts the doors, a pneumatic router and a vault keypad, two scissor lifts, a claw, a brood mother boss, a character (Ada) who joins the crew, a camera moment at the flag, a Raft store and a vending machine |
 | ![](images/library/wandering_sorting_barge.jpg) **The Wandering Sorting Barge** (side, every 6 km) | A mail barge aground on a sandbar | A side rule that comes back until done (`km:6:again`) |
 
 To learn from it: open the plan with **EDITOR** > **A world plan** and compare its "done when" parts (`note:`, `zone:`,

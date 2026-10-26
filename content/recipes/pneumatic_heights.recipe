@@ -2,22 +2,28 @@
 # A steep hill town of the Coastal Post's pneumatic mail tubes: a harbour stair on the south shore, two terraces of
 # houses on stilts, the brick exchange on the hilltop with the tube valves, the tube connector and the crank of the
 # second tube outside it, its vault inside behind a keypad; the linesman's signal hut on the top's west edge.
-# Quest "By Tube" (19 steps): the harbour steps, the exchange instructions, three tube valves, tube A connected at the
+# Quest "By Tube" (29 steps): the harbour steps, the exchange instructions, three tube valves, tube A connected at the
 # exchange, capsule 1, house 4's letterbox (engine controls blueprint) and the rats it lets out, tube B's crank,
 # capsule 2 (the vault code), the exchange vault (metal detector), the festival crate (fireworks), the linesman's locker
-# (zipline) - done-when step:16 - then the telegraphist's letter down the exchange chute, the reply, the signal hut.
+# (zipline) - done-when step:18 - then the telegraphist's letter down the exchange chute, the reply, the signal hut.
 #
 # Built by the recipe player (CIRecipe pneumatic_heights) through the editor's own operations.
 include lib_sea
 include lib_features
 include lib_huts
 include lib_post
+include lib_areas
+include lib_highwater
+include lib_lastpost
+# RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 64 -> 88; the old island moved 24 m south (push frames), so its south shore stays on the coast and the new land is north
+# POST 10-26: the new land - Pressure Hill with tube vent mast, Vent Cave, Otto Rask at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five tube tokens
 new
 # (nature: a steep green hill, Like Raft's hill islands)
 gen Trees=0.28 Bushes=0.3 Rocks=0.35 Harvest=0.25 BeachThings=0.12
-gen Seed=4401 Radius=64 Height=20 Roughness=0.5 Peaks=1 Shape=0 Style=0 PeakShape=0.5 Cliffs=0.3 BeachWidth=0.35
+gen Seed=4401 Radius=88 Height=20 Roughness=0.5 Peaks=1 Shape=0 Style=0 PeakShape=0.5 Cliffs=0.3 BeachWidth=0.35
 gen Water=0.5 SeaRocks=0.35 SeaFinds=0.15 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
+push at 0 -24
 
 # --- Terrain: the harbour stair (1.5 m), terrace 1 (6 m), terrace 2 (11 m), the hilltop (16 m), a path up between ----
 brush flatten from 0 -44 to 0 -54 r=4 s=20 frames=80 h=1.5
@@ -27,7 +33,15 @@ brush flatten at 0 6 r=12 s=20 frames=160 h=16
 brush flatten at -11.5 8.5 r=5 s=20 frames=80 h=16
 brush smooth from 0 -50 to 0 -6 r=5 s=8 frames=40
 brush smooth from -22 -32 to 18 -14 r=8 s=5 frames=20
+pop
 origin
+# --- POST 10-26 terrain: Pressure Hill, the pads of the new areas ---------------------------------------------------
+call hw_mount x=42 z=50 b=24 h=22
+call hw_trail x=42 z=50 b=24 h=22 a0=-123.69 turn=300 n=40 h0=3
+brush flatten at 0 22 r=4 s=8 frames=60
+clear at 0 22 r=7
+# (RESIZE 10-26: the old island, 24 m south)
+push at 0 -24
 clear from 0 -40 to 0 -58 r=4
 clear from -20 -32 to 14 -32 r=6
 clear from -22 -14 to 18 -14 r=6
@@ -103,6 +117,98 @@ call hives x=-28 z=22 r=12 n=1 seed=4414
 call treasure x=30 z=-24 r=10 n=1 seed=4415 kind=0
 call shallows r=82 deep=5 n=3
 
+pop
+
+# --- POST 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Pressure Hill ------
+# Pressure Hill with tube vent mast on it, Vent Cave, the ruined house where Otto Rask waits (four lamps round it: a puzzle), a crashed plane,
+# a jump course, five tube tokens about the island (a set), and at the hub the north line pump that wants the pump gauge and the pump bellows
+call hw_zone x=21.2 z=36.13 al=qh_trailz id=qh_trail r=5 msg="The trail up Pressure Hill starts here - round and up."
+call hw_zone x=42 z=50 al=qh_summitz id=qh_summit r=8 h=1 msg="The top of Pressure Hill. The whole island below you."
+call hw_mast x=39 z=52 h0=22 lv=5 a=qh_mast chest=qh_topchest top=Placeable_Lantern_Metal
+place ZiplinePath_Landmark qh_zip at 45.2 47.4 h=23.35
+zipto qh_zip 7.99 25.33
+place Creature_Goat qh_goats at 25.2 39.13 ground
+prop qh_goats creature.count=2
+call ar_cave x=-50 z=46 h=3 yaw=180 al=qh_caverock chest=qh_cavechest
+call hw_zone x=-49 z=37 al=qh_cavez id=qh_cave r=4 h=1 msg="Vent Cave. Water drips somewhere in the dark."
+call ar_ruin x=-58 z=-36 h=3 yaw=0 w=3 d=2 al=qh_ruin
+call lp_islander x=-59 z=-40.5 yaw=200 al=qh_isl nm="Otto Rask" pose=sit
+prop qh_isl talk.text=Up the harbour stair, were you? Then you've seen the tubes. I fitted every one.\n---\nThe north line has its own pump, out here. When they shut the exchange I took its gauge up the vent mast on Pressure Hill and its bellows into Vent Cave. Nobody left to send anything.\n---\nPut it back if you like. It's good to hear the tubes breathe.\n---\nMy lamps: four round the house, each one wakes its neighbour. All four lit, and look behind the back wall.
+place Placeable_Chair_Basic - at -59 -40.5 ground sit yaw=200
+call lp_lamp x=-65 z=-37 al=qh_lamp1 nm="Fitter's lamp 1" grp="Fitter's lamps" on=0
+call lp_lamp x=-59 z=-30 al=qh_lamp2 nm="Fitter's lamp 2" grp="Fitter's lamps" on=0
+call lp_lamp x=-52 z=-37 al=qh_lamp3 nm="Fitter's lamp 3" grp="Fitter's lamps" on=0
+call lp_lamp x=-59 z=-44 al=qh_lamp4 nm="Fitter's lamp 4" grp="Fitter's lamps" on=0
+prop qh_lamp1 on.use=light|Fitter's lamp 2|toggle
+prop qh_lamp2 on.use=light|Fitter's lamp 3|toggle
+prop qh_lamp3 on.use=light|Fitter's lamp 4|toggle
+prop qh_lamp4 on.use=light|Fitter's lamp 1|toggle
+prop qh_lamp1 on.alllit=show|qh_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call lp_hidden x=-57 z=-31.4 al=qh_lampchest
+place Creature_Chicken qh_hens at -50 -30 ground
+prop qh_hens creature.count=3
+call ar_plane x=58 z=-30 h=3 yaw=220 al=qh_plane crate=qh_planecrate
+place Note_Paper qh_pilot at 59.78 -34.1 ground y=0.1 drop yaw=250
+call hw_zone x=58 z=-30 al=qh_planez id=qh_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
+# JUMP qh pad=3 at=-6 70
+push at -6 70
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpqh at 4.24 4.24 h=3.6
+place Block_Foundation_Tier3 jpqh at 5.77 1.65 h=4.35
+place Block_Foundation_Tier3 jpqh at 5.85 -1.35 h=5.1
+place Block_Foundation_Tier3 jpqh at 4.46 -4.01 h=5.85
+place Block_Foundation_Tier3 jpqh at 1.95 -5.67 h=6.6
+place Block_Foundation_Tier3 jpqh at -1.04 -5.91 h=7.35
+place Block_Foundation_Tier3 jpqh at -3.78 -4.66 h=8.1
+place Block_Foundation_Tier3 jpqh at -5.56 -2.25 h=8.85
+place Block_Foundation_Tier3 jpqh at -5.96 0.73 h=9.6
+# JUMP from 10
+place Block_Foundation_Tier3 jpqh at -4.85 3.53 h=10.35
+place Block_Foundation_Tier3 jpqh at -2.54 5.44 h=11.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppqh at 5.77 1.65 h=3.668 sy=1.861
+place Block_Foundation_Tier3 jppqh at 5.85 -1.35 h=4.418 sy=2.959
+place Block_Foundation_Tier3 jppqh at 4.46 -4.01 h=5.168 sy=4.058
+place Block_Foundation_Tier3 jppqh at 1.95 -5.67 h=5.918 sy=5.157
+place Block_Foundation_Tier3 jppqh at -1.04 -5.91 h=6.668 sy=6.255
+place Block_Foundation_Tier3 jppqh at -3.78 -4.66 h=7.418 sy=7.354
+place Block_Foundation_Tier3 jppqh at -5.56 -2.25 h=8.168 sy=8.453
+place Block_Foundation_Tier3 jppqh at -5.96 0.73 h=8.918 sy=9.552
+place Block_Foundation_Tier3 jppqh at -4.85 3.53 h=9.668 sy=10.650
+place Block_Foundation_Tier3 jppqh at -2.54 5.44 h=10.418 sy=11.749 sx=2 sz=2
+prop jpqh tint.color=#8a7f70
+prop jpqh tint.amount=0.35
+prop jppqh tint.color=#8a7f70
+prop jppqh tint.amount=0.35
+place Loot_Chest jcqh at -1.04 -5.91 h=7.35 sit yaw=0
+prop jcqh loot.refill=0
+place Loot_ChestSmall jbqh at -2.54 5.44 h=11.1 sit yaw=0
+prop jbqh loot.refill=0
+pop
+call hw_zone x=-6 z=62 al=qh_jumpz id=qh_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call lp_piece x=28 z=30 al=qh_piece1 set="Tube tokens"
+call lp_piece x=50 z=-21 al=qh_piece2 set="Tube tokens"
+call lp_piece x=-56 z=20 al=qh_piece3 set="Tube tokens"
+call lp_piece x=-20 z=64 al=qh_piece4 set="Tube tokens"
+call lp_piece x=-44 z=-20 al=qh_piece5 set="Tube tokens"
+prop qh_piece1 on.set=show|qh_setchest\nmessage||All five tube tokens found.
+call lp_hidden x=5 z=18 al=qh_setchest kind=Loot_Chest
+call treasure x=20 z=82 r=10 n=1 seed=27478 kind=0
+prop treasure27478 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call shallows x=0 z=0 r=98 deep=5 n=1 seed=27461
+call ar_plants_hill x=-72 z=4 r=14 seed=27491
+call ar_plants_hill x=72 z=8 r=14 seed=27492
+call ar_plants_hill x=-16 z=36 r=14 seed=27493
+call ar_plants_hill x=-48 z=16 r=14 seed=27494
+call ar_plants_hill x=8 z=48 r=12 seed=27495
+call hw_machine x=0 z=22 yaw=180 al=qh_machine nm="North line pump" obj=TP_LaserControlPanel_lever sc=3 a=qh_top b=qh_cave done=qh_fixed rew=qh_rewchest rnote=qh_rewnote msg="It works." hint="It wants the pump gauge from Pressure Hill and the pump bellows from Vent Cave."
+call hw_note x=-2.6 z=23.2 yaw=200 al=qh_hint
+
 # --- Settings, notes, behaviours, quest --------------------------------------------------------------------------------
 info title=Pneumatic Heights
 info author=Custom Islands
@@ -129,9 +235,11 @@ prop $al if.use=!signal|$al
 prop $al on.use=switch|\nsignal||$al\ngive||story:valve*1\nmessage||The valve clunks round. Air hisses up the hill.
 prop $al else.use=message||This valve is already turned to EXCHANGE.
 end
+push at 0 -24
 call valveuse al=valve1
 call valveuse al=valve2
 call valveuse al=valve3
+pop
 prop tubehub obj.name=tubehub
 prop tubehub beh.use=Connect tube A
 prop tubehub if.use=has|story:valve|3\n!signal|tubea
@@ -161,7 +269,7 @@ prop vaultpad beh.use=Type the vault code
 prop vaultpad lock.code=3109
 prop vaultpad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The keypad chirps; the vault and the cupboards by it unbolt.\nsignal||vault
 note exchvault Exchange vault | The exchange vault: registered post, and the Coastal Post's metal detector plans "for lost parcels".
-loot exchvault Blueprint_MetalDetector*1;MetalIngot*2;CopperIngot*2
+loot exchvault Blueprint_MetalDetector*1;Blueprint_BatteryCharger*1;MetalIngot*2;CopperIngot*2
 prop exchvault loot.refill=0
 prop exchvault if.open=signal|vault
 prop exchvault else.open=message||The vault is bolted from the keypad on the wall. Four digits.
@@ -171,7 +279,7 @@ prop festival loot.refill=0
 prop festival if.open=signal|vault
 prop festival else.open=message||Bolted from the same keypad as the vault.
 note linesman Linesman's locker | The linesman's locker: a zipline harness and its plans, for the wires to the Narrows.
-loot linesman Blueprint_ZiplineBase*1;Rope*4;Bolt*2
+loot linesman Blueprint_ZiplineBase*1;Blueprint_ZiplineTool*1;Rope*4;Bolt*2
 prop linesman loot.refill=0
 prop linesman if.open=signal|vault
 prop linesman else.open=message||Bolted from the same keypad as the vault.
@@ -191,6 +299,30 @@ prop roofzone zone.id=tower_roof
 prop roofzone zone.radius=3
 prop roofzone zone.message=From the signal hut you see the whole tube network: valves, pipes and the exchange, and far to the east the stacks of the Narrows.
 
+story qh_top|Pump gauge|Bolt|The pressure gauge off the north line's pump, screwed up on the vent mast on Pressure Hill.
+story qh_cave|Pump bellows|Bolt|The leather bellows of the north line's pump, folded in a chest in Vent Cave.
+story qh_fixed|North line pump working|Bolt|The north line pump, working again.
+note qh_hint North line notice | NORTH LINE PUMP STOPPED - no pressure in the north tubes. Gauge on the vent mast up Pressure Hill (north-east), bellows in Vent Cave (north-west). Otto at the old house in the south-west can tell you more.
+note qh_topchest Tube vent mast deck box | A box lashed to the deck rail at the top of the tube vent mast.
+loot qh_topchest story:qh_top*1;Rope*2;Scrap*2
+note qh_cavechest Vent Cave chest | A chest at the back of Vent Cave, dry under the rock.
+loot qh_cavechest story:qh_cave*1;Nail*6;Plank*3
+note qh_rewnote Pump fitter's chit | The pump thumps and somewhere in the hill the tubes start to hiss. A capsule pops out of the pump's chute with a fitter's chit in it: 'Pressure restored, north line. The town is long empty. I did it anyway.'
+note qh_rewchest North line pump reward | What the north line pump kept.
+loot qh_rewchest MetalIngot*2;Bolt*3;Rope*2
+note qh_lampchest Otto's toolbox | Otto's toolbox under a stone behind the house: spanners, and a tube capsule full of tokens.
+loot qh_lampchest TradeToken*2;CopperIngot*2;Bolt*3
+note qh_setchest Token rack | The exchange's token rack: all five tube tokens back, and the fares.
+loot qh_setchest TradeToken*3;MetalIngot*2;Glass*2
+note qh_planecrate Inspector's crate | The tube inspector's crate: spare valves, a gauge and a flask.
+loot qh_planecrate Plastic*3;Scrap*3;Nail*6
+prop qh_planecrate loot.refill=0
+note qh_pilot Inspector's flight plan | COASTAL POST - TUBE INSPECTION, PNEUMATIC HEIGHTS. Wind on the hill too strong for the strip. Came down short. The tubes are fine. It's the town that's empty.
+note jcqh Harbour stone climb | Stones from the old harbour stair, stacked high.
+loot jcqh Rope*3;Plank*4;MetalIngot*1
+note jbqh Top of the stair stack | Somebody's stash at the very top.
+loot jbqh CopperIngot*1;Bolt*2;TradeToken*1
+
 quest title=By Tube
 quest intro=A hill town of mail tubes. Climb the harbour steps.
 step reach|harbour_steps|1|Climb the harbour steps
@@ -205,12 +337,22 @@ step collect|story:tubeb|1|Crank tube B by the exchange's east wall
 step read|Capsule 2|1|Read the second capsule
 step open|Exchange vault|1|Open the exchange vault with the code
 step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from the vault
+step blueprint|Blueprint_BatteryCharger|1|Take the battery charger plans from the vault
 step open|Festival crate|1|Open the festival crate
 step blueprint|Blueprint_Firework|1|Take the firework plans from the festival crate
 step open|Linesman's locker|1|Open the linesman's locker
 step blueprint|Blueprint_ZiplineBase|1|Take the zipline plans from the linesman's locker
+step blueprint|Blueprint_ZiplineTool|1|Take the zipline tool plans from the linesman's locker
 step collect|story:telegraphdelivered|1|Send the telegraphist's letter down the exchange chute
 step read|Telegraphist's reply|1|Read the telegraphist's reply
+step read|North line notice|1|Read the north line notice by the north line pump
+step talk|Otto Rask|1|Talk to Otto Rask at the ruined house in the south-west
+step reach|qh_trail|1|Find the foot of the trail up Pressure Hill, in the north-east
+step reach|qh_summit|1|Climb the trail to the top of Pressure Hill
+step collect|story:qh_top|1|Climb the tube vent mast and take the pump gauge from its deck
+step reach|qh_cave|1|Find Vent Cave in the north-west
+step collect|story:qh_cave|1|Take the pump bellows from the chest at the back of the cave
+step read|Pump fitter's chit|1|Bring both to the north line pump and read what it shows
 step reach|tower_roof|1|Climb to the linesman's signal hut and look out over the tubes
 quest done=The tubes hiss with post again. From the signal hut you can see the telegraph poles of the Narrows to the east.
 quest reward=MetalIngot*4;CopperIngot*2;Bolt*4

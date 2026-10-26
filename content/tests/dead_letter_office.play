@@ -1,6 +1,6 @@
 # The Dead Letter Office (CIPlay dead_letter_office): the plan The Last Post's first island, quest "Return to Sender"
 island The Dead Letter Office
-offset 0 0
+offset 0 42
 expect step 0
 expect title Return to Sender
 zone jetty
@@ -23,5 +23,59 @@ expect story deadletter 5
 expect story dl_ferry 1
 expect story dl_ada 1
 expect step 6
+# POST 10-26: the hub, Sven Holm, the climb, Sack Cave, the secrets
+expect hidden qd_rewchest
+use qd_machine
+expect hidden qd_rewchest
+read Night clerk's notice
+expect step 7
+use Sven Holm
+wait 1
+expect step 8
+expect hidden qd_lampchest
+use Carrier's lamp 1
+use Carrier's lamp 2
+wait 1
+expect shown qd_lampchest
+open Sven's satchel
+zone qd_trail
+expect step 9
+zone qd_summit
+expect step 10
+open Old signal mast deck box
+wait 3
+expect story qd_top 1
+expect step 11
+zone qd_cave
+expect step 12
+open Sack Cave chest
+wait 3
+expect story qd_cave 1
+expect step 13
+use qd_machine
+expect shown qd_rewchest
+expect story qd_fixed 1
+open Night lamp reward
+wait 3
+read Night lamp log
+expect step 14
+# the secrets: the plane, the jumps, the maze, the set
+zone qd_plane
+open Feeder plane's crate
+read Feeder flight docket
+zone qd_jumps
+open Gull perch
+open Top of the gull stack
+zone qd_maze
+open Sorter's lost box
+expect hidden qd_setchest
+use qd_piece1
+use qd_piece2
+use qd_piece3
+use qd_piece4
+use qd_piece5
+wait 2
+expect shown qd_setchest
+open Postcard rack
 read Postmaster's route card
 expect done
