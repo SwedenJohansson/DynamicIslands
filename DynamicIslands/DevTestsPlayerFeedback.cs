@@ -40,7 +40,7 @@ namespace DynamicIslands
 			yield break;
 		}
 
-		[ConsoleCommand(name: "CIGenFuller", docs: "Dev, editor or menu (ROADMAP PF-D1): islands made while sailing - over 400 rolls about 70 % get one hostile animal and 50 % one friendly, each alone and never coming back; the same seed rolls the same settings; a generated island has more on land and under water than the old roll of the same island")]
+		[ConsoleCommand(name: "CIGenFuller", docs: "Dev, editor or menu (ROADMAP PF-D1): the world option Fuller random islands - off, islands made while sailing roll as before; on, over 400 rolls about 70 % get one hostile animal and 50 % one friendly, each alone and never coming back; the same seed rolls the same settings; a generated island has more on land and under water than the old roll of the same island")]
 		public static void GenFullerCommand() { StartTest(GenFullerRoutine()); }
 
 		static IEnumerator GenFullerRoutine()
@@ -48,11 +48,34 @@ namespace DynamicIslands
 			bool ok = true;
 			yield return PlaceableCatalog.EnsureBuilt();
 			int[] styles = { TerrainPainter.Tropical, TerrainPainter.Snowy, TerrainPainter.Desert, TerrainPainter.Forest, TerrainPainter.Volcanic };
+			// The world option: off (the default) the islands roll as they always did; on, fuller
+			Check(ref ok, WorldOptions.Offered.Contains(WorldOptions.FullerIslands), "'" + WorldOptions.Label(WorldOptions.FullerIslands) + "' is a world option (the New Game box and Esc > Custom Islands; a world has none until ticked)");
+			var was = new HashSet<string>(WorldOptions.Current);
+			bool offSame = true, onFuller = true;
+			try
+			{
+				WorldOptions.Current.Remove(WorldOptions.FullerIslands);
+				for (int i = 0; i < 50; i++)
+				{
+					IslandGenSettings off = CustomIslandSpawner.RollGenerated(new System.Random(3000 + i), styles), plain = IslandGenerator.RandomSettings(new System.Random(3000 + i), styles);
+					if (off.ToText() != plain.ToText() || off.LoneAnimals) offSame = false;
+				}
+				WorldOptions.Current.Add(WorldOptions.FullerIslands);
+				for (int i = 0; i < 50; i++)
+				{
+					IslandGenSettings on = CustomIslandSpawner.RollGenerated(new System.Random(3000 + i), styles), plain = IslandGenerator.RandomSettings(new System.Random(3000 + i), styles);
+					if (!on.LoneAnimals || on.ToText() == plain.ToText()) onFuller = false;
+				}
+			}
+			finally { WorldOptions.Current.Clear(); WorldOptions.Current.UnionWith(was); }
+			Check(ref ok, offSame, "option off: islands generated while sailing roll exactly as before (50 seeds)");
+			Check(ref ok, onFuller, "option on: they roll fuller, animals alone (50 seeds)");
+
 			int hostile = 0, friendly = 0, n = 400;
 			bool lone = true, same = true;
 			for (int i = 0; i < n; i++)
 			{
-				IslandGenSettings a = IslandGenerator.RandomSettings(new System.Random(1000 + i), styles), b = IslandGenerator.RandomSettings(new System.Random(1000 + i), styles);
+				IslandGenSettings a = IslandGenerator.RandomSettings(new System.Random(1000 + i), styles, true), b = IslandGenerator.RandomSettings(new System.Random(1000 + i), styles, true);
 				if (a.ToText() != b.ToText()) same = false;
 				if (a.Hostiles > 1 || a.Friendly > 1 || !a.LoneAnimals) lone = false;
 				hostile += a.Hostiles; friendly += a.Friendly;
@@ -64,7 +87,7 @@ namespace DynamicIslands
 			IslandGenSettings s = null;
 			for (int i = 0; i < 200 && s == null; i++)
 			{
-				IslandGenSettings t = IslandGenerator.RandomSettings(new System.Random(5000 + i), new[] { TerrainPainter.Tropical });
+				IslandGenSettings t = IslandGenerator.RandomSettings(new System.Random(5000 + i), new[] { TerrainPainter.Tropical }, true);
 				if (t.Hostiles == 1 && t.Friendly == 1 && t.Radius > 60f) s = t;
 			}
 			if (s == null) { Fail("no roll with both animals"); yield break; }

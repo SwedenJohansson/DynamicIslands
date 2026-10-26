@@ -4134,8 +4134,9 @@ namespace DynamicIslands.Editor
 			return Mathf.Lerp(Mathf.Lerp(h[z0, x0], h[z0, x0 + 1], tx), Mathf.Lerp(h[z0 + 1, x0], h[z0 + 1, x0 + 1], tx), tz);
 		}
 
-		/// <summary>Random settings for an island generated while sailing, in one of the allowed styles.</summary>
-		public static IslandGenSettings RandomSettings(System.Random rnd, int[] styles)
+		/// <summary>Random settings for an island generated while sailing, in one of the allowed styles; fuller: the world's
+		/// Fuller random islands option (Fuller, PF-D1) - off, the islands come as they always did.</summary>
+		public static IslandGenSettings RandomSettings(System.Random rnd, int[] styles, bool fuller = false)
 		{
 			var s = new IslandGenSettings
 			{
@@ -4154,7 +4155,7 @@ namespace DynamicIslands.Editor
 			if (rnd.NextDouble() < 0.25) s.Valleys = 0.3f + (float)rnd.NextDouble() * 0.4f;
 			// Under water: a gentle slope or a wall into the deep, as Raft's islands vary
 			s.DropOff = 0.15f + (float)rnd.NextDouble() * 0.8f;
-			Fuller(s, rnd);
+			if (fuller) Fuller(s, rnd);
 			return s;
 		}
 

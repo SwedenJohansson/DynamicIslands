@@ -36,14 +36,15 @@ namespace DynamicIslands.Editor
 	///   - fogsight: the haze comes ~30 % closer; binoculars, the telescope and Marine binoculars see further through it (FogSight).
 	///   - nominimap: no player can open the island map (Minimap); the per-PC Minimap box and the zoom keys do nothing. Pings still work.
 	///   - mirrorislands: about one random custom island in three comes mirrored left to right (MirrorIslands). Never quest, plan or story islands.
+	///   - fullerislands: islands generated while sailing come fuller, with at most one lone hostile and one friendly animal (IslandGenerator.Fuller, PF-D1).
 	/// Saved in the world file ("@options=", "@optionseed=" - the seed every shuffle of the world comes from), sent by the host
 	/// to every player who joins and when they change (network kind 17: Data = "on=a,b;seed=n", Name = the private
 	/// storages' builders). The last choice in the box is kept in world_rules.txt ("options=").
 	/// </summary>
 	public static class WorldOptions
 	{
-		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger", DailyQuest = "dailyquest", RogueShark = "rogueshark", Barrels = "barrels", StormDays = "stormdays", TraderRaft = "traderraft", Upgrades = "upgrades", StormSeas = "stormseas", Ufo = "ufo", GlowSea = "glowsea", Lightning = "lightning", GhostShip = "ghostship", WhaleBreach = "whalebreach", Fog = "fogbanks", Kraken = "kraken", FogSight = "fogsight", MirrorIslands = "mirrorislands", NoMinimap = "nominimap";
-		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger, DailyQuest, RogueShark, Barrels, StormDays, TraderRaft, Upgrades, StormSeas, Ufo, GlowSea, Lightning, GhostShip, WhaleBreach, Fog, Kraken, FogSight, MirrorIslands, NoMinimap };
+		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger", DailyQuest = "dailyquest", RogueShark = "rogueshark", Barrels = "barrels", StormDays = "stormdays", TraderRaft = "traderraft", Upgrades = "upgrades", StormSeas = "stormseas", Ufo = "ufo", GlowSea = "glowsea", Lightning = "lightning", GhostShip = "ghostship", WhaleBreach = "whalebreach", Fog = "fogbanks", Kraken = "kraken", FogSight = "fogsight", MirrorIslands = "mirrorislands", NoMinimap = "nominimap", FullerIslands = "fullerislands";
+		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger, DailyQuest, RogueShark, Barrels, StormDays, TraderRaft, Upgrades, StormSeas, Ufo, GlowSea, Lightning, GhostShip, WhaleBreach, Fog, Kraken, FogSight, MirrorIslands, NoMinimap, FullerIslands };
 		/// <summary>
 		/// Options no longer offered (the user, 2026-10-09): not in the New Game box, left out of the remembered choice, and in
 		/// World settings only while a world still has them on (so the host can switch them off). A world that has one on keeps it.
@@ -51,7 +52,7 @@ namespace DynamicIslands.Editor
 		public static readonly string[] Retired = { Blueprints, StoryOrder };
 		public static bool IsRetired(string option) { return Array.IndexOf(Retired, option) >= 0; }
 		public static string[] Offered { get { return All.Where(o => !IsRetired(o)).ToArray(); } }
-		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous", "Daily quest", "Rogue shark", "Silver & golden barrels", "Storm days", "Trader raft", "Extra upgrades", "Storm seas", "UFO sightings", "Bioluminescent sea", "Lightning strikes", "Ghost ship", "Whale breach", "Fog banks", "Kraken arm", "Binoculars see through fog", "Mirrored islands", "No minimap" };
+		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous", "Daily quest", "Rogue shark", "Silver & golden barrels", "Storm days", "Trader raft", "Extra upgrades", "Storm seas", "UFO sightings", "Bioluminescent sea", "Lightning strikes", "Ghost ship", "Whale breach", "Fog banks", "Kraken arm", "Binoculars see through fog", "Mirrored islands", "No minimap", "Fuller random islands" };
 		public static readonly string[] Hints =
 		{
 			"The blueprints lying on Raft's story islands are found on other story islands than usual. What the story needs (the steering wheel, the engine and its fuel, the machete) is never moved: the story can always be finished.",
@@ -79,6 +80,7 @@ namespace DynamicIslands.Editor
 			"The sea's haze comes about 30 % closer than in Raft, so islands show up later. Raise binoculars and you see about 20 % further than Raft's usual view, the telescope about 50 % further; Marine binoculars (an extra upgrade from the upgrade table, made with titanium) see furthest and lighten the view at dusk and at night. Raft's weather keeps its own fog: a storm or a fog bank still closes in. Each player sees through their own binoculars only.",
 			"About one random custom island in three comes mirrored left to right: its land, paint and everything on it, so islands you know look new. Which ones is fixed for the world (from its seed and the island's name), the same for every player. Islands with a quest, plan and story islands, and islands with moving parts, events or zip lines are never mirrored. Looks only: what was taken or used on an island stays so.",
 			"No player can open the island map in this world. The Minimap box in Defaults... and the zoom keys then do nothing. Pings (G) still work.",
+			"Islands generated while sailing come fuller: plants, rocks and things to gather as thick as on Raft's own islands, more on the sea floor around them, one or two of Raft's features, now and then a ruin or a hut, and at most one hostile animal (on about 7 islands in 10) and one friendly animal (about 1 in 2), each alone and never coming back once killed or caught. Fixed by the world's seed: the same on every PC. Islands already made stay as they are.",
 		};
 
 		/// <summary>
@@ -112,6 +114,7 @@ namespace DynamicIslands.Editor
 			"The haze comes closer; binoculars and the telescope see through it, Marine binoculars furthest and in the dark too.",
 			"About one random custom island in three comes mirrored, so known islands look new. Never quest, plan or story islands.",
 			"No one can open the island map. Pings still work.",
+			"Islands generated while sailing come fuller: more plants, finds and sea floor, at most one lone hostile and one friendly animal.",
 		};
 
 		/// <summary>The current world's options (clients get the host's).</summary>

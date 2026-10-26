@@ -231,9 +231,10 @@ part, they never crowd the sea. It can be:
 
 - one of **your own islands** (every saved island takes part unless `spawnpool.txt` says otherwise; islands your world plan brings, and islands generated while sailing, don't come by chance),
 - a **brand-new generated island**: a random size and style (tropical, snowy, desert, forest or volcanic), sometimes
-  flying; it is saved as `gen-<style>-<seed>.island`, so it stays in that world. It is about as full as Raft's own
-  islands, on land and under water, often with a small ruin, and its animals are few: mostly one hostile animal (a
-  warthog, a stone bird, a rat...) and sometimes one friendly one, which don't come back once killed. Everything about
+  flying; it is saved as `gen-<style>-<seed>.island`, so it stays in that world. With the world option **Fuller random
+  islands** ([9.4](#94-extra-options), off by default) it is about as full as Raft's own islands, on land and under
+  water, often with a small ruin, and its animals are few: mostly one hostile animal (a warthog, a stone bird, a
+  rat...) and sometimes one friendly one, which don't come back once killed. Everything about
   it comes from its seed, so every player meets the same island, and after a reload it is the same again. In World settings > Islands while sailing it is the row
   **Brand-new generated islands**; untick it and only made or downloaded islands and map types come (see [9.5](#95-islands-while-sailing)),
 - a **map type**: a sandbar, a wreck of raft blocks, an atoll or a sunken island (more in [4.6](#46-ready-made-islands-map-types)).
@@ -2950,6 +2951,7 @@ already in the world is taken away. What each one does from the moment it change
 | Islands while sailing | The next random island is picked from the new list; islands already here stay |
 
 ### 9.2 World rules: monster difficulty and build cost
+| Fuller random islands | Islands generated from now on; ones already generated stay as they are |
 
 #### Monster difficulty
 
@@ -3443,6 +3445,15 @@ a stern cabin with a roof, railings, a mast with a flag and a torn sail, an anch
 
 - **Its loot is good:** a large chest (the ghost ship's hoard: titanium, explosive goo, circuit boards, a battery,
   good healing salves, honey, metal, copper, bolts, hinges), the captain's chest in the cabin, two chests on deck and
+#### Fuller random islands
+
+**Brand-new islands generated while sailing** ([section 3](#3-sailing-custom-islands-in-your-world)) come about as full as Raft's own islands: more plants, rocks
+and finds on land, a fuller sea floor, one or two features and sometimes a small ruin. Their animals are few: about
+70% have **one hostile animal** and 50% **one friendly animal**, and they don't come back once killed or caught. It all
+comes from the island's seed, so every player meets the same island. **Off by default**: without it, generated islands
+come as they always did. It changes only islands generated after it is ticked; one already generated keeps its file.
+The host's choice; it can be changed in a running world.
+
   barrels. The captain's log lies on the cabin floor.
 - **Its crew are ghosts:** Raft's own monsters, made **see-through with a faint glow** - hard rats on deck and a
   screecher or two over it. They don't come back once beaten.
