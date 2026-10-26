@@ -70,7 +70,8 @@ place Creature_Boar boars at -2 4 ground
 
 # --- The chart room on the biggest hulk's deck ---------------------------------------------------------------------------
 place BoatStranded hulkbig at 0 -49 ground sit y=-1.2 yaw=90
-push at 3 -37 h=1
+# (1.5 m nearer the middle of the hulk: its door stood 1 m over the narrowing stern, CIGroundIslands 10-25)
+push at 3 -38.5 h=1
 call hw_penthouse d=10 a=hull f1=RT_WallWindow1 f2=RT_Wall1 b1=RT_WallWindow1 b2=RT_WallDoor1 l2=RT_WallDoor1 r2=RT_WallWindow1
 # (the chart table's mesh lies 12.6 m from its pivot: centred)
 place MapTable - at -3 0 y=0.1 sit centred scale=0.6
@@ -391,4 +392,6 @@ call ar_plants_hill x=-26 z=-60 r=12 seed=5500
 call ar_plants_hill x=-66 z=-26 r=12 seed=5510
 call ar_plants_hill x=-44 z=38 r=12 seed=5520
 
+# (a generator boulder left 0.8 m over a brushed slope, CIGroundIslands 10-25)
+clear at 77.9 19.2 r=1.5 only=SmallBoulder1
 save Fleetbreak Moorings

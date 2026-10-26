@@ -410,4 +410,7 @@ call ar_plants_hill x=12 z=22 r=12 seed=5800
 call ar_plants_hill x=-66 z=6 r=12 seed=5810
 call ar_plants_hill x=18 z=-74 r=12 seed=5820
 
+# (hill rocks that stood off a steep slope, CIGroundIslands 10-25)
+clear at 56.16 43.4 r=1.2 only=SmallBoulder4 all
+clear at 61.25 46.23 r=1.2 only=SmallBoulder4 all
 save Hookline Stack

@@ -86,7 +86,7 @@ pop
 # --- The councillor's office: a storey on legs, its door on the walkway's side ---------------------------------------
 push at -9 -22 h=1
 call hw_penthouse d=8 a=stone r2=RT_WallDoor1 l2=RT_WallWindow1 f2=RT_Wall1 b1=RT_WallWindow1
-place "Table Office" - at -4.5 3 y=0.1 sit yaw=180
+place "Table Office" - at -4.5 3 y=0.4 sit yaw=180
 place Loot_ChestSmall drawer at -3 3.4 y=0.1 sit yaw=180
 place RT_Clipboard - at -4.5 3 y=0.9 drop
 place Placeable_Lantern_Metal - at -3 0 y=0.1 drop
@@ -188,6 +188,7 @@ place Creature_Chicken hens at 30 48 ground
 # the sunk boat's crate
 call hw_zone x=-20.5 z=-18.54 al=ch_trailz id=ch_trail r=5 msg="The trail up Overflow Tor starts here - cut into the slope, round and up."
 call hw_zone x=-42 z=-38 al=ch_summitz id=ch_summit r=8 h=1 msg="The top of Overflow Tor. The whole island below, the city beyond it, and the surge tower still higher."
+brush flatten at -44.74 -35.09 r=3.5 s=20 frames=300 h=40
 call hw_mast x=-44.74 z=-35.09 h0=40 lv=10 a=ch_mast chest=ch_topchest top=RT_CommRadio
 place ZiplinePath_Landmark ch_zip at -37.08 -40.67 h=41.35
 zipto ch_zip -12.74 -69.09
@@ -443,4 +444,32 @@ call ar_plants_hill x=-66 z=-52 r=12 seed=5400
 call ar_plants_hill x=18 z=14 r=12 seed=5410
 call ar_plants_hill x=56 z=-18 r=12 seed=5420
 
+# --- 10-25b: low hills over the open sand left in the middle (plan2.py: 16 m clear of the recipe's things)
+# low hill 1: 24 m across, 10.0 m over the sea (D 25)
+brush flatten at 16 72 r=12 s=20 frames=600 h=5.3
+brush flatten at 16 72 r=8.6 s=20 frames=600 h=7.8
+brush flatten at 16 72 r=5.4 s=20 frames=500 h=10.0
+brush smooth at 16 72 r=13.8 s=5 frames=70
+brush auto at 16 72 r=14.4 s=10 frames=25
+clear at 16 72 r=14
+# low hill 2: 24 m across, 10.1 m over the sea (D 17)
+brush flatten at -8 34 r=12 s=20 frames=600 h=5.4
+brush flatten at -8 34 r=8.6 s=20 frames=600 h=7.9
+brush flatten at -8 34 r=5.4 s=20 frames=500 h=10.1
+brush smooth at -8 34 r=13.8 s=5 frames=70
+brush auto at -8 34 r=14.4 s=10 frames=25
+clear at -8 34 r=14
+# low hill 3: 24 m across, 10.2 m over the sea (D 17)
+brush flatten at 32 -28 r=12 s=20 frames=600 h=5.5
+brush flatten at 32 -28 r=8.6 s=20 frames=600 h=8.0
+brush flatten at 32 -28 r=5.4 s=20 frames=500 h=10.2
+brush smooth at 32 -28 r=13.8 s=5 frames=70
+brush auto at 32 -28 r=14.4 s=10 frames=25
+clear at 32 -28 r=14
+call ar_plants_hill x=16 z=72 r=12 seed=6300
+call ar_plants_hill x=-8 z=34 r=12 seed=6310
+call ar_plants_hill x=32 z=-28 r=12 seed=6320
+# (hill rocks that stood off a steep slope, CIGroundIslands 10-25)
+clear at 54.1 -27.21 r=3 only=SmallBoulder4 all
+clear at 6.57 76.21 r=3 only=SmallBoulder4 all
 save Cistern Hall

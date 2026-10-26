@@ -49,7 +49,7 @@ push at 3 -46 h=1
 call hw_roof d=12 a=concrete bm=none fm=none
 place "Table Office" - at -4.6 0 y=0.05 sit yaw=90
 place RT_Clipboard permitstamp at -4.6 0 y=0.85 drop yaw=90
-place UT_HookRoom_Weight02 weighscale at -1.6 1.5 y=0.05 sit
+place UT_HookRoom_Weight02 weighscale at -1.6 1.5 y=0.35 sit
 place Note_Sign weighsign at -1.4 -2.6 y=0.05 sit yaw=180
 pop
 
@@ -327,4 +327,6 @@ call ar_plants_hill x=18 z=14 r=12 seed=5200
 call ar_plants_hill x=-80 z=18 r=12 seed=5210
 call ar_plants_hill x=70 z=42 r=12 seed=5220
 
+# (hill rocks that stood off a steep slope, CIGroundIslands 10-25)
+clear at 53.16 53.76 r=1.2 only=SmallBoulder4 all
 save Breakwater Customs

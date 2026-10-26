@@ -111,7 +111,7 @@ push at -6 52 h=1.05
 call hw_laundry n=4
 pop
 push at 2 52 h=1.05
-call hw_laundry n=4
+call hw_laundry n=3 y=-0.42
 pop
 
 # --- The key: the market's garden ---------------------------------------------------------------------------------------
@@ -402,4 +402,31 @@ call ar_plants_hill x=16 z=-18 r=12 seed=6100
 call ar_plants_hill x=-44 z=4 r=12 seed=6110
 call ar_plants_hill x=52 z=-18 r=12 seed=6120
 
+# --- 10-25b: low hills over the open sand left in the middle (plan2.py: 16 m clear of the recipe's things)
+# low hill 1: 24 m across, 10.2 m over the sea (D 21)
+brush flatten at 42 18 r=12 s=20 frames=600 h=5.5
+brush flatten at 42 18 r=8.6 s=20 frames=600 h=8.0
+brush flatten at 42 18 r=5.4 s=20 frames=500 h=10.2
+brush smooth at 42 18 r=13.8 s=5 frames=70
+brush auto at 42 18 r=14.4 s=10 frames=25
+clear at 42 18 r=14
+# low hill 2: 24 m across, 9.9 m over the sea (D 20)
+brush flatten at -46 4 r=12 s=20 frames=600 h=5.2
+brush flatten at -46 4 r=8.6 s=20 frames=600 h=7.7
+brush flatten at -46 4 r=5.4 s=20 frames=500 h=9.9
+brush smooth at -46 4 r=13.8 s=5 frames=70
+brush auto at -46 4 r=14.4 s=10 frames=25
+clear at -46 4 r=14
+# low hill 3: 24 m across, 10.7 m over the sea (D 19)
+brush flatten at 16 -18 r=12 s=20 frames=600 h=6.0
+brush flatten at 16 -18 r=8.6 s=20 frames=600 h=8.6
+brush flatten at 16 -18 r=5.4 s=20 frames=500 h=10.7
+brush smooth at 16 -18 r=13.8 s=5 frames=70
+brush auto at 16 -18 r=14.4 s=10 frames=25
+clear at 16 -18 r=14
+call ar_plants_hill x=42 z=18 r=12 seed=6200
+call ar_plants_hill x=-46 z=4 r=12 seed=6210
+call ar_plants_hill x=16 z=-18 r=12 seed=6220
+# (a hill rock that stood off a steep slope, CIGroundIslands 10-25)
+clear at -53.67 9.45 r=3 only=SmallBoulder4 all
 save Raft Row Bazaar

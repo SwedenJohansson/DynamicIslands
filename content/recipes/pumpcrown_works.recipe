@@ -153,7 +153,7 @@ brush flatten at 24 46 r=7 s=20 frames=200 h=3.2
 clear at 24 46 r=8
 call hw_hazard x=24 z=46 al=sludgeacid kind=acid r=5 dmg=6 safe=suit msg="The purifiers' sludge burns through your boots. A hazmat suit would keep it off."
 place Loot_Chest sludgechest at 24 46 ground sit yaw=30
-place RT_PowerBox hazmatbox at 31 40 ground y=1 yaw=230
+place RT_PowerBox hazmatbox at 31 40 ground y=0.35 yaw=230
 call hw_zone x=24 z=56 al=sludgebeds id=sludge_beds r=4 msg="The sludge beds: what the purifiers take out of the water ends up here, green and smoking. A hazmat box stands at the edge."
 call ar_plants_hill x=-50 z=35 r=14 seed=13521
 call ar_plants_hill x=55 z=45 r=12 seed=13531

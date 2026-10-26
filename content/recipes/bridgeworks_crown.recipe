@@ -127,7 +127,7 @@ place Note_Paper teomsg at -2.4 2.6 y=0.9 drop
 place Zone_Trigger councilzone at -3 0 y=0.1
 pop
 place PlantationDoor councilgate at 1.5 29.5 h=1 sit yaw=0
-place RT_PowerBox councilpad at 3.2 28.6 h=2.2 yaw=90
+place RT_PowerBox councilpad at 3.2 28.6 h=2.3 yaw=90
 place Zone_Trigger doorzone at 1.5 28 h=1.5
 place Creature_StoneBird screechers at 0 30 h=12
 
@@ -191,6 +191,7 @@ call hw_zone x=62 z=24 al=ciphermouth id=cipher_cave r=4 msg="A cave under the C
 brush flatten at 25 -74 r=5 s=20 frames=200 h=2
 call hw_hazard x=25 z=-74 al=shockcoil kind=shock r=4 dmg=8 safe=none msg="The cable bed is live: the old bridge's power still runs through the wet ground."
 place Loot_Chest cablechest at 25 -74 ground sit yaw=0
+place RT_Pillar - at 16 -66 ground sit sy=0.4
 place TP_LaserControlPanel_lever breaker at 16 -66 ground y=1.25 scale=3 yaw=-45
 prop breaker beh.use=Pull the old breaker
 prop breaker on.use=message||The breaker drops with a bang. The hum in the cable bed dies.\nhide|shockcoil
@@ -239,6 +240,11 @@ place Zone_Trigger bc_btnback at -59 -7 ground y=1
 prop bc_btnback obj.name=bc_btnback
 prop bc_btnback zone.id=bc_btnback
 push at 50 66 h=3
+# (pillars in the corners carry the roof: CIGroundIslands 10-25)
+place Block_Pillar_Wood bc_sealed at -1.35 -1.35
+place Block_Pillar_Wood bc_sealed at 1.35 -1.35
+place Block_Pillar_Wood bc_sealed at -1.35 1.35
+place Block_Pillar_Wood bc_sealed at 1.35 1.35
 place Block_Wall_Tier3 bc_sealed at -0.75 -1.5
 place Block_Wall_Tier3 bc_sealed at -0.75 1.5
 place Block_Wall_Tier3 bc_sealed at -1.5 -0.75 yaw=90
@@ -258,6 +264,7 @@ place Zone_Trigger bc_records at 0 0 y=0.6
 prop bc_records obj.name=bc_records
 place Note_Paper bc_sealednote at 0.6 0.6 y=0.1 drop
 place Placeable_Lantern_Metal - at -0.6 0.6 y=0.1 drop
+place RT_Pillar - at -0.6 -0.9 y=0.05 sy=0.6
 place TP_LaserControlPanel_lever bc_climbout at -0.6 -0.9 y=1.2 yaw=0
 prop bc_climbout obj.name=bc_climbout
 prop bc_climbout beh.use=Pull the lever

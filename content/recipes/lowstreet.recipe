@@ -81,14 +81,39 @@ place "Box Small" - at -5 3.5 y=0.1 sit
 place "Pickup_Landmark_Scrap 2_OceanBottom" - at -2 2 y=0.1 sit
 place Loot_ChestSmall toybox at -1.2 3.4 y=0.1 sit yaw=180
 pop
-call hw_airpocket x=-21 z=10 id=shop_1 al=air1 bub=bub1 msg="Number fourteen, the blue door: the Penns' rooms over the old pawn shop. A pocket of air under the ceiling - the Union's divers left it."
+# (the pocket inside its shop, on the shop's floor twenty metres down - by "ground" it stood on the cliff over it: CIGroundIslands 10-25)
+push at -18 10 h=-20
+place AirPocket_1 - at -3 0 y=0.05 scale=0.6
+place Zone_Trigger air1 at -3 0 y=1.6
+place Zone_Atmosphere bub1 at -3 0 y=1.2
+pop
+prop air1 obj.name=air1
+prop air1 zone.id=shop_1
+prop air1 zone.radius=2.5
+prop air1 zone.repeat=1
+prop air1 zone.air=1
+prop air1 zone.message=Number fourteen, the blue door: the Penns' rooms over the old pawn shop. A pocket of air under the ceiling - the Union's divers left it.
+prop bub1 atmo.particles=bubbles
+prop bub1 zone.radius=3
 push at -3 10 h=-20
 call rt_storey a=city f1=RT_WallWindowBroken f2=RT_WallDoor1
 place RT_Floor city at 0 4.5 y=3
 place "Table Office" - at -4.5 3 y=0.1 sit yaw=180
 place Loot_Chest electronics at -1.2 3.4 y=0.1 sit yaw=180
 pop
-call hw_airpocket x=-6 z=10 id=shop_2 al=air2 bub=bub2
+push at -3 10 h=-20
+place AirPocket_1 - at -3 0 y=0.05 scale=0.6
+place Zone_Trigger air2 at -3 0 y=1.6
+place Zone_Atmosphere bub2 at -3 0 y=1.2
+pop
+prop air2 obj.name=air2
+prop air2 zone.id=shop_2
+prop air2 zone.radius=2.5
+prop air2 zone.repeat=1
+prop air2 zone.air=1
+prop air2 zone.message=An air pocket - breathe.
+prop bub2 atmo.particles=bubbles
+prop bub2 zone.radius=3
 push at 12 10 h=-20
 call rt_storey a=city f1=RT_WallWindowBroken f2=RT_WallDoor1
 place RT_Floor city at 0 4.5 y=3
@@ -96,7 +121,19 @@ place Loot_Chest lampshop at -1.2 3.4 y=0.1 sit yaw=180
 place Floorlamp_01 - at -5 3.5 y=0.1 sit
 place Floorlamp_02 - at -4 3.5 y=0.1 sit
 pop
-call hw_airpocket x=9 z=10 id=shop_3 al=air3 bub=bub3
+push at 12 10 h=-20
+place AirPocket_1 - at -3 0 y=0.05 scale=0.6
+place Zone_Trigger air3 at -3 0 y=1.6
+place Zone_Atmosphere bub3 at -3 0 y=1.2
+pop
+prop air3 obj.name=air3
+prop air3 zone.id=shop_3
+prop air3 zone.radius=2.5
+prop air3 zone.repeat=1
+prop air3 zone.air=1
+prop air3 zone.message=An air pocket - breathe.
+prop bub3 atmo.particles=bubbles
+prop bub3 zone.radius=3
 push at 27 10 h=-20
 call rt_storey a=city f1=RT_WallWindowBroken f2=RT_WallDoor1
 place RT_Floor city at 0 4.5 y=3
@@ -105,7 +142,19 @@ place Note_Paper jonahletter at -4.5 2 y=0.9 drop yaw=15
 place Loot_Chest diner at -1.2 3.4 y=0.1 sit yaw=180
 place Note_Sign dinersign at -1.5 -4.9 y=2.6 yaw=180
 pop
-call hw_airpocket x=24 z=10 id=shop_4 al=air4 bub=bub4
+push at 27 10 h=-20
+place AirPocket_1 - at -3 0 y=0.05 scale=0.6
+place Zone_Trigger air4 at -3 0 y=1.6
+place Zone_Atmosphere bub4 at -3 0 y=1.2
+pop
+prop air4 obj.name=air4
+prop air4 zone.id=shop_4
+prop air4 zone.radius=2.5
+prop air4 zone.repeat=1
+prop air4 zone.air=1
+prop air4 zone.message=An air pocket - breathe.
+prop bub4 atmo.particles=bubbles
+prop bub4 zone.radius=3
 place Creature_AnglerFish anglers at -12 4 ground y=2
 
 # --- The department store: fallen at the street's east end, the expedition in its cages -------------------------------
@@ -336,4 +385,29 @@ call ar_plants_hill x=-4 z=6 r=12 seed=5900
 call ar_plants_hill x=4 z=-20 r=12 seed=5910
 call ar_plants_hill x=24 z=30 r=12 seed=5920
 
+# --- 10-25b: low hills over the open sand left in the middle (plan2.py: 16 m clear of the recipe's things)
+# low hill 1: 24 m across, 9.1 m over the sea (D 24)
+brush flatten at 26 58 r=12 s=20 frames=600 h=4.4
+brush flatten at 26 58 r=8.6 s=20 frames=600 h=6.9
+brush flatten at 26 58 r=5.4 s=20 frames=500 h=9.1
+brush smooth at 26 58 r=13.8 s=5 frames=70
+brush auto at 26 58 r=14.4 s=10 frames=25
+clear at 26 58 r=14
+# low hill 2: 24 m across, 10.4 m over the sea (D 23)
+brush flatten at -16 -30 r=12 s=20 frames=600 h=5.7
+brush flatten at -16 -30 r=8.6 s=20 frames=600 h=8.2
+brush flatten at -16 -30 r=5.4 s=20 frames=500 h=10.4
+brush smooth at -16 -30 r=13.8 s=5 frames=70
+brush auto at -16 -30 r=14.4 s=10 frames=25
+clear at -16 -30 r=14
+# low hill 3: 24 m across, 9.8 m over the sea (D 22)
+brush flatten at 48 22 r=12 s=20 frames=600 h=5.1
+brush flatten at 48 22 r=8.6 s=20 frames=600 h=7.6
+brush flatten at 48 22 r=5.4 s=20 frames=500 h=9.8
+brush smooth at 48 22 r=13.8 s=5 frames=70
+brush auto at 48 22 r=14.4 s=10 frames=25
+clear at 48 22 r=14
+call ar_plants_hill x=26 z=58 r=12 seed=6400
+call ar_plants_hill x=-16 z=-30 r=12 seed=6410
+call ar_plants_hill x=48 z=22 r=12 seed=6420
 save Lowstreet

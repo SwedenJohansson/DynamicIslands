@@ -344,4 +344,6 @@ call ar_plants_hill x=-34 z=-48 r=12 seed=5600
 call ar_plants_hill x=48 z=28 r=12 seed=5610
 call ar_plants_hill x=-72 z=-24 r=12 seed=5620
 
+# (a generator boulder left 1.4 m over a brushed slope, CIGroundIslands 10-25)
+clear at 26.1 21 r=1.5 only=SmallBoulder2
 save The Foundation Piles
