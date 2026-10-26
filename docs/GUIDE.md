@@ -4270,7 +4270,14 @@ player (**teleport to**); doors that slide aside when three seals are set.
 
 **Silver Screen Seas** - Raft's whole story with the library's themed islands ([15.6](#156-the-themed-islands)). After
 every story island a big themed island comes on its own Receiver frequency (after Temperance two, one after the other);
-its quest done, the story goes on as Raft's. The ten normal-size themed islands turn up as side trips while you sail. Its main islands are about as big as Raft's own big islands.
+its quest done, the story goes on as Raft's. The ten normal-size themed islands turn up as side trips while you sail. Its main islands are as big as Raft's own (new land out to 90-110 m), an hour each: the old island
+stays as it was, and new land raised from the sea round it (joined to the coast by land bridges) holds a hill with a
+trail and a mast (on Sundown Canyons a mast on Buzzard Butte), a cave, an islander's ruined house with a ring of four
+lamps (each lamp toggles itself and the next), a machine there that wants the mast's and the cave's parts, a wreck
+(a plane, or a stranded boat on the Liner, Stations and the Park), a jump course, a set of five and a treasure; the
+Pyramid, the Arena, the Park and Sundown add a maze. Eight new steps (Sundown seven) come before each quest's finale;
+each blueprint an island gives is a quest step (Camp Blackwater and the Arena gained one more for it). The old steps,
+quest ids and the plan's chain are unchanged, and worlds already started keep their islands.
 
 | After | The plan's island | Size |
 |---|---|---|

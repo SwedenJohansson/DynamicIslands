@@ -7,20 +7,52 @@
 # The last session went home early: a huge bear from the ridge had been in the kitchens three nights running. The head
 # counselor stayed to close up and to lure it away from the cabins with honey at the old boathouse, then fire a flare from
 # the lookout for the ranger boat. Her last note is still pinned in the boathouse.
-# Quest "The Last Week of Summer" (11 steps): the gate, the counselor's logbook, the honey, the flare pistol, the dock
+# Quest "The Last Week of Summer" (19 steps): the gate, the counselor's logbook, the honey, the flare pistol, the dock
 # box, the old boathouse, the bait and the Ridge Bear, her last note, the lookout, the flare (her key), her footlocker
 # (canteen blueprint).
 #
 # Built by the recipe player (CIRecipe camp_blackwater) through the editor's own operations.
+# SILVER 10-26: the new land - Pike Knob with the ranger's radio mast, Bear Hollow, Walt Pruitt at the ruined house (a lamp puzzle), a plane wreck, a jump course, a set of five camp badges
 include lib_huts
 include lib_relay
 include lib_sea
+include lib_areas
+include lib_highwater
+include lib_features
+include lib_silver
 new
 # (nature: forest, Like Raft's Balboa - birch and pine round the lake; the camp clearing the recipe's own)
 gen Trees=0.21 Bushes=0.38 Rocks=0.42 Harvest=0.1 BeachThings=0.3
 gen Seed=9012 Radius=63 Height=22 Roughness=0.4 Peaks=2 Shape=0 Style=3 BeachWidth=0.4 Cliffs=0.2 PeakShape=0.35 Lakes=0.6
 gen Water=0.5 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.4 Hostiles=0
 generate
+# --- SILVER 10-26 terrain: the new land - pads raised from the sea (joined to the coast), Pike Knob ------------------------
+brush flatten at -78 -4 r=16 s=20 frames=500 h=3.5
+brush smooth at -78 -4 r=21 s=4 frames=40
+brush flatten at -78 -4 r=14 s=20 frames=500 h=3.5
+brush flatten from -78 -4 to -51.04 -2.62 r=9 s=20 frames=500 h=3
+brush flatten at -10 -76 r=17 s=20 frames=500 h=3
+brush smooth at -10 -76 r=22 s=4 frames=40
+brush flatten at -10 -76 r=15 s=20 frames=500 h=3
+brush flatten from -10 -76 to -7.52 -57.16 r=9 s=20 frames=500 h=3
+brush flatten at -34 82 r=17 s=20 frames=500 h=3
+brush smooth at -34 82 r=22 s=4 frames=40
+brush flatten at -34 82 r=15 s=20 frames=500 h=3
+brush flatten from -34 82 to -20.21 48.75 r=9 s=20 frames=500 h=3
+brush flatten at -34 -40 r=19 s=20 frames=500 h=2.5
+brush smooth at -34 -40 r=24 s=4 frames=40
+brush flatten at -34 -40 r=17 s=20 frames=500 h=2.5
+brush flatten at 54 62 r=12 s=20 frames=500 h=3
+brush smooth at 54 62 r=17 s=4 frames=40
+brush flatten at 54 62 r=10 s=20 frames=500 h=3
+brush flatten from 54 62 to 34.95 40.13 r=9 s=20 frames=500 h=3
+call hw_mount x=-60 z=-58 b=14 h=9
+brush flatten at 48 -52 r=11 s=20 frames=500 h=3
+brush smooth at 48 -52 r=16 s=4 frames=40
+brush flatten at 48 -52 r=9 s=20 frames=500 h=3
+brush flatten from 48 -52 to 37.15 -40.24 r=9 s=20 frames=500 h=3
+call hw_mount x=76 z=6 b=20 h=18
+call hw_trail x=76 z=6 b=20 h=18 a0=-94.51 turn=300 n=40 h0=3
 
 # --- Terrain: the lake dug into the north lowland (3.5 m) down to 2.5 m under the sea's level, its shores smoothed and
 # sanded; the camp's clearing levelled at 3.5 m on its west shore (cut into the hill's foot behind the cabins), a low
@@ -206,7 +238,95 @@ scatter "Pickup_Landmark_BerryBush" 6 at 0 0 r=44.1 seed=4585 free=3
 call shallows r=72 deep=5 n=2
 call shallows x=12 z=38 r=14 deep=3 seed=90
 
-# ===== Settings, story items, notes, behaviours, quest (11 steps) ==========================================================
+# --- SILVER 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Pike Knob ------
+# Pike Knob with the ranger's radio mast on it, Bear Hollow, the ruined house where Walt Pruitt waits (four lamps round it: a puzzle), a plane wreck,
+# a jump course, five camp badges about the island (a set), and at the house the camp loudspeaker that wants the radio valve and the amplifier fuse
+call hw_zone x=55.07 z=4.35 al=cb_trailz id=cb_trail r=5 msg="The trail up Pike Knob starts here - round and up."
+call hw_zone x=76 z=6 al=cb_summitz id=cb_summit r=8 h=1 msg="The top of Pike Knob. The whole island below you."
+place Creature_Goat cb_goats at 59.07 7.35 ground
+prop cb_goats creature.count=2
+call hw_mast x=73 z=8 h0=18 lv=6 a=cb_mast chest=cb_topchest top=Placeable_Lantern_Metal
+call ar_cave x=-10 z=-80 h=3 yaw=0 al=cb_caverock chest=cb_cavechest
+call hw_zone x=-11 z=-71 al=cb_cavez id=cb_cave r=4 h=1 msg="Bear Hollow. Water drips somewhere in the dark."
+call ar_ruin x=-78 z=-4 h=3.5 yaw=0 w=3 d=2 al=cb_ruin
+call ss_islander x=-79 z=-8.5 yaw=200 al=cb_isl nm="Walt Pruitt" pose=lean
+prop cb_isl talk.text=You came in by boat? Then you missed the ranger too. He came once a week. Then he stopped.\n---\nI'm the caretaker. Thirty summers. I stay when the kids go home - somebody has to mend the canoes.\n---\nThe loudspeaker wants its valve back from the radio mast on Pike Knob, and the fuse the kids hid in Bear Hollow. Bring both and we hear the old reel again.\n---\nAnd my porch lamps - four round the cottage. Each one you turn wakes the next one too. Light all four and look behind the back wall.
+call ss_lamp x=-85 z=-5 al=cb_lamp1 nm="Porch lamp 1" grp="Porch lamps" on=0
+call ss_lamp x=-79 z=2 al=cb_lamp2 nm="Porch lamp 2" grp="Porch lamps" on=1
+call ss_lamp x=-72 z=-5 al=cb_lamp3 nm="Porch lamp 3" grp="Porch lamps" on=0
+call ss_lamp x=-79 z=-12 al=cb_lamp4 nm="Porch lamp 4" grp="Porch lamps" on=1
+prop cb_lamp1 on.use=light|Porch lamp 2|toggle
+prop cb_lamp2 on.use=light|Porch lamp 3|toggle
+prop cb_lamp3 on.use=light|Porch lamp 4|toggle
+prop cb_lamp4 on.use=light|Porch lamp 1|toggle
+prop cb_lamp1 on.alllit=show|cb_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call ss_hidden x=-77 z=0.6 al=cb_lampchest
+place Creature_Chicken cb_hens at -70 2 ground
+prop cb_hens creature.count=3
+call ar_plane x=-34 z=82 h=3 yaw=160 al=cb_plane crate=cb_planecrate
+place Note_Paper cb_pilot at -29.56 81.49 ground y=0.1 drop yaw=190
+call hw_zone x=-34 z=82 al=cb_planez id=cb_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
+# JUMP cb pad=2.5 at=-34 -40
+push at -34 -40
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=2.5
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=2.5
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpcb at 4.24 4.24 h=3.1
+place Block_Foundation_Tier3 jpcb at 5.77 1.65 h=3.85
+place Block_Foundation_Tier3 jpcb at 5.85 -1.35 h=4.6
+place Block_Foundation_Tier3 jpcb at 4.46 -4.01 h=5.35
+place Block_Foundation_Tier3 jpcb at 1.95 -5.67 h=6.1
+place Block_Foundation_Tier3 jpcb at -1.04 -5.91 h=6.85
+place Block_Foundation_Tier3 jpcb at -3.78 -4.66 h=7.6
+place Block_Foundation_Tier3 jpcb at -5.56 -2.25 h=8.35
+place Block_Foundation_Tier3 jpcb at -5.96 0.73 h=9.1
+# JUMP from 10
+place Block_Foundation_Tier3 jpcb at -4.85 3.53 h=9.85
+place Block_Foundation_Tier3 jpcb at -2.54 5.44 h=10.6 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppcb at 5.77 1.65 h=3.168 sy=1.861
+place Block_Foundation_Tier3 jppcb at 5.85 -1.35 h=3.918 sy=2.959
+place Block_Foundation_Tier3 jppcb at 4.46 -4.01 h=4.668 sy=4.058
+place Block_Foundation_Tier3 jppcb at 1.95 -5.67 h=5.418 sy=5.157
+place Block_Foundation_Tier3 jppcb at -1.04 -5.91 h=6.168 sy=6.255
+place Block_Foundation_Tier3 jppcb at -3.78 -4.66 h=6.918 sy=7.354
+place Block_Foundation_Tier3 jppcb at -5.56 -2.25 h=7.668 sy=8.453
+place Block_Foundation_Tier3 jppcb at -5.96 0.73 h=8.418 sy=9.552
+place Block_Foundation_Tier3 jppcb at -4.85 3.53 h=9.168 sy=10.650
+place Block_Foundation_Tier3 jppcb at -2.54 5.44 h=9.918 sy=11.749 sx=2 sz=2
+prop jpcb tint.color=#8a7f70
+prop jpcb tint.amount=0.35
+prop jppcb tint.color=#8a7f70
+prop jppcb tint.amount=0.35
+place Loot_Chest jccb at -1.04 -5.91 h=6.85 sit yaw=0
+prop jccb loot.refill=0
+place Loot_ChestSmall jbcb at -2.54 5.44 h=10.6 sit yaw=0
+prop jbcb loot.refill=0
+pop
+call hw_zone x=-34 z=-48 al=cb_jumpz id=cb_jumps r=6 h=1 msg="Stacks, one higher than the next. Something at the top."
+call hw_machine x=-69 z=-13 yaw=-45 al=cb_machine nm="Camp loudspeaker" obj=RT_PowerBox sc=1 a=cb_top b=cb_cave done=cb_fixed rew=cb_rewchest rnote=cb_rewnote msg="It works." hint="It wants the radio valve from Pike Knob and the amplifier fuse from Bear Hollow."
+call hw_note x=-71.6 z=-11.8 yaw=-25 al=cb_hint
+call ss_piece x=62 z=-19 al=cb_piece1 set="Camp badges"
+call ss_piece x=-1 z=56 al=cb_piece2 set="Camp badges"
+call ss_piece x=-13 z=-58 al=cb_piece3 set="Camp badges"
+call ss_piece x=-22 z=2 al=cb_piece4 set="Camp badges"
+call ss_piece x=26 z=14 al=cb_piece5 set="Camp badges"
+prop cb_piece1 on.set=show|cb_setchest\nmessage||All five camp badges found.
+call ss_hidden x=-73 z=-16 al=cb_setchest kind=Loot_Chest
+call treasure x=20 z=-31 r=5 n=1 seed=26478 kind=0
+prop treasure26478 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_hill x=-78 z=-4 r=20 seed=26491
+call ar_plants_hill x=-10 z=-76 r=21 seed=26492
+call ar_plants_hill x=-34 z=82 r=21 seed=26493
+call ar_plants_hill x=54 z=62 r=16 seed=26494
+call ar_plants_hill x=48 z=-52 r=15 seed=26495
+call ar_plants_hill x=-60 z=-58 r=14 seed=26496
+call ar_plants_hill x=76 z=6 r=22 seed=26497
+
+# ===== Settings, story items, notes, behaviours, quest (19 steps) ==========================================================
 info title=Camp Blackwater
 info author=Custom Islands
 info description=A summer camp on a forest lake, empty since the season ended early: cabins, canoes, an archery range, a radio still playing the camp song. The head counselor stayed behind to deal with the bear from the ridge. Her last note is in the old boathouse across the lake.
@@ -225,7 +345,7 @@ loot archeryshed story:flaregun*1;Bow*1;Arrow_Stone*10
 prop archeryshed loot.refill=0
 note lastnote Dana's last note | (pinned to the boathouse wall)\n\nSet the bait. Heard it coming through the reeds at dusk. It's bigger than they said.\n\nI'm going up to the lookout to fire the flare.\n\nIf this note is still here, I didn't make it up the hill.\n\n- D.
 note footlocker Counselor's footlocker | Dana's footlocker: the season's cash box, her canteen plans from the survival class, a first-aid tin, a leather helmet from the camp's play - and a photo of the whole camp on the dock, the last week of summer.
-loot footlocker Blueprint_Canteen*1;TradeToken*6;Leather*3;HealingSalve_Good*2;Equipment_LeatherHelmet*1
+loot footlocker Blueprint_Canteen*1;Blueprint_Cropplot_Small_Tier3*1;TradeToken*6;Leather*3;HealingSalve_Good*2;Equipment_LeatherHelmet*1
 prop footlocker loot.refill=0
 prop footlocker if.open=has|story:lockerkey|1
 prop footlocker else.open=message||The footlocker is padlocked. Dana's logbook said she kept the key on the nail by the lookout's flare post.
@@ -282,6 +402,30 @@ prop forest sound.event=event:/amb/pineforest
 prop forest sound.volume=0.5
 prop forest zone.radius=60
 
+story cb_top|Radio valve|Bolt|The big glass valve out of the ranger's radio set, still warm from the sun on the mast.
+story cb_cave|Amplifier fuse|Bolt|The camp loudspeaker's fuse, which the kids hid in the bear's old den for a dare.
+story cb_fixed|Camp loudspeaker working|Bolt|The camp loudspeaker, working again.
+note cb_hint Caretaker's chalk board | LOUDSPEAKER DEAD. Wants the valve off the ranger's radio mast on Pike Knob (east) and the fuse the kids hid in Bear Hollow (south). Ask Walt at the cottage.
+note cb_topchest Ranger's radio mast box | A box lashed to the top of the ranger's radio mast.
+loot cb_topchest story:cb_top*1;Rope*2;Scrap*2
+note cb_cavechest Bear Hollow chest | A chest at the back of Bear Hollow, dry under the rock.
+loot cb_cavechest story:cb_cave*1;Nail*6;Plank*3
+note cb_rewnote Last broadcast | The loudspeaker crackles and a reel starts: the farewell song of the last session, and then the camp director: 'Camp is closed. Go home. Do not go up the ridge.' Somebody cut the tape right after.
+note cb_rewchest Camp loudspeaker reward | What the camp loudspeaker kept.
+loot cb_rewchest CopperIngot*2;Bolt*3;Rope*2
+note cb_lampchest Walt's tackle box | Walt's tackle box under a stone behind the cottage: his lures, his tobacco tin and his savings.
+loot cb_lampchest CopperIngot*2;TradeToken*2;Rope*2
+note cb_setchest Lost and found box | The camp's lost and found: every badge back in its place, and what the kids left behind.
+loot cb_setchest Glass*3;Bolt*4;MetalIngot*1
+note cb_planecrate Floatplane crate | The ranger's floatplane crate: a first-aid kit, a radio part and a box of flares.
+loot cb_planecrate Plastic*3;Scrap*3;Nail*6
+prop cb_planecrate loot.refill=0
+note cb_pilot Ranger's flight card | RANGER RUN - BLACKWATER. Camp empty, flag down. Something big on the ridge above the boathouse. Engine knocking, setting her down on the north shore.
+note jccb Counselors' perch | The counselors climbed up here to smoke where the kids could not see.
+loot jccb Rope*3;Plank*4;MetalIngot*1
+note jbcb Top of the perch | Somebody's stash at the very top.
+loot jbcb CopperIngot*1;Bolt*2;TradeToken*1
+
 quest title=The Last Week of Summer
 quest intro=A summer camp on a forest lake, empty but for a radio that won't stop playing. The head counselor kept a logbook in the mess hall.
 step reach|campgate|1|Walk in under the camp's banner
@@ -294,8 +438,17 @@ step kill|Bear|1|Set the bait and face the Ridge Bear when it comes for it
 step read|Dana's last note|1|Read the note pinned inside the old boathouse
 step reach|lookout|1|Climb to the fire lookout on the hill
 step collect|story:lockerkey|1|Fire the flare for the ranger boat and take the key from the nail by the post
+step read|Caretaker's chalk board|1|Read the caretaker's chalk board by the camp loudspeaker at the ruined house in the west
+step talk|Walt Pruitt|1|Talk to Walt Pruitt at the ruined house
+step reach|cb_trail|1|Find the foot of the trail up Pike Knob, in the east
+step reach|cb_summit|1|Climb the trail to the top of Pike Knob
+step collect|story:cb_top|1|Climb the ranger's radio mast and take the radio valve from its box
+step reach|cb_cave|1|Find Bear Hollow in the south
+step collect|story:cb_cave|1|Take the amplifier fuse from the chest at the back of the cave
+step read|Last broadcast|1|Bring both to the camp loudspeaker and read what it shows
 step open|Counselor's footlocker|1|Take her key back down to cabin 1 and open her footlocker
 step blueprint|Blueprint_Canteen|1|Take the canteen plans from the counselor's footlocker
+step blueprint|Blueprint_Cropplot_Small_Tier3|1|Take the small crop plot plans from the counselor's footlocker
 quest done=The flare has been fired and the ranger boat answered - a whole summer late. The Ridge Bear is gone; whatever happened to Dana, her camp is quiet now.
 quest reward=Plank*8;Rope*4;Raw_Salmon*3
 

@@ -1,6 +1,6 @@
 # Guide pictures of The Sunken Liner (CIPlay sunken_liner_pics): Raft's camera, midday, calm. Points as in its recipe ("offset").
 island The Sunken Liner
-offset -0.2904 -0.4361
+offset -4.6484 -3.9492
 hour 11
 weather Calm
 at -13 11.5
@@ -12,3 +12,10 @@ wait 6
 picture sunken_liner_bow 11 -8 -1 8 -12 16
 picture sunken_liner_ballroom 8 -13 -16 7 -14.5 -6
 picture sunken_liner_stern -2 -15 -38 13 -18 -46
+# SILVER 10-26: the new land - Ice Crown, Frost Cave, the ruined house, the wreck, the jumps
+picture silver_sl_hill -50.75 26 29.1 -67 14 -6
+picture silver_sl_cave 0 8 -52 -6 6 -76
+picture silver_sl_ruin -54 8 36 -42 4.5 48
+picture silver_sl_wreck 60 8.5 42 48 3.5 52
+picture silver_sl_jumps 84 9 -26 70 7 -14
+picture silver_sl_air -67.2 70 76.8 0 0 0

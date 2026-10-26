@@ -1,6 +1,6 @@
 # Guide pictures of Primeval Park (CIPlay primeval_park_pics): Raft's camera, midday, calm. Points as in its recipe ("offset").
 island Primeval Park
-offset -1.155 0.7575
+offset -11.3586 -2.7132
 hour 11
 weather Calm
 at -5 -12 h=9
@@ -15,3 +15,11 @@ picture primeval_park_lagoon 34 13 38 8 2 22
 picture primeval_park_gate -12 11 40 -12 6 56
 picture primeval_park_lodge -10 9 72 2 5 84
 picture primeval_park_cage -6 9 33 -16 5.5 42
+# SILVER 10-26: the new land - Fern Knoll, Nest Cave, the ruined house, the wreck, the jumps
+picture silver_pp_hill -57.55 23.6 -26.6 -53 11.2 80
+picture silver_pp_cave -80 8 -20 -86 6 -44
+picture silver_pp_ruin -72 8 -96 -60 4.5 -84
+picture silver_pp_wreck 76 8.5 -16 64 3.5 -6
+picture silver_pp_maze -36 12 -106 -24 3 -92
+picture silver_pp_jumps -68 7.5 22 -82 5.5 34
+picture silver_pp_air -96 70 -134.4 0 0 0

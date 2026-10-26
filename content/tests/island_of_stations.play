@@ -8,11 +8,11 @@
 # the shaft at 0 5.9, the rooms' floor 3 m: the terminal room x -3..3, z -3..3, the vault east of it through the sliding
 # leaves at x 3)
 island The Island of Stations
-offset -1.2361 0.2186
+offset -0.1312 1.0379
 expect step 0
 expect title The Sequence
-expect animals Chicken 4
-expect animals Goat 3
+expect animals Chicken 7
+expect animals Goat 5
 expect animals Turtle 2
 expect animals Dolphin 3
 wait 5
@@ -90,6 +90,58 @@ expect step 16
 open Lantern's file box
 expect story seqcard 5
 expect step 17
+# SILVER 10-26: the ruined house, Arlo Penn, the climb, Echo Cave, the secrets
+expect hidden is_rewchest
+use is_machine
+expect hidden is_rewchest
+read Radio man's note
+expect step 18
+use Arlo Penn
+wait 1
+expect step 19
+expect hidden is_lampchest
+use Barracks lamp 1
+use Barracks lamp 2
+wait 1
+expect shown is_lampchest
+open Arlo's foot locker
+zone is_trail
+expect step 20
+zone is_summit
+expect step 21
+open Initiative's relay mast box
+wait 3
+expect story is_top 1
+expect step 22
+zone is_cave
+expect step 23
+open Echo Cave chest
+wait 3
+expect story is_cave 1
+expect step 24
+use is_machine
+expect shown is_rewchest
+expect story is_fixed 1
+open Broadcast desk reward
+wait 3
+read The broadcast
+expect step 25
+# the secrets: the wreck, the jumps, the set
+zone is_plane
+open Launch's locker
+read Launch skipper's log
+zone is_jumps
+open Survey stacks
+open Top marker
+expect hidden is_setchest
+use is_piece1
+use is_piece2
+use is_piece3
+use is_piece4
+use is_piece5
+wait 2
+expect shown is_setchest
+open Staff locker
 open Observatory crate
 
 # Chapter 3 - the hatch: across the slab to the collar, down the ladder; the manual, the rations
@@ -98,9 +150,9 @@ climb 0 7.1 h=7.6
 climb 0 7.1 h=1.6
 walk 0 5.4 to 0 2 to 0 -1 h=3 below=8
 zone hatch
-expect step 18
+expect step 26
 read Hatch manual
-expect step 19
+expect step 27
 open Hatch rations
 walk -1 0 to -6 0 h=3 below=8
 # (the vault's door shut: the way east is blocked)
@@ -109,10 +161,12 @@ walk 0 0 to 6 0 h=3 below=8 blocked
 # The Sequence at the terminal: the access card, the vault door open; through it before the counter runs out
 use terminal
 expect story accesscard 1
-expect step 20
+expect step 28
 walk 0 0 to 2.5 0 to 6 0 h=3 below=8
 zone vaultroom
-expect step 21
+expect step 29
+# (a bag full of the whole story by now: room made, or the vault's plans drop to the floor)
+empty
 open Initiative's vault
 wait 3
 expect item Blueprint_BatteryCharger 1

@@ -7,12 +7,12 @@
 # platform 18 m); the show lagoon at the bay's head (24 22, 12 m deep) with its feeding platform (6.5..17 21..24, 1.5 m);
 # the great gate across the north horn (-12 56), the Queen's valley behind it, the keeper lodge at 2 84.
 island Primeval Park
-offset -1.155 0.7575
+offset -11.3586 -2.7132
 expect step 0
 expect title Welcome to Primeval Park
 wait 5
 expect animals Llama 2
-expect animals Goat 3
+expect animals Goat 5
 expect animals Turtle 2
 expect animals Dolphin 3
 
@@ -81,6 +81,60 @@ at 25 18.5 h=-9
 open Box on the lagoon floor
 expect story queenkey 1
 expect step 16
+# SILVER 10-26: the ruined house, Rosa Okafor, the climb, Nest Cave, the secrets
+expect hidden pp_rewchest
+use pp_machine
+expect hidden pp_rewchest
+read Night keeper's note
+expect step 17
+use Rosa Okafor
+wait 1
+expect step 18
+expect hidden pp_lampchest
+use Staff lamp 2
+use Staff lamp 3
+wait 1
+expect shown pp_lampchest
+open Rosa's kit box
+zone pp_trail
+expect step 19
+zone pp_summit
+expect step 20
+open Park camera mast box
+wait 3
+expect story pp_top 1
+expect step 21
+zone pp_cave
+expect step 22
+open Nest Cave chest
+wait 3
+expect story pp_cave 1
+expect step 23
+use pp_machine
+expect shown pp_rewchest
+expect story pp_fixed 1
+open Hatchery console reward
+wait 3
+read Hatchery count
+expect step 24
+# the secrets: the wreck, the jumps, the maze, the set
+zone pp_plane
+open Supply boat's locker
+read Supply boat log
+zone pp_jumps
+open Fossil stacks
+open Top block
+zone pp_maze
+open Children's prize
+expect hidden pp_setchest
+use pp_piece1
+use pp_piece2
+use pp_piece3
+use pp_piece4
+use pp_piece5
+wait 2
+expect shown pp_setchest
+open Ticket booth box
 open Sunk feed barrel
 
 # Chapter 4 - the Queen: the gate's panel, her valley, the keeper lodge
@@ -90,11 +144,11 @@ expect message the great gate sinks
 wait 9
 walk 0 50 to -12 51 to -12 60 to -12 66 h=9.6
 zone queengate
-expect step 17
+expect step 25
 kill Mama bear
-expect step 18
+expect step 26
 read Founder's farewell
-expect step 19
+expect step 27
 open Founder's vault
 wait 3
 expect done

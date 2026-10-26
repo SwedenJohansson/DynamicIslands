@@ -41,6 +41,14 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   four at all: they are now in the Receiver's, the antenna's and the zipline's chests, each with a step. A few next
   islands now come one step later, once the island's blueprints are found.
 
+## 2026-10-26: Silver Screen Seas' islands, an hour each
+
+- The eight main islands of **Silver Screen Seas** grow to Raft's size: new land raised round each old island holds a
+  hill with a mast, a cave, an islander's ruined house with a lamp puzzle, a machine that wants the mast's and the
+  cave's parts, a wreck, a jump course, a set of five and a treasure (mazes on four islands). Each quest gains eight
+  steps (Sundown seven) across the island, and every blueprint comes from a step the quest needs; worlds already
+  started keep their islands ([guide](docs/GUIDE.md#156-the-themed-islands)).
+
 ## 2026-10-26: The Last Post's islands, an hour each
 
 - The nine main islands of **The Last Post** are now as big as Raft's own (radius 82-98 m). The old island stays as it

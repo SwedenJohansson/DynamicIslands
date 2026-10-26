@@ -8,19 +8,36 @@
 # Pike (zoology) in the marsh south of the middle (36 -40), Moth (the residents' village) round a green in the west
 # (-58 9), Lantern (the observatory) on the north hill (-8 60); the hatch under a concrete slab on the wooded rise at the
 # marsh's heart (0 3). The plane is Raft's light plane, scaled up and nose-down in the reeds.
-# Quest "The Sequence" (22 steps, 3 chapters): the crash - camp, journal, the passenger's trunk (4), the stations and
+# Quest "The Sequence" (30 steps, 3 chapters): the crash - camp, journal, the passenger's trunk (4), the stations and
 # their five cards - Pike's sign and its bear, a village fridge, the boars under the north hill (13), the hatch and the
 # vault (5, timed).
+# SILVER 10-26: the new land - Mist Hill with the Initiative's relay mast, Echo Cave, Arlo Penn at the ruined house (a lamp puzzle), a boat wreck, a jump course, a set of five initiative badges
 include lib_rt
 include lib_selene
 include lib_relay
 include lib_sea
 include lib_features
+include lib_areas
+include lib_highwater
+include lib_silver
 new
 gen Trees=0.3 Bushes=0.38 Rocks=0.42 Harvest=0.1 BeachThings=0.18
 gen Seed=9023 Radius=100 Height=14 Roughness=0.4 Peaks=1 Shape=5 Style=3 BeachWidth=0.5 Cliffs=0.1 PeakShape=0.35
 gen Water=0.5 SeaRocks=0.5 SeaFinds=0.3 Sunken=0.4 Hostiles=0 Friendly=0 SeaLife=0
 generate
+# --- SILVER 10-26 terrain: the new land - pads raised from the sea (joined to the coast), Mist Hill ------------------------
+brush flatten at -80 -32 r=17 s=20 frames=500 h=1.5
+brush smooth at -80 -32 r=22 s=4 frames=40
+brush flatten at -80 -32 r=15 s=20 frames=500 h=1.5
+brush flatten at 90 -54 r=12 s=20 frames=500 h=2.5
+brush smooth at 90 -54 r=17 s=4 frames=40
+brush flatten at 90 -54 r=10 s=20 frames=500 h=2.5
+brush flatten from 90 -54 to 72.85 -43.71 r=9 s=20 frames=500 h=2.5
+brush flatten at 24 90 r=19 s=20 frames=500 h=1.5
+brush smooth at 24 90 r=24 s=4 frames=40
+brush flatten at 24 90 r=17 s=20 frames=500 h=1.5
+call hw_mount x=56 z=70 b=18 h=18
+call hw_trail x=56 z=70 b=18 h=18 a0=-141.34 turn=300 n=40 h0=3
 
 # ===== The land: the north hill, the hatch's clearing, the bay, the pads, the marsh's pools ===========================
 # (the north hill for the observatory: raised in steps from the marsh, its top levelled at 14 m)
@@ -311,7 +328,7 @@ place Balboa_DirectionSign - at 36 -24 ground yaw=-30
 place Balboa_DirectionSign - at -12 18 ground yaw=200
 place Balboa_DirectionSign - at -40 20 ground yaw=110
 place Zone_Atmosphere marshmist at 0 -10 y=2
-place Creature_Boar boars at 40 58 ground
+place Creature_Boar boars at 34 42 ground
 place Creature_Chicken hens at -60 0 ground
 place Creature_Goat goats at -22 66 ground
 place Creature_Turtle turtles at 96 -32 h=-4
@@ -323,7 +340,91 @@ scatter "Pickup_Landmark_Tree_Pine" 6 at 0 0 r=70.0 seed=4421 free=5
 scatter "Pickup_Landmark_BerryBush" 6 at 0 0 r=70.0 seed=4431 free=3
 scatter "Pickup_Landmark_Tree_Birch" 6 at 0 0 r=70.0 seed=4441 free=5
 
-# ===== Settings, story items, notes, behaviours, quest (22 steps, 3 chapters) =============================================
+# --- SILVER 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Mist Hill ------
+# Mist Hill with the Initiative's relay mast on it, Echo Cave, the ruined house where Arlo Penn waits (four lamps round it: a puzzle), a boat wreck,
+# a jump course, five initiative badges about the island (a set), and at the house the broadcast desk that wants the relay crystal and the tape reel
+call hw_zone x=44.13 z=55.16 al=is_trailz id=is_trail r=5 msg="The trail up Mist Hill starts here - round and up."
+call hw_zone x=56 z=70 al=is_summitz id=is_summit r=8 h=1 msg="The top of Mist Hill. The whole island below you."
+place Creature_Goat is_goats at 48.13 58.16 ground
+prop is_goats creature.count=2
+call hw_mast x=53 z=72 h0=18 lv=6 a=is_mast chest=is_topchest top=Placeable_Lantern_Metal
+call ar_cave x=-80 z=-36 h=1.5 yaw=0 al=is_caverock chest=is_cavechest
+call hw_zone x=-81 z=-27 al=is_cavez id=is_cave r=4 h=1 msg="Echo Cave. Water drips somewhere in the dark."
+call ar_ruin x=-60 z=-60 h=1.7 yaw=0 w=3 d=2 al=is_ruin
+call ss_islander x=-61 z=-64.5 yaw=200 al=is_isl nm="Arlo Penn" pose=lean
+prop is_isl talk.text=You came off the beach? Then you've seen the plane. I'm sorry. Nobody came for us either.\n---\nI ran the Initiative's radio. When they left, they left me the broadcast desk and no way to send.\n---\nThe crystal is up the relay mast on Mist Hill. The reel I hid in Echo Cave - I didn't want to hear it again. Bring both.\n---\nThe barracks lamps: each one you turn wakes the next. Light all four and look behind the back wall.
+call ss_lamp x=-67 z=-61 al=is_lamp1 nm="Barracks lamp 1" grp="Barracks lamps" on=0
+call ss_lamp x=-61 z=-54 al=is_lamp2 nm="Barracks lamp 2" grp="Barracks lamps" on=1
+call ss_lamp x=-54 z=-61 al=is_lamp3 nm="Barracks lamp 3" grp="Barracks lamps" on=0
+call ss_lamp x=-61 z=-68 al=is_lamp4 nm="Barracks lamp 4" grp="Barracks lamps" on=1
+prop is_lamp1 on.use=light|Barracks lamp 2|toggle
+prop is_lamp2 on.use=light|Barracks lamp 3|toggle
+prop is_lamp3 on.use=light|Barracks lamp 4|toggle
+prop is_lamp4 on.use=light|Barracks lamp 1|toggle
+prop is_lamp1 on.alllit=show|is_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call ss_hidden x=-59 z=-55.4 al=is_lampchest
+place Creature_Chicken is_hens at -52 -54 ground
+prop is_hens creature.count=3
+call hw_wreck x=90 z=-54 h=2.5 yaw=120 obj=BoatStranded al=is_plane crate=is_planecrate r=9
+place Note_Paper is_pilot at 93.73 -51.54 ground y=0.1 drop yaw=150
+call hw_zone x=90 z=-54 al=is_planez id=is_plane r=6 h=1 msg="A boat, high and dry on the shore. Nobody came for it."
+# JUMP is pad=1.5 at=24 90
+push at 24 90
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=1.5
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=1.5
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpis at -6 0 h=2.1
+place Block_Foundation_Tier3 jpis at -5.25 2.91 h=2.85
+place Block_Foundation_Tier3 jpis at -3.18 5.09 h=3.6
+place Block_Foundation_Tier3 jpis at -0.31 5.99 h=4.35
+place Block_Foundation_Tier3 jpis at 2.63 5.39 h=5.1
+place Block_Foundation_Tier3 jpis at 4.91 3.44 h=5.85
+place Block_Foundation_Tier3 jpis at 5.97 0.63 h=6.6
+place Block_Foundation_Tier3 jpis at 5.52 -2.34 h=7.35
+place Block_Foundation_Tier3 jpis at 3.69 -4.73 h=8.1
+# JUMP from 10
+place Block_Foundation_Tier3 jpis at 0.94 -5.93 h=8.85
+place Block_Foundation_Tier3 jpis at -2.05 -5.64 h=9.6 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppis at -5.25 2.91 h=2.168 sy=1.861
+place Block_Foundation_Tier3 jppis at -3.18 5.09 h=2.918 sy=2.959
+place Block_Foundation_Tier3 jppis at -0.31 5.99 h=3.668 sy=4.058
+place Block_Foundation_Tier3 jppis at 2.63 5.39 h=4.418 sy=5.157
+place Block_Foundation_Tier3 jppis at 4.91 3.44 h=5.168 sy=6.255
+place Block_Foundation_Tier3 jppis at 5.97 0.63 h=5.918 sy=7.354
+place Block_Foundation_Tier3 jppis at 5.52 -2.34 h=6.668 sy=8.453
+place Block_Foundation_Tier3 jppis at 3.69 -4.73 h=7.418 sy=9.552
+place Block_Foundation_Tier3 jppis at 0.94 -5.93 h=8.168 sy=10.650
+place Block_Foundation_Tier3 jppis at -2.05 -5.64 h=8.918 sy=11.749 sx=2 sz=2
+prop jpis tint.color=#8a7f70
+prop jpis tint.amount=0.35
+prop jppis tint.color=#8a7f70
+prop jppis tint.amount=0.35
+place Loot_Chest jcis at 4.91 3.44 h=5.85 sit yaw=0
+prop jcis loot.refill=0
+place Loot_ChestSmall jbis at -2.05 -5.64 h=9.6 sit yaw=0
+prop jbis loot.refill=0
+pop
+call hw_zone x=24 z=82 al=is_jumpz id=is_jumps r=6 h=1 msg="Stacks, one higher than the next. Something at the top."
+call hw_machine x=-51 z=-69 yaw=-45 al=is_machine nm="Broadcast desk" obj=TP_LaserControlPanel_lever sc=3 a=is_top b=is_cave done=is_fixed rew=is_rewchest rnote=is_rewnote msg="It works." hint="It wants the relay crystal from Mist Hill and the tape reel from Echo Cave."
+call hw_note x=-53.6 z=-67.8 yaw=-25 al=is_hint
+call ss_piece x=71 z=47 al=is_piece1 set="Initiative badges"
+call ss_piece x=-55 z=65 al=is_piece2 set="Initiative badges"
+call ss_piece x=56 z=-64 al=is_piece3 set="Initiative badges"
+call ss_piece x=-22 z=2 al=is_piece4 set="Initiative badges"
+call ss_piece x=11 z=74 al=is_piece5 set="Initiative badges"
+prop is_piece1 on.set=show|is_setchest\nmessage||All five initiative badges found.
+call ss_hidden x=-55 z=-72 al=is_setchest kind=Loot_Chest
+call treasure x=-85 z=8 r=5 n=1 seed=26483 kind=0
+prop treasure26483 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_hill x=90 z=-54 r=16 seed=26496
+call ar_plants_hill x=24 z=90 r=23 seed=26497
+call ar_plants_hill x=56 z=70 r=20 seed=26498
+
+# ===== Settings, story items, notes, behaviours, quest (30 steps, 3 chapters) =============================================
 info title=The Island of Stations
 info author=Custom Islands
 info description=A misty forest marsh where a plane came down - and found the island already full of buildings: the stations of a research initiative that vanished, each keeping one card of a Sequence. Gather the five cards, find the hatch in the marsh and enter the Sequence before the counter runs out.
@@ -447,6 +548,30 @@ prop marshmist atmo.fogAmount=0.3
 prop marshmist atmo.particles=mist
 prop marshmist zone.radius=60
 
+story is_top|Relay crystal|Bolt|The tuning crystal of the Initiative's relay mast on Mist Hill.
+story is_cave|Tape reel|Bolt|A reel of tape in a tin, marked 'DO NOT PLAY', hidden in Echo Cave.
+story is_fixed|Broadcast desk working|Bolt|The broadcast desk, working again.
+note is_hint Radio man's note | THE BROADCAST DESK NEEDS: the relay crystal from the mast on Mist Hill (north-east) and the reel from Echo Cave (south-west). I can't climb any more. - Arlo, in the barracks
+note is_topchest Initiative's relay mast box | A box lashed to the top of the Initiative's relay mast.
+loot is_topchest story:is_top*1;Rope*2;Scrap*2
+note is_cavechest Echo Cave chest | A chest at the back of Echo Cave, dry under the rock.
+loot is_cavechest story:is_cave*1;Nail*6;Plank*3
+note is_rewnote The broadcast | The desk warms up and the reel plays: a calm voice reading numbers, over and over. Between the numbers, very low: 'If you hear this, do not open the hatch.'
+note is_rewchest Broadcast desk reward | What the broadcast desk kept.
+loot is_rewchest CopperIngot*2;Bolt*3;Rope*2
+note is_lampchest Arlo's foot locker | Arlo's foot locker behind the barracks: a radio manual and his last pay.
+loot is_lampchest CopperIngot*2;TradeToken*2;Rope*2
+note is_setchest Staff locker | A staff locker: all five badges back, and what the staff left.
+loot is_setchest MetalIngot*2;Glass*3;Bolt*4
+note is_planecrate Launch's locker | The supply launch's locker: fuel cans, rope and tins of coffee.
+loot is_planecrate Plastic*3;Scrap*3;Nail*6
+prop is_planecrate loot.refill=0
+note is_pilot Launch skipper's log | SUPPLY LAUNCH. Last run. Compass spinning off the east shore. Ran her up on the rocks rather than go round again.
+note jcis Survey stacks | Survey markers stacked into steps. A surveyor's bundle half way.
+loot jcis Rope*3;Plank*4;MetalIngot*1
+note jbis Top marker | A box at the very top.
+loot jbis CopperIngot*1;Bolt*2;TradeToken*1
+
 quest title=The Sequence
 quest intro=A misty island with a plane in its marsh - and buildings that were here long before the plane. The survivors left a journal at their camp on the beach.
 # Chapter 1 - the crash
@@ -469,6 +594,14 @@ step kill|Warthog|2|Drive off the boars rooting in the woods under the north hil
 step reach|stationlantern|1|Climb to Station Lantern, the observatory on the north hill
 step collect|story:seqcard|5|Take the last card from the observatory
 # Chapter 3 - the hatch
+step read|Radio man's note|1|Read the radio man's note by the broadcast desk at the ruined house in the south-west
+step talk|Arlo Penn|1|Talk to Arlo Penn at the ruined house
+step reach|is_trail|1|Find the foot of the trail up Mist Hill, in the north-east
+step reach|is_summit|1|Climb the trail to the top of Mist Hill
+step collect|story:is_top|1|Climb the Initiative's relay mast and take the relay crystal from its box
+step reach|is_cave|1|Find Echo Cave in the south-west
+step collect|story:is_cave|1|Take the tape reel from the chest at the back of the cave
+step read|The broadcast|1|Bring both to the broadcast desk and read what it shows
 step reach|hatch|1|Find the hatch in the marsh and climb down into it
 step read|Hatch manual|1|Read the hatch's manual by the terminal
 step collect|story:accesscard|1|Enter the Sequence at the terminal
@@ -482,5 +615,8 @@ quest reward=CircuitBoard*2;MetalIngot*8;Cooked_GenericMeat*4
 # Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
 call treasure x=0 z=0 r=50 n=1 seed=8810
 prop treasure8810 treasure.loot=TitaniumOre*3
+
+# SILVER 10-26 ground fixes: rocks the new terrain left floating (or buried) taken away, each by its spot and name
+clear at 27.6 39.3 r=1.5 all only=^SmallRock_01
 
 save The Island of Stations

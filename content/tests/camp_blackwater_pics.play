@@ -1,6 +1,6 @@
 # Guide pictures of Camp Blackwater (CIPlay camp_blackwater_pics): Raft's camera, midday, calm. Points as in its recipe ("offset").
 island Camp Blackwater
-offset -0.5279 -1.75
+offset -0.4374 -1.2402
 hour 11
 weather Calm
 at -44 34
@@ -9,3 +9,10 @@ picture camp_blackwater_camp -8 14 46 -30 4 32
 picture camp_blackwater_lake -15 15 24 16 0 40
 picture camp_blackwater_boathouse 22 7 34 33 3.5 39.5
 picture camp_blackwater_lookout -10 16 24 0 14 10
+# SILVER 10-26: the new land - Pike Knob, Bear Hollow, the ruined house, the wreck, the jumps
+picture silver_cb_hill -25.15 24.8 0.2 73 12.6 8
+picture silver_cb_cave -4 8 -56 -10 6 -80
+picture silver_cb_ruin -90 8.5 -16 -78 5 -4
+picture silver_cb_wreck -22 9 72 -34 4 82
+picture silver_cb_jumps -20 8.5 -52 -34 6.5 -40
+picture silver_cb_air -124.8 70 -6.4 0 0 0

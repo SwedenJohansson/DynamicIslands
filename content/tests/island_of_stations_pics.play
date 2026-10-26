@@ -1,7 +1,7 @@
 # Guide pictures of The Island of Stations (CIPlay island_of_stations_pics): Raft's camera, mid-morning, calm. The pictures
 # above the water first (a player under water makes Raft draw every picture as seen under water), Station Kelp last
 island The Island of Stations
-offset -1.2361 0.2186
+offset -0.1312 1.0379
 hour 10
 weather Calm
 at 12 -80
@@ -18,3 +18,10 @@ picture island_of_stations_terminal 2.4 4.9 2.4 0.6 3.9 -2.6
 at 106 -14 h=-6
 wait 2
 picture island_of_stations_kelp 110 -6 -10 100 -8.5 -16
+# SILVER 10-26: the new land - Mist Hill, Echo Cave, the ruined house, the wreck, the jumps
+picture silver_is_hill -20.45 24.8 -13.8 53 12.6 72
+picture silver_is_cave -74 6.5 -12 -80 4.5 -36
+picture silver_is_ruin -72 6.7 -72 -60 3.2 -60
+picture silver_is_wreck 102 8.5 -64 90 3.5 -54
+picture silver_is_jumps 38 7.5 78 24 5.5 90
+picture silver_is_air -96 70 -96 0 0 0

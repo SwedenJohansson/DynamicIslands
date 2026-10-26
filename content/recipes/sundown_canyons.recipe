@@ -8,18 +8,29 @@
 # 24 -58, 11.5 m); Black Mesa in the middle, its top levelled at 42 m with the gang's fort (-26 -24), the mine lift's top
 # station (-2 -34) and the ladder trail down its north face (x -24); the Double Bar ranch on the east plain (104 4) and the
 # box canyon behind it (66 -6).
-# Quest "The New Sheriff" (36 steps, 6 chapters): Sundown (6), the ranch (5), the railroad (7), the mine (5), the fort
+# Quest "The New Sheriff" (43 steps, 6 chapters): Sundown (6), the ranch (5), the railroad (7), the mine (5), the fort
 # (8), the bank (5).
+# SILVER 10-26: the new land - Buzzard Butte with the telegraph pole tower, Rattler Cave, Hattie Cole at the ruined house (a lamp puzzle), a plane wreck, a jump course, a maze, a set of five sheriff stars
 include lib_rt
 include lib_huts
 include lib_relay
 include lib_sea
 include lib_features
+include lib_areas
+include lib_highwater
+include lib_silver
 new
 gen Trees=0.38 Bushes=0.5 Rocks=0.55 Harvest=0.25 BeachThings=0.3
 gen Seed=9026 Radius=142 Height=45 Roughness=0.5 Peaks=3 Shape=0 Style=2 BeachWidth=0.5 Cliffs=0.5 PeakShape=0.35 Valleys=0.7 Terraces=0.4
 gen Water=0.5 SeaRocks=0.3 SeaFinds=0.2 Sunken=0.4 Hostiles=0 Friendly=0 SeaLife=0
 generate
+# --- SILVER 10-26 terrain: the new land - pads raised from the sea (joined to the coast), Buzzard Butte ------------------------
+brush flatten at -63 -29 r=17 s=20 frames=500 h=16.4
+brush smooth at -63 -29 r=22 s=4 frames=40
+brush flatten at -63 -29 r=15 s=20 frames=500 h=16.4
+brush flatten at 69 18 r=19 s=20 frames=500 h=23.1
+brush smooth at 69 18 r=24 s=4 frames=40
+brush flatten at 69 18 r=17 s=20 frames=500 h=23.1
 
 # ===== The land ==========================================================================================================
 # (ramps: flatten dabs from one height to another along a line - switchbacks, a doorstep)
@@ -516,7 +527,165 @@ call shallows r=170 deep=5 n=2
 scatter "Pickup_Landmark_Flower_Yellow" 6 at 0 0 r=99.4 seed=4482 free=3
 scatter "Pickup_Landmark_Flower_Red" 6 at 0 0 r=99.4 seed=4483 free=3
 
-# ===== Settings, story items, notes, behaviours, quest (36 steps, 6 chapters) =============================================
+# --- SILVER 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Buzzard Butte ------
+# Buzzard Butte with the telegraph pole tower on it, Rattler Cave, the ruined house where Hattie Cole waits (four lamps round it: a puzzle), a plane wreck,
+# a jump course, a maze, five sheriff stars about the island (a set), and at the house the telegraph office set that wants the telegraph key and the wire spool
+call hw_zone x=43 z=27 al=sc_hillz id=sc_hill r=8 h=1 msg="Buzzard Butte. The whole island below you."
+brush flatten at 39.5 26 r=5 s=20 frames=300 h=27.3
+call hw_mast x=39 z=27 h0=27.3 lv=6 a=sc_mast chest=sc_topchest top=Placeable_Flag_01
+call ar_cave x=-63 z=-33 h=16.4 yaw=0 al=sc_caverock chest=sc_cavechest
+call hw_zone x=-64 z=-24 al=sc_cavez id=sc_cave r=4 h=1 msg="Rattler Cave. Water drips somewhere in the dark."
+call ar_ruin x=-40 z=54 h=13.4 yaw=0 w=3 d=2 al=sc_ruin
+call ss_islander x=-41 z=49.5 yaw=200 al=sc_isl nm="Hattie Cole" pose=sit
+prop sc_isl talk.text=New sheriff? About time. Sit a spell.\n---\nMy husband ran the telegraph line. The gang cut the wire and shot the pole tower full of holes.\n---\nThe office set wants the key from the tower on Buzzard Butte and a spool of wire from Rattler Cave. Mind the snakes.\n---\nAnd the corral maze? The boys built it to break horses. There's something at the middle.\n---\nMy lanterns: four round the house, each wakes the next. Light all four and look behind the back wall.
+place Placeable_Chair_Basic - at -41 49.5 ground sit yaw=200
+call ss_lamp x=-47 z=53 al=sc_lamp1 nm="Homestead lantern 1" grp="Homestead lanterns" on=0
+call ss_lamp x=-41 z=60 al=sc_lamp2 nm="Homestead lantern 2" grp="Homestead lanterns" on=0
+call ss_lamp x=-34 z=53 al=sc_lamp3 nm="Homestead lantern 3" grp="Homestead lanterns" on=1
+call ss_lamp x=-41 z=46 al=sc_lamp4 nm="Homestead lantern 4" grp="Homestead lanterns" on=1
+prop sc_lamp1 on.use=light|Homestead lantern 2|toggle
+prop sc_lamp2 on.use=light|Homestead lantern 3|toggle
+prop sc_lamp3 on.use=light|Homestead lantern 4|toggle
+prop sc_lamp4 on.use=light|Homestead lantern 1|toggle
+prop sc_lamp1 on.alllit=show|sc_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call ss_hidden x=-39 z=58.6 al=sc_lampchest
+place Creature_Chicken sc_hens at -32 60 ground
+prop sc_hens creature.count=3
+call ar_plane x=33 z=72 h=9.1 yaw=120 al=sc_plane crate=sc_planecrate
+place Note_Paper sc_pilot at 36.73 74.46 ground y=0.1 drop yaw=150
+call hw_zone x=33 z=72 al=sc_planez id=sc_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
+# JUMP sc pad=23.1 at=69 18
+push at 69 18
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=23.1
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=23.1
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpsc at 0 6 h=23.7
+place Block_Foundation_Tier3 jpsc at 2.91 5.25 h=24.45
+place Block_Foundation_Tier3 jpsc at 5.09 3.18 h=25.2
+place Block_Foundation_Tier3 jpsc at 5.99 0.31 h=25.95
+place Block_Foundation_Tier3 jpsc at 5.39 -2.63 h=26.7
+place Block_Foundation_Tier3 jpsc at 3.44 -4.91 h=27.45
+place Block_Foundation_Tier3 jpsc at 0.63 -5.97 h=28.2
+place Block_Foundation_Tier3 jpsc at -2.34 -5.52 h=28.95
+place Block_Foundation_Tier3 jpsc at -4.73 -3.69 h=29.7
+# JUMP from 10
+place Block_Foundation_Tier3 jpsc at -5.93 -0.94 h=30.45
+place Block_Foundation_Tier3 jpsc at -5.64 2.05 h=31.2 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppsc at 2.91 5.25 h=23.768 sy=1.861
+place Block_Foundation_Tier3 jppsc at 5.09 3.18 h=24.518 sy=2.959
+place Block_Foundation_Tier3 jppsc at 5.99 0.31 h=25.268 sy=4.058
+place Block_Foundation_Tier3 jppsc at 5.39 -2.63 h=26.018 sy=5.157
+place Block_Foundation_Tier3 jppsc at 3.44 -4.91 h=26.768 sy=6.255
+place Block_Foundation_Tier3 jppsc at 0.63 -5.97 h=27.518 sy=7.354
+place Block_Foundation_Tier3 jppsc at -2.34 -5.52 h=28.268 sy=8.453
+place Block_Foundation_Tier3 jppsc at -4.73 -3.69 h=29.018 sy=9.552
+place Block_Foundation_Tier3 jppsc at -5.93 -0.94 h=29.768 sy=10.650
+place Block_Foundation_Tier3 jppsc at -5.64 2.05 h=30.518 sy=11.749 sx=2 sz=2
+prop jpsc tint.color=#8a7f70
+prop jpsc tint.amount=0.35
+prop jppsc tint.color=#8a7f70
+prop jppsc tint.amount=0.35
+place Loot_Chest jcsc at 3.44 -4.91 h=27.45 sit yaw=0
+prop jcsc loot.refill=0
+place Loot_ChestSmall jbsc at -5.64 2.05 h=31.2 sit yaw=0
+prop jbsc loot.refill=0
+pop
+call hw_zone x=69 z=10 al=sc_jumpz id=sc_jumps r=6 h=1 msg="Stacks, one higher than the next. Something at the top."
+call ss_pad x=-9 z=60 r=15 h=14.2
+push at -16.5 52.5 h=14.2
+place Block_Wall_Tier3 sc_maze at 0.75 0 y=0.05
+place Block_Wall_Tier3 sc_maze at 2.25 0 y=0.05
+place Block_Wall_Tier3 sc_maze at 0.75 9 y=0.05
+place Block_Wall_Tier3 sc_maze at 2.25 9 y=0.05
+place Block_Wall_Tier3 sc_maze at 0.75 15 y=0.05
+place Block_Wall_Tier3 sc_maze at 2.25 15 y=0.05
+place Block_Wall_Tier3 sc_maze at 3.75 0 y=0.05
+place Block_Wall_Tier3 sc_maze at 5.25 0 y=0.05
+place Block_Wall_Tier3 sc_maze at 3.75 12 y=0.05
+place Block_Wall_Tier3 sc_maze at 5.25 12 y=0.05
+place Block_Wall_Tier3 sc_maze at 3.75 15 y=0.05
+place Block_Wall_Tier3 sc_maze at 5.25 15 y=0.05
+place Block_Wall_Tier3 sc_maze at 6.75 15 y=0.05
+place Block_Wall_Tier3 sc_maze at 8.25 15 y=0.05
+place Block_Wall_Tier3 sc_maze at 9.75 0 y=0.05
+place Block_Wall_Tier3 sc_maze at 11.25 0 y=0.05
+place Block_Wall_Tier3 sc_maze at 9.75 3 y=0.05
+place Block_Wall_Tier3 sc_maze at 11.25 3 y=0.05
+place Block_Wall_Tier3 sc_maze at 9.75 12 y=0.05
+place Block_Wall_Tier3 sc_maze at 11.25 12 y=0.05
+place Block_Wall_Tier3 sc_maze at 9.75 15 y=0.05
+place Block_Wall_Tier3 sc_maze at 11.25 15 y=0.05
+place Block_Wall_Tier3 sc_maze at 12.75 0 y=0.05
+place Block_Wall_Tier3 sc_maze at 14.25 0 y=0.05
+place Block_Wall_Tier3 sc_maze at 12.75 9 y=0.05
+place Block_Wall_Tier3 sc_maze at 14.25 9 y=0.05
+place Block_Wall_Tier3 sc_maze at 12.75 15 y=0.05
+place Block_Wall_Tier3 sc_maze at 14.25 15 y=0.05
+place Block_Wall_Tier3 sc_maze at 0 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 0 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 0 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 0 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 0 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 0 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 0 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 0 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 0 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 0 14.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 3 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 3 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 3 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 3 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 6 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 6 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 6 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 6 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 6 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 6 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 6 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 6 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 9 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 9 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 9 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 9 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 9 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 9 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 9 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 9 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 12 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 12 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 15 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 15 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 15 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 15 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 15 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 15 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 15 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 15 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 15 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sc_maze at 15 14.25 y=0.05 yaw=90
+place Loot_ChestSmall sc_mazechest at 1.5 7.5 y=0.05 sit yaw=0
+pop
+prop sc_maze tint.color=#4e6b3a
+prop sc_maze tint.amount=0.55
+prop sc_mazechest loot.refill=0
+call hw_zone x=-10.5 z=51 al=sc_mazez id=sc_maze r=3 msg="A maze of old walls. Somewhere in the middle, a box."
+call hw_machine x=-31 z=45 yaw=-45 al=sc_machine nm="Telegraph office set" obj=RT_PowerBox sc=1 a=sc_top b=sc_cave done=sc_fixed rew=sc_rewchest rnote=sc_rewnote msg="It works." hint="It wants the telegraph key from Buzzard Butte and the wire spool from Rattler Cave."
+call hw_note x=-33.6 z=46.2 yaw=-25 al=sc_hint
+call ss_piece x=53 z=-67 al=sc_piece1 set="Sheriff stars"
+call ss_piece x=-61 z=-58 al=sc_piece2 set="Sheriff stars"
+call ss_piece x=74 z=41 al=sc_piece3 set="Sheriff stars"
+call ss_piece x=14 z=17 al=sc_piece4 set="Sheriff stars"
+call ss_piece x=-82 z=5 al=sc_piece5 set="Sheriff stars"
+prop sc_piece1 on.set=show|sc_setchest\nmessage||All five sheriff stars found.
+call ss_hidden x=-35 z=42 al=sc_setchest kind=Loot_Chest
+call treasure x=17 z=83 r=5 n=1 seed=26485 kind=0
+prop treasure26485 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+
+# ===== Settings, story items, notes, behaviours, quest (43 steps, 6 chapters) =============================================
 prop hens creature.count=4
 prop goats creature.count=3
 prop turtles creature.count=2
@@ -717,6 +886,32 @@ prop wind sound.event=event:/amb/caravan
 prop wind sound.volume=0.5
 prop wind zone.radius=50
 
+story sc_top|Telegraph key|Bolt|The telegraph key off the line tower on Buzzard Butte.
+story sc_cave|Wire spool|Bolt|A spool of telegraph wire, cached in Rattler Cave by the line crew.
+story sc_fixed|Telegraph office set working|Bolt|The telegraph office set, working again.
+note sc_hint Line crew notice | TELEGRAPH DOWN. Key is up the line tower on Buzzard Butte (north-east), the wire spool in Rattler Cave (south-west). Hattie at the homestead has the keys to the office.
+note sc_topchest Telegraph pole tower box | A box lashed to the top of the telegraph pole tower.
+loot sc_topchest story:sc_top*1;Rope*2;Scrap*2
+note sc_cavechest Rattler Cave chest | A chest at the back of Rattler Cave, dry under the rock.
+loot sc_cavechest story:sc_cave*1;Nail*6;Plank*3
+note sc_rewnote Telegram | The sounder clicks and spells out the last telegram that never got through: 'SILVER TRAIN AMBUSHED STOP SEND MARSHAL STOP'. The gang cut the wire before it reached town.
+note sc_rewchest Telegraph office set reward | What the telegraph office set kept.
+loot sc_rewchest CopperIngot*2;Bolt*3;Rope*2
+note sc_lampchest Hattie's biscuit tin | Hattie's biscuit tin behind the house: silver dollars and a marriage paper.
+loot sc_lampchest TradeToken*2;CopperIngot*1;Rope*2
+note sc_setchest Deputies' chest | The deputies' chest: all five stars back, and the posse fund.
+loot sc_setchest MetalIngot*2;Glass*3;Bolt*4
+note sc_planecrate Barnstormer's crate | The barnstormer's crate: posters, rope and a can of oil.
+loot sc_planecrate Plastic*3;Scrap*3;Rope*2
+prop sc_planecrate loot.refill=0
+note sc_pilot Barnstormer's poster | THE FLYING DAREDEVIL - ONE SHOW ONLY. Somebody has written across it: 'Engine quit over the butte. Show cancelled.'
+note jcsc Rock stacks | Red rock stacks, one higher than the next. An outlaw's bundle half way.
+loot jcsc Rope*3;Plank*4;MetalIngot*1
+note jbsc Top rock | A box at the very top.
+loot jbsc CopperIngot*1;Bolt*2;TradeToken*1
+note sc_mazechest Corral prize | A saddlebag in the middle of the corral maze: silver dollars and a branding iron.
+loot sc_mazechest TradeToken*3;CopperIngot*2;Leather*2
+
 quest title=The New Sheriff
 quest intro=A frontier town under red canyons, its sheriff gone after an outlaw gang. Her report is on the jail's desk. Start at the wharf.
 # Chapter 1 - Sundown
@@ -757,6 +952,13 @@ step reach|homeward|1|Climb down the mesa's ladder trail to the signpost at its 
 step read|Mayor's proclamation|1|Read the mayor's proclamation nailed to the signpost
 # Chapter 6 - the bank
 step collect|story:silverbar|6|Carry all six silver bars: the express safe, the river, the gang's chest
+step read|Line crew notice|1|Read the line crew notice by the telegraph office set at the ruined house in the north-west
+step talk|Hattie Cole|1|Talk to Hattie Cole at the ruined house
+step reach|sc_hill|1|Climb to the top of Buzzard Butte in the north-east
+step collect|story:sc_top|1|Climb the telegraph pole tower and take the telegraph key from its box
+step reach|sc_cave|1|Find Rattler Cave in the south-west
+step collect|story:sc_cave|1|Take the wire spool from the chest at the back of the cave
+step read|Telegram|1|Bring both to the telegraph office set and read what it shows
 step reach|bank|1|Walk into the Bank of Sundown
 step collect|story:receipt|1|Return the silver at the teller's counter
 step read|Bank manager's letter|1|Read the bank manager's letter behind the counter
@@ -773,5 +975,17 @@ store generalstore at -116 -20 ground
 # Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
 call treasure x=0 z=0 r=70 n=1 seed=8812
 prop treasure8812 treasure.loot=TitaniumOre*3
+
+# SILVER 10-26 ground fixes: rocks the new terrain left floating (or buried) taken away, each by its spot and name
+clear at -117.8 44.2 r=1.5 all only=^BigSharpRock_3
+clear at 115.5 -47.4 r=1.5 all only=^CaravanIsland_SmallRock_1
+clear at -49.3 -113.9 r=1.5 all only=^CaravanIsland_SmallRock_1
+clear at -111.6 -74.2 r=1.5 all only=^BigSharpRock_2
+clear at -97.1 -98.5 r=1.5 all only=^CaravanIsland_SmallRock_1
+clear at 112.3 62.7 r=1.5 all only=^BigSharpRock_1
+clear at 130.4 47.4 r=1.5 all only=^BigSharpRock_5
+clear at -79.4 -100.0 r=1.5 all only=^CaravanIsland_SmallRock_1
+clear at 110.5 37.4 r=1.5 all only=^BigSharpRock_2
+clear at -67.9 -74.3 r=1.5 all only=^BigSharpRock_2
 
 save Sundown Canyons

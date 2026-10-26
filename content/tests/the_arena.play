@@ -4,11 +4,11 @@
 # -50 -30; the control room in the south-west peak's east flank (floor 7 m, x -10..-4 z -27..-15, its door at -4 -24
 # opening on a cutting down to the meadow); the champion in the valley at 15 -17.
 island The Arena
-offset 0.4541 0.9109
+offset 2.6119 -4.723
 expect step 0
 expect title The Games Run On
 wait 5
-expect animals Goat 3
+expect animals Goat 5
 expect animals Dolphin 2
 
 # Up from the beach: the shore, a sponsor's gift in a hollow, the rules at the meadow's edge
@@ -66,6 +66,61 @@ expect step 11
 use console
 expect story prizekey 1
 expect step 12
+# SILVER 10-26: the ruined house, Cassia Venn, the climb, Hideout Cave, the secrets
+expect hidden ta_rewchest
+use ta_machine
+expect hidden ta_rewchest
+read Sponsor's notice
+expect step 13
+use Cassia Venn
+wait 1
+expect step 14
+expect hidden ta_lampchest
+use Lodge lamp 1
+use Lodge lamp 2
+use Lodge lamp 3
+wait 1
+expect shown ta_lampchest
+open Cassia's go-bag
+zone ta_trail
+expect step 15
+zone ta_summit
+expect step 16
+open Wardens' camera mast box
+wait 3
+expect story ta_top 1
+expect step 17
+zone ta_cave
+expect step 18
+open Hideout Cave chest
+wait 3
+expect story ta_cave 1
+expect step 19
+use ta_machine
+expect shown ta_rewchest
+expect story ta_fixed 1
+open Sponsors' gate reward
+wait 3
+read Sponsors' ledger
+expect step 20
+# the secrets: the wreck, the jumps, the maze, the set
+zone ta_plane
+open Supply drop crate
+read Drop pilot's card
+zone ta_jumps
+open Arena stacks
+open Top stack
+zone ta_maze
+open Round zero prize
+expect hidden ta_setchest
+use ta_piece1
+use ta_piece2
+use ta_piece3
+use ta_piece4
+use ta_piece5
+wait 2
+expect shown ta_setchest
+open Tribute chest
 open Prize vault
 wait 2
 expect done

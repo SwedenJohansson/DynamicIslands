@@ -3,12 +3,12 @@
 # the archery shed at -44.5 22; the lake x -8..32 z 29..46; the old boathouse on its east shore (30-35 37-41.5); the fire
 # lookout up the hill at 0 11 (ground 10.4 m, deck 16.9 m, its ladder on the south side).
 island Camp Blackwater
-offset -0.5279 -1.75
+offset -0.4374 -1.2402
 expect step 0
 expect title The Last Week of Summer
 wait 5
-expect animals Chicken 3
-expect animals Goat 2
+expect animals Chicken 6
+expect animals Goat 4
 expect animals Turtle 2
 
 # Off the jetty, up the road under the banner
@@ -57,6 +57,58 @@ use flarepost
 expect message a ship's horn answers
 expect story lockerkey 1
 expect step 10
+# SILVER 10-26: the ruined house, Walt Pruitt, the climb, Bear Hollow, the secrets
+expect hidden cb_rewchest
+use cb_machine
+expect hidden cb_rewchest
+read Caretaker's chalk board
+expect step 11
+use Walt Pruitt
+wait 1
+expect step 12
+expect hidden cb_lampchest
+use Porch lamp 1
+use Porch lamp 2
+wait 1
+expect shown cb_lampchest
+open Walt's tackle box
+zone cb_trail
+expect step 13
+zone cb_summit
+expect step 14
+open Ranger's radio mast box
+wait 3
+expect story cb_top 1
+expect step 15
+zone cb_cave
+expect step 16
+open Bear Hollow chest
+wait 3
+expect story cb_cave 1
+expect step 17
+use cb_machine
+expect shown cb_rewchest
+expect story cb_fixed 1
+open Camp loudspeaker reward
+wait 3
+read Last broadcast
+expect step 18
+# the secrets: the wreck, the jumps, the set
+zone cb_plane
+open Floatplane crate
+read Ranger's flight card
+zone cb_jumps
+open Counselors' perch
+open Top of the perch
+expect hidden cb_setchest
+use cb_piece1
+use cb_piece2
+use cb_piece3
+use cb_piece4
+use cb_piece5
+wait 2
+expect shown cb_setchest
+open Lost and found box
 
 # Back to cabin 1: her footlocker
 open Counselor's footlocker

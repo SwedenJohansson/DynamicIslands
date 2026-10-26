@@ -9,15 +9,19 @@
 # Primeval Park bred its animals big: ironback boars, the aviary's screechers, a leviathan in the show lagoon - and the
 # park's crown, a giant bear the keepers called the Queen. A storm blew the park's three fuses and the staff fled on the
 # last boat. Bring the power back, cross the park, open the great gate and meet the Queen.
-# Quest "Welcome to Primeval Park" (20 steps, 4 chapters): arrival (4), the power (6), the aviary and the lagoon (6), the
+# Quest "Welcome to Primeval Park" (28 steps, 4 chapters): arrival (4), the power (6), the aviary and the lagoon (6), the
 # Queen (4) - large crop plot and recycler blueprints, titanium, batteries.
 #
 # Built by the recipe player (CIRecipe primeval_park) through the editor's own operations.
+# SILVER 10-26: the new land - Fern Knoll with the park camera mast, Nest Cave, Rosa Okafor at the ruined house (a lamp puzzle), a boat wreck, a jump course, a maze, a set of five park tickets
 include lib_rt
 include lib_huts
 include lib_relay
 include lib_sea
 include lib_features
+include lib_areas
+include lib_highwater
+include lib_silver
 new
 # (nature: a jungle a little denser than Raft's tropical islands; the park's terraces, roads and paddocks cleared)
 gen Trees=0.35 Bushes=0.35 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -25,6 +29,25 @@ gen Seed=9021 Radius=100 Height=14 Roughness=0.35 Peaks=2 Shape=6 Style=0 BeachW
 gen SeaFloor=0 Shelf=0.45 Seabed=0
 gen Water=0.5 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.4 Hostiles=0
 generate
+# --- SILVER 10-26 terrain: the new land - pads raised from the sea (joined to the coast), Fern Knoll ------------------------
+brush flatten at -60 -84 r=16 s=20 frames=500 h=3
+brush smooth at -60 -84 r=21 s=4 frames=40
+brush flatten at -60 -84 r=14 s=20 frames=500 h=3
+brush flatten from -60 -84 to -50.7 -70.98 r=9 s=20 frames=500 h=3
+brush flatten at -86 -40 r=17 s=20 frames=500 h=3
+brush smooth at -86 -40 r=22 s=4 frames=40
+brush flatten at -86 -40 r=15 s=20 frames=500 h=3
+brush flatten at 64 -6 r=12 s=20 frames=500 h=2.5
+brush smooth at 64 -6 r=17 s=4 frames=40
+brush flatten at 64 -6 r=10 s=20 frames=500 h=2.5
+brush flatten at -82 34 r=19 s=20 frames=500 h=1.5
+brush smooth at -82 34 r=24 s=4 frames=40
+brush flatten at -82 34 r=17 s=20 frames=500 h=1.5
+brush flatten at -24 -92 r=14 s=20 frames=500 h=3
+brush smooth at -24 -92 r=19 s=4 frames=40
+brush flatten at -24 -92 r=12 s=20 frames=500 h=3
+call hw_mount x=-50 z=78 b=14 h=16
+call hw_trail x=-50 z=78 b=14 h=16 a0=147.34 turn=300 n=40 h0=3
 
 # --- Terrain: the visitor centre's terrace (7 m) cut into the crescent's middle, the maintenance shed on its west end;
 # the boar paddock's field (5 m) and the keeper's pad; the river ride's channel cut from the bay into the south horn and
@@ -324,7 +347,171 @@ scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=70.0 seed=4164 free=5
 call shallows r=125 deep=5 n=2
 call shallows x=52 z=30 r=15 deep=4 seed=90
 
-# ===== Settings, story items, notes, behaviours, quest (20 steps, 4 chapters) =============================================
+# --- SILVER 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Fern Knoll ------
+# Fern Knoll with the park camera mast on it, Nest Cave, the ruined house where Rosa Okafor waits (four lamps round it: a puzzle), a boat wreck,
+# a jump course, a maze, five park tickets about the island (a set), and at the house the hatchery console that wants the camera lens and the hatchery tag gun
+call hw_zone x=-41.91 z=65.37 al=pp_trailz id=pp_trail r=5 msg="The trail up Fern Knoll starts here - round and up."
+call hw_zone x=-50 z=78 al=pp_summitz id=pp_summit r=8 h=1 msg="The top of Fern Knoll. The whole island below you."
+place Creature_Goat pp_goats at -37.91 68.37 ground
+prop pp_goats creature.count=2
+call hw_mast x=-53 z=80 h0=16 lv=6 a=pp_mast chest=pp_topchest top=Placeable_Flag_01
+call ar_cave x=-86 z=-44 h=3 yaw=0 al=pp_caverock chest=pp_cavechest
+call hw_zone x=-87 z=-35 al=pp_cavez id=pp_cave r=4 h=1 msg="Nest Cave. Water drips somewhere in the dark."
+call ar_ruin x=-60 z=-84 h=3 yaw=0 w=3 d=2 al=pp_ruin
+call ss_islander x=-61 z=-88.5 yaw=200 al=pp_isl nm="Rosa Okafor" pose=lean
+prop pp_isl talk.text=Shh. Something hears better than you think out here.\n---\nI was the night keeper. When the storm came, they took the boat. I was out at the hatchery.\n---\nThe hatchery console wants the lens off the camera mast on Fern Knoll and my tag gun from Nest Cave. I want to know how many hatched.\n---\nAnd the hedge maze south of here was for the visitors' children. Go on - there's a prize.\n---\nThe staff lamps round my house: each one you turn wakes the next. Light all four and look behind the back wall.
+call ss_lamp x=-67 z=-85 al=pp_lamp1 nm="Staff lamp 1" grp="Staff lamps" on=1
+call ss_lamp x=-61 z=-78 al=pp_lamp2 nm="Staff lamp 2" grp="Staff lamps" on=0
+call ss_lamp x=-54 z=-85 al=pp_lamp3 nm="Staff lamp 3" grp="Staff lamps" on=1
+call ss_lamp x=-61 z=-92 al=pp_lamp4 nm="Staff lamp 4" grp="Staff lamps" on=0
+prop pp_lamp1 on.use=light|Staff lamp 2|toggle
+prop pp_lamp2 on.use=light|Staff lamp 3|toggle
+prop pp_lamp3 on.use=light|Staff lamp 4|toggle
+prop pp_lamp4 on.use=light|Staff lamp 1|toggle
+prop pp_lamp1 on.alllit=show|pp_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call ss_hidden x=-59 z=-79.4 al=pp_lampchest
+place Creature_Chicken pp_hens at -52 -78 ground
+prop pp_hens creature.count=3
+call hw_wreck x=64 z=-6 h=2.5 yaw=200 obj=BoatStranded al=pp_plane crate=pp_planecrate r=9
+place Note_Paper pp_pilot at 67.07 -9.25 ground y=0.1 drop yaw=230
+call hw_zone x=64 z=-6 al=pp_planez id=pp_plane r=6 h=1 msg="A boat, high and dry on the shore. Nobody came for it."
+# JUMP pp pad=1.5 at=-82 34
+push at -82 34
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=1.5
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=1.5
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jppp at -4.24 4.24 h=2.1
+place Block_Foundation_Tier3 jppp at -1.65 5.77 h=2.85
+place Block_Foundation_Tier3 jppp at 1.35 5.85 h=3.6
+place Block_Foundation_Tier3 jppp at 4.01 4.46 h=4.35
+place Block_Foundation_Tier3 jppp at 5.67 1.95 h=5.1
+place Block_Foundation_Tier3 jppp at 5.91 -1.04 h=5.85
+place Block_Foundation_Tier3 jppp at 4.66 -3.78 h=6.6
+place Block_Foundation_Tier3 jppp at 2.25 -5.56 h=7.35
+place Block_Foundation_Tier3 jppp at -0.73 -5.96 h=8.1
+# JUMP from 10
+place Block_Foundation_Tier3 jppp at -3.53 -4.85 h=8.85
+place Block_Foundation_Tier3 jppp at -5.44 -2.54 h=9.6 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jpppp at -1.65 5.77 h=2.168 sy=1.861
+place Block_Foundation_Tier3 jpppp at 1.35 5.85 h=2.918 sy=2.959
+place Block_Foundation_Tier3 jpppp at 4.01 4.46 h=3.668 sy=4.058
+place Block_Foundation_Tier3 jpppp at 5.67 1.95 h=4.418 sy=5.157
+place Block_Foundation_Tier3 jpppp at 5.91 -1.04 h=5.168 sy=6.255
+place Block_Foundation_Tier3 jpppp at 4.66 -3.78 h=5.918 sy=7.354
+place Block_Foundation_Tier3 jpppp at 2.25 -5.56 h=6.668 sy=8.453
+place Block_Foundation_Tier3 jpppp at -0.73 -5.96 h=7.418 sy=9.552
+place Block_Foundation_Tier3 jpppp at -3.53 -4.85 h=8.168 sy=10.650
+place Block_Foundation_Tier3 jpppp at -5.44 -2.54 h=8.918 sy=11.749 sx=2 sz=2
+prop jppp tint.color=#8a7f70
+prop jppp tint.amount=0.35
+prop jpppp tint.color=#8a7f70
+prop jpppp tint.amount=0.35
+place Loot_Chest jcpp at 5.91 -1.04 h=5.85 sit yaw=0
+prop jcpp loot.refill=0
+place Loot_ChestSmall jbpp at -5.44 -2.54 h=9.6 sit yaw=0
+prop jbpp loot.refill=0
+pop
+call hw_zone x=-82 z=26 al=pp_jumpz id=pp_jumps r=6 h=1 msg="Stacks, one higher than the next. Something at the top."
+call ss_pad x=-24 z=-92 r=15 h=3
+push at -31.5 -99.5 h=3
+place Block_Wall_Tier3 pp_maze at 0.75 0 y=0.05
+place Block_Wall_Tier3 pp_maze at 2.25 0 y=0.05
+place Block_Wall_Tier3 pp_maze at 0.75 3 y=0.05
+place Block_Wall_Tier3 pp_maze at 2.25 3 y=0.05
+place Block_Wall_Tier3 pp_maze at 0.75 15 y=0.05
+place Block_Wall_Tier3 pp_maze at 2.25 15 y=0.05
+place Block_Wall_Tier3 pp_maze at 3.75 0 y=0.05
+place Block_Wall_Tier3 pp_maze at 5.25 0 y=0.05
+place Block_Wall_Tier3 pp_maze at 3.75 6 y=0.05
+place Block_Wall_Tier3 pp_maze at 5.25 6 y=0.05
+place Block_Wall_Tier3 pp_maze at 3.75 12 y=0.05
+place Block_Wall_Tier3 pp_maze at 5.25 12 y=0.05
+place Block_Wall_Tier3 pp_maze at 3.75 15 y=0.05
+place Block_Wall_Tier3 pp_maze at 5.25 15 y=0.05
+place Block_Wall_Tier3 pp_maze at 6.75 9 y=0.05
+place Block_Wall_Tier3 pp_maze at 8.25 9 y=0.05
+place Block_Wall_Tier3 pp_maze at 6.75 15 y=0.05
+place Block_Wall_Tier3 pp_maze at 8.25 15 y=0.05
+place Block_Wall_Tier3 pp_maze at 9.75 0 y=0.05
+place Block_Wall_Tier3 pp_maze at 11.25 0 y=0.05
+place Block_Wall_Tier3 pp_maze at 9.75 9 y=0.05
+place Block_Wall_Tier3 pp_maze at 11.25 9 y=0.05
+place Block_Wall_Tier3 pp_maze at 9.75 12 y=0.05
+place Block_Wall_Tier3 pp_maze at 11.25 12 y=0.05
+place Block_Wall_Tier3 pp_maze at 9.75 15 y=0.05
+place Block_Wall_Tier3 pp_maze at 11.25 15 y=0.05
+place Block_Wall_Tier3 pp_maze at 12.75 0 y=0.05
+place Block_Wall_Tier3 pp_maze at 14.25 0 y=0.05
+place Block_Wall_Tier3 pp_maze at 12.75 3 y=0.05
+place Block_Wall_Tier3 pp_maze at 14.25 3 y=0.05
+place Block_Wall_Tier3 pp_maze at 12.75 15 y=0.05
+place Block_Wall_Tier3 pp_maze at 14.25 15 y=0.05
+place Block_Wall_Tier3 pp_maze at 0 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 0 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 0 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 0 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 0 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 0 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 0 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 0 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 0 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 0 14.25 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 3 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 3 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 6 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 6 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 6 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 6 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 6 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 6 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 9 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 9 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 9 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 9 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 9 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 9 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 9 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 9 14.25 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 12 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 12 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 15 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 15 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 15 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 15 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 15 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 15 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 15 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 15 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 15 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 pp_maze at 15 14.25 y=0.05 yaw=90
+place Loot_ChestSmall pp_mazechest at 13.5 1.5 y=0.05 sit yaw=0
+pop
+prop pp_maze tint.color=#4e6b3a
+prop pp_maze tint.amount=0.55
+prop pp_mazechest loot.refill=0
+call hw_zone x=-25.5 z=-101 al=pp_mazez id=pp_maze r=3 msg="A maze of old walls. Somewhere in the middle, a box."
+call hw_machine x=-51 z=-93 yaw=-45 al=pp_machine nm="Hatchery console" obj=TP_LaserControlPanel_lever sc=3 a=pp_top b=pp_cave done=pp_fixed rew=pp_rewchest rnote=pp_rewnote msg="It works." hint="It wants the camera lens from Fern Knoll and the hatchery tag gun from Nest Cave."
+call hw_note x=-53.6 z=-91.8 yaw=-25 al=pp_hint
+call ss_piece x=-22 z=80 al=pp_piece1 set="Park tickets"
+call ss_piece x=41 z=-64 al=pp_piece2 set="Park tickets"
+call ss_piece x=-85 z=8 al=pp_piece3 set="Park tickets"
+call ss_piece x=-16 z=-28 al=pp_piece4 set="Park tickets"
+call ss_piece x=-31 z=26 al=pp_piece5 set="Park tickets"
+prop pp_piece1 on.set=show|pp_setchest\nmessage||All five park tickets found.
+call ss_hidden x=-55 z=-96 al=pp_setchest kind=Loot_Chest
+call treasure x=-4 z=-74 r=12 n=1 seed=26484 kind=0
+prop treasure26484 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_tropical x=-60 z=-84 r=20 seed=26497
+call ar_plants_tropical x=-86 z=-40 r=21 seed=26498
+call ar_plants_tropical x=64 z=-6 r=16 seed=26499
+call ar_plants_tropical x=-24 z=-92 r=18 seed=26500
+call ar_plants_tropical x=-50 z=78 r=16 seed=26501
+
+# ===== Settings, story items, notes, behaviours, quest (28 steps, 4 chapters) =============================================
 info title=Primeval Park
 info author=Custom Islands
 info description=A park of giant beasts on a jungle crescent, dark since a storm blew its fuses and the staff fled: ironback boars loose from their paddock, screechers in the aviary, a leviathan in the show lagoon - and behind the great gate, the park's Queen. Bring the power back and see the whole park.
@@ -462,6 +649,32 @@ call dirt x=0 z=20 r=40 n=4 seed=72
 call cagecache x=-16 z=41.5 yaw=90 alias=feedcage sig=feedcage chest=feedchest items=Cooked_GenericMeat*3;Leather*2;Rope*2 title="Boar keeper's feed chest" kx=14 kz=38 kr=6 seed=73 keychest=keepertools keytitle="Keeper's tool chest" keyitems=Rope*2;Nail*6
 call camera x=8.2 z=43.2 h=8.5 yaw=-145 alias=paddockcam
 
+story pp_top|Camera lens|Bolt|The long lens off the park's camera mast on Fern Knoll.
+story pp_cave|Hatchery tag gun|Bolt|The hatchery's tag gun, dropped by a keeper in Nest Cave.
+story pp_fixed|Hatchery console working|Bolt|The hatchery console, working again.
+note pp_hint Night keeper's note | HATCHERY CONSOLE: needs the lens off the camera mast (Fern Knoll, north-west) to count the eggs, and the tag gun (Nest Cave, south-west). Rosa, at the old staff house.
+note pp_topchest Park camera mast box | A box lashed to the top of the park camera mast.
+loot pp_topchest story:pp_top*1;Rope*2;Scrap*2
+note pp_cavechest Nest Cave chest | A chest at the back of Nest Cave, dry under the rock.
+loot pp_cavechest story:pp_cave*1;Nail*6;Plank*3
+note pp_rewnote Hatchery count | The console wakes and counts: 'Eggs laid: 41. Eggs tagged: 38.' Three missing. Under the count, Rosa's pencil: 'I told them. Nobody counts the ones that hatch.'
+note pp_rewchest Hatchery console reward | What the hatchery console kept.
+loot pp_rewchest CopperIngot*2;Bolt*3;Rope*2
+note pp_lampchest Rosa's kit box | Rosa's kit box: a torch, keeper's pay, and a feather as long as her arm.
+loot pp_lampchest Feather*4;TradeToken*2;Rope*2
+note pp_setchest Ticket booth box | The ticket booth cash box: all five tickets back, and the takings.
+loot pp_setchest MetalIngot*2;Glass*3;Bolt*4
+note pp_planecrate Supply boat's locker | The supply boat's locker: feed sacks, rope and a keeper's rifle case - empty.
+loot pp_planecrate Plastic*3;Scrap*3;Nail*6
+prop pp_planecrate loot.refill=0
+note pp_pilot Supply boat log | FEED RUN. Gate open, nobody at the dock. Something big in the bay. Ran her onto the sandbar.
+note jcpp Fossil stacks | Fossil blocks from the visitor centre, stacked as steps. A keeper's bag half way.
+loot jcpp Rope*3;Plank*4;MetalIngot*1
+note jbpp Top block | A box at the very top.
+loot jbpp CopperIngot*1;Bolt*2;TradeToken*1
+note pp_mazechest Children's prize | The hedge maze prize: a toy beast, sweets long gone, and park tokens.
+loot pp_mazechest TradeToken*3;CopperIngot*2;Feather*4
+
 quest title=Welcome to Primeval Park
 quest intro=A park of giant beasts, dark since the storm. The welcome arch is still up. Start at the dock.
 # Chapter 1 - arrival
@@ -484,6 +697,14 @@ step reach|lagoonshow|1|Go down to the show lagoon's feeding platform
 step kill|Angler fish|1|Face the leviathan of the show lagoon
 step collect|story:queenkey|1|Dive for the Queen's keeper's key on the lagoon floor
 # Chapter 4 - the Queen
+step read|Night keeper's note|1|Read the night keeper's note by the hatchery console at the ruined house in the south-west
+step talk|Rosa Okafor|1|Talk to Rosa Okafor at the ruined house
+step reach|pp_trail|1|Find the foot of the trail up Fern Knoll, in the north-west
+step reach|pp_summit|1|Climb the trail to the top of Fern Knoll
+step collect|story:pp_top|1|Climb the park camera mast and take the camera lens from its box
+step reach|pp_cave|1|Find Nest Cave in the south-west
+step collect|story:pp_cave|1|Take the hatchery tag gun from the chest at the back of the cave
+step read|Hatchery count|1|Bring both to the hatchery console and read what it shows
 step reach|queengate|1|Open the great gate on the north horn and walk into the Queen's valley
 step kill|Mama bear|1|Face the Queen
 step read|Founder's farewell|1|Read the founder's farewell in the keeper lodge
@@ -496,5 +717,11 @@ quest reward=MetalIngot*8;Bolt*8;Plastic*12
 # Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
 call treasure x=0 z=0 r=50 n=1 seed=8811
 prop treasure8811 treasure.loot=TitaniumOre*3
+
+# SILVER 10-26 ground fixes: rocks the new terrain left floating (or buried) taken away, each by its spot and name
+clear at 66.2 -49.8 r=1.5 all only=^SmallBoulder4
+clear at 5.8 23.4 r=1.5 all only=^SmallBoulder1
+clear at 55.3 -0.1 r=1.5 all only=^LeafCoral_3
+clear at -38.3 69.4 r=1.5 all only=^SmallBoulder2
 
 save Primeval Park

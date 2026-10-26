@@ -6,13 +6,18 @@
 # The liner Regina Borealis struck the ice-rocks at full speed on her first crossing and broke in two. Lifeboat 7 reached
 # the biggest islet; its survivors' log tells where the chief steward kept the purser's safe combination, and what is in
 # the safe: the Polar Star sapphire and the key to the ship's pay chest. Something with lamps lives in the stern now.
-# Quest "The Polar Star" (11 steps): lifeboat 7's camp, the log, the steward's key, the bow, the wireless message, the
+# Quest "The Polar Star" (19 steps): lifeboat 7's camp, the log, the steward's key, the bow, the wireless message, the
 # ballroom (air under its ceiling), the steward's cabinet, the anglers in the stern, the purser's office, the safe, the pay
 # chest (head light blueprint, captain's hat, trade coins).
 #
 # Built by the recipe player (CIRecipe sunken_liner) through the editor's own operations.
+# SILVER 10-26: the new land - Ice Crown with the liner's fallen foremast, Frost Cave, Nils Ekholm at the ruined house (a lamp puzzle), a boat wreck, a jump course, a set of five deck chairs
 include lib_rt
 include lib_sea
+include lib_areas
+include lib_highwater
+include lib_features
+include lib_silver
 new
 # (nature: snowy, Like Raft's Temperance - near-bare icy islets, a few pines on the biggest)
 gen Trees=0.08 Bushes=0.15 Rocks=0.25 Harvest=0.05 BeachThings=0.3
@@ -20,6 +25,38 @@ gen Seed=9011 Radius=63 Height=9 Roughness=0.5 Peaks=1 Shape=2 Style=1 BeachWidt
 gen SeaFloor=0 Shelf=0.5 Seabed=1
 gen Water=0.5 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.4 Hostiles=0
 generate
+# --- SILVER 10-26 terrain: the new land - pads raised from the sea (joined to the coast), Ice Crown ------------------------
+brush flatten at -42 48 r=16 s=20 frames=500 h=3
+brush smooth at -42 48 r=21 s=4 frames=40
+brush flatten at -42 48 r=14 s=20 frames=500 h=3
+brush flatten from -42 48 to -10.39 11.88 r=9 s=20 frames=500 h=3
+brush flatten at -6 -72 r=17 s=20 frames=500 h=3
+brush smooth at -6 -72 r=22 s=4 frames=40
+brush flatten at -6 -72 r=15 s=20 frames=500 h=3
+brush flatten from -6 -72 to -3.84 -46.09 r=9 s=20 frames=500 h=3
+brush flatten at 48 52 r=12 s=20 frames=500 h=2.5
+brush smooth at 48 52 r=17 s=4 frames=40
+brush flatten at 48 52 r=10 s=20 frames=500 h=2.5
+brush flatten from 48 52 to 12.73 13.79 r=9 s=20 frames=500 h=2.5
+brush flatten at 70 -14 r=19 s=20 frames=500 h=3
+brush smooth at 70 -14 r=24 s=4 frames=40
+brush flatten at 70 -14 r=17 s=20 frames=500 h=3
+brush flatten from 70 -14 to 48.43 -9.69 r=9 s=20 frames=500 h=3
+brush flatten at -50 -50 r=12 s=20 frames=500 h=2.5
+brush smooth at -50 -50 r=17 s=4 frames=40
+brush flatten at -50 -50 r=10 s=20 frames=500 h=2.5
+brush flatten from -50 -50 to -4.75 -4.75 r=9 s=20 frames=500 h=2.5
+brush flatten at 48 -44 r=11 s=20 frames=500 h=2.5
+brush smooth at 48 -44 r=16 s=4 frames=40
+brush flatten at 48 -44 r=9 s=20 frames=500 h=2.5
+brush flatten from 48 -44 to 5.98 -5.48 r=9 s=20 frames=500 h=2.5
+brush flatten at 20 72 r=10 s=20 frames=500 h=2.5
+brush smooth at 20 72 r=15 s=4 frames=40
+brush flatten at 20 72 r=8 s=20 frames=500 h=2.5
+brush flatten from 20 72 to 5.28 19.01 r=9 s=20 frames=500 h=2.5
+call hw_mount x=-64 z=-8 b=22 h=20
+call hw_trail x=-64 z=-8 b=22 h=20 a0=82.87 turn=300 n=40 h0=3
+brush flatten from -41.18 -5.15 to -9.42 -1.18 r=7 s=20 frames=500 h=3
 
 # --- Terrain: the wreck's trench dug north-south between the west and east islets and out past the south islet - a bed
 # 16 m down for the bow and the ballroom, 24 m down for the stern; a pad on the west islet for lifeboat 7's camp ---------
@@ -32,6 +69,12 @@ brush flatten from 1 -6.5 to 15 -6.5 r=6.5 s=20 frames=200 h=-16
 brush flatten from 1 -29 to 13 -29 r=5.5 s=20 frames=200 h=-24
 brush flatten from 3 -17 to 14 -17 r=5 s=20 frames=150 h=-16
 brush flatten at -14 10 r=6 s=20 frames=80 h=6.5
+# (a ramp up to the camp from the low path in the north-east: the camp's pad stood 3 m over it)
+brush flatten at -8.5 17.3 r=1.8 s=20 frames=150 h=4.4
+brush flatten at -9.3 16 r=1.8 s=20 frames=150 h=4.9
+brush flatten at -10.1 14.8 r=1.8 s=20 frames=150 h=5.4
+brush flatten at -10.9 13.6 r=1.8 s=20 frames=150 h=5.9
+brush smooth from -8 18 to -11.5 12.8 r=3 s=4 frames=30
 clear at -14 10 r=8
 clear from 8 34 to 12 -56 r=12
 clear at 26 20 r=3
@@ -45,7 +88,7 @@ place ReefHuts_Pillar1 - at -17.9 8.5 ground
 place ReefHuts_Pillar1 - at -14.1 8.5 ground
 place ReefHuts_Tarpaulin - at -16 7.5 h=9.45 tilt=4 rot=0,0,0
 place campfire_1 - at -12.5 11.5 ground
-place VG_LoungeChair - at -11 12.6 ground yaw=200
+place VG_LoungeChair - at -12 8.8 ground sit y=0.15 yaw=200
 place VG_LoungeChair - at -14 13 ground yaw=150 roll=80
 place Crate_Big_01 - at -16.8 7.2 ground
 place Placeable_Lantern_Metal - at -16.8 7.2 h=9 drop
@@ -153,7 +196,96 @@ scatter "Pickup_Landmark_Flower_Blue" 4 at 0 0 r=44.1 seed=4511 free=3
 # --- Raft's finds in the shallows round the islets (lib_sea) ------------------------------------------------------------
 call shallows r=55 deep=5 n=2
 
-# ===== Settings, story items, notes, behaviours, quest (11 steps) =========================================================
+# --- SILVER 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Ice Crown ------
+# Ice Crown with the liner's fallen foremast on it, Frost Cave, the ruined house where Nils Ekholm waits (four lamps round it: a puzzle), a boat wreck,
+# a jump course, five deck chairs about the island (a set), and at the house the signal lamp that wants the lookout's spyglass and the lamp carbons
+call hw_zone x=-41.18 z=-5.15 al=sl_trailz id=sl_trail r=5 msg="The trail up Ice Crown starts here - round and up."
+call hw_zone x=-64 z=-8 al=sl_summitz id=sl_summit r=8 h=1 msg="The top of Ice Crown. The whole island below you."
+place Creature_Goat sl_goats at -37.18 -2.15 ground
+prop sl_goats creature.count=2
+call hw_mast x=-67 z=-6 h0=20 lv=6 a=sl_mast chest=sl_topchest top=Placeable_Lantern_Metal
+call ar_cave x=-6 z=-76 h=3 yaw=0 al=sl_caverock chest=sl_cavechest
+call hw_zone x=-7 z=-67 al=sl_cavez id=sl_cave r=4 h=1 msg="Frost Cave. Water drips somewhere in the dark."
+call ar_ruin x=-42 z=48 h=3 yaw=0 w=3 d=2 al=sl_ruin
+call ss_islander x=-43 z=43.5 yaw=200 al=sl_isl nm="Nils Ekholm" pose=lean
+prop sl_isl talk.text=You see that rock out there? I saw it first. From the crow's nest. I rang the bell three times.\n---\nThe foremast came down on the next islet when she broke. My spyglass is still up there, on Ice Crown.\n---\nThe signal lamp wants its carbons too - one of us carried the tin into Frost Cave to keep it dry. Bring both and we can show a light to the next ship.\n---\nThe deck lamps round my hut: each one you turn wakes the next. Light all four and look behind the hut.
+call ss_lamp x=-49 z=47 al=sl_lamp1 nm="Deck lamp 1" grp="Deck lamps" on=1
+call ss_lamp x=-43 z=54 al=sl_lamp2 nm="Deck lamp 2" grp="Deck lamps" on=0
+call ss_lamp x=-36 z=47 al=sl_lamp3 nm="Deck lamp 3" grp="Deck lamps" on=0
+call ss_lamp x=-43 z=40 al=sl_lamp4 nm="Deck lamp 4" grp="Deck lamps" on=1
+prop sl_lamp1 on.use=light|Deck lamp 2|toggle
+prop sl_lamp2 on.use=light|Deck lamp 3|toggle
+prop sl_lamp3 on.use=light|Deck lamp 4|toggle
+prop sl_lamp4 on.use=light|Deck lamp 1|toggle
+prop sl_lamp1 on.alllit=show|sl_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call ss_hidden x=-41 z=52.6 al=sl_lampchest
+place Creature_Chicken sl_hens at -34 54 ground
+prop sl_hens creature.count=3
+call hw_wreck x=48 z=52 h=2.5 yaw=30 obj=BoatStranded al=sl_plane crate=sl_planecrate r=9
+place Note_Paper sl_pilot at 45.54 55.73 ground y=0.1 drop yaw=60
+call hw_zone x=48 z=52 al=sl_planez id=sl_plane r=6 h=1 msg="A boat, high and dry on the shore. Nobody came for it."
+# JUMP sl pad=3 at=70 -14
+push at 70 -14
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpsl at 6 0 h=3.6
+place Block_Foundation_Tier3 jpsl at 5.25 -2.91 h=4.35
+place Block_Foundation_Tier3 jpsl at 3.18 -5.09 h=5.1
+place Block_Foundation_Tier3 jpsl at 0.31 -5.99 h=5.85
+place Block_Foundation_Tier3 jpsl at -2.63 -5.39 h=6.6
+place Block_Foundation_Tier3 jpsl at -4.91 -3.44 h=7.35
+place Block_Foundation_Tier3 jpsl at -5.97 -0.63 h=8.1
+place Block_Foundation_Tier3 jpsl at -5.52 2.34 h=8.85
+place Block_Foundation_Tier3 jpsl at -3.69 4.73 h=9.6
+# JUMP from 10
+place Block_Foundation_Tier3 jpsl at -0.94 5.93 h=10.35
+place Block_Foundation_Tier3 jpsl at 2.05 5.64 h=11.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppsl at 5.25 -2.91 h=3.668 sy=1.861
+place Block_Foundation_Tier3 jppsl at 3.18 -5.09 h=4.418 sy=2.959
+place Block_Foundation_Tier3 jppsl at 0.31 -5.99 h=5.168 sy=4.058
+place Block_Foundation_Tier3 jppsl at -2.63 -5.39 h=5.918 sy=5.157
+place Block_Foundation_Tier3 jppsl at -4.91 -3.44 h=6.668 sy=6.255
+place Block_Foundation_Tier3 jppsl at -5.97 -0.63 h=7.418 sy=7.354
+place Block_Foundation_Tier3 jppsl at -5.52 2.34 h=8.168 sy=8.453
+place Block_Foundation_Tier3 jppsl at -3.69 4.73 h=8.918 sy=9.552
+place Block_Foundation_Tier3 jppsl at -0.94 5.93 h=9.668 sy=10.650
+place Block_Foundation_Tier3 jppsl at 2.05 5.64 h=10.418 sy=11.749 sx=2 sz=2
+prop jpsl tint.color=#8a7f70
+prop jpsl tint.amount=0.35
+prop jppsl tint.color=#8a7f70
+prop jppsl tint.amount=0.35
+place Loot_Chest jcsl at -4.91 -3.44 h=7.35 sit yaw=0
+prop jcsl loot.refill=0
+place Loot_ChestSmall jbsl at 2.05 5.64 h=11.1 sit yaw=0
+prop jbsl loot.refill=0
+pop
+call hw_zone x=70 z=-22 al=sl_jumpz id=sl_jumps r=6 h=1 msg="Stacks, one higher than the next. Something at the top."
+call hw_machine x=-33 z=39 yaw=-45 al=sl_machine nm="Signal lamp" obj=TP_LaserControlPanel_lever sc=3 a=sl_top b=sl_cave done=sl_fixed rew=sl_rewchest rnote=sl_rewnote msg="It works." hint="It wants the lookout's spyglass from Ice Crown and the lamp carbons from Frost Cave."
+call hw_note x=-35.6 z=40.2 yaw=-25 al=sl_hint
+call ss_piece x=50 z=-10 al=sl_piece1 set="Deck chairs"
+call ss_piece x=-7 z=-40 al=sl_piece2 set="Deck chairs"
+call ss_piece x=35 z=17 al=sl_piece3 set="Deck chairs"
+call ss_piece x=50 z=14 al=sl_piece4 set="Deck chairs"
+call ss_piece x=38 z=-19 al=sl_piece5 set="Deck chairs"
+prop sl_piece1 on.set=show|sl_setchest\nmessage||All five deck chairs found.
+call ss_hidden x=-37 z=36 al=sl_setchest kind=Loot_Chest
+call treasure x=2 z=-49 r=5 n=1 seed=26479 kind=0
+prop treasure26479 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_snowy x=-42 z=48 r=20 seed=26492
+call ar_plants_snowy x=-6 z=-72 r=21 seed=26493
+call ar_plants_snowy x=48 z=52 r=16 seed=26494
+call ar_plants_snowy x=70 z=-14 r=23 seed=26495
+call ar_plants_snowy x=-50 z=-50 r=16 seed=26496
+call ar_plants_snowy x=48 z=-44 r=15 seed=26497
+call ar_plants_snowy x=20 z=72 r=14 seed=26498
+call ar_plants_snowy x=-64 z=-8 r=24 seed=26499
+
+# ===== Settings, story items, notes, behaviours, quest (19 steps) =========================================================
 info title=The Sunken Liner
 info author=Custom Islands
 info description=Icy rocks in a cold sea, and between them on the sea floor a great liner broken in two: her ballroom still holds a breath of air, her purser's safe the Polar Star sapphire - and something with lamps lives in her stern. Lifeboat 7's survivors left a log on the biggest rock.
@@ -238,6 +370,30 @@ prop wind sound.event=event:/amb/temperance
 prop wind sound.volume=0.4
 prop wind zone.radius=25
 
+story sl_top|Lookout's spyglass|Bolt|The lookout's brass spyglass, still in its box in the crow's nest.
+story sl_cave|Lamp carbons|Bolt|A tin of carbon rods for the signal lamp, carried into the cave by a survivor.
+story sl_fixed|Signal lamp working|Bolt|The signal lamp, working again.
+note sl_hint Lookout's message | THE SIGNAL LAMP IS DARK. It wants its carbons (a survivor took them to Frost Cave, south) and a lookout to aim it: my spyglass is still up the foremast on Ice Crown (west). - N. Ekholm, lookout
+note sl_topchest Liner's fallen foremast box | A box lashed to the top of the liner's fallen foremast.
+loot sl_topchest story:sl_top*1;Rope*2;Scrap*2
+note sl_cavechest Frost Cave chest | A chest at the back of Frost Cave, dry under the rock.
+loot sl_cavechest story:sl_cave*1;Nail*6;Plank*3
+note sl_rewnote Lookout's log | The lamp flares and its beam sweeps the ice-rocks. In its hood, the lookout's log: 'Ice ahead, I rang three times. They said the bell was a drill. Nobody slowed.'
+note sl_rewchest Signal lamp reward | What the signal lamp kept.
+loot sl_rewchest CopperIngot*2;Bolt*3;Rope*2
+note sl_lampchest Ekholm's sea chest | Ekholm's sea chest behind the hut: his watch coat, a tin of biscuits and his pay.
+loot sl_lampchest Leather*2;TradeToken*2;Rope*2
+note sl_setchest Steward's linen chest | A steward's chest that floated ashore: every deck chair plate back, and the first-class silver.
+loot sl_setchest MetalIngot*2;Glass*3;Bolt*4
+note sl_planecrate Catcher boat's locker | The whale catcher's locker: rope, a harpoon line and a crate of tinned fish.
+loot sl_planecrate Rope*3;Scrap*3;Nail*6
+prop sl_planecrate loot.refill=0
+note sl_pilot Catcher's log | WHALE CATCHER SKUA. Came to look for survivors of the liner. Found the ice-rocks first. Aground on the north shoal, crew to the boats.
+note jcsl Floe stack | Ice floes, stacked by the winter storms. A survivor left a bundle half way.
+loot jcsl Rope*3;Plank*4;MetalIngot*1
+note jbsl Top of the stack | A tin box on the highest floe.
+loot jbsl CopperIngot*1;Bolt*2;TradeToken*1
+
 quest title=The Polar Star
 quest intro=Ice-rocks in a cold sea, a lifeboat drawn up on the biggest, and a great ship on the sea floor between them. Start at the lifeboat.
 step reach|lifeboat|1|Climb onto the icy islet where lifeboat 7 came ashore
@@ -250,9 +406,20 @@ step collect|story:pursercode|1|Open the steward's cabinet in the ballroom for t
 step kill|Angler fish|2|Drive the two lamps out of the stern
 step reach|purser|1|Find the purser's office beside the stern
 step collect|story:sapphire|1|Open the purser's safe for the Polar Star
+step read|Lookout's message|1|Read the lookout's message by the signal lamp at the ruined house in the north-west
+step talk|Nils Ekholm|1|Talk to Nils Ekholm at the ruined house
+step reach|sl_trail|1|Find the foot of the trail up Ice Crown, in the west
+step reach|sl_summit|1|Climb the trail to the top of Ice Crown
+step collect|story:sl_top|1|Climb the liner's fallen foremast and take the lookout's spyglass from its box
+step reach|sl_cave|1|Find Frost Cave in the south
+step collect|story:sl_cave|1|Take the lamp carbons from the chest at the back of the cave
+step read|Lookout's log|1|Bring both to the signal lamp and read what it shows
 step open|Ship's pay chest|1|Open the ship's pay chest with the purser's key
 step blueprint|Blueprint_HeadLight|1|Take the headlamp plans from the ship's pay chest
 quest done=The Polar Star is yours, and the ship's last wages. Above you the ice-rocks stand where they always stood; below, the Regina Borealis sleeps on.
 quest reward=OxygenBottle*2;Wool*4;MetalIngot*6
+
+# SILVER 10-26 ground fixes: rocks the new terrain left floating (or buried) taken away, each by its spot and name
+clear at 32.7 30.3 r=1.5 all only=^TP_BigRock04
 
 save The Sunken Liner

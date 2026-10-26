@@ -6,15 +6,42 @@
 # south end, the operations hut, the control tower and the power bunker at its north end, the barracks along the north
 # shore; the fuel dump on the eastern islet across the north pass; a fighter ditched in the lagoon, a bomber on the outer
 # reef to the north.
+# SILVER 10-26: the new land - Gannet Rock with the old radar mast, Turtle Cave, Tavita Leota at the ruined house (a lamp puzzle), a plane wreck, a jump course, a set of five pilot wings
 include lib_rt
 include lib_relay
 include lib_sea
+include lib_areas
+include lib_highwater
+include lib_features
+include lib_silver
 new
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
 gen Seed=9017 Radius=78 Height=5 Roughness=0.3 Peaks=1 Shape=1 Style=0 BeachWidth=0.8 Cliffs=0 PeakShape=0.2
 gen SeaFloor=0 Shelf=0.5 Seabed=2
 gen Water=0.5 SeaRocks=0.35 SeaFinds=0.5 Sunken=0.4 Hostiles=0 Friendly=0 SeaLife=0
 generate
+# --- SILVER 10-26 terrain: the new land - pads raised from the sea (joined to the coast), Gannet Rock ------------------------
+brush flatten at 80 -26 r=16 s=20 frames=500 h=2.5
+brush smooth at 80 -26 r=21 s=4 frames=40
+brush flatten at 80 -26 r=14 s=20 frames=500 h=2.5
+brush flatten from 80 -26 to 62.88 -20.44 r=9 s=20 frames=500 h=2.5
+brush flatten at 16 -82 r=17 s=20 frames=500 h=2.5
+brush smooth at 16 -82 r=22 s=4 frames=40
+brush flatten at 16 -82 r=15 s=20 frames=500 h=2.5
+brush flatten from 16 -82 to 13.13 -67.28 r=9 s=20 frames=500 h=2.5
+brush flatten at -80 -12 r=17 s=20 frames=500 h=2.5
+brush smooth at -80 -12 r=22 s=4 frames=40
+brush flatten at -80 -12 r=15 s=20 frames=500 h=2.5
+brush flatten at -14 26 r=19 s=20 frames=500 h=2.5
+brush smooth at -14 26 r=24 s=4 frames=40
+brush flatten at -14 26 r=17 s=20 frames=500 h=2.5
+brush flatten at 64 58 r=12 s=20 frames=500 h=2.5
+brush smooth at 64 58 r=17 s=4 frames=40
+brush flatten at 64 58 r=10 s=20 frames=500 h=2.5
+brush flatten from 64 58 to 49.18 44.57 r=9 s=20 frames=500 h=2.5
+call hw_mount x=-44 z=82 b=16 h=14
+call hw_trail x=-44 z=82 b=16 h=14 a0=151.78 turn=300 n=40 h0=3
+brush flatten from -35.96 67.02 to -32.65 60.85 r=7 s=20 frames=500 h=3
 
 # ===== The land: the passes, the runway, the pads for the buildings, the hollows for the wrecks =========================
 # (the north pass and the south-east pass: the ring cut to the sea floor, the eastern islet a swim or a wade away)
@@ -218,7 +245,95 @@ where drum1
 where drum2
 where lamp1
 
-# ===== Settings, story items, notes, behaviours, quest (11 steps) =========================================================
+# --- SILVER 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Gannet Rock ------
+# Gannet Rock with the old radar mast on it, Turtle Cave, the ruined house where Tavita Leota waits (four lamps round it: a puzzle), a plane wreck,
+# a jump course, five pilot wings about the island (a set), and at the house the beacon transmitter that wants the radar valve and the morse key
+call hw_zone x=-35.96 z=67.02 al=af_trailz id=af_trail r=5 msg="The trail up Gannet Rock starts here - round and up."
+call hw_zone x=-44 z=82 al=af_summitz id=af_summit r=8 h=1 msg="The top of Gannet Rock. The whole island below you."
+place Creature_Goat af_goats at -31.96 70.02 ground
+prop af_goats creature.count=2
+call hw_mast x=-47 z=84 h0=14 lv=6 a=af_mast chest=af_topchest top=Placeable_Flag_01
+call ar_cave x=16 z=-86 h=2.5 yaw=0 al=af_caverock chest=af_cavechest
+call hw_zone x=15 z=-77 al=af_cavez id=af_cave r=4 h=1 msg="Turtle Cave. Water drips somewhere in the dark."
+call ar_ruin x=80 z=-26 h=2.5 yaw=0 w=3 d=2 al=af_ruin
+call ss_islander x=79 z=-30.5 yaw=200 al=af_isl nm="Tavita Leota" pose=sit
+prop af_isl talk.text=Before the airfield this was our island. Then the pilots came, and then they went.\n---\nI showed them the reef paths. One of them taught me the morse. When they left, I hid the spare key in Turtle Cave.\n---\nTheir beacon wants that key and the valve off the radar mast on Gannet Rock. Let it call - maybe the last flight hears it.\n---\nMy lamps round the house: each one you light wakes the next. Light all four and look behind the back wall.
+place Placeable_Chair_Basic - at 79 -30.5 ground sit yaw=200
+call ss_lamp x=73 z=-27 al=af_lamp1 nm="Reef lamp 1" grp="Reef lamps" on=1
+call ss_lamp x=79 z=-20 al=af_lamp2 nm="Reef lamp 2" grp="Reef lamps" on=1
+call ss_lamp x=86 z=-27 al=af_lamp3 nm="Reef lamp 3" grp="Reef lamps" on=0
+call ss_lamp x=79 z=-34 al=af_lamp4 nm="Reef lamp 4" grp="Reef lamps" on=0
+prop af_lamp1 on.use=light|Reef lamp 2|toggle
+prop af_lamp2 on.use=light|Reef lamp 3|toggle
+prop af_lamp3 on.use=light|Reef lamp 4|toggle
+prop af_lamp4 on.use=light|Reef lamp 1|toggle
+prop af_lamp1 on.alllit=show|af_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call ss_hidden x=81 z=-21.4 al=af_lampchest
+place Creature_Chicken af_hens at 88 -20 ground
+prop af_hens creature.count=3
+call ar_plane x=-80 z=-12 h=2.5 yaw=20 al=af_plane crate=af_planecrate
+place Note_Paper af_pilot at -83.07 -8.75 ground y=0.1 drop yaw=50
+call hw_zone x=-80 z=-12 al=af_planez id=af_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
+# JUMP af pad=2.5 at=-14 26
+push at -14 26
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=2.5
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=2.5
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpaf at -4.24 -4.24 h=3.1
+place Block_Foundation_Tier3 jpaf at -5.77 -1.65 h=3.85
+place Block_Foundation_Tier3 jpaf at -5.85 1.35 h=4.6
+place Block_Foundation_Tier3 jpaf at -4.46 4.01 h=5.35
+place Block_Foundation_Tier3 jpaf at -1.95 5.67 h=6.1
+place Block_Foundation_Tier3 jpaf at 1.04 5.91 h=6.85
+place Block_Foundation_Tier3 jpaf at 3.78 4.66 h=7.6
+place Block_Foundation_Tier3 jpaf at 5.56 2.25 h=8.35
+place Block_Foundation_Tier3 jpaf at 5.96 -0.73 h=9.1
+# JUMP from 10
+place Block_Foundation_Tier3 jpaf at 4.85 -3.53 h=9.85
+place Block_Foundation_Tier3 jpaf at 2.54 -5.44 h=10.6 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppaf at -5.77 -1.65 h=3.168 sy=1.861
+place Block_Foundation_Tier3 jppaf at -5.85 1.35 h=3.918 sy=2.959
+place Block_Foundation_Tier3 jppaf at -4.46 4.01 h=4.668 sy=4.058
+place Block_Foundation_Tier3 jppaf at -1.95 5.67 h=5.418 sy=5.157
+place Block_Foundation_Tier3 jppaf at 1.04 5.91 h=6.168 sy=6.255
+place Block_Foundation_Tier3 jppaf at 3.78 4.66 h=6.918 sy=7.354
+place Block_Foundation_Tier3 jppaf at 5.56 2.25 h=7.668 sy=8.453
+place Block_Foundation_Tier3 jppaf at 5.96 -0.73 h=8.418 sy=9.552
+place Block_Foundation_Tier3 jppaf at 4.85 -3.53 h=9.168 sy=10.650
+place Block_Foundation_Tier3 jppaf at 2.54 -5.44 h=9.918 sy=11.749 sx=2 sz=2
+prop jpaf tint.color=#8a7f70
+prop jpaf tint.amount=0.35
+prop jppaf tint.color=#8a7f70
+prop jppaf tint.amount=0.35
+place Loot_Chest jcaf at 1.04 5.91 h=6.85 sit yaw=0
+prop jcaf loot.refill=0
+place Loot_ChestSmall jbaf at 2.54 -5.44 h=10.6 sit yaw=0
+prop jbaf loot.refill=0
+pop
+call hw_zone x=-14 z=18 al=af_jumpz id=af_jumps r=6 h=1 msg="Stacks, one higher than the next. Something at the top."
+call hw_machine x=89 z=-35 yaw=-45 al=af_machine nm="Beacon transmitter" obj=RT_PowerBox sc=1 a=af_top b=af_cave done=af_fixed rew=af_rewchest rnote=af_rewnote msg="It works." hint="It wants the radar valve from Gannet Rock and the morse key from Turtle Cave."
+call hw_note x=86.4 z=-33.8 yaw=-25 al=af_hint
+call ss_piece x=-58 z=47 al=af_piece1 set="Pilot wings"
+call ss_piece x=-28 z=-64 al=af_piece2 set="Pilot wings"
+call ss_piece x=38 z=59 al=af_piece3 set="Pilot wings"
+call ss_piece x=-61 z=-13 al=af_piece4 set="Pilot wings"
+call ss_piece x=26 z=-46 al=af_piece5 set="Pilot wings"
+prop af_piece1 on.set=show|af_setchest\nmessage||All five pilot wings found.
+call ss_hidden x=85 z=-38 al=af_setchest kind=Loot_Chest
+call treasure x=-13 z=68 r=5 n=1 seed=26482 kind=0
+prop treasure26482 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_tropical x=80 z=-26 r=20 seed=26495
+call ar_plants_tropical x=16 z=-82 r=21 seed=26496
+call ar_plants_tropical x=-80 z=-12 r=21 seed=26497
+call ar_plants_tropical x=-14 z=26 r=23 seed=26498
+call ar_plants_tropical x=64 z=58 r=16 seed=26499
+call ar_plants_tropical x=-44 z=82 r=18 seed=26500
+
+# ===== Settings, story items, notes, behaviours, quest (19 steps) =========================================================
 info title=Albatross Field
 info author=Custom Islands
 info description=A coral atoll with a wartime airfield on it: a runway, rusting hangars, a control tower, a fuel dump on the next islet and a fighter in the lagoon. The field closed with one flight still out on patrol. The commander's last order says what to do if anyone keeps the field after him.
@@ -320,6 +435,30 @@ prop gulls creature.count=3
 prop gulls creature.respawn=0
 prop gulls creature.zone=hangars
 
+story af_top|Radar valve|Bolt|The magnetron valve off the old radar mast on Gannet Rock.
+story af_cave|Morse key|Bolt|The field's spare morse key, hidden in Turtle Cave when the order came to burn the codes.
+story af_fixed|Beacon transmitter working|Bolt|The beacon transmitter, working again.
+note af_hint Signals hut notice | BEACON OFF THE AIR. Needs the radar valve (mast on Gannet Rock, north-west) and the spare morse key (Turtle Cave, south). Tavita at the village knows the reef paths.
+note af_topchest Old radar mast box | A box lashed to the top of the old radar mast.
+loot af_topchest story:af_top*1;Rope*2;Scrap*2
+note af_cavechest Turtle Cave chest | A chest at the back of Turtle Cave, dry under the rock.
+loot af_cavechest story:af_cave*1;Nail*6;Plank*3
+note af_rewnote Beacon log | The beacon hums and starts sending the field's call sign over the sea. In its log: 'Last flight overdue. Beacon on all night. Ordered off at dawn. I left it on.'
+note af_rewchest Beacon transmitter reward | What the beacon transmitter kept.
+loot af_rewchest CopperIngot*2;Bolt*3;Rope*2
+note af_lampchest Tavita's box | Tavita's box behind the house: shell money, a pilot's wings and a photo.
+loot af_lampchest TradeToken*2;CopperIngot*1;Rope*2
+note af_setchest Squadron chest | The squadron's chest: all five wings back, and the mess fund.
+loot af_setchest MetalIngot*2;Glass*3;Bolt*4
+note af_planecrate Transport plane's crate | The transport's cargo crate: spare parts and tinned peaches.
+loot af_planecrate Plastic*3;Scrap*3;Nail*6
+prop af_planecrate loot.refill=0
+note af_pilot Transport pilot's log | SUPPLY RUN 9. Field lights off, beacon silent. Put her down on the reef west of the strip and walked in.
+note jcaf Palm stumps | Palm stumps the storms left in the lagoon. A mechanic's bundle half way.
+loot jcaf Rope*3;Plank*4;MetalIngot*1
+note jbaf Top stump | A box at the very top.
+loot jbaf CopperIngot*1;Bolt*2;TradeToken*1
+
 quest title=Long Patrol
 quest intro=An atoll airfield, closed the night one flight didn't come home. The commander left an order in the operations hut. Start on the runway.
 step reach|strip|1|Land on the coral runway
@@ -332,10 +471,38 @@ step collect|story:crystal|1|Take the radio crystal from her cockpit box
 step reach|tower|1|Climb the control tower to the radio
 step collect|story:landingorder|1|Fit the crystal and raise the lost flight on the radio
 step collect|story:runwaylit|1|Light the four runway lamps, south to north
+step read|Signals hut notice|1|Read the signals hut notice by the beacon transmitter at the ruined house in the east
+step talk|Tavita Leota|1|Talk to Tavita Leota at the ruined house
+step reach|af_trail|1|Find the foot of the trail up Gannet Rock, in the north-west
+step reach|af_summit|1|Climb the trail to the top of Gannet Rock
+step collect|story:af_top|1|Climb the old radar mast and take the radar valve from its box
+step reach|af_cave|1|Find Turtle Cave in the south
+step collect|story:af_cave|1|Take the morse key from the chest at the back of the cave
+step read|Beacon log|1|Bring both to the beacon transmitter and read what it shows
 step open|Commander's footlocker|1|Open the commander's footlocker - it's for whoever brings them home
 step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the commander's footlocker
 step blueprint|Blueprint_Antenna|1|Take the antenna plans from the commander's footlocker
 quest done=Four aircraft came home over Albatross Field - or something did. The runway lamps burn on, and the order is carried out.
 quest reward=MetalIngot*8;Glass*6;CircuitBoard*2
+
+# SILVER 10-26 ground fixes: rocks the new terrain left floating (or buried) taken away, each by its spot and name
+clear at 42.9 45.0 r=1.5 all only=^VP_RubblePile_Small01
+clear at 66.3 5.8 r=1.5 all only=^SmallBoulder1
+clear at 56.4 15.2 r=1.5 all only=^SmallBoulder1
+clear at 61.7 -3.6 r=1.5 all only=^SmallBoulder1
+clear at 58.3 -1.9 r=1.5 all only=^SmallBoulder1
+clear at 34.5 47.2 r=1.5 all only=^SmallBoulder1
+clear at 36.7 54.2 r=1.5 all only=^SmallBoulder1
+clear at 30.9 56.6 r=1.5 all only=^SmallBoulder1
+clear at 39.4 50.6 r=1.5 all only=^SmallBoulder1
+clear at 73.5 -20.9 r=1.5 all only=^SmallBoulder2
+clear at 5.7 -79.6 r=1.5 all only=^SmallBoulder2
+clear at 19.5 -61.2 r=1.5 all only=^SmallBoulder2
+clear at -66.8 -18.4 r=1.5 all only=^SmallBoulder2
+clear at -24.3 35.4 r=1.5 all only=^SmallBoulder2
+clear at 52.8 48.7 r=1.5 all only=^SmallBoulder2
+clear at 56.3 48.3 r=1.5 all only=^SmallBoulder2
+clear at -39.7 85.5 r=1.5 all only=^SmallBoulder2
+clear at -55.7 78.5 r=1.5 all only=^BigBoulder1_Low
 
 save Albatross Field

@@ -1,7 +1,7 @@
 # Guide pictures of Albatross Field (CIPlay albatross_field_pics): Raft's camera, afternoon, calm. The pictures above the
 # water first (a player under water makes Raft draw every picture as seen under water), the ditched fighter last
 island Albatross Field
-offset -1.6942 -0.1074
+offset -1.7806 2.2619
 hour 15
 weather Calm
 at -55 -30
@@ -13,3 +13,10 @@ picture albatross_field_hangars -16 9 -30 -36 6 -48
 at 5 4 h=-5
 wait 2
 picture albatross_field_ditched 10 -4.5 9 5 -7 0
+# SILVER 10-26: the new land - Gannet Rock, Turtle Cave, the ruined house, the wreck, the jumps
+picture silver_af_hill 35.55 22.4 12.5 -47 9.8 84
+picture silver_af_cave 22 7.5 -62 16 5.5 -86
+picture silver_af_ruin 68 7.5 -38 80 4 -26
+picture silver_af_wreck -68 8.5 -22 -80 3.5 -12
+picture silver_af_jumps 0 8.5 14 -14 6.5 26
+picture silver_af_air 128 70 -41.6 0 0 0

@@ -3,11 +3,11 @@
 # face along x 0), the Sun shrine at -28 0 (its doorway east), the Rain shrine at 30.5 0 beyond the moat's stepping stones
 # (x 24-27), the well at -6 -26 (its gorge to the sea south); the causeway up the west face from the base camp (-24 46).
 island The Step Pyramid
-offset 0 0
+offset -2.0083 9.8018
 expect step 0
 expect title The Rain Kings
 wait 5
-expect animals Chicken 3
+expect animals Chicken 6
 expect animals Turtle 2
 
 # The base camp: the field notes
@@ -54,7 +54,7 @@ at -6 -48 h=0.5
 
 # Back up on the plateau: across the stepping stones over the moat to the Rain shrine
 at 18 0 h=24
-walk 18 0 to 20.8 0 to 22.3 0 to 23.9 0 to 25.5 0 to 27.1 0 to 29.6 0 h=23.85 below=26
+walk 18 0 to 20.8 0 to 22.3 0 to 23.9 0 to 25.5 0 to 27.1 0 to 28.7 0 to 30.3 0 h=23.85 below=26
 open Rain shrine's tablet chest
 expect story jade 3
 expect step 9
@@ -65,6 +65,60 @@ zone summit
 expect step 10
 read The Rain Kings' carvings
 expect step 11
+# SILVER 10-26: the ruined house, Mateo Ruiz, the climb, Serpent Cave, the secrets
+expect hidden sp_rewchest
+use sp_machine
+expect hidden sp_rewchest
+read Porter's carving
+expect step 12
+use Mateo Ruiz
+wait 1
+expect step 13
+expect hidden sp_lampchest
+use Torch post 1
+use Torch post 3
+wait 1
+expect shown sp_lampchest
+open Mateo's strongbox
+zone sp_trail
+expect step 14
+zone sp_summit
+expect step 15
+open Explorer's survey tower box
+wait 3
+expect story sp_top 1
+expect step 16
+zone sp_cave
+expect step 17
+open Serpent Cave chest
+wait 3
+expect story sp_cave 1
+expect step 18
+use sp_machine
+expect shown sp_rewchest
+expect story sp_fixed 1
+open Calendar stone reward
+wait 3
+read Calendar reading
+expect step 19
+# the secrets: the wreck, the jumps, the maze, the set
+zone sp_plane
+open Mail plane's crate
+read Mail pilot's note
+zone sp_jumps
+open Stela stack
+open Top stela
+zone sp_maze
+open Priests' offering box
+expect hidden sp_setchest
+use sp_piece1
+use sp_piece2
+use sp_piece3
+use sp_piece4
+use sp_piece5
+wait 2
+expect shown sp_setchest
+open Bead offering bowl
 use altar
 expect message settle into their hollows
 open Rain Kings' offering chest

@@ -3,11 +3,11 @@
 # 16 m down), the ballroom (x 2-14, z -11..-2, its floor 16 m down), the debris field (z -13..-23), the purser's office
 # (x 2.5-11.5, z -32..-26, 24 m down) and the stern (13 -46) at the deep south end.
 island The Sunken Liner
-offset -0.2904 -0.4361
+offset -4.6484 -3.9492
 expect step 0
 expect title The Polar Star
 wait 5
-expect animals Goat 2
+expect animals Goat 4
 expect animals Dolphin 2
 
 # Lifeboat 7's camp: the survivors' log, the camp chest with the steward's keys
@@ -49,6 +49,57 @@ expect step 9
 open Purser's safe
 expect story sapphire 1
 expect step 10
+# SILVER 10-26: the ruined house, Nils Ekholm, the climb, Frost Cave, the secrets
+expect hidden sl_rewchest
+use sl_machine
+expect hidden sl_rewchest
+read Lookout's message
+expect step 11
+use Nils Ekholm
+wait 1
+expect step 12
+expect hidden sl_lampchest
+use Deck lamp 2
+wait 1
+expect shown sl_lampchest
+open Ekholm's sea chest
+zone sl_trail
+expect step 13
+zone sl_summit
+expect step 14
+open Liner's fallen foremast box
+wait 3
+expect story sl_top 1
+expect step 15
+zone sl_cave
+expect step 16
+open Frost Cave chest
+wait 3
+expect story sl_cave 1
+expect step 17
+use sl_machine
+expect shown sl_rewchest
+expect story sl_fixed 1
+open Signal lamp reward
+wait 3
+read Lookout's log
+expect step 18
+# the secrets: the wreck, the jumps, the set
+zone sl_plane
+open Catcher boat's locker
+read Catcher's log
+zone sl_jumps
+open Floe stack
+open Top of the stack
+expect hidden sl_setchest
+use sl_piece1
+use sl_piece2
+use sl_piece3
+use sl_piece4
+use sl_piece5
+wait 2
+expect shown sl_setchest
+open Steward's linen chest
 open Ship's pay chest
 wait 2
 expect done

@@ -1,6 +1,6 @@
 # Guide pictures of The Step Pyramid (CIPlay step_pyramid_pics): Raft's camera, midday, calm. Points as in its recipe ("offset").
 island The Step Pyramid
-offset 0 0
+offset -2.0083 9.8018
 hour 11
 weather Calm
 at 10 22
@@ -9,3 +9,11 @@ picture step_pyramid_pyramid 24 32 38 0 28 0
 picture step_pyramid_mesa -60 30 60 -10 18 0
 picture step_pyramid_well -9 14 -38 -6 4 -24
 picture step_pyramid_rain 16 28 6 30 24 0
+# SILVER 10-26: the new land - Jaguar Hill, Serpent Cave, the ruined house, the wreck, the jumps
+picture silver_sp_hill 32.55 26 23 -63 14 62
+picture silver_sp_cave -10 8 66 -20 6 90
+picture silver_sp_ruin 72 8 -10 84 4.5 2
+picture silver_sp_wreck -50 7.5 -38 -62 2.5 -28
+picture silver_sp_maze 28 10.5 32 40 1.5 46
+picture silver_sp_jumps 52 8.5 -48 38 6.5 -36
+picture silver_sp_air 134.4 70 3.2 0 0 0

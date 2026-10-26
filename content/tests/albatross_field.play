@@ -5,7 +5,7 @@
 # east door) and the power bunker (x -44.5..-35.5, z 54..60) at the runway's north end; the fuel dump on the eastern
 # islet (56 0) across the north pass; the ditched fighter 8 m down in the lagoon (5 0)
 island Albatross Field
-offset -1.6942 -0.1074
+offset -1.7806 2.2619
 expect step 0
 expect title Long Patrol
 wait 5
@@ -72,6 +72,57 @@ use lamp4
 expect shown lamp4light
 expect story runwaylit 1
 expect step 10
+# SILVER 10-26: the ruined house, Tavita Leota, the climb, Turtle Cave, the secrets
+expect hidden af_rewchest
+use af_machine
+expect hidden af_rewchest
+read Signals hut notice
+expect step 11
+use Tavita Leota
+wait 1
+expect step 12
+expect hidden af_lampchest
+use Reef lamp 3
+wait 1
+expect shown af_lampchest
+open Tavita's box
+zone af_trail
+expect step 13
+zone af_summit
+expect step 14
+open Old radar mast box
+wait 3
+expect story af_top 1
+expect step 15
+zone af_cave
+expect step 16
+open Turtle Cave chest
+wait 3
+expect story af_cave 1
+expect step 17
+use af_machine
+expect shown af_rewchest
+expect story af_fixed 1
+open Beacon transmitter reward
+wait 3
+read Beacon log
+expect step 18
+# the secrets: the wreck, the jumps, the set
+zone af_plane
+open Transport plane's crate
+read Transport pilot's log
+zone af_jumps
+open Palm stumps
+open Top stump
+expect hidden af_setchest
+use af_piece1
+use af_piece2
+use af_piece3
+use af_piece4
+use af_piece5
+wait 2
+expect shown af_setchest
+open Squadron chest
 open Commander's footlocker
 wait 3
 expect item Blueprint_Reciever 1

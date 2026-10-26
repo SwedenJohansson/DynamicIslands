@@ -1,6 +1,6 @@
 # Guide pictures of The Arena (CIPlay the_arena_pics): Raft's camera, midday, calm. Points as in its recipe ("offset").
 island The Arena
-offset 0.4541 0.9109
+offset 2.6119 -4.723
 hour 11
 weather Calm
 at 15 -60 h=4
@@ -11,3 +11,11 @@ picture the_arena_lake -2 10 -62 -22 1 -44
 picture the_arena_door 12 10 -30 -4 9 -24
 picture the_arena_control -4.6 9.2 -26.4 -7 8.2 -17
 picture the_arena_leanto -44 6 -36 -50 3 -30
+# SILVER 10-26: the new land - Victor's Rock, Hideout Cave, the ruined house, the wreck, the jumps
+picture silver_ta_hill 73.25 23.6 9.4 83 11.2 -14
+picture silver_ta_cave -74 8 -26 -80 6 -50
+picture silver_ta_ruin 56 7.1 10 68 3.6 22
+picture silver_ta_wreck 10 9 -100 -2 4 -90
+picture silver_ta_maze -84 11.5 -8 -72 2.5 6
+picture silver_ta_jumps 80 9 50 66 7 62
+picture silver_ta_air 108.8 70 35.2 0 0 0

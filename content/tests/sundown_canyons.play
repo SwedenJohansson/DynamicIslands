@@ -16,7 +16,7 @@ offset 0.1194 1.6867
 expect step 0
 expect title The New Sheriff
 expect animals Llama 3
-expect animals Chicken 4
+expect animals Chicken 7
 expect animals Goat 3
 expect animals Turtle 2
 expect animals Dolphin 3
@@ -151,17 +151,68 @@ zone homeward
 expect step 30
 read Mayor's proclamation
 expect step 32
+# SILVER 10-26: the ruined house, Hattie Cole, the climb, Rattler Cave, the secrets
+expect hidden sc_rewchest
+use sc_machine
+expect hidden sc_rewchest
+read Line crew notice
+expect step 33
+use Hattie Cole
+wait 1
+expect step 34
+expect hidden sc_lampchest
+use Homestead lantern 1
+wait 1
+expect shown sc_lampchest
+open Hattie's biscuit tin
+zone sc_hill
+expect step 35
+open Telegraph pole tower box
+wait 3
+expect story sc_top 1
+expect step 36
+zone sc_cave
+expect step 37
+open Rattler Cave chest
+wait 3
+expect story sc_cave 1
+expect step 38
+use sc_machine
+expect shown sc_rewchest
+expect story sc_fixed 1
+open Telegraph office set reward
+wait 3
+read Telegram
+expect step 39
+# the secrets: the wreck, the jumps, the maze, the set
+zone sc_plane
+open Barnstormer's crate
+read Barnstormer's poster
+zone sc_jumps
+open Rock stacks
+open Top rock
+zone sc_maze
+open Corral prize
+expect hidden sc_setchest
+use sc_piece1
+use sc_piece2
+use sc_piece3
+use sc_piece4
+use sc_piece5
+wait 2
+expect shown sc_setchest
+open Deputies' chest
 
 # Chapter 6 - the bank: in at its door; the teller takes the silver; the letter; the vault door with the gang's key
 walk -112 -18.5 to -106 -18.5 to -101 -18.5 h=3.05 below=6
 zone bank
-expect step 33
+expect step 40
 use teller
 expect story silverbar 0
 expect story receipt 1
-expect step 34
+expect step 41
 read Bank manager's letter
-expect step 35
+expect step 42
 walk -99.5 -18.5 to -99.5 -15.5 to -94 -15.5 h=3.05 below=6 blocked
 use vaultdoor
 wait 3
