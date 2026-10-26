@@ -784,8 +784,12 @@ namespace DynamicIslands
 			if (ok) Log("PASS: island generator test"); else Fail("island generator test");
 		}
 
+		// (set while a play polls its expects: the result only, no PASS/FAIL line)
+		static bool quietCheck;
+
 		static void Check(ref bool ok, bool condition, string what)
 		{
+			if (quietCheck) { ok &= condition; return; }
 			Log((condition ? "PASS: " : "FAIL: ") + what);
 			ok &= condition;
 		}
@@ -2079,11 +2083,24 @@ namespace DynamicIslands
 		public static void Init()
 		{
 			Log("Command file: " + CommandFile + (Sandboxed ? " (second player: running in Sandboxie)" : ""));
+			// (the build this Raft runs: buildstamp.ps1 compares it with the installed .rmod - a box run of 10-26 played
+			// ~40 min on a Raft still running the 08:16 build)
+			LogBuild();
 			// A Raft that isn't in front pauses, and then never reads the command file (not even a CIBackground):
 			// dev builds always keep running, so a Raft started behind other windows can still be driven.
 			Application.runInBackground = true;
 			DynamicIslands.instance.StartCoroutine(PollCommandFile());
 		}
+
+		static void LogBuild()
+		{
+			int files = 0;
+			try { files = DynamicIslands.instance.modlistEntry.modinfo.modFiles.Count; } catch { }
+			Log("BUILD " + IslandNetwork.Build + " (" + files + " files, loaded " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) + ")");
+		}
+
+		[ConsoleCommand(name: "CIBuild", docs: "Dev, anywhere: logs the build this Raft runs - BUILD <hash of the .rmod's files, as IslandNetwork.Build> (buildstamp.ps1)")]
+		public static void CIBuild() { LogBuild(); }
 
 		[System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
 		static extern IntPtr GetModuleHandle(string moduleName);

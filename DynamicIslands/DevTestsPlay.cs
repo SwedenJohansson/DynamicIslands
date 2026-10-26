@@ -126,12 +126,31 @@ namespace DynamicIslands
 			playEntry = null;
 			playBlueprints.Clear();
 			int checks = 0;
-			foreach (RLine rl in lines)
+			// (settle time: a step's wait after its action is owed, not slept. The expects right after it are polled and
+			// checked as soon as all of them hold - only when each was false before the action, so nothing true all along
+			// passes early. Any other step, or an expect that can't pass early, waits the whole time as before; a step
+			// that moves or looks (walk, at, picture...) after an early group still waits out the time it saved)
+			float owed = 0f, settleLeft = 0f;
+			List<RLine> settleGroup = null;
+			bool settleAllFalse = false;
+			int groupLeft = 0;
+			for (int li = 0; li < lines.Count; li++)
 			{
+				RLine rl = lines[li];
 				string line = rl.Text.Trim();
 				string[] t = Tokens(line);
 				string verb = t[0].ToLowerInvariant();
 				var opt = Options(t.Skip(1));
+				bool plainExpect = verb == "expect" && PlayPlainExpect(rl);
+				bool okBefore = ok;
+				if (!plainExpect) groupLeft = 0;
+				if (!plainExpect && verb != "wait" && verb != "log" && owed > 0f) { yield return new WaitForSeconds(owed); owed = 0f; settleGroup = null; }
+				if (!plainExpect && verb != "log" && settleLeft > 0f) { if (!PlayNoSettleVerbs.Contains(verb)) yield return new WaitForSeconds(settleLeft); settleLeft = 0f; }
+				if (PlayDeferVerbs.Contains(verb) && settleGroup == null && playEntry != null)
+				{
+					settleGroup = PlayExpectGroup(lines, li + 1);
+					settleAllFalse = settleGroup.Count > 0 && settleGroup.All(g => !PlayQuiet(g));
+				}
 				// (sail only counts distance: a plan whose first rule wants km sails before any island - Relic of the Seventh Tide)
 				bool storyStep = verb == "plan" || verb == "note" || verb == "tune" || verb == "arrive" || verb == "sail" || (verb == "expect" && t.Length > 1 && t[1] == "chain");
 				if (verb != "island" && verb != "log" && verb != "wait" && verb != "hour" && !storyStep && playEntry == null) { Fail("play " + name + ", " + rl.Where + ": no island yet"); yield break; }
@@ -253,7 +272,7 @@ namespace DynamicIslands
 					}
 					case "zone":
 						Check(ref ok, ScEnterZone(playEntry, Rest(line, 1).Trim()), "zone '" + Rest(line, 1).Trim() + "' there");
-						yield return new WaitForSeconds(1.2f);
+						owed += 1.2f;
 						break;
 					case "air":
 					{
@@ -280,7 +299,7 @@ namespace DynamicIslands
 						if (!plain && inChest != null) { PutPlayerNear(inChest.transform); NoteReader.Open(inChest); NoteReader.Close(); }
 						else ScReadNote(playEntry, title);
 						Check(ref ok, plain || inChest != null, "a note '" + title + "' to read");
-						yield return new WaitForSeconds(1.2f);
+						owed += 1.2f;
 						break;
 					}
 					case "dig":
@@ -300,12 +319,12 @@ namespace DynamicIslands
 						Pickup digger = RAPI.GetLocalPlayer().GetComponentInChildren<Pickup>(true);
 						if (dug != null && digger != null) digger.PickupItemByType(dug, true);
 						checks++;
-						yield return new WaitForSeconds(1.5f);
+						owed += 1.5f;
 						break;
 					}
 					case "open":
 						Check(ref ok, ScOpenChest(playEntry, Rest(line, 1).Trim()) != null, "chest '" + Rest(line, 1).Trim() + "' opened");
-						yield return new WaitForSeconds(1.2f);
+						owed += 1.2f;
 						break;
 					case "reach":
 					{
@@ -320,7 +339,7 @@ namespace DynamicIslands
 						Check(ref ok, chest != null && ScFlat(chest.transform.position, p) < 4f, "a chest at " + t[1] + "," + t[2] + (chest != null ? " (" + ScFlat(chest.transform.position, p).ToString("F1") + " m off)" : ""));
 						if (chest != null) { PutPlayerNear(chest.transform); chest.LastGiven = new List<string>(); chest.Open(); }
 						checks++;
-						yield return new WaitForSeconds(1.2f);
+						owed += 1.2f;
 						break;
 					}
 					case "use":
@@ -331,9 +350,9 @@ namespace DynamicIslands
 						if (stay) what = what.Substring(0, what.Length - 5).Trim();
 						IslandObjectRef used = ScObjOf(playEntry, what);
 						Check(ref ok, used != null, "object '" + what + "' there");
-						if (stay) { if (used != null) Behaviours.Fire(playEntry, used.Index, "use", true); }
-						else ScUse(playEntry, what);
-						yield return new WaitForSeconds(1.2f);
+						// (standing on a lift: its ride takes the full time, as before)
+						if (stay) { if (used != null) Behaviours.Fire(playEntry, used.Index, "use", true); yield return new WaitForSeconds(1.2f); }
+						else { ScUse(playEntry, what); owed += 1.2f; }
 						break;
 					}
 					case "code":
@@ -372,7 +391,7 @@ namespace DynamicIslands
 						ControllerType backType = killer != null ? killer.PersonController.controllerType : ControllerType.Ground;
 						foreach (AI_NetworkBehaviour a in animals) { if (a == null) continue; PutPlayerNear(a.transform); ScKill(a); yield return new WaitForSeconds(0.4f); } // (a puffer fish that burst is gone: Rootcellar Deep 10-25)
 						if (killer != null && animals.Count > 0) { PlayerMove.To(killer, playEntry.Position + back, backType); KeepAlive(killer); }
-						yield return new WaitForSeconds(2f);
+						owed += 2f;
 						break;
 					}
 					case "catch":
@@ -386,7 +405,7 @@ namespace DynamicIslands
 							.Where(an => an.connectedSpawner != null && an.connectedSpawner.transform.IsChildOf(playEntry.Root.transform)).Take(want).ToList();
 						Check(ref ok, animals.Count >= want, "animals '" + label + "' to catch (" + animals.Count + " of " + want + ")");
 						foreach (AI_NetworkBehaviour_Domestic a in animals) yield return ScCarryHome(a, false);
-						yield return new WaitForSeconds(1f);
+						owed += 1f;
 						break;
 					}
 					case "plan":
@@ -497,12 +516,23 @@ namespace DynamicIslands
 							Check(ref ok, tilt < 2f && turned > 5f, "'" + t[2] + "' turns around its own axis (its axis moved " + tilt.ToString("F1") + " deg, it turned " + turned.ToString("F1") + " deg)");
 							break;
 						}
-						yield return new WaitForSeconds(0.3f);
+						if (groupLeft > 0) groupLeft--;  // (its group held together: checked at once)
+						else if (owed > 0f && settleAllFalse && settleGroup != null && settleGroup.Count > 0 && settleGroup[0] == rl)
+						{
+							// (polled for at most the time it waited before: owed + its 0.3 s)
+							float budget = owed + 0.3f, w = 0f;
+							bool all = settleGroup.All(PlayQuiet);
+							while (!all && w < budget) { yield return new WaitForSeconds(0.1f); w += 0.1f; all = settleGroup.All(PlayQuiet); }
+							settleLeft = Mathf.Max(0f, budget - w);
+							groupLeft = all ? settleGroup.Count - 1 : 0;
+							owed = 0f; settleGroup = null;
+						}
+						else { yield return new WaitForSeconds(owed + 0.3f); owed = 0f; settleGroup = null; }
 						try { PlayExpect(t, line, ref ok); }
 						catch (Exception e) { Check(ref ok, false, rl.Where + " (" + line + "): " + e.Message); }
 						break;
 					case "wait":
-						yield return new WaitForSeconds(t.Length > 1 ? F(t[1]) : 1f);
+						owed += t.Length > 1 ? F(t[1]) : 1f;
 						break;
 					case "hour":
 						AzureSkyHour(F(t[1]));
@@ -603,7 +633,16 @@ namespace DynamicIslands
 						Check(ref ok, false, rl.Where + ": unknown step '" + verb + "'");
 						break;
 				}
+				// (fail fast: a quest or story step that didn't come leaves every later step waiting out its time for what
+				// follows from it - a plan's next tune/arrive 90 s, an island 40 s. The play ends at that FAIL)
+				string kind = t.Length > 1 ? t[1].ToLowerInvariant() : "";
+				if (okBefore && !ok && (verb == "tune" || verb == "arrive" || (verb == "expect" && (kind == "step" || kind == "done" || kind == "chain"))))
+				{
+					Log("  (play ended at this FAIL, " + rl.Where + ": the " + (lines.Count - li - 1) + " steps after it follow from it)");
+					break;
+				}
 			}
+			if (owed > 0f) yield return new WaitForSeconds(owed);
 			if (!keep && made.Count > 0) { ScRemove(made); OnRaftCommand(); }
 			if (planMode) { PlanCleanSlate(); WorldDirector.SetPlan(WorldPlan.RandomName, false); StoryChain.OnWorldRead(); IslandWorldState.Save(); planMode = false; OnRaftCommand(); }
 			if (ok) Log("PASS: play " + name + " (" + checks + " checks)"); else Fail("play " + name);
@@ -622,6 +661,40 @@ namespace DynamicIslands
 			WorldDirector.Done.Clear();
 			// (from the start: nothing sailed yet - a test world sailed 40 km in earlier tests brought every side trip at once)
 			WorldDirector.Sailed = 0f;
+		}
+
+		// (steps whose wait after the action is settle time, owed to the expects after them)
+		static readonly HashSet<string> PlayDeferVerbs = new HashSet<string> { "zone", "read", "open", "openat", "use", "kill", "catch", "dig", "wait" };
+		// (steps that may follow an early group at once: they act on what the expects saw, they don't move or look)
+		static readonly HashSet<string> PlayNoSettleVerbs = new HashSet<string> { "zone", "read", "open", "openat", "use", "code", "dig", "reach", "expect", "note" };
+		// (expects that only read the state - no wait of their own, no side effect)
+		static readonly HashSet<string> PlayQuietKinds = new HashSet<string> { "step", "title", "done", "story", "survivor", "shown", "hidden", "message", "item", "animals" };
+
+		static bool PlayPlainExpect(RLine r)
+		{
+			string[] t = Tokens(r.Text.Trim());
+			return t.Length > 1 && t[0].ToLowerInvariant() == "expect" && PlayQuietKinds.Contains(t[1].ToLowerInvariant());
+		}
+
+		/// <summary>The plain expects right after a step (past any 'wait' lines): the ones its settle time is for.</summary>
+		static List<RLine> PlayExpectGroup(List<RLine> lines, int from)
+		{
+			var g = new List<RLine>();
+			int i = from;
+			while (i < lines.Count && Tokens(lines[i].Text.Trim()).FirstOrDefault() == "wait") i++;
+			while (i < lines.Count && PlayPlainExpect(lines[i])) g.Add(lines[i++]);
+			return g;
+		}
+
+		/// <summary>An expect's result without logging it.</summary>
+		static bool PlayQuiet(RLine r)
+		{
+			bool ok = true;
+			quietCheck = true;
+			try { string line = r.Text.Trim(); PlayExpect(Tokens(line), line, ref ok); }
+			catch { ok = false; }
+			finally { quietCheck = false; }
+			return ok;
 		}
 
 		static void PlayExpect(string[] t, string line, ref bool ok)
