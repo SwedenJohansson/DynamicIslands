@@ -179,9 +179,9 @@ note skifflog Skiff log: following the pollen | SKIFF LOG - SEEDKEEPERS' SURVEY\
 note leaflet Seedkeepers' leaflet | THE SEEDKEEPERS - A PROMISE\n\nVERDANCE. The last green world.\n\nForests. Rivers you can drink from. Animals that the flood took from everyone else, kept alive on one land by people who refused to give up.\n\nWe plant. We tend. We keep one of every seed. And when the water stops rising, Verdance will green the world again - every coast, every rock, every raft.\n\nYou are welcome here. Come to the Ranger Landing, east of the spit: the station's band is 700. Ask for Ranger Oda Fenn. Bring nothing; we have everything.\n\n(Pencilled in the margin, in a different hand: "Bring a machete. And do not drink from the marsh. - O.")
 note cabinchest Skiff cabin | The skiff's cabin chest: a Receiver's plans in a dry bag.
 note mastlocker Mast locker | The mast locker: the aerial's plans, wrapped round the broken mast.
-loot cabinchest Blueprint_Reciever*1;Battery*1;Scrap*3
+loot cabinchest Blueprint_Reciever*1;Blueprint_HeadLight*1;Battery*1;Scrap*3
 prop cabinchest loot.refill=0
-loot mastlocker Blueprint_Antenna*1;Rope*3;Plank*6
+loot mastlocker Blueprint_Antenna*1;Blueprint_Recycler*1;Rope*3;Plank*6
 prop mastlocker loot.refill=0
 
 prop samplecase obj.name=samplecase
@@ -228,11 +228,13 @@ quest intro=Yellow dust on the sea for days - and here a whole spit of it. Go to
 step reach|skiff|1|Go to the beached skiff
 step read|Skiff log: following the pollen|1|Read the skiff's log
 step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the cabin chest
+step blueprint|Blueprint_HeadLight|1|Take the head light plans from the cabin chest too
 step collect|story:pollen|3|Gather the three pollen sample jars on the dunes
 step reach|pr_top|1|Climb the dune spine to the weather mast and read the drift
 step collect|story:lens|1|Dive to the drowned research boat for the sample case's lens
 step collect|story:sealed|1|Put the three jars in the skiff's sample case
 step blueprint|Blueprint_Antenna|1|Take the antenna plans from the mast locker
+step blueprint|Blueprint_Recycler|1|Take the recycler plans from the mast locker too
 step collect|story:capsule|1|Launch the seed rocket from the mast and find its capsule
 step read|Seedkeepers' leaflet|1|Read the Seedkeepers' leaflet on the dune top
 quest done=Verdance. The last green world. The ranger station's band is 700.

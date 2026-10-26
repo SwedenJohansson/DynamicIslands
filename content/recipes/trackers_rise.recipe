@@ -216,7 +216,7 @@ note rangerlog5 Ranger log 5 | RANGER LOG 5 - O. FENN\n\nBurr is safe. If you fo
 note towerchest Tower chest | The tower chest: plans for an engine's controls, a pair of field glasses, cord.
 note satchel Ranger's satchel | Oda's satchel, dropped in the gully and torn: one piece of her map, and her shovel.
 note anchorbox Zipline anchor box | The zipline's anchor box: the plans for the zipline it was built from.
-loot towerchest Blueprint_EngineControls*1;Rope*2;Bolt*2
+loot towerchest Blueprint_EngineControls*1;Blueprint_BatteryCharger*1;Rope*2;Bolt*2
 prop towerchest loot.refill=0
 loot satchel story:mappiece*1;Shovel*1;Battery*1
 prop satchel loot.refill=0
@@ -242,7 +242,7 @@ prop rangerlock beh.use=Open the ranger stores
 prop rangerlock if.use=has|story:rangerkey
 prop rangerlock on.use=hide|\nshow|rangercache\nmessage||Oda's key turns the stores lock. The lid comes up on a ranger cache.
 prop rangerlock else.use=message||A locked box stencilled RANGER - STORES. A ranger's key would open it.
-loot anchorbox Blueprint_ZiplineBase*1;Rope*3;MetalIngot*1
+loot anchorbox Blueprint_ZiplineBase*1;Blueprint_ZiplineTool*1;Rope*3;MetalIngot*1
 prop anchorbox loot.refill=0
 
 prop burrcage obj.name=burrcage
@@ -278,6 +278,7 @@ quest intro=Something bleats on the meadow. Climb up to it.
 step reach|meadow|1|Climb up to the meadow
 step read|Tracking guide|1|Read the trackers' board
 step blueprint|Blueprint_EngineControls|1|Take the engine controls plans from the tower chest
+step blueprint|Blueprint_BatteryCharger|1|Take the battery charger plans from the tower chest too
 step reach|gully|1|Follow the broken bushes to the gully
 step collect|story:burr|1|Free the goat from the branches
 step collect|story:mappiece|3|Find the three pieces of Oda's torn map: the gully, the fishing wreck, the cove
@@ -285,6 +286,7 @@ step collect|story:trackmap|1|Lay the pieces on the tower's map table
 step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from Oda's map case
 step blueprint|Blueprint_Firework|1|Take the firework plans from Oda's map case
 step blueprint|Blueprint_ZiplineBase|1|Take the zipline plans from the anchor box by the tower
+step blueprint|Blueprint_ZiplineTool|1|Take the zipline tool plans from the anchor box too
 step catch|Llama|1|Catch a llama
 step reach|tr_top|1|Climb Antler Peak to the trackers' notch post
 step collect|story:lamp|1|Dive to the hunters' trailer off the south cove

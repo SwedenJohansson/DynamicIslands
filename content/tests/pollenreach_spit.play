@@ -11,29 +11,29 @@ read Skiff log: following the pollen
 expect step 2
 open Skiff cabin
 wait 3
-expect step 3
+expect step 4
 use pollen1
 use pollen2
 use pollen3
 expect story pollen 3
-expect step 4
-zone pr_top
 expect step 5
+zone pr_top
+expect step 6
 open Research boat's instrument crate
 wait 3
 expect story lens 1
-expect step 6
+expect step 7
 use samplecase
 expect story pollen 0
-expect step 7
+expect step 8
 open Mast locker
 wait 3
-expect step 8
+expect step 10
 use seedrocket
 wait 8
 expect shown capsule
 open Seed capsule
 wait 3
-expect step 9
+expect step 11
 read Seedkeepers' leaflet
 expect done
