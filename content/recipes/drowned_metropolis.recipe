@@ -47,19 +47,17 @@ place UT_Set_Tower02 - at 104 72 centred h=-90 tilt=-11 yaw=40
 # when the island was generated (the recipe logs it when it saves). The probe tools measure from that centre too.
 push at -13.83 9.66
 # --- ABYSS 10-26: relief - three rubble hills where the city's outskirts stood, each with a ruined block on top ------
-# (before everything placed below, so their clears take only the generator's plants; nothing of the quest is near)
-call hw_mount x=-72 z=-42 b=13 h=8
-call ar_ruin x=-72 z=-42 h=8 yaw=20 w=2 d=2 al=dmruin1
-place VP_RubblePile_Medium01 - at -66 -48 ground yaw=70
-place VP_ConcretePipe02 - at -79 -37 ground yaw=15 tilt=6
+# (before everything placed below, so their clears take only the generator's plants; kept 40 m+ from the quest walks)
+call hw_mount x=-98 z=-62 b=13 h=8
+call ar_ruin x=-98 z=-62 h=8 yaw=20 w=2 d=2 al=dmruin1
+place VP_ConcretePipe02 - at -105 -57 ground yaw=15 tilt=6
 call hw_mount x=55 z=70 b=14 h=10
 call ar_ruin x=55 z=70 h=10 yaw=-30 w=3 d=2 al=dmruin2
 place RT_PillarThick - at 61 64 ground tilt=18 yaw=40
-place VP_RubblePile_Medium01 - at 48 75 ground yaw=200
 call hw_mount x=55 z=-84 b=12 h=7
 call ar_ruin x=55 z=-84 h=7 yaw=60 w=2 d=2 al=dmruin3
 place VP_ConcretePipe02 - at 62 -79 ground yaw=110 tilt=5
-scatter Bush2 4 at -72 -42 r=12 seed=26101
+scatter Bush2 4 at -98 -62 r=12 seed=26101
 scatter Bush2 4 at 55 70 r=13 seed=26102
 scatter "Pickup_Landmark_Tree_Palm 2" 2 at 55 -84 r=10 seed=26103
 brush lower at 20 -42 r=11 s=20 frames=6
