@@ -61,6 +61,9 @@ namespace DynamicIslands.Editor
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Adding the plan choice to the New Game box: " + e); }
 		}
 
+		/// <summary>The box's last line: where the world's settings are found once it is under way (ROADMAP PF-D5).</summary>
+		public const string WorldWindowLine = "In the world: Esc > Custom Islands changes the islands and settings (not the plan).";
+
 		static void Ensure(NewGameBox box)
 		{
 			if (row == null)
@@ -72,7 +75,7 @@ namespace DynamicIslands.Editor
 				row.anchoredPosition = new Vector2(-16f, 104f); // (above Raft's "Online features not available in offline mode" line)
 				// (CT2, the user 2026-10-06: the heading wrapped into the buttons and the description was cut off - the heading
 				// has its own line, the buttons theirs under the description, which gets three lines and its whole text as a hint)
-				row.sizeDelta = new Vector2(292f, 150f);
+				row.sizeDelta = new Vector2(292f, 168f);
 				UIKit.Background(row.gameObject, UIKit.GroupBg, 6);
 				UIKit.Vertical(row.gameObject, 4f, new RectOffset(10, 10, 6, 8));
 				Text title = UIKit.Label(row, "CUSTOM ISLANDS PLAN", 13, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
@@ -98,6 +101,12 @@ namespace DynamicIslands.Editor
 				// (ROADMAP T6: look inside the plan before choosing it - its rules, what it does to Raft's story)
 				Button view = UIKit.Button(head, "View the plan...", () => ShowPlan(Selected), "What the chosen plan does: its islands, when and where each comes, and Raft's story", 133, 22f, 11);
 				view.name = "Button_ViewPlan";
+				// (ROADMAP PF-D5: a player never found the world window - say where it is; the plan itself can't change there)
+				Text later = UIKit.Label(row, WorldWindowLine, 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "Later");
+				later.name = "Text_WorldWindowLine";
+				UIKit.Size(later.gameObject, -1, 14);
+				later.horizontalOverflow = HorizontalWrapMode.Wrap;
+				later.resizeTextForBestFit = true; later.resizeTextMinSize = 9; later.resizeTextMaxSize = 11;
 			}
 			Show();
 		}

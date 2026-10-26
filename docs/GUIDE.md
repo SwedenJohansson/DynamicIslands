@@ -197,6 +197,10 @@ lists every rule of the plan in words.
 ![The plan picker](images/plan-picker.jpg)
 *The plan picker: a plan selected, with a map of its first island and the islands it brings.*
 
+Under the plan the box says **In the world: Esc > Custom Islands changes the islands and settings (not the plan)**:
+the plan is fixed once the world is made, everything else can still be changed there. In your first worlds a tip says
+so again a little after you arrive (at most three times, and never again once you have opened that window).
+
 Then click Raft's **Create** as usual. Your World settings are remembered for the next new world, and so is the plan
 (in `newworld_plan.txt`; the first time it is **Random islands**, or the `defaultPlan` of `spawnpool.txt`). Both belong to the world:
 saved with it, the same for every player, and every new world gets its own.
@@ -227,7 +231,10 @@ part, they never crowd the sea. It can be:
 
 - one of **your own islands** (every saved island takes part unless `spawnpool.txt` says otherwise; islands your world plan brings, and islands generated while sailing, don't come by chance),
 - a **brand-new generated island**: a random size and style (tropical, snowy, desert, forest or volcanic), sometimes
-  flying; it is saved as `gen-<style>-<seed>.island`, so it stays in that world. In World settings > Islands while sailing it is the row
+  flying; it is saved as `gen-<style>-<seed>.island`, so it stays in that world. It is about as full as Raft's own
+  islands, on land and under water, often with a small ruin, and its animals are few: mostly one hostile animal (a
+  warthog, a stone bird, a rat...) and sometimes one friendly one, which don't come back once killed. Everything about
+  it comes from its seed, so every player meets the same island, and after a reload it is the same again. In World settings > Islands while sailing it is the row
   **Brand-new generated islands**; untick it and only made or downloaded islands and map types come (see [9.5](#95-islands-while-sailing)),
 - a **map type**: a sandbar, a wreck of raft blocks, an atoll or a sunken island (more in [4.6](#46-ready-made-islands-map-types)).
 
@@ -764,7 +771,9 @@ against a wall) stands up straight; a bigger lean - more than 25°, a boulder ly
 - **Select:** click a placed object; **Shift+click** adds more, **Ctrl+click** takes one out again. The object under the
   mouse has a light blue outline: that is what a click selects. Where objects stand in each other, the smallest one is
   picked (a flower beside a big palm, not the palm), and a model's real shape counts, not the box around it. Click the
-  same spot again to get the next object there (the status bar says "2 of 3 here"), and again to go round.
+  same spot again to get the next object there (the status bar says "2 of 3 here"), and again to go round. A big
+  object such as a big palm takes a click only on itself - its trunk, its leaves - not on the ground under its crown,
+  so the ground and small things there stay easy to click.
 - **Transform** (keys 1-4): Move, Turn, Scale or All, with the coloured handles. **X** switches the arrows between the
   world's directions and the object's own turn; **P** turns and scales around each object's own point or the middle of
   the selection; hold **Ctrl** while dragging to snap (0.25 m, 15°). An island holds at most 100 000 objects (the editor

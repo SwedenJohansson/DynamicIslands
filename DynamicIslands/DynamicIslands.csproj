@@ -321,6 +321,7 @@
     <Compile Include="ZiplineEnds.cs" />
     <Compile Include="TestStart.cs" />
     <Compile Include="DevTestsTestStart.cs" />
+    <Compile Include="DevTestsPlayerFeedback.cs" />
     <Compile Include="DevTestsBuriedTreasure.cs" />
     <Compile Include="BuriedTreasure.cs" />
     <Compile Include="KeycardDoor.cs" />

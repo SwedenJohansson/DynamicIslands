@@ -466,6 +466,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("World randomizer", e); }
 			try { Editor.ExtraUpgrades.Tick(); }
 			catch (Exception e) { TickError("Extra upgrades", e); }
+			try { WorldWindowHint.Tick(); }
+			catch (Exception e) { TickError("World window tip", e); }
 			try { PlayerLevels.Tick(); LevelWindow.Tick(); }
 			catch (Exception e) { TickError("Levels", e); }
 			try { EditorAutosave.Tick(); }

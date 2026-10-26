@@ -235,6 +235,7 @@ namespace DynamicIslands.Editor
 			PlayerLevels.Reset();
 			WorldOptions.Reset();
 			WorldIslands.Reset();
+			WorldWindowHint.OnWorldLoaded();
 			StoryChain.Reset();
 			// (the newest copy: this PC's own, or the one that came with Raft's world folder from another host - WorldCopy)
 			string[] fileLines = null;

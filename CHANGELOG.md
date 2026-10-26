@@ -9,6 +9,24 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-26: Easier clicks, fuller islands
+
+### Added
+- **A tip in your first worlds**: a little after you arrive, a message says that **Esc > Custom Islands** has the
+  world's islands and settings (at most three times, never once you have opened it). The New Game box says it too,
+  under the plan.
+
+### Changed
+- **Brand-new generated islands** are about as full as Raft's own islands, on land and under water, sometimes with a
+  small ruin. Their animals are few: 70% have one hostile animal and 50% one friendly animal, which don't come back.
+  The same island for every player and after a reload.
+
+### Fixed
+- **Big palms no longer take every click around them** in the editor: a big object is selected only by clicking the
+  object itself, not the ground under its crown.
+
+---
+
 ## 2026-10-26: Where Test puts you
 
 ### Added

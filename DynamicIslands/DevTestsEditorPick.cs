@@ -17,7 +17,7 @@ namespace DynamicIslands
 	{
 		#region E11: picking
 
-		[ConsoleCommand(name: "CIPickSmall", docs: "Dev, editor (ROADMAP E11): a flower beside a big palm is picked, not the palm; two objects on the same spot: clicking the spot again gives the next one, then the first again; Shift (no cycling) always the first; the outline goes on the object a click would select and comes off")]
+		[ConsoleCommand(name: "CIPickSmall", docs: "Dev, editor (ROADMAP E11, PF-D4): a flower beside a big palm is picked, not the palm; the ground under the crown's edge is not the palm, its trunk is; two objects on the same spot: clicking the spot again gives the next one, then the first again; Shift (no cycling) always the first; the outline goes on the object a click would select and comes off")]
 		public static void PickSmallCommand() { StartTest(PickSmallRoutine()); }
 
 		static IEnumerator PickSmallRoutine()
@@ -98,6 +98,20 @@ namespace DynamicIslands
 				ObjectPick.ClearHover();
 				bool off = ObjectPick.Hovered == null && !ObjectPick.Outlined(fr);
 				Check(ref ok, would == flower.transform && on && off, "hover: a click would select " + (would != null ? would.name : "nothing") + "; the outline goes on it (" + on + ", not on the palm) and comes off (" + off + ")");
+
+				// 4. PF-D4: the ground under the edge of the palm's crown is not the palm (its bounds span ~10 m); its middle still is
+				flower.gameObject.SetActive(false);
+				Physics.SyncTransforms();
+				Bounds pb = palm.GetComponentsInChildren<Renderer>().Where(r => r is MeshRenderer || r is SkinnedMeshRenderer).Select(r => r.bounds).Aggregate((a, b) => { a.Encapsulate(b); return a; });
+				Vector3 edge = onGround(pb.center.x - o.x + pb.extents.x * 0.85f, pb.center.z - o.z);
+				Ray down = new Ray(edge + new Vector3(0f, 3f, 0f), Vector3.down);
+				Transform atEdge = ObjectPick.First(down, mask);
+				Check(ref ok, atEdge != palm.transform, "a click on the ground under the crown's edge (" + (pb.extents.x * 0.85f).ToString("F1") + " m from the middle of a " + (pb.size.x).ToString("F1") + " m wide palm) picks " + (atEdge != null ? atEdge.name : "nothing") + " (not the palm; candidates: " + string.Join(", ", ObjectPick.Candidates(down, mask).Select(c => c.Root.name + (c.Solid ? " solid" : " loose")).ToArray()) + ")");
+				Vector3 trunk = palm.transform.position + Vector3.up * 2f;
+				Ray side = new Ray(trunk + new Vector3(8f, 1f, 0f), (trunk - (trunk + new Vector3(8f, 1f, 0f))).normalized);
+				Transform atTrunk = ObjectPick.First(side, mask);
+				Check(ref ok, atTrunk == palm.transform, "a click on the trunk still picks the palm (" + (atTrunk != null ? atTrunk.name : "nothing") + ")");
+				flower.gameObject.SetActive(true);
 			}
 			finally
 			{
