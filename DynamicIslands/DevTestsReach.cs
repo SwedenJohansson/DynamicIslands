@@ -126,13 +126,7 @@ namespace DynamicIslands
 			ReachInputOn(1);
 			try
 			{
-				// (a and b are feet, as the walker's reports give them; Raft's player transform sits 0.85 m over the feet)
-				PlayerMove.To(pl, a + Vector3.up * 0.95f);
-				ReachFree(pl);
-				for (int f = 0; f < 15; f++) { MmHold(pl, false); yield return null; }
-				foreach (Collider c in Physics.OverlapSphere(ReachFeet(pl) + Vector3.up * 0.3f, 1.2f, ~0, QueryTriggerInteraction.Ignore))
-					if (!c.transform.IsChildOf(pl.transform)) Log("  near: " + BlockerName(c) + " layer " + LayerMask.LayerToName(c.gameObject.layer) + " " + c.GetType().Name + " y " + (c.bounds.min.y - e.Position.y).ToString("F2") + "-" + (c.bounds.max.y - e.Position.y).ToString("F2"));
-				// (what the grid's checks see on the way a->b: a flat ray every 0.15 m up from the feet, and the swept body)
+				// (what the grid's checks see on the way a->b, before the player stands there (its own collider is in the mask): a flat ray every 0.15 m up from the feet, and the swept body)
 				{
 					Vector3 fa = a, fb = b; fb.y = fa.y; Vector3 fd = fb - fa;
 					var rays = new System.Text.StringBuilder("  rays a->b:");
@@ -143,7 +137,14 @@ namespace DynamicIslands
 					}
 					Log(rays.ToString());
 					Log("  grid: blocked .45 " + Blocked(a, b, Mathf.Max(a.y, b.y) + 0.45f) + " 1.0 " + Blocked(a, b, Mathf.Max(a.y, b.y) + 1.0f) + " 1.55 " + Blocked(a, b, Mathf.Max(a.y, b.y) + 1.55f) + " swept " + Swept(a, b, Mathf.Max(a.y, b.y)));
+					{ string why; bool sw = SlopeWalk(a, b, out why); Log("  grid: slope walk " + sw + " (" + why + ")"); }
 				}
+				// (a and b are feet, as the walker's reports give them; Raft's player transform sits 0.85 m over the feet)
+				PlayerMove.To(pl, a + Vector3.up * 0.95f);
+				ReachFree(pl);
+				for (int f = 0; f < 15; f++) { MmHold(pl, false); yield return null; }
+				foreach (Collider c in Physics.OverlapSphere(ReachFeet(pl) + Vector3.up * 0.3f, 1.2f, ~0, QueryTriggerInteraction.Ignore))
+					if (!c.transform.IsChildOf(pl.transform)) Log("  near: " + BlockerName(c) + " layer " + LayerMask.LayerToName(c.gameObject.layer) + " " + c.GetType().Name + " y " + (c.bounds.min.y - e.Position.y).ToString("F2") + "-" + (c.bounds.max.y - e.Position.y).ToString("F2"));
 				float next = 0f, still = 0f; bool jumped = false; Vector3 last = ReachFeet(pl);
 				Vector3 dir = b - a; dir.y = 0f;
 				for (float t = 0f; t < 8f; t += Time.deltaTime)
@@ -642,7 +643,14 @@ namespace DynamicIslands
 		/// <summary>Room for the player standing with the feet here.</summary>
 		static bool Stands(Vector3 feet)
 		{
-			return !Physics.CheckCapsule(feet + Vector3.up * (RRadius + 0.08f), feet + Vector3.up * (RHeight - RRadius), RRadius, reachMask, QueryTriggerInteraction.Ignore);
+			Vector3 top = feet + Vector3.up * (RHeight - RRadius), low = feet + Vector3.up * (RRadius + 0.08f);
+			if (!Physics.CheckCapsule(low, top, RRadius, reachMask, QueryTriggerInteraction.Ignore)) return true;
+			// (on a slope over ~38 deg the 0.6 m wide capsule's foot touches the rising terrain itself - Raft's controller stands
+			// and walks there (a 40 deg trail pad edge, PQ11 10-27): the terrain alone may touch it under 0.4 m, nothing else)
+			if (Physics.CheckCapsule(feet + Vector3.up * (0.4f + RRadius), top, RRadius, reachMask, QueryTriggerInteraction.Ignore)) return false;
+			foreach (Collider c in Physics.OverlapCapsule(low, top, RRadius, reachMask, QueryTriggerInteraction.Ignore))
+				if (!(c is TerrainCollider)) return false;
+			return true;
 		}
 
 		/// <summary>The player's body (bar the bottom 0.45 m, which steps over) swept from a to b at floor height y:
@@ -702,9 +710,13 @@ namespace DynamicIslands
 				if (!wet && dy > RStepUp && pa.y < RSea - 0.3f) return;
 				if (wet && Mathf.Abs(dy) > 2f) return;
 				float hi = Mathf.Max(pa.y, pb.y);
-				if (Blocked(pa, pb, hi + 0.45f) || Blocked(pa, pb, hi + 1.0f) || Blocked(pa, pb, hi + 1.55f) || Swept(pa, pb, hi)) return;
+				bool flat = !(Blocked(pa, pb, hi + 0.45f) || Blocked(pa, pb, hi + 1.0f) || Blocked(pa, pb, hi + 1.55f) || Swept(pa, pb, hi));
+				// (rising ground: the fixed-height rays above hit the slope itself - Raft walked a 1.2 m trail pad step
+				// in 0.9 s that they called blocked, PQ11 10-27; follow the ground instead)
+				bool slope = !flat && !wet && SlopeWalk(pa, pb);
+				if (!flat && !slope) return;
 				// (a jump: room over the head as the player rises)
-				if (dy > RStepUp && !wet && Physics.CheckCapsule(pa + Vector3.up * (dy + RRadius + 0.1f), pa + Vector3.up * (dy + RHeight - RRadius), RRadius, reachMask, QueryTriggerInteraction.Ignore)) return;
+				if (flat && dy > RStepUp && !wet && Physics.CheckCapsule(pa + Vector3.up * (dy + RRadius + 0.1f), pa + Vector3.up * (dy + RHeight - RRadius), RRadius, reachMask, QueryTriggerInteraction.Ignore)) return;
 				// (a drop: nothing to land on on the way down - a floor that reaches over the spot below catches the player)
 				if (dy < -0.9f && !wet && FallCaught(pb, pa.y, pb.y)) return;
 				g.Link(a, b);
@@ -738,6 +750,41 @@ namespace DynamicIslands
 				if (!same && pa.y > RSea + 0.9f && FallCaught(pb, pa.y, RSea)) return;
 				g.Link(a, b);
 			}
+		}
+
+		/// <summary>Walking from a to b over the ground between them: every 0.25 m the ground is found under the last
+		/// one (at most 0.5 m up per sample, a step Raft's controller takes, and a step down), is walkable (not steeper than 60 deg where it rises: Raft walked a 48 deg pad edge), the body
+		/// (bar the bottom 0.45 m) has room over it, and nothing stands between two samples. It ends at b's floor.</summary>
+		static bool SlopeWalk(Vector3 a, Vector3 b) { string why; return SlopeWalk(a, b, out why); }
+
+		static bool SlopeWalk(Vector3 a, Vector3 b, out string why)
+		{
+			const float r = 0.2f, stepLen = 0.25f;
+			why = "";
+			Vector3 d = new Vector3(b.x - a.x, 0f, b.z - a.z);
+			float len = d.magnitude;
+			if (len < 0.01f) { why = "same spot"; return false; }
+			int n = Mathf.Max(1, Mathf.CeilToInt(len / stepLen));
+			Vector3 prev = a;
+			for (int i = 1; i <= n; i++)
+			{
+				float t = (float)i / n;
+				Vector3 c = new Vector3(a.x + d.x * t, prev.y, a.z + d.z * t);
+				RaycastHit h;
+				if (!Physics.Raycast(c + Vector3.up * RStepUp, Vector3.down, out h, RStepUp * 2f, reachMask, QueryTriggerInteraction.Ignore)) { why = "no ground at sample " + i; return false; }
+				Vector3 g = h.point;
+				float rise = g.y - prev.y;
+				if (rise > 0.5f || (rise > 0.05f && h.normal.y < 0.5f)) { why = "sample " + i + " rise " + rise.ToString("0.00") + " normal y " + h.normal.y.ToString("0.00"); return false; }
+				// (the body over the bottom step's height: a terrain cell's edge rises like a step just ahead and the controller
+				// steps up it - a capsule from 0.45 m touched the trail's next 0.5 m rise)
+				Collider[] hit = Physics.OverlapCapsule(g + Vector3.up * (RStepUp + r), g + Vector3.up * (RHeight - r), r, reachMask, QueryTriggerInteraction.Ignore);
+				if (hit.Length > 0) { why = "no room for the body at sample " + i + " (" + hit[0].name + ")"; return false; }
+				float y0 = Mathf.Max(prev.y, g.y);
+				if (Blocked(prev, g, y0 + RStepUp) || Blocked(prev, g, y0 + 1.0f) || Blocked(prev, g, y0 + 1.55f)) { why = "blocked before sample " + i; return false; }
+				prev = g;
+			}
+			why = "ends " + (prev.y - b.y).ToString("0.00") + " m from b's floor";
+			return Mathf.Abs(prev.y - b.y) < 0.3f;
 		}
 
 		/// <summary>Something in column at between the heights from (over a floor) and to that a falling player lands on.</summary>

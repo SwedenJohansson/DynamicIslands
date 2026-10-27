@@ -50,7 +50,7 @@ call hw_roof d=12 a=concrete bm=none fm=none
 place "Table Office" - at -4.6 0 y=0.05 sit yaw=90
 place RT_Clipboard permitstamp at -4.6 0 y=0.85 drop yaw=90
 place UT_HookRoom_Weight02 weighscale at -1.6 1.5 y=0.35 sit
-place Note_Sign weighsign at -1.4 -2.6 y=0.05 sit yaw=180
+place Note_Sign weighsign at -5.4 2.4 y=0.05 sit yaw=180
 pop
 
 # --- The customs house: a drowned tower's top storey, its door on the breakwater side, the radio desk ----------------
