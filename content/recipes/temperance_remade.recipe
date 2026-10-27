@@ -137,7 +137,10 @@ place Loot_Crate icelocker at 70 12 ground sit yaw=180
 # C The west crags, the whaler run aground below them, the ice cave in the crags
 call ar_ridge x1=-58 z1=-26 x2=-44 z2=-50 h=4 top=7 r=9
 call hw_wreck x=-70 z=-12 h=2 yaw=110 obj=BoatStranded al=whaler crate=whalercrate r=9
-call ar_cave x=-50 z=-40 h=4 yaw=180 al=icecaverock chest=icecavebox
+# 10-27: mouth turned inland (yaw 0): facing the sea, the mouth showed the hollow inside as a cut face; the pad's west
+# edge to the sea is smoothed (it showed a sawtooth)
+call ar_cave x=-50 z=-40 h=4 yaw=0 al=icecaverock chest=icecavebox
+brush smooth from -65 -28 to -63 -52 r=5 s=6 frames=40
 # D The supply plane (north-east): down on the flats past the village
 call ar_plane x=46 z=44 h=3 yaw=210 al=supplyplane crate=planecrate
 call rr_pad x=36 z=-38 h=3 r=10
@@ -179,7 +182,7 @@ story cavekey|Whalers' cave key|Bolt|An iron key on a strap of seal hide, from t
 note whalercrate Whaler's crate | The whaler's crate: harpoon heads, blubber hooks - and an iron key on a strap of hide.
 loot whalercrate story:cavekey*1;Rope*2;Scrap*2
 prop whalercrate loot.refill=0
-call hw_zone x=-50 z=-44 al=icecavez id=icecave r=4 msg="A cave in the crags, its mouth half drifted shut - an iron-bound chest inside, locked."
+call hw_zone x=-50 z=-35 al=icecavez id=icecave r=4 msg="A cave in the crags, its mouth half drifted shut - an iron-bound chest inside, locked."
 note icecavebox Whalers' chest | The whalers' iron-bound chest, kept in the cave out of the weather: their share of the last good season.
 loot icecavebox TitaniumIngot*1;TitaniumOre*2;CopperIngot*2;Leather*2
 prop icecavebox loot.refill=0

@@ -2,7 +2,7 @@
 # village on the north flats (4 m), the road up to the station's terrace (9 m), Selene's station along its north edge
 # (its entrance at the west end), the path up to the telescope's terrace (18 m), the sunken snowmobile in the bay.
 island Temperance Remade
-offset 0.1375 -4.1368
+offset 0.39 -3.8893
 expect step 0
 expect title The Reactor's Last Breath
 

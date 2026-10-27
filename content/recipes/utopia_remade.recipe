@@ -122,6 +122,8 @@ call rr_land x1=44 z1=-8 x2=56 z2=-14 h=3 r=10
 call rr_land x1=-34 z1=32 x2=-44 z2=42 h=3 r=9
 call rr_land x1=30 z1=-36 x2=40 z2=-48 h=3 r=9
 call rr_land x1=44 z1=26 x2=56 z2=30 h=3 r=8
+# (10-27: a generated glass tower stood in the head's hill - its pieces cleared before the head is built)
+clear at 0 -74 r=30 all body
 # A Lighthouse Head (south): summit 26 m, base r 24, the trail from its north foot, the old lighthouse mast on top
 call hw_mount x=0 z=-74 b=24 h=26
 call hw_trail x=0 z=-74 b=24 h=26 a0=0 turn=300 n=30 h0=3
