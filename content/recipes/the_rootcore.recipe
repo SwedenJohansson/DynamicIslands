@@ -130,7 +130,7 @@ place campfire_1 - at 0.7 -39 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 3.7 -37 ground sit yaw=347
 place "Box Small" - at -1.3 -36.5 ground sit
 place Note_Paper dnote at -1.3 -36.5 ground y=0.7 drop yaw=20
-note dnote Jonas's last pot | JONAS - THE SOUTH CAMP\n\nI followed Teodor down here with a pot of soup, because that is what I am for. He would not eat it. He said the dome was his to finish and the soup was mine to finish, and he was right about one of those.\n\nThe brood are only boar with the green on them. Fire scares them. Shouting does not; I tried.\n\nI hid the good chest behind the vines to the west - cut them if you need it more than I do. If you see Oda, tell her I kept the bees alive. If you see Marit, tell her nothing; she will only climb something.\n\nThe pot is still warm. Take it with you into the dome. Nobody should face that place hungry.\n\n- Jonas
+note dnote Jonas's last pot | JONAS - THE LOWER CAMP\n\nI followed Teodor down here with a pot of soup, because that is what I am for. He would not eat it. He said the dome was his to finish and the soup was mine to finish, and he was right about one of those.\n\nThe brood are only boar with the green on them. Fire scares them. Shouting does not; I tried.\n\nI hid the good chest behind the vines by the wreck - cut them if you need it more than I do. If you see Oda, tell her I kept the bees alive. If you see Marit, tell her nothing; she will only climb something.\n\nThe pot is still warm. Take it with you into the dome. Nobody should face that place hungry.\n\n- Jonas
 place Van_1 dvan at 34 29.5 ground yaw=107
 prop dvan tint.color=#5a4a32
 prop dvan tint.amount=0.5
@@ -178,8 +178,8 @@ prop rcmast tint.amount=0.5
 place Loot_ChestSmall rcbox at -63.4 -1.4 h=24 sit yaw=90
 prop rcbox loot.refill=0
 place Placeable_Flag_05 - at -66.4 1.4 h=24 sit
-call vd_spot x=-65 z=1.5 al=rctopz id=rc_top r=4 msg="Expedition 3's mast on the west crag, snapped off at head height. The dome's hill lies below you like a sleeping animal."
-note rcbox Expedition mast box | EXPEDITION 3 - MAST. The mast came down in the first storm. Strongbox at the east camp, key with the boat. Walk down the way you came; there is no line off this crag any more.
+call vd_spot x=-65 z=1.5 al=rctopz id=rc_top r=4 msg="Expedition 3's mast on the crag, snapped off at head height. The dome's hill lies below you like a sleeping animal."
+note rcbox Expedition mast box | EXPEDITION 3 - MAST. The mast came down in the first storm. Strongbox at the expedition camp, key with the boat. Walk down the way you came; there is no line off this crag any more.
 loot rcbox Rope*3;Bolt*2;Battery*1
 # the dive: BoatStranded on the sea floor 12 m down, its crate, an air pocket
 call vd_dive x=60 z=-90 h=-12 yaw=40 obj="BoatStranded" al=rcwreck crate=rccrate zal=rcwz zid=rc_wreck msg="Expedition 3's boat, on the bottom off the south-east point. The skipper's drawer is still shut." air=rcair bub=rcbub
@@ -244,7 +244,7 @@ prop oldroot obj.name=oldroot
 prop oldroot beh.use=Set the heart shards into the oldest root
 prop oldroot if.use=take|story:shard|3
 prop oldroot on.use=give||story:rootlit*1\nplaysound||event:/exploring/radar/radar_humm|0.8|once|near\ncollapse|teodorwall|4\nshow|teodortape\ncamera|domecam|oldroot|6|40\nmessage||The shards slide into the torn wood and hold. A hum runs down the root - and the coral wall behind it shakes, cracks and falls away. Behind it, on a box: a tape recorder, its red light still on.
-prop oldroot else.use=message||Three shards are torn out of the root. The brood carried them off - one in the dome, one east by the wreck, one west behind the vines.
+prop oldroot else.use=message||Three shards are torn out of the root. The brood carried them off - one in the dome, one by the wreck, one behind the vines.
 prop rangercache obj.name=rangercache
 prop rangercache beh.hidden=1
 loot rangercache TitaniumIngot*2;Battery*1;Rope*3
@@ -293,7 +293,7 @@ prop heartseed obj.name=heartseed
 prop heartseed beh.use=Take the heart seed
 prop heartseed on.use=give||story:heartseed*1\nhide|\nmessage||The Heart seed. Whatever Verdance becomes, it starts again from this.
 
-note expedition Expedition sign | ROOTCORE - EXPEDITION 3\n\nCave mouth north side. The dome is hers now. Do not go in alone, and do not go in blind.\n\nOda's team lost their boat off the south-east point. Their key went down with it, and their log is locked in the strongbox at their east camp. Read what they learnt before you meet what they met.\n\nThe oldest root lies at the back of the dome. It was here before any of us.\n\n- Aki, root gate (I came down after them. I did not go in either.)
+note expedition Expedition sign | ROOTCORE - EXPEDITION 3\n\nThe cave mouth is behind this sign. The dome is hers now. Do not go in alone, and do not go in blind.\n\nOda's team lost their boat off the point. Their key went down with it, and their log is locked in the strongbox at their camp. Read what they learnt before you meet what they met.\n\nThe oldest root lies at the back of the dome. It was here before any of us.\n\n- Aki, root gate (I came down after them. I did not go in either.)
 note ringwave The Ringwave root | THE OLDEST ROOT\n\nCut deep into the wood: a ring of waves round a single line.\n\nThe same sign as the sea people's doors. It was here before the Seedkeepers - before the trees.
 note teodortape Teodor's last tape | TAPE - T. LIND - LAST\n\n(Breathing. Then the voice, close to the microphone.)\n\nIf you are hearing this, the root is awake and you came the whole way. Good. I owe you the truth, so here it is.\n\nThe skiff on Pollenreach was mine. I wrote its log. I ran it onto the sand and left the beacon burning, because none of us could choose any more. Oda would burn everything to keep the land safe. Marit would hide on a balcony and let it decide for itself. I made V-1; I cannot be trusted with the answer. So I called for someone from the sea who owed Verdance nothing.\n\nEvery island you crossed, I crossed first. I left the doors open, the keys where you would find them, the notes where you would read them. Forgive me for that.\n\nThe valves are by the root. Whatever you turn, it is honest. That is all I wanted.\n\nTell Jonas the soup was good. Tell Oda I am sorry.\n\n(Click.)
 note coreburnnote The core | THE CORE - BURNT\n\nThe organism is ash. Verdance will grow back slowly, from seeds, the old way. The network is gone; the land is safe.\n\nTeodor: his V-1 burns with it. He asked for honesty and got it.\nMarit: comes down off the top balcony at last, counting the steps out loud.\nOda: carries the ash to the shore, and does not cry until the boat is out of sight.\nJonas: makes soup for everyone, and for once nobody says no.\nBurr: rings his bell at the smoke until somebody scratches his ears.
@@ -326,15 +326,15 @@ prop expbox on.use=signal||expbox\nshow|expchest\nmessage||The key turns. Inside
 prop expbox else.use=message||Expedition 3's strongbox, locked. The mast box said the key stayed with the boat.
 prop expchest obj.name=expchest
 prop expchest beh.hidden=1
-note expchest Expedition 3 log | EXPEDITION 3 - ROOTCORE - O. FENN\n\nDay 1. Landed south-east with Burr and the last of the bees' honey. Mast up on the west crag.\nDay 4. The dome breathes. Something big sleeps in it, and small ones guard her. Fire keeps them back; I have set baskets along the walls.\nDay 6. Teodor's boot prints go in. None come out.\nDay 9. The boat broke its line in the night. I am staying. Marit is waiting on the top balcony of the Heart and I promised her I would come up with an answer.\n\nWhoever reads this: the brood tears shards out of the oldest root and carries them off. The root will not wake without them. Go into the dome.
+note expchest Expedition 3 log | EXPEDITION 3 - ROOTCORE - O. FENN\n\nDay 1. Landed on the point with Burr and the last of the bees' honey. Mast up on the crag.\nDay 4. The dome breathes. Something big sleeps in it, and small ones guard her. Fire keeps them back; I have set baskets along the walls.\nDay 6. Teodor's boot prints go in. None come out.\nDay 9. The boat broke its line in the night. I am staying. Marit is waiting on the top balcony of the Heart and I promised her I would come up with an answer.\n\nWhoever reads this: the brood tears shards out of the oldest root and carries them off. The root will not wake without them. Go into the dome.
 loot expchest TitaniumOre*1;Battery*1;Rope*2
 prop expchest loot.refill=0
 quest title=The Core
-quest intro=The Rootcore, under the Heart. Find the cave mouth.
+quest intro=The Rootcore, under the Heart. Make for the crag with the snapped mast, then find the cave mouth in the hill.
 step reach|mouth|1|Go to the cave mouth
 step read|Expedition sign|1|Read Aki's expedition sign in the meadow
-step collect|story:expkey|1|Dive to the expedition boat off the south-east point
-step read|Expedition 3 log|1|Open the expedition strongbox at their east camp and read the log
+step collect|story:expkey|1|Dive to the expedition boat off the point and open the skipper's drawer
+step read|Expedition 3 log|1|Open the expedition strongbox at their camp and read the log
 step reach|dome|1|Go into the dome
 step kill|Warthog|3|Drive off the Blightmother's brood
 step kill|Mama bear|1|Defeat the Blightmother
@@ -346,7 +346,7 @@ step read|Teodor's last tape|1|Read what was hidden behind the coral wall
 step collect|story:core|1|Turn the core valve the way the Heart was set
 step read|The core|1|Read what the core became
 step collect|story:heartseed|1|Take the heart seed
-step reach|oda_camp|1|Go to Oda's camp east of the meadow, where Burr waits
+step reach|oda_camp|1|Go to Oda's camp by the meadow, where Burr waits
 step read|Oda Fenn's farewell|1|Read Oda Fenn's farewell
 quest done=The Last Green World is finished. Verdance keeps one seed - and so do you.
 quest reward=TitaniumOre*2;Seed_Flower_Yellow*2

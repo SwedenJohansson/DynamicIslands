@@ -107,7 +107,7 @@ place campfire_1 - at 20.8 25.6 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 23.8 27.6 ground sit yaw=247
 place "Box Small" - at 18.8 28.1 ground sit
 place Note_Paper dnote at 18.8 28.1 ground y=0.7 drop yaw=20
-note dnote Ranger's camp note | OUTER CAMP 3 - O. FENN, RANGER\n\nCamped here on the way back from the spit. A Seedkeepers' skiff came ashore on the south beach last week with nobody in it. I did not send for one, and the Heart lab says they did not either.\n\nThe log on board is neat. Too neat. Nobody writes that tidily on a boat that is going aground.\n\nThe pollen is thicker every day. Teodor Lind at the Heart lab calls it a good sign: "the green is waking up". I say it is hungry. We are both probably right, which is the worst kind of argument.\n\nThe hens I brought ate my lunch. All of it. I am a ranger of Verdance and I have been robbed by poultry.
+note dnote Ranger's camp note | OUTER CAMP 3 - O. FENN, RANGER\n\nCamped here on the way back from the spit. A Seedkeepers' skiff came ashore on the beach last week with nobody in it. I did not send for one, and the Heart lab says they did not either.\n\nThe log on board is neat. Too neat. Nobody writes that tidily on a boat that is going aground.\n\nThe pollen is thicker every day. Teodor Lind at the Heart lab calls it a good sign: "the green is waking up". I say it is hungry. We are both probably right, which is the worst kind of argument.\n\nThe hens I brought ate my lunch. All of it. I am a ranger of Verdance and I have been robbed by poultry.
 place Caravan_Green_01 dvan at -33.4 -20.1 ground yaw=7
 prop dvan tint.color=#5a6b3a
 prop dvan tint.amount=0.5
@@ -143,7 +143,7 @@ scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=74 seed=11199 free=2
 # --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): the dune spine and its weather mast (climb), the drowned research boat (dive), the seed rocket, the crab cave
 # the climb: a mountain (trail winding up from bearing 270), a 7-storey climbing tower on its top, the summit box
 call vd_mount x=0 z=52 top=20 r=22 a0=270 turns=1.25 hb=3
-call vd_tower x=0 z=52 h0=20 lv=7 a=prtw box=prbox zal=prtopz zid=pr_top msg="The whole spit below you. Yellow drift streams off the dunes - west, always west."
+call vd_tower x=0 z=52 h0=20 lv=7 a=prtw box=prbox zal=prtopz zid=pr_top msg="The whole spit below you. Yellow drift streams off the dunes and out over the sea, always the same way."
 note prbox Weather mast box | The Seedkeepers kept their drift logs up here. The last page: PUFFER POWDER FOR THE ROCKET. LENS IS ON THE BOAT.
 loot prbox Rope*2;Plank*4;Coconut*1
 # the seed rocket on the summit pad (RAFT_QUEST_MECHANICS SL11 6): powder in, it flies; its capsule comes down on the east beach
@@ -172,11 +172,11 @@ info author=Custom Islands
 info description=A sandy spit dusted yellow with pollen, a research skiff beached on its side and sample jars on the dunes. The first island of The Last Green World.
 island on.arrive=message||The sand here is yellow. Not sand - pollen, drifting off the dunes in the wind. And a boat on its side on the beach.
 
-story sealed|Sample case reading|Placeable_Lantern_Metal|The sample case read the three jars: the pollen comes from the west - Verdance.
+story sealed|Sample case reading|Placeable_Lantern_Metal|The sample case read the three jars: the pollen comes from far across the sea - Verdance.
 story pollen|Pollen sample|Placeable_Lantern_Metal|A Seedkeepers' sample jar of yellow pollen, labelled VERDANCE - DRIFT 4.
 
-note skifflog Skiff log: following the pollen | SKIFF LOG - SEEDKEEPERS' SURVEY\n\nDay 9. The pollen thickens every mile west. It is not from any tree we know. It sticks to the sails, to the rope, to my hands. It smells of cut grass and of summer, and I had forgotten both.\n\nDay 11. Ran aground on a spit gold with it. Nobody hurt. The radio set is in the cabin chest; the aerial's plans are wrapped round the broken mast.\n\nDay 12. Three jars of the drift kept for the lab, out on the dunes where the wind is cleanest. The sample case wants its lens, and the lens went down with the big boat.\n\nI have packed everything so that it can be found. If you are reading this, you were meant to. Follow the pollen. It comes from Verdance, and Verdance is waiting.
-note leaflet Seedkeepers' leaflet | THE SEEDKEEPERS - A PROMISE\n\nVERDANCE. The last green world.\n\nForests. Rivers you can drink from. Animals that the flood took from everyone else, kept alive on one land by people who refused to give up.\n\nWe plant. We tend. We keep one of every seed. And when the water stops rising, Verdance will green the world again - every coast, every rock, every raft.\n\nYou are welcome here. Come to the Ranger Landing, east of the spit: the station's band is 700. Ask for Ranger Oda Fenn. Bring nothing; we have everything.\n\n(Pencilled in the margin, in a different hand: "Bring a machete. And do not drink from the marsh. - O.")
+note skifflog Skiff log: following the pollen | SKIFF LOG - SEEDKEEPERS' SURVEY\n\nDay 9. The pollen thickens every mile. It is not from any tree we know. It sticks to the sails, to the rope, to my hands. It smells of cut grass and of summer, and I had forgotten both.\n\nDay 11. Ran aground on a spit gold with it. Nobody hurt. The radio set is in the cabin chest; the aerial's plans are wrapped round the broken mast.\n\nDay 12. Three jars of the drift kept for the lab, out on the dunes where the wind is cleanest. The sample case wants its lens, and the lens went down with the big boat.\n\nI have packed everything so that it can be found. If you are reading this, you were meant to. Follow the pollen. It comes from Verdance, and Verdance is waiting.
+note leaflet Seedkeepers' leaflet | THE SEEDKEEPERS - A PROMISE\n\nVERDANCE. The last green world.\n\nForests. Rivers you can drink from. Animals that the flood took from everyone else, kept alive on one land by people who refused to give up.\n\nWe plant. We tend. We keep one of every seed. And when the water stops rising, Verdance will green the world again - every coast, every rock, every raft.\n\nYou are welcome here. Come to the Ranger Landing: the station's band is 700. Ask for Ranger Oda Fenn. Bring nothing; we have everything.\n\n(Pencilled in the margin, in a different hand: "Bring a machete. And do not drink from the marsh. - O.")
 note cabinchest Skiff cabin | The skiff's cabin chest: a Receiver's plans in a dry bag.
 note mastlocker Mast locker | The mast locker: the aerial's plans, wrapped round the broken mast.
 loot cabinchest Blueprint_Reciever*1;Blueprint_HeadLight*1;Battery*1;Scrap*3
@@ -187,7 +187,7 @@ prop mastlocker loot.refill=0
 prop samplecase obj.name=samplecase
 prop samplecase beh.use=Put the jars in the sample case
 prop samplecase if.use=take|story:pollen|3
-prop samplecase on.use=message||The case hums. Three needles shiver - and all swing the same way: west, to the green on the horizon.\ngive||story:sealed*1\nshow|mastlocker
+prop samplecase on.use=message||The case hums. Three needles shiver - and all swing the same way, to the green on the horizon.\ngive||story:sealed*1\nshow|mastlocker
 prop samplecase else.use=message||Three empty slots, each labelled DRIFT. The case wants three pollen jars.
 prop mastlocker obj.name=mastlocker
 prop mastlocker beh.hidden=1
@@ -216,7 +216,7 @@ prop seedrocket beh.move=0,90,0
 prop seedrocket beh.moveTime=7
 prop seedrocket beh.moveMode=switch
 prop seedrocket if.use=take|ExplosivePowder|2
-prop seedrocket on.use=open|seedrocket\ncamera|rocketcam|seedrocket|7|80\nplaysound||event:/amb/wreck_creaks|0.8|once|near\nwait|7\nhide|seedrocket\nshow|capsule\nmessage||The rocket climbs, trailing yellow smoke, bursts high over the sea - and a small capsule drifts down on a sheet of cloth towards the east beach.
+prop seedrocket on.use=open|seedrocket\ncamera|rocketcam|seedrocket|7|80\nplaysound||event:/amb/wreck_creaks|0.8|once|near\nwait|7\nhide|seedrocket\nshow|capsule\nmessage||The rocket climbs, trailing yellow smoke, bursts high over the sea - and a small capsule drifts down on a sheet of cloth towards the beach.
 prop seedrocket else.use=message||A Seedkeepers' seed rocket, empty. A stencil on its side: TWO TINS OF POWDER.
 prop capsule obj.name=capsule
 prop capsule beh.hidden=1
@@ -224,18 +224,18 @@ note capsule Seed capsule | The capsule's cloth is printed with a map: a green i
 loot capsule story:capsule*1;Seed_Flower_Red*2;Rope*1
 prop capsule loot.refill=0
 quest title=The Pollen Trail
-quest intro=Yellow dust on the sea for days - and here a whole spit of it. Go to the beached skiff.
-step reach|skiff|1|Go to the beached skiff
+quest intro=Yellow dust on the sea for days - and here a whole spit of it. Make for the weather mast on the dune ridge, then follow the shore to the beached skiff.
+step reach|skiff|1|Go to the beached skiff at the end of the spit
 step read|Skiff log: following the pollen|1|Read the skiff's log
 step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the cabin chest
 step blueprint|Blueprint_HeadLight|1|Take the head light plans from the cabin chest too
 step collect|story:pollen|3|Gather the three pollen sample jars on the dunes
 step reach|pr_top|1|Climb the dune spine to the weather mast and read the drift
-step collect|story:lens|1|Dive to the drowned research boat for the sample case's lens
+step collect|story:lens|1|Dive to the drowned research boat and take the lens from its crate
 step collect|story:sealed|1|Put the three jars in the skiff's sample case
 step blueprint|Blueprint_Antenna|1|Take the antenna plans from the mast locker
 step blueprint|Blueprint_Recycler|1|Take the recycler plans from the mast locker too
-step collect|story:capsule|1|Launch the seed rocket from the mast and find its capsule
+step collect|story:capsule|1|Launch the seed rocket by the mast, then open its capsule chest
 step read|Seedkeepers' leaflet|1|Read the Seedkeepers' leaflet on the dune top
 quest done=Verdance. The last green world. The ranger station's band is 700.
 quest reward=Plank*8;Rope*3;Coconut*2
@@ -245,11 +245,11 @@ quest reward=Plank*8;Rope*3;Coconut*2
 #     on the raft. The skiff log is Teodor's lure (paid off on The Rootcore).
 place "Box Small" - at -2.6 48.4 h=20 sit yaw=30
 place Note_Paper driftlog at -2.6 48.4 h=20.7 drop yaw=40
-note driftlog Drift log, page 4 | POLLEN WATCH - DRIFT LOG - T. LIND\n\nDrift 1: a haze. Drift 2: a film on the sea. Drift 3: the gulls came back to the spit for the first time in a year.\n\nDrift 4 is perfect. Gold, fine, and it rides the west wind for sixty miles. From the shipping lanes it will look like sunrise in the wrong place. People will come to look at it. People always come to look at sunrise.\n\nOda wants the drift stopped. Oda wants everything stopped: the cutting, the planting, the growing. She is a good ranger and a frightened woman.\n\nI am not frightened. I made it. It only wants what we all want - to reach further.\n\nNote for the crew: the sample case lens is on the big boat. Leave it there.
+note driftlog Drift log, page 4 | POLLEN WATCH - DRIFT LOG - T. LIND\n\nDrift 1: a haze. Drift 2: a film on the sea. Drift 3: the gulls came back to the spit for the first time in a year.\n\nDrift 4 is perfect. Gold, fine, and it rides the wind for sixty miles. From the shipping lanes it will look like sunrise in the wrong place. People will come to look at it. People always come to look at sunrise.\n\nOda wants the drift stopped. Oda wants everything stopped: the cutting, the planting, the growing. She is a good ranger and a frightened woman.\n\nI am not frightened. I made it. It only wants what we all want - to reach further.\n\nNote for the crew: the sample case lens is on the big boat. Leave it there.
 place Note_Paper jonasrules at -50 32 ground y=1.4 drop yaw=200
 note jonasrules Sample station rules | SAMPLE STATION - RULES (BY ORDER OF J. BRANDT, COOK)\n\n1. The jars on the table are SAMPLES. They are not honey. I know they look like honey. Ask Aki how it tastes. Go on, ask him.\n2. No sleeping in the ring wall. It was built to keep the wind off the samples, not off you.\n3. If the pollen makes you sneeze, sneeze AWAY from the jars.\n4. Teodor's sample case is not a lunch box.\n\nAll of us came here because Verdance was the one place where things still grew. I would like it to still be growing when I retire, so: rules.\n\n- Jonas\n\n(Under it, in pencil: "Tastes of nothing. Do not ask him. - A.")
 place Note_Paper castnote at 62.2 -6.3 h=3.6 drop yaw=40
-note castnote Castaway's note | To the next one who follows the gold -\n\nI saw it from forty miles out: a yellow smear on the sea, like somebody spilt the sun. I had a raft, two hens and no plan, so I followed it.\n\nThe hens did not survive the trip. The hens are not why you should worry.\n\nThe sand here is not sand. It gets in everything and it is warm. Last night the jars on the dunes glowed, very faintly, all three at once, as if they were breathing together.\n\nI am going on east to the ranger station. The leaflet says they have everything.\n\nI have heard that before. But the trees on the horizon are real, and I have not seen a real tree in nine years.\n\n- M. (no relation to anyone, hopefully)
+note castnote Castaway's note | To the next one who follows the gold -\n\nI saw it from forty miles out: a yellow smear on the sea, like somebody spilt the sun. I had a raft, two hens and no plan, so I followed it.\n\nThe hens did not survive the trip. The hens are not why you should worry.\n\nThe sand here is not sand. It gets in everything and it is warm. Last night the jars on the dunes glowed, very faintly, all three at once, as if they were breathing together.\n\nI am going on to the ranger station. The leaflet says they have everything.\n\nI have heard that before. But the trees on the horizon are real, and I have not seen a real tree in nine years.\n\n- M. (no relation to anyone, hopefully)
 
 # a rock that floated over the slope (ground check, 2026-10-24)
 clear at -25.71 5.74 r=1.5 only=CaravanIsland_SmallRock all

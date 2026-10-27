@@ -127,12 +127,12 @@ prop dview zone.message=The giant roots climb the slope like a stair, up to the 
 # the climb: a mountain (trail winding up from bearing 120), a 10-storey climbing tower on its top, the summit box
 call vd_mount x=-50 z=40 top=28 r=20 a0=120 turns=1.25 hb=3
 call vd_tower x=-50 z=40 h0=28 lv=10 a=cstw box=csbox zal=cstopz zid=cs_top msg="The top of the Great Cliff, the highest rope on Verdance. Marit's pitons run all the way up the gantry."
-note csbox Cliff gantry box | SEEDKEEPERS - CLIFF LINE. Marit fixed the ropes; the plane dropped the supplies. The pilot camped east of the shelf and kept her key on a string round her neck.
+note csbox Cliff gantry box | SEEDKEEPERS - CLIFF LINE. Marit fixed the ropes; the plane dropped the supplies. The pilot camped just off the shelf and kept her key on a string round her neck.
 loot csbox Rope*4;Bolt*2;Leather*2
 place ZiplinePath_Landmark cszip at -45.03 38.28 h=53.89
 zipto cszip -14 -4
 # the dive: Airplane on the sea floor 12 m down, its crate, an air pocket
-call vd_dive x=-92 z=-40 h=-12 yaw=70 obj="Airplane" al=cswreck crate=cscrate zal=cswz zid=cs_wreck msg="The Seedkeepers' supply plane, nose-down on the sand off the west shore. The cockpit locker is still shut." air=csair bub=csbub
+call vd_dive x=-92 z=-40 h=-12 yaw=70 obj="Airplane" al=cswreck crate=cscrate zal=cswz zid=cs_wreck msg="The Seedkeepers' supply plane, nose-down on the sand off the shore. The cockpit locker is still shut." air=csair bub=csbub
 note cscrate Plane's cockpit locker | The pilot's flight bag: a hut key on a string, a compass, a tin of biscuits gone to paste.
 loot cscrate story:pilotkey*1;Scrap*3;Bolt*2
 # the pilot's camp east of the shelf: four old pillars of a burnt hut, a tent, the pilot's locker (her key is in the plane)
@@ -149,7 +149,7 @@ place Loot_ChestSmall pilotchest at 52.6 30.6 ground sit yaw=250
 call ni8cave x=40 z=-60 h=2 yaw=0 al=cscavecave
 place Loot_ChestSmall cscavecavebox at 37.5 -55 h=2.45 sit yaw=20
 place Placeable_Lantern_Metal - at 42.6 -56 h=2.45 sit
-note cscavecavebox Ledge cave chest | A dry cave under the east ledges. Someone slept here with the goats: straw, a blanket, a jar of honey.
+note cscavecavebox Ledge cave chest | A dry cave under the ledges. Someone slept here with the goats: straw, a blanket, a jar of honey.
 loot cscavecavebox Rope*2;Leather*2;HoneyComb*1
 prop cscavecavebox loot.refill=0
 # the east knoll (secret): a low hill with a goatherd's box on top
@@ -170,18 +170,18 @@ prop cshens creature.count=2
 place Note_Paper jonaslist at 1.6 -7.2 ground y=0.3 drop
 note jonaslist Jonas's packing list | JONAS - TO TAKE UP TO THE HEART\n\n- honey (all of it, Teodor asked)\n- the good pan\n- the other good pan, in case\n- bees\n- salt\n- Marit's birthday cake, in a tin, do NOT tell her\n\nNOT TO TAKE:\n- the jars Teodor keeps giving me "for the kitchen". They are not for the kitchen. Nothing for a kitchen glows.\n\nNote to self: be cheerful. Everybody up there is frightened and somebody has to be the one making toast. That is my whole plan. Toast.
 place Note_Paper maritline at -24.6 -11.4 ground y=0.3 drop
-note maritline Note on the west ledge | M. - WEST LINE\n\nThis line is for whoever comes after Oda, because somebody will. Teodor is certain of it. He has been leaving the spit beacon on every night for a month, and when I asked him why, he said, "So that someone can find us who does not already know what to think."\n\nI think he means you.\n\nThe rope is good. Clip in at every piton. Do not look at the vines while you climb; they look back.\n\nAt the top: the Heart. I will be on the balconies. Wave.
+note maritline Note on the west ledge | M. - LEDGE LINE\n\nThis line is for whoever comes after Oda, because somebody will. Teodor is certain of it. He has been leaving the spit beacon on every night for a month, and when I asked him why, he said, "So that someone can find us who does not already know what to think."\n\nI think he means you.\n\nThe rope is good. Clip in at every piton. Do not look at the vines while you climb; they look back.\n\nAt the top: the Heart. I will be on the balconies. Wave.
 
 # --- Settings, notes, behaviours, quest -------------------------------------------------------------------------
 info title=Canopy Stair
 info author=Custom Islands
-info description=A steep island climbing on giant roots to a shelf where the Seedkeepers made their last camp, a zipline pointing north to the Heart. The eighth island of The Last Green World.
-island on.arrive=message||Roots as thick as boats lie up the slope like a stair. At the top, tents - and a zipline line strung north into the haze.
+info description=A steep island climbing on giant roots to a shelf where the Seedkeepers made their last camp, a zipline pointing out to the Heart. The eighth island of The Last Green World.
+island on.arrive=message||Roots as thick as boats lie up the slope like a stair. At the top, tents - and a zipline line strung out into the haze.
 
 prop stairroots tint.color=#4a3424
 prop stairroots tint.amount=0.5
 
-note rollcall Seedkeepers' roll call | ROLL CALL - LAST CAMP - written by Marit, corrected by Jonas\n\nMarit - Heart lab\nJonas - Heart lab (with bees) (bees not optional - J.)\nAki - root gate\nTeodor - stayed in the marsh. He said so on the radio. He said it twice.\nRiver people (14) - gone below\nLise's crew (4) - gone below, looking for them\n\nWhoever reads this: the tents are yours. We will not need them, or we will need them very much and not be able to come back for them. Either way.\n\nRope coils left on the ledges - stair, west, east root. Rig the anchor before you ride.
+note rollcall Seedkeepers' roll call | ROLL CALL - LAST CAMP - written by Marit, corrected by Jonas\n\nMarit - Heart lab\nJonas - Heart lab (with bees) (bees not optional - J.)\nAki - root gate\nTeodor - stayed in the marsh. He said so on the radio. He said it twice.\nRiver people (14) - gone below\nLise's crew (4) - gone below, looking for them\n\nWhoever reads this: the tents are yours. We will not need them, or we will need them very much and not be able to come back for them. Either way.\n\nRope coils left on the ledges - stair, ledge, big root. Rig the anchor before you ride.
 note odaletter Oda's letter | To whoever came after me -\n\nYou have been one day behind me since the spit. I have seen your fires. You put them out properly. Thank you.\n\nI found them - the Seedkeepers, the river people, all of it. Teodor did not stay in the marsh. He came up this stair a week ago with a crate of jars, and Marit let him into the Heart, because she is my sister and she has always believed people when they say sorry.\n\nThe Heart of Green is at the top of the zipline. The band is 1200. Marit is in the lab, if she is anywhere. Count the balconies when you climb; she always did.\n\nBurr has gone on ahead. He knows the way to Marit better than I do.\n\n- Oda Fenn
 note tentone Tent chest | Marit's tent chest: titanium tool plans, worn soft at the folds.
 note tenttwo Jonas' tent chest | Jonas' tent chest: a big backpack's plans and his spare rope.
@@ -204,16 +204,16 @@ prop coil1 obj.name=coil1
 prop coil1 beh.hidden=1
 prop stairvines obj.name=stairvines
 prop stairvines on.use=hide|\nshow|coil1\nmessage||The machete cuts the vines off the ledge: a coil of rope hangs on a piton.
-note coil2 West ledge | The west ledge, where Marit fixed her lines: a rope coil.
+note coil2 West ledge | The ledge where Marit fixed her lines: a rope coil.
 loot coil2 story:ropecoil*1;Leather*1
 prop coil2 loot.refill=0
-note coil3 East root | The east root's top, a coil tied off on it.
+note coil3 East root | The big root's top, a coil tied off on it.
 loot coil3 story:ropecoil*1;Bolt*2
 prop coil3 loot.refill=0
 prop anchorwinch beh.use=Rig the anchor
 prop anchorwinch if.use=take|story:ropecoil|3
 prop anchorwinch on.use=message||Three coils, spliced and wound on. The anchor line sings tight toward the Heart - and the anchor box's catch drops.\ngive||story:rigged*1\nshow|anchorbox
-prop anchorwinch else.use=message||The anchor's winch, empty. The roll call: "Coils left on the ledges - stair, west, east root."
+prop anchorwinch else.use=message||The anchor's winch, empty. The roll call: "Coils left on the ledges - stair, ledge, big root."
 note rangercache Oda's locker | Oda's locker on the shelf: her spare lamp, rope and a battery.
 loot rangercache Placeable_Lantern_Metal*1;Rope*3;Battery*1
 prop rangercache loot.refill=0
@@ -238,7 +238,7 @@ prop pilotlock on.use=signal||pilot\nshow|pilotchest\nmessage||The key turns sti
 prop pilotlock else.use=message||The pilot's locker, padlocked. The gantry box said she kept the key round her neck - and she flew the plane.
 prop pilotchest obj.name=pilotchest
 prop pilotchest beh.hidden=1
-note pilotchest Pilot's flight log | FLIGHT LOG - VERDANCE SUPPLY\n\nRun 31. Dropped rope and seed at the cliff. Marit waved from the top.\nRun 32. The canopy has grown a metre since run 31. The strip is gone.\nRun 33. Ditching off the west shore. If you read this, the ropes are on the ledges, the Heart is north, and I swam.
+note pilotchest Pilot's flight log | FLIGHT LOG - VERDANCE SUPPLY\n\nRun 31. Dropped rope and seed at the cliff. Marit waved from the top.\nRun 32. The canopy has grown a metre since run 31. The strip is gone.\nRun 33. Ditching off the shore. If you read this, the ropes are on the ledges, the Heart is up the zipline, and I swam.
 loot pilotchest Rope*2;Leather*1;Battery*1
 prop pilotchest loot.refill=0
 # --- JUMP COURSE cs (U22, 10-24): a kz-style hop course of floor slabs on its own flattened pad -----------------
@@ -299,19 +299,19 @@ pop
 # --- end of jump course cs ---
 
 quest title=The Climb
-quest intro=Climb the root stair to the shelf on top.
+quest intro=Make for the great cliff with the rope gantry, then climb the root stair to the shelf on top.
 step reach|shelf|1|Climb the root stair to the shelf
 step read|Seedkeepers' roll call|1|Read the Seedkeepers' roll call
 step blueprint|Blueprint_TitaniumTools|1|Take the titanium tool plans from Marit's tent
 step blueprint|Blueprint_BackpackAdvanced|1|Take the big backpack plans from Jonas' tent
-step collect|story:ropecoil|3|Find three rope coils on the ledges: the stair, the west ledge, the east root
+step collect|story:ropecoil|3|Find three rope coils in small chests: on the stair, a ledge and the big root
 step collect|story:rigged|1|Rig the zipline anchor's winch
 step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline plans from the anchor box
 step reach|cs_top|1|Climb the Great Cliff's rope gantry
-step collect|story:pilotkey|1|Dive to the supply plane off the west shore
-step read|Pilot's flight log|1|Open the pilot's locker at her camp east of the shelf and read her log
+step collect|story:pilotkey|1|Dive to the supply plane wreck off the shore and open its cockpit locker
+step read|Pilot's flight log|1|Open the pilot's locker at her camp near the shelf and read her log
 step read|Oda's letter|1|Read Oda's letter in Jonas' tent
-step reach|jump_cs_top|1|Climb the woodcutters' hop-stones on the west shore and look out from the top
+step reach|jump_cs_top|1|Climb the woodcutters' hop-stones on the shore and look out from the top
 quest done=The Heart of Green. Band 1200.
 quest reward=Seed_Mango*2;Seed_Flower_Blue*1
 

@@ -273,7 +273,7 @@ prop gatezone zone.message=Ada's garden gate - never locked. The beds are weeded
 story qa_top|Pump plunger|Bolt|The village pump's plunger, hung up the weather vane mast on Heather Hill.
 story qa_cave|Pump leather|Bolt|The village pump's leather washer, in a chest at the back of Fox Cave.
 story qa_fixed|Village pump working|Bolt|The village pump, working again.
-note qa_hint Village pump notice | VILLAGE PUMP DRY. Plunger on the weather vane mast up Heather Hill (north-west), leather in Fox Cave (north-east). Tove at the old house in the east knows. - A.L.
+note qa_hint Village pump notice | VILLAGE PUMP DRY. Plunger on the weather vane mast up Heather Hill, leather in Fox Cave. Tove at the old house on the shore knows. - A.L.
 note qa_topchest Weather vane mast deck box | A box lashed to the deck rail at the top of the weather vane mast.
 loot qa_topchest story:qa_top*1;Rope*2;Scrap*2
 note qa_cavechest Fox Cave chest | A chest at the back of Fox Cave, dry under the rock.
@@ -295,7 +295,7 @@ note jbqa Top of the millstones | A children's treasure tin, still at the top.
 loot jbqa CopperIngot*1;Bolt*2;TradeToken*1
 
 quest title=Ada's Round
-quest intro=The postmistress's house on a green hill. Find her garden gate.
+quest intro=The postmistress's house on a green hill. Make for the house on the green hilltop and find her garden gate.
 step reach|garden_gate|1|Find the garden gate on the hilltop
 step read|Ada's diary|1|Read Ada's diary in her house
 step collect|story:pigeonsflown|1|Let the pigeons out of the dovecote
@@ -305,11 +305,11 @@ step blueprint|Blueprint_TitaniumTools|1|Take the titanium tools plans
 step blueprint|Blueprint_BackpackAdvanced|1|Take the advanced backpack plans
 step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline tool plans
 step read|Village pump notice|1|Read the village pump notice by the village pump
-step talk|Tove|1|Talk to Tove at the ruined house in the east
-step reach|qa_trail|1|Find the foot of the trail up Heather Hill, in the north-west
+step talk|Tove|1|Talk to Tove at the ruined house on the shore
+step reach|qa_trail|1|Find the foot of the trail up Heather Hill, below the weather vane mast
 step reach|qa_summit|1|Climb the trail to the top of Heather Hill
 step collect|story:qa_top|1|Climb the weather vane mast and take the pump plunger from its deck
-step reach|qa_cave|1|Find Fox Cave in the north-east
+step reach|qa_cave|1|Find Fox Cave in the rocks, past Tove's ruined house
 step collect|story:qa_cave|1|Take the pump leather from the chest at the back of the cave
 step read|Note under the pump cap|1|Bring both to the village pump and read what it shows
 step read|Ada's note to the next postman|1|Read Ada's note to the next postman

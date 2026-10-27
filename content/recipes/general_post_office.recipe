@@ -537,7 +537,7 @@ prop posthorn else.use=message||The post-horn. Ada's welcome first - and you'll 
 
 prop squarezone zone.id=square
 prop squarezone zone.radius=6
-prop squarezone zone.message=The square: drowned to the south, a stopped clock tower, and the post office behind its white colonnade.
+prop squarezone zone.message=The square: half drowned, a stopped clock tower, and the post office behind its white colonnade.
 prop hallzone zone.id=main_hall
 prop hallzone zone.radius=3
 prop hallzone zone.message=The sorting hall: tables, scales, the tubes along the ceiling, and the vault at the back.
@@ -556,7 +556,7 @@ prop flagcam obj.name=flagcam
 story qg_top|Fountain valve|Bolt|The square's fountain valve, carried up the weather mast on Postmaster's Hill.
 story qg_cave|Fountain spout|Bolt|The fountain's brass spout, a fish with its mouth open, in a chest at the back of Crab Cave.
 story qg_fixed|Square fountain working|Bolt|The square fountain, working again.
-note qg_hint Fountain notice | FOUNTAIN OFF. Valve on the weather mast up Postmaster's Hill (north-west), spout in Crab Cave (north-east). Sigge, the old porter, at the house in the east knows the rest.
+note qg_hint Fountain notice | FOUNTAIN OFF. Valve on the weather mast up Postmaster's Hill, spout in Crab Cave. Sigge, the old porter, at the house on the shore knows the rest.
 note qg_topchest Weather mast deck box | A box lashed to the deck rail at the top of the weather mast.
 loot qg_topchest story:qg_top*1;Rope*2;Scrap*2
 note qg_cavechest Crab Cave chest | A chest at the back of Crab Cave, dry under the rock.
@@ -580,7 +580,7 @@ note qg_mazechest Returned parcel | A parcel at the heart of the wall maze, retu
 loot qg_mazechest TradeToken*2;Glass*2;CopperIngot*2
 
 quest title=The Last Post
-quest intro=The General Post Office, on its drowned square. Walk into the square.
+quest intro=The General Post Office, on its drowned square. Make for the clock tower, then walk into the square.
 step reach|square|1|Walk into the square
 step read|Notice of closure|1|Read the notice of closure
 step kill|Hyena|4|Drive the dogs out of the arcade
@@ -607,11 +607,11 @@ step collect|story:semaphore|1|Work the semaphore mast
 step read|Ada's welcome|1|Read Ada's welcome
 step collect|story:adajoined|1|Sound the post-horn with the last letter
 step read|Fountain notice|1|Read the fountain notice by the square fountain
-step talk|Sigge|1|Talk to Sigge at the ruined house in the east
-step reach|qg_trail|1|Find the foot of the trail up Postmaster's Hill, in the north-west
+step talk|Sigge|1|Talk to Sigge at the ruined house on the shore
+step reach|qg_trail|1|Find the foot of the trail up Postmaster's Hill, below the weather mast
 step reach|qg_summit|1|Climb the trail to the top of Postmaster's Hill
 step collect|story:qg_top|1|Climb the weather mast and take the fountain valve from its deck
-step reach|qg_cave|1|Find Crab Cave in the north-east
+step reach|qg_cave|1|Find Crab Cave in the rocks, past Sigge's ruined house
 step collect|story:qg_cave|1|Take the fountain spout from the chest at the back of the cave
 step read|Letter in the basin|1|Bring both to the square fountain and read what it shows
 step reach|flag|1|Go to the flag

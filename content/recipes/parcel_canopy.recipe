@@ -264,7 +264,7 @@ call bag al=bag4
 call bag al=bag5
 pop
 
-note notebook Pilot Eskil's notebook | E. BRANDT - MAIL PILOT\n\nEngine quit over the canopy. Put her down in the trees - she held.\n\nMailbags carried up to the tree houses: the warthogs root through anything on the ground. The tail section is grown in with vines; the cargo hold is in the tail. Machete in my camp chest.\n\nFuel shed in the west woods. If the radio still works, I'll light the beacon on the hill so the next plane finds the strip.\n\nI don't think the next plane is coming.
+note notebook Pilot Eskil's notebook | E. BRANDT - MAIL PILOT\n\nEngine quit over the canopy. Put her down in the trees - she held.\n\nMailbags carried up to the tree houses: the warthogs root through anything on the ground. The tail section is grown in with vines; the cargo hold is in the tail. Machete in my camp chest.\n\nFuel shed in the woods on the hilltop. If the radio still works, I'll light the beacon on the hill so the next plane finds the strip.\n\nI don't think the next plane is coming.
 note campchest Pilot's camp chest | Eskil's camp chest: his machete, its plans, and the last of his food.
 loot campchest Blueprint_Machete*1;Machete*1;Cooked_Potato*2;Coconut*2
 prop campchest loot.refill=0
@@ -314,7 +314,7 @@ prop hilltop zone.radius=4
 story qc_top|Pump valve|Bolt|The fuel pump's valve, taken up the radio relay mast on Parrot Peak.
 story qc_cave|Pump handle|Bolt|The pump's long iron handle, hidden in a chest in Root Cave.
 story qc_fixed|Airstrip pump working|Bolt|The airstrip pump, working again.
-note qc_hint Pump keeper's notice | AIRSTRIP PUMP - DO NOT USE. Valve up the radio relay mast on Parrot Peak (north-west), handle in Root Cave (north-east). Eskil wanted it working for the next plane. Ask Mira at the old house in the south-west.
+note qc_hint Pump keeper's notice | AIRSTRIP PUMP - DO NOT USE. Valve up the radio relay mast on Parrot Peak, handle in Root Cave. Eskil wanted it working for the next plane. Ask Mira at the old house on the shore.
 note qc_topchest Radio relay mast deck box | A box lashed to the deck rail at the top of the radio relay mast.
 loot qc_topchest story:qc_top*1;Rope*2;Scrap*2
 note qc_cavechest Root Cave chest | A chest at the back of Root Cave, dry under the rock.
@@ -336,7 +336,7 @@ note jbqc Top of the stumps | Somebody's stash at the very top.
 loot jbqc CopperIngot*1;Bolt*2;TradeToken*1
 
 quest title=The Last Mail Flight
-quest intro=A plane crashed in the canopy. Land on the beach below it.
+quest intro=A plane crashed in the canopy. Make for the crashed plane's tail in the trees and land on the beach below it.
 step reach|beach|1|Land on the beach
 step read|Pilot Eskil's notebook|1|Read the pilot's notebook in his camp
 step open|Pilot's camp chest|1|Open the pilot's camp chest
@@ -348,15 +348,15 @@ step open|Cargo hold|1|Open the cargo hold in the tail
 step blueprint|Blueprint_Fueltank|1|Take the fuel tank plans from the cargo hold
 step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe plans from the cargo hold
 step collect|story:planeradio|1|Use the plane's radio
-step open|Fuel shed|1|Open the fuel shed in the west woods
+step open|Fuel shed|1|Open the fuel shed in the woods on the hilltop
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from the fuel shed
 step collect|story:eskildelivered|1|Lay Eskil's letter on his grave on the hilltop
 step read|Pump keeper's notice|1|Read the pump keeper's notice by the airstrip pump
-step talk|Mira Dahl|1|Talk to Mira Dahl at the ruined house in the south-west
-step reach|qc_trail|1|Find the foot of the trail up Parrot Peak, in the north-west
+step talk|Mira Dahl|1|Talk to Mira Dahl at the ruined house on the shore
+step reach|qc_trail|1|Find the foot of the trail up Parrot Peak, below the relay mast
 step reach|qc_summit|1|Climb the trail to the top of Parrot Peak
 step collect|story:qc_top|1|Climb the radio relay mast and take the pump valve from its deck
-step reach|qc_cave|1|Find Root Cave in the north-east
+step reach|qc_cave|1|Find Root Cave in the rocks, past the crashed plane
 step collect|story:qc_cave|1|Take the pump handle from the chest at the back of the cave
 step read|Pump ticket|1|Bring both to the airstrip pump and read what it shows
 step collect|story:beaconlit|1|Light the beacon on the hilltop

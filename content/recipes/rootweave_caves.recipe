@@ -164,7 +164,7 @@ brush flatten at 11 2 r=3 s=20 frames=150 h=38.5
 clear at 11 2 r=4 all
 # the climb: a mountain (trail winding up from bearing 0), a 8-storey climbing tower on its top, the summit box
 call vd_tower x=11 z=2 h0=38.5 lv=8 a=rwtw box=rwbox zal=rwtopz zid=rw_top msg="The survey mast, the highest point of Verdance. The wind sings in the rope rail."
-note rwbox Survey mast box | SURVEY - MAST. Every cave mouth on this hill is in sight from here: south the Fungus Hall, east the bees, west the drowned one, north the den.
+note rwbox Survey mast box | SURVEY - MAST. Every cave mouth on this hill is in sight from here: the Fungus Hall camp, the bees, the drowned one, the den.
 loot rwbox Battery*1;Rope*3;Bolt*3
 place ZiplinePath_Landmark rwzip at 15.97 0.28 h=59.55
 zipto rwzip 30 -62
@@ -206,9 +206,9 @@ prop denair atmo.fog=#20180e
 prop denair atmo.fogAmount=0.3
 prop denair zone.radius=14
 
-note survey Cave survey | CAVE SURVEY - SEEDKEEPERS\n\nFungus Hall: camp. Lamps on the crates.\nBee Hall (east): hives in the roots. Leave them be.\nFlooded Passage (west): two air pockets. Swim between them.\nDen (north): a mama bear. Our cache is in there. Wait for her to sleep.\n\nFuses: one in each far cave. Three in the box and the lab lights up.\n\nThe turbine on the top charges the lamps.
+note survey Cave survey | CAVE SURVEY - SEEDKEEPERS\n\nFungus Hall: camp. Lamps on the crates.\nBee Hall: hives in the roots. Leave them be.\nFlooded Passage: two air pockets. Swim between them.\nDen: a mama bear. Our cache is in there. Wait for her to sleep.\n\nFuses: one in each far cave. Three in the box and the lab lights up.\n\nThe turbine on the top charges the lamps.
 note samplereport Poison sample report | SAMPLE 31 - ROOT TISSUE, DEN - T.L.\n\nThe rot is not fungus. Not bacteria. It grows where the roots are cut, and it grows TOWARDS the cut. Like a hand going to a wound.\n\nThis is V-1. I knew it at the first slide and I wrote "not natural" on the label anyway, because Marit reads my labels.\n\nIt was only meant to clean the water. It eats oil, and then it eats the dead things in the silt, and then it finds out that living things are only dead things that have not stopped yet. It is not cruel. It is tidy.\n\nAll samples to the marsh station, Blightmire. I will finish the work there, where nobody climbs the balconies to look over my shoulder.\n\n- T.L.
-note akilog Root gate log | ROOT GATE LOG - AKI, gatekeeper\n\nThe gate at the bottom of the grove's root hole is mine. I open it for the lamps and close it for the bears, and I keep the book.\n\nIn: the river people, fourteen, singing. They did not want to stop. I let them through. I should not have. They were so happy.\nIn: the Seedkeepers' crew, looking for them. Lise, Bo, Greta and the sandwiches.\nOut: nobody.\n\nTeodor came through last, with a crate of jars on his back. He patted my shoulder and said, "Close it behind me, Aki. Nobody needs to follow." Then he went on east, to the marsh.\n\nI did not close it. Marit says I never close anything.
+note akilog Root gate log | ROOT GATE LOG - AKI, gatekeeper\n\nThe gate at the bottom of the grove's root hole is mine. I open it for the lamps and close it for the bears, and I keep the book.\n\nIn: the river people, fourteen, singing. They did not want to stop. I let them through. I should not have. They were so happy.\nIn: the Seedkeepers' crew, looking for them. Lise, Bo, Greta and the sandwiches.\nOut: nobody.\n\nTeodor came through last, with a crate of jars on his back. He patted my shoulder and said, "Close it behind me, Aki. Nobody needs to follow." Then he went on, to the marsh.\n\nI did not close it. Marit says I never close anything.
 note jonasmush Soup note | SOUP - by Jonas, for whoever is cold\n\nCave mushrooms: three. Water: some. Salt: if you have it. Hope: a lot.\n\nBoil until it smells like a forest. Do not boil until it smells like a lab.\n\nThis basket is for the survey crew. If the survey crew is gone, it is for you. Food does not care who eats it; that is the nicest thing about food.\n\nI am going on to the Heart with the honey. Teodor asked for it. He says sweet things help the cultures. I said they help people too. He said, "That is what I am counting on, Jonas," and I did not like the way he smiled.
 note mushroombasket Mushroom basket | The survey camp's mushroom basket, still full. A label on the handle in Jonas's capitals: CAVE MUSHROOMS. NOT FOR TEODOR. HE PUTS THEM UNDER GLASS. MUSHROOMS ARE FOR SOUP.
 note mastbox Turbine mast box | The box at the turbine's foot: its plans, oiled and rolled.
@@ -271,10 +271,10 @@ prop rwdeep zone.damage=1
 prop rwdeep zone.safe=wears|OxygenBottle*
 prop rwdeep zone.hazardMsg=The passage drops deep and cold, and your breath goes fast. An oxygen bottle - the Bee Hall's cache had one - would carry you to the crate.
 quest title=The Living Labyrinth
-quest intro=Four caves in a hill of roots. The survey team camped in the Fungus Hall on the south side.
+quest intro=Four caves in a hill of roots. Make for the survey mast on the rocky top; the survey team camped in the Fungus Hall, a cave mouth at the foot of the hill.
 step reach|fungus_hall|1|Go into the Fungus Hall
 step read|Cave survey|1|Read the cave survey
-step blueprint|Blueprint_WindTurbine|1|Take the wind turbine plans from the mast box on the hilltop
+step blueprint|Blueprint_WindTurbine|1|Take the wind turbine plans from the crate by the mast on the hilltop
 step reach|bee_hall|1|Go into the Bee Hall
 step blueprint|Blueprint_BatteryAdvanced|1|Take the advanced battery plans from the Bee Hall's cache
 step reach|flooded_passage|1|Swim into the Flooded Passage

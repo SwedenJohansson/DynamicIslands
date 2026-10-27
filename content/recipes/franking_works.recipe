@@ -229,7 +229,7 @@ prop yardzone zone.message=The works yard: presses, ink tanks, and something sma
 story qf_top|Perforating wheel|Bolt|The perforating wheel off the stamp machine - the one that cut the little holes between the stamps - hung up the works signal mast on Ink Hill.
 story qf_cave|Ink roller|Bolt|The stamp machine's ink roller, wrapped in oilcloth in a chest in Gull Cave.
 story qf_fixed|Perforating machine working|Bolt|The perforating machine, working again.
-note qf_hint Perforator notice | PERFORATING MACHINE STOPPED - stamps to be cut with scissors. Wheel on the works signal mast up Ink Hill (north-east), roller in Gull Cave (north-west). Bertil at the old house in the west ran it.
+note qf_hint Perforator notice | PERFORATING MACHINE STOPPED - stamps to be cut with scissors. Wheel on the works signal mast up Ink Hill, roller in Gull Cave. Bertil at the old house on the shore ran it.
 note qf_topchest Works signal mast deck box | A box lashed to the deck rail at the top of the works signal mast.
 loot qf_topchest story:qf_top*1;Rope*2;Scrap*2
 note qf_cavechest Gull Cave chest | A chest at the back of Gull Cave, dry under the rock.
@@ -251,7 +251,7 @@ note jbqf Top of the barrels | The wager's stake, still at the top.
 loot jbqf CopperIngot*1;Bolt*2;TradeToken*1
 
 quest title=Rare Stamps
-quest intro=A stamp factory on a flat islet. Walk into its yard.
+quest intro=A stamp factory on a flat islet. Make for the signal mast on Ink Hill, then walk into the works yard.
 step reach|yard|1|Walk into the works yard
 step read|Franking master's ledger|1|Read the franking master's ledger in the works hall
 step collect|story:raft-Tangaroa_Token|3|Find the three rare stamps about the yard
@@ -262,11 +262,11 @@ step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced biofuel ex
 step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced stationary anchor plans
 step collect|story:adadelivered|1|Put Ada's letter in her pigeonhole
 step read|Perforator notice|1|Read the perforator notice by the perforating machine
-step talk|Bertil Gran|1|Talk to Bertil Gran at the ruined house in the west
-step reach|qf_trail|1|Find the foot of the trail up Ink Hill, in the north-east
+step talk|Bertil Gran|1|Talk to Bertil Gran at the ruined house on the shore
+step reach|qf_trail|1|Find the foot of the trail up Ink Hill, below the signal mast
 step reach|qf_summit|1|Climb the trail to the top of Ink Hill
 step collect|story:qf_top|1|Climb the works signal mast and take the perforating wheel from its deck
-step reach|qf_cave|1|Find Gull Cave in the north-west
+step reach|qf_cave|1|Find Gull Cave in the rocks, past Bertil's ruined house
 step collect|story:qf_cave|1|Take the ink roller from the chest at the back of the cave
 step read|Last stamp sheet|1|Bring both to the perforating machine and read what it shows
 step read|Ada's route map|1|Read Ada's route map

@@ -139,8 +139,8 @@ scatter Tree_Stump 8 at 0 0 r=74 seed=11198 free=3
 call vd_mount x=-66 z=-30 top=20 r=18 a0=60 turns=1.25 hb=3
 place Loot_ChestSmall bmbox at -65 -29.2 h=20 sit yaw=200
 place Placeable_Flag_05 - at -67.4 -31 h=20 sit
-call vd_spot x=-66 z=-30 al=bmtopz id=bm_top r=4 msg="The digger crew's cairn on the west hill. From up here the bog's acid pools shine like spilt oil."
-note bmbox Digger crew's box | SEEDKEEPERS - DIGGER CREW. We dug the channels the growth was meant to drink from. The pump barge drained the east bog; it sank in the first storm.
+call vd_spot x=-66 z=-30 al=bmtopz id=bm_top r=4 msg="The digger crew's cairn on the hill. From up here the bog's acid pools shine like spilt oil."
+note bmbox Digger crew's box | SEEDKEEPERS - DIGGER CREW. We dug the channels the growth was meant to drink from. The pump barge drained the bog; it sank in the first storm.
 loot bmbox Rope*3;Bolt*3;MetalIngot*1
 prop bmbox loot.refill=0
 # the drowned digger at the foot of the west hill, half in the mud
@@ -148,8 +148,8 @@ place VP_Excavator bmdigger at -58 -50 ground sit yaw=210
 prop bmdigger tint.color=#4a4f3a
 prop bmdigger tint.amount=0.5
 # the dive: BoatStranded on the sea floor 10 m down, its crate, an air pocket
-call vd_dive x=70 z=-68 h=-10 yaw=135 obj="BoatStranded" al=bmwreck crate=bmcrate zal=bmwz zid=bm_wreck msg="The Seedkeepers' pump barge, on the bottom off the south-east shore. The valve box on its deck is still shut." air=bmair bub=bmbub
-note bmcrate Pump barge's valve box | A brass bog-pump valve, greased and wrapped. Stamped on it: EAST BOG.
+call vd_dive x=70 z=-68 h=-10 yaw=135 obj="BoatStranded" al=bmwreck crate=bmcrate zal=bmwz zid=bm_wreck msg="The Seedkeepers' pump barge, on the bottom off the shore. The valve box on its deck is still shut." air=bmair bub=bmbub
+note bmcrate Pump barge's valve box | A brass bog-pump valve, greased and wrapped. Stamped on it: BOG PUMP.
 loot bmcrate story:valve*1;Scrap*3;Bolt*2
 # the acid bog (RAFT_QUEST_MECHANICS SL11 7, M7): a sunken bog of acid round a dead stump island with the burner's
 # fuel drum; old logs lie across it and bob as you step on them. The pump at its edge takes the barge's valve and drains it;
@@ -183,15 +183,15 @@ place Loot_ChestSmall bmheron at -10 70 h=12 sit yaw=160
 note bmheron Heron watcher box | A bird-watcher's tally: HERONS 0. FROGS 0. THE MARSH IS TOO QUIET.
 loot bmheron Feather*4;Rope*2;Coconut*2
 prop bmheron loot.refill=0
-call vd_spot x=-10 z=71.5 al=bmheronz id=bm_heron r=3 msg="From the heron hummock the burnt roots smoke in a line, west to east."
+call vd_spot x=-10 z=71.5 al=bmheronz id=bm_heron r=3 msg="From the heron hummock the burnt roots smoke in a line across the marsh."
 
 # --- STORY 10-24: Ranger log 7 at the marsh station, the dog-handler's note by the west root, Marit's sample tag at the east root
 place Note_Paper rangerlog7 at 20 41.6 ground y=0.3 drop
 note rangerlog7 Ranger log 7 | RANGER LOG 7 - O. FENN\n\nThe marsh station's sample jars line every shelf: grove soil, delta water, cave root, all labelled T.L. And one shelf of empty jars with names on them instead of places. HEDDA. ULF. LISE. GRETA. BO.\n\nI held the vial up against them. Same glass. Same hand.\n\nI am not calm any more. I said I would ask Teodor very calmly. I take it back.\n\nBurr found me in the reeds and stood on my foot until I stopped shaking. Good goat. Terrible goat. He has lost his bell; I have it in my pocket with the vial, which is getting crowded.\n\nThe burn crew's map says three roots. I will burn the first and see what the marsh does.
 place Note_Paper dognote at -43.4 2.6 ground y=0.3 drop
-note dognote Dog-handler's note | BO - SEARCH CREW\n\nThe dogs will not go near the west root. Good dogs, smart dogs, and they sit down in the mud and look at me like I have suggested something rude.\n\nThe hyenas came out of the reeds at dusk. Thin, wrong, too quiet. They did not want us. They wanted to drive us to the root, and stood in a ring round it like they were guarding a door.\n\nGreta says burn it. Lise says wait for the lab. I say whatever we do, do it before supper; I am not walking back through that in the dark.\n\nIf you read this, we waited for the lab.
+note dognote Dog-handler's note | BO - SEARCH CREW\n\nThe dogs will not go near the hyena root. Good dogs, smart dogs, and they sit down in the mud and look at me like I have suggested something rude.\n\nThe hyenas came out of the reeds at dusk. Thin, wrong, too quiet. They did not want us. They wanted to drive us to the root, and stood in a ring round it like they were guarding a door.\n\nGreta says burn it. Lise says wait for the lab. I say whatever we do, do it before supper; I am not walking back through that in the dark.\n\nIf you read this, we waited for the lab.
 place Note_Paper marittag at 54 -6 ground y=0.3 drop
-note marittag Tag on the east root | A climbing tag, the kind you clip to a rope, wired to the root with care:\n\nM. FENN - SAMPLE LINE 40 - EAST ROOT. GROWTH 1 METRE A DAY. TEODOR SAYS DO NOT CUT. I SAY SOMEBODY MUST.\n\nOn the back, scratched with a pin: ODA - IF YOU GET THIS FAR, I AM STILL UP AT THE HEART. I KEEP THE TOP BALCONY LAMP ON FOR YOU.
+note marittag Tag on the east root | A climbing tag, the kind you clip to a rope, wired to the root with care:\n\nM. FENN - SAMPLE LINE 40 - BOAR ROOT. GROWTH 1 METRE A DAY. TEODOR SAYS DO NOT CUT. I SAY SOMEBODY MUST.\n\nOn the back, scratched with a pin: ODA - IF YOU GET THIS FAR, I AM STILL UP AT THE HEART. I KEEP THE TOP BALCONY LAMP ON FOR YOU.
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Blightmire
@@ -249,15 +249,15 @@ prop root2 obj.name=root2
 prop root2 beh.use=Set the growth alight
 prop root2 if.use=signal|root1\n!signal|root2
 prop root2 on.use=signal||root2\nhide|fume2\ngive||story:burnt*1\nhide|root2\nshow|fire2\nmessage||The second root burns. Somewhere out in the marsh, something squeals.
-prop root2 else.use=message||The growth only smoulders. The map says: west root first.
+prop root2 else.use=message||The growth only smoulders. The map says: hyena root first.
 prop root3 obj.name=root3
 prop root3 beh.use=Set the growth alight
 prop root3 if.use=signal|root2\n!signal|cleansed
 prop root3 on.use=signal||cleansed\nhide|fume3\ngive||story:burnt*1\nhide|root3\nshow|fire3\nshow|rootcache\nshow|confession\nmessage||The last root goes up with a roar. The fog lifts off the marsh - and the burnt root splits open over a chest.
-prop root3 else.use=message||The growth only smoulders. The map says: west, then north, then east.
+prop root3 else.use=message||The growth only smoulders. The map says: hyena root, then station root, then boar root.
 prop burrvines on.use=hide|\nshow|burrchest\nmessage||Burr butts through the vines - he found it: a Seedkeeper's stash.
 
-note blightmap Blight map | BLIGHT MAP - MARSH STATION\n\nThree roots up through the marsh, all three grown over.\nBurn them in order or the growth runs back along the root:\n  1. WEST   2. NORTH   3. EAST\n\nThe dogs nest on the west side. Boars on the east.
+note blightmap Blight map | BLIGHT MAP - MARSH STATION\n\nThree roots up through the marsh, all three grown over.\nBurn them in order or the growth runs back along the root:\n  1. HYENA ROOT   2. STATION ROOT (by this station)   3. BOAR ROOT\n\nThe hyenas nest at the first. Boars at the last.
 note confession Seedkeeper's confession | To whoever burns the last root -\n\nThank you. I mean that. I could not do it; I tried twice and stood here with the torch until it went out.\n\nI made it. V-1. A spore to eat the oil out of the river and give back clean water. It did. And then it went on into the roots, and fed on the roots, and then on whatever lay down among them to rest. Fourteen river people. Lise's crew. They are not dead, exactly. They are part of it. It sings with their voices at night.\n\nThe ranger has my first trial vial. I saw her pocket it. She is looking for me, and she will want to burn everything, and she will be right, and it will still be the wrong answer.\n\nThe Seedkeepers' last camp is on Canopy Stair, the climb to the Heart. Come up. I left the stair for you. - T.L.
 note smeltercamp Smelter camp chest | The smelter camp's chest: the plans of a smelter that runs on power.
 note marshstation Marsh station locker | The marsh station's locker: an advanced extractor's plans and the root samples, sealed.
@@ -290,7 +290,7 @@ prop hummockzone zone.radius=6
 prop hummockzone zone.message=The hummock. Dry ground, a cold smelter camp, a map nailed to a post.
 
 # DEEP 10-24 settings
-story valve|Bog pump valve|Placeable_Lantern_Metal|A brass valve stamped EAST BOG, from the sunk pump barge.
+story valve|Bog pump valve|Placeable_Lantern_Metal|A brass valve stamped BOG PUMP, from the sunk pump barge.
 story fuel|Burner fuel|Placeable_Lantern_Metal|A drum of the Seedkeepers' burner fuel, from the acid bog's stump island.
 story beacon|Beacon lit|Placeable_Lantern_Metal|The hummock beacon is burning: the marsh is clean.
 prop bogacid obj.name=bogacid
@@ -310,7 +310,7 @@ prop bogpump obj.name=bogpump
 prop bogpump beh.use=Fit the valve and work the bog pump
 prop bogpump if.use=!signal|drained\ntake|story:valve|1
 prop bogpump on.use=signal||drained\nhide|bogacid\nmessage||The valve bites, the pump wheezes and the acid drains off down the old channel. The logs settle in the mud.
-prop bogpump else.use=message||The bog pump. Its valve is gone - EAST BOG, the plate says; the pump barge carried the spares.
+prop bogpump else.use=message||The bog pump. Its valve is gone - BOG PUMP, the plate says; the pump barge carried the spares.
 prop fueldrum obj.name=fueldrum
 note fueldrum Fuel drum | The Seedkeepers' burner fuel, sealed against the acid. Enough for one big fire.
 loot fueldrum story:fuel*1;Scrap*2
@@ -323,18 +323,18 @@ prop beacon else.use=message||The camp's beacon burner, dry. The fuel was kept o
 prop beaconfire obj.name=beaconfire
 prop beaconfire beh.hidden=1
 quest title=The Poisoned Marsh
-quest intro=Green fog and dead wood. The Seedkeepers' camp is on the dry hummock to the south.
+quest intro=Green fog and dead wood. Make for the digger crew's hill, then find the Seedkeepers' camp on the dry hummock out in the marsh.
 step reach|hummock|1|Go to the dry hummock
 step read|Blight map|1|Read the blight map
 step blueprint|Blueprint_SmelterElectric|1|Take the electric smelter plans from the camp chest
 step kill|Hyena|3|Drive off the three hyenas
-step collect|story:burnt|1|Burn the west root
-step collect|story:burnt|2|Burn the north root
+step collect|story:burnt|1|Burn the root where the hyenas nest
+step collect|story:burnt|2|Burn the root by the marsh station
 step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced extractor plans from the marsh station
 step kill|Warthog|2|Drive off the two boars
-step collect|story:burnt|3|Burn the east root
+step collect|story:burnt|3|Burn the root where the boars roam
 step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced anchor plans from the root cache
-step collect|story:valve|1|Dive to the sunk pump barge off the south-east shore
+step collect|story:valve|1|Dive to the sunk pump barge off the shore and open its valve box
 step collect|story:fuel|1|Cross the acid bog to the fuel drum (drain it with the bog pump, or wear the blight suit)
 step collect|story:beacon|1|Light the beacon on the hummock with the fuel
 step read|Seedkeeper's confession|1|Read the Seedkeeper's confession in the camp

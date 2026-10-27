@@ -133,7 +133,7 @@ call ar_cave x=-50 z=46 h=3 yaw=180 al=qh_caverock chest=qh_cavechest
 call hw_zone x=-49 z=37 al=qh_cavez id=qh_cave r=4 h=1 msg="Vent Cave. Water drips somewhere in the dark."
 call ar_ruin x=-58 z=-36 h=3 yaw=0 w=3 d=2 al=qh_ruin
 call lp_islander x=-59 z=-40.5 yaw=200 al=qh_isl nm="Otto Rask" pose=sit
-prop qh_isl talk.text=Up the harbour stair, were you? Then you've seen the tubes. I fitted every one.\n---\nThe north line has its own pump, out here. When they shut the exchange I took its gauge up the vent mast on Pressure Hill and its bellows into Vent Cave. Nobody left to send anything.\n---\nPut it back if you like. It's good to hear the tubes breathe.\n---\nMy lamps: four round the house, each one wakes its neighbour. All four lit, and look behind the back wall.
+prop qh_isl talk.text=Up the harbour stair, were you? Then you've seen the tubes. I fitted every one.\n---\nThe hill line has its own pump, out here. When they shut the exchange I took its gauge up the vent mast on Pressure Hill and its bellows into Vent Cave. Nobody left to send anything.\n---\nPut it back if you like. It's good to hear the tubes breathe.\n---\nMy lamps: four round the house, each one wakes its neighbour. All four lit, and look behind the back wall.
 place Placeable_Chair_Basic - at -59 -40.5 ground sit yaw=200
 call lp_lamp x=-65 z=-37 al=qh_lamp1 nm="Fitter's lamp 1" grp="Fitter's lamps" on=0
 call lp_lamp x=-59 z=-30 al=qh_lamp2 nm="Fitter's lamp 2" grp="Fitter's lamps" on=0
@@ -227,7 +227,7 @@ story tubea|Tube A|Note_Paper|Tube A of the exchange runs again.
 story tubeb|Tube B|Note_Paper|Tube B of the exchange runs again.
 story telegraphdelivered|Letter for the telegraphist|Note_Paper|The telegraphist's letter, sent down the exchange chute.
 
-note instructions Exchange instructions | PNEUMATIC HEIGHTS EXCHANGE - IF THE TUBES STOP\n\n1. Turn the three valves on the middle terrace to EXCHANGE.\n2. Connect tube A at the connector by the west wall. The capsule comes up in the rack.\n3. Tube B runs off the crank by the east wall.\n\nThe vault code goes by tube B. Never write it on a wall.
+note instructions Exchange instructions | PNEUMATIC HEIGHTS EXCHANGE - IF THE TUBES STOP\n\n1. Turn the three valves on the middle terrace to EXCHANGE.\n2. Connect tube A at the connector by the capsule rack. The capsule comes up in the rack.\n3. Tube B runs off the crank by the vault.\n\nThe vault code goes by tube B. Never write it on a wall.
 macro valveuse al=valve1
 prop $al obj.name=$al
 prop $al beh.use=Turn the valve to EXCHANGE
@@ -297,17 +297,17 @@ prop harbourzone zone.radius=4
 prop harbourzone zone.message=The harbour steps: a stair up the hill, pipes running beside it.
 prop roofzone zone.id=tower_roof
 prop roofzone zone.radius=3
-prop roofzone zone.message=From the signal hut you see the whole tube network: valves, pipes and the exchange, and far to the east the stacks of the Narrows.
+prop roofzone zone.message=From the signal hut you see the whole tube network: valves, pipes and the exchange, and far off across the sea the stacks of the Narrows.
 
 story qh_top|Pump gauge|Bolt|The pressure gauge off the north line's pump, screwed up on the vent mast on Pressure Hill.
 story qh_cave|Pump bellows|Bolt|The leather bellows of the north line's pump, folded in a chest in Vent Cave.
 story qh_fixed|North line pump working|Bolt|The north line pump, working again.
-note qh_hint North line notice | NORTH LINE PUMP STOPPED - no pressure in the north tubes. Gauge on the vent mast up Pressure Hill (north-east), bellows in Vent Cave (north-west). Otto at the old house in the south-west can tell you more.
+note qh_hint North line notice | HILL LINE PUMP STOPPED - no pressure in the hill tubes. Gauge on the vent mast up Pressure Hill, bellows in Vent Cave. Otto at the old house on the shore can tell you more.
 note qh_topchest Tube vent mast deck box | A box lashed to the deck rail at the top of the tube vent mast.
 loot qh_topchest story:qh_top*1;Rope*2;Scrap*2
 note qh_cavechest Vent Cave chest | A chest at the back of Vent Cave, dry under the rock.
 loot qh_cavechest story:qh_cave*1;Nail*6;Plank*3
-note qh_rewnote Pump fitter's chit | The pump thumps and somewhere in the hill the tubes start to hiss. A capsule pops out of the pump's chute with a fitter's chit in it: 'Pressure restored, north line. The town is long empty. I did it anyway.'
+note qh_rewnote Pump fitter's chit | The pump thumps and somewhere in the hill the tubes start to hiss. A capsule pops out of the pump's chute with a fitter's chit in it: 'Pressure restored, hill line. The town is long empty. I did it anyway.'
 note qh_rewchest North line pump reward | What the north line pump kept.
 loot qh_rewchest MetalIngot*2;Bolt*3;Rope*2
 note qh_lampchest Otto's toolbox | Otto's toolbox under a stone behind the house: spanners, and a tube capsule full of tokens.
@@ -324,16 +324,16 @@ note jbqh Top of the stair stack | Somebody's stash at the very top.
 loot jbqh CopperIngot*1;Bolt*2;TradeToken*1
 
 quest title=By Tube
-quest intro=A hill town of mail tubes. Climb the harbour steps.
+quest intro=A hill town of mail tubes. Make for the linesman's signal hut on the hilltop, then climb the harbour steps.
 step reach|harbour_steps|1|Climb the harbour steps
 step read|Exchange instructions|1|Read the exchange instructions on the hilltop
 step collect|story:valve|3|Turn the three tube valves on the middle terrace to EXCHANGE
-step collect|story:tubea|1|Connect tube A at the exchange's west wall
+step collect|story:tubea|1|Connect tube A at the exchange, at the connector by the capsule rack
 step read|Capsule 1|1|Read the capsule that comes up tube A
 step open|House 4 letterbox|1|Open House 4's letterbox on the lower terrace
 step blueprint|Blueprint_EngineControls|1|Take the engine controls plans from the letterbox
 step kill|Rat|6|Deal with the rats from the tube cellar
-step collect|story:tubeb|1|Crank tube B by the exchange's east wall
+step collect|story:tubeb|1|Turn the crank for tube B, by the exchange vault
 step read|Capsule 2|1|Read the second capsule
 step open|Exchange vault|1|Open the exchange vault with the code
 step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from the vault
@@ -345,16 +345,16 @@ step blueprint|Blueprint_ZiplineBase|1|Take the zipline plans from the linesman'
 step blueprint|Blueprint_ZiplineTool|1|Take the zipline tool plans from the linesman's locker
 step collect|story:telegraphdelivered|1|Send the telegraphist's letter down the exchange chute
 step read|Telegraphist's reply|1|Read the telegraphist's reply
-step read|North line notice|1|Read the north line notice by the north line pump
-step talk|Otto Rask|1|Talk to Otto Rask at the ruined house in the south-west
-step reach|qh_trail|1|Find the foot of the trail up Pressure Hill, in the north-east
+step read|North line notice|1|Read the pump notice by the line pump out on the island
+step talk|Otto Rask|1|Talk to Otto Rask at the ruined house on the shore
+step reach|qh_trail|1|Find the foot of the trail up Pressure Hill, below the vent mast
 step reach|qh_summit|1|Climb the trail to the top of Pressure Hill
 step collect|story:qh_top|1|Climb the tube vent mast and take the pump gauge from its deck
-step reach|qh_cave|1|Find Vent Cave in the north-west
+step reach|qh_cave|1|Find Vent Cave in the rocks, past Otto's ruined house
 step collect|story:qh_cave|1|Take the pump bellows from the chest at the back of the cave
-step read|Pump fitter's chit|1|Bring both to the north line pump and read what it shows
+step read|Pump fitter's chit|1|Bring both to the line pump and read what it shows
 step reach|tower_roof|1|Climb to the linesman's signal hut and look out over the tubes
-quest done=The tubes hiss with post again. From the signal hut you can see the telegraph poles of the Narrows to the east.
+quest done=The tubes hiss with post again. From the signal hut you can see the telegraph poles of the Narrows across the water.
 quest reward=MetalIngot*4;CopperIngot*2;Bolt*4
 
 save Pneumatic Heights

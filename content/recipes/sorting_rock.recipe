@@ -270,7 +270,7 @@ prop cistern tint.amount=0.4
 story parcelweights|Parcel weights|Note_Paper|The postal safe's ledger: what each waiting parcel weighs, and which band it goes in.
 story weighed|Weighed parcel|Note_Paper|A parcel weighed into its rate band.
 story lisedelivered|Letter for Lise|Note_Paper|Lise's urgent letter, in her locker at last.
-note ratechart Rate chart | COASTAL POST - PARCEL RATES\n\nUnder 1 kg: band A\n1 - 5 kg: band B\nOver 5 kg: band C\n\nThe weights of parcels waiting are in the postal safe. The safe was buried when the water came - "somewhere on the rock, west of the stair".\n\nThe sorter's tool rack is by the back wall.
+note ratechart Rate chart | COASTAL POST - PARCEL RATES\n\nUnder 1 kg: band A\n1 - 5 kg: band B\nOver 5 kg: band C\n\nThe weights of parcels waiting are in the postal safe. The safe was buried when the water came - "somewhere on the rock, near the landing stair".\n\nThe sorter's tool rack is by the back wall.
 note toolrack Sorter's tool rack | The sorter's tool rack: a metal detector and a spade, for the safe.
 loot toolrack MetalDetector*1;Shovel*1
 prop toolrack loot.refill=0
@@ -309,7 +309,7 @@ prop doorzone zone.message=The sorting hall: five scales on the tables, and the 
 story qr_top|Crane hook|Bolt|The parcel crane's hook, hung on the quarry mast on Quarry Crag.
 story qr_cave|Crane chain|Bolt|The parcel crane's chain, coiled in a chest at the back of Slate Cave.
 story qr_fixed|Parcel crane working|Bolt|The parcel crane, working again.
-note qr_hint Crane driver's notice | PARCEL CRANE OUT OF ORDER - parcels to be carried up by hand. Hook on the quarry mast up Quarry Crag (north-west), chain in Slate Cave (north-east). Greta at the old house in the east drove it.
+note qr_hint Crane driver's notice | PARCEL CRANE OUT OF ORDER - parcels to be carried up by hand. Hook on the quarry mast up Quarry Crag, chain in Slate Cave. Greta at the old house on the shore drove it.
 note qr_topchest Quarry mast deck box | A box lashed to the deck rail at the top of the quarry mast.
 loot qr_topchest story:qr_top*1;Rope*2;Scrap*2
 note qr_cavechest Slate Cave chest | A chest at the back of Slate Cave, dry under the rock.
@@ -333,11 +333,11 @@ note qr_mazechest Unsorted parcel | A parcel at the heart of the wall maze - add
 loot qr_mazechest TradeToken*2;Glass*2;CopperIngot*2
 
 quest title=Weighed and Sorted
-quest intro=A sorting hall in a rock. Climb up to its door.
+quest intro=A sorting hall in a rock. Make for the tall quarry mast on the crag, then climb up to the hall's door.
 step reach|hall_door|1|Climb up to the sorting hall
 step read|Rate chart|1|Read the rate chart
 step open|Sorter's tool rack|1|Take the metal detector and the spade from the tool rack
-step collect|story:parcelweights|1|Find and dig up the buried postal safe
+step collect|story:parcelweights|1|Dig up the buried postal safe near the landing stair
 step collect|story:weighed|3|Weigh three parcels on the scales
 step open|Rates office|1|Open the rates office chest
 step blueprint|Blueprint_WaterTank|1|Take the water tank plans
@@ -347,11 +347,11 @@ step blueprint|Blueprint_Storage_Large|1|Take the large storage plans
 step blueprint|Blueprint_Recycler|1|Take the recycler plans
 step collect|story:lisedelivered|1|Put Lise's letter in her locker
 step read|Crane driver's notice|1|Read the crane driver's notice by the parcel crane
-step talk|Greta Moberg|1|Talk to Greta Moberg at the ruined house in the east
-step reach|qr_trail|1|Find the foot of the trail up Quarry Crag, in the north-west
+step talk|Greta Moberg|1|Talk to Greta Moberg at the ruined house on the shore
+step reach|qr_trail|1|Find the foot of the trail up Quarry Crag, below the quarry mast
 step reach|qr_summit|1|Climb the trail to the top of Quarry Crag
 step collect|story:qr_top|1|Climb the quarry mast and take the crane hook from its deck
-step reach|qr_cave|1|Find Slate Cave in the north-east
+step reach|qr_cave|1|Find Slate Cave in the rocks, past Greta's ruined house
 step collect|story:qr_cave|1|Take the crane chain from the chest at the back of the cave
 step read|Crane cab slip|1|Bring both to the parcel crane and read what it shows
 step read|Lise's reply|1|Read Lise's note

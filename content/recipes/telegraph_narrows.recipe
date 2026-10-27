@@ -232,7 +232,7 @@ prop generator else.use=message||The generator is running.
 prop linehub obj.name=linehub
 prop linehub beh.use=Join the line
 prop linehub if.use=has|story:linepower|1\n!signal|linewire
-prop linehub on.use=open|\nsignal||wire\nsignal||linewire\ngive||story:linewire*1\nmessage||The cable clicks in. Current hums along the wire, down the line to the east.
+prop linehub on.use=open|\nsignal||wire\nsignal||linewire\ngive||story:linewire*1\nmessage||The cable clicks in. Current hums along the wire, down the line to the stacks.
 prop linehub else.use=message||The line is dead - the generator at the first hut is off. Or it is joined already.
 prop cabinetpad obj.name=cabinetpad
 prop cabinetpad beh.use=Type the cabinet code
@@ -259,7 +259,7 @@ prop holgerkit else.open=message||Holger's kit bag - and Holger is still in the 
 
 prop firsthutzone zone.id=first_hut
 prop firsthutzone zone.radius=3
-prop firsthutzone zone.message=The first telegraph hut: a table, a code sheet, and the line running out of the window to the east.
+prop firsthutzone zone.message=The first telegraph hut: a table, a code sheet, and the line running out of the window towards the stacks.
 prop stack4zone zone.id=stack_4
 prop stack4zone zone.radius=3
 prop lasthutzone zone.id=last_hut
@@ -269,7 +269,7 @@ prop lasthutzone zone.message=The last hut - and outside it, someone in a cage.
 story qt_top|Relay coil|Bolt|The repeater's relay coil, hung up the repeater mast on Wire Hill.
 story qt_cave|Relay key|Bolt|The repeater's brass relay key, in a chest at the back of Seal Cave.
 story qt_fixed|Line repeater working|Bolt|The line repeater, working again.
-note qt_hint Repeater notice | LINE REPEATER DEAD - the signals stop at the strait. Relay coil on the repeater mast up Wire Hill (south-west), relay key in Seal Cave over the strait (east). Dagny at the old house on the east headland keeps the line book.
+note qt_hint Repeater notice | LINE REPEATER DEAD - the signals stop at the strait. Relay coil on the repeater mast up Wire Hill, relay key in Seal Cave over the strait. Dagny at the old house on the far headland keeps the line book.
 note qt_topchest Repeater mast deck box | A box lashed to the deck rail at the top of the repeater mast.
 loot qt_topchest story:qt_top*1;Rope*2;Scrap*2
 note qt_cavechest Seal Cave chest | A chest at the back of Seal Cave, dry under the rock.
@@ -284,14 +284,14 @@ loot qt_setchest Glass*3;MetalIngot*2;Bolt*4
 note qt_planecrate Line plane's crate | The linesmen's plane crate: wire, insulators and a toolkit.
 loot qt_planecrate Plastic*3;Scrap*3;Nail*6
 prop qt_planecrate loot.refill=0
-note qt_pilot Line patrol log | LINE PATROL - TELEGRAPH NARROWS. Followed the wire across the strait. Wind off the headland, landed hard on the west shore. Line is down at stack 4.
+note qt_pilot Line patrol log | LINE PATROL - TELEGRAPH NARROWS. Followed the wire across the strait. Wind off the headland, landed hard on the shore. Line is down at stack 4.
 note jcqt Pole climb | Old telegraph poles stood on end and cut short, one higher than the next.
 loot jcqt Rope*3;Plank*4;MetalIngot*1
 note jbqt Top of the pole stack | Somebody's stash at the very top.
 loot jbqt CopperIngot*1;Bolt*2;TradeToken*1
 
 quest title=Down the Line
-quest intro=A telegraph line across the strait. Climb to the first hut on the west headland.
+quest intro=A telegraph line across the strait. Make for the tall telegraph stacks, then climb to the first hut at the start of the line.
 step reach|first_hut|1|Climb to the first telegraph hut
 step read|Telegraph code sheet|1|Read the telegraph code sheet
 step collect|story:linepower|1|Start the generator by the first hut
@@ -306,11 +306,11 @@ step blueprint|Blueprint_HeadLight_Advanced|1|Take the advanced headlight plans
 step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans
 step collect|story:cagekey|1|Take the cage key from the cabinet
 step read|Repeater notice|1|Read the repeater notice by the line repeater
-step talk|Dagny Ek|1|Talk to Dagny Ek at the ruined house in the south-east
-step reach|qt_trail|1|Find the foot of the trail up Wire Hill, in the south-west
+step talk|Dagny Ek|1|Talk to Dagny Ek at the ruined house on the far headland
+step reach|qt_trail|1|Find the foot of the trail up Wire Hill, below the repeater mast
 step reach|qt_summit|1|Climb the trail to the top of Wire Hill
 step collect|story:qt_top|1|Climb the repeater mast and take the relay coil from its deck
-step reach|qt_cave|1|Find Seal Cave in the east
+step reach|qt_cave|1|Find Seal Cave in the rocks across the strait
 step collect|story:qt_cave|1|Take the relay key from the chest at the back of the cave
 step read|Repeater tape|1|Bring both to the line repeater and read what it shows
 step open|Holger's kit|1|Free Holger from the cage, then open his kit bag

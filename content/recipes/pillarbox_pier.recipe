@@ -249,7 +249,7 @@ prop sortingzone zone.message=The sorting shed: tables, sacks and a chalkboard r
 story qp_top|Bell clapper|Bolt|The clapper of the ferry bell, hung up the signal mast so nobody could ring it.
 story qp_cave|Bell rope|Bolt|The ferry bell's rope, coiled up in a chest at the back of Tide Cave.
 story qp_fixed|Ferry bell working|Bolt|The ferry bell, working again.
-note qp_hint Bell ringer's notice | FERRY BELL OUT OF USE. The clapper is up the ferry signal mast on Ferry Hill (north-east) and the rope is in Tide Cave (north-west). No ferry comes in without the bell. Ask Nils at the old house on the west shore.
+note qp_hint Bell ringer's notice | FERRY BELL OUT OF USE. The clapper is up the ferry signal mast on Ferry Hill and the rope is in Tide Cave, in the rocks past Nils' house. No ferry comes in without the bell. Ask Nils at the old house on the shore.
 note qp_topchest Ferry signal mast deck box | A box lashed to the deck rail at the top of the ferry signal mast.
 loot qp_topchest story:qp_top*1;Rope*2;Scrap*2
 note qp_cavechest Tide Cave chest | A chest at the back of Tide Cave, dry under the rock.
@@ -271,7 +271,7 @@ note jbqp Top of the bollards | The wager's stake, still at the top.
 loot jbqp CopperIngot*1;Bolt*2;TradeToken*1
 
 quest title=The Ferry Master's Wife
-quest intro=A ferry pier with a row of pillar boxes. Walk out to its head.
+quest intro=A ferry pier with a row of pillar boxes. Make for the ferry signal mast on the hill, then walk out to the head of the pier.
 step reach|pier_head|1|Walk out to the head of the pier
 step read|Ferry timetable|1|Read the ferry timetable in the waiting room
 step collect|story:ferrydelivered|1|Post the Ferry Master's letter in pillar box 7
@@ -281,11 +281,11 @@ step blueprint|Blueprint_MotorWheel|1|Take the motor wheel plans from the locker
 step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel plans from the locker
 step blueprint|Blueprint_HeadLight|1|Take the head light plans from the locker
 step read|Bell ringer's notice|1|Read the bell ringer's notice by the ferry bell
-step talk|Nils|1|Talk to Nils at the ruined house in the west
-step reach|qp_trail|1|Find the foot of the trail up Ferry Hill, in the north-east
+step talk|Nils|1|Talk to Nils at the ruined house on the shore
+step reach|qp_trail|1|Find the foot of the trail up Ferry Hill, below the signal mast
 step reach|qp_summit|1|Climb the trail to the top of Ferry Hill
 step collect|story:qp_top|1|Climb the ferry signal mast and take the bell clapper from its deck
-step reach|qp_cave|1|Find Tide Cave in the north-west
+step reach|qp_cave|1|Find Tide Cave in the rocks, past Nils' ruined house
 step collect|story:qp_cave|1|Take the bell rope from the chest at the back of the cave
 step read|Bell ringer's card|1|Bring both to the ferry bell and read what it shows
 step reach|sorting|1|Go to the sorting shed at the land end of the pier

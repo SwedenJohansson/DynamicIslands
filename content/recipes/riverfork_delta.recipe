@@ -147,7 +147,7 @@ place RT_RadarScreen mapscreen at 6.5 -8.5 ground sit yaw=200
 # the climb: a mountain (trail winding up from bearing 250), a 10-storey climbing tower on its top, the summit box
 call vd_mount x=55 z=25 top=22 r=20 a0=250 turns=1.25 hb=3
 call vd_tower x=55 z=25 h0=22 lv=10 a=dltw box=dlbox zal=dltopz zid=dl_top msg="The timber port's crane. The jib still points at the river mouth; the route strongbox sits out on its end."
-note dlbox Crane cab box | RIVER PEOPLE - TIMBER PORT. Logs came down the north arm and swung out to the barges from here. The strongbox on the jib keeps the route.
+note dlbox Crane cab box | RIVER PEOPLE - TIMBER PORT. Logs came down the upper river and swung out to the barges from here. The strongbox on the jib keeps the route.
 loot dlbox Rope*3;Plank*4;Bolt*2
 # the crane's jib: two floor tiles out east from the deck, the route strongbox (a keypad) at its end
 place Block_Floor_Tier3 dljib at 57.25 24.25 h={22+10*2.42+0.215}
@@ -182,11 +182,11 @@ prop treasure11380 treasure.loot=Scrap*6;Bolt*3;Nail*10
 
 # --- STORY 10-24: Teodor's water trial at the map screen, Hedda's ferry log, the fisher's diary, Pim's note in the otter den
 beside Note_Paper teodortrial mapscreen d=1.4
-note teodortrial Water trial, sheet 1 | SEEDKEEPERS - HEART LAB - WATER TRIAL, SHEET 1 - T. LIND\n\nSite: river people's outpost, Riverfork Delta.\nProblem: brown foam on the stones, fish belly-up in the east arm, children with rashes. Old oil in the silt from the timber barges.\n\nTrial: one dose of V-1 in the outpost's water barrel. V-1 is a spore that eats oil and gives back clean water and flowers. Nothing else. I have checked it two hundred times.\n\nDay 1: foam gone.\nDay 3: the east arm runs clear. Hedda says the water tastes sweet. Children say it tastes like sweets.\nDay 6: vines on the ferry rope. Small. Lovely, really.\n\nI am so happy I could cry. I will tell Marit tonight. She said I would never fix the river. I have fixed the river.
+note teodortrial Water trial, sheet 1 | SEEDKEEPERS - HEART LAB - WATER TRIAL, SHEET 1 - T. LIND\n\nSite: river people's outpost, Riverfork Delta.\nProblem: brown foam on the stones, fish belly-up in the drawbridge arm, children with rashes. Old oil in the silt from the timber barges.\n\nTrial: one dose of V-1 in the outpost's water barrel. V-1 is a spore that eats oil and gives back clean water and flowers. Nothing else. I have checked it two hundred times.\n\nDay 1: foam gone.\nDay 3: the drawbridge arm runs clear. Hedda says the water tastes sweet. Children say it tastes like sweets.\nDay 6: vines on the ferry rope. Small. Lovely, really.\n\nI am so happy I could cry. I will tell Marit tonight. She said I would never fix the river. I have fixed the river.
 place Note_Paper ferrylog at -18.5 5 ground y=0.3 drop
 note ferrylog Ferry log | FERRY LOG - HEDDA, ferry keeper\n\nCrossings today: 31. Fares paid: 4. Fares paid in fish: 9. Fares paid in "I will pay you tomorrow, Hedda": everyone else, as usual.\n\nThe rope is growing leaves. I cut them in the morning and by supper there are more. The lab man says it is good. The lab man has never had to wind a ferry with a salad on the rope.\n\nThe water smells sweet at night. People go down to the bank and stand there, just stand. Old Ulf stood there till midnight and said he heard singing upriver.\n\nI told him that was the boars. He did not laugh. He always laughs at my jokes; that is why he pays in fish.
 place Note_Paper fishernote at 28 -16 ground y=0.3 drop
-note fishernote Fisher's diary | ULF - FISHING, east arm\n\nThe puffers have come back to the barge wreck. They feed where it lies, off the mouth, ten metres down. I have not seen puffers here since I was a boy.\n\nThe fish taste of honey now. My wife says that is not natural. I say nothing about this river has been natural since the timber men came. This is the first nice thing.\n\nThere is singing upriver at night. Not people. More like a lot of leaves moving the same way at the same time.\n\nTomorrow the whole village is going up to see. Hedda says she is staying with the ferry. Hedda says that every time, and then she comes.
+note fishernote Fisher's diary | ULF - FISHING, drawbridge arm\n\nThe puffers have come back to the barge wreck. They feed where it lies, off the mouth, ten metres down. I have not seen puffers here since I was a boy.\n\nThe fish taste of honey now. My wife says that is not natural. I say nothing about this river has been natural since the timber men came. This is the first nice thing.\n\nThere is singing upriver at night. Not people. More like a lot of leaves moving the same way at the same time.\n\nTomorrow the whole village is going up to see. Hedda says she is staying with the ferry. Hedda says that every time, and then she comes.
 place Note_Paper pimnote at -57.8 6.5 h=2.5 drop
 note pimnote Note in the otter den | MY HIDING PLACE, by PIM (age 9). KEEP OUT. EXCEPT OTTERS.\n\nEveryone is walking upriver to the singing. Mum said come on Pim. I said no because I am hiding, and you do not stop hiding just because people want you to.\n\nThe otter lets me sit here if I give her my fish. I have given her all my fish.\n\nIf the ranger lady comes: I did NOT take the apples. The otter took the apples. Also I took some apples.\n\nIt is very quiet now. I think I will go and find mum after all. The singing sounds nice.\n\nPim
 
@@ -196,7 +196,7 @@ info author=Custom Islands
 info description=A jungle delta cut by river arms: the river people's outpost, vines on the paths, a rope ferry and boars upriver. The third island of The Last Green World.
 island on.arrive=message||Fresh water runs into the sea here - three river arms through the jungle. Somewhere a wheel creaks on a rope.
 
-story ferry|Ferry crossed|Note_Paper|The delta's rope ferry, wound across the west arm.
+story ferry|Ferry crossed|Note_Paper|The delta's rope ferry, wound across the ferry arm.
 
 note riverchart River chart | THE DELTA - RIVER PEOPLE'S CHART\n\nWest arm: the ferry. Keep the vines cut.\nEast arm: shallow, no crossing in rain.\nUpper river: the fuel cache and the pressing shed. Boars.\nOutpost: tools on the rack.\n\nUpriver of everything: the rise, and past it the hollow trees.
 note rangerlog4 Ranger log 4 | RANGER LOG 4 - O. FENN\n\nThe river people are gone. Their shed is full, their fire cold, their pot of porridge still on the hook. Fourteen people do not leave porridge. Hedda would come back from the dead for porridge.\n\nIn their water barrel I found a little glass vial, empty, with a lab label: V-1 - T.L. - TRIAL DOSE. Teodor's writing. He told me once the delta water was the worst on the coast. Now it is clear as glass, and it smells of flowers, and nobody is here to drink it.\n\nI have the vial in my breast pocket. I will ask him what it is. I will ask him very calmly.\n\nThe boars charged me twice today. The animals turn mean near the dark roots. I am going up onto Tracker's Rise - the trackers' tower can see the whole wood, and the trackers can see where fourteen people walk to.
@@ -213,7 +213,7 @@ prop pressshed obj.name=pressshed
 prop pressshed beh.hidden=1
 story fuelcan|Fuel can|Placeable_FuelTank|A dented can of the river people's fuel. The press takes three.
 story pressed|Press running|Placeable_FuelTank|The pressing shed's press runs again; its door is open.
-note dcanwest West bank can | A fuel can wedged under the ferry landing on the west bank.
+note dcanwest West bank can | A fuel can wedged under the ferry landing, in a small chest.
 loot dcanwest story:fuelcan*1;Rope*2
 prop dcanwest loot.refill=0
 note dcaneast Fisher's can | The fisher's camp kept a can by the fire, behind the vines that grew over it.
@@ -240,10 +240,10 @@ prop dhatchchest obj.name=dhatchchest
 prop dhatchchest beh.hidden=1
 
 prop westvines obj.name=westvines
-prop westvines on.use=hide|\nmessage||The vines part under the machete. The path runs down to the west arm.
+prop westvines on.use=hide|\nmessage||The vines part under the machete. The path runs down to the rope ferry.
 prop ferrycrank beh.use=Wind the ferry across
 prop ferrycrank if.use=!signal|ferry
-prop ferrycrank on.use=signal||ferry\ngive||story:ferry*1\nmessage||The rope tightens and the ferry crawls across the west arm, bumping the far bank.
+prop ferrycrank on.use=signal||ferry\ngive||story:ferry*1\nmessage||The rope tightens and the ferry crawls across the river, bumping the far bank.
 prop ferrycrank else.use=message||The ferry is across.
 
 prop mouthzone zone.id=mouth
@@ -251,7 +251,7 @@ prop mouthzone zone.radius=6
 prop mouthzone zone.message=The river mouth. Fresh water and salt water swirl together over the sand.
 prop westarm zone.id=west_arm
 prop westarm zone.radius=3
-prop westarm zone.message=The west arm. A rope ferry, a crank wheel on a post.
+prop westarm zone.message=The ferry arm. A rope ferry, a crank wheel on a post.
 prop upriverzone zone.id=upriver
 prop upriverzone zone.radius=6
 prop upriverzone zone.message=Upriver. A fuel cache, a pressing shed - and boars.
@@ -261,7 +261,7 @@ story fuse|Relay fuse|Placeable_Lantern_Metal|A ranger fuse for Relay Mouth, fro
 story relay|Relay switched on|Placeable_Lantern_Metal|One of the delta's three ranger relays, humming again.
 story rivercode|Route code|Note_Paper|The map screen's code: 4172.
 story route|River route|Note_Paper|The river people's route through the delta to the rise.
-note forksign Fork sign | RANGER RELAYS\n\nRELAY NORTH - up the river, past the cross, behind the bad vines.\nRELAY EAST - over the east arm. Lever on this side.\nRELAY MOUTH - by the landing. Its fuse went down with the barge.\n\nAll three on: the outpost's screen shows the route.
+note forksign Fork sign | RANGER RELAYS\n\nRELAY NORTH - up the river, past the cross, behind the bad vines.\nRELAY EAST - over the drawbridge. Lever on this side.\nRELAY MOUTH - by the landing. Its fuse went down with the barge.\n\nAll three on: the outpost's screen shows the route.
 prop relaym obj.name=relaym
 prop relaym beh.use=Fit the fuse and switch on Relay Mouth
 prop relaym if.use=!signal|relaym\ntake|story:fuse|1
@@ -276,7 +276,7 @@ prop eastbridge beh.moveMode=switch
 prop bridgelever obj.name=bridgelever
 prop bridgelever beh.use=Pull the bridge lever
 prop bridgelever if.use=!signal|bridge
-prop bridgelever on.use=signal||bridge\nopen|eastbridge\nmessage||Chains rattle. The drawbridge slides out across the east arm.
+prop bridgelever on.use=signal||bridge\nopen|eastbridge\nmessage||Chains rattle. The drawbridge slides out across the river.
 prop relaye obj.name=relaye
 prop relaye beh.use=Switch on Relay East
 prop relaye if.use=signal|bridge\n!signal|relaye
@@ -304,23 +304,23 @@ prop cranepad lock.code=4172
 prop cranepad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\ngive||story:route*1\nmessage||The strongbox opens: the river people's route, drawn on oilcloth, every channel up to the rise.
 prop cranepad else.use=message||A strongbox with a keypad, out on the end of the jib. The outpost's map screen knows the code.
 quest title=The Rivers
-quest intro=Three river arms into the jungle. Start at the river mouth.
-step reach|mouth|1|Go to the river mouth
+quest intro=Three river arms into the jungle. Make for the tall timber-port crane, then go to the river mouth and its chart post.
+step reach|mouth|1|Go to the river mouth and its chart post
 step read|River chart|1|Read the river people's chart
 step blueprint|Blueprint_Machete|1|Take the machete plans from the outpost's tool rack
-step reach|west_arm|1|Cut through the vines to the west arm
+step reach|west_arm|1|Cut through the vines to the rope ferry
 step collect|story:ferry|1|Wind the rope ferry across
 step reach|upriver|1|Go upriver
 step kill|Warthog|3|Drive off the three boars
 step blueprint|Blueprint_Fueltank|1|Take the fuel tank plans from the fuel cache
 step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe plans from the fuel cache
-step collect|story:fuelcan|3|Find three fuel cans: the west bank, the east arm's camp and the fuel cache
+step collect|story:fuelcan|3|Find three fuel cans: by the ferry landing, in the drawbridge camp and in the fuel cache crate
 step collect|story:pressed|1|Cut the vines by the pressing shed and fill the press
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from the pressing shed
 step collect|story:fuse|1|Dive to the sunk barge off the mouth for the relay fuse
-step collect|story:relay|3|Switch on the three ranger relays: Mouth, East (over the drawbridge) and North (behind the vines)
+step collect|story:relay|3|Switch on three relays: by the landing, over the drawbridge, behind the vines
 step collect|story:rivercode|1|Read the route code on the outpost's map screen
-step reach|dl_top|1|Climb the timber port's crane on the east bluff
+step reach|dl_top|1|Climb the timber port's crane on the bluff
 step collect|story:route|1|Open the strongbox on the crane's jib with the route code
 step read|Ranger log 4|1|Read Ranger log 4 in the pressing shed
 quest done=Oda went up onto the rise. The trackers' tower sees the whole wood.

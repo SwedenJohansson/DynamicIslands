@@ -126,7 +126,7 @@ place campfire_1 - at 9.8 28.4 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 12.8 30.4 ground sit yaw=257
 place "Box Small" - at 7.8 30.9 ground sit
 place Note_Paper dnote at 7.8 30.9 ground y=0.7 drop yaw=20
-note dnote Seedkeeper's note | SAMPLE RUN - WEST SIDE - A. (root gate crew, on loan)\n\nJars 1 to 12 filled. Pollen counts ten times last year's, and Teodor wrote PERFECT next to the number and underlined it twice.\n\nThe vines grew over the trail behind us in one night. Not slowly, the way vines are supposed to. I heard them. A soft sound, like someone turning the pages of a big book.\n\nWe go back by the beach. Jonas packed us honey sandwiches and a note: "Do not let Aki eat the samples." I have eaten one sample, once, a year ago, and I will never hear the end of it.\n\nThe ranger was right about the hunger. I will not tell Teodor that. He gets a look.
+note dnote Seedkeeper's note | SAMPLE RUN - BIRCH WOOD - A. (root gate crew, on loan)\n\nJars 1 to 12 filled. Pollen counts ten times last year's, and Teodor wrote PERFECT next to the number and underlined it twice.\n\nThe vines grew over the trail behind us in one night. Not slowly, the way vines are supposed to. I heard them. A soft sound, like someone turning the pages of a big book.\n\nWe go back by the beach. Jonas packed us honey sandwiches and a note: "Do not let Aki eat the samples." I have eaten one sample, once, a year ago, and I will never hear the end of it.\n\nThe ranger was right about the hunger. I will not tell Teodor that. He gets a look.
 note dwreckchest Pilot's locker | The plane's locker, thrown clear in the crash: plank, rope and a few seeds.
 loot dwreckchest Plank*4;Rope*2;Seed_Pineapple*1;story:winchpart*1
 prop dwreckchest loot.refill=0
@@ -147,7 +147,7 @@ prop dcavechest loot.refill=0
 prop dview zone.id=ranger_landing_view
 prop dview zone.radius=7
 prop dview zone.repeat=never
-prop dview zone.message=From the hill: the stilt station on the south beach, the old tower's ruins in the west, the ridge and its cave, and the boat shed on the north shore.
+prop dview zone.message=From the hill: the stilt station on the beach, the old tower's ruins on the knoll, the ridge and its cave, and the boat shed by the water.
 
 # --- FILL 10-24 (RESIZE rework): the bigger island's whole area at Raft-like density - trees, bushes, rocks; free= keeps them
 #     off the quest's objects and paths
@@ -191,11 +191,11 @@ prop treasure11280 treasure.loot=Scrap*6;Bolt*3;Nail*10
 
 # --- STORY 10-24: Teodor's radio log at the rack, Jonas on the hens, Oda's training log at the summit
 beside Note_Paper teodorradio toolrack d=1.4
-note teodorradio Radio log: Heart lab | RADIO LOG - STATION COPY - heard on the lab band, written down by O.F.\n\nTEODOR (Heart lab): "...counts are up again on the west coast, Oda. That is good news. That is life coming back."\nME: "It is coming back over my slipway."\nTEODOR: "Vines are only hungry. Hunger is a kind of hope. The river was dead when I came here, do you remember? Brown foam on every stone. Now look."\nME: "I am looking. The deer are gone."\nTEODOR: "The deer will adjust."\n\nThen he asked, very politely, whether anyone new had come ashore on the spit. Not Marit, not Jonas - anyone. A stranger. He asked twice.\n\nI said no. He said "Soon, then," and signed off.\n\nI wrote it down because it was strange. I am still not sure why it was strange.
+note teodorradio Radio log: Heart lab | RADIO LOG - STATION COPY - heard on the lab band, written down by O.F.\n\nTEODOR (Heart lab): "...counts are up again along the coast, Oda. That is good news. That is life coming back."\nME: "It is coming back over my slipway."\nTEODOR: "Vines are only hungry. Hunger is a kind of hope. The river was dead when I came here, do you remember? Brown foam on every stone. Now look."\nME: "I am looking. The deer are gone."\nTEODOR: "The deer will adjust."\n\nThen he asked, very politely, whether anyone new had come ashore on the spit. Not Marit, not Jonas - anyone. A stranger. He asked twice.\n\nI said no. He said "Soon, then," and signed off.\n\nI wrote it down because it was strange. I am still not sure why it was strange.
 place Note_Paper jonashens at 7 -53.5 ground y=0.3 drop
 note jonashens Note on the hen run | HENS - A GUIDE, by Jonas Brandt, cook\n\nThe brown one is Pancake. The white one is Admiral. The speckled one has no name because she bit me and she knows what she did.\n\nOne handful of seeds in the morning. Not two. Oda gives them two and then says I spoil them.\n\nIf the eggs taste sweet, do not eat them, bring them to the lab. Teodor wants every sweet egg. He says it is very exciting. I say an egg should taste like an egg.\n\nI am taking honey to the Heart. If anybody needs me I am the man with the bees following him.\n\n- J.
 place Note_Paper odatrain at 43 30.5 h=24.3 drop
-note odatrain Oda's training log | TRAINING LOG - O. FENN\n\nMonday: 41 s. Wind.\nTuesday: 38 s. No wind. Shouted at a gull.\nWednesday: 36 s. Best ever. Nobody saw.\n\nMarit used to beat me up here every time. She climbs like the ladder owes her money. When she went up to the Heart lab to hang Teodor's sample lines from the balconies, I built this tower so I would not get slow while she was gone.\n\nFrom the flag you can see the river mouth, south-east, and on a clear day the brown smudge of the delta's ferry. No smudge today. No smoke from the delta either.\n\nI will go and look tomorrow. Today I will beat 36.
+note odatrain Oda's training log | TRAINING LOG - O. FENN\n\nMonday: 41 s. Wind.\nTuesday: 38 s. No wind. Shouted at a gull.\nWednesday: 36 s. Best ever. Nobody saw.\n\nMarit used to beat me up here every time. She climbs like the ladder owes her money. When she went up to the Heart lab to hang Teodor's sample lines from the balconies, I built this tower so I would not get slow while she was gone.\n\nFrom the flag you can see the river mouth and on a clear day the brown smudge of the delta's ferry. No smudge today. No smoke from the delta either.\n\nI will go and look tomorrow. Today I will beat 36.
 
 # --- Settings, notes, behaviours, quest ----------------------------------------------------------------------------
 info title=Ranger Landing
@@ -203,9 +203,9 @@ info author=Custom Islands
 info description=The rangers' forward camp on Verdance's shore: a watch station on stilts, a hen run, a fire pit and a trail into the birch wood. The second island of The Last Green World.
 island on.arrive=message||A watch station on stilts over the beach, hens scratching under it. Smoke from a fire pit - still warm.
 
-note jobboard Oda's job board | RANGER STATION - JOBS\n\n1. Follow the trail to the boat shed. Three marks: the split stone, the bent birch, the shed path. Walk them in order or you lose it.\n2. The shed winch is stripped - I hid its parts from the scavengers: the crank in the bear cave, the chain with the plane, the pawl in the west ruins. Fit them and the door goes up. The boat's wheels are in the shed. Take them, and my stores key. A raft with a motor goes where the rivers go.\n3. Read my log before you go upriver.\n\n- Oda Fenn, ranger
+note jobboard Oda's job board | RANGER STATION - JOBS\n\n1. Follow the trail to the boat shed. Three marks: the split stone, the bent birch, the shed path. Walk them in order or you lose it.\n2. The shed winch is stripped - I hid its parts from the scavengers: the crank in the bear cave, the chain with the plane, the pawl in the old tower's ruins. Fit them and the door goes up. The boat's wheels are in the shed. Take them, and my stores key. A raft with a motor goes where the rivers go.\n3. Read my log before you go upriver.\n\n- Oda Fenn, ranger
 note rangerlog2 Ranger log 2 | RANGER LOG 2 - O. FENN\n\nThe hens are laying again, which makes one of us. The deer did not come to the salt lick. Nothing comes out of the birch wood any more except the wind, and the wind smells sweet, like a greenhouse with the door shut.\n\nMarit wrote from the Heart lab. My sister has always had nicer handwriting than me and worse news. Teodor has stopped coming to meals. He sleeps in the lab, next to his sample tanks, and talks to them. Jonas says it is fine, all scientists talk to their tanks. Jonas says everything is fine; that is his job.\n\nI asked Marit to come down to the coast for a week. She said: "Who would hold the ropes?"\n\nTraining course today: 36 seconds. Getting old is a choice. I refuse it.
-note rangerlog3 Ranger log 3 | RANGER LOG 3 - O. FENN\n\nThe delta's river people have not answered in six days. Fourteen of them, and a ferry, and children who steal my apples. Six days of nothing on 800.\n\nI am going upriver. The machete plans are at their outpost - the vines grow back faster every week, and last night they grew over the slipway while I slept beside it.\n\nIf you read this, you followed my trail, fixed my winch and put my tools back where they live. Thank you. Nobody has done that for me since Marit was twelve.\n\nTake the boat's wheels. Take my stores key - the ranger lockers upriver open with it. Feed the hens if you pass this way again.\n\nRiverfork Delta, south-east of here. The band is 800. I will leave a light at the outpost.\n\n- Oda
+note rangerlog3 Ranger log 3 | RANGER LOG 3 - O. FENN\n\nThe delta's river people have not answered in six days. Fourteen of them, and a ferry, and children who steal my apples. Six days of nothing on 800.\n\nI am going upriver. The machete plans are at their outpost - the vines grow back faster every week, and last night they grew over the slipway while I slept beside it.\n\nIf you read this, you followed my trail, fixed my winch and put my tools back where they live. Thank you. Nobody has done that for me since Marit was twelve.\n\nTake the boat's wheels. Take my stores key - the ranger lockers upriver open with it. Feed the hens if you pass this way again.\n\nRiverfork Delta, across the water from here. The band is 800. I will leave a light at the outpost.\n\n- Oda
 note boatshed Ranger boat shed | The rangers' boat shed: the motor wheel's and the steering wheel's plans, oiled and rolled.
 loot boatshed Blueprint_MotorWheel*1;Blueprint_SteeringWheel*1;Bolt*3;Hinge*2;story:rangerkey*1
 prop boatshed loot.refill=0
@@ -232,7 +232,7 @@ prop track2 obj.name=track2
 prop track2 beh.hidden=1
 prop track2 zone.id=track_2
 prop track2 zone.radius=3
-prop track2 on.enter=show|track3\nmessage||The bent birch, a ribbon tied round it. The shed path goes north.
+prop track2 on.enter=show|track3\nmessage||The bent birch, a ribbon tied round it. The path to the boat shed goes on from here.
 prop track3 obj.name=track3
 prop track3 beh.hidden=1
 prop track3 zone.id=track_3
@@ -253,16 +253,16 @@ note odacard Oda's postcard | A postcard of a thorny ridge with smoke on a ledge
 loot odacard Rope*2;Coconut*2
 prop odacard loot.refill=0
 quest title=The Forgotten Shore
-quest intro=A ranger station, empty, and a trail into the wood. Go up to the station.
-step reach|station|1|Go to the ranger station
+quest intro=A ranger station, empty, and a trail into the wood. Make for the tall training tower, then find the stilt station on the beach.
+step reach|station|1|Go to the stilt ranger station on the beach
 step read|Oda's job board|1|Read Oda's job board
 step reach|track_3|1|Follow the trail: the split stone, the bent birch, the shed path
-step collect|story:winchpart|3|Find the winch's three parts: in the bear cave, the plane and the west ruins
+step collect|story:winchpart|3|Find the winch's three parts in chests: bear cave, plane wreck, old tower ruins
 step collect|story:winch|1|Fit the three parts to the slipway winch at the boat shed
 step blueprint|Blueprint_MotorWheel|1|Take the motor wheel plans from the boat shed
 step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel plans from the boat shed
 step reach|rl_top|1|Climb Oda's training hill and tower to the flag
-step collect|story:tool|3|Find Oda's three tools: the tower, the fox den under the west hill and the quarry
+step collect|story:tool|3|Find Oda's three tools: in the tower box, the fox den under the hill and a quarry chest
 step collect|story:rack|1|Hang the tools back on the rack by the station
 step read|Ranger log 3|1|Read Ranger log 3
 quest done=Oda went upriver. The delta's band is 800.

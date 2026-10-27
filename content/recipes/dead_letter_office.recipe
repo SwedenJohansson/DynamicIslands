@@ -312,7 +312,7 @@ prop jettyzone zone.message=The office jetty: grey planks, a lantern, and up the
 story qd_top|Night lamp lens|Bolt|The thick glass lens of the office's night lamp, carried up the old signal mast on Gull Knoll out of the storms' way.
 story qd_cave|Lamp wick spool|Bolt|A spool of lamp wick, wrapped in a mail sack at the back of the cave to keep the damp off it.
 story qd_fixed|Night lamp working|Bolt|The night lamp, working again.
-note qd_hint Night clerk's notice | THE NIGHT LAMP IS OUT - no boat will find the office in the dark. The lens went up the old signal mast on Gull Knoll (north-west; the trail starts on the side toward the office) and the wick spool is in Sack Cave (north-east). Sven at the old house on the east shore knows the rest.
+note qd_hint Night clerk's notice | THE NIGHT LAMP IS OUT - no boat will find the office in the dark. The lens went up the old signal mast on Gull Knoll (the trail starts on the side toward the office) and the wick spool is in Sack Cave (in the rocks past Sven's house). Sven at the old house on the shore knows the rest.
 note qd_topchest Old signal mast deck box | A box lashed to the deck rail at the top of the old signal mast.
 loot qd_topchest story:qd_top*1;Rope*2;Scrap*2
 note qd_cavechest Sack Cave chest | A chest at the back of Sack Cave, dry under the rock.
@@ -336,19 +336,19 @@ note qd_mazechest Sorter's lost box | A box of letters that went round and round
 loot qd_mazechest TradeToken*2;Glass*2;CopperIngot*2
 
 quest title=Return to Sender
-quest intro=A post office on a bare skerry. Tie up at its jetty.
-step reach|jetty|1|Tie up at the post office jetty
+quest intro=A post office on a bare skerry. Make for the red-brick post office and tie up at its jetty.
+step reach|jetty|1|Tie up at the jetty below the red-brick post office
 step read|Letter addressed to your raft|1|Read the letter on the counter - it is addressed to your raft
 step open|Counter drawer|1|Open the counter drawer
 step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the counter drawer
 step blueprint|Blueprint_Antenna|1|Take the antenna plans from the counter drawer
 step collect|story:deadletter|5|Take the five dead letters from the pigeon-holes
 step read|Night clerk's notice|1|Read the night clerk's notice by the night lamp
-step talk|Sven Holm|1|Talk to Sven Holm at the ruined house in the east
-step reach|qd_trail|1|Find the foot of the trail up Gull Knoll, in the north-west
+step talk|Sven Holm|1|Talk to Sven Holm at the ruined house on the shore
+step reach|qd_trail|1|Find the foot of the trail up Gull Knoll, below the signal mast
 step reach|qd_summit|1|Climb the trail to the top of Gull Knoll
 step collect|story:qd_top|1|Climb the old signal mast and take the night lamp lens from its deck
-step reach|qd_cave|1|Find Sack Cave in the north-east
+step reach|qd_cave|1|Find Sack Cave in the rocks, past Sven's ruined house
 step collect|story:qd_cave|1|Take the lamp wick spool from the chest at the back of the cave
 step read|Night lamp log|1|Bring both to the night lamp and read what it shows
 step read|Postmaster's route card|1|Read the postmaster's route card by the door

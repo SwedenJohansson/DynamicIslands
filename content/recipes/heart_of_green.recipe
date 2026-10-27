@@ -159,7 +159,7 @@ note hhbox Pollen watch box | SEEDKEEPERS - POLLEN WATCH. Count the drift each d
 loot hhbox Rope*3;Bolt*2;Battery*1
 prop hhbox loot.refill=0
 # the dive: Van_1 on the sea floor 10 m down, its crate, an air pocket
-call vd_dive x=70 z=-68 h=-10 yaw=250 obj="Van_1" al=hhwreck crate=hhcrate zal=hhwz zid=hh_wreck msg="The Seedkeepers' lab van, off the end of the old east road. Its sample fridge is still sealed." air=hhair bub=hhbub
+call vd_dive x=70 z=-68 h=-10 yaw=250 obj="Van_1" al=hhwreck crate=hhcrate zal=hhwz zid=hh_wreck msg="The Seedkeepers' lab van, off the end of the old shore road. Its sample fridge is still sealed." air=hhair bub=hhbub
 note hhcrate Lab van's sample fridge | One sealed sample tube, gold dust inside, labelled HEART - FIRST BLOOM.
 loot hhcrate story:sample*1;Scrap*3;Battery*1
 # the seed vault on the north-east slope: a sealed vault box on a stone pad; the van's sample opens it and its ledger
@@ -173,7 +173,7 @@ place Loot_ChestSmall vaultchest at 55 43.6 ground sit yaw=200
 call ni8cave x=70 z=0 h=3.8 yaw=180 al=hhcavecave
 place Loot_ChestSmall hhcavecavebox at 72.5 -5 h=4.25 sit yaw=200
 place Placeable_Lantern_Metal - at 67.4 -4 h=4.25 sit
-note hhcavecavebox East cave chest | A dry cave on the east shore: the river people's spare paddles and a jar of seeds.
+note hhcavecavebox East cave chest | A dry cave on the shore: the river people's spare paddles and a jar of seeds.
 loot hhcavecavebox Rope*2;Plank*3;Seed_Flower_Yellow*1
 prop hhcavecavebox loot.refill=0
 # the north knoll (secret): a low hill with a lookout box
@@ -182,7 +182,7 @@ place Loot_ChestSmall hhknoll at 0 68 h=14 sit yaw=180
 note hhknoll North knoll box | A ranger's box. Scratched in the lid: THE HEART WAS SMALL ONCE. I SAW IT.
 loot hhknoll Rope*2;Leather*2;Coconut*2
 prop hhknoll loot.refill=0
-call vd_spot x=0 z=69.5 al=hhknollz id=hh_knoll r=3 msg="From the north knoll the Heart fills half the sky."
+call vd_spot x=0 z=69.5 al=hhknollz id=hh_knoll r=3 msg="From the knoll the Heart fills half the sky."
 place Creature_Chicken hhhens at -40 -20 ground
 prop hhhens creature.count=3
 
@@ -264,7 +264,7 @@ note twovalves Two valves | TWO VALVES\n\nBURN: fire down every root. The growth
 note verdictburn The verdict | THE VERDICT - BURN\n\nThe fires run down the roots. Verdance will be a smaller green, and a safe one.\nThe core below must be burnt too.
 note verdictspread The verdict | THE VERDICT - SPREAD\n\nThe spores are on the wind. What they make of the world is not ours to say any more.\nThe core below must be opened too.
 note labsafe Lab safe | The lab safe: the Seedkeepers' seed bank, and Marit's last letter beside it.
-note lastletter Seedkeeper's last letter | Marit's last letter -\n\nWe could not choose. You have. Thank you, and I am sorry it was you; Teodor never asked if you wanted it.\n\nWhatever you turned, the core under the tree must follow, or it will grow back from the oldest root. The gate is down in the west roots.\n\nTeodor has gone below to the oldest root. He said he wanted to be there when it ends, either way. Jonas went after him with soup. I am staying up here, on the top balcony, with the lamp on, because Oda will come, and someone should be here when she does.\n\nThe Ringwave is cut on that root. We did not cut it. It was there before us.
+note lastletter Seedkeeper's last letter | Marit's last letter -\n\nWe could not choose. You have. Thank you, and I am sorry it was you; Teodor never asked if you wanted it.\n\nWhatever you turned, the core under the tree must follow, or it will grow back from the oldest root. The gate is down among the roots.\n\nTeodor has gone below to the oldest root. He said he wanted to be there when it ends, either way. Jonas went after him with soup. I am staying up here, on the top balcony, with the lamp on, because Oda will come, and someone should be here when she does.\n\nThe Ringwave is cut on that root. We did not cut it. It was there before us.
 note rootstore Root store | The root store's chest: lamp oil, rope and a coil of wire.
 loot rootstore Rope*3;CopperIngot*2;Battery*1
 prop rsthatch obj.name=rsthatch
@@ -316,7 +316,7 @@ note vaultchest Vault ledger | SEED VAULT - VERDANCE\n\nKept back: one of every 
 loot vaultchest Seed_Flower_Yellow*2;Seed_Pine*2;TitaniumOre*1
 prop vaultchest loot.refill=0
 quest title=The Heart
-quest intro=The Heart of Green, at the centre of Verdance. Find the trunk door.
+quest intro=The Heart of Green, at the centre of Verdance. Make for the giant Heart tree, then find the trunk door at its foot.
 step reach|trunk_door|1|Go to the trunk door
 step read|Heart lab notice|1|Read the Heart lab notice
 step kill|Warthog|3|Drive off the three blighted boars
@@ -338,10 +338,10 @@ step read|The verdict|1|Read the verdict
 step reach|lab|1|Go to the Heart lab
 step open|Lab safe|1|Open the lab safe
 step read|Seedkeeper's last letter|1|Read the Seedkeeper's last letter
-step reach|root_gate|1|Go to the root gate in the west roots
+step reach|root_gate|1|Go to the root gate down among the roots
 step collect|story:gate|1|Pull the root gate lever
-step collect|story:sample|1|Dive to the lab van off the east shore
-step collect|story:vault|1|Seal the sample in the seed vault on the north-east slope
+step collect|story:sample|1|Dive to the lab van off the old road and take the sample from its fridge
+step collect|story:vault|1|Seal the sample in the seed vault box on the slope
 step read|Vault ledger|1|Read the vault ledger
 quest done=The gate is open. Below the Heart: the Rootcore - band 400.
 quest reward=Seed_Flower_Yellow*2;TitaniumOre*1

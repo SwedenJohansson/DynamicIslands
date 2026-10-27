@@ -187,7 +187,7 @@ prop hgmother creature.respawn=0
 place "Box Big" trough at 52 -6 ground sit yaw=30
 call vinecache x=12 z=69 r=8 seed=11361 chest=hgvine vines=hgvinevines items=Rope*2;Nail*8;Seed_Pine*1
 prop hgvine note.title=Root-choked crate
-call vd_spot x=-35 z=61 al=hglook id=hg_view r=5 msg="From the north rocks the five trunks stand like pillars holding the sky up."
+call vd_spot x=-35 z=61 al=hglook id=hg_view r=5 msg="From the lookout rocks the five trunks stand like pillars holding the sky up."
 
 # --- STORY 10-24: Jonas's bee notes by the bee box, the greenhouse log, Oda's note on Owl Hill
 place Note_Paper jonasbees at 35.6 -11.2 ground y=0.3 drop
@@ -275,7 +275,7 @@ prop trough on.use=signal||fed\nmessage||The berries thud into the trough. Somew
 prop trough else.use=message||A feeding trough, licked clean. The seedkeepers kept the old sow sweet with berries: five, the board said.
 prop hgmother obj.name=hgmother
 quest title=The Hollow Trees
-quest intro=Trees as tall as towers. Find the Seedkeepers' greenhouse.
+quest intro=Trees as tall as towers. Make for the tall trunks, then find the Seedkeepers' greenhouse on the beach.
 step reach|greenhouse|1|Go to the Seedkeepers' greenhouse
 step read|Seedkeeper's watering rota|1|Read the watering rota
 step blueprint|Blueprint_WaterTank|1|Take the water tank plans from the water tower
@@ -286,7 +286,7 @@ step collect|story:pumppart|3|Find the pump's three parts in trunks 3, 4 and 5
 step collect|story:water|1|Fit the parts to the water tower's pump
 step blueprint|Blueprint_Storage_Large|1|Take the large storage plans from the seed store
 step open|Seed drawers|1|Open the seed drawers
-step collect|story:seedjar|1|Dive to the seed caravan in the bay
+step collect|story:seedjar|1|Dive to the sunk seed caravan in the bay and take the seed jar
 step collect|story:denkey|1|Get the key from the mother boar's den (fill her trough with five berries, or fight her)
 step read|Ranger log 6|1|Read Ranger log 6 in the seed store
 step reach|roots|1|Go down into the root hole

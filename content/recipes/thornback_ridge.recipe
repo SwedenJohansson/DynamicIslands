@@ -94,13 +94,13 @@ prop dview zone.message=The thorny ridge runs off like a spine, the mango grove 
 # --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): Radius 60 -> 80: the eagle eyrie on the north spine (climb, zipline to the ridge), the hermit's sunk boat (dive), his boathouse, the east cave, the west lookout
 # the climb: a mountain (trail winding up from bearing 150), a 8-storey climbing tower on its top, the summit box
 call vd_mount x=-40 z=45 top=26 r=18 a0=150 turns=1.25 hb=3
-call vd_tower x=-40 z=45 h0=26 lv=8 a=tbtw box=tbbox zal=tbtopz zid=tb_top msg="The eagle eyrie on the spine's north end. Sticks as long as oars, and a hermit's rope ladder up the last of it."
+call vd_tower x=-40 z=45 h0=26 lv=8 a=tbtw box=tbbox zal=tbtopz zid=tb_top msg="The eagle eyrie at the end of the spine. Sticks as long as oars, and a hermit's rope ladder up the last of it."
 note tbbox Eyrie box | HERMIT - EYRIE. The eagles left when the boars came. I kept my boat key up here, then I lost the boat. Fair trade.
 loot tbbox Rope*3;Feather*4;Leather*1
 place ZiplinePath_Landmark tbzip at -35.03 43.28 h=47.05
 zipto tbzip -10 -8
 # the dive: BoatStranded on the sea floor 12 m down, its crate, an air pocket
-call vd_dive x=30 z=85 h=-12 yaw=200 obj="BoatStranded" al=tbwreck crate=tbcrate zal=tbwz zid=tb_wreck msg="The hermit's boat, on the bottom off the north cove. Its seat locker is still lashed shut." air=tbair bub=tbbub
+call vd_dive x=30 z=85 h=-12 yaw=200 obj="BoatStranded" al=tbwreck crate=tbcrate zal=tbwz zid=tb_wreck msg="The hermit's boat, on the bottom off the cove. Its seat locker is still lashed shut." air=tbair bub=tbbub
 note tbcrate Boat's seat locker | A key on a cork float - the float rotted, the key sank with the boat. Tag: BOATHOUSE.
 loot tbcrate story:boathousekey*1;Scrap*3;Rope*1
 # the hermit's boathouse on the north cove: four posts, a tent roof's worth of sailcloth, his locker
@@ -119,11 +119,11 @@ place Loot_ChestSmall tbwest at -60 -15 h=12 sit yaw=60
 note tbwest West lookout box | The hermit's tally of boars: four columns, and a fifth with one mark - ME.
 loot tbwest Rope*2;Leather*2;Coconut*2
 prop tbwest loot.refill=0
-call vd_spot x=-60 z=-13.5 al=tbwestz id=tb_west r=3 msg="From the west lookout the thorny ridge is a sleeping beast with its spine up."
+call vd_spot x=-60 z=-13.5 al=tbwestz id=tb_west r=3 msg="From the lookout the thorny ridge is a sleeping beast with its spine up."
 call ni8cave x=50 z=20 h=3 yaw=180 al=tbcavecave
 place Loot_ChestSmall tbcavecavebox at 52.5 15 h=3.45 sit yaw=200
 place Placeable_Lantern_Metal - at 47.4 16 h=3.45 sit
-note tbcavecavebox Thorn cave chest | A cave under the east thorns, dry and warm: the hermit's winter store.
+note tbcavecavebox Thorn cave chest | A cave under the thorns, dry and warm: the hermit's winter store.
 loot tbcavecavebox Rope*2;Plank*3;HoneyComb*1
 prop tbcavecavebox loot.refill=0
 call treasure x=-10 z=60 r=10 n=1 seed=11391 kind=0
@@ -158,7 +158,7 @@ prop boatlock on.use=signal||boathouse\nshow|boatchest\nmessage||The key turns i
 prop boatlock else.use=message||The boathouse locker, locked. The eyrie box said the key went down with the boat.
 prop boatchest obj.name=boatchest
 prop boatchest beh.hidden=1
-note boatchest Hermit's boat log | BOAT LOG - G. HOLT\n\nSpring. Fished the north cove; the eagles watched me like I owed them money.\nSummer. The boars came over the ridge. The eagles left. I would have left too, if I had wings or sense.\nAutumn. Lost the boat in a squall. Swam. Kept the hens; they kept me.\n\nLater. A woman in a ranger's coat rowed past with a goat in the bow. She waved. The goat did not.\n\nA raft came by after that - if that is you, take a hen, and take my map. It is the only thing I have that points anywhere.
+note boatchest Hermit's boat log | BOAT LOG - G. HOLT\n\nSpring. Fished the cove; the eagles watched me like I owed them money.\nSummer. The boars came over the ridge. The eagles left. I would have left too, if I had wings or sense.\nAutumn. Lost the boat in a squall. Swam. Kept the hens; they kept me.\n\nLater. A woman in a ranger's coat rowed past with a goat in the bow. She waved. The goat did not.\n\nA raft came by after that - if that is you, take a hen, and take my map. It is the only thing I have that points anywhere.
 loot boatchest Rope*2;Leather*1;TradeToken*2
 prop boatchest loot.refill=0
 # --- JUMP COURSE tb (U22, 10-24): a kz-style hop course of floor slabs on its own flattened pad -----------------
@@ -220,14 +220,14 @@ pop
 # --- end of jump course tb ---
 
 quest title=The Hermit
-quest intro=A camp on Thornback Ridge. Find it.
+quest intro=A camp on Thornback Ridge. Make for the tall eagle eyrie on the ridge, then find the hermit's camp.
 step reach|camp|1|Climb to the hermit's camp
 step read|Hermit's journal|1|Read the hermit's journal
 step kill|Warthog|4|Drive the four boars out of the mango grove
 step open|Hermit's chest|1|Open the hermit's chest
 step catch|Chicken|1|Catch a hen for the raft
-step reach|tb_top|1|Climb to the eagle eyrie on the north spine
-step collect|story:boathousekey|1|Dive to the hermit's boat off the north cove
+step reach|tb_top|1|Climb to the eagle eyrie at the end of the ridge spine
+step collect|story:boathousekey|1|Dive to the hermit's boat off the cove and open its seat locker
 step read|Hermit's boat log|1|Open his boathouse locker and read the boat log
 step read|Hermit's map|1|Read the hermit's map
 quest done=The grove is clear. The hermit's map points at the Heart.
