@@ -398,7 +398,7 @@ namespace DynamicIslands.Editor
 		/// Raft's box of this kind in the main menu now - found again at every step, never kept: the one found before can be
 		/// gone, and its links to other boxes mended (MendDeadLinks).
 		/// </summary>
-		static T LiveBox<T>() where T : Component
+		internal static T LiveBox<T>() where T : Component
 		{
 			// (the main menu scene's first, should there be one in another loaded scene too)
 			T box = Resources.FindObjectsOfTypeAll<T>().Where(b => b != null && b.gameObject.scene.IsValid() && b.gameObject.scene.isLoaded)

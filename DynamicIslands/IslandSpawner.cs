@@ -173,6 +173,134 @@ namespace DynamicIslands.Editor
 			go.AddComponent<MeshFilter>().sharedMesh = mesh;
 			go.AddComponent<MeshRenderer>().sharedMaterial = UndersideMaterial(TerrainPainter.StyleOf(terrainTransform.GetComponent<Terrain>()));
 			go.AddComponent<MeshCollider>().sharedMesh = mesh;
+
+			MakeCoast(data, terrainTransform, h, land, solid, waterLevel);
+		}
+
+		/// <summary>
+		/// A flying island's coast: the holes cut whole cells, so the land ended in 2 m steps - a sawtooth seen from the side
+		/// and below (Pendulum Isle 10-27). Each cut cell with land at a corner gets that land back as a thin sheet out to
+		/// where the ground crosses the sea level (marching squares): ground on top, textured as the terrain there, rock
+		/// below, solid to walk on.
+		/// </summary>
+		static void MakeCoast(TerrainData data, Transform terrainTransform, float[,] h, bool[,] land, bool[,] solid, float waterLevel)
+		{
+			int res = data.heightmapResolution, cells = res - 1;
+			float spacing = data.size.x / cells, height = data.size.y, water = waterLevel / height;
+			UnityEngine.TerrainLayer[] layers = data.terrainLayers ?? new UnityEngine.TerrainLayer[0];
+			int aRes = data.alphamapResolution, nLayers = Mathf.Min(layers.Length, data.alphamapLayers);
+			float[,,] alpha = nLayers > 0 ? data.GetAlphamaps(0, 0, aRes, aRes) : null;
+
+			var verts = new List<Vector3>();
+			var normals = new List<Vector3>();
+			var uvs = new List<Vector2>();
+			var topTris = new Dictionary<int, List<int>>(); // per terrain layer (-1: none)
+			var bottomTris = new List<int>();
+			var poly = new List<Vector3>(6);
+			int[] cx = { 0, 1, 1, 0 }, cz = { 0, 0, 1, 1 };
+			for (int z = 0; z < cells; z++)
+				for (int x = 0; x < cells; x++)
+				{
+					if (solid[z, x]) continue;
+					if (!land[z, x] && !land[z, x + 1] && !land[z + 1, x] && !land[z + 1, x + 1]) continue;
+					// The land part of the cell, round its corners (counter-clockwise seen from above)
+					poly.Clear();
+					for (int i = 0; i < 4; i++)
+					{
+						int j = (i + 1) % 4;
+						int xi = x + cx[i], zi = z + cz[i], xj = x + cx[j], zj = z + cz[j];
+						if (land[zi, xi]) poly.Add(new Vector3(xi * spacing, h[zi, xi] * height, zi * spacing));
+						if (land[zi, xi] != land[zj, xj])
+						{
+							float f = Mathf.Clamp((water - h[zi, xi]) / (h[zj, xj] - h[zi, xi]), 0.02f, 0.98f);
+							poly.Add(new Vector3(Mathf.Lerp(xi, xj, f) * spacing, waterLevel, Mathf.Lerp(zi, zj, f) * spacing));
+						}
+					}
+					if (poly.Count < 3) continue;
+					// Ground on top: the terrain layer that covers most of the cell
+					int layer = -1;
+					if (alpha != null)
+					{
+						int ax = Mathf.Min(aRes - 1, (int)((x + 0.5f) * aRes / cells)), az = Mathf.Min(aRes - 1, (int)((z + 0.5f) * aRes / cells));
+						float best = 0f;
+						for (int l = 0; l < nLayers; l++) if (alpha[az, ax, l] > best && layers[l] != null) { best = alpha[az, ax, l]; layer = l; }
+					}
+					Vector2 tile = layer >= 0 ? layers[layer].tileSize : new Vector2(12f, 12f), offset = layer >= 0 ? layers[layer].tileOffset : Vector2.zero;
+					if (tile.x <= 0f) tile.x = 12f;
+					if (tile.y <= 0f) tile.y = 12f;
+					List<int> top;
+					if (!topTris.TryGetValue(layer, out top)) topTris[layer] = top = new List<int>();
+					int t0 = verts.Count;
+					foreach (Vector3 p in poly)
+					{
+						verts.Add(p);
+						normals.Add(data.GetInterpolatedNormal(p.x / data.size.x, p.z / data.size.z));
+						uvs.Add(new Vector2((p.x + offset.x) / tile.x, (p.z + offset.y) / tile.y));
+					}
+					int b0 = verts.Count;
+					foreach (Vector3 p in poly)
+					{
+						verts.Add(p);
+						normals.Add(Vector3.down);
+						uvs.Add(new Vector2((p.x + p.y) / 12f, (p.z + p.y) / 12f)); // (as the underside's)
+					}
+					for (int i = 1; i + 1 < poly.Count; i++)
+					{
+						top.Add(t0); top.Add(t0 + i + 1); top.Add(t0 + i);  // (clockwise from above: faces up)
+						bottomTris.Add(b0); bottomTris.Add(b0 + i); bottomTris.Add(b0 + i + 1);
+					}
+				}
+			if (bottomTris.Count == 0) return;
+
+			var mesh = new Mesh { name = "CI_FlyingCoast" };
+			mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+			mesh.SetVertices(verts);
+			mesh.SetNormals(normals);
+			mesh.SetUVs(0, uvs);
+			var keys = topTris.Keys.OrderBy(k => k).ToList();
+			mesh.subMeshCount = keys.Count + 1;
+			var materials = new Material[keys.Count + 1];
+			for (int k = 0; k < keys.Count; k++)
+			{
+				mesh.SetTriangles(topTris[keys[k]], k);
+				materials[k] = CoastMaterial(keys[k] >= 0 ? layers[keys[k]] : null);
+			}
+			mesh.SetTriangles(bottomTris, keys.Count);
+			materials[keys.Count] = UndersideMaterial(TerrainPainter.StyleOf(terrainTransform.GetComponent<Terrain>()));
+			mesh.RecalculateBounds();
+
+			var go = new GameObject("Coast");
+			go.layer = TerrainLayer;
+			go.transform.SetParent(terrainTransform, false);
+			go.AddComponent<MeshFilter>().sharedMesh = mesh;
+			go.AddComponent<MeshRenderer>().sharedMaterials = materials;
+			go.AddComponent<MeshCollider>().sharedMesh = mesh;
+		}
+
+		static readonly Dictionary<UnityEngine.TerrainLayer, Material> coastMaterials = new Dictionary<UnityEngine.TerrainLayer, Material>();
+		static Material coastFallback;
+
+		/// <summary>A flying coast's ground: the terrain layer's own textures (its tiling is in the mesh's UVs).</summary>
+		static Material CoastMaterial(UnityEngine.TerrainLayer layer)
+		{
+			Material m;
+			if (layer != null && coastMaterials.TryGetValue(layer, out m) && m != null) return m;
+			if (layer == null && coastFallback != null) return coastFallback;
+			Shader shader = Shader.Find("Standard") ?? Shader.Find("Legacy Shaders/Diffuse");
+			m = new Material(shader) { name = "CI_FlyingCoast_" + (layer != null ? layer.name : "plain") };
+			if (layer != null && layer.diffuseTexture != null)
+			{
+				m.mainTexture = layer.diffuseTexture;
+				if (layer.normalMapTexture != null && m.HasProperty("_BumpMap"))
+				{
+					m.SetTexture("_BumpMap", layer.normalMapTexture);
+					m.EnableKeyword("_NORMALMAP");
+				}
+			}
+			else m.color = new Color(0.76f, 0.70f, 0.55f);
+			if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.05f);
+			if (layer != null) coastMaterials[layer] = m; else coastFallback = m;
+			return m;
 		}
 
 		/// <summary>Chamfer distance (in samples) from each true cell to the nearest false cell.</summary>

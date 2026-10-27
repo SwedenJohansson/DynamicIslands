@@ -2386,7 +2386,9 @@ namespace DynamicIslands
 		static NewGameBox MenuNewGameBox()
 		{
 			if (LoadSceneManager.IsGameSceneLoaded) return null;
-			return Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid() && b.gameObject.scene.isLoaded);
+			// (the main menu scene's, its links to destroyed objects mended: after the editor its authSettingDropdown could be
+			// a dead one and Raft's Create threw in Dropdown.Hide - the test hung, CINewWorld after CIRecipe + groundall, 10-27)
+			return Editor.IslandTest.LiveBox<NewGameBox>();
 		}
 
 		/// <summary>Waits for the main menu (a CINewWorld straight after CIMainMenu: up to 30 s - it failed at once before
@@ -2424,8 +2426,32 @@ namespace DynamicIslands
 			Log("Creating world '" + name + "'");
 			// (a test world gets defaultPlan unless a test chose one: not the plan the last world was made with, ROADMAP CB5)
 			if (WorldDirector.PendingPlan == null) WorldDirector.PendingPlan = WorldDirector.DefaultPlan;
-			box.Button_CreateNewGame();
+			box = MenuNewGameBox() ?? box;
+			string err = TryCreate(box);
+			if (err != null)
+			{
+				// (Raft's Create threw - a dead link in a box left from the editor: the test stopped there and hung. Unless the
+				// world is on its way after all, once more with the live box, then a FAIL instead of a hang)
+				Log("Raft's Create threw (" + err + "): trying again with the live New Game box");
+				for (float end = Time.realtimeSinceStartup + 5f; Time.realtimeSinceStartup < end && !LoadSceneManager.IsGameSceneLoaded; ) yield return new WaitForSecondsRealtime(0.2f);
+				if (!LoadSceneManager.IsGameSceneLoaded)
+				{
+					NewGameBox again = MenuNewGameBox();
+					if (again == null) { Fail("Raft's Create threw (" + err + ") and there is no New Game box to try again"); yield break; }
+					if (again.inputfield_GameName.text != name) { again.inputfield_GameName.text = name; again.GameNameEndEdit(name); }
+					if (WorldDirector.PendingPlan == null) WorldDirector.PendingPlan = WorldDirector.DefaultPlan;
+					err = TryCreate(again);
+					if (err != null) { Fail("Raft's Create threw twice: " + err); yield break; }
+				}
+			}
 			yield return WaitForWorld();
+		}
+
+		/// <summary>Raft's Create on the box; null, or what it threw.</summary>
+		static string TryCreate(NewGameBox box)
+		{
+			try { box.Button_CreateNewGame(); return null; }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [test] Raft's Create threw: " + e); return e.GetType().Name + ": " + e.Message; }
 		}
 
 		[ConsoleCommand(name: "CIUITest", docs: "Dev, editor: the editor screen - panels per tab, buttons in their groups, windows, object browser; screenshots ui_<tab>.png")]
