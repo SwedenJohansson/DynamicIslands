@@ -244,8 +244,8 @@ prop thanks obj.name=thanks
 prop puffers creature.count=3
 
 quest title=The White Sea
-quest intro=Floes, leads, a crushed boat - and three cages on the ice. Make for the crushed boat and land on the floe with the winch lever.
-step reach|first_floe|1|Make for the crushed boat; land on the floe with the winch lever
+quest intro=Floes, leads, a crushed boat - and three cages on the ice. Make for the crushed boat and land on the ice floe with the winch lever.
+step reach|first_floe|1|Make for the crushed boat; land on the ice floe with the winch lever
 step read|Sealer's distress card|1|Read the sealer's distress card
 step reach|hull|1|Pull the winch lever, then cross the ice to the crushed boat
 step blueprint|Blueprint_MotorWheel|1|Take the motor wheel's plans from the chest in the boat's engine room
