@@ -201,7 +201,7 @@ story diary|Tent diary|Note_Paper|A diary from one of the Choir's tents.
 story pitopen|Pit gate open|Note_Paper|The listening pit's gate let you through: you know the hymn.
 story sermon|The Listener's sermon|Placeable_Radio|The sermon on the pit's radio: the quarry, the mirrors, the Lantern-Mother.
 story strongkey|Listener's strongbox key|Placeable_Lantern_Metal|A heavy key on a leather thong, from the far ear on Gannet Crown.
-story quarrychart|Quarry chart|Note_Paper|A chart of a flooded quarry far to the north, five great mirrors drawn round its rim. The Listener's last plan.
+story quarrychart|Quarry chart|Note_Paper|A chart of a flooded quarry far across the water, five great mirrors drawn round its rim. The Listener's last plan.
 story rung|Camp bell rung|Note_Paper|You rang the Choir's camp bell. Sister Ro came out of hiding.
 
 note noticeboard Choir notice board | THE QUIET CHOIR\n\nWelcome, listener. Leave your voice at the foot of the rock.\nWe do not speak on the rock. We do not sing, except the hymn.\nThe pit is for those who know the hymn.\n\nNight watch at the ears: Ro, Ansel. Dogs fed at dusk.
@@ -216,7 +216,7 @@ prop diary_listener if.read=!signal|gn_listener
 prop diary_listener on.read=signal||gn_listener\ngive||story:diary*1
 
 note gideonnote Watcher Gideon Pell's log | THE FAR EAR - G. PELL, WATCHER\n\nNight 1. The Listener has me turn the dish down at the sea instead of up at the sky. He says she does not come from the sky.\n\nNight 4. Two voices in the headset. Hers, the lullaby, the one we all know. And under it something answering, slow and huge, as if the sea floor were humming back.\n\nNight 6. The gannets came up to the Crown in the dark and sat round the mast in rows. Forty thousand birds, and not one sound. They were listening too.\n\nNight 7. The Listener hung his strongbox key on the mast and went down to the pit with the dogs. He said: whoever climbs up here after me, give them the key. They will have earned the chart.\n\nI am taking off the headset now. I do not want to hear the second voice say my name again.
-note wilfnote Egg collector Wilf Darrow's note | (Pencil on a tally board, dry in the air pocket)\n\nForty years on ropes down the cliffs for the eggs. This year the gannets let us take them. They did not cry or strike at us. They watched us go down with their heads on one side, as if they were waiting to see what we would do.\n\nThe night the store went under I was here alone, sorting. The sea came up the steps, kind as you like, and not one egg broke when it covered them.\n\nI have the air under the roof. Through the window I can see the Choir walking down the cove to the sea, all of them, and their dogs walking with them, into the water, north.\n\nThe eggs on the shelf have started to hum. I am not going to look in them.
+note wilfnote Egg collector Wilf Darrow's note | (Pencil on a tally board, dry in the air pocket)\n\nForty years on ropes down the cliffs for the eggs. This year the gannets let us take them. They did not cry or strike at us. They watched us go down with their heads on one side, as if they were waiting to see what we would do.\n\nThe night the store went under I was here alone, sorting. The sea came up the steps, kind as you like, and not one egg broke when it covered them.\n\nI have the air under the roof. Through the window I can see the Choir walking down the cove to the sea, all of them, and their dogs walking with them, into the water, away from the rock.\n\nThe eggs on the shelf have started to hum. I am not going to look in them.
 note magsnote Dog keeper Mags Tolley's note | M. TOLLEY - THE KENNEL\n\nThree black dogs for the pit and four for the rock. I raised every one from a pup. Not one of them ever barked; the Listener chose them for that.\n\nAt dusk the four from the rock slipped their collars without undoing a buckle and walked down to the sea. They came back at dawn black and dripping and lay down at the pit's mouth with the other three, facing in.\n\nThey will not eat now. They do not need to.\n\nIf you go into the pit, go fast and do not look them in the eyes. They are not keeping people out any more. They are keeping something in.
 note strongbox Listener's strongbox | The Listener's strongbox: metal, a battery, the Choir's dues - and a rolled chart of a flooded quarry.
 loot strongbox story:quarrychart*1;MetalIngot*4;Battery*1;CopperIngot*2;TitaniumIngot*1
@@ -274,16 +274,16 @@ step collect|story:pitopen|1|Open the pit gate (only for those who know the hymn
 step reach|pit_floor|1|Climb down into the listening pit
 step kill|Hyena|3|Deal with the Choir's dogs
 step collect|story:sermon|1|Turn on the pit's radio
-step reach|hillfoot|1|Find the path up Gannet Crown in the north-east
+step reach|hillfoot|1|Find the path up Gannet Crown, the hill with the mast
 step reach|hilltop|1|Climb Gannet Crown to the Choir's far ear
 step read|Watcher Gideon Pell's log|1|Read the watcher's log by the mast
-step collect|story:strongkey|1|Take the Listener's strongbox key from the far ear's box
-step reach|eggstore|1|Dive to the drowned egg store off the south-east shore
+step collect|story:strongkey|1|Take the Listener's strongbox key from the box at the mast on Gannet Crown
+step reach|eggstore|1|Dive to the drowned egg store in the water below the cliff
 step read|Egg collector Wilf Darrow's note|1|Breathe in the egg store's front room and read the collector's note
 step open|Listener's strongbox|1|Open the Listener's strongbox
 step collect|story:quarrychart|1|Take the quarry chart
 step collect|story:rung|1|Ring the camp bell
-quest done=Sister Ro says the Choir rowed north to a flooded quarry. But first they went down to a drowned children's home - Cradle Reef - for the Lantern-Mother's tooth. The Receiver has it: tune in.
+quest done=Sister Ro says the Choir rowed away to a flooded quarry. But first they went down to a drowned children's home - Cradle Reef - for the Lantern-Mother's tooth. The Receiver has it: tune in.
 quest reward=MetalIngot*3;Battery*1
 
 # Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it

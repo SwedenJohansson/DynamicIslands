@@ -311,7 +311,7 @@ call ar_cave x=-53 z=-56 h=2.5 yaw=0 al=dg_caverock chest=dg_cavechest
 call hw_zone x=-54 z=-47 al=dg_cavez id=dg_cave r=4 h=1 msg="Sluice Cave. Water runs through it from somewhere."
 call ar_ruin x=-57 z=26 h=2.5 yaw=0 w=3 d=2 al=dg_ruin
 call r2_islander x=-58 z=21.5 yaw=200 al=dg_isl nm="Odile Marsh" pose=stand
-prop dg_isl talk.text=My father kept the gate. Counted the hours to high tide every day of his life.\n---\nWhen the sea came over the wall he counted faster. Then he stopped counting.\n---\nThe lock hands kept a chest in Sluice Cave, south-west. And their tokens - five of them - got scattered when the water came in. Find them and the token box opens.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
+prop dg_isl talk.text=My father kept the gate. Counted the hours to high tide every day of his life.\n---\nWhen the sea came over the wall he counted faster. Then he stopped counting.\n---\nThe lock hands kept a chest in Sluice Cave, in the rocks on the land side. And their tokens - five of them - got scattered when the water came in. Find them and the token box opens.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
 call r2_lamp x=-64 z=25 al=dg_lamp1 nm="Lock lamp 1" grp="Lock lamps" on=1
 call r2_lamp x=-58 z=32 al=dg_lamp2 nm="Lock lamp 2" grp="Lock lamps" on=0
 call r2_lamp x=-51 z=25 al=dg_lamp3 nm="Lock lamp 3" grp="Lock lamps" on=0
@@ -476,18 +476,18 @@ note jbdg Top of the tide stack | Somebody's stash at the very top.
 loot jbdg CopperIngot*1;Bolt*2;TradeToken*1
 
 quest title=Locks and Pumps
-quest intro=A sea wall across a strait, its gates shut and its pumps drowned. Station Nine: start on the wall.
-step reach|wall|1|Climb onto the sea wall
-step read|Lock keeper's count|1|Read the lock keeper's count at the wall's north end
+quest intro=A sea wall across a strait, its gates shut and its pumps drowned. Station Nine: make for the sea wall and start on top of it.
+step reach|wall|1|Make for the long sea wall and climb onto it
+step read|Lock keeper's count|1|Read the lock keeper's count on the board by his locker
 step reach|lockgate|1|Throw the outer lock's lever and swim into the lock
 step open|Lock keeper's locker|1|Take the lock keeper's crowbar from his locker
 step reach|pumphall|1|Force the pump hall's door and swim into its flooded hall
 step kill|Angler fish|1|Face the angler in the pump hall
-step collect|story:lockkey|1|Dive for the inner lock's key on the pump hall's floor
+step collect|story:lockkey|1|Dive for the inner lock's key in the box on the pump hall's floor
 step reach|innerlock|1|Carry the key to the inner lock's wheel on the wall
 step reach|gateoffice|1|Open the inner lock and go into the gate office
-step talk|Odile Marsh|1|Talk to Odile Marsh at the ruined house in the north-west
-step reach|dg_cave|1|Find Sluice Cave in the south-west
+step talk|Odile Marsh|1|Talk to Odile Marsh at the lock keeper's old house on the land side
+step reach|dg_cave|1|Find Sluice Cave, the cave mouth in the rocks on the land side
 step open|Sluice Cave chest|1|Open the chest at the back of Sluice Cave
 step open|Gate office vault|1|Open the gate office's vault
 step blueprint|Blueprint_TitaniumTools|1|Take the titanium tools plans from the gate office vault

@@ -141,15 +141,15 @@ prop floorhatch else.use=message||The hatch is nailed down. Not yet - and you wo
 
 quest title=Supper for Four
 quest intro=A hut on stilts and a table set for four. Climb up and look at the plates.
-step read|Plate 1|1|Read what lies on the first plate
+step read|Plate 1|1|Climb into the stilt hut and read the first plate on the table
 step read|Plate 2|1|Come back for the second plate
 step read|Plate 3|1|Come back for the third plate
 step read|Plate 4|1|Come back for the fourth plate
-step reach|hillfoot|1|Find the steps up the Watch Rock in the north-west
+step reach|hillfoot|1|Find the steps up the Watch Rock, the rock with the watch hut
 step reach|hilltop|1|Climb the Watch Rock to the fisherman's watch hut
 step read|Fisherman Tobias Grey's note|1|Read the fisherman's note in the watch hut
 step collect|story:prybar|1|Take the fisherman's pry bar from his chest
-step reach|netshed|1|Dive to the family's drowned net shed off the south-east shore
+step reach|netshed|1|Dive to the family's drowned net shed in the water by the islet
 step read|Net mender Hanne Grey's note|1|Breathe in the net shed's front room and read the net mender's note
 step open|Floor hatch|1|Open the hatch in the floor and the box under the hut
 quest done=The table is empty now. The islet will not come back.

@@ -277,7 +277,7 @@ call ar_cave x=46 z=-66 h=3 yaw=0 al=hh_caverock chest=hh_cavechest
 call hw_zone x=45 z=-57 al=hh_cavez id=hh_cave r=4 h=1 msg="Smugglers' Cave. Somebody kept their own harbour in here."
 call ar_ruin x=66 z=32 h=3 yaw=0 w=3 d=2 al=hh_ruin
 call r2_islander x=65 z=27.5 yaw=200 al=hh_isl nm="Nell Garrow" pose=sit
-prop hh_isl talk.text=Mind the nets. I've mended them every morning for a fleet that doesn't come.\n---\nThe harbour master watched the boats from the pilot mast on Gull Head. Climb it - you'll see the whole bay.\n---\nAnd the old smugglers kept their share in a cave south-east. Never told the master. I'm telling you.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
+prop hh_isl talk.text=Mind the nets. I've mended them every morning for a fleet that doesn't come.\n---\nThe harbour master watched the boats from the pilot mast on Gull Head. Climb it - you'll see the whole bay.\n---\nAnd the old smugglers kept their share in a cave in the rocks by the water. Never told the master. I'm telling you.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
 place Placeable_Chair_Basic - at 65 27.5 ground sit yaw=200
 call r2_lamp x=59 z=31 al=hh_lamp1 nm="Loft lamp 1" grp="Loft lamps" on=1
 call r2_lamp x=65 z=38 al=hh_lamp2 nm="Loft lamp 2" grp="Loft lamps" on=0
@@ -466,30 +466,30 @@ loot hh_setchest Glass*3;Bolt*4;MetalIngot*1
 note hh_planecrate Fishery plane's crate | The fishery plane's crate: ice boxes, a radio and tools.
 loot hh_planecrate Plastic*3;Scrap*3;Nail*6
 prop hh_planecrate loot.refill=0
-note hh_pilot Spotter's note | FISH SPOTTER 2. No shoals for three weeks. Engine quit over the south bank. Nell, the fleet went north past the Iron Graveyard. Don't wait up.
+note hh_pilot Spotter's note | FISH SPOTTER 2. No shoals for three weeks. Engine quit over the sandbank. Nell, the fleet went north past the Iron Graveyard. Don't wait up.
 note jchh Lookout stones | The fishers' children stacked these to watch for the boats.
 loot jchh Rope*3;Plank*4;MetalIngot*1
 note jbhh Top of the lookout | Somebody's stash at the very top.
 loot jbhh CopperIngot*1;Bolt*2;TradeToken*1
 
 quest title=The Fleet Comes Home
-quest intro=A fishing town on stilts with its fleet lost and its lamp dark. Station Five: start at the quay.
-step reach|quay|1|Tie up at Hightide's quay
+quest intro=A fishing town on stilts with its fleet lost and its lamp dark. Station Five: make for the stilt town and start at its quay.
+step reach|quay|1|Make for the stilt town and tie up at Hightide's quay
 step read|Harbour master's log|1|Read the harbour master's log on the quay's board
-step collect|story:fleetpage|3|Find three torn pages of the fleet's log in the stilt houses
+step collect|story:fleetpage|3|Find three torn log pages in the boxes inside the stilt houses
 step kill|Bear|2|Drive the bears out of the fish hall
 step collect|story:fuse|1|Take the works' spare fuse from the fish hall's office locker
 step reach|works|1|Climb to the water works on the hill
 step collect|story:workskey|1|Fit the fuse and throw the works' switch
 step open|Valve house chest|1|Open the valve house's chest with its key
-step collect|story:lampoil|3|Gather three cans of lamp oil: the valve house, the Mary's locker, the sunken Heron's hold
-step reach|lamptower|1|Climb the lamp tower out on the point
+step collect|story:lampoil|3|Gather three oil cans: valve house chest, box on the Mary, sunken Heron's hold
+step reach|lamptower|1|Climb the lamp tower, the tall tower with the dark harbour lamp
 step kill|Screecher|2|Drive the screechers off the lamp tower
 step collect|story:safecode|1|Fill the harbour lamp and light it
-step talk|Nell Garrow|1|Talk to Nell Garrow at the ruined house in the north-east
-step reach|hh_trail|1|Find the foot of the trail up Gull Head, in the east
+step talk|Nell Garrow|1|Talk to Nell Garrow at the ruined net loft house by the water
+step reach|hh_trail|1|Find the foot of the trail up Gull Head, the hill with the pilot mast
 step reach|hh_summit|1|Climb the trail to the top of Gull Head
-step reach|hh_cave|1|Find Smugglers' Cave in the south-east
+step reach|hh_cave|1|Find Smugglers' Cave, the cave mouth in the rocks by the water
 step open|Smugglers' Cave chest|1|Open the chest at the back of Smugglers' Cave
 step open|Harbour master's safe|1|Open the harbour master's safe
 step blueprint|Blueprint_Pipe_Water|1|Take the water pipe plans from the harbour master's safe

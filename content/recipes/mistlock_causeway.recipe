@@ -247,16 +247,16 @@ prop lever on.use=open|gate\ngive||story:lever*1\nsound||event:/raft/radar/lever
 prop lever else.use=message||The gate is still open - go!
 
 quest title=Walk Where She Sings
-quest intro=A causeway into the mist. Find where it starts on the south islet.
-step reach|causeway_start|1|Find the start of the causeway
+quest intro=A causeway into the mist. Find where it starts, on the islet at the foot of the causeway.
+step reach|causeway_start|1|Make for the causeway into the mist and find where it starts
 step read|Pilgrim's rule|1|Read the pilgrims' rule
 step reach|midpoint|1|Cross to the causeway's midpoint - walk only where she sings
 step reach|gatehouse|1|Reach the gatehouse on the far islet
-step reach|hillfoot|1|Find the path up Lamplighter's Tor in the east
+step reach|hillfoot|1|Find the path up Lamplighter's Tor, the hill with the lamplighter's hut
 step reach|hilltop|1|Climb Lamplighter's Tor to the lamplighter's hut
 step read|Lamplighter Edwin Sallow's log|1|Read the lamplighter's log in his hut
 step collect|story:leverhandle|1|Take the lever handle from the lamplighter's chest
-step reach|tollhouse|1|Dive to the drowned toll house off the west shore
+step reach|tollhouse|1|Dive to the drowned toll house in the water by the near islet
 step read|Toll keeper Marta Lund's note|1|Breathe in the toll house's front room and read the toll keeper's note
 step collect|story:handleset|1|Fit the handle to the gatehouse lever
 step collect|story:lever|1|Pull the lever by the gate

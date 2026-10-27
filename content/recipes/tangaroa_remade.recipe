@@ -378,14 +378,14 @@ prop roaches creature.respawn=0
 prop roaches creature.zone=flat
 
 quest title=The Lights of Tangaroa
-quest intro=A floating city remade on a hill of its own, dark from the harbour to the square. Start at the floating harbour.
-step read|Council notice|1|Tie up at the floating harbour and read the council's notice by the pier
+quest intro=A floating city remade on a hill of its own, dark from the harbour to the square. Make for the city on the hill and start at the floating harbour by its shore.
+step read|Council notice|1|Make for the city on the hill, tie up at the floating harbour and read the notice by the pier
 step open|Founder's strongbox|1|Dive to the founder's toppled statue for his strongbox
 step kill|Tangaroa rat|3|Clear the rats out of the pump house
-step collect|story:genpart|1|Take the generator's part from the pump house
-step reach|fueldepot|1|Go round to the fuel depot on the south shore
+step collect|story:genpart|1|Take the generator's part from the locker in the pump house
+step reach|fueldepot|1|Go round the shore to the fuel depot
 step open|Fuel depot crate|1|Open the depot's crate - one can of fuel left
-step reach|lookout|1|Climb Lookout Hill, west of the square, to the lookout mast
+step reach|lookout|1|Climb Lookout Hill, the hill with the lookout mast
 step open|Lookout's box|1|Climb the mast and open the lookout's box - the council's reserve can
 step collect|story:fuel|2|Carry both cans of fuel for the generator
 step collect|story:keycard|3|Find the other two key cards: the harbour master's and the caretaker's

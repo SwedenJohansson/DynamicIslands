@@ -273,26 +273,26 @@ prop lullaby sound.volume=0.25
 prop lullaby zone.radius=26
 
 quest title=Admitted With the Song
-quest intro=A sanatorium on the headland, its gate open. Go up the drive to the gate.
-step reach|gate|1|Go up the drive to the gate
+quest intro=A sanatorium on the headland, its gate open. Make for the big sanatorium building and go up the drive to the gate.
+step reach|gate|1|Make for the sanatorium and go up the drive to the gate
 step read|Admissions book|1|Read the admissions book in the day room
 step read|Nurse Edda's rota|1|Read Nurse Edda's rota
 step collect|story:pianoplayed|1|Play the piano in the day room
 step collect|story:wardckey|1|Take the Ward C key from the music box
 step reach|ward_c|1|Unlock Ward C and go in
 step collect|story:chart|3|Read the charts of beds 4, 7 and 9
-step reach|hydro|1|Go to the hydrotherapy house north of the wings
+step reach|hydro|1|Go to the hydrotherapy house beside the sanatorium wings
 step collect|story:drained|1|Turn the crank to drain the basin
 step kill|Roach|4|Deal with the roaches from the pipes
-step reach|hillfoot|1|Find the path up Chapel Hill in the north-west
+step reach|hillfoot|1|Find the path up Chapel Hill, the hill with the bell tower
 step reach|hilltop|1|Climb Chapel Hill to the bell tower
 step read|Chaplain Aldous Penn's sermon notes|1|Read the chaplain's notes by the bell tower
-step collect|story:cabinetkey|1|Take Doctor Vell's cabinet key from the bell tower's box
-step reach|seabath|1|Dive to the drowned sea-bathing house off the south-east shore
+step collect|story:cabinetkey|1|Take Doctor Vell's cabinet key from the box on the bell tower's deck
+step reach|seabath|1|Dive to the drowned sea-bathing house out in the water
 step read|Bath attendant Mabel Orr's note|1|Breathe in the bathing house's front room and read the attendant's note
 step open|Doctor Vell's cabinet|1|Open Doctor Vell's cabinet
 step read|Vell - final entry|1|Read Doctor Vell's final entry
-quest done="Not for us - for it." The charts point to the sea in the east, where the Choir's effigies stand. They will not show on the Receiver yet - the song needs more nights.
+quest done="Not for us - for it." The charts point out over the sea, where the Choir's effigies stand. They will not show on the Receiver yet - the song needs more nights.
 quest reward=TitaniumIngot*1;MetalIngot*4;CopperIngot*2;Battery*1
 
 # --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---

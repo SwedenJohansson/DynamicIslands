@@ -284,7 +284,7 @@ call rr_piece x=28 z=-46 al=tag4 set="Cargo tags" nm="Cargo tag 4"
 call rr_piece x=-34 z=46 al=tag5 set="Cargo tags" nm="Cargo tag 5"
 prop tag1 on.set=give||TitaniumIngot*1;CopperIngot*2\nmessage||All five cargo tags: every box of the deck cargo is accounted for.
 # The smugglers' hole, the plane and Gannet Head's buried box
-note smugglerbox Smugglers' hole | A box in the hole in the west dunes' rock: what the crew hid from the purser.
+note smugglerbox Smugglers' hole | A box in the hole in the dunes' rock: what the crew hid from the purser.
 loot smugglerbox TitaniumOre*2;CopperIngot*2;Bolt*3
 prop smugglerbox loot.refill=0
 call hw_zone x=-60 z=16 al=smugglerz id=smugglershole r=4 msg="A hole in the dune's rock, boulders across its mouth. Somebody's boot prints inside."
@@ -358,14 +358,14 @@ prop creaks sound.volume=0.7
 prop creaks zone.radius=12
 
 quest title=Two Halves of a Ship
-quest intro=A broken ship on a reef, on an island grown long and wide: her bow on a sandbar, her stern under the bay. The crew's camp in the dunes is the place to start.
-step reach|camp|1|Find the crew's camp in the dunes
+quest intro=A broken ship on a reef, on an island grown long and wide: her bow on a sandbar, her stern under the bay. Make for the ship's bow on the sandbar; the crew's camp is in the dunes near it.
+step reach|camp|1|Make for the ship's bow on the sandbar and find the crew's camp in the dunes
 step read|First mate's diary|1|Read the first mate's diary
 step open|Camp tool chest|1|Open the crew's tool chest by the cold fire
 step collect|story:crowbar|1|Take the crowbar - it opens what is jammed
-step reach|gannettop|1|Climb Gannet Head in the north-east to the lighthouse - the reef shows from there
+step reach|gannettop|1|Climb Gannet Head to the lighthouse - the reef shows from there
 step collect|story:chart|1|Take the salvage chart from the lighthouse's lamp-room box
-step reach|containeryard|1|Go to the container yard on the east shore
+step reach|containeryard|1|Go to the container yard by the water
 step open|Purser's container|1|Break the chain on the purser's container with the crowbar - his diving gear is in it
 step reach|stern|1|Dive to the sunk stern on the bay's floor below the reef
 step open|Captain's cabin locker|1|Search the locker in the captain's torn-open cabin

@@ -262,20 +262,20 @@ prop altar zone.repeat=never
 prop altar on.enter=hide|st_c\nshow|st_b\ncamera|fogcam|foglook|6|40\nmessage||Below you every figure has turned to face the sea. Out there a fog bank lies on the water, and lamps burn in it, in a line.
 
 quest title=The Planting Song
-quest intro=Flooded terraces and a path up the middle. Climb to the first paddy.
-step reach|paddy1|1|Walk up to the first paddy
+quest intro=Flooded terraces and a path up the middle. Make for the terraced hillside and climb to the first paddy at its foot.
+step reach|paddy1|1|Make for the terraces and walk up to the first paddy at the bottom
 step read|Planting song|1|Read the planting song on the wooden marker
 step reach|paddy2|1|Climb to the second paddy
-step collect|story:bellstone|3|Find the three Bell stones on the terraces
+step collect|story:bellstone|3|Find the three big wet Bell stones beside the paddies
 step reach|paddy3|1|Climb to the third paddy
 step collect|story:bellsset|1|Set the Bell stones in their stand
 step kill|Bear|2|Deal with what came up through the paddies
 step read|Monk's confession|1|Read the monk's confession at the shrine wall
-step reach|hillfoot|1|Find the path up Hermit's Peak in the north-east
+step reach|hillfoot|1|Find the path up Hermit's Peak, the peak with the hermitage
 step reach|hilltop|1|Climb Hermit's Peak to the abbot's hermitage
 step read|Abbot Oren Vasque's letter|1|Read the abbot's letter in the hermitage
 step collect|story:shrinekey|1|Take the offering box key from the hermit's chest
-step reach|seedstore|1|Dive to the drowned seed store off the west shore
+step reach|seedstore|1|Dive to the drowned seed store in the water below the terraces
 step read|Planter Noor Hadi's note|1|Breathe in the seed store's front room and read the planter's note
 step open|Offering box|1|Open the offering box
 step reach|altar|1|Stand at the altar

@@ -416,35 +416,35 @@ prop sealook obj.name=sealook
 prop sealook zone.radius=1
 
 quest title=The Last Frequency
-quest intro=The Receiver's last frequency: a quarry, and five mirrors listening to the sea. Go ashore at the landing.
-step reach|rim_landing|1|Go ashore at the quarry's landing
+quest intro=The Receiver's last frequency: a quarry, and five mirrors listening to the sea. Make for the five big mirrors and go ashore at the quarry's landing.
+step reach|rim_landing|1|Make for the mirrors and go ashore at the quarry's landing
 step read|Quarry Foreman's board|1|Read the foreman's board
 step read|Mirror 1 log|1|Read mirror 1's log on the rim
 step collect|story:power|1|Start the generator by mirror 1
 step collect|story:hum|1|Listen on mirror 1's receiver
 step read|Mirror 2 log|1|Read mirror 2's log
 step collect|story:hutopen|1|Open the mirror control hut (its code is in the bearings)
-step collect|story:fuse|1|Take the mirror fuse
-step reach|chapel|1|Go into the Choir's chapel on the east rim
+step collect|story:fuse|1|Take the mirror fuse from the control hut
+step reach|chapel|1|Go into the Choir's chapel with the bell, on the quarry rim
 step read|The Listener's sermon|1|Read the Listener's sermon
 step kill|Hyena|6|Fight off the Choir's dogs
 step open|Wren's bundle|1|Free Sister Wren (the chapel's key opens her cage) and open her bundle
 step read|Wren's warning|1|Hear Wren's warning
-step reach|hillfoot|1|Find the path up Watcher's Fell in the west
+step reach|hillfoot|1|Find the path up Watcher's Fell, the hill with the signal mast
 step reach|hilltop|1|Climb Watcher's Fell to the Choir's signal mast
 step read|Watcher Abel Strand's log|1|Read the watcher's log by the mast
-step collect|story:relickey|1|Take the reliquary's key from the signal mast's box
-step reach|pumphouse|1|Dive to the quarry's drowned pump house off the east shore
+step collect|story:relickey|1|Take the reliquary's key from the box on the signal mast's deck
+step reach|pumphouse|1|Dive to the quarry's drowned pump house in the water by the quarry
 step read|Pump keeper Dora Haig's note|1|Breathe in the pump house's front room and read the pump keeper's note
 step open|Reliquary|1|Open the Choir's reliquary
-step collect|story:bellrope|1|Take the bell rope
+step collect|story:bellrope|1|Take the bell rope from the Choir's reliquary
 step collect|story:bellrung|1|Ring the chapel bell
 step reach|crane_base|1|Go to the crane by the pit
 step collect|story:hookmoved|1|Pull the crane lever
 step reach|crane_cab|1|Climb to the crane cab
 step read|Crane operator's note|1|Read the crane operator's note
 step collect|story:sluiceup|1|Fit the fuse and work the claw
-step collect|story:lure|1|Pick up the light on the road down
+step collect|story:lure|1|Pick up the glowing light on the stones under the grate
 step reach|pit_edge|1|Go down to the pit's edge
 step collect|story:toothset|1|Lay the Lantern-Mother's tooth on the altar
 step kill|Angler fish|1|Defeat the Lantern-Mother

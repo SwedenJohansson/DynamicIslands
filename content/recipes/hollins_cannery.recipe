@@ -214,20 +214,20 @@ prop slipway zone.radius=5
 prop slipway zone.message=The shift bell is still ringing.
 
 quest title=The Night Shift
-quest intro=A cannery, its doors open, its slipway running down into the sea. Walk up the slipway.
-step reach|slipway|1|Walk up the slipway
+quest intro=A cannery, its doors open, its slipway running down into the sea. Make for the cannery and walk up the slipway.
+step reach|slipway|1|Make for the cannery and walk up the slipway
 step read|Shift log - night of the 14th|1|Read the shift log on the hall's table
-step reach|hillfoot|1|Find the path up Smokehouse Hill in the north-east
+step reach|hillfoot|1|Find the path up Smokehouse Hill, the hill with the radio mast
 step reach|hilltop|1|Climb Smokehouse Hill to the radio mast
 step read|Radio operator Ada Brann's log|1|Read the radio operator's log by the mast
 step collect|story:deskkey|1|Take the foreman's desk key from the mast's deck box
-step reach|netloft|1|Dive to the drowned net loft off the south-east shore
+step reach|netloft|1|Dive to the drowned net loft in the water past the slipway
 step read|Gutter Jonna Hale's note|1|Breathe in the loft's front room and read the gutter's note
 step collect|story:coldopen|1|Open the cold store with its keypad
 step kill|Rat|6|Deal with the rats in the dark cold store
-step collect|story:cagekey|1|Take the rusted cage key from the foreman's desk
+step collect|story:cagekey|1|Take the rusted cage key from the chest on the foreman's desk
 step open|Pim's tin box|1|Free Pim from the cage in the hall, then open his tin box
-quest done=Pim is on his way to your raft, humming. He says the song comes stronger from the north-east - an old sanatorium. Tune the Receiver to 800.
+quest done=Pim is on his way to your raft, humming. He says the song comes stronger from an old sanatorium across the water. Tune the Receiver to 800.
 quest reward=Plank*6;Rope*3;Scrap*4
 
 # --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---

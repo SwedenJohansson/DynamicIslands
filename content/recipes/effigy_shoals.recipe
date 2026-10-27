@@ -181,7 +181,7 @@ call lp_piece x=60 z=6 al=ef_doll2 set="Straw dolls"
 call lp_piece x=28 z=-51 al=ef_doll3 set="Straw dolls"
 call lp_piece x=-6 z=-60 al=ef_doll4 set="Straw dolls"
 call lp_piece x=-56 z=-4 al=ef_doll5 set="Straw dolls"
-prop ef_doll1 on.set=show|ef_setchest\nmessage||Five straw dolls, small as a hand, each one facing the same way: south-west. On the Whistling Dune a box has come up out of the sand.
+prop ef_doll1 on.set=show|ef_setchest\nmessage||Five straw dolls, small as a hand, each one facing the same way: out to sea. On the Whistling Dune a box has come up out of the sand.
 note ef_setchest Lise's box | Lise Marren's box: "They made me make the dolls too. I hid them where the Choir would not count. If you found all five, you count better than they do." Inside, her things.
 loot ef_setchest CopperIngot*2;MetalIngot*2;Rope*3;Glass*2
 
@@ -223,19 +223,19 @@ prop windsound sound.volume=0.25
 prop windsound zone.radius=40
 
 quest title=Count Them Again
-quest intro=Sandbars, and straw figures on them. Come ashore on the south bar.
-step reach|landing|1|Come ashore on the south bar
+quest intro=Sandbars, and straw figures on them. Come ashore on the sandbar by the tide marker; the tallest effigy stands in the middle of the ring.
+step reach|landing|1|Come ashore by the tide marker; the tallest effigy marks the middle
 step read|Tide marker|1|Read the tide marker
 step reach|circle|1|Walk into the middle of the circle
 step read|Choir hymn sheet|1|Read the hymn sheet at the tallest effigy's feet
-step read|Who made them|1|Find out who made them (the east bar)
-step reach|hillfoot|1|Find the path up the Pyre Dune in the north-west
+step read|Who made them|1|Find out who made them (paper by the offerings chest)
+step reach|hillfoot|1|Find the path up the Pyre Dune, the dune with the Choir's pyre
 step reach|hilltop|1|Climb the Pyre Dune to the Choir's pyre
 step read|Choir warden Hester Vane's count|1|Read the warden's count by the pyre
 step collect|story:reliquarykey|1|Take the reliquary key from the warden's chest
-step reach|boathouse|1|Dive to the Choir's drowned boathouse off the north-east shore
+step reach|boathouse|1|Dive to the Choir's drowned boathouse in the water off the sandbars
 step read|Boatman Silas Crewe's note|1|Breathe in the boathouse's front room and read the boatman's note
-step reach|choircave|1|Find the Choir's cave on the north-east shore
+step reach|choircave|1|Find the Choir's cave in the dunes by the water
 step open|Choir's reliquary|1|Open the Choir's reliquary with the warden's key
 quest done=They all face you now. The Quiet Choir is on Gannet Rock - and the hymn will get you in.
 quest reward=Cooked_Mackerel*2;Rope*3;Plank*4

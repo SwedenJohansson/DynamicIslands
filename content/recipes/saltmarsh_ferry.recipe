@@ -120,7 +120,7 @@ call ar_cave x=50 z=-60 h=2.5 yaw=0 al=sm_caverock chest=sm_cavechest
 call hw_zone x=49 z=-51 al=sm_cavez id=sm_cave r=4 h=1 msg="Eel Cave. The floor is wet; something slithers away."
 call ar_ruin x=-34 z=50 h=2.5 yaw=0 w=3 d=2 al=sm_ruin
 call r2_islander x=-35 z=45.5 yaw=200 al=sm_isl nm="Wenna Rook" pose=stand
-prop sm_isl talk.text=Shoes off, it's all mud.\n---\nMy man cut reeds for the ferry's roofs. The Corps paid in tins. The tins stopped when the ferry did.\n---\nClimb Heron Hill out west - you'll see the whole marsh and the channel from the mast. And the eel men kept a chest in Eel Cave, south-east. They won't be back for it.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
+prop sm_isl talk.text=Shoes off, it's all mud.\n---\nMy man cut reeds for the ferry's roofs. The Corps paid in tins. The tins stopped when the ferry did.\n---\nClimb Heron Hill, the one with the lookout mast - you'll see the whole marsh and the channel from the mast. And the eel men kept a chest in Eel Cave, in the rocks past the marsh. They won't be back for it.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
 call r2_lamp x=-41 z=49 al=sm_lamp1 nm="Reed lamp 1" grp="Reed lamps" on=0
 call r2_lamp x=-35 z=56 al=sm_lamp2 nm="Reed lamp 2" grp="Reed lamps" on=1
 call r2_lamp x=-28 z=49 al=sm_lamp3 nm="Reed lamp 3" grp="Reed lamps" on=0
@@ -270,15 +270,15 @@ quest intro=A salt marsh, a channel - and the Corps' ferry stranded at its end. 
 step reach|ferry|1|Find the Corps' ferry at the channel's end
 step read|Captain's notice|1|Read the captain's notice by the Corps' office
 step catch|Chicken|2|Net two of the Corps' hens scratching about the office
-step open|Reed cutter's chest|1|Cross the marsh to the reed cutter's camp and open his chest
+step open|Reed cutter's chest|1|Cross the marsh to the reed cutter's camp and open his box
 step collect|story:pumphandle|1|Take the bilge pump's handle, greased and wrapped in oilcloth
-step catch|Goat|2|Net the two goats grazing the eastern marsh
+step catch|Goat|2|Net the two goats grazing on the marsh
 step reach|hold|1|Look into the ferry's hold, where something scratches
 step kill|Rat|4|Clear the rats - and their king - out of the ferry's hold
-step talk|Wenna Rook|1|Talk to Wenna Rook at the ruined house in the north-west
-step reach|sm_trail|1|Find the foot of the trail up Heron Hill, in the west
+step talk|Wenna Rook|1|Talk to Wenna Rook at the ruined reed cutters' house
+step reach|sm_trail|1|Find the foot of the trail up Heron Hill, the hill with the lookout mast
 step reach|sm_summit|1|Climb the trail to the top of Heron Hill
-step reach|sm_cave|1|Find Eel Cave in the south-east
+step reach|sm_cave|1|Find Eel Cave, the cave mouth in the rocks at the marsh edge
 step open|Eel Cave chest|1|Open the chest at the back of Eel Cave
 step open|Engineer's locker|1|Pump the ferry dry and open the engineer's locker
 step blueprint|Blueprint_MotorWheel|1|Take the engine plans from the engineer's locker

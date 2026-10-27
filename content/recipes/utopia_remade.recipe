@@ -221,7 +221,7 @@ call shallows r=75 deep=5 n=2
 # --- RAFT REMADE 10-26: the new areas' zones and notes, the gate's third key, the secrets ------------------------------
 call hw_zone x=-70 z=2 al=crewz id=crewcamp r=9 h=1 msg="Olof's crew camp. A stone hut, a tent, a fire long cold - they waited here for the warden to fall."
 place Note_Paper crewjournal at -72.75 8 h=4.45 drop yaw=20
-note crewjournal Crew's journal | OLOF'S CREW - THE JOURNAL\n\nThe warden had a third lock put on his gate after we tried it the first time. The third key went to the old lighthouse keeper - he'd never come down.\nThe keeper's box is up the lighthouse mast on Lighthouse Head, south of the summit.\nThe rest of us are marking our tokens round the island. Find all six and you'll know we were here.
+note crewjournal Crew's journal | OLOF'S CREW - THE JOURNAL\n\nThe warden had a third lock put on his gate after we tried it the first time. The third key went to the old lighthouse keeper - he'd never come down.\nThe keeper's box is up the lighthouse mast on Lighthouse Head, the hill with the old mast.\nThe rest of us are marking our tokens round the island. Find all six and you'll know we were here.
 call hw_zone x=0 z=-56 al=headfootz id=headfoot r=6 msg="Lighthouse Head. A path cut round the hill to the old lighthouse mast on its top."
 call hw_zone x=0 z=-74 al=headtopz id=lighthouse r=8 h=1 msg="The top of Lighthouse Head. The mast's ladder runs up inside it - the keeper's box hangs on the deck."
 story keeperkey|Lighthouse keeper's key|quest:Utopia_KeyEntrance|The third key to the warden's gate - the old lighthouse keeper's.
@@ -341,8 +341,8 @@ prop pack creature.respawn=0
 prop pack creature.zone=yard
 
 quest title=The Warden's Gate
-quest intro=Utopia at last - and its summit fenced off by the warden. Tie up at the docks.
-step reach|docks|1|Tie up at Utopia's docks
+quest intro=Utopia at last - and its summit fenced off by the warden. Make for the fenced summit and tie up at the docks below it.
+step reach|docks|1|Make for the fenced hilltop and tie up at Utopia's docks below it
 step read|Olof's last message|1|Read Olof's last message on the quay
 step open|Olof's crate|1|Open Olof's covered crate under his message
 step open|Empty cage|1|Look into the empty cage on the quay
@@ -351,20 +351,20 @@ step open|Market stores|1|Search the market's stores under their cover
 step pages||6|Check the trader's stack box by the bench: six pages for the journal
 step open|Dock master's crate|1|Walk the pier to the dock master's crate at its end
 step collect|story:dockkey|1|Take the dock master's key - the first of two
-step reach|clerkyard|1|Cross to the prison clerk's desk on the east flats
+step reach|clerkyard|1|Cross to the prison clerk's desk by the prison house
 step kill|Rat|3|Drive off the rats boiling out from under the prison house
 step open|Prison clerk's desk|1|Search the prison clerk's gnawed desk
 step collect|story:prisonkey|1|Take the prison clerk's key - the second
 step pages||9|Look in the crate beside the clerk's desk: nine pages of Utopia so far
-step reach|crewcamp|1|Go out to Olof's crew camp on the west point
+step reach|crewcamp|1|Go out to Olof's crew camp, a hut and tents on the far point
 step read|Crew's journal|1|Read the crew's journal in their hut - the gate has a third lock
-step reach|lighthouse|1|Climb Lighthouse Head, south of the summit, to the old lighthouse mast
+step reach|lighthouse|1|Climb Lighthouse Head, the hill with the old lighthouse mast
 step open|Keeper's box|1|Climb the mast and open the keeper's box
 step collect|story:keeperkey|1|Take the lighthouse keeper's key - the third
 step reach|yard|1|Climb to the summit and unlock the warden's gate with all three keys
 step kill|Hyena|3|Defeat the warden's hyenas and their alpha
 step open|Warden's table|1|Go through the ledger on the warden's table
-step open|Warden's pot|1|Search the pot in the yard's back corner
+step open|Warden's pot|1|Search the pot in the corner of the warden's yard
 step pages||12|Find the warden's jar by the palisade: twelve pages, the last before his chest
 step open|Warden's chest|1|Open the warden's chest
 step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline tool plans from the warden's chest

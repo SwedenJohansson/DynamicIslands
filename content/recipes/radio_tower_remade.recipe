@@ -312,11 +312,11 @@ quest title=Back on the Air
 quest intro=A tower of steel rooms on a black rock, its antenna dead, on an island grown wide round it. The landing at its foot is the place to start.
 step reach|landing|1|Land at the tower's landing
 step read|Keeper's note|1|Read the keeper's note on the landing
-step reach|keepercove|1|Go round to Keeper's Cove in the west
+step reach|keepercove|1|Go round to Keeper's Cove, the beach with the ruined stone hut and a boat
 step read|Keeper's diary|1|Read the keeper's diary in his hut
-step reach|antennatop|1|Climb Antenna Hill in the north to the relay mast
+step reach|antennatop|1|Climb Antenna Hill, the hill with the relay mast, to the mast
 step collect|story:valve|1|Take the relay valve from the mast's deck box
-step collect|story:battery|1|Dive to the old shark cage for the battery bank
+step collect|story:battery|1|Dive to the old shark cage near the landing and open its chest for the battery bank
 step reach|roof|1|Climb the tower's three ladders to the nest of wire and bones on its roof
 step kill|Screecher|1|Drive Old Beak off the tower's roof
 step reach|radioroom|1|Climb to the radio room at the top

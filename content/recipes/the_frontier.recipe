@@ -756,23 +756,23 @@ prop ray creature.health=3
 prop ray creature.zone=vault
 
 quest title=Almost Home
-quest intro=The last high ground: the Frontier Corps' town, locked against the storms. The end of the voyage begins at the harbour.
+quest intro=The last high ground: the Frontier Corps' town, locked against the storms. The end of the voyage begins at the harbour below the terraced town.
 # chapter 1: arrival (4)
-step reach|harbour|1|Tie up at the Frontier's harbour
+step reach|harbour|1|Make for the terraced town and tie up at its harbour
 step read|Welcome board|1|Read the Corps' welcome board at the quay
-step open|Harbour office locker|1|Take the town map from the harbour office
+step open|Harbour office locker|1|Take the town map from the locker in the harbour office
 step reach|square|1|Walk to the town square at the terraces' foot
 # chapter 2: the lower town (5)
 step read|Smith's note|1|The smiths' quarter: read the smith's note in the forge
 step kill|Hyena|3|Drive the dogs out of the forge yard
 step read|Netmaker's note|1|The fishers' quarter: read the netmaker's note on the quay
-step collect|story:wardenkey|1|Dive off the quay's end for the sunken net store and the smiths' key
+step collect|story:wardenkey|1|Dive off the quay's end to the box in the sunken net store for the smiths' key
 step open|Forge chest|1|Open the forge's chest with the smiths' key
 # chapter 3: the farms' water (6)
 step reach|reservoir|1|Climb the terraces to the reservoir on the rim
 step kill|Bear|1|Drive off the bear at the reservoir
 step read|Reservoir keeper's note|1|Read the reservoir keeper's note
-step collect|story:valvewheel|3|Find the sluice box's three valve wheels on the terraces
+step collect|story:valvewheel|3|Find the three valve wheels in the crates on the terraces
 step collect|story:waterpass|1|Fit the wheels and open the sluice
 step open|Farm store|1|Open the farm store with the water pass
 # chapter 4: the upper town (8)
@@ -785,7 +785,7 @@ step collect|story:sealtool|1|Take the archive's seal press from the top deck's 
 step reach|archive|1|Carry the seal press to the archive by the hall
 step collect|story:seal|2|Press the archive's seal at its desk (the farm store's was the first)
 # chapter 5: the hall (5)
-step reach|hall|1|Go to the Corps' hall on the east rim
+step reach|hall|1|Go to the Corps' hall on the rim above the town
 step read|Hall door plaque|1|Read the plaque by the hall's doors
 step collect|story:seal|3|Fit the reed and sound the signal horn on its tower for the third seal
 step reach|hallinside|1|Set the three seals in the hall's doors and go in

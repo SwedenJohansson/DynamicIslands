@@ -219,15 +219,15 @@ step reach|dormitory|1|Dive to the dormitory (there is air in it)
 step read|Matron's last letter|1|Read the matron's last letter
 step collect|story:comb|3|Take the three music-box combs from the cribs
 step kill|Angler fish|3|Deal with the lights in the dark (they come when you enter the chapel)
-step reach|hillfoot|1|Swim to Nursery Rock in the north-west and find its steps
+step reach|hillfoot|1|Swim to Nursery Rock, the tall rock with the lookout, and find its steps
 step reach|hilltop|1|Climb Nursery Rock to the nursemaid's lookout
 step read|Nursemaid Ada Finch's note|1|Read the nursemaid's note in the lookout
 step collect|story:windkey|1|Take the music box's winding key from the nursemaid's chest
-step reach|deepward|1|Dive into the trench in the north-east to the home's infirmary
+step reach|deepward|1|Dive into the deep trench beside the home to the infirmary
 step read|Doctor Lewin Hale's note|1|Breathe in the infirmary's front room and read the doctor's note
 step collect|story:boxsong|1|Put the combs back in the chapel's music box
-step collect|story:tooth|1|Take what lies on the altar
-quest done=The Lantern-Mother's tooth hums in your pack. The Choir is at the quarry with the mirrors. The Receiver points north: the last frequency.
+step collect|story:tooth|1|Take the tooth from the altar in the chapel
+quest done=The Lantern-Mother's tooth hums in your pack. The Choir is at the quarry with the mirrors. The Receiver points far out to sea: the last frequency.
 quest reward=OxygenBottle*1;Canteen_Water*2
 
 save Cradle Reef

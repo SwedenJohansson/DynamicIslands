@@ -119,7 +119,7 @@ call ar_cave x=58 z=-48 h=3 yaw=0 al=cf_caverock chest=cf_cavechest
 call hw_zone x=57 z=-39 al=cf_cavez id=cf_cave r=4 h=1 msg="Slag Cave. The rock is warm to the touch."
 call ar_ruin x=56 z=34 h=2.6 yaw=0 w=3 d=2 al=cf_ruin
 call r2_islander x=55 z=29.5 yaw=200 al=cf_isl nm="Tomas Reyes" pose=lean
-prop cf_isl talk.text=You came for the plant? Take your time - it's not going anywhere. Neither am I.\n---\nI surveyed this rock before they built the plant. Told them the mountain breathes. They built it anyway.\n---\nThe survey crew left their samples in Slag Cave, south-east. And my lads built a maze out of the slag heaps east of here, for fun. There's a box in the middle.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
+prop cf_isl talk.text=You came for the plant? Take your time - it's not going anywhere. Neither am I.\n---\nI surveyed this rock before they built the plant. Told them the mountain breathes. They built it anyway.\n---\nThe survey crew left their samples in Slag Cave, in the rocks by the shore. And my lads built a maze out of the slag heaps east of here, for fun. There's a box in the middle.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
 call r2_lamp x=49 z=33 al=cf_lamp1 nm="Survey lamp 1" grp="Survey lamps" on=0
 call r2_lamp x=55 z=40 al=cf_lamp2 nm="Survey lamp 2" grp="Survey lamps" on=1
 call r2_lamp x=62 z=33 al=cf_lamp3 nm="Survey lamp 3" grp="Survey lamps" on=1
@@ -287,7 +287,7 @@ island on.arrive=message||A black volcano breathing steam, tents on the ash, a h
 
 story valvetag|Valve tag|quest:Varuna_CraneKey|The brass tag from a relief valve, taken once it was shut - the plant's store opens to all three.
 
-note engineerswarning Engineer's warning | FRONTIER CORPS - STATION THREE - CINDERFALL PLANT\n\nPRESSURE RISING. The three relief valves are stuck open - one on the west plateau, one on the south-east spur, one on the north shoulder up the ramp, where the stone birds nest.\n\nShut each by its wheel and bring me its brass tag: the plant's store opens to the three tags. The roaches have the turbine hall - mind your boots.\n\nThe Corps went on to the Sunken Archive. The machete is in the store - you'll want it there.
+note engineerswarning Engineer's warning | FRONTIER CORPS - STATION THREE - CINDERFALL PLANT\n\nPRESSURE RISING. The three relief valves are stuck open - one on the high plateau, one on the rocky spur across the plain, one on the shoulder up the ramp, where the stone birds nest.\n\nShut each by its wheel and bring me its brass tag: the plant's store opens to the three tags. The roaches have the turbine hall - mind your boots.\n\nThe Corps went on to the Sunken Archive. The machete is in the store - you'll want it there.
 note plantstore Plant store | The plant's store: the machete, the plans for a biofuel refiner, a fuel tank and fuel pipes - all a raft needs to run on its own fuel.
 loot plantstore Blueprint_Machete*1;Blueprint_BiofuelExtractor*1;Blueprint_Fueltank*1;Blueprint_Pipe_Fuel*1;Scrap*6;ExplosiveGoo*3
 prop plantstore loot.refill=0
@@ -340,7 +340,7 @@ loot cf_setchest Glass*3;Bolt*4;MetalIngot*1
 note cf_planecrate Survey plane's crate | The survey plane's crate: rock hammers, sample bags and tools.
 loot cf_planecrate Plastic*3;Scrap*3;Nail*6
 prop cf_planecrate loot.refill=0
-note cf_pilot Survey pilot's note | SURVEY 4 - Cinderfall. Ash cloud at two thousand. Engine choked, glided onto the north-west flats. Tomas, your mountain is breathing again.
+note cf_pilot Survey pilot's note | SURVEY 4 - Cinderfall. Ash cloud at two thousand. Engine choked, glided onto the ash flats. Tomas, your mountain is breathing again.
 note jccf Ash lookout box | The stokers stacked stones to see over the ash.
 loot jccf Rope*3;Plank*4;MetalIngot*1
 note jbcf Top of the ash stack | Somebody's stash at the very top.
@@ -349,18 +349,18 @@ note cf_mazechest Slag maze box | The crew's prize box in the middle of the slag
 loot cf_mazechest CopperIngot*2;Rope*2;TradeToken*1
 
 quest title=Pressure
-quest intro=A volcano breathing steam and a plant at its foot, its pressure rising. Station Three: start at the workers' camp.
-step reach|camp|1|Come to the workers' camp on the ash plain
+quest intro=A volcano breathing steam and a plant at its foot, its pressure rising. Station Three: make for the volcano and start at the workers' camp below it.
+step reach|camp|1|Make for the volcano; the workers' camp is on the ash plain below it
 step read|Engineer's warning|1|Read the engineer's warning
-step collect|story:valvetag|1|Climb to the west plateau, shut its relief valve and pocket the brass tag
-step collect|story:valvetag|2|Cross the plain to the south-east spur and shut the second valve
-step reach|nest|1|Take the ramp up to the north shoulder, where the stone birds nest
+step collect|story:valvetag|1|Climb to the high plateau, shut its relief valve and pocket the brass tag
+step collect|story:valvetag|2|Cross the plain to the rocky spur and shut the second valve
+step reach|nest|1|Take the ramp up to the shoulder where the stone birds nest
 step kill|Screecher|1|Drive off the stone birds' matriarch by the third valve
 step collect|story:valvetag|3|Shut the last valve - three brass tags, and the hiss dies
 step reach|hall|1|Go down to the turbine hall at the volcano's foot
 step kill|Roach|3|Clear the roaches out of the turbine hall
-step talk|Tomas Reyes|1|Talk to Tomas Reyes at the ruined house in the north-east
-step reach|cf_cave|1|Find Slag Cave in the south-east
+step talk|Tomas Reyes|1|Talk to Tomas Reyes at the ruined house on the ash plain
+step reach|cf_cave|1|Find Slag Cave, the cave mouth in the rocks by the shore
 step open|Slag Cave chest|1|Open the chest at the back of Slag Cave
 step open|Plant store|1|Open the plant's store with the three valve tags
 step blueprint|Blueprint_Machete|1|Take the machete plans from the plant store

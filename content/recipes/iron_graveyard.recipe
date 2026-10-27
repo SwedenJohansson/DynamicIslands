@@ -132,7 +132,7 @@ call ar_cave x=66 z=-44 h=2.5 yaw=0 al=ig_caverock chest=ig_cavechest
 call hw_zone x=65 z=-35 al=ig_cavez id=ig_cave r=4 h=1 msg="Rivet Cave. Somebody stacked steel plates in here."
 call ar_ruin x=-46 z=44 h=2.5 yaw=0 w=3 d=2 al=ig_ruin
 call r2_islander x=-47 z=39.5 yaw=200 al=ig_isl nm="Big Sol" pose=lean
-prop ig_isl talk.text=Careful where you step - half this yard is still sharp.\n---\nI broke ships here for the Corps. Cut them up for their steel, forty years. Now the sea brings them in faster than I can cut.\n---\nThe cutters hid their best finds in Rivet Cave, east. And the builders' plates off the old hulls are all over the yard - five of them. Bring them together.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
+prop ig_isl talk.text=Careful where you step - half this yard is still sharp.\n---\nI broke ships here for the Corps. Cut them up for their steel, forty years. Now the sea brings them in faster than I can cut.\n---\nThe cutters hid their best finds in Rivet Cave, in the rocks by the water. And the builders' plates off the old hulls are all over the yard - five of them. Bring them together.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
 call r2_lamp x=-53 z=43 al=ig_lamp1 nm="Yard lamp 1" grp="Yard lamps" on=1
 call r2_lamp x=-47 z=50 al=ig_lamp2 nm="Yard lamp 2" grp="Yard lamps" on=1
 call r2_lamp x=-40 z=43 al=ig_lamp3 nm="Yard lamp 3" grp="Yard lamps" on=0
@@ -249,19 +249,19 @@ note ig_setchest Plate rack | The builders' plates back on their rack - and what
 loot ig_setchest Glass*3;Bolt*4;MetalIngot*1
 
 quest title=Breakers' Yard
-quest intro=A breakers' yard on a desert beach, its turbine standing still. Station Six: start at the yard's gate.
-step reach|yardgate|1|Come in through the yard's gate
+quest intro=A breakers' yard on a desert beach, its turbine standing still. Station Six: make for the tall crane and start at the yard's gate.
+step reach|yardgate|1|Make for the tall crane and come in through the yard's gate
 step read|Foreman's board|1|Read the foreman's board by the office
 step kill|Hyena|3|Deal with the yard's dogs - and their alpha
-step collect|story:blade|3|Find three turbine blades in the hulls on the beach
+step collect|story:blade|3|Find three turbine blades in the boxes on the wrecked hulls on the beach
 step kill|Angler fish|1|Face what lives in the barge sunk off the beach
-step collect|story:blade|4|Take the fourth blade from the barge's hold
+step collect|story:blade|4|Take the fourth blade from the box in the barge's hold
 step read|Crane operator's note|1|Climb up to the crane's cab and read the operator's note
 step collect|story:cranekey|1|Open the yard office's safe for the crane key
 step collect|story:hub|1|Lift the turbine hub off the tanker with the crane
 step reach|turbinehill|1|Carry the parts up the ramp to the turbine on the mesa
-step talk|Big Sol|1|Talk to Big Sol at the ruined house in the north-west
-step reach|ig_cave|1|Find Rivet Cave in the south-east
+step talk|Big Sol|1|Talk to Big Sol at the ruined house in the yard
+step reach|ig_cave|1|Find Rivet Cave, the cave mouth in the rocks by the water
 step open|Rivet Cave chest|1|Open the chest at the back of Rivet Cave
 step open|Yard store|1|Get the turbine turning and open the yard store
 step blueprint|Blueprint_WindTurbine|1|Take the wind turbine plans from the yard store

@@ -137,7 +137,7 @@ call ar_cave x=60 z=-72 h=3 yaw=0 al=wr_caverock chest=wr_cavechest
 call hw_zone x=59 z=-63 al=wr_cavez id=wr_cave r=4 h=1 msg="Frost Cave. Out of the wind, at last."
 call ar_ruin x=-60 z=-50 h=3 yaw=0 w=3 d=2 al=wr_ruin
 call r2_islander x=-61 z=-54.5 yaw=200 al=wr_isl nm="Pell Arnesen" pose=sit
-prop wr_isl talk.text=Shut the - oh. There's no door. Sit by the lamps, then.\n---\nI trapped for the winter camp. Furs for the Corps, meat for the cook. The camp told everybody: do not come in winter. I came in winter.\n---\nThe camp kept spare fuel in Frost Cave, south-east. And a supply plane came down on the north-east snowfield - nobody went to look.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
+prop wr_isl talk.text=Shut the - oh. There's no door. Sit by the lamps, then.\n---\nI trapped for the winter camp. Furs for the Corps, meat for the cook. The camp told everybody: do not come in winter. I came in winter.\n---\nThe camp kept spare fuel in Frost Cave, in the rocks by the water. And a supply plane came down on the snowfield - nobody went to look.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
 place Placeable_Chair_Basic - at -61 -54.5 ground sit yaw=200
 call r2_lamp x=-67 z=-51 al=wr_lamp1 nm="Trap lamp 1" grp="Trap lamps" on=0
 call r2_lamp x=-61 z=-44 al=wr_lamp2 nm="Trap lamp 2" grp="Trap lamps" on=1
@@ -175,8 +175,8 @@ call shallows r=120 deep=5 n=3
 
 info title=Whiteout Reach
 info author=Custom Islands
-info description=Station Eight of the Frontier Corps: the winter camp on a snowy hill, its boiler cold and its domes empty, a supply ship frozen in the north shore's ice and a polar bear matriarch in a crevasse. The eighth island of Raft 2: The Drowned Frontier.
-island on.arrive=message||Snow to the horizon, domes on a hill's shoulder, a ship's hull locked in the ice of the north shore. A sign by the shore: DO NOT COME IN WINTER.
+info description=Station Eight of the Frontier Corps: the winter camp on a snowy hill, its boiler cold and its domes empty, a supply ship frozen in the ice at the water's edge and a polar bear matriarch in a crevasse. The eighth island of Raft 2: The Drowned Frontier.
+island on.arrive=message||Snow to the horizon, domes on a hill's shoulder, a ship's hull locked in the ice at the water's edge. A sign by the shore: DO NOT COME IN WINTER.
 
 story storekey|Store key|quest:Temperance_SeleneGateKey|The camp store's key, dropped in the snowmobile shed.
 story heatpart|Boiler part|quest:Temperance_ReactorKey|One of the camp boiler's three missing parts.
@@ -269,29 +269,29 @@ loot wr_setchest Glass*3;Bolt*4;MetalIngot*1
 note wr_planecrate Supply plane's crate | The winter supply plane's crate: tins, fuel and tools.
 loot wr_planecrate Plastic*3;Scrap*3;Nail*6
 prop wr_planecrate loot.refill=0
-note wr_pilot Supply pilot's note | WINTER SUPPLY - Whiteout Reach. Whiteout at three hundred feet. Put her down on the snowfield north-east of the camp. Walking in. They did tell us not to come in winter.
+note wr_pilot Supply pilot's note | WINTER SUPPLY - Whiteout Reach. Whiteout at three hundred feet. Put her down on the snowfield beyond the camp. Walking in. They did tell us not to come in winter.
 
 quest title=Do Not Come in Winter
-quest intro=A frozen camp of the Frontier Corps, its boiler cold. Station Eight: start at the camp on the hill.
-step reach|camp|1|Reach the Corps' winter camp on the hill
+quest intro=A frozen camp of the Frontier Corps, its boiler cold. Station Eight: make for the hill with the snow domes and start at the camp.
+step reach|camp|1|Make for the hill with the snow domes: the Corps' winter camp
 step read|Commander's order|1|Read the commander's order in the mess dome
 step open|Mess dome locker|1|Open the mess dome's locker
-step reach|kestrel|1|Find the supply ship Kestrel in the north shore's ice
+step reach|kestrel|1|Find the supply ship Kestrel, stuck in the ice at the water's edge
 step read|Ship's manifest|1|Read the Kestrel's manifest on her deck
 step reach|shed|1|Go back up the hill to the snowmobile shed for the store key
 step kill|Polar bear|1|Drive the polar bear out of the snowmobile shed
-step collect|story:storekey|1|Find the camp store's key in the shed
+step collect|story:storekey|1|Find the camp store's key in the box in the shed
 step open|Camp store|1|Unlock the camp store with the key
-step collect|story:heatpart|1|Take the first boiler part from its crate
+step collect|story:heatpart|1|Take the first boiler part from the big box in the camp store
 step reach|kestrel|1|Back down to the Kestrel - the manifest says a part is still in her hold
-step collect|story:heatpart|2|Dive by the Kestrel's stern for the second
-step reach|icecaves|1|Find the crevasse in the hill's west side
+step collect|story:heatpart|2|Dive by the Kestrel's stern for the second part in the box in her hold
+step reach|icecaves|1|Find the crevasse in the side of the hill
 step kill|Polar bear|1|Face the polar bear matriarch in her den
-step collect|story:heatpart|3|Take the third part from the survey team's pack
+step collect|story:heatpart|3|Take the third part from the survey team's pack box in the den
 step collect|story:radiocrystal|1|Fit the parts to the camp's boiler and light it
-step catch|Goat|2|The camp is warm again - net the two goats on the south snowfield
-step talk|Pell Arnesen|1|Talk to Pell Arnesen at the ruined house in the south-west
-step reach|wr_cave|1|Find Frost Cave in the south-east
+step catch|Goat|2|The camp is warm again - net the two goats on the snowfield below the hill
+step talk|Pell Arnesen|1|Talk to Pell Arnesen at the trapper's ruined house on the snowfield
+step reach|wr_cave|1|Find Frost Cave, the cave mouth in the rocks by the water
 step open|Frost Cave chest|1|Open the chest at the back of Frost Cave
 step reach|radiohut|1|Climb to the radio hut on the summit
 step read|Last transmission|1|Read the radio's last transmission

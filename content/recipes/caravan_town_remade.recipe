@@ -195,7 +195,7 @@ call shallows r=80 deep=5 n=2
 note cavebox Smugglers' cache | A box in the cave on the west flats: what the drovers kept back from the mayor's toll.
 loot cavebox TitaniumIngot*1;CopperIngot*2;Bolt*3
 prop cavebox loot.refill=0
-call hw_zone x=-88 z=2 al=cavez id=smugglerscave r=4 msg="A cave in a rock on the west flats - a cold fire outside, a box within."
+call hw_zone x=-88 z=2 al=cavez id=smugglerscave r=4 msg="A cave in a rock out on the flats - a cold fire outside, a box within."
 # Toll tokens: five of the mayor's brass toll tokens, dropped round the island (a set)
 call rr_piece x=-90 z=-6 al=toll1 set="Toll tokens" nm="Toll token 1"
 call rr_piece x=-40 z=60 al=toll2 set="Toll tokens" nm="Toll token 2"
@@ -276,13 +276,13 @@ prop whitebird creature.respawn=0
 prop whitebird creature.zone=roof
 
 quest title=The Mayor's Toll
-quest intro=Red stacks of trailers, a market in the inlet - and the mayor's pillar with its bridge pulled in. The market is the place to start.
-step reach|market|1|Come into the market in the inlet
+quest intro=Red stacks of trailers, a market in the inlet - and the mayor's pillar with its bridge pulled in. Make for the mayor's tall pillar; the market is in the inlet at its foot.
+step reach|market|1|Make for the mayor's tall pillar and come into the market at its foot
 step read|Toll notice|1|Read the toll notice by the market
 step read|Market ledger|1|Leaf through the market's ledger - the mayor's cut on every page
 step reach|airpocket|1|Dive to the sunken trailer in the bay - breathe in the air pocket by it
 step open|Diver's crate|1|Open the diver's crate by his sunken trailer
-step collect|story:crank|1|Bring the winch's crank up from the bay
+step collect|story:crank|1|Take the winch's crank from the diver's crate and bring it up
 step reach|mayortower|1|Ride the lift up, wind the bridge across and cross to the mayor's pillar
 step kill|Hyena|3|Deal with the mayor's three hyenas
 step reach|roof|1|Climb the ladder to the mayor's roof
