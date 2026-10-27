@@ -105,7 +105,7 @@ call snowfall x=0 z=2 r=45 al=snow
 place campfire_1 - at 38.3 7.4 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 41.3 9.4 ground sit yaw=357
 place "Box Small" - at 36.3 9.9 ground sit
-place Note_Paper dnote at 36.3 9.9 ground y=0.7 drop yaw=20
+place Note_Paper dnote at 36.3 9.9 ground y=1.6 drop yaw=20
 note dnote Sledger's note | CAMP ON THE SHELF (a note under a stone, in a round, friendly hand)\n\nTuva and Knut fed, both asleep on my feet, which is the only warm thing in the north. The ice groaned all night like an old man getting out of a chair.\nThe Kittiwake's master gave me coffee and an earful. I took their radio set "for repair" - his quotes, not mine, he did them with his fingers. They'll have it back when the Coldhold says so.\nNailed the Warden's paper up on their mast, as I was told. Halvorsen read it and spat on the deck. Good man, Halvorsen.\nThe Whale's horn sounded from the north again. No ship has a horn like that any more. Nobody says so out loud.\nOn at first light: Steamvent, then home to my goats, who have surely eaten the door.\n- O.V.
 place TP_SnowVehicle01 dvan at -38.3 -7.4 ground yaw=117
 prop dvan tint.color=#8a9aa6

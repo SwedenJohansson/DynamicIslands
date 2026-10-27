@@ -73,7 +73,7 @@ push at 6 42 h=2
 call hut w=3 d=2 y=0.1
 place Loot_Chest pressshed at 3.6 2.3 y=0.1 sit yaw=180
 place "Box Small" - at 0.8 2.3 y=0.1 sit
-place Note_Paper rangerlog4 at 0.8 2.3 y=0.8 drop yaw=10
+place Note_Paper rangerlog4 at 0.8 2.3 y=1.7 drop yaw=10
 pop
 
 # --- REDO 10-24: three fuel cans from three river arms for the press; the machete taught three times ----------------

@@ -93,7 +93,7 @@ place UT_WaterChallengeWheel3 enginerings at 3 0 y=0.1 yaw=90
 place Note_Sign enginestatus at -4.5 -3.8 y=0.1 sit yaw=0
 place Note_Sign threeways at 0 -3.8 y=0.1 sit yaw=0
 place "Box Small" - at 4.5 -3.4 y=0.1 sit yaw=10
-place Note_Paper thesource at 4.5 -3.4 y=0.8 drop yaw=20
+place Note_Paper thesource at 4.5 -3.4 y=1.7 drop yaw=20
 pop
 prop housing tint.color=#4e5358
 prop housing tint.amount=0.6

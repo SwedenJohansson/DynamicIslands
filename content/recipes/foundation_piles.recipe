@@ -115,7 +115,7 @@ pop
 place campfire_1 - at -23.2 38.6 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -20.2 40.6 ground sit yaw=307
 place "Box Small" - at -25.2 41.1 ground sit
-place Note_Paper dnote at -25.2 41.1 ground y=0.7 drop yaw=20
+place Note_Paper dnote at -25.2 41.1 ground y=1.6 drop yaw=20
 note dnote Salvager's note | SALVAGE CLAIM - this side is ours. Union stamp below (smudged).\nGood copper in the roofs off shore. Bad currents at the turn of the tide.\nDon't dive alone.
 place RT_PlasticBoat dvan at 23.2 -38.6 ground yaw=67
 prop dvan tint.color=#4a6b7a

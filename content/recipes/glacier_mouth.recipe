@@ -96,9 +96,9 @@ place "Box Big" - at -1 -12 ground sit yaw=30
 # STORY 10-24: Orrin's abandoned sledge (its box and his note) and the Warden's tape by the leader's tent
 place Loot_ChestLarge orrinsledge at 4.6 -7 ground sit yaw=110
 place "Box Small" - at 5.8 -8.6 ground sit yaw=20
-place Note_Paper sledgenote at 5.8 -8.6 ground y=0.7 drop yaw=35
+place Note_Paper sledgenote at 5.8 -8.6 ground y=1.6 drop yaw=35
 place "Box Small" - at 8.8 1.2 ground sit yaw=160
-place Note_Paper wardentape at 8.8 1.2 ground y=0.7 drop yaw=175
+place Note_Paper wardentape at 8.8 1.2 ground y=1.6 drop yaw=175
 # (box agent 10-25: 0.16 m into the trading post - moved 0.5 m off it)
 place RT_CommRadio - at 10.1 1.1 ground sit yaw=200
 place TP_Moontown_SealedCrate01 - at 2 -8 ground sit yaw=60
@@ -184,7 +184,7 @@ place campfire_1 - at -23.6 27.2 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -20.6 29.2 ground sit yaw=237
 place "Box Small" - at -25.6 29.7 ground sit
 place Loot_ChestSmall campbits at -21.8 25.4 ground sit yaw=140
-place Note_Paper dnote at -25.6 29.7 ground y=0.7 drop yaw=20
+place Note_Paper dnote at -25.6 29.7 ground y=1.6 drop yaw=20
 note dnote Traveller's note | Old camp, seventh day out of the Coldhold. Fingers bad, so the writing is bad, so blame the fingers.\nAune says leave a spare bit at every camp, so here is a spare bit, wrapped in wool like a baby. If a bear eats it, that is the bear's problem.\nAt night the stack's signal comes in on the little set I am not supposed to have: COME HOME, over and over. Ivo used to read the weather on it. Now nobody reads anything, and still it says COME HOME, like the mast forgot how to stop.\nThe courier passed at dawn with his dogs and did not wave. Orrin always waves.\n\n- Ivar Nes, driller
 place Caravan_Blue_01 dvan at 39 0.7 ground yaw=357
 prop dvan tint.color=#6a7a8a

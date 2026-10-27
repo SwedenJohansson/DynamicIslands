@@ -99,7 +99,7 @@ pop
 place campfire_1 - at -34.1 18.9 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -31.1 20.9 ground sit yaw=177
 place "Box Small" - at -36.1 21.4 ground sit
-place Note_Paper dnote at -36.1 21.4 ground y=0.7 drop yaw=20
+place Note_Paper dnote at -36.1 21.4 ground y=1.6 drop yaw=20
 note dnote Squatter's note | Moved out of the tower when the water reached the thirtieth floor. My mother cried. I didn't - I'd carried our things down thirty flights of stairs to a boat, and there was nothing left in me to cry with.\n\nIt's quieter out here. No Union men, no Authority men, nobody weighing my fish. The gulls are the only council, and they vote with their feet.\n\nThe city lights still come on at dusk, out on the towers. Nobody knows who pays for them. I like to think somebody keeps a switch on on purpose, so people out here know the city is still there.
 place Van_2 dvan at 34.1 -18.9 ground yaw=297
 prop dvan tint.color=#5a5048

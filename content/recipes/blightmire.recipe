@@ -46,7 +46,7 @@ push at -4.65 -55.8 h=3.6
 call shelter w=2 d=2 y=0.1
 place Loot_Chest smeltercamp at 1.5 2.2 y=0.1 sit yaw=180
 place "Box Small" - at 0.7 0.8 y=0.1 sit
-place Note_Paper confession at 0.7 0.8 y=0.8 drop yaw=15
+place Note_Paper confession at 0.7 0.8 y=1.7 drop yaw=15
 pop
 place campfire_1 - at 6.2 -46.5 ground sit
 place Note_Sign blightmap at -7.75 -41.85 ground sit yaw=200
@@ -104,7 +104,7 @@ pop
 place campfire_1 - at -28 48 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -25 50 ground sit yaw=317
 place "Box Small" - at -30 50.5 ground sit
-place Note_Paper dnote at -30 50.5 ground y=0.7 drop yaw=20
+place Note_Paper dnote at -30 50.5 ground y=1.6 drop yaw=20
 note dnote Ranger's camp note | OUTER CAMP 3 - LISE, Seedkeepers' search crew\n\nWe stopped here on the way in. The birds go quiet past the ridge. Bo tried whistling to them and the quiet got worse, which I did not know quiet could do.\n\nThe Seedkeepers say the green is waking up. Oda says it is hungry. Greta says it is both, like a baby, and Greta has five, so we listen to Greta.\n\nWe found the river people's lamps in the reeds, still lit, all in a row, set down very neatly as if they would be picked up again in a minute.\n\nKeep the fire small and the machete close. Keep the sandwiches closer.
 place Caravan_Green_01 dvan at -38.5 6.1 ground yaw=77
 prop dvan tint.color=#5a6b3a

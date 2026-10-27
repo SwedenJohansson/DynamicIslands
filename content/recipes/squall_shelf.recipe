@@ -103,7 +103,7 @@ call treasure x=40 z=-6 r=6 n=1 seed=13196
 place campfire_1 - at -9.7 25.2 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -6.7 27.2 ground sit yaw=177
 place "Box Small" - at -11.7 27.7 ground sit
-place Note_Paper dnote at -11.7 27.7 ground y=0.7 drop yaw=20
+place Note_Paper dnote at -11.7 27.7 ground y=1.6 drop yaw=20
 note dnote Sealer's note | (on the furs box, in big careful letters)\n\nSparks -\nThe council says nobody helps you, so this is not help. These are some furs I lost, and some tea that fell out of my boat, and a box they happened to land in.\nThe whole of Saga misses the seven o'clock show. My mother asks every morning why the radio is quiet, and I can't tell her it's because the council is frightened of the Warden. She thinks the penguins took you.\nIf you are cold, the fire pit still takes driftwood. If you get the set going again, play the song about the seal. Not for me. For my mother.\n- Nils, of Saga Drift
 place TP_SnowVehicle02 dvan at 23.1 13.9 ground yaw=297
 prop dvan tint.color=#7a8a96

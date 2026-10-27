@@ -135,7 +135,7 @@ call shallows x=0 z=0 r=125 deep=5 n=1 seed=10507
 place campfire_1 - at 14 -36.4 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 17 -34.4 ground sit yaw=97
 place "Box Small" - at 12 -33.9 ground sit
-place Note_Paper dnote at 12 -33.9 ground y=0.7 drop yaw=20
+place Note_Paper dnote at 12 -33.9 ground y=1.6 drop yaw=20
 note dnote Castaway's note | DAY 40 - OR 41\n\nThe station people never came up for me. I watch their crane from here and wave, and the crane does not wave back, which is fair.\nAt night a light goes down the shaft and does not come back up. Teal. Last night it came UP the shaft instead, slowly, and sat under the deck while the bell was ringing. When the bell stopped, it went down again.\nSo I don't ring anything. I don't light anything. I talk to the crabs very quietly.\nI have fish, rain, and this pencil. That is enough for now.
 place BoatStranded dvan at -14 36.4 ground yaw=217
 prop dvan tint.color=#6b5a48

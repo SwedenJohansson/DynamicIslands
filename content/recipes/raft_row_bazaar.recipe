@@ -147,7 +147,7 @@ pop
 place campfire_1 - at -4.7 -29.6 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -1.7 -27.6 ground sit yaw=277
 place "Box Small" - at -6.7 -27.1 ground sit
-place Note_Paper dnote at -6.7 -27.1 ground y=0.7 drop yaw=20
+place Note_Paper dnote at -6.7 -27.1 ground y=1.6 drop yaw=20
 note dnote Salvager's note | SALVAGE CLAIM - this side is ours. Union stamp below (smudged).\n\nGood copper in the roofs off shore. Bad currents at the turn of the tide. Don't dive alone - Jory dived alone, and we only got his boots back, and they weren't even good boots.\n\nThe old arcade went down off the shore last winter. The pedlars got the till out first, the thieves. There's still a strongbox in its back room if your lungs are better than mine.\n\nThe market people think we're vultures. We are. Somebody has to pick a drowned city clean, or it just sits there under you, full of things you need.
 place RT_PlasticBoat dvan at 18.9 34.1 ground yaw=37
 prop dvan tint.color=#4a6b7a

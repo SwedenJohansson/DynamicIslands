@@ -91,7 +91,7 @@ call hut w=3 d=2 y=0.1
 place Loot_Chest seedstore at 3.6 2.3 y=0.1 sit yaw=180
 place Loot_Crate seeddrawers at 1.8 2.3 y=0.1 sit yaw=180
 place "Box Small" - at 0.8 1.2 y=0.1 sit
-place Note_Paper rangerlog6 at 0.8 1.2 y=0.8 drop yaw=10
+place Note_Paper rangerlog6 at 0.8 1.2 y=1.7 drop yaw=10
 pop
 place Zone_Trigger rootszone at -6 2 ground
 
@@ -134,7 +134,7 @@ pop
 place campfire_1 - at 18.9 34.1 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 21.9 36.1 ground sit yaw=297
 place "Box Small" - at 16.9 36.6 ground sit
-place Note_Paper dnote at 16.9 36.6 ground y=0.7 drop yaw=20
+place Note_Paper dnote at 16.9 36.6 ground y=1.6 drop yaw=20
 note dnote Lost traveller's note | I came for the seeds like everyone else. Three weeks rowing, one bad tooth, a sunburn shaped like a hat.\n\nThe paths move. I am sure of it. I marked this tree twice, and the second mark is higher up the trunk than the first, as if the tree grew a hand's width in a night.\n\nA Seedkeeper with a kind face gave me tea and asked where I had come from, and whether anyone knew I was here. I said no. He seemed pleased about that, and then sorry he was pleased.\n\nIf the fire is cold, I went towards the sea. If the fire is warm, I am behind you. Say hello.
 place Caravan_Yellow_01 dvan at -7.4 38.3 ground yaw=57
 prop dvan tint.color=#7a7040

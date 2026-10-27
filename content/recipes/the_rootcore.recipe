@@ -129,7 +129,7 @@ pop
 place campfire_1 - at 0.7 -39 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 3.7 -37 ground sit yaw=347
 place "Box Small" - at -1.3 -36.5 ground sit
-place Note_Paper dnote at -1.3 -36.5 ground y=0.7 drop yaw=20
+place Note_Paper dnote at -1.3 -36.5 ground y=1.6 drop yaw=20
 note dnote Jonas's last pot | JONAS - THE LOWER CAMP\n\nI followed Teodor down here with a pot of soup, because that is what I am for. He would not eat it. He said the dome was his to finish and the soup was mine to finish, and he was right about one of those.\n\nThe brood are only boar with the green on them. Fire scares them. Shouting does not; I tried.\n\nI hid the good chest behind the vines by the wreck - cut them if you need it more than I do. If you see Oda, tell her I kept the bees alive. If you see Marit, tell her nothing; she will only climb something.\n\nThe pot is still warm. Take it with you into the dome. Nobody should face that place hungry.\n\n- Jonas
 place Van_1 dvan at 34 29.5 ground yaw=107
 prop dvan tint.color=#5a4a32

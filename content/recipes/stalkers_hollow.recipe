@@ -112,7 +112,7 @@ call shallows x=0 z=0 r=119 deep=6 n=1 seed=11007
 
 # --- DISCOVERIES 10-24 (optional, no quest needs them): diver's cache + slate + air pocket; Van3 + chest; hatch with a chest; buried treasure; viewpoint ---
 place "Box Small" dcampbox at 36.7 -20.4 ground sit
-place Note_Paper dnote at 36.7 -20.4 ground y=0.7 drop yaw=30
+place Note_Paper dnote at 36.7 -20.4 ground y=1.6 drop yaw=30
 place Loot_ChestSmall dcamp at 38.7 -18.9 ground sit yaw=237
 call airpocket x=34.2 z=-22.4 id=stalkers_hollow_dair al=dairzone bub=dairbub r=2.5 msg="Air trapped in a diver's bell-tent. Breathe."
 note dnote Ines's last slate | DIVE SLATE - I. MARLOWE\n\nTo whoever has Mo.\nI followed you down the chain as far as the lip. Further than this, the Stalker would hear me, and you have enough to carry.\nFennick and Halvard went to the vent. Neither of them came back up the chain. I sat here a long time with my light off.\nGo and finish it. Then go up, find a boy on a high island with a warden's hat over his eyes, and give him his whale. Tell him his mum is coming. Tell him she counted everybody.

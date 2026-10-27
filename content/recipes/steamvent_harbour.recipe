@@ -223,7 +223,7 @@ pop
 place campfire_1 - at -11.8 30.8 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -8.8 32.8 ground sit yaw=97
 place "Box Small" - at -13.8 33.3 ground sit
-place Note_Paper dnote at -13.8 33.3 ground y=0.7 drop yaw=20
+place Note_Paper dnote at -13.8 33.3 ground y=1.6 drop yaw=20
 note dnote Sealer's note | (on the furs box by the fire pit, in pencil)\n\nWe got in! Three days over the ice with Bo singing the whole way, which is a kind of punishment, but we got in.\nThe town is cold. The vent valve has stuck and there is frost on the inside of the windows. Nobody has had a bath in a week and you can tell.\nIvo went straight to the harbour master and asked for a set. She said the Warden's order forbids it. Ivo said the Warden is welcome to come and take it off him in person. I like Ivo.\nLeft the spare furs and the tea in the box. If you are cold, the fire pit still takes driftwood.\n- Sigrid, of the Kittiwake
 place TP_SnowVehicle02 dvan at 32.6 -26.4 ground yaw=217
 prop dvan tint.color=#7a8a96

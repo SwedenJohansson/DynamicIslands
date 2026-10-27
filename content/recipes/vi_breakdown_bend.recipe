@@ -37,7 +37,7 @@ place Bench_01 - at -5 -1 ground sit yaw=90
 place PlasticChair_01 - at -1 -5 ground sit yaw=300
 place PlasticChair_01 - at -4 -6 ground sit yaw=20
 place "Box Small" logbox at 1 -6 ground sit yaw=15
-place Note_Paper driverlog at 1 -6 y=0.5 drop yaw=10
+place Note_Paper driverlog at 1 -6 ground y=1.6 drop yaw=10
 place Loot_ChestSmall roofbox at 6 -4 ground sit yaw=75
 place Zone_Trigger campzone at -2 -3 ground
 

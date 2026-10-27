@@ -65,7 +65,7 @@ call floors w=2 d=2 y=0.1
 call corners w=2 d=2 y=0.1
 roof 2 2 at 0 0 y=0.1 wood
 place "Box Small" - at 2.2 2.2 y=0.1 sit
-place Note_Paper belllog at 2.2 2.2 y=0.8 drop yaw=20
+place Note_Paper belllog at 2.2 2.2 y=1.7 drop yaw=20
 pop
 call airpocket x=-8.5 z=-4.5 id=bell al=bellair bub=bellbub r=2.5 msg="The diving bell's air pocket. Breathe."
 
@@ -89,7 +89,7 @@ place Creature_Stingray rays at 9 10 ground y=2
 place Survivor_Cage marncage at -6 8 ground yaw=180
 place Loot_ChestSmall marnsatchel at -3.8 8.5 ground sit yaw=180
 place "Box Small" - at -8.2 8.8 ground sit
-place Note_Paper marnmap at -8.2 8.8 ground y=0.7 drop yaw=30
+place Note_Paper marnmap at -8.2 8.8 ground y=1.6 drop yaw=30
 
 # --- The cable car's bottom station: two stone pylons, its car in the silt; an air pocket by it -----------------------
 place RT_PillarThick - at -14.5 12 ground

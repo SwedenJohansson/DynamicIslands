@@ -44,7 +44,7 @@ place Loot_Chest rootstore at -6 -13 ground sit yaw=180
 place "VG_DecorationPrefabBase_EmergencyGenerator Variant" generator at 6 -15 ground sit yaw=180
 push at 8.5 -12 h=4
 place "Box Small" - at 0 0 y=0 sit
-place Note_Paper organism1 at 0 0 y=0.7 drop yaw=20
+place Note_Paper organism1 at 0 0 y=1.6 drop yaw=20
 pop
 place Creature_Boar blightboars at -12 -24 ground
 prop blightboars creature.count=3
@@ -107,7 +107,7 @@ push at 14 2 h=4
 call hut w=3 d=2 y=0.1
 place Loot_ChestLarge labsafe at 3.6 2.3 y=0.1 sit yaw=180
 place "Box Small" - at 0.8 2.3 y=0.1 sit
-place Note_Paper lastletter at 0.8 2.3 y=0.8 drop yaw=10
+place Note_Paper lastletter at 0.8 2.3 y=1.7 drop yaw=10
 pop
 place Zone_Trigger labzone at 14.75 0 ground
 place Zone_Trigger rootgate at -24 0 ground

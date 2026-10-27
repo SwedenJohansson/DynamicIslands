@@ -49,7 +49,7 @@ clear at 40 -30 r=10
 push at -12 -2 h=3
 call hut w=3 d=3 y=0.1
 place "Box Small" - at 1.2 3.4 y=0.1 sit
-place Note_Paper diary at 1.2 3.4 y=0.8 drop yaw=15
+place Note_Paper diary at 1.2 3.4 y=1.7 drop yaw=15
 pop
 place TangaroaHatchRoom_Hatch cellardoor at -5.5 4 ground sit yaw=0
 beside Loot_Chest cellarchest cellardoor d=0.01

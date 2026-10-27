@@ -95,7 +95,7 @@ clear at -45 -10 r=8
 push at -47.25 -11.5 h=3.4
 call thatchhut w=3 d=2
 place "Box Small" - at 2.25 2.2 y=0.1 sit
-place Note_Paper rangerlog5 at 2.25 2.2 y=0.8 drop yaw=30
+place Note_Paper rangerlog5 at 2.25 2.2 y=1.7 drop yaw=30
 pop
 # REDO 10-24 (optional): Oda's ranger cache by the old hut, locked with her ranger key from Ranger Landing
 clear at -51 -14.5 r=2
@@ -123,7 +123,7 @@ next
 place campfire_1 - at -25.6 20.8 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -22.6 22.8 ground sit yaw=277
 place "Box Small" - at -27.6 23.3 ground sit
-place Note_Paper dnote at -27.6 23.3 ground y=0.7 drop yaw=20
+place Note_Paper dnote at -27.6 23.3 ground y=1.6 drop yaw=20
 note dnote Hunter's note | STEN - HUNTING, the wood\n\nBoar sign everywhere. Hyena sign at the edge of the dark trees, which is new; hyenas never came up the rise before. Something is pushing them out of the wood.\n\nI hid the good chest behind the vines. Cut them if you need it more than I do. You probably do. I am old and I mostly need a chair.\n\nThe trackers say the herds have stopped grazing at the tree line. Goats will eat a boot, a hat, a book, my second-best hat. Goats will not eat those leaves.\n\nThink about that before you sit under them.\n\n- Sten
 place Van_1 dvan at -6.1 -38.5 ground yaw=37
 prop dvan tint.color=#5a4a32

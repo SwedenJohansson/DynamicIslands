@@ -151,7 +151,7 @@ place Placeable_Table_Basic - at 3 2 ground sit yaw=180
 place RT_PowerBox commanddesk at 3 2 ground y=0.9 yaw=180
 place Note_Sign crewnames at 5.5 5 ground sit yaw=225
 place "Box Small" - at 1.2 2.5 ground sit yaw=10
-place Note_Paper lastlog at 1.2 2.5 ground y=0.7 drop yaw=25
+place Note_Paper lastlog at 1.2 2.5 ground y=1.6 drop yaw=25
 prop lastlog obj.name=lastlog
 prop lastlog beh.hidden=1
 place Loot_Crate cellar at 6 1 ground sit yaw=200

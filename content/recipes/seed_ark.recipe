@@ -243,7 +243,7 @@ prop hall3air zone.message=The last cooling hall, flooded to the roof. Air in a 
 
 # --- DISCOVERIES 10-24 (optional, no quest needs them): diver's cache + slate + air pocket; TP_SnowVehicle01 + chest; hatch with a chest; buried treasure; viewpoint ---
 place "Box Small" dcampbox at 5.6 35.6 ground sit
-place Note_Paper dnote at 5.6 35.6 ground y=0.7 drop yaw=30
+place Note_Paper dnote at 5.6 35.6 ground y=1.6 drop yaw=30
 place Loot_ChestSmall dcamp at 7.6 37.1 ground sit yaw=77
 call airpocket x=3.1 z=33.6 id=seed_ark_dair al=dairzone bub=dairbub r=2.5 msg="Air trapped in a diver's bell-tent. Breathe."
 note dnote Diver's slate | (chalked on a diver's slate, tied to a box)\n\nCOLD. TOO COLD FOR LONG DIVES. AIR IN THE ROOMS ONLY.\nThat was the diver before me. The rest is mine.\nFirst dive: the flood door, the shaft, the lamps still burning thirty metres down. Somebody kept them going a long time.\nSecond dive: room 4 and the valve. It will not turn. Dead pumps, the engineer's log says, and the islet's halls are too far for these hands.\nThird dive: I am going down to sit with the valve a while. If it moves, it moves.\nThe dogs are fed. The goats are somebody else's now.\n\n- O. V.

@@ -153,7 +153,7 @@ pop
 place campfire_1 - at 23.3 -18.9 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 26.3 -16.9 ground sit yaw=257
 place "Box Small" - at 21.3 -16.4 ground sit
-place Note_Paper dnote at 21.3 -16.4 ground y=0.7 drop yaw=20
+place Note_Paper dnote at 21.3 -16.4 ground y=1.6 drop yaw=20
 note dnote Squatter's note | Moved out of the tower when the water reached the 30th floor.\nIt's quieter here. No Union men, no Authority men.\nThe city lights still come on at dusk - nobody knows who pays for them.
 place Van_2 dvan at -36.7 20.4 ground yaw=17
 prop dvan tint.color=#5a5048

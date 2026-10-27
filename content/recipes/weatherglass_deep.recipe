@@ -45,7 +45,7 @@ prop barometer tint.amount=0.6
 place Note_Sign drownedlog at 0 -2 ground sit rot=6,180,4
 place Loot_Chest drownedchest at 1 6.5 ground sit yaw=160
 place "Box Small" - at -1.2 6.6 ground sit
-place Note_Paper twinanswer at -1.2 6.6 ground y=0.7 drop yaw=20
+place Note_Paper twinanswer at -1.2 6.6 ground y=1.6 drop yaw=20
 place Zone_Trigger stationzone at 0 0 ground y=1
 place Zone_Trigger pufferzone at 0 2 ground y=2
 place Creature_PufferFish puffers at 4 -4 ground y=2

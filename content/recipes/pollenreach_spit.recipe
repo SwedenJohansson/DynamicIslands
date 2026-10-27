@@ -45,7 +45,7 @@ push at -16.2 -48.6 h=1.2
 call shelter w=2 d=2 y=0.1
 place Loot_Chest cabinchest at 1.5 2.2 y=0.1 sit yaw=180
 place "Box Small" - at 0.7 0.8 y=0.1 sit
-place Note_Paper skifflog at 0.7 0.8 y=0.8 drop yaw=15
+place Note_Paper skifflog at 0.7 0.8 y=1.7 drop yaw=15
 pop
 place Loot_Crate mastlocker at 13.5 -42.3 ground sit yaw=200
 # REDO 10-24: the skiff's sample case (the island's machine): the three jars go in, its needle points to Verdance
@@ -106,7 +106,7 @@ prop pollen3 tint.amount=0.7
 place campfire_1 - at 20.8 25.6 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 23.8 27.6 ground sit yaw=247
 place "Box Small" - at 18.8 28.1 ground sit
-place Note_Paper dnote at 18.8 28.1 ground y=0.7 drop yaw=20
+place Note_Paper dnote at 18.8 28.1 ground y=1.6 drop yaw=20
 note dnote Ranger's camp note | OUTER CAMP 3 - O. FENN, RANGER\n\nCamped here on the way back from the spit. A Seedkeepers' skiff came ashore on the beach last week with nobody in it. I did not send for one, and the Heart lab says they did not either.\n\nThe log on board is neat. Too neat. Nobody writes that tidily on a boat that is going aground.\n\nThe pollen is thicker every day. Teodor Lind at the Heart lab calls it a good sign: "the green is waking up". I say it is hungry. We are both probably right, which is the worst kind of argument.\n\nThe hens I brought ate my lunch. All of it. I am a ranger of Verdance and I have been robbed by poultry.
 place Caravan_Green_01 dvan at -33.4 -20.1 ground yaw=7
 prop dvan tint.color=#5a6b3a

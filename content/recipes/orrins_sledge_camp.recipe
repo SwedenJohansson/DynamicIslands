@@ -134,7 +134,7 @@ pop
 place campfire_1 - at -12.9 33.6 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -9.9 35.6 ground sit yaw=197
 place "Box Small" - at -14.9 36.1 ground sit
-place Note_Paper dnote at -14.9 36.1 ground y=0.7 drop yaw=20
+place Note_Paper dnote at -14.9 36.1 ground y=1.6 drop yaw=20
 note dnote Traveller's note | (on a box by a dead sledge, in a shaky hand)\n\nSeventh day out of the Coldhold. Fingers bad. Food gone yesterday.\nI was the cook down there. P. Skarr, if anyone is keeping a list. The Warden keeps lists. He kept one of who was allowed in and one of who was allowed to leave, and the second list was very short.\nThey say it is warm below the ice. It is. It is also very quiet, and the quiet gets into your teeth.\nThere is a woman down there in a cage for asking to use the radio. Fenn, her name is. Somebody should go for her.\nIf you find Orrin's camp, ask him for coffee. Don't ask him about his post.
 place Caravan_Blue_01 dvan at 30.3 -24.5 ground yaw=317
 prop dvan tint.color=#6a7a8a

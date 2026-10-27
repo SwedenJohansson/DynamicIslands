@@ -41,7 +41,7 @@ push at -10 -12 h=3
 call shelter w=2 d=2 y=0.1
 place Loot_Chest hermitchest at 1.5 2.2 y=0.1 sit yaw=180
 place "Box Small" - at 0.7 0.8 y=0.1 sit
-place Note_Paper hermitmap at 0.7 0.8 y=0.8 drop yaw=15
+place Note_Paper hermitmap at 0.7 0.8 y=1.7 drop yaw=15
 pop
 place campfire_1 - at -4 -10 ground sit
 place Note_Sign hermitjournal at -6 -6 ground sit yaw=180
@@ -51,7 +51,7 @@ prop hens creature.count=3
 # STORY 10-24: Jonas's trade slip by the hen run; Teodor's note on a box by the fire
 place Note_Paper jonastrade at -11 -4 ground y=0.3 drop yaw=60
 place "Box Small" - at -2.6 -8 ground sit yaw=20
-place Note_Paper teodorpass at -2.6 -8 ground y=0.7 drop yaw=40
+place Note_Paper teodorpass at -2.6 -8 ground y=1.6 drop yaw=40
 
 # --- The grove and its boar herd; thorns along the ridge --------------------------------------------------------
 place Creature_Boar herd at 18 -20 ground
@@ -69,7 +69,7 @@ pop
 place campfire_1 - at 13.1 23.6 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 16.1 25.6 ground sit yaw=357
 place "Box Small" - at 11.1 26.1 ground sit
-place Note_Paper dnote at 11.1 26.1 ground y=0.7 drop yaw=20
+place Note_Paper dnote at 11.1 26.1 ground y=1.6 drop yaw=20
 note dnote Lost traveller's note | I came for the seeds like everyone else. The paths move here; I am sure of it. I marked this tree twice.\n\nA tall man in a stained lab coat passed my fire last night. He did not ask the way. He walked straight to the hermit's ledge, left something there, and went back to his skiff without a word.\n\nIf the fire is cold, I went towards the sea.
 place Caravan_Yellow_01 dvan at -21 17 ground yaw=117
 prop dvan tint.color=#7a7040

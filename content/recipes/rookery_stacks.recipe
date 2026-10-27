@@ -137,7 +137,7 @@ pop
 place campfire_1 - at -28 22.7 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -25 24.7 ground sit yaw=157
 place "Box Small" - at -30 25.2 ground sit
-place Note_Paper dnote at -30 25.2 ground y=0.7 drop yaw=20
+place Note_Paper dnote at -30 25.2 ground y=1.6 drop yaw=20
 note dnote Drowned city note | My street is under that water. Number 14, blue door.\nSome nights I row out and look down at the roofs.\nThe tram is still on its rails down there.
 place BoatStranded dvan at 28 -22.7 ground yaw=277
 prop dvan tint.color=#5a5a50

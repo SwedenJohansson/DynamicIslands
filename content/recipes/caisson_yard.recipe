@@ -107,7 +107,7 @@ pop
 place campfire_1 - at -29.6 4.7 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -26.6 6.7 ground sit yaw=297
 place "Box Small" - at -31.6 7.2 ground sit
-place Note_Paper dnote at -31.6 7.2 ground y=0.7 drop yaw=20
+place Note_Paper dnote at -31.6 7.2 ground y=1.6 drop yaw=20
 note dnote Fisher's note | FISHER'S NOTE, UNDER A STONE\n\nGood fishing off this side - too good. The fish come up here to get away from something, and they do not look back.\nLeft the spare line in the box. Take it if you need it, friend.\nP.S. If you see a diver, a tall one, wet hair, fierce - she went down the trench wall towards the Commons yesterday with a rope and no plan. Tell her the fisher says hello. Tell her the fisher says come back up.
 place RT_PlasticBoat dvan at 31.5 -17.5 ground yaw=57
 prop dvan tint.color=#4a6b7a

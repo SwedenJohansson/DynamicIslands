@@ -71,7 +71,7 @@ call shallows x=0 z=0 r=78 deep=4 n=1 seed=11110
 
 # --- DISCOVERIES 10-24 (optional, no quest needs them): diver's cache + slate + air pocket; RT_PlasticBoat + chest; hatch with a chest; viewpoint ---
 place "Box Small" dcampbox at -13.1 -23.6 ground sit
-place Note_Paper dnote at -13.1 -23.6 ground y=0.7 drop yaw=30
+place Note_Paper dnote at -13.1 -23.6 ground y=1.6 drop yaw=30
 place Loot_ChestSmall dcamp at -11.1 -22.1 ground sit yaw=337
 call airpocket x=-15.6 z=-25.6 id=shuttlewreck_reef_dair al=dairzone bub=dairbub r=2.5 msg="Air trapped in a diver's bell-tent. Breathe."
 note dnote Ines's slate (the reef) | DIVE SLATE - I. MARLOWE, WIRED TO A BOX\n\nAIR ON THE CHAIN. AIR IN THE HOUSES. NOT IN THE DARK BITS.\n\nShuttle 7 found. Hatch open. Nobody inside. The seats are all empty and the net on 14 is empty too - so wherever Milo went, he went without Mo. He will not be sleeping.\nFootprints in the silt along the ridge, small ones, going away along the ridge towards the Caisson Yard. Fourteen sets. I counted. I am not crying, it is the mask.\nGoing on along the chain. Teo, if you're following me, go home.

@@ -131,7 +131,7 @@ scatter SeaVine3 14 at -2 0 r=8 seed=10307 free=2
 place campfire_1 - at -36 30 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -33 32 ground sit yaw=160
 place "Box Small" - at -38 32.5 ground sit
-place Note_Paper evacnote at -38 32.5 ground y=0.7 drop yaw=25
+place Note_Paper evacnote at -38 32.5 ground y=1.6 drop yaw=25
 place VP_Forklift forklift at 36 -36 ground yaw=40
 prop forklift tint.color=#8a6a4e
 prop forklift tint.amount=0.4

@@ -193,7 +193,7 @@ pop
 place campfire_1 - at -39.4 21.8 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -36.4 23.8 ground sit yaw=337
 place "Box Small" - at -41.4 24.3 ground sit
-place Note_Paper dnote at -41.4 24.3 ground y=0.7 drop yaw=20
+place Note_Paper dnote at -41.4 24.3 ground y=1.6 drop yaw=20
 note dnote Survey note | ICE SURVEY, SHEET 4 (and on the back, a sealer's scrawl)\n\nPressure ridge moving 2 m a day. Crack under the tent this morning. Moved camp.\n\nHalvorsen here, borrowing the surveyors' paper because ours went in the sea. We came up the ice to trade seal oil for seed and found the vault's door shut and nobody answering. Ivo from the relay is with us, listening to his little set every night with his eyes closed, like a man in church. He says the stack never fell on its own. He heard sledge bells the night the mast bent, and there was no wind.\nWe are going back to the steam harbour. The sea under the ice is warmer than it should be.
 place BoatStranded dvan at 39.4 -21.8 ground yaw=97
 prop dvan tint.color=#5a6670

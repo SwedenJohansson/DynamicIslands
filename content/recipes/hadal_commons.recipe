@@ -131,7 +131,7 @@ pop
 
 # --- DISCOVERIES 10-24 (optional, no quest needs them): diver's cache + slate + air pocket; VP_Forklift + chest; hatch with a chest; buried treasure; viewpoint ---
 place "Box Small" dcampbox at -25.6 29.4 ground sit
-place Note_Paper dnote at -25.6 29.4 ground y=0.7 drop yaw=30
+place Note_Paper dnote at -25.6 29.4 ground y=1.6 drop yaw=30
 place Loot_ChestSmall dcamp at -23.6 30.9 ground sit yaw=37
 call airpocket x=-28.1 z=27.4 id=hadal_commons_dair al=dairzone bub=dairbub r=2.5 msg="Air trapped in a diver's bell-tent. Breathe."
 note dnote Ines's slate (the trench) | DIVE SLATE - I. MARLOWE, ON A LANYARD\n\nLAST DIVE - LIGHTS OUT BELOW 40. Spare kit left for whoever comes next.\n\nMilo. I came down the trench wall from the Yard on a rope and a temper. The Commons' windows are lit below me - the only lights left in the sea, and the shadow is between me and them.\nIf you read this one day: I was not brave. I was just your mum, and that is a different thing, and it is stronger.

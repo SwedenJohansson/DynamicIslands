@@ -82,7 +82,7 @@ push at -15 -24 h=1.5
 call hut w=2 d=2 y=0.1
 place Loot_Chest hutchest at 2.2 2.4 y=0.1 sit yaw=180
 place "Box Small" - at 0.8 2.4 y=0.1 sit
-place Note_Paper log1 at 0.8 2.4 y=0.8 drop yaw=15
+place Note_Paper log1 at 0.8 2.4 y=1.7 drop yaw=15
 pop
 
 # --- Things to gather; Raft's finds in the shallows ----------------------------------------------------------------

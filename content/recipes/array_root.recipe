@@ -88,7 +88,7 @@ place RT_Pillar - at 5 -5 ground sy=0.4
 place TP_LaserControlPanel_lever rootcutoff at 5 -5 ground y=1.25 scale=3 yaw=225
 place Loot_ChestLarge rootvault at -5 -5 ground sit yaw=45
 place "Box Small" - at -6.5 -3.8 ground sit
-place Note_Paper apology at -6.5 -3.8 ground y=0.7 drop yaw=30
+place Note_Paper apology at -6.5 -3.8 ground y=1.6 drop yaw=30
 place Zone_Trigger anglerzone at 4 -10 ground y=2
 place Creature_AnglerFish anglers at 4 -10 ground y=3
 

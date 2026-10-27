@@ -122,7 +122,7 @@ pop
 
 # --- DISCOVERIES 10-24 (optional, no quest needs them): diver's cache + slate + air pocket; Van3 + chest; hatch with a chest; buried treasure; viewpoint ---
 place "Box Small" dcampbox at -28.9 16 ground sit
-place Note_Paper dnote at -28.9 16 ground y=0.7 drop yaw=30
+place Note_Paper dnote at -28.9 16 ground y=1.6 drop yaw=30
 place Loot_ChestSmall dcamp at -26.9 17.5 ground sit yaw=197
 call airpocket x=-31.4 z=14 id=lumen_shelf_dair al=dairzone bub=dairbub r=2.5 msg="Air trapped in a diver's bell-tent. Breathe."
 note dnote Ines's slate (the shelf) | DIVE SLATE - I. MARLOWE, ON A LANYARD\n\nLAST DIVE - LIGHTS OUT BELOW 40.\nLeft the spare kit here for whoever comes next. Probably Teo. Teo, go back up, I mean it.\n\nMilo, the shelf is beautiful. You would hate the cold and love the fish. There are lamps on poles all along the bottom like a street with no houses, and the survey people walk between them holding hands.\nTheir lead says your group came along the lamp line two weeks ago with a man in a warden's cap - singing, she says, very badly, to keep you all brave. That will be Fennick. He sang at the regatta too. Nobody forgave him.

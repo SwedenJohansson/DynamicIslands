@@ -151,7 +151,7 @@ call shallows x=0 z=0 r=85 deep=5 n=1 seed=12620
 
 # --- DISCOVERIES 10-24 (optional, no quest needs them): diver's cache + slate + air pocket; TP_SnowVehicle01 + chest; hatch with a chest; buried treasure; viewpoint ---
 place "Box Small" dcampbox at 5.6 35.6 ground sit
-place Note_Paper dnote at 5.6 35.6 ground y=0.7 drop yaw=30
+place Note_Paper dnote at 5.6 35.6 ground y=1.6 drop yaw=30
 place Loot_ChestSmall dcamp at 7.6 37.1 ground sit yaw=37
 call airpocket x=3.1 z=33.6 id=iron_whale_decks_dair al=dairzone bub=dairbub r=2.5 msg="Air trapped in a diver's bell-tent. Breathe."
 note dnote Diver's slate | A SLATE TIED TO A BOX - B. EKLUND, SHIP'S DIVER\n\nCold. Too cold for long dives. I tried singing to keep warm and a seal came to listen, which was flattering, and then left, which was honest.\nThere is air in the rooms only - under the boilers' hood, up in the shaft tunnel, in the captain's cabin. Nowhere else. Count your strokes and get out at the first shiver.\nThe captain is still in there. She knocks on the hull at seven every morning, three short and one long, so we know she is alive. I knock back with a spanner.\nIf this slate is still here, I went in after her and did not come out. Leave a lamp on the mast for me anyway.

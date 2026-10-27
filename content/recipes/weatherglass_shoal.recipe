@@ -51,7 +51,7 @@ prop barometer tint.amount=0.6
 place Note_Sign weatherlog at 0 -2 ground sit yaw=180
 place Loot_Chest stationchest at 1 6.5 ground sit yaw=180
 place "Box Small" - at -1.2 6.6 ground sit
-place Note_Paper twinnote at -1.2 6.6 ground y=0.7 drop yaw=20
+place Note_Paper twinnote at -1.2 6.6 ground y=1.6 drop yaw=20
 place Zone_Trigger stationzone at 0 0 ground y=1
 
 # --- Things to gather ------------------------------------------------------------------------------------------------

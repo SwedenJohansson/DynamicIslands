@@ -94,7 +94,7 @@ push at 6 68 h=2.6
 call hut w=3 d=2 y=0.1
 place Loot_Chest boatshed at 3.6 2.3 y=0.1 sit yaw=180
 place "Box Small" - at 0.8 2.3 y=0.1 sit
-place Note_Paper rangerlog3 at 0.8 2.3 y=0.8 drop yaw=10
+place Note_Paper rangerlog3 at 0.8 2.3 y=1.7 drop yaw=10
 pop
 # REDO 10-24: the slipway winch (the island's machine): its crank, chain and pawl lie in three zones (bear cave, plane,
 # west ruins); the winch hauls the shed door up, and the shed chest shows
@@ -125,7 +125,7 @@ scatter "Pickup_Landmark_Tree_Birch" 8 at -10 40 r=22 seed=11023 free=4
 place campfire_1 - at 9.8 28.4 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 12.8 30.4 ground sit yaw=257
 place "Box Small" - at 7.8 30.9 ground sit
-place Note_Paper dnote at 7.8 30.9 ground y=0.7 drop yaw=20
+place Note_Paper dnote at 7.8 30.9 ground y=1.6 drop yaw=20
 note dnote Seedkeeper's note | SAMPLE RUN - BIRCH WOOD - A. (root gate crew, on loan)\n\nJars 1 to 12 filled. Pollen counts ten times last year's, and Teodor wrote PERFECT next to the number and underlined it twice.\n\nThe vines grew over the trail behind us in one night. Not slowly, the way vines are supposed to. I heard them. A soft sound, like someone turning the pages of a big book.\n\nWe go back by the beach. Jonas packed us honey sandwiches and a note: "Do not let Aki eat the samples." I have eaten one sample, once, a year ago, and I will never hear the end of it.\n\nThe ranger was right about the hunger. I will not tell Teodor that. He gets a look.
 note dwreckchest Pilot's locker | The plane's locker, thrown clear in the crash: plank, rope and a few seeds.
 loot dwreckchest Plank*4;Rope*2;Seed_Pineapple*1;story:winchpart*1

@@ -169,7 +169,7 @@ call snowfall x=4 z=0 r=55 al=snow
 place campfire_1 - at 13.7 39.7 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 16.7 41.7 ground sit yaw=297
 place "Box Small" - at 11.7 42.2 ground sit
-place Note_Paper dnote at 11.7 42.2 ground y=0.7 drop yaw=20
+place Note_Paper dnote at 11.7 42.2 ground y=1.6 drop yaw=20
 note dnote Ice survey, sheet 4 | ICE SURVEY, SHEET 4 - E. NORD, ICE PILOT\n\nPressure ridge moving two metres a day. At that rate it will carry the Whale's bow all the way to Saga Drift by midsummer, and I shall send the flotilla a postcard.\nCrack under my tent this morning. I moved camp and did not spill the tea, which I count as a victory.\nThe serious part, because the captain wants it in plain words: the sea under the ice is warmer than it should be, and warmer every week. Something in the south is stirring the water. The ice is not freezing us in. It is letting go.\nI am going back aboard before it lets go of me. Somebody has to tell the mate, and the mate will want it in triplicate.
 place BoatStranded dvan at -13.7 -39.7 ground yaw=57
 prop dvan tint.color=#5a6670

@@ -103,7 +103,8 @@ place Balboa_DecorationPrefabBase_SimpleTent - at 2 -88 h=2.5 sit yaw=200
 place campfire_1 - at -2 -90 ground sit
 place Loot_ChestSmall poacherschest at -12 -88 ground sit yaw=40
 call hw_wreck x=104 z=-30 h=1.5 yaw=70 obj=BoatStranded al=poacherboat crate=boatcrate r=8
-call ar_cave x=-40 z=-84 h=2.5 yaw=180 al=caverock chest=cavebox
+# (its mouth turned inland: facing the sea it opened over 6 m of water with no way up, PQ11 10-27)
+call ar_cave x=-40 z=-84 h=2.5 yaw=0 al=caverock chest=cavebox
 # --- JUMP COURSE bb (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---
 # JUMP bb pad=2.5 at=46 -86
 push at 46 -86
@@ -184,7 +185,7 @@ prop poacherschest else.open=message||Padlocked. The poachers came by sea - thei
 note cavebox Hermit's strongbox | A box in the cave in the south lowlands: an old hermit's savings, long before the rangers came.
 loot cavebox TitaniumOre*2;CopperIngot*2;Bolt*3
 prop cavebox loot.refill=0
-call hw_zone x=-40 z=-88 al=cavez id=hiddencave r=4 msg="A cave in a rock by the south beach - a strongbox at the back."
+call hw_zone x=-40 z=-80 al=cavez id=hiddencave r=4 msg="A cave in a rock by the south beach - a strongbox at the back."
 # Ranger badges: five of the rangers' badges, lost round the island (a set)
 call rr_piece x=95 z=-20 al=badge1 set="Ranger badges" nm="Ranger badge 1"
 call rr_piece x=-30 z=-80 al=badge2 set="Ranger badges" nm="Ranger badge 2"

@@ -140,7 +140,7 @@ pop
 place campfire_1 - at -34 11.7 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -31 13.7 ground sit yaw=57
 place "Box Small" - at -36 14.2 ground sit
-place Note_Paper dnote at -36 14.2 ground y=0.7 drop yaw=20
+place Note_Paper dnote at -36 14.2 ground y=1.6 drop yaw=20
 note dnote Fleet runner's note | Waiting for the Free Fleet's boat. Three days now.\nI hid my share where the Authority won't look. You won't either, unless you dig.
 place Van_4 dvan at 36.9 -12.7 ground yaw=177
 prop dvan tint.color=#6b4a32

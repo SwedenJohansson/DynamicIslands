@@ -69,7 +69,7 @@ place LandmarkLadder_6m - at -18.2 0 h=-1.2 yaw=90
 push at -2.5 0.5 h=5
 call hut w=2 d=2 y=0.05
 place "Box Small" - at 0.8 2.3 y=0.05 sit
-place Note_Paper distresscard at 0.8 2.3 y=0.75 drop yaw=15
+place Note_Paper distresscard at 0.8 2.3 y=1.65 drop yaw=15
 place Loot_Chest beaconchest at 2.2 2.2 y=0.05 sit yaw=270
 pop
 place Antenna_pole - at 2.2 -3.6 h=5 sy=1
@@ -132,7 +132,7 @@ scatter "Pickup_Landmark_Scrap 1_OceanBottom" 3 at 26 -28 r=6 seed=10112 free=1
 place campfire_1 - at 4 63 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 7 65 ground sit yaw=200
 place "Box Small" - at 2 65.5 ground sit
-place Note_Paper campnote at 2 65.5 ground y=0.7 drop yaw=20
+place Note_Paper campnote at 2 65.5 ground y=1.6 drop yaw=20
 place Van_5 ringvan at -56 -34 ground yaw=60
 prop ringvan tint.color=#6b4a32
 prop ringvan tint.amount=0.55

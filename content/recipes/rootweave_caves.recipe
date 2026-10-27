@@ -50,10 +50,10 @@ beside Note_Paper jonasmush mushroombasket d=0.5
 place RT_PowerBox fusebox at -3.2 -15 sit yaw=90
 place Loot_Chest labchest at -2.5 -27 sit yaw=0
 place "Box Small" - at 0 -28 sit
-place Note_Paper samplereport at 0 -28 y=0.7 drop yaw=20
+place Note_Paper samplereport at 0 -28 y=1.6 drop yaw=20
 # (box agent 10-25: Aki's gate log had a note line but no paper placed - it sits by the sample report)
 place "Box Small" - at 1.6 -30.2 sit
-place Note_Paper akilog at 1.6 -30.2 y=0.7 drop yaw=-30
+place Note_Paper akilog at 1.6 -30.2 y=1.6 drop yaw=-30
 pop
 
 # (the east flank raised round the Bee Hall, so the hill covers the cave's shell)

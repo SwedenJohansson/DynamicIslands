@@ -54,7 +54,7 @@ push at 3 8 h=10
 call shelter w=2 d=2 y=0.1
 place Loot_Chest tenttwo at 1.5 2.2 y=0.1 sit yaw=180
 place "Box Small" - at 0.7 0.8 y=0.1 sit
-place Note_Paper odaletter at 0.7 0.8 y=0.8 drop yaw=15
+place Note_Paper odaletter at 0.7 0.8 y=1.7 drop yaw=15
 pop
 place "Box Big" - at -1 2 ground sit yaw=15
 place "Box Big" - at 0.4 0.6 ground sit yaw=40
@@ -105,7 +105,7 @@ pop
 place campfire_1 - at -28 22.7 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -25 24.7 ground sit yaw=327
 place "Box Small" - at -30 25.2 ground sit
-place Note_Paper dnote at -30 25.2 ground y=0.7 drop yaw=20
+place Note_Paper dnote at -30 25.2 ground y=1.6 drop yaw=20
 note dnote Seedkeeper's note | MARIT - CLIFF LINE, day 9\n\nNew record to the top of the Great Cliff: 4 minutes. Oda's record on her silly tower is 36 seconds, which she will tell you about for an hour if you let her. Do not let her.\n\nThe pitons hold. The vines hold better; I could climb this cliff on the green alone now, and that is the problem.\n\nTeodor called up on the radio, all excited: "Has anyone new come ashore?" Nobody, I said. "Soon," he said. He says "soon" a lot lately, the way you say it to a dog when you are holding its dinner.\n\nWe go back by the beach.
 place VP_Excavator dvan at 34.1 -18.9 ground yaw=87
 prop dvan tint.color=#7a6a3a
