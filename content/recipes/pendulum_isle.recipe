@@ -63,7 +63,9 @@ call hw_mount x=-58 z=0 b=24 h=28
 call hw_trail x=-58 z=0 b=24 h=28 a0=90 turn=300 n=36 h0=6
 brush flatten at -25 26 r=11 s=20 frames=500 h=5
 call ar_ruin x=-25 z=26 h=5 yaw=0 w=3 d=2 al=weatherstation
-call ar_cave x=62 z=6 h=4 yaw=180 al=watchrock chest=watchchest
+# (cave at x 48 on a 6 m pad, not 62 on 4: the bear rock reaches 5.5 m under its pad and 15 m east of x; out at the
+# east rim the flying underside is too thin to hide it - it hung below the island as a light slab)
+call ar_cave x=48 z=6 h=6 yaw=180 al=watchrock chest=watchchest
 call ar_plane x=20 z=-28 h=5 yaw=200 al=surveyplane crate=planecrate
 # --- OLDER4 10-26 terrain: the Iron Ridge (north, peak 12 m), Needle Knoll (south-west, 16 m) and its trail, the compass
 # garden's pad (south-east) --------------------------------------------------------------------------------------------
@@ -146,12 +148,12 @@ prop treasure9625 treasure.loot=MetalOre*3;CopperOre*2
 call hw_zone x=-25 z=26 al=weatherz id=weatherstation r=6 msg="The old weather station. Its instruments are gone - only the table and a pinned note."
 place Note_Paper anjanote at -25.75 26 h=6.05 drop yaw=0
 # --- The watchman's hole (east): Per's note and box -------------------------------------------------------------------
-call hw_zone x=62 z=1 al=watchz id=watchhole r=4 msg="A hole in the rock at the low end. A blanket, a lamp, a pot - the night watchman's."
-place Note_Paper pernote at 60.5 0.5 h=4.45 drop yaw=200
+call hw_zone x=48 z=1 al=watchz id=watchhole r=4 msg="A hole in the rock at the low end. A blanket, a lamp, a pot - the night watchman's."
+place Note_Paper pernote at 46.5 0.5 h=6.45 drop yaw=200
 loot watchchest Rope*2;Plank*3;Battery*1;CopperOre*1
 prop watchchest loot.refill=0
 note watchchest Watchman's box | Per's box: rope, planks and a battery 'borrowed' from the generator shed.
-call treasure x=48 z=-10 r=7 n=1 seed=9626 kind=0
+call treasure x=30 z=-18 r=6 n=1 seed=9626 kind=0
 prop treasure9626 treasure.loot=Scrap*3;Bolt*2;Hinge*1
 # --- The survey plane (south): a secret -------------------------------------------------------------------------------
 loot planecrate Battery*1;Plastic*4;Rope*2;Nail*6
