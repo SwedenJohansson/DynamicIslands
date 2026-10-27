@@ -270,7 +270,7 @@ call shallows x=106 z=0 r=20 deep=4 n=1 seed=90
 info title=Halcyon Cove
 info author=Custom Islands
 info description=A perfect little town on a sunny island - where it rains at 7:42 on cue, the neighbours' notes read like scripts and there are cameras in the flower beds. Everyone here was acting but one man, and one day he sailed out to the horizon and found a wall. The door in it is still there.
-island on.arrive=message||A neat white town on a perfect island: lawns, picket fences, a statue in the square. It's raining on the town - only on the town. The sky over the sea to the east looks... flat.
+island on.arrive=message||A neat white town on a perfect island: lawns, picket fences, a statue in the square. It's raining on the town - only on the town. The sky out over one stretch of the sea looks... flat.
 
 story tape|Camera tape|quest:Tangaroa_Tape|A tape from one of the hidden cameras, labelled with a number and a day.
 story boothkey|Booth key|quest:Tangaroa_KeyCard|The key to the booth in the "moon", from the rain machine's box.
@@ -387,17 +387,17 @@ prop rays creature.count=2
 
 quest title=The Door in the Sky
 quest intro=A perfect little town where it rains on cue. Start in the square - and smile, you may be on camera.
-step reach|square|1|Walk into Halcyon Cove's town square
+step reach|square|1|Make for the weather tower on the hill, then walk into the town square
 step read|Welcome board|1|Read the town's welcome board
-step read|Neighbour's script|1|Read the note left on the porch table of the house east of the square
+step read|Neighbour's script|1|Read the note on the porch table of the house beside the town square
 step collect|story:tape|4|Find the four hidden cameras round the town and pull their tapes
-step reach|weathertower|1|Climb the weather tower on the hill south of the town
+step reach|weathertower|1|Climb the weather tower on the hill above the town
 step read|Weather log|1|Read the weather log in the hut at the tower's foot
 step collect|story:boothkey|1|Switch the rain machine off - its box holds the booth key
 step reach|moon|1|Find the booth inside the "moon" on the hilltop
 step read|Director's journal|1|Read the director's journal
 step collect|story:exitkey|1|Play the four tapes on the booth's console
-step reach|skywall|1|Sail east to the horizon - and find the wall
+step reach|skywall|1|Sail out to the flat painted horizon and find the wall
 step open|The last prop crate|1|Climb the stair, open the door in the sky, and open what waits behind it
 quest done=You walk out through the door in the sky, onto a narrow ledge over the real sea. Behind you, Halcyon Cove is quiet: no rain, no cameras, no script - just a town, and an island, and the way out.
 quest reward=Plastic*10;Coconut*4;Watermelon*2

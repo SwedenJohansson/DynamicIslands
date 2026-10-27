@@ -87,7 +87,7 @@ island on.arrive=message||Two little islets with pines on them, and between them
 
 story reading|Depth reading|quest:Tangaroa_Tape|A depth reading scratched on a slate tag, with a cave's number on it.
 
-note orders Survey orders | KELPDEEP SURVEY - ORDERS\n\nFour caves under the kelp, all on the chart, none measured. Swim to each one, find its marker post at the mouth and take the reading off it (the posts are numbered: north, east, south, west).\n\nThe kelp is thick and the caves are deep. There's air trapped under the overhang at the north cave and under the east one - use it.\n\nWhen you have all four, log them at the buoy's recorder. The recorder unlocks the survey chest.\n- M. Okafor, surveyor
+note orders Survey orders | KELPDEEP SURVEY - ORDERS\n\nFour caves under the kelp, all on the chart, none measured. Swim to each one, find its marker post at the mouth and take the reading off it (the caves lie in a ring round the hut's islet and their posts are numbered 1 to 4).\n\nThe kelp is thick and the caves are deep. There's air trapped under the overhang at cave 1 and under cave 2 - use it.\n\nWhen you have all four, log them at the buoy's recorder. The recorder unlocks the survey chest.\n- M. Okafor, surveyor
 note surveychest Survey chest | The survey's chest, unlocked by the recorder: a diving mask, a coil of good line, the surveyor's pay.
 loot surveychest Blueprint_Canteen*1;OxygenBottle*1;Rope*4;TradeToken*6
 prop surveychest loot.refill=0
@@ -101,24 +101,24 @@ loot kelpbarrel MetalOre*2;Rope*2;Scrap*3
 prop kelpbarrel loot.refill=0
 
 prop post1 obj.name=post1
-prop post1 beh.use=Take the north cave's reading
+prop post1 beh.use=Take cave 1's reading
 prop post1 if.use=!signal|r1
-prop post1 on.use=message||NORTH CAVE - 14 M, the tag says. You scratch it onto a slate.\ngive||story:reading*1\nsignal||r1
+prop post1 on.use=message||CAVE 1 - 14 M, the tag says. You scratch it onto a slate.\ngive||story:reading*1\nsignal||r1
 prop post1 else.use=message||You have this cave's reading.
 prop post2 obj.name=post2
-prop post2 beh.use=Take the east cave's reading
+prop post2 beh.use=Take cave 2's reading
 prop post2 if.use=!signal|r2
-prop post2 on.use=message||EAST CAVE - 11 M.\ngive||story:reading*1\nsignal||r2
+prop post2 on.use=message||CAVE 2 - 11 M.\ngive||story:reading*1\nsignal||r2
 prop post2 else.use=message||You have this cave's reading.
 prop post3 obj.name=post3
-prop post3 beh.use=Take the south cave's reading
+prop post3 beh.use=Take cave 3's reading
 prop post3 if.use=!signal|r3
-prop post3 on.use=message||SOUTH CAVE - 9 M.\ngive||story:reading*1\nsignal||r3
+prop post3 on.use=message||CAVE 3 - 9 M.\ngive||story:reading*1\nsignal||r3
 prop post3 else.use=message||You have this cave's reading.
 prop post4 obj.name=post4
-prop post4 beh.use=Take the west cave's reading
+prop post4 beh.use=Take cave 4's reading
 prop post4 if.use=!signal|r4
-prop post4 on.use=message||WEST CAVE - 13 M, and a shape in the dark you'd rather not measure.\ngive||story:reading*1\nsignal||r4
+prop post4 on.use=message||CAVE 4 - 13 M, and a shape in the dark you'd rather not measure.\ngive||story:reading*1\nsignal||r4
 prop post4 else.use=message||You have this cave's reading.
 prop recorder obj.name=recorder
 prop recorder beh.use=Log the four readings
@@ -127,7 +127,7 @@ prop recorder on.use=message||The recorder ticks through the four depths and sta
 prop recorder else.use=message||The buoy's recorder wants four readings, one from each cave.
 prop hut zone.id=hut
 prop hut zone.radius=6
-prop hut zone.message=The survey hut on the east islet: a chart on the wall, slate tags, a view straight down into the kelp.
+prop hut zone.message=The survey hut on the pine islet: a chart on the wall, slate tags, a view straight down into the kelp.
 prop air1 zone.id=air1
 prop air1 zone.radius=2.5
 prop air1 zone.repeat=1
@@ -152,11 +152,11 @@ prop kelplight zone.radius=30
 
 quest title=Under the Kelp
 quest intro=A survey hut on a pine islet over a forest of kelp. The surveyor's orders are pinned up inside.
-step read|Survey orders|1|Read the survey orders pinned up in the hut on the east islet
-step reach|air1|1|Dive to the north cave and find the air trapped under its overhang
+step read|Survey orders|1|Make for the pine islet and read the survey orders pinned up in its hut
+step reach|air1|1|Dive to cave 1 in the ring round the hut's islet and find the air under its overhang
 step collect|story:reading|4|Take the depth readings at the four kelp caves' marker posts
 step open|Survey chest|1|Log the readings at the buoy's recorder and open the survey chest
-quest done=The chart of Kelpdeep is complete - four caves, four depths, and a note in the margin about the west one.
+quest done=The chart of Kelpdeep is complete - four caves, four depths, and a note in the margin about the last one.
 quest reward=Rope*4;MetalOre*3;Clay*4
 
 save Kelpdeep Rock

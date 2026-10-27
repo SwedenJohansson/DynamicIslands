@@ -359,26 +359,26 @@ prop deepsound zone.radius=50
 quest title=Aurelis Rising
 quest intro=A drowned city in a volcano's caldera, an expedition camp on the rim and a temple with an old promise carved on it. Start at the camp.
 # Chapter 1 - the rim
-step reach|camp|1|Land at the expedition camp on the caldera's rim
+step reach|camp|1|Land on the caldera's rim at the expedition's tents
 step read|Archaeologist's journal|1|Read the archaeologist's journal
 step open|Expedition dive locker|1|Gear up from the expedition's dive locker
 step reach|watchtemple|1|Climb to the watch temple on the rim's highest islet
 step read|Tablet of the sea-priests|1|Read the sea-priests' tablet by the altar
-step open|Rim ruins box|1|Search the temple ruins for a pilgrim's offering box
+step open|Rim ruins box|1|Open the small box in the ruins of the watch temple
 # Chapter 2 - the drowned streets
 step reach|agora|1|Dive into the caldera to the drowned agora
 step open|Agora market basket|1|Sift a stone market basket on the agora's paving
 step open|Agora urn|1|Break the pitch seal on an agora urn
-step collect|story:crystal|1|Take the first crystal from the harbour temple's shrine
-step collect|story:crystal|2|Find the second crystal under the canal bridge
+step collect|story:crystal|1|Open the small chest in the harbour temple's shrine for the first crystal
+step collect|story:crystal|2|Open the small chest on the canal floor under the stone bridge
 step open|Expedition's lost barrel|1|Recover the barrel the expedition lost on its first dive
 step reach|sluice|1|Find the tide sluice and turn its wheel to open the inner basin
-step collect|story:crystal|3|Take the third crystal from the inner basin's shrine
+step collect|story:crystal|3|Open the small chest in the inner basin's shrine for the third crystal
 # Chapter 3 - the gate
 step reach|gate|1|Find the crystal gate at the foot of the drowned tower
 step kill|Angler fish|1|Face the gate's guardian
 step reach|thronehall|1|Set the three crystals in the gate and swim into the throne hall
-step collect|story:crown|1|Take the crown from the drowned throne (breathe under the dome)
+step collect|story:crown|1|Open the chest on the drowned throne for the crown (breathe under the dome)
 # Chapter 4 - rising
 step reach|altar|1|Carry the crown back up to the watch temple's altar
 step collect|story:priestkey|1|Lay the crown on the altar - and watch Aurelis rise

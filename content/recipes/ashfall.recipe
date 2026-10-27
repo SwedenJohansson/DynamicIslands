@@ -260,7 +260,7 @@ story ashshovel|Ash shovel|quest:Balboa_BrunosTool_Saw|A broad shovel from the t
 
 note proclamation The last proclamation | (on the board at the bell house's foot)\n\nBY ORDER OF THE MAYOR\n\nThe ash is falling faster. Tonight, when the bell rings three times, everyone leaves for the safe house by the sea. Bring water and blankets. Leave the animals' doors open.\n\nDo not be afraid. We have done this before - a hundred years ago - and we came back.\n- Ilse Varga, Mayor
 note page1 Mayor's diary, page one | Day 1. The mountain across the strait is coughing. Ash on the windowsills like flour. The children think it's snow.\nDay 3. It doesn't stop. The rats have come in from the fields into the town hall - they know something.
-note page2 Mayor's diary, page two | Day 4. The baker kept baking. "People need bread," she said. The ash is up to the bakery's windows.\nDay 5. I found the old records: a hundred years ago they sheltered in the lava tube under the north cliff. There is a gate on it. The bell opened it then - three rings.
+note page2 Mayor's diary, page two | Day 4. The baker kept baking. "People need bread," she said. The ash is up to the bakery's windows.\nDay 5. I found the old records: a hundred years ago they sheltered in the lava tube under the cliff by the sea. There is a gate on it. The bell opened it then - three rings.
 note toolbox Tool shed box | The tool shed's box, dug out from under the eaves: rope, nails - and a broad ash shovel, its blade worn bright. Somebody kept the school's path clear with it until the very end.
 loot toolbox story:ashshovel*1;Rope*2;Nail*6
 prop toolbox loot.refill=0
@@ -347,11 +347,11 @@ prop dolphins creature.count=2
 
 quest title=Under the Ash
 quest intro=A village buried in ash, and not a soul in it. A proclamation hangs at the foot of the bell house.
-step reach|rooftops|1|Climb the road to the buried village
+step reach|rooftops|1|Climb the road up to the buried village below the bell house
 step read|The last proclamation|1|Read the mayor's last proclamation
 step kill|Rat|4|Clear the rats out of the town hall
 step pages||3|Find the mayor's first diary pages in the town hall and the bakery
-step collect|story:ashshovel|1|Dig into the tool shed for a shovel
+step collect|story:ashshovel|1|Open the chest in the tool shed for a shovel
 step reach|school|1|Dig out the school's door
 step pages||6|Find the diary pages in the school and the chapel crypt
 step kill|Roach|3|Fight off the ash beetles in the chapel crypt

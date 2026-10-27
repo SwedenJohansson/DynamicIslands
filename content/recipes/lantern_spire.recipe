@@ -82,14 +82,14 @@ story lampoil|Lamp oil|BioFuel|The sky keeper's last can of lamp oil, from the l
 story skykey|Sky keeper's key|quest:Caravan_KeyMayor|A brass key on a nail under the hut's eave - only seen in the beacon's light.
 
 note welcome To whoever gets up here | (a board by the hut, the paint flaking)\n\nYou climbed. Good. Now keep the light burning - the boats down there steer by it.\n- Tomas, sky keeper
-note skylog Sky keeper's log | Day 212. The oil in the basket is gone. The last can is on the ledge under the north lip - down the ladder, mind the birds.\n\nDay 213. My brother Aldo on the island to the south will see the light go out and think the worst. He always does.\n\nDay 214. Hung the chest key on its nail where only the beacon shows it. Whoever lights the beacon has earned what is in the chest.
+note skylog Sky keeper's log | Day 212. The oil in the basket is gone. The last can is on the ledge under the rim - down the ladder, mind the birds.\n\nDay 213. My brother Aldo on the island far below will see the light go out and think the worst. He always does.\n\nDay 214. Hung the chest key on its nail where only the beacon shows it. Whoever lights the beacon has earned what is in the chest.
 note oilbox Keeper's oil box | A box on the ledge: the last can of lamp oil, rope and a bundle of feathers the birds left.
 loot oilbox story:lampoil*1;Rope*2;Feather*3
 note topcrate Supply crate | The sky keeper's supplies, hauled up a rope a plank at a time.
 loot topcrate Plank*4;Plastic*3;Scrap*2;Rope*1
 prop topcrate loot.refill=0
 prop oilbox loot.refill=0
-note skychest Sky keeper's chest | The sky keeper's chest: his savings, his tools, his spyglass - and a map with a ring drawn round a low green island in the south.
+note skychest Sky keeper's chest | The sky keeper's chest: his savings, his tools, his spyglass - and a map with a ring drawn round a low green island far below.
 loot skychest TradeToken*10;MetalIngot*4;CopperIngot*2;Bolt*4;Hinge*2;Binoculars*1;Placeable_Lantern_Metal*1
 prop skychest loot.refill=0
 prop skychest if.open=has|story:skykey|1
@@ -99,23 +99,23 @@ prop beacon obj.name=beacon
 prop beacon beh.use=Pour in the oil and light the beacon
 prop beacon if.use=take|story:lampoil|1
 prop beacon on.use=message||The beacon flares up - and in its light something glints under the hut's eave: a brass key on a nail.\ngive||story:skykey*1\nsound||event:/raft/radar/lever
-prop beacon else.use=message||The beacon's basket is dry. The keeper's last oil is on the ledge under the north lip.
+prop beacon else.use=message||The beacon's basket is dry. The keeper's last oil is on the ledge under the rim, down the ladder.
 
 prop summit zone.id=summit
 prop summit zone.radius=8
 prop summit zone.message=The top of Lantern Spire. Far below, the sea - and your raft, very small.
 prop ledge zone.id=ledge
 prop ledge zone.radius=3
-prop ledge zone.message=The ledge under the north lip: bird nests, a box - and a long, long way down to the sea.
+prop ledge zone.message=The ledge under the rim: bird nests, a box - and a long, long way down to the sea.
 
 quest title=The Light in the North
 quest intro=An island in the air, a little hut on its top and a beacon gone dark. Get up there.
 step reach|summit|1|Build your way up to the floating rock and climb on to its top
 step read|Sky keeper's log|1|Read the sky keeper's log in the lantern hut
-step open|Keeper's oil box|1|Climb down the ladder to the ledge under the north lip and find the keeper's oil
+step open|Keeper's oil box|1|Climb down the ladder below the hut and open the keeper's oil box on the ledge
 step collect|story:skykey|1|Pour the oil into the beacon and light it
 step open|Sky keeper's chest|1|Open the sky keeper's chest in the hut
-quest done=The light in the north burns again. Somewhere to the south, an old lockkeeper is looking up.
+quest done=The beacon burns again. Somewhere far below, an old lockkeeper is looking up.
 quest reward=Plank*12;Rope*4;Nail*8
 
 save Lantern Spire

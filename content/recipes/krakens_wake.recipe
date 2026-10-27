@@ -272,7 +272,7 @@ prop creaks zone.radius=40
 
 quest title=The Wake
 quest intro=A line of wrecks along a reef, each one deeper than the last. The fisherfolk left a warning at the lookout on the first islet.
-step reach|lookout|1|Climb the old lookout on the first islet of the chain
+step reach|lookout|1|Make for the old lookout on the first islet of the chain and climb it
 step read|Fisherfolk's warning|1|Read the warning carved at the lookout's foot
 step reach|wreck1|1|Dive to the first wreck of the wake
 step collect|story:logpage|4|Collect four pages of the admiral's log from the captains' chests along the wake

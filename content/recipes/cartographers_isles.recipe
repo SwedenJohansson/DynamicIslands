@@ -164,15 +164,15 @@ prop mapcase on.open=show|piece2\nmessage||As you lift the chart, a gull lifts o
 note piece2 Map piece II | (a brass plate on the trig pillar, engraved)\n\nTRIG STATION 2. FROM HERE: bearing 050 to the flat islet. Climb the survey tower; the third quarter is pinned to its rail.
 prop piece2 obj.name=piece2
 prop piece2 beh.hidden=1
-prop piece2 on.read=show|piece3\nmessage||On the flat islet to the north-east, the survey tower. A paper flutters on its rail now.
-note piece3 Map piece III | (pinned to the tower's rail with a brass tack)\n\nFROM THE TOWER: look down into the water just west of this islet. There stood my third post, before the sea took it. At its foot, a bottle. Swim.
+prop piece2 on.read=show|piece3\nmessage||On the flat islet with the survey tower. A paper flutters on its rail now.
+note piece3 Map piece III | (pinned to the tower's rail with a brass tack)\n\nFROM THE TOWER: look down into the water right beside this islet. There stood my third post, before the sea took it. At its foot, a bottle. Swim.
 prop piece3 obj.name=piece3
 prop piece3 beh.hidden=1
-prop piece3 on.read=show|piece4\nmessage||Down in the green water west of the islet, the top of a mast - and something glinting at its foot.
-note piece4 Map piece IV | (rolled in the bottle, dry)\n\nTHE LAST QUARTER. From the drowned post: the sandbar to the north-west. X is where the dark stones cross. Dig.\n\nThat's all of it. It was always a very simple map, once you had walked it.
+prop piece3 on.read=show|piece4\nmessage||Down in the green water beside the islet, the top of a mast - and something glinting at its foot.
+note piece4 Map piece IV | (rolled in the bottle, dry)\n\nTHE LAST QUARTER. From the drowned post: the sandbar with the dark stones, a short swim away. X is where the dark stones cross. Dig.\n\nThat's all of it. It was always a very simple map, once you had walked it.
 prop piece4 obj.name=piece4
 prop piece4 beh.hidden=1
-prop piece4 on.read=show|xmark\nshow|digmound\nmessage||The sandbar to the north-west - you can see the dark stones from here.
+prop piece4 on.read=show|xmark\nshow|digmound\nmessage||The sandbar, a short swim away - you can see the dark stones from here.
 note treasure Achterberg's treasure | Ines's savings in an oilcloth chest: forty years of a surveyor's pay, a brass compass, the plans for the canteen she carried every day - and a note: GOOD. YOU CAN READ A MAP.
 loot treasure TradeToken*12;Blueprint_Canteen*1;Compass*1;Glass*3
 prop treasure loot.refill=0
@@ -239,9 +239,9 @@ step reach|trig1|1|Follow the first bearing to the white trig pillar on the knol
 step read|Map piece II|1|Read the pillar's brass plate
 step reach|trig2|1|Climb the survey tower on the flat islet
 step read|Map piece III|1|Read the third quarter pinned to the tower's rail
-step reach|trig3|1|Dive to the drowned survey post
+step reach|trig3|1|Dive in beside the survey tower islet to the drowned post
 step read|Map piece IV|1|Read the last quarter from the bottle at its foot
-step reach|xmark|1|Find the X on the sandbar
+step reach|xmark|1|Swim to the sandbar with the dark stones and find the X
 step open|Achterberg's treasure|1|Dig at the X and open the treasure
 quest done=Four bearings, five islets, one X. Ines was right: it was a very simple map, once you had walked it.
 quest reward=Rope*3;Plank*4;Cooked_GenericMeat*2

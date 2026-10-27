@@ -111,12 +111,12 @@ call shallows r=83 deep=5 n=1
 info title=The Ice Organ
 info author=Custom Islands
 info description=A frozen crescent with an organ of ice in its sea cave: five pillars that each ring a different note when struck. The old organist's score is cut into an ice slab beside them - play it right and the house of the last note opens.
-island on.arrive=message||A crescent of ice cliffs round a still bay. From a cave in the southern cliff comes a low, hollow note, as if the wind were playing something.
+island on.arrive=message||A crescent of ice cliffs round a still bay. From a cave in the ice cliffs comes a low, hollow note, as if the wind were playing something.
 
 story mallet|Felt mallet|quest:Utopia_Hammer|Halvard's organ mallet: a birch handle, a head of felt wrapped in sealskin.
 story icekey|Crypt key of ice-blue iron|quest:Temperance_SeleneGateKey|A heavy key, frozen into the great icicle for thirty winters.
 
-note letter Halvard's letter | (pinned to the hut's door post)\n\nTo whoever lands in my bay.\n\nI am Halvard Rime, organist. Thirty winters I have tuned the five pillars in the cave under the south cliff. Each sings when struck - but only one order of them is music.\n\nThe order is cut into the ice beside them. My mallet is in my chest; use nothing else, iron cracks them.\n\nPlay the score through and the great icicle over the organ will let go of what it holds. Then the house of the last note is yours to open. Mind the one who sleeps in it.\n- H. R.
+note letter Halvard's letter | (pinned to the hut's door post)\n\nTo whoever lands in my bay.\n\nI am Halvard Rime, organist. Thirty winters I have tuned the five pillars in the cave under the ice cliff. Each sings when struck - but only one order of them is music.\n\nThe order is cut into the ice beside them. My mallet is in my chest; use nothing else, iron cracks them.\n\nPlay the score through and the great icicle over the organ will let go of what it holds. Then the house of the last note is yours to open. Mind the one who sleeps in it.\n- H. R.
 note hutchest Organist's chest | Halvard's chest: wool socks, a tuning fork, sheets of music frozen together - and his felt mallet.
 loot hutchest story:mallet*1;Wool*2;Rope*2
 prop hutchest loot.refill=0
@@ -183,7 +183,7 @@ prop cryptbear creature.zone=crypt
 
 prop bay zone.id=bay
 prop bay zone.radius=10
-prop bay zone.message=The frozen bay: still water, a hut on the slope - and from the southern cliff, that low note again.
+prop bay zone.message=The frozen bay: still water, a hut on the slope - and from the cave in the cliff, that low note again.
 prop organcave zone.id=organcave
 prop organcave zone.radius=6
 prop organcave zone.message=The organ cave: five pillars of ice along the wall, a slab of ice cut with writing, a giant icicle hanging over it all - and at the back, an iron gate.
@@ -211,13 +211,13 @@ prop dolphins creature.count=2
 
 quest title=The Frozen Score
 quest intro=A frozen bay, an organist's hut, and a cave that hums. Halvard left a letter on his door.
-step reach|bay|1|Land in the frozen bay
+step reach|bay|1|Make for the hut on the slope and land in the frozen bay below it
 step read|Halvard's letter|1|Read the letter on the hut's door post
-step open|Organist's chest|1|Take Halvard's felt mallet from his chest
+step open|Organist's chest|1|Open Halvard's chest in the hut for his felt mallet
 step open|Snowmobile box|1|Dig out the box by the dead snowmobile below the hut
-step reach|organcave|1|Find the organ cave in the southern cliff
+step reach|organcave|1|Follow the humming note to the organ cave in the ice cliff
 step read|The frozen score|1|Read the score cut into the ice slab
-step open|Cave cache|1|Look behind the snow bank in the cave - someone kept a cache there
+step open|Cave cache|1|Open the small box behind the snow bank in the cave
 step collect|story:icekey|1|Play the five pipes in the score's order
 step reach|crypt|1|Unlock the crypt gate and step into the house of the last note
 step kill|Polar bear|1|Face the sleeper when it wakes

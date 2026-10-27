@@ -188,7 +188,7 @@ story mast|Mast spar|quest:Utopia_Harpoon|The Second Wind's mast spar, salt-wet,
 story loftkey|Sail loft key|quest:Caravan_KeyInfirmary|The sail loft's key, from Brandvold's coat pocket.
 story sailcloth|The Second Wind's sail|Placeable_Sail|A great square sail, hemmed and roped, folded in the loft.
 
-note letter Brandvold's letter | To whoever finds my yard.\n\nThe Second Wind was to be my last ship and she nearly is. She wants:\n- three seasoned planks for the last strakes: one in the drying shed, one the storm threw up on the east beach, one on the drying rack in the west woods (mind the bear, he likes that rack);\n- her mast, which broke loose in the storm and sank in the bay, still tied to its anchor;\n- her sail, in the loft on the east horn. The key is in my coat.\n\nThen read the rhyme at the slip's head and knock out the chocks. She'll go.\n- Brandvold
+note letter Brandvold's letter | To whoever finds my yard.\n\nThe Second Wind was to be my last ship and she nearly is. She wants:\n- three seasoned planks for the last strakes: one in the drying shed, one the storm threw up on the beach, one on the drying rack in the woods (mind the bear, he likes that rack);\n- her mast, which broke loose in the storm and sank in the bay, still tied to its anchor;\n- her sail, in the loft on the far horn of the bay. The key is in my coat.\n\nThen read the rhyme at the slip's head and knock out the chocks. She'll go.\n- Brandvold
 note rhyme The launching rhyme | (painted on the board at the slip's head)\n\nFore to free her nose,\naft to free her heel,\nthe middle last of all\nand down she goes on her keel.
 note nameboard The slip board | (the board at the slip's foot, its cloth fallen away as she went past)\n\nSECOND WIND\nbuilt at Brandvold's yard, the last of sixty-one ships,\nlaunched by a stranger - which is how every good ship should be launched.
 note coat Brandvold's coat | Brandvold's coat on its hook: pipe tobacco, a pencil stub, a shipwright's rule - and the sail loft's key.
@@ -315,15 +315,15 @@ prop dolphins creature.count=2
 
 quest title=The Second Wind
 quest intro=A shipwright's yard on a wooded bay and an unfinished ship on its slip. Brandvold's letter is on his house door.
-step read|Brandvold's letter|1|Walk up into the shipwright's yard and read Brandvold's letter
-step collect|story:plank|3|Fetch the three seasoned planks: the drying shed, the east beach, the rack in the west woods
+step read|Brandvold's letter|1|Walk up to the unfinished ship in the yard and read Brandvold's letter on the house door
+step collect|story:plank|3|Fetch the three seasoned planks: one in the drying shed, one on the beach, one on the rack in the woods
 step kill|Bear|1|Deal with the bear at the drying rack
 step collect|story:mark|1|Climb the scaffold onto her deck and fit the three planks as the last strakes
 step reach|mastwreck|1|Dive to the mast spar on the bay's floor
 step collect|story:mast|1|Cut the spar free of its anchor and bring it ashore
 step collect|story:mark|2|Step the mast
-step collect|story:loftkey|1|Take the sail loft's key from Brandvold's coat
-step open|Sail loft chest|1|Open the sail loft's chest on the east horn
+step collect|story:loftkey|1|Search Brandvold's coat in his house for the sail loft's key
+step open|Sail loft chest|1|Open the sail loft's chest on the far horn of the bay
 step collect|story:mark|3|Bend on the sail
 step read|The launching rhyme|1|Read the launching rhyme at the slip's head
 step reach|afloat|1|Knock out the chocks in the rhyme's order - and board her afloat

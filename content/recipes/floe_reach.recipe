@@ -132,7 +132,7 @@ story magazinekey|Magazine key|quest:Varuna_MotherlodeKey|The blasting magazine'
 story charge|Blasting charge|quest:Vasagatan_Bomb|A charge for the ice, its fuse coiled on top.
 story fuse|Fuse end|quest:Temperance_ElectricalCable|The end of a fuse wire, run back from a charge at the ship's bow.
 
-note order Captain's order | ICEBREAKER NORDLYS - CAPTAIN'S ORDER\n\nShe's frozen in. Plan: three holes drilled in the ice at the bow (done - the flags), a charge in each, fuses back to the plunger on the middle islet's ridge. Push it and the pack breaks; she'll slide out to the open water east of us with the current.\n\nThe charges are in the magazine on the north-east islet. Magazine key in my desk drawer on the bridge.\n\n(added, shaky:) Bears at the magazine. We're leaving on the whaler. God help whoever finishes this.\n- Capt. A. Halvorsen
+note order Captain's order | ICEBREAKER NORDLYS - CAPTAIN'S ORDER\n\nShe's frozen in. Plan: three holes drilled in the ice at the bow (done - the flags), a charge in each, fuses back to the plunger on the middle islet's ridge. Push it and the pack breaks; she'll slide out to the open water with the current.\n\nThe charges are in the magazine hut on the far islet, the one with the danger sign. Magazine key in my desk drawer on the bridge.\n\n(added, shaky:) Bears at the magazine. We're leaving on the whaler. God help whoever finishes this.\n- Capt. A. Halvorsen
 note captaindesk Captain's desk drawer | The captain's drawer: his pipe, a frozen apple, the ship's papers - and the magazine's key on a red cord.
 loot captaindesk story:magazinekey*1;Rope*1
 prop captaindesk loot.refill=0
@@ -158,17 +158,17 @@ prop hole1 obj.name=hole1
 prop hole1 beh.use=Set a charge in the hole and run the fuse back
 prop hole1 if.use=take|story:charge|1\n!signal|h1
 prop hole1 on.use=message||You lower the charge into the black water of the hole and pay out the fuse behind you towards the ridge.\nshow|charge1\nsignal||h1\ngive||story:fuse*1\nsound||event:/weapons/dynamite/land
-prop hole1 else.use=message||A drilled hole by a red flag. It wants a charge - from the magazine on the north-east islet.
+prop hole1 else.use=message||A drilled hole by a red flag. It wants a charge - from the magazine hut with the danger sign.
 prop hole2 obj.name=hole2
 prop hole2 beh.use=Set a charge in the hole and run the fuse back
 prop hole2 if.use=take|story:charge|1\n!signal|h2
 prop hole2 on.use=message||Second charge set. Another fuse back towards the ridge.\nshow|charge2\nsignal||h2\ngive||story:fuse*1\nsound||event:/weapons/dynamite/land
-prop hole2 else.use=message||A drilled hole by a red flag. It wants a charge - from the magazine on the north-east islet.
+prop hole2 else.use=message||A drilled hole by a red flag. It wants a charge - from the magazine hut with the danger sign.
 prop hole3 obj.name=hole3
 prop hole3 beh.use=Set a charge in the hole and run the fuse back
 prop hole3 if.use=take|story:charge|1\n!signal|h3
 prop hole3 on.use=message||Third charge set. That's all three.\nshow|charge3\nsignal||h3\ngive||story:fuse*1\nsound||event:/weapons/dynamite/land
-prop hole3 else.use=message||A drilled hole by a red flag. It wants a charge - from the magazine on the north-east islet.
+prop hole3 else.use=message||A drilled hole by a red flag. It wants a charge - from the magazine hut with the danger sign.
 prop charge1 obj.name=charge1
 prop charge1 beh.hidden=1
 prop charge2 obj.name=charge2
@@ -178,7 +178,7 @@ prop charge3 beh.hidden=1
 prop plunger obj.name=plunger
 prop plunger beh.use=Push the plunger
 prop plunger if.use=quest|8\ntake|story:fuse|3
-prop plunger on.use=message||You twist the three fuse ends onto the terminals and lean on the plunger -\nsound||event:/weapons/dynamite/explode\nshow|blastcloud\nhide|charge1\nhide|charge2\nhide|charge3\nwait|1\nsound||event:/weapons/dynamite/explode\nhide|packice\nhide|icegroan\nhide|hole1\nhide|hole2\nhide|hole3\nmessage||- and the ice round the bow goes up in three white fountains. The pack splits with a sound like thunder. The Nordlys rolls, rights herself - and begins to slide east with the current.\nopen|ship\nsound||event:/exploring/temperence/ravine_collapse\nwait|16\nsignal||free\nshow|shipfree\nshow|thanks\nhide|blastcloud\nmessage||The Nordlys floats free in open water. Swim out and climb aboard!
+prop plunger on.use=message||You twist the three fuse ends onto the terminals and lean on the plunger -\nsound||event:/weapons/dynamite/explode\nshow|blastcloud\nhide|charge1\nhide|charge2\nhide|charge3\nwait|1\nsound||event:/weapons/dynamite/explode\nhide|packice\nhide|icegroan\nhide|hole1\nhide|hole2\nhide|hole3\nmessage||- and the ice round the bow goes up in three white fountains. The pack splits with a sound like thunder. The Nordlys rolls, rights herself - and begins to slide out to open water with the current.\nopen|ship\nsound||event:/exploring/temperence/ravine_collapse\nwait|16\nsignal||free\nshow|shipfree\nshow|thanks\nhide|blastcloud\nmessage||The Nordlys floats free in open water. Swim out and climb aboard!
 prop plunger else.use=message||The plunger. Three bare terminals for the fuses - set the charges first.
 prop packice obj.name=packice
 prop blastcloud obj.name=blastcloud
@@ -231,11 +231,11 @@ prop dolphins creature.count=2
 
 quest title=Breaking the Ice
 quest intro=An icebreaker frozen fast in a channel of pack ice, her crew's camp abandoned ashore. The captain's order is on the camp's board.
-step reach|camp|1|Land at the crew's camp on the west islet
+step reach|camp|1|Make for the frozen icebreaker Nordlys, then land at the crew's camp on the islet beside her
 step read|Captain's order|1|Read the captain's order
 step reach|bridge|1|Cross the floes to the Nordlys and climb to her bridge
-step collect|story:magazinekey|1|Take the magazine key from the captain's desk drawer
-step kill|Polar bear|2|Deal with the bears at the magazine on the north-east islet
+step collect|story:magazinekey|1|Open the captain's desk drawer on the bridge for the magazine key
+step kill|Polar bear|2|Deal with the polar bears at the magazine hut with the danger sign
 step open|Blasting magazine|1|Open the blasting magazine for the charges
 step collect|story:fuse|3|Set the three charges at the flagged holes and run the fuses back
 step reach|plungerridge|1|Climb to the plunger on the middle islet's ridge

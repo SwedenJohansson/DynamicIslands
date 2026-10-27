@@ -267,7 +267,7 @@ call shallows r=139 deep=5 n=2
 info title=Hollow Mountain
 info author=Custom Islands
 info description=One great snowy mountain the Delvers hollowed out over three hundred years: a sealed gate, halls on three levels joined by lifts, a sunken lake hall in its roots and a throne on an islet in the lake. Open the gate, mend the lifts, dive for the throne key - and face the king's stone guardian.
-island on.arrive=message||One mountain, alone in the sea, white to its top. In its south face at the foot, a gate of iron as tall as a house - and high up on the east face, a balcony cut into the rock.
+island on.arrive=message||One mountain, alone in the sea, white to its top. At its foot, a gate of iron as tall as a house - and high up the rock, a balcony cut into the mountain.
 
 story keystone|Keystone|quest:Utopia_KeyEntrance|A wedge of blue stone carved with a Delver rune.
 story crank|Lift crank|quest:Varuna_CraneKey|An iron crank for the Delvers' lifts.
@@ -287,7 +287,7 @@ note granarybin Granary bin | The granary bin, gnawed through: old grain, and un
 loot granarybin story:cog*1;Seed_Grass*2
 prop granarybin loot.refill=0
 note decree The king's decree | BY ORM, KING UNDER THE MOUNTAIN\n\nI stay. My guardian stays with me. Whoever comes after: you may have the hoard, if you can sit where I sat - but my guardian will want a word.\n\nThe throne key is in the drowned treasury. Breathe at the bells.
-note slate The ferryman's slate | (chalked on a slate by the lake's shore)\n\nSunken gate: straight out from here, nine fathoms of rope. Two bells on the way - air under each.\nThe islet: west, past the gate. Mind the step, it's slippery.
+note slate The ferryman's slate | (chalked on a slate by the lake's shore)\n\nSunken gate: straight out from here, nine fathoms of rope. Two bells on the way - air under each.\nThe islet: just past the gate. Mind the step, it's slippery.
 note drowned The drowned treasury | The drowned treasury's chest: gold gone green, a crown's worth of gems - and a key of black iron with a crown for a bow.
 loot drowned story:thronekey*1;TradeToken*4;CopperIngot*2
 prop drowned loot.refill=0
@@ -421,7 +421,7 @@ prop highhall zone.message=The high hall, near the top of the world: a long wind
 prop lakeshore obj.name=lakeshore
 prop lakeshore zone.id=lakeshore
 prop lakeshore zone.radius=5
-prop lakeshore zone.message=The lake hall: black water under a roof of stone, columns standing in it, and far out to the west, lights on an islet.
+prop lakeshore zone.message=The lake hall: black water under a roof of stone, columns standing in it, and far out across the water, lights on an islet.
 prop sunkgate zone.id=sunkgate
 prop sunkgate zone.radius=5
 prop sunkgate zone.message=The sunken gate: a stone arch on the lake floor, and beyond it a room with a chest.
@@ -471,24 +471,24 @@ prop dolphins creature.count=2
 quest title=The Delvers' Hoard
 quest intro=A mountain the Delvers hollowed out and sealed behind them. The rune over the great gate says how to open it.
 # Chapter 1 - the gate
-step reach|gatehall|1|Walk up to the great gate in the south face
+step reach|gatehall|1|Walk up to the great iron gate at the foot of the mountain
 step read|The gate rune|1|Read the rune carved over the gate
 step kill|Polar bear|2|Drive off the bears sleeping in the forecourt
-step collect|story:keystone|3|Bring the three keystones: from the ice ledge, behind the frozen falls, from the herder
+step collect|story:keystone|3|Bring the three keystones: from the ice ledge, behind the frozen falls, from the herder's chest
 step reach|entryhall|1|Set the three keystones in their sockets and enter the mountain
 step read|The steward's ledger|1|Read the steward's ledger in the entry hall
 # Chapter 2 - the lifts
-step collect|story:crank|1|Take the lift crank from the lower workshop
+step collect|story:crank|1|Open the chest in the lower workshop for the lift crank
 step reach|midhall|1|Ride the first lift up to the mid hall
 step kill|Rat|4|Clear the rats out of the granary
-step collect|story:cog|1|Take the bronze cog from the granary bin
+step collect|story:cog|1|Open the crate in the granary for the bronze cog
 step reach|highhall|1|Ride the second lift up to the high hall
 step read|The king's decree|1|Read King Orm's decree
 # Chapter 3 - the lake
 step reach|lakeshore|1|Ride the long lift down to the lake hall
 step read|The ferryman's slate|1|Read the ferryman's slate on the shore
 step reach|sunkgate|1|Dive to the sunken gate (breathe at the bells)
-step collect|story:thronekey|1|Take the throne key from the drowned treasury
+step collect|story:thronekey|1|Open the chest in the drowned treasury for the throne key
 step reach|islet|1|Swim to the islet in the lake
 # Chapter 4 - the throne hall
 step reach|thronehall|1|Unlock the throne hall's doors and go in

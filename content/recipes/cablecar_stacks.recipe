@@ -311,9 +311,9 @@ zipto summitzip 28 -24
 
 quest title=The Skyline
 quest intro=A cable car up four sea stacks, stopped by three faults. The operator's log is in the shore station.
-step reach|shorestation|1|Climb up to the shore station
+step reach|shorestation|1|Make for the cable line on the sea stacks, then climb up to the shore station
 step read|Operator's log|1|Read the operator's log
-step collect|story:fuse|1|Dive to the fallen supply car for the spare fuse
+step collect|story:fuse|1|Dive for the spare fuse in the chest by the fallen supply car under the shore station
 step reach|midstation|1|Fit the fuse and ride car one to the mid station
 step kill|Screecher|2|Drive the screechers out of the wheel house
 step reach|highstation|1|Ride car two to the high station
@@ -322,7 +322,7 @@ step reach|summit|1|Release the three brakes in the right order and ride car thr
 step kill|Bear|1|Deal with the summit's bear
 step read|Summit keeper's diary|1|Read the keeper's diary in the summit hut
 step reach|mast|1|Climb the signal mast
-step collect|story:vaultkey|1|Take the vault key from the mast's box
+step collect|story:vaultkey|1|Open the small box at the top of the mast for the vault key
 step open|Summit vault|1|Open the summit vault
 step reach|landing|1|Ride the express car down to the beach
 quest done=The Skyline runs again: fuse, birds and brakes, and the fastest ride on any island you know.

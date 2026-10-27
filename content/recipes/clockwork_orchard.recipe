@@ -125,9 +125,9 @@ story crank|Pump crank|quest:Balboa_BrunosTool_Wrench|The inventor's pump crank,
 story flow|Running water|Placeable_Pipe_Water|The orchard's water running again, pumps to fountain - the workshop shutter's pressure line is live.
 
 note diagram Inventor's diagram | (chalk on a board, much rubbed out and redrawn)\n\nTHE WATER ORDER\n\nThe gutters fill the fountain; the fountain lifts the workshop shutter.\nThe pumps must run in the order the fruit ripens - lowest first, highest last:\n\n  the PINEAPPLE (it sits on the ground),\n  then the MANGO (it hangs on the tree),\n  then the BANANA (it hangs highest of all).\n\nStart one out of order and they choke each other - all three stop and you start again.\nThe crank is in my toolbox. I am at the market, back Thursday.\n- O.V.
-note pineapplesign Pineapple pump | PINEAPPLE PUMP (west)
-note mangosign Mango pump | MANGO PUMP (south)
-note bananasign Banana pump | BANANA PUMP (east)
+note pineapplesign Pineapple pump | PINEAPPLE PUMP
+note mangosign Mango pump | MANGO PUMP
+note bananasign Banana pump | BANANA PUMP
 note toolbox Inventor's toolbox | The inventor's toolbox: spanners, springs, a pocket watch with no hands - and the pump crank.
 loot toolbox story:crank*1;Bolt*4;Hinge*2
 prop toolbox loot.refill=0
@@ -162,12 +162,12 @@ prop bananacog on.use=
 prop pineapplepump obj.name=pineapplepump
 prop pineapplepump beh.use=Crank the pineapple pump
 prop pineapplepump if.use=has|story:crank|1
-prop pineapplepump on.use=hide|mangocog\nhide|bananacog\nshow|pineapplecog\nmessage||The pineapple pump coughs and starts to chug. Water gurgles into the west gutter.\nsound||event:/raft/engine/waterwheel
+prop pineapplepump on.use=hide|mangocog\nhide|bananacog\nshow|pineapplecog\nmessage||The pineapple pump coughs and starts to chug. Water gurgles into the pineapple gutter.\nsound||event:/raft/engine/waterwheel
 prop pineapplepump else.use=message||A hand pump with no handle. The inventor's crank is somewhere.
 prop mangopump obj.name=mangopump
 prop mangopump beh.use=Crank the mango pump
 prop mangopump if.use=has|story:crank|1\nstate|pineapplecog|shown
-prop mangopump on.use=show|mangocog\nmessage||The mango pump picks up the pineapple pump's beat. The south gutter runs.\nsound||event:/raft/engine/waterwheel
+prop mangopump on.use=show|mangocog\nmessage||The mango pump picks up the pineapple pump's beat. The mango gutter runs.\nsound||event:/raft/engine/waterwheel
 prop mangopump else.use=hide|pineapplecog\nhide|mangocog\nhide|bananacog\nmessage||The pump bucks against the crank - and all over the plateau the pumps choke and stop. Wrong order (or no crank). The diagram, again.
 prop bananapump obj.name=bananapump
 prop bananapump beh.use=Crank the banana pump
@@ -209,9 +209,9 @@ call leverchest x=6.5 z=-36 yaw=270 alias=sparelever sig=sparelever chest=sparec
 
 quest title=The Water Order
 quest intro=An orchard on a rock where nothing turns. The inventor left his diagram in the lean-to at the top of the ramp.
-step read|Inventor's diagram|1|Climb the ramp to the orchard and read the inventor's diagram in his lean-to
+step read|Inventor's diagram|1|Climb the ramp up to the wind-tower orchard and read the diagram in the lean-to
 step open|Inventor's toolbox|1|Take the pump crank from his toolbox
-step collect|story:flow|1|Start the three pumps in the diagram's order and get the water running
+step collect|story:flow|1|Start the three wind-tower pumps in the diagram's order to run water to the fountain
 step open|Inventor's parts crate|1|Down by the workshop, turn the crank wheel and take his parts crate
 step open|Inventor's strongbox|1|Duck under the raised shutter and open the inventor's strongbox
 quest done=The pumps chug in time, the fountain turns, and the orchard drinks. The inventor's plans are yours - keep it running.

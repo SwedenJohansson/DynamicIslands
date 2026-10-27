@@ -150,12 +150,12 @@ story lamplit|The bottle light|Placeable_Lantern_Basic|The bottle lighthouse is 
 
 note bottle1 Pell's bottle, the driftwood man | (rolled up in a bottle at the driftwood man's feet)\n\nWhoever finds this: I am Pell, and this bay is mine, and now it's yours. There are eight of these. Find them all.
 note bottle2 Pell's bottle, the hut | (in a bottle on the beachcomber's floor)\n\nThe tower is made of everything the sea ever handed me. One bottle for every year. I ran out of years before I ran out of bottles.
-note bottle3 Pell's bottle, the north horn | (half in the sand at the north horn)\n\nThe sea gives back what you throw in. Not always to you.
-note bottle4 Pell's bottle, the south horn | (wedged among the rocks of the south horn)\n\nThe lamp burns on what's written. That's the only fuel I have left: words.
+note bottle3 Pell's bottle, the north horn | (half in the sand near Pell's hut)\n\nThe sea gives back what you throw in. Not always to you.
+note bottle4 Pell's bottle, the south horn | (wedged among the rocks at the far end of the crescent)\n\nThe lamp burns on what's written. That's the only fuel I have left: words.
 note bottle5 Pell's bottle, the whale | (in the driftwood whale's ribs on the crest)\n\nI built the whale because one came into the bay once and I was the only one who saw it.
 note bottle6 Pell's bottle, the bay | (on the bay's sandy floor)\n\nUnder the water it is quiet enough to think. I came down here to think most days.
 note bottle7 Pell's bottle, the east reef | (on the reef outside the crescent)\n\nThe ships pass out there and never turn in. Light the lamp and one of them might.
-note bottle8 Pell's bottle, the north-west shallows | (in the shallows off the north-west point)\n\nThat's all of it. Put them in the lamp. Then sit at the top a while. My chest is at the foot - it's yours.
+note bottle8 Pell's bottle, the north-west shallows | (in the shallows off the far point)\n\nThat's all of it. Put them in the lamp. Then sit at the top a while. My chest is at the foot - it's yours.
 note pellsdiary Pell's diary | PELL - DRIFTGLASS BAY\n\nThe tower: one more ring of bottles and it's done.\nThe lamp: dry. No oil on this island since the last can.\nBut a lamp needs something to burn. I'll give it what I've got.\n\nI'm writing it out across eight bottles and throwing them back. If someone comes, they'll find them. If no one comes, the bay will keep them for me.
 note welcome Welcome board | DRIFTGLASS BAY\n\nPOP. 1 (BEACHCOMBER)\n\nThe tower is not for sale.\nThe whale is not real.\nThe bottles are not empty.
 note hutbox Pell's box | Pell's box under his hut: twine, a knife, dried fish, and a lot of corks.
@@ -196,8 +196,8 @@ prop lamptop zone.message=The lamp room. The lamp is dry, and its bowl has eight
 
 quest title=The Bottle Light
 quest intro=A lighthouse made of bottles, dark on the crest of a sandy crescent. A bottle lies at the feet of a driftwood man on the beach.
-step reach|landing|1|Land on the beach where the driftwood man keeps watch
-step read|Pell's diary|1|Climb into Pell's hut on the north horn and read his diary
+step reach|landing|1|Make for the bottle lighthouse and land on the beach below it, by the driftwood man
+step read|Pell's diary|1|Walk along the crescent to Pell's hut on stilts and read his diary
 step collect|story:bottle|8|Find the eight bottles of Pell's message - round the bay, and under the water
 step reach|lamptop|1|Climb the bottle tower to the dark lamp at its top
 step collect|story:lamplit|1|Fill the lamp with the eight bottles

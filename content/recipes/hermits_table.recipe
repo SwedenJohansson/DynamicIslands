@@ -78,8 +78,8 @@ scatter "Pickup_Landmark_Flower_Blue" 2 at 0 0 r=31.5 seed=4389 free=3
 # ===== Settings, story items, notes, behaviours, quest (5 steps) ==========================================================
 info title=Hermit's Table
 info author=Custom Islands
-info description=A table of snowy rock standing out of the sea on sheer cliffs, a ladder scaffold up its north face - and on top, a hermit's hut with three riddles and three levers. Pull the right one.
-island on.arrive=message||A table of rock, straight up out of the sea, snow on its top - and a thin scaffold of ladders up its north cliff to a hut on the very top.
+info description=A table of snowy rock standing out of the sea on sheer cliffs, a ladder scaffold up its cliff - and on top, a hermit's hut with three riddles and three levers. Pull the right one.
+island on.arrive=message||A table of rock, straight up out of the sea, snow on its top - and a thin scaffold of ladders up its cliff to a hut on the very top.
 
 story hermitkey|Hermit's key|quest:Caravan_KeyMayor|A key on a leather thong, from the lever's box.
 
@@ -126,8 +126,8 @@ prop wind sound.volume=0.5
 prop wind zone.radius=20
 
 quest title=Three Levers
-quest intro=A table of rock with a hermit's hut on top and a ladder scaffold up its north cliff. Start at its foot.
-step read|Climber's note|1|Land at the foot of the north cliff and read the note nailed to the post
+quest intro=A table of rock with a hermit's hut on top and a ladder scaffold up its cliff. Start at the scaffold's foot.
+step read|Climber's note|1|Make for the ladder scaffold on the cliff, land at its foot and read the note on the post
 step open|Ledge box|1|Climb the scaffold to the ledge and open the box wedged there - someone gave up here
 step read|The hermit's riddles|1|Don't look down: climb on to the hermit's hut and read his riddles
 step collect|story:hermitkey|1|Pull the lever that answers the first riddle

@@ -124,7 +124,7 @@ place Claw_ControlBoard clawgame at 2.5 -40.2 ground sit yaw=180
 prop clawgame obj.name=clawgame
 prop clawgame if.use=!signal|btclaw\ntake|TradeToken|1
 prop clawgame on.use=message||The token clinks into the slot, the claw swings, dips - and drops a prize chest down the chute!\nsignal||btclaw\nshow|clawprize
-prop clawgame else.use=message||WIN A PRIZE - ONE TOKEN. One prize a season. The ticket box by the south rope keeps the tokens.
+prop clawgame else.use=message||WIN A PRIZE - ONE TOKEN. One prize a season. The ticket box by the rope behind the big top keeps the tokens.
 place Loot_Chest clawprize at 3.9 -40.2 ground sit yaw=180
 prop clawprize obj.name=clawprize
 prop clawprize note.title=Claw game prize
@@ -156,7 +156,7 @@ note notice Ringmaster's notice | CIRCUS ALBANI - NOTICE TO THE COMPANY\n\nWe sa
 note menagerie Menagerie wagon | The menagerie wagon's chest: feed scoops, halters, a whistle - and the net launcher with its canisters.
 loot menagerie NetGun*1;NetCanister*8;Rope*2
 prop menagerie loot.refill=0
-note artistnote The escape artist's note | (tied to the rig's rail with a ribbon)\n\nAlbani - yes, I took your whip. You said nobody could get out of my trunk in under a minute. I did it in forty seconds, and then I put your whip in it, locked it, and threw it in the lagoon.\n\nIt's on the bottom, just west of the rig. Swim for it like a real performer.\n- Mirela the Unchained
+note artistnote The escape artist's note | (tied to the rig's rail with a ribbon)\n\nAlbani - yes, I took your whip. You said nobody could get out of my trunk in under a minute. I did it in forty seconds, and then I put your whip in it, locked it, and threw it in the lagoon.\n\nIt's on the bottom, right beside the rig. Swim for it like a real performer.\n- Mirela the Unchained
 note trunk Mirela's trick trunk | The escape artist's trunk, chained and locked - but its back panel slides, as every trick trunk's does. Inside: the ringmaster's whip, coiled, and a dry bag of her rope.
 loot trunk story:whip*1;Rope*3
 prop trunk loot.refill=0
@@ -173,7 +173,7 @@ prop strongbox loot.refill=0
 note cookbarrel Cook's barrel | The cook wagon's barrel: flour gone hard, but the tins are good.
 loot cookbarrel Cooked_GenericMeat*2;Raw_Potato*3;PlasticBottle_Water*1
 prop cookbarrel loot.refill=0
-note rigbox Rig box | A box on the rig's north platform: chalk, tape, spare rope.
+note rigbox Rig box | A box on the rig's far platform: chalk, tape, spare rope.
 loot rigbox Rope*3;Plastic*2
 prop rigbox loot.refill=0
 note propcrate Sunk prop crate | A crate of props that fell off the boat: juggling clubs, a rubber chicken, nails.
@@ -216,7 +216,7 @@ step catch|Goat|2|Net the two runaway goats
 step kill|Hyena|2|Deal with the two hyenas from the empty cage
 step reach|trapeze|1|Climb the practice rig to the trapeze platform
 step read|The escape artist's note|1|Read the note tied to the rig's rail
-step collect|story:whip|1|Dive to the escape artist's trunk for the ringmaster's whip
+step collect|story:whip|1|Dive to the escape artist's trunk, a chest on the lagoon floor by the rig
 step open|Ringmaster's cash box|1|Open the ringmaster's cash box with the key in the whip
 quest done=Every beast back in its pen, the whip found, the takings counted. Somewhere at sea, Albani's circus is one ringmaster's grin richer.
 quest reward=Cooked_GenericMeat*3;Rope*3;Plank*4

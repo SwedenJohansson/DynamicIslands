@@ -114,8 +114,8 @@ story jar|Glazed jar|quest:Utopia_KeyPhase1|A blue glazed jar with a lid, from t
 story lamp|Brass lamp|Placeable_Lantern_Metal|A brass lamp that burns fish oil.
 story merchantkey|Merchant's key|quest:Caravan_KeyMayor|The merchant's strongbox key.
 
-note closing Notice of the closing bazaar | GULLSONG BAZAAR - CLOSED FOR THE SEASON\n\nThe keepers have left one thing at every stall, each with a price on the board. No coin: trade only.\n\nThe net-maker takes a pink shell (you will find one in the small wooden crate by the bucket on the south bank).\nThe spice-seller takes rope.\nThe potter takes pepper.\nThe lamp-maker takes a jar.\nThe merchant takes a lamp - and gives the key to his strongbox, the best thing in the bazaar.\n\nGood trading!
-note shellbucket Shell crate | A small wooden crate beside a bucket on the south bank, full of shells - and one pink one, polished, the kind the net-maker wants.
+note closing Notice of the closing bazaar | GULLSONG BAZAAR - CLOSED FOR THE SEASON\n\nThe keepers have left one thing at every stall, each with a price on the board. No coin: trade only.\n\nThe net-maker takes a pink shell (you will find one in the small wooden crate by the bucket on the bank).\nThe spice-seller takes rope.\nThe potter takes pepper.\nThe lamp-maker takes a jar.\nThe merchant takes a lamp - and gives the key to his strongbox, the best thing in the bazaar.\n\nGood trading!
+note shellbucket Shell crate | A small wooden crate beside a bucket on the bank, full of shells - and one pink one, polished, the kind the net-maker wants.
 loot shellbucket story:shell*1;Clay*2
 prop shellbucket loot.refill=0
 note strongbox Merchant's strongbox | The merchant's strongbox: a season's takings in trade coin, a spyglass, the plans for a recycler.
@@ -134,7 +134,7 @@ prop netstall obj.name=netstall
 prop netstall beh.use=Trade the pink shell for the net-maker's rope
 prop netstall if.use=take|story:shell|1
 prop netstall on.use=message||You leave the shell on the net-maker's board and take the coil of rope.\ngive||story:rope*1\nsound||event:/ui/pickup
-prop netstall else.use=message||NET-MAKER: rope for a pink shell. (Look in the small wooden crate by the bucket on the south bank.)
+prop netstall else.use=message||NET-MAKER: rope for a pink shell. (Look in the small wooden crate by the bucket on the bank.)
 prop spicestall obj.name=spicestall
 prop spicestall beh.use=Trade the rope for the pepper pouch
 prop spicestall if.use=take|story:rope|1
@@ -165,7 +165,7 @@ prop gulls zone.radius=25
 quest title=A Fair Trade
 quest intro=A floating bazaar, closed for the season. The keepers left a notice on the landing.
 step read|Notice of the closing bazaar|1|Tie up at the bazaar and read the notice on the landing
-step open|Shell crate|1|Open the small wooden crate by the bucket on the south bank for the pink shell
+step open|Shell crate|1|Open the small wooden crate by the bucket on the bank for the pink shell
 step collect|story:rope|1|Trade the pink shell for the net-maker's rope
 step collect|story:lamp|1|Trade down the boardwalk: rope for pepper, pepper for a jar, a jar for a lamp
 step collect|story:merchantkey|1|Trade the lamp for the merchant's key

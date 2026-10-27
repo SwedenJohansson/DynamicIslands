@@ -436,7 +436,7 @@ call shallows r=220 deep=5 n=3
 info title=The Last Kingdom
 info author=Custom Islands
 info description=A whole small kingdom on one island - a harbour town, farmland and a mill along a river, a dark forest, a lake with a drowned chapel and a castle on the hill - empty until its crown is found. Gather the three royal seals across the kingdom, open the crown vault, face the Beast in the great hall and crown the empty throne.
-island on.arrive=message||A kingdom: a harbour town with flags on its roofs, fields and a mill along a river, a dark forest over the northern peak - and on the southern one's shoulder, a castle. No smoke from any chimney, no one on the quay.
+island on.arrive=message||A kingdom: a harbour town with flags on its roofs, fields and a mill along a river, a dark forest over one peak - and on the other's shoulder, a castle. No smoke from any chimney, no one on the quay.
 
 story writ|Reeve's writ|quest:Tangaroa_Tape|The town reeve's writ, sealed in red: LET THE BEARER PASS THE TOLL.
 story seal|Royal seal|quest:Tangaroa_Token|One of the three royal seals of Elderhaven, a stag in gold on black stone.
@@ -639,7 +639,7 @@ prop warehouserats creature.zone=warehouse
 prop markethens creature.count=3
 prop tollbridge zone.id=tollbridge
 prop tollbridge zone.radius=6
-prop tollbridge zone.message=Over the toll bridge: the road runs west and south up the river, past fields and a mill.
+prop tollbridge zone.message=Over the toll bridge: the road runs up the river, past fields and a mill.
 prop mill zone.id=mill
 prop mill zone.radius=8
 prop mill zone.message=The watermill: a still wheel, a dry race, a hopper jammed full - and the miller's ledger on a sack.
@@ -690,7 +690,7 @@ prop oldbear creature.respawn=0
 prop oldbear creature.zone=glade
 prop forestshrine zone.id=forestshrine
 prop forestshrine zone.radius=6
-prop forestshrine zone.message=The forest shrine on the south edge: below you, the lake - and a church spire standing out of the middle of it.
+prop forestshrine zone.message=The forest shrine at the forest's edge: below you, the lake - and a church spire standing out of the middle of it.
 prop lakeshore zone.id=lakeshore
 prop lakeshore zone.radius=8
 prop lakeshore zone.message=The ferryman's landing: a punt, a jetty, a chart on a post.
@@ -722,7 +722,7 @@ prop pike tint.color=#4a6a3a
 prop pike tint.amount=0.5
 prop castlepath zone.id=castlepath
 prop castlepath zone.radius=6
-prop castlepath zone.message=The castle road's foot. High above, on the southern peak, the castle's towers against the sky.
+prop castlepath zone.message=The castle road's foot. High above, on the peak, the castle's towers against the sky.
 prop castlegate zone.id=castlegate
 prop castlegate zone.radius=8
 prop castlegate zone.message=The castle gate: towers either side, the portcullis down. A side door into the gatehouse stands ajar.
@@ -756,10 +756,10 @@ prop dolphins creature.count=3
 quest title=The Empty Throne
 quest intro=A kingdom emptied, its crown hidden, its throne bare. The herald's proclamation is on the market cross by the harbour.
 # Chapter 1 - the harbour town
-step reach|harbour|1|Land at the harbour of Elderhaven
+step reach|harbour|1|Land at the harbour town of Elderhaven, the one with flags on its roofs
 step read|The herald's proclamation|1|Read the herald's proclamation on the market cross
 step kill|Tangaroa rat|4|Clear the rats out of the warehouse on the quay
-step open|Guildhall chest|1|Take the reeve's writ from the guildhall's chest
+step open|Guildhall chest|1|Open the guildhall's chest for the reeve's writ
 step catch|Chicken|3|Catch the market's runaway hens (the poulterer's crate has a net launcher)
 step open|Innkeeper's thanks|1|Open the innkeeper's chest for her thanks - and her gossip
 step reach|tollbridge|1|Show the writ at the toll and cross the river bridge
@@ -769,7 +769,7 @@ step read|The miller's ledger|1|Read the miller's ledger
 step collect|story:seal|1|Open the mill race, let the wheel turn and empty the hopper for the first seal
 step kill|Warthog|4|Drive the boars out of the barley
 step catch|Goat|3|Bring in the farmer's three goats
-step collect|story:forestkey|1|Take the forest gate's key from the farmer's chest
+step collect|story:forestkey|1|Open the farmer's chest for the forest gate's key
 step reach|forestgate|1|Unlock the gate in the palisade and enter the dark forest
 # Chapter 3 - the dark forest
 step read|The woodcutter's warning|1|Read the warning on the woodcutter's door
@@ -778,13 +778,13 @@ step reach|hermithut|1|Find the hermit's hut in the deepest wood
 step read|The hermit's riddle|1|Read the hermit's riddle
 step collect|story:seal|2|Find the right hollow oak in the glade for the second seal
 step kill|Bear|1|Face the old bear of the glade
-step reach|forestshrine|1|Go on to the forest shrine on the south edge
+step reach|forestshrine|1|Go on to the forest shrine at the forest's edge, above the lake
 # Chapter 4 - the lake
 step reach|lakeshore|1|Go down to the ferryman's landing on the lake
 step read|The ferryman's chart|1|Read the ferryman's chart
 step reach|drownedchapel|1|Dive to the drowned chapel (air under its roof)
 step kill|Angler fish|1|Face the lake's great pike
-step collect|story:seal|3|Take the third seal from the chapel's reliquary
+step collect|story:seal|3|Open the reliquary chest in the drowned chapel for the third seal
 step reach|castlepath|1|Swim or punt across to the castle road's foot
 # Chapter 5 - the castle
 step reach|castlegate|1|Climb the castle road to the gate

@@ -93,10 +93,10 @@ call hives x=0 z=0 r=35 n=1 seed=92
 
 quest title=Three Goats
 quest intro=A farm on a green island, its goats loose. The farmer left a note on the farmhouse door.
-step reach|farmyard|1|Walk up into the farmyard
+step reach|farmyard|1|Walk up to the farmhouse and barn, the farmyard of the island
 step read|Farmer's note|1|Read the note on the farmhouse door
 step open|Barn tack chest|1|Take the net launcher from the barn's tack chest
-step catch|Goat|3|Net the three runaway goats
+step catch|Goat|3|Net the three runaway goats loose on the hill
 step open|Marta's basket|1|Open Marta's basket in the farmhouse
 quest done=Three goats back in the pen, chewing as if they'd never left. Marta will be glad.
 quest reward=Seed_Mango*2;Raw_Potato*4;Rope*2

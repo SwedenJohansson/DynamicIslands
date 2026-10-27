@@ -300,11 +300,11 @@ step reach|frostgold|1|Walk into the boomtown of Frostgold at the creek's mouth
 step read|Assay office notice|1|Read the notice nailed to the assay office door
 step read|Abbie Starling's letter|1|Read Abbie Starling's letter in her cabin up the creek
 step collect|story:nugget|3|Find the nuggets she hid in the three sluice boxes along the creek
-step reach|mine|1|Climb to the old mine on the north-east peak's shoulder
+step reach|mine|1|Climb the trail to the old mine in the snowy mountainside above the creek
 step kill|Polar bear|1|Drive the white bear out of the mine
-step collect|story:nugget|5|Take the mine's nugget and dive for the one in the creek pool
+step collect|story:nugget|5|Open the box in the mine, then dive for the small chest in the pool under the falls
 step collect|story:assayslip|1|Weigh the five nuggets on the assay office's scales
-step reach|claimpost|1|Climb to her claim post on the saddle
+step reach|claimpost|1|Climb the trail beside the falls to her claim post on the saddle
 step open|Abbie's strongbox|1|Set the assay slip on the claim post and open her strongbox
 quest done=Claim No. 7 is staked, by the law of the creek. The Rourkes can pull all the stakes they like - the slip is nailed to the post, and Abbie's gold is yours.
 quest reward=Plank*10;Leather*3;Cooked_GenericMeat*3

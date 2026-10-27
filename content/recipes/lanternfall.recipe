@@ -336,11 +336,11 @@ prop turtle creature.count=1
 
 quest title=Twelve Lanterns
 quest intro=A festival island at dusk, every lantern dark. The programme is on the pier.
-step reach|pier|1|Tie up at the festival pier
+step reach|pier|1|Make for the pagoda on the hill and tie up at the festival pier below it
 step read|Festival programme|1|Read the festival programme
-step open|Lamplighter's box|1|Take the taper from the lamplighter's box
-step open|Sunk festival goods|1|Dive off the end of the pier for the festival goods the storm knocked in
-step open|Fish stall box|1|See what the fish stall in the square left behind when everyone ran
+step open|Lamplighter's box|1|Open the lamplighter's box by the pier for the taper
+step open|Sunk festival goods|1|Dive off the end of the pier and open the sunk barrel of festival goods
+step open|Fish stall box|1|Open the box behind the fish stall in the square
 step collect|story:lit|6|Light the six lanterns along the shore walk
 step catch|Chicken|2|Catch two of the festival hens loose round the stall square
 step collect|story:lit|12|Light the six lanterns up the hill path along the ridge

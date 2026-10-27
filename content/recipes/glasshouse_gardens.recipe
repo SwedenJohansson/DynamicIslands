@@ -303,7 +303,7 @@ call mirrors x1=20 z1=-2 yaw1=0 x2=-14 z2=-6 yaw2=90 a1=sunmirror1 a2=sunmirror2
 
 quest title=The Titan Blooms
 quest intro=Glasshouses on a forest plateau, and a giant flower thirty years in bud. Professor Lind's journal is in her cottage by the gate.
-step reach|gardengate|1|Climb the stair road to the garden gate
+step reach|gardengate|1|Make for the glasshouses on the plateau and climb the stair road to the garden gate
 step read|Professor Lind's journal|1|Read Professor Lind's journal in her cottage
 step kill|Roach|3|Clear the beetles out of the potting shed
 step open|Potting shed chest|1|Take Lind's pollen brush from the potting shed chest

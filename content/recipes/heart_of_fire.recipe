@@ -293,7 +293,7 @@ call shallows r=165 deep=5 n=2
 info title=Heart of Fire
 info author=Custom Islands
 info description=Two great peaks over a burnt bay: the Ember, a live volcano with a fire-bird in its crater, and the Green Mother, sleeping, her heart stolen. The island is ash; its people left in their canoes. Find the three shards of the Bloomstone, mend it, carry it past the Cinderwraith - and give the Mother back her heart.
-island on.arrive=message||Grey ash where a jungle should be, dead trees on the slopes of two huge peaks, a burnt village by the bay. Over the western peak, something circles in the smoke.
+island on.arrive=message||Grey ash where a jungle should be, dead trees on the slopes of two huge peaks, a burnt village by the bay. Over the Ember, the smoking peak, something circles in the smoke.
 
 story prybar|Pry bar|quest:Vasagatan_Crowbar|The canoe builders' pry bar from the canoe house.
 story shard|Shard of the Bloomstone|Placeable_Utopia_LightBottleYellow|A shard of green stone with the sun caught in it - a third of the Green Mother's heart.
@@ -301,9 +301,9 @@ story livecoal|Live coal|Placeable_Lantern_FireBasket|A coal from the lava tubes
 story bloomstone|The Bloomstone|Placeable_Utopia_LightBottleWhite|The Green Mother's heart, whole again: green as a leaf, warm as skin.
 story seedpod|The Mother's seed pod|Seed_Palm|A seed pod left on the shrine where the Bloomstone was laid: the island's first fruit.
 
-note eldercarving The elders' carving | (carved round the great post)\n\nWhen the island was young the Green Mother slept on the eastern peak and the Ember slept on the western one. In the Mother's shrine lay the Bloomstone, her heart, and while it lay there the island was green.\n\nA navigator came, Corvan, who wanted a ship that never lacked a wind. He took the Bloomstone.\n\nThe Ember woke. Fire came down the mountain and the green went grey, and the Cinderwraith rose out of the Ember's mouth and has not slept since. Corvan's ship burned in the bay as he ran.\n\nWe took the canoes and went over the sea. If the Bloomstone ever comes home to the Mother, we will come home too.
+note eldercarving The elders' carving | (carved round the great post)\n\nWhen the island was young the Green Mother slept on the green peak and the Ember slept on the smoking one. In the Mother's shrine lay the Bloomstone, her heart, and while it lay there the island was green.\n\nA navigator came, Corvan, who wanted a ship that never lacked a wind. He took the Bloomstone.\n\nThe Ember woke. Fire came down the mountain and the green went grey, and the Cinderwraith rose out of the Ember's mouth and has not slept since. Corvan's ship burned in the bay as he ran.\n\nWe took the canoes and went over the sea. If the Bloomstone ever comes home to the Mother, we will come home too.
 note navlog Navigator's log | CORVAN LISLE - LOG\n\nI have it. The Bloomstone, green as a leaf with the sun in it. Already the sails fill with no wind.\n\n...\n\nThe mountain is burning. The bird of fire is over the bay. The stone CRACKED in my hands when the mast came down - three pieces. One is in the hold with me; the hatch is jammed. The bird took one in its claws and dropped it in its black temple on the burning mountain's shoulder. The third fell into the river of fire, and the beetles dragged it into the tubes.\n\nIf anyone reads this: put it back. Put it back.
-note templecarving The temple's carving | (cut into the black stone over the braziers)\n\nLight the three fires as the sun lights them -\ndawn, noon, dusk:\nthe east, the high one, the west -\nand the stone door will open.
+note templecarving The temple's carving | (cut into the black stone over the braziers)\n\nLight the three fires as the sun lights them -\ndawn, noon, dusk:\nthe rising one, the high one, the setting one -\nand the stone door will open.
 note mothersong The Mother's song | (carved on a stone by the dry basin)\n\nThree that were one, lay them in my bowl.\nCarry my heart over the saddle where the Ember watches.\nLay it on my stone at the top of the world,\nand I will wake.
 note welcomepost The elders' welcome | (freshly carved, the wood still pale)\n\nThe Mother is awake and the island is green. We came home on the morning tide and found her heart in the shrine and the Ember asleep.\n\nWhoever you are - you are one of us now. Our gift is in the canoe house.
 note canoebox Canoe house box | The canoe builders' box: adzes, cord - and a long iron pry bar, for planks that won't come apart.
@@ -354,9 +354,9 @@ loot cairnbox HealingSalve*2;PlasticBottle_Water*2;Rope*2
 prop cairnbox loot.refill=0
 
 prop brazier1 obj.name=brazier1
-prop brazier1 beh.use=Light the eastern brazier (dawn)
+prop brazier1 beh.use=Light the dawn brazier
 prop brazier1 if.use=has|story:livecoal|1
-prop brazier1 on.use=message||The coal catches the oil on the eastern stand. Dawn.\nshow|flame1\nsignal||br1\nsound||event:/crafting/torch
+prop brazier1 on.use=message||The coal catches the oil on the dawn stand. Dawn.\nshow|flame1\nsignal||br1\nsound||event:/crafting/torch
 prop brazier1 else.use=message||A cold brazier stand. You'd need fire - the Ember's own, from the tubes.
 prop brazier2 obj.name=brazier2
 prop brazier2 beh.use=Light the high brazier (noon)
@@ -364,9 +364,9 @@ prop brazier2 if.use=has|story:livecoal|1\nsignal|br1
 prop brazier2 on.use=message||The high brazier blazes. Noon.\nshow|flame2\nsignal||br2\nsound||event:/crafting/torch
 prop brazier2 else.use=message||It won't catch. "As the sun lights them: dawn, noon, dusk."
 prop brazier3 obj.name=brazier3
-prop brazier3 beh.use=Light the western brazier (dusk)
+prop brazier3 beh.use=Light the dusk brazier
 prop brazier3 if.use=has|story:livecoal|1\nsignal|br2
-prop brazier3 on.use=message||The western brazier flares. Dusk - and with a grinding the stone door of the sanctum sinks into the ground.\nshow|flame3\nopen|sanctumdoor\nsound||event:/exploring/temperence/selene/gate_open
+prop brazier3 on.use=message||The dusk brazier flares. Dusk - and with a grinding the stone door of the sanctum sinks into the ground.\nshow|flame3\nopen|sanctumdoor\nsound||event:/exploring/temperence/selene/gate_open
 prop brazier3 else.use=message||It won't catch. "As the sun lights them: dawn, noon, dusk."
 prop flame1 obj.name=flame1
 prop flame1 beh.hidden=1
@@ -498,23 +498,23 @@ prop tubesound zone.radius=20
 quest title=The Bloomstone
 quest intro=An island of ash under two great peaks, a burnt village by the bay, and a story carved on a column. Start in the village.
 # Chapter 1 - the ash shore
-step reach|village|1|Land at the burnt village on the bay shore
+step reach|village|1|Land at the burnt village in the bay, below the two great peaks
 step read|The elders' carving|1|Read the story carved round the village's great column
 step kill|Warthog|3|Drive off the ash boars rooting through the village
-step collect|story:prybar|1|Take the canoe builders' pry bar from the canoe house
+step collect|story:prybar|1|Open the box in the canoe house for the builders' pry bar
 step reach|wreck|1|Dive to the navigator's ship sunk in the bay
 step read|Navigator's log|1|Read the navigator's log on the wreck's deck
 # Chapter 2 - the three shards
-step collect|story:shard|1|Pry open the wreck's hold for the first shard of the Bloomstone
-step reach|lavatubes|1|Find the lava tubes in the Ember's south flank
+step collect|story:shard|1|Pry open the big box in the wreck's hold for the first shard
+step reach|lavatubes|1|Find the lava tubes in the Ember's side, the smoking peak
 step kill|Roach|4|Clear the ember beetles out of the tubes
-step collect|story:shard|2|Take the second shard from the glowing chamber at the tubes' end
+step collect|story:shard|2|Open the small chest in the glowing chamber at the tubes' end
 step collect|story:livecoal|1|Take a live coal from the ember pot by the lava glow
 step reach|obsidiantemple|1|Climb to the black temple on the Ember's shoulder
 step read|The temple's carving|1|Read the carving over the temple's braziers
 step collect|story:shard|3|Light the braziers in the carving's order and take the third shard from the sanctum
 # Chapter 3 - the mending
-step reach|motherspring|1|Go to the Green Mother's spring at the foot of the eastern peak
+step reach|motherspring|1|Go to the Green Mother's spring at the foot of her green peak
 step read|The Mother's song|1|Read the song carved by the dry basin
 step collect|story:bloomstone|1|Lay the three shards in the Mother's bowl
 step reach|saddle|1|Carry the Bloomstone up to the saddle between the peaks
