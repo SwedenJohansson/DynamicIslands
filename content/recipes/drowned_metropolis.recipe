@@ -98,14 +98,15 @@ place Loot_Chest penthousesafe at -5 -3.2 sit yaw=90
 place "VG_DecorationPrefabBase_FloorLamp Variant" - at -5.4 3.8 sit
 place Painting_Captain - at -3 4.35 y=1.6 yaw=180
 pop
-# (a plank ramp up the roof to the penthouse's open east side - two wall slots open, 10-27: with one, the walker stuck on
-# the doorway's edge. These planks' walking surface lies 0.5 m under the ramp line (the walker rode 21.2 where the line
-# said 21.7), so the line runs 0.5 over it: it starts on the roof at x -42 (roof 17.9), climbs at 22 degrees and runs on
-# flat into the room just over the floor (21.9) - a ramp ending under the floor's edge left a lip the walker stuck on)
-ramp Block_Floor_Wood from -42 -50.75 18.48 to -51.8 -50.75 22.45 len=1.5 top=0
-ramp Block_Floor_Wood from -42 -49.25 18.48 to -51.8 -49.25 22.45 len=1.5 top=0
-ramp Block_Floor_Wood from -51.8 -50.75 22.45 to -53.6 -50.75 22.45 len=1.5 top=0
-ramp Block_Floor_Wood from -51.8 -49.25 22.45 to -53.6 -49.25 22.45 len=1.5 top=0
+# (a plank ramp up the roof to the penthouse's open east side - two wall slots open. top=0: the line is the planks'
+# walking surface. It starts on the roof at x -42 (roof 17.94), climbs at 18 degrees to the doorway at x -52 and runs on
+# flat into the room 4 cm over its floor (21.26). 10-27: in play tests the penthouse and this ramp both stand 2.6 m
+# further north (z +2.6) than these numbers say - the ramp at play z -49..-46 - so the play walks up at z -47.5; walks at
+# z -50 rode the bare roof beside the ramp and stuck on the floor's 0.66 m edge)
+ramp Block_Floor_Wood from -42 -50.75 17.98 to -52 -50.75 21.3 len=1.5 top=0
+ramp Block_Floor_Wood from -42 -49.25 17.98 to -52 -49.25 21.3 len=1.5 top=0
+ramp Block_Floor_Wood from -52 -50.75 21.3 to -53.6 -50.75 21.3 len=1.5 top=0
+ramp Block_Floor_Wood from -52 -49.25 21.3 to -53.6 -49.25 21.3 len=1.5 top=0
 
 # --- The Meridian Tower: ladders up its west face to the pool deck, the city vault, deck chairs -----------------------
 place LandmarkLadder_6m meridianladder at 45.7 -2 h=-4.3 yaw=90
