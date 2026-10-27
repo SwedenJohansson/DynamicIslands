@@ -47,6 +47,17 @@ brush flatten from 58 -40 to 58 -24 r=6 s=20 frames=300 h=3
 call r2_pad x=56 z=34 r=11 h=2.6
 call r2_pad x=-48 z=54 r=11 h=2
 call r2_pad x=68 z=4 r=12 h=2.6
+# RAFT2 10-26 b: relief round the ruined house - a rocky rise to its north-east and a lower one to its north-west,
+# so the house stands in a hollow, not on a bare flat top
+brush flatten at 66 44 r=6 s=20 frames=300 h=4.6
+brush flatten at 66.5 44.5 r=3.5 s=20 frames=300 h=6.4
+brush flatten at 45 43 r=5 s=20 frames=300 h=3.8
+brush flatten at 44.5 43.5 r=2.8 s=20 frames=300 h=5
+brush smooth at 66 44 r=8 s=4 frames=30
+brush smooth at 45 43 r=7 s=4 frames=30
+brush auto at 56 40 r=18 s=10 frames=25
+clear at 66 44 r=8
+clear at 45 43 r=7
 clear at -10 48 r=11
 clear at 3 31.5 r=9
 clear from -60 24 to -57.5 4 r=4
@@ -256,6 +267,7 @@ call ar_plants_desert x=56 z=-40 r=8 seed=27092
 # RAFT2 10-26: scattered rocks that came out floating on the new slopes (CIGroundIslands)
 clear at 35.68 24.95 r=1.5 all only=BigSharpRock_5
 clear at 51.44 -34.89 r=1.5 all only=CaravanIsland_BrownGrass
+clear at 25.62 23.09 r=1.5 all only=CaravanIsland_SmallRock
 clear at 35.67 34.96 r=1.5 all only=BigSharpRock_5
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): palms, pineapples, flowers ----------
@@ -263,6 +275,8 @@ scatter "Pickup_Landmark_Tree_Palm 3" 6 at 0 0 r=56.0 seed=4476 free=5
 scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=56.0 seed=4486 free=3
 scatter "Pickup_Landmark_Flower_Black" 4 at 0 0 r=56.0 seed=4496 free=3
 scatter "Pickup_Landmark_Flower_Red" 4 at 0 0 r=56.0 seed=4497 free=3
+# RAFT2 10-26 b: no plants on the hills' steep rock faces
+call r2_bareflank x=44 z=16 b=10 h=6
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=100 deep=5 n=2
 

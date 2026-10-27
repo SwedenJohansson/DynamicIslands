@@ -323,6 +323,8 @@ clear at 25.24 91.47 r=1.5 all only=SmallBoulder4
 scatter "Pickup_Landmark_Tree_Pine" 3 at 0 0 r=38.5 seed=4353 free=5
 scatter "Pickup_Landmark_Tree_Birch" 3 at 0 0 r=38.5 seed=4363 free=5
 scatter "Pickup_Landmark_BerryBush" 3 at 0 0 r=38.5 seed=4373 free=3
+# RAFT2 10-26 b: no plants on the hills' steep rock faces
+call r2_bareflank x=18 z=80 b=20 h=18
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=75 deep=5 n=2
 

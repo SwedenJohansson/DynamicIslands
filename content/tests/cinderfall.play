@@ -3,7 +3,7 @@
 # (7 m), the north shoulder (16 m) up the ramp. Quest "Pressure", 10 steps: camp, warning, valve 1, valve 2, the nest,
 # the matriarch, valve 3, the hall, its roaches, the store opened.
 island Cinderfall
-offset 0.9218 -0.0812
+offset 0.9743 -0.0458
 expect step 0
 expect title Pressure
 

@@ -60,3 +60,9 @@ prop $al cam.look=$look
 prop $al cam.speed=$speed
 prop $al cam.hold=$hold
 end
+#
+# r2_bareflank: the plants that came down on a hill's steep rock faces (hw_mount x z b h) taken off again - the
+# summit's (at its height) and the foot's (not painted rock) kept; called after every scatter
+macro r2_bareflank x=0 z=0 b=20 h=18
+clear at $x $z r={$b+2} all only=Tree|Bush|Bamboo|Pineapple|Flower|Melon|Palm|Fern on=rock below={$h-0.6}
+end

@@ -178,6 +178,8 @@ scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=49.0 seed=4545 free=5
 scatter "Pickup_Landmark_Tree_Palm 1" 4 at 0 0 r=49.0 seed=4555 free=5
 scatter "Pickup_Landmark_Tree_Palm 3" 4 at 0 0 r=49.0 seed=4556 free=5
 scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=49.0 seed=4565 free=3
+# RAFT2 10-26 b: no plants on the hills' steep rock faces
+call r2_bareflank x=-6 z=66 b=18 h=16
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=90 deep=5 n=2
 
