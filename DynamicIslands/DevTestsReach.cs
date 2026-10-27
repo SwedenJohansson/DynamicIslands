@@ -104,6 +104,38 @@ namespace DynamicIslands
 			StartTest(ReachProbeRoutine(string.Join(" ", args.Take(args.Length - 6).ToArray()), new Vector3(v[0], v[1], v[2]), new Vector3(v[3], v[4], v[5])));
 		}
 
+		[ConsoleCommand(name: "CIReachHeights", docs: "Dev, world (host): PQ11 - the height of what a player would stand on (a ray down, triggers ignored), as a grid of numbers round a point of an island (metres from the island's position, as the reach report gives them), to plan a ramp. CIReachHeights <island> x z half step")]
+		public static void ReachHeightsCommand(string[] args)
+		{
+			if (args == null || args.Length < 5) { Fail("CIReachHeights <island> x z half step"); return; }
+			float[] v = args.Skip(args.Length - 4).Select(x => float.Parse(x, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+			StartTest(ReachHeightsRoutine(string.Join(" ", args.Take(args.Length - 4).ToArray()), v[0], v[1], v[2], Mathf.Max(0.5f, v[3])));
+		}
+
+		static IEnumerator ReachHeightsRoutine(string island, float cx, float cz, float half, float step)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("CIReachHeights: host, in a world"); yield break; }
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase) && x.Root != null);
+			if (e == null) { Fail("CIReachHeights: '" + island + "' is not here"); yield break; }
+			Physics.SyncTransforms();
+			int mask = reachMask != 0 ? reachMask : ~0;
+			var head = new System.Text.StringBuilder("  heights x:");
+			for (float x = cx - half; x <= cx + half + 0.01f; x += step) head.Append(" " + x.ToString("F0").PadLeft(5));
+			Log(head.ToString());
+			for (float z = cz + half; z >= cz - half - 0.01f; z -= step)
+			{
+				var row = new System.Text.StringBuilder("  z " + z.ToString("F0").PadLeft(5) + ":");
+				for (float x = cx - half; x <= cx + half + 0.01f; x += step)
+				{
+					RaycastHit h;
+					Vector3 o = e.Position + new Vector3(x, 120f, z);
+					row.Append(Physics.Raycast(o, Vector3.down, out h, 400f, mask, QueryTriggerInteraction.Ignore) ? " " + (h.point.y - e.Position.y).ToString("F1").PadLeft(5) : "     -");
+				}
+				Log(row.ToString());
+			}
+			Log("PASS: reach heights");
+		}
+
 		static IEnumerator ReachProbeRoutine(string island, Vector3 from, Vector3 to)
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("CIReachProbe: host, in a world"); yield break; }
@@ -270,6 +302,7 @@ namespace DynamicIslands
 			public float Cell, X0, Z0;
 			public Vector3 Anchor;
 			public Dictionary<int, Bounds> LadderB = new Dictionary<int, Bounds>();
+			public Dictionary<int, Vector3> LadderF = new Dictionary<int, Vector3>();
 			public int NX, NZ;
 			public List<Vector3> Pos = new List<Vector3>();
 			// 0 standing (feet), 1 the sea's surface (swimming), 2 under water (a 1 m cell's middle), 3 a ladder
@@ -312,6 +345,17 @@ namespace DynamicIslands
 			// (never the island's own layers)
 			var islandLayers = new HashSet<int>(e.Root.GetComponentsInChildren<Collider>(false).Where(c => !c.isTrigger && c.GetComponentInParent<AI_NetworkBehaviour>() == null).Select(c => c.gameObject.layer));
 			foreach (int l in skipLayers) if (!islandLayers.Contains(l)) mask &= ~(1 << l);
+			// (nor a layer Raft's physics never lets touch the player: it can't stand in a player's way - an air pocket's bubble
+			// blocked the door of every drowned house in the grid, PQ11 10-27)
+			{
+				Network_Player me = ComponentManager<Network_Player>.Value;
+				CharacterController pcc = me != null ? me.GetComponentInChildren<CharacterController>() : null;
+				if (pcc != null)
+					for (int l = 0; l < 32; l++)
+						if (Physics.GetIgnoreLayerCollision(pcc.gameObject.layer, l)) mask &= ~(1 << l);
+				foreach (Collider c in e.Root.GetComponentsInChildren<Collider>(false).Where(c => !c.isTrigger && c.name.IndexOf("AirPocket", StringComparison.OrdinalIgnoreCase) >= 0 || (c.transform.parent != null && c.transform.root.name.IndexOf("AirPocket", StringComparison.OrdinalIgnoreCase) >= 0)).Take(1))
+					report.Add("REACH " + name + " | air pocket collider '" + c.name + "' | - | NOTE layer " + LayerMask.LayerToName(c.gameObject.layer) + ", trigger " + c.isTrigger + ", player ignores it " + (pcc != null && (Physics.GetIgnoreLayerCollision(pcc.gameObject.layer, c.gameObject.layer) || Physics.GetIgnoreCollision(pcc, c))));
+			}
 			reachMask = mask;
 
 			Bounds ib;
@@ -444,6 +488,11 @@ namespace DynamicIslands
 				foreach (Collider c in ch) lb.Encapsulate(c.bounds);
 				int node = g.Add(lb.center, 3, -1);
 				g.LadderB[node] = lb;
+				{
+					// (the side a player climbs it from: its front, or its back when only the back has room)
+					Vector3 lf = LadderRoot(ch[0]).forward; lf.y = 0f;
+					if (lf.sqrMagnitude > 0.01f) { lf.Normalize(); g.LadderF[node] = LadderRoom(lb, lf) || !LadderRoom(lb, -lf) ? lf : -lf; }
+				}
 				int grabs = 0, tops = 0;
 				for (int k = 0; k < node; k++)
 				{
@@ -519,6 +568,24 @@ namespace DynamicIslands
 				fwd[s] = new bool[g.Pos.Count];
 				parent[s] = new int[g.Pos.Count];
 				if (start >= 0) Flood(g, new List<int> { start }, g.Out, fwd[s], parent[s]);
+				// (a flying island: the rim spot nearest a side can be a roof or a post top with a drop all round - stairs from the
+				// raft go to the island's edge, not onto a lamp post: Altitude Market's north/south starts reached nothing, PQ11 10-27.
+				// Take the nearest rim spot whose walk-in reaches at least a quarter of the island's floor)
+				if (reachSky && start >= 0)
+				{
+					int floor = 0; for (int k = 0; k < g.Pos.Count; k++) if (g.Kind[k] == 0) floor++;
+					List<int> cands = sea.OrderBy(k => ScFlat(g.Pos[k], edgeMid[s])).Take(400).ToList();
+					for (int c = 0, tried = 0; c < cands.Count && tried < 25; c++)
+					{
+						int got = 0; for (int k = 0; k < g.Pos.Count; k++) if (fwd[s][k] && g.Kind[k] == 0) got++;
+						if (got * 4 >= floor) break;
+						if (c == 0) continue;
+						if (fwd[s][cands[c]]) continue;
+						tried++;
+						fwd[s] = new bool[g.Pos.Count]; parent[s] = new int[g.Pos.Count];
+						Flood(g, new List<int> { cands[c] }, g.Out, fwd[s], parent[s]);
+					}
+				}
 			}
 			var back = new bool[g.Pos.Count];
 			var backParent = new int[g.Pos.Count];
@@ -839,17 +906,18 @@ namespace DynamicIslands
 			Vector3 f = t.forward; f.y = 0f;
 			if (f.sqrMagnitude < 0.01f) return "?";
 			f.Normalize();
-			Func<Vector3, bool> room = dir =>
-			{
-				for (float y = lb.min.y + 0.8f; y < lb.max.y - 0.4f; y += 1f)
-				{
-					Vector3 c = new Vector3(lb.center.x, y, lb.center.z) + dir * 0.75f;
-					if (Physics.CheckSphere(c, 0.28f, reachMask, QueryTriggerInteraction.Ignore)) return false;
-				}
-				return true;
-			};
-			bool front = room(f), backside = room(-f);
+			bool front = LadderRoom(lb, f), backside = LadderRoom(lb, -f);
 			return "room at its front " + (front ? "yes" : "no") + ", at its back " + (backside ? "yes" : "no") + ", yaw " + t.eulerAngles.y.ToString("F0");
+		}
+
+		static bool LadderRoom(Bounds lb, Vector3 dir)
+		{
+			for (float y = lb.min.y + 0.8f; y < lb.max.y - 0.4f; y += 1f)
+			{
+				Vector3 c = new Vector3(lb.center.x, y, lb.center.z) + dir * 0.75f;
+				if (Physics.CheckSphere(c, 0.28f, reachMask, QueryTriggerInteraction.Ignore)) return false;
+			}
+			return true;
 		}
 
 		static List<int> NearNodes(ReachGrid g, Bounds b, float r)
@@ -1373,7 +1441,9 @@ namespace DynamicIslands
 					float nextY = i + 1 < way.Count ? W(way[i + 1]).y : W(k).y;
 					bool up = nextY > ReachFeet(pl).y + 0.3f;
 					float held = 0f, since = 0f, bestY = ReachFeet(pl).y, walkSign = 1f;
-					int flips = 0;
+					Vector3 lfront; bool hasF = g.LadderF.TryGetValue(k, out lfront), atFront = false;
+					int flips = 0, sweeps = 0;
+					float sweepT = 0f, sweepYaw = 0f;
 					for (int n = 0; n < 6000; n++)
 					{
 						Vector3 p = ReachFeet(pl);
@@ -1387,6 +1457,17 @@ namespace DynamicIslands
 						// the walker stood on the wall top behind the ladder and walked nowhere, radar mast PQ11 10-27)
 						if (!up && !climbing && d.sqrMagnitude < 0.16f && i + 1 < way.Count) { d = W(way[i + 1]) - p; d.y = 0f; }
 						if (climbing) held += Time.deltaTime;
+						// (a player stands in front of a ladder and walks into it facing it; the walker went to the ladder's middle -
+						// inside its climb collider, facing wherever - and Raft never took hold: tower ladders PQ11 10-27)
+						if (up && hasF && !climbing && held <= 0f && sweepT <= 0f)
+						{
+							Vector3 ds = lc + lfront * 0.55f - p; ds.y = 0f;
+							if (!atFront && ds.sqrMagnitude > 0.04f) d = ds; else { atFront = true; d = -lfront; }
+						}
+						// (a player turns to face the ladder; the walker stood on the ladder's spot facing along the wall and Raft never
+						// took hold - tower ladders at Array Root/Caisson Yard/Brinelab PQ11 10-27: sweep four headings into it)
+						if (climbing) sweepT = 0f;
+						if (sweepT > 0f) { sweepT -= Time.deltaTime; d = Quaternion.Euler(0f, sweepYaw, 0f) * Vector3.forward; }
 						Look(pl, d.sqrMagnitude > 0.01f ? Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg : pl.transform.eulerAngles.y, climbing ? (up ? -60f : 60f) : 0f);
 						mmWalk = walkSign;
 						MmHold(pl, false);
@@ -1397,6 +1478,7 @@ namespace DynamicIslands
 						if (since > 2.5f)
 						{
 							if (flips < 1 && climbing) { walkSign = -walkSign; flips++; since = 0f; continue; }
+							if (held <= 0f && !climbing && sweeps < 4) { sweepYaw = sweeps * 90f; sweeps++; sweepT = 0.35f; since = 1.2f; continue; }
 							mmWalk = 0f;
 							result("stuck at the ladder at " + (p - e.Position).ToString("F1") + " going " + (up ? "up" : "down") + " to h=" + (nextY - e.Position.y).ToString("F1") +
 								(held > 0f ? " (Raft held the ladder " + held.ToString("F1") + " s)" : " (Raft never took hold of it)") + " (in the way: " + ReachBlocker(pl, up ? Vector3.up : Vector3.down) + ")");

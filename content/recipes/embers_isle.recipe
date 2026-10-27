@@ -120,7 +120,8 @@ prop opencage beh.use=
 prop opencage if.use=
 prop opencage else.use=
 prop opencage on.use=
-place Note_Book journal at 21.4 6.9 h=3.6 yaw=20
+# (PQ11 10-27: the journal was inside the cage's solid box - nowhere to read it from; now dropped at the open cage's side)
+place Note_Book journal at 20.0 5.9 ground sit yaw=20
 # (effigies dressed in sailcloth at the village's edges, a charm post with dangling charms by the trail, an old whaling
 # harpoon stuck in the ground, barrels, the hunters' store)
 place Placeable_Scarecrow - at 15.2 5 ground yaw=250
@@ -255,7 +256,7 @@ prop dolphins creature.count=2
 quest title=Before They Come Back
 quest intro=Smoke over the huts of a black island, and nobody at the fire. Whoever lives here is out hunting. Be quick.
 step reach|village|1|Climb from the landing to the village above the bay
-step read|Botanist's journal|1|Read the journal left in the open cage by the fire
+step read|Botanist's journal|1|Read the journal dropped beside the open cage by the fire
 step collect|story:chainkey|1|Take the boat chain's key from the fire-keeper's hut
 step open|Botanist's satchel|1|Run the shore path round the headland - snatch up her dropped satchel, don't stop
 step open|Botanist's sea chest|1|On to the sea cave and open her sea chest before the hunters catch you
