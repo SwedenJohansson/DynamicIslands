@@ -83,11 +83,11 @@ prop yardzone zone.message=The building yard on Pallet Point. Nobody has worked 
 
 quest title=Last Shift
 quest intro=Somebody left a building yard on Pallet Point mid-job. Find the yard.
-step reach|yard|1|Climb the track to the building yard
+step reach|yard|1|Make for the forklift holding a crate in the air and climb the track to the building yard
 step read|Foreman's notice|1|Read the foreman's notice
 step kill|Rat|3|Clear the rats out of the dumpster
 step collect|story:forksdown|1|Find the forklift key and lower the forks
-step open|Crate on the forks|1|Open the crew's crate
+step open|Crate on the forks|1|Open the crew's crate on the forks
 quest done=The last shift is done. The crew's share is yours.
 quest reward=Nail*10;Scrap*3
 

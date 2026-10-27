@@ -91,12 +91,12 @@ prop crashzone zone.message=The crash site. A small plane, nose down in the sand
 
 quest title=Mayday
 quest intro=A plane came down on Kestrel Strand. Find the crash.
-step reach|crash|1|Find the crashed plane
+step reach|crash|1|Follow the pieces of wing along the sand to the crashed plane
 step read|Pilot's logbook|1|Read the pilot's logbook
 step kill|Hyena|2|Drive the hyenas away from the flight case
 step collect|story:hatchopen|1|Unlock the plane's cargo hatch with the key from the flight case
 step open|Pilot's stash|1|Open the pilot's stash in the shelter
-step read|Last entry|1|Find where the pilot went
+step read|Last entry|1|Read the pilot's last note on the sign near the shelter
 quest done=The pilot took the dinghy out to sea. The plane, and the stash, are yours.
 quest reward=PlasticBottle_Water*2;Scrap*4
 

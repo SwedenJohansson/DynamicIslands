@@ -197,7 +197,7 @@ call shallows r=139 deep=5 n=2
 info title=Ribcage Reef
 info author=Custom Islands
 info description=A village built inside the bleached ribs of a giant sea creature on a black-sand crescent, its skull half drowned in the bay. The bone-singers missed their own festival this year. Gather the song shells, sing the ribs before the jaw closes, take the heartbone from the skull's guardian - and the festival happens anyway.
-island on.arrive=message||A black crescent of sand - and lying along it, white as chalk, the skeleton of something enormous: ribs taller than trees with huts between them, a jaw at the east end, and in the bay a skull the size of a house.
+island on.arrive=message||A black crescent of sand - and lying along it, white as chalk, the skeleton of something enormous: ribs taller than trees with huts between them, a jaw at the far end, and in the bay a skull the size of a house.
 
 story songshell|Song shell|Placeable_GiantClam|A spiral shell with a verse of the bone-singers' song scratched inside.
 story mask|Festival mask|Hat_Tiki|A carved bone mask: whoever sings the ribs wears it.
@@ -350,15 +350,15 @@ prop turtles creature.count=3
 quest title=The Bone-Singers' Festival
 quest intro=A village inside a giant skeleton, its singers away on the long voyage. Their festival invitation hangs at the village gate.
 # Chapter 1 - the village
-step reach|ribvillage|1|Walk in through the ribs to the singers' village
+step reach|ribvillage|1|Make for the giant skeleton and walk in through the ribs to the singers' village
 step read|The festival invitation|1|Read the festival invitation at the gate
-step open|Tail box|1|Follow the tail's vertebrae west to the singers' offering box
+step open|Tail box|1|Dive along the tail's vertebrae to the singers' offering box on the sea floor
 step kill|Roach|4|Drive the bone crabs out of the village
-step open|First song shell|1|Search the singers' stilt houses for the first song shell
-step collect|story:songshell|2|Find the second shell in another singer's house
+step open|First song shell|1|Open the small chest in a singer's stilt house for the first song shell
+step collect|story:songshell|2|Open the small chest in another stilt house for the second shell
 step reach|ribtop|1|Climb the post tower to the top of the highest rib
-step collect|story:songshell|3|Take the third shell from the rib's top
-step open|Fourth song shell|1|Dive the tide pool by the bay for the fourth shell
+step collect|story:songshell|3|Open the small chest on top of the highest rib for the third shell
+step open|Fourth song shell|1|Dive into the tide pool by the bay and open the small chest for the fourth shell
 # Chapter 2 - the song
 step reach|jawstage|1|Go to the stage at the jaw
 step read|The song's rule|1|Read the rule carved on the jawbone
@@ -367,11 +367,11 @@ step reach|throatzone|1|Go through the open throat
 # Chapter 3 - the skull
 step reach|skull|1|Swim down the throat into the drowned skull
 step read|The eldest singer's tablet|1|Read the eldest singer's tablet on the skull's floor
-step collect|story:pearl|1|Take the pearl from the eye socket (there's air up there)
+step collect|story:pearl|1|Open the small chest in the eye socket for the pearl (there's air up there)
 step kill|Angler fish|1|Face the skull's guardian, the lamp-fish
-step collect|story:heartbone|1|Take the heartbone from the brain-case
+step collect|story:heartbone|1|Open the big chest in the brain-case for the heartbone
 # Chapter 4 - the festival
-step reach|altarzone|1|Carry the heartbone to the bone altar on the east horn
+step reach|altarzone|1|Carry the heartbone to the bone altar and blessing board on the horn
 step collect|story:garland|1|Lay the heartbone on the altar - and the festival begins
 step read|The singers' blessing|1|Read the singers' blessing by the altar
 step open|The festival chest|1|Open the festival chest under the stage

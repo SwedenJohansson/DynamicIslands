@@ -119,7 +119,7 @@ note letter Mother's letter | My dear Aldo,\n\nCome home for my birthday this ye
 note pensign Goat pen | KEEP THE GATE SHUT.\n\n(under it, smaller:) The net launcher is in the tack chest. Again.
 note log1 Keeper's log, page 1 | Day 1. The new strongbox arrived. A keypad on it, four digits. I picked Mum's birthday, because I will forget anything else.
 note log2 Keeper's log, page 2 | Day 40. The goats have learnt to open the pen. I have not learnt to close it.
-note log3 Keeper's log, page 3 | Day 90. From the lookout I saw a light in the sky to the north, high over the water, where nothing should be. Some nights it is there and some nights not. Tomas, is that you?
+note log3 Keeper's log, page 3 | Day 90. From the lookout I saw a light in the sky out past the lookout, high over the water, where nothing should be. Some nights it is there and some nights not. Tomas, is that you?
 note strongbox Keeper's strongbox | The keeper's strongbox: his savings, his tools - and a key on a string, a tag on it: LOOKOUT.
 loot strongbox story:lookoutkey*1;Nail*12;Scrap*6;MetalIngot*3;TradeToken*6
 prop strongbox loot.refill=0
@@ -151,16 +151,16 @@ prop landing zone.radius=4
 prop landing zone.message=The landing. A mooring post - with a page tied to it - and the keeper's board.
 prop lookout zone.id=lookout
 prop lookout zone.radius=4
-prop lookout zone.message=The lookout: a bench, the keeper's sea chest, and the whole island below you. To the north, only sea.
+prop lookout zone.message=The lookout: a bench, the keeper's sea chest, and the whole island below you. Out past the rail, only sea.
 
 quest title=The Keeper's Strongbox
 quest intro=A tidy island and nobody home. The keeper left a note by his hut door.
-step reach|landing|1|Land on the Lockkeeper's Isle
+step reach|landing|1|Land at the welcome sign and barrel on the shore; the keeper's hut is up the slope
 step read|Keeper's note|1|Read the keeper's note by his hut
 step read|Mother's letter|1|Find his mother's letter on his table by the hut
 step open|Keeper's strongbox|1|Open the strongbox in the shed - the keypad wants her birthday
 step open|Keeper's sea chest|1|Open the keeper's sea chest at the lookout
-quest done=In the sea chest, a letter: "Tomas - I see your light. I'll come in spring. - Aldo". To the north, high over the water, a light burns.
+quest done=In the sea chest, a letter: "Tomas - I see your light. I'll come in spring. - Aldo". Far out, high over the water, a light burns.
 quest reward=Nail*6;Plank*6;Rope*2
 
 quest2 title=Strays
@@ -174,9 +174,9 @@ quest3 intro=The keeper's log is scattered over the island, one page at a time.
 step3 read|Keeper's log, page 1|1|Read the first log page, at the landing
 step3 read|Keeper's log, page 2|1|Read the second log page, at the goat pen
 step3 read|Keeper's log, page 3|1|Read the third log page, at the lookout
-quest3 done=You know the keeper a little now - and his brother's light in the north.
+quest3 done=You know the keeper a little now - and his brother's light far out over the water.
 quest3 reward=Cooked_GenericMeat*2
 
-questbring quest-done | island:Lantern Spire | quest:self | near:self:400:north | High over the water to the north, a light burns on an island that floats in the air. | Lantern Spire
+questbring quest-done | island:Lantern Spire | quest:self | near:self:400:north | High over the water, far from here, a light burns on an island that floats in the air. | Lantern Spire
 
 save The Lockkeeper's Isle

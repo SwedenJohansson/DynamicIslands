@@ -640,21 +640,21 @@ prop tunneldark zone.radius=16
 quest title=The Job
 quest intro=A resort archipelago, a casino with its gold still in the vault, and a crew's plan in five pieces. The crew's yacht is at the marina.
 # Chapter 1 - the marina
-step reach|marina|1|Tie up at the resort's marina
+step reach|marina|1|Make for the stranded yacht at the resort's marina and tie up beside it
 step kill|Hyena|3|Deal with the security dogs loose on the marina
 step read|Planner's briefing|1|Read the planner's briefing on the crew's yacht
 step collect|story:crewkey|1|Find the crew's locker key in the yacht's cabin chest
 step open|Crew's locker|1|Open the crew's locker in the marina office
 # Chapter 2 - the crew
-step reach|hotel|1|Cross the boardwalk to the hotel key
+step reach|hotel|1|Cross the boardwalk to the big hotel and go in
 step kill|Roach|4|Clear the roaches out of the hotel kitchen
 step read|Electrician's notes|1|Find the electrician's notes in room 304
-step collect|story:fusepuller|1|Take his fuse puller from the hotel's service room
+step collect|story:fusepuller|1|Open the small box in the hotel's service room for the fuse puller
 step reach|waterpark|1|Cross to the water park
-step collect|story:divemap|1|Find the diver's map in the wave-machine hut (mind the bees)
-step reach|villas|1|Reach the villa key
+step collect|story:divemap|1|Open the box in the wave-machine hut for the diver's map (mind the bees)
+step reach|villas|1|Go to the villas with the swimming pool
 step read|Dealer's letter|1|Read the dealer's letter in the corner villa
-step collect|story:dealercard|1|Dive into the villa's pool for the croupier's card
+step collect|story:dealercard|1|Dive into the villa pool and open the small chest on the bottom for the croupier's card
 step reach|lighthousebar|1|Climb to the lighthouse bar on the point
 step read|Safecracker's postcard|1|Read the safecracker's postcard behind the bar
 step collect|story:timelockkey|1|Find her time-lock key in the bar cupboard
@@ -673,7 +673,7 @@ step open|House gold reserve|1|Open the house's gold reserve
 # Chapter 5 - the getaway
 step reach|getaway|1|Carry the gold out to the crew's getaway boat at the casino's dock
 step read|The crew's last postcard|1|Read the postcard taped to the boat's wheel
-step open|Crew's strongbox|1|Open the crew's strongbox
+step open|Crew's strongbox|1|Open the crew's strongbox on the getaway boat
 quest done=The job is done - five specialists' worth of it, by one. The Golden Gull's lights are out, its vault is empty, and the crew's shares are yours. Spend them somewhere dry.
 quest reward=TitaniumIngot*4;Battery*4;MetalIngot*10
 

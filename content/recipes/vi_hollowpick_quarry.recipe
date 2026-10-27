@@ -152,11 +152,11 @@ prop quarrypit zone.message=The quarry pit: the excavator still at the face, its
 
 quest title=Payday in the Pit
 quest intro=A quarry stopped in the middle of a shift: the wagons loaded, a crate on the crane's hook. Go down into the pit.
-step reach|quarry_pit|1|Go down into the quarry pit
+step reach|quarry_pit|1|Make for the crane over the quarry and go down into the pit
 step read|Shift ledger|1|Read the shift ledger in the office cabin
 step kill|Rat|4|Clear the four rats out of the ore wagons
 step read|Chalk on wagon 3|1|Find the chalk mark on wagon 3
-step collect|story:powderopen|1|Open the powder store with its code
+step collect|story:powderopen|1|Enter the code on the keypad by the powder store
 step open|Powder store|1|Open the powder store
 step collect|story:craneup|1|Start the crane's generator in the loading yard
 step open|Hoist crate|1|Open the crate the crane lowered

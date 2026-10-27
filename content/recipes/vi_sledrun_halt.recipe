@@ -85,9 +85,9 @@ prop haltzone zone.message=The last halt of the sled run. A shed, a sled and a b
 
 quest title=Running on Empty
 quest intro=A sled run stopped at Sledrun Halt. Find the halt.
-step reach|halt|1|Go up to the sled halt
+step reach|halt|1|Follow the tracks in the snow up to the shed and sled at the halt
 step read|Halt board|1|Read the halt board
-step kill|Polar bear|1|Deal with the polar bear at the fuel depot
+step kill|Polar bear|1|Deal with the polar bear lying beside the fuel barrels on the rise
 step collect|story:sledfull|1|Fill the sled's tank from the fuel locker
 step open|Sled's saddlebag|1|Open the sled's saddlebag
 quest done=The sled is fuelled. Nobody is coming back for it, but its saddlebag was well packed.

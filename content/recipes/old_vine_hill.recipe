@@ -140,11 +140,11 @@ call shallows r=83 deep=5 n=1
 info title=Old Vine Hill
 info author=Custom Islands
 info description=A terraced vineyard on a sunny two-peaked island, a press house, a cellar in the hill - and below it, off the shore, a reserve vault the sea got into. The old vintner's labels tell the order of his four great casks. Tap them right and the vault is yours.
-island on.arrive=message||Two dry peaks striped with green: stone terraces and rows of vines, a white press house in the saddle between them, and on the eastern top, a bench and a grave.
+island on.arrive=message||Two dry peaks striped with green: stone terraces and rows of vines, a white press house in the saddle between them, and on the other top, a bench and a grave.
 
 story firstvintage|The founding vintage|Glass|A dusty bottle with a wax seal: the first wine Tomas Ferrand ever made.
 
-note letter Tomas's letter | (on the press house's long table, under a glass)\n\nTo whoever takes on my hill.\n\nFifty harvests I tapped my four great casks in the cellar, always in the same order - each terrace's label says when its cask comes. Tap them in the wrong order and they just drip.\n\nTap them right and the old pump in the cellar's corner starts by itself (I rigged it) and blows the reserve vault full of air. The sea got into the vault the year the cellar cracked; the first vintage is down there.\n\nOne glass of it on my grave on the east top, please. The rest is yours.\n- Tomas Ferrand
+note letter Tomas's letter | (on the press house's long table, under a glass)\n\nTo whoever takes on my hill.\n\nFifty harvests I tapped my four great casks in the cellar, always in the same order - each terrace's label says when its cask comes. Tap them in the wrong order and they just drip.\n\nTap them right and the old pump in the cellar's corner starts by itself (I rigged it) and blows the reserve vault full of air. The sea got into the vault the year the cellar cracked; the first vintage is down there.\n\nOne glass of it on my grave on the top with the bench, please. The rest is yours.\n- Tomas Ferrand
 note labelsunrise Label of the Sunrise terrace | SUNRISE TERRACE - the first light, the first grapes.\nAt the harvest feast its cask is tapped SECOND, after the hill's oldest.
 note labelchapel Label of the Chapel terrace | CHAPEL TERRACE - blessed every spring.\nAt the harvest feast its cask is tapped LAST, for the toast.
 note labelstony Label of the Stony terrace | STONY TERRACE - poor soil, the best wine.\nAt the harvest feast its cask is tapped THIRD.
@@ -218,7 +218,7 @@ prop cellar zone.radius=5
 prop cellar zone.message=The cellar: four great casks on their cradles, an old pump in the corner, its pipes running down the rock toward the sea.
 prop gravetop zone.id=gravetop
 prop gravetop zone.radius=5
-prop gravetop zone.message=The east top: a bench, a stone, and every terrace of the hill below you.
+prop gravetop zone.message=The top: a bench, a stone, and every terrace of the hill below you.
 prop cellardark atmo.fog=#100c08
 prop cellardark atmo.fogAmount=0.6
 prop cellardark atmo.light=#4a3a28
@@ -247,16 +247,16 @@ note hoistcrate Pickers' crate | Old Wall pickers - fill the baskets, send them 
 
 quest title=The Founding Vintage
 quest intro=A vineyard on two sunny peaks, abandoned with the grapes still on the vines. The vintner left a letter in the press house.
-step reach|presshouse|1|Climb the cart track to the press house in the saddle
+step reach|presshouse|1|Make for the white press house between the two peaks and climb the cart track to it
 step read|Tomas's letter|1|Read Tomas's letter on the long table
 step catch|Chicken|2|Catch two of Tomas's hens running wild round the press house yard
-step reach|topterrace|1|Climb to the Old Wall terrace on the west peak, the first vines on the hill
+step reach|topterrace|1|Climb to the Old Wall terrace, the first vines on the hill (its label sign stands there)
 step kill|Warthog|3|Drive the boars out of the Old Wall terrace
 step pages||5|Find the labels of the four terraces (with the letter, five pages)
-step reach|cellar|1|Find the cellar on the west peak's seaward flank
+step reach|cellar|1|Find the cellar dug into the rock below the Old Wall terrace
 step reach|vault|1|Tap the four casks in the labels' order - and dive down to the vault the pump fills with air
 step open|Reserve vault|1|Open the reserve vault
-step reach|gravetop|1|Carry the founding vintage up to Tomas's grave on the east top
+step reach|gravetop|1|Carry the founding vintage up to Tomas's grave on the peak with the bench
 step read|The vintner's toast|1|Pour a glass of the founding vintage on Tomas's grave
 quest done=The hill is yours: four terraces, four casks, and a glass poured for the man who planted them. Salut.
 quest reward=Mango*3;Seed_Strawberry*3;Plank*4

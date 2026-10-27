@@ -248,30 +248,30 @@ call shallows r=139 deep=5 n=2
 info title=Star Fort
 info author=Custom Islands
 info description=A great star-shaped fortress on a desert table-land, its garrison gone and its walls still besieged by the island's beasts, bastion by bastion. Take the commanders' keys, open the magazine, fire the great gun - and meet the pack's leader at the gate.
-island on.arrive=message||A red table-land with a fortress on top shaped like a star, a gun on its keep, flags still on the gatehouse. Something howls on the north wall.
+island on.arrive=message||A red table-land with a fortress on top shaped like a star, a gun on its keep, flags still on the gatehouse. Something howls on the wall.
 
 story gatekey|Fort gate key|quest:Utopia_KeyEntrance|The fort gate's great iron key.
 story bastionkey|Bastion key|quest:Caravan_KeyMayor|A commander's key, one of the four that open the magazine.
 story powder|Keg of powder|quest:Vasagatan_GasTank|A small keg of dry gunpowder, its bung sealed with wax.
 story shot|Great gun's shot|quest:Vasagatan_Bullet|An iron ball as big as your head.
 
-note order The governor's last order | FORT MERIDIAN - LAST ORDER OF THE GOVERNOR\n\nThe relief ship is here. All hands aboard. I will follow tomorrow.\n\nTo whoever holds this fort after us: the beasts come over the bastions one after another, as they have every season - north, east, west, then up from the south sea caves. Each commander's key is in his locker on his bastion. The four keys open the magazine under the keep.\nThree kegs and a shot fire the great gun. The gun always brings their leader up the ramp. When it falls, the siege is over for the year.\n\nGate key: the guardhouse below.\n- I. Albrecht, Governor
+note order The governor's last order | FORT MERIDIAN - LAST ORDER OF THE GOVERNOR\n\nThe relief ship is here. All hands aboard. I will follow tomorrow.\n\nTo whoever holds this fort after us: the beasts come over the bastions one after another, as they have every season - three bastions in turn, then up from the sea caves. Each commander's key is in his locker on his bastion. The four keys open the magazine under the keep.\nThree kegs and a shot fire the great gun. The gun always brings their leader up the ramp. When it falls, the siege is over for the year.\n\nGate key: the guardhouse below.\n- I. Albrecht, Governor
 note guardchest Guardhouse chest | The guard's chest: a lantern, a coil of rope, his dinner - and the fort gate's great iron key.
 loot guardchest story:gatekey*1;Rope*2;Cooked_GenericMeat*1
 prop guardchest loot.refill=0
-note northlocker North commander's locker | The north commander's locker: his telescope, a letter home never sent - and the first bastion key.
+note northlocker North commander's locker | The first bastion's commander's locker: his telescope, a letter home never sent - and the first bastion key.
 loot northlocker story:bastionkey*1;Glass*1
 prop northlocker loot.refill=0
-note eastlocker East commander's locker | The east commander's locker: boar tusks nailed inside the door, a tin of tobacco - and the second bastion key.
+note eastlocker East commander's locker | The second bastion's commander's locker: boar tusks nailed inside the door, a tin of tobacco - and the second bastion key.
 loot eastlocker story:bastionkey*1;Leather*1
 prop eastlocker loot.refill=0
-note westlocker West commander's locker | The west commander's locker: feathers, a sling, a list of screechers shot (forty-one) - and the third key.
+note westlocker West commander's locker | The third bastion's commander's locker: feathers, a sling, a list of screechers shot (forty-one) - and the third key.
 loot westlocker story:bastionkey*1;Feather*3
 prop westlocker loot.refill=0
-note southlocker South commander's locker | The south commander's locker, damp from the sea: a scarab shell as big as a plate - and the fourth key.
+note southlocker South commander's locker | The fourth bastion's commander's locker, damp from the sea: a scarab shell as big as a plate - and the fourth key.
 loot southlocker story:bastionkey*1;Scrap*2
 prop southlocker loot.refill=0
-note gunnerchart The master gunner's chart | THE GREAT GUN - LOADING\n\nThree kegs of powder. Dry ones on the top rack - two left. The third dry keg is sealed in a cask in the sea-cave store under the south cliff (flooded since the spring tide - hold your breath, there's air under its ceiling). Down the ramp road and round under the cliff.\nOne shot from the pile.\nLoad on the keep's roof, fire, and stand by the gate.
+note gunnerchart The master gunner's chart | THE GREAT GUN - LOADING\n\nThree kegs of powder. Dry ones on the top rack - two left. The third dry keg is sealed in a cask in the sea-cave store under the cliff by the sea (flooded since the spring tide - hold your breath, there's air under its ceiling). Down the ramp road and round under the cliff.\nOne shot from the pile.\nLoad on the keep's roof, fire, and stand by the gate.
 note journal The governor's journal | (on the governor's desk, open at the last page)\n\nEleven seasons. Eleven times the pack came over the walls, eleven times their leader came up the ramp when the gun spoke, eleven times we held.\n\nThey are not cruel. They are hungry, and this was their island first.\n\nIf you held it once - the chest is yours. Then leave the gate open when you go. Let them have it for a season.\n- Ines
 note governorchest The governor's chest | Governor Albrecht's chest: the fort's pay chest, titanium from the gun foundry, the plans for the battery charger that ran the signal lamps, her sword, and dried dates.
 loot governorchest TradeToken*15;TitaniumIngot*4;Blueprint_BatteryCharger*1;Sword_Titanium*1;Cooked_GenericMeat*3
@@ -359,31 +359,31 @@ prop ramp zone.message=The foot of the ramp road: a guardhouse, a corral of llam
 prop parade zone.id=parade
 prop parade zone.radius=14
 prop parade zone.repeat=never
-prop parade zone.message=The parade ground - and over the north bastion's bank, the first wave: hyenas, laughing as they come!
+prop parade zone.message=The parade ground - and over the first bastion's bank, the first wave: hyenas, laughing as they come!
 prop wave1 creature.count=4
 prop wave1 creature.respawn=0
 prop wave1 creature.zone=parade
 prop northbastion zone.id=northbastion
 prop northbastion zone.radius=9
-prop northbastion zone.message=The north bastion: a gun, a sentry box, a commander's locker. The plain beyond is empty now.
+prop northbastion zone.message=The first bastion: a gun, a sentry box, a commander's locker. The plain beyond is empty now.
 prop eastbastion zone.id=eastbastion
 prop eastbastion zone.radius=9
 prop eastbastion zone.repeat=never
-prop eastbastion zone.message=The east bastion - and the second wave comes up the bank: boars, a whole sounder of them!
+prop eastbastion zone.message=The second bastion - and the second wave comes up the bank: boars, a whole sounder of them!
 prop wave2 creature.count=4
 prop wave2 creature.respawn=0
 prop wave2 creature.zone=eastbastion
 prop westbastion zone.id=westbastion
 prop westbastion zone.radius=9
 prop westbastion zone.repeat=never
-prop westbastion zone.message=The west bastion over the cliffs - and the third wave comes out of the sky. Screechers!
+prop westbastion zone.message=The third bastion above the cliffs - and the third wave comes out of the sky. Screechers!
 prop wave3 creature.count=3
 prop wave3 creature.respawn=0
 prop wave3 creature.zone=westbastion
 prop southbastion zone.id=southbastion
 prop southbastion zone.radius=9
 prop southbastion zone.repeat=never
-prop southbastion zone.message=The south bastion over the sea - and up the cliff from the sea caves, clicking, the fourth wave: scarabs!
+prop southbastion zone.message=The fourth bastion over the sea - and up the cliff from the sea caves, clicking, the fourth wave: scarabs!
 prop wave4 creature.count=4
 prop wave4 creature.size=1.3
 prop wave4 creature.respawn=0
@@ -422,28 +422,28 @@ prop dolphins creature.count=2
 quest title=Hold the Fort
 quest intro=A star fort on a desert table-land, besieged by the island's beasts. The governor's last order is nailed to the gate.
 # Chapter 1 - the gate
-step reach|ramp|1|Land and walk to the foot of the ramp road
+step reach|ramp|1|Make for the star-shaped fort on the table-land, land and walk to the foot of its ramp road
 step read|The governor's last order|1|Climb to the gate and read the governor's last order
-step collect|story:gatekey|1|Take the gate key from the guardhouse at the ramp's foot
+step collect|story:gatekey|1|Open the chest in the guardhouse at the ramp's foot for the gate key
 step reach|parade|1|Unlock the gate and march onto the parade ground
-step kill|Hyena|4|Hold off the first wave from the north bastion
+step kill|Hyena|4|Hold off the first wave: hyenas coming over the bank
 # Chapter 2 - the bastions
-step reach|northbastion|1|Climb to the north bastion
-step open|North commander's locker|1|Open the north commander's locker
-step reach|eastbastion|1|Climb to the east bastion
+step reach|northbastion|1|Climb to the first bastion, where the hyenas came over
+step open|North commander's locker|1|Open the commander's locker on the first bastion
+step reach|eastbastion|1|Climb to the second bastion, where the boars come up the bank
 step kill|Warthog|4|Hold off the second wave
-step open|East commander's locker|1|Open the east commander's locker
-step reach|westbastion|1|Climb to the west bastion
+step open|East commander's locker|1|Open the commander's locker on the second bastion
+step reach|westbastion|1|Climb to the third bastion, above the cliffs
 step kill|Screecher|3|Hold off the third wave
-step open|West commander's locker|1|Open the west commander's locker
-step reach|southbastion|1|Climb to the south bastion over the sea
+step open|West commander's locker|1|Open the commander's locker on the third bastion
+step reach|southbastion|1|Climb to the fourth bastion, the one over the sea
 step kill|Roach|4|Hold off the scarabs from the sea caves
-step open|South commander's locker|1|Open the south commander's locker
+step open|South commander's locker|1|Open the commander's locker on the fourth bastion
 # Chapter 3 - the magazine
 step reach|magazine|1|Turn the four bastion keys and enter the magazine under the keep
 step read|The master gunner's chart|1|Read the master gunner's chart
 step collect|story:powder|3|Take the three kegs of dry powder (one in the flooded sea-cave store)
-step collect|story:shot|1|Take a shot for the great gun
+step collect|story:shot|1|Take a cannon shot from the pile in the magazine
 # Chapter 4 - the last stand
 step reach|keeptop|1|Climb to the great gun on the keep's roof
 step reach|gatefight|1|Fire the great gun - and run down to the gate

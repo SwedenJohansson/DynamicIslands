@@ -160,15 +160,15 @@ prop lagoonjetty zone.message=The lagoon jetty: boats left on the water and drum
 
 quest title=Wheels Up
 quest intro=An airstrip on a coral island, its plane parked and dry. Walk out onto the runway.
-step reach|runway|1|Walk out onto the runway
+step reach|runway|1|Make for the parked plane and walk out onto the runway beside it
 step read|Strip log|1|Read the strip log in the tower hut
 step kill|Warthog|4|Clear the four warthogs off the runway
 step open|Mechanic's chest|1|Open the mechanic's chest by the hangar
 step collect|story:runwaylit|1|Start the runway generator
-step collect|story:radiocall|1|Call on the tower radio
+step collect|story:radiocall|1|Call on the radio in the tower hut
 step reach|lagoon_jetty|1|Go to the lagoon jetty
 step read|Fuel log|1|Read the fuel log on the bank
-step open|Fuel drum|1|Open the last fuel drum
+step open|Fuel drum|1|Open the last fuel drum (marked AVGAS) by the lagoon jetty
 step collect|story:fuelpumped|1|Run the fuel truck's pump to fuel the plane
 step open|Hangar locker|1|Open the hangar locker
 step blueprint|Blueprint_HeadLight|1|Take the landing light plans from the hangar locker

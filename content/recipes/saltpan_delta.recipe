@@ -181,7 +181,7 @@ story crank|Sluice crank|quest:Varuna_CraneKey|A cranked iron handle that fits t
 story saltsack|Sack of salt|quest:Caravan_BatteryChargerPart|A sack of coarse white salt, raked from a pan.
 story waybill|Waybill|quest:Tangaroa_Tape|The wagon's waybill: THREE SACKS - SALT - FOR THE JETTY.
 
-note notice Foreman's notice | SALTPAN DELTA WORKS - NOTICE\n\nThe company has gone under. Wages stop today. Sorry, lads.\n\nThe last harvest is still in the pans. The brine runs north to south: open the north sluice first, then the middle, then the south - open them out of order and you flood the pan below. The crank is in my locker.\n\nThree sacks on the wagon and down to the jetty, and the pay chest in the office is for whoever does it. Mind the store. The rats have had it since Tuesday.\n- Gus, foreman
+note notice Foreman's notice | SALTPAN DELTA WORKS - NOTICE\n\nThe company has gone under. Wages stop today. Sorry, lads.\n\nThe last harvest is still in the pans. The brine runs from the pump house down to the jetty: open the first sluice first, then the middle, then the last - open them out of order and you flood the pan below. The crank is in my locker.\n\nThree sacks on the wagon and down to the jetty, and the pay chest in the office is for whoever does it. Mind the store. The rats have had it since Tuesday.\n- Gus, foreman
 note locker Foreman's locker | Gus's locker: his spare shirt, his pipe, and the sluice crank on a hook.
 loot locker story:crank*1;Rope*2;Leather*1
 prop locker loot.refill=0
@@ -202,20 +202,20 @@ loot channelbarrel MetalOre*2;Scrap*3;Clay*2
 prop channelbarrel loot.refill=0
 
 prop crank1 obj.name=crank1
-prop crank1 beh.use=Crank the north pan's sluice open
+prop crank1 beh.use=Crank the first pan's sluice open
 prop crank1 if.use=has|story:crank|1
-prop crank1 on.use=message||The board grinds up out of its notch and the brine runs off south, gurgling. Give it a moment.\nopen|sluice1\nsound||event:/exploring/temperence/selene/handle_spin\nwait|8\nshow|salt1\nmessage||The north pan has drained: a white heap of salt glitters on its floor.
+prop crank1 on.use=message||The board grinds up out of its notch and the brine runs off down the channel, gurgling. Give it a moment.\nopen|sluice1\nsound||event:/exploring/temperence/selene/handle_spin\nwait|8\nshow|salt1\nmessage||The first pan has drained: a white heap of salt glitters on its floor.
 prop crank1 else.use=message||A crank post with no crank on it. The foreman's notice says where the crank is.
 prop crank2 obj.name=crank2
 prop crank2 beh.use=Crank the middle pan's sluice open
 prop crank2 if.use=has|story:crank|1\nstate|sluice1|open
-prop crank2 on.use=message||The middle sluice lifts and the brine runs on south.\nopen|sluice2\nsound||event:/exploring/temperence/selene/handle_spin\nwait|8\nshow|salt2\nmessage||The middle pan has drained: salt on its floor.
-prop crank2 else.use=message||The middle pan is still brimming from the north one. North sluice first - the brine runs north to south.
+prop crank2 on.use=message||The middle sluice lifts and the brine runs on down the channel.\nopen|sluice2\nsound||event:/exploring/temperence/selene/handle_spin\nwait|8\nshow|salt2\nmessage||The middle pan has drained: salt on its floor.
+prop crank2 else.use=message||The middle pan is still brimming from the first one. Pump-house sluice first - the brine runs from the pump house down to the jetty.
 prop crank3 obj.name=crank3
-prop crank3 beh.use=Crank the south pan's sluice open
+prop crank3 beh.use=Crank the last pan's sluice open
 prop crank3 if.use=has|story:crank|1\nstate|sluice2|open
-prop crank3 on.use=message||The south sluice opens on the channel and the last brine runs out to sea.\nopen|sluice3\nsound||event:/exploring/temperence/selene/handle_spin\nwait|8\nshow|salt3\nmessage||The south pan has drained.
-prop crank3 else.use=message||The south pan is fed by the middle one. Middle sluice first.
+prop crank3 on.use=message||The south sluice opens on the channel and the last brine runs out to sea.\nopen|sluice3\nsound||event:/exploring/temperence/selene/handle_spin\nwait|8\nshow|salt3\nmessage||The last pan has drained.
+prop crank3 else.use=message||The last pan is fed by the middle one. Middle sluice first.
 prop sluice1 obj.name=sluice1
 prop sluice1 beh.move=0,1.4,0
 prop sluice1 beh.moveTime=3
@@ -285,13 +285,13 @@ prop dolphins creature.count=2
 
 quest title=The Last Harvest
 quest intro=A salt works on a desert delta, its pans still full. The foreman left a notice at the pump house.
-step reach|pumphouse|1|Walk up to the pump house by the feed channel
+step reach|pumphouse|1|Make for the pump house by the feed channel and walk up to it
 step read|Foreman's notice|1|Read the foreman's notice
-step collect|story:crank|1|Take the sluice crank from the foreman's locker
-step collect|story:saltsack|1|Drain the north pan and rake its salt
+step collect|story:crank|1|Open the foreman's locker in the pump house for the sluice crank
+step collect|story:saltsack|1|Drain the first pan, nearest the pump house, and rake its salt
 step collect|story:saltsack|2|Drain the middle pan and rake its salt
-step kill|Rat|4|Clear the rats out of the salt store by the south pan
-step collect|story:saltsack|3|Drain the south pan and rake its salt
+step kill|Rat|4|Clear the rats out of the salt store by the last pan
+step collect|story:saltsack|3|Drain the last pan and rake its salt
 step collect|story:waybill|1|Load the three sacks onto the salt wagon
 step reach|jetty|1|Release the brake and ride the wagon down to the jetty
 step open|Works pay chest|1|Open the pay chest in the shipping office

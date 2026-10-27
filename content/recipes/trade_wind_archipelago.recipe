@@ -378,14 +378,14 @@ prop register else.use=message||You're signed on: number 17.
 prop startcannon obj.name=startcannon
 prop startcannon beh.use=Fire the start cannon
 prop startcannon if.use=has|story:racenumber|1\n!signal|started
-prop startcannon on.use=message||BOOM - the start cannon's smoke rolls over the harbour. The regatta is on! Out to the north-east, a flag goes up on the first buoy.\nsignal||started\nshow|buoy1\nshow|buoy1mark\nsound||event:/weapons/dynamite/explode
+prop startcannon on.use=message||BOOM - the start cannon's smoke rolls over the harbour. The regatta is on! Out past the harbour mouth, a flag goes up on the first buoy.\nsignal||started\nshow|buoy1\nshow|buoy1mark\nsound||event:/weapons/dynamite/explode
 prop startcannon else.use=message||The start cannon. Sign on in the register first - or the race has started already.
 prop buoy1 obj.name=buoy1
 prop buoy1 beh.hidden=1
 prop buoy1 zone.id=buoy1
 prop buoy1 zone.radius=9
 prop buoy1 zone.repeat=never
-prop buoy1 zone.message=Buoy one rounded! A flag goes up to the north-east: buoy two.
+prop buoy1 zone.message=Buoy one rounded! A flag goes up on the next buoy: buoy two.
 prop buoy1 on.enter=show|buoy2\nshow|buoy2mark\nsound||event:/crafting/horns/air
 prop buoy1mark obj.name=buoy1mark
 prop buoy1mark beh.hidden=1
@@ -405,7 +405,7 @@ prop buoy3 beh.hidden=1
 prop buoy3 zone.id=buoy3
 prop buoy3 zone.radius=9
 prop buoy3 zone.repeat=never
-prop buoy3 zone.message=Buoy three rounded, off Windward Cay - call in for your pennant. Buoy four's flag is up far to the east, at the reef passage's mouth.
+prop buoy3 zone.message=Buoy three rounded, off Windward Cay - call in for your pennant. Buoy four's flag is up at the reef passage's mouth.
 prop buoy3 on.enter=show|buoy4\nshow|buoy4mark\nsound||event:/crafting/horns/air
 prop buoy3mark obj.name=buoy3mark
 prop buoy3mark beh.hidden=1
@@ -425,7 +425,7 @@ prop buoy5 beh.hidden=1
 prop buoy5 zone.id=buoy5
 prop buoy5 zone.radius=9
 prop buoy5 zone.repeat=never
-prop buoy5 zone.message=Through the passage - buoy five! Far to the south-west, beyond the south-east island, a buoy rises over a dark shape on the reef: buoy six, the leader's wreck.
+prop buoy5 zone.message=Through the passage - buoy five! Far out beyond the last island, a buoy rises over a dark shape on the reef: buoy six, the leader's wreck.
 prop buoy5 on.enter=show|wreckmark\nshow|wreckmarkbuoy\nsound||event:/crafting/horns/air
 prop buoy5mark obj.name=buoy5mark
 prop buoy5mark beh.hidden=1
@@ -435,7 +435,7 @@ prop wreckmark beh.hidden=1
 prop wreckmark zone.id=wreckmark
 prop wreckmark zone.radius=9
 prop wreckmark zone.repeat=never
-prop wreckmark zone.message=Buoy six: last year's leader, eight metres down on the reef, her flag still on her mast. Leeward Key is the island far to the west; buoy seven's flag is up off its north point.
+prop wreckmark zone.message=Buoy six: last year's leader, eight metres down on the reef, her flag still on her mast. Leeward Key is the island with the goat pens; buoy seven's flag is up off its point.
 prop wreckmark on.enter=show|buoy7\nshow|buoy7mark\nsound||event:/crafting/horns/air
 prop wreckmarkbuoy obj.name=wreckmarkbuoy
 prop wreckmarkbuoy beh.hidden=1
@@ -449,7 +449,7 @@ prop buoy7 beh.hidden=1
 prop buoy7 zone.id=buoy7
 prop buoy7 zone.radius=9
 prop buoy7 zone.repeat=never
-prop buoy7 zone.message=Buoy seven rounded, off Leeward Key. One more: buoy eight, east towards Port Alize's island.
+prop buoy7 zone.message=Buoy seven rounded, off Leeward Key. One more: buoy eight, back towards Port Alize's island and its bell tower.
 prop buoy7 on.enter=show|buoy8\nshow|buoy8mark\nsound||event:/crafting/horns/air
 prop buoy7mark obj.name=buoy7mark
 prop buoy7mark beh.hidden=1
@@ -539,11 +539,11 @@ prop turtles2 creature.count=2
 quest title=The Trade Wind Regatta
 quest intro=A regatta course laid round a whole archipelago, the fleet scattered by a storm. The regatta notice is by the office in Port Alize.
 # Chapter 1 - the start (Port Alize)
-step reach|portalize|1|Tie up on the quay at Port Alize
+step reach|portalize|1|Make for the bell tower on the hill and tie up on the quay at Port Alize
 step read|The regatta notice|1|Read the regatta notice by the office
 step collect|story:racenumber|1|Sign on in the register for your race number
 step reach|harbourfloor|1|Dive to the harbourmaster's sunk skiff in the harbour
-step collect|story:pennant|1|Take Port Alize's pennant from the skiff's tiller box
+step collect|story:pennant|1|Open the tiller box on the sunk skiff for Port Alize's pennant
 step reach|startline|1|Sail out to the committee boat and fire the start cannon
 # Chapter 2 - the windward leg
 step reach|buoy1|1|Round buoy one
@@ -552,7 +552,7 @@ step reach|buoy3|1|Round buoy three off Windward Cay
 step reach|windwardcay|1|Call in at Windward Cay
 step read|The fishwife's complaint|1|Read the fishwife's complaint at the fish market
 step kill|Rat|4|Clear the rats out of the fish market's back room
-step collect|story:pennant|2|Take Windward Cay's pennant from the fishwife's box
+step collect|story:pennant|2|Open the fishwife's chest at the fish market for Windward Cay's pennant
 # Chapter 3 - the reef leg
 step reach|buoy4|1|Round buoy four at the reef passage's mouth
 step reach|buoy5|1|Thread the passage and round buoy five
@@ -562,7 +562,7 @@ step reach|leewardkey|1|Call in at Leeward Key
 # Chapter 4 - Leeward Key
 step read|The goatherd's plea|1|Read the goatherd's plea on the pen gate
 step catch|Goat|3|Net the goatherd's three goats
-step collect|story:pennant|3|Take Leeward Key's pennant from the goatherd's box
+step collect|story:pennant|3|Open the goatherd's chest by the pen gate for Leeward Key's pennant
 step reach|buoy7|1|Round buoy seven
 # Chapter 5 - the run home
 step reach|buoy8|1|Round buoy eight

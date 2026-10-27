@@ -85,10 +85,10 @@ prop digzone zone.message=The dig on Ashdig. An ore train, an excavator, a crane
 
 quest title=The Last Load
 quest intro=Somebody dug for ore on Ashdig. Find the dig.
-step reach|dig|1|Climb to the dig on the terrace
+step reach|dig|1|Climb to the dig on the terrace above the beach, by the three ore wagons
 step read|Foreman's tally|1|Read the foreman's tally
 step kill|Screecher|2|Drive off the two screechers
-step collect|story:oresample|3|Collect the three ore samples by the cut
+step collect|story:oresample|3|Open the three small sample chests by the cut
 step collect|story:loaded|1|Load the samples on the lead wagon
 step open|Assay box|1|Open the assay box under the crane
 quest done=The last load is on the wagon. The crew's pay is yours.

@@ -136,7 +136,7 @@ story crowbar|Brake van crowbar|quest:Vasagatan_Crowbar|A guard's crowbar from t
 story mailbag|Mail bag|quest:Tangaroa_Tape|A canvas mail bag, sealed with lead, wet through but whole.
 story receipt|Signed receipt|quest:Utopia_DettoCode|The station master's receipt book, signed: THREE BAGS - RECEIVED.
 
-note telegram Station master's telegram | (pinned on the platform's board)\n\nTO WHOEVER COMES - STOP - NIGHT MAIL WENT THROUGH VIADUCT MIDDLE SPANS - STOP - CREW SAFE CAME UP UNDER THE ROOFS - STOP - THREE MAIL BAGS STILL IN THE CAR LOCKERS - STOP - LOCKERS JAM - CROWBAR IN BRAKE VAN - STOP - BRING BAGS TO SIGNAL CABIN EAST SIDE AND SIGN IN AT COUNTER - STOP - SAFE KEY UNDER RECEIPT BOOK - STOP - P. LUNDGREN STATION MASTER
+note telegram Station master's telegram | (pinned on the platform's board)\n\nTO WHOEVER COMES - STOP - NIGHT MAIL WENT THROUGH VIADUCT MIDDLE SPANS - STOP - CREW SAFE CAME UP UNDER THE ROOFS - STOP - THREE MAIL BAGS STILL IN THE CAR LOCKERS - STOP - LOCKERS JAM - CROWBAR IN BRAKE VAN - STOP - BRING BAGS TO SIGNAL CABIN ACROSS THE LAGOON AND SIGN IN AT COUNTER - STOP - SAFE KEY UNDER RECEIPT BOOK - STOP - P. LUNDGREN STATION MASTER
 note brakevan Brake van locker | The guard's locker in the brake van, hanging over the gap: a lamp, a flask, his whistle - and the crowbar.
 loot brakevan story:crowbar*1;PlasticBottle_Water*1;Rope*2
 prop brakevan loot.refill=0
@@ -217,18 +217,18 @@ prop whale creature.count=1
 
 quest title=The Winter Post
 quest intro=A railway atoll with a broken viaduct and a train on the lagoon's floor. The station master left a telegram at the station.
-step reach|station|1|Walk up onto the station's platform
+step reach|station|1|Make for the tall viaduct and walk up onto the station's platform
 step read|Station master's telegram|1|Read the telegram pinned on the platform
 step open|Platform parcel box|1|Check the parcel box on the platform - rope and nails for the dive
 step reach|wreckage|1|Dive through the break and find the mail train on the lagoon's floor
-step open|Brake van locker|1|The lockers are jammed - climb out to the brake van and take the crowbar
+step open|Brake van locker|1|The lockers are jammed - climb out to the brake van and open its chest for the crowbar
 step open|Mail locker of car one|1|Catch your breath under the first car's roof and crowbar its locker
 step collect|story:mailbag|3|Work down the other two cars and bring up all three mail bags
-step open|Mail sack in the silt|1|Dig out the sack that fell from the train into the silt
-step reach|office|1|Cross to the signal cabin on the east side of the lagoon
+step open|Mail sack in the silt|1|Open the mail sack that fell from the train into the silt
+step reach|office|1|Cross to the signal cabin on the far side of the lagoon
 step collect|story:receipt|1|Sign the three bags in at the counter
 step open|Station master's safe|1|Open the station master's safe
-step catch|Goat|2|Round up two of the goats on the north ring - the line owes the island its milk
+step catch|Goat|2|Round up two of the goats on the ring of land round the lagoon - the line owes the island its milk
 quest done=The winter post is signed in, a season late and a little wet. Somewhere letters will arrive that everyone thought were lost.
 quest reward=Wool*2;Cooked_GenericMeat*3;Rope*2
 

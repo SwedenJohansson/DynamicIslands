@@ -84,10 +84,10 @@ prop campzone zone.message=The caravan camp. A cold fire, two chairs and a logbo
 
 quest title=Out of Road
 quest intro=A van broke down on Breakdown Bend. Find the camp.
-step reach|camp|1|Walk up to the caravan camp
+step reach|camp|1|Walk up to the broken-down van and the two caravans
 step read|Driver's log|1|Read the driver's log
 step kill|Hyena|2|Drive off the two hyenas at the end of the track
-step collect|story:vanfixed|1|Fit the spare fan belt to the van
+step collect|story:vanfixed|1|Take the spare fan belt from the crate by the old caravan frame, then fit it to the van
 step open|Driver's roof box|1|Open the van's roof box
 quest done=The van runs again. Nobody to drive it now, but the road food was good.
 quest reward=Rope*3;Scrap*4

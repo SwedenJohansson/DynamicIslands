@@ -358,11 +358,11 @@ prop dolphins creature.count=2
 
 quest title=Cold Start
 quest intro=An old rig among red sea stacks. The manager left a handover for the salvage crew at the top of the landing's ladder.
-step reach|landing|1|Tie up at the rig's boat landing
+step reach|landing|1|Make for the tall derrick and tie up at the rig's boat landing
 step read|Manager's handover|1|Climb the ladder to the cellar deck and read the manager's handover
 step kill|Screecher|2|Drive the screechers off the derrick
-step collect|story:startkey|1|Take the start key from the manager's locker in the control room
-step collect|story:diesel|1|Cross the rope bridge to the tank stack for diesel
+step collect|story:startkey|1|Open the manager's locker in the control room for the start key
+step collect|story:diesel|1|Cross the rope bridge to the tank stack and open the fuel chest for diesel
 step read|Restart checklist|1|Read the restart checklist on the control desk
 step reach|firedeck|1|Cold start the rig - and get down to the cellar deck
 step collect|story:valvetag|1|Shut valve one at the wellhead

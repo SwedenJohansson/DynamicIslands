@@ -129,11 +129,11 @@ prop caravanring zone.message=Caravan Rest: a ring of caravans round a well, the
 
 quest title=Odo's Rocket
 quest intro=A ring of caravans round a desert well, and a rocket on a pad of its own. Walk into the ring.
-step reach|caravan_ring|1|Walk into the ring of caravans
+step reach|caravan_ring|1|Make for the tall rocket caravan and walk into the ring of caravans beside it
 step read|Camp board|1|Read the camp board by the well
 step kill|Hyena|3|Drive off the three hyenas denned in the dunes
 step open|Odo's locker|1|Open Odo's locker by the yellow caravan
-step collect|story:sparkplug|1|Find Odo's spark plug, kept out of the sand
+step collect|story:sparkplug|1|Open the chest in the dune cave for Odo's spark plug
 step collect|story:rocketlit|1|Fit the spark plug in the rocket caravan
 quest done=The rocket caravan lit once, the way Odo always said it would. Nobody is waiting for calm days at Caravan Rest any more.
 quest reward=MetalIngot*3;CopperIngot*2;Rope*3

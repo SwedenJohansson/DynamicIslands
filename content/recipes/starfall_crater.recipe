@@ -148,7 +148,7 @@ island on.arrive=message||A round desert island with its middle punched in. Over
 story tongs|Fragment tongs|quest:Vasagatan_CarJack|Long ceramic tongs from the instrument crate: the fragments are too cold to touch.
 story fragment|Star fragment|Placeable_Utopia_LightBottleWhite|A shard of grey-blue rock with a violet light moving inside it, cold as ice.
 
-note fieldnotes Dr. Sato's field notes | STARFALL - FIELD NOTES, M. SATO\n\nDay 3. It's hollow. The impact broke twelve fragments off it and it CLOSED - the halves at the front sealed like a clam.\nDay 5. The fragments want to go back. Laid one near the star and it rolled towards it. Theory: all twelve in the cradle at its foot and it opens again.\nDay 6. Three fragments on the rim, three in the east gullies (hyenas - careful), three on the lake floor round the islet, three on the star's own crown.\nDay 7. Hyenas in camp. We're leaving. Tongs in the instrument crate - DON'T touch them bare-handed.
+note fieldnotes Dr. Sato's field notes | STARFALL - FIELD NOTES, M. SATO\n\nDay 3. It's hollow. The impact broke twelve fragments off it and it CLOSED - the halves at the front sealed like a clam.\nDay 5. The fragments want to go back. Laid one near the star and it rolled towards it. Theory: all twelve in the cradle at its foot and it opens again.\nDay 6. Three fragments on the rim, three in the badland gullies (hyenas - careful), three on the lake floor round the islet, three on the star's own crown.\nDay 7. Hyenas in camp. We're leaving. Tongs in the instrument crate - DON'T touch them bare-handed.
 note instruments Instrument crate | The instrument crate: a magnetometer, spare batteries, sample jars - and the long ceramic tongs.
 loot instruments story:tongs*1;Battery*1;Glass*2
 prop instruments loot.refill=0
@@ -281,9 +281,9 @@ prop dolphins creature.count=2
 
 quest title=Twelve Fragments
 quest intro=A crater lake with a fallen star in it, and a scientists' camp abandoned on the rim. Dr. Sato's notes are on the lab table.
-step reach|camp|1|Climb to the scientists' camp on the south rim
+step reach|camp|1|Make for the fallen star in the crater lake, then climb to the scientists' camp on the rim
 step read|Dr. Sato's field notes|1|Read Dr. Sato's field notes
-step open|Instrument crate|1|Take the fragment tongs from the instrument crate
+step open|Instrument crate|1|Open the instrument crate in the camp for the fragment tongs
 step collect|story:fragment|3|Gather the three fragments on the crater's rim
 step kill|Hyena|3|Drive the hyenas out of the badland gullies
 step collect|story:fragment|6|Gather the three fragments at the gullies' ends

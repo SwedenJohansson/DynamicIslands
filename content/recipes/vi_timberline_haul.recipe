@@ -135,7 +135,7 @@ note cookbook Camp cook's book | THE COOK'S BOOK\n\nDay 41. The bear again. It t
 note larder Cook's larder | What the bear left: tins, a sack of salt, and the cook's spare rope. A note pinned inside: GONE UP TO THE CUT.
 loot larder Rope*3;Leather*2;Plank*4;Seed_Mango*2
 prop larder loot.refill=0
-note fellertally Feller's tally | FELLER'S TALLY - THE LAST STAND\n\n38 trees down. 4 to go. Fuel cans stacked by the big stump, east side, under the tarp.\n\nIf the loader runs, the crane runs. If the crane runs, we are done.
+note fellertally Feller's tally | FELLER'S TALLY - THE LAST STAND\n\n38 trees down. 4 to go. Fuel cans stacked by the big stump, under the tarp.\n\nIf the loader runs, the crane runs. If the crane runs, we are done.
 note cutfuel Fuel cache in the cut | The mill's fuel, stacked under a tarp by the big stump.
 loot cutfuel story:raft-Vasagatan_GasTank*1;Plastic*2;Rope*1
 prop cutfuel loot.refill=0
@@ -171,13 +171,13 @@ prop cutblock zone.message=The cut block: stumps in rows, the excavator with a l
 
 quest title=Down to the Mill
 quest intro=A timber island with its last load half done. Come ashore at the log landing.
-step reach|log_landing|1|Come ashore at the log landing
+step reach|log_landing|1|Make for the mill and its crane and come ashore at the log landing
 step read|Haul boss's notice|1|Read the haul boss's notice at the landing
 step reach|logging_camp|1|Follow the haul road up to the logging camp
 step read|Camp cook's book|1|Read the cook's book in the camp cabin
 step kill|Bear|1|Drive off the bear raiding the camp
 step open|Cook's larder|1|Open the cook's larder
-step reach|cut_block|1|Climb to the cut block in the north
+step reach|cut_block|1|Climb to the cut block, the logged clearing with the big stump past the camp
 step read|Feller's tally|1|Read the feller's tally on the big stump
 step open|Fuel cache in the cut|1|Open the fuel cache in the cut
 step collect|story:loaderrun|1|Start the loader engine in the mill yard

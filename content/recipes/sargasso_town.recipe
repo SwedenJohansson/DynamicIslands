@@ -232,11 +232,11 @@ story pumphandle|Pump handle|quest:Varuna_CraneKey|An iron pump handle out of th
 story spyglass|Fen's spyglass|Binoculars|A brass spyglass with F.F. scratched on it.
 
 note notice Notice of the Council | SARGASSO TOWN - NOTICE OF THE COUNCIL OF CAPTAINS\n\nThe town's chest goes to whoever wins the Council: five votes of five.\n\nThe Council is at sea for the season. Each captain has left a vote token on board - for whoever does them a favour. Read the notes on their ships.\n\nThe ballot box is in the council hulk. Cast all five there.
-note mbekinote Captain Mbeki's note | Captain Mbeki - the Hesper, on the weed islet by the quay.\n\nMy water butt is empty and the lagoon's salt. Bring me a cask from the crater spring on the north rim and my vote is yours.
+note mbekinote Captain Mbeki's note | Captain Mbeki - the Hesper, on the weed islet by the quay.\n\nMy water butt is empty and the lagoon's salt. Bring me a cask from the crater spring on the rim and my vote is yours.
 note rourkenote Captain Rourke's note | Rourke - the Galley.\n\nRats. Big ones, the brown sort from the old towns. They've had my galley since spring. Clear them out and you'll find my vote on the stove.
 note yusufnote Captain Yusuf's note | Captain Yusuf, nailed to the keel of what used to be the Tamarind.\n\nShe rolled over in a squall. My strongbox is on the bottom under her - air's still trapped under the hull. Bring it up, open it, keep the vote that's in it.
 note ilkanote Captain Ilka's note | Ilka - the Merrow, listing.\n\nMy bilge pump's handle snapped and she's filling. There's a handle in the scrap barge that'll do. Fit it, pump her dry, and my vote's in the pump box.
-note fennote Captain Fen's note | Fen - the Kittiwake.\n\nLeft my spyglass up in the rim's lookout tower, east side. Can't climb it any more with this knee. Bring it back to the Kittiwake's wheel and I'll give you my vote.
+note fennote Captain Fen's note | Fen - the Kittiwake.\n\nLeft my spyglass up in the rim's lookout tower. Can't climb it any more with this knee. Bring it back to the Kittiwake's wheel and I'll give you my vote.
 note charter The Council's charter | THE CHARTER OF SARGASSO TOWN\n\n1. No ship sinks while another can hold it up.\n2. Everything is decided by the Council of Captains, five votes of five.\n3. The town's chest belongs to the town - and to whoever the whole Council votes for.\n4. Nobody pays rent. Everybody helps.
 note townchest The town chest | Sargasso Town's chest: everybody's savings, the plans for the recycler that turns the town's junk into rope and nails, a captain's hat, dried fish.
 loot townchest TradeToken*12;Blueprint_Recycler*1;Hat_Captain*1;Cooked_Herring*3;Rope*4
@@ -332,17 +332,17 @@ prop dolphins creature.count=2
 
 quest title=Five Votes
 quest intro=A floating town of wrecks, its Council of Captains away at sea. The Council's notice is on the quay.
-step reach|quay|1|Tie up at the town quay
+step reach|quay|1|Sail into the wreck town and tie up at its quay, where the Council's notice hangs
 step read|Notice of the Council|1|Read the Council's notice
-step collect|story:springwater|1|Fill a cask at the crater spring on the north rim (Captain Mbeki)
+step collect|story:springwater|1|Fill a cask at the pump by the crater spring on the rim (Captain Mbeki)
 step collect|story:vote|1|Pour it into Mbeki's water butt for her vote
 step kill|Tangaroa rat|4|Clear the rats out of Captain Rourke's galley
-step collect|story:vote|2|Take Rourke's vote from the galley's stove
+step collect|story:vote|2|Open Rourke's chest in the galley for his vote
 step reach|sunkhull|1|Dive under Captain Yusuf's capsized hull
-step collect|story:vote|3|Bring up Yusuf's strongbox for his vote
-step collect|story:pumphandle|1|Find a pump handle in the scrap barge (Captain Ilka)
+step collect|story:vote|3|Open Yusuf's chest on the sea floor under the hull for his vote
+step collect|story:pumphandle|1|Open the crate on the scrap barge for a pump handle (Captain Ilka)
 step collect|story:vote|4|Fit it and pump the Merrow dry for Ilka's vote
-step reach|lookout|1|Climb the lookout tower on the east rim (Captain Fen)
+step reach|lookout|1|Climb the tall lookout tower on the crater rim (Captain Fen)
 step collect|story:vote|5|Bring Fen's spyglass back to his wheel for his vote
 step reach|council|1|Go aboard the council hulk
 step read|The Council's charter|1|Read the town's charter

@@ -272,7 +272,7 @@ prop shrinebell tint.amount=0.6
 
 quest title=Before the Tide Turns
 quest intro=A maze of red stacks with a heron shrine at its heart. The tide-keeper's hut is on the outer stack.
-step reach|tidehouse|1|Climb up to the tide-keeper's hut on the outer stack
+step reach|tidehouse|1|Make for the tide-keeper's hut on the outer red stack and climb up to it
 step read|The tide-keeper's chart|1|Read the tide-keeper's chart
 step open|Tide-keeper's box|1|Take the rope and bait from the box in the corner of Tamsin's hut
 step reach|mazemouth|1|Find the lever at the maze's mouth
@@ -280,7 +280,7 @@ step open|Barrel in the dead end|1|Learn the channels first - find the barrel we
 step kill|Puffer fish|2|Clear the two puffers out of the dead ends before you race the gate
 step reach|shrine|1|Pull the lever and get through the maze before the shrine's gate closes
 step collect|story:heronpearl|1|Climb the shrine stack and take the pearl from the heron's nest
-step open|Tide-keeper's strongbox|1|Ring the heron's bell to ride the tide home - and open the strongbox
+step open|Tide-keeper's strongbox|1|Ring the bell by the heron's nest to ride the tide home, then open the strongbox in the hut
 step catch|Chicken|2|Catch Tamsin's two hens on the outer stack - they'll do better on a raft
 quest done=Left, right, straight, straight, left - and home on the tide. Tamsin would have been impressed.
 quest reward=Cooked_Herring*3;Rope*2;Stone*4

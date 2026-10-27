@@ -127,7 +127,7 @@ prop igloocamp zone.message=The old igloo: sled 4 half buried, and tracks in the
 
 quest title=The Fourth Sled
 quest intro=A sled depot in the snow with one sled missing from its row. Walk into the depot yard.
-step reach|depot_yard|1|Walk into the depot yard
+step reach|depot_yard|1|Walk into the depot yard, by the row of sleds and the sled shed
 step read|Depot log|1|Read the depot log on the board
 step reach|igloo_camp|1|Go out to the old igloo
 step kill|Polar bear|1|Drive the polar bear away from the sled

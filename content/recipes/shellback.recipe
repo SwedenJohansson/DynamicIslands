@@ -197,7 +197,7 @@ call shallows r=110 deep=5 n=1
 info title=Shellback
 info author=Custom Islands
 info description=An island shaped like a giant tortoise's shell, with a shrine at each of its four legs and a temple at its head. Each shrine keeps one scute behind its own trial - a dive, a climb, a fight, a catch. Bring all four to the head-temple.
-island on.arrive=message||A great green dome rising out of the sea, ribbed like a shell - and at its north end a headland like a head, with a temple on it. Turtles on the beach look at you as if they knew.
+island on.arrive=message||A great green dome rising out of the sea, ribbed like a shell - and at one end a headland like a head, with a temple on it. Turtles on the beach look at you as if they knew.
 
 story scute|Scute of the Tortoise|Placeable_GiantClam|A plate of polished shell as big as your hand, carved with a spiral.
 
@@ -255,7 +255,7 @@ prop tailbeach zone.radius=10
 prop tailbeach zone.message=The tail beach: tiki poles, a standing stone with carving on it, and turtles everywhere.
 prop diveshrine zone.id=diveshrine
 prop diveshrine zone.radius=6
-prop diveshrine zone.message=The Sea shrine, on the rocks of the south-west leg. Below it in the water, the dark mouth of a tunnel.
+prop diveshrine zone.message=The Sea shrine, on the rocks of its leg. Below it in the water, the dark mouth of a tunnel.
 prop seaair zone.id=seaair
 prop seaair zone.radius=3
 prop seaair zone.repeat=1
@@ -294,18 +294,18 @@ prop dolphins creature.count=2
 
 quest title=The Four Scutes
 quest intro=An island like a sleeping tortoise, a shrine at each of her legs. The Shell-keepers' tablet stands at the tail beach.
-step read|The Shell-keepers' tablet|1|Land on the tail beach and read the tablet on the standing stone
-step reach|diveshrine|1|Go to the Sea shrine on the south-west leg
-step collect|story:scute|1|Dive through the sea tunnel to the flooded chamber for the Sea scute
-step reach|climbshrine|1|Go to the Sky shrine on the north-east leg
-step collect|story:scute|2|Climb the needle for the Sky scute
+step read|The Shell-keepers' tablet|1|Make for the great green dome, land on the tail beach and read the tablet on the standing stone
+step reach|diveshrine|1|Go to the Sea shrine on the rocks above the tunnel mouth
+step collect|story:scute|1|Dive through the sea tunnel and open the small chest in the flooded chamber for the Sea scute
+step reach|climbshrine|1|Go to the Sky shrine at the foot of the tall needle
+step collect|story:scute|2|Climb the needle to the bird's nest for the Sky scute
 step reach|fightshrine|1|Step into the Tusk shrine's ring of stones
 step kill|Warthog|4|Win the Tusk shrine's fight
 step collect|story:scute|3|Take the Tusk scute from the stone chest
-step reach|catchshrine|1|Go to the Wing shrine on the north-west leg
+step reach|catchshrine|1|Go to the Wing shrine, where the sacred hens roam
 step catch|Chicken|3|Net the three sacred hens and bring them home
 step collect|story:scute|4|Take the Wing scute from the keeper-box
-step read|The head-temple's carving|1|Climb to the head-temple on the north headland and read the carving over its gate
+step read|The head-temple's carving|1|Climb to the head-temple on the headland and read the carving over its gate
 step reach|sanctum|1|Lay the four scutes in the sockets and enter the inner room
 step open|The Tortoise's treasure|1|Open the Tortoise's treasure
 quest done=Four plates of the Great Tortoise home in her head. Somewhere under your feet, something enormous and patient goes back to sleep - and your raft, the keepers would say, will never sink.

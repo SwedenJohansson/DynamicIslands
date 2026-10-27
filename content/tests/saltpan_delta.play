@@ -24,7 +24,7 @@ expect step 3
 
 # The pans in turn, north to south; the middle one first is refused
 use crank2
-expect message North sluice first
+expect message Pump-house sluice first
 use crank1
 wait 10
 expect shown salt1
