@@ -191,8 +191,8 @@ place Relay_support_beam_wood - at {$jx-5} 0.4 h=-3 rot=0,0,-90 sx=0.55
 next
 # the plank road up the cliff to the mountain's shoulder: two lanes of raft planks on posts
 # (10-25: a cut under the road's upper half, 0.4 m under its planks - on the bigger island the cliff came up through
-# the road and the walker stuck at z -24.5)
-for f 0.55 1.04 0.02
+# the road and the walker stuck at z -24.5; 10-27: the whole road - a cut starting part way up left a lip the walker stuck on, at z -14.8 and -9.5)
+for f -0.02 1.04 0.02
 brush flatten from {71.1-17.5*$f+2.1} {-0.9-27.7*$f-1.33} to {71.1-17.5*$f-2.1} {-0.9-27.7*$f+1.33} r=0.6 s=20 frames=100 h={2.0+18*$f}
 next
 ramp Block_Floor_Wood from 70.47 -0.5 2.4 to 52.97 -28.2 20.4 len=1.5 top=0

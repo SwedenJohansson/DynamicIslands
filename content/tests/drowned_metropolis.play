@@ -3,7 +3,8 @@
 # the middle, the Meridian Tower east (pool deck 6-9 m). The quest has 20 steps; the city's papers (notes and the chests'
 # tags) go into the journal as they are read, and its pages steps follow (3, 4, 5, 6).
 island The Drowned Metropolis
-offset -12.2788 8.3228
+# (no offset: the city's points line up with the island as it comes - the recipe's land-centre offset, -14 7, put
+# the Harbour Tower's ladder 17 m off; 10-27)
 expect step 0
 expect title The Keys of Meridian
 
@@ -20,7 +21,7 @@ climb -19.2 -50 h=6.5
 expect stand -22 -50 h=12.4
 zone harbourroof
 expect step 3
-walk -22 -50 to -35 -50 to -45 -50 to -55 -50 h=21.2
+walk -22 -50 to -35 -50 to -45 -50 to -50.5 -50 to -55.5 -49.5 h=21.2
 read Mayor's memo
 expect step 4
 open Penthouse safe

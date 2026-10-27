@@ -164,8 +164,9 @@ namespace DynamicIslands
 						string island = Rest(line, 1).Replace(" keep", "").Trim();
 						keep = line.EndsWith(" keep");
 						playOffset = Vector2.zero;
-						// (a plan's test: the copy the plan brought - tuned to - is the one played)
-						IslandWorldState.Entry planned = planMode ? IslandWorldState.Islands.FirstOrDefault(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(x.Rule)) : null;
+						// (a plan's test: the copy the plan brought - tuned to - is the one played; "island <rule>" names it by the
+						// plan's rule - a generated island without a play of its own, The Abyss Expedition's sunken island)
+						IslandWorldState.Entry planned = planMode ? IslandWorldState.Islands.FirstOrDefault(x => !string.IsNullOrEmpty(x.Rule) && (string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase) || x.Rule == island)) : null;
 						Vector3 offIsland = planned != null ? me.transform.position - planned.Position : Vector3.zero;
 						offIsland.y = 0f;
 						if (planned != null && (planned.Root == null || offIsland.magnitude > 300f))

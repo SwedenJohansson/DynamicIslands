@@ -7,11 +7,13 @@ include old_mine_islet.play
 tune shelter
 include shelter_atoll.play
 tune sunken
+island sunken
 # (its top is under water: the player swims over it - a visit counts within its land's radius)
 at 0 0
 tune caverns
 include ironreef_caverns.play
 tune wreck
+island wreck
 stand
 tune city
 include drowned_metropolis.play
