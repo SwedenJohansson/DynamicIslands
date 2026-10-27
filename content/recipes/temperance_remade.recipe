@@ -199,12 +199,7 @@ brush flatten at -30 -38 r=3.5 s=20 frames=150 h=9
 brush flatten from -51 -15 to -51 -23.5 r=4.5 s=20 frames=60 h=4.4
 brush auto at -50 -46 r=40 s=10 frames=25
 brush rock at -50 -43 r=15 s=10 frames=30
-place TP_IcePillar02 - at -73 -44 ground sit yaw=30
-place TP_IcePillar01 - at -67 -59 ground sit yaw=120
 place TP_IcePillar04_Snow - at -48 -69 ground sit yaw=200
-place TP_IcePillar04_Snow - at -56 -52 ground sit yaw=40
-place TP_IcePillar02 - at -40 -61 ground sit yaw=160
-place TP_IcePillar01 - at -69 -32 ground sit yaw=250
 # D The supply plane (north-east): down on the flats past the village
 call ar_plane x=46 z=44 h=3 yaw=210 al=supplyplane crate=planecrate
 call rr_pad x=36 z=-38 h=3 r=10
