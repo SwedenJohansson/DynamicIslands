@@ -322,7 +322,8 @@ call hw_zone x=-14 z=18 al=af_jumpz id=af_jumps r=6 h=1 msg="Stacks, one higher 
 # (moved 2 m in from 89 -35: its reward chest stood on the shore slope with nowhere to stand by it, PQ11 10-27)
 call hw_machine x=87 z=-33 yaw=-45 al=af_machine nm="Beacon transmitter" obj=RT_PowerBox sc=1 a=af_top b=af_cave done=af_fixed rew=af_rewchest rnote=af_rewnote msg="It works." hint="It wants the radar valve from Gannet Rock and the morse key from Turtle Cave."
 call hw_note x=86.4 z=-33.8 yaw=-25 al=af_hint
-call ss_piece x=-58 z=47 al=af_piece1 set="Pilot wings"
+# (moved from -58 47, where it lay 3 m under the ground at the runway's soft north edge, PQ11 10-27)
+call ss_piece x=-61 z=30 al=af_piece1 set="Pilot wings"
 call ss_piece x=-28 z=-64 al=af_piece2 set="Pilot wings"
 call ss_piece x=38 z=59 al=af_piece3 set="Pilot wings"
 call ss_piece x=-61 z=-13 al=af_piece4 set="Pilot wings"

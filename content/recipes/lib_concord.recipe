@@ -73,7 +73,7 @@ end
 # notebox: a note lying on a small box at x z (alias al)
 macro notebox x=0 z=0 yaw=0 al=note
 place "Box Small" - at $x $z ground sit yaw=$yaw
-place Note_Paper $al at $x $z ground y=0.7 drop yaw={$yaw+15}
+place Note_Paper $al at $x $z ground y=1.6 drop yaw={$yaw+15}
 end
 #
 # camp: a survivors' camp at x z - a tent, a fire, a crate and a lantern (the tent faces yaw)

@@ -280,15 +280,18 @@ namespace DynamicIslands
 			public int Add(Vector3 p, byte k, int col)
 			{
 				int i = Pos.Count;
-				Pos.Add(p); Kind.Add(k); Out.Add(new List<int>()); In.Add(new List<int>());
+				Pos.Add(p); Kind.Add(k); Out.Add(None); In.Add(None);
 				if (col >= 0) { List<int> l; if (!Col.TryGetValue(col, out l)) Col[col] = l = new List<int>(); l.Add(i); }
 				return i;
 			}
-			public void Link(int a, int b) { if (a == b || Out[a].Contains(b)) return; Out[a].Add(b); In[b].Add(a); }
+			// (a spot's lists are made on its first link: millions of spots on a big island, PQ11 10-27 RAM)
+			public static readonly List<int> None = new List<int>(0);
+			public void Link(int a, int b) { if (a == b || Out[a].Contains(b)) return; if (Out[a] == None) Out[a] = new List<int>(4); if (In[b] == None) In[b] = new List<int>(4); Out[a].Add(b); In[b].Add(a); }
 			public List<int> At(int i, int j) { List<int> l; return i >= 0 && j >= 0 && i < NX && j < NZ && Col.TryGetValue(i * NZ + j, out l) ? l : null; }
 		}
 
 		static int reachMask;
+		static bool reachSky, reachWalkIn;
 
 		/// <summary>The reach-and-escape measure of one island in the world, as it stands now. done(n): problems found.</summary>
 		static IEnumerator ReachAnalyze(IslandWorldState.Entry e, Vector2 offset, string state, Action<int> done)
@@ -449,7 +452,8 @@ namespace DynamicIslands
 					if (hd > 1.6f) continue;
 					float feet = g.Kind[k] == 2 ? p.y - 0.9f : p.y;
 					// (the top: a floor at the ladder's top beside it - where the climb ends)
-					if (g.Kind[k] == 0 && feet >= lb.max.y - 1.0f && feet <= lb.max.y + 1.3f && LadderClear(p + Vector3.up * 1.0f, flat, ch)) { g.Link(node, k); g.Link(k, node); tops++; continue; }
+					// (or over its top end: a ladder up through a hole in a landing - the line to its middle crossed the landing, PQ11 10-27)
+					if (g.Kind[k] == 0 && feet >= lb.max.y - 1.0f && feet <= lb.max.y + 1.3f && (LadderClear(p + Vector3.up * 1.0f, flat, ch) || LadderClear(p + Vector3.up * 1.0f, new Vector3(flat.x, lb.max.y + 0.6f, flat.z), ch))) { g.Link(node, k); g.Link(k, node); tops++; continue; }
 					// (the foot, and any spot beside it up its length: a hand reaches it with nothing solid in between)
 					if (hd <= 1.0f && feet >= lb.min.y - 1.8f && feet <= lb.max.y - 1.0f)
 					{
@@ -477,6 +481,29 @@ namespace DynamicIslands
 				if (g.Kind[k] != 1) continue;
 				int ci = Mathf.FloorToInt((g.Pos[k].x - g.X0) / g.Cell), cj = Mathf.FloorToInt((g.Pos[k].z - g.Z0) / g.Cell);
 				if (ci <= 1 || cj <= 1 || ci >= g.NX - 2 || cj >= g.NZ - 2) sea.Add(k);
+			}
+			// (a flying island (higher than a climb out of the sea): players build stairs or pillars up from the raft to its edge
+			// (GUIDE "Flying islands") - the arrivals and the ways back are the rim: a standing spot under the open sky with
+			// a drop of 5 m or more (or nothing at all) beside it. PQ11 10-27)
+			reachSky = e.Position.y > 6f;
+			if (reachSky)
+			{
+				sea.Clear();
+				for (int k = 0; k < g.Pos.Count; k++)
+				{
+					if (g.Kind[k] != 0) continue;
+					Vector3 p = g.Pos[k];
+					if (Physics.Raycast(p + Vector3.up * 1.7f, Vector3.up, 60f, mask, QueryTriggerInteraction.Ignore)) continue;
+					int ci = Mathf.FloorToInt((p.x - g.X0) / g.Cell), cj = Mathf.FloorToInt((p.z - g.Z0) / g.Cell);
+					bool edge = false;
+					for (int dd = 0; dd < 4 && !edge; dd++)
+					{
+						List<int> col = g.At(ci + (dd == 0 ? 1 : dd == 1 ? -1 : 0), cj + (dd == 2 ? 1 : dd == 3 ? -1 : 0));
+						edge = col == null || !col.Any(o => g.Kind[o] == 0 && g.Pos[o].y > p.y - 5f);
+					}
+					if (edge) sea.Add(k);
+				}
+				report.Add("REACH " + name + " | flying island (" + e.Position.y.ToString("F0") + " m up) | - | NOTE arrivals and ways out: " + sea.Count + " rim spots (stairs built up from the raft), not the sea");
 			}
 			if (sea.Count == 0) { report.Add("REACH " + name + " | - | - | FAIL no open sea round it on the grid"); problems++; }
 			// the four arrival sides: the open sea nearest the middle of each edge
@@ -577,6 +604,9 @@ namespace DynamicIslands
 				File.WriteAllLines(file, new[] { "# " + DateTime.Now.ToString("yyyy-MM-dd HH:mm") + " " + state + (reachLabel.Length > 0 ? " " + reachLabel : "") + " offset " + offset.x.ToString("F2", CultureInfo.InvariantCulture) + " " + offset.y.ToString("F2", CultureInfo.InvariantCulture) }.Concat(report).ToArray());
 			}
 			catch (Exception ex) { Log("  (reach file: " + ex.Message + ")"); }
+			// (the grid freed before the next island: Raft's heap is reused, not grown)
+			g.Pos = null; g.Kind = null; g.Out = null; g.In = null; g.Col = null; g.Vox = null; fwd = null; back = null; parent = null; backParent = null; trapped = null; seen = null;
+			GC.Collect();
 			done(problems);
 		}
 
@@ -1067,7 +1097,9 @@ namespace DynamicIslands
 				ReachInputOn(speed);
 				try
 				{
+					reachWalkIn = true;
 					yield return ReachWalkPath(pl, e, g, pin, speed, r => why = r);
+					reachWalkIn = false;
 					if (why == null)
 					{
 						string u = ReachUseNow(pl, e, g, t);
@@ -1075,7 +1107,34 @@ namespace DynamicIslands
 						if (u != null) { yield return ReachApproach(pl, e, g, t); u = ReachUseNow(pl, e, g, t); }
 						if (u != null) why = "walked in, but " + u;
 					}
-					if (why == null) yield return ReachWalkPath(pl, e, g, pout, speed, r => why = r == null ? null : "used it, then on the way out: " + r);
+					List<int> wayOut = pout;
+					// (stopped by something the grid didn't see, but already where it is used - in the zone, in reach of the
+					// chest: a player is done there too. The way out then starts from the grid spot under the player, PQ11 10-27)
+					if (why != null && why.StartsWith("stuck") && ReachUseNow(pl, e, g, t) == null)
+					{
+						Vector3 feet = ReachFeet(pl) - e.Position + g.Anchor;
+						int near = -1; float nd = 1.6f;
+						for (int k = 0; k < g.Pos.Count; k++)
+						{
+							if (g.Kind[k] == 3 || !back[k]) continue;
+							float dk = (g.Pos[k] - feet).magnitude;
+							if (dk < nd) { nd = dk; near = k; }
+						}
+						if (near >= 0)
+						{
+							Log("  walk to " + t.Kind + " '" + t.Name + "' at " + speed + "x: " + why + " - but usable there; out from the grid spot " + nd.ToString("F1") + " m off");
+							why = null;
+							wayOut = PathOut(backParent, near);
+							int ll = wayOut.FindLastIndex(a => g.Kind[a] != 1);
+							if (ll >= 0 && ll < wayOut.Count - 1)
+							{
+								int en = ll + 1;
+								while (en < wayOut.Count - 1 && ScFlat(g.Pos[wayOut[en]], g.Pos[wayOut[ll]]) < 15f) en++;
+								wayOut = wayOut.GetRange(0, en + 1);
+							}
+						}
+					}
+					if (why == null) yield return ReachWalkPath(pl, e, g, wayOut, speed, r => why = r == null ? null : "used it, then on the way out: " + r);
 				}
 				finally { ReachInputOff(); }
 				if (why == null) { result("PASS walked (in from the " + sideNames[bestS] + ", " + pin.Count + " cells; out " + pout.Count + " cells; " + speed + "x)"); yield break; }
@@ -1225,6 +1284,13 @@ namespace DynamicIslands
 				// the chest's window; the walker frees them the same way, noted)
 				if (ReachFree(pl)) for (int f = 0; f < 5; f++) { MmHold(pl, false); yield return null; }
 			}
+			else if (reachSky && reachWalkIn && g.Kind[way[0]] == 0 && (ReachFeet(pl) - W(way[0])).magnitude > 1.5f)
+			{
+				// (a flying island: the walk in starts on its rim, where a player's stairs from the raft come up)
+				PlayerMove.To(pl, W(way[0]) + Vector3.up * 0.95f);
+				for (int f = 0; f < 10; f++) { MmHold(pl, false); yield return null; }
+				if (ReachFree(pl)) for (int f = 0; f < 5; f++) { MmHold(pl, false); yield return null; }
+			}
 			Vector3 prev = ReachFeet(pl) + Vector3.up * 0.9f;
 			string bad = null;
 			Func<string> guard = () =>
@@ -1234,7 +1300,14 @@ namespace DynamicIslands
 				string r = null;
 				if (d.sqrMagnitude > 1e-6f && d.magnitude < 30f)
 					foreach (RaycastHit h in Physics.RaycastAll(prev, d.normalized, d.magnitude, reachMask, QueryTriggerInteraction.Ignore))
-						if (!h.collider.transform.IsChildOf(pl.transform)) { r = "INVALID: the walker crossed " + BlockerName(h.collider) + " at " + (h.point - e.Position).ToString("F1"); break; }
+					{
+						if (h.collider.transform.IsChildOf(pl.transform)) continue;
+						// (a collider Raft's own CharacterController never meets - a layer the player's layer ignores, or a pair
+						// set to ignore - is passed through by a real player too, e.g. a landmark zipline's rope: not tunnelling, PQ11 10-27)
+						CharacterController gcc = pl.GetComponent<CharacterController>();
+						if (gcc != null && (Physics.GetIgnoreLayerCollision(gcc.gameObject.layer, h.collider.gameObject.layer) || Physics.GetIgnoreCollision(gcc, h.collider))) continue;
+						r = "INVALID: the walker crossed " + BlockerName(h.collider) + " (layer " + LayerMask.LayerToName(h.collider.gameObject.layer) + ", player " + (gcc != null ? LayerMask.LayerToName(gcc.gameObject.layer) : "?") + ") at " + (h.point - e.Position).ToString("F1"); break;
+					}
 				prev = now;
 				return r;
 			};

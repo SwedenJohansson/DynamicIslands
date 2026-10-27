@@ -336,7 +336,7 @@ end
 # sk_notebox: a note lying on a small box at x z
 macro sk_notebox x=0 z=0 yaw=0 al=note
 place "Box Small" - at $x $z ground sit yaw=$yaw
-place Note_Paper $al at $x $z ground y=0.7 drop yaw={$yaw+15}
+place Note_Paper $al at $x $z ground y=1.6 drop yaw={$yaw+15}
 end
 #
 # sk_reef: a tight reef under water at x z: corals, leaf coral and a silver alga

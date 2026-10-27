@@ -68,9 +68,9 @@ call tzone x=-1.22 z=2.2 al=beaconzone id=beacon r=6 msg="The beacon. An iron to
 push at -22.87 -14.39 h=4
 call hut w=2 d=2 y=0.1
 place Loot_Chest radiochest at 2.2 2.4 y=0.1 sit yaw=180
-place Placeable_Table_Basic - at 0.9 1 y=0.1 sit
-place RT_PowerBox radioset at 0.9 1 y=1.05 yaw=0 scale=0.6
-place Placeable_Lantern_Metal - at 0.4 2.4 y=0.1 sit
+place Placeable_Table_Basic - at 0.6 2.4 y=0.1 sit
+place RT_PowerBox radioset at 0.6 2.4 y=1.05 yaw=0 scale=0.6
+place Placeable_Lantern_Metal - at 2.4 0.5 y=0.1 sit
 pop
 place Antenna_cone - at -24.07 -12.89 ground y=0 scale=0.5
 
