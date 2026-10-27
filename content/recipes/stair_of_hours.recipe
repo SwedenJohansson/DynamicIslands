@@ -108,7 +108,7 @@ scatter Bush2 5 at -50 -5 r=24 seed=9683 free=1
 call treasure x=-44 z=4 r=4 n=1 seed=9684 kind=0
 prop treasure9684 treasure.loot=MetalOre*3;CopperOre*2
 # --- The hour-keeper's cave (east): a secret -------------------------------------------------------------------------
-call hw_zone x=55 z=-20 al=keeperz id=hourkeeper r=4 msg="A cave in the east: a cot, a row of stopped clocks - the hour-keeper's."
+call hw_zone x=55 z=-20 al=keeperz id=hourkeeper r=4 msg="A cave in the rock: a cot, a row of stopped clocks - the hour-keeper's."
 place Note_Paper bonote at 53.5 -20.5 h=6.45 drop yaw=180
 loot keeperchest Rope*2;Plank*3;Battery*1;MetalIngot*1
 prop keeperchest loot.refill=0
@@ -130,11 +130,11 @@ island on.arrive=message||Terraces climbing into the sky like a stair, a stone f
 story lens|Telescope lens|Placeable_Lantern_Metal|The big telescope's lens, from the star station on Shadow Crag.
 story sighted|The Array sighted|Placeable_Lantern_Metal|Through Halvard's telescope you saw the Lodestone Array's crown, 35 m over the sea.
 
-note sundial Sundial instructions | THE STAIR OF HOURS\n\nWalk the hours as the shadow walks them: the first, the third, the seventh - then the twelfth shows on the top terrace, and noon is at the telescope.\nThe Institute's telescope looks west, to the Array. Its LENS is kept at the star station on Shadow Crag, out of the dust - fetch it first. The vault under it opens at noon.
+note sundial Sundial instructions | THE STAIR OF HOURS\n\nWalk the hours as the shadow walks them: the first, the third, the seventh - then the twelfth shows on the top terrace, and noon is at the telescope.\nThe Institute's telescope looks out over the sea to the Array. Its LENS is kept at the star station on Shadow Crag, out of the dust - fetch it first. The vault under it opens at noon.
 note vault Telescope vault | The telescope vault: Halvard's last plans - titanium tools, a big backpack and an electric zipline - "for the crown".
-note lisenote Dr. Lise Holm's note | STAR STATION - L. HOLM, ASTRONOMER\n\nI have taken the lens out of the big telescope and locked it up here. Halvard wants to watch the Array day and night, and a man who watches a thing day and night stops sleeping, then stops eating, then starts climbing.\n\nThe stars are wrong over the Gravity Sea. Not the stars - the light. It bends round the Array the way light bends round a lens. I have measured it: the bend points down, to the seabed, to the root.\n\nWhoever takes the lens back down: the crown is in the west, 35 m up. You will see it sparking. Do not stare at it too long. Halvard did.
+note lisenote Dr. Lise Holm's note | STAR STATION - L. HOLM, ASTRONOMER\n\nI have taken the lens out of the big telescope and locked it up here. Halvard wants to watch the Array day and night, and a man who watches a thing day and night stops sleeping, then stops eating, then starts climbing.\n\nThe stars are wrong over the Gravity Sea. Not the stars - the light. It bends round the Array the way light bends round a lens. I have measured it: the bend points down, to the seabed, to the root.\n\nWhoever takes the lens back down: the crown is out over the sea, 35 m up. You will see it sparking. Do not stare at it too long. Halvard did.
 note bonote Hour-keeper Bo Nyman's note | HOUR-KEEPER'S BOOK - B. NYMAN\n\nMy job: wind the clocks on the hour stones every morning, so the Institute's sundial and its clocks agree.\n\nSince Lift Day they do not agree. The sundial is right - the sun does not care about magnets. The clocks are all slow, every one, by the same eleven minutes, as if time itself were heavier here.\n\nI have stopped winding them. I have stopped my own watch too. I tell the time by the shadow of the gnomon now, like the old ones did.
-note glidernote Glider pilot's note | Came over from the Lodestone Array's side on the thermals. Halfway across, the glider's iron frame was pulled west, hard, like a hand on a rope. Cut loose, came down here. If you are going to the Array: leave your iron behind, or tie it down. - T. Falk
+note glidernote Glider pilot's note | Came over from the Lodestone Array's side on the thermals. Halfway across, the glider's iron frame was pulled sideways, hard, like a hand on a rope. Cut loose, came down here. If you are going to the Array: leave your iron behind, or tie it down. - T. Falk
 note lastlog Halvard's last log | HALVARD - LAST LOG\n\nI see the crown from here: four magnet arms round the core, sparking blue, 35 m over the sea, and the field pulling at everything.\n\nI am too old to climb it. Whoever reads this: shut off the crown first, then dive to the root. Band 1300.\n\n- E. H.
 loot vault Blueprint_TitaniumTools*1;Blueprint_BackpackAdvanced*1;Blueprint_ZiplineToolElectric*1;TitaniumIngot*2;MetalIngot*2
 prop vault loot.refill=0
@@ -165,15 +165,15 @@ prop vaulthatch obj.name=vaulthatch
 prop telescope obj.name=telescope
 prop telescope beh.use=Look through Halvard's telescope
 prop telescope if.use=has|story:lens|1\n!signal|sighted
-prop telescope on.use=signal||sighted\ngive||story:sighted*1\nhide|vaulthatch\nshow|vault\nmessage||Far to the west, 35 m over the sea: four magnet arms round a core, sparking blue. At the telescope's foot, the vault's hatch springs open.\ncamera|telescope|arrayview|5|30
-prop telescope else.use=message||The telescope shows only blur - its lens is missing. (Or, if it has its lens: the crown is still there, sparking blue in the west.)
+prop telescope on.use=signal||sighted\ngive||story:sighted*1\nhide|vaulthatch\nshow|vault\nmessage||Far out across the water, 35 m over the sea: four magnet arms round a core, sparking blue. At the telescope's foot, the vault's hatch springs open.\ncamera|telescope|arrayview|5|30
+prop telescope else.use=message||The telescope shows only blur - its lens is missing. (Or, if it has its lens: the crown is still there, sparking blue out over the sea.)
 
 quest title=Walking the Hours
-quest intro=A sundial as big as an island, 30 m up. Climb to its first hour.
-step reach|hour_1|1|Climb onto the first hour stone's terrace
+quest intro=A sundial as big as an island, 30 m up. Make for the sundial and climb to its first hour.
+step reach|hour_1|1|Make for the giant sundial; climb onto the first hour stone's terrace
 step read|Sundial instructions|1|Read the sundial's instructions
 step reach|hour_12|1|Walk the hours - the third, the seventh, then noon on the top terrace
-step reach|cragfoot|1|Find the path up Shadow Crag in the west
+step reach|cragfoot|1|Find the path up Shadow Crag, the tall crag with the star station
 step reach|cragtop|1|Climb Shadow Crag to the old star station
 step read|Dr. Lise Holm's note|1|Read the astronomer's note at the star station
 step collect|story:lens|1|Take the telescope's lens from the star station chest

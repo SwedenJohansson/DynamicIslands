@@ -143,7 +143,7 @@ call snowfall x=0 z=0 r=46 al=snow fog=#c0c8cc fa=0.5
 # (its strongbox, an air pocket); a third buried treasure on the berg's foot.
 call fz_mount x=64 z=-4 h=24 r=7
 call ar_plants_snowy x=64 z=-4 r=26 seed=12745
-call fz_cairn x=64 z=-1 al=cranecairn chest=cranecab zal=cranezone zid=crane_top msg="The berg's top. The old harbour crane lies toppled down the far side; its split cab sits here on the ice. Below, the nine ships - and from here you see the dark shape under the ice in the south-west: a tenth."
+call fz_cairn x=64 z=-1 al=cranecairn chest=cranecab zal=cranezone zid=crane_top msg="The berg's top. The old harbour crane lies toppled down the far side; its split cab sits here on the ice. Below, the nine ships - and from here you see the dark shape under the ice beside the city: a tenth."
 place Beam_Long_01 cranejib at 60.6 -6.2 ground y=0.2 yaw=35
 place Beam_Long_01 cranejib at 61.8 -7.6 ground y=0.25 yaw=80
 prop cranejib tint.color=#5a3a2a
@@ -216,7 +216,7 @@ island on.arrive=message||Nine masts in the fog, and not a light among them. The
 story chapelcode|The chapel's code|Placeable_Lantern_Metal|You typed the charter's year into the chapel strongbox's keypad.
 
 note charter City charter | SAGA DRIFT - CITY CHARTER\n\nNine keels, one city. Signed on the ice in the year 1909, when the last ship was lashed.\nNo ship leaves alone. No light goes out alone. The radio belongs to all.\n\n(the chapel keeps the city's strongbox; its lock is set to the year of this charter)
-note minutes Council cabin minutes | COUNCIL OF SAGA DRIFT - MINUTES, KEPT BY THE CLERK, R. AAS\n\nItem 1: the order from the Coldhold, come by the courier's dog sledge, sealed. The Warden writes: all comms off, every band, so the signal from the south will not find us. Carried, five to four. The radio was shut down the same night.\nItem 2: the Whale to be told nothing. Not carried. The Whale was sent north on our band anyway - on the Coldhold's order, in our voice. The clerk notes his shame.\nItem 3: Tor Hallen, called Sparks, found broadcasting from a tent on the north-east ice, against Item 1, for the fourth time. Banished. He asked to take the llama. Carried, nine to nothing; nobody else will feed her.\nItem 4: the rendering house is full of rats again.
+note minutes Council cabin minutes | COUNCIL OF SAGA DRIFT - MINUTES, KEPT BY THE CLERK, R. AAS\n\nItem 1: the order from the Coldhold, come by the courier's dog sledge, sealed. The Warden writes: all comms off, every band, so the signal from the south will not find us. Carried, five to four. The radio was shut down the same night.\nItem 2: the Whale to be told nothing. Not carried. The Whale was sent north on our band anyway - on the Coldhold's order, in our voice. The clerk notes his shame.\nItem 3: Tor Hallen, called Sparks, found broadcasting from a tent on the ice outside the ships, against Item 1, for the fourth time. Banished. He asked to take the llama. Carried, nine to nothing; nobody else will feed her.\nItem 4: the rendering house is full of rats again.
 note sermon Last sermon | (the chaplain's last sermon, on the lectern - Father Ansgar)\n\nWe were nine ships because no ship can live alone up here. We lashed our keels and promised each other: no light goes out alone.\nNow the vault asks us to be silent for its sake. A seed bank under the glacier, they say, for when the world is green again. The Warden is afraid of something in the south. So am I. I am afraid of it the way I am afraid of the dark - which is to say, I light a candle and keep talking.\nWe sent Tor away for singing to penguins. God forgive us, the penguins miss him.\nI say a city that stops talking is already dead.\nThe glacier is on 1000. Go and see what they are keeping.
 note flensechest Smelter yard chest | Smelter yard chest: the electric smelter's plans, for when the generator runs.
 note councilchest Council chest | The council's chest: beets from the planter boxes, the city's seal.
@@ -235,7 +235,7 @@ loot anchorchest Blueprint_AnchorStationaryAdvanced*1;MetalIngot*2;Rope*4
 prop anchorchest obj.name=anchorchest
 prop anchorchest beh.hidden=1
 prop bell1 obj.name=bell1
-prop bell1 beh.use=Ring the south-west ship's bell
+prop bell1 beh.use=Ring the gangway ship's bell
 prop bell1 if.use=!signal|bell1
 prop bell1 on.use=signal||bell1\ngive||story:bellrung*1\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The bell clangs over the ice. Far off, something creaks on the flagship's bow.
 prop bell2 obj.name=bell2
@@ -243,7 +243,7 @@ prop bell2 beh.use=Ring the middle ship's bell
 prop bell2 if.use=!signal|bell2
 prop bell2 on.use=signal||bell2\ngive||story:bellrung*1\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||A second bell. The ice round the anchor cracks.
 prop bell3 obj.name=bell3
-prop bell3 beh.use=Ring the north-west ship's bell
+prop bell3 beh.use=Ring the far ship's bell
 prop bell3 if.use=!signal|bell3
 prop bell3 on.use=signal||bell3\ngive||story:bellrung*1\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The third bell - the city's old 'all hands'. The winch is ready to turn.
 story bellrung|A ship's bell rung|Placeable_Lantern_Metal|One of the three bells of the city's "all hands".
@@ -260,7 +260,7 @@ prop treasure12051 treasure.loot=TitaniumOre*3
 
 # --- DEEP 10-24: the pawl, the ledger, the extras ---
 story pawl|The winch's pawl|Placeable_Lantern_Metal|The anchor winch's iron pawl - without it the chain runs free.
-note ledger Harbour master's ledger | HARBOUR MASTER'S LEDGER - K. VIK\n\nThe Coldhold's order came with the post: the anchor winch is not to turn, so no ship leaves to carry word south. I took its pawl out myself.\nThe old harbour crane on the berg went over in the January gale, jib first, down the far side. Its cab lies split on the top, where no one goes now. I carried the pawl up there on my own two feet, wrapped it in the city flag and put it in the cab's chest. Then I sat in the wreck and cried a bit, which the ledger need not record, and does.\nThe city's all hands is three bells. With the bells rung and the pawl back, the winch turns.\nLast line: the tenth ship went down in the south-west lead the winter we signed. We do not count her. We should.
+note ledger Harbour master's ledger | HARBOUR MASTER'S LEDGER - K. VIK\n\nThe Coldhold's order came with the post: the anchor winch is not to turn, so no ship leaves to carry word south. I took its pawl out myself.\nThe old harbour crane on the berg went over in the January gale, jib first, down the far side. Its cab lies split on the top, where no one goes now. I carried the pawl up there on my own two feet, wrapped it in the city flag and put it in the cab's chest. Then I sat in the wreck and cried a bit, which the ledger need not record, and does.\nThe city's all hands is three bells. With the bells rung and the pawl back, the winch turns.\nLast line: the tenth ship went down in the lead the winter we signed. We do not count her. We should.
 note cranecab Crane cab chest | The fallen crane's cab: the winch's pawl, wrapped in a flag.
 loot cranecab story:pawl*1;MetalIngot*2;Rope*2
 prop cranecab loot.refill=0
@@ -302,17 +302,17 @@ prop chapelbox if.open=signal|chapelcode
 prop chapelbox else.open=message||The strongbox is locked. The keypad beside it wants a year.
 
 quest title=The Floating City
-quest intro=Nine ships frozen into one city - and silent. Climb the gangway.
-step reach|gangway|1|Climb the gangway onto the ice
+quest intro=Nine ships frozen into one city - and silent. Make for the forest of masts and climb the gangway.
+step reach|gangway|1|Make for the nine ships; climb the gangway onto the ice
 step read|City charter|1|Read the city charter by the gangway
 step kill|Screecher|3|Drive off the three screechers nesting on the masts
 step blueprint|Blueprint_SmelterElectric|1|Take the electric smelter's plans from the smelter yard
 step read|Council cabin minutes|1|Read the council cabin minutes
-step read|Sparks' farewell|1|Find the banished radio man's tent on the north-east ice
+step read|Sparks' farewell|1|Find the banished radio man's tent on the ice outside the ships
 step open|Chapel strongbox|1|Open the chapel strongbox (the charter knows its year)
 step kill|Rat|4|Clear the four rats out of the rendering house
 step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced biofuel extractor's plans from the rendering house
-step read|Harbour master's ledger|1|The winch's pawl is gone. Find the harbour master's ledger in the berg cave, east of the city
+step read|Harbour master's ledger|1|The winch's pawl is gone. Find the harbour master's ledger in the cave at the foot of the big iceberg
 step reach|crane_top|1|Climb the iceberg on foot to the fallen crane's cab on its top
 step collect|story:pawl|1|Take the winch's pawl from the crane cab chest
 step collect|story:bellrung|3|Ring the three ships' bells - "all hands"

@@ -21,7 +21,7 @@ include lib_highwater
 # RESIZE 10-25 (box agent, older-storyline deep pass): Radius 32 -> 82: the whole lower town's ground on the seabed;
 # the old square, bell, cistern and cage stay in the middle.
 # DEEP 10-25: Lookout Rock - the town's old signal rock in the north-east climbs out of the sea: its dry crown (4 m over
-# the sea) holds the signal mast. The cistern valve's wheel lies in the salt cellar in the west (the salt merchant took
+# the sea) holds the signal mast. The cistern valve's wheel lies in the salt cellar, away from the square (the salt merchant took
 # it off so nobody would flood her stock); her house lies drowned in the south with an air pocket; a fishing boat lies
 # wrecked in the north-west. Voices: Ilse Marn, the salt merchant Ada Sund, the signalman Tomas Berg.
 new
@@ -156,9 +156,9 @@ story valvewheel|Cistern valve wheel|Bolt|The cistern valve's wheel, which the s
 story marnkey|Marn's cage key|Placeable_Lantern_Metal|The key of Dr. Marn's cage, from the cistern store.
 
 note ledger Sinkmarket ledger | SINKMARKET - LEDGER\n\nLift Day: the upper market went up with the hill. We stayed down with the cisterns.\nStock: rope, salt, water plans.\nThe Institute's bell by the square has air; Dr. Marn keeps it.\nIf the ballast ever drops, it is THEIR fault, up there.
-note belllog Bell keeper's log | BELL KEEPER - I. MARN\n\nThe cistern hall flooded on day 2. The valve on its west side drains it into the old pipes - the hall fills with air when you turn it.\nThe stingrays came in with the water. I locked myself in the cage against them and threw the key in the cistern store. Stupid.
-note tomaslog Signalman Tomas Berg's log | SIGNAL LOG - T. BERG\n\nLift Day, 3:51. The upper town went up like a lid. I signalled: WHAT HAPPENED. Nobody up there knew either.\n\nThe rock is the only part of the lower town that still has its head in the air. I sleep on the crown and swim down for water from the cistern, while it has water.\n\nDay 4. Ada has taken the wheel off the cistern valve. 'Nobody drains my hall,' she says - her salt is stored in the pipes. She has hidden it in her salt cellar in the west. Marn needs that hall dry to get at her key. I have told Ada so. Ada has told me what I can do with my flags.\n\nIf you go down: the spare bottle is in my deck box. Use it.
-note adanote Salt merchant Ada Sund's note | (Pinned to the salt sacks with a fish hook)\n\nTO WHOEVER IS READING MY SALT CELLAR:\n\nThe wheel is in the box. I took it off so the Institute's people could not drain the cistern hall into the pipes where my salt is. My salt is slush now anyway. So take it.\n\nTake it to the valve on the hall's west side. Get the poor woman out of her cage. I said some hard things to her about her Institute. Some of them were true. None of them were her fault.\n\n- A. Sund, salt and rope
+note belllog Bell keeper's log | BELL KEEPER - I. MARN\n\nThe cistern hall flooded on day 2. The valve on its far wall drains it into the old pipes - the hall fills with air when you turn it.\nThe stingrays came in with the water. I locked myself in the cage against them and threw the key in the cistern store. Stupid.
+note tomaslog Signalman Tomas Berg's log | SIGNAL LOG - T. BERG\n\nLift Day, 3:51. The upper town went up like a lid. I signalled: WHAT HAPPENED. Nobody up there knew either.\n\nThe rock is the only part of the lower town that still has its head in the air. I sleep on the crown and swim down for water from the cistern, while it has water.\n\nDay 4. Ada has taken the wheel off the cistern valve. 'Nobody drains my hall,' she says - her salt is stored in the pipes. She has hidden it in her salt cellar, away from the square. Marn needs that hall dry to get at her key. I have told Ada so. Ada has told me what I can do with my flags.\n\nIf you go down: the spare bottle is in my deck box. Use it.
+note adanote Salt merchant Ada Sund's note | (Pinned to the salt sacks with a fish hook)\n\nTO WHOEVER IS READING MY SALT CELLAR:\n\nThe wheel is in the box. I took it off so the Institute's people could not drain the cistern hall into the pipes where my salt is. My salt is slush now anyway. So take it.\n\nTake it to the valve on the hall's far wall. Get the poor woman out of her cage. I said some hard things to her about her Institute. Some of them were true. None of them were her fault.\n\n- A. Sund, salt and rope
 note cisternstore Cistern store | The cistern store: the water works' plans - a tank, pipes, a purifier and a big store chest - and on top, a cage key on a string.
 note marnsatchel Marn's satchel | Ilse Marn's satchel: her survey book and a coil of rope.
 note marnmap Marn's map of the pendulum | MARN'S MAP\n\nA long, thin island drawn in pencil, 12 m over the water, a pendulum hall on top. Under it, an arrow: "the KEEL - the field's lowest point. Halvard measures from there."\n\nIn the margin: "the cable car went to the pendulum; band 1000."
@@ -205,15 +205,15 @@ prop cablezone zone.radius=4
 prop cablezone zone.message=The cable car's bottom station. The cable runs up into the sea - towards the pendulum.
 
 quest title=The Sunken Square
-quest intro=The ballast stone fell into a town on the seabed, 30 m down. Dive to it.
-step reach|ballast_stone|1|Dive to the ballast stone in the square
+quest intro=The ballast stone fell into a town on the seabed, 30 m down. Dive to it, by the rock that sticks out of the sea.
+step reach|ballast_stone|1|Dive by the rock that sticks out of the sea to the ballast stone in the square
 step read|Sinkmarket ledger|1|Read the market's ledger
 step reach|bell|1|Breathe in the diving bell
 step read|Bell keeper's log|1|Read the bell keeper's log
-step reach|rockfoot|1|Find Lookout Rock north-east of the square
+step reach|rockfoot|1|Find Lookout Rock, the rock that reaches the surface
 step reach|rocktop|1|Climb Lookout Rock to its dry crown
 step read|Signalman Tomas Berg's log|1|Read the signalman's log on the crown
-step read|Salt merchant Ada Sund's note|1|Find the salt cellar in the west and read Ada's note
+step read|Salt merchant Ada Sund's note|1|Find Ada's salt cellar on the seabed and read her note
 step collect|story:valvewheel|1|Take the cistern valve's wheel from the salt cellar box
 step collect|story:drained|1|Set the wheel on the cistern valve and turn it
 step reach|cistern|1|Breathe in the drained cistern hall

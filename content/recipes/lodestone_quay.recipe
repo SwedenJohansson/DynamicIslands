@@ -167,16 +167,16 @@ loot pinbox story:leverpin*1;Rope*2;Plank*4
 prop pinbox loot.refill=0
 note pinbox Survey mast deck box | A box lashed to the rail at the top of the survey mast. A tag: PIN - DO NOT RETURN.
 note idaletter Ida Kristen's letter | Erik -\n\nThey said it was safe. They said the cellar line was 'a precaution'. Well, the cellar line is where our hill broke, and the house and the orchard and your father's bees went up with it, and I was standing in the boathouse with the nets.\n\nI watched it go. It did not fall. It just kept rising, slowly, as if it had remembered something.\n\nThe apples are still up there. Halvard says they will ripen. Halvard says a great many things.\n\nWhen you come back from the market, do not go near the hill. Come here. I will wait at the boathouse until the needles lie down again.\n\n- Ida
-note brandtbook Harbour master Brandt's tide book | TIDE BOOK - Lodestone Quay. H. Brandt, harbour master.\n\nMon: high water 06:10. The needles twitch at noon. Nobody says why.\nTue: an anchor chain stood up off the quay. Straight up, like a rope trick. The Institute says 'magnetite'.\nWed: dug into the seam east of the quay. The rock pulls the nails out of your boots. I have stopped wearing boots.\nThu: LIFT DAY. Seven rowing boats went up with the hill. Ours came down in the afternoon, without its oars. The tide office went the other way.\n\nFor whoever keeps this book after me: the seam runs north, under Cut Hill and out to sea. Halvard's Array is built on the end of it. That is not a coincidence.
-note pilotnote Mail pilot's note | Put her down in the long grass on the north side. The compass went round in circles from the coast in, and the wings got heavy, as if somebody was sitting on them. The Institute's mail is in the crate. I am not flying back over that hill. - R. Lind, island post
+note brandtbook Harbour master Brandt's tide book | TIDE BOOK - Lodestone Quay. H. Brandt, harbour master.\n\nMon: high water 06:10. The needles twitch at noon. Nobody says why.\nTue: an anchor chain stood up off the quay. Straight up, like a rope trick. The Institute says 'magnetite'.\nWed: dug into the seam beside the quay. The rock pulls the nails out of your boots. I have stopped wearing boots.\nThu: LIFT DAY. Seven rowing boats went up with the hill. Ours came down in the afternoon, without its oars. The tide office went the other way.\n\nFor whoever keeps this book after me: the seam runs under Cut Hill and out to sea. Halvard's Array is built on the end of it. That is not a coincidence.
+note pilotnote Mail pilot's note | Put her down in the long grass by the hill. The compass went round in circles from the coast in, and the wings got heavy, as if somebody was sitting on them. The Institute's mail is in the crate. I am not flying back over that hill. - R. Lind, island post
 note lassechalk Survey hand Lasse's note | LASSE WAS HERE. Four storeys of ladder for a view of a hole in the sky. The pin is in the box at the top, like the Director said. Don't tell Halvard I ate his lunch up here. Again.
 quest title=Lift Day
-quest intro=A harbour with a hill sliced flat behind it. Go up onto the quay.
-step reach|quay|1|Go onto the quay
+quest intro=A harbour with a hill sliced flat behind it. Make for the flat-topped hill and go up onto the quay below it.
+step reach|quay|1|Make for the flat-topped hill; go onto the harbour quay below it
 step read|Institute notice: Lift Day|1|Read the Institute's notice by the water
-step read|Ida Kristen's letter|1|Find the Kristens' boathouse in the west and read Ida's letter
-step read|Harbour master Brandt's tide book|1|Read the harbour master's tide book in the seam cave in the east
-step reach|cutfoot|1|Find the trail up Cut Hill, north of the quay
+step read|Ida Kristen's letter|1|Find the Kristens' boathouse by the water and read Ida's letter
+step read|Harbour master Brandt's tide book|1|Read the harbour master's tide book in the seam cave, a tunnel in the shore rock
+step reach|cutfoot|1|Find the trail up Cut Hill, the flat-topped hill behind the quay
 step reach|cuttop|1|Climb Cut Hill
 step collect|story:leverpin|1|Climb the survey mast and take the lever pin from its deck box
 step collect|story:needles|1|Set the pin and pull the compass ring's lever

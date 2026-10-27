@@ -142,7 +142,7 @@ info description=A low ice shelf the storms keep pushing back into the lanes: on
 island on.arrive=message||A tent on a scrap of ice, guy-lines white with frost. Nobody answers.
 
 note strandednote Stranded note | (pinned to the tent flap, in a hand that loops on every letter)\n\nGood morning, ice! This is Tor Hallen, "Sparks", broadcasting to nobody from the Squall Shelf.\nThe council of Saga Drift put me on a raft for breaking the Warden's silence. One broadcast. Three minutes. I played a song and read out the ice for the woman on 700, and they said that was three minutes too many.\nThe squall took my raft on the third night. I have the tent, the cache, and Bramble - the llama - when she stays.\nA bear comes round at dusk. I go in and keep still. Hardest thing I have ever done, keeping still and quiet.\nIf the shelf drifts near you: the cache is yours. Take Bramble too. She likes being scratched behind the left ear only.
-note weatherlog Weather log | WEATHER LOG - SQUALL SHELF (T. Hallen)\n\nDay 1: north wind, snow. Bramble unimpressed.\nDay 3: squall. Raft gone. Bramble still unimpressed.\nDay 6: fog. The shelf turns with the current, nine days round, near as I can count. Built the mast from the raft's last spar to keep my hands busy.\nDay 8: picked up the woman on 700 on the mast's wire. Just a few seconds. "Ice holding at the Whale. Still here." I said "Still here" back, out loud, to nobody. Felt better than a week of soup.\nDay 9: the same lanes again, past Saga Drift. Leaving on foot while the ice holds, north, toward the Whale. If they won't let me talk, I'll go and stand next to someone who does.
+note weatherlog Weather log | WEATHER LOG - SQUALL SHELF (T. Hallen)\n\nDay 1: north wind, snow. Bramble unimpressed.\nDay 3: squall. Raft gone. Bramble still unimpressed.\nDay 6: fog. The shelf turns with the current, nine days round, near as I can count. Built the mast from the raft's last spar to keep my hands busy.\nDay 8: picked up the woman on 700 on the mast's wire. Just a few seconds. "Ice holding at the Whale. Still here." I said "Still here" back, out loud, to nobody. Felt better than a week of soup.\nDay 9: the same lanes again, past Saga Drift. Leaving on foot while the ice holds, out over the ice toward the Whale. If they won't let me talk, I'll go and stand next to someone who does.
 note tentcache Tent cache | The cache: hides, wool, eggs, goo - and a net launcher.
 loot tentcache Leather*2;Wool*2;Feather*4;Egg*2;ExplosiveGoo*1;NetGun*1;NetCanister*3
 prop tentcache loot.refill=0
@@ -151,7 +151,7 @@ prop tentcache loot.refill=0
 note mastchest Weather mast chest | Sparks' chest by the anemometer: spare vanes, a flask, socks.
 loot mastchest Rope*2;Wool*2;MetalIngot*1
 prop mastchest loot.refill=0
-note cavemark Initials in the ice | (cut in the cave wall)\n\nT.H. - DAY 4. WIND TOO STRONG TO WALK.\nThe old sled on the west lip runs if you feed it bolts. There's a ledge out over the lead with the sealers' cache on it.\nCaller 1 of the day: a gull. Said a great deal. All of it rude.
+note cavemark Initials in the ice | (cut in the cave wall)\n\nT.H. - DAY 4. WIND TOO STRONG TO WALK.\nThe old sled on the lip of the shelf runs if you feed it bolts. There's a ledge out over the lead with the sealers' cache on it.\nCaller 1 of the day: a gull. Said a great deal. All of it rude.
 note icecavechest Ice cave chest | A sealer's chest frozen into the cave floor.
 loot icecavechest Leather*2;Feather*3;Raw_GenericMeat*2
 prop icecavechest loot.refill=0
@@ -170,8 +170,8 @@ prop bear creature.zone=tent
 prop llama creature.count=1
 
 quest title=The Stranded Tent
-quest intro=A tent on the ice shelf. Go and look.
-step reach|tent|1|Go to the tent
+quest intro=A tent on the ice shelf. Make for the weather mast on the hill and go and look.
+step reach|tent|1|Make for the weather mast on the hill; the tent is on the ice shelf
 step read|Stranded note|1|Read the note pinned to the tent
 step kill|Polar bear|1|Drive off the polar bear that comes round at dusk
 step open|Tent cache|1|Open the tent's cache
@@ -179,7 +179,7 @@ step read|A QSL card for you|1|Read the postcard tucked in the cache's lid
 step catch|Llama|1|Net Bramble, the traveller's llama
 step reach|mast_top|1|Climb the weather hill to the traveller's weather mast
 step read|Weather log|1|Read the traveller's weather log at the mast
-quest done=Sparks walked north toward the Whale. The tent, the cache and Bramble are yours now; the shelf will drift on without you.
+quest done=Sparks walked out over the ice toward the Whale. The tent, the cache and Bramble are yours now; the shelf will drift on without you.
 quest reward=Leather*2;Wool*2;CopperIngot*2
 
 save Squall Shelf

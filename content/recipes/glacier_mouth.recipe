@@ -141,7 +141,7 @@ pop
 # climbs back out. A third buried treasure under the Icefall.
 call fz_mount x=-44 z=52 h=30 r=6
 call ar_plants_snowy x=-40 z=46 r=24 seed=12896
-call fz_cairn x=-44 z=52 al=surveycairn chest=mastchest zal=mastzone zid=glacier_top msg="The top of the Icefall, the highest ice of the whole white sea: a cairn where the survey mast stood. Far below, the Ringwave - and west, a dark line across the cave path: a crevasse, roofed with thin ice."
+call fz_cairn x=-44 z=52 al=surveycairn chest=mastchest zal=mastzone zid=glacier_top msg="The top of the Icefall, the highest ice of the whole white sea: a cairn where the survey mast stood. Far below, the Ringwave - and a dark line across the cave path: a crevasse, roofed with thin ice."
 call fz_note x=-45.6 z=53.6 yaw=200 al=surveylog
 call fz_zone x=-32 z=38 al=icefallzone id=icefall r=6 msg="The foot of the Icefall. Blue ice in steps, and on the top a cairn of stones, the survey team's flag on it."
 call treasure x=-22 z=56 r=10 n=1 seed=12895
@@ -216,7 +216,7 @@ info author=Custom Islands
 info description=A glacier's front at the sea: a wall of ice with a cave at its foot, an expedition depot with a drill rig and a store - and cut deep into the ice, taller than a house, the Ringwave. The eighth island of The Frozen Horizon.
 island on.arrive=message||A wall of ice across the island, and on its face a sign cut taller than a house: a ring, a wave through it.
 
-note orders Expedition orders | COLDHOLD EXPEDITION - ORDERS\n\nDepot at the glacier mouth. Drill for the vault's air shafts. Keep the cave mouth clear.\nNo signals. The Warden's order came up with the courier, sealed, inside the ordinary post like every letter he carries. The council of Saga Drift has agreed to silence; so will we. I do not like it. A crew that cannot call for help digs carefully, I suppose.\nThe bears come down off the ice when the wind is from the north. Two of them, the same two, every time. Ivar calls them the Inspectors. Do not feed the Inspectors, and do not let them inspect the rations.\nThe rig takes three bits. One stays in the depot stores, not in Ivar's pocket.\n\n- Expedition leader R. Aune
+note orders Expedition orders | COLDHOLD EXPEDITION - ORDERS\n\nDepot at the glacier mouth. Drill for the vault's air shafts. Keep the cave mouth clear.\nNo signals. The Warden's order came up with the courier, sealed, inside the ordinary post like every letter he carries. The council of Saga Drift has agreed to silence; so will we. I do not like it. A crew that cannot call for help digs carefully, I suppose.\nThe bears come down off the ice when the wind turns bitter. Two of them, the same two, every time. Ivar calls them the Inspectors. Do not feed the Inspectors, and do not let them inspect the rations.\nThe rig takes three bits. One stays in the depot stores, not in Ivar's pocket.\n\n- Expedition leader R. Aune
 note carvingnote Carving note | (scratched on a board under the carving)\n\nWe did not cut this. It was here when we came, under the snow, and the snow slid off it in a single night, as if it wanted to be seen.\nThe same sign as the sea doors of the Coldhold. A ring, a wave through it. They knew it here too, whoever they were, long before the Warden and his silence.\nThe vault lies under the glacier: its door is in the ice past the crack, and its gate answers on 700. If you have come this far, go in gently. Something down there has been listening for a lot longer than we have.\nI have stopped telling the crew it is only a carving.\n\n- R. A.
 note depotstores Depot stores | Pine seeds for the harbour, rope, rations and a spare drill bit.
 note drillrig Drill rig chest | The rig's chest: titanium tools' plans, the only bits that bite ice.
@@ -253,7 +253,7 @@ prop leaderchest loot.refill=0
 loot cavechest Blueprint_ZiplineToolElectric*1;CaveMushroom*4;Battery*1
 prop cavechest loot.refill=0
 prop cavechest if.open=has|story:surveykey
-prop cavechest else.open=message||The cave mouth chest is locked with the survey team's lock. Their cairn stands on top of the Icefall, north-west.
+prop cavechest else.open=message||The cave mouth chest is locked with the survey team's lock. Their cairn stands on top of the Icefall, the tallest ice.
 
 # --- DEEP 10-24: the survey team's log, the snowcat, the key ---
 story surveykey|The survey key|Placeable_Lantern_Metal|The survey team's key: it opens the expedition's chest at the cave mouth.
@@ -339,22 +339,22 @@ pop
 # --- end of jump course gm ---
 
 quest title=The Glacier
-quest intro=A wall of ice, a depot at its foot. Climb up to the depot.
-step reach|depot|1|Climb up to the expedition depot
+quest intro=A wall of ice, a depot at its foot. Make for the great wall of ice, then climb up to the depot.
+step reach|depot|1|Make for the ice wall; climb up to the expedition depot at its foot
 step read|Expedition orders|1|Read the expedition orders
 step kill|Polar bear|2|Drive off the two polar bears
-step collect|story:drillbit|3|Find the drill rig's three bits (depot, the bears' sled, the old camp)
+step collect|story:drillbit|3|Find the drill rig's three bits in chests: depot, bears' sled, old camp
 step collect|story:drilled|1|Fit the bits and start the drill rig
 step blueprint|Blueprint_TitaniumTools|1|Take the titanium tools' plans from the drill rig
 step blueprint|Blueprint_BackpackAdvanced|1|Take the advanced backpack's plans from the leader's tent
-step reach|icefall|1|The cave mouth chest has the survey team's lock. Go to the Icefall in the north-west
+step reach|icefall|1|The cave mouth chest has the survey team's lock. Go to the Icefall, the tallest ice of the glacier
 step reach|glacier_top|1|Climb the Icefall on foot to the survey team's cairn on its top
 step read|Survey log|1|Read the survey log under the cairn
-step reach|crevasse|1|Walk the crevasse cave's path in the west
+step reach|crevasse|1|Walk the path through the crevasse cave
 step collect|story:surveykey|1|Dive to the survey snowcat and take the key from its box
 step read|Carving note|1|Go to the Ringwave on the ice wall and read the note under it
-step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline tool's plans from the cave mouth
-step reach|jump_gm_top|1|Jump up the ice-cutters' block stair on the east shore and look for the vault's door
+step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline tool's plans from the cave mouth chest
+step reach|jump_gm_top|1|Jump up the ice-cutters' block stair by the shore and look for the vault's door
 quest done=The vault is under the glacier. Its door is on 700.
 quest reward=MetalIngot*3;Rope*3;Leather*2
 

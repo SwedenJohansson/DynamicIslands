@@ -108,7 +108,7 @@ call ar_plants_snowy x=0 z=58 r=26 seed=12131
 call fz_tower x=0 z=60 h=26 n=6 al=beacon chest=beaconchest zal=beaconzone zid=beacon_top msg="The beacon on the Needle. The white sea all round - and the stack's mast, small as a pin."
 place Note_Sign stardome at -0.9 58.6 h=40.57 sit yaw=180
 place Note_Paper chart4 at 0.6 58.4 h=40.6 drop yaw=30
-call fz_zone x=0 z=31 al=needlezone id=needle_foot r=6 msg="The foot of the Needle. A way of sorts climbs its south face; at the top, the beacon tower."
+call fz_zone x=0 z=31 al=needlezone id=needle_foot r=6 msg="The foot of the Needle. A way of sorts climbs its rock face; at the top, the beacon tower."
 # the operator's cave (its mouth north, to the Needle)
 call ar_cave x=-40 z=26 h=4 yaw=0 al=opcave chest=opcavechest
 place Note_Paper opdiary at -39.2 31.4 h=4.5 drop yaw=200
@@ -152,7 +152,7 @@ info description=A basalt stack in a grey sea, snow on every ledge: a relay hut 
 island on.arrive=message||Snow on every ledge. A relay mast on the stack's top - half of it bent flat by the ice.
 
 note relaylog Relay log: fragments | SIGNALSTACK RELAY - LOG (I. Rask, operator)\n\nDay 1: a call from the north, band 500. Not a voice at first - a hand key, short bursts, as if whoever sends it dares not stay on the air long. Then a woman's voice, very calm, reading the ice like a weather forecast.\nDay 2: "...floes... open in the..." Then nothing for six hours.\nDay 3: "...whale..." - just that. I said it back to her. No answer. I don't think she can hear us. I think she's talking to anyone.\nDay 4: the courier brought a sealed order with the post. Twenty years this stack has listened. It is not going to stop because somebody sealed an envelope.\nDay 19: the mast came down in the night. I wrote her last fragment on a slip and left it under the mast box.\nIf you are reading this: the Receiver's plans are in the desk. I'm in the cave under the Needle, where it's warm. Listen north.
-note shelfsign Relay shelf | SIGNALSTACK RELAY\nPath to the mast: east side, mind the ice.
+note shelfsign Relay shelf | SIGNALSTACK RELAY\nPath to the mast: up the rock, mind the ice.
 note relaydesk Relay desk | Ivo's desk drawer: the Receiver's plans, wire, a mug frozen in.
 note relaystores Relay stores | The relay's stores: seed, planks, rope - and a torn guy clamp.
 note mastbox Mast box | The mast's junction box, iced shut. Plans taped inside the lid.
@@ -219,27 +219,27 @@ prop shelfzone zone.radius=6
 prop shelfzone zone.message=The relay shelf. Footprints in the snow, a day old or a year.
 prop mastzone zone.id=mast_top
 prop mastzone zone.radius=4
-prop mastzone zone.message=The stack's top. The wind from the north smells of ice.
+prop mastzone zone.message=The stack's top. The wind off the sea smells of ice.
 
 quest title=The Fragments
-quest intro=A relay rock in the snow. Somebody was listening here. Land on the shelf.
-step reach|shelf|1|Land on the relay shelf
+quest intro=A relay rock in the snow. Somebody was listening here. Make for the tall mast on the rock and land on the shelf below it.
+step reach|shelf|1|Make for the tall mast; land on the shelf with the relay hut
 step read|Relay log: fragments|1|Read the relay log
 step blueprint|Blueprint_Reciever|1|Take the Receiver's plans from the relay desk
 step blueprint|Blueprint_HeadLight|1|Take the head light's plans from the relay desk too
 step read|Post for the relay|1|Read the courier's note by the shelf's stores
 step reach|mast_top|1|Climb the path to the mast on the stack's top
-step collect|story:clamp|3|Find the mast's three guy clamps (shelf, path ledge, top)
+step collect|story:clamp|3|Find the mast's three guy clamps in chests: shelf, path ledge, mast foot
 step collect|story:mastfixed|1|Fit the clamps on the mast winch
-step reach|needle_foot|1|The mast box has a star lock. Cross the island to the Needle, the sea stack in the north
-step read|Operator's diary|1|Find the operator's cave below the Needle and read his diary
-step read|The sealed order|1|Read the letter half burnt in Ivo's stove
+step reach|needle_foot|1|The mast box has a star lock. Go to the Needle, the tall sea stack with the beacon tower
+step read|Operator's diary|1|Find the operator's cave near the Needle and read the diary
+step read|The sealed order|1|Read the half-burnt letter by the stove in the same cave
 step reach|beacon_top|1|Climb the Needle and its beacon tower to the star dome
 step collect|story:starcode|1|Open the mast box's star lock (the four star charts and the dome's numbers)
 step blueprint|Blueprint_Antenna|1|Take the antenna's plans from the mast box
 step blueprint|Blueprint_Recycler|1|Take the recycler's plans from the mast box too
-step read|Fragment 4|1|Read the fourth fragment
-quest done=North, past the white sea, a ship called the Whale is held in the ice - and a woman on it will not stay silent. The sealers' floes call on 700.
+step read|Fragment 4|1|Read the fourth fragment by the mast box
+quest done=Far across the white sea, a ship called the Whale is held in the ice - and a woman on it will not stay silent. The sealers' floes call on 700.
 quest reward=MetalIngot*2;Rope*3
 
 # (box agent 10-25: generated rocks left hanging over the ground check - cleared)

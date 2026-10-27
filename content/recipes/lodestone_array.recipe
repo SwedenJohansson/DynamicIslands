@@ -172,7 +172,7 @@ place Note_Paper arnenote at -55.65 -54.63 h=7.05 drop yaw=30
 call treasure x=-48 z=-46 r=4 n=1 seed=9696 kind=0
 prop treasure9696 treasure.loot=Scrap*4;Bolt*3;Hinge*1
 # --- The coil-winders' cave (east): a secret --------------------------------------------------------------------------
-call hw_zone x=75 z=-35 al=coilz id=coilcave r=4 msg="A cave in the east rock, its walls wound with copper wire - the coil-winders' workshop."
+call hw_zone x=75 z=-35 al=coilz id=coilcave r=4 msg="A cave in the rock, its walls wound with copper wire - the coil-winders' workshop."
 place Note_Paper rutnote at 73.5 -35.5 h=6.45 drop yaw=180
 loot coilchest CopperIngot*3;Rope*2;Battery*1;Bolt*2
 prop coilchest loot.refill=0
@@ -192,30 +192,30 @@ info description=The Halvard Institute's crown, 35 m over the sea and the size o
 island on.arrive=message||Four iron arms round a core, sparking in a storm, 35 m over the sea. Every compass on the raft spins.
 
 story arraypower|Array generator on|Battery|You started the Array's generator: the coils can be worked.
-story coilnorth|North coil off|Bolt|You pulled the north coil's lever.
-story coileast|East coil off|Bolt|You pulled the east coil's lever.
-story coilsouth|South coil off|Bolt|You pulled the south coil's lever.
-story coilwest|West coil off|Bolt|You pulled the west coil's lever.
+story coilnorth|First coil off|Bolt|You pulled the first coil's lever.
+story coileast|Second coil off|Bolt|You pulled the second coil's lever.
+story coilsouth|Third coil off|Bolt|You pulled the third coil's lever.
+story coilwest|Fourth coil off|Bolt|You pulled the fourth coil's lever.
 story beamset|Beam on the core door|Battery|The beam runs through two mirrors onto the core's door panel.
 story cutoffkey|Core cutoff key|Bolt|The core cutoff's key, from the lightning mast on Storm Peak.
 story crownoff|Crown shut off|Placeable_Lantern_Metal|You pulled the core cutoff: the Array's crown went dark.
 
-note manual Array operating manual | LODESTONE ARRAY - OPERATING MANUAL\n\n1. Start the generator on the landing ring.\n2. Take the coils off line in order: north, east, south, west. Ride the lines between the arms.\n3. Cross to the core by the glass bridge. The core's door takes the beam (emitter, two mirrors).\n4. The CUTOFF is by the core. It stops the crown - not the root. Its KEY is kept by the chief engineer, off the plate.
+note manual Array operating manual | LODESTONE ARRAY - OPERATING MANUAL\n\n1. Start the generator on the landing ring.\n2. Take the coils off line in order: first, second, third, fourth. The line from the ring leads to the first arm, and each line leads on to the next. Ride the lines between the arms.\n3. Cross to the core by the glass bridge. The core's door takes the beam (emitter, two mirrors).\n4. The CUTOFF is by the core. It stops the crown - not the root. Its KEY is kept by the chief engineer, off the plate.
 note ringlocker Ring locker | The landing ring's locker: the crew's spare lights, wire and a little food.
-note coilstatus Coil status | COIL STATUS\n\nNORTH - ON\nEAST - ON\nSOUTH - ON\nWEST - ON\n\nField: rising. Do NOT approach the core with the coils on line.
-note coilsoff Coils offline | COIL STATUS\n\nNORTH - OFF\nEAST - OFF\nSOUTH - OFF\nWEST - OFF\n\nField: falling. The core may be approached.
+note coilstatus Coil status | COIL STATUS\n\nARM 1 - ON\nARM 2 - ON\nARM 3 - ON\nARM 4 - ON\n\nField: rising. Do NOT approach the core with the coils on line.
+note coilsoff Coils offline | COIL STATUS\n\nARM 1 - OFF\nARM 2 - OFF\nARM 3 - OFF\nARM 4 - OFF\n\nField: falling. The core may be approached.
 note arnenote Foreman Arne Dahl's note | BUILDERS' CAMP - A. DAHL, FOREMAN\n\nWe built the arms in eleven weeks. Halvard paid in titanium, which tells you something about Halvard.\n\nWe were told: the Array lifts nothing, it only measures. On Lift Day it lifted our camp, the huts, the cook and me, 35 m into the air, and set us down again as if nothing had happened. The huts did not survive the setting down. The cook has not spoken since.\n\nSigrid has the cutoff key. She took it up Storm Peak to the lightning mast, so nobody could pull the cutoff by mistake - or on purpose. If you mean to shut the crown, you need her key. Go up the peak. Watch the iron spikes in a storm.
 note sigridlog Chief engineer Sigrid Ahl's log | CHIEF ENGINEER - S. AHL\n\nThe key stays up here, by the mast, where only someone who means it will climb for it.\n\nHalvard asked me for it on his way to the Stair of Hours. I said: Ernst, if you pull the crown and leave the root running, the islands stay up and the crown has nothing holding it back. The root would pull alone - down. The islands would come down hard.\n\nHe said he knew. He said that is why he wanted someone else to do it - someone who would also dive to the root after. I am not that person. I build things; I do not dive.\n\nIf you are: take the key. Throw the crown's cutoff. Then the root's. Both.
-note rutnote Coil-winder Rut Ek's note | We wound every coil by hand - eleven thousand turns each, copper from the quay's seams. The arms hum when the coils are on, you can feel it in your teeth.\n\nSince Lift Day the spare wire in this cave winds itself tighter every night. I come in, it is tighter. Nobody touches it.\n\nI keep my spare ingots here. If you are going to the core: the coils must be OFF, all four, north first. Do not go in with them on. - R. Ek
+note rutnote Coil-winder Rut Ek's note | We wound every coil by hand - eleven thousand turns each, copper from the quay's seams. The arms hum when the coils are on, you can feel it in your teeth.\n\nSince Lift Day the spare wire in this cave winds itself tighter every night. I come in, it is tighter. Nobody touches it.\n\nI keep my spare ingots here. If you are going to the core: the coils must be OFF, all four, the first arm first. Do not go in with them on. - R. Ek
 note halvardplanenote Halvard's note in his plane | (Tucked into the plane's logbook, in Halvard's hand)\n\nFlew the whole Gravity Sea today. From the air it is beautiful: islands hanging over their own shadows, a market in the sky, a quay cut in half.\n\nI did this. I meant to weigh the field and I lifted the sea's bed into the air.\n\nI will not fly again; the compass will not settle. If someone finds the plane: there is a titanium ingot in the crate. Use it to fix what I broke.\n\n- E. H.
-note westcache West arm cache | The west arm's cache: Halvard's crew's emergency kit.
+note westcache West arm cache | The fourth arm's cache: Halvard's crew's emergency kit.
 note corewarning Core warning | CORE - WARNING\n\nThe cutoff stops the crown. The field below - the ROOT, 35 m under the sea - keeps pulling until its own cutoff is thrown.\nIf the crown goes dark and the root does not, the islands stay up. Throw both.\n\n- E. H.
 loot ringlocker Battery*1;CopperIngot*2;Rope*2;Cooked_Mackerel*2
 prop ringlocker loot.refill=0
 loot westcache TitaniumIngot*2;MetalIngot*3;Battery*1
 prop westcache loot.refill=0
 prop westcache if.open=signal|claw
-prop westcache else.open=message||The west arm's cache is clamped shut while its coil is on line.
+prop westcache else.open=message||The fourth arm's cache is clamped shut while its coil is on line.
 prop coilsoff obj.name=coilsoff
 prop coilsoff beh.hidden=1
 
@@ -234,37 +234,37 @@ prop generator else.use=message||The generator is running.
 
 prop northzone zone.id=north_arm
 prop northzone zone.radius=4
-prop northzone zone.message=The north arm. Its coil hums.
+prop northzone zone.message=The first arm. Its coil hums.
 prop eastzone zone.id=east_arm
 prop eastzone zone.radius=4
-prop eastzone zone.message=The east arm.
+prop eastzone zone.message=The second arm.
 prop southzone zone.id=south_arm
 prop southzone zone.radius=4
-prop southzone zone.message=The south arm.
+prop southzone zone.message=The third arm.
 prop westzone zone.id=west_arm
 prop westzone zone.radius=4
-prop westzone zone.message=The west arm - the last coil.
+prop westzone zone.message=The fourth arm - the last coil.
 
 prop northcoil obj.name=northcoil
-prop northcoil beh.use=Take the north coil off line
+prop northcoil beh.use=Take the first coil off line
 prop northcoil if.use=signal|power\n!signal|lever
-prop northcoil on.use=signal||lever\ngive||story:coilnorth*1\nmessage||The north coil's hum dies.
+prop northcoil on.use=signal||lever\ngive||story:coilnorth*1\nmessage||The first coil's hum dies.
 prop northcoil else.use=message||Nothing - the generator on the landing ring is off, or the coil is off already.
 prop eastcoil obj.name=eastcoil
-prop eastcoil beh.use=Take the east coil off line
+prop eastcoil beh.use=Take the second coil off line
 prop eastcoil if.use=signal|lever\n!signal|crank
-prop eastcoil on.use=signal||crank\ngive||story:coileast*1\nmessage||The east coil's hum dies.
-prop eastcoil else.use=message||The manual says: north first. Or it is off already.
+prop eastcoil on.use=signal||crank\ngive||story:coileast*1\nmessage||The second coil's hum dies.
+prop eastcoil else.use=message||The manual says: the first arm first. Or it is off already.
 prop southcoil obj.name=southcoil
-prop southcoil beh.use=Take the south coil off line
+prop southcoil beh.use=Take the third coil off line
 prop southcoil if.use=signal|crank\n!signal|wire
-prop southcoil on.use=signal||wire\ngive||story:coilsouth*1\nmessage||The south coil's hum dies.
-prop southcoil else.use=message||The manual says: north, then east. Or it is off already.
+prop southcoil on.use=signal||wire\ngive||story:coilsouth*1\nmessage||The third coil's hum dies.
+prop southcoil else.use=message||The manual says: the first arm, then the second. Or it is off already.
 prop westcoil obj.name=westcoil
-prop westcoil beh.use=Take the west coil off line
+prop westcoil beh.use=Take the fourth coil off line
 prop westcoil if.use=signal|wire\n!signal|claw
 prop westcoil on.use=signal||claw\ngive||story:coilwest*1\nshow|coilsoff\nmessage||The last coil dies. The storm's sparks thin out - and back on the landing ring, the status board changes.
-prop westcoil else.use=message||The manual says: north, east, south, then west. Or it is off already.
+prop westcoil else.use=message||The manual says: first, second, third, then fourth. Or it is off already.
 
 prop bridge obj.name=bridge
 prop bridgebroken obj.name=bridgebroken
@@ -325,25 +325,25 @@ prop storm atmo.particles=embers
 prop storm zone.radius=34
 
 quest title=Shutting the Crown
-quest intro=The Lodestone Array, 35 m over the sea. Land on its ring.
-step reach|ring|1|Land on the Array's landing ring
+quest intro=The Lodestone Array, 35 m over the sea. Make for the tall lightning mast and land on its ring.
+step reach|ring|1|Make for the Array; land on its landing ring by the generator
 step read|Array operating manual|1|Read the Array's operating manual
 step kill|Screecher|4|Drive the screechers off the landing ring
 step open|Ring locker|1|Open the ring locker
 step collect|story:arraypower|1|Start the Array's generator
 step read|Coil status|1|Read the coil status board
-step reach|north_arm|1|Ride the line to the north arm
-step collect|story:coilnorth|1|Take the north coil off line
-step reach|east_arm|1|Ride the line to the east arm
-step collect|story:coileast|1|Take the east coil off line
-step reach|south_arm|1|Ride the line to the south arm
-step collect|story:coilsouth|1|Take the south coil off line
-step reach|west_arm|1|Ride the line to the west arm
-step collect|story:coilwest|1|Take the west coil off line
+step reach|north_arm|1|Ride the line from the ring to the first arm
+step collect|story:coilnorth|1|Take the first coil off line
+step reach|east_arm|1|Ride the line on to the second arm
+step collect|story:coileast|1|Take the second coil off line
+step reach|south_arm|1|Ride the line on to the third arm
+step collect|story:coilsouth|1|Take the third coil off line
+step reach|west_arm|1|Ride the line on to the fourth arm
+step collect|story:coilwest|1|Take the fourth coil off line
 step read|Coils offline|1|Read the status board on the landing ring again
-step open|West arm cache|1|Open the west arm's cache
-step read|Foreman Arne Dahl's note|1|Find the builders' camp in the south-west and read the foreman's note
-step reach|peakfoot|1|Find the path up Storm Peak in the north-west
+step open|West arm cache|1|Open the cache at the fourth arm
+step read|Foreman Arne Dahl's note|1|Find the builders' camp on the rock below the Array and read the foreman's note
+step reach|peakfoot|1|Find the path up Storm Peak, the peak with the lightning mast
 step reach|peaktop|1|Climb Storm Peak to the lightning mast
 step read|Chief engineer Sigrid Ahl's log|1|Read the chief engineer's log by the mast
 step collect|story:cutoffkey|1|Take the core cutoff's key from the lightning mast box

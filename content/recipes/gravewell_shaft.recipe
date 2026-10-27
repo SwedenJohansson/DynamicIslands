@@ -144,7 +144,7 @@ story pumpkey|Pump hall key|Placeable_Lantern_Metal|The pump hall's key, from th
 note permit Shaft entry permit | GRAVEWELL - ENTRY PERMIT\n\nThe bearer may enter the shaft.\nThe cage takes you to the floor - when it has its FUSE. The keeper takes the fuse home to Pump Ridge every night.\nThe galleries have air (bells, 2).\nThe pump hall is LOCKED - its key is in gallery 2.\nThe anglers came after Lift Day. Carry a light. Carry a spear.
 note logbook Gallery logbook | GALLERY LOGBOOK\n\nDay 1: the pumps hold.\nDay 4: the field pulls DOWN here as hard as it lifts up there. Halvard's numbers were right; his sign was wrong.\nDay 9: Halvard has gone up to the Stair of Hours, to watch the Array through the telescope. I left the pump key in gallery 2.
 note karinnote Pump keeper Karin Vik's note | PUMP KEEPER - K. VIK\n\nI take the cage's fuse home every night. Rule 4: no cage rides after the shift. Nobody has ridden it since Lift Day anyway.\n\nLift Day. The house went under the way a boot goes into mud - slowly, then all at once. The front room kept its air. I have been breathing it since, and swimming down to the pumps by day. They still run. They run harder every day, as if something up there were drinking through them.\n\nHalvard came by on his way up. He asked for the fuse. I said no; rules are rules. He said there are no rules any more, only the field. He went up the stairs to the gauges instead.\n\nIf you have read this: take the fuse. Go down. Shut it off.
-note ollenote Diver Olle Strand's slate | (A diver's slate, scratched with a nail)\n\nDIVE 31. Shaft wall: the iron in the rock is warm. Stone is not warm 45 m down.\nDIVE 34. The anglers came up out of the pit - came UP, out of the dark. They do not like the cage lights.\nDIVE 40. The supply plane came down north of the rim. Pilot got out. Load did not.\nDIVE 41. Karin will not lend me the fuse. Fine. I go down the stair.\nDIVE 42. Pump hall locked. The key is in gallery 2 and gallery 2 is full of teeth.
+note ollenote Diver Olle Strand's slate | (A diver's slate, scratched with a nail)\n\nDIVE 31. Shaft wall: the iron in the rock is warm. Stone is not warm 45 m down.\nDIVE 34. The anglers came up out of the pit - came UP, out of the dark. They do not like the cage lights.\nDIVE 40. The supply plane came down beside the rim. Pilot got out. Load did not.\nDIVE 41. Karin will not lend me the fuse. Fine. I go down the stair.\nDIVE 42. Pump hall locked. The key is in gallery 2 and gallery 2 is full of teeth.
 note pilotnote Supply pilot's note | Engine died at 200 m over the Gravity Sea - no warning, the compass spinning like a top. Put her down by the shaft. She went under in a minute. Swam for it. The load was for the pump hall: if anyone wants it, it is still in the crate. - E. Lind, Institute supply flight
 note pumphall Pump hall | The pump hall's chest: the shift's last pay and a spare coil of wire.
 note smelterstore Smelter store | The smelter store: Halvard's heavy plans - an electric smelter, an advanced biofuel extractor and an advanced anchor - "for the Array's foundations".
@@ -186,10 +186,10 @@ prop rimzone zone.radius=6
 prop rimzone zone.message=The rim of the gravewell. Below: a spiral stair into the dark.
 
 quest title=The Gravewell
-quest intro=A shaft in the seabed, 45 m down. Swim to its rim.
-step reach|rim|1|Swim to the rim of the gravewell
+quest intro=A shaft in the seabed, 45 m down. Make for the pump keeper's house on the ridge and swim to the shaft's rim near it.
+step reach|rim|1|Make for the pump keeper's house on the ridge; dive to the gravewell's rim
 step read|Shaft entry permit|1|Read the shaft's entry permit
-step reach|ridgefoot|1|Find Pump Ridge south-east of the rim
+step reach|ridgefoot|1|Find Pump Ridge, the ridge with the pump keeper's house
 step reach|ridgetop|1|Climb Pump Ridge to the pump keeper's house
 step read|Pump keeper Karin Vik's note|1|Read the pump keeper's note
 step collect|story:cagefuse|1|Take the cage's fuse from the keeper's chest

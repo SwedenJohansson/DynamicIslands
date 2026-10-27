@@ -51,8 +51,8 @@ place Antenna_pole masteast at 49 5 ground
 place Loot_ChestSmall masteastbox at 50.4 4.2 ground sit yaw=160
 place Creature_PolarBear beareast at 43 11 ground
 call fz_zone x=-28 z=62 al=mastridgez id=mast_ridge r=4 msg="The ridge mast. Its cable hangs in the snow - and there are tracks round it. Big ones."
-call fz_zone x=52 z=48 al=mastnez id=mast_ne r=4 msg="The north-east mast, its cable down in a drift. A bear's den in the lee of it."
-call fz_zone x=49 z=3 al=masteastz id=mast_east r=4 msg="The east mast on its rise. The cable box at its foot is still shut."
+call fz_zone x=52 z=48 al=mastnez id=mast_ne r=4 msg="The mast by the bears' den, its cable down in a drift. A bear's den in the lee of it."
+call fz_zone x=49 z=3 al=masteastz id=mast_east r=4 msg="The mast on the rise. The cable box at its foot is still shut."
 # the bathhouse at the mountain's foot: hot water piped from the derrick; its door is wired shut (the derrick's power line)
 brush flatten at 25 32 r=8 s=20 frames=250 h=7
 clear at 25 32 r=8
@@ -245,17 +245,17 @@ prop dview zone.message=Steam rises from the square below, and the harbour town 
 story cable|Antenna cable|Placeable_Lantern_Metal|A coil of the antenna masts' cable. The storm brought it down; a wire hub takes it.
 story bathpower|The derrick's power line|Placeable_Lantern_Metal|The bathhouse hub wired: power runs up the mountain to the derrick again.
 story relief|Relief valve|Placeable_Lantern_Metal|The derrick's relief valve. With it on the vent, the valve can be turned without blowing the pipes.
-note drillwarn Driller's warning | DRILLER'S WARNING\n\nDO NOT FORCE THE VENT VALVE. The vent is over pressure - turn it now and the pipes burst under the square.\nBleed it first: the relief valve is on the derrick, top of Fumarole Mountain.\nThe valve's housing is clamped by the power line from the bathhouse. The storm took the line down: its cable was strung on the three antenna masts (the ridge, the north-east, the east rise).\nTwo coils from each mast. The bathhouse hub takes four.\nBears den by the masts in winter. Mind them.\n\n- Brann, driller. If you see my wife, the soup was fine. It was not fine.
+note drillwarn Driller's warning | DRILLER'S WARNING\n\nDO NOT FORCE THE VENT VALVE. The vent is over pressure - turn it now and the pipes burst under the square.\nBleed it first: the relief valve is on the derrick, top of Fumarole Mountain.\nThe valve's housing is clamped by the power line from the bathhouse. The storm took the line down: its cable was strung on the three antenna masts (the ridge mast, the bears' mast, the mast on the rise).\nTwo coils from each mast. The bathhouse hub takes four.\nBears den by the masts in winter. Mind them.\n\n- Brann, driller. If you see my wife, the soup was fine. It was not fine.
 note bathslate Bath keeper's slate | BATHHOUSE\n\nHot water from the derrick, free to all.\nThe hub outside powers the derrick's clamps - when the line is up the clamps let go of the relief valve.\nThe greenhouse has its own hub for the heat lamps. Two coils.
-note derricksign The derrick | FUMAROLE DERRICK\n\nRelief valve in the housing. Carry it down and fit it on the vent valve before you turn it.\nThe quick way down is the way the steam goes: down the mountain's south face.
-note pumpledger Pump keeper's ledger | PUMP KEEPER'S LEDGER\n\nPump stopped. The basin flooded when the ferry went down in it, which the ferry did out of spite, I am sure of it.\nThe ferry's strongbox is still aboard. Twelve metres. There's air on the boat's west side if you need it. I don't swim. I keep pumps. It's different.\nSpare tools buried by the north shore, under the white rock, where the harbour master won't borrow them.\nThe courier came through on the 20th and took the town's sets, every one, very polite, a receipt for each. Then he sat by my pump for an hour and didn't say a word. Never seen Orrin quiet before. I asked him what was wrong. He said: "Nothing I can carry back."
+note derricksign The derrick | FUMAROLE DERRICK\n\nRelief valve in the housing. Carry it down and fit it on the vent valve before you turn it.\nThe quick way down is the way the steam goes: down the mountain's steep side.
+note pumpledger Pump keeper's ledger | PUMP KEEPER'S LEDGER\n\nPump stopped. The basin flooded when the ferry went down in it, which the ferry did out of spite, I am sure of it.\nThe ferry's strongbox is still aboard. Twelve metres. There's air pocket beside the boat if you need it. I don't swim. I keep pumps. It's different.\nSpare tools buried by the shore, under the white rock, where the harbour master won't borrow them.\nThe courier came through on the 20th and took the town's sets, every one, very polite, a receipt for each. Then he sat by my pump for an hour and didn't say a word. Never seen Orrin quiet before. I asked him what was wrong. He said: "Nothing I can carry back."
 note mastridgebox Ridge mast's cable box | The ridge mast's cable box: two frosted coils of antenna line.
 loot mastridgebox story:cable*2;Bolt*1
 prop mastridgebox loot.refill=0
-note mastnebox North-east mast's cable box | The north-east mast's cable box: two coils of antenna line.
+note mastnebox North-east mast's cable box | The cable box at the bears' mast: two coils of antenna line.
 loot mastnebox story:cable*2;Rope*1
 prop mastnebox loot.refill=0
-note masteastbox East mast's cable box | The east mast's cable box: two coils of line and pliers.
+note masteastbox East mast's cable box | The cable box at the mast on the rise: two coils of line and pliers.
 loot masteastbox story:cable*2;Nail*6
 prop masteastbox loot.refill=0
 note derrickchest Derrick valve housing | The derrick's valve housing: the relief valve, the driller's tools.
@@ -366,15 +366,15 @@ prop ventvalve obj.name=ventvalve
 prop ventvalve beh.use=Turn the vent valve
 prop ventvalve if.use=!signal|steam\ntake|story:wheelpiece|3\ntake|story:relief|1
 prop ventvalve on.use=message||The valve groans, gives - and steam hisses down the pipes. One by one the houses' chimneys breathe.\nsignal||steam\ngive||story:steam*1\nshow|steamhouses\nsound||event:/exploring/obstacles/keypad/keypad_correct
-prop ventvalve else.use=message||The valve is open and the town is warm - or it is not ready: its handwheel is in three pieces (the greenhouse, the boiler house, the pipe store), and the vent wants its relief valve first (the driller's cave, west, says why).
+prop ventvalve else.use=message||The valve is open and the town is warm - or it is not ready: its handwheel is in three pieces (the greenhouse, the boiler house, the pipe store), and the vent wants its relief valve first (the driller's steam cave says why).
 prop steamhouses obj.name=steamhouses
 prop townlocker obj.name=townlocker
 prop townlocker if.open=signal|steam
 prop townlocker else.open=message||The locker's lock is frozen solid. The hall needs its steam back.
 
 quest title=The Warm Harbour
-quest intro=A town round a steaming vent, its houses cold. Tie up at the quay.
-step reach|quay|1|Tie up at the harbour quay
+quest intro=A town round a steaming vent, its houses cold. Make for the steam over the town and tie up at the quay.
+step reach|quay|1|Make for the steaming town; tie up at the harbour quay
 step read|Harbour master's notice|1|Read the harbour master's notice
 step blueprint|Blueprint_Machete|1|Take the machete's plans from the harbour store
 step reach|greenhouse|1|Cut the vines and go into the greenhouse
@@ -383,10 +383,10 @@ step blueprint|Blueprint_Fueltank|1|Take the fuel tank's plans from the boiler h
 step kill|Rat|4|Clear the rats out of the pipe store
 step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe's plans from the pipe store
 step collect|story:wheelpiece|3|Find the valve handwheel's three pieces (greenhouse, boiler house, pipe store)
-step read|Driller's warning|1|The vent hisses too hard to turn. Find the driller's cave in the west and read his warning
-step collect|story:bathpower|1|Bring four antenna cables from the masts (mind the bears) to the bathhouse's wire hub
+step read|Driller's warning|1|The vent hisses too hard to turn. Find the driller's steam cave, where the steam rises, and read his warning
+step collect|story:bathpower|1|Take cable coils from the chests at the three antenna masts (bears!) and wire the bathhouse hub
 step read|A note for the bath keeper|1|The bathhouse is open again: read the note left on the bath keeper's bench
-step collect|story:relief|1|Climb Fumarole Mountain and the derrick; take the relief valve from its housing
+step collect|story:relief|1|Climb the derrick on Fumarole Mountain; take the relief valve from the housing chest
 step collect|story:steam|1|Turn the vent valve on the square
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor's plans from the town hall's locker
 step read|The Warden's broadcast|1|Read the transcript of the Warden's broadcast in the town hall

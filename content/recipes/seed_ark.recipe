@@ -203,7 +203,7 @@ prop hall1air zone.id=hall_east
 prop hall1air zone.radius=2.5
 prop hall1air zone.repeat=1
 prop hall1air zone.air=1
-prop hall1air zone.message=The east hall: a cooling hall, flooded to the roof. Air in a pocket, a rod chest by the wall.
+prop hall1air zone.message=A cooling hall, flooded to the roof. Air in a pocket, a rod chest by the wall.
 brush flatten at -43 -14 r=9 s=20 frames=300 h=3.8
 clear at -43 -14 r=9
 push at -40 -14 h=4
@@ -221,7 +221,7 @@ prop hall2air zone.id=hall_west
 prop hall2air zone.radius=2.5
 prop hall2air zone.repeat=1
 prop hall2air zone.air=1
-prop hall2air zone.message=The west hall: a cooling hall, flooded to the roof. Air in a pocket, a rod chest by the wall.
+prop hall2air zone.message=A second cooling hall, flooded to the roof. Air in a pocket, a rod chest by the wall.
 brush flatten at -23 40 r=9 s=20 frames=300 h=3.8
 clear at -23 40 r=9
 push at -20 40 h=4
@@ -239,7 +239,7 @@ prop hall3air zone.id=hall_north
 prop hall3air zone.radius=2.5
 prop hall3air zone.repeat=1
 prop hall3air zone.air=1
-prop hall3air zone.message=The north hall: a cooling hall, flooded to the roof. Air in a pocket, a rod chest by the wall.
+prop hall3air zone.message=The last cooling hall, flooded to the roof. Air in a pocket, a rod chest by the wall.
 
 # --- DISCOVERIES 10-24 (optional, no quest needs them): diver's cache + slate + air pocket; TP_SnowVehicle01 + chest; hatch with a chest; buried treasure; viewpoint ---
 place "Box Small" dcampbox at 5.6 35.6 ground sit
@@ -287,12 +287,12 @@ story rodset|A cooling rod set|Placeable_Lantern_Metal|A cooling rod set in the 
 story pumpkey|The pump key|Placeable_Lantern_Metal|The pump key: it unlocks the islet's three valves.
 story valveturned|A valve turned|Placeable_Lantern_Metal|One of the pump islet's three valves, opened.
 story pumpsrun|The pumps running|Placeable_Lantern_Metal|The Ark's pumps run again: the ark valve can turn.
-note engineerlog Pump engineer's log | PUMP ENGINEER'S LOG\n\nThe ark valve will not turn on dead pumps. It was built that way, so nobody floods the racks by accident. I hate whoever built it that way, and it was me.\nThe pump switch stands on the islet south-east, by the cooling station - the only rock over the water. When the coolant began to boil I took the three cooling rods out and hid one in each cooling hall: east, west and north. Nobody steals what nobody can reach.\nThe station keeps the pump key until its rods are home. Then the three valves out in the rotten gas, and only then the switch. Wear a suit from the cabinets. And mind the rats: they live in the pipes, and they think the pipes are theirs.\n\n- B. Moe, pump engineer
-note rodchest1 East hall rod chest | Flooded east hall: a cooling rod in its lead sleeve.
+note engineerlog Pump engineer's log | PUMP ENGINEER'S LOG\n\nThe ark valve will not turn on dead pumps. It was built that way, so nobody floods the racks by accident. I hate whoever built it that way, and it was me.\nThe pump switch stands on the pump islet, by the cooling station - the only rock over the water. When the coolant began to boil I took the three cooling rods out and hid one in each cooling hall, down in the flooded part of the ark. Nobody steals what nobody can reach.\nThe station keeps the pump key until its rods are home. Then the three valves out in the rotten gas, and only then the switch. Wear a suit from the cabinets. And mind the rats: they live in the pipes, and they think the pipes are theirs.\n\n- B. Moe, pump engineer
+note rodchest1 East hall rod chest | A flooded cooling hall: a cooling rod in its lead sleeve.
 loot rodchest1 story:coolrod*1;CopperIngot*2
-note rodchest2 West hall rod chest | Flooded west hall: a cooling rod and the hall keeper's spares.
+note rodchest2 West hall rod chest | A second flooded cooling hall: a cooling rod and the hall keeper's spares.
 loot rodchest2 story:coolrod*1;Bolt*3;Glass*2
-note rodchest3 North hall rod chest | A chest in the flooded north hall: the last cooling rod.
+note rodchest3 North hall rod chest | A chest in the last flooded hall: the last cooling rod.
 loot rodchest3 story:coolrod*1;MetalIngot*2
 note pumpchest Pump keeper's chest | The pump keeper's chest: dry clothes, tools, seeds he kept himself.
 loot pumpchest TitaniumIngot*1;Seed_Pine*3;Rope*2
@@ -442,8 +442,8 @@ step reach|room_4|1|Swim on to pressure room 4
 step collect|story:arkseal|3|Find the valve's three seals (pressure rooms 1, 2 and 3)
 step read|Orrin's last letter|1|Read the letter by the body at the ark valve
 step read|Pump engineer's log|1|The valve won't turn on dead pumps. Read the pump engineer's log in room 4
-step reach|pump_islet|1|Swim up and out to the pump islet in the south-east
-step collect|story:rodset|3|Bring the three cooling rods from the flooded halls (east, west, north) and set them in the sockets
+step reach|pump_islet|1|Swim up and out to the pump islet, the only dry rock over the Ark
+step collect|story:rodset|3|Dive for the 3 cooling rods in chests in the flooded halls; set them in the sockets
 step collect|story:pumpkey|1|Pull the cooling station's lever for the pump key
 step collect|story:valveturned|3|Open the islet's three valves (the gas: take a suit from a cabinet)
 step collect|story:pumpsrun|1|Throw the pump switch by the station

@@ -167,7 +167,7 @@ prop quarrydigger tint.color=#8a7a50
 prop quarrydigger tint.amount=0.4
 place Loot_Crate quarrycrate at 31.5 48 ground sit yaw=60
 call fz_zone x=26 z=47 al=quarryzone id=quarry r=6 msg="Orrin's quarry. The excavator stopped mid-bite; his boot prints go on up the ridge."
-call fz_cairn x=36 z=60 al=rimtower chest=rimcache zal=rimzone zid=rim_top msg="The rim of the quarry ridge, and Orrin's cairn. North, far off on the white: a ship's bow on a ridge of ice. Orrin watched her from here."
+call fz_cairn x=36 z=60 al=rimtower chest=rimcache zal=rimzone zid=rim_top msg="The rim of the quarry ridge, and Orrin's cairn. Far off on the white: a ship's bow on a ridge of ice. Orrin watched her from here."
 place Note_Paper wardenletter at 35.4 61.2 ground y=0.05 drop yaw=40
 # the bear cave (N): its mouth south to the camp, Orrin's trail mark inside, a brown bear in it
 call ar_cave x=-20 z=66 h=5 yaw=180 al=bearcave chest=cavestash
@@ -198,9 +198,9 @@ info description=A camp on the shelf ice built for animals: a fodder barn, goats
 island on.arrive=message||Goats bleating in the snow. A camp - and far off on the ice, something white and big, watching the pen.
 
 note orrinnote1 Orrin's note 1 | (on the hay, weighed down with a horseshoe)\n\nWhoever you are: feed them. Goats get the hay, llamas get the rest, and the big grey goat gets whatever she wants, because she will take it anyway.\nThe bears come whenever the herd is alone. They'll come for you too. Mind them, and mind the little ones by the pen.\nI've gone north. There is a thing up there I have to put right. The town will think I've gone for the Whale's captain. In a way I have. Let them think it.\nThe dogs are with me. They always are.\n\n- Orrin
-note orrinnote2 Orrin's note 2 | (on the table in Orrin's hut)\n\nThe detector is for the ice: things the sledges lost, things the Whale dropped, a spoon I've been looking for since spring. Plans in my chest.\nI took my compass. North by the ridge, keep the sun on your left, and if there's no sun, keep the wind on your cheek and complain about it. That helps too.\nThe bed is warmer than it looks. Tuva sleeps across your feet if you let her. I'm sorry she's not here to do it.\n- O.
+note orrinnote2 Orrin's note 2 | (on the table in Orrin's hut)\n\nThe detector is for the ice: things the sledges lost, things the Whale dropped, a spoon I've been looking for since spring. Plans in my chest.\nI took my compass. Follow the ridge, keep the sun on your left, and if there's no sun, keep the wind on your cheek and complain about it. That helps too.\nThe bed is warmer than it looks. Tuva sleeps across your feet if you let her. I'm sorry she's not here to do it.\n- O.
 note orrinnote3 Orrin's note 3 | (in the cook hut, pinned over the stove)\n\nMilk the goats morning and evening, or they'll complain to the whole shelf, and the shelf is very large.\nThe lookout has the flares, and the plans for making more. If you see a flare from the north, that's me. If you see two, it's me and I've fallen into something.\nThere's salt meat in the stores. Eat it. Nobody else will: the trapper is vegetarian on Tuesdays and never knows what day it is.\nHedda Brask gave me coffee the last time I took the Whale her post. Real coffee, her last tin. I keep thinking about that.\n- O.
-note orrinnote4 Orrin's note 4 | (pinned to the zipline crate)\n\nThe Whale lies on a ridge of ice to the north, her bow up as if she's trying to climb out. Her captain is still aboard - I saw her lamp from the rim.\nThe zipline gear is for her mast; you'll want it to get up her side. She's on 1100, if your set has the range, and you'll want an engine to get there.\nIf she answers you, tell her the courier is sorry. She'll know which courier. Don't tell her more than that. I want to tell her the rest myself.\n- Orrin
+note orrinnote4 Orrin's note 4 | (pinned to the zipline crate)\n\nThe Whale lies on a ridge of ice far out on the white, her bow up as if she's trying to climb out. Her captain is still aboard - I saw her lamp from the rim.\nThe zipline gear is for her mast; you'll want it to get up her side. She's on 1100, if your set has the range, and you'll want an engine to get there.\nIf she answers you, tell her the courier is sorry. She'll know which courier. Don't tell her more than that. I want to tell her the rest myself.\n- Orrin
 note daybook Orrin's daybook | ORRIN VALE - DAYBOOK\n\nDay 3. Finished the new hatchet. Carved Tuva's head on the handle, ears back like when she smells fish. Best thing I ever made. Hung it on its hook by the door where I can see it.\nDay 9. The Warden's letters again, a whole sack of them, sealed. "Post, Orrin. Just post." A berth below the ice for me and the dogs when the cold comes, he says, for faithful service.\nDay 19. Bad night at the stack. Don't ask. I'm asking myself enough.\nDay 20. Steamvent. Took all their sets. Gunnar gave me soup anyway. Couldn't eat it.\nDay 27. Another letter, for me this time. I've put it where I won't have to look at it: up on the rim, under the cairn's top stone.\nDay 30. The goats are fed for a week. I'm taking the hatchet north.
 note toolrack Orrin's tool rack | TOOL RACK - each tool on its painted outline:\nSAW. ADZE. TONGS. ICE PICK.\nHATCHET (TUVA) - the hook is empty. Its outline is a hatchet with a dog's head carved on the handle.
 note wardenletter The Warden's letter | (under the cairn's top stone, folded small, the Coldhold's wax seal on it)\n\nVale,\nYou have served well. The stack is quiet. Steamvent is quiet. The sealers will be quiet soon enough, one way or another.\nThe last station in the north that will not be silent is the Whale. Her captain sends every night with a hand key, a few seconds at a time, and every second she sends brings the pulse closer to all of us. To your dogs. To your goats.\nSee to it. Your berth is kept.\n\n- A. Holt, Warden\n\n(On the back, in Orrin's round hand, the pencil pressed through the paper: "North, to the Whale. Tonight.")
@@ -237,7 +237,7 @@ loot ziplinecrate Blueprint_ZiplineBase*1;Blueprint_ZiplineTool*1;Rope*4;MetalIn
 prop ziplinecrate loot.refill=0
 
 # --- DEEP 10-24: Orrin's trail - the quarry, the bear cave, the rim, the extras ---
-note trailmark Orrin's trail mark | (scratched on a cut pole by cold ashes)\n\nO. - DAY 1 NORTH.\nUp the quarry ridge to the rim, as every morning. There's no ladder; there never was. The ridge is the ladder. From the rim you see the Whale.\nI left the good things in the cache by the cairn for whoever feeds my goats. The rest is under the cairn's top stone, and I wish it weren't.\nThe bear in this cave is called Mrs Fjell. She is not friendly. I named her anyway; it seemed polite.\n- O.
+note trailmark Orrin's trail mark | (scratched on a cut pole by cold ashes)\n\nO. - DAY 1 OF THE TRAIL.\nUp the quarry ridge to the rim, as every morning. There's no ladder; there never was. The ridge is the ladder. From the rim you see the Whale.\nI left the good things in the cache by the cairn for whoever feeds my goats. The rest is under the cairn's top stone, and I wish it weren't.\nThe bear in this cave is called Mrs Fjell. She is not friendly. I named her anyway; it seemed polite.\n- O.
 note rimcache Orrin's rim cache | Orrin's cache by the cairn: a spare compass and flares.
 loot rimcache MetalIngot*3;Rope*3;Leather*2;CopperIngot*1
 prop rimcache loot.refill=0
@@ -247,7 +247,7 @@ prop quarrycrate loot.refill=0
 note cavestash Bear cave stash | Orrin's stash in the bear cave: kindling, a tin of meat.
 loot cavestash Plank*4;Raw_GenericMeat*2;Wool*2
 prop cavestash loot.refill=0
-note trapperlog Trapper's log | TRAPPER'S HUT (old Sten)\n\nOrrin brings me hay for the traps' bait; I bring him wool. Fair trade, though my wool comes back as socks with dogs knitted on them.\nThe sledge truck went through the ice on the west lake. I marked the hole with a pole. Her toolbox is still aboard. Twelve metres down, cold as a debt.\nOrrin came by last week with the bells off his dogs. Sat by my fire and asked me, out of nowhere, whether a man can undo a thing once it's done. I said that depends on the thing. He said that was what he was afraid of, and left before the tea.
+note trapperlog Trapper's log | TRAPPER'S HUT (old Sten)\n\nOrrin brings me hay for the traps' bait; I bring him wool. Fair trade, though my wool comes back as socks with dogs knitted on them.\nThe sledge truck went through the ice on the lake. I marked the hole with a pole. Her toolbox is still aboard. Twelve metres down, cold as a debt.\nOrrin came by last week with the bells off his dogs. Sat by my fire and asked me, out of nowhere, whether a man can undo a thing once it's done. I said that depends on the thing. He said that was what he was afraid of, and left before the tea.
 note trapperchest Trapper's chest | The trapper's chest: skins and snares.
 loot trapperchest Leather*3;Rope*2;Feather*3
 prop trapperchest loot.refill=0
@@ -261,7 +261,7 @@ prop barnzone zone.radius=5
 prop barnzone zone.message=The fodder barn. Behind you the goats go quiet - something is coming over the ice.
 prop lookzone zone.id=lookout
 prop lookzone zone.radius=3
-prop lookzone zone.message=The lookout. North, on the white, a ridge - and on the ridge, a ship's bow.
+prop lookzone zone.message=The lookout. Far off on the white, a ridge - and on the ridge, a ship's bow.
 prop goats creature.count=3
 prop llamas creature.count=2
 prop bears creature.count=2
@@ -269,25 +269,25 @@ prop bears creature.respawn=0
 prop bears creature.zone=barn
 
 quest title=The Sledge Camp
-quest intro=A camp on the shelf ice, its herd alone. Go to the fodder barn.
-step reach|barn|1|Go to the fodder barn
+quest intro=A camp on the shelf ice, its herd alone. Make for the lookout on four posts, then go to the fodder barn.
+step reach|barn|1|Make for the lookout on four posts; the fodder barn is in the camp
 step read|Orrin's note 1|1|Read Orrin's note on the hay
 step kill|Polar bear|2|Drive off the two polar bears that come for the herd
 step blueprint|Blueprint_MetalDetector|1|Take the metal detector's plans from Orrin's hut
 step read|Orrin's daybook|1|Read Orrin's daybook on his bed (his tool rack has an empty hook)
-step blueprint|Blueprint_Firework|1|Climb the lookout and take the firework's plans
-step blueprint|Blueprint_ZiplineBase|1|Cut through to the crate by the pine wood and take the zipline base's plans
+step blueprint|Blueprint_Firework|1|Climb the lookout and open its chest for the firework's plans
+step blueprint|Blueprint_ZiplineBase|1|Cut the vines at the crate by the pine wood; take the zipline base's plans
 step blueprint|Blueprint_ZiplineTool|1|Take the zipline tool's plans from the crate too
-step collect|story:harness|3|Find the sledge winch's three harness pieces (barn, Orrin's hut, the crate)
+step collect|story:harness|3|Find the winch's three harness pieces in chests: barn, Orrin's hut, zipline crate
 step collect|story:sledge|1|Rig the harness and wind the sledge winch
 step blueprint|Blueprint_EngineControls|1|Take the engine controls' plans from the sledge shed
 step blueprint|Blueprint_BatteryCharger|1|Take the battery charger's plans from the sledge shed too
-step reach|quarry|1|Follow Orrin's trail north to his quarry on the ridge
-step read|Orrin's trail mark|1|Find Orrin's trail mark in the bear cave north-west of the quarry
+step reach|quarry|1|Go to Orrin's quarry on the tall quarry ridge
+step read|Orrin's trail mark|1|Find Orrin's trail mark in the bear cave near the quarry
 step reach|rim_top|1|Climb the quarry ridge on foot to Orrin's cairn on the rim
 step open|Orrin's rim cache|1|Open Orrin's cache beside the cairn
 step read|The Warden's letter|1|Read what Orrin left under the cairn's top stone
-quest done=The courier went north to the Whale with his hatchet and the Warden's order. She is on 1100.
+quest done=The courier went out to the Whale with his hatchet and the Warden's order. She is on 1100.
 quest reward=MetalIngot*2;Rope*3;Leather*2
 
 # RESIZE 10-24 retest: the bigger island's generator rocks that floated over slopes (ground check)

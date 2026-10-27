@@ -167,7 +167,7 @@ info author=Custom Islands
 info description=Five ice floes in the white sea, black leads between them, a sealing boat crushed between the floes - and her crew locked in cages on the ice. A winch hauls loose ice into the lead. The second island of The Frozen Horizon.
 island on.arrive=message||Floes as far as the eye goes - and on them, three cages. Somebody waves from one of them.
 
-story sealkey|Cage key|Placeable_Lantern_Metal|One of the sealers' three cage keys, from the locker on the west floe.
+story sealkey|Cage key|Placeable_Lantern_Metal|One of the sealers' three cage keys, from the locker on the floe with the sealed crate.
 story rescued|The sealers freed|Placeable_Lantern_Metal|The three sealers are out of their cages, and the hull bell has called them home.
 
 note distresscard Sealer's distress card | MV KITTIWAKE - SEALER - DISTRESS\n\nIced in and crushed on the Floelane. Two crew aboard, and the relay man Ivo, who came to us off the stack with his headphones still round his neck.\nWe have no set. The courier took it "for repair" and left us a paper telling us to be quiet. Quiet! On a floe, with bears.\nBears on the floes every night: I have locked the three of them in the sealing cages for safety and taken the dinghy for help. Do not laugh, Ivo. You will thank me when you still have legs.\nCage keys in my locker on the west floe.\nThe lead to the hull opens and shuts with the ice - the winch hauls the loose floes in. Be quick about it.\n\n- Master Halvorsen
@@ -244,17 +244,17 @@ prop thanks obj.name=thanks
 prop puffers creature.count=3
 
 quest title=The White Sea
-quest intro=Floes, leads, a crushed boat - and three cages on the ice. Land on the first floe.
-step reach|first_floe|1|Land on the first floe
+quest intro=Floes, leads, a crushed boat - and three cages on the ice. Make for the crushed boat and land on the floe with the winch lever.
+step reach|first_floe|1|Make for the crushed boat; land on the floe with the winch lever
 step read|Sealer's distress card|1|Read the sealer's distress card
-step reach|hull|1|Cross the lead to the hull floe (the winch hauls the ice in)
-step blueprint|Blueprint_MotorWheel|1|Take the motor wheel's plans from the boat's engine room
+step reach|hull|1|Pull the winch lever, then cross the ice to the crushed boat
+step blueprint|Blueprint_MotorWheel|1|Take the motor wheel's plans from the chest in the boat's engine room
 step read|SILENCE ORDER|1|Read the paper nailed to the Kittiwake's mast
-step collect|story:rescued|1|Free the three sealers (keys in the locker on the west floe) and ring the hull bell
-step reach|berg_foot|1|The wheelhouse is locked and the key is not aboard. Cross the floes to the grounded iceberg in the north-east
-step read|Lookout's tally|1|Find what the lookout left - the bear den in the west has his tally board
+step collect|story:rescued|1|Take the cage keys from the sealer's locker, free the 3 caged sealers, ring the hull bell
+step reach|berg_foot|1|The wheelhouse is locked. Go to the tall grounded iceberg with the lookout on top
+step read|Lookout's tally|1|Find the lookout's tally board in the bear den, a cave beside the floes
 step reach|berg_top|1|Climb the iceberg on foot to Ivar's cairn on its top
-step collect|story:wheelkey|1|Take the wheelhouse key from the lookout chest
+step collect|story:wheelkey|1|Take the wheelhouse key from the chest at Ivar's cairn
 step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel's plans from the wheelhouse locker
 step read|Survivors' thanks|1|Read the survivors' thanks on the bell rope
 quest done=The sealers are going to the steam harbour. It is warm there, they say - band 800.

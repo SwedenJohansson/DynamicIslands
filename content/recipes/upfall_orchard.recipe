@@ -92,7 +92,7 @@ scatter Bush2 5 at -8 46 r=30 seed=9566 free=1
 call treasure x=-3 z=41 r=4 n=1 seed=9562 kind=0
 prop treasure9562 treasure.loot=MetalOre*2;CopperOre*2;Seed_Pine*2
 # --- The root cave (west): Halvard's survey peg ---------------------------------------------------------------------
-call hw_zone x=-56 z=3 al=rootcavez id=rootcave r=4 msg="A cave under the plate's west edge. Roots hang from its roof - and below the floor, through the cracks, the sea."
+call hw_zone x=-56 z=3 al=rootcavez id=rootcave r=4 msg="A cave under the plate's edge. Roots hang from its roof - and below the floor, through the cracks, the sea."
 place Note_Paper surveypeg at -54.5 4.5 h=6.45 drop yaw=30
 loot rootchest Plank*4;Rope*2;Seed_Mango*1
 prop rootchest loot.refill=0
@@ -161,15 +161,15 @@ prop rimzone zone.radius=8
 prop rimzone zone.message=The orchard's rim. Apples in the grass - and the sea 30 m below.
 
 quest title=The Apples Fall Up
-quest intro=An orchard in the sky. You made it up - step onto the rim.
-step reach|rim|1|Climb onto the orchard's rim
+quest intro=An orchard in the sky. You made it up - step onto the rim, by the well.
+step reach|rim|1|Climb onto the orchard's rim by the well (the tall bee tower marks the island)
 step read|Orchard keeper's diary|1|Read the orchard keeper's diary under the trees
 step collect|story:upapple|4|Find the four baskets of upfall apples - the wind has scattered them over the plate
 step blueprint|Blueprint_MotorWheel|1|Take the motor wheel plans from the farmhouse chest
 step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel plans from the farmhouse chest
 step read|Well notice|1|Read the notice by the well
-step read|Erik Kristen's bee book|1|Find the bee house in the east and read Erik's bee book
-step reach|beefoot|1|Find the path up Bee Hill, north of the farm
+step read|Erik Kristen's bee book|1|Find the roofless bee house, with bees still circling, and read Erik's bee book
+step reach|beefoot|1|Find the path up Bee Hill, the hill with the tall bee tower
 step reach|beetop|1|Climb Bee Hill
 step collect|story:bucket|1|Climb Erik's bee tower and fetch the well bucket from its deck box
 step collect|story:wellrope|1|Hang the bucket on the winch and wind it until the rope runs out

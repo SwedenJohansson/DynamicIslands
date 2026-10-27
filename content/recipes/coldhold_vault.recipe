@@ -194,7 +194,7 @@ place campfire_1 - at -39.4 21.8 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -36.4 23.8 ground sit yaw=337
 place "Box Small" - at -41.4 24.3 ground sit
 place Note_Paper dnote at -41.4 24.3 ground y=0.7 drop yaw=20
-note dnote Survey note | ICE SURVEY, SHEET 4 (and on the back, a sealer's scrawl)\n\nPressure ridge moving 2 m a day, east. Crack under the tent this morning. Moved camp.\n\nHalvorsen here, borrowing the surveyors' paper because ours went in the sea. We came up the ice to trade seal oil for seed and found the vault's door shut and nobody answering. Ivo from the relay is with us, listening to his little set every night with his eyes closed, like a man in church. He says the stack never fell on its own. He heard sledge bells the night the mast bent, and there was no wind.\nWe are going back to the steam harbour. The sea under the ice is warmer than it should be.
+note dnote Survey note | ICE SURVEY, SHEET 4 (and on the back, a sealer's scrawl)\n\nPressure ridge moving 2 m a day. Crack under the tent this morning. Moved camp.\n\nHalvorsen here, borrowing the surveyors' paper because ours went in the sea. We came up the ice to trade seal oil for seed and found the vault's door shut and nobody answering. Ivo from the relay is with us, listening to his little set every night with his eyes closed, like a man in church. He says the stack never fell on its own. He heard sledge bells the night the mast bent, and there was no wind.\nWe are going back to the steam harbour. The sea under the ice is warmer than it should be.
 place BoatStranded dvan at 39.4 -21.8 ground yaw=97
 prop dvan tint.color=#5a6670
 prop dvan tint.amount=0.5
@@ -416,8 +416,8 @@ prop councilpad else.use=message||Four digits, scratched round the 1 and the 9. 
 prop dhatchchest if.open=wears|HeadLight*
 prop dhatchchest else.open=message||A store cut into the ice under the hatch, pitch black - wear a headlight.
 quest title=Beneath the Glacier
-quest intro=A door in the glacier, frost on its frame. Go to the entrance.
-step reach|entrance|1|Go to the Coldhold's entrance
+quest intro=A door in the glacier, frost on its frame. Make for the ice cap and go to the entrance.
+step reach|entrance|1|Make for the ice cap; go to the Coldhold's frosted door in the glacier
 step read|Coldhold charter|1|Read the Coldhold charter in the entrance hall
 step collect|story:power|1|Pull the generator's lever
 step reach|far_side|1|Ride the electric zipline across the crevasse to the far side
@@ -441,10 +441,10 @@ step collect|story:choice|1|Pull one switch: KEEP, CARRY or BROADCAST
 step read|The verdict|1|Read the verdict
 step open|The vault's gift|1|Open the vault's gift
 step read|Hedda's radio call|1|Read Hedda's radio call
-step read|Vent keeper's note|1|The flood door's lever has no interlock. Find the vent keeper's cave west of the ice cap
+step read|Vent keeper's note|1|The flood door's lever has no interlock. Find the vent keeper's cave beside the ice cap
 step reach|vent_top|1|Climb the ice cap on foot to the vent shaft's head
 step collect|story:interlock|1|Take the interlock from the chest by the vent shaft
-step reach|flood_door|1|Go to the flood door at the vault's north end
+step reach|flood_door|1|Go to the flood door at the far end of the vault, past the control room
 step collect|story:flooddoor|1|Open the flood door
 quest done=The flood door is open. Down there, the Seed Ark - on 400.
 quest reward=MetalIngot*4;CopperIngot*3;TradeToken*6

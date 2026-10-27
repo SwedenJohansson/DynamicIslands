@@ -146,7 +146,7 @@ prop treasure9625 treasure.loot=MetalOre*3;CopperOre*2
 call hw_zone x=-25 z=26 al=weatherz id=weatherstation r=6 msg="The old weather station. Its instruments are gone - only the table and a pinned note."
 place Note_Paper anjanote at -25.75 26 h=6.05 drop yaw=0
 # --- The watchman's hole (east): Per's note and box -------------------------------------------------------------------
-call hw_zone x=62 z=1 al=watchz id=watchhole r=4 msg="A hole in the rock at the east end. A blanket, a lamp, a pot - the night watchman's."
+call hw_zone x=62 z=1 al=watchz id=watchhole r=4 msg="A hole in the rock at the low end. A blanket, a lamp, a pot - the night watchman's."
 place Note_Paper pernote at 60.5 0.5 h=4.45 drop yaw=200
 loot watchchest Rope*2;Plank*3;Battery*1;CopperOre*1
 prop watchchest loot.refill=0
@@ -183,7 +183,7 @@ prop pi_lamp3 on.use=light|Compass lamp west|toggle
 prop pi_lamp4 on.use=light|Compass lamp north|toggle
 prop pi_lamp1 on.alllit=show|pi_lampchest\nmessage||All four compass lamps burn. In the middle of the ring the stone box's lid slides aside.
 call lp_hidden x=38 z=-40 al=pi_lampchest kind=Loot_Chest
-note pi_lampchest Compass garden box | The compass garden's box: the Institute's spare compasses, every needle pointing north - at the Iron Ridge - and copper and glass for their cases.
+note pi_lampchest Compass garden box | The compass garden's box: the Institute's spare compasses, every needle pointing at the Iron Ridge - and copper and glass for their cases.
 loot pi_lampchest CopperIngot*2;Glass*3;MetalIngot*2;Battery*1
 scatter Bush 4 at 38 -40 r=14 seed=9651 free=2
 scatter "Pickup_Landmark_Tree_Palm 4" 2 at 38 -40 r=14 seed=9652 free=4
@@ -201,17 +201,17 @@ loot pi_setchest Plastic*4;CopperIngot*2;Rope*2;Battery*1
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Pendulum Isle
 info author=Custom Islands
-info description=A broad island, 170 m from end to end, hovering only 12 m over the water - sail under it. Bob Hill and Halvard's sighting tower at the west end, the lodestone Iron Ridge in the north, Needle Knoll and a compass garden in the south, an old weather station, the night watchman's hole and a survey plane. On top the Institute's pendulum hall and generator shed, a zipline from end to end, and a shaft down to the island's keel. A Raft store at the low end. The sixth island of The Gravity Sea.
+info description=A broad island, 170 m from end to end, hovering only 12 m over the water - sail under it. Bob Hill and Halvard's sighting tower at the high end, the lodestone Iron Ridge, Needle Knoll with a compass garden, an old weather station, the night watchman's hole and a survey plane. On top the Institute's pendulum hall and generator shed, a zipline from end to end, and a shaft down to the island's keel. A Raft store at the low end. The sixth island of The Gravity Sea.
 island on.arrive=message||An island hanging 12 m over the water - low enough to sail under. Something swings slowly on top of it.
 
 story surveybolt|Survey bolt|Bolt|A brass survey bolt dug from the pendulum island's grass, stamped HALVARD - KEEL REF.
 story power|Pendulum power on|Battery|You set the survey bolt in the pendulum frame: the generator woke.
 
-note hallrules Pendulum hall rules | PENDULUM HALL - RULES\n\n1. The pendulum measures the field. Do not touch the bob.\n2. The frame's reference bolt is LOST (Lift Day). A spare was buried as a marker west of the hall - find it with a detector.\n3. With the bolt in the frame, the generator runs.\n4. The keel shaft is at the low east end. Staff only.
+note hallrules Pendulum hall rules | PENDULUM HALL - RULES\n\n1. The pendulum measures the field. Do not touch the bob.\n2. The frame's reference bolt is LOST (Lift Day). A spare was buried as a marker near the hall - find it with a detector.\n3. With the bolt in the frame, the generator runs.\n4. The keel shaft is at the low end. Staff only.
 note shaftwarning Keel shaft warning | KEEL SHAFT - WARNING\n\nThe shaft goes through the island to the KEEL, its underside, 12 m over the water. There is nothing below the keel but sea.\nHalvard measures the field from here. So should you.
 note halvardlog Halvard's sighting log | SIGHTING LOG - E. HALVARD\n\nFrom the tower: the quay's cut hill, the orchard's plate, the market. All of them where the field put them, all of them still. Only the pendulum below me moves.\n\nThe bob swings north-south now, never east-west. The field is not round any more. It has a direction: down, to the KEEL of this island, and through it to the seabed, to a well I have never seen.\n\nAnja thinks the Array's crown can be shut down from the root. I think the root is where the crown gets its strength from - and the only way to stop the crown is to stand on it.\n\nWe are both going to find out. I will leave this lamp lit, so whoever comes next sees the tower from the sea.
-note anjanote Dr. Anja Roos's note | Ernst -\n\nI have moved what is left of the weather station into the shed. The barometer reads the same on every island, whatever the height. Air does not care how high we are. Only iron does.\n\nThe spare bolt is buried west of the hall, as you ordered. I marked it with nothing - you said a detector would find it, and a fool would not.\n\nI am going down to the seabed with Marn's last bottle. If the pump hall still runs, the root can be reached. Do not follow me up your tower. Follow me down.\n\n- Anja
-note pernote Night watchman Per Ek's note | NIGHT WATCH - P. EK\n\nNight 1: the bob swung by itself at 2 in the morning. Nobody touched it. I wrote it down, as I was told.\nNight 3: the bob swings every night at 2. Halvard says 'tidal'. There is no tide 12 m up.\nNight 7: moved my bed out here, to the far end. I can hear it from here anyway. Tick. Tock.\nNight 9: the survey plane's pilot is staying in the south field. He says the compass in his plane points at the shaft hatch. I have nailed the hatch shut. Halvard has un-nailed it.
+note anjanote Dr. Anja Roos's note | Ernst -\n\nI have moved what is left of the weather station into the shed. The barometer reads the same on every island, whatever the height. Air does not care how high we are. Only iron does.\n\nThe spare bolt is buried near the hall, as you ordered. I marked it with nothing - you said a detector would find it, and a fool would not.\n\nI am going down to the seabed with Marn's last bottle. If the pump hall still runs, the root can be reached. Do not follow me up your tower. Follow me down.\n\n- Anja
+note pernote Night watchman Per Ek's note | NIGHT WATCH - P. EK\n\nNight 1: the bob swung by itself at 2 in the morning. Nobody touched it. I wrote it down, as I was told.\nNight 3: the bob swings every night at 2. Halvard says 'tidal'. There is no tide 12 m up.\nNight 7: moved my bed out here, to the far end. I can hear it from here anyway. Tick. Tock.\nNight 9: the survey plane's pilot is staying in the compass garden. He says the compass in his plane points at the shaft hatch. I have nailed the hatch shut. Halvard has un-nailed it.
 note lodenote Lodestone survey | INSTITUTE LODESTONE SURVEY - RIDGE NORTH\n\nThe ridge is lodestone through and through. Every compass on the island points at it - but the field does not stop here. Read downwards: the pull runs from the ridge, under the hall, to the KEEL.\n\nThe pendulum swings north-south because of this ridge. What it measures is underneath us.\n\nNext: survey the island from Needle Knoll, then go down the keel shaft.\n- Survey team 3
 note planenote Survey pilot's note | Photographed the whole Gravity Sea from 300 m. Every island is pointing at the same spot on the seabed, like iron filings round a magnet. The camera jammed on the last frame. Leaving the plane here: the engine will not start while the pendulum swings. - J. Moe, Institute survey flight
 note genroom Generator room | The generator room's chest: the power plans of the Institute - a wind turbine, an advanced battery, an advanced head light and an electric grill.
@@ -245,22 +245,22 @@ prop lowzone zone.radius=4
 prop lowzone zone.message=The low end. A hatch in the rock, and a warning sign.
 
 quest title=The Keel
-quest intro=An island hanging 12 m over the water. Get onto its top.
-step reach|top|1|Climb onto the top of Pendulum Isle
+quest intro=An island hanging 12 m over the water. Sail under it and get onto its top; the tall sighting tower on Bob Hill marks it.
+step reach|top|1|Climb onto the top of the island; the tall sighting tower on Bob Hill marks it
 step read|Pendulum hall rules|1|Read the pendulum hall's rules
-step read|Dr. Anja Roos's note|1|Find the old weather station north of the hall and read Anja's note
-step reach|bobfoot|1|Find the path up Bob Hill at the west end
+step read|Dr. Anja Roos's note|1|Find the old weather station past the pendulum hall and read Anja's note
+step reach|bobfoot|1|Find the path up Bob Hill, the hill with the sighting tower
 step reach|bobtop|1|Climb Bob Hill
 step read|Halvard's sighting log|1|Read Halvard's sighting log by his tower
-step collect|story:surveybolt|1|Dig up the buried survey bolt (metal detector and shovel)
+step collect|story:surveybolt|1|Dig up the buried survey bolt near the pendulum hall (metal detector and shovel)
 step collect|story:power|1|Set the survey bolt in the pendulum frame
 step blueprint|Blueprint_WindTurbine|1|Take the wind turbine plans from the generator room
 step blueprint|Blueprint_BatteryAdvanced|1|Take the advanced battery plans from the generator room
 step blueprint|Blueprint_HeadLight_Advanced|1|Take the advanced head light plans from the generator room
 step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans from the generator room
-step reach|ironridge|1|Walk out to the Iron Ridge on the north side, where every compass points
+step reach|ironridge|1|Walk out to the Iron Ridge, the dark ridge where every compass points
 step read|Lodestone survey|1|Read the Institute's lodestone survey on the ridge
-step reach|needletop|1|Climb Needle Knoll in the south-west and look the island over
+step reach|needletop|1|Climb Needle Knoll, the hill by the compass garden, and look the island over
 step reach|low_end|1|Take the zipline to the low end
 step read|Keel shaft warning|1|Read the keel shaft's warning
 step reach|keel|1|Climb down the shaft to the keel

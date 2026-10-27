@@ -156,13 +156,13 @@ island on.arrive=message||A market in the sky: caravans, tents, a clock tower - 
 story clockcode|Clock tower keypad open|Note_Paper|The clock tower room's keypad, unlocked with the crier's code.
 story ballastdrop|Ballast dropped|Placeable_Lantern_Metal|You let the ballast stone go: it fell 35 m into the sea, where the market's lower town lies.
 
-note crier Market crier's board | MARKET DAY - HEAR YE\n\nThe market is OPEN, Lift Day or no Lift Day.\nStalls: fruit, rope, fireworks (by the south tent).\nThe cable-car is shut - vines. Bring a blade.\nClock tower room: the code is the hour the hill went up, 3:51, then 7 for luck - 3517.\nThe ballast crane holds the market level. DO NOT pull the release.
+note crier Market crier's board | MARKET DAY - HEAR YE\n\nThe market is OPEN, Lift Day or no Lift Day.\nStalls: fruit, rope, fireworks (in the tent by the square).\nThe cable-car is shut - vines. Bring a blade.\nClock tower room: the code is the hour the hill went up, 3:51, then 7 for luck - 3517.\nThe ballast crane holds the market level. DO NOT pull the release.
 story cranekey|Ballast release key|Bolt|The ballast release's key, which the craneman Oskar hid on the cable car's top pylon.
 loot keybox story:cranekey*1;Rope*2;Plank*2
 prop keybox loot.refill=0
 note keybox Pylon deck box | A box lashed to the top pylon's rail. Inside, on a string, a heavy key stamped BALLAST.
 note oskarnote Craneman Oskar Lund's note | To whoever comes up here after me -\n\nThe ballast crane holds this town level. Take the stone off the hook and the plate tips, and everything on it slides towards the sea - or so the Institute told me, and I believed them for three weeks.\n\nThen I measured. The plate does not tip. It does not care. It hangs where the field wants it, and the stone is only a stone.\n\nI have hidden the release key up here anyway, in the deck box, so no drunk at the fireworks stall pulls it for a laugh. If you are sober and you have a reason: take it. Down there, under the crane, there are people on the seabed who have been waiting for a sign that somebody is up here.\n\n- O. Lund, craneman
-note gretaledger Toll keeper Greta Holm's ledger | TOLLS - G. HOLM\n\nLift Day: 41 carts in, 0 carts out. Nobody can leave. I have stopped charging.\nDay 2: The crier still cries. Prices are up. Water is up most.\nDay 5: Nils from the west end is selling the same battery to everyone. Twice to the Institute.\nDay 9: Oskar has gone up the pylon hill with the crane's key. 'Safety', he says. He has also taken his lunch, his blanket and my good chair.\nDay 14: Someone in the sea under us is ringing a bell. Oskar says it is the lower town, the half of us that went down. I go to the edge every evening and listen.
+note gretaledger Toll keeper Greta Holm's ledger | TOLLS - G. HOLM\n\nLift Day: 41 carts in, 0 carts out. Nobody can leave. I have stopped charging.\nDay 2: The crier still cries. Prices are up. Water is up most.\nDay 5: Nils from the far end is selling the same battery to everyone. Twice to the Institute.\nDay 9: Oskar has gone up the pylon hill with the crane's key. 'Safety', he says. He has also taken his lunch, his blanket and my good chair.\nDay 14: Someone in the sea under us is ringing a bell. Oskar says it is the lower town, the half of us that went down. I go to the edge every evening and listen.
 note nilsnote Smuggler's note | (In pencil, on the back of a toll ticket)\n\nBattery: sold to H. (Inst.) - 3 tokens\nBattery (same): sold to H. again - 3 tokens\nBattery (same): sold to Greta - 1 token and a pie\n\nGreta knows. Greta always knows.\nIf the stone goes, I go down after it. There is copper in the lower town and nobody to sell it to me.
 note newsnote Newspaper pilot's note | Landed in the south field. The Courier's Lift Day edition is in the crate, if anybody up here still wants the news. The headline did not age well. - P. Varga, Halvard Courier air delivery
 note portertools Porter's toolbox | The cable-car porter's toolbox: a machete for the vines on the station door, and a coil of rope.
@@ -221,8 +221,8 @@ prop release on.use=signal||ballast\nhide|ballaststone\ngive||story:ballastdrop*
 prop release else.use=message||The release is locked - its key is gone. A chalked arrow on the crane points up at Pylon Hill. (If the stone is already gone: down there, under the splash, is the market's lower town.)
 
 quest title=Market Day in the Sky
-quest intro=A market town 35 m over the sea. Climb onto its rim.
-step reach|market_rim|1|Climb onto the market's rim
+quest intro=A market town 35 m over the sea. Make for the clock tower and climb onto its rim.
+step reach|market_rim|1|Make for the clock tower; climb onto the market's rim
 step read|Market crier's board|1|Read the crier's board in the square
 step reach|station|1|Cut the vines and go into the cable-car station
 step blueprint|Blueprint_EngineControls|1|Take the engine control plans from the station office
@@ -233,8 +233,8 @@ step blueprint|Blueprint_Firework|1|Take the firework plans from the fireworks s
 step blueprint|Blueprint_ZiplineBase|1|Take the zipline base plans from the rigger's chest
 step blueprint|Blueprint_ZiplineTool|1|Take the zipline tool plans from the rigger's chest
 step blueprint|Blueprint_BatteryCharger|1|Take the battery charger plans from the rigger's chest
-step read|Toll keeper Greta Holm's ledger|1|Find the toll house in the north-east and read Greta's ledger
-step reach|pylonfoot|1|Find the path up Pylon Hill, north-west of the square
+step read|Toll keeper Greta Holm's ledger|1|Find the toll house outside the town square and read Greta's ledger
+step reach|pylonfoot|1|Find the path up Pylon Hill, the hill with the pylons
 step reach|pylontop|1|Climb Pylon Hill
 step collect|story:cranekey|1|Climb the top pylon and take the ballast release key from its deck box
 step reach|lower_terrace|1|Take the zipline down to the lower terrace

@@ -66,7 +66,7 @@ call hw_reef x=-30 z=-30 r=4 seed=9762
 
 # --- DEEP 10-25: the north keeper's drowned house (air), his note, his strongbox in the reef rock, a rowing boat -------
 call hw_sunkhouse x=-25 z=20 h=2 yaw=310 a=jonashouse chest=jonaschest air=jonasair bub=jonasbub dal=jonasdoor
-call hw_zone x=-25 z=20 al=jonaszone id=jonashouse r=7 h=1 msg="The north keeper's house, drowned with its station. The front room still holds air."
+call hw_zone x=-25 z=20 al=jonaszone id=jonashouse r=7 h=1 msg="The keeper's house, drowned with its station. The front room still holds air."
 place Note_Paper jonasnote at -24 19 h=2.5 drop yaw=310
 loot jonaschest CopperOre*2;Battery*1;Rope*2;Cooked_Mackerel*1
 prop jonaschest loot.refill=0
@@ -74,7 +74,7 @@ note jonaschest Jonas's sea chest | Jonas Lund's sea chest: rope, a battery, a d
 call hw_zone x=30 z=-20 al=reefz id=reefcave r=4 msg="A cave in the reef rock. Something wrapped in sailcloth is wedged at the back."
 loot reefchest TitaniumOre*1;MetalIngot*1;Bolt*2;Hinge*1
 prop reefchest loot.refill=0
-note reefchest Keeper's strongbox | The north keeper's strongbox, hidden in the reef rock: the station's float money - iron, titanium ore and bolts.
+note reefchest Keeper's strongbox | The keeper's strongbox, hidden in the reef rock: the station's float money - iron, titanium ore and bolts.
 call hw_wreck x=20 z=35 h=2 yaw=200 obj=BoatStranded al=rowboat crate=rowcrate r=7
 loot rowcrate Rope*2;Plank*3;Nail*6
 note rowcrate Rowing boat's crate | The station's rowing boat, gone down at its mooring: rope, planks, nails.
@@ -87,13 +87,13 @@ prop treasure9764 treasure.loot=Scrap*3;Bolt*2;TitaniumOre*1
 # --- Settings, notes, behaviours, quest -------------------------------------------------------------------------------
 info title=Weatherglass Deep
 info author=Custom Islands
-info description=Weatherglass Shoal's drowned twin, 20 m down: the north keeper's drowned house with its air, a reef rock with a cave, a sunken rowing boat, the same weather station gone under on Lift Day, its glass broken, pufferfish in the reef. A side island of The Gravity Sea - dive.
-island on.arrive=message||20 m down, just north of the shoal: the same white box on legs - fallen over, in the sand.
+info description=Weatherglass Shoal's drowned twin, 20 m down: the keeper's drowned house with its air, a reef rock with a cave, a sunken rowing boat, the same weather station gone under on Lift Day, its glass broken, pufferfish in the reef. A side island of The Gravity Sea - dive.
+island on.arrive=message||20 m down, in the dark water by the shoal: the same white box on legs - fallen over, in the sand.
 
-note drownedlog Drowned log | WEATHERGLASS NORTH - LOG\n\nLift Day, 3:51. The glass reads 9.9 - off the scale.\n3:52. The bank is sinking. Halvard's lift took the hill; the bill comes here.\n3:53. Going up the boardwalk. Leaving the log.
+note drownedlog Drowned log | WEATHERGLASS TWIN - LOG\n\nLift Day, 3:51. The glass reads 9.9 - off the scale.\n3:52. The bank is sinking. Halvard's lift took the hill; the bill comes here.\n3:53. Going up the boardwalk. Leaving the log.
 note drownedchest Drowned chest | The drowned station's chest, sealed with wax: the keeper's valuables.
-note jonasnote North keeper Jonas Lund's note | (Written in pencil, on the back of a weather form, the paper dry in the air pocket)\n\nMaja -\n\nThe house went down slower than the station. I had time to shut the door, and the front room kept its air. I have been breathing it for two days. The water outside is very calm and very green.\n\nThe glass read 9.9 at the end. Not the weather - the field. Halvard's lift took the hill up, and the sea took our bank down to pay for it. Up and down, always equal. That is all the glass ever says.\n\nThe station's money is in the reef rock, south-east, where the tide could never reach it. Give it to whoever comes down. They will have earned it.\n\n- Jonas
-note twinanswer Twin's answer | TO THE SOUTH STATION\n\nIf you are reading this, the field fell, or someone came down anyway. Thank you for coming.\nThe glass told us all along: what goes up must be paid for below.
+note jonasnote North keeper Jonas Lund's note | (Written in pencil, on the back of a weather form, the paper dry in the air pocket)\n\nMaja -\n\nThe house went down slower than the station. I had time to shut the door, and the front room kept its air. I have been breathing it for two days. The water outside is very calm and very green.\n\nThe glass read 9.9 at the end. Not the weather - the field. Halvard's lift took the hill up, and the sea took our bank down to pay for it. Up and down, always equal. That is all the glass ever says.\n\nThe station's money is in the reef rock, where the tide could never reach it. Give it to whoever comes down. They will have earned it.\n\n- Jonas
+note twinanswer Twin's answer | TO THE SHOAL STATION\n\nIf you are reading this, the field fell, or someone came down anyway. Thank you for coming.\nThe glass told us all along: what goes up must be paid for below.
 loot drownedchest TitaniumIngot*1;MetalIngot*3;CopperIngot*2;Bolt*2
 prop drownedchest loot.refill=0
 
@@ -109,15 +109,15 @@ prop puffers creature.respawn=0
 prop puffers creature.zone=drowned_reef
 
 quest title=The Drowned Twin
-quest intro=The shoal's twin station lies 20 m down, just north. Dive to it.
-step reach|drowned_station|1|Dive to the drowned station
+quest intro=The shoal's twin station lies 20 m down, in the dark water. Dive to it.
+step reach|drowned_station|1|Dive down where the sea is darker, to the drowned station
 step read|Drowned log|1|Read the drowned station's log
-step reach|jonashouse|1|Find the north keeper's drowned house north-west of the station
+step reach|jonashouse|1|Find the keeper's drowned house, a little way from the station
 step read|North keeper Jonas Lund's note|1|Breathe in the house's front room and read the keeper's note
 step kill|Puffer fish|3|Drive off the pufferfish
 step open|Drowned chest|1|Open the drowned chest
 step read|Twin's answer|1|Read the twin's answer
-quest done=Both weather stations are read. The glass on the shoal still says: falling north.
+quest done=Both weather stations are read. The glass on the shoal still says: falling toward the dark water.
 quest reward=TitaniumIngot*1;MetalIngot*2;Cooked_Mackerel*2
 
 save Weatherglass Deep

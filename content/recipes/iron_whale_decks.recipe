@@ -336,7 +336,7 @@ pop
 
 quest title=The Engine Decks
 quest intro=A mast out of the sea, a stern on the seabed. Climb to the mast's platform.
-step reach|stern_mast|1|Climb the stern mast out of the sea
+step reach|stern_mast|1|Climb the stern mast sticking out of the sea
 step blueprint|Blueprint_WindTurbine|1|Take the wind turbine's plans from the mast box
 step reach|boiler_hall|1|Dive into the stern and find the air in the boiler hall
 step read|Captain's log, day 40|1|Read the captain's log
@@ -351,8 +351,8 @@ step read|Radio cable, chopped|1|Look at the chopped radio cable beside her
 step blueprint|Blueprint_ElectricGrill|1|Take the electric grill's plans from the officers' galley
 step collect|story:fuse|3|Find the three breaker fuses (engine store, chief's locker, shaft box)
 step collect|story:breaker|1|Throw the main breaker in the engine room
-step reach|prop_trench|1|With the lights on, the trench south-west shows: dive to the Whale's propeller in the dark
-step reach|funnel_top|1|Leave the stern the way its smoke did: climb the fallen funnel north-east out of the sea
+step reach|prop_trench|1|With the lights on, dive into the dark trench beside the stern to the Whale's propeller
+step reach|funnel_top|1|Climb the fallen funnel, the ladder tower out of the sea, to leave the stern
 quest done=The Whale's lights burn again. Hedda says: Saga Drift, 900 - the flotilla city went quiet first.
 quest reward=MetalIngot*3;CopperIngot*2;Battery*1
 
