@@ -471,7 +471,11 @@ namespace DynamicIslands.Editor
 
 				// Ground textures (and footstep sounds) for the island styles
 				foreach (Terrain t in scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Terrain>(true)))
-					if (t.terrainData != null) TerrainPainter.UseRaftTextures(t.terrainData.terrainLayers, t.GetComponent<TerrainIdentifier>());
+					if (t.terrainData != null)
+					{
+						TerrainPainter.UseRaftTextures(t.terrainData.terrainLayers, t.GetComponent<TerrainIdentifier>());
+						SeaGrass.Learn(t.terrainData); // (Raft's short sea grass, PF-D3)
+					}
 
 				Debug.Log("[CUSTOM ISLANDS] " + source.Scene + ": " + (prototypes.Count - before) + " objects");
 				yield return CloseScene(opened);

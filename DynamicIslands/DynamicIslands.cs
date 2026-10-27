@@ -466,6 +466,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("World randomizer", e); }
 			try { Editor.ExtraUpgrades.Tick(); }
 			catch (Exception e) { TickError("Extra upgrades", e); }
+			try { WorldWindowHint.Tick(); }
+			catch (Exception e) { TickError("World window tip", e); }
 			try { PlayerLevels.Tick(); LevelWindow.Tick(); }
 			catch (Exception e) { TickError("Levels", e); }
 			try { EditorAutosave.Tick(); }
@@ -718,6 +720,7 @@ namespace DynamicIslands
 			terraineditor.paintMask = new float[data.alphamapResolution, data.alphamapResolution];
 			SetEditorWaterLevel(IslandFile.DefaultWaterLevel);
 			TerrainPainter.Setup(terrain, EditorWaterLevel);
+			SeaGrass.Clear(terrain);
 			CommandUndoRedo.UndoRedoManager.Clear();
 			EditorAutosave.Opened(currentIslandName, false);
 			EditorUI.RefreshIsland();
@@ -1036,6 +1039,7 @@ namespace DynamicIslands
 					terraineditor.paintMask = new float[terrain.terrainData.alphamapResolution, terrain.terrainData.alphamapResolution];
 					TerrainPainter.Setup(terrain, island.WaterLevel);
 				}
+				SeaGrass.Load(terrain, island);
 
 				// (the selection too, as New and Generate do: the gizmo stayed on the destroyed objects - Shift+click added to it, no handles)
 				if (EditorGizmoHandler != null) EditorGizmoHandler.ClearTargets(false);

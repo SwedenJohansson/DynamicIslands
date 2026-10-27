@@ -197,6 +197,10 @@ lists every rule of the plan in words.
 ![The plan picker](images/plan-picker.jpg)
 *The plan picker: a plan selected, with a map of its first island and the islands it brings.*
 
+Under the plan the box says **In the world: Esc > Custom Islands changes the islands and settings (not the plan)**:
+the plan is fixed once the world is made, everything else can still be changed there. In your first worlds a tip says
+so again a little after you arrive (at most three times, and never again once you have opened that window).
+
 Then click Raft's **Create** as usual. Your World settings are remembered for the next new world, and so is the plan
 (in `newworld_plan.txt`; the first time it is **Random islands**, or the `defaultPlan` of `spawnpool.txt`). Both belong to the world:
 saved with it, the same for every player, and every new world gets its own.
@@ -227,7 +231,11 @@ part, they never crowd the sea. It can be:
 
 - one of **your own islands** (every saved island takes part unless `spawnpool.txt` says otherwise; islands your world plan brings, and islands generated while sailing, don't come by chance),
 - a **brand-new generated island**: a random size and style (tropical, snowy, desert, forest or volcanic), sometimes
-  flying; it is saved as `gen-<style>-<seed>.island`, so it stays in that world. In World settings > Islands while sailing it is the row
+  flying; it is saved as `gen-<style>-<seed>.island`, so it stays in that world. With the world option **Fuller random
+  islands** ([9.4](#94-extra-options), off by default) it is about as full as Raft's own islands, on land and under
+  water, often with a small ruin, and its animals are few: mostly one hostile animal (a warthog, a stone bird, a
+  rat...) and sometimes one friendly one, which don't come back once killed. Everything about
+  it comes from its seed, so every player meets the same island, and after a reload it is the same again. In World settings > Islands while sailing it is the row
   **Brand-new generated islands**; untick it and only made or downloaded islands and map types come (see [9.5](#95-islands-while-sailing)),
 - a **map type**: a sandbar, a wreck of raft blocks, an atoll or a sunken island (more in [4.6](#46-ready-made-islands-map-types)).
 
@@ -658,11 +666,27 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
 - **Paint ground:** the style's four textures (for a tropical island Sand, Grass, Rock, Seabed). **Auto** textures an
   area by its height and slope again. **Mix** adds a second style's four textures (eight in all): a tropical island
   with a snowy peak, a desert with forest ground. Older versions of the mod show the first style's textures there.
+  **Sea grass** grows Raft's own short sea grass on the sea floor: hold the mouse down and tufts come up under the
+  brush, thicker the longer you hold (two tufts a spot at most). It grows only where the ground is under the sea, so
+  you can brush along a shore and the beach stays bare; **Shift** takes it away. Each stroke is one Ctrl+Z. The
+  grass is saved with the island and shows on its sea floor in your world (not under a flying island). New and
+  Generate start without grass; Generate's Ctrl+Z brings it back. Older versions of the mod open the island without it.
 - **Brush:** size, strength and **Edge**: **Smooth** (soft all the way out, as before), **Linear** or **Hard** (full
   strength up to a thin rim - for terraces and sharp paint borders).
 - **Stamps:** click the ground to put down a **Hill**, **Peak**, **Crater**, **Mesa**, **Lagoon** or **Ridge**, as big
   as the brush (Q/E turn it). **Save stamp...** keeps the land under the brush as a stamp of your own; **Manage...** beside it renames or
   deletes your stamps.
+- **Caves:** **Tunnel** digs a cave you can walk into. Press where its mouth is to be and drag the way it goes, into a
+  hill or across flat ground: Raft's own cave tunnels (the ones on Temperance) are laid end to end along the drag, as
+  many as fit (up to 12, about 10 m each), and the ground is raised over them into a hill, filled up under them and
+  levelled in front of the mouth, which stays open. **Slope** tips the tunnel down into the ground or up (up to 12°);
+  **Size** makes the whole cave smaller or bigger than Raft's own, from **0.7x** (a narrow passage you can still
+  walk) to **1.5x** (a big cavern); pick it before you drag - an outline of the mouth at that size follows the mouse;
+  **Cave room at the end** ends it in Balboa's bear den (off: an open far end, a tunnel through the hill); **Hill over
+  it** off leaves the ground as it is (for a cave inside a hill you made yourself). Esc cancels the drag; one **Ctrl+Z**
+  takes the pieces and the ground back together. The pieces are ordinary objects: move, delete or tint them like any
+  other; they save with the island and come along into Test and multiplayer. In a world the rock over them is solid
+  and no daylight shows through.
 
 **Sea floor.** On the Island tab, **Sea floor: Deep / Shallow** switches the sea around the island without making it
 again: the land keeps its height above the sea, the untouched sea floor goes down (a slope falls away from the shore)
@@ -768,7 +792,9 @@ against a wall) stands up straight; a bigger lean - more than 25°, a boulder ly
 - **Select:** click a placed object; **Shift+click** adds more, **Ctrl+click** takes one out again. The object under the
   mouse has a light blue outline: that is what a click selects. Where objects stand in each other, the smallest one is
   picked (a flower beside a big palm, not the palm), and a model's real shape counts, not the box around it. Click the
-  same spot again to get the next object there (the status bar says "2 of 3 here"), and again to go round.
+  same spot again to get the next object there (the status bar says "2 of 3 here"), and again to go round. A big
+  object such as a big palm takes a click only on itself - its trunk, its leaves - not on the ground under its crown,
+  so the ground and small things there stay easy to click.
 - **Transform** (keys 1-4): Move, Turn, Scale or All, with the coloured handles. **X** switches the arrows between the
   world's directions and the object's own turn; **P** turns and scales around each object's own point or the middle of
   the selection; hold **Ctrl** while dragging to snap (0.25 m, 15°). An island holds at most 100 000 objects (the editor
@@ -837,7 +863,8 @@ behaviours (see [section 5](#5-making-islands-come-alive)).
   (or a deck, a roof) and click **Test start: where I look**: a small **green marker** (a pole with a ball) shows the
   spot, in the editor only - it is not an object and players never see it. **Clear** takes it away; **Ctrl+Z** undoes
   either. It is saved with the island. Without one, Test puts you on the island's middle, or on the land nearest the
-  middle when the middle is sea (an atoll, a crescent). It is only for Test: players reach the island by raft, wherever
+  middle when the middle is sea (an atoll, a crescent). When the middle is a high peak (over 60 m) or too steep to
+  stand on, you go to the low flat land (a beach) nearest it. It is only for Test: players reach the island by raft, wherever
   they like.
 - **About this island** (the last group of the tab): how many objects the island has, what the height means **in a
   world** ("normal (at sea level)", "flying 60 m above the sea" or "under water, top of the land 30 m deeper than
@@ -1418,7 +1445,7 @@ moment, with other islands after it ([7.2](#72-your-first-world-plan-step-by-ste
    world with the plan **No custom islands**, so nothing else turns up.
 3. Your island is put beside the raft and you stand on it: on the ground at its **test start** if you set one (Island
    tab, [section 4.4](#44-the-island-tab)), else on its middle - or, when the middle is sea, on the land nearest it, not
-   the sea floor. Islands tried there before are taken away first. Their journal pages and story items go too, so a quest starts fresh.
+   the sea floor; when the middle is a high peak or too steep, on the low flat land (a beach) nearest it. Islands tried there before are taken away first. Their journal pages and story items go too, so a quest starts fresh.
    You arrive with the **starter kit** (below), hunger, thirst, health and oxygen full.
 4. Walk around, open the chests, read the notes, meet the creatures, try the quest.
 5. **Esc → Custom Islands → Back to the editor**: the test world is left **without saving** and the editor opens
@@ -2936,6 +2963,7 @@ already in the world is taken away. What each one does from the moment it change
 | Binoculars see through fog | At once (the haze eases in over a second); off: Raft's own fog |
 | Mirrored islands | Islands that spawn from now on (one already in the world changes when it comes back into view); off: they spawn as made |
 | No minimap | At once: the island map is hidden for every player and its keys do nothing; off: it works again (if the player's own Minimap box is on) |
+| Fuller random islands | Islands generated from now on; ones already generated stay as they are |
 | Lightning strikes | The next storm can have bolts (one blowing now too); off, a bolt already in the sky finishes |
 | Extra upgrades | Off: the recipes are hidden; upgrades built or worn keep working, learned ones are kept |
 | Scrambled blueprints / Story order (retired, off only) | Untaken blueprints go back to Raft's places / the Receiver goes back to Raft's order |
@@ -3428,6 +3456,15 @@ No player can open the [island map](#the-island-map-m-and-pings-g): it is never 
 and no picture is taken. The **Minimap** box in each player's **Defaults... > Keys (this PC)** has no effect while it is
 on (it is that player's own switch when the option is off). **Pings** (G) still work. Off by default; the host's choice
 applies to every player, joining ones too, and can be changed in a running world.
+
+#### Fuller random islands
+
+**Brand-new islands generated while sailing** ([section 3](#3-sailing-custom-islands-in-your-world)) come about as full as Raft's own islands: more plants, rocks
+and finds on land, a fuller sea floor, one or two features and sometimes a small ruin. Their animals are few: about
+70% have **one hostile animal** and 50% **one friendly animal**, and they don't come back once killed or caught. It all
+comes from the island's seed, so every player meets the same island. **Off by default**: without it, generated islands
+come as they always did. It changes only islands generated after it is ticked; one already generated keeps its file.
+The host's choice; it can be changed in a running world.
 
 #### Ghost ship
 

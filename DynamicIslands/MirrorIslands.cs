@@ -82,6 +82,8 @@ namespace DynamicIslands.Editor
 				if (island.PaintMask != null && island.PaintMask.Length == r * r)
 					for (int z = 0; z < r; z++) FlipRow(island.PaintMask, z * r, r);
 			}
+			if (island.HasGrass)
+				for (int z = 0; z < island.GrassResolution; z++) FlipRow(island.GrassCells, z * island.GrassResolution, island.GrassResolution);
 			float w = island.TerrainSize.x;
 			foreach (IslandObject o in island.Objects)
 			{

@@ -34,6 +34,8 @@ namespace DynamicIslands
 			Stamp,      // one click puts down TerrainStamps.Current, as big as the brush
 			Noise,      // adds bumps of TerrainBrushes.NoiseScale (Shift: takes them away)
 			Erode,      // thermal erosion: ground steeper than TerrainBrushes.TalusAngle slides down
+			Cave,       // drag a tunnel of cave pieces into a hill (CaveTool, PF-D2)
+			SeaGrass,   // Raft's short sea grass on the sea floor (SeaGrass, PF-D3; Shift: takes it away)
 		}
 
 		/// <summary>Tests: the next strokes take the noise away, as Shift does.</summary>
@@ -75,10 +77,11 @@ namespace DynamicIslands
 		Vector3 dirtyMin, dirtyMax; // world-space area touched by the current stroke, repainted on release
 		float dt; // time step of the current brush application
 		float[,] strokeHeights; float[,,] strokeAlpha; float[,] strokeMask; // undo snapshot taken when the stroke starts
+		int[,] strokeGrass; // the sea grass before a Sea grass stroke
 
 		void Start()
 		{
-			terrainData = new TerrainData();
+			terrainData = SeaGrass.NewTerrainData(); // (a copy of Raft's when found: its sea grass draws cut out)
 			// Resolution first: changing it afterwards rescales the size
 			terrainData.heightmapResolution = heightmapResolution;
 			terrainData.size = terrainSize;
@@ -91,6 +94,7 @@ namespace DynamicIslands
 			paintMask = null;
 			TerrainPainter.Setup(terrain, DynamicIslands.EditorWaterLevel);
 			paintMask = new float[terrainData.alphamapResolution, terrainData.alphamapResolution];
+			SeaGrass.EditorSetup(terrain);
 		}
 
 		void Update()
@@ -144,6 +148,8 @@ namespace DynamicIslands
 				if (Input.GetKeyDown(CameraSettings.UpKey)) TerrainStamps.Rotation += 15f;
 			}
 
+			if (modificationAction == TerrainModificationAction.Cave) { CaveTool.Drag(overTerrain, point, canSculpt); return; }
+			CaveTool.Cancel();
 			if (!Input.GetMouseButton(0) || !overTerrain || (!stroking && EditorCamera.UsingMouse)) return; // (Alt+drag orbits the camera)
 			if (!stroking) BeginStroke(point);
 			ApplyAt(point, Time.deltaTime);
@@ -163,6 +169,8 @@ namespace DynamicIslands
 			strokeHeights = terrainData.GetHeights(0, 0, hres, hres);
 			strokeAlpha = terrainData.GetAlphamaps(0, 0, ares, ares);
 			strokeMask = paintMask != null ? (float[,])paintMask.Clone() : null;
+			strokeGrass = null;
+			if (modificationAction == TerrainModificationAction.SeaGrass) { SeaGrass.EditorSetup(terrain); strokeGrass = SeaGrass.Layer(terrain); }
 		}
 
 		void ApplyAt(Vector3 point, float deltaTime)
@@ -178,6 +186,7 @@ namespace DynamicIslands
 				case TerrainModificationAction.Erode: ApplyErode(point); break;
 				case TerrainModificationAction.PaintLayer: ApplyPaint(point, false); break;
 				case TerrainModificationAction.AutoPaint: ApplyPaint(point, true); break;
+				case TerrainModificationAction.SeaGrass: SeaGrass.Paint(terrain, point, brushRadius, strength, dt, noiseSign < 0f, DynamicIslands.EditorWaterLevel); break;
 				case TerrainModificationAction.Stamp:
 					if (!stamped && TerrainStamps.Current != null) TerrainStamps.Apply(terrain, TerrainStamps.Current, point, brushRadius, TerrainStamps.Rotation);
 					stamped = true;
@@ -198,7 +207,7 @@ namespace DynamicIslands
 		{
 			stroking = false;
 			// Sculpting changes heights/slopes, so refresh the automatic texturing (hand-painted pixels are kept)
-			if (modificationAction != TerrainModificationAction.PaintLayer && modificationAction != TerrainModificationAction.AutoPaint)
+			if (modificationAction != TerrainModificationAction.PaintLayer && modificationAction != TerrainModificationAction.AutoPaint && modificationAction != TerrainModificationAction.SeaGrass)
 				TerrainPainter.PaintWorldArea(terrain, DynamicIslands.EditorWaterLevel, dirtyMin, dirtyMax, paintMask);
 			RecordUndo();
 		}
@@ -206,6 +215,14 @@ namespace DynamicIslands
 		/// <summary>Stores the area touched by the stroke (before/after) as one undo step.</summary>
 		void RecordUndo()
 		{
+			if (strokeGrass != null)
+			{
+				// (grass only: the cells the stroke reached)
+				RectInt cells = SeaGrass.CellRect(terrain, dirtyMin, dirtyMax);
+				CommandUndoRedo.UndoRedoManager.Insert(new SeaGrass.Command(terrainData, cells, SeaGrass.Command.Crop(strokeGrass, cells)));
+				strokeGrass = null; strokeHeights = null; strokeAlpha = null; strokeMask = null;
+				return;
+			}
 			if (strokeHeights == null) return;
 			int hres = terrainData.heightmapResolution;
 			float spacing = terrainData.size.x / (hres - 1);

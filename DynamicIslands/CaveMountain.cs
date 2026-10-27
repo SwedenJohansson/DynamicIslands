@@ -65,6 +65,9 @@ namespace DynamicIslands.Editor
 				{
 					if (end == 0 ? !m.Plus : !m.Minus) continue;
 					float dir = end == 0 ? 1f : -1f, start = end == 0 ? m.StartPlus : m.StartMinus;
+					// (an end joined on to another piece: the roof runs on past it to the chain's mouth, which that piece checks at its
+					// own floor - this one's floor there was a tunnel slope's height off, under the way in's floor, 10-26)
+					if (start > (end == 0 ? m.OwnPlus : m.OwnMinus) + 2.5f) continue;
 					foreach (float up in new[] { 0.5f, 1.2f, 1.9f })
 						foreach (float s in new[] { 0f, -m.HalfWidth * 0.4f, m.HalfWidth * 0.4f })
 						{
@@ -72,7 +75,7 @@ namespace DynamicIslands.Editor
 							from.y = m.FloorY + up;
 							RaycastHit hit;
 							if (mine.Raycast(new Ray(from, -dir * m.Along), out hit, 6f))
-								bad.Add(m.Name + (end == 0 ? " +" : " -") + " end, " + up.ToString("0.0") + " m over its floor, " + s.ToString("0.0") + " m aside: the hill " + hit.distance.ToString("0.0") + " m in");
+								bad.Add(m.Name + (end == 0 ? " +" : " -") + " end, " + up.ToString("0.0") + " m over its floor, " + s.ToString("0.0") + " m aside: the hill " + hit.distance.ToString("0.0") + " m in" + HitShape(hit, m));
 						}
 					// Out in front beside the way in: no hill over the ground there (it spread on over the ledge and the paths - Sundown
 					// Canyons, the Iron Gate); over the cave's own rock, or another cave's hill reaching there, is all right
@@ -97,6 +100,24 @@ namespace DynamicIslands.Editor
 						}
 				}
 			return bad;
+		}
+
+		/// <summary>(tests) What the ray hit: the face's slant and its corners against the floor and the roof's end.</summary>
+		string HitShape(RaycastHit hit, Mouth m)
+		{
+			var mc = hit.collider as MeshCollider;
+			string s = " (normal " + hit.normal.ToString("F2");
+			if (mc != null && mc.sharedMesh != null && hit.triangleIndex >= 0)
+			{
+				Vector3[] v = mc.sharedMesh.vertices; int[] t = mc.sharedMesh.triangles;
+				for (int c = 0; c < 3; c++)
+				{
+					Vector3 w = mc.transform.TransformPoint(v[t[hit.triangleIndex * 3 + c]]);
+					float a = Vector3.Dot(w - m.Pos, m.Along) - m.InsideAlong;
+					s += ", corner along " + a.ToString("0.00") + " aside " + (Vector3.Dot(w - m.Pos, m.Side) - m.InsideSide).ToString("0.00") + " y-floor " + (w.y - m.FloorY).ToString("0.00");
+				}
+			}
+			return s + "; roof ends " + m.StartPlus.ToString("0.00") + "/" + m.StartMinus.ToString("0.00") + ")";
 		}
 
 		bool[,] otherHill; // (last build: out past an open end, where another cave's hill reaches)
@@ -133,7 +154,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>One cave piece's open ends: where the mountain must leave the way in clear.</summary>
-		struct Mouth { public Vector3 Pos, Along, Side; public float InsideAlong, InsideSide, HalfWidth, FloorY, StartPlus, StartMinus; public bool Plus, Minus; public string Name; }
+		struct Mouth { public Vector3 Pos, Along, Side; public float InsideAlong, InsideSide, HalfWidth, FloorY, OwnPlus, OwnMinus, StartPlus, StartMinus; public bool Plus, Minus; public string Name; }
 		readonly List<Mouth> lastMouths = new List<Mouth>();
 
 		void Build()
@@ -172,11 +193,15 @@ namespace DynamicIslands.Editor
 				along.y = 0f; along.Normalize();
 				Vector3 side = new Vector3(along.z, 0f, -along.x);
 				Vector3 inside = t.position + t.rotation * Vector3.Scale(p.Inside, sc);
+				// (how far the piece itself reaches from its inside point, each way along its passage: past that its roof is another
+				// piece's, joined on)
+				float ax = p.Axis == 0 ? sc.x : sc.z, mid = p.Axis == 0 ? p.Centre.x : p.Centre.z, half = (p.Axis == 0 ? p.Size.x : p.Size.z) / 2f, inAxis = p.Axis == 0 ? p.Inside.x : p.Inside.z;
+				float ownPlus = (mid + half - inAxis) * ax, ownMinus = (inAxis - (mid - half)) * ax;
 				mouths.Add(new Mouth
 				{
 					Pos = t.position, Along = along, Side = side,
 					InsideAlong = Vector3.Dot(inside - t.position, along), InsideSide = Vector3.Dot(inside - t.position, side),
-					HalfWidth = p.Width * (p.Axis == 0 ? sc.z : sc.x) / 2f + 1f, FloorY = floorY, Plus = p.OpenPlus, Minus = p.OpenMinus, Name = t.name
+					HalfWidth = p.Width * (p.Axis == 0 ? sc.z : sc.x) / 2f + 1f, FloorY = floorY, OwnPlus = ownPlus, OwnMinus = ownMinus, Plus = p.OpenPlus, Minus = p.OpenMinus, Name = t.name
 				});
 			}
 			caves.RemoveAll(t => t == null);

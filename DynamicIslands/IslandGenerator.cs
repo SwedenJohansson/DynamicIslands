@@ -78,6 +78,9 @@ namespace DynamicIslands.Editor
 
 		// Content: creature spots and loot boxes
 		public int Hostiles, Friendly, SeaLife;
+		/// <summary>Each land animal spot holds one animal that never comes back once killed or caught (ROADMAP PF-D1: the
+		/// islands made while sailing get one hostile and one friendly animal at most). False: herds that come back, as before.</summary>
+		public bool LoneAnimals;
 		/// <summary>Kinds of hostile creatures (AI types, comma separated), "" = the style's own.</summary>
 		public string HostileKinds = "";
 		/// <summary>A creature stat preset (ObjectProps.Presets): Easy, Normal, Hard, Boss.</summary>
@@ -1697,6 +1700,8 @@ namespace DynamicIslands.Editor
 			group.Add(new StyleCommand(styleBefore, s.Style)); // first in, so undo restores the old style last
 			group.Add(new WaterLevelCommand(levelBefore, s.WaterLevel));
 			group.Add(new TerrainStrokeCommand(data, new RectInt(0, 0, hres, hres), heightsBefore, new RectInt(0, 0, ares, ares), alphaBefore, maskBefore, terraineditor.paintMask));
+			CommandUndoRedo.ICommand grassGone = SeaGrass.ClearWithUndo(terrain); // (the old island's sea grass)
+			if (grassGone != null) group.Add(grassGone);
 
 			// The old objects go (hidden, so undo brings them back), the new ones come
 			Transform placed = GameObject.Find("PlacedObjects") != null ? GameObject.Find("PlacedObjects").transform : null;
@@ -3936,6 +3941,7 @@ namespace DynamicIslands.Editor
 			{
 				spots.Clear(p.x, p.y, 2.5f); // (room for the animals: the nature there goes)
 				var props = new Dictionary<string, string> { { ObjectProps.CreatureCount, HerdSize(kind, rnd).ToString(CultureInfo.InvariantCulture) } };
+				if (s.LoneAnimals && Array.IndexOf(SeaKinds, kind) < 0) { props[ObjectProps.CreatureCount] = "1"; props[ObjectProps.CreatureRespawn] = "0"; } // (not the sea life)
 				if (s.Difficulty != "Normal" && ContentCatalog.CreatureOf("Creature_" + kind) != null && ContentCatalog.CreatureOf("Creature_" + kind).Category == ContentCatalog.HostileCategory)
 				{
 					props[ObjectProps.CreatureHealth] = ObjectProps.Format(stats[0]);
@@ -4130,8 +4136,9 @@ namespace DynamicIslands.Editor
 			return Mathf.Lerp(Mathf.Lerp(h[z0, x0], h[z0, x0 + 1], tx), Mathf.Lerp(h[z0 + 1, x0], h[z0 + 1, x0 + 1], tx), tz);
 		}
 
-		/// <summary>Random settings for an island generated while sailing, in one of the allowed styles.</summary>
-		public static IslandGenSettings RandomSettings(System.Random rnd, int[] styles)
+		/// <summary>Random settings for an island generated while sailing, in one of the allowed styles; fuller: the world's
+		/// Fuller random islands option (Fuller, PF-D1) - off, the islands come as they always did.</summary>
+		public static IslandGenSettings RandomSettings(System.Random rnd, int[] styles, bool fuller = false)
 		{
 			var s = new IslandGenSettings
 			{
@@ -4150,7 +4157,35 @@ namespace DynamicIslands.Editor
 			if (rnd.NextDouble() < 0.25) s.Valleys = 0.3f + (float)rnd.NextDouble() * 0.4f;
 			// Under water: a gentle slope or a wall into the deep, as Raft's islands vary
 			s.DropOff = 0.15f + (float)rnd.NextDouble() * 0.8f;
+			if (fuller) Fuller(s, rnd);
 			return s;
+		}
+
+		/// <summary>Chances of the one hostile and the one friendly animal on an island made while sailing (ROADMAP PF-D1).</summary>
+		public const double LoneHostileChance = 0.7, LoneFriendlyChance = 0.5;
+		/// <summary>The small hostile kinds a lone animal is picked from, per style (TerrainPainter order): a boar, a bird, a rat...</summary>
+		static readonly string[] LoneHostiles = { "Boar,StoneBird,Rat", "StoneBird,Rat", "Hyena,Rat", "Boar,Rat", "Rat,Roach,StoneBird" };
+
+		/// <summary>
+		/// ROADMAP PF-D1 (player feedback 2026-10-26: "random islands feel empty"): an island made while sailing gets the land
+		/// as thick as Raft's islands of its style (not thicker: the user wants no jungle), a fuller sea floor than Raft's,
+		/// things to gather on land and in the shallows, one or two of Raft's features, now and then a ruin or a hut, and
+		/// at most one hostile animal (70 %) and one friendly one (50 %) that never come back. Drawn after the old draws, from
+		/// the same stream: the same world seed gives the same island on every PC and after a reload.
+		/// </summary>
+		static void Fuller(IslandGenSettings s, System.Random rnd)
+		{
+			if (!RaftIslands.DensitiesLikeRaft(s, s.Radius < 70f)) RandomizerIslands.LikeRaft(s);
+			float sea = 0.58f + (float)rnd.NextDouble() * 0.12f;
+			s.Water = sea; s.SeaRocks = 0.55f; s.SeaFinds = sea; s.Sunken = 0.5f;
+			s.Gather = 0.3f + (float)rnd.NextDouble() * 0.2f;
+			s.Shallows = 0.3f + (float)rnd.NextDouble() * 0.2f;
+			s.Features = 1 + rnd.Next(2);
+			if (rnd.NextDouble() < 0.4) { s.Buildings = true; s.BuildingKind = GenBuildings.Mixed; s.BuildingCount = 1; }
+			s.LoneAnimals = true;
+			s.Hostiles = rnd.NextDouble() < LoneHostileChance ? 1 : 0;
+			s.Friendly = rnd.NextDouble() < LoneFriendlyChance ? 1 : 0;
+			s.HostileKinds = LoneHostiles[Mathf.Clamp(s.Style, 0, LoneHostiles.Length - 1)];
 		}
 
 		#endregion

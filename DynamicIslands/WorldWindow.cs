@@ -331,6 +331,7 @@ namespace DynamicIslands.Editor
 			if (!LoadSceneManager.IsGameSceneLoaded) return;
 			if (canvas == null) Build();
 			canvas.gameObject.SetActive(true);
+			WorldWindowHint.Opened();
 			// (read afresh each time the window opens)
 			candidatesSig = null;
 			FillIslands();
@@ -481,6 +482,84 @@ namespace DynamicIslands.Editor
 	/// One Esc press closes only our window: Raft's pause menu skips the press while one of our in-world windows is open, or was open
 	/// last frame (the window may have closed on this same press before the pause menu's Update ran).
 	/// </summary>
+	/// <summary>
+	/// ROADMAP PF-D5 (player feedback, 2026-10-26: a player never found Esc > Custom Islands): a tip some seconds into a
+	/// world - "Esc > Custom Islands: this world's islands and settings" - on this PC's first worlds, until the window has
+	/// been opened once (at most Times worlds). Kept in worldwindow_hint.txt: the number shown, or "opened".
+	/// </summary>
+	public static class WorldWindowHint
+	{
+		public const string FileName = "worldwindow_hint.txt";
+		public const int Times = 3;
+		public const float Delay = 25f;
+		public const string Text = "Tip: press Esc > Custom Islands for this world's islands and settings (which islands come while sailing, the randomizer, the extra options).";
+		static float due = -1f;
+
+		static string Path { get { return System.IO.Path.Combine(DynamicIslands.assetpath, FileName); } }
+
+		/// <summary>What the file says: -1 = the window was opened, else how many times the tip was shown.</summary>
+		public static int State
+		{
+			get
+			{
+				try
+				{
+					if (!System.IO.File.Exists(Path)) return 0;
+					string v = (System.IO.File.ReadAllLines(Path).FirstOrDefault(l => !l.StartsWith("#")) ?? "").Trim();
+					int n;
+					return v == "opened" ? -1 : int.TryParse(v, out n) ? n : 0;
+				}
+				catch { return 0; }
+			}
+		}
+
+		static void Write(string v)
+		{
+			try { SafeFile.WriteAllText(Path, "# The \"Esc > Custom Islands\" tip at the start of a world: how often it was shown, or opened (the window was found)\n" + v + "\n"); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write " + Path + ": " + e.Message); }
+		}
+
+		/// <summary>A world was loaded or made: the tip is due in Delay seconds, if it is still to be shown.</summary>
+		public static void OnWorldLoaded()
+		{
+			int s = State;
+			due = s >= 0 && s < Times ? Time.realtimeSinceStartup + Delay : -1f;
+		}
+
+		/// <summary>The window was opened: the tip is never shown again.</summary>
+		public static void Opened() { due = -1f; if (State != -1) Write("opened"); }
+
+		public static void Tick()
+		{
+			if (due < 0f || Time.realtimeSinceStartup < due) return;
+			if (!LoadSceneManager.IsGameSceneLoaded || DynamicIslands.InEditor()) { due = -1f; return; }
+			if (RAPI.GetLocalPlayer() == null) return;
+			due = -1f;
+			Show();
+		}
+
+		/// <summary>Whether the tip waits to be shown in this world.</summary>
+		public static bool Pending { get { return due >= 0f; } }
+
+		/// <summary>Shows the tip now (if it is still to be shown) and counts it.</summary>
+		public static void Show()
+		{
+			int s = State;
+			if (s < 0 || s >= Times) return;
+			Write((s + 1).ToString());
+			DynamicIslands.Notify(Text, false, 12);
+		}
+
+		/// <summary>Tests: the kept state as text (null: no file), and putting it back.</summary>
+		public static string Kept { get { try { return System.IO.File.Exists(Path) ? System.IO.File.ReadAllText(Path) : null; } catch { return null; } } }
+		public static void Restore(string kept)
+		{
+			try { if (kept == null) { if (System.IO.File.Exists(Path)) System.IO.File.Delete(Path); } else SafeFile.WriteAllText(Path, kept); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] " + e.Message); }
+			due = -1f;
+		}
+	}
+
 	[HarmonyPatch(typeof(PauseMenu), "Update")]
 	public static class EscGuard
 	{

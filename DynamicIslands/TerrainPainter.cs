@@ -174,6 +174,13 @@ namespace DynamicIslands.Editor
 			return added > 0;
 		}
 
+		/// <summary>The ground texture layer of Raft's with this diffuse texture, or null if not seen yet.</summary>
+		public static TerrainLayer RaftLayer(string diffuseName)
+		{
+			KeyValuePair<TerrainLayer, SO_TerrainType> found;
+			return raftTextures.TryGetValue(diffuseName, out found) && found.Key != null && found.Key.diffuseTexture != null ? found.Key : null;
+		}
+
 		/// <summary>The four layers for a style, or null if Raft's textures for it haven't been seen.</summary>
 		static TerrainLayer[] BuildStyle(int style)
 		{

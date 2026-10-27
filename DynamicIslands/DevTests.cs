@@ -2427,31 +2427,82 @@ namespace DynamicIslands
 			// (a test world gets defaultPlan unless a test chose one: not the plan the last world was made with, ROADMAP CB5)
 			if (WorldDirector.PendingPlan == null) WorldDirector.PendingPlan = WorldDirector.DefaultPlan;
 			box = MenuNewGameBox() ?? box;
-			string err = TryCreate(box);
-			if (err != null)
-			{
-				// (Raft's Create threw - a dead link in a box left from the editor: the test stopped there and hung. Unless the
-				// world is on its way after all, once more with the live box, then a FAIL instead of a hang)
-				Log("Raft's Create threw (" + err + "): trying again with the live New Game box");
-				for (float end = Time.realtimeSinceStartup + 5f; Time.realtimeSinceStartup < end && !LoadSceneManager.IsGameSceneLoaded; ) yield return new WaitForSecondsRealtime(0.2f);
-				if (!LoadSceneManager.IsGameSceneLoaded)
-				{
-					NewGameBox again = MenuNewGameBox();
-					if (again == null) { Fail("Raft's Create threw (" + err + ") and there is no New Game box to try again"); yield break; }
-					if (again.inputfield_GameName.text != name) { again.inputfield_GameName.text = name; again.GameNameEndEdit(name); }
-					if (WorldDirector.PendingPlan == null) WorldDirector.PendingPlan = WorldDirector.DefaultPlan;
-					err = TryCreate(again);
-					if (err != null) { Fail("Raft's Create threw twice: " + err); yield break; }
-				}
-			}
+			// Raft's Create twice threw a NullReferenceException in Dropdown.Hide (10-26): the coroutine died at the menu and the
+			// runner waited 25 min. Now: caught, the box's dropdowns closed and the box reopened, one retry, else a FAIL line.
+			string[] error = new string[1];
+			yield return CreateWithRetry(() => box.Button_CreateNewGame(), WorldStarting, () => ResetNewGameBox(box, name), e => error[0] = e);
+			if (error[0] != null) { Fail("CINewWorld '" + name + "': " + error[0]); yield break; }
 			yield return WaitForWorld();
 		}
 
-		/// <summary>Raft's Create on the box; null, or what it threw.</summary>
-		static string TryCreate(NewGameBox box)
+		/// <summary>True once a world is loading or in (the menu's New Game box gone or the game scene up).</summary>
+		static bool WorldStarting()
 		{
-			try { box.Button_CreateNewGame(); return null; }
-			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [test] Raft's Create threw: " + e); return e.GetType().Name + ": " + e.Message; }
+			try { return LoadSceneManager.IsGameSceneLoaded || MenuNewGameBox() == null; } catch { return false; }
+		}
+
+		/// <summary>
+		/// Calls create; if it throws and no world started within 2 s, runs reset and tries once more. Reports null on success,
+		/// else what went wrong (the caller logs the FAIL) - kept apart from Raft's box so CINewWorldRetry can test it.
+		/// </summary>
+		static IEnumerator CreateWithRetry(Action create, Func<bool> started, Func<IEnumerator> reset, Action<string> report)
+		{
+			string last = null;
+			for (int attempt = 1; attempt <= 2; attempt++)
+			{
+				try { create(); report(null); yield break; }
+				catch (Exception e) { last = e.GetType().Name + ": " + e.Message; Debug.LogWarning("[CITEST] Create threw (attempt " + attempt + "): " + e); }
+				// (the throw may come after Raft began loading the world: then go on, never create a second one)
+				for (float end = Time.realtimeSinceStartup + 2f; Time.realtimeSinceStartup < end; )
+				{
+					if (started()) { report(null); yield break; }
+					yield return null;
+				}
+				if (attempt == 1) yield return reset();
+			}
+			report("Create threw twice (" + last + ")");
+		}
+
+		/// <summary>Closes every dropdown in the New Game box (and drops stray dropdown lists), then reopens the box with the name.</summary>
+		static IEnumerator ResetNewGameBox(NewGameBox box, string name)
+		{
+			foreach (UnityEngine.UI.Dropdown d in box.GetComponentsInChildren<UnityEngine.UI.Dropdown>(true)) try { d.Hide(); } catch { }
+			foreach (TMPro.TMP_Dropdown d in box.GetComponentsInChildren<TMPro.TMP_Dropdown>(true)) try { d.Hide(); } catch { }
+			foreach (Transform t in box.GetComponentsInChildren<Transform>(true).Where(t => t != null && t.name == "Dropdown List").ToList()) UnityEngine.Object.Destroy(t.gameObject);
+			yield return null;
+			try { box.Close(); } catch { }
+			yield return null;
+			box.gameObject.SetActive(true);
+			try { box.Open(); } catch (Exception e) { Debug.LogWarning("[CITEST] reopening the New Game box threw: " + e.Message); }
+			yield return null; yield return null;
+			box.inputfield_GameName.text = name;
+			box.GameNameEndEdit(name);
+			for (float t = 0; t < 2f && box.createGameButton != null && !box.createGameButton.interactable; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+		}
+
+		[ConsoleCommand(name: "CINewWorldRetry", docs: "Dev, anywhere: CINewWorld's create-with-retry - one throw then success retries once; two throws report an error instead of hanging")]
+		public static void NewWorldRetry()
+		{
+			StartTest(NewWorldRetryRoutine());
+		}
+
+		static IEnumerator NewWorldRetryRoutine()
+		{
+			bool ok = true;
+			int calls = 0, resets = 0; string err = "unset";
+			Func<IEnumerator> reset = () => { resets++; return Enumerable.Empty<object>().GetEnumerator(); };
+			yield return CreateWithRetry(() => { if (++calls == 1) throw new NullReferenceException("test"); }, () => false, reset, e => err = e);
+			Check(ref ok, err == null && calls == 2 && resets == 1, "one throw: reset once, created on the retry (calls " + calls + ", resets " + resets + ", error " + (err ?? "none") + ")");
+			calls = 0; resets = 0; err = "unset";
+			yield return CreateWithRetry(() => { calls++; throw new NullReferenceException("test"); }, () => false, reset, e => err = e);
+			Check(ref ok, err != null && err.StartsWith("Create threw twice") && calls == 2 && resets == 1, "two throws: an error, no third try (calls " + calls + ", error " + err + ")");
+			calls = 0; resets = 0; err = "unset";
+			yield return CreateWithRetry(() => { calls++; throw new NullReferenceException("test"); }, () => true, reset, e => err = e);
+			Check(ref ok, err == null && calls == 1 && resets == 0, "a throw after the world began loading: no second world (calls " + calls + ")");
+			calls = 0; resets = 0; err = "unset";
+			yield return CreateWithRetry(() => calls++, () => false, reset, e => err = e);
+			Check(ref ok, err == null && calls == 1 && resets == 0, "no throw: created once");
+			if (ok) Log("PASS: CINewWorldRetry"); else Fail("CINewWorldRetry");
 		}
 
 		[ConsoleCommand(name: "CIUITest", docs: "Dev, editor: the editor screen - panels per tab, buttons in their groups, windows, object browser; screenshots ui_<tab>.png")]

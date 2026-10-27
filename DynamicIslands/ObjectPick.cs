@@ -21,7 +21,16 @@ namespace DynamicIslands.Editor
 			public Transform Root;
 			public float Distance, Size;
 			public bool Exact;
+			/// <summary>Its real surface or one of its own colliders was hit (not only the box round its meshes).</summary>
+			public bool Solid;
 		}
+
+		/// <summary>An object bigger than this (diagonal, metres) counts a click by its meshes' bounds only through the middle
+		/// of them (Loose), and an object hit only that way comes after every object whose surface or collider was hit: a big
+		/// palm's crown spans 10 m and otherwise took every click near it (ROADMAP PF-D4, 2026-10-26).</summary>
+		public const float BigObject = 6f;
+		/// <summary>The part of a big object's bounds (across, x and z) a bounds-only click must go through.</summary>
+		public const float Loose = 0.6f;
 
 		/// <summary>Past the first real surface by more than this: hidden behind it.</summary>
 		public const float BehindMargin = 0.3f;
@@ -41,7 +50,7 @@ namespace DynamicIslands.Editor
 				EditorGameObject owner = hit.collider.GetComponentInParent<EditorGameObject>();
 				if (!SelectionTools.Pickable(owner)) continue;
 				MeshCollider mc = hit.collider as MeshCollider;
-				Add(found, owner.transform, hit.distance, mc != null && !mc.convex);
+				Add(found, owner.transform, hit.distance, mc != null && !mc.convex, true);
 			}
 
 			GameObject placedRoot = GameObject.Find("PlacedObjects");
@@ -49,6 +58,7 @@ namespace DynamicIslands.Editor
 				foreach (EditorGameObject o in placedRoot.GetComponentsInChildren<EditorGameObject>(false))
 				{
 					if (!SelectionTools.Pickable(o)) continue; // (hidden or locked - ROADMAP E3)
+					float size = -1f;
 					foreach (Renderer r in o.GetComponentsInChildren<Renderer>())
 					{
 						float d;
@@ -57,8 +67,13 @@ namespace DynamicIslands.Editor
 						float surface;
 						if (MeshHit(r, ray, out exact, out surface))
 						{
-							if (exact) { if (surface < terrainDistance) Add(found, o.transform, surface, true); }
-							else Add(found, o.transform, d, false);
+							if (exact) { if (surface < terrainDistance) Add(found, o.transform, surface, true, true); }
+							else
+							{
+								if (size < 0f) size = SizeOf(o.transform);
+								if (size > BigObject && !TightBounds(r.bounds).IntersectRay(ray)) continue;
+								Add(found, o.transform, d, false, false);
+							}
 						}
 					}
 				}
@@ -68,13 +83,20 @@ namespace DynamicIslands.Editor
 			float firstSurface = list.Where(c => c.Exact).Select(c => c.Distance).DefaultIfEmpty(float.MaxValue).Min();
 			if (firstSurface < float.MaxValue) list.RemoveAll(c => c.Distance > firstSurface + BehindMargin);
 			foreach (Candidate c in list) c.Size = SizeOf(c.Root);
-			return list.OrderBy(c => c.Size).ThenBy(c => c.Distance).ToList();
+			return list.OrderBy(c => !c.Solid && c.Size > BigObject).ThenBy(c => c.Size).ThenBy(c => c.Distance).ToList();
 		}
 
-		static void Add(Dictionary<Transform, Candidate> found, Transform root, float distance, bool exact)
+		/// <summary>Bounds narrowed to their middle Loose part across (x and z); the full height kept.</summary>
+		public static Bounds TightBounds(Bounds b)
+		{
+			return new Bounds(b.center, new Vector3(b.size.x * Loose, b.size.y, b.size.z * Loose));
+		}
+
+		static void Add(Dictionary<Transform, Candidate> found, Transform root, float distance, bool exact, bool solid)
 		{
 			Candidate c;
-			if (!found.TryGetValue(root, out c)) { found[root] = new Candidate { Root = root, Distance = distance, Exact = exact }; return; }
+			if (!found.TryGetValue(root, out c)) { found[root] = new Candidate { Root = root, Distance = distance, Exact = exact, Solid = solid }; return; }
+			if (solid) c.Solid = true;
 			// (a real surface counts over a bounds box; of two of a kind, the nearer)
 			if (exact && !c.Exact) { c.Exact = true; c.Distance = distance; }
 			else if (exact == c.Exact && distance < c.Distance) c.Distance = distance;

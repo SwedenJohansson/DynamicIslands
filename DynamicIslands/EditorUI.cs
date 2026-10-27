@@ -34,7 +34,7 @@ namespace DynamicIslands.Editor
 		static TabSelector tabs;
 
 		static Button[] tabButtons;
-		static Button[] brushButtons; // Raise, Lower, Flatten, Smooth, 4 paint slots, Auto, Noise, Erode, 4 mixed-style paint slots
+		static Button[] brushButtons; // Raise, Lower, Flatten, Smooth, 4 paint slots, Auto, Noise, Erode, 4 mixed-style paint slots, Tunnel, Sea grass
 		static Button[] falloffButtons; // Smooth, Linear, Hard
 		static Image[] mixSwatches;
 		static Button mixDrop, seaDeepButton, seaShallowButton, skySeaButton;
@@ -293,13 +293,33 @@ namespace DynamicIslands.Editor
 
 			RectTransform sculpt = UIKit.Group(s, "Sculpt");
 			RectTransform r1 = UIKit.Row(sculpt), r2 = UIKit.Row(sculpt), r3 = UIKit.Row(sculpt);
-			brushButtons = new Button[15];
+			brushButtons = new Button[17];
 			brushButtons[0] = UIKit.Button(r1, "Raise", () => SetBrush(terraineditor.TerrainModificationAction.Raise), "Raise: hold the left mouse button to build up land");
 			brushButtons[1] = UIKit.Button(r1, "Lower", () => SetBrush(terraineditor.TerrainModificationAction.Lower), "Lower: dig down, make bays and lagoons");
 			brushButtons[2] = UIKit.Button(r2, "Flatten", () => SetBrush(terraineditor.TerrainModificationAction.Flatten), "Flatten: levels the ground to the height where the stroke starts (or to Flatten to, below)");
 			brushButtons[3] = UIKit.Button(r2, "Smooth", () => SetBrush(terraineditor.TerrainModificationAction.Smooth), "Smooth: softens bumps and sharp edges");
 			brushButtons[9] = UIKit.Button(r3, "Noise", () => SetBrush(terraineditor.TerrainModificationAction.Noise), "Noise: roughens the ground with bumps (their size: Noise size below) - hold Shift to take them away again");
 			brushButtons[10] = UIKit.Button(r3, "Erode", () => SetBrush(terraineditor.TerrainModificationAction.Erode), "Erode: ground steeper than the Talus angle below slides down, like loose earth - wears cliffs and spikes into slopes");
+
+			// The cave tool (PF-D2): a tunnel of Raft's cave pieces dragged into a hill, a room at its end
+			RectTransform caves = UIKit.Group(s, "Caves");
+			RectTransform c1 = UIKit.Row(caves);
+			brushButtons[15] = UIKit.Button(c1, "Tunnel", () => SetBrush(terraineditor.TerrainModificationAction.Cave),
+				"Cave: press where the mouth is to be and drag the way the tunnel goes, into a hill - Raft's cave tunnels are laid end to end along it, the ground raised over them into a hill. Esc cancels, Ctrl+Z takes it all back");
+			brushButtons[15].name = "Button_CaveTunnel";
+			UIKit.Slider(caves, "Slope", -CaveTool.MaxSlope, CaveTool.MaxSlope, CaveTool.Slope, v => Mathf.Abs(v) < 0.5f ? "level" : (v < 0 ? "down " : "up ") + Mathf.RoundToInt(Mathf.Abs(v)) + "°",
+				v => CaveTool.Slope = v, "How the tunnel slopes from the mouth: down into the ground, or up", true);
+			UIKit.Slider(caves, "Size", CaveTool.MinSize, CaveTool.MaxSize, CaveTool.Size, v => v.ToString("0.0") + "x",
+				v => CaveTool.Size = Mathf.Round(v * 10f) / 10f, "How big the tunnel and its room are, against Raft's own cave (1x): 0.7x a narrow passage (still walkable), 1.5x a big cavern. Its mouth's outline follows the mouse before you press", false);
+			Button room = null, hill = null;
+			room = UIKit.Check(caves, "Cave room at the end", () => { CaveTool.EndRoom = !CaveTool.EndRoom; UIKit.SetCheck(room, CaveTool.EndRoom); },
+				"A big cave room (Balboa's bear den) where the tunnel ends. Off: the tunnel comes out open at its far end - a way through a hill. A short drag with this on: only the room");
+			room.name = "Check_CaveRoom";
+			UIKit.SetCheck(room, CaveTool.EndRoom);
+			hill = UIKit.Check(caves, "Hill over it", () => { CaveTool.Hill = !CaveTool.Hill; UIKit.SetCheck(hill, CaveTool.Hill); },
+				"Raise the ground over the cave into a hill so its rock is covered (the ground is never lowered there). Off: only filled up under it");
+			hill.name = "Check_CaveHill";
+			UIKit.SetCheck(hill, CaveTool.Hill);
 
 			RectTransform paint = UIKit.Group(s, "Paint ground");
 			RectTransform p1 = UIKit.Row(paint), p2 = UIKit.Row(paint), p3 = UIKit.Row(paint);
@@ -312,6 +332,9 @@ namespace DynamicIslands.Editor
 				brushButtons[4 + i] = b;
 			}
 			brushButtons[8] = UIKit.Button(p3, "Auto", () => SetBrush(terraineditor.TerrainModificationAction.AutoPaint), "Auto: the ground textures itself again by height and slope");
+			brushButtons[16] = UIKit.Button(p3, "Sea grass", () => SetBrush(terraineditor.TerrainModificationAction.SeaGrass),
+				"Sea grass: Raft's short sea grass on the sea floor (it grows only under water) - hold Shift to take it away");
+			brushButtons[16].name = "Button_SeaGrass";
 
 			// A second style mixed in: its four textures to paint with too (layers 5-8)
 			RectTransform mixRow = UIKit.Row(paint, UIKit.RowHeight, 4f, "MixStyle");
@@ -939,6 +962,8 @@ namespace DynamicIslands.Editor
 				case terraineditor.TerrainModificationAction.AutoPaint: active = 8; break;
 				case terraineditor.TerrainModificationAction.Noise: active = 9; break;
 				case terraineditor.TerrainModificationAction.Erode: active = 10; break;
+				case terraineditor.TerrainModificationAction.Cave: active = 15; break;
+				case terraineditor.TerrainModificationAction.SeaGrass: active = 16; break;
 				case terraineditor.TerrainModificationAction.PaintLayer:
 					active = terraineditor.paintLayer >= TerrainPainter.LayerCount ? 11 + Array.IndexOf(PaintSlots, terraineditor.paintLayer - TerrainPainter.LayerCount) : 4 + Array.IndexOf(PaintSlots, terraineditor.paintLayer);
 					break;

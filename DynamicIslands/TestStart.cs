@@ -136,32 +136,126 @@ namespace DynamicIslands.Editor
 			if (local.HasValue)
 			{
 				Vector3 p = e.Root.transform.position + local.Value;
-				// (from just above the spot first: a spot inside a cave or under a roof keeps its floor; then from high above)
-				Vector3? g = GroundBelow(p + Vector3.up * 2.5f, 30f) ?? GroundBelow(p + Vector3.up * 400f, 800f);
+				float top = RayTop(e);
+				// (from just above the spot first: a spot inside a cave or under a roof keeps its floor; then from above the island)
+				Vector3? g = GroundBelow(p + Vector3.up * 2.5f, 30f) ?? GroundBelow(new Vector3(p.x, top, p.z), top - p.y + 400f);
 				if (g.HasValue) { how = "the island's test start"; return g.Value + Vector3.up * StandAbove; }
 			}
 			return Fallback(e, out how);
 		}
 
-		/// <summary>No test start: the ground at the island's middle (as before), unless nothing there stands above the
-		/// island's sea - then the dry land nearest the middle (an atoll, a crescent), not the sea floor.</summary>
+		/// <summary>Ground steeper than this (degrees) isn't a place to put a player: they slide off it (Raft's player walks up to 45).</summary>
+		const float FlatSlope = 30f;
+		/// <summary>The middle is kept when it is no higher than this above the island's sea (a hill top). A peak gives way to low land.</summary>
+		const float HighMiddle = 60f;
+		/// <summary>A beach or a low flat spot: dry land up to this high above the sea.</summary>
+		const float LowLand = 25f;
+		/// <summary>The flat ground found reaches this far round the spot (m): a player put at the foot of a cliff touched it, not grounded.</summary>
+		const float FlatRound = 3f;
+
+		/// <summary>Where the rays down onto the island start: above everything it can have (PF-D7, 2026-10-26: the ray from 400 m
+		/// above the sea started inside a peak higher than that - land goes up to 580 m above the sea - and found the inside
+		/// of the mountain; the tester stood under its ground and Raft moved them off the island).</summary>
+		internal static float RayTop(IslandWorldState.Entry e)
+		{
+			float top = e.Position.y + 400f;
+			if (e.Root != null)
+				foreach (Terrain t in e.Root.GetComponentsInChildren<Terrain>(false))
+					if (t.terrainData != null) top = Mathf.Max(top, t.transform.position.y + t.terrainData.size.y + 20f);
+			return top;
+		}
+
+		/// <summary>No test start: the ground at the island's middle (as before) when it is dry, not steep and not a high peak;
+		/// otherwise the low flat land (a beach) nearest the middle, else any flat dry land nearest it (PF-D7); and when the
+		/// middle is under the sea and no flat land is found, the dry land nearest the middle (an atoll, a crescent).</summary>
 		public static Vector3 Fallback(IslandWorldState.Entry e, out string how)
 		{
 			Vector3 centre = e.Position;
 			float sea = e.Position.y; // (the island's own sea: its elevation in the world - 0 at sea, 60 flying, -30 sunken)
 			Transform root = e.Root != null ? e.Root.transform : null;
-			Vector3? mid = GroundBelow(centre + Vector3.up * 400f, 800f, root);
-			if (mid.HasValue && mid.Value.y > sea + 0.2f) { how = "the island's middle"; return mid.Value + Vector3.up * StandAbove; }
+			float top = RayTop(e), depth = top - sea + 400f;
+			Vector3? mid = GroundBelow(new Vector3(centre.x, top, centre.z), depth, root);
+			bool dry = mid.HasValue && mid.Value.y > sea + 0.2f;
+			if (dry && mid.Value.y <= sea + HighMiddle && !Steep(root, mid.Value)) { how = "the island's middle"; return mid.Value + Vector3.up * StandAbove; }
+			if (root != null)
+			{
+				Vector3? flat = FlatLand(root, centre, sea + 1.5f, sea + LowLand) ?? FlatLand(root, centre, sea + 1.5f, float.MaxValue);
+				if (flat.HasValue)
+				{
+					Vector3? g = GroundBelow(new Vector3(flat.Value.x, top, flat.Value.z), depth, root);
+					how = dry ? "the low flat land nearest the island's middle (its middle is " + (mid.Value.y > sea + HighMiddle ? "a peak " + (mid.Value.y - sea).ToString("0") + " m high" : "too steep") + ")"
+						: "the flat land nearest the island's middle";
+					return (g.HasValue && g.Value.y > sea ? g.Value : flat.Value) + Vector3.up * StandAbove;
+				}
+			}
+			if (dry) { how = "the island's middle"; return mid.Value + Vector3.up * StandAbove; }
 			// (a little inland first, so the tester stands on the land and not at its wet edge)
-			Vector3? land = e.Root != null ? NearestLand(e.Root.transform, centre, sea + 1.5f) ?? NearestLand(e.Root.transform, centre, sea + 0.3f) : null;
+			Vector3? land = root != null ? NearestLand(root, centre, sea + 1.5f) ?? NearestLand(root, centre, sea + 0.3f) : null;
 			if (land.HasValue)
 			{
-				Vector3? g = GroundBelow(land.Value + Vector3.up * 400f, 800f, root);
+				Vector3? g = GroundBelow(new Vector3(land.Value.x, top, land.Value.z), depth, root);
 				how = "the land nearest the island's middle";
 				return (g.HasValue && g.Value.y > sea ? g.Value : land.Value) + Vector3.up * StandAbove;
 			}
 			how = "the island's middle (no land above its sea)";
 			return mid.HasValue ? mid.Value + Vector3.up * StandAbove : centre + Vector3.up * 5f;
+		}
+
+		/// <summary>Whether the island's ground at this point is too steep to stand on. A point on an object (a deck, a roof) or
+		/// off the island's land isn't.</summary>
+		internal static bool Steep(Transform root, Vector3 at)
+		{
+			if (root == null) return false;
+			foreach (Terrain t in root.GetComponentsInChildren<Terrain>(false))
+			{
+				TerrainData d = t.terrainData;
+				if (d == null) continue;
+				Vector3 p = at - t.transform.position;
+				float u = p.x / d.size.x, v = p.z / d.size.z;
+				if (u < 0f || u > 1f || v < 0f || v > 1f) continue;
+				if (Mathf.Abs(t.SampleHeight(at) + t.transform.position.y - at.y) > 1f) return false; // (standing on something on the ground)
+				return d.GetSteepness(u, v) > FlatSlope;
+			}
+			return false;
+		}
+
+		/// <summary>The point of the island's terrain between <paramref name="low"/> and <paramref name="high"/> (world heights),
+		/// with dry ground no steeper than <see cref="FlatSlope"/> all round it (<see cref="FlatRound"/> m), nearest
+		/// <paramref name="centre"/> (flat distance); null when there is none.</summary>
+		internal static Vector3? FlatLand(Transform root, Vector3 centre, float low, float high)
+		{
+			Vector3? best = null;
+			float bestD = float.MaxValue, maxRise = Mathf.Tan(FlatSlope * Mathf.Deg2Rad);
+			foreach (Terrain t in root.GetComponentsInChildren<Terrain>(false))
+			{
+				TerrainData d = t.terrainData;
+				if (d == null) continue;
+				int res = d.heightmapResolution;
+				float[,] h = d.GetHeights(0, 0, res, res);
+				Vector3 size = d.size, at = t.transform.position;
+				float sx = size.x / (res - 1), sz = size.z / (res - 1), lowN = (low - at.y) / size.y, highN = (high - at.y) / size.y;
+				int k = Mathf.Clamp(Mathf.CeilToInt(FlatRound / Mathf.Min(sx, sz)), 1, 6);
+				for (int z = k; z < res - k; z++)
+					for (int x = k; x < res - k; x++)
+					{
+						float y = h[z, x];
+						if (y < lowN || y > highN) continue;
+						// (every point round it: dry - not at the wet edge - and no higher or lower than the slope allows)
+						bool flat = true;
+						for (int dz = -k; dz <= k && flat; dz++)
+							for (int dx = -k; dx <= k && flat; dx++)
+							{
+								if (dx == 0 && dz == 0) continue;
+								float n = h[z + dz, x + dx], dist = Mathf.Sqrt(dx * sx * dx * sx + dz * sz * dz * sz);
+								if (n < lowN || Mathf.Abs(n - y) * size.y > maxRise * dist) flat = false;
+							}
+						if (!flat) continue;
+						float wx = at.x + x * sx, wz = at.z + z * sz;
+						float dd = (wx - centre.x) * (wx - centre.x) + (wz - centre.z) * (wz - centre.z);
+						if (dd < bestD) { bestD = dd; best = new Vector3(wx, at.y + y * size.y, wz); }
+					}
+			}
+			return best;
 		}
 
 		/// <summary>The point of the island's terrain higher than <paramref name="above"/> nearest <paramref name="centre"/>

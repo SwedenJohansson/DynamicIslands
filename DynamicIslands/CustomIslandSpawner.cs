@@ -41,6 +41,9 @@ namespace DynamicIslands.Editor
 		/// <summary>Weight of brand-new, randomly generated islands in the pool (0 = never).</summary>
 		public static float GeneratedWeight = 1f;
 		/// <summary>Styles generated islands can have.</summary>
+		/// <summary>The settings of an island generated while sailing: fuller when the world has the Fuller random islands option (PF-D1).</summary>
+		public static IslandGenSettings RollGenerated(System.Random rnd, int[] styles) { return IslandGenerator.RandomSettings(rnd, styles, WorldOptions.On(WorldOptions.FullerIslands)); }
+
 		public static int[] GeneratedStyles = { TerrainPainter.Tropical, TerrainPainter.Snowy, TerrainPainter.Desert, TerrainPainter.Forest, TerrainPainter.Volcanic };
 		/// <summary>Chance that a generated island is a flying one.</summary>
 		public static float GeneratedFlyingChance = 0.1f;
@@ -317,7 +320,7 @@ namespace DynamicIslands.Editor
 			{
 				// (seeded like the map-type islands when the world gives a seed - CB14)
 				var rnd = seed.HasValue ? new System.Random(WorldRandomizer.Hash(seed.Value, 41)) : new System.Random();
-				generate = IslandGenerator.RandomSettings(rnd, GeneratedStyles);
+				generate = RollGenerated(rnd, GeneratedStyles);
 				GatherFor(generate);
 				if (rnd.NextDouble() < GeneratedFlyingChance) elevation = 40f + (float)rnd.NextDouble() * 50f;
 				name = FreeName(GeneratedPrefix + TerrainPainter.StyleName(generate.Style).ToLowerInvariant() + "-" + generate.Seed);
@@ -446,7 +449,7 @@ namespace DynamicIslands.Editor
 			{
 				return () =>
 				{
-					IslandGenSettings s = IslandGenerator.RandomSettings(new System.Random(seed), new[] { style });
+					IslandGenSettings s = RollGenerated(new System.Random(seed), new[] { style });
 					s.Seed = seed; s.Style = style;
 					GatherFor(s);
 					return IslandGenerator.CreateFile(s, name);

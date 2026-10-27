@@ -94,7 +94,7 @@ namespace DynamicIslands.Editor
 			RectTransform head = UIKit.Row(panel, 30f, 6f, "Head");
 			Text title = UIKit.Label(head, "WORLD SETTINGS", 22, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
 			UIKit.UseTitleFont(title);
-			UIKit.Label(head, "for the world you create - every player in it gets them from the host", 12, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Italic);
+			UIKit.Label(head, "for the world you create - every player gets them from the host; later: Esc > Custom Islands", 12, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Italic);
 
 			// (as tall as its taller column: no empty band under them)
 			RectTransform columns = UIKit.Rect("Columns", panel);
