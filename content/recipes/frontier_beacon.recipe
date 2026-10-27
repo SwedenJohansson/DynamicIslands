@@ -50,6 +50,46 @@ call r2_pad x=56 z=-64 r=14 h=3
 brush flatten from 56 -56 to 56 -40 r=6 s=20 frames=300 h=3
 call r2_pad x=70 z=8 r=11 h=3
 call r2_pad x=-46 z=-60 r=11 h=3
+# RAFT2 10-27: relief on the cliff top round the ruined house - low domes (stepped, then smoothed round) with rocks on
+# their crowns: north-west of the house by the bay, a low one between the lamps west of it and one in front of it to the
+# east (in the view up to the house, clear of lamps and house), south-west of it, on the tongue, the strip and where it narrows
+# (none by the inlet south of the house: a dome there stood up as a steep flat-topped slab)
+brush flatten at 59 15 r=6 s=20 frames=200 h=4
+brush flatten at 59 15 r=4.2 s=20 frames=200 h=5.4
+brush flatten at 59 15 r=2.4 s=20 frames=200 h=6.6
+brush flatten at 59 15 r=1.2 s=20 frames=200 h=7.2
+brush flatten at 62.5 12.5 r=4 s=20 frames=200 h=4.3
+brush flatten at 62.5 12.5 r=2.4 s=20 frames=200 h=5
+brush flatten at 74 0 r=3.5 s=20 frames=200 h=4.1
+brush flatten at 74 0 r=1.8 s=20 frames=200 h=4.7
+brush flatten at 62 -3 r=5 s=20 frames=200 h=3.8
+brush flatten at 62 -3 r=3.4 s=20 frames=200 h=4.7
+brush flatten at 62 -3 r=1.8 s=20 frames=200 h=5.4
+brush flatten at 56 2 r=7 s=20 frames=200 h=3.7
+brush flatten at 56 2 r=5 s=20 frames=200 h=4.5
+brush flatten at 56 2 r=3 s=20 frames=200 h=5.3
+brush flatten at 56 2 r=1.5 s=20 frames=200 h=5.8
+brush flatten at 47 8 r=6 s=20 frames=200 h=3.6
+brush flatten at 47 8 r=4 s=20 frames=200 h=4.3
+brush flatten at 47 8 r=2 s=20 frames=200 h=4.8
+brush smooth at 59 15 r=8 s=8 frames=60
+brush smooth at 62.5 12.5 r=5.5 s=8 frames=60
+brush smooth at 74 0 r=5 s=8 frames=60
+brush smooth at 62 -3 r=7 s=8 frames=60
+brush smooth at 56 2 r=9 s=8 frames=60
+brush smooth at 47 8 r=8 s=8 frames=60
+brush auto at 62 6 r=24 s=10 frames=25
+clear at 59 15 r=7.5
+clear at 62.5 12.5 r=5
+clear at 74 0 r=4.5
+clear at 62 -3 r=6.5
+clear at 56 2 r=8
+clear at 47 8 r=7
+clear at 46.2 -2.2 r=1.5 all only=CaravanIsland_SmallRock_1
+place CaravanIsland_SmallRock_1 - at 59.5 15.5 ground y=-0.4 sit scale=1.3 yaw=30
+place CaravanIsland_SmallRock_1 - at 57.4 13.6 ground y=-0.3 sit scale=0.9 yaw=110
+place CaravanIsland_SmallRock_1 - at 61.6 -3.4 ground y=-0.4 sit scale=1.2 yaw=70
+place CaravanIsland_SmallRock_1 - at 56.4 2.2 ground y=-0.4 sit scale=1.2 yaw=15
 # Cinder Knoll: summit 20 m, base r 22, the trail from the foot toward the hub
 call hw_mount x=0 z=76 b=22 h=20
 call hw_trail x=0 z=76 b=22 h=20 a0=-160.35 turn=300 n=34 h0=3
@@ -196,6 +236,8 @@ scatter "Pickup_Landmark_Flower_Red" 2 at 0 0 r=31.5 seed=4504 free=3
 call r2_bareflank x=0 z=76 b=22 h=20
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=65 deep=5 n=2
+# RAFT2 10-27: a rock that came out floating (CIGroundIslands)
+clear at 4.7 -37.91 r=1.5 all body only=BigSharpRock_3
 
 info title=Frontier Beacon
 info author=Custom Islands

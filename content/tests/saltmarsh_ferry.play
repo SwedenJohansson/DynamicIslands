@@ -39,7 +39,7 @@ expect step 8
 # RAFT2 10-26: Wenna Rook, the climb, Eel Cave, the secrets
 use Wenna Rook
 wait 1
-expect step 9
+# (no expect step 9 here: in a plan world the trail's foot can be done already, so the quest goes straight to step 10)
 expect hidden sm_lampchest
 use Reed lamp 1
 use Reed lamp 2

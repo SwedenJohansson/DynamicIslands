@@ -2,7 +2,7 @@
 # the keeper's hut on the west flats (3.5 m), the ramp of fill up to the beacon terrace on the spike (16 m), the supply
 # boat's crate on the sea floor off the landing (6.5 m down).
 island Frontier Beacon
-offset 7.3746 -0.6566
+offset 6.9449 -0.7407
 expect step 0
 expect title The First Signal
 

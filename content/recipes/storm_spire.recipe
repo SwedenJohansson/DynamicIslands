@@ -64,6 +64,19 @@ brush flatten from -12 -68 to -12 -86 r=14 s=20 frames=500 h=3
 call r2_pad x=-12 z=-82 r=17 h=3
 # Thunder Knoll: summit 18 m, base r 20, the trail from the foot toward the hub
 call hw_mount x=18 z=80 b=20 h=18
+# RAFT2 10-27: Thunder Knoll not a straight column - shoulders and ledges on its sides (all 10 m or more from the top's
+# middle, so the top stays whole), a slight crown on the top, the mast's foot kept level; the trail is cut after
+brush flatten at 3.9 74.87 r=4.5 s=20 frames=200 h=9.5
+brush flatten at 19.26 65.56 r=4 s=20 frames=200 h=10.5
+brush flatten at 27.64 91.49 r=5 s=20 frames=200 h=8.5
+brush flatten at 10.54 69.35 r=3 s=20 frames=200 h=12.5
+brush flatten at 6.31 86.75 r=3 s=20 frames=200 h=12
+brush flatten at 30.22 75.55 r=3 s=20 frames=200 h=13.5
+brush flatten at 13.55 92.22 r=3 s=20 frames=200 h=11
+brush flatten at 18 80 r=5 s=20 frames=120 h=19
+brush smooth at 18 80 r=8.5 s=4 frames=20
+brush flatten at 15 82 r=2.2 s=20 frames=120 h=18
+brush auto at 18 80 r=24 s=10 frames=25
 call hw_trail x=18 z=80 b=20 h=18 a0=-149.22 turn=300 n=34 h0=3
 brush flatten at -38 -14 r=4 s=8 frames=60
 clear at -38 -14 r=7
