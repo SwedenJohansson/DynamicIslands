@@ -171,5 +171,7 @@ plan already open.
 
 `CIMeasureObjects` (writes `recipes\objects_<category>.txt`), `CIHeightMap`, `CISeaSpots`, `CIProfile`, `CIBoundsOf`,
 `CIColliders`, `CIFloating`, `CIView` (writes `recipes\view_<name>_<n>.jpg`), `CIViewAt`, `CIProtoInfo`,
-`CIQuestIcons` (`questicons.txt`), `CISounds` (`sounds.txt`), `CIScene`, `CIInstances`. All are in `DevTestsRecipe.cs`.
+`CIQuestIcons` (`questicons.txt`), `CISounds` (`sounds.txt`), `CIScene`, `CIInstances`, `CIChestReach` (every chest
+has a floor spot with room to stand and a clear line from the eye), `CILadderSide` (every ladder's climb side is
+open; a ladder takes hold only from its climb trigger's side). All are in `DevTestsRecipe.cs`.
 Object and item lists for writing recipes are in the repo at `content\objects\`.

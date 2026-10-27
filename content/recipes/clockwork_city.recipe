@@ -11,6 +11,16 @@
 include lib_rt
 include lib_huts
 include lib_sea
+include lib_ni34
+# climbup: a way up a stack's face from the sea - n ladders from h, climbed from the yaw side, and floor planks from the top
+# back over the gap to the rim, the first on a post (PQ3)
+macro climbup x=0 z=0 h=0 n=2 yaw=0 tiles=1
+call ladders x=$x z=$z h=$h n=$n yaw=$yaw
+place RT_PillarThick - at {$x-0.5*sin($yaw)+0.45*cos($yaw)} {$z-0.5*cos($yaw)-0.45*sin($yaw)} h=$h sy={2.42*$n/6}
+for ct 0 {$tiles-1} 1
+place Block_Floor_Wood - at {$x-(0.95+1.5*$ct)*sin($yaw)} {$z-(0.95+1.5*$ct)*cos($yaw)} h={$h+2.42*$n} yaw=$yaw
+next
+end
 new
 # (nature: tropical, Like Raft - palms and jungle on the stacks' tops round the buildings)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -34,19 +44,15 @@ clear at 20 -12 r=8
 clear at 80 40 r=9
 clear at -28 30 r=7
 
-# --- The harbour stack: the quay on its south shore, a tower of posts with two ladders up its south face to a landing at
-# the top; the harbourmaster's office (its box: the winding key), the clockmaker's welcome at the ladder's top, the gong;
+# --- The harbour stack: the quay on its south shore, ladders up its south face from the beach to planks at the
+# top; the harbourmaster's office (its box: the winding key), the clockmaker's welcome at the ladder's top, the gong;
 # the first shuttle's lever on the north edge -------------------------------------------------------------------------------
-push at -50 -64.5 h=-3
+push at -47.5 -69.8 h=-3
 call boardwalk n=6 wide=1 y=4.6
 pop
-for lv 0 2 1
-place RT_PillarThick - at -42.5 -61 h={-3+6*$lv}
-place RT_PillarThick - at -41 -61 h={-3+6*$lv}
-next
-place LandmarkLadder_6m - at -41.75 -61.3 h=1.6 yaw=0
-place LandmarkLadder_6m - at -41.75 -61.3 h=8.3 yaw=0
-place RT_Floor - at -40.5 -55 h=15.05 sx=0.3 sz=0.7
+# (PQ3, 2026-10-27: the quay and the ladder tower stood inside the rock - left out under the ground - so the harbour had no
+# way up from the water; now a ladder up the south face from the beach by the quay, floor planks from its top to the rim)
+call climbup x=-41.75 z=-66.8 h=1.58 n=6 yaw=180 tiles=3
 push at -42 -46 h=15.05
 call rt_storey f1=RT_WallDoor1 f2=RT_WallWindow1 l2=RT_WallWindow1
 place RT_Floor - at 0 4.5 y=3
@@ -209,6 +215,19 @@ place Block_Ladder - at 82.4 33 h=24.05 yaw=0
 place Block_Ladder - at 82.4 33 h=26.47 yaw=0
 place Zone_Sound chimes at 80 40 h=30
 place Zone_Sound citytick at 20 10 h=20
+
+# --- Ways up and across (PQ3, 2026-10-27): ladders up each stack's face from the sea (the plaza's north face, the tower's
+# east face, the observatory's west face, the gearworks' west pier), and rope bridges between the stacks - harbour to
+# plaza, plaza to gearworks, plaza to observatory, observatory to the clock tower - so the city can be walked as well as
+# shuttled ----------------------------------------------------------------------------------------------------------------
+call climbup x=-3 z=49.2 h=0.75 n=8 yaw=0 tiles=4
+call climbup x=91.3 z=40 h=-0.3 n=10 yaw=90 tiles=4
+call climbup x=5.6 z=-12 h=-0.09 n=12 yaw=270 tiles=4
+call climbup x=32.5 z=32.5 h=-2.45 n=6 yaw=270 tiles=1
+call hangbridge x1=-39.5 z1=-43 h1=15.84 x2=-10.6 z2=12.4 h2=21.44 sag=2 pb=-3
+call hangbridge x1=10.5 z1=25.5 h1=19.93 x2=34.5 z2=22 h2=12.06 sag=0.5 pb=-3
+call hangbridge x1=2.6 z1=14 h1=20.27 x2=18.7 z2=-4 h2=29.4 sag=0.3 pb=-3
+call hangbridge x1=25.5 z1=-9 h1=28.83 x2=73.7 z2=32.05 h2=25.35 sag=2 pb=-3
 
 # --- The city's brass figures, frozen in the streets (and their walking twins, hidden till the city wakes) --------------
 place Placeable_ToyRobot frozen at -2 34 h=20 sit scale=5 yaw=20

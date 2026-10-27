@@ -527,14 +527,13 @@ namespace DynamicIslands.Editor
 			return false;
 		}
 
-		/// <summary>"to the north-east" from one point to another (+z is north on the map).</summary>
+		/// <summary>"about 40 m away" from one point to another ("right here" under 12 m).</summary>
 		public static string DirectionTo(Vector3 from, Vector3 to)
 		{
 			Vector2 d = new Vector2(to.x - from.x, to.z - from.z);
+			// (no compass words - players steer by what they see: the distance and the beam)
 			if (d.magnitude < 12f) return "right here";
-			string[] names = { "north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west" };
-			float a = Mathf.Repeat(Mathf.Atan2(d.x, d.y) * Mathf.Rad2Deg + 22.5f, 360f);
-			return "to the " + names[(int)(a / 45f) % 8];
+			return "about " + (Mathf.Round(d.magnitude / 10f) * 10f).ToString("0") + " m away";
 		}
 
 		/// <summary>A gold beam over the quest's start while the player is at an island whose quest hasn't begun.</summary>

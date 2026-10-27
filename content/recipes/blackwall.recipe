@@ -211,7 +211,7 @@ place RT_Wall1 - at 1.3 -35.6 h=5.4 sx=0.6
 place RT_Wall1 - at 6.5 -35.6 h=5.4 sx=0.59
 place UT_Skyscraber01PadlockDoorBase - at 3.96 -35.6 h=5.4
 place UT_Skyscraber01PadlockDoor shaftgate at 3.96 -35.6 h=5.4
-place LandmarkLadder_6m shaftladder at 3 -35.9 h=-1.38 yaw=0
+place LandmarkLadder_6m shaftladder at 3 -35.9 h=-0.4 yaw=0
 macro collar x1 x2 z1 z2
 place RT_Floor - at $x2 $z2 h=5.4 sx={($x2-$x1)/6.04} sz={($z2-$z1)/9}
 end

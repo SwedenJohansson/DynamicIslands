@@ -220,7 +220,7 @@ place Bench_01 - at 3.4 3.5 y=0.1 sit yaw=0
 place Bench_01 - at 3.4 5 y=0.1 sit yaw=0
 place Placeable_Piano - at 1.05 6.4 y=0.1 sit yaw=0
 place Balboa_DecorationPrefabBase_Table - at 2.25 8.5 y=0.1 sit yaw=90
-place Loot_ChestSmall altarbox at 2.25 8.5 y=0.1 sit yaw=180
+place Loot_ChestSmall altarbox at 2.25 7.25 y=0.1 sit yaw=180
 place Placeable_Candelabra - at 0.5 9.9 y=0.1 sit
 place Placeable_Candelabra - at 2.25 10.0 y=0.1 sit
 place Placeable_Table_Square_Tall - at 3.9 5.6 y=0.1 sit

@@ -81,7 +81,7 @@ place Zone_Trigger winchfoot at -21 -12.5 h=5.5
 place Note_Sign cliffsign at -5.4 42.4 ground yaw=180
 macro ladders z h n
 for k 0 {$n-1} 1
-place Block_Ladder - at -7.5 $z h={$h+2.42*$k}
+place Block_Ladder - at -7.5 $z h={$h+2.42*$k} yaw=180
 place Block_Pillar_Wood - at -7.5 {$z-0.2} h={$h+2.42*$k}
 next
 end

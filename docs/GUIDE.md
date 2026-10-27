@@ -364,6 +364,10 @@ and with the mouse wheel over the panel while the cursor is free (the inventory,
 Once every quest of the island is done, the panel goes by itself **30 seconds** later; its **×** (top right, while the
 cursor is free) closes it at any time - it comes back with the next step, or when you come to the island again.
 
+**Where a quest starts.** Until an island's quest has begun, a **gold beam** stands over the place its first step
+wants you to go (its label says "Start: ..." with the step), whichever side you come from; the quest's opening message
+names the same start and how far it is. The beam goes once the first step is done.
+
 ![The quest panel](images/world-quest-panel.jpg)
 *The quest panel of "The lost camp" on the right: the first step is "Go to camp".*
 
@@ -405,7 +409,7 @@ not a button): they show and hide with Raft's own key tabs, and say the new key 
   quest is done, the whole line in light green) and how many of its notes you have found, **(5/7 notes)** - so you know if some are still left on it - the island you were at last first, its newest page first - so notes of several islands don't get
   mixed up. They are every note you read on a custom island - the first time anyone reads it, once, with its title -
   pages an island writes when something happens (an island event "write a journal page"), and, under **Other pages**,
-  the frequencies a world plan gives out ("Tune the Receiver to #4821"). Click a page to read it on the paper, signed
+  the frequencies a world plan gives out ("Tune the Receiver to #4821"). The messages an island shows as you play ("The padlock drops and the gate screams open...") are kept too, once each, under the island: read them again any time. Click a page to read it on the paper, signed
   with the island, its quest and the day it was found.
 - **QUESTS 7 / 20 · 35%** (top, next to the title): how many of this world's **custom islands' quests** are done,
   with a green bar that fills as you go. Raft's own story (Radio Tower ... Utopia) isn't counted - the journal is the
@@ -3944,6 +3948,10 @@ before you stop.
 
 **My island is far away / I can't find it.** Build Raft's Receiver: custom islands are green dots with their distance.
 
+**I'm stuck in a cave or under water on a custom island.** Use Raft's **Unstuck** (Esc menu). Near a custom island it
+is there at once when you are under the sea or haven't got anywhere for 20 seconds (Raft itself waits 30 seconds),
+and it takes you back to your raft.
+
 **I can't get onto a flying island (or a cliff island).** Build stairs or pillars up from the raft. The generator's
 reach line tells a builder beforehand.
 
@@ -4434,7 +4442,7 @@ vans, caravans, excavators, forklifts, cranes, ore wagons, snow vehicles, planes
 | ![](images/library/great_fen.jpg) **The Great Fen** (twenty times the size) | A vast wetland with seven stilt villages round a great mere and the lost town of Sevenbridge on its island, cut off behind seven raised drawbridges | **Seven drawbridges** (a raised leaf hidden, a lowered deck shown), each lowered by a different kind of task - a catch, a dive, horns in order, a fight, a delivery, a timed lock, a boss - and a bell that waits for all seven |
 | ![](images/library/star_fort.jpg) **Star Fort** (seven times the size) | A star-shaped fortress on a desert table-land, its garrison gone, the island's beasts still coming over the walls bastion by bastion | **Banks** raised as strokes along a star, ramps up to each bastion, four **waves** that wait for their zones, a magazine that **takes** four keys, a great gun that calls the pack's leader; Raft's **keycard door** on a strongroom (the keycard in a chest outside the walls) and a **hatch** (`lib_features`) |
 | ![](images/library/last_kingdom.jpg) **The Last Kingdom** (twenty times the size) | A whole small kingdom: a harbour town, a river with a watermill and farms, a dark forest, a lake with a drowned chapel and a castle on the hill - empty until its crown is found | A **river** dug from a lake to the sea with a ford and a toll bridge, a mill that turns when its sluice lifts, three seals gathered across the land, a coronation that **shows** banners on every tower |
-| ![](images/library/clockwork_city.jpg) **The Clockwork City** (seven times the size) | A city of clockmakers on stacks above the sea: a harbour stack, the Hall of Hours on the plaza stack, gearworks on a pier, an observatory and a clock tower - joined by shuttles | **Shuttles** between levels (a lever, `wait`, a `teleport` to a zone), rooms in an undercroft, a clock tower whose hands are set in order |
+| ![](images/library/clockwork_city.jpg) **The Clockwork City** (seven times the size) | A city of clockmakers on stacks above the sea: a harbour stack, the Hall of Hours on the plaza stack, gearworks on a pier, an observatory and a clock tower - joined by shuttles and rope bridges, each stack with a ladder up from the sea | **Shuttles** between levels (a lever, `wait`, a `teleport` to a zone), rooms in an undercroft, a clock tower whose hands are set in order |
 | ![](images/library/starfall_crater.jpg) **Starfall Crater** (four times the size) | A crater lake round a grey-blue fallen star on its islet, closed like a clam; an observer's cradle on the rim and a sunk probe in the lake | A lake dug as a **ring** of strokes round an islet (cut down, never raised past 8 m), a **dive** for the probe's parts, a star that **shows** its glow when the cradle is fed |
 | ![](images/library/lockkeepers_isle.jpg) **The Lockkeeper's Isle** | A low green island and its absent keeper: a tidy hut, a strongbox shed, a goat pen and a lookout | Featured, three quests: find the keeper's **keypad code** from his mother's letter, catch his two goats, read his log. Its main quest **brings** Lantern Spire ([16.3](#163-two-small-islands-with-many-features)) |
 | ![](images/library/lantern_spire.jpg) **Lantern Spire** | A rock floating 60 m over the sea, a lantern hut and a dark beacon on top | Featured, a **flying island** reached by building up from the raft: fetch the sky keeper's oil from the ledge, light the beacon, open his chest ([16.3](#163-two-small-islands-with-many-features)) |

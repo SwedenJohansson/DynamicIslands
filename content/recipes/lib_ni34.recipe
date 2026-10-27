@@ -72,7 +72,7 @@ end
 # hangbridge: a rope bridge hanging between two heights - from x1 z1 (deck h1 above the sea) to x2 z2 (h2), sagging sag m
 # in the middle: Raft's wooden floor blocks end to end, rope rails on both sides, a stout post either side at each end.
 # po: how far beyond each end the stout posts stand (more where the end is at a cliff edge, so a post isn't snapped onto the face).
-# Given pb (m above the sea; -1 none), over a gap wider than a few planks it rests on slim posts from pb at every third joint of each half,
+# Given pb (m above the sea, under it to the sea floor too; -1 none), over a gap wider than a few planks it rests on slim posts from pb at every third joint of each half,
 # so no plank is more than one from a held one (CIFloating's one-tile reach); the recipe ends with "posts off" so save
 # doesn't stand a post under every corner.
 macro hangbridge x1=0 z1=0 h1=10 x2=10 z2=0 h2=10 sag=1.2 pb=-1 po=0.6
@@ -94,7 +94,7 @@ place RT_PillarThick bridgepost at {$x1+$nx*1.4-$dx/$dl*$po} {$z1+$nz*1.4-$dz/$d
 place RT_PillarThick bridgepost at {$x1-$nx*1.4-$dx/$dl*$po} {$z1-$nz*1.4-$dz/$dl*$po} ground sy=0.4
 place RT_PillarThick bridgepost at {$x2+$nx*1.4+$dx/$dl*$po} {$z2+$nz*1.4+$dz/$dl*$po} ground sy=0.4
 place RT_PillarThick bridgepost at {$x2-$nx*1.4+$dx/$dl*$po} {$z2-$nz*1.4+$dz/$dl*$po} ground sy=0.4
-for bk 1 {ceil(($pb+1)/100)} 1
+for bk 1 {ceil(($pb+1)*($pb+1)/1000)} 1
 set hl {$dl/2}
 set hn {max(1,ceil(sqrt($hl*$hl+$sag*$sag)/1.5-0.05))}
 for bj 3 {$hn} 3
@@ -112,10 +112,11 @@ next
 end
 
 # ladders: n of Raft's building ladders one above the other up a rock face at x z from h (the foot, above the sea),
-# facing yaw, each on a wooden pillar behind it (back m behind, towards the rock)
+# facing yaw, each on a wooden pillar behind it (back m behind, towards the rock); the ladder itself turned round: Raft's
+# ladder takes hold only on its local -z side (PQ6, 2026-10-27 - before, the pillar stood on the climbing side)
 macro ladders x=0 z=0 h=0 n=2 yaw=0 back=0.2
 for k 0 {$n-1} 1
-place Block_Ladder - at $x $z h={$h+2.42*$k} yaw=$yaw
+place Block_Ladder - at $x $z h={$h+2.42*$k} yaw={$yaw+180}
 place Block_Pillar_Wood - at {$x-$back*sin($yaw)} {$z-$back*cos($yaw)} h={$h+2.42*$k}
 next
 end

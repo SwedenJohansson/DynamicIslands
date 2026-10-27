@@ -95,7 +95,7 @@ place RT_PillarThick - at 1.4 3.9 h=9
 place RT_Floor - at 1.7 3.8 h=15 sx=0.56 sz=0.36
 place Block_Roof_Wood_Pyramid - at 0 2.5 h=15.05 scale=2.4
 place TangaroaBucket bell at 0 2.5 h=14.9 rot=180,0,0 scale=2.6
-place Note_Papers page5 at 0.8 3.2 h=9.2 drop yaw=40
+place Note_Papers page5 at -0.1 2.3 h=9.2 drop yaw=40
 # (the wayside shrine at the stack's east edge)
 place Note_Sign - at 5 -1 h=9 sit yaw=90
 place Note_Papers page6 at 4.6 0.2 h=9.2 drop yaw=-30

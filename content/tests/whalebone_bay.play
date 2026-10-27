@@ -82,6 +82,9 @@ expect step 9
 # The church: the pastor's register on its lectern; the box under the altar - the firing pin
 read Pastor's register
 expect step 10
+# (PQ5: the box stands in front of the altar now, not inside its table - reached from the aisle)
+walk -18 43 to -18 47.7 h=6.1
+reach Box under the altar
 open Box under the altar
 expect story firingpin 1
 expect step 11

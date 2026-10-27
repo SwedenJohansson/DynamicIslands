@@ -742,6 +742,109 @@ namespace DynamicIslands
 			Log("PASS: " + n + " objects with '" + part + "'");
 		}
 
+		[ConsoleCommand(name: "CIChestReach", docs: "Dev, editor: can every chest (Loot_*) of the island be used? For each, spots round it 0.9-1.8 m out with a floor and room to stand, and from a standing eye there a clear line within 2.5 m to it - a chest under a table or wedged in a wall has none (Whalebone Bay's altar box, PQ5, 2026-10-27). CIChestReach")]
+		public static void ChestReachCommand(string[] args)
+		{
+			if (!DynamicIslands.InEditor()) { Fail("CIChestReach (in the editor)"); return; }
+			Vector2 mid = EditorLandCentre();
+			float sea = DynamicIslands.EditorWaterLevel;
+			Physics.SyncTransforms();
+			int n = 0, bad = 0;
+			foreach (EditorGameObject e in PlacedEditorObjects())
+			{
+				string name = e.GameObjectName ?? "";
+				if (!name.StartsWith("Loot_", StringComparison.OrdinalIgnoreCase)) continue;
+				Renderer[] rs = PlacementOptions.ShapeRenderers(e.gameObject);
+				if (rs.Length == 0) continue;
+				Bounds b = rs[0].bounds;
+				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+				n++;
+				int good = 0;
+				string why = "no floor to stand on near it";
+				// (each spot's reason counted: the last one alone hid what most of the ring met)
+				var whys = new Dictionary<string, int>();
+				for (int ring = 0; ring < 3; ring++)
+					for (int k = 0; k < 16; k++)
+					{
+						float a = k * Mathf.PI / 8f, rad = 0.9f + 0.45f * ring;
+						Vector3 at = b.center + new Vector3(Mathf.Sin(a) * rad, 0f, Mathf.Cos(a) * rad);
+						RaycastHit floor;
+						if (!Physics.Raycast(new Vector3(at.x, b.max.y + 1.2f, at.z), Vector3.down, out floor, b.max.y - b.min.y + 3f, ~0, QueryTriggerInteraction.Ignore)) continue;
+						if (floor.collider.transform.IsChildOf(e.transform)) continue;
+						Vector3 foot = floor.point;
+						Collider block = Physics.OverlapCapsule(foot + Vector3.up * 0.45f, foot + Vector3.up * 1.6f, 0.28f, ~0, QueryTriggerInteraction.Ignore)
+							.FirstOrDefault(c => !c.transform.IsChildOf(e.transform));
+						if (block != null)
+						{
+							EditorGameObject o = block.GetComponentInParent<EditorGameObject>();
+							why = "no room to stand round it (" + (o != null ? o.GameObjectName : block.GetComponent<Terrain>() != null ? "terrain" : block.name) + ")";
+							whys[why] = (whys.ContainsKey(why) ? whys[why] : 0) + 1; continue;
+						}
+						Vector3 eye = foot + Vector3.up * 1.6f;
+						float d = Vector3.Distance(eye, b.center);
+						if (d > 2.5f) { why = "too far from any floor (" + d.ToString("F1") + " m)"; whys[why] = (whys.ContainsKey(why) ? whys[why] : 0) + 1; continue; }
+						RaycastHit[] hits = Physics.RaycastAll(eye, (b.center - eye).normalized, d + 0.3f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).ToArray();
+						if (hits.Length > 0 && !hits[0].collider.transform.IsChildOf(e.transform))
+						{
+							EditorGameObject o = hits[0].collider.GetComponentInParent<EditorGameObject>();
+							why = (o != null ? o.GameObjectName : hits[0].collider.name) + " in the way";
+							whys[why] = (whys.ContainsKey(why) ? whys[why] : 0) + 1; continue;
+						}
+						good++;
+					}
+				Vector3 p = e.transform.position;
+				if (good == 0) bad++;
+				Log("  " + (good == 0 ? "UNUSABLE " : "") + name + " at " + Num(p.x - mid.x) + " " + Num(p.z - mid.y) + " h=" + Num(p.y - sea) + ": " + (good > 0 ? good + " spots to use it from" : whys.Count == 0 ? why : string.Join(", ", whys.OrderByDescending(w => w.Value).Select(w => w.Key + " x" + w.Value).ToArray())));
+			}
+			if (bad > 0) Fail(bad + " of " + n + " chests can't be used");
+			else Log("PASS: " + n + " chests, each usable");
+		}
+
+		[ConsoleCommand(name: "CILadderSide", docs: "Dev, editor: is each ladder's climbing side free? Raft's ladder takes hold of a player only on the side of its climb trigger (Block_Ladder: its local -z); for every ladder, balls up that side - a ladder whose pillar or rock is on the climbing side can't be climbed (Twin Horns, PQ6, 2026-10-27). CILadderSide")]
+		public static void LadderSideCommand(string[] args)
+		{
+			if (!DynamicIslands.InEditor()) { Fail("CILadderSide (in the editor)"); return; }
+			Vector2 mid = EditorLandCentre();
+			float sea = DynamicIslands.EditorWaterLevel;
+			Physics.SyncTransforms();
+			int n = 0, bad = 0;
+			foreach (EditorGameObject e in PlacedEditorObjects())
+			{
+				string name = e.GameObjectName ?? "";
+				if (name.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) < 0) continue;
+				Collider climb = e.GetComponentsInChildren<Collider>(true).FirstOrDefault(c => c.isTrigger && c.name.IndexOf("climb", StringComparison.OrdinalIgnoreCase) >= 0);
+				Renderer[] rs = PlacementOptions.ShapeRenderers(e.gameObject);
+				if (climb == null || rs.Length == 0) continue;
+				Bounds b = rs[0].bounds;
+				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+				Vector3 side = climb.bounds.center - b.center;
+				side.y = 0f;
+				if (side.sqrMagnitude < 0.0001f) continue;
+				side.Normalize();
+				n++;
+				int blocked = 0, samples = 0;
+				string by = "";
+				Bounds cb = climb.bounds;
+				for (float y = cb.min.y + 0.4f; y <= cb.max.y - 0.2f; y += 0.4f)
+				{
+					samples++;
+					Vector3 at = new Vector3(cb.center.x, y, cb.center.z) + side * 0.3f;
+					Collider hit = Physics.OverlapSphere(at, 0.22f, ~0, QueryTriggerInteraction.Ignore).FirstOrDefault(c => !c.transform.IsChildOf(e.transform));
+					if (hit == null) continue;
+					blocked++;
+					if (by.Length == 0) { EditorGameObject o = hit.GetComponentInParent<EditorGameObject>(); by = o != null ? o.GameObjectName : hit.GetComponent<Terrain>() != null ? "terrain" : hit.name; }
+				}
+				Vector3 p = e.transform.position;
+				// (a ladder's foot in the ground is fine; most of its climbing side shut is not)
+				bool shut = samples > 0 && blocked * 2 > samples;
+				if (shut) bad++;
+				if (shut || args != null && args.Length > 0)
+					Log("  " + (shut ? "BLOCKED " : "") + name + " at " + Num(p.x - mid.x) + " " + Num(p.z - mid.y) + " h=" + Num(p.y - sea) + " turn " + e.transform.eulerAngles.y.ToString("F0") + ": climbing side (" + Num(side.x) + "," + Num(side.z) + ") shut " + blocked + "/" + samples + (by.Length > 0 ? " by " + by : ""));
+			}
+			if (bad > 0) Fail(bad + " of " + n + " ladders have their climbing side shut");
+			else Log("PASS: " + n + " ladders, each climbable");
+		}
+
 		[ConsoleCommand(name: "CIProfile", docs: "Dev, editor: the island's profile along a line - at <n> points from <x1> <z1> to <x2> <z2> (recipe coordinates) the first thing a ray down from 40 m over the sea meets and its height above the sea: where a hull's deck and sides are, to set stairs to them. CIProfile <x1> <z1> <x2> <z2> <n>")]
 		public static void ProfileCommand(string[] args)
 		{

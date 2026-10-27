@@ -81,4 +81,6 @@ open Lamp-room tally chest
 expect item Blueprint_BatteryCharger 1
 expect done
 # (the ladder in the shaft takes hold of a diver at the water)
-climb 3 -35.9 h=-1.38
+climb 3 -35.9 h=-0.4
+# (PQ2: the way out - from the ladder's top through the open gate onto the collar)
+walk 3 -35.5 to 3 -32 h=5.4 below=7

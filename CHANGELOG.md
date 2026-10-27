@@ -9,6 +9,23 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-27: Quest playtest fixes
+
+- **Where a quest starts**: until an island's quest has begun, a gold beam stands over the place its first step wants
+  you to go, labelled with that step, and the quest's opening message names the start and how far it is.
+- **Story messages go into the journal**: every message an island shows while you play is kept under the island, once
+  each, to read again.
+- **Unstuck near custom islands**: under the sea or after 20 seconds without getting anywhere, Raft's Unstuck (Esc
+  menu) is there at once near a custom island and takes you back to your raft.
+- **The Clockwork City** can be walked as well as shuttled: rope bridges join the harbour, the plaza, the gearworks,
+  the observatory and the clock tower, and every stack has a ladder up from the sea (the harbour's ladder tower had
+  stood inside the rock).
+- Fixed on the islands: Blackwall's flooded mine shaft has a ladder all the way up to its gate again; Whalebone Bay's
+  altar box stands in front of the altar where it can be opened; The Bell Stack's fifth page lies clear of the bell
+  tower's pillar; the rock-face ladders of Twin Horns and the other islands built with them (Basalt Cay, Coyote Mesa,
+  Crowncrag Ruin, Driftcloud Islet, the Iron Whale, Lantern Spire, Orrin's Sledge Camp) and Rookery Cliffs face the
+  right way; a few events that were only told now sound too.
+
 ## 2026-10-26: Four older storylines' islands, an hour each
 
 - **Pendulum Isle** (The Gravity Sea) grows to Raft's size (about 170 m by 130): the lodestone Iron Ridge in the north,

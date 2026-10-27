@@ -92,8 +92,30 @@ at 82.4 32.5 h=25
 walk 82.4 32.5 to 78.5 33.5 to 78.5 37 to 80 40 h=24.05
 zone vault
 expect step 19
+walk 80 40 to 80 46.4 h=24.05 below=26
+reach The founder's vault
 open The founder's vault
 expect done
 open Market stall box
 open Platform box
 open Sunk crate of springs
+# (PQ3, 2026-10-27: each stack climbed from the sea - its ladder takes hold at the water, its planks lead from the
+# ladder's top onto the stack - and the four rope bridges walked end to end)
+climb -41.75 -67.2 h=1.6
+walk -41.75 -62.5 to -41.75 -66 h=16.1
+climb -3 49.6 h=0.8
+walk -3 43 to -3 48.5 h=20.4
+climb 91.7 40 h=0
+walk 85 40 to 90.6 40 h=23.9
+climb 5.2 -12 h=0.7
+walk 11 -12 to 6.3 -12 h=29.1
+climb 32.1 32.5 h=-2
+walk 35.5 32.5 to 33 32.5 h=12.05
+walk -39.5 -43 to -10.6 12.4 to -9 15 h=21.45
+walk 10.5 25.5 to 34.5 22 to 36 22 h=12.05
+walk 2.6 14 to 18.7 -4 h=29.4
+walk 25.5 -9 to 73.7 32.05 h=25.35
+picture cw_harbour -41.75 8 -78 -41.75 10 -62
+picture cw_bridges -60 40 -60 0 18 0
+picture cw_tower 100 20 30 85 15 40
+picture cw_plaza -3 12 62 -3 12 45
