@@ -312,9 +312,9 @@ step read|Station chief's note|1|Read the station chief's note
 step open|Village store crate|1|Open the village store's crate - the first drum of cable
 step open|Sled crate|1|Dive to Mikkel's snowmobile under the ice in the bay and open its crate
 step open|Survey crate|1|Climb to the telescope on the peak - the survey team left a drum there
-step reach|frostridge|1|Climb Frost Ridge, south of the peak, to the weather mast
+step reach|frostridge|1|Climb Frost Ridge below the peak to the weather mast
 step open|Weather mast box|1|Climb the weather mast and open the box on its deck - the fourth drum
-step reach|fishcamp|1|Cross to the ice fishing camp on the east flats
+step reach|fishcamp|1|Cross the ice flats to the fishing camp
 step read|Fisherman's log|1|Read the fisherman's log in his hut
 step open|Ice hut locker|1|Open the fisherman's locker by the hut - the chief's last drum
 step collect|story:cable|5|Carry all five cable drums - one for each torn cable run

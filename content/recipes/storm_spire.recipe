@@ -342,7 +342,7 @@ prop rodshed loot.refill=0
 note rodledge Landing box | A box on the lift tower's landing, halfway up: a copper rod, wet and green.
 loot rodledge story:rod*1;Scrap*3
 prop rodledge loot.refill=0
-note rodcove Cove box | A box on the north cove's floor: the third copper rod.
+note rodcove Cove box | A box on the cove's floor: the third copper rod.
 loot rodcove story:rod*1;Plastic*2
 prop rodcove loot.refill=0
 note stationlocker Station locker | The weather station's locker, behind the instrument panel: an electric smelter, an advanced biofuel extractor, an anchor for any storm.
@@ -405,21 +405,21 @@ quest intro=A weather spire in the storm belt, its lightning line broken. Statio
 step read|Meteorologist's tapes|1|Listen to the meteorologist's tapes at the spire's landing
 step reach|spiretop|1|Climb the lift tower to the station - a rod waits on the landing halfway
 step kill|Screecher|1|Drive off the storm bird on the mast
-step open|Cove box|1|Dive into the north cove for the rod that went over the edge
+step open|Cove box|1|Dive into the cove for the rod that went over the edge - it is in a box on the floor
 step collect|story:rod|3|Have all three conductor rods: the shed, the tower's landing, the cove
 step read|Met-man's warning|1|Read the met-man's warning by the storm siren
-step talk|Ivo Brand|1|Talk to Ivo Brand at the ruined house in the east
-step reach|ss_trail|1|Find the foot of the trail up Thunder Knoll, in the north
+step talk|Ivo Brand|1|Talk to Ivo Brand at the ruined house on the cliff top
+step reach|ss_trail|1|Make for Thunder Knoll, the hill with the lightning mast, and find the foot of its trail
 step reach|ss_summit|1|Climb the trail to the top of Thunder Knoll
 step collect|story:ss_top|1|Climb the lightning mast and take the siren rotor from its deck
-step reach|ss_cave|1|Find Lightning Cave in the south-east
+step reach|ss_cave|1|Find Lightning Cave, the dark cave mouth in the rocks
 step collect|story:ss_cave|1|Take the siren coil from the chest at the back of the cave
 step read|Siren log|1|Bring both to the storm siren and read what it shows
 step open|Station locker|1|Mend the lightning line and open the station's locker
 step blueprint|Blueprint_SmelterElectric|1|Take the electric smelter plans from the station locker
 step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced biofuel extractor plans from the station locker
 step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced stationary anchor plans from the station locker
-quest done=The line holds as the next strike hits - the instruments live again, and their last reading points north: Whiteout Reach.
+quest done=The line holds as the next strike hits - the instruments live again, and their last reading points the way to Whiteout Reach.
 quest reward=CopperIngot*2;Plank*6;Rope*2
 
 # --- A Raft store at the needle's foot: the Corps' supply post, still trading (Raft's goods, and plans the crew missed) --
