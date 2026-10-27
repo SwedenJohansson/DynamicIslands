@@ -251,7 +251,7 @@ call shallows r=139 deep=5 n=2
 # ===== Settings, story items, notes, behaviours, quest (20 steps, 4 chapters) =============================================
 info title=The Clockwork City
 info author=Custom Islands
-info description=A city of clockwork on tropical sea stacks - shuttle platforms between them, doors that open on the gong for half a minute, brass automatons frozen mid-step - and in the middle a clock tower whose heart was stolen. Find the parts, ride to the tower, set the hour, and the city wakes.
+info description=A city of clockwork on tropical sea stacks - shuttle platforms between them, doors that open on the gong for half a minute, brass automatons frozen mid-step - and in the middle a clock tower whose heart was stolen. Find the parts, cross the rope bridges to the tower, set the hour, and the city wakes.
 island on.arrive=message||Stacks of rock standing in the sea with a city on them - towers, domes, cogs on every wall - and between them, platforms sliding slowly back and forth over the water, all by themselves. In the middle, a clock tower. Its hands don't move.
 
 story winder|Winding key|quest:Varuna_CraneKey|A brass winding key as long as your arm - the city's key to everything that winds.
@@ -446,7 +446,7 @@ quest intro=A city of clockwork on sea stacks, stopped mid-tick. The clockmaker'
 step reach|harbour|1|Tie up at the harbour stack
 step read|The clockmaker's welcome|1|Read the clockmaker's welcome
 step collect|story:winder|1|Take the winding key from the harbourmaster's box
-step reach|plaza|1|Ride the first shuttle to the plaza
+step reach|plaza|1|Cross the rope bridge from the harbour's top to the plaza
 step read|The city timetable|1|Read the city timetable
 # Chapter 2 - the timed doors
 step collect|story:gear|1|Strike the gong and get the first gear out of the Hall of Hours in thirty seconds
@@ -454,12 +454,12 @@ step kill|Rat|4|Clear the rats out of the gearworks
 step collect|story:gear|2|Drop the counterweight and reach the gearworks' vault in twenty seconds
 step reach|undercroft|1|Swim through the sea door into the flooded undercroft
 step collect|story:gear|3|Find the third gear in the undercroft
-# Chapter 3 - the shuttles
-step reach|observatory|1|Ride the shuttles up to the observatory
+# Chapter 3 - the bridges
+step reach|observatory|1|Back over the rope bridge to the plaza, then up the steep rope bridge to the observatory
 step kill|Screecher|2|Drive off the screechers
 step read|The thief's diary|1|Read the thief's diary
 step collect|story:mainspring|1|Take the mainspring from the thief's stash
-step reach|towerbalcony|1|Ride the last shuttle down to the clock tower
+step reach|towerbalcony|1|Cross the long rope bridge from the observatory down to the clock tower's balcony
 # Chapter 4 - the clock
 step reach|clockroom|1|Climb to the clock room
 step collect|story:clockkey|1|Fit the gears and the mainspring into the clock's heart

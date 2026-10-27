@@ -67,6 +67,8 @@ expect item Rope 2
 at -4 0.1 h=12.5
 use egghoistup stay
 wait 7
+# (the height first, as on the way up: shown/hidden right after a wait are checked as soon as they hold, and an
+# expect height after them would be read mid-ride)
+expect height 7.1
 expect shown egghoist
 expect hidden egghoistup
-expect height 7.1
