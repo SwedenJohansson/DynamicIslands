@@ -341,7 +341,7 @@ prop treasure32062 treasure.loot=CopperIngot*2;MetalIngot*2;Scrap*4
 call hw_zone x=40 z=38 al=radarfootz id=radarfoot r=5 msg="Radar Hill. A path cut round it to the radar mast on its top."
 call hw_zone x=60 z=54 al=radartopz id=radartop r=7 h=1 msg="The top of Radar Hill. The radar dish is gone; the mast still stands, and the whole atoll lies below - the ring, the islet, the outer barrier."
 note radarbox Radar deck box | A box bolted to the mast's deck: a radar valve in a padded case, stamped RELAY - SHELTER No. 7.
-loot radarbox story:valve*1;Battery*1;Plastic*2
+loot radarbox story:radarvalve*1;Battery*1;Plastic*2
 # The north channel: the bank, the patrol boat on the channel's floor, its locker and an air pocket beside it
 call hw_zone x=-14 z=58 al=channelz id=channel r=5 msg="The north channel. Down in the green water, a patrol boat lies on its side."
 place Story_Islander signe at -16 55 ground
@@ -350,12 +350,12 @@ prop signe islander.pose=fish
 prop signe talk.text=Nobody fishes the channel but me. The patrol boat scares the rest off.\n---\nThe sailors kept their coil in the boat's locker, for the relay by the slab. They never got it there.\n---\nThe runway lights on the barrier? Each one throws its neighbours too. Start at the second and walk out to the sea - leave the first alone.
 place Loot_Crate boatlocker at 6.5 62.5 ground sit yaw=160
 note boatlocker Patrol boat locker | The patrol boat's locker, jammed half shut: a signal coil in oilcloth, labelled RELAY, and a sailor's tin.
-loot boatlocker story:coil*1;Rope*2;Bolt*2
+loot boatlocker story:sigcoil*1;Rope*2;Bolt*2
 prop boatlocker loot.refill=0
 call hw_airpocket x=-3 z=57 id=boatair al=boatair bub=boatbub msg="An air pocket under the bank's edge - breathe."
 # The relay box on the islet, north of the slab: both parts, and the relay chest by it opens
 clear at 0 18 r=3
-call hw_machine x=0 z=18 yaw=180 al=relaybox nm="Relay box" a=valve b=coil done=relay rew=relaychest rnote=relaynote msg="The relay hums. Under your feet, deep in the islet, a bell rings once - the shelter knows someone is here." hint="The relay box has no valve and no coil. The radar mast and the patrol boat had them."
+call hw_machine x=0 z=18 yaw=180 al=relaybox nm="Relay box" a=radarvalve b=sigcoil done=sheltrelay rew=relaychest rnote=relaynote msg="The relay hums. Under your feet, deep in the islet, a bell rings once - the shelter knows someone is here." hint="The relay box has no valve and no coil. The radar mast and the patrol boat had them."
 note relaychest Relay chest | The relay crew's chest, unlocked by the relay: their rations, batteries and the shelter's spare key ring.
 loot relaychest Battery*2;CircuitBoard*1;MetalIngot*2;Rope*2
 note relaynote Relay crew's card | RELAY CREW - SHELTER No. 7\n\nValve from the radar mast. Coil from the patrol boat.\nWith both in, the shelter hears us. Without them, nobody hears anybody.\n\nThe boat went down in the channel with the coil on board. - Sgt. Oskarsson
@@ -407,9 +407,9 @@ info description=An atoll of palms as big as Raft's own islands: a lagoon, a loo
 island on.arrive=message||An atoll with an islet in its lagoon. On the islet: a concrete slab, a radio mast - and a hatch.
 
 story fuel|Can of fuel|BioFuel|The shelter's last can of generator fuel, from the radio operator's bunk locker.
-story valve|Radar valve|CircuitBoard|The relay's radar valve, from the deck box of the radar mast on Radar Hill.
-story coil|Signal coil|Battery|The relay's signal coil, from the locker of the patrol boat sunk in the north channel.
-story relay|Relay running|Placeable_Lantern_Metal|You ran the relay north of the slab with its valve and coil: the shelter rang.
+story radarvalve|Radar valve|CircuitBoard|The relay's radar valve, from the deck box of the radar mast on Radar Hill.
+story sigcoil|Signal coil|Battery|The relay's signal coil, from the locker of the patrol boat sunk in the north channel.
+story sheltrelay|Relay running|Placeable_Lantern_Metal|You ran the relay north of the slab with its valve and coil: the shelter rang.
 note caldernote2 Dr. Ruth Calder's field note | THE ABYSS EXPEDITION - FIELD NOTE 2\n\nThe shelter's people built for a war that never came. Their radar charted the sea floor instead: east of here the bottom falls away, and on it stands a whole island, drowned.\n\nThe shelter's radio still works, they say. If it picks up a buoy, follow it down.\n- R. C.
 note ferrisnote Lookout Nadia Ferris's log | N. FERRIS - LOOKOUT, SHELTER No. 7\n\nWatch 1. Posted on the west dune with binoculars and a lamp. My orders: report anything on the horizon to the radio room below.\n\nWatch 9. Nothing on the horizon for nine days. Rats in the dormitory. The commander has locked himself in his room with the charts and won't say why.\n\nWatch 12. The generator is almost dry. The operator says he's hidden the last can of fuel in his bunk locker, so the commander can't burn it all on his own lamp.\n\nWatch 14. I've stopped going down. It is better up here, in the wind.\n\nIf you're reading this, go down the hatch on the islet. Start the generator - it opens his door and the blast gate. My spare kit is under the hatch beside this post, and my tin is buried at the foot of the dune.
 note notice Shelter notice | CIVIL DEFENCE SHELTER No. 7\n\nEMERGENCY HATCH - climb down slowly, one at a time.\n\nThe blast gate on the lagoon side opens from inside only, and only with the generator running.\n\nCapacity: 24. Keep this hatch clear.
@@ -491,10 +491,10 @@ step read|Shelter notice|1|Find the hatch on the islet and read the notice besid
 step reach|dunetop|1|Climb the dune on the atoll's west side - someone kept watch up there
 step read|Lookout Nadia Ferris's log|1|Read the lookout's log by the post: what happened below
 step reach|radartop|1|Climb Radar Hill in the north-east to the radar mast
-step collect|story:valve|1|Take the radar valve from the mast's deck box
+step collect|story:radarvalve|1|Take the radar valve from the mast's deck box
 step reach|channel|1|Go to the north channel, where the patrol boat went down
-step collect|story:coil|1|Dive to the patrol boat and take the signal coil from its locker
-step collect|story:relay|1|Put the valve and the coil in the relay box north of the slab
+step collect|story:sigcoil|1|Dive to the patrol boat and take the signal coil from its locker
+step collect|story:sheltrelay|1|Put the valve and the coil in the relay box north of the slab
 step reach|hatchhall|1|Climb down the ladder into the shelter
 step read|Radio log|1|Read the radio log
 step kill|Rat|3|Clear the rats out of the dormitory

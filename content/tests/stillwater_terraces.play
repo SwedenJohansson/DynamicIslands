@@ -29,8 +29,8 @@ use bellstand
 expect message Three hollows
 use bellstone3
 expect story bellstone 3
-# (step 5, not 4: the stand is inside paddy 3's zone, so using it on the way already counts the climb)
-expect step 5
+# (the stone ring is still short of paddy 3's zone: the climb to it is step 4)
+expect step 4
 walk 0 -24 to 0 -14 to 0 -8 h=11
 zone paddy3
 expect shown st_c

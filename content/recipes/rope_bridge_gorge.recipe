@@ -51,8 +51,8 @@ place CaravanHubBridge3 bridge at 4.38 0 h=3.15 yaw=90
 # (the spans' ends meet the lips at 4 m; an invisible net just under the planks' sag, lip to lip, for the gaps)
 place Helper_Wall bridgewalk at -9.2 0 h=2.9 rot=90,90,0 sy=6.14 sx=0.75 sz=1.9
 for bx -9.2 9.2 18.4
-place RT_PillarThick bridgeposts at $bx -1.3 h=0
-place RT_PillarThick bridgeposts at $bx 1.3 h=0
+place RT_PillarThick bridgeposts at $bx -1.9 h=0
+place RT_PillarThick bridgeposts at $bx 1.9 h=0
 next
 place Zone_Trigger bridgelip at -12 0 h=4
 place Note_Sign idolwarning at -11 2 h=4 ground sit yaw=90

@@ -27,17 +27,17 @@ zone radarfoot
 zone radartop
 expect step 4
 open Radar deck box
-expect story valve 1
+expect story radarvalve 1
 expect step 5
 zone channel
 expect step 6
 read Dr. Ruth Calder's field note
 air boatair
 open Patrol boat locker
-expect story coil 1
+expect story sigcoil 1
 expect step 7
 use relaybox
-expect story relay 1
+expect story sheltrelay 1
 expect step 8
 expect shown relaychest
 open Relay chest

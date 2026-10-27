@@ -72,7 +72,7 @@ expect step 19
 
 # Up the boar trail into the stone ring (the walk passes the trail's zone; opening the temple's chest above took the
 # player into the ring, so that step is credited with it): the Boar King and his guards
-walk -20 -12 to -10 0 h=12.7
+walk -19 -8 to -10 0 h=14.4
 walk -10 0 to -5 5 to 0 10 to 10 18 to 15 21 h=25.2
 zone hilltrail
 expect step 21
