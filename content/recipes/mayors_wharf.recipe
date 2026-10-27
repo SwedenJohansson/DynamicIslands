@@ -160,7 +160,7 @@ prop puffers creature.count=2
 
 quest title=The Mayor's Safe
 quest intro=City Hall stands in the sea up to its third floor. Somewhere below the waterline is the mayor's vault.
-step reach|wharf|1|Tie up at the mayor's wharf
+step reach|wharf|1|Make for City Hall standing in the sea and tie up at the mayor's wharf
 step kill|Tangaroa rat|3|Clear the rats out of the mayor's office
 step read|Mayor's memo|1|Read the memo on the mayor's desk
 step collect|story:wharf-keycard|1|Swim down to level 1 and take the spare keycard from Darnell's locker

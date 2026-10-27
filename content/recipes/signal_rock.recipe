@@ -225,19 +225,19 @@ prop treasure32042 treasure.loot=CopperIngot*2;MetalIngot*2;Bolt*3
 
 info title=Signal Rock
 info author=Custom Islands
-info description=A rocky island with a radio relay station standing in its cove and a rigger's cave on its east headland. Climb the station, dive for the lost transmitter coil, bring the radio back on the air and light the beacon on top of the mast. Inspired by Raft's Radio Tower.
+info description=A rocky island with a radio relay station standing in its cove and a rigger's cave on its headland. Climb the station, dive for the lost transmitter coil, bring the radio back on the air and light the beacon on top of the mast. Inspired by Raft's Radio Tower.
 island on.arrive=message||Signal Rock. A silent radio mast stands in the cove.
 
 story coil|Transmitter coil|CircuitBoard|A heavy copper coil from the relay transmitter. The radio won't work without it.
 loot coilcrate story:coil*1;Bolt*3;Scrap*4
 prop coilcrate loot.refill=0
 
-note rignote Rigger Dmitri Vos's note | D. VOS, RIGGER, RELAY SR-4\n\nRuth, if you come out here looking for me: I've gone east with the last boat.\n\nI bought the new coil for the transmitter myself, out of my own pay, because the company never sent one. Then the crane arm snapped in the storm and dropped it in the cove, crate and all. It's still down there. The puffers have moved in round it.\n\nYou owe me for that coil. I know you'll say the company owes me. Fine. Get the coil up, fit it, and light the beacon on the mast, and we'll call it even.\n\nThe mast ladder is not a lookout, management says. The screechers on the ridge agree with them. Go up fast.\n\nWhat I saved I buried at the south end of this headland. If I'm not back by spring, it's yours.
+note rignote Rigger Dmitri Vos's note | D. VOS, RIGGER, RELAY SR-4\n\nRuth, if you come out here looking for me: I've gone off with the last boat.\n\nI bought the new coil for the transmitter myself, out of my own pay, because the company never sent one. Then the crane arm snapped in the storm and dropped it in the cove, crate and all. It's still down there. The puffers have moved in round it.\n\nYou owe me for that coil. I know you'll say the company owes me. Fine. Get the coil up, fit it, and light the beacon on the mast, and we'll call it even.\n\nThe mast ladder is not a lookout, management says. The screechers on the ridge agree with them. Go up fast.\n\nWhat I saved I buried at the far end of this headland. If I'm not back by spring, it's yours.
 note log Operator's log | Day 212. The mainland has been silent for a week. I keep sending on the old frequency anyway.\n\nDay 219. Storm. The crane arm snapped while I was lifting the spare transmitter coil to the roof - coil, crate and arm all went into the cove. It's only five metres deep there. I'll dive for it when the swell drops.\n\nDay 220. The swell isn't dropping, and screechers have taken the ridge. Without that coil the transmitter is dead.\n\nDay 223. Taking the boat to look for the others. If you read this: the coil is in a crate on the cove floor, on the seaward side. Fit it in the transmitter and the station will print the last message it caught.\n\n- R. Okafor, operator, relay station SR-4
-note printout Signal printout | SR-4 RELAY - LAST BUFFERED MESSAGE\n\n...TO ANY STATION... THIS IS THE CARAVAN... WE HAVE WATER AND SHELTER FOR ALL WHO COME... FOLLOW THE BEACONS EAST... REPEAT, FOLLOW THE BEACONS...\n\n[END OF BUFFER]\n\nUnder it, in pencil: "Light the beacon so they know we're still here."
+note printout Signal printout | SR-4 RELAY - LAST BUFFERED MESSAGE\n\n...TO ANY STATION... THIS IS THE CARAVAN... WE HAVE WATER AND SHELTER FOR ALL WHO COME... FOLLOW THE BEACONS TO THE CARAVAN... REPEAT, FOLLOW THE BEACONS...\n\n[END OF BUFFER]\n\nUnder it, in pencil: "Light the beacon so they know we're still here."
 note notice Relay Station SR-4 | AUTHORISED PERSONNEL ONLY\n\nTransmitter maintenance: every Monday.\nThe mast ladder is NOT a lookout.\n\n- Management
 note sign Signal Rock | Relay station SR-4 - the walkway to the station.\nMind the screechers on the ridge.
-note bottle A message in a bottle | Ruth - we made it to the caravan. Come east when the radio works again, and bring that coil money you owe me. - D.
+note bottle A message in a bottle | Ruth - we made it to the caravan. Come along when the radio works again, and bring that coil money you owe me. - D.
 
 prop hum sound.event=event:/exploring/relaystation/electricity
 prop hum sound.volume=0.5
@@ -252,7 +252,7 @@ prop radio else.use=message||The transmitter is dead - its coil socket is empty.
 prop radioLive obj.name=radioLive
 prop radioLive beh.hidden=1
 prop radioLive beh.use=Listen
-prop radioLive on.use=message||Static... then, faintly, the same words over and over: "Follow the beacons east."
+prop radioLive on.use=message||Static... then, faintly, the same words over and over: "Follow the beacons to the caravan."
 # (Raft's comm radio as a ready piece only works with power (a running generator or Raft's battery charger part), which this island has none of: the radio, live once the coil is fitted, answered "The radio is dead". The ready piece's lock taken off)
 prop radioLive if.use=
 prop radioLive else.use=
@@ -281,12 +281,12 @@ prop puffers creature.count=2
 
 quest title=Dead Air
 quest intro=A relay mast stands in the cove of Signal Rock, silent for weeks. Find out why the station went quiet - and bring it back on the air.
-step reach|deck|1|Climb up to the station deck
+step reach|deck|1|Make for the relay mast in the cove and climb up to the station deck
 step read|Operator's log|1|Read the operator's log in the radio room
 step kill|Puffer fish|2|Dive to the cove floor and clear the puffer fish off the coil's crate
-step collect|story:coil|1|Find the transmitter coil in the cove
+step collect|story:coil|1|Open the crate on the cove floor and take the transmitter coil
 step read|Signal printout|1|Fit the coil in the transmitter and read the printout
-step reach|rigcave|1|Find the rigger's cave on the east headland
+step reach|rigcave|1|Find the rigger's cave in the low headland
 step read|Rigger Dmitri Vos's note|1|Read the rigger's note: what the beacon needs
 step reach|beaconswitch|1|Climb the mast and light the beacon
 quest done=The beacon on Signal Rock sweeps the sea again. Whoever is out there will see it.

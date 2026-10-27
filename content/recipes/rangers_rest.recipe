@@ -135,18 +135,18 @@ place Note_Paper poachnote at -43.5 0.5 ground drop yaw=260
 place Zone_Trigger poachcamp at -44 -1 y=1
 prop poachcamp zone.id=poachcamp
 prop poachcamp zone.radius=6
-prop poachcamp zone.message=A camp on the west point: a tent, a cold fire, and a row of snares hung up to dry. Not the ranger's.
+prop poachcamp zone.message=A camp on the low point: a tent, a cold fire, and a row of snares hung up to dry. Not the ranger's.
 call hatchcache x=-51 z=1 r=4 seed=32045 alias=poachhatch chest=poachstash items=Arrow_Stone*6;Rope*3;Leather*2;MetalIngot*1
 scatter Bush2 4 at -45 -2 r=12 seed=32046
 scatter "Pickup_Landmark_Tree_Palm 2" 2 at -49 4 r=6 seed=32047 free=1
 
 info title=Ranger's Rest
 info author=Custom Islands
-info description=A jungle hill with a ranger's log cabin and a watchtower, a poacher's camp on its west point - and on the south shore the den of Old Scar, the bear that stole the ranger's supplies. Inspired by Raft's Balboa.
+info description=A jungle hill with a ranger's log cabin and a watchtower, a poacher's camp on its low point - and on the shore the den of Old Scar, the bear that stole the ranger's supplies. Inspired by Raft's Balboa.
 island on.arrive=message||A watchtower on a jungle hill. Below it a log cabin with its door open.
 
-note poachnote Poacher Kurt Hale's note | (Pencil on the back of a tide table, weighed down with a stone)\n\nKowalski,\n\nYou can stop writing me up in your diary. I'm leaving tonight. The boat comes for me at the west point when the moon is down.\n\nYes, I baited the old bear. Fish heads and honey, a trail of it from the bamboo to your supply crate. I wanted him out of the jungle and away from my snares, and I thought he'd take the crate and go. He took the crate and stayed. Now he sleeps on it in that cave on the south shore, and he won't let anyone near.\n\nThat's on me. I'm sorry for your goats.\n\nMy own kit is under the hatch by the tent. Take what you want from it. You'll need the arrows more than I will.\n\n- K. Hale
-note diary Ranger's diary | Ranger station Rest-3 - diary of P. Kowalski\n\nWeek 1. Quiet posting. Warthogs in the bamboo, coconuts on the beach, a good tower on the hill. I could live here.\n\nWeek 3. An old male bear has taken the cave on the south shore. Torn left ear - I call him Old Scar. The flares don't scare him any more.\n\nWeek 4. Scar raided the supply shed while I was up the tower and dragged the whole crate into his den: my medicine, my machete, everything.\n\nWeek 5. A rescue boat passed twice and never stopped. I'm going up the tower tonight with my last flare. If you read this and I'm not here: the crate is at the back of the den. Watch the bear. Watch the warthogs too.
+note poachnote Poacher Kurt Hale's note | (Pencil on the back of a tide table, weighed down with a stone)\n\nKowalski,\n\nYou can stop writing me up in your diary. I'm leaving tonight. The boat comes for me at the point when the moon is down.\n\nYes, I baited the old bear. Fish heads and honey, a trail of it from the bamboo to your supply crate. I wanted him out of the jungle and away from my snares, and I thought he'd take the crate and go. He took the crate and stayed. Now he sleeps on it in that cave on the shore, and he won't let anyone near.\n\nThat's on me. I'm sorry for your goats.\n\nMy own kit is under the hatch by the tent. Take what you want from it. You'll need the arrows more than I will.\n\n- K. Hale
+note diary Ranger's diary | Ranger station Rest-3 - diary of P. Kowalski\n\nWeek 1. Quiet posting. Warthogs in the bamboo, coconuts on the beach, a good tower on the hill. I could live here.\n\nWeek 3. An old male bear has taken the cave on the shore. Torn left ear - I call him Old Scar. The flares don't scare him any more.\n\nWeek 4. Scar raided the supply shed while I was up the tower and dragged the whole crate into his den: my medicine, my machete, everything.\n\nWeek 5. A rescue boat passed twice and never stopped. I'm going up the tower tonight with my last flare. If you read this and I'm not here: the crate is at the back of the den. Watch the bear. Watch the warthogs too.
 note stash Ranger's stash | A supply crate stencilled REST-3, its lid clawed open. Inside, under bear-chewed tins, the ranger's own things.
 loot stash Machete*1;HealingSalve_Good*2;Rope*4;Nail*8
 prop stash loot.refill=0
@@ -156,7 +156,7 @@ prop station zone.radius=6
 prop station zone.message=Ranger station Rest-3. The door is open and the stove is cold.
 prop tower zone.id=tower
 prop tower zone.radius=2.5
-prop tower zone.message=From up here you can see the whole island - and a dark cave mouth on the south shore, with bones on the sand in front of it.
+prop tower zone.message=From up here you can see the whole island - and a dark cave mouth on the shore, with bones on the sand in front of it.
 prop den zone.id=den
 prop den zone.radius=4
 prop den zone.message=The cave reeks of bear. Something big stirs in the dark.
@@ -182,13 +182,13 @@ prop goats creature.count=2
 
 quest title=Old Scar
 quest intro=A ranger station on a jungle hill - its door open, nobody home. Find out what happened to the ranger.
-step read|Ranger's diary|1|Find the ranger station on the hill and read the ranger's diary
+step read|Ranger's diary|1|Make for the watchtower on the jungle hill and read the ranger's diary in the cabin
 step catch|Goat|2|Pen the ranger's two goats - loose by the campfire since he went up the tower
 step reach|tower|1|Climb the watchtower and look for the den
-step reach|poachcamp|1|Find the strangers' camp on the west point
+step reach|poachcamp|1|Find the strangers' camp, the tent and snares on the low point below the hill
 step read|Poacher Kurt Hale's note|1|Read the poacher's note: who baited Old Scar
-step kill|Bear|1|Drive off Old Scar
-step open|Ranger's stash|1|Take back the ranger's supply crate
+step kill|Bear|1|Drive off Old Scar, the bear in the cave on the beach
+step open|Ranger's stash|1|Open the ranger's supply crate in the bear's cave
 quest done=Old Scar is gone, and the ranger's machete is yours. The hill is quiet again.
 quest reward=Bow*1;Arrow_Stone*10
 

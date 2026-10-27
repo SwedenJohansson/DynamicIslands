@@ -108,7 +108,7 @@ call shallows r=50 deep=5 n=1
 # --- DEEP 10-25: the sample store on the south point - Tomas Berg's note, his box, his cache, his kit ---------------
 call ar_cave x=2 z=-40 h=3 yaw=0 al=storerock chest=bergbox
 brush auto at 2 -40 r=17 s=10 frames=25
-call hw_zone x=2 z=-35 al=samplecavez id=samplecave r=4 msg="An ice cave on the south point, racks of sample jars along its walls, frozen solid. A camp bed and a lamp."
+call hw_zone x=2 z=-35 al=samplecavez id=samplecave r=4 msg="An ice cave on the low point, racks of sample jars along its walls, frozen solid. A camp bed and a lamp."
 place Note_Paper bergnote at 0.5 -34.5 h=3.45 drop yaw=180
 loot bergbox Wool*2;Glass*2;Battery*1;CopperIngot*1
 prop bergbox loot.refill=0
@@ -129,10 +129,10 @@ prop treasure32054 treasure.loot=CopperIngot*2;MetalIngot*2;Glass*2
 
 info title=Frost Hollow
 info author=Custom Islands
-info description=A snowy islet with two Moontown igloo houses, a snowmobile shed, a telescope on the hill, an ice cave on its south point - and a small research lab whose power is dead. Three cables, a power box and a polar bear. Inspired by Raft's Temperance.
+info description=A snowy islet with two Moontown igloo houses, a snowmobile shed, a telescope on the hill, an ice cave on its low point - and a small research lab whose power is dead. Three cables, a power box and a polar bear. Inspired by Raft's Temperance.
 island on.arrive=message||Snow, two glowing domes, a dark lab on the hill. The wind smells of ice.
 
-note bergnote Lab assistant Tomas Berg's note | T. BERG - ASSISTANT TO DR. LINDQVIST\n\nThe power went in the first storm, and the freezers in the lab with it. I carried every sample out here to the cave on the south point. Ice keeps them better than the company's machines ever did.\n\nDr. Lindqvist would not leave the lab. She said the lights over the ice were coming closer every night, and she had to measure them. I said they were the northern lights. She showed me her readings. They were not the northern lights.\n\nThe lab's power box takes three cables. Two are by the igloo doors. The third is in the shed, and the bear sleeps in front of it. I left it there. I am an assistant, not a hunter.\n\nMy spare things are under the hatch by the rocks. My kit is buried at the far end of the point.
+note bergnote Lab assistant Tomas Berg's note | T. BERG - ASSISTANT TO DR. LINDQVIST\n\nThe power went in the first storm, and the freezers in the lab with it. I carried every sample out here to the cave on the low point. Ice keeps them better than the company's machines ever did.\n\nDr. Lindqvist would not leave the lab. She said the lights over the ice were coming closer every night, and she had to measure them. I said they were the northern lights. She showed me her readings. They were not the northern lights.\n\nThe lab's power box takes three cables. Two are by the igloo doors. The third is in the shed, and the bear sleeps in front of it. I left it there. I am an assistant, not a hunter.\n\nMy spare things are under the hatch by the rocks. My kit is buried at the far end of the point.
 story cable|Electrical cable|quest:Temperance_ElectricalCable|A heavy coil of insulated cable - the lab's power box needs three.
 
 note researchlog Research log | Frost Hollow research station - log of Dr. I. Lindqvist\n\nThe storm cut every cable between the generator and the lab. I pulled what was left: one coil in the supply crate by each igloo's door, the third in front of the snowmobile shed.\n\nThe polar bear has moved into the shed. It does not like visitors.\n\nWith three cables the power box by the lab door will take the load and the doors will open again. My samples - and my good thermos - are in the lab locker.
@@ -178,14 +178,14 @@ prop bear creature.respawn=0
 
 quest title=Power for Frost Hollow
 quest intro=An igloo village with its lights on and nobody home, and a research lab on the hill, dark and shut.
-step reach|village|1|Find the igloo village
+step reach|village|1|Make for the research lab on the hill and find the igloo village near it
 step read|Research log|1|Read the research log
 step collect|story:cable|2|Take the cables from the supply crates by both igloo doors
 step kill|Polar bear|1|Deal with the polar bear sleeping in front of the snowmobile shed
-step collect|story:cable|3|Dig the third cable out of the shed crate, from under the fur
-step reach|samplecave|1|Find the lab's sample store, an ice cave on the island's south point
+step collect|story:cable|3|Take the third cable from the crate in the snowmobile shed
+step reach|samplecave|1|Find the lab's sample store, the ice cave on the island's low point
 step read|Lab assistant Tomas Berg's note|1|Read the assistant's note: what Dr. Lindqvist was measuring
-step open|Lab locker|1|Power the lab and open its locker
+step open|Lab locker|1|Power the lab with the three cables and open its locker
 quest done=The lab's lights are on again. Whatever Dr. Lindqvist saw over the ice, her notes are yours.
 quest reward=Glass*2;CopperIngot*3
 

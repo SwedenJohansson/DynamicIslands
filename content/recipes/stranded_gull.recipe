@@ -118,7 +118,7 @@ call shallows r=42 deep=5 n=1
 
 # --- DEEP 10-25: Lookout Hill - the navigator's mast on the top, her log, her flare kit buried on the far foot --------
 call hw_zone x=-17.45 z=14.79 al=gullfootz id=gullfoot r=5 msg="Steps cut into the hill's side, and a rope rail. Someone went up here often."
-call hw_zone x=-32 z=27 al=gulltopz id=gulltop r=7 h=1 msg="Lookout Hill. The whole sandbar lies below you - the camp, the tender, and off the south-east shore a dark shape on the reef."
+call hw_zone x=-32 z=27 al=gulltopz id=gulltop r=7 h=1 msg="Lookout Hill. The whole sandbar lies below you - the camp, the tender, and off the shore a dark shape on the reef."
 call hw_mast x=-32 z=27 h0=17 lv=2 a=gullmast chest=gullmastchest top=Placeable_Lantern_Metal
 place Note_Paper navnote at -28.5 25 h=17.1 drop yaw=200
 loot gullmastchest Rope*2;Plastic*2;Battery*1;Binoculars*1
@@ -135,12 +135,12 @@ island on.arrive=message||A distress flag flies over a sandbar. Couches and a ba
 
 story capkey|Captain's safe key|quest:Vasagatan_BlueKey|A small brass key on a chain. It opens the Gull's safe.
 
-note navnote Navigator Ilse Brandt's log | I. BRANDT, NAVIGATOR, M/Y GULL\n\nDay 4. Climbed the hill at the west end with the binoculars and the mast lamp. From here I can see twenty miles of empty sea, and nothing on it.\n\nDay 6. The stern has settled on the reef, south-east of the camp, about ten metres down. Last night there was a light moving inside it. Not a torch. It swings slowly, like a lamp on a string.\n\nDay 7. The captain says the safe is down there with the chart, and the key is in his locker on the tender. He won't go down. Nobody will. That light has teeth under it - I saw the shape of them when it turned.\n\nIf you go, go in daylight and take a spear.\n\nI buried the flare kit at the foot of this hill, on the far side, in case a ship comes and I'm not up here to see it.
+note navnote Navigator Ilse Brandt's log | I. BRANDT, NAVIGATOR, M/Y GULL\n\nDay 4. Climbed the hill with the binoculars and the mast lamp. From here I can see twenty miles of empty sea, and nothing on it.\n\nDay 6. The stern has settled on the reef off the camp, about ten metres down. Last night there was a light moving inside it. Not a torch. It swings slowly, like a lamp on a string.\n\nDay 7. The captain says the safe is down there with the chart, and the key is in his locker on the tender. He won't go down. Nobody will. That light has teeth under it - I saw the shape of them when it turned.\n\nIf you go, go in daylight and take a spear.\n\nI buried the flare kit at the foot of this hill, on the far side, in case a ship comes and I'm not up here to see it.
 note dnote Deckhand's note | Day 3 on this sandbar. We dragged what we could off the Gull before her stern broke away and slid down the reef: the good couches, the bar stools, the captain's speaker (no power, of course).\n\nThe captain won't leave the tender. He sleeps on the bow with the safe key on a chain and mutters about "the chart".\n\nSomething with a light lives down in the stern now. Marco dived for the safe and came back white as a sheet. He says the light has teeth.\n\n- Jules, deckhand
 note locker Captain's locker | A. Varga, master of the Gull - personal.\n\nThe chart stays in the safe until we are picked up. Nobody touches it.\n\n(Underneath, in a shakier hand:) The stern is gone, and the safe with it. If you hold this key, you are braver than my crew.
 loot locker story:capkey*1;Compass*1;Rope*3
 prop locker loot.refill=0
-note safe Ship's safe | Wrapped in oilcloth, the captain's last entry:\n\n"The Gull was never a pleasure yacht. We carried parts for the relay stations along the old shipping line. If the beacons are lit again, the line can be followed - east, from beacon to beacon."
+note safe Ship's safe | Wrapped in oilcloth, the captain's last entry:\n\n"The Gull was never a pleasure yacht. We carried parts for the relay stations along the old shipping line. If the beacons are lit again, the line can be followed - out to sea, from beacon to beacon."
 loot safe Hat_Captain*1;TitaniumIngot*2;Binoculars*1;Battery*1
 prop safe loot.refill=0
 prop safe if.open=take|story:capkey|1
@@ -173,14 +173,14 @@ prop angler creature.respawn=0
 
 quest title=The Gull's Safe
 quest intro=A distress flag over a sandbar, a camp with yacht furniture and nobody in it. Find out what happened to the crew of the Gull.
-step read|Deckhand's note|1|Find the crew's camp and read the note left on the table
+step read|Deckhand's note|1|Make for the distress flag on the sandbar and read the note on the camp table
 step kill|Rat|3|Board the beached tender and clear the rats out of the wheelhouse
 step open|Captain's locker|1|Search the captain's locker on the tender's bow
-step reach|gulltop|1|Climb Lookout Hill at the sandbar's west end - someone kept watch up there
+step reach|gulltop|1|Climb Lookout Hill, the hill with the lookout mast
 step read|Navigator Ilse Brandt's log|1|Read the navigator's log by the lookout mast: what she saw on the reef
-step kill|Angler fish|1|Deal with the light in the sunken stern
-step open|Ship's safe|1|Open the ship's safe on the reef
-quest done=The Gull's secret is out: she carried parts for the relay stations. East, from beacon to beacon.
+step kill|Angler fish|1|Dive to the sunken stern on the reef and kill the angler fish
+step open|Ship's safe|1|Open the ship's safe inside the sunken stern
+quest done=The Gull's secret is out: she carried parts for the relay stations. Out to sea, from beacon to beacon.
 quest reward=Glass*4;Nail*10
 
 save The Stranded Gull

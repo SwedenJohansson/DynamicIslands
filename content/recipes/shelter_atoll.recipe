@@ -343,7 +343,7 @@ call hw_zone x=60 z=54 al=radartopz id=radartop r=7 h=1 msg="The top of Radar Hi
 note radarbox Radar deck box | A box bolted to the mast's deck: a radar valve in a padded case, stamped RELAY - SHELTER No. 7.
 loot radarbox story:radarvalve*1;Battery*1;Plastic*2
 # The north channel: the bank, the patrol boat on the channel's floor, its locker and an air pocket beside it
-call hw_zone x=-14 z=58 al=channelz id=channel r=5 msg="The north channel. Down in the green water, a patrol boat lies on its side."
+call hw_zone x=-14 z=58 al=channelz id=channel r=5 msg="The channel. Down in the green water, a patrol boat lies on its side."
 place Story_Islander signe at -16 55 ground
 prop signe obj.name=Signe
 prop signe islander.pose=fish
@@ -403,18 +403,18 @@ prop treasure26391 treasure.loot=MetalIngot*2;TitaniumOre*1;Battery*1
 
 info title=Shelter Atoll
 info author=Custom Islands
-info description=An atoll of palms as big as Raft's own islands: a lagoon, a lookout post on the dune of its west side, the civil defence's outer works round it - Radar Hill, a barrier of pillboxes and runway lights, a patrol boat sunk in the north channel, a decontamination maze - and on the islet in the middle, a concrete slab with a hatch. Civil Defence Shelter No. 7 lies buried underneath: seven dark rooms, rats in the bunks and a dry generator. Bring a light.
+info description=An atoll of palms as big as Raft's own islands: a lagoon, a lookout post on a tall dune, the civil defence's outer works round it - Radar Hill, a barrier of pillboxes and runway lights, a patrol boat sunk in the channel, a decontamination maze - and on the islet in the middle, a concrete slab with a hatch. Civil Defence Shelter No. 7 lies buried underneath: seven dark rooms, rats in the bunks and a dry generator. Bring a light.
 island on.arrive=message||An atoll with an islet in its lagoon. On the islet: a concrete slab, a radio mast - and a hatch.
 
 story fuel|Can of fuel|BioFuel|The shelter's last can of generator fuel, from the radio operator's bunk locker.
 story radarvalve|Radar valve|CircuitBoard|The relay's radar valve, from the deck box of the radar mast on Radar Hill.
-story sigcoil|Signal coil|Battery|The relay's signal coil, from the locker of the patrol boat sunk in the north channel.
-story sheltrelay|Relay running|Placeable_Lantern_Metal|You ran the relay north of the slab with its valve and coil: the shelter rang.
-note caldernote2 Dr. Ruth Calder's field note | THE ABYSS EXPEDITION - FIELD NOTE 2\n\nThe shelter's people built for a war that never came. Their radar charted the sea floor instead: east of here the bottom falls away, and on it stands a whole island, drowned.\n\nThe shelter's radio still works, they say. If it picks up a buoy, follow it down.\n- R. C.
-note ferrisnote Lookout Nadia Ferris's log | N. FERRIS - LOOKOUT, SHELTER No. 7\n\nWatch 1. Posted on the west dune with binoculars and a lamp. My orders: report anything on the horizon to the radio room below.\n\nWatch 9. Nothing on the horizon for nine days. Rats in the dormitory. The commander has locked himself in his room with the charts and won't say why.\n\nWatch 12. The generator is almost dry. The operator says he's hidden the last can of fuel in his bunk locker, so the commander can't burn it all on his own lamp.\n\nWatch 14. I've stopped going down. It is better up here, in the wind.\n\nIf you're reading this, go down the hatch on the islet. Start the generator - it opens his door and the blast gate. My spare kit is under the hatch beside this post, and my tin is buried at the foot of the dune.
+story sigcoil|Signal coil|Battery|The relay's signal coil, from the crate of the patrol boat sunk in the channel.
+story sheltrelay|Relay running|Placeable_Lantern_Metal|You ran the relay by the slab with its valve and coil: the shelter rang.
+note caldernote2 Dr. Ruth Calder's field note | THE ABYSS EXPEDITION - FIELD NOTE 2\n\nThe shelter's people built for a war that never came. Their radar charted the sea floor instead: out in the open sea the bottom falls away, and on it stands a whole island, drowned.\n\nThe shelter's radio still works, they say. If it picks up a buoy, follow it down.\n- R. C.
+note ferrisnote Lookout Nadia Ferris's log | N. FERRIS - LOOKOUT, SHELTER No. 7\n\nWatch 1. Posted on the tall dune with binoculars and a lamp. My orders: report anything on the horizon to the radio room below.\n\nWatch 9. Nothing on the horizon for nine days. Rats in the dormitory. The commander has locked himself in his room with the charts and won't say why.\n\nWatch 12. The generator is almost dry. The operator says he's hidden the last can of fuel in his bunk locker, so the commander can't burn it all on his own lamp.\n\nWatch 14. I've stopped going down. It is better up here, in the wind.\n\nIf you're reading this, go down the hatch on the islet. Start the generator - it opens his door and the blast gate. My spare kit is under the hatch beside this post, and my tin is buried at the foot of the dune.
 note notice Shelter notice | CIVIL DEFENCE SHELTER No. 7\n\nEMERGENCY HATCH - climb down slowly, one at a time.\n\nThe blast gate on the lagoon side opens from inside only, and only with the generator running.\n\nCapacity: 24. Keep this hatch clear.
 note radiolog Radio log | RADIO LOG - SHELTER 7\n\nDay 12: No answer from the mainland. The water is still rising.\nDay 31: Rats in the dormitory. Big ones - they came up the vent shaft.\nDay 46: The generator is dry. I put the LAST can of fuel in my bunk locker, so nobody burns it on the heaters.\nDay 47: The commander has sealed himself in with his charts. I'm going up the hatch to look for a boat.\n\nIf you read this: the can is in the dormitory. Fill the generator and the doors will open. - Radio operator Makela
-note orders Commander's orders | FINAL ORDERS\n\nHold the shelter until relieved.\n\nNobody came. The charts show land to the east - a big island with a tower on it. Whoever gets the power back: take the charts, the blueprint and the spare parts in my safe, and go.
+note orders Commander's orders | FINAL ORDERS\n\nHold the shelter until relieved.\n\nNobody came. The charts show land across the sea - a big island with a tower on it. Whoever gets the power back: take the charts, the blueprint and the spare parts in my safe, and go.
 note bunklocker Bunk locker | A dented locker with MAKELA stencilled on the door. Inside, wrapped in a blanket: a can of fuel.
 loot bunklocker story:fuel*1;Wool*6;Egg*4
 prop bunklocker loot.refill=0
@@ -424,7 +424,7 @@ prop footlocker loot.refill=0
 note supply Supply crate | Shelter supplies: nails, bolts and spare parts.
 loot supply Nail*10;Bolt*4;Hinge*2;Scrap*4
 prop supply loot.refill=0
-note safe Commander's safe | The commander's safe: his charts of the islands to the east, a blueprint, metal ingots and good healing salve.
+note safe Commander's safe | The commander's safe: his charts of the islands across the sea, a blueprint, metal ingots and good healing salve.
 loot safe Blueprint_Fueltank*1;MetalIngot*4;CopperIngot*3;HealingSalve_Good*2
 prop safe loot.refill=0
 prop safe tint.color=#3a4048
@@ -487,19 +487,19 @@ prop redlight beh.spin=90
 
 quest title=Shelter No. 7
 quest intro=A concrete slab on the islet in the lagoon, with vents, a radio mast and a hatch. Something was built under this atoll - and nobody has come out in a long time.
-step read|Shelter notice|1|Find the hatch on the islet and read the notice beside it
-step reach|dunetop|1|Climb the dune on the atoll's west side - someone kept watch up there
+step read|Shelter notice|1|Make for the radio mast on the islet in the lagoon; read the notice by the hatch
+step reach|dunetop|1|Climb the tall dune with the lookout post on top
 step read|Lookout Nadia Ferris's log|1|Read the lookout's log by the post: what happened below
-step reach|radartop|1|Climb Radar Hill in the north-east to the radar mast
-step collect|story:radarvalve|1|Take the radar valve from the mast's deck box
-step reach|channel|1|Go to the north channel, where the patrol boat went down
-step collect|story:sigcoil|1|Dive to the patrol boat and take the signal coil from its locker
-step collect|story:sheltrelay|1|Put the valve and the coil in the relay box north of the slab
+step reach|radartop|1|Climb Radar Hill to the radar mast on its top
+step collect|story:radarvalve|1|Open the box on the radar mast's deck and take the valve
+step reach|channel|1|Go to the channel where the patrol boat went down
+step collect|story:sigcoil|1|Dive to the sunk patrol boat and open the crate for the signal coil
+step collect|story:sheltrelay|1|Put the valve and the coil in the relay box on the islet by the slab
 step reach|hatchhall|1|Climb down the ladder into the shelter
 step read|Radio log|1|Read the radio log
 step kill|Rat|3|Clear the rats out of the dormitory
-step collect|story:fuel|1|Find the last can of fuel
-step read|Commander's orders|1|Start the generator and read the commander's final orders behind his door
+step collect|story:fuel|1|Open the operator's bunk locker in the dormitory for the last fuel can
+step read|Commander's orders|1|Start the generator, then read the commander's orders in his room
 step open|Commander's safe|1|Open the commander's safe and take his charts
 step blueprint|Blueprint_Fueltank|1|Take the fuel tank plans from the commander's safe
 quest done=The lights are on, the blast gate stands open onto the lagoon, and the commander's charts are yours.

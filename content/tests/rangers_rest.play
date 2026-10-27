@@ -23,7 +23,7 @@ climb 19 -14.75
 expect stand 19 -12 h=16.1
 zone tower
 expect step 3
-expect message cave mouth on the south shore
+expect message dark cave mouth on the shore
 
 # DEEP 10-25: the poacher's camp on the west point
 zone poachcamp

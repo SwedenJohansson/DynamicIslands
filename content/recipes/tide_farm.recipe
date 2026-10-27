@@ -197,11 +197,11 @@ prop chickens creature.count=3
 
 quest title=The Last Harvest
 quest intro=A floating farm with its wheel stopped and its glasshouse locked. The farmer left a notebook on the table.
-step reach|farm|1|Board the floating farm
+step reach|farm|1|Board the floating farm with the big water wheel and glasshouse
 step read|Farmer's notebook|1|Read the farmer's notebook
-step collect|story:crowbar|1|Find the crowbar in the tool shed
+step collect|story:crowbar|1|Open the chest in the tool shed and take the crowbar
 step catch|Chicken|2|Catch two runaway chickens
-step open|Glasshouse harvest|1|Free the water wheel and open the glasshouse
+step open|Glasshouse harvest|1|Free the water wheel with the crowbar, then open the chest in the glasshouse
 quest done=The wheel turns, the beds are wet and the chickens are home. The harvest is yours.
 quest reward=Seed_Watermelon*2;Placeable_Scarecrow*1
 

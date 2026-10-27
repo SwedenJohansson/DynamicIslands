@@ -173,20 +173,20 @@ call shallows r=135 deep=5 n=3
 
 info title=Thornwood
 info author=Custom Islands
-info description=A jungle island split by a river gorge. An explorer's camp on the beach, a guide's cave on the north plateau, a shrine keeper's house drowned off the north-west coast, an old rope bridge, three shrines in the jungle - and on the hill, a ring of standing stones where the Boar King guards the boar idol. Inspired by Raft's Balboa.
+info description=A jungle island split by a river gorge. An explorer's camp on the beach, a guide's cave on the plateau, a shrine keeper's house drowned off the coast, an old rope bridge, three shrines in the jungle - and on the hill, a ring of standing stones where the Boar King guards the boar idol. Inspired by Raft's Balboa.
 island on.arrive=message||Dense jungle, a gorge cut through it - and on the hill, a ring of standing stones.
 
 story spiralkey|Spiral key|Placeable_HonkHorn_3|A stone key cut in a spiral, from the drowned shrine keeper's chest. It fits the Shrine of the Hill.
 story tusk|Carved tusk|Placeable_HonkHorn_3|A boar's tusk carved with spirals - an offering from one of Thornwood's shrines.
 note diary Explorer's diary | EXPEDITION DIARY - THORNWOOD\n\nDay 3: The island is split by a gorge. The natives' old rope bridge still holds, barely.\nDay 5: Three shrines in the jungle, each with a carved tusk in an offering box. The stone ring on the hill is their temple - they laid the tusks on its altar for the boar spirit.\nDay 6: The boar spirit is real. A warthog the size of a cow, with two guards. It charged me off the hill.\nDay 7: I'm leaving. Whoever reads this: three tusks on the altar, and the temple's offering is yours. If the King lets you.
-note thornmap Map of Thornwood | MAP OF THORNWOOD (drawn by the expedition)\n\n- Camp: the south beach.\n- The gorge runs from the west coast to the south-east. Rope bridge in the middle.\n- Shrine of the Roots: south-east jungle, this side of the gorge.\n- Shrine of the Falls: north-west, where the gorge meets the sea.\n- Shrine of the Hill: the east slope of the temple hill.\n- Temple: the stone ring on the hill, north of the gorge.
+note thornmap Map of Thornwood | MAP OF THORNWOOD (drawn by the expedition)\n\n- Camp: the beach below the hill.\n- The gorge cuts across the island from the sea. Rope bridge in the middle.\n- Shrine of the Roots: in the jungle, this side of the gorge.\n- Shrine of the Falls: where the gorge meets the sea, by the falls.\n- Shrine of the Hill: on the slope of the temple hill.\n- Temple: the stone ring on the hill, across the gorge.
 note shrine1 Shrine of the Roots | An offering box among the roots, a brazier burning beside it. Inside: a boar's tusk carved with spirals.
 loot shrine1 story:tusk*1;Raw_Beet*2
 prop shrine1 loot.refill=0
 note shrine2 Shrine of the Falls | An offering box above the gorge's mouth, damp with spray. Inside: a carved tusk.
 loot shrine2 story:tusk*1;Rope*2
 prop shrine2 loot.refill=0
-note shrine3 Shrine of the Hill | An offering box on the hill's east slope, facing the sunrise. Inside: a carved tusk.
+note shrine3 Shrine of the Hill | An offering box on the hill's slope, sealed with a spiral stone. Inside: a carved tusk.
 loot shrine3 story:tusk*1;Feather*4
 prop shrine3 loot.refill=0
 prop shrine3 if.open=has|story:spiralkey|1
@@ -256,7 +256,7 @@ call hives x=0 z=0 r=60 n=2 seed=63
 
 # --- DEEP 10-25: Tama's cave on the north plateau - the guide's note, his box -----------------------------------------
 call ar_cave x=-55 z=72 h=6 yaw=180 al=tamarock chest=tamachest
-call hw_zone x=-55 z=67 al=tamazone id=tamacave r=4 msg="A cave in a hump of rock on the north plateau. Boar tusks hang on cords across its mouth, clicking in the wind - a guide's charm against the King."
+call hw_zone x=-55 z=67 al=tamazone id=tamacave r=4 msg="A cave in a hump of rock on the plateau. Boar tusks hang on cords across its mouth, clicking in the wind - a guide's charm against the King."
 place Note_Paper tamanote at -53.5 66.5 h=6.45 drop yaw=0
 loot tamachest Rope*2;Leather*3;Seed_Banana*2;Bolt*2
 prop tamachest loot.refill=0
@@ -279,39 +279,39 @@ call treasure x=-58 z=-64 r=12 n=1 seed=32013 kind=0
 prop treasure32013 treasure.loot=MetalOre*3;TitaniumOre*1;Hinge*1
 
 quest title=The Boar King of Thornwood
-quest intro=A jungle island split by a deep gorge. On the south beach, an explorer's camp - abandoned in a hurry, the diary still on a crate.
-step reach|camp|1|Find the explorer's camp on the south beach
+quest intro=A jungle island split by a deep gorge. On the beach below the temple hill, an explorer's camp - abandoned in a hurry, the diary still on a crate.
+step reach|camp|1|Land on the beach in front of the temple hill and find the explorer's camp
 step read|Explorer's diary|1|Read the explorer's diary
 step read|Map of Thornwood|1|Study the expedition's map on the board by the tent
-step open|Shrine of the Roots|1|Follow the trail east to the Shrine of the Roots
+step open|Shrine of the Roots|1|Follow the trail into the jungle to the Shrine of the Roots, an offering box by a brazier
 step collect|story:tusk|1|Take the first carved tusk from its offering box
-step reach|gorgerim|1|Follow the trail north to the rim of the gorge
+step reach|gorgerim|1|Follow the trail on to the rim of the gorge
 step read|Carved post|1|Read the marks carved into the rope bridge's post
 step reach|bridge|1|Cross the gorge on the old rope bridge
-step reach|falls|1|Take the west trail towards the falls at the gorge's mouth
-step open|Shrine of the Falls|1|Find the Shrine of the Falls where the gorge meets the sea
+step reach|falls|1|Follow the gorge down to the falls where it meets the sea
+step open|Shrine of the Falls|1|Open the offering box of the Shrine of the Falls, above the gorge's mouth
 step collect|story:tusk|2|Take the second tusk, damp with the falls' spray
-step open|Wild beehive|1|Raid a wild beehive in the jungle for its honeycomb
-step reach|tamacave|1|Find the guide's cave on the north plateau
+step open|Wild beehive|1|Open a wild beehive in the jungle for its honeycomb
+step reach|tamacave|1|Find the guide's cave, a hump of rock hung with boar tusks
 step read|The guide Tama's note|1|Read the guide Tama's note in the cave
-step reach|keeperhouse|1|Dive to the shrine keeper's house, drowned off the north-west coast
+step reach|keeperhouse|1|Dive to the keeper's house with spirals over its door, sunk below the cliff
 step read|Keeper Ruan's note|1|Breathe in the keeper's front room and read his note
 step collect|story:spiralkey|1|Take the spiral key from the keeper's chest
-step open|Shrine of the Hill|1|Find the Shrine of the Hill on the temple hill's east slope
-step collect|story:tusk|3|Carry all three carved tusks up the hill
+step open|Shrine of the Hill|1|Open the offering box of the Shrine of the Hill, on the temple hill's slope
+step collect|story:tusk|3|Carry all three carved tusks up to the stone temple
 step reach|hilltrail|1|Follow the boar trail up the temple hill
 step reach|temple|1|Climb to the stone temple on the hill
 step kill|Warthog|3|Defeat the Boar King and his guards
 step read|The boar idol|1|Read the spirals carved down the boar idol's flanks
-step open|Temple offering|1|Lay the three tusks on the altar
+step open|Temple offering|1|Open the temple offering and lay the three tusks on the altar
 step blueprint|Blueprint_Machete|1|Take the machete plans from the temple offering
 step open|Vine cache by the temple|1|Cut through the vines near the temple with the new machete
-step open|Vine cache by the camp|1|Back towards the beach: cut open the second cache behind the vines
+step open|Vine cache by the camp|1|Cut open the second vine cache, on the way back to the camp
 quest done=The Boar King is dead, the tusks lie on the altar and the explorer's caches are found. The temple's offering - and a machete blueprint the explorer left - are yours.
 quest reward=Leather*6;Feather*6;Rope*4
 
-note tamanote The guide Tama's note | TAMA - FOR THE ONE WHO COMES AFTER THE WHITE MAN\n\nI brought Mr Brandt to the shrines because he paid. I told him the tusks are not for taking. He wrote it in his book and took them anyway.\n\nThe Shrine of the Hill he could not open. Its box is sealed with a spiral stone, and the key was always with old Ruan, the keeper. Ruan lived on the north-west shore, below the cliff, where his fathers lived.\n\nWhen the King came down off the hill the ground shook, and Ruan's shore slid into the sea, house and all. I swam down once. The house stands on the bottom with its door open, and there is still air under the roof.\n\nIf you mean to lay the tusks back on the altar, take the key from his chest. If you mean to steal them, leave this island now.
+note tamanote The guide Tama's note | TAMA - FOR THE ONE WHO COMES AFTER THE WHITE MAN\n\nI brought Mr Brandt to the shrines because he paid. I told him the tusks are not for taking. He wrote it in his book and took them anyway.\n\nThe Shrine of the Hill he could not open. Its box is sealed with a spiral stone, and the key was always with old Ruan, the keeper. Ruan lived on the shore below the cliff, where his fathers lived.\n\nWhen the King came down off the hill the ground shook, and Ruan's shore slid into the sea, house and all. I swam down once. The house stands on the bottom with its door open, and there is still air under the roof.\n\nIf you mean to lay the tusks back on the altar, take the key from his chest. If you mean to steal them, leave this island now.
 note ruannote Keeper Ruan's note | (Charcoal on a bark sheet, dry in the air pocket)\n\nThe stranger took two tusks. The King has woken. The ground is angry and my house is going into the sea; I can hear the water at the door.\n\nThe third tusk is safe in the hill shrine. The key is in my chest. I will not carry it out of here. Whoever finds it must have swum down to an old man's house in the dark, and nobody does that to steal.\n\nThree tusks on the altar and the King will lie down. Two, and he will hunt. None, and he will come down off the hill for good.\n\nI am old, and the air is going. Put them back.
-note halnote Explorer Hal Brandt's letter | Dear Margaret,\n\nI have the finest collection of carved tusks in the Empire - two, and soon three, if I can open the hill shrine. The natives say I mustn't. Tama says I mustn't. Old Ruan looked at me as if I were already dead.\n\nLast night something came down off the hill and stood at the edge of the firelight. It was the size of a cow and it didn't make a sound. This morning the guide was gone and the keeper's house was under the sea.\n\nI have buried our valuables west of the camp, under the big palm, in case I can't carry everything to the boat.\n\nI'm leaving the tusks. God help me, I'm leaving the tusks.
+note halnote Explorer Hal Brandt's letter | Dear Margaret,\n\nI have the finest collection of carved tusks in the Empire - two, and soon three, if I can open the hill shrine. The natives say I mustn't. Tama says I mustn't. Old Ruan looked at me as if I were already dead.\n\nLast night something came down off the hill and stood at the edge of the firelight. It was the size of a cow and it didn't make a sound. This morning the guide was gone and the keeper's house was under the sea.\n\nI have buried our valuables near the camp, under the big palm, in case I can't carry everything to the boat.\n\nI'm leaving the tusks. God help me, I'm leaving the tusks.
 
 save Thornwood

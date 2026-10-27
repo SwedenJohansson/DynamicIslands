@@ -160,7 +160,7 @@ call hw_reef x=101 z=46 r=3 seed=32037
 call hw_reef x=118 z=56 r=3 seed=32038
 # --- DEEP 10-25: the ice cave on the peak's south flank: Mira Sato's diary (its chest has no note) -----------------------
 call ar_cave x=-30 z=-64 h=8 yaw=180 al=icerock chest=icebox
-call hw_zone x=-30 z=-69 al=icecavez id=icecave r=4 msg="A cave in the south flank, its floor swept clean. A sleeping bag, a radio with its back off, and a mug frozen to the rock."
+call hw_zone x=-30 z=-69 al=icecavez id=icecave r=4 msg="A cave on the peak, its floor swept clean. A sleeping bag, a radio with its back off, and a mug frozen to the rock."
 place Note_Paper miranote at -28.5 -69.5 h=8.45 drop yaw=0
 loot icebox Wool*3;Rope*2;Battery*1;Jar_Honey*1
 prop icebox loot.refill=0
@@ -173,9 +173,9 @@ info description=A research station at the edge of a glacier, dark since its rea
 island on.arrive=message||A glacier island: dark domes on the shore, a mast on the peak, two chimneys cold in the snow.
 
 note hannenote Engineer Hanne Lund's note | (Pencil on a pump log, dry in the air pocket)\n\nDay 211. The storm took the reactor, and the cold took the pumps. I came down to shut the intake before the pipes froze solid and split.\n\nThe reactor will not start again on its own. It needs three good fuses in the control column in the basin, and the spares are scattered - one in the tool crate, one at the observatory, and Petrov has the third. Put them in and it will catch. It always catches.\n\nThe ground under this hut has been moving since the storm. I can feel it in my boots. I'll finish the valve and go up.\n\nIf you are reading this down here, I didn't go up fast enough. Fit the fuses anyway.
-note miranote Radio operator Mira Sato's diary | M. SATO, RADIO - GLACIER STATION\n\nDay 214. Moved up to the cave on the south flank. It's warmer than the domes now, and the radio works better high up. Nobody answers.\n\nDay 216. Petrov came by with the third fuse in his pocket. He says the shortcut to the reactor is down the crevasse in the west. I told him the Queen dens in the crevasse. He said she sleeps in the day.\n\nDay 217. He hasn't come back.\n\nDay 220. The observatory still has its fuse. I could carry it down. But two fuses do nothing, and I am not going into that crevasse.\n\nI buried my spare kit below the cave, by the shore, in case the snow takes this place. If you are the one who goes after Petrov, it's yours.
+note miranote Radio operator Mira Sato's diary | M. SATO, RADIO - GLACIER STATION\n\nDay 214. Moved up to the cave on the peak. It's warmer than the domes now, and the radio works better high up. Nobody answers.\n\nDay 216. Petrov came by with the third fuse in his pocket. He says the shortcut to the reactor is down the big crevasse. I told him the Queen dens in the crevasse. He said she sleeps in the day.\n\nDay 217. He hasn't come back.\n\nDay 220. The observatory still has its fuse. I could carry it down. But two fuses do nothing, and I am not going into that crevasse.\n\nI buried my spare kit below the cave, by the shore, in case the snow takes this place. If you are the one who goes after Petrov, it's yours.
 story fuse|Reactor fuse|quest:Tangaroa_GeneratorPart|A heavy ceramic reactor fuse. The station's reactor takes three.
-note stationlog Station log | GLACIER STATION - LOG\n\nDay 210: The reactor tripped in the storm. Three fuses blew; the spares are scattered - one in the tool crate here, one at the observatory, and Petrov took one into the glacier's crevasse when he went after the dogs.\nDay 214: Petrov hasn't come back. Something huge lives at the bottom of the crevasse - the men call her the Queen.\nDay 220: The long night has started. We're leaving on the supply boat.\n\nTo restart the reactor: three fuses in the control column, in the basin north of the village.
+note stationlog Station log | GLACIER STATION - LOG\n\nDay 210: The reactor tripped in the storm. Three fuses blew; the spares are scattered - one in the tool crate here, one at the observatory, and Petrov took one into the glacier's crevasse when he went after the dogs.\nDay 214: Petrov hasn't come back. Something huge lives at the bottom of the crevasse - the men call her the Queen.\nDay 220: The long night has started. We're leaving on the supply boat.\n\nTo restart the reactor: three fuses in the control column, in the basin under the twin chimneys.
 note obssign Observatory | GLACIER STATION OBSERVATORY\nWeather and aurora recording. The cabin is up the ladder.\nSpare parts in the locker by the mast.
 note toolcrate Tool crate | The station's tool crate: a reactor fuse in its padded case, and the usual spanners.
 loot toolcrate story:fuse*1;Bolt*4;Nail*8
@@ -225,7 +225,7 @@ prop mast zone.radius=5
 prop mast zone.message=The radio mast, furred with rime. Its set hums faintly - not enough power to call anyone.
 prop crevassehead zone.id=crevassehead
 prop crevassehead zone.radius=5
-prop crevassehead zone.message=The head of the crevasse: a cleft in the ice falling away west. Boot prints going down - none coming back.
+prop crevassehead zone.message=The head of the crevasse: a cleft in the ice falling away into the dark. Boot prints going down - none coming back.
 prop chimneys zone.id=chimneys
 prop chimneys zone.radius=5
 prop chimneys zone.message=Warm air rolls down from the twin chimneys. For the first time in months, the station breathes.
@@ -239,24 +239,24 @@ prop queen tint.color=#e8f0ff
 prop queen tint.amount=0.3
 
 quest title=The Long Night
-quest intro=A research station at the edge of a glacier, dark since its reactor failed. Its igloo village stands on the east shore - and something big has been taking the station's dogs.
-step reach|village|1|Land at the station's igloo village
+quest intro=A research station at the edge of a glacier, dark since its reactor failed. Its igloo village stands on the shore below the radio mast - and something big has been taking the station's dogs.
+step reach|village|1|Make for the radio mast and land at the igloo village below it
 step read|Station log|1|Read the station log on the board by the lantern
 step open|Tool crate|1|Open the station's tool crate beside the log
-step collect|story:fuse|1|Take the first spare reactor fuse from its padded case
-step reach|domes|1|Look in among the domes on the village's north side
+step collect|story:fuse|1|Take the spare reactor fuse out of the tool crate
+step reach|domes|1|Look in among the domes at the edge of the village
 step reach|mast|1|Climb to the radio mast above the village
-step reach|pumphouse|1|Dive to the station's pump house, slid into the sea north-east of the domes
+step reach|pumphouse|1|Dive to the station's pump house, slid into the sea below the domes
 step read|Engineer Hanne Lund's note|1|Breathe in the pump house's front room and read the engineer's note
-step reach|reactor|1|Find the reactor basin north of the village
+step reach|reactor|1|Find the reactor basin under the twin chimneys
 step pages||4|Try the dead control column and note what it needs
 step reach|observatory|1|Climb the glacier peak to the observatory
 step read|Observatory|1|Read the sign at the foot of the observatory's ladder
-step open|Observatory locker|1|Dig the observatory's spare-parts locker out of the snow
-step collect|story:fuse|2|Pocket the second fuse - the third went into the crevasse with Petrov
-step reach|icecave|1|Find the radio operator's ice cave on the peak's south flank
+step open|Observatory locker|1|Dig the spare-parts crate out of the snow at the observatory's foot
+step collect|story:fuse|2|Take the second fuse from the observatory crate
+step reach|icecave|1|Find the radio operator's ice cave low on the glacier peak
 step read|Radio operator Mira Sato's diary|1|Read the radio operator's diary: where Petrov went
-step reach|crevassehead|1|Follow the trail west to the head of the glacier's crevasse
+step reach|crevassehead|1|Follow the trail to the head of the glacier's crevasse, the big cleft in the ice
 step reach|ravine|1|Climb down the crevasse to its end, where Petrov went
 step kill|Polar bear|1|Defeat the Polar Bear Queen in her den of bones
 step open|Frozen crate|1|Break open Petrov's crate, frozen into the crevasse floor

@@ -46,7 +46,7 @@ expect shown radioLive
 expect hidden radioDead
 expect shown beaconswitch
 use radioLive
-expect message Follow the beacons east
+expect message Follow the beacons to the caravan
 read Signal printout
 expect step 5
 

@@ -301,16 +301,16 @@ prop treasure26181 treasure.loot=CopperIngot*2;TitaniumOre*1;Nail*8
 
 info title=Old Mine Islet
 info author=Custom Islands
-info description=A wooded mining island as big as Raft's own: a rock mound with an old mine inside, a headframe on Copper Knob, a miners' row, a flooded quarry with a pump house under the water, slag stacks, an assay plane and an ore barge - and a prospector's camp on the hill to the north. Pitch dark in the mine, where something big has dug in. Bring a light.
+info description=A wooded mining island as big as Raft's own: a rock mound with an old mine inside, a headframe on Copper Knob, a miners' row, a flooded quarry with a pump house under the water, slag stacks, an assay plane and an ore barge - and a prospector's camp on the wooded hill. Pitch dark in the mine, where something big has dug in. Bring a light.
 island on.arrive=message||A rock mound with a timbered mine mouth. Rails run into the dark.
 
-note greynote Prospector Elias Grey's note | E. GREY - FIRST CLAIM, OLD MINE ISLET\n\nI found the vein from up here. You can see the colour in the rock of the mound when the sun is low, a rusty stripe down its east face. I staked the claim, and the company built the mine around my stake and paid me a tenth of what it was worth.\n\nThey dug too deep. The lowest tunnel broke into a burrow under the mound, and something big lives in it. It came out of the dark and the men ran, and the last cart was left full at the end of the line.\n\nTake the head lamp from the miner's locker before you go in. It is darker down there than you think.\n\nMy tools are under the hatch by the tent. My nuggets I buried at the foot of the hill on the sea side. The company never saw them.
+note greynote Prospector Elias Grey's note | E. GREY - FIRST CLAIM, OLD MINE ISLET\n\nI found the vein from up here. You can see the colour in the rock of the mound when the sun is low, a rusty stripe down one face. I staked the claim, and the company built the mine around my stake and paid me a tenth of what it was worth.\n\nThey dug too deep. The lowest tunnel broke into a burrow under the mound, and something big lives in it. It came out of the dark and the men ran, and the last cart was left full at the end of the line.\n\nTake the head lamp from the miner's locker before you go in. It is darker down there than you think.\n\nMy tools are under the hatch by the tent. My nuggets I buried at the foot of the hill on the sea side. The company never saw them.
 note notice Mine notice | ISLET MINE No. 2 - CLOSED\n\nTunnel 3 broke into an old burrow. Something big lives down there now, and it does NOT like lamps going out.\n\nThe last ore cart is still at the end of the line - full. Whoever brings it out keeps half.\n\nTake a head lamp from the locker. - The pit boss
 story windkey|Winding key|Bolt|The mine winch's winding key, from the headframe's deck box on Copper Knob.
 story pumpfuse|Pump fuse|Battery|The winch circuit's fuse, from the strongbox of the pump house under the flooded quarry.
 story winch|Mine winch running|Placeable_Lantern_Metal|You ran the mine winch with its key and fuse: the cage came up.
 note dorseynote Foreman Dorsey's note | FOREMAN H. DORSEY - MINE No. 2\n\nShift's over and the mine is shut. The thing in Tunnel 3 had Pike's lamp off him and nearly Pike.\n\nI have taken the winch apart so no fool goes down the cage after the cart: the winding key is in the deck box on the headframe up Copper Knob, the fuse is in the pump house strongbox. The quarry flooded on us in the spring, so the pump house is under the water now - you'll have to swim for it.\n\nPut both back in the winch in the yard and the cage comes up. My box is in it, with the tally book. Read it before you go down.\n\n- H. Dorsey
-note caldernote Dr. Ruth Calder's field note | THE ABYSS EXPEDITION - FIELD NOTE 1\n\nWe start where the company stopped. Their surveys say the vein under this islet runs down and east, deeper than any shaft - towards a trench nobody has charted.\n\nOld Harlan will not leave the row. He says the lamps keep the thing in the mine below. I think he keeps the lamps.\n\nNext: a civil-defence atoll to the east still sends a call sign. If the shelter's radio works, we can listen further down.\n\n- R. Calder
+note caldernote Dr. Ruth Calder's field note | THE ABYSS EXPEDITION - FIELD NOTE 1\n\nWe start where the company stopped. Their surveys say the vein under this islet runs down, deeper than any shaft - towards a trench nobody has charted.\n\nOld Harlan will not leave the row. He says the lamps keep the thing in the mine below. I think he keeps the lamps.\n\nNext: a civil-defence atoll still sends a call sign. If the shelter's radio works, we can listen further down.\n\n- R. Calder
 note locker Miner's locker | A miner's locker: a head lamp with a spare battery, gloves worn through at the fingers, a lunch tin (empty).
 loot locker HeadLight*1;Battery*1;Leather*2
 prop locker loot.refill=0
@@ -344,16 +344,16 @@ prop minesound zone.radius=18
 
 quest title=Down the Old Mine
 quest intro=An old mine in a rock mound, closed since a tunnel broke into a burrow. The notice at the mouth says the last ore cart is still down there - and the foreman took the mine winch apart before he left.
-step reach|minehead|1|Find the old mine
+step reach|minehead|1|Head for the big rock mound and find the old mine at its foot
 step read|Mine notice|1|Read the mine notice
-step open|Miner's locker|1|Take the miner's head lamp
-step read|Foreman Dorsey's note|1|Find the foreman's note on Miners' Row, west of the mine
-step reach|knobtop|1|Climb Copper Knob to the headframe in the east
-step collect|story:windkey|1|Take the winding key from the headframe's deck box
-step reach|quarry|1|Go to the flooded quarry in the south-west
-step collect|story:pumpfuse|1|Swim down to the pump house and take the fuse from its strongbox
-step collect|story:winch|1|Put the key and the fuse in the mine winch in the yard
-step reach|prospecttop|1|Climb Prospect Hill on the north shore - someone camped up there
+step open|Miner's locker|1|Open the miner's locker by the mine mouth and take the head lamp
+step read|Foreman Dorsey's note|1|Read the foreman's note on the table of a roofless cottage on Miners' Row
+step reach|knobtop|1|Climb Copper Knob to the tall headframe on its top
+step collect|story:windkey|1|Open the box on the headframe's deck and take the winding key
+step reach|quarry|1|Go to the flooded quarry, the big pit full of green water
+step collect|story:pumpfuse|1|Dive to the pump house on the quarry floor and open its strongbox for the fuse
+step collect|story:winch|1|Use the key and the fuse on the mine winch beside the mine mouth
+step reach|prospecttop|1|Climb Prospect Hill, the wooded hill with a campfire on top
 step read|Prospector Elias Grey's note|1|Read the prospector's note: what lies at the bottom of the mine
 step reach|deep|1|Light the lamp and follow the rails into the dark to the deep tunnel
 step kill|Warthog|1|Face the beast at the end of the line

@@ -354,32 +354,32 @@ prop abyssal on.defeat=journal|The Abyssal Angler|The light that was not a fish'
 
 quest title=The Bottom of the Abyss
 quest intro=The expedition's last stop: a trench among black sea stacks. Their raft is still moored over it - and on the shore their diver Tomas Ek still keeps the camp.
-step reach|shorecamp|1|Land at the divers' shore camp on the lagoon's north bank
+step reach|shorecamp|1|Make for the mast on Black Peak, then land at the divers' camp with the burnt huts
 step read|Dr. Ruth Calder's field note|1|Read Dr. Calder's last field note on the hut's table
 step reach|peaktop|1|Climb Black Peak to its signal mast
-step collect|story:gauge|1|Take the compressor's pressure gauge from the mast's deck box
-step collect|story:piston|1|Dive to the supply boat in Wreck Cove for the compressor's piston
-step collect|story:compressed|1|Run the compressor at the shore camp - the deep tanks fill
-step open|Compressor chest|1|Open the divers' deep-dive chest
+step collect|story:gauge|1|Open the box on the mast's deck and take the compressor's gauge
+step collect|story:piston|1|Dive to the sunk supply boat in Wreck Cove and open its crate for the piston
+step collect|story:compressed|1|Put the gauge and piston in the compressor at the shore camp
+step open|Compressor chest|1|Open the deep-dive chest by the compressor
 step reach|camp|1|Board the expedition's raft, moored over the trench
 step read|Expedition leader's log|1|Read the expedition leader's log on the table
-step pages||6|Keep the leader's warning in your journal
+step pages||6|Read the leader's warning; it goes into your journal
 step open|Camp chest|1|Open the expedition's camp chest
-step collect|story:abysswrench|1|Take the valve wrench - the air line's valve won't turn without it
-step pages||7|Copy the camp chest's list into your journal
-step pages||8|Turn the air line's valve with the wrench and log it in your journal
-step reach|pocket1|1|Dive to the container on the shelf and breathe
+step collect|story:abysswrench|1|Take the valve wrench from the camp chest
+step pages||7|Read the camp chest's list; it goes into your journal
+step pages||8|Turn the air line's valve on the raft with the wrench
+step reach|pocket1|1|Dive to the container on the shelf under the raft and breathe
 step reach|pocket2|1|Sink to the gas tank on the ledge, 18 m down
 step reach|pocket3|1|Down to the shack on the floor - the last air before the lair
-step reach|lair|1|Face the light that is not a fish's at the bottom of the Abyss
-step pages||9|Kill the Abyssal Angler and write its end into your journal
+step reach|lair|1|Swim to the lair at the bottom of the Abyss and face the glowing light
+step pages||9|Kill the Abyssal Angler in the lair
 step kill|Angler fish|4|Finish off its brood - not one angler left in the lair
-step open|Lair hoard|1|Open what the lair kept
+step open|Lair hoard|1|Open the hoard chest in the lair
 step blueprint|Blueprint_HeadLight_Advanced|1|Take the advanced headlamp plans from the lair hoard
 step blueprint|Blueprint_BackpackAdvanced|1|Take the advanced backpack plans from the lair hoard
-step pages||10|Write the hoard into your journal - the expedition's answer
-step reach|camp|1|Climb the air line back up - the pockets still breathe on the way - and haul yourself aboard the expedition's raft
-step read|Expedition leader's log|1|Read the leader's log once more - its question has an answer now
+step pages||10|Read the hoard's note; it goes into your journal
+step reach|camp|1|Climb the air line back up and get aboard the expedition's raft
+step read|Expedition leader's log|1|Read the leader's log on the raft once more
 quest done=The Abyss is quiet. The expedition's question has its answer - and the deep has given up its hoard. The Abyss Expedition is done.
 quest reward=MetalIngot*8;Nail*30;OxygenBottle*2
 

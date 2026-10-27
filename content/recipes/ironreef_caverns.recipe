@@ -230,9 +230,9 @@ island on.arrive=message||A jungle mountain with a ruined mining camp on its bea
 # the pump store key (TODO 4c): kept - it opens the company's pump store on the Drowned Metropolis' ferry islet
 story ironreef-key|Pump store key|quest:Caravan_KeyMayor|The Ironreef Mining Company's key to its pump store in the drowned city of Meridian.
 story charges|Blasting charge|quest:Vasagatan_Bomb|A bundle of the Ironreef Mining Company's blasting charges, still dry in its oilcloth.
-note notice Company notice | IRONREEF MINING COMPANY\n\nNOTICE TO ALL HANDS: the mine is CLOSED.\n\nThe north gallery broke into a cave the size of a church - and the thing living in it. Two men hurt, one missing. The foreman has blown the Bear Hall shut.\n\nThe last of the blasting charges are where we left them: one crate in the Vine Crawl, one box in the sea adit. Leave them there.\n\nThe Iron Gate mine is up the plank road. - The Company
-note foremanlog Foreman's log | FOREMAN'S LOG\n\nWeek 9: The north gallery hit a great hollow. Bones on the floor, big ones. Claw marks on the props.\nWeek 10: Something came through the north gallery at night. Iron-grey, bigger than any bear I've seen. The men call it Ironhide.\nWeek 11: Blew the Bear Hall shut with half our charges. The other half I hid - one crate in the Vine Crawl, one box down the sea adit (the Drowned Shaft) before it flooded.\n\nThe richest ore is in the Bear Hall. So is the company strongbox. Two charges will clear the rockfall. I won't be the one to do it.
-note davynote Miner Davy Rees's letter | D. REES, HEWER - FOR MY MAM, IF ANYONE FINDS IT\n\nThey think I'm dead. I heard them shouting for me through the rock, and then I heard the foreman's charges go, and the hall went dark.\n\nI'm not hurt, Mam. The beast doesn't touch me. It sleeps on the ore like a dog on a rug and it watches me with its little eyes, and when I sit still it lets me be. I've been eating the roots that grow in the drip.\n\nThere's no way out now. The north mouth is a wall of stone and the beast is between me and the gallery.\n\nMy pay is buried on the high flat ground on the west side, under the palms, where I used to sit of an evening. Forty weeks of it. If someone blows that rockfall and gets past the beast, they've earned it more than the company ever did.\n\nYour loving son, Davy
+note notice Company notice | IRONREEF MINING COMPANY\n\nNOTICE TO ALL HANDS: the mine is CLOSED.\n\nThe deep gallery broke into a cave the size of a church - and the thing living in it. Two men hurt, one missing. The foreman has blown the Bear Hall shut.\n\nThe last of the blasting charges are where we left them: one crate in the Vine Crawl, one box in the sea adit. Leave them there.\n\nThe Iron Gate mine is up the plank road. - The Company
+note foremanlog Foreman's log | FOREMAN'S LOG\n\nWeek 9: The deep gallery hit a great hollow. Bones on the floor, big ones. Claw marks on the props.\nWeek 10: Something came through the gallery at night. Iron-grey, bigger than any bear I've seen. The men call it Ironhide.\nWeek 11: Blew the Bear Hall shut with half our charges. The other half I hid - one crate in the Vine Crawl, one box down the sea adit (the Drowned Shaft) before it flooded.\n\nThe richest ore is in the Bear Hall. So is the company strongbox. Two charges will clear the rockfall. I won't be the one to do it.
+note davynote Miner Davy Rees's letter | D. REES, HEWER - FOR MY MAM, IF ANYONE FINDS IT\n\nThey think I'm dead. I heard them shouting for me through the rock, and then I heard the foreman's charges go, and the hall went dark.\n\nI'm not hurt, Mam. The beast doesn't touch me. It sleeps on the ore like a dog on a rug and it watches me with its little eyes, and when I sit still it lets me be. I've been eating the roots that grow in the drip.\n\nThere's no way out now. The mouth of the hall is a wall of stone and the beast is between me and the gallery.\n\nMy pay is buried on the high flat ground by the crashed plane, under the palms, where I used to sit of an evening. Forty weeks of it. If someone blows that rockfall and gets past the beast, they've earned it more than the company ever did.\n\nYour loving son, Davy
 note rocksign Rockfall | DANGER - BLASTED SHUT\n\nDo not open. Do not feed.\n- Foreman
 note minelocker Foreman's locker | The foreman's locker: his spare lamp, a flask (empty), a map of the caves - and a brass key on a company tag: "PUMP STORE - MERIDIAN CONTRACT". The company pumped out the drowned city's cellars, until the sea won.
 loot minelocker story:ironreef-key*1;HeadLight*1;Battery*1;Rope*2
@@ -323,22 +323,22 @@ prop hallsound zone.radius=22
 
 quest title=The Heart of Ironreef
 quest intro=A ruined mining camp on a jungle mountain. The Ironreef Mining Company struck rich iron here - then left in a hurry. Their notice board still stands on the beach.
-step reach|camp|1|Land at the abandoned mining camp
+step reach|camp|1|Make for the jungle mountain and land at the mining camp on the beach below it
 step read|Company notice|1|Read the company's notice board
-step open|Supply barrel|1|Raid the company's supply barrel by the campfire
+step open|Supply barrel|1|Open the company's supply barrel by the campfire
 step reach|shoulder|1|Climb the plank road up the cliff to the mountain's shoulder
 step reach|irongate|1|Follow the shoulder to the Iron Gate mine
 step kill|Warthog|2|Drive the two warthogs out of the dark along the rails
 step read|Foreman's log|1|Read the foreman's log at the back of the mine
 step open|Foreman's locker|1|Take the foreman's spare lamp from his locker
-step reach|vines|1|Crawl into the Vine Crawl on the east flank
-step open|Powder crate|1|Find the powder crate wedged behind the vines
-step collect|story:charges|1|Take the first bundle of charges - the other is down the sea adit
-step reach|hallmouth|1|Go round to the north flank, where the Bear Hall was blasted shut
+step reach|vines|1|Find the Vine Crawl, the tunnel choked with vines and bees
+step open|Powder crate|1|Open the powder crate wedged behind the vines
+step collect|story:charges|1|Take the first bundle of charges; the other is in the Drowned Shaft
+step reach|hallmouth|1|Go to the Bear Hall, the cave blocked by a rockfall
 step read|Rockfall|1|Read the foreman's warning on the rockfall
-step pages||7|Try the rockfall - see what one charge won't do
-step reach|drowned|1|Take a deep breath and dive into the Drowned Shaft
-step open|Sunken powder box|1|Find the sunken powder box on the flooded floor of the adit
+step pages||7|Try one charge on the rockfall - it won't be enough
+step reach|drowned|1|Dive into the Drowned Shaft, the flooded mine tunnel by the shore
+step open|Sunken powder box|1|Open the powder box on the flooded floor of the Drowned Shaft
 step collect|story:charges|2|Bring both blasting charges back to the rockfall
 step pages||9|Wedge both charges into the rockfall and blow it open
 step reach|bearhall|1|Enter the Bear Hall
@@ -389,7 +389,7 @@ call ab_piece x=60 z=58 al=ctally5 set="Company tallies" nm="Company tally 5"
 prop ctally1 on.set=give||TitaniumIngot*1;MetalIngot*2\nmessage||All five company tallies. Every miner of Ironreef is accounted for.
 # E Dr. Calder's field note, by the company's wagon in the camp
 place Note_Paper caldernote3 at 79 -10 ground y=0.1 drop yaw=60
-note caldernote3 Dr. Ruth Calder's field note | THE ABYSS EXPEDITION - FIELD NOTE 3\n\nIronreef. The company dug for iron and found the sea under the mountain instead. Their foreman's log talks of a pump store in a drowned city - Meridian - and a key they never used.\n\nThe ore here is good, but it is not what we came for. The soundings all point the same way: deeper, and east.\n\nWe take the company's key and go on.\n- R. C.
+note caldernote3 Dr. Ruth Calder's field note | THE ABYSS EXPEDITION - FIELD NOTE 3\n\nIronreef. The company dug for iron and found the sea under the mountain instead. Their foreman's log talks of a pump store in a drowned city - Meridian - and a key they never used.\n\nThe ore here is good, but it is not what we came for. The soundings all point the same way: deeper, and out to sea.\n\nWe take the company's key and go on.\n- R. C.
 # F The scaffold run on the east beach (a hop course on its own pad)
 # --- JUMP COURSE ir (Abyss pass 10-26): kz-style hop course of floor slabs on its own pad (the bs course, turned) ---
 # JUMP ir pad=2.5 at=88 26

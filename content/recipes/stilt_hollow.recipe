@@ -116,13 +116,13 @@ prop treasure32048 treasure.loot=CopperIngot*2;Bolt*3;Glass*2
 
 info title=Stilt Hollow
 info author=Custom Islands
-info description=A trailer town on sandstone stacks in a desert reef, joined by scaffold walkways, its old rain tank's mast on the stack to the west. Its pump is dead and its mayor's rock locked: follow the red pipe down the reef wall. Hyenas and a white screecher. Inspired by Raft's Caravan Town.
+info description=A trailer town on sandstone stacks in a desert reef, joined by scaffold walkways, its old rain tank's mast on a stack of its own. Its pump is dead and its mayor's rock locked: follow the red pipe down the reef wall. Hyenas and a white screecher. Inspired by Raft's Caravan Town.
 island on.arrive=message||Trailers on top of sea stacks, a flag flapping on the highest one. Something laughs in the dock trailer.
 
 story valve|Pump valve wheel|quest:Caravan_KeyInfirmary|The valve wheel of Stilt Hollow's water pump.
 
 note agnesnote First warden Agnes Reyes's note | A. REYES - FIRST WATER WARDEN OF STILT HOLLOW\n\nBefore the pump there was the tank. Up here, on this stack, a rain tank on a mast and a pipe down to the town. When it rained we drank. When it didn't, we argued.\n\nThe pump was my idea. I fought the mayor for it for two years. He said the reef would eat the pipe. He was half right: the pipe is fine, but the valve wheel never sat tight. Give it a hard turn when you fit it.\n\nWhen the pump came, they took the tank down and sold it. I kept the mast. I like the view.\n\nI kept my own things here too, under the hatch. If the pump ever fails and someone climbs up to curse me, they've earned them.\n\nThe rest of my money is in the sand at the foot of the stack, on the far side. The mayor never knew. Please don't tell him.
-note notice Water warden's notice | STILT HOLLOW WATER BOARD\n\nThe pump is DOWN. The storm tore the valve wheel off and it rolled down the pipe channel.\n\nFollow the red pipe east and down the reef wall - there is an air pocket at the bottom, Pedro rigged it for the divers. Put the valve back and the pump will run.\n\nWhen the water runs, the gate to the mayor's rock opens. Not before. Mayor's orders.
+note notice Water warden's notice | STILT HOLLOW WATER BOARD\n\nThe pump is DOWN. The storm tore the valve wheel off and it rolled down the pipe channel.\n\nFollow the red pipe down the reef wall - there is an air pocket at the bottom, Pedro rigged it for the divers. Put the valve back and the pump will run.\n\nWhen the water runs, the gate to the mayor's rock opens. Not before. Mayor's orders.
 note valvebox Divers' box | A rusty box wedged under the air pocket. The valve wheel is jammed inside, with a diver's scrawl: "GOT IT - GO UP BEFORE YOUR LUNGS DO".
 loot valvebox story:valve*1;Rope*2
 prop valvebox loot.refill=0
@@ -172,12 +172,12 @@ prop whitescreecher tint.amount=0.85
 
 quest title=Water for Stilt Hollow
 quest intro=A trailer town on sea stacks, dry and silent. Get its water running again.
-step kill|Hyena|2|Climb to the trailer town and drive the hyenas out of the dock trailer
+step kill|Hyena|2|Make for the trailer town on the sea stacks and drive the hyenas out of the dock trailer
 step read|Water warden's notice|1|Read the notice at the pump
-step collect|story:valve|1|Follow the red pipe down to the valve
-step reach|tanktop|1|Climb the tank stack west of the mayor's rock - someone kept the old tank's mast up there
+step collect|story:valve|1|Follow the red pipe down the reef wall and take the valve wheel from the divers' box
+step reach|tanktop|1|Climb the tank stack with the old tank's mast on top
 step read|First warden Agnes Reyes's note|1|Read the first warden's note by the mast: the pump's history
-step reach|mayor|1|Start the pump and cross to the mayor's rock
+step reach|mayor|1|Fit the valve, start the pump and climb the scaffold to the mayor's rock
 step kill|Screecher|1|Drive off the white screecher
 step open|Mayor's chest|1|Open the mayor's chest
 quest done=The pump thumps, the town has water, and the mayor's hat is yours.
