@@ -93,10 +93,10 @@ prop $al zone.radius=$r
 prop $al zone.message=$msg
 end
 #
-# hw_note: a note lying on a small box at x z (alias al)
+# hw_note: a note lying on a small box at x z (alias al) (dropped from 1.6 m: from 0.7 m it started inside the box and fell through it, PQ11 10-27)
 macro hw_note x=0 z=0 yaw=0 al=note
 place "Box Small" - at $x $z ground sit yaw=$yaw
-place Note_Paper $al at $x $z ground y=0.7 drop yaw={$yaw+15}
+place Note_Paper $al at $x $z ground y=1.6 drop yaw={$yaw+15}
 end
 #
 # hw_wreck: one of Raft's vehicles (VEHICLES.md) wrecked on its own pad h m over the sea at x z, turned yaw, tinted

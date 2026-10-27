@@ -294,6 +294,7 @@ namespace DynamicIslands
 			MmRunToggled.SetValue(pc, sprint);
 			if (MmCheatSprint != null) MmCheatSprint.SetValue(pc, false);
 			pc.crouching = false;
+			ReachPace(pc);
 			if (CanvasHelper.ActiveMenu != MenuType.None) { if (!mmMenuCleared) { mmMenu0 = CanvasHelper.ActiveMenu; mmMenuCleared = true; } CanvasHelper.ActiveMenu = MenuType.None; }
 			// (Raft walks at normal speed even when sprinting while its well-being is Bad; fed and watered it is Good)
 			Stat_WellBeing.Factor = WellBeing.Good;

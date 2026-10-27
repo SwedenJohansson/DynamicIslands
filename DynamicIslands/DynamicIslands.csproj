@@ -95,6 +95,7 @@
     <Compile Include="DevTestsMore.cs" />
     <Compile Include="DevTestsLand.cs" />
     <Compile Include="DevTestsRandomizer.cs" />
+    <Compile Include="DevTestsReach.cs" />
     <Compile Include="DevTestsRecipe.cs" />
     <Compile Include="DevTestsPlay.cs" />
     <Compile Include="DevTestsRelease.cs" />

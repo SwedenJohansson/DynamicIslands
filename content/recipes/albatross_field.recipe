@@ -62,6 +62,9 @@ brush flatten from -46 57 to -30 57 r=6 s=20 frames=60 h=4.3
 brush flatten at 56 0 r=7 s=20 frames=60 h=4.3
 brush flatten at 40 46 r=4 s=20 frames=40 h=4.3
 brush flatten at 30 -56 r=4 s=20 frames=40 h=4.3
+# (a 2x2 m hollow at 48.8 -56, 1.7 m deep with no way out by a jump: filled, PQ11 10-27)
+brush flatten at 48.8 -56 r=3 s=20 frames=40 h=3.0
+brush smooth at 48.8 -56 r=5 s=4 frames=30
 # (the ditched fighter's hollow in the lagoon, 8 m down; the bomber's on the outer reef to the north, 12 m down)
 brush flatten at 5 0 r=9 s=20 frames=60 h=-8
 brush flatten at -5 86 r=9 s=20 frames=60 h=-12
@@ -272,7 +275,8 @@ call ss_hidden x=81 z=-21.4 al=af_lampchest
 place Creature_Chicken af_hens at 88 -20 ground
 prop af_hens creature.count=3
 call ar_plane x=-80 z=-12 h=2.5 yaw=20 al=af_plane crate=af_planecrate
-place Note_Paper af_pilot at -83.07 -8.75 ground y=0.1 drop yaw=50
+# (the log lay under the plane's low wing, out of reach - on the cargo crate now, PQ11 10-27)
+place Note_Paper af_pilot at -76.24 -13.37 ground y=1.6 drop yaw=50
 call hw_zone x=-80 z=-12 al=af_planez id=af_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
 # JUMP af pad=2.5 at=-14 26
 push at -14 26
@@ -315,7 +319,8 @@ place Loot_ChestSmall jbaf at 2.54 -5.44 h=10.6 sit yaw=0
 prop jbaf loot.refill=0
 pop
 call hw_zone x=-14 z=18 al=af_jumpz id=af_jumps r=6 h=1 msg="Stacks, one higher than the next. Something at the top."
-call hw_machine x=89 z=-35 yaw=-45 al=af_machine nm="Beacon transmitter" obj=RT_PowerBox sc=1 a=af_top b=af_cave done=af_fixed rew=af_rewchest rnote=af_rewnote msg="It works." hint="It wants the radar valve from Gannet Rock and the morse key from Turtle Cave."
+# (moved 2 m in from 89 -35: its reward chest stood on the shore slope with nowhere to stand by it, PQ11 10-27)
+call hw_machine x=87 z=-33 yaw=-45 al=af_machine nm="Beacon transmitter" obj=RT_PowerBox sc=1 a=af_top b=af_cave done=af_fixed rew=af_rewchest rnote=af_rewnote msg="It works." hint="It wants the radar valve from Gannet Rock and the morse key from Turtle Cave."
 call hw_note x=86.4 z=-33.8 yaw=-25 al=af_hint
 call ss_piece x=-58 z=47 al=af_piece1 set="Pilot wings"
 call ss_piece x=-28 z=-64 al=af_piece2 set="Pilot wings"

@@ -145,7 +145,9 @@ namespace DynamicIslands
 				bool okBefore = ok;
 				if (!plainExpect) groupLeft = 0;
 				if (!plainExpect && verb != "wait" && verb != "log" && owed > 0f) { yield return new WaitForSeconds(owed); owed = 0f; settleGroup = null; }
-				if (!plainExpect && verb != "log" && settleLeft > 0f) { if (!PlayNoSettleVerbs.Contains(verb)) yield return new WaitForSeconds(settleLeft); settleLeft = 0f; }
+				// (an expect that reads where things are - height, stand - waits it out too: right after an early group of shown/hidden
+				// it read a lift or hoist still on its way - Rookery hoist, 10-27)
+				if (!plainExpect && verb != "log" && settleLeft > 0f) { if (!PlayNoSettleVerbs.Contains(verb) || (verb == "expect" && t.Length > 1 && PlayMotionExpects.Contains(t[1].ToLowerInvariant()))) yield return new WaitForSeconds(settleLeft); settleLeft = 0f; }
 				if (PlayDeferVerbs.Contains(verb) && settleGroup == null && playEntry != null)
 				{
 					settleGroup = PlayExpectGroup(lines, li + 1);
@@ -161,6 +163,8 @@ namespace DynamicIslands
 				{
 					case "island":
 					{
+						// (PQ11: the island the play leaves, measured in the state the quest left it - CIReachOn)
+						if (reachHook && playEntry != null && playEntry.Root != null) yield return ReachAnalyze(playEntry, playOffset, "after play " + name, n => { });
 						string island = Rest(line, 1).Replace(" keep", "").Trim();
 						keep = line.EndsWith(" keep");
 						playOffset = Vector2.zero;
@@ -644,6 +648,7 @@ namespace DynamicIslands
 				}
 			}
 			if (owed > 0f) yield return new WaitForSeconds(owed);
+			if (reachHook && playEntry != null && playEntry.Root != null) yield return ReachAnalyze(playEntry, playOffset, "after play " + name, n => { });
 			if (!keep && made.Count > 0) { ScRemove(made); OnRaftCommand(); }
 			if (planMode) { PlanCleanSlate(); WorldDirector.SetPlan(WorldPlan.RandomName, false); StoryChain.OnWorldRead(); IslandWorldState.Save(); planMode = false; OnRaftCommand(); }
 			if (ok) Log("PASS: play " + name + " (" + checks + " checks)"); else Fail("play " + name);
@@ -668,6 +673,8 @@ namespace DynamicIslands
 		static readonly HashSet<string> PlayDeferVerbs = new HashSet<string> { "zone", "read", "open", "openat", "use", "kill", "catch", "dig", "wait" };
 		// (steps that may follow an early group at once: they act on what the expects saw, they don't move or look)
 		static readonly HashSet<string> PlayNoSettleVerbs = new HashSet<string> { "zone", "read", "open", "openat", "use", "code", "dig", "reach", "expect", "note" };
+		// (expects that read where things are: they wait out a step's whole settle time, also after an early group)
+		static readonly HashSet<string> PlayMotionExpects = new HashSet<string> { "height", "stand" };
 		// (expects that only read the state - no wait of their own, no side effect)
 		static readonly HashSet<string> PlayQuietKinds = new HashSet<string> { "step", "title", "done", "story", "survivor", "shown", "hidden", "message", "item", "animals" };
 
