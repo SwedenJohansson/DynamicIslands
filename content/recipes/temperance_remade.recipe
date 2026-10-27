@@ -270,4 +270,8 @@ quest reward=Wool*4;Plank*8;Glass*2
 call treasure x=0 z=0 r=30 n=1 seed=8805
 prop treasure8805 treasure.loot=TitaniumOre*3
 
+# --- RAFT REMADE 10-27: groundall - rocks the scatters/randomizer left off a slope or edge (CIGroundIslands): taken away by their
+# bounds centre (the report's point; "body", as a rock's pivot can stand a metre or more off it)
+clear at -60.92 -36.48 r=0.5 all body only=SmallBoulder4
+
 save Temperance Remade

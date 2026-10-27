@@ -96,9 +96,10 @@ expect step 21
 open Warden's table
 expect step 22
 open Warden's pot
-expect step 23
+expect step 24
+# the twelve pages are already found by now (the pages step completes with the pot), so the jar adds no step
 open Warden's jar
-wait 2
+wait 5
 expect step 24
 walk -2.5 -5 to -2.5 -11.8 to -4.8 -12.3 h=18
 reach Warden's chest

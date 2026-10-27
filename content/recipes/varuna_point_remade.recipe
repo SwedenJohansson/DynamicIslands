@@ -143,7 +143,6 @@ call ar_ridge x1=-52 z1=36 x2=-26 z2=48 h=5 top=6 r=8
 call hw_wreck x=-62 z=50 h=2 yaw=50 obj=BoatStranded al=barge crate=bargecrate r=9
 # D The hidden cave (south-west): a rock with a hole, its mouth to the sea
 call ar_cave x=-50 z=-46 h=3 yaw=180 al=caverock chest=cavebox
-place SmallBoulder4 - at -51 -65 ground yaw=40 scale=0.9
 place SmallBoulder4 - at -47.5 -67 ground yaw=110 scale=0.8
 # E The company plane (south-east): down on the shore field
 call ar_plane x=46 z=-52 h=3 yaw=120 al=companyplane crate=planecrate
@@ -204,14 +203,14 @@ prop jyvp zone.message=You topped the slab stacks.
 pop
 # --- end of jump course vp ---
 # The new land planted (palms, mangoes, bamboo as on the point)
-call ar_plants_hill x=-10 z=-54 r=24 seed=26601
-call ar_plants_tropical x=-10 z=-32 r=8 seed=26611
-call ar_plants_tropical x=-62 z=3 r=8 seed=26621
-call ar_plants_tropical x=-78 z=4 r=14 seed=26631
-call ar_plants_hill x=-39 z=42 r=16 seed=26641
-call ar_plants_tropical x=-43 z=-30 r=7 seed=26651
-call ar_plants_tropical x=43 z=-34 r=8 seed=26661
-call ar_plants_tropical x=46 z=-52 r=12 seed=26671
+call rr_plants_hill x=-10 z=-54 r=24 seed=26601
+call rr_plants_tropical x=-10 z=-32 r=8 seed=26611
+call rr_plants_tropical x=-62 z=3 r=8 seed=26621
+call rr_plants_tropical x=-78 z=4 r=14 seed=26631
+call rr_plants_hill x=-39 z=42 r=16 seed=26641
+call rr_plants_tropical x=-43 z=-30 r=7 seed=26651
+call rr_plants_tropical x=43 z=-34 r=8 seed=26661
+call rr_plants_tropical x=46 z=-52 r=12 seed=26671
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, pineapples, bananas ----------
@@ -330,5 +329,19 @@ quest reward=Plank*8;Scrap*8;Bolt*4
 # Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
 call treasure x=0 z=0 r=30 n=1 seed=8804
 prop treasure8804 treasure.loot=TitaniumOre*3
+
+# --- RAFT REMADE 10-27: groundall - rocks the scatters/randomizer left off a slope or edge (CIGroundIslands): taken away by their
+# bounds centre (the report's point; "body", as a rock's pivot can stand a metre or more off it)
+clear at -38.27 -24.79 r=0.5 all body only=SmallBoulder2
+clear at -4.48 -26.48 r=0.5 all body only=SmallBoulder2
+clear at -50.97 -65.26 r=0.5 all body only=SmallBoulder4
+clear at -55.53 -0.22 r=0.5 all body only=SmallBoulder2
+clear at -6.97 -38.34 r=0.5 all body only=SmallBoulder2
+clear at -61.82 4.13 r=0.5 all body only=SmallBoulder2
+clear at -78.26 1.59 r=0.5 all body only=SmallBoulder2
+clear at -82.02 -3.62 r=0.5 all body only=BigBoulder1_Low
+clear at 39.35 -50.90 r=0.5 all body only=SmallBoulder2
+clear at 43.48 -29.27 r=0.5 all body only=SmallBoulder2
+clear at 44.77 -35.44 r=0.5 all body only=SmallBoulder2
 
 save Varuna Point Remade

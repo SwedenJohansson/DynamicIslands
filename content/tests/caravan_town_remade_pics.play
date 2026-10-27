@@ -14,5 +14,5 @@ picture caravan_town_remade_bay -21 +2 -19 -15 -1 -13
 hour 11
 at -70 0
 wait 2
-picture rr_ct_west_flats -66 12 8 -88 4 2
+picture rr_ct_west_flats -50 34 28 -88 4 2
 picture rr_ct_slab_stacks -62 12 -8 -80 6 -22

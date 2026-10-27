@@ -10,5 +10,5 @@ picture vasagatan_remade_bow -40 8 -36 -26.5 1.5 -23.5
 picture vasagatan_remade_camp -29 9 -24 -37.2 4 -16.5
 picture vasagatan_remade_stern -15 -7 -47 -24.5 -12.5 -40
 picture rr_vs_gannet_head 30 16 36 48 18 58
-picture rr_vs_container_yard 40 8 -4 60 5 4
-picture rr_vs_west_dunes -44 8 -2 -60 4 16
+picture rr_vs_container_yard 30 30 -24 60 5 4
+picture rr_vs_west_dunes -40 28 -24 -60 4 16

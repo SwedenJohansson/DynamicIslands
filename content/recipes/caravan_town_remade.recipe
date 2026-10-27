@@ -298,4 +298,20 @@ step blueprint|Blueprint_ZiplineBase|1|Take the zipline base plans from the mayo
 quest done=The chest opens: the fireworks' plans, the engine controls', a metal detector's - a battery charger's, and a zipline's with its bases. Down in the market, someone has already started to sweep.
 quest reward=Plank*8;Scrap*6;Rope*3
 
+# --- RAFT REMADE 10-27: groundall - rocks the scatters/randomizer left off a slope or edge (CIGroundIslands): taken away by their
+# bounds centre (the report's point; "body", as a rock's pivot can stand a metre or more off it)
+clear at -23.79 41.29 r=0.5 all body only=BigSharpRock_1
+clear at -25.18 52.46 r=0.5 all body only=BigSharpRock_2
+clear at -28.65 -12.61 r=0.5 all body only=BigSharpRock_5
+clear at -4.43 -51.15 r=0.5 all body only=CaravanIsland_SmallRock_1
+clear at -40.17 97.22 r=0.5 all body only=BigSharpRock_5
+clear at -44.84 87.38 r=0.5 all body only=CaravanIsland_SmallRock_1
+clear at -46.41 22.47 r=0.5 all body only=BigSharpRock_2
+clear at -50.12 89.75 r=0.5 all body only=CaravanIsland_SmallRock_1
+clear at -8.40 -2.20 r=0.5 all body only=Crate_Big_01
+clear at 52.88 49.17 r=0.5 all body only=CaravanIsland_SmallRock_2
+clear at 57.12 42.67 r=0.5 all body only=BigSharpRock_2
+clear at 68.08 24.31 r=0.5 all body only=CaravanIsland_SmallRock_1
+clear at 70.70 24.78 r=0.5 all body only=CaravanIsland_SmallRock_1
+
 save Caravan Town Remade

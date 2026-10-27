@@ -203,16 +203,16 @@ prop jyrt zone.message=The top of the old pylon bases. The tower, the hill and i
 pop
 # --- end of jump course rt ---
 # The new land planted (palms, bamboo, mangoes as on the rock)
-call ar_plants_tropical x=0 z=40 r=10 seed=26301
-call ar_plants_hill x=0 z=66 r=22 seed=26311
-call ar_plants_hill x=-27 z=48 r=16 seed=26321
-call ar_plants_tropical x=-62 z=8 r=15 seed=26331
-call ar_plants_tropical x=-42 z=-26 r=10 seed=26341
-call ar_plants_hill x=64 z=-2 r=22 seed=26351
-call ar_plants_tropical x=40 z=-28 r=10 seed=26361
-call ar_plants_tropical x=40 z=36 r=14 seed=26371
-call ar_plants_tropical x=-40 z=36 r=12 seed=26381
-call ar_plants_tropical x=-40 z=7 r=8 seed=26391
+call rr_plants_tropical x=0 z=40 r=10 seed=26301
+call rr_plants_hill x=0 z=66 r=22 seed=26311
+call rr_plants_hill x=-27 z=48 r=16 seed=26321
+call rr_plants_tropical x=-62 z=8 r=15 seed=26331
+call rr_plants_tropical x=-42 z=-26 r=10 seed=26341
+call rr_plants_hill x=64 z=-2 r=22 seed=26351
+call rr_plants_tropical x=40 z=-28 r=10 seed=26361
+call rr_plants_tropical x=40 z=36 r=14 seed=26371
+call rr_plants_tropical x=-40 z=36 r=12 seed=26381
+call rr_plants_tropical x=-40 z=7 r=8 seed=26391
 
 # --- Settings, notes, behaviours, quest ------------------------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): palms, melons, bananas ----------
@@ -327,5 +327,18 @@ step blueprint|Blueprint_HeadLight|1|Take the head light plans from the radio ro
 step blueprint|Blueprint_Recycler|1|Take the recycler plans from the radio room locker
 quest done=The tower talks again: its call goes out over the sea - and somewhere far off, a ship's beacon answers.
 quest reward=Plank*10;Rope*3;Nail*10
+
+# --- RAFT REMADE 10-27: groundall - rocks the scatters/randomizer left off a slope or edge (CIGroundIslands): taken away by their
+# bounds centre (the report's point; "body", as a rock's pivot can stand a metre or more off it)
+clear at -0.36 39.63 r=0.5 all body only=SmallBoulder2
+clear at -32.55 44.42 r=0.5 all body only=BigBoulder1_Low
+clear at -42.90 -34.96 r=0.5 all body only=Coral1
+clear at -59.51 5.83 r=0.5 all body only=SmallBoulder2
+clear at -61.43 8.02 r=0.5 all body only=SmallBoulder2
+clear at -69.19 16.12 r=0.5 all body only=SmallBoulder4
+clear at -70.44 13.84 r=0.5 all body only=BigBoulder1_Low
+clear at 37.46 44.61 r=0.5 all body only=SmallBoulder2
+clear at 48.81 37.72 r=0.5 all body only=SmallBoulder2
+clear at 73.92 10.17 r=0.5 all body only=SmallBoulder4
 
 save Radio Tower Remade

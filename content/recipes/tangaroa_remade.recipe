@@ -227,12 +227,12 @@ call ar_cave x=-44 z=-46 h=3 yaw=180 al=caverock chest=cavebox
 # D The ferry run aground (north-west), her crate on the sand by her
 call hw_wreck x=-50 z=50 h=2 yaw=40 obj=BoatStranded al=ferry crate=ferrycrate r=9
 # The new land planted (palms, mangoes, bushes as on the hill)
-call ar_plants_hill x=-62 z=4 r=22 seed=26901
-call ar_plants_tropical x=-44 z=4 r=8 seed=26911
-call ar_plants_tropical x=8 z=-44 r=8 seed=26921
-call ar_plants_tropical x=-34 z=-36 r=8 seed=26931
-call ar_plants_tropical x=-40 z=40 r=9 seed=26941
-call ar_plants_tropical x=-10 z=46 r=7 seed=26951
+call rr_plants_hill x=-62 z=4 r=22 seed=26901
+call rr_plants_tropical x=-44 z=4 r=8 seed=26911
+call rr_plants_tropical x=8 z=-44 r=8 seed=26921
+call rr_plants_tropical x=-34 z=-36 r=8 seed=26931
+call rr_plants_tropical x=-40 z=40 r=9 seed=26941
+call rr_plants_tropical x=-10 z=46 r=7 seed=26951
 # --- JUMP COURSE tg (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---
 # JUMP tg pad=3 at=-14 64
 push at -14 64
@@ -402,5 +402,18 @@ call treasure x=0 z=0 r=30 n=1 seed=8831
 prop treasure8831 treasure.loot=TitaniumOre*3
 # Titanium rocks, as on Raft's Tangaroa (the pickaxe breaks them)
 scatter Pickup_Landmark_Titanium_Land 3 at 0 0 r=35 seed=8832 free=3
+
+# --- RAFT REMADE 10-27: groundall - rocks the scatters/randomizer left off a slope or edge (CIGroundIslands): taken away by their
+# bounds centre (the report's point; "body", as a rock's pivot can stand a metre or more off it)
+clear at -3.96 46.72 r=0.5 all body only=SmallBoulder2
+clear at -33.57 46.76 r=0.5 all body only=SmallBoulder2
+clear at -37.04 6.51 r=0.5 all body only=SmallBoulder2
+clear at -39.55 -1.47 r=0.5 all body only=SmallBoulder2
+clear at -40.32 39.01 r=0.5 all body only=SmallBoulder2
+clear at -44.67 43.51 r=0.5 all body only=SmallBoulder2
+clear at -46.39 39.40 r=0.5 all body only=SmallBoulder2
+clear at -9.83 41.36 r=0.5 all body only=SmallBoulder2
+clear at 4.20 -47.26 r=0.5 all body only=SmallBoulder2
+clear at 7.73 -44.01 r=0.5 all body only=SmallBoulder2
 
 save Tangaroa Remade

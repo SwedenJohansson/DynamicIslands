@@ -29,6 +29,27 @@ scatter Bush2 5 at $x $z r=$r seed={$seed+4} free=1
 scatter SmallBoulder4 5 at $x $z r=$r seed={$seed+5} free=2
 end
 #
+# rr_plants_tropical / rr_plants_hill: ar_plants_tropical / ar_plants_hill without the rocks that stand off the new land
+# (CIGroundIslands 10-26: SmallBoulder2 and BigBoulder1_Low up to 4-65 m off a lobe's edge, SmallBoulder4 up to 9 m off a
+# slope). Same seeds as the ar_ macros, so the trees and bushes stand where they stood; flat land keeps SmallBoulder4.
+macro rr_plants_tropical x=0 z=0 r=20 seed=1
+scatter "Pickup_Landmark_Tree_Palm 3" 3 at $x $z r=$r seed=$seed free=3
+scatter "Pickup_Landmark_Tree_Palm 4" 3 at $x $z r=$r seed={$seed+1} free=3
+scatter Bamboo_1 4 at $x $z r=$r seed={$seed+2} free=2
+scatter Pickup_Landmark_Tree_Mango 2 at $x $z r=$r seed={$seed+3} free=3
+scatter Bush 8 at $x $z r=$r seed={$seed+4} free=1
+scatter Bush2 5 at $x $z r=$r seed={$seed+5} free=1
+scatter SmallBoulder4 4 at $x $z r=$r seed={$seed+7} free=2
+end
+macro rr_plants_hill x=0 z=0 r=20 seed=1
+scatter "Pickup_Landmark_Tree_Palm 3" 3 at $x $z r=$r seed=$seed free=3
+scatter "Pickup_Landmark_Tree_Palm 4" 3 at $x $z r=$r seed={$seed+1} free=3
+scatter Bamboo_1 4 at $x $z r=$r seed={$seed+2} free=2
+scatter Pickup_Landmark_Tree_Mango 2 at $x $z r=$r seed={$seed+3} free=3
+scatter Bush 8 at $x $z r=$r seed={$seed+4} free=1
+scatter Bush2 5 at $x $z r=$r seed={$seed+5} free=1
+end
+#
 # rr_piece: one piece of a collectible set (Story_Collectible) at x z on the ground, alias al, in set, named nm
 macro rr_piece x=0 z=0 al=piece set=Relics nm=Relic
 place Story_Collectible $al at $x $z ground sit

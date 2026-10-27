@@ -295,4 +295,25 @@ step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe plans from the ranger's 
 quest done=The strongbox opens: the machete's blueprint, the biofuel refiner's, the fuel tank's and its pipe's. The voice on the radio said south - toward the traders.
 quest reward=Plank*8;Rope*4;BioFuel*1
 
+# --- RAFT REMADE 10-27: groundall - rocks the scatters/randomizer left off a slope or edge (CIGroundIslands): taken away by their
+# bounds centre (the report's point; "body", as a rock's pivot can stand a metre or more off it)
+clear at -10.73 72.67 r=0.5 all body only=SmallRock_01
+clear at -14.49 9.67 r=0.5 all body only=SmallRock_01
+clear at -17.74 -44.20 r=0.5 all body only=SmallRock_01
+clear at -22.32 -5.31 r=0.5 all body only=BigRock_3
+clear at -37.08 30.95 r=0.5 all body only=SmallRock_01
+clear at -43.58 30.21 r=0.5 all body only=SmallRock_01
+clear at -6.89 9.02 r=0.5 all body only=SmallRock_03
+clear at -70.55 76.39 r=0.5 all body only=BigRock_2
+clear at -74.01 -40.10 r=0.5 all body only=BigRock_2
+clear at 24.82 17.74 r=0.5 all body only=BigRock_2
+clear at 32.57 -43.36 r=0.5 all body only=BigRock_2
+clear at 34.63 -28.68 r=0.5 all body only=SmallRock_01
+clear at 35.68 21.82 r=0.5 all body only=SmallRock_01
+clear at 37.58 2.61 r=0.5 all body only=SmallRock_01
+clear at 5.82 -60.24 r=0.5 all body only=BigRock_2
+clear at 62.76 40.63 r=0.5 all body only=SmallRock_02
+clear at 7.40 -3.27 r=0.5 all body only=SmallRock_01
+clear at 89.65 46.61 r=0.5 all body only=SmallRock_01
+
 save Balboa Remade

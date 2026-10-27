@@ -12,6 +12,6 @@ picture utopia_remade_yard -6.5 26 9 -6.5 18.5 -7
 hour 11
 at 0 -40
 wait 2
-picture rr_ut_lighthouse_head 22 18 -48 0 18 -74
+picture rr_ut_lighthouse_head -10 44 -40 0 18 -74
 picture rr_ut_crew_camp -54 10 14 -72 4 4
-picture rr_ut_quarry 44 12 -40 64 6 -20
+picture rr_ut_quarry 30 36 -60 64 6 -20

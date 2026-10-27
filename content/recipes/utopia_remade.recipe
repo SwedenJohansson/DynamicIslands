@@ -198,14 +198,14 @@ prop jyut zone.message=You topped the slab stacks.
 pop
 # --- end of jump course ut ---
 # The new land planted (mangoes, bananas, palms as on the island)
-call ar_plants_hill x=0 z=-74 r=26 seed=27001
-call ar_plants_tropical x=0 z=-50 r=9 seed=27011
-call ar_plants_tropical x=-52 z=1 r=8 seed=27021
-call ar_plants_tropical x=-72 z=4 r=14 seed=27031
-call ar_plants_hill x=64 z=-17 r=14 seed=27041
-call ar_plants_tropical x=-42 z=40 r=10 seed=27051
-call ar_plants_tropical x=36 z=-44 r=8 seed=27061
-call ar_plants_tropical x=50 z=-10 r=7 seed=27071
+call rr_plants_hill x=0 z=-74 r=26 seed=27001
+call rr_plants_tropical x=0 z=-50 r=9 seed=27011
+call rr_plants_tropical x=-52 z=1 r=8 seed=27021
+call rr_plants_tropical x=-72 z=4 r=14 seed=27031
+call rr_plants_hill x=64 z=-17 r=14 seed=27041
+call rr_plants_tropical x=-42 z=40 r=10 seed=27051
+call rr_plants_tropical x=36 z=-44 r=8 seed=27061
+call rr_plants_tropical x=50 z=-10 r=7 seed=27071
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, bananas, palms ----------
@@ -380,4 +380,18 @@ prop treasure8806 treasure.loot=TitaniumOre*3
 
 # --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
 place UT_ElectricityIsland_Crane02 - at -7 44 ground y=-1.0 sit scale=0.3 yaw=200
+
+# --- RAFT REMADE 10-27: groundall - rocks the scatters/randomizer left off a slope or edge (CIGroundIslands): taken away by their
+# bounds centre (the report's point; "body", as a rock's pivot can stand a metre or more off it)
+clear at -34.59 39.26 r=0.5 all body only=SmallBoulder2
+clear at -4.44 -49.66 r=0.5 all body only=SmallBoulder2
+clear at -44.29 48.17 r=0.5 all body only=SmallBoulder2
+clear at -44.71 33.41 r=0.5 all body only=SmallBoulder4
+clear at -52.51 2.94 r=0.5 all body only=SmallBoulder2
+clear at -6.97 -46.68 r=0.5 all body only=SmallBoulder2
+clear at -60.07 -0.98 r=0.5 all body only=BigBoulder1_Low
+clear at -62.66 4.63 r=0.5 all body only=SmallBoulder2
+clear at -75.57 12.49 r=0.5 all body only=SmallBoulder2
+clear at -78.82 5.18 r=0.5 all body only=SmallBoulder2
+
 save Utopia Remade
