@@ -137,10 +137,74 @@ place Loot_Crate icelocker at 70 12 ground sit yaw=180
 # C The west crags, the whaler run aground below them, the ice cave in the crags
 call ar_ridge x1=-58 z1=-26 x2=-44 z2=-50 h=4 top=7 r=9
 call hw_wreck x=-70 z=-12 h=2 yaw=110 obj=BoatStranded al=whaler crate=whalercrate r=9
-# 10-27: mouth turned inland (yaw 0): facing the sea, the mouth showed the hollow inside as a cut face; the pad's west
-# edge to the sea is smoothed (it showed a sawtooth)
+# 10-27: mouth turned inland (yaw 0): facing the sea, the mouth showed the hollow inside as a cut face
 call ar_cave x=-50 z=-40 h=4 yaw=0 al=icecaverock chest=icecavebox
-brush smooth from -65 -28 to -63 -52 r=5 s=6 frames=40
+# 10-27 c: the crag built up over the cave - in a world the cave gets its own rock skin (a smooth dome draped over its
+# roof on a 1.25 m grid, sides falling 1.5 m per m out to 16 m past it, walled down to the ground where they stop: on
+# the coast that wall stood in the sea as steps). The crag's ground now holds the whole skin under it: a top over the
+# roof and the passage's arch, then ledges in rings round it (4 m apart, 6 m down each), out to the shelf under the sea; the way in (north)
+# left open between two shoulders
+brush flatten at -50 -50 r=11 s=20 frames=500 h=23
+brush flatten at -50 -42 r=7 s=20 frames=300 h=23
+brush flatten from -59 -40 to -59 -26 r=4 s=20 frames=300 h=22
+brush flatten from -43 -40 to -43 -26 r=4 s=20 frames=300 h=22
+brush flatten from -51 -40 to -51 -29 r=5 s=20 frames=300 h=21
+brush flatten from -69 -24 to -69 -52 r=4 s=20 frames=300 h=17
+brush flatten from -69 -52 to -60 -61 r=4 s=20 frames=300 h=17
+brush flatten from -60 -61 to -40 -61 r=4 s=20 frames=300 h=17
+brush flatten from -40 -61 to -31 -52 r=4 s=20 frames=300 h=17
+brush flatten from -31 -52 to -31 -21 r=4 s=20 frames=300 h=17
+brush flatten from -73 -25 to -73 -53 r=4 s=20 frames=300 h=11
+brush flatten from -73 -53 to -61 -65 r=4 s=20 frames=300 h=11
+brush flatten from -61 -65 to -39 -65 r=4 s=20 frames=300 h=11
+brush flatten from -39 -65 to -27 -53 r=4 s=20 frames=300 h=11
+brush flatten from -27 -53 to -27 -30 r=4 s=20 frames=300 h=11
+brush flatten from -77 -24 to -77 -55 r=4 s=20 frames=300 h=5
+brush flatten from -77 -55 to -63 -69 r=4 s=20 frames=300 h=5
+brush flatten from -63 -69 to -37 -69 r=4 s=20 frames=300 h=5
+brush flatten from -37 -69 to -23 -55 r=4 s=20 frames=300 h=5
+brush flatten from -23 -55 to -23 -34 r=4 s=20 frames=300 h=5
+brush flatten from -81 -22 to -81 -56 r=4 s=20 frames=300 h=-1
+brush flatten from -81 -56 to -64 -73 r=4 s=20 frames=300 h=-1
+brush flatten from -64 -73 to -36 -73 r=4 s=20 frames=300 h=-1
+brush flatten from -36 -73 to -19 -56 r=4 s=20 frames=300 h=-1
+brush flatten from -19 -56 to -19 -38 r=4 s=20 frames=300 h=-1
+brush flatten from -85 -20 to -85 -57 r=4 s=20 frames=200 h=-5
+brush flatten from -85 -57 to -65 -77 r=4 s=20 frames=200 h=-5
+brush flatten from -65 -77 to -35 -77 r=4 s=20 frames=200 h=-5
+brush flatten from -35 -77 to -15 -57 r=4 s=20 frames=200 h=-5
+brush flatten from -15 -57 to -15 -42 r=4 s=20 frames=200 h=-5
+brush flatten from -69 -24 to -58 -24 r=4 s=20 frames=200 h=12
+brush flatten from -42 -21 to -31 -21 r=4 s=20 frames=200 h=12
+brush smooth at -50 -46 r=40 s=5 frames=40
+# 10-27 d: solid cap over the whole cave box at 23 (chamfered corners), a ledge band at 20 round it, after the smooth, so no skin shows on top.
+brush flatten from -72 -27 to -72 -56 r=3.5 s=20 frames=200 h=20
+brush flatten from -72 -56 to -66 -62 r=3.5 s=20 frames=200 h=20
+brush flatten from -66 -62 to -36 -62 r=3.5 s=20 frames=200 h=20
+brush flatten from -36 -62 to -29 -55 r=3.5 s=20 frames=200 h=20
+brush flatten from -29 -55 to -29 -27 r=3.5 s=20 frames=200 h=20
+brush flatten from -60 -57 to -40 -57 r=5 s=20 frames=200 h=23
+brush flatten from -66 -53 to -35 -53 r=5 s=20 frames=200 h=23
+brush flatten from -67 -49 to -34 -49 r=5 s=20 frames=200 h=23
+brush flatten from -67 -45 to -34 -45 r=5 s=20 frames=200 h=23
+brush flatten from -67 -41 to -34 -41 r=5 s=20 frames=200 h=23
+brush flatten from -67 -37 to -34 -37 r=5 s=20 frames=200 h=23
+brush flatten from -66 -33 to -35 -33 r=5 s=20 frames=200 h=23
+brush flatten from -62 -29 to -39 -29 r=5 s=20 frames=200 h=23
+brush flatten at -74 -40 r=4 s=20 frames=150 h=15
+brush flatten at -71 -52 r=3.5 s=20 frames=150 h=10
+brush flatten at -52 -65 r=4 s=20 frames=150 h=13
+brush flatten at -32 -50 r=4 s=20 frames=150 h=16
+brush flatten at -30 -38 r=3.5 s=20 frames=150 h=9
+brush flatten from -51 -15 to -51 -23.5 r=4.5 s=20 frames=60 h=4.4
+brush auto at -50 -46 r=40 s=10 frames=25
+brush rock at -50 -43 r=15 s=10 frames=30
+place TP_IcePillar02 - at -73 -44 ground sit yaw=30
+place TP_IcePillar01 - at -67 -59 ground sit yaw=120
+place TP_IcePillar04_Snow - at -48 -69 ground sit yaw=200
+place TP_IcePillar04_Snow - at -56 -52 ground sit yaw=40
+place TP_IcePillar02 - at -40 -61 ground sit yaw=160
+place TP_IcePillar01 - at -69 -32 ground sit yaw=250
 # D The supply plane (north-east): down on the flats past the village
 call ar_plane x=46 z=44 h=3 yaw=210 al=supplyplane crate=planecrate
 call rr_pad x=36 z=-38 h=3 r=10
@@ -148,7 +212,7 @@ place TP_Moontown_Barrel02 - at 38 -36 ground sit
 # The new land's snowy pines, drifts and stones (Raft's Temperance is near bare: a few)
 scatter TP_PineTreeSnowy 6 at 10 -64 r=22 seed=26801
 scatter TP_PineTreeSnowy 3 at 66 6 r=14 seed=26802
-scatter TP_PineTreeSnowy 3 at -52 -30 r=14 seed=26803
+scatter TP_PineTreeSnowy 3 at -74 -22 r=5 seed=26803
 scatter TP_SnowDrift01 6 at 10 -50 r=18 seed=26804
 scatter TP_SnowDrift01 4 at 60 10 r=12 seed=26805
 scatter TP_SnowDrift01 3 at 44 42 r=10 seed=26806
