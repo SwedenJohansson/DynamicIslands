@@ -574,17 +574,24 @@ namespace DynamicIslands
 				if (reachSky && start >= 0)
 				{
 					int floor = 0; for (int k = 0; k < g.Pos.Count; k++) if (g.Kind[k] == 0) floor++;
-					List<int> cands = sea.OrderBy(k => ScFlat(g.Pos[k], edgeMid[s])).Take(400).ToList();
-					for (int c = 0, tried = 0; c < cands.Count && tried < 25; c++)
+					// (every rim spot already covered by a tried walk-in is skipped, and the best walk-in tried is kept: the last
+					// one tried was kept before, and Altitude Market's north start, 25 roof tops, reached nothing - 22 false
+					// "north: can't get there" with the target's spot reached from the other sides, PQ11 10-28)
+					List<int> cands = sea.OrderBy(k => ScFlat(g.Pos[k], edgeMid[s])).ToList();
+					var rimDone = new bool[g.Pos.Count];
+					bool[] bestF = fwd[s]; int[] bestP = parent[s]; int bestGot = -1;
+					for (int c = 0, tried = 0; c < cands.Count && tried < 80; c++)
 					{
-						int got = 0; for (int k = 0; k < g.Pos.Count; k++) if (fwd[s][k] && g.Kind[k] == 0) got++;
+						int got = 0; for (int k = 0; k < g.Pos.Count; k++) if (fwd[s][k]) { rimDone[k] = true; if (g.Kind[k] == 0) got++; }
+						if (got > bestGot) { bestGot = got; bestF = fwd[s]; bestP = parent[s]; }
 						if (got * 4 >= floor) break;
 						if (c == 0) continue;
-						if (fwd[s][cands[c]]) continue;
+						if (rimDone[cands[c]]) continue;
 						tried++;
 						fwd[s] = new bool[g.Pos.Count]; parent[s] = new int[g.Pos.Count];
 						Flood(g, new List<int> { cands[c] }, g.Out, fwd[s], parent[s]);
 					}
+					fwd[s] = bestF; parent[s] = bestP;
 				}
 			}
 			var back = new bool[g.Pos.Count];
