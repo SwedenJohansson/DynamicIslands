@@ -187,16 +187,21 @@ prop treasure31010 treasure.loot=MetalOre*2;Glass*3;Rope*2
 # a stone shed on the flat top (3 x 3 m, walls on the ground, roof on the walls), its open south side grown shut with
 # vines; the chest inside only shows once the vines are cut
 push at -28 8 h=12.4
+# (corner pillars carry the roof: CIGroundIslands)
+place Block_Pillar_Wood sm_shed at -1.35 -1.35 y=-0.1 sy=1.6
+place Block_Pillar_Wood sm_shed at 1.35 -1.35 y=-0.1 sy=1.6
+place Block_Pillar_Wood sm_shed at -1.35 1.35 y=-0.1 sy=1.6
+place Block_Pillar_Wood sm_shed at 1.35 1.35 y=-0.1 sy=1.6
 place Block_Wall_Tier3 sm_shed at -0.75 1.5 y=-0.1 sy=1.6
 place Block_Wall_Tier3 sm_shed at 0.75 1.5 y=-0.1 sy=1.6
 place Block_Wall_Tier3 sm_shed at -1.5 -0.75 y=-0.1 sy=1.6 yaw=90
 place Block_Wall_Tier3 sm_shed at -1.5 0.75 y=-0.1 sy=1.6 yaw=90
 place Block_Wall_Tier3 sm_shed at 1.5 -0.75 y=-0.1 sy=1.6 yaw=90
 place Block_Wall_Tier3 sm_shed at 1.5 0.75 y=-0.1 sy=1.6 yaw=90
-place Block_Floor_Tier3 sm_shed at -0.75 -0.75 y=3.93
-place Block_Floor_Tier3 sm_shed at 0.75 -0.75 y=3.93
-place Block_Floor_Tier3 sm_shed at -0.75 0.75 y=3.93
-place Block_Floor_Tier3 sm_shed at 0.75 0.75 y=3.93
+place Block_Floor_Tier3 sm_shed at -0.75 -0.75 y=4.12
+place Block_Floor_Tier3 sm_shed at 0.75 -0.75 y=4.12
+place Block_Floor_Tier3 sm_shed at -0.75 0.75 y=4.12
+place Block_Floor_Tier3 sm_shed at 0.75 0.75 y=4.12
 place Loot_Chest sm_vinechest at 0 0.4 y=0 sit yaw=180
 place ChoppableVines sm_vines at 0 -1.7 y=0 yaw=0
 pop
