@@ -255,15 +255,15 @@ island on.arrive=message||A ring of sun-baked islets, too quiet: no birds. Faded
 story dosimeter|Dosimeter|MetalDetector|Dr. Varga's dosimeter. It ticks faster the closer you get to ground zero.
 story film|Lead film canister|quest:Vasagatan_Recorder|A lead canister of film from one of the test cameras, its seal unbroken.
 
-note notebook Dr. Varga's notebook | SUN ATOLL - OBSERVATION BLOCKHOUSE\n\nThey gave us until dawn to clear the atoll before shot Juniper. I didn't go. Someone has to see what it does - not in numbers. With eyes.\n\nThree cameras, each film sealed in lead: on the north post, on the south post, and on the tower itself at ground zero. The tower will be gone. The can may not be.\n\nMy dosimeter is in the instrument locker in the bunker behind this room. Don't go out to ground zero without it ticking in your pocket - and don't stay.\n\nWhen you have all three cans, run them on the projector. The safe opens to the projector's switch; I wired it myself. The world should see what we did. - I. V.
+note notebook Dr. Varga's notebook | SUN ATOLL - OBSERVATION BLOCKHOUSE\n\nThey gave us until dawn to clear the atoll before shot Juniper. I didn't go. Someone has to see what it does - not in numbers. With eyes.\n\nThree cameras, each film sealed in lead: on one measuring post, on the other measuring post across the lagoon, and on the tower itself at ground zero. The tower will be gone. The can may not be.\n\nMy dosimeter is in the instrument locker in the bunker behind this room. Don't go out to ground zero without it ticking in your pocket - and don't stay.\n\nWhen you have all three cans, run them on the projector. The safe opens to the projector's switch; I wired it myself. The world should see what we did. - I. V.
 note instlocker Instrument locker | The instrument locker in the bunker: a dosimeter on a lanyard, spare batteries, a pencil worn to a stub.
 loot instlocker story:dosimeter*1;Battery*1;Nail*6
 prop instlocker loot.refill=0
 prop instlocker on.open=show|geiger
-note northpost North post camera box | The north post's camera box, its lens melted to the glass behind it - but the lead canister inside is whole.
+note northpost North post camera box | The first post's camera box, its lens melted to the glass behind it - but the lead canister inside is whole.
 loot northpost story:film*1;Scrap*3
 prop northpost loot.refill=0
-note southpost South post camera box | The south post's camera box, blown over and half buried in sand. The canister rattles inside.
+note southpost South post camera box | The other post's camera box, blown over and half buried in sand. The canister rattles inside.
 loot southpost story:film*1;CopperOre*2
 prop southpost loot.refill=0
 note cratercase Tower camera's lead case | A lead case at the bottom of the crater, all that is left of the tower's camera. Its film canister is sealed tight.
@@ -272,7 +272,7 @@ prop cratercase loot.refill=0
 note supplycrate Blockhouse supply crate | The blockhouse's supplies: nails, bolts, plastic sheeting for the slits.
 loot supplycrate Nail*10;Bolt*4;Plastic*4
 prop supplycrate loot.refill=0
-note beachbarrel Beached supply barrel | A supply barrel washed up on the east islet, its stencil faded: water, and tins.
+note beachbarrel Beached supply barrel | A supply barrel standing on the beach of a small islet, its stencil faded: water, and tins.
 loot beachbarrel PlasticBottle_Water*2;Cooked_GenericMeat*2;Scrap*2
 prop beachbarrel loot.refill=0
 note palmbox Box under the palm | Somebody's private stash under the only palm left standing: rope, a hinge, a deck of cards.
@@ -290,7 +290,7 @@ prop bhsafe else.open=message||The safe's lock is wired to the projector's switc
 prop projector obj.name=projector
 prop projector beh.use=Thread the three films and run them
 prop projector if.use=quest|6\ntake|story:film|3
-prop projector on.use=message||The films flicker on the screen: a dawn sky, the palms of the north islet, the tower - then white, a white that eats the picture. A cloud climbs out of the lagoon. The palms bow flat. The south camera, its lens cracked, shows the sea pulling back off the reef - and coming back as a wall. The safe's lock clicks.\nsignal||filmsrun\nsound||event:/exploring/relaystation/crt
+prop projector on.use=message||The films flicker on the screen: a dawn sky, the palms of the islet, the tower - then white, a white that eats the picture. A cloud climbs out of the lagoon. The palms bow flat. The other camera, its lens cracked, shows the sea pulling back off the reef - and coming back as a wall. The safe's lock clicks.\nsignal||filmsrun\nsound||event:/exploring/relaystation/crt
 prop projector else.use=message||A film projector, threaded with nothing. Dr. Varga's notebook says there are three canisters.
 prop geiger obj.name=geiger
 prop geiger beh.hidden=1
@@ -330,13 +330,13 @@ prop glare atmo.lightAmount=0.25
 prop glare zone.radius=45
 
 quest title=Shot Juniper
-quest intro=An atoll burned bare by a test that nobody watched - nearly nobody. Start at the blockhouse on the west islet.
-step read|Dr. Varga's notebook|1|Find the blockhouse on the west islet and read the notebook on its desk
+quest intro=An atoll burned bare by a test that nobody watched - nearly nobody. Start at the blockhouse buried in the dunes of the big islet.
+step read|Dr. Varga's notebook|1|Find the blockhouse buried in the dunes and read the notebook on its desk
 step kill|Roach|4|Clear the roaches out of the instrument bunker behind the blockhouse
 step collect|story:dosimeter|1|Take her dosimeter from the instrument locker
 step reach|groundzero|1|Wade out to the test tower's stumps at ground zero
 step open|Tower camera's lead case|1|Dive into the crater for the tower camera's lead case - don't stay
-step collect|story:film|3|Recover the other two canisters from the north and south measuring posts
+step collect|story:film|3|Open the camera boxes on the two wire-fenced measuring posts for the films
 step open|Blockhouse safe|1|Run the films on the projector and open the blockhouse safe
 step blueprint|Blueprint_Recycler|1|Take the recycler plans from the blockhouse safe
 quest done=The films have been seen. Whatever the world does with them, the atoll has its witness - and you have hers.

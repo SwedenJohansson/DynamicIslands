@@ -61,10 +61,10 @@ pop
 push at -11 5.5 h=0 yaw=270
 call stonehouse w=2 d=2 a=alcoves
 pop
-call airpocketat x=0 z=13.5 h=0 id=alcove_1 al=alc1air bub=alc1bub r=1.8 msg="Air in the north alcove. Something big passes the doorway."
-call airpocketat x=13.5 z=0 h=0 id=alcove_2 al=alc2air bub=alc2bub r=1.8 msg="Air in the east alcove."
-call airpocketat x=0 z=-13.5 h=0 id=alcove_3 al=alc3air bub=alc3bub r=1.8 msg="Air in the south alcove."
-call airpocketat x=-12.5 z=7 h=0 id=alcove_4 al=alc4air bub=alc4bub r=1.8 msg="Air in the west alcove. Paper on the floor."
+call airpocketat x=0 z=13.5 h=0 id=alcove_1 al=alc1air bub=alc1bub r=1.8 msg="Air in the alcove next to the chain one. Something big passes the doorway."
+call airpocketat x=13.5 z=0 h=0 id=alcove_2 al=alc2air bub=alc2bub r=1.8 msg="Air in the next alcove round the arena."
+call airpocketat x=0 z=-13.5 h=0 id=alcove_3 al=alc3air bub=alc3bub r=1.8 msg="Air in the alcove across from the chain one."
+call airpocketat x=-12.5 z=7 h=0 id=alcove_4 al=alc4air bub=alc4bub r=1.8 msg="Air in the alcove nearest the chain. Paper on the floor."
 place Placeable_Lantern_Metal teal at 0.6 14.6 h=0 sit
 place Placeable_Lantern_Metal teal at 14.6 -0.6 h=0 sit
 place Placeable_Lantern_Metal teal at -0.6 -14.6 h=0 sit
@@ -142,7 +142,7 @@ call sk_reef x=-49 z=66 r=6 seed=11061
 call sk_reef x=-36 z=78 r=5 seed=11071
 call sk_zone x=-49 z=66 al=sh_ridge id=sh_ridge r=7 msg="The lip ridge. The trench wall goes straight up from here to the Spire, and something big moves along the bottom."
 call sk_cave x=64 z=26 h=2 yaw=180 al=sh_caverock chest=sh_cavechest
-call sk_zone x=64 z=21 al=sh_cave id=sh_cave r=4 msg="A cave in the east wall. The Stalker's scratches go all the way in."
+call sk_zone x=64 z=21 al=sh_cave id=sh_cave r=4 msg="A cave in the rock wall. The Stalker's scratches go all the way in."
 call sk_dark x=64 z=21 h=1 r=7 al=sh_dark
 call airpocketat x=61.4 z=22 h=3.6 id=sh_air al=sh_air bub=sh_airbub r=2.2 msg="Air under the rock - breathe."
 call sk_ruin x=-62 z=-22 h=2 al=sh_ruin
@@ -261,7 +261,7 @@ prop hollowdark zone.radius=36
 note sh_cavechest Stalker's hoard | Things the Stalker dragged in: a diver's tank, a lamp, a broken bag.
 loot sh_cavechest OxygenBottle*1;TitaniumOre*2;Rope*2;Battery*1
 prop sh_cavechest loot.refill=0
-note sh_ruinnote Watchers' post log | WATCHERS' POST - LOG\n\nWe watched the Hollow for the Network. The Stalker comes up the trench at night and goes back at dawn, like a commuter.\nIt keeps out of strong light - not dim lamps, those it likes, it comes to them like a moth. Strong light, the floodlights, burns it.\nThe old valve in the south-east trench shuts the vent it breathes from.\nLast night two men went past the post towards the vent: a warden in a big coat with no hat, and the Director himself, carrying a lamp. The warden was talking the whole way. The Director was listening. We have never seen him listen.
+note sh_ruinnote Watchers' post log | WATCHERS' POST - LOG\n\nWe watched the Hollow for the Network. The Stalker comes up the trench at night and goes back at dawn, like a commuter.\nIt keeps out of strong light - not dim lamps, those it likes, it comes to them like a moth. Strong light, the floodlights, burns it.\nThe old valve in the trench shuts the vent it breathes from.\nLast night two men went past the post towards the vent: a warden in a big coat with no hat, and the Director himself, carrying a lamp. The warden was talking the whole way. The Director was listening. We have never seen him listen.
 note sh_wrecknote Boat's last log | BOAT'S LAST LOG\n\nWe came over the trench lip to see the Hollow lit - the Spire had set its fuses, and the whole sea could see.\nThe Stalker came up under us and took the hull like a dog takes a slipper. The crew swam for the post. I stayed with the boat, because somebody should, and because I can't swim, which I have never told anybody.\nI watched it go back down to the Hollow afterwards. It went straight past the lamps and lay down in the dark by the vent, the way you'd lie down by a fire.
 note sh_wreckcrate Boat's locker | The boat's locker: titanium, rope, a lamp in oilcloth.
 loot sh_wreckcrate TitaniumIngot*1;Rope*3;Bolt*2;Copper*2
@@ -295,7 +295,7 @@ note shbldnote Warden house roll | WARDEN HOUSE - DUTY ROLL\n\nFennick. Fennick.
 note shledge Watcher's cache | A watcher's cache on the lip rock's shelf.
 loot shledge Rope*3;Bolt*2;Feather*3
 prop shledge loot.refill=0
-note shcave2chest Warden's spare chest | A warden's spare chest in the east rock.
+note shcave2chest Warden's spare chest | A warden's spare chest in the rock cave.
 loot shcave2chest CopperOre*3;Rope*2;Battery*1
 prop shcave2chest loot.refill=0
 prop shsummit zone.id=sh_summit
@@ -325,19 +325,19 @@ quest title=The Deep
 quest intro=Fennick and the Director went down to the Hollow. Go down the chain to the trench lip after them.
 step reach|lip|1|Go down the chain to the trench lip
 step read|Warden's last entry|1|Read the warden's last entry
-step read|Watchers' post log|1|Read the log at the watchers' post in the west
-step read|Boat's last log|1|Read the last log at the sunk boat in the south
-step open|Warden house chest|1|Dive to the bottom of the drowned warden house in the south-west and open its chest
+step read|Watchers' post log|1|Read the log at the watchers' post
+step read|Boat's last log|1|Read the last log at the sunken boat
+step open|Warden house chest|1|Dive to the bottom of the drowned warden house and open its chest
 step read|Warden house roll|1|Read the duty roll in the drowned warden house
-step reach|alcove_1|1|Go down into the Hollow and get into the north alcove
+step reach|alcove_1|1|Go down into the Hollow and get into the stone alcove next to the chain one
 step collect|story:stalkerhurt|1|Wound the Abyssal Stalker
 step collect|story:sh_flood|3|While it calls the small ones, turn the three floodlights on it
-step reach|alcove_2|1|Get into the east alcove before the small ones reach you
+step reach|alcove_2|1|Get into the next stone alcove round the arena before the small ones reach you
 step collect|story:stalker|1|Drive off the Abyssal Stalker
 step reach|valve|1|Go to the seal valve on the plinth
 step collect|story:valve|1|Turn the seal valve
 step read|What the Ringwave means (part 1)|1|Read the plate on the plinth
-step reach|alcove_4|1|Go to the west alcove
+step reach|alcove_4|1|Go to the stone alcove nearest the chain
 step read|The last word|1|Read the last word
 step reach|surface_line|1|Climb the chain back to the surface
 quest done=The Sunken Kingdom is decided. Mo is going home. The Receiver goes quiet on every band but one.

@@ -428,13 +428,13 @@ call ar_plants_hill x=56 z=70 r=20 seed=26498
 info title=The Island of Stations
 info author=Custom Islands
 info description=A misty forest marsh where a plane came down - and found the island already full of buildings: the stations of a research initiative that vanished, each keeping one card of a Sequence. Gather the five cards, find the hatch in the marsh and enter the Sequence before the counter runs out.
-island on.arrive=message||A long, low, misty island. On the south beach, the tail of a plane sticks up out of the reeds. Further in, an aerial - and a dish.
+island on.arrive=message||A long, low, misty island. On the beach, the tail of a plane sticks up out of the reeds. Further in, an aerial - and a dish.
 
 story seqcard|Sequence card|quest:Vasagatan_KeyCard|A stamped card with one number of the Initiative's Sequence on it.
 story accesscard|Vault access card|quest:Tangaroa_KeyCard|The vault's access card, printed by the hatch's terminal when the Sequence was entered.
 
-note survivorsjournal Survivors' journal | ISLAND AIR FLIGHT 9 - SURVIVORS' JOURNAL\n\nDay 1. We came down in the marsh. Forty-one of us walked away.\nDay 6. There are buildings on this island. Somebody built them and left - or didn't leave.\nDay 14. A hatch in the marsh, its lid open, a ladder going down. The terminal down there wants five numbers.\nDay 30. The people in the village in the west came at night and took our compass and our maps. They won't speak to us.\nDay 41. A boat. Most of us are going. Kim stays - she wants to know what's in the hatch. Her notes are at the station with the aerials on the east rise.
-note orientation Orientation notes | THE HALDEN INITIATIVE - ORIENTATION (Kim's copy, typed from the projector reel)\n\nWelcome to the Island. Six stations, one purpose:\nGull - communications (you are here).\nKelp - the marine lab, in the bay.\nPike - zoology. Mind the cages.\nMoth - the residents' village.\nLantern - the observatory on the north hill.\nThe Hatch.\n\nEach station keeps one card of the Sequence. The Sequence is entered at the Hatch's terminal; it opens the Initiative's vault for sixty seconds.\n\n(Kim, in pencil:) Gull's card is in the desk. Kelp sank in a storm. Pike's bear is OUT. The village took Moth's card. Lantern's is in the observatory.
+note survivorsjournal Survivors' journal | ISLAND AIR FLIGHT 9 - SURVIVORS' JOURNAL\n\nDay 1. We came down in the marsh. Forty-one of us walked away.\nDay 6. There are buildings on this island. Somebody built them and left - or didn't leave.\nDay 14. A hatch in the marsh, its lid open, a ladder going down. The terminal down there wants five numbers.\nDay 30. The people in the village inland came at night and took our compass and our maps. They won't speak to us.\nDay 41. A boat. Most of us are going. Kim stays - she wants to know what's in the hatch. Her notes are at the station with the aerials on the rise.
+note orientation Orientation notes | THE HALDEN INITIATIVE - ORIENTATION (Kim's copy, typed from the projector reel)\n\nWelcome to the Island. Six stations, one purpose:\nGull - communications (you are here).\nKelp - the marine lab, in the bay.\nPike - zoology. Mind the cages.\nMoth - the residents' village.\nLantern - the observatory on the hill.\nThe Hatch.\n\nEach station keeps one card of the Sequence. The Sequence is entered at the Hatch's terminal; it opens the Initiative's vault for sixty seconds.\n\n(Kim, in pencil:) Gull's card is in the desk. Kelp sank in a storm. Pike's bear is OUT. The village took Moth's card. Lantern's is in the observatory.
 note gullsign Station Gull | THE HALDEN INITIATIVE - STATION GULL - COMMUNICATIONS\n\n(under it, scratched) nobody answers
 note pikesign Station Pike | THE HALDEN INITIATIVE - STATION PIKE - ZOOLOGY\nDo not feed the specimens. Do not open the cages.
 note mothsign Station Moth | THE HALDEN INITIATIVE - STATION MOTH - RESIDENCE\nResidents only. Curfew at dark.
@@ -466,7 +466,7 @@ prop campbox loot.refill=0
 note gulllocker Gull's locker | The comms officer's locker: spare valves, wire, a sweater.
 loot gulllocker CopperIngot*2;Wool*2;Bolt*2
 prop gulllocker loot.refill=0
-note baybarrel Barrel in the bay | A barrel from the plane's hold, washed into the bay: tins and tools.
+note baybarrel Barrel in the bay | A barrel from the plane's hold, floating in the bay: tins and tools.
 loot baybarrel Scrap*3;MetalOre*2;Cooked_GenericMeat*2
 prop baybarrel loot.refill=0
 note feedstore Pike's feed store | The zoo's feed store: sacks of fish meal, a scoop, rope for the cages.
@@ -551,7 +551,7 @@ prop marshmist zone.radius=60
 story is_top|Relay crystal|Bolt|The tuning crystal of the Initiative's relay mast on Mist Hill.
 story is_cave|Tape reel|Bolt|A reel of tape in a tin, marked 'DO NOT PLAY', hidden in Echo Cave.
 story is_fixed|Broadcast desk working|Bolt|The broadcast desk, working again.
-note is_hint Radio man's note | THE BROADCAST DESK NEEDS: the relay crystal from the mast on Mist Hill (north-east) and the reel from Echo Cave (south-west). I can't climb any more. - Arlo, in the barracks
+note is_hint Radio man's note | THE BROADCAST DESK NEEDS: the relay crystal from the mast on top of Mist Hill and the reel from Echo Cave. I can't climb any more. - Arlo, in the barracks
 note is_topchest Initiative's relay mast box | A box lashed to the top of the Initiative's relay mast.
 loot is_topchest story:is_top*1;Rope*2;Scrap*2
 note is_cavechest Echo Cave chest | A chest at the back of Echo Cave, dry under the rock.
@@ -566,7 +566,7 @@ loot is_setchest MetalIngot*2;Glass*3;Bolt*4
 note is_planecrate Launch's locker | The supply launch's locker: fuel cans, rope and tins of coffee.
 loot is_planecrate Plastic*3;Scrap*3;Nail*6
 prop is_planecrate loot.refill=0
-note is_pilot Launch skipper's log | SUPPLY LAUNCH. Last run. Compass spinning off the east shore. Ran her up on the rocks rather than go round again.
+note is_pilot Launch skipper's log | SUPPLY LAUNCH. Last run. Compass spinning off the shore. Ran her up on the rocks rather than go round again.
 note jcis Survey stacks | Survey markers stacked into steps. A surveyor's bundle half way.
 loot jcis Rope*3;Plank*4;MetalIngot*1
 note jbis Top marker | A box at the very top.
@@ -577,8 +577,8 @@ quest intro=A misty island with a plane in its marsh - and buildings that were h
 # Chapter 1 - the crash
 step reach|crashcamp|1|Reach the survivors' camp by the wreck of Flight 9
 step read|Survivors' journal|1|Read the survivors' journal
-step open|Passenger's trunk|1|Search the reeds by the plane for a passenger's trunk
-step reach|stationgull|1|Find the station with the aerials on the east rise
+step open|Passenger's trunk|1|Open the passenger's trunk in the reeds by the plane
+step reach|stationgull|1|Find the station with the aerials and the dish on the rise
 # Chapter 2 - the stations
 step read|Orientation notes|1|Read the orientation notes in Station Gull
 step collect|story:seqcard|1|Take Station Gull's Sequence card from the comms desk
@@ -587,19 +587,19 @@ step collect|story:seqcard|2|Find Kelp's card in its flooded lab
 step read|Station Pike|1|Read the sign at Station Pike's fence before you go in
 step kill|Polar bear|1|Face the bear that broke out of Station Pike
 step collect|story:seqcard|3|Take Pike's card from the keeper's locker
-step reach|village|1|Walk into the residents' village in the west
+step reach|village|1|Walk into the residents' village of small houses
 step open|Village fridge|1|Raid the fridge humming in a village house - somebody still stocks it
 step collect|story:seqcard|4|Find Station Moth's card in the village's council hall
-step kill|Warthog|2|Drive off the boars rooting in the woods under the north hill
-step reach|stationlantern|1|Climb to Station Lantern, the observatory on the north hill
+step kill|Warthog|2|Drive off the boars rooting in the woods under the observatory hill
+step reach|stationlantern|1|Climb to Station Lantern, the observatory on the hill
 step collect|story:seqcard|5|Take the last card from the observatory
 # Chapter 3 - the hatch
-step read|Radio man's note|1|Read the radio man's note by the broadcast desk at the ruined house in the south-west
+step read|Radio man's note|1|Read the radio man's note by the broadcast desk at the ruined house
 step talk|Arlo Penn|1|Talk to Arlo Penn at the ruined house
-step reach|is_trail|1|Find the foot of the trail up Mist Hill, in the north-east
+step reach|is_trail|1|Find the foot of the trail up Mist Hill, the big hill
 step reach|is_summit|1|Climb the trail to the top of Mist Hill
 step collect|story:is_top|1|Climb the Initiative's relay mast and take the relay crystal from its box
-step reach|is_cave|1|Find Echo Cave in the south-west
+step reach|is_cave|1|Find Echo Cave, the cave in the rock
 step collect|story:is_cave|1|Take the tape reel from the chest at the back of the cave
 step read|The broadcast|1|Bring both to the broadcast desk and read what it shows
 step reach|hatch|1|Find the hatch in the marsh and climb down into it

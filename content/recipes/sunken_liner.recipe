@@ -296,7 +296,7 @@ story pursercode|Purser's combination|quest:Vasagatan_FourDigitCode|A card in an
 story sapphire|The Polar Star|Placeable_GiantClam|The Polar Star, the sapphire the whole voyage was about - blue as deep ice.
 story paykey|Pay chest key|quest:Vasagatan_GreenKey|The key to the ship's pay chest, from the purser's safe.
 
-note survivorslog Survivors' log | LIFEBOAT 7 - REGINA BOREALIS\n\nNight of the 9th. She struck the ice-rocks off these islets at full speed and broke in two. Eleven of us in lifeboat 7.\nDay 3. The chief steward died of the cold. His keys are in the camp chest - the one for his cabinet in the ballroom, where he kept the purser's safe combination "away from the purser".\nDay 5. The purser's safe holds the Polar Star, the sapphire the whole voyage was about, and the key to the ship's pay chest.\nDay 7. Smoke on the horizon - a whaler. We're going.\n\nIf anyone comes after: the wreck lies below the islets, bow to the north, stern in the deep. Something lives in the stern now. It has lamps.
+note survivorslog Survivors' log | LIFEBOAT 7 - REGINA BOREALIS\n\nNight of the 9th. She struck the ice-rocks off these islets at full speed and broke in two. Eleven of us in lifeboat 7.\nDay 3. The chief steward died of the cold. His keys are in the camp chest - the one for his cabinet in the ballroom, where he kept the purser's safe combination "away from the purser".\nDay 5. The purser's safe holds the Polar Star, the sapphire the whole voyage was about, and the key to the ship's pay chest.\nDay 7. Smoke on the horizon - a whaler. We're going.\n\nIf anyone comes after: the wreck lies below the islets, bow toward the lifeboat, stern in the deep. Something lives in the stern now. It has lamps.
 note campchest Lifeboat 7's camp chest | The survivors' chest: blankets, a flare pistol (empty) - and the chief steward's key ring.
 loot campchest story:stewardkey*1;Wool*3;Rope*2
 prop campchest loot.refill=0
@@ -373,7 +373,7 @@ prop wind zone.radius=25
 story sl_top|Lookout's spyglass|Bolt|The lookout's brass spyglass, still in its box in the crow's nest.
 story sl_cave|Lamp carbons|Bolt|A tin of carbon rods for the signal lamp, carried into the cave by a survivor.
 story sl_fixed|Signal lamp working|Bolt|The signal lamp, working again.
-note sl_hint Lookout's message | THE SIGNAL LAMP IS DARK. It wants its carbons (a survivor took them to Frost Cave, south) and a lookout to aim it: my spyglass is still up the foremast on Ice Crown (west). - N. Ekholm, lookout
+note sl_hint Lookout's message | THE SIGNAL LAMP IS DARK. It wants its carbons (a survivor took them to Frost Cave, the ice cave below the rocks) and a lookout to aim it: my spyglass is still up the foremast on top of Ice Crown. - N. Ekholm, lookout
 note sl_topchest Liner's fallen foremast box | A box lashed to the top of the liner's fallen foremast.
 loot sl_topchest story:sl_top*1;Rope*2;Scrap*2
 note sl_cavechest Frost Cave chest | A chest at the back of Frost Cave, dry under the rock.
@@ -388,7 +388,7 @@ loot sl_setchest MetalIngot*2;Glass*3;Bolt*4
 note sl_planecrate Catcher boat's locker | The whale catcher's locker: rope, a harpoon line and a crate of tinned fish.
 loot sl_planecrate Rope*3;Scrap*3;Nail*6
 prop sl_planecrate loot.refill=0
-note sl_pilot Catcher's log | WHALE CATCHER SKUA. Came to look for survivors of the liner. Found the ice-rocks first. Aground on the north shoal, crew to the boats.
+note sl_pilot Catcher's log | WHALE CATCHER SKUA. Came to look for survivors of the liner. Found the ice-rocks first. Aground on the far shoal, crew to the boats.
 note jcsl Floe stack | Ice floes, stacked by the winter storms. A survivor left a bundle half way.
 loot jcsl Rope*3;Plank*4;MetalIngot*1
 note jbsl Top of the stack | A tin box on the highest floe.
@@ -406,12 +406,12 @@ step collect|story:pursercode|1|Open the steward's cabinet in the ballroom for t
 step kill|Angler fish|2|Drive the two lamps out of the stern
 step reach|purser|1|Find the purser's office beside the stern
 step collect|story:sapphire|1|Open the purser's safe for the Polar Star
-step read|Lookout's message|1|Read the lookout's message by the signal lamp at the ruined house in the north-west
+step read|Lookout's message|1|Read the lookout's message by the signal lamp at the ruined house
 step talk|Nils Ekholm|1|Talk to Nils Ekholm at the ruined house
-step reach|sl_trail|1|Find the foot of the trail up Ice Crown, in the west
+step reach|sl_trail|1|Find the foot of the trail up Ice Crown, the big ice hill
 step reach|sl_summit|1|Climb the trail to the top of Ice Crown
 step collect|story:sl_top|1|Climb the liner's fallen foremast and take the lookout's spyglass from its box
-step reach|sl_cave|1|Find Frost Cave in the south
+step reach|sl_cave|1|Find Frost Cave, the ice cave under the rocks
 step collect|story:sl_cave|1|Take the lamp carbons from the chest at the back of the cave
 step read|Lookout's log|1|Bring both to the signal lamp and read what it shows
 step open|Ship's pay chest|1|Open the ship's pay chest with the purser's key

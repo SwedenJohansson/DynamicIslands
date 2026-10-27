@@ -246,7 +246,7 @@ call ar_cave x=-20 z=90 h=3 yaw=180 al=sp_caverock chest=sp_cavechest
 call hw_zone x=-19 z=81 al=sp_cavez id=sp_cave r=4 h=1 msg="Serpent Cave. Water drips somewhere in the dark."
 call ar_ruin x=84 z=2 h=3 yaw=0 w=3 d=2 al=sp_ruin
 call ss_islander x=83 z=-2.5 yaw=200 al=sp_isl nm="Mateo Ruiz" pose=sit
-prop sp_isl talk.text=The doctora paid us to carry her boxes up the causeway. When the rains came, the others went home. I stayed.\n---\nThe calendar stone by the village tells the rain days - but only with its two discs. The sun disc hangs on her survey tower on Jaguar Hill, the moon disc is in Serpent Cave.\n---\nAnd the maze by the north shore? The Rain Kings made it for their priests. There is something in the middle.\n---\nThe four torches round my house: each one you light wakes the next. Light all four and look behind the back wall.
+prop sp_isl talk.text=The doctora paid us to carry her boxes up the causeway. When the rains came, the others went home. I stayed.\n---\nThe calendar stone by the village tells the rain days - but only with its two discs. The sun disc hangs on her survey tower on Jaguar Hill, the moon disc is in Serpent Cave.\n---\nAnd the maze by the shore? The Rain Kings made it for their priests. There is something in the middle.\n---\nThe four torches round my house: each one you light wakes the next. Light all four and look behind the back wall.
 place Placeable_Chair_Basic - at 83 -2.5 ground sit yaw=200
 call ss_lamp x=77 z=1 al=sp_lamp1 nm="Torch post 1" grp="Torch posts" on=0
 call ss_lamp x=83 z=8 al=sp_lamp2 nm="Torch post 2" grp="Torch posts" on=0
@@ -408,12 +408,12 @@ island on.arrive=message||A green mesa with cliffs like walls. Over the treetops
 
 story jade|Jade tablet|quest:Utopia_KeyPhase1|A tablet of green jade carved with rain clouds: one of the three for the Rain Kings' altar.
 
-note fieldnotes Dr. Quintero's field notes | THE PYRAMID OF THE RAIN KINGS - field notes, M. Quintero\n\nThe plateau was theirs: maize terraces, the stepped pyramid, and beside it a sinkhole straight down to the sea - their sacred well, where they threw jade to bring the rain.\n\nThree jade tablets were kept apart. One in the Sun shrine on the west terrace; its doorway is staked shut - the carving shows a jaguar's paw at the cliff's edge (a lever?). One thrown into the well. One in the Rain shrine on the east terrace, beyond a moat of stakes nobody can cross. The carving over the moat: "When the Sun gives up its stone, the Rain shows its path."\n\nLay the three on the summit altar, the carvings say, and the Kings' own offering is yours.\n\nThe warthogs dig everywhere. Something in the well took my rope.
+note fieldnotes Dr. Quintero's field notes | THE PYRAMID OF THE RAIN KINGS - field notes, M. Quintero\n\nThe plateau was theirs: maize terraces, the stepped pyramid, and beside it a sinkhole straight down to the sea - their sacred well, where they threw jade to bring the rain.\n\nThree jade tablets were kept apart. One in the Sun shrine on the near terrace; its doorway is staked shut - the carving shows a jaguar's paw at the cliff's edge (a lever?). One thrown into the well. One in the Rain shrine on the far terrace, beyond a moat of stakes nobody can cross. The carving over the moat: "When the Sun gives up its stone, the Rain shows its path."\n\nLay the three on the summit altar, the carvings say, and the Kings' own offering is yours.\n\nThe warthogs dig everywhere. Something in the well took my rope.
 note carvings The Rain Kings' carvings | (carved round the altar; Dr. Quintero's pencil translation tucked under a stone)\n\nThree stones of rain - the Sun's, the Well's, the Rain's.\nLay them in the hollows of the altar,\nand the sky's chest opens.
-note sunchest Sun shrine's tablet chest | A stone box in the Sun shrine: the first jade tablet, wrapped in rotten cloth. As you lift it, stone grinds on stone somewhere to the east.
+note sunchest Sun shrine's tablet chest | A stone box in the Sun shrine: the first jade tablet, wrapped in rotten cloth. As you lift it, stone grinds on stone somewhere on the plateau.
 loot sunchest story:jade*1;Clay*3
 prop sunchest loot.refill=0
-prop sunchest on.open=show|rainstones\nmessage||Stone grinds on stone, somewhere to the east - the Rain shows its path.\nsound||event:/coll/stoneground
+prop sunchest on.open=show|rainstones\nmessage||Stone grinds on stone, somewhere on the plateau - the Rain shows its path.\nsound||event:/coll/stoneground
 note offeringbox Well's offering box | A box among the offerings at the bottom of the well: jade beads, a gold disc - and the second tablet.
 loot offeringbox story:jade*1;TradeToken*4
 prop offeringbox loot.refill=0
@@ -487,7 +487,7 @@ prop wellight zone.radius=12
 story sp_top|Sun disc|Bolt|A gold disc the Rain Kings set on the hill to catch the sunrise; the explorer hung it on her survey tower.
 story sp_cave|Moon disc|Bolt|A silver disc, wrapped in the explorer's scarf at the back of Serpent Cave.
 story sp_fixed|Calendar stone working|Bolt|The calendar stone, working again.
-note sp_hint Porter's carving | THE CALENDAR STONE WANTS ITS DISCS: the sun on the hill (north-west, the explorer's tower is on it) and the moon in Serpent Cave (north). Mateo at the porters' village knows.
+note sp_hint Porter's carving | THE CALENDAR STONE WANTS ITS DISCS: the sun on Jaguar Hill (the explorer's tower is on it) and the moon in Serpent Cave. Mateo at the porters' village knows.
 note sp_topchest Explorer's survey tower box | A box lashed to the top of the explorer's survey tower.
 loot sp_topchest story:sp_top*1;Rope*2;Plank*3
 note sp_cavechest Serpent Cave chest | A chest at the back of Serpent Cave, dry under the rock.
@@ -502,7 +502,7 @@ loot sp_setchest MetalIngot*2;Glass*3;Bolt*4
 note sp_planecrate Mail plane's crate | The expedition's mail plane crate: letters never sent, rope and tins.
 loot sp_planecrate Plastic*3;Scrap*3;Rope*2
 prop sp_planecrate loot.refill=0
-note sp_pilot Mail pilot's note | MAIL RUN TO THE PLATEAU. Fog to the treetops. The doctora's flare never came. Putting down in the west lowland.
+note sp_pilot Mail pilot's note | MAIL RUN TO THE PLATEAU. Fog to the treetops. The doctora's flare never came. Putting down in the lowland below the cliffs.
 note jcsp Stela stack | Fallen stelae piled into steps. Half way up, a priest's bundle.
 loot jcsp Rope*3;Plank*4;MetalIngot*1
 note jbsp Top stela | An offering on the highest stone.
@@ -516,19 +516,19 @@ step reach|basecamp|1|Reach the explorers' base camp at the foot of the cliffs
 step read|Dr. Quintero's field notes|1|Read the field notes in the base camp
 step reach|causeway|1|Climb the old causeway up the cliffs to the plateau
 step kill|Warthog|3|Drive off the warthogs rooting in the ruined terraces
-step collect|story:jade|1|Find the hidden lever, sink the Sun shrine's stakes and take its jade tablet
+step collect|story:jade|1|Find the lever at the cliff edge, sink the Sun shrine's stakes, take its jade tablet
 step reach|cenote|1|Find the sacred well beside the pyramid
 step kill|Angler fish|1|Face the guardian of the well's deep water
 step collect|story:jade|2|Dive for the second jade tablet among the offerings
 step collect|story:jade|3|Cross the stepping stones over the stakes to the Rain shrine for the third tablet
 step reach|summit|1|Climb the pyramid's stairway to the summit shrine
 step read|The Rain Kings' carvings|1|Read the carvings round the altar
-step read|Porter's carving|1|Read the porter's carving by the calendar stone at the ruined house in the east
+step read|Porter's carving|1|Read the porter's carving by the calendar stone at the ruined house
 step talk|Mateo Ruiz|1|Talk to Mateo Ruiz at the ruined house
-step reach|sp_trail|1|Find the foot of the trail up Jaguar Hill, in the north-west
+step reach|sp_trail|1|Find the foot of the trail up Jaguar Hill, the tall hill
 step reach|sp_summit|1|Climb the trail to the top of Jaguar Hill
 step collect|story:sp_top|1|Climb the explorer's survey tower and take the sun disc from its box
-step reach|sp_cave|1|Find Serpent Cave in the north
+step reach|sp_cave|1|Find Serpent Cave, the cave in the cliff
 step collect|story:sp_cave|1|Take the moon disc from the chest at the back of the cave
 step read|Calendar reading|1|Bring both to the calendar stone and read what it shows
 step open|Rain Kings' offering chest|1|Lay the three tablets in the altar and open the offering chest

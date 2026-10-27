@@ -155,7 +155,7 @@ call sk_ridge x1=58 z1=-30 x2=72 z2=24 h=5 top=8 r=10
 call sk_plants x=65 z=-3 r=16 seed=10161
 call sk_zone x=65 z=-3 al=sc_ridge id=sc_ridge r=7 msg="The rubble ridge. Under the water the drowned rooftops lie in a grid - streets, once. Two masts still stand up here."
 call sk_cave x=-46 z=-4 h=3 yaw=0 al=sc_caverock chest=sc_cavechest
-call sk_zone x=-46 z=1 al=sc_cave id=sc_cave r=4 msg="A cave in the western rock. Somebody slept here and kept a mast by the door."
+call sk_zone x=-46 z=1 al=sc_cave id=sc_cave r=4 msg="A cave in the rock. Somebody slept here and kept a mast by the door."
 call sk_ruin x=-8 z=-66 h=3 al=sc_ruin
 call sk_notebox x=-5.5 z=-70.5 yaw=10 al=sc_ruinnote
 call sk_plane x=-46 z=58 h=3 yaw=60 al=sc_plane crate=sc_wreckcrate
@@ -214,8 +214,8 @@ island on.arrive=message||Roofs. Five of them, standing out of the sea - and thr
 note distresscard Pelagic Network distress card | PELAGIC NETWORK - AUTOMATED NOTICE\n\nThis is the Sealkeeper. The Commons are sealed and safe.\nStay where you are. Keep your lights low. Do not answer the deep.\nThis is the Sealkeeper. The Commons are sealed and safe...\n\n(A printout of the beacon's loop: the same three lines, again and again, down the whole page.)\n\nIn pencil at the bottom: "Then why is HIS light the only one still on? - T."\nUnder that, in a neat hand: "That is Director Rook's voice. He read the weather at the regatta once and nobody heard a word. He has found his volume now. - I.M."
 note beaconchest Beacon hut chest | The beacon keeper's chest: receiver plans and a spare cable.
 note masttoolbox Mast toolbox | A rigger's toolbox wedged in the fallen mast: antenna plans.
-note inesslate1 Ines's slate (the coop) | DIVE SLATE - I. MARLOWE (chalk)\n\nMilo, you made me promise to write down everything I see, so here it is: the coop roof, at night, with a hen asleep on my boot.\nTeo says the beacon is a distress call. I worked the Network's cables for eleven years and I have never heard a distress call that says "do not answer".\nAnd there is something else. Out past the drowned streets, under the water, a light. Teal, small, very steady. The wind is from the west tonight and every fleck of foam on the sea goes east. The light goes west. Against the wind. Slowly, like it is looking for something.\nI have put our lamp out. Mo the whale is in your bag - I checked twice. Sleep, love.
-note diary Rooftop caretaker's diary | ROOF CARETAKER - SPIRECREST (T. Brask)\n\nDay 31 of the water. The hens lay on the coop roof and the birches don't care what floor they are on. I envy them.\nThe beacon keeps calling the Commons. Nobody calls back, except the gulls, and they are rude.\nInes went down to the street today and came back with a kettle and a face like thunder. The children's shuttle leaves from the toll booth on the overpass. She has put Milo's name down. She has knitted him a whale for the trip. It is yellow. It is the yellowest thing left in the world.\nDay 34. Shuttle gone. Ines gone after it, down the road. Somebody has to follow her with the oxygen she forgot, and it seems to be me.\nIf you read this: feed the hens, mind the screechers, and follow the road east. It goes into the blue and comes up again at the toll booth.
+note inesslate1 Ines's slate (the coop) | DIVE SLATE - I. MARLOWE (chalk)\n\nMilo, you made me promise to write down everything I see, so here it is: the coop roof, at night, with a hen asleep on my boot.\nTeo says the beacon is a distress call. I worked the Network's cables for eleven years and I have never heard a distress call that says "do not answer".\nAnd there is something else. Out past the drowned streets, under the water, a light. Teal, small, very steady. The wind is blowing hard tonight and every fleck of foam on the sea runs before it. The light goes the other way. Against the wind. Slowly, like it is looking for something.\nI have put our lamp out. Mo the whale is in your bag - I checked twice. Sleep, love.
+note diary Rooftop caretaker's diary | ROOF CARETAKER - SPIRECREST (T. Brask)\n\nDay 31 of the water. The hens lay on the coop roof and the birches don't care what floor they are on. I envy them.\nThe beacon keeps calling the Commons. Nobody calls back, except the gulls, and they are rude.\nInes went down to the street today and came back with a kettle and a face like thunder. The children's shuttle leaves from the toll booth on the overpass. She has put Milo's name down. She has knitted him a whale for the trip. It is yellow. It is the yellowest thing left in the world.\nDay 34. Shuttle gone. Ines gone after it, down the road. Somebody has to follow her with the oxygen she forgot, and it seems to be me.\nIf you read this: feed the hens, mind the screechers, and follow the road out over the water. It goes into the blue and comes up again at the toll booth.
 loot beaconchest Blueprint_Reciever*1;Rope*2;Scrap*2
 prop beaconchest loot.refill=0
 loot masttoolbox Blueprint_Antenna*1;Bolt*2
@@ -234,7 +234,7 @@ prop hens creature.count=3
 note sc_cavechest Signalman's chest | A signalman's chest: wire, a battery, rope.
 loot sc_cavechest Copper*2;Battery*1;Rope*3;CircuitBoard*1
 prop sc_cavechest loot.refill=0
-note sc_ruinnote Pump-man's slate | PUMP-MAN'S SLATE\n\nForty years I kept the roof pumps going. When the sea came over the parapets they were still running, I'll have you know.\nThen one night the board in my hut went from LOCAL to REMOTE all by itself, and every pump on every roof stopped at once. Not broken. Stopped. Somebody far away pressed a button, and the water came in like it had been invited.\nMy spares are in the strongbox by my wall. My wife always said I counted masts the way other men count sheep, so that is the lock: the poles still standing at the east ridge, the west cave, my house and the courier's plane, in that order.
+note sc_ruinnote Pump-man's slate | PUMP-MAN'S SLATE\n\nForty years I kept the roof pumps going. When the sea came over the parapets they were still running, I'll have you know.\nThen one night the board in my hut went from LOCAL to REMOTE all by itself, and every pump on every roof stopped at once. Not broken. Stopped. Somebody far away pressed a button, and the water came in like it had been invited.\nMy spares are in the strongbox by my wall. My wife always said I counted masts the way other men count sheep, so that is the lock: the poles still standing on the ridge, the cave, my house and the courier's plane, in that order.
 note sc_wrecknote Courier's logbook | COURIER'S LOGBOOK - AIR MAIL, SUCH AS IT IS\n\nLast run to the Spirecrest roofs: one sack of mail for addresses that are now under water, two oxygen tanks, a crate of fuses, and a jar of pickled herring nobody ordered.\nPut down on the rocks. Nobody came to the lamp. The caretaker came at last, with a hen under one arm, as if that were normal.\nThe tanks were for the diver, Marlowe. She had already gone down the road after the children's shuttle. He said he would carry them after her. He is seventy if he is a day.\nI asked him what the beacon was for. He said "company". Flying home over the city I saw a teal light under the water, keeping pace with my shadow. I did not log that. I am logging it now.
 note sc_wreckcrate Courier's crate | The courier's crate. The mail is pulp; the rest kept dry.
 loot sc_wreckcrate Plank*4;Nail*8;Rope*2;Scrap*3
@@ -260,7 +260,7 @@ loot sclocker MetalIngot*3;CopperIngot*2;Rope*3;Cooked_Potato*2
 prop sclocker loot.refill=0
 prop sclocker if.open=has|story:sc_key|1
 prop sclocker else.open=message||Padlocked. The tag: "key in the exchange strongbox, at the bottom".
-note scsumnote Ines's slate (Signal Hill) | DIVE SLATE - I. MARLOWE, SIGNAL HILL\n\nMilo, I climbed the linemen's tower to see the road, because the radio says your shuttle never reached the Yard. It says it went down on a reef. It says twelve got off and walked to the Caisson Yard. It does not say which twelve.\nFrom up here the old highway runs out of the sea and back into it, east, to the toll booth on the overpass. That is where you got on. That is where I start.\nThe teal light was out there again tonight, under the road. It stopped when I lit my torch. I put the torch out and it moved on.\nThis slate is not goodbye. It is so you know which way I went. The overpass. Then the labs. Then wherever you are.
+note scsumnote Ines's slate (Signal Hill) | DIVE SLATE - I. MARLOWE, SIGNAL HILL\n\nMilo, I climbed the linemen's tower to see the road, because the radio says your shuttle never reached the Yard. It says it went down on a reef. It says twelve got off and walked to the Caisson Yard. It does not say which twelve.\nFrom up here the old highway runs out of the sea and back into it, on to the toll booth on the overpass. That is where you got on. That is where I start.\nThe teal light was out there again tonight, under the road. It stopped when I lit my torch. I put the torch out and it moved on.\nThis slate is not goodbye. It is so you know which way I went. The overpass. Then the labs. Then wherever you are.
 note scbldnote Switchboard log | SWITCHBOARD LOG - NIGHT SHIFT, V. OKAFOR\n\n23:10 Call from the Spire, the Director's office: keep the beacon line open whatever happens. Keep it LIT. Yes, Director.\n23:40 A woman asking which seat her boy has on the night shuttle. Seat 14. She thanked me like I had done something.\n01:05 The water is at the windows. I put the relay locker key in the strongbox downstairs, safe from thieves. Which is a joke. Who is left?\n01:30 Nobody calls now. But the line to the trench is not quiet. Something on it, very low, saying the word I say when I pick up. "Calling. Calling."\nI am going up. There is air under the stairs if the water beats me to them.
 note scledge Climber's cache | A climber's cache on a ledge, off the path.
 loot scledge Rope*3;Bolt*2;Feather*3
@@ -335,17 +335,17 @@ step reach|beacon|1|Climb onto the beacon roof in the middle
 step read|Pelagic Network distress card|1|Read the distress card in the beacon hut
 step kill|Screecher|3|Drive the screechers off the beacon
 step blueprint|Blueprint_Reciever|1|Take the receiver plans from the beacon hut's chest
-step blueprint|Blueprint_Antenna|1|Take the antenna plans from the toolbox on the east bridge
+step blueprint|Blueprint_Antenna|1|Take the antenna plans from the toolbox on the bridge by the beacon
 step read|Rooftop caretaker's diary|1|Read the caretaker's diary in the roof garden
-step read|Ines's slate (the coop)|1|Find the diver's slate by the hen coop on the south roof
-step reach|sc_ridge|1|Climb the rubble ridge in the east
-step read|Pump-man's slate|1|Read the slate in the pump-man's ruin in the south
-step read|Courier's logbook|1|Read the logbook at the courier plane in the north-west
-step collect|story:sc_key|1|Dive into the drowned telephone exchange in the south-east pit: the key is in its strongbox
-step reach|sc_summit|1|Climb Signal Hill in the west to the linemen's tower
+step read|Ines's slate (the coop)|1|Find the diver's slate by the hen coop on its roof
+step reach|sc_ridge|1|Climb the rubble ridge with the old signal poles
+step read|Pump-man's slate|1|Read the slate in the pump-man's ruin, a small house on the rubble
+step read|Courier's logbook|1|Read the logbook at the crashed courier plane
+step collect|story:sc_key|1|Dive into the drowned telephone exchange pit and open its strongbox for the key
+step reach|sc_summit|1|Climb Signal Hill, the tall hill with the linemen's tower
 step open|Relay locker|1|Open the relay locker with the exchange key
 step read|Ines's slate (Signal Hill)|1|Read the diver's slate on Signal Hill
-step reach|jump_sc_top|1|Hop up the caretaker's slab scaffold on the south-west shore and look for the highway from its top
+step reach|jump_sc_top|1|Hop up the caretaker's slab scaffold by the water and look for the highway from its top
 quest done=Ines went down the road after her son's shuttle, and Teo after her with the oxygen. The Receiver finds the toll booth's radio on band 700.
 quest reward=Plank*8;Rope*3;OxygenBottle*1;Flipper*1
 

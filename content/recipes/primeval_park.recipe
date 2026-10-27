@@ -359,7 +359,7 @@ call ar_cave x=-86 z=-44 h=3 yaw=0 al=pp_caverock chest=pp_cavechest
 call hw_zone x=-87 z=-35 al=pp_cavez id=pp_cave r=4 h=1 msg="Nest Cave. Water drips somewhere in the dark."
 call ar_ruin x=-60 z=-84 h=3 yaw=0 w=3 d=2 al=pp_ruin
 call ss_islander x=-61 z=-88.5 yaw=200 al=pp_isl nm="Rosa Okafor" pose=lean
-prop pp_isl talk.text=Shh. Something hears better than you think out here.\n---\nI was the night keeper. When the storm came, they took the boat. I was out at the hatchery.\n---\nThe hatchery console wants the lens off the camera mast on Fern Knoll and my tag gun from Nest Cave. I want to know how many hatched.\n---\nAnd the hedge maze south of here was for the visitors' children. Go on - there's a prize.\n---\nThe staff lamps round my house: each one you turn wakes the next. Light all four and look behind the back wall.
+prop pp_isl talk.text=Shh. Something hears better than you think out here.\n---\nI was the night keeper. When the storm came, they took the boat. I was out at the hatchery.\n---\nThe hatchery console wants the lens off the camera mast on Fern Knoll and my tag gun from Nest Cave. I want to know how many hatched.\n---\nAnd the hedge maze near here was for the visitors' children. Go on - there's a prize.\n---\nThe staff lamps round my house: each one you turn wakes the next. Light all four and look behind the back wall.
 call ss_lamp x=-67 z=-85 al=pp_lamp1 nm="Staff lamp 1" grp="Staff lamps" on=1
 call ss_lamp x=-61 z=-78 al=pp_lamp2 nm="Staff lamp 2" grp="Staff lamps" on=0
 call ss_lamp x=-54 z=-85 al=pp_lamp3 nm="Staff lamp 3" grp="Staff lamps" on=1
@@ -652,7 +652,7 @@ call camera x=8.2 z=43.2 h=8.5 yaw=-145 alias=paddockcam
 story pp_top|Camera lens|Bolt|The long lens off the park's camera mast on Fern Knoll.
 story pp_cave|Hatchery tag gun|Bolt|The hatchery's tag gun, dropped by a keeper in Nest Cave.
 story pp_fixed|Hatchery console working|Bolt|The hatchery console, working again.
-note pp_hint Night keeper's note | HATCHERY CONSOLE: needs the lens off the camera mast (Fern Knoll, north-west) to count the eggs, and the tag gun (Nest Cave, south-west). Rosa, at the old staff house.
+note pp_hint Night keeper's note | HATCHERY CONSOLE: needs the lens off the camera mast (on top of Fern Knoll) to count the eggs, and the tag gun (in Nest Cave). Rosa, at the old staff house.
 note pp_topchest Park camera mast box | A box lashed to the top of the park camera mast.
 loot pp_topchest story:pp_top*1;Rope*2;Scrap*2
 note pp_cavechest Nest Cave chest | A chest at the back of Nest Cave, dry under the rock.
@@ -683,11 +683,11 @@ step read|Evacuation notice|1|Read the evacuation notice under the welcome arch
 step reach|visitorcentre|1|Walk the tour road to the visitor centre
 step read|Chief engineer's report|1|Read the chief engineer's report in the control room
 # Chapter 2 - the power
-step collect|story:fuse|1|Find the first fuse in the maintenance shed
+step collect|story:fuse|1|Find the first fuse in the box in the maintenance shed
 step kill|Warthog|4|Get past the ironback boars loose from their paddock
 step collect|story:fuse|2|Take the second fuse from the boar keeper's locker
 step reach|river|1|Follow the river ride to its station
-step collect|story:fuse|3|Dive for the third fuse in the sunken tour boat
+step collect|story:fuse|3|Dive for the third fuse, in the box in the sunken tour boat
 step collect|story:gatecard|1|Fit the fuses at the power house and take the gate card the control room prints
 # Chapter 3 - the aviary and the lagoon
 step reach|aviary|1|Climb to the keeper's platform in the aviary
@@ -697,15 +697,15 @@ step reach|lagoonshow|1|Go down to the show lagoon's feeding platform
 step kill|Angler fish|1|Face the leviathan of the show lagoon
 step collect|story:queenkey|1|Dive for the Queen's keeper's key on the lagoon floor
 # Chapter 4 - the Queen
-step read|Night keeper's note|1|Read the night keeper's note by the hatchery console at the ruined house in the south-west
+step read|Night keeper's note|1|Read the night keeper's note by the hatchery console at the ruined house
 step talk|Rosa Okafor|1|Talk to Rosa Okafor at the ruined house
-step reach|pp_trail|1|Find the foot of the trail up Fern Knoll, in the north-west
+step reach|pp_trail|1|Find the foot of the trail up Fern Knoll, the tall wooded hill
 step reach|pp_summit|1|Climb the trail to the top of Fern Knoll
 step collect|story:pp_top|1|Climb the park camera mast and take the camera lens from its box
-step reach|pp_cave|1|Find Nest Cave in the south-west
+step reach|pp_cave|1|Find Nest Cave, the cave in the rock
 step collect|story:pp_cave|1|Take the hatchery tag gun from the chest at the back of the cave
 step read|Hatchery count|1|Bring both to the hatchery console and read what it shows
-step reach|queengate|1|Open the great gate on the north horn and walk into the Queen's valley
+step reach|queengate|1|Open the great gate across the park's narrow neck and walk into the Queen's valley
 step kill|Mama bear|1|Face the Queen
 step read|Founder's farewell|1|Read the founder's farewell in the keeper lodge
 step open|Founder's vault|1|Open the founder's vault

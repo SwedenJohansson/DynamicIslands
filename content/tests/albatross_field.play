@@ -63,7 +63,7 @@ expect step 9
 
 # The runway lamps: not out of order - then south to north; the flight comes home; the footlocker
 use lamp3
-expect message South to north
+expect message One end to the other
 use lamp1
 expect shown lamp1light
 use lamp2

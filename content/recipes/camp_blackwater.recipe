@@ -405,7 +405,7 @@ prop forest zone.radius=60
 story cb_top|Radio valve|Bolt|The big glass valve out of the ranger's radio set, still warm from the sun on the mast.
 story cb_cave|Amplifier fuse|Bolt|The camp loudspeaker's fuse, which the kids hid in the bear's old den for a dare.
 story cb_fixed|Camp loudspeaker working|Bolt|The camp loudspeaker, working again.
-note cb_hint Caretaker's chalk board | LOUDSPEAKER DEAD. Wants the valve off the ranger's radio mast on Pike Knob (east) and the fuse the kids hid in Bear Hollow (south). Ask Walt at the cottage.
+note cb_hint Caretaker's chalk board | LOUDSPEAKER DEAD. Wants the valve off the ranger's radio mast on top of Pike Knob and the fuse the kids hid in Bear Hollow. Ask Walt at the cottage.
 note cb_topchest Ranger's radio mast box | A box lashed to the top of the ranger's radio mast.
 loot cb_topchest story:cb_top*1;Rope*2;Scrap*2
 note cb_cavechest Bear Hollow chest | A chest at the back of Bear Hollow, dry under the rock.
@@ -420,7 +420,7 @@ loot cb_setchest Glass*3;Bolt*4;MetalIngot*1
 note cb_planecrate Floatplane crate | The ranger's floatplane crate: a first-aid kit, a radio part and a box of flares.
 loot cb_planecrate Plastic*3;Scrap*3;Nail*6
 prop cb_planecrate loot.refill=0
-note cb_pilot Ranger's flight card | RANGER RUN - BLACKWATER. Camp empty, flag down. Something big on the ridge above the boathouse. Engine knocking, setting her down on the north shore.
+note cb_pilot Ranger's flight card | RANGER RUN - BLACKWATER. Camp empty, flag down. Something big on the ridge above the boathouse. Engine knocking, setting her down on the far shore.
 note jccb Counselors' perch | The counselors climbed up here to smoke where the kids could not see.
 loot jccb Rope*3;Plank*4;MetalIngot*1
 note jbcb Top of the perch | Somebody's stash at the very top.
@@ -428,22 +428,22 @@ loot jbcb CopperIngot*1;Bolt*2;TradeToken*1
 
 quest title=The Last Week of Summer
 quest intro=A summer camp on a forest lake, empty but for a radio that won't stop playing. The head counselor kept a logbook in the mess hall.
-step reach|campgate|1|Walk in under the camp's banner
+step reach|campgate|1|Head for the camp by the lake and walk in under its banner
 step read|Head counselor's logbook|1|Read the head counselor's logbook in the mess hall
-step collect|story:honey|1|Take the bear bait - a crock of honey - from the pantry
-step collect|story:flaregun|1|Find the flare pistol in the archery range's shed
-step open|Dock box|1|Check the canoe dock the bear took apart - its box is still at the end
+step collect|story:honey|1|Take the bear bait - a crock of honey - from the pantry cupboard in the mess hall
+step collect|story:flaregun|1|Find the flare pistol in the box in the archery range's shed
+step open|Dock box|1|Check the canoe dock the bear took apart - open the box still at the end
 step reach|boathouse|1|Go round the lake to the old boathouse on the far shore
 step kill|Bear|1|Set the bait and face the Ridge Bear when it comes for it
 step read|Dana's last note|1|Read the note pinned inside the old boathouse
 step reach|lookout|1|Climb to the fire lookout on the hill
 step collect|story:lockerkey|1|Fire the flare for the ranger boat and take the key from the nail by the post
-step read|Caretaker's chalk board|1|Read the caretaker's chalk board by the camp loudspeaker at the ruined house in the west
+step read|Caretaker's chalk board|1|Read the caretaker's chalk board at the ruined house by the camp loudspeaker
 step talk|Walt Pruitt|1|Talk to Walt Pruitt at the ruined house
-step reach|cb_trail|1|Find the foot of the trail up Pike Knob, in the east
+step reach|cb_trail|1|Find the foot of the trail up Pike Knob, the big hill
 step reach|cb_summit|1|Climb the trail to the top of Pike Knob
 step collect|story:cb_top|1|Climb the ranger's radio mast and take the radio valve from its box
-step reach|cb_cave|1|Find Bear Hollow in the south
+step reach|cb_cave|1|Find Bear Hollow, the bear's cave under the ridge
 step collect|story:cb_cave|1|Take the amplifier fuse from the chest at the back of the cave
 step read|Last broadcast|1|Bring both to the camp loudspeaker and read what it shows
 step open|Counselor's footlocker|1|Take her key back down to cabin 1 and open her footlocker

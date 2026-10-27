@@ -117,11 +117,11 @@ call hatchcache x=-40 z=-44 r=10 seed=10215 alias=roadhatch chest=roadhatchchest
 call treasure x=-60 z=10 r=10 n=1 seed=10214
 prop treasure10214 treasure.loot=CopperOre*3
 place Zone_Trigger viewzone at -20 -60 ground
-note drivernote Drivers' camp note | LANE 3 - WHO'S STILL HERE\n\nThe Okafors (van, four kids, one goat that is not ours). Dee (bike, opinions). The bus driver, gone down the lane for his toolbox and his dignity.\nWe cook on the bank and watch the road go under a bit more each week. Mrs Okafor says her sister works the night switchboard on the roofs and will have heard something. Dee says the Network has heard plenty and said nothing.\nTonight nobody lit the stove. Dee saw something out where the road goes under - a teal light, sliding along the lane markings like it was reading them.\nWe ate cold beans in the dark and the goat sulked. Tomorrow we walk north.
+note drivernote Drivers' camp note | LANE 3 - WHO'S STILL HERE\n\nThe Okafors (van, four kids, one goat that is not ours). Dee (bike, opinions). The bus driver, gone down the lane for his toolbox and his dignity.\nWe cook on the bank and watch the road go under a bit more each week. Mrs Okafor says her sister works the night switchboard on the roofs and will have heard something. Dee says the Network has heard plenty and said nothing.\nTonight nobody lit the stove. Dee saw something out where the road goes under - a teal light, sliding along the lane markings like it was reading them.\nWe ate cold beans in the dark and the goat sulked. Tomorrow we walk on along the highway.
 prop viewzone zone.id=overpass_view
 prop viewzone zone.radius=7
 prop viewzone zone.repeat=never
-prop viewzone zone.message=From the hills you see the whole highway: up out of the sea in the east, over the bank - and its broken end in the air.
+prop viewzone zone.message=From the hills you see the whole highway: up out of the sea at the ramp, over the bank - and its broken end in the air.
 
 # --- Areas (10-24: every story island has places all over it and its quest crosses it): the embankment ridge in the north, a cave in the south-east
 # rock, the toll keeper's house in the north-east, a caravan park in the south-west - and a Tangaroa token at each (the toll run)
@@ -129,7 +129,7 @@ call sk_ridge x1=-14 z1=66 x2=18 z2=72 h=5 top=4 r=8
 call sk_plants x=2 z=69 r=16 seed=10261
 call sk_zone x=2 z=69 al=op_ridge id=op_ridge r=7 msg="The old embankment. The road ran along here before the overpass went up; the toll lane is still painted on its stones."
 call sk_cave x=24 z=-42 h=3 yaw=180 al=op_caverock chest=op_cavechest
-call sk_zone x=24 z=-47 al=op_cave id=op_cave r=4 msg="A cave under the south-east rock - a road crew's store, its door long gone."
+call sk_zone x=24 z=-47 al=op_cave id=op_cave r=4 msg="A cave under the rock -a road crew's store, its door long gone."
 call sk_ruin x=66 z=50 h=3 al=op_ruin
 call sk_notebox x=68.5 z=45.5 yaw=10 al=op_ruinnote
 call sk_wreck x=-66 z=-24 h=3 yaw=30 v=Caravan_Blue_01 al=op_wreck crate=op_wreckcrate scale=1
@@ -222,7 +222,7 @@ note op_cavechest Road crew's chest | A road crew's chest: bolts, hinges, nails.
 loot op_cavechest Bolt*3;Hinge*2;Nail*10;Rope*2
 prop op_cavechest loot.refill=0
 note op_ruinnote Toll keeper's tally | TOLL KEEPER'S TALLY (A. Petrov)\n\nTangaroa tokens, the Network's coin. One a car, two a caravan, three for the man in the silver saloon who called me "booth".\nWhen the water came the cars stopped and the tokens rolled everywhere. I went round and left one on every place I liked, so somebody with a detector would have a nice walk one day. Under the old bench. By the caravans. Where the goats sleep.\nThe yard past the shelf has a machine that still takes them, they say. I hope it gives change.\nI have kept my tally to the last car. The last entry is not a car. It is the children's shuttle, 12 aboard, and I did not charge it.
-note op_wrecknote Caravan diary | CARAVAN DIARY - THE HALLORAN FAMILY\n\nWe paid the toll and parked to wait out the storm. Two caravans, one family, one jack between us, which Grandad keeps "for safety" in five different gloveboxes so nobody can lose it. Nobody can find it either.\nThe road went under at night. We walked the embankment north and left the caravans with the kettle on.\nBefore we went, the little one pointed at the water and said "boat". It was not a boat. It was a light, teal, low down, and it went the wrong way - out to sea, against the waves - and then it turned and came back slowly along the road.\nWe did not light the kettle again.
+note op_wrecknote Caravan diary | CARAVAN DIARY - THE HALLORAN FAMILY\n\nWe paid the toll and parked to wait out the storm. Two caravans, one family, one jack between us, which Grandad keeps "for safety" in five different gloveboxes so nobody can lose it. Nobody can find it either.\nThe road went under at night. We walked the embankment on up the road and left the caravans with the kettle on.\nBefore we went, the little one pointed at the water and said "boat". It was not a boat. It was a light, teal, low down, and it went the wrong way - out to sea, against the waves - and then it turned and came back slowly along the road.\nWe did not light the kettle again.
 note op_wreckcrate Caravan larder | A caravan's larder crate: tins, rope, seeds.
 loot op_wreckcrate Rope*2;Seed_Pineapple*1;Plank*4;Scrap*2
 prop op_wreckcrate loot.refill=0
@@ -241,7 +241,7 @@ note opbldnote Depot foreman's note | DEPOT FOREMAN - LOG, LAST PAGE\n\nThe orde
 note opledge Surveyor's cache | A road surveyor's cache on a ledge of Toll Hill.
 loot opledge Rope*3;Bolt*2;Feather*3
 prop opledge loot.refill=0
-note opcave2chest Road crew chest | The road crew's chest at the back of the north rock.
+note opcave2chest Road crew chest | The road crew's chest at the back of the rock cave.
 loot opcave2chest CopperOre*3;Rope*2;Battery*1
 prop opcave2chest loot.refill=0
 prop opsummit zone.id=op_summit
@@ -298,10 +298,10 @@ step read|Teo's card (Toll Hill)|1|Read the caretaker's card on Toll Hill
 step reach|sunken_lane|1|Dive down the lane to the air pocket by the vans
 step open|Van glovebox|1|Open the glovebox of the van on the lane
 step blueprint|Blueprint_MotorWheel|1|Open the booth's strongbox with the key: motor wheel plans
-step read|Toll keeper's tally|1|Read the tally in the toll keeper's house in the north-east
-step read|Caravan diary|1|Read the diary at the caravans in the south-west
+step read|Toll keeper's tally|1|Read the tally in the toll keeper's ruined house
+step read|Caravan diary|1|Read the diary at the abandoned caravans
 step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel plans from the bus locker
-step collect|story:op_jack|1|Find the five jack parts in the caravans' gloveboxes and put the jack together at the workbench by the pit
+step collect|story:op_jack|1|Find five jack parts in the caravans' gloveboxes, then build the jack at the workbench
 step collect|story:op_lifted|1|Jack the slab off the sunken depot's roof hatch
 step open|Depot chest|1|Dive into the depot and open its stock chest at the bottom
 step read|Depot foreman's note|1|Read the foreman's last page by the stairs

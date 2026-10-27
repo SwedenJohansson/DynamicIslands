@@ -245,7 +245,7 @@ call ar_cave x=-80 z=-50 h=3 yaw=0 al=ta_caverock chest=ta_cavechest
 call hw_zone x=-81 z=-41 al=ta_cavez id=ta_cave r=4 h=1 msg="Hideout Cave. Water drips somewhere in the dark."
 call ar_ruin x=68 z=22 h=2.1 yaw=0 w=3 d=2 al=ta_ruin
 call ss_islander x=67 z=17.5 yaw=200 al=ta_isl nm="Cassia Venn" pose=sit
-prop ta_isl talk.text=Another one off the sea. They used to bring us by boat too, in the dark.\n---\nI won, you know. Two years ago. Nobody came to take me home - the wardens had already gone.\n---\nThe sponsors' gate wants its relay off the camera mast on Victor's Rock and the gate key I hid in Hideout Cave. Bring them, and see what the sponsors kept.\n---\nThe lodge lamps: four, each wakes the next. Light them all and look behind the back wall. And the maze in the west - that was round zero. Nobody liked round zero.
+prop ta_isl talk.text=Another one off the sea. They used to bring us by boat too, in the dark.\n---\nI won, you know. Two years ago. Nobody came to take me home - the wardens had already gone.\n---\nThe sponsors' gate wants its relay off the camera mast on Victor's Rock and the gate key I hid in Hideout Cave. Bring them, and see what the sponsors kept.\n---\nThe lodge lamps: four, each wakes the next. Light them all and look behind the back wall. And the maze by the woods - that was round zero. Nobody liked round zero.
 place Placeable_Chair_Basic - at 67 17.5 ground sit yaw=200
 call ss_lamp x=61 z=21 al=ta_lamp1 nm="Lodge lamp 1" grp="Lodge lamps" on=0
 call ss_lamp x=67 z=28 al=ta_lamp2 nm="Lodge lamp 2" grp="Lodge lamps" on=1
@@ -513,7 +513,7 @@ prop forest zone.radius=80
 story ta_top|Camera relay|Bolt|The relay box off the wardens' camera mast that watched the whole arena.
 story ta_cave|Gate key|Bolt|The key to the sponsors' gate, hidden in a cave by a contestant who meant to come back.
 story ta_fixed|Sponsors' gate working|Bolt|The sponsors' gate, working again.
-note ta_hint Sponsor's notice | SPONSORS ONLY. Gate opens with the camera relay (mast on Victor's Rock, east) and the gate key (lost - try the caves, south-west). Ask Cassia at the lodge.
+note ta_hint Sponsor's notice | SPONSORS ONLY. Gate opens with the camera relay (mast on top of Victor's Rock) and the gate key (lost - try Hideout Cave). Ask Cassia at the lodge.
 note ta_topchest Wardens' camera mast box | A box lashed to the top of the wardens' camera mast.
 loot ta_topchest story:ta_top*1;Rope*2;Scrap*2
 note ta_cavechest Hideout Cave chest | A chest at the back of Hideout Cave, dry under the rock.
@@ -528,7 +528,7 @@ loot ta_setchest MetalIngot*2;Rope*4;TradeToken*2
 note ta_planecrate Supply drop crate | A sponsors' supply crate still strapped in: bandages, water, a rope.
 loot ta_planecrate Rope*3;Scrap*3;Plastic*2
 prop ta_planecrate loot.refill=0
-note ta_pilot Drop pilot's card | GIFT RUN 41. Two parachutes to drop. Wind took the plane, not the parachutes. Down on the south shore.
+note ta_pilot Drop pilot's card | GIFT RUN 41. Two parachutes to drop. Wind took the plane, not the parachutes. Down on the shore.
 note jcta Arena stacks | Training stacks from the old practice rounds. A tribute's stash half way.
 loot jcta Rope*3;Plank*4;Wool*2
 note jbta Top stack | A box at the very top.
@@ -538,24 +538,24 @@ loot ta_mazechest TradeToken*3;CopperIngot*2;MetalIngot*1
 
 quest title=The Games Run On
 quest intro=An island built for a contest, still running on its own. The rules are posted at the meadow's edge. Start at the shore.
-step reach|shore|1|Land on the arena's shore
+step reach|shore|1|Land on the shore below the great canopy
 step read|Rules of the Arena|1|Read the rules posted at the meadow's edge
 step reach|ring|1|Step onto a starting plate round the great canopy
 step kill|Warthog|4|Round one: survive the boars
-step open|Canopy supply crate|1|Grab the supplies from under the great canopy
-step read|A contestant's diary|1|Find last year's contestant's diary in the woods west of the lake
+step open|Canopy supply crate|1|Open the supply crate under the great canopy
+step read|A contestant's diary|1|Find last year's contestant's diary in the woods by the lake
 step kill|Hyena|4|Round two: the hounds
-step collect|story:wardenpass|1|Swim to the gift on the lake's islet for the warden's pass
+step collect|story:wardenpass|1|Swim to the gift crate on the lake's islet for the warden's pass
 step kill|Bear|1|The final round: the champion
 step reach|controlroom|1|Find the door that opened in the peak
 step read|Gamewarden's log|1|Read the gamewarden's log in the control room
 step collect|story:prizekey|1|Shut the games down at the master console
-step read|Sponsor's notice|1|Read the sponsor's notice by the sponsors' gate at the ruined house in the east
+step read|Sponsor's notice|1|Read the sponsor's notice by the sponsors' gate at the ruined house
 step talk|Cassia Venn|1|Talk to Cassia Venn at the ruined house
-step reach|ta_trail|1|Find the foot of the trail up Victor's Rock, in the east
+step reach|ta_trail|1|Find the foot of the trail up Victor's Rock, the big rock hill
 step reach|ta_summit|1|Climb the trail to the top of Victor's Rock
 step collect|story:ta_top|1|Climb the wardens' camera mast and take the camera relay from its box
-step reach|ta_cave|1|Find Hideout Cave in the south-west
+step reach|ta_cave|1|Find Hideout Cave, the cave in the rock
 step collect|story:ta_cave|1|Take the gate key from the chest at the back of the cave
 step read|Sponsors' ledger|1|Bring both to the sponsors' gate and read what it shows
 step open|Prize vault|1|Open the prize vault

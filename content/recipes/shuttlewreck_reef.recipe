@@ -74,7 +74,7 @@ place "Box Small" dcampbox at -13.1 -23.6 ground sit
 place Note_Paper dnote at -13.1 -23.6 ground y=0.7 drop yaw=30
 place Loot_ChestSmall dcamp at -11.1 -22.1 ground sit yaw=337
 call airpocket x=-15.6 z=-25.6 id=shuttlewreck_reef_dair al=dairzone bub=dairbub r=2.5 msg="Air trapped in a diver's bell-tent. Breathe."
-note dnote Ines's slate (the reef) | DIVE SLATE - I. MARLOWE, WIRED TO A BOX\n\nAIR ON THE CHAIN. AIR IN THE HOUSES. NOT IN THE DARK BITS.\n\nShuttle 7 found. Hatch open. Nobody inside. The seats are all empty and the net on 14 is empty too - so wherever Milo went, he went without Mo. He will not be sleeping.\nFootprints in the silt along the ridge, small ones, going north towards the Caisson Yard. Fourteen sets. I counted. I am not crying, it is the mask.\nGoing on along the chain. Teo, if you're following me, go home.
+note dnote Ines's slate (the reef) | DIVE SLATE - I. MARLOWE, WIRED TO A BOX\n\nAIR ON THE CHAIN. AIR IN THE HOUSES. NOT IN THE DARK BITS.\n\nShuttle 7 found. Hatch open. Nobody inside. The seats are all empty and the net on 14 is empty too - so wherever Milo went, he went without Mo. He will not be sleeping.\nFootprints in the silt along the ridge, small ones, going away along the ridge towards the Caisson Yard. Fourteen sets. I counted. I am not crying, it is the mask.\nGoing on along the chain. Teo, if you're following me, go home.
 note dcamp Diver's cache | A diver's spare kit, wired shut against the current.
 loot dcamp Rope*2;Glass*3;Plastic*4
 prop dcamp loot.refill=0
@@ -143,7 +143,7 @@ info description=A Network transit shuttle on a reef 10 m down, its cabin still 
 island on.arrive=message||A buoy over a reef. Under it, the long shape of a shuttle with windows down its sides.
 
 note manifest Shuttle manifest | NIGHT SHUTTLE 7 - THALASSA TO THE COMMONS\n\n14 passengers, 2 crew, 31 bags.\nPassengers: 12 children (the roofs school party), 2 teachers.\nSeat 14: MARLOWE, MILO, age 6. Travelling with: one whale (knitted). Mother: I. Marlowe, Network diver, to meet at the Commons.\nDeparted 22:40. Arrived: -\n\nSomeone has written underneath, in a teacher's careful capitals: WE WENT THE LONG WAY ROUND THE REEF BECAUSE THE SPIRE TOLD THE DRIVER TO RUN WITH HIS LIGHTS OFF. THE DRIVER COULD NOT SEE THE REEF. NOBODY ASKED THE DRIVER.
-note commuter Teacher's note | Left on seat 14, under a little string net hooked to the armrest. The net is empty.\n\nTo whoever finds the shuttle - we got out through the roof hatch and walked the reef ridge north to the Caisson Yard, in a line, holding hands. All fourteen of us. I counted four times. Then I counted again, for luck.\nMilo Marlowe would not leave without his whale. We could not find it in the dark. I promised him somebody would bring it. Please do not make me a liar.\nThe luggage is yours. Some of it explodes, mind - the Commons ordered goo.\n- A. Okafor, teacher, Spirecrest roofs school
+note commuter Teacher's note | Left on seat 14, under a little string net hooked to the armrest. The net is empty.\n\nTo whoever finds the shuttle - we got out through the roof hatch and walked the reef ridge on to the Caisson Yard, in a line, holding hands. All fourteen of us. I counted four times. Then I counted again, for luck.\nMilo Marlowe would not leave without his whale. We could not find it in the dark. I promised him somebody would bring it. Please do not make me a liar.\nThe luggage is yours. Some of it explodes, mind - the Commons ordered goo.\n- A. Okafor, teacher, Spirecrest roofs school
 note luggage Luggage rack | Bags, still dry inside the rack.
 loot luggage ExplosiveGoo*2;Seed_Grass*2;Leather*2
 prop luggage loot.refill=0
@@ -176,12 +176,12 @@ prop swsummit zone.message=Out of the water on the depot rock. The shuttle lies 
 
 quest title=The Night Shuttle
 quest intro=A shuttle full of children lost on the night run. Find its cabin.
-step reach|cabin|1|Get into the shuttle's cabin
+step reach|cabin|1|Find the wrecked shuttle and get into its cabin
 step read|Shuttle manifest|1|Read the shuttle manifest
 step kill|Puffer fish|2|Drive off the puffers in the reef
 step open|Luggage rack|1|Open the luggage rack
 step read|Teacher's note|1|Read the note left on seat 14
-step read|Seat 14's ticket|1|Find seat 14's ticket in the tender van's hold in the south
+step read|Seat 14's ticket|1|Find seat 14's ticket in the wrecked tender van's hold
 step open|Shuttle depot chest|1|Dive to the bottom of the drowned depot and open its chest
 step read|Depot clerk's note|1|Read the depot clerk's note
 step read|Shuttle timetable|1|Climb the rock to the timetable on its top

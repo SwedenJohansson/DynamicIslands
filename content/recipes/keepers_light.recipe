@@ -332,7 +332,7 @@ prop foghorn else.use=message||The horn is for when the light burns. Light the l
 
 prop landing zone.id=landing
 prop landing zone.radius=6
-prop landing zone.message=The keepers' rock: a cottage on the stack to the south-west, the dark lighthouse on the northern one - and nobody on the bridges.
+prop landing zone.message=The keepers' rock: a cottage on the low stack, the dark lighthouse on the tall one - and nobody on the bridges.
 prop cottage zone.id=cottage
 prop cottage zone.radius=4
 prop oilstore zone.id=oilstore

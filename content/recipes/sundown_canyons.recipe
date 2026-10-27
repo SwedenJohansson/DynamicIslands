@@ -889,7 +889,7 @@ prop wind zone.radius=50
 story sc_top|Telegraph key|Bolt|The telegraph key off the line tower on Buzzard Butte.
 story sc_cave|Wire spool|Bolt|A spool of telegraph wire, cached in Rattler Cave by the line crew.
 story sc_fixed|Telegraph office set working|Bolt|The telegraph office set, working again.
-note sc_hint Line crew notice | TELEGRAPH DOWN. Key is up the line tower on Buzzard Butte (north-east), the wire spool in Rattler Cave (south-west). Hattie at the homestead has the keys to the office.
+note sc_hint Line crew notice | TELEGRAPH DOWN. Key is up the line tower on top of Buzzard Butte, the wire spool in Rattler Cave. Hattie at the homestead has the keys to the office.
 note sc_topchest Telegraph pole tower box | A box lashed to the top of the telegraph pole tower.
 loot sc_topchest story:sc_top*1;Rope*2;Scrap*2
 note sc_cavechest Rattler Cave chest | A chest at the back of Rattler Cave, dry under the rock.
@@ -920,7 +920,7 @@ step read|Sheriff's last report|1|Read the sheriff's last report on the jail's d
 step read|Wanted poster|1|Read the wanted poster by the saloon's door
 step collect|story:sheriffkey|1|Find the sheriff's key ring in her desk drawer
 step open|Sheriff's gun locker|1|Open the sheriff's gun locker with her keys
-step reach|ranch|1|Take the east trail out to the Double Bar ranch
+step reach|ranch|1|Follow the wagon trail out of town to the Double Bar ranch
 # Chapter 2 - the ranch
 step read|Rancher's letter|1|Read the rancher's letter in the ranch house
 step open|Barn tack chest|1|Open the barn's tack chest for the ranch's net launcher
@@ -952,11 +952,11 @@ step reach|homeward|1|Climb down the mesa's ladder trail to the signpost at its 
 step read|Mayor's proclamation|1|Read the mayor's proclamation nailed to the signpost
 # Chapter 6 - the bank
 step collect|story:silverbar|6|Carry all six silver bars: the express safe, the river, the gang's chest
-step read|Line crew notice|1|Read the line crew notice by the telegraph office set at the ruined house in the north-west
+step read|Line crew notice|1|Read the line crew notice by the telegraph office set at the ruined house
 step talk|Hattie Cole|1|Talk to Hattie Cole at the ruined house
-step reach|sc_hill|1|Climb to the top of Buzzard Butte in the north-east
+step reach|sc_hill|1|Climb to the top of Buzzard Butte, the tall rock
 step collect|story:sc_top|1|Climb the telegraph pole tower and take the telegraph key from its box
-step reach|sc_cave|1|Find Rattler Cave in the south-west
+step reach|sc_cave|1|Find Rattler Cave, the cave in the canyon wall
 step collect|story:sc_cave|1|Take the wire spool from the chest at the back of the cave
 step read|Telegram|1|Bring both to the telegraph office set and read what it shows
 step reach|bank|1|Walk into the Bank of Sundown

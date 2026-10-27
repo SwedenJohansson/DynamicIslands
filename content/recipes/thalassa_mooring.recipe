@@ -261,7 +261,7 @@ prop bellcrane obj.name=bellcrane
 note th_cavechest Bell crew's locker | A bell crew locker: a dive knife's sheath, a rope, a tin of grease.
 loot th_cavechest Rope*3;Bolt*2;Leather*1;Copper*2
 prop th_cavechest loot.refill=0
-note th_ruinnote Dive log | DIVE LOG - DIVE MASTER R. OYELARAN\n\nDive 41: east of the station, off the rocks. Order from the Spire: cut the trench cable at marker 3. Diver did not surface. Her sample bag is still down there, buried in the sand.\nDive 44: north-east, by the old marker. Order from the Spire: cut the dome feed. Line cut - not by us.\nDive 47: south, past the dinghy. Order from the Spire: cut the lab line. Bell came up empty.\nThree dives, three cables, three crews. Why is the Director cutting his own Network? He says "to keep the Commons quiet". Quiet from what?\nWhoever has a metal detector: their tags will ring under the sand. Bring them home.
+note th_ruinnote Dive log | DIVE LOG - DIVE MASTER R. OYELARAN\n\nDive 41: beside the station, off the rocks. Order from the Spire: cut the trench cable at marker 3. Diver did not surface. Her sample bag is still down there, buried in the sand.\nDive 44: out by the old marker. Order from the Spire: cut the dome feed. Line cut - not by us.\nDive 47: past the dinghy. Order from the Spire: cut the lab line. Bell came up empty.\nThree dives, three cables, three crews. Why is the Director cutting his own Network? He says "to keep the Commons quiet". Quiet from what?\nWhoever has a metal detector: their tags will ring under the sand. Bring them home.
 note th_wrecknote Dinghy logbook | DINGHY LOGBOOK\n\nTook the dinghy out for dive 47. Came back without the bell crew. I tied her up on the rocks, walked to the hut, and sat on the floor for a long time.\nThen a gardener rowed in from Biome Seven with a diver, an old man and a hen, and the hen walked straight into my hut as if it had paid rent.\nThe diver, Marlowe, asked about the shuttle. I told her what we heard on the station set: the shuttle hit the reef past the Caisson Yard, and the children walked. Then I told her what the dive orders were. She went very quiet. She said she used to lay those cables.
 note th_wreckcrate Dinghy stores | The dinghy's stores crate: spare line, a lamp, a tin of fuel.
 loot th_wreckcrate Rope*3;Plank*3;Scrap*2;Battery*1
@@ -283,7 +283,7 @@ note thbldnote Ines's slate (salvage store) | DIVE SLATE - I. MARLOWE, SALVAGE S
 note thledge Lookout's cache | A harbour lookout's cache on a ledge.
 loot thledge Rope*3;Bolt*2;Feather*3
 prop thledge loot.refill=0
-note thcave2chest Salvager's spare chest | A salvager's spare chest in the south rock.
+note thcave2chest Salvager's spare chest | A salvager's spare chest in the rock cave.
 loot thcave2chest CopperOre*3;Rope*2;Battery*1
 prop thcave2chest loot.refill=0
 prop thsummit zone.id=th_summit
@@ -332,8 +332,8 @@ step blueprint|Blueprint_WaterTank|1|Climb the water tower: water tank plans
 step blueprint|Blueprint_Pipe_Water|1|Find the water pipe plans in the pipe crate
 step blueprint|Blueprint_ElectricPurifier|1|Find the purifier plans in the station office
 step blueprint|Blueprint_Storage_Large|1|Open the store shed: large storage plans
-step read|Dive log|1|Read the dive log in the dive master's hut in the north
-step read|Dinghy logbook|1|Read the logbook at the divers' dinghy in the south-west
+step read|Dive log|1|Read the dive log in the dive master's hut on the rocks
+step read|Dinghy logbook|1|Read the logbook at the divers' wrecked dinghy
 step reach|th_summit|1|Climb Mooring Hill to the harbour master's tower
 step collect|story:th_key|1|Take the salvage store key from the harbour master's locker
 step collect|story:th_pump|1|Work the salvage pump on the pit rim to send air down to the flooded store

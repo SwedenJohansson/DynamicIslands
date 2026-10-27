@@ -158,7 +158,7 @@ call sk_reef x=69 z=5 r=6 seed=10461
 call sk_reef x=72 z=22 r=5 seed=10471
 call sk_zone x=69 z=5 al=b7_ridge id=b7_ridge r=7 msg="The kelp ridge. The dome glows behind you like a lamp left on in an empty house."
 call sk_cave x=6 z=-68 h=2 yaw=0 al=b7_caverock chest=b7_cavechest
-call sk_zone x=6 z=-63 al=b7_cave id=b7_cave r=4 msg="A cave in the south rock. The garden's overflow pipe ends here, still dripping silt."
+call sk_zone x=6 z=-63 al=b7_cave id=b7_cave r=4 msg="A cave in the rock. The garden's overflow pipe ends here, still dripping silt."
 call sk_ruin x=-6 z=48 h=2 al=b7_ruin
 call sk_notebox x=-3.5 z=43.5 yaw=10 al=b7_ruinnote
 call sk_wreck x=-44 z=62 h=2 yaw=200 v=Van_1 al=b7_wreck crate=b7_wreckcrate scale=1
@@ -217,7 +217,7 @@ story cycled|Airlock cycled|Placeable_Lantern_Metal|You opened Biome Seven's air
 story melonseed|Melon seed packet|Seed_Watermelon|A packet of melon seeds from Biome Seven's beds.
 story watered|Beds watered|Placeable_Sprinkler|You turned the sprinkler crank: Biome Seven's beds are green again.
 
-note hydrolog Hydrophone log | HYDROPHONE LOG - BIOME SEVEN (printout, W. Ashby's pencil in the margin)\n\n03:10 Low call, bearing south-west, the trench. Not whale. Not ship.\n03:12 Same. Closer.\n03:40 The call has changed. It is copying the dome's beacon - the same two notes, the same gap.\n04:05 It is copying the Network's line tone now. On the speaker it sounds almost like a word. "Calling. Calling."\n04:30 Teal light outside the north glass. It waited by the airlock for nine minutes. Then it went towards the lab tower, against the current.\n\nMargin: "It doesn't hunt by eye. It hunts by what is LIT and what is LOUD. Told the Director. He said thank you, Wren, that is very useful, and the line went dead."
+note hydrolog Hydrophone log | HYDROPHONE LOG - BIOME SEVEN (printout, W. Ashby's pencil in the margin)\n\n03:10 Low call, bearing out past the reef, the trench. Not whale. Not ship.\n03:12 Same. Closer.\n03:40 The call has changed. It is copying the dome's beacon - the same two notes, the same gap.\n04:05 It is copying the Network's line tone now. On the speaker it sounds almost like a word. "Calling. Calling."\n04:30 Teal light outside the glass. It waited by the airlock for nine minutes. Then it went towards the lab tower, against the current.\n\nMargin: "It doesn't hunt by eye. It hunts by what is LIT and what is LOUD. Told the Director. He said thank you, Wren, that is very useful, and the line went dead."
 note wrenletter Wren's letter | WREN ASHBY - LETTER, IN A TIN UNDER THE BEDS\n\nWhoever turned my sprinklers on: thank you. The melons thank you. The goat will not, she never thanks anybody.\nI have gone up in the boat with Ines Marlowe and that lovely old idiot Teo and his hen. Ines wants the Thalassa Mooring, the surface station, where the dive teams went down to the trench cables. She thinks the Network's divers saw where the children's shuttle drifted. I think she just wants to keep moving so she doesn't have to stop and think.\nThalassa still has a bell. If you go there, ring it carefully. Bells are loud, and you know now what loud does.\nLeave the lights off on your way out. Not because the Director says so. Because Wren does.
 prop wrenletter obj.name=wrenletter
 prop wrenletter beh.hidden=1
@@ -243,7 +243,7 @@ prop airlockhatch beh.use=Open the airlock hatch
 prop airlockhatch on.use=give||story:cycled*1\nhide|\nmessage||The hatch swings up. Below it, the airlock - and through it, air and green light.
 prop lockzone zone.id=airlock
 prop lockzone zone.radius=2.5
-prop lockzone zone.message=The airlock on the dome's north side. A hatch in its roof.
+prop lockzone zone.message=The airlock on the dome's rim. A hatch in its roof.
 prop domeair zone.id=dome
 prop domeair zone.radius=6.5
 prop domeair zone.repeat=1
@@ -310,7 +310,7 @@ note b7bldnote Seed keeper's list | SEED STORE - STOCK (W. Ashby)\n\nStrawberry,
 note b7ledge Diver's shelf cache | A diver's cache on the rock's shelf, out of the current.
 loot b7ledge Rope*3;Bolt*2;Feather*3
 prop b7ledge loot.refill=0
-note b7cave2chest Grower's spare chest | A grower's chest deep in the north rock.
+note b7cave2chest Grower's spare chest | A grower's chest deep in the rock cave.
 loot b7cave2chest CopperOre*3;Rope*2;Battery*1
 prop b7cave2chest loot.refill=0
 prop b7summit zone.id=b7_summit
@@ -319,7 +319,7 @@ prop b7summit zone.message=Out of the water: the garden rock, a beacon on top. B
 
 quest title=The Glass Dome
 quest intro=Dr Sato's drive woke the last dome's beacon. Dive to the airlock and find the gardener.
-step reach|airlock|1|Dive to the airlock on the dome's north side
+step reach|airlock|1|Dive to the airlock hatch on the big glass dome
 step collect|story:cycled|1|Open the airlock hatch
 step read|Gardener's rota|1|Read the gardener's rota
 step collect|story:melonseed|3|Take the three melon seed packets from the beds
@@ -327,8 +327,8 @@ step blueprint|Blueprint_EngineControls|1|Find the engine control plans at the c
 step read|Hydrophone log|1|Read the hydrophone printout by the control desk
 step kill|Stingray|2|Drive the stingrays off the outer vent
 step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from the vent shed
-step read|Gardener's shed book|1|Read the book in the gardener's shed in the north
-step read|Car park ticket|1|Read the ticket at the sunk car park in the north-west
+step read|Gardener's shed book|1|Read the book in the gardener's shed outside the dome
+step read|Car park ticket|1|Read the ticket at the sunken car park
 step blueprint|Blueprint_ZiplineBase|1|Swim up to the gantry on the dome's cap: zipline plans
 step open|Seed store chest|1|Dive into the drowned seed store in the pit and open its chest
 step blueprint|Blueprint_Firework|1|Back in the dome, open the gardener's locker: firework plans

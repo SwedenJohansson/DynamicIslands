@@ -304,7 +304,7 @@ note strongroom Commons strongroom | The Commons' strongroom behind the great do
 loot strongroom TitaniumIngot*2;OxygenBottle*1;CircuitBoard*1;Battery*2
 prop strongroom loot.refill=0
 prop greatdoors if.use=signal|hc_doors
-prop greatdoors else.use=message||Locked. The door warden worked them from a lever by his lodge, north-east.
+prop greatdoors else.use=message||Locked. The door warden worked them from a lever by his lodge.
 # --- DEEP 1-HOUR (10-24): story items, notes and checks
 story hc_key|Scavenger's key|Hinge|The scavenger's key, from the chest at the bottom of his hideout.
 story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
@@ -319,7 +319,7 @@ note hcbldnote Scavenger's inventory | WHAT I TOOK - AND WHAT I SAW\n\nWindows, 
 note hcledge Scavenger's stash | One of the scavenger's stashes, on the spire's shelf.
 loot hcledge Rope*3;Bolt*2;Feather*3
 prop hcledge loot.refill=0
-note hccave2chest Warden's spare chest | A warden's spare chest in the east rock.
+note hccave2chest Warden's spare chest | A warden's spare chest in the rock cave.
 loot hccave2chest CopperOre*3;Rope*2;Battery*1
 prop hccave2chest loot.refill=0
 prop hcsummit zone.id=hc_summit
@@ -382,10 +382,10 @@ step reach|house_3|1|Climb to house 3, the last air house
 step open|Ines's bag|1|Free the diver from the cage with the key, then open her bag
 step read|Ines Marlowe's account|1|Read Ines Marlowe's account
 step blueprint|Blueprint_ZiplineToolElectric|1|Open the door warden's chest: electric zipline tool plans
-step read|Warden's lodge note|1|Read the note in the warden's lodge in the north-east
-step read|Wagon driver's chit|1|Read the chit at the mine wagons in the north-west
+step read|Warden's lodge note|1|Read the note in the door warden's lodge
+step read|Wagon driver's chit|1|Read the chit at the old mine wagons
 step reach|doors|1|Go to the great doors
-step read|Scavenger's note I|1|Follow the scavenger's notes out to his hideout in the south-west
+step read|Scavenger's note I|1|Follow the scavenger's notes out to his hideout by the drowned store
 step read|Scavenger's note III|1|Get past his trip wires and read the last note at the hideout
 step open|Scavenger's strongbox|1|Dive to the bottom of his drowned store and open the strongbox
 step read|Scavenger's inventory|1|Read what the scavenger took - and what he saw

@@ -272,10 +272,10 @@ prop sklure tint.amount=0.8
 prop sklure beh.move=-28,0,-14
 prop sklure beh.moveTime=20
 prop sklure beh.moveMode=switch
-note orders Sealkeeper's orders | SEALKEEPER'S ORDERS - DIRECTOR H. ROOK\n\n1. Power first: the generator on the base.\n2. Prime the pumps from the west tower. Fuses from the east tower.\n3. The control room is keyed with the Commons' code.\n4. Wind the cable. At the cable head: RESTORE, or SEAL. Not both. There is no both.\n5. Then go down. Somebody has to see it done.\n\nUnder it, in Fennick's capitals: "AND WIPE YOUR FEET." And under that, very small, in the Director's own hand: "Whoever you are - I am glad somebody came. I could not pull either lever. I tried for nine days."
+note orders Sealkeeper's orders | SEALKEEPER'S ORDERS - DIRECTOR H. ROOK\n\n1. Power first: the generator on the base.\n2. Prime the pumps from the pump tower. Fuses from the door tower.\n3. The control room is keyed with the Commons' code.\n4. Wind the cable. At the cable head: RESTORE, or SEAL. Not both. There is no both.\n5. Then go down. Somebody has to see it done.\n\nUnder it, in Fennick's capitals: "AND WIPE YOUR FEET." And under that, very small, in the Director's own hand: "Whoever you are - I am glad somebody came. I could not pull either lever. I tried for nine days."
 note baselocker Base locker | The base locker: rope, a lamp and a crowbar.
 note statusboard Network status board | NETWORK STATUS (chalk, every line crossed out and rewritten in the same hand)\n\nSpirecrest Roofs: BEACON ON - leave it on.\nBrinelab: DARK. 02:14. (I am sorry, Mei.)\nBiome 1-6: DARK. Biome Seven: GREEN - Wren never listens.\nThalassa: SURFACE. Dives 41, 44, 47: cables cut.\nLumen Shelf: LIGHTS HALF - Lindqvist, please.\nCaisson Yard: DARK. Sluice 4. Eight men. Eight.\nHadal Commons: DOORS SHUT. DARK. SAFE.\nThe Hollow: - - - (no reading)\n\nIn the corner, a tally of five-bar gates. Forty-one. Each one, someone he turned the lights off on.
-note pumplog Pump log | PUMP LOG - WEST TOWER\n\nPressure's held for nine years on one crank a week. I sing to the crank. The crank does not mind.\nThe week the Commons' doors were open for the pumps, the pumps pulled something up the trench with the water. It came up the pipe like a cat up a curtain, and then it went back down into the Hollow, and it has been listening ever since.\nWe stopped cranking. The Director came down himself and stood here a long time with his hand on the wheel.\nCrank it now if you mean to RESTORE. Crank it anyway. Pumps want to work. So do people.
+note pumplog Pump log | PUMP LOG - PUMP TOWER\n\nPressure's held for nine years on one crank a week. I sing to the crank. The crank does not mind.\nThe week the Commons' doors were open for the pumps, the pumps pulled something up the trench with the water. It came up the pipe like a cat up a curtain, and then it went back down into the Hollow, and it has been listening ever since.\nWe stopped cranking. The Director came down himself and stood here a long time with his hand on the wheel.\nCrank it now if you mean to RESTORE. Crank it anyway. Pumps want to work. So do people.
 note warning Door warden's warning | DOOR WARDEN - G. FENNICK (pinned to the fuse board with a fork)\n\nThree fuses, three lockers. Set them and the spire lights up - and everything down there sees it. Everything. I mean the big one.\nIf you go to the Hollow, go when the lights are on. It hunts what is lit, but it cannot SEE in light, it can only find. In the dark it can do both.\nI am going down ahead of you to wedge the Hollow's gate. I have put the children on the plane. I have given Milo my hat. I don't need a hat where I'm going.\nIf you are the Stalker - you know the rest.
 note networkmap The Network map | THE PELAGIC NETWORK - CONTROL ROOM MAP\n\nSeven stations round a ring, three wavy lines across it, and the Ringwave humming in the middle. At its centre, under the trench lip, one word: HOLLOW.\nPins in the map, one per station. Every pin but one has been pulled out and laid on the desk in a neat row, like teeth.\nThe last pin is on the roofs: SPIRECREST. A red thread runs from it out to sea, then curls back to the Hollow.\nUnder it, in the Director's hand: "Bait."
 note inesmessage Ines's message | INES - IN PENCIL, ON THE DESK, OVER THE DIRECTOR'S PAPERS\n\nYou read it. Good. So did I.\nHe's gone down the trench after Fennick. Not to stop him. To help him, I think. I didn't ask.\nRESTORE turns the Network back on - the lights, the pumps, the doors - and the Commons can walk out. It will come up with them.\nSEAL drops the plug on the Hollow for good. The Commons stays in the dark, alive, for as long as dark lasts.\nI can't choose. I'd only choose Milo, and he's on a plane.\nTake Mo with you. He's been everywhere else.
@@ -392,7 +392,7 @@ note skbldnote Archive register | NETWORK ARCHIVE - COMMAND REGISTER (printout)\
 note skledge Storm watcher's cache | A storm watcher's cache on a ledge of Storm Crown.
 loot skledge Rope*3;Bolt*2;Feather*3
 prop skledge loot.refill=0
-note skcave2chest Archivist's spare chest | An archivist's chest at the back of the west rock.
+note skcave2chest Archivist's spare chest | An archivist's chest at the back of the rock cave.
 loot skcave2chest CopperOre*3;Rope*2;Battery*1
 prop skcave2chest loot.refill=0
 prop sksummit zone.id=sk_summit
@@ -406,7 +406,7 @@ step read|Sealkeeper's orders|1|Read the Sealkeeper's orders
 step read|Milo's crayon card|1|Read the card wedged in the dock rail
 step kill|Screecher|4|Drive off the screechers nesting on the spire
 step open|Base locker|1|Open the base locker by the cable mast
-step collect|story:power|1|Start the generator
+step collect|story:power|1|Start the generator at the foot of the spire
 step read|Network status board|1|Read the Network status board
 step reach|pump_tower|1|Zipline from the cable mast to the pump tower
 step collect|story:pumped|1|Turn the pump crank
@@ -415,8 +415,8 @@ step reach|door_tower|1|Zipline from the cable mast to the door tower
 step collect|story:fuse|3|Collect the three fuses from the door tower's lockers
 step collect|story:fused|1|Set the fuses in the fuse board - and watch the trench
 step read|Door warden's warning|1|Read the door warden's warning
-step read|Supply pilot's log|1|Read the log at the supply plane in the west
-step open|Archive chest|1|Dive into the drowned archive in the south-west pit and open its chest
+step read|Supply pilot's log|1|Read the log at the crashed supply plane
+step open|Archive chest|1|Dive into the drowned archive pit and open its chest at the bottom
 step read|Archive register|1|Read the command register in the drowned archive
 step reach|spire_stair|1|Go to the spire's door
 step reach|control|1|Climb to the control room through the storm

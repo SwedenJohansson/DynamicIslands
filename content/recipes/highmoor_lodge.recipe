@@ -428,7 +428,7 @@ quest title=The Winter Book
 quest intro=A lodge closed for the winter with one man to look after it. He isn't here any more - but his pages are. Start up the drive.
 step read|Manager's ledger|1|Climb the drive to the lodge and read the ledger on the front desk
 step pages||6|Read the six pages of the lodge's winter: the ledger and the caretaker's five typed pages
-step reach|maze|1|Find the way into the hedge maze west of the lodge
+step reach|maze|1|Find the way into the hedge maze beside the lodge
 step kill|Polar bear|1|Survive what waits at the heart of the maze
 step collect|story:boilerkey|1|Take the boiler house key from the caretaker's coat
 step reach|boilerroom|1|Unlock the boiler house behind the lodge

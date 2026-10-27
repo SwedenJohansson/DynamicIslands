@@ -277,7 +277,7 @@ island on.arrive=message||A black cone of a mountain. On its top, something huge
 story keycard|Chief's keycard|quest:Tangaroa_KeyCard|The Chief's own keycard, fished out of his pet's pool.
 story codes|Storm Engine launch codes|quest:Vasagatan_FourDigitCode|A sealed sheet of launch codes for the Storm Engine in the crater.
 
-note memo Chief engineer's memo | TO ALL STAFF - FROM THE CHIEF ENGINEER\n\nThe tremors are not the generators. The mountain is waking. I am taking my people off tonight on the north boat.\n\nThe Chief stays. He says the Storm Engine fires at the next new moon, whatever the mountain does.\n\nIf anyone left here has a conscience: the launch codes are in his office safe. His keycard went into his pet's pool when he threw his drink at the screens. The incinerator in the control room takes paper.\n\nKnow this: his "security" seals the control wing forty-five seconds after the incinerator runs. The escape hatch in the control room's floor drops you straight down to his getaway boat.\n\n- T. Lind, Chief Engineer
+note memo Chief engineer's memo | TO ALL STAFF - FROM THE CHIEF ENGINEER\n\nThe tremors are not the generators. The mountain is waking. I am taking my people off tonight on the supply boat.\n\nThe Chief stays. He says the Storm Engine fires at the next new moon, whatever the mountain does.\n\nIf anyone left here has a conscience: the launch codes are in his office safe. His keycard went into his pet's pool when he threw his drink at the screens. The incinerator in the control room takes paper.\n\nKnow this: his "security" seals the control wing forty-five seconds after the incinerator runs. The escape hatch in the control room's floor drops you straight down to his getaway boat.\n\n- T. Lind, Chief Engineer
 note poolbox Box in the pet's pool | A waterproof box on the pool's floor, scratched by teeth: the Chief's keycard, and a gold cufflink.
 loot poolbox story:keycard*1;TradeToken*2
 prop poolbox loot.refill=0
@@ -365,8 +365,8 @@ prop turtles creature.count=2
 prop dolphins creature.count=2
 
 quest title=Storm Engine
-quest intro=A black cone with a dish in its crater and a wall at its foot that is not rock. Somewhere in its west bluff there's a door.
-step reach|hangar|1|Find the hangar door hidden in the cone's west bluff and get inside
+quest intro=A black cone with a dish in its crater and a wall at its foot that is not rock. Somewhere in its rocky bluff there's a door.
+step reach|hangar|1|Find the hangar door hidden in the cone's rocky bluff and get inside
 step read|Chief engineer's memo|1|Read the chief engineer's memo on the hangar's board
 step kill|Tangaroa rat|3|Clear the service rats out from among the hangar crates
 step kill|Angler fish|1|Deal with the Chief's pet in the pool under the control room

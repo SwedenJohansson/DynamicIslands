@@ -192,7 +192,7 @@ info author=Custom Islands
 info description=Concrete caissons standing out of the sea over the trench edge, linked by stone footbridges, with two cranes, a zipline, a smelter and a store. The seventh island of The Sunken Kingdom.
 island on.arrive=message||Grey concrete blocks standing out of the sea, two cranes over them - and past them, dark water.
 
-note foremanboard Foreman's board | CAISSON YARD - FOREMAN (J. Achterberg)\n\nSmelter: on the yard, under the roof. Fuel: west caisson shed.\nCrane 1 to crane 2 by the cable only - the north bridge is for carts, and for people who enjoy swimming.\nAnchor gear stays on north: we anchor over the trench. Chart of the trench on north's table. Hadal is straight down.\n\nChalked across the bottom, big letters: "SHUTTLE KIDS - 12 - ALL FED, ALL COUNTED. Warden Fennick took them down to the Commons Tues. Doors shut from inside. Good."\nUnder it, smaller, a different chalk: "Counted them myself. - I.M."
+note foremanboard Foreman's board | CAISSON YARD - FOREMAN (J. Achterberg)\n\nSmelter: on the yard, under the roof. Fuel: the little shed on the next caisson over.\nCrane 1 to crane 2 by the cable only - the footbridge is for carts, and for people who enjoy swimming.\nAnchor gear stays on the crane 2 caisson: we anchor over the trench. Chart of the trench on its table. Hadal is straight down.\n\nChalked across the bottom, big letters: "SHUTTLE KIDS - 12 - ALL FED, ALL COUNTED. Warden Fennick took them down to the Commons Tues. Doors shut from inside. Good."\nUnder it, smaller, a different chalk: "Counted them myself. - I.M."
 note trenchchart Trench chart | TRENCH CHART - CAISSON YARD\n\nThe trench below the yard, contour by contour, in three colours of ink and one of tea.\nOne mark, circled twice: HADAL COMMONS, 45 m. The city under the sea, where the Network's families live.\nIn pencil beside it, Ines Marlowe's hand: "Doors shut from inside. Fennick has the keys. If they let me in, I'll stay with Milo till the Spire sends the lift. If they don't, I'll knock."\nAnd under that, much later, in red: "The Spire is not sending the lift."
 note smelterchest Smelter chest | The smelter chest: electric smelter plans.
 note fuelchest Fuel shed chest | The fuel shed's chest: advanced biofuel extractor plans.
@@ -220,7 +220,7 @@ loot cymo story:sk_mo*1;Rope*1
 prop cymo loot.refill=0
 story sk_mo|Mo, a knitted whale|Feather|A small yellow whale, knitted by Ines Marlowe for her son Milo. A label: "MILO - SHUTTLE SEAT 14".
 note cy_ruinnote Yard office book | YARD OFFICE BOOK\n\nThe vending machine takes Tangaroa tokens, the road toll's coin. Nobody here has any. We have put a sign on it saying "BROKEN" so it feels less alone.\nMon. The Director on the radio again, calm as milk: "This is the Sealkeeper. The Yard will keep its lights off. The Commons is safe as long as it is dark." He says "safe" the way doctors say "comfortable".\nTues. Twelve children came up our ramp from the reef, in a line, holding hands, the biggest one at the back counting. We had soup. Fennick came up from the Commons for them.\nThe little one cried all night for his whale. The crane driver swam out to the shuttle at dawn and fetched it. It is in the lost property box, drying. Labelled. We are not animals.
-note cy_wrecknote Crane driver's report | CRANE DRIVER'S REPORT\n\nThe trench wall slid and my crane went with it, over on its side, like a giraffe fainting. I was not in it. I was out on the reef fetching a knitted whale, which is the only reason I am alive, and I would like that written down somewhere official.\nThe old crane's counterweight still hangs over the drowned store by the pit. Its release lever is on the rim, and it wants the crane key - I hid that in the east rock, in the key box.\nThe Commons is straight down from the trench edge. When the caisson is sunk the city gets its back door. Until then, it's the front door, and Fennick.
+note cy_wrecknote Crane driver's report | CRANE DRIVER'S REPORT\n\nThe trench wall slid and my crane went with it, over on its side, like a giraffe fainting. I was not in it. I was out on the reef fetching a knitted whale, which is the only reason I am alive, and I would like that written down somewhere official.\nThe old crane's counterweight still hangs over the drowned store by the pit. Its release lever is on the rim, and it wants the crane key - I hid that in the rock cave, in the key box.\nThe Commons is straight down from the trench edge. When the caisson is sunk the city gets its back door. Until then, it's the front door, and Fennick.
 note cy_wreckcrate Crane's toolbox | The crane's toolbox: shackles, bolts, a coil of cable.
 loot cy_wreckcrate Bolt*4;MetalIngot*2;Rope*2;Hinge*1
 prop cy_wreckcrate loot.refill=0
@@ -234,7 +234,7 @@ prop cydeep loot.refill=0
 note cylocker Crane hill locker | The crane driver's locker on the hill: tea, rope.
 loot cylocker MetalIngot*3;CopperIngot*2;Rope*3;Cooked_Potato*2
 prop cylocker loot.refill=0
-note cysumnote Crane driver's card | CRANE HILL\n\nThe old crane's counterweight hangs over the drowned store. The release lever is on the rim.\nThe lever wants the crane key - I left it in the east rock, with my good tea.\nFrom up here you can see the shuttle on the reef, past the yard, lying on its side with the door open. The kids walked out of it. All of them. I keep telling myself that, every time I come up here. All of them.
+note cysumnote Crane driver's card | CRANE HILL\n\nThe old crane's counterweight hangs over the drowned store. The release lever is on the rim.\nThe lever wants the crane key - I left it in the rock cave, with my good tea.\nFrom up here you can see the shuttle on the reef, past the yard, lying on its side with the door open. The kids walked out of it. All of them. I keep telling myself that, every time I come up here. All of them.
 note cybldnote Yard pump log | YARD PUMP LOG - NIGHT SHIFT\n\n01:50 Sluices 1-3 closed. Store dry. Night shift below in the store, eight men, counting stock.\n02:14 SLUICE 4 OPENED - BY SPIRE ORDER. Remote. We did not touch it.\n02:14 Called the Spire. "Sluice 4 is open, the night shift is still below." Director: "I know. I'm sorry. The Yard's lights must go out."\n02:20 Store flooded. Capped the hatch with a steel plate.\n02:21 Eight men. I wrote their names on the back of this page. Then I stopped.\n\nLast line, a different pen: "He chose the lights over us. Over his own people. Hadal next - the Commons is the only lit room left. - I.M."
 note cyledge Rigger's cache | A rigger's cache on a ledge of Crane Hill.
 loot cyledge Rope*3;Bolt*2;Feather*3
@@ -321,14 +321,14 @@ step read|Foreman's board|1|Read the foreman's board
 step reach|crane_2|1|Take the zipline from crane 1 to crane 2
 step blueprint|Blueprint_SmelterElectric|1|Find the electric smelter and battery charger plans under the smelter's roof
 step blueprint|Blueprint_BatteryCharger|1|Take the battery charger plans from under the smelter's roof too
-step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Open the fuel shed on the west caisson
-step blueprint|Blueprint_AnchorStationaryAdvanced|1|Find the anchor gear and zipline plans on the north caisson
-step blueprint|Blueprint_ZiplineTool|1|Take the zipline plans from the north caisson too
-step read|Yard office book|1|Read the book in the yard office in the north
+step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Open the chest in the little fuel shed on the caisson next to the yard
+step blueprint|Blueprint_AnchorStationaryAdvanced|1|Open the chest by the anchor post on the crane 2 caisson: anchor gear plans
+step blueprint|Blueprint_ZiplineTool|1|Take the zipline plans from the same chest too
+step read|Yard office book|1|Read the book in the ruined yard office
 step collect|story:sk_mo|1|Look in the yard office's lost property box
-step read|Crane driver's report|1|Read the report at the fallen crane in the south-east
+step read|Crane driver's report|1|Read the report at the fallen crane
 step read|Trench chart|1|Read the trench chart
-step collect|story:cy_cranekey|1|Find the crane key in the key box in the east rock
+step collect|story:cy_cranekey|1|Find the crane key in the key box in the rock cave
 step collect|story:cy_drop|1|Drop the counterweight on the sealed store with the release lever on the rim
 step open|Yard store chest|1|Dive down through the store's floors and open the chest at the bottom
 step read|Yard pump log|1|Read the night shift's pump log in the drowned store

@@ -210,7 +210,7 @@ island on.arrive=message||Two green peaks over a quiet cove - a longboat drawn u
 story mappiece|Piece of the map|quest:Vasagatan_FourDigitCode|A torn piece of Captain Marrow's treasure map, salt-stained, a third of a verse scrawled on its back.
 story wholemap|Captain Marrow's map|Placeable_PaperBundle|The three pieces laid together: the cove, two peaks, three stones drawn on the saddle like teeth - and the verse that says which stone moves first.
 
-note letter Captain's last letter | To whoever beaches beside my boat.\n\nThe crew wanted the hoard split before we reached port. I said no, and the Gilded Skull went down in the cove's mouth the same night - holed, I think, by one of them.\n\nI tore the map in three and gave a piece to each of the three I trust. Tamsin the cook keeps hers in the hollow log by her spring, where her hogs run wild now. Kell the bosun took his up to his lookout on the east peak. Pell the navigator stayed with the ship; his piece is in his chart chest, under the water.\n\nLay the pieces together on my map table. The verse on the back says which stone to move first. Don't move them in the wrong order.\n\n- Captain Odile Marrow
+note letter Captain's last letter | To whoever beaches beside my boat.\n\nThe crew wanted the hoard split before we reached port. I said no, and the Gilded Skull went down in the cove's mouth the same night - holed, I think, by one of them.\n\nI tore the map in three and gave a piece to each of the three I trust. Tamsin the cook keeps hers in the hollow log by her spring, where her hogs run wild now. Kell the bosun took his up to his lookout on one of the two peaks. Pell the navigator stayed with the ship; his piece is in his chart chest, under the water.\n\nLay the pieces together on my map table. The verse on the back says which stone to move first. Don't move them in the wrong order.\n\n- Captain Odile Marrow
 note cookbox Cook Tamsin's tin | A tin box wedged into the hollow log, wrapped in sailcloth: a torn piece of map, dried fruit and a recipe for hog stew with the word NEVER underlined twice.
 loot cookbox story:mappiece*1;Banana*2;Mango*2
 prop cookbox loot.refill=0
@@ -236,12 +236,12 @@ prop hoard loot.refill=0
 prop maptable obj.name=maptable
 prop maptable beh.use=Lay the three map pieces together
 prop maptable if.use=quest|4\ntake|story:mappiece|3
-prop maptable on.use=message||The torn edges fit. The cove, the two peaks, three stones drawn on the saddle - and on the back the verse, whole at last.\ngive||story:wholemap*1\njournal|Captain Marrow's verse|North stone first, where the gulls sit. Then the tall one that throws the noon shadow. The flat one last - and dig where it lay.\nsound||event:/char/logbook_flip
+prop maptable on.use=message||The torn edges fit. The cove, the two peaks, three stones drawn on the saddle - and on the back the verse, whole at last.\ngive||story:wholemap*1\njournal|Captain Marrow's verse|The gull stone first, where the gulls sit. Then the tall one that throws the noon shadow. The flat one last - and dig where it lay.\nsound||event:/char/logbook_flip
 prop maptable else.use=message||A chart table with three empty pins. The captain's letter said the map is in three pieces.
 prop stone1 obj.name=stone1
-prop stone1 beh.use=Push the north stone
+prop stone1 beh.use=Push the gull stone
 prop stone1 if.use=has|story:wholemap|1
-prop stone1 on.use=message||The north stone grinds a hand's width over the sand. Somewhere under your feet, something clicks.\nsignal||stone1\nsound||event:/coll/stoneground
+prop stone1 on.use=message||The gull stone grinds a hand's width over the sand. Somewhere under your feet, something clicks.\nsignal||stone1\nsound||event:/coll/stoneground
 prop stone1 else.use=message||A heavy stone, half sunk in the sand. Without the map's verse you wouldn't know which one to move.
 prop stone2 obj.name=stone2
 prop stone2 beh.use=Push the tall stone
@@ -287,7 +287,7 @@ call vinecache x=-14 z=10 r=14 seed=32 chest=cookcache vines=cookvines items=Rop
 
 quest title=The Gilded Skull's Hoard
 quest intro=A pirate captain's camp in a cove under two jungle peaks, her ship sunk in the cove's mouth. Start at her longboat.
-step read|Captain's last letter|1|Land in the cove and read the letter left in the beached longboat
+step read|Captain's last letter|1|Land in the cove between the two peaks and read the letter in the beached longboat
 step kill|Warthog|3|Drive the cook's runaway hogs away from her spring
 step reach|wreck|1|Dive to the wreck of the Gilded Skull in the cove's mouth
 step collect|story:mappiece|3|Find the three map pieces: the cook's hollow log, the bosun's lookout, the navigator's chart chest
