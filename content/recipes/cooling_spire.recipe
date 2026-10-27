@@ -130,7 +130,7 @@ call ar_plants_desert x=24 z=44 r=28 seed=14451
 call tzone x=24 z=44 al=neridge id=coolridge r=7 msg="The top of the dune ridge. From here the spire's steam leans south in a straight line, though the wind blows west."
 call treasure x=24 z=44 r=12 n=1 seed=14461
 call ar_cave x=-56 z=16 h=3 yaw=0 al=dunecave chest=dunecavechest
-call tzone x=-56 z=21 al=dunecavezone id=dunecave r=4 msg="A cave in the west dunes, cold as a cellar. Water drips from the roof - the spire's cooling water, come through the rock."
+call tzone x=-56 z=21 al=dunecavezone id=dunecave r=4 msg="A cave in the dunes, cold as a cellar. Water drips from the roof - the spire's cooling water, come through the rock."
 call ar_ruin x=-8 z=-68 h=3 yaw=0 al=pumphouse
 call notebox x=-5.5 z=-72.5 yaw=20 al=pumpmenlog
 call ar_plane x=52 z=-16 h=3 yaw=20 al=waterplane crate=watercrate
@@ -209,7 +209,7 @@ note gaugereadings Steam gauge readings | GAUGE READINGS - a clipboard, damp\n\n
 note dunecavechest Cellar chest | A chest in the cold cave, its lid beaded with drips.
 prop dunecavechest loot.refill=0
 note pumpmenlog Pumpmen's log | PUMPMEN'S LOG - in a tin under the fallen wall\n\nThe spire must never run dry. If it does, the Engine runs hot. We never saw the Engine. We only saw the pipe, going south under the sand, and felt it hum in our teeth at night.\n\nHedda came through asking about it. We told her what we knew: nothing. She said that was more honest than most harbour masters and gave us a tin of fish.\n\nThe steam leans south because the Engine draws it. The pumpmen kept their best chest by the water plane, behind a sun-lock: one mirror on the dune ridge, one at this house. They liked a puzzle more than a lock.
-note waterplanelog Water plane log | WATER PLANE LOG\n\nSpare cooling coils for the spire. The steam from the top of it leans south, whatever the wind does. The needle agrees.\n\nLanded short in the east dunes. The coils are in the crate. I have landed short three times this year; the dunes are getting used to me.\n\nSomething big flew under me on the way in, low over the water - grey, with lamps along its side - and turned round to look at me before it went south. I did not know drones could look. This one did.
+note waterplanelog Water plane log | WATER PLANE LOG\n\nSpare cooling coils for the spire. The steam from the top of it leans south, whatever the wind does. The needle agrees.\n\nLanded short in the dunes. The coils are in the crate. I have landed short three times this year; the dunes are getting used to me.\n\nSomething big flew under me on the way in, low over the water - grey, with lamps along its side - and turned round to look at me before it went south. I did not know drones could look. This one did.
 # (deep pass 10-24: the climb and the dive)
 story frostvalve|Frost valve|Hinge|A frost valve from the cooling pond, white with old ice. The ice tower's locker opens with it.
 note csdivechest Pond caravan | Hedda's old caravan. In its chest: a frost valve, still cold.
@@ -242,9 +242,9 @@ step blueprint|Blueprint_BackpackAdvanced|1|Take the backpack plans from the lan
 step reach|spire_top|1|Climb to the top of the spire
 step kill|Polar bear|1|Drive the polar bear off the roof
 step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline plans from the chest on the roof
-step read|Pumpmen's log|1|Read the pumpmen's log at the ruined house in the south
-step reach|coolridge|1|Climb the dune ridge in the north-east
-step read|Water plane log|1|Read the log at the plane wreck in the east dunes
+step read|Pumpmen's log|1|Read the pumpmen's log in the ruined pump house on the flat
+step reach|coolridge|1|Climb the dune ridge, the highest dunes behind the spire
+step read|Water plane log|1|Read the log at the plane wreck in the dunes
 step open|Sun-locked chest|1|Turn both mirrors and open the sun-locked chest by the water plane
 step reach|court_view|1|Ride the cable down to the lookout on the shore
 step read|What Hedda saw|1|Read what Hedda painted at the lookout

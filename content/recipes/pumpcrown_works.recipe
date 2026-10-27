@@ -277,7 +277,7 @@ prop seedbox loot.refill=0
 
 prop outfallzone zone.id=outfall
 prop outfallzone zone.radius=4
-prop outfallzone zone.message=The outfall. The pipe's water pours on down - east, into a drowned street.
+prop outfallzone zone.message=The outfall. The pipe's water pours on down into a drowned street.
 prop boomzone zone.id=boom_tower
 prop boomzone zone.radius=3
 prop boomzone zone.message=The boom tower. A table, a cold stove, and a winch outside that nobody winds.
@@ -296,37 +296,37 @@ loot sludgechest Battery*1;CopperIngot*2;Glass*2
 prop sludgechest loot.refill=0
 quest title=The Authority's Water
 quest intro=The Authority rules Highwater's water from Pumpcrown. Get inside - and find Wilmer Dobbs, the foreman who never stops complaining.
-step collect|story:authcoat|1|Take an Authority coat off the guards' laundry line
+step collect|story:authcoat|1|Take an Authority coat from the chest by the laundry line, next to the purifier hall
 step open|Purifier hall|1|Wear the coat through the purifier hall's door and open its locker
 step read|Dobbs's complaints|1|Read the carbon copies on the foreman's desk
 step read|Councillor's memo|1|Read the Councillor's answer beside them
-step reach|pc_trail|1|Find the foot of the trail up Standpipe Hill, in the west
+step reach|pc_trail|1|Find the foot of the trail up Standpipe Hill, the hill with the old water tower
 step reach|pc_summit|1|Climb the trail to the top of Standpipe Hill
 step collect|story:pc_top|1|Climb the old water tower and get Dobbs's measuring stick back from its deck
-step collect|story:tape|3|Gather three rolls of insulating tape - the deck box, the climber's cache, the linesman's locker in the south-west
-step read|Dobbs's warning|1|Read Dobbs's warning by the shorted breaker in the south-west
+step collect|story:tape|3|Gather three rolls of tape: the water tower's deck box, the climber's chest, the linesman's locker
+step read|Dobbs's warning|1|Read Dobbs's warning by the shorted breaker, the power box by the shore
 step collect|story:pc_breaker|1|Tape the shorted breaker and switch the live water off
-step reach|pc_deep|1|Dive to the flooded intake chamber off the south-west shore
+step reach|pc_deep|1|Dive to the flooded intake chamber, sunk off the shore by the breaker
 step collect|story:pc_deep|1|Read the intake gauge in its back room and bring it up
 step blueprint|Blueprint_WaterTank|1|Take the water tank's plans from the tank house
 step blueprint|Blueprint_Pipe_Water|1|Take the water pipe's plans from the pipe gallery
 step blueprint|Blueprint_ElectricPurifier|1|Take the electric purifier's plans from the purifier bench
 step blueprint|Blueprint_Storage_Large|1|Take the large storage's plans from the Authority's stores
-step reach|reservoir_bank|1|Climb the reservoir bank north of the works
-step read|Filter house notice|1|Read the notice at the old filter house in the west
-step open|Patrol van's lockbox|1|Open the lockbox in the Authority's patrol van in the east
-step reach|sludge_beds|1|Go to the edge of the sludge beds
+step reach|reservoir_bank|1|Climb the reservoir bank, the long raised bank behind the works
+step read|Filter house notice|1|Read the notice at the old ruined filter house
+step open|Patrol van's lockbox|1|Open the lockbox in the Authority's wrecked patrol van on the shore
+step reach|sludge_beds|1|Go to the edge of the green sludge beds, where the hazmat box stands
 step read|Complaint No. 300|1|Read the complaint nailed up by the outfall
 step reach|outfall|1|Dive into the outfall where the pipe meets the sea
-quest done=The outfall runs east, down into the drowned city. The Union's divers went down there - into Lowstreet.
+quest done=The outfall runs on, down into the drowned city. The Union's divers went down there - into Lowstreet.
 quest reward=HoneyComb*2;Plastic*4
 
 quest2 title=Keep the Boom
 quest2 intro=The Authority pays for any hand that winds the boom.
 step2 read|Authority duty roster|1|Read the duty roster in the purifier hall
-step2 reach|boom_tower|1|Go to the boom tower on the east point
+step2 reach|boom_tower|1|Go to the boom tower at the end of the point
 step2 collect|story:boomwinch|1|Wind the boom winch
-step2 kill|Screecher|3|Drive off the three screechers off the tower
+step2 kill|Screecher|3|Drive off the three screechers circling the boom tower
 step2 read|Authority receipt|1|Read the Authority's receipt in the boom tower
 quest2 done=The Authority remembers its friends. When the city breaks, it will remember you.
 quest2 reward=MetalIngot*3;Glass*2

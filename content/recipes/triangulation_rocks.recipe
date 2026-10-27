@@ -102,10 +102,10 @@ place Caravan_Blue_01 - at 31.6 64.6 ground sit yaw=116
 # buried treasure, the cave in the south-east bluff, the surveyors' ruined house in the north, the plane in the south-west
 call ar_ridge x1=-62 z1=44 x2=-56 z2=8 h=10 top=7 r=9
 call ar_plants_tropical x=-59 z=26 r=26 seed=14201
-call tzone x=-59 z=26 al=westridge id=westridge r=7 msg="The top of the west ridge. Three red lights on three rock tops - and between them, out to sea, the water lies still."
+call tzone x=-59 z=26 al=westridge id=westridge r=7 msg="The top of the ridge. Three red lights on three rock tops - and between them, out to sea, the water lies still."
 call treasure x=-59 z=26 r=12 n=1 seed=14211
 call ar_cave x=46 z=-28 h=4 yaw=180 al=tricave chest=tricavechest
-call tzone x=46 z=-33 al=tricavezone id=tricave r=4 msg="A cave in the south-east bluff, dry and cool - the surveyors kept their instruments here."
+call tzone x=46 z=-33 al=tricavezone id=tricave r=4 msg="A cave in the bluff, dry and cool - the surveyors kept their instruments here."
 call ar_ruin x=12 z=66 h=3 yaw=0 al=surveyruin
 call notebox x=14.5 z=61.5 yaw=20 al=fieldbook
 call ar_plane x=-40 z=-48 h=3 yaw=60 al=surveyplane crate=surveycrate
@@ -177,11 +177,11 @@ story unlock3|Relay 3 unlocked|quest:Vasagatan_FourDigitCode|You typed the surve
 story fixed|Pulse fixed|Placeable_Lantern_Metal|Relay 3 read out the last bearing, 8, and the three masts agreed: the pulse comes from the south, from a ring-shaped station far off. Bearings 3, 5, 8.
 
 note surveyorders Survey orders | CONCORD WORKS - SURVEY ORDERS\n\nThree masts. Three bearings. Where they cross, the source.\n\n1. Clear the cleft to relay 1 - the vines grow back every season. Machete in the camp chest.\n2. Wake each mast at its power box. Note its bearing.\n3. Relay 3 is locked. The code is on the camp map.\n\nSend the fix to the engine crew. Then wait for the ring to answer.
-note campmap Camp map | A map of the three rock tops, pencilled over and over.\n\nRELAY 1 - west top, through the cleft\nRELAY 2 - east top\nRELAY 3 - south top. Box code 2417\n\nIn the corner, in a different hand: Teo was here. The masts still work. We went south.
+note campmap Camp map | A map of the three rock tops, pencilled over and over.\n\nRELAY 1 - the top through the cleft\nRELAY 2 - the top across the hollow\nRELAY 3 - the top with the keypad box. Box code 2417\n\nIn the corner, in a different hand: Teo was here. The masts still work. We went south.
 note campchest Survey camp | The survey team's chest: a machete's plans - and the team's own machete, still oiled.
-note fuelcache Fuel cache | A fuel cache under the west mast: a fuel tank's plans and two empty cans.
-note relay2locker Relay 2 locker | The east mast's locker: a fuel pipe's plans, coiled like the pipe itself.
-note relay3locker Relay 3 locker | The south mast's locker: a biofuel extractor's plans and a jar of old goo.
+note fuelcache Fuel cache | A fuel cache under relay 1's mast: a fuel tank's plans and two empty cans.
+note relay2locker Relay 2 locker | Relay 2's locker: a fuel pipe's plans, coiled like the pipe itself.
+note relay3locker Relay 3 locker | Relay 3's locker: a biofuel extractor's plans and a jar of old goo.
 loot campchest Blueprint_Machete*1;Machete*1;Rope*2;Scrap*2
 prop campchest loot.refill=0
 loot fuelcache Blueprint_Fueltank*1;Scrap*2;Plastic*4
@@ -192,7 +192,7 @@ loot relay3locker Blueprint_BiofuelExtractor*1;ExplosiveGoo*1;Hinge*2
 prop relay3locker loot.refill=0
 
 prop cleftvines obj.name=cleftvines
-prop cleftvines on.use=hide|cleftvines\nmessage||The machete bites through the vines. Behind them the cleft runs up to the west mast.
+prop cleftvines on.use=hide|cleftvines\nmessage||The machete bites through the vines. Behind them the cleft runs up to relay 1's mast.
 prop relay1 beh.use=Wake relay 1
 prop relay1 if.use=!signal|bearing1
 prop relay1 on.use=signal||bearing1\ngive||story:bearing1*1\nmessage||The box hums, the dish swings round and the red light blinks on. A voice from the box: BEARING THREE.\nsound||event:/exploring/obstacles/keypad/keypad_correct
@@ -228,8 +228,8 @@ note trdivesecret Quarry tool box | The quarrymen's best chisels, under a tarp.
 loot trdivesecret MetalIngot*2;Rope*2;Nail*6
 prop trdivesecret loot.refill=0
 note trcairn Survey cairn | A survey cairn on the peak, a brass pin on top, and a card in the surveyors' hand:\n\nTRUE SOUTH 180. NOT WHAT THE MASTS SAY.\n\nUnder it, newer, in pencil: The masts say what they say now because I made them. You lot sent the Concord 2, 4 and 7 and thought the sea would keep your secret. The sea keeps nothing. It only waits.\n\nAnd under that, in Teo's scrawl: Whoever wrote the middle bit has very nice handwriting for a madman. Dig where the map says. Hedda says do not dig anywhere else, I have been told twice.
-story surveyfix|Survey fix-pin|Bolt|A brass fix-pin from the surveyors' buried tins on the east flat.
-note trmap Surveyors' dig map | DIG MAP - east flat, by the cairns\n\nFour crosses, a stride apart in a square. Three tins of spare fix-pins, buried against salvagers. The fourth cross is a lie - the one nearest the sea. Dig there and you dig up rats.\n\n- the survey party
+story surveyfix|Survey fix-pin|Bolt|A brass fix-pin from the surveyors' buried tins on the flat by the cairns.
+note trmap Surveyors' dig map | DIG MAP - the flat, by the cairns\n\nFour crosses, a stride apart in a square. Three tins of spare fix-pins, buried against salvagers. The fourth cross is a lie - the one nearest the sea. Dig there and you dig up rats.\n\n- the survey party
 # --- JUMP COURSE tr (U22, 10-24): a kz-style hop course of floor slabs on its own flattened pad -----------------
 # Every gap and rise is within the U22 jump limits (reach_audit/jumps.py checks them). A fall lands on the pad.
 # JUMP tr pad=4 at=69 -15
@@ -291,29 +291,29 @@ pop
 # --- end of jump course tr ---
 
 note keepertri Keeper's log: Triangulation | KEEPER'S LOG. Triangulation, in the careful old hand, pinned beside the case with a fix-pin:\n\nThe surveyors were frightened men. They found the Well and they lied about it - three bearings turned a little wrong, so no boat would find the end of them. I understand fear. I have had forty years of it.\n\nBut a lie is a closed door, and Mara is behind it.\n\nI climbed all three rocks. I turned the masts true with my own spanner. Let the pilgrims follow; let them come in their dozens. A captain, a smoker, a girl with a radio: they are slow, but they are coming, and five posts want five pairs of hands.\n\nNext the static on the shoals. The generator there is in pieces; I left them where clever hands can find them. Calling. Calling.\n\n- S.W.
-note teotri Teo's review: the camp | TEO'S REVIEW - on a page of the camp's ration book\n\nTHE SURVEY CAMP, TRIANGULATION ROCKS. One star.\n\nThree rocks, three masts, no roof. Boars on the west top who think they own it, and to be fair to the boars, they were here first. The hollow is nice. The hollow is the only nice thing.\n\nHedda says somebody climbed the masts before us and turned them. I said who climbs a mast for fun. Ines said someone who wants us to follow. Then nobody said anything for a while, and the wind did all the talking.\n\nI buried my last good tobacco by the camp so the madman cannot have it. If I do not come back, it is yours. If I do come back, it is still mine.\n\n- T. Varga
+note teotri Teo's review: the camp | TEO'S REVIEW - on a page of the camp's ration book\n\nTHE SURVEY CAMP, TRIANGULATION ROCKS. One star.\n\nThree rocks, three masts, no roof. Boars on the first top who think they own it, and to be fair to the boars, they were here first. The hollow is nice. The hollow is the only nice thing.\n\nHedda says somebody climbed the masts before us and turned them. I said who climbs a mast for fun. Ines said someone who wants us to follow. Then nobody said anything for a while, and the wind did all the talking.\n\nI buried my last good tobacco by the camp so the madman cannot have it. If I do not come back, it is yours. If I do come back, it is still mine.\n\n- T. Varga
 note heddatri Hedda's watch | CAPTAIN'S WATCH - Hedda's square capitals, on the back of a survey form\n\nNight at the camp. Three masts round us with their dead red lights, like three old men at a bedside.\n\nSomebody has been here inside the month. The spanner marks on the mast bolts are bright. The boars avoid the camp. And someone left a fire laid for us, dry wood and all, the way you lay one for guests.\n\nI do not like being expected. I have been expected before, by harbour masters and bailiffs, and it never meant a good dinner.\n\nInes sleeps with the radio on her chest. In her sleep she answers it. Teo sleeps with a rock in his hand, in case of boars. I keep the watch, because somebody should, and because I am the one who said south.
 note inestri Ines's radio log: the flat | A page of Ines's radio log, under a stone at the edge of the dig field:\n\nNight four. With all three masts awake, the pulse is so clean I can draw it. Three beats, a pause, three beats. And the old man is louder now - he is not under the pulse any more. He is beside it, like someone reading over a shoulder.\n\nHe says a name. Mara. Then calling, calling.\n\nHedda wants to go straight to the Well. I want to know who is talking first. Teo wants breakfast.\n\nThe fix crosses south over the shoals, where the chart shows nothing but static - grey water, a dead generator, a maze of old sheds. That is where the needle goes next, and so do we. - I.
 quest title=Three Bearings
 quest intro=Three masts on three rock tops, and a camp in the hollow between them. Go down to the camp.
-step reach|survey_camp|1|Go down to the survey camp
+step reach|survey_camp|1|Go down to the survey camp in the hollow between the three masts
 step read|Survey orders|1|Read the survey orders on the plan table
 step blueprint|Blueprint_Machete|1|Take the machete plans from the camp chest
 step reach|relay_1|1|Cut through the vined cleft to relay 1
-step kill|Warthog|3|Drive the boars off the west mast
+step kill|Warthog|3|Drive the boars off relay 1's mast
 step collect|story:bearing1|1|Wake relay 1
 step blueprint|Blueprint_Fueltank|1|Take the fuel tank plans from the cache under relay 1
-step collect|story:bearing2|1|Cross to the east top and wake relay 2
+step collect|story:bearing2|1|Cross the hollow to the second mast and wake relay 2
 step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe plans from relay 2's locker
 step collect|story:unlock3|1|Type the code from the camp map into relay 3's box
 step collect|story:fixed|1|Pull relay 3's lever
-step reach|westridge|1|Climb the west ridge and look for the still water
-step collect|story:surveyseal|1|Find the surveyors' seal in the plane wreck's crate in the south-west
-step read|Surveyor's field book|1|Read the field book at the ruined house in the north
-step open|Instrument chest|1|Open the instrument chest in the south-east cave with the seal
-step read|Surveyors' dig map|1|Find the surveyors' dig map on the east flat
+step reach|westridge|1|Climb the ridge beyond relay 1's mast and look for the still water
+step collect|story:surveyseal|1|Find the surveyors' seal in the plane wreck's crate on the shore
+step read|Surveyor's field book|1|Read the field book at the ruined surveyors' house inland
+step open|Instrument chest|1|Open the instrument chest in the cave in the bluff with the seal
+step read|Surveyors' dig map|1|Find the surveyors' dig map on the flat by the cairns
 step collect|story:surveyfix|3|Dig up the three tins of fix-pins - not the decoy
-step open|Surveyor's case|1|Open the surveyor's case on the east flat with the three fix-pins
+step open|Surveyor's case|1|Open the surveyor's case on the flat by the cairns with the three fix-pins
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from relay 3's locker
 quest done=Three bearings - three, five, eight - and the pulse is fixed. Something answers in the south: static, and a mast.
 quest reward=Scrap*6;Rope*4;CopperOre*2

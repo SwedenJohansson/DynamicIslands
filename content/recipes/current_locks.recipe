@@ -84,7 +84,7 @@ call airpocket x=0 z=-28.67 id=gate_air al=gateair bub=gatebub r=2.5 msg="An air
 place Loot_Chest basinchest at 0.8 -12 ground sit yaw=270
 
 # --- Lock 2 and the bear's den on the way to lock 3 ---------------------------------------------------------------------
-call tzone x=8 z=-2 al=lock2zone id=lock_2 r=4 msg="Lock 2. The path north goes past a den in the bank."
+call tzone x=8 z=-2 al=lock2zone id=lock_2 r=4 msg="Lock 2. The path along the bank goes past a den in the bank."
 place Creature_Bear bear at 12 8 ground
 prop bear creature.count=1
 prop bear creature.respawn=0
@@ -96,7 +96,7 @@ place UT_ElectricityIsland_Crane02 - at -9 -6 ground sit yaw=90
 place RT_PlasticBoat - at -7 -38.67 ground sit yaw=10
 
 # --- Lock 3; Ines's note; the keeper's kitchen and its planters -----------------------------------------------------------
-call tzone x=8 z=28.67 al=lock3zone id=lock_3 r=4 msg="Lock 3, the last. Past it the canal opens to the sea - and far off south, smoke over a dark island."
+call tzone x=8 z=28.67 al=lock3zone id=lock_3 r=4 msg="Lock 3, the last. Past it the canal opens to the sea - and far off, smoke over a dark island."
 call notebox x=9 z=32.67 yaw=200 al=inesnote
 place Note_Paper keepercl at 10.5 31.4 ground drop yaw=60
 push at -12 34.67 h=2
@@ -136,10 +136,10 @@ place BoatStranded - at -44.7 75.9 ground sit yaw=60 scale=0.7
 # north-west
 call ar_ridge x1=-48 z1=-20 x2=-40 z2=36 h=9 top=7 r=9
 call ar_plants_tropical x=-44 z=8 r=28 seed=14351
-call tzone x=-44 z=8 al=westridge id=locksridge r=7 msg="The top of the west ridge. The canal cuts the island in two below you, straight as a rule, pointing south."
+call tzone x=-44 z=8 al=westridge id=locksridge r=7 msg="The top of the ridge. The canal cuts the island in two below you, straight as a rule, pointing south."
 call treasure x=-44 z=8 r=12 n=1 seed=14361
 call ar_cave x=44 z=36 h=5 yaw=0 al=lockcave chest=lockcavechest
-call tzone x=44 z=41 al=lockcavezone id=lockcave r=4 msg="A cave in the north-east bank. Water marks on the walls - the canal ran through here once, before the locks."
+call tzone x=44 z=41 al=lockcavezone id=lockcave r=4 msg="A cave in the bank. Water marks on the walls - the canal ran through here once, before the locks."
 call ar_ruin x=-16 z=-64 h=3 yaw=0 al=bunkhouse
 call notebox x=-13.5 z=-68.5 yaw=20 al=diggerlist
 call ar_plane x=-36 z=60 h=2.5 yaw=210 al=canalplane crate=canalcrate
@@ -247,7 +247,7 @@ note lockrota Lock-keepers' rota | ROTA - pinned inside a box lid\n\nGate 1: Mir
 note lockcavechest Old canal chest | A chest left on a ledge above the old water line: the first lock keeper's tools.
 prop lockcavechest loot.refill=0
 note diggerlist Diggers' roll | CANAL DIGGERS' ROLL - nailed inside the bunkhouse door\n\nForty-one names, crossed out one by one as the crews went home. Beside one, a heart. Beside another, a pig, which may be a joke about the man or about his cooking.\n\nAt the bottom, in the foreman's hand: The canal is not for boats. It carries the current south to the Engine. Do not let the locks rust.\n\nAnd under that, smaller: The Engine went to standby the year we finished. Nobody told us why. We stayed on another season out of pride and then we went home too. If anyone ever asks, we did a good job. Tell them we did a good job.
-note canalplanelog Canal plane log | SURVEY PLANE LOG - the canal run\n\nThe canal points due south to within half a degree. So does the pulse. So did the beacon. Every station on this line is aimed at the same place, like the spokes of a wheel round a hub nobody visits.\n\nForced down in the north-west. Walking to the locks. The bear watched me the whole way and did nothing, which was worse.\n\nWe never dug toward the sea. Every cut points at the Engine in the south - the canal was its drain. And the smoke in the south, over the dark island, is the stormworks still burning. Nobody has fed those furnaces in forty years. Somebody has.
+note canalplanelog Canal plane log | SURVEY PLANE LOG - the canal run\n\nThe canal points due south to within half a degree. So does the pulse. So did the beacon. Every station on this line is aimed at the same place, like the spokes of a wheel round a hub nobody visits.\n\nForced down on the bank. Walking to the locks. The bear watched me the whole way and did nothing, which was worse.\n\nWe never dug toward the sea. Every cut points at the Engine in the south - the canal was its drain. And the smoke in the south, over the dark island, is the stormworks still burning. Nobody has fed those furnaces in forty years. Somebody has.
 # (deep pass 10-24: the climb and the dive)
 story dredgekey|Dredge key|Bolt|The dredge gantry's key, floated up to the grate in the old lock chamber when the three wheels let the water in.
 note cldivechest Lock chamber grate | The water lifted the dredge key into the grate.
@@ -272,7 +272,7 @@ note keepercl Keeper's log: Locks | KEEPER'S LOG. Current Locks - oilcloth, unde
 note heddacl Hedda's note: the kitchen | HEDDA - on the back of a seed packet, left in the keeper's kitchen\n\nAte the lock keeper's beets. Left him seeds. Fair trade, and the beets were terrible.\n\nInes thinks the old man is answering a woman down in the Well. She found his initials on the lock rota, and his wife's name in every log he leaves. Wren. Silas and Mara. I found something too, and I have not told her: he does not just follow the pulse. He makes the masts carry it. He wants it loud.\n\nI go south to the smoke, to the Stormworks, to see what he lit the furnaces for. Ines goes to the cooling spire to listen. Whoever you are, come to the smelters. I could use the company, and Teo is not here to complain for me.
 quest title=Three Locks
 quest intro=A canal with three shut gates. Go to the first lock.
-step reach|lock_1|1|Go to lock 1
+step reach|lock_1|1|Go to lock 1, the first iron gate across the canal
 step read|Lock keeper's rules|1|Read the lock keeper's rules on the gate post
 step blueprint|Blueprint_WindTurbine|1|Take the wind turbine plans from the lock house
 step collect|story:lock1|1|Wind lock 1's crank
@@ -282,14 +282,14 @@ step collect|story:lock2|1|Wind lock 2's crank
 step kill|Bear|1|Drive the bear away from lock 2
 step blueprint|Blueprint_HeadLight_Advanced|1|Take the headlamp plans from the bear's den
 step collect|story:lock3|1|Wind lock 3's crank
-step reach|locksridge|1|Climb the west ridge above the canal
-step read|Canal plane log|1|Read the log at the plane wreck in the north-west
+step reach|locksridge|1|Climb the long ridge above the canal
+step read|Canal plane log|1|Read the log at the plane wreck on the canal bank
 step open|Fuel crate|1|Find the fuel crate by the canal plane
-step open|Engine room locker|1|Start the dredge engine by the bunkhouse in the south and open its locker
+step open|Engine room locker|1|Start the dredge engine by the ruined bunkhouse and open its locker
 step reach|cl_dive|1|Dive into the old lock chamber
 step collect|story:dredgekey|1|Take the dredge key from the grate
 step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans from the keeper's kitchen
-quest done=The canal runs free. Down it, south, smoke over a dark island - and the clang of a smelter.
+quest done=The canal runs free. Down it, far off, smoke over a dark island - and the clang of a smelter.
 quest reward=Seed_Mango*2;Scrap*6;Rope*4
 
 save Current Locks

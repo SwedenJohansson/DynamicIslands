@@ -383,30 +383,30 @@ pop
 
 quest title=The Lowest Roofs
 quest intro=The Rookery lives on the city's lowest roofs, and the Authority's butler bots guard its rations. Ines hid the ledger page here. Find the soup kitchen - and Maud Penn.
-step reach|soup_kitchen|1|Find the Rookery's soup kitchen
+step reach|soup_kitchen|1|Find the Rookery's soup kitchen on the low roofs, within sight of the great chimney
 step read|Rookery petition|1|Read the petition on the soup kitchen's board
 step kill|Butler bot|3|Stop the three butler bots running wild round the hub and the trail foot
 step collect|story:ration|3|Take the ration tins the bots were guarding
-step read|Maud Penn's note|1|Read Maud Penn's note by the cold boiler in the south-east
+step read|Maud Penn's note|1|Read Maud Penn's note nailed to the cold boiler out on the roofs
 step kill|Rat|4|Drive the four rats out of the barrels
 step collect|story:watertoken|3|Find three water tokens in the empty barrels
 step blueprint|Blueprint_TitaniumTools|1|Take the titanium tools' plans from the smithy hut
 step reach|tollgate|1|Go out along the causeway to the tollgate
 step kill|Screecher|3|Drive the three screechers off the roofs
 step blueprint|Blueprint_BackpackAdvanced|1|Take the advanced backpack's plans from the packer's hut
-step reach|gull_stacks|1|Climb the gull stacks north of the Rookery
+step reach|gull_stacks|1|Climb the gull stacks, the chimney stumps white with birds
 step read|Pip's note|1|Read the note Pip left on the gull stacks
-step read|Bathhouse slate|1|Read the slate on the old bathhouse in the west
-step open|Family van's crate|1|Open the crate in the family's van in the north-west
-step reach|rk_deep|1|Dive to the bathhouse cellar off the south shore
+step read|Bathhouse slate|1|Read the slate on the old ruined bathhouse inland
+step open|Family van's crate|1|Open the crate in the family's old van up on the hills
+step reach|rk_deep|1|Dive to the bathhouse cellar, sunk off the shore
 step collect|story:rk_deep|1|Open its strongbox with a ration tin and take what the Authority kept there
-step reach|rk_trail|1|Find the foot of the trail up Chimney Tor, in the east
+step reach|rk_trail|1|Find the foot of the trail up Chimney Tor, the tor with the great chimney
 step reach|rk_summit|1|Climb the trail to the top of Chimney Tor
 step collect|story:rk_top|1|Climb the great chimney and take Ines's hidden page from its deck box
 step read|Rookery elders' plan|1|Read the elders' plan in their hut
 step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline tool's plans from the elders' chest
 step read|Storm warning|1|Read the storm warning
-step reach|jump_rs_top|1|Hop up the egg-collectors' slabs on the south-west shore and watch the storm come in
+step reach|jump_rs_top|1|Hop up the egg-collectors' slabs on the shore and watch the storm come in
 quest done=The councils meet on the Crown tonight, in the storm. Bridgeworks Crown - band 1000.
 quest reward=Leather*2;TitaniumOre*1
 

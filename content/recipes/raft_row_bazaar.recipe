@@ -148,7 +148,7 @@ place campfire_1 - at -4.7 -29.6 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -1.7 -27.6 ground sit yaw=277
 place "Box Small" - at -6.7 -27.1 ground sit
 place Note_Paper dnote at -6.7 -27.1 ground y=0.7 drop yaw=20
-note dnote Salvager's note | SALVAGE CLAIM - this side is ours. Union stamp below (smudged).\n\nGood copper in the roofs off shore. Bad currents at the turn of the tide. Don't dive alone - Jory dived alone, and we only got his boots back, and they weren't even good boots.\n\nThe old arcade went down off the west shore last winter. The pedlars got the till out first, the thieves. There's still a strongbox in its back room if your lungs are better than mine.\n\nThe market people think we're vultures. We are. Somebody has to pick a drowned city clean, or it just sits there under you, full of things you need.
+note dnote Salvager's note | SALVAGE CLAIM - this side is ours. Union stamp below (smudged).\n\nGood copper in the roofs off shore. Bad currents at the turn of the tide. Don't dive alone - Jory dived alone, and we only got his boots back, and they weren't even good boots.\n\nThe old arcade went down off the shore last winter. The pedlars got the till out first, the thieves. There's still a strongbox in its back room if your lungs are better than mine.\n\nThe market people think we're vultures. We are. Somebody has to pick a drowned city clean, or it just sits there under you, full of things you need.
 place RT_PlasticBoat dvan at 18.9 34.1 ground yaw=37
 prop dvan tint.color=#4a6b7a
 prop dvan tint.amount=0.5
@@ -245,7 +245,7 @@ story rb_top|Bell clapper|Bolt|The bell tower's iron clapper, taken down so the 
 story rb_deep|Arcade till key|Bolt|The till key of the old shopping arcade, pulled out of its drawer by the pedlars before the arcade went under.
 story rb_fixed|Crier's box working|Bolt|The crier's box, working again.
 story rb_strong|Crier's strongbox open|Bolt|The crier's strongbox, opened with the market's own stall numbers.
-note rb_hint Market crier's notice | MARKET CRIER'S NOTICE - in my own hand, since I'm not allowed to shout it.\n\nThe crier's box has been quiet since the arcade sank, and a market without a crier is just people standing near fish.\n\nMy bell's clapper is up in the pedlars' bell tower on Tin Peak. The Authority made me take it down after I rang the bell the night of the fire, and I hid it up there out of spite. The trail starts on the side toward the stalls. The box's till key the pedlars pulled out of the arcade before it went under - they keep it in their cave on the east shore, with everything else they won't sell.\n\nBring me both, and Raft Row will hear itself again.\n\n- Oswin, crier (retired, by order)
+note rb_hint Market crier's notice | MARKET CRIER'S NOTICE - in my own hand, since I'm not allowed to shout it.\n\nThe crier's box has been quiet since the arcade sank, and a market without a crier is just people standing near fish.\n\nMy bell's clapper is up in the pedlars' bell tower on Tin Peak. The Authority made me take it down after I rang the bell the night of the fire, and I hid it up there out of spite. The trail starts on the side toward the stalls. The box's till key the pedlars pulled out of the arcade before it went under - they keep it in their cave by the shore, with everything else they won't sell.\n\nBring me both, and Raft Row will hear itself again.\n\n- Oswin, crier (retired, by order)
 note rb_topchest Pedlars' bell tower deck box | A box lashed to the deck rail at the top of the pedlars' bell tower.
 loot rb_topchest story:rb_top*1;Bolt*2;Scrap*2
 note rb_deepchest Sunk arcade strongbox | A strongbox in the back room of the sunk arcade.
@@ -280,7 +280,7 @@ prop backroom if.open=has|story:backkey|1
 prop backroom else.open=message||Locked. The merchant keeps the key on him - or in his stall's drawer.
 
 note pricesign Bazaar price board | RAFT ROW - TODAY'S PRICES\n\nNails - cheap\nRope - cheap\nScrap - cheaper\nFilters - ASK\nClean water - ASK\n\nNo permits. No questions. No credit.
-note shortage Shortage list | Chalked on a slate, rubbed out and written again many times -\n\nSHORT: filters, filter cloth, charcoal.\nSHORT: clean water.\nSHORT: anything the Authority stamps.\nSHORT: patience (mine).\n\nTwenty years I've had this stall and I've never seen a shortage go on this long. The prices go up, then the boats from Pumpcrown come in light, then the prices go up again. Funny, how the filters are always short, and the merchant on the north-east roof always has a new coat.\n\nAsk at the Free Fleet's stall. They find things.\n\n- Marta, corner stall
+note shortage Shortage list | Chalked on a slate, rubbed out and written again many times -\n\nSHORT: filters, filter cloth, charcoal.\nSHORT: clean water.\nSHORT: anything the Authority stamps.\nSHORT: patience (mine).\n\nTwenty years I've had this stall and I've never seen a shortage go on this long. The prices go up, then the boats from Pumpcrown come in light, then the prices go up again. Funny, how the filters are always short, and the merchant on the high roof always has a new coat.\n\nAsk at the Free Fleet's stall. They find things.\n\n- Marta, corner stall
 note teoschalk Free Fleet stall | FREE FLEET - WE FIND THINGS\n\nEngines, wheels, anything that floats. Ask for Teo.\n\nTeo is out. Teo is always out. Teo is at sea, where the Authority can't count him.\n\nTake what you need from the crate - the Fleet trusts you or it doesn't, and if it doesn't, you'll find out. If you're new: the wheel plans in there are good. My father drew them. He sailed out past Pumpcrown when the rules said nobody could, and he came back, which is more than the rules ever did.\n\n- T. Varga
 note ledger Withheld stock ledger | The merchant's real book, in his small, careful hand.\n\nFilters received from the Authority: 400.\nFilters sold at the board: 0.\nFilters held back to raise the price: 400.\n\nThe Authority's cut, paid each week at Pumpcrown - to a clerk with a Council seal, never the same clerk twice.\n\nAt the bottom of the page, in a shakier hand: I didn't want this. They told me the market stays open as long as the board says ASK. My daughter drinks clean water. Other people's daughters don't. I write it down here so that somebody knows I know.\n\nSo the shortage is made. Someone should know.
 note drawer Merchant's drawer | The stall's drawer: string, a broken pencil, a key on a tag that says BACK.
@@ -302,7 +302,7 @@ place Note_Paper warning at 12 59 h=1.1 drop
 prop warning obj.name=warning
 prop warning beh.hidden=1
 prop backroom on.open=show|warning\nmessage||Filters, stacked to the ceiling. On the strongbox, a folded note.
-note warning Merchant's warning | Left on the strongbox, for whoever opened it -\n\nYou found the filters. Put them back and walk away.\n\nThe Authority takes its cut and leaves us alone. Tell the Fleet and they'll come with boats. Tell the Authority and they'll come with matches - ask the west stalls how that went.\n\nI am not a brave man. I sell things. I would like to go on selling things, in a market that is still here next week.\n\nEither way the market burns. Think about it. And if you have to go, go - but don't tell them where you got it.
+note warning Merchant's warning | Left on the strongbox, for whoever opened it -\n\nYou found the filters. Put them back and walk away.\n\nThe Authority takes its cut and leaves us alone. Tell the Fleet and they'll come with boats. Tell the Authority and they'll come with matches - ask the burnt stalls how that went.\n\nI am not a brave man. I sell things. I would like to go on selling things, in a market that is still here next week.\n\nEither way the market burns. Think about it. And if you have to go, go - but don't tell them where you got it.
 
 prop marketzone zone.id=market
 prop marketzone zone.radius=7
@@ -311,7 +311,7 @@ prop fleetzone zone.id=fleet_stall
 prop fleetzone zone.radius=3
 prop fleetzone zone.message=The Free Fleet's stall. A flag with a gull on it, and nobody at the table.
 
-note wardenreport Fire warden's report | FIRE WARDEN'S REPORT - Raft Row, west stalls\n\nCause: a lamp knocked over. Or so the Authority's clerk wrote, before he looked.\n\nSix stalls burnt. All six had refused to pay the Authority's 'market levy'. All six lamps were knocked over on the same night, in a flat calm, at the same hour. Fourteen years a fire warden, and I have never seen lamps so clumsy.\n\nNobody died. The pedlars dragged their stock out through the smoke and moved east to their caravans. They keep it in a cave now, where a lamp can't find it. The crier rang his bell all through the fire, and the Authority has not forgiven him.\n\nMy bolt cutters are in my tool box here. The pedlars chained up a chest by the old van to the south - use them, if you're one of us.\n\n- J. Okafor, fire warden
+note wardenreport Fire warden's report | FIRE WARDEN'S REPORT - Raft Row, the burnt stalls\n\nCause: a lamp knocked over. Or so the Authority's clerk wrote, before he looked.\n\nSix stalls burnt. All six had refused to pay the Authority's 'market levy'. All six lamps were knocked over on the same night, in a flat calm, at the same hour. Fourteen years a fire warden, and I have never seen lamps so clumsy.\n\nNobody died. The pedlars dragged their stock out through the smoke and moved out to their caravans. They keep it in a cave now, where a lamp can't find it. The crier rang his bell all through the fire, and the Authority has not forgiven him.\n\nMy bolt cutters are in my tool box here. The pedlars chained up a chest by the old van down the shore - use them, if you're one of us.\n\n- J. Okafor, fire warden
 note pedlarcavechest Pedlars' stock | The pedlars' stock: the things a city on rafts runs out of first - and the drowned arcade's till key on a loop of wire.
 loot pedlarcavechest story:rb_deep*1;Battery*1;Bolt*3;Rope*2;TradeToken*2
 note rb_broadcast Councillor's broadcast | From the market's speaker, the same calm voice as the loop on five hundred -\n\n'Citizens of Raft Row. This is Councillor Crane. I know what is said about me in this market. I know the price of a filter here, and I know who sets it. I am not a fool, and I am not your enemy.\n\nThe Authority does not ration water out of spite. We ration it because this city cannot carry one more pound of anything. If you hoard, it sinks. If you riot, it sinks. If you sail off with the Fleet and leave your floors empty, the weight shifts, and it sinks.\n\nI ask you for patience. I have asked for nine years. I will ask again tomorrow.'\n\nScratched into the speaker's casing, deep: TURN IT OFF, ALDOUS.
@@ -327,20 +327,20 @@ step reach|market|1|Walk onto the market between the towers
 step read|Bazaar price board|1|Read the price board
 step blueprint|Blueprint_MotorWheel|1|Take the motor wheel's plans from the engine stall's crate
 step read|Shortage list|1|Read the shortage list at the corner stall
-step reach|fleet_stall|1|Find the Free Fleet's stall on the east roof
-step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel's plans from the Fleet's crate
+step reach|fleet_stall|1|Find the stall with the Free Fleet flag on a tower roof at the market
+step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel's plans from the chest at the Fleet's stall
 step read|Complaint No. 230|1|Read the complaint pinned under the price board
 step read|Councillor's broadcast|1|Listen to the market's speaker
 step open|Back room|1|Find the merchant's key and open the back room's strongbox
 step read|Withheld stock ledger|1|Read the ledger in the back room
 step catch|Chicken|1|Catch a hen from the garden for the Fleet's coop
-step read|Fire warden's report|1|Read the fire warden's report in the burnt stall row, west of the key
-step read|Market crier's notice|1|Read the market crier's notice by his silent box, north of the burnt row
-step reach|rubbish_hill|1|Climb Rubbish Hill south of the market
-step open|Pedlar's caravan|1|Open the stock crate at the pedlars' caravans on the east shore
+step read|Fire warden's report|1|Read the fire warden's report in the burnt stall row on the shore
+step read|Market crier's notice|1|Read the market crier's notice by his silent box near the burnt stall row
+step reach|rubbish_hill|1|Climb Rubbish Hill, the big heap of junk on the key
+step open|Pedlar's caravan|1|Open the stock crate at the pedlars' caravans by the shore
 step read|Pedlar's tag|1|Read the tag on what the pedlar won't sell
 step collect|story:rb_deep|1|Find the pedlars' cave and take the arcade till key from their stock
-step reach|rb_trail|1|Find the foot of the trail up Tin Peak, in the north-west
+step reach|rb_trail|1|Find the foot of the trail up Tin Peak, the tall peak on the island
 step reach|rb_summit|1|Climb the trail to the top of Tin Peak
 step collect|story:rb_top|1|Climb the pedlars' bell tower and take the bell clapper from its deck
 step read|Crier's ledger|1|Bring both to the crier's box and read what it shows

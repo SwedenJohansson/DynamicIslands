@@ -138,7 +138,7 @@ call zipdeck y=4.7
 pop
 place ZiplinePath_Landmark zipinner at -6 14 h=10.07
 zipto zipinner 0 8.5
-call tzone x=0 z=8.5 al=innerzone id=inner_ring r=2.5 msg="The inner ring. Ines's lamp is lit by the wall - and to the east, something hums in a bay."
+call tzone x=0 z=8.5 al=innerzone id=inner_ring r=2.5 msg="The inner ring. Ines's lamp is lit by the wall - and ahead, something hums in a bay."
 call notebox x=3 z=9 yaw=200 al=ineswatch
 place Placeable_Lantern_Metal - at 3 9 ground y=1.2 drop
 call tzone x=16 z=0 al=dronezone id=drone_bay r=3 msg="The drone bay. A maintenance drone lifts off its cradle - and turns its lights on you."
@@ -184,7 +184,7 @@ place Placeable_Anchor_Stationary - at -19 -3 ground sit
 
 # --- The well stair: down the north side of the court to the sea, where the Command Well opens -------------------------
 place RT_Stair wellstair at 0 37 ground y=-3 yaw=180 sy=0.68
-call tzone x=0 z=41 al=wellzone id=well_stair r=4 msg="The well stair. Under the calm water, north of the court, a shaft goes straight down - lit."
+call tzone x=0 z=41 al=wellzone id=well_stair r=4 msg="The well stair. Under the calm water, beyond the court, a shaft goes straight down - lit."
 
 # --- Planters, the sand garden, the treasure, a reef ring in the calm water ----------------------------------------------
 place Placeable_Cropplot_Medium - at 22 -14 ground sit
@@ -212,10 +212,10 @@ call treasure x=75.5 z=-15.4 r=18 n=1 seed=14193
 # buried treasure, the cave in the west shore, the builders' ruined lodge in the north, the courier plane in the east
 call ar_ridge x1=-24 z1=-60 x2=24 z2=-64 h=10 top=7 r=9
 call ar_plants_tropical x=0 z=-62 r=28 seed=14501
-call tzone x=0 z=-62 al=southridge id=courtridge r=7 msg="The top of the south ridge. The court's rings lie below like a target - and the well is its bull's-eye."
+call tzone x=0 z=-62 al=southridge id=courtridge r=7 msg="The top of the ridge. The court's rings lie below like a target - and the well is its bull's-eye."
 call treasure x=0 z=-62 r=12 n=1 seed=14511
 call ar_cave x=-64 z=8 h=3 yaw=0 al=courtcave chest=courtcavechest
-call tzone x=-64 z=13 al=courtcavezone id=courtcave r=4 msg="A cave in the west shore. Somebody chalked the court's rings on the wall, and a line going down through the middle."
+call tzone x=-64 z=13 al=courtcavezone id=courtcave r=4 msg="A cave in the shore rocks. Somebody chalked the court's rings on the wall, and a line going down through the middle."
 call ar_ruin x=24 z=60 h=3 yaw=0 al=builderlodge
 call notebox x=26.5 z=55.5 yaw=20 al=builderbook
 call ar_plane x=72 z=8 h=3 yaw=270 al=courierplane crate=couriercrate
@@ -262,7 +262,7 @@ prop couriercrate loot.refill=0
 # bridge from landing 3 to the summit, the top locker, a stash on landing 2, a cairn and buried tin on the peak; the
 # dive - a flooded pit with a wreck, an air bell, a chest and a sunk secret, a ramp out (lib_deep14)
 call dp_ground tx=-19 tz=80 hb=1.6 sx=-22 sz=92.65 hs=23.2
-call dp_tower ox=-16.29 oz=78.33 hb=1.6 yaw=-103.36 al=ectower top=ectop stash=ecstash zal=ectopzone zid=ec_top msg="The top of the spark tower. A drone with a lamp - the Keeper's - lifts off the locker and flies west."
+call dp_tower ox=-16.29 oz=78.33 hb=1.6 yaw=-103.36 al=ectower top=ectop stash=ecstash zal=ectopzone zid=ec_top msg="The top of the spark tower. A drone with a lamp - the Keeper's - lifts off the locker and flies off towards the pit."
 call tzone x=-21.19 z=89.24 al=ecsummit id=ec_summit r=4 msg="The spark peak beside the spark tower." h=1
 call notebox x=-25.41 z=91.84 yaw=-13.36 al=eccairn
 call treasure x=-20.05 z=93.11 r=1.5 n=1 seed=14981
@@ -276,8 +276,8 @@ place Airplane ecwreck at -78 -28 ground sit yaw=-19.75 scale=0.6
 place Loot_Chest ecdivechest at -79.15 -24.8 ground sit yaw=70.25
 call dp_air x=-76.85 z=-31.2 id=ec_air al=ecair msg="Air trapped under the wreck - breathe."
 place Loot_ChestSmall ecdivesecret at -82.71 -29.69 ground sit yaw=-19.75
-call tzone x=-78 z=-28 al=ecdivezone id=ec_dive r=7 msg="The bottom of the west pit. A courier plane lies here." h=1
-call tzone x=-60.12 z=-21.58 al=ecrim id=ec_rim r=5 msg="The west pit's rim." h=1
+call tzone x=-78 z=-28 al=ecdivezone id=ec_dive r=7 msg="The bottom of the pit. A courier plane lies here." h=1
+call tzone x=-60.12 z=-21.58 al=ecrim id=ec_rim r=5 msg="The pit's rim." h=1
 call treasure x=-56.35 z=-20.23 r=12 n=1 seed=14982
 prop treasure14982 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 # the Keeper's flight (M30 moveto, M32 pulse, M31 shieldIf) and the epilogue (M40)
@@ -305,7 +305,7 @@ prop ec_mark3 obj.name=ec_mark3
 prop ectopzone on.enter=moveto|ec_keeper|ec_mark2,5\nsignal||ec_flight1
 prop ecrim zone.repeat=1
 prop ecrim if.enter=signal|ec_flight1\n!signal|ec_flight2
-prop ecrim on.enter=moveto|ec_keeper|ec_mark3,6\nsignal||ec_flight2\nmessage||The Keeper's drone was waiting here - it slams into you and flies off north-east, to the coils.
+prop ecrim on.enter=moveto|ec_keeper|ec_mark3,6\nsignal||ec_flight2\nmessage||The Keeper's drone was waiting here - it slams into you and flies off, to the coils.
 place Zone_Trigger ec_knock at -60.1 -21.6 ground y=1
 prop ec_knock obj.name=ec_knock
 prop ec_knock zone.id=ec_knock
@@ -366,7 +366,7 @@ story redirectway|Redirected|Battery|You turned the Concord Engine's call away f
 note concordplate Concord plate | THE CONCORD ENGINE - an iron plate by the gate\n\nThe ring is the engine. The three waves are the surface, the deep and the ice.\n\nStation 1 asks. The Engine answers. Where the Engine answers, the sea is calm.\n\nKeep the rings turning. Keep the stations talking. When the stations stop asking, keep the engine on standby - and keep the well shut.
 note teowatch Teo's watch | TEO - in pencil, on a page torn from the Fleet's log\n\nYes, it is me. I left the masts to Gerald. He is a screecher and has no thumbs, but he is very loyal. I could not let Hedda walk into the end of the ocean without somebody to complain at her.\n\nThe birds here do not like company. The crank by the gate turns the first ring - I did not dare. My hands shake, and it is not the tobacco, because I have none.\n\nIt is the end of the ocean, this. Nothing after it, just the engine. Go on in. I will be by the tent, being brave from a distance.
 note heddawatch Hedda's watch | HEDDA - on the back of her map\n\nMiddle ring. I took the cable in, it held. The crew's locker is here - goo and a battery, they knew someone would have to blow something.\n\nWind the second crank. The inner cable will carry you. Ines is already in there, of course.
-note ineswatch Ines's watch | INES - by her lamp\n\nInner ring. There is a drone in the bay to the east - the Stalker's twin, the same make as the one in the Commons. It is still doing its job.\n\nThe keypad by the bay wants a code. Bearings first, then the station it calls. You have the bearings. The station is the first one.\n\nOn her lamp, in grease pencil: 358 + 1 = 3581.
+note ineswatch Ines's watch | INES - by her lamp\n\nInner ring. There is a drone in the drone bay on this ring - the Stalker's twin, the same make as the one in the Commons. It is still doing its job.\n\nThe keypad by the bay wants a code. Bearings first, then the station it calls. You have the bearings. The station is the first one.\n\nOn her lamp, in grease pencil: 358 + 1 = 3581.
 note dronelog Drone log | MAINTENANCE DRONE 2 - LOG (last page)\n\nRING CHECK: OUTER OK. MIDDLE OK. INNER OK.\nENGINE: STANDBY.\nSTATION 1 silent.\nCalling.\nCalling.\nCalling.
 note enginestatus Engine status | ENGINE STATUS\n\nRINGS: 3 OF 3 TURNING (STANDBY SPEED)\nSURFACE WAVE: WEAK\nDEEP WAVE: WEAK\nICE WAVE: OFF\nCALM CIRCLE: HOLDING\nCALL TO STATION 1: OFF - CREW ORDER\nCARRIER ON STATION 1 BAND: PRESENT\nCARRIER SOURCE: NOT THIS ENGINE
 note thesource The source | THE SOURCE - a note in pencil, signed Tomas, lift\n\nEveryone up top thinks the pulse is us. The engine calling Station 1, the Hadal Commons, at the bottom of the sea, the way it was built to. I thought so too.\n\nTonight I read the call board properly. Our transmitter has been cold since the night of the flood. We switched it off ourselves - Mara's order, the whole crew signed it, and I was glad to.\n\nThe pulse is still out there. Our band, our beat, eight seconds to the tick. Something else is calling in the engine's voice.\n\nI put the phones on and listened through it. Under the beeps there is a hiss, like a reel, and a woman saying crew to posts. I know that voice. I am not going to write the name down. Mara is at her post below and I do not want her to read it.
@@ -404,7 +404,7 @@ prop courtpad lock.code=3581
 prop courtpad on.use=signal||unlockinner\ngive||story:unlockinner*1\nmessage||Three, five, eight - and one. The keypad chirps. By the bay, the inner crank's brake lets go.\nsound||event:/exploring/obstacles/keypad/keypad_correct
 prop innercrank beh.use=Wind the inner ring's crank
 prop innercrank if.use=signal|unlockinner\n!signal|inner
-prop innercrank on.use=signal||inner\nsignal||open\ngive||story:inner*1\nhide|innergate\nhide|housinggate\nmessage||The inner crank turns and the whole court shudders. The housing's door slides down - and far below, north of the court, something heavy opens.\nsound||event:/exploring/utopia/drawbridge/drawbridge_land
+prop innercrank on.use=signal||inner\nsignal||open\ngive||story:inner*1\nhide|innergate\nhide|housinggate\nmessage||The inner crank turns and the whole court shudders. The housing's door slides down - and far below, beyond the court, something heavy opens.\nsound||event:/exploring/utopia/drawbridge/drawbridge_land
 prop innercrank else.use=message||The brake is on - the keypad by the drone bay first.
 prop lever_re beh.use=Pull REACTIVATE
 prop lever_re if.use=!signal|chosen
@@ -427,7 +427,7 @@ note courtcavechest Chalk cave chest | A builder's tools. Chalked: TRUE BEARINGS
 loot courtcavechest Bolt*3;Hinge*2;MetalIngot*2;Rope*2
 prop courtcavechest loot.refill=0
 note builderbook Builders' day book | BUILDERS' DAY BOOK - the last page\n\nRing three finished. The court is level to a finger's width - the Concord's engineers checked it twice.\nUnder the well there is a stair, and under the stair there is the Engine. We were not allowed down.\nThe lodge roof can wait. Everybody wants to see the Engine start.\n\nOur strongbox takes the true bearings of the Triangulation rocks - not the ones the Concord was sent.
-note courierlog Courier plane log | COURIER PLANE LOG\n\nThe last post for the court: letters for the builders, a parcel for Ines.\nOn the way in, every needle on the panel pointed at the well.\nThe engine died over the east shore. The letters are in the crate.
+note courierlog Courier plane log | COURIER PLANE LOG\n\nThe last post for the court: letters for the builders, a parcel for Ines.\nOn the way in, every needle on the panel pointed at the well.\nThe engine died over the shore. The letters are in the crate.
 # (deep pass 10-24: the climb and the dive)
 note ecdivechest Drowned courier plane | The Keeper's courier plane, on the pit floor. Rope and air.
 loot ecdivechest Rope*2;Scrap*3;OxygenBottle*1
@@ -442,14 +442,14 @@ prop ecstash loot.refill=0
 note ecdivesecret Plane tail box | Wedged in the plane's tail: the courier's own tin.
 loot ecdivesecret MetalIngot*2;Bolt*3;TitaniumOre*1
 prop ecdivesecret loot.refill=0
-note eccairn Spark cairn | A cairn by the spark peak, Hedda's chalk on the top stone:\n\nThe old man's drone sits on the spark tower like a gull on a mast. When you climb, it goes - west first, to the pit rim, then north-east to the coils. Kill the coils and it has nowhere to hide. Its cage holds the key to his box by the gate.\n\nDo not hate him. I tried. It does not take. - H.
+note eccairn Spark cairn | A cairn by the spark peak, Hedda's chalk on the top stone:\n\nThe old man's drone sits on the spark tower like a gull on a mast. When you climb, it goes - first to the pit rim, then to the coils. Kill the coils and it has nowhere to hide. Its cage holds the key to his box by the gate.\n\nDo not hate him. I tried. It does not take. - H.
 
 story keepkey|Keeper's key|Bolt|The Keeper's key, from his drone's cage. It opens the Keeper's strongbox in the court.
 note ec_kbox Keeper's strongbox | His savings, and a note: I kept it running. You decided.
 loot ec_kbox TitaniumIngot*2;CircuitBoard*2;Battery*2;OxygenBottle*1
 prop ec_kbox loot.refill=0
 note keeperec Keeper's log: Court | A sheet of oilcloth tied to the coil switch, in the careful old hand:\n\nKEEPER'S LOG. The Court.\n\nCalling. Calling. They came, all of them, the way I knew they would. The captain, the smoker, the girl with the radio, and you, with five keys on your belt. I watched from the tower. My drone did not like you. It never likes anyone but me; it is a good dog.\n\nYou pulled a lever. Fine. Pull what you like. The Court was never the door I wanted. The door is under it, and you carried me the keys.\n\nI have kept her voice safe all these years, the way a keeper keeps a light: wound, trimmed, turning every eight seconds. Tonight I take it home to her. I am going down the Well ahead of you. Mind the stair. - S. Wren
-note ectally Teo's tally | TEO'S TALLY - chalked on the strongbox lid, in a hand that has given up on straight lines\n\nWho came to the Court after the levers. I counted, because somebody should.\n\nA goat called Burr. Nobody brought him. He ate my map.\nOda, who would not say where from, only that the goat was with her. The goat did not deny it.\nOrrin, with ice still in his beard, who shook my hand and would not let go.\nCrane, who looked at the rings for an hour and said only: I would have used more bolts.\nThe Stalker - yes, that one - sitting on the wall like a gull, doing nothing at all, for once.\nAnd the old man's boat, tied at the north stair. Empty.\n\nThat is a lot of people for the end of the ocean. Maybe it is not the end. Go down the Well; Ines will wait at the first pocket. I will mind the goat.
+note ectally Teo's tally | TEO'S TALLY - chalked on the strongbox lid, in a hand that has given up on straight lines\n\nWho came to the Court after the levers. I counted, because somebody should.\n\nA goat called Burr. Nobody brought him. He ate my map.\nOda, who would not say where from, only that the goat was with her. The goat did not deny it.\nOrrin, with ice still in his beard, who shook my hand and would not let go.\nCrane, who looked at the rings for an hour and said only: I would have used more bolts.\nThe Stalker - yes, that one - sitting on the wall like a gull, doing nothing at all, for once.\nAnd the old man's boat, tied at the well stair. Empty.\n\nThat is a lot of people for the end of the ocean. Maybe it is not the end. Go down the Well; Ines will wait at the first pocket. I will mind the goat.
 quest title=The Concord Engine
 quest intro=Three rings of iron, one inside the other. Go to the outer ring's gate.
 step reach|outer_ring|1|Go to the outer ring's gate
@@ -479,18 +479,18 @@ step open|Engine's gift|1|Open the engine's gift
 step read|Ines's goodbye|1|Read Ines's goodbye
 step read|Hedda's goodbye|1|Read Hedda's goodbye
 step read|Teo's goodbye|1|Read Teo's goodbye
-step reach|courtcave|1|Find the chalked cave in the west shore
-step read|Builders' day book|1|Read the builders' day book at the ruined lodge in the north
+step reach|courtcave|1|Find the chalked cave in the shore rocks
+step read|Builders' day book|1|Read the builders' day book in the ruined lodge inland
 step collect|story:builderscode|1|Type the true bearings into the builders' keypad
 step open|Builders' strongbox|1|Open the builders' strongbox
 step reach|ec_top|1|Climb the spark tower past the sparks to its top
-step reach|ec_rim|1|Chase the Keeper's drone to the west pit's rim
+step reach|ec_rim|1|Chase the Keeper's drone to the rim of the pit
 step collect|story:keepkey|1|Throw both coil switches and bring the Keeper's drone down
 step read|Keeper's log: Court|1|Read the Keeper's log at the coil switch
 step open|Keeper's strongbox|1|Open the Keeper's strongbox in the court
 step read|Teo's tally|1|Read Teo's tally on the strongbox
-step reach|well_stair|1|Go down the well stair on the north side
-quest done=The engine has its answer. Below, north of the court, the Command Well is open - its heart is waiting.
+step reach|well_stair|1|Go down the well stair at the court's edge, by the calm water
+quest done=The engine has its answer. Below the court, the Command Well is open - its heart is waiting.
 quest reward=TitaniumOre*2;Battery*2;Rope*4
 
 save Engine Court

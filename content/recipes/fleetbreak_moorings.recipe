@@ -249,8 +249,8 @@ prop fleetreward on.open=signal||fleetfriend\nmessage||The Fleet's thanks. Word 
 
 note articles Free Fleet articles | ARTICLES OF THE FREE FLEET\n\nThe sea is nobody's.\nWhat floats is shared.\nNo boom, no toll, no permit.\nA captain is chosen and can be unchosen.\nNobody is weighed.\n\nSigned, for the Fleet: Teo Varga, captain.\n\n(Under it, in a child's paint: A CAPTAIN MUST ALSO SHARE BISCUITS. Teo has signed that too. Twice, the second time bigger.)\n\n(And under that, in Teo's hand: Article six was added by my niece, by a vote of forty to one. The one was me. I have since come round. A fleet that shares its biscuits is a fleet that stays together, and a fleet that stays together is the only reason forty families still have a roof that floats. - T.V.)
 note decree Council decree | BY ORDER OF THE HARBOR COUNCIL - DECREE No. 77\n\nThe moorings of the so-called Free Fleet are revoked. Forty-one hulls, chained to the old office block, are a burden the city cannot carry. They are to be broken up and their iron delivered to the Council's barges for the Foundation works.\n\nThis is not malice. It is arithmetic. The city can bear so much and no more.\n\n- Councillor Aldous Crane\n\n(Scrawled across it in tar: FORTY-ONE HULLS THAT FLOAT, COUNCILLOR. WE WEIGH NOTHING ON YOUR PILES. WHY DO YOU WANT OUR IRON SO BADLY? - T.V.)
-note teoslog Teo's log | Teo Varga's log -\n\nRan forty filters past the boom last night. The Authority's lamp swept twice and missed us twice. Old Mags at the tiller laughed so hard she nearly gave us away.\n\nThe bazaar says filters are short. They aren't short. Somebody holds them back, and the Rookery drinks rain.\n\nThe Council's new decree wants our iron. My father had the same visit, the year the Gull's Mother went down off the west moorings - he swore Crane came out himself, in the night, and that the flagship sank two days after he said no. Nobody believed him. I was twelve. I believed him.\n\nThe log is still in her deckhouse strongbox, twelve metres down. I can't dive any more - my ears went in the cold years. If the stranger from the bazaar can swim, bring it up. Then we'll talk about trust.\n\n- T.V.
-note contract Fleet contract offer | FROM THE FLEET - A JOB\n\nThree crates of filters wait on our outer hulks.\nTake them past the boom to the Rookery's drop, the raft with our flag east of the ring.\n\nDo it and the Fleet owes you.\n\nAnd when you're done, go and see Bram Hask at Hookline Stack, band eight hundred. The Union's cranes lift what we can't, and Bram writes down every ton. If anybody knows where the Council's iron goes, it's him. - T.V.
+note teoslog Teo's log | Teo Varga's log -\n\nRan forty filters past the boom last night. The Authority's lamp swept twice and missed us twice. Old Mags at the tiller laughed so hard she nearly gave us away.\n\nThe bazaar says filters are short. They aren't short. Somebody holds them back, and the Rookery drinks rain.\n\nThe Council's new decree wants our iron. My father had the same visit, the year the Gull's Mother went down off the moorings - he swore Crane came out himself, in the night, and that the flagship sank two days after he said no. Nobody believed him. I was twelve. I believed him.\n\nThe log is still in her deckhouse strongbox, twelve metres down. I can't dive any more - my ears went in the cold years. If the stranger from the bazaar can swim, bring it up. Then we'll talk about trust.\n\n- T.V.
+note contract Fleet contract offer | FROM THE FLEET - A JOB\n\nThree crates of filters wait on our outer hulks.\nTake them past the boom to the Rookery's drop, the raft with our flag just outside the ring.\n\nDo it and the Fleet owes you.\n\nAnd when you're done, go and see Bram Hask at Hookline Stack, band eight hundred. The Union's cranes lift what we can't, and Bram writes down every ton. If anybody knows where the Council's iron goes, it's him. - T.V.
 note receipt Fleet receipt | RECEIVED AT THE DROP: three crates of filters.\nThe Rookery drinks clean tonight.\n\nThe Fleet won't forget. - T.V.
 note bosunlocker Bosun's locker | The bosun's locker: the machete's plans, the bosun's own old machete on a whetstone, a rope.
 note fueltankchest Fuel tank crate | A crate on the hulk's deck: the fuel tank's plans, drums half full.
@@ -302,7 +302,7 @@ note pressvault Press engine locker | The engine's locker, rusted shut for years
 loot pressvault MetalIngot*3;Bolt*4;CopperIngot*2
 prop pressvault loot.refill=0
 prop ridgevinechest note.title=Gull nest cache
-note seaplanelog Seaplane log | FREE FLEET SEAPLANE 'GULL' - last entry\n\nFlew the Fleet's mail to the far moorings. Authority guns at Pumpcrown fired on us - warning shots, I think, though one of the warnings went through the left float.\n\nNo engine, no radio. Glided in onto the north shore with the mail bags as cushions. Nobody hurt except the plane and my pride, and the plane is worse off.\n\nThe filters are still in the crate. Somebody take them where they're needed. The letters too - one of them is from a girl on the Rookery to her gran on Lowstreet, and I promised I'd see it delivered. Lowstreet is under water now. I don't know what you do with a letter like that. I've kept it.\n\n- Ada, pilot, still grounded
+note seaplanelog Seaplane log | FREE FLEET SEAPLANE 'GULL' - last entry\n\nFlew the Fleet's mail to the far moorings. Authority guns at Pumpcrown fired on us - warning shots, I think, though one of the warnings went through the left float.\n\nNo engine, no radio. Glided in onto the beach with the mail bags as cushions. Nobody hurt except the plane and my pride, and the plane is worse off.\n\nThe filters are still in the crate. Somebody take them where they're needed. The letters too - one of them is from a girl on the Rookery to her gran on Lowstreet, and I promised I'd see it delivered. Lowstreet is under water now. I don't know what you do with a letter like that. I've kept it.\n\n- Ada, pilot, still grounded
 note seaplanecrate Seaplane's crate | The seaplane's cargo crate: water filters and the Fleet's mail, never delivered.
 loot seaplanecrate Plastic*3;Rope*2;Leather*2
 note harbourledger Harbourmaster's ledger | HARBOURMASTER'S LEDGER\n\nThe Fleet's hulks: forty-one boats, moored bow to stern in a ring to break the storms. The Authority wants a mooring fee for each. The Fleet says a wreck pays no fee. The Authority says a wreck with forty families living in it is not a wreck. The Fleet says then it is not a boat either, and the argument has gone on for six years.\n\nLast month the Council sent a new form: TONNAGE OF IRON PER HULL. Not the fee. The iron. I filled it in honestly, then sat up all night wondering why a council needs to know how much a fleet weighs.\n\nI resigned in the morning. Someone has to count the boats nobody owns, and it had better not be someone who answers to Crane.
@@ -315,20 +315,20 @@ step reach|chart_room|1|Go into the Fleet's chart room on the biggest hulk
 step read|Free Fleet articles|1|Read the Free Fleet's articles
 step read|Council decree|1|Read the Council's decree nailed up beside them
 step read|Teo's log|1|Read Teo's log on the chart table
-step reach|fb_deep|1|Dive to the sunk flagship's deckhouse off the west moorings
+step reach|fb_deep|1|Dive to the sunk flagship's deckhouse, sunk beside the ring of hulks
 step collect|story:fb_deep|1|Bring up the flagship's log from the deckhouse strongbox
 step blueprint|Blueprint_Machete|1|Take the machete's plans from the bosun's locker in the chart room
 step reach|roof_garden|1|Cut the vines on the stair and climb to the roof garden
 step kill|Warthog|3|Drive the three boars out of the roof garden
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor's plans from the press in the roof garden
-step blueprint|Blueprint_Fueltank|1|Take the fuel tank's plans from the east hulk's deck
-step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe's plans from the west hulk's fuel store
+step blueprint|Blueprint_Fueltank|1|Take the fuel tank's plans from the chest on an outer hulk, next to the biggest hulk
+step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe's plans from the fuel store chest on the other outer hulk
 step open|Fleet strongbox|1|Open the Fleet's strongbox
-step reach|gull_ridge|1|Climb Gull Ridge in the north-west
-step read|Harbourmaster's ledger|1|Read the harbourmaster's ledger in his house on the west shore
-step open|Seaplane's crate|1|Open the crate in the Fleet's crashed seaplane on the north-east shore
-step reach|bosuns_cave|1|Find the bosun's cave in the east
-step reach|fb_trail|1|Find the foot of the trail up Mastback Fell, in the south-west
+step reach|gull_ridge|1|Climb Gull Ridge, the long ridge above the ring of hulks
+step read|Harbourmaster's ledger|1|Read the harbourmaster's ledger in his house by the shore
+step open|Seaplane's crate|1|Open the crate in the Fleet's crashed seaplane on the beach
+step reach|bosuns_cave|1|Find the bosun's cave in the shore rocks
+step reach|fb_trail|1|Find the foot of the trail up Mastback Fell, the tall fell with the signal mast
 step reach|fb_summit|1|Climb the trail to the top of Mastback Fell
 step collect|story:fb_top|1|Climb the Fleet's signal mast and take the signal pennant from its deck
 step read|A friend's signal|1|Read the note tied to the foot of the mast
@@ -338,7 +338,7 @@ quest reward=Mango*2;Banana*2;Leather*2
 
 quest2 title=Filters Past the Boom
 quest2 intro=Three crates of filters for the Rookery's poor roofs, past the Authority's boom.
-step2 reach|boom|1|Go to the boom across the north channel
+step2 reach|boom|1|Go to the boom, the line of lashed foundations across the channel
 step2 collect|story:filtercrate|3|Take the three filter crates off the outer hulks
 step2 reach|rookery_drop|1|Bring the crates to the Rookery's drop under the gull flag
 step2 read|Fleet receipt|1|Read the Fleet's receipt

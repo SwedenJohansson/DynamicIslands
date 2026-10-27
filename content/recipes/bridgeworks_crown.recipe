@@ -187,7 +187,7 @@ place Loot_ChestLarge strongbox at -68 -11 ground sit yaw=180
 prop strongbox if.open=has|Tangaroa_KeyCard|1
 call ar_cave x=62 z=0 h=4 yaw=0 al=ciphercave chest=cipherchest
 call hw_hazard x=62 z=10 al=ciphercavedark kind=dark r=4 dmg=0 safe=wears|HeadLight* msg="Black as the bottom of the sea. A headlight would show you what is written on the walls."
-call hw_zone x=62 z=24 al=ciphermouth id=cipher_cave r=4 msg="A cave under the Crown's east cliff. Someone carved numbers by the entrance and scratched them out again."
+call hw_zone x=62 z=24 al=ciphermouth id=cipher_cave r=4 msg="A cave under the Crown's cliff. Someone carved numbers by the entrance and scratched them out again."
 brush flatten at 25 -74 r=5 s=20 frames=200 h=2
 call hw_hazard x=25 z=-74 al=shockcoil kind=shock r=4 dmg=8 safe=none msg="The cable bed is live: the old bridge's power still runs through the wet ground."
 place Loot_Chest cablechest at 25 -74 ground sit yaw=0
@@ -269,7 +269,7 @@ place TP_LaserControlPanel_lever bc_climbout at -0.6 -0.9 y=1.2 yaw=0
 prop bc_climbout obj.name=bc_climbout
 prop bc_climbout beh.use=Pull the lever
 prop bc_climbout if.use=!signal|bc_doorout
-prop bc_climbout on.use=signal||bc_doorout\nsound||event:/exploring/zipline/zipline_engine\nmoveto|bc_secret|bc_secretopen,3\nmessage||Stone grinds on stone - one wall panel slides aside. Daylight, and the north-east shore.
+prop bc_climbout on.use=signal||bc_doorout\nsound||event:/exploring/zipline/zipline_engine\nmoveto|bc_secret|bc_secretopen,3\nmessage||Stone grinds on stone - one wall panel slides aside. Daylight, and the shore.
 prop bc_climbout else.use=message||The panel is already open.
 pop
 prop bc_sealed tint.color=#5c5850
@@ -395,9 +395,9 @@ note verdictauthority The verdict | THE AUTHORITY KEEPS THE WATER.\n\nThe pumps 
 note verdictfleet The verdict | THE FLEET TAKES THE PUMPS.\n\nBoats come and go through an open boom. The water flows - to whoever has a boat.
 note verdictunion The verdict | THE UNION RUNS THE WATER.\n\nThe cranes turn day and night. Every barrel filled is chalked, every chalk mark paid.
 note verdictexpose The verdict | ALL THREE EXPOSED.\n\nThe valve log is read in every market. The councillor runs, the Fleet's captains scatter, the foreman resigns. The city will have to start again.
-note verdictfree The verdict | THE ROOKERY GOES FREE.\n\nThe Rookery's barrels are filled from the Authority's tanks, and at dawn its boats leave for a shoal of their own, ahead of you to the south.
+note verdictfree The verdict | THE ROOKERY GOES FREE.\n\nThe Rookery's barrels are filled from the Authority's tanks, and at dawn its boats leave for a shoal of their own, ahead of you across the water.
 note teomsg Teo Varga's message | Left on the council table, in the Fleet's chalk -\n\nWhatever you chose, it's chosen. I won't argue it. The valves were never my shame - the money was, and that's said now.\n\nCrane didn't stay for the vote. Nell saw him go: out the back in his shirtsleeves, into the storm, down the pile stair with a lantern. Whatever he's been carrying all these years, he's gone to carry it alone.\n\nThe piles are groaning. If they go, the Crown goes, and every roof with it - the Rookery's too. Somebody has to follow him down. I can't dive. You can.\n\n- Teo Varga
-note pilemap Pile engineer's map | THE FOUNDATION PILES\n\nThe whole crown stands on four piles. The storm has cracked them. Jack them up, one by one, or the city goes down tonight.\n\nThe stair at the west shore goes down to the first pile head.\n\n(Fresh, in wet pencil: Jacks one to four, in order. Do not let anyone wind number four alone. - pile engineer, retired, who should have said this louder)
+note pilemap Pile engineer's map | THE FOUNDATION PILES\n\nThe whole crown stands on four piles. The storm has cracked them. Jack them up, one by one, or the city goes down tonight.\n\nThe pile stair on the key's shore goes down to the first pile head.\n\n(Fresh, in wet pencil: Jacks one to four, in order. Do not let anyone wind number four alone. - pile engineer, retired, who should have said this louder)
 note councilchest Council reward | The council's reward, for the one who spoke.
 loot letters Rope*2
 prop letters loot.refill=0
@@ -465,8 +465,8 @@ note cablechest Linesman's chest | A linesman's chest in the middle of the live 
 loot cablechest CopperIngot*3;CircuitBoard*1;Battery*1
 prop cablechest loot.refill=0
 quest title=The Council in the Storm
-quest intro=The councils meet on the Crown tonight, in the storm - and Crane will be in the chair. You carry the valve log, the ledger page and Dobbs's complaints. Go up onto the landing roof.
-step reach|landing_roof|1|Go up onto the landing roof
+quest intro=The councils meet on the Crown tonight, in the storm - and Crane will be in the chair. You carry the valve log, the ledger page and Dobbs's complaints. Make for the four council roofs on the Crown and go up onto the landing roof.
+step reach|landing_roof|1|Make for the four council roofs and go up onto the landing roof
 step read|Storm bulletin|1|Read the storm bulletin
 step kill|Screecher|4|Drive the four screechers off the roofs
 step collect|story:shutters|1|Crank the landing roof's storm shutters shut
@@ -482,11 +482,11 @@ step open|Faction letters|1|Open the factions' letters on the Union's roof
 step read|Authority secret|1|Read the Authority's secret
 step read|Fleet secret|1|Read the Fleet's secret
 step read|Union secret|1|Read the Union's secret
-step reach|storm_ridge|1|Climb storm ridge on the south side of the Crown
-step read|Councillor's notebook|1|Read the councillor's notebook in his summer house in the west
-step open|Bridgeworks crane's toolbox|1|Open the toolbox of the fallen bridgeworks crane in the south-east
-step read|Storm warden's notice|1|Read the storm warden's notice in the west
-step reach|bc_trail|1|Find the foot of the trail up Crown Fell, in the west
+step reach|storm_ridge|1|Climb storm ridge, the long ridge behind the council roofs
+step read|Councillor's notebook|1|Read the councillor's notebook in his ruined summer house inland
+step open|Bridgeworks crane's toolbox|1|Open the toolbox crate of the fallen bridgeworks crane on the shore
+step read|Storm warden's notice|1|Read the storm warden's notice near the foot of Crown Fell
+step reach|bc_trail|1|Find the foot of the trail up Crown Fell, the tall fell with the storm mast
 step reach|bc_summit|1|Climb the trail to the top of Crown Fell
 step collect|story:bc_top|1|Climb the storm beacon mast and light the beacon from its deck box
 step collect|story:alarm|1|Ring the alarm bell on the Authority's roof - the council sits
@@ -498,7 +498,7 @@ step collect|story:choice|1|Pull one lever - choose for Highwater
 step read|The verdict|1|Read the verdict
 step open|Council reward|1|Open the council's reward
 step read|Teo Varga's message|1|Read Teo Varga's message
-step reach|pile_stair|1|Go down to the pile stair on the key's west shore
+step reach|pile_stair|1|Go down to the pile stair on the key's shore
 step read|Pile engineer's map|1|Read the pile engineer's map
 step reach|pile_head|1|Dive to the first pile head, where Crane's lantern went down
 quest done=The council is over. Under the city, the piles are cracking - the foundations, band 400.

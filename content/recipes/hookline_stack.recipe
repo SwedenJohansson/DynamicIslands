@@ -190,7 +190,7 @@ call hw_note x=33.63 z=-19.11 yaw=-108.29 al=hk_hint
 story hk_top|Strongroom key|Bolt|Bram Hask's key to the old Union strongroom, hung on a nail at the top of the dragline's boom ladder.
 story hk_deep|Bram's tonnage ledger|Note_Paper|Ten years of Council barges, every ton written down - and every one going to the Foundation Piles.
 story tape|Insulating tape|Bolt|A roll of the Union linesmen's insulating tape. Three of them would make a dead breaker safe.
-note hk_hint Bram's tonnage note | Nailed to the post where the old crane console stood, before the Council took its fuses -\n\nStranger. Teo's runner says you can swim and you can keep your mouth shut. Good. I need both.\n\nThirty years I've written down every ton this yard lifts. Ten years ago I started writing down every ton the Council's barges carry away from it, too. They don't like that. So the ledger lives in the old strongroom, sixteen metres down off the east yard, where no clerk will ever go to fetch it.\n\nThe key's at the top of the dragline's boom ladder on Scrapjaw Heights. I hung it there when my knees still worked. If you've got it, go down and bring the ledger up. Read the last page. Then tell me I'm a mad old man, because I would very much like to be one.\n\n- Bram Hask, foreman
+note hk_hint Bram's tonnage note | Nailed to the post where the old crane console stood, before the Council took its fuses -\n\nStranger. Teo's runner says you can swim and you can keep your mouth shut. Good. I need both.\n\nThirty years I've written down every ton this yard lifts. Ten years ago I started writing down every ton the Council's barges carry away from it, too. They don't like that. So the ledger lives in the old strongroom, sixteen metres down off the yard, where no clerk will ever go to fetch it.\n\nThe key's at the top of the dragline's boom ladder on Scrapjaw Heights. I hung it there when my knees still worked. If you've got it, go down and bring the ledger up. Read the last page. Then tell me I'm a mad old man, because I would very much like to be one.\n\n- Bram Hask, foreman
 prop hk_deepchest on.open=message||Bram's tonnage ledger, in oilcloth. Ten years of Council barges, every line the same: SCRAP AND STONE TO THE FOUNDATION PILES, BY ORDER, A.C. Eleven thousand tons. Not one barge ever came back loaded.
 note hk_topchest Dragline's boom ladder deck box | A box lashed to the deck rail at the top of the dragline's boom ladder.
 loot hk_topchest story:hk_top*1;Scrap*3;Bolt*2
@@ -269,7 +269,7 @@ prop divezone zone.message=The dive rope. Below it, in green water, the street l
 
 note cranewreckcrate Toppled crane's toolbox | Crane five's toolbox. The crane came down in the last storm; the Union never had the parts to stand it up again.
 loot cranewreckcrate Bolt*4;MetalIngot*2;Rope*2
-note tallybook Tally book | UNION TALLY BOOK\n\nShare out: one part to the diver, one to the crane, one to the hall.\nThis week: a fridge, two doors, a tram seat. Lowstreet is picked nearly clean above the shops.\nMarlowe says the store at the east end is untouched. The Authority says it is closed. Why would a drowned shop be closed?\n\n(Carver's hand: A tram driver's cap came up today, off the depot steps on Lowstreet - JONAH PENN on the band, the man who drove the six-forty. Little Pip's dad, from the Rookery. I didn't have the heart to give it to her. Gave it to old Maud Penn instead. Unpaid share, one cap. Bram can dock my wages. - C.)\n\n(Bram's hand: Docked one biscuit. - B.)
+note tallybook Tally book | UNION TALLY BOOK\n\nShare out: one part to the diver, one to the crane, one to the hall.\nThis week: a fridge, two doors, a tram seat. Lowstreet is picked nearly clean above the shops.\nMarlowe says the store at the far end is untouched. The Authority says it is closed. Why would a drowned shop be closed?\n\n(Carver's hand: A tram driver's cap came up today, off the depot steps on Lowstreet - JONAH PENN on the band, the man who drove the six-forty. Little Pip's dad, from the Rookery. I didn't have the heart to give it to her. Gave it to old Maud Penn instead. Unpaid share, one cap. Bram can dock my wages. - C.)\n\n(Bram's hand: Docked one biscuit. - B.)
 note divercavechest Divers' locker | A diver's locker: a spare mask strap, rope and a tin of grease.
 loot divercavechest Rope*3;Scrap*3;Leather*1
 prop divercavechest loot.refill=0
@@ -333,22 +333,22 @@ pop
 
 quest title=The Salvagers' Union
 quest intro=The Union works the cranes on the half-sunk block. Find their hall - and their foreman, Bram Hask, who writes down every ton.
-step reach|union_hall|1|Go into the Union hall
+step reach|union_hall|1|Go into the Union hall, the half-sunk block with the crane on its roof
 step read|Union charter|1|Read the Union's charter
 step read|Council requisition|1|Read the Council's requisition pinned beside it
 step blueprint|Blueprint_EngineControls|1|Take the engine controls' plans from the hall's desk
-step reach|hk_trail|1|Find the foot of the trail up Scrapjaw Heights, in the south
+step reach|hk_trail|1|Find the foot of the trail up Scrapjaw Heights, the big scrap mountain
 step reach|hk_summit|1|Climb the trail to the top of Scrapjaw Heights
 step collect|story:hk_top|1|Climb the dragline's boom ladder and take the strongroom key from its deck
 step reach|crane_3|1|Ride the zipline from the hall's roof crane to crane three
 step blueprint|Blueprint_MetalDetector|1|Take the metal detector's plans from the foreman's box
 step blueprint|Blueprint_Firework|1|Take the firework's plans from the flare store
-step reach|spoil_heap|1|Climb the spoil heap east of the yard
-step open|Toppled crane's toolbox|1|Open the toolbox of the toppled crane in the south-east
-step read|Tally book|1|Read the Union's tally book in the old tally house in the north
-step reach|divers_cave|1|Find the divers' drying cave in the west
-step read|Bram's tonnage note|1|Read Bram's note on the post at the south-east yard
-step reach|hk_deep|1|Dive to the Union strongroom off the east shore
+step reach|spoil_heap|1|Climb the spoil heap, the rubble hill beside the sorting yard
+step open|Toppled crane's toolbox|1|Open the toolbox crate at the toppled crane wreck on the shore
+step read|Tally book|1|Read the Union's tally book in the old ruined tally house inland
+step reach|divers_cave|1|Find the divers' drying cave in the shore rocks
+step read|Bram's tonnage note|1|Read Bram's note on the post in the sorting yard
+step reach|hk_deep|1|Dive to the Union strongroom, sunk off the yard's shore
 step collect|story:hk_deep|1|Open the strongbox with the key and take Bram's tonnage ledger
 step read|Bram's letter|1|Read the letter Bram left on the hall floor
 step blueprint|Blueprint_ZiplineBase|1|Take the zipline's plans from crane three's cab

@@ -81,7 +81,7 @@ place Creature_StoneBird screechers at 28.47 21.09 ground y=4
 prop screechers creature.count=3
 prop screechers creature.respawn=0
 call notebox x=29.47 z=24.59 yaw=200 al=worksnote3
-call tzone x=30.47 z=23.09 al=rodzone id=rod_top r=3 msg="The top of the spur, under the lightning rod. Far off south: a pale tower in cold steam."
+call tzone x=30.47 z=23.09 al=rodzone id=rod_top r=3 msg="The top of the spur, under the lightning rod. Far off: a pale tower in cold steam."
 
 # --- The clay beach and the anchor store ---------------------------------------------------------------------------------
 place BoatStranded - at 3.54 -51.4 ground sit yaw=200 scale=0.7
@@ -111,10 +111,10 @@ place Van_4 - at 67 -15 ground sit yaw=192
 # buried treasure, the ore cave in the west hills, the smelters' ruined bunkhouse in the south, the ore plane in the east
 call ar_ridge x1=-8 z1=64 x2=40 z2=60 h=9 top=7 r=9
 call ar_plants_snowy x=16 z=62 r=28 seed=14401
-call tzone x=16 z=62 al=northridge id=stormridge r=7 msg="The top of the north ridge. Lightning walks along the horizon to the south, always the same strip of sky."
+call tzone x=16 z=62 al=northridge id=stormridge r=7 msg="The top of the ridge. Lightning walks along the horizon, always the same strip of sky."
 call treasure x=16 z=62 r=12 n=1 seed=14411
 call ar_cave x=-56 z=12 h=3 yaw=0 al=orecave chest=orecavechest
-call tzone x=-56 z=17 al=orecavezone id=orecave r=4 msg="An ore cave in the west hills. The walls are scored where the works' drills bit in - and stopped."
+call tzone x=-56 z=17 al=orecavezone id=orecave r=4 msg="An ore cave in the hills. The walls are scored where the works' drills bit in - and stopped."
 call ar_ruin x=8 z=-64 h=3 yaw=0 al=smelthouse
 call notebox x=10.5 z=-68.5 yaw=20 al=smeltroll
 call ar_plane x=56 z=-36 h=3 yaw=300 al=oreplane crate=orecrate
@@ -140,7 +140,7 @@ zipto ridgezip 12 32
 call lever x=-51 z=6 yaw=180 al=cellarlever
 prop cellarlever if.use=!signal|cellarbolt
 prop cellarlever else.use=message||The lever is down. Far off, the cellar bolt is drawn.
-prop cellarlever on.use=message||The lever drops with a bang. A rod rattles away through the hill - toward the smelthouse in the south.\nsignal||cellarbolt\ngive||story:cellarpin*1
+prop cellarlever on.use=message||The lever drops with a bang. A rod rattles away through the hill - toward the ruined smelthouse.\nsignal||cellarbolt\ngive||story:cellarpin*1
 call hatchcache x=13 z=-68.5 r=3 seed=14771 alias=cellarhatch chest=cellarchest items=TitaniumOre*3;MetalIngot*4;Battery*1
 prop cellarchest note.title=Storm cellar
 prop cellarhatch if.use=signal|cellarbolt
@@ -182,7 +182,7 @@ island on.arrive=message||Smoke over a dark rock, and the smell of a forge. Up o
 
 note worksnote1 Stormworks note 1 | STORMWORKS - NOTE 1, painted on the hall wall in letters a metre high\n\nWhat the engine is for.\n\nThe sea rose and would not stop. The Concord was every station that agreed to try: the beacon, the intake, the relays, the wall, the locks, these works. We cast the rings here. The ring turns the sea - surface, deep and ice - so it stops rising.\n\nIt worked. That is the trouble. It never stops working.\n\nUnder it, in chalk, Hedda's capitals: SOMEONE HAS RELIT FURNACE 3. THE ASH IS WARM. - H.B.
 note worksnote2 Stormworks note 2 | STORMWORKS - NOTE 2, the standing order to the last crew\n\nKeep the engine on standby. Do not shut it down - nobody knows what the sea does if the ring stops. Do not run it full - nobody knows that either. Station 1 has the switch. Station 1 decides.\n\nThe drone will keep the ring clean. Do not fight the drone. Do not feed the drone. Do not name the drone.\n\nPencilled under it: Somebody named the drone. It answers to Biscuit now. Please stop.\n\nWe went home anyway.
-note worksnote3 Stormworks note 3 | STORMWORKS - NOTE 3, scratched into the rod's foot\n\nThe rafts call it the Stalker. It is not a beast.\n\nIt was our maintenance drone. It kept the ring clean of anything that grew on it, or swam into it, or came too close. When the crews left nobody told it to stop. It is still cleaning. It thinks you are something growing on the ring.\n\nBelow, fresh, in Hedda's hand: Saw one of them tonight, out over the south water, a long grey shape following an old man in a dory like a dog on a lead. He stopped, and it stopped. He went on, and it went on. It is not cleaning any more. It is guarding him.\n\nSouth, the pale tower in the steam. Ines is there. I am going to her. - H.
+note worksnote3 Stormworks note 3 | STORMWORKS - NOTE 3, scratched into the rod's foot\n\nThe rafts call it the Stalker. It is not a beast.\n\nIt was our maintenance drone. It kept the ring clean of anything that grew on it, or swam into it, or came too close. When the crews left nobody told it to stop. It is still cleaning. It thinks you are something growing on the ring.\n\nBelow, fresh, in Hedda's hand: Saw one of them tonight, out over the water, a long grey shape following an old man in a dory like a dog on a lead. He stopped, and it stopped. He went on, and it went on. It is not cleaning any more. It is guarding him.\n\nSouth, the pale tower in the steam. Ines is there. I am going to her. - H.
 note hallchest Smelter hall | The hall's tool chest: an electric smelter's plans, soot in every fold.
 note weatherchest Weather room | The weather room's chest: an advanced extractor's plans and a stopped barometer.
 note anchorstore Anchor store | The anchor store on the clay beach: an advanced anchor's plans, for the ore barges.
@@ -225,7 +225,7 @@ note swcairn Smoke cairn | A cairn on the slag peak:\n\nWe smelted ships to make
 note keepersw Keeper's log: Stormworks | KEEPER'S LOG. The Stormworks, written in soot on the back of a shift card:\n\nFurnace 3 took a night to wake and two days to forgive me. I cast the pin the Well door wants; the old one rusted in the lock the year they sealed you in.\n\nThe drone found me here. It came up out of the quench pool dripping, all its lamps on, and I thought: this is how it ends, love, cleaned off the ring like a barnacle. It looked at me a long time. Then it followed me to the boat. It follows me still. I think it knows who I am waiting for. I think it waits for her too.\n\nThe captain is here, the hard one. She saw the drone. Good. Let her be afraid of it and not of me.\n\nCalling. Calling.\n\n- Silas
 quest title=The Works
 quest intro=A smelter hall under smoke on a dark rock. Go up to the hall.
-step reach|smelter_hall|1|Go up to the smelter hall
+step reach|smelter_hall|1|Go up to the smelter hall, the big building under the smoke
 step read|Stormworks note 1|1|Read the first note in the hall
 step blueprint|Blueprint_SmelterElectric|1|Take the electric smelter and battery charger plans from the hall's tool chest
 step blueprint|Blueprint_BatteryCharger|1|Take the battery charger plans from the hall's tool chest too
@@ -235,13 +235,13 @@ step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced extractor 
 step kill|Screecher|3|Drive the screechers off the rod spur
 step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced anchor and zipline plans from the store on the clay beach
 step blueprint|Blueprint_ZiplineTool|1|Take the zipline plans from the store on the clay beach too
-step reach|stormridge|1|Climb the north ridge and watch the lightning
-step read|Smelters' roll|1|Read the smelters' roll at the ruined smelthouse in the south
-step collect|story:cellarpin|1|Drop the cellar lever by the ore cave in the west hills
+step reach|stormridge|1|Climb the ridge behind the works and watch the lightning
+step read|Smelters' roll|1|Read the smelters' roll at the ruined smelthouse inland
+step collect|story:cellarpin|1|Drop the cellar lever by the ore cave in the hills
 step open|Storm cellar|1|Open the storm cellar under the hatch by the smelthouse
 step reach|rod_top|1|Climb to the top of the rod spur
 step read|Stormworks note 3|1|Read the last note under the lightning rod
-quest done=The Stalker was the engine's drone, still cleaning. South, a pale tower stands in cold steam.
+quest done=The Stalker was the engine's drone, still cleaning. Far off, a pale tower stands in cold steam.
 quest reward=MetalIngot*4;CopperOre*2;Scrap*6
 
 save Stormworks

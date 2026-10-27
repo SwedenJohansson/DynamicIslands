@@ -98,7 +98,7 @@ call reef x=57.39 z=-53.57 r=5 seed=14009
 call shallows x=-1.22 z=4.2 r=107.13 deep=5 n=1 seed=14013
 
 # --- Discoveries: things to find off the quest path (not needed for the quest) ---------------------------------
-call tzone x=36.5 z=48.5 al=saddleview id=saddleview r=4 msg="A ledge high on the saddle. Far to the south the sea lies flat in a wide circle - as if something under it holds the waves down."
+call tzone x=36.5 z=48.5 al=saddleview id=saddleview r=4 msg="A ledge high on the saddle. Far off the sea lies flat in a wide circle - as if something under it holds the waves down."
 place Loot_Chest goatchest at -48.8 -47.3 ground sit yaw=46
 prop goatchest loot.refill=0
 call notebox x=40.6 z=-47 yaw=139 al=keepertally
@@ -110,10 +110,10 @@ place BoatStranded - at 75.5 12 ground sit yaw=173 scale=0.7
 # wreck in the east
 call ar_ridge x1=-28 z1=58 x2=20 z2=68 h=11 top=7 r=10
 call ar_plants_tropical x=-4 z=63 r=30 seed=14101
-call tzone x=-4 z=63 al=northridge id=northridge r=7 msg="The top of the north ridge. South, past the beacon, the sea goes flat and grey in a wide circle."
+call tzone x=-4 z=63 al=northridge id=northridge r=7 msg="The top of the ridge. Past the beacon, the sea goes flat and grey in a wide circle."
 call treasure x=-4 z=63 r=14 n=1 seed=14111
 call ar_cave x=-56 z=4 h=3 yaw=0 al=westcave chest=cavechest
-call tzone x=-56 z=9 al=westcavezone id=westcave r=4 msg="A cave in the west bluff. Someone slept here: a chest, a lamp, a row of scratches on the wall - one for every pulse they counted."
+call tzone x=-56 z=9 al=westcavezone id=westcave r=4 msg="A cave in the bluff. Someone slept here: a chest, a lamp, a row of scratches on the wall - one for every pulse they counted."
 call ar_ruin x=18 z=-68 h=6 yaw=0 al=keeperruin
 call notebox x=20.5 z=-72.5 yaw=20 al=keeperpage
 call ar_plane x=62 z=24 h=7 yaw=200 al=mailplane crate=planecrate
@@ -142,7 +142,7 @@ prop keeperbox loot.refill=0
 # bridge from landing 3 to the summit, the top locker, a stash on landing 2, a cairn and buried tin on the peak; the
 # dive - a flooded pit with a wreck, an air bell, a chest and a sunk secret, a ramp out (lib_deep14)
 call dp_ground tx=71 tz=-19 hb=5.2 sx=83.56 sz=-22.36 hs=26.8
-call dp_tower ox=68.24 oz=-20.59 hb=5.2 yaw=14.98 al=bstower top=bstop stash=bsstash zal=bstopzone zid=bs_top msg="The top of the Old Light, 36 m up. Far to the south, under the calm circle, a dark square sits in the water with chains across it."
+call dp_tower ox=68.24 oz=-20.59 hb=5.2 yaw=14.98 al=bstower top=bstop stash=bsstash zal=bstopzone zid=bs_top msg="The top of the Old Light, 36 m up. Far off, under the calm circle, a dark square sits in the water with chains across it."
 call tzone x=80.18 z=-21.46 al=bssummit id=bs_summit r=4 msg="The peak beside the Old Light. Wind, gulls, and the whole saddle under you." h=1
 call notebox x=84.46 z=-18.98 yaw=104.98 al=bscairn
 call treasure x=83.04 z=-24.29 r=1.5 n=1 seed=14901
@@ -187,7 +187,7 @@ note cavechest Cave chest | A pilgrim's blanket. Scratched in the lid: THE FIRST
 loot cavechest Rope*2;Bolt*2;CircuitBoard*1;Battery*1
 prop cavechest loot.refill=0
 note keeperpage Keeper's last page | THE KEEPER'S LAST PAGE - weighted down with a stone in the doorway\n\nThe roof went in the second storm. I sleep in the hut by the tower now, beside the set, so I hear every beat.\n\nThe pulse never misses one. I timed it against the mail plane's clock before the plane came down: eight seconds, to the tick. My wife Mara went south on the Station run to keep the great engine, and the pulse is the engine calling its crew home. That is what I tell myself. That is what I tell you.\n\nI found a reel in the tower long ago and never told the others what was on it. Some things a keeper keeps.\n\nI am going south to answer her myself. Whoever lights this lamp after me: my strongbox holds the card that opens the doors down there. The last is 1. Mind it well.\n\nOn the back, pressed hard into the paper: 741.
-note planelog Mail plane log | MAIL PLANE LOG - the last page, written sideways\n\nCourse south for the Station run. Engine coughing since the second stop. I have told it that coughing is not a flight plan.\n\nThe Receiver needle swung hard south and stayed there, like a dog that has seen the butcher. Something down there is much louder than a beacon.\n\nPutting her down on the saddle's east slope. Aim: the grass. Result: also the grass, mostly.\n\nMail bags in the crate. One letter in the old keeper's hand, for MARA WREN, COMMAND WELL, CONCORD ENGINE. He gave it me every run for nine years and every run it came back: NO SUCH POST. Somebody deliver it. I am tired of carrying it.\n\nPencilled on the back, in the keeper's hand: the second is 4.
+note planelog Mail plane log | MAIL PLANE LOG - the last page, written sideways\n\nCourse south for the Station run. Engine coughing since the second stop. I have told it that coughing is not a flight plan.\n\nThe Receiver needle swung hard south and stayed there, like a dog that has seen the butcher. Something down there is much louder than a beacon.\n\nPutting her down on the saddle's slope. Aim: the grass. Result: also the grass, mostly.\n\nMail bags in the crate. One letter in the old keeper's hand, for MARA WREN, COMMAND WELL, CONCORD ENGINE. He gave it me every run for nine years and every run it came back: NO SUCH POST. Somebody deliver it. I am tired of carrying it.\n\nPencilled on the back, in the keeper's hand: the second is 4.
 note goatchest Goatherd's chest | A goatherd's chest, its lid tied down with rope.
 loot goatchest Rope*3;Plank*6;Nail*8;Wool*2
 note keepertally Keeper's tally | BEACON KEEPER'S TALLY - in a tin under a stone\n\nDay 1 of the pulse: logged it. Three beats, a pause, three beats. Mara's station, if the bearing is right. She always did like a tidy signal.\n\nDay 40: still there. Nobody answers on 500. I answer anyway. I tell her about the hens.\n\nDay 300: the relief boat did not come. I keep the light turning anyway. Somebody out there must be listening.\n\nDay 2000: I have stopped counting days and started counting beats. It is easier. You cannot miss a day if you count beats.\n\nDay - never mind the day. The pulse is still here. So am I. Calling, calling.\n\n- S. Wren, keeper
@@ -272,17 +272,17 @@ note teolist Teo's packing list | TEO'S PACKING LIST - on the back of a tobacco 
 note planecrate Mail crate | Wet mail bags. One letter is addressed to the Command Well.
 quest title=The Last Beacon
 quest intro=A beacon still turning on a saddle between two stacks. Go up to it.
-step reach|beacon|1|Go up to the beacon on the saddle
+step reach|beacon|1|Go up to the beacon on the saddle between the two stacks
 step read|Pilgrims' log|1|Read the pilgrims' log by the cold fires
 step blueprint|Blueprint_Reciever|1|Take the Receiver and head light plans from the radio hut
 step blueprint|Blueprint_HeadLight|1|Take the head light plans from the radio hut too
 step blueprint|Blueprint_Antenna|1|Take the antenna and recycler plans from the beacon tower
 step blueprint|Blueprint_Recycler|1|Take the recycler plans from the beacon tower too
 step read|Bearing card|1|Read the bearing card pinned by the camp
-step open|Cave chest|1|Find the pilgrims' chest in the west cave and read its lid
-step read|Mail plane log|1|Read the log at the mail plane wreck on the east slope
+step open|Cave chest|1|Find the pilgrims' chest in the cave in the bluff and read its lid
+step read|Mail plane log|1|Read the log at the mail plane wreck on the saddle's slope
 step collect|story:letter|1|Take the keeper's undelivered letter from the mail crate
-step read|Keeper's last page|1|Read the keeper's last page at the ruined house in the south
+step read|Keeper's last page|1|Read the keeper's last page in the ruined keeper's house on the flat below
 step open|Keeper's strongbox|1|Type the keeper's three numbers and open his strongbox
 step reach|bs_dive|1|Dive to the caravan at the bottom of the pilgrims' cistern
 step collect|story:bell|1|Take the pilgrims' bell from the caravan chest

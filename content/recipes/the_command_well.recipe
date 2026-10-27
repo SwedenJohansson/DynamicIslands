@@ -273,8 +273,8 @@ place BoatStranded cwwreck at -28 58 ground sit yaw=154.23 scale=0.5
 place Loot_Chest cwdivechest at -24.94 59.48 ground sit yaw=154.23
 call dp_air x=-31.06 z=56.52 id=cw_air al=cwair msg="Air trapped under the wreck - breathe."
 place Loot_ChestSmall cwdivesecret at -30.17 62.5 ground sit yaw=64.23
-call tzone x=-28 z=58 al=cwdivezone id=cw_dive r=7 msg="The bottom of the west pit. The spoil boat lies here." h=1
-call tzone x=-19.74 z=40.89 al=cwrim id=cw_rim r=5 msg="The west pit's rim." h=1
+call tzone x=-28 z=58 al=cwdivezone id=cw_dive r=7 msg="The bottom of the pit. The spoil boat lies here." h=1
+call tzone x=-19.74 z=40.89 al=cwrim id=cw_rim r=5 msg="The pit's rim." h=1
 call treasure x=-18 z=37.29 r=12 n=1 seed=14992
 prop treasure14992 treasure.loot=story:chainkey*1;MetalIngot*2;Bolt*2
 # the chained hatch on the islet: five chain locks round it (D1+P1)
@@ -394,7 +394,7 @@ loot cw_hatch TitaniumIngot*3;CircuitBoard*3;Battery*3;OxygenBottle*2
 prop cw_hatch loot.refill=0
 note inesw Ines's radio log: the shaft | A page of Ines's radio log, folded under a bolt on the first landing:\n\nI came as far as the first pocket, as I promised. Hedda is up on the deck, pretending not to worry. Teo is minding a goat that is not his.\n\nThe old man's boat is tied to the deck. Empty. His drone sat on the rail and did not move when I passed, which was worse than if it had.\n\nThe pulse is clearer down here. It does not come from the south any more. It comes from under me.\n\nThis part is yours. Whatever is at the bottom, read it out loud when you come back up. I want to hear it in a voice that is not on a tape. - I.
 note maranote Mara's last call | MARA'S LAST CALL - in pencil, on radio-room paper, where the letter now lies\n\nSilas. If this is in your hand, you brought the letter. Nine years you sent it, nine years it came back, and still you brought it. Of course you did.\n\nHere is the truth, since nobody else will tell it. The Commons drowned in the spring. The engine went on calling them, and the call drew every raft on the sea into the ring and the waves. So we turned it off. All of us signed. Pia printed a kinder story for the Concord.\n\nMy last call went out that night on the open band: Station 1, crew to posts, standby. Then the set went quiet.\n\nLast week I heard it again. My own voice, my own breath, every eight seconds, with a reel's hiss under it. Somebody taped it and is sending it back. Only one man ever listened that carefully.\n\nLove, it is you. You are the pulse. Every raft that came south came for my voice.\n\nStop the reel. Let me be quiet. Light the lamp instead; a lamp only says here is land.\n\nThe Ringwave on our doors means a ring that holds and a wave let through. Be the wave. Go home. - M.
-note keeperwell Keeper's log: Well | A sheet of oilcloth on Mara's chair, the careful old hand shaking now:\n\nKEEPER'S LOG. The Well. Last entry.\n\nI found her. She was at her post, as she said she would be.\n\nThe reel is in my satchel. I have stopped it. Tonight your set will be quiet for the first time in nine years. That was me too. I called you all here with her voice - the captain, the smoker, the girl from the deep, and you. I am sorry for the waves, and the drone, and the five keys on your belt. I would do it again, and that is the worst thing I know about myself.\n\nI am going up to sit with the relays. One of them drifts north, blinking her sign: long, short, short, long. If it passes you, blink back, so it knows somebody is listening. Then I will know too. - Silas
+note keeperwell Keeper's log: Well | A sheet of oilcloth on Mara's chair, the careful old hand shaking now:\n\nKEEPER'S LOG. The Well. Last entry.\n\nI found her. She was at her post, as she said she would be.\n\nThe reel is in my satchel. I have stopped it. Tonight your set will be quiet for the first time in nine years. That was me too. I called you all here with her voice - the captain, the smoker, the girl from the deep, and you. I am sorry for the waves, and the drone, and the five keys on your belt. I would do it again, and that is the worst thing I know about myself.\n\nI am going up to sit with the relays. One of them drifts off, blinking her sign: long, short, short, long. If it passes you, blink back, so it knows somebody is listening. Then I will know too. - Silas
 note maraspost Mara's post | M. WREN - RADIO. The letter belongs here.
 note keepersatchel Keeper's satchel | His stopped reel, and a second copy of his letter.
 quest title=The Heart
@@ -413,8 +413,8 @@ step read|Closing note|1|Read the closing note
 step open|Mara's post|1|Lay the Keeper's letter at Mara's post by the door
 step read|Mara's last call|1|Read what Mara left at her post
 step read|Keeper's log: Well|1|Read the Keeper's last log on her chair
-step reach|wellridge|1|Swim out to the sunken ridge in the east
-step read|Pump house book|1|Read the book in the drowned pump house in the north-east
+step reach|wellridge|1|Swim out to the sunken ridge, where the rings' glow comes up
+step read|Pump house book|1|Read the book in the drowned pump house beyond the ridge
 step collect|story:wellfuse|3|Find the three fuses: the cable cave, the supply plane and the pump house
 step open|Pump house locker|1|Fit the fuses in the pump house fuse box and open the locker
 step open|Chained hatch|1|Unlock the five chains on the islet's hatch and open it

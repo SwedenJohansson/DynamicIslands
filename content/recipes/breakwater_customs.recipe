@@ -121,12 +121,12 @@ prop dview zone.message=From here the drowned city's roofs go on to the horizon,
 # the keeper's ruined house in the east, the wreckers' cave in the west shore, the smugglers' boat the Authority seized
 call ar_ridge x1=-22 z1=56 x2=24 z2=63 h=9 top=7 r=9
 call ar_plants_hill x=1 z=60 r=30 seed=13111
-call hw_zone x=1 z=60 al=signalhill id=signal_hill r=7 msg="The top of Signal Hill. South, the breakwater; north and east, the roofs of the drowned city - and on the horizon, Highwater's towers with lights in them."
+call hw_zone x=1 z=60 al=signalhill id=signal_hill r=7 msg="The top of Signal Hill. Below, the breakwater; all around, the roofs of the drowned city - and on the horizon, Highwater's towers with lights in them."
 call ar_ruin x=54 z=30 h=3 yaw=0 al=keeperhouse
 call hw_note x=56.5 z=25.5 yaw=20 al=keeperlog
 call ar_plants_hill x=60 z=44 r=12 seed=13121
 call ar_cave x=-62 z=24 h=3 yaw=0 al=wreckcave chest=wreckcavechest
-call hw_zone x=-62 z=38 al=wreckcavezone id=wreckers_cave r=4 msg="A cave in the west shore. Lamps were hung at its mouth once - wreckers' lamps, to pull boats onto the rocks."
+call hw_zone x=-62 z=38 al=wreckcavezone id=wreckers_cave r=4 msg="A cave in the shore rocks. Lamps were hung at its mouth once - wreckers' lamps, to pull boats onto the rocks."
 call hw_wreck x=-64 z=-22 h=2 yaw=80 obj=BoatStranded al=seizedboat crate=seizedcrate r=11
 call ar_plants_hill x=-40 z=50 r=14 seed=13131
 
@@ -240,7 +240,7 @@ note weighsign Weigh station | WEIGH STATION\n\nAll cargo on the scale. All numb
 note towersign Watch tower | AUTHORITY WATCH TOWER\nNo entry. The aerial is for official traffic.\n\n(The door is not locked. The guard left for the city a long time ago.)
 note smugglertip A friend's tip | Folded small, in a hurry, tucked under the strongbox lid -\n\nYou got through Nell's yard. Good. Then you can get through a city.\n\nForget the Authority's prices. The bazaar sells what the Authority says doesn't exist: filters, real ones, the kind the Council says nobody makes any more. Raft Row, on band six hundred. Look for the pedlar with the green awning, and don't tell him your permit number.\n\nI can't give you my name yet. Somebody in this city reads every letter that comes past the breakwater, and I would like to go on breathing. I'll leave you notes where I can.\n\n- a friend
 note cranewelcome Councillor Crane's welcome | TRANSCRIPT - the loop on band five hundred, typed out by the duty clerk because she was sick of hearing it.\n\n'This is Councillor Aldous Crane. If you can hear me, you have found Highwater, and Highwater has found you. You will have heard that the city sank. It did not. It will not, while I sit on the Council. Stop at the breakwater. Let the clerks weigh you. Every pound that comes into this city, I must answer for.'\n\n(In pencil, in the margin: He recorded it nine years ago. He says 'every pound' in exactly the same voice every time. I have started saying it along with him. If anyone hears me doing it, I will deny it. - N.)
-note dobbs211 Complaint No. 211 | To the Harbor Council, Water Committee.\nCOMPLAINT No. 211\n\nSirs,\nThe boom squeaks. I reported the boom squeaking in Complaints 87, 140 and 198. It is the third post from the east. It squeaks on the ebb tide, in B-flat, and it can be heard at Pumpcrown, which is eleven miles away, which should not be possible, and yet.\n\nI am a pump foreman. I do not maintain booms. But I am the one who cannot sleep.\n\nI enclose a small tin of grease. Please give it to whoever maintains the boom. If nobody maintains the boom, please keep the tin, and think about that.\n\nYours, as ever, in hope,\nWilmer Dobbs, Foreman, Pumpcrown Works\n\n(Nailed to the post. The tin of grease is nailed up beside it.)
+note dobbs211 Complaint No. 211 | To the Harbor Council, Water Committee.\nCOMPLAINT No. 211\n\nSirs,\nThe boom squeaks. I reported the boom squeaking in Complaints 87, 140 and 198. It is the third post from the shore end. It squeaks on the ebb tide, in B-flat, and it can be heard at Pumpcrown, which is eleven miles away, which should not be possible, and yet.\n\nI am a pump foreman. I do not maintain booms. But I am the one who cannot sleep.\n\nI enclose a small tin of grease. Please give it to whoever maintains the boom. If nobody maintains the boom, please keep the tin, and think about that.\n\nYours, as ever, in hope,\nWilmer Dobbs, Foreman, Pumpcrown Works\n\n(Nailed to the post. The tin of grease is nailed up beside it.)
 note radiodesk Radio desk | The customs radio desk: the receiver's plans in a drawer, a log of ships turned away.
 note towerlocker Watch tower locker | The watch tower's locker: the aerial's plans, a coil of wire, a cold thermos.
 loot radiodesk Blueprint_Reciever*1;Blueprint_HeadLight*1;CircuitBoard*1;Coconut*2
@@ -252,7 +252,7 @@ prop customszone zone.id=customs_house
 prop customszone zone.radius=3
 prop customszone zone.message=The customs house. A radio desk, a board of rules, the sea at every window.
 
-note keeperlog Keeper's log | LIGHTKEEPER'S LOG - the last page\n\nThey took the light off me in the spring. A customs house is cheaper than a lighthouse, Councillor Crane said, and shook my hand as if he was doing me a kindness. Thirty-one years I kept that lamp.\n\nNow the clerks wave boats in to be weighed, and wave the smugglers round the back for a fee. I watch from my porch. Their lamps go into the wreckers' cave on the west shore every new moon. I don't blame them. A filter costs a week's catch in the city. The boy two doors down went half blind from the brown water last summer.\n\nWhat the Authority catches goes into the bonded yard on the east side - walls in a maze, so nobody steals it back. Nell the night clerk knows the way through. Nell knows everything, and tells half.\n\n- Osric Pell, keeper (retired, against his will)
+note keeperlog Keeper's log | LIGHTKEEPER'S LOG - the last page\n\nThey took the light off me in the spring. A customs house is cheaper than a lighthouse, Councillor Crane said, and shook my hand as if he was doing me a kindness. Thirty-one years I kept that lamp.\n\nNow the clerks wave boats in to be weighed, and wave the smugglers round the back for a fee. I watch from my porch. Their lamps go into the wreckers' cave in the shore rocks every new moon. I don't blame them. A filter costs a week's catch in the city. The boy two doors down went half blind from the brown water last summer.\n\nWhat the Authority catches goes into the bonded yard behind the hills - walls in a maze, so nobody steals it back. Nell the night clerk knows the way through. Nell knows everything, and tells half.\n\n- Osric Pell, keeper (retired, against his will)
 note wreckcavechest Wreckers' chest | The wreckers' chest: lamp oil, rope, and a dozen stamped permits with no names on them.
 loot wreckcavechest Rope*3;Nail*8;Scrap*3;CopperIngot*1
 prop wreckcavechest loot.refill=0
@@ -260,20 +260,20 @@ note seizedcrate Seized boat's hold | SEIZED BY THE HARBOR AUTHORITY - pending s
 loot seizedcrate Glass*3;Plastic*4;Nail*10
 quest title=The Rumour Is True
 quest intro=A city that never sank, the sailors say. Go into the customs house at the end of the breakwater.
-step reach|customs_house|1|Go into the customs house at the end of the breakwater
+step reach|customs_house|1|Go into the customs house, the tower top at the end of the breakwater
 step read|Authority entry rules|1|Read the Authority's entry rules
 step read|Councillor Crane's welcome|1|Read the transcript of the Councillor's loop by the radio
 step blueprint|Blueprint_Reciever|1|Take the receiver's and head light's plans from the radio desk
 step blueprint|Blueprint_HeadLight|1|Take the head light's plans from the radio desk too
 step blueprint|Blueprint_Antenna|1|Take the antenna's and recycler's plans from the watch tower's locker
 step blueprint|Blueprint_Recycler|1|Take the recycler's plans from the watch tower's locker too
-step collect|story:permit|1|Weigh your cargo and stamp a trader's permit
+step collect|story:permit|1|Weigh your cargo on the scale, then stamp a permit at the desk (both on the breakwater)
 step read|Complaint No. 211|1|Read the complaint nailed to the boom post
-step reach|signal_hill|1|Climb Signal Hill north of the breakwater
-step read|Keeper's log|1|Read the lightkeeper's log in his ruined house on the east shore
-step reach|wreckers_cave|1|Find the wreckers' cave in the west shore
-step open|Seized boat's hold|1|Open the hold of the smugglers' boat the Authority seized
-step read|Bonded yard notice|1|Read the notice at the gate of the bonded yard, on the east side
+step reach|signal_hill|1|Climb Signal Hill, the big hill behind the shore
+step read|Keeper's log|1|Read the lightkeeper's log in his ruined house on the hill by the shore
+step reach|wreckers_cave|1|Find the wreckers' cave in the shore rocks, with lamps at its mouth
+step open|Seized boat's hold|1|Open the crate in the stranded boat the Authority seized, on the shore
+step read|Bonded yard notice|1|Read the notice at the gate of the bonded yard, the maze of walls
 step reach|bw_heart|1|Find your way through the bonded yard's maze to its heart
 step open|Seized goods strongbox|1|Open the seized-goods strongbox
 step read|Clerk's last shift|1|Read the night clerk's last note

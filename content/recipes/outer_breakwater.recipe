@@ -102,7 +102,7 @@ scatter Pickup_Landmark_Flower_White 2 at -9.63 18.9 r=4 seed=14104 free=1
 scatter Pickup_Landmark_Flower_Blue 2 at 11.2 4.72 r=4 seed=14105 free=1
 scatter Pickup_Landmark_Flower_Black 1 at -1.63 21.9 r=3 seed=14106 free=1
 place RT_Stair innerstair at -1.63 19.4 ground sit yaw=0
-call tzone x=-1.63 z=24.9 al=innerzone id=inner_stair r=4 h=0 msg="The inner terrace, up out of the garden. From here, south over the wall: the storm. North: a canal of locks."
+call tzone x=-1.63 z=24.9 al=innerzone id=inner_stair r=4 h=0 msg="The inner terrace, up out of the garden. From here, over the wall: the storm. Behind you: a canal of locks."
 call notebox x=-0.2 z=26.6 yaw=170 al=inesob
 scatter "Pickup_Landmark_Tree_Palm 2" 3 at -31.3 27.39 r=6 seed=14107 free=2
 call reef x=-62.61 z=43.04 r=5 seed=14108
@@ -120,10 +120,10 @@ call treasure x=-68.9 z=0.4 r=5 n=1 seed=14113
 # buried treasure, the smugglers' cave in the west shore, the masons' ruined lodge in the north, the plane in the storm
 call ar_ridge x1=56 z1=-24 x2=60 z2=28 h=9 top=7 r=9
 call ar_plants_tropical x=58 z=2 r=28 seed=14301
-call tzone x=58 z=2 al=eastridge id=eastridge r=7 msg="The top of the east ridge. The wall runs round below you - and to the south, the storm sits on the same spot and never moves."
+call tzone x=58 z=2 al=eastridge id=eastridge r=7 msg="The top of the ridge. The wall runs round below you - and beyond it, the storm sits on the same spot and never moves."
 call treasure x=58 z=2 r=12 n=1 seed=14311
 call ar_cave x=-56 z=-24 h=3 yaw=180 al=wallcave chest=wallcavechest
-call tzone x=-56 z=-29 al=wallcavezone id=wallcave r=4 msg="A smugglers' cave in the west shore. Tokens, hundreds of them, pressed into the wet sand in rows."
+call tzone x=-56 z=-29 al=wallcavezone id=wallcave r=4 msg="A smugglers' cave in the shore. Tokens, hundreds of them, pressed into the wet sand in rows."
 call ar_ruin x=12 z=64 h=3 yaw=0 al=masonlodge
 call notebox x=14.5 z=59.5 yaw=20 al=masonplan
 call ar_plane x=-8 z=-70 h=3 yaw=80 al=stormplane crate=stormcrate
@@ -169,7 +169,7 @@ loot wallcavechest Scrap*4;Nail*10;Rope*2;Copper*1;TitaniumOre*2
 # bridge from landing 3 to the summit, the top locker, a stash on landing 2, a cairn and buried tin on the peak; the
 # dive - a flooded pit with a wreck, an air bell, a chest and a sunk secret, a ramp out (lib_deep14)
 call dp_ground tx=45 tz=60 hb=4.1 sx=52.8 sz=70.4 hs=25.7
-call dp_tower ox=45.45 oz=56.85 hb=4.1 yaw=-53.13 al=obtower top=obtop stash=obstash zal=obtopzone zid=ob_top msg="The top of the watch tower, high over the wall. South the storm, north the garden, and a cable down to the gate house."
+call dp_tower ox=45.45 oz=56.85 hb=4.1 yaw=-53.13 al=obtower top=obtop stash=obstash zal=obtopzone zid=ob_top msg="The top of the watch tower, high over the wall. On one side the storm, on the other the garden, and a cable down to the gate house."
 call tzone x=50.7 z=67.6 al=obsummit id=ob_summit r=4 msg="The garden peak beside the watch tower." h=1
 call notebox x=50 z=72.5 yaw=36.87 al=obcairn
 call treasure x=54.4 z=69.2 r=1.5 n=1 seed=14941
@@ -184,7 +184,7 @@ place Loot_Chest obdivechest at 26.9 -67.41 ground sit yaw=-24.44
 call dp_air x=33.1 z=-64.59 id=ob_air al=obair msg="Air trapped under the wreck - breathe."
 place Loot_ChestSmall obdivesecret at 32.07 -70.55 ground sit yaw=-114.44
 call tzone x=30 z=-66 al=obdivezone id=ob_dive r=7 msg="The bottom of the storm pit. A smugglers' boat lies broken on the floor." h=1
-call tzone x=22.14 z=-48.7 al=obrim id=ob_rim r=5 msg="The storm pit's rim, south of the wall." h=1
+call tzone x=22.14 z=-48.7 al=obrim id=ob_rim r=5 msg="The storm pit's rim, beyond the wall." h=1
 call treasure x=20.48 z=-45.06 r=12 n=1 seed=14942
 prop treasure14942 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 # the counterweight scales on the hill above the wall stair (M35 with M37 carry + a stack zone; optional)
@@ -242,7 +242,7 @@ note masonnotice Mason's notice | NOTICE - nailed to a post\n\nWall gangs: the s
 note wallcavechest Smugglers' chest | Wall tokens, and the tools to fake more.
 prop wallcavechest loot.refill=0
 note masonplan Masons' plan | MASONS' PLAN - a sheet held flat with four stones\n\nThe wall is a circle because the sea inside it must be still. Who ordered it: the Concord. What it keeps still: they did not say, and the foreman said that was a good sign. The foreman said a lot of things.\n\nWe built the lodge from the leftover blocks. The storm took the roof the week we finished. We drank to it anyway; you do not get many weeks like that.\n\nThe smugglers came after us. They bolted their strongbox in our lodge and hid the bolt's lever in their cave, behind the vines, because smugglers love a lever. Their boat is in the storm pit now. The sea has no sense of humour about smugglers.
-note stormlog Storm plane log | STORM PLANE LOG - the pages stuck together with salt\n\nThe storm south of the wall never drifts. It sits there like a dog on a doorstep. Flew into it to see why.\n\nIn the middle the rain fell upward for a second and every instrument read zero. The Receiver did not read zero. It played the pulse, and under it a woman's voice, calm, saying a station number and a word that might have been standby. Then the old man again, talking over her, louder, as if to keep her company.\n\nCame down on the south shore with one wing. The wall's lights were the last thing I saw. I like lights. I hope the keeper keeps them on.
+note stormlog Storm plane log | STORM PLANE LOG - the pages stuck together with salt\n\nThe storm beyond the wall never drifts. It sits there like a dog on a doorstep. Flew into it to see why.\n\nIn the middle the rain fell upward for a second and every instrument read zero. The Receiver did not read zero. It played the pulse, and under it a woman's voice, calm, saying a station number and a word that might have been standby. Then the old man again, talking over her, louder, as if to keep her company.\n\nCame down on the shore with one wing. The wall's lights were the last thing I saw. I like lights. I hope the keeper keeps them on.
 # (deep pass 10-24: the climb and the dive)
 story ledger|Smugglers' ledger|Hinge|The smugglers' ledger, oiled and wrapped, from the boat they sank in the storm pit. Its last page lists what they hid on the watch tower.
 story chainkey|Chain key|Bolt|A heavy key on a ring, stamped CONCORD WELL. One of the five that open the chained door of the Command Well, deep under the calm circle.
@@ -265,26 +265,26 @@ note obcairn Garden cairn | A cairn on the garden peak, flowers pressed under a 
 note ob_cwcrate Counterweight crate | The wall crew's crate, hung from the walk on the counterweight rope.
 loot ob_cwcrate MetalIngot*3;Bolt*3;Hinge*2;TitaniumIngot*1
 prop ob_cwcrate loot.refill=0
-note keeperob Keeper's log: Breakwater | KEEPER'S LOG. The Breakwater, oilcloth wrapped round the gate crank:\n\nThe wall keeper is a good man. He keeps the storm out of the calm with nothing but a crank, a ledger and a goat. Forty years ago he would have been on the Station run with Mara and me.\n\nMara used to say the wall was the Engine's ribcage: keep the storm out and the heart beats easy. I used to say it was a very large fence. She laughed every time, though it was not funny the fortieth time.\n\nThrough the gate the canal goes south through three locks. The locks want hands on the wheels, three of them at once if you are lazy, one at a time if you are old. I am old. I have done them before. I will leave them for my pilgrims.\n\nCalling. Calling. Not long now, love.\n\n- S.W.
+note keeperob Keeper's log: Breakwater | KEEPER'S LOG. The Breakwater, oilcloth wrapped round the gate crank:\n\nThe wall keeper is a good man. He keeps the storm out of the calm with nothing but a crank, a ledger and a goat. Forty years ago he would have been on the Station run with Mara and me.\n\nMara used to say the wall was the Engine's ribcage: keep the storm out and the heart beats easy. I used to say it was a very large fence. She laughed every time, though it was not funny the fortieth time.\n\nThrough the gate the canal goes on through three locks. The locks want hands on the wheels, three of them at once if you are lazy, one at a time if you are old. I am old. I have done them before. I will leave them for my pilgrims.\n\nCalling. Calling. Not long now, love.\n\n- S.W.
 note inesob Ines's radio log: the terrace | A page of Ines's radio log, tucked in a crack of the terrace wall:\n\nNight nine. Hedda waited for me. She pretends she did not, but there is a hat-shaped bite out of her temper.\n\nInside the wall the pulse is so strong the radio does not need its aerial. And I have stopped pretending: there is a woman under it, very far down. Station 1, she says. Standby. Then nothing, and the old man answers her, every eight seconds, as if the nothing were a reply.\n\nNorth of the terrace the canal runs on through three locks - the Current Locks. Hedda says the keeper went that way. I say he wants us to. Either way, that is where we go. - I.
 quest title=The Wall
 quest intro=An iron wall, a storm and a gate house. Go up to the gate.
-step reach|gate_house|1|Go up to the gate house
+step reach|gate_house|1|Go up to the gate house in the iron wall
 step blueprint|Blueprint_WaterTank|1|Take the water tank plans from the rain cistern
 step blueprint|Blueprint_Pipe_Water|1|Take the water pipe plans from the pipe store
 step collect|story:gate|1|Wind the gate crank
 step blueprint|Blueprint_ElectricPurifier|1|Take the purifier plans from the keeper's chest in his hut
 step blueprint|Blueprint_Storage_Large|1|Take the large storage plans from the wall store
-step reach|eastridge|1|Climb the east ridge above the wall
-step collect|story:smugbolt|1|Cut the vines in the smugglers' cave in the west and pull the lever behind them
-step open|Smugglers' strongbox|1|Open the smugglers' strongbox at the ruined lodge in the north
-step read|Storm plane log|1|Read the log at the plane wreck in the southern storm
+step reach|eastridge|1|Climb the ridge that looks down on the wall
+step collect|story:smugbolt|1|Cut the vines in the smugglers' cave in the shore and pull the lever behind them
+step open|Smugglers' strongbox|1|Open the smugglers' strongbox in the ruined lodge inland
+step read|Storm plane log|1|Read the log at the plane wreck out in the storm beyond the wall
 step reach|ob_dive|1|Dive into the storm pit to the smugglers' boat
-step collect|story:ledger|1|Take the smugglers' ledger from the boat's hold
+step collect|story:ledger|1|Take the smugglers' ledger from the chest in the boat
 step reach|ob_top|1|Climb the watch tower by the garden peak to its top
 step open|Watch tower locker|1|Open the watch tower locker with what the ledger says
 step reach|inner_stair|1|Climb the stair to the inner terrace
-quest done=Through the wall and out of the storm. South of the terrace a canal runs on through three locks.
+quest done=Through the wall and out of the storm. Beyond the terrace a canal runs on through three locks.
 quest reward=Seed_Pineapple*2;Plank*10;Rope*4
 
 save Outer Breakwater

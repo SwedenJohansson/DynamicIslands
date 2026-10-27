@@ -370,7 +370,7 @@ loot pumpvault MetalIngot*3;Bolt*3;CopperIngot*2
 prop pumpvault loot.refill=0
 quest title=The Evidence
 quest intro=Ines Marlowe's chalk led here: the cistern under the Authority's tower, where the valves under Lowstreet were turned by hand. Find the record - and the four clerks who kept the sluice order between them.
-step reach|intake|1|Go down to the cistern's intake
+step reach|intake|1|Make for the Authority's tower, then go down the causeway to the cistern's intake
 step read|Cistern ledger|1|Read the cistern ledger at the intake
 step reach|valve_gallery|1|Dive down to the flooded valve gallery
 step read|Valve log|1|Read the valve log in the gallery
@@ -382,18 +382,18 @@ step reach|old_pump|1|Go into the pump house and look at the oldest pump
 step read|Builder's plate|1|Read the builder's plate on the pump
 step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced anchor's and zipline's plans from the pump house locker
 step blueprint|Blueprint_ZiplineTool|1|Take the zipline's plans from the pump house locker too
-step read|Sluicekeeper's notice|1|Read the sluicekeeper's notice by the four sluice levers in the south
-step reach|aqueduct_hill|1|Climb aqueduct hill in the north-west
+step read|Sluicekeeper's notice|1|Read the sluicekeeper's notice by the four sluice levers, behind the pump house
+step reach|aqueduct_hill|1|Climb aqueduct hill, the hill with the two old arches
 step read|Clerk Quill's slip|1|Find Clerk Quill's slip on aqueduct hill
-step read|Waterman's diary|1|Read the waterman's diary in his lodge in the north-east
+step read|Waterman's diary|1|Read the waterman's diary in his ruined lodge inland
 step read|Clerk Hollis's slip|1|Find Clerk Hollis's slip by the waterman's lodge
-step open|Records van's crate|1|Open the crate in the Authority's records van on the east shore
+step open|Records van's crate|1|Open the crate in the Authority's records van on the shore
 step read|Clerk Fane's slip|1|Find Clerk Fane's slip by the records van
-step read|Clerk Abernethy's slip|1|Find Clerk Abernethy's slip at the mouth of the lamp men's cave in the west
-step reach|ch_trail|1|Find the foot of the trail up Overflow Tor, in the south-west
+step read|Clerk Abernethy's slip|1|Find Clerk Abernethy's slip at the mouth of the lamp men's cave in the shore rocks
+step reach|ch_trail|1|Find the foot of the trail up Overflow Tor, the tall tor with the surge tower
 step reach|ch_summit|1|Climb the trail to the top of Overflow Tor
 step collect|story:ch_top|1|Climb the surge tower and read its gauge on the deck
-step reach|ch_deep|1|Dive to the settling house off the south shore
+step reach|ch_deep|1|Dive to the settling house, sunk off the shore below the tor
 step collect|story:ch_deep|1|Find what was left in its back room strongbox
 step collect|story:ch_gates|1|Pull the four sluices by the hub in the clerks' order
 step open|Pump-keeper's chest|1|Open the pump-keeper's chest in the drained pump hall

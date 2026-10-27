@@ -145,7 +145,7 @@ call hw_wreck x=-62 z=-42 h=3 yaw=40 obj=VP_Excavator al=sunkdigger crate=digger
 call ar_ruin x=10 z=-66 h=4 yaw=180 al=engineershut
 call hw_note x=7.5 z=-61.5 yaw=190 al=engineersurvey
 call ar_cave x=-78 z=-5 h=4 yaw=0 al=drivercave chest=driverchest
-call hw_zone x=-78 z=19 al=drivermouth id=driver_cave r=4 msg="A cave in the west cliff: the pile drivers kept their charges here, well away from the city."
+call hw_zone x=-78 z=19 al=drivermouth id=driver_cave r=4 msg="A cave in the cliff: the pile drivers kept their charges here, well away from the city."
 prop pileray obj.name=pileray
 prop pileray boss.shield=1
 place VP_ExplosiveBarrel_Pile blast1 at 12 8 ground sit yaw=0
@@ -247,9 +247,9 @@ prop jack4 if.use=signal|jack3
 prop jack4 on.use=signal||jack4\ngive||story:jack4*1\nshow|closing\nsound||event:/raft/radar/lever\nmessage||The last jack bites. All through the water the piles settle. Highwater holds - for now. Tucked behind the jack, a note.
 prop jack4 else.use=message||The third pile first.
 
-note enginenote Nell Abernethy's note | Pinned over the old engineer's board, in a clerk's tidy hand -\n\nYou came. Good. I came down on the last barge after the council broke up, and I am writing this on my knee, so forgive the hand.\n\nCouncillor Crane went down the pile stair an hour before me, alone, with a lantern. He has not come back up. The air under the city lies in pockets round the foot-blocks; he knew that - he signed for them every year.\n\nFour piles carry the Crown. The jacks are at their feet. The first pile first, then the second - and then the stingray will wake. The pile drivers left blasting barrels on the piles for it. The third and the fourth after.\n\nBefore you dive, read the engineers' survey in their hut to the south, and look at what the rubble bank is made of. Then you will know why the Rookery was weight.\n\nInes's chalk hooks go down the pile stair. Follow them.\n\n- N. Abernethy
+note enginenote Nell Abernethy's note | Pinned over the old engineer's board, in a clerk's tidy hand -\n\nYou came. Good. I came down on the last barge after the council broke up, and I am writing this on my knee, so forgive the hand.\n\nCouncillor Crane went down the pile stair an hour before me, alone, with a lantern. He has not come back up. The air under the city lies in pockets round the foot-blocks; he knew that - he signed for them every year.\n\nFour piles carry the Crown. The jacks are at their feet. The first pile first, then the second - and then the stingray will wake. The pile drivers left blasting barrels on the piles for it. The third and the fourth after.\n\nBefore you dive, read the engineers' survey in their ruined hut inland, and look at what the rubble bank is made of. Then you will know why the Rookery was weight.\n\nInes's chalk hooks go down the pile stair. Follow them.\n\n- N. Abernethy
 note engineerbox Engineer's box | The pile engineer's spare tools.
-note closing The city holds | Behind the fourth jack, in a tin with chalk fingerprints on the lid -\n\nYou did it. I heard the piles settle from the stair, all four, like a house letting out its breath.\n\nI found him before you did. I closed his eyes and left his page where it was, for you - you earned the reading of it. Nell will take it up to the Crown. Let the factions argue over it for a hundred years; they are good at that.\n\nI'm going up. Dobbs is waiting on the mudflat with a thermos and a complaint about the tide.\n\nIf you spoke for the Rookery on the roofs, Maud's boats are already out on the shoal ahead, band 700 - Pip has a tram line to build and says you are its first passenger.\n\nThe brass plates on the piles say CONCORD WORKS. Whoever built them is still out there, south, on the old band. That's another story.\n\n- Ines
+note closing The city holds | Behind the fourth jack, in a tin with chalk fingerprints on the lid -\n\nYou did it. I heard the piles settle from the stair, all four, like a house letting out its breath.\n\nI found him before you did. I closed his eyes and left his page where it was, for you - you earned the reading of it. Nell will take it up to the Crown. Let the factions argue over it for a hundred years; they are good at that.\n\nI'm going up. Dobbs is waiting on the mudflat with a thermos and a complaint about the tide.\n\nIf you spoke for the Rookery on the roofs, Maud's boats are already out on the shoal ahead, band 700 - Pip has a tram line to build and says you are its first passenger.\n\nThe brass plates on the piles say CONCORD WORKS. Whoever built them is still out there, on the old band. That's another story.\n\n- Ines
 note returnsign Mudflat | High-water mark. The tide comes no further.
 loot engineerbox Rope*2;MetalIngot*2;Bolt*2
 prop engineerbox loot.refill=0
@@ -264,7 +264,7 @@ prop returnzone zone.message=Back on the mudflat. Dobbs is there with a thermos,
 prop blast1 on.use=message||The barrel goes up under the pile - the shock rolls the stingray over.\nhit|pileray|40\nhide|\nsignal||blast
 prop blast2 on.use=message||The second barrel bursts - the stingray's hide splits along the old scar.\nhit|pileray|40\nhide|\nsignal||blast
 prop blast3 on.use=message||The last barrel blows - and the pile shudders free of the stingray.\nhit|pileray|40\nhide|\nsignal||blast
-note diggercrate Excavator's toolbox | The excavator slid off the bank in a storm. Its toolbox stayed bolted to the cab - and in the lid, the driver's work sheets.\n\nNIGHT SHIFT. DIG BALLAST PIT AT THE PILE FOOT. BARGE IRON FROM PUMPCROWN. NO LIGHTS. NO NAMES. Paid in Authority tokens, double.\n\nOn the last sheet, pressed hard: The ground under pile four is moving. I told the Councillor. He said: then dig faster. I have gone up to the Rookery to dig for them instead. Whoever finds this - the drivers kept charges in the west cave. You will want them down there. - Carver
+note diggercrate Excavator's toolbox | The excavator slid off the bank in a storm. Its toolbox stayed bolted to the cab - and in the lid, the driver's work sheets.\n\nNIGHT SHIFT. DIG BALLAST PIT AT THE PILE FOOT. BARGE IRON FROM PUMPCROWN. NO LIGHTS. NO NAMES. Paid in Authority tokens, double.\n\nOn the last sheet, pressed hard: The ground under pile four is moving. I told the Councillor. He said: then dig faster. I have gone up to the Rookery to dig for them instead. Whoever finds this - the drivers kept charges in the cave in the cliff. You will want them down there. - Carver
 loot diggercrate MetalIngot*3;Bolt*3;Scrap*3
 note engineersurvey Engineers' survey | PILE SURVEY - CROWN FOUNDATIONS\n\nFour piles carry the Crown. Inspected this year: all four sound. Jacks serviced, as funded. Signed every year for twenty-two years, in the same neat hand: A.C.\n\n(Underneath, in pencil, shaky: I was the pile engineer. The service money was voted every year and never spent. He was a junior clerk then, and it paid for his first election. When the cracks came he could not send men down to the jacks - they would have seen the rust, and the dates. So he sent iron instead. I am old and I was paid to keep quiet, and I am sorry. - R. Tolley)\n\n(And in grease pencil: He couldn't wind the jacks without a vote, so he bought weight. Lowstreet's water. The barges' iron. The Rookery's roofs next. - I.M.)
 note driverchest Pile-driver's stash | Blasting charges wrapped in oilcloth, and the drivers' pay, never collected.\n\nOn the cave wall above, a chalk hook you know by now, and under it: THE BARRELS ON THE PILES ARE THE SAME CHARGE. THE RAY'S HIDE ONLY GIVES TO A BLAST. LIGHT ONE UNDER IT, NOT UNDER YOU. - I.M.
@@ -275,13 +275,13 @@ loot driverchest ExplosiveGoo*2;TradeToken*3;Rope*2
 prop driverchest loot.refill=0
 quest title=The Piles
 quest intro=The storm is cracking the four piles under the Crown, and Councillor Crane has gone down the pile stair alone. Land on the mudflat at the city's edge - Nell Abernethy left a note there.
-step reach|mudflat|1|Land on the mudflat
+step reach|mudflat|1|Land on the flat mud at the city's edge, by the engineer's board
 step read|Nell Abernethy's note|1|Read Nell Abernethy's note on the engineer's board
-step read|Engineers' survey|1|Read the engineers' survey in their hut in the south
-step open|Excavator's toolbox|1|Open the toolbox of the sunk excavator in the south-west
-step reach|driver_cave|1|Find the pile drivers' cave in the west cliff
+step read|Engineers' survey|1|Read the engineers' survey in their ruined hut inland
+step open|Excavator's toolbox|1|Open the toolbox crate of the sunk excavator on the shore
+step reach|driver_cave|1|Find the pile drivers' cave in the cliff
 step open|Pile-driver's stash|1|Open the pile drivers' stash in the cave
-step reach|rubble_bank|1|Climb the rubble bank in the north-west and see what it is made of
+step reach|rubble_bank|1|Climb the rubble bank, the long pile of stone and iron, and see what it is made of
 step reach|pile_1|1|Follow Ines's hooks down the pile stair to the first pile
 step read|Jack log - pile 1|1|Read the jack log wired to the first jack
 step collect|story:jack1|1|Wind the first pile's jack

@@ -214,9 +214,9 @@ call ar_plants_hill x=60 z=30 r=12 seed=13631
 # along the street to the sewer mouth at the west end; her slate at the sewer's lip names Cistern Hall. The Penns' rooms
 # at No. 14 (shop one) hold the tin tram's empty box; Jonah Penn's letter is in the drivers' diner. The sunk boat and its
 # crate off the north-west shore stay as a secret; the sewer-mouth cache is Ines's (an oxygen bottle sees you down).
-call hw_zone x=36 z=-79 al=ls_hook1z id=ls_hook1 r=3 h=1 msg="A hook, chalked on the store's last pillar - the Union's sign. Under it, smaller: I.M. - OUT THIS WAY. And an arrow, west along the street."
-call hw_zone x=0 z=-74 al=ls_hook2z id=ls_hook2 r=3 h=1 msg="Another hook, chalked on a lamp post in front of the cinema. I.M. - KEEP TO THE LAMPS. The arrow points on, west."
-call hw_zone x=-45 z=-63 al=ls_hook3z id=ls_hook3 r=3 h=1 msg="The last hook, on the kerb at the street's west end - and beyond it the sewer mouth, breathing cold water. A slate is tied to the railing."
+call hw_zone x=36 z=-79 al=ls_hook1z id=ls_hook1 r=3 h=1 msg="A hook, chalked on the store's last pillar - the Union's sign. Under it, smaller: I.M. - OUT THIS WAY. And an arrow, along the street towards the cinema."
+call hw_zone x=0 z=-74 al=ls_hook2z id=ls_hook2 r=3 h=1 msg="Another hook, chalked on a lamp post in front of the cinema. I.M. - KEEP TO THE LAMPS. The arrow points on, along the street."
+call hw_zone x=-45 z=-63 al=ls_hook3z id=ls_hook3 r=3 h=1 msg="The last hook, on the kerb at the street's far end - and beyond it the sewer mouth, breathing cold water. A slate is tied to the railing."
 place Note_Paper ineschalk at -41 -64 ground y=0.2 drop yaw=60
 place RT_PlasticBoat ls_sunkboat at -66 34 ground sit yaw=35
 prop ls_sunkboat tint.color=#5a5048
@@ -309,8 +309,8 @@ note sewerchest Ines's cache | A shop's safe, caught in the sewer mouth, that In
 loot sewerchest TradeToken*4;MetalIngot*1;Glass*2
 prop sewerchest loot.refill=0
 quest title=The Drowned District
-quest intro=The outfall pours east into a drowned street. The Union's lost divers went down here. Find their rope at the tram stop.
-step reach|tram_stop|1|Dive to the tram stop on the drowned street
+quest intro=The outfall pours into a drowned street. The Union's lost divers went down here. Make for the cinema roof with the wind turbine and dive to the tram stop on the street below.
+step reach|tram_stop|1|Dive from the cinema roof (the wind turbine) to the tram stop on the street below
 step read|Expedition plan|1|Read the expedition's plan at the tram stop
 step read|Council flood notice|1|Read the Council's notice beside it
 step reach|shop_1|1|Breathe in the air pocket at No. 14, the blue door
@@ -319,19 +319,19 @@ step kill|Angler fish|3|Drive off the three anglers in the shops
 step blueprint|Blueprint_BatteryAdvanced|1|Take the advanced battery's plans from the electronics shop
 step blueprint|Blueprint_ElectricGrill|1|Take the electric grill's plans from the drivers' diner
 step read|Jonah's letter|1|Read the letter left on the diner's table
-step reach|store_front|1|Swim to the fallen department store at the street's east end
+step reach|store_front|1|Swim to the fallen department store at the end of the street, past the diner
 step collect|story:cagesopen|1|Find the cage key and open the four cages
 step read|Ines's report|1|Read Ines's report
 step reach|ls_hook1|1|Find the chalk hook on the store's last pillar
-step reach|ls_hook2|1|Follow the hooks west - the next is by the cinema
+step reach|ls_hook2|1|Follow the chalk hooks along the street - the next is by the cinema
 step blueprint|Blueprint_WindTurbine|1|Take the wind turbine's plans from the cinema's projection box, up on its roof
 step blueprint|Blueprint_HeadLight_Advanced|1|Take the advanced headlight's plans from the lamp shop
 step kill|Stingray|1|Drive off the big stingray on the street
-step reach|embankment|1|Climb the old tram embankment north of the islet
-step read|Depot timetable|1|Read the last timetable in the tram depot's office in the north-west
-step reach|tram_wagons|1|Find the tram's last wagons, hauled out on the east shore
+step reach|embankment|1|Climb the old tram embankment, the raised line on the hills behind the islet
+step read|Depot timetable|1|Read the last timetable in the tram depot's office, the ruin inland
+step reach|tram_wagons|1|Find the tram's last wagons, hauled out on the shore
 step open|Stripped caravan's crate|1|Open the crate in the stripped caravan beside them
-step reach|ls_hook3|1|Dive back down and follow the hooks to the street's west end
+step reach|ls_hook3|1|Dive back down and follow the hooks to the sewer mouth at the street's far end
 step read|Ines's chalk note|1|Read the slate Ines left at the sewer's lip
 quest done=The valves were turned by hand. The cistern under the Authority's tower holds the records - Cistern Hall, band 700.
 quest reward=SilverAlgae*3;SeaVine*2

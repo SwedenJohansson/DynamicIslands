@@ -80,7 +80,7 @@ push at 16 10 h=1.5
 call stilt_hut y=2.6
 place Loot_Chest mast4chest at 3.6 3.6 y=2.7 sit yaw=225
 pop
-call tzone x=18.25 z=12.25 al=mast4zone id=mast_4 r=4 h=2.6 msg="Mast 4's hut, on posts over the east bar. The static is loudest here."
+call tzone x=18.25 z=12.25 al=mast4zone id=mast_4 r=4 h=2.6 msg="Mast 4's hut, on posts over the bar. The static is loudest here."
 
 # --- The flare locker under mast 2, the mast workshop under mast 3 --------------------------------------------------------
 place Loot_ChestLarge flarelocker at -4.5 -9 ground sit yaw=160
@@ -115,7 +115,7 @@ call ar_plants_tropical x=-44 z=42 r=26 seed=14251
 call tzone x=-44 z=42 al=nwridge id=nwridge r=7 msg="The top of the outer ring. Inside it, the four masts and the static; outside it, the sea goes on south - quiet, as if listening."
 call treasure x=-44 z=42 r=12 n=1 seed=14261
 call ar_cave x=60 z=20 h=6 yaw=180 al=shoalcave chest=shoalcavechest
-call tzone x=60 z=15 al=shoalcavezone id=shoalcave r=4 msg="A cave in the east bar. Somebody wired a speaker in here and left it humming - the same static, softer."
+call tzone x=60 z=15 al=shoalcavezone id=shoalcave r=4 msg="A cave in the bar. Somebody wired a speaker in here and left it humming - the same static, softer."
 call ar_ruin x=-12 z=-58 h=6 yaw=0 al=nethouse
 call notebox x=-9.5 z=-62.5 yaw=20 al=netbook
 call notebox x=-16.5 z=-52.5 yaw=110 al=heddass
@@ -358,7 +358,7 @@ note shoalcavechest Speaker cave chest | A chest under the humming speaker: wire
 loot shoalcavechest Battery*1;CircuitBoard*1;Copper*2;Bolt*2
 prop shoalcavechest loot.refill=0
 note netbook Net house book | THE FLEET'S NET HOUSE - catch book, last page\n\nNo fish since the static started. Not one.\nThe nets come up clean and the needle on the barge's set points south.\nThe Fleet sails tomorrow to see what scares the fish. Teo stays to keep the masts lit.\n\nThe radio on our table still works if anyone gets the generator going. The part is in the mechanic's box by the humming cave.
-note spotterlog Spotter plane log | SPOTTER PLANE LOG\n\nFlew the Fleet's course south ahead of the boats.\nThe static on the Receiver turned to a voice for a moment - numbers, read out slowly, in no language I know.\nLost the horizon in the grey. Put down on the north bar. The Fleet never saw my flare.
+note spotterlog Spotter plane log | SPOTTER PLANE LOG\n\nFlew the Fleet's course south ahead of the boats.\nThe static on the Receiver turned to a voice for a moment - numbers, read out slowly, in no language I know.\nLost the horizon in the grey. Put down on the bar. The Fleet never saw my flare.
 # (deep pass 10-24: the climb and the dive)
 story genpart2|Coil pack|Battery|A coil pack for the net house generator, sealed in a drowned van. One of its three parts.
 story chainkey|Chain key|Bolt|A heavy key on a ring, stamped CONCORD WELL. One of the five that open the chained door of the Command Well, deep under the calm circle.
@@ -383,16 +383,16 @@ note keeperss Keeper's log: Static | KEEPER'S LOG. Static Shoals - oilcloth, tac
 note heddass Hedda's watch | CAPTAIN'S WATCH - Hedda's capitals, on a page left in the net house\n\nTeo is staying. He says the boats need the masts. The boats are not coming back, and he knows it, and he is staying anyway. I have never been prouder of a fool.\n\nI gave him my good knife. He cried, which he will deny, and so will I.\n\nInes walks about with her ear to the set and does not sleep. Something talks to her on it. She thinks I have not noticed. I notice everything; it is my only skill.\n\nTomorrow I go south to the wall to look for a way through. Ines will follow when she has listened enough. I have left the coil pack where the Fleet keeps its cable - in the dark store by the peak. Whoever you are: mind the dark.
 quest title=Static
 quest intro=A beached radio barge on a grey bar, static from every mast. Look in the barge.
-step read|Teo's note|1|Read Teo's note in the radio barge
-step blueprint|Blueprint_EngineControls|1|Take the engine control plans from the Fleet chest
+step read|Teo's note|1|Read Teo's note in the beached radio barge, the big wreck on the bar
+step blueprint|Blueprint_EngineControls|1|Take the engine control plans from the Fleet chest by the barge
 step kill|Screecher|4|Drive the screechers off the masts
 step reach|mast_4|1|Ride the cable from mast 1 to mast 4's hut
 step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans in mast 4's hut
 step blueprint|Blueprint_Firework|1|Take the firework plans from the flare locker under mast 2
-step read|Net house book|1|Read the catch book at the ruined net house on the south bar
-step open|Mechanic's toolbox|1|Find the mechanic's toolbox by the humming cave in the east bar
+step read|Net house book|1|Read the catch book in the ruined net house out on the bar
+step open|Mechanic's toolbox|1|Find the mechanic's toolbox by the humming cave in the bar's rocks
 step collect|story:teovoice|1|Start the net house generator and listen to its radio
-step open|Supply drop|1|Open the supply drop the voice gave away, by the spotter plane
+step open|Supply drop|1|Open the supply drop crate by the crashed spotter plane
 step reach|ss_maze|1|Find your way into the dark cable store by the dune peak
 step collect|story:genpart2|1|Find the coil pack in the cable store's coil room
 step open|Wiring room locker|1|Open the wiring room locker deep in the cable store

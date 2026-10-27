@@ -159,7 +159,7 @@ story fh_top|Ines's spyglass|Bolt|Ines Marlowe's brass spyglass, left in the Fre
 story fh_deep|Squatters' cash tin|Bolt|The first squatters' cash tin, drowned with their hut - Freehold's first purse.
 note fh_topchest Freehold lookout deck box | A box lashed to the deck rail at the top of the Freehold lookout.
 loot fh_topchest story:fh_top*1;Scrap*2;Bolt*2
-prop fh_topchest on.open=message||Ines's brass spyglass, wrapped in her diving shirt, and a chalk note: For you. Look south past the piles on a clear day - there is a light on the old Concord band that nobody in Highwater ever answered. I am going to answer it. Come if you like. - I.M.
+prop fh_topchest on.open=message||Ines's brass spyglass, wrapped in her diving shirt, and a chalk note: For you. Look out past the piles on a clear day - there is a light on the old Concord band that nobody in Highwater ever answered. I am going to answer it. Come if you like. - I.M.
 note fh_deepchest Squatters' hut strongbox | A strongbox in the back room of the squatters' hut.
 loot fh_deepchest story:fh_deep*1;TradeToken*2;Plastic*2
 prop fh_deepchest on.open=message||The cash tin, rusted shut and still heavy. Scratched on the lid: FREEHOLD - FOR WHOEVER COMES NEXT. Thirty years ago the first squatters had the same idea, and the Authority drowned their hut for it. Maud will want it on the founding board.
@@ -193,9 +193,9 @@ prop wellcrank else.use=message||The well is running.
 
 note founding Freehold founding | FREEHOLD - FOUNDED THE NIGHT OF THE STORM\n\nNo Authority. No Fleet. No Union.\n\nEveryone here owns a share of the well, the coop and the boats. Bring planks. Mind the hens.\n\n(Under it, chalked in a careful old hand: Stranger - you spoke for us on the roofs, and they heard you, which is more than they ever did for me. We took the boats the same night. Two thousand of us went up to the Rookery from Lowstreet; nine hundred came on to the shoal. The rest will follow when the roofs stop shaking.\n\nThe well wants winding, the huts want planks, and the hens want catching, in that order of temper. Pip wants all three and a tram line. Ask her - she is at the end of the driftwood rails, by the boats. - Maud Penn)
 note firstnight Freehold's first night | Pinned by the first fire, in two hands, one careful and old, one large and wobbly -\n\nOur first night on our own shoal. The children drank from our own well. Nobody counted the cups.\n\nThe Crown sent a boat at dusk: Nell Abernethy, with the Councillor's last page and a pardon nobody asked for. We gave her soup. She is staying the night. She says the Fleet and the Union are still arguing on the roofs, and that the piles hold.\n\nJonah would have liked this place. He liked anywhere with a straight line in it.\n\n(The wobbly hand: THE TRAM RAN NINE TIMES. NAN RODE IT ONCE. SHE SAYS SHE DID NOT BUT SHE DID.)\n\nWhoever you were - stranger, the one who spoke for us - there's a hut here with your name on it, and a seat on the tram that is always yours.\n\n- Maud and Pip Penn
-note bundle1 Plank bundle | Planks tied with rope, washed up off the city.
-note bundle2 Plank bundle | Planks tied with rope, washed up off the city.
-note bundle3 Plank bundle | Planks tied with rope, washed up off the city.
+note bundle1 Plank bundle | Planks tied with rope, a bundle saved from the city.
+note bundle2 Plank bundle | Planks tied with rope, a bundle saved from the city.
+note bundle3 Plank bundle | Planks tied with rope, a bundle saved from the city.
 loot bundle1 story:plankbundle*1;Plank*4
 prop bundle1 loot.refill=0
 loot bundle2 story:plankbundle*1;Plank*4
@@ -222,19 +222,19 @@ quest intro=The Rookery has left the city for a shoal of its own - Maud Penn's b
 step reach|landing|1|Land on Freehold Shoal
 step read|Freehold founding|1|Read the founding board - and Maud's chalk under it
 step read|Pip's tram line|1|Read Pip's note at the end of her driftwood tram line
-step collect|story:plankbundle|3|Bring three plank bundles for the huts and the tram line
+step collect|story:plankbundle|3|Find three plank bundles in the small chests around the shoal
 step collect|story:wellwater|1|Wind the well crank
 step catch|Chicken|1|Catch a hen for the coop
-step read|Old squatter's slate|1|Read the slate in the old squatter's shack in the west
-step reach|fh_deep|1|Dive to the first squatters' hut, drowned off the west shore
+step read|Old squatter's slate|1|Read the slate in the old squatter's shack, the ruin on the shoal
+step reach|fh_deep|1|Dive to the first squatters' hut, drowned off the shore
 step collect|story:fh_deep|1|Bring up their cash tin from its back room - Freehold's first purse
-step reach|dune_top|1|Climb the dune on the north side of the shoal and look back at the Crown
-step open|Rook's van crate|1|Find Rook the pedlar's van, hauled up on the east beach, and open its crate
+step reach|dune_top|1|Climb the dune, the highest sand on the shoal, and look back at the Crown
+step open|Rook's van crate|1|Find Rook the pedlar's van, hauled up on the beach, and open its crate
 step collect|story:tramrun|1|Set Pip's tin tram on the driftwood line and wind the tramway crank
-step reach|fh_summit|1|Climb Lookout Hill in the south-west
+step reach|fh_summit|1|Climb Lookout Hill, the tall hill on the shoal
 step collect|story:fh_top|1|Climb the Freehold lookout and take what Ines left in its deck box
 step read|Freehold's first night|1|Read the note by the first fire
-quest done=The Freehold has its first night, its first purse and its first tram. Highwater is behind you - and somewhere south, on the old Concord band, the light Ines saw is still calling.
+quest done=The Freehold has its first night, its first purse and its first tram. Highwater is behind you - and somewhere out on the old Concord band, the light Ines saw is still calling.
 quest reward=HoneyComb*2;TradeToken*4
 
 # --- 10-25: the open sand filled - hills where nothing stands, a ruin on the biggest, a wreck, plants over all

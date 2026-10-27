@@ -1,7 +1,7 @@
 # Reefmachine Atoll - the second island of The End of the Ocean (SL14, the Concord Engine's Station 4: its intake reef)
 # A low ring of sand round a lagoon - and in the lagoon four rows of iron frames, half in the water, the reef growing over
 # them. The frames are an intake: the engine drinks the sea here. A sunk service boat lies on the lagoon floor, the pump
-# head under the middle has an air pocket, and on the east islet the old intake cage still holds its water behind a gate.
+# head under the middle has an air pocket, and on the islet the old intake cage still holds its water behind a gate.
 # Quest "The Intake" (15 steps; the frame tower is an optional climb since the 10-24 story pass): the frame rows, the frame plate (the Ringwave again), the stingrays, the Motor plans in
 # the sunk boat, the puffers, the pump head, the steering plans in it, the frame valve, the service note, the cage.
 #
@@ -121,10 +121,10 @@ call treasure x=24.7 z=-27.8 r=5 n=1 seed=14048
 # a buried treasure, the cave in the north bank, the pump keeper's ruined hut in the west, the supply plane in the south-east
 call ar_ridge x1=-24 z1=-50 x2=28 z2=-52 h=9 top=7 r=9
 call ar_plants_tropical x=2 z=-51 r=30 seed=14151
-call tzone x=2 z=-51 al=southridge id=southridge r=7 msg="The top of the south ridge. The lagoon below is a perfect circle - nothing that round grows by itself."
+call tzone x=2 z=-51 al=southridge id=southridge r=7 msg="The top of the ridge. The lagoon below is a perfect circle - nothing that round grows by itself."
 call treasure x=2 z=-51 r=14 n=1 seed=14161
 call ar_cave x=-24 z=52 h=3 yaw=0 al=reefcave chest=reefcavechest
-call tzone x=-24 z=57 al=reefcavezone id=reefcave r=4 msg="A cave in the north bank. Pipe fittings in a row on the floor, each one labelled in neat paint."
+call tzone x=-24 z=57 al=reefcavezone id=reefcave r=4 msg="A cave in the bank. Pipe fittings in a row on the floor, each one labelled in neat paint."
 call ar_ruin x=-52 z=0 h=3 yaw=0 al=keeperhut
 call notebox x=-49.5 z=-4.5 yaw=20 al=pumpdiary
 call ar_plane x=48 z=-32 h=3 yaw=150 al=supplyplane crate=supplycrate
@@ -171,10 +171,10 @@ prop treasure14912 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Reefmachine Atoll
 info author=Custom Islands
-info description=A low atoll round a lagoon full of iron frames, the reef grown over them and the water pulling one way: the Concord Engine's intake. A sunk service boat, a pump head with air in it, and a cage on the east islet.
+info description=A low atoll round a lagoon full of iron frames, the reef grown over them and the water pulling one way: the Concord Engine's intake. A sunk service boat, a pump head with air in it, and a cage on the islet.
 island on.arrive=message||A ring of sand, a lagoon - and rows of rusted frames standing in the water like a fence. The current runs into the lagoon, not out.
 
-story valve|Frame valve turned|Hinge|You wound the frame valve on Reefmachine Atoll. The intake cage on the east islet drained, and its gate dropped.
+story valve|Frame valve turned|Hinge|You wound the frame valve on Reefmachine Atoll. The intake cage on the islet drained, and its gate dropped.
 
 note frameplate Frame plate | A plate bolted to the first frame, green with age.\n\nCONCORD WORKS - INTAKE 4\nTHE RINGWAVE\n\nUnder the words, the sign again: a ring, cut through by three waves.
 note servicenote Service note | SERVICE NOTE - scratched into a tin plate, by the pump crew\n\nStation 4 reef. Feeding the engine's intake.\n\nKeep the frames clear of shell. Keep the cage full for the inspectors. Smile at the inspectors; they have never once smiled back.\n\nIf the inspectors stop coming, open the valve and go home.\n\nUnderneath, in a different hand, much later: The inspectors stopped coming. We opened the valve. Nobody told us where home was, so we stayed a while longer and scraped the frames for no one. Old habits. If you are here, scrape one for us. The reef likes it.
@@ -190,7 +190,7 @@ prop cagecrate loot.refill=0
 
 prop framevalve beh.use=Wind the frame valve
 prop framevalve if.use=!signal|valve
-prop framevalve on.use=signal||valve\ngive||story:valve*1\nhide|cagegate\nmessage||The valve fights, then spins. Out on the east islet the cage's water drops away with a long gurgle - and its gate sinks out of sight.\nsound||event:/raft/engine/waterwheel
+prop framevalve on.use=signal||valve\ngive||story:valve*1\nhide|cagegate\nmessage||The valve fights, then spins. Out on the islet the cage's water drops away with a long gurgle - and its gate sinks out of sight.\nsound||event:/raft/engine/waterwheel
 prop framevalve else.use=message||The valve is open. The cage is dry.
 
 note pumplocker Pump crew's locker | Spare parts nobody came back for.
@@ -223,22 +223,22 @@ note teoreef Teo's complaint | TEO'S COMPLAINT - pinned under a shell on a box b
 note keeperlog Keeper's log: Intake | A sheet of oilcloth nailed inside the cage, in a careful old hand:\n\nKEEPER'S LOG. Intake 4.\n\nCalling. Calling. Station, this is the Keeper. The intake is clear again; I scraped it myself, all four rows, with these hands that are too old for it.\n\nThree of them came through last week, following my beacon - a captain, a smoker and the girl from the deep with the good radio. They camped where I told them with the light. They will do. Five posts want five pairs of hands, and I have only the one pair.\n\nThe masts at the three rocks are lying. I will turn them true again. Calling. Calling. Answer me, Mara.
 quest title=The Intake
 quest intro=Iron frames in a lagoon, coral over them. Go ashore by the first row.
-step reach|frame_row|1|Go ashore by the frame rows
+step reach|frame_row|1|Go ashore by the rows of iron frames in the lagoon
 step read|Frame plate|1|Read the plate on the first frame
 step kill|Stingray|2|Drive off the two stingrays in the lagoon
 step blueprint|Blueprint_MotorWheel|1|Take the motor plans from the sunk service boat
 step kill|Puffer fish|2|Clear the puffer fish from the frames
 step reach|pump_head|1|Swim down into the pump head's air pocket
 step blueprint|Blueprint_SteeringWheel|1|Take the steering plans from the pump head
-step collect|story:valve|1|Wind the frame valve on the east bank
+step collect|story:valve|1|Wind the frame valve on the lagoon bank, by the service note
 step read|Service note|1|Read the service note by the valve
-step collect|story:reefhandle|1|Find the sluice handle in the supply plane's crate on the south-east shore
-step read|Pump keeper's diary|1|Read the pump keeper's diary at the ruined hut in the west
+step collect|story:reefhandle|1|Find the sluice handle in the crashed supply plane's crate on the shore
+step read|Pump keeper's diary|1|Read the pump keeper's diary in the ruined pump keeper's hut
 step open|Sluice crate|1|Turn the sluice by the hut and open what it uncovers
 step reach|ra_dive|1|Dive into the lagoon pit to the drowned van
 step collect|story:reeflog|1|Take the reef log from the van's cargo chest
 step reach|cage|1|Go into the drained intake cage
-quest done=The intake is open and the cage is dry. Something on the Receiver answers now - three relays, west of here.
+quest done=The intake is open and the cage is dry. Something on the Receiver answers now - three relays, out on the water.
 quest reward=Rope*4;Scrap*6;Nail*10
 
 save Reefmachine Atoll
