@@ -1441,6 +1441,7 @@ namespace DynamicIslands
 				string[] t = Tokens(line);
 				string verb = t[0].ToLowerInvariant();
 				steps++;
+				hbWhat = "recipe " + name; hbStep = steps; hbProg++;
 				// (quest2 ... / step2 ...: the island's further quests - ROADMAP LM4)
 				int questNo = 0;
 				System.Text.RegularExpressions.Match qm = System.Text.RegularExpressions.Regex.Match(verb, @"^(quest|step)([2-9])$");

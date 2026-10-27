@@ -136,6 +136,7 @@ namespace DynamicIslands
 			int groupLeft = 0;
 			for (int li = 0; li < lines.Count; li++)
 			{
+				hbWhat = "play " + name; hbStep = li; hbProg++;
 				RLine rl = lines[li];
 				string line = rl.Text.Trim();
 				string[] t = Tokens(line);

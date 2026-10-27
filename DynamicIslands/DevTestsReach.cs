@@ -602,8 +602,10 @@ namespace DynamicIslands
 			// the targets: what the quests point at, and everything a player uses
 			List<ReachTarget> targets = ReachTargets(e);
 			ReachStepNames(e, targets, report, ref problems);
+			int hbT = 0;
 			foreach (ReachTarget t in targets)
 			{
+				hbWhat = "reach " + name; hbStep = hbT++; hbProg++;
 				var use = new List<int>();
 				foreach (int k in NearNodes(g, t.B, 3.2f))
 					if (CanUseFrom(g, k, t)) use.Add(k);
@@ -1417,6 +1419,26 @@ namespace DynamicIslands
 			}
 			Vector3 prev = ReachFeet(pl) + Vector3.up * 0.9f;
 			string bad = null;
+			// (stall rule, the user 10-28 - no multi-minute waits on one target: real seconds, whatever the speed. Under 0.5 m in a 10 s
+			// window: one unstick (a jump and a turn). No waypoint for 30 s while stalled, or for 90 s with under 3 m in the last window:
+			// FAIL "stuck" - it still counts as a fail to triage)
+			float wdWin = Time.realtimeSinceStartup, wdWay = wdWin, wdMoved = 99f;
+			Vector3 wdP = ReachFeet(pl);
+			bool wdTried = false;
+			Func<int> watchdog = () =>
+			{
+				float now = Time.realtimeSinceStartup;
+				if (now - wdWin >= 10f)
+				{
+					Vector3 q = ReachFeet(pl);
+					wdMoved = (q - wdP).magnitude; wdP = q; wdWin = now;
+					if (wdMoved >= 0.5f) wdTried = false;
+					else if (!wdTried) { wdTried = true; return 1; }
+				}
+				if ((wdMoved < 0.5f && now - wdWay >= 30f) || (wdMoved < 3f && now - wdWay >= 90f)) return 2;
+				return 0;
+			};
+			Func<string> wdWhy = () => "stuck (no waypoint for " + (Time.realtimeSinceStartup - wdWay).ToString("F0") + " s real time, moved " + wdMoved.ToString("F1") + " m in the last 10 s)";
 			Func<string> guard = () =>
 			{
 				Vector3 now = ReachFeet(pl) + Vector3.up * 0.9f;
@@ -1437,6 +1459,7 @@ namespace DynamicIslands
 			};
 			for (int i = 1; i < way.Count; i++)
 			{
+				wdWay = Time.realtimeSinceStartup; wdTried = false; wdMoved = 99f; hbProg++;
 				int k = way[i];
 				byte kind = g.Kind[k];
 				if (kind == 3)
@@ -1482,6 +1505,9 @@ namespace DynamicIslands
 						MmHold(pl, false);
 						yield return null;
 						if ((bad = guard()) != null) { result(bad); yield break; }
+						int wd = watchdog();
+						if (wd == 1 && !climbing) { sweepYaw = 45f + 90f * sweeps; sweepT = 0.35f; }
+						if (wd == 2) { mmWalk = 0f; result(wdWhy() + " at the ladder at " + (p - e.Position).ToString("F1") + " going " + (up ? "up" : "down") + " (in the way: " + ReachBlocker(pl, up ? Vector3.up : Vector3.down) + ")"); yield break; }
 						float y = ReachFeet(pl).y;
 						if (up ? y > bestY + 0.1f : y < bestY - 0.1f) { bestY = y; since = 0f; } else since += Time.deltaTime;
 						if (since > 2.5f)
@@ -1542,6 +1568,9 @@ namespace DynamicIslands
 					yield return null;
 					if (!float.IsNaN(hopFrom)) hopPeak = Mathf.Max(hopPeak, ReachFeet(pl).y - hopFrom);
 					if ((bad = guard()) != null) { mmWalk = 0f; result(bad); yield break; }
+					int wd = watchdog();
+					if (wd == 1) { jumpT = 0.4f; turnLeft = 0.7f; turnDir = -turnDir; }
+					if (wd == 2) { mmWalk = 0f; mmJump = false; result(wdWhy() + " at " + (p - e.Position).ToString("F1") + " on the way to " + (aim - e.Position).ToString("F1") + " (in the way: " + ReachBlocker(pl, flat.sqrMagnitude > 0.01f ? flat.normalized : d.normalized) + ")"); yield break; }
 					if (n > 60000) { mmWalk = 0f; result("gave up (too long)"); yield break; }
 				}
 			}

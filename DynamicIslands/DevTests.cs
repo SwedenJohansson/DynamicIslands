@@ -2090,6 +2090,28 @@ namespace DynamicIslands
 			// dev builds always keep running, so a Raft started behind other windows can still be driven.
 			Application.runInBackground = true;
 			DynamicIslands.instance.StartCoroutine(PollCommandFile());
+			DynamicIslands.instance.StartCoroutine(HeartbeatLoop());
+		}
+
+		// Heartbeat (the user 10-28: no worker sits stuck): every 10 s a "[CITEST] HB <what> step=<n> prog=<counter> pos=x,y,z" line,
+		// "idle" between tests. prog goes up on real progress (a play line done, a reach waypoint reached, a target done):
+		// a watcher reads the log's tail - no HB for 30 s = Raft hung or crashed, HB without prog for 90 s = a test stuck.
+		internal static string hbWhat = "idle";
+		internal static int hbStep, hbProg;
+		static IEnumerator HeartbeatLoop()
+		{
+			while (true)
+			{
+				yield return new WaitForSecondsRealtime(10f);
+				string pos = "-";
+				try
+				{
+					Network_Player pl = LoadSceneManager.IsGameSceneLoaded ? RAPI.GetLocalPlayer() : null;
+					if (pl != null) pos = pl.transform.position.x.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + "," + pl.transform.position.y.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + "," + pl.transform.position.z.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+				}
+				catch { }
+				Log("HB " + (runningTests > 0 ? hbWhat.Replace(' ', '_') : "idle") + " step=" + hbStep + " prog=" + hbProg + " pos=" + pos);
+			}
 		}
 
 		static void LogBuild()
