@@ -181,7 +181,7 @@ namespace DynamicIslands.Editor
 			cooldownUntil = Time.time + RepeatCooldown;
 			if (!reachCounted) { reachCounted = true; QuestTracker.Event(entry, "reach", Id); } // (passed just above)
 
-			if (Message.Length > 0) IslandInfo.ShowMessage(Message);
+			if (Message.Length > 0) { IslandInfo.ShowMessage(Message); StoryBook.AddMessagePage(entry, Message); } // (PQ8: kept in the journal)
 			if (Items.Count > 0) Give(Items);
 			if (!fired) { firedHere = true; ContentState.MarkUsed(transform, StateKey); } // the host wakes up the linked creatures
 			Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "' set off" + (Message.Length > 0 ? ": " + Message : ""));

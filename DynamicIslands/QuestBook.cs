@@ -202,8 +202,8 @@ namespace DynamicIslands.Editor
 			// crew found them)
 			foreach (IslandWorldState.Entry e in entries)
 			{
-				string note = "note:" + StoryBook.PageIsland(e) + ":", act = "act:" + StoryBook.PageIsland(e) + ":";
-				foreach (StoryBook.Page p in StoryBook.Pages.Where(p => p.Key.StartsWith(note, StringComparison.OrdinalIgnoreCase) || p.Key.StartsWith(act, StringComparison.OrdinalIgnoreCase)))
+				string note = "note:" + StoryBook.PageIsland(e) + ":", act = "act:" + StoryBook.PageIsland(e) + ":", msg = "msg:" + StoryBook.PageIsland(e) + ":";
+				foreach (StoryBook.Page p in StoryBook.Pages.Where(p => p.Key.StartsWith(note, StringComparison.OrdinalIgnoreCase) || p.Key.StartsWith(act, StringComparison.OrdinalIgnoreCase) || p.Key.StartsWith(msg, StringComparison.OrdinalIgnoreCase)))
 					i.Notes.Add(new KeyValuePair<string, string>(p.Title ?? "", p.Text ?? ""));
 			}
 			return i;
@@ -241,7 +241,7 @@ namespace DynamicIslands.Editor
 				foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(e => e.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase)))
 				{
 					string island = StoryBook.PageIsland(e);
-					if (k.StartsWith("note:" + island + ":", StringComparison.OrdinalIgnoreCase) || k.StartsWith("act:" + island + ":", StringComparison.OrdinalIgnoreCase)) return true;
+					if (k.StartsWith("note:" + island + ":", StringComparison.OrdinalIgnoreCase) || k.StartsWith("act:" + island + ":", StringComparison.OrdinalIgnoreCase) || k.StartsWith("msg:" + island + ":", StringComparison.OrdinalIgnoreCase)) return true;
 				}
 			return false;
 		}

@@ -58,7 +58,7 @@ place VP_MotherlodePillar1_Exploded pylonsburst at 0 12 ground sit scale=0.3 yaw
 place VP_MotherlodePillar1_Exploded pylonsburst at 0 -12 ground sit scale=0.3 yaw=180
 prop pylons tint.color=#4a5560
 prop pylons tint.amount=0.6
-prop pylons on.use=message||The pylon hums through the water, iron-grey and far too heavy to move.
+prop pylons on.use=message||The pylon hums through the water, iron-grey and far too heavy to move.\nsound||event:/exploring/radar/radar_humm|0.8|once|near
 place RT_Pillar - at 9.5 -2 ground sy=0.4
 place TP_LaserControlPanel_lever pylona at 9.5 -2 ground y=1.25 scale=3 yaw=90
 place RT_Pillar - at -9.5 2 ground sy=0.4

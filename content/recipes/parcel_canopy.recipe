@@ -286,7 +286,7 @@ prop planeradio obj.name=planeradio
 prop planeradio beh.use=Use the plane's radio
 prop planeradio if.use=
 prop planeradio else.use=
-prop planeradio on.use=message||Static... then the Coastal Post's band, a recorded voice: "Pneumatic Heights exchange opens on the tenth day. All mail by tube."\ngive||story:planeradio*1
+prop planeradio on.use=message||Static... then the Coastal Post's band, a recorded voice: "Pneumatic Heights exchange opens on the tenth day. All mail by tube."\ngive||story:planeradio*1\nsound||event:/raft/radio/casette_switch
 note fuelshed Fuel shed | The airstrip's fuel shed: drums, a funnel, and the plans for a biofuel extractor, "for when the avgas runs out".
 loot fuelshed Blueprint_BiofuelExtractor*1;Plank*4;Rope*2
 prop fuelshed loot.refill=0

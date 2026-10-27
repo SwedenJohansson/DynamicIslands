@@ -374,6 +374,24 @@ namespace DynamicIslands.Editor
 			Change("page", Fields(key, Today.ToString(CultureInfo.InvariantCulture), title ?? "", island ?? "", text ?? ""));
 		}
 
+		/// <summary>
+		/// PQ8: a story popup (a behaviour's message, a trigger zone's message) also goes into the journal, so it can be read
+		/// again - one page per island and text ("msg:" keys: not counted by a quest's pages step, which counts notes and
+		/// journal actions).
+		/// </summary>
+		public static void AddMessagePage(IslandWorldState.Entry e, string text)
+		{
+			if (e == null || string.IsNullOrEmpty(text)) return;
+			text = text.Replace("\\n", "\n").Trim();
+			if (text.Length == 0) return;
+			uint h = 2166136261;
+			foreach (char c in text) { h ^= c; h *= 16777619; }
+			string first = text.Split('\n')[0].Trim();
+			if (first.Length > 48) { int cut = first.LastIndexOf(' ', 47); first = first.Substring(0, cut > 20 ? cut : 47).TrimEnd(',', ';', ':', '-', ' ') + "..."; }
+			try { AddPage("msg:" + PageIsland(e) + ":" + h.ToString("x8", CultureInfo.InvariantCulture), first, text, Behaviours.IslandTitle(e)); }
+			catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Message page: " + x.Message); }
+		}
+
 		/// <summary>Whether a held story item can be taken out as a Raft item (T8): it names one Raft has, and the crew holds one.</summary>
 		public static bool CanTakeOut(string id)
 		{

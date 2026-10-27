@@ -98,6 +98,7 @@ namespace DynamicIslands.Editor
 			{
 				if (canvas != null) canvas.gameObject.SetActive(false);
 				if (!LoadSceneManager.IsGameSceneLoaded) { ClearPings(); Island = null; }
+				DropStart();
 				return;
 			}
 			Network_Player me = RAPI.GetLocalPlayer();
@@ -111,6 +112,7 @@ namespace DynamicIslands.Editor
 			}
 			UpdatePings();
 			if (Time.unscaledTime >= nextFind) { nextFind = Time.unscaledTime + 0.5f; FindIsland(me.transform.position); }
+			UpdateStart(me);
 			bool show = Available && Mode != Off && Island != null && Island.Root != null;
 			if (!show) { if (panel != null) panel.gameObject.SetActive(false); return; }
 			EnsureUi();
@@ -447,7 +449,9 @@ namespace DynamicIslands.Editor
 			SoundLibrary.PlayOnce(PingSound, p.WorldPos, 0.8f);
 		}
 
-		static GameObject Beam(Vector3 at, string who)
+		static GameObject Beam(Vector3 at, string who) { return Beam(at, who, new Color(1f, 0.35f, 0.3f)); }
+
+		static GameObject Beam(Vector3 at, string who, Color colour)
 		{
 			var go = new GameObject("CustomIslands_Ping");
 			go.transform.position = at;
@@ -459,7 +463,7 @@ namespace DynamicIslands.Editor
 			lr.SetPosition(0, Vector3.zero);
 			lr.SetPosition(1, Vector3.up * 25f);
 			lr.startWidth = 0.35f; lr.endWidth = 0.05f;
-			lr.startColor = new Color(1f, 0.35f, 0.3f, 0.95f); lr.endColor = new Color(1f, 0.35f, 0.3f, 0f);
+			lr.startColor = new Color(colour.r, colour.g, colour.b, 0.95f); lr.endColor = new Color(colour.r, colour.g, colour.b, 0f);
 			lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 			var label = new GameObject("Name");
 			label.transform.SetParent(go.transform, false);
@@ -498,6 +502,73 @@ namespace DynamicIslands.Editor
 		}
 
 		static void Drop(Ping p) { if (p.World != null) UnityEngine.Object.Destroy(p.World); }
+
+		#region The quest's start (PQ1)
+
+		static GameObject startBeam;
+		static int startIsland = -1;
+		static float nextStart;
+
+		/// <summary>
+		/// PQ1: where an island's quest starts - the first step's target (a zone, a note, a chest...), while the quest is at
+		/// its first step. False when the first step names no object (a "pages" step, say).
+		/// </summary>
+		public static bool StartOf(IslandWorldState.Entry e, out Vector3 at, out string text)
+		{
+			at = Vector3.zero; text = "";
+			if (e == null || e.Root == null || QuestTracker.QuestsOf(e) == 0 || QuestTracker.IsDone(e, 0) || QuestTracker.StepOf(e, 0) != 0) return false;
+			IslandQuest q = QuestTracker.QuestOf(e, 0);
+			if (!q.Exists || q.Steps.Count == 0) return false;
+			string target = (q.Steps[0].Target ?? "").Trim();
+			if (target.Length == 0) return false;
+			foreach (IslandObjectRef r in Behaviours.RefsOf(e))
+				if (r != null && string.Equals(r.Name, target, StringComparison.OrdinalIgnoreCase) && r.gameObject.activeInHierarchy)
+				{ at = r.transform.position; text = q.Steps[0].Text ?? ""; return true; }
+			return false;
+		}
+
+		/// <summary>"to the north-east" from one point to another (+z is north on the map).</summary>
+		public static string DirectionTo(Vector3 from, Vector3 to)
+		{
+			Vector2 d = new Vector2(to.x - from.x, to.z - from.z);
+			if (d.magnitude < 12f) return "right here";
+			string[] names = { "north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west" };
+			float a = Mathf.Repeat(Mathf.Atan2(d.x, d.y) * Mathf.Rad2Deg + 22.5f, 360f);
+			return "to the " + names[(int)(a / 45f) % 8];
+		}
+
+		/// <summary>A gold beam over the quest's start while the player is at an island whose quest hasn't begun.</summary>
+		static void UpdateStart(Network_Player me)
+		{
+			if (Time.unscaledTime >= nextStart)
+			{
+				nextStart = Time.unscaledTime + 0.5f;
+				Vector3 at; string text;
+				IslandWorldState.Entry e = Island;
+				if (!StartOf(e, out at, out text)) { DropStart(); }
+				else
+				{
+					if (startBeam == null || startIsland != e.Id) { DropStart(); startBeam = Beam(at, "Start: " + text, new Color(1f, 0.82f, 0.3f)); startIsland = e.Id; StartBeams++; }
+					startBeam.transform.position = at; // (follows its island)
+				}
+			}
+			Camera c = Camera.main;
+			if (startBeam == null || c == null) return;
+			Transform label = startBeam.transform.Find("Name");
+			float dist = Vector3.Distance(c.transform.position, label.position);
+			label.rotation = Quaternion.LookRotation(label.position - c.transform.position);
+			label.localScale = Vector3.one * Mathf.Clamp(dist / 15f, 1f, 12f);
+		}
+
+		static void DropStart() { if (startBeam != null) UnityEngine.Object.Destroy(startBeam); startBeam = null; startIsland = -1; }
+
+		/// <summary>Start beams put up (tests).</summary>
+		public static int StartBeams { get; private set; }
+
+		/// <summary>Whether a start beam is up now (tests).</summary>
+		public static bool StartShown { get { return startBeam != null; } }
+
+		#endregion
 
 		public static void ClearPings() { foreach (Ping p in Pings) Drop(p); Pings.Clear(); lastPing = -10f; }
 

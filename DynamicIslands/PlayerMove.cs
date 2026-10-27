@@ -108,4 +108,83 @@ namespace DynamicIslands.Editor
 			Debug.Log("[CUSTOM ISLANDS] A dead " + carrier.behaviourType + " let go of the player it carried");
 		}
 	}
+
+	/// <summary>
+	/// PQ2: Raft's Unstuck (in the pause menu) on and round custom islands. Raft offers it only after 30 s within 3 m of one
+	/// spot, and sends the player to the nearest of its own unstuck points - there are none on a custom island, so a player
+	/// pacing the floor of a shaft, a cave or a dead end under water never saw the button, or was sent far off. Near a custom
+	/// island (off the raft) the button shows after 20 s within 10 m of one spot, or at once below the sea; it takes the
+	/// player back to the raft.
+	/// </summary>
+	static class IslandUnstuck
+	{
+		const float Radius = 10f, Seconds = 20f;
+		static Vector3 anchor;
+		static float since = -1f;
+		static readonly System.Reflection.FieldInfo trackedField = HarmonyLib.AccessTools.Field(typeof(Unstuck_Tracker), "tracked");
+
+		static Transform Tracked(Unstuck_Tracker t)
+		{
+			Component c = trackedField != null ? trackedField.GetValue(t) as Component : null;
+			return c != null ? c.transform : null;
+		}
+
+		static bool Local(Unstuck_Tracker t)
+		{
+			Network_Player p = ComponentManager<Network_Player>.Value;
+			return p != null && p.UnstuckTracker == t;
+		}
+
+		/// <summary>Whether the local player is stuck by this rule (near a custom island, off the raft).</summary>
+		internal static bool Stuck(Unstuck_Tracker t)
+		{
+			if (t == null || !Local(t)) return false;
+			Transform tr = Tracked(t);
+			if (tr == null || tr.ParentedToRaft() || Minimap.IslandAt(tr.position) == null) return false;
+			return tr.position.y < -1.5f || (since >= 0f && Time.time - since >= Seconds);
+		}
+
+		[HarmonyLib.HarmonyPatch(typeof(Unstuck_Tracker), "Update")]
+		static class TrackPatch
+		{
+			static void Postfix(Unstuck_Tracker __instance)
+			{
+				if (!Local(__instance)) return;
+				Transform tr = Tracked(__instance);
+				if (tr == null) { since = -1f; return; }
+				Vector3 at = tr.position;
+				if (since < 0f || (at - anchor).sqrMagnitude > Radius * Radius) { anchor = at; since = Time.time; }
+			}
+		}
+
+		[HarmonyLib.HarmonyPatch(typeof(PauseMenu), "HandleToggleUnstuckPanel")]
+		static class PanelPatch
+		{
+			static void Postfix(PauseMenu __instance)
+			{
+				Network_Player p = ComponentManager<Network_Player>.Value;
+				if (p == null || p.UnstuckTracker == null || p.UnstuckTracker.IsConsideredStuck || !Stuck(p.UnstuckTracker)) return;
+				GameObject panel = HarmonyLib.Traverse.Create(__instance).Field("unstuckPanel").GetValue<GameObject>();
+				if (panel != null) panel.SetActive(true);
+			}
+		}
+
+		[HarmonyLib.HarmonyPatch(typeof(Unstuck_Tracker), "Unstuck")]
+		static class UnstuckPatch
+		{
+			static bool Prefix(Unstuck_Tracker __instance)
+			{
+				if (!Stuck(__instance)) return true;
+				try
+				{
+					HarmonyLib.AccessTools.Method(__instance.GetType(), "StuckFixTPRaft").Invoke(__instance, null);
+					HarmonyLib.AccessTools.Method(typeof(Unstuck_Tracker), "SetIsStuck").Invoke(__instance, new object[] { false });
+					since = -1f;
+					Debug.Log("[CUSTOM ISLANDS] Unstuck near a custom island: back to the raft");
+					return false;
+				}
+				catch (System.Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Unstuck: " + e.Message); return true; }
+			}
+		}
+	}
 }

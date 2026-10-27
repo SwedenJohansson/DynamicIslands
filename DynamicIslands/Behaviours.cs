@@ -1224,6 +1224,7 @@ namespace DynamicIslands.Editor
 						case "message":
 							LastMessage = a.Arg;
 							IslandInfo.ShowMessage(a.Arg);
+							StoryBook.AddMessagePage(e, a.Arg); // (PQ8: read again in the journal)
 							break;
 						case "give":
 							if (messagesOnly) break;

@@ -372,6 +372,15 @@ namespace DynamicIslands.Editor
 			Debug.Log("[CUSTOM ISLANDS] Quest reward: " + string.Join(", ", given.ToArray()));
 		}
 
+		/// <summary>PQ1: the arrival banner says where the quest starts - its first step and which way (a gold beam marks it).</summary>
+		static string StartHint(IslandWorldState.Entry e)
+		{
+			Vector3 at; string text;
+			Network_Player me = RAPI.GetLocalPlayer();
+			if (me == null || !Minimap.StartOf(e, out at, out text) || text.Length == 0) return "";
+			return "\nStart: " + text + " - " + Minimap.DirectionTo(me.transform.position, at) + ", under the gold beam.";
+		}
+
 		static void Show(string title, string text)
 		{
 			LastMessage = title + (text.Length > 0 ? " | " + text : "");
@@ -463,7 +472,7 @@ namespace DynamicIslands.Editor
 			if (!TickQuest(at, shown).Exists) shown = Enumerable.Range(0, quests).First(n => TickQuest(at, n).Exists);
 			IslandQuest q = TickQuest(at, shown);
 			int step = StepOf(at, shown);
-			if (introduced.Add(at.Id) && step == 0 && q.Intro.Length > 0) Show(q.ShownTitle, q.Intro);
+			if (introduced.Add(at.Id) && step == 0 && q.Intro.Length > 0) Show(q.ShownTitle, q.Intro + StartHint(at));
 			if (panel == null) Build();
 			int open = Enumerable.Range(0, quests).Count(n => n != shown && TickQuest(at, n).Exists && StepOf(at, n) < TickQuest(at, n).Steps.Count);
 			// (every quest here done: the panel goes after DoneHideSeconds; closed with its X: gone until the step changes)
