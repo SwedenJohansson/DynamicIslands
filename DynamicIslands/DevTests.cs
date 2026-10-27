@@ -2421,8 +2421,10 @@ namespace DynamicIslands
 			yield return null;
 			box.inputfield_GameName.text = name;
 			box.GameNameEndEdit(name);
+			string solo = Editor.IslandTest.SoloWhenOffline(box);
+			if (solo != null) Log(solo);
 			for (float t = 0; t < 5f && box.createGameButton != null && !box.createGameButton.interactable; t += 0.5f) yield return new WaitForSecondsRealtime(0.5f);
-			if (box.createGameButton != null && !box.createGameButton.interactable) { Fail("Create is disabled (name taken, or Steam offline?)"); yield break; }
+			if (box.createGameButton != null && !box.createGameButton.interactable) { Fail("Create is disabled (name taken or invalid, or offline: PlayFab signed in " + Raft_Network.SignedIntoPlayfab + ")"); yield break; }
 			Log("Creating world '" + name + "'");
 			// (a test world gets defaultPlan unless a test chose one: not the plan the last world was made with, ROADMAP CB5)
 			if (WorldDirector.PendingPlan == null) WorldDirector.PendingPlan = WorldDirector.DefaultPlan;
@@ -2477,7 +2479,8 @@ namespace DynamicIslands
 			yield return null; yield return null;
 			box.inputfield_GameName.text = name;
 			box.GameNameEndEdit(name);
-			for (float t = 0; t < 2f && box.createGameButton != null && !box.createGameButton.interactable; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+			Editor.IslandTest.SoloWhenOffline(box);
+			for (float t = 0; t < 2f &&box.createGameButton != null && !box.createGameButton.interactable; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
 		}
 
 		[ConsoleCommand(name: "CINewWorldRetry", docs: "Dev, anywhere: CINewWorld's create-with-retry - one throw then success retries once; two throws report an error instead of hanging")]

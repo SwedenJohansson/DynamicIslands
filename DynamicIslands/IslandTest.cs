@@ -395,6 +395,20 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>
+		/// Not signed in to PlayFab, Raft's New Game box keeps Create off for a friends/password world (offline note shown):
+		/// then the "solo" choice (dropdown value 1 = auth 0), which needs no sign-in. Returns a line to log, or null when
+		/// nothing changed. (The box Raft lost its PlayFab sign-in, 10-27: every CINewWorld failed "Create is disabled".)
+		/// </summary>
+		internal static string SoloWhenOffline(NewGameBox box)
+		{
+			if (box == null || Raft_Network.SignedIntoPlayfab) return null;
+			UnityEngine.UI.Dropdown auth = HarmonyLib.Traverse.Create(box).Field("authSettingDropdown").GetValue<UnityEngine.UI.Dropdown>();
+			if (auth == null || auth.value == 1 || auth.options == null || auth.options.Count < 2) return null;
+			auth.value = 1;
+			return "Not signed in to PlayFab: the new world is made solo (Raft's Create is off for a friends world offline)";
+		}
+
+		/// <summary>
 		/// Raft's box of this kind in the main menu now - found again at every step, never kept: the one found before can be
 		/// gone, and its links to other boxes mended (MendDeadLinks).
 		/// </summary>
@@ -540,6 +554,8 @@ namespace DynamicIslands.Editor
 				Step("Naming the test world '" + worldName + "'");
 				box.inputfield_GameName.text = worldName;
 				box.GameNameEndEdit(worldName);
+				string solo = SoloWhenOffline(box);
+				if (solo != null) Step(solo);
 				for (float t = 0; t < 5f; t += 0.5f)
 				{
 					box = LiveBox<NewGameBox>();
