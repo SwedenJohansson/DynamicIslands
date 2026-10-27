@@ -1045,7 +1045,9 @@ namespace DynamicIslands
 			var list = new List<ReachTarget>();
 			Func<Transform, Bounds> boundsOf = tr =>
 			{
-				Renderer[] rs = tr.GetComponentsInChildren<Renderer>(false);
+				// (renderers far off the object left out: some notes on Biome Seven and Foundation Piles carry one ~2 km away,
+				// and the target's middle came out ~1000 m off - "no spot" for every one of them, PQ11 10-28)
+				Renderer[] rs = tr.GetComponentsInChildren<Renderer>(false).Where(r => (r.bounds.center - tr.position).sqrMagnitude < 900f).ToArray();
 				Bounds b = new Bounds(tr.position, Vector3.one * 0.3f);
 				if (rs.Length > 0) { b = rs[0].bounds; foreach (Renderer r in rs) b.Encapsulate(r.bounds); }
 				return b;
