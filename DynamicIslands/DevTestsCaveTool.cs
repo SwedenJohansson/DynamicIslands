@@ -36,6 +36,18 @@ namespace DynamicIslands
 			Check(ref ok, den.Tunnels == 0 && den.Pieces.Count == 1 && (den.RoomPivot + den.RoomRotation * new Vector3(-1.072f, -4.05f - CaveTool.RoomLift, 15.99f) - a).magnitude < 0.01f, "a short drag with a room: only the den, its mouth at the press");
 			Check(ref ok, CaveTool.Plan(a, a + Vector3.forward * 3f, 0f, false).Tunnels == 1, "a short drag without: one tunnel");
 
+			// (PF-D2b: smaller and bigger - the pieces scaled, still end to end, the den on the end, the hill over the scaled rock)
+			foreach (float k in new[] { CaveTool.MinSize, CaveTool.MaxSize })
+			{
+				CaveTool.Layout sl = CaveTool.Plan(a, a + new Vector3(40f * k, 0f, 0f), -6f, true, k);
+				Vector3 dm = sl.RoomPivot + sl.RoomRotation * (new Vector3(-1.072f, -4.05f - CaveTool.RoomLift, 15.99f) * k);
+				float hillTop = CaveTool.HillAt(sl, a + new Vector3(sl.Length / 2f, 0f, 0f));
+				Check(ref ok, sl.Tunnels == 4 && sl.Pieces.All(p => Mathf.Abs(p.Scale - k) < 1e-4f) && CaveJoins(sl) < 0.01f && (dm - sl.End).magnitude < 0.01f
+					&& Mathf.Abs(sl.Length - 4f * CaveTool.Step * k * Mathf.Cos(6f * Mathf.Deg2Rad)) < 0.01f && hillTop >= sl.FloorAt(sl.Length / 2f) + CaveTool.ShellTop * k,
+					"size " + k + "x: 4 pieces at " + k + "x end to end (worst " + CaveJoins(sl).ToString("0.000") + " m), the den on the end (" + (dm - sl.End).magnitude.ToString("0.000") + " m off), " + sl.Length.ToString("0.0") + " m long, the hill over its rock");
+			}
+			Check(ref ok, Mathf.Abs(CaveTool.Plan(a, a + Vector3.forward * 40f, 0f, true, 0.2f).Size - CaveTool.MinSize) < 1e-4f && Mathf.Abs(CaveTool.Plan(a, a + Vector3.forward * 40f, 0f, true, 9f).Size - CaveTool.MaxSize) < 1e-4f, "a size is kept to " + CaveTool.MinSize + "-" + CaveTool.MaxSize);
+
 			// (the hill: over the tunnel its roof and more, none before the mouth or past an open end on its line)
 			float over = CaveTool.HillAt(down, a + new Vector3(0f, 0f, -20f));
 			Check(ref ok, over >= down.FloorAt(20f) + CaveTool.ShellTop, "the hill over the tunnel is over its rock (" + over.ToString("0.0") + ")");
@@ -54,19 +66,19 @@ namespace DynamicIslands
 			Vector3 prevEnd = l.Mouth;
 			foreach (CaveTool.Piece p in l.Pieces.Where(x => x.Name == CaveTool.Tunnel))
 			{
-				Vector3 start = p.Position + p.Rotation * new Vector3(CaveTool.PassX, CaveTool.Floor - CaveTool.EndDip, CaveTool.FaceMin);
+				Vector3 start = p.Position + p.Rotation * (new Vector3(CaveTool.PassX, CaveTool.Floor - CaveTool.EndDip, CaveTool.FaceMin) * l.Size);
 				worst = Mathf.Max(worst, (start - prevEnd).magnitude);
-				prevEnd = p.Position + p.Rotation * new Vector3(CaveTool.PassX, CaveTool.Floor - CaveTool.EndDip, CaveTool.FaceMin + CaveTool.Step);
+				prevEnd = p.Position + p.Rotation * (new Vector3(CaveTool.PassX, CaveTool.Floor - CaveTool.EndDip, CaveTool.FaceMin + CaveTool.Step) * l.Size);
 			}
 			return Mathf.Max(worst, (prevEnd - l.End).magnitude);
 		}
 
-		[ConsoleCommand(name: "CICaveToolEditor", docs: "Dev, editor: the cave tool on a generated island - a tunnel 6 degrees down into the land with the den at its end, laid as the Tunnel button lays it: walkable end to end (a floor every metre, steps under 0.6 m, 2 m of room over it), the hill over it, its sides buried, the way in level; one Ctrl+Z takes all back, redo brings it; saved and loaded with the island. Leaves the island citest-cavetool for CICaveToolWorld")]
-		public static void CaveToolEditorCommand(string[] args) { StartTest(CaveToolEditorRoutine()); }
+		[ConsoleCommand(name: "CICaveToolEditor", docs: "Dev, editor: the cave tool on a generated island - a tunnel 6 degrees down into the land with the den at its end, laid as the Tunnel button lays it (CICaveToolEditor [size], 0.7-1.5, default 1): walkable end to end (a floor every metre, steps under 0.6 m, 2 m of room over it), the hill over it, its sides buried, the way in level; one Ctrl+Z takes all back, redo brings it; saved and loaded with the island. Leaves the island citest-cavetool for CICaveToolWorld")]
+		public static void CaveToolEditorCommand(string[] args) { StartTest(CaveToolEditorRoutine(args.Length > 0 ? float.Parse(args[0], CultureInfo.InvariantCulture) : 1f)); }
 
 		const string RockName = "SmallBoulder2";
 
-		static IEnumerator CaveToolEditorRoutine()
+		static IEnumerator CaveToolEditorRoutine(float size)
 		{
 			if (!DynamicIslands.InEditor()) { Fail("cave tool: in the editor"); yield break; }
 			bool ok = true;
@@ -92,7 +104,7 @@ namespace DynamicIslands
 			GameObject rockIn = null, rockOut = null;
 			yield return PlaceableCatalog.EnsureLoaded(new[] { RockName });
 			{
-				CaveTool.Layout pl = CaveTool.Plan(mouth, mouth + Vector3.right * 42f, -6f, true);
+				CaveTool.Layout pl = CaveTool.Plan(mouth, mouth + Vector3.right * 42f * size, -6f, true, size);
 				Vector3 inP = mouth + pl.Flat * 15f; inP.y = pl.FloorAt(15f) + 1f;
 				Vector3 outP = ground(mouth + pl.Flat * 15f + Vector3.Cross(Vector3.up, pl.Flat) * 40f);
 				foreach (Vector3 at in new[] { inP, outP })
@@ -107,7 +119,7 @@ namespace DynamicIslands
 			}
 			List<GameObject> laid = null;
 			var shownBefore = root.GetComponentsInChildren<EditorGameObject>(false).Select(x => x.gameObject).ToList();
-			yield return CaveTool.Lay(mouth, mouth + Vector3.right * 42f, -6f, true, true, m => laid = m);
+			yield return CaveTool.Lay(mouth, mouth + Vector3.right * 42f * size, -6f, true, true, size, m => laid = m);
 			CaveTool.Layout l = CaveTool.LastLayout;
 			if (laid == null || laid.Count == 0 || l == null) { Fail("cave tool: nothing was laid"); yield break; }
 			int hid = shownBefore.Count(x => x != null && !x.activeSelf);
@@ -115,6 +127,14 @@ namespace DynamicIslands
 			Check(ref ok, laid.Where(g => g.GetComponent<EditorGameObject>().GameObjectName == CaveTool.Tunnel).All(g => ObjectProps.Get(g.GetComponent<EditorGameObject>().Props, ObjectProps.Skin) == ObjectProps.SkinRock), "the tunnels take the den's brown rock");
 			GameObject den = laid.FirstOrDefault(g => g.GetComponent<EditorGameObject>().GameObjectName == CaveTool.Room);
 			Check(ref ok, den != null && den.transform.Find(CaveTool.PlugName) != null, "the den's wide mouth walled round the tunnel's end");
+			{
+				// (PF-D2b: every piece laid at the size, the den's wall with it)
+				GameObject tp = PlaceableCatalog.Get(CaveTool.Tunnel), rp = PlaceableCatalog.Get(CaveTool.Room);
+				bool scaled = tp != null && rp != null && laid.All(g => Mathf.Abs(g.transform.lossyScale.x - (g.GetComponent<EditorGameObject>().GameObjectName == CaveTool.Tunnel ? tp : rp).transform.localScale.x * size) < 0.001f);
+				Transform plug = den != null ? den.transform.Find(CaveTool.PlugName) : null;
+				Check(ref ok, Mathf.Abs(l.Size - size) < 0.001f && scaled && plug != null && Mathf.Abs(plug.lossyScale.x - size) < 0.001f && ObjectProps.Get(den.GetComponent<EditorGameObject>().Props, ObjectProps.CavePlug) == size.ToString("0.###", CultureInfo.InvariantCulture),
+					"size " + size + "x: the pieces and the den's wall laid at it (wall " + (plug != null ? plug.lossyScale.x.ToString("0.00") : "none") + ")");
+			}
 			Check(ref ok, rockIn != null && !rockIn.activeSelf && rockOut != null && rockOut.activeSelf, "a rock in the tunnel's way cleared, one beside it kept");
 			var selected = DynamicIslands.EditorGizmoHandler != null ? DynamicIslands.EditorGizmoHandler.SelectedRoots : null;
 			Check(ref ok, selected == null || selected.Count == laid.Count, "the cave's pieces are selected after");
@@ -130,7 +150,7 @@ namespace DynamicIslands
 			var ss = new List<float>();
 			var ys = new List<float?>();
 			var profile = new List<string>();
-			for (float s = 0.5f; s <= l.Length + 8f; s += 0.5f)
+			for (float s = 0.5f; s <= l.Length + 8f * size; s += 0.5f)
 			{
 				Vector3 p = mouth + l.Flat * s;
 				float expect = s <= l.Length ? l.FloorAt(s) : l.End.y;
@@ -149,7 +169,9 @@ namespace DynamicIslands
 			float? last = mouth.y;
 			for (int k = 0; k < ys.Count; k++)
 			{
-				float? y = ys[k], next = k + 1 < ys.Count ? ys[k + 1] : null;
+				float? y = ys[k], next = null;
+				// (the joins' grooves widen with the size: up to a metre and a half across at 1.5x, as Raft's own between its pieces)
+				for (int j = k + 1; j < ys.Count && j <= k + Mathf.Max(1, Mathf.FloorToInt(size * 1.5f)); j++) if (ys[j].HasValue) { next = ys[j]; break; }
 				bool groove = last.HasValue && next.HasValue && (!y.HasValue || (y.Value < last.Value - 0.25f && y.Value < next.Value - 0.25f));
 				if (groove) { grooves++; continue; }
 				if (!y.HasValue) { gap = gap ?? "no floor " + ss[k].ToString("0.0") + " m in"; last = null; continue; }
@@ -166,7 +188,7 @@ namespace DynamicIslands
 
 			// The ground: a hill over the tunnel, its sides buried (nothing hangs in the air), the way in at the mouth's floor
 			float mid = l.Length / 2f;
-			Vector3 midP = mouth + l.Flat * mid, side = Vector3.Cross(Vector3.up, l.Flat) * (CaveTool.ShellHalfWidth + 0.6f);
+			Vector3 midP = mouth + l.Flat * mid, side = Vector3.Cross(Vector3.up, l.Flat) * (l.HalfWidth + 0.6f);
 			float hillY = ground(midP + side * 2.5f).y;
 			Check(ref ok, ground(midP + side).y > l.FloorAt(mid) && ground(midP - side).y > l.FloorAt(mid), "the tunnel's sides are buried (" + (ground(midP + side).y - l.FloorAt(mid)).ToString("0.0") + " m over its floor)");
 			float dz = ground(l.RoomPivot + Vector3.up * 0f).y - l.RoomPivot.y;
@@ -176,6 +198,28 @@ namespace DynamicIslands
 			int dug;
 			int cut = CaveGround.EditorNow(t, out dug);
 			Log("  the ground in the cave's rooms: " + cut + " cells cut, " + dug + " points let down; den " + dz.ToString("0.0") + " m");
+			{
+				// (the cut fits the scaled rooms: looking down in the passage and over the den's floor, the ground is never met before
+				// the cave's own floor - nothing of it stands where the player walks)
+				Physics.SyncTransforms();
+				int looked = 0, inWay = 0;
+				var seenAt = new List<string>();
+				System.Action<Vector3, float> lookDown = (p, from) =>
+				{
+					RaycastHit[] hits = Physics.RaycastAll(new Vector3(p.x, from, p.z), Vector3.down, 2.5f * size, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).ToArray();
+					RaycastHit first = hits.FirstOrDefault(h => h.collider is TerrainCollider || pieces.Contains(h.collider));
+					if (first.collider == null) return;
+					looked++;
+					if (first.collider is TerrainCollider) { inWay++; seenAt.Add(p.ToString("F0")); }
+				};
+				for (float s = 1f; s <= l.Length; s += 1f) lookDown(mouth + l.Flat * s, l.FloorAt(s) + 1.8f * size);
+				float denFloor = l.RoomPivot.y + l.RoomMouth.y;
+				Vector3 rmin = l.RoomMin, rmax = l.RoomMax;
+				for (float x = rmin.x + 3f; x < rmax.x - 3f; x += 3f * size)
+					for (float z = rmin.z + 3f; z < rmax.z - 3f; z += 3f * size)
+						lookDown(l.RoomPivot + l.RoomRotation * new Vector3(x, 0f, z), denFloor + 1.8f * size);
+				Check(ref ok, looked > 20 && inWay == 0, "the ground cut out of the " + size + "x tunnel and den: " + inWay + " of " + looked + " looks down meet the ground before the cave's floor" + (seenAt.Count > 0 ? ": " + string.Join(", ", seenAt.Take(5).ToArray()) : ""));
+			}
 
 			// One undo takes the pieces and the ground back; redo brings them
 			float[,] after = data.GetHeights(0, 0, hres, hres);
@@ -189,8 +233,8 @@ namespace DynamicIslands
 
 			// Saved and loaded with the island; the cave's place kept for CICaveToolWorld (m from the middle, above the sea)
 			Vector3 m0 = mouth - c, e0 = l.End - c;
-			DynamicIslands.currentIslandProps[CaveToolKey] = string.Join(",", new[] { m0.x, mouth.y - sea, m0.z, e0.x, l.End.y - sea, e0.z, l.Length }.Select(v => v.ToString("0.###", CultureInfo.InvariantCulture)).ToArray());
-			Vector3 firstAt = laid[0].transform.position;
+			DynamicIslands.currentIslandProps[CaveToolKey] = string.Join(",", new[] { m0.x, mouth.y - sea, m0.z, e0.x, l.End.y - sea, e0.z, l.Length, size }.Select(v => v.ToString("0.###", CultureInfo.InvariantCulture)).ToArray());
+			Vector3 firstAt = laid[0].transform.position; float firstScale = laid[0].transform.lossyScale.x;
 			Check(ref ok, DynamicIslands.SaveIsland(CaveToolIsland), "saved as " + CaveToolIsland);
 			DynamicIslands.NewIsland();
 			yield return null;
@@ -198,12 +242,13 @@ namespace DynamicIslands
 			yield return null;
 			yield return null;
 			var back = GameObject.Find("PlacedObjects").GetComponentsInChildren<EditorGameObject>(false).Where(e => e.GameObjectName == CaveTool.Tunnel || e.GameObjectName == CaveTool.Room).ToList();
-			Check(ref ok, back.Count == 5 && back.Any(e => (e.transform.position - firstAt).magnitude < 0.05f) && back.Where(e => e.GameObjectName == CaveTool.Tunnel).All(e => ObjectProps.Get(e.Props, ObjectProps.Skin) == ObjectProps.SkinRock) && back.Any(e => e.transform.Find(CaveTool.PlugName) != null), "loaded again: the 5 pieces where they were, brown, the den walled (" + back.Count + ")");
+			Check(ref ok, back.Count == 5 && back.Any(e => (e.transform.position - firstAt).magnitude < 0.05f && Mathf.Abs(e.transform.lossyScale.x - firstScale) < 0.001f) && back.Where(e => e.GameObjectName == CaveTool.Tunnel).All(e => ObjectProps.Get(e.Props, ObjectProps.Skin) == ObjectProps.SkinRock) && back.Any(e => e.transform.Find(CaveTool.PlugName) != null), "loaded again: the 5 pieces where they were at their size, brown, the den walled (" + back.Count + ")");
 
 			// Pictures: the mouth from outside, and down the tunnel from inside it
 			Vector3 eye = mouth - l.Flat * 14f + Vector3.up * 4f;
-			yield return CameraShot(eye, mouth + Vector3.up * 2f, "cavetool_mouth");
-			yield return CameraShot(mouth + l.Flat * 2f + Vector3.up * 1.6f, mouth + l.Flat * 12f + Vector3.up * 0.6f, "cavetool_inside");
+			string tag = Mathf.Abs(size - 1f) < 0.01f ? "" : "_" + size.ToString("0.0", CultureInfo.InvariantCulture);
+			yield return CameraShot(eye, mouth + Vector3.up * 2f, "cavetool_mouth" + tag);
+			yield return CameraShot(mouth + l.Flat * 2f + Vector3.up * 1.6f, mouth + l.Flat * 12f + Vector3.up * 0.6f, "cavetool_inside" + tag);
 			if (ok) Log("PASS: cave tool editor"); else Fail("cave tool editor");
 		}
 
@@ -230,6 +275,8 @@ namespace DynamicIslands
 			string spec;
 			if (f == null || !f.Props.TryGetValue(CaveToolKey, out spec)) { Fail("cave tool world: run CICaveToolEditor first (no " + CaveToolIsland + " with its cave)"); yield break; }
 			float[] v = spec.Split(',').Select(x => float.Parse(x, CultureInfo.InvariantCulture)).ToArray();
+			float size = v.Length > 7 ? v[7] : 1f;
+			string tag = Mathf.Abs(size - 1f) < 0.01f ? "" : "_" + size.ToString("0.0", CultureInfo.InvariantCulture);
 			bool ok = true;
 			Vector3 pos = raftPos.Value + Vector3.forward * 350f; pos.y = 0f;
 			int before = IslandWorldState.Islands.Count;
@@ -248,6 +295,16 @@ namespace DynamicIslands
 			System.Func<float, float, float, Vector3> at = (x, y, z) => { Vector3 p = e.Position + turn * new Vector3(x, 0f, z); p.y = e.Position.y + y; return p; };
 			Vector3 mouth = at(v[0], v[1], v[2]), end = at(v[3], v[4], v[5]);
 			Vector3 flat = end - mouth; flat.y = 0f; flat.Normalize();
+			// (the island may stand a little off where its file's middle says: take the mouth from the first tunnel piece, as Plan laid it)
+			{
+				Transform first = e.Root.GetComponentsInChildren<Transform>(true).Where(x => x.name == CaveTool.Tunnel).OrderBy(x => Vector3.Dot(x.position - mouth, flat)).FirstOrDefault();
+				if (first != null)
+				{
+					Vector3 shift = first.position + first.rotation * (new Vector3(CaveTool.PassX, CaveTool.Floor - CaveTool.EndDip, CaveTool.FaceMin) * size) - mouth;
+					if (shift.magnitude > 0.05f) Log("  (the mouth taken from the first piece: " + shift.magnitude.ToString("0.00") + " m from the file's)");
+					mouth += shift; end += shift;
+				}
+			}
 			List<string> blocked = mountain != null ? mountain.BlockedWays() : new List<string>();
 			Check(ref ok, mountain != null && blocked.Count == 0, "the rock over it leaves the way in clear" + (blocked.Count > 0 ? ": " + string.Join("; ", blocked.Take(4).ToArray()) : mountain == null ? " (no mountain built)" : ""));
 
@@ -291,7 +348,7 @@ namespace DynamicIslands
 			Physics.SyncTransforms();
 			try
 			{
-				for (float s = 1.5f; s <= v[6] + 14f; s += 4f)
+				for (float s = 1.5f; s <= v[6] + 14f * size; s += 4f * Mathf.Min(1f, size))
 				{
 					float y = s <= v[6] ? Mathf.Lerp(mouth.y, end.y, s / Mathf.Max(0.1f, v[6])) : end.y;
 					Vector3 p = mouth + flat * s; p.y = y;
@@ -313,7 +370,7 @@ namespace DynamicIslands
 							float t = Vector3.Dot(eye - mouth, flat) / back;
 							Vector3 cross = eye + d * t;
 							Vector3 rel = cross - mouth; rel.y = 0f;
-							outOfMouth = (all.Length == 0 || all[0].distance > t - 0.3f) && Mathf.Abs(Vector3.Dot(rel, Vector3.Cross(Vector3.up, flat))) < CaveTool.ShellHalfWidth && cross.y < mouth.y + CaveTool.ShellTop;
+							outOfMouth = (all.Length == 0 || all[0].distance > t - 0.3f) && Mathf.Abs(Vector3.Dot(rel, Vector3.Cross(Vector3.up, flat))) < CaveTool.ShellHalfWidth * size && cross.y < mouth.y + (CaveTool.ShellTop - CaveTool.Floor + CaveTool.EndDip) * size;
 						}
 						// (the first thing met is the cave's rock - a piece, the den's wall, the mountain - or the ground from above;
 						// anything else - a tree, a rock, the sky - is seen through the hill: the den's wide mouth showed it)
@@ -325,12 +382,12 @@ namespace DynamicIslands
 				}
 			}
 			finally { Physics.queriesHitBackfaces = backs0; }
-			Check(ref ok, eyes >= 5 && sky == 0 && under == 0, "from inside (" + eyes + " places, " + noFloor + " without a floor): " + sky + " looks to the sky, " + under + " to the ground from below" + (seen.Count > 0 ? ": " + string.Join("; ", seen.Take(6).ToArray()) : ""));
+			Check(ref ok, eyes >= 5 && sky == 0 && under == 0, "size " + size + "x, from inside (" + eyes + " places, " + noFloor + " without a floor): " + sky + " looks to the sky, " + under + " to the ground from below" + (seen.Count > 0 ? ": " + string.Join("; ", seen.Take(6).ToArray()) : ""));
 
-			yield return CameraShot(mouth - flat * 14f + Vector3.up * 4f, mouth + Vector3.up * 2f, "cavetool_world_mouth");
-			yield return CameraShot(mouth + flat * 3f + Vector3.up * 1.6f, mouth + flat * 14f + Vector3.up * 0.8f, "cavetool_world_tunnel");
-			yield return CameraShot(end + flat * 6f + Vector3.up * 1.8f, end + flat * 20f + Vector3.up * 3f, "cavetool_world_den");
-			yield return CameraShot(end + flat * 10f + Vector3.up * 1.8f, end - flat * 6f + Vector3.up * 3f, "cavetool_world_back");
+			yield return CameraShot(mouth - flat * 14f * size + Vector3.up * 4f * size, mouth + Vector3.up * 2f * size, "cavetool_world_mouth" + tag);
+			yield return CameraShot(mouth + flat * 3f * size + Vector3.up * 1.6f, mouth + flat * 14f * size + Vector3.up * 0.8f, "cavetool_world_tunnel" + tag);
+			yield return CameraShot(end + flat * 6f * size + Vector3.up * 1.8f, end + flat * 20f * size + Vector3.up * 3f * size, "cavetool_world_den" + tag);
+			yield return CameraShot(end + flat * 10f * size + Vector3.up * 1.8f, end - flat * 6f * size + Vector3.up * 3f * size, "cavetool_world_back" + tag);
 
 			if (args0Keep) { Log("  (island kept: " + CaveToolIsland + ")"); }
 			else

@@ -45,11 +45,16 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The tool's settings (the Caves panel; a recipe's cave step sets its own).</summary>
 		public static float Slope; // degrees: below 0 down into the ground, above 0 up
+		/// <summary>The tunnel's size over Raft's own (PF-D2b): the pieces are laid scaled by it, and every measure of the
+		/// layout, the hill, the cut and the den's wall with them. MinSize: the passage still about 3.6 m wide and 4 m high.</summary>
+		public static float Size = 1f;
+		public const float MinSize = 0.7f, MaxSize = 1.5f;
 		public static bool EndRoom = true, Hill = true;
 
 		public struct Piece
 		{
 			public string Name;
+			public float Scale; // (over the piece's own: the layout's Size)
 			public Vector3 Position;
 			public Quaternion Rotation;
 		}
@@ -60,6 +65,7 @@ namespace DynamicIslands.Editor
 			public List<Piece> Pieces = new List<Piece>();
 			public Vector3 Mouth, End, Dir, Flat;
 			public float Slope, Length;
+			public float Size = 1f;
 			public int Tunnels;
 			public bool Room;
 			public Vector3 RoomPivot;
@@ -67,35 +73,43 @@ namespace DynamicIslands.Editor
 
 			/// <summary>The floor of the passage this far along it (m, flat), on the tunnel's line.</summary>
 			public float FloorAt(float s) { return Mouth.y + Mathf.Tan(Slope * Mathf.Deg2Rad) * Mathf.Clamp(s, 0f, Length); }
+
+			/// <summary>The tunnel's rock to each side of the passage, and over its floor (m, at this size); the den's box and mouth.</summary>
+			public float HalfWidth { get { return ShellHalfWidth * Size; } }
+			public float Top { get { return (ShellTop - Floor + EndDip) * Size; } }
+			public Vector3 RoomMin { get { return CaveTool.RoomMin * Size; } }
+			public Vector3 RoomMax { get { return CaveTool.RoomMax * Size; } }
+			public Vector3 RoomMouth { get { return CaveTool.RoomMouth * Size; } }
 		}
 
 		/// <summary>
 		/// Lays a cave out: the mouth's floor at mouth, the tunnel towards toward (only its direction and flat distance count),
 		/// as many tunnel pieces as fit (one at least, MaxTunnels at most; none when only a room is wanted and the drag is
-		/// shorter than one), sloping slope degrees, the bear's den at the far end when room.
+		/// shorter than one), sloping slope degrees, the bear's den at the far end when room; size times Raft's own size.
 		/// </summary>
-		public static Layout Plan(Vector3 mouth, Vector3 toward, float slope, bool room)
+		public static Layout Plan(Vector3 mouth, Vector3 toward, float slope, bool room, float size = 1f)
 		{
-			var l = new Layout { Mouth = mouth, Room = room, Slope = Mathf.Clamp(slope, -MaxSlope, MaxSlope) };
+			var l = new Layout { Mouth = mouth, Room = room, Slope = Mathf.Clamp(slope, -MaxSlope, MaxSlope), Size = Mathf.Clamp(size, MinSize, MaxSize) };
+			float k = l.Size, step = Step * k;
 			Vector3 flat = toward - mouth; flat.y = 0f;
 			float dist = flat.magnitude;
 			l.Flat = dist > 0.01f ? flat / dist : Vector3.forward;
 			float a = l.Slope * Mathf.Deg2Rad;
 			l.Dir = (l.Flat * Mathf.Cos(a) + Vector3.up * Mathf.Sin(a)).normalized;
-			int n = Mathf.RoundToInt(dist / (Step * Mathf.Cos(a)));
+			int n = Mathf.RoundToInt(dist / (step * Mathf.Cos(a)));
 			l.Tunnels = Mathf.Clamp(n, room ? 0 : 1, MaxTunnels);
 			Quaternion r = Quaternion.LookRotation(l.Dir, Vector3.up);
-			Vector3 entry = new Vector3(PassX, Floor - EndDip, FaceMin);
+			Vector3 entry = new Vector3(PassX, Floor - EndDip, FaceMin) * k;
 			for (int i = 0; i < l.Tunnels; i++)
-				l.Pieces.Add(new Piece { Name = Tunnel, Rotation = r, Position = mouth + l.Dir * (i * Step) - r * entry });
-			l.End = mouth + l.Dir * (l.Tunnels * Step);
-			l.Length = l.Tunnels * Step * Mathf.Cos(a);
+				l.Pieces.Add(new Piece { Name = Tunnel, Scale = k, Rotation = r, Position = mouth + l.Dir * (i * step) - r * entry });
+			l.End = mouth + l.Dir * (l.Tunnels * step);
+			l.Length = l.Tunnels * step * Mathf.Cos(a);
 			if (room)
 			{
 				// (the den's mouth meets the tunnel's far end flush, its floor level with it; it faces back up the tunnel)
 				l.RoomRotation = Quaternion.LookRotation(-l.Flat, Vector3.up);
-				l.RoomPivot = l.End - l.RoomRotation * RoomMouth + Vector3.up * RoomLift;
-				l.Pieces.Add(new Piece { Name = Room, Rotation = l.RoomRotation, Position = l.RoomPivot });
+				l.RoomPivot = l.End - l.RoomRotation * l.RoomMouth + Vector3.up * (RoomLift * k);
+				l.Pieces.Add(new Piece { Name = Room, Scale = k, Rotation = l.RoomRotation, Position = l.RoomPivot });
 			}
 			return l;
 		}
@@ -115,25 +129,26 @@ namespace DynamicIslands.Editor
 			{
 				// (before the mouth, and past an open end, the tunnel's face is the hillside: the hill only beside it)
 				bool beforeMouth = s < 0f, pastEnd = !l.Room && s > l.Length;
-				if (!((beforeMouth || pastEnd) && Mathf.Abs(q) < ShellHalfWidth + 0.5f))
+				if (!((beforeMouth || pastEnd) && Mathf.Abs(q) < l.HalfWidth + 0.5f))
 				{
-					float ds = s < 0f ? -s : s > l.Length ? s - l.Length : 0f, dq = Mathf.Max(0f, Mathf.Abs(q) - ShellHalfWidth);
+					float ds = s < 0f ? -s : s > l.Length ? s - l.Length : 0f, dq = Mathf.Max(0f, Mathf.Abs(q) - l.HalfWidth);
 					float d = Mathf.Sqrt(ds * ds + dq * dq);
-					float top = l.FloorAt(s) + ShellTop - Floor + EndDip + Cover;
+					float top = l.FloorAt(s) + l.Top + Cover;
 					best = top - d * SideSlope;
 					// (beside the way in, the cut's walls slope up from it: not straight up - they stood as two flat slabs)
-					if (beforeMouth) best = Mathf.Min(best, l.Mouth.y + (Mathf.Abs(q) - ShellHalfWidth - 0.5f) * CutSlope);
+					if (beforeMouth) best = Mathf.Min(best, l.Mouth.y + (Mathf.Abs(q) - l.HalfWidth - 0.5f) * CutSlope);
 				}
 			}
 			if (l.Room)
 			{
 				Vector3 lp = Quaternion.Inverse(l.RoomRotation) * (p - l.RoomPivot);
-				float dx = Mathf.Max(0f, RoomMin.x - lp.x, lp.x - RoomMax.x), dz = Mathf.Max(0f, RoomMin.z - lp.z, lp.z - RoomMax.z);
+				Vector3 rmin = l.RoomMin, rmax = l.RoomMax;
+				float dx = Mathf.Max(0f, rmin.x - lp.x, lp.x - rmax.x), dz = Mathf.Max(0f, rmin.z - lp.z, lp.z - rmax.z);
 				// (the den's own front - at its mouth - is under the tunnel's hill, or, with no tunnel, the face it opens in)
-				bool front = l.Tunnels == 0 && lp.z > RoomMax.z - 0.5f && Mathf.Abs(lp.x - RoomMouth.x) < 7f;
+				bool front = l.Tunnels == 0 && lp.z > rmax.z - 0.5f && Mathf.Abs(lp.x - l.RoomMouth.x) < 7f * l.Size;
 				if (!front)
 				{
-					float top = l.RoomPivot.y + RoomMax.y + Cover - Mathf.Sqrt(dx * dx + dz * dz) * SideSlope;
+					float top = l.RoomPivot.y + rmax.y + Cover - Mathf.Sqrt(dx * dx + dz * dz) * SideSlope;
 					if (float.IsNaN(best) || top > best) best = top;
 				}
 			}
@@ -147,9 +162,10 @@ namespace DynamicIslands.Editor
 			weight = 0f;
 			Vector3 rel = p - l.Mouth; rel.y = 0f;
 			float s = Vector3.Dot(rel, l.Flat), q = Mathf.Abs(Vector3.Dot(rel, Vector3.Cross(Vector3.up, l.Flat)));
-			if (s > 0.5f || s < -ApronLength - 6f || q > ApronHalf + 3f) return float.NaN;
-			weight = Mathf.Clamp01((ApronHalf + 3f - q) / 3f) * Mathf.Clamp01((ApronLength + 6f + s) / 6f);
-			return l.Mouth.y - 0.05f + Mathf.Max(0f, -s - ApronLength) * 0.25f; // (level up to the mouth: it rose into a hump)
+			float len = ApronLength * l.Size, half = ApronHalf * l.Size;
+			if (s > 0.5f || s < -len - 6f || q > half + 3f) return float.NaN;
+			weight = Mathf.Clamp01((half + 3f - q) / 3f) * Mathf.Clamp01((len + 6f + s) / 6f);
+			return l.Mouth.y - 0.05f + Mathf.Max(0f, -s - len) * 0.25f; // (level up to the mouth: it rose into a hump)
 		}
 
 		/// <summary>
@@ -180,7 +196,7 @@ namespace DynamicIslands.Editor
 					if (!float.IsNaN(apron) && wgt > 0f)
 					{
 						Vector3 rel = p - l.Mouth; rel.y = 0f;
-						bool near = Vector3.Dot(rel, l.Flat) > -ApronLength;
+						bool near = Vector3.Dot(rel, l.Flat) > -ApronLength * l.Size;
 						if (ny > apron || near) ny = Mathf.Lerp(ny, apron, wgt);
 					}
 					if (ny != y) heights[z, x] = Mathf.Clamp01((ny - o.y) / size.y);
@@ -194,13 +210,14 @@ namespace DynamicIslands.Editor
 			Vector3 rel = p - l.Mouth; rel.y = 0f;
 			float s = Vector3.Dot(rel, l.Flat), q = Mathf.Abs(Vector3.Dot(rel, Vector3.Cross(Vector3.up, l.Flat)));
 			float best = float.NaN;
-			if (l.Tunnels > 0 && s >= 0f && s <= l.Length && q < ShellHalfWidth - 0.5f) best = l.FloorAt(s) - 1.5f;
+			if (l.Tunnels > 0 && s >= 0f && s <= l.Length && q < l.HalfWidth - 0.5f) best = l.FloorAt(s) - 1.5f * l.Size;
 			if (l.Room)
 			{
 				Vector3 lp = Quaternion.Inverse(l.RoomRotation) * (p - l.RoomPivot);
-				if (lp.x > RoomMin.x + 1f && lp.x < RoomMax.x - 1f && lp.z > RoomMin.z + 1f && lp.z < RoomMax.z - 1f)
+				Vector3 rmin = l.RoomMin, rmax = l.RoomMax;
+				if (lp.x > rmin.x + 1f && lp.x < rmax.x - 1f && lp.z > rmin.z + 1f && lp.z < rmax.z - 1f)
 				{
-					float t = l.RoomPivot.y + RoomMouth.y - 2f;
+					float t = l.RoomPivot.y + l.RoomMouth.y - 2f * l.Size;
 					if (float.IsNaN(best) || t > best) best = t;
 				}
 			}
@@ -211,14 +228,15 @@ namespace DynamicIslands.Editor
 		public static Bounds Footprint(Layout l)
 		{
 			var b = new Bounds(l.Mouth, Vector3.zero);
-			Vector3 side = Vector3.Cross(Vector3.up, l.Flat) * ShellHalfWidth;
+			Vector3 side = Vector3.Cross(Vector3.up, l.Flat) * l.HalfWidth;
+			Vector3 rmin = l.RoomMin, rmax = l.RoomMax;
 			foreach (Vector3 c in new[] { l.Mouth, l.End })
 			{
-				b.Encapsulate(c + side + Vector3.up * (ShellTop + EndDip)); b.Encapsulate(c - side - Vector3.up * 4.5f);
+				b.Encapsulate(c + side + Vector3.up * l.Top); b.Encapsulate(c - side - Vector3.up * 4.5f * l.Size);
 			}
 			if (l.Room)
 				for (int i = 0; i < 8; i++)
-					b.Encapsulate(l.RoomPivot + l.RoomRotation * new Vector3((i & 1) == 0 ? RoomMin.x : RoomMax.x, (i & 2) == 0 ? RoomMin.y : RoomMax.y, (i & 4) == 0 ? RoomMin.z : RoomMax.z));
+					b.Encapsulate(l.RoomPivot + l.RoomRotation * new Vector3((i & 1) == 0 ? rmin.x : rmax.x, (i & 2) == 0 ? rmin.y : rmax.y, (i & 4) == 0 ? rmin.z : rmax.z));
 			return b;
 		}
 
@@ -235,9 +253,10 @@ namespace DynamicIslands.Editor
 		/// outside only (the ground is not seen from below), so from inside the den you looked out past the tunnel's end
 		/// through the hill. A den laid at a tunnel's end (ObjectProps.CavePlug) gets a rock wall across its mouth, just inside
 		/// the tunnel's last piece, with a hole the size of the passage (its edges hidden in the tunnel's rock). In the editor
-		/// and in a world; made again when called again.
+		/// and in a world; made again when called again. size: the den's size over Raft's own (the cave tool's Size, kept as
+		/// its ObjectProps.CavePlug).
 		/// </summary>
-		public static void Plug(GameObject den)
+		public static void Plug(GameObject den, float size = 1f)
 		{
 			if (den == null) return;
 			Transform old = den.transform.Find(PlugName);
@@ -249,7 +268,7 @@ namespace DynamicIslands.Editor
 			go.layer = look.gameObject.layer;
 			go.transform.SetParent(den.transform, false);
 			Vector3 ls = den.transform.lossyScale;
-			go.transform.localScale = new Vector3(1f / Mathf.Max(0.001f, ls.x), 1f / Mathf.Max(0.001f, ls.y), 1f / Mathf.Max(0.001f, ls.z));
+			go.transform.localScale = new Vector3(size / Mathf.Max(0.001f, ls.x), size / Mathf.Max(0.001f, ls.y), size / Mathf.Max(0.001f, ls.z));
 			// (in the den's frame at the size the layout uses: its mouth at +z, the tunnel past it)
 			float z = RoomMax.z + PlugIn, mx = RoomMouth.x, my = RoomMouth.y;
 			float x0 = Mathf.Max(RoomMin.x + 0.5f, mx - PlugHalf), x1 = Mathf.Min(RoomMax.x - 0.5f, mx + PlugHalf);
@@ -286,11 +305,12 @@ namespace DynamicIslands.Editor
 		{
 			Vector3 rel = p - l.Mouth; rel.y = 0f;
 			float s = Vector3.Dot(rel, l.Flat), q = Mathf.Abs(Vector3.Dot(rel, Vector3.Cross(Vector3.up, l.Flat)));
-			if (l.Tunnels > 0 && s > -0.3f && s < l.Length + 0.3f && q < ShellHalfWidth && p.y > l.FloorAt(s) - 2f && p.y < l.FloorAt(s) + ShellTop + EndDip + 0.5f) return true;
+			if (l.Tunnels > 0 && s > -0.3f && s < l.Length + 0.3f && q < l.HalfWidth && p.y > l.FloorAt(s) - 2f * l.Size && p.y < l.FloorAt(s) + l.Top + 0.5f) return true;
 			if (l.Room)
 			{
 				Vector3 lp = Quaternion.Inverse(l.RoomRotation) * (p - l.RoomPivot);
-				if (lp.x > RoomMin.x && lp.x < RoomMax.x && lp.y > RoomMin.y && lp.y < RoomMax.y && lp.z > RoomMin.z && lp.z < RoomMax.z) return true;
+				Vector3 rmin = l.RoomMin, rmax = l.RoomMax;
+				if (lp.x > rmin.x && lp.x < rmax.x && lp.y > rmin.y && lp.y < rmax.y && lp.z > rmin.z && lp.z < rmax.z) return true;
 			}
 			return false;
 		}
@@ -352,14 +372,15 @@ namespace DynamicIslands.Editor
 		/// <summary>
 		/// Lays a cave in the editor's island (the scenes its pieces come from loaded first): the pieces, the ground shaped
 		/// around them, one undo step; the pieces selected after. Says what it did. done gets the objects (none: refused).
+		/// size: times Raft's own size (Size).
 		/// </summary>
-		public static IEnumerator Lay(Vector3 mouth, Vector3 toward, float slope, bool room, bool hill, Action<List<GameObject>> done = null)
+		public static IEnumerator Lay(Vector3 mouth, Vector3 toward, float slope, bool room, bool hill, float size, Action<List<GameObject>> done = null)
 		{
 			var made = new List<GameObject>();
 			Terrain terrain = terraineditor.terrain;
 			GameObject placedRoot = GameObject.Find("PlacedObjects");
 			if (terrain == null || placedRoot == null || Busy) { if (done != null) done(made); yield break; }
-			Layout l = Plan(mouth, toward, slope, room);
+			Layout l = Plan(mouth, toward, slope, room, size);
 			if (!ObjectLimit.Allow(l.Pieces.Count)) { if (done != null) done(made); yield break; }
 			Busy = true;
 			try
@@ -395,10 +416,11 @@ namespace DynamicIslands.Editor
 					if (go == null) continue;
 					go.transform.position = p.Position;
 					go.transform.rotation = p.Rotation;
+					if (p.Scale > 0f && Mathf.Abs(p.Scale - 1f) > 0.001f) go.transform.localScale *= p.Scale;
 					foreach (Collider c in go.GetComponentsInChildren<Collider>()) c.enabled = true;
 					// (the tunnels' icy rock takes the den's brown island rock; the den keeps its own)
 					EditorGameObject.Attach(go, p.Name, p.Name == Tunnel ? new Dictionary<string, string>(props)
-						: l.Tunnels > 0 ? new Dictionary<string, string> { { ObjectProps.CavePlug, "1" } } : null);
+						: l.Tunnels > 0 ? new Dictionary<string, string> { { ObjectProps.CavePlug, l.Size.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) } } : null);
 					made.Add(go);
 				}
 
@@ -426,7 +448,7 @@ namespace DynamicIslands.Editor
 				LastPieces = made;
 				float sea = DynamicIslands.EditorWaterLevel;
 				float lowest = Mathf.Min(l.Mouth.y, l.End.y);
-				string what = (l.Tunnels > 0 ? l.Tunnels + " tunnel piece" + (l.Tunnels == 1 ? "" : "s") + " (" + Mathf.RoundToInt(l.Length) + " m" + (Mathf.Abs(l.Slope) > 0.5f ? ", " + (l.Slope < 0 ? "down " : "up ") + Mathf.RoundToInt(Mathf.Abs(l.Slope)) + "°" : "") + ")" : "") +
+				string what = (Mathf.Abs(l.Size - 1f) > 0.01f ? "size " + l.Size.ToString("0.0") + "x, " : "") + (l.Tunnels > 0 ? l.Tunnels + " tunnel piece" + (l.Tunnels == 1 ? "" : "s") + " (" + Mathf.RoundToInt(l.Length) + " m" + (Mathf.Abs(l.Slope) > 0.5f ? ", " + (l.Slope < 0 ? "down " : "up ") + Mathf.RoundToInt(Mathf.Abs(l.Slope)) + "°" : "") + ")" : "") +
 					(l.Room ? (l.Tunnels > 0 ? " and " : "") + "a cave room" : ", open at the far end");
 				if (lowest < sea + 0.3f) DynamicIslands.Notify("Cave laid: " + what + " - part of its floor is under the sea, so it fills with water. Ctrl+Z takes it back", true, 7);
 				else DynamicIslands.Notify("Cave laid: " + what + ". Ctrl+Z takes it back", false, 5);
@@ -440,21 +462,28 @@ namespace DynamicIslands.Editor
 		#region The drag (terraineditor's Cave action)
 
 		static Vector3? dragFrom;
-		static LineRenderer line;
+		static LineRenderer line, ring;
 
 		/// <summary>The mouse in the editor while the Cave tool is chosen: press where the mouth goes, drag the way the tunnel
-		/// runs, let go to lay it; Esc or the right button lets it go.</summary>
+		/// runs, let go to lay it; Esc or the right button lets it go. Before the press the mouth's outline (its size: Size)
+		/// stands at the cursor.</summary>
 		public static void Drag(bool overTerrain, Vector3 point, bool canUse)
 		{
 			if (dragFrom.HasValue && (Input.GetKeyDown(KeyCode.Escape) || Input.GetMouseButtonDown(1) || !canUse && !Input.GetMouseButton(0))) { Cancel(); return; }
 			if (!dragFrom.HasValue)
 			{
 				if (canUse && overTerrain && Input.GetMouseButtonDown(0) && !EditorCamera.UsingMouse && !Busy) dragFrom = point;
+				// (the mouth's outline at the cursor, across the view)
+				Camera cam = Camera.main;
+				Vector3 look = cam != null ? cam.transform.forward : Vector3.forward;
+				look.y = 0f;
+				if (canUse && overTerrain && !Busy) ShowMouth(point, look.sqrMagnitude > 1e-4f ? look.normalized : Vector3.forward, Size);
+				else if (ring != null) ring.enabled = false;
 				return;
 			}
 			if (Input.GetMouseButton(0))
 			{
-				if (overTerrain) Show(Plan(dragFrom.Value, point, Slope, EndRoom), point);
+				if (overTerrain) Show(Plan(dragFrom.Value, point, Slope, EndRoom, Size), point);
 				return;
 			}
 			// (let go)
@@ -462,29 +491,64 @@ namespace DynamicIslands.Editor
 			Cancel();
 			Vector3 flat = to - from; flat.y = 0f;
 			if (flat.magnitude < 2f) { DynamicIslands.Notify("Cave: press where the mouth is to be and drag the way the tunnel goes, into a hill", true); return; }
-			DynamicIslands.instance.StartCoroutine(Lay(from, to, Slope, EndRoom, Hill));
+			DynamicIslands.instance.StartCoroutine(Lay(from, to, Slope, EndRoom, Hill, Size));
 		}
 
 		static Vector3 lastTo;
 
+		static LineRenderer NewLine(string name, float width, Color a, Color b)
+		{
+			var go = new GameObject(name);
+			LineRenderer lr = go.AddComponent<LineRenderer>();
+			lr.material = new Material(Shader.Find("Sprites/Default"));
+			lr.startWidth = lr.endWidth = width;
+			lr.startColor = a; lr.endColor = b;
+			lr.useWorldSpace = true;
+			return lr;
+		}
+
+		/// <summary>The mouth's outline at a size (world, its floor at floor, the tunnel running along dir): the rock's width
+		/// along the ground and the passage's opening rising from it - the way in is about that wide and high.</summary>
+		public static List<Vector3> MouthOutline(Vector3 floor, Vector3 dir, float size)
+		{
+			Vector3 across = Vector3.Cross(Vector3.up, dir).normalized;
+			float k = Mathf.Clamp(size, MinSize, MaxSize), rock = ShellHalfWidth * k, half = HoleHalf * k, up = HoleUp * k;
+			Vector3 b = floor + Vector3.up * 0.15f;
+			var pts = new List<Vector3> { b - across * rock, b - across * half };
+			// (the opening: straight sides to two thirds of its height, a half-ellipse over them)
+			float wall = up * 0.62f;
+			pts.Add(b - across * half + Vector3.up * wall);
+			for (int i = 1; i < 12; i++)
+			{
+				float a = Mathf.PI * i / 12f;
+				pts.Add(b - across * (half * Mathf.Cos(a)) + Vector3.up * (wall + (up - wall) * Mathf.Sin(a)));
+			}
+			pts.Add(b + across * half + Vector3.up * wall);
+			pts.Add(b + across * half);
+			pts.Add(b + across * rock);
+			return pts;
+		}
+
+		static void ShowMouth(Vector3 floor, Vector3 dir, float size)
+		{
+			if (ring == null) ring = NewLine("CaveToolMouth", 0.25f, new Color(1f, 0.85f, 0.35f), new Color(1f, 0.85f, 0.35f));
+			ring.enabled = true;
+			List<Vector3> pts = MouthOutline(floor, dir, size);
+			ring.positionCount = pts.Count;
+			ring.SetPositions(pts.ToArray());
+		}
+
 		static void Show(Layout l, Vector3 to)
 		{
 			lastTo = to;
-			if (line == null)
-			{
-				var go = new GameObject("CaveToolPreview");
-				line = go.AddComponent<LineRenderer>();
-				line.material = new Material(Shader.Find("Sprites/Default"));
-				line.startWidth = line.endWidth = 0.6f;
-				line.startColor = new Color(1f, 0.8f, 0.3f); line.endColor = new Color(1f, 0.5f, 0.2f);
-				line.useWorldSpace = true;
-			}
+			if (line == null) line = NewLine("CaveToolPreview", 0.6f, new Color(1f, 0.8f, 0.3f), new Color(1f, 0.5f, 0.2f));
 			line.enabled = true;
 			var pts = new List<Vector3> { l.Mouth + Vector3.up * 0.3f, l.End + Vector3.up * 0.3f };
-			if (l.Room) pts.Add(l.RoomPivot + l.RoomRotation * new Vector3(RoomMouth.x, RoomMouth.y, 0f) + Vector3.up * 0.3f);
+			if (l.Room) pts.Add(l.RoomPivot + l.RoomRotation * new Vector3(l.RoomMouth.x, l.RoomMouth.y, 0f) + Vector3.up * 0.3f);
 			line.positionCount = pts.Count;
 			line.SetPositions(pts.ToArray());
-			string text = "Cave: " + (l.Tunnels > 0 ? l.Tunnels + " tunnel piece(s), " + Mathf.RoundToInt(l.Length) + " m" : "no tunnel") + (l.Room ? " + a cave room" : ", open far end") + " - let go to lay it, Esc to cancel";
+			ShowMouth(l.Mouth, l.Flat, l.Size);
+			string text = "Cave: " + (l.Tunnels > 0 ? l.Tunnels + " tunnel piece(s), " + Mathf.RoundToInt(l.Length) + " m" : "no tunnel") + (l.Room ? " + a cave room" : ", open far end") + (Mathf.Abs(l.Size - 1f) > 0.01f ? ", size " + l.Size.ToString("0.0") + "x" : "") + " - let go to lay it, Esc to cancel";
 			if (text != shownText) { shownText = text; DynamicIslands.Notify(text, false, 2); }
 		}
 
@@ -495,6 +559,7 @@ namespace DynamicIslands.Editor
 			dragFrom = null;
 			shownText = null;
 			if (line != null) line.enabled = false;
+			if (ring != null) ring.enabled = false;
 		}
 
 		#endregion

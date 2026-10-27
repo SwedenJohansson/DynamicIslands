@@ -9,6 +9,15 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-10-27: Cave sizes
+
+### Added
+- **Size** for the editor's cave **Tunnel**: from 0.7x (a narrow passage you can still walk) to 1.5x (a big cavern)
+  of Raft's own cave, picked before you drag; an outline of the mouth at that size follows the mouse. The size is kept
+  with the island.
+
+---
+
 ## 2026-10-26: Caves, easier clicks, fuller islands
 
 ### Added

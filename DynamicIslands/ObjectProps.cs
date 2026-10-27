@@ -24,7 +24,7 @@ namespace DynamicIslands.Editor
 		/// <summary>"rock": the object's rock textures swapped for Raft's brown island rock (the cave tool's tunnels, whose
 		/// icy rock shader has no colour to tint).</summary>
 		public const string Skin = "skin", SkinRock = "rock";
-		/// <summary>"1": a bear den laid at a cave tool tunnel's end - a rock wall across its wide mouth around the tunnel (CaveTool.Plug).</summary>
+		/// <summary>"1" (or the cave's size, e.g. "0.7"): a bear den laid at a cave tool tunnel's end - a rock wall across its wide mouth around the tunnel (CaveTool.Plug), at that size.</summary>
 		public const string CavePlug = "cave.plug";
 		/// <summary>Loot: "UniqueItemName*amount;..." (Raft's item names), and "0" = never fills up again.</summary>
 		public const string LootItems = "loot.items", LootRefill = "loot.refill";
@@ -258,7 +258,8 @@ namespace DynamicIslands.Editor
 			if (HasTint(props)) ApplyTint(root, Tint(props), TintStrength(props));
 			else ApplyTint(root, Color.white, 0f);
 			if (Get(props, Skin, "") == SkinRock) ApplyRockSkin(root);
-			if (Get(props, CavePlug, "") == "1") CaveTool.Plug(root);
+			float plug;
+			if (float.TryParse(Get(props, CavePlug, ""), NumberStyles.Float, CultureInfo.InvariantCulture, out plug) && plug > 0f) CaveTool.Plug(root, plug);
 		}
 
 		static Texture rockDiffuse, rockNormal;

@@ -309,6 +309,8 @@ namespace DynamicIslands.Editor
 			brushButtons[15].name = "Button_CaveTunnel";
 			UIKit.Slider(caves, "Slope", -CaveTool.MaxSlope, CaveTool.MaxSlope, CaveTool.Slope, v => Mathf.Abs(v) < 0.5f ? "level" : (v < 0 ? "down " : "up ") + Mathf.RoundToInt(Mathf.Abs(v)) + "°",
 				v => CaveTool.Slope = v, "How the tunnel slopes from the mouth: down into the ground, or up", true);
+			UIKit.Slider(caves, "Size", CaveTool.MinSize, CaveTool.MaxSize, CaveTool.Size, v => v.ToString("0.0") + "x",
+				v => CaveTool.Size = Mathf.Round(v * 10f) / 10f, "How big the tunnel and its room are, against Raft's own cave (1x): 0.7x a narrow passage (still walkable), 1.5x a big cavern. Its mouth's outline follows the mouse before you press", false);
 			Button room = null, hill = null;
 			room = UIKit.Check(caves, "Cave room at the end", () => { CaveTool.EndRoom = !CaveTool.EndRoom; UIKit.SetCheck(room, CaveTool.EndRoom); },
 				"A big cave room (Balboa's bear den) where the tunnel ends. Off: the tunnel comes out open at its far end - a way through a hill. A short drag with this on: only the room");
