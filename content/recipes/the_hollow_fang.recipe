@@ -153,7 +153,7 @@ scatter "Pickup_Landmark_PineappleLandmark" 2 at -52 -18 r=18 seed=31031 free=3
 call treasure x=-66 z=-4 r=12 n=1 seed=31027 kind=0
 prop treasure31027 treasure.loot=MetalOre*3;CopperOre*2;Glass*2
 # --- The mercenaries' cave on the east shore: Silas Grey's note ---------------------------------------------------------
-call hw_zone x=60 z=-35 al=mercz id=merccave r=4 msg="A cave on the east shore, crates and bear harness in it, a grey coat folded on a crate. The Syndicate's mercenaries were kennelled here."
+call hw_zone x=60 z=-35 al=mercz id=merccave r=4 msg="A cave on the shore, crates and bear harness in it, a grey coat folded on a crate. The Syndicate's mercenaries were kennelled here."
 place Note_Paper greyfang at 58.5 -35.5 h=2.45 drop yaw=180
 loot mercchest Rope*2;Battery*1;Nail*6;Leather*2
 prop mercchest loot.refill=0
@@ -178,7 +178,7 @@ prop hf_lamp1 on.use=light|Guardian lamp north-east|toggle
 prop hf_lamp2 on.use=light|Guardian lamp south-east|toggle
 prop hf_lamp3 on.use=light|Guardian lamp south-west|toggle
 prop hf_lamp4 on.use=light|Guardian lamp north-west|toggle
-prop hf_lamp1 on.alllit=show|hf_lampchest\nmessage||All four guardian lamps burn, as they did when the Fang was kept. West of the hollow a stone box stands open.
+prop hf_lamp1 on.alllit=show|hf_lampchest\nmessage||All four guardian lamps burn, as they did when the Fang was kept. Beside the hollow a stone box stands open.
 call lp_hidden x=-24 z=8 al=hf_lampchest kind=Loot_Chest
 note hf_lampchest Sefa's offering box | The guardians' offering box. Sefa's tablet on the lid: "Whoever keeps the four lamps keeps the Fang. Take what you need."
 loot hf_lampchest TitaniumOre*1;CopperIngot*2;Glass*2;Rope*2
@@ -186,7 +186,7 @@ loot hf_lampchest TitaniumOre*1;CopperIngot*2;Glass*2;Rope*2
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Hollow Fang
 info author=Custom Islands
-info description=A tall spire of rock in an island as big as Raft's own big islands, cleft by a narrow gorge and hollow at its heart: the three trials of the sea kings' guardians - spinning blades, a floor of lettered stones over a flooded pit, an invisible bridge over a chasm - and a glass bridge to the altar. Orin's Knoll and his old lookout mast, the mercenaries' cave on the east shore, the guardians' boathouse drowned off the north-east. The fifth island of Relic of the Seventh Tide.
+info description=A tall spire of rock in an island as big as Raft's own big islands, cleft by a narrow gorge and hollow at its heart: the three trials of the sea kings' guardians - spinning blades, a floor of lettered stones over a flooded pit, an invisible bridge over a chasm - and a glass bridge to the altar. Orin's Knoll and his old lookout mast, the mercenaries' cave on the shore, the guardians' boathouse drowned off a point. The fifth island of Relic of the Seventh Tide.
 island on.arrive=message||A single spire of rock like a fang. A cleft runs into it from the sea - and something glints inside.
 
 story sand|Bag of sand|Placeable_PaperBundle|A small sack of fine white sand, for throwing.
@@ -204,7 +204,7 @@ loot altar story:gear3*1;Leather*4;Rope*4;Cooked_GenericMeat*2;TradeToken*6
 prop altar loot.refill=0
 note orinscharge Orin's charge | ORIN'S CHARGE\n\nWhoever reads this has the three gears. Do not take them to the Engine. Take them to the giant in the strait: set them in its breast, and its eyes will show you the heart. Then decide.\n\n- Orin, keeper of the Fang
 
-note orinjournal Orin's journal | ORIN - THE KNOLL BELOW THE FANG\n\nForty days I have watched the Fang from this hill. The guardians are gone; their boathouse sank in the spring storm off the north-east point, and the last of them, old Sefa, went down with it.\n\nTomorrow I go in. The Penitent, the Word, the Leap. I know the Word: it is the name of the one who guards, and that will be me, if I come through.\n\nThe guardians' key I leave here in the box. Their chest in the boathouse holds the keepers' pay. If I do not come out, let whoever reads this have it, and let them be worthy. Isadora, if it is you: I told you that you would come. - Orin
+note orinjournal Orin's journal | ORIN - THE KNOLL BELOW THE FANG\n\nForty days I have watched the Fang from this hill. The guardians are gone; their boathouse sank in the spring storm off the point, and the last of them, old Sefa, went down with it.\n\nTomorrow I go in. The Penitent, the Word, the Leap. I know the Word: it is the name of the one who guards, and that will be me, if I come through.\n\nThe guardians' key I leave here in the box. Their chest in the boathouse holds the keepers' pay. If I do not come out, let whoever reads this have it, and let them be worthy. Isadora, if it is you: I told you that you would come. - Orin
 note greyfang Silas Grey's note | S. GREY - THE FANG\n\nThe bears went in after her and did not come out. Neither did the two men who went to fetch the bears.\n\nThe cleft is a madhouse: knives on wheels, a floor that throws you back, and a hole with no bottom and no bridge. I am not paid to die in a hole.\n\nShe came out with the third gear. I watched her from the cave mouth. She looked straight at me, and she smiled.\n\nVery well. Three gears, and only one place in the sea to use them: the giant in the strait. We sail tonight. We will be standing on its shoulders when she arrives.
 note sefa Guardian Sefa's tablet | (A tablet of slate in the guardians' script. Kett's pencil translation is tucked under it.)\n\nI, Sefa, last of the keepers of the Fang, set this down as the sea comes in.\n\nWe guarded the third gear for the kings, who are dust. The trials will guard it now without us. They need no keeper: the Penitent bows the proud, the Word wants the guardian's name, the Leap wants faith.\n\nThe one who comes through is the guardian after us. To them belongs our chest, and our duty: carry the gear to the giant at the right tide, and to no one else.
 prop blade1 obj.name=blade1
@@ -254,7 +254,7 @@ prop mercs tint.amount=0.5
 prop fangtop zone.id=fang_top
 prop fangtop zone.radius=3
 prop fangtop zone.repeat=never
-prop fangtop zone.message=A window in the Fang. Far off to the north, across the water: a giant standing in the sea.
+prop fangtop zone.message=A window in the Fang. Far off across the water: a giant standing in the sea.
 prop fangtop on.enter=camera|fangcam||6|40
 prop fangcam obj.name=fangcam
 
@@ -280,8 +280,8 @@ prop chasmback zone.message=Down into the chasm's water. You climb back up to th
 prop chasmback on.enter=teleport|leaplip
 
 quest title=The Three Trials
-quest intro=A cleft into a spire of rock. Kett went in. Go into the sea cave.
-step reach|sea_cave|1|Go into the sea cave
+quest intro=A cleft into a spire of rock. Kett went in. Make for the spire of rock and go into the sea cave at its foot.
+step reach|sea_cave|1|Make for the spire of rock and go into the sea cave
 step read|Kett's last diary page|1|Read Kett's last diary page
 step reach|trial1|1|Come to the first trial
 step reach|trial1_end|1|Pass the Penitent's blades
@@ -294,13 +294,13 @@ step kill|Bear|2|Fight off the Syndicate's mercenary bears
 step open|Altar|1|Take what lies on the altar
 step read|Orin's charge|1|Read Orin's charge
 step reach|fang_top|1|Look out of the window in the Fang
-step reach|knollfoot|1|Find the path up Orin's Knoll in the south-west
+step reach|knollfoot|1|Find the path up Orin's Knoll, the knoll with his old lookout mast
 step reach|knolltop|1|Climb Orin's Knoll to his old lookout mast
 step read|Orin's journal|1|Read Orin's journal on the knoll top
 step collect|story:orinkey|1|Climb the mast and take Orin's key from his box
-step reach|boathouse|1|Dive to the guardians' boathouse off the north-east
+step reach|boathouse|1|Dive to the guardians' sunken boathouse in the shallows off the point
 step open|Guardians' chest|1|Open the guardians' chest with Orin's key
-step read|Silas Grey's note|1|Read Silas Grey's note in the mercenaries' cave on the east shore
+step read|Silas Grey's note|1|Read Silas Grey's note in the mercenaries' cave with the crates, down on the shore
 quest done=The three gears. Orin's charge, and the window in the Fang, show the way: the giant in the strait - 1100 on the Receiver.
 quest reward=TradeToken*6;Rope*4;Leather*3
 

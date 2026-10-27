@@ -221,7 +221,7 @@ scatter "Pickup_Landmark_Flower_Red" 2 at -60 45 r=22 seed=31043 free=3
 call treasure x=-80 z=28 r=12 n=1 seed=31038 kind=0
 prop treasure31038 treasure.loot=TitaniumIngot*2;MetalOre*2;Glass*2
 # --- Nell Okafor's cave on the east shore: her note, her tool chest (a secret) ---------------------------------------
-call hw_zone x=66 z=39 al=okaz id=okafor_cave r=4 msg="A cave on the east shore, and in it a small airship's gondola on blocks, half rebuilt. Nell Okafor got here before you."
+call hw_zone x=66 z=39 al=okaz id=okafor_cave r=4 msg="A cave on the shore, and in it a small airship's gondola on blocks, half rebuilt. Nell Okafor got here before you."
 place Note_Paper okalast at 64.5 38.5 h=2.45 drop yaw=180
 loot okachest Bolt*4;Hinge*2;MetalIngot*2;CopperIngot*1
 prop okachest loot.refill=0
@@ -243,7 +243,7 @@ prop treasure31040 treasure.loot=MetalOre*3;CopperOre*2;Glass*2
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Tide Engine
 info author=Custom Islands
-info description=A ring of desert rock round a vast well, in an island as big as Raft's biggest: three machine halls of sandstone and brass - tide wheels, Utopia's cranes as the Engine's arms - and in the well the Engine's heart, its reactor core, its beam and the Seventh lever. The Watch Hill and Silas Grey's last lookout, Nell Okafor's cave on the east shore, the 1931 expedition's tide-gauge house drowned off the south-west. The finale of Relic of the Seventh Tide.
+info description=A ring of desert rock round a vast well, in an island as big as Raft's biggest: three machine halls of sandstone and brass - tide wheels, Utopia's cranes as the Engine's arms - and in the well the Engine's heart, its reactor core, its beam and the Seventh lever. The Watch Hill and Silas Grey's last lookout, Nell Okafor's cave on the shore, the 1931 expedition's tide-gauge house drowned off a point. The finale of Relic of the Seventh Tide.
 island on.arrive=message||A ring of rock round a well as wide as a lagoon, and in it something humming. The sea round the ring is drawn in, wave by wave.
 
 story radiocodes|Syndicate radio codes|Placeable_PaperBundle|A card of call signs and codes from the Syndicate's supply crate.
@@ -348,10 +348,10 @@ prop cabladder on.use=teleport|armtop
 prop armtop obj.name=armtop
 prop armtop zone.id=arm_top
 prop armtop zone.radius=2.5
-prop armtop zone.message=The crane cab, high over the well. A zipline runs from here across to the south rim.
+prop armtop zone.message=The crane cab, high over the well. A zipline runs from here across to the far rim.
 prop heartrim zone.id=heart_rim
 prop heartrim zone.radius=5
-prop heartrim zone.message=The south rim of the well - and a cage. Inside it, a woman in a battered coat: Professor Kett!
+prop heartrim zone.message=The far rim of the well - and a cage. Inside it, a woman in a battered coat: Professor Kett!
 prop kettcage obj.name=kettcage
 prop kettcage survivor.name=Isadora Kett
 prop kettcage survivor.id=seventhtide_kett
@@ -396,33 +396,33 @@ prop coldlights beh.hidden=1
 prop core obj.name=core
 prop wellcam obj.name=wellcam
 prop emitter obj.name=emitter
-note greylast Silas Grey's last log | S. GREY - THE ENGINE, LAST ENTRY\n\nThe beast is dead and the Engine is quiet, and the boss has gone down to the launch without a word to any of us. Twenty years of paying men to follow other people, and he ends with nothing in his hands.\n\nI watched her come up the ramp out of the well with that brass ring. She did not look at me this time.\n\nThe old expedition left a vault in the gauge house off the south-west point. I found its key in the boss's things, years ago, and never told him. Let whoever ends this have it. I am done waiting for other people. The launch leaves at dusk, and I am not on it.
-note okalast Nell Okafor's note | N. OKAFOR - THE ENGINE'S EAST SHORE\n\nProfessor, I said I would follow you, and I did. The Albatross's gondola is in this cave; the balloon is in the bay; the engine runs if you swear at it.\n\nIf you are not the professor: she is all right. I saw her come out of the cage on the south rim. I saw the man in the grey coat climb the hill to the north-west and not come down.\n\nWhen it is over, the gondola flies. There is room for three, if one of them is small. Take what you want from the chest. I have made my last spanner for a while. - Nell
+note greylast Silas Grey's last log | S. GREY - THE ENGINE, LAST ENTRY\n\nThe beast is dead and the Engine is quiet, and the boss has gone down to the launch without a word to any of us. Twenty years of paying men to follow other people, and he ends with nothing in his hands.\n\nI watched her come up the ramp out of the well with that brass ring. She did not look at me this time.\n\nThe old expedition left a vault in the gauge house off the point. I found its key in the boss's things, years ago, and never told him. Let whoever ends this have it. I am done waiting for other people. The launch leaves at dusk, and I am not on it.
+note okalast Nell Okafor's note | N. OKAFOR - THE ENGINE'S SHORE\n\nProfessor, I said I would follow you, and I did. The Albatross's gondola is in this cave; the balloon is in the bay; the engine runs if you swear at it.\n\nIf you are not the professor: she is all right. I saw her come out of the cage on the far rim. I saw the man in the grey coat climb the Watch Hill and not come down.\n\nWhen it is over, the gondola flies. There is room for three, if one of them is small. Take what you want from the chest. I have made my last spanner for a while. - Nell
 note ostrlast Dr. Ostrander's last letter | DR. HAL OSTRANDER - THE GAUGE HOUSE, 1931\n\nWe reached the Engine. Nobody believed we would. The gauge on this wall has drawn the sea for forty days, and every seventh tide the line climbs and does not come down.\n\nWe could not stop it. The lever wants light, and we had only lamps. I have locked our pay and our samples in the vault and given the key to the boy who carries our water, a quiet lad with grey eyes.\n\nTo whoever stopped it: you did what we could not. The sea will go down, a finger's width at a time. Leave the gauge on the wall. Let it draw the line going down.
 prop ringtop zone.id=ring_top
 prop ringtop zone.radius=4
 prop ringtop zone.message=From the ring's top: the well is still, the sea outside calm. The Seventh Tide is over.
 
 quest title=The Seventh Tide
-quest intro=The Engine at last. Kett's camp is on the landing in the south. Go ashore.
-step reach|landing|1|Go ashore at the landing
+quest intro=The Engine at last. Kett's camp is on the landing at the foot of the great ring and crane. Go ashore.
+step reach|landing|1|Make for the great ring and crane and go ashore at the landing
 step read|Kett's final camp log|1|Read Kett's final camp log
 step kill|Hyena|6|Fight off the Syndicate's ambush
 step open|Syndicate supply crate|1|Open the Syndicate's supply crate
 step collect|story:radiocodes|1|Take the Syndicate's radio codes
 step collect|story:taunt|1|Listen in on the Syndicate's radio
-step reach|wheel_hall|1|Go to the wheel hall in the east
+step reach|wheel_hall|1|Go to the wheel hall, the hall with the three big tide wheels
 step read|Engine diagram|1|Read the Engine diagram
 step collect|story:wheelturn|3|Turn the three tide wheels
 step collect|story:sluiceopen|1|Pull the sluice lever
 step reach|sluice_gallery|1|Go down to the flooded sluice gallery
 step kill|Stingray|4|Deal with the stingrays in the gallery
 step open|Sluice cache|1|Open the sluice cache
-step reach|crane_hall|1|Go to the crane hall in the north
+step reach|crane_hall|1|Go to the crane hall, at the foot of the big crane
 step collect|story:clawmoved|1|Work the claw to raise the Engine's arm
 step read|The Seventh Tide tablet|1|Read the Seventh Tide tablet
 step reach|arm_top|1|Climb to the crane cab
-step reach|heart_rim|1|Take the zipline across the well to the south rim
+step reach|heart_rim|1|Take the zipline from the crane cab across the well to the far rim
 step open|Kett's satchel|1|Free Professor Kett (the cab's key opens her cage) and open her satchel
 step read|Kett's warning|1|Hear Kett's warning
 step reach|heart|1|Go down into the heart of the Engine
@@ -432,13 +432,13 @@ step read|Heart inscription|1|Read the heart inscription
 step collect|story:enginestopped|1|Pull the Seventh lever
 step open|Engine treasury|1|Open the Engine's treasury
 step collect|story:relic|1|Take the Seventh Tide
-step reach|ring_top|1|Climb to the ring's top in the west
-step reach|watchfoot|1|Find the path up the Watch Hill in the north-west
+step reach|ring_top|1|Climb to the top of the great ring
+step reach|watchfoot|1|Find the path up the Watch Hill, the hill with Grey's lookout mast
 step reach|watchtop|1|Climb the Watch Hill to Silas Grey's last lookout
 step read|Silas Grey's last log|1|Read Silas Grey's last log
 step collect|story:vaultkey|1|Climb the mast and take the tide vault key from Grey's box
-step read|Nell Okafor's note|1|Find Nell Okafor's cave on the east shore and read her note
-step reach|gaugehouse|1|Dive to the expedition's tide-gauge house off the south-west
+step read|Nell Okafor's note|1|Find Nell Okafor's cave with the half-built gondola, on the shore, and read her note
+step reach|gaugehouse|1|Dive to the expedition's tide-gauge house, sunk in the water off the point
 step open|Tide vault|1|Open the tide vault with the key
 step read|Dr. Ostrander's last letter|1|Read Dr. Ostrander's last letter
 quest done=The Seventh Tide stops. Somewhere, the sea is a finger's width lower.

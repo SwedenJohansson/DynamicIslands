@@ -264,7 +264,7 @@ story power|Generator running|Battery|One of the array's three generators is run
 story link|Wire connected|Battery|One of the rod rows is wired to the grid board.
 story cagekey|Cage key|Placeable_Lantern_Metal|The key of the cage between the generator hall and the bunker.
 
-note safetyrules Array safety rules | THUNDERHEAD ARRAY - SAFETY RULES\n\n1. Start all THREE generators before you touch the grid.\n2. Then wire every row of rods at its connector, west end of the grid.\n3. Then the grid board. Never the other way round.\n4. The rods draw lightning - and screechers. Keep your head down.\n5. Bunker keycard: in the generator hall chest. Return it.\n\n- Ingrid Vale, Array Engineer
+note safetyrules Array safety rules | THUNDERHEAD ARRAY - SAFETY RULES\n\n1. Start all THREE generators before you touch the grid.\n2. Then wire every row of rods at its connector, the cable posts along the edge of the grid.\n3. Then the grid board. Never the other way round.\n4. The rods draw lightning - and screechers. Keep your head down.\n5. Bunker keycard: in the generator hall chest. Return it.\n\n- Ingrid Vale, Array Engineer
 note gridnote Grid restored | GRID RESTORED\n\nAll rows live. Charge going to the bunker.\n\n(printed by the grid board)
 note hallchest Generator hall chest | The generator hall's chest: the bunker's keycard on a lanyard, a coil of wire, spare bolts.
 loot hallchest story:raft-Tangaroa_KeyCard*1;CopperIngot*2;Bolt*3
@@ -378,15 +378,15 @@ loot ta_setchest Glass*3;CopperIngot*2;TradeToken*2
 note ta_planecrate Weather plane's crate | The weather plane's crate: copper wire, a barometer, flares.
 loot ta_planecrate CopperIngot*1;Scrap*3;Plastic*2
 prop ta_planecrate loot.refill=0
-note ta_pilot Weather pilot's note | STORM FLIGHT. Struck twice over the array. Instruments dead. Down on the north shore. Never fly over the rods in weather.
+note ta_pilot Weather pilot's note | STORM FLIGHT. Struck twice over the array. Instruments dead. Down on the shore under the cliffs. Never fly over the rods in weather.
 note jcta Basalt perch | A perch on the basalt stacks, out of the lightning's way.
 loot jcta Rope*3;Plank*4;MetalIngot*1
 note jbta Stack top | The very top of the basalt stacks.
 loot jbta CopperIngot*1;Bolt*2;TradeToken*1
 
 quest title=Storm Grid
-quest intro=A black cliff island with a forest of rods on top. Land on the beach.
-step reach|landing|1|Land on the beach under the cliffs
+quest intro=A black cliff island with a forest of rods on top. Make for the forest of rods on top of the cliffs and land on the beach below.
+step reach|landing|1|Make for the forest of rods and land on the beach under the cliffs
 step read|Array safety rules|1|Read the safety rules at the foot of the path
 step reach|plateau|1|Climb the path to the plateau
 step collect|story:power|3|Start the three generators in the generator hall
@@ -401,10 +401,10 @@ step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans from the 
 step read|Array engineer's diary|1|Read the array engineer's diary
 step open|Ingrid's tool bag|1|Free Ingrid from the cage and take her tool bag
 step read|Linesman's notice|1|Read the linesman's notice by the earthing switch
-step talk|Signe Lund|1|Talk to Signe Lund at the ruined house in the south-east
-step reach|ta_hill|1|Climb to Spark Bluff in the north-west
-step collect|story:ta_top|1|Climb the storm watch mast and take the storm meter from its deck
-step reach|ta_cave|1|Find Basalt Cave in the north-east
+step talk|Signe Lund|1|Talk to Signe Lund at the ruined house away from the rods
+step reach|ta_hill|1|Climb to Spark Bluff, the hill with the storm watch mast
+step collect|story:ta_top|1|Climb the storm watch mast and take the storm meter from the box on its deck
+step reach|ta_cave|1|Find Basalt Cave, the rock cave in the far hillside
 step collect|story:ta_cave|1|Take the earth spike from the chest at the back of the cave
 step read|Earthing log|1|Bring both to the earthing switch and read what it shows
 step reach|beach|1|Ride the zipline down to the beach

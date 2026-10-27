@@ -394,7 +394,7 @@ loot sk_setchest Glass*3;MetalIngot*2;TradeToken*2
 note sk_planecrate Salt plane's crate | The salt plane's crate: sacks, scoops, a flask.
 loot sk_planecrate Plastic*3;Scrap*3;Rope*2
 prop sk_planecrate loot.refill=0
-note sk_pilot Salt pilot's note | SALT RUN. Wind full of ash, couldn't see the strip. Down west of the kilns. The special salt sacks are marked red - don't open them.
+note sk_pilot Salt pilot's note | SALT RUN. Wind full of ash, couldn't see the strip. Down on the flat ground beside the kilns. The special salt sacks are marked red - don't open them.
 note jcsk Ash perch | The kiln hands' perch out of the ash.
 loot jcsk Rope*3;Plank*4;MetalIngot*1
 note jbsk Ash top | The very top of the perch.
@@ -403,8 +403,8 @@ note sk_mazechest Kiln hands' box | A box in the heart of the maze: the kiln han
 loot sk_mazechest TradeToken*3;CopperIngot*2;MetalIngot*1
 
 quest title=Seeding Salt
-quest intro=Black sand and brick kilns. Land at the tram stop.
-step reach|tram_stop|1|Land at the tram stop
+quest intro=Black sand and brick kilns. Make for the row of brick kilns and land at the tram stop in front of them.
+step reach|tram_stop|1|Make for the brick kilns and land at the tram stop
 step read|Kiln master's log|1|Read the kiln master's log in the smelter house
 step collect|story:weighed|1|Fill three salt sacks at the heaps and weigh them on the scales
 step open|Kiln 4 door|1|Open Kiln 4's iron door
@@ -413,11 +413,11 @@ step blueprint|Blueprint_SmelterElectric|1|Take the electric smelter plans from 
 step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced biofuel extractor plans from the kiln store
 step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced stationary anchor plans from the kiln store
 step read|Kiln hand's notice|1|Read the kiln hand's notice by the salt crusher
-step talk|Kalle Strom|1|Talk to Kalle Strom at the ruined house in the east
-step reach|sk_trail|1|Find the foot of the trail up Cinder Knoll, in the north-west
+step talk|Kalle Strom|1|Talk to Kalle Strom at the ruined house away from the kilns
+step reach|sk_trail|1|Find the foot of the trail up Cinder Knoll, below the salt-drop chimney
 step reach|sk_summit|1|Climb the trail to the top of Cinder Knoll
-step collect|story:sk_top|1|Climb the salt-drop chimney and take the chimney damper from its deck
-step reach|sk_cave|1|Find Ash Cave in the north-east
+step collect|story:sk_top|1|Climb the salt-drop chimney and take the chimney damper from the box on its deck
+step reach|sk_cave|1|Find Ash Cave, the rock cave in the far hillside
 step collect|story:sk_cave|1|Take the kiln six fire bar from the chest at the back of the cave
 step read|Crusher ledger|1|Bring both to the salt crusher and read what it shows
 step kill|Hyena|3|Deal with the hyenas at the tram stop on the way out

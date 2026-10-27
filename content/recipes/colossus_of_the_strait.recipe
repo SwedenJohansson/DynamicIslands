@@ -194,7 +194,7 @@ scatter "Pickup_Landmark_Flower_Blue" 2 at 50 45 r=20 seed=31037 free=3
 call treasure x=66 z=30 r=12 n=1 seed=31032 kind=0
 prop treasure31032 treasure.loot=MetalOre*3;CopperOre*2;Glass*2
 # --- Kett's cave on the west headland's south shore: her letter and her cache (a secret) ------------------------------
-call hw_zone x=-50 z=-55 al=kettcavez id=kettcave r=4 msg="A cave on the south shore. A bedroll, a cold lamp, a pencil sketch of the giant pinned to the rock. Kett slept here."
+call hw_zone x=-50 z=-55 al=kettcavez id=kettcave r=4 msg="A cave on the shore. A bedroll, a cold lamp, a pencil sketch of the giant pinned to the rock. Kett slept here."
 place Note_Paper kettcave at -51.5 -55.5 h=2.45 drop yaw=180
 loot kettcavechest Rope*3;Cooked_GenericMeat*3;PlasticBottle_Water*2;Bolt*2
 prop kettcavechest loot.refill=0
@@ -216,8 +216,8 @@ prop treasure31034 treasure.loot=TitaniumIngot*1;MetalOre*2;Glass*2
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Colossus of the Strait
 info author=Custom Islands
-info description=Two forested headlands and a stone giant standing across the strait between them - legs of Varuna's motherlode pillars, a sandstone chest chamber over the water, Tangaroa's founder statue as its head. Strait Head and the Syndicate's lookout mast, Kett's cave on the south shore, the builders' cistern drowned off the north-west. The sixth island of Relic of the Seventh Tide.
-island on.arrive=message||A giant of stone stands across the strait, one foot on each headland. Smoke rises from tents on the west side.
+info description=Two forested headlands and a stone giant standing across the strait between them - legs of Varuna's motherlode pillars, a sandstone chest chamber over the water, Tangaroa's founder statue as its head. Strait Head and the Syndicate's lookout mast, Kett's cave on the shore, the builders' cistern drowned off a point. The sixth island of Relic of the Seventh Tide.
+island on.arrive=message||A giant of stone stands across the strait, one foot on each headland. Smoke rises from tents on this side.
 
 story heelopen|Heel door opened|Placeable_Lantern_Metal|The keycard opened the door in the colossus's heel.
 story heelride|Lift ride|Placeable_Lantern_Metal|You rode the lift up the colossus's leg.
@@ -237,8 +237,8 @@ prop crownvault if.open=signal|eyes
 prop crownvault else.open=message||The vault's lid will not move. It is locked to the giant's heart.
 note kettnote Kett's note | Whoever you are - you have been one island behind me since the museum. Thank you for the gears.\n\nThe giant looks where the Engine sleeps. I went on alone. Follow the light.\n\n- I. K.
 
-note greylog Silas Grey's lookout log | S. GREY - STRAIT HEAD, LOOKOUT LOG\n\nThe boss arrived by night and went straight up the giant, with the keycard and two men. He came down in an hour, white as paper. The wheel would not turn for him. It wants the three gears, and we have none.\n\nSo we wait for her. I have done nothing on this job but wait for her.\n\nThe men found a key in the giant's knee, a bronze thing with a sluice gate on it. The builders' cistern is off the north-west point, ten metres down, and nobody here can hold his breath that long. I keep the key up here, out of the men's hands.\n\nThe boss says when the giant's eyes light, they will point at the Engine, and then we will not need the professor any more.
-note kettcave Kett's letter from the cave | KETT - THE STRAIT, THE NIGHT BEFORE\n\nWhoever you are: I have watched you come up behind me from the museum to here. You read what I left, you took what I left, and you never once tried to sell any of it. So this is for you.\n\nGrey sits on the hill to the north-east with a spyglass. He has a key he does not understand. The builders' cistern is under the sea off the north-west point; the key opens their chest. I could not get to it without him seeing me.\n\nYou could. Get the key from his mast while he is down at the camp. There is food and water in the chest here. Eat first. - I. K.
+note greylog Silas Grey's lookout log | S. GREY - STRAIT HEAD, LOOKOUT LOG\n\nThe boss arrived by night and went straight up the giant, with the keycard and two men. He came down in an hour, white as paper. The wheel would not turn for him. It wants the three gears, and we have none.\n\nSo we wait for her. I have done nothing on this job but wait for her.\n\nThe men found a key in the giant's knee, a bronze thing with a sluice gate on it. The builders' cistern is off the point, ten metres down, and nobody here can hold his breath that long. I keep the key up here, out of the men's hands.\n\nThe boss says when the giant's eyes light, they will point at the Engine, and then we will not need the professor any more.
+note kettcave Kett's letter from the cave | KETT - THE STRAIT, THE NIGHT BEFORE\n\nWhoever you are: I have watched you come up behind me from the museum to here. You read what I left, you took what I left, and you never once tried to sell any of it. So this is for you.\n\nGrey sits on the hill with the lookout mast, spyglass in hand. He has a key he does not understand. The builders' cistern is under the sea off the point; the key opens their chest. I could not get to it without him seeing me.\n\nYou could. Get the key from his mast while he is down at the camp. There is food and water in the chest here. Eat first. - I. K.
 note hesk Master builder Hesk's tablet | (A bronze tablet, its words cut deep. Kett's pencil translation is tucked under it.)\n\nHesk, master of the builders of the strait, to those who come after.\n\nWe set the giant to watch the Engine, because the Engine cannot be trusted to sleep. When the seventh tide comes, the Engine wakes and the sea rises. The giant's eyes will show you where it lies.\n\nWe sealed our tools and our pay in this cistern. If the sea has taken it, so be it. Take what you need, and go to the Engine before the tide. Do not let it wake for anyone who wants the sea to rise.
 prop heeldoor obj.name=heeldoor
 prop heeldoor on.use=hide|\ngive||story:heelopen*1\nmessage||The reader blinks green and the heel door swings away. Inside: a lift in the giant's foot.
@@ -258,7 +258,7 @@ prop heelzone zone.message=A door in the giant's heel - a Tangaroa keycard door,
 
 prop westhead zone.id=west_headland
 prop westhead zone.radius=6
-prop westhead zone.message=The west headland. Across the strait the giant stands with a foot on each side - and there are tents below it.
+prop westhead zone.message=The headland with the camp. Across the strait the giant stands with a foot on each side - and there are tents below it.
 prop camp zone.id=syndicate_camp
 prop camp zone.radius=8
 prop camp zone.repeat=never
@@ -305,8 +305,8 @@ prop headzone on.enter=camera|headcam||6|40
 prop headcam obj.name=headcam
 
 quest title=The Giant's Heart
-quest intro=A stone giant across a strait, and a camp at its feet. Go up onto the west headland.
-step reach|west_headland|1|Go up onto the west headland
+quest intro=A stone giant across a strait, and a camp at its feet. Make for the giant and go up onto the headland with the camp at its feet.
+step reach|west_headland|1|Make for the stone giant and go up onto the headland with the camp
 step read|Syndicate camp orders|1|Read the Syndicate's camp orders
 step kill|Hyena|4|Deal with the Syndicate's dogs
 step open|Syndicate strongbox|1|Open the Syndicate strongbox
@@ -320,11 +320,11 @@ step collect|story:eyeslit|1|Set the three gears in the wheel
 step reach|head|1|Climb up to the giant's head
 step open|Crown vault|1|Open the crown vault
 step read|Kett's note|1|Read Kett's note
-step reach|straitfoot|1|Find the path up Strait Head on the east headland
+step reach|straitfoot|1|Find the path up Strait Head, the hill with Grey's lookout mast
 step reach|straittop|1|Climb Strait Head to Silas Grey's lookout mast
 step read|Silas Grey's lookout log|1|Read Silas Grey's lookout log
 step collect|story:sluicekey|1|Climb the mast and take the sluice key from Grey's box
-step reach|cistern|1|Dive to the builders' cistern off the north-west
+step reach|cistern|1|Dive to the builders' cistern, sunk in the water off the point
 step open|Builders' chest|1|Open the builders' chest with the sluice key
 step read|Master builder Hesk's tablet|1|Read the master builder's tablet in the cistern
 quest done=The giant looks out to sea, at the Engine. Kett went on alone - and the Engine's call is on the Receiver, 1300.

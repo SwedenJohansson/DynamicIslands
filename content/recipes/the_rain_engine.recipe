@@ -388,7 +388,7 @@ note armsnote Arms offline | MASTER BOARD - ARMS\n\nNORTH ..... OFFLINE\nEAST ..
 note westlocker Arm West locker | The West arm crew's locker: batteries, circuits and titanium - and a hand-written list: 'drums at the cutoff, beam first'.
 loot westlocker Battery*2;CircuitBoard*2;TitaniumIngot*2;Bolt*4
 prop westlocker loot.refill=0
-note chemnote Seeding chemistry | SEEDING CHEMISTRY (D. HOLM)\n\nThe salt from the kilns goes into the drums. The drums turn it into a fine smoke; the arms fire the smoke into the cloud base. Every grain of salt pulls a drop of rain out of the sky.\n\nThe drums only stop at the CUTOFF, and the cutoff only works on the beam: the emitter in the court outside, three mirrors, the panel on the court's east side. Turn the mirrors one quarter each.\n\nThe master key is in the drum cage. The cage opens when the drums stop.
+note chemnote Seeding chemistry | SEEDING CHEMISTRY (D. HOLM)\n\nThe salt from the kilns goes into the drums. The drums turn it into a fine smoke; the arms fire the smoke into the cloud base. Every grain of salt pulls a drop of rain out of the sky.\n\nThe drums only stop at the CUTOFF, and the cutoff only works on the beam: the emitter in the court outside, three mirrors, the panel on the court's far wall. Turn the mirrors one quarter each.\n\nThe master key is in the drum cage. The cage opens when the drums stop.
 note drumcage Drum cage | The drum cage: the Rain Engine's master key on its chain, and a crate of seeding salt.
 loot drumcage story:masterkey*1;Scrap*4
 prop drumcage loot.refill=0
@@ -589,14 +589,14 @@ note jbre Shell stack top | The very top of the stacks.
 loot jbre CopperIngot*1;Bolt*2;TradeToken*1
 
 quest title=The Rain Engine
-quest intro=A mountain under a black cloud. Land at the Foot.
-step reach|foot|1|Land at the Foot of the Rain Engine
+quest intro=A mountain under a black cloud. Make for the mountain under the cloud and land at the Foot, its base.
+step reach|foot|1|Make for the mountain under the black cloud and land at its Foot
 step read|Engine visitor sign|1|Read the visitor sign at the Foot
-step kill|Bear|4|Drive the bears out of the salt caves west of the Foot
+step kill|Bear|4|Drive the bears out of the salt caves beside the Foot, near the gatehouse
 step open|Gatehouse|1|Open the gatehouse strongbox with the key from the bears' den
 step collect|story:liftride|1|Ride the Tangaroa lift up the cliff to the crown
 step read|Operator's last shift|1|Read the lift operator's last note at the top station
-step reach|arm_north|1|Climb to the North arm
+step reach|arm_north|1|Climb to the North arm, the brass gun at the far end of the crown from the lift
 step collect|story:armlever|1|Pull the North arm's lever
 step reach|arm_east|1|Ride the electric zipline to the East arm
 step collect|story:armcrank|1|Wind the East arm's crank back
@@ -619,8 +619,8 @@ step kill|Polar bear|1|Defeat the Engine's guardian
 step collect|story:enginestopped|1|Throw the master switch
 step open|Engine vault|1|Open the Engine vault
 step read|Last broadcast|1|Read Dagny's last broadcast
-step talk|Tor|1|Talk to Tor at the ruined house in the south-east
-step reach|re_cave|1|Find Thunder Cave in the north-east
+step talk|Tor|1|Talk to Tor at the ruined house away from the Foot
+step reach|re_cave|1|Find Thunder Cave, the rock cave in the hillside
 step open|Tor's strongbox|1|Open Tor's strongbox at the back of the cave
 step reach|summit|1|Climb to the summit by the North arm and look at the sea
 quest done=The Rain Engine is still, and the sky over the sea is clear for the first time in eleven years.

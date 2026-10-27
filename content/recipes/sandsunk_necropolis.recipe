@@ -208,7 +208,7 @@ call hw_reef x=74 z=24 r=4 seed=31020
 
 # --- DEEP 10-25: the Kings' Dune - its foot and top as zones, Kett's survey mast (her letter, the embalmers' key) -------
 call hw_zone x=-26.6 z=31.6 al=kingfootz id=kingfoot r=5 msg="The Kings' Dune, the highest sand on the island. Flat stones climb it in a spiral to a thin mast."
-call hw_zone x=-40 z=45 al=kingtopz id=kingtop r=7 h=1 msg="The top of the Kings' Dune. The whole city of the dead below - and smoke from a cave on the east shore."
+call hw_zone x=-40 z=45 al=kingtopz id=kingtop r=7 h=1 msg="The top of the Kings' Dune. The whole city of the dead below - and smoke from a cave at the water's edge."
 call hw_mast x=-40 z=45 h0=22 lv=3 a=kettmast chest=kettbox top=Placeable_Lantern_Metal
 place Note_Paper kettletter at -43.5 41.5 h=22.1 drop yaw=135
 loot kettbox story:tombkey*1;Rope*2;PlasticBottle_Water*1
@@ -240,7 +240,7 @@ prop treasure31017 treasure.loot=MetalOre*2;Glass*3;Rope*2
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Sandsunk Necropolis
 info author=Custom Islands
-info description=A desert island as big as Raft's own big islands, of dunes over a city of the dead: an obelisk, a processional way between temple columns, tomb fronts sunk in the dunes and the great tomb of the sea kings - a sealed slab, scarabs in the dark, a timed gate and a sarcophagus. The Kings' Dune and Kett's survey mast, the embalmers' cave where the Syndicate camps, a harbour shrine drowned off the south-east. The third island of Relic of the Seventh Tide.
+info description=A desert island as big as Raft's own big islands, of dunes over a city of the dead: an obelisk, a processional way between temple columns, tomb fronts sunk in the dunes and the great tomb of the sea kings - a sealed slab, scarabs in the dark, a timed gate and a sarcophagus. The Kings' Dune and Kett's survey mast, the embalmers' cave where the Syndicate camps, a harbour shrine drowned off the shore. The third island of Relic of the Seventh Tide.
 island on.arrive=message||Dunes, and in them the tops of columns and the dark doors of tombs. An obelisk throws its shadow over the sand.
 
 story seal|Tomb seal|Placeable_Lantern_Metal|A disc of green bronze with seven waves on it: the seal of the sea kings' tomb.
@@ -248,7 +248,7 @@ story sealset|Tomb slab raised|Placeable_Lantern_Metal|The tomb seal is set in i
 story tombkey|Embalmers' key|Placeable_PaperBundle|A bronze key with seven waves on its bow: the key of the embalmers' chest, left by Kett on her survey mast.
 story gear1|Gear of the First Tide|Bolt|A bronze gear the size of a plate, its teeth cut like waves. One of three.
 
-note dignotes Kett's dig notes | KETT - NECROPOLIS DIG, WEEK 2\n\nThe tomb door will not move. The slab is locked by its seal plinth, and the seal is not here - the priests buried it.\n\nThe tablet says: "The seal sleeps where the obelisk's shadow falls at noon." At noon the sun stands south - the shadow points NORTH, a few paces.\n\nI left the detector and the spade in my kit. The Syndicate's men are two days behind me. I am going on to the mast.
+note dignotes Kett's dig notes | KETT - NECROPOLIS DIG, WEEK 2\n\nThe tomb door will not move. The slab is locked by its seal plinth, and the seal is not here - the priests buried it.\n\nThe tablet says: "The seal sleeps where the obelisk's shadow falls at noon." At noon the shadow falls toward the tomb - a few paces from the obelisk's foot, on the tomb side.\n\nI left the detector and the spade in my kit. The Syndicate's men are two days behind me. I am going on to the mast.
 note digkit Kett's dig kit | Kett's dig kit: her metal detector, a spade and a canteen.
 loot digkit MetalDetector*1;Shovel*1;PlasticBottle_Water*1;Rope*2
 prop digkit loot.refill=0
@@ -260,7 +260,7 @@ note sarcophagus Sarcophagus | The last sea king's sarcophagus. In his folded ha
 loot sarcophagus story:gear1*1;TradeToken*6;CopperIngot*3;MetalIngot*3
 prop sarcophagus loot.refill=0
 
-note kettletter Kett's letter from the dune | KETT - ON THE KINGS' DUNE\n\nIf you have come this far you have the seal, and the gear, and you are cleverer than the man in the grey coat. Good.\n\nGrey's people are camped in the embalmers' cave on the east shore. They have been trying to open the embalmers' chest for three days with a crowbar. They will not. The key was in the tomb front on the west side, under the third block, where the priests left it for their own people. I found it the first week.\n\nI am leaving it here in the box, out of their reach. The chest holds the kings' tokens - you will need tokens where you are going. Take them before Grey thinks to look up. - I. K.
+note kettletter Kett's letter from the dune | KETT - ON THE KINGS' DUNE\n\nIf you have come this far you have the seal, and the gear, and you are cleverer than the man in the grey coat. Good.\n\nGrey's people are camped in the embalmers' cave at the water's edge. They have been trying to open the embalmers' chest for three days with a crowbar. They will not. The key was in the sunken tomb front by the dunes, under the third block, where the priests left it for their own people. I found it the first week.\n\nI am leaving it here in the box, out of their reach. The chest holds the kings' tokens - you will need tokens where you are going. Take them before Grey thinks to look up. - I. K.
 note greynote Silas Grey's note | S. GREY - TO THE BOSS, BY THE NEXT LAUNCH\n\nThe tomb is open. Not by us: by someone with the seal, who walked in, took the gear and walked out of a hole in the sand behind it while my men were asleep.\n\nThe embalmers' chest will not open. Lopez says there is a key. Lopez says a lot of things.\n\nThe walls inside speak of a tower in the sky - a mast on a stack of rock - and a hollow tooth, and a giant. Three gears. If the professor has one, we need not find all three ourselves. We need only find her at the end, with the other two in her bag.\n\nSend more fuel. And a better crowbar.
 note ankhu Scribe Ankhu's tablet | (A clay tablet, its marks pressed deep. Kett's pencil translation is tucked under it.)\n\nI, Ankhu, scribe of the harbour, write this as the water rises in the shrine.\n\nThe kings are laid in the great tomb with the first gear. The second goes to the tower in the sky, the third to the hollow tooth, where the sea itself will guard it.\n\nWhen the seventh tide comes, the three will be carried to the giant in the strait, and the giant will show the way to the heart of fire. Let no one who comes for gold find them. Let one who comes for the sea find them all.
 prop sealplinth obj.name=sealplinth
@@ -314,10 +314,10 @@ prop tombsound sound.volume=0.5
 prop tombsound zone.radius=9
 
 quest title=The Tomb of the Sea Kings
-quest intro=Dunes over a city of the dead. Kett dug here - go up into the dunes.
-step reach|dunes|1|Go up into the dunes
+quest intro=Dunes over a city of the dead. Kett dug here - make for the tall obelisk and go up into the dunes.
+step reach|dunes|1|Make for the tall obelisk and go up into the dunes
 step read|Kett's dig notes|1|Read Kett's dig notes at her camp
-step collect|story:seal|1|Dig up the tomb seal (metal detector, then shovel)
+step collect|story:seal|1|Dig up the tomb seal a few paces from the obelisk, tomb side (metal detector, then shovel)
 step reach|processional|1|Walk the processional way to the tomb
 step collect|story:sealset|1|Set the seal in the plinth before the tomb
 step reach|antechamber|1|Go into the antechamber
@@ -329,11 +329,11 @@ step reach|burial_chamber|1|Pull the gate lever and get into the burial chamber 
 step open|Sarcophagus|1|Open the sarcophagus
 step collect|story:gear1|1|Take the Gear of the First Tide
 step reach|tomb_exit|1|Get out through the hatch
-step reach|kingfoot|1|Find the path up the Kings' Dune in the north-west
+step reach|kingfoot|1|Find the path up the Kings' Dune, the big dune with Kett's survey mast
 step reach|kingtop|1|Climb the Kings' Dune to Kett's survey mast
 step read|Kett's letter from the dune|1|Read Kett's letter on the dune top
 step collect|story:tombkey|1|Climb the mast and take the embalmers' key from Kett's box
-step reach|embalmcave|1|Find the embalmers' cave on the east shore
+step reach|embalmcave|1|Find the embalmers' cave at the water's edge, where the Syndicate camps
 step open|Embalmers' chest|1|Open the embalmers' chest with the key
 step read|Silas Grey's note|1|Read Silas Grey's note in the cave
 quest done=The Gear of the First Tide. The walls named the next one: a tower in the sky - a mast on a sea stack, 900 on the Receiver.

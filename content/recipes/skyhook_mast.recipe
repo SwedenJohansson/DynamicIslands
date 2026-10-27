@@ -145,7 +145,7 @@ call hw_reef x=50 z=40 r=4 seed=31025
 
 # --- DEEP 10-25: Gull Crag - its foot and top as zones, the station's signal mast (keeper Holt's note on top) --------
 call hw_zone x=36 z=3 al=cragfootz id=cragfoot r=5 msg="Gull Crag. White with birds, and a path of flat stones winding up it to a little signal mast."
-call hw_zone x=36 z=18 al=cragtopz id=cragtop r=6 h=1 msg="The top of Gull Crag. Across the gap, the mooring mast on its stack - and on the east shore below, a cave with a tarpaulin over its mouth."
+call hw_zone x=36 z=18 al=cragtopz id=cragtop r=6 h=1 msg="The top of Gull Crag. Across the gap, the mooring mast on its stack - and on the shore below, a cave with a tarpaulin over its mouth."
 call hw_mast x=36 z=18 h0=16 lv=2 a=holtmast chest=holtbox top=Placeable_Lantern_Metal
 place Note_Paper holtnote at 32.5 14.5 h=16.1 drop yaw=200
 loot holtbox Rope*2;Battery*1;Feather*3;Cooked_GenericMeat*2
@@ -221,7 +221,7 @@ call dirt x=8 z=14 r=5 n=2 seed=9422
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Skyhook Mast
 info author=Custom Islands
-info description=A tall sea stack in a skirt of green land, with an airship mooring mast on top - a steel lattice three stages high, the station cabin and its old vending machine - and below, in the shallows, the wreck of Kett's airship and its chart locker. Gull Crag and its signal mast, the engineer's cave on the east shore, a supply barge drowned off the north. The fourth island of Relic of the Seventh Tide.
+info description=A tall sea stack in a skirt of green land, with an airship mooring mast on top - a steel lattice three stages high, the station cabin and its old vending machine - and below, in the shallows, the wreck of Kett's airship and its chart locker. Gull Crag and its signal mast, the engineer's cave on the shore, a supply barge drowned off the island. The fourth island of Relic of the Seventh Tide.
 island on.arrive=message||A sea stack like a chimney, and on top of it a steel mast. In the shallows below, the ribs of a wrecked airship.
 
 story liftride|Skylift ride|Placeable_Lantern_Metal|You rode the station's skylift up the stack.
@@ -238,9 +238,9 @@ prop chartlocker else.open=message||The Albatross's chart locker, green with wee
 prop chartlocker loot.refill=0
 note chartlocker Albatross chart locker | The Albatross's chart locker: Kett's sea charts in oilcloth, the Fang marked in red - "THREE TRIALS - MIND THE GLASS" - and the airship's brass compass.
 loot chartlocker Rope*3;MetalIngot*2;CopperIngot*2;TradeToken*2
-note holtnote Station keeper Bram Holt's note | B. HOLT, KEEPER, SKYHOOK MOORING STATION\n\nThe Albatross came in crooked on the morning wind and went down in the shallows before I could get a line on her. The professor got out, and her engineer, the Okafor girl, and that was everyone.\n\nThe professor went up the lift, left her box in the strongbox and was off on the next boat before noon. Okafor stayed. She says an airship is only a balloon with ideas, and she will have her flying again.\n\nShe has set up in the cave on the east shore. She has the keys to everything on that ship. If you want what the professor left in the chart locker, ask Nell, not me. I only keep the mast.
-note okanote Nell Okafor's note | N. OKAFOR, ENGINEER, AIRSHIP ALBATROSS\n\nTo whoever reads this, if it isn't the man in the grey coat:\n\nThe chart locker fell out of the gondola when we hit. It's in the lagoon by the wreck, a few feet down. The key's in my tool chest - take it. The professor's charts are in that locker, and the Fang is marked on them. She wanted whoever followed her to have them.\n\nThe grey-coat man's diver came round twice asking after the locker. I told him it sank in deep water to the north, with the supply barge. He has been diving on the wrong wreck all week.\n\nI am going after the professor as soon as the engine runs. - Nell
-note greyreport Silas Grey's report | S. GREY - SKYHOOK, REPORT\n\nThe barge to the north is a barge. Rope, iron, lamp glass. No charts.\n\nThe engineer lied to my diver, and he believed her, and I have told him what I think of that. We have lost three days.\n\nThe keeper says Kett went to the Fang. Everyone in these waters knows the Fang: a hollow tooth of rock with a pool of glass inside it and trials the old kings set. Men who go in for the gear come out without it, or do not come out.\n\nGood. Let her go first. Let the Fang do our work. We wait at the strait, by the giant, where every road from here ends.
+note holtnote Station keeper Bram Holt's note | B. HOLT, KEEPER, SKYHOOK MOORING STATION\n\nThe Albatross came in crooked on the morning wind and went down in the shallows before I could get a line on her. The professor got out, and her engineer, the Okafor girl, and that was everyone.\n\nThe professor went up the lift, left her box in the strongbox and was off on the next boat before noon. Okafor stayed. She says an airship is only a balloon with ideas, and she will have her flying again.\n\nShe has set up in the cave with the tarpaulin, down on the shore. She has the keys to everything on that ship. If you want what the professor left in the chart locker, ask Nell, not me. I only keep the mast.
+note okanote Nell Okafor's note | N. OKAFOR, ENGINEER, AIRSHIP ALBATROSS\n\nTo whoever reads this, if it isn't the man in the grey coat:\n\nThe chart locker fell out of the gondola when we hit. It's in the lagoon by the wreck, a few feet down. The key's in my tool chest - take it. The professor's charts are in that locker, and the Fang is marked on them. She wanted whoever followed her to have them.\n\nThe grey-coat man's diver came round twice asking after the locker. I told him it sank in deep water off the island, with the supply barge. He has been diving on the wrong wreck all week.\n\nI am going after the professor as soon as the engine runs. - Nell
+note greyreport Silas Grey's report | S. GREY - SKYHOOK, REPORT\n\nThe barge out in the deep water is a barge. Rope, iron, lamp glass. No charts.\n\nThe engineer lied to my diver, and he believed her, and I have told him what I think of that. We have lost three days.\n\nThe keeper says Kett went to the Fang. Everyone in these waters knows the Fang: a hollow tooth of rock with a pool of glass inside it and trials the old kings set. Men who go in for the gear come out without it, or do not come out.\n\nGood. Let her go first. Let the Fang do our work. We wait at the strait, by the giant, where every road from here ends.
 prop lift obj.name=lift
 prop lift beh.use=Ride the skylift up the stack
 prop lift on.use=message||The skylift's motor coughs, catches, and hauls you up the face of the stack.\nsound||event:/exploring/utopia/lift_pull\nwait|4\nteleport|lifttop\ngive||story:liftride*1
@@ -276,10 +276,10 @@ step collect|story:liftride|1|Ride the skylift up the stack
 step kill|Screecher|2|Drive off the screechers nesting on the mast
 step open|Mast cabin strongbox|1|Open the strongbox in the mast cabin
 step reach|wreck_shore|1|Take the zipline down to the wreck's shore
-step reach|cragfoot|1|Find the path up Gull Crag in the east
+step reach|cragfoot|1|Find the path up Gull Crag, the crag with the signal mast
 step reach|cragtop|1|Climb Gull Crag to the station's signal mast
 step read|Station keeper Bram Holt's note|1|Read the station keeper's note on the crag top
-step reach|albatross_cave|1|Find the engineer's cave on the east shore
+step reach|albatross_cave|1|Find the engineer's cave with the tarpaulin over its mouth, on the shore
 step read|Nell Okafor's note|1|Read Nell Okafor's note
 step collect|story:chartkey|1|Take the chart locker key from her tool chest
 step open|Albatross chart locker|1|Dive in the lagoon by the wreck and open the Albatross's chart locker

@@ -410,8 +410,8 @@ note ic_mazechest Maze prize | The prize at the heart of the members' hedge maze
 loot ic_mazechest TradeToken*3;Glass*2;CopperIngot*2
 
 quest title=Members Only
-quest intro=A granite shelf with a white pavilion on it. Land on the lower terrace.
-step reach|terrace|1|Land on the club's lower terrace
+quest intro=A granite shelf with a white pavilion on it. Make for the white pavilion on the granite shelf and land on the lower terrace below it.
+step reach|terrace|1|Make for the white pavilion and land on the lower terrace
 step read|Members' book|1|Read the members' book on its stand
 step reach|club|1|Ride the funicular up to the club
 step read|Board minutes|1|Read the board minutes on the billiard table
@@ -421,11 +421,11 @@ step blueprint|Blueprint_TitaniumTools|1|Take the titanium tools plans from the 
 step blueprint|Blueprint_BackpackAdvanced|1|Take the advanced backpack plans from the secretary's cabinet
 step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline tool plans from the secretary's cabinet
 step read|Steward's notice|1|Read the steward's notice by the club signal
-step talk|Lord Arvid Hale|1|Talk to Lord Arvid Hale at the ruined house in the east
-step reach|ic_trail|1|Find the foot of the trail up Barometer Hill, in the north-west
+step talk|Lord Arvid Hale|1|Talk to Lord Arvid Hale at the ruined house away from the club
+step reach|ic_trail|1|Find the foot of the trail up Barometer Hill, below the weather mast
 step reach|ic_summit|1|Climb the trail to the top of Barometer Hill
-step collect|story:ic_top|1|Climb the club's weather mast and take the mast barometer from its deck
-step reach|ic_cave|1|Find Smugglers' Cave in the north-east
+step collect|story:ic_top|1|Climb the club's weather mast and take the mast barometer from the box on its deck
+step reach|ic_cave|1|Find Smugglers' Cave, the rock cave in the far hillside
 step collect|story:ic_cave|1|Take the members' seal from the chest at the back of the cave
 step read|Signal book|1|Bring both to the club signal and read what it shows
 step open|Dagny's case|1|Free the prisoner in the wine cellar and take her case

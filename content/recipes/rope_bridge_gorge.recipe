@@ -96,8 +96,8 @@ call shallows x=-24 z=-56 r=10 deep=3 n=1 seed=9912
 call hw_reef x=-52 z=-30 r=4 seed=31050
 
 # --- DEEP 10-25: the Lantern Hill - its foot and top as zones, Kett's lookout mast (her note, the coffer key) ----------
-call hw_zone x=-30 z=21 al=lanternfootz id=lanternfoot r=5 msg="A steep green hill on the west half. Old flat stones climb it in a spiral to a mast with a lantern."
-call hw_zone x=-30 z=34 al=lanterntopz id=lanterntop r=6 h=1 msg="The top of the Lantern Hill. The gorge, the swaying bridge, the idols' lanterns - and a cave mouth on the far half's south shore."
+call hw_zone x=-30 z=21 al=lanternfootz id=lanternfoot r=5 msg="A steep green hill on this side of the gorge. Old flat stones climb it in a spiral to a mast with a lantern."
+call hw_zone x=-30 z=34 al=lanterntopz id=lanterntop r=6 h=1 msg="The top of the Lantern Hill. The gorge, the swaying bridge, the idols' lanterns - and a cave mouth on the far shore."
 call hw_mast x=-30 z=34 h0=16 lv=2 a=kettmast chest=kettbox top=Placeable_Lantern_Metal
 place Note_Paper kettnote at -33.5 30.5 h=16.1 drop yaw=200
 loot kettbox story:cofferkey*1;Rope*2;PlasticBottle_Water*1
@@ -107,7 +107,7 @@ scatter "Pickup_Landmark_Flower_Red" 2 at -30 34 r=13 seed=31051 free=3
 call treasure x=-44 z=22 r=12 n=1 seed=31048 kind=0
 prop treasure31048 treasure.loot=MetalOre*3;CopperOre*2;Glass*2
 # --- The builders' cave on the east half's south shore: the builders' coffer (needs the key), Silas Grey's note -------
-call hw_zone x=30 z=-37 al=buildz id=buildcave r=4 msg="A cave on the south shore, its walls cut with seven lines over and over. Boot prints in the sand - and a Syndicate cigarette tin."
+call hw_zone x=30 z=-37 al=buildz id=buildcave r=4 msg="A cave on the shore, its walls cut with seven lines over and over. Boot prints in the sand - and a Syndicate cigarette tin."
 place Note_Paper greygorge at 28.5 -37.5 h=2.45 drop yaw=180
 loot buildcoffer TradeToken*4;CopperIngot*2;MetalIngot*1;Glass*2
 prop buildcoffer loot.refill=0
@@ -127,7 +127,7 @@ prop treasure31049 treasure.loot=Scrap*4;Bolt*2;Hinge*1
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Rope Bridge Gorge
 info author=Custom Islands
-info description=A jungle island split by a deep gorge, crossed by a rope bridge to a temple porch where doll idols with lanterns keep watch. A lantern hill with a lookout mast, the builders' cave on the south shore, an expedition house drowned off the north-east. A side island of Relic of the Seventh Tide.
+info description=A jungle island split by a deep gorge, crossed by a rope bridge to a temple porch where doll idols with lanterns keep watch. A lantern hill with a lookout mast, the builders' cave on the shore, an expedition house drowned off a point. A side island of Relic of the Seventh Tide.
 island on.arrive=message||The island is split in two. A rope bridge sways over the gorge, and on the far side two tall figures stand beside lanterns.
 
 note idolwarning Idol warning | Carved on a board at the bridge's lip, in a hand like Kett's:\n\nTHE IDOLS ARE PAINTED DOLLS. THE PIGS ARE NOT.\nThe builders' people left their offering here. Take it - and cross back quickly.
@@ -135,9 +135,9 @@ note offering Idol's offering | A box the builders' people left between their id
 loot offering TradeToken*6;Cooked_GenericMeat*3;Coconut*3;PlasticBottle_Water*2
 prop offering loot.refill=0
 story cofferkey|Coffer key|Placeable_PaperBundle|A small clay-and-bronze key with seven lines on it: the builders' coffer, from Kett's lookout box.
-note kettnote Kett's note on the hill | KETT - ON THE LANTERN HILL\n\nThe idols are dolls, but the people who painted them were not fools. Their coffer is in the cave on the far side, on the south shore, and its key was in the offering box under a false floor. I have it. Now you have it.\n\nSomeone keeps the idols' lanterns burning. I have not seen who. I have seen boot prints in the gorge, though, and they are not mine.\n\nThe seven lines are on everything here: the bridge posts, the idols, the cave walls. The builders came this way, carrying something heavy, and they were counting tides. - I. K.
-note greygorge Silas Grey's note | S. GREY - THE GORGE\n\nThe men will not cross the bridge. One of them says the idols watch him. I said the idols are painted dolls, and he said that is exactly what a painted doll would want me to think.\n\nThe coffer in this cave will not open, and Kett has been here before us; there are her pencil marks on the wall. She is always one island ahead.\n\nWe will not catch her by running. Let her run, and let her lead. There is an old house sunk off the north-east point. Lopez thinks it is the 1931 lot. Let it rot.
-note ostrgorge Dr. Ostrander's note | DR. HAL OSTRANDER - THE GORGE, 1931\n\nWe have made camp on the north-east shore, where the ground is soft and sinking. The boys say the gorge was cut by the builders, to let the sea through at the seventh tide. I think they are right.\n\nThe idols' keepers came in the night and lit the lanterns and were gone by morning. They want nothing from us. I have left them a tin of tobacco.\n\nThe tide marks here count seven, and seven again. Whatever the builders made, it is a clock. And a clock, sooner or later, strikes.
+note kettnote Kett's note on the hill | KETT - ON THE LANTERN HILL\n\nThe idols are dolls, but the people who painted them were not fools. Their coffer is in the cave on the far side, down on the shore, and its key was in the offering box under a false floor. I have it. Now you have it.\n\nSomeone keeps the idols' lanterns burning. I have not seen who. I have seen boot prints in the gorge, though, and they are not mine.\n\nThe seven lines are on everything here: the bridge posts, the idols, the cave walls. The builders came this way, carrying something heavy, and they were counting tides. - I. K.
+note greygorge Silas Grey's note | S. GREY - THE GORGE\n\nThe men will not cross the bridge. One of them says the idols watch him. I said the idols are painted dolls, and he said that is exactly what a painted doll would want me to think.\n\nThe coffer in this cave will not open, and Kett has been here before us; there are her pencil marks on the wall. She is always one island ahead.\n\nWe will not catch her by running. Let her run, and let her lead. There is an old house sunk off the point. Lopez thinks it is the 1931 lot. Let it rot.
+note ostrgorge Dr. Ostrander's note | DR. HAL OSTRANDER - THE GORGE, 1931\n\nWe have made camp on the shore, where the ground is soft and sinking. The boys say the gorge was cut by the builders, to let the sea through at the seventh tide. I think they are right.\n\nThe idols' keepers came in the night and lit the lanterns and were gone by morning. They want nothing from us. I have left them a tin of tobacco.\n\nThe tide marks here count seven, and seven again. Whatever the builders made, it is a clock. And a clock, sooner or later, strikes.
 
 prop bridgelip zone.id=bridge_lip
 prop bridgelip zone.radius=3
@@ -156,19 +156,19 @@ prop farporch zone.message=The temple porch. The idols' lanterns still burn - so
 
 quest title=The Idol's Bridge
 quest intro=A rope bridge crosses a gorge to a temple porch with two tall idols.
-step reach|bridge_lip|1|Go to the bridge's lip
+step reach|bridge_lip|1|Make for the rope bridge and go to its lip
 step read|Idol warning|1|Read the warning at the bridge
 step kill|Warthog|3|Drive off the temple's warthogs
 step open|Idol's offering|1|Open the idols' offering
 step reach|far_porch|1|Stand on the temple porch
-step reach|lanternfoot|1|Cross back and find the path up the Lantern Hill
+step reach|lanternfoot|1|Cross back and find the path up the Lantern Hill, the hill with Kett's lookout mast
 step reach|lanterntop|1|Climb the Lantern Hill to Kett's lookout mast
 step read|Kett's note on the hill|1|Read Kett's note on the hill top
 step collect|story:cofferkey|1|Climb the mast and take the coffer key from Kett's box
-step reach|buildcave|1|Find the builders' cave on the east half's south shore
+step reach|buildcave|1|Find the builders' cave on the shore beyond the temple, past the idols
 step open|Builders' coffer|1|Open the builders' coffer with the key
 step read|Silas Grey's note|1|Read Silas Grey's note in the cave
-step read|Dr. Ostrander's note|1|Dive to the drowned house off the north-east and read Dr. Ostrander's note
+step read|Dr. Ostrander's note|1|Dive to the drowned expedition house off the point and read Dr. Ostrander's note
 quest done=Seven lines on the offering's lid - the same tide marks as Kett's notes. The builders came this way too.
 quest reward=TradeToken*4;Cooked_GenericMeat*2;Rope*3
 

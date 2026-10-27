@@ -216,8 +216,8 @@ note sm_vinechest Ostrander's cache | Dr. Hal Ostrander's cache, 1931: survey pe
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Sunstaff Mesa
 info author=Custom Islands
-info description=A red sandstone mesa as big as Raft's own big islands, split by a slot canyon: an abandoned dig camp, vines, an oasis with a well, and on the top a map room with an open oculus, where a beam of light through three mirrors burns the place to dig. Gnomon Butte and a lookout mast in the east, the Syndicate's cave in the west, an expedition house drowned off the north-west. Holds Balboa's plans. The second island of Relic of the Seventh Tide.
-island on.arrive=message||A red mesa rises out of the sea, flat as a table. A dark cut runs into its south face - a canyon.
+info description=A red sandstone mesa as big as Raft's own big islands, split by a slot canyon: an abandoned dig camp, vines, an oasis with a well, and on the top a map room with an open oculus, where a beam of light through three mirrors burns the place to dig. Gnomon Butte and a lookout mast, the Syndicate's cave, an expedition house drowned off a point. Holds Balboa's plans. The second island of Relic of the Seventh Tide.
+island on.arrive=message||A red mesa rises out of the sea, flat as a table. A dark cut runs into its face - a canyon.
 
 story sunangle|Sun angle|Placeable_PaperBundle|Kett's note of the sun's angle at the hour of the seventh tide: the mirrors' setting.
 story crank|Windlass handle|Placeable_PaperBundle|The iron crank handle of the oasis well's windlass, hidden by Pim Lark on his lookout mast.
@@ -228,8 +228,8 @@ note camptrunk Kett's camp trunk | Kett's camp trunk: her machete and its plans,
 loot camptrunk Blueprint_Machete*1;Machete*1;Rope*3;Cooked_GenericMeat*2
 prop camptrunk loot.refill=0
 note journalstand Kett's journal stand | A brass stand where a journal lay open. On its page, Kett's hand: "Sun at the seventh tide - lens north, first mirror east, second north, third east to the mark."
-note burnedmark Burned mark | The beam has burned a black mark into the model, on a little island of the chain to the north-east: a tomb city in the dunes, half-buried. Beside the mark, carved long ago: a gear with seven teeth.
-note mapcache Map room cache | The map room cache under the mark: Kett's fuel plans - a fuel tank and fuel pipes to run an engine on the way north - and her charts.
+note burnedmark Burned mark | The beam has burned a black mark into the model, on a little island of the chain, the next one on: a tomb city in the dunes, half-buried. Beside the mark, carved long ago: a gear with seven teeth.
+note mapcache Map room cache | The map room cache under the mark: Kett's fuel plans - a fuel tank and fuel pipes to run an engine on the way onward - and her charts.
 loot mapcache Blueprint_Fueltank*1;Blueprint_Pipe_Fuel*1;Bow*1;Arrow_Stone*6;Cooked_GenericMeat*2
 prop mapcache loot.refill=0
 prop mapcache if.open=signal|laser
@@ -272,9 +272,9 @@ prop windlass if.use=!signal|windlass\nhas|story:crank|1
 prop windlass on.use=message||The windlass groans round and round. Up out of the dark water, streaming, on its chain: a locker from the workshop that sank into the well.\nsignal||windlass\nshow|workshop
 prop windlass else.use=message||The windlass will not turn: its crank handle is gone from the shaft - or the chain is already wound up as far as it goes.
 prop workshop obj.name=workshop
-note pimnote Pim Lark's note | PIM LARK - KETT'S BOATMAN - ON THE LOOKOUT\n\nProfessor, if you come back and read this: I am fine, mostly. The grey launch put in at the west shore the day after you went up the canyon. Six of them, and a tall one in a grey coat who never raises his voice. That's the worst kind.\n\nThey wanted the well. I heard them say a locker went down it with your workshop. So I took the handle off the windlass and climbed up here with it. Let them turn the shaft with their teeth.\n\nThe handle is in my box in the nest. I am going round to the boat to wait for you. If I'm not at the boat, I'm hiding, and I'm good at hiding. - Pim
-note greylog Silas Grey's log | S. GREY - FIELD LOG, SUNSTAFF MESA\n\nDay 2. Kett has gone up the canyon and not come down. Her boatman ran off up the east rock like a goat. Leave him.\n\nThe staff from the museum is useless on its own: a brass tube with a lens. The boss says the map room does the work. The vines are cut now - someone has been through - so the room is open to us.\n\nThe well is a different matter. Someone took the crank. My men have tried for an hour with a crowbar and broke the crowbar.\n\nNo matter. Wherever the mark points, the tomb city or the next, we will be there before her. She digs. We follow. It is cheaper.
-note ostrander Dr. Ostrander's notes | DR. HAL OSTRANDER - SEVENTH TIDE EXPEDITION, 1931\n\nThe sea took the dig house tonight. The point has been sinking all season; the locals said it would.\n\nI am writing this in the front room with the water at my knees. I have sent the boys up the canyon with the instruments. The map room's mirrors we left in place: anyone who reads the old texts will know the setting, and anyone who does not will never find the tide-gear.\n\nThe first gear lies in the dunes to the north-east, with the kings who made it. I am sure of it now. If you find this, whoever you are, finish what we began - and do not trust anyone who offers to pay for it.
+note pimnote Pim Lark's note | PIM LARK - KETT'S BOATMAN - ON THE LOOKOUT\n\nProfessor, if you come back and read this: I am fine, mostly. The grey launch put in at the beach below the cave the day after you went up the canyon. Six of them, and a tall one in a grey coat who never raises his voice. That's the worst kind.\n\nThey wanted the well. I heard them say a locker went down it with your workshop. So I took the handle off the windlass and climbed up here with it. Let them turn the shaft with their teeth.\n\nThe handle is in my box in the nest. I am going round to the boat to wait for you. If I'm not at the boat, I'm hiding, and I'm good at hiding. - Pim
+note greylog Silas Grey's log | S. GREY - FIELD LOG, SUNSTAFF MESA\n\nDay 2. Kett has gone up the canyon and not come down. Her boatman ran off up the butte like a goat. Leave him.\n\nThe staff from the museum is useless on its own: a brass tube with a lens. The boss says the map room does the work. The vines are cut now - someone has been through - so the room is open to us.\n\nThe well is a different matter. Someone took the crank. My men have tried for an hour with a crowbar and broke the crowbar.\n\nNo matter. Wherever the mark points, the tomb city or the next, we will be there before her. She digs. We follow. It is cheaper.
+note ostrander Dr. Ostrander's notes | DR. HAL OSTRANDER - SEVENTH TIDE EXPEDITION, 1931\n\nThe sea took the dig house tonight. The point has been sinking all season; the locals said it would.\n\nI am writing this in the front room with the water at my knees. I have sent the boys up the canyon with the instruments. The map room's mirrors we left in place: anyone who reads the old texts will know the setting, and anyone who does not will never find the tide-gear.\n\nThe first gear lies in the dunes of the next island, with the kings who made it. I am sure of it now. If you find this, whoever you are, finish what we began - and do not trust anyone who offers to pay for it.
 
 prop mouth zone.id=canyon_mouth
 prop mouth zone.radius=6
@@ -294,8 +294,8 @@ prop hogs creature.count=4
 prop hogs creature.respawn=0
 
 quest title=The Map Room
-quest intro=A red mesa with a canyon cut into it. Land at the canyon mouth.
-step reach|canyon_mouth|1|Land at the canyon mouth
+quest intro=A red mesa with a canyon cut into it. Make for the red mesa and land at the mouth of the canyon cut into it.
+step reach|canyon_mouth|1|Make for the red mesa and land at the canyon mouth
 step read|Kett's camp diary|1|Read Kett's camp diary
 step open|Kett's camp trunk|1|Open Kett's camp trunk
 step blueprint|Blueprint_Machete|1|Take the machete plans from the trunk
@@ -308,11 +308,11 @@ step read|Burned mark|1|Read the burned mark on the model
 step open|Map room cache|1|Open the map room cache
 step blueprint|Blueprint_Fueltank|1|Take the fuel tank plans from the cache
 step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe plans from the cache
-step reach|buttefoot|1|Find the path up Gnomon Butte in the east
+step reach|buttefoot|1|Find the path up Gnomon Butte, the tall rock with the lookout mast
 step reach|buttetop|1|Climb Gnomon Butte to the lookout mast
 step read|Pim Lark's note|1|Read Pim Lark's note on the butte top
 step collect|story:crank|1|Climb the mast and take the windlass handle from Pim's box
-step read|Silas Grey's log|1|Find the Syndicate's cave on the west shore and read Grey's log
+step read|Silas Grey's log|1|Find the Syndicate's cave by their grey launch on the shore and read Grey's log
 step reach|oasis_well|1|Go back to the oasis well with the handle
 step open|Workshop locker|1|Wind up the well and open the drowned workshop's locker
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from the locker

@@ -220,7 +220,7 @@ story valvewheel|Valve wheel|Placeable_Lantern_Metal|The valve tower's hand whee
 story valveopen|Flood gate open|Placeable_Pipe_Water|The valve tower's valve is turned: the pump hall's flood gate is open.
 
 prop treasure9711 treasure.loot=story:valvewheel*1;Glass*3;Bolt*2
-note surveynote Surveyors' note | VAPORHOLD - SURVEY TEAM\n\nThe company wants the valve tower locked off before the inspectors come. Done: we took the hand wheel off the spindle and BURIED it in the survey case, ten paces west of the marker post.\n\nIf you're one of us and you need it back: the detector and the spade are in this box.\n\n- K.
+note surveynote Surveyors' note | VAPORHOLD - SURVEY TEAM\n\nThe company wants the valve tower locked off before the inspectors come. Done: we took the hand wheel off the spindle and BURIED it in the survey case, ten paces past the flag marker post, away from this box.\n\nIf you're one of us and you need it back: the detector and the spade are in this box.\n\n- K.
 note surveybox Surveyors' toolbox | The surveyors' toolbox: a metal detector and a spade, left for whoever comes back for the valve wheel.
 loot surveybox MetalDetector*1;Shovel*1;Rope*2
 prop surveybox loot.refill=0
@@ -253,7 +253,7 @@ prop pumphall zone.message=The drowned pump hall: silt, still pumps, a chest - a
 story vr_top|Level float|Bolt|The water-level float off the survey mast, its brass dented.
 story vr_cave|Outflow gate key|Bolt|The key of the outflow gate, hidden where the reservoir seeps.
 story vr_fixed|Outflow gate working|Bolt|The outflow gate, working again.
-note vr_hint Dam keeper's notice | OUTFLOW GATE LOCKED. It wants the level float from the survey mast on Spillway Hill (north-west) and its key from the Seep Cave (north-east). Ove at the old house east of the dam knows.
+note vr_hint Dam keeper's notice | OUTFLOW GATE LOCKED. It wants the level float from the survey mast on Spillway Hill and its key from the Seep Cave, the rock cave in the far hillside. Ove at the old house outside the dam ring knows.
 note vr_topchest Survey mast deck box | A box lashed to the deck rail at the top of the survey mast.
 loot vr_topchest story:vr_top*1;Rope*2;Scrap*2
 note vr_cavechest Seep Cave chest | A chest at the back of Seep Cave, dry under the rock.
@@ -268,16 +268,16 @@ loot vr_setchest MetalIngot*2;Bolt*3;Plank*4
 note vr_planecrate Survey plane's crate | The survey plane's crate: theodolite parts, rope, tins.
 loot vr_planecrate Rope*3;Scrap*3;Plastic*2
 prop vr_planecrate loot.refill=0
-note vr_pilot Survey pilot's note | SURVEY FLIGHT. The lake is higher than the charts. Engine out over the dam - landing west. Tell Ove the village church is still standing under the water.
+note vr_pilot Survey pilot's note | SURVEY FLIGHT. The lake is higher than the charts. Engine out over the dam - landing on the grass past the trees. Tell Ove the village church is still standing under the water.
 note jcvr Spillway perch | A perch where the dam hands watched the spillway.
 loot jcvr Rope*3;Plank*4;MetalIngot*1
 note jbvr Spillway top | The very top of the perch.
 loot jbvr CopperIngot*1;Bolt*2;TradeToken*1
 
 quest title=The Valve Tower
-quest intro=A reservoir in a ring of grass. Climb the path to the embankment.
-step reach|embankment|1|Climb the path to the embankment's crest
-step collect|story:valvewheel|1|Dig up the surveyors' buried case (the detector and the spade are in their toolbox)
+quest intro=A reservoir in a ring of grass. Make for the grass embankment that rings the lake and climb the path up to it.
+step reach|embankment|1|Make for the grass ring round the lake and climb up to its crest
+step collect|story:valvewheel|1|Dig up the surveyors' buried case past the flag post (detector and spade are in their toolbox on the crest)
 step reach|valve_tower|1|Cross the glass bridge to the valve tower
 step collect|story:valveopen|1|Fit the valve wheel on its spindle and turn it
 step reach|pump_hall|1|Dive to the drowned pump hall on the lake floor (an air pocket by its door)
@@ -287,11 +287,11 @@ step blueprint|Blueprint_Pipe_Water|1|Take the water pipe plans from the pump ha
 step blueprint|Blueprint_ElectricPurifier|1|Take the electric purifier plans from the pump hall store
 step blueprint|Blueprint_Storage_Large|1|Take the large storage plans from the pump hall store
 step read|Dam keeper's notice|1|Read the dam keeper's notice by the outflow gate
-step talk|Ove Strand|1|Talk to Ove Strand at the ruined house in the east
-step reach|vr_trail|1|Find the foot of the trail up Spillway Hill, in the north-west
+step talk|Ove Strand|1|Talk to Ove Strand at the ruined house outside the dam ring
+step reach|vr_trail|1|Find the foot of the trail up Spillway Hill, below the survey mast
 step reach|vr_summit|1|Climb the trail to the top of Spillway Hill
-step collect|story:vr_top|1|Climb the survey mast and take the level float from its deck
-step reach|vr_cave|1|Find Seep Cave in the north-east
+step collect|story:vr_top|1|Climb the survey mast and take the level float from the box on its deck
+step reach|vr_cave|1|Find Seep Cave, the rock cave in the far hillside
 step collect|story:vr_cave|1|Take the outflow gate key from the chest at the back of the cave
 step read|Outflow ledger|1|Bring both to the outflow gate and read what it shows
 step read|Dagny's letter to the town|1|Read the letter on the crate in the pump hall

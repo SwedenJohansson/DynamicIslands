@@ -224,7 +224,7 @@ island on.arrive=message||A green island, a river - and across its mouth a grey 
 
 story sluiceopen|Sluice one open|Placeable_Pipe_Water|Sluice one of the weir is open; the pump house basement drained.
 
-note keeperslog Weir keeper's log | NIMBUS WORKS - HAILSTONE WEIR - KEEPER'S LOG\n\nDay 1 of the rain that doesn't stop. The seeders upriver kept firing all night. Head office says it will pass.\n\nDay 9. Still raining. The river is over the second mark. I shut all three gates to hold the silt back - now the pump house basement is flooding instead.\n\nDay 14. Sluice one's crank is on the west pier. Open it and the basement drains. The company locker is down there with the Receiver plans - head office wants every station able to hear the maintenance band.\n\nIf you find this: open sluice one, take the plans, and listen.
+note keeperslog Weir keeper's log | NIMBUS WORKS - HAILSTONE WEIR - KEEPER'S LOG\n\nDay 1 of the rain that doesn't stop. The seeders upriver kept firing all night. Head office says it will pass.\n\nDay 9. Still raining. The river is over the second mark. I shut all three gates to hold the silt back - now the pump house basement is flooding instead.\n\nDay 14. Sluice one's crank is on the pier post by the pump house. Open it and the basement drains. The company locker is down there with the Receiver plans - head office wants every station able to hear the maintenance band.\n\nIf you find this: open sluice one, take the plans, and listen.
 note maintcard Nimbus maintenance card | NIMBUS WORKS - MAINTENANCE CARD\n\nStation: Hailstone Weir. Status: running.\n\nNext station on the round: CIRRUS SILO FARM - the seed silos on the grass island.\n\nTune the maintenance band on a Receiver; the silo farm answers on its own frequency.
 prop maintcard obj.name=maintcard
 prop maintcard beh.hidden=1
@@ -245,7 +245,7 @@ prop weirwalk zone.message=The weir walk: three sluice gates under your feet, th
 story hw_top|Gauge funnel|Bolt|The brass funnel off the top of the rain gauge mast, still beaded with water.
 story hw_cave|Weir crank pawl|Bolt|The pawl of the weir's second crank, hidden in the cave so nobody could open the sluices.
 story hw_fixed|Sluice two hoist working|Bolt|The sluice two hoist, working again.
-note hw_hint Weir hand's notice | SLUICE TWO HOIST - OUT OF ORDER. The gauge funnel is up on the mast on Sleet Knoll (the trail starts on the side toward the weir) and somebody took the crank pawl into Drip Cave, north-east. Ask Brita at the old house east of the weir.
+note hw_hint Weir hand's notice | SLUICE TWO HOIST - OUT OF ORDER. The gauge funnel is up on the mast on Sleet Knoll (the trail starts on the side facing the weir) and somebody took the crank pawl into Drip Cave, the rock cave in the far hillside. Ask Brita at the old house with the four lamps.
 note hw_topchest Rain gauge mast deck box | A box lashed to the deck rail at the top of the rain gauge mast.
 loot hw_topchest story:hw_top*1;Rope*2;Scrap*2
 note hw_cavechest Drip Cave chest | A chest at the back of Drip Cave, dry under the rock.
@@ -260,26 +260,26 @@ loot hw_setchest Glass*3;Bolt*4;MetalIngot*1
 note hw_planecrate Survey plane's crate | The survey plane's crate: river charts, a flask, and the company's tools.
 loot hw_planecrate Plastic*3;Scrap*3;Nail*6
 prop hw_planecrate loot.refill=0
-note hw_pilot Pilot's kneeboard | SURVEY FLIGHT 3 - Hailstone. Cloud base at forty metres and falling. River mouth closed. Fuel low, putting her down on the west meadow. If anybody finds this, the weir was a mistake.
+note hw_pilot Pilot's kneeboard | SURVEY FLIGHT 3 - Hailstone. Cloud base at forty metres and falling. River mouth closed. Fuel low, putting her down on the meadow by the trees. If anybody finds this, the weir was a mistake.
 note jchw Gauge hand's perch | The gauge hands climbed up here to dry their boots, out of reach of the river.
 loot jchw Rope*3;Plank*4;MetalIngot*1
 note jbhw Top of the perch | Somebody's stash at the very top.
 loot jbhw CopperIngot*1;Bolt*2;TradeToken*1
 
 quest title=Day One of the Rain
-quest intro=A weir across a river mouth: Nimbus Works' first station. Walk out onto it.
-step reach|weir_walk|1|Walk out onto the weir
-step read|Weir keeper's log|1|Read the weir keeper's log by the east end
-step collect|story:sluiceopen|1|Turn the crank on the west pier to open sluice one
+quest intro=A weir across a river mouth: Nimbus Works' first station. Make for the weir, the row of three sluice gates, and walk out onto it.
+step reach|weir_walk|1|Make for the row of sluice gates and walk out onto the weir
+step read|Weir keeper's log|1|Read the weir keeper's log on the table at the end of the weir
+step collect|story:sluiceopen|1|Turn the crank on the post of the first sluice pier, by the pump house
 step open|Pump house locker|1|Open the locker in the drained pump house
 step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the pump house locker
 step blueprint|Blueprint_Antenna|1|Take the antenna plans from the pump house locker
 step read|Weir hand's notice|1|Read the weir hand's notice by the sluice two hoist
-step talk|Brita Sand|1|Talk to Brita Sand at the ruined house in the east
-step reach|hw_trail|1|Find the foot of the trail up Sleet Knoll, in the north-west
+step talk|Brita Sand|1|Talk to Brita Sand at the ruined house with the four lamps
+step reach|hw_trail|1|Find the foot of the trail up Sleet Knoll, below the tall rain gauge mast
 step reach|hw_summit|1|Climb the trail to the top of Sleet Knoll
-step collect|story:hw_top|1|Climb the rain gauge mast and take the gauge funnel from its deck
-step reach|hw_cave|1|Find Drip Cave in the north-east
+step collect|story:hw_top|1|Climb the rain gauge mast and take the gauge funnel from the box on its deck
+step reach|hw_cave|1|Find Drip Cave, the rock cave in the far hillside
 step collect|story:hw_cave|1|Take the weir crank pawl from the chest at the back of the cave
 step read|Sluice two log|1|Bring both to the sluice two hoist and read what it shows
 step read|Nimbus maintenance card|1|Read the Nimbus maintenance card on the pump house table

@@ -138,7 +138,7 @@ call hw_reef x=-75 z=-30 r=4 seed=31006
 
 # --- DEEP 10-25: Signal Hill - its foot and top as zones, the curator's signal mast (his note, the safe's key) --------
 call hw_zone x=23.7 z=21.7 al=hillfootz id=signalfoot r=5 msg="Signal Hill. A path of flat stones winds up round it to a mast with a lamp on top."
-call hw_zone x=40 z=38 al=hilltopz id=signaltop r=7 h=1 msg="The top of Signal Hill. The whole key below you - the museum, the beach, a grey boat pulled up in the east."
+call hw_zone x=40 z=38 al=hilltopz id=signaltop r=7 h=1 msg="The top of Signal Hill. The whole key below you - the museum, the beach, a grey boat pulled up on the sand."
 call hw_mast x=40 z=38 h0=24 lv=3 a=vellmast chest=vellbox top=Placeable_Lantern_Metal
 place Note_Paper vellnote at 36.5 35 h=24.1 drop yaw=225
 loot vellbox story:safekey*1;Rope*2;Battery*1
@@ -174,7 +174,7 @@ prop treasure31003 treasure.loot=MetalOre*2;Glass*3;Rope*2
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Marrow Key Museum
 info author=Custom Islands
-info description=A coral key as big as Raft's own big islands, with a small sandstone museum: a portico of pillars, glass cases on plinths, a founder's statue and a smashed skylight. Signal Hill and the curator's mast in the north-east, the Syndicate's launch on the east beach, a smugglers' cave and a customs house drowned off the north-west. Someone got here first. The first island of Relic of the Seventh Tide.
+info description=A coral key as big as Raft's own big islands, with a small sandstone museum: a portico of pillars, glass cases on plinths, a founder's statue and a smashed skylight. Signal Hill and the curator's mast, the Syndicate's launch on a beach, a smugglers' cave and a customs house drowned off a headland. Someone got here first. The first island of Relic of the Seventh Tide.
 island on.arrive=message||A white museum on a coral key, its doors standing open. Glass glitters on the steps.
 
 story safekey|Curator's safe key|Placeable_PaperBundle|The curator's brass safe key on a ribbon, from his signal mast on Signal Hill.
@@ -190,9 +190,9 @@ prop cursafe if.open=signal|safe\nhas|story:safekey|1
 prop cursafe else.open=message||The safe has two locks: a keypad beside it (four digits) and a keyhole for the curator's own key.
 prop cursafe on.open=show|ambushzone\nmessage||Kett's journal. On its first page, a sketch of a sundial on a flat-topped mesa - and under it: "the Sunstaff casts the way".
 
-note vellnote Curator Ambrose Vell's note | A. VELL, CURATOR - WRITTEN ON THE MAST\n\nThird night up here. The lamp is lit for the professor's boat; no boat. Only theirs, the grey one, pulled up on the east beach like it owns the sand.\n\nI watched them go in through the roof. Six men and three dogs. I could not have stopped them with a broom, and a broom is what I had. They took the Sunstaff and left the case - they did not know what else was worth having. They never do.\n\nThe safe will hold. It has my code and my key, and the key is here in the signal box with me. If you are the professor: take it, and go down to the hall. If you are not the professor - and I hope you are not one of THEM - then for pity's sake take the journal to her before they work out where it is.
+note vellnote Curator Ambrose Vell's note | A. VELL, CURATOR - WRITTEN ON THE MAST\n\nThird night up here. The lamp is lit for the professor's boat; no boat. Only theirs, the grey one, pulled up on the beach below like it owns the sand.\n\nI watched them go in through the roof. Six men and three dogs. I could not have stopped them with a broom, and a broom is what I had. They took the Sunstaff and left the case - they did not know what else was worth having. They never do.\n\nThe safe will hold. It has my code and my key, and the key is here in the signal box with me. If you are the professor: take it, and go down to the hall. If you are not the professor - and I hope you are not one of THEM - then for pity's sake take the journal to her before they work out where it is.
 note synorders Syndicate orders | SYNDICATE - ORDERS FOR THE MARROW KEY JOB\n\nIn by the skylight after dark. Take Exhibit 9 (the brass rod, 'Sunstaff') and nothing else; the boss does not pay for vases.\n\nThe woman Kett had a journal. It is NOT in the cases. Search the curator's office, the desk, the floor. If it is in his safe, leave the safe: the dogs will watch the door and we come back with the cutter.\n\nThe curator is not to be hurt. He is to be frightened. He is an old man who likes rules.\n\nThe mesa next. Then the dunes.\n\n- S. Grey, field captain
-note divernote Syndicate diver's note | (Pencil, on the back of a pay slip)\n\nGrey says the job's done, back to the boat by morning. Grey can row himself. I've found something better than a brass stick.\n\nThe old customs house went down off the north-west point in the big storm, with the duty still in it. Ten metres, maybe a bit more. The front room holds air - you can feel it on your face when you swim through the door.\n\nSomebody beat me to it, mind. Fresh scratches on the strongbox and a slate left inside with a woman's handwriting. K, it's signed. Same as the journal they're all after.\n\nNot telling Grey any of this.
+note divernote Syndicate diver's note | (Pencil, on the back of a pay slip)\n\nGrey says the job's done, back to the boat by morning. Grey can row himself. I've found something better than a brass stick.\n\nThe old customs house went down off the far headland in the big storm, with the duty still in it. Ten metres, maybe a bit more. The front room holds air - you can feel it on your face when you swim through the door.\n\nSomebody beat me to it, mind. Fresh scratches on the strongbox and a slate left inside with a woman's handwriting. K, it's signed. Same as the journal they're all after.\n\nNot telling Grey any of this.
 note kettdive Kett's dive log | KETT - DIVE LOG, MARROW KEY\n\nDived the customs house for the second tablet. The tide tablet in the museum - Exhibit 7 - has a twin; the dynasty always cut them in pairs. The twin is not here. Someone took it out of the strongbox years ago, by the rust.\n\nWhat IS here: the old tide marks scratched into the doorframe, seven of them, each one higher. The house went under at the sixth.\n\nSo the sea is rising in steps, and the steps are not natural. Somewhere a machine counts tides.\n\nLeaving the journal with Vell; he will keep it safe and keep it boring. I go to the mesa. The Sunstaff shows the way, if the Syndicate do not find it first.\n\n- I.K.
 prop safekeypad obj.name=safekeypad
 prop safekeypad beh.use=Type the safe's code
@@ -217,15 +217,15 @@ prop hyenas tint.color=#c8a46a
 prop hyenas tint.amount=0.5
 
 quest title=Someone Got Here First
-quest intro=A museum on a coral key, its doors open. Go up the steps.
-step reach|museum_steps|1|Go up the museum steps
+quest intro=A museum on a coral key, its doors open. Make for the sandstone museum with the pillars and go up the steps.
+step reach|museum_steps|1|Make for the sandstone museum and go up its steps
 step read|Curator's report|1|Read the curator's report on his desk
 step read|Exhibit 7 card|1|Read the Exhibit 7 card by the empty case
-step reach|signalfoot|1|Find the path up Signal Hill in the north-east
+step reach|signalfoot|1|Find the path up Signal Hill, the hill with the curator's mast and lamp
 step reach|signaltop|1|Climb Signal Hill to the curator's mast
 step read|Curator Ambrose Vell's note|1|Read the curator's note on the hilltop
-step collect|story:safekey|1|Climb the mast and take the safe's key from the signal box
-step read|Syndicate orders|1|Find the Syndicate's launch on the east beach and read their orders
+step collect|story:safekey|1|Climb the mast and take the safe's key from the signal box on top
+step read|Syndicate orders|1|Find the Syndicate's grey launch pulled up on the beach and read their orders
 step open|Curator's safe|1|Open the curator's safe (the card hides its code; the key is its second lock)
 step collect|story:journal|1|Take Kett's field journal from the safe
 step kill|Hyena|3|Deal with the Syndicate's hyenas outside

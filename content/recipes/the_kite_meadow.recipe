@@ -322,8 +322,8 @@ note jbkm Perch top | A crew stash at the very top.
 loot jbkm CopperIngot*1;Bolt*2;TradeToken*1
 
 quest title=Kites Over the Ridge
-quest intro=A row of winch masts on a high meadow, kites slack between them. Climb the cliff path.
-step reach|cliff_path|1|Climb the cliff path from the beach
+quest intro=A row of winch masts on a high meadow, kites slack between them. Make for the winch masts, then climb the cliff path from the beach below them.
+step reach|cliff_path|1|Make for the tall winch masts and climb the cliff path below them
 step read|Kite crew roster|1|Read the crew roster in the hut on the ledge
 step open|Crew hut chest|1|Open the crew hut chest
 step blueprint|Blueprint_Machete|1|Take the machete plans from the crew hut chest
@@ -338,10 +338,10 @@ step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe plans from the fuel stor
 step open|Biofuel press|1|Open the biofuel press in the shed
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from the biofuel press
 step read|Kite crew's notice|1|Read the kite crew's notice by the reserve winch
-step talk|Ivar Brekke|1|Talk to Ivar Brekke at the ruined house in the south-east
-step reach|km_hill|1|Climb to Gull Crown in the north-west
-step collect|story:km_top|1|Climb the kite spotter's tower and take the spotter's reel from its deck
-step reach|km_cave|1|Find Wind Cave in the north-east
+step talk|Ivar Brekke|1|Talk to Ivar Brekke at the ruined house away from the masts
+step reach|km_hill|1|Climb to Gull Crown, the hill with the kite spotter's tower
+step collect|story:km_top|1|Climb the kite spotter's tower and take the spotter's reel from the box on its deck
+step reach|km_cave|1|Find Wind Cave, the rock cave in the far hillside
 step collect|story:km_cave|1|Take the winch governor from the chest at the back of the cave
 step read|Reserve winch card|1|Bring both to the reserve winch and read what it shows
 step collect|story:bellrung|1|Ring the shed bell

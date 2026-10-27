@@ -391,7 +391,7 @@ prop towertop zone.message=The top of the cooling tower: the whole fog bay under
 story fw_top|Fog lamp lens|Bolt|The fog lookout's lamp lens, unscrewed and wrapped in a rag.
 story fw_cave|Fog-line valve key|Bolt|The master key of the fog-line valves, dropped in the cave.
 story fw_fixed|Fog horn working|Bolt|The fog horn, working again.
-note fw_hint Night shift notice | THE FOG HORN IS DEAD. It wants the lens from the fog lookout on Smoke Hill (north-west) and the valve key from the Condensate Cave (north-east). Hanne at the old house east of town knows.
+note fw_hint Night shift notice | THE FOG HORN IS DEAD. It wants the lens from the fog lookout on Smoke Hill and the valve key from the Condensate Cave, the rock cave in the far hillside. Hanne at the old house outside town knows.
 note fw_topchest Fog lookout deck box | A box lashed to the deck rail at the top of the fog lookout.
 loot fw_topchest story:fw_top*1;Glass*2;Scrap*2
 note fw_cavechest Condensate Cave chest | A chest at the back of Condensate Cave, dry under the rock.
@@ -406,15 +406,15 @@ loot fw_setchest MetalIngot*2;Bolt*3;TradeToken*2
 note fw_planecrate Supply plane's crate | The supply plane's crate: condenser coils, gloves, coffee.
 loot fw_planecrate CopperIngot*1;Scrap*3;Plastic*2
 prop fw_planecrate loot.refill=0
-note fw_pilot Supply pilot's note | FOGWORKS SUPPLY RUN. Couldn't see the dock for fog. Put her down on the grass west of town. Coffee in the crate - the night shift deserves it.
+note fw_pilot Supply pilot's note | FOGWORKS SUPPLY RUN. Couldn't see the dock for fog. Put her down on the grass beyond the town. Coffee in the crate - the night shift deserves it.
 note jcfw Stack perch | The boiler hands' perch on the old stacks.
 loot jcfw Rope*3;Plank*4;MetalIngot*1
 note jbfw Stack top | Something left at the top of the stacks.
 loot jbfw CopperIngot*1;Bolt*2;TradeToken*1
 
 quest title=The Fog Shift
-quest intro=A works town on stilts in a fog bay. Tie up at the dock.
-step reach|town_dock|1|Tie up at the Fogworks dock
+quest intro=A works town on stilts in a fog bay. Make for the two tall cooling towers; the dock is at the foot of the town.
+step reach|town_dock|1|Make for the cooling towers and tie up at the Fogworks dock
 step read|Fogworks bulletin|1|Read the bulletin at the end of the street
 step reach|pump_hall|1|Go to the pump hall on the yard
 step collect|story:foglines|1|Set the fog-line valves as the bulletin says and close the circuit at the control room's cable hub
@@ -422,7 +422,7 @@ step read|Shift chief's notes|1|Read the shift chief's notes in the control room
 step kill|Rat|4|Clear the rats out of the cold condenser
 step open|Control room safe|1|Open the control room safe
 step blueprint|Blueprint_EngineControls|1|Take the engine controls plans from the control room safe
-step reach|tower_top|1|Climb to the top of the west cooling tower
+step reach|tower_top|1|Climb to the top of the cooling tower with the cabin on it
 step open|Tower cabin chest|1|Open the chest on the tower top
 step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from the tower cabin chest
 step collect|story:confession|1|Play the tape on the control room's radio
@@ -432,11 +432,11 @@ step blueprint|Blueprint_ZiplineBase|1|Take the zipline plans from the founders'
 step blueprint|Blueprint_ZiplineTool|1|Take the zipline tool plans from the founders' Day crate
 step blueprint|Blueprint_BatteryCharger|1|Take the battery charger plans from the founders' Day crate
 step read|Night shift notice|1|Read the night shift notice by the fog horn
-step talk|Hanne Vik|1|Talk to Hanne Vik at the ruined house in the east
-step reach|fw_trail|1|Find the foot of the trail up Smoke Hill, in the north-west
+step talk|Hanne Vik|1|Talk to Hanne Vik at the ruined house outside town
+step reach|fw_trail|1|Find the foot of the trail up Smoke Hill, below the fog lookout
 step reach|fw_summit|1|Climb the trail to the top of Smoke Hill
-step collect|story:fw_top|1|Climb the fog lookout and take the fog lamp lens from its deck
-step reach|fw_cave|1|Find Condensate Cave in the north-east
+step collect|story:fw_top|1|Climb the fog lookout and take the fog lamp lens from the box on its deck
+step reach|fw_cave|1|Find Condensate Cave, the rock cave in the far hillside
 step collect|story:fw_cave|1|Take the fog-line valve key from the chest at the back of the cave
 step read|Fog horn tape|1|Bring both to the fog horn and read what it shows
 step open|Boilerman's locker|1|Free Mattis from the cage behind the boiler, then open his locker

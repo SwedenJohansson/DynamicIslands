@@ -342,7 +342,7 @@ prop farmgate zone.message=Cirrus Silo Farm: a lane up to six grey silos and a f
 story cs_top|Drop valve|Bolt|The brass drop valve that let the seeding salt fall from the tower into the wind.
 story cs_cave|Silo four gauge|Bolt|The pressure gauge off silo four, wrapped in sacking in the cave.
 story cs_fixed|Salt blower working|Bolt|The salt blower, working again.
-note cs_hint Farmhand's notice | THE SALT BLOWER IS STOPPED. It wants its drop valve (up the seed-drop tower on Drizzle Hill, north-west) and silo four's gauge (Teo hid it in the Root Cellar Cave, north-east). Marta at the east ruin knows the way.
+note cs_hint Farmhand's notice | THE SALT BLOWER IS STOPPED. It wants its drop valve (up the seed-drop tower on Drizzle Hill) and silo four's gauge (Teo hid it in the Root Cellar Cave, the rock cave in the far hillside). Marta at the ruined house knows the way.
 note cs_topchest Seed-drop tower deck box | A box lashed to the deck rail at the top of the seed-drop tower.
 loot cs_topchest story:cs_top*1;Rope*2;Plank*3
 note cs_cavechest Root Cellar Cave chest | A chest at the back of Root Cellar Cave, dry under the rock.
@@ -357,7 +357,7 @@ loot cs_setchest Seed_Flower_Red*3;Plank*4;MetalIngot*1
 note cs_planecrate Crop duster's crate | The crop duster's crate: hoses, a pump, and sacks of seeding salt nobody will spread now.
 loot cs_planecrate Plastic*3;Scrap*3;Rope*2
 prop cs_planecrate loot.refill=0
-note cs_pilot Crop duster's log | SALT RUN 212. Wind wrong again, the whole load went over the farm. Teo shook his fist at me from the pen. Engine coughing. Setting down in the west field.
+note cs_pilot Crop duster's log | SALT RUN 212. Wind wrong again, the whole load went over the farm. Teo shook his fist at me from the pen. Engine coughing. Setting down in the field past the farm.
 note jccs Hay loft | The farmhands' old hay loft perch, where they slept off the drizzle.
 loot jccs Rope*3;Plank*4;Wool*2
 note jbcs Loft top | A box at the top of the loft.
@@ -366,8 +366,8 @@ note cs_mazechest Teo's daughter's toy box | A painted toy box in the middle of 
 loot cs_mazechest TradeToken*3;CopperIngot*2;Feather*4
 
 quest title=The Seed Silos
-quest intro=A farm of seed silos, and somebody's goats loose. Walk up through the farm gate.
-step reach|farm_gate|1|Walk up the lane through the farm gate
+quest intro=A farm of seed silos, and somebody's goats loose. Make for the six tall silos and walk up through the farm gate at their foot.
+step reach|farm_gate|1|Make for the tall silos and walk through the farm gate
 step catch|Goat|3|Net the three runaway goats (the net launcher is in the tool chest by the pen)
 step read|Farmer Teo's letter to his daughter|1|Read the letter on the farmhouse table
 step collect|story:silohatch|1|Open the hatch at the foot of silo three with the silo key
@@ -377,11 +377,11 @@ step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel plans from the 
 step blueprint|Blueprint_HeadLight|1|Take the headlight plans from the silo 3 store
 step blueprint|Blueprint_Recycler|1|Take the recycler plans from the silo 3 store
 step read|Farmhand's notice|1|Read the farmhand's notice by the salt blower
-step talk|Marta Hollis|1|Talk to Marta Hollis at the ruined house in the east
-step reach|cs_trail|1|Find the foot of the trail up Drizzle Hill, in the north-west
+step talk|Marta Hollis|1|Talk to Marta Hollis at the ruined house away from the farm
+step reach|cs_trail|1|Find the foot of the trail up Drizzle Hill, below the seed-drop tower
 step reach|cs_summit|1|Climb the trail to the top of Drizzle Hill
-step collect|story:cs_top|1|Climb the seed-drop tower and take the drop valve from its deck
-step reach|cs_cave|1|Find Root Cellar Cave in the north-east
+step collect|story:cs_top|1|Climb the seed-drop tower and take the drop valve from the box on its deck
+step reach|cs_cave|1|Find Root Cellar Cave, the rock cave in the far hillside
 step collect|story:cs_cave|1|Take the silo four gauge from the chest at the back of the cave
 step read|Blower tally|1|Bring both to the salt blower and read what it shows
 step open|Teo's seed box|1|Free Teo from the seed cage beside silo three (the silo key opens it), then open his seed box

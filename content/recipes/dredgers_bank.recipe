@@ -72,7 +72,7 @@ call hw_reef x=52 z=-14 r=4 seed=31046
 
 # --- DEEP 10-25: the Spoil Dune - its foot and top as zones, the foreman's survey mast (Lopez's note, the tender key) -
 call hw_zone x=-32 z=16 al=dunefootz id=dunefoot r=5 msg="The Spoil Dune: everything the dredge brings up, heaped into a hill. Planks are laid up it in a spiral to a survey mast."
-call hw_zone x=-32 z=30 al=dunetopz id=dunetop r=6 h=1 msg="The top of the Spoil Dune. The camp, the rig - and off the south-west point, a mast-top just under the water."
+call hw_zone x=-32 z=30 al=dunetopz id=dunetop r=6 h=1 msg="The top of the Spoil Dune. The camp, the rig - and off the point, a mast-top just under the water."
 call hw_mast x=-32 z=30 h0=14 lv=2 a=lopezmast chest=lopezbox top=Placeable_Lantern_Metal
 place Note_Paper lopeznote at -35.5 26.5 h=14.1 drop yaw=200
 loot lopezbox story:tenderkey*1;Rope*2;Battery*1
@@ -82,7 +82,7 @@ scatter "Pickup_Landmark_Flower_Blue" 2 at -32 30 r=14 seed=31047 free=3
 call treasure x=-44 z=18 r=12 n=1 seed=31044 kind=0
 prop treasure31044 treasure.loot=MetalOre*3;CopperOre*2;Glass*2
 # --- The cave on the north-east shore: Pim Lark's hide-out (a secret) ------------------------------------------------
-call hw_zone x=30 z=29 al=pimz id=pimcave r=4 msg="A cave on the north-east shore. A bedroll, a fishing line, a tin cup - and a small boat pulled up out of sight."
+call hw_zone x=30 z=29 al=pimz id=pimcave r=4 msg="A cave on the shore. A bedroll, a fishing line, a tin cup - and a small boat pulled up out of sight."
 place Note_Paper pimnote at 28.5 28.5 h=2.45 drop yaw=180
 loot pimchest Cooked_GenericMeat*3;PlasticBottle_Water*2;Rope*2;Nail*6
 prop pimchest loot.refill=0
@@ -102,7 +102,7 @@ prop treasure31045 treasure.loot=Scrap*4;Bolt*2;Glass*2
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Dredgers Bank
 info author=Custom Islands
-info description=A long sandbank where the Syndicate dredge the seabed: a dredging rig on four legs, containers on the sand, a forklift and the camp's tents. A spoil dune with a survey mast, a cave on the north-east shore, the dredge's tender sunk off the south-west. A side island of Relic of the Seventh Tide.
+info description=A long sandbank where the Syndicate dredge the seabed: a dredging rig on four legs, containers on the sand, a forklift and the camp's tents. A spoil dune with a survey mast, a cave on the shore, the dredge's tender sunk off the point. A side island of Relic of the Seventh Tide.
 island on.arrive=message||A sandbank with a rig on legs, containers and tents. Somewhere a generator coughs - this camp is working.
 
 story tenderkey|Tender key|Placeable_PaperBundle|A steel key on a cork float stamped TENDER: the dredge tender's lockbox, from the foreman's survey box.
@@ -119,7 +119,7 @@ prop safekeypad beh.use=Type the safe's code
 prop safekeypad lock.code=4471
 prop safekeypad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The keypad chirps and the safe's bolts slide back.\nsignal||paysafe
 
-note lopeznote Foreman Lopez's note | R. LOPEZ, FOREMAN, BANK 4\n\nTo the night shift: the tender went down in the squall on Tuesday with the lockbox still bolted in her. Nobody is to dive on her without me. The key stays up here.\n\nMr Grey says we dredge until we bring up more brass plates, and then we dredge some more. He says the plates are a map, and the map ends at an engine. I say it ends at my bad back.\n\nThe boat that sneaks round the north-east point at night is not ours. Leave it be. Whoever it is steals only fish, and I have seen worse men on my own payroll.
+note lopeznote Foreman Lopez's note | R. LOPEZ, FOREMAN, BANK 4\n\nTo the night shift: the tender went down in the squall on Tuesday with the lockbox still bolted in her. Nobody is to dive on her without me. The key stays up here.\n\nMr Grey says we dredge until we bring up more brass plates, and then we dredge some more. He says the plates are a map, and the map ends at an engine. I say it ends at my bad back.\n\nThe boat that sneaks round the far point at night is not ours. Leave it be. Whoever it is steals only fish, and I have seen worse men on my own payroll.
 note pimnote Pim Lark's note | PIM LARK - BANK 4, THE CAVE\n\nIf the professor comes by: I am here, I am fine, I am very hungry of sand.\n\nThe Syndicate dredge all day for the builders' brass plates, and send them off on the launch. I have seen three go. Each one has the seven wave marks on it, like on your notes.\n\nThe foreman's a decent sort for a Syndicate man. He keeps the tender key on his mast on the dune and tells the night shift to leave me alone.\n\nI am going to borrow their tender's lockbox, if I can find a diver. Or I'll eat it. One or the other. - Pim
 note greyorders Silas Grey's orders | S. GREY - ORDERS FOR BANK 4\n\nDredge the whole bank, end to end. Every plate with the wave marks comes to me, unread, by the next launch. If a man reads one, he goes over the side.\n\nNo one dives without the foreman. No one leaves the camp at night. If a woman in a battered hat comes ashore, do not stop her - watch her, and send word.\n\nThe engine the plates speak of is the job. The professor is the way to it. Do not frighten either one.
 prop camp zone.id=dredge_camp
@@ -140,17 +140,17 @@ prop rigtop zone.radius=2.5
 prop rigtop zone.message=The rig's deck. Out to sea the Syndicate's dredge lines run - all toward the horizon where the chart says ENGINE.
 
 quest title=The Dredging Camp
-quest intro=A Syndicate camp on a sandbank. Their manifest lies on a crate.
-step read|Dredge manifest|1|Read the dredge manifest
+quest intro=A Syndicate camp on a sandbank, below a dredging rig. Their manifest lies on a crate.
+step read|Dredge manifest|1|Make for the dredging rig and read the manifest on the crate in the camp
 step kill|Hyena|3|Deal with the camp's dogs
 step open|Paymaster's safe|1|Open the paymaster's safe (the manifest has the code)
 step collect|story:mapfrag|1|Take the Syndicate's map fragment
 step reach|rig_top|1|Climb up onto the dredging rig
-step reach|dunefoot|1|Find the plank path up the Spoil Dune in the north-west
+step reach|dunefoot|1|Find the plank path up the Spoil Dune, the dune with the survey mast
 step reach|dunetop|1|Climb the Spoil Dune to the foreman's survey mast
 step read|Foreman Lopez's note|1|Read the foreman's note on the dune top
 step collect|story:tenderkey|1|Climb the mast and take the tender key from his box
-step reach|tender|1|Dive to the dredge's tender off the south-west
+step reach|tender|1|Dive to the dredge's sunk tender, a mast-top just under the water off the point
 step open|Tender's lockbox|1|Open the tender's lockbox with the key
 step read|Silas Grey's orders|1|Read Silas Grey's orders in the tender
 quest done=A piece of the Syndicate's chart: a ring of rock marked ENGINE. Whatever they dredge for, it ends there.
