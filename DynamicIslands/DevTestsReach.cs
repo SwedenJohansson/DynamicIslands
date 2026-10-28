@@ -665,6 +665,13 @@ namespace DynamicIslands
 					if (CanUseFrom(g, k, t)) use.Add(k);
 				Vector3 tr = Rel(e, t.B.center, offset);
 				string head = "REACH " + name + " | " + t.Kind + " '" + t.Name + "' at " + tr.x.ToString("F1") + " " + tr.z.ToString("F1") + " h=" + tr.y.ToString("F1") + " | " + (t.Steps.Length > 0 ? t.Steps : "-") + " | ";
+				// (a cage the play opened is hidden (Survivors.cs: open = gone for everyone), its model off and its bounds a 0.3 m box
+				// at its root - "no spot" for Teo's and Oda's cages after their quests freed them, PQ11 10-28: not checkable now)
+				if (use.Count == 0 && t.Kind == "cage")
+				{
+					SurvivorCage sc = t.Root.GetComponentInChildren<SurvivorCage>(false);
+					if (sc != null && sc.IsOpen) { report.Add(head + "NOTE opened in the play (the cage is gone now): not checked"); continue; }
+				}
 				if (use.Count == 0)
 				{
 					problems++;
