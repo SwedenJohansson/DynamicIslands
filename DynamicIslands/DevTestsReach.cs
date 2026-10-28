@@ -586,7 +586,9 @@ namespace DynamicIslands
 					{
 						Vector3 eye = g.Kind[k] == 0 ? p + Vector3.up * 1.3f : p + Vector3.up * 0.2f;
 						Vector3 at = lb.ClosestPoint(new Vector3(eye.x, Mathf.Clamp(eye.y, lb.min.y + 0.2f, lb.max.y - 0.2f), eye.z));
-						if (LadderClear(eye, at, ch)) { g.Link(k, node); g.Link(node, k); grabs++; }
+						// (and to its middle: a spot behind the wall it is fixed to saw the climb box's back face poke through the wall
+						// and counted as a foot spot - the walker stood outside the mast pressing on the wall, hw_mast PQ11 10-28)
+						if (LadderClear(eye, at, ch) && LadderClear(eye, new Vector3(lb.center.x, at.y, lb.center.z) + (g.LadderF.ContainsKey(node) ? g.LadderF[node] * 0.25f : Vector3.zero), ch)) { g.Link(k, node); g.Link(node, k); grabs++; }
 					}
 				}
 				Vector3 lr = Rel(e, lb.center, offset);
@@ -705,6 +707,15 @@ namespace DynamicIslands
 					}
 					fwd[s] = bestF; parent[s] = bestP;
 				}
+			}
+			// (a flying island: stairs from the raft can come up at any part of the rim, so a side whose 80 rim tries all found
+			// roofs or posts takes the best side's walk-in - Pendulum Isle's north reached nothing, 22 false "north: can't get
+			// there" with every spot reached from the other sides, PQ11 10-28)
+			if (reachSky)
+			{
+				int[] gotS = new int[4]; int bs = 0;
+				for (int s = 0; s < 4; s++) { for (int k = 0; k < g.Pos.Count; k++) if (fwd[s][k] && g.Kind[k] == 0) gotS[s]++; if (gotS[s] > gotS[bs]) bs = s; }
+				for (int s = 0; s < 4; s++) if (gotS[s] * 4 < gotS[bs]) { fwd[s] = fwd[bs]; parent[s] = parent[bs]; }
 			}
 			var back = new bool[g.Pos.Count];
 			var backParent = new int[g.Pos.Count];
