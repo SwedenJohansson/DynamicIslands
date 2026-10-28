@@ -303,6 +303,9 @@ namespace DynamicIslands
 			public Vector3 Anchor;
 			public Dictionary<int, Bounds> LadderB = new Dictionary<int, Bounds>();
 			public Dictionary<int, Vector3> LadderF = new Dictionary<int, Vector3>();
+			// (a used object's teleport (a lift, a hatch down): from a spot a player uses it from to the spot it puts the player on)
+			public HashSet<long> Tele = new HashSet<long>();
+			public static long TeleKey(int a, int b) { return ((long)a << 32) | (uint)b; }
 			public int NX, NZ;
 			public List<Vector3> Pos = new List<Vector3>();
 			// 0 standing (feet), 1 the sea's surface (swimming), 2 under water (a 1 m cell's middle), 3 a ladder
@@ -540,6 +543,41 @@ namespace DynamicIslands
 			}
 			yield return null;
 
+			// (an object a player uses that teleports them (on.use ... teleport|<name>): Colossus's lift up the leg, a hatch down
+			// into a vault - the grid can't walk it, and the whole colossus above the lift failed, PQ11 10-28. Every spot the
+			// object is used from links to the standing spot where the player lands. Use checks (a key) are taken as met, as
+			// the play left the island; the walker uses the object at that step, as a player would)
+			{
+				int links = 0, objs = 0;
+				foreach (IslandObjectRef r in e.Root.GetComponentsInChildren<IslandObjectRef>(false))
+				{
+					string onUse;
+					if (!r.Props.TryGetValue("on.use", out onUse) || onUse.IndexOf("teleport", StringComparison.Ordinal) < 0) continue;
+					ObjAction ta = ObjAction.ParseLines(onUse).FirstOrDefault(a => a.Verb == "teleport");
+					if (ta == null) continue;
+					IslandObjectRef to = Behaviours.TargetsOf(e, r.Index, ta.Target).FirstOrDefault(x => x.gameObject.activeInHierarchy);
+					if (to == null) continue;
+					Vector3 land = to.transform.position;
+					int dst = -1; float best = 9f;
+					foreach (int k in NearNodes(g, new Bounds(land, Vector3.one), 2.5f))
+					{
+						if (g.Kind[k] != 0) continue;
+						float dl = (g.Pos[k] - land).sqrMagnitude;
+						if (dl < best) { best = dl; dst = k; }
+					}
+					if (dst < 0) { report.Add("REACH " + name + " | teleport '" + (r.Name.Length > 0 ? r.Name : r.ObjectName) + "' -> " + ta.Target + " | - | NOTE no standing spot within 3 m of where it puts the player"); continue; }
+					var ut = new ReachTarget { Kind = "use", Root = r.transform };
+					Renderer[] rs = r.GetComponentsInChildren<Renderer>(false).Where(x => (x.bounds.center - r.transform.position).sqrMagnitude < 900f).ToArray();
+					ut.B = new Bounds(r.transform.position, Vector3.one * 0.3f);
+					foreach (Renderer x in rs) ut.B.Encapsulate(x.bounds);
+					ut.Colliders = r.GetComponentsInChildren<Collider>(false).ToList();
+					int n0 = links;
+					foreach (int k in NearNodes(g, ut.B, RUse + 0.6f))
+						if (k != dst && g.Kind[k] != 3 && CanUseFrom(g, k, ut)) { g.Link(k, dst); g.Tele.Add(ReachGrid.TeleKey(k, dst)); links++; }
+					if (links > n0) objs++;
+				}
+				if (objs > 0) report.Add("REACH " + name + " | teleports | - | NOTE " + objs + " used object(s) that teleport the player (a lift, a hatch) linked: " + links + " use spots");
+			}
 			// where the open sea is: the grid's edge
 			var sea = new List<int>();
 			for (int k = 0; k < g.Pos.Count; k++)
@@ -1342,7 +1380,7 @@ namespace DynamicIslands
 			for (int i = 0; i < path.Count; i++)
 			{
 				int k = path[i];
-				bool keep = i == 0 || i == path.Count - 1 || g.Kind[k] == 3 || (i + 1 < path.Count && g.Kind[path[i + 1]] == 3) || (i > 0 && g.Kind[path[i - 1]] == 3);
+				bool keep = i == 0 || i == path.Count - 1 || g.Kind[k] == 3 || (i + 1 < path.Count && g.Tele.Contains(ReachGrid.TeleKey(k, path[i + 1]))) || (i > 0 && g.Tele.Contains(ReachGrid.TeleKey(path[i - 1], k))) || (i + 1 < path.Count && g.Kind[path[i + 1]] == 3) || (i > 0 && g.Kind[path[i - 1]] == 3);
 				if (!keep && w.Count > 0)
 				{
 					int last = w[w.Count - 1];
@@ -1478,6 +1516,14 @@ namespace DynamicIslands
 				wdWay = Time.realtimeSinceStartup; wdTried = false; wdMoved = 99f; hbProg++;
 				int k = way[i];
 				byte kind = g.Kind[k];
+				// (a teleport step: the player at the object uses it and is put where it puts them - the grid's link, see above)
+				if (g.Tele.Contains(ReachGrid.TeleKey(way[i - 1], k)))
+				{
+					PlayerMove.To(pl, W(k) + Vector3.up * 0.1f, ControllerType.Ground);
+					for (int f = 0; f < 20; f++) { MmHold(pl, false); yield return null; }
+					prev = ReachFeet(pl) + Vector3.up * 0.9f;
+					continue;
+				}
 				if (kind == 3)
 				{
 					// a ladder: walk into it (Raft takes hold), look up or down and hold Walk to the next spot's height
