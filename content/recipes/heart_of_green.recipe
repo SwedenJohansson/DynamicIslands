@@ -65,7 +65,8 @@ zipto zip12 -16 10
 push at -14 12 h=4
 call stilt_hut y=2.6
 place "Box Small" - at 3.6 3.6 y=2.7 sit
-place Note_Paper organism2 at 3.6 3.6 y=3.4 drop yaw=10
+# (REACH 10-28: from y=3.4 it started inside the box (its top 0.9 m over y=2.7) and fell through to the floor under it)
+place Note_Paper organism2 at 3.6 3.6 y=4.0 drop yaw=10
 pop
 place Zone_Trigger balcony2 at -11.75 10 ground
 place "Box Small" spore1 at -20 16 ground sit yaw=20
