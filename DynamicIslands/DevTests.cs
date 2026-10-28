@@ -2103,14 +2103,31 @@ namespace DynamicIslands
 			while (true)
 			{
 				yield return new WaitForSecondsRealtime(10f);
-				string pos = "-";
+				string pos = "-", hp = "-";
+				bool dead = false;
+				Network_Player pl = null;
 				try
 				{
-					Network_Player pl = LoadSceneManager.IsGameSceneLoaded ? RAPI.GetLocalPlayer() : null;
-					if (pl != null) pos = pl.transform.position.x.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + "," + pl.transform.position.y.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + "," + pl.transform.position.z.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+					pl = LoadSceneManager.IsGameSceneLoaded ? RAPI.GetLocalPlayer() : null;
+					if (pl != null)
+					{
+						pos = pl.transform.position.x.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + "," + pl.transform.position.y.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + "," + pl.transform.position.z.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+						if (pl.Stats != null) hp = pl.Stats.stat_health.Value.ToString("F0", System.Globalization.CultureInfo.InvariantCulture);
+						dead = (pl.Stats != null && pl.Stats.stat_health.Value <= 0f) || (pl.PlayerScript != null && pl.PlayerScript.IsDead);
+					}
 				}
 				catch { }
-				Log("HB " + (runningTests > 0 ? hbWhat.Replace(' ', '_') : "idle") + " step=" + hbStep + " prog=" + hbProg + " pos=" + pos);
+				Log("HB " + (runningTests > 0 ? hbWhat.Replace(' ', '_') : "idle") + " step=" + hbStep + " prog=" + hbProg + " pos=" + pos + " hp=" + hp + " dead=" + (dead ? 1 : 0));
+				// (PQ11 10-28: the box's player starved on its drifting raft while it stood idle for half an hour, and the next
+				// play's results came from a dead player. Idle in a world: kept fed and well. Dead: a FAIL line, then up again)
+				if (pl != null && dead)
+				{
+					Log("FAIL: player died at " + pos + " (" + (runningTests > 0 ? hbWhat : "idle") + ")");
+					yield return EnsureAlive();
+				}
+				// (and while the reach audit measures: it tests the way, not air or food - the box player drowned at the bottom of
+				// Gravewell Shaft while the 58 s grid was built after its play, PQ11 10-28)
+				else if (pl != null && (runningTests == 0 || hbWhat.StartsWith("reach "))) { try { KeepAlive(pl); } catch { } }
 			}
 		}
 
