@@ -444,6 +444,8 @@ namespace DynamicIslands
 
 			// columns: every floor down the column with room to stand; the sea's surface where a swimmer fits
 			int work = 0;
+			// (yield by time, not by count: a frame every 3000 cells left most of each frame idle - Rootweave Caves' grid took 54 s, PQ11 10-28)
+			var slice = System.Diagnostics.Stopwatch.StartNew();
 			for (int i = 0; i < g.NX; i++)
 			{
 				for (int j = 0; j < g.NZ; j++)
@@ -469,7 +471,7 @@ namespace DynamicIslands
 					if (low < RSea - 1.6f && hits > 0) underCols.Add(i * g.NZ + j);
 					if (!landAbove && !InsideSolid(new Vector3(x, RSea - 1.1f, z)) && !Physics.CheckCapsule(new Vector3(x, RSea - 1.1f, z), new Vector3(x, RSea + 0.3f, z), RRadius, mask, QueryTriggerInteraction.Ignore))
 						g.Add(new Vector3(x, RSea, z), 1, i * g.NZ + j);
-					if (++work % 3000 == 0) yield return null;
+					if (++work % 64 == 0 && slice.ElapsedMilliseconds >= 25) { yield return null; slice.Reset(); slice.Start(); }
 				}
 			}
 			// under water: 1 m cells with room for a swimmer, where something of the island lies below the surface
@@ -494,7 +496,7 @@ namespace DynamicIslands
 						Vector3 p = new Vector3(x, y, z);
 						if (!Physics.CheckSphere(p, 0.4f, mask, QueryTriggerInteraction.Ignore) && !InsideSolid(p))
 							g.Vox[VoxKey(i / vstep, j / vstep, k)] = g.Add(p, 2, -1);
-						if (++work % 3000 == 0) yield return null;
+						if (++work % 64 == 0 && slice.ElapsedMilliseconds >= 25) { yield return null; slice.Reset(); slice.Start(); }
 					}
 				}
 			}
@@ -516,7 +518,7 @@ namespace DynamicIslands
 						if (there == null) continue;
 						foreach (int a in here) foreach (int b in there) { TryMove(g, a, b, false); TryMove(g, b, a, false); }
 					}
-					if (++work % 1500 == 0) yield return null;
+					if (++work % 64 == 0 && slice.ElapsedMilliseconds >= 25) { yield return null; slice.Reset(); slice.Start(); }
 				}
 			}
 			// swimming under water: cell to cell, up to the surface, onto floors under water
@@ -542,9 +544,10 @@ namespace DynamicIslands
 						else if (g.Kind[f] == 0 && q.y < RSea - 0.5f && Mathf.Abs(q.y + 0.9f - p.y) <= 1.1f && !Between(p, q + Vector3.up * 0.9f, mask)) { g.Link(kv.Value, f); g.Link(f, kv.Value); }
 					}
 				}
-				if (++work % 3000 == 0) yield return null;
+				if (++work % 64 == 0 && slice.ElapsedMilliseconds >= 25) { yield return null; slice.Reset(); slice.Start(); }
 			}
 
+			Log("  reach grid '" + name + "': moves linked (" + sw.ElapsedMilliseconds + " ms)");
 			// ladders: a climb collider (stacked ones as one), from spots at its foot that can take hold of it to spots at its top
 			var ladders = e.Root.GetComponentsInChildren<Collider>(false).Where(c => c.enabled && c.name.IndexOf("climb", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
 			var chains = new List<List<Collider>>();
