@@ -1500,7 +1500,12 @@ namespace DynamicIslands
 						// took hold - tower ladders at Array Root/Caisson Yard/Brinelab PQ11 10-27: sweep four headings into it)
 						if (climbing) sweepT = 0f;
 						if (sweepT > 0f) { sweepT -= Time.deltaTime; d = Quaternion.Euler(0f, sweepYaw, 0f) * Vector3.forward; }
-						Look(pl, d.sqrMagnitude > 0.01f ? Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg : pl.transform.eulerAngles.y, climbing ? (up ? -60f : 60f) : 0f);
+						// (a swimmer at a dock ladder looks up and swims up into it, Jump held - Raft takes hold when the body touches its
+						// "Ladder" trigger (PersonController.OnTriggerStay); the walker swam level under the rungs and never touched it,
+						// Caisson Yard / Array Root PQ11 10-28)
+						bool wet = up && !climbing && inWaterNow(pl);
+						mmJump = wet;
+						Look(pl, d.sqrMagnitude > 0.01f ? Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg : pl.transform.eulerAngles.y, climbing ? (up ? -60f : 60f) : wet ? -35f : 0f);
 						mmWalk = walkSign;
 						MmHold(pl, false);
 						yield return null;
@@ -1520,6 +1525,7 @@ namespace DynamicIslands
 							yield break;
 						}
 					}
+					mmJump = false;
 					continue;
 				}
 				Vector3 aim = W(k);
