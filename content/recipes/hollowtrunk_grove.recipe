@@ -35,6 +35,9 @@ brush flatten at 30 -14 r=7 s=20 frames=200 h=2
 brush flatten at -24 34 r=8 s=20 frames=200 h=2
 brush flatten at 28 30 r=7 s=20 frames=200 h=2
 brush flatten from -2 6 to -6 2 r=2.5 s=20 frames=150 h=0.6
+# (REACH 10-28: the trunk-1 pad (h 2) sat in the island's rise, walled all round - into it, no way out; its lowest rim
+# at -7 9 was a 1.1 m step -> smoothed into a slope there)
+brush smooth from -6 8 to -10 11 r=4 s=6 frames=40
 pop
 brush flatten at 18.9 34.1 r=5 s=8 frames=40
 origin
