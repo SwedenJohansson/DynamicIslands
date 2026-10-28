@@ -1446,6 +1446,27 @@ namespace DynamicIslands
 		}
 
 		/// <summary>Long test runs in a Normal world would otherwise starve the test player.</summary>
+		/// <summary>A blueprint the play picked up and holds up in hand moved off the hotbar (into a free bag slot), so the
+		/// watcher sees the player's hands and what they do (10-28: plays idled holding a blueprint up).</summary>
+		static void PutAwayBlueprint()
+		{
+			try
+			{
+				Network_Player p = RAPI.GetLocalPlayer();
+				if (p == null || p.Inventory == null) return;
+				ItemInstance held = p.Inventory.GetSelectedHotbarItem();
+				if (held == null || held.UniqueName == null || !held.UniqueName.StartsWith("Blueprint_")) return;
+				int hot = HarmonyLib.Traverse.Create(p.Inventory).Field("hotslotCount").GetValue<int>();
+				if (hot <= 0) hot = 10;
+				Slot from = p.Inventory.allSlots.Take(hot).FirstOrDefault(sl => sl != null && sl.itemInstance == held);
+				Slot to = p.Inventory.allSlots.Skip(hot).FirstOrDefault(sl => sl != null && sl.IsEmpty);
+				if (from == null || to == null) return;
+				to.SetItem(held);
+				from.Reset();
+			}
+			catch (Exception ex) { Log("  (blueprint not put away: " + ex.Message + ")"); }
+		}
+
 		static void KeepAlive(Network_Player player)
 		{
 			if (player == null || player.Stats == null) return;

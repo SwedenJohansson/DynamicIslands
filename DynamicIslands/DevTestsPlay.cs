@@ -137,6 +137,7 @@ namespace DynamicIslands
 			for (int li = 0; li < lines.Count; li++)
 			{
 				hbWhat = "play " + name; hbStep = li; hbProg++;
+				PutAwayBlueprint();
 				RLine rl = lines[li];
 				string line = rl.Text.Trim();
 				string[] t = Tokens(line);
