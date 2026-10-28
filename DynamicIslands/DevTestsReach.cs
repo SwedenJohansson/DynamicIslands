@@ -38,6 +38,12 @@ namespace DynamicIslands
 		// no farther than a player's; 1 = off)
 		static float reachPace = 1f, reachPaceOn = 1f, reachWalk0, reachSwim0;
 		static int reachPrechecked, reachWalked, reachRewalked, reachCcNoted, reachRespawns;
+		// (spots walks got stuck at on this island (island-local) and how many targets each blocked; once one spot blocks 3
+		// targets the island's other walks are not tried - each is a FAIL with that cause. Dead Letter Office: every chest walk
+		// stuck at the same shore lip after 3 jumps, PQ11 10-28)
+		static List<Vector3> reachStuckAt = new List<Vector3>();
+		static List<int> reachStuckN = new List<int>();
+		static string reachBlocked;
 
 		[ConsoleCommand(name: "CIReachSpeed", docs: "Dev, anywhere: PQ11 - the reach walker's speed: moves a frame, each one swept by Raft's own CharacterController (1 = a player's pace, 0 = no walks, the grid alone); pace: Raft's walk/swim speed times p on the ground and in the water (not in the air) while above 1x. CIReachSpeed <n> [pace]")]
 		public static void ReachSpeedCommand(string[] args)
@@ -55,6 +61,11 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIReachSwim", docs: "Dev, world: PQ11 - the reach walker's swim alone: the player put in the sea 150 m off, Walk held 3 s with and without a look pitch; the metres moved")]
+		/// <summary>Something solid on the line between two grid spots, from either end (a mesh is hit from its front only).</summary>
+		static bool Between(Vector3 a, Vector3 b, int mask)
+		{
+			return Physics.Linecast(a, b, mask, QueryTriggerInteraction.Ignore) || Physics.Linecast(b, a, mask, QueryTriggerInteraction.Ignore);
+		}
 		public static void ReachSwimCommand(string[] args) { StartTest(ReachSwimRoutine()); }
 
 		static IEnumerator ReachSwimRoutine()
@@ -354,6 +365,8 @@ namespace DynamicIslands
 			string name = e.HostName;
 			var report = new List<string>();
 			int problems = 0;
+			reachStuckAt.Clear(); reachStuckN.Clear(); reachBlocked = null;
+			hbWhat = "reach " + name; // (from the start: the grid takes a minute, and the HB keeps the player alive while it is "reach")
 			// (a player opens a plain door with E: Raft's own doors (Door) with no use check of the island's on them are opened
 			// first - every drowned house's back room failed behind its closed Block_Wall_Door, PQ11 10-28; a gate or key door
 			// (an if./else./beh. prop, a ready-made key door) stays as the play left it)
@@ -512,10 +525,12 @@ namespace DynamicIslands
 				int vi, vj, vk;
 				VoxSplit(kv.Key, out vi, out vj, out vk);
 				int other;
-				if (g.Vox.TryGetValue(VoxKey(vi + 1, vj, vk), out other)) { g.Link(kv.Value, other); g.Link(other, kv.Value); }
-				if (g.Vox.TryGetValue(VoxKey(vi, vj + 1, vk), out other)) { g.Link(kv.Value, other); g.Link(other, kv.Value); }
-				if (g.Vox.TryGetValue(VoxKey(vi, vj, vk + 1), out other)) { g.Link(kv.Value, other); g.Link(other, kv.Value); }
 				Vector3 p = g.Pos[kv.Value];
+				// (not through a thin floor, roof or wall between two free cells: the swimmer's 0.4 m spheres miss a block's
+				// 0.2 m slab half way between cells 1 m apart - Hadal Commons' houses were swum into through their roofs, PQ11 10-28)
+				if (g.Vox.TryGetValue(VoxKey(vi + 1, vj, vk), out other) && !Between(p, g.Pos[other], mask)) { g.Link(kv.Value, other); g.Link(other, kv.Value); }
+				if (g.Vox.TryGetValue(VoxKey(vi, vj + 1, vk), out other) && !Between(p, g.Pos[other], mask)) { g.Link(kv.Value, other); g.Link(other, kv.Value); }
+				if (g.Vox.TryGetValue(VoxKey(vi, vj, vk + 1), out other) && !Between(p, g.Pos[other], mask)) { g.Link(kv.Value, other); g.Link(other, kv.Value); }
 				for (int a = 0; a < vstep; a++) for (int c = 0; c < vstep; c++)
 				{
 					List<int> col = g.At(vi * vstep + a, vj * vstep + c);
@@ -523,8 +538,8 @@ namespace DynamicIslands
 					foreach (int f in col)
 					{
 						Vector3 q = g.Pos[f];
-						if (g.Kind[f] == 1 && vk == 0) { g.Link(kv.Value, f); g.Link(f, kv.Value); }
-						else if (g.Kind[f] == 0 && q.y < RSea - 0.5f && Mathf.Abs(q.y + 0.9f - p.y) <= 1.1f) { g.Link(kv.Value, f); g.Link(f, kv.Value); }
+						if (g.Kind[f] == 1 && vk == 0 && !Between(p, q, mask)) { g.Link(kv.Value, f); g.Link(f, kv.Value); }
+						else if (g.Kind[f] == 0 && q.y < RSea - 0.5f && Mathf.Abs(q.y + 0.9f - p.y) <= 1.1f && !Between(p, q + Vector3.up * 0.9f, mask)) { g.Link(kv.Value, f); g.Link(f, kv.Value); }
 					}
 				}
 				if (++work % 3000 == 0) yield return null;
@@ -746,7 +761,8 @@ namespace DynamicIslands
 					// alone; all else is walked by the player, in from the sea and out again
 					if (OpenTarget(g, use, fwd, back, parent)) { reachPrechecked++; report.Add(head + "PASS (precheck) (" + grid + ")"); continue; }
 					string walked = null;
-					if (reachSpeed > 0) yield return ReachWalkTarget(e, g, t, use, fwd, back, parent, backParent, sideNames, r => walked = r);
+					if (reachSpeed > 0 && reachBlocked != null) walked = "FAIL not walked: " + reachBlocked + " - the island's walks ended there";
+					else if (reachSpeed > 0) yield return ReachWalkTarget(e, g, t, use, fwd, back, parent, backParent, sideNames, r => walked = r);
 					if (walked == null) report.Add(head + "PASS grid only, not walked (" + grid + ")");
 					else if (walked.StartsWith("PASS")) report.Add(head + walked + " (" + grid + ")");
 					else { problems++; report.Add(head + walked + " (the grid found a way: " + grid + ")"); }
@@ -1337,7 +1353,10 @@ namespace DynamicIslands
 				foreach (int k in use)
 				{
 					if (!fwd[s][k] || !back[k]) continue;
-					int len = PathIn(parent[s], k).Count + PathOut(backParent, k).Count;
+					List<int> pi = PathIn(parent[s], k);
+					int len = pi.Count + PathOut(backParent, k).Count;
+					// (a way past a spot a walk already stuck at comes last: another sea side, or round it)
+					if (reachStuckAt.Count > 0 && pi.Any(a => reachStuckAt.Any(q => ScFlat(g.Pos[a] - g.Anchor, q) < 2f))) len += 100000;
 					if (len < bestLen) { bestLen = len; bestS = s; bestK = k; }
 				}
 			if (bestK < 0) { result(null); yield break; }
@@ -1412,6 +1431,18 @@ namespace DynamicIslands
 				Log("  walk to " + t.Kind + " '" + t.Name + "' at " + speed + "x: " + why + " - walked again at 1x");
 				speed = 1;
 				reachRewalked++;
+			}
+			if (why != null && why.StartsWith("stuck"))
+			{
+				Vector3 at = ReachFeet(pl) - e.Position;
+				int i = reachStuckAt.FindIndex(q => ScFlat(q, at) < 2f);
+				if (i < 0) { reachStuckAt.Add(at); reachStuckN.Add(1); i = reachStuckAt.Count - 1; }
+				else reachStuckN[i]++;
+				if (reachStuckN[i] >= 3 && reachBlocked == null)
+				{
+					reachBlocked = "blocked at " + reachStuckAt[i].x.ToString("F1", CultureInfo.InvariantCulture) + " " + reachStuckAt[i].z.ToString("F1", CultureInfo.InvariantCulture) + " (" + reachStuckN[i] + " targets)";
+					Log("  FAIL " + reachBlocked + " - the other walks of this island are not tried");
+				}
 			}
 			result("FAIL walked at 1x: " + why);
 		}
