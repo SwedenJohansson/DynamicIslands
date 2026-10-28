@@ -102,6 +102,16 @@ place Block_Wall_Fence_Rope - at 0.75 3 y={$lv*2.42+0.05}
 place Block_Wall_Fence_Rope - at 0 0.75 y={$lv*2.42+0.05} yaw=90
 place Block_Wall_Fence_Rope - at 0 2.25 y={$lv*2.42+0.05} yaw=90
 place Block_Wall_Fence_Rope - at 3 2.25 y={$lv*2.42+0.05} yaw=90
+# (REACH 10-28: at the ladder's top the climber faces out over the back wall, with nothing ahead (canopy_stair: no floor);
+# a ladder hung in the shaft's middle instead was grabbed from the door side and ran into the deck - so the ladder
+# stays on the back wall and a landing over that wall takes the climber's step forward, fenced on three sides)
+# (two tiles wide: on one 1.5 m tile between its fences the reach grid found no spot to stand - canopy_stair, PQ11 10-28 (2))
+place Block_Floor_Tier3 $a at 2.25 3.75 y={$lv*2.42+0.05}
+place Block_Floor_Tier3 $a at 0.75 3.75 y={$lv*2.42+0.05}
+place Block_Wall_Fence_Rope - at 2.25 4.5 y={$lv*2.42+0.05}
+place Block_Wall_Fence_Rope - at 0.75 4.5 y={$lv*2.42+0.05}
+place Block_Wall_Fence_Rope - at 0 3.75 y={$lv*2.42+0.05} yaw=90
+place Block_Wall_Fence_Rope - at 3 3.75 y={$lv*2.42+0.05} yaw=90
 place Loot_ChestSmall $box at 0.75 2.25 y={$lv*2.42+0.165} yaw=180
 place Zone_Trigger $zal at 1.5 1.5 y={$lv*2.42+1.4}
 place Placeable_Flag_05 - at 2.5 0.5 y={$lv*2.42+0.165}

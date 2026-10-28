@@ -16,8 +16,8 @@ end
 #
 # dp_tower: a scaffold tower 36 m high on the pad at ox oz (its corner; hb over the sea), turned yaw (local x towards the
 # summit): four corner posts of thick pillars (the first sunk 0.8 m), five plank landings 3 x 3 (7.2 m apart, a hole
-# in each for the ladder, the holes taking turns between the north corners), three ladders a storey each on wooden
-# posts at the north face, rope rails round the top, a lantern; landing 3 (21.6 m) gives onto a plank bridge on posts to
+# in each for the ladder, the holes taking turns between the north corners), three ladders a storey each hung in
+# the holes from the landings' edges, rope rails round the top, a lantern; landing 3 (21.6 m) gives onto a plank bridge on posts to
 # the summit pad (local x 4.5..12). al: the tower's pieces; top: the chest on the top landing; stash: a small chest on
 # landing 2; zal/zid/msg: the zone on the top landing.
 macro dp_tower ox=0 oz=0 hb=4 yaw=0 al=dptower top=dptop stash=dpstash zal=dptopzone zid=dptop msg=""
@@ -31,16 +31,19 @@ next
 next
 next
 for k 1 5
-set hi {2*(($k+1)%2)}
 for i 0 2
 place Block_Floor_Wood $al at {0.75+1.5*$i} 0.75 y={7.2*$k}
 place Block_Floor_Wood $al at {0.75+1.5*$i} 2.25 y={7.2*$k}
 next
-place Block_Floor_Wood $al at 2.25 3.75 y={7.2*$k}
-place Block_Floor_Wood $al at {0.75+1.5*(2-$hi)} 3.75 y={7.2*$k}
+place Block_Floor_Wood $al at 0.75 3.75 y={7.2*$k}
+place Block_Floor_Wood $al at 3.75 3.75 y={7.2*$k}
 for j 0 2
-place Block_Ladder $al at {0.75+1.5*$hi} 4.35 y={7.2*($k-1)+2.42*$j} yaw=180
-place Block_Pillar_Wood $al at {0.75+1.5*$hi} 4.55 y={7.2*($k-1)+2.42*$j}
+# (REACH 10-28: the ladders hung on posts outside the north face, against the corner pillars - the climber faced
+# out over the drop at each landing and the east ones had no room to take hold. Now each hangs from the landing's
+# floor edge on the hole's south side, facing into the hole: the climber steps forward onto the landing. The holes
+# are all in the middle of the north row, one straight ladder up: in the corners the corner pillar left no room
+# to stand at the ladder - the walker never took hold, PQ11 10-28 (3))
+place Block_Ladder $al at 2.25 3.2 y={7.2*($k-1)+2.42*$j} yaw=0
 next
 next
 for i 0 2
@@ -83,6 +86,17 @@ brush smooth at $x $z r=18 s=6 frames=40
 brush flatten at $x $z r=6 s=20 frames=200 h=$d
 brush auto at $x $z r=18 s=10 frames=25
 clear at $x $z r=19
+# (REACH 10-28: the sink's banks stood sheer, up to 5 m over its water, and the plank ramp lay buried in them - after
+# the dive a swimmer had no way out: a stepped slope up the ramp's line, 0.6 m a step, from one step in the water up
+# to the ramp's top - keep the ramp at least 1.5 m long for each metre it rises)
+set dpn {(($eh)-0.42)/0.6}
+for k 0 {$dpn+1}
+set dpt {($k-1)/$dpn}
+set dpx {($ex1)+(($ex2)-($ex1))*$dpt}
+set dpz {($ez1)+(($ez2)-($ez1))*$dpt}
+brush flatten at $dpx $dpz r=2.2 s=20 frames=150 h={0.42+(($eh)-0.42)*$dpt}
+next
+clear from $ex1 $ez1 to $ex2 $ez2 r=3
 ramp Block_Floor_Wood from $ex1 $ez1 0.5 to $ex2 $ez2 $eh len=1.5 top=0
 end
 #
