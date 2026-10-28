@@ -2154,7 +2154,32 @@ namespace DynamicIslands
 		/// dev_commands.txt for the normal Raft, dev_commands_2.txt for a second Raft in Sandboxie (its box must open
 		/// that one file to the real folder: OpenFilePath, see TEST_PROTOCOL.md §5), so tests can drive each player.
 		/// </summary>
-		static string CommandFile { get { return Path.Combine(DynamicIslands.assetpath, Sandboxed ? "dev_commands_2.txt" : "dev_commands.txt"); } }
+		/// (10-28: a third Raft in box "Raft3" reads dev_commands_3.txt - any box named Raft<N>, N 3..9; other boxes keep _2)
+		static string CommandFile { get { return Path.Combine(DynamicIslands.assetpath, Sandboxed ? "dev_commands_" + BoxSlot + ".txt" : "dev_commands.txt"); } }
+
+		[System.Runtime.InteropServices.DllImport("SbieDll.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+		static extern int SbieApi_QueryProcess(IntPtr processId, System.Text.StringBuilder boxName, System.Text.StringBuilder imageName, System.Text.StringBuilder sid, IntPtr sessionId);
+
+		static string boxSlot;
+		static string BoxSlot
+		{
+			get
+			{
+				if (boxSlot != null) return boxSlot;
+				boxSlot = "2";
+				try
+				{
+					var box = new System.Text.StringBuilder(64); var img = new System.Text.StringBuilder(128); var sid = new System.Text.StringBuilder(128);
+					if (SbieApi_QueryProcess((IntPtr)System.Diagnostics.Process.GetCurrentProcess().Id, box, img, sid, IntPtr.Zero) == 0)
+					{
+						string b = box.ToString();
+						if (b.Length == 5 && b.StartsWith("Raft") && b[4] >= '3' && b[4] <= '9') boxSlot = b.Substring(4);
+					}
+				}
+				catch { }
+				return boxSlot;
+			}
+		}
 
 		static IEnumerator PollCommandFile()
 		{
