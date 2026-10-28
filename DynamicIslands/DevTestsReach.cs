@@ -169,6 +169,9 @@ namespace DynamicIslands
 					}
 					Log(rays.ToString());
 					Log("  grid: blocked .45 " + Blocked(a, b, Mathf.Max(a.y, b.y) + 0.45f) + " 1.0 " + Blocked(a, b, Mathf.Max(a.y, b.y) + 1.0f) + " 1.55 " + Blocked(a, b, Mathf.Max(a.y, b.y) + 1.55f) + " swept " + Swept(a, b, Mathf.Max(a.y, b.y)));
+					// (what rules a spot in or out of the grid at each end: a floor stands, a swimmer's 0.4 m sphere is free, not inside a rock)
+					foreach (Vector3 q in new[] { a, b })
+						Log("  grid at " + (q - e.Position).ToString("F1") + ": stands " + Stands(q) + ", inside solid " + InsideSolid(q + Vector3.up * 0.5f) + ", swim sphere free " + !Physics.CheckSphere(q + Vector3.up * 0.9f, 0.4f, reachMask, QueryTriggerInteraction.Ignore));
 					{ string why; bool sw = SlopeWalk(a, b, out why); Log("  grid: slope walk " + sw + " (" + why + ")"); }
 				}
 				// (a and b are feet, as the walker's reports give them; Raft's player transform sits 0.85 m over the feet)
@@ -176,7 +179,7 @@ namespace DynamicIslands
 				ReachFree(pl);
 				for (int f = 0; f < 15; f++) { MmHold(pl, false); yield return null; }
 				foreach (Collider c in Physics.OverlapSphere(ReachFeet(pl) + Vector3.up * 0.3f, 1.2f, ~0, QueryTriggerInteraction.Ignore))
-					if (!c.transform.IsChildOf(pl.transform)) Log("  near: " + BlockerName(c) + " layer " + LayerMask.LayerToName(c.gameObject.layer) + " " + c.GetType().Name + " y " + (c.bounds.min.y - e.Position.y).ToString("F2") + "-" + (c.bounds.max.y - e.Position.y).ToString("F2"));
+					if (!c.transform.IsChildOf(pl.transform)) Log("  near: " + BlockerName(c) + " layer " + LayerMask.LayerToName(c.gameObject.layer) + " " + c.GetType().Name + " bounds " + (c.bounds.min - e.Position).ToString("F2") + " to " + (c.bounds.max - e.Position).ToString("F2") + (reachMask != 0 && (reachMask & (1 << c.gameObject.layer)) == 0 ? " (not in the grid's mask)" : ""));
 				float next = 0f, still = 0f; bool jumped = false; Vector3 last = ReachFeet(pl);
 				Vector3 dir = b - a; dir.y = 0f;
 				for (float t = 0f; t < 8f; t += Time.deltaTime)
@@ -329,6 +332,20 @@ namespace DynamicIslands
 
 		static int reachMask;
 		static bool reachSky, reachWalkIn;
+		// (the grid, the targets' boxes and the walks follow a world shift: a walk far off shifts the world (0 0 1000) and the
+		// spots made before it stood ~1000 m off the island after it (box runs, Colossus body PQ11 10-28))
+		static ReachGrid shiftGrid;
+		static List<ReachTarget> shiftTargets;
+				static void ReachFollowShift(Vector3 s)
+		{
+			ReachGrid g = shiftGrid;
+			if (g == null) return;
+			for (int i = 0; i < g.Pos.Count; i++) g.Pos[i] -= s;
+			g.X0 -= s.x; g.Z0 -= s.z; g.Anchor -= s;
+			foreach (int k in g.LadderB.Keys.ToList()) { Bounds b = g.LadderB[k]; b.center -= s; g.LadderB[k] = b; }
+			if (shiftTargets != null) foreach (ReachTarget t in shiftTargets) t.B.center -= s;
+			Log("[REACH] world shift " + s + " followed");
+		}
 
 		/// <summary>The reach-and-escape measure of one island in the world, as it stands now. done(n): problems found.</summary>
 		static IEnumerator ReachAnalyze(IslandWorldState.Entry e, Vector2 offset, string state, Action<int> done)
@@ -352,6 +369,25 @@ namespace DynamicIslands
 				}
 				if (opened + stuck > 0) report.Add("REACH " + name + " | doors | - | NOTE " + opened + " plain door(s) opened as a player would" + (stuck > 0 ? ", " + stuck + " would not open (not placed: a player can't open them either)" : ""));
 				if (opened > 0) yield return new WaitForSeconds(1.5f);
+			}
+			// (an object a player uses that hides itself (on.use ... hide| with no name, or its own name): Biome Seven's airlock
+			// hatch - a player uses it and it is gone; the grid saw it as a lid on the airlock, PQ11 10-28. A gated one (if./else.)
+			// stays: only the play's own steps open it)
+			{
+				int gone = 0;
+				foreach (IslandObjectRef ir in e.Root.GetComponentsInChildren<IslandObjectRef>(false))
+				{
+					string onUse;
+					if (!ir.Props.TryGetValue("on.use", out onUse) || onUse.IndexOf("hide", StringComparison.Ordinal) < 0) continue;
+					if (ir.Props.Keys.Any(k => k.StartsWith("if.") || k.StartsWith("else."))) continue;
+					string own = ir.Name ?? "";
+					bool self = ObjAction.ParseLines(onUse.Replace("\\n", "\n")).Any(a => a.Verb == "hide"
+						&& (a.Target.Length == 0 || a.Target.Equals("self", StringComparison.OrdinalIgnoreCase) || (own.Length > 0 && a.Target == own)));
+					if (!self) continue;
+					ir.gameObject.SetActive(false);
+					gone++;
+				}
+				if (gone > 0) report.Add("REACH " + name + " | used-away | - | NOTE " + gone + " object(s) a player uses away (a hatch that hides itself) taken away as a player would");
 			}
 			Physics.SyncTransforms();
 			// (what the grid looks through: the players and the animals - they move about)
@@ -380,6 +416,10 @@ namespace DynamicIslands
 			Bounds ib;
 			if (!ReachBounds(e.Root, out ib)) { Log("REACH " + name + " | - | - | FAIL no colliders"); done(1); yield break; }
 			var g = new ReachGrid { Anchor = e.Position };
+			// (Raft drops the event's handlers with each world: hooked once, the next world's shift went unfollowed, PQ11 10-28)
+			Action<Vector3> follow = ReachFollowShift;
+			if (WorldShiftManager.OnWorldShift == null || Array.IndexOf(WorldShiftManager.OnWorldShift.GetInvocationList(), follow) < 0) WorldShiftManager.OnWorldShift += follow;
+			shiftGrid = g; shiftTargets = null;
 			float margin = 10f;
 			float w = ib.size.x + 2f * margin, d = ib.size.z + 2f * margin;
 			g.Cell = Mathf.Max(0.5f, Mathf.Sqrt(w * d / 300000f));
@@ -655,15 +695,28 @@ namespace DynamicIslands
 
 			// the targets: what the quests point at, and everything a player uses
 			List<ReachTarget> targets = ReachTargets(e);
+			shiftTargets = targets;
 			ReachStepNames(e, targets, report, ref problems);
 			int hbT = 0;
+			// (every target's use spots and place first, while the grid, the targets and the world agree: a walk that takes the
+			// player far off sets off a world shift (0 0 1000), and every target after it came out ~1000 m off with "no spot to
+			// use it from" - the grid's spots and the targets' bounds are from before the shift, the colliders the rays hit after it.
+			// Gannet Cliff / Foundation Piles PQ11 10-28)
+			var useOf = new Dictionary<ReachTarget, List<int>>();
+			var relOf = new Dictionary<ReachTarget, Vector3>();
+			foreach (ReachTarget t in targets)
+			{
+				var u = new List<int>();
+				foreach (int k in NearNodes(g, t.B, 3.2f))
+					if (CanUseFrom(g, k, t)) u.Add(k);
+				useOf[t] = u;
+				relOf[t] = Rel(e, t.B.center, offset);
+			}
 			foreach (ReachTarget t in targets)
 			{
 				hbWhat = "reach " + name; hbStep = hbT++; hbProg++;
-				var use = new List<int>();
-				foreach (int k in NearNodes(g, t.B, 3.2f))
-					if (CanUseFrom(g, k, t)) use.Add(k);
-				Vector3 tr = Rel(e, t.B.center, offset);
+				var use = useOf[t];
+				Vector3 tr = relOf[t];
 				string head = "REACH " + name + " | " + t.Kind + " '" + t.Name + "' at " + tr.x.ToString("F1") + " " + tr.z.ToString("F1") + " h=" + tr.y.ToString("F1") + " | " + (t.Steps.Length > 0 ? t.Steps : "-") + " | ";
 				// (a cage the play opened is hidden (Survivors.cs: open = gone for everyone), its model off and its bounds a 0.3 m box
 				// at its root - "no spot" for Teo's and Oda's cages after their quests freed them, PQ11 10-28: not checkable now)
@@ -745,6 +798,7 @@ namespace DynamicIslands
 			// (the grid freed before the next island: Raft's heap is reused, not grown)
 			g.Pos = null; g.Kind = null; g.Out = null; g.In = null; g.Col = null; g.Vox = null; fwd = null; back = null; parent = null; backParent = null; trapped = null; seen = null;
 			GC.Collect();
+			shiftGrid = null; shiftTargets = null;
 			done(problems);
 		}
 
@@ -808,11 +862,14 @@ namespace DynamicIslands
 		/// An overhang's underside faces down and is no hit.</summary>
 		static bool InsideSolid(Vector3 p)
 		{
-			// (under a terrain: a heightfield has no inside to hit)
+			// (under a terrain: a heightfield has no inside to hit - unless p is in a cave of the island's own pieces under it, a
+			// ceiling facing down over p and a floor facing up under it, both below the terrain: Temperance tunnels under a reef
+			// (Drowned Labyrinth: every tunnel spot was ruled out, 'no spot' for all its targets, PQ11 10-28))
 			foreach (Terrain t in Terrain.activeTerrains)
 			{
 				Vector3 tp = t.transform.position, ts = t.terrainData.size;
-				if (p.x >= tp.x && p.x <= tp.x + ts.x && p.z >= tp.z && p.z <= tp.z + ts.z && tp.y + t.SampleHeight(p) > p.y) return true;
+				if (p.x >= tp.x && p.x <= tp.x + ts.x && p.z >= tp.z && p.z <= tp.z + ts.z && tp.y + t.SampleHeight(p) > p.y)
+					return !CaveUnder(p, tp.y + t.SampleHeight(p));
 			}
 			bool was = Physics.queriesHitBackfaces;
 			Physics.queriesHitBackfaces = true;
@@ -822,6 +879,18 @@ namespace DynamicIslands
 				return Physics.Raycast(p, Vector3.up, out h, 40f, reachMask, QueryTriggerInteraction.Ignore) && h.normal.y > 0.1f;
 			}
 			finally { Physics.queriesHitBackfaces = was; }
+		}
+
+		/// <summary>p (under a terrain whose surface is at ground) lies in a hollow of the island's own pieces: the first thing over it
+		/// is a ceiling facing down below the ground and the first thing under it a floor facing up - a tunnel, not the earth.
+		/// (Front faces only: from inside a rock or a sunk boulder's skin a ray meets no face, so solid ground stays solid.)</summary>
+		static bool CaveUnder(Vector3 p, float ground)
+		{
+			RaycastHit up, down;
+			if (!Physics.Raycast(p, Vector3.up, out up, ground - p.y, reachMask, QueryTriggerInteraction.Ignore)) return false;
+			if (up.collider is TerrainCollider || up.normal.y > -0.3f) return false;
+			if (!Physics.Raycast(p, Vector3.down, out down, 30f, reachMask, QueryTriggerInteraction.Ignore)) return false;
+			return !(down.collider is TerrainCollider) && down.normal.y > 0.3f;
 		}
 
 		static bool Blocked(Vector3 a, Vector3 b, float y)
@@ -930,7 +999,12 @@ namespace DynamicIslands
 			const float r = 0.2f;
 			float dist = from + 0.6f - to - r - 0.25f;
 			RaycastHit h;
-			return dist > 0f && Physics.SphereCast(new Vector3(at.x, from + 0.6f, at.z), r, Vector3.down, out h, dist, reachMask, QueryTriggerInteraction.Ignore);
+			// (back faces too: a cave's skin faces inwards, so from above its roof is a back face - Biome Seven's overflow cave:
+			// the grid dropped through the seamount's skin into the cave, the walk stood on it, PQ11 10-28)
+			bool was = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try { return dist > 0f && Physics.SphereCast(new Vector3(at.x, from + 0.6f, at.z), r, Vector3.down, out h, dist, reachMask, QueryTriggerInteraction.Ignore); }
+			finally { Physics.queriesHitBackfaces = was; }
 		}
 
 		static void Flood(ReachGrid g, List<int> starts, List<List<int>> edges, bool[] seen, int[] parent)
@@ -1137,6 +1211,14 @@ namespace DynamicIslands
 				IslandObjectRef r = n.GetComponentInParent<IslandObjectRef>();
 				Transform root = r != null ? r.transform : n.transform;
 				if (!done.Add(root)) continue;
+				// (some notes come out ~1000 m off their island after a world shift, PQ11 10-28: the chain up to the island says which part stayed behind)
+				if ((root.position - e.Position).sqrMagnitude > 250000f)
+				{
+					string chain = "";
+					for (Transform t = root; t != null && t != e.Root.transform.parent; t = t.parent)
+						chain += " < " + t.name + " " + (t.position - e.Position).ToString("F0") + " [" + string.Join(",", t.GetComponents<Component>().Select(c => c.GetType().Name).ToArray()) + "]";
+					Log("  far note '" + n.Title + "':" + chain + " | shifted by " + IslandWorldState.ShiftedBy.ToString("F0"));
+				}
 				list.Add(new ReachTarget { Kind = "note", Name = n.Title ?? "", Root = root, B = boundsOf(root) });
 			}
 			foreach (IslandObjectRef r in e.Root.GetComponentsInChildren<IslandObjectRef>(false))
@@ -1173,7 +1255,8 @@ namespace DynamicIslands
 					switch (st.Type)
 					{
 						case "reach": hit = targets.Where(t => t.Zone && string.Equals(t.Name, tg, StringComparison.OrdinalIgnoreCase)).ToList(); break;
-						case "read": hit = targets.Where(t => t.Kind == "note" && t.Name.IndexOf(tg, StringComparison.OrdinalIgnoreCase) >= 0).ToList(); break;
+						// (a note on a chest is listed as the chest, under the note's title - Canopy Stair's pilot's locker, PQ11 10-28)
+						case "read": hit = targets.Where(t => (t.Kind == "note" || t.Kind == "chest") && t.Name.IndexOf(tg, StringComparison.OrdinalIgnoreCase) >= 0).ToList(); break;
 						case "open": hit = targets.Where(t => t.Kind == "chest" && (tg.Length == 0 || string.Equals(t.Name, tg, StringComparison.OrdinalIgnoreCase))).ToList(); break;
 						case "talk": hit = targets.Where(t => t.Kind == "islander" && string.Equals(t.Name, tg, StringComparison.OrdinalIgnoreCase)).ToList(); if (hit.Count == 0) hit = targets.Where(t => t.Kind == "islander").ToList(); break;
 						case "collect":
@@ -1543,7 +1626,7 @@ namespace DynamicIslands
 					bool up = nextY > ReachFeet(pl).y + 0.3f;
 					float held = 0f, since = 0f, bestY = ReachFeet(pl).y, walkSign = 1f;
 					Vector3 lfront; bool hasF = g.LadderF.TryGetValue(k, out lfront), atFront = false;
-					int flips = 0, sweeps = 0;
+					int flips = 0, sweeps = 0; bool otherSide = false; float bestH = float.MaxValue;
 					float sweepT = 0f, sweepYaw = 0f;
 					for (int n = 0; n < 6000; n++)
 					{
@@ -1563,6 +1646,8 @@ namespace DynamicIslands
 						if (up && hasF && !climbing && held <= 0f && sweepT <= 0f)
 						{
 							Vector3 ds = lc + lfront * 0.55f - p; ds.y = 0f;
+							// (still walking round to that side: getting nearer counts as progress)
+							if (!atFront && ds.magnitude < bestH - 0.1f) { bestH = ds.magnitude; since = 0f; }
 							if (!atFront && ds.sqrMagnitude > 0.04f) d = ds; else { atFront = true; d = -lfront; }
 						}
 						// (a player turns to face the ladder; the walker stood on the ladder's spot facing along the wall and Raft never
@@ -1588,6 +1673,9 @@ namespace DynamicIslands
 						{
 							if (flips < 1 && climbing) { walkSign = -walkSign; flips++; since = 0f; continue; }
 							if (held <= 0f && !climbing && sweeps < 4) { sweepYaw = sweeps * 90f; sweeps++; sweepT = 0.35f; since = 1.2f; continue; }
+							// (a player who can't take hold from one side tries the other: the dp_tower ladders took hold only from their back,
+							// the walker came from the front, walked through them and on 11 m - PQ11 10-28)
+							if (held <= 0f && !climbing && hasF && !otherSide) { otherSide = true; lfront = -lfront; atFront = false; sweeps = 0; since = 0f; bestH = float.MaxValue; continue; }
 							mmWalk = 0f;
 							result("stuck at the ladder at " + (p - e.Position).ToString("F1") + " going " + (up ? "up" : "down") + " to h=" + (nextY - e.Position.y).ToString("F1") +
 								(held > 0f ? " (Raft held the ladder " + held.ToString("F1") + " s)" : " (Raft never took hold of it)") + " (in the way: " + ReachBlocker(pl, up ? Vector3.up : Vector3.down) + ")");
@@ -1607,6 +1695,8 @@ namespace DynamicIslands
 				float hopFrom = float.NaN, hopPeak = 0f;
 				for (int n = 0; ; n++)
 				{
+					// (aimed afresh each frame: a world shift mid-step moved the island but left the aim 1000 m off, PQ11 10-28)
+					aim = W(k);
 					Vector3 p = ReachFeet(pl);
 					Vector3 d = aim - p;
 					Vector3 flat = new Vector3(d.x, 0f, d.z);
