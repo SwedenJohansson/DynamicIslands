@@ -334,6 +334,22 @@ namespace DynamicIslands
 			string name = e.HostName;
 			var report = new List<string>();
 			int problems = 0;
+			// (a player opens a plain door with E: Raft's own doors (Door) with no use check of the island's on them are opened
+			// first - every drowned house's back room failed behind its closed Block_Wall_Door, PQ11 10-28; a gate or key door
+			// (an if./else./beh. prop, a ready-made key door) stays as the play left it)
+			{
+				int opened = 0, stuck = 0;
+				foreach (Door dr in e.Root.GetComponentsInChildren<Door>(false))
+				{
+					if (dr.open) continue;
+					IslandObjectRef ir = dr.GetComponentInParent<IslandObjectRef>();
+					if (ir != null && (KeycardDoor.Is(ir.ObjectName) || ir.Props.Keys.Any(k => k.StartsWith("if.") || k.StartsWith("else.") || k.StartsWith("beh.")))) continue;
+					dr.Open();
+					if (dr.open) opened++; else stuck++;
+				}
+				if (opened + stuck > 0) report.Add("REACH " + name + " | doors | - | NOTE " + opened + " plain door(s) opened as a player would" + (stuck > 0 ? ", " + stuck + " would not open (not placed: a player can't open them either)" : ""));
+				if (opened > 0) yield return new WaitForSeconds(1.5f);
+			}
 			Physics.SyncTransforms();
 			// (what the grid looks through: the players and the animals - they move about)
 			int mask = ~0;
