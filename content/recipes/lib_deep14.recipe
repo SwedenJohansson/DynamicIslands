@@ -43,7 +43,10 @@ for j 0 2
 # floor edge on the hole's south side, facing into the hole: the climber steps forward onto the landing. The holes
 # are all in the middle of the north row, one straight ladder up: in the corners the corner pillar left no room
 # to stand at the ladder - the walker never took hold, PQ11 10-28 (3))
-place Block_Ladder $al at 2.25 3.2 y={7.2*($k-1)+2.42*$j} yaw=0
+# (REACH 10-28 (4): at yaw 0 the walker in the hole walked through it and never took hold on four islands (engine_court,
+# outer_breakwater, beacon_saddle, the_command_well): a Block_Ladder is climbed from its back, looking along its
+# forward (the zipdeck ladder; the old yaw 180 ladders here) - turned 180 so the climber stands in the hole)
+place Block_Ladder $al at 2.25 3.2 y={7.2*($k-1)+2.42*$j} yaw=180
 next
 next
 for i 0 2
