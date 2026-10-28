@@ -244,7 +244,8 @@ call lp_hidden x=61 z=-15.4 al=qg_lampchest
 place Creature_Chicken qg_hens at 68 -14 ground
 prop qg_hens creature.count=3
 call ar_plane x=-62 z=-30 h=3 yaw=40 al=qg_plane crate=qg_planecrate
-place Note_Paper qg_pilot at -63.78 -25.9 ground y=0.1 drop yaw=70
+# (REACH 10-28: under the wing nobody could get to it - the walker stopped 3.4 m off: moved out by the cockpit side)
+place Note_Paper qg_pilot at -66.3 -26.8 ground y=0.1 drop yaw=70
 call hw_zone x=-62 z=-30 al=qg_planez id=qg_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
 # JUMP qg pad=3 at=10 80
 push at 10 80

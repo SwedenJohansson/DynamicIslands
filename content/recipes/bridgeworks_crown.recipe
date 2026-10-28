@@ -30,6 +30,13 @@ push at -9.3 31.1
 # --- Terrain: the key levelled; the way out to the roofs and down to the piles cleared --------------------------------
 brush flatten at 0 -2 r=12 s=20 frames=300 h=2
 brush flatten at -27 14 r=4 s=20 frames=150 h=-6
+# (REACH 10-28: the pile stair (ramp, below) lay buried in the key's sand - the pit a 4 m well with no way out; a cut
+# along the stair, just under its planks)
+brush flatten at -19.5 7.8 r=2 s=20 frames=150 h=1.8
+brush flatten at -21 9 r=2 s=20 frames=150 h=1.2
+brush flatten at -22.5 10.2 r=2 s=20 frames=150 h=0.2
+brush flatten at -24 11.3 r=2 s=20 frames=150 h=-0.8
+brush flatten at -25.5 12.5 r=2 s=20 frames=150 h=-1.8
 # (PQ11 10-27: the RESIZE buried the roofs and the council house in sand - dug back down to a low sand flat 0.8 m under the roof tops; dug to -1.2 they stood 2.3 m over the sea floor, too high to climb)
 brush flatten at 0 33 r=21 s=20 frames=600 h=0.3
 brush smooth at 0 33 r=25 s=5 frames=70
