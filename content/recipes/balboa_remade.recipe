@@ -102,6 +102,9 @@ call rr_ruin x=-6 z=-80 h=2.5 yaw=0 w=3 d=2 al=poachershut
 place Balboa_DecorationPrefabBase_SimpleTent - at 2 -88 h=2.5 sit yaw=200
 place campfire_1 - at -2 -90 ground sit
 place Loot_ChestSmall poacherschest at -12 -88 ground sit yaw=40
+# (REACH 10-29: the boat's crate stood on a bank 5 m over the sea floor west of it - two steps up out of the water)
+brush flatten from 97.5 -35 to 99 -35.2 r=1.6 s=20 frames=60 h=-0.6
+brush flatten from 99.6 -35.3 to 100.8 -35.5 r=1.6 s=20 frames=60 h=0.4
 call hw_wreck x=104 z=-30 h=1.5 yaw=70 obj=BoatStranded al=poacherboat crate=boatcrate r=8
 # (its mouth turned inland: facing the sea it opened over 6 m of water with no way up, PQ11 10-27)
 call ar_cave x=-40 z=-84 h=2.5 yaw=0 al=caverock chest=cavebox

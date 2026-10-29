@@ -36,8 +36,9 @@ call ar_plants_snowy x=-30 z=-22 r=24 seed=12601
 place UT_ElectricityIsland_Crane01 dockcrane at -29 -23 h=20 sit scale=0.7 yaw=50
 prop dockcrane tint.color=#5a4a3e
 prop dockcrane tint.amount=0.45
-call fz_tower x=-34 z=-18 h=20 n=5 al=cranetower chest=cabchest zal=cabzone zid=crane_cab msg="The crane's cab. Below, the whole bow - and the cargo hatch, white with ice. The hook's lever is by your hand."
-place UT_JumpPuzzle_LiftMechanism_Lever cranelever at -33.3 -19.4 h=32.15 sit yaw=180
+# (REACH 10-28: the tower stands on the mount's slope (ground ~13.3), its first ladder started at 20 - nothing to take hold of from below: 8 ladders from 13.16, the cab 0.4 m higher)
+call fz_tower x=-34 z=-18 h=13.16 n=8 al=cranetower chest=cabchest zal=cabzone zid=crane_cab msg="The crane's cab. Below, the whole bow - and the cargo hatch, white with ice. The hook's lever is by your hand."
+place UT_JumpPuzzle_LiftMechanism_Lever cranelever at -33.3 -19.4 h=32.57 sit yaw=180
 call fz_zone x=-20 z=-10 al=cranefoot id=crane_foot r=5 msg="The foot of the Crane Ridge. The old dock crane leans on its top; a ladder tower climbs to its cab."
 # the hummock ridge (north-east)
 call ar_ridge x1=32 z1=30 x2=62 z2=20 h=9 top=5 r=7
@@ -61,6 +62,12 @@ brush flatten from -4.5 -24 to -4.5 -18 r=2.5 s=20 frames=60 h=2
 brush flatten from -4.5 -18 to -4.5 -12 r=2.5 s=20 frames=60 h=3
 brush flatten from -4.5 -12 to -4.5 -4 r=2.5 s=20 frames=60 h=4
 brush flatten at 34 -8 r=7 s=20 frames=200 h=1.5
+# (REACH 10-29: the crane's ice and the whalers' cave mouth stood too high over the sea - steps up from the water)
+brush flatten from 27 -14 to 29 -12.5 r=2 s=20 frames=60 h=0.3
+brush flatten from 29.5 -12 to 31 -10.8 r=2 s=20 frames=60 h=0.9
+brush flatten from 40 -32 to 40 -35 r=2 s=20 frames=60 h=0.3
+brush flatten from 40 -36 to 40 -38 r=2 s=20 frames=60 h=1.2
+brush flatten from 40 -39 to 40 -41 r=2 s=20 frames=60 h=2.1
 brush flatten at 13.7 39.7 r=5 s=8 frames=40
 origin
 clear at 13.7 39.7 r=6
@@ -133,7 +140,10 @@ call rt_railing y=0 fm=none
 place Zone_Trigger foredeck at -3 0 y=1
 place QuestItemPickup_Tangaroa_Token - at -1 3.5 y=0.05
 pop
-call ladders x=9.75 z=-0.3 h=4 n=2 yaw=180
+# (REACH 10-28: two ladders from 4 m topped out at 8.8, 1.8 m over the foredeck (7) - no floor to step off: one ladder 1.4x tall, top ~7.4)
+# (REACH 10-29: yaw 0 faced the hull - no room to take hold; turned to face the ridge)
+place Block_Ladder - at 9.75 -0.3 h=4 yaw=180 sy=1.4
+place Block_Pillar_Wood - at 9.75 -0.1 h=4 sy=1.4
 prop whalehull tint.color=#5a2a22
 prop whalehull tint.amount=0.55
 
@@ -207,7 +217,7 @@ prop cranelever else.use=message||The hook is down. The cargo hatch is clear.
 note cabchest Crane cab locker | The crane driver's locker: a thermos, his tools, a pay packet.
 loot cabchest MetalIngot*2;Bolt*3;TradeToken*2
 prop cabchest loot.refill=0
-place Note_Paper cabnote at -34.7 -21.5 h=32.2 drop yaw=150
+place Note_Paper cabnote at -34.7 -21.5 h=33.0 drop yaw=150
 note cabnote Crane driver's last shift | CRANE LOG - A. MOEN, DRIVER\n\nLast shift. The old dock crane was here before the Whale and will be here after her, sat on its ridge like a heron. Eleven winters I have driven it, and I never once thought I would be the last man aboard who could.\nThe stern went in the night. The crew came forward over the ice, all but the captain. She stayed aft with the boilers and the hand key and would not come. Lunde says she is stubborn. Lunde says that about the weather.\nThe cargo hatch is iced shut. The hook goes where you point it; the lever's brake is stiff, lean on it. I am too old for the ladder twice in one wind.\nSomebody go down the hatch to the stern and fetch her up. She is down there with the engines, still tapping.
 note whaletally Whalers' tally | WHALERS' TALLY (cut in the cave wall)\n\nNine seasons. Forty-one whales. Old Gunnar cut a mark for every whale and a cross for every man we lost, and there are only two crosses, which is a better tally than any crew on this coast.\nThe Iron Whale took the bay in the tenth season. She broke the ice for good and the whales went with the ice. Her captain - Brask, a woman, polite as a bishop - paid us for the pots we could no longer use. We drank most of it.\nWe left the pots here in the cave. Our lifeboat - her lifeboat, she gave it us - went down off the ice edge in the first storm. Its locker had the good knives. Somebody braver than us can dive for them.
 note whalecavechest Whalers' pots | The whalers' pots, rimed with old fat: hooks, a harpoon head, rope.

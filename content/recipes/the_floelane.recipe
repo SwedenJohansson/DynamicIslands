@@ -31,6 +31,11 @@ brush flatten at 0 6 r=8 s=20 frames=200 h=0.5
 brush flatten at 0 30 r=8 s=20 frames=200 h=0.5
 brush flatten from 0 -16 to 0 -2 r=2.2 s=20 frames=120 h=-0.6
 brush flatten at 38.3 7.4 r=5 s=8 frames=40
+# (REACH 10-29: the bear den's mouth and the sealers' hut stood 2 m over the lead - steps up out of the water)
+brush flatten from -60.5 -9.5 to -61 -11.5 r=2 s=20 frames=60 h=0.3
+brush flatten from -61.2 -12.5 to -61.8 -15 r=2 s=20 frames=60 h=1.2
+brush flatten from 43.5 -52.5 to 44.5 -50.5 r=2 s=20 frames=60 h=0.3
+brush flatten from 45 -49.5 to 45.8 -47.5 r=2 s=20 frames=60 h=1.2
 origin
 clear at 38.3 7.4 r=6
 clear at 0 -24 r=8
@@ -70,8 +75,9 @@ place TP_SnowDrift03 - at -17 -9 ground sit yaw=60
 # --- The hull floe and the crushed sealing boat: the ladder up her side, the engine room, the wheelhouse, the bell ----
 place Zone_Trigger hullzone at 0 9 ground y=1
 place BoatStranded sealer at 0 18 h=1.5 yaw=90 roll=-8
-place LandmarkLadder_6m sealer at -2.5 12.8 ground yaw=0
-place LandmarkLadder_6m sealer at 2.5 23.2 ground yaw=180
+# (REACH 10-29: the two ladders topped out 1 m under and 2.5 m over the tilted deck - no floor to step off: set by height)
+place LandmarkLadder_6m sealer at -2.5 12.8 h=-2.3 yaw=0
+place LandmarkLadder_6m sealer at 2.5 23.2 h=-1.5 yaw=180
 place Loot_ChestLarge engineroom at -4.5 18 h=9 drop yaw=90
 place Placeable_SteeringWheel - at 4.5 18 h=9 drop yaw=90
 place Loot_Chest wheelhouse at 3 19 h=9 drop yaw=270
