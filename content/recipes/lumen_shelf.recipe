@@ -179,6 +179,15 @@ call sk_reef x=-21.4 z=-52.8 r=6 seed=24520
 call sk_reef x=-26 z=66 r=5 seed=24530
 
 # the summit: the survey rock - the tower (ladder inside), the locker, the note, the zone
+# (REACH 10-29: the top's south rim rose 2.7 m in 2 (24.6 at z -57, 27.3 at -59) - climbers stalled at 23.7: a ramp of
+# flattened steps up the south face to the tower's door, 0.6 m a step)
+for k 0 5 1
+brush flatten at -6 {-54+(-1)*$k} r=1.8 s=20 frames=200 h={24.3+0.6*$k}
+next
+# (REACH 10-29 (2): walkers come up the north side (stalled at 23.7, z -72.5) - steps there too (24.2 at z -72, 27 at -71))
+for k 0 4 1
+brush flatten at -6 {-75+$k} r=1.8 s=20 frames=200 h={23.2+0.8*$k}
+next
 call ladtower x=-6 z=-66 h0=27.5 lv=3 a=lutower
 place Loot_ChestSmall lulocker at -6.75 -65.25 h=34.98 sit yaw=180
 place Note_Paper lusumnote at -6.75 -66.75 h=35.08 drop yaw=20
