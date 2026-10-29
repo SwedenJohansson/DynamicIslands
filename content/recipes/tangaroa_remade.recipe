@@ -21,7 +21,6 @@ include lib_raft_remade
 new
 # (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
 randomize Tangaroa like Seed=7105 Radius=52 Height=16 Cliffs=0.1 BeachWidth=0.6 Hostiles=0 Friendly=0 SeaLife=0.3 Trees=0.35 Bushes=0.35 Rocks=0.55 SeaRocks=0.6 SeaFinds=0.8
-
 # --- Terrain: the square on the hilltop (12.5 m), the harbour front along the east shore (2.2 m), the road between them
 brush flatten from -6 2 to -6 12 r=13 s=20 frames=60 h=12.5
 brush flatten from -5 20 to -5 24.5 r=6.5 s=20 frames=50 h=12.4
@@ -52,6 +51,50 @@ brush flatten from 49 -17.6 to 83 -17.6 r=2 s=20 frames=120 h=1.85
 # 'a step too high'; the land under the pier just under its plates)
 brush flatten from 47 -3 to 58 -3 r=3.5 s=20 frames=60 h=1.7
 origin
+# (the land made like Tangaroa is a flat 8.9 m table out to r 82 with a 70 m wall into the sea all round: the new land's
+# lobes sat in pits cut into it, the harbour was a lake inside its rim, and the sea-ring cameras stood inside the land -
+# reach audit 10-29. Its outer ring brought down: 3 m land to r 75, a beach at r 82, the sea floor beyond; off the
+# harbour (east) sea only. The core - the hill the city stands on - keeps its height. After the origin is set - the
+# land lowered off the harbour moves the land centre, and an origin taken after it moved the pump house and the deck's
+# railings a metre into the land - and before the set-pieces' objects, so theirs win.)
+# (the ring's angle is ra, not a: rt_storey's walls take $a as their alias - with a set here the pump house's and
+# Chi's walls came out wrong and buried)
+for k 0 29 1
+set ra {40+$k*10}
+brush flatten at {66*cos($ra)} {66*sin($ra)} r=9 s=20 frames=200 h=3
+brush flatten at {74*cos($ra)} {74*sin($ra)} r=9 s=20 frames=200 h=2.4
+brush flatten at {82*cos($ra)} {82*sin($ra)} r=9 s=20 frames=200 h=0.3
+brush flatten at {90*cos($ra)} {90*sin($ra)} r=9 s=20 frames=250 h=-5
+brush flatten at {98*cos($ra)} {98*sin($ra)} r=9 s=20 frames=300 h=-14
+next
+for k 0 8 1
+set ra {-40+$k*10}
+brush flatten at {76*cos($ra)} {76*sin($ra)} r=9 s=20 frames=250 h=-5
+brush flatten at {86*cos($ra)} {86*sin($ra)} r=9 s=20 frames=250 h=-6
+brush flatten at {96*cos($ra)} {96*sin($ra)} r=9 s=20 frames=300 h=-14
+next
+# (not off the harbour - east: a smooth there raised the land under the pier and the harbour front)
+for k 5 31 1
+set ra {$k*10}
+brush smooth at {55*cos($ra)} {55*sin($ra)} r=9 s=4 frames=30
+brush smooth at {86*cos($ra)} {86*sin($ra)} r=10 s=4 frames=30
+clear at {56*cos($ra)} {56*sin($ra)} r=10
+clear at {70*cos($ra)} {70*sin($ra)} r=10
+clear at {84*cos($ra)} {84*sin($ra)} r=10
+clear at {98*cos($ra)} {98*sin($ra)} r=10
+next
+# (the ring painted, not the whole island: one auto brush over it all raised the harbour front and buried the pump house's
+# walls and floor, the play's walker stuck at its door - reach audit 10-29)
+for k 4 32 1
+set ra {$k*10}
+brush auto at {74*cos($ra)} {74*sin($ra)} r=12 s=10 frames=25
+next
+
+# (the deck's north edge by the statue's ladder: the land rose under its last plate and railings - the ladder had no floor
+# at its top - reach audit 10-29)
+brush flatten from 56 7 to 62 13 r=5 s=20 frames=80 h=-5
+# (and the sea floor where the old statue and its strongbox lie, 7 m down: the ring left the box on a ledge - 10-29)
+brush flatten from 53 12 to 59 17 r=5 s=20 frames=80 h=-5
 clear at -6 7 r=16
 clear at 33 -2 r=14
 clear at 16 9 r=7
@@ -93,7 +136,8 @@ for fz -0.5 8 1.5
 place RT_Fence - at 53 $fz h=1.96 yaw=90
 next
 place LandmarkLadder_6m northladder at 58.2 9.62 h=-4.35 yaw=180
-place LandmarkLadder_6m eastladder at 83.12 -12.2 h=-4.35 yaw=-90
+# (half a metre off the deck's edge: at 83.12 the climber hung against the deck's plate and stuck going down - 10-29)
+place LandmarkLadder_6m eastladder at 83.6 -12.2 h=-4.35 yaw=-90
 push at 80 2 h=1.96
 call rt_storey floor=none l2=RT_WallDoor1 f1=RT_WallWindow1 f2=RT_WallWindow1 b1=RT_WallWindow2 r2=RT_WallWindow1
 place RT_Floor - at 0 4.5 y=3.05
@@ -114,7 +158,8 @@ place RestaSunshadeGround - at 74 -11 h=1.96
 place Tangaroa_OutdoorFurniture_Table - at 74 -11 h=1.96
 place Tangaroa_OutdoorFurniture_Chair - at 73 -11.4 h=1.96 yaw=90
 place Tangaroa_OutdoorFurniture_Chair - at 75 -10.6 h=1.96 yaw=-90
-place RT_PlasticBoat - at 86 -13 h=-0.3 yaw=0
+# (moored a little up the deck from the east ladder: at its foot it barred the way from the ladder to the sea - 10-29)
+place RT_PlasticBoat - at 87.5 -4 h=-0.3 yaw=0
 place Crate_Big_01 - at 78 -6.5 h=1.96 yaw=5
 place Crate_Big_02 - at 79.6 -8 h=1.96 yaw=-25
 place "Box Big" - at 76.6 -7.4 h=1.96 yaw=10
@@ -218,6 +263,8 @@ call rr_land x1=-6 z1=40 x2=-12 z2=50 h=3 r=9
 # A Lookout Hill (west): summit 20 m, base r 20, the trail from its east foot, the city's lookout mast on top
 call hw_mount x=-62 z=4 b=20 h=20
 call hw_trail x=-62 z=4 b=20 h=20 a0=80 turn=300 n=26 h0=3
+# (a step on the trail where the ring met the hill's foot - reach audit 10-29)
+brush smooth at -57.4 -17 r=3.5 s=8 frames=40
 brush flatten at -62 4 r=7 s=20 frames=400 h=20
 call hw_mast x=-62 z=4 h0=20 lv=5 a=lookoutmast chest=lookoutbox top=Placeable_Lantern_Metal
 # B The fuel depot (south shore): containers washed up on a pad, the depot's crate, barrels
@@ -227,6 +274,12 @@ place "Box Big" - at 20 -52 ground sit
 place "Box Big" - at 21.5 -53 ground sit yaw=40
 # C The hidden cave in Lookout Hill's south foot, its mouth to the sea
 call ar_cave x=-44 z=-46 h=3 yaw=180 al=caverock chest=cavebox
+# (the hill round the cave rock, its mouth to the sea left open: the ring brought down the land the rock stood in and left
+# it a bare half-dome - reach audit 10-29)
+brush flatten from -55 -38 to -33 -38 r=5 s=20 frames=120 h=8
+brush flatten from -56 -50 to -56 -40 r=4 s=20 frames=120 h=7
+brush flatten from -32 -50 to -32 -40 r=4 s=20 frames=120 h=7
+brush smooth from -56 -37 to -32 -37 r=7 s=6 frames=30
 # D The ferry run aground (north-west), her crate on the sand by her
 call hw_wreck x=-50 z=50 h=2 yaw=40 obj=BoatStranded al=ferry crate=ferrycrate r=9
 # The new land planted (palms, mangoes, bushes as on the hill)

@@ -2,6 +2,8 @@
 # harbour's deck (1.96 m) on its ring pontoon east of the island, the harbour front (2.2 m) with the pump house at its
 # west end, the road up to the square (12.5 m), the old statue on the sea floor north of the harbour (10 m down).
 island Tangaroa Remade
+# (the land lowered round the city in the ring pass, 10-29, moved its land centre west of the recipe's origin)
+offset -6.51 -0.01
 expect step 0
 expect title The Lights of Tangaroa
 
