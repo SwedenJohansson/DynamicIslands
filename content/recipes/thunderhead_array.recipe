@@ -30,12 +30,18 @@ push at 0 -24
 brush flatten at 0 8 r=30 s=20 frames=200 h=14
 brush flatten at 0 -57 r=7 s=20 frames=60 h=1
 brush flatten at 22 -55 r=6 s=20 frames=60 h=1
+# (reach audit 10-29: 2.5 m terraces stopped the walker at the second step - now 1.25 m steps every 3 m, smoothed)
 brush flatten at 0 -50 r=4 s=20 frames=50 h=2.5
+brush flatten at 0 -47 r=4 s=20 frames=50 h=3.75
 brush flatten at 0 -44 r=4 s=20 frames=50 h=5
+brush flatten at 0 -41 r=4 s=20 frames=50 h=6.25
 brush flatten at 0 -38 r=4 s=20 frames=50 h=7.5
+brush flatten at 0 -35 r=4 s=20 frames=50 h=8.75
 brush flatten at 0 -32 r=4 s=20 frames=50 h=10
-brush flatten at 0 -27 r=4 s=20 frames=50 h=12.5
-brush smooth from 0 -54 to 0 -22 r=3 s=6 frames=20
+brush flatten at 0 -29 r=4 s=20 frames=50 h=11.25
+brush flatten at 0 -26 r=4 s=20 frames=50 h=12.5
+brush flatten at 0 -23 r=4 s=20 frames=50 h=13.5
+brush smooth from 0 -54 to 0 -21 r=3.5 s=10 frames=40
 pop
 origin
 # --- RAIN 10-26 terrain: Spark Bluff, the pads of the new areas ---------------------------------------------------
