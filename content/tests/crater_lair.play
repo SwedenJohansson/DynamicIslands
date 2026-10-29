@@ -42,7 +42,9 @@ expect message door hanging open
 open Staff locker
 
 # The pet's pool behind the bars: the angler comes up; the keycard's box at the bottom
-walk -32.6 0.85 to -35.3 0.85 to -35.1 -1.6 h=1.0 below=7
+# (REACH 10-29: the walker along x -35.3 by the bars stuck on the window wall's end (RT_WallWindow1) at z -0.4: the lane
+# to the bars swings 0.7 m west of it)
+walk -32.6 0.85 to -35.3 0.85 to -36.0 0.2 to -35.9 -1.6 h=1.0 below=7
 zone petpool
 kill Angler fish
 expect step 4
@@ -51,7 +53,7 @@ expect story keycard 1
 expect step 4
 
 # The safe opens to the keycard: the launch codes; the incinerator - the dish dies, the alarm, forty-five seconds
-walk -35.1 -1.6 to -35.3 0.85 to -32.6 0.85 to -29.6 3.4 h=1.15 below=7
+walk -35.9 -1.6 to -36.0 0.2 to -35.3 0.85 to -32.6 0.85 to -29.6 3.4 h=1.15 below=7
 open Chief's office safe
 expect story codes 1
 expect step 5
@@ -62,7 +64,9 @@ expect shown alarm
 expect hidden dishlights
 
 # Out before the blast door seals: back through the hangar and the door to the jetty
-walk -31.6 0.85 to -35.3 0.85 to -38.5 1.5 to -41.5 1.9 to -44.2 1.9 to -48 0.5 h=1.15 below=7
+# (REACH 10-29: out along z 1.9 to -48 0.5 the walker cut the corner off the planks and stuck, at z 0.3 on the door's
+# frame: out the way it came in - through the door at z 1.9, along the walkway, then to the jetty)
+walk -31.6 0.85 to -35.3 0.85 to -38.5 1.5 to -41.5 1.9 to -44.2 1.9 to -44.2 -1.6 to -48 0.5 h=1.15 below=7
 zone dock
 expect step 6
 open Getaway boat locker

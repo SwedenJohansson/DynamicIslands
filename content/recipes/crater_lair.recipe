@@ -105,6 +105,15 @@ place RT_Floodlight - at -41.6 -1.0 h=1.0 sit yaw=120
 place RT_Floodlight - at -35.0 -0.4 h=1.0 sit yaw=240
 place Creature_Rat_Tangaroa servicerats at -40.5 -8.6 h=1.3
 place Zone_Trigger hangar at -37.6 -4.0 h=2
+# (REACH 10-28: a swimmer coming in under the garage door had no way out of the dock pool - its banks stand 1 m over
+# the water: a ladder up the walkway's edge, inside the door)
+# (REACH 10-28 (3): its top at 0.9 stayed under the walkway (1.0) - no floor to step off onto: 1.5x tall, the top 0.9 m over it)
+# (REACH 10-28 (4): at 1.5x its top (2.1) stood 1.1 m over the walkway - still no floor to step off: 1.2x, top ~1.3)
+# (REACH 10-28 (5): at z 5.1 the ladder stood inside the walkway's edge (5.21) - out in the pool by 0.35, full height, its
+# top level with the walkway (1.0), as the glacier crevasse ladders that work)
+# (REACH 10-29: level with the walkway (top 0.9 by the probe) still 'no floor to step off' - raised 0.35 so its top
+# stands just over the walkway's edge (~1.25), its foot still in the water)
+place Block_Ladder poolladder at -38.5 5.45 h=-1.07 yaw=0
 
 # --- The control wing at the hangar's back: concrete walls two storeys high under the roof - the control room (the
 # console, its screens, the incinerator, lockers, the alarm light, the escape hatch in its floor) and through a gap in
@@ -169,6 +178,10 @@ place Zone_Trigger petpool at -32.8 -3.6 h=0.5
 # finish the escape step), a barrel sunk beside it ------------------------------------------------------------------------
 place Relay_Floor_deck - at -42.6 3.0 h=1.0
 place Relay_Floor_deck - at -47.83 3.0 h=1.0
+# (REACH 10-28: the decking ends 0.8 m short of the facade and the ground in that gap lay at 0.8 m - a lip the walker
+# hopped going in and stuck on coming out (in the way: the deck's edge), and the reach grid found no way in at all.
+# A strip of planks fills the gap at the deck's height, stopping short of the closed door's face)
+place Block_Floor_Wood - at -43.1 0.3 h=1.0 sx=0.6 sz=3.4
 for jx -43.0 -52.6 -4.8
 place Relay_support_beam_wood - at $jx -2.0 h=-16 rot=0,0,-90 sx=1.79
 place Relay_support_beam_wood - at $jx 2.7 h=-16 rot=0,0,-90 sx=1.79
