@@ -82,7 +82,8 @@ next
 prop ringwave tint.color=#1d2a33
 prop ringwave tint.amount=0.8
 place Zone_Trigger ringzone at -12 9 ground y=1
-place Note_Sign carvingnote at -9 10 ground sit yaw=200
+# (REACH 10-28: the board stood on the Ringwave's ring of stones, no spot to read it: moved off the ring)
+place Note_Sign carvingnote at -8 7.5 ground sit yaw=200
 place Placeable_Lantern_Metal ringcam at -12 2 ground y=1.1 drop
 
 # --- The depot: tents, the leader's tent, the drill rig on legs, the store ---------------------------------------------
@@ -91,8 +92,9 @@ place Balboa_DecorationPrefabBase_SimpleTent - at -4 -14 ground sit yaw=20
 place Balboa_DecorationPrefabBase_SimpleTent - at 4 -14 ground sit yaw=-20
 place Balboa_DecorationPrefabBase_SimpleTent leadertent at 6 4 ground sit yaw=200
 place Loot_Chest leaderchest at 6.8 2.6 ground sit yaw=180
-place Note_Paper orders at -1 -12 ground y=1.1 drop yaw=30
+# (REACH 10-28: the note dropped before the box stood there and ended inside it - the box first now)
 place "Box Big" - at -1 -12 ground sit yaw=30
+place Note_Paper orders at -1 -12 ground y=1.4 drop yaw=30
 # STORY 10-24: Orrin's abandoned sledge (its box and his note) and the Warden's tape by the leader's tent
 place Loot_ChestLarge orrinsledge at 4.6 -7 ground sit yaw=110
 place "Box Small" - at 5.8 -8.6 ground sit yaw=20
@@ -116,8 +118,9 @@ scatter TP_SnowDrift02 3 at 0 -4 r=15 seed=12811 free=3
 scatter TP_SnowDrift03 3 at 0 -4 r=15 seed=12812 free=3
 
 # --- The cave mouth: the electric zipline tool's plans ------------------------------------------------------------------
-place Loot_Chest cavechest at 0 14.5 ground sit yaw=180
-place Placeable_Lantern_Metal - at 1.2 14 ground drop
+# (REACH 10-28: the chest sat in the wall's rock in the cave mouth gap, no spot: moved to the mouth's front)
+place Loot_Chest cavechest at 0 12.3 ground sit yaw=180
+place Placeable_Lantern_Metal - at 1.4 12 ground drop
 
 # --- Bears, the titanium treasure, the sea ------------------------------------------------------------------------------
 place Creature_PolarBear bears at 20 6 ground
@@ -140,6 +143,14 @@ pop
 # snowcat (12 m down, an air pocket, the deep cold), its box holds the survey key the cave mouth chest wants; a ladder
 # climbs back out. A third buried treasure under the Icefall.
 call fz_mount x=-44 z=52 h=30 r=6
+# (REACH 10-28: the top tier rises 10 m in 8 - climbers stalled at 19.5 m, the cairn out of reach: a path winding a third
+# round the Icefall from the foot zone's side up to the top, under 0.5 m a step)
+for k 0 24
+set ct {$k/24}
+set ca {-50+120*$ct}
+set cr {16-11*$ct}
+brush flatten at {-44+$cr*cos($ca)} {52+$cr*sin($ca)} r=2.4 s=20 frames=150 h={20+10*$ct}
+next
 call ar_plants_snowy x=-40 z=46 r=24 seed=12896
 call fz_cairn x=-44 z=52 al=surveycairn chest=mastchest zal=mastzone zid=glacier_top msg="The top of the Icefall, the highest ice of the whole white sea: a cairn where the survey mast stood. Far below, the Ringwave - and a dark line across the cave path: a crevasse, roofed with thin ice."
 call fz_note x=-45.6 z=53.6 yaw=200 al=surveylog
@@ -157,6 +168,17 @@ for k 0 7 1
 place Block_Ladder crevladder at -57 -22.8 h={-12+2.42*$k} yaw=0
 place Block_Pillar_Wood crevladder at -57 -23 h={-12+2.42*$k}
 next
+# (REACH 10-28: the south ladder's top is on the cave side and the way back to the path crosses the hole the lid left -
+# crevasse, snowcat and cave were a trap: a second ladder up the north wall, back to the path the player came by)
+# (REACH 10-28: at -16.4 the wall's foot filled the ladder's front - nothing could take hold from below; 0.6 m out)
+# (REACH 10-28 (2): at -17 still no hold from below (front blocked) - the ground flattened first, wider, the ladder 0.6 m further out)
+brush flatten at -57 -18.4 r=1.6 s=20 frames=300 h=-12
+for k 0 7 1
+place Block_Ladder crevladder at -57 -17.6 h={-12+2.42*$k} yaw=180
+place Block_Pillar_Wood crevladder at -57 -17.4 h={-12+2.42*$k}
+next
+# (REACH 10-29: now held from below, but its top stood 0.6 m off the rim - a plank on the pillar bridges top and rim)
+place Block_Floor_Wood crevtop at -57 -16.9 h=7.35 sx=1 sz=1.2
 # the ice lid (it gives way: the collapse action, M19, since ce82976) and the rubble it leaves at the bottom
 for lx -60.5 -53.5 3.5
 for lz -23.5 -16.5 3.5
