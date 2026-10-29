@@ -53,7 +53,10 @@ place Note_Sign marquee at -3 -4.9 y=2.6 yaw=180
 line Placeable_StringLight_Horizontal from -5.5 -4.8 to -0.5 -4.8 step=2 y=3.1
 pop
 push at 3 -15.5 h=1
-call hw_roof d=21 a=city
+# (REACH 10-29: the projection box on the roof had no way up from the sea - the slab stands 1 m over the water behind
+# its railing: the railing's west middle left open and a ladder up the slab's edge there, its top just over the slab)
+call hw_roof d=21 a=city lm=none
+place Block_Ladder roofladder at -6.35 -0.75 y=-2.0 yaw=-90
 place Placeable_WindTurbine - at -3 1.5 y=0.05 sit
 place Loot_Chest projectorbox at -4.8 -3.4 y=0.05 sit
 place RT_Spotlight - at -0.8 -3.6 y=0.05 sit yaw=160

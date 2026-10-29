@@ -21,12 +21,14 @@ expect step 1
 walk 17 8.5 to 13.83 8.92 to 6.49 -3.36 to 4.4 -2.85 h=9.85
 read Head Keeper Shale's diary
 expect step 2
-walk 4.4 -2.85 to 4.6 -0.9 h=9.85 below=12
+# (REACH 10-29: at 4.6 -0.9, 0.3 m off the north wall, the walker leaving hit the roof's corner piece over its head
+# (Block_Roof_Corner_Wood) and stuck: the cupboard is opened from 4.6 -1.6, clear of the eave)
+walk 4.4 -2.85 to 4.6 -1.6 h=9.85 below=12
 reach Cottage cupboard
 open Cottage cupboard
 
 # Back over the landing stack and north over the other bridge to the light: the assistant keeper's diary in the oil store
-walk 4.6 -0.9 to 4.4 -2.85 to 6.49 -3.36 to 13.83 8.92 to 17.75 11 to 17.75 22.2 to 17.15 24.4 h=8.55 below=12
+walk 4.6 -1.6 to 4.4 -2.85 to 6.49 -3.36 to 13.83 8.92 to 17.75 11 to 17.75 22.2 to 17.15 24.4 h=8.55 below=12
 reach Oil store crate
 open Oil store crate
 read Keeper Lusk's diary
