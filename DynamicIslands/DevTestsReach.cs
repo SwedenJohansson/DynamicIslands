@@ -300,6 +300,7 @@ namespace DynamicIslands
 
 		// ---------------------------------------------------------------- the grid
 
+		static int dbgShoreHigh, dbgShoreLow, dbgShoreBlocked, dbgShoreOk; static int dbgOutBlocked, dbgOutFall, dbgOutOk;
 		const float RSea = 0f, RStepUp = 0.55f, RJump = 1.1f, RDrop = 12f, RSwimFeet = -1.3f, RUse = 2.5f, RRadius = 0.3f, RHeight = 1.75f;
 
 		class ReachTarget
@@ -642,7 +643,9 @@ namespace DynamicIslands
 			var sea = new List<int>();
 			for (int k = 0; k < g.Pos.Count; k++)
 			{
-				if (g.Kind[k] != 1) continue;
+				// (and a standing spot in the shallows at the grid's edge, at the sea's surface or under it: a raft lands there too -
+				// PQ11 10-29 diagnosis for the big remade islands)
+				if (g.Kind[k] != 1 && !(g.Kind[k] == 0 && g.Pos[k].y < RSea + 0.3f)) continue;
 				int ci = Mathf.FloorToInt((g.Pos[k].x - g.X0) / g.Cell), cj = Mathf.FloorToInt((g.Pos[k].z - g.Z0) / g.Cell);
 				if (ci <= 1 || cj <= 1 || ci >= g.NX - 2 || cj >= g.NZ - 2) sea.Add(k);
 			}
@@ -717,6 +720,12 @@ namespace DynamicIslands
 				int[] gotS = new int[4]; int bs = 0;
 				for (int s = 0; s < 4; s++) { for (int k = 0; k < g.Pos.Count; k++) if (fwd[s][k] && g.Kind[k] == 0) gotS[s]++; if (gotS[s] > gotS[bs]) bs = s; }
 				for (int s = 0; s < 4; s++) if (gotS[s] * 4 < gotS[bs]) { fwd[s] = fwd[bs]; parent[s] = parent[bs]; }
+				int seaSwim = sea.Count(k => g.Kind[k] == 1);
+				report.Add("REACH " + name + " | shore links | - | NOTE out of the water: ok " + dbgShoreOk + ", too high " + dbgShoreHigh + ", too low " + dbgShoreLow + ", blocked " + dbgShoreBlocked);
+				report.Add("REACH " + name + " | shore links | - | NOTE into the water: ok " + dbgOutOk + ", blocked " + dbgOutBlocked + ", fall caught " + dbgOutFall);
+				dbgShoreOk = dbgShoreHigh = dbgShoreLow = dbgShoreBlocked = 0;
+				dbgOutOk = dbgOutBlocked = dbgOutFall = 0;
+				report.Add("REACH " + name + " | walk-in | - | NOTE sea " + sea.Count + " spots (" + seaSwim + " swim), grid " + g.NX + "x" + g.NZ + "; floor reached per side n/e/s/w " + string.Join("/", gotS.Select(x => x.ToString()).ToArray()));
 			}
 			var back = new bool[g.Pos.Count];
 			var backParent = new int[g.Pos.Count];
@@ -972,8 +981,12 @@ namespace DynamicIslands
 				// 1.1 m over the sea floor and stopped the walker (jumps in the water rise 0.1-0.3 m)
 				RaycastHit bh;
 				float bed = Physics.Raycast(new Vector3(pa.x, RSea - 0.1f, pa.z), Vector3.down, out bh, 3f, reachMask, QueryTriggerInteraction.Ignore) ? bh.point.y : RSea - 3f;
-				if (pb.y > Mathf.Max(bed, RSea + RSwimFeet) + RStepUp || pb.y < RSea - 1.7f) return;
-				if (!same && (Blocked(pa, pb, Mathf.Max(pb.y, RSea) + 0.45f) || Blocked(pa, pb, Mathf.Max(pb.y, RSea) + 1.2f))) return;
+				// (or up a slope out of the water, as on land: Tangaroa's shores rose 0.6-1 m from one spot to the next all
+				// round, every one called a lip - 2 ways in for the whole island, PQ11 10-29)
+				if (pb.y > Mathf.Max(bed, RSea + RSwimFeet) + RStepUp && (pb.y > RSea + 0.6f || bed < RSea - 2.9f || !SlopeWalk(new Vector3(pa.x, bed, pa.z), pb))) { dbgShoreHigh++; return; }
+				if (pb.y < RSea - 1.7f) { dbgShoreLow++; return; }
+				if (!same && (Blocked(pa, pb, Mathf.Max(pb.y, RSea) + 0.45f) || Blocked(pa, pb, Mathf.Max(pb.y, RSea) + 1.2f))) { dbgShoreBlocked++; return; }
+				dbgShoreOk++;
 				g.Link(a, b);
 				return;
 			}
@@ -983,8 +996,16 @@ namespace DynamicIslands
 				if (pa.y < RSea - 1.7f) return;
 				// (the sea under the same spot's floor: not where a player standing on that floor drops to)
 				if (same && pa.y > RSea + 0.6f) return;
-				if (!same && (Blocked(pa, pb, Mathf.Max(pa.y, RSea) + 0.45f) || Blocked(pa, pb, Mathf.Max(pa.y, RSea) + 1.2f) || Swept(pa, pb, Mathf.Max(pa.y, RSea)))) return;
-				if (!same && pa.y > RSea + 0.9f && FallCaught(pb, pa.y, RSea)) return;
+				if (!same && (Blocked(pa, pb, Mathf.Max(pa.y, RSea) + 0.45f) || Blocked(pa, pb, Mathf.Max(pa.y, RSea) + 1.2f) || Swept(pa, pb, Mathf.Max(pa.y, RSea))))
+				{
+					// (or down a slope into the water, as on land - the way in above, back out)
+					RaycastHit oh;
+					if (pa.y > RSea + 0.6f || !Physics.Raycast(new Vector3(pb.x, RSea - 0.1f, pb.z), Vector3.down, out oh, 2.8f, reachMask, QueryTriggerInteraction.Ignore) || !SlopeWalk(pa, oh.point)) { dbgOutBlocked++; return; }
+				}
+				// (a slope under the drop only slides the player on into the sea: Tangaroa's shore ledges, 2736 drops 'caught' by the
+				// rock face below them, no way off the island, PQ11 10-29)
+				if (!same && pa.y > RSea + 0.9f && FallCaught(pb, pa.y, RSea, true)) { dbgOutFall++; return; }
+				dbgOutOk++;
 				g.Link(a, b);
 			}
 		}
@@ -1025,7 +1046,7 @@ namespace DynamicIslands
 		}
 
 		/// <summary>Something in column at between the heights from (over a floor) and to that a falling player lands on.</summary>
-		static bool FallCaught(Vector3 at, float from, float to)
+		static bool FallCaught(Vector3 at, float from, float to, bool floorOnly = false)
 		{
 			const float r = 0.2f;
 			float dist = from + 0.6f - to - r - 0.25f;
@@ -1034,7 +1055,7 @@ namespace DynamicIslands
 			// the grid dropped through the seamount's skin into the cave, the walk stood on it, PQ11 10-28)
 			bool was = Physics.queriesHitBackfaces;
 			Physics.queriesHitBackfaces = true;
-			try { return dist > 0f && Physics.SphereCast(new Vector3(at.x, from + 0.6f, at.z), r, Vector3.down, out h, dist, reachMask, QueryTriggerInteraction.Ignore); }
+			try { return dist > 0f && Physics.SphereCast(new Vector3(at.x, from + 0.6f, at.z), r, Vector3.down, out h, dist, reachMask, QueryTriggerInteraction.Ignore) && (!floorOnly || h.normal.y > 0.7f); }
 			finally { Physics.queriesHitBackfaces = was; }
 		}
 
@@ -1737,7 +1758,7 @@ namespace DynamicIslands
 				// (a drop off a ledge into the sea or onto a floor below: the walker gets over the spot and then keeps going the
 				// way it came in, over the edge, as a player walks off it)
 				Vector3 seg = W(k) - W(way[i - 1]); seg.y = 0f;
-				int hops = 0, turns = 0;
+				int hops = 0, turns = 0, steps = 0;
 				float hopFrom = float.NaN, hopPeak = 0f;
 				for (int n = 0; ; n++)
 				{
@@ -1756,6 +1777,21 @@ namespace DynamicIslands
 					{
 						// (a jump at whatever stops it - a ledge, a rock's lip at the shore - as a player would)
 						if (hops < 3 && d.y > -0.9f) { hops++; hopFrom = p.y; jumpT = 0.4f; since2 = 1.2f; }
+						// (a swimmer at a lip: a player climbs out where the lip top is near the surface (up to 0.6 m over the sea, within
+						// 1.6 m of the feet), or stands on the bed by the lip (standing depth, 0.8 m short of it) and steps or jumps up
+						// (RJump). Raft's water controller cannot rise out of the sea, so the walker lifts the feet onto the lip - varuna and
+						// spirecrest 0.7-2 m lips, PQ11 10-29)
+						else if (steps < 3 && inWaterNow(pl) && d.y > 0f && flatLen < 2.6f && ((aim.y < RSea + 0.6f && d.y < 1.6f) || (StandBed(aim - flat.normalized * 0.8f) > RSea - 1.6f && aim.y - StandBed(aim - flat.normalized * 0.8f) < RJump)) &&
+							!Physics.Linecast(new Vector3(p.x, Mathf.Max(aim.y, RSea) + 0.5f, p.z), new Vector3(aim.x, Mathf.Max(aim.y, RSea) + 0.5f, aim.z), reachMask, QueryTriggerInteraction.Ignore))
+						{
+							steps++;
+							CharacterController scc = pl.GetComponent<CharacterController>();
+							Vector3 to = new Vector3(aim.x, aim.y + 0.05f, aim.z) + (pl.transform.position - p);
+							if (scc != null) scc.enabled = false;
+							pl.transform.position = to;
+							if (scc != null) scc.enabled = true;
+							since2 = 1.2f;
+						}
 						else if (turns < 2) { turns++; turnLeft = 0.7f; turnDir = turns == 1 ? 1f : -1f; since2 = 0f; }
 						else
 						{
@@ -1790,6 +1826,13 @@ namespace DynamicIslands
 		}
 
 		static bool inWaterNow(Network_Player pl) { return pl.PersonController.controllerType == ControllerType.Water; }
+
+		/// <summary>The sea floor under a swimmer (where a player would stand), or far down when there is none within 3 m.</summary>
+		static float StandBed(Vector3 p)
+		{
+			RaycastHit h;
+			return Physics.Raycast(new Vector3(p.x, Mathf.Min(p.y + 0.5f, RSea), p.z), Vector3.down, out h, 3f, reachMask, QueryTriggerInteraction.Ignore) ? h.point.y : RSea - 9f;
+		}
 
 		/// <summary>The player's feet: Raft's player transform sits about 0.9 m above them (the grid's spots are feet).</summary>
 		static Vector3 ReachFeet(Network_Player pl)
