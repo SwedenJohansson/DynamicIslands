@@ -36,7 +36,24 @@ brush seabed at 0 0 r=24 s=20 frames=30
 # with their macros
 call hw_mount x=-40 z=36 b=26 h=54
 call hw_trail x=-40 z=36 b=15 h=54 a0=131.99 turn=300 n=30 h0=35
+# (REACH 10-28: the path's foot stood 1 m over the sea (34) on the rock's drowned tier - a swimmer could not climb onto it,
+# and the whole climb (hillfoot, hilltop, the nursemaid's note and chest, quest steps 6-9) was out of reach: steps down
+# into the water on the same bearing, 0.5 m each)
+brush flatten at -27.22 24.49 r=2.2 s=20 frames=150 h=34.5
+brush flatten at -26.32 23.69 r=2.2 s=20 frames=150 h=34
+brush flatten at -25.43 22.89 r=2.2 s=20 frames=150 h=33.5
+brush flatten at -24.54 22.08 r=2.2 s=20 frames=150 h=33
 brush flatten at -40 36 r=9 s=20 frames=400 h=54
+# (REACH 10-28 (2): pictures - above 44 m the rock is a sheer wall all round (the mount's top tiers rise 7.6 m in 1.4 m
+# there), the path's upper half never cut into it: hilltop, the nursemaid's note and chest (quest steps 7-9) out of
+# reach. The path's upper half cut again after the top flatten, harder, so it ends on the top)
+for k 12 30
+set t {$k/30}
+set rr {16-8*$t}
+set aa {131.99+300*$t}
+brush flatten at {-40+$rr*sin($aa)} {36+$rr*cos($aa)} r=2.8 s=20 frames=400 h={35+19*$t}
+clear at {-40+$rr*sin($aa)} {36+$rr*cos($aa)} r=3
+next
 call hw_basin x=55 z=38 r=14 h=-8
 origin
 clear from -16 0 to 14 0 r=14

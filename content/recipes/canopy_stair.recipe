@@ -54,7 +54,8 @@ push at 3 8 h=10
 call shelter w=2 d=2 y=0.1
 place Loot_Chest tenttwo at 1.5 2.2 y=0.1 sit yaw=180
 place "Box Small" - at 0.7 0.8 y=0.1 sit
-place Note_Paper odaletter at 0.7 0.8 y=1.7 drop yaw=15
+# (REACH 10-28: dropped, the letter fell through the box's top into it - now set on its lid, 0.99 m up)
+place Note_Paper odaletter at 0.7 0.8 y=1.0 sit yaw=15
 pop
 place "Box Big" - at -1 2 ground sit yaw=15
 place "Box Big" - at 0.4 0.6 ground sit yaw=40

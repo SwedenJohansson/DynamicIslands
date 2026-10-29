@@ -77,10 +77,12 @@ place Loot_Chest portertools at -11 -6.5 ground sit yaw=200
 
 # --- The clock tower on stilts: its room behind a keypad (on a stilt), a zipline from its deck down to the terrace ---
 push at 8 6 h=5
-call stilt_hut y=2.6
-place Placeable_Clock_Basic - at 0.9 3.6 y=2.7 sit yaw=90
-place Loot_Chest clockroom at 3.6 3.6 y=2.7 sit yaw=270
-place Loot_Chest riggerchest at 0.9 1.2 y=2.7 sit yaw=90
+# (REACH 10-28: deck 2.6 -> 2.3 m: the 2.42 m ladder on the ground (4.8) ended 0.4 m under the deck and the climber
+# stuck under its edge)
+call stilt_hut y=2.3
+place Placeable_Clock_Basic - at 0.9 3.6 y=2.4 sit yaw=90
+place Loot_Chest clockroom at 3.6 3.6 y=2.4 sit yaw=270
+place Loot_Chest riggerchest at 0.9 1.2 y=2.4 sit yaw=90
 place RT_PowerBox clockpad at 4.6 0.15 y=1.4 yaw=90
 pop
 place Zone_Trigger towerzone at 10.25 8.25 ground
@@ -130,7 +132,8 @@ call treasure x=-20 z=45 r=4 n=1 seed=9585 kind=0
 prop treasure9585 treasure.loot=MetalOre*2;CopperOre*3
 # --- The smugglers' hole (west): Nils's note and his box --------------------------------------------------------------
 call hw_zone x=-58 z=-5 al=smugz id=smughole r=4 msg="A hole under the rock, out of the crier's sight. Somebody slept here - and counted money."
-place Note_Paper nilsnote at -56.5 -4.5 h=6.45 drop yaw=30
+# (REACH 10-28: by the lantern no spot could reach the note (no clear line) - now on the floor beside Nils's box)
+place Note_Paper nilsnote at -59.3 -3.8 h=6.45 drop yaw=30
 loot smugchest TradeToken*3;CopperOre*2;Rope*2;Battery*1
 prop smugchest loot.refill=0
 note smugchest Smuggler's box | Nils's box: Tangaroa tokens, copper and a battery he meant to sell twice.

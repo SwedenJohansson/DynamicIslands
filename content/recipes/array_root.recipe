@@ -126,9 +126,11 @@ note divebox Diving mast box | The root diver's box: a full bottle, rope and a b
 call treasure x=60 z=46 r=3 n=1 seed=9724 kind=0
 prop treasure9724 treasure.loot=TitaniumOre*1;MetalOre*3
 # --- The crew quarters (south-west), drowned, an air pocket: Hedda's note and the crank handle ------------------------
-call hw_sunkhouse x=-55 z=-40 h=3 yaw=234 a=crewhouse chest=crewchest air=crewair bub=crewbub dal=crewdoor
+# (REACH 10-28 (2): turned square (yaw 234 -> 270, door still to the root): with the door on the slant every walk in
+# slid along the front wall and ended outside - Hedda's note and the crank handle chest (quest steps 10-11) unreached)
+call hw_sunkhouse x=-55 z=-40 h=3 yaw=270 a=crewhouse chest=crewchest air=crewair bub=crewbub dal=crewdoor
 call hw_zone x=-55 z=-40 al=crewzone id=crewquarters r=7 h=1 msg="The root crew's quarters. The front room still holds the crew's air."
-place Note_Paper heddanote at -53.8 -39.1 h=3.5 drop yaw=234
+place Note_Paper heddanote at -53.5 -40 h=3.5 drop yaw=270
 loot crewchest story:crankhandle*1;CopperIngot*2;Battery*1
 prop crewchest loot.refill=0
 note crewchest Crew chief's chest | Hedda's chest: pylon B's crank handle, greased and wrapped, and the crew's last pay in copper.
@@ -136,7 +138,8 @@ call treasure x=-45 z=-52 r=4 n=1 seed=9725 kind=0
 prop treasure9725 treasure.loot=Scrap*4;Bolt*3;Hinge*1
 # --- The west cave: a secret ------------------------------------------------------------------------------------------
 call hw_zone x=-65 z=35 al=westcavez id=westcave r=4 msg="A cave in the rock. The iron in its walls rings faintly when you touch it."
-place Note_Paper cavenote at -63.5 35.5 h=6.45 drop yaw=0
+# (REACH 10-28: by the lantern no spot could reach the note (no clear line) - now on the floor beside the survey cache)
+place Note_Paper cavenote at -66.3 36.5 h=6.45 drop yaw=0
 loot westchest MetalIngot*2;TitaniumOre*1;Rope*2
 prop westchest loot.refill=0
 note westchest Survey cache | The surveyors' cache: iron ingots and a lump of titanium ore cut from the cave wall.

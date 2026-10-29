@@ -35,6 +35,17 @@ brush flatten at 0 -30.72 r=3.5 s=20 frames=150 h=-3
 brush flatten at 0 0 r=3.5 s=20 frames=150 h=-3
 brush flatten at 0 30.72 r=3.5 s=20 frames=150 h=-3
 brush flatten at -10.5 36.17 r=5.5 s=20 frames=200 h=2
+# (REACH 10-28: the canal's walls stood 2 m over the water - a swimmer in a pound, or up from the basin, had no way out.
+# Three steps up the west bank in each pound)
+brush flatten at -3.3 -18 r=1.3 s=20 frames=120 h=-0.5
+brush flatten at -4.5 -18 r=1.3 s=20 frames=120 h=0.4
+brush flatten at -5.7 -18 r=1.3 s=20 frames=120 h=1.3
+brush flatten at -3.3 15 r=1.3 s=20 frames=120 h=-0.5
+brush flatten at -4.5 15 r=1.3 s=20 frames=120 h=0.4
+brush flatten at -5.7 15 r=1.3 s=20 frames=120 h=1.3
+brush flatten at -3.3 45 r=1.3 s=20 frames=120 h=-0.5
+brush flatten at -4.5 45 r=1.3 s=20 frames=120 h=0.4
+brush flatten at -5.7 45 r=1.3 s=20 frames=120 h=1.3
 origin
 clear from 8 -57.5 to 8 57.5 r=5
 clear from -8 -57.5 to -8 57.5 r=5
@@ -102,7 +113,8 @@ place Note_Paper keepercl at 10.5 31.4 ground drop yaw=60
 push at -12 34.67 h=2
 call hut w=2 d=2 y=0.1
 place Loot_Chest kitchen at 2.2 2.4 y=0.1 sit yaw=180
-place Note_Paper heddacl at 1.2 2.5 y=0.1 drop yaw=20
+# (REACH 10-28: dropped, its middle sank into the hut floor - set on the floor instead)
+place Note_Paper heddacl at 1.2 2.5 y=0.1 sit yaw=20
 place Placeable_CookingStand_Food_One - at 0.8 0.8 y=0.1 sit
 place Placeable_Table_Basic - at 1.0 1.95 y=0.1 sit
 pop

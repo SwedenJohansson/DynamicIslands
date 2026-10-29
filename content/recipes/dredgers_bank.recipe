@@ -57,9 +57,13 @@ for lx 16.5 19.5 3
 place RT_PillarThick riglegs at $lx -1.5 h=1
 place RT_PillarThick riglegs at $lx 1.5 h=1
 next
-place RT_Floor rigdeck at 18 0 h=7 sit sx=0.6 sz=0.4
+# (REACH 10-28: RT_Floor's pivot is its +x +z corner - the deck hung off the legs to the west and the ladder ran up
+# into its middle, the climb stuck under it at 5.3 m; now the deck sits on the four legs, the ladder against its south edge)
+place RT_Floor rigdeck at 19.81 1.8 h=7 sit sx=0.6 sz=0.4
 place UT_ElectricityIsland_Crane02 rigcrane at 18.6 0.6 h=7.07 sit scale=0.25 yaw=90
-place LandmarkLadder_6m rigladder at 18 -1.85 h=1 sit yaw=180
+# (REACH 10-28 (2): the ladder's top was flush with the deck - going back down, the climber stepped off the edge, missed
+# the rungs and hung under the deck at 5.3 m: the ladder now stands 1.2 m over the deck, to take hold of from it)
+place LandmarkLadder_6m rigladder at 18 -1.95 h=1 sit yaw=180 sy=1.2
 place Zone_Trigger rigtop at 17 -0.6 h=7.2
 prop riglegs tint.color=#6f7780
 prop rigdeck tint.color=#5d646b

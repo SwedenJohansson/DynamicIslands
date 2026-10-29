@@ -31,9 +31,12 @@ brush flatten at 0 0 r=16 s=20 frames=240 h=0
 brush grass at 0 0 r=6 s=20 frames=20
 # discoveries: a level spot for the diver's cache
 brush flatten at 30 46 r=4 s=8 frames=40
+# REACH 10-28: the seabed rose right at the vent shed's door (the door faces the rise): a level apron in front of it
+brush flatten at 0 -17 r=4 s=20 frames=200 h=0
 origin
 clear at 0 0 r=15
 clear at 30 46 r=5
+clear at 0 -17 r=4
 
 # --- The dome: a ring of glass walls (open on the north for the airlock), a ring leaning in over it, the steel cap ----
 for a 120 420 30
@@ -55,6 +58,9 @@ place Block_Wall_Tier3 lock at -1.5 7.45 h=0.22 yaw=90
 place Block_Wall_Tier3 lock at -1.5 8.95 h=0.22 yaw=90
 place Block_Wall_Tier3 lock at 1.5 7.45 h=0.22 yaw=90
 place Block_Wall_Tier3 lock at 1.5 8.95 h=0.22 yaw=90
+# REACH 10-28: the dome's gap is 3.49 m wide, the tunnel 3 m: narrow wall strips close the slits beside the tunnel mouth
+place Block_Wall_Tier3 lock at -1.622 6.7 h=0.22 yaw=0 sx=0.163
+place Block_Wall_Tier3 lock at 1.622 6.7 h=0.22 yaw=0 sx=0.163
 place Block_Wall_Tier3 lock at -0.75 9.7 h=0.22 yaw=0
 place Block_Wall_Tier3 lock at 0.75 9.7 h=0.22 yaw=0
 place Block_Floor_Tier3 lock at -0.75 7.45 h=2.86
@@ -130,7 +136,7 @@ call shallows x=0 z=0 r=100 deep=6 n=2 seed=10410
 # a diver's cache with a slate (a note), a hatch in the seabed with a chest, a ridge where the dome's glow shows ----
 place BoatStranded - at 40 -38 ground yaw=210
 place Loot_ChestSmall wreckchest at 35 -34 ground sit yaw=30
-call airpocket x=37 z=-41 id=wreck_air al=wreckair bub=wreckbub r=2.5 msg="Air caught under the wreck's hull. Breathe."
+call airpocket x=37 z=-41 id=wreck_air al=wreckair bub=wreckbub r=3.2 msg="Air caught under the wreck's hull. Breathe."
 place Van3 drownedvan at -46 30 ground yaw=75
 prop drownedvan tint.color=#6b4a32
 prop drownedvan tint.amount=0.55
@@ -176,6 +182,12 @@ call crankcache x=1 z=51 yaw=270 alias=sluicecrank sig=sluice chest=bedbox cx=-1
 # --- DEEP 1-HOUR (10-24): the garden rock breaking the surface (20.5 m from the floor) and the drowned seed store in the west pit
 # the rock that breaks the surface (20.5 m up from the floor), a beacon tower on its dry top
 call sk_seamount x=-24 z=-66 top=20.5 r=20
+# REACH 10-28: the dry top stood 2-3 m over the water on a steep lip (no way out of the sea): a ramp up its west side (beside the ledge chest)
+brush flatten at -36 -62.5 r=1.8 s=20 frames=200 h=17.6
+brush flatten at -34.5 -62.5 r=1.8 s=20 frames=200 h=18.4
+brush flatten at -33 -62.5 r=1.8 s=20 frames=200 h=19.2
+brush flatten at -31.5 -62.5 r=1.8 s=20 frames=200 h=20
+brush smooth at -33.5 -62.5 r=3 s=4 frames=20
 call sk_pit x=-66 z=-30 h0=-8
 call sk_cave x=-12 z=72 h=2 yaw=180 al=b7cave2 chest=b7cave2chest
 call sk_reef x=-6 z=-66 r=6 seed=24310
