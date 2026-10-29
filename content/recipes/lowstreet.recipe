@@ -147,6 +147,9 @@ place AirPocket_1 - at -3 0 y=0.05 scale=0.6
 place Zone_Trigger air4 at -3 0 y=1.6
 place Zone_Atmosphere bub4 at -3 0 y=1.2
 pop
+# (REACH 10-29: the street's sand lay at -16.9 in front of the shops, over the tops of their doors (shop floors at -20) - the
+# strip before the four shop fronts dug down to the shop floors, so a diver swims in through the doors)
+brush flatten from -24 3.6 to 31 3.6 r=2.2 s=20 frames=200 h=-20.1
 prop air4 obj.name=air4
 prop air4 zone.id=shop_4
 prop air4 zone.radius=2.5
@@ -206,6 +209,9 @@ call hw_hazard x=51 z=45 al=lampcavedark kind=dark r=5 dmg=0 safe=wears|HeadLigh
 brush flatten at -46 -59 r=4 s=20 frames=200 h=-26
 call hw_hazard x=-46 z=-59 al=sewerdeep kind=deep r=6 dmg=10 safe=wears|OxygenBottle* msg="A cold current pours out of the sewer mouth and pulls the air out of you. An oxygen bottle would see you down and back."
 place Loot_Chest sewerchest at -46 -59 ground sit yaw=90
+# (REACH 10-28: the sewer well's rim stands 1.5 m over its water - no way back up: a ladder out on its south side)
+# (REACH 10-29: at yaw 180 its face was against the rim - nothing could take hold from the water: turned to face the well)
+place Block_Ladder sewerladder at -44.4 -64.9 h=-0.8 yaw=0
 call ar_plants_hill x=-50 z=20 r=14 seed=13621
 call ar_plants_hill x=60 z=30 r=12 seed=13631
 
