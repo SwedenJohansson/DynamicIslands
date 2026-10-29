@@ -45,7 +45,9 @@ place Crate_Big_01 - at 2.5 -14 sit yaw=20
 place Placeable_Lantern_Metal - at 2.5 -14 y=0.45 sit
 place Loot_Crate mushroombasket at 2 -24 sit yaw=200
 # (box agent 10-25: Jonas's soup note had no paper placed - it lies by his mushroom basket)
-beside Note_Paper jonasmush mushroombasket d=0.5
+# (REACH 10-29: 0.5 m off the basket it lay in the slope - 1 m off)
+# (REACH 10-29 (2): beside it, it lay in the slope either way - dropped onto the basket's lid)
+place Note_Paper jonasmush at 2 -24 y=1.2 drop yaw=20
 # REDO 10-24: the survey team's fuse box (the island's machine) and the lab corner it lights
 place RT_PowerBox fusebox at -3.2 -15 sit yaw=90
 place Loot_Chest labchest at -2.5 -27 sit yaw=0
