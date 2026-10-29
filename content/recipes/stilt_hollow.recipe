@@ -38,8 +38,7 @@ brush sand from -23.0 6.0 to -12 8 r=3 s=10 frames=30
 clear at -17 7 r=6
 
 # --- The landing stack: a ladder up from the reef, the dock trailer, crates; hyenas lurk in the trailer -------------
-# (REACH 10-29: at -16.9 the stack's sloped foot filled the ladder's lower rungs - nothing could take hold from below; 0.6 m out)
-place LandmarkLadder_6m ladder at 7.5 -17.5 h=-1.8 rot=0,0,0
+place LandmarkLadder_6m ladder at 7.5 -16.9 h=-1.8 rot=0,0,0
 place Caravan_Blue_01 docktrailer at 6.4 -12.2 h=4.45 yaw=15
 place Crate_Big_01 - at 5.5 -14.5 h=4.45 sit yaw=40
 place Crate_Big_02 - at 5.2 -13.6 h=4.45 sit yaw=10
