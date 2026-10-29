@@ -711,7 +711,8 @@ namespace DynamicIslands
 			// (a flying island: stairs from the raft can come up at any part of the rim, so a side whose 80 rim tries all found
 			// roofs or posts takes the best side's walk-in - Pendulum Isle's north reached nothing, 22 false "north: can't get
 			// there" with every spot reached from the other sides, PQ11 10-28)
-			if (reachSky)
+			// (and a sea island: the raft sails round to a side it can land on - Primeval Park's north start lay off a cliff and
+			// reached nothing, 45 false "north: can't get there" with every spot reached 0.0 m off from the other sides, PQ11 10-29)
 			{
 				int[] gotS = new int[4]; int bs = 0;
 				for (int s = 0; s < 4; s++) { for (int k = 0; k < g.Pos.Count; k++) if (fwd[s][k] && g.Kind[k] == 0) gotS[s]++; if (gotS[s] > gotS[bs]) bs = s; }
