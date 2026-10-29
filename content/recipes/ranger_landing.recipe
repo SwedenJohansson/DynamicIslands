@@ -40,7 +40,8 @@ push at -21.6 -46.8 h=1.4
 call stilt_hut y=2.6
 place Note_Sign jobboard at 2.25 3.9 y=2.7 sit
 place "Box Small" - at 3.6 1.2 y=2.7 sit
-place Note_Paper rangerlog2 at 3.6 1.2 y=3.4 drop yaw=20
+# (REACH 10-28: from 3.4 it lay inside the box - dropped from over it)
+place Note_Paper rangerlog2 at 3.6 1.2 y=4.0 drop yaw=20
 pop
 place Zone_Trigger stationzone at -17.1 -36 ground
 place campfire_1 - at -3.6 -32.4 ground sit

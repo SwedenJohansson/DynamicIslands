@@ -46,12 +46,15 @@ clear at -11 -16 r=7
 # --- The pier: two plates wide from the shore out to sea, ninety metres -----------------------------------------------
 call pier x=0 z1=-30 z2=-122 h=1.45
 # the ferry waiting room at the pier head: a wider deck, a roof on posts, benches, the timetable, the locker
-push at -2.25 -127.25 h=1.4
+# (REACH 10-28: the room met the pier 0.5 m short - a gap over the sea; now flush with the last pier plate)
+push at -2.25 -126.75 h=1.4
 call openhall w=3 d=3
 place Bench_01 - at 0.8 2.25 y=1.3 sit drop yaw=90
 place Bench_01 - at 3.7 2.25 y=1.3 sit drop yaw=270
-place Note_Paper timetable at 2.25 4.2 y=2 sit drop yaw=0
-place Placeable_Cupboard_Small - at 2.25 4.2 y=1.3 sit drop yaw=180
+# (REACH 10-28: placed before the cupboard, it lay under it - now placed after it, dropped onto its top)
+# (REACH 10-28: the cupboard stood in the doorway from the pier - now at the back wall)
+place Placeable_Cupboard_Small - at 1.2 0.4 y=1.3 sit drop yaw=0
+place Note_Paper timetable at 1.2 0.4 y=2.6 sit drop yaw=180
 place Loot_ChestSmall locker at 3.8 0.6 y=1.3 sit drop yaw=0
 place Zone_Trigger headzone at 2.25 2.25 y=0.8
 pop

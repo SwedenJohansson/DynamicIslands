@@ -145,7 +145,8 @@ place Zone_Trigger hallmouth at 0 8 y=1.5
 place Creature_Bear ironhide at 0 -26 ground
 place Loot_ChestLarge strongbox at -0.5 -35 ground sit
 # DEEP 10-25: the missing miner's letter, by the strongbox (read after the blast: the pages counts stay as they were)
-place Note_Paper davynote at 1.8 -33.2 ground drop yaw=160
+# (REACH 10-28: "ground" here is the cave's roof - the letter lay in the rock; now beside the strongbox)
+beside Note_Paper davynote strongbox d=1.2
 place Zone_Atmosphere halldark at 0 -20 y=5
 place Zone_Sound hallsound at 0 -20 y=3
 pop

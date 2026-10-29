@@ -50,7 +50,8 @@ clear at -16 -30 r=8
 # --- Kett's dig camp: a tent, her notes on a crate, her kit (a metal detector and a shovel) ----------------------------
 place Balboa_DecorationPrefabBase_SimpleTent - at 17 -46 ground sit yaw=250
 place "Box Small" digdesk at 11.4 -42.6 ground sit
-place Note_Paper dignotes at 11.4 -42.6 h=3 sit drop yaw=20
+# (REACH 10-28: from h 3 it lay inside the desk box - dropped from over it)
+place Note_Paper dignotes at 11.4 -42.6 h=4.2 sit drop yaw=20
 place Loot_Chest digkit at 15.6 -41.4 ground sit yaw=200
 place Zone_Trigger dunes at 0 -50 ground
 
