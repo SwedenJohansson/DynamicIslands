@@ -137,7 +137,8 @@ pop
 
 # --- The stair from the cottage stack down to the cistern's slab: two flights on posts --------------------------------
 place Relay_stairs_30_tall - at 3.0 -13.9 h=6.85 yaw=180
-place Relay_stairs_30_tall - at 3.0 -20.32 h=3.9 yaw=180
+# (reach audit 10-29: the lower flight stood 0.45 m high - its foot over the slab, its top over the upper flight's foot)
+place Relay_stairs_30_tall - at 3.0 -20.32 h=3.45 yaw=180
 place Relay_support_beam_wood - at 3.0 -14.0 h=3.96 rot=0,0,-90 sx=0.29
 place Relay_support_beam_wood - at 4.15 -14.0 h=3.96 rot=0,0,-90 sx=0.29
 
