@@ -1,0 +1,12 @@
+island Rootweave Caves
+wait 3
+at 43 20
+wait 2
+picture rw_e_bee_mouth 43 11 24 44 9 6
+picture rw_e_bee_top 56 20 4 44 9 4
+picture rw_e_bee_side 60 6 -6 44 9 4
+picture rw_e_bee_sea 70 1.7 8 44 9 4
+zone bee_hall
+wait 2
+picture rw_e_bee_in 44 10.2 9 44 11.5 3
+picture rw_e_bee_up 44 10 7 44 16 5

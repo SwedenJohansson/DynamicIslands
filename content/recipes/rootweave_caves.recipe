@@ -16,6 +16,7 @@ include lib_sea
 include lib_features
 include lib_gravity
 include lib_verdance
+include lib_areas
 new
 gen Trees=0.35 Bushes=0.35 Rocks=0.5 Harvest=0.24 BeachThings=0.3
 gen Seed=11071 Radius=85 Height=34 Roughness=0.45 Peaks=1 Shape=0 Style=0 BeachWidth=0.5 Cliffs=0.35 PeakShape=0.45
@@ -30,6 +31,11 @@ brush flatten at 0 -72 r=8 s=20 frames=60 h=1.4
 brush sand at 0 -72 r=10 s=10 frames=30
 clear at 0 -72 r=8
 clear from 0 -66 to 0 -50 r=4
+
+# (the east flank raised round the Bee Hall, so the hill covers the cave's shell)
+# (REACH 10-29: raised after the Fungus Hall was dug and furnished, its 34 m reach buried the hall's back - the lab chest,
+# the basket and Jonas's note under the floor (picture x10_rw_lab): raised first now, the hall dug out of it after)
+brush raise at 26 4 r=34 s=20 frames=16
 
 # --- The Fungus Hall: Balboa's dead-end cave on the south flank, dim green, the survey camp inside ------------------
 push at 0 -45 yaw=180
@@ -50,7 +56,8 @@ place Loot_Crate mushroombasket at 2 -24 sit yaw=200
 place Note_Paper jonasmush at 2 -24 y=1.2 drop yaw=20
 # REDO 10-24: the survey team's fuse box (the island's machine) and the lab corner it lights
 place RT_PowerBox fusebox at -3.2 -15 sit yaw=90
-place Loot_Chest labchest at -2.5 -27 sit yaw=0
+# (reach audit 10-29 (d): at -27 the chest stood inside the cave's back wall - out to the lab corner's open floor)
+place Loot_Chest labchest at -2.8 -22.5 sit yaw=90
 place "Box Small" - at 0 -28 sit
 place Note_Paper samplereport at 0 -28 y=1.6 drop yaw=20
 # (box agent 10-25: Aki's gate log had a note line but no paper placed - it sits by the sample report)
@@ -58,27 +65,20 @@ place "Box Small" - at 1.6 -30.2 sit
 place Note_Paper akilog at 1.6 -30.2 y=1.6 drop yaw=-30
 pop
 
-# (the east flank raised round the Bee Hall, so the hill covers the cave's shell)
-brush raise at 26 4 r=34 s=20 frames=16
 # --- The hilltop: the survey team's wind turbine and its mast box -----------------------------------------------------
 place Placeable_WindTurbine turbine at 24 10 ground sit
 place Loot_Crate mastbox at 26.5 12 ground sit yaw=40
 
-# --- The Bee Hall: Balboa's vine cave on the east flank, wild hives inside, flowers at its mouth --------------------
-# (the frame held at 8.5 m, as on Ironreef: at the slope's own 13.5 m the shell stood 9 m over the hilltop - X7, 2026-10-23)
-push at 42 4 h=8.5 yaw=90
-brush flatten from 0 0 to 0 -14 r=4 s=20 frames=40
-brush flatten from 0 0 to 0 8 r=7 s=20 frames=25
-clear from 0 6 to 0 -16 r=6
-brush sand from 0 2 to 0 -16 r=5 s=10 frames=25
-place BalboaCave_Vines beehallcave at -1.2 -28.6 y=5.5 scale=1.3
-place Zone_Trigger beehall at 0 -6 y=1.5
-place Loot_WildHive beehive1 at -2 -10 sit
-place Loot_WildHive beehive2 at 2 -13 sit yaw=90
-place Loot_Chest beecache at 0 -16 sit yaw=180
+# --- The Bee Hall: a vine cave in a rock hump on the east flank, wild hives inside, flowers at its mouth ---------------
+# (10-29 (e) redesign: the old Balboa vine cave sat in a trench dug into the flank - the trench opened the hill to the sky
+# over the hall whatever the strokes did. Now Raft's bear-cave rock (ar_cave, closed on top) on a pad cut level into the
+# flank at 8.5 m, its mouth to the north and a level way out from it)
+call ar_cave x=44 z=4 h=8.5 yaw=0 al=beehallcave chest=beecache
+place Zone_Trigger beehall at 44 9 h=10
+place Loot_WildHive beehive1 at 45.5 10.5 h=8.95 sit
+place Loot_WildHive beehive2 at 43 6 h=8.95 sit yaw=90
 beside ChoppableVines beevines beecache d=1.6
-scatter Pickup_Landmark_Flower_Red 3 at 0 6 r=5 seed=11072 free=1
-pop
+scatter Pickup_Landmark_Flower_Red 3 at 43 16 r=4 seed=11072 free=1
 loot beehive1 HoneyComb*3
 prop beehive1 note.title=Wild beehive
 loot beehive2 HoneyComb*3
@@ -172,7 +172,7 @@ place ZiplinePath_Landmark rwzip at 15.97 0.28 h=59.55
 zipto rwzip 30 -62
 # the survey team's last camp on the south-west slope (secret): a tent, a cold fire, a chest
 clear at -26 -24 r=5
-brush flatten at -26 -24 r=4 s=20 frames=120 h=8.6
+brush flatten at -26 -24 r=4 s=20 frames=40 h=8.6
 place Balboa_DecorationPrefabBase_SimpleTent - at -28 -22 ground sit yaw=120
 place campfire_1 - at -24.5 -22.5 ground sit
 place Loot_ChestSmall rwhut at -25 -26 ground sit yaw=0
