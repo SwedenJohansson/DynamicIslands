@@ -48,6 +48,9 @@ next
 # (the deck's south edge, z -17.5, met the land's foot: its ridges rose through the deck and buried two railings - a ledge
 # along the edge just under the deck (lower, the railings hung over it), the cliff behind it)
 brush flatten from 49 -17.6 to 83 -17.6 r=2 s=20 frames=120 h=1.85
+# (reach audit 10-29: a hump of the land rose through between the pier and the deck at x 57 - the walker stuck there
+# 'a step too high'; the land under the pier just under its plates)
+brush flatten from 47 -3 to 58 -3 r=3.5 s=20 frames=60 h=1.7
 origin
 clear at -6 7 r=16
 clear at 33 -2 r=14
