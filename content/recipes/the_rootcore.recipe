@@ -86,7 +86,8 @@ place Placeable_Lantern_Metal domecam at 1 -10 y=0.05 sit
 place CylinderCoral_2 teodorwall at 0 -27.6 sit scale=2.2
 place LeafCoral_2 teodorwall at 1.8 -27.4 sit scale=2
 place "Box Small" teodorbox at 0.8 -28.6 sit yaw=10
-beside Note_Paper teodortape teodorbox d=0.5
+# (REACH 10-29: beside left the tape inside the box - set on its lid)
+place Note_Paper teodortape at 0.8 -28.6 h=25.56 yaw=10
 pop
 # REDO 10-24: the cave mouth stood on a sheer grass pillar over the meadow - now a wide ramp climbs the hill's west
 #     flank to the mouth's ledge (island frame z=41, from 9 m at x=-45 to 24.6 m at the mouth; about 1:2.6), smoothed
