@@ -843,6 +843,8 @@ namespace DynamicIslands
 		/// <summary>Rocks and stones placed as objects (not a Placeable_, not a cave or a stalagmite): measured under their whole base.</summary>
 		static readonly Regex LooseRock = new Regex("^(?!Placeable_)(?!.*(Cave|Tunnel|Stalag|Wall|Floor|Block_)).*(Rock|Boulder|Stone)", RegexOptions.IgnoreCase);
 		static readonly Regex OnAMount =new Regex("Sattelite|Satellite|Dish|Antenna|Tower_EndRoom", RegexOptions.IgnoreCase);
+		/// <summary>What stands on one trunk: its pivot is its foot (the generator's trees and palms).</summary>
+		static readonly Regex Trunk = new Regex("^(?!Placeable_).*(Tree|Palm|Bamboo|Pine|Birch)", RegexOptions.IgnoreCase);
 
 		/// <summary>What on a spawned island doesn't stand on anything: one line per problem; <paramref name="count"/> = the objects measured.</summary>
 		static List<string> GroundProblems(IslandWorldState.Entry e, out int count)
@@ -940,6 +942,25 @@ namespace DynamicIslands
 					}
 					if (seen > 0 && (high >= 3 || high * 2 > seen))
 					{ node.Reported = true; lines.Add("floating rock: " + n + " at " + where + ", its underside up to " + Num(most) + " m over what is under it (" + high + " of " + seen + " points)"); continue; }
+				}
+				// A trunk over a drop: its foot on a pit's or a cliff's rim, the trunk hanging out over the slope - a stroke lowered
+				// the ground beside it (the user, 2026-10-30: Reefmachine Atoll's palm over its valve-bank pit; the foot itself was
+				// on the ground). Eight points round the foot, a trunk's width out: three or more 0.8 m over what is under them
+				if (Trunk.IsMatch(n) && land != null && o.position.y > sea + 0.3f)
+				{
+					Vector3 foot = o.position;
+					foot.y = Mathf.Max(foot.y, land.SampleHeight(foot) + land.transform.position.y);
+					float rt = 0.6f * Mathf.Max(0.5f, o.lossyScale.x);
+					int over = 0;
+					float most = 0f;
+					for (int k = 0; k < 8; k++)
+					{
+						float a = k * Mathf.PI / 4f;
+						float g = GapUnder(o, new Vector3(foot.x + rt * Mathf.Cos(a), foot.y, foot.z + rt * Mathf.Sin(a)), land);
+						if (g > 0.8f) { over++; most = Mathf.Max(most, g); }
+					}
+					if (over >= 3)
+					{ node.Reported = true; lines.Add("trunk over a drop: " + n + " at " + Num(foot.x - mid.x) + " " + Num(foot.z - mid.z) + " h=" + Num(foot.y - sea) + ", " + over + " of 8 points round its foot over a drop (up to " + (most > 999f ? "nothing under it" : Num(most) + " m") + ")"); continue; }
 				}
 				// Floating: nothing at its base (another object, a wall it hangs on, the land) and the first thing under it more than 0.5 m down
 				float gapUnder = GapUnder(o, new Vector3(b.center.x, b.min.y, b.center.z), land);
