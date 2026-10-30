@@ -172,8 +172,9 @@ namespace DynamicIslands
 				new KeyValuePair<string, KeyValuePair<Action, Action>>("the plan picker", new KeyValuePair<Action, Action>(PlanPickerWindow.Open, PlanPickerWindow.Close)),
 				new KeyValuePair<string, KeyValuePair<Action, Action>>("the world settings", new KeyValuePair<Action, Action>(WorldSettingsWindow.Open, WorldSettingsWindow.Close)),
 				new KeyValuePair<string, KeyValuePair<Action, Action>>("the defaults", new KeyValuePair<Action, Action>(DefaultsWindow.Open, DefaultsWindow.Close)),
+				new KeyValuePair<string, KeyValuePair<Action, Action>>("the placed-objects list", new KeyValuePair<Action, Action>(PlacedListWindow.Open, PlacedListWindow.Close)),
 			};
-			Func<bool> isOpen = () => InfoWindow.IsOpen || IslandPickerWindow.IsOpen || PlanPickerWindow.IsOpen || WorldSettingsWindow.IsOpen || DefaultsWindow.IsOpen;
+			Func<bool> isOpen = () => InfoWindow.IsOpen || IslandPickerWindow.IsOpen || PlanPickerWindow.IsOpen || WorldSettingsWindow.IsOpen || DefaultsWindow.IsOpen || PlacedListWindow.IsOpen;
 			int tried = 0;
 			foreach (var w in windows)
 			{

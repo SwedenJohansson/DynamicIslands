@@ -36,7 +36,9 @@ namespace DynamicIslands.Editor
 					MyIslandsWindow.IsOpen || MainStoryHelper.IsOpen || PlanCheckWindow.IsOpen || PlanProgressWindow.IsOpen || StoryItemsWindow.IsOpen || PiecesWindow.IsOpen ||
 					LibraryExportWindow.IsOpen || LibraryImportWindow.IsOpen || LibraryWindow.IsOpen || CameraSettingsWindow.IsOpen ||
 					// (review 10-30: the box after a save - OfferThisVersion - and the pickers and settings had Ctrl+Z/S act behind them)
-					InfoWindow.IsOpen || IslandPickerWindow.IsOpen || PlanPickerWindow.IsOpen || LevelWindow.IsOpen || WorldSettingsWindow.IsOpen || DefaultsWindow.IsOpen;
+					InfoWindow.IsOpen || IslandPickerWindow.IsOpen || PlanPickerWindow.IsOpen || LevelWindow.IsOpen || WorldSettingsWindow.IsOpen || DefaultsWindow.IsOpen ||
+					// (merge review 10-31: the placed-objects list is a modal too - Ctrl+A then Delete wiped the island behind it, Ctrl+O left its rows on destroyed objects)
+					PlacedListWindow.IsOpen;
 			}
 		}
 
