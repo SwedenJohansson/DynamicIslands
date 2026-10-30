@@ -45,9 +45,17 @@ brush smooth from 0 -48 to 0 5 r=2.5 s=4 frames=20
 # its path, the seed store's hole (west, -14 m); the cave's, the plane's and the hermitage's pads come with their macros
 brush smooth from 0 -48 to 0 -84 r=3 s=6 frames=40
 call hw_mount x=40 z=45 b=24 h=32
-call hw_trail x=40 z=45 b=24 h=32 a0=221.63 turn=300 n=38 h0=12
+# (REACH 10-30: h0 was 12 - the trail ran 4-5 m above the mount's own slope and its pads never rose that far: the foot hung
+# over a cliff and the trail broke up. From 6 it keeps 1-2 m over the slope, as on the other hills)
+call hw_trail x=40 z=45 b=24 h=32 a0=221.63 turn=300 n=38 h0=6
 brush flatten at 40 45 r=9 s=20 frames=400 h=32
 call hw_basin x=-80 z=-10 r=14 h=-14
+# (REACH 10-30: the ossuary cave's two ways out had a lip a player could not step over - evened)
+brush flatten at -26.0 -56.9 r=2.0 s=20 frames=120 h=4.0
+clear at -26.0 -56.9 r=3.0 body
+brush flatten at -27.8 -65.4 r=1.8 s=20 frames=120 h=4.3
+brush flatten at -26.9 -64.5 r=1.8 s=20 frames=120 h=4.75
+clear from -27.8 -65.4 to -26.9 -64.5 r=2.8 body
 origin
 clear from -22 -38 to 22 -38 r=9
 clear from -22 -22 to 22 -22 r=9
@@ -125,7 +133,8 @@ place Note_Sign confession at 6.5 4.1 y=2.42 sit yaw=180
 place Loot_Chest offeringbox at 2.4 3.8 y=2.42 sit yaw=180
 place Bench_01 - at 4.5 3.2 y=2.42 sit yaw=180
 place Antenna_dish - at 7.8 2 y=2.42 sit scale=1.6
-place Placeable_Lantern_Metal fogcam at 4.5 0.4 y=2.42 sit
+# (REACH 10-30: it stood at the stair's head, in the way up - moved aside)
+place Placeable_Lantern_Metal fogcam at 3.2 0.4 y=2.42 sit
 place Zone_Trigger altar at 4.5 2 y=3.4
 pop
 place Zone_Trigger foglook at 0 -105 y=1
@@ -166,7 +175,8 @@ place Creature_PufferFish seedpuffers at -72 -4 h=-9
 prop seedpuffers creature.count=2
 # --- The ossuary cave (south-west): a secret ----------------------------------------------------------------------------
 call hw_zone x=-45 z=-57 al=cavez id=ossuary r=4 msg="The monks' ossuary cave. Niches cut in the rock, and in every niche a little straw figure where the bones should be."
-place Note_Paper ivonote at -43.5 -56.5 h=4.45 drop yaw=0
+# (REACH 10-30: at -43.5 -56.5 it lay in the cave wall - nowhere to read it from; moved in beside the box)
+place Note_Paper ivonote at -45.5 -57.5 h=4.45 drop yaw=0
 loot ossuarychest Candle*2;Scrap*2;MetalOre*2;Battery*1
 prop ossuarychest loot.refill=0
 note ossuarychest Ossuary box | Brother Ivo's box: candles, a battery, scrap and ore from the cave's back wall.
