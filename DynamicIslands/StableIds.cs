@@ -161,7 +161,7 @@ namespace DynamicIslands.Editor
 		// ---- Keys --------------------------------------------------------------------------------------------------
 
 		/// <summary>The keys whose number says the object's place in the file (Behaviours, CodeLock, QuestItemPickups).</summary>
-		static readonly int[] IndexBases = { Behaviours.StateBase, Behaviours.DoneBase, Behaviours.SharedOnceBase, CodeLock.LockKeyBase, QuestItemPickups.KeyBase, Survivors.KeyBase, BossPhases.KeyBase, Islanders.TalkedBase, Collectibles.KeyBase, TriggerSounds.KeyBase, TriggerZone.StoryLootBase, Behaviours.StoryGivenBase };
+		static readonly int[] IndexBases = { Behaviours.StateBase, Behaviours.DoneBase, Behaviours.SharedOnceBase, CodeLock.LockKeyBase, QuestItemPickups.KeyBase, Survivors.KeyBase, BossPhases.KeyBase, Islanders.TalkedBase, Collectibles.KeyBase, TriggerSounds.KeyBase, TriggerZone.StoryLootBase, Behaviours.StoryGivenBase, RaftVending.PackageKeyBase };
 		const int TreasureLow = 0xC000;
 
 		/// <summary>Where each running number of an island's objects points: the object's place, and (pickups) which of its pickups.</summary>
@@ -306,8 +306,10 @@ namespace DynamicIslands.Editor
 				moved = TreasureLow + t * 2 + 1;
 				return t >= 0 && moved <= 0xFFFF;
 			}
-			int[] countedBases = { CreatureSpawner.StateKeyBase, ContentState.LootKeyBase, TriggerZone.KeyBase };
-			List<int>[] wasLists = { was.Creatures, was.Loot, was.Zones }, nowLists = { now.Creatures, now.Loot, now.Zones };
+			// (treasure dug up for good: KeepBase + its number among the island's treasure - it stayed put on an edit, and a
+			// story treasure came back or another one was gone; bughunt 10-30)
+			int[] countedBases = { CreatureSpawner.StateKeyBase, ContentState.LootKeyBase, TriggerZone.KeyBase, BuriedTreasure.KeepBase };
+			List<int>[] wasLists = { was.Creatures, was.Loot, was.Zones, was.Treasure }, nowLists = { now.Creatures, now.Loot, now.Zones, now.Treasure };
 			for (int k = 0; k < countedBases.Length; k++)
 				if (key >= countedBases[k] && key < countedBases[k] + 0x10000)
 				{
@@ -324,6 +326,16 @@ namespace DynamicIslands.Editor
 					moved = b + j;
 					return j >= 0 && j < 0x10000;
 				}
+			// (a trade stand's units: KeyBase + (object index & 0x1FFF) * MaxStock + unit - they stayed put on an edit, and a
+			// stand's once-only trade could be had again, another's was gone; bughunt 10-30)
+			if (key >= TradeStand.KeyBase && key < TradeStand.KeyBase + 0x2000 * TradeStand.MaxStock)
+			{
+				int i = (key - TradeStand.KeyBase) / TradeStand.MaxStock, unit = (key - TradeStand.KeyBase) % TradeStand.MaxStock;
+				if (i >= was.Uids.Length) return true;
+				int j = indexNow(uidAt(i));
+				moved = TradeStand.KeyBase + j * TradeStand.MaxStock + unit;
+				return j >= 0 && j < 0x2000;
+			}
 			foreach (int pb in new[] { Behaviours.PendingBase, Behaviours.MorePendingBase })
 				if (key >= pb && key < pb + 0x100000)
 				{

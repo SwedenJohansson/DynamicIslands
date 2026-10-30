@@ -244,6 +244,7 @@ namespace DynamicIslands.Editor
 			ResetStep("WorldIslands.Reset", () => WorldIslands.Reset());
 			ResetStep("WorldWindowHint.OnWorldLoaded", () => WorldWindowHint.OnWorldLoaded());
 			ResetStep("StoryChain.Reset", () => StoryChain.Reset());
+			ResetStep("MissingIslandsCheck.Forget", () => MissingIslandsCheck.Forget()); // (before the early return below: the last world's "Main menu" held the story; review 10-30 A)
 			ResetStep("BuriedTreasure.ForgetGiven", () => BuriedTreasure.ForgetGiven()); // (chest indexes come from the island ids of this world: another world's would block its loot - audit 10-30)
 			ResetStep("QuestCount.Reset", () => QuestCount.Reset()); // (the last world's count isn't shown here - review 10-30)
 			ResetStep("Collectibles.Reset", () => Collectibles.Reset()); // (set counts are kept by island id, and ids repeat between worlds - review 10-30)

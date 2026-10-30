@@ -882,6 +882,9 @@ namespace DynamicIslands.Editor
 					// A "hide" action on the spot: its animals go too (not counted as defeated), and come back when it is shown
 					if (!p.gameObject.activeInHierarchy)
 					{
+						// (its kills since the last look counted first, as before an unload: a kill in the second the spot was
+						// hidden was lost - the animal came back when it was shown, and its "defeat" never came; bughunt 10-30)
+						try { Account(e, p); } catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Counting a hidden spot's animals: " + ex.Message); }
 						int gone = RemoveAnimals(p);
 						p.RecordedAlive = -1;
 						p.Strayed = 0;

@@ -577,7 +577,7 @@ namespace DynamicIslands.Editor
 				IslandBehaviour b = r.GetComponent<IslandBehaviour>();
 				if (b != null && !b.Loop) b.Snap(open);
 			}
-			arrived.Remove(e.Id);
+			arrived.Remove(e.Id); arriveNotYet.Remove(e.Id);
 			try { ResumePending(e); } catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Actions after a wait on '" + e.HostName + "': " + ex.Message); }
 		}
 
@@ -1306,6 +1306,11 @@ namespace DynamicIslands.Editor
 		#region Island events (arrive, quest)
 
 		static readonly HashSet<int> arrived = new HashSet<int>();
+		/// <summary>Arrived at, but the island's arrive checks failed: tried again when the player comes back after leaving -
+		/// it was tried only when the island loaded again, so "come back with the key" never fired while it stayed loaded (bughunt 10-30).</summary>
+		static readonly HashSet<int> arriveNotYet = new HashSet<int>();
+		/// <summary>How far past its land a player who arrived has to go for a failed arrive to be tried again.</summary>
+		const float LeftMargin = 60f;
 		static float nextTick;
 
 		/// <summary>Every frame from the mod: players arriving at islands with "on.arrive" actions (each machine its own player).</summary>
@@ -1328,18 +1333,37 @@ namespace DynamicIslands.Editor
 			try { if (LoadSceneManager.IsGameSceneLoaded) WatchDeath(); } catch { }
 			if (Time.unscaledTime < nextTick) return;
 			nextTick = Time.unscaledTime + 0.5f;
-			if (!LoadSceneManager.IsGameSceneLoaded) { arrived.Clear(); return; }
+			if (!LoadSceneManager.IsGameSceneLoaded) { arrived.Clear(); arriveNotYet.Clear(); return; }
 			Network_Player p = RAPI.GetLocalPlayer();
 			if (p == null) return;
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
 			{
-				if (e.Root == null || arrived.Contains(e.Id)) continue;
+				if (e.Root == null) continue;
+				if (arrived.Contains(e.Id))
+				{
+					if (!arriveNotYet.Contains(e.Id)) continue;
+					if (e.State.ContainsKey(DoneBase + IslandIndex)) { arriveNotYet.Remove(e.Id); continue; }
+					float away = new Vector2(p.transform.position.x - e.Position.x, p.transform.position.z - e.Position.z).magnitude;
+					if (away > Mathf.Max(0f, CustomIslandSpawner.LandRadius(e.Name)) + LeftMargin) { arrived.Remove(e.Id); arriveNotYet.Remove(e.Id); }
+					continue;
+				}
 				if (!IslandCache.PropsOf(e).ContainsKey(BehaviourProps.EventKey("arrive"))) { arrived.Add(e.Id); continue; }
 				float r = Mathf.Max(0f, CustomIslandSpawner.LandRadius(e.Name));
 				if (new Vector2(p.transform.position.x - e.Position.x, p.transform.position.z - e.Position.z).magnitude > r + 30f) continue;
 				arrived.Add(e.Id);
 				Fire(e, -1, "arrive", true);
+				if (!e.State.ContainsKey(DoneBase + IslandIndex) && ChecksOf(e, IslandIndex, "arrive").Count > 0 && ArriveMayRepeat(e)) arriveNotYet.Add(e.Id);
 			}
+		}
+
+		/// <summary>Shared verbs that only play something (no object, plan or world state changes): an "otherwise" may repeat them.</summary>
+		static readonly string[] RepeatSafeShared = { "playsound", "stopsound", "camera", "flythrough" };
+
+		/// <summary>Whether a failed arrive may be tried again on a come-back: its "otherwise" actions run each time, so only when
+		/// they give nothing (story or Raft items) and change no shared state - else a give there was farmable (review 10-30 C).</summary>
+		internal static bool ArriveMayRepeat(IslandWorldState.Entry e)
+		{
+			return !ActionsOf(e, IslandIndex, "arrive!").Any(a => a.Verb == "give" || (a.Shared && !RepeatSafeShared.Contains(a.Verb)));
 		}
 
 		/// <summary>Hooked to QuestTracker.Advanced (every machine): the island's quest is done.</summary>

@@ -31,7 +31,10 @@ namespace DynamicIslands.Editor
 		public static readonly List<Missing> Last = new List<Missing>();
 		/// <summary>Tests: the box isn't shown by itself (the list is still made).</summary>
 		public static bool Quiet;
-		static bool waiting, cursorFreed;
+		static bool waiting, cursorFreed, shown, leaving;
+		/// <summary>The host hasn't answered the box yet (it is to come, open, or "Main menu" is leaving): the story chain
+		/// doesn't skip a missing island's step meanwhile (bughunt 10-30).</summary>
+		internal static bool Asking { get { return waiting || leaving || (shown && InfoWindow.Closed == (Action)OnClosed); } } // (another box in its place: not)
 		/// <summary>Tests: the box had the cursor free (it was free already, or the box freed it).</summary>
 		public static bool CursorFree;
 		static float showAt;
@@ -40,7 +43,7 @@ namespace DynamicIslands.Editor
 		internal static void OnWorldRead(IList<IslandWorldState.Entry> islands)
 		{
 			Last.Clear();
-			waiting = false;
+			waiting = false; shown = false; leaving = false;
 			if (!Raft_Network.IsHost) return;
 			try
 			{
@@ -120,6 +123,9 @@ namespace DynamicIslands.Editor
 		/// <summary>Every frame: shows the box once the world is on the screen.</summary>
 		internal static void Tick()
 		{
+			// (out of the world - "Main menu" left it, or it was left another way: nothing is asked any more. A new world, a
+			// client session or a world whose file failed to read never reach OnWorldRead; review 10-30 A)
+			if ((leaving || shown) && !LoadSceneManager.IsGameSceneLoaded) { leaving = false; shown = false; }
 			if (!waiting || Time.unscaledTime < showAt) return;
 			if (!LoadSceneManager.IsGameSceneLoaded) { waiting = false; return; }
 			if (RAPI.GetLocalPlayer() == null) return;
@@ -134,6 +140,7 @@ namespace DynamicIslands.Editor
 				new InfoWindow.Choice(MenuLabel, ToMenu, "Leave without saving, to download or restore them"));
 			InfoWindow.Closed = OnClosed;
 			answered = false;
+			shown = true;
 			cursorFreed = !Cursor.visible;
 			CursorFree = !cursorFreed;
 			if (cursorFreed) try { RAPI.ToggleCursor(true); CursorFree = true; } catch { }
@@ -147,6 +154,7 @@ namespace DynamicIslands.Editor
 			if (cursorFreed) try { RAPI.ToggleCursor(false); } catch { }
 			cursorFreed = false;
 			if (!answered) { answered = true; Debug.Log("[CUSTOM ISLANDS] The missing islands box closed: playing on without them"); StoryChain.PlayWithoutMissing(); }
+			shown = false;
 		}
 
 		internal static void PlayWithout()
@@ -160,11 +168,24 @@ namespace DynamicIslands.Editor
 		internal static void ToMenu()
 		{
 			answered = true;
+			leaving = true;
 			InfoWindow.Close();
 			Debug.Log("[CUSTOM ISLANDS] Back to the main menu (islands missing), without saving");
-			Raft_Network net = ComponentManager<Raft_Network>.Value;
-			if (net != null) net.LeaveGame(DisconnectReason.SelfDisconnected, (SceneName)1, false, false);
-			else UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene", UnityEngine.SceneManagement.LoadSceneMode.Single);
+			try
+			{
+				Raft_Network net = ComponentManager<Raft_Network>.Value;
+				if (net != null) net.LeaveGame(DisconnectReason.SelfDisconnected, (SceneName)1, false, false);
+				else UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene", UnityEngine.SceneManagement.LoadSceneMode.Single);
+			}
+			catch (Exception e)
+			{
+				leaving = false; // (still in the world: the story isn't held for good; review 10-30 B)
+				Debug.LogWarning("[CUSTOM ISLANDS] Going back to the main menu failed: " + e.Message);
+			}
 		}
+
+		/// <summary>A world is loading (host, client, new world or a file that failed to read): the last world's box and
+		/// "Main menu" no longer hold the story (review 10-30 A).</summary>
+		internal static void Forget() { waiting = false; shown = false; leaving = false; }
 	}
 }

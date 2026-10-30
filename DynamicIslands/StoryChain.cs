@@ -393,9 +393,9 @@ namespace DynamicIslands.Editor
 				}
 				if (!Brought.Contains(r.Id))
 				{
-					if (IslandWorldState.Islands.Any(e => e.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase))) { Brought.Add(r.Id); dirty = true; }
+					if (IslandWorldState.Islands.Any(e => e.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase))) { Brought.Add(r.Id); answerFirst.Remove(r.Id); dirty = true; }
 					else if (r.Where == "sailing") { float d; if (!due.TryGetValue(r.Id, out d) || WorldDirector.Sailed >= d) TryBring(r); }
-					else if (r.Where != "receiver") TryBring(r);
+					else if (r.Where != "receiver" || answerFirst.Contains(r.Id)) TryBring(r);
 					continue;
 				}
 				// (its island was made in the end: the failures before it don't count towards going on without it - review 10-30)
@@ -455,6 +455,7 @@ namespace DynamicIslands.Editor
 				if (IslandWorldState.Islands.Any(e => e.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase))) continue;
 				Brought.Remove(r.Id);
 				retryAt.Remove(r.Id);
+				answerFirst.Remove(r.Id); // (a Receiver island comes again only by a new tune; review 10-30 D)
 				if (r.Where == "sailing" && Fired.Contains(r.Id)) DueFromNow(r);
 				Log("The island of '" + r.Id + "' was removed from the world before its step was done: it comes again " +
 					(r.Where == "receiver" ? "when the Receiver is tuned to " + FrequencyOf(r.Id) : r.Where == "sailing" ? "by chance while sailing" : "now"));
@@ -494,13 +495,21 @@ namespace DynamicIslands.Editor
 			float t;
 			if (retryAt.TryGetValue(r.Id, out t) && Time.unscaledTime < t) return;
 			string why = WorldDirector.Bring(r, null, null);
-			if (why == null) { Brought.Add(r.Id); retryAt.Remove(r.Id); Changed(); return; }
+			if (why == null) { Brought.Add(r.Id); retryAt.Remove(r.Id); answerFirst.Remove(r.Id); Changed(); return; }
 			retryAt[r.Id] = Time.unscaledTime + RetrySeconds;
 			if (warned.Add(r.Id + why)) Log("Rule '" + r.Id + "' waits: " + why);
 			// (the host is told when the island isn't on this PC: the Receiver gave nothing and the story stopped, silently)
 			WorldDirector.NoteMissingIf(why, r, null);
-			if (WorldDirector.IsMissing(why)) GoOnWithout(r);
+			if (!WorldDirector.IsMissing(why)) return;
+			// (not while the host is still asked what to do about the missing islands: the step was skipped and saved at once,
+			// so "Main menu" - to fetch the island - came back to a story without it; asked again soon, also a Receiver's)
+			if (MissingIslandsCheck.Asking) { answerFirst.Add(r.Id); retryAt[r.Id] = Time.unscaledTime + 2f; return; }
+			answerFirst.Remove(r.Id);
+			GoOnWithout(r);
 		}
+
+		/// <summary>Rules whose island is missing, waiting for the host's answer to the missing-islands box (bughunt 10-30).</summary>
+		static readonly HashSet<string> answerFirst = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>
 		/// Host: a story island whose file isn't on this PC (missing, or removed since) when its moment comes: the story goes
@@ -538,7 +547,7 @@ namespace DynamicIslands.Editor
 			IntroRule r = RuleOf(id);
 			if (r == null || !Fired.Contains(r.Id)) return;
 			if (Brought.Contains(r.Id)) { BringBackTuned(r); return; }
-			if (IslandWorldState.Islands.Any(e => e.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase))) { Brought.Add(r.Id); return; }
+			if (IslandWorldState.Islands.Any(e => e.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase))) { Brought.Add(r.Id); answerFirst.Remove(r.Id); return; }
 			TryBring(r);
 		}
 
@@ -711,7 +720,8 @@ namespace DynamicIslands.Editor
 			Frequencies.Clear();
 			Unlocked.Clear(); Done.Clear(); Fired.Clear(); Brought.Clear();
 			due.Clear(); retryAt.Clear(); warned.Clear(); PlayingWithoutMissing = false; PlayingWithoutSince = 0f;
-			failedMaking.Clear(); Moved.Clear(); tunedAt.Clear();
+			// (the last world's: a rule of the same id in the next world gave up after one failure; bughunt 10-30)
+			failedMaking.Clear(); Moved.Clear(); tunedAt.Clear(); answerFirst.Clear();
 			StoryEnding = "";
 			EndingTitle = ""; Credits = ""; CreditsShown = false;
 			clientBook.Clear();
