@@ -100,5 +100,6 @@ place ReefHuts_Pillar3 - at 1.35 0.15 y=0 sy={$y/4.815}
 place ReefHuts_Pillar3 - at 0.15 1.35 y=0 sy={$y/4.815}
 place ReefHuts_Pillar3 - at 1.35 1.35 y=0 sy={$y/4.815}
 place Block_Floor_Wood - at 0.75 0.75 y=$y
-place Block_Ladder - at 0.75 -0.12 ground
+# (REACH 10-28: one ladder block is 2.3 m - the decks at y 4.7 and 5 were out of reach from its top; it grows with the deck)
+place Block_Ladder - at 0.75 -0.12 ground sy={$y/2.4}
 end

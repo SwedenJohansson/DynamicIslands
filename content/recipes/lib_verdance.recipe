@@ -88,7 +88,10 @@ place Block_Wall_Tier3 $a at 0 0.75 y={$k*2.42} yaw=90
 place Block_Wall_Tier3 $a at 0 2.25 y={$k*2.42} yaw=90
 place Block_Wall_Tier3 $a at 3 0.75 y={$k*2.42} yaw=90
 place Block_Wall_Tier3 $a at 3 2.25 y={$k*2.42} yaw=90
-place Block_Ladder_Tier3 - at 2.25 2.7 y={$k*2.42} yaw=180
+# (REACH 10-28 (4): Block_Ladder_Tier3's climb trigger sits 0.3 m behind the piece and 0.55 m to its -x; at yaw 180 it
+# lay in the back wall and nobody could take hold (hw_mast/ladtower "never took hold" on several islands). At yaw 0, as
+# the drowned building's ladders that work, it is 0.3 m in front of the piece; x 2.6 centres it under the top hole)
+place Block_Ladder_Tier3 - at 2.6 2.7 y={$k*2.42} yaw=0
 next
 place Block_Wall_Door_Tier3 $a at 0.75 0 y=0
 for k 1 {$lv-1}
