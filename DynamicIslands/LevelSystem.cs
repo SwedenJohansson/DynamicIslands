@@ -954,10 +954,16 @@ namespace DynamicIslands.Editor
 	[HarmonyPatch(typeof(Stat_Consumable), "LostPerSecond", MethodType.Getter)]
 	static class LevelHungerPatch
 	{
+		static bool warned;
+
 		static void Postfix(Stat_Consumable __instance, ref float __result)
 		{
-			int stat = StatApply.ConsumableStat(__instance);
-			if (stat >= 0) __result /= PlayerLevels.Factor(stat);
+			try
+			{
+				int stat = StatApply.ConsumableStat(__instance);
+				if (stat >= 0) __result /= PlayerLevels.Factor(stat);
+			}
+			catch (Exception e) { if (!warned) { warned = true; Debug.LogWarning("[CUSTOM ISLANDS] Levels: hunger and thirst: " + e.Message); } }
 		}
 	}
 
@@ -967,6 +973,7 @@ namespace DynamicIslands.Editor
 	{
 		// (a reference to the field, not FieldInfo: GetValue and SetValue boxed the float twice a frame)
 		static readonly AccessTools.FieldRef<Stat_Oxygen, float> LostPerSecond = OxygenField();
+		static bool warned;
 
 		static AccessTools.FieldRef<Stat_Oxygen, float> OxygenField()
 		{
@@ -977,9 +984,13 @@ namespace DynamicIslands.Editor
 		static void Prefix(Stat_Oxygen __instance, out float __state)
 		{
 			__state = -1f;
-			if (LostPerSecond == null || !StatApply.IsLocalOxygen(__instance)) return;
-			__state = LostPerSecond(__instance);
-			LostPerSecond(__instance) = __state / PlayerLevels.Factor(LevelRules.Oxygen);
+			try
+			{
+				if (LostPerSecond == null || !StatApply.IsLocalOxygen(__instance)) return;
+				__state = LostPerSecond(__instance);
+				LostPerSecond(__instance) = __state / PlayerLevels.Factor(LevelRules.Oxygen);
+			}
+			catch (Exception e) { if (!warned) { warned = true; Debug.LogWarning("[CUSTOM ISLANDS] Levels: oxygen: " + e.Message); } }
 		}
 
 		// (a Finalizer: put back also when Raft's Update throws - AU41)
@@ -1089,10 +1100,15 @@ namespace DynamicIslands.Editor
 
 		static void Prefix(Firework __instance)
 		{
-			ulong id;
-			By = __instance != null && Owner.TryGetValue(__instance.ObjectIndex, out id) ? id : 0UL;
+			try
+			{
+				ulong id;
+				By = __instance != null && Owner.TryGetValue(__instance.ObjectIndex, out id) ? id : 0UL;
+			}
+			catch (Exception e) { By = 0UL; Debug.LogWarning("[CUSTOM ISLANDS] Levels (firework): " + e.Message); }
 		}
 
-		static void Postfix() { By = 0UL; }
+		// (a Finalizer, not a Postfix: By is cleared also when Raft's method throws - later damage went to that player otherwise)
+		static Exception Finalizer(Exception __exception) { By = 0UL; return __exception; }
 	}
 }

@@ -324,6 +324,7 @@ namespace DynamicIslands.Editor
 		{
 			WorldCopy.InRaftSave = true;
 			try { IslandWorldState.Save(); }
+			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Could not save the world's island list: " + ex.Message); }
 			finally { WorldCopy.InRaftSave = false; }
 			// (a quest reward given from now on isn't in this save - review 10-30)
 			if (Raft_Network.IsHost) QuestRewards.AfterRaftSave(WorldCopy.SavingStamp);

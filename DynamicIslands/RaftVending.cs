@@ -136,9 +136,13 @@ namespace DynamicIslands
 	{
 		static void Postfix(VendingMachine __instance)
 		{
-			if (__instance == null) return;
-			RaftVending v = __instance.GetComponentInParent<RaftVending>();
-			if (v != null) v.Note();
+			try
+			{
+				if (__instance == null) return;
+				RaftVending v = __instance.GetComponentInParent<RaftVending>();
+				if (v != null) v.Note();
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [vending] Noting a press: " + e.Message); }
 		}
 	}
 }

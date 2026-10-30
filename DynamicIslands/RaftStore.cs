@@ -144,9 +144,13 @@ namespace DynamicIslands
 	{
 		static void Postfix(TradingPost __instance, int uniqueItemIndex, bool __result)
 		{
-			if (!__result || __instance == null) return;
-			RaftStore s = __instance.GetComponentInParent<RaftStore>();
-			if (s != null) s.Bought(uniqueItemIndex);
+			try
+			{
+				if (!__result || __instance == null) return;
+				RaftStore s = __instance.GetComponentInParent<RaftStore>();
+				if (s != null) s.Bought(uniqueItemIndex);
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [store] Noting a purchase: " + e.Message); }
 		}
 	}
 
@@ -157,15 +161,21 @@ namespace DynamicIslands
 		static void Prefix(TradingPost tradingPost, out List<SO_TradingPost_Buyable.Instance> __state)
 		{
 			__state = null;
-			RaftStore s = tradingPost != null ? tradingPost.GetComponentInParent<RaftStore>() : null;
-			if (s == null) return;
-			__state = tradingPost.buyableItems;
-			tradingPost.buyableItems = s.Shown();
+			try
+			{
+				RaftStore s = tradingPost != null ? tradingPost.GetComponentInParent<RaftStore>() : null;
+				if (s == null) return;
+				__state = tradingPost.buyableItems;
+				tradingPost.buyableItems = s.Shown();
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [store] Opening the store window: " + e.Message); }
 		}
 
-		static void Postfix(TradingPost tradingPost, List<SO_TradingPost_Buyable.Instance> __state)
+		// (a Finalizer, not a Postfix: the full list goes back also when Raft's Open throws)
+		static Exception Finalizer(Exception __exception, TradingPost tradingPost, List<SO_TradingPost_Buyable.Instance> __state)
 		{
 			if (__state != null && tradingPost != null) tradingPost.buyableItems = __state;
+			return __exception;
 		}
 	}
 }

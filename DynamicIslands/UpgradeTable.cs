@@ -476,32 +476,38 @@ namespace DynamicIslands.Editor
 	[HarmonyPatch(typeof(Inventory_ResearchTable), "Update")]
 	static class UpgradeTableUpdatePatch
 	{
+		static bool warned;
+
 		static void Postfix(Inventory_ResearchTable __instance)
 		{
-			ResearchTable t = __instance.activeTable;
-			if (!UpgradeTableMenu.IsUpgradeTable(t)) return;
-			if (!UpgradeTableMenu.Showing) UpgradeTableMenu.Show(true);
-			UpgradeTableMenu.SyncIcons(__instance);
-			if (!t.IsOccupied || t.slot == null || t.slot.IsEmpty) return;
-			Traverse tr = Traverse.Create(__instance);
-			UnityEngine.UI.Button button = tr.Field("researchButton").GetValue<UnityEngine.UI.Button>();
-			UnityEngine.UI.Text done = tr.Field("researchedText").GetValue<UnityEngine.UI.Text>(), cant = tr.Field("cantBeResearchedText").GetValue<UnityEngine.UI.Text>();
-			if (button == null || done == null || cant == null) return;
-			bool pad = CustomInputConfig.Instance != null && CustomInputConfig.Instance.Gamepad;
-			Item_Base item = t.slot.itemInstance.baseItem;
-			if (UpgradeTable.IsResearched(item))
+			try
 			{
-				done.gameObject.SetActive(true);
-				if (!pad) button.gameObject.SetActive(false);
-				cant.gameObject.SetActive(false);
-				Inventory_ResearchTable.ResearchItem = null;
-				return;
+				ResearchTable t = __instance.activeTable;
+				if (!UpgradeTableMenu.IsUpgradeTable(t)) return;
+				if (!UpgradeTableMenu.Showing) UpgradeTableMenu.Show(true);
+				UpgradeTableMenu.SyncIcons(__instance);
+				if (!t.IsOccupied || t.slot == null || t.slot.IsEmpty) return;
+				Traverse tr = Traverse.Create(__instance);
+				UnityEngine.UI.Button button = tr.Field("researchButton").GetValue<UnityEngine.UI.Button>();
+				UnityEngine.UI.Text done = tr.Field("researchedText").GetValue<UnityEngine.UI.Text>(), cant = tr.Field("cantBeResearchedText").GetValue<UnityEngine.UI.Text>();
+				if (button == null || done == null || cant == null) return;
+				bool pad = CustomInputConfig.Instance != null && CustomInputConfig.Instance.Gamepad;
+				Item_Base item = t.slot.itemInstance.baseItem;
+				if (UpgradeTable.IsResearched(item))
+				{
+					done.gameObject.SetActive(true);
+					if (!pad) button.gameObject.SetActive(false);
+					cant.gameObject.SetActive(false);
+					Inventory_ResearchTable.ResearchItem = null;
+					return;
+				}
+				button.interactable = UpgradeTable.CanResearch(item);
+				button.gameObject.SetActive(!pad);
+				cant.gameObject.SetActive(!button.interactable);
+				done.gameObject.SetActive(false);
+				Inventory_ResearchTable.ResearchItem = button.interactable ? item : null;
 			}
-			button.interactable = UpgradeTable.CanResearch(item);
-			button.gameObject.SetActive(!pad);
-			cant.gameObject.SetActive(!button.interactable);
-			done.gameObject.SetActive(false);
-			Inventory_ResearchTable.ResearchItem = button.interactable ? item : null;
+			catch (Exception e) { if (!warned) { warned = true; Debug.LogWarning("[CUSTOM ISLANDS] [upgrade table] The research window: " + e.Message); } }
 		}
 	}
 
@@ -511,9 +517,13 @@ namespace DynamicIslands.Editor
 	{
 		static bool Prefix(Inventory_ResearchTable __instance)
 		{
-			if (!UpgradeTableMenu.IsUpgradeTable(__instance.activeTable)) return true;
-			UpgradeTable.AskResearch(__instance.activeTable.slot);
-			return false;
+			try
+			{
+				if (!UpgradeTableMenu.IsUpgradeTable(__instance.activeTable)) return true;
+				UpgradeTable.AskResearch(__instance.activeTable.slot);
+				return false;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrade table] Research button: " + e.Message); return true; }
 		}
 	}
 
@@ -523,8 +533,12 @@ namespace DynamicIslands.Editor
 	{
 		static void Postfix(Inventory_ResearchTable __instance, Item_Base item, ref bool __result)
 		{
-			if (!__result || item == null || item.settings_recipe.IsBlueprint) return;
-			if (!__instance.GetMenuItems().Any(m => m != null && !UpgradeTableMenu.IsModEntry(m) && m.ContainsItem(item))) __result = false;
+			try
+			{
+				if (!__result || item == null || item.settings_recipe.IsBlueprint) return;
+				if (!__instance.GetMenuItems().Any(m => m != null && !UpgradeTableMenu.IsModEntry(m) && m.ContainsItem(item))) __result = false;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrade table] Can research: " + e.Message); }
 		}
 	}
 
@@ -535,23 +549,39 @@ namespace DynamicIslands.Editor
 	{
 		[HarmonyPatch(typeof(ResearchMenuItem), "Research")]
 		[HarmonyPrefix]
-		static bool Research(ResearchMenuItem __instance) { return !UpgradeTableMenu.IsModEntry(__instance); }
+		static bool Research(ResearchMenuItem __instance)
+		{
+			try { return !UpgradeTableMenu.IsModEntry(__instance); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrade table] An entry's Research: " + e.Message); return true; }
+		}
 
 		[HarmonyPatch(typeof(ResearchMenuItem), "LearnInstantly")]
 		[HarmonyPrefix]
-		static bool LearnInstantly(ResearchMenuItem __instance) { return !UpgradeTableMenu.IsModEntry(__instance); }
+		static bool LearnInstantly(ResearchMenuItem __instance)
+		{
+			try { return !UpgradeTableMenu.IsModEntry(__instance); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrade table] An entry's LearnInstantly: " + e.Message); return true; }
+		}
 
 		[HarmonyPatch(typeof(ResearchMenuItem), "Learn")]
 		[HarmonyPrefix]
-		static bool Learn(ResearchMenuItem __instance) { return UpgradeTableMenu.Applying || !UpgradeTableMenu.IsModEntry(__instance); }
+		static bool Learn(ResearchMenuItem __instance)
+		{
+			try { return UpgradeTableMenu.Applying || !UpgradeTableMenu.IsModEntry(__instance); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrade table] An entry's Learn: " + e.Message); return true; }
+		}
 
 		[HarmonyPatch(typeof(ResearchMenuItem), "LearnButton")]
 		[HarmonyPrefix]
 		static bool LearnButton(ResearchMenuItem __instance)
 		{
-			if (!UpgradeTableMenu.IsModEntry(__instance)) return true;
-			UpgradeTable.AskLearn(UpgradeTableMenu.UpgradeOf(__instance));
-			return false;
+			try
+			{
+				if (!UpgradeTableMenu.IsModEntry(__instance)) return true;
+				UpgradeTable.AskLearn(UpgradeTableMenu.UpgradeOf(__instance));
+				return false;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrade table] An entry's Learn button: " + e.Message); return true; }
 		}
 	}
 }

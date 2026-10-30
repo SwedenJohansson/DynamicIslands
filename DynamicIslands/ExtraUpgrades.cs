@@ -1121,16 +1121,23 @@ namespace DynamicIslands.Editor
 		static void Prefix(Block block, out Item_Base __state)
 		{
 			__state = null;
-			if (block == null || block.buildableItem == null) return;
-			ExtraUpgrades.Upgrade u = ExtraUpgrades.Find(block.buildableItem.UniqueIndex);
-			if (u == null || u.Base == null) return;
-			__state = block.buildableItem;
-			block.buildableItem = u.Base;
+			try
+			{
+				if (block == null || block.buildableItem == null) return;
+				ExtraUpgrades.Upgrade u = ExtraUpgrades.Find(block.buildableItem.UniqueIndex);
+				if (u == null || u.Base == null) return;
+				__state = block.buildableItem;
+				block.buildableItem = u.Base;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] A removed block: " + e.Message); }
 		}
 
-		static void Postfix(Block block, Item_Base __state)
+		// (a Finalizer, not a Postfix: the upgrade's item goes back also when Raft's method throws - the block was
+		// otherwise left, and saved, as its base item)
+		static Exception Finalizer(Exception __exception, Block block, Item_Base __state)
 		{
 			if (__state != null && block != null) block.buildableItem = __state;
+			return __exception;
 		}
 	}
 
@@ -1143,7 +1150,9 @@ namespace DynamicIslands.Editor
 	{
 		static void Prefix(CraftingMenu __instance, out object __state)
 		{
-			__state = Traverse.Create(__instance).Field("selectedCategory").GetValue();
+			__state = null;
+			try { __state = Traverse.Create(__instance).Field("selectedCategory").GetValue(); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Crafting menu sizes: " + e.Message); }
 		}
 
 		static void Postfix(CraftingMenu __instance, CraftingCategory category, object __state)

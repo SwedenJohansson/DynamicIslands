@@ -107,13 +107,18 @@ namespace DynamicIslands.Editor
 			placedAt.Remove(block.ObjectIndex);
 			if (at == BuildCost.Applied) return null;
 			var changed = new List<KeyValuePair<CostMultiple, int>>();
-			foreach (CostMultiple c in block.buildableItem.settings_recipe.NewCost)
+			// (a throw part-way puts back what was already changed: the shared recipe would otherwise keep the old cost)
+			try
 			{
-				if (c == null) continue;
-				changed.Add(new KeyValuePair<CostMultiple, int>(c, c.amount));
-				c.amount = BuildCost.Cost(BuildCost.OriginalOf(c), at);
+				foreach (CostMultiple c in block.buildableItem.settings_recipe.NewCost)
+				{
+					if (c == null) continue;
+					changed.Add(new KeyValuePair<CostMultiple, int>(c, c.amount));
+					c.amount = BuildCost.Cost(BuildCost.OriginalOf(c), at);
+				}
+				Debug.Log("[CUSTOM ISLANDS] [build cost] " + block.buildableItem.UniqueName + " " + block.ObjectIndex + " placed at " + BuildCost.Describe(at) + ": gives back by that cost (now " + BuildCost.Describe(BuildCost.Applied) + ")");
 			}
-			Debug.Log("[CUSTOM ISLANDS] [build cost] " + block.buildableItem.UniqueName + " " + block.ObjectIndex + " placed at " + BuildCost.Describe(at) + ": gives back by that cost (now " + BuildCost.Describe(BuildCost.Applied) + ")");
+			catch { PutBack(changed); throw; }
 			return changed;
 		}
 

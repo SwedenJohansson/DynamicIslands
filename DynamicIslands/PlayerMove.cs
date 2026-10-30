@@ -54,6 +54,7 @@ namespace DynamicIslands.Editor
 		static HarmonyLib.AccessTools.FieldRef<PersonController, float> resetTimer;
 		static Collider last;
 		static bool lastOnIsland;
+		static bool warned;
 
 		/// <summary>Times a player on island ground was taken off the raft (tests).</summary>
 		public static int Kept { get; private set; }
@@ -68,21 +69,30 @@ namespace DynamicIslands.Editor
 
 		static bool Prefix(PersonController __instance, RaycastHit groundHit)
 		{
-			Collider c = groundHit.collider;
-			if (c == null || lockedPivot(__instance) == null) return true;
-			if (c != last) { last = c; lastOnIsland = c.GetComponentInParent<IslandInfoTag>() != null; }
-			if (!lastOnIsland) return true;
-			if (groundHit.distance < 0.4f && resetTimer(__instance) <= 0f && (__instance.terrainRaycaster == null || !__instance.terrainRaycaster.IsCurrentTerrainIDUsingCustomFriction()))
+			try
 			{
-				__instance.externalVelocity.x = 0f;
-				__instance.externalVelocity.z = 0f;
+				Collider c = groundHit.collider;
+				if (c == null || lockedPivot(__instance) == null) return true;
+				if (c != last) { last = c; lastOnIsland = c.GetComponentInParent<IslandInfoTag>() != null; }
+				if (!lastOnIsland) return true;
+				if (groundHit.distance < 0.4f && resetTimer(__instance) <= 0f && (__instance.terrainRaycaster == null || !__instance.terrainRaycaster.IsCurrentTerrainIDUsingCustomFriction()))
+				{
+					__instance.externalVelocity.x = 0f;
+					__instance.externalVelocity.z = 0f;
+				}
+				if (__instance.transform.parent != null)
+				{
+					if (__instance.HasRaftAsParent) Kept++;
+					__instance.transform.SetParent(null);
+				}
+				return false;
 			}
-			if (__instance.transform.parent != null)
+			catch (System.Exception e)
 			{
-				if (__instance.HasRaftAsParent) Kept++;
-				__instance.transform.SetParent(null);
+				// (Raft's own step runs then: the player is parented as Raft does it)
+				if (!warned) { warned = true; Debug.LogWarning("[CUSTOM ISLANDS] Island ground under the player: " + e.Message); }
+				return true;
 			}
-			return false;
 		}
 	}
 
@@ -98,14 +108,20 @@ namespace DynamicIslands.Editor
 		/// <summary>Players a dead carrier let go of (tests).</summary>
 		public static int Released { get; private set; }
 
+		static bool warned;
+
 		static void Prefix(AttachPlayer __instance)
 		{
-			if (__instance.carriedPlayer == null) return;
-			AI_NetworkBehaviour carrier = __instance.GetComponentInParent<AI_NetworkBehaviour>();
-			if (carrier == null || carrier.networkEntity == null || !carrier.networkEntity.IsDead) return;
-			__instance.StopCarryingPlayer(true, true);
-			Released++;
-			Debug.Log("[CUSTOM ISLANDS] A dead " + carrier.behaviourType + " let go of the player it carried");
+			try
+			{
+				if (__instance.carriedPlayer == null) return;
+				AI_NetworkBehaviour carrier = __instance.GetComponentInParent<AI_NetworkBehaviour>();
+				if (carrier == null || carrier.networkEntity == null || !carrier.networkEntity.IsDead) return;
+				__instance.StopCarryingPlayer(true, true);
+				Released++;
+				Debug.Log("[CUSTOM ISLANDS] A dead " + carrier.behaviourType + " let go of the player it carried");
+			}
+			catch (System.Exception e) { if (!warned) { warned = true; Debug.LogWarning("[CUSTOM ISLANDS] A dead carrier letting go: " + e.Message); } }
 		}
 	}
 
@@ -147,25 +163,37 @@ namespace DynamicIslands.Editor
 		[HarmonyLib.HarmonyPatch(typeof(Unstuck_Tracker), "Update")]
 		static class TrackPatch
 		{
+			static bool warned;
+
 			static void Postfix(Unstuck_Tracker __instance)
 			{
-				if (!Local(__instance)) return;
-				Transform tr = Tracked(__instance);
-				if (tr == null) { since = -1f; return; }
-				Vector3 at = tr.position;
-				if (since < 0f || (at - anchor).sqrMagnitude > Radius * Radius) { anchor = at; since = Time.time; }
+				try
+				{
+					if (!Local(__instance)) return;
+					Transform tr = Tracked(__instance);
+					if (tr == null) { since = -1f; return; }
+					Vector3 at = tr.position;
+					if (since < 0f || (at - anchor).sqrMagnitude > Radius * Radius) { anchor = at; since = Time.time; }
+				}
+				catch (System.Exception e) { if (!warned) { warned = true; Debug.LogWarning("[CUSTOM ISLANDS] Unstuck tracking: " + e.Message); } }
 			}
 		}
 
 		[HarmonyLib.HarmonyPatch(typeof(PauseMenu), "HandleToggleUnstuckPanel")]
 		static class PanelPatch
 		{
+			static bool warned;
+
 			static void Postfix(PauseMenu __instance)
 			{
-				Network_Player p = ComponentManager<Network_Player>.Value;
-				if (p == null || p.UnstuckTracker == null || p.UnstuckTracker.IsConsideredStuck || !Stuck(p.UnstuckTracker)) return;
-				GameObject panel = HarmonyLib.Traverse.Create(__instance).Field("unstuckPanel").GetValue<GameObject>();
-				if (panel != null) panel.SetActive(true);
+				try
+				{
+					Network_Player p = ComponentManager<Network_Player>.Value;
+					if (p == null || p.UnstuckTracker == null || p.UnstuckTracker.IsConsideredStuck || !Stuck(p.UnstuckTracker)) return;
+					GameObject panel = HarmonyLib.Traverse.Create(__instance).Field("unstuckPanel").GetValue<GameObject>();
+					if (panel != null) panel.SetActive(true);
+				}
+				catch (System.Exception e) { if (!warned) { warned = true; Debug.LogWarning("[CUSTOM ISLANDS] Unstuck button: " + e.Message); } }
 			}
 		}
 
@@ -174,9 +202,9 @@ namespace DynamicIslands.Editor
 		{
 			static bool Prefix(Unstuck_Tracker __instance)
 			{
-				if (!Stuck(__instance)) return true;
 				try
 				{
+					if (!Stuck(__instance)) return true;
 					HarmonyLib.AccessTools.Method(__instance.GetType(), "StuckFixTPRaft").Invoke(__instance, null);
 					HarmonyLib.AccessTools.Method(typeof(Unstuck_Tracker), "SetIsStuck").Invoke(__instance, new object[] { false });
 					since = -1f;

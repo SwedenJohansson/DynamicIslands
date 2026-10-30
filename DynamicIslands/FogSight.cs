@@ -175,6 +175,12 @@ namespace DynamicIslands.Editor
 	[HarmonyPatch(typeof(AzureSkyController), "Update")]
 	static class FogSightNightPatch
 	{
-		static void Postfix(AzureSkyController __instance) { FogSight.LiftNight(__instance); }
+		static bool warned;
+
+		static void Postfix(AzureSkyController __instance)
+		{
+			try { FogSight.LiftNight(__instance); }
+			catch (Exception e) { if (!warned) { warned = true; Debug.LogWarning("[CUSTOM ISLANDS] Fog sight night light: " + e.Message); } }
+		}
 	}
 }

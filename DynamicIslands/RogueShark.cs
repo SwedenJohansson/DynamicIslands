@@ -291,20 +291,26 @@ namespace DynamicIslands.Editor
 		static bool Prefix(AI_State_Decay_Shark __instance, ref bool __result, out int __state)
 		{
 			__state = 0;
-			AI_NetworkBehaviour ai = __instance.GetComponentInParent<AI_NetworkBehaviour>();
-			if (RogueShark.IsRogue(ai)) { __result = true; Debug.Log("[CUSTOM ISLANDS] [rogue] Its body decays: no shark comes for it"); return false; }
-			if (RogueShark.Index == 0 || !RogueShark.Alive) return true;
-			Network_Host_Entities host = null;
-			try { host = ComponentManager<Network_Host_Entities>.Value; } catch { }
-			if (host != null && host.SharkCount > 1) { host.SharkCount--; __state = 1; Debug.Log("[CUSTOM ISLANDS] [rogue] A shark's body decays while the rogue lives: Raft counts " + host.SharkCount + " shark(s)"); }
-			else Debug.Log("[CUSTOM ISLANDS] [rogue] A shark's body decays while the rogue lives: Raft counts " + (host == null ? "? (no host)" : host.SharkCount + " shark(s)") + ", left as it is");
-			return true;
+			try
+			{
+				AI_NetworkBehaviour ai = __instance.GetComponentInParent<AI_NetworkBehaviour>();
+				if (RogueShark.IsRogue(ai)) { __result = true; Debug.Log("[CUSTOM ISLANDS] [rogue] Its body decays: no shark comes for it"); return false; }
+				if (RogueShark.Index == 0 || !RogueShark.Alive) return true;
+				Network_Host_Entities host = null;
+				try { host = ComponentManager<Network_Host_Entities>.Value; } catch { }
+				if (host != null && host.SharkCount > 1) { host.SharkCount--; __state = 1; Debug.Log("[CUSTOM ISLANDS] [rogue] A shark's body decays while the rogue lives: Raft counts " + host.SharkCount + " shark(s)"); }
+				else Debug.Log("[CUSTOM ISLANDS] [rogue] A shark's body decays while the rogue lives: Raft counts " + (host == null ? "? (no host)" : host.SharkCount + " shark(s)") + ", left as it is");
+				return true;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [rogue] A shark's body decaying: " + e.Message); return true; }
 		}
 
-		static void Postfix(int __state)
+		// (a Finalizer, not a Postfix: the count goes back also when Raft's method throws - one shark too few otherwise)
+		static Exception Finalizer(Exception __exception, int __state)
 		{
-			if (__state == 0) return;
-			try { ComponentManager<Network_Host_Entities>.Value.SharkCount += __state; } catch { }
+			if (__state != 0)
+				try { ComponentManager<Network_Host_Entities>.Value.SharkCount += __state; } catch { }
+			return __exception;
 		}
 	}
 }

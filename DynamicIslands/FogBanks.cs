@@ -354,7 +354,20 @@ namespace DynamicIslands.Editor
 	[HarmonyPatch(typeof(AzureSkyController), "UpdateShaderUniforms")]
 	static class FogBanksSkyPatch
 	{
-		static void Prefix(AzureSkyController __instance, out FogBanks.Saved __state) { __state = FogBanks.Lend(__instance); FogSight.Lend(__instance); }
-		static void Postfix(AzureSkyController __instance, FogBanks.Saved __state) { FogSight.Return(__instance); FogBanks.Return(__instance, __state); }
+		static bool warned;
+
+		static void Prefix(AzureSkyController __instance, out FogBanks.Saved __state)
+		{
+			__state = default(FogBanks.Saved);
+			try { __state = FogBanks.Lend(__instance); FogSight.Lend(__instance); }
+			catch (Exception e) { if (!warned) { warned = true; Debug.LogWarning("[CUSTOM ISLANDS] [fog] Lending the fog: " + e.Message); } }
+		}
+
+		// (a Finalizer, not a Postfix: Raft's own fog goes back also when its method throws)
+		static Exception Finalizer(Exception __exception, AzureSkyController __instance, FogBanks.Saved __state)
+		{
+			FogSight.Return(__instance); FogBanks.Return(__instance, __state);
+			return __exception;
+		}
 	}
 }

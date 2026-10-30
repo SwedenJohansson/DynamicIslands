@@ -228,7 +228,8 @@ namespace DynamicIslands.Editor
 	{
 		static void Prefix(ref ChunkPointType chunkPointType)
 		{
-			if (StoryOrder.Active) chunkPointType = StoryOrder.Map(chunkPointType);
+			try { if (StoryOrder.Active) chunkPointType = StoryOrder.Map(chunkPointType); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story order] A frequency unlocked: " + e.Message); }
 		}
 	}
 
@@ -237,17 +238,29 @@ namespace DynamicIslands.Editor
 	[HarmonyPatch(typeof(NoteBookUI), "UpdateAllNotesVisibility")]
 	static class StoryOrderNotesRead
 	{
-		static void Postfix() { StoryOrder.Rebuild(); }
+		static void Postfix()
+		{
+			try { StoryOrder.Rebuild(); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story order] The notes read: " + e.Message); }
+		}
 	}
 	[HarmonyPatch(typeof(FrequencyTextMeshPro), "Start")]
 	static class StoryOrderLabel
 	{
-		static void Postfix(FrequencyTextMeshPro __instance, ChunkPointType ___frequencyType) { StoryOrder.Register(__instance, ___frequencyType); }
+		static void Postfix(FrequencyTextMeshPro __instance, ChunkPointType ___frequencyType)
+		{
+			try { StoryOrder.Register(__instance, ___frequencyType); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story order] A frequency label: " + e.Message); }
+		}
 	}
 
 	[HarmonyPatch(typeof(FrequencyTextMeshProUI), "Start")]
 	static class StoryOrderLabelUI
 	{
-		static void Postfix(FrequencyTextMeshProUI __instance) { StoryOrder.Register(__instance, __instance.frequencyType); }
+		static void Postfix(FrequencyTextMeshProUI __instance)
+		{
+			try { StoryOrder.Register(__instance, __instance.frequencyType); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story order] A frequency label: " + e.Message); }
+		}
 	}
 }
