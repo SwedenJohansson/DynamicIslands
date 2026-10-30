@@ -126,6 +126,15 @@ namespace DynamicIslands.Editor
 			// (out of the world - "Main menu" left it, or it was left another way: nothing is asked any more. A new world, a
 			// client session or a world whose file failed to read never reach OnWorldRead; review 10-30 A)
 			if ((leaving || shown) && !LoadSceneManager.IsGameSceneLoaded) { leaving = false; shown = false; }
+			// (another box opened in its place - InfoWindow.Open doesn't call the replaced box's Closed: the story never went on
+			// without the missing islands and the cursor stayed free. Now as when the box is closed, the cursor once no box is
+			// open; merge review 10-31)
+			if (shown && !leaving && InfoWindow.Closed != (Action)OnClosed)
+			{
+				shown = false;
+				if (!answered) { answered = true; Debug.Log("[CUSTOM ISLANDS] Another box replaced the missing islands box: playing on without them"); StoryChain.PlayWithoutMissing(); }
+			}
+			if (!shown && cursorFreed && !InfoWindow.IsOpen) { cursorFreed = false; try { RAPI.ToggleCursor(false); } catch { } }
 			if (!waiting || Time.unscaledTime < showAt) return;
 			if (!LoadSceneManager.IsGameSceneLoaded) { waiting = false; return; }
 			if (RAPI.GetLocalPlayer() == null) return;

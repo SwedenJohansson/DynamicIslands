@@ -70,7 +70,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: mg tune fresh"); else Fail("mg tune fresh");
 		}
 
-		[ConsoleCommand(name: "CIMgTunedFar", docs: "Dev, world (host, 'CI ...'): merge 10-31 - the Receiver staying tuned to a brought island's frequency (Raft asks every frame) doesn't pull it back and use up its returns; only a new tune does")]
+		[ConsoleCommand(name: "CIMgTunedFar", docs: "Dev, world (host, 'CI ...'): merge 10-31 - the Receiver staying tuned to a brought island's frequency (Raft asks every frame) doesn't pull it back and use up its returns; only a new tune does. Also: the missing-islands box replaced by another box plays on without them")]
 		public static void MgTunedFarCommand() { StartTest(MgTunedFarRoutine()); }
 
 		static IEnumerator MgTunedFarRoutine()
@@ -111,6 +111,32 @@ namespace DynamicIslands
 				IslandWorldState.Islands.Remove(far); // (before the spawner sees it near: there is no such file)
 				if (moved) Check(ref ok, ReturningIslands.Returns(far) == 1, "a new tune: it comes back, one return (" + ReturningIslands.Returns(far) + ")");
 				else Log("mg tuned far: a new tune found no free spot ahead of the raft - not checked");
+
+				// The missing-islands box replaced by another box (InfoWindow.Open doesn't call its Closed): the world plays on
+				// without them, as when it is closed (merge review 10-31)
+				var lastBefore = MissingIslandsCheck.Last.ToList();
+				bool withoutBefore = StoryChain.PlayingWithoutMissing;
+				try
+				{
+					StoryChain.PlayingWithoutMissing = false;
+					MissingIslandsCheck.Last.Clear();
+					MissingIslandsCheck.Last.Add(new MissingIslandsCheck.Missing { Name = gone, ByPlan = true });
+					MissingIslandsCheck.Show();
+					Check(ref ok, MissingIslandsCheck.Asking, "the missing-islands box asks");
+					InfoWindow.Open("CI merge", "Another box");
+					MissingIslandsCheck.Tick();
+					Check(ref ok, !MissingIslandsCheck.Asking && StoryChain.PlayingWithoutMissing, "another box in its place: no longer asking, playing on without them");
+					Check(ref ok, InfoWindow.IsOpen, "the other box stays open");
+					InfoWindow.Close();
+					MissingIslandsCheck.Tick();
+				}
+				finally
+				{
+					if (InfoWindow.IsOpen) InfoWindow.Close();
+					MissingIslandsCheck.Forget();
+					MissingIslandsCheck.Last.Clear(); MissingIslandsCheck.Last.AddRange(lastBefore);
+					StoryChain.PlayingWithoutMissing = withoutBefore;
+				}
 			}
 			finally
 			{
