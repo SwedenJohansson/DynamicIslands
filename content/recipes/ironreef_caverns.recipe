@@ -148,7 +148,8 @@ place Loot_ChestLarge strongbox at -0.5 -35 ground sit
 # (REACH 10-28: "ground" here is the cave's roof - the letter lay in the rock; now beside the strongbox)
 # (REACH 10-29: d=1.2 on the default side put it in the hall's rock wall - the other side)
 # (REACH 10-29b: beside put it at the terrain under the cave floor, 1 m down - placed on the floor by the strongbox)
-place Note_Paper davynote at -0.5 -36.3 h=5.62 yaw=180
+# (agent Q 10-30, REACH: behind the strongbox, against the hall's back wall, nobody could stand by it - now on the floor in front of it)
+place Note_Paper davynote at -0.5 -33.4 h=5.62 yaw=180
 place Zone_Atmosphere halldark at 0 -20 y=5
 place Zone_Sound hallsound at 0 -20 y=3
 pop
@@ -391,7 +392,8 @@ call ab_piece x=20 z=-92 al=ctally4 set="Company tallies" nm="Company tally 4"
 call ab_piece x=60 z=58 al=ctally5 set="Company tallies" nm="Company tally 5"
 prop ctally1 on.set=give||TitaniumIngot*1;MetalIngot*2\nmessage||All five company tallies. Every miner of Ironreef is accounted for.
 # E Dr. Calder's field note, by the company's wagon in the camp
-place Note_Paper caldernote3 at 79 -10 ground y=0.1 drop yaw=60
+# (agent Q 10-30, REACH: between the office and the wagon nobody could stand by it - now on the open ground by the wagon's front)
+place Note_Paper caldernote3 at 80 -4.5 ground y=0.1 drop yaw=60
 note caldernote3 Dr. Ruth Calder's field note | THE ABYSS EXPEDITION - FIELD NOTE 3\n\nIronreef. The company dug for iron and found the sea under the mountain instead. Their foreman's log talks of a pump store in a drowned city - Meridian - and a key they never used.\n\nThe ore here is good, but it is not what we came for. The soundings all point the same way: deeper, and out to sea.\n\nWe take the company's key and go on.\n- R. C.
 # F The scaffold run on the east beach (a hop course on its own pad)
 # --- JUMP COURSE ir (Abyss pass 10-26): kz-style hop course of floor slabs on its own pad (the bs course, turned) ---
