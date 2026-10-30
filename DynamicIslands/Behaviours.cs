@@ -1017,13 +1017,36 @@ namespace DynamicIslands.Editor
 		/// it has run: when the island unloads during the wait, or the host saves and quits, it runs when the island loads
 		/// again (ev: the event, to find its actions then; firstPart: the part these actions start at, when resumed).
 		/// </summary>
+		/// <summary>The event's parts before part firstPart (the ones before its firstPart-th wait) have a story give.</summary>
+		internal static bool StoryGivenInPartsBefore(IslandWorldState.Entry e, int index, string ev, int firstPart)
+		{
+			if (e == null || ev == null || firstPart <= 0) return false;
+			return StoryGivenInPartsBefore(ActionsOf(e, index, ev), firstPart);
+		}
+
+		internal static bool StoryGivenInPartsBefore(List<ObjAction> actions, int firstPart)
+		{
+			if (actions == null || firstPart <= 0) return false;
+			int waits = 0;
+			foreach (ObjAction a in actions)
+			{
+				if (waits >= firstPart) break;
+				if (a.Verb == "wait") { waits++; continue; }
+				if (GivesStory(a)) return true;
+			}
+			return false;
+		}
+
 		static void Schedule(IslandWorldState.Entry e, int index, List<ObjAction> actions, bool shared, bool messagesOnly, string ev = null, int firstPart = 0)
 		{
 			float delay = 0f;
 			int deathsThen = deaths, partNo = 0, parts = actions.Count(a => a.Verb == "wait") + 1;
 			bool keep = shared && ev != null && Raft_Network.IsHost && Resumable(ev);
 			// (a zone's story items: once per world - known now, for every part: a "give" after a wait is still the first)
-			bool storyGiven = shared && StoryGivenBefore(e, ev, index);
+			// (resumed after a reload - firstPart > 0 - when a part before the wait gave story items, the key may be this run's
+			// own: a story give after the wait was skipped and the item lost. Then the resumed parts give. When none before it
+			// gives, the key is an earlier firing's and they don't - merge review 10-31)
+			bool storyGiven = shared && StoryGivenBefore(e, ev, index) && (firstPart == 0 || !StoryGivenInPartsBefore(e, index, ev, firstPart));
 			int token = ++pendingTokens; // (the latest scheduling of an event is the one that runs: resumed after a reload, the old timers stop)
 			var part = new List<ObjAction>();
 			foreach (ObjAction a in actions.Concat(new[] { new ObjAction { Verb = "wait", Arg = "0" } }))
