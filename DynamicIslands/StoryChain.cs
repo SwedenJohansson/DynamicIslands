@@ -554,11 +554,32 @@ namespace DynamicIslands.Editor
 		/// <summary>When a Receiver island was last asked back by tuning (rule id, unscaled time): Raft asks every frame.</summary>
 		static readonly Dictionary<string, float> tunedAt = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 
+		/// <summary>The last time (unscaled, frame) Raft asked for a brought rule's island: it asks every frame while tuned.</summary>
+		static readonly Dictionary<string, KeyValuePair<float, int>> tuneSeen = new Dictionary<string, KeyValuePair<float, int>>(StringComparer.OrdinalIgnoreCase);
+		/// <summary>Seconds without an ask before a tune counts as new (a single long frame - a hitch - doesn't).</summary>
+		internal const float TuneGapSeconds = 2f;
+		internal const int TuneGapFrames = 30;
+
+		/// <summary>Whether this ask is a new tune of the rule's frequency (not the same tune asking again), and notes it.</summary>
+		internal static bool TuneIsFresh(string id, float now, int frame)
+		{
+			KeyValuePair<float, int> last;
+			bool fresh = !tuneSeen.TryGetValue(id, out last) || (now - last.Key > TuneGapSeconds && frame - last.Value > TuneGapFrames);
+			tuneSeen[id] = new KeyValuePair<float, int>(now, frame);
+			return fresh;
+		}
+
+		/// <summary>Tests: forget the asks noted for a rule.</summary>
+		internal static void ForgetTunes(string id) { tuneSeen.Remove(id); }
+
 		/// <summary>The frequency of an island already brought, tuned again: left far behind with its quest unfinished it comes
 		/// back ahead of the raft (counted as one of its returns, up to MaxReturns) - a Receiver island never comes back by
 		/// itself, and with showOnReceiver 0 it had no dot either: lost for good (review 10-30).</summary>
 		static void BringBackTuned(IntroRule r)
 		{
+			// (Raft asks every frame while the Receiver stays tuned: only a fresh tune brings it back, else each time the island
+			// unloaded behind the raft it was pulled back and used up one of its returns - lost for good; merge review 10-31)
+			if (!TuneIsFresh(r.Id, Time.unscaledTime, Time.frameCount)) return;
 			if (r.InStory && Done.Contains(RuleKey(r.Id))) return;
 			float t;
 			if (tunedAt.TryGetValue(r.Id, out t) && Time.unscaledTime - t < RetrySeconds) return;
@@ -721,7 +742,7 @@ namespace DynamicIslands.Editor
 			Unlocked.Clear(); Done.Clear(); Fired.Clear(); Brought.Clear();
 			due.Clear(); retryAt.Clear(); warned.Clear(); PlayingWithoutMissing = false; PlayingWithoutSince = 0f;
 			// (the last world's: a rule of the same id in the next world gave up after one failure; bughunt 10-30)
-			failedMaking.Clear(); Moved.Clear(); tunedAt.Clear(); answerFirst.Clear();
+			failedMaking.Clear(); Moved.Clear(); tunedAt.Clear(); tuneSeen.Clear(); answerFirst.Clear();
 			StoryEnding = "";
 			EndingTitle = ""; Credits = ""; CreditsShown = false;
 			clientBook.Clear();
