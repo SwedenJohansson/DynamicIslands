@@ -151,6 +151,15 @@ call ar_ridge x1=-62 z1=20 x2=-40 z2=52 h=10 top=10 r=8
 call fz_mount x=22 z=-46 h=33 r=8
 # (box agent 10-25: the sockets, valves and suit boxes sat on the cone's slope - boxes half sunk, sockets over them; a wider flat top)
 brush flatten at 22 -46 r=11 s=20 frames=400 h=33
+# (REACH 10-30: the flat top stood 3 m over the water on a cliff all round - no way up out of the sea onto the islet
+# (reach: pump_islet, the valves and the keeper's chest "can't get there", nearest a swim 11 m off): a beach slope up
+# its north side, towards the Ark)
+brush flatten at 22 -34.6 r=2.6 s=20 frames=200 h=32.4
+brush flatten at 22 -33.1 r=2.6 s=20 frames=200 h=31.7
+brush flatten at 22 -31.6 r=2.6 s=20 frames=200 h=31.0
+brush flatten at 22 -30.1 r=2.6 s=20 frames=200 h=30.3
+brush flatten at 22 -28.6 r=2.6 s=20 frames=200 h=29.6
+brush flatten at 22 -27.1 r=2.6 s=20 frames=200 h=28.9
 place "Box Small" - at 21.5 -45 ground sit yaw=10
 place TP_LaserControlPanel_lever pumpswitch at 21.5 -45 ground y=0.7 yaw=180
 place RT_PillarThick pumppipe at 20.2 -46.2 ground y=-0.5 sy=0.3 sx=0.6 sz=0.6

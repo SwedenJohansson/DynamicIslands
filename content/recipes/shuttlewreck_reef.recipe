@@ -110,6 +110,13 @@ call leverchest x=-2 z=-40 yaw=0 alias=holdlever sig=holdlever chest=luggagehold
 # --- DEEP 1-HOUR (10-24): the depot rock breaking the surface (12.5 m from the floor) and the shuttle line's drowned depot in the south-east pit
 # the rock that breaks the surface (12.5 m up from the floor), a beacon tower on its dry top
 call sk_seamount x=-38 z=-10 top=12.5 r=14
+# (REACH 10-30: the rock's flat top stood 2.5 m over the water with its sides falling straight in - no way up out of
+# the sea to the depot tower (reach: summit, locker, timetable "can't get there"): a beach slope up its south side, to the tower's door)
+brush flatten at -38.6 -15.6 r=2.4 s=20 frames=200 h=11.9
+brush flatten at -38.6 -17.0 r=2.4 s=20 frames=200 h=11.2
+brush flatten at -38.6 -18.4 r=2.4 s=20 frames=200 h=10.5
+brush flatten at -38.6 -19.8 r=2.4 s=20 frames=200 h=9.8
+brush flatten at -38.6 -21.2 r=2.4 s=20 frames=200 h=9.1
 call sk_pit x=28 z=-32 h0=-6
 call sk_reef x=-25.4 z=-10 r=6 seed=25010
 call sk_reef x=-47.8 z=-1.6 r=6 seed=25020
