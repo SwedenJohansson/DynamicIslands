@@ -142,8 +142,10 @@ place Zone_Trigger spring at -13 22.5 h=5
 # --- The three standing stones on the saddle between the peaks (the generator's upright boulders, set straight as it sets
 # them - as Raft's scene keeps them they lay on their sides): the north stone, the tall one, the flat one; the hoard
 # hidden in the scrape under the flat one ------------------------------------------------------------------------------
-place BigBoulder4_Low stone1 at -0.6 6.4 ground rot=0,0,0 scale=0.5 yaw=30
-place BigBoulder1_Low stone2 at -3.4 1.8 ground rot=0,0,0 scale=0.45 yaw=65
+place BigBoulder4_Low stone1 at -0.6 6.4 ground y=-0.7 rot=0,0,0 scale=0.5 yaw=30
+# (G2 10-30: both stones set into the slope - their low sides stood up to 1.3 and 1.9 m over the sand; the gull stone
+# only 0.7 m: at 1.4 m the play could no longer push it)
+place BigBoulder1_Low stone2 at -3.4 1.8 ground y=-2 rot=0,0,0 scale=0.45 yaw=65
 place SmallRock_02 stone3 at 2.4 1 ground rot=0,0,0 yaw=90
 place MayorsChest hoard at 2.4 0.6 h=5.7 yaw=180
 place Zone_Trigger stones at 0 3 h=7.2
@@ -298,5 +300,11 @@ step open|Captain Marrow's hoard|1|Move the stones in the verse's order, dig, an
 step blueprint|Blueprint_DetailPlank|1|Take the decorative plank plans from the captain Marrow's hoard
 quest done=The hoard is up and the verse kept its word. Whoever holed the Gilded Skull never found it - you did.
 quest reward=Plank*8;Rope*4;Cooked_Mackerel*3
+
+# (G2 10-30: four scattered rocks that came down on slopes, their low sides in the air - CIGroundIslands 10-30)
+clear at -14.44 -37.57 r=1.2 all only=SmallBoulder1
+clear at -13.08 -30.58 r=1.2 all only=SmallBoulder1
+clear at 16.1 9.44 r=1.2 all only=BigBoulder4_Low
+clear at 24.03 -7.27 r=1.2 all only=SmallBoulder3
 
 save Gilded Skull Cove
