@@ -6,7 +6,7 @@
 # advanced extractor plans, the screechers, the anchor store, the rod top, note 3.
 #
 # Built by the recipe player (CIRecipe stormworks) through the editor's own operations. Points (metres over the sea):
-# the works plateau at 8 m round 0 0 (r 13), the smelter hall x -3..3, z -4.5..4.5 (its door at the front, z -4.5), the
+# the works plateau at 8 m round 0 0 (r 13), the smelter hall x -3..3, z -4.5..4.5 (its open bay at the front, z -4.5), the
 # weather room on its roof at 11 m, the roof stair on the east side, the rod spur at 14 m round 16 12, the clay beach and
 # anchor store round 0 -26 at 1 m, the treasure round -10 12.
 include lib_sea
@@ -32,22 +32,37 @@ brush smooth from 11.48 11.48 to 30.47 23.09 r=3 s=6 frames=40
 brush flatten at -0.46 -49.4 r=8 s=20 frames=300 h=1
 brush smooth from 0 -20.67 to -0.46 -47.4 r=4 s=6 frames=40
 brush sand at -0.46 -49.4 r=8 s=10 frames=40
+# (REACH 10-30: the clay beach lay in a pit under a 5 m cliff - the shelf west of it came down to 6.5 m and stopped:
+# a ledge down the cliff from the shelf into the pit, 0.7 m a step)
+brush flatten at -8.16 -44.79 r=2.4 s=20 frames=200 h=7.3
+brush flatten at -8.16 -46.09 r=2.4 s=20 frames=200 h=6.6
+brush flatten at -8.16 -47.39 r=2.4 s=20 frames=200 h=5.9
+brush flatten at -8.16 -48.69 r=2.4 s=20 frames=200 h=5.2
+brush flatten at -8.16 -49.99 r=2.4 s=20 frames=200 h=4.5
+brush flatten at -8.16 -51.29 r=2.4 s=20 frames=200 h=3.8
+brush flatten at -6.86 -51.79 r=2.4 s=20 frames=200 h=3.0
+brush flatten at -5.56 -51.79 r=2.4 s=20 frames=200 h=2.2
+brush flatten at -4.26 -51.79 r=2.4 s=20 frames=200 h=1.4
+clear from -8.16 -44.79 to -8.16 -51.29 r=3.4 body
+clear from -8.16 -51.29 to -4.26 -51.79 r=3.4 body
 origin
 clear at 1.14 -0.09 r=13
 clear at 30.47 23.09 r=4
 clear at -0.46 -49.4 r=6
 
-# --- The smelter hall (radio tower pieces, a door at the front) and the weather room on its roof ---------------------------
+# --- The smelter hall (radio tower pieces, an open bay at the front) and the weather room on its roof ---------------------------
 push at 4.14 -0.09 h=8.05
-call rt_storey f1=RT_WallDoor1 r2=RT_WallWindow1 l2=RT_WallWindow1 a=hall
+# (REACH 10-30: RT_WallDoor1's narrow off-centre doorway let a player through but not the reach grid - a 3 m open bay instead)
+call rt_storey f1=none r2=RT_WallWindow1 l2=RT_WallWindow1 a=hall
 place Placeable_CookingStand_Smelter - at -4.5 3 y=0.1 sit
 place Placeable_CookingStand_Smelter - at -1.5 3 y=0.1 sit
 place Loot_Chest hallchest at -1 -2.5 y=0.1 sit yaw=270
 place Note_Sign worksnote1 at -5.85 0 y=1.2 yaw=90
 place Placeable_Lantern_Metal - at -3 0 y=0.1 sit
 pop
+# (REACH 10-30: the roof stair arrives at r1 - its window wall shut it off; r1 left open)
 push at 4.14 -0.09 h=11.05
-call rt_storey f1=none r1=RT_WallWindow1 r2=RT_WallWindow1 r3=RT_WallWindow1 l1=RT_WallWindow1 l2=RT_WallWindow1 l3=RT_WallWindow1 a=hall
+call rt_storey f1=none r1=none r2=RT_WallWindow1 r3=RT_WallWindow1 l1=RT_WallWindow1 l2=RT_WallWindow1 l3=RT_WallWindow1 a=hall
 place RT_Floor hall at 0 4.5 y=3
 call rt_railing y=3 fm=none
 place RT_SatteliteDisc - at -3 0 y=3.1 scale=0.4 yaw=180
