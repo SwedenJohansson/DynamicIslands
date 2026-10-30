@@ -54,7 +54,8 @@ place SmallRock_02 - at 0 0 ground y=-1.2 scale=1.3 yaw=40 rot=8,40,-6
 place SmallRock_02 - at 1.6 1.2 ground scale=0.5 yaw=130
 place Zone_Trigger stonezone at 0 -2.5 ground y=1
 place "Box Big" - at 3.2 -3 ground sit yaw=20
-place Note_Paper ledger at 3.2 -3 ground y=1.1 drop yaw=10
+# (REACH 10-29: dropped, the ledger fell through the crate's lid into it - now set on the lid)
+place Note_Paper ledger at 3.2 -3 ground y=1.07 sit yaw=10
 place UT_MarketCrateSmall01 - at 4.4 -1.6 ground sit yaw=60
 place UT_MarketBasket02 - at -3.2 -2.6 ground sit yaw=10
 place Caravan_Green_01 - at -4 -10 ground sit yaw=15
@@ -125,7 +126,9 @@ prop signalbox loot.refill=0
 note signalbox Signal mast deck box | The signalman's box: a spare air bottle, rope and a battery for the lamp.
 # --- The salt cellar (west): Ada's note and the valve wheel -----------------------------------------------------------
 call hw_zone x=-55 z=-5 al=saltz id=saltcellar r=4 msg="The salt cellar, dug into the rock. Sacks of salt, gone to slush - and a valve wheel on a hook."
-place Note_Paper adanote at -53.5 -4.5 h=3.45 drop yaw=30
+# (REACH 10-29: at -53.5 -4.5 h=3.45 the note sat in the sacks with no spot to read it from - now on the cellar floor
+# in the zone's middle)
+place Note_Paper adanote at -55 -5.4 ground y=0.05 drop yaw=30
 loot saltchest story:valvewheel*1;Rope*2;Scrap*2
 prop saltchest loot.refill=0
 note saltchest Salt cellar box | Ada's box: the cistern valve's wheel, wrapped in an oilcloth, and a coil of rope.

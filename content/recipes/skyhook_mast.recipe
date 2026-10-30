@@ -50,7 +50,8 @@ clear from -18 -44 to -4 -34 r=6
 # --- The stack's foot: the mooring station's landing, its log on a crate, the skylift against the cliff -----------------
 place Zone_Trigger stackfoot at 0 -30 ground
 place "Box Small" logdesk at 3 -28 ground sit
-place Note_Paper mooringlog at 3 -28 h=2 sit drop yaw=15
+# (REACH 10-29: at h=2 the log sat inside the crate (its top is 2.64 m) - no spot to read it from: set on the lid)
+place Note_Paper mooringlog at 3 -28 h=2.66 sit yaw=15
 place "Box Big" - at 3 -30 ground sit yaw=20
 place VP_Skylift lift at 0 -22.5 ground sit yaw=0
 place Zone_Trigger liftfoot at 0 -26 ground

@@ -33,6 +33,22 @@ brush flatten at 9.81 8.8 r=3 s=20 frames=200 h=-5
 brush flatten at -9.19 -10.2 r=3 s=20 frames=200 h=-5
 brush flatten at 9.81 -10.2 r=3 s=20 frames=200 h=-5
 brush flatten at -4.01 37.01 r=4 s=20 frames=400 h=1
+# (REACH 10-28: since the hills came (nature 10-24) the lagoon, the landing, the valve bank and the cage islet are pits 5-8 m
+# deep with sheer banks - nine quest steps couldn't be reached or left (pictures reach_ra). Ways in and out:
+# - the landing: a cut through the ridge to the sink's shelf, whose steps climb out
+brush flatten from 1 36 to 9.5 38.6 r=2.5 s=20 frames=200 h=1
+clear from 1 36 to 9.5 38.6 r=2.5
+# - the valve bank joined to the cage islet, and steps from the islet up to the ground (0.5 m a step)
+brush flatten from 33.97 6.69 to 39.97 1.69 r=2.5 s=20 frames=200 h=1
+for k 0 11
+brush flatten at {42.6+0.84*$k} {0.7-0.32*$k} r=1.8 s=20 frames=150 h={1.3+0.5*$k}
+next
+clear from 33.97 6.69 to 51.8 -2.8 r=3
+# - the lagoon: steps from the water up through the south bank, between two rows of frames (0.5 m a step)
+for k 0 16
+brush flatten at -5.7 {-11.2-0.9*$k} r=1.8 s=20 frames=150 h={-0.4+0.5*$k}
+next
+clear from -5.7 -11 to -5.7 -26 r=2.5
 brush sand at 0.31 -0.7 r=20 s=10 frames=40
 origin
 clear at 0.31 -0.7 r=14
@@ -158,7 +174,8 @@ call treasure x=-63.75 z=-42.91 r=1.5 n=1 seed=14911
 prop treasure14911 treasure.loot=TitaniumOre*2;Battery*1
 place Creature_Goat ragoats at -41.19 -36.67 ground
 prop ragoats creature.count=2
-call dp_sink x=23 z=41 d=-14 ex1=17.62 ez1=31.41 ex2=13.7 ez2=24.43 eh=8.36
+# (REACH 10-28: the ramp out rose 8.4 m in 8 m - too steep to walk up: now 13 m long on the same line)
+call dp_sink x=23 z=41 d=-14 ex1=17.62 ez1=31.41 ex2=11.25 ez2=20.06 eh=8.36
 place Van_4 rawreck at 23 41 ground sit yaw=119.29
 place Loot_Chest radivechest at 25.97 39.34 ground sit yaw=209.29
 call dp_air x=20.03 z=42.66 id=ra_air al=raair msg="Air trapped under the wreck - breathe."
