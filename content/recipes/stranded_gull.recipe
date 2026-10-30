@@ -28,6 +28,13 @@ call hw_mount x=-32 z=27 b=18 h=17
 call hw_trail x=-32 z=27 b=18 h=17 a0=130 turn=300 n=24 h0=1.5
 brush flatten at -32 27 r=8 s=20 frames=400 h=17
 brush sand from -10 8 to -20 17 r=4 s=10 frames=30
+# (REACH 10-30: a pit at h 7.6 between the trail and the summit's flank - the walk cut a bend through it and could not
+# climb out; filled level with the trail, 0.5 m a step)
+brush flatten at -40.78 28.68 r=2.2 s=20 frames=200 h=9.4
+brush flatten at -40.58 29.98 r=2.2 s=20 frames=200 h=9.8
+brush flatten at -40.08 31.18 r=2.2 s=20 frames=200 h=10.3
+brush flatten at -39.38 32.28 r=2.2 s=20 frames=200 h=10.8
+clear from -40.78 28.68 to -39.38 32.28 r=3.2 body
 
 # --- The beached boat on the south-east shore (Raft's stranded boat, listing on the sand): the yacht's tender -------
 clear at 10 -14 r=7
