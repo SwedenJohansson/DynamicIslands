@@ -60,6 +60,13 @@ for a 0 340 20
 brush smooth at {-22+14*cos($a)} {-44+10.5*sin($a)} r=4 s=10 frames=14
 next
 brush flatten at -22 -44 r=3.5 s=20 frames=80 h=1
+# (agent Q 10-30, REACH: the islet stood 4.5 m over the lake's floor on sheer sides - whoever swam out to the supply drop could
+# not climb onto it: a sandbar of steps from just under the water up to the islet, 0.5 m a step (box 10-30: the first, narrow
+# steps of r1.5 from the floor did not help - the proven way, wide steps from 1.4 m under the water)
+for k 0 4
+brush flatten at {-29.2+0.9*$k} -44 r=2.6 s=20 frames=150 h={-1.4+0.5*$k}
+next
+clear from -29.2 -44 to -25.6 -44 r=3.6 body
 brush sand at -22 -44 r=14 s=20 frames=30
 # (the plain's grass: the generator laid it all as beach; a band of sand left along the coast)
 for gz -56 -14 7
