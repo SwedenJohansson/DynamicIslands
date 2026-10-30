@@ -1399,14 +1399,16 @@ namespace DynamicIslands
 			List<int> pin = PathIn(parent[bestS], bestK), pout = PathOut(backParent, bestK);
 			// (the start in the sea: the open water's last 15 m before the island (the user 10-27: a teleport to open water 15 m off), not the grid's far edge; the way out ends
 			// once the player swims in water that goes on to the open sea, 15 m from the island)
-			int firstLand = pin.FindIndex(a => g.Kind[a] != 1);
+			// (a standing spot under the sea's surface counts as sea here too: the shallows' sea starts, PQ11 10-29)
+			Func<int, bool> seaSpot = a => g.Kind[a] == 1 || (g.Kind[a] == 0 && g.Pos[a].y < RSea - 0.5f);
+			int firstLand = pin.FindIndex(a => !seaSpot(a));
 			if (firstLand > 0)
 			{
 				int st = firstLand - 1;
 				while (st > 0 && ScFlat(g.Pos[pin[st - 1]], g.Pos[pin[firstLand]]) <= 15f) st--;
 				pin = pin.GetRange(st, pin.Count - st);
 			}
-			int lastLand = pout.FindLastIndex(a => g.Kind[a] != 1);
+			int lastLand = pout.FindLastIndex(a => !seaSpot(a));
 			if (lastLand >= 0 && lastLand < pout.Count - 1)
 			{
 				int en = lastLand + 1;
@@ -1628,6 +1630,17 @@ namespace DynamicIslands
 				for (int f = 0; f < 10; f++) { MmHold(pl, false); yield return null; }
 				if (ReachFree(pl)) for (int f = 0; f < 5; f++) { MmHold(pl, false); yield return null; }
 			}
+			else if (reachWalkIn && g.Kind[way[0]] == 0 && g.Pos[way[0]].y < RSea + 0.3f && (ReachFeet(pl) - W(way[0])).magnitude > 1.5f)
+			{
+				// (a sea start in the shallows - a standing spot at or under the sea's surface, PQ11 10-29 - was never moved to: the
+				// walker set off from where the last walk left it. Coldhold on box/box3 10-30: every walk "stuck on the way to
+				// (16.4, -4.4, 247.6)" from inside the vault. A raft lands there: the player starts there, swimming if it is under water)
+				Vector3 s0 = W(way[0]);
+				if (g.Pos[way[0]].y < RSea - 0.5f) PlayerMove.To(pl, new Vector3(s0.x, e.Position.y + RSea - g.Anchor.y - 0.4f, s0.z), ControllerType.Water);
+				else PlayerMove.To(pl, s0 + Vector3.up * 0.95f);
+				for (int f = 0; f < 10; f++) { MmHold(pl, false); yield return null; }
+				if (ReachFree(pl)) for (int f = 0; f < 5; f++) { MmHold(pl, false); yield return null; }
+			}
 			Vector3 prev = ReachFeet(pl) + Vector3.up * 0.9f;
 			string bad = null;
 			// (stall rule, the user 10-28 - no multi-minute waits on one target: real seconds, whatever the speed. Under 0.5 m in a 10 s
@@ -1694,7 +1707,7 @@ namespace DynamicIslands
 					float held = 0f, since = 0f, bestY = ReachFeet(pl).y, walkSign = 1f;
 					Vector3 lfront; bool hasF = g.LadderF.TryGetValue(k, out lfront), atFront = false;
 					int flips = 0, sweeps = 0; bool otherSide = false; float bestH = float.MaxValue;
-					float sweepT = 0f, sweepYaw = 0f;
+					float sweepT = 0f, sweepYaw = 0f, nearT = 0f; Vector3 lastD = Vector3.zero;
 					for (int n = 0; n < 6000; n++)
 					{
 						Vector3 p = ReachFeet(pl);
@@ -1706,7 +1719,16 @@ namespace DynamicIslands
 						bool climbing = Climbing(pl);
 						// (going down from a ladder's top while standing over it: head for the spot at its foot, over the shaft -
 						// the walker stood on the wall top behind the ladder and walked nowhere, radar mast PQ11 10-27)
-						if (!up && !climbing && d.sqrMagnitude < 0.16f && i + 1 < way.Count) { d = W(way[i + 1]) - p; d.y = 0f; }
+						// (but a ladder down through a roof hatch: the walker stopped 0.4 m short at the hatch's rim, turned to the next
+						// spot (away, over the roof) and back, and never dropped in - sk_drowned roofs on Lumen/Thalassa/Shuttlewreck
+						// PQ11 10-30. It keeps on into the hole the way it came for 1 s first; a swimmer looks down into it)
+						if (!up && !climbing && d.sqrMagnitude < 0.16f && i + 1 < way.Count)
+						{
+							nearT += Time.deltaTime;
+							if (nearT > 1f) { d = W(way[i + 1]) - p; d.y = 0f; }
+							else if (lastD.sqrMagnitude > 0.01f) d = lastD;
+						}
+						else if (!up && !climbing && d.sqrMagnitude > 0.01f) lastD = d.normalized;
 						if (climbing) held += Time.deltaTime;
 						// (a player stands in front of a ladder and walks into it facing it; the walker went to the ladder's middle -
 						// inside its climb collider, facing wherever - and Raft never took hold: tower ladders PQ11 10-27)
@@ -1726,7 +1748,9 @@ namespace DynamicIslands
 						// Caisson Yard / Array Root PQ11 10-28)
 						bool wet = up && !climbing && inWaterNow(pl);
 						mmJump = wet;
-						Look(pl, d.sqrMagnitude > 0.01f ? Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg : pl.transform.eulerAngles.y, climbing ? (up ? -60f : 60f) : wet ? -35f : 0f);
+						float lpitch = climbing ? (up ? -60f : 60f) : wet ? -35f : 0f;
+						if (!up && !climbing && inWaterNow(pl)) lpitch = Mathf.Clamp(Mathf.Atan2(p.y - (ladTop - 0.5f), Mathf.Max(d.magnitude, 0.3f)) * Mathf.Rad2Deg, 0f, 80f);
+						Look(pl, d.sqrMagnitude > 0.01f ? Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg : pl.transform.eulerAngles.y, lpitch);
 						mmWalk = walkSign;
 						MmHold(pl, false);
 						yield return null;
