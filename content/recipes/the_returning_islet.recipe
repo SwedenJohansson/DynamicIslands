@@ -33,6 +33,14 @@ call hw_mount x=-26 z=22 b=16 h=20
 call hw_trail x=-26 z=22 b=16 h=20 a0=130.24 turn=300 n=30 h0=3
 brush flatten at -26 22 r=9 s=20 frames=400 h=20
 call hw_basin x=30 z=-28 r=12 h=-12
+# (agent Q 10-30, REACH: the basin's rim stood 1.7 m over the water all round - divers to the net shed had no way back out:
+# a shelf of steps up its south lip, from 1 m under the water up to the bank, 0.6 m a step)
+brush flatten at 32.5 -38.6 r=2.2 s=20 frames=200 h=-1.0
+brush flatten at 32.5 -39.6 r=2.2 s=20 frames=200 h=-0.4
+brush flatten at 32.5 -40.6 r=2.2 s=20 frames=200 h=0.2
+brush flatten at 32.5 -41.6 r=2.2 s=20 frames=200 h=0.8
+brush flatten at 32.5 -42.6 r=2.2 s=20 frames=200 h=1.4
+clear from 32.5 -38.6 to 32.5 -42.6 r=3.2 body
 origin
 clear at 0 0 r=7
 clear from 0 -4 to 0 -18 r=2.5
@@ -67,7 +75,8 @@ call shallows r=66 deep=5 n=2 seed=30808
 call hw_zone x=-13.02 z=11.02 al=hillfootz id=hillfoot r=5 msg="The Watch Rock. Steps cut in the grey stone go up to a little hut on the top, where a fisherman could watch for his boat."
 call hw_zone x=-26 z=22 al=hilltopz id=hilltop r=8 h=1 msg="The top of the Watch Rock, and the watch hut, its roof gone. From here the sea is empty in every direction. A candle stub on the sill is still warm."
 place Note_Paper tobiasnote at -26.75 22 h=21.1 drop yaw=10
-place Loot_Chest tobiaschest at -24.7 22.5 h=20.1 drop yaw=180
+# (agent Q 10-30, REACH: the chest stood hard in the hut's corner - out of reach from inside: a step out of the corner)
+place Loot_Chest tobiaschest at -25.3 22.6 h=20.1 drop yaw=180
 loot tobiaschest story:prybar*1;Rope*2;Nail*4;Cooked_Mackerel*1
 note tobiaschest Watch hut chest | The fisherman's chest in the watch hut: rope, nails, dried fish - and a short iron pry bar, its end bent from lifting deck planks.
 prop tobiaschest loot.refill=0
@@ -91,7 +100,8 @@ place Creature_PufferFish netpuffers at 24 -22 h=-8
 prop netpuffers creature.count=1
 # --- The children's cave (north-east): a secret -------------------------------------------------------------------------
 call hw_zone x=28 z=25 al=cavez id=childcave r=4 msg="A little cave in the rock, the children's den. Shells in rows on a ledge, and two small pairs of boots, dry."
-place Note_Paper nednote at 26.5 24.5 h=3.45 drop yaw=180
+# (agent Q 10-30, REACH: the note lay where nobody could stand by it: on the den's floor)
+place Note_Paper nednote at 28 25.4 h=3.45 drop yaw=180
 loot childchest Scrap*2;Rope*1;Battery*1;CopperOre*2
 prop childchest loot.refill=0
 note childchest Den box | A tin in the den: string, scrap, a torch battery and two lumps of copper ore - a boy's treasures.
