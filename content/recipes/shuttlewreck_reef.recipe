@@ -129,7 +129,6 @@ place Note_Paper swsumnote at -38.75 -10.75 h=20.07 drop yaw=20
 place Zone_Trigger swsummit at -38 -10 h=20.97
 place Loot_ChestSmall swledge at -45.7 -10 ground sit yaw=40
 place SmallRock_02 - at -33 -8 ground sit scale=0.5
-place SmallRock_02 - at -33 -8 ground y=0.6 sit scale=0.32 yaw=40
 call treasure x=-35.5 z=-8 r=12 n=1 seed=25011
 prop treasure25011 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 call treasure x=41 z=-36 r=5 n=1 seed=25012
