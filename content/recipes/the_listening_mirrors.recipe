@@ -60,6 +60,13 @@ call hw_mount x=-66 z=24 b=26 h=38
 call hw_trail x=-66 z=24 b=26 h=38 a0=109.98 turn=300 n=40 h0=9
 brush flatten at -66 24 r=9 s=20 frames=400 h=38
 call hw_basin x=76 z=-30 r=14 h=-14
+# (reach audit 10-29 (d): the basin's north rim at 81 -17 rose 3.9 m in 3 m - the walker could not climb it: two steps)
+# (REACH 10-29 (e): the walker still met 2.3 m out of the water at 79.3 -18.6 - lower steps, built up fully)
+brush flatten at 80.2 -18.4 r=1.4 s=20 frames=200 h=0.6
+brush flatten at 80.8 -17.9 r=1.4 s=20 frames=200 h=1.25
+brush flatten at 81.3 -17.4 r=1.6 s=20 frames=200 h=1.9
+brush flatten at 81.8 -16.6 r=1.6 s=20 frames=200 h=2.6
+brush flatten at 82.3 -15.8 r=1.6 s=20 frames=200 h=3.2
 origin
 clear at 0 4 r=35
 clear from 0 -66 to 0 -32 r=5
