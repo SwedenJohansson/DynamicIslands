@@ -3891,6 +3891,7 @@ planned to change.
 - **The screecher's stone look can't be tinted** (it is not a normal texture).
 - **Atmosphere zones** change Unity's fog and light plus a faint tint: how strong they look depends on Raft's own sky
   at that moment.
+- **Don't leave loose items on the ground of a custom island**: an item you drop there can fall into the sea when the island unloads (the raft sails far away) or while it loads again after loading a save. Keep them in your inventory or a storage on the raft.
 
 **The land**
 - **One sea level.** Raft has one ocean: lakes and lagoons go down to sea level, and there is no water above it.

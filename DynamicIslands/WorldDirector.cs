@@ -1750,23 +1750,87 @@ namespace DynamicIslands.Editor
 		static void Postfix(ChunkPoint pointToCheck, ref bool __result)
 		{
 			if (!__result || pointToCheck == null) return;
+			// Raft's forced add (a Receiver story island) then drops every other point that doesn't fit and isn't loaded:
+			// Raft's own answer there, or a Raft island near one of ours would be deleted (ForcedStoryPointPatch moves the new one instead)
+			if (ForcedStoryPointPatch.Forcing) return;
+			try { if (NearCustomIsland(pointToCheck)) __result = false; }
+			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Chunk point check: " + ex.Message); }
+		}
+
+		/// <summary>The point is too near a custom island for one of Raft's islands (its overlap radius plus the island's land radius).</summary>
+		internal static bool NearCustomIsland(ChunkPoint pointToCheck)
+		{
+			bool wreck = pointToCheck.rule != null && pointToCheck.rule.name.IndexOf("FloatingRaft", StringComparison.OrdinalIgnoreCase) >= 0;
+			float overlap = pointToCheck.rule != null ? pointToCheck.rule.collisionOverlapRadius : 150f;
+			Vector3 p = pointToCheck.worldPosition;
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
+			{
+				float r = CustomIslandSpawner.LandRadius(e.Name);
+				if (r < 0f) continue;
+				if (new Vector2(p.x - e.Position.x, p.z - e.Position.z).magnitude < (wreck ? 20f : overlap) + r) return true;
+			}
+			return false;
+		}
+	}
+
+	/// <summary>
+	/// Raft's own story islands (the Receiver: Radio Tower, Vasagatan, Balboa, ...) come through ChunkManager.AddChunkPointForcibly
+	/// (host only), which never asks DoesPointFit for the new point: it only pushes it 200 m further from the raft while
+	/// SO_ChunkSpawnRuleAsset.DoesPointPassSpawnRules(new point, other point) fails (checked in Raft 1.1's IL). Without this, a story
+	/// island could grow through a custom island. While a Raft type is forced, that check also fails for the new point near a custom
+	/// island, so Raft's own loop moves it on; at most MaxPushes times (Raft's loop has no cap of its own), then Raft's answer as before.
+	/// The mod's own frequencies (StoryChainReceiver) never reach Raft's method and are left alone.
+	/// </summary>
+	[HarmonyPatch(typeof(ChunkManager), "AddChunkPointForcibly")]
+	static class ForcedStoryPointPatch
+	{
+		/// <summary>Pushes of 200 m one forced point may get for custom islands (6 km).</summary>
+		internal const int MaxPushes = 30;
+		/// <summary>Raft's AddChunkPointForcibly runs for one of Raft's own types.</summary>
+		internal static bool Forcing;
+		/// <summary>The forced point: the first one checked while forcing (Raft's push loop checks only it; later checks are other points').</summary>
+		static ChunkPoint forced;
+		static int pushes;
+		/// <summary>How often the last forced point was moved for a custom island (tests read it).</summary>
+		internal static int LastPushes;
+
+		static void Prefix(ChunkPointType pointType)
+		{
+			if ((int)pointType >= StoryChain.ModTypeBase) return;
+			Forcing = true;
+			forced = null;
+			pushes = 0;
+		}
+
+		static Exception Finalizer(Exception __exception)
+		{
+			if (Forcing) LastPushes = pushes;
+			Forcing = false;
+			forced = null;
+			return __exception;
+		}
+
+		/// <summary>While forcing: true when Raft's check for this point should fail (the forced point, near a custom island, pushes left).</summary>
+		internal static bool PushOn(ChunkPoint pointToCheck)
+		{
 			try
 			{
-				bool wreck = pointToCheck.rule != null && pointToCheck.rule.name.IndexOf("FloatingRaft", StringComparison.OrdinalIgnoreCase) >= 0;
-				float overlap = pointToCheck.rule != null ? pointToCheck.rule.collisionOverlapRadius : 150f;
-				Vector3 p = pointToCheck.worldPosition;
-				foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
-				{
-					float r = CustomIslandSpawner.LandRadius(e.Name);
-					if (r < 0f) continue;
-					if (new Vector2(p.x - e.Position.x, p.z - e.Position.z).magnitude < (wreck ? 20f : overlap) + r)
-					{
-						__result = false;
-						return;
-					}
-				}
+				if (forced == null && pointToCheck.IsAddedByForce) forced = pointToCheck;
+				if (!ReferenceEquals(pointToCheck, forced) || pushes >= MaxPushes || !ChunkPointFitPatch.NearCustomIsland(pointToCheck)) return false;
+				pushes++;
+				return true;
 			}
-			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Chunk point check: " + ex.Message); }
+			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Forced chunk point check: " + ex.Message); return false; }
+		}
+	}
+
+	/// <summary>Raft's spawn rule check, for ForcedStoryPointPatch: fails for the forced point near a custom island.</summary>
+	[HarmonyPatch(typeof(SO_ChunkSpawnRuleAsset), "DoesPointPassSpawnRules", new Type[] { typeof(ChunkPoint), typeof(ChunkPoint) })]
+	static class ForcedStoryPointRules
+	{
+		static void Postfix(ChunkPoint pointToCheck, ref bool __result)
+		{
+			if (ForcedStoryPointPatch.Forcing && __result && pointToCheck != null && ForcedStoryPointPatch.PushOn(pointToCheck)) __result = false;
 		}
 	}
 
