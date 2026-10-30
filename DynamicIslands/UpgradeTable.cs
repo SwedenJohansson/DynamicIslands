@@ -523,7 +523,12 @@ namespace DynamicIslands.Editor
 				UpgradeTable.AskResearch(__instance.activeTable.slot);
 				return false;
 			}
-			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrade table] Research button: " + e.Message); return true; }
+			catch (Exception e)
+			{
+				Debug.LogWarning("[CUSTOM ISLANDS] [upgrade table] Research button: " + e.Message);
+				// (not Raft's research on an upgrade table: it took the item for a normal research - merge review 10-31)
+				try { return !UpgradeTableMenu.IsUpgradeTable(__instance.activeTable); } catch { return false; }
+			}
 		}
 	}
 
