@@ -302,4 +302,7 @@ clear at -38.79 -15.8 r=1.2 all only=SmallBoulder
 clear at 10.16 38.45 r=1.2 all only=SmallBoulder
 clear at -24.68 27.51 r=1.2 all only=SmallBoulder
 
+# (G2 10-30: a palm on the rim of a drop, its trunk over it - CIGroundIslands 10-30)
+clear at 26.92 0.59 r=1.5 only=BigPalm4
+
 save Skyhook Mast

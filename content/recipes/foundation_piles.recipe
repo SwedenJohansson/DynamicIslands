@@ -362,4 +362,8 @@ call ar_plants_hill x=-72 z=-24 r=12 seed=5620
 
 # (a generator boulder left 1.4 m over a brushed slope, CIGroundIslands 10-25)
 clear at 26.1 21 r=1.5 only=SmallBoulder2
+# (G2 10-30: two bamboos on the rim of a drop, their trunks over it - CIGroundIslands 10-30)
+clear at -37.74 -62.31 r=1 only=Bamboo
+clear at 72.92 -46.36 r=1 only=Bamboo
+
 save The Foundation Piles
