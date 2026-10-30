@@ -29,6 +29,11 @@ push at 26.4 0
 # --- Terrain: the mudflat dry, the pile basin deep ------------------------------------------------------------------
 brush flatten at 24 0 r=12 s=20 frames=300 h=0.8
 brush flatten at -16 0 r=22 s=20 frames=500 h=-10
+# REACH 10-28: a bank ramp out of the pile basin (it was a 2.8 m climb all round) - pads from 0.6 m under the water up to the rim
+brush flatten at -6.4 16.4 r=2 s=20 frames=200 h=-0.6
+brush flatten at -5.4 18.1 r=2 s=20 frames=200 h=0.3
+brush flatten at -4.4 19.8 r=2 s=20 frames=200 h=1.2
+brush flatten at -3.4 21.5 r=2 s=20 frames=200 h=2.1
 pop
 # --- DEEP 10-24 terrain: Pile-driver's Hump (north, summit 42 m, base r 30), its trail, the drowned pump gallery (-18 m) ------------
 call hw_mount x=12 z=56 b=30 h=42
@@ -65,7 +70,8 @@ place "Pickup_Landmark_Clay 3" - at 18 8 ground sit
 place "Pickup_Landmark_Sand" - at 16 -6 ground sit
 place "Pickup_Landmark_Sand" - at 20 10 ground sit
 place Reef_Barrel2 - at 31 3 ground sit
-place Block_Ladder - at 13 0 ground yaw=270 sy=4
+# (REACH 10-28: the basin ladder stood 7 m off the basin's rim on the mudflat - 9 m up into nothing; the bank ramp is the way out now)
+# place Block_Ladder - at 13 0 ground yaw=270 sy=4
 call dirt x=18 z=0 r=6 n=3 seed=13952
 call treasure x=18 z=0 r=10 n=1 seed=13054
 prop treasure13054 treasure.loot=TitaniumOre*3
@@ -145,6 +151,16 @@ call hw_wreck x=-62 z=-42 h=3 yaw=40 obj=VP_Excavator al=sunkdigger crate=digger
 call ar_ruin x=10 z=-66 h=4 yaw=180 al=engineershut
 call hw_note x=7.5 z=-61.5 yaw=190 al=engineersurvey
 call ar_cave x=-78 z=-5 h=4 yaw=0 al=drivercave chest=driverchest
+# (REACH 10-28: the cave's path ended 3.6 m over the shore at its mouth - nobody got up into it: a slope down off its end)
+# (REACH 10-28 (2): pictures - the macro's path stood ~1.5 m under the cave floor at the mouth, a hollow under the floor's
+# lip: the path again at full strength, then the slope with more frames)
+for pz 2 16 1.5
+brush flatten at -79 $pz r=3 s=20 frames=200 h=4.4
+next
+brush flatten at -79 18 r=2.4 s=20 frames=150 h=3.6
+brush flatten at -79 20 r=2.4 s=20 frames=150 h=2.8
+brush flatten at -79 22 r=2.4 s=20 frames=150 h=2.0
+brush flatten at -79 24 r=2.4 s=20 frames=150 h=1.2
 call hw_zone x=-78 z=19 al=drivermouth id=driver_cave r=4 msg="A cave in the cliff: the pile drivers kept their charges here, well away from the city."
 prop pileray obj.name=pileray
 prop pileray boss.shield=1
