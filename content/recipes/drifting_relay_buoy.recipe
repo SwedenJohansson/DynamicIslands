@@ -24,6 +24,11 @@ brush flatten at 0 0 r=10 s=20 frames=200 h=1
 brush sand at 0 0 r=12 s=10 frames=60
 origin
 clear at 0 0 r=10
+# (REACH 10-28: the bar stood as a 1 m sand lip all round - out of the water there was no way up onto it (pictures
+# reach_rb_bar): a beach slope on its north-west side)
+brush flatten at -7.4 7.4 r=2.2 s=20 frames=80 h=0.5
+brush flatten at -8.3 8.3 r=2.2 s=20 frames=80 h=-0.2
+brush flatten at -9.2 9.2 r=2.2 s=20 frames=80 h=-0.9
 place "Pickup_Landmark_Tree_Palm 1" - at -4 2 ground sit
 place "Pickup_Landmark_Tree_Palm 1" - at 3 -3 ground sit yaw=120
 
@@ -32,6 +37,11 @@ place Reef_Buoy floats at 9.9 -3.1 h=-1.45
 place Reef_Buoy floats at 13.7 3.2 h=-1.45
 place Reef_Buoy floats at 15.3 -2.5 h=-1.45
 place RT_Floor buoydeck at 15 3 h=2.0 sx=0.66 sz=0.5
+# (REACH 10-28: the deck stands 2 m over the water on its poles, with no way up from a swim (pictures reach_rb_buoy):
+# a ladder from under the water up the deck's west edge, the climber stepping forward onto the deck)
+# (10-28 (2): its lower piece reached the seabed's slope on the open-water side - the walker took it from under the deck
+# and never rose: one piece from just under the surface)
+place Block_Ladder - at 10.8 0.75 h=-0.4 yaw=270
 place RT_Pillar - at 12 0 h=2.1 sy=0.8
 place RT_SatteliteDisc - at 12 0 h=4.55 scale=0.35 yaw=270
 place Placeable_Lantern_Metal buoylamp at 13 -1 h=2.1 sit
@@ -57,7 +67,9 @@ call dp_ground tx=-24 tz=-11 hb=3 sx=-35.82 sz=-16.42 hs=24.6
 call dp_tower ox=-22.89 oz=-8.02 hb=3 yaw=155.38 al=rbtower top=rbtop stash=rbstash zal=rbtopzone zid=rb_top msg="The top of the dune mast. The buoy blinks below - and out to sea, the engine's towers."
 call tzone x=-32.64 z=-14.96 al=rbsummit id=rb_summit r=4 msg="The dune peak beside the mast." h=1
 call notebox x=-34.36 z=-19.6 yaw=245.38 al=rbcairn
-call notebox x=-30.6 z=-12.9 yaw=200 al=keeperrelay
+# (REACH 10-28: on the steep side of the peak the box and note sank into the slope - nothing to read. Up on the
+# peak's flat top now, beside the mast's bridge end)
+call notebox x=-33 z=-14.4 yaw=200 al=keeperrelay
 call notebox x=-2.2 z=-1.4 yaw=40 al=heddastrip
 call notebox x=1.6 z=3.2 yaw=210 al=teostrip
 call treasure x=-36.65 z=-14.6 r=1.5 n=1 seed=14231
@@ -70,6 +82,16 @@ place Loot_ChestSmall rbdivesecret at -9.15 38.87 ground sit yaw=76.76
 call tzone x=-8 z=34 al=rbdivezone id=rb_dive r=7 msg="The bottom of the blue hole. Relay 6 lies here, floats cut." h=1
 call tzone x=-3.65 z=15.51 al=rbrim id=rb_rim r=5 msg="The blue hole's rim." h=1
 call treasure x=-2.73 z=11.61 r=12 n=1 seed=14232
+# (REACH 10-28: the tower's pad stood 3 m over the water on steep sides, and the dune behind it too steep to come down
+# (pictures reach_rb_pad*): no way to the tower's ladder from the sea - a beach slope up the pad's north side)
+# (10-28 (2): at 80 frames the strip stayed a sunk trench under the water with a step at its end (pictures reach_rb2_pad) - 200 frames, wider, up to the pad's own height)
+brush flatten at -24 -5.7 r=2.6 s=20 frames=200 h=3.0
+brush flatten at -24 -4.4 r=2.6 s=20 frames=200 h=2.3
+brush flatten at -24 -3.1 r=2.6 s=20 frames=200 h=1.5
+brush flatten at -24 -1.8 r=2.6 s=20 frames=200 h=0.7
+brush flatten at -24 -0.5 r=2.6 s=20 frames=200 h=-0.1
+brush flatten at -24 0.8 r=2.6 s=20 frames=200 h=-0.9
+clear at -24 -1.8 r=3.5
 prop treasure14232 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 place Creature_Turtle rbturtles at 6 -14 ground
 prop rbturtles creature.count=2

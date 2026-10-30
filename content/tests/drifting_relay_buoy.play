@@ -25,7 +25,8 @@ wait 3
 open Relay 6 float box
 wait 3
 dig 1
-climb -21.91 -11.97
+# (10-28: the dp_tower ladders now hang inside the landing holes - the bottom one's grip is here)
+climb -21.4 -7.9
 open Mast stash
 wait 3
 read Dune cairn
