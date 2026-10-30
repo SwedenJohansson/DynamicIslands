@@ -172,7 +172,8 @@ place ZiplinePath_Landmark cszip at 34.01 -64.67 h=40.2
 zipto cszip 11.88 -23.75
 place Creature_Goat csgoats at 33.34 -53.27 ground
 prop csgoats creature.count=2
-call dp_sink x=-31 z=-43 d=-20 ex1=-24.57 ez1=-34.08 ex2=-19.89 ez2=-27.59 eh=8.96
+# (REACH 10-28: the ramp out rose 8.5 m in 8 m - too steep to walk up: now 15 m long on the same line)
+call dp_sink x=-31 z=-43 d=-20 ex1=-24.57 ez1=-34.08 ex2=-15.8 ez2=-21.9 eh=8.96
 place Caravan_Green_02 cswreck at -31 -43 ground sit yaw=-54.21
 place Loot_Chest csdivechest at -33.76 -41.01 ground sit yaw=35.79
 call dp_air x=-28.24 z=-44.99 id=cs_air al=csair msg="Air trapped under the wreck - breathe."

@@ -50,6 +50,21 @@ for pz 9.6 14.4 0.6
 brush flatten at $px $pz r=0.8 s=20 frames=100 h=8.16
 next
 next
+# (REACH 10-28: pictures - the dig still bled out past the walls on the east and south sides: a 4.6 m funnel round the pit,
+# the walls standing bare in it, a dish over the hole and nobody climbing out. The plateau put back round the pit: pads at
+# 13 m reaching to the wall line, never inside it)
+for t 6.6 17.4 1.2
+brush flatten at 5.6 $t r=2.2 s=20 frames=150 h=13
+brush flatten at -5.6 $t r=2.2 s=20 frames=150 h=13
+next
+for t -3.4 3.4 1.2
+brush flatten at $t 6.6 r=2.2 s=20 frames=150 h=13
+brush flatten at $t 17.4 r=2.2 s=20 frames=150 h=13
+next
+# (REACH 10-30: pictures reach_e_gc - the south side still a funnel with the wall bare: a second row of pads there)
+for t -6.6 6.6 1.2
+brush flatten at $t 4.4 r=2.2 s=20 frames=150 h=13
+next
 # --- DEEP 10-25 terrain: the cove (the cliff foot's beach still on the sea on the bigger island), Gannet Crown (north-
 # east, summit 34 m, base r 24) and its path, the egg store's hole (south-east, -14 m); the cave's and the plane's pads
 # come with their macros
@@ -178,7 +193,8 @@ place Creature_PufferFish eggpuffers at 66 -32 h=-9
 prop eggpuffers creature.count=2
 # --- The kennel cave (north): a secret ----------------------------------------------------------------------------------
 call hw_zone x=-30 z=61 al=cavez id=kennelcave r=4 msg="The Choir's kennel cave. Chains on rings in the rock, the collars still buckled - and empty. The floor is wet with sea water."
-place Note_Paper magsnote at -31.5 60.5 h=5.45 drop yaw=180
+# (REACH 10-28: by the lantern no spot could reach the note (no clear line) - now on the floor beside the kennel chest)
+place Note_Paper magsnote at -28.7 59.5 h=5.45 drop yaw=180
 loot kennelchest Rope*2;Leather*3;Scrap*2;Battery*1
 prop kennelchest loot.refill=0
 note kennelchest Kennel box | The dog keeper's box: leather for collars, rope, scrap and a battery for her lamp.
