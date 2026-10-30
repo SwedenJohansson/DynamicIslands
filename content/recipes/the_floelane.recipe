@@ -267,4 +267,7 @@ quest done=The sealers are going to the steam harbour. It is warm there, they sa
 quest reward=MetalIngot*2;Rope*3;Leather*1
 
 prop icebridge obj.name=icebridge
+# (G2 10-30: a rock floating 1.7 m over the slope - CIGroundIslands 10-30; the report is from the island's position, which sits 2.6 -15.6 off the land centre)
+clear at 24.71 56.02 r=1.5 all only=SmallRock_02
+
 save The Floelane
