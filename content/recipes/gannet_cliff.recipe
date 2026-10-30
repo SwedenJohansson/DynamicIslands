@@ -308,4 +308,7 @@ prop treasure8823 treasure.loot=TitaniumOre*3
 
 clear at -57.28 57.63 r=1.2 all only=SmallBoulder
 
+# (G2 10-30: a bush floating 1 m over the slope - CIGroundIslands 10-30)
+clear at -22.31 -18.38 r=1.5 only=Bush
+
 save Gannet Cliff

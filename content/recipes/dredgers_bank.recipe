@@ -164,4 +164,8 @@ quest reward=MetalIngot*3;Battery*1;Rope*3
 call treasure x=0 z=0 r=34 n=1 seed=8842
 prop treasure8842 treasure.loot=TitaniumOre*2
 
+# (G2 10-30: two bamboos on the rim of a drop, their trunks over it - CIGroundIslands 10-30)
+clear at -29.21 -37.31 r=1 only=Bamboo
+clear at -34.06 -35.68 r=1 only=Bamboo
+
 save Dredgers Bank
