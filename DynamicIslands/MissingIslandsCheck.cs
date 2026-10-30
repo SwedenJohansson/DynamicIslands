@@ -181,6 +181,10 @@ namespace DynamicIslands.Editor
 			{
 				leaving = false; // (still in the world: the story isn't held for good; review 10-30 B)
 				Debug.LogWarning("[CUSTOM ISLANDS] Going back to the main menu failed: " + e.Message);
+				// (and not answered: the box closed before the throw, with "answered" set, so OnClosed didn't let the story go on
+				// without the missing islands - it does here, as when the box is closed; merge review 10-31)
+				answered = false;
+				if (!shown) { answered = true; try { StoryChain.PlayWithoutMissing(); } catch (Exception e2) { Debug.LogWarning("[CUSTOM ISLANDS] " + e2.Message); } }
 			}
 		}
 
