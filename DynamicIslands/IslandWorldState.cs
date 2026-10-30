@@ -176,6 +176,8 @@ namespace DynamicIslands.Editor
 				lines.AddRange(WorldOptions.WriteLines());
 				lines.AddRange(WorldIslands.WriteLines());
 				lines.AddRange(StoryChain.WriteLines());
+				// (this version keeps the zones' story-loot keys: a file without the line is migrated on reading - TriggerZone)
+				lines.Add(TriggerZone.StoryLootLine);
 				foreach (Entry e in islands)
 				{
 					IslandObjectState.Capture(e);
@@ -244,6 +246,7 @@ namespace DynamicIslands.Editor
 			ResetStep("WorldIslands.Reset", () => WorldIslands.Reset());
 			ResetStep("WorldWindowHint.OnWorldLoaded", () => WorldWindowHint.OnWorldLoaded());
 			ResetStep("StoryChain.Reset", () => StoryChain.Reset());
+			ResetStep("TriggerZone.ForgetStoryLootLine", () => TriggerZone.ForgetStoryLootLine());
 			ResetStep("MissingIslandsCheck.Forget", () => MissingIslandsCheck.Forget()); // (before the early return below: the last world's "Main menu" held the story; review 10-30 A)
 			ResetStep("BuriedTreasure.ForgetGiven", () => BuriedTreasure.ForgetGiven()); // (chest indexes come from the island ids of this world: another world's would block its loot - audit 10-30)
 			ResetStep("QuestCount.Reset", () => QuestCount.Reset()); // (the last world's count isn't shown here - review 10-30)
@@ -274,6 +277,7 @@ namespace DynamicIslands.Editor
 					WorldOptions.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
 					WorldIslands.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
 					StoryChain.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
+					TriggerZone.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
 					WorldDirector.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)))) continue;
 				// (a setting this version doesn't know - written by a newer one: kept as it is, so this version's save doesn't
 				// erase it for everyone - AU5)
@@ -308,6 +312,7 @@ namespace DynamicIslands.Editor
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read a line of " + FilePath + " (left as it is): " + line + " - " + e.Message); keptLines.Add(line); }
 			Debug.Log("[CUSTOM ISLANDS] World '" + SaveAndLoad.CurrentGameFileName + "' has " + islands.Count + " custom island(s); automatic islands " +
 				(CustomIslandSpawner.Enabled ? "on" : "off"));
+			TriggerZone.MarkOldStoryLoot(islands);
 			StoryChain.OnWorldRead();
 			WorldRules.OnWorldRead();
 			WorldDirector.OnWorldLoaded();

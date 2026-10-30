@@ -19,6 +19,43 @@ namespace DynamicIslands.Editor
 		/// <summary>The zone gave its story items (loot): + its object index, once per world - GiveStoryOnce (after
 		/// TriggerSounds.KeyBase 0x150000 + 0xFFFF).</summary>
 		public const int StoryLootBase = 0x160000;
+		/// <summary>The world file has the story-loot keys ("@storyloot=1", written by every save of this version). Read
+		/// without it, the file came from a version before them: a zone that fired there gave its story items already.</summary>
+		static bool storyLootKeysRead;
+		internal const string StoryLootSetting = "storyloot";
+		internal static void ForgetStoryLootLine() { storyLootKeysRead = false; }
+		internal static string StoryLootLine { get { return "@" + StoryLootSetting + "=1"; } }
+		internal static bool ReadLine(string key, string value)
+		{
+			if (key != StoryLootSetting) return false;
+			storyLootKeysRead = true;
+			return true;
+		}
+
+		/// <summary>
+		/// Host, after reading a world file from before the story-loot keys (merge review 10-31): every zone whose "used" key
+		/// is set gets its story-loot key too, so a zone that fires on every walk-in doesn't hand its story items out once
+		/// more after the update. A zone without story items only gets a key nothing reads. Returns how many were set.
+		/// </summary>
+		internal static int MarkOldStoryLoot(IEnumerable<IslandWorldState.Entry> islands)
+		{
+			if (storyLootKeysRead || islands == null) return 0;
+			int set = 0;
+			foreach (IslandWorldState.Entry e in islands)
+			{
+				if (e == null || e.State == null) continue;
+				foreach (KeyValuePair<int, ObjectState> kv in e.State.ToList())
+				{
+					if (kv.Key < KeyBase || kv.Key >= KeyBase + 0x10000 || kv.Value == null || kv.Value.Active) continue;
+					int story = StoryLootBase + (kv.Key - KeyBase);
+					if (e.State.ContainsKey(story)) continue;
+					e.State[story] = new ObjectState { Active = false, Yield = 0, Day = kv.Value.Day };
+					set++;
+				}
+			}
+			if (set > 0) Debug.Log("[CUSTOM ISLANDS] World file from before the story-loot keys: " + set + " zone(s) that fired keep their story items given");
+			return set;
+		}
 		const float RepeatCooldown = 30f;
 
 		public string Id = "", Message = "";
