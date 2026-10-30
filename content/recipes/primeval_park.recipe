@@ -46,6 +46,24 @@ brush flatten at -82 34 r=17 s=20 frames=500 h=1.5
 brush flatten at -24 -92 r=14 s=20 frames=500 h=3
 brush smooth at -24 -92 r=19 s=4 frames=40
 brush flatten at -24 -92 r=12 s=20 frames=500 h=3
+# (agent Q 10-30, REACH: the house pad and the Nest Cave pad stood out of the sea on banks 3 m high with no way up for a
+# swimmer - a sand spit down into the water off each: the house pad's off the end of its causeway, Nest Cave's before its mouth)
+brush flatten from -49.30 -62.18 to -42.82 -66.82 r=2 s=20 frames=60 h=2.3
+brush flatten from -48.26 -60.72 to -41.78 -65.36 r=2 s=20 frames=60 h=1.6
+brush flatten from -47.21 -59.26 to -40.73 -63.90 r=2 s=20 frames=60 h=0.9
+brush flatten from -46.17 -57.81 to -39.69 -62.45 r=2 s=20 frames=60 h=0.2
+brush flatten from -45.12 -56.35 to -38.64 -60.99 r=2 s=20 frames=60 h=-0.5
+brush flatten from -44.08 -54.89 to -37.60 -59.53 r=2 s=20 frames=60 h=-1.2
+brush smooth from -46.06 -64.50 to -40.84 -57.21 r=4 s=10 frames=20
+clear from -46.06 -64.50 to -40.84 -57.21 r=5 body
+brush flatten from -89.5 -27.0 to -82.5 -27.0 r=2 s=20 frames=60 h=2.3
+brush flatten from -89.5 -25.2 to -82.5 -25.2 r=2 s=20 frames=60 h=1.6
+brush flatten from -89.5 -23.4 to -82.5 -23.4 r=2 s=20 frames=60 h=0.9
+brush flatten from -89.5 -21.6 to -82.5 -21.6 r=2 s=20 frames=60 h=0.2
+brush flatten from -89.5 -19.8 to -82.5 -19.8 r=2 s=20 frames=60 h=-0.5
+brush flatten from -89.5 -18.0 to -82.5 -18.0 r=2 s=20 frames=60 h=-1.2
+brush smooth from -86 -27 to -86 -18 r=4 s=10 frames=20
+clear from -86 -27 to -86 -18 r=5 body
 call hw_mount x=-50 z=78 b=14 h=16
 call hw_trail x=-50 z=78 b=14 h=16 a0=147.34 turn=300 n=40 h0=3
 
@@ -498,8 +516,10 @@ prop pp_maze tint.color=#4e6b3a
 prop pp_maze tint.amount=0.55
 prop pp_mazechest loot.refill=0
 call hw_zone x=-25.5 z=-101 al=pp_mazez id=pp_maze r=3 msg="A maze of old walls. Somewhere in the middle, a box."
-call hw_machine x=-51 z=-93 yaw=-45 al=pp_machine nm="Hatchery console" obj=TP_LaserControlPanel_lever sc=3 a=pp_top b=pp_cave done=pp_fixed rew=pp_rewchest rnote=pp_rewnote msg="It works." hint="It wants the camera lens from Fern Knoll and the hatchery tag gun from Nest Cave."
-call hw_note x=-53.6 z=-91.8 yaw=-25 al=pp_hint
+# (agent Q 10-30, REACH: its reward chest, 2 m before it, fell off the pad's edge to the sea floor - the console moved in
+# off the edge and turned so the chest lands on the pad)
+call hw_machine x=-53 z=-91 yaw=-135 al=pp_machine nm="Hatchery console" obj=TP_LaserControlPanel_lever sc=3 a=pp_top b=pp_cave done=pp_fixed rew=pp_rewchest rnote=pp_rewnote msg="It works." hint="It wants the camera lens from Fern Knoll and the hatchery tag gun from Nest Cave."
+call hw_note x=-51.8 z=-88.4 yaw=-25 al=pp_hint
 call ss_piece x=-22 z=80 al=pp_piece1 set="Park tickets"
 call ss_piece x=41 z=-64 al=pp_piece2 set="Park tickets"
 call ss_piece x=-85 z=8 al=pp_piece3 set="Park tickets"
@@ -727,5 +747,10 @@ clear at 66.2 -49.8 r=1.5 all only=^SmallBoulder4
 clear at 5.8 23.4 r=1.5 all only=^SmallBoulder1
 clear at 55.3 -0.1 r=1.5 all only=^LeafCoral_3
 clear at -38.3 69.4 r=1.5 all only=^SmallBoulder2
+# (agent Q 10-30, ground check: a boulder still hanging off its slope and a bamboo over a drop - gone)
+clear at 68.1 -50.5 r=2 all only=^SmallBoulder4
+clear at 64.5 -39.5 r=2 all only=^Bamboo_1
+# (agent Q 10-30, ground check: the house pad's sand spit left a boulder hanging 3.4 m over the new slope - gone)
+clear at -36.8 -66.3 r=2 all only=^SmallBoulder2
 
 save Primeval Park

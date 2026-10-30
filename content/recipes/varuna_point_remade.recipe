@@ -115,6 +115,14 @@ place "Box Small" partcrate4 at 16 -30 ground yaw=10
 place VG_Safe strongbox at 18 70 ground sit yaw=180
 place Zone_Trigger deep at 18 70 ground y=2
 place Creature_AnglerFish angler at 18 74 ground y=3
+# (agent Q 10-30, REACH: no way back out of the sea by the deep - the shore over it is a 2 m bank; a sandy slope up
+# out of the water east of the deep, in four low steps)
+brush flatten from 23 67.2 to 29 67.2 r=2 s=20 frames=60 h=-0.9
+brush flatten from 23 65.4 to 29 65.4 r=2 s=20 frames=60 h=-0.2
+brush flatten from 23 63.6 to 29 63.6 r=2 s=20 frames=60 h=0.5
+brush flatten from 23 61.8 to 29 61.8 r=2 s=20 frames=60 h=1.2
+brush smooth from 23 64.5 to 29 64.5 r=4 s=10 frames=20
+clear from 23 64.5 to 29 64.5 r=5 body
 
 # --- RAFT REMADE 10-26 (1-hour pass): the point grows to Raft's size - and gets its relief - by land added round it
 # (the point, the site, the floodlight tower, the crates and the deep as they were; the north water stays open):
