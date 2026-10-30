@@ -844,7 +844,7 @@ namespace DynamicIslands
 		static readonly Regex LooseRock = new Regex("^(?!Placeable_)(?!.*(Cave|Tunnel|Stalag|Wall|Floor|Block_)).*(Rock|Boulder|Stone)", RegexOptions.IgnoreCase);
 		static readonly Regex OnAMount =new Regex("Sattelite|Satellite|Dish|Antenna|Tower_EndRoom", RegexOptions.IgnoreCase);
 		/// <summary>What stands on one trunk: its pivot is its foot (the generator's trees and palms).</summary>
-		static readonly Regex Trunk = new Regex("^(?!Placeable_).*(Tree|Palm|Bamboo|Pine|Birch)", RegexOptions.IgnoreCase);
+		static readonly Regex Trunk = new Regex("^(?!Placeable_)(?!.*(Ladder|Zipline|Spine|Street)).*(Tree|Palm|Bamboo|Pine|Birch)", RegexOptions.IgnoreCase);
 
 		/// <summary>What on a spawned island doesn't stand on anything: one line per problem; <paramref name="count"/> = the objects measured.</summary>
 		static List<string> GroundProblems(IslandWorldState.Entry e, out int count)
@@ -867,6 +867,9 @@ namespace DynamicIslands
 			{
 				if (o == null || !o.gameObject.activeInHierarchy) continue;
 				string n = o.name.Replace("(Clone)", "").Trim();
+				// (a tree or a palm, the Pickup_ landmark ones too, which are skipped below: its trunk's foot on the ground)
+				string trunkLine = TrunkFootProblem(o, n, land, sea, mid);
+				if (trunkLine != null) { lines.Add(trunkLine); if (!n.StartsWith("Pickup_")) count++; continue; }
 				bool structural = ChainLink.IsMatch(n), banner = n.IndexOf("Banner", StringComparison.OrdinalIgnoreCase) >= 0;
 				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Note_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") ||
 					n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0 || (Hangs.IsMatch(n) && !structural && !banner)) continue;
@@ -1507,6 +1510,27 @@ namespace DynamicIslands
 				if (h.collider.transform.IsChildOf(self) && h.point.y < underside) underside = h.point.y;
 			if (underside == float.MaxValue) return float.NaN; // (not over this point, or into the ground here: the ray starts inside it)
 			return Mathf.Max(0f, underside - under);
+		}
+
+		/// <summary>A tree's or a palm's trunk foot (its pivot) more than 1 m under the land at it ("sunk trunk": set down by the
+		/// lowest ground under its crown, Stranded Gull's hill palm grew out of the cliff, the user, 2026-10-30 - "buried" needs
+		/// the whole top under the ground and a crown sticks out) or more than 0.4 m over what is under it ("trunk foot
+		/// floating"); null when it is fine, or its foot is over the sea.</summary>
+		static string TrunkFootProblem(Transform o, string n, Terrain land, float sea, Vector3 mid)
+		{
+			if (land == null || !Trunk.IsMatch(n)) return null;
+			Vector3 foot = o.position;
+			float ground = land.SampleHeight(foot) + land.transform.position.y;
+			Vector3 lp = land.transform.position, ls = land.terrainData.size;
+			if (foot.x < lp.x || foot.x > lp.x + ls.x || foot.z < lp.z || foot.z > lp.z + ls.z || ground <= sea) return null;
+			string at = n + " at " + Num(foot.x - mid.x) + " " + Num(foot.z - mid.z) + " h=" + Num(foot.y - sea);
+			if (ground - foot.y > 1f) return "sunk trunk: " + at + ", its foot " + Num(ground - foot.y) + " m under the ground";
+			if (foot.y > sea + 0.3f)
+			{
+				float g = GapUnder(o, foot, land);
+				if (g > 0.4f) return "trunk foot floating: " + at + ", " + (g > 999f ? "nothing under it" : Num(g) + " m over what is under it");
+			}
+			return null;
 		}
 
 		static float GapUnder(Transform self, Vector3 foot, Terrain land)

@@ -159,7 +159,7 @@ plan already open.
   run (by `place`, `beside` or `scatter as=`); `where` with an unknown alias logs nothing. Aliases ignore case.
 - Quest fields are written only once the quest has a step. `save` fails when the main quest has a title and no steps.
 - An object placed with alias `-` at a set height is left out when it is under the ground whole; so are `line` and
-  `ramp` pieces. Objects on the ground with no height go down to the lowest ground under their base.
+  `ramp` pieces. Objects on the ground with no height go down to the lowest ground under their base; a tree, palm or bamboo (not over the sea) goes down by its trunk foot, the lowest ground within 0.5 m of its pivot, not under its whole crown.
 - `save` hides Raft's sea finds that the recipe's strokes lifted out of the water, and plants, rocks and finds buried
   whole.
 - A strokes line after a `place` can leave that object floating or buried: shape the land first, then place. Check

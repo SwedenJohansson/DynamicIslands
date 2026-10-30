@@ -2477,7 +2477,15 @@ namespace DynamicIslands
 			if (!opt.ContainsKey("h") && !opt.ContainsKey("y") && (!TopFrame.HasFloor || opt.ContainsKey("ground")))
 			{
 				if (!opt.ContainsKey("sit")) go.transform.position = new Vector3(go.transform.position.x, y, go.transform.position.z);
-				y = Mathf.Min(y, PlacementOptions.LowestGroundUnder(go));
+				// (a tree or a palm: set down by its trunk's foot, the ground just round its pivot - Raft's are one mesh, so their
+				// "base" is the whole crown, and on a slope or a coast they went down to the lowest ground under it: Stranded
+				// Gull's hill palm grew out of the cliff 4 m down, 1200 trunks on the library islands sunk, the user, 2026-10-30.
+				// Over the sea there is no trunk foot to keep: as before)
+				Vector3 gp, gn;
+				if (Trunk.IsMatch(name) && PlacementOptions.GroundAt(go.transform.position, out gp, out gn) && gp.y > DynamicIslands.EditorWaterLevel)
+					y = Mathf.Min(y, PlacementOptions.LowestGroundUnder(new Bounds(go.transform.position, new Vector3(1f, 0f, 1f))));
+				else
+					y = Mathf.Min(y, PlacementOptions.LowestGroundUnder(go));
 				// (as the placer: an object whose pivot is well above its bottom rests on its bottom - RestingPivotY)
 				if (!opt.ContainsKey("sit")) go.transform.position = new Vector3(go.transform.position.x, y + PlacementOptions.PivotAboveBottom(go), go.transform.position.z);
 			}
