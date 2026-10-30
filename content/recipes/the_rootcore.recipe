@@ -36,6 +36,22 @@ brush sand at 0 46 r=9 s=10 frames=30
 clear at 0 26 r=10
 clear at 22 20 r=5
 clear at 0 46 r=6
+# (agent Q 10-30, REACH: since the RESIZE the meadow, the landing beach and Oda's camp lay as pits in the bigger island,
+# ringed by sheer banks - whoever walked down into them found no way back up and out to the sea: gentle paths out of
+# them - the meadow down to the beach, the beach east and the camp north to the low land at 22.7 46, where the
+# ground runs on down to the sea)
+for k 0 4
+brush flatten at 0 {36+1.5*$k} r=3 s=20 frames=150 h={1.55-0.08*$k}
+next
+for k 0 10
+brush flatten at {5+1.77*$k} {46+0.02*$k} r=2.5 s=20 frames=150 h={1.25+0.095*$k}
+next
+for k 0 12
+brush flatten at {22+0.05*$k} {25+1.6*$k} r=2.5 s=20 frames=150 h={1.8+0.033*$k}
+next
+clear from 0 36 to 0 42 r=4 body
+clear from 5 46 to 22.7 46.2 r=3.5 body
+clear from 22 25 to 22.6 44.2 r=3.5 body
 
 # --- The dome: Raft's bear cave under the hill; the organism (purple coral on land) round the oldest root ---------
 push at 0 10
