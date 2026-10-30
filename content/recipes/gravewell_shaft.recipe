@@ -70,7 +70,9 @@ call airpocket x=0 z=-9 id=gallery_1 al=gallery1 bub=gallery1bub r=2.2 msg="Gall
 place "Box Small" - at 0.6 -9 ground sit
 place Note_Paper logbook at 1.4 -9.6 ground y=0.7 drop yaw=20
 call airpocket x=9 z=0 id=gallery_2 al=gallery2 bub=gallery2bub r=2.2 msg="Gallery 2 - air. Something glints on a crate."
-place Loot_ChestSmall pumpkeybox at 9.6 1.4 ground sit yaw=270
+# (REACH 10-28: the crate stood past the pocket's solid AirPocket_1 from the way in - the walker stopped 1.9 m short at
+# 6.8 -0.3: the crate on the near side of the pocket)
+place Loot_ChestSmall pumpkeybox at 7.6 1.0 ground sit yaw=270
 
 # --- The pump hall on the pit floor (roof on stone pillars): the pump hall chest, the smelter store, Halvard's log 7 --
 push at -3 -2 h=1
@@ -106,6 +108,16 @@ call hw_reef x=-55 z=45 r=4 seed=9655
 # --- DEEP 10-25: Pump Ridge - its foot and top as zones, the keeper's drowned house (air) with the cage's fuse ----------
 call hw_zone x=27.3 z=-17.3 al=ridgefootz id=ridgefoot r=5 msg="Pump Ridge. A path of flat stones winds up round it - the pump keeper's path."
 call hw_sunkhouse x=45 z=-35 h=30 yaw=135 a=keeperhouse chest=keeperchest air=keeperair bub=keeperbub dal=keeperdoor
+# (G2 10-30: pillars in its four corners carry the flat roof - CIGroundIslands counts no wall as holding a roof, as on
+# Bridgeworks Crown 10-25; the pillar tops end inside the roof tiles)
+push at 45 -35 h=30 yaw=135
+place Block_Pillar_Wood keeperpost at -1.35 -2.85
+place Block_Pillar_Wood keeperpost at 1.35 -2.85
+place Block_Pillar_Wood keeperpost at -1.35 2.85
+place Block_Pillar_Wood keeperpost at 1.35 2.85
+pop
+prop keeperpost tint.color=#4e5a58
+prop keeperpost tint.amount=0.5
 call hw_zone x=45 z=-35 al=ridgetopz id=ridgetop r=7 h=1 msg="The top of Pump Ridge: the pump keeper's house, drowned, its front room still holding air."
 place Note_Paper karinnote at 44 -33 h=30.5 drop yaw=135
 loot keeperchest story:cagefuse*1;OxygenBottle*1;CopperOre*2

@@ -349,4 +349,8 @@ step read|Wren's letter|1|Read the letter that came up out of the dry bed
 quest done=The garden breathes again. Wren took Ines and Teo up to the Thalassa surface station - the Receiver finds it on band 900.
 quest reward=Seed_Watermelon*3;Seed_Mango*1
 
+# (G2 10-30: two rocks floating - CIGroundIslands 10-30)
+clear at -3.17 49.29 r=1.2 all only=SmallBoulder2
+clear at -19.54 -64.04 r=1.2 all only=SmallRock_02
+
 save Biome Seven

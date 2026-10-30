@@ -168,7 +168,8 @@ call tzone x=36.24 z=-72.5 al=cssummit id=cs_summit r=4 msg="The frost peak besi
 call notebox x=40.94 z=-74.06 yaw=153.43 al=cscairn
 call treasure x=36.02 z=-76.52 r=1.5 n=1 seed=14971
 prop treasure14971 treasure.loot=TitaniumOre*2;Battery*1
-place ZiplinePath_Landmark cszip at 34.01 -64.67 h=40.2
+# (G2 10-30: pivot moved so the near end's floor sits on the tower's deck, between the lantern and the ladder hole)
+place ZiplinePath_Landmark cszip at 37.93 -63.01 h=41.55
 zipto cszip 11.88 -23.75
 place Creature_Goat csgoats at 33.34 -53.27 ground
 prop csgoats creature.count=2
@@ -253,5 +254,9 @@ quest done=South over the sea: the ring, turning. The Engine Court is waiting.
 quest reward=TitaniumOre*2;Rope*4;CaveMushroom*2
 
 call tzone x=14.43 z=-2.35 al=campzone id=hedda_camp r=5 msg="Hedda's camp. A fire, a tent, a store - and her handwriting on a sheet by the fire."
+
+# (G2 10-30: two generator rocks floating on slopes - CIGroundIslands 10-30)
+clear at -52.9 -59.36 r=1.5 all only=CaravanIsland_SmallRock_1
+clear at -16.14 51.06 r=1.5 all only=BigSharpRock_5
 
 save Cooling Spire
