@@ -147,8 +147,9 @@ end
 #
 # powerradio: a generator at x z (gen; it wants Raft's generator part and sends "power") and a radio at rx rz rh (h over
 # the sea, set down on what is there - a table) that works once the power is on: its voice gives away a supply drop
-# hidden within cr of cx cz; the generator part in a mechanic's toolbox scattered within kr of kx kz
-macro powerradio x=0 z=0 yaw=0 gen="VG_DecorationPrefabBase_EmergencyGenerator Variant" alias=generator radio=RT_CommRadio ralias=radio rx=0 rz=0 rh=3 ryaw=0 cache=supplydrop cx=0 cz=0 cr=20 cseed=1 items=Battery*2;CopperIngot*2 kx=0 kz=0 kr=20 seed=2 toolbox=mechanicsbox free=5
+# hidden within cr of cx cz; the generator part in a mechanic's toolbox scattered within kr of kx kz (kfree: its free room,
+# default 5 - a toolbox at a cave mouth needs less)
+macro powerradio x=0 z=0 yaw=0 gen="VG_DecorationPrefabBase_EmergencyGenerator Variant" alias=generator radio=RT_CommRadio ralias=radio rx=0 rz=0 rh=3 ryaw=0 cache=supplydrop cx=0 cz=0 cr=20 cseed=1 items=Battery*2;CopperIngot*2 kx=0 kz=0 kr=20 seed=2 toolbox=mechanicsbox free=5 kfree=5
 place "$gen" $alias at $x $z ground sit yaw=$yaw
 prop $alias obj.name=$alias
 place "$radio" $ralias at $rx $rz h=$rh drop yaw=$ryaw
@@ -159,7 +160,7 @@ prop $cache obj.name=$cache
 prop $cache note.title=Supply drop
 prop $cache beh.hidden=1
 loot $cache $items
-scatter Loot_Chest 1 at $kx $kz r=$kr seed=$seed free=$free as=$toolbox
+scatter Loot_Chest 1 at $kx $kz r=$kr seed=$seed free=$kfree as=$toolbox
 prop $toolbox note.title=Mechanic's toolbox
 loot $toolbox story:raft-Tangaroa_GeneratorPart*1;Bolt*2
 end
