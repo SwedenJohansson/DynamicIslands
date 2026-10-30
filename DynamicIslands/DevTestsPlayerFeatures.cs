@@ -695,13 +695,18 @@ namespace DynamicIslands
 			Check(ref ok, Vector3.Distance(made[0].transform.position, pointWas) < 0.01f, "... and Ctrl+Z puts it back");
 
 			EditorCamera ec = c.GetComponent<EditorCamera>();
+			Canvas ui = EditorUI.Canvas;
+			bool uiWas = ui != null && ui.enabled;
 			Check(ref ok, CameraPath.Preview("ci tour", false) == null && CameraFlight.Active && (ec == null || !ec.enabled), "Preview flies the editor camera (its own control off)");
+			// (player 10-30: the inspector covered the preview)
+			Check(ref ok, ui == null || !ui.enabled, "the editor's windows are hidden while it flies");
 			yield return new WaitForSecondsRealtime(0.2f);
 			Check(ref ok, keys.Count > 0 && Vector3.Distance(c.transform.position, keys[0].Pos) < 8f, "it starts at the first point");
 			float wait = Time.unscaledTime + CameraFlight.LastDuration + 3f;
 			while (CameraFlight.Active && Time.unscaledTime < wait) yield return null;
 			yield return null;
 			Check(ref ok, !CameraFlight.Active && Vector3.Distance(c.transform.position, camWas) < 0.01f && (ec == null || ec.enabled), "over: the editor camera back where it was, its control on");
+			Check(ref ok, ui == null || ui.enabled == uiWas, "... and the editor's windows back");
 
 			Check(ref ok, CameraPath.Preview("ci tour", true) == null && CameraFlight.Active, "Record trailer starts");
 			for (int i = 0; i < 20; i++) yield return null;
@@ -712,6 +717,7 @@ namespace DynamicIslands
 			int pngs = folder != null && Directory.Exists(folder) ? Directory.GetFiles(folder, "frame_*.png").Length : 0;
 			Check(ref ok, !CameraFlight.Active && pngs >= 10 && pngs == CameraFlight.LastFrames && File.Exists(Path.Combine(folder, "frame_00001.png")), "it wrote " + pngs + " frames to " + folder + " (Esc stopped it)");
 			Check(ref ok, Vector3.Distance(c.transform.position, camWas) < 0.01f, "... and the camera is back");
+			Check(ref ok, ui == null || ui.enabled == uiWas, "... and the editor's windows after Esc");
 			Check(ref ok, CameraPath.Preview("nothing here", false) != null && !CameraFlight.Active, "a path with no points says so, no flight");
 			try { if (folder != null) Directory.Delete(folder, true); } catch { }
 			foreach (EditorGameObject o in made) if (o != null) UnityEngine.Object.Destroy(o.gameObject);

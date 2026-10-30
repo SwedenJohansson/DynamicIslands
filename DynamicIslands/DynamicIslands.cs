@@ -803,18 +803,26 @@ namespace DynamicIslands
 			if (!IsValidIslandName(name)) { Notify("Can't save '" + name + "': " + FileNames.IslandProblem(name), true); return false; }
 			try
 			{
+				// (the objects in the order Capture lists them: the numbers saved go back onto them - UidsSaved)
+				EditorGameObject[] egos = GameObject.Find("PlacedObjects").transform.GetComponentsInChildren<EditorGameObject>();
 				IslandFile island = CaptureIsland(name);
 				// (a file with more objects couldn't be opened again)
 				if (island.Objects.Count > IslandFile.MaxObjects) { Notify("Can't save: " + island.Objects.Count + " objects, at most " + IslandFile.MaxObjects + " fit in an island file - delete some first", true); return false; }
 				bool overwrote = File.Exists(IslandSpawner.PathFor(name));
 				IslandFile before = null;
 				if (overwrote) try { before = IslandFile.Load(IslandSpawner.PathFor(name)); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Reading the saved '" + name + "' before saving over it: " + e.Message); }
+				// (Save as over another island: the numbers are the open island's, not that file's - the worlds on it would carry
+				// what was looted or opened onto other objects; only an object standing where one of the same name stood there
+				// keeps that one's, as for an island made again - review 10-30)
+				if (overwrote && !string.Equals(name, currentIslandName, StringComparison.OrdinalIgnoreCase))
+					foreach (IslandObject o in island.Objects) o.Uid = 0;
 				// (every object keeps its number - R1b; one made again where the same object stood gets that one's)
 				StableIds.Prepare(island, before);
 				// (saved worlds with this island: a change that would mix up what was used there keeps them on their version)
 				bool carry = false;
 				bool kept = before != null && KeepForWorldsIfShifted(name, island, before, out carry);
 				island.Save(IslandSpawner.PathFor(name));
+				UidsSaved(egos, island);
 				if (kept && carry) kept = !CarryWorlds(name);
 				currentIslandName = name;
 				EditorUI.RefreshIsland();
@@ -831,6 +839,20 @@ namespace DynamicIslands
 				else Notify("Saving '" + name + "' failed - see console (F10)", true);
 				return false;
 			}
+		}
+
+		/// <summary>
+		/// After a save: the objects in the editor get the numbers just saved (R1b). A new object kept 0, so each save gave it
+		/// a new number until the island was opened again, and worlds lost its state when it was moved (review 10-30). Only
+		/// when the list still matches the file, object for object. The number of objects given theirs.
+		/// </summary>
+		internal static int UidsSaved(EditorGameObject[] egos, IslandFile island)
+		{
+			if (egos == null || island == null || egos.Length != island.Objects.Count) { Debug.LogWarning("[CUSTOM ISLANDS] Saved numbers not given back: the objects changed while saving"); return 0; }
+			for (int i = 0; i < egos.Length; i++)
+				if (egos[i] == null || egos[i].GameObjectName != island.Objects[i].Name) { Debug.LogWarning("[CUSTOM ISLANDS] Saved numbers not given back: the objects changed while saving"); return 0; }
+			for (int i = 0; i < egos.Length; i++) egos[i].Uid = island.Objects[i].Uid;
+			return egos.Length;
 		}
 
 		/// <summary>

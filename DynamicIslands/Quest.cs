@@ -55,7 +55,12 @@ namespace DynamicIslands.Editor
 
 		public bool Exists { get { return Steps.Count > 0; } }
 
-		static string Clean(string s) { return (s ?? "").Replace("|", "/").Replace("\n", " ").Trim(); }
+		/// <summary>A step's target as the file keeps it (a "|" or a line break would split the step). Titles, zone ids and
+		/// islanders' names stay as typed: compare them in this form (QuestTracker.Matches, PlanChecker) - review 10-30.</summary>
+		public static string Clean(string s) { return (s ?? "").Replace("|", "/").Replace("\n", " ").Trim(); }
+		/// <summary>A title, zone id or islander's name as a step can name it: cleaned only when it has a "|" or a line
+		/// break (anything else as it is).</summary>
+		public static string AsTarget(string s) { return s != null && (s.IndexOf('|') >= 0 || s.IndexOf('\n') >= 0) ? Clean(s) : s; }
 
 		/// <summary>Most quests an island has: its main quest and up to eight more (ROADMAP LM4).</summary>
 		public const int MaxQuests = 9;
@@ -251,7 +256,8 @@ namespace DynamicIslands.Editor
 
 		static bool Matches(IslandQuest.Step s, string type, string target)
 		{
-			return s.Type == type && (s.Target.Length == 0 || string.Equals(s.Target.Trim(), (target ?? "").Trim(), StringComparison.OrdinalIgnoreCase));
+			// (the target cleaned as the step's was: a note titled "Log | Day 3" is "Log / Day 3" in the step - review 10-30)
+			return s.Type == type && (s.Target.Length == 0 || string.Equals(s.Target.Trim(), IslandQuest.Clean(target), StringComparison.OrdinalIgnoreCase));
 		}
 
 		/// <summary>The later step (after step) that something done now is kept for, or -1: a step naming it first, then a

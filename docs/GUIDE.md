@@ -1731,8 +1731,12 @@ found on one copy don't finish the other's step (items found away from both coun
 **Test** ([4.9](#49-trying-the-island-in-a-world-test)), doing things in the wrong order on purpose. Steps find
 things by name. Renaming a note or chest (its title) or a zone (its id) moves the quest's steps along with it, in the
 same undo step, unless another note, chest or zone still has the old name; a story item's new id does the same on
-**Save** in the Story items window. A creature kind, an object's **name** (Behaviour & events) or a world plan that
-points at a zone is not followed: change those steps and actions with it.
+**Save** in the Story items window. A new **name** for an object (Behaviour & events, or an islander's name) moves
+what names it too: other objects' and the island's actions (show, open, teleport...), "only if" checks (its state,
+talked to, its light), camera points that look at it and an islander's "talk" steps - again in one undo step, and not
+while another object keeps the old name. A zone's new id or a note's new title also moves this island's own world-plan
+rules ("when a player reaches zone X" of this island, "done when" of the rule that brings it). A creature kind, a
+signal's name and rules in world plan files are not followed: change those with it.
 
 ### 6.2 Behaviour and events
 
@@ -1840,7 +1844,7 @@ Select any object → **Behaviour & events...**. No code needed:
   runs) or **once** (only the first time in a world, for an intro: the host keeps it in the world's save, so it
   doesn't replay after loading or for a player who joins later). The points are invisible in a world, and a **use**
   hint on one does nothing (there is nothing to look at). **Preview path** in a point's
-  inspector flies the editor camera along it (Esc stops); **Record trailer** does the same and saves every frame (30 a
+  inspector flies the editor camera along it with the editor's windows hidden (Esc stops); **Record trailer** does the same and saves every frame (30 a
   second, without the editor's windows) as `frame_00001.png`... in the mod's `trailers` folder, to make a video from
   (with a video editor, or `ffmpeg -framerate 30 -i frame_%05d.png trailer.mp4`). **Check** warns about a path with
   fewer than two points.
@@ -1865,7 +1869,8 @@ key somewhere..."*
 **Island tab → Story items...** (**+ Add a story item** adds one): keys, map pieces, logs... with a name, a description and a picture (Raft's quest
 item pictures or any Raft item). A new item takes the name of the picture you pick until you type one, and its **id**
 (the box after `story:`, what chests, actions and checks call it) follows its name until you type one. You can change
-an id: **Save** then renames it in this island's chests, actions, checks, events and quest (one undo step). Worlds
+an id (letters a-z, digits, - and _; accents are dropped, so "Källaren" becomes `kallaren`, and an id of other
+letters only is refused with a message): **Save** then renames it in this island's chests, actions, checks, events and quest (one undo step). Worlds
 where the crew already holds the item keep the old id, so rename ids before you share the island. Chests, zones, quest rewards and "give" actions hand them out; "only if" checks ask
 for them; players find them in the journal (J), or in Raft's notebook (T) for a main story island. **Raft item...**
 beside an item links it to one of Raft's own items (**-** clears it): players can then **take it out** of the journal

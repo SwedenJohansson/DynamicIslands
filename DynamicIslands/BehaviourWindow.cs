@@ -689,8 +689,11 @@ namespace DynamicIslands.Editor
 			}
 			else if (target != null)
 			{
+				string oldName = ObjectProps.Get(target.Props, BehaviourProps.Name);
 				PropsCommand.Change(target, result);
 				DynamicIslands.Notify("Behaviour kept: " + Summary(result, target.GameObjectName));
+				// (player 10-30: a new name - the actions, checks and steps that named the old one follow, in the same undo step)
+				EditorRenames.ObjectName(target, oldName, ObjectProps.Get(result, BehaviourProps.Name));
 			}
 			Close();
 		}

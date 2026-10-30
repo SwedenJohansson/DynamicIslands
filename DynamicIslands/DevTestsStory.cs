@@ -170,7 +170,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: story items and checks in the editor"); else Fail("story items and checks in the editor");
 		}
 
-		[ConsoleCommand(name: "CIRenameRefs", docs: "Dev, anywhere (no world needed): player 10-30 renames - a note's new title moves the quest's read steps (any case, every quest, other steps untouched), a zone's reach steps, a story item's new id moves its collect steps and story:<id> refs (whole ids only, swaps work), a new item's name from its picture, typed ids made safe")]
+		[ConsoleCommand(name: "CIRenameRefs", docs: "Dev, anywhere (no world needed): player 10-30 renames - a note's new title moves the quest's read steps (any case, every quest, other steps untouched), a zone's reach steps, a story item's new id moves its collect steps and story:<id> refs (whole ids only, swaps work), a new item's name from its picture, typed ids made safe (accents dropped), an object's new name moves the actions, checks, camera look-ats and talk steps that name it (messages and signals untouched), a zone's or note's new name moves the island's own world-plan rules")]
 		public static void RenameRefsCommand()
 		{
 			bool ok = true;
@@ -181,8 +181,10 @@ namespace DynamicIslands
 			int n = EditorRenames.QuestTargets(p, new[] { "read" }, "Old log", "Captain's log");
 			Check(ref ok, n == 2 && p[k0] == "read|Captain's log|1|Read it\nopen|Old Log|1|\nreach|cove|1|\nread|Other|1|" && p[k1] == "read|Captain's log|1|Again", "a note's new title: its read steps in both quests follow, the rest stays (" + n + ")");
 			Check(ref ok, EditorRenames.QuestTargets(p, new[] { "reach" }, "cove", "bay") == 1 && p[k0].Contains("reach|bay|1|"), "a zone's new id: its reach step follows");
-			Check(ref ok, EditorRenames.QuestTargets(p, new[] { "read" }, "Other", "a|b") == 0 && EditorRenames.QuestTargets(p, new[] { "read" }, "Other", "OTHER") == 0
-				&& EditorRenames.QuestTargets(p, new[] { "read" }, "", "x") == 0, "no change for a title with |, a change of case only, or an empty old title");
+			Check(ref ok, EditorRenames.QuestTargets(p, new[] { "read" }, "Other", "OTHER") == 0 && EditorRenames.QuestTargets(p, new[] { "read" }, "", "x") == 0,
+				"no change for a change of case only, or an empty old title");
+			// (review 10-30: a title with | is followed too, as the step keeps it - "a/b")
+			Check(ref ok, EditorRenames.QuestTargets(p, new[] { "read" }, "Other", "a|b") == 1 && p[k0].EndsWith("read|a/b|1|"), "a new title with |: the step follows as a/b");
 			var s = new Dictionary<string, string> {
 				{ k0, "collect|key|1|\ncollect|story:map|1|\ncollect|key-2|1|" },
 				{ "quest.reward", "story:key" },
@@ -196,6 +198,44 @@ namespace DynamicIslands
 			Check(ref ok, StoryItems.RenameRefs(o, map) && o["loot.items"] == "story:map:1;Plank:2", "an object's story: ref follows (any case)");
 			Check(ref ok, StoryItemsWindow.QuestItemName("Vasagatan_GreenKey") == "Green key" && StoryItemsWindow.QuestItemName("Vasagatan_Key_Red") == "Key red", "a picture's name: " + StoryItemsWindow.QuestItemName("Vasagatan_GreenKey"));
 			Check(ref ok, StoryItemsWindow.CleanId(" Story:Brass Key! ") == "brass-key" && StoryItemsWindow.CleanId("***") == "", "a typed id made safe: " + StoryItemsWindow.CleanId(" Story:Brass Key! "));
+			Check(ref ok, StoryItemsWindow.CleanId("K" + (char)0xE4 + "llaren " + (char)0xDF + (char)0xE9) == "kallaren-sse" && StoryItemsWindow.CleanId("" + (char)0x5BB6) == "", "accents dropped, other letters refused: " + StoryItemsWindow.CleanId("K" + (char)0xE4 + "llaren " + (char)0xDF + (char)0xE9));
+
+			// (an object's new name: actions and checks that name it, a camera point looking at it, "talk" steps)
+			var b = new Dictionary<string, string> {
+				{ BehaviourProps.EventPrefix + "use", "open|Gate|\nmessage|Gate|\nsignal|Gate|\nshow|Other|" },
+				{ BehaviourProps.ElsePrefix + "use", "close|gate|" },
+				{ BehaviourProps.CheckPrefix + "use", "state|Gate|open\n!state|GATE|open\nsignal|Gate|" },
+				{ CameraPath.LookProp, "Gate" },
+				{ "obj.name", "Gate" } };
+			n = EditorRenames.NameRefs(b, "Gate", "Old gate");
+			Check(ref ok, n == 5 && b[BehaviourProps.EventPrefix + "use"] == "open|Old gate|\nmessage|Gate|\nsignal|Gate|\nshow|Other|" && b[BehaviourProps.ElsePrefix + "use"] == "close|Old gate|"
+				&& b[BehaviourProps.CheckPrefix + "use"] == "state|Old gate|open\n!state|Old gate|open\nsignal|Gate|" && b[CameraPath.LookProp] == "Old gate" && b["obj.name"] == "Gate",
+				"an object's new name: open/close actions, state checks and the camera look-at follow, messages, signals and the name itself stay (" + n + ")");
+			Check(ref ok, EditorRenames.NameRefs(b, "Old gate", "a|b") == 0 && EditorRenames.NameRefs(b, "Old gate", "OLD GATE") == 0, "no change for a name with |, or a change of case only");
+			var t = new Dictionary<string, string> { { k0, "talk|Mira|1|\nread|Mira|1|" } };
+			Check(ref ok, EditorRenames.QuestTargets(t, new[] { Islanders.QuestType }, "Mira", "Mara") == 1 && t[k0] == "talk|Mara|1|\nread|Mira|1|", "an islander's new name: the talk step follows, a note of that title stays");
+
+			// (a zone's or note's new name: the island's own rules - zone:self:X, and "done when" of a rule bringing this island)
+			Func<string, string, string, string, IntroRule> rule = (id, whatArg, when, done) =>
+			{
+				IntroRule r = new IntroRule { Id = id, WhatArg = whatArg, StoryDone = done };
+				string[] w = when.Split(':');
+				r.When = w[0]; r.WhenRef = w.Length > 1 ? w[1] : ""; r.WhenArg = w.Length > 2 ? w[2] : "";
+				return r;
+			};
+			var rp = new Dictionary<string, string> { { WorldDirector.IslandRulesKey, string.Join("\n", new[] {
+				rule("a", "Mine", "zone:self:cave", "zone:cave").ToLine(),
+				rule("b", "Other", "zone:Other:cave", "zone:cave").ToLine(),
+				rule("c", "self", "start", "note:Old log").ToLine(),
+				"not a rule" }) } };
+			n = EditorRenames.RuleRefs(rp, "zone", "cave", "grotto", "Mine");
+			List<IntroRule> after = IntroRule.ParseLines(rp[WorldDirector.IslandRulesKey]);
+			Check(ref ok, n == 1 && after.Count == 3 && after[0].WhenArg == "grotto" && after[0].StoryDone == "zone:grotto" && after[1].WhenArg == "cave" && after[1].StoryDone == "zone:cave"
+				&& rp[WorldDirector.IslandRulesKey].EndsWith("\nnot a rule"), "a zone's new id: this island's own rule follows (when + done), another island's rule and a line that isn't a rule stay (" + n + ")");
+			n = EditorRenames.RuleRefs(rp, "note", "old log", "Captain's log", "Mine");
+			after = IntroRule.ParseLines(rp[WorldDirector.IslandRulesKey]);
+			Check(ref ok, n == 1 && after[2].StoryDone == "note:Captain's log" && after[0].StoryDone == "zone:grotto", "a note's new title: done when note:... of a rule bringing this island follows");
+
 			if (ok) Log("PASS: renames move their references"); else Fail("renames move their references");
 		}
 

@@ -251,7 +251,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Collects one object's facts (PlanChecker.FromFile).</summary>
 		public static void AddFacts(PlanFacts f, string objectName, IDictionary<string, string> p)
 		{
-			if (Islanders.Is(objectName)) f.Islanders.Add(Islanders.NameOf(p));
+			if (Islanders.Is(objectName)) f.Islanders.Add(IslandQuest.AsTarget(Islanders.NameOf(p))); // (as a talk step names it - review 10-30)
 			string set = Collectibles.SetOf(p);
 			if (set.Length > 0) { int n; f.Sets.TryGetValue(set, out n); f.Sets[set] = n + 1; }
 			string lg = Lights.IsLight(objectName, p) ? Lights.GroupOf(p) : "";

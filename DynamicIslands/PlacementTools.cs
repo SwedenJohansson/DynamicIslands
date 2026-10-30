@@ -300,7 +300,7 @@ namespace DynamicIslands.Editor
 				copy.transform.rotation = t.rotation;
 				copy.transform.localScale = t.lossyScale;
 				foreach (Collider c in copy.GetComponentsInChildren<Collider>()) c.enabled = true;
-				EditorGameObject.Attach(copy, info.GameObjectName, info.Props); // a copy keeps the settings (creature stats, note text, tint)
+				EditorGameObject.Attach(copy, info.GameObjectName, info.Props).Uid = 0; // a copy keeps the settings (creature stats, note text, tint), not the number: it gets its own when saved (R1b)
 				copies.Add(copy);
 			}
 			if (copies.Count == 0) return 0;
@@ -357,7 +357,7 @@ namespace DynamicIslands.Editor
 				copy.transform.rotation = Quaternion.Euler(m.Euler);
 				copy.transform.localScale = m.Scale;
 				foreach (Collider c in copy.GetComponentsInChildren<Collider>()) c.enabled = true;
-				EditorGameObject.Attach(copy, m.Name, new Dictionary<string, string>(m.Props));
+				EditorGameObject.Attach(copy, m.Name, new Dictionary<string, string>(m.Props)).Uid = 0; // (its own number when saved - R1b)
 				copies.Add(copy);
 			}
 			if (copies.Count == 0) return 0;

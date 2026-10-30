@@ -156,6 +156,8 @@ namespace DynamicIslands.Editor
 			{
 				string n = UniqueId(d, CleanId(v));
 				if (n.Length > 0 && n != d.Id) { d.Id = n; idTyped.Add(d); }
+				// (player 10-30: an id of only other letters or signs just went back without a word)
+				else if (n.Length == 0 && (v ?? "").Trim().Length > 0) DynamicIslands.Notify("\"" + v.Trim() + "\" can't be an id: use letters a-z, digits, - or _. The id stays \"" + d.Id + "\"");
 				idField.text = d.Id;
 			});
 			idField.characterLimit = 40;
@@ -279,12 +281,39 @@ namespace DynamicIslands.Editor
 			return b.ToString();
 		}
 
-		/// <summary>An id as typed, made safe: letters a-z, digits, "-" and "_" (anything else becomes "-"), lower case.</summary>
+		/// <summary>An id as typed, made safe: letters a-z, digits, "-" and "_" (anything else becomes "-"), lower case.
+		/// Accented letters lose their accents (player 10-30: a Swedish name's "a with ring" made the id "k-llaren", now "kallaren").</summary>
 		public static string CleanId(string v)
 		{
-			string s = (v ?? "").Trim().ToLowerInvariant();
+			string s = Unaccent((v ?? "").Trim().ToLowerInvariant());
 			if (s.StartsWith(StoryItems.Prefix)) s = s.Substring(StoryItems.Prefix.Length);
 			return new string(s.Select(c => (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-' ? c : '-').ToArray()).Trim('-');
+		}
+
+		/// <summary>Lower-case text with its accents dropped (e acute -> e, a ring -> a) and a few letters spelled out (sharp s, ae, o slash, oe, l stroke, eth, thorn).</summary>
+		static string Unaccent(string s)
+		{
+			try
+			{
+				var b = new System.Text.StringBuilder(s.Length);
+				foreach (char c in s.Normalize(System.Text.NormalizationForm.FormD))
+				{
+					if (System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) == System.Globalization.UnicodeCategory.NonSpacingMark) continue;
+					switch (c)
+					{
+						case '\u00df': b.Append("ss"); break;
+						case '\u00e6': b.Append("ae"); break;
+						case '\u00f8': b.Append('o'); break;
+						case '\u0153': b.Append("oe"); break;
+						case '\u0142': b.Append('l'); break;
+						case '\u0111': case '\u00f0': b.Append('d'); break;
+						case '\u00fe': b.Append("th"); break;
+						default: b.Append(c); break;
+					}
+				}
+				return b.ToString();
+			}
+			catch { return s; }
 		}
 
 		/// <summary>An id no other item here has ("key" -> "key-2"...); empty stays empty.</summary>

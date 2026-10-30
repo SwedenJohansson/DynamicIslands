@@ -375,6 +375,9 @@ namespace DynamicIslands.Editor
 		Transform cam;
 		CameraPath.Flight flight;
 		bool editor;
+		/// <summary>The editor's windows hidden for this flight (player 10-30: the inspector and the other panels covered the
+		/// preview, as the window did the behaviour preview); shown again when it ends.</summary>
+		Canvas hiddenUi;
 		string folder;
 		EditorCamera editorCam;
 		Vector3 localPos, fromPos;
@@ -400,6 +403,7 @@ namespace DynamicIslands.Editor
 			f.fromRot = cam.rotation;
 			f.started = Time.unscaledTime;
 			if (editorCam != null && editorCam.enabled) { editorCam.enabled = false; f.editorCam = editorCam; }
+			if (editor && EditorUI.Canvas != null && EditorUI.Canvas.enabled) { EditorUI.Canvas.enabled = false; f.hiddenUi = EditorUI.Canvas; }
 			if (!editor)
 			{
 				Network_Player p = RAPI.GetLocalPlayer();
@@ -511,6 +515,15 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		void ShowUi()
+		{
+			if (hiddenUi != null) hiddenUi.enabled = true;
+			hiddenUi = null;
+		}
+
+		// (gone some other way: the editor's windows never stay hidden)
+		void OnDestroy() { ShowUi(); if (current == this) current = null; }
+
 		void End(bool skipped)
 		{
 			if (current == this) current = null;
@@ -520,6 +533,7 @@ namespace DynamicIslands.Editor
 				else { cam.localPosition = localPos; cam.localRotation = localRot; }
 			}
 			if (editorCam != null) { editorCam.enabled = true; editorCam.Sync(); }
+			ShowUi();
 			foreach (Behaviour b in held) if (b != null) b.enabled = true;
 			held.Clear();
 			Debug.Log("[CUSTOM ISLANDS] Fly-through " + (skipped ? "skipped" : "over") + (Recording ? " (" + frames + " frames in " + folder + ")" : ""));
@@ -560,7 +574,7 @@ namespace DynamicIslands.Editor
 			RectTransform row = UIKit.Row(g, 26f, 4f, "CamPointRow");
 			UIKit.Button(row, "To my view", () => { if (CameraPointToView(target)) Refresh(); }, "Moves this point to where the editor camera is, facing the way it looks (Ctrl+Z undoes it)", -1, 26f, 12).name = "Button_CamToView";
 			RectTransform row2 = UIKit.Row(g, 26f, 4f, "CamPreviewRow");
-			UIKit.Button(row2, "Preview path", () => { string why = CameraPath.Preview(path, false); if (why != null) IslandInfo.ShowMessage(why); }, "Flies the camera along the path as players will see it (Esc stops)", -1, 26f, 12).name = "Button_CamPreview";
+			UIKit.Button(row2, "Preview path", () => { string why = CameraPath.Preview(path, false); if (why != null) IslandInfo.ShowMessage(why); }, "Flies the camera along the path as players will see it, with the editor's windows hidden (Esc stops)", -1, 26f, 12).name = "Button_CamPreview";
 			UIKit.Button(row2, "Record trailer", () => { string why = CameraPath.Preview(path, true); if (why != null) IslandInfo.ShowMessage(why); }, "Flies the path and saves every frame (" + CameraPath.FrameRate + " a second, without the editor's windows) as PNG pictures in the mod's trailers folder, for a video (Esc stops)", -1, 26f, 12).name = "Button_CamRecord";
 		}
 

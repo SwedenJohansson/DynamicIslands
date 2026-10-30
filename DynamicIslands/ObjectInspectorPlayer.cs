@@ -38,7 +38,12 @@ namespace DynamicIslands.Editor
 			RectTransform g = UIKit.Group(root, "Islander");
 			InputField name = SurvivorField(g, "Name", ObjectProps.Get(p, BehaviourProps.Name, "Islander"), 26f, "Who it is: the name in its dialogue, and what a quest's \"Talk to\" step and the \"talked to\" check use");
 			name.characterLimit = 32;
-			name.onEndEdit.AddListener(v => Set(target, BehaviourProps.Name, v.Trim().Length > 0 ? v.Trim() : "Islander", null));
+			name.onEndEdit.AddListener(v =>
+			{
+				string old = ObjectProps.Get(target.Props, BehaviourProps.Name), now = v.Trim().Length > 0 ? v.Trim() : "Islander";
+				Set(target, BehaviourProps.Name, now, null);
+				EditorRenames.ObjectName(target, old, now); // (player 10-30: "talk" steps and "talked to" checks follow)
+			});
 			amountFields.Add(name);
 			// Who it looks like: steps through Raft's characters (none: one picked by the island and the object)
 			string ch = ObjectProps.Get(p, Islanders.CharacterProp);

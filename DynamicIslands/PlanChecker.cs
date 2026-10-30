@@ -86,15 +86,15 @@ namespace DynamicIslands.Editor
 			foreach (IslandObject o in f.Objects)
 			{
 				IDictionary<string, string> p = o.Props ?? new Dictionary<string, string>();
-				if (o.Name == ContentCatalog.TriggerZone) { string z = ObjectProps.Get(p, ObjectProps.ZoneId); if (z.Length > 0) x.Zones.Add(z); }
+				if (o.Name == ContentCatalog.TriggerZone) { string z = ObjectProps.Get(p, ObjectProps.ZoneId); if (z.Length > 0) x.Zones.Add(IslandQuest.AsTarget(z)); }
 				PlayerFeatures.AddFacts(x.Player, o.Name, p);
 				if (ObjectProps.IsNote(o.Name, p))
 				{
 					x.NoteCount++;
-					string t = ObjectProps.Get(p, ObjectProps.NoteTitle); if (t.Length > 0) x.Notes.Add(t);
+					string t = ObjectProps.Get(p, ObjectProps.NoteTitle); if (t.Length > 0) x.Notes.Add(IslandQuest.AsTarget(t));
 					if (ObjectProps.Get(p, ObjectProps.NoteText).Trim().Length > 0) x.PageCount++;
 				}
-				if (ObjectProps.IsLoot(o.Name, p)) { x.ChestCount++; string t = ObjectProps.Get(p, ObjectProps.NoteTitle); if (t.Length > 0) x.Chests.Add(t); }
+				if (ObjectProps.IsLoot(o.Name, p)) { x.ChestCount++; string t = ObjectProps.Get(p, ObjectProps.NoteTitle); if (t.Length > 0) x.Chests.Add(IslandQuest.AsTarget(t)); }
 				if (o.Name == PlaceableCatalog.RaftCrate) x.RaftCrates++;
 				ContentCatalog.CreatureKind k = ContentCatalog.CreatureOf(o.Name);
 				if (k != null)
