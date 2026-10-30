@@ -52,9 +52,33 @@ namespace DynamicIslands.Editor
 			List<EditorGameObject> others = Others(target);
 			Func<EditorGameObject, bool> keeps = e => ObjectProps.Get(e.Props, ObjectProps.NoteTitle, "").Trim().Equals(oldTitle, StringComparison.OrdinalIgnoreCase);
 			var types = new List<string>();
-			if (ObjectProps.IsNote(target.GameObjectName, target.Props) && !others.Any(e => ObjectProps.IsNote(e.GameObjectName, e.Props) && keeps(e))) types.Add("read");
-			if (ObjectProps.IsLoot(target.GameObjectName, target.Props) && !others.Any(e => ObjectProps.IsLoot(e.GameObjectName, e.Props) && keeps(e))) types.Add("open");
+			// (not when another note or chest has the new title already: the steps would then mean both - TellTaken)
+			List<EditorGameObject> notes = others.Where(e => ObjectProps.IsNote(e.GameObjectName, e.Props)).ToList(), chests = others.Where(e => ObjectProps.IsLoot(e.GameObjectName, e.Props)).ToList();
+			bool taken = false;
+			if (ObjectProps.IsNote(target.GameObjectName, target.Props) && !notes.Any(keeps))
+			{
+				if (Taken(notes.Select(e => (IDictionary<string, string>)e.Props), ObjectProps.NoteTitle, newTitle)) taken = true; else types.Add("read");
+			}
+			if (ObjectProps.IsLoot(target.GameObjectName, target.Props) && !chests.Any(keeps))
+			{
+				if (Taken(chests.Select(e => (IDictionary<string, string>)e.Props), ObjectProps.NoteTitle, newTitle)) taken = true; else types.Add("open");
+			}
+			if (taken) TellTaken("title", newTitle);
 			Island(types.ToArray(), oldTitle, newTitle, types.Contains("read") ? "note" : null);
+		}
+
+		/// <summary>Whether one of these objects' settings has this value (any case) under the key already.</summary>
+		internal static bool Taken(IEnumerable<IDictionary<string, string>> others, string key, string value)
+		{
+			value = (value ?? "").Trim();
+			return value.Length > 0 && others.Any(p => p != null && ObjectProps.Get(p, key, "").Trim().Equals(value, StringComparison.OrdinalIgnoreCase));
+		}
+
+		/// <summary>A rename to a title, zone id or name another object has already: what pointed at the old one is left as it
+		/// was - moved, it would silently mean both objects (two notes' "read" steps merged into one).</summary>
+		static void TellTaken(string what, string name)
+		{
+			DynamicIslands.Notify("Another object already has the " + what + " \"" + name.Trim() + "\" - the quest steps and actions that named the old " + what + " were left as they were (they would mean both). Check them.", true, 8);
 		}
 
 		/// <summary>After a zone's id changed (already an undo step): "reach" steps follow.</summary>
@@ -63,14 +87,18 @@ namespace DynamicIslands.Editor
 			if (target == null) return;
 			oldId = (oldId ?? "").Trim();
 			if (oldId.Length == 0) return;
-			if (Others(target).Any(e => ObjectProps.Get(e.Props, ObjectProps.ZoneId, "").Trim().Equals(oldId, StringComparison.OrdinalIgnoreCase))) return;
+			List<EditorGameObject> others = Others(target);
+			if (others.Any(e => ObjectProps.Get(e.Props, ObjectProps.ZoneId, "").Trim().Equals(oldId, StringComparison.OrdinalIgnoreCase))) return;
+			List<IDictionary<string, string>> zones = others.Where(e => e.GameObjectName == ContentCatalog.TriggerZone).Select(e => (IDictionary<string, string>)e.Props).ToList();
+			if (Taken(zones, ObjectProps.ZoneId, newId)) { TellTaken("zone id", newId); return; }
 			Island(new[] { "reach" }, oldId, newId, "zone");
 		}
 
+		/// <summary>The other placed objects - hidden ones too (an object "Hidden until shown" may be inactive).</summary>
 		static List<EditorGameObject> Others(EditorGameObject target)
 		{
 			GameObject placed = GameObject.Find("PlacedObjects");
-			return placed == null ? new List<EditorGameObject>() : placed.GetComponentsInChildren<EditorGameObject>().Where(e => e != target && e.Props != null).ToList();
+			return placed == null ? new List<EditorGameObject>() : placed.GetComponentsInChildren<EditorGameObject>(true).Where(e => e != target && e.Props != null).ToList();
 		}
 
 		/// <summary>The quest steps of these types and the island's own rules (rule: "zone" or "note", or null) follow.</summary>
@@ -135,7 +163,9 @@ namespace DynamicIslands.Editor
 			if (target == null) return;
 			oldName = (oldName ?? "").Trim(); newName = (newName ?? "").Trim();
 			if (oldName.Length == 0 || newName.Length == 0 || oldName.Equals(newName, StringComparison.OrdinalIgnoreCase)) return;
-			if (Others(target).Any(e => ObjectProps.Get(e.Props, BehaviourProps.Name).Trim().Equals(oldName, StringComparison.OrdinalIgnoreCase))) return;
+			List<EditorGameObject> others = Others(target);
+			if (others.Any(e => ObjectProps.Get(e.Props, BehaviourProps.Name).Trim().Equals(oldName, StringComparison.OrdinalIgnoreCase))) return;
+			if (Taken(others.Select(e => (IDictionary<string, string>)e.Props), BehaviourProps.Name, newName)) { TellTaken("name", newName); return; }
 			int count = 0;
 			string[] talk = Islanders.Is(target.GameObjectName) ? new[] { Islanders.QuestType } : new string[0];
 			if (DynamicIslands.currentIslandProps != null)

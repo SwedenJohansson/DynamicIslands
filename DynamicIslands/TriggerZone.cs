@@ -16,6 +16,9 @@ namespace DynamicIslands.Editor
 	public class TriggerZone : MonoBehaviour
 	{
 		public const int KeyBase = 0x30000;
+		/// <summary>The zone gave its story items (loot): + its object index, once per world - GiveStoryOnce (after
+		/// TriggerSounds.KeyBase 0x150000 + 0xFFFF).</summary>
+		public const int StoryLootBase = 0x160000;
 		const float RepeatCooldown = 30f;
 
 		public string Id = "", Message = "";
@@ -182,13 +185,34 @@ namespace DynamicIslands.Editor
 			if (!reachCounted) { reachCounted = true; QuestTracker.Event(entry, "reach", Id); } // (passed just above)
 
 			if (Message.Length > 0) { IslandInfo.ShowMessage(Message); StoryBook.AddMessagePage(entry, Message); } // (PQ8: kept in the journal)
-			// (a zone that fires on every walk-in gives its story items the first time only: they are the crew's, and a
-			// second key or quest item let players skip ahead or broke "has"/"take" counts - player 10-30)
-			if (Items.Count > 0) Give(fired ? Items.Where(l => !StoryItems.IsStory(l.Key)).ToList() : Items);
+			// (its story items once per world - GiveStoryOnce; its other loot every time it fires)
+			if (Items.Count > 0)
+			{
+				List<KeyValuePair<string, int>> story = Items.Where(l => StoryItems.IsStory(l.Key)).ToList();
+				Give(story.Count == 0 ? Items : Items.Where(l => !StoryItems.IsStory(l.Key)).ToList());
+				if (story.Count > 0) GiveStoryOnce(entry, r, story, fired);
+			}
 			if (!fired) { firedHere = true; ContentState.MarkUsed(transform, StateKey); } // the host wakes up the linked creatures
 			Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "' set off" + (Message.Length > 0 ? ": " + Message : ""));
 			if (r != null) Behaviours.Fire(entry, r.Index, "enter", true, true); // (checked above)
 			if (Fired != null) try { Fired(this); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Zone listener: " + e.Message); }
+		}
+
+		/// <summary>
+		/// The zone's story items, once per world: they are the crew's, and a second key or quest item let players skip ahead
+		/// or broke "has"/"take" counts (player 10-30). Its own key (StoryLootBase + object index) is saved and shared like
+		/// "used" and never made ready again, so a zone ready again after the regrow days gives its other loot but not these.
+		/// A zone that fires once was claimed already; one that fires on every walk-in is claimed here (two players walking
+		/// in together each got the crew's key). Without its object reference (tests): its first firing only.
+		/// </summary>
+		void GiveStoryOnce(IslandWorldState.Entry entry, IslandObjectRef r, List<KeyValuePair<string, int>> story, bool fired)
+		{
+			if (entry == null || r == null) { if (!fired) Give(story); return; }
+			int key = StoryLootBase + r.Index;
+			if (ContentState.IsUsed(entry, key)) { Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "' gave its story items before - not again"); return; }
+			if (Repeats && !Claims.May(entry, key, yes => { if (this != null && yes) GiveStoryOnce(entry, r, story, false); })) return;
+			Give(story);
+			ContentState.MarkUsed(transform, key);
 		}
 
 		/// <summary>Counts the quest step "go to this zone" for this arrival when the zone's "only if" passes - checked

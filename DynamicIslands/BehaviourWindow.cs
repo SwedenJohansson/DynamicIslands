@@ -39,6 +39,9 @@ namespace DynamicIslands.Editor
 		// (player 10-30: the window covered the object, so its preview couldn't be seen - the panel and the dark cover step
 		// aside while it plays and come back after; Esc stops it)
 		bool stopPreview;
+		// (the frame the preview ended: EscKey answers a frame after the press, so an Esc pressed as the preview ended on its
+		// own came on the next frame and closed the window instead of stopping the preview)
+		int previewEndFrame = -10;
 
 		static readonly Dictionary<string, string> VerbLabels = new Dictionary<string, string>
 		{
@@ -184,7 +187,7 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			if (ChoiceWindow.IsOpen || ItemPickerWindow.IsOpen || SoundPickerWindow.IsOpen || DropList.Busy || EditorInput.SubWindowJustClosed) return;
-			if (previewing) { if (EscKey.Down(this)) stopPreview = true; return; }
+			if (previewing || Time.frameCount <= previewEndFrame + 1) { if (EscKey.Down(this) && previewing) stopPreview = true; return; }
 			EditorInput.IsTyping = fields.Any(f => f != null && f.isFocused);
 			if (EscKey.Down(this)) { if (Unsaved) EscKey.AskUnsaved(islandMode ? "The island's events" : "The behaviour", Save, Close); else Close(); }
 		}
@@ -722,6 +725,7 @@ namespace DynamicIslands.Editor
 			if (t != null) { t.position = pos; t.rotation = rot; }
 			previewing = false;
 			stopPreview = false;
+			previewEndFrame = Time.frameCount;
 			Uncover(true);
 		}
 

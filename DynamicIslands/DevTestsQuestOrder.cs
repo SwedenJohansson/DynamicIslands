@@ -31,6 +31,8 @@ namespace DynamicIslands
 				new IslandQuest.Step { Type = "open", Target = "Vault" } } }.To(f.Props, 0);
 			new IslandQuest { Title = "Hogs", Steps = { new IslandQuest.Step { Type = "reach", Target = "pen" }, new IslandQuest.Step { Type = "kill", Target = "", Count = 2 },
 				new IslandQuest.Step { Type = "kill", Target = "Warthog", Count = 1 } } }.To(f.Props, 1);
+			new IslandQuest { Title = "Client vault", Steps = { new IslandQuest.Step { Type = "read", Target = "Letter" }, new IslandQuest.Step { Type = "craft", Target = "" },
+				new IslandQuest.Step { Type = "craft", Target = "Spear" } } }.To(f.Props, 2);
 			IslandWorldState.Remove(name);
 			f.Save(IslandSpawner.PathFor(name));
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, CustomIslandSpawner.LandRadius(name), 450f);
@@ -50,6 +52,16 @@ namespace DynamicIslands
 			QuestTracker.Event(e, "reach", "pen");
 			yield return new WaitForSeconds(0.5f);
 			Check(ref ok, QuestTracker.IsDone(e, 1), "three warthogs early: the named step got one, the 'any x2' step the rest - done (step " + (QuestTracker.StepOf(e, 1) + 1) + ")");
+			// (a client's early work: it named the Spear's step twice - its view stale. The host picks again: the Spear's step
+			// full, the second goes to the 'craft any' step, so the Letter then finishes the quest - review 10-30)
+			QuestTracker.AddFromPlayer(e.Id, 2, 2, 1);
+			QuestTracker.AddFromPlayer(e.Id, 2, 2, 1);
+			QuestTracker.Event(e, "read", "Letter");
+			yield return new WaitForSeconds(0.5f);
+			Check(ref ok, QuestTracker.IsDone(e, 2), "a client's early work re-picked by the host: done (step " + (QuestTracker.StepOf(e, 2) + 1) + ")");
+			// (QuestBook: a moved frequency's page is "storyfreq:id#1234" - only a last '#' with 4 digits is cut off - review 10-30)
+			Check(ref ok, QuestBook.FrequencyPageRule("cave#1234") == "cave" && QuestBook.FrequencyPageRule("a#b#1234") == "a#b" && QuestBook.FrequencyPageRule("a#12") == "a#12" &&
+				QuestBook.FrequencyPageRule("a#12345") == "a#12345" && QuestBook.FrequencyPageRule("a#12x4") == "a#12x4", "a frequency page's rule: only a last '#' with 4 digits is cut off");
 			OnRaftCommand();
 			IslandWorldState.Remove(name);
 			if (ok) Log("PASS: quest order 1030"); else Fail("quest order 1030");

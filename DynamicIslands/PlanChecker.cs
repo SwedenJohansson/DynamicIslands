@@ -1170,16 +1170,15 @@ namespace DynamicIslands.Editor
 				List<ObjAction> acts = ev != null ? ObjAction.ParseLines(ObjectProps.Get(p, BehaviourProps.EventKey(ev))) : new List<ObjAction>();
 				if (again.Length > 0)
 				{
-					// Story items given again: the crew gets a second key or log
+					// Story items given again: the crew gets a second key or log (not a zone's - its loot and "give" actions give
+					// them once per world: TriggerZone.StoryLootBase, Behaviours.StoryGivenBase)
 					var story = new List<string>();
-					if (ev == "enter") story.AddRange(ObjectProps.Loot(p).Where(l => StoryItems.IsStory(l.Key)).Select(l => StoryItems.Label(l.Key)));
-					foreach (ObjAction a in acts.Where(Behaviours.GivesStory))
+					foreach (ObjAction a in acts.Where(y => ev != "enter" && Behaviours.GivesStory(y)))
 						story.AddRange(ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, a.Arg } }).Where(l => StoryItems.IsStory(l.Key)).Select(l => StoryItems.Label(l.Key)));
 					if (story.Count > 0)
 						x.Traps.Add(new Finding(-1, Level.Warning, thing + " gives the story item" + (story.Count > 1 ? "s " : " ") + string.Join(", ", story.Distinct().ToArray()) + ", and gives " + (story.Count > 1 ? "them" : "it") + " again " + again +
 							": the crew gets a second key or log, and counts and \"uses up\" checks go wrong.",
-							ev == "enter" ? "Set the zone to Fires: Once ever - it never fires again."
-							: ev == "open" ? "Put the story item in the chest's loot (a chest with story items never fills up again), or set Fills up again: Never."
+							ev == "open" ? "Put the story item in the chest's loot (a chest with story items never fills up again), or set Fills up again: Never."
 							: "Set the animals to come back: Never, or give the story item where it happens once (a chest's loot, a note, the quest's reward)."));
 					// show/hide and open/close there flip the bridge or door back
 					List<ObjAction> flips = acts.Where(a => a.Verb == "toggle" || a.Verb == "switch").ToList();
@@ -1351,6 +1350,12 @@ namespace DynamicIslands.Editor
 			else if (r.StoryPlace.StartsWith("after:") && StoryOrder.Parse(r.StoryPlace.Substring(6)) == ChunkPointType.None && !c.Plan.Rules.Any(o => o != r && o.InStory && o.Id.Equals(r.StoryPlace.Substring(6), StringComparison.OrdinalIgnoreCase)))
 				c.Add(i, endsWithUtopia ? Level.Problem : Level.Warning, R(c, i) + " comes in the story after '" + r.StoryPlace.Substring(6) + "', which isn't in the story: it goes at the end" +
 					(endsWithUtopia ? ", after Utopia - which never counts as done, so this island never unlocks." : "."), "Choose its place again in STORY.");
+			// (a story rule comes when its step unlocks AND its WHEN is met: another WHEN held the step back without a word, its
+			// note showing no number - review 10-30. WHEN "rule" naming another story island is met by the story's own order.)
+			if (!string.Equals(r.When, "start", StringComparison.OrdinalIgnoreCase) &&
+				!(r.When == "rule" && c.Plan.Rules.Any(o => o != r && o.InStory && o.Id.Equals(r.WhenRef, StringComparison.OrdinalIgnoreCase))))
+				c.Add(i, Level.Warning, R(c, i) + " is in the story, but its WHEN isn't \"When the world starts\": when its turn in the story comes it still waits for that, and nothing tells the players why (its note shows #---- until then).",
+					"WHEN: choose \"When the world starts\" - the story's order already decides when it comes.");
 			string kind = r.StoryDone.Split(':')[0], arg = r.StoryDone.Contains(":") ? r.StoryDone.Substring(r.StoryDone.IndexOf(':') + 1) : "";
 			foreach (Facts f in Brings(c, r))
 			{

@@ -23,7 +23,8 @@ namespace DynamicIslands
 			Func<string, string, bool> has = (a, b) => bad.Any(f => f.Level == PlanChecker.Level.Warning && f.Text.StartsWith("This island: ") && f.Text.Contains(a) && f.Text.Contains(b) && f.Fix.Length > 0);
 			Check(ref ok, has("step 2 of the quest", "the chest \"Vault\""), "a later step's chest there from the start");
 			Check(ref ok, has("step 3 of the quest", "warthog spot"), "a later step's warthogs there from the start");
-			Check(ref ok, has("trigger zone 'gate'", "gives the story item"), "a story item in a zone that is ready again (Fires: Once)");
+			// (since 10-30 a zone gives its story items once per world: no warning for one that is ready again)
+			Check(ref ok, !bad.Any(f => f.Text.Contains("trigger zone 'gate'") && f.Text.Contains("gives the story item")), "a story item in a zone that is ready again (Fires: Once): given once per world, no warning");
 			Check(ref ok, has("show/hide 'bridge'", "flips the bridge or door back"), "show/hide on a defeat event that happens again");
 			Check(ref ok, has("the defeat event of a warthog spot", "left out"), "a Raft item check on a defeat event");
 			Check(ref ok, has("\"when its quest is done\" event", "left out"), "a Raft item check on the quest-done event");

@@ -112,7 +112,7 @@ namespace DynamicIslands.Editor
 				lines.Add("  - " + m.Name + (m.ByPlan ? " (the world's plan brings it)" : "") + where);
 			}
 			lines.Add("");
-			lines.Add(ContinueLabel + ": the rest of the world plays. These islands are left out but kept in the world, so they come back once their file is here (in multiplayer a player who has one can bring it).");
+			lines.Add(ContinueLabel + ": the rest of the world plays. These islands are left out but kept in the world, so they come back once their file is here (in multiplayer a player who has one can bring it). A story step that waits for one of them goes on without it after about 10 minutes of play.");
 			lines.Add(MenuLabel + ": leave without saving, then download them in the island library" + " or put their files back in Mods\\DynamicIslands, and load the world again.");
 			return string.Join("\n", lines.ToArray());
 		}
@@ -133,26 +133,33 @@ namespace DynamicIslands.Editor
 				new InfoWindow.Choice(ContinueLabel, PlayWithout, "Play on; the missing islands are left out", true),
 				new InfoWindow.Choice(MenuLabel, ToMenu, "Leave without saving, to download or restore them"));
 			InfoWindow.Closed = OnClosed;
+			answered = false;
 			cursorFreed = !Cursor.visible;
 			CursorFree = !cursorFreed;
 			if (cursorFreed) try { RAPI.ToggleCursor(true); CursorFree = true; } catch { }
 		}
 
+		/// <summary>Whether a button closed the box: closed with Esc or its X, the world plays on - as "Play without".</summary>
+		static bool answered;
+
 		static void OnClosed()
 		{
 			if (cursorFreed) try { RAPI.ToggleCursor(false); } catch { }
 			cursorFreed = false;
+			if (!answered) { answered = true; Debug.Log("[CUSTOM ISLANDS] The missing islands box closed: playing on without them"); StoryChain.PlayWithoutMissing(); }
 		}
 
 		internal static void PlayWithout()
 		{
 			Debug.Log("[CUSTOM ISLANDS] Playing on without the missing islands");
-			StoryChain.PlayingWithoutMissing = true; // (a story step whose island is among them goes on without it - audit 10-30)
+			answered = true;
+			StoryChain.PlayWithoutMissing(); // (a story step whose island is among them goes on without it, after a while - audit 10-30)
 			InfoWindow.Close();
 		}
 
 		internal static void ToMenu()
 		{
+			answered = true;
 			InfoWindow.Close();
 			Debug.Log("[CUSTOM ISLANDS] Back to the main menu (islands missing), without saving");
 			Raft_Network net = ComponentManager<Raft_Network>.Value;

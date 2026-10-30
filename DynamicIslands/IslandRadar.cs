@@ -59,12 +59,17 @@ namespace DynamicIslands.Editor
 		/// else a plan's island or a begun quest until ReturningIslands.Finished. (e.Rule and the chain's steps reach clients too.)</summary>
 		static bool StillOpen(IslandWorldState.Entry e)
 		{
+			// (one that couldn't be made, or whose file this PC is still waiting for, isn't there to sail to - review 10-30)
+			if ((e.Failed && e.Root == null) || e.WaitingForFile || e.Excluded) return false;
 			bool ruled = !string.IsNullOrEmpty(e.Rule);
 			if (ruled)
 			{
 				string key = StoryChain.RuleKey(e.Rule);
 				if (StoryChain.Steps.Contains(key, System.StringComparer.OrdinalIgnoreCase)) return !StoryChain.Done.Contains(key);
 			}
+			// (a client never gets the host's VisitKey, so there an island without a quest never counted finished and kept its
+			// dot for good: on a client only an island with a quest, whose steps it does get - review 10-30)
+			if (!Raft_Network.IsHost && IslandQuest.From(IslandCache.PropsOf(e)).Steps.Count == 0) return false;
 			bool begun = e.State.ContainsKey(WorldDirector.VisitKey) || QuestTracker.StepOf(e) > 0;
 			return (ruled || begun) && !ReturningIslands.Finished(e);
 		}

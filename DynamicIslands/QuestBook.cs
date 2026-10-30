@@ -228,14 +228,21 @@ namespace DynamicIslands.Editor
 
 		/// <summary>A journal page that belongs to the main story (Raft's notebook shows it): a note or event page of a main
 		/// story island, or a frequency of the chain - the journal leaves these out.</summary>
+		/// <summary>The rule of a frequency page's key (after "storyfreq:"): a moved frequency's page is "id#1234" - only a last
+		/// '#' with exactly 4 digits after it is cut off, a rule id may hold '#' itself (review 10-30).</summary>
+		internal static string FrequencyPageRule(string what)
+		{
+			int hash = what.LastIndexOf('#');
+			return hash > 0 && what.Length - hash - 1 == 4 && what.Substring(hash + 1).All(c => c >= '0' && c <= '9') ? what.Substring(0, hash) : what;
+		}
+
 		public static bool IsMainPage(StoryBook.Page p)
 		{
 			if (!Applies || p == null) return false;
 			string k = p.Key ?? "";
 			if (k.StartsWith("storyfreq:", StringComparison.OrdinalIgnoreCase))
 			{
-				string what = k.Substring(10);
-				if (what.IndexOf('#') > 0) what = what.Substring(0, what.IndexOf('#')); // (a moved frequency's page: "storyfreq:id#1234")
+				string what = FrequencyPageRule(k.Substring(10));
 				return StoryChain.IsRaft(what) || StoryChain.BookRules.Any(r => r.Id.Equals(what, StringComparison.OrdinalIgnoreCase));
 			}
 			foreach (IntroRule r in StoryChain.BookRules)

@@ -117,7 +117,7 @@ namespace DynamicIslands.Editor
 			{
 				Keep();
 				var d = new StoryItemDef { Name = "Old key", Icon = StoryItems.QuestIcon + "Vasagatan_GreenKey", Description = "" };
-				d.Id = StoryItems.NewId(defs, d.Name);
+				d.Id = StoryItems.NewId(Taken(null), d.Name);
 				defs.Add(d);
 				autoName.Add(d);
 				Rebuild();
@@ -150,7 +150,7 @@ namespace DynamicIslands.Editor
 			desc.characterLimit = 200;
 			Text id = UIKit.Label(row, "story:", 11, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Italic, "Id");
 			UIKit.Size(id.gameObject, 38);
-			const string idHint = "Its id: what chests, actions and checks call it (story:<id>). A new item's id follows its name. Changing an id renames it in this island's chests, actions, checks and quest on Save; worlds where the crew already has the item keep the old one";
+			const string idHint = "Its id: what chests, actions and checks call it (story:<id>). A new item's id follows its name. Changing an id renames it in this island's chests, actions, checks and quest on Save - not on other islands or in plans that use it; worlds where the crew already has the item keep the old one";
 			UIKit.Hint(id.gameObject, idHint);
 			idField = Field(row, "id", d.Id, 112, idHint, v =>
 			{
@@ -212,7 +212,11 @@ namespace DynamicIslands.Editor
 		{
 			Keep();
 			Vector3 at = StorySets.ViewCentre();
-			List<GameObject> placed = set(defs, at);
+			// (its new items' ids don't take an id renamed here before Save: see Taken)
+			List<StoryItemDef> work = Taken(null);
+			List<StoryItemDef> ghosts = work.Where(x => !defs.Contains(x)).ToList();
+			List<GameObject> placed = set(work, at);
+			foreach (StoryItemDef d in work) if (!ghosts.Contains(d) && !defs.Contains(d)) defs.Add(d);
 			if (placed.Count == 0) { DynamicIslands.Notify("Could not place the story set here", true); return; }
 			// (its story items in the same undo step as its objects: the first Ctrl+Z took only the key away and left the door)
 			SaveDefs(true);
@@ -251,7 +255,7 @@ namespace DynamicIslands.Editor
 		bool FollowName(StoryItemDef d)
 		{
 			if (originalId.ContainsKey(d) || idTyped.Contains(d)) return false;
-			string id = StoryItems.NewId(defs.Where(x => x != d), CleanId(d.Name));
+			string id = StoryItems.NewId(Taken(d), CleanId(d.Name));
 			if (id == d.Id) return false;
 			d.Id = id;
 			return true;
@@ -316,12 +320,25 @@ namespace DynamicIslands.Editor
 			catch { return s; }
 		}
 
+		/// <summary>The ids a new or changed id must not take: the other items', and the id an item here had when the window
+		/// opened and has since changed - Save moves that old id's uses to the new one, so an item taking it (a story set's
+		/// "Rusty key" after renaming rusty-key) had its own uses moved away too (review 10-30).</summary>
+		List<StoryItemDef> Taken(StoryItemDef except)
+		{
+			List<StoryItemDef> list = defs.Where(x => x != except).ToList();
+			foreach (KeyValuePair<StoryItemDef, string> kv in originalId)
+				if (kv.Key != except && defs.Contains(kv.Key) && kv.Value.Length > 0 && !kv.Value.Equals(kv.Key.Id, StringComparison.OrdinalIgnoreCase))
+					list.Add(new StoryItemDef { Id = kv.Value, Name = "" });
+			return list;
+		}
+
 		/// <summary>An id no other item here has ("key" -> "key-2"...); empty stays empty.</summary>
 		string UniqueId(StoryItemDef d, string id)
 		{
 			if (id.Length == 0) return id;
 			string b = id, n = id;
-			for (int i = 2; defs.Any(x => x != d && x.Id.Equals(n, StringComparison.OrdinalIgnoreCase)); i++) n = b + "-" + i;
+			List<StoryItemDef> taken = Taken(d);
+			for (int i = 2; taken.Any(x => x.Id.Equals(n, StringComparison.OrdinalIgnoreCase)); i++) n = b + "-" + i;
 			return n;
 		}
 
@@ -335,7 +352,8 @@ namespace DynamicIslands.Editor
 			var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 			string was;
 			foreach (StoryItemDef d in defs)
-				if (originalId.TryGetValue(d, out was) && was.Length > 0 && !was.Equals(d.Id, StringComparison.OrdinalIgnoreCase)) map[was] = d.Id;
+				if (originalId.TryGetValue(d, out was) && was.Length > 0 && !was.Equals(d.Id, StringComparison.OrdinalIgnoreCase) &&
+					!defs.Any(x => x != d && x.Id.Equals(was, StringComparison.OrdinalIgnoreCase))) map[was] = d.Id; // (another item has the old id now: its uses stay its own)
 			Action change = () =>
 			{
 				if (text.Length == 0) DynamicIslands.currentIslandProps.Remove(StoryItems.Key);
@@ -366,7 +384,7 @@ namespace DynamicIslands.Editor
 						joined = true;
 						objects++;
 					}
-				DynamicIslands.Notify(map.Count + " story item id(s) renamed" + (objects > 0 ? ", in " + objects + " object(s) too" : ""));
+				DynamicIslands.Notify(map.Count + " story item id(s) renamed" + (objects > 0 ? ", in " + objects + " object(s) too" : "") + " - on this island only: other islands, plans and worlds that use the old id keep it");
 			}
 			Remember();
 		}

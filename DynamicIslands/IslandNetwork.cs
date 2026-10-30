@@ -539,6 +539,16 @@ namespace DynamicIslands.Editor
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
 		}
 
+		/// <summary>Host -> one player: quest n's step and progress as the host has them, Name "set" - the player takes them even
+		/// when older than its own (a step the host refused). An older version takes it as a plain step: never back.</summary>
+		internal static void SendQuestCorrection(Network_UserId player, int islandId, int n)
+		{
+			if (!Raft_Network.IsHost) return;
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
+			if (e == null) return;
+			SendToPlayer(new IslandNetMessage { Kind = QuestKind(n), Ids = n == 0 ? new[] { islandId } : new[] { islandId, n }, Index = QuestTracker.StepOf(e, n), Count = QuestTracker.ProgressOf(e, n), Name = "set" }, player);
+		}
+
 		/// <summary>Host: tells everyone a rule brought this island (the banner with its direction).</summary>
 		public static void SendAnnounce(IslandWorldState.Entry e, string title, string message)
 		{
@@ -679,7 +689,11 @@ namespace DynamicIslands.Editor
 							// (a player's amount: the host adds it up and tells everyone the total)
 							int questNo = msg.Ids.Length > 1 ? msg.Ids[1] : 0;
 							// (CB2: a player's progress only on an island near them - loaded on their side)
-							if (Raft_Network.IsHost && !PlayerTrust.MayMark(from.Id, msg.Ids[0], "quest step")) break;
+							// (refused: that player is told the host's step - its own view had moved on already and stayed ahead for
+							// good, the others never saw the step done - review 10-30)
+							if (Raft_Network.IsHost && !PlayerTrust.MayMark(from.Id, msg.Ids[0], "quest step")) { SendQuestCorrection(from, msg.Ids[0], questNo); break; }
+							// (the host's answer to a refused step: the host's step, even an older one)
+							if (!Raft_Network.IsHost && msg.Name == "set") { QuestTracker.Correct(msg.Ids[0], questNo, msg.Index, msg.Count); break; }
 							if (Raft_Network.IsHost && msg.Name == "add") { QuestTracker.AddFromPlayer(msg.Ids[0], questNo, msg.Index, msg.Count); break; }
 							// (one it ignored - stale, or older than what it has - isn't passed on: it lowered the others' count)
 							if (QuestTracker.Apply(msg.Ids[0], questNo, msg.Index, msg.Count) && Raft_Network.IsHost) SendToClients(msg);

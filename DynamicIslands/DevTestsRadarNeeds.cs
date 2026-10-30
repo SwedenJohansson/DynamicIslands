@@ -219,11 +219,14 @@ namespace DynamicIslands
 				// a) SpawnIsland of its name: that entry comes back
 				float returnsBefore = ReturningIslands.Returns(e);
 				DynamicIslands.SpawnIslandCommand(new[] { typed });
+				Vector3 broughtTo = e.Position;
+				DynamicIslands.SpawnIslandCommand(new[] { typed }); // (twice at once: the second is refused - review 10-30)
+				Check(ref ok, e.Position == broughtTo && copies() == 1, "a second SpawnIsland right after: nothing moved or added");
 				yield return new WaitForSeconds(0.5f);
 				float away = new Vector2(e.Position.x - raft.Value.x, e.Position.z - raft.Value.z).magnitude;
 				Check(ref ok, copies() == 1 && IslandWorldState.Islands.Contains(e), "SpawnIsland " + typed + ": no second entry (" + copies() + " with that name), the story's own is still there");
 				Check(ref ok, e.Rule == "cispawn" && QuestTracker.StepOf(e) == 1 && !ReturningIslands.Finished(e), "it is still the story's: rule '" + e.Rule + "', quest step " + QuestTracker.StepOf(e) + " kept");
-				Check(ref ok, away < 600f && ReturningIslands.Returns(e) == returnsBefore + 1, "it came back ahead of the raft (" + Gf(away, "F0") + " m from it, came back " + ReturningIslands.Returns(e) + "x)");
+				Check(ref ok, away < 600f && ReturningIslands.Returns(e) == returnsBefore, "it came back ahead of the raft, not counted as one of its returns (" + Gf(away, "F0") + " m from it, came back " + ReturningIslands.Returns(e) + "x)");
 				for (float t = 0f; t < 40f && e.Root == null; t += 0.5f) yield return new WaitForSeconds(0.5f);
 				Check(ref ok, e.Root != null && copies() == 1, "it loads there: " + (e.Root != null ? "loaded" : "not loaded after 40 s"));
 
@@ -236,6 +239,29 @@ namespace DynamicIslands
 				Check(ref ok, IslandWorldState.Islands.Count == total && copies() == 1 && e.Position == posBefore && ReturningIslands.Returns(e) == returnsAfter && QuestTracker.StepOf(e) == 1,
 					"loaded already: SpawnIsland adds nothing, moves nothing (" + IslandWorldState.Islands.Count + " islands, " + copies() + " with that name)");
 
+				// b2) unloaded far again: refused while its file is missing or it couldn't be made, or brought by hand seconds ago;
+				// then brought again, not counted (review 10-30)
+				IslandObjectState.Capture(e);
+				IslandSpawner.Despawn(e.Root);
+				e.Root = null;
+				e.Position = raft.Value + new Vector3(sail.x, 0f, sail.z).normalized * 4000f;
+				Vector3 farPos = e.Position;
+				int returns0 = ReturningIslands.Returns(e);
+				e.Excluded = true;
+				DynamicIslands.SpawnIslandCommand(new[] { typed });
+				e.Excluded = false;
+				Check(ref ok, e.Position == farPos, "its file missing (Excluded): refused");
+				e.Failed = true;
+				DynamicIslands.SpawnIslandCommand(new[] { typed });
+				e.Failed = false;
+				Check(ref ok, e.Position == farPos, "it couldn't be made (Failed): refused");
+				DynamicIslands.handBrought[e.Id] = Time.unscaledTime;
+				DynamicIslands.SpawnIslandCommand(new[] { typed });
+				Check(ref ok, e.Position == farPos, "brought by hand seconds ago: refused");
+				DynamicIslands.handBrought.Remove(e.Id);
+				DynamicIslands.SpawnIslandCommand(new[] { typed });
+				Check(ref ok, e.Position != farPos && ReturningIslands.Returns(e) == returns0 && copies() == 1, "then it comes again, not counted (came back " + ReturningIslands.Returns(e) + "x)");
+
 				// c) a rule-less same-name copy (spawned by hand before the fix) whose quest is done: the rule's step counts as done
 				Check(ref ok, !StoryChain.IsDone(ahead), "the story island's own quest is not done: the step is not done");
 				IslandWorldState.Entry x = IslandWorldState.Add(name, raft.Value + new Vector3(sail.x, 0f, sail.z).normalized * 5000f, null, false);
@@ -243,8 +269,21 @@ namespace DynamicIslands
 				Check(ref ok, x.Rule.Length == 0 && !StoryChain.IsDone(ahead), "a rule-less copy with its quest not done: the step is not done");
 				x.State[QuestTracker.StepKey] = new ObjectState { Active = true, Yield = 2 };
 				Check(ref ok, StoryChain.IsDone(ahead), "a rule-less copy with its quest done: the step counts as done");
-				x.Name = "cispawnother";
+				x.Name = "cispawnother"; x.HostName = "cispawnother";
 				Check(ref ok, !StoryChain.IsDone(ahead), "a rule-less entry of another name does not count");
+				x.Name = name; x.HostName = name;
+				// (a rule-less copy from before the story's own entry - a pool copy - doesn't count: review 10-30)
+				IslandWorldState.Islands.Remove(x);
+				IslandWorldState.Islands.Insert(0, x);
+				Check(ref ok, !StoryChain.IsDone(ahead), "a rule-less copy made before the story's own entry does not count");
+
+				// d) its quest done: SpawnIsland refuses it ("already done") and adds no fresh copy (review 10-30)
+				e.State[QuestTracker.StepKey] = new ObjectState { Active = true, Yield = 2 };
+				Vector3 donePos = e.Position;
+				int before = IslandWorldState.Islands.Count;
+				DynamicIslands.SpawnIslandCommand(new[] { typed });
+				yield return new WaitForSeconds(0.5f);
+				Check(ref ok, ReturningIslands.Finished(e) && e.Position == donePos && IslandWorldState.Islands.Count == before, "finished: SpawnIsland moves nothing, adds nothing (" + IslandWorldState.Islands.Count + " islands, were " + before + ")");
 			}
 			finally
 			{

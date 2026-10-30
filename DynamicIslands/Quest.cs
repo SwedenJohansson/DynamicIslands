@@ -181,7 +181,7 @@ namespace DynamicIslands.Editor
 			return e != null && e.State.TryGetValue(StepKeyOf(n), out s) ? Mathf.Max(0, s.Yield) : 0; // (a hand-edited world file may hold a negative step - CB12)
 		}
 
-		static int ProgressOf(IslandWorldState.Entry e, int n = 0)
+		internal static int ProgressOf(IslandWorldState.Entry e, int n = 0)
 		{
 			ObjectState s;
 			return e != null && e.State.TryGetValue(ProgressKeyOf(n), out s) ? s.Yield : 0;
@@ -336,7 +336,34 @@ namespace DynamicIslands.Editor
 			IslandQuest q = QuestOf(e, n);
 			int now = StepOf(e, n);
 			if (!q.Exists) return;
-			if (step > now && step < q.Steps.Count) { Remember(e, n, step, amount); return; }
+			// (the client picked the later step on its own view, which may be stale or full of early work already: the host
+			// picks again from its own state, the same way as for its own events - review 10-30)
+			if (step > now && step < q.Steps.Count)
+			{
+				int p = LaterStep(e, n, q, now, q.Steps[step].Type, q.Steps[step].Target);
+				Remember(e, n, p >= 0 ? p : step, amount);
+				return;
+			}
+			// (an older step: another player did that step a moment before. A chest is opened once, so what this player opened
+			// counts for the step now, or is kept for a later step asking for the same - it was dropped, and with no chest left
+			// the quest was stuck. Steps a player can just do again are left as before - review 10-30)
+			if (step < now && now < q.Steps.Count && step >= 0 && q.Steps[step].Type == "open")
+			{
+				string type = q.Steps[step].Type, target = q.Steps[step].Target;
+				IslandNetwork.SendQuest(e.Id, n, now, ProgressOf(e, n)); // (the player's view put right first: Set below sends the new count after it)
+				if (Matches(q.Steps[now], type, target))
+				{
+					int p = ProgressOf(e, n) + amount;
+					if (p >= q.Steps[now].Count) Set(e, n, now + 1, 0, true);
+					else Set(e, n, now, p, true);
+				}
+				else
+				{
+					int later = LaterStep(e, n, q, now, type, target);
+					if (later >= 0) Remember(e, n, later, amount);
+				}
+				return;
+			}
 			if (step != now || now >= q.Steps.Count) { IslandNetwork.SendQuest(e.Id, n, now, ProgressOf(e, n)); return; } // (the player's view put right)
 			int progress = ProgressOf(e, n) + amount;
 			if (progress >= q.Steps[now].Count) Set(e, n, now + 1, 0, true);
@@ -381,6 +408,24 @@ namespace DynamicIslands.Editor
 		{
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
 			return e != null && Set(e, n, step, progress, false);
+		}
+
+		/// <summary>A player: the host's step for quest n after it refused this player's step (IslandNetwork "set"). Forward as
+		/// Apply; back as well - this machine had moved on alone. Going back shows the step again and runs nothing else: no
+		/// rewards, events or rules (review 10-30).</summary>
+		public static bool Correct(int islandId, int n, int step, int progress)
+		{
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
+			if (e == null || Raft_Network.IsHost || step < 0) return false;
+			int before = StepOf(e, n);
+			if (step > before || (step == before && progress >= ProgressOf(e, n))) return Set(e, n, step, progress, false);
+			e.State[StepKeyOf(n)] = new ObjectState { Active = true, Yield = step, Day = Today };
+			if (progress > 0) e.State[ProgressKeyOf(n)] = new ObjectState { Active = true, Yield = progress, Day = Today };
+			else e.State.Remove(ProgressKeyOf(n));
+			IslandQuest q = QuestOf(e, n);
+			Debug.Log("[CUSTOM ISLANDS] Quest " + (n + 1) + " of '" + e.HostName + "': the host has step " + (step + 1) + " (this player's step " + (before + 1) + " wasn't counted there)");
+			if (q.Exists && step < q.Steps.Count) Show(q.ShownTitle, "Next: " + q.Steps[step].Describe());
+			return true;
 		}
 
 		/// <summary>Where this player's share of quest n's reward is kept (QuestRewards). By the island's copy (PageIsland: the

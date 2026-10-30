@@ -463,7 +463,17 @@ namespace DynamicIslands.Editor
 		const int OldSignalBase = 0x7F000;
 		/// <summary>Host only: the shared part of an event that happens once (a note read, arriving) has run - once, however many players set it off together.</summary>
 		public const int SharedOnceBase = 0x80000;
+		/// <summary>A zone's "enter" gave its story items ("give" actions): + the zone's object index. Saved and shared like
+		/// "used", never made ready again: a zone ready again after the regrow days, or one that fires on every walk-in,
+		/// gave the crew a second key (after TriggerZone.StoryLootBase 0x160000 + 0xFFFF).</summary>
+		public const int StoryGivenBase = 0x170000;
 		const float NearDistance = 120f;
+
+		/// <summary>Host: a zone's "enter" gave its story items before (once per world - only zones: other events give them each time).</summary>
+		internal static bool StoryGivenBefore(IslandWorldState.Entry e, string ev, int index)
+		{
+			return e != null && ev == "enter" && index != IslandIndex && ContentState.IsUsed(e, StoryGivenBase + index);
+		}
 
 		/// <summary>Raised on every machine when an event's actions run here (tests listen): island id, object index (-1 = the island), event.</summary>
 		public static event Action<int, int, string> Fired;
@@ -1012,6 +1022,8 @@ namespace DynamicIslands.Editor
 			float delay = 0f;
 			int deathsThen = deaths, partNo = 0, parts = actions.Count(a => a.Verb == "wait") + 1;
 			bool keep = shared && ev != null && Raft_Network.IsHost && Resumable(ev);
+			// (a zone's story items: once per world - known now, for every part: a "give" after a wait is still the first)
+			bool storyGiven = shared && StoryGivenBefore(e, ev, index);
 			int token = ++pendingTokens; // (the latest scheduling of an event is the one that runs: resumed after a reload, the old timers stop)
 			var part = new List<ObjAction>();
 			foreach (ObjAction a in actions.Concat(new[] { new ObjAction { Verb = "wait", Arg = "0" } }))
@@ -1021,7 +1033,7 @@ namespace DynamicIslands.Editor
 				{
 					List<ObjAction> now = part;
 					int no = firstPart + partNo;
-					if (delay <= 0f) RunPart(e, index, now, shared, messagesOnly);
+					if (delay <= 0f) RunPart(e, index, now, shared, messagesOnly, ev, storyGiven);
 					else
 					{
 						if (keep) KeepPending(e, index, ev, no, token);
@@ -1035,7 +1047,7 @@ namespace DynamicIslands.Editor
 							}
 							// (unloaded meanwhile: it runs when the island loads again - kept in its state)
 							if (keep && (e.Root == null || !IsPending(e, index, ev, token))) return;
-							RunPart(e, index, now, shared, messagesOnly);
+							RunPart(e, index, now, shared, messagesOnly, ev, storyGiven);
 							if (keep) PendingDone(e, index, ev, no, firstPart + parts - 1, token);
 						}));
 					}
@@ -1134,18 +1146,34 @@ namespace DynamicIslands.Editor
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Waiting actions: " + ex.Message); }
 		}
 
-		static void RunPart(IslandWorldState.Entry e, int index, List<ObjAction> actions, bool shared, bool messagesOnly)
+		static void RunPart(IslandWorldState.Entry e, int index, List<ObjAction> actions, bool shared, bool messagesOnly, string ev = null, bool storyGiven = false)
 		{
-			if (shared) RunShared(e, index, actions); else RunPersonal(e, index, actions, messagesOnly);
+			if (shared) RunShared(e, index, actions, ev, storyGiven); else RunPersonal(e, index, actions, messagesOnly);
 		}
 
-		static void RunShared(IslandWorldState.Entry e, int index, List<ObjAction> actions)
+		static void RunShared(IslandWorldState.Entry e, int index, List<ObjAction> actions, string ev = null, bool storyGiven = false)
 		{
 			bool creaturesShown = false;
-			// Story items belong to the crew: given once, here on the host (each player near would give them again)
-			foreach (ObjAction a in actions.Where(GivesStory))
-				foreach (KeyValuePair<string, int> l in ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, a.Arg } }).Where(l => StoryItems.IsStory(l.Key)))
-					StoryBook.Give(l.Key, l.Value, e);
+			// Story items belong to the crew: given once, here on the host (each player near would give them again). A zone
+			// gives them once per world (StoryGivenBase): ready again after the regrow days, or firing on every walk-in, its
+			// "give" of the story's key came again.
+			bool gaveStory = false;
+			if (!storyGiven)
+			{
+				foreach (ObjAction a in actions.Where(GivesStory))
+					foreach (KeyValuePair<string, int> l in ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, a.Arg } }).Where(l => StoryItems.IsStory(l.Key)))
+					{
+						StoryBook.Give(l.Key, l.Value, e);
+						gaveStory = true;
+					}
+			}
+			else if (actions.Any(GivesStory)) Debug.Log("[CUSTOM ISLANDS] '" + e.HostName + "': the zone gave its story items before - not again");
+			if (gaveStory && ev == "enter" && index != IslandIndex)
+			{
+				int key = StoryGivenBase + index;
+				e.State[key] = new ObjectState { Active = false, Day = Today };
+				IslandNetwork.SendUsed(e.Id, key, Today);
+			}
 			foreach (ObjAction a in actions.Where(x => x.Shared))
 			{
 				if (PlayerFeatures.RunShared(e, index, a)) continue;

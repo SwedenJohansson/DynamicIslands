@@ -59,8 +59,19 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, float> due = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 		static readonly Dictionary<string, float> retryAt = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 		static readonly HashSet<string> warned = new HashSet<string>();
-		/// <summary>The host chose "Play without them" for islands whose files are missing (MissingIslandsCheck).</summary>
+		/// <summary>The host chose "Play without them" for islands whose files are missing (MissingIslandsCheck), at this game time.</summary>
 		internal static bool PlayingWithoutMissing;
+		internal static float PlayingWithoutSince;
+		/// <summary>Seconds of play after "Play without them" before a story step whose island is among them goes on without
+		/// it: meanwhile a player who has the file can bring it (the box promises they come back - review 10-30). Tests shorten it.</summary>
+		internal static float MissingGraceSeconds = 600f;
+
+		/// <summary>MissingIslandsCheck: the host plays on without the missing islands.</summary>
+		internal static void PlayWithoutMissing()
+		{
+			if (!PlayingWithoutMissing) PlayingWithoutSince = Time.time;
+			PlayingWithoutMissing = true;
+		}
 		static bool rebuilding, dirty;
 
 		/// <summary>Our own call of Raft's UnlockFrequency: let it through.</summary>
@@ -282,7 +293,13 @@ namespace DynamicIslands.Editor
 				RecieverFrequency f = RecieverFrequency.AllFrequencies != null ? RecieverFrequency.AllFrequencies.FirstOrDefault(x => x != null && x.chunkPointType == t) : null;
 				return f != null ? f.ToString() : null;
 			}
-			return FrequencyOf(RuleIdOf(next)) ?? "#----";
+			// (a rule waiting for a WHEN other than start: no number before it fired - the Receiver can't be tuned to it until
+			// then, and the note showed a frequency that gave nothing. Fire -> Changed -> Rebuild relabels the note. A start
+			// rule fires within a second of its step's unlock: its number as before - review 10-30)
+			string rid = RuleIdOf(next);
+			IntroRule rule = RuleOf(rid);
+			if (!Fired.Contains(rid) && rule != null && !string.Equals(rule.When, "start", StringComparison.OrdinalIgnoreCase)) return "#----";
+			return FrequencyOf(rid) ?? "#----";
 		}
 
 		/// <summary>The island a note of Raft's now leads to (ROADMAP LM1): the step after the note's island in this chain, by
@@ -381,10 +398,14 @@ namespace DynamicIslands.Editor
 					else if (r.Where != "receiver") TryBring(r);
 					continue;
 				}
+				// (its island was made in the end: the failures before it don't count towards going on without it - review 10-30)
+				if (failedMaking.Count > 0 && failedMaking.ContainsKey(r.Id) && IslandWorldState.Islands.Any(e => e.Root != null && e.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase))) failedMaking.Remove(r.Id);
 				if (r.InStory && !Done.Contains(key) && IsDone(r)) MarkDone(key);
 				// (its island brought, then its file gone and the host plays on without it: the step never got done and every later
-				// one stayed locked - audit 10-30. Only on that answer: "To menu" or a client sending the file keeps the step.)
-				else if (r.InStory && !Done.Contains(key) && PlayingWithoutMissing && WorldDirector.Refs(r.Id, null).Count > 0 && WorldDirector.Refs(r.Id, null).All(e => e.Excluded || !System.IO.File.Exists(IslandSpawner.PathFor(e.Name))))
+				// one stayed locked - audit 10-30. Only on that answer: "To menu" or a client sending the file keeps the step;
+				// and only after MissingGraceSeconds of play - meanwhile a player who has the file can still bring it.)
+				else if (r.InStory && !Done.Contains(key) && PlayingWithoutMissing && Time.time - PlayingWithoutSince >= MissingGraceSeconds &&
+					WorldDirector.Refs(r.Id, null).Count > 0 && WorldDirector.Refs(r.Id, null).All(e => e.Excluded || !System.IO.File.Exists(IslandSpawner.PathFor(e.Name))))
 					GoOnWithout(r, "its file is gone");
 			}
 			if (dirty) { dirty = false; IslandWorldState.Save(); }
@@ -455,6 +476,14 @@ namespace DynamicIslands.Editor
 			failedMaking[r.Id] = ++n;
 			if (r.InStory && n >= 3 && active && Steps.Contains(RuleKey(r.Id), StringComparer.OrdinalIgnoreCase)) { GoOnWithout(r, "it couldn't be made"); return; }
 			OnIslandsRemoved(new[] { e });
+			// (a rule by chance outside the story: OnIslandsRemoved leaves those as they are, so it stayed "brought" for good and
+			// never came again - review 10-30. It comes up again after some more sailing.)
+			if (!r.InStory && r.Where == "sailing" && !IslandWorldState.Contains(e) && Brought.Remove(r.Id))
+			{
+				if (Fired.Contains(r.Id)) DueFromNow(r);
+				Log("The island of '" + r.Id + "' couldn't be made: it comes again by chance while sailing");
+				Changed();
+			}
 			retryAt[r.Id] = Time.unscaledTime + RetrySeconds;
 		}
 
@@ -507,9 +536,34 @@ namespace DynamicIslands.Editor
 		{
 			string id = RuleOfType(type);
 			IntroRule r = RuleOf(id);
-			if (r == null || !Fired.Contains(r.Id) || Brought.Contains(r.Id)) return;
+			if (r == null || !Fired.Contains(r.Id)) return;
+			if (Brought.Contains(r.Id)) { BringBackTuned(r); return; }
 			if (IslandWorldState.Islands.Any(e => e.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase))) { Brought.Add(r.Id); return; }
 			TryBring(r);
+		}
+
+		/// <summary>When a Receiver island was last asked back by tuning (rule id, unscaled time): Raft asks every frame.</summary>
+		static readonly Dictionary<string, float> tunedAt = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+
+		/// <summary>The frequency of an island already brought, tuned again: left far behind with its quest unfinished it comes
+		/// back ahead of the raft (counted as one of its returns, up to MaxReturns) - a Receiver island never comes back by
+		/// itself, and with showOnReceiver 0 it had no dot either: lost for good (review 10-30).</summary>
+		static void BringBackTuned(IntroRule r)
+		{
+			if (r.InStory && Done.Contains(RuleKey(r.Id))) return;
+			float t;
+			if (tunedAt.TryGetValue(r.Id, out t) && Time.unscaledTime - t < RetrySeconds) return;
+			tunedAt[r.Id] = Time.unscaledTime;
+			Vector3? raft = CustomIslandSpawner.RaftPosition;
+			if (!raft.HasValue) return;
+			List<IslandWorldState.Entry> own = IslandWorldState.Islands.Where(e => e.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase) && !WorldRandomizer.IsExtras(e)).ToList();
+			// (one of them here or on its way: nothing to do)
+			if (own.Count == 0 || own.Any(e => e.Root != null || e.Loading)) return;
+			IslandWorldState.Entry far = own.FirstOrDefault(e => !e.Failed && !e.Excluded && !e.WaitingForFile && !ReturningIslands.Finished(e) &&
+				ReturningIslands.Returns(e) < ReturningIslands.MaxReturns &&
+				new Vector2(e.Position.x - raft.Value.x, e.Position.z - raft.Value.z).magnitude - Mathf.Max(0f, CustomIslandSpawner.LandRadius(e.Name)) > WorldRules.UnloadDistance);
+			if (far == null) return;
+			if (ReturningIslands.BringAgain(far, raft.Value)) Log("Rule '" + r.Id + "': its frequency tuned again - its island, left behind unfinished, comes back");
 		}
 
 		/// <summary>The rule's island counts as done (its quest, step N, a zone, a signal, players at it).</summary>
@@ -529,8 +583,14 @@ namespace DynamicIslands.Editor
 			if (WorldDirector.Met(done, null, out at)) return true;
 			// (a copy of the island spawned by hand (F10 SpawnIsland, before it brought the story's own back) has no rule: its
 			// quest done there counts too - player 10-30, the step and the next frequency never came)
-			return kind != "visit" && IslandWorldState.Islands.Any(x => string.IsNullOrEmpty(x.Rule) &&
-				entries.Any(y => y.Name.Equals(x.Name, StringComparison.OrdinalIgnoreCase)) && WorldDirector.Happened(done, x));
+			// (only a copy made after the story's own entry: a pool copy from before the story reached this island is just
+			// another island with the same file, its quest done long ago doesn't finish the story step - review 10-30)
+			if (kind == "visit") return false;
+			IList<IslandWorldState.Entry> all = IslandWorldState.Islands;
+			int first = entries.Select(y => all.IndexOf(y)).Where(i => i >= 0).DefaultIfEmpty(int.MaxValue).Min();
+			return all.Where((x, i) => i > first && string.IsNullOrEmpty(x.Rule) &&
+				entries.Any(y => (y.HostName ?? y.Name).Equals(x.HostName ?? x.Name, StringComparison.OrdinalIgnoreCase) || y.Name.Equals(x.Name, StringComparison.OrdinalIgnoreCase)) &&
+				WorldDirector.Happened(done, x)).Any();
 		}
 
 		#endregion
@@ -553,12 +613,13 @@ namespace DynamicIslands.Editor
 		{
 			if (rebuilding) return;
 			rebuilding = true;
+			bool grew = false;
 			try
 			{
 				InstallFrequencies();
 				List<ChunkPointType> unlocked = NoteBook.unlockedChunkPointType;
 				if (unlocked == null) return;
-				if (active && Raft_Network.IsHost) ReplayNotes();
+				if (active && Raft_Network.IsHost) { int d = Done.Count, u = Unlocked.Count; ReplayNotes(); grew = Done.Count > d || Unlocked.Count > u; }
 				unlocked.RemoveAll(t => (int)t >= ModTypeBase);
 				if (active)
 				{
@@ -571,6 +632,9 @@ namespace DynamicIslands.Editor
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] " + e); }
 			finally { rebuilding = false; }
+			// (notes of a save the world file hadn't counted moved the chain on while rebuilding, where Changed tells no one:
+			// the players and the QuestBook told now - review 10-30)
+			if (grew) { Broadcast(null); RaiseChanged(); }
 		}
 
 		/// <summary>Host: every frequency note found (a save's too) through the chain again - nothing twice.</summary>
@@ -646,7 +710,8 @@ namespace DynamicIslands.Editor
 			Rules.Clear();
 			Frequencies.Clear();
 			Unlocked.Clear(); Done.Clear(); Fired.Clear(); Brought.Clear();
-			due.Clear(); retryAt.Clear(); warned.Clear(); PlayingWithoutMissing = false;
+			due.Clear(); retryAt.Clear(); warned.Clear(); PlayingWithoutMissing = false; PlayingWithoutSince = 0f;
+			failedMaking.Clear(); Moved.Clear(); tunedAt.Clear();
 			StoryEnding = "";
 			EndingTitle = ""; Credits = ""; CreditsShown = false;
 			clientBook.Clear();

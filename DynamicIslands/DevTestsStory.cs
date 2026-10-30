@@ -214,6 +214,10 @@ namespace DynamicIslands
 			Check(ref ok, EditorRenames.NameRefs(b, "Old gate", "a|b") == 0 && EditorRenames.NameRefs(b, "Old gate", "OLD GATE") == 0, "no change for a name with |, or a change of case only");
 			var t = new Dictionary<string, string> { { k0, "talk|Mira|1|\nread|Mira|1|" } };
 			Check(ref ok, EditorRenames.QuestTargets(t, new[] { Islanders.QuestType }, "Mira", "Mara") == 1 && t[k0] == "talk|Mara|1|\nread|Mira|1|", "an islander's new name: the talk step follows, a note of that title stays");
+			// (a rename to a title/id/name another object has: the references stay - moved, they would mean both)
+			var taken = new List<IDictionary<string, string>> { new Dictionary<string, string> { { ObjectProps.NoteTitle, " Diary " } }, null, new Dictionary<string, string>() };
+			Check(ref ok, EditorRenames.Taken(taken, ObjectProps.NoteTitle, "diary") && !EditorRenames.Taken(taken, ObjectProps.NoteTitle, "Log") && !EditorRenames.Taken(taken, ObjectProps.NoteTitle, " "),
+				"a new title another note has already is seen (any case, spaces), a free one and an empty one aren't");
 
 			// (a zone's or note's new name: the island's own rules - zone:self:X, and "done when" of a rule bringing this island)
 			Func<string, string, string, string, IntroRule> rule = (id, whatArg, when, done) =>

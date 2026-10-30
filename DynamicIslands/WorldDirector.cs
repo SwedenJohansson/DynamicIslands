@@ -843,6 +843,7 @@ namespace DynamicIslands.Editor
 			LibSeen = 0;
 			retryAt.Clear(); noRoom.Clear();
 			warned.Clear();
+			Fresh.Clear(); planFailed.Clear(); failNoted.Clear();
 		}
 
 		/// <summary>A "@key=value" line of the world file; false if it isn't ours.</summary>
@@ -1461,6 +1462,51 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		/// <summary>Host: islands Bring started that weren't made yet (SpawnIslandFile drops them once made).</summary>
+		internal static readonly HashSet<IslandWorldState.Entry> Fresh = new HashSet<IslandWorldState.Entry>();
+		static readonly Dictionary<string, int> planFailed = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+		static readonly HashSet<string> failNoted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+		/// <summary>Host: an island couldn't be made (file or generated). One a rule just brought is taken out of the world, the
+		/// story chain told, and a plan rule (not Special) is no longer done, so TryRule brings it again after RetrySeconds - up to
+		/// three times. Before, the island stayed "failed" for good and the rule counted as done, without a word (review 10-30).
+		/// told: the caller has told the player already.</summary>
+		internal static void OnIslandFailed(IslandWorldState.Entry e, bool told)
+		{
+			if (e == null) return;
+			bool first = Fresh.Remove(e);
+			if (!Raft_Network.IsHost) return;
+			IntroRule plan = PlanRuleOf(e.Rule);
+			// (only a rule's fresh island: one of the world's own islands that fails stays in its list - the file may come back)
+			if (first && IslandWorldState.Contains(e) && (plan != null || StoryChain.RuleOf(e.Rule) != null))
+			{
+				IslandWorldState.RemoveIds(new[] { e.Id }, false);
+				IslandNetwork.BroadcastRemoved(new[] { e.Id });
+			}
+			try { StoryChain.OnIslandFailed(e); } catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] " + x.Message); }
+			if (plan != null && first && !IslandWorldState.Contains(e) && Done.Contains(plan.Id))
+			{
+				int n;
+				planFailed.TryGetValue(plan.Id, out n);
+				planFailed[plan.Id] = ++n;
+				if (n <= 3)
+				{
+					Done.Remove(plan.Id);
+					retryAt["plan/" + plan.Id] = Time.unscaledTime + RetrySeconds;
+					Log("Rule '" + plan.Id + "': its island '" + e.HostName + "' couldn't be made - it is brought again (try " + n + " of 3)");
+				}
+				else Log("Rule '" + plan.Id + "': its island '" + e.HostName + "' couldn't be made 3 times - the rule is left done");
+			}
+			if (!told && !string.IsNullOrEmpty(e.Rule) && failNoted.Add(e.HostName ?? ""))
+				DynamicIslands.Notify("Island '" + e.HostName + "' couldn't be built (see F10)", true);
+		}
+
+		static IntroRule PlanRuleOf(string id)
+		{
+			if (Plan == null || string.IsNullOrEmpty(id)) return null;
+			return Plan.Rules.FirstOrDefault(x => !x.Special && x.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		}
+
 		/// <summary>Brings the rule's island; null when it's on its way, else why not (yet).</summary>
 		internal static string Bring(IntroRule r, IslandWorldState.Entry owner, IslandWorldState.Entry at)
 		{
@@ -1532,6 +1578,7 @@ namespace DynamicIslands.Editor
 			}
 			entry.Label = LabelFor(r, file, type);
 			entry.Loading = true;
+			Fresh.Add(entry);
 			if (gen != null)
 			{
 				MapType t = type; IslandGenSettings s = gen; float el = elevation; string n = name;
@@ -1827,7 +1874,8 @@ namespace DynamicIslands.Editor
 		/// again brought it and it isn't finished) or "quest" (begun and not done) - or null when it doesn't come back.</summary>
 		public static string Why(IslandWorldState.Entry e)
 		{
-			if (e == null || e.Failed || e.WaitingForFile || WorldRandomizer.IsExtras(e)) return null;
+			// (Excluded: its file isn't on the host - it came "back in sight" onto empty sea every few minutes, review 10-30)
+			if (e == null || e.Failed || e.WaitingForFile || e.Excluded || WorldRandomizer.IsExtras(e)) return null;
 			IntroRule brought = RuleThatBrought(e);
 			if (brought != null && brought.Where == "receiver") return null;
 			if (Awaited(e)) return "awaited";
@@ -1848,7 +1896,9 @@ namespace DynamicIslands.Editor
 			// (never reached and no step done: not finished whatever its quest - without reading its file, which the spawn
 			// pool's first pick did for every island the world has, IM43)
 			if (!e.State.ContainsKey(WorldDirector.VisitKey) && QuestTracker.StepOf(e) <= 0) return false;
-			if (QuestTracker.SideQuestOpen(e)) return false;
+			// (a side quest begun and not done keeps it unfinished only while it may still come back (MaxReturns): a side quest
+			// left or stuck kept it unfinished for good - its dot and its SpawnIsland copy forever - review 10-30)
+			if (QuestTracker.SideQuestOpen(e) && Returns(e) < MaxReturns) return false;
 			int steps = IslandQuest.From(IslandCache.PropsOf(e)).Steps.Count;
 			if (steps > 0) return QuestTracker.StepOf(e) >= steps;
 			return e.State.ContainsKey(WorldDirector.VisitKey);
@@ -1856,9 +1906,10 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Host: the spawn pool picked an island this world already has, not finished and left behind: it comes
 		/// back ahead of the raft as it was (quest, chests and harvest kept) instead of a second, fresh copy.</summary>
-		public static bool BringAgain(IslandWorldState.Entry e, Vector3 raft)
+		/// <param name="count">false: a player's own SpawnIsland - it doesn't use up one of the island's MaxReturns</param>
+		public static bool BringAgain(IslandWorldState.Entry e, Vector3 raft, bool count = true)
 		{
-			return Bring(e, raft, Why(e) ?? "again");
+			return Bring(e, raft, Why(e) ?? "again", count);
 		}
 
 		public static int Returns(IslandWorldState.Entry e)
@@ -1934,15 +1985,15 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Moves the island to a free spot ahead of the raft and tells everyone. False: no room there yet.</summary>
-		static bool Bring(IslandWorldState.Entry e, Vector3 raft, string why)
+		static bool Bring(IslandWorldState.Entry e, Vector3 raft, string why, bool count = true)
 		{
 			float radius = Mathf.Max(10f, CustomIslandSpawner.LandRadius(e.Name));
 			Vector3? spot = CustomIslandSpawner.SpotAhead(raft, radius, e.Position.y, e);
 			if (!spot.HasValue) { Debug.Log("[CUSTOM ISLANDS] [returning] '" + e.HostName + "' can't come back yet: no free spot ahead of the raft"); return false; }
 			float behind = Flat(e.Position - raft);
 			e.Position = spot.Value;
-			int returned = Returns(e) + 1;
-			e.State[ReturnsKey] = new ObjectState { Active = true, Yield = returned, Day = WorldDirector.Today };
+			int returned = Returns(e) + (count ? 1 : 0);
+			if (count) e.State[ReturnsKey] = new ObjectState { Active = true, Yield = returned, Day = WorldDirector.Today };
 			// (the other players' copies move too: a known island at another place)
 			IslandNetwork.BroadcastAdded(e);
 			string title = TitleOf(e);

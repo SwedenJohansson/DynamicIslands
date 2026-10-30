@@ -106,6 +106,17 @@ namespace DynamicIslands
 			if (InfoWindow.IsOpen) { ok = false; Fail("the box is still open"); }
 			if (e == null || !e.Excluded) { ok = false; Fail("the island isn't left out"); }
 			if (e != null && (e.Failed || e.Loading || e.Root != null)) { ok = false; Fail("the island was tried: failed " + e.Failed + ", loading " + e.Loading); }
+			// (Play without: a story step waiting for it goes on only after the grace time, and the box says so - review 10-30)
+			if (!StoryChain.PlayingWithoutMissing) { ok = false; Fail("Play without didn't set playing without"); }
+			if (Time.time - StoryChain.PlayingWithoutSince >= StoryChain.MissingGraceSeconds) { ok = false; Fail("no grace time before a story step goes on"); }
+			if (!MissingIslandsCheck.Text(MissingIslandsCheck.Last).Contains("about 10 minutes")) { ok = false; Fail("the box doesn't say a story step waits"); }
+			// (closed with Esc or its X: the world plays on, as Play without)
+			StoryChain.PlayingWithoutMissing = false;
+			MissingIslandsCheck.Show();
+			yield return null;
+			InfoWindow.Close();
+			yield return null;
+			if (!StoryChain.PlayingWithoutMissing) { ok = false; Fail("closing the box with Esc/X didn't play on without them"); }
 			IslandWorldState.Save();
 			string[] lines = File.ReadAllLines(IslandWorldState.WorldFilePath);
 			if (!lines.Any(l => l.StartsWith(MissingTestIsland + "|"))) { ok = false; Fail("the island's line is gone from the world file"); }

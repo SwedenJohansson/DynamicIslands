@@ -1149,6 +1149,9 @@ namespace DynamicIslands
 
 		/// <summary>Distance in front of the raft where SpawnIsland places the island's land. Raft's camera only renders to 400 m.</summary>
 		const float SpawnDistance = 250f;
+		/// <summary>Story islands SpawnIsland brought back (entry id, when): the same again within HandBringSeconds is "on its way".</summary>
+		internal static readonly Dictionary<int, float> handBrought = new Dictionary<int, float>();
+		const float HandBringSeconds = 30f;
 
 		[ConsoleCommand(name: "SpawnIsland", docs: "Host, in game: spawns a saved editor island in front of the raft. Usage: SpawnIsland <name> [distance in m, default 250] [height above sea in m, default the island's own elevation]")]
 		public static void SpawnIslandCommand(string[] args)
@@ -1175,12 +1178,27 @@ namespace DynamicIslands
 			// A story or plan island this world already has, not finished: that one comes back (quest kept, still the story's).
 			// A fresh copy had no rule: its quest started over, counted in the journal and never opened the next frequency
 			// (player 10-30).
-			IslandWorldState.Entry kept = IslandWorldState.Islands.FirstOrDefault(e => !string.IsNullOrEmpty(e.Rule) &&
-				e.Name.Equals(name, StringComparison.OrdinalIgnoreCase) && !ReturningIslands.Finished(e));
+			// (by its name on the host too: a world file's line can load from a same-content file of another name - review 10-30)
+			Func<IslandWorldState.Entry, bool> named = e => !string.IsNullOrEmpty(e.Rule) &&
+				((e.HostName ?? e.Name).Equals(name, StringComparison.OrdinalIgnoreCase) || e.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+			IslandWorldState.Entry kept = IslandWorldState.Islands.FirstOrDefault(e => named(e) && !ReturningIslands.Finished(e));
 			if (kept != null)
 			{
 				if (kept.Root != null || kept.Loading) { Notify("'" + name + "' is already here (the story's island, its quest as you left it)", false); return; }
-				if (!ReturningIslands.BringAgain(kept, origin)) Notify("'" + name + "' is this world's story island: no free spot ahead of the raft yet - sail on a little and try again", true);
+				// (one that can't load was moved and announced, and never came - review 10-30)
+				if (kept.Excluded || kept.WaitingForFile) { Notify("'" + name + "' is this world's story island, but its file isn't on this PC - put it back in Mods\\DynamicIslands (or download it in the island library) and load the world again", true); return; }
+				if (kept.Failed) { Notify("'" + name + "' is this world's story island, but it couldn't be made (the log says why) - it isn't spawned again", true); return; }
+				// (twice in a row: the first is still on its way - a second moved it again and used up a return)
+				float at;
+				if (handBrought.TryGetValue(kept.Id, out at) && Time.unscaledTime - at < HandBringSeconds) { Notify("'" + name + "' is on its way: it comes into sight ahead of the raft", false); return; }
+				if (!ReturningIslands.BringAgain(kept, origin, false)) Notify("'" + name + "' is this world's story island: no free spot ahead of the raft yet - sail on a little and try again", true);
+				else handBrought[kept.Id] = Time.unscaledTime;
+				return;
+			}
+			// (done: a fresh copy without the rule started its quest over and gave its story items again - review 10-30)
+			if (IslandWorldState.Islands.Any(e => named(e) && ReturningIslands.Finished(e)))
+			{
+				Notify("'" + name + "' is this world's story island and you finished it already - it isn't spawned again", true);
 				return;
 			}
 			// The island's y is its elevation above sea level (0 = a normal island)
@@ -1264,7 +1282,12 @@ namespace DynamicIslands
 			}
 			if (island == null)
 			{
-				if (entry != null) { entry.Loading = false; entry.Failed = true; }
+				if (entry != null)
+				{
+					entry.Loading = false; entry.Failed = true;
+					// (the story chain and the plan told: a rule's island is tried again - review 10-30)
+					try { WorldDirector.OnIslandFailed(entry, true); } catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] " + x.Message); }
+				}
 				yield break;
 			}
 
@@ -1302,6 +1325,7 @@ namespace DynamicIslands
 			{
 				if (entry != null) entry.Failed = true;
 				Notify("Spawning '" + name + "' failed - see console (F10)", true);
+				if (entry != null) try { WorldDirector.OnIslandFailed(entry, true); } catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] " + x.Message); }
 				yield break;
 			}
 
@@ -1313,6 +1337,7 @@ namespace DynamicIslands
 				if (entry != null)
 				{
 					entry.Root = root;
+					WorldDirector.Fresh.Remove(entry);
 					// (the host's list says which version the world plays: an island edited in the editor since the world was
 					// saved kept its old hash there until the next save)
 					if (Raft_Network.IsHost) entry.Hash = IslandNetwork.HashOf(entry.Name) ?? entry.Hash;
@@ -1334,6 +1359,7 @@ namespace DynamicIslands
 				Debug.LogError("[CUSTOM ISLANDS] Spawning '" + name + "' failed: " + e);
 				if (entry != null) entry.Failed = true;
 				Notify("Spawning '" + name + "' failed - see console (F10)", true);
+				if (entry != null) try { WorldDirector.OnIslandFailed(entry, true); } catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] " + x.Message); }
 			}
 		}
 

@@ -87,9 +87,9 @@ namespace DynamicIslands.Editor
 			if (days <= 0) return;
 			foreach (LootCrate crate in e.Root.GetComponentsInChildren<LootCrate>(true).Where(c => c.Refills)) Refill(e, crate.StateKey, days);
 			CreatureSpawnPoint[] spots = e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true);
-			// (a zone with story items is never ready again, as a chest with them never fills up again: the story's key or
-			// item came twice and "has"/"take" counts went wrong - player 10-30)
-			foreach (TriggerZone zone in e.Root.GetComponentsInChildren<TriggerZone>(true).Where(z => !z.OnceEver && !z.Items.Any(l => StoryItems.IsStory(l.Key))))
+			// (a zone with story items is ready again too - its guards, message and other loot come back - but its story items
+			// don't: they are given once per world, TriggerZone.StoryLootBase / Behaviours.StoryGivenBase)
+			foreach (TriggerZone zone in e.Root.GetComponentsInChildren<TriggerZone>(true).Where(z => !z.OnceEver))
 			{
 				if (!IsDue(e, zone.StateKey, days)) continue;
 				string id = zone.Id;

@@ -335,7 +335,8 @@ namespace DynamicIslands.Editor
 				IslandWorldState.Entry known = InWorld(name);
 				if (known != null)
 				{
-					if (!ReturningIslands.BringAgain(known, raftPos)) return Skip("no free spot ahead of the raft for '" + name + "' (it comes again)");
+					// (count false: the pool picking it isn't a return - it used up the quest's MaxReturns, review 10-30)
+					if (!ReturningIslands.BringAgain(known, raftPos, false)) return Skip("no free spot ahead of the raft for '" + name + "' (it comes again)");
 					sailedSinceSpawn = 0f;
 					spawned = true;
 					return "'" + name + "' comes again, " + Flat(known.Position - raftPos).magnitude.ToString("F0") + " m ahead";
@@ -401,7 +402,7 @@ namespace DynamicIslands.Editor
 			{
 				Debug.LogError("[CUSTOM ISLANDS] Generating island '" + name + "' failed: " + e);
 				IslandWorldState.RemoveIds(new[] { entry.Id }, false);
-				try { StoryChain.OnIslandFailed(entry); } catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] " + x.Message); }
+				try { WorldDirector.OnIslandFailed(entry, false); } catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] " + x.Message); } // (the story chain too; a plan rule comes again - review 10-30)
 				yield break;
 			}
 			// (pieces whose scenes weren't loaded yet get their own scale - the radio tower's floors were 3 x 3 m, IG6)
@@ -423,7 +424,7 @@ namespace DynamicIslands.Editor
 			{
 				Debug.LogError("[CUSTOM ISLANDS] Generating island '" + name + "' failed: " + e);
 				IslandWorldState.RemoveIds(new[] { entry.Id }, false);
-				try { StoryChain.OnIslandFailed(entry); } catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] " + x.Message); }
+				try { WorldDirector.OnIslandFailed(entry, false); } catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] " + x.Message); } // (the story chain too; a plan rule comes again - review 10-30)
 				yield break;
 			}
 			if (!IslandWorldState.Contains(entry)) yield break; // removed meanwhile
@@ -483,12 +484,13 @@ namespace DynamicIslands.Editor
 			{
 				if (failed != null) throw failed;
 				file.Save(IslandSpawner.PathFor(name));
-				radiusCache.Remove(name); elevationCache.Remove(name);
+				radiusCache.Remove(name); elevationCache.Remove(name); radiusFailedAt.Remove(name);
 			}
 			catch (Exception e)
 			{
 				Debug.LogError("[CUSTOM ISLANDS] Making '" + name + "' again failed: " + e);
 				entry.Loading = false; entry.Failed = true;
+				try { WorldDirector.OnIslandFailed(entry, false); } catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] " + x.Message); }
 				yield break;
 			}
 			entry.State.Clear();
@@ -649,6 +651,10 @@ namespace DynamicIslands.Editor
 		{
 			float r;
 			if (radiusCache.TryGetValue(name, out r)) return r;
+			// (a file that couldn't be read is tried again after a while, not -1 for good: one that arrives later (a client's
+			// download, a file put back) had no land radius all session - review 10-30)
+			float failedAt;
+			if (radiusFailedAt.TryGetValue(name, out failedAt) && Time.unscaledTime - failedAt < 30f) return -1f;
 			try
 			{
 				IslandFile file = IslandFile.Load(IslandSpawner.PathFor(name));
@@ -656,14 +662,17 @@ namespace DynamicIslands.Editor
 				elevationCache[name] = file.Elevation;
 			}
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read island '" + name + "': " + ex.Message); r = -1; }
-			radiusCache[name] = r;
+			if (r >= 0f) { radiusCache[name] = r; radiusFailedAt.Remove(name); }
+			else radiusFailedAt[name] = Time.unscaledTime;
 			return r;
 		}
+
+		static readonly Dictionary<string, float> radiusFailedAt = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 
 		static readonly Dictionary<string, float> elevationCache = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>An island file written again: its size read from it anew.</summary>
-		internal static void ForgetSize(string name) { radiusCache.Remove(name); elevationCache.Remove(name); }
+		internal static void ForgetSize(string name) { radiusCache.Remove(name); elevationCache.Remove(name); radiusFailedAt.Remove(name); }
 
 		/// <summary>Placing an island whose file doesn't exist yet (being generated): its size until then.</summary>
 		internal static void CacheSize(string name, float radius, float elevation)

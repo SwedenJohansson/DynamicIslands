@@ -164,8 +164,9 @@ namespace DynamicIslands.Editor
 			{
 				string v = props[k];
 				if (v == null || v.IndexOf(Prefix, StringComparison.OrdinalIgnoreCase) < 0) continue;
-				// ("story:<id>" as a whole: "story:key" isn't part of "story:key-2")
-				string nv = System.Text.RegularExpressions.Regex.Replace(v, @"(?<![A-Za-z0-9_\-])story:([A-Za-z0-9_\-]+)(?![A-Za-z0-9_\-])",
+				// ("story:<id>" as a whole: "story:key" isn't part of "story:key-2". Any letter or digit, as NewId makes them -
+				// "story:k\u00e4llaren" from an older id or a pack wasn't renamed: review 10-30)
+				string nv = System.Text.RegularExpressions.Regex.Replace(v, @"(?<![\p{L}\p{Nd}_\-])story:([\p{L}\p{Nd}_\-]+)(?![\p{L}\p{Nd}_\-])",
 					x => { string to; return map.TryGetValue(x.Groups[1].Value, out to) ? Prefix + to : x.Value; }, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 				if (nv != v) { props[k] = nv; changed = true; }
 			}
