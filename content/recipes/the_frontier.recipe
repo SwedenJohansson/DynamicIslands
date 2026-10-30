@@ -117,7 +117,8 @@ pop
 push at -2.25 105.25 h=-2.5 yaw=270
 call stilt_hut y=5.1 ladder=none w1=ReefHuts_PlasticWall4
 place Table_Common_01 - at 2.25 3.6 y=5.1 sit
-place Note_Paper fishernote at 2.25 3.6 y=5.9 drop yaw=20
+# (REACH 10-29: dropped, it fell through the table top to the floor under it - set on the top)
+place Note_Paper fishernote at 2.25 3.6 y=6.02 yaw=20
 place FishingNets_02 - at 0.8 3.7 y=5.1 sit yaw=80
 place FishingNets_02 - at 3.8 1 y=5.1 sit yaw=10
 place Placeable_Lantern_Metal - at 3.9 3.8 y=5.1 sit
@@ -170,7 +171,8 @@ place Locker harbouroffice at 0.5 3.8 y=0.1 sit yaw=90
 place "Table Office" - at 3 3.7 y=0.1 sit yaw=180
 place "Chair Office" - at 3 3 y=0.1 sit
 place Placeable_Lantern_Metal - at 3.4 3.7 y=0.9 sit drop
-place RT_CommRadio officeradio at 2.5 3.7 y=1 sit drop yaw=180
+# (REACH 10-29: dropped, it fell through the table top to the floor under it - set on the top)
+place RT_CommRadio officeradio at 2.5 3.7 y=1.1 yaw=180
 place Loot_Chest officecache at 4.8 0.6 y=0.1 sit yaw=0
 place Crate_Big_02 - at 1 0.9 y=0.1 sit yaw=8
 place Pickup_Landmark_Plank_Land - at 2.0 2.0 y=0.4 drop yaw=29
@@ -213,7 +215,8 @@ place Placeable_CookingStand_Smelter - at 1.2 1.1 y=0.1 sit yaw=45
 place Workbench - at 3.3 0.6 y=0.1 sit
 place CaravanWorkbench_Tools - at 3.3 0.6 y=1.2 drop
 place "Box Big" forgechest at 5.3 1 y=0.1 sit yaw=-90
-place Note_Paper smithnote at 3.6 0.5 y=1.2 drop yaw=15
+# (REACH 10-29: dropped, it fell through the table top to the floor under it - set on the top)
+place Note_Paper smithnote at 3.6 0.5 y=1.03 yaw=15
 place Reef_Barrel1 - at 0.7 5.2 y=0.1 sit
 place MetalSheet_2 - at 1.6 5.4 y=0.1 sit yaw=10
 place Placeable_Lantern_Metal - at 2.6 0.6 y=1.2 drop
@@ -262,7 +265,8 @@ place TP_Selene_DoorCrankWheel wheels at -14.9 42.42 h=35.32 yaw=180
 place TP_Selene_DoorCrankWheel wheels at -14 42.42 h=35.32 yaw=180
 place TP_Selene_DoorCrankWheel wheels at -13.1 42.42 h=35.32 yaw=180
 place Table_Common_01 - at -11 33.6 h=34.7 sit
-place Note_Paper reservoirnote at -11 33.6 h=35.6 drop yaw=-20
+# (REACH 10-29: dropped, it fell through the table top to the floor under it - set on the top)
+place Note_Paper reservoirnote at -11 33.6 h=35.62 yaw=-20
 place Zone_Trigger reservoir at -10 36 h=36
 place Creature_Bear bear at -16 33 h=34.7
 line WaterPipe_Long_2 from -14 42.6 to -14 49.6 follow y=0.12
@@ -310,7 +314,8 @@ call corners w=3 d=3
 roof 3 3 at 0 0 y=0.1
 place MayorsChest growerchest at 3.7 3.8 y=0.1 sit yaw=180
 place Table_Common_01 - at 1.2 3.4 y=0.1 sit yaw=90
-place Note_Paper growernote at 1.2 3.4 y=0.9 drop yaw=30
+# (REACH 10-29: dropped, it fell through the table top to the floor under it - set on the top)
+place Note_Paper growernote at 1.2 3.4 y=1.02 yaw=30
 place Placeable_Chair_Stool - at 1.9 2.5 y=0.1 sit
 place Placeable_Lantern_Metal - at 0.9 3.9 y=0.9 drop
 place Pickup_Landmark_Plastic3_Land - at 3.1 2.2 y=0.4 drop yaw=12
@@ -455,7 +460,8 @@ roof 6 4 at 0 0 y=2.52 wood
 place Block_Wall_Wood halldoora at -0.12 2.25 y=0.1 yaw=90
 place Block_Wall_Wood halldoorb at -0.12 3.75 y=0.1 yaw=90
 place "VG_DecorationPrefabBase_DinnerTable Variant" - at 4.5 3 y=0.1 sit yaw=90
-place Note_Paper commandersorder at 4.5 3 y=0.9 drop yaw=10
+# (REACH 10-29: dropped, it fell through the table top to the floor under it - set on the top)
+place Note_Paper commandersorder at 4.5 3 y=0.95 yaw=10
 place Placeable_Flag_01 - at 8.3 0.7 y=0.1
 place Placeable_Flag_01 - at 8.3 5.3 y=0.1
 place Placeable_Lantern_Basic - at 0.7 0.7 y=0.1 sit
