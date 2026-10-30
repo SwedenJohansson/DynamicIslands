@@ -490,6 +490,9 @@ namespace DynamicIslands.Editor
 			incoming.Remove(key);
 			string[] lines = string.Concat(parts).Split('\n');
 			WarnFuture(lines, "the host sent");
+			// (the host's Raft save this copy is from: a quest reward given after it isn't in it yet - review 10-30)
+			try { QuestRewards.OnHostCopy(guid, RaftSaveOf(lines), LongLine(lines, "@between=")); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Quest rewards, the host's save: " + e.Message); }
 			// (newer by the world's save counter, not the PCs' clocks - AU4)
 			if (HostLines == null || !Newer(HostLines, lines)) HostLines = lines;
 			string path = Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), guid + ".txt");

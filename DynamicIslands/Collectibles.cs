@@ -105,6 +105,12 @@ namespace DynamicIslands.Editor
 		/// <summary>The count each set of a loaded island was last seen at here (island id + set), to show its rises.</summary>
 		static readonly Dictionary<string, int> seen = new Dictionary<string, int>();
 
+		/// <summary>A world loaded or a host's arrived: island ids repeat between worlds and hosts - review 10-30.</summary>
+		internal static void Reset() { seen.Clear(); }
+
+		/// <summary>Sets seen this world (tests).</summary>
+		internal static int SeenCount { get { return seen.Count; } }
+
 		static string SeenKey(IslandWorldState.Entry e, string set) { return e.Id + ":" + (set ?? "").Trim().ToLowerInvariant(); }
 
 		static void ShowCount(IslandWorldState.Entry e, string set, int found)

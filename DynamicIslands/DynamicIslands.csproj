@@ -238,6 +238,7 @@
     <Compile Include="IslandSettingsUndo.cs" />
     <Compile Include="EditorRenames.cs" />
     <Compile Include="DevTestsQuestOrder.cs" />
+    <Compile Include="DevTestsSaveStateResets.cs" />
     <Compile Include="WorldWindow.cs" />
     <Compile Include="IslandTest.cs" />
     <Compile Include="Housekeeping.cs" />

@@ -50,8 +50,13 @@ namespace DynamicIslands.Editor
 		#region The world file
 
 		/// <summary>Before a world's file is read (WorldOptions.Reset): a new one gets the chosen level.</summary>
+		// (the build waiting for the new raft: stopped when another world loads - review 10-30)
+		static Coroutine building;
+
 		internal static void Reset(bool isNew)
 		{
+			if (building != null && DynamicIslands.instance != null) DynamicIslands.instance.StopCoroutine(building);
+			building = null;
 			Level = 0;
 			Done = false;
 			LastBuild = "";
@@ -82,7 +87,8 @@ namespace DynamicIslands.Editor
 		internal static void OnWorldRead()
 		{
 			if (!Raft_Network.IsHost || Level <= 0 || Done || DynamicIslands.instance == null) return;
-			DynamicIslands.instance.StartCoroutine(BuildWhenReady());
+			if (building != null) DynamicIslands.instance.StopCoroutine(building);
+			building = DynamicIslands.instance.StartCoroutine(BuildWhenReady());
 		}
 
 		#endregion

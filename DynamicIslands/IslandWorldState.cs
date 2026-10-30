@@ -215,6 +215,13 @@ namespace DynamicIslands.Editor
 			DynamicIslands.Notify("This world was saved by a newer Custom Islands (" + version + ", you have " + LibraryPack.ModVersion + "). What this version doesn't know is kept as it is, but please update the mod before playing on.", true);
 		}
 
+		/// <summary>One step of a world's resets: a throw is logged and the next step (and the island list) still runs - review 10-30.</summary>
+		internal static void ResetStep(string what, Action step)
+		{
+			try { step(); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] World reset, " + what + " failed: " + e); }
+		}
+
 		public static void OnWorldLoaded()
 		{
 			islands.Clear();
@@ -223,21 +230,25 @@ namespace DynamicIslands.Editor
 			keptLines.Clear();
 			WorldCopy.ForgetHostLines();
 			CustomIslandSpawner.Enabled = true;
-			CustomIslandSpawner.OnWorldLoaded();
-			IslandNetwork.OnWorldLoaded();
-			WorldRules.Reset();
-			WorldDirector.Reset();
-			StoryBook.Reset();
-			PlayerPlaces.Reset();
-			Claims.Reset();
-			MechFeatures.Reset();
-			WorldRandomizer.Reset();
-			PlayerLevels.Reset();
-			WorldOptions.Reset();
-			WorldIslands.Reset();
-			WorldWindowHint.OnWorldLoaded();
-			StoryChain.Reset();
-			BuriedTreasure.ForgetGiven(); // (chest indexes come from the island ids of this world: another world's would block its loot - audit 10-30)
+			ResetStep("CustomIslandSpawner.OnWorldLoaded", () => CustomIslandSpawner.OnWorldLoaded());
+			ResetStep("IslandNetwork.OnWorldLoaded", () => IslandNetwork.OnWorldLoaded());
+			ResetStep("WorldRules.Reset", () => WorldRules.Reset());
+			ResetStep("WorldDirector.Reset", () => WorldDirector.Reset());
+			ResetStep("StoryBook.Reset", () => StoryBook.Reset());
+			ResetStep("PlayerPlaces.Reset", () => PlayerPlaces.Reset());
+			ResetStep("Claims.Reset", () => Claims.Reset());
+			ResetStep("MechFeatures.Reset", () => MechFeatures.Reset());
+			ResetStep("WorldRandomizer.Reset", () => WorldRandomizer.Reset());
+			ResetStep("PlayerLevels.Reset", () => PlayerLevels.Reset());
+			ResetStep("WorldOptions.Reset", () => WorldOptions.Reset());
+			ResetStep("WorldIslands.Reset", () => WorldIslands.Reset());
+			ResetStep("WorldWindowHint.OnWorldLoaded", () => WorldWindowHint.OnWorldLoaded());
+			ResetStep("StoryChain.Reset", () => StoryChain.Reset());
+			ResetStep("BuriedTreasure.ForgetGiven", () => BuriedTreasure.ForgetGiven()); // (chest indexes come from the island ids of this world: another world's would block its loot - audit 10-30)
+			ResetStep("QuestCount.Reset", () => QuestCount.Reset()); // (the last world's count isn't shown here - review 10-30)
+			ResetStep("Collectibles.Reset", () => Collectibles.Reset()); // (set counts are kept by island id, and ids repeat between worlds - review 10-30)
+			// (the Raft save the world loads from, before Choose uses up its stamp: a quest reward given after it isn't in it - review 10-30)
+			if (Raft_Network.IsHost) ResetStep("QuestRewards.OnWorldLoaded", () => QuestRewards.OnWorldLoaded(WorldCopy.LoadingStamp));
 			// (the newest copy: this PC's own, or the one that came with Raft's world folder from another host - WorldCopy)
 			string[] fileLines = null;
 			try { fileLines = Raft_Network.IsHost ? WorldCopy.Choose(FilePath) : null; }
@@ -313,6 +324,8 @@ namespace DynamicIslands.Editor
 			WorldCopy.InRaftSave = true;
 			try { IslandWorldState.Save(); }
 			finally { WorldCopy.InRaftSave = false; }
+			// (a quest reward given from now on isn't in this save - review 10-30)
+			if (Raft_Network.IsHost) QuestRewards.AfterRaftSave(WorldCopy.SavingStamp);
 		}
 	}
 

@@ -191,12 +191,14 @@ namespace DynamicIslands.Editor
 		/// blueprint pairs). A world that never had one writes no file for it.</summary>
 		static bool used;
 
+		static void ResetStep(string what, Action step) { IslandWorldState.ResetStep(what, step); }
+
 		internal static void Reset()
 		{
 			Current.Clear();
 			Seed = 0;
 			used = false;
-			global::DynamicIslands.Editor.StoryOrder.Reset();
+			ResetStep("StoryOrder.Reset", () => global::DynamicIslands.Editor.StoryOrder.Reset());
 			if (!Raft_Network.IsHost) { Notify(); return; }
 			bool isNew = false;
 			try { isNew = GameManager.IsInNewGame; } catch { }
@@ -207,32 +209,32 @@ namespace DynamicIslands.Editor
 				used = Current.Count > 0;
 				Log("New world: " + Describe());
 				// (the level up system, when it was chosen in World settings)
-				global::DynamicIslands.Editor.PlayerLevels.OnNewWorld();
+				ResetStep("PlayerLevels.OnNewWorld", () => global::DynamicIslands.Editor.PlayerLevels.OnNewWorld());
 			}
-			global::DynamicIslands.Editor.HeadStart.Reset(isNew);
+			ResetStep("HeadStart.Reset", () => global::DynamicIslands.Editor.HeadStart.Reset(isNew));
 			Pending = null;
 			// (a saved world loaded: every unsaved New Game choice goes back to the remembered one, as the options' and the
 			// islands' did - the level up system, the randomizer and the rules box kept theirs)
 			if (!isNew) { PlayerLevels.Pending = null; WorldRandomizer.Pending = null; NewWorldRulesBox.Forget(); }
-			global::DynamicIslands.Editor.PrivateStorage.Reset();
-			global::DynamicIslands.Editor.IronRaft.Reset();
-			global::DynamicIslands.Editor.NightDanger.Reset();
-			global::DynamicIslands.Editor.DailyQuest.Reset();
-			global::DynamicIslands.Editor.RogueShark.Reset();
-			global::DynamicIslands.Editor.GoldenBarrels.Reset();
-			global::DynamicIslands.Editor.StormDays.Reset();
-			global::DynamicIslands.Editor.WhaleBreach.Reset();
-			global::DynamicIslands.Editor.Kraken.Reset();
-			global::DynamicIslands.Editor.FogSight.Reset();
-			global::DynamicIslands.Editor.GhostShip.Reset();
-			global::DynamicIslands.Editor.StormSeas.Reset();
-			global::DynamicIslands.Editor.TraderRaft.Reset();
-			global::DynamicIslands.Editor.UpgradeTable.Reset();
-			ScrambledBlueprints.Reset();
-			global::DynamicIslands.Editor.GhostRafts.Reset();
-			global::DynamicIslands.Editor.LightningStrikes.Reset();
-			global::DynamicIslands.Editor.UfoSightings.Reset();
-			global::DynamicIslands.Editor.FogBanks.Reset();
+			ResetStep("PrivateStorage.Reset", () => global::DynamicIslands.Editor.PrivateStorage.Reset());
+			ResetStep("IronRaft.Reset", () => global::DynamicIslands.Editor.IronRaft.Reset());
+			ResetStep("NightDanger.Reset", () => global::DynamicIslands.Editor.NightDanger.Reset());
+			ResetStep("DailyQuest.Reset", () => global::DynamicIslands.Editor.DailyQuest.Reset());
+			ResetStep("RogueShark.Reset", () => global::DynamicIslands.Editor.RogueShark.Reset());
+			ResetStep("GoldenBarrels.Reset", () => global::DynamicIslands.Editor.GoldenBarrels.Reset());
+			ResetStep("StormDays.Reset", () => global::DynamicIslands.Editor.StormDays.Reset());
+			ResetStep("WhaleBreach.Reset", () => global::DynamicIslands.Editor.WhaleBreach.Reset());
+			ResetStep("Kraken.Reset", () => global::DynamicIslands.Editor.Kraken.Reset());
+			ResetStep("FogSight.Reset", () => global::DynamicIslands.Editor.FogSight.Reset());
+			ResetStep("GhostShip.Reset", () => global::DynamicIslands.Editor.GhostShip.Reset());
+			ResetStep("StormSeas.Reset", () => global::DynamicIslands.Editor.StormSeas.Reset());
+			ResetStep("TraderRaft.Reset", () => global::DynamicIslands.Editor.TraderRaft.Reset());
+			ResetStep("UpgradeTable.Reset", () => global::DynamicIslands.Editor.UpgradeTable.Reset());
+			ResetStep("ScrambledBlueprints.Reset", () => ScrambledBlueprints.Reset());
+			ResetStep("GhostRafts.Reset", () => global::DynamicIslands.Editor.GhostRafts.Reset());
+			ResetStep("LightningStrikes.Reset", () => global::DynamicIslands.Editor.LightningStrikes.Reset());
+			ResetStep("UfoSightings.Reset", () => global::DynamicIslands.Editor.UfoSightings.Reset());
+			ResetStep("FogBanks.Reset", () => global::DynamicIslands.Editor.FogBanks.Reset());
 			Notify();
 			if (isNew) Broadcast();
 		}
@@ -252,10 +254,14 @@ namespace DynamicIslands.Editor
 		{
 			// (the head start's lines also in a world without options)
 			foreach (string l in global::DynamicIslands.Editor.HeadStart.WriteLines()) yield return l;
-			if (Current.Count == 0 && Seed == 0) yield break;
-			yield return "@options=" + string.Join(",", All.Where(On).ToArray());
-			yield return "@optionseed=" + Seed.ToString(CultureInfo.InvariantCulture);
-			if (used) yield return "@optionsused=1";
+			// (only the options' own lines wait for options or a seed: the parts' lines below were left out with them, and a
+			// world whose options were all switched off forgot its private boxes' owners and the rest - review 10-30)
+			if (Current.Count != 0 || Seed != 0)
+			{
+				yield return "@options=" + string.Join(",", All.Where(On).ToArray());
+				yield return "@optionseed=" + Seed.ToString(CultureInfo.InvariantCulture);
+				if (used) yield return "@optionsused=1";
+			}
 			foreach (string l in global::DynamicIslands.Editor.PrivateStorage.WriteLines()) yield return l;
 			foreach (string l in global::DynamicIslands.Editor.GhostRafts.WriteLines()) yield return l;
 			foreach (string l in global::DynamicIslands.Editor.DailyQuest.WriteLines()) yield return l;
@@ -319,22 +325,25 @@ namespace DynamicIslands.Editor
 		{
 			Current.Clear();
 			Seed = 0;
-			global::DynamicIslands.Editor.PrivateStorage.Reset();
-			global::DynamicIslands.Editor.IronRaft.Reset();
-			global::DynamicIslands.Editor.NightDanger.Reset();
-			global::DynamicIslands.Editor.DailyQuest.Reset();
-			global::DynamicIslands.Editor.RogueShark.Reset();
-			global::DynamicIslands.Editor.GoldenBarrels.Reset();
-			global::DynamicIslands.Editor.StormDays.Reset();
-			global::DynamicIslands.Editor.WhaleBreach.Reset();
-			global::DynamicIslands.Editor.Kraken.Reset();
-			global::DynamicIslands.Editor.FogSight.Reset();
-			global::DynamicIslands.Editor.GhostShip.Reset();
-			global::DynamicIslands.Editor.StormSeas.Reset();
-			global::DynamicIslands.Editor.TraderRaft.Reset();
-			global::DynamicIslands.Editor.LightningStrikes.Reset();
-			ScrambledBlueprints.Reset();
-			global::DynamicIslands.Editor.UpgradeTable.Reset();
+			ResetStep("PrivateStorage.Reset", () => global::DynamicIslands.Editor.PrivateStorage.Reset());
+			ResetStep("IronRaft.Reset", () => global::DynamicIslands.Editor.IronRaft.Reset());
+			ResetStep("NightDanger.Reset", () => global::DynamicIslands.Editor.NightDanger.Reset());
+			ResetStep("DailyQuest.Reset", () => global::DynamicIslands.Editor.DailyQuest.Reset());
+			ResetStep("RogueShark.Reset", () => global::DynamicIslands.Editor.RogueShark.Reset());
+			ResetStep("GoldenBarrels.Reset", () => global::DynamicIslands.Editor.GoldenBarrels.Reset());
+			ResetStep("StormDays.Reset", () => global::DynamicIslands.Editor.StormDays.Reset());
+			ResetStep("WhaleBreach.Reset", () => global::DynamicIslands.Editor.WhaleBreach.Reset());
+			ResetStep("Kraken.Reset", () => global::DynamicIslands.Editor.Kraken.Reset());
+			ResetStep("FogSight.Reset", () => global::DynamicIslands.Editor.FogSight.Reset());
+			ResetStep("GhostShip.Reset", () => global::DynamicIslands.Editor.GhostShip.Reset());
+			ResetStep("StormSeas.Reset", () => global::DynamicIslands.Editor.StormSeas.Reset());
+			ResetStep("TraderRaft.Reset", () => global::DynamicIslands.Editor.TraderRaft.Reset());
+			ResetStep("LightningStrikes.Reset", () => global::DynamicIslands.Editor.LightningStrikes.Reset());
+			ResetStep("ScrambledBlueprints.Reset", () => ScrambledBlueprints.Reset());
+			ResetStep("UpgradeTable.Reset", () => global::DynamicIslands.Editor.UpgradeTable.Reset());
+			// (only counters the host uses: a player who hosts later starts at 0 - review 10-30. UfoSightings and FogBanks are
+			// left alone here: a late call - IslandNetwork's 10 s fallback - would take away a saucer or fog the host just sent)
+			ResetStep("GhostRafts.Reset", () => global::DynamicIslands.Editor.GhostRafts.Reset());
 			Notify();
 		}
 

@@ -39,7 +39,11 @@ namespace DynamicIslands.Editor
 
 		static void Log(string msg) { Debug.Log("[CUSTOM ISLANDS] [barrels] " + msg); }
 
-		internal static void Reset() { TestKind = null; }
+		// (barrels opened in another world, or after the save loaded, aren't this world's: ObjectIndex repeats - review 10-30)
+		internal static void Reset() { TestKind = null; given.Clear(); }
+
+		/// <summary>Barrels given a bonus this world (tests).</summary>
+		internal static int GivenCount { get { return given.Count; } }
 
 		static int Hash(int seed, uint index, int salt)
 		{

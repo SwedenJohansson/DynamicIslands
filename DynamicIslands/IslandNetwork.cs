@@ -198,6 +198,10 @@ namespace DynamicIslands.Editor
 			WorldOptions.OnWorldReceived();
 			global::DynamicIslands.Editor.StoryChain.OnWorldReceived();
 			global::DynamicIslands.Editor.WorldCopy.OnWorldReceived();
+			global::DynamicIslands.Editor.QuestCount.Reset();
+			global::DynamicIslands.Editor.Collectibles.Reset();
+			global::DynamicIslands.Editor.QuestRewards.OnWorldReceived();
+			toldRefused.Clear(); // (a new host: its left-out islands are told again - review 10-30)
 			IslandWorldState.RemoveIds(IslandWorldState.Islands.Select(e => e.Id).ToList(), false);
 			synced = false;
 			syncTries = 0;
