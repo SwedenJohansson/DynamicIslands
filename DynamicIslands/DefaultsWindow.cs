@@ -43,7 +43,7 @@ namespace DynamicIslands.Editor
 
 		static readonly Setting[] Shared =
 		{
-			new Setting("receiverDistance", "Receiver range (m, 0 = all)", "Receiver dots only for islands this close (0 = all of them); an island the players still need shows however far it is"),
+			new Setting("receiverDistance", "Receiver range (m, 0 = all)", "Receiver dots only for islands this close (0 = all of them); an island the players still need (a quest begun, a plan's island not done yet, one on its own Receiver frequency) shows however far it is"),
 			new Setting("unloadDistance", "Unload beyond (m)", "Islands further than this from the raft are unloaded, and come back when the raft returns (300 or more)"),
 			new Setting("regrowDays", "Regrow days (new worlds)", "Harvested trees and picked-up items grow back after this many in-game days (0 = never). A world keeps the days it was first played with: change a world's in Esc > Custom Islands", true),
 		};

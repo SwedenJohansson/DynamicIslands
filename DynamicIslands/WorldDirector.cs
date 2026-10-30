@@ -1834,7 +1834,8 @@ namespace DynamicIslands.Editor
 			if (brought != null && brought.Repeats) return Finished(e) ? null : "again";
 			int steps = IslandQuest.From(IslandCache.PropsOf(e)).Steps.Count, step = QuestTracker.StepOf(e);
 			bool begun = e.State.ContainsKey(WorldDirector.VisitKey) || step > 0;
-			if (steps == 0 || step >= steps || !begun) return null;
+			// (a side quest begun and not done too: its rewards are only there - code audit 2026-10-30)
+			if ((steps == 0 || step >= steps || !begun) && !QuestTracker.SideQuestOpen(e)) return null;
 			return Returns(e) < MaxReturns ? "quest" : null;
 		}
 
@@ -1847,6 +1848,7 @@ namespace DynamicIslands.Editor
 			// (never reached and no step done: not finished whatever its quest - without reading its file, which the spawn
 			// pool's first pick did for every island the world has, IM43)
 			if (!e.State.ContainsKey(WorldDirector.VisitKey) && QuestTracker.StepOf(e) <= 0) return false;
+			if (QuestTracker.SideQuestOpen(e)) return false;
 			int steps = IslandQuest.From(IslandCache.PropsOf(e)).Steps.Count;
 			if (steps > 0) return QuestTracker.StepOf(e) >= steps;
 			return e.State.ContainsKey(WorldDirector.VisitKey);

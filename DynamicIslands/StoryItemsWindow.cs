@@ -21,6 +21,11 @@ namespace DynamicIslands.Editor
 		RectTransform body;
 		readonly List<InputField> fields = new List<InputField>();
 		int pickingIconFor = -1;
+		// (player 10-30: every new item was "Old key" / story:old-key whatever picture was picked, and the id couldn't be
+		// changed. Now a new item's name follows its picture until it's typed, its id follows its name until the id is typed,
+		// and the id can be changed - Save then renames what uses the old id on this island)
+		readonly Dictionary<StoryItemDef, string> originalId = new Dictionary<StoryItemDef, string>();
+		readonly HashSet<StoryItemDef> autoName = new HashSet<StoryItemDef>(), idTyped = new HashSet<StoryItemDef>();
 
 		public static void Create(Transform canvas)
 		{
@@ -38,6 +43,7 @@ namespace DynamicIslands.Editor
 		{
 			if (instance == null) return;
 			instance.defs = StoryItems.Of(DynamicIslands.currentIslandProps).Select(d => d.Copy()).ToList();
+			instance.Remember();
 			instance.pickingIconFor = -1;
 			instance.gameObject.SetActive(true);
 			instance.transform.SetAsLastSibling();
@@ -113,6 +119,7 @@ namespace DynamicIslands.Editor
 				var d = new StoryItemDef { Name = "Old key", Icon = StoryItems.QuestIcon + "Vasagatan_GreenKey", Description = "" };
 				d.Id = StoryItems.NewId(defs, d.Name);
 				defs.Add(d);
+				autoName.Add(d);
 				Rebuild();
 			}, "Another story item", 170, 26f, 12);
 			SetsGroup();
@@ -130,13 +137,28 @@ namespace DynamicIslands.Editor
 			img.sprite = StoryItems.IconSprite(d.Icon);
 			img.preserveAspect = true; img.raycastTarget = false;
 			if (img.sprite == null) img.color = new Color(0, 0, 0, 0.2f);
-			InputField name = Field(row, "Name players see", d.Name, 170, "The item's name in the journal and messages", v => d.Name = v.Trim());
+			InputField idField = null;
+			InputField name = Field(row, "Name players see", d.Name, 170, "The item's name in the journal and messages", v =>
+			{
+				string n = v.Trim();
+				if (n != d.Name) autoName.Remove(d);
+				d.Name = n;
+				if (FollowName(d) && idField != null) idField.text = d.Id;
+			});
 			name.characterLimit = 40;
 			InputField desc = Field(row, "What it is (shown in the journal)", d.Description, -1, "A line or two about it", v => d.Description = v.Trim());
 			desc.characterLimit = 200;
-			Text id = UIKit.Label(row, "story:" + d.Id, 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "Id");
-			UIKit.Size(id.gameObject, 150);
-			UIKit.Hint(id.gameObject, "What chests, actions and checks call it");
+			Text id = UIKit.Label(row, "story:", 11, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Italic, "Id");
+			UIKit.Size(id.gameObject, 38);
+			const string idHint = "Its id: what chests, actions and checks call it (story:<id>). A new item's id follows its name. Changing an id renames it in this island's chests, actions, checks and quest on Save; worlds where the crew already has the item keep the old one";
+			UIKit.Hint(id.gameObject, idHint);
+			idField = Field(row, "id", d.Id, 112, idHint, v =>
+			{
+				string n = UniqueId(d, CleanId(v));
+				if (n.Length > 0 && n != d.Id) { d.Id = n; idTyped.Add(d); }
+				idField.text = d.Id;
+			});
+			idField.characterLimit = 40;
 			// (T8: a Raft item players can take it out of the journal as - "Take out" in the journal; none: a journal item only)
 			bool hasRaft = (d.RaftItem ?? "").Trim().Length > 0;
 			UIKit.Button(row, hasRaft ? "As " + ContentCatalog.ItemLabel(d.RaftItem.Trim()) : "Raft item...", () => { Keep(); ItemPickerWindow.PickOne(item => { defs[index].RaftItem = item; Rebuild(); }); }, "Optional: one of Raft's own items players can take it out of the journal as (Take out in the journal puts that item in their inventory; the crew has one less). None: it stays a journal item.", 120, 28f, 12);
@@ -160,7 +182,8 @@ namespace DynamicIslands.Editor
 			foreach (SO_QuestItem q in StoryItems.QuestItems)
 			{
 				string icon = StoryItems.QuestIcon + q.questItemType;
-				Button b = UIKit.Button(grid, "", () => { defs[index].Icon = icon; pickingIconFor = -1; Rebuild(); }, q.questItemType.ToString().Replace('_', ' '), 44, 44f);
+				string label = q.questItemType.ToString();
+				Button b = UIKit.Button(grid, "", () => { defs[index].Icon = icon; NameFromPicture(defs[index], QuestItemName(label)); pickingIconFor = -1; Rebuild(); }, label.Replace('_', ' '), 44, 44f);
 				UIKit.Slot(b);
 				RectTransform pic = UIKit.Rect("Picture", b.transform);
 				UIKit.Stretch(pic, 4, 4, 4, 4);
@@ -169,7 +192,7 @@ namespace DynamicIslands.Editor
 			}
 			RectTransform more = UIKit.Row(wrap, 26f, 6f, "More");
 			UIKit.Label(more, "Raft's quest items above, or any of Raft's items:", 12, UIKit.TextMuted);
-			UIKit.Button(more, "Raft items...", () => ItemPickerWindow.PickOne(item => { defs[index].Icon = item; pickingIconFor = -1; Rebuild(); }), "Use the picture of one of Raft's items", 130, 26f, 12);
+			UIKit.Button(more, "Raft items...", () => ItemPickerWindow.PickOne(item => { defs[index].Icon = item; NameFromPicture(defs[index], ContentCatalog.ItemLabel(item)); pickingIconFor = -1; Rebuild(); }), "Use the picture of one of Raft's items", 130, 26f, 12);
 		}
 
 		void SetsGroup()
@@ -213,25 +236,119 @@ namespace DynamicIslands.Editor
 
 		#endregion
 
+		#region Names and ids (player 10-30)
+
+		/// <summary>The ids the island has now: Save renames what uses one that changed.</summary>
+		void Remember()
+		{
+			originalId.Clear(); autoName.Clear(); idTyped.Clear();
+			foreach (StoryItemDef d in defs) originalId[d] = d.Id;
+		}
+
+		/// <summary>A new item's id follows its name (not one the island had: things may use that; not a typed one). True when it changed.</summary>
+		bool FollowName(StoryItemDef d)
+		{
+			if (originalId.ContainsKey(d) || idTyped.Contains(d)) return false;
+			string id = StoryItems.NewId(defs.Where(x => x != d), CleanId(d.Name));
+			if (id == d.Id) return false;
+			d.Id = id;
+			return true;
+		}
+
+		/// <summary>A new item still called by the default name takes the name of the picture picked.</summary>
+		void NameFromPicture(StoryItemDef d, string name)
+		{
+			if (d == null || !autoName.Contains(d) || string.IsNullOrEmpty(name) || name.Trim().Length == 0) return;
+			d.Name = name.Trim().Length > 40 ? name.Trim().Substring(0, 40) : name.Trim();
+			FollowName(d);
+		}
+
+		/// <summary>A quest item's name as an item name: "Vasagatan_GreenKey" -> "Green key", "Vasagatan_Key_Red" -> "Key red".</summary>
+		public static string QuestItemName(string type)
+		{
+			string[] parts = (type ?? "").Split(new[] { '_' }, StringSplitOptions.RemoveEmptyEntries);
+			if (parts.Length == 0) return "";
+			// (the first part is the place in Raft's story)
+			string s = string.Join(" ", parts.Length > 1 ? parts.Skip(1).ToArray() : parts);
+			var b = new System.Text.StringBuilder();
+			for (int i = 0; i < s.Length; i++)
+			{
+				if (i > 0 && char.IsUpper(s[i]) && char.IsLower(s[i - 1])) b.Append(' ');
+				b.Append(b.Length == 0 ? char.ToUpperInvariant(s[i]) : char.ToLowerInvariant(s[i]));
+			}
+			return b.ToString();
+		}
+
+		/// <summary>An id as typed, made safe: letters a-z, digits, "-" and "_" (anything else becomes "-"), lower case.</summary>
+		public static string CleanId(string v)
+		{
+			string s = (v ?? "").Trim().ToLowerInvariant();
+			if (s.StartsWith(StoryItems.Prefix)) s = s.Substring(StoryItems.Prefix.Length);
+			return new string(s.Select(c => (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-' ? c : '-').ToArray()).Trim('-');
+		}
+
+		/// <summary>An id no other item here has ("key" -> "key-2"...); empty stays empty.</summary>
+		string UniqueId(StoryItemDef d, string id)
+		{
+			if (id.Length == 0) return id;
+			string b = id, n = id;
+			for (int i = 2; defs.Any(x => x != d && x.Id.Equals(n, StringComparison.OrdinalIgnoreCase)); i++) n = b + "-" + i;
+			return n;
+		}
+
+		#endregion
+
 		void SaveDefs(bool withLastStep = false)
 		{
 			string text = StoryItems.Text(defs);
+			// (player 10-30: an id changed here - what uses the old one on this island follows: chests, actions, checks, the
+			// quest, the island's events; in the same undo step)
+			var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			string was;
+			foreach (StoryItemDef d in defs)
+				if (originalId.TryGetValue(d, out was) && was.Length > 0 && !was.Equals(d.Id, StringComparison.OrdinalIgnoreCase)) map[was] = d.Id;
 			Action change = () =>
 			{
 				if (text.Length == 0) DynamicIslands.currentIslandProps.Remove(StoryItems.Key);
 				else DynamicIslands.currentIslandProps[StoryItems.Key] = text;
+				if (map.Count > 0) StoryItems.RenameUses(DynamicIslands.currentIslandProps, map);
 			};
-			if (!withLastStep) { IslandSettingsUndo.Change(change); return; }
 			CommandUndoRedo.ICommand step = IslandSettingsUndo.Record(change);
-			if (step != null) CommandUndoRedo.UndoRedoManager.AppendToLast(step);
+			// (a step of its own (as IslandSettingsUndo.Change), or into the story set's)
+			bool joined = withLastStep;
+			if (step != null)
+			{
+				if (withLastStep) CommandUndoRedo.UndoRedoManager.AppendToLast(step); else CommandUndoRedo.UndoRedoManager.Insert(step);
+				joined = true;
+			}
+			if (map.Count > 0)
+			{
+				int objects = 0;
+				GameObject placed = GameObject.Find("PlacedObjects");
+				if (placed != null)
+					foreach (EditorGameObject e in placed.GetComponentsInChildren<EditorGameObject>(true))
+					{
+						if (e.Props == null) continue;
+						var after = new Dictionary<string, string>(e.Props);
+						if (!StoryItems.RenameRefs(after, map)) continue;
+						var cmd = new PropsCommand(e, e.Props, after);
+						cmd.Execute();
+						if (joined) CommandUndoRedo.UndoRedoManager.AppendToLast(cmd); else CommandUndoRedo.UndoRedoManager.Insert(cmd);
+						joined = true;
+						objects++;
+					}
+				DynamicIslands.Notify(map.Count + " story item id(s) renamed" + (objects > 0 ? ", in " + objects + " object(s) too" : ""));
+			}
+			Remember();
 		}
 
 		void Save()
 		{
 			Keep();
+			// (first: the message of renamed ids then shows instead)
+			DynamicIslands.Notify(defs.Count + " story item(s) kept (save the island, Ctrl+S)");
 			SaveDefs();
 			EditorUI.RefreshIsland();
-			DynamicIslands.Notify(defs.Count + " story item(s) kept (save the island, Ctrl+S)");
 			Close();
 		}
 

@@ -121,29 +121,43 @@ namespace DynamicIslands.Editor
 				string to;
 				foreach (StoryItemDef d in defs) if (m.TryGetValue(d.Id, out to)) { d.Id = to; changed = true; }
 				if (changed) f.Props[Key] = Text(defs);
-				for (int n = 0; n < IslandQuest.MaxQuests; n++)
-				{
-					string k = IslandQuest.Key(IslandQuest.KeySteps, n), steps;
-					if (!f.Props.TryGetValue(k, out steps) || steps.Length == 0) continue;
-					string[] lines = steps.Split('\n');
-					bool any = false;
-					for (int i = 0; i < lines.Length; i++)
-					{
-						string[] p = lines[i].Split('|');
-						if (p.Length < 2 || p[0] != "collect" || IsStory(p[1]) || !m.TryGetValue(p[1].Trim(), out to)) continue;
-						p[1] = to;
-						lines[i] = string.Join("|", p);
-						any = true;
-					}
-					if (any) { f.Props[k] = string.Join("\n", lines); changed = true; }
-				}
-				changed |= RenameRefs(f.Props, m);
+				changed |= RenameUses(f.Props, m);
 			}
 			foreach (IslandObject o in f.Objects) if (o.Props != null) changed |= RenameRefs(o.Props, m);
 			return changed;
 		}
 
-		static bool RenameRefs(Dictionary<string, string> props, Dictionary<string, string> map)
+		/// <summary>An island's settings' uses of story items, not their definitions: quest steps that collect the bare id,
+		/// and "story:&lt;id&gt;" anywhere (rewards, island events). map: old id -> new id. True when anything changed. Also the
+		/// editor's story items window when an id is changed there (player 10-30).</summary>
+		public static bool RenameUses(Dictionary<string, string> props, IDictionary<string, string> map)
+		{
+			if (props == null || map == null || map.Count == 0) return false;
+			var m = new Dictionary<string, string>(map, StringComparer.OrdinalIgnoreCase);
+			bool changed = false;
+			string to;
+			for (int n = 0; n < IslandQuest.MaxQuests; n++)
+			{
+				string k = IslandQuest.Key(IslandQuest.KeySteps, n), steps;
+				if (!props.TryGetValue(k, out steps) || steps.Length == 0) continue;
+				string[] lines = steps.Split('\n');
+				bool any = false;
+				for (int i = 0; i < lines.Length; i++)
+				{
+					string[] p = lines[i].Split('|');
+					if (p.Length < 2 || p[0] != "collect" || IsStory(p[1]) || !m.TryGetValue(p[1].Trim(), out to)) continue;
+					p[1] = to;
+					lines[i] = string.Join("|", p);
+					any = true;
+				}
+				if (any) { props[k] = string.Join("\n", lines); changed = true; }
+			}
+			changed |= RenameRefs(props, m);
+			return changed;
+		}
+
+		/// <summary>"story:&lt;old id&gt;" in one set of settings becomes "story:&lt;new id&gt;" (map: any case). True when anything changed.</summary>
+		public static bool RenameRefs(Dictionary<string, string> props, Dictionary<string, string> map)
 		{
 			bool changed = false;
 			foreach (string k in props.Keys.ToList())

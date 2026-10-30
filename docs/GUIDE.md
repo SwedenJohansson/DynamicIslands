@@ -259,7 +259,7 @@ it - its quest where it was, opened chests still open - and a banner says "Back 
   comes back every time that many days (or km) after you were last near it - even if you never reached it - until you
   reached it and finished its quest.
 
-An island found with a Receiver frequency stays where it is (the Receiver shows the way), and so do islands nobody
+An island found with a Receiver frequency stays where it is (the Receiver shows the way, however far, until its quest is done), and so do islands nobody
 needs. With several players the host decides, and the island moves for everyone. (`returnMinutes` in
 `spawnpool.txt`, [10](#10-settings-files); 0 = never.)
 
@@ -279,7 +279,7 @@ first. An island whose builder set **"Comes by chance after ... km sailed"** isn
 that far.
 
 **On the Receiver:** once you have built Raft's Receiver, custom islands show as **green dots** with their distance,
-if they are within 2 km - an island the players still need shows however far it is (`receiverDistance` in `spawnpool.txt`). An island a rule brought (a quest reward, a plan) carries its name on its dot.
+if they are within 2 km - an island the players still need shows however far it is: its quest begun and not done, one the plan waits for, a plan's island not finished yet (one on its own Receiver frequency too), or a story step not done yet (`receiverDistance` in `spawnpool.txt`). An island a rule brought (a quest reward, a plan) carries its name on its dot.
 
 ![Custom islands on the Receiver](images/receiver-dots.jpg)
 *Raft's Receiver with two custom islands as green dots, one 494 m away.*
@@ -1704,8 +1704,15 @@ list too (nothing, a saved island, a new island of a map type), and so does its 
 
 **Steps done in another order count too:** a chest opened or animals defeated before their step has come are
 remembered, and count the moment their step comes - the guide's camp quest done backwards (warthogs, supplies, then
-the diary) finishes when the diary is read. To keep the story in order anyway, hide a later step's chest or animals until
+the diary) finishes when the diary is read. If more than one later step could take the same work, the step that names
+it gets it: the Vault opened early counts for the later "open the Vault" step, not for an "open any chest" step before
+it. Once a naming step has all it needs, more of the same goes to the "any" step. To keep the story in order anyway, hide a later step's chest or animals until
 the step before shows them (**Behaviour & events...** > **At first: Hidden until shown**, for animals **Hidden (ambush)**, and a **show** action).
+
+**Story items from zones and loot are given once.** A trigger zone that fires every time you walk in hands out its
+story items the first time only (its message and other items come every time), and a zone that holds a story item
+is not made ready again when the island grows back - as a chest with one never fills up again (5.3). So a key or quest
+item can't be had twice, and **has** and **take** counts stay right.
 
 **Blueprint steps** ask for one of Raft's blueprints (`Blueprint_Fueltank`, ...; the **▾** lists them, Raft's story
 blueprints first; empty = any of Raft's story blueprints). A player has it when it is in their inventory or they have
@@ -1722,8 +1729,10 @@ found on one copy don't finish the other's step (items found away from both coun
 **Traps to avoid** when you make a quest (toggles in events that happen again, keys, rewards): see the notes under
 6.2; **Check** finds most of them ([7.5](#75-check-finding-and-fixing-problems)). Play your adventure once with
 **Test** ([4.9](#49-trying-the-island-in-a-world-test)), doing things in the wrong order on purpose. Steps find
-things by name: renaming a note, zone or creature kind that a step points at breaks the step, so change the step with
-it.
+things by name. Renaming a note or chest (its title) or a zone (its id) moves the quest's steps along with it, in the
+same undo step, unless another note, chest or zone still has the old name; a story item's new id does the same on
+**Save** in the Story items window. A creature kind, an object's **name** (Behaviour & events) or a world plan that
+points at a zone is not followed: change those steps and actions with it.
 
 ### 6.2 Behaviour and events
 
@@ -1731,7 +1740,7 @@ Select any object → **Behaviour & events...**. No code needed:
 
 - **A name** that actions refer to (objects with the same name act together).
 - **Movement:** spin, bob, move back and forth, or **open and close** like a door, gate, bridge or lift (with a
-  Preview in the editor). A spin turns around the vertical, or with **Own axis** around the object's own up axis:
+  Preview in the editor: the window steps aside while it plays, Esc stops it). A spin turns around the vertical, or with **Own axis** around the object's own up axis:
   tilt it first - a water wheel, a windmill's blades, a fan (Tide Farm's wheel in the library). With **Carries players**, players standing on a moving object ride along (a lift).
 - **At first:** there, or **hidden until shown** (a hidden creature spot is an ambush).
 - **Players can use it:** Raft's "press E" hint with your own text ("Pull the lever"). With a **keypad code** (the
@@ -1854,7 +1863,10 @@ key somewhere..."*
 ### 6.3 Story items and story sets
 
 **Island tab → Story items...** (**+ Add a story item** adds one): keys, map pieces, logs... with a name, a description and a picture (Raft's quest
-item pictures or any Raft item). Chests, zones, quest rewards and "give" actions hand them out; "only if" checks ask
+item pictures or any Raft item). A new item takes the name of the picture you pick until you type one, and its **id**
+(the box after `story:`, what chests, actions and checks call it) follows its name until you type one. You can change
+an id: **Save** then renames it in this island's chests, actions, checks, events and quest (one undo step). Worlds
+where the crew already holds the item keep the old id, so rename ids before you share the island. Chests, zones, quest rewards and "give" actions hand them out; "only if" checks ask
 for them; players find them in the journal (J), or in Raft's notebook (T) for a main story island. **Raft item...**
 beside an item links it to one of Raft's own items (**-** clears it): players can then **take it out** of the journal
 as that item, into their inventory ([3](#the-journal-j)) - a map piece that becomes a real blueprint, a log that
@@ -3709,7 +3721,7 @@ get the settings they share at once.
 | `returnMinutes` | 12 | An island the players still need (its quest begun and not done, or one a plan waits for) that the raft left behind comes back ahead of the raft after this many minutes (0 = never; [3](#islands-appear-while-you-sail)) |
 | `regrowDays` | 3 | In-game days until harvested things grow back (0 = never), for new worlds: a world keeps its own (the F10 command `RegrowDays`) |
 | `showOnReceiver` | 1 | Custom islands as green dots on Raft's Receiver (0 = no) |
-| `receiverDistance` | 2000 | ... only those within this many metres (0 = all); an island the players still need (its quest begun, one the plan waits for) shows however far |
+| `receiverDistance` | 2000 | ... only those within this many metres (0 = all); an island the players still need (its quest begun, one the plan waits for, one on its own Receiver frequency until done) shows however far |
 | `defaultPlan` | Random islands | The plan new worlds get when none is chosen |
 | `generated` | 1 | How often a brand-new generated island is picked (0 = never) |
 | `generatedStyles` | all five | The styles generated islands can have |
@@ -3803,7 +3815,7 @@ Press **F10** for RML's console.
 
 | Command | Where | What it does |
 |---|---|---|
-| `SpawnIsland <name> [distance] [height]` | World, host | An island ahead of the raft (default 250 m, 20-390 m), at its own height unless you give one (-100 to 250 m above the sea). It says **Careful** when the island would overlap one of Raft's own islands (players can fall through the ground there), or reach over the raft or within 10 m of it (it suggests a larger distance); the island is spawned anyway |
+| `SpawnIsland <name> [distance] [height]` | World, host | An island ahead of the raft (default 250 m, 20-390 m), at its own height unless you give one (-100 to 250 m above the sea). It says **Careful** when the island would overlap one of Raft's own islands (players can fall through the ground there), or reach over the raft or within 10 m of it (it suggests a larger distance); the island is spawned anyway. If the world already has this island as a story or plan island that isn't finished, that one comes back instead (its quest as you left it, still the story's; it says so if it is already here) |
 | `RemoveIsland <name>` / `RemoveIsland all` | World, host | Removes custom islands |
 | `ListIslands` / `ListSpawned` | Anywhere / world | Your saved islands / the world's custom islands with their distance |
 | `SpawnPool` | Anywhere | Which islands appear on their own, and how often. A player who joined is told that the host's `spawnpool.txt` decides, and which islands the host left out (until the host's copy of the world has come: that it comes with the host's next save) |
@@ -4618,7 +4630,7 @@ Telegraph Narrows a telescope.
 
 | Island | What it is | What to look at |
 |---|---|---|
-| ![](images/library/dead_letter_office.jpg) **The Dead Letter Office** (first, 500) | A brick post office on a granite skerry, its clock stopped at nine | Done when the letter to your raft is read (`note:2576`), five dead letters as story items carried to later islands |
+| ![](images/library/dead_letter_office.jpg) **The Dead Letter Office** (first, 500) | A brick post office on a granite skerry, its clock stopped at nine | Done when the letter to your raft is read (`note:2495`), five dead letters as story items carried to later islands |
 | ![](images/library/pillarbox_pier.jpg) **Pillarbox Pier** (800) | A long pier with the ferry office and its sorting shed | Done when a zone is reached (`zone:sorting`), a dead letter posted with a `take` check |
 | ![](images/library/parcel_canopy.jpg) **Parcel Canopy** (900) | A jungle airstrip with the mail pilot's plane in the trees | Vines cut with the machete, a beacon whose **signal** finishes the island (`signal:beacon`) |
 | ![](images/library/pneumatic_heights.jpg) **Pneumatic Heights** (1000) | A terraced tube-post town round its exchange tower | Comes on day 10 (`day:10`), done after step 18 (`step:18`), valves, tubes and capsules, rats from the cellar |

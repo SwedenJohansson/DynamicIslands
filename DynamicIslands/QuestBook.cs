@@ -235,6 +235,7 @@ namespace DynamicIslands.Editor
 			if (k.StartsWith("storyfreq:", StringComparison.OrdinalIgnoreCase))
 			{
 				string what = k.Substring(10);
+				if (what.IndexOf('#') > 0) what = what.Substring(0, what.IndexOf('#')); // (a moved frequency's page: "storyfreq:id#1234")
 				return StoryChain.IsRaft(what) || StoryChain.BookRules.Any(r => r.Id.Equals(what, StringComparison.OrdinalIgnoreCase));
 			}
 			foreach (IntroRule r in StoryChain.BookRules)

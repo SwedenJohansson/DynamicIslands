@@ -1135,8 +1135,11 @@ namespace DynamicIslands
 			foreach (var o in f.Objects) if (o.Props != null) o.Props.Remove(ObjectProps.NoteText); // (no notes: they'd keep a finished island in the pool)
 			f.Props[IslandQuest.KeyTitle] = "Again";
 			f.Props[IslandQuest.KeySteps] = "reach|cizone|1|\nread|CI note|1|";
+			f.Props[IslandQuest.Key(IslandQuest.KeyTitle, 1)] = "Again side"; // (a side quest: begun and not done, it keeps the island unfinished)
+			f.Props[IslandQuest.Key(IslandQuest.KeySteps, 1)] = "reach|cizone|1|\nread|CI note|1|";
 			for (int i = 0; i < 2; i++) { f.Name = names[i]; f.Save(IslandSpawner.PathFor(names[i])); }
 			f.Props.Remove(IslandQuest.KeyTitle); f.Props.Remove(IslandQuest.KeySteps);
+			f.Props.Remove(IslandQuest.Key(IslandQuest.KeyTitle, 1)); f.Props.Remove(IslandQuest.Key(IslandQuest.KeySteps, 1));
 			for (int i = 2; i < 4; i++) { f.Name = names[i]; f.Save(IslandSpawner.PathFor(names[i])); }
 			CustomIslandSpawner.LoadPool(true);
 			var made = new List<IslandWorldState.Entry>();
@@ -1157,6 +1160,11 @@ namespace DynamicIslands
 				seen.State[WorldDirector.VisitKey] = visit;
 				Check(ref ok, ReturningIslands.Finished(done) && !ReturningIslands.Finished(begun) && ReturningIslands.Finished(seen) && !ReturningIslands.Finished(unseen),
 					"finished: quest done " + ReturningIslands.Finished(done) + ", begun " + ReturningIslands.Finished(begun) + ", no quest reached " + ReturningIslands.Finished(seen) + ", no quest never reached " + ReturningIslands.Finished(unseen));
+				// (code audit 2026-10-30: a side quest begun and not done - not finished, it comes back; done, it is finished)
+				QuestTracker.Set(done, 1, 1, 0, false);
+				bool sideOpen = !ReturningIslands.Finished(done) && ReturningIslands.Why(done) == "quest";
+				QuestTracker.Set(done, 1, 2, 0, false);
+				Check(ref ok, sideOpen && ReturningIslands.Finished(done), "a side quest begun keeps the island unfinished, done it is finished: " + sideOpen + ", " + ReturningIslands.Finished(done));
 				var pool = CustomIslandSpawner.Pool().Select(p => p.Key).ToList();
 				Func<string, bool> inPool = n => pool.Contains(n, StringComparer.OrdinalIgnoreCase);
 				Check(ref ok, !inPool(names[0]) && !inPool(names[2]), "the finished ones are not in the pool: done " + inPool(names[0]) + ", reached " + inPool(names[2]));

@@ -39,15 +39,34 @@ namespace DynamicIslands.Editor
 			return dots.TryGetValue(r, out list) ? list : new List<Reciever_Dot>();
 		}
 
-		/// <summary>An island the players still need (its quest begun, one the plan waits for: ReturningIslands), cached a second.</summary>
+		/// <summary>An island the players still need, its dot shown however far (cached a second): one that comes back
+		/// (ReturningIslands.Why), a story step not done yet, a plan's island (brought by a rule) not finished, or any island
+		/// whose quest is begun and not done. Not only what comes back: an island on its own Receiver frequency never does
+		/// (a player 6 h past one lost it beyond receiverDistance, 2026-10-30), nor a step left unvisited or done by a zone /
+		/// note / signal, nor a quest island past its returns - without the dot such an island was lost for good.</summary>
 		static bool Needed(IslandWorldState.Entry e)
 		{
 			float t;
 			bool v;
 			if (neededAt.TryGetValue(e.Id, out t) && Time.time - t < 1f && needed.TryGetValue(e.Id, out v)) return v;
-			try { v = ReturningIslands.Why(e) != null; } catch { v = false; }
+			try { v = ReturningIslands.Why(e) != null || StillOpen(e); }
+			catch { v = false; }
 			needed[e.Id] = v; neededAt[e.Id] = Time.time;
 			return v;
+		}
+
+		/// <summary>A story step the chain hasn't counted done (it may need more than the quest: a zone, a note, a signal),
+		/// else a plan's island or a begun quest until ReturningIslands.Finished. (e.Rule and the chain's steps reach clients too.)</summary>
+		static bool StillOpen(IslandWorldState.Entry e)
+		{
+			bool ruled = !string.IsNullOrEmpty(e.Rule);
+			if (ruled)
+			{
+				string key = StoryChain.RuleKey(e.Rule);
+				if (StoryChain.Steps.Contains(key, System.StringComparer.OrdinalIgnoreCase)) return !StoryChain.Done.Contains(key);
+			}
+			bool begun = e.State.ContainsKey(WorldDirector.VisitKey) || QuestTracker.StepOf(e) > 0;
+			return (ruled || begun) && !ReturningIslands.Finished(e);
 		}
 
 		/// <summary>SL9: an island whose rule needs a blueprint (needs=engine...) shows once this player has it (BlueprintSteps.Has).</summary>

@@ -36,6 +36,9 @@ namespace DynamicIslands.Editor
 		Transform previewObject;
 		Vector3 previewPos;
 		Quaternion previewRot;
+		// (player 10-30: the window covered the object, so its preview couldn't be seen - the panel and the dark cover step
+		// aside while it plays and come back after; Esc stops it)
+		bool stopPreview;
 
 		static readonly Dictionary<string, string> VerbLabels = new Dictionary<string, string>
 		{
@@ -181,6 +184,7 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			if (ChoiceWindow.IsOpen || ItemPickerWindow.IsOpen || SoundPickerWindow.IsOpen || DropList.Busy || EditorInput.SubWindowJustClosed) return;
+			if (previewing) { if (EscKey.Down(this)) stopPreview = true; return; }
 			EditorInput.IsTyping = fields.Any(f => f != null && f.isFocused);
 			if (EscKey.Down(this)) { if (Unsaved) EscKey.AskUnsaved(islandMode ? "The island's events" : "The behaviour", Save, Close); else Close(); }
 		}
@@ -190,6 +194,16 @@ namespace DynamicIslands.Editor
 			EditorInput.IsTyping = false;
 			if (previewing && previewObject != null) { previewObject.position = previewPos; previewObject.rotation = previewRot; }
 			previewing = false;
+			Uncover(true);
+		}
+
+		/// <summary>Shows (true) or hides the panel and the dark cover; the cover still takes the clicks while hidden.</summary>
+		void Uncover(bool shown)
+		{
+			Transform panel = transform.Find("Panel");
+			if (panel != null) panel.gameObject.SetActive(shown);
+			Image dim = GetComponent<Image>();
+			if (dim != null) dim.color = new Color(0, 0, 0, shown ? 0.6f : 0f);
 		}
 
 		#region Building
@@ -296,7 +310,7 @@ namespace DynamicIslands.Editor
 			UIKit.Size(UIKit.Label(o, "\u00B0 in", 12, UIKit.TextMuted).gameObject, 34);
 			Field(o, "2", ObjectProps.Get(props, BehaviourProps.MoveTime), 50, "Seconds to get there", v => SetNumber(BehaviourProps.MoveTime, v));
 			UIKit.Size(UIKit.Label(o, "s", 12, UIKit.TextMuted).gameObject, 14);
-			UIKit.Button(o, previewing ? "..." : "Preview", () => StartCoroutine(Preview()), "Show the movement here in the editor", 90, 26f, 12);
+			UIKit.Button(o, previewing ? "..." : "Preview", () => StartCoroutine(Preview()), "Show the movement here in the editor (the window steps aside while it plays; Esc stops it)", 90, 26f, 12);
 		}
 
 		void EnsureMove()
@@ -693,7 +707,9 @@ namespace DynamicIslands.Editor
 			previewObject = t; previewPos = pos; previewRot = rot;
 			Vector3 off = BehaviourProps.Offset(props);
 			float turn = ObjectProps.GetFloat(props, BehaviourProps.Turn, 0f), time = Mathf.Max(0.1f, ObjectProps.GetFloat(props, BehaviourProps.MoveTime, 2f));
-			for (float phase = 0f; phase < 2f && t != null; phase += Time.unscaledDeltaTime / time)
+			stopPreview = false;
+			Uncover(false);
+			for (float phase = 0f; phase < 2f && t != null && !stopPreview; phase += Time.unscaledDeltaTime / time)
 			{
 				float s = Mathf.SmoothStep(0f, 1f, phase < 1f ? phase : 2f - phase);
 				t.position = pos + off * s;
@@ -702,6 +718,8 @@ namespace DynamicIslands.Editor
 			}
 			if (t != null) { t.position = pos; t.rotation = rot; }
 			previewing = false;
+			stopPreview = false;
+			Uncover(true);
 		}
 
 		#endregion

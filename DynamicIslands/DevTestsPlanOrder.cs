@@ -166,7 +166,7 @@ namespace DynamicIslands
 			door.Save(IslandSpawner.PathFor(islands[2]));
 			var kept = new WorldPlan { Name = "CI Raft's Own Keys", Random = false, RaftStory = true };
 			kept.Rules.Add(new IntroRule { Id = "door", What = "island", WhatArg = islands[2], When = "start", Where = "receiver", Label = "Door", StoryPlace = "after:Utopia" });
-			string want = string.Join(" / ", PlanChecker.Check(kept, false, false).Where(x => x.Text.Contains("has a lock that wants")).Select(x => x.Text).ToArray());
+			string want = string.Join(" / ", PlanChecker.Check(kept, false, false).Where(x => x.Text.Contains("a lock there wants")).Select(x => x.Text).ToArray());
 			Check(ref ok, want.Contains("no island of the plan gives") && want.Contains("Raft's own on Tangaroa"), "Raft's own keycard on Tangaroa isn't a key for the plan's door (" + want + ")");
 		}
 	}

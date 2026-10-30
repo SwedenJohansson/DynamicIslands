@@ -57,13 +57,16 @@ namespace DynamicIslands.Editor
 			if (target == null) return;
 			Dictionary<string, string> p = ObjectProps.With(target.Props, ObjectProps.NoteTitle, title ?? "");
 			p = ObjectProps.With(p, ObjectProps.NoteText, text ?? "");
+			string old = ObjectProps.Get(target.Props, ObjectProps.NoteTitle, "");
 			PropsCommand.Change(target, p);
+			EditorRenames.NoteTitle(target, old, title); // (player 10-30: the quest's steps follow a new title)
 		}
 
 		void Save()
 		{
-			if (target != null) Apply(target, titleField.text.Trim(), textField.text.TrimEnd());
+			// (before saving: a rename's "quest steps updated" message then shows instead)
 			DynamicIslands.Notify("Note saved: \"" + titleField.text.Trim() + "\" (Ctrl+Z undoes)");
+			if (target != null) Apply(target, titleField.text.Trim(), textField.text.TrimEnd());
 			Close();
 		}
 

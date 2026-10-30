@@ -6,7 +6,7 @@ Which custom islands a world gets, when and where (world plans and island rules)
 | File | Role |
 |---|---|
 | `WorldDirector.cs` | `IntroRule` (one rule line), `WorldPlan` (a .plan file), `IslandCache` (settings of unspawned island files; `rulescache.txt`, `notbeforecache.txt`), `WorldDirector` (host: checks rules, brings and announces islands), `ChunkPointFitPatch`, `ReturningIslands` (left-behind islands come back) |
-| `StoryChain.cs` | Plan islands in Raft's Receiver chain, mod frequencies (types from `ModTypeBase` = 100), chain state sent to players |
+| `StoryChain.cs` | Plan islands in Raft's Receiver chain, mod frequencies (types from `ModTypeBase` = 100), chain state sent to players; `IsDone` also counts a quest done on a hand-spawned copy (no rule); `PlayingWithoutMissing` (set by `MissingIslandsCheck` "Play without them") and `OnIslandFailed` (3 failed makings) call `GoOnWithout`; `Moved` frequencies get a journal page (`storyfreq:`) |
 | `StoryOrder.cs` | Raft's story islands in order (`StoryOrder.Chain`, `Key`, `Parse`); world option `WorldOptions.StoryOrder` (story islands in a new order) |
 | `QuestBook.cs` | Main story tabs and pages in Raft's notebook, built on every machine |
 | `QuestBookPreview.cs` | World Plans' Preview notebook: a plan's story as `Moment`s, stepped with Back / Next |

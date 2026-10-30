@@ -170,6 +170,35 @@ namespace DynamicIslands
 			if (ok) Log("PASS: story items and checks in the editor"); else Fail("story items and checks in the editor");
 		}
 
+		[ConsoleCommand(name: "CIRenameRefs", docs: "Dev, anywhere (no world needed): player 10-30 renames - a note's new title moves the quest's read steps (any case, every quest, other steps untouched), a zone's reach steps, a story item's new id moves its collect steps and story:<id> refs (whole ids only, swaps work), a new item's name from its picture, typed ids made safe")]
+		public static void RenameRefsCommand()
+		{
+			bool ok = true;
+			string k0 = IslandQuest.Key(IslandQuest.KeySteps, 0), k1 = IslandQuest.Key(IslandQuest.KeySteps, 1);
+			var p = new Dictionary<string, string> {
+				{ k0, "read|Old Log|1|Read it\nopen|Old Log|1|\nreach|cove|1|\nread|Other|1|" },
+				{ k1, "read|old log|1|Again" } };
+			int n = EditorRenames.QuestTargets(p, new[] { "read" }, "Old log", "Captain's log");
+			Check(ref ok, n == 2 && p[k0] == "read|Captain's log|1|Read it\nopen|Old Log|1|\nreach|cove|1|\nread|Other|1|" && p[k1] == "read|Captain's log|1|Again", "a note's new title: its read steps in both quests follow, the rest stays (" + n + ")");
+			Check(ref ok, EditorRenames.QuestTargets(p, new[] { "reach" }, "cove", "bay") == 1 && p[k0].Contains("reach|bay|1|"), "a zone's new id: its reach step follows");
+			Check(ref ok, EditorRenames.QuestTargets(p, new[] { "read" }, "Other", "a|b") == 0 && EditorRenames.QuestTargets(p, new[] { "read" }, "Other", "OTHER") == 0
+				&& EditorRenames.QuestTargets(p, new[] { "read" }, "", "x") == 0, "no change for a title with |, a change of case only, or an empty old title");
+			var s = new Dictionary<string, string> {
+				{ k0, "collect|key|1|\ncollect|story:map|1|\ncollect|key-2|1|" },
+				{ "quest.reward", "story:key" },
+				{ "on.1", "give story:map;give story:key-2" },
+				{ StoryItems.Key, "key|Key|quest:Vasagatan_GreenKey|" } };
+			var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "key", "map" }, { "map", "key" } };
+			bool changed = StoryItems.RenameUses(s, map);
+			Check(ref ok, changed && s[k0] == "collect|map|1|\ncollect|story:key|1|\ncollect|key-2|1|" && s["quest.reward"] == "story:map" && s["on.1"] == "give story:key;give story:key-2"
+				&& s[StoryItems.Key] == "key|Key|quest:Vasagatan_GreenKey|", "story ids swapped: collect steps and story: refs follow, key-2 and the definitions stay (" + s[k0].Replace("\n", " / ") + ")");
+			var o = new Dictionary<string, string> { { "loot.items", "story:KEY:1;Plank:2" } };
+			Check(ref ok, StoryItems.RenameRefs(o, map) && o["loot.items"] == "story:map:1;Plank:2", "an object's story: ref follows (any case)");
+			Check(ref ok, StoryItemsWindow.QuestItemName("Vasagatan_GreenKey") == "Green key" && StoryItemsWindow.QuestItemName("Vasagatan_Key_Red") == "Key red", "a picture's name: " + StoryItemsWindow.QuestItemName("Vasagatan_GreenKey"));
+			Check(ref ok, StoryItemsWindow.CleanId(" Story:Brass Key! ") == "brass-key" && StoryItemsWindow.CleanId("***") == "", "a typed id made safe: " + StoryItemsWindow.CleanId(" Story:Brass Key! "));
+			if (ok) Log("PASS: renames move their references"); else Fail("renames move their references");
+		}
+
 		#endregion
 
 		#region World

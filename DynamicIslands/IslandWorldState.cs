@@ -237,6 +237,7 @@ namespace DynamicIslands.Editor
 			WorldIslands.Reset();
 			WorldWindowHint.OnWorldLoaded();
 			StoryChain.Reset();
+			BuriedTreasure.ForgetGiven(); // (chest indexes come from the island ids of this world: another world's would block its loot - audit 10-30)
 			// (the newest copy: this PC's own, or the one that came with Raft's world folder from another host - WorldCopy)
 			string[] fileLines = null;
 			try { fileLines = Raft_Network.IsHost ? WorldCopy.Choose(FilePath) : null; }

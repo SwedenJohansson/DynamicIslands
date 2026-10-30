@@ -236,6 +236,8 @@
     <Compile Include="StoryChain.cs" />
     <Compile Include="PatchHealth.cs" />
     <Compile Include="IslandSettingsUndo.cs" />
+    <Compile Include="EditorRenames.cs" />
+    <Compile Include="DevTestsQuestOrder.cs" />
     <Compile Include="WorldWindow.cs" />
     <Compile Include="IslandTest.cs" />
     <Compile Include="Housekeeping.cs" />

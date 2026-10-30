@@ -401,6 +401,7 @@ namespace DynamicIslands.Editor
 			{
 				Debug.LogError("[CUSTOM ISLANDS] Generating island '" + name + "' failed: " + e);
 				IslandWorldState.RemoveIds(new[] { entry.Id }, false);
+				try { StoryChain.OnIslandFailed(entry); } catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] " + x.Message); }
 				yield break;
 			}
 			// (pieces whose scenes weren't loaded yet get their own scale - the radio tower's floors were 3 x 3 m, IG6)
@@ -422,6 +423,7 @@ namespace DynamicIslands.Editor
 			{
 				Debug.LogError("[CUSTOM ISLANDS] Generating island '" + name + "' failed: " + e);
 				IslandWorldState.RemoveIds(new[] { entry.Id }, false);
+				try { StoryChain.OnIslandFailed(entry); } catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] " + x.Message); }
 				yield break;
 			}
 			if (!IslandWorldState.Contains(entry)) yield break; // removed meanwhile

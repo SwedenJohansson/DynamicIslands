@@ -147,6 +147,7 @@ namespace DynamicIslands.Editor
 		internal static void PlayWithout()
 		{
 			Debug.Log("[CUSTOM ISLANDS] Playing on without the missing islands");
+			StoryChain.PlayingWithoutMissing = true; // (a story step whose island is among them goes on without it - audit 10-30)
 			InfoWindow.Close();
 		}
 

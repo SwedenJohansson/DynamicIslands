@@ -59,6 +59,8 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, float> due = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 		static readonly Dictionary<string, float> retryAt = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 		static readonly HashSet<string> warned = new HashSet<string>();
+		/// <summary>The host chose "Play without them" for islands whose files are missing (MissingIslandsCheck).</summary>
+		internal static bool PlayingWithoutMissing;
 		static bool rebuilding, dirty;
 
 		/// <summary>Our own call of Raft's UnlockFrequency: let it through.</summary>
@@ -197,12 +199,33 @@ namespace DynamicIslands.Editor
 				int[] digits;
 				if (!kept.TryGetValue(r.Id, out digits) || digits == null || digits.Length != 4 || taken.Any(t => t.SequenceEqual(digits)))
 				{
+					// (a kept number moved: the journal's page still gives the old one - Tick adds one with the new)
+					if (digits != null && digits.Length == 4) Moved.Add(r.Id);
 					var rnd = new System.Random(StableHash(SaveAndLoad.WorldGuid.ToString() + "/" + r.Id));
 					do digits = new[] { rnd.Next(10), rnd.Next(10), rnd.Next(10), rnd.Next(10) };
 					while (taken.Any(t => t.SequenceEqual(digits)));
 				}
 				taken.Add(digits);
 				Frequencies.Add(new KeyValuePair<string, int[]>(r.Id, digits));
+			}
+		}
+
+		/// <summary>Receiver rules whose kept frequency had to change (it clashed with one of Raft's): a fired one gets a
+		/// journal page with the new number, else the player tunes to the old one and the island never comes.</summary>
+		static readonly HashSet<string> Moved = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+		static void NoteMovedFrequencies()
+		{
+			foreach (string id in Moved.ToList())
+			{
+				Moved.Remove(id);
+				IntroRule r = RuleOf(id);
+				string freq = FrequencyOf(id);
+				if (r == null || freq == null || !Fired.Contains(id)) continue;
+				string title = r.Label.Length > 0 ? r.Label : "A new signal";
+				string text = "The signal moved: tune the Receiver to " + freq;
+				Banner(title, text);
+				try { StoryBook.AddPage("storyfreq:" + id + freq, title, text, ""); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] " + e.Message); }
 			}
 		}
 
@@ -338,6 +361,7 @@ namespace DynamicIslands.Editor
 		public static void Tick()
 		{
 			if (!HasSnapshot || !Raft_Network.IsHost) return;
+			if (Moved.Count > 0) NoteMovedFrequencies();
 			// (the plan's island first in the chain: unlocked from the start)
 			if (active && Steps.Count > 0 && !IsRaft(Steps[0])) Unlock(Steps[0], false);
 			foreach (IntroRule r in Rules.ToList())
@@ -358,6 +382,10 @@ namespace DynamicIslands.Editor
 					continue;
 				}
 				if (r.InStory && !Done.Contains(key) && IsDone(r)) MarkDone(key);
+				// (its island brought, then its file gone and the host plays on without it: the step never got done and every later
+				// one stayed locked - audit 10-30. Only on that answer: "To menu" or a client sending the file keeps the step.)
+				else if (r.InStory && !Done.Contains(key) && PlayingWithoutMissing && WorldDirector.Refs(r.Id, null).Count > 0 && WorldDirector.Refs(r.Id, null).All(e => e.Excluded || !System.IO.File.Exists(IslandSpawner.PathFor(e.Name))))
+					GoOnWithout(r, "its file is gone");
 			}
 			if (dirty) { dirty = false; IslandWorldState.Save(); }
 		}
@@ -390,7 +418,9 @@ namespace DynamicIslands.Editor
 		/// could never be done: the story stopped for good (AU50). Such a rule is "not brought" again and brings its island
 		/// once more when its moment comes: at once (ahead / near), on the Receiver when it is tuned to the frequency again,
 		/// or by chance after some more sailing. A rule with another island of its own still in the world, or whose step is
-		/// done, keeps it as it is.
+		/// done, keeps it as it is. A Receiver rule outside the story too, unless its island was finished: tuning to its
+		/// frequency did nothing for good (only on the Receiver, a player's own doing - an ahead rule's island removed on
+		/// purpose doesn't come straight back).
 		/// </summary>
 		internal static void OnIslandsRemoved(IEnumerable<IslandWorldState.Entry> gone)
 		{
@@ -398,9 +428,9 @@ namespace DynamicIslands.Editor
 			var ids = new HashSet<string>(gone.Where(e => e != null && !string.IsNullOrEmpty(e.Rule)).Select(e => e.Rule), StringComparer.OrdinalIgnoreCase);
 			if (ids.Count == 0) return;
 			bool changed = false;
-			foreach (IntroRule r in Rules.Where(x => x.InStory && ids.Contains(x.Id) && Brought.Contains(x.Id)).ToList())
+			foreach (IntroRule r in Rules.Where(x => (x.InStory || x.Where == "receiver") && ids.Contains(x.Id) && Brought.Contains(x.Id)).ToList())
 			{
-				if (Done.Contains(RuleKey(r.Id))) continue;
+				if (r.InStory ? Done.Contains(RuleKey(r.Id)) : gone.Any(e => e != null && r.Id.Equals(e.Rule, StringComparison.OrdinalIgnoreCase) && ReturningIslands.Finished(e))) continue;
 				if (IslandWorldState.Islands.Any(e => e.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase))) continue;
 				Brought.Remove(r.Id);
 				retryAt.Remove(r.Id);
@@ -411,6 +441,24 @@ namespace DynamicIslands.Editor
 			}
 			if (changed) Changed();
 		}
+
+		/// <summary>Host: a rule's island failed to be made (CustomIslandSpawner) and was taken out without telling the chain:
+		/// it is tried again a little later like a removed island, and a story step whose island failed three times goes on
+		/// without it - else the step waited for good (code audit 2026-10-30).</summary>
+		internal static void OnIslandFailed(IslandWorldState.Entry e)
+		{
+			if (!Raft_Network.IsHost || !HasSnapshot || e == null || string.IsNullOrEmpty(e.Rule)) return;
+			IntroRule r = RuleOf(e.Rule);
+			if (r == null || !Brought.Contains(r.Id) || IslandWorldState.Islands.Any(x => x != e && x.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase))) return;
+			int n;
+			failedMaking.TryGetValue(r.Id, out n);
+			failedMaking[r.Id] = ++n;
+			if (r.InStory && n >= 3 && active && Steps.Contains(RuleKey(r.Id), StringComparer.OrdinalIgnoreCase)) { GoOnWithout(r, "it couldn't be made"); return; }
+			OnIslandsRemoved(new[] { e });
+			retryAt[r.Id] = Time.unscaledTime + RetrySeconds;
+		}
+
+		static readonly Dictionary<string, int> failedMaking = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
 		static void TryBring(IntroRule r)
 		{
@@ -430,7 +478,7 @@ namespace DynamicIslands.Editor
 		/// on without it - Raft's own island comes back in its place when it took one's place, else its step counts as
 		/// done and the next one unlocks. It stopped the story for good.
 		/// </summary>
-		static void GoOnWithout(IntroRule r)
+		static void GoOnWithout(IntroRule r, string why = "it isn't on the host's PC")
 		{
 			if (!active || !r.InStory) return;
 			string key = RuleKey(r.Id);
@@ -442,13 +490,13 @@ namespace DynamicIslands.Editor
 			{
 				Steps[at] = RaftKey(raft);
 				Log("The island of '" + r.Id + "' isn't on this PC: Raft's " + StoryOrder.Name(raft) + " comes in its place");
-				Banner("A new signal", "The island '" + name + "' can't come (it isn't on the host's PC): Raft's " + StoryOrder.Name(raft) + " comes in its place.");
+				Banner("A new signal", "The island '" + name + "' can't come (" + why + "): Raft's " + StoryOrder.Name(raft) + " comes in its place.");
 				Unlock(Steps[at], true);
 			}
 			else
 			{
 				Log("The island of '" + r.Id + "' isn't on this PC: the story goes on without it");
-				Banner("The story goes on", "The island '" + name + "' can't come (it isn't on the host's PC): the story goes on without it.");
+				Banner("The story goes on", "The island '" + name + "' can't come (" + why + "): the story goes on without it.");
 				MarkDone(key);
 			}
 			Changed();
@@ -477,7 +525,12 @@ namespace DynamicIslands.Editor
 			if (kind.Length == 0) kind = IslandQuest.From(IslandCache.PropsOf(entries[0])).Steps.Count > 0 ? "quest" : "visit";
 			if (kind == "note") return entries.Any(e => StoryBook.Pages.Any(p => p.Key.Equals("note:" + StoryBook.PageIsland(e) + ":" + arg.Trim(), StringComparison.OrdinalIgnoreCase)));
 			IslandWorldState.Entry at;
-			return WorldDirector.Met(new IntroRule { When = kind, WhenRef = r.Id, WhenArg = arg }, null, out at);
+			var done = new IntroRule { When = kind, WhenRef = r.Id, WhenArg = arg };
+			if (WorldDirector.Met(done, null, out at)) return true;
+			// (a copy of the island spawned by hand (F10 SpawnIsland, before it brought the story's own back) has no rule: its
+			// quest done there counts too - player 10-30, the step and the next frequency never came)
+			return kind != "visit" && IslandWorldState.Islands.Any(x => string.IsNullOrEmpty(x.Rule) &&
+				entries.Any(y => y.Name.Equals(x.Name, StringComparison.OrdinalIgnoreCase)) && WorldDirector.Happened(done, x));
 		}
 
 		#endregion
@@ -593,7 +646,7 @@ namespace DynamicIslands.Editor
 			Rules.Clear();
 			Frequencies.Clear();
 			Unlocked.Clear(); Done.Clear(); Fired.Clear(); Brought.Clear();
-			due.Clear(); retryAt.Clear(); warned.Clear();
+			due.Clear(); retryAt.Clear(); warned.Clear(); PlayingWithoutMissing = false;
 			StoryEnding = "";
 			EndingTitle = ""; Credits = ""; CreditsShown = false;
 			clientBook.Clear();

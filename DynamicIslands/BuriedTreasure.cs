@@ -86,6 +86,7 @@ namespace DynamicIslands.Editor
 					tm.AddTreasurePoint(point, chest, e.Root.transform, e.Root.transform.InverseTransformPoint(b.transform.position), b.Kind);
 					b.Point = PointsOf(tm, e.Root.transform).LastOrDefault();
 					b.Made = true;
+					given.Remove(chest); // (a new chest here - grown back: its own loot again, not only Raft's - audit 10-30)
 					made++;
 				}
 				catch (Exception ex) { Debug.LogError("[CUSTOM ISLANDS] Buried treasure on '" + e.HostName + "': " + ex.Message); }

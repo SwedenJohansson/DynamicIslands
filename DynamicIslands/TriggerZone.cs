@@ -182,7 +182,9 @@ namespace DynamicIslands.Editor
 			if (!reachCounted) { reachCounted = true; QuestTracker.Event(entry, "reach", Id); } // (passed just above)
 
 			if (Message.Length > 0) { IslandInfo.ShowMessage(Message); StoryBook.AddMessagePage(entry, Message); } // (PQ8: kept in the journal)
-			if (Items.Count > 0) Give(Items);
+			// (a zone that fires on every walk-in gives its story items the first time only: they are the crew's, and a
+			// second key or quest item let players skip ahead or broke "has"/"take" counts - player 10-30)
+			if (Items.Count > 0) Give(fired ? Items.Where(l => !StoryItems.IsStory(l.Key)).ToList() : Items);
 			if (!fired) { firedHere = true; ContentState.MarkUsed(transform, StateKey); } // the host wakes up the linked creatures
 			Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "' set off" + (Message.Length > 0 ? ": " + Message : ""));
 			if (r != null) Behaviours.Fire(entry, r.Index, "enter", true, true); // (checked above)

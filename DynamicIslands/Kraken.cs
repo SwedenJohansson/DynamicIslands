@@ -72,8 +72,9 @@ namespace DynamicIslands.Editor
 
 		// Host timing
 		static int rolledDay = -1, seenStorms = -1, nextNumber;
-		static float dueAt = -1f;
-		static bool waiting;
+		// (a day's arm and a storm's each have their own time: one overwrote the other, a new day wiped a storm's - audit 10-30)
+		static float dayDue = -1f, stormDue = -1f;
+		static bool waiting, stormWaits;
 		// A player: a "rise" whose floor hasn't arrived yet
 		static IslandNetMessage pending;
 		static float pendingSince;
@@ -84,7 +85,7 @@ namespace DynamicIslands.Editor
 		{
 			if (arm != null) UnityEngine.Object.Destroy(arm.gameObject);
 			arm = null; pending = null;
-			rolledDay = seenStorms = -1; dueAt = -1f;
+			rolledDay = seenStorms = -1; dayDue = stormDue = -1f; stormWaits = false;
 			LastEnd = "";
 		}
 
@@ -119,7 +120,7 @@ namespace DynamicIslands.Editor
 			if (!On)
 			{
 				if (arm != null && arm.Phase < 2) Away("the option was switched off");
-				dueAt = -1f;
+				dayDue = stormDue = -1f; stormWaits = false;
 				return;
 			}
 			int seed = WorldOptions.Seed, day = Today;
@@ -127,32 +128,39 @@ namespace DynamicIslands.Editor
 			{
 				rolledDay = day;
 				waiting = false;
-				dueAt =Rolls(seed, day) ? Time.time + 60f + 540f * (float)WorldOptions.Unit(seed, day, SaltTime) : -1f;
-				if (dueAt > 0) Log("day " + day + " brings an arm in " + Mathf.RoundToInt(dueAt - Time.time) + " s");
+				// (a storm's arm already waiting for open sea gives up with the day, as before; one not due yet stays)
+				if (stormWaits) { stormDue = -1f; stormWaits = false; }
+				dayDue = Rolls(seed, day) ? Time.time + 60f + 540f * (float)WorldOptions.Unit(seed, day, SaltTime) : -1f;
+				if (dayDue > 0) Log("day " + day + " brings an arm in " + Mathf.RoundToInt(dayDue - Time.time) + " s");
 			}
 			if (StormSeas.On && StormSeas.Storms != seenStorms)
 			{
 				if (seenStorms >= 0 && StormSeas.Storms > seenStorms && StormRolls(seed, StormSeas.Storms))
 				{
-					dueAt = Time.time + 20f + 60f * (float)WorldOptions.Unit(seed, StormSeas.Storms, SaltTime);
-					Log("storm " + StormSeas.Storms + " brings an arm in " + Mathf.RoundToInt(dueAt - Time.time) + " s");
+					stormDue = Time.time + 20f + 60f * (float)WorldOptions.Unit(seed, StormSeas.Storms, SaltTime);
+					stormWaits = false;
+					Log("storm " + StormSeas.Storms + " brings an arm in " + Mathf.RoundToInt(stormDue - Time.time) + " s");
 				}
 				seenStorms = StormSeas.Storms;
 			}
-			if (dueAt > 0 && Time.time >= dueAt)
+			bool dayNow = dayDue > 0 && Time.time >= dayDue, stormNow = stormDue > 0 && Time.time >= stormDue;
+			if (dayNow || stormNow)
 			{
 				string near = arm == null ? NearIsland() : null;
 				if (near != null)
 				{
-					// Wait for open sea; checked again every 30 s until the day ends
+					// Wait for open sea; checked again every 30 s (a day's arm until the day ends)
 					if (!waiting) Log("due, but waits: " + near);
 					waiting = true;
-					dueAt = Time.time + 30f;
+					if (dayNow) dayDue = Time.time + 30f;
+					if (stormNow) { stormDue = Time.time + 30f; stormWaits = true; }
 				}
 				else
 				{
+					// (one arm for all that are due now, as with the one time before; one still to come keeps its time)
 					waiting = false;
-					dueAt = -1f;
+					if (dayNow) dayDue = -1f;
+					if (stormNow) { stormDue = -1f; stormWaits = false; }
 					if (arm == null) Log("due: " + Bring());
 				}
 			}
@@ -409,14 +417,16 @@ namespace DynamicIslands.Editor
 			int[] next = Enumerable.Range(day, 400).Where(d => Rolls(seed, d)).Take(5).ToArray();
 			string now = arm == null || arm.Phase >= 2 ? "none out" : "arm " + arm.Number + " holds floor " + arm.BlockIndex + " (" + arm.Hits + "/" + arm.Need + " hits, " + (arm.Released ? "letting go" : Mathf.Max(0, Mathf.RoundToInt(arm.Stay - (Time.time - arm.Started))) + " s left") + ", " + arm.Extras + " more arms)";
 			Debug.Log("[CUSTOM ISLANDS] Kraken arm: " + (On ? "on" : "off") + ", day " + day + ", " + now + ", next days with one: " + (next.Length > 0 ? string.Join(" ", next.Select(d => d.ToString()).ToArray()) : "-") +
-				(dueAt > 0 ? ", due in " + Mathf.RoundToInt(dueAt - Time.time) + " s" : "") + ", brought " + Brought + ", beaten " + Beaten + ", torn " + Torn + (LastEnd.Length > 0 ? ", last: " + LastEnd : ""));
+				(dayDue > 0 ? ", due in " + Mathf.RoundToInt(dayDue - Time.time) + " s" : "") + (stormDue > 0 ? ", storm's due in " + Mathf.RoundToInt(stormDue - Time.time) + " s" : "") + ", brought " + Brought + ", beaten " + Beaten + ", torn " + Torn + (LastEnd.Length > 0 ? ", last: " + LastEnd : ""));
 		}
 
 		/// <summary>Raft's own sounds, read from its prefabs.</summary>
 		static class Sounds
 		{
-			public static UnityEngine.Object Whale { get { return Resources.FindObjectsOfTypeAll<AI_NetworkBehaviour_Whale>().FirstOrDefault(); } }
-			public static UnityEngine.Object Shark { get { return Resources.FindObjectsOfTypeAll<AI_NetworkBehavior_Shark>().FirstOrDefault(); } }
+			// (kept: every sound looked through all loaded objects; found again once destroyed - audit 10-30)
+			static UnityEngine.Object whale, shark;
+			public static UnityEngine.Object Whale { get { if (whale == null) whale = Resources.FindObjectsOfTypeAll<AI_NetworkBehaviour_Whale>().FirstOrDefault(); return whale; } }
+			public static UnityEngine.Object Shark { get { if (shark == null) shark = Resources.FindObjectsOfTypeAll<AI_NetworkBehavior_Shark>().FirstOrDefault(); return shark; } }
 			public static UnityEngine.Object Manager { get { return UnityEngine.Object.FindObjectOfType<SoundManager>(); } }
 
 			public static void Play(UnityEngine.Object source, string field, Vector3 at)
@@ -845,6 +855,16 @@ namespace DynamicIslands.Editor
 				else swipePush[i] = Vector3.Lerp(slam, Vector3.zero, Smooth((q - 1.3f) / 0.9f));
 			}
 
+			// (the players, looked up at most once a second: every free arm's swipe searched the scene - audit 10-30)
+			static Network_Player[] players;
+			static float playersAt = -10f;
+
+			static Network_Player[] Players()
+			{
+				if (players == null || Time.time - playersAt > 1f || Time.time < playersAt) { players = UnityEngine.Object.FindObjectsOfType<Network_Player>(); playersAt = Time.time; }
+				return players;
+			}
+
 			/// <summary>Where free arm t slams this time (arm space): the nearest living player within SwipeReach of where it
 			/// comes out of the sea, or null.</summary>
 			Vector3? Target(Tentacle t)
@@ -853,7 +873,7 @@ namespace DynamicIslands.Editor
 				Network_Player best = null; float bestD = SwipeReach;
 				try
 				{
-					foreach (Network_Player p in UnityEngine.Object.FindObjectsOfType<Network_Player>())
+					foreach (Network_Player p in Players())
 					{
 						if (p == null || p.Stats == null || p.Stats.IsDead) continue;
 						Vector3 d = p.transform.position - from; d.y = 0f;

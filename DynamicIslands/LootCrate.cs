@@ -87,7 +87,9 @@ namespace DynamicIslands.Editor
 			if (days <= 0) return;
 			foreach (LootCrate crate in e.Root.GetComponentsInChildren<LootCrate>(true).Where(c => c.Refills)) Refill(e, crate.StateKey, days);
 			CreatureSpawnPoint[] spots = e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true);
-			foreach (TriggerZone zone in e.Root.GetComponentsInChildren<TriggerZone>(true).Where(z => !z.OnceEver))
+			// (a zone with story items is never ready again, as a chest with them never fills up again: the story's key or
+			// item came twice and "has"/"take" counts went wrong - player 10-30)
+			foreach (TriggerZone zone in e.Root.GetComponentsInChildren<TriggerZone>(true).Where(z => !z.OnceEver && !z.Items.Any(l => StoryItems.IsStory(l.Key))))
 			{
 				if (!IsDue(e, zone.StateKey, days)) continue;
 				string id = zone.Id;

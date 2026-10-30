@@ -7,14 +7,14 @@ How a saved `.island` file becomes an island in a Raft world, streams in and out
 | `IslandFile.cs` | `IslandFile`: the `.island` format; `Save`, `Load`, `LoadOffThread`, `FromBytes`, `Capture` (private `Read` parses) |
 | `IslandSpawner.cs` | Builds an island in the scene: `SpawnInWorldSliced`, `MakeRoot` (cropped terrain, paint, `MakeFlying`), `SpawnObjectsSliced`/`SpawnBody`, `RegisterNetworkIds`, `Despawn`, `PathFor`, `SpawnedRoots` |
 | `CustomIslandSpawner.cs` | `Tick` every 2 s: `StreamIslands` (every machine), random islands while sailing (`TrySpawn`, host); spawnpool.txt (`LoadPool`, `SetValue`) |
-| `DynamicIslands.cs` | `SpawnIslandFile` coroutine (read, spawn, wire up); `OnLoadComplete`; `Update` calls each class's `Tick` |
+| `DynamicIslands.cs` | `SpawnIslandFile` coroutine (read, spawn, wire up); `SpawnIslandCommand` (F10 `SpawnIsland`: a world's unfinished rule island is brought back by `ReturningIslands.BringAgain` instead of a fresh copy); `OnLoadComplete`; `Update` calls each class's `Tick` |
 | `IslandWorldState.cs` | The world's island list (`Entry`), `Save`/`OnWorldLoaded` of the world file, `OnWorldShift`; `SaveWorldPatch`, `CreateRGDGamePatch`, `RestoreRGDGamePatch` |
 | `WorldCopy.cs` | Copies of the world file (Raft's world and save folders, every player); `Choose` picks the copy to read; `LocalFileFor` finds a saved island's file here |
 | `IslandObjectState.cs` | Used trees/pickups by ordinal (`ObjectState`): `Capture`, `Apply` (regrow), `Tick` (sends `ObjectHarvest`), `Encode`/`Decode` |
 | `CreatureSpawner.cs` | Host: NavMesh, then animals through `Network_Host_Entities`; `Watch`/`Account` record kills and catches; client tint and health; `Patch` (Harmony by hand) |
 | `PlayerHold.cs` | `PlayerHold` keeps a player in place until the island under them loads; `PlayerPlaces` (host) records places; `Players.All`; `SetToValidSpawnPointPatch` |
 | `PlayerMove.cs` | `PlayerMove.To`: moves the local player at once, off the raft and ladders first |
-| `IslandRadar.cs` | Postfix on `Reciever.HandleUI`: a green dot per entry (`Draw`) |
+| `IslandRadar.cs` | Postfix on `Reciever.HandleUI`: a green dot per entry (`Draw`); `Needed` shows the dot however far for an island players still need (`ReturningIslands.Why`, or `StillOpen`: a story step not done, a plan island or begun quest not `Finished`, a Receiver-frequency island too) |
 | `IslandRename.cs` | `IslandRename.Rename`: file, `_<hash>` copies, spawnpool.txt, installed.json, plans and island rules, every world file copy |
 | `MyIslandsWindow.cs` | My islands: `SourceOf`, worlds using each island, pool weight, Open/Rename/Delete/Give/Tidy up |
 | `Housekeeping.cs` | Tidy up (`Look`, `TidyUp`), `AllWorldCopies`, `WorldsByIsland`, `NamesIn`, `SavedByLine` |

@@ -85,6 +85,175 @@ namespace DynamicIslands
 			if (ok) Log("PASS: radar needs"); else Fail("radar needs");
 		}
 
+		[ConsoleCommand(name: "CIRadarFarReceiver", docs: "Dev, in game (host, a fresh world): an island on its own Receiver frequency, reached and its quest begun, then left beyond receiverDistance - it doesn't come back by itself, so its dot still shows however far; its quest done, the dot goes beyond the range (a player lost one, 2026-10-30)")]
+		public static void RadarFarReceiverCommand(string[] args) { StartTest(RadarFarReceiverRoutine()); }
+
+		static IEnumerator RadarFarReceiverRoutine()
+		{
+			Network_Player me = RAPI.GetLocalPlayer();
+			if (me == null || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			if (!WorldRules.ShowOnReceiver) { Fail("custom islands are hidden on the Receiver (showOnReceiver = 0)"); yield break; }
+			bool ok = true;
+			yield return EnsureAlive();
+			const string name = "ciradarfar";
+			var s = new IslandGenSettings { Seed = 8995, Radius = 25f, Height = 5f, Trees = 0f, Bushes = 0f, Rocks = 0f, Harvest = 0f, BeachThings = 0f, Water = 0f, SeaRocks = 0f, SeaFinds = 0f, Sunken = 0f };
+			IslandFile file = IslandGenerator.CreateFile(s, name);
+			var k = new MapKit(file, 5);
+			Vector2 at = k.Find(k.Mid, 15f, MapKit.Dry, 4f) ?? k.Mid;
+			k.Zone(at, "landing", 4f, "");
+			k.Zone(at + new Vector2(6f, 0f), "lookout", 4f, "");
+			k.Quest("Far signal", "Find the signal's source.", "Found it.", "", "reach|landing|1|Walk to the landing", "reach|lookout|1|Walk to the lookout");
+			file.Save(IslandSpawner.PathFor(name));
+			IslandWorldState.Remove(name);
+			WorldPlan keep = WorldDirector.Plan;
+			float keepRange = CustomIslandSpawner.ReceiverDistance;
+			// (brought ahead so the test needn't tune the Receiver; then the plan's rule is the Receiver one, as in a world whose plan gives its frequency)
+			IntroRule ahead = IntroRule.Parse("cifar | island:" + name + " | start | ahead:300 | | Far");
+			IntroRule onReceiver = IntroRule.Parse("cifar | island:" + name + " | start | receiver:300 | | Far");
+			// (a second frequency in the same game, its island also begun and left: both dots show, each until its own quest is done)
+			IntroRule ahead2 = IntroRule.Parse("cifar2 | island:" + name + " | start | ahead:600 | | Far two");
+			IntroRule onReceiver2 = IntroRule.Parse("cifar2 | island:" + name + " | start | receiver:600 | | Far two");
+			WorldDirector.Plan = new WorldPlan { Name = "CI radar far", Random = true, Rules = { ahead, ahead2 } };
+			GameObject recv = null;
+			try
+			{
+				string why = WorldDirector.Bring(ahead, null, null);
+				IslandWorldState.Entry e = null;
+				for (float t = 0f; t < 30f && (e == null || e.Root == null); t += 0.5f) { e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == name && i.Rule == "cifar"); yield return new WaitForSeconds(0.5f); }
+				if (e == null) { Fail("the island did not come (" + (why ?? "") + ")"); yield break; }
+				string why2 = WorldDirector.Bring(ahead2, null, null);
+				IslandWorldState.Entry e2 = null;
+				for (float t = 0f; t < 30f && (e2 == null || e2.Root == null); t += 0.5f) { e2 = IslandWorldState.Islands.LastOrDefault(i => i.HostName == name && i.Rule == "cifar2"); yield return new WaitForSeconds(0.5f); }
+				if (e2 == null) { Fail("the second island did not come (" + (why2 ?? "") + ")"); yield break; }
+				WorldDirector.Plan = new WorldPlan { Name = "CI radar far", Random = true, Rules = { onReceiver, onReceiver2 } };
+				// (reached, first step done, the second not: as the player who sailed off - from both)
+				foreach (IslandWorldState.Entry x in new[] { e, e2 })
+				{
+					x.State[WorldDirector.VisitKey] = new ObjectState { Active = true, Yield = 0 };
+					x.State[QuestTracker.StepKey] = new ObjectState { Active = true, Yield = 1 };
+				}
+				Check(ref ok, ReturningIslands.RuleThatBrought(e) == onReceiver && !ReturningIslands.Finished(e), "on its own Receiver frequency, quest begun and not done (step " + QuestTracker.StepOf(e) + ")");
+				Check(ref ok, ReturningIslands.Why(e) == null, "it doesn't come back by itself (the Receiver shows the way): " + (ReturningIslands.Why(e) ?? "no return"));
+				Check(ref ok, ReturningIslands.RuleThatBrought(e2) == onReceiver2 && ReturningIslands.Why(e2) == null && !ReturningIslands.Finished(e2), "the second frequency's island: begun, not done, no return by itself");
+				float dist = Vector2.Distance(new Vector2(e.Position.x, e.Position.z), new Vector2(me.transform.position.x, me.transform.position.z));
+				float dist2 = Vector2.Distance(new Vector2(e2.Position.x, e2.Position.z), new Vector2(me.transform.position.x, me.transform.position.z));
+				CustomIslandSpawner.ReceiverDistance = Mathf.Max(20f, Mathf.Min(dist, dist2) * 0.25f); // (both islands now far beyond the range)
+				Reciever r = MakeReceiver(me, out recv);
+				if (r == null) { Fail("could not find Raft's receiver block"); yield break; }
+				yield return new WaitForSeconds(1.2f);
+				IslandRadar.Draw(r);
+				int idx = IslandRadar.Shown.IndexOf(e);
+				List<Reciever_Dot> dots = IslandRadar.DotsOf(r);
+				Check(ref ok, idx >= 0 && idx < dots.Count && dots[idx] != null && dots[idx].gameObject.activeSelf,
+					"beyond the Receiver's range (" + Gf(dist, "F0") + " m, range " + Gf(WorldRules.ReceiverDistance, "F0") + " m): its dot still shows (" + (idx >= 0 && idx < dots.Count && dots[idx] != null && dots[idx].dotNumberText != null ? dots[idx].dotNumberText.text : "none") + ")");
+				int idx2 = IslandRadar.Shown.IndexOf(e2);
+				Check(ref ok, idx2 >= 0 && idx2 < dots.Count && dots[idx2] != null && dots[idx2].gameObject.activeSelf, "the second frequency's island (" + Gf(dist2, "F0") + " m): its dot shows too");
+				// (its quest done: an island nobody needs, so beyond the range no dot - the other frequency's island keeps its own)
+				e.State[QuestTracker.StepKey] = new ObjectState { Active = true, Yield = 2 };
+				yield return new WaitForSeconds(1.2f);
+				IslandRadar.Draw(r);
+				Check(ref ok, ReturningIslands.Finished(e) && !IslandRadar.Shown.Contains(e), "its quest done: no dot beyond the range (" + IslandRadar.Shown.Count + " dot(s))");
+				Check(ref ok, IslandRadar.Shown.Contains(e2), "the second frequency's island, still unfinished: its dot still shows");
+				// (an island of the pool - no rule - its quest begun and back the most times it comes: no return, but its dot stays)
+				e2.Rule = "";
+				e2.State[ReturningIslands.ReturnsKey] = new ObjectState { Active = true, Yield = ReturningIslands.MaxReturns };
+				yield return new WaitForSeconds(1.2f);
+				IslandRadar.Draw(r);
+				Check(ref ok, ReturningIslands.Why(e2) == null && IslandRadar.Shown.Contains(e2), "a pool island past its returns, quest unfinished: no return (" + (ReturningIslands.Why(e2) ?? "none") + "), its dot still shows");
+				CustomIslandSpawner.ReceiverDistance = 0f;
+				yield return new WaitForSeconds(1.2f);
+				IslandRadar.Draw(r);
+				Check(ref ok, IslandRadar.Shown.Contains(e), "range 0 (all): its dot shows again");
+			}
+			finally
+			{
+				WorldDirector.Plan = keep;
+				CustomIslandSpawner.ReceiverDistance = keepRange;
+				if (recv != null) UnityEngine.Object.Destroy(recv);
+				IslandWorldState.Remove(name);
+			}
+			if (ok) Log("PASS: radar far receiver"); else Fail("radar far receiver");
+		}
+
+		[ConsoleCommand(name: "CISpawnStoryAgain", docs: "Dev, in game (host, a fresh world): SpawnIsland <name> of a story island (one with a rule) this world has, quest unfinished: that entry comes back (quest kept) instead of a fresh rule-less copy; loaded already, nothing is added; a rule-less same-name copy whose quest is done counts the story step as done (a player's SpawnIsland copy, 2026-10-30)")]
+		public static void SpawnStoryAgainCommand(string[] args) { StartTest(SpawnStoryAgainRoutine()); }
+
+		static IEnumerator SpawnStoryAgainRoutine()
+		{
+			Network_Player me = RAPI.GetLocalPlayer();
+			Vector3? raft = CustomIslandSpawner.RaftPosition;
+			if (me == null || !raft.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			bool ok = true;
+			yield return EnsureAlive();
+			const string name = "cispawnstory";
+			const string typed = "CiSpawnStory"; // (the player's spelling: any case finds it)
+			var s = new IslandGenSettings { Seed = 8996, Radius = 25f, Height = 5f, Trees = 0f, Bushes = 0f, Rocks = 0f, Harvest = 0f, BeachThings = 0f, Water = 0f, SeaRocks = 0f, SeaFinds = 0f, Sunken = 0f };
+			IslandFile file = IslandGenerator.CreateFile(s, name);
+			var k = new MapKit(file, 5);
+			Vector2 at = k.Find(k.Mid, 15f, MapKit.Dry, 4f) ?? k.Mid;
+			k.Zone(at, "landing", 4f, "");
+			k.Zone(at + new Vector2(6f, 0f), "lookout", 4f, "");
+			k.Quest("Spawn again", "Find the lookout.", "Found it.", "", "reach|landing|1|Walk to the landing", "reach|lookout|1|Walk to the lookout");
+			file.Save(IslandSpawner.PathFor(name));
+			IslandWorldState.Remove(name);
+			WorldPlan keep = WorldDirector.Plan;
+			IntroRule ahead = IntroRule.Parse("cispawn | island:" + name + " | start | ahead:300 | | Spawn again");
+			WorldDirector.Plan = new WorldPlan { Name = "CI spawn story", Random = true, Rules = { ahead } };
+			Func<int> copies = () => IslandWorldState.Islands.Count(i => i.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+			try
+			{
+				string why = WorldDirector.Bring(ahead, null, null);
+				IslandWorldState.Entry e = null;
+				for (float t = 0f; t < 30f && (e == null || e.Root == null); t += 0.5f) { e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == name && i.Rule == "cispawn"); yield return new WaitForSeconds(0.5f); }
+				if (e == null || e.Root == null) { Fail("the story island did not come (" + (why ?? "") + ")"); yield break; }
+				// (reached, first step done, the second not; then left far behind and unloaded, as after the player sailed off)
+				e.State[WorldDirector.VisitKey] = new ObjectState { Active = true, Yield = 0 };
+				e.State[QuestTracker.StepKey] = new ObjectState { Active = true, Yield = 1 };
+				Vector3 sail = CustomIslandSpawner.SailDirection();
+				e.Position = raft.Value + new Vector3(sail.x, 0f, sail.z).normalized * 4000f;
+				IslandObjectState.Capture(e);
+				IslandSpawner.Despawn(e.Root);
+				e.Root = null;
+				Check(ref ok, !ReturningIslands.Finished(e) && e.Rule == "cispawn" && QuestTracker.StepOf(e) == 1 && copies() == 1, "set up: a story island, quest begun and not done, unloaded far away (" + copies() + " entry)");
+
+				// a) SpawnIsland of its name: that entry comes back
+				float returnsBefore = ReturningIslands.Returns(e);
+				DynamicIslands.SpawnIslandCommand(new[] { typed });
+				yield return new WaitForSeconds(0.5f);
+				float away = new Vector2(e.Position.x - raft.Value.x, e.Position.z - raft.Value.z).magnitude;
+				Check(ref ok, copies() == 1 && IslandWorldState.Islands.Contains(e), "SpawnIsland " + typed + ": no second entry (" + copies() + " with that name), the story's own is still there");
+				Check(ref ok, e.Rule == "cispawn" && QuestTracker.StepOf(e) == 1 && !ReturningIslands.Finished(e), "it is still the story's: rule '" + e.Rule + "', quest step " + QuestTracker.StepOf(e) + " kept");
+				Check(ref ok, away < 600f && ReturningIslands.Returns(e) == returnsBefore + 1, "it came back ahead of the raft (" + Gf(away, "F0") + " m from it, came back " + ReturningIslands.Returns(e) + "x)");
+				for (float t = 0f; t < 40f && e.Root == null; t += 0.5f) yield return new WaitForSeconds(0.5f);
+				Check(ref ok, e.Root != null && copies() == 1, "it loads there: " + (e.Root != null ? "loaded" : "not loaded after 40 s"));
+
+				// b) loaded already: nothing is added or moved
+				Vector3 posBefore = e.Position;
+				int returnsAfter = ReturningIslands.Returns(e);
+				int total = IslandWorldState.Islands.Count;
+				DynamicIslands.SpawnIslandCommand(new[] { typed.ToLowerInvariant() });
+				yield return new WaitForSeconds(1.5f);
+				Check(ref ok, IslandWorldState.Islands.Count == total && copies() == 1 && e.Position == posBefore && ReturningIslands.Returns(e) == returnsAfter && QuestTracker.StepOf(e) == 1,
+					"loaded already: SpawnIsland adds nothing, moves nothing (" + IslandWorldState.Islands.Count + " islands, " + copies() + " with that name)");
+
+				// c) a rule-less same-name copy (spawned by hand before the fix) whose quest is done: the rule's step counts as done
+				Check(ref ok, !StoryChain.IsDone(ahead), "the story island's own quest is not done: the step is not done");
+				IslandWorldState.Entry x = IslandWorldState.Add(name, raft.Value + new Vector3(sail.x, 0f, sail.z).normalized * 5000f, null, false);
+				x.State[QuestTracker.StepKey] = new ObjectState { Active = true, Yield = 1 };
+				Check(ref ok, x.Rule.Length == 0 && !StoryChain.IsDone(ahead), "a rule-less copy with its quest not done: the step is not done");
+				x.State[QuestTracker.StepKey] = new ObjectState { Active = true, Yield = 2 };
+				Check(ref ok, StoryChain.IsDone(ahead), "a rule-less copy with its quest done: the step counts as done");
+				x.Name = "cispawnother";
+				Check(ref ok, !StoryChain.IsDone(ahead), "a rule-less entry of another name does not count");
+			}
+			finally
+			{
+				WorldDirector.Plan = keep;
+				IslandWorldState.Remove(name);
+			}
+			if (ok) Log("PASS: spawn story again"); else Fail("spawn story again");
+		}
+
 		/// <summary>A Receiver (Raft's block) above the player with its radar on.</summary>
 		static Reciever MakeReceiver(Network_Player me, out GameObject go)
 		{

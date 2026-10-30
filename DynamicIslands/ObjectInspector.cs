@@ -408,7 +408,8 @@ namespace DynamicIslands.Editor
 			RectTransform g = UIKit.Group(root, "Note");
 			titleField = UIKit.Field(g, "Title", ObjectProps.Get(p, ObjectProps.NoteTitle, ""), 30f, "The note's title (Enter keeps it)");
 			titleField.characterLimit = NoteEditorWindow.MaxTitle;
-			titleField.onEndEdit.AddListener(v => Set(target, ObjectProps.NoteTitle, v.Trim(), null));
+			// (player 10-30: the quest's steps that read or open it follow a new title)
+			titleField.onEndEdit.AddListener(v => { string old = ObjectProps.Get(target.Props, ObjectProps.NoteTitle, ""); Set(target, ObjectProps.NoteTitle, v.Trim(), null); EditorRenames.NoteTitle(target, old, v); });
 			string text = ObjectProps.Get(p, ObjectProps.NoteText, "");
 			string preview = text.Length == 0 ? "<i>(no text yet)</i>" : Escape(text.Length > 140 ? text.Substring(0, 140).TrimEnd() + "\u2026" : text);
 			Text pt = UIKit.Label(g, preview, 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Preview");
@@ -593,6 +594,7 @@ namespace DynamicIslands.Editor
 		{
 			if (newId.Length == 0 || newId == oldId) { Refresh(); return; }
 			Set(target, ObjectProps.ZoneId, newId);
+			EditorRenames.ZoneId(target, oldId, newId); // (player 10-30: and the quest's "reach" steps, in the same undo step)
 			GameObject placed = GameObject.Find("PlacedObjects");
 			if (placed != null && oldId.Length > 0)
 				foreach (EditorGameObject e in placed.GetComponentsInChildren<EditorGameObject>().Where(e => ObjectProps.Get(e.Props, ObjectProps.CreatureZone) == oldId).ToList())

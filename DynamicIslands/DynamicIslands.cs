@@ -1150,6 +1150,17 @@ namespace DynamicIslands
 			Vector3 dir = Raft.direction.sqrMagnitude > 0.01f ? Raft.direction.normalized : Vector3.forward;
 			Vector3 position = origin + new Vector3(dir.x, 0, dir.z).normalized * distance;
 			string name = string.Join(" ", args);
+			// A story or plan island this world already has, not finished: that one comes back (quest kept, still the story's).
+			// A fresh copy had no rule: its quest started over, counted in the journal and never opened the next frequency
+			// (player 10-30).
+			IslandWorldState.Entry kept = IslandWorldState.Islands.FirstOrDefault(e => !string.IsNullOrEmpty(e.Rule) &&
+				e.Name.Equals(name, StringComparison.OrdinalIgnoreCase) && !ReturningIslands.Finished(e));
+			if (kept != null)
+			{
+				if (kept.Root != null || kept.Loading) { Notify("'" + name + "' is already here (the story's island, its quest as you left it)", false); return; }
+				if (!ReturningIslands.BringAgain(kept, origin)) Notify("'" + name + "' is this world's story island: no free spot ahead of the raft yet - sail on a little and try again", true);
+				return;
+			}
 			// The island's y is its elevation above sea level (0 = a normal island)
 			position.y = height ?? IslandSpawner.ElevationOf(name);
 			// On top of one of Raft's own islands, players can fall through the ground: say so (the automatic spawner avoids it)

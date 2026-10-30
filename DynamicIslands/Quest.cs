@@ -182,6 +182,21 @@ namespace DynamicIslands.Editor
 			return e != null && e.State.TryGetValue(ProgressKeyOf(n), out s) ? s.Yield : 0;
 		}
 
+		/// <summary>A side quest (2..) of the island begun and not done: the island isn't finished while one is (its rewards
+		/// can only be had there). The file is read only for an island that has a side quest step saved.</summary>
+		public static bool SideQuestOpen(IslandWorldState.Entry e)
+		{
+			if (e == null) return false;
+			for (int n = 1; n < IslandQuest.MaxQuests; n++)
+			{
+				int step = StepOf(e, n);
+				if (step <= 0) continue;
+				IslandQuest q = QuestOf(e, n);
+				if (q.Exists && step < q.Steps.Count) return true;
+			}
+			return false;
+		}
+
 		/// <summary>Whether quest n of the island is done (it has steps, all done).</summary>
 		public static bool IsDone(IslandWorldState.Entry e, int n)
 		{
@@ -210,12 +225,11 @@ namespace DynamicIslands.Editor
 			{
 				// Done before its step came (the chest opened, the animals defeated first): remembered for that step and
 				// counted when it comes - it was lost, and the chest stayed empty / the animals dead
-				for (int later = step + 1; later < q.Steps.Count; later++)
+				int later = LaterStep(e, n, q, step, type, target);
+				if (later >= 0)
 				{
-					if (IslandQuest.Counted(q.Steps[later].Type) || !Matches(q.Steps[later], type, target)) continue;
 					if (Raft_Network.IsHost) Remember(e, n, later, amount);
 					else if (IslandNetwork.HostAddsCounts) IslandNetwork.SendQuestAdd(e.Id, n, later, amount); // (an older host would jump to that step)
-					break;
 				}
 				return;
 			}
@@ -226,8 +240,10 @@ namespace DynamicIslands.Editor
 			bool adds = !Raft_Network.IsHost && IslandNetwork.HostAddsCounts;
 			// (more than the step needs: the rest for the next step asking for the same, kept before the quest moves there)
 			if (progress > s.Count && Raft_Network.IsHost)
-				for (int later = step + 1; later < q.Steps.Count; later++)
-					if (!IslandQuest.Counted(q.Steps[later].Type) && Matches(q.Steps[later], type, target)) { Remember(e, n, later, progress - s.Count); break; }
+			{
+				int later = LaterStep(e, n, q, step, type, target);
+				if (later >= 0) Remember(e, n, later, progress - s.Count);
+			}
 			if (progress >= s.Count) Set(e, n, step + 1, 0, !adds);
 			else Set(e, n, step, progress, !adds);
 			if (adds) IslandNetwork.SendQuestAdd(e.Id, n, step, amount);
@@ -236,6 +252,28 @@ namespace DynamicIslands.Editor
 		static bool Matches(IslandQuest.Step s, string type, string target)
 		{
 			return s.Type == type && (s.Target.Length == 0 || string.Equals(s.Target.Trim(), (target ?? "").Trim(), StringComparison.OrdinalIgnoreCase));
+		}
+
+		/// <summary>The later step (after step) that something done now is kept for, or -1: a step naming it first, then a
+		/// step taking any. (Before, the first match won: the Vault opened early went to an earlier "open any chest" step, and
+		/// the later "open the Vault" step could never be done - player 10-30.) A naming step already full of early work
+		/// is passed over, so more of the same still goes to the "any" step.</summary>
+		static int LaterStep(IslandWorldState.Entry e, int n, IslandQuest q, int step, string type, string target)
+		{
+			int any = -1;
+			for (int later = step + 1; later < q.Steps.Count; later++)
+			{
+				IslandQuest.Step s = q.Steps[later];
+				if (IslandQuest.Counted(s.Type) || !Matches(s, type, target)) continue;
+				if (s.Target.Trim().Length > 0)
+				{
+					ObjectState had;
+					if (e.State.TryGetValue(EarlyKeyOf(n, later), out had) && had.Yield >= s.Count) continue;
+					return later;
+				}
+				if (any < 0) any = later;
+			}
+			return any;
 		}
 
 		/// <summary>Where a later step's early work is kept in the island's state (its count in Yield).</summary>
@@ -577,16 +615,21 @@ namespace DynamicIslands.Editor
 		/// <summary>Host: counted steps (story items, pages) move on when the crew has enough; everyone is told.</summary>
 		static void CheckCounted()
 		{
+			Network_Player[] players = UnityEngine.Object.FindObjectsOfType<Network_Player>();
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.ToList())
 			{
-				for (int n = 0, count = QuestsOf(e); n < count; n++)
+				// (only while someone is there: a quest whose items the crew already held finished the moment its island
+				// appeared far away, and nobody got its reward. Looked at first: every island's quests were read and their
+				// finds counted every 0.5 s, for islands nobody was at - audit 10-30. Islands without quests first: no land
+				// radius asked for an island whose file isn't here)
+				int count = QuestsOf(e);
+				if (count == 0 || !AnyPlayerNear(e, players)) continue;
+				for (int n = 0; n < count; n++)
 				{
 					IslandQuest q = TickQuest(e, n);
 					int step = StepOf(e, n);
 					if (!q.Exists || step >= q.Steps.Count || !IslandQuest.Counted(q.Steps[step].Type)) continue;
-					// (only while someone is there: a quest whose items the crew already held finished the moment its island
-					// appeared far away, and nobody got its reward)
-					if (Found(e, q.Steps[step]) >= q.Steps[step].Count && AnyPlayerNear(e)) Set(e, n, step + 1, 0, true);
+					if (Found(e, q.Steps[step]) >= q.Steps[step].Count) Set(e, n, step + 1, 0, true);
 				}
 			}
 		}
@@ -615,10 +658,12 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Host: whether any player is at the island (its land and the same reach as the rewards).</summary>
-		static bool AnyPlayerNear(IslandWorldState.Entry e)
+		static bool AnyPlayerNear(IslandWorldState.Entry e) { return AnyPlayerNear(e, UnityEngine.Object.FindObjectsOfType<Network_Player>()); }
+
+		static bool AnyPlayerNear(IslandWorldState.Entry e, Network_Player[] players)
 		{
 			float r = Mathf.Max(0f, CustomIslandSpawner.LandRadius(e.Name)) + NearDistance;
-			foreach (Network_Player p in UnityEngine.Object.FindObjectsOfType<Network_Player>())
+			foreach (Network_Player p in players)
 				if (p != null && new Vector2(p.transform.position.x - e.Position.x, p.transform.position.z - e.Position.z).magnitude < r) return true;
 			return false;
 		}
