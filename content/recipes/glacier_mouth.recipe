@@ -175,8 +175,12 @@ next
 brush flatten at -57 -18.4 r=1.6 s=20 frames=300 h=-12
 for k 0 7 1
 place Block_Ladder crevladder at -57 -17.6 h={-12+2.42*$k} yaw=180
+next
+# (GROUND 10-30 G1: the posts behind ladder pieces 4-6 stood buried whole in the north wall's rock - left out there)
+for k 0 3 1
 place Block_Pillar_Wood crevladder at -57 -17.4 h={-12+2.42*$k}
 next
+place Block_Pillar_Wood crevladder at -57 -17.4 h={-12+2.42*7}
 # (REACH 10-29: now held from below, but its top stood 0.6 m off the rim - a plank on the pillar bridges top and rim)
 place Block_Floor_Wood crevtop at -57 -16.9 h=7.35 sx=1 sz=1.2
 # the ice lid (it gives way: the collapse action, M19, since ce82976) and the rubble it leaves at the bottom
