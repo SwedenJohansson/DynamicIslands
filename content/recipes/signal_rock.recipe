@@ -214,6 +214,22 @@ call shallows r=50 deep=5 n=1
 
 # --- DEEP 10-25: the rigger's cave on the east headland - Dmitri Vos's note, his box, his savings -------------------
 call ar_cave x=42 z=12 h=3.5 yaw=0 al=rigrock chest=rigbox
+# (REACH 10-30: the cave floor ended 3.5 m over the sea in a cliff and the rock's overhang shuts the way round from
+# the neck - no way in (reach: the cave, the note and the box "can't get there"): a beach slope from the mouth to the sea)
+# (widening out to the sea as it goes down, then smoothed, so it reads as a sand fan off the headland, not a causeway)
+# (10-31: the wide top cut into the cave's mouth path and left a step the walker could not climb: narrow at the top as
+# on 10-30 19:04 (reach PASS), widening only further down)
+brush flatten at 41 27.5 r=2 s=20 frames=200 h=3.5
+brush flatten at 41 29.5 r=2.4 s=20 frames=200 h=3.1
+brush flatten at 41 31 r=2.4 s=20 frames=200 h=2.4
+brush flatten at 41 32.5 r=3 s=20 frames=200 h=1.7
+brush flatten at 41 34 r=3.5 s=20 frames=200 h=1.0
+brush flatten at 41 35.5 r=4 s=20 frames=200 h=0.3
+brush flatten at 41 37 r=4.5 s=20 frames=200 h=-0.4
+brush flatten at 41 38.5 r=5 s=20 frames=200 h=-1.1
+brush flatten at 41 40 r=5 s=20 frames=200 h=-1.8
+brush smooth from 41 35 to 41 40 r=6 s=4 frames=8
+clear from 41 27.5 to 41 40 r=7 body
 call hw_zone x=42 z=17 al=rigcavez id=rigcave r=4 msg="A cave in the headland, a bedroll and a coil of cable inside. Someone lived out here, away from the station."
 place Note_Paper rignote at 40.5 17.5 h=3.95 drop yaw=180
 loot rigbox Rope*2;CircuitBoard*1;Bolt*3;Battery*1
@@ -295,4 +311,7 @@ quest reward=HeadLight*1;Battery*2;CircuitBoard*1;Bolt*4
 # (generator stones left in the air by the shaping - taken out, 10-25)
 clear at 3.19 -19.83 r=1 only=SmallBoulder2
 clear at 9.94 -18.71 r=1.5 only=BigBoulder4_Low
+# (ground check 10-30, "sunk trunk": a big palm, its foot 1.9 m in the slope - taken out. The report is from the land centre,
+# 16.7847 3.2432 off this recipe's origin: added here)
+clear at 7.92 -24.33 r=0.8 all only=BigPalm4
 save Signal Rock

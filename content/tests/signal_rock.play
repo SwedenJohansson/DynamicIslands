@@ -3,7 +3,7 @@
 # a point (x, z) of the station is (-11 + 0.707 (x + z), -11 + 0.707 (z - x)).
 island Signal Rock
 # DEEP 10-25: the headland moved the land's centre (the recipe's save prints the exact offset)
-offset 16.96 3.45
+offset 16.8261 3.288
 expect step 0
 expect title Dead Air
 
