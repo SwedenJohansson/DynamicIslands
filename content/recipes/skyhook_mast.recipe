@@ -160,6 +160,8 @@ call hw_zone x=44 z=-29 al=okaz id=albatross_cave r=4 msg="A cave under a tarpau
 place Note_Paper okanote at 42.5 -29.5 h=2.45 drop yaw=180
 loot okachest story:chartkey*1;Bolt*3;Hinge*2;MetalIngot*1
 prop okachest loot.refill=0
+prop okachest if.open=quest|11
+prop okachest else.open=message||Nell's tool chest is padlocked. Her note says where she keeps the key to it.
 note okachest Engineer's tool chest | Nell Okafor's tool chest: spanners, bolts, hinges - and a small brass key on a wire tag: "CHART LOCKER - ALBATROSS".
 # --- The station's supply barge, drowned off the north (-9 m): Silas Grey's report, an air pocket --------------------
 call hw_sunkhouse x=-8 z=56 h=-9 yaw=0 a=barge chest=bargechest air=bargeair bub=bargebub dal=bargedoor
