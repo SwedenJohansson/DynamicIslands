@@ -36,7 +36,7 @@ use valve2
 expect message won't budge
 use valve1
 expect story tally 1
-expect step 6
+expect step 5
 at -25 5 h=1
 zone cistern
 expect step 6
