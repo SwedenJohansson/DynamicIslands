@@ -1260,6 +1260,8 @@ namespace DynamicIslands.Editor
 			{
 				string[] lines = File.ReadAllLines(file);
 				bool changed = false;
+				// (the island copies whose state was carried: their journal pages go with it - Files #2)
+				var pagesOf = new List<KeyValuePair<string, string>>();
 				for (int i = 0; i < lines.Length; i++)
 				{
 					string had = OlderHash(lines[i], island, now);
@@ -1267,13 +1269,14 @@ namespace DynamicIslands.Editor
 					string[] p = lines[i].Split('|');
 					string state = CarryState(island, had, p, ref current, copies);
 					if (state == null && carriedOnly) continue;
-					if (state != null) { p[4] = state; carried++; }
+					if (state != null) { p[4] = state; carried++; pagesOf.Add(new KeyValuePair<string, string>(PageIslandOfLine(lines, i), had)); }
 					p[7] = now;
 					lines[i] = string.Join("|", p);
 					olds.Add(had);
 					changed = true;
 				}
 				if (!changed) continue;
+				if (pagesOf.Count > 0) lines = CarryPages(lines, pagesOf, current, copies, island);
 				// (not the editor's test world: it is made again for each test, and its next save wrote the old hash back - CA29)
 				string world = Housekeeping.WorldName(lines, file);
 				if (world.Equals(IslandTest.WorldName, StringComparison.OrdinalIgnoreCase)) continue;
@@ -1302,6 +1305,59 @@ namespace DynamicIslands.Editor
 			if (moved.Count > 0) IslandCache.Forget();
 			Debug.Log("[CUSTOM ISLANDS] Gave " + worlds.Count + " world(s) the version " + now + " of '" + island + "', moved " + moved.Count + " old cop" + (moved.Count == 1 ? "y" : "ies") + " aside");
 			return worlds.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+		}
+
+		/// <summary>
+		/// The journal's name for the island of a world file's line (StoryBook.PageIsland): its name, with "|2" for the second
+		/// island line of that name, and so on - the islands' order when the world loads (lines it can't read don't count).
+		/// </summary>
+		static string PageIslandOfLine(string[] lines, int index)
+		{
+			string name = lines[index].Split('|')[0];
+			int copy = 1;
+			for (int i = 0; i < index; i++)
+			{
+				string l = lines[i];
+				if (l.StartsWith("@") || l.StartsWith("#") || l.Trim().Length == 0) continue;
+				string[] p = l.Split('|');
+				float v;
+				if (p.Length < 4 || !p[0].Equals(name, StringComparison.OrdinalIgnoreCase) || !new[] { p[1], p[2], p[3] }.All(s => float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out v))) continue;
+				copy++;
+			}
+			return copy == 1 ? name : name + "|" + copy.ToString(CultureInfo.InvariantCulture);
+		}
+
+		/// <summary>
+		/// Files #2: the world's journal pages of the island copies whose state was carried (page island, old hash) moved with
+		/// it - "note:" and "act:" keys name an object by its place in the file (StableIds.MovePageKey). All or nothing: on an
+		/// error the pages stay as they were.
+		/// </summary>
+		static string[] CarryPages(string[] lines, List<KeyValuePair<string, string>> pagesOf, IslandFile current, Dictionary<string, IslandFile> copies, string island)
+		{
+			try
+			{
+				var maps = pagesOf.Select(c => new KeyValuePair<string, int[]>(c.Key, StableIds.IndexMap(copies[c.Value], current))).ToList();
+				var taken = new HashSet<string>(lines.Select(StoryBook.PageKeyOfLine).Where(k => k != null));
+				var result = (string[])lines.Clone();
+				int movedPages = 0;
+				for (int i = 0; i < result.Length; i++)
+				{
+					string key = StoryBook.PageKeyOfLine(result[i]);
+					if (key == null) continue;
+					foreach (KeyValuePair<string, int[]> m in maps)
+					{
+						string moved = StableIds.MovePageKey(key, m.Key, m.Value, taken);
+						if (moved == key) continue;
+						result[i] = StoryBook.WithPageKey(result[i], moved);
+						taken.Add(moved);
+						movedPages++;
+						break;
+					}
+				}
+				if (movedPages > 0) Debug.Log("[CUSTOM ISLANDS] '" + island + "': " + movedPages + " journal page(s) moved with their objects");
+				return result;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Moving a world's journal pages of '" + island + "': " + e.Message); return lines; }
 		}
 
 		/// <summary>A world line's state of the island carried from its old copy (hash had) to the island's file now; null when it can't be.</summary>

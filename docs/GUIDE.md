@@ -1209,8 +1209,8 @@ in the list: **Tidy up** (in **My islands** or the Import window) clears the one
 
 **Give my worlds this version.** A saved world keeps playing the version of an island it was saved with. When you save
 an island that worlds play in an older version, the editor offers **Give my worlds this version** (also in **My islands**
-for the picked island): those worlds then play the island as you saved it now, with what was used there kept on the
-same objects (unless rules or quest steps were removed or reordered: then fired rules and reached steps may land on
+for the picked island): those worlds then play the island as you saved it now, with what was used there and the
+journal's pages of its notes kept on the same objects (a note you deleted keeps its page) (unless rules or quest steps were removed or reordered: then fired rules and reached steps may land on
 other ones), and the old copies go to `deleted\kept versions`. **Keep their version** leaves them as they are.
 
 **My islands...** (in the Islands window) lists every island file at once: where it came from (**Mine**, the island
@@ -3903,6 +3903,11 @@ planned to change.
 **Versions**
 - **An island saved with a newer version of the mod can't be opened by an older one** (the file says so). Update the mod.
 - **Islands built with Unity (`.assets`, version 2)** are no longer read: rebuild them in the editor.
+- **A world follows the host's version of an island.** When the next host has an island of the world in another version
+  (same name, changed in their editor), they play theirs until a player who has the world's version joins. If the world
+  is saved before that, it keeps the host's version from then on, and what was used on that island may sit on other
+  objects. Let a player who hosted the world before join first ([Hosting on another day](#hosting-on-another-day)).
+  (The same rule lets your own edits reach your saved worlds, 4.7.)
 
 **Your PC and Raft's menus**
 - **Keep Raft out of OneDrive and Program Files.** The mod writes its files next to Raft (`<Raft>\Mods\DynamicIslands`).

@@ -387,6 +387,44 @@ namespace DynamicIslands.Editor
 			return IslandObjectState.Encode(moved);
 		}
 
+		/// <summary>Each object's place in was -> its place in now, by its number (-1: removed, or it has no number).</summary>
+		public static int[] IndexMap(IslandFile was, IslandFile now)
+		{
+			var at = new Dictionary<int, int>();
+			for (int k = 0; k < now.Objects.Count; k++) if (now.Objects[k].Uid > 0) at[now.Objects[k].Uid] = k;
+			var map = new int[was.Objects.Count];
+			for (int i = 0; i < map.Length; i++) { int j; map[i] = was.Objects[i].Uid > 0 && at.TryGetValue(was.Objects[i].Uid, out j) ? j : -1; }
+			return map;
+		}
+
+		/// <summary>
+		/// A journal page's key (StoryBook: "note:&lt;island&gt;:&lt;object&gt;", "act:&lt;island&gt;:&lt;object&gt;:&lt;title&gt;") of
+		/// the island copy pageIsland, moved as Carry moves the state: to its object's place in the new file (map: IndexMap).
+		/// A removed object's page is kept under "gone&lt;n&gt;" (it was read, but is no longer any object's: the object now at
+		/// its old place doesn't count as read); taken holds the keys in use, so that one is new. Other keys, and the island's
+		/// own events (Behaviours.IslandIndex, past the objects), as they are.
+		/// </summary>
+		public static string MovePageKey(string key, string pageIsland, int[] map, ICollection<string> taken)
+		{
+			if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(pageIsland) || map == null) return key;
+			foreach (string kind in new[] { "note:", "act:" })
+			{
+				string prefix = kind + pageIsland + ":";
+				if (!key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) continue;
+				string rest = key.Substring(prefix.Length);
+				int colon = rest.IndexOf(':');
+				if (kind == "act:" && colon < 0) return key;
+				string number = kind == "act:" ? rest.Substring(0, colon) : rest, title = kind == "act:" ? rest.Substring(colon) : "";
+				int i;
+				if (!int.TryParse(number, NumberStyles.None, CultureInfo.InvariantCulture, out i) || i >= map.Length) return key;
+				if (map[i] >= 0) return key.Substring(0, prefix.Length) + map[i].ToString(CultureInfo.InvariantCulture) + title;
+				string gone = key.Substring(0, prefix.Length) + "gone" + i.ToString(CultureInfo.InvariantCulture), moved = gone + title;
+				for (int n = 2; taken != null && taken.Contains(moved); n++) moved = gone + "-" + n.ToString(CultureInfo.InvariantCulture) + title;
+				return moved;
+			}
+			return key;
+		}
+
 		/// <summary>Whether a world's line can be carried to the new file as it is: its rules and quest steps keep their places.</summary>
 		public static bool ListsKept(IslandFile before, IslandFile after) { return !DynamicIslands.ListsShift(before, after); }
 

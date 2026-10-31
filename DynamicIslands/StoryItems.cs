@@ -615,6 +615,25 @@ namespace DynamicIslands.Editor
 		/// <summary>Lines for the world's file ("@" + key = value).</summary>
 		public static IEnumerable<string> WriteLines() { return Lines().Select(l => "@" + l); }
 
+		/// <summary>A world file's line written by WriteLines: its page key when it is a page ("@story.page="), else null.</summary>
+		public static string PageKeyOfLine(string line)
+		{
+			const string head = "@story.page=";
+			if (line == null || !line.StartsWith(head)) return null;
+			string f = line.Substring(head.Length).Split('|')[0];
+			try { return Uri.UnescapeDataString(f); } catch { return null; }
+		}
+
+		/// <summary>A world file's page line with another key (the other fields as they are); other lines as they are.</summary>
+		public static string WithPageKey(string line, string key)
+		{
+			const string head = "@story.page=";
+			if (line == null || key == null || !line.StartsWith(head)) return line;
+			string[] f = line.Substring(head.Length).Split('|');
+			f[0] = Uri.EscapeDataString(key);
+			return head + string.Join("|", f);
+		}
+
 		/// <summary>A line of the world's file; true if it was a story line.</summary>
 		public static bool ReadLine(string key, string value)
 		{

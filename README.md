@@ -1014,6 +1014,7 @@ These come from Raft, its mod loader, Unity, or a choice made on purpose - the g
 - The generator gives one island at most 12 000 objects (a Balboa-sized jungle is thinned to that): more makes Raft stutter when the island loads.
 - Atmosphere zones change Unity's fog and ambient light plus a faint screen tint; how strong the fog looks depends on Raft's own sky at that moment.
 - An island file with creatures, notes, a tint or island info is format 4: older versions of the mod can't open it. Islands without these are still saved in the older formats. Support for Unity-built `.assets` islands from version 2 was removed: rebuild those islands in the editor.
+- A world follows the host's version of an island: a next host who has one of its islands in another version (same name, changed in their editor) plays theirs until a player with the world's version joins, and a save before that keeps the host's version, with what was used there possibly on other objects. Let a player who hosted before join first.
 - A private storage is its builder's alone - there is no shared storage whose contents differ per player. Scrambled blueprints move only the blueprints lying on the story islands (the Radio Tower has none) and never what the story needs. Alphas' extra spoils come from alphas of Raft's own islands, and the extra animals on Raft's islands are never alphas.
 - Text inside islands (notes, quests) is shown as written, so a pack from someone you don't know can hold words you'd rather not see - the island library's entries are looked at before they go in.
 
