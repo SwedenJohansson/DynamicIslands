@@ -274,17 +274,17 @@ needs. With several players the host decides, and the island moves for everyone.
 
 **A finished island never comes again by chance.** When the spawn pool picks an island this world already has:
 
-- **finished** - its quest done, or, for an island without a quest, reached by a player, and every note on it found
-  - it isn't picked; another island comes instead;
-- **notes left** - its quest done but a note on it not found yet (the journal shows "(6/7 notes)") - it may come
-  back as you left it, so a missed note isn't lost for good;
+- **finished** - its quest done (a note on it missed or not), or, for an island without a quest, reached by a player
+  with every note on it found - it isn't picked; another island comes instead;
+- **notes left** - an island without a quest, reached, with a note on it not found yet (the journal shows "(6/7
+  notes)") - it may come back as you left it, so a missed note isn't lost for good;
 - **not finished** - its quest begun and not done, or never reached - it comes back ahead of the raft **as you left
-  it** (quest steps, opened chests, harvest), with a banner "Back in sight", instead of a second, fresh copy;
+  it** (quest steps, opened chests, harvest), with a banner "Back in sight", instead of a second, fresh copy (also
+  one that once failed to load: it tries again there);
 - already near the players (loaded) - not picked.
 
-Each pick is a fresh random draw by the islands' weights, so the same island can come twice - but one this world
-already has (left behind, not finished) counts only **a quarter** of its weight, so islands you haven't seen come
-first. An island whose builder set **"Comes by chance after ... km sailed"** isn't picked before the world has sailed
+Each pick is a fresh random draw by the islands' weights, so the same island can come twice - one this world already
+has (left behind, not finished) has the **same chance** as every other island. An island whose builder set **"Comes by chance after ... km sailed"** isn't picked before the world has sailed
 that far.
 
 **On the Receiver:** once you have built Raft's Receiver, custom islands show as **green dots** with their distance,
@@ -2661,7 +2661,7 @@ island). The span is the world's: chosen in **World settings > Islands while sai
 `WorldIslandsGap` in a world. None in a new world's first **10 minutes** of play (`quietMinutes`; game time, kept with
 the world - worlds made before this don't wait). `chancePerKm` only switches them on (above 0) or off (0).
 `spawnDistanceMin` / `spawnDistanceMax` (250-350 m ahead), `minSpacing` (800 m between custom islands) - all in
-`spawnpool.txt` ([10](#10-settings-files)). A finished island isn't picked again; an unfinished one (or one with notes not found) comes back as it was
+`spawnpool.txt` ([10](#10-settings-files)). A finished island isn't picked again; an unfinished one (or one without a quest with notes not found) comes back as it was
 ([3](#islands-appear-while-you-sail)). None appears while the raft is at one of Raft's own islands, and Raft won't put one of its
 islands on top of a custom one later.
 
