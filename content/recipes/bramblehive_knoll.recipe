@@ -156,7 +156,7 @@ prop comb3 loot.refill=0
 note beemotherchest Bee-mother's chest | Bram's chest by the bee-mother skep. Inside, under the cloth, his spare hives, his honey - and a note: "Thank you. Same again next year."
 loot beemotherchest Placeable_BeeHive*2;Jar_Honey*3;HoneyComb*4;Jar_Bee*2;TradeToken*5
 prop beemotherchest loot.refill=0
-prop beemotherchest if.open=has|story:mead|1\ntake|story:mead|1
+prop beemotherchest if.open=quest|5\nhas|story:mead|1\ntake|story:mead|1
 prop beemotherchest else.open=message||The chest by the bee-mother skep, its lid carved with a bee. Bram's note said: the first mead goes in here.
 note shedbox Mead shed box | A box of the shed's tools: a smoker, a veil, a bundle of rags.
 loot shedbox Rope*2;Wool*2;Plank*4
