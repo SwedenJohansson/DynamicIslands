@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -26,6 +26,12 @@ namespace DynamicIslands.Editor
 		/// <summary>Map dots: 0 me, 1 another player, 2 a quest step's target, 3 a builder's map marker, 4 a ping.</summary>
 		public const int MarkMe = 0, MarkPlayer = 1, MarkQuest = 2, MarkMarker = 3, MarkPing = 4;
 		const int TexSize = 512;
+		/// <summary>The corner map's size on screen (the full map is 700).</summary>
+		public const float CornerSize = 180f;
+		/// <summary>The sea on the picture: seabed up to ShallowDepth m under the sea shows through a light sea blue (the shallows
+		/// by the shore), deeper is flat sea blue, like Raft's own sea from above (the map camera doesn't draw Raft's water).</summary>
+		public const float ShallowDepth = 3f;
+		public static readonly Color SeaColor = new Color(0.11f, 0.42f, 0.62f, 1f), ShallowColor = new Color(0.22f, 0.70f, 0.78f, 0.65f);
 
 		public struct Mark { public Vector3 Pos; public string Label; public int Kind; public float Yaw; }
 
@@ -55,6 +61,8 @@ namespace DynamicIslands.Editor
 		public static float HalfSize { get; private set; }
 		public static Vector3 Center { get; private set; }
 		public static int RenderCount { get; private set; }
+		/// <summary>Tests: the island picture.</summary>
+		internal static RenderTexture Picture { get { return tex; } }
 		public static readonly List<Mark> Marks = new List<Mark>();
 		public static readonly List<Ping> Pings = new List<Ping>();
 		/// <summary>Dev tests: pings sent (by this player) and shown.</summary>
@@ -62,6 +70,7 @@ namespace DynamicIslands.Editor
 		public static bool Shown { get { return panel != null && panel.gameObject.activeSelf; } }
 
 		static Camera cam;
+		static GameObject seaDeep, seaShallow;
 		static RenderTexture tex;
 		static Canvas canvas;
 		static RectTransform panel, dots;
@@ -190,7 +199,7 @@ namespace DynamicIslands.Editor
 				cam.enabled = false;
 				cam.orthographic = true;
 				cam.clearFlags = CameraClearFlags.SolidColor;
-				cam.backgroundColor = new Color(0.12f, 0.32f, 0.42f, 1f);
+				cam.backgroundColor = SeaColor;
 				cam.cullingMask = ~(1 << 5); // not the UI
 				cam.nearClipPlane = 1f;
 				cam.farClipPlane = 900f;
@@ -201,14 +210,61 @@ namespace DynamicIslands.Editor
 			cam.orthographicSize = HalfSize;
 			cam.transform.position = Center + Vector3.up * 400f;
 			cam.transform.rotation = Quaternion.Euler(90f, 0f, 0f); // screen up = north (+z), right = +x
+			float sea = SeaY;
+			// (nothing deeper than the deep sea plane is drawn: the far seabed was a brown blur)
+			cam.farClipPlane = Mathf.Clamp(cam.transform.position.y - sea + ShallowDepth + 1f, 10f, 900f);
 			cam.targetTexture = tex;
 			bool fog = RenderSettings.fog;
 			RenderSettings.fog = false;
+			SeaPlanes(sea, true);
 			try { cam.Render(); }
-			finally { RenderSettings.fog = fog; cam.targetTexture = null; }
+			finally { SeaPlanes(sea, false); RenderSettings.fog = fog; cam.targetTexture = null; }
 			if (image != null) image.texture = tex;
 			RenderCount++;
 			return true;
+		}
+
+		/// <summary>The sea's height in the world (Raft's sea is at 0).</summary>
+		public static float SeaY { get { return 0f; } }
+
+		/// <summary>The two sea planes, shown only while the map camera takes its picture: a see-through light blue at the sea's
+		/// height (the shallows, seabed seen through it) and a flat sea blue ShallowDepth under it (all deeper sea).</summary>
+		static void SeaPlanes(float sea, bool on)
+		{
+			try
+			{
+				if (on)
+				{
+					if (seaShallow == null) seaShallow = SeaPlane("CustomIslands_MapShallows", ShallowColor, 3001);
+					if (seaDeep == null) seaDeep = SeaPlane("CustomIslands_MapSea", SeaColor, 3002); // (after the shallows: covers them where deeper)
+					float size = HalfSize * 2.4f;
+					seaShallow.transform.position = new Vector3(Center.x, sea, Center.z);
+					seaDeep.transform.position = new Vector3(Center.x, sea - ShallowDepth, Center.z);
+					seaShallow.transform.localScale = seaDeep.transform.localScale = new Vector3(size, size, 1f);
+				}
+				if (seaShallow != null) seaShallow.SetActive(on);
+				if (seaDeep != null) seaDeep.SetActive(on);
+			}
+			catch (Exception ex) { Debug.LogWarning("[DynamicIslands] map sea: " + ex.Message); }
+		}
+
+		static GameObject SeaPlane(string name, Color color, int queue)
+		{
+			GameObject go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+			go.name = name;
+			Collider c = go.GetComponent<Collider>();
+			if (c != null) UnityEngine.Object.DestroyImmediate(c);
+			UnityEngine.Object.DontDestroyOnLoad(go);
+			go.transform.rotation = Quaternion.Euler(90f, 0f, 0f); // faces up
+			var mat = new Material(Shader.Find("Sprites/Default"));
+			mat.color = color;
+			mat.renderQueue = queue;
+			MeshRenderer r = go.GetComponent<MeshRenderer>();
+			r.sharedMaterial = mat;
+			r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+			r.receiveShadows = false;
+			go.SetActive(false);
+			return go;
 		}
 
 		/// <summary>Where a world point is on the whole island picture (0..1 each way; outside when off the picture).</summary>
@@ -299,15 +355,15 @@ namespace DynamicIslands.Editor
 		static void Layout()
 		{
 			if (Mode == Full) UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(700f, 700f));
-			else UIKit.Anchor(panel, new Vector2(1f, 1f), new Vector2(-14f, -14f), new Vector2(210f, 210f));
-			UIKit.Anchor(title.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, -20f), new Vector2(Mode == Full ? 680f : 210f, 18f));
+			else UIKit.Anchor(panel, new Vector2(1f, 1f), new Vector2(-14f, -14f), new Vector2(CornerSize, CornerSize));
+			UIKit.Anchor(title.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, -20f), new Vector2(Mode == Full ? 680f : CornerSize, 18f));
 		}
 
 		static void Draw(Network_Player me)
 		{
 			Rect view = View(me.transform.position);
 			image.uvRect = view;
-			float size = (Mode == Full ? 700f : 210f) - 8f;
+			float size = (Mode == Full ? 700f : CornerSize) - 8f;
 			int used = 0;
 			if (Marks.Count > 0) Marks[0] = new Mark { Pos = me.transform.position, Kind = MarkMe, Yaw = YawOf(me) };
 			foreach (Mark m in Marks) Place(ref used, m, view, size);

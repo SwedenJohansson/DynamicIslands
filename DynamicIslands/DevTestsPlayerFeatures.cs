@@ -813,6 +813,91 @@ namespace DynamicIslands
 			if (ok) Log("PASS: minimap off"); else Fail("minimap off");
 		}
 
+		[ConsoleCommand(name: "CIMinimapLook", docs: "Dev (PF5): how the island map looks. World 'CI ...': on the map test island logs the sea (Raft's water: height, layer, colours) and what is drawn on the picture by layer and height, saves the picture as it was before 10-31 (minimap_before.png) and now (minimap_after.png), the corner map and the full map on screen (minimap_corner.png, minimap_full.png). CIMinimapLook <folder> (default the mod folder)")]
+		public static void MinimapLookCommand(string[] args) { StartTest(MinimapLook(args != null && args.Length > 0 ? string.Join(" ", args) : DynamicIslands.assetpath)); }
+
+		static IEnumerator MinimapLook(string dir)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("minimap look: host, in a test world 'CI ...'"); yield break; }
+			yield return EnsureAlive();
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Note_Sign" });
+			bool ok = true;
+			IslandWorldState.Entry e = null;
+			yield return RfSpawn(MapBuild(), MapIsland, x => e = x);
+			if (e == null) yield break;
+			int mode = Minimap.Mode;
+			Minimap.Mode = Minimap.Corner;
+			Minimap.SetZoom(1);
+			PutPlayerNear(ScObjOf(e, "cimapstart").transform);
+			yield return new WaitForSecondsRealtime(2f);
+			Check(ref ok, Minimap.Island == e && Minimap.Shown && Minimap.Picture != null, "the map shows on the island");
+			Vector3 c = Minimap.Center; float half = Minimap.HalfSize;
+			Log("look: centre " + c.ToString("F1") + " half " + half.ToString("F0") + " root " + e.Root.transform.position.ToString("F1") + " SeaY " + Minimap.SeaY);
+			UltimateWater.Water w = UnityEngine.Object.FindObjectOfType<UltimateWater.Water>();
+			if (w == null) Log("look: no UltimateWater.Water");
+			else
+			{
+				string h = "?"; try { h = w.GetHeightAt(c.x, c.z, w.Time).ToString("F2"); } catch (Exception ex) { h = ex.GetType().Name; }
+				Log("look: water '" + w.name + "' y " + w.transform.position.y.ToString("F2") + " height here " + h + " layer " + w.gameObject.layer + " (" + LayerMask.LayerToName(w.gameObject.layer) + "), renderers " + string.Join(",", w.GetComponentsInChildren<Renderer>(true).Select(r => r.name + "@" + r.gameObject.layer).Take(6).ToArray()));
+				try
+				{
+					foreach (object v in Enum.GetValues(typeof(UltimateWater.WaterMaterials.ColorParameter)))
+						Log("look: water colour " + v + " = " + w.Materials.GetParameterValue((UltimateWater.WaterMaterials.ColorParameter)v));
+				}
+				catch (Exception ex) { Log("look: water colours: " + ex.Message); }
+			}
+			var rect = new Rect(c.x - half, c.z - half, half * 2f, half * 2f);
+			var drawn = UnityEngine.Object.FindObjectsOfType<Renderer>().Where(r => r != null && r.enabled && r.gameObject.activeInHierarchy && rect.Overlaps(new Rect(r.bounds.min.x, r.bounds.min.z, r.bounds.size.x, r.bounds.size.z))).ToList();
+			foreach (var g in drawn.GroupBy(r => r.gameObject.layer).OrderBy(g => g.Key))
+				Log("look: layer " + g.Key + " (" + LayerMask.LayerToName(g.Key) + ") " + g.Count() + " renderers, y " + g.Min(r => r.bounds.min.y).ToString("F1") + ".." + g.Max(r => r.bounds.max.y).ToString("F1") + ": " + string.Join(", ", g.Select(r => r.name).Distinct().Take(5).ToArray()));
+			var under = drawn.Where(r => r.bounds.max.y < Minimap.SeaY - Minimap.ShallowDepth).ToList();
+			Log("look: wholly deeper than the sea plane (not on the map now): " + under.Count + ": " + string.Join(", ", under.Select(r => r.name).Distinct().Take(12).ToArray()));
+			var terr = Terrain.activeTerrains.Where(t => t != null && rect.Overlaps(new Rect(t.transform.position.x, t.transform.position.z, t.terrainData.size.x, t.terrainData.size.z))).ToList();
+			Log("look: terrains " + string.Join(", ", terr.Select(t => t.name + " y " + t.transform.position.y.ToString("F1") + ".." + (t.transform.position.y + t.terrainData.size.y).ToString("F1") + " layer " + t.gameObject.layer).ToArray()));
+			try { Directory.CreateDirectory(dir); } catch { }
+			// before 10-31: Raft's sea floor down to 900 m under the camera, a dark teal behind
+			var go = new GameObject("CI_MapOld");
+			Camera old = go.AddComponent<Camera>();
+			old.enabled = false; old.orthographic = true; old.clearFlags = CameraClearFlags.SolidColor;
+			old.backgroundColor = new Color(0.12f, 0.32f, 0.42f, 1f); old.cullingMask = ~(1 << 5); old.nearClipPlane = 1f; old.farClipPlane = 900f;
+			old.orthographicSize = half; old.transform.position = c + Vector3.up * 400f; old.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+			var rt = new RenderTexture(512, 512, 16);
+			old.targetTexture = rt;
+			bool fog = RenderSettings.fog; RenderSettings.fog = false;
+			try { old.Render(); } finally { RenderSettings.fog = fog; old.targetTexture = null; }
+			SaveRt(rt, Path.Combine(dir, "minimap_before.png"));
+			UnityEngine.Object.Destroy(go); rt.Release();
+			Check(ref ok, Minimap.Render(), "the picture taken again");
+			SaveRt(Minimap.Picture, Path.Combine(dir, "minimap_after.png"));
+			Check(ref ok, GameObject.Find("CustomIslands_MapSea") == null && GameObject.Find("CustomIslands_MapShallows") == null, "the sea planes are hidden after the picture (no one else sees them)");
+			yield return new WaitForSecondsRealtime(0.5f);
+			ScreenCapture.CaptureScreenshot(Path.Combine(dir, "minimap_corner.png"));
+			yield return new WaitForSecondsRealtime(1f);
+			Minimap.Cycle();
+			yield return new WaitForSecondsRealtime(1f);
+			Check(ref ok, Minimap.Mode == Minimap.Full && Minimap.Shown, "full screen");
+			ScreenCapture.CaptureScreenshot(Path.Combine(dir, "minimap_full.png"));
+			yield return new WaitForSecondsRealtime(1f);
+			Minimap.Mode = mode;
+			RfAway(e);
+			yield return new WaitForSecondsRealtime(1f);
+			RfRemove(MapIsland);
+			if (ok) Log("PASS: minimap look (" + dir + ")"); else Fail("minimap look");
+		}
+
+		static void SaveRt(RenderTexture rt, string path)
+		{
+			RenderTexture was = RenderTexture.active;
+			RenderTexture.active = rt;
+			var t = new Texture2D(rt.width, rt.height, TextureFormat.RGB24, false);
+			t.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+			t.Apply();
+			RenderTexture.active = was;
+			File.WriteAllBytes(path, t.EncodeToPNG());
+			UnityEngine.Object.Destroy(t);
+			Log("look: saved " + path);
+		}
+
 		/// <summary>A test island: a quest whose first step is to reach 'cimapgoal', a map marker 'Hut', a start spot.</summary>
 		static IslandFile MapBuild()
 		{
@@ -885,7 +970,7 @@ namespace DynamicIslands
 			finally { IslandNetwork.Loopback = null; }
 			Check(ref ok, Minimap.Pings.Count == 2 && Minimap.Pings.Any(p => p.From == 12345UL) && sent.Any(x => x.Kind == IslandNetMessage.Ping && x.Data == "12345"), "a crew mate's ping: shown here and passed on to everyone");
 			yield return new WaitForSecondsRealtime(Minimap.PingSeconds + 0.5f);
-			Check(ref ok, Minimap.Pings.Count == 0 && GameObject.Find("CustomIslands_Ping") == null, "the pings are gone after " + Minimap.PingSeconds + " s");
+			Check(ref ok, Minimap.Pings.Count == 0 && UnityEngine.Object.FindObjectsOfType<LineRenderer>().Count(l => l.name == "CustomIslands_Ping") == (Minimap.StartShown ? 1 : 0), "the pings are gone after " + Minimap.PingSeconds + " s");
 
 			RfAway(e);
 			yield return new WaitForSecondsRealtime(1.2f);
