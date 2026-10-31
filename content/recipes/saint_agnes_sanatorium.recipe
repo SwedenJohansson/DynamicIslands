@@ -204,7 +204,7 @@ prop musicbox beh.hidden=1
 note vellcabinet Doctor Vell's cabinet | Doctor Vell's cabinet: his instruments, a battery for the ward lamps, and salves.
 loot vellcabinet Battery*1;HealingSalve*2;MetalIngot*3;Bolt*2
 prop vellcabinet loot.refill=0
-prop vellcabinet if.open=has|story:cabinetkey|1
+prop vellcabinet if.open=quest|16\nhas|story:cabinetkey|1
 prop vellcabinet else.open=message||Doctor Vell's cabinet is locked. A card is pinned to it in his hand: KEY WITH THE CHAPLAIN - CHAPEL HILL.
 
 prop piano obj.name=piano
@@ -215,7 +215,7 @@ prop piano else.use=message||The piano keeps playing by itself.
 
 prop wardcdoor obj.name=wardcdoor
 prop wardcdoor beh.use=Unlock Ward C
-prop wardcdoor if.use=has|story:wardckey|1
+prop wardcdoor if.use=quest|5\nhas|story:wardckey|1
 prop wardcdoor on.use=hide|\nmessage||The Ward C key turns. The door swings in on three beds and a smell of salt.
 prop wardcdoor else.use=message||WARD C - KEEP LOCKED AFTER DARK. The door is locked.
 prop wardczone zone.id=ward_c

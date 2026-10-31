@@ -229,7 +229,7 @@ prop shedvines on.use=hide|\nshow|press\nmessage||Behind the vines: the river pe
 prop press obj.name=press
 prop press beh.hidden=1
 prop press beh.use=Fill the press
-prop press if.use=take|story:fuelcan|3
+prop press if.use=quest|10\ntake|story:fuelcan|3
 prop press on.use=message||Three cans in. The press coughs, catches and thumps; the shed's bar drops off its door.\ngive||story:pressed*1\nshow|pressshed
 prop press else.use=message||The press needs fuel: three cans. The river people kept one on each arm.
 prop dhatch obj.name=dhatch
@@ -265,7 +265,7 @@ story route|River route|Note_Paper|The river people's route through the delta to
 note forksign Fork sign | RANGER RELAYS\n\nRELAY NORTH - up the river, past the cross, behind the bad vines.\nRELAY EAST - over the drawbridge. Lever on this side.\nRELAY MOUTH - by the landing. Its fuse went down with the barge.\n\nAll three on: the outpost's screen shows the route.
 prop relaym obj.name=relaym
 prop relaym beh.use=Fit the fuse and switch on Relay Mouth
-prop relaym if.use=!signal|relaym\ntake|story:fuse|1
+prop relaym if.use=quest|13\n!signal|relaym\ntake|story:fuse|1
 prop relaym on.use=signal||relaym\nshow|relaymlamp\ngive||story:relay*1\nmessage||The fuse seats with a snap. Relay Mouth hums and its lamp starts to turn.
 prop relaym else.use=message||Relay Mouth. The fuse holder is empty; the fork sign says the fuse went down with the barge.
 prop relaymlamp obj.name=relaymlamp
