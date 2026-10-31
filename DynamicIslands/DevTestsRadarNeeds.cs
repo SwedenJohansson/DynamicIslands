@@ -200,6 +200,9 @@ namespace DynamicIslands
 			IntroRule ahead = IntroRule.Parse("cispawn | island:" + name + " | start | ahead:300 | | Spawn again");
 			WorldDirector.Plan = new WorldPlan { Name = "CI spawn story", Random = true, Rules = { ahead } };
 			Func<int> copies = () => IslandWorldState.Islands.Count(i => i.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+			// (done, as TryRule marks it once it brings the island: else the director's own tick brought it a second time - merge 10-31)
+			bool hadDone = WorldDirector.Done.Contains(ahead.Id);
+			WorldDirector.Done.Add(ahead.Id);
 			try
 			{
 				string why = WorldDirector.Bring(ahead, null, null);
@@ -288,6 +291,7 @@ namespace DynamicIslands
 			finally
 			{
 				WorldDirector.Plan = keep;
+				if (!hadDone) WorldDirector.Done.Remove(ahead.Id);
 				IslandWorldState.Remove(name);
 			}
 			if (ok) Log("PASS: spawn story again"); else Fail("spawn story again");
