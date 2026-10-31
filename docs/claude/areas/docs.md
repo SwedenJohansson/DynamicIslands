@@ -24,7 +24,7 @@ Usually also: a `CHANGELOG.md` bullet; a picture in `docs/images`; a new word pl
 | World rule / randomizer part / level up | `### 9.2` / `### 9.3` / `### 9.6` | `## World rules: monster difficulty and build cost` / `## World randomizer` (Part/What changes table) / `## The level up system` |
 | File or setting in `Mods\DynamicIslands\` | `## 10. Settings files` (`spawnpool.txt` table, "Other files:" table) | `## Installing` (File/What it is table) |
 | Console command | `## 11. Console commands` | `## Console commands (F10)` |
-| Good-to-know advice / can't-change limit | the topic's own section (no known-issues chapter) / `## 12.` | `## Known issues (being fixed)` / `## Limitations (can't be changed)` |
+| Good-to-know advice / can't-change limit | the topic's own section (no known-issues chapter) / `## 12.` | `## Good to know` / `## Limitations (can't be changed)` |
 | Main menu box: alpha box / PC check | `## 1. Installing` / `**The PC check.**` in `## 1. Installing` | `- **EXPERIMENTAL ALPHA RELEASE box**` / `- **PC check:**` |
 
 ## GUIDE.md
@@ -53,7 +53,7 @@ Then `## N. Title` chapters, `### N.M Title` subsections, and unnumbered `####` 
 - `## Console commands (F10)`: Command/Where/What it does; the `CI*` dev commands (`DevTests*.cs`) are not listed, and `pack.ps1 -Release` leaves those files out.
 - `## Reporting a problem` (short form of guide 14). `## Documentation`: the docs rule and table.
 - `## Building`: `compile.ps1`, `pack.ps1`. `### Source overview`: File/What it holds, a row per `.cs` file except `DevTests*.cs` (related files share one).
-- `## Known issues (being fixed)` and `## Limitations (can't be changed)` (the second points to guide 12). Then `## What has been tested`, `## Contributing`, `## License`.
+- `## Good to know` (fixable known issues and surprises, with their ROADMAP codes; was `## Known issues (being fixed)`) and `## Limitations (can't be changed)` (the second points to guide 12). Then `## What has been tested`, `## Contributing`, `## License`.
 
 ## CHANGELOG.md
 - Newest first, for players and island makers; internal clean-ups and test runs are left out.

@@ -78,5 +78,7 @@ The optional systems of a world: world rules (monster difficulty, build cost), t
 - Colours, alphas and moved loot are worked out on every machine from `Current.Seed` and network ids (`WorldRandomizer.Hash`, `Unit`), with no messages: keep them deterministic. Extras and sailing islands are host only. `WorldRandomizer.IsNatural` (its `StoryParts` types) keeps the randomizer off story islands.
 - `ScrambledBlueprints.Keep` must list every blueprint the story needs. `ScrambledBlueprintsPickup` finds Raft's `Pickup.PickupItem` by reflection.
 - `PrivateStorage` builders are noted on every machine in a `BlockCreator.CreateBlock` postfix (not when `replicating`, only while the option is on). `MayOpen` lets the host open a storage whose builder is not in the game.
+- World-load resets go through `IslandWorldState.ResetStep`: one failing reset is logged, the rest and the island list still load.
+- `WorldOptions.WriteLines` always writes the feature lines; only `@options`/`@optionseed`/`@optionsused` need options or a seed.
 - C# 7.3 only: RML compiles the mod in game.
 - Docs: README "World settings: more ways to play Raft again", "World rules: monster difficulty and build cost", "World randomizer", "The level up system", "Console commands (F10)", "Source overview"; `docs/GUIDE.md` chapters 9, 10 (settings files) and 11 (console commands).

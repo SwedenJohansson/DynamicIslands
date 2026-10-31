@@ -305,6 +305,10 @@ Custom islands work like Raft's own: you can **walk** on them, the **raft runs a
 flowers and more. What you took **stays taken** (also after saving, loading and sailing away), and it **grows
 back** after 3 in-game days (the island's builder or `spawnpool.txt` can change that).
 
+**Don't leave loose items on the ground of a custom island.** An item you drop there can fall into the sea when the
+island unloads (the raft sails far away) or while it loads again after loading a save. Keep them in your inventory or
+a storage on the raft. (This is being fixed.)
+
 ![On a generated island](images/world-on-a-generated-island.jpg)
 *On a generated tropical island: Raft's bamboo, palms and plants, placed where Raft's own islands have them.*
 
@@ -371,6 +375,10 @@ just done, the one you're on and what comes after. A longer quest scrolls - to y
 and with the mouse wheel over the panel while the cursor is free (the inventory, the journal, the Esc menu).
 Once every quest of the island is done, the panel goes by itself **30 seconds** later; its **×** (top right, while the
 cursor is free) closes it at any time - it comes back with the next step, or when you come to the island again.
+
+**A reward lost with a save.** A reward follows Raft's saves: if Raft crashes, you quit without saving or you load an
+older save after a quest's reward was paid, the reward went with it - so when you finish the quest again, it is paid
+again, once (not one paid before the world's very first save). A reward from a save you kept is never paid twice.
 
 **Where a quest starts.** Until an island's quest has begun, a **gold beam** stands over the place its first step
 wants you to go (its label says "Start: ..." with the step), whichever side you come from; the quest's opening message
@@ -1782,6 +1790,9 @@ Select any object → **Behaviour & events...**. No code needed:
   closed, shown or hidden, a signal was sent, the quest reached a step (a ▼ list too). Turn a check round with **not**; ask for
   **all** or **any** of them. **Otherwise** say a message. (An island file written by hand or by a script can give
   **Otherwise** any action, not only a message; the editor shows only the message and keeps the other actions as they are.)
+  An island's **arrive** event whose check failed (the player came without the key) can run again when the player
+  leaves (about 60 m past the shore) and comes back with it, as long as its **Otherwise** only says a message or plays
+  a sound.
 - **Wears, holds, suits and blasts** (2026-10-24): the checks **wears item** (a headlight, flippers, an oxygen tank)
   and **holds item** (in the player's hand: **binoculars** for a lookout - Raft's telescope counts too -, `Hook*` or
   `Axe*` for an opening only a hook or an axe gets through) look at the player who does it, so they are left out
@@ -3917,7 +3928,6 @@ planned to change.
 - **The screecher's stone look can't be tinted** (it is not a normal texture).
 - **Atmosphere zones** change Unity's fog and light plus a faint tint: how strong they look depends on Raft's own sky
   at that moment.
-- **Don't leave loose items on the ground of a custom island**: an item you drop there can fall into the sea when the island unloads (the raft sails far away) or while it loads again after loading a save. Keep them in your inventory or a storage on the raft.
 
 **The land**
 - **One sea level.** Raft has one ocean: lakes and lagoons go down to sea level, and there is no water above it.
@@ -3995,6 +4005,11 @@ leaves without saving, so you can download them again in the island library (or 
 missing files from the host as before.
 
 **Load World is greyed out.** Raft is offline from Steam. Check that Steam is online and restart Raft.
+
+**After updating the mod, do I need a new world?** No: worlds from Release 2026-10-23 play on. An island you left
+before its quest was done shows its dot on the Receiver again, however far away it is: sail to it, or type
+`SpawnIsland <name>` (F10), which brings back the story's own island with the quest as you left it. A quest you
+finished on a copy you spawned earlier counts, and the next frequency comes.
 
 **"The host has Custom Islands 3.x - you have 3.y".** You and the host have different versions of the mod: islands,
 quests and settings may not match between you. The message says which version to install; both of you update to the same
