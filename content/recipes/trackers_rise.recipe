@@ -176,6 +176,8 @@ prop trbox loot.refill=0
 call vd_dive x=8 z=-95 h=-11 yaw=60 obj="Caravan_Blue_01" al=trwreck crate=trcrate zal=trwz zid=tr_wreck msg="The hunters' trailer slid off the cove road in a storm and rolled out to here." air=trair bub=trbub
 note trcrate Trailer's drawer | A hunter's drawer of odds: a carving knife, and a small lamp with a goat painted on its glass.
 loot trcrate story:lamp*1;Scrap*3;Nail*6
+prop trcrate if.open=quest|14
+prop trcrate else.open=message||The drawer is rusted shut. The trackers' notch post on Antler Peak comes first.
 # the tracker's carving in the north clearing (RAFT_QUEST_MECHANICS SL11 5, M6 + D7): a carved post of Burr's
 # likeness with an empty lamp socket; the trailer's lamp lights it, and his journal page shows behind it
 clear at 24 65 r=5
@@ -224,7 +226,7 @@ story mappiece|Map piece|Note_Paper|A torn piece of Oda's tracking map. The towe
 story trackmap|Oda's tracking map|Note_Paper|Oda's map, whole again on the tower table: the hunters' trail, and her map case's catch.
 prop maptable obj.name=maptable
 prop maptable beh.use=Lay the map pieces on the table
-prop maptable if.use=take|story:mappiece|3
+prop maptable if.use=quest|7\ntake|story:mappiece|3
 prop maptable on.use=message||The three pieces fit. Oda's trail runs off the map's edge, upriver - and the map case under the table clicks open.\ngive||story:trackmap*1\nshow|mapcase
 prop maptable else.use=message||A map table with a torn map's outline pinned on it. The pieces went where Oda went: the gully, the fishing wreck, the cove.
 note mapcase Oda's map case | Oda's map case: the plans she was carrying - a metal detector's and a firework's.
@@ -263,7 +265,7 @@ story lamp|Painted lamp|Placeable_Lantern_Metal|A small lamp with a goat painted
 story totem|Carving lit|Placeable_Lantern_Metal|The tracker's carving of Burr has its lamp again.
 prop carving obj.name=carving
 prop carving beh.use=Set the lamp in the carving
-prop carving if.use=take|story:lamp|1
+prop carving if.use=quest|15\ntake|story:lamp|1
 prop carving on.use=give||story:totem*1\nshow|carvinglamp\nshow|journalbox\nmessage||The lamp sits in the socket and the carved goat's eye glows. Behind the post a little box was waiting.
 prop carving else.use=message||A post carved into a goat with a torn ear - Burr. Where its eye should be there is an empty lamp socket.
 prop carvinglamp obj.name=carvinglamp
