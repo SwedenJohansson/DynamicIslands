@@ -159,6 +159,8 @@ call hw_mast x=-60 z=45 h0=40 lv=4 a=lightningmast chest=stormbox top=Placeable_
 place Note_Paper sigridlog at -63.5 41.5 h=40.1 drop yaw=135
 loot stormbox story:cutoffkey*1;OxygenBottle*1;Battery*1;Rope*2
 prop stormbox loot.refill=0
+prop stormbox if.open=quest|20
+prop stormbox else.open=message||The box is bolted to the mast. The chief engineer's log, by the mast, says what it holds.
 note stormbox Lightning mast box | Sigrid's box on the lightning mast: the core cutoff's key on a copper chain, a battery - and a diving bottle 'for the root'.
 scatter Bush 8 at -60 45 r=30 seed=9701 free=1
 scatter Bush2 5 at -60 45 r=30 seed=9702 free=1
