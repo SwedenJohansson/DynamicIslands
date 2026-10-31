@@ -325,6 +325,37 @@ namespace DynamicIslands.Editor
 			else Set(e, n, step, progress, true);
 		}
 
+		/// <summary>Host, the island there: a quest waiting at "open &lt;the Vault&gt;" whose every chest of that name on the
+		/// island is already open can never go on - the chest was opened for another step (a build before 2026-10-31 gave the
+		/// Vault opened early to an "open any chest" step; it still counts for an "any chest" step it is opened at). The step
+		/// counts as done: its chest was opened, nothing is given twice (the chest's loot was had). Old saves heal on load.</summary>
+		internal static void HealSpentChests(IslandWorldState.Entry e)
+		{
+			if (!Raft_Network.IsHost || e == null || e.Root == null) return;
+			int count = QuestsOf(e);
+			for (int n = 0; n < count; n++)
+				for (int guard = 0; guard < 8; guard++)
+				{
+					IslandQuest q = QuestOf(e, n);
+					int step = StepOf(e, n);
+					if (!q.Exists || step >= q.Steps.Count) break;
+					IslandQuest.Step s = q.Steps[step];
+					string target = s.Target.Trim();
+					if (s.Type != "open" || target.Length == 0) break;
+					List<LootCrate> named = e.Root.GetComponentsInChildren<LootCrate>(true).Where(c =>
+					{
+						CustomNote note = c.GetComponent<CustomNote>();
+						return note != null && string.Equals((note.Title ?? "").Trim(), target, StringComparison.OrdinalIgnoreCase);
+					}).ToList();
+					if (named.Count == 0 || !named.All(c => ContentState.IsUsed(e, c.StateKey))) break;
+					int need = s.Count - ProgressOf(e, n);
+					if (need <= 0) break;
+					Debug.Log("[CUSTOM ISLANDS] Quest " + (n + 1) + " of '" + e.HostName + "': step " + (step + 1) + " (open " + target + ") counts - its chest was opened before");
+					Event(e, n, "open", target, need);
+					if (StepOf(e, n) == step) break;
+				}
+		}
+
 		/// <summary>Host: a player's event counted on an island's quest - their amount at that step, added to the host's
 		/// count and sent to everyone. A step the quest has moved past counted already; a later one keeps it for then.</summary>
 		public static void AddFromPlayer(int islandId, int step, int amount) { AddFromPlayer(islandId, 0, step, amount); }
@@ -392,6 +423,7 @@ namespace DynamicIslands.Editor
 			if (n == 0 && Advanced != null) try { Advanced(e.Id, step); } catch { }
 			if (AdvancedAny != null) try { AdvancedAny(e.Id, n, step); } catch { }
 			CreditEarly(e, n, q, step);
+			if (StepOf(e, n) == step) HealSpentChests(e); // (its named chest opened already: upgrade 10-31)
 			// (host: a counted step the crew already has enough for moves on now, not at the next half-second check - CB11)
 			if (Raft_Network.IsHost && step < q.Steps.Count && IslandQuest.Counted(q.Steps[step].Type) && Found(e, q.Steps[step]) >= q.Steps[step].Count && AnyPlayerNear(e))
 				Set(e, n, step + 1, 0, true);

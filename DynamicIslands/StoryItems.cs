@@ -776,7 +776,9 @@ namespace DynamicIslands.Editor
 					if (q.Steps.Count == 0) continue;
 					counted.Add(r.WhatArg);
 					if (at.Count > 0) counted.Add(at[0].HostName);
-					list.Add(new Quest { Name = NameOf(at, r, r.Id), Group = r.Beside ? PlanStory : PlanIslands, Done = at.Any(e => QuestTracker.StepOf(e) >= q.Steps.Count) });
+					// (a copy spawned by hand (F10 SpawnIsland before 10-31) whose quest was done counts: player 10-30)
+					list.Add(new Quest { Name = NameOf(at, r, r.Id), Group = r.Beside ? PlanStory : PlanIslands, Done = at.Concat(IslandWorldState.Islands.Where(x =>
+						string.IsNullOrEmpty(x.Rule) && x.HostName.Equals(r.WhatArg, StringComparison.OrdinalIgnoreCase))).Any(e => QuestTracker.StepOf(e) >= q.Steps.Count) });
 				}
 			// Every other island with a quest that has come
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)

@@ -833,6 +833,8 @@ namespace DynamicIslands.Editor
 
 		internal static void OnWorldRead()
 		{
+			// (a world played with a build before 10-31: a story island lost, or played on a hand-spawned copy - StoryUpgrade)
+			if (HasSnapshot && StoryUpgrade.Run() > 0) dirty = true;
 			if (HasSnapshot) { AssignFrequencies(); Rebuild(); }
 			NoteMissingIslands();
 		}

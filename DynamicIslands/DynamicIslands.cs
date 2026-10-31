@@ -1351,6 +1351,7 @@ namespace DynamicIslands
 					MechFeatures.OnIslandReady(entry); // pieces carried or moved where they were left (before the animals come: a moved boss spot)
 					ContentState.OnIslandReady(entry); // first: chests refill and zones re-arm before the creatures look at them
 					CreatureSpawner.OnIslandReady(entry);
+					QuestTracker.HealSpentChests(entry); // (after the refills: a quest stuck at a chest already open goes on - upgrade 10-31)
 				}
 				if (!quiet) Notify("Spawned island '" + name + "'");
 			}

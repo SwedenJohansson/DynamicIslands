@@ -239,6 +239,8 @@
     <Compile Include="PatchHealth.cs" />
     <Compile Include="IslandSettingsUndo.cs" />
     <Compile Include="EditorRenames.cs" />
+    <Compile Include="StoryUpgrade.cs" />
+    <Compile Include="DevTestsUpgrade.cs" />
     <Compile Include="DevTestsQuestOrder.cs" />
     <Compile Include="DevTestsSaveStateResets.cs" />
     <Compile Include="WorldWindow.cs" />
