@@ -211,7 +211,7 @@ prop captainchest loot.refill=0
 note strongbox Smugglers' strongbox | The smugglers' strongbox at the back of the den: a list of ships, a purse of bolts - and where the lantern key should be, a slip: "Key's with Jory on the Crown. Ask him. - W."
 loot strongbox Bolt*8;Nail*12;Rope*2
 prop strongbox loot.refill=0
-prop strongbox if.open=has|story:denkey|1
+prop strongbox if.open=quest|8\nhas|story:denkey|1
 prop strongbox else.open=message||The strongbox is locked with the smugglers' mark. The Marigold's captain had a key like that.
 note jorynote Lookout Jory Vance's log | THE CROWN - J. VANCE, LOOKOUT\n\nWaddy gave me the lantern key to keep. He says a man on a hill can't be bribed by the boats. He doesn't know Ned.\n\nNed Pike piloted ships into this cove for twenty years, the honest way, by the deep water. Then we lit the red lantern and the ships stopped asking for a pilot. He came up here last night and asked me for the key. He wanted to put the light out. I said no.\n\nThis morning I gave it him anyway. I watched him row it home to his house on the shore.\n\nAt noon the shore under his house slid into the sea, house and all. I saw the roof go under. It's still down there, I can see it from here when the water is still.\n\nThe key is in his sea chest. I am not going down for it.
 note nednote Pilot Ned Pike's note | (Pencil on the back of a tide table, dry in the air pocket)\n\nThe ground has been groaning under the house all week. I knew. I stayed because I had the key at last and I wanted one more night to make up my mind.\n\nTwenty years I brought ships in by the deep channel and never lost one. Then the wreckers lit their red lie on the point and every ship that saw it went onto the reef, and I sat in my window and watched them break.\n\nThe key is in my sea chest, wrapped in oilcloth. Take it to the point. Turn the fuel cock and let the lantern die. Do what I didn't have the courage to do.\n\nThe air in here is going stale. I'm going to open the window and swim for it.
@@ -225,7 +225,7 @@ prop hoard else.open=message||The hoard's lid is chained to the lantern's base. 
 
 prop douse obj.name=douse
 prop douse beh.use=Douse the false lantern
-prop douse if.use=has|story:lanternkey|1
+prop douse if.use=quest|15\nhas|story:lanternkey|1
 prop douse on.use=message||The key turns the fuel cock. The lantern gutters, the red light dies - for the first time in years the point goes dark. The chain on the hoard falls slack.\nhide|lantern\nsignal||doused\nsound||event:/exploring/obstacles/varuna/garagedoor_open
 prop douse else.use=message||The fuel cock is locked. Jory had its key - and Jory's log says it went down with the pilot's house.
 prop lantern obj.name=lantern
