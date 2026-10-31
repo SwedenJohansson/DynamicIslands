@@ -306,7 +306,8 @@ place CaravanBarebones1 - at -44.5 -70 ground yaw=-20 tilt=12
 # bank, its middle buried 1 m, CIGroundIslands)
 place Placeable_FuelTank - at -43.94 -73.95 sit rot=0,340,90
 place RT_PipeDownStraight - at -46.3 -68.8 h=7.2 rot=0,0,15
-place Note_Book engineerlog at -45.6 -70.6 h=8 drop yaw=20
+# (10-30 P: the log on the canyon floor beside the engine; at h=8 it lay on the engine's top, out of reach)
+place Note_Book engineerlog at -49.0 -71.0 ground y=0.3 drop yaw=20
 place Caravan_Green_02 - at -50.5 -76.6 h=5.4 rot=0,15,88
 # (the safe on the canyon floor east of the car: at -48 -79.2 it stood on the south wall's foot, a 6 m-in-1.5 m slope,
 # set down at its low side and buried 1.4 m, CIGroundIslands)
@@ -318,7 +319,8 @@ place VP_Wagon02 - at -59.5 -70.5 ground yaw=40 tilt=20
 place VP_Wagon02 - at -53.2 -67.5 h=4.6 rot=0,60,-80
 place VP_Wagon02 - at -61.8 -68.7 ground yaw=21
 place "Box Small" toolcar at -61.8 -68.7 h=7 drop yaw=21
-place "Box Small" mailsack at -51.8 -79.4 ground yaw=60
+# (10-30 P: the sack on the canyon floor by the express car; at -51.8 -79.4 it landed on the south wall at 16 m)
+place "Box Small" mailsack at -49.4 -74.4 ground yaw=60
 place TreeLog_02 - at -40 -74.6 ground yaw=80
 place TreeLog_02 - at -38.4 -74 ground yaw=95
 place Zone_Trigger derailment at -48 -73 h=5.5
