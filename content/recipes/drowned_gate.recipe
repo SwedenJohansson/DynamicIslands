@@ -508,4 +508,5 @@ place VP_Excavator - at 5 -23 ground sit yaw=90
 # the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
 clear at -15.53 -56.52 r=1.5 only=SmallBoulder1
 
+reseat trees
 save The Drowned Gate
