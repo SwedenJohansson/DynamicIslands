@@ -28,6 +28,17 @@ brush flatten at -2.5 2.5 r=4 s=20 frames=20
 clear at 7.5 -13 r=6
 clear at 16.5 0.5 r=6
 clear at -2.5 2.5 r=6
+# (10-30 P: a ramp from the reef up the landing stack's west side - the walks never got onto the 4.45 m landing)
+brush flatten at 2.2 -13.5 r=2.4 s=20 frames=120 h=3.8
+brush flatten at 0.9 -13.5 r=2.4 s=20 frames=120 h=3.1
+brush flatten at -0.4 -13.5 r=2.4 s=20 frames=120 h=2.4
+brush flatten at -1.7 -13.5 r=2.4 s=20 frames=120 h=1.7
+brush flatten at -3.0 -13.5 r=2.4 s=20 frames=120 h=1.0
+clear at 2.2 -13.5 r=3.4 body
+clear at 0.9 -13.5 r=3.4 body
+clear at -0.4 -13.5 r=3.4 body
+clear at -1.7 -13.5 r=3.4 body
+clear at -3.0 -13.5 r=3.4 body
 # --- DEEP 10-25 terrain: the tank stack west of the mayor's rock (summit 12 m, base r 14), its path from the east,
 # and a sand bar over the reef from below the mayor's rock to its foot
 call hw_mount x=-38 z=6 b=14 h=12
