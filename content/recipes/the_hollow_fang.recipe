@@ -164,7 +164,7 @@ call hw_zone x=40 z=62 al=boatz id=boathouse r=7 h=1 msg="The guardians' boathou
 place Note_Paper sefa at 40.6 60.8 h=-9.5 drop yaw=0
 loot guardchest TradeToken*4;CopperIngot*2;MetalIngot*2;Glass*2
 prop guardchest loot.refill=0
-prop guardchest if.open=has|story:orinkey|1
+prop guardchest if.open=quest|18\nhas|story:orinkey|1
 prop guardchest else.open=message||The guardians' chest is locked with iron, a wave cut round its keyhole. Orin's key would fit it.
 note guardchest Guardians' chest | The guardians' chest: the sea kings' tokens paid to the Fang's keepers, copper and iron, and two lenses of old glass.
 call treasure x=26 z=52 r=12 n=1 seed=31028 kind=0
@@ -217,7 +217,7 @@ prop blade4 obj.name=blade4
 prop blade4 beh.spin=-70
 prop lionhead obj.name=lionhead
 prop lionhead beh.use=Throw the sand from the lion's head
-prop lionhead if.use=take|story:sand|1
+prop lionhead if.use=quest|8\ntake|story:sand|1
 prop lionhead on.use=message||The sand fans out over the chasm - and settles on nothing, in a thin line, all the way across. A bridge you cannot see!\nshow|sandtrail
 prop lionhead else.use=message||A stone lion's head at the chasm's lip. From here the far side seems a long jump away.
 prop sandtrail obj.name=sandtrail
