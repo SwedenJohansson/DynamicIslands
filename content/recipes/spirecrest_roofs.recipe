@@ -60,6 +60,16 @@ call mastbridge x1=3 x2=12 z=0 h=5
 call mastbridge x1=-12 x2=-3 z=0 h=5
 call mastbridgez z1=4.5 z2=11.5 x=0 h=5
 call mastbridgez z1=-11.5 z2=-4.5 x=0 h=5
+# (each mast deck stops 0.75 m short of the roofs at both ends - a gap a walker falls through to the street: a short
+# deck piece closes each, G1 10-31)
+ramp Block_Floor_Tier3 from 3 0 5 to 3.75 0 5 len=1.5 top=0
+ramp Block_Floor_Tier3 from 11.25 0 5 to 12 0 5 len=1.5 top=0
+ramp Block_Floor_Tier3 from -12 0 5 to -11.25 0 5 len=1.5 top=0
+ramp Block_Floor_Tier3 from -3.75 0 5 to -3 0 5 len=1.5 top=0
+ramp Block_Floor_Tier3 from 0 4.5 5 to 0 5.25 5 len=1.5 top=0
+ramp Block_Floor_Tier3 from 0 10.75 5 to 0 11.5 5 len=1.5 top=0
+ramp Block_Floor_Tier3 from 0 -11.5 5 to 0 -10.75 5 len=1.5 top=0
+ramp Block_Floor_Tier3 from 0 -5.25 5 to 0 -4.5 5 len=1.5 top=0
 
 # --- Ladders up from the water: the coop tower's south face, the west tower's west face -------------------------------
 place LandmarkLadder_6m - at 0 -20.7 h=-1.2 yaw=0
