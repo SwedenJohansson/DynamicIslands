@@ -138,6 +138,40 @@ namespace DynamicIslands
 			if (ok) Log("PASS: mg zone story key"); else Fail("mg zone story key");
 		}
 
+		[ConsoleCommand(name: "CIM2WindowShots", docs: "Dev, main menu: pictures of the World settings, Islands while sailing (CHOOSE ISLANDS) and Defaults windows for the settings-text review (shot_m2_worldsettings, shot_m2_picker, shot_m2_defaults)")]
+		public static void M2WindowShotsCommand() { StartTest(M2WindowShotsRoutine()); }
+
+		static IEnumerator M2WindowShotsRoutine()
+		{
+			NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
+			if (box == null) { Fail("m2 window shots: no New Game box (main menu?)"); yield break; }
+			bool ok = true;
+			box.gameObject.SetActive(true);
+			try { box.Close(); } catch { } box.Open();
+			yield return new WaitForSecondsRealtime(1f);
+			WorldSettingsWindow.Open();
+			yield return new WaitForSecondsRealtime(1f);
+			Check(ref ok, WorldSettingsWindow.IsOpen, "the World settings window is open");
+			Shot("m2_worldsettings");
+			yield return new WaitForSecondsRealtime(1f);
+			IslandPickerWindow.Open();
+			yield return new WaitForSecondsRealtime(3f);
+			Check(ref ok, IslandPickerWindow.IsOpen, "the Islands while sailing window is open");
+			Shot("m2_picker");
+			yield return new WaitForSecondsRealtime(1f);
+			try { IslandPickerWindow.Close(); } catch { }
+			try { WorldSettingsWindow.Close(); } catch { }
+			try { box.Close(); } catch { }
+			yield return new WaitForSecondsRealtime(0.5f);
+			DefaultsWindow.Open();
+			yield return new WaitForSecondsRealtime(1f);
+			Check(ref ok, DefaultsWindow.IsOpen, "the Defaults window is open");
+			Shot("m2_defaults");
+			yield return new WaitForSecondsRealtime(1f);
+			try { DefaultsWindow.Close(); } catch { }
+			if (ok) Log("PASS: m2 window shots"); else Fail("m2 window shots");
+		}
+
 		[ConsoleCommand(name: "CIMgTunedFar", docs: "Dev, world (host, 'CI ...'): merge 10-31 - the Receiver staying tuned to a brought island's frequency (Raft asks every frame) doesn't pull it back and use up its returns; only a new tune does. Also: the missing-islands box replaced by another box plays on without them")]
 		public static void MgTunedFarCommand() { StartTest(MgTunedFarRoutine()); }
 
