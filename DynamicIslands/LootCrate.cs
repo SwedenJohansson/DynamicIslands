@@ -149,7 +149,8 @@ namespace DynamicIslands.Editor
 			c.Items = ObjectProps.Loot(props);
 			// (a chest with story items never fills up again: the story's key or log came twice, and counts and "uses up"
 			// checks went wrong)
-			c.Refills = ObjectProps.LootRefills(props) && !c.Items.Any(l => StoryItems.IsStory(l.Key));
+			c.Refills = ObjectProps.LootRefills(props) && !c.Items.Any(l => StoryItems.IsStory(l.Key)) &&
+				!ObjAction.ParseLines(ObjectProps.Get(props, BehaviourProps.EventKey("open"))).Any(Behaviours.GivesStory); // (nor one whose open gives one: it came again with every refill)
 			c.Ordinal = ordinal;
 			c.Label = PlaceableCatalog.DisplayName(name).ToLowerInvariant();
 			return c;

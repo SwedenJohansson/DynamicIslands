@@ -340,10 +340,29 @@ namespace DynamicIslands.Editor
 				if (key >= pb && key < pb + 0x100000)
 				{
 					int i = (key - pb) >> 4, ev = (key - pb) & 0xF;
+					if (i >= was.Uids.Length) return true; // (the island's own events - Behaviours.IslandIndex 0xFFFF: an arrive's wait - were dropped)
 					int j = indexNow(uidAt(i));
 					moved = pb + (j << 4) + ev;
 					return j >= 0 && j < 0x10000;
 				}
+			// (MechFeatures: where a pushed crate was left, 4 keys per object, and a stack zone's done flag - kept unmoved, another
+			// object took the crate's place and a stack puzzle fired again)
+			if (key >= MechFeatures.PlaceBase && key < MechFeatures.StackDoneBase)
+			{
+				int i = (key - MechFeatures.PlaceBase) >> 2, part = (key - MechFeatures.PlaceBase) & 3;
+				if (i >= was.Uids.Length) return true;
+				int j = indexNow(uidAt(i));
+				moved = MechFeatures.PlaceBase + j * 4 + part;
+				return j >= 0;
+			}
+			if (key >= MechFeatures.StackDoneBase && key < MechFeatures.StackDoneBase + 0x100000)
+			{
+				int i = key - MechFeatures.StackDoneBase;
+				if (i >= was.Uids.Length) return true;
+				int j = indexNow(uidAt(i));
+				moved = MechFeatures.StackDoneBase + j;
+				return j >= 0;
+			}
 			return true; // (not an object's: quest steps, rules, visits, signals - kept by their own place)
 		}
 

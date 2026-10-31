@@ -287,7 +287,8 @@ namespace DynamicIslands.Editor
 				if (p.Length < 4 || !float.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out x) ||
 					!float.TryParse(p[2], NumberStyles.Float, CultureInfo.InvariantCulture, out y) || !float.TryParse(p[3], NumberStyles.Float, CultureInfo.InvariantCulture, out z))
 				{
-					Debug.LogWarning("[CUSTOM ISLANDS] Ignoring bad line in " + FilePath + ": " + line);
+					Debug.LogWarning("[CUSTOM ISLANDS] Ignoring bad line in " + FilePath + " (kept in the file): " + line);
+					keptLines.Add(line); // (left out, it was gone for good at the next save)
 					continue;
 				}
 				// (the name becomes a file's path, and the file may have come from another host with Raft's world folder: one

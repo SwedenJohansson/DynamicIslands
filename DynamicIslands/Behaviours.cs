@@ -810,7 +810,11 @@ namespace DynamicIslands.Editor
 			// reading a note within a message's time each got its items, before either heard the other had)
 			if (once && localPlayer && (checks.Any(c => c.Kind == "take") || actions.Any(a => a.Verb == "give" || a.Verb == "teleport")) &&
 				!Claims.May(e, key, yes => { if (yes) Fire(e, index, ev, true, skipChecks); else Schedule(e, index, actions, false, true, ev); }))
+			{
+				// (the host is answered at once, without the callback: refused - another player holds it - its messages only, as a client gets)
+				if (Raft_Network.IsHost) Schedule(e, index, actions, false, true, ev);
 				return;
+			}
 			if (!skipChecks && checks.Count > 0 && !Passes(e, index, checks, AnyOf(e, index, ev)))
 			{
 				Otherwise(e, index, ev, localPlayer);
@@ -1092,7 +1096,9 @@ namespace DynamicIslands.Editor
 		static string[] MorePendingEvents { get { return PlayerFeatures.ResumableEvents; } }
 
 		/// <summary>Whether an event's shared actions after a wait are kept until they ran.</summary>
-		static bool Resumable(string ev) { return PendingEventNo(ev) >= 0 || Array.IndexOf(MorePendingEvents, (ev ?? "").TrimEnd('!')) >= 0; }
+		/// (the key keeps an event's number in 4 bits: phase!, stack!, arrive! and quest! - 16 to 19 - ran into the next object's
+		/// keys, so theirs are not kept - they run in this session only, as before pending keys)
+		static bool Resumable(string ev) { int n = PendingEventNo(ev); return (n >= 0 && n < 16) || Array.IndexOf(MorePendingEvents, (ev ?? "").TrimEnd('!')) >= 0; }
 
 		static int PendingEventNo(string ev)
 		{
@@ -1198,6 +1204,7 @@ namespace DynamicIslands.Editor
 				IslandNetwork.SendUsed(e.Id, key, Today);
 			}
 			foreach (ObjAction a in actions.Where(x => x.Shared))
+			try // (one action that throws - a target gone - stopped the rest of the chain and its caller: a zone or light spent for nothing; as RunPersonal)
 			{
 				if (PlayerFeatures.RunShared(e, index, a)) continue;
 				if (a.Verb == "hit") { GapFeatures.HitCreatures(e, Targets(e, index, a.Target), a.Arg); continue; }
@@ -1245,6 +1252,7 @@ namespace DynamicIslands.Editor
 					if (visible && r.GetComponent<CreatureSpawnPoint>() != null) creaturesShown = true;
 				}
 			}
+			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] The action '" + a.Verb + "' on '" + (e.HostName ?? "?") + "': " + ex.Message); }
 			if (creaturesShown) CreatureSpawner.OnIslandReady(e); // hidden animals appear: an ambush
 		}
 

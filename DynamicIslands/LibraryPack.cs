@@ -671,10 +671,12 @@ namespace DynamicIslands.Editor
 			var result = new List<string>();
 			try
 			{
-				if (!Directory.Exists(WorldsFolder)) return result;
-				foreach (string file in Directory.GetFiles(WorldsFolder, "*.txt"))
+				// (also the copies in Raft's world folders: a world only there - a shared save not loaded here yet - kept no
+				// copy of the old version, and its state landed on the wrong objects)
+				foreach (string file in WorldStateFiles())
 				{
-					string[] lines = File.ReadAllLines(file);
+					string[] lines;
+					try { lines = File.ReadAllLines(file); } catch { continue; }
 					string world = Housekeeping.WorldName(lines, file);
 					// (the editor's test world: counted, every edit-and-test round kept another copy of the island for it, and
 					// the save notices and the Delete warning named it)

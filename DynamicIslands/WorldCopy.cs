@@ -526,7 +526,9 @@ namespace DynamicIslands.Editor
 			string own = IslandNetwork.HashOf(name);
 			if (own == hash) return name;
 			string downloaded = IslandNetwork.DownloadName(name, hash);
-			if (File.Exists(IslandSpawner.PathFor(downloaded))) { Debug.Log("[CUSTOM ISLANDS] '" + name + "' is played from the copy downloaded from its first host: " + downloaded); return downloaded; }
+			// (its content checked, as a client's ResolveFile does: a copy cut short by a crash played as nothing, and the next
+			// save wrote its hash over the right one)
+			if (IslandNetwork.IsHash(hash) && IslandNetwork.HashOf(downloaded) == hash) { Debug.Log("[CUSTOM ISLANDS] '" + name + "' is played from the copy downloaded from its first host: " + downloaded); return downloaded; }
 			string same = IslandNetwork.IsHash(hash) ? IslandNetwork.FileWithHash(hash, null) : null;
 			if (same != null) { Debug.Log("[CUSTOM ISLANDS] '" + name + "' is played from " + same + ", the same island under another name"); return same; }
 			if (IslandNetwork.IsHash(hash) && Raft_Network.IsHost) IslandNetwork.WantFromPlayers(name, hash);
