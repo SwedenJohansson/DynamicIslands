@@ -34,6 +34,16 @@ brush flatten at -6 -72 r=17 s=20 frames=500 h=3
 brush smooth at -6 -72 r=22 s=4 frames=40
 brush flatten at -6 -72 r=15 s=20 frames=500 h=3
 brush flatten from -6 -72 to -3.84 -46.09 r=9 s=20 frames=500 h=3
+# (R 10-31, REACH: Frost Cave's islet stood 3 m over the sea on sheer sides and its causeway reached no shore - nobody got
+# to the cave or its chest: a beach from the sea up onto the causeway beside the cave's passage, 0.7 m a step)
+brush flatten at -14.0 -55 r=2.0 s=20 frames=200 h=2.3
+brush flatten at -15.3 -55 r=2.0 s=20 frames=200 h=1.6
+brush flatten at -16.6 -55 r=2.0 s=20 frames=200 h=0.9
+brush flatten at -17.9 -55 r=2.0 s=20 frames=200 h=0.2
+brush flatten at -19.2 -55 r=2.0 s=20 frames=200 h=-0.5
+brush flatten at -20.5 -55 r=2.0 s=20 frames=200 h=-1.2
+brush flatten at -21.8 -55 r=2.0 s=20 frames=200 h=-1.9
+clear from -14 -55 to -21.8 -55 r=3.0 body
 brush flatten at 48 52 r=12 s=20 frames=500 h=2.5
 brush smooth at 48 52 r=17 s=4 frames=40
 brush flatten at 48 52 r=10 s=20 frames=500 h=2.5
@@ -55,8 +65,10 @@ brush smooth at 20 72 r=15 s=4 frames=40
 brush flatten at 20 72 r=8 s=20 frames=500 h=2.5
 brush flatten from 20 72 to 5.28 19.01 r=9 s=20 frames=500 h=2.5
 call hw_mount x=-64 z=-8 b=22 h=20
-call hw_trail x=-64 z=-8 b=22 h=20 a0=82.87 turn=300 n=40 h0=3
+# (R 10-31, REACH: the path to Ice Crown's trail was laid after the trail and cut its first pads down to 3 m, leaving a
+# 1.3 m step up to the fourth - nobody got up the trail to the top or the foremast: the path first, the trail on it)
 brush flatten from -41.18 -5.15 to -9.42 -1.18 r=7 s=20 frames=500 h=3
+call hw_trail x=-64 z=-8 b=22 h=20 a0=82.87 turn=300 n=40 h0=3
 
 # --- Terrain: the wreck's trench dug north-south between the west and east islets and out past the south islet - a bed
 # 16 m down for the bow and the ballroom, 24 m down for the stern; a pad on the west islet for lifeboat 7's camp ---------
@@ -68,6 +80,8 @@ brush smooth from 8 30 to 11 -54 r=10 s=10 frames=10
 brush flatten from 1 -6.5 to 15 -6.5 r=6.5 s=20 frames=200 h=-16
 brush flatten from 1 -29 to 13 -29 r=5.5 s=20 frames=200 h=-24
 brush flatten from 3 -17 to 14 -17 r=5 s=20 frames=150 h=-16
+# (R 10-31, REACH: a level patch for the ship's stores crate on the bank)
+brush flatten at 11 -22.5 r=1.4 s=20 frames=150 h=-16
 brush flatten at -14 10 r=6 s=20 frames=80 h=6.5
 # (a ramp up to the camp from the low path in the north-east: the camp's pad stood 3 m over it)
 brush flatten at -8.5 17.3 r=1.8 s=20 frames=150 h=4.4
@@ -148,7 +162,9 @@ place Reef_Barrel1 - at 4 -18 ground roll=90
 place Reef_Barrel3 - at 14 -20.5 ground roll=88 yaw=40
 place Placeable_Clock_Basic - at 7.5 -17 ground roll=88 yaw=110
 place "VG_DecorationPrefabBase_Mirror Variant" - at 10.8 -13.8 h=-16 sit rot=90,0,0
-place "Box Big" stores at 11 -22.5 ground yaw=25
+# (R 10-31, REACH: the crate stood half in the bank - plain ground put its middle on the ground - out of reach from
+# where the walk ended: sat on a small level patch)
+place "Box Big" stores at 11 -22.5 ground sit yaw=25
 place Loot_SunkenBarrel coalbarrel at 5.5 -23 ground
 place "Pickup_Landmark_Scrap 2_OceanBottom" - at 8 -15.5 ground
 place "Pickup_Landmark_Scrap 3_OceanBottom" - at 12 -18.5 ground
@@ -165,7 +181,9 @@ place BoatStranded - at 13 -46 y=-1 sit scale=1.5 yaw=10 roll=8
 place Creature_AnglerFish deeplamps at 13 -44 h=-18
 place Zone_Trigger stern at 12 -40 h=-18
 push at 7 -32 h=-23.95 yaw=90
-call rt_storey f1=RT_WallWindowBroken f2=RT_WallWindowBroken b1=RT_Wall1 b2=RT_WallWindowBroken l2=RT_WallWindowBroken r2=RT_WallWindowBroken
+# (R 10-31, REACH: the safe stood in the corner by this wall's broken window: the walk stopped outside it, where the wall
+# above the window hid the safe - the window walled up, so it is reached from inside the office)
+call rt_storey f1=RT_WallWindowBroken f2=RT_WallWindowBroken b1=RT_Wall1 b2=RT_Wall1 l2=RT_WallWindowBroken r2=RT_WallWindowBroken
 place RT_Floor - at 0 4.5 y=3
 place "VG_DecorationPrefabBase_Desk Variant" - at -3 2.5 y=0 sit yaw=180
 place TP_FileBox01 - at -5.3 3.8 y=0 sit
@@ -264,6 +282,16 @@ prop jcsl loot.refill=0
 place Loot_ChestSmall jbsl at 2.05 5.64 h=11.1 sit yaw=0
 prop jbsl loot.refill=0
 pop
+# (R 10-31, REACH: the jump islet stood 3 m over the sea on sheer sides and its causeway reached no shore - nobody got onto
+# it, its course, the Floe stack or the Top of the stack: a beach from the sea up onto it, 0.7 m a step)
+brush flatten at 55.56 -21.99 r=2.2 s=20 frames=200 h=2.3
+brush flatten at 54.42 -22.62 r=2.2 s=20 frames=200 h=1.6
+brush flatten at 53.29 -23.24 r=2.2 s=20 frames=200 h=0.9
+brush flatten at 52.15 -23.87 r=2.2 s=20 frames=200 h=0.2
+brush flatten at 51.02 -24.50 r=2.2 s=20 frames=200 h=-0.5
+brush flatten at 49.88 -25.13 r=2.2 s=20 frames=200 h=-1.2
+brush flatten at 48.74 -25.76 r=2.2 s=20 frames=200 h=-1.9
+clear from 55.56 -21.99 to 48.74 -25.76 r=3.2 body
 call hw_zone x=70 z=-22 al=sl_jumpz id=sl_jumps r=6 h=1 msg="Stacks, one higher than the next. Something at the top."
 call hw_machine x=-33 z=39 yaw=-45 al=sl_machine nm="Signal lamp" obj=TP_LaserControlPanel_lever sc=3 a=sl_top b=sl_cave done=sl_fixed rew=sl_rewchest rnote=sl_rewnote msg="It works." hint="It wants the lookout's spyglass from Ice Crown and the lamp carbons from Frost Cave."
 call hw_note x=-35.6 z=40.2 yaw=-25 al=sl_hint
@@ -284,6 +312,15 @@ call ar_plants_snowy x=-50 z=-50 r=16 seed=26496
 call ar_plants_snowy x=48 z=-44 r=15 seed=26497
 call ar_plants_snowy x=20 z=72 r=14 seed=26498
 call ar_plants_snowy x=-64 z=-8 r=24 seed=26499
+# (R 10-31, REACH: ar_plants_snowy's rocks are 15-20 m wide and 10 m tall, and scatter's free= keeps only their pivots off the
+# recipe's objects: one stood over the signal lamp (its reward chest, the Lookout's log and message: nowhere to
+# stand by them) and over Ice Crown's trail. Taken off the lamp, the trail, the Frost Cave beach and the jump islet)
+clear at -33.6 39.4 r=4.5 all body only=^TP_(BigRock03|SmallRock01|PineTreeSnowy)
+clear at -64 -8 r=25 all only=^TP_(BigRock03|SmallRock01)
+clear from -21.8 -55 to -12 -55 r=3.6 all body only=^TP_(BigRock03|SmallRock01|PineTreeSnowy)
+clear from -12 -55 to -7 -60 r=3.6 all body only=^TP_(BigRock03|SmallRock01|PineTreeSnowy)
+clear at 70 -14 r=23 all only=^TP_(BigRock03|SmallRock01)
+clear from 48.74 -25.76 to 55.56 -21.99 r=3.6 all body only=^TP_(BigRock03|SmallRock01|PineTreeSnowy)
 
 # ===== Settings, story items, notes, behaviours, quest (19 steps) =========================================================
 info title=The Sunken Liner
