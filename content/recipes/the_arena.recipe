@@ -500,9 +500,9 @@ prop hiddendoorR beh.moveTime=2
 prop hiddendoorR beh.moveMode=switch
 prop console obj.name=console
 prop console beh.use=Shut the games down with the warden's pass
-prop console if.use=has|story:wardenpass|1
+prop console if.use=quest|11\nhas|story:wardenpass|1
 prop console on.use=message||You swipe the pass. GAMES ENDED, say the screens one after another - and outside, every camera on every pole stops turning. A drawer slides out of the console with a key in it.\ngive||story:prizekey*1\nsignal||gamesoff\nsound||event:/exploring/obstacles/keypad/keypad_selene_correct
-prop console else.use=message||MASTER CONSOLE - WARDEN'S PASS REQUIRED.
+prop console else.use=message||MASTER CONSOLE - WARDEN'S PASS REQUIRED. THE GAMEWARDEN'S LOG HAS THE PROCEDURE.
 
 prop shore zone.id=shore
 prop shore zone.radius=8
