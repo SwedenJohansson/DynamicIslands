@@ -366,4 +366,5 @@ quest reward=MetalIngot*3;Nail*10
 call treasure x=0 z=0 r=29 n=1 seed=8951
 prop treasure8951 treasure.loot=TitaniumOre*2
 
+reseat trees
 save Old Mine Islet
