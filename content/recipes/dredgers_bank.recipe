@@ -97,7 +97,7 @@ call hw_zone x=-36 z=-46 al=tenderz id=tender r=6 h=1 msg="The dredge's tender o
 place Note_Paper greyorders at -35.4 -47.2 h=-8.5 drop yaw=0
 loot tenderbox MetalIngot*2;CopperIngot*2;TradeToken*3;Bolt*3
 prop tenderbox loot.refill=0
-prop tenderbox if.open=has|story:tenderkey|1
+prop tenderbox if.open=quest|10\nhas|story:tenderkey|1
 prop tenderbox else.open=message||The tender's lockbox is bolted to the deck and locked. It wants the tender key - the foreman keeps it.
 note tenderbox Tender's lockbox | The tender's lockbox: the camp's spare iron and copper, a bag of tokens, and bolts for the rig's legs.
 call treasure x=-22 z=-40 r=12 n=1 seed=31045 kind=0

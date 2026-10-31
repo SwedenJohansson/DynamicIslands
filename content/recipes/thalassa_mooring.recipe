@@ -272,7 +272,7 @@ story th_key|Salvage store key|Hinge|The salvage store's key, from the harbour m
 story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
 note thdeep Salvage store chest | The salvage crew's chest: their pay and a crest shard.
 loot thdeep story:sk_crest*1;MetalIngot*2;Bolt*3;OxygenBottle*1;TradeToken*2
-prop thdeep if.open=has|story:th_key|1
+prop thdeep if.open=quest|11\nhas|story:th_key|1
 prop thdeep else.open=message||Locked. A tag: "Key in my locker on Mooring Hill. - Harbour master".
 prop thdeep loot.refill=0
 note thlocker Mooring hill locker | The harbour master's locker: the salvage store key.

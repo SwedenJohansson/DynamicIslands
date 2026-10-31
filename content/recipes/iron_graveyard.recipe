@@ -204,12 +204,12 @@ prop yardstore else.open=message||The store's crate is chained to an electric lo
 
 prop crane obj.name=crane
 prop crane beh.use=Unlock the crane and lift the turbine hub
-prop crane if.use=has|story:cranekey|1
+prop crane if.use=quest|8\nhas|story:cranekey|1
 prop crane on.use=message||The crane coughs into life and swings the turbine hub off the tanker's deck onto the sand. You roll it free.\ngive||story:hub*1\nsound||event:/raft/engine/controller_on
 prop crane else.use=message||The crane's controls are locked. The foreman's board said the key is in the office safe.
 prop turbine obj.name=turbine
 prop turbine beh.use=Fit the hub and the four blades
-prop turbine if.use=take|story:blade|4\ntake|story:hub|1
+prop turbine if.use=quest|9\ntake|story:blade|4\ntake|story:hub|1
 prop turbine on.use=message||Hub, then blades, one by one - the wind catches them and the turbine turns. Lights come on across the yard.\nhide|turbine\nshow|turbinefull\nshow|yardlight\nsignal||turbine
 prop turbine else.use=message||The mast needs the turbine's hub and all four blades.
 prop turbinefull obj.name=turbinefull

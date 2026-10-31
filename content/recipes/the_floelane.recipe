@@ -208,7 +208,7 @@ note sisterchest Sister boat's strongbox | The sister boat's strongbox, twelve m
 loot sisterchest MetalIngot*3;CopperIngot*2;Bolt*3
 prop treasure12241 treasure.loot=MetalOre*3;Wool*2
 prop treasure12242 treasure.loot=TitaniumOre*1;CopperOre*2
-prop wheelhouse if.open=has|story:wheelkey|1
+prop wheelhouse if.open=quest|10\nhas|story:wheelkey|1
 prop wheelhouse else.open=message||Locked. Sigrid calls from the ice: "Ivar had the key - he kept the lookout on the berg!"
 
 prop firstzone zone.id=first_floe

@@ -233,8 +233,8 @@ prop fusetin obj.name=fusetin
 place RT_Pillar - at 45 56.5 ground sy=0.4
 place RT_PowerBox fusebox at 45 56.5 ground y=1.25 yaw=180
 prop fusebox obj.name=fusebox
-prop fusebox if.use=!signal|fuses\ntake|story:wellfuse|3
-prop fusebox else.use=message||The pump house fuse box: three empty sockets - or three fuses already burning.
+prop fusebox if.use=quest|17\n!signal|fuses\ntake|story:wellfuse|3
+prop fusebox else.use=message||The pump house fuse box: three empty sockets - or three fuses already burning. The pump house book says which fuses it takes.
 prop fusebox on.use=message||The three fuses glow. The pump house's drowned locker clanks open.\nsignal||fuses\nshow|pumplocker
 place Loot_ChestLarge pumplocker at 46 52 ground sit yaw=270
 prop pumplocker obj.name=pumplocker

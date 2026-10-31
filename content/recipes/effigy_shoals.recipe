@@ -156,7 +156,7 @@ call hw_zone x=50 z=35 al=cavez id=choircave r=4 msg="The Choir's cave. Candle s
 place Note_Paper lisenote at 48.5 34.5 h=2.45 drop yaw=180
 loot reliquary CopperIngot*2;MetalIngot*2;Battery*1;Glass*2
 prop reliquary loot.refill=0
-prop reliquary if.open=has|story:reliquarykey|1
+prop reliquary if.open=quest|12\nhas|story:reliquarykey|1
 prop reliquary else.open=message||The reliquary is padlocked. The warden kept its key by the pyre, on top of the Pyre Dune.
 note reliquary Choir's reliquary | What the Quiet Choir's nets brought up and nobody would keep at home: copper and iron bars, glass, a battery that is still warm - and a brass tuning fork that hums the lullaby on its own when you lift it.
 call treasure x=58 z=28 r=7 n=1 seed=30206 kind=0

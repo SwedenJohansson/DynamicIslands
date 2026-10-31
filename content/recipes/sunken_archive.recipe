@@ -208,7 +208,7 @@ prop rarebookvault else.open=message||The vault's lock is wired to the index des
 
 prop indexterminal obj.name=indexterminal
 prop indexterminal beh.use=Feed the catalogue cards through the index
-prop indexterminal if.use=take|story:card|3
+prop indexterminal if.use=quest|9\ntake|story:card|3
 prop indexterminal on.use=message||The index whirrs through the three cards - far below, under the water, a heavy lock clunks open.\nsignal||indexed
 prop indexterminal else.use=message||The index desk wants three catalogue cards. The archivist's letter said they are in the flooded stacks.
 

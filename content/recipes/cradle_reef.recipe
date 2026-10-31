@@ -201,7 +201,7 @@ prop comb3 tint.color=#b08d57
 
 prop musicbox obj.name=musicbox
 prop musicbox beh.use=Put the combs in the music box
-prop musicbox if.use=has|story:windkey|1\ntake|story:comb|3
+prop musicbox if.use=quest|11\nhas|story:windkey|1\ntake|story:comb|3
 prop musicbox on.use=show|tooth\ngive||story:boxsong*1\nplaysound||event:/exploring/elevator/elevator_music|0.6|once|near\nmessage||The box plays. Slow, out of tune, the lullaby. Far off in the dark water, something sings it back - and on the altar, where nothing was, lies a long white tooth.
 prop musicbox else.use=message||A music box with no comb in it and no winding key. It needs its three combs - and its key, which the matron's letter says the nursemaid took up to her lookout on Nursery Rock.
 prop tooth obj.name=tooth

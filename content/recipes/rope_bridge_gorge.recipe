@@ -111,7 +111,7 @@ call hw_zone x=30 z=-37 al=buildz id=buildcave r=4 msg="A cave on the shore, its
 place Note_Paper greygorge at 28.5 -37.5 h=2.45 drop yaw=180
 loot buildcoffer TradeToken*4;CopperIngot*2;MetalIngot*1;Glass*2
 prop buildcoffer loot.refill=0
-prop buildcoffer if.open=has|story:cofferkey|1
+prop buildcoffer if.open=quest|10\nhas|story:cofferkey|1
 prop buildcoffer else.open=message||A clay coffer bound in bronze, seven lines on its lock. It wants the coffer key - the boot prints show someone tried to prise it.
 note buildcoffer Builders' coffer | The builders' coffer: the sea kings' tokens, copper, iron and two lenses of old glass.
 # --- The 1931 expedition's camp house, drowned off the north-east (-9 m): Dr. Ostrander's note, an air pocket --------

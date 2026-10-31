@@ -503,7 +503,7 @@ prop drumpanel if.laser=!signal|laser
 prop drumpanel on.laser=signal||laser\ngive||story:beamset*1\nmessage||The panel drinks the beam and hums. Inside the drum hall a light comes on over the cutoff.
 prop cutoff obj.name=cutoff
 prop cutoff beh.use=Pull the drum cutoff
-prop cutoff if.use=signal|laser
+prop cutoff if.use=quest|20\nsignal|laser
 prop cutoff on.use=hide|drumspin\nshow|drumstop\nhide|cagebars\ngive||story:drumsoff*1\nmessage||The drums run down and stop. The bars of the drum cage slide back.\nsound||event:/exploring/obstacles/keypad/keypad_correct
 prop cutoff else.use=message||The cutoff is dead. Its light is off - the panel out in the laser court has no beam.
 

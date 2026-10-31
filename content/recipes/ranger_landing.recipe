@@ -219,7 +219,7 @@ story winchpart|Winch part|Placeable_Lantern_Metal|A piece of the boat shed's sl
 story winch|Shed winch|Placeable_Lantern_Metal|The slipway winch runs again; the shed door is up.
 story rangerkey|Oda's ranger key|Placeable_Lantern_Metal|Oda's key on a leather tag: RANGER - STORES. Keep it; the rangers' locks upriver take it.
 prop winch beh.use=Fit the parts to the winch
-prop winch if.use=take|story:winchpart|3
+prop winch if.use=quest|4\ntake|story:winchpart|3
 prop winch on.use=message||Crank, chain, pawl. The winch catches and the shed door grinds up.\ngive||story:winch*1\nshow|boatshed
 prop winch else.use=message||The winch is stripped: no crank, no chain, no pawl. Oda's board says where the parts went.
 
@@ -245,7 +245,7 @@ story tool|Oda's tool|Placeable_Lantern_Metal|One of Oda's three tools from the 
 story rack|Tool rack|Placeable_Lantern_Metal|Oda's tools hang on her rack again.
 prop toolrack obj.name=toolrack
 prop toolrack beh.use=Hang the tools
-prop toolrack if.use=take|story:tool|3
+prop toolrack if.use=quest|9\ntake|story:tool|3
 prop toolrack on.use=give||story:rack*1\nshow|odacard\nmessage||Saw, wrench, hammer - each on its painted outline. Behind the last outline a drawer slides out.
 prop toolrack else.use=message||A tool rack with three painted outlines: a saw, a wrench, a hammer. All empty. Oda left them all over her course.
 prop odacard obj.name=odacard

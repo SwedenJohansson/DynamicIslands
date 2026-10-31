@@ -126,6 +126,8 @@ prop kennelchest else.open=message||The chest is inside the survey dog's kennel,
 story surveyseal|Surveyors' seal|Bolt|The brass seal of the Triangulation survey. It locks their instrument chest in the cave.
 loot surveycrate story:surveyseal*1;Rope*2;Glass*2
 prop surveycrate loot.refill=0
+prop surveycrate if.open=quest|12
+prop surveycrate else.open=message||The crate is pinned under the wreck. The ridge beyond relay 1's mast comes first.
 prop tricavechest if.open=has|story:surveyseal|1
 prop tricavechest else.open=message||A brass seal-lock on the lid. The surveyors' seal would open it.
 loot tricavechest TitaniumOre*2;Bolt*2;Glass*2;Rope*2
@@ -222,8 +224,8 @@ note trtop Surveyor's case | The pins seat in the lid. A chain key, and the true
 loot trtop story:chainkey*1;TitaniumOre*2;Battery*1;CircuitBoard*1
 prop trtop loot.refill=0
 prop trtop obj.name=trtop
-prop trtop if.open=has|story:surveyfix|3
-prop trtop else.open=message||The surveyor's case. Three holes in the lid, each for a brass fix-pin.
+prop trtop if.open=quest|17\nhas|story:surveyfix|3
+prop trtop else.open=message||The surveyor's case. Three holes in the lid, each for a brass fix-pin - the surveyors' dig map on the flat says which tins hold them.
 note trdivesecret Quarry tool box | The quarrymen's best chisels, under a tarp.
 loot trdivesecret MetalIngot*2;Rope*2;Nail*6
 prop trdivesecret loot.refill=0

@@ -216,6 +216,8 @@ call hw_mast x=-60 z=45 h0=26 lv=3 a=greymast chest=greybox top=Placeable_Lanter
 place Note_Paper greylast at -63.5 41.5 h=26.1 drop yaw=200
 loot greybox story:vaultkey*1;Rope*2;Battery*1;Cooked_GenericMeat*2
 prop greybox loot.refill=0
+prop greybox if.open=quest|31
+prop greybox else.open=message||Grey's box is wired shut to the mast. His last log, up here on the hill, says what it holds.
 note greybox Grey's last lookout box | Silas Grey's box on his last lookout: his spyglass, left behind, rope - and a long brass key with seven teeth on its bit.
 scatter "Pickup_Landmark_Flower_Red" 2 at -60 45 r=22 seed=31043 free=3
 call treasure x=-80 z=28 r=12 n=1 seed=31038 kind=0
