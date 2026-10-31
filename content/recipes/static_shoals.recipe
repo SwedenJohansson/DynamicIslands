@@ -365,6 +365,8 @@ story chainkey|Chain key|Bolt|A heavy key on a ring, stamped CONCORD WELL. One o
 note ssdivechest Coil room | A sealed coil pack, tagged FOR THE NET HOUSE.
 loot ssdivechest story:genpart2*1;Plastic*4;Scrap*3;Rope*2
 prop ssdivechest loot.refill=0
+prop ssdivechest if.open=quest|11
+prop ssdivechest else.open=message||The coil room's chest is sealed. Come in through the cable store's door by the dune peak, the Fleet's way.
 note sstop Wiring room locker | The coil fits the card: a chain key and a spark plug.
 loot sstop story:chainkey*1;TitaniumOre*2;CircuitBoard*1;Bolt*3
 prop sstop loot.refill=0
