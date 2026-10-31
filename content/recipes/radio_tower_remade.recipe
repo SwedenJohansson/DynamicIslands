@@ -146,6 +146,15 @@ place SmallBoulder4 - at 72.5 -57 ground yaw=110 scale=0.8
 call ar_plane x=46 z=46 h=3 yaw=210 al=mailplane crate=mailcrate
 # G The trawler (north-west): run aground on the beach below the ridge
 call hw_wreck x=-54 z=46 h=2 yaw=60 obj=BoatStranded al=trawler crate=trawlercrate r=9
+# (agent Q 10-30, REACH: the sea cave's mouth path ended 2.4 m over the sea and the rock filled the land round it - the
+# cave and the Smugglers' cache unreached: a beach down from the path's end into the water)
+brush flatten at 71 -57.9 r=2.2 s=20 frames=200 h=1.8
+brush flatten at 71 -59.2 r=2.2 s=20 frames=200 h=1.1
+brush flatten at 71 -60.5 r=2.2 s=20 frames=200 h=0.4
+brush flatten at 71 -61.8 r=2.2 s=20 frames=200 h=-0.3
+brush flatten at 71 -63.1 r=2.2 s=20 frames=200 h=-1.0
+brush flatten at 71 -64.4 r=2.2 s=20 frames=200 h=-1.6
+clear from 71 -57.9 to 71 -64.4 r=3.2 body
 # --- JUMP COURSE rt (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---
 # JUMP rt pad=4 at=40 -56
 push at 40 -56
