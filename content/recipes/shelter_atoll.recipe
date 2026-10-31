@@ -60,13 +60,34 @@ brush smooth at -34 -38 r=10 s=5 frames=80
 brush auto at -34 -38 r=11 s=10 frames=25
 # A Radar Hill (north-east): summit 20 m, base r 22, the trail from its south-west foot, the radar mast on top
 call hw_mount x=60 z=54 b=22 h=20
-call hw_trail x=60 z=54 b=22 h=20 a0=225 turn=300 n=28 h0=3
+call hw_trail x=60 z=54 b=22 h=20 a0=225 turn=-300 n=28 h0=3
 brush flatten at 60 54 r=7 s=20 frames=400 h=20
 call hw_mast x=60 z=54 h0=20 lv=3 a=radarmast chest=radarbox top=Placeable_Lantern_Metal
 # B The outer barrier (east to south): a bank h 3.5 with two humps of dune on its sea side, two pillboxes on it
 brush flatten from 62 -8 to 58 -40 r=10 s=20 frames=600 h=3.5
 brush flatten from 58 -40 to 24 -66 r=10 s=20 frames=600 h=3.5
 brush flatten from 24 -66 to 10 -70 r=8 s=20 frames=400 h=3.5
+# (REACH 10-30: a pool between the ring and the barrier with walls 2-3 m high, and the islet's east side falling 2.5 m
+# straight into the lagoon - both traps for anyone in the water: a slope out of the pool and a beach up onto the islet)
+# (circles r 2.8 stepping 0.6 m every 1.5 m, laid from the top down - 10-30 agent N: the first try with r 2.2
+# circles left both walls in place)
+# (10-31: the reach walk got stuck on the walls either side of the r 2.8 slope (a 1.5 m step at 38.8 -17.5) and at its
+# top (2.9 against the ring's 3.5): wider, one more circle onto the ring, then smoothed)
+brush flatten at 43.6 -12.9 r=3.5 s=20 frames=200 h=3.5
+brush flatten at 42.2 -13.5 r=3.5 s=20 frames=200 h=2.9
+brush flatten at 40.8 -14.1 r=3.5 s=20 frames=200 h=2.3
+brush flatten at 39.4 -14.7 r=3.5 s=20 frames=200 h=1.7
+brush flatten at 38 -15.3 r=3.5 s=20 frames=200 h=1.1
+brush smooth from 38 -15.3 to 43.6 -12.9 r=4.5 s=4 frames=8
+clear from 38 -15.3 to 43.6 -12.9 r=5.5 body
+# (the hole at 31.5 11 under the islet's east bank held water below the sea's level - a pool nobody could climb out
+# of: filled to a sand slope above the water instead)
+brush flatten at 29.6 10.8 r=2.8 s=20 frames=200 h=1.3
+brush flatten at 31.1 10.8 r=2.8 s=20 frames=200 h=0.9
+brush flatten at 32.6 10.8 r=2.8 s=20 frames=200 h=0.6
+brush flatten at 34 10.8 r=2.8 s=20 frames=200 h=0.5
+brush smooth from 29.6 10.8 to 34 10.8 r=4.5 s=4 frames=8
+clear from 29.6 10.8 to 34 10.8 r=5.5 body
 call hw_mount x=78 z=-24 b=12 h=9
 call hw_mount x=50 z=-76 b=10 h=7
 call ab_ruin x=64 z=-30 h=3.5 yaw=90 w=2 d=2 al=pillbox
@@ -101,6 +122,18 @@ line Block_Wall_Tier3 from 6 -78 to 6 -69 step=1.5 y=-0.15
 line Block_Wall_Tier3 from 9 -84 to 9 -69 step=1.5 y=-0.15
 # F The ammo cave (Radar Hill's north foot): a rock with a hole in it, its mouth to the sea
 call ar_cave x=62 z=82 h=3 yaw=0 al=ammorock chest=ammochest
+# (REACH 10-30: the cave floor ended 3 m over the sea in a cliff - no way in from the water (reach: ammo chest and the
+# cave "can't get there"): a beach slope from the mouth down into the sea)
+# (widening out to the sea as it goes down, then smoothed, so it reads as a sand fan, not a causeway)
+brush flatten at 61 101.5 r=2.4 s=20 frames=200 h=2.6
+brush flatten at 61 103 r=3 s=20 frames=200 h=1.9
+brush flatten at 61 104.5 r=4 s=20 frames=200 h=1.2
+brush flatten at 61 106 r=4.5 s=20 frames=200 h=0.5
+brush flatten at 61 107.5 r=5 s=20 frames=200 h=-0.2
+brush flatten at 61 109 r=5 s=20 frames=200 h=-0.9
+brush flatten at 61 110.5 r=5 s=20 frames=200 h=-1.6
+brush smooth from 61 104.5 to 61 110.5 r=6 s=4 frames=8
+clear from 61 101.5 to 61 110.5 r=7 body
 # The new land planted (palms, bamboo, bushes as on the ring; boulders only on the flats)
 call ar_plants_tropical x=40 z=38 r=10 seed=26301
 call ar_plants_hill x=60 z=54 r=22 seed=26311
@@ -329,7 +362,10 @@ prop dunepostchest loot.refill=0
 # (a level patch for the hatch, 10-25: on the dune's slope its top was half a metre under the sand)
 # (10-25: r=4 and a set height - the scatter may set the hatch up to 2 m off the centre; with no h the dune's slope
 # stayed and the hatch's top was still 0.3 m under at -35.2 14.2)
-brush flatten at -37 13.5 r=4.5 s=20 frames=200 h=10
+# (ground check 10-30: in The Long Voyage's copy the scatter set the hatch 3.7 m off, at -33.7 13.3, past the patch's edge,
+# its top 0.3 m under - a wider patch, so the hatch lands on the flat wherever the scatter sets it)
+brush flatten at -37 13.5 r=6 s=20 frames=200 h=10
+clear at -37 13.5 r=7 body
 call hatchcache x=-37 z=13.5 r=2 seed=32063 alias=dunehatch chest=dunestash items=Scrap*4;Rope*2;CircuitBoard*1;Bolt*2
 scatter "Pickup_Landmark_Tree_Palm 2" 2 at -40 10 r=11 seed=32064 free=1
 scatter Bush2 3 at -40 10 r=12 seed=32065
@@ -397,7 +433,7 @@ loot ammochest CopperIngot*3;MetalIngot*2;TitaniumOre*2
 prop ammochest loot.refill=0
 call hw_zone x=62 z=86 al=ammoz id=ammocave r=4 msg="A hole in the rock under Radar Hill, its mouth to the sea. Ammunition crates - empty."
 # Dr. Calder's field note, at the north bank's west end
-place Note_Paper caldernote2 at -22 55 ground y=0.1 drop yaw=40
+place Note_Paper caldernote2 at -19.5 56.5 ground y=0.1 drop yaw=40
 call treasure x=40 z=-48 r=8 n=1 seed=26391 kind=0
 prop treasure26391 treasure.loot=MetalIngot*2;TitaniumOre*1;Battery*1
 
@@ -528,6 +564,31 @@ clear at -23.49 45.16 r=1 all only=SmallBoulder2
 clear at -19.29 57.61 r=2 all only=SmallBoulder2
 clear at -23.12 55.98 r=2 all only=SmallBoulder2
 clear at -22.11 45.21 r=2 all only=SmallBoulder2
+# (ground check 10-30: a rock hanging 1.8 m over Radar Hill's foot - cleared. The report's points are from the land
+# centre, 14.7199 -1.3105 off this recipe's origin: added here)
+clear at 43.40 42.73 r=1 all body only=SmallBoulder2
+# (ground check 10-30, "sunk trunk": palms, bamboo and a mango with their trunk foot 1-13 m in the ground - the trunk
+# coming out of the slope, or the whole tree under a hill. Taken out; the islet's two palms set down again below, last,
+# when the land is done)
+clear at 68.48 65.71 r=0.6 all only=Bamboo_1
+clear at 52.13 -20.64 r=0.6 all only=Tree_Palm.4
+clear at 51.85 -21.44 r=0.6 all only=Bamboo_1
+clear at 82.63 -18.15 r=0.6 all only=Tree_Palm.3
+clear at 73.62 -17.22 r=0.6 all only=Bamboo_1
+clear at 44.66 -80.10 r=0.6 all only=Tree_Palm.3
+clear at 42.99 -76.47 r=0.6 all only=Tree_Palm.3
+clear at 44.58 -82.57 r=0.6 all only=Tree_Palm.4
+clear at 55.61 -81.15 r=0.6 all only=Tree_Mango
+clear at 2.55 42.02 r=0.6 all only=Tree_Palm.3
+clear at 2.99 41.67 r=0.6 all only=Tree_Palm.3
+clear at 1.07 41.46 r=0.6 all only=Tree_Palm.3
+clear at -22.83 29.27 r=0.6 all only=Tree_Palm.4
+clear at -17 13 r=0.6 all only=Tree_Palm.1
+clear at -18 -9 r=0.6 all only=Tree_Palm.2
+# (10-31: "ground" still left these three 1.1-1.4 m deep: set by their pivot instead, just under the ground)
+place "Pickup_Landmark_Tree_Palm 1" - at -17 13 y=-0.3
+place "Pickup_Landmark_Tree_Palm 2" - at -18 -9 y=-0.3 yaw=60
+place "Pickup_Landmark_Tree_Palm 3" - at 2 41.7 y=-0.3 yaw=200
 # (ABYSS 10-26: the old reef's corals the new banks lifted out of the sea - cleared)
 clear at -34.6 42.8 r=2.3 all only=Coral
 clear at -31.8 46.4 r=3.0 all only=Coral
