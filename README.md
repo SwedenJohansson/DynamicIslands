@@ -1004,6 +1004,7 @@ How some things work that can surprise players and island builders. What players
 - A world follows the host's version of an island (RK1): a next host who has one of its islands in another version (same name, changed in their editor) plays theirs until a player with the world's version joins, and a save before that keeps the host's version, with what was used there possibly on other objects. Let a player who hosted before join first ([Hosting on another day](docs/GUIDE.md#hosting-on-another-day)).
 - Loose items on the ground of a custom island can fall into the sea when the island unloads or while it loads again after a save is loaded (RK2): keep them in the inventory or a storage on the raft.
 - A trade stand on an island of more than 8191 objects shares its key with another (RK9): after an edit reaches a world, a once-only trade there can be had again.
+- Editor: the Vasagatan's and Utopia's quest item pickups (the ones under their quest item folders) are in the object list but never appear when placed (RK10); the Tangaroa token and the Vasagatan scrap work. KeyRescue places without a visible model (RK11).
 - The mod's own text is English only (L1); the journal (J) and stats (K) keys are changed in World settings > **Defaults...** > Keys (this PC) (L2, done).
 
 ## Limitations (can't be changed)
