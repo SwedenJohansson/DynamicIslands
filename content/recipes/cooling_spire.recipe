@@ -33,23 +33,31 @@ brush flatten at -0.41 -57.78 r=4 s=20 frames=200 h=1
 brush flatten from 10 -8 to 6 -26 r=5 s=20 frames=500 h=6
 brush flatten from 6 -26 to 0 -52 r=5 s=20 frames=600 h=2.5
 brush smooth from 10 -8 to 0 -52 r=8 s=6 frames=60
+# (G2 10-31: reach - the walk up from the east shore stuck at a 1.5 m terrain step at 44 -4.6 (in the way: the ground):
+# smoothed to a slope)
+brush smooth at 44 -4.2 r=4.5 s=6 frames=120
 origin
 clear at 4.43 -0.35 r=12
 clear at 14.43 1.65 r=6
 clear from 10 -8 to 0 -52 r=8
 clear at -0.41 -57.78 r=4
 clear at -2.41 -53.78 r=2
+clear at 44 -4.2 r=4.5
 
 # --- The spire: four storeys of radio tower pieces, open doorways where the outside stairs arrive, a railed roof -------
 push at 7.43 -0.35 h=3.05
-call rt_storey f1=RT_WallDoor1 a=spire
+# (G2 10-31: reach - RT_WallDoor1's narrow doorway let a player through but not the walker, the cold store and the
+# ground floor shut to it: a 3 m open bay instead, as on Stormworks)
+call rt_storey f1=none a=spire
 place Loot_Crate mushcrate at -5 3.5 y=0.1 sit yaw=10
 place "Box Big" - at -1 3.5 y=0.1 sit yaw=-10
 pop
 push at 7.43 -0.35 h=6
 call rt_storey r3=none a=spire
 place Loot_Chest landingchest at -5 3.5 y=0.1 sit yaw=180
-place Note_Paper inescs at -2.2 3.2 y=0.1 drop yaw=200
+# (G2 10-31: reach found the log on the ground floor - dropped from 0.1 m its ray began under the landing's floor top
+# and fell through to the storey below: dropped from 0.3 m)
+place Note_Paper inescs at -2.2 3.2 y=0.3 drop yaw=200
 place "Box Small" - at -3.5 3.5 y=0.1 sit yaw=30
 pop
 push at 7.43 -0.35 h=9
@@ -57,17 +65,64 @@ call rt_storey b1=none r1=RT_WallWindow1 r2=RT_WallWindow1 l2=RT_WallWindow1 a=s
 pop
 push at 7.43 -0.35 h=12
 place RT_Floor spire at 0 4.5
-call rt_railing y=0 lm=none
+# (G2 10-30: the roof's west side open over its south half, where the third stair arrives - the railing laid out by hand)
+place RT_Fence - at -4.5 4.5 y=0
+place RT_Fence - at -3 4.5 y=0
+place RT_Fence - at -1.5 4.5 y=0
+place RT_Fence - at 0 4.5 y=0
+place RT_Fence - at -4.5 -4.5 y=0
+place RT_Fence - at -3 -4.5 y=0
+place RT_Fence - at -1.5 -4.5 y=0
+place RT_Fence - at 0 -4.5 y=0
+place RT_Fence - at -6.0 0 y=0 yaw=90
+place RT_Fence - at -6.0 1.5 y=0 yaw=90
+place RT_Fence - at -6.0 3 y=0 yaw=90
+place RT_Fence - at 0 -4.5 y=0 yaw=90
+place RT_Fence - at 0 -3 y=0 yaw=90
+place RT_Fence - at 0 -1.5 y=0 yaw=90
+place RT_Fence - at 0 0 y=0 yaw=90
+place RT_Fence - at 0 1.5 y=0 yaw=90
+place RT_Fence - at 0 3 y=0 yaw=90
 place RT_SatteliteDisc - at -1.5 3 y=0.1 scale=0.45 yaw=180
 place Loot_Chest topchest at -4.5 -3.5 y=0.1 sit yaw=0
 pop
 prop spire tint.color=#c9d0d6
 prop spire tint.amount=0.55
-place RT_Stair stair1 at 10.93 -3.35 ground sit yaw=0 sy=0.68
-place RT_Stair stair2 at 8.43 7.15 ground y=3 yaw=270 sy=0.68
-place RT_Stair stair3 at -2.07 5.65 ground y=6 yaw=180 sy=0.68
-prop stair1 tint.color=#c9d0d6
-prop stair1 tint.amount=0.55
+# (G2 10-30: the outside stairs laid as one climb round the spire - the old three hung in the air and ran into its walls
+# (pictures g2_cs2). RT_Stair's pivot is its low end, its high end 7.5 m along local -x, 1.5 m wide along local +z,
+# 2.9 m rise at sy=0.68. 1: up the east wall going north to the second storey's open east side, a landing there;
+# 2: up the north wall going west past the third storey's open back; a landing at the north-west corner; 3: up
+# the west wall going south to the roof's open west side)
+# (G2 10-30 (2): reach - the walker stuck at the first stair's foot, sunk 1 m in the path's slope (a step too high),
+# and the first landing ended where the second stair began. The climb moved 2.5 m north, its foot on the 3 m yard;
+# the first landing deep enough to hold the second stair's foot)
+place RT_Stair spirestair at 7.55 -2.32 h=3.05 yaw=90 sy=0.68
+# (G2 10-31: reach - the second stair's foot lay at the first landing's east edge, so only its side could be stepped
+# onto: the landing 1.55 m wider to the east, a player walking round onto the stair's foot end-on)
+place RT_Floor spirestair at 10.6 8.3 h=6 sx=0.523 sz=0.356
+place RT_Stair spirestair at 9.02 6.8 h=6 yaw=0 sy=0.68
+place RT_Floor spirestair at 1.55 8.3 h=9 sx=0.278 sz=0.328
+place RT_Stair spirestair at 1.38 5.42 h=9 yaw=270 sy=0.68
+# (G2 10-31: reach - the third stair ended beside the roof with nothing at its top: a landing level with the roof
+# beyond its top end, the roof's open west side next to it, on two posts from the yard)
+place RT_Floor spirestair at 1.43 -2.0 h=12 sx=0.257 sz=0.178
+place RT_Pillar spirestair at 0 -3.45 h=2.7 sy=3.077
+place RT_Pillar spirestair at 1.15 -3.45 h=2.7 sy=3.077
+# (G2 10-30 (3): the two landings stand off the spire's north wall with nothing under them (the save's posts took the
+# stairs for their holders) - inner posts from 0.3 m into the 3 m yard, the outer pair past the yard's edge from the sea floor
+# (8 m down) up to each landing's underside, as the trader's stilts)
+place RT_Pillar spirestair at 7.6 5.35 h=2.7 sy=1.077
+place RT_Pillar spirestair at 8.95 5.35 h=2.7 sy=1.077
+place RT_Pillar spirestair at 7.6 8.2 h=-8 sy=4.643
+place RT_Pillar spirestair at 8.95 8.2 h=-8 sy=4.643
+place RT_Pillar spirestair at 10.5 5.2 h=-8 sy=4.643
+place RT_Pillar spirestair at 10.5 8.2 h=-8 sy=4.643
+place RT_Pillar spirestair at 0 5.45 h=2.7 sy=2.077
+place RT_Pillar spirestair at 1.35 5.45 h=2.7 sy=2.077
+place RT_Pillar spirestair at 0 8.2 h=-8 sy=5.643
+place RT_Pillar spirestair at 1.35 8.2 h=-8 sy=5.643
+prop spirestair tint.color=#c9d0d6
+prop spirestair tint.amount=0.55
 call tzone x=4.43 z=-0.35 al=landing2zone id=landing_2 r=3 h=3.2 msg="The second landing. Something has nested in the insulation - and it has teeth."
 call tzone x=4.43 z=-0.35 al=topzone id=spire_top r=3.5 h=9.2 msg="The top of the Cooling Spire. Steam, wind - and to the south, a ring of iron on the sea."
 
@@ -148,8 +203,11 @@ call ar_plants_desert x=-24 z=60 r=14 seed=14481
 
 # --- Tools in use (10-24: a tool given earlier in the storyline is used again here, for optional finds): the
 # machete from Triangulation Rocks cuts the vines over a hidden chest, and a zipline from the ridge top is the quick way back down
-clear from 20.5 37.3 to 12 17 r=2.5
-place ZiplinePath_Landmark ridgezip at 22 41 ground
+# (G2 10-30: the near end's floor stood 7.5 m over the ridge's west slope - a ZiplinePath_Landmark's near floor sits
+# 5.7 m west and 0.9 m north of its pivot, 1.35 m under an explicit h (cszip). Pivot moved so the floor lies on the
+# flat ridge top, ground 12.1 there)
+clear from 22.3 43.95 to 12 17 r=2.5
+place ZiplinePath_Landmark ridgezip at 28.0 43.05 h=13.45
 zipto ridgezip 12 17
 
 # --- Unique layer (10-24): cooling_spire device - see SL14_progress.md UNIQUE ISLANDS
@@ -175,6 +233,10 @@ place Creature_Goat csgoats at 33.34 -53.27 ground
 prop csgoats creature.count=2
 # (REACH 10-28: the ramp out rose 8.5 m in 8 m - too steep to walk up: now 15 m long on the same line)
 call dp_sink x=-31 z=-43 d=-20 ex1=-24.57 ez1=-34.08 ex2=-15.8 ez2=-21.9 eh=8.96
+# (G2 10-31: reach - still a trap: the first step lies under the water against the pit's sheer side, too high to climb
+# onto out of depth. Terrain shelves there (1.15/0.65 m down) took the swim spots and shut the pond off: a pool ladder
+# instead, on the ramp's line at the step's edge, its foot in the water, its top 1.2 m over the surface)
+place Block_Ladder csdiveladder at -26.18 -36.31 h=-1.1 yaw=35.79
 place Caravan_Green_02 cswreck at -31 -43 ground sit yaw=-54.21
 place Loot_Chest csdivechest at -33.76 -41.01 ground sit yaw=35.79
 call dp_air x=-28.24 z=-44.99 id=cs_air al=csair msg="Air trapped under the wreck - breathe."
@@ -255,8 +317,9 @@ quest reward=TitaniumOre*2;Rope*4;CaveMushroom*2
 
 call tzone x=14.43 z=-2.35 al=campzone id=hedda_camp r=5 msg="Hedda's camp. A fire, a tent, a store - and her handwriting on a sheet by the fire."
 
-# (G2 10-30: two generator rocks floating on slopes - CIGroundIslands 10-30)
+# (G2 10-30: two generator rocks floating on slopes, a generator bush sunk 1 m at the shore - CIGroundIslands 10-30)
 clear at -52.9 -59.36 r=1.5 all only=CaravanIsland_SmallRock_1
 clear at -16.14 51.06 r=1.5 all only=BigSharpRock_5
+clear at -62.79 -57.53 r=1.5 all only=SmallBushyTree_1
 
 save Cooling Spire
