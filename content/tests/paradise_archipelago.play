@@ -82,7 +82,7 @@ expect story dealercard 1
 expect step 14
 
 # Over the last boardwalk to lighthouse point; up the stair into the bar: the postcard, the cupboard, the till
-walk 0.2 57.7 to 0.2 51 to -12 50 to -18 51.5 to -24 53 h=2.5
+walk 0.2 57.7 to 0.2 51 to -12 50 to -14 48.6 to -16.5 49.2 to -18 51.5 to -24 53 h=2.5
 walk -25.06 53.06 to -29.5 49 to -33.98 45.03 h=2.6
 walk -34 45 to -40 38.75 to -41.5 38.75 h=3.1
 walk -41.5 38.75 to -48.7 38.75 h=6.1
