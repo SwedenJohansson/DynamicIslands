@@ -520,6 +520,30 @@ namespace DynamicIslands.Editor
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
 		}
 
+		/// <summary>Host -> one player whose "used" of a key the host refused (CB2): the key as the host has it. Not used on the
+		/// host: available again (day -1, as a refill says); used on the host too: nothing to put right. A state of another
+		/// shape (not a "used") is left alone. Their copy showed it used for good, everyone else's not - review 10-30.</summary>
+		internal static void SendUsedCorrection(Network_UserId player, int islandId, int key)
+		{
+			if (!Raft_Network.IsHost) return;
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
+			if (e == null || e.State.ContainsKey(key)) return;
+			SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.ObjectUsed, Ids = new[] { islandId }, Index = key, Count = -1 }, player);
+		}
+
+		/// <summary>Host -> one player whose harvest the host refused (CB2): the tree or pickup as the host has it - whole (grown
+		/// back, day -1) or the host's state. Only for an island not loaded on the host: a loaded copy has Raft's own message,
+		/// and its state is in the scene, not the entry - review 10-30.</summary>
+		internal static void SendHarvestCorrection(Network_UserId player, int islandId, int ord)
+		{
+			if (!Raft_Network.IsHost || ord <= 0 || ord >= CreatureSpawner.StateKeyBase) return;
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
+			if (e == null || e.Root != null || e.Loading) return;
+			ObjectState s;
+			if (!e.State.TryGetValue(ord, out s)) SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.ObjectUsed, Ids = new[] { islandId }, Index = ord, Count = -1 }, player);
+			else SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.ObjectHarvest, Ids = new[] { islandId, s.Active ? 1 : 0, s.Yield }, Index = ord, Count = s.Day }, player);
+		}
+
 		/// <summary>A player's quest event: its amount at that step, for the host to add ("add"; an older host takes it as the
 		/// total, as before).</summary>
 		public static void SendQuestAdd(int islandId, int step, int amount) { SendQuestAdd(islandId, 0, step, amount); }
@@ -629,8 +653,8 @@ namespace DynamicIslands.Editor
 							// dropped everything after it, and the player had the islands without the story or their levels - AU41)
 							Network_UserId to = from;
 							JoinPart("world rules", () => WorldRules.Message(), to);
-							JoinPart("island list", () => IslandsMessage(IslandWorldState.Islands, true), to);
-							JoinPart("story", () => StoryBook.StateMessage(), to);
+							JoinPart("island list", () => IslandsMessage(IslandWorldState.Islands, true), to, true);
+							JoinPart("story", () => StoryBook.StateMessage(), to, true);
 							JoinPart("world options", () => WorldOptions.Message(), to);
 							JoinPart("daily quest", () => global::DynamicIslands.Editor.DailyQuest.Message(), to);
 							JoinPart("upgrade table", () => global::DynamicIslands.Editor.UpgradeTable.Message(), to);
@@ -791,7 +815,7 @@ namespace DynamicIslands.Editor
 					case IslandNetMessage.ObjectHarvest:
 						if (msg.Ids != null && msg.Ids.Length >= 3)
 						{
-							if (Raft_Network.IsHost && !PlayerTrust.MayMark(from.Id, msg.Ids[0], "harvest")) break; // (CB2)
+							if (Raft_Network.IsHost && !PlayerTrust.MayMark(from.Id, msg.Ids[0], "harvest")) { SendHarvestCorrection(from, msg.Ids[0], msg.Index); break; } // (CB2; that player is told the host's state)
 							if (Raft_Network.IsHost) msg.Count = ContentState.Today; // (the host's day, as for ObjectUsed - AU60)
 							if (IslandObjectState.OnHarvest(msg.Ids[0], msg.Index, msg.Ids[1] != 0, msg.Ids[2], msg.Count) && Raft_Network.IsHost) SendToClients(msg);
 						}
@@ -803,7 +827,8 @@ namespace DynamicIslands.Editor
 							// used gets the host's day, the one its regrow counts from - on every machine, as it is passed on so)
 							if (Raft_Network.IsHost)
 							{
-								if (!PlayerTrust.MayMark(from.Id, msg.Ids[0], "use of " + msg.Index.ToString("X"))) break; // (CB2: code locks, signals, used things)
+								// (CB2: code locks, signals, used things; that player is told the host's state of it - review 10-30)
+								if (!PlayerTrust.MayMark(from.Id, msg.Ids[0], "use of " + msg.Index.ToString("X"))) { SendUsedCorrection(from, msg.Ids[0], msg.Index); break; }
 								if (msg.Count < 0) { Log("A player said " + msg.Index.ToString("X") + " on island " + msg.Ids[0] + " is available again: only the host decides that"); break; }
 								msg.Count = ContentState.Today;
 							}
@@ -818,15 +843,30 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Host: one part of the reply to a player who joined, made and sent on its own (nothing when it makes none).</summary>
-		static void JoinPart(string what, Func<IslandNetMessage> make, Network_UserId to)
+		static void JoinPart(string what, Func<IslandNetMessage> make, Network_UserId to) { JoinPart(what, make, to, false); }
+
+		/// <summary>JoinPart; logSize: its size goes in the log too (the two big parts, sent in one message each - review 10-30).</summary>
+		static void JoinPart(string what, Func<IslandNetMessage> make, Network_UserId to, bool logSize)
 		{
 			try
 			{
 				IslandNetMessage part = make();
+				if (part != null && logSize) Log("Join reply: the " + what + " is about " + (SizeOf(part) / 1024L) + " KB (one message)");
 				if (part != null) SendToPlayer(part, to);
 			}
 			catch (Exception e) { JoinPartFailed(what, e); }
 		}
+
+		/// <summary>About how big a message is: its text and numbers (for the log).</summary>
+		internal static long SizeOf(IslandNetMessage m)
+		{
+			long n = 64 + Len(m.Name) + Len(m.Hash) + Len(m.Data) + 4L * ((m.Ids != null ? m.Ids.Length : 0) + (m.Offsets != null ? m.Offsets.Length : 0));
+			foreach (string[] a in new[] { m.Names, m.Hashes, m.States, m.Labels, m.Rules })
+				if (a != null) foreach (string s in a) n += 4 + Len(s);
+			return n;
+		}
+
+		static long Len(string s) { return s != null ? s.Length : 0; }
 
 		static void JoinPartFailed(string what, Exception e)
 		{
@@ -895,8 +935,16 @@ namespace DynamicIslands.Editor
 					}
 					// (still waiting for its file after a Resync, which forgot the requests: asked for again - AU64)
 					else if (known.WaitingForFile && known.Root == null && !string.IsNullOrEmpty(known.Hash) && !requested.Contains(known.Hash)) ResolveFile(known);
+					// (the whole list - a Resync: a known island's things as the host has them, as for a new one - drift from a
+					// refused "used" stayed until the player joined again. Only for a copy not loaded here: a loaded one shows
+					// its state already and isn't set again; it takes the host's state from a Resync once it is unloaded - review 10-30)
+					if (msg.FullList && known.Root == null && !known.Loading && msg.States != null && i < msg.States.Length && msg.States[i] != null)
+						known.State = IslandObjectState.Decode(msg.States[i]);
+					if (msg.FullList && msg.Labels != null && i < msg.Labels.Length && msg.Labels[i] != null) known.Label = msg.Labels[i];
 					continue;
 				}
+				// (incomplete first: the name check below read Names[i] of a list without names - review 10-30)
+				if (!whole) { skipped++; continue; }
 				// (the host's name and hash become a file's name here: one that isn't a plain file name - "..\..\x" wrote
 				// outside the mod's folder - is left out, not written - AU41)
 				string problem = ReceivedProblem(msg.Names[i], msg.Hashes != null && i < msg.Hashes.Length ? msg.Hashes[i] : null);
@@ -906,7 +954,6 @@ namespace DynamicIslands.Editor
 					if (toldRefused.Add(msg.Names[i] ?? "")) DynamicIslands.Notify("An island from the host is left out: its name can't be a file name here (see the log, F10)", true);
 					continue;
 				}
-				if (!whole) { skipped++; continue; }
 				var entry = IslandWorldState.AddRemote(msg.Ids[i], msg.Names[i], msg.Hashes != null && i < msg.Hashes.Length ? msg.Hashes[i] ?? "" : "",
 					FromHost(raft, msg.Offsets, i));
 				if (msg.States != null && i < msg.States.Length) entry.State = IslandObjectState.Decode(msg.States[i]);

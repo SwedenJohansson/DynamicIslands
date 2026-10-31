@@ -115,6 +115,7 @@
     <Compile Include="DevTestsRename.cs" />
     <Compile Include="DevTestsReadyPieces.cs" />
     <Compile Include="DevTestsT8cb.cs" />
+    <Compile Include="DevTestsMp1030.cs" />
     <Compile Include="DevTestsLibrary.cs" />
     <Compile Include="DevTestsLibraryOnline.cs" />
     <Compile Include="DevTestsMapTypes.cs" />

@@ -171,8 +171,12 @@ namespace DynamicIslands.Editor
 				IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == msg.Ids[0]);
 				// (held longer for a client whose answers come late: Count = how late, from the client)
 				int hold = Mathf.RoundToInt(HoldSeconds + Mathf.Clamp(msg.Count, 0, MaxExtraHold));
-				bool ok = e != null && HostGrant(e, msg.Index, from, hold);
-				Debug.Log("[CUSTOM ISLANDS] [net] Claim of " + msg.Index.ToString("X") + " on island " + msg.Ids[0] + " by " + from + ": " + (ok ? "granted" : "refused") + (hold > HoldSeconds ? " (held " + hold + " s)" : ""));
+				// (CB2: refused here too when the host wouldn't take this player's "used" of it - they gave themselves the loot,
+				// then the host refused the "used" and everyone else still saw it full - review 10-30)
+				bool near = e == null || PlayerTrust.MayMark(from, e.Id, "claim of " + msg.Index.ToString("X"));
+				bool ok = e != null && near && HostGrant(e, msg.Index, from, hold);
+				if (!near) LastAnswer = "refused";
+				Debug.Log("[CUSTOM ISLANDS] [net] Claim of " + msg.Index.ToString("X") + " on island " + msg.Ids[0] + " by " + from + ": " + (ok ? "granted" : "refused") + (near ? "" : " (too far from it)") + (hold > HoldSeconds ? " (held " + hold + " s)" : ""));
 				var answer = new IslandNetMessage { Kind = IslandNetMessage.Claim, Ids = new[] { msg.Ids[0], msg.Ids.Length > 1 ? msg.Ids[1] : 0, hold }, Index = msg.Index, Count = ok ? 1 : 0 };
 				if (TestAnswerDelay > 0f) { DynamicIslands.instance.StartCoroutine(AnswerLater(TestAnswerDelay, () => reply(answer))); return; }
 				reply(answer);

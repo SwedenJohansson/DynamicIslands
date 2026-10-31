@@ -419,7 +419,9 @@ namespace DynamicIslands.Editor
 			Network_Player me = RAPI.GetLocalPlayer();
 			if (Raft_Network.IsHost)
 			{
-				msg.Data = who.ToString(CultureInfo.InvariantCulture); // (the sender as the host saw it)
+				// (the sender as the host saw it, not who the message says: a player could show a ping as another's - review 10-30)
+				if (from != 0UL) who = from;
+				msg.Data = who.ToString(CultureInfo.InvariantCulture);
 				Show(msg, who);
 				IslandNetwork.SendToEveryone(msg);
 				return;

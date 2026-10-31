@@ -8,6 +8,7 @@ Automated tests and content tools, run as `CI*` console commands. Players never 
 - `DevTests*.cs` (113 files) -> one `public static partial class DevTests`; each file adds one area's commands.
 - `DevTestsRecipe.cs` -> `CIRecipe` and recipe-writing helpers (see `RECIPE_FORMAT.md`).
 - `DevTestsT8cb.cs` -> `CIT8Items` (story take-out), `CICB1Recipe` (decorative ready pieces), `CITrust` (two players: host trust, a player's take-out). CI world commands set `PlayerTrust.ForTests`; `CITrust setup` clears it, `CITrust on` sets it again.
+- `DevTestsMp1030.cs` -> `CIMp1030` (one machine, host, Loopback: review 10-30 multiplayer fixes - corrections of refused used/harvest, full-list state re-apply, list without names, event on an island the host hasn't loaded, the day before's daily reward, ping sender, join size).
 - `DevTestsPlay.cs` -> `CIPlay` play tests (see `PLAY_FORMAT.md`).
 - `DevTestsScenarios.cs` -> `Sc*` helpers to bring, use and remove islands in a world; many `CISc*` scenario tests.
 - `DevTestsEditorStart.cs` -> the start window, plan on the main menu, Use in a plan..., Edit island, plan tabs (`CICreateWindow`, `CIPlanFromMenu`, `CIUseInPlan`, `CIEditIslandFromMenu`, `CIPlanTabs`, `CIStoryNewIsland`).

@@ -71,6 +71,9 @@ namespace DynamicIslands.Editor
 		public static Task Current = new Task();
 		/// <summary>This machine gave its player the reward of this day already (a client: until the host's list has them).</summary>
 		static int gotDay = -1;
+		/// <summary>Host: the day before's task, while a player's "got" for it may still be on its way (the day turned in
+		/// between: its EXP wasn't credited, and the player's level was cut back - review 10-30).</summary>
+		static Task previous;
 		static float nextCheck;
 
 		/// <summary>Tests: the day whatever Raft's counter says (null = Raft's).</summary>
@@ -89,7 +92,7 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		internal static void Reset() { Current = new Task(); gotDay = -1; TestDay = null; nextCheck = 0f; }
+		internal static void Reset() { Current = new Task(); previous = null; gotDay = -1; TestDay = null; nextCheck = 0f; }
 
 		#region What a day asks for
 
@@ -201,6 +204,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Host (and tests): the task of this day starts now.</summary>
 		internal static void Start(int day)
 		{
+			previous = Current;
 			Current = Make(WorldOptions.Seed, day);
 			Log("Day " + day + ": " + Describe(Current) + " (" + Current.Reward + ")");
 			Changed(true);
@@ -295,6 +299,7 @@ namespace DynamicIslands.Editor
 			{
 				if (msg.Name == "add") AddOnHost(msg.Index, msg.Count);
 				else if (msg.Name == "got" && msg.Index == Current.Day && from.Id != 0UL && Current.Rewarded.Add(from.Id)) { PlayerLevels.CreditXp(from.Id, Xp); Send(Message(), null); IslandWorldState.Save(); } // (CB2: the host credits the reward's EXP)
+				else if (msg.Name == "got" && previous != null && previous.Day >= 0 && previous.Day != Current.Day && msg.Index == previous.Day && previous.State == "done" && from.Id != 0UL && previous.Rewarded.Add(from.Id)) { PlayerLevels.CreditXp(from.Id, Xp); Log("A player's reward of day " + previous.Day + " came after the next day began: its EXP credited"); }
 				return;
 			}
 			if (msg.Name != "state") return;
@@ -310,6 +315,7 @@ namespace DynamicIslands.Editor
 		{
 			if (key != "daily") return false;
 			Current = Task.Decode(value);
+			previous = null;
 			// (the host's own reward is in the list: not given again after a load)
 			gotDay = -1;
 			return true;

@@ -965,6 +965,15 @@ namespace DynamicIslands.Editor
 			// (the client made the checks already - except the crew's story items, made again here: AU18)
 			if (Raft_Network.IsHost && !fromHost)
 			{
+				// (an object's event while the island isn't built here - its file still coming, or still loading: its actions
+				// and checks aren't known, its shared part was lost and the player told yes. A player sends only events with a
+				// shared part or story checks; one who waits gets the "otherwise" part - review 10-30)
+				if (index >= 0 && index != IslandIndex && e.Root == null)
+				{
+					Debug.Log("[CUSTOM ISLANDS] A player's '" + ev + "' on '" + e.HostName + "' isn't done: the island isn't loaded on the host" + (answer ? " (they get its \"otherwise\")" : ""));
+					if (answer && from.HasValue) IslandNetwork.SendEventTo(from.Value, e.Id, index, ev.TrimEnd('!') + "!");
+					return;
+				}
 				string failed;
 				if (!StoryChecksHold(e, index, ev, from.HasValue ? from.Value.Id : 0UL, out failed))
 				{

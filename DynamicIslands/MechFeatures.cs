@@ -827,7 +827,7 @@ namespace DynamicIslands.Editor
 			{
 				case "carry":
 					if (!Raft_Network.IsHost || index < 0) return;
-					if (!PlayerTrust.MayMark(from, island, "a carried piece")) { IslandNetwork.SendToEveryone(new IslandNetMessage { Kind = IslandNetMessage.Mech, Name = "refused", Ids = msg.Ids, Data = from.ToString(CultureInfo.InvariantCulture) }); return; }
+					if (!PlayerTrust.MayMark(from, island, "a carried piece")) { IslandNetwork.SendToEveryone(new IslandNetMessage { Kind = IslandNetMessage.Mech, Name = "refused", Ids = msg.Ids, Count = 1, Data = from.ToString(CultureInfo.InvariantCulture) }); return; }
 					HostCarry(island, index, from);
 					return;
 				case "drop":
@@ -841,7 +841,7 @@ namespace DynamicIslands.Editor
 					if (index >= 0 && ulong.TryParse(msg.Data, NumberStyles.Integer, CultureInfo.InvariantCulture, out who)) OnHeld(island, index, who);
 					break;
 				case "refused":
-					if (ulong.TryParse(msg.Data, NumberStyles.Integer, CultureInfo.InvariantCulture, out who) && who == LocalId) Tell("Someone else is carrying that");
+					if (ulong.TryParse(msg.Data, NumberStyles.Integer, CultureInfo.InvariantCulture, out who) && who == LocalId) Tell(msg.Count == 1 ? "The host sees you too far from that island to carry it - try again" : "Someone else is carrying that"); // Count 1 = too far (review 10-30)
 					break;
 				case "at":
 					OnAt(EntryById(island), island, index, msg.Offsets);
