@@ -561,6 +561,8 @@ prop fuse3box loot.refill=0
 note showtankbox Box on the lagoon floor | A keeper's satchel on the show lagoon's floor, weighted with a stone: the Queen's paddock key.
 loot showtankbox story:queenkey*1;Scrap*2
 prop showtankbox loot.refill=0
+prop showtankbox if.open=quest|15
+prop showtankbox else.open=message||The satchel is weighted down hard. While the lagoon's leviathan still hunts here, there is no time to work it free.
 note vault Founder's vault | The founder's vault: the plans of his gardens and his recycling plant, titanium bars, batteries, and the park's last takings.
 loot vault Blueprint_Cropplot_Large_Tier3*1;Blueprint_Recycler*1;TitaniumIngot*4;Battery*3;TradeToken*15
 prop vault loot.refill=0
