@@ -107,7 +107,8 @@ place Placeable_Lantern_Metal racklights3 at 11.7 -5.8 h=3.9
 prop racklights1 beh.hidden=1
 prop racklights2 beh.hidden=1
 prop racklights3 beh.hidden=1
-place Placeable_Lantern_Metal arkcam at 14 0 h=5.6
+# (ground check 10-30: it hung 1.8 m in the air with nothing above it - on the floor now, like the hall's other lamps)
+place Placeable_Lantern_Metal arkcam at 14 0 h=3.9
 place Placeable_Lantern_Metal - at -12 5.5 h=3.9
 place Placeable_Lantern_Metal - at 12 -5.5 h=3.9
 
@@ -266,6 +267,10 @@ place Loot_ChestSmall dwreckchest at -10.1 -35.5 ground sit yaw=137
 note dwreckchest Frozen chest | Frozen to the runner: wool, rope and a tin of nails.
 loot dwreckchest Wool*3;Rope*2;Nail*8
 prop dwreckchest loot.refill=0
+# (ground check 10-30: the hatch came down on a slope at 41 -26.7, its top 0.6 m under the ground - the ground there
+# levelled first, so the hatch lands on the flat; levelling after it only carried the hatch down with the ground)
+brush flatten at 41 -26.7 r=2.5 s=20 frames=200 h=9.3
+clear at 41 -26.7 r=3.5 body
 call hatchcache x=36.9 z=-12.7 r=15 seed=13091 alias=dhatch chest=dhatchchest items=MetalIngot*2;Wool*3;Bolt*2
 call vinecache x=-12.7 z=-36.9 r=15 seed=13093 chest=dvinechest vines=dvines items=Rope*3;Wool*2;Bolt*3
 call treasure x=-36.9 z=12.7 r=15 n=1 seed=13092
