@@ -239,12 +239,12 @@ prop radiodesk else.open=message||The desk's drawer is wired to the radio. Call 
 note strongbox Ranger's strongbox | The rangers' strongbox: Balboa's blueprints and their fuel - and Hayes' last note: "Whoever opens this: the fuel pipes go to the engine room. Good luck."
 loot strongbox Blueprint_Machete*1;Blueprint_BiofuelExtractor*1;Blueprint_Fueltank*1;Blueprint_Pipe_Fuel*1;BioFuel*2;Nail*10
 prop strongbox loot.refill=0
-prop strongbox if.open=take|story:stationkey|1
+prop strongbox if.open=quest|19\ntake|story:stationkey|1
 prop strongbox else.open=message||The strongbox is locked. Hayes wrote that the key went with Hendricks' pack.
 
 prop vinewall obj.name=vinewall
 prop vinewall beh.use=Cut through the vines
-prop vinewall if.use=has|story:machete|1
+prop vinewall if.use=quest|7\nhas|story:machete|1
 prop vinewall on.use=message||The machete bites into the vines. They fall away - and the rotten planks behind them with them: the den's mouth is open.\nhide|vinewall
 prop vinewall else.use=message||Thick vines over the rangers' plank barricade. You'd need a blade.
 prop mastradio obj.name=mastradio

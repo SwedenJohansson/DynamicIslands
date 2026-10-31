@@ -290,7 +290,7 @@ prop lairhoard loot.refill=0
 
 prop airvalve obj.name=airvalve
 prop airvalve beh.use=Open the air line's valve
-prop airvalve if.use=take|story:abysswrench|1
+prop airvalve if.use=quest|12\ntake|story:abysswrench|1
 prop airvalve on.use=message||The wrench bites and the wheel turns. The pump hisses - far below, one by one, the air pockets swell with air, and bubbles rise out of the dark.\nshow|airpockets\nsignal||airon\njournal|The air line's valve|The valve is open. The container on the shelf, the tank on the ledge, the shack on the floor: air all the way down. Breathe at each one.\nsound||event:/exploring/obstacles/varuna/garagedoor_open
 prop airvalve else.use=message||The valve wheel is rusted fast. The expedition had a wrench for it - in the camp chest?
 

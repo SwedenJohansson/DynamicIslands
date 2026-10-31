@@ -470,7 +470,7 @@ call scaleuse al=gposcale2
 call scaleuse al=gposcale3
 prop router obj.name=router
 prop router beh.use=Throw the pneumatic router
-prop router if.use=has|story:gpoweighed|3\n!signal|routed
+prop router if.use=quest|8\nhas|story:gpoweighed|3\n!signal|routed
 prop router on.use=open|\nsignal||wire\nsignal||routed\ngive||story:routed*1\nshow|capsule\nmessage||The router clacks over. Tubes hiss along the ceiling - and a minute later a capsule drops into the rack by the vault.
 prop router else.use=message||The router won't throw: three parcels must be weighed first. Or it is thrown already.
 note capsule Capsule from the vault | (A brass capsule from the vault's tube. Inside, a card:)\n\nREGISTERED MAIL VAULT - COMBINATION\n1 8 4 0\n(the year of the first stamp)
@@ -480,7 +480,7 @@ prop capsule on.read=give||story:vaultcard*1
 prop vaultpad obj.name=vaultpad
 prop vaultpad beh.use=Type the vault combination
 prop vaultpad lock.code=1840
-prop vaultpad if.use=has|story:vaultcard|1
+prop vaultpad if.use=quest|11\nhas|story:vaultcard|1
 prop vaultpad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The keypad chirps and the registered mail vault unbolts.\nsignal||regvault\ngive||story:vaultopen*1
 prop vaultpad else.use=message||The keypad wants the vault's combination. The vault sends it by capsule.
 note regvault Registered mail vault | The registered mail vault: parcels never collected, insured letters - and a key on a tag: ARCHIVE, CAGE 2.
@@ -532,7 +532,7 @@ prop adawelcome obj.name=adawelcome
 prop adawelcome beh.hidden=1
 prop posthorn obj.name=posthorn
 prop posthorn beh.use=Sound the post-horn
-prop posthorn if.use=signal|semaphore\ntake|story:lastletter|1
+prop posthorn if.use=quest|24\nsignal|semaphore\ntake|story:lastletter|1
 prop posthorn on.use=sound||event:/raft/radar/lever\nmessage||The post-horn rings out over the drowned square. Ada takes the last letter, reads it, smiles - and picks up her bag. Ada Lind has joined the crew.\ncharacter||Mayu\ngive||story:adajoined*1\nsignal||adajoined
 prop posthorn else.use=message||The post-horn. Ada's welcome first - and you'll need the last letter from the archive's crate.
 

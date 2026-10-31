@@ -312,7 +312,7 @@ prop canoebox loot.refill=0
 note wreckhold Navigator's hold | Corvan's hold, its hatch pried open: charred cargo, salt-stiff charts - and in a box lined with moss, the first shard of the Bloomstone.
 loot wreckhold story:shard*1;Scrap*3;TitaniumOre*1
 prop wreckhold loot.refill=0
-prop wreckhold if.open=has|story:prybar|1
+prop wreckhold if.open=quest|6\nhas|story:prybar|1
 prop wreckhold else.open=message||The hold's hatch is jammed shut with fire-warped planks. A pry bar would do it.
 note tubechest Tubes' chamber chest | A beetle-gnawed box in the glowing chamber at the tubes' end: the second shard, warm to the touch.
 loot tubechest story:shard*1;CopperOre*2
@@ -355,17 +355,17 @@ prop cairnbox loot.refill=0
 
 prop brazier1 obj.name=brazier1
 prop brazier1 beh.use=Light the dawn brazier
-prop brazier1 if.use=has|story:livecoal|1
+prop brazier1 if.use=quest|11\nhas|story:livecoal|1
 prop brazier1 on.use=message||The coal catches the oil on the dawn stand. Dawn.\nshow|flame1\nsignal||br1\nsound||event:/crafting/torch
 prop brazier1 else.use=message||A cold brazier stand. You'd need fire - the Ember's own, from the tubes.
 prop brazier2 obj.name=brazier2
 prop brazier2 beh.use=Light the high brazier (noon)
-prop brazier2 if.use=has|story:livecoal|1\nsignal|br1
+prop brazier2 if.use=quest|11\nhas|story:livecoal|1\nsignal|br1
 prop brazier2 on.use=message||The high brazier blazes. Noon.\nshow|flame2\nsignal||br2\nsound||event:/crafting/torch
 prop brazier2 else.use=message||It won't catch. "As the sun lights them: dawn, noon, dusk."
 prop brazier3 obj.name=brazier3
 prop brazier3 beh.use=Light the dusk brazier
-prop brazier3 if.use=has|story:livecoal|1\nsignal|br2
+prop brazier3 if.use=quest|11\nhas|story:livecoal|1\nsignal|br2
 prop brazier3 on.use=message||The dusk brazier flares. Dusk - and with a grinding the stone door of the sanctum sinks into the ground.\nshow|flame3\nopen|sanctumdoor\nsound||event:/exploring/temperence/selene/gate_open
 prop brazier3 else.use=message||It won't catch. "As the sun lights them: dawn, noon, dusk."
 prop flame1 obj.name=flame1
