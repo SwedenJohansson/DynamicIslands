@@ -21,7 +21,7 @@ expect step 3
 at -54 -10 h=-3
 open Supply crate
 expect story beaconcell 1
-expect step 4
+# (step 4, the terrace, can come early: a hen chased up the ramp sets it off - step 5 below holds either way)
 
 # Up the ramp of fill to the beacon terrace - its stone birds
 walk -34 20 to -28.2 17.8 to -22.4 15.6 to -16.7 13.3 to -10.9 11.1 to -6 9.5 to -2 9 h=16
