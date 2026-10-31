@@ -74,7 +74,7 @@ namespace DynamicIslands.Editor
 				holder.anchoredPosition = new Vector2(-16f, 44f);
 				holder.sizeDelta = new Vector2(292f, 34f);
 				UIKit.Horizontal(holder.gameObject, 0f, new RectOffset(0, 0, 0, 0));
-				openButton = UIKit.Button(holder, "", Open, "The world's settings: monster difficulty, build cost, the world randomizer and the extra options", -1, 34f, 14);
+				openButton = UIKit.Button(holder, "", Open, "The world's settings: monster difficulty, build cost, rare animal looks, the world randomizer, the islands while sailing and the extra options (the level up system and the head start raft too)", -1, 34f, 14);
 				UIKit.Primary(openButton);
 			}
 			if (window == null) Build(box);
@@ -141,7 +141,7 @@ namespace DynamicIslands.Editor
 				RectTransform group = UIKit.Group(list, null, "Option_levels");
 				levelsToggle = UIKit.Button(group, "", () => { PlayerLevels.Chosen = !PlayerLevels.Chosen; Show(); }, hint, -1, 28f, 14);
 				levelsToggle.name = "Toggle_levels";
-				Text d = UIKit.Label(group, hint, 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
+				Text d = UIKit.Label(group, "Players earn EXP from monsters and spend stat points (K) on speed, damage, health and more. Off: only an island made with it switches it on.", 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail"); // (the whole text is the button's tip)
 				d.horizontalOverflow = HorizontalWrapMode.Wrap;
 				UIKit.Size(d.gameObject, -1, 44);
 			}
@@ -160,7 +160,7 @@ namespace DynamicIslands.Editor
 			summary.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(summary.gameObject, -1, 30);
 			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
-			UIKit.Button(buttons, "Raft's own", RaftsOwn, "Every setting back to plain Raft: Normal monsters, Raft's build cost, no randomizer, no extra options", 150, 34f, 14);
+			UIKit.Button(buttons, "Raft's own", RaftsOwn, "Every setting back to plain Raft: Normal monsters, Raft's build cost and animal looks, no randomizer, no extra options, the level up system off, no head start raft. The islands while sailing and their gap stay as they are", 150, 34f, 14);
 			// (spawnpool.txt's settings for every world this PC hosts, without editing the file - ROADMAP AU46)
 			UIKit.Button(buttons, "Defaults...", DefaultsWindow.Open, "This PC's settings for every world it hosts: random islands, spacing, distances, the Receiver, regrow days, generated islands", 150, 34f, 14).name = "Button_Defaults";
 			UIKit.Label(buttons, "", 12);

@@ -240,7 +240,7 @@ namespace DynamicIslands.Editor
 
 		#endregion
 
-		[ConsoleCommand(name: "Monsters", docs: "Monster difficulty: Monsters = this world's; Monsters timid|normal|fierce|savage|nightmare = change it for this world (host), or at the main menu for the next new world. Health and damage of hostile animals x0.75 / x1 / x1.25 / x1.5 / x2")]
+		[ConsoleCommand(name: "Monsters", docs: "Monster difficulty: Monsters = this world's; Monsters timid|normal|fierce|savage|nightmare (or easy|moderate|hard|impossible, or 0-4) = change it for this world (host), or at the main menu for the next new world. Health and damage of hostile animals x0.75 / x1 / x1.25 / x1.5 / x2")]
 		public static void MonstersCommand(string[] args)
 		{
 			string arg = args != null ? string.Join(" ", args).Trim() : "";

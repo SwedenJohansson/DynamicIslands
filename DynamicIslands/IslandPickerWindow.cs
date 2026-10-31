@@ -113,7 +113,7 @@ namespace DynamicIslands.Editor
 			Text title = UIKit.Label(head, "ISLANDS WHILE SAILING", 22, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
 			UIKit.UseTitleFont(title);
 			UIKit.Label(head, "for the world you create", 12, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Italic);
-			Text intro = UIKit.Label(panel, "These turn up by chance while you sail. Untick the ones this world shouldn't have; islands you make or download later join in. Point at a row for its whole description. (In a world, the host can change it with the console command WorldIslands.)",
+			Text intro = UIKit.Label(panel, "These turn up by chance while you sail. Untick the ones this world shouldn't have; islands you make or download later join in. Point at a row for its whole description. (In a world the host uses the console commands WorldIslands and WorldIslandsGap.)",
 				12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Intro");
 			intro.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(intro.gameObject, -1, 32);

@@ -230,7 +230,7 @@ picked up while the game runs). **Defaults...** in World settings sets the first
 | `spawnDistanceMin`, `spawnDistanceMax` | 250, 350 | How far ahead of the raft an island appears (the nearest at least 20 m). The furthest is kept 150 m inside `unloadDistance`: a bigger number is cut to that, and the log says so |
 | `unloadDistance` | 800 | Islands further away are unloaded and come back when the raft returns (at least 300) |
 | `returnMinutes` | 12 | An island the players still need that the raft left behind comes back ahead of the raft after this many minutes (0 = never) |
-| `regrowDays` | 3 | In-game days until harvested things grow back (0 = never), for new worlds; a world keeps its own (`RegrowDays`) |
+| `regrowDays` | 3 | In-game days until chopped trees, picked items, animals and looted chests come back (0 = never; an island's own rule wins), for new worlds; a world keeps its own (`RegrowDays`) |
 | `showOnReceiver`, `receiverDistance` | 1, 2000 | Custom islands as dots on Raft's Receiver (0 = no), and only those within this many metres (0 = all); an island the players still need shows however far |
 | `defaultPlan` | Random islands | The plan new worlds get when none is chosen |
 | `generated`, `generatedStyles`, `generatedFlyingChance` | 1, all five, 0.1 | How often a brand-new generated island is picked (0 = never), the styles it can have, the chance it flies |
@@ -598,7 +598,7 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   (2x repair), longbow (1.5x draw and range), bright head light and bright lamp (2x as far), lumber axe (2x as fast) and marine binoculars (2x zoom, titanium;
   see furthest with Binoculars see through fog).
 - The host can change them in a world: `WorldOptions` shows them; `WorldOptions +ghostrafts -privatestorage` (any
-  option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades, glowsea, stormseas, ghostship, fogsight, mirrorislands, nominimap).
+  option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades, stormseas, ufo, glowsea, lightning, ghostship, whalebreach, fogbanks, kraken, fogsight, mirrorislands, nominimap, fullerislands).
 - Multiplayer: the options, their seed and the storages' builders are in the world file and sent to every player
   (network kind 17). The story order and the blueprints' pairs are worked out from the seed on every machine, and each
   machine notes who built a storage as Raft places it there.
@@ -630,7 +630,7 @@ These are the Easy / Normal / Moderate / Hard / Impossible levels, named so they
 - **Left as Raft has them:** puffer fish damage (their explosion, their cloud and the poison it leaves; only their health changes), and everything about Bruce and your raft: his bites on it, how often he comes for it and how soon a killed shark comes back. Also how fast monsters move, how far they see and how often land monsters attack: Raft's own difficulty doesn't change these either, and faster animals would trip up Raft's animations and paths.
 - **Peaceful and Creative:** monsters can't hurt players there, so only their health changes, and the box says so.
 - **For every player:** a guest's spear does the same to a shark as the host's, and a monster bites a guest as hard as the host.
-- **Changing it later:** `Monsters` shows the world's level. The host can change it with `Monsters timid|normal|fierce|savage|nightmare`. At the main menu, `Monsters <level>` sets the choice for the next new world.
+- **Changing it later:** `Monsters` shows the world's level. The host can change it with `Monsters timid|normal|fierce|savage|nightmare` (or `easy`, `moderate`, `hard`, `impossible`, or `0`-`4`). At the main menu, `Monsters <level>` sets the choice for the next new world.
 
 ### Build cost
 
@@ -758,7 +758,7 @@ The level up system comes on in a world by the **Level up system** switch in Wor
 | `CustomIslandsAuto on` / `off` | Game, host | Turns automatic islands on or off for this world |
 | `WorldPlan` / `WorldPlan <name>` | Game (changing: host) | Shows the world's plan and its rules (done or not), or gives the world another plan. A player who joined sees the host's plan, its rules and the story chain; changing it says only the host can |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | Game (changing: host) | Shows what the world randomizer does in this world, or changes it (parts: colours, animals, alphas, loot, finds, oddities, bosses, large) |
-| `WorldOptions` / `WorldOptions +option -option` | Game (changing: host); main menu | Shows the world's World settings, or changes them for every player (options: ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades, stormseas, ufo, glowsea, lightning, ghostship, whalebreach, fogbanks) |
+| `WorldOptions` / `WorldOptions +option -option` | Game (changing: host); main menu | Shows the world's World settings, or changes them for every player (options: ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades, stormseas, ufo, glowsea, lightning, ghostship, whalebreach, fogbanks, kraken, fogsight, mirrorislands, nominimap, fullerislands) |
 | `DailyQuest` / `DailyQuest new [gather/fish/monsters n [item]]` | Game (new: host) | Today's daily quest (world option Daily quest): the task, how far, the reward; `new`: a new quest now (with a kind and a number: that quest) |
 | `UpgradeTable` | Game | The upgrade research table (world option Extra upgrades): what the world has researched and learned there |
 | `RogueShark` / `RogueShark spawn` / `RogueShark giant` | Game (spawn, giant: host) | The rogue shark (world option Rogue shark): alive or not, giant or not, and the day before which none comes; spawn / giant bring one now |

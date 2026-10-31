@@ -2910,7 +2910,7 @@ they come along when the world moves to another host ([section 8](#8-playing-tog
 
 ### 9.1 The World settings window
 
-Everything else the mod lets you choose for a new world is in one window, in four groups. Each part has a **?** or
+Everything else the mod lets you choose for a new world is in one window, in four groups: the world rules (monster difficulty, build cost and rare animal looks), the world randomizer, the islands while sailing and the extra options (the level up system and the head start raft among them). Each part has a **?** or
 an explanation. **Raft's own** puts every setting back to plain Raft; **Defaults...** opens this PC's `spawnpool.txt` settings ([section 10](#10-settings-files)); **Done** closes the window.
 
 ![The World settings window](images/newgame-worldsettings.jpg)
@@ -2926,7 +2926,7 @@ an explanation. **Raft's own** puts every setting back to plain Raft; **Defaults
 | **Islands while sailing** | Which of your islands (and which kinds of new islands) turn up by chance while you sail in this world: **CHOOSE ISLANDS...** opens the list (below) |
 
 **Raft's own** sets monsters to Normal, the build cost to Raft's own, rare animal looks to Normal, the randomizer to Off and every extra option to
-off, the level up system too (it leaves the island list alone). The line at the bottom of the window sums up what the world will get. Nothing is
+off, the level up system and the head start raft too (it leaves the islands while sailing and their gap alone). The line at the bottom of the window sums up what the world will get. Nothing is
 final until you click **Create** in the New Game box.
 
 **In a world:** press **Esc → Custom Islands** (a button in Raft's pause menu). The world's own settings window
@@ -3739,7 +3739,7 @@ get the settings they share at once.
 | **Shared with every player** | **Receiver dots** on or off, the **Receiver range**, **Unload beyond** and **Regrow days (new worlds)** |
 | **Generated islands** | The weight of new generated islands, the chance one flies, **Things to gather**, **Finds in the shallows** and how far down they go, the five styles (at least one stays lit) and a button for each kind of thing to gather (lit = on) |
 | **Editor camera (this PC)** | The island editor's camera: **Look sensitivity**, **Move speed**, **Zoom speed**, **Pan speed**, **Drag up: look up / down** and **Wheel up: zoom in / out** - the same as the editor's **Camera...** button ([4.1](#41-the-screen)); kept in `world_rules.txt` |
-| **Mod's own** | Click it twice: every setting in the window, the keys J and K and the editor camera too, goes back to what a new install has. The island list in `spawnpool.txt` stays |
+| **Mod's own** | Click it twice: every setting in the window, every key of the mod (J, K, the notebook, map, ping and map zoom keys) and the editor camera too, goes back to what a new install has. The island list in `spawnpool.txt` stays |
 | **Close** | Closes the window (Esc does too) |
 
 **`spawnpool.txt`** (islands that appear on their own; the host's counts):
@@ -3752,7 +3752,7 @@ get the settings they share at once.
 | `spawnDistanceMin`, `spawnDistanceMax` | 250, 350 | How far ahead of the raft an island appears (at least 20 m). The furthest is kept 150 m inside `unloadDistance`, because an island put beyond that would unload before anyone saw it: with 800 it can be at most 650, and a bigger number is cut to that (the log says so). The nearest is never further than the furthest |
 | `unloadDistance` | 800 | Islands further away are unloaded (and come back when you return); at least 300 |
 | `returnMinutes` | 12 | An island the players still need (its quest begun and not done, or one a plan waits for) that the raft left behind comes back ahead of the raft after this many minutes (0 = never; [3](#islands-appear-while-you-sail)) |
-| `regrowDays` | 3 | In-game days until harvested things grow back (0 = never), for new worlds: a world keeps its own (the F10 command `RegrowDays`) |
+| `regrowDays` | 3 | In-game days until chopped trees, picked items, animals and looted chests come back (0 = never; an island's own rule wins), for new worlds: a world keeps its own (the F10 command `RegrowDays`) |
 | `showOnReceiver` | 1 | Custom islands as green dots on Raft's Receiver (0 = no) |
 | `receiverDistance` | 2000 | ... only those within this many metres (0 = all); an island the players still need (its quest begun, one the plan waits for, one on its own Receiver frequency until done) shows however far |
 | `defaultPlan` | Random islands | The plan new worlds get when none is chosen |
@@ -3782,7 +3782,7 @@ there means plain Raft.
 | `monsters` | `timid`, `normal`, `fierce`, `savage`, `nightmare`; `easy`, `moderate`, `hard`, `impossible` or 0-4 are read too | The monster difficulty the next new world starts with | **Monster difficulty** in World settings, when you press **Create**; `Monsters <level>` in the main menu, at once |
 | `rarelooks` | 0-2 (Normal, More, Lots) | How often animals have a rare look in the next new world | **Rare animal looks** in World settings (Create); `AnimalLooks <level>` in the main menu |
 | `buildcost` | 0-100 | How many % more the build menu costs in the next new world | **Build cost** in World settings (Create); `BuildCost <0-100>` in the main menu |
-| `options` | The extra options that are on, separated by commas: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ufo`, `glowsea`, `lightning`, `ghostship`, `whalebreach`, `fogbanks`, `kraken` | The extra options the next new world starts with | The option buttons in World settings (Create); `WorldOptions +option -option` in the main menu |
+| `options` | The extra options that are on, separated by commas: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ufo`, `glowsea`, `lightning`, `ghostship`, `whalebreach`, `fogbanks`, `kraken`, `fogsight`, `mirrorislands`, `nominimap`, `fullerislands` | The extra options the next new world starts with | The option buttons in World settings (Create); `WorldOptions +option -option` in the main menu |
 | `levels` | `on`, `off` | The level up system in the next new world | **Level up system** in World settings (Create); `Levels on` / `Levels off` in the main menu |
 | `headstart` | 0-10 | The head start raft's level in the next new world (0 = none) | **Head start raft** in World settings (Create); `HeadStart <0-10>` in the main menu |
 | `islandsoff` | Island names separated by a vertical bar; also `type:<map type>` and `<generated>` | The islands left out of the next new world's islands while sailing | **CHOOSE ISLANDS...** in World settings (Create); `WorldIslands -<island>`, `+<island>`, `all` in the main menu |
@@ -3856,7 +3856,7 @@ Press **F10** for RML's console.
 | `WorldPlan` / `WorldPlan <name>` | World | The world's plan and its rules / give it another plan (host). A player who joined sees the host's plan, which of its rules are done and the story chain; trying to change it says only the host can |
 | `StoryChain` | World | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | World | What the randomizer does here / change it (host) |
-| `WorldOptions` / `WorldOptions +option -option` | World or main menu | The world's World settings / change them (host; at the main menu: the next new world). Options: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ufo`, `glowsea`, `lightning`, `ghostship`, `whalebreach`, `fogbanks`, `kraken` ([9.4](#94-extra-options)) |
+| `WorldOptions` / `WorldOptions +option -option` | World or main menu | The world's World settings / change them (host; at the main menu: the next new world). Options: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ufo`, `glowsea`, `lightning`, `ghostship`, `whalebreach`, `fogbanks`, `kraken`, `fogsight`, `mirrorislands`, `nominimap`, `fullerislands` ([9.4](#94-extra-options)) |
 | `HeadStart` / `HeadStart 0-10` | World or main menu | The head start raft: this world's level and the next new world's / at the main menu choose the level for the next new world (0 = off) |
 | `Levels` / `Levels on` / `Levels off` | World or main menu | The level up system in this world / switch it (host; off keeps everyone's levels; at the main menu: for the next new world) |
 | `Resync` | World, joined player | Ask the host for its custom islands again (the list, and any island file that hasn't come) |

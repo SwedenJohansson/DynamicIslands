@@ -45,7 +45,7 @@ namespace DynamicIslands.Editor
 		{
 			new Setting("receiverDistance", "Receiver range (m, 0 = all)", "Receiver dots only for islands this close (0 = all of them); an island the players still need (a quest begun, a plan's island not done yet, one on its own Receiver frequency) shows however far it is"),
 			new Setting("unloadDistance", "Unload beyond (m)", "Islands further than this from the raft are unloaded, and come back when the raft returns (300 or more)"),
-			new Setting("regrowDays", "Regrow days (new worlds)", "Harvested trees and picked-up items grow back after this many in-game days (0 = never). A world keeps the days it was first played with: change a world's in Esc > Custom Islands", true),
+			new Setting("regrowDays", "Regrow days (new worlds)", "Chopped trees, picked-up items, animals and looted chests come back after this many in-game days (0 = never; an island's own rule wins). A world keeps the days it was first played with: change a world's in Esc > Custom Islands", true),
 		};
 
 		static readonly Setting[] Generated =
@@ -157,7 +157,7 @@ namespace DynamicIslands.Editor
 			UIKit.Size(status.gameObject, -1, 30);
 			UIKit.Fit(status);
 			RectTransform buttonsRow = UIKit.Row(panel, 34f, 8f, "Buttons");
-			UIKit.Button(buttonsRow, "Mod's own", ModsOwn, "Every setting here back to what a new install of Custom Islands has, the keys J and K and the editor camera too (the island list stays as it is) - click twice", 150, 34f, 14);
+			UIKit.Button(buttonsRow, "Mod's own", ModsOwn, "Every setting here back to what a new install of Custom Islands has, every key of the mod (J, K, the notebook, map, ping and map zoom keys) and the editor camera too (the island list stays as it is) - click twice", 150, 34f, 14);
 			UIKit.Label(buttonsRow, "", 12);
 			Button close = UIKit.Button(buttonsRow, "Close", Close, "Close (Esc)", 140, 34f, 15);
 			UIKit.Primary(close);
@@ -296,7 +296,7 @@ namespace DynamicIslands.Editor
 			if (Time.unscaledTime > modsOwnUntil)
 			{
 				modsOwnUntil = Time.unscaledTime + 6f;
-				SetStatus("Every setting here (the keys J and K and the editor camera too) goes back to the mod's own. Click Mod's own again to go ahead.", true);
+				SetStatus("Every setting here (all the mod's keys and the editor camera too) goes back to the mod's own. Click Mod's own again to go ahead.", true);
 				return;
 			}
 			modsOwnUntil = 0f;

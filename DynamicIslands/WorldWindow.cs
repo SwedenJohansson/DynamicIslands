@@ -40,7 +40,7 @@ namespace DynamicIslands.Editor
 		static List<string> candidates, filledFrom;
 		static string candidatesSig;
 
-		const string DefaultHint = "Point at a setting to read what it does.  The same with F10: Monsters, BuildCost, Randomizer, WorldOptions, Levels, WorldIslands.";
+		const string DefaultHint = "Point at a setting to read what it does.  The same with F10: Monsters, BuildCost, AnimalLooks, Randomizer, WorldOptions, Levels, RegrowDays, WorldIslands, WorldIslandsGap.";
 
 		#region What a change does in a running world (from the code; GUIDE "Changing settings in a running world")
 
@@ -81,6 +81,14 @@ namespace DynamicIslands.Editor
 				case WorldOptions.GhostShip: return "From the next nightfall. Off: a ship out goes at once.";
 				case WorldOptions.Upgrades: return "Off: recipes hidden; built upgrades keep working, learned stay.";
 				case WorldOptions.StormSeas: return "At once: Raft's next weather; a storm blowing rocks harder.";
+				case WorldOptions.Ufo: return "From now on. Off: a saucer in the sky finishes its crossing.";
+				case WorldOptions.Lightning: return "From now on, also in a storm blowing now. Off: no more bolts.";
+				case WorldOptions.WhaleBreach: return "The first breach 3-7 minutes later, by day. Off: a leap under way finishes.";
+				case WorldOptions.Fog: return "At once: a bank due now rolls in. Off: the fog lifts within half a minute.";
+				case WorldOptions.FogSight: return "At once.";
+				case WorldOptions.MirrorIslands: return "Each island when it next loads.";
+				case WorldOptions.NoMinimap: return "At once: the map closes for every player. Off: it works again.";
+				// (fullerislands: none - its hint already ends "Islands already made stay as they are", and more would be cut off in the hint line)
 				default: return "";
 			}
 		}
