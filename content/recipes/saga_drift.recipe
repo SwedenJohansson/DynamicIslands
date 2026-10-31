@@ -250,7 +250,7 @@ story bellrung|A ship's bell rung|Placeable_Lantern_Metal|One of the three bells
 story winchfree|The anchor winch freed|Placeable_Lantern_Metal|The flagship's winch turns again.
 prop anchorwinch obj.name=anchorwinch
 prop anchorwinch beh.use=Turn the anchor winch
-prop anchorwinch if.use=take|story:pawl|1\ntake|story:bellrung|3
+prop anchorwinch if.use=quest|13\ntake|story:pawl|1\ntake|story:bellrung|3
 prop anchorwinch on.use=give||story:winchfree*1\nshow|anchorchest\nmessage||The chain groans and comes up a link at a time. The winch locker under it is free.
 prop anchorwinch else.use=message||Frozen by order: "THE WINCH TURNS ON ALL HANDS ONLY." Three bells call all hands - one on each of three hulls. And the winch's pawl is gone: the harbour master's ledger will say where.
 prop dhatchchest if.open=wears|HeadLight*
