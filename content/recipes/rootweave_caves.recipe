@@ -173,6 +173,20 @@ zipto rwzip 30 -62
 # the survey team's last camp on the south-west slope (secret): a tent, a cold fire, a chest
 clear at -26 -24 r=5
 brush flatten at -26 -24 r=4 s=20 frames=40 h=8.6
+clear at -26 -24 r=5 body
+# 10-30 P: a ramp from the camp pad down the south-west slope (the walks reached the slope at 4.6, 4 m under the camp)
+brush flatten at -29.95 -27.1 r=2.4 s=20 frames=120 h=8.0
+brush flatten at -30.97 -27.9 r=2.4 s=20 frames=120 h=7.4
+brush flatten at -32.0 -28.7 r=2.4 s=20 frames=120 h=6.7
+brush flatten at -33.02 -29.51 r=2.4 s=20 frames=120 h=6.0
+brush flatten at -34.05 -30.31 r=2.4 s=20 frames=120 h=5.3
+brush flatten at -35.07 -31.12 r=2.4 s=20 frames=120 h=4.6
+clear at -29.95 -27.1 r=3.4 body
+clear at -30.97 -27.9 r=3.4 body
+clear at -32.0 -28.7 r=3.4 body
+clear at -33.02 -29.51 r=3.4 body
+clear at -34.05 -30.31 r=3.4 body
+clear at -35.07 -31.12 r=3.4 body
 place Balboa_DecorationPrefabBase_SimpleTent - at -28 -22 ground sit yaw=120
 place campfire_1 - at -24.5 -22.5 ground sit
 place Loot_ChestSmall rwhut at -25 -26 ground sit yaw=0
