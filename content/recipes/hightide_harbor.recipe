@@ -393,7 +393,7 @@ prop fishoffice loot.refill=0
 note valvechest Valve house chest | The valve house's chest: tools, a coil of rope - and a can of lamp oil.
 loot valvechest story:lampoil*1;Bolt*4;Nail*6
 prop valvechest loot.refill=0
-prop valvechest if.open=has|story:workskey|1
+prop valvechest if.open=quest|7\nhas|story:workskey|1
 prop valvechest else.open=message||The valve house's chest is locked. Its key hangs in the works' switch box - which needs power.
 note marylocker The Mary's locker | The Mary's deck locker on her mooring: a can of lamp oil, a gutting knife, a photograph of eleven boats.
 loot marylocker story:lampoil*1;Plastic*3
@@ -414,17 +414,17 @@ prop storeschest if.open=signal|storescage
 prop storeschest else.open=message||The chest is inside the cage, and the cage is chained shut. The tag says the Saltmarsh ferry's crew had the bolt cutters.
 loot storeschest Cooked_Mackerel*3;Rope*4;Nail*12;MetalIngot*2;Battery*1
 prop storeschest loot.refill=0
-prop masterssafe if.open=has|story:safecode|1
+prop masterssafe if.open=quest|17\nhas|story:safecode|1
 prop masterssafe else.open=message||The safe's dial won't move. The harbour master's log said the code is inside the lamp's oil tank.
 
 prop worksswitch obj.name=worksswitch
 prop worksswitch beh.use=Fit the fuse and throw the works' switch
-prop worksswitch if.use=take|story:fuse|1
+prop worksswitch if.use=quest|6\ntake|story:fuse|1
 prop worksswitch on.use=message||The fuse clicks in, the switch thunks over - the pumps rumble, water runs in the pipes, and the switch box's lid drops open: a key on a hook.\nsignal||works\ngive||story:workskey*1
 prop worksswitch else.use=message||The switch box is dead - its fuse burned out. The harbour master's log said the spare is in the fish hall's office.
 prop harbourlamp obj.name=harbourlamp
 prop harbourlamp beh.use=Fill the lamp with the three cans of oil and light it
-prop harbourlamp if.use=take|story:lampoil|3
+prop harbourlamp if.use=quest|11\ntake|story:lampoil|3
 prop harbourlamp on.use=message||The oil glugs in, the wick catches - the lamp throws its light out over the harbour mouth. Inside the tank's lid, scratched in the paint: the safe's code.\nshow|lamplight\nsignal||lamp\ngive||story:safecode*1\nsound||event:/exploring/obstacles/tangaroa/generator_placepart
 prop harbourlamp else.use=message||The lamp's tank is dry. It takes three cans of oil.
 prop lamplight obj.name=lamplight
