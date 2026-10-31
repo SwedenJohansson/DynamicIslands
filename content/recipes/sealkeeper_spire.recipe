@@ -252,6 +252,9 @@ place Placeable_Table_Basic - at -51.5 -61 h=-11 sit yaw=0
 place Note_Paper skbldnote at -51.5 -61 h=-9.7 drop yaw=10
 call airpocketat x=-50.5 z=-64 h=-11 id=sk_dair al=skdair bub=skdbub r=2.2 msg="Air trapped under the stairs of the drowned building. Breathe."
 call sk_zone x=-50 z=-73 al=skdeepzone id=sk_deep r=4 msg="The pit floor: the drowned building stands below you."
+# (REACH 10-31 G1: the pit's rim stands 0.8 m and more over the water all round - a swimmer in the pit had no way
+# out onto it: a ladder down the west wall, from the rim into the water)
+place LandmarkLadder_6m - at -59.8 -63.9 h=-5.4 yaw=270
 
 # (stones left in the air by the shaping - the areas' and ruins' own, so "all" - taken out, 10-26; the ground check's points plus the land centre's offset)
 clear at 84.45 11.67 r=1.5 all only=SmallBoulder2
