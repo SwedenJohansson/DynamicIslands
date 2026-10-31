@@ -133,6 +133,8 @@ call hw_zone x=-55 z=-40 al=crewzone id=crewquarters r=7 h=1 msg="The root crew'
 place Note_Paper heddanote at -53.5 -40 h=3.5 drop yaw=270
 loot crewchest story:crankhandle*1;CopperIngot*2;Battery*1
 prop crewchest loot.refill=0
+prop crewchest if.open=quest|10
+prop crewchest else.open=message||Hedda's chest is locked. Her note in the quarters says how it opens.
 note crewchest Crew chief's chest | Hedda's chest: pylon B's crank handle, greased and wrapped, and the crew's last pay in copper.
 call treasure x=-45 z=-52 r=4 n=1 seed=9725 kind=0
 prop treasure9725 treasure.loot=Scrap*4;Bolt*3;Hinge*1
