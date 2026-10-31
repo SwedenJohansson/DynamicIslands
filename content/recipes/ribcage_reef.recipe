@@ -246,7 +246,7 @@ prop tailbox loot.refill=0
 
 prop ribtide obj.name=ribtide
 prop ribtide beh.use=Strike the rib of the TIDE
-prop ribtide if.use=has|story:songshell|4\nstate|jaw|closed
+prop ribtide if.use=quest|6\nhas|story:songshell|4\nstate|jaw|closed
 prop ribtide on.use=message||The rib of the tide rings low, like a wave under a hull - and the jaw lifts with a groan. Thirty breaths!\nsignal||c1\nopen|jaw\nsound||event:/crafting/horns/air\nwait|30\nclose|jaw\nmessage||The jaw comes down again with a crack.
 prop ribtide else.use=message||The rib of the tide. You'll want all four verses before you sing - or the jaw is already up: go on!
 prop ribwind obj.name=ribwind

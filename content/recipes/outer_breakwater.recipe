@@ -155,7 +155,7 @@ prop smugvines obj.name=smugvines
 prop smugvines on.use=hide|\nsignal||smugvines\nmessage||The machete cuts the vines down. Behind them, a lever set in the rock.
 place Loot_Chest smugbox at 7.5 60 ground sit yaw=0
 prop smugbox obj.name=smugbox
-prop smugbox if.open=has|story:smugbolt|1
+prop smugbox if.open=quest|8\nhas|story:smugbolt|1
 prop smugbox else.open=message||A strongbox with a long, odd keyhole - shaped like the end of a bolt.
 story smugbolt|Smugglers' bolt|MetalIngot|A rusted rod with a key-shaped end, drawn out of the rock in the smugglers' cave.
 note smugbox Smugglers' strongbox | A ledger on top: every crate that went south.
@@ -253,7 +253,7 @@ note obtop Watch tower locker | Under the floor, as the ledger says: a chain key
 loot obtop story:chainkey*1;TitaniumOre*2;Battery*1;MetalIngot*2
 prop obtop loot.refill=0
 prop obtop obj.name=obtop
-prop obtop if.open=has|story:ledger|1
+prop obtop if.open=quest|13\nhas|story:ledger|1
 prop obtop else.open=message||The watch tower's locker is bolted from inside - but a loose plank shows there is a hiding place. Somebody wrote down where.
 note obstash Watch tower stash | The wall keeper's tea tin, and spare tokens.
 loot obstash Battery*1;CircuitBoard*1;Nail*6
