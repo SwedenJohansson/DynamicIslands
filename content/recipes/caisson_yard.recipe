@@ -261,6 +261,8 @@ prop cyledge loot.refill=0
 note cycave2chest Crane key box | The crane driver's key box: the crane key.
 loot cycave2chest story:cy_cranekey*1;CopperOre*2;Rope*2
 prop cycave2chest loot.refill=0
+prop cycave2chest if.open=quest|12
+prop cycave2chest else.open=message||The key box is locked. The trench chart and the crane driver's report come first.
 prop cysummit zone.id=cy_summit
 prop cysummit zone.radius=2.5
 prop cysummit zone.message=The top of Crane Hill. The whole island lies below.
