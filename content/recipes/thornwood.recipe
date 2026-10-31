@@ -189,12 +189,12 @@ prop shrine2 loot.refill=0
 note shrine3 Shrine of the Hill | An offering box on the hill's slope, sealed with a spiral stone. Inside: a carved tusk.
 loot shrine3 story:tusk*1;Feather*4
 prop shrine3 loot.refill=0
-prop shrine3 if.open=has|story:spiralkey|1
+prop shrine3 if.open=quest|17\nhas|story:spiralkey|1
 prop shrine3 else.open=message||The offering box is sealed with a stone lid, a spiral-shaped hole in it. Its key went with the shrine keeper, wherever he went.
 note offering Temple offering | The temple's offering chest at the foot of the boar idol, its lid carved with three tusks.
 loot offering Blueprint_Machete*1;Machete*1;HealingSalve_Good*3;Jar_Honey*2;Seed_Mango*3
 prop offering loot.refill=0
-prop offering if.open=take|story:tusk|3
+prop offering if.open=quest|23\ntake|story:tusk|3
 prop offering else.open=message||Three tusks are carved into the lid. The chest won't open without three carved tusks laid on the altar.
 prop offering tint.color=#77756a
 prop offering tint.amount=0.5
