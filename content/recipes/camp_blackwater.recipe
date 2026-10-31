@@ -347,7 +347,7 @@ note lastnote Dana's last note | (pinned to the boathouse wall)\n\nSet the bait.
 note footlocker Counselor's footlocker | Dana's footlocker: the season's cash box, her canteen plans from the survival class, a first-aid tin, a leather helmet from the camp's play - and a photo of the whole camp on the dock, the last week of summer.
 loot footlocker Blueprint_Canteen*1;Blueprint_Cropplot_Small_Tier3*1;TradeToken*6;Leather*3;HealingSalve_Good*2;Equipment_LeatherHelmet*1
 prop footlocker loot.refill=0
-prop footlocker if.open=has|story:lockerkey|1
+prop footlocker if.open=quest|18\nhas|story:lockerkey|1
 prop footlocker else.open=message||The footlocker is padlocked. Dana's logbook said she kept the key on the nail by the lookout's flare post.
 note cabinbox Cabin 2 box | A camper's box under a bunk: comics, a pocket knife, string.
 loot cabinbox Rope*3;Feather*3;Nail*6
@@ -378,7 +378,7 @@ prop ridgebear tint.color=#2a2018
 prop ridgebear tint.amount=0.5
 prop flarepost obj.name=flarepost
 prop flarepost beh.use=Fire the flare
-prop flarepost if.use=has|story:flaregun|1
+prop flarepost if.use=quest|9\nhas|story:flaregun|1
 prop flarepost on.use=message||The flare climbs over the lake and bursts red. A long minute - then far out at sea a ship's horn answers, twice. On the nail by the post hangs a key marked CABIN 1.\nsignal||flare\ngive||story:lockerkey*1\nsound||event:/weapons/firework/launch\nwait|2\nsound||event:/weapons/firework/explode
 prop flarepost else.use=message||A flare launcher bracket with nothing in it. Dana's logbook said the flare pistol is in the archery shed.
 

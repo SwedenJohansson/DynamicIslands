@@ -170,7 +170,7 @@ prop safe else.open=message||The safe is wired to the analyzer. Run the samples 
 
 prop analyzer obj.name=analyzer
 prop analyzer beh.use=Put the three samples in the analyzer
-prop analyzer if.use=take|story:sample|3
+prop analyzer if.use=quest|10\ntake|story:sample|3
 prop analyzer on.use=message||The analyzer hums and prints: the reef is dying of cold - a current from the open sea, colder every year. The safe's lock clicks open.\nshow|analyzerlight\nsignal||analysed\nsound||event:/exploring/obstacles/tangaroa/generator_placepart
 prop analyzer else.use=message||The analyzer has three empty slots. It wants all three samples.
 prop analyzerlight obj.name=analyzerlight

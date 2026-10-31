@@ -152,7 +152,7 @@ prop wellcam obj.name=wellcam
 prop rimrock obj.name=rimrock
 prop crank obj.name=crank
 prop crank beh.use=Wind the well winch
-prop crank if.use=has|story:bucket|1\n!signal|roots
+prop crank if.use=quest|10\nhas|story:bucket|1\n!signal|roots
 prop crank on.use=signal||roots\ngive||story:wellrope*1\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The winch spins and spins. The rope pays out down the shaft - past the rock, past the sky, down into the sea. Far below, something tugs back.\ncamera|wellcam|rimrock|5|30
 prop crank else.use=message||The winch has no bucket on its rope - the apples pulled it up the shaft. (If the rope is already down, its end is in the cellar under the sea.)
 
