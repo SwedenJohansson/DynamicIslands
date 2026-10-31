@@ -129,10 +129,13 @@ namespace DynamicIslands
 				// (no state: the signal throws, as a target gone does)
 				var e = new IslandWorldState.Entry { Id = IslandNetwork.NewId(), Name = "ci_fix3_noisland", HostName = "ci_fix3_noisland", State = null };
 				List<ObjAction> actions = ObjAction.ParseLines("signal||ci_fix3\njournal|" + title + "|The rest of the chain ran");
-				MethodInfo run = typeof(Behaviours).GetMethod("RunShared", BindingFlags.NonPublic | BindingFlags.Static, null, new[] { typeof(IslandWorldState.Entry), typeof(int), typeof(List<ObjAction>) }, null);
+				// (by its first three parameters: the merge of 10-31 met a RunShared with more, optional ones - they get their defaults)
+				MethodInfo run = typeof(Behaviours).GetMethods(BindingFlags.NonPublic | BindingFlags.Static).FirstOrDefault(m => m.Name == "RunShared" && m.GetParameters().Length >= 3 &&
+					m.GetParameters()[0].ParameterType == typeof(IslandWorldState.Entry) && m.GetParameters()[1].ParameterType == typeof(int) && m.GetParameters()[2].ParameterType == typeof(List<ObjAction>) &&
+					m.GetParameters().Skip(3).All(x => x.IsOptional));
 				if (run == null) { Fail("fix3 run shared: Behaviours.RunShared not found"); return; }
 				bool threw = false;
-				try { run.Invoke(null, new object[] { e, 0, actions }); } catch (Exception ex) { threw = true; Log("  threw: " + (ex.InnerException ?? ex).Message); }
+				try { run.Invoke(null, new object[] { e, 0, actions }.Concat(run.GetParameters().Skip(3).Select(x => x.DefaultValue)).ToArray()); } catch (Exception ex) { threw = true; Log("  threw: " + (ex.InnerException ?? ex).Message); }
 				Check(ref ok, !threw, "a throwing action doesn't stop its caller");
 				Check(ref ok, StoryBook.Pages.Any(p => p.Key.StartsWith("act:") && p.Title == title), "the journal action after it ran (its page is there)");
 			}
