@@ -207,7 +207,7 @@ note ivonote Brother Ivo's note | BROTHER IVO - THE OSSUARY\n\nWe keep the bones
 note offeringbox Offering box | The monks' offering box: a fishing rod, a lantern, rice cakes wrapped in leaves (long since gone to dust), dried fish.
 loot offeringbox FishingRod_Metal*1;Placeable_Lantern_Basic*1;Cooked_Mackerel*3;Coconut*2
 prop offeringbox loot.refill=0
-prop offeringbox if.open=has|story:shrinekey|1
+prop offeringbox if.open=quest|14\nhas|story:shrinekey|1
 prop offeringbox else.open=message||The offering box is locked. The monk's confession says its key went up to the abbot's hermitage on Hermit's Peak.
 
 prop paddywater tint.color=#55715a
@@ -257,7 +257,7 @@ prop bellstone2 on.use=hide|\ngive||story:bellstone*1\nsound||event:/raft/radar/
 prop bellstone3 on.use=hide|\ngive||story:bellstone*1\nsound||event:/raft/radar/lever\nmessage||The stone rings under your knuckle, faint and clear.
 prop bellstand obj.name=bellstand
 prop bellstand beh.use=Set the Bell stones in the stand
-prop bellstand if.use=take|story:bellstone|3
+prop bellstand if.use=quest|5\ntake|story:bellstone|3
 prop bellstand on.use=give||story:bellsset*1\nshow|altarstair\nplaysound||event:/crafting/horns/viking|0.6|once|near\nmessage||Three notes ring out together. Up on the altar terrace, stone grinds on stone: a stair.
 prop bellstand else.use=message||Three hollows in the bench, worn smooth. Three stones belong here.
 prop altarstair obj.name=altarstair
