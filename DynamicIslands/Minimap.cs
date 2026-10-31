@@ -68,6 +68,11 @@ namespace DynamicIslands.Editor
 		/// <summary>Dev tests: pings sent (by this player) and shown.</summary>
 		public static int PingsSent, PingsShown;
 		public static bool Shown { get { return panel != null && panel.gameObject.activeSelf; } }
+		/// <summary>The small map is on the screen in the top right corner (the quest panel moves under it).</summary>
+		public static bool CornerShown { get { return Mode == Corner && Shown && canvas != null && canvas.gameObject.activeSelf; } }
+		/// <summary>How far down from the top of the screen the corner map reaches, its island name under it included (UI units, see Layout).</summary>
+		public const float CornerBottom = CornerTop + CornerSize + 20f;
+		const float CornerTop = 14f;
 
 		static Camera cam;
 		static GameObject seaDeep, seaShallow;
@@ -355,7 +360,7 @@ namespace DynamicIslands.Editor
 		static void Layout()
 		{
 			if (Mode == Full) UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(700f, 700f));
-			else UIKit.Anchor(panel, new Vector2(1f, 1f), new Vector2(-14f, -14f), new Vector2(CornerSize, CornerSize));
+			else UIKit.Anchor(panel, new Vector2(1f, 1f), new Vector2(-CornerTop, -CornerTop), new Vector2(CornerSize, CornerSize));
 			UIKit.Anchor(title.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, -20f), new Vector2(Mode == Full ? 680f : CornerSize, 18f));
 		}
 

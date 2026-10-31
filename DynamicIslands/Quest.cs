@@ -540,6 +540,15 @@ namespace DynamicIslands.Editor
 		/// <summary>How long a finished quest's panel stays up (the user, 2026-10-07: "after finished, hide it after 30sec").</summary>
 		public static float DoneHideSeconds = 30f;
 		/// <summary>Whether the quest panel is on screen (for the tests).</summary>
+		const float PanelTop = -160f;
+
+		/// <summary>10-31: under the corner island map while it shows (the map is drawn over the panel and hid its title and first step); back in its place when the map is hidden or the big map is open.</summary>
+		static void PlaceUnderMap()
+		{
+			float y = Minimap.CornerShown ? Mathf.Min(PanelTop, -(Minimap.CornerBottom + 8f)) : PanelTop;
+			if (panel.anchoredPosition.y != y) panel.anchoredPosition = new Vector2(panel.anchoredPosition.x, y);
+		}
+
 		public static bool PanelShown { get { return panel != null && panel.gameObject.activeSelf; } }
 		/// <summary>How many steps the panel shows at a time; a longer quest scrolls (the user, 2026-10-03: a 32-step quest
 		/// covered the right side of the screen).</summary>
@@ -607,6 +616,7 @@ namespace DynamicIslands.Editor
 			}
 			panel.gameObject.SetActive(!hide);
 			if (hide) return;
+			PlaceUnderMap();
 			closeButton.onClick.RemoveAllListeners();
 			closeButton.onClick.AddListener(() => { closedKey = shownKey; closedStep = step; panel.gameObject.SetActive(false); });
 			titleText.text = q.ShownTitle + (step >= q.Steps.Count ? "  <color=#8fdc8f>\u221A done</color>" : "") + (open > 0 ? "  <color=#b39a6c>(+" + open + " more)</color>" : "");
@@ -756,7 +766,7 @@ namespace DynamicIslands.Editor
 			Canvas canvas = UIKit.CreateCanvas("CustomIslands_Quest", 380);
 			UnityEngine.Object.DontDestroyOnLoad(canvas.gameObject);
 			panel = UIKit.Rect("Quest", canvas.transform);
-			UIKit.Anchor(panel, new Vector2(1f, 1f), new Vector2(-20, -160), new Vector2(300, 0));
+			UIKit.Anchor(panel, new Vector2(1f, 1f), new Vector2(-20, PanelTop), new Vector2(300, 0));
 			UIKit.Surface(panel); // Raft's menu look
 			UIKit.Vertical(panel.gameObject, 4f, new RectOffset(12, 12, 8, 10), true);
 			// (the title and an X to close the panel - ROADMAP CT10; the X takes the mouse while the cursor is free)

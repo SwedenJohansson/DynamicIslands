@@ -885,6 +885,103 @@ namespace DynamicIslands
 			if (ok) Log("PASS: minimap look (" + dir + ")"); else Fail("minimap look");
 		}
 
+		[ConsoleCommand(name: "CIMinimapUi", docs: "Dev (PF5): what is on screen under the corner map. World 'CI ...': on the map test island lists every active UI piece whose screen rectangle overlaps the map panel (name, path, size, canvas), counts the objects named MapPanel (one), then hides the other canvases for a moment and saves minimap_clean.png. CIMinimapUi <folder> (default the mod folder)")]
+		public static void MinimapUiCommand(string[] args) { StartTest(MinimapUi(args != null && args.Length > 0 ? string.Join(" ", args) : DynamicIslands.assetpath)); }
+
+		static IEnumerator MinimapUi(string dir)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("minimap ui: host, in a test world 'CI ...'"); yield break; }
+			yield return EnsureAlive();
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Note_Sign" });
+			bool ok = true;
+			CloseRmlMenuCommand(); // (open when Raft starts; it covered the pictures)
+			IslandWorldState.Entry e = null;
+			yield return RfSpawn(MapBuild(), MapIsland, x => e = x);
+			if (e == null) yield break;
+			int mode = Minimap.Mode;
+			Minimap.Mode = Minimap.Corner;
+			Minimap.SetZoom(1);
+			PutPlayerNear(ScObjOf(e, "cimapstart").transform);
+			yield return new WaitForSecondsRealtime(2f);
+			Check(ref ok, Minimap.Island == e && Minimap.Shown, "the map shows on the island");
+			var panels = Resources.FindObjectsOfTypeAll<RectTransform>().Where(t => t != null && t.name == "MapPanel" && t.gameObject.scene.IsValid()).ToList();
+			Log("ui: objects named MapPanel " + panels.Count + ": " + string.Join(", ", panels.Select(t => UiPath(t) + (t.gameObject.activeInHierarchy ? " active " : " inactive ") + t.rect.size.ToString("F0")).ToArray()));
+			Check(ref ok, panels.Count == 1, "one MapPanel");
+			RectTransform panel = panels.FirstOrDefault(t => t.gameObject.activeInHierarchy);
+			if (panel == null) { Fail("minimap ui: no active MapPanel"); yield break; }
+			Canvas ours = panel.GetComponentInParent<Canvas>().rootCanvas;
+			Rect pr = MapScreenRect(panel);
+			Rect area = new Rect(pr.x, pr.y - 30f, pr.width, pr.height + 30f); // with the title under it
+			Log("ui: map panel screen " + pr + " size " + panel.rect.size.ToString("F0") + " canvas " + ours.name + " order " + ours.sortingOrder + " screen " + Screen.width + "x" + Screen.height);
+			var hits = UnityEngine.Object.FindObjectsOfType<UnityEngine.UI.Graphic>().Where(g => g != null && g.enabled && g.gameObject.activeInHierarchy && g.canvas != null && g.canvas.enabled && g.canvas.rootCanvas.renderMode != RenderMode.WorldSpace && g.color.a > 0.01f && MapScreenRect(g.rectTransform).Overlaps(area)).ToList();
+			foreach (var g in hits.OrderBy(g => g.canvas.rootCanvas == ours ? 0 : 1).ThenBy(g => UiPath(g.rectTransform)))
+				Log("ui: overlaps " + (g.canvas.rootCanvas == ours ? "[ours] " : "[other] ") + g.GetType().Name + " '" + UiPath(g.rectTransform) + "' screen " + MapScreenRect(g.rectTransform) + " size " + g.rectTransform.rect.size.ToString("F0") + " colour " + g.color + " canvas '" + g.canvas.rootCanvas.name + "' order " + g.canvas.rootCanvas.sortingOrder);
+			var others = hits.Select(g => g.canvas.rootCanvas).Where(cv => cv != ours).Distinct().ToList();
+			Log("ui: other canvases over/under the map: " + others.Count + ": " + string.Join(", ", others.Select(cv => cv.name + " (order " + cv.sortingOrder + ")").ToArray()));
+			try { Directory.CreateDirectory(dir); } catch { }
+			// (10-31) the quest panel moves under the corner map (the map was drawn over its title and first step) and back up when the big map is open
+			float until = Time.realtimeSinceStartup + 4f;
+			while (!QuestTracker.PanelShown && Time.realtimeSinceStartup < until) yield return null;
+			yield return new WaitForSecondsRealtime(1f);
+			RectTransform qp = Resources.FindObjectsOfTypeAll<RectTransform>().FirstOrDefault(t => t != null && t.name == "Quest" && t.parent != null && t.parent.name == "CustomIslands_Quest" && t.gameObject.scene.IsValid());
+			Check(ref ok, qp != null && qp.gameObject.activeInHierarchy, "the quest panel shows on the island");
+			if (qp != null)
+			{
+				RectTransform tt = panel.parent.GetComponentsInChildren<RectTransform>(true).FirstOrDefault(t => t.name == "MapTitle");
+				Rect map = pr;
+				if (tt != null) { Rect r = MapScreenRect(tt); map = Rect.MinMaxRect(Mathf.Min(map.xMin, r.xMin), Mathf.Min(map.yMin, r.yMin), Mathf.Max(map.xMax, r.xMax), Mathf.Max(map.yMax, r.yMax)); }
+				Rect q = MapScreenRect(qp);
+				Log("ui: quest panel screen " + q + " at " + qp.anchoredPosition.ToString("F0") + ", the map with its title " + map);
+				Check(ref ok, !q.Overlaps(map), "the quest panel is not under the corner map");
+				Check(ref ok, q.yMin >= 0f && q.xMin >= 0f && q.xMax <= Screen.width, "the quest panel is all on the screen");
+				ScreenCapture.CaptureScreenshot(Path.Combine(dir, "minimap_quest.png"));
+				yield return new WaitForSecondsRealtime(1f);
+				Log("ui: saved " + Path.Combine(dir, "minimap_quest.png") + " with the quest panel and the corner map");
+				float cornerY = qp.anchoredPosition.y;
+				Minimap.Mode = Minimap.Full;
+				yield return new WaitForSecondsRealtime(1.5f);
+				ScreenCapture.CaptureScreenshot(Path.Combine(dir, "minimap_full_quest.png"));
+				yield return new WaitForSecondsRealtime(1f);
+				Log("ui: saved " + Path.Combine(dir, "minimap_full_quest.png") + " with the quest panel and the big map");
+				Check(ref ok, Mathf.Abs(qp.anchoredPosition.y - (-160f)) < 0.5f && cornerY < -160f, "the quest panel goes back up with the big map open (" + cornerY.ToString("F0") + " -> " + qp.anchoredPosition.y.ToString("F0") + ")");
+				Minimap.Mode = Minimap.Corner;
+				yield return new WaitForSecondsRealtime(1.5f);
+				Check(ref ok, Mathf.Abs(qp.anchoredPosition.y - cornerY) < 0.5f, "and under the corner map again");
+			}
+			foreach (var cv in others) cv.enabled = false;
+			try
+			{
+				yield return new WaitForSecondsRealtime(0.5f);
+				ScreenCapture.CaptureScreenshot(Path.Combine(dir, "minimap_clean.png"));
+				yield return new WaitForSecondsRealtime(1f);
+			}
+			finally { foreach (var cv in others) if (cv != null) cv.enabled = true; }
+			Log("ui: saved " + Path.Combine(dir, "minimap_clean.png") + " with the other canvases hidden");
+			Minimap.Mode = mode;
+			RfAway(e);
+			yield return new WaitForSecondsRealtime(1f);
+			RfRemove(MapIsland);
+			if (ok) Log("PASS: minimap ui (" + dir + ")"); else Fail("minimap ui");
+		}
+
+		static Rect MapScreenRect(RectTransform t)
+		{
+			var w = new Vector3[4];
+			t.GetWorldCorners(w);
+			Canvas cv = t.GetComponentInParent<Canvas>();
+			Camera cam = cv != null && cv.rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? cv.rootCanvas.worldCamera : null;
+			Vector2 a = RectTransformUtility.WorldToScreenPoint(cam, w[0]), b = RectTransformUtility.WorldToScreenPoint(cam, w[2]);
+			return Rect.MinMaxRect(Mathf.Min(a.x, b.x), Mathf.Min(a.y, b.y), Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y));
+		}
+
+		static string UiPath(Transform t)
+		{
+			var parts = new List<string>();
+			for (; t != null && parts.Count < 8; t = t.parent) parts.Add(t.name);
+			parts.Reverse();
+			return string.Join("/", parts.ToArray());
+		}
+
 		static void SaveRt(RenderTexture rt, string path)
 		{
 			RenderTexture was = RenderTexture.active;
@@ -970,7 +1067,8 @@ namespace DynamicIslands
 			finally { IslandNetwork.Loopback = null; }
 			Check(ref ok, Minimap.Pings.Count == 2 && Minimap.Pings.Any(p => p.From == 12345UL) && sent.Any(x => x.Kind == IslandNetMessage.Ping && x.Data == "12345"), "a crew mate's ping: shown here and passed on to everyone");
 			yield return new WaitForSecondsRealtime(Minimap.PingSeconds + 0.5f);
-			Check(ref ok, Minimap.Pings.Count == 0 && UnityEngine.Object.FindObjectsOfType<LineRenderer>().Count(l => l.name == "CustomIslands_Ping") == (Minimap.StartShown ? 1 : 0), "the pings are gone after " + Minimap.PingSeconds + " s");
+			var beams = UnityEngine.Object.FindObjectsOfType<LineRenderer>().Where(l => l.name == "CustomIslands_Ping").ToList();
+			Check(ref ok, Minimap.Pings.Count == 0 && beams.Count == (Minimap.StartShown ? 1 : 0), "the pings are gone after " + Minimap.PingSeconds + " s (pings " + Minimap.Pings.Count + ", start beam " + Minimap.StartShown + ", beams " + beams.Count + ": " + string.Join(", ", beams.Select(l => { TextMesh tm = l.GetComponentInChildren<TextMesh>(); return (tm != null ? tm.text : "?") + " " + l.transform.position.ToString("F0"); }).ToArray()) + ")");
 
 			RfAway(e);
 			yield return new WaitForSecondsRealtime(1.2f);
