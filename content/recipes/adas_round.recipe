@@ -254,7 +254,7 @@ prop pigeonbox beh.hidden=1
 prop pigeonbox loot.refill=0
 prop atticdoor obj.name=atticdoor
 prop atticdoor beh.use=Unlock the attic store
-prop atticdoor if.use=take|story:attickey|1
+prop atticdoor if.use=quest|4\ntake|story:attickey|1
 prop atticdoor on.use=hide|\nshow|attic\nshow|adanote\nmessage||The key turns stiffly and the padlock drops. Inside: Ada's attic chest, and a note on top of it.
 prop atticdoor else.use=message||Ada's attic store, padlocked. The diary says where she keeps the key.
 note attic Attic | Ada's attic chest: the post's best tools, packed for whoever comes next.

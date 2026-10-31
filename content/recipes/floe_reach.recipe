@@ -139,7 +139,7 @@ prop captaindesk loot.refill=0
 note magazine Blasting magazine | The blasting magazine's chest: three charges for the ice, packed in straw, and a coil of fuse wire.
 loot magazine story:charge*3;Rope*2
 prop magazine loot.refill=0
-prop magazine if.open=has|story:magazinekey|1
+prop magazine if.open=quest|5\nhas|story:magazinekey|1
 prop magazine else.open=message||The magazine's chest is padlocked. DANGER - EXPLOSIVES. The key is with the captain.
 note thanks The captain's thanks | (on the command tent's table, weighed down with a mug - it wasn't there before)\n\nIf the Nordlys is floating, you did it. She's yours to keep, if you can sail her - or at least the crew's pay chest here is. Nobody ever collected it.\n\nThank you.\n- A. Halvorsen
 note strongroom Crew's pay chest | The Nordlys's pay chest, carried ashore: the crew's unpaid wages, the plans for the miners' head lamps they wore in the engine room, wool, metal ingots and a few cooked meals.

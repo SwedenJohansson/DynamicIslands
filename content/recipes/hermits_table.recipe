@@ -88,7 +88,7 @@ note riddles The hermit's riddles | Three riddles, three levers. The answer to a
 note hermitchest Hermit's chest | The hermit's chest: a leather jerkin he never wears, a carpenter's plan for detail planks, a few stones from his path, his savings.
 loot hermitchest Equipment_LeatherChest*1;Blueprint_DetailPlank*1;TradeToken*8;Stone*4
 prop hermitchest loot.refill=0
-prop hermitchest if.open=has|story:hermitkey|1
+prop hermitchest if.open=quest|4\nhas|story:hermitkey|1
 prop hermitchest else.open=message||The hermit's chest is locked. The key is in one of the levers' boxes.
 note footbox Climbers' box | A box at the cliff's foot: planks, rope, two flasks of water.
 loot footbox Rope*3;PlasticBottle_Water*2;Plank*3

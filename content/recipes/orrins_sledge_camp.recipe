@@ -229,7 +229,7 @@ story harness|Harness piece|Placeable_Lantern_Metal|A piece of the sledge winch'
 story sledge|The motor sledge out|Placeable_Lantern_Metal|The winch hauled the motor sledge out onto the runners.
 prop sledgewinch obj.name=sledgewinch
 prop sledgewinch beh.use=Rig the harness and wind the sledge winch
-prop sledgewinch if.use=take|story:harness|3
+prop sledgewinch if.use=quest|9\ntake|story:harness|3
 prop sledgewinch on.use=give||story:sledge*1\nshow|sledgeshed\nmessage||The harness takes the strain. The motor sledge rolls out on the runners - and behind it, the shed's big chest.
 prop sledgewinch else.use=message||The winch has no harness. Orrin's notes: one piece in the hay, one in my hut, one with the zipline crate.
 loot lookoutbox Blueprint_Firework*1;Machete*1;Rope*2;Nail*6

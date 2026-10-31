@@ -210,7 +210,7 @@ story clamp|Guy clamp|Placeable_Lantern_Metal|One of the relay mast's three guy 
 story mastfixed|Mast rigged|Placeable_Lantern_Metal|The mast's guys are clamped again; the junction box came free.
 prop mastwinch obj.name=mastwinch
 prop mastwinch beh.use=Fit the guy clamps and wind the mast winch
-prop mastwinch if.use=take|story:clamp|3
+prop mastwinch if.use=quest|7\ntake|story:clamp|3
 prop mastwinch on.use=give||story:mastfixed*1\nshow|mastbox\nmessage||The guys tighten, the mast groans upright an inch - and the junction box drops out of its ice.
 prop mastwinch else.use=message||The winch spins free: the mast's three guy clamps are gone. One in the shelf stores, one on the path's ledge, one in a drift up here.
 

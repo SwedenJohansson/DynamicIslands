@@ -275,7 +275,7 @@ prop chiefsvault loot.refill=0
 
 prop reactor obj.name=reactor
 prop reactor beh.use=Connect the cables and start the reactor
-prop reactor if.use=take|story:cable|5
+prop reactor if.use=quest|11\ntake|story:cable|5
 prop reactor on.use=message||The cables lock in, the reactor wakes with a deep hum - lights run down the hall and the inner doors slide apart. Something big stirs behind them.\nopen|innerdoor\nsound||event:/raft/door/door_selene_open
 prop reactor else.use=message||The reactor is dead. Five cable runs are missing - the chief's note said where the drums are.
 prop innerdoorL obj.name=innerdoor

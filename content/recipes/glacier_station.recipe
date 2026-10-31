@@ -194,7 +194,7 @@ prop reactorvault else.open=message||The vault is sealed. It opens when the reac
 
 prop controls obj.name=controls
 prop controls beh.use=Fit the reactor fuses
-prop controls if.use=take|story:fuse|3
+prop controls if.use=quest|4\ntake|story:fuse|3
 prop controls on.use=message||Three fuses click home. Deep under the snow the reactor catches - the pool glows, the chimneys breathe, and up on the shore the domes light one by one.\nshow|reactorglow\nshow|reactorhum\nsignal||reactor\nsound||event:/exploring/obstacles/tangaroa/generator_placepart\njournal|The reactor restarted|Three fuses home. The pool glows, the chimneys breathe, and the domes on the shore are lit again.
 prop controls else.use=message||The control column is dead. Three fuse sockets stand empty.\njournal|The dead reactor|The control column in the basin: three fuse sockets, all empty. The log says one fuse is in the tool crate, one at the observatory, one down the crevasse with Petrov.
 prop reactorglow obj.name=reactorglow

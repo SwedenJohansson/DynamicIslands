@@ -92,7 +92,7 @@ prop oilbox loot.refill=0
 note skychest Sky keeper's chest | The sky keeper's chest: his savings, his tools, his spyglass - and a map with a ring drawn round a low green island far below.
 loot skychest TradeToken*10;MetalIngot*4;CopperIngot*2;Bolt*4;Hinge*2;Binoculars*1;Placeable_Lantern_Metal*1
 prop skychest loot.refill=0
-prop skychest if.open=has|story:skykey|1
+prop skychest if.open=quest|4\nhas|story:skykey|1
 prop skychest else.open=message||The sky keeper's chest is locked. His log says where the key hangs: only the beacon shows it.
 
 prop beacon obj.name=beacon
