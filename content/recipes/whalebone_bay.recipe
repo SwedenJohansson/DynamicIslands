@@ -330,6 +330,8 @@ prop liftedbox loot.refill=0
 note altarbox Box under the altar | Under the altar cloth, a small box: the harpoon cannon's firing pin, wrapped in a page torn from the hymn book.
 loot altarbox story:firingpin*1;Placeable_GlassCandle*1
 prop altarbox loot.refill=0
+prop altarbox if.open=quest|10
+prop altarbox else.open=message||The altar cloth is nailed down over the box. The pastor's register in the church comes first.
 note mgrstrongbox Manager's strongbox | The manager's strongbox: the men's pay that never reached them, his carving tools and the carpentry shop's patterns for the station's woodwork, and a bear skin he never had the heart to hang.
 loot mgrstrongbox Blueprint_DetailPlank*1;Head_PolarBear*1;MetalIngot*6;Leather*4;Wool*4;TradeToken*10
 prop mgrstrongbox loot.refill=0
