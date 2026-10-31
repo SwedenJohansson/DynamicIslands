@@ -64,6 +64,9 @@ namespace DynamicIslands.Editor
 
 			// 2. No island of it at all: brought again when its moment comes - only if nothing of it was had
 			if (!StoryChain.Brought.Contains(r.Id) || stepDone) return false;
+			// (only story and Receiver rules, as StoryChain.OnIslandsRemoved: a "by chance while sailing" island removed on
+			// purpose - F10 RemoveIsland - came straight back at the next load)
+			if (!r.InStory && r.Where != "receiver") return false;
 			if (!r.InStory && name.Length > 0 && (QuestRewards.Rewarded(name) || QuestRewards.Owed(name) ||
 				StoryBook.Items.Any(h => h.From.Keys.Any(k => k.Equals(name, StringComparison.OrdinalIgnoreCase) || k.StartsWith(name + "|", StringComparison.OrdinalIgnoreCase)))))
 			{
