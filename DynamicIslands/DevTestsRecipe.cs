@@ -1418,6 +1418,7 @@ namespace DynamicIslands
 			recipeGroups.Clear();
 			recipePlaced.Clear();
 			recipeNoPosts = false;
+			recipeReseat = false;
 			leftOutBuried = 0;
 			pendingQuest = null;
 			pendingMore.Clear();
@@ -1918,6 +1919,13 @@ namespace DynamicIslands
 							else StandPosts();
 							break;
 						}
+						case "reseat":
+						{
+							// reseat trees - at the save, trees and palms whose trunk foot is more than 1 m under the land set back on it
+							if (t.Length < 2 || t[1].ToLowerInvariant() != "trees") { error = "reseat trees"; break; }
+							recipeReseat = true;
+							break;
+						}
 						case "save":
 						{
 							if (pendingQuest != null && !pendingQuest.Exists && pendingQuest.Title.Length > 0) { error = "the quest '" + pendingQuest.Title + "' has no steps"; break; }
@@ -1935,6 +1943,11 @@ namespace DynamicIslands
 								CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(dried, false));
 								Log("  " + dried.Count + " of Raft's sea finds out of the water (carried up by the ground) left out");
 							}
+							// (and trees and palms whose trunk foot ended more than 1 m under the land - the generator's, set down by the
+							// lowest ground under their crown, then the recipe's strokes raised the ground round them: Old Mine Islet's pines
+							// and birches 1-3 m into the slope, the ground check 2026-10-31; up to the ground round the pivot, as Place sets them)
+							// Only with "reseat trees" in the recipe: every other island saves as before (the release 2026-10-31)
+							if (recipeReseat) ReseatSunkTrees(seaY);
 							// (and plants, rocks, corals and finds the recipe's own strokes buried whole - a footing flattened over the shelf:
 							// Signal Rock's table coral 0.3 m under its platform's sea floor; nothing showed of them, the review 2026-10-03)
 							var covered = GameObject.Find("PlacedObjects").transform.GetComponentsInChildren<EditorGameObject>()
@@ -2235,7 +2248,44 @@ namespace DynamicIslands
 
 		/// <summary>Pieces the recipe left out because they were under the ground whole (this run).</summary>
 		static int leftOutBuried;
-		static bool recipeNoPosts;
+		static bool recipeNoPosts, recipeReseat;
+
+		/// <summary>"reseat trees" at the save: trees and palms whose trunk foot is more than 1 m under the land (the ground
+		/// check's "sunk trunk") set back on the ground round their pivot, as Place sets them. The foot stays within 1 m under
+		/// the land (lower ground under it is a cave floor or a ledge: the land then), and a tree whose foot would be inside a
+		/// placed rock or building stays where it is.</summary>
+		static void ReseatSunkTrees(float seaY)
+		{
+			EditorGameObject[] all = GameObject.Find("PlacedObjects").transform.GetComponentsInChildren<EditorGameObject>();
+			int reseated = 0, kept = 0;
+			foreach (EditorGameObject e in all)
+			{
+				if (!Trunk.IsMatch(e.GameObjectName ?? "")) continue;
+				Vector3 p = e.transform.position;
+				float land = GroundY(p.x, p.z);
+				if (land <= seaY || land - p.y <= 1f) continue;
+				float foot = PlacementOptions.LowestGroundUnder(new Bounds(p, new Vector3(1f, 0f, 1f)));
+				if (foot > land || foot < land - 1f) foot = land;
+				Vector3 to = new Vector3(p.x, foot + PlacementOptions.PivotAboveBottom(e.gameObject), p.z);
+				if (InsidePlaced(to, e, all)) { kept++; continue; }
+				e.transform.position = to;
+				reseated++;
+			}
+			if (reseated + kept > 0) Log("  reseat trees: " + reseated + " sunk trees and palms set back on the ground" + (kept > 0 ? ", " + kept + " left (their foot would be inside a placed object)" : ""));
+		}
+
+		/// <summary>A point inside the bounds of a placed object's solid colliders (not a tree's or a palm's).</summary>
+		static bool InsidePlaced(Vector3 at, EditorGameObject self, EditorGameObject[] all)
+		{
+			Vector3 q = at + Vector3.up * 0.1f;
+			foreach (EditorGameObject o in all)
+			{
+				if (o == self || !o.gameObject.activeInHierarchy || Trunk.IsMatch(o.GameObjectName ?? "")) continue;
+				foreach (Collider c in o.GetComponentsInChildren<Collider>())
+					if (c.enabled && !c.isTrigger && c.bounds.Contains(q)) return true;
+			}
+			return false;
+		}
 
 		/// <summary>
 		/// Posts under the floors and decks over nothing (ROADMAP CA30, FloorsOverNothing): at each corner nothing holds, one
