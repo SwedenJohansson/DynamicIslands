@@ -317,12 +317,16 @@ place RT_PowerBox ec_coil1 at 49 64 ground y=1.25 yaw=45
 prop ec_coil1 obj.name=ec_coil1
 prop ec_coil1 beh.use=Throw the coil switch
 prop ec_coil1 on.use=message||The coil whines down. (1 of 2)\nsignal||ec_coil1
+prop ec_coil1 if.use=quest|33
+prop ec_coil1 else.use=message||The switch is locked in its housing. It answers only once you have chased the Keeper's drone to the rim of the pit.
 place RT_Pillar - at 57 72 ground sy=0.4
 place RT_PowerBox ec_coil2 at 57 72 ground y=1.25 yaw=225
 place Note_Paper keeperec at 55.4 71.2 ground drop yaw=40
 prop ec_coil2 obj.name=ec_coil2
 prop ec_coil2 beh.use=Throw the coil switch
 prop ec_coil2 on.use=message||The coil whines down. (2 of 2)\nsignal||ec_coil2
+prop ec_coil2 if.use=quest|33
+prop ec_coil2 else.use=message||The switch is locked in its housing. It answers only once you have chased the Keeper's drone to the rim of the pit.
 # epilogue: once a lever is pulled the court fills (lamps, flags) and the Keeper's strongbox is set out
 place Zone_Trigger ec_epizone at 0 26 ground y=1
 prop ec_epizone obj.name=ec_epizone
