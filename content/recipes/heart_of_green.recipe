@@ -163,6 +163,8 @@ prop hhbox loot.refill=0
 call vd_dive x=70 z=-68 h=-10 yaw=250 obj="Van_1" al=hhwreck crate=hhcrate zal=hhwz zid=hh_wreck msg="The Seedkeepers' lab van, off the end of the old shore road. Its sample fridge is still sealed." air=hhair bub=hhbub
 note hhcrate Lab van's sample fridge | One sealed sample tube, gold dust inside, labelled HEART - FIRST BLOOM.
 loot hhcrate story:sample*1;Scrap*3;Battery*1
+prop hhcrate if.open=quest|23
+prop hhcrate else.open=message||The fridge's seal is locked tight. The Seedkeeper's root gate comes first - pull its lever down among the roots.
 # the seed vault on the north-east slope: a sealed vault box on a stone pad; the van's sample opens it and its ledger
 # shows what the Seedkeepers kept back
 clear at 55 45 r=5
