@@ -263,7 +263,7 @@ prop keeperslocker else.open=message||The locker's lock is wired to the beacon -
 
 prop beaconbox obj.name=beaconbox
 prop beaconbox beh.use=Fit the cell and light the beacon
-prop beaconbox if.use=take|story:beaconcell|1
+prop beaconbox if.use=quest|4\ntake|story:beaconcell|1
 prop beaconbox on.use=message||The cell clicks home. Up on the mast the lamp blinks - three short, three long - out over the sea again.\nsignal||beacon\nshow|beaconlight
 prop beaconbox else.use=message||The beacon's box is dead: its cell is spent. The keeper's log said the spares went down with the supply boat.
 prop beaconlamp obj.name=beaconlight
