@@ -189,6 +189,8 @@ call hw_mast x=50 z=45 h0=22 lv=3 a=greymast chest=greybox top=Placeable_Lantern
 place Note_Paper greylog at 46.5 41.5 h=22.1 drop yaw=200
 loot greybox story:sluicekey*1;Rope*2;Battery*1;Cooked_GenericMeat*2
 prop greybox loot.refill=0
+prop greybox if.open=quest|17
+prop greybox else.open=message||Grey's box is wired shut to the mast. His lookout log, up here, says what it holds.
 note greybox Grey's lookout box | Silas Grey's box on his lookout: a spyglass with a cracked lens, a battery, rope - and a big bronze key with a sluice gate cut on its bow.
 scatter "Pickup_Landmark_Flower_Blue" 2 at 50 45 r=20 seed=31037 free=3
 call treasure x=66 z=30 r=12 n=1 seed=31032 kind=0
