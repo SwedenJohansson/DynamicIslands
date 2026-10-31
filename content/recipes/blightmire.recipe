@@ -152,6 +152,8 @@ prop bmdigger tint.amount=0.5
 call vd_dive x=70 z=-68 h=-10 yaw=135 obj="BoatStranded" al=bmwreck crate=bmcrate zal=bmwz zid=bm_wreck msg="The Seedkeepers' pump barge, on the bottom off the shore. The valve box on its deck is still shut." air=bmair bub=bmbub
 note bmcrate Pump barge's valve box | A brass bog-pump valve, greased and wrapped. Stamped on it: BOG PUMP.
 loot bmcrate story:valve*1;Scrap*3;Bolt*2
+prop bmcrate if.open=quest|10
+prop bmcrate else.open=message||The valve box is rusted shut. The Seedkeepers' root cache comes first.
 # the acid bog (RAFT_QUEST_MECHANICS SL11 7, M7): a sunken bog of acid round a dead stump island with the burner's
 # fuel drum; old logs lie across it and bob as you step on them. The pump at its edge takes the barge's valve and drains it;
 # without the valve the camp's blight suit keeps the acid off for three minutes.
@@ -316,6 +318,8 @@ prop fueldrum obj.name=fueldrum
 note fueldrum Fuel drum | The Seedkeepers' burner fuel, sealed against the acid. Enough for one big fire.
 loot fueldrum story:fuel*1;Scrap*2
 prop fueldrum loot.refill=0
+prop fueldrum if.open=quest|11
+prop fueldrum else.open=message||The drum's cap is seized. Fetch the bog pump's valve from the sunk barge first.
 prop beacon obj.name=beacon
 prop beacon beh.use=Pour the fuel into the beacon burner
 prop beacon if.use=!signal|beacon\ntake|story:fuel|1
