@@ -53,12 +53,21 @@ clear at 13 4 r=6
 call caisson x=-6 z=-6 w=3 h0=-8 lv=4 a=caissons
 call caisson x=-6 z=6 w=3 h0=-8 lv=4 a=caissons
 call caisson x=10 z=16 w=3 h0=-8 lv=4 a=caissons
-place Block_Ladder_Tier3 - at -6 -8.45 h=-0.6 yaw=180
-place Block_Ladder_Tier3 - at -8.45 6 h=-0.6 yaw=270
-place Block_Ladder_Tier3 - at 12.45 16 h=-0.6 yaw=90
+# (REACH 10-30 G1: a ladder's climb trigger sits 0.3 m behind it - these faced away from the caisson, so the trigger lay
+# inside the wall and Raft never took hold; turned round to face the sea, 0.3 m off the wall like the ladder tower's)
+place Block_Ladder_Tier3 - at -6 -8.55 h=-0.6 yaw=0
+place Block_Ladder_Tier3 - at -8.55 6 h=-0.6 yaw=90
+place Block_Ladder_Tier3 - at 12.55 16 h=-0.6 yaw=270
 call mastbridgez z1=-3.75 z2=3.75 x=-6 h=1.9
 call mastbridge x1=-3.75 x2=7 z=5 h=1.9
 call mastbridgez z1=10.5 z2=13.75 x=10 h=1.9
+# (each mast deck stops 0.75 m short of its ends - at the caisson caps a gap a walker falls through to the sea: a short
+# deck piece closes each caisson end, a 1.5 m one the yard end of the bridge to crane 2 (1.2 m short of the rock), G1 10-31)
+ramp Block_Floor_Tier3 from -6 -3.75 1.9 to -6 -3 1.9 len=1.5 top=0
+ramp Block_Floor_Tier3 from -6 3 1.9 to -6 3.75 1.9 len=1.5 top=0
+ramp Block_Floor_Tier3 from -3.75 5 1.9 to -3 5 1.9 len=1.5 top=0
+ramp Block_Floor_Tier3 from 10 13 1.9 to 10 13.75 1.9 len=1.5 top=0
+ramp Block_Floor_Tier3 from 10 9.75 1.9 to 10 11.25 1.9 len=1.5 top=0
 
 # --- The yard: foreman's board, the smelter under its roof, the sand and clay bank, the store -------------------------
 place Zone_Trigger yardzone at 13 4 h=2.6
