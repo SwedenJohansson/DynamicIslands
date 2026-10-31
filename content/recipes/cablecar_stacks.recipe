@@ -197,6 +197,8 @@ prop vault on.open=show|landing\nmessage||Out on the summit's far side, the expr
 note mastbox Mast's key box | A tin box on the mast's platform, forty kilometres of sea round you: the summit vault's key.
 loot mastbox story:vaultkey*1
 prop mastbox loot.refill=0
+prop mastbox if.open=quest|11
+prop mastbox else.open=message||The tin box is wired to the platform. Climb the signal mast first.
 note ticketbox Ticket booth box | The ticket booth's box: unsold tickets, a thermos, rope.
 loot ticketbox Rope*2;PlasticBottle_Water*2;Plastic*2
 prop ticketbox loot.refill=0
