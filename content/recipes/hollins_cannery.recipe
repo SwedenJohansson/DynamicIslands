@@ -168,7 +168,7 @@ note rolfnote Spotter pilot Rolf Iversen's note | Spotting herring for the canne
 note foremandesk Foreman's desk | The foreman's desk drawer: pay slips, a whistle, and a rusted key on a wire ring.
 loot foremandesk story:cagekey*1;Rope*2
 prop foremandesk loot.refill=0
-prop foremandesk if.open=has|story:deskkey|1
+prop foremandesk if.open=quest|10\nhas|story:deskkey|1
 prop foremandesk else.open=message||The desk drawer is locked. The shift log says the foreman left his key ring at the radio mast on Smokehouse Hill.
 note pimbox Pim's tin box | Pim's tin box from under the bench: the canning line's last tins, and a lantern.
 loot pimbox Cooked_Mackerel*4;Placeable_Lantern_Basic*1;Plank*6;Rope*3;Scrap*3

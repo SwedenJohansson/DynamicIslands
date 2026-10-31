@@ -245,7 +245,7 @@ prop jammedcrate else.open=message||The crate's lid is nailed down tight - the n
 
 prop winch obj.name=winch
 prop winch beh.use=Turn the winch
-prop winch if.use=has|story:crank|1
+prop winch if.use=quest|6\nhas|story:crank|1
 prop winch on.use=message||The crank bites. Chains rattle, and the bridge slides out from the mayor's pillar across the gap.\nopen|drawbridge
 prop winch else.use=message||The winch has no crank. The toll notice said it went down with the diver's trailer in the bay.
 prop drawbridge obj.name=drawbridge

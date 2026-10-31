@@ -373,7 +373,7 @@ prop rodcove loot.refill=0
 note stationlocker Station locker | The weather station's locker, behind the instrument panel: an electric smelter, an advanced biofuel extractor, an anchor for any storm.
 loot stationlocker Blueprint_SmelterElectric*1;Blueprint_BiofuelExtractorAdvanced*1;Blueprint_AnchorStationaryAdvanced*1;CopperIngot*3
 prop stationlocker loot.refill=0
-prop stationlocker if.open=take|story:rod|3
+prop stationlocker if.open=quest|13\ntake|story:rod|3
 prop stationlocker else.open=message||The locker is behind the instrument panel - and the panel's lightning line is broken in three places. It takes three rods.
 
 prop vane obj.name=vane

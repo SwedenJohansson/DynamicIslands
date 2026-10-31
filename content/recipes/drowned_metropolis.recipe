@@ -189,7 +189,7 @@ prop strongbox loot.refill=0
 note vault Meridian Vault | The city vault of Meridian: what the council saved from the sea.
 loot vault Blueprint_BatteryAdvanced*1;Battery_Advanced*2;TitaniumIngot*3;Glass*6
 prop vault loot.refill=0
-prop vault if.open=take|story:keycard|3
+prop vault if.open=quest|18\ntake|story:keycard|3
 prop vault else.open=message||The vault door has three card slots. All three must be filled.
 prop pumpstore obj.name=pumpstore
 note pumpstore Company pump store | The Ironreef Mining Company's pump store, padlocked: hoses, a pump's spare parts and the crew's last rations. A tag: "Meridian contract - key with the foreman at Ironreef."

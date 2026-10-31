@@ -364,7 +364,7 @@ prop cockpitbox loot.refill=0
 note footlocker Commander's footlocker | Major Vale's footlocker: the field's radio and aerial plans, his flying helmet, his binoculars, spare batteries for the tower - and a photograph of four aircraft over the runway.
 loot footlocker Blueprint_Reciever*1;Blueprint_Antenna*1;Hat_Pilot*1;Binoculars*1;Battery*2
 prop footlocker loot.refill=0
-prop footlocker if.open=has|story:runwaylit|1
+prop footlocker if.open=quest|18\nhas|story:runwaylit|1
 prop footlocker else.open=message||The footlocker is padlocked, a tag on the lock: FOR WHOEVER BRINGS THEM HOME.
 note hangarbox Hangar toolbox | A mechanic's toolbox: spanners, bolts, a can of oil.
 loot hangarbox Bolt*4;Nail*8;Scrap*3
@@ -390,12 +390,12 @@ prop towerlights obj.name=towerlights
 prop towerlights beh.hidden=1
 prop radio obj.name=radio
 prop radio beh.use=Fit the crystal and call the flight
-prop radio if.use=has|story:crystal|1\nsignal|power
+prop radio if.use=quest|8\nhas|story:crystal|1\nsignal|power
 prop radio on.use=message||The crystal clicks home and the set warms up. Through the static, faint and far: "Albatross tower, this is Long Patrol. Four aircraft. Fuel for ten minutes. Request runway lights, one by one, from the far end..."\ngive||story:landingorder*1\nsound||event:/raft/radar/radar_on
 prop radio else.use=message||The radio is dead: it needs power from the bunker, and its crystal went into the lagoon.
 prop lamp1 obj.name=lamp1
 prop lamp1 beh.use=Switch on the first runway lamp (far end from the tower)
-prop lamp1 if.use=has|story:landingorder|1
+prop lamp1 if.use=quest|9\nhas|story:landingorder|1
 prop lamp1 on.use=message||The first lamp blazes along the runway.\nshow|lamp1light\nsignal||l1\nsound||event:/raft/radar/button
 prop lamp1 else.use=message||A runway lamp. Nobody is asking for lights - yet.
 prop lamp2 obj.name=lamp2

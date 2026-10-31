@@ -237,7 +237,7 @@ prop linehub else.use=message||The line is dead - the generator at the first hut
 prop cabinetpad obj.name=cabinetpad
 prop cabinetpad beh.use=Type the cabinet code
 prop cabinetpad lock.code=7241
-prop cabinetpad if.use=has|story:linewire|1
+prop cabinetpad if.use=quest|5\nhas|story:linewire|1
 prop cabinetpad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The keypad chirps and the telegraph cabinet unlocks.\nsignal||cabinet
 prop cabinetpad else.use=message||The keypad is dark: no current on the line.
 note cabinet Telegraph cabinet | The telegraph cabinet: the line's power plans, and a key on a hook labelled CAGE.

@@ -119,7 +119,7 @@ prop lookoutchest loot.refill=0
 
 prop rocket obj.name=rocket
 prop rocket beh.use=Fit the spark plug
-prop rocket if.use=take|story:sparkplug|1
+prop rocket if.use=quest|5\ntake|story:sparkplug|1
 prop rocket on.use=sound||event:/raft/radar/lever\nmessage||The plug screws home. Something in the rocket ticks, then coughs a long tongue of fire into the sand - and goes quiet. It will never fly. But it lit, Odo.\ngive||story:rocketlit*1
 prop rocket else.use=message||The rocket's igniter is an empty socket. Odo's plug is somewhere out of the sand.
 

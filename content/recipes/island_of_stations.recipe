@@ -484,7 +484,7 @@ prop rations loot.refill=0
 
 prop terminal obj.name=terminal
 prop terminal beh.use=Enter the Sequence
-prop terminal if.use=has|story:seqcard|5
+prop terminal if.use=quest|27\nhas|story:seqcard|5
 prop terminal on.use=message||You type the five numbers. The terminal beeps, prints a card - and the vault door slides open. The counter on the wall starts: 60... 59... 58...\ngive||story:accesscard*1\nopen|vaultdoor\nsound||event:/exploring/obstacles/keypad/keypad_selene_correct\nwait|60\nclose|vaultdoor\nmessage||The counter reaches zero. The vault door slams shut - and for a moment every light in the hatch flickers. Enter the Sequence again to reopen it.
 prop terminal else.use=message||A keyboard and a green screen: ENTER SEQUENCE. You need all five cards.\nsound||event:/exploring/obstacles/keypad/keypad_selene_error
 prop vaultdoorL obj.name=vaultdoor

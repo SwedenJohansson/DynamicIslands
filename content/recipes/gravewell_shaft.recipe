@@ -175,7 +175,7 @@ prop pumpkeybox loot.refill=0
 
 prop cage obj.name=cage
 prop cage beh.use=Ride the cage elevator down
-prop cage if.use=has|story:cagefuse|1
+prop cage if.use=quest|6\nhas|story:cagefuse|1
 prop cage else.use=message||The cage is dead - its fuse box is empty. (The entry permit says the keeper takes the fuse home to Pump Ridge.)
 prop cage on.use=give||story:cagedown*1\nmessage||The cage rattles down the shaft, past the galleries' lights, to the floor.\nteleport|pitzone
 prop pitzone obj.name=pitzone
