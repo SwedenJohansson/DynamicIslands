@@ -165,7 +165,7 @@ prop trunk tint.amount=0.5
 note cashbox Ringmaster's cash box | Albani's cash box: the takings of a whole season, his plans for the cook's little planters, a captain's hat he never wore.
 loot cashbox TradeToken*10;Blueprint_Cropplot_Small_Tier3*1;Hat_Captain*1;Cooked_GenericMeat*2
 prop cashbox loot.refill=0
-prop cashbox if.open=has|story:whip|1
+prop cashbox if.open=quest|9\nhas|story:whip|1
 prop cashbox else.open=message||A brass cash box with a small keyhole. The key, the company says, is in the ringmaster's whip.
 note strongbox Strongman's box | The strongman's box: iron weights, a jar of liniment, rope.
 loot strongbox MetalIngot*1;HealingSalve*1;Rope*2

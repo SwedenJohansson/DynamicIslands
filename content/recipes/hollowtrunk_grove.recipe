@@ -238,7 +238,7 @@ prop trunk5vines obj.name=trunk5vines
 prop trunk5vines on.use=hide|\nshow|trunk5chest\nmessage||The machete clears trunk 5's foot. A chest under the vines.
 prop towerpump obj.name=towerpump
 prop towerpump beh.use=Fit the parts to the pump
-prop towerpump if.use=take|story:pumppart|3
+prop towerpump if.use=quest|7\ntake|story:pumppart|3
 prop towerpump on.use=message||Valve, gasket, rod. The pump thumps; water runs down the pipes to the greenhouse and gurgles away into the roots of trunk 1. The seed store's lock was on the water: it opens.\ngive||story:water*1\nshow|seedstore\nshow|rootszone
 prop towerpump else.use=message||The water tower's pump is stripped. The rota says: "Pump parts kept in the trunks - 3, 4 and 5."
 note rangercache Ranger locker | Oda's locker at trunk 1: a lantern, rope and honey.

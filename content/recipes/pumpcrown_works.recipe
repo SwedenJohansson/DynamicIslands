@@ -196,7 +196,7 @@ place RT_Pillar - at -44.92 -53.11 ground sit sy=0.4
 place RT_PowerBox pc_breaker at -44.92 -53.11 ground y=1.25 yaw=72.65
 prop pc_breaker obj.name=pc_breaker
 prop pc_breaker beh.use=Tape and switch off the shorted breaker
-prop pc_breaker if.use=!signal|pc_breaker\ntake|story:tape|3
+prop pc_breaker if.use=quest|9\n!signal|pc_breaker\ntake|story:tape|3
 prop pc_breaker on.use=signal||pc_breaker\nhide|pc_shock\ngive||story:pc_breaker*1\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||Three rolls of tape round the bare ends - the breaker clunks off. The water by the sunk house goes quiet.
 prop pc_breaker else.use=message||Bare copper, sparking. It needs three rolls of insulating tape before anyone touches it.
 place Loot_Chest pc_locker at -35.53 -57.35 ground sit yaw=252.65

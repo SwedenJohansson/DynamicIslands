@@ -212,7 +212,7 @@ note coil3 East root | The big root's top, a coil tied off on it.
 loot coil3 story:ropecoil*1;Bolt*2
 prop coil3 loot.refill=0
 prop anchorwinch beh.use=Rig the anchor
-prop anchorwinch if.use=take|story:ropecoil|3
+prop anchorwinch if.use=quest|5\ntake|story:ropecoil|3
 prop anchorwinch on.use=message||Three coils, spliced and wound on. The anchor line sings tight toward the Heart - and the anchor box's catch drops.\ngive||story:rigged*1\nshow|anchorbox
 prop anchorwinch else.use=message||The anchor's winch, empty. The roll call: "Coils left on the ledges - stair, ledge, big root."
 note rangercache Oda's locker | Oda's locker on the shelf: her spare lamp, rope and a battery.
@@ -234,7 +234,7 @@ prop shelfzone zone.message=The root shelf. The Seedkeepers' last camp: two tent
 story pilotkey|Pilot's key|Placeable_Lantern_Metal|A hut key on a string, from the cockpit locker of the sunk supply plane.
 prop pilotlock obj.name=pilotlock
 prop pilotlock beh.use=Open the pilot's locker with her key
-prop pilotlock if.use=!signal|pilot\ntake|story:pilotkey|1
+prop pilotlock if.use=quest|9\n!signal|pilot\ntake|story:pilotkey|1
 prop pilotlock on.use=signal||pilot\nshow|pilotchest\nmessage||The key turns stiffly. Inside the locker: her flight log and her spares.
 prop pilotlock else.use=message||The pilot's locker, padlocked. The gantry box said she kept the key round her neck - and she flew the plane.
 prop pilotchest obj.name=pilotchest

@@ -197,7 +197,7 @@ prop coat loot.refill=0
 note loftchest Sail loft chest | The sail loft's chest: the Second Wind's sail, folded square and roped.
 loot loftchest story:sailcloth*1;Rope*3
 prop loftchest loot.refill=0
-prop loftchest if.open=has|story:loftkey|1
+prop loftchest if.open=quest|8\nhas|story:loftkey|1
 prop loftchest else.open=message||The sail loft's chest is locked. Brandvold's letter says where the key is.
 note gift The shipwright's gift | Brandvold's gift for whoever launched her: his plans for the yard's big planting beds, his best hammer, a ship's lantern, birch seed for the next trees, a purse of tokens.
 loot gift Blueprint_Cropplot_Large_Tier3*1;Hammer*1;Placeable_Lantern_Metal*1;Seed_Birch*4;TradeToken*8

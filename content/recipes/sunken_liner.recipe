@@ -309,7 +309,7 @@ prop stewardcab else.open=message||The steward's cabinet is locked. The survivor
 note pursersafe Purser's safe | The purser's safe: a velvet box with the Polar Star in it - and the key of the ship's pay chest.
 loot pursersafe story:sapphire*1;story:paykey*1
 prop pursersafe loot.refill=0
-prop pursersafe if.open=has|story:pursercode|1
+prop pursersafe if.open=quest|9\nhas|story:pursercode|1
 prop pursersafe else.open=message||A safe with a combination dial, dead still under the water. The combination was kept "away from the purser".
 note paychest Ship's pay chest | The ship's pay chest: the crew's wages for a voyage that never ended, the captain's spare hat, crystal from the first-class bar - and the plans of a salvage diver's lamp somebody tucked in on the last night.
 loot paychest Blueprint_HeadLight*1;Hat_Captain*1;TradeToken*15;Glass*6;MetalIngot*6

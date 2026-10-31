@@ -186,7 +186,7 @@ note exhibit7 Exhibit 7 card | EXHIBIT 7 - A TIDE TABLET, SEVENTH DYNASTY OF THE
 note cursafe Curator's safe | The curator's safe: Professor Kett's field journal, wrapped in oilcloth, and the museum's petty cash.
 loot cursafe story:journal*1;Glass*2;Rope*2
 prop cursafe loot.refill=0
-prop cursafe if.open=signal|safe\nhas|story:safekey|1
+prop cursafe if.open=quest|8\nsignal|safe\nhas|story:safekey|1
 prop cursafe else.open=message||The safe has two locks: a keypad beside it (four digits) and a keyhole for the curator's own key.
 prop cursafe on.open=show|ambushzone\nmessage||Kett's journal. On its first page, a sketch of a sundial on a flat-topped mesa - and under it: "the Sunstaff casts the way".
 

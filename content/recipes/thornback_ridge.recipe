@@ -153,7 +153,7 @@ prop campzone zone.message=The hermit's camp. A warm fire, a journal nailed to a
 story boathousekey|Boathouse key|Placeable_Lantern_Metal|The hermit's boathouse key, from his sunk boat.
 prop boatlock obj.name=boatlock
 prop boatlock beh.use=Open the hermit's boathouse locker
-prop boatlock if.use=!signal|boathouse\ntake|story:boathousekey|1
+prop boatlock if.use=quest|7\n!signal|boathouse\ntake|story:boathousekey|1
 prop boatlock on.use=signal||boathouse\nshow|boatchest\nmessage||The key turns in the salt-stiff lock. Inside: his tackle and a log in a tin.
 prop boatlock else.use=message||The boathouse locker, locked. The eyrie box said the key went down with the boat.
 prop boatchest obj.name=boatchest

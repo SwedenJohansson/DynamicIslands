@@ -225,7 +225,7 @@ prop treasure9611 treasure.loot=story:surveybolt*1;Scrap*2
 
 prop framelever obj.name=framelever
 prop framelever beh.use=Set the survey bolt in the pendulum frame
-prop framelever if.use=take|story:surveybolt|1
+prop framelever if.use=quest|7\ntake|story:surveybolt|1
 prop framelever on.use=signal||power\ngive||story:power*1\nmessage||The bolt clicks into the frame. The bob swings - and in the shed the generator coughs and runs.\nsound||event:/exploring/obstacles/keypad/keypad_correct
 prop framelever else.use=message||The frame's reference socket is empty. The hall rules say where the spare bolt was buried.
 prop bob obj.name=bob

@@ -154,7 +154,7 @@ prop needlesup beh.hidden=1
 prop needlesflat obj.name=needlesflat
 prop lever obj.name=lever
 prop lever beh.use=Pull the compass ring's lever
-prop lever if.use=has|story:leverpin|1\n!signal|needles
+prop lever if.use=quest|7\nhas|story:leverpin|1\n!signal|needles
 prop lever on.use=signal||needles\nhide|needlesflat\nshow|needlesup\ngive||story:needles*1\nmessage||With a grinding of iron every needle on the quay swings round - and points straight up at the sky.\nsound||event:/exploring/obstacles/keypad/keypad_correct
 prop lever else.use=message||The lever will not move: its pin is gone. A tag hangs on the stump - 'Pin to the survey mast, by order. E.H.' (If the needles already point up, whatever pulls them is up there.)
 

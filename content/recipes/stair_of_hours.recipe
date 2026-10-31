@@ -164,7 +164,7 @@ prop arrayview obj.name=arrayview
 prop vaulthatch obj.name=vaulthatch
 prop telescope obj.name=telescope
 prop telescope beh.use=Look through Halvard's telescope
-prop telescope if.use=has|story:lens|1\n!signal|sighted
+prop telescope if.use=quest|7\nhas|story:lens|1\n!signal|sighted
 prop telescope on.use=signal||sighted\ngive||story:sighted*1\nhide|vaulthatch\nshow|vault\nmessage||Far out across the water, 35 m over the sea: four magnet arms round a core, sparking blue. At the telescope's foot, the vault's hatch springs open.\ncamera|telescope|arrayview|5|30
 prop telescope else.use=message||The telescope shows only blur - its lens is missing. (Or, if it has its lens: the crown is still there, sparking blue out over the sea.)
 

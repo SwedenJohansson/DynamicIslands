@@ -213,7 +213,7 @@ note chart The tide-keeper's chart | (a chart of the stacks, the channels inked 
 note strongbox Tide-keeper's strongbox | Tamsin's strongbox: the plans for the lamp she wore on night tides, her tide tables, a jar of coins, dried fish.
 loot strongbox Blueprint_HeadLight*1;TradeToken*6;Cooked_Herring*3;Rope*2
 prop strongbox loot.refill=0
-prop strongbox if.open=has|story:heronpearl|1
+prop strongbox if.open=quest|8\nhas|story:heronpearl|1
 prop strongbox else.open=message||A strongbox with a pearl-shaped hollow in its lid instead of a keyhole.
 prop heronnest obj.name=heronnest
 prop heronnest beh.use=Take the pearl from the heron's nest
@@ -238,7 +238,7 @@ prop shrinegate beh.moveTime=3
 prop shrinegate beh.moveMode=switch
 prop shrinebell obj.name=shrinebell
 prop shrinebell beh.use=Ring the heron's bell (the tide takes you home)
-prop shrinebell if.use=has|story:heronpearl|1
+prop shrinebell if.use=quest|8\nhas|story:heronpearl|1
 prop shrinebell on.use=message||The bell's note goes out over the stacks. The water under the shrine heaves - a long swell lifts you off the rock, through the channels, out past the mouth -\nsound||event:/exploring/obstacles/bicyclebell\nwait|2\nteleport|tidehouse\nmessage||- and sets you down on the tide-keeper's landing, dripping.
 prop shrinebell else.use=message||The heron's bell. Tamsin wrote: the pearl pays for the trip.
 prop tidehouse obj.name=tidehouse
