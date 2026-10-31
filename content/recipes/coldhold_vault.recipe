@@ -345,6 +345,8 @@ note ventnote Vent keeper's note | VENT KEEPER\n\nI keep the vault breathing. Th
 note ventchest Vent shaft chest | The vent keeper's chest: the flood door's interlock, in oilcloth.
 loot ventchest MetalIngot*2;Bolt*2;Rope*2
 prop ventchest loot.refill=0
+prop ventchest if.open=quest|26
+prop ventchest else.open=message||The chest is frozen shut to the cairn. The vent keeper's note says what is inside - find it first.
 prop ventchest on.open=give||story:interlock*1\nmessage||The interlock: a brass key as long as your forearm. The flood door's lever will take it.
 note ventcavechest Vent keeper's bedroll | The vent keeper's bedroll and box: tins, a lamp wick, rope.
 loot ventcavechest Rope*3;Scrap*2;Raw_GenericMeat*2
