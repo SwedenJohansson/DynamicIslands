@@ -188,7 +188,7 @@ prop lockbox loot.refill=0
 note hoard Scrap king's hoard | The scrap king's hoard, on the fortress's deck: everything worth keeping that ever washed up on the crescent.\n\nScratched inside the lid: "Barred the hall and took the back way down to the sea. If you got past my dog, you've earned the rest. The town's yours - keep the gate shut at night. - K."
 loot hoard Blueprint_ZiplineBase*1;Blueprint_ZiplineTool*1;MetalIngot*6;Scrap*10;Battery*2
 prop hoard loot.refill=0
-prop hoard if.open=has|story:crownkey|1
+prop hoard if.open=quest|25\nhas|story:crownkey|1
 prop hoard else.open=message||The hoard is chained shut, a padlock shaped like a crown on the chain. The King took its key with him - down the back way to the sea.
 note kingnote Scrap king Kasimir Dunne's note | KASIMIR DUNNE, KING OF THE SCRAPYARD - TO WHOEVER IS NEXT\n\nI fed that dog with my own hands for six years. Bolts in his collar, the best scraps from the tithe. Then the tithe stopped coming, and he got hungry, and he went down to the pit and found friends.\n\nThe town hates me. They are right to. A king who takes a tenth and can't keep the dogs out isn't a king, he's a thief with a chair.\n\nI chained the hoard and barred the hall, and I came down here by the back way. My strongroom's out in the bay, where Pearl sank it for me - the crown key is in its chest. Nobody gets the hoard who hasn't cleared the pit and swum for it.\n\nI'm going out to the strongroom to sit with what's left of my kingdom. If I'm not back, it's yours.
 note pearlnote Diver Pearl Ash's note | (Grease pencil on a sheet of tin, dry in the air pocket)\n\nThe King paid me forty bolts to weld him a shack and sink it in the bay. "A strongroom nobody can rob," he said. "Not without gills."\n\nIt took me nine days. I welded the roof on underwater with the air trapped in it, and I was proud of it.\n\nHe came out last night, rowing alone, and swam down and sat here in the air. He gave me the crown key and told me to leave it in his chest. Then he swam out of the door and kept swimming. Out to sea. I don't know where he thought he was going.\n\nI put the key where he said. It's for whoever cleans up his mess.
@@ -209,7 +209,7 @@ note pitsign King's pit sign | Painted on a sheet of scrap: KING'S PIT - SCRAPPE
 
 prop winch obj.name=winch
 prop winch beh.use=Turn the gate winch
-prop winch if.use=has|story:gatekey|1
+prop winch if.use=quest|6\nhas|story:gatekey|1
 prop winch on.use=message||The key turns, the winch clanks - and the gate trailer rises on its chains.\nopen|gate\nsound||event:/exploring/obstacles/varuna/garagedoor_open
 prop winch else.use=message||The winch is locked. The keyhole wants the harbour master's key.
 prop gate obj.name=gate
