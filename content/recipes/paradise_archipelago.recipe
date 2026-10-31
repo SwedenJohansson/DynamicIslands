@@ -478,7 +478,7 @@ prop yachtchest loot.refill=0
 note crewlocker Crew's locker | The crew's locker: five sets of overalls, radios with dead batteries, and the plan of the job pinned inside the door.
 loot crewlocker Battery*1;Rope*3;Plastic*3
 prop crewlocker loot.refill=0
-prop crewlocker if.open=has|story:crewkey|1
+prop crewlocker if.open=quest|4\nhas|story:crewkey|1
 prop crewlocker else.open=message||The crew's locker is padlocked. The planner's briefing said the key is in her cabin chest.
 prop crewlocker on.open=journal|The plan of the job|Five jobs, in order: Sol's breakers on the power islet (blue, green, red) for the blackout. Noa's tunnel from the marina floor under the third pier up into the casino. Marco's card for the lasers - thirty seconds. Iris's time lock - twenty seconds. Out to the getaway boat at the casino's own dock.
 note servicebox Electrician's toolbox | Sol's toolbox in the service room: wire, tape - and his insulated fuse puller.
@@ -529,17 +529,17 @@ prop slotmachine loot.refill=0
 
 prop breaker1 obj.name=breaker1
 prop breaker1 beh.use=Pull the blue breaker
-prop breaker1 if.use=has|story:fusepuller|1
+prop breaker1 if.use=quest|9\nhas|story:fusepuller|1
 prop breaker1 on.use=message||The blue breaker comes out with a fat spark. Across the water, the casino's sign flickers.\nsignal||b1\nsound||event:/raft/radar/lever
 prop breaker1 else.use=message||Live breakers - you'd want the electrician's insulated fuse puller for these.
 prop breaker2 obj.name=breaker2
 prop breaker2 beh.use=Pull the green breaker
-prop breaker2 if.use=has|story:fusepuller|1\nsignal|b1
+prop breaker2 if.use=quest|9\nhas|story:fusepuller|1\nsignal|b1
 prop breaker2 on.use=message||The green breaker comes out. The casino's sign goes dark.\nsignal||b2\nsound||event:/raft/radar/lever
 prop breaker2 else.use=message||The backup hums and the breakers snap back - wrong order (or no fuse puller). Blue, then green, then red.
 prop breaker3 obj.name=breaker3
 prop breaker3 beh.use=Pull the red breaker
-prop breaker3 if.use=has|story:fusepuller|1\nsignal|b2
+prop breaker3 if.use=quest|18\nhas|story:fusepuller|1\nsignal|b2
 prop breaker3 on.use=message||The red breaker comes out - and across the water every red light on the casino goes dark. Blackout.\ngive||story:blackout*1\nsignal||blackout\nhide|camlights\nsound||event:/raft/radar/radar_off
 prop breaker3 else.use=message||The backup hums and the breakers snap back - wrong order (or no fuse puller). Blue, then green, then red.
 prop camlights obj.name=camlights
@@ -548,12 +548,12 @@ prop tunnelgrate beh.use=Push the grate where its bolts are rusted through
 prop tunnelgrate beh.turn=-80
 prop tunnelgrate beh.moveTime=2
 prop tunnelgrate beh.moveMode=switch
-prop tunnelgrate if.use=has|story:divemap|1
+prop tunnelgrate if.use=quest|11\nhas|story:divemap|1
 prop tunnelgrate on.use=message||Just where the map said: the bottom bolts are rusted through. The grate swings in.\nopen|tunnelgrate\nsound||event:/exploring/utopia/gate_metal_open
 prop tunnelgrate else.use=message||A heavy grate over a dark tunnel mouth, bolted fast - as far as you can see.
 prop laserpanel obj.name=laserpanel
 prop laserpanel beh.use=Swipe the croupier's card
-prop laserpanel if.use=has|story:dealercard|1\nsignal|blackout
+prop laserpanel if.use=quest|14\nhas|story:dealercard|1\nsignal|blackout
 prop laserpanel on.use=message||The panel blinks green and the red beams across the corridor die. Thirty seconds - not one more.\nhide|lasers\nsound||event:/exploring/obstacles/keypad/keypad_correct\nwait|30\nshow|lasers\nmessage||The lasers snap back on.
 prop laserpanel else.use=message||CORRIDOR SECURED. The panel wants a croupier's card - and with the alarms still live, it would only raise them.
 prop laserwall obj.name=lasers
