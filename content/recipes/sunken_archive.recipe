@@ -41,6 +41,18 @@ call r2_pad x=-60 z=-54 r=11 h=3
 # Reading Hill: summit 16 m, base r 18, the trail from the foot toward the house
 call hw_mount x=-6 z=66 b=18 h=16
 call hw_trail x=-6 z=66 b=18 h=16 a0=-137.94 turn=300 n=34 h0=3
+# (R 10-31: reach - the trail's foot pad stood 3 m over the sea on Reading Hill's drowned rim, nothing round it above
+# the water - the whole hill (sa_trail, sa_summit, the reading mast and its deck box; quest steps 11-12) out of reach
+# from the sea: steps down from the foot into the water, 0.55 m each, toward the archive's side (clear of the trail's pads))
+brush flatten at -19.40 49.38 r=2.2 s=20 frames=200 h=2.45
+brush flatten at -19.71 48.22 r=2.2 s=20 frames=200 h=1.90
+brush flatten at -20.02 47.06 r=2.2 s=20 frames=200 h=1.35
+brush flatten at -20.33 45.90 r=2.2 s=20 frames=200 h=0.80
+brush flatten at -20.65 44.74 r=2.2 s=20 frames=200 h=0.25
+brush flatten at -20.96 43.58 r=2.2 s=20 frames=200 h=-0.30
+brush flatten at -21.27 42.42 r=2.2 s=20 frames=200 h=-0.85
+brush flatten at -21.58 41.26 r=2.2 s=20 frames=200 h=-1.40
+clear from -19.40 49.38 to -21.58 41.26 r=3.2 body
 clear at -7 -8 r=14
 
 # --- The archive: three of the radio tower's rooms stacked, turned to face north; the flooded stacks below (broken
@@ -61,7 +73,9 @@ place "VP_DecorationPrefabBase_Bookshelf Filled 1" - at -5.3 1.5 sit yaw=90
 place "Box Small" cardbox1 at -1 3.6 sit yaw=-15
 place "Box Small" cardbox2 at -4.6 -3.6 sit yaw=30
 push at 0 0 y=3.05
-call rt_storey f2=RT_WallDoor1 f1=RT_WallWindow1 l2=RT_WallWindow1 r2=RT_WallWindow1 b1=RT_WallWindow2 b2=RT_WallWindow2
+# (R 10-31: reach - RT_WallDoor1's narrow doorway let the play's walker through but not the reach grid: the reading room
+# zone and the archivist's letter (quest steps 1-2) unreached - a 3 m open bay onto the jetty instead, as on Stormworks)
+call rt_storey f2=none f1=RT_WallWindow1 l2=RT_WallWindow1 r2=RT_WallWindow1 b1=RT_WallWindow2 b2=RT_WallWindow2
 place RT_Floor - at 0 4.5 y=3.05
 place "Table Office" indexdesk at -3 2.6 sit yaw=180
 place RT_RadarScreen indexterminal at -3 2.35 y=1.08 sit yaw=180 scale=0.5
@@ -180,6 +194,9 @@ scatter "Pickup_Landmark_Tree_Palm 3" 4 at 0 0 r=49.0 seed=4556 free=5
 scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=49.0 seed=4565 free=3
 # RAFT2 10-26 b: no plants on the hills' steep rock faces
 call r2_bareflank x=-6 z=66 b=18 h=16
+# (R 10-31: reach - the walk up Reading Hill's trail stopped at 7 m: the scatter's boulders and trees stood on its pads (the
+# trail was cleared before they came) - nobody got to the top or the reading mast: taken off the hill below its top)
+clear at -6 66 r=20 all only=Boulder|Palm|Mango|Bamboo below=15.4
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=90 deep=5 n=2
 
