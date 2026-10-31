@@ -257,7 +257,7 @@ note owennote Blaster Owen Tarr's note | O. TARR, BLASTER - THE POWDER CAVE\n\nT
 note reliquary Reliquary | The Choir's reliquary: a bell rope knotted thirteen times, candles, and a hymn book with every page blank.
 loot reliquary story:bellrope*1;Placeable_GlassCandle*2;Cooked_Mackerel*2
 prop reliquary loot.refill=0
-prop reliquary if.open=has|story:relickey|1
+prop reliquary if.open=quest|19\nhas|story:relickey|1
 prop reliquary else.open=message||The reliquary is locked. Wren says its key went up Watcher's Fell with Abel, the Choir's watcher.
 note wrenbundle Wren's bundle | Sister Wren's bundle: bandages, water, and a whistle she says the dogs hate.
 loot wrenbundle HealingSalve*3;Canteen_Water*2;Arrow_Metal*6
@@ -340,7 +340,7 @@ prop wrencage survivor.signal=wrenfree
 prop wrencage survivor.line=You came up the terraces? Then she has heard you. I'll wait on your raft - I've had enough of quarries.
 prop chapelbell obj.name=chapelbell
 prop chapelbell beh.use=Tie the rope on and ring the Choir's bell
-prop chapelbell if.use=take|story:bellrope|1
+prop chapelbell if.use=quest|21\ntake|story:bellrope|1
 prop chapelbell on.use=signal||bell\ngive||story:bellrung*1\nhide|mirror1rx\nshow|mirror1rx2\nsound||event:/amb/wreck_creaks\nmessage||The bell rings once, flat and loud. All five mirrors turn a hand's width toward the pit.
 prop chapelbell else.use=message||The bell has no rope. The Choir keeps it in the reliquary.
 
@@ -360,7 +360,7 @@ prop crane_cab zone.radius=2
 prop crane_cab zone.message=The crane cab. The claw lever is dead without a fuse.
 prop claw obj.name=claw
 prop claw beh.use=Fit the fuse and work the claw
-prop claw if.use=signal|hookmoved\ntake|story:fuse|1
+prop claw if.use=quest|26\nsignal|hookmoved\ntake|story:fuse|1
 prop claw on.use=signal||claw\nhide|sluicegate\nhide|hookdown\nshow|hookup\nshow|lure\ngive||story:sluiceup*1\nmessage||The claw bites, the hook lifts - and the sluice grate swings up off the road. Under it, on the stones, something glows.
 prop claw else.use=message||Dead. The hook must be on the grate, and the claw needs a fuse.
 prop sluicegate obj.name=sluicegate
