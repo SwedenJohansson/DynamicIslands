@@ -161,7 +161,7 @@ namespace DynamicIslands.Editor
 		// ---- Keys --------------------------------------------------------------------------------------------------
 
 		/// <summary>The keys whose number says the object's place in the file (Behaviours, CodeLock, QuestItemPickups).</summary>
-		static readonly int[] IndexBases = { Behaviours.StateBase, Behaviours.DoneBase, Behaviours.SharedOnceBase, CodeLock.LockKeyBase, QuestItemPickups.KeyBase, Survivors.KeyBase, BossPhases.KeyBase, Islanders.TalkedBase, Collectibles.KeyBase, TriggerSounds.KeyBase, TriggerZone.StoryLootBase, Behaviours.StoryGivenBase, RaftVending.PackageKeyBase };
+		static readonly int[] IndexBases = { Behaviours.StateBase, Behaviours.DoneBase, Behaviours.SharedOnceBase, CodeLock.LockKeyBase, QuestItemPickups.KeyBase, Survivors.KeyBase, BossPhases.KeyBase, Islanders.TalkedBase, Collectibles.KeyBase, TriggerSounds.KeyBase, Behaviours.StoryGivenBase, RaftVending.PackageKeyBase };
 		const int TreasureLow = 0xC000;
 
 		/// <summary>Where each running number of an island's objects points: the object's place, and (pickups) which of its pickups.</summary>
@@ -308,8 +308,9 @@ namespace DynamicIslands.Editor
 			}
 			// (treasure dug up for good: KeepBase + its number among the island's treasure - it stayed put on an edit, and a
 			// story treasure came back or another one was gone; bughunt 10-30)
-			int[] countedBases = { CreatureSpawner.StateKeyBase, ContentState.LootKeyBase, TriggerZone.KeyBase, BuriedTreasure.KeepBase };
-			List<int>[] wasLists = { was.Creatures, was.Loot, was.Zones, was.Treasure }, nowLists = { now.Creatures, now.Loot, now.Zones, now.Treasure };
+			// (a zone's story-loot key is its ordinal too, as its "used" key - TriggerZone.StoryKey, verify 10-31)
+			int[] countedBases = { CreatureSpawner.StateKeyBase, ContentState.LootKeyBase, TriggerZone.KeyBase, BuriedTreasure.KeepBase, TriggerZone.StoryLootBase };
+			List<int>[] wasLists = { was.Creatures, was.Loot, was.Zones, was.Treasure, was.Zones }, nowLists = { now.Creatures, now.Loot, now.Zones, now.Treasure, now.Zones };
 			for (int k = 0; k < countedBases.Length; k++)
 				if (key >= countedBases[k] && key < countedBases[k] + 0x10000)
 				{

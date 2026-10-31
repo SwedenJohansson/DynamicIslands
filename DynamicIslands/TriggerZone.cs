@@ -16,8 +16,8 @@ namespace DynamicIslands.Editor
 	public class TriggerZone : MonoBehaviour
 	{
 		public const int KeyBase = 0x30000;
-		/// <summary>The zone gave its story items (loot): + its object index, once per world - GiveStoryOnce (after
-		/// TriggerSounds.KeyBase 0x150000 + 0xFFFF).</summary>
+		/// <summary>The zone gave its story items (loot): + its zone ordinal (as KeyBase), once per world - GiveStoryOnce
+		/// (after TriggerSounds.KeyBase 0x150000 + 0xFFFF).</summary>
 		public const int StoryLootBase = 0x160000;
 		/// <summary>The world file has the story-loot keys ("@storyloot=1", written by every save of this version). Read
 		/// without it, the file came from a version before them: a zone that fired there gave its story items already.</summary>
@@ -74,6 +74,9 @@ namespace DynamicIslands.Editor
 		/// <summary>Place among the island's zones (file order: the same on every machine).</summary>
 		public int Ordinal;
 		public int StateKey { get { return KeyBase + Ordinal; } }
+		/// <summary>Its story items were given: StoryLootBase + its ordinal - as StateKey, and as MarkOldStoryLoot writes it
+		/// for an old world file (by the object index, a zone after another object read another zone's key: verify 10-31).</summary>
+		public int StoryKey { get { return StoryLootBase + Ordinal; } }
 
 		/// <summary>A once-zone another player had first is tried again this often while the local player stays inside
 		/// (the host holds it for them about as long: their "only if" may fail, or they walk off without setting it off).</summary>
@@ -237,7 +240,7 @@ namespace DynamicIslands.Editor
 
 		/// <summary>
 		/// The zone's story items, once per world: they are the crew's, and a second key or quest item let players skip ahead
-		/// or broke "has"/"take" counts (player 10-30). Its own key (StoryLootBase + object index) is saved and shared like
+		/// or broke "has"/"take" counts (player 10-30). Its own key (StoryKey: StoryLootBase + zone ordinal) is saved and shared like
 		/// "used" and never made ready again, so a zone ready again after the regrow days gives its other loot but not these.
 		/// A zone that fires once was claimed already; one that fires on every walk-in is claimed here (two players walking
 		/// in together each got the crew's key). Without its object reference (tests): its first firing only.
@@ -245,7 +248,7 @@ namespace DynamicIslands.Editor
 		void GiveStoryOnce(IslandWorldState.Entry entry, IslandObjectRef r, List<KeyValuePair<string, int>> story, bool fired)
 		{
 			if (entry == null || r == null) { if (!fired) Give(story); return; }
-			int key = StoryLootBase + r.Index;
+			int key = StoryKey;
 			if (ContentState.IsUsed(entry, key)) { Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "' gave its story items before - not again"); return; }
 			if (Repeats && !Claims.May(entry, key, yes => { if (this != null && yes) GiveStoryOnce(entry, r, story, false); })) return;
 			Give(story);

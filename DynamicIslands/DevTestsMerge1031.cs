@@ -70,6 +70,74 @@ namespace DynamicIslands
 			if (ok) Log("PASS: mg tune fresh"); else Fail("mg tune fresh");
 		}
 
+		[ConsoleCommand(name: "CIMgZoneStoryKey", docs: "Dev: merge 10-31 - a zone's story-loot key is StoryLootBase + its zone ordinal (as the old-file migration writes it, not its object index), and an island edit carries it with the zone")]
+		public static void MgZoneStoryKeyCommand()
+		{
+			bool ok = true;
+			var made = new List<GameObject>();
+			string tmp = System.IO.Path.Combine(DynamicIslands.assetpath, "ci_mgzonekey.island");
+			try
+			{
+				// (1) a creature first, then two zones: zone A is ordinal 0 at object 1, zone B ordinal 1 at object 2
+				Func<int, int, TriggerZone> zone = (ordinal, index) =>
+				{
+					var go = new GameObject("cimgzonekey" + ordinal); go.SetActive(false); made.Add(go);
+					go.AddComponent<IslandObjectRef>().Index = index;
+					TriggerZone z = go.AddComponent<TriggerZone>(); z.Ordinal = ordinal; return z;
+				};
+				TriggerZone zoneA = zone(0, 1), zoneB = zone(1, 2);
+				Check(ref ok, zoneA.StoryKey == TriggerZone.StoryLootBase && zoneB.StoryKey == TriggerZone.StoryLootBase + 1 && zoneB.StoryKey - TriggerZone.StoryLootBase == zoneB.StateKey - TriggerZone.KeyBase,
+					"the story-loot key goes by the zone ordinal, as the used key (" + (zoneA.StoryKey - TriggerZone.StoryLootBase) + ", " + (zoneB.StoryKey - TriggerZone.StoryLootBase) + ")");
+				Check(ref ok, zoneB.StoryKey != TriggerZone.StoryLootBase + zoneB.GetComponent<IslandObjectRef>().Index, "not by the object index");
+				// an old world file: zone B fired (its used key set) - the migration marks zone B only
+				var e = new IslandWorldState.Entry { Name = "cimgzonekey", HostName = "cimgzonekey" };
+				e.State[zoneB.StateKey] = new ObjectState { Active = false, Yield = 0, Day = 3 };
+				TriggerZone.ForgetStoryLootLine();
+				int set = TriggerZone.MarkOldStoryLoot(new[] { e });
+				Check(ref ok, set == 1 && e.State.ContainsKey(TriggerZone.StoryLootBase + 1) && !e.State.ContainsKey(TriggerZone.StoryLootBase + 2), "old file: only zone B's key is set (" + set + ")");
+				Check(ref ok, !ContentState.IsUsed(e, zoneA.StoryKey), "zone A still gives its story items");
+				Check(ref ok, ContentState.IsUsed(e, zoneB.StoryKey), "zone B doesn't give them again");
+
+				// (2) an island edit: the first zone removed - the story-loot keys move with the zones, as the used keys do
+				if (!PlaceableCatalog.IsBuilt) { Fail("mg zone story key: the object catalog isn't loaded yet (run it in a world)"); ok = false; }
+				else
+				{
+					Func<string, float, IslandObject> obj = (n, x) => new IslandObject { Name = n, Position = new Vector3(x, 5, 0), EulerRotation = Vector3.zero, Scale = Vector3.one };
+					var f1 = new IslandFile { Name = "ci_mgzonekey", TerrainSize = new Vector3(10, 10, 10), HeightmapResolution = 33, Heights = new float[33, 33] };
+					f1.Objects.AddRange(new[] { obj("Creature_Boar", 0), obj(ContentCatalog.TriggerZone, 1), obj(ContentCatalog.TriggerZone, 2), obj(ContentCatalog.TriggerZone, 3) });
+					f1.Save(tmp);
+					IslandFile a = IslandFile.Load(tmp);
+					IslandFile b = IslandFile.Load(tmp);
+					b.Objects.RemoveAt(1);
+					StableIds.Prepare(b, a);
+					Func<bool, ObjectState> st = active => new ObjectState { Active = active, Yield = -1, Day = 3 };
+					var was = new Dictionary<int, ObjectState>
+					{
+						{ TriggerZone.KeyBase, st(false) }, { TriggerZone.StoryLootBase, st(false) },             // the removed zone: dropped
+						{ TriggerZone.KeyBase + 1, st(false) }, { TriggerZone.StoryLootBase + 1, st(false) },     // the second zone -> 0
+						{ TriggerZone.KeyBase + 2, st(true) },                                                    // the third -> 1
+					};
+					var expect = new Dictionary<int, ObjectState>
+					{
+						{ TriggerZone.KeyBase, was[TriggerZone.KeyBase + 1] }, { TriggerZone.StoryLootBase, was[TriggerZone.StoryLootBase + 1] },
+						{ TriggerZone.KeyBase + 1, was[TriggerZone.KeyBase + 2] },
+					};
+					int dropped; string unsure;
+					string moved = StableIds.Carry(a, b, IslandObjectState.Encode(was), false, out dropped, out unsure);
+					Check(ref ok, moved != null && moved == IslandObjectState.Encode(expect) && dropped == 2,
+						"the story-loot key follows its zone (dropped " + dropped + (unsure != null ? ", unsure: " + unsure : "") + ")\n    got    " + moved + "\n    wanted " + IslandObjectState.Encode(expect));
+				}
+			}
+			catch (Exception ex) { ok = false; Fail("mg zone story key: " + ex); }
+			finally
+			{
+				foreach (GameObject go in made) if (go != null) UnityEngine.Object.DestroyImmediate(go);
+				try { if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp); } catch { }
+				TriggerZone.ForgetStoryLootLine();
+			}
+			if (ok) Log("PASS: mg zone story key"); else Fail("mg zone story key");
+		}
+
 		[ConsoleCommand(name: "CIMgTunedFar", docs: "Dev, world (host, 'CI ...'): merge 10-31 - the Receiver staying tuned to a brought island's frequency (Raft asks every frame) doesn't pull it back and use up its returns; only a new tune does. Also: the missing-islands box replaced by another box plays on without them")]
 		public static void MgTunedFarCommand() { StartTest(MgTunedFarRoutine()); }
 
