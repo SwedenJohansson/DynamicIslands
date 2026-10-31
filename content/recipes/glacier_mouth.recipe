@@ -289,6 +289,8 @@ loot mastchest Rope*3;CopperIngot*2;Glass*2
 prop mastchest loot.refill=0
 note snowcatbox Survey snowcat's box | The snowcat's box, 12 m down: the survey key on a cord.
 loot snowcatbox story:surveykey*1;MetalIngot*2;Battery*1
+prop snowcatbox if.open=quest|10
+prop snowcatbox else.open=message||The snowcat's box is frozen shut. The survey team's trail comes first - their log tells of the crevasse cave.
 note crevchest Ice cave cache | A cache in the crevasse cave, left before the ice broke.
 loot crevchest TitaniumOre*1;Rope*2;Bolt*3
 prop crevchest loot.refill=0
