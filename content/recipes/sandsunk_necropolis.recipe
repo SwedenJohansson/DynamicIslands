@@ -214,6 +214,8 @@ call hw_mast x=-40 z=45 h0=22 lv=3 a=kettmast chest=kettbox top=Placeable_Lanter
 place Note_Paper kettletter at -43.5 41.5 h=22.1 drop yaw=135
 loot kettbox story:tombkey*1;Rope*2;PlasticBottle_Water*1
 prop kettbox loot.refill=0
+prop kettbox if.open=quest|17
+prop kettbox else.open=message||Kett's box is wired shut to the mast. His letter on the dune top says what it holds.
 note kettbox Kett's survey box | Kett's box on the survey mast: a bronze key with seven waves on its bow, a canteen, rope.
 scatter "Pickup_Landmark_Flower_Red" 2 at -40 45 r=20 seed=31021 free=3
 call treasure x=-56 z=28 r=12 n=1 seed=31015 kind=0
