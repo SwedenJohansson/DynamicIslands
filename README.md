@@ -998,6 +998,7 @@ How some things work that can surprise players and island builders. What players
 - A plan can only bring islands that are on the host's PC: when another player hosts a world later, islands its plan hasn't brought yet have to be installed there - the host is told which (AU6, AU43).
 - With very many islands and worlds (about 1300 islands and 190 worlds) Tidy up's first look takes ~13 s and the Islands window ~3 s to open (P6).
 - A generated island (`gen-...`) whose file is gone and has no copy in `deleted\` is made again by the host from its name: one of the same kind and seed in its place, not quite the same island, its used objects fresh (R15). With a copy there it is put back (see Features).
+- A world follows the host's version of an island (RK1): a next host who has one of its islands in another version (same name, changed in their editor) plays theirs until a player with the world's version joins, and a save before that keeps the host's version, with what was used there possibly on other objects. Let a player who hosted before join first ([Hosting on another day](docs/GUIDE.md#hosting-on-another-day)).
 - The mod's own text is English only (L1); the journal (J) and stats (K) keys are changed in World settings > **Defaults...** > Keys (this PC) (L2, done).
 
 ## Limitations (can't be changed)
@@ -1014,7 +1015,6 @@ These come from Raft, its mod loader, Unity, or a choice made on purpose - the g
 - The generator gives one island at most 12 000 objects (a Balboa-sized jungle is thinned to that): more makes Raft stutter when the island loads.
 - Atmosphere zones change Unity's fog and ambient light plus a faint screen tint; how strong the fog looks depends on Raft's own sky at that moment.
 - An island file with creatures, notes, a tint or island info is format 4: older versions of the mod can't open it. Islands without these are still saved in the older formats. Support for Unity-built `.assets` islands from version 2 was removed: rebuild those islands in the editor.
-- A world follows the host's version of an island: a next host who has one of its islands in another version (same name, changed in their editor) plays theirs until a player with the world's version joins, and a save before that keeps the host's version, with what was used there possibly on other objects. Let a player who hosted before join first.
 - A private storage is its builder's alone - there is no shared storage whose contents differ per player. Scrambled blueprints move only the blueprints lying on the story islands (the Radio Tower has none) and never what the story needs. Alphas' extra spoils come from alphas of Raft's own islands, and the extra animals on Raft's islands are never alphas.
 - Text inside islands (notes, quests) is shown as written, so a pack from someone you don't know can hold words you'd rather not see - the island library's entries are looked at before they go in.
 

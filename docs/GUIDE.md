@@ -2871,6 +2871,13 @@ who joins with it brings it. Get a missing island from the plan's maker (their p
 entry the message names. (Worlds saved before 2026-10-06 still look up the islands not brought yet by name: there,
 **Rename** an own island named like the plan's - F10 `WorldPlan` lists them.)
 
+**Let a player who hosted before join first.** A world follows the host's version of an island. When the next host
+has an island of the world in another version (same name, changed in their editor), they play theirs until a player
+who has the world's version joins. If the world is saved before that, it keeps the host's version from then on, and
+what was used on that island may sit on other objects. So the next host waits for a player who hosted the world
+before (or who has its islands unchanged) before playing on. (The same rule lets your own edits reach your saved
+worlds, [4.7](#47-saving-and-sharing). This is being fixed.)
+
 #### Everyone runs the same version of the mod
 
 Joining with another version shows a warning naming both versions, and the game goes on. Every release of a version
@@ -3903,11 +3910,6 @@ planned to change.
 **Versions**
 - **An island saved with a newer version of the mod can't be opened by an older one** (the file says so). Update the mod.
 - **Islands built with Unity (`.assets`, version 2)** are no longer read: rebuild them in the editor.
-- **A world follows the host's version of an island.** When the next host has an island of the world in another version
-  (same name, changed in their editor), they play theirs until a player who has the world's version joins. If the world
-  is saved before that, it keeps the host's version from then on, and what was used on that island may sit on other
-  objects. Let a player who hosted the world before join first ([Hosting on another day](#hosting-on-another-day)).
-  (The same rule lets your own edits reach your saved worlds, 4.7.)
 
 **Your PC and Raft's menus**
 - **Keep Raft out of OneDrive and Program Files.** The mod writes its files next to Raft (`<Raft>\Mods\DynamicIslands`).
