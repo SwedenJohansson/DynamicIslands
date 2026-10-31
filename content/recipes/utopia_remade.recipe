@@ -304,7 +304,7 @@ prop gateL beh.move=-1.6,0,0.3
 prop gateL beh.moveTime=2
 prop gateL beh.moveMode=switch
 prop gateL beh.use=Unlock the warden's gate
-prop gateL if.use=take|story:dockkey|1\ntake|story:prisonkey|1\ntake|story:keeperkey|1
+prop gateL if.use=quest|19\ntake|story:dockkey|1\ntake|story:prisonkey|1\ntake|story:keeperkey|1
 prop gateL on.use=message||All three keys turn. The gate's leaves grind aside - and behind them, the hyenas rise.\nopen|wardensgate
 prop gateL else.use=message||The warden's gate has three locks - the dock master's, the prison clerk's and a third, newer one. Olof's message and his crew's journal said where the keys are.
 prop gateR obj.name=wardensgate
@@ -312,7 +312,7 @@ prop gateR beh.move=1.6,0,0.3
 prop gateR beh.moveTime=2
 prop gateR beh.moveMode=switch
 prop gateR beh.use=Unlock the warden's gate
-prop gateR if.use=take|story:dockkey|1\ntake|story:prisonkey|1\ntake|story:keeperkey|1
+prop gateR if.use=quest|19\ntake|story:dockkey|1\ntake|story:prisonkey|1\ntake|story:keeperkey|1
 prop gateR on.use=message||All three keys turn. The gate's leaves grind aside - and behind them, the hyenas rise.\nopen|wardensgate
 prop gateR else.use=message||The warden's gate has three locks - the dock master's, the prison clerk's and a third, newer one. Olof's message and his crew's journal said where the keys are.
 
