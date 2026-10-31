@@ -265,6 +265,8 @@ story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, f
 note scdeep Exchange strongbox | The exchange strongbox: the relay locker key and a crest shard.
 loot scdeep story:sc_key*1;story:sk_crest*1;MetalIngot*2;Bolt*3;OxygenBottle*1
 prop scdeep loot.refill=0
+prop scdeep if.open=quest|10
+prop scdeep else.open=message||The strongbox is rusted shut. The courier's logbook, at the crashed plane, comes first.
 note sclocker Relay locker | The linemen's relay locker, high above the water.
 loot sclocker MetalIngot*3;CopperIngot*2;Rope*3;Cooked_Potato*2
 prop sclocker loot.refill=0
