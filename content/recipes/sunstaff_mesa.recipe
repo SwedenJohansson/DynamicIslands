@@ -162,6 +162,8 @@ call hw_mast x=52 z=-15 h0=24 lv=3 a=pimmast chest=pimbox top=Placeable_Lantern_
 place Note_Paper pimnote at 48.5 -18.5 h=24.1 drop yaw=200
 loot pimbox story:crank*1;Rope*2;Cooked_GenericMeat*2
 prop pimbox loot.refill=0
+prop pimbox if.open=quest|16
+prop pimbox else.open=message||Pim's box is wired shut in the crow's nest. Her note on the butte top says what it holds.
 note pimbox Pim's lookout box | Pim Lark's box in the crow's nest: the well windlass's iron crank handle, wrapped in sacking, a coil of rope, two strips of dried meat.
 scatter "Pickup_Landmark_Flower_Red" 2 at 52 -15 r=20 seed=31014 free=3
 call treasure x=66 z=4 r=12 n=1 seed=31008 kind=0
