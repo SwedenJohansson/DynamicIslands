@@ -568,4 +568,13 @@ call ar_plants_hill x=88 z=4 r=12 seed=5300
 call ar_plants_hill x=0 z=90 r=12 seed=5310
 call ar_plants_hill x=-94 z=46 r=12 seed=5320
 
+# (GROUND 10-30 G1: bamboo with its foot on a rim and the trunk out over the drop (CIGroundIslands 11:28) taken out,
+# with what grew round it on the same rim)
+clear at -4.57 -39.37 r=2.5 all only=Bamboo
+clear at 47.31 -76.74 r=2.5 all only=Bamboo
+clear at -75.89 46.10 r=2.5 all only=Bamboo
+clear at -73.42 56.11 r=2.5 all only=Bamboo
+clear at -64.94 55.12 r=2.5 all only=Bamboo
+clear at -71.68 56.64 r=2.5 all only=Bamboo
+clear at -86.07 44.14 r=2.5 all only=Bamboo
 save Bridgeworks Crown
