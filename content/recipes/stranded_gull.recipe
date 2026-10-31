@@ -130,7 +130,9 @@ call hw_mast x=-32 z=27 h0=17 lv=2 a=gullmast chest=gullmastchest top=Placeable_
 place Note_Paper navnote at -28.5 25 h=17.1 drop yaw=200
 loot gullmastchest Rope*2;Plastic*2;Battery*1;Binoculars*1
 prop gullmastchest loot.refill=0
-scatter "Pickup_Landmark_Tree_Palm 2" 3 at -32 27 r=15 seed=32040 free=1
+# (10-30 P: the palms on the flat hilltop only, their feet at its 17 m - set "on the ground" a palm goes down to the
+# lowest ground under its whole crown, and on the hill's slope (r=15) one sank 4 m and grew out of the cliff face)
+scatter "Pickup_Landmark_Tree_Palm 2" 3 at -32 27 r=6.5 seed=32040 free=1 h=17
 scatter Bush2 4 at -32 27 r=16 seed=32041
 call treasure x=-44 z=36 r=12 n=1 seed=32039 kind=0
 prop treasure32039 treasure.loot=Rope*2;Bolt*3;CopperIngot*2;Battery*1
