@@ -131,7 +131,7 @@ loot barrel Plastic*6;Glass*2;Scrap*3
 
 prop reader obj.name=reader
 prop reader beh.use=Swipe the vault keycard
-prop reader if.use=take|story:wharf-keycard|1
+prop reader if.use=quest|4\ntake|story:wharf-keycard|1
 prop reader on.use=message||The reader beeps green. The vault shutter rattles up.\nopen|shutter\nsound||event:/raft/door/door_unlock_keycard
 prop reader else.use=message||The card reader blinks red: KEYCARD REQUIRED.
 prop shutter1 obj.name=shutter

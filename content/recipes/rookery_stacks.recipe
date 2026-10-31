@@ -232,11 +232,11 @@ prop rk_tin3 beh.hidden=1
 prop rk_tin3 loot.refill=0
 place Loot_Chest rk_hoard at 19.55 -45.81 ground sit yaw=-71.57
 prop rk_hoard loot.refill=0
-prop rk_hoard if.open=take|story:ration|1
+prop rk_hoard if.open=quest|4\ntake|story:ration|1
 prop rk_hoard else.open=message||An elders' padlock: one ration tin opens it.
-prop rk_topchest if.open=take|story:ration|1
+prop rk_topchest if.open=quest|19\ntake|story:ration|1
 prop rk_topchest else.open=message||An elders' padlock: one ration tin opens it.
-prop rk_deepchest if.open=take|story:ration|1
+prop rk_deepchest if.open=quest|16\ntake|story:ration|1
 prop rk_deepchest else.open=message||An elders' padlock on the strongbox: one ration tin opens it.
 story rk_top|Torn ledger page|Note_Paper|The page Ines Marlowe tore from the Cistern ledger - Crane's ballast account.
 story rk_deep|Ration order|Note_Paper|Crane's order holding back the Rookery's rations until it moves away.

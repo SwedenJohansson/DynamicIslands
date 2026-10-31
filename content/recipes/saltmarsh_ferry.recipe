@@ -228,7 +228,7 @@ prop ferrytools loot.refill=0
 
 prop bilgepump obj.name=bilgepump
 prop bilgepump beh.use=Fit the handle and work the bilge pump
-prop bilgepump if.use=take|story:pumphandle|1
+prop bilgepump if.use=quest|5\ntake|story:pumphandle|1
 prop bilgepump on.use=message||The pump coughs, then gushes - brown bilge water pours off the ferry's deck. The engineer's locker comes clear of the mud.\nsignal||pumped
 prop bilgepump else.use=message||The bilge pump has no handle. The captain's notice said it is at the reed cutter's camp.
 

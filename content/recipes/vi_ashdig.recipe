@@ -75,7 +75,7 @@ prop assaybox beh.hidden=1
 
 prop leadwagon obj.name=leadwagon
 prop leadwagon beh.use=Load the ore samples
-prop leadwagon if.use=take|story:oresample|3
+prop leadwagon if.use=quest|4\ntake|story:oresample|3
 prop leadwagon on.use=message||The three sample bags thump into the wagon. Up on the crane, the hook slips its catch and the assay box drops onto the rock below it.\ngive||story:loaded*1\nshow|assaybox
 prop leadwagon else.use=message||The lead wagon waits for its load: three ore samples. The tally says where they are.
 

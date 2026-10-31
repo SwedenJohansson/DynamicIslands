@@ -312,12 +312,12 @@ prop sterncabin loot.refill=0
 note safe Captain's safe | The captain's safe: the ship's papers, the engine's spare drawings - and two blueprints.
 loot safe Blueprint_MotorWheel*1;Blueprint_SteeringWheel*1;MetalIngot*3;Bolt*6
 prop safe loot.refill=0
-prop safe if.open=has|story:capkey|1
+prop safe if.open=quest|13\nhas|story:capkey|1
 prop safe else.open=message||The safe is locked. The captain's key went down with the stern.
 
 prop chartdoor obj.name=chartdoor
 prop chartdoor beh.use=Force the jammed door
-prop chartdoor if.use=has|story:crowbar|1
+prop chartdoor if.use=quest|4\nhas|story:crowbar|1
 prop chartdoor on.use=message||The crowbar bites, the frame groans - and the wheelhouse door swings free.\nopen|chartdoor\nsound||event:/exploring/obstacles/door_breakopen
 prop chartdoor else.use=message||The door is jammed tight in its bent frame. It needs a crowbar.
 prop chartdoor beh.turn=-140

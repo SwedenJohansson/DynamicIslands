@@ -121,7 +121,7 @@ prop shellbucket loot.refill=0
 note strongbox Merchant's strongbox | The merchant's strongbox: a season's takings in trade coin, a spyglass, the plans for a recycler.
 loot strongbox TradeToken*15;Blueprint_Recycler*1;Glass*4;Plastic*4
 prop strongbox loot.refill=0
-prop strongbox if.open=has|story:merchantkey|1
+prop strongbox if.open=quest|5\nhas|story:merchantkey|1
 prop strongbox else.open=message||The merchant's strongbox. Its key is at the merchant's stall - for a price.
 note stallbox Fish stall's box | The fish stall's ice box, the ice long gone: salted fish that kept.
 loot stallbox Cooked_Herring*3;Raw_Mackerel*2
@@ -152,7 +152,7 @@ prop lampstall on.use=message||The jar for the lamp. It still smells of fish oil
 prop lampstall else.use=message||LAMP-MAKER: a lamp for a jar.
 prop merchantstall obj.name=merchantstall
 prop merchantstall beh.use=Trade the lamp for the merchant's key
-prop merchantstall if.use=take|story:lamp|1
+prop merchantstall if.use=quest|4\ntake|story:lamp|1
 prop merchantstall on.use=message||The lamp for the key. The merchant's board says: A FAIR TRADE.\ngive||story:merchantkey*1\nsound||event:/ui/pickup
 prop merchantstall else.use=message||MERCHANT: the strongbox key for a lamp.
 prop bazaar zone.id=bazaar

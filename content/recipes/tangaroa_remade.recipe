@@ -400,12 +400,12 @@ prop pumplocker loot.refill=0
 note councilvault Council's vault | The council's vault: the founders' plans for keeping a floating city alive - water pipes, purifiers, tanks and stores.
 loot councilvault Blueprint_Pipe_Water*1;Blueprint_ElectricPurifier*1;Blueprint_WaterTank*1;Blueprint_Storage_Large*1;CopperIngot*3
 prop councilvault loot.refill=0
-prop councilvault if.open=take|story:keycard|3
+prop councilvault if.open=quest|10\ntake|story:keycard|3
 prop councilvault else.open=message||Three card slots - the harbour master's, the caretaker's and the founder's. The council's notice said where they are.
 
 prop generator obj.name=generator
 prop generator beh.use=Fit the part and start the generator
-prop generator if.use=take|story:fuel|2\ntake|story:genpart|1
+prop generator if.use=quest|4\ntake|story:fuel|2\ntake|story:genpart|1
 prop generator on.use=message||The part slides home, the generator coughs and runs. Lamps come on across the square - and the council office's shutter rolls aside.\nopen|councilshutter\nshow|citylights
 prop generator else.use=message||The generator is missing a part and its tank is dry: two cans of fuel. The council's notice said where to look.
 prop councilshutter obj.name=councilshutter

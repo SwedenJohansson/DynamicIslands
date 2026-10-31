@@ -259,7 +259,7 @@ prop rats creature.count=6
 prop rats creature.respawn=0
 prop tubeb obj.name=tubeb
 prop tubeb beh.use=Crank tube B
-prop tubeb if.use=has|story:tubea|1\n!signal|tubeb
+prop tubeb if.use=quest|8\nhas|story:tubea|1\n!signal|tubeb
 prop tubeb on.use=signal||crank\nsignal||tubeb\ngive||story:tubeb*1\nshow|capsule2\nmessage||The crank turns with a long groan. Somewhere inside, a second capsule thumps into the rack.
 prop tubeb else.use=message||The crank won't turn while tube A is dead - or it has turned as far as it goes.
 note capsule2 Capsule 2 | (A second capsule, sealed with red wax:)\n\nVault code 3 1 0 9 - the exchange opened on the 10th of the 3rd month, 1909, and so it opens still.
