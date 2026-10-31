@@ -223,6 +223,8 @@ story chainkey|Chain key|Bolt|A heavy key on a ring, stamped CONCORD WELL. One o
 note radivechest Drowned supply van | The van that never arrived. A sealed tin: the reef log.
 loot radivechest story:reeflog*1;Plastic*4;Scrap*3;Rope*2
 prop radivechest loot.refill=0
+prop radivechest if.open=quest|13
+prop radivechest else.open=message||The van's cargo tin is sealed fast. Dive into the lagoon pit, to the van itself, and it will give.
 note ratop Frame tower locker | The log's number opens it: a chain key and spare parts.
 loot ratop story:chainkey*1;TitaniumOre*2;Battery*1;Bolt*4
 prop ratop loot.refill=0
