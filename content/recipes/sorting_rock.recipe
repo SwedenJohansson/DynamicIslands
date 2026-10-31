@@ -64,8 +64,9 @@ place TangaroaScaleModel scale2 at 2.6 3 y=2.3 sit drop yaw=0
 place TangaroaScaleModel scale3 at 4.1 3 y=2.3 sit drop yaw=0
 place TangaroaScaleModel scale4 at 5.6 3 y=2.3 sit drop yaw=0
 place TangaroaScaleModel scale5 at 7.4 3 y=2.3 sit drop yaw=0
-place Note_Paper ratechart at 8.3 0.8 y=2 sit drop yaw=-80
 place Placeable_Cupboard_Small - at 8.3 0.8 y=1.3 sit drop yaw=270
+# (agent Q 10-30, REACH: the chart was laid first and the cupboard set down over it - the chart lay inside the cupboard: cupboard first, the chart on its top)
+place Note_Paper ratechart at 8.3 0.8 y=2 sit drop yaw=-80
 place Loot_Chest ratesoffice at 4.5 5.4 y=1.3 sit drop yaw=180
 place Placeable_Cupboard_Medium liselocker at 1 5.3 y=1.3 sit drop yaw=180
 place Note_Paper lisereply at 2 5.3 y=1.3 sit drop yaw=10
