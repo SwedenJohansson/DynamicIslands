@@ -190,7 +190,7 @@ note manifest Ship's manifest | The Kestrel's manifest: ...boiler parts, three c
 note storecrate Camp store | The camp store: blankets, rope - and one of the boiler's parts in its crate.
 loot storecrate story:heatpart*1;Wool*3;Rope*2
 prop storecrate loot.refill=0
-prop storecrate if.open=has|story:storekey|1
+prop storecrate if.open=quest|8\nhas|story:storekey|1
 prop storecrate else.open=message||The camp store is locked. The commander's order said the key is in the snowmobile shed.
 note shedcrate Shed box | A box in the snowmobile shed, gnawed: the store key on a nail above it.
 loot shedcrate story:storekey*1;Scrap*3
@@ -219,13 +219,13 @@ prop commanderschest else.open=message||The commander's chest is frozen shut. Ge
 
 prop boiler obj.name=boiler
 prop boiler beh.use=Fit the three parts and light the boiler
-prop boiler if.use=take|story:heatpart|3
+prop boiler if.use=quest|15\ntake|story:heatpart|3
 prop boiler on.use=message||The parts fit, the burner catches - pipes tick and steam as the heat runs out to the domes. The warm drawer slides open: the radio's crystal.\nsignal||heat\ngive||story:radiocrystal*1\nsound||event:/raft/engine/controller_on
 prop boiler else.use=message||The boiler is missing three parts. The commander's order said where they went.
 # (the summit radio: Raft's radio wants power or a battery - this one the crystal from the boiler's drawer)
 prop hutradio obj.name=hutradio
 prop hutradio beh.use=Fit the crystal and use the radio
-prop hutradio if.use=has|story:radiocrystal|1
+prop hutradio if.use=quest|16\nhas|story:radiocrystal|1
 prop hutradio else.use=message||The set is dead: its tuning crystal is gone. The commander's order said where it was kept.
 prop hutradio on.use=message||The crystal clicks home. Static... then the Corps' frequency, a voice on a loop: the Drowned Gate holds, the sea wall still stands.\nsignal||radio
 
