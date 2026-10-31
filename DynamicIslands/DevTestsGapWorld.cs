@@ -499,10 +499,10 @@ namespace DynamicIslands
 				run("rogueshark", new[] { "abc;xyz;1", "", "-5;-9;1", "99999999999999999999", "0;99999999999", ";;;", "0;0;1" }, new[] { "@options=rogueshark" },
 					v => RogueShark.Index == 0 && !RogueShark.Giant ? null : "a rogue from nonsense (#" + RogueShark.Index + (RogueShark.Giant ? ", giant" : "") + ")");
 				run("storages", new[] { "garbage", "", "1:2:3;;::;x:y;4294967296:1;-1:5", "5:abc" }, new[] { "@options=privatestorage" }, v => PrivateStorage.Count == 0 ? null : PrivateStorage.Count + " storage(s) from nonsense");
-				run("headstart", new[] { "99", "-5", "abc", "", "1.5", "2" }, noBuild, v =>
+				run("headstart", new[] { "99", "11", "10", "-5", "abc", "", "1.5", "2" }, noBuild, v =>
 				{
 					int want; int.TryParse(v.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out want);
-					want = Mathf.Clamp(want, 0, 3);
+					want = Mathf.Clamp(want, 0, HeadStart.Max);
 					return HeadStart.Level == want ? null : "level " + HeadStart.Level + ", wanted " + want;
 				});
 				// (nonsense never reads as done; "1" does, but with no head start - level 0 here, so nothing is built - the line

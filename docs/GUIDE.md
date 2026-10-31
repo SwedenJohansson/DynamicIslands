@@ -3537,20 +3537,39 @@ sea, a jagged **bolt** with a few forks stands from the clouds to the water for 
 
 #### Head start raft
 
-The world starts on a bigger raft that is already set up, to skip the first hours. The button goes **off -> LEVEL 1 ->
-LEVEL 2 -> LEVEL 3 -> off**:
+The world starts on a bigger raft that is already set up, to skip the first hours - up to level 10, about what 20 hours
+of play would give. Each click of the button goes to the next level (after 10 back to off); it shows the level with the
+raft's size, for example "LEVEL 4  (9 x 14)". What the chosen level gives is written under the button.
 
-| Level | Raft | On it |
-|---|---|---|
-| 1 | 6 x 12 foundations | a simple grill, a simple purifier, the research table, a bed and a small storage with 10 planks, 10 plastic, 10 rope, 10 stones, 5 raw mackerel and 5 potatoes |
-| 2 | 8 x 14 | level 1, plus 2 smelters, a sail, 10 item nets in the water and 2 medium storages: 10 each of sand, clay, stone, scrap, metal ore, copper ore, seaweed, palm leaves, dirt and vine goo, 2 batteries and 2 flippers |
-| 3 | 10 x 20 | level 2, plus the Receiver with its 3 antennas and a battery in it, and 2 more medium storages (40 planks, 40 plastic and more) |
+| Level | Raft | Item nets | Adds (each level has what the ones below it have) |
+|---|---|---|---|
+| 1 | 7 x 10 | 0 | a simple grill, a simple purifier, the research table, a bed, a small storage: 10 planks, plastic, rope and stones, 5 raw mackerel, 5 potatoes |
+| 2 | 7 x 14 | 10 | 2 smelters, a sail, 2 medium storages: 10 each of sand, clay, stone, scrap, metal ore, copper ore, seaweed, palm leaves, dirt and vine goo, 2 batteries, 2 flippers |
+| 3 | 9 x 14 | 12 | the Receiver with its 3 antennas and a battery in it, 2 more medium storages (40 planks, 40 plastic and more) |
+| 4 | 9 x 14 | 16 | an advanced purifier, a medium storage; axe, scrap hook, metal fishing rod, scrap spear, bow and arrows, shovel, hammer, bucket, paddle, 2 oxygen bottles, 2 canteens, metal ingots, nails, glass, 2 lanterns |
+| 5 | 9 x 16 | 20 | an advanced grill, a 3rd smelter, 2 large storages; an engine, steering wheel and anchor (items to place), head light, 2 batteries, binoculars, leather armour, copper, bolts, hinges, circuit boards, salves |
+| 6 | 9 x 16 | 26 | a 4th smelter, 2 large storages; machete, biofuel extractor, fuel tank and pipes, biofuel, a 2nd engine, backpack, 2 crop plots, scarecrow, cooking pot, seeds and fruit |
+| 7 | 11 x 16 | 32 | a 2nd advanced purifier, 2 large storages; engine controls, zipline tool and 4 bases, metal detector, shears, a 2nd sail (item), 2 more flippers and oxygen bottles, 4 lanterns, metal ingots for armoured foundations |
+| 8 | 11 x 16 | 38 (advanced) | a 5th smelter, 2 large storages; net launcher and 20 canisters, metal arrows, good salves, 2 beehives, bricks, glass, silver algae, meals |
+| 9 | 11 x 18 | 44 (advanced) | a 2nd advanced grill, 2 large storages; water tank, electric purifier and 20 water pipes (items), 2 more engines, circuit boards, batteries, lots of planks, plastic and nails |
+| 10 | 11 x 18 | 51 (advanced) | a 6th smelter, a 3rd advanced purifier, 3 large storages (19 in all); 40 more canisters, flippers, oxygen bottles, batteries, metal and scrap for armour, and plenty of every resource |
+
+Every level also gets **15 planks per level** on top (level 1 +15 ... level 10 +150). Nothing comes from Varuna Point or
+later and nothing of titanium. Engines, steering wheel, anchor, water tank, electric purifier and the like are in the
+storages as items, so you place them where you want them.
+
+The layout is the same on every level: the stations and storages stand in rows in the **middle** of the raft, with a
+walkway between the rows and an aisle down the centre, so everything can be reached. The ring of edge foundations is
+left bare (the shark bites those first). The start raft sits in a free deck in front of the stations, the sail in front
+of that (level 2 up), and the item nets hang in the water round the edges: the front row first, then the back (its
+middle 3 left free for engines), then the sides, with a gap on each side by the start raft to climb up. The supplies go
+into the storages only as far as there is room, a stack at a time, so nothing is dropped.
 
 The host builds it once, a moment after the new world first loads, around Raft's start raft. They are Raft's own blocks,
 saved with the world like any you build. A joiner gets them with the world. It is never built twice: the world file
 remembers it is built (`@headstartdone=1`), and a raft that already has more than 12 foundations is never built on.
-`HeadStart` (F10) says what this world has and what the next new world gets. In the main menu `HeadStart 2` chooses
-level 2 for the next new world.
+`HeadStart` (F10) says what this world has and what the next new world gets. In the main menu `HeadStart 7` chooses
+level 7 for the next new world.
 
 #### For every player
 
@@ -3765,7 +3784,7 @@ there means plain Raft.
 | `buildcost` | 0-100 | How many % more the build menu costs in the next new world | **Build cost** in World settings (Create); `BuildCost <0-100>` in the main menu |
 | `options` | The extra options that are on, separated by commas: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ufo`, `glowsea`, `lightning`, `ghostship`, `whalebreach`, `fogbanks`, `kraken` | The extra options the next new world starts with | The option buttons in World settings (Create); `WorldOptions +option -option` in the main menu |
 | `levels` | `on`, `off` | The level up system in the next new world | **Level up system** in World settings (Create); `Levels on` / `Levels off` in the main menu |
-| `headstart` | 0-3 | The head start raft's level in the next new world (0 = none) | **Head start raft** in World settings (Create); `HeadStart <0-3>` in the main menu |
+| `headstart` | 0-10 | The head start raft's level in the next new world (0 = none) | **Head start raft** in World settings (Create); `HeadStart <0-10>` in the main menu |
 | `islandsoff` | Island names separated by a vertical bar; also `type:<map type>` and `<generated>` | The islands left out of the next new world's islands while sailing | **CHOOSE ISLANDS...** in World settings (Create); `WorldIslands -<island>`, `+<island>`, `all` in the main menu |
 | `raftgap` | `min-max`, for example `3-6` (min 2-20, max 4-50) | One random island after every min to max of Raft's own islands | **One after every ... to ...** under CHOOSE ISLANDS..., at once; `WorldIslandsGap <min>-<max>` in the main menu |
 | `journalkey`, `statskey` | A Unity key name, for example `J`, `K` or `F6` | The keys of the journal (J) and the stats page (K) in a world | **Defaults...** > **Keys (this PC)**, at once. A key that can't be used falls back to J or K, and the log says so |
@@ -3838,7 +3857,7 @@ Press **F10** for RML's console.
 | `StoryChain` | World | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | World | What the randomizer does here / change it (host) |
 | `WorldOptions` / `WorldOptions +option -option` | World or main menu | The world's World settings / change them (host; at the main menu: the next new world). Options: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ufo`, `glowsea`, `lightning`, `ghostship`, `whalebreach`, `fogbanks`, `kraken` ([9.4](#94-extra-options)) |
-| `HeadStart` / `HeadStart 0-3` | World or main menu | The head start raft: this world's level and the next new world's / at the main menu choose the level for the next new world (0 = off) |
+| `HeadStart` / `HeadStart 0-10` | World or main menu | The head start raft: this world's level and the next new world's / at the main menu choose the level for the next new world (0 = off) |
 | `Levels` / `Levels on` / `Levels off` | World or main menu | The level up system in this world / switch it (host; off keeps everyone's levels; at the main menu: for the next new world) |
 | `Resync` | World, joined player | Ask the host for its custom islands again (the list, and any island file that hasn't come) |
 | `WorldIslands` / `WorldIslands -<island>` / `+<island>` / `all` | World or main menu | Which islands turn up by chance while sailing in this world / leave one out, let it take part again, all of them (host; also `type:<map type>`; at the main menu: the next new world). A player who joined sees the host's list, and changing it says only the host chooses |

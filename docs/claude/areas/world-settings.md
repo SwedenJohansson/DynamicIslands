@@ -14,6 +14,7 @@ The optional systems of a world: world rules (monster difficulty, build cost), t
 | `BuildCostRefund.cs` | `BuildCostRefund`: the cost each block was placed at; `BuildCostPlaced`, `BuildCostRefundPatch` |
 | `WorldRandomizer.cs` | `RandomizerSettings` (level, seed, parts), `WorldRandomizer` (kind 13, `Tick`, `OnSailed`, colours, alphas, loot, extras), `LandGround` |
 | `RandomizerContent.cs`, `RandomizerIslands.cs`, `RaftProps.cs` | Content: `RandomizerContent.Extras`, `Oddity`, `Lair`; `RandomizerIslands.Themes`, `Dens`, `Large`. `RaftProps` reads `raft_props.txt` |
+| `HeadStart.cs` | World setting Head start raft (levels 1-10, `Max`): `Plan(level)` lays out the raft (station rows either side of a centre aisle, bare edge ring, free deck round the start raft, sail, nets round the edge), `Build` places it once through the host's BlockCreator, `Stock` fills the storages within their room (`Room`/`Put`, a stack at a time, "left out" logged), `SetUpReceiver` (level 3 up). `Details(level)` = the World settings text. Tests `DevTestsHeadStart.cs` (`CIHeadStartToggle`, `CIHeadStartCheck <1-10>`) |
 | `WorldOptions.cs` | `WorldOptions`: the extra options, their seed, kind 17, the `WorldOptions` command |
 | `ScrambledBlueprints.cs`, `StoryOrder.cs`, `GhostRafts.cs`, `PrivateStorage.cs` | The options `blueprints`, `storyorder`, `ghostrafts`, `privatestorage` |
 | `UfoSightings.cs` | The option `ufo`: host `Tick` picks the day (seed) and hour, sends Moment "ufo" (path text); `UfoSaucer` builds and flies it relative to the raft; dev test `CIUfo [day|night]` |

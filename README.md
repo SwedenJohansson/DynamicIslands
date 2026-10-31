@@ -248,7 +248,7 @@ picked up while the game runs). **Defaults...** in World settings sets the first
 | `buildcost` | 0-100 | % more the build menu costs | **Build cost** (Create); `BuildCost <0-100>` in the main menu |
 | `options` | the extra options that are on, separated by commas: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ufo`, `glowsea`, `lightning`, `ghostship`, `whalebreach`, `fogbanks`, `kraken`, `fogsight`, `mirrorislands`, `nominimap`, `fullerislands` | The extra options the next new world starts with | The option buttons (Create); `WorldOptions +option -option` in the main menu |
 | `levels` | `on`, `off` | The level up system | **Level up system** (Create); `Levels on` / `off` in the main menu |
-| `headstart` | 0-3 | The head start raft's level (0 = none) | **Head start raft** (Create); `HeadStart <0-3>` in the main menu |
+| `headstart` | 0-10 | The head start raft's level (0 = none) | **Head start raft** (Create); `HeadStart <0-10>` in the main menu |
 | `islandsoff` | island names separated by a vertical bar (also `type:<map type>`, `<generated>`) | Islands left out of the islands while sailing | **CHOOSE ISLANDS...** (Create); `WorldIslands -<island>` / `+<island>` / `all` in the main menu |
 | `raftgap` | `min-max`, for example `3-6` (min 2-20, max 4-50) | One random island after every min to max of Raft's own islands | **One after every ... to ...**, at once; `WorldIslandsGap <min>-<max>` in the main menu |
 | `journalkey`, `statskey` | a Unity key name (`J`, `K`, `F6`) | The journal's and the stats page's keys in a world | **Defaults...** > Keys (this PC), at once; a key that can't be used falls back to J / K |
@@ -582,9 +582,11 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   from the raft with a bright flash and a thunder clap; some storms have none, the others one to four. Very rarely it
   hits the raft's Receiver antenna or wind turbine instead. Looks only: no damage, no fire. Every player sees the same
   bolt (the host sends it).
-- **Head start raft:** the world starts on a bigger raft already set up - level 1: 6 x 12 foundations with a grill, a
-  purifier, the research table, a bed and first supplies; level 2: 8 x 14, also smelters, a sail, 10 item nets and island
-  resources; level 3: 10 x 20, also the Receiver with its antennas. Built once by the host (`HeadStart`).
+- **Head start raft:** the world starts on a bigger raft already set up, levels 1-10 (one button in World settings steps
+  through them, each level described there) - level 1: 7 x 10 foundations with a grill, a purifier, the research table, a bed and first
+  supplies; each level more stations, storages, item nets and supplies, up to level 10: 11 x 18 with 6 smelters, 19
+  storages of everything up to Tangaroa (no titanium) and 51 nets. Stations stand in the middle, nets in the water
+  round the edges. Built once by the host (`HeadStart`).
 - **Extra upgrades:** better versions of Raft's things to craft, strongly tinted with glints round them, next to the thing they improve once they are
   learned at the **upgrade research table** (a violet research table of their own, four times the cost, separate research): large battery (2x charge), titanium grill and blast furnace (cook 2x as fast), reinforced storage (1.5x
   slots), wide net (2x as wide), large fuel and water tanks (2x), greenhouse plot (waters itself), turbo engine (2x
@@ -771,7 +773,7 @@ The level up system comes on in a world by the **Level up system** switch in Wor
 | `FogSight` / `FogSight test none\|binoculars\|telescope\|marine\|auto` | Game | What this player looks through, the fog factor and the sky's fog distance (option Binoculars see through fog); `test` makes this machine look through one (tests) |
 | `Traders` / `Traders offers <seed>` / `Traders bring` | Game | The trader rafts' stalls loaded now and their stock (world option Trader raft); `offers`: what a trader raft with that seed sells; `bring` (host): a trader raft ahead now |
 | `StoryChain` | Game | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
-| `HeadStart` / `HeadStart 0-3` | Game; main menu | The head start raft: this world's level and the next new world's; at the main menu `HeadStart 2` chooses level 2 for the next new world (0 = off) |
+| `HeadStart` / `HeadStart 0-10` | Game; main menu | The head start raft: this world's level and the next new world's; at the main menu `HeadStart 2` chooses level 2 for the next new world (0 = off) |
 | `Levels` / `Levels on` / `Levels off` | Game (switching: host); main menu | The level up system in this world, or switch it for every player (off keeps the levels); at the main menu: the choice for the next new world |
 | `Resync` | Game, a player who joined | Ask the host for its custom islands again: the list, and any island file that hasn't come (the mod also keeps asking by itself) |
 | `WorldIslandsGap` / `WorldIslandsGap <min>-<max>` | Game (changing: host) or main menu | How often random islands come: one after every min-max of Raft's own islands met (default 3-6; min 2-20, max 4-50) |
@@ -939,7 +941,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `GoldenBarrels.cs` | Extra option Silver & golden barrels: which barrel is which (from the seed and its network index, nothing sent), its colour and the extra loot. `Barrels` command |
 | `StormDays.cs` | Extra option Storm days: which days storm (from the seed and the day), Raft's rain held all day, the keener shark, the warning at nightfall. `StormDays` command |
 | `TraderRaft.cs` | Extra option Trader raft: when one comes (not in the first 3 km, then about one per 7 km; map type `traderraft`), its stalls' offers from the raft's seed and the shared stock. `Traders` command |
-| `HeadStart.cs` | World setting Head start raft (levels 1-3): the bigger raft the host builds once on a new world's first load (`@headstartdone=1`). `HeadStart` command |
+| `HeadStart.cs` | World setting Head start raft (levels 1-10, stations in the middle, nets round the edge): the bigger raft the host builds once on a new world's first load (`@headstartdone=1`). `HeadStart` command |
 | `UfoSightings.cs` | Extra option UFO sightings: which days and hours have a saucer (from the seed), the host sending it (kind 33 `Moment`, Name "ufo"), the saucer built from Unity shapes, its flight, spin and night glow |
 | `LightningStrikes.cs` | Extra option Lightning strikes: when a storm has bolts (the host rolls them), where they hit (the sea 30-150 m away, rarely the antenna or wind turbine), sending them (kind 33 `Moment`, Name "bolt"), the bolt drawn with lines and lights, its flicker and the thunder (Raft has none: its dynamite bang + boss rumble) |
 | `FogBanks.cs` | Extra option Fog banks: which days and hours have a bank (from the seed and the day, so nothing is sent), the fade, and lending AzureSky a shorter fog distance around its `UpdateShaderUniforms` (Raft's weather blending never sees it); no fog while Raft's weather is stormy or under water. `FogBanks` command |

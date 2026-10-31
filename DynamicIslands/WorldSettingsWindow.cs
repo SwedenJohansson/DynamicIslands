@@ -35,6 +35,8 @@ namespace DynamicIslands.Editor
 		public static Button LevelsToggle { get { return levelsToggle; } }
 		static Button headStartToggle;
 		public static Button HeadStartToggle { get { return headStartToggle; } }
+		static Text headStartDetail;
+		public static Text HeadStartDetail { get { return headStartDetail; } }
 		static bool hooked;
 
 		/// <summary>The options shown (the last choice until one is made).</summary>
@@ -143,15 +145,15 @@ namespace DynamicIslands.Editor
 				d.horizontalOverflow = HorizontalWrapMode.Wrap;
 				UIKit.Size(d.gameObject, -1, 44);
 			}
-			// Head start raft: off, level 1, 2 or 3 - each press the next
+			// Head start raft: off or levels 1-10 - the button steps to the next (round to off); what the level gives below
 			{
-				const string hint = "The world starts on a bigger raft that is already set up. Level 1: 6 x 12 foundations, a grill, a purifier, the research table, a bed and a storage of first supplies. Level 2: 8 x 14, also smelters, a sail, 10 item nets and island resources. Level 3: 10 x 20, also the Receiver with its antennas.";
+				const string hint = "The world starts on a bigger raft that is already set up, its stations and storages in the middle, item nets round it. Level 1: a 7 x 10 raft with a grill, a purifier, the research table, a bed and first supplies. Each level more stations, storages and supplies, up to level 10: an 11 x 18 raft with what about 20 hours of play would give (up to Tangaroa, no titanium).";
 				RectTransform group = UIKit.Group(list, null, "Option_headstart");
-				headStartToggle = UIKit.Button(group, "", () => { HeadStart.Chosen = (HeadStart.Chosen + 1) % 4; Show(); }, hint, -1, 28f, 14);
+				headStartToggle = UIKit.Button(group, "", () => { HeadStart.Chosen = (HeadStart.Chosen + 1) % (HeadStart.Max + 1); Show(); }, hint, -1, 28f, 14);
 				headStartToggle.name = "Toggle_headstart";
-				Text d = UIKit.Label(group, "The world starts on a bigger raft, already set up: level 1 with a grill, purifier, research table and bed, level 2 also smelters, a sail and nets, level 3 also the Receiver.", 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
-				d.horizontalOverflow = HorizontalWrapMode.Wrap;
-				UIKit.Size(d.gameObject, -1, 44);
+				headStartDetail = UIKit.Label(group, "", 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
+				headStartDetail.horizontalOverflow = HorizontalWrapMode.Wrap;
+				UIKit.Size(headStartDetail.gameObject, -1, 58);
 			}
 
 			summary =UIKit.Label(panel, "", 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Normal, "Summary");
@@ -222,8 +224,9 @@ namespace DynamicIslands.Editor
 			}
 			if (headStartToggle != null)
 			{
-				UIKit.LabelOf(headStartToggle).text = "Head start raft:  " + (HeadStart.Chosen > 0 ? "LEVEL " + HeadStart.Chosen : "off");
+				UIKit.LabelOf(headStartToggle).text = "Head start raft:  " + (HeadStart.Chosen > 0 ? "LEVEL " + HeadStart.Chosen + "  (" + HeadStart.Width(HeadStart.Chosen) + " x " + HeadStart.Length(HeadStart.Chosen) + ")" : "off");
 				UIKit.SetActive(headStartToggle, HeadStart.Chosen > 0);
+				if (headStartDetail != null) headStartDetail.text = HeadStart.Details(HeadStart.Chosen);
 			}
 			IslandPickerWindow.ShowEntry();
 			int changed = Changed;
