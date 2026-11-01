@@ -73,8 +73,6 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Riverfork Delta**: a ramp out of the roofed hollow by the river fork.
 - **Hadal Commons**: footing under the houses, so all five house paths can be walked, and the lodge chest can be
   reached (it sat inside the cage's collider).
-<!-- PENDING (release-prep): add lines for fixes pushed after 29fd237 (e.g. Frontier Beacon, Hadal Commons,
-     Overpass/Caravan/Utopia Remade), then delete this comment. finish.sh refuses to run while it is here. -->
 
 ---
 
