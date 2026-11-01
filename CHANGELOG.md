@@ -63,10 +63,11 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Iron Whale Bow**: the foredeck ladder can be reached, the prow plate meets the ice, and shelves let swimmers out
   at the crane and the whalers' cave.
 - **Rootweave Caves**: ladders out of the two cave pits.
-- **Skyhook Mast**: ladders up from two ledges you could drop to.
-- **Step Pyramid** and **Sundown Canyons**: ladders and an earth ramp out of every pit and ledge.
-- **The Listening Mirrors**: the crane cab ladder can be reached, and the chapel's quest step counts once you are in
-  the chapel.
+- **Skyhook Mast**: ladders up from two ledges you could drop to, and no generator plants sunk into the ground.
+- **Step Pyramid** and **Sundown Canyons**: ladders and an earth ramp out of every pit and ledge. On Step Pyramid the
+  generator trees, bamboo and pineapple sunk into the ground and a palm hanging over a drop are gone.
+- **The Listening Mirrors**: the crane cab ladder can be reached from the cab floor, Owen's note in the cab can be
+  read, the walk down the pit reaches the water, and the chapel's quest step counts once you are in the chapel.
 - **Lodestone Quay**: the hollow under the generator rocks is now a ramp up to the rim.
 - **Saga Drift**: an open ramp down into the berg cave, so the harbour office chest and the ledger can be reached.
 - **Riverfork Delta**: a ramp out of the roofed hollow by the river fork.
