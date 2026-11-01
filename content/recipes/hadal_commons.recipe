@@ -38,6 +38,19 @@ origin
 clear at -25.6 29.4 r=5
 push at 24.8 0
 clear at 0 0 r=11
+# (T 11-01, REACH + GROUND: the houses' floors lay under the terraces' banks (the strokes ran before origin) - their
+# rooms were inside the ground, so the walk went over the roofs and no spot inside was found: a pad at each floor's
+# height under every house, and a level path from its stairs to its door)
+brush flatten from -15.75 -0.5 to -15.75 0.5 r=3.2 s=20 frames=200 h=3.9
+brush flatten from -11.5 -3.6 to -18.6 -3.6 r=1.9 s=20 frames=200 h=3.95
+brush flatten from -13.75 15 to -13.75 16 r=3.2 s=20 frames=200 h=7.9
+brush flatten from -14 9.5 to -15.6 12.4 r=1.9 s=20 frames=200 h=7.95
+brush flatten from 2.25 20.5 to 2.25 22 r=3.2 s=20 frames=200 h=11.9
+brush flatten from -3 17 to 1.2 17.4 r=1.9 s=20 frames=200 h=11.95
+brush flatten at 6.5 4.5 r=2.6 s=20 frames=200 h=-0.1
+brush flatten from 5.75 1.4 to 3 0 r=1.8 s=20 frames=200 h=0
+brush flatten at 6.5 -9.5 r=2.6 s=20 frames=200 h=-0.1
+brush flatten from 5.75 -12.6 to 3 -12.6 r=1.8 s=20 frames=200 h=0
 
 # --- The plaza: the bell's landing, the council board, the stairs up ---------------------------------------------------
 place Block_Foundation bellpad at 0 4 h=0.3 sx=2 sz=2
@@ -172,7 +185,9 @@ call sk_notebox x=-40 z=46 yaw=70 al=hc_wrecknote
 # --- Unique layer (10-24): the caged warden's store: a chest in a chained cage by the lodge (the bolt cutters from
 # Brinelab) - and the deep trench south-east of it is dark (dark hazard zone, the headlight from Lumen)
 place UT_DogCage_Medium02 wardencage at 66 60 ground sit yaw=200
-place Loot_Chest lodgechest at 66 60 ground sit yaw=200
+# (T 11-01, REACH: inside the cage the chest's middle lay in the cage's box collider - no spot to use it from; it
+# stands chained to the cage's side now, still shut until the cage is opened)
+place Loot_Chest lodgechest at 68.6 58.8 ground sit yaw=200
 place Loot_ChestSmall trenchchest at 62 -58 ground sit yaw=40
 place RT_Pillar - at 55 51 ground sy=0.4
 place TP_LaserControlPanel_lever doorlever at 55 51 ground y=1.25 scale=3 yaw=220
@@ -193,6 +208,19 @@ call ladtower x=-12 z=74 h0=47.5 lv=3 a=hctower
 place Loot_ChestSmall hclocker at -12.75 74.75 h=54.98 sit yaw=180
 place Note_Paper hcsumnote at -12.75 73.25 h=55.08 drop yaw=20
 place Zone_Trigger hcsummit at -12 74 h=55.98
+# (R 10-31: REACH - no walk got out of the sea onto the spire's dry top (47.5; summit, locker, boast): its sides drop
+# sheer from the top into deep water, and a pool ladder in the sea had no floor at its top. A beach is cut down the
+# spire's south side instead, from the dry top's edge to 3 m under the sea, 0.7 m a step)
+# (R 11-01: the walker still slid off a step's side onto the bare slope 2 m under it: the steps 2 m wider)
+brush flatten at -8 65.7 r=3.2 s=20 frames=300 h=46.8
+brush flatten at -8 64.4 r=3.2 s=20 frames=300 h=46.1
+brush flatten at -8 63.1 r=3.2 s=20 frames=300 h=45.4
+brush flatten at -8 61.8 r=3.2 s=20 frames=300 h=44.7
+brush flatten at -8 60.5 r=3.2 s=20 frames=300 h=44.0
+brush flatten at -8 59.2 r=3.2 s=20 frames=300 h=43.3
+brush flatten at -8 57.9 r=3.2 s=20 frames=300 h=42.6
+brush flatten at -8 56.6 r=3.2 s=20 frames=300 h=41.9
+clear from -8 67 to -8 56.6 r=4.2 body
 place Loot_ChestSmall hcledge at -24.1 74 ground sit yaw=40
 place SmallRock_02 - at -7 76 ground sit scale=0.5
 place SmallRock_02 - at -7 76 ground y=0.6 sit scale=0.32 yaw=40
@@ -217,10 +245,11 @@ call sk_notebox x=-48.8 z=-36.6 yaw=40 al=hcnote2
 call sk_notebox x=-54.8 z=-40.6 yaw=40 al=hcnote3
 place Zone_Trigger hctrip1 at -46 -34 ground y=1.5
 place Zone_Trigger hctrip2 at -52 -39 ground y=1.5
-place Zone_Trigger hctrip3 at -58 -43 ground y=1.5
+# (T 11-01, REACH: 1.2 m off the drowned building's roof rail - the walk to it caught on the rail)
+place Zone_Trigger hctrip3 at -56.8 -42 ground y=1.5
 place Zone_Trigger hcspike1 at -46 -34 ground y=1
 place Zone_Trigger hcspike2 at -52 -39 ground y=1
-place Zone_Trigger hcspike3 at -58 -43 ground y=1
+place Zone_Trigger hcspike3 at -56.8 -42 ground y=1
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # the generator's rocks that floated over the slope, and walls left wholly under the ground (ground check, 2026-10-23)
@@ -290,7 +319,7 @@ note lodgechest Warden's store | The warden's store, safe in its cage: spare tan
 loot lodgechest OxygenBottle*1;TitaniumIngot*2;Bolt*3
 prop lodgechest loot.refill=0
 prop lodgechest if.open=signal|wardencage
-prop lodgechest else.open=message||The chest is inside the chained cage.
+prop lodgechest else.open=message||The chest is chained to the cage. Open the cage first.
 note trenchchest Trench box | A box dropped down the dark trench: copper and a battery, dry in wax.
 loot trenchchest Copper*3;Battery*1;CircuitBoard*1
 prop trenchchest loot.refill=0
