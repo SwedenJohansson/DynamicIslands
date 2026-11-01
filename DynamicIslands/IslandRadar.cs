@@ -57,7 +57,7 @@ namespace DynamicIslands.Editor
 
 		/// <summary>A story step the chain hasn't counted done (it may need more than the quest: a zone, a note, a signal),
 		/// else a plan's island or a begun quest until ReturningIslands.Finished. (e.Rule and the chain's steps reach clients too.)</summary>
-		static bool StillOpen(IslandWorldState.Entry e)
+		internal static bool StillOpen(IslandWorldState.Entry e)
 		{
 			// (one that couldn't be made, or whose file this PC is still waiting for, isn't there to sail to - review 10-30)
 			if ((e.Failed && e.Root == null) || e.WaitingForFile || e.Excluded) return false;
@@ -65,7 +65,10 @@ namespace DynamicIslands.Editor
 			if (ruled)
 			{
 				string key = StoryChain.RuleKey(e.Rule);
-				if (StoryChain.Steps.Contains(key, System.StringComparer.OrdinalIgnoreCase)) return !StoryChain.Done.Contains(key);
+				// (a step done before its quest - done when step N, a zone, a signal: the rest of its quest and its rewards are
+				// still there, and its dot went when the raft was beyond receiverDistance - questdive 11-01. Done, it is
+				// needed like any plan island, until ReturningIslands.Finished)
+				if (StoryChain.Steps.Contains(key, System.StringComparer.OrdinalIgnoreCase) && !StoryChain.Done.Contains(key)) return true;
 				// (its quest done on a copy without the rule - one spawned by hand: the plan counts it done (StoryItems), so
 				// no dot either; looked at once a second per island, as all of this - RK8)
 				string name = e.HostName ?? e.Name;

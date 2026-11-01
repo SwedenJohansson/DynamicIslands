@@ -269,7 +269,9 @@ it - its quest where it was, opened chests still open - and a banner says "Back 
   reached it and finished its quest.
 
 An island found with a Receiver frequency stays where it is (the Receiver shows the way, however far, until its quest is done), and so do islands nobody
-needs. With several players the host decides, and the island moves for everyone. (`returnMinutes` in
+needs. A **main story** island is the exception, like Raft's own story islands: while the Receiver is set to its
+frequency and the raft is far from it (800 m and more), it comes up ahead of the raft again, as you left it - finished
+or not, as often as you like. With several players the host decides, and the island moves for everyone. (`returnMinutes` in
 `spawnpool.txt`, [10](#10-settings-files); 0 = never.)
 
 **A finished island never comes again by chance.** When the spawn pool picks an island this world already has:
@@ -2231,7 +2233,10 @@ chain, in the **World plan** window (its **Settings** and **Main story line** ta
 - **Where** it appears, for any rule:
   - **on the Receiver**: it gets its own 4-digit frequency, made for each world. When it is unlocked, every player sees
     a banner "Tune the Receiver to #4821", the journal gets a page, and the number on the note before it shows it.
-    **Any player** can dial it on the Receiver; the island then comes up ahead of the raft, like Raft's story islands;
+    **Any player** can dial it on the Receiver; the island then comes up ahead of the raft, like Raft's story islands.
+    A **main story** island comes back the same way whenever the Receiver is set to its frequency and the raft has left
+    it far behind - its quest, chests and rewards as you left them, finished or not. A side quest island on the
+    Receiver comes back only when you dial its frequency again, until its quest is done;
   - **by chance while sailing**: it comes up ahead some time after it is unlocked;
   - **ahead of the raft** or **near an island**, as soon as it is unlocked.
 ![Raft's story in the World plan window](images/editor-story-chain.jpg)
