@@ -67,6 +67,13 @@ brush flatten at 80.8 -17.9 r=1.4 s=20 frames=200 h=1.25
 brush flatten at 81.3 -17.4 r=1.6 s=20 frames=200 h=1.9
 brush flatten at 81.8 -16.6 r=1.6 s=20 frames=200 h=2.6
 brush flatten at 82.3 -15.8 r=1.6 s=20 frames=200 h=3.2
+# (agent Q 10-30, REACH: the steps start 0.5 m over the water at 81.2 -22.4 and the hole is 14 m deep below them - a
+# swimmer at the surface has no floor to step up from (the pump house, its chest and Dora's note: no way back out);
+# three steps under the water, down into the hole)
+brush flatten at 80.8 -23.2 r=1.4 s=20 frames=200 h=-0.2
+brush flatten at 80.2 -24.0 r=1.4 s=20 frames=200 h=-0.8
+brush flatten at 79.7 -24.8 r=1.4 s=20 frames=200 h=-1.3
+clear from 80.8 -23.2 to 79.7 -24.8 r=2.4 body
 origin
 clear at 0 4 r=35
 clear from 0 -66 to 0 -32 r=5
@@ -151,7 +158,9 @@ place Block_Pillar_Tier3 - at 0 3 y=2.55
 place Block_Pillar_Tier3 - at 4.5 3 y=0
 place Block_Pillar_Tier3 - at 4.5 3 y=2.55
 call shed w=3 d=2 door=1 y=5.04
-place LandmarkLadder_6m cabladder at 2.25 -0.4 y=0 sit yaw=0
+# (T 11-01, REACH: the ladder's top stood 1.8 m over the cab's floor - no floor to step off onto, the cab and its note
+# unreachable: 1.2 m lower, its foot in the ground, its top 0.5 m over the floor)
+place LandmarkLadder_6m cabladder at 2.25 -0.4 y=-1.2 sit yaw=0
 place Note_Paper operatornote at 0.9 2.3 y=5.1 sit drop yaw=80
 place TP_LaserControlPanel_lever claw at 3.5 2.2 y=5.04 sit drop scale=1.5 yaw=270
 place Zone_Trigger crane_cab at 2.25 1.5 y=6.5
@@ -309,14 +318,17 @@ prop fuse tint.color=#d8d2c4
 prop fuse on.use=hide|\ngive||story:fuse*1\nmessage||A heavy ceramic fuse, stamped CRANE.
 
 prop chapel zone.id=chapel
-prop chapel zone.radius=2.5
+prop chapel zone.radius=3.5
 prop chapel zone.repeat=never
 prop chapel zone.message=Inside the Choir's chapel it is darker than it should be. Through the door, far below, the pit's water is lit from under.
 prop chapel on.enter=camera|chapelcam|pitlook|6|40
+# (T 11-01: camera points only - no zone id, so the reach audit no longer counts them as places to walk to)
 prop chapelcam obj.name=chapelcam
 prop chapelcam zone.radius=1
+prop chapelcam zone.id=
 prop pitlook obj.name=pitlook
 prop pitlook zone.radius=1
+prop pitlook zone.id=
 prop chapeldark atmo.fog=#0a0c10
 prop chapeldark atmo.fogAmount=0.6
 prop chapeldark atmo.light=#1c2028
@@ -417,10 +429,13 @@ prop quarry_top zone.id=quarry_top
 prop quarry_top zone.radius=4
 prop quarry_top zone.message=The top of the quarry. The sea, all the way round. Silent.
 prop quarry_top on.enter=camera|topcam|sealook|6|40
+# (T 11-01: camera points only - no zone id, so the reach audit no longer counts them as places to walk to)
 prop topcam obj.name=topcam
 prop topcam zone.radius=1
+prop topcam zone.id=
 prop sealook obj.name=sealook
 prop sealook zone.radius=1
+prop sealook zone.id=
 
 quest title=The Last Frequency
 quest intro=The Receiver's last frequency: a quarry, and five mirrors listening to the sea. Make for the five big mirrors and go ashore at the quarry's landing.
