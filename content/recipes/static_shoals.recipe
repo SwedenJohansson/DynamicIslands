@@ -28,9 +28,23 @@ brush flatten at -10 -4 r=12 s=20 frames=200 h=1.5
 brush flatten at 18 12 r=6 s=20 frames=200 h=1.5
 brush flatten from 4 2 to 10 6 r=4 s=20 frames=150 h=-2
 brush sand at -10 -4 r=14 s=10 frames=40
+# (REACH 10-30 G1: the east bar stood 1.5 m sheer out of the sea - a swimmer under mast 4's ladder never got out; a sand
+# ramp now runs down into the sea south of the hut. The mast workshop's door faced the beach below the main bar's edge -
+# its door is now in the back wall, and a pad levels the sand in front of it; the hut's south half hung over the sea
+# off the bar's edge - sand now built up under the whole hut)
+for k 0 4
+brush flatten at 18 {7.6-$k} r=1.6 s=20 frames=150 h={1.5-0.5*$k}
+next
+brush sand from 18 7.6 to 18 3.6 r=1.8 s=10 frames=20
+brush flatten at -17.25 -12.1 r=1.6 s=20 frames=150 h=1.5
+brush flatten at -16.5 -14.5 r=2.8 s=20 frames=150 h=1.5
+brush sand at -16.5 -14.5 r=3 s=10 frames=20
 origin
 clear at -10 -4 r=12
 clear at 18 12 r=6
+clear from 18 7.6 to 18 3.6 r=2.6 body
+clear at -17.25 -12.1 r=2.6 body
+clear at -16.5 -14.5 r=3 body
 
 # --- The four masts: two thick pillars high, a dish, a red light, a cable hub at the foot ------------------------------
 macro mast x=0 z=0 yaw=0
@@ -86,7 +100,17 @@ call tzone x=18.25 z=12.25 al=mast4zone id=mast_4 r=4 h=2.6 msg="Mast 4's hut, o
 place Loot_ChestLarge flarelocker at -4.5 -9 ground sit yaw=160
 place Placeable_Flag_05 - at -5.1 -9.8 ground sit
 push at -18 -16 h=1.5
-call hut w=2 d=2 y=0.1
+call floors w=2 d=2 y=0.1
+place Block_Wall_Wood - at 0.75 0 y=0.1
+place Block_Wall_Wood - at 2.25 0 y=0.1
+place Block_Wall_Door_Wood - at 0.75 3 y=0.1
+place Block_Wall_Wood - at 2.25 3 y=0.1
+for fz 0.75 2.25 1.5
+place Block_Wall_Wood - at 0 $fz y=0.1 yaw=90
+place Block_Wall_Wood - at 3 $fz y=0.1 yaw=90
+next
+call corners w=2 d=2 y=0.1
+roof 2 2 at 0 0 y=0.1 wood
 place Loot_Chest workshop at 2.2 2.4 y=0.1 sit yaw=180
 place "Box Big" - at 0.8 0.8 y=0.1 sit yaw=10
 pop
