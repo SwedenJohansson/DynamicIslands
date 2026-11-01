@@ -175,6 +175,25 @@ call rr_pad x=-60 z=16 h=3 r=14
 call ar_cave x=-60 z=12 h=3 yaw=0 al=smugglerrock chest=smugglerbox
 place SmallBoulder4 - at -61 33 ground yaw=40 scale=0.9
 place SmallBoulder4 - at -57.5 35.5 ground yaw=110 scale=0.8
+# (agent Q 10-30, REACH: the west dunes' pad stood 3 m over the sea on sheer sides and the walker never got onto it -
+# the smugglers' hole and its chest unreached; a beach slope down its north-east side into the water, 0.7 m a step)
+brush flatten at -52.3 23.8 r=2.6 s=20 frames=200 h=3.0
+brush flatten at -51.39 24.72 r=2.6 s=20 frames=200 h=2.3
+brush flatten at -50.48 25.65 r=2.6 s=20 frames=200 h=1.6
+brush flatten at -49.57 26.57 r=2.6 s=20 frames=200 h=0.9
+brush flatten at -48.66 27.49 r=2.6 s=20 frames=200 h=0.2
+brush flatten at -47.75 28.42 r=2.6 s=20 frames=200 h=-0.5
+brush flatten at -46.84 29.34 r=2.6 s=20 frames=200 h=-1.2
+clear from -52.3 23.8 to -46.84 29.34 r=3.6 body
+# (agent Q 10-30, REACH: the east land bridge's north edge fell sheer into the water by the container yard - a swimmer
+# there had no way back up (the yard, the purser's container, the harbour cache unreached); a beach slope up onto it)
+brush flatten at 37.5 5.4 r=2.6 s=20 frames=200 h=2.0
+brush flatten at 37.5 6.7 r=2.6 s=20 frames=200 h=1.3
+brush flatten at 37.5 8.0 r=2.6 s=20 frames=200 h=0.6
+brush flatten at 37.5 9.3 r=2.6 s=20 frames=200 h=-0.1
+brush flatten at 37.5 10.6 r=2.6 s=20 frames=200 h=-0.8
+brush flatten at 37.5 11.9 r=2.6 s=20 frames=200 h=-1.3
+clear from 37.5 5.4 to 37.5 11.9 r=3.6 body
 # D The cargo plane (south-east): down on the shore field below the ridge's south end
 call ar_plane x=36 z=-52 h=3 yaw=140 al=cargoplane crate=planecrate
 # --- JUMP COURSE vs (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---
@@ -290,7 +309,8 @@ prop smugglerbox loot.refill=0
 call hw_zone x=-60 z=16 al=smugglerz id=smugglershole r=4 msg="A hole in the dune's rock, boulders across its mouth. Somebody's boot prints inside."
 note planecrate Cargo plane's crate | The cargo plane's crate: parts for a ship's engine that never got to her.
 loot planecrate Bolt*4;MetalIngot*1;Scrap*3;Rope*2
-call treasure x=48 z=58 r=6 n=1 seed=26498 kind=0
+# (R 10-31: with the reach beaches the seeded scatters before it pick other spots, and no spot within 6 m was 4 m clear)
+call treasure x=48 z=58 r=8 n=1 seed=26498 kind=0
 prop treasure26498 treasure.loot=CopperIngot*2;TitaniumOre*1;Nail*8
 
 info title=Vasagatan Remade
