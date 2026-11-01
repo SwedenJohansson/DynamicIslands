@@ -35,6 +35,24 @@ brush flatten at -10 -45 r=12 s=20 frames=60
 # (the trail from the town's gate down the shore to the pit, and up onto the fortress's shelf)
 brush smooth from -8 -10 to -21 -10 r=5 s=20 frames=60
 brush smooth from 5 21 to -2 13 r=4 s=20 frames=50
+# (agent Q 10-30, REACH: the terrace cut into the north hill left a 6.6 m bank at its north-east edge - who came down
+# into the town that way had no way back up (12 targets 'on the way out'); a ramp up along the bank's foot to its top)
+brush flatten at 15.34 49.50 r=1.6 s=20 frames=120 h=5.50
+brush flatten at 16.14 49.80 r=1.6 s=20 frames=120 h=6.01
+brush flatten at 16.97 50.06 r=1.6 s=20 frames=120 h=6.52
+brush flatten at 17.82 50.30 r=1.6 s=20 frames=120 h=7.02
+brush flatten at 18.70 50.49 r=1.6 s=20 frames=120 h=7.53
+brush flatten at 19.59 50.65 r=1.6 s=20 frames=120 h=8.04
+brush flatten at 20.50 50.77 r=1.6 s=20 frames=120 h=8.55
+brush flatten at 21.43 50.84 r=1.6 s=20 frames=120 h=9.05
+brush flatten at 22.38 50.88 r=1.6 s=20 frames=120 h=9.56
+brush flatten at 23.34 50.87 r=1.6 s=20 frames=120 h=10.07
+brush flatten at 24.30 50.82 r=1.6 s=20 frames=120 h=10.58
+brush flatten at 25.28 50.73 r=1.6 s=20 frames=120 h=11.08
+brush flatten at 26.27 50.59 r=1.6 s=20 frames=120 h=11.59
+brush flatten at 27.26 50.40 r=1.6 s=20 frames=120 h=12.10
+brush smooth at 21.5 49.3 r=6 s=4 frames=15
+clear at 21.5 49.3 r=8 body
 # --- DEEP 10-25 terrain (under the sea as it was: the land's centre stays put): the strongroom's hole in the bay (-14 m);
 # the cave's pad comes with its macro (in the south hill, below its own ground)
 call hw_basin x=58 z=-42 r=12 h=-14
@@ -99,6 +117,8 @@ place Caravan_Blue_01 - at 8 36 ground sit yaw=20
 place Caravan_Green_02 - at 8 36 ground sit yaw=20 y=2.75
 place Caravan_Yellow_01 - at 8 36 ground sit yaw=20 y=5.5
 place LandmarkLadder_6m - at 9.8 33.7 ground yaw=20
+# (agent R 11-01: the 6 m ladder ended ~2 m under the top caravan's roof - a second one over it to the roof)
+place LandmarkLadder_6m - at 9.8 33.7 ground yaw=20 y=2.5
 place Scrap_02 tithe at 17 38 ground sit yaw=30
 place Pallet - at 14 26 ground sit yaw=15
 place MetalSheet_2 - at 17 22 ground sit yaw=80 tilt=70
