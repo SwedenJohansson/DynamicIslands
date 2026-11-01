@@ -64,6 +64,16 @@ call ab_ruin x=7 z=77 h=3 yaw=0 w=2 d=2 al=campruin
 place Balboa_DecorationPrefabBase_SimpleTent - at -5 79 ground sit yaw=180
 place campfire_1 - at 3 68 ground sit
 place Crate_Big_01 - at -4.5 69 ground sit yaw=15
+# (agent Q 10-30, REACH: the bank stood 3 m over the water on sheer sides all round - nobody got up onto it from the
+# lagoon or the sea: the camp, Tomas and the compressor unreached. A beach from the lagoon up to the camp, 0.7 m a step)
+brush flatten at -6 57.5 r=2.6 s=20 frames=200 h=2.3
+brush flatten at -6 56.2 r=2.6 s=20 frames=200 h=1.6
+brush flatten at -6 54.9 r=2.6 s=20 frames=200 h=0.9
+brush flatten at -6 53.6 r=2.6 s=20 frames=200 h=0.2
+brush flatten at -6 52.3 r=2.6 s=20 frames=200 h=-0.5
+brush flatten at -6 51.0 r=2.6 s=20 frames=200 h=-1.2
+brush flatten at -6 49.7 r=2.6 s=20 frames=200 h=-1.9
+clear from -6 57.5 to -6 49.7 r=3.6 body
 # B Black Peak (west): summit 30 m, base r 26, the trail from its south foot, the signal mast on top
 call hw_mount x=-72 z=8 b=26 h=30
 call hw_trail x=-72 z=8 b=26 h=30 a0=170 turn=300 n=34 h0=3
@@ -83,6 +93,16 @@ call ar_ridge x1=72 z1=-26 x2=64 z2=28 h=9 top=7 r=8
 call ar_cave x=88 z=-8 h=3 yaw=0 al=lavarock chest=lavachest
 prop lavarock tint.color=#2e2a28
 prop lavarock tint.amount=0.5
+# (agent Q 10-30, REACH: the lava tube's mouth path ended 3.4 m over the sea - the tube and its chest unreached: a
+# beach down from the path's end into the water)
+brush flatten at 87 14.3 r=2.2 s=20 frames=200 h=2.7
+brush flatten at 87 15.6 r=2.2 s=20 frames=200 h=2.0
+brush flatten at 87 16.9 r=2.2 s=20 frames=200 h=1.3
+brush flatten at 87 18.2 r=2.2 s=20 frames=200 h=0.6
+brush flatten at 87 19.5 r=2.2 s=20 frames=200 h=-0.1
+brush flatten at 87 20.8 r=2.2 s=20 frames=200 h=-0.8
+brush flatten at 87 22.1 r=2.2 s=20 frames=200 h=-1.5
+clear from 87 14.3 to 87 22.1 r=3.2 body
 
 # --- JUMP COURSE ab (Abyss pass 10-26): kz-style hop course of floor slabs on its own pad (the bs course, turned) ---
 # JUMP ab pad=4 at=48 66
