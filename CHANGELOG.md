@@ -9,6 +9,16 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 2026-11-01: Main story islands on the Receiver
+
+- **A main story island always comes back on the Receiver.** Like Raft's own story islands, while the Receiver is set to
+  its frequency and the raft has left it 800 m or more behind, it comes up ahead of the raft again as you left it
+  (quest, chests, rewards), finished or not, as often as you like. Before, it came back only when you dialled the
+  frequency again (not while the Receiver stayed set), only up to three times, and never once its story step was done -
+  also when that step was done before the rest of its quest ("done when step 5").
+- **Receiver dot for a story island with its quest still open.** A story island whose step was done before its quest
+  (a step, a zone, a note, a signal) lost its Receiver dot far away; it now keeps it until its quest is done.
+
 ## 2026-10-27: Quest playtest fixes
 
 - **Where a quest starts**: until an island's quest has begun, a gold beam stands over the place its first step wants
