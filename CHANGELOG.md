@@ -11,6 +11,13 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ## Next update
 
+### New
+- **Dig brush** (editor, Terrain tab, Caves): a second tunnel tool beside the drag one, now called **Straight tunnel**.
+  Press on a hillside or cliff and hold: a passage is dug in toward where the mouse points, so you paint your own winding
+  tunnel or cave entrance. **Dig size** (2.8-10 m) and **Dig slope** (up to 25°) as with the other brushes; press on a tunnel
+  to branch off, **Shift** fills a passage in, one **Ctrl+Z** per stroke. The passage is lined with Raft's brown rock and closed
+  under the ground, open only at its mouth; it saves with the island and comes along into Test and multiplayer.
+
 ### Fixed
 - **Cave tool (Terrain tab, Caves - Tunnel)**: the mouth no longer comes out as a narrow dark slit with rock spikes
   through it, walking in no longer pushes you up, and every drag makes an entrance. The mouth gets a frame of the same

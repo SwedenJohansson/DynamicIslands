@@ -36,6 +36,7 @@ namespace DynamicIslands
 			Erode,      // thermal erosion: ground steeper than TerrainBrushes.TalusAngle slides down
 			Cave,       // drag a tunnel of cave pieces into a hill (CaveTool, PF-D2)
 			SeaGrass,   // Raft's short sea grass on the sea floor (SeaGrass, PF-D3; Shift: takes it away)
+			Dig,        // paint a tunnel into a hill: a passage dug where the mouse points (DigTunnel; Shift: fills it in)
 		}
 
 		/// <summary>Tests: the next strokes take the noise away, as Shift does.</summary>
@@ -104,7 +105,8 @@ namespace DynamicIslands
 				EditorInput.HandleShortcuts();
 				EditorUI.Tick();
 				ModifyTerrain();
-				CaveGround.EditorTick(terrain, stroking); // (the ground out of the caves' rooms, as in a world - X7)
+				CaveGround.EditorTick(terrain, stroking || DigTunnel.Digging); // (the ground out of the caves' rooms, as in a world - X7)
+				DigTunnel.EditorTick(terrain, stroking || DigTunnel.Digging); // (and over the dug tunnels)
 			}
 			catch (Exception e)
 			{
@@ -148,6 +150,8 @@ namespace DynamicIslands
 				if (Input.GetKeyDown(CameraSettings.UpKey)) TerrainStamps.Rotation += 15f;
 			}
 
+			if (modificationAction == TerrainModificationAction.Dig) { CaveTool.Cancel(); DigTunnel.Brush(terrain, canSculpt); return; }
+			DigTunnel.Cancel();
 			if (modificationAction == TerrainModificationAction.Cave) { CaveTool.Drag(overTerrain, point, canSculpt); return; }
 			CaveTool.Cancel();
 			if (!Input.GetMouseButton(0) || !overTerrain || (!stroking && EditorCamera.UsingMouse)) return; // (Alt+drag orbits the camera)
@@ -265,6 +269,7 @@ namespace DynamicIslands
 			Vector3 o = terrain.transform.position, size = terrainData.size;
 			foreach (EditorGameObject e in root.GetComponentsInChildren<EditorGameObject>(false))
 			{
+				if (e.GameObjectName == DigTunnel.ObjectName) continue; // (a dug tunnel is made again under the new ground instead)
 				Vector3 p = e.transform.position;
 				if (p.x < dirtyMin.x - 1f || p.x > dirtyMax.x + 1f || p.z < dirtyMin.z - 1f || p.z > dirtyMax.z + 1f) continue;
 				// (the ground there before the stroke, from its snapshot, and now)

@@ -21,8 +21,8 @@ namespace DynamicIslands.Editor
 
 		public static bool IsHidden(EditorGameObject o) { return o != null && hiddenRenderers.ContainsKey(o); }
 		public static bool IsLocked(EditorGameObject o) { return o != null && locked.Contains(o); }
-		/// <summary>Can be clicked, boxed or selected by Select all: neither hidden nor locked.</summary>
-		public static bool Pickable(EditorGameObject o) { return o != null && o.gameObject.activeInHierarchy && !IsHidden(o) && !IsLocked(o); }
+		/// <summary>Can be clicked, boxed or selected by Select all: neither hidden nor locked (nor a dug tunnel: the Dig brush digs, fills and undoes it - no gizmo arrows).</summary>
+		public static bool Pickable(EditorGameObject o) { return o != null && o.GameObjectName != DigTunnel.ObjectName && o.gameObject.activeInHierarchy && !IsHidden(o) && !IsLocked(o); }
 
 		/// <summary>
 		/// Every placed object (the deleted ones, kept for undo, are inactive: left out) - also those of an opened or generated

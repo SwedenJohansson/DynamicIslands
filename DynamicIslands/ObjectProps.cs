@@ -270,6 +270,7 @@ namespace DynamicIslands.Editor
 			if (hasMouth) CaveTool.Mouth(root, mouth, false);
 			if (hasEnd) CaveTool.Mouth(root, end, true);
 			if (hasJoin) CaveTool.Join(root, join);
+			if (props != null && props.ContainsKey(DigTunnel.PathKey)) DigTunnel.Apply(root, props); // (a dug tunnel's rock, from its path - first, so it is tinted too)
 			if (HasTint(props)) ApplyTint(root, Tint(props), TintStrength(props));
 			else ApplyTint(root, Color.white, 0f);
 			if (Get(props, Skin, "") == SkinRock) ApplyRockSkin(root);

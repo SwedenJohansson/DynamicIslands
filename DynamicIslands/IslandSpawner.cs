@@ -758,6 +758,7 @@ namespace DynamicIslands.Editor
 			objects.transform.SetParent(root.transform, false);
 			int missing = SpawnObjects(island, objects.transform, false, flying);
 			CaveGround.Cut(objects.transform); // (X7)
+			DigTunnel.Cut(objects.transform); // (and over the dug tunnels)
 			Spawned(island, worldPosition, flying, missing);
 			return root;
 		}
@@ -814,6 +815,7 @@ namespace DynamicIslands.Editor
 			objects.SetActive(true);
 			LastSpawnTiming = "land " + land + " ms, objects over " + LastSpawnFrames + " frames, switching them on " + clock.ElapsedMilliseconds + " ms";
 			CaveGround.Cut(objects.transform); // (the ground out of the caves' rooms: their rock can be hit now - X7)
+			DigTunnel.Cut(objects.transform); // (and over the dug tunnels)
 			Spawned(island, worldPosition, flying, missing);
 			result(root);
 		}

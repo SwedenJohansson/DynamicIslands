@@ -646,6 +646,9 @@ namespace DynamicIslands.Editor
 			sizes.Remove(name);
 		}
 
+		/// <summary>Keeps an object out of the editor's list (one a tool makes, as the dug tunnels).</summary>
+		internal static void Hide(string name) { hidden.Add(name); }
+
 		/// <summary>Takes a custom object out of the catalog (a deleted group).</summary>
 		internal static void RemoveCustom(string name)
 		{

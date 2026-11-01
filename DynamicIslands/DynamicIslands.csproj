@@ -67,6 +67,7 @@
     <Compile Include="CaveMountain.cs" />
     <Compile Include="CaveTool.cs" />
     <Compile Include="CustomIslandSpawner.cs" />
+    <Compile Include="DigTunnel.cs" />
     <Compile Include="DevTests.cs" />
     <Compile Include="DevTestsGapsB.cs" />
     <Compile Include="DevTestsSize.cs" />
@@ -334,6 +335,7 @@
     <Compile Include="DevTestsTestStart.cs" />
     <Compile Include="DevTestsCaveTool.cs" />
     <Compile Include="DevTestsSeaGrass.cs" />
+    <Compile Include="DevTestsDigTunnel.cs" />
     <Compile Include="DevTestsPlayerFeedback.cs" />
     <Compile Include="DevTestsBuriedTreasure.cs" />
     <Compile Include="BuriedTreasure.cs" />

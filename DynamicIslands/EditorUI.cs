@@ -293,7 +293,7 @@ namespace DynamicIslands.Editor
 
 			RectTransform sculpt = UIKit.Group(s, "Sculpt");
 			RectTransform r1 = UIKit.Row(sculpt), r2 = UIKit.Row(sculpt), r3 = UIKit.Row(sculpt);
-			brushButtons = new Button[17];
+			brushButtons = new Button[18];
 			brushButtons[0] = UIKit.Button(r1, "Raise", () => SetBrush(terraineditor.TerrainModificationAction.Raise), "Raise: hold the left mouse button to build up land");
 			brushButtons[1] = UIKit.Button(r1, "Lower", () => SetBrush(terraineditor.TerrainModificationAction.Lower), "Lower: dig down, make bays and lagoons");
 			brushButtons[2] = UIKit.Button(r2, "Flatten", () => SetBrush(terraineditor.TerrainModificationAction.Flatten), "Flatten: levels the ground to the height where the stroke starts (or to Flatten to, below)");
@@ -320,6 +320,16 @@ namespace DynamicIslands.Editor
 				"Raise the ground over the cave into a hill so its rock is covered (the ground is never lowered there). Off: only filled up under it");
 			hill.name = "Check_CaveHill";
 			UIKit.SetCheck(hill, CaveTool.Hill);
+			// (the other tunnel tool: the Dig brush, a passage painted into a hill - 11-01)
+			Text straight = UIKit.LabelOf(brushButtons[15]);
+			if (straight != null) straight.text = "Straight tunnel";
+			brushButtons[17] = UIKit.Button(c1, "Dig brush", () => SetBrush(terraineditor.TerrainModificationAction.Dig),
+				"Dig brush: press on a hillside or cliff and hold - a passage is dug in toward where the mouse points (keep it still to dig on the way you look, move it to steer). Press on a tunnel to dig on from it or branch off; Shift+drag fills a passage in. Ctrl+Z undoes a stroke");
+			brushButtons[17].name = "Button_DigBrush";
+			UIKit.Slider(caves, "Dig size", DigTunnel.MinRadius * 2f, DigTunnel.MaxRadius * 2f, DigTunnel.Radius * 2f, v => v.ToString("0.0") + " m",
+				v => DigTunnel.Radius = Mathf.Round(v * 5f) / 10f, "Dig brush: how wide (and high) the passage is. 2.8 m is a tight crawl you can still walk, 3.5 m a passage, 6 m and more a hall", false);
+			UIKit.Slider(caves, "Dig slope", -DigTunnel.MaxSlope, DigTunnel.MaxSlope, DigTunnel.Slope, v => Mathf.Abs(v) < 0.5f ? "level" : (v < 0 ? "down " : "up ") + Mathf.RoundToInt(Mathf.Abs(v)) + "°",
+				v => DigTunnel.Slope = v, "Dig brush: how the passage climbs as you dig - level, down into the ground (from flat ground: a ramp in) or up", true);
 
 			RectTransform paint = UIKit.Group(s, "Paint ground");
 			RectTransform p1 = UIKit.Row(paint), p2 = UIKit.Row(paint), p3 = UIKit.Row(paint);
@@ -964,6 +974,7 @@ namespace DynamicIslands.Editor
 				case terraineditor.TerrainModificationAction.Erode: active = 10; break;
 				case terraineditor.TerrainModificationAction.Cave: active = 15; break;
 				case terraineditor.TerrainModificationAction.SeaGrass: active = 16; break;
+				case terraineditor.TerrainModificationAction.Dig: active = 17; break;
 				case terraineditor.TerrainModificationAction.PaintLayer:
 					active = terraineditor.paintLayer >= TerrainPainter.LayerCount ? 11 + Array.IndexOf(PaintSlots, terraineditor.paintLayer - TerrainPainter.LayerCount) : 4 + Array.IndexOf(PaintSlots, terraineditor.paintLayer);
 					break;
@@ -1057,6 +1068,8 @@ namespace DynamicIslands.Editor
 						: terraineditor.modificationAction == terraineditor.TerrainModificationAction.AutoPaint ? "Auto texturing" : terraineditor.modificationAction.ToString();
 					if (terraineditor.modificationAction == terraineditor.TerrainModificationAction.Noise)
 						return "Noise: hold the left mouse button to roughen the ground · Shift: take the bumps away · Noise size sets how big · Ctrl+Z undoes a stroke";
+					if (terraineditor.modificationAction == terraineditor.TerrainModificationAction.Dig)
+						return "Dig brush: hold the left mouse button on a hillside - it digs in where you point · press on a tunnel to dig on · Shift: fill in · Ctrl+Z undoes a stroke";
 					if (terraineditor.modificationAction == terraineditor.TerrainModificationAction.Erode)
 						return "Erode: hold the left mouse button - ground steeper than " + TalusText(TerrainBrushes.TalusAngle) + " slides down · Ctrl+Z undoes a stroke";
 					if (terraineditor.modificationAction == terraineditor.TerrainModificationAction.Stamp && TerrainStamps.Current != null)

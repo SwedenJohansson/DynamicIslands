@@ -698,6 +698,15 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
   takes the pieces and the ground back together. Nothing is selected after laying, so no gizmo stands on the cave. The pieces are ordinary objects: move, delete or tint them like any
   other; they save with the island and come along into Test and multiplayer. In a world the rock over them is solid
   and no daylight shows through.
+- **Caves: Dig brush:** the other tunnel tool (the one above is now called **Straight tunnel**). Paint your own
+  passage into a hill or cliff, as the Sculpt brushes paint the ground: press on a hillside and hold - a tunnel is dug in
+  toward where the mouse points. Move the mouse to steer it round bends; keep it still and it digs on the way you look.
+  Let go and press again on the tunnel to dig on from that spot or branch off; **Shift**+drag fills a passage back in.
+  **Dig size** is the passage's width and height (2.8 m: a tight passage you can still walk; 6 m and more: a hall);
+  **Dig slope** makes it climb or go down as you dig (up to 25°; down from flat ground is a ramp in). The passage is lined
+  with Raft's brown island rock, closed all round under the ground; only its mouth, where it comes out of the hill, is
+  open to the sky. Each stroke is one **Ctrl+Z**. A dug tunnel is saved with the island and comes along into Test and
+  multiplayer; it follows the ground if you sculpt over it later. It has no move arrows: dig, fill or undo it.
 
 **Sea floor.** On the Island tab, **Sea floor: Deep / Shallow** switches the sea around the island without making it
 again: the land keeps its height above the sea, the untouched sea floor goes down (a slope falls away from the shore)

@@ -343,6 +343,7 @@ namespace DynamicIslands.Editor
 			PlaceableCatalog.AddCustom(Islanders.ObjectName, Islanders.BuildMarker(), NotesCategory, "Islander (talks)");
 			PlaceableCatalog.AddCustom(Collectibles.ObjectName, Collectibles.BuildMarker(), LootCategory, "Collectible (set piece)");
 			CameraPath.Register(); // (camera points of fly-through paths, PF4)
+			DigTunnel.Register(); // (the Dig brush's tunnels, hidden from the list)
 			Minimap.Register(); // (map markers of the island map, PF5)
 			foreach (CreatureKind k in Creatures)
 				PlaceableCatalog.AddCustom(k.Name, BuildPrototype(k), k.Category, k.Label);
