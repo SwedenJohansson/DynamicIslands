@@ -163,6 +163,72 @@ call ar_ridge x1=16 z1=70 x2=56 z2=50 h=18 top=8 r=9
 call ar_plants_snowy x=36 z=60 r=32 seed=12441
 brush flatten at 28 51 r=6 s=20 frames=300 h=12
 clear at 28 51 r=7
+# (agent Q 10-30, REACH: the quarry ledge stood 9 m over the shelf on sheer sides, and the ridge's crest 6 m over the ledge -
+# nobody got up to the quarry, its crate, the cairn, the rim cache or the Warden's letter: a ramp from the shelf up to the
+# ledge, the ledge widened under the crate, and a path cut into the ridge's flank from the ledge up to the crest)
+brush flatten at 16.80 28.60 r=2.2 s=20 frames=200 h=3.20
+brush flatten at 17.23 29.45 r=2.2 s=20 frames=200 h=3.64
+brush flatten at 17.65 30.30 r=2.2 s=20 frames=200 h=4.08
+brush flatten at 18.07 31.15 r=2.2 s=20 frames=200 h=4.52
+brush flatten at 18.50 32.00 r=2.2 s=20 frames=200 h=4.96
+brush flatten at 18.93 32.85 r=2.2 s=20 frames=200 h=5.40
+brush flatten at 19.35 33.70 r=2.2 s=20 frames=200 h=5.84
+brush flatten at 19.77 34.55 r=2.2 s=20 frames=200 h=6.28
+brush flatten at 20.20 35.40 r=2.2 s=20 frames=200 h=6.72
+brush flatten at 20.62 36.25 r=2.2 s=20 frames=200 h=7.16
+brush flatten at 21.05 37.10 r=2.2 s=20 frames=200 h=7.60
+brush flatten at 21.48 37.95 r=2.2 s=20 frames=200 h=8.04
+brush flatten at 21.90 38.80 r=2.2 s=20 frames=200 h=8.48
+brush flatten at 22.33 39.65 r=2.2 s=20 frames=200 h=8.92
+brush flatten at 22.75 40.50 r=2.2 s=20 frames=200 h=9.36
+brush flatten at 23.18 41.35 r=2.2 s=20 frames=200 h=9.80
+brush flatten at 23.60 42.20 r=2.2 s=20 frames=200 h=10.24
+brush flatten at 24.02 43.05 r=2.2 s=20 frames=200 h=10.68
+brush flatten at 24.45 43.90 r=2.2 s=20 frames=200 h=11.12
+brush flatten at 24.88 44.75 r=2.2 s=20 frames=200 h=11.56
+brush flatten at 25.30 45.60 r=2.2 s=20 frames=200 h=12.00
+brush smooth from 16.8 28.6 to 25.3 45.6 r=3.6 s=3 frames=10
+brush flatten at 16.80 28.60 r=1.6 s=20 frames=200 h=3.20
+brush flatten at 17.23 29.45 r=1.6 s=20 frames=200 h=3.64
+brush flatten at 17.65 30.30 r=1.6 s=20 frames=200 h=4.08
+brush flatten at 18.07 31.15 r=1.6 s=20 frames=200 h=4.52
+brush flatten at 18.50 32.00 r=1.6 s=20 frames=200 h=4.96
+brush flatten at 18.93 32.85 r=1.6 s=20 frames=200 h=5.40
+brush flatten at 19.35 33.70 r=1.6 s=20 frames=200 h=5.84
+brush flatten at 19.77 34.55 r=1.6 s=20 frames=200 h=6.28
+brush flatten at 20.20 35.40 r=1.6 s=20 frames=200 h=6.72
+brush flatten at 20.62 36.25 r=1.6 s=20 frames=200 h=7.16
+brush flatten at 21.05 37.10 r=1.6 s=20 frames=200 h=7.60
+brush flatten at 21.48 37.95 r=1.6 s=20 frames=200 h=8.04
+brush flatten at 21.90 38.80 r=1.6 s=20 frames=200 h=8.48
+brush flatten at 22.33 39.65 r=1.6 s=20 frames=200 h=8.92
+brush flatten at 22.75 40.50 r=1.6 s=20 frames=200 h=9.36
+brush flatten at 23.18 41.35 r=1.6 s=20 frames=200 h=9.80
+brush flatten at 23.60 42.20 r=1.6 s=20 frames=200 h=10.24
+brush flatten at 24.02 43.05 r=1.6 s=20 frames=200 h=10.68
+brush flatten at 24.45 43.90 r=1.6 s=20 frames=200 h=11.12
+brush flatten at 24.88 44.75 r=1.6 s=20 frames=200 h=11.56
+brush flatten at 25.30 45.60 r=1.6 s=20 frames=200 h=12.00
+brush flatten at 31.5 48 r=3 s=20 frames=200 h=12
+brush flatten at 30.10 55.10 r=1.8 s=20 frames=200 h=12.00
+brush flatten at 29.27 55.51 r=1.8 s=20 frames=200 h=12.40
+brush flatten at 28.44 55.93 r=1.8 s=20 frames=200 h=12.80
+brush flatten at 27.61 56.34 r=1.8 s=20 frames=200 h=13.20
+brush flatten at 26.79 56.76 r=1.8 s=20 frames=200 h=13.60
+brush flatten at 25.96 57.17 r=1.8 s=20 frames=200 h=14.00
+brush flatten at 25.13 57.59 r=1.8 s=20 frames=200 h=14.40
+brush flatten at 24.30 58.00 r=1.8 s=20 frames=200 h=14.80
+brush flatten at 23.47 58.41 r=1.8 s=20 frames=200 h=15.20
+brush flatten at 22.64 58.83 r=1.8 s=20 frames=200 h=15.60
+brush flatten at 21.81 59.24 r=1.8 s=20 frames=200 h=16.00
+brush flatten at 20.99 59.66 r=1.8 s=20 frames=200 h=16.40
+brush flatten at 20.16 60.07 r=1.8 s=20 frames=200 h=16.80
+brush flatten at 19.33 60.49 r=1.8 s=20 frames=200 h=17.20
+brush flatten at 18.50 60.90 r=1.8 s=20 frames=200 h=17.60
+brush flatten from 18.5 60.9 to 21.6 67.2 r=1.8 s=20 frames=200 h=17.8
+clear from 16.8 28.6 to 25.3 45.6 r=3.2 body
+clear from 30.1 55.1 to 18.5 60.9 r=2.8 body
+clear from 18.5 60.9 to 21.6 67.2 r=2.8 body
 place VP_Excavator quarrydigger at 28 51 ground sit yaw=30
 prop quarrydigger tint.color=#8a7a50
 prop quarrydigger tint.amount=0.4
