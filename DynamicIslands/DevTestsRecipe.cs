@@ -33,7 +33,7 @@ namespace DynamicIslands
 	/// </summary>
 	public static partial class DevTests
 	{
-		[ConsoleCommand(name: "CIRecipe", docs: "Dev, the editor (opened when needed): builds an island (or a world plan, in World plans) from Mods\\DynamicIslands\\recipes\\<name>.recipe through the editor's operations (generator, terrain strokes, placer, properties, notes, quests, story items, rules, Save) - the library content's builder. CIRecipe <name>")]
+		[ConsoleCommand(name: "CIRecipe", docs: "Dev, the editor (opened when needed): builds an island (or a world plan, in World plans) from Mods\\DynamicIslands\\recipes\\<name>.recipe through the editor's operations (generator, terrain strokes, placer, properties, notes, quests, story items, rules, Save) - the library content's builder; a patch recipe starts with \"load <island name>\" (the saved island opened, a few ops, save <same name>) instead of new + generate. CIRecipe <name>")]
 		public static void RecipeCommand(string[] args)
 		{
 			if (args == null || args.Length == 0) { Fail("recipe: name a recipe (Mods\\DynamicIslands\\recipes\\<name>.recipe)"); return; }
@@ -1471,6 +1471,27 @@ namespace DynamicIslands
 					placed += laid.Count;
 					continue;
 				}
+				if (verb == "load")
+				{
+					// load <island name>: a patch recipe - the saved island opened in the editor (its land, objects, quests, notes,
+					// story items as saved), a few ops on it, then save <same name> writes it back; no ~9 min rebuild for a small fix.
+					// The origin is the saved land centre (a recipe's origin after generate/randomize); a recipe without them adds
+					// "origin 500 500", one whose build said "the land centre is dx dz from the recipe's origin" adds "origin shift -dx -dz"
+					string island = Rest(line, 1).Trim();
+					if (island.Length == 0) { Fail("recipe " + name + ", " + rl.Where + ": load <island name>"); yield break; }
+					pendingQuest = null;
+					pendingMore.Clear();
+					gen.Length = 0;
+					DynamicIslands.currentIslandName = "";
+					if (!DynamicIslands.LoadIsland(island)) { Fail("recipe " + name + ", " + rl.Where + ": no saved island '" + island + "' (or the editor didn't load it)"); yield break; }
+					for (float w = 0; w < 120f && DynamicIslands.currentIslandName != island; w += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+					if (DynamicIslands.currentIslandName != island) { Fail("recipe " + name + ", " + rl.Where + ": '" + island + "' not loaded after 2 minutes"); yield break; }
+					yield return null; yield return null;
+					Physics.SyncTransforms();
+					SetOrigin(EditorLandCentre());
+					Log("  loaded '" + island + "': " + PlacedEditorObjects().Count() + " objects - origin (the land centre) " + Num(recipeOrigin.x) + " " + Num(recipeOrigin.y));
+					continue;
+				}
 				// (a generate with buildings or caves: their objects of Raft's islands loaded first)
 				if (verb == "generate") yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(IslandGenSettings.FromText(gen.ToString())));
 				try
@@ -1516,7 +1537,9 @@ namespace DynamicIslands
 							break;
 						}
 						case "origin":
-							SetOrigin(t.Length > 2 ? new Vector2(F(t[1]), F(t[2])) : EditorLandCentre());
+							// (origin shift dx dz: the origin moved - a patch recipe's land centre to the full recipe's origin)
+							if (t.Length > 3 && t[1].ToLowerInvariant() == "shift") SetOrigin(recipeOrigin + new Vector2(F(t[2]), F(t[3])));
+							else SetOrigin(t.Length > 2 ? new Vector2(F(t[1]), F(t[2])) : EditorLandCentre());
 							break;
 						case "push":
 						{

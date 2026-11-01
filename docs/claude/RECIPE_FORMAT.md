@@ -95,10 +95,11 @@ plan save
 | Step | Arguments | What it does |
 |---|---|---|
 | `new` | | A new island (`DynamicIslands.NewIsland`); origin reset, pending quests dropped. |
+| `load` | `<island name>` | Patch recipe: opens the saved island (`DynamicIslands.LoadIsland`, waits up to 2 min) with its land, objects, quests, notes and story items; pending quests dropped; origin = the saved land centre (a recipe's origin after `generate`/`randomize`). A few ops, then `save <same name>` writes it back (uids kept), so a small fix needs no full rebuild. Recipes without `generate` add `origin 500 500`. Fails when the island isn't saved. |
 | `gen` | `Name=value ...` | Collects generator settings for the next `generate`/`randomize`. Several lines add up. |
 | `generate` | | `IslandGenerator.GenerateInEditor` with the collected settings; origin = land centre. |
 | `randomize` | `<part of a Raft island scene name> [like] [Name=value ...]` | `RaftIslands.VariationOf`, or `RaftIslands.LikeIt` with `like`, of the first `RaftIslands.Offered` island whose scene contains the text; then the sliders given. |
-| `origin` | `[x z]` | See above. Clears the frames. |
+| `origin` | `[x z]` or `shift dx dz` | See above. `shift` moves the current origin (a patch recipe: the save's "land centre is dx dz from the recipe's origin" -> `origin shift -dx -dz`). Clears the frames. |
 | `push` / `pop` | see above | A frame for a building. |
 | `style` | `Tropical`, `Snowy`, `Desert`, `Forest`, `Volcanic` or a number | The island's style (`StyleOf`). |
 | `elevation` | `<m>` | Height above the sea, clamped to `IslandSpawner.MinElevation`..`MaxElevation`. |
