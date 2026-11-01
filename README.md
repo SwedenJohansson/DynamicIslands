@@ -1008,6 +1008,11 @@ How some things work that can surprise players and island builders. What players
 - Editor: the Vasagatan's and Utopia's quest item pickups (the ones under their quest item folders) are in the object list but never appear when placed (RK10); the Tangaroa token and the Vasagatan scrap work. KeyRescue places without a visible model (RK11).
 - Caves of the `ar_cave` kind can look see-through from outside the island: the cave shell is one-sided, so from outside you can see into the cave through its wall (RK15).
 - If you get stuck somewhere you cannot get out of, use **Esc > SPAWN TO RAFT**: it asks once, and **Yes** puts you on your raft.
+- **Which island first?** A few quests need an item from another island, so play that island first:
+  - Colossus of the Strait: a gear each from Sandsunk Necropolis, Skyhook Mast and The Hollow Fang (the last one late in the quest).
+  - Gannet Cliff: the hymn from Effigy Shoals (early in the quest).
+  - Parcel Canopy, Pillarbox Pier, Pneumatic Heights, Sorting Rock and The Franking Works: a letter each from The Dead Letter Office.
+  - The Listening Mirrors: the Lantern-Mother's tooth from Cradle Reef (late in the quest).
 - The mod's own text is English only (L1); the journal (J) and stats (K) keys are changed in World settings > **Defaults...** > Keys (this PC) (L2, done).
 
 ## Limitations (can't be changed)

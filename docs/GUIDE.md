@@ -4062,6 +4062,8 @@ before you stop.
 
 **My island is far away / I can't find it.** Build Raft's Receiver: custom islands are green dots with their distance.
 
+**Which island first?** A few quests need an item from another island, so play that island first. Colossus of the Strait: a gear each from Sandsunk Necropolis, Skyhook Mast and The Hollow Fang (the last one late in the quest). Gannet Cliff: the hymn from Effigy Shoals (early in the quest). Parcel Canopy, Pillarbox Pier, Pneumatic Heights, Sorting Rock and The Franking Works: a letter each from The Dead Letter Office. The Listening Mirrors: the Lantern-Mother's tooth from Cradle Reef (late in the quest).
+
 **I'm stuck in a cave or under water on a custom island.** Use Raft's **Unstuck** (Esc menu). Near a custom island it
 is there at once when you are under the sea or haven't got anywhere for 20 seconds (Raft itself waits 30 seconds),
 and it takes you back to your raft. If that doesn't help, **Esc > SPAWN TO RAFT** is the last way out: it asks
