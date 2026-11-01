@@ -65,6 +65,20 @@ place RT_Pillar valvepost at 2.25 2.25 y=0.05 sy=0.6
 place TP_Selene_DoorCrankWheel valvewheelobj at 2.25 2.16 y=1.25 rot=0,0,0
 pop
 place Zone_Trigger valvetower at 0 0 h=5
+# (agent Q 10-30, REACH: the lake's banks stood 4 m+ over the water all round - whoever went in could not climb out, and the
+# tower stood in the water with no way up from it: a beach down into the lake by the bridge's foot, 0.6 m a step, and a
+# ladder up the tower's column to its platform)
+brush flatten at -4.00 -20.00 r=1.6 s=20 frames=200 h=3.60
+brush flatten at -4.81 -19.16 r=1.6 s=20 frames=200 h=2.95
+brush flatten at -5.62 -18.32 r=1.6 s=20 frames=200 h=2.30
+brush flatten at -6.44 -17.49 r=1.6 s=20 frames=200 h=1.65
+brush flatten at -7.25 -16.65 r=1.6 s=20 frames=200 h=1.00
+brush flatten at -8.06 -15.81 r=1.6 s=20 frames=200 h=0.35
+brush flatten at -8.88 -14.98 r=1.6 s=20 frames=200 h=-0.30
+brush flatten at -9.69 -14.14 r=1.6 s=20 frames=200 h=-0.95
+brush flatten at -10.50 -13.30 r=1.6 s=20 frames=200 h=-1.60
+clear from -4 -20 to -10.5 -13.3 r=2.6 body
+place LandmarkLadder_6m - at -2.45 0 h=-1.3 yaw=90
 
 # --- The glass bridge from the south bank to the tower (Utopia's) ---------------------------------------------------
 place UT_Set_GlassBridge glassbridge at 0 -11 h=4 yaw=90 scale=0.42
