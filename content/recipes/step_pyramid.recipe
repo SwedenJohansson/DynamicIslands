@@ -580,4 +580,19 @@ clear at -47.3 -20.9 r=1.5 all only=^SmallBoulder2
 clear at -44.8 -25.2 r=1.5 all only=^SmallBoulder2
 clear at -83.4 -47.6 r=1.5 all only=^SmallBoulder4
 
+# (GROUND 11-01 N: 13 generator trees and bamboo sunk 1-5 m into the ground and a big palm over a drop: taken off)
+clear at 23.35 -24.09 r=0.8 all only=BigPalm4
+clear at -42.24 -17.76 r=0.8 all only=Bamboo
+clear at -30.61 21.23 r=0.8 all only=Tree_Palm
+clear at -20.92 31.55 r=0.8 all only=Tree_Palm
+clear at 95.69 3.80 r=0.8 all only=Bamboo
+clear at -32.62 92.03 r=0.8 all only=Tree_Mango
+clear at 71.33 48.56 r=0.8 all only=Tree_Palm
+clear at -85.90 -48.27 r=0.8 all only=Tree_Palm
+clear at -69.16 -54.24 r=0.8 all only=Bamboo
+clear at -70.31 -52.14 r=0.8 all only=Tree_Mango
+clear at -57.28 75.69 r=0.8 all only=Tree_Palm
+clear at -68.11 61.30 r=0.8 all only=Tree_Palm
+clear at -69.94 61.89 r=0.8 all only=Bamboo
+clear at -50.03 65.96 r=0.8 all only=Bamboo
 save The Step Pyramid
