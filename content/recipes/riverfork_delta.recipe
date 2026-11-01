@@ -330,4 +330,12 @@ quest reward=Leather*2;Mango*2
 # (box agent 10-25: names for the guide pictures' snap points)
 prop dltw obj.name=dltw
 prop dlwreck obj.name=dlwreck
+# (TRAP 11-01 N: the outpost pad sits 4 m below the ground round it with steep sides: a ramp cut up its
+# south-east corner)
+for i 0 8 1
+brush flatten at {1.5+0.5*$i} {-18.5-0.75*$i} r=1.8 s=20 frames=300 h={1.7+0.4*$i}
+next
+brush smooth from 1.5 -18.5 to 5.5 -24.5 r=2.2 s=10 frames=12
+clear from 1.5 -18.5 to 5.5 -24.5 r=2.5 body
+
 save Riverfork Delta
