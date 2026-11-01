@@ -110,7 +110,12 @@ place TP_IcePillar04_Snow - at 19 96 ground
 place TP_IcePillar04_Snow - at 31 99 ground yaw=60
 place TP_SnowDrift01 - at 22 86 ground yaw=20
 place Zone_Trigger kestrel at 25 90 h=3
-place Note_Paper manifest at 25 92 h=12 sit drop yaw=40
+# (agent R 11-01: dropped from 12 m it came to rest on the cabin roof, 5.6 m up - out of reach; now dropped onto her deck
+# beside the cabin, where the walker gets to - 3.1 m)
+place Note_Paper manifest at 22.8 90.9 h=4.3 sit drop yaw=40
+# (agent Q 10-30, REACH: her deck stood 2.5 m over the ice with nothing up her side - the manifest on her deck was out of
+# reach: a ladder up her side, as the Nordlys has at Floe Reach)
+# (agent R 11-01: the ladder stood in the open ice 3 m off her side, its top on nothing - taken out again)
 # (her hold's crate, broken out on the sea floor by her stern - 2.5 m down, a level spot: CISeaSpots)
 place "Box Big" holdcrate at 29 101.5 ground yaw=25
 
@@ -152,7 +157,9 @@ call r2_hidden x=-59 z=-45.4 al=wr_lampchest
 place Creature_Chicken wr_hens at -52 -44 ground
 prop wr_hens creature.count=3
 call ar_plane x=70 z=52 h=2.6 yaw=40 al=wr_plane crate=wr_planecrate
-place Note_Paper wr_pilot at 68.22 56.1 ground y=0.1 drop yaw=70
+# (agent Q 10-30, REACH: the note lay under the plane's low wing - nowhere to stand with it in reach: out from under the wing)
+# (agent R 11-01: "ground" took the ground before the plane's pad was raised - the note lay 2 m under the snow; dropped now)
+place Note_Paper wr_pilot at 65.2 58.7 h=4.5 sit drop yaw=70
 call hw_zone x=70 z=52 al=wr_planez id=wr_plane r=6 h=1 msg="A supply plane, half buried in snow."
 call r2_piece x=-40 z=70 al=wr_piece1 set="Frozen lanterns"
 call r2_piece x=80 z=0 al=wr_piece2 set="Frozen lanterns"
