@@ -396,6 +396,27 @@ namespace DynamicIslands
 			CustomIslandSpawner.LoadPool(true);
 		}
 
+		[ConsoleCommand(name: "CILibraryBanner", docs: "Dev: the island library window shows its 'not fully tested' info banner on both tabs, inside the screen")]
+		public static void LibraryBannerCommand() { StartTest(LibraryBannerRoutine()); }
+
+		static IEnumerator LibraryBannerRoutine()
+		{
+			bool ok = true;
+			for (int tab = 0; tab < 2; tab++)
+			{
+				if (LibraryWindow.IsOpen) LibraryWindow.Close();
+				LibraryWindow.Open(tab);
+				yield return new WaitForSecondsRealtime(0.6f);
+				Text b = LibraryWindow.Banner;
+				Check(ref ok, b != null && b.gameObject.activeInHierarchy && b.text.Contains("fully tested"), "tab " + tab + ": the banner draws: " + (b != null ? b.text : "none"));
+				var off = OffScreen(LibraryWindow.Root.gameObject, Screen.width, Screen.height);
+				Check(ref ok, off.Count == 0, "tab " + tab + ": the library fits the screen" + (off.Count > 0 ? " - off: " + string.Join(", ", off.Take(4).ToArray()) : ""));
+				if (tab == 0) Screenshot(new[] { "library_banner" });
+			}
+			LibraryWindow.Close();
+			if (ok) Log("PASS: library banner"); else Fail("library banner");
+		}
+
 		[ConsoleCommand(name: "CILibraryWindows", docs: "Dev, editor: the Share and Import windows clicked as a player does - the Islands window's Export... opens Share for the picked island (what goes along, the picture of the editor's view, the author), Export writes the pack; the pack in the import folder is picked, shows what it holds, installs; the Installed list has it, Remove asks first and removes it; both windows fit the screen. Cleans up")]
 		public static void LibraryWindowsCommand() { StartTest(LibraryWindowsRoutine()); }
 

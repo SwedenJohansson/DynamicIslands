@@ -20,7 +20,7 @@ namespace DynamicIslands.Editor
 
 		static Canvas canvas;
 		static RectTransform list, detail;
-		static Text status, title, meta, quest, tags, description, warning, progress, pictureCount, empty;
+		static Text banner, status, title, meta, quest, tags, description, warning, progress, pictureCount, empty;
 		static Button[] tabs;
 		static Button mainButton, removeButton, sailingButton, keepButton, cancelButton;
 		static InputField search;
@@ -46,6 +46,7 @@ namespace DynamicIslands.Editor
 			bool has = i.tags != null && i.tags.Any(t => string.Equals((t ?? "").Trim(), "quest", StringComparison.OrdinalIgnoreCase));
 			return has ? "Quest: yes" : "No quest - an island to explore";
 		}
+		public static Text Banner { get { return banner; } }
 		public static bool Busy { get { return busy; } }
 		public static Texture Picture { get { return picture != null ? picture.texture : null; } }
 		public static Button Row(string id) { Button b; return rows.TryGetValue(id, out b) ? b : null; }
@@ -60,7 +61,7 @@ namespace DynamicIslands.Editor
 			UIKit.Stretch(dim);
 			dim.gameObject.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.6f);
 			RectTransform panel = UIKit.Panel(root, "Panel", new RectOffset(16, 16, 12, 14), 8f, false);
-			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1240f, 720f));
+			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1240f, 764f));
 
 			RectTransform head = UIKit.Row(panel, 34f, 8f, "Head");
 			Text t = UIKit.Label(head, "ISLAND LIBRARY", 22, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
@@ -85,6 +86,13 @@ namespace DynamicIslands.Editor
 			WindowKeys keys = canvas.gameObject.AddComponent<WindowKeys>();
 			keys.Typing = () => search != null && search.isFocused;
 			keys.Close = Close;
+
+		// (the user, 2026-11-01: an info banner above the list, on both tabs - the entries are not all fully tested yet)
+		RectTransform bannerRow = UIKit.Row(panel, 34f, 8f, "BannerRow");
+		UIKit.Background(bannerRow.gameObject, new Color(0.97f, 0.8f, 0.42f, 0.22f), 6);
+		banner = UIKit.Label(bannerRow, "Not everything on these islands is fully tested yet - please report any issues you find!", 13, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Normal, "Banner");
+		banner.horizontalOverflow = HorizontalWrapMode.Wrap;
+		UIKit.Size(banner.gameObject, 1180, 34);
 
 			RectTransform body = UIKit.Rect("Body", panel);
 			UIKit.Size(body.gameObject, -1, 610);
