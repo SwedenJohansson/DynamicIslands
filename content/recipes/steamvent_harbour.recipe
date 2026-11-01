@@ -32,7 +32,16 @@ generate
 # steam cave in the west; the pumphouse ruin north-east; the sunk steam ferry east (12 m down); two buried treasures.
 # Built before the town so the town, the camp and the dirt sit on the final ground.
 call fz_mount x=10 z=62 h=30 r=7
+# (REACH 10-30 N: the mountain's top stood 8 m over its smoothed shoulder all round - nobody got up to the derrick's
+# foot, and the walker's every later walk ended there: a path now winds up the last 9 m round its south side, from the
+# west shoulder (20.4 m, 11 m out) curling in to the top's south-east edge, 7 m out)
+for k 0 16
+brush flatten at {10+(11-0.25*$k)*cos(200+9*$k)} {62+(11-0.25*$k)*sin(200+9*$k)} r=1.5 s=20 frames=150 h={20.4+0.6*$k}
+next
 call ar_plants_snowy x=10 z=62 r=28 seed=12401
+for k 0 16
+clear at {10+(11-0.25*$k)*cos(200+9*$k)} {62+(11-0.25*$k)*sin(200+9*$k)} r=2.5 body
+next
 call fz_tower x=10 z=64 h=30 n=6 al=derrick chest=derrickchest zal=derrickzone zid=derrick_top msg="The derrick's top. The vent's pipe climbs here from the town - and the relief valve's housing sits on it, clamped shut."
 place Note_Sign derricksign at 9.2 62.4 h=44.57 sit yaw=180
 # the ridge west of the mountain (the ridge mast) and the east rise (the east mast)
@@ -41,6 +50,9 @@ call ar_plants_snowy x=-28 z=64 r=24 seed=12402
 call ar_ridge x1=38 z1=-4 x2=60 z2=14 h=9 top=5 r=7
 call ar_plants_snowy x=49 z=5 r=18 seed=12403
 # the three antenna masts, a bear by each, a cable box at each foot
+# (REACH 11-01 N: generator big rocks heaped round the ridge mast's foot - its cable box sat wedged in among them
+# with nowhere to stand and open it: cleared)
+clear at -27 63.5 r=6 all body only=TP_BigRock
 place Antenna_pole mastridge at -28 64 ground
 place Loot_ChestSmall mastridgebox at -26.6 63.2 ground sit yaw=200
 place Creature_PolarBear bearridge at -22 58 ground
@@ -56,6 +68,9 @@ call fz_zone x=49 z=3 al=masteastz id=mast_east r=4 msg="The mast on the rise. T
 # the bathhouse at the mountain's foot: hot water piped from the derrick; its door is wired shut (the derrick's power line)
 brush flatten at 25 32 r=8 s=20 frames=250 h=7
 clear at 25 32 r=8
+# (REACH 11-01 N: a generator big rock stood through the bathhouse's back half - the locker, the note, the card and the
+# slate were walled off behind it: cleared)
+clear at 25 33 r=9 all body only=TP_BigRock
 push at 28 32 h=7
 call rt_storey a=bathhouse f1=none f2=RT_WallWindow1 l2=RT_WallWindow1 r2=RT_WallWindow1
 place RT_Floor bathhouse at 0 4.5 y=3
@@ -364,7 +379,7 @@ prop hens creature.count=3
 
 prop ventvalve obj.name=ventvalve
 prop ventvalve beh.use=Turn the vent valve
-prop ventvalve if.use=!signal|steam\ntake|story:wheelpiece|3\ntake|story:relief|1
+prop ventvalve if.use=quest|13\n!signal|steam\ntake|story:wheelpiece|3\ntake|story:relief|1
 prop ventvalve on.use=message||The valve groans, gives - and steam hisses down the pipes. One by one the houses' chimneys breathe.\nsignal||steam\ngive||story:steam*1\nshow|steamhouses\nsound||event:/exploring/obstacles/keypad/keypad_correct
 prop ventvalve else.use=message||The valve is open and the town is warm - or it is not ready: its handwheel is in three pieces (the greenhouse, the boiler house, the pipe store), and the vent wants its relief valve first (the driller's steam cave says why).
 prop steamhouses obj.name=steamhouses
@@ -409,4 +424,8 @@ clear at -29.87 24.60 r=1.5 all body only=TP_BigRock02
 clear at -32.97 -21.83 r=1.5 all body only=TP_BigRock02
 clear at -39.08 -16.00 r=1.5 all body only=TP_BigRock02
 clear at 57.25 3.91 r=1.5 all body only=TP_BigRock03
+
+# (REACH 10-31 N: generator big rocks west of the town leaned over a dip at their foot - a player dropped in under them
+# and couldn't jump out again (three roofed traps between runs): cleared)
+clear at -42 35.5 r=5 all body only=TP_BigRock
 save Steamvent Harbour
