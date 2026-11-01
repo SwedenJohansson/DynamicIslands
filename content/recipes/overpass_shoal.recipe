@@ -164,7 +164,9 @@ place Placeable_Lantern_Metal oplure at 104 -24 h=-5 drop scale=1.6
 place TP_Moontown_Barrel04 opscorch at 84 -4 h=-5.6 sit scale=0.8
 place TP_Moontown_Barrel04 opscorch at 79 5 h=-5 sit yaw=60 scale=0.7
 zipto opzip 30 -21
-place Loot_ChestSmall opledge at 50.67 -32.67 ground sit yaw=40
+# (REACH 10-30 G1: the cache stood 3 m up a sheer bit of Toll Hill's side over the last ledge anyone stands on - it is
+# now on that ledge, against the rock)
+place Loot_ChestSmall opledge at 45.9 -31.2 ground sit yaw=40
 place SmallRock_02 - at 39.49 -44.02 ground sit scale=0.5
 place SmallRock_02 - at 39.49 -44.02 ground y=0.6 sit scale=0.32 yaw=40
 call treasure x=36.99 z=-44.02 r=12 n=1 seed=24111
