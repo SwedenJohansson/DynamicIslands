@@ -334,4 +334,6 @@ step blueprint|Blueprint_Recycler|1|Take the recycler plans from the keeper's lo
 quest done=The beacon blinks over the sea again - and inside the locker door, the next frequency: Station Two, down the marsh.
 quest reward=Plank*6;Rope*3;Scrap*4
 
+# (G2 10-31: the ground check found 2 sunk trunks - a mango and a pineapple tree on the spike the strokes raised the ground round; set back on the land at the save)
+reseat trees
 save Frontier Beacon
