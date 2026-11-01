@@ -107,8 +107,10 @@ place Creature_Rat rats at -25.5 13.5 ground y=0.4
 # --- The chapel on the north shore: benches, candles, the strongbox and its keypad, the last sermon ---------------------
 push at -3 33 h=0.6
 call hut w=4 d=3 y=0.1
-place Bench_01 - at 1.5 1.5 y=0.1 sit yaw=180
-place Bench_01 - at 4.5 1.5 y=0.1 sit yaw=180
+# (R 10-31: reach - the first bench stood across the doorway, the strongbox and the sermon unreached: the pews
+# moved off the door's lane)
+place Bench_01 - at 2.8 1.5 y=0.1 sit yaw=180
+place Bench_01 - at 4.9 1.5 y=0.1 sit yaw=180
 place Placeable_Candlestick - at 3 4 y=0.1 sit
 place Loot_Chest chapelbox at 1 4 y=1.1 sit yaw=180
 place RT_PowerBox chapelpad at 0.2 3 y=1.2 yaw=90
@@ -143,6 +145,24 @@ call snowfall x=0 z=0 r=46 al=snow fog=#c0c8cc fa=0.5
 # (its strongbox, an air pocket); a third buried treasure on the berg's foot.
 call fz_mount x=64 z=-4 h=24 r=7
 call ar_plants_snowy x=64 z=-4 r=26 seed=12745
+# (agent Q 10-30, REACH: the berg's top stood on a 6 m ice wall over its shoulder - the crane cab, its chest and the
+# top unreached on foot: a path cut round the berg's west side up to the top, 0.6 m a step)
+brush flatten at 54.13 -7.59 r=1.6 s=20 frames=120 h=16.00
+brush flatten at 54.19 -6.37 r=1.6 s=20 frames=120 h=16.57
+brush flatten at 54.39 -5.20 r=1.6 s=20 frames=120 h=17.14
+brush flatten at 54.72 -4.12 r=1.6 s=20 frames=120 h=17.71
+brush flatten at 55.17 -3.12 r=1.6 s=20 frames=120 h=18.29
+brush flatten at 55.73 -2.22 r=1.6 s=20 frames=120 h=18.86
+brush flatten at 56.36 -1.43 r=1.6 s=20 frames=120 h=19.43
+brush flatten at 57.07 -0.77 r=1.6 s=20 frames=120 h=20.00
+brush flatten at 57.82 -0.22 r=1.6 s=20 frames=120 h=20.57
+brush flatten at 58.60 0.20 r=1.6 s=20 frames=120 h=21.14
+brush flatten at 59.40 0.49 r=1.6 s=20 frames=120 h=21.71
+brush flatten at 60.19 0.66 r=1.6 s=20 frames=120 h=22.29
+brush flatten at 60.95 0.72 r=1.6 s=20 frames=120 h=22.86
+brush flatten at 61.68 0.66 r=1.6 s=20 frames=120 h=23.43
+brush flatten at 62.36 0.51 r=1.6 s=20 frames=120 h=24.00
+clear at 58 -3 r=9 body
 call fz_cairn x=64 z=-1 al=cranecairn chest=cranecab zal=cranezone zid=crane_top msg="The berg's top. The old harbour crane lies toppled down the far side; its split cab sits here on the ice. Below, the nine ships - and from here you see the dark shape under the ice beside the city: a tenth."
 place Beam_Long_01 cranejib at 60.6 -6.2 ground y=0.2 yaw=35
 place Beam_Long_01 cranejib at 61.8 -7.6 ground y=0.25 yaw=80
@@ -155,6 +175,66 @@ call treasure x=50 z=-16 r=8 n=1 seed=12741
 # the berg cave (its mouth north, to the berg)
 call ar_cave x=64 z=-40 h=4 yaw=0 al=bergcave chest=bergcavechest
 call icetint al=bergcave
+# (agent Q 10-30, REACH: the berg cave's mouth lies in a 4 m cut below the berg's lowest shelf - the cave, its chest
+# and the ledger unreached: a ramp down from the shelf into the cut)
+brush flatten at 56.80 -26.60 r=1.6 s=20 frames=120 h=8.1
+brush flatten at 57.56 -27.25 r=1.6 s=20 frames=120 h=7.5
+brush flatten at 58.33 -27.89 r=1.6 s=20 frames=120 h=6.9
+brush flatten at 59.09 -28.54 r=1.6 s=20 frames=120 h=6.3
+brush flatten at 59.86 -29.19 r=1.6 s=20 frames=120 h=5.7
+brush flatten at 60.62 -29.84 r=1.6 s=20 frames=120 h=5.1
+brush flatten at 61.39 -30.48 r=1.6 s=20 frames=120 h=4.5
+clear from 56.8 -26.6 to 61.4 -30.5 r=2.6 body
+# (R 11-01 15:40: reach - still no way out: the ramp head (8.1 m) lay more than a jump under the shelf - the ramp carried
+# on up the same line, 0.45 m a step, to 14 m, so it meets the shelf wherever the shelf is)
+brush flatten at 56.03 -25.96 r=1.8 s=20 frames=160 h=8.55
+brush flatten at 55.27 -25.31 r=1.8 s=20 frames=160 h=9.00
+brush flatten at 54.50 -24.67 r=1.8 s=20 frames=160 h=9.45
+brush flatten at 53.74 -24.02 r=1.8 s=20 frames=160 h=9.90
+brush flatten at 52.97 -23.38 r=1.8 s=20 frames=160 h=10.35
+brush flatten at 52.20 -22.73 r=1.8 s=20 frames=160 h=10.80
+brush flatten at 51.44 -22.09 r=1.8 s=20 frames=160 h=11.25
+brush flatten at 50.67 -21.44 r=1.8 s=20 frames=160 h=11.70
+brush flatten at 49.91 -20.80 r=1.8 s=20 frames=160 h=12.15
+brush flatten at 49.14 -20.15 r=1.8 s=20 frames=160 h=12.60
+brush flatten at 48.37 -19.51 r=1.8 s=20 frames=160 h=13.05
+brush flatten at 47.61 -18.86 r=1.8 s=20 frames=160 h=13.50
+brush flatten at 46.84 -18.22 r=1.8 s=20 frames=160 h=13.95
+clear from 56.8 -26.6 to 46.84 -18.22 r=2.8 body
+# (R 10-31: reach - down the ramp a player got into the cave but never out: the shelf above the ramp is higher than a
+# jump and the cave rock walls the pad in on the other sides - a beach from the cave mouth east along the cut and down
+# the berg's foot into the sea, 0.7 m a step)
+brush flatten at 64.50 -28.60 r=2.2 s=20 frames=200 h=3.9
+brush flatten at 67.39 -28.31 r=2.2 s=20 frames=200 h=3.2
+brush flatten at 70.28 -28.02 r=2.2 s=20 frames=200 h=2.5
+brush flatten at 73.17 -27.73 r=2.2 s=20 frames=200 h=1.8
+brush flatten at 76.06 -27.44 r=2.2 s=20 frames=200 h=1.1
+brush flatten at 78.94 -27.16 r=2.2 s=20 frames=200 h=0.4
+brush flatten at 81.83 -26.87 r=2.2 s=20 frames=200 h=-0.3
+brush flatten at 84.72 -26.58 r=2.2 s=20 frames=200 h=-1.0
+brush flatten at 87.61 -26.29 r=2.2 s=20 frames=200 h=-1.7
+brush flatten at 90.50 -26.00 r=2.2 s=20 frames=200 h=-2.4
+clear from 64.5 -28.6 to 90.5 -26.0 r=3.2 body
+# (R 11-01: reach - the beach began 3.6 m off the ramp foot, the pad still walled in: the beach carried on to the ramp foot)
+brush flatten at 62.43 -29.87 r=2.2 s=20 frames=200 h=4.3
+brush flatten at 63.47 -29.23 r=2.2 s=20 frames=200 h=4.1
+clear from 61.4 -30.5 to 64.5 -28.6 r=2.6 body
+# (R 11-01 19:35: reach - the ramp runs under the cave's ice roof and the walker never found its way down it: an open-sky
+# ramp cut from the shelf straight down into the cut before the cave mouth, 4 m wide, 0.6 m a step)
+brush flatten at 49.50 -22.30 r=2.0 s=20 frames=160 h=11.70
+brush flatten at 50.46 -22.30 r=2.0 s=20 frames=160 h=11.09
+brush flatten at 51.42 -22.30 r=2.0 s=20 frames=160 h=10.48
+brush flatten at 52.38 -22.30 r=2.0 s=20 frames=160 h=9.88
+brush flatten at 53.33 -22.30 r=2.0 s=20 frames=160 h=9.27
+brush flatten at 54.29 -22.30 r=2.0 s=20 frames=160 h=8.66
+brush flatten at 55.25 -22.30 r=2.0 s=20 frames=160 h=8.05
+brush flatten at 56.21 -22.30 r=2.0 s=20 frames=160 h=7.44
+brush flatten at 57.17 -22.30 r=2.0 s=20 frames=160 h=6.83
+brush flatten at 58.12 -22.30 r=2.0 s=20 frames=160 h=6.22
+brush flatten at 59.08 -22.30 r=2.0 s=20 frames=160 h=5.62
+brush flatten at 60.04 -22.30 r=2.0 s=20 frames=160 h=5.01
+brush flatten at 61.00 -22.30 r=2.0 s=20 frames=160 h=4.40
+clear from 49.5 -22.3 to 61 -22.3 r=3 body
 place Note_Book ledger at 63.2 -34.6 h=4.5 drop yaw=200
 place Zone_Trigger bergcavezone at 64 -35 h=5.4
 prop bergcavezone zone.id=berg_cave
