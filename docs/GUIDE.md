@@ -112,6 +112,7 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
    - [9.4 Extra options](#94-extra-options)
    - [9.5 Islands while sailing](#95-islands-while-sailing)
    - [9.6 The level up system](#96-the-level-up-system)
+   - [9.7 SPAWN TO RAFT: the way out when you are stuck](#97-spawn-to-raft-the-way-out-when-you-are-stuck)
 10. [Settings files](#10-settings-files)
 11. [Console commands](#11-console-commands)
 12. [Limitations: what can't be changed](#12-limitations-what-cant-be-changed)
@@ -3726,6 +3727,21 @@ small gold **Lv 5** under your name.
 
 ---
 
+### 9.7 SPAWN TO RAFT: the way out when you are stuck
+
+If you have got stuck in a place you cannot get out of, open Raft's **Esc** menu. The **SPAWN TO RAFT** button sits
+just before **Exit**. It opens a box that says "Only use this if you have gotten stuck in a place you cannot get
+out of." with **Yes** and **No**:
+
+- **No** takes you back to the menu.
+- **Yes** closes the menu and stands you on your raft.
+
+The button is greyed out while you are dead, asleep in a bed or on a zipline, or when no raft floor is found. In
+multiplayer each player moves only themselves: nobody else is taken to the raft.
+
+---
+
+
 ## 10. Settings files
 
 In `<Raft>\Mods\DynamicIslands\`. Text files: open them with Notepad. They explain themselves, and changes are picked
@@ -4048,7 +4064,11 @@ before you stop.
 
 **I'm stuck in a cave or under water on a custom island.** Use Raft's **Unstuck** (Esc menu). Near a custom island it
 is there at once when you are under the sea or haven't got anywhere for 20 seconds (Raft itself waits 30 seconds),
-and it takes you back to your raft.
+and it takes you back to your raft. If that doesn't help, **Esc > SPAWN TO RAFT** is the last way out: it asks
+"Only use this if you have gotten stuck in a place you cannot get out of", and **Yes** puts you on your raft.
+
+**A cave looks see-through from outside.** Some caves (the `ar_cave` kind) have a one-sided shell: from outside the
+island you can see into the cave through its wall. It is only how it looks; inside, the cave is as it should be.
 
 **I can't get onto a flying island (or a cliff island).** Build stairs or pillars up from the raft. The generator's
 reach line tells a builder beforehand.
