@@ -49,7 +49,21 @@ clear from 5 6 to 3 5 r=2
 
 # --- The relay hut on the shelf: the desk, the radio log, the Receiver's plans --------------------------------------
 push at -4 -18 h=2.5
-call hut w=3 d=2 y=0.1
+# (REACH 10-30 G1: the hut's door was at its west end, the desk at its east end - a player from the shelf came up to the
+# front wall by the desk and stuck on the door frame's edge; the hut is built here with its door at the desk end)
+call floors w=3 d=2 y=0.1
+place Block_Wall_Wood - at 0.75 0 y=0.1
+place Block_Wall_Wood - at 2.25 0 y=0.1
+place Block_Wall_Door_Wood - at 3.75 0 y=0.1
+for fx 0.75 3.75 1.5
+place Block_Wall_Wood - at $fx 3 y=0.1
+next
+for fz 0.75 2.25 1.5
+place Block_Wall_Wood - at 0 $fz y=0.1 yaw=90
+place Block_Wall_Wood - at 4.5 $fz y=0.1 yaw=90
+next
+call corners w=3 d=2 y=0.1
+roof 3 2 at 0 0 y=0.1 wood
 place Placeable_Table_Basic - at 3.4 2.2 y=0.1 sit yaw=90
 place Note_Paper relaylog at 3.2 1.8 y=0.1 drop yaw=20
 place Note_Paper chart1 at 3.6 2.6 y=0.1 drop yaw=80
@@ -104,7 +118,15 @@ call shallows x=0 z=0 r=90 deep=6 n=1 seed=12120
 # (RAFT_QUEST_MECHANICS 4): four star-chart notes (hut, path ledge, mast foot, beacon) + the dome's numbers = the mast
 # box's keypad code.
 call fz_mount x=0 z=58 h=26 r=7
+# (REACH 10-30 G1: the Needle's top stood 7 m over its smoothed shoulder all round - nobody got up to the tower's foot;
+# a path now winds up the last 7 m round its south side, from the west shoulder (18.6 m) to the top's south-east edge)
+for k 0 14
+brush flatten at {6.8*cos(200+9*$k)} {58+6.8*sin(200+9*$k)} r=1.5 s=20 frames=150 h={18.6+0.543*$k}
+next
 call ar_plants_snowy x=0 z=58 r=26 seed=12131
+for k 0 14
+clear at {6.8*cos(200+9*$k)} {58+6.8*sin(200+9*$k)} r=2.5 body
+next
 call fz_tower x=0 z=60 h=26 n=6 al=beacon chest=beaconchest zal=beaconzone zid=beacon_top msg="The beacon on the Needle. The white sea all round - and the stack's mast, small as a pin."
 place Note_Sign stardome at -0.9 58.6 h=40.57 sit yaw=180
 place Note_Paper chart4 at 0.6 58.4 h=40.6 drop yaw=30
@@ -126,7 +148,9 @@ call ar_plane x=-58 z=14 h=3 yaw=120 al=mailplane crate=planecrate
 place Creature_PolarBear planebear at -48 22 ground
 prop planebear creature.count=1
 prop planebear creature.respawn=0
-place Note_Paper mailletter at -55.5 17.5 ground y=0.05 drop yaw=60
+# (REACH 10-30 G1 + R 10-31: the letter lay under the plane's wing, where nobody stands up, and the sand off the wing's
+# edge was boxed in by the wing and the body too - now on the open sand past the crate, 6.5 m from the body)
+place Note_Paper mailletter at -61.25 8.37 ground y=0.05 drop yaw=60
 # Grey Cove (south-west): the supply boat 10 m down, its chest, an air pocket at its side
 call fz_dive x=-50 z=-46 d=10 r=12 yaw=0 obj=BoatStranded al=supplyboat chest=boatchest aid=coveair aal=coveairz abub=coveairb cx=6 cz=2 ax=-6 az=-3
 # the Gull Ridge (south-east) and the Saddle (west): the island's own hills
