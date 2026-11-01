@@ -114,7 +114,8 @@ push at -12 34.67 h=2
 call hut w=2 d=2 y=0.1
 place Loot_Chest kitchen at 2.2 2.4 y=0.1 sit yaw=180
 # (REACH 10-28: dropped, its middle sank into the hut floor - set on the floor instead)
-place Note_Paper heddacl at 1.2 2.5 y=0.1 sit yaw=20
+# (R 11-01: reach - behind the table nobody could see it to pick it up: on the open floor by the door)
+place Note_Paper heddacl at 2.3 1.0 y=0.1 sit yaw=20
 place Placeable_CookingStand_Food_One - at 0.8 0.8 y=0.1 sit
 place Placeable_Table_Basic - at 1.0 1.95 y=0.1 sit
 pop
@@ -194,7 +195,8 @@ place Creature_Goat clgoats at 66.92 6.88 ground
 prop clgoats creature.count=2
 call dp_sink x=-74 z=37 d=-18 ex1=-64.16 ez1=32.08 ex2=-57.01 ez2=28.5 eh=3
 place Van_5 clwreck at -74 37 ground sit yaw=26.57
-place Loot_Chest cldivechest at -72.48 40.04 ground sit yaw=116.57
+# (R 11-01: reach - one spot only to open it from, at the van's end: out to the van's side, open water round it)
+place Loot_Chest cldivechest at -70.87 35.44 ground sit yaw=116.57
 call dp_air x=-75.52 z=33.96 id=cl_air al=clair msg="Air trapped under the wreck - breathe."
 place Loot_ChestSmall cldivesecret at -78.47 39.24 ground sit yaw=26.57
 call tzone x=-74 z=37 al=cldivezone id=cl_dive r=7 msg="The bottom of the old lock chamber. A van lies drowned here, and a grate in the floor." h=1
@@ -304,4 +306,16 @@ step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans from the 
 quest done=The canal runs free. Down it, far off, smoke over a dark island - and the clang of a smelter.
 quest reward=Seed_Mango*2;Scrap*6;Rope*4
 
+# (GROUND 10-30 G1: scattered rocks 2.5-4 m off the slopes taken out; Raft's zipline has no stand - its near end's floor
+# (ZiplineBase_FloorB, 5.72 m west and 0.97 m north of where it is put) hung 9.7 m over the ridge and 34.5 m beside the
+# gantry: iron posts under both, the gantry's in 6 m lengths like its own legs)
+clear at -60.15 26.32 r=1.5 all body only=SmallBoulder2
+clear at -65.40 -45.45 r=1.5 all body only=SmallBoulder2
+clear at 49.08 -56.39 r=1.5 all body only=SmallBoulder2
+clear at 27.43 -61.29 r=1.5 all body only=SmallBoulder2
+place RT_PillarThick zipposts at -46.72 8.97 ground sy=1.625
+for k 0 4
+place RT_PillarThick zipposts at 71.76 3.49 ground y={6*$k}
+next
+place RT_PillarThick zipposts at 71.76 3.49 ground y=30 sy=0.7583
 save Current Locks
