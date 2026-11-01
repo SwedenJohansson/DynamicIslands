@@ -215,4 +215,224 @@ namespace DynamicIslands.Editor
 			}
 		}
 	}
+
+	/// <summary>
+	/// A SPAWN TO RAFT button in Raft's pause menu (Esc), for a player stuck in a hole or a shaft they can't climb out of.
+	/// It asks first, in a copy of Raft's own Unstuck yes/no box; Yes closes the menu and stands the local player on their
+	/// raft on a walkable raft block as Raft's respawn without a bed does, here the first with room to stand,
+	/// with no fall or push kept and the swimming state ended. Only the local player moves (a client too: each player's
+	/// own position is theirs to send). Greyed while dead, asleep, on a zipline, or with no raft block to stand on.
+	/// </summary>
+	public static class SpawnToRaft
+	{
+		public const string ButtonName = "CustomIslands_SpawnToRaft", BoxName = "CustomIslands_SpawnToRaftBox";
+		public const string Label = "SPAWN TO RAFT", Question = "Only use this if you have gotten stuck in a place you cannot get out of.";
+
+		static PauseMenu menu;
+		static GameObject box;
+		static UnityEngine.UI.Button button, yesButton, noButton;
+
+		/// <summary>Tests: the button, the box and its Yes/No, whether the box is up.</summary>
+		public static UnityEngine.UI.Button Button { get { return button; } }
+		public static UnityEngine.UI.Button YesButton { get { return yesButton; } }
+		public static UnityEngine.UI.Button NoButton { get { return noButton; } }
+		public static GameObject Box { get { return box; } }
+		public static bool Asking { get { return box != null && box.activeSelf; } }
+
+		/// <summary>Null when the local player can be sent to the raft now, else why not.</summary>
+		public static string WhyNot()
+		{
+			Network_Player p = ComponentManager<Network_Player>.Value;
+			if (p == null || !LoadSceneManager.IsGameSceneLoaded) return "no player";
+			if (Player.LocalPlayerIsDead || (p.PlayerScript != null && p.PlayerScript.IsDead)) return "dead";
+			if (p.BedComponent != null && p.BedComponent.Sleeping) return "asleep";
+			if (p.ZiplinePlayer != null && p.ZiplinePlayer.IsAttachedToZipline) return "on a zipline";
+			Vector3 at;
+			if (!Spot(p, out at)) return "no raft block";
+			return null;
+		}
+
+		/// <summary>
+		/// Where on the raft: on top of a walkable block of the raft (Raft's respawn takes the first one), the first with room
+		/// to stand - nothing in a player-sized space above its floor. A client's list may hold no walkable blocks (CIOnRaft
+		/// found Raft's own SetToWalkableBlockPosition did nothing there), so the raft's foundations count too, and last the
+		/// deck found straight down from above the raft's middle.
+		/// </summary>
+		internal static bool Spot(Network_Player p, out Vector3 at)
+		{
+			at = Vector3.zero;
+			Raft raft = ComponentManager<Raft>.Value;
+			if (raft == null) return false;
+			int mask = ~(1 << LayerMask.NameToLayer("LocalPlayer"));
+			System.Collections.Generic.List<Block> blocks = BlockCreator.GetPlacedBlocks();
+			if (blocks != null)
+				for (int pass = 0; pass < 2; pass++)
+					foreach (Block b in blocks)
+					{
+						if (b == null || !b.transform.IsChildOf(raft.transform) || b.GetComponentInParent<IslandInfoTag>() != null) continue;
+						bool ok = pass == 0 ? b.IsWalkable() : b.buildableItem != null && b.buildableItem.UniqueName != null && b.buildableItem.UniqueName.IndexOf("Foundation", System.StringComparison.OrdinalIgnoreCase) >= 0;
+						if (ok && Stand(b.transform.position + b.transform.up * 1.9f, raft, p, mask, out at)) return true;
+					}
+			Vector3? middle = CustomIslandSpawner.RaftPosition;
+			return middle.HasValue && Stand(middle.Value + Vector3.up * 20f, raft, p, mask, out at, 40f);
+		}
+
+		/// <summary>Down from <paramref name="from"/> onto the raft: a floor of the raft with a player's room above it.</summary>
+		static bool Stand(Vector3 from, Raft raft, Network_Player p, int mask, out Vector3 at, float reach = 2.6f)
+		{
+			at = Vector3.zero;
+			RaycastHit hit;
+			if (!Physics.Raycast(from, Vector3.down, out hit, reach, mask, QueryTriggerInteraction.Ignore) || hit.collider == null
+				|| !hit.collider.transform.IsChildOf(raft.transform) || hit.normal.y < 0.7f) return false;
+			foreach (Collider c in Physics.OverlapCapsule(hit.point + Vector3.up * 0.45f, hit.point + Vector3.up * 1.6f, 0.3f, mask, QueryTriggerInteraction.Ignore))
+				if (c != null && !c.transform.IsChildOf(p.transform)) return false;
+			at = hit.point + Vector3.up * 1.2f;
+			return true;
+		}
+
+		/// <summary>Stands the local player on the raft (Yes in the box, and tests).</summary>
+		public static bool Go()
+		{
+			try
+			{
+				string why = WhyNot();
+				if (why != null) { Debug.Log("[CUSTOM ISLANDS] Spawn to raft: not now (" + why + ")"); return false; }
+				Network_Player p = ComponentManager<Network_Player>.Value;
+				Vector3 at;
+				Spot(p, out at);
+				PlayerMove.To(p, at, ControllerType.Ground);
+				if (p.UnstuckTracker != null) try { HarmonyLib.AccessTools.Method(typeof(Unstuck_Tracker), "SetIsStuck").Invoke(p.UnstuckTracker, new object[] { false }); } catch { }
+				Debug.Log("[CUSTOM ISLANDS] Spawn to raft: the player stands on the raft at " + at.ToString("F1"));
+				return true;
+			}
+			catch (System.Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Spawn to raft: " + e.Message); return false; }
+		}
+
+		/// <summary>The button: the yes/no box over the menu, as Raft's Unstuck does it.</summary>
+		public static void Ask()
+		{
+			try
+			{
+				if (menu == null || box == null || WhyNot() != null) return;
+				box.SetActive(true);
+				if (menu.buttonHolderPanel != null) menu.buttonHolderPanel.SetActive(false);
+				Focus(box);
+			}
+			catch (System.Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Spawn to raft box: " + e.Message); }
+		}
+
+		/// <summary>Yes or No in the box. Yes also closes the pause menu and sends the player.</summary>
+		public static void Answer(bool yes)
+		{
+			try
+			{
+				Hide();
+				if (!yes) return;
+				if (menu != null) menu.ContinuePlaying();
+				Go();
+			}
+			catch (System.Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Spawn to raft: " + e.Message); }
+		}
+
+		static void Hide()
+		{
+			if (box == null || !box.activeSelf) return;
+			box.SetActive(false);
+			if (menu != null && menu.buttonHolderPanel != null) { menu.buttonHolderPanel.SetActive(true); Focus(menu.buttonHolderPanel); }
+		}
+
+		static void Focus(GameObject panel)
+		{
+			try
+			{
+				GamepadCursor cursor = HarmonyLib.Traverse.Create(menu).Field("cursor").GetValue<GamepadCursor>();
+				UiMagnet magnet = panel.GetComponentInChildren<UiMagnet>();
+				if (cursor != null && magnet != null) cursor.FocusMagnet(magnet);
+			}
+			catch { }
+		}
+
+		static void SetText(GameObject root, string text, bool skipButtons)
+		{
+			foreach (Component loc in System.Linq.Enumerable.ToList(System.Linq.Enumerable.Where(root.GetComponentsInChildren<Component>(true),
+				x => x != null && x.GetType().Name.IndexOf("Locali", System.StringComparison.OrdinalIgnoreCase) >= 0 && !(skipButtons && x.GetComponentInParent<UnityEngine.UI.Button>() != null))))
+				Object.Destroy(loc);
+			foreach (UnityEngine.UI.Text t in root.GetComponentsInChildren<UnityEngine.UI.Text>(true))
+				if (!(skipButtons && t.GetComponentInParent<UnityEngine.UI.Button>() != null)) t.text = text;
+			foreach (Component tmp in root.GetComponentsInChildren<Component>(true))
+				if (tmp != null && tmp.GetType().Name.StartsWith("TextMeshPro") && !(skipButtons && tmp.GetComponentInParent<UnityEngine.UI.Button>() != null))
+					HarmonyLib.Traverse.Create(tmp).Property("text").SetValue(text);
+		}
+
+		[HarmonyLib.HarmonyPatch(typeof(PauseMenu), "Start")]
+		static class MenuPatch
+		{
+			static void Postfix(PauseMenu __instance)
+			{
+				try
+				{
+					menu = __instance;
+					GameObject holder = __instance.buttonHolderPanel;
+					GameObject unstuckBox = HarmonyLib.Traverse.Create(__instance).Field("yesNoPanelUnstuck").GetValue<GameObject>();
+					if (holder == null || unstuckBox == null || holder.transform.Find(ButtonName) != null) return;
+					UnityEngine.UI.Button[] own = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Where(holder.GetComponentsInChildren<UnityEngine.UI.Button>(true),
+						b => b.transform.parent == holder.transform && !b.name.StartsWith("CustomIslands_")));
+					if (own.Length == 0) return;
+
+					// (the box: Raft's Unstuck question with our words; its Yes/No keep Raft's words and look)
+					box = Object.Instantiate(unstuckBox, unstuckBox.transform.parent);
+					box.name = BoxName;
+					box.SetActive(false);
+					SetText(box, Question, true);
+					int wired = 0;
+					foreach (UnityEngine.UI.Button b in box.GetComponentsInChildren<UnityEngine.UI.Button>(true))
+					{
+						string m = b.onClick.GetPersistentEventCount() > 0 ? b.onClick.GetPersistentMethodName(0) : "";
+						bool yes = m.IndexOf("Yes", System.StringComparison.OrdinalIgnoreCase) >= 0;
+						b.onClick = new UnityEngine.UI.Button.ButtonClickedEvent();
+						if (yes) { b.onClick.AddListener(() => Answer(true)); yesButton = b; } else { b.onClick.AddListener(() => Answer(false)); noButton = b; }
+						wired++;
+					}
+
+					GameObject copy = Object.Instantiate(own[0].gameObject, holder.transform);
+					copy.name = ButtonName;
+					SetText(copy, Label, false);
+					button = copy.GetComponent<UnityEngine.UI.Button>();
+					button.onClick = new UnityEngine.UI.Button.ButtonClickedEvent();
+					button.onClick.AddListener(Ask);
+					copy.transform.SetSiblingIndex(Mathf.Max(0, own[own.Length - 1].transform.GetSiblingIndex()));
+					Debug.Log("[CUSTOM ISLANDS] Pause menu: a Spawn to raft button (" + wired + " box buttons)");
+				}
+				catch (System.Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] The pause menu's Spawn to raft button: " + e.Message); }
+			}
+		}
+
+		[HarmonyLib.HarmonyPatch(typeof(PauseMenu), "Update")]
+		static class GreyPatch
+		{
+			static float next;
+
+			static void Postfix(PauseMenu __instance)
+			{
+				try
+				{
+					if (button == null || __instance != menu) return;
+					// (Esc or anything else closing the menu takes the box with it; nothing is checked while the menu is shut.
+					//  Not pausePanel's state: the box hides the button holder, which made that panel read as shut)
+					if (CanvasHelper.ActiveMenu != MenuType.PauseMenu) { Hide(); return; }
+					if (Time.unscaledTime < next) return;
+					next = Time.unscaledTime + 0.25f;
+					button.interactable = WhyNot() == null;
+					if (Asking && !button.interactable) Hide();
+				}
+				catch { }
+			}
+		}
+
+		[HarmonyLib.HarmonyPatch(typeof(PauseMenu), "MenuClose")]
+		static class ClosePatch
+		{
+			static void Postfix() { try { Hide(); } catch { } }
+		}
+	}
 }
