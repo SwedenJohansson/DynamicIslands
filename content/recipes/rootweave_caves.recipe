@@ -306,4 +306,11 @@ quest reward=CaveMushroom*3;Leather*2
 # (box agent 10-25: names for the guide pictures' snap points)
 prop rwhut obj.name=rwhut
 prop rwtw obj.name=rwtw
+# (TRAP 11-01 N: two hollows in the caves a player drops into, their only side a 1.5 m step: a ladder up each)
+# (named, not `-`: a `-` piece under the cave roof counts as under the ground and is left out)
+place Block_Ladder nrwl1 at -15.3 -18.9 h=4.9 yaw=90
+place Block_Pillar_Wood nrwp1 at -15.1 -18.9 h=4.9
+place Block_Ladder nrwl2 at -11.9 -8.9 h=5.7 yaw=180
+place Block_Pillar_Wood nrwp2 at -11.9 -9.1 h=5.7
+
 save Rootweave Caves
