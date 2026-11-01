@@ -193,4 +193,22 @@ quest reward=Plank*10;Rope*4;Nail*10
 place Creature_Boar boars at -6 16 ground
 prop boars creature.count=1
 
+# (TRAP 11-01 N: a hollow a player drops into, its side a 1.5 m step: a ladder up it)
+place Block_Ladder nlql1 at 34.3 -7.6 h=8.9 yaw=270
+place Block_Pillar_Wood nlqp1 at 34.1 -7.6 h=8.9
+place Block_Ladder nlql2 at 34.3 -9.1 h=8.9 yaw=270
+place Block_Pillar_Wood nlqp2 at 34.1 -9.1 h=8.9
+
+# (TRAP 11-01 N: a pocket under the east end of the bear cave's rock, over the cave's pad, a player could get
+# into and not out: ground raised into it so there is no pocket)
+brush flatten from 64.5 -19.5 to 64.5 -10 r=3.5 s=20 frames=300 h=6
+brush smooth from 64.5 -19.5 to 64.5 -10 r=4 s=10 frames=12
+clear from 64.5 -19.5 to 64.5 -10 r=4 body
+
+# (TRAP 11-01 N: a roofed hollow under the generator rocks, its rim a step a player could not get over: the rocks taken off and its floor raised into a ramp up to the rim)
+clear at 40.8 -30.9 r=7 all body
+brush flatten from 40.8 -31.5 to 40.3 -25 r=4 s=20 frames=300 h=5.0
+brush smooth from 40.8 -31.5 to 40.3 -25 r=4.5 s=10 frames=12
+clear from 40.8 -31.5 to 40.3 -25 r=4.5 body
+
 save Lodestone Quay
