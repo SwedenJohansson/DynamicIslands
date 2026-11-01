@@ -56,7 +56,8 @@ push at 3 -15.5 h=1
 # (REACH 10-29: the projection box on the roof had no way up from the sea - the slab stands 1 m over the water behind
 # its railing: the railing's west middle left open and a ladder up the slab's edge there, its top just over the slab)
 call hw_roof d=21 a=city lm=none
-place Block_Ladder roofladder at -6.35 -0.75 y=-2.0 yaw=-90
+# (R 11-01: reach - the walker climbed it but got stuck under the slab's edge: the ladder 0.6 m higher, its top well over the slab)
+place Block_Ladder roofladder at -6.35 -0.75 y=-1.4 yaw=-90
 place Placeable_WindTurbine - at -3 1.5 y=0.05 sit
 place Loot_Chest projectorbox at -4.8 -3.4 y=0.05 sit
 place RT_Spotlight - at -0.8 -3.6 y=0.05 sit yaw=160
@@ -77,8 +78,10 @@ place Antenna_pole - at 0 6 ground sit
 place Antenna_pole - at 30 6 ground sit
 
 # --- The four shops (air in each), shop 1 a pawn shop, shop 2 electronics, shop 3 a lamp shop, shop 4 the diner ----------
+# (R 11-01: reach - nobody got into the shops: the broken windows let no one through and the doors stay shut - each
+# shop window gone, an open shopfront beside its door)
 push at -18 10 h=-20
-call rt_storey a=city f1=RT_WallWindowBroken f2=RT_WallDoor1
+call rt_storey a=city f1=none f2=RT_WallDoor1
 place RT_Floor city at 0 4.5 y=3
 place "Box Small" - at -5 3.5 y=0.1 sit
 place "Pickup_Landmark_Scrap 2_OceanBottom" - at -2 2 y=0.1 sit
@@ -99,7 +102,7 @@ prop air1 zone.message=Number fourteen, the blue door: the Penns' rooms over the
 prop bub1 atmo.particles=bubbles
 prop bub1 zone.radius=3
 push at -3 10 h=-20
-call rt_storey a=city f1=RT_WallWindowBroken f2=RT_WallDoor1
+call rt_storey a=city f1=none f2=RT_WallDoor1
 place RT_Floor city at 0 4.5 y=3
 place "Table Office" - at -4.5 3 y=0.1 sit yaw=180
 place Loot_Chest electronics at -1.2 3.4 y=0.1 sit yaw=180
@@ -118,7 +121,7 @@ prop air2 zone.message=An air pocket - breathe.
 prop bub2 atmo.particles=bubbles
 prop bub2 zone.radius=3
 push at 12 10 h=-20
-call rt_storey a=city f1=RT_WallWindowBroken f2=RT_WallDoor1
+call rt_storey a=city f1=none f2=RT_WallDoor1
 place RT_Floor city at 0 4.5 y=3
 place Loot_Chest lampshop at -1.2 3.4 y=0.1 sit yaw=180
 place Floorlamp_01 - at -5 3.5 y=0.1 sit
@@ -138,7 +141,7 @@ prop air3 zone.message=An air pocket - breathe.
 prop bub3 atmo.particles=bubbles
 prop bub3 zone.radius=3
 push at 27 10 h=-20
-call rt_storey a=city f1=RT_WallWindowBroken f2=RT_WallDoor1
+call rt_storey a=city f1=none f2=RT_WallDoor1
 place RT_Floor city at 0 4.5 y=3
 place "Table Office" - at -4.5 2 y=0.1 sit
 place Note_Paper jonahletter at -4.5 2 y=0.9 drop yaw=15
@@ -215,6 +218,10 @@ place Loot_Chest sewerchest at -46 -59 ground sit yaw=90
 # (REACH 10-28: the sewer well's rim stands 1.5 m over its water - no way back up: a ladder out on its south side)
 # (REACH 10-29: at yaw 180 its face was against the rim - nothing could take hold from the water: turned to face the well)
 place Block_Ladder sewerladder at -44.4 -64.9 h=-0.8 yaw=0
+# (R 11-01: reach - the well was still a trap, its ladder not enough: a channel cut from the well's west side south into
+# the street, the sewer mouth open to the street)
+brush flatten from -48.5 -61 to -48.5 -71 r=2 s=20 frames=300 h=-21
+clear from -48.5 -61 to -48.5 -71 r=2.5 body
 call ar_plants_hill x=-50 z=20 r=14 seed=13621
 call ar_plants_hill x=60 z=30 r=12 seed=13631
 
@@ -419,4 +426,10 @@ clear at 48 22 r=14
 call ar_plants_hill x=26 z=58 r=12 seed=6400
 call ar_plants_hill x=-16 z=-30 r=12 seed=6410
 call ar_plants_hill x=48 z=22 r=12 seed=6420
+# (REACH 10-30 G1: a pit roofed over by plants on low hill 1's flank (35 49, 3 m up) - a player got in but not out by
+# a 1.3 m step; the pit smoothed out and its plants cleared)
+brush smooth at 35 49 r=3 s=5 frames=40
+clear at 35 49 r=4 body
+# (GROUND 10-31 G1: a palm's foot 0.55 m over the ground at 39.5 13 - taken out)
+clear at 39.55 13.01 r=0.6 all only=Tree_Palm
 save Lowstreet
