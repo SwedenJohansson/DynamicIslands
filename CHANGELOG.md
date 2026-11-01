@@ -19,6 +19,14 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Receiver dot for a story island with its quest still open.** A story island whose step was done before its quest
   (a step, a zone, a note, a signal) lost its Receiver dot far away; it now keeps it until its quest is done.
 
+## 2026-11-01: Random islands and finished quests
+
+- **A finished quest island never comes again by chance**, also when a note on it was missed (it came back for the
+  note). An island without a quest still comes back while a note on it is unfound.
+- **An island you left unfinished has the same chance** to be picked again as every other island (it had a quarter).
+- **An island that once failed to load** is the one that comes back when picked again: the spawn pool made a second,
+  fresh copy of it, with its finished quest and rewards to be had again, or its progress gone.
+
 ## 2026-10-27: Quest playtest fixes
 
 - **Where a quest starts**: until an island's quest has begun, a gold beam stands over the place its first step wants
