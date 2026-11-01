@@ -990,4 +990,19 @@ clear at -79.4 -100.0 r=1.5 all only=^CaravanIsland_SmallRock_1
 clear at 110.5 37.4 r=1.5 all only=^BigSharpRock_2
 clear at -67.9 -74.3 r=1.5 all only=^BigSharpRock_2
 
+# (TRAP 11-01 N: the trench by the mine a player drops into, its lowest side a 1.6 m step: a ladder up it)
+place Block_Ladder - at 17.4 -30.6 h=21.0 yaw=180
+place Block_Pillar_Wood - at 17.4 -30.8 h=21.0
+
+# (TRAP 11-01 N: the middle ledge of the ladder trail (36 m) had no way off, its 6 m landmark ladders
+# give no hold: plain ladders up both crib walls beside them)
+place Block_Ladder - at -25.62 -0.69 h=30.0 yaw=180
+place Block_Ladder - at -25.62 -0.69 h=32.42 yaw=180
+place Block_Ladder - at -25.62 -0.69 h=34.84 yaw=180
+place Block_Pillar_Wood - at -25.62 -0.89 h=30.0
+place Block_Ladder - at -25.62 -6.69 h=36.0 yaw=180
+place Block_Ladder - at -25.62 -6.69 h=38.42 yaw=180
+place Block_Ladder - at -25.62 -6.69 h=40.84 yaw=180
+place Block_Pillar_Wood - at -25.62 -6.89 h=36.0
+
 save Sundown Canyons

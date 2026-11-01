@@ -3,7 +3,7 @@
 # face along x 0), the Sun shrine at -28 0 (its doorway east), the Rain shrine at 30.5 0 beyond the moat's stepping stones
 # (x 24-27), the well at -6 -26 (its gorge to the sea south); the causeway up the west face from the base camp (-24 46).
 island The Step Pyramid
-offset -2.0083 9.8018
+offset -1.8093 10.1439
 expect step 0
 expect title The Rain Kings
 wait 5

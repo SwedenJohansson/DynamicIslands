@@ -44,6 +44,11 @@ brush flatten at 84 2 r=16 s=20 frames=500 h=3
 brush smooth at 84 2 r=21 s=4 frames=40
 brush flatten at 84 2 r=14 s=20 frames=500 h=3
 brush flatten from 84 2 to 51.01 1.21 r=9 s=20 frames=500 h=3
+# (REACH 10-30: the calendar stone at 93 -7 stood on the pad's very edge - its hidden reward chest came up on the slope
+# below it and its note dropped down the cliff to the sea floor (reach: "Calendar stone reward" and "Calendar reading"
+# can't get there): the pad carried out round the stone)
+brush flatten at 93 -7 r=5 s=20 frames=300 h=3
+clear at 93 -7 r=6 body
 brush flatten at -20 86 r=17 s=20 frames=500 h=3
 brush smooth at -20 86 r=22 s=4 frames=40
 brush flatten at -20 86 r=15 s=20 frames=500 h=3
@@ -88,6 +93,11 @@ brush flatten at -6 -26 r=6 s=20 frames=500 h=-10
 brush flatten from -6 -31 to -6 -44 r=1.6 s=20 frames=300 h=-3
 brush rock at -6 -26 r=8 s=20 frames=30
 brush rock from -6 -31 to -6 -42 r=3 s=20 frames=20
+# (REACH 10-31 N: the rock strokes closed the gorge again - the walker's swim from the sea never got into it, nearest
+# 20 m off - and its cut ended in a pit in the beach, a sand bar short of the sea: the channel cut once more after them,
+# 4 m wide and 3 m deep, on across the beach into the open sea)
+brush flatten from -6 -31 to -6 -74 r=2 s=20 frames=300 h=-3
+clear from -6 -31 to -6 -74 r=3 body
 for i 0 16 1
 brush flatten at {-28-$i*0.8125} {42-$i*1.25} r=4.5 s=20 frames=20 h={3+$i*0.5}
 next
@@ -103,7 +113,7 @@ clear at 0 0 r=24
 clear at -28 0 r=6
 clear from 22 0 to 38 0 r=8
 clear at -6 -26 r=10
-clear from -6 -31 to -6 -46 r=3
+clear from -6 -31 to -6 -76 r=3
 clear from -28 42 to -41 22 r=5
 clear from -41 22 to -37 -16 r=5
 clear at -24 46 r=9
@@ -233,6 +243,16 @@ scatter "Pickup_Landmark_WatermelonLandmark" 6 at 0 0 r=44.1 seed=4330 free=3
 
 # --- Raft's finds in the shallows round the island (lib_sea) ---------------------------------------------------------
 call shallows r=72 deep=5 n=2
+# (REACH 10-30 N: the beach under Jaguar Hill's south side met the land in a 2.5 m step at -48 27 - the walk to the trail
+# stopped there every run: a ramp up from the sand, laid from the top down)
+# (REACH 10-31 N: four 0.7 m terraces still stopped the walk - now nine of 0.26 m, then smoothed)
+# (REACH 11-01 N: the ramp stood 10 m off the step - the walk's points are the play's, 'offset -1.8093 10.1439' from
+# here: moved onto the step itself, laid after the shallows, wider)
+for i 0 8 1
+brush flatten at {-48.1+0.375*$i} {18.4-0.4125*$i} r=3 s=20 frames=300 h={3.6-0.2625*$i}
+next
+brush smooth from -45.1 15.1 to -48.1 18.4 r=3.5 s=10 frames=12
+clear from -45.1 15.1 to -48.1 18.4 r=4 body
 
 # --- SILVER 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Jaguar Hill ------
 # Jaguar Hill with the explorer's survey tower on it, Serpent Cave, the ruined house where Mateo Ruiz waits (four lamps round it: a puzzle), a plane wreck,
@@ -399,6 +419,9 @@ call ar_plants_tropical x=-62 z=-28 r=21 seed=26495
 call ar_plants_tropical x=70 z=58 r=16 seed=26496
 call ar_plants_tropical x=-78 z=-52 r=12 seed=26497
 call ar_plants_tropical x=-60 z=60 r=24 seed=26498
+# (REACH 10-31 N: the calendar stone's pad, carried out to the cliff's edge, left a palm on its steep rim with its foot
+# buried: no trees on the pad or its rim)
+clear at 93 -7 r=7 all only=Palm|Bamboo|Banana|Bush
 
 # ===== Settings, story items, notes, behaviours, quest (20 steps) =========================================================
 info title=The Step Pyramid
