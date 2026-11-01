@@ -1355,7 +1355,8 @@ Import is offered in the island editor (the Islands and World plan windows), nev
 **The island library: download plans and islands others made.** **ISLAND LIBRARY** in Raft's main menu (also **Get
 more...** in the New Game box and **Library...** in the Islands window) opens the library: a public collection on
 a shared Google Drive folder, where every
-entry is looked at before it goes in.
+entry is looked at before it goes in. A banner on both tabs says that not everything on these islands is fully
+tested yet: please report any issues you find ([section 14](#14-reporting-a-problem)).
 - **World plans** and **Islands** tabs, a **search** (titles, authors, summaries, tags), featured entries first. Each
   row has the entry's icon, title, author and summary, and says **INSTALLED** or **UPDATE** when that applies (**FEATURED**: a featured entry you don't have).
   **Refresh** reads the library's list again at once; otherwise the window reads it again after 10 minutes.

@@ -9,6 +9,147 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## 3.0 alpha - 2026-11-01: Island reach fixes
+
+### New
+- **SPAWN TO RAFT** (Esc menu, just before Exit): if you have got stuck in a place you cannot get out of, the button
+  asks "Only use this if you have gotten stuck in a place you cannot get out of". **Yes** stands you on your raft,
+  **No** goes back to the menu. It is greyed out while dead, asleep in a bed, on a zipline, or when no raft floor is
+  found. In multiplayer each player moves only themselves.
+- **Island library banner**: both tabs of the library window say that not everything on these islands is fully
+  tested yet, and ask you to report any issues you find.
+
+### Changed
+- **Ways out everywhere**: on many islands ladders, ramps and steps were added so no pit, ledge, hollow or roof you
+  can drop onto traps you, and quest notes and chests were moved to where you can stand next to them.
+
+### Fixed
+- **Quest locks wait for their step**: on about 60 islands a lock, gate or lift that a quest key opens now stays shut
+  until the quest step that asks for it, so a quest can no longer be skipped ahead by walking in with the key. Hollow
+  Mountain's lifts and throne lock wait too, and its entry-hall step now counts only from inside the hall.
+- **Island map**: the corner map is smaller, and the sea on it is a flat Raft blue instead of a brown blur. The quest
+  tracker now sits just under the corner map while it shows, so its title and first step can be read.
+- **Cooling Spire**: stairs round the outside of the spire, and a ladder out of the dive pond.
+- **Signal Rock**: the rig cave is reachable again (the fan top is narrower).
+- **Sorting Rock**: the rate chart lies on top of its cupboard, where it can be read.
+- **Spirecrest Roofs**: the mast bridges no longer have gaps at their ends.
+- **Caisson Yard**: the mast bridges have no gaps at their ends, and the dock ladders face the sea.
+- **Shelter Atoll**: palms and trees that sat in the ground stand on it again, and the beach and pit slopes are walkable.
+- **Drowned Gate**: a tree and the excavator that sat in the dam slope stand on level ground.
+- **Old Mine Islet**: trees that sat in the ground stand on it again.
+- **Frontier Beacon**: the mango and pineapple trees on the spike's slope stand on the ground.
+- **Radio Tower**: the beach path below the cave mouth is flatter and can be walked.
+- **Seed Ark**: the lantern stands on the hall floor, and the hatch stands on level ground.
+- **Sunken Liner**: beaches up onto the two islets, the trail path no longer has a step, and the stores crate, the
+  purser's safe and the rocks can be reached.
+- **Sunken Archive**: steps from the sea up to Reading Hill, and the reading room has a wide open way in.
+- **Utopia Remade**: land joins the cargo yard to the quarry cave, and steps lead out of the deep water.
+- **Overpass Shoal**: the surveyor's cache sits on the last ledge, where you can reach it.
+- **current_locks**: the Hedda note and the dive chest are out in the open.
+- **static_shoals**: a ramp from the sea up the bar, the mast workshop's door can be reached, and the hut stands on sand.
+- **Lowstreet**: a channel out of the well, open shopfronts, a pit you can climb out of, and the roof ladder is higher.
+- **Signalstack Rock**: the hut's door is at the desk, a path winds up the Needle, and the mail letter lies in the open.
+- **Vasagatan Remade**: beach slopes up onto the west dunes and the east land bridge.
+- **Orrin's Sledge Camp**: a ramp up to the quarry ledge and a path up to the crest.
+- **Vaporhold Reservoir**: a beach out of the lake, a ladder up the tower, and the valve platform sits on top of
+  its column.
+- **The Abyss**: beaches up to the camp and down from the lava tube.
+- **The Rain Engine**: the Foot and the salt caves are joined, so the salt caves, the bears' den and its chest can be reached.
+- **Steamvent Harbour**: rocks cleared off the bathhouse's back half and the ridge mast's cable box, with a path up
+  to the derrick foot.
+- **Island of Stations**: low steps out of the pond by the north shore and out of the west pond.
+- **Whiteout Reach**: the Kestrel manifest and the pilot note lie where you can stand next to them.
+- **Scrapyard Haven**: a ramp up the terrace bank, and the lookout ladder reaches the top caravan roof.
+- **Iron Whale Bow**: the foredeck ladder can be reached, the prow plate meets the ice, and shelves let swimmers out
+  at the crane and the whalers' cave.
+- **Rootweave Caves**: ladders out of the two cave pits.
+- **Skyhook Mast**: ladders up from two ledges you could drop to.
+- **Step Pyramid** and **Sundown Canyons**: ladders and an earth ramp out of every pit and ledge.
+- **The Listening Mirrors**: the crane cab ladder can be reached, and the chapel's quest step counts once you are in
+  the chapel.
+- **Lodestone Quay**: the hollow under the generator rocks is now a ramp up to the rim.
+- **Saga Drift**: an open ramp down into the berg cave, so the harbour office chest and the ledger can be reached.
+- **Riverfork Delta**: a ramp out of the roofed hollow by the river fork.
+<!-- PENDING (release-prep): add lines for fixes pushed after 29fd237 (e.g. Frontier Beacon, Hadal Commons,
+     Overpass/Caravan/Utopia Remade), then delete this comment. finish.sh refuses to run while it is here. -->
+
+---
+
+## 2026-10-31: Release fixes
+
+### New
+- **Head start raft, levels 1-10** (was 1-3): - and + in World settings pick the level, and the text under the
+  buttons says what it gives. Level 1 is a 7 x 10 raft with a grill, a purifier, the research table, a bed and first
+  supplies; each level adds stations, storages, item nets and supplies, up to level 10: 11 x 18 with 6 smelters, 19
+  storages of everything up to Tangaroa (no titanium) and 51 nets. Stations stand in the middle, nets round the edge.
+  `HeadStart 0-10` (F10) and the `headstart` key take the new levels.
+
+### Fixed
+- **Old worlds play on**: a world from Release 2026-10-23 needs no new world. On load the host puts right what an
+  island that went missing left behind: a hand-spawned copy (F10 `SpawnIsland`) becomes the story's island, so its
+  quest counts and the next frequency comes, and a story island that is gone can be brought again by the Receiver.
+  A quest whose next step was already done before the island loaded ("open the Vault" with the Vault open) goes on.
+- **Receiver islands come back**: an island you left before its quest was done keeps its Receiver dot, however far
+  away, and comes back, also one that has its own Receiver frequency. A tuned Receiver brings a far island back only
+  once per new tune. A story island whose saved frequency had to change (it clashed with one of Raft's) says so in a
+  banner and a journal page with the new number. Only islands with a quest have a dot on a player's Receiver.
+- **SpawnIsland on a story island** brings that island back with its quest as you left it, instead of a fresh copy,
+  and two in a row don't use up a return. A quest done on an earlier hand-spawned copy counts too.
+- **A story island that can't come**: when its file is gone and the host picks Play without them, or it can't be made
+  three times, the story goes on without it after a short wait and a banner says why, instead of every later step
+  waiting for ever. The story step is kept while the missing-islands box asks, and a failed Main menu doesn't stop the
+  story. An island file that couldn't be read is tried again later.
+- **Quest steps done in another order**: early work counts for the later step that names it (the Vault opened early
+  counts for "open the Vault", not for an "open any chest" step before it).
+- **Story items are given once**: a story item from a zone that fires on every walk-in, or that the regrow readies
+  again, comes once per world, as from a chest; a chest whose opening gives a story item doesn't fill up again; an
+  event resumed after a wait gives its story items. Worlds that already had such a zone fire keep it given.
+- **Quest rewards follow Raft's saves**: a reward lost with a crash, a quit without saving or an older save is paid
+  again, once, when the quest is finished again.
+- **Side quests**: an island with a side quest begun and not done is not counted as finished while it can still come
+  back for its rewards.
+- **Behaviours**: an island's arrive event whose "only if" failed (no key yet) runs again when the player leaves and
+  comes back with it. One action that fails no longer stops the rest of its chain. A kill in the same second as a
+  creature hides is counted.
+- **Kraken**: a storm's arm and a day's arm no longer cancel each other.
+- **Buried treasure**: a chest that grows back has its own loot again, and another world's opened chests no longer
+  block the loot of a new world. Collectibles, golden barrels, the story chain and the head start build no longer
+  carry over from one world into the next one you load.
+- **Raft's own story islands** keep clear of custom islands, and Raft's clean-up no longer removes Raft islands that
+  stand near a custom one.
+- **Edits reaching saved worlds**: what was used on an island (treasure, trade stands, vending machines, crate places,
+  stack zones, journal pages of notes) stays on the same objects when an edit or a library update reaches a world,
+  also for worlds that live only in Raft's own world folders. A damaged island copy is no longer played, and a world
+  line the mod can't read is kept instead of dropped.
+- **Multiplayer**: a chest or once-only thing a player opened from too far for the host is no longer theirs while the
+  others still see it full: the host refuses it and tells that player how it really is (a refused harvest too), and
+  Resync puts right what a player's islands show. A refusal now shows its message. An action on an island the host
+  is still loading gets its "otherwise" part. A daily quest finished just before the day turned still gives its EXP.
+  A carried piece refused for distance says so, not "Someone else is carrying that", and a ping always shows who sent
+  it.
+- **Other mods**: an error inside one of the mod's patches no longer breaks Raft's own code it is patched into.
+- **Editor**: a window open on top (island info, island and plan pickers, Level, World settings, Defaults, Placed
+  objects) keeps the editor's keys from acting behind it, so Ctrl+A and Delete there no longer wipe the island. Save
+  as over another island and saving keep each object's own number right. Titles, ids and islander names with `|` in
+  them work in quest steps. A rename onto a name another object already has is refused.
+- **Editor objects**: a scene that was cut off while loading is loaded again next time, so objects like `campfire_1`
+  are no longer missing for the rest of the session.
+- **World loading**: one part that fails while a world loads no longer stops the rest, or the island list, from
+  loading. The extra options' state (private storages, ghost rafts, the daily quest, the trader raft, the upgrade
+  table, storm seas and the rogue shark) is always written into the world's file.
+
+### Changed
+- **Behaviour preview**: the window steps aside while the movement plays, so you can see the object, and Esc stops it.
+  A camera flight hides the editor's windows.
+- **Renames move the quest steps**: a new title on a note or chest, or a new id on a zone, changes the quest steps,
+  actions, checks, camera points, talk steps and plan rules that name it, in the same undo step.
+- **Story items**: a new item takes its name from the picture you pick, and its id is a box you can change (accents
+  are dropped: "Källaren" is `kallaren`); **Save** renames the id in the island's chests, actions, checks, events and
+  quest.
+- **Give my worlds this version** keeps the journal's pages of notes with their notes (a deleted note keeps its page).
+
+---
+
 ## 2026-10-27: Quest playtest fixes
 
 - **Where a quest starts**: until an island's quest has begun, a gold beam stands over the place its first step wants
