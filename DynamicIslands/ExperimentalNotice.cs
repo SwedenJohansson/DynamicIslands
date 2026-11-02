@@ -13,7 +13,8 @@ namespace DynamicIslands.Editor
 	/// The main menu's "EXPERIMENTAL ALPHA RELEASE" box: this is the mod's first release, so new players are told that things are
 	/// likely to change, some systems might be unstable and progress isn't guaranteed to be saved. It starts on the right
 	/// half of Raft's main menu, clear of the menu buttons and the New Game box, and can be dragged anywhere (the place is
-	/// remembered). Its buttons lead to help: the Discord server, the guide (PDF) and Report a problem. "Got it" folds it
+	/// remembered). Its buttons lead to help: the Discord server, the guide (PDF), Report a problem and Check for updates (the
+	/// mod's raftmodding.com page). "Got it" folds it
 	/// into a slim bar with those buttons (Show opens it again); the X closes it altogether (Franz, 2026-10-17), and then
 	/// only a small "Custom Islands: help" link in the menu's bottom right corner is left, which opens it again. Both are
 	/// remembered for this version of the mod only (Mods\DynamicIslands\notice.txt), so a new version shows the whole box again.
@@ -34,10 +35,10 @@ namespace DynamicIslands.Editor
 		static readonly Vector2 StartSpot = new Vector2(0.64f, 0.8f);
 		/// <summary>The player dragged it (or a saved place was used): it stays there instead of its start.</summary>
 		static bool dragged;
-		const float Width = 600f; // (the button row needs ~550 inside the 18+18 padding)
+		const float Width = 760f; // (the button row needs ~714 inside the 18+18 padding)
 
 		static RectTransform panel, body;
-		static Button toggle, discordButton, guideButton, reportButton, closeButton, helpLink;
+		static Button toggle, discordButton, guideButton, reportButton, updatesButton, closeButton, helpLink;
 		/// <summary>The X was pressed (for this version): the box is gone, the help link shows instead.</summary>
 		static bool closed;
 
@@ -49,6 +50,7 @@ namespace DynamicIslands.Editor
 		public static Button DiscordButton { get { return discordButton; } }
 		public static Button GuideButton { get { return guideButton; } }
 		public static Button ReportButton { get { return reportButton; } }
+		public static Button UpdatesButton { get { return updatesButton; } }
 		public static Button CloseButton { get { return closeButton; } }
 		/// <summary>The small link left on the menu while the box is closed: opens the box again.</summary>
 		public static Button HelpLink { get { return helpLink; } }
@@ -160,6 +162,8 @@ namespace DynamicIslands.Editor
 			guideButton.name = "Guide";
 			reportButton = UIKit.Button(buttons, "Report a problem", InfoWindow.OpenReport, "How to report a problem, on GitHub or Discord", 164, 32f, 14);
 			reportButton.name = "Report";
+			updatesButton = UIKit.Button(buttons, "Check for updates", () => HelpLinks.Open(HelpLinks.ModPage), "The mod's page on raftmodding.com: the newest version of Custom Islands (this is " + Version + ")", 150, 32f, 14);
+			updatesButton.name = "Updates";
 			UIKit.Label(buttons, "", 12);
 			toggle = UIKit.Button(buttons, "", Flip, null, 92, 32f, 14);
 			toggle.name = "Toggle";

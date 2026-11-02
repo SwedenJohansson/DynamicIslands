@@ -470,6 +470,10 @@ namespace DynamicIslands
 				ExperimentalNotice.DiscordButton.onClick.Invoke();
 				check(HelpLinks.LastOpened == HelpLinks.Discord, "Discord opens " + HelpLinks.LastOpened);
 				HelpLinks.LastOpened = null;
+				check(ExperimentalNotice.UpdatesButton != null && ExperimentalNotice.UpdatesButton.gameObject.activeInHierarchy, "Check for updates on the box");
+				ExperimentalNotice.UpdatesButton.onClick.Invoke();
+				check(HelpLinks.LastOpened == HelpLinks.ModPage, "Check for updates opens " + HelpLinks.LastOpened);
+				HelpLinks.LastOpened = null;
 				ExperimentalNotice.GuideButton.onClick.Invoke();
 				bool g = true; CheckGuideOpened(ref g); check(g, "Guide (PDF) opens the PDF");
 				ExperimentalNotice.ReportButton.onClick.Invoke();

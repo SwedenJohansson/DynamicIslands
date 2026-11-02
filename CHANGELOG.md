@@ -12,6 +12,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next update
 
 ### New
+- **Check for updates** (the alpha box on the main menu): opens the mod's page on raftmodding.com, where new
+  versions come out.
 - **Dig brush** (editor, Terrain tab, Caves): a second tunnel tool beside the drag one, now called **Straight tunnel**.
   Press on a hillside or cliff and hold: a passage is dug in toward where the mouse points, so you paint your own winding
   tunnel or cave entrance. **Dig size** (2.8-10 m) and **Dig slope** (up to 25°) as with the other brushes; press on a tunnel

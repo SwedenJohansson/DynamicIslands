@@ -14,6 +14,8 @@ namespace DynamicIslands.Editor
 		public const string Discord = "https://discord.gg/U7DfKY9tN";
 		public const string Repo = "https://github.com/SwedenJohansson/DynamicIslands";
 		public const string Issues = Repo + "/issues";
+		/// <summary>The mod's page on raftmodding.com, where new versions come out (the mod never updates itself).</summary>
+		public const string ModPage = "https://www.raftmodding.com/mods/custom-islands";
 		public const string GuideOnline = Repo + "/blob/master/docs/GUIDE.md";
 		public const string GuidePdfOnline = Repo + "/blob/master/docs/Custom-Islands-Guide.pdf";
 		/// <summary>The guide as a PDF: in the .rmod (pack.ps1 puts it there), written to Mods\DynamicIslands\ to open it.</summary>

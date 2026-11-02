@@ -145,8 +145,9 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
 > **Experimental Alpha Release:** this is the mod's first release, an early alpha. Things are likely to change, some systems might be
 > unstable, and progress is not guaranteed to be saved - back up the worlds you care about (Raft keeps them in
 > `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User`). The main menu shows this in the **EXPERIMENTAL ALPHA
-> RELEASE** box right of the middle, with the mod's version and three buttons: **Discord** (the Custom Islands Discord
-> server), **Guide (PDF)** (this guide, which comes with the mod) and **Report a problem** ([section 14](#14-reporting-a-problem)).
+> RELEASE** box right of the middle, with the mod's version and four buttons: **Discord** (the Custom Islands Discord
+> server), **Guide (PDF)** (this guide, which comes with the mod), **Report a problem** ([section 14](#14-reporting-a-problem))
+> and **Check for updates** (the mod's page on raftmodding.com, where new versions come out; the mod never updates itself).
 > Drag the box anywhere you like; it stays where you put it. It steps aside while another window of the main menu is
 > open (New Game, Load World, Settings, the island library...) and comes back when you close it. **Got it** folds it into a slim bar with the same buttons (its
 > **Show** opens it again); its **X** closes it altogether, and then only a small **Custom Islands: help** button is left in
