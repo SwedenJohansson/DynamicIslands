@@ -94,5 +94,41 @@ namespace DynamicIslands
 			finally { Claims.Reset(); }
 			if (ok) Log("PASS: claim release"); else Fail("claim release");
 		}
+
+		[ConsoleCommand(name: "CIRadarCopyDone", docs: "Dev, in a test world 'CI ...' (host): RK8 - a plan's island (ruled) whose quest was done on a rule-less copy (spawned by hand) has no radar dot left; before the copy is done it has")]
+		public static void RadarCopyDoneCommand()
+		{
+			bool ok = true;
+			Vector3? raft = CustomIslandSpawner.RaftPosition;
+			if (!raft.HasValue || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("radar copy done: run as the host in a test world 'CI ...'"); return; }
+			const string name = "cirk8-radar";
+			var made = new List<IslandWorldState.Entry>();
+			try
+			{
+				IslandFile f = SampleIsland();
+				f.Name = name;
+				f.Props[IslandQuest.KeyTitle] = "Radar";
+				f.Props[IslandQuest.KeySteps] = "reach|cizone|1|";
+				f.Save(IslandSpawner.PathFor(name));
+				Vector3 far = raft.Value + new Vector3(41000f, 0f, -41000f);
+				far.y = 0f;
+				IslandWorldState.Entry orig = IslandWorldState.Add(name, far, null, false), copy = IslandWorldState.Add(name, far + new Vector3(2000f, 0f, 0f), null, false);
+				made.Add(orig); made.Add(copy);
+				orig.Rule = "cirk8";
+				orig.State[WorldDirector.VisitKey] = new ObjectState { Active = true, Yield = 0, Day = 0 };
+				Func<bool> open = () => Traverse.Create(typeof(IslandRadar)).Method("StillOpen", orig).GetValue<bool>();
+				Check(ref ok, open(), "the plan's island, begun, its copy not done: it has a dot");
+				copy.State[WorldDirector.VisitKey] = new ObjectState { Active = true, Yield = 0, Day = 0 };
+				QuestTracker.Set(copy, 1, 0, false);
+				Check(ref ok, ReturningIslands.Finished(copy) && !open(), "the quest done on the rule-less copy: no dot for the plan's island");
+			}
+			catch (Exception ex) { Check(ref ok, false, "threw " + ex); }
+			finally
+			{
+				if (made.Count > 0) IslandWorldState.RemoveIds(made.Select(e => e.Id).ToArray(), false);
+				try { File.Delete(IslandSpawner.PathFor(name)); } catch { }
+			}
+			if (ok) Log("PASS: radar copy done"); else Fail("radar copy done");
+		}
 	}
 }

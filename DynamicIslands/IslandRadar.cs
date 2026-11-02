@@ -66,6 +66,10 @@ namespace DynamicIslands.Editor
 			{
 				string key = StoryChain.RuleKey(e.Rule);
 				if (StoryChain.Steps.Contains(key, System.StringComparer.OrdinalIgnoreCase)) return !StoryChain.Done.Contains(key);
+				// (its quest done on a copy without the rule - one spawned by hand: the plan counts it done (StoryItems), so
+				// no dot either; looked at once a second per island, as all of this - RK8)
+				string name = e.HostName ?? e.Name;
+				if (IslandWorldState.Islands.Any(x => x != e && string.IsNullOrEmpty(x.Rule) && string.Equals(x.HostName ?? x.Name, name, System.StringComparison.OrdinalIgnoreCase) && ReturningIslands.Finished(x))) return false;
 			}
 			// (a client never gets the host's VisitKey, so there an island without a quest never counted finished and kept its
 			// dot for good: on a client only an island with a quest, whose steps it does get - review 10-30)

@@ -22,6 +22,7 @@ Not in this release yet; these come in the next update:
   buy it straight away (it was held for 6 s).
 - Quests: a step that opens the same chest more than once counts a chest opened before a load only once, so it
   doesn't skip ahead after loading a save.
+- Radar: a plan's island whose quest you finished on a copy of it (spawned by hand) no longer keeps its dot.
 - **Dig brush look in a world**: the mouth's rim top drawn with the ground's grass as in the editor (rock in a world for
   now), and the passage near the mouth as brown as in the editor (it is paler there, lit by the sky).
 - Reach fixes still being checked on Steamvent Harbour, Rootweave Caves, Caravan Town Remade, Old Mine Islet, Cistern
