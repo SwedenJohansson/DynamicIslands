@@ -55,6 +55,7 @@ clear from -40 -30 to -40 -5 r=3.5
 clear at 35 -40 r=18
 clear at 6 40 r=10
 clear at 36 40 r=10
+clear at 34.2 50.5 r=2 only=SmallBoulder
 clear from 6 -9 to 6 34 r=4.5
 
 # ===== The castle: the ring of crumbled walls with the gate south, four stubby towers, fire baskets at the gate =========
