@@ -55,7 +55,24 @@ namespace DynamicIslands.Editor
 
 		public static IList<Entry> Islands { get { return islands; } }
 
-		static string WorldKey { get { return SaveAndLoad.WorldGuid.ToString(); } }
+		/// <summary>
+		/// The key the world's state is kept under: Raft's world id - or, for a world made before Raft gave worlds an id (its
+		/// saves have none, so SaveAndLoad.WorldGuid stays empty), "noid-" and its name. Before, such a world was never saved
+		/// at all: a plan set by WorldPlan and the whole story chain were gone on the next load (player log 11-02).
+		/// </summary>
+		internal static string WorldKey
+		{
+			get
+			{
+				if (SaveAndLoad.WorldGuid != Guid.Empty) return SaveAndLoad.WorldGuid.ToString();
+				string name = SaveAndLoad.CurrentGameFileName;
+				if (string.IsNullOrEmpty(name)) return NoWorldKey;
+				foreach (char c in Path.GetInvalidFileNameChars()) name = name.Replace(c, '_');
+				return NoIdPrefix + name;
+			}
+		}
+		internal const string NoIdPrefix = "noid-";
+		static readonly string NoWorldKey = Guid.Empty.ToString();
 		static string FilePath { get { return Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), WorldKey + ".txt"); } }
 		/// <summary>The world file of the world being played (WorldCopy).</summary>
 		public static string WorldFilePath { get { return FilePath; } }
@@ -140,7 +157,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Writes the list for the current world (called after Raft saves the world).</summary>
 		public static void Save()
 		{
-			if (!Raft_Network.IsHost || SaveAndLoad.WorldGuid == Guid.Empty) return;
+			// (a world without Raft's world id is kept under its name - WorldKey)
+			if (!Raft_Network.IsHost || WorldKey == NoWorldKey) return;
 			// Not set up for this world yet (Raft saves a brand-new world at once, before the mod notices it): what is in
 			// memory - the plan, km sailed, the story book - still belongs to the world played before, and writing it
 			// here gave the new world that world's journal and km, and lost the plan chosen for it (two-player test).
@@ -228,6 +246,7 @@ namespace DynamicIslands.Editor
 		{
 			islands.Clear();
 			loadedFor = WorldKey;
+			if (loadedFor.StartsWith(NoIdPrefix)) Debug.Log("[CUSTOM ISLANDS] This world has no world id in Raft's save (an old world): its custom islands are kept under its name (" + loadedFor + ")");
 			loadFailed = loadFailedTold = false;
 			keptLines.Clear();
 			WorldCopy.ForgetHostLines();

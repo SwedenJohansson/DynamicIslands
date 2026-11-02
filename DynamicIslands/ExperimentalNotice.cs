@@ -1,9 +1,11 @@
 using System;
+using System.Collections;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
@@ -13,7 +15,8 @@ namespace DynamicIslands.Editor
 	/// The main menu's "EXPERIMENTAL ALPHA RELEASE" box: this is the mod's first release, so new players are told that things are
 	/// likely to change, some systems might be unstable and progress isn't guaranteed to be saved. It starts on the right
 	/// half of Raft's main menu, clear of the menu buttons and the New Game box, and can be dragged anywhere (the place is
-	/// remembered). Its buttons lead to help: the Discord server, the guide (PDF) and Report a problem. "Got it" folds it
+	/// remembered). Its buttons lead to help: the Discord server, the guide (PDF), Report a problem and Check for updates (the
+	/// mod's raftmodding.com page). "Got it" folds it
 	/// into a slim bar with those buttons (Show opens it again); the X closes it altogether (Franz, 2026-10-17), and then
 	/// only a small "Custom Islands: help" link in the menu's bottom right corner is left, which opens it again. Both are
 	/// remembered for this version of the mod only (Mods\DynamicIslands\notice.txt), so a new version shows the whole box again.
@@ -34,10 +37,10 @@ namespace DynamicIslands.Editor
 		static readonly Vector2 StartSpot = new Vector2(0.64f, 0.8f);
 		/// <summary>The player dragged it (or a saved place was used): it stays there instead of its start.</summary>
 		static bool dragged;
-		const float Width = 600f; // (the button row needs ~550 inside the 18+18 padding)
+		const float Width = 760f; // (the button row needs ~714 inside the 18+18 padding)
 
 		static RectTransform panel, body;
-		static Button toggle, discordButton, guideButton, reportButton, closeButton, helpLink;
+		static Button toggle, discordButton, guideButton, reportButton, updatesButton, closeButton, helpLink;
 		/// <summary>The X was pressed (for this version): the box is gone, the help link shows instead.</summary>
 		static bool closed;
 
@@ -49,6 +52,7 @@ namespace DynamicIslands.Editor
 		public static Button DiscordButton { get { return discordButton; } }
 		public static Button GuideButton { get { return guideButton; } }
 		public static Button ReportButton { get { return reportButton; } }
+		public static Button UpdatesButton { get { return updatesButton; } }
 		public static Button CloseButton { get { return closeButton; } }
 		/// <summary>The small link left on the menu while the box is closed: opens the box again.</summary>
 		public static Button HelpLink { get { return helpLink; } }
@@ -160,6 +164,8 @@ namespace DynamicIslands.Editor
 			guideButton.name = "Guide";
 			reportButton = UIKit.Button(buttons, "Report a problem", InfoWindow.OpenReport, "How to report a problem, on GitHub or Discord", 164, 32f, 14);
 			reportButton.name = "Report";
+			updatesButton = UIKit.Button(buttons, "Check for updates", CheckForUpdates, "Asks raftmodding.com for the newest version of Custom Islands (this is " + Version + ")", 150, 32f, 14);
+			updatesButton.name = "Updates";
 			UIKit.Label(buttons, "", 12);
 			toggle = UIKit.Button(buttons, "", Flip, null, 92, 32f, 14);
 			toggle.name = "Toggle";
@@ -203,6 +209,79 @@ namespace DynamicIslands.Editor
 		{
 			SetClosed(false);
 			Write("closed", null);
+		}
+
+		/// <summary>Check for updates: a box that asks raftmodding.com for the newest version (the version.txt RML reads too) and
+		/// says whether this one is it, with a button to the mod's page (where new versions come out; the mod never updates itself).</summary>
+		public static void CheckForUpdates()
+		{
+			LastUpdateCheck = null;
+			InfoWindow.Open("Check for updates", "You have Custom Islands " + Version + ".\n\nAsking raftmodding.com for the newest version...", UpdateChoices());
+			if (DynamicIslands.instance != null) DynamicIslands.instance.StartCoroutine(AskNewest());
+		}
+
+		/// <summary>Tests: what the last check found (null while it asks): "newest", "newer X" or "failed".</summary>
+		public static string LastUpdateCheck;
+
+		static InfoWindow.Choice[] UpdateChoices()
+		{
+			return new[]
+			{
+				new InfoWindow.Choice("Open the mod's page", () => { HelpLinks.Open(HelpLinks.ModPage); InfoWindow.SetStatus("Opened raftmodding.com in your browser"); }, "The mod's page on raftmodding.com, where new versions come out", true),
+				new InfoWindow.Choice("Close", InfoWindow.Close, "Close this box (Esc)"),
+			};
+		}
+
+		static IEnumerator AskNewest()
+		{
+			string newest = null, error = null;
+			using (UnityWebRequest req = UnityWebRequest.Get(HelpLinks.VersionUrl))
+			{
+				req.timeout = 15;
+				yield return req.SendWebRequest();
+				if (req.result != UnityWebRequest.Result.Success) error = req.error;
+				else
+				{
+					newest = (req.downloadHandler.text ?? "").Trim();
+					if (newest.Length == 0 || newest.Length > 20 || newest.Contains("<")) { error = "an unexpected answer"; newest = null; }
+				}
+			}
+			string text;
+			if (newest == null)
+			{
+				LastUpdateCheck = "failed";
+				text = "You have Custom Islands " + Version + ".\n\nCould not reach raftmodding.com (" + error + "). The mod's page shows the newest version.";
+			}
+			else if (CompareVersions(newest, Version) > 0)
+			{
+				LastUpdateCheck = "newer " + newest;
+				text = "<b>Custom Islands " + newest + " is out</b> (you have " + Version + ").\n\n" +
+					"Download it from the mod's page on raftmodding.com and put the .rmod in Raft's mods folder in place of this one, " +
+					"or let the Raft Mod Loader update it. Back up the worlds you care about first.";
+			}
+			else
+			{
+				LastUpdateCheck = "newest";
+				text = "<b>You have the newest version</b> of Custom Islands (" + Version + ", the newest on raftmodding.com is " + newest + ").";
+			}
+			Debug.Log("[CUSTOM ISLANDS] Check for updates: " + LastUpdateCheck + (error != null ? " (" + error + ")" : ""));
+			// (only while the box still shows this check: it may have been closed, or another box opened)
+			if (InfoWindow.IsOpen && InfoWindow.ButtonNamed("Open the mod's page") != null)
+				InfoWindow.Open("Check for updates", text, UpdateChoices());
+		}
+
+		/// <summary>Compares "3.0", "3.0.1", "3.1" part by part as numbers; text that isn't numbers compares as text.</summary>
+		public static int CompareVersions(string a, string b)
+		{
+			string[] x = a.Split('.'), y = b.Split('.');
+			for (int i = 0; i < Math.Max(x.Length, y.Length); i++)
+			{
+				string p = i < x.Length ? x[i].Trim() : "0", q = i < y.Length ? y[i].Trim() : "0";
+				int m, n;
+				int c = int.TryParse(p, out m) && int.TryParse(q, out n) ? m.CompareTo(n) : string.Compare(p, q, StringComparison.OrdinalIgnoreCase);
+				if (c != 0) return c;
+			}
+			return 0;
 		}
 
 		static void SetClosed(bool c)

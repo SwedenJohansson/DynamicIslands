@@ -470,6 +470,19 @@ namespace DynamicIslands
 				ExperimentalNotice.DiscordButton.onClick.Invoke();
 				check(HelpLinks.LastOpened == HelpLinks.Discord, "Discord opens " + HelpLinks.LastOpened);
 				HelpLinks.LastOpened = null;
+				check(ExperimentalNotice.UpdatesButton != null && ExperimentalNotice.UpdatesButton.gameObject.activeInHierarchy, "Check for updates on the box");
+				ExperimentalNotice.UpdatesButton.onClick.Invoke();
+				check(InfoWindow.IsOpen && InfoWindow.ButtonNamed("Open the mod's page") != null, "Check for updates: its box, asking raftmodding.com");
+				float until = Time.realtimeSinceStartup + 20f;
+				while (ExperimentalNotice.LastUpdateCheck == null && Time.realtimeSinceStartup < until) yield return null;
+				check(ExperimentalNotice.LastUpdateCheck != null, "Check for updates: the answer (" + (ExperimentalNotice.LastUpdateCheck ?? "none in 20 s") + ")");
+				check(ExperimentalNotice.CompareVersions("3.1", "3.0") > 0 && ExperimentalNotice.CompareVersions("3.0", "3.0") == 0 && ExperimentalNotice.CompareVersions("3.0", "3.0.1") < 0
+					&& ExperimentalNotice.CompareVersions("3.10", "3.9") > 0, "versions compare as numbers (3.1 > 3.0 = 3.0 < 3.0.1, 3.10 > 3.9)");
+				InfoWindow.ButtonNamed("Open the mod's page").onClick.Invoke();
+				check(HelpLinks.LastOpened == HelpLinks.ModPage, "Open the mod's page opens " + HelpLinks.LastOpened);
+				HelpLinks.LastOpened = null;
+				InfoWindow.Close();
+				yield return null;
 				ExperimentalNotice.GuideButton.onClick.Invoke();
 				bool g = true; CheckGuideOpened(ref g); check(g, "Guide (PDF) opens the PDF");
 				ExperimentalNotice.ReportButton.onClick.Invoke();

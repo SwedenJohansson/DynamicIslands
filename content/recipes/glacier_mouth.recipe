@@ -151,6 +151,15 @@ set ca {-50+120*$ct}
 set cr {16-11*$ct}
 brush flatten at {-44+$cr*cos($ca)} {52+$cr*sin($ca)} r=2.4 s=20 frames=150 h={20+10*$ct}
 next
+# (RA3 11-02, REACH: the winding path starts 20 m up, but the slope below it, from the first ice step (~10 m), is too
+# steep to climb - the foot zone and everything above out of reach: a lower path winding up to the path's start)
+for k 0 20
+set ct {$k/20}
+set ca {-120+70*$ct}
+set cr {20-4*$ct}
+brush flatten at {-44+$cr*cos($ca)} {52+$cr*sin($ca)} r=2.4 s=20 frames=150 h={10.5+9.5*$ct}
+clear at {-44+$cr*cos($ca)} {52+$cr*sin($ca)} r=3.4 body
+next
 call ar_plants_snowy x=-40 z=46 r=24 seed=12896
 call fz_cairn x=-44 z=52 al=surveycairn chest=mastchest zal=mastzone zid=glacier_top msg="The top of the Icefall, the highest ice of the whole white sea: a cairn where the survey mast stood. Far below, the Ringwave - and a dark line across the cave path: a crevasse, roofed with thin ice."
 call fz_note x=-45.6 z=53.6 yaw=200 al=surveylog
