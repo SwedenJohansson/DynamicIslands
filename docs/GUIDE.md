@@ -705,7 +705,8 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
   **Dig size** is the passage's width and height (2.8 m: a tight passage you can still walk; 6 m and more: a hall);
   **Dig slope** makes it climb or go down as you dig (up to 25°; down from flat ground is a ramp in). The passage is lined
   with Raft's brown island rock, closed all round under the ground; only its mouth, where it comes out of the hill, is
-  open to the sky. Each stroke is one **Ctrl+Z**. A dug tunnel is saved with the island and comes along into Test and
+  open to the sky. Placed objects the passage goes through (a boulder, a bush, a buried rock) are taken away
+  with the stroke. Each stroke is one **Ctrl+Z** (it brings them back too). A dug tunnel is saved with the island and comes along into Test and
   multiplayer; it follows the ground if you sculpt over it later. It has no move arrows: dig, fill or undo it.
 
 **Sea floor.** On the Island tab, **Sea floor: Deep / Shallow** switches the sea around the island without making it

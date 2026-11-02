@@ -81,14 +81,24 @@ namespace DynamicIslands
 						Physics.queriesHitBackfaces = false;
 						float first = all.Length > 0 ? all[0].distance : 150f;
 						bool outside = false;
+						float left = -1f;
 						for (float s = 0.25f; s < Mathf.Min(first, 60f); s += 0.25f)
 						{
 							Vector3 p = eye + d * s;
 							if (p.y > land.SampleHeight(p) + o + 0.05f) { outside = true; break; }
-							if (t.Distance(t.transform.InverseTransformPoint(p)) > 0.4f) break; // (out of the passage under the ground: through the lining)
+							if (t.Distance(t.transform.InverseTransformPoint(p)) > 0.4f)
+							{
+								// (out of the passage at the lining's top, under the cut ground, with nothing met: out by the open mouth; lower: through the lining)
+								left = s;
+								if (p.y > land.SampleHeight(p) + o - DigTunnel.Under - 0.1f) outside = true;
+								break;
+							}
 						}
 						if (outside) continue;
-						string where = (eye - eyes[0]).magnitude.ToString("0") + " m in, " + d.ToString("F1");
+						Vector3 lp = eye + d * Mathf.Max(left, 0f);
+						string where = (eye - eyes[0]).magnitude.ToString("0") + " m in, " + d.ToString("F1") + " (left the passage " + left.ToString("0.0") + " m on, "
+							+ (lp.y - land.SampleHeight(lp) - o).ToString("0.0") + " m from the ground there"
+							+ (all.Length > 0 ? ", hit at " + (all[0].point.y - land.SampleHeight(all[0].point) - o).ToString("0.0") + " m from the ground, normal " + all[0].normal.ToString("F1") : "") + ")";
 						if (all.Length == 0) { leaks++; seen.Add("sky " + where); }
 						else if (all[0].collider is TerrainCollider) { if (all[0].normal.y < 0f) { under++; seen.Add("the ground from below " + where); } else { leaks++; seen.Add("the ground " + all[0].distance.ToString("0.0") + " m off " + where); } }
 						else if (!IsDigRock(all[0].collider)) { leaks++; seen.Add("out to " + all[0].collider.name + " " + all[0].distance.ToString("0") + " m, " + where); }

@@ -674,6 +674,7 @@ namespace DynamicIslands.Editor
 		static List<Point> head; // the stroke being dug (null: filling)
 		static Dictionary<string, string> before;
 		static bool madeNew, filling, changedSinceBuild;
+		static HashSet<GameObject> insideBefore = new HashSet<GameObject>();
 		static float carry, nextBuild;
 		static LineRenderer ring;
 		static string shownHint;
@@ -796,6 +797,7 @@ namespace DynamicIslands.Editor
 			EditorGameObject ego = current.GetComponent<EditorGameObject>();
 			before = ego != null && ego.Props != null ? new Dictionary<string, string>(ego.Props) : new Dictionary<string, string>();
 			if (!madeNew && ego != null && ego.Props != null) before[PathKey] = current.built ?? "";
+			insideBefore = madeNew || fill ? new HashSet<GameObject>() : InsideObjects(current);
 			Digging = true;
 			changedSinceBuild = true;
 			nextBuild = 0f;
@@ -872,11 +874,21 @@ namespace DynamicIslands.Editor
 			after[PathKey] = path;
 			ego.Props = new Dictionary<string, string>(after);
 			if (terraineditor.terrain != null) EditorNow(terraineditor.terrain, true);
+			// Objects the stroke dug into (a boulder, a bush in the way) go with the rock, in the same undo step
+			var gone = new List<GameObject>();
+			if (!filling && t.PointCount > 0)
+				foreach (GameObject g in InsideObjects(t))
+					if (!insideBefore.Contains(g)) { g.SetActive(false); gone.Add(g); }
+			insideBefore = new HashSet<GameObject>();
+			string cleared = gone.Count > 0 ? " (" + gone.Count + " object" + (gone.Count == 1 ? "" : "s") + " in its way taken away)" : "";
 			if (madeNew)
 			{
 				if (t.PointCount == 0) { Destroy(t.gameObject); return; }
-				UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { t.gameObject }, true));
-				Hint("Tunnel dug: " + t.PointCount + " points. Ctrl+Z takes the stroke back", false);
+				var made = new CommandGroup();
+				made.Add(new ObjectVisibilityCommand(new[] { t.gameObject }, true));
+				if (gone.Count > 0) made.Add(new ObjectVisibilityCommand(gone, false));
+				UndoRedoManager.Insert(made);
+				Hint("Tunnel dug: " + t.PointCount + " points" + cleared + ". Ctrl+Z takes the stroke back", false);
 			}
 			else if (before != null && (before.ContainsKey(PathKey) ? before[PathKey] : "") != path)
 			{
@@ -889,9 +901,49 @@ namespace DynamicIslands.Editor
 					UndoRedoManager.Insert(group);
 					if (terraineditor.terrain != null) EditorNow(terraineditor.terrain, true);
 				}
+				else if (gone.Count > 0)
+				{
+					var group = new CommandGroup();
+					group.Add(new PropsCommand(ego, before, after));
+					group.Add(new ObjectVisibilityCommand(gone, false));
+					UndoRedoManager.Insert(group);
+					Hint("Dug on" + cleared, false);
+				}
 				else UndoRedoManager.Insert(new PropsCommand(ego, before, after));
 			}
 			before = null;
+		}
+
+		/// <summary>
+		/// Placed objects in the passage - a boulder, a bush, a buried rock the tunnel goes through: their foot in it, or their
+		/// colliders reaching into its middle (a sphere of 0.8 of its size at every point). The ground and dug tunnels aside.
+		/// </summary>
+		public static HashSet<GameObject> InsideObjects(DigTunnel t)
+		{
+			var set = new HashSet<GameObject>();
+			if (t == null || t.PointCount == 0) return set;
+			var top = new HashSet<EditorGameObject>();
+			Bounds pb = t.WorldBounds();
+			pb.Expand(1f);
+			foreach (EditorGameObject e in SelectionTools.Placed())
+			{
+				if (e == null || e.GameObjectName == ObjectName || !e.gameObject.activeInHierarchy) continue;
+				top.Add(e);
+				if (pb.Contains(e.transform.position) && t.Distance(t.transform.InverseTransformPoint(e.transform.position)) < 0f) set.Add(e.gameObject);
+			}
+			Physics.SyncTransforms();
+			foreach (List<Point> stroke in t.Strokes)
+				foreach (Point q in stroke)
+					foreach (Collider c in Physics.OverlapSphere(t.transform.TransformPoint(q.Centre), q.R * 0.8f * Mathf.Abs(t.transform.lossyScale.y), ~0, QueryTriggerInteraction.Ignore))
+					{
+						if (c == null || c is TerrainCollider) continue;
+						for (Transform x = c.transform; x != null; x = x.parent)
+						{
+							EditorGameObject e = x.GetComponent<EditorGameObject>();
+							if (e != null && top.Contains(e)) { set.Add(e.gameObject); break; }
+						}
+					}
+			return set;
 		}
 
 		/// <summary>Leaving the brush (another tool): a stroke under way is finished.</summary>
