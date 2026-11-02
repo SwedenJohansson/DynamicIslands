@@ -348,7 +348,9 @@ namespace DynamicIslands.Editor
 						return note != null && string.Equals((note.Title ?? "").Trim(), target, StringComparison.OrdinalIgnoreCase);
 					}).ToList();
 					if (named.Count == 0 || !named.All(c => ContentState.IsUsed(e, c.StateKey))) break;
-					int need = s.Count - ProgressOf(e, n);
+					// (each chest of that name counts once: one refilling chest at a step wanting it opened twice gets 1, not the
+					// whole step, and a load after that adds nothing - RK7)
+					int need = Math.Min(s.Count, named.Count) - ProgressOf(e, n);
 					if (need <= 0) break;
 					Debug.Log("[CUSTOM ISLANDS] Quest " + (n + 1) + " of '" + e.HostName + "': step " + (step + 1) + " (open " + target + ") counts - its chest was opened before");
 					Event(e, n, "open", target, need);

@@ -81,8 +81,9 @@ namespace DynamicIslands
 				add("Loot_Chest", 6f, 0f, new Dictionary<string, string> { { ObjectProps.LootItems, "Plank*1" }, { ObjectProps.NoteTitle, "Vault" }, { ObjectProps.NoteText, "The vault." } });
 				add("Loot_Chest", -6f, 0f, new Dictionary<string, string> { { ObjectProps.LootItems, "Plank*1" }, { ObjectProps.NoteTitle, "Box" }, { ObjectProps.NoteText, "A box." } });
 				add("Loot_Chest", 0f, 6f, new Dictionary<string, string> { { ObjectProps.LootItems, "Plank*1" }, { ObjectProps.NoteTitle, "Crate" }, { ObjectProps.NoteText, "A crate." } });
+				add("Loot_Chest", 0f, -6f, new Dictionary<string, string> { { ObjectProps.LootItems, "Plank*1" }, { ObjectProps.NoteTitle, "Bell" }, { ObjectProps.NoteText, "A bell chest." } });
 				file.Props[IslandQuest.KeyTitle] = "Vault order";
-				file.Props[IslandQuest.KeySteps] = "open||1|Open any chest\nopen|Vault|1|Open the vault\nopen|Box|1|Open the box";
+				file.Props[IslandQuest.KeySteps] = "open||1|Open any chest\nopen|Vault|1|Open the vault\nopen|Box|1|Open the box\nopen|Bell|2|Open the bell chest twice";
 			});
 			IslandWorldState.Entry e2 = null;
 			yield return SpawnPlayerIsland(v, x => e2 = x);
@@ -103,7 +104,13 @@ namespace DynamicIslands
 				// (a save stuck at the box with it open: loading the island heals it)
 				e2.State[box.StateKey] = new ObjectState { Active = false, Yield = 0, Day = 0 };
 				QuestTracker.HealSpentChests(e2);
-				Check(ref ok, QuestTracker.StepOf(e2) == 3, "loaded with the box open already: the quest is done (step " + QuestTracker.StepOf(e2) + " of 3)");
+				Check(ref ok, QuestTracker.StepOf(e2) == 3, "loaded with the box open already: it goes on to the bell chest (step " + QuestTracker.StepOf(e2) + " of 4)");
+				// RK7: one refilling chest, a step that wants it opened twice - open already counts once, not the whole step
+				LootCrate bell = crate("Bell");
+				e2.State[bell.StateKey] = new ObjectState { Active = false, Yield = 0, Day = 0 };
+				QuestTracker.HealSpentChests(e2);
+				QuestTracker.HealSpentChests(e2);
+				Check(ref ok, QuestTracker.StepOf(e2) == 3 && QuestTracker.ProgressOf(e2, 0) == 1, "the one bell chest open already: 1 of 2 counted, once however often it loads (step " + QuestTracker.StepOf(e2) + ", " + QuestTracker.ProgressOf(e2, 0) + " of 2)");
 			}
 			finally { RemovePlayerIsland(e2); }
 			if (ok) Log("PASS: upgrade heal"); else Fail("upgrade heal");
