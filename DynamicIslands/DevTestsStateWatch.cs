@@ -130,6 +130,24 @@ namespace DynamicIslands
 			Check(ref ok, p.Strayed == 0 && p.RecordedAlive == 1, "not counted as gone or defeated (strayed " + p.Strayed + ", alive " + p.RecordedAlive + ")");
 			Check(ref ok, done < 0 || QuestTracker.StepOf(e, 0) == done, "the quest's kill step not done by it");
 			Check(ref ok, back != null && back.GetComponentsInChildren<WorldEvent_Tracker_AI>(true).Length == 0, "the new one kept out of Raft's sea events too");
+			// Shot (a hit that doesn't leave it dead, as a bow's often doesn't), then it sinks and Raft takes it away: killed,
+			// not taken away (Sinkmarket Floor's stingrays stayed 0/3, 2026-11-02)
+			if (back != null)
+			{
+				int strayedBefore = p.Strayed;
+				CreatureSpawner.Hit(back.networkEntity);
+				yield return new WaitForSeconds(0.5f);
+				UnityEngine.Object.Destroy(back.gameObject);
+				AI_NetworkBehaviour again = null;
+				for (float t = 0f; t < 3f; t += 0.25f)
+				{
+					yield return new WaitForSeconds(0.25f);
+					again = p.Spawned.FirstOrDefault(a => a != null && a != first && a != back);
+				}
+				Check(ref ok, again == null, "shot, then gone: not put back");
+				Check(ref ok, p.Strayed == strayedBefore && p.RecordedAlive == 0, "shot, then gone: counted as defeated (strayed " + p.Strayed + ", alive " + p.RecordedAlive + ")");
+				Check(ref ok, done >= 0 && QuestTracker.StepOf(e, 0) != done, "shot, then gone: the quest's kill step done (step " + QuestTracker.StepOf(e, 0) + ")");
+			}
 			IslandWorldState.Remove(name);
 			if (ok) Log("PASS: quest stray back"); else Fail("quest stray back");
 		}

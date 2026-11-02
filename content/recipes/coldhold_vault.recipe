@@ -43,6 +43,25 @@ brush flatten at -21.65 22.5 r=3.5 s=20 frames=200 h=4
 brush flatten at -12.5 31.65 r=3.5 s=20 frames=200 h=4
 brush flatten at -17.68 27.68 r=3.5 s=20 frames=200 h=4
 brush flatten at -6.47 34.15 r=3.5 s=20 frames=200 h=4
+# (REACH 11-02 RA1: the flood door and its lever, at 0 35 between two of those rocks, stood on the slope 7 m over the
+# vault floor with no way up - the floor carried on to them, the door set into the glacier's face)
+brush flatten at 0 35 r=3.5 s=20 frames=200 h=4
+brush flatten at 6.47 34.15 r=3.5 s=20 frames=200 h=4
+clear at 0 35 r=4.5 body
+clear at 6.47 34.15 r=4.5 body
+# (REACH 11-02 RA1: the crevasse's walls stood 1.7-2.6 m over the water everywhere - a player who fell in swam its
+# length and could not climb out (the 10-28 lip slope went in 22 m off, outside this frame): a beach ramp up out of its
+# west end, and a shelf sloping up its north wall west of the zipline to the far side)
+for i 0 6 1
+brush flatten at {-27.5-1.1*$i} -15.2 r=2 s=20 frames=200 h={-0.4+0.65*$i}
+next
+for i 0 8 1
+brush flatten at {-14-1*$i} -12.6 r=1.5 s=20 frames=200 h={-0.3+0.42*$i}
+next
+brush smooth from -34.5 -15.2 to -27 -15.2 r=2.5 s=10 frames=12
+clear from -34.5 -15.2 to -27 -15.2 r=3 body
+brush smooth from -22.5 -12.6 to -14 -12.6 r=2 s=10 frames=12
+clear from -22.5 -12.6 to -14 -12.6 r=2.5 body
 pop
 brush flatten at -39.4 21.8 r=5 s=8 frames=40
 origin
@@ -217,6 +236,15 @@ prop dview zone.message=The Coldhold's entrance hall looks out over the landing,
 include lib_areas
 call fz_mount x=-42 z=55 h=34 r=8
 call ar_plants_snowy x=-42 z=55 r=30 seed=12961
+# (REACH 11-02 RA1: the cap's top is a 6.4 m pillar of ground standing 8 m over the slope round it - walks stopped at its
+# foot at 25.6 on every side. A ledge path winds up round it from its west foot, five-sixths of a turn; the 11-02 walk
+# still stops at h 26 - vent_top and the vent chest stay open)
+for k 0 28 1
+brush flatten at {-42+(8.9-0.9*$k/28)*cos(180+300*$k/28)} {55+(8.9-0.9*$k/28)*sin(180+300*$k/28)} r=2 s=20 frames=200 h={25.3+8.9*$k/28}
+next
+for k 0 28 1
+clear at {-42+(8.9-0.9*$k/28)*cos(180+300*$k/28)} {55+(8.9-0.9*$k/28)*sin(180+300*$k/28)} r=3 body
+next
 call fz_cairn x=-42 z=55 al=ventcairn chest=ventchest zal=ventzone zid=vent_top msg="The vent shaft's head on the ice cap: a cairn over a grille, warm air breathing out of it - the vault, far below, breathing."
 place RT_PillarThick ventshaft at -43.4 56.8 ground y=-0.7 sy=0.25 sx=1.2 sz=1.2
 prop ventshaft tint.color=#4a4038

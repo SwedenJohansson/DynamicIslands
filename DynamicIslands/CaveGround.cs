@@ -399,6 +399,9 @@ namespace DynamicIslands.Editor
 				MeshFilter mf = c.name == CaveTool.MouthName ? c.GetComponent<MeshFilter>() : null;
 				if (mf == null || mf.sharedMesh == null || !c.gameObject.activeInHierarchy) continue;
 				Transform space = c.Find(CaveTool.FrameSpaceName) ?? c;
+				// (the frame's footprint as it was before its rock was made rough and wider than it, 11-02)
+				Transform foot = space.Find(CaveTool.FootName);
+				if (foot != null) { found.Add(new KeyValuePair<Transform, Bounds>(space, new Bounds(foot.localPosition, foot.localScale))); continue; }
 				Vector3[] v = mf.sharedMesh.vertices;
 				if (v.Length == 0) continue;
 				var b = new Bounds(space.InverseTransformPoint(c.TransformPoint(v[0])), Vector3.zero);

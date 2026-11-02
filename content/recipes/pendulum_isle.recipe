@@ -149,7 +149,8 @@ call hw_zone x=-25 z=26 al=weatherz id=weatherstation r=6 msg="The old weather s
 place Note_Paper anjanote at -25.75 26 h=6.05 drop yaw=0
 # --- The watchman's hole (east): Per's note and box -------------------------------------------------------------------
 call hw_zone x=48 z=1 al=watchz id=watchhole r=4 msg="A hole in the rock at the low end. A blanket, a lamp, a pot - the night watchman's."
-place Note_Paper pernote at 46.5 0.5 h=6.45 drop yaw=200
+# (RA4 11-02, REACH: h 6.45 was at or under the hole's floor (6.2-6.8) - no spot; now dropped onto it from above)
+place Note_Paper pernote at 46.5 0.5 h=7.3 drop yaw=200
 loot watchchest Rope*2;Plank*3;Battery*1;CopperOre*1
 prop watchchest loot.refill=0
 note watchchest Watchman's box | Per's box: rope, planks and a battery 'borrowed' from the generator shed.

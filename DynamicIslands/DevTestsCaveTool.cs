@@ -740,6 +740,17 @@ namespace DynamicIslands
 			yield return PlaceableCatalog.EnsureLoaded(args);
 			foreach (string name in args)
 			{
+				if (name == "terrain")
+				{
+					foreach (Terrain land in Terrain.activeTerrains)
+					{
+						Material tm = land.materialTemplate;
+						Log("  terrain " + land.name + " at " + land.transform.position.ToString("F1") + " size " + land.terrainData.size.ToString("F1") + " material " + (tm != null ? tm.name + " shader " + tm.shader.name : "built-in") + " holes " + land.terrainData.holesResolution);
+						foreach (TerrainLayer tl in land.terrainData.terrainLayers)
+							if (tl != null) Log("    layer " + tl.name + " " + (tl.diffuseTexture != null ? tl.diffuseTexture.name : "-") + " tile " + tl.tileSize.ToString("F2") + " off " + tl.tileOffset.ToString("F2") + " remap " + tl.diffuseRemapMin.ToString("F2") + ".." + tl.diffuseRemapMax.ToString("F2") + " smooth " + tl.smoothness.ToString("0.00") + " spec " + tl.specular);
+					}
+					continue;
+				}
 				GameObject go = PlaceableCatalog.Get(name);
 				if (go == null) { Log("  " + name + ": no prefab"); continue; }
 				foreach (Renderer r in go.GetComponentsInChildren<Renderer>(true))
@@ -747,8 +758,10 @@ namespace DynamicIslands
 					{
 						if (m == null) continue;
 						string cols = string.Join(" ", new[] { "_Color", "_BaseColor", "_MainColor", "_TintColor", "_Tint", "_AlbedoColor", "_EmissionColor" }.Where(m.HasProperty).Select(c => c + "=" + ColorUtility.ToHtmlStringRGBA(m.GetColor(c))).ToArray());
-						string texs = string.Join(" ", m.GetTexturePropertyNames().Where(t => m.GetTexture(t) != null).Select(t => t + "=" + m.GetTexture(t).name).ToArray());
-						Log("  " + name + " / " + r.name + " (" + r.GetType().Name + "): " + m.name + " shader " + m.shader.name + " | " + cols + " | " + texs);
+						string texs = string.Join(" ", m.GetTexturePropertyNames().Where(t => m.GetTexture(t) != null).Select(t => t + "=" + m.GetTexture(t).name + " x" + m.GetTextureScale(t).ToString("F3") + "+" + m.GetTextureOffset(t).ToString("F2")).ToArray());
+						string floats = string.Join(" ", m.shader != null ? Enumerable.Range(0, m.shader.GetPropertyCount()).Where(p => m.shader.GetPropertyType(p) == UnityEngine.Rendering.ShaderPropertyType.Float || m.shader.GetPropertyType(p) == UnityEngine.Rendering.ShaderPropertyType.Range || m.shader.GetPropertyType(p) == UnityEngine.Rendering.ShaderPropertyType.Vector)
+							.Select(p => m.shader.GetPropertyName(p) + "=" + (m.shader.GetPropertyType(p) == UnityEngine.Rendering.ShaderPropertyType.Vector ? m.GetVector(m.shader.GetPropertyName(p)).ToString("F2") : m.GetFloat(m.shader.GetPropertyName(p)).ToString("0.###"))).ToArray() : new string[0]);
+						Log("  " + name + " / " + r.name + " (" + r.GetType().Name + "): " + m.name + " shader " + m.shader.name + " | " + cols + " | " + texs + " | " + floats + " | kw " + string.Join(",", m.shaderKeywords));
 					}
 			}
 			Log("PASS: materials probed");
