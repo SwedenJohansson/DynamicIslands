@@ -9,7 +9,17 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
-## Next update
+## Next update (planned)
+
+Not in this release yet; these come in the next update:
+- Reach fixes still being checked on Steamvent Harbour, Rootweave Caves, Caravan Town Remade, Old Mine Islet, Cistern
+  Hall, Spirecrest Roofs, Radio Tower Remade, The Rootcore, Ironreef Caverns, Colossus of the Strait and the rest of
+  Primeval Park.
+- Old worlds (made before Raft gave worlds an id): quest rewards are kept per world, and players who join such a world
+  get the host's custom islands state.
+- Cave tool: a thin spike of ground left beside the cut over some tunnel mouths.
+
+## 3.0 alpha - 2026-11-02: Tunnels and fixes
 
 ### New
 - **Check for updates** (the alpha box on the main menu): opens the mod's page on raftmodding.com, where new
