@@ -75,8 +75,20 @@ push at -18 -2 h=4
 call stonehouse w=3 d=2 a=houses
 place Loot_Chest toolmaker at 3.7 2.2 y=0 sit yaw=180
 place Placeable_Table_Basic - at 2.2 1.6 y=0 sit yaw=0
+# (fxT 11-01, ground check: the roof blocks lay on the walls' tops with nothing under them - stone pillars in the corners carry it)
+place Block_Pillar_Tier3 hcposts at 0.15 0.15 y=0
+place Block_Pillar_Tier3 hcposts at 0.15 2.85 y=0
+place Block_Pillar_Tier3 hcposts at 4.35 0.15 y=0
+place Block_Pillar_Tier3 hcposts at 4.35 2.85 y=0
+# (fxT 11-01, REACH: a second course of roof blocks - over one 0.2 m slab the audit's swimmer went in and out through the
+# roof instead of the door, and stuck on it; the air 2.6 m round, so the chest at the back wall is in it too)
+for fx 0.75 3.75 1.5
+for fz 0.75 2.25 1.5
+place Block_Floor_Tier3 hcposts at $fx $fz y=2.835
+next
+next
 pop
-call airpocketat x=-16.5 z=-0.5 h=4 id=house_1 al=house1air bub=house1bub r=2 msg="Air - the toolmaker's house still holds it."
+call airpocketat x=-16.5 z=-0.5 h=4 id=house_1 al=house1air bub=house1bub r=2.6 msg="Air - the toolmaker's house still holds it."
 place Creature_AnglerFish anglers at -10 -8 h=7
 prop anglers creature.count=4
 prop anglers creature.respawn=0
@@ -89,15 +101,41 @@ place Placeable_Table_Basic - at 2.2 2 y=0 sit yaw=0
 place Note_Paper broadcast at 2.2 2 y=1.3 drop yaw=20
 place RT_CommRadio - at 2.8 2.1 y=1.3 drop yaw=200
 place Loot_Chest packchest at 0.8 2.3 y=0 sit yaw=90
+# (fxT 11-01, ground check: the roof blocks lay on the walls' tops with nothing under them - stone pillars in the corners carry it)
+place Block_Pillar_Tier3 hcposts at 0.15 0.15 y=0
+place Block_Pillar_Tier3 hcposts at 0.15 2.85 y=0
+place Block_Pillar_Tier3 hcposts at 4.35 0.15 y=0
+place Block_Pillar_Tier3 hcposts at 4.35 2.85 y=0
+# (fxT 11-01, REACH: a second course of roof blocks, as house 1)
+for fx 0.75 3.75 1.5
+for fz 0.75 2.25 1.5
+place Block_Floor_Tier3 hcposts at $fx $fz y=2.835
+next
+next
 pop
-call airpocketat x=-13 z=15.2 h=8 id=house_2 al=house2air bub=house2bub r=2 msg="Air. A radio on the table, its dial still lit."
+call airpocketat x=-13 z=15.2 h=8 id=house_2 al=house2air bub=house2bub r=2.6 msg="Air. A radio on the table, its dial still lit."
 
 # --- House 3 (terrace 3): Ines in the cage, her bag, her account -------------------------------------------------------
 push at 0 19 h=12
 call stonehouse w=3 d=3 a=houses
 place Survivor_Cage inescage at 2.6 2.9 y=0 sit yaw=180
 place Loot_ChestSmall inesbag at 0.8 3.6 y=0 sit yaw=90
-place Note_Paper inesaccount at 3.9 0.9 y=0 drop yaw=40
+# (fxT 11-01, REACH: the cage fills the house but for a strip 0.9 m wide along the west wall (its frame x 0.9..4.9 here,
+# z -0.1..4.9) - the note in the east corner, and then on a table there, was inside it: the note on the floor in the strip,
+# just in from the door)
+place Note_Paper inesaccount at 0.46 1.14 y=0.3 drop yaw=40
+# (fxT 11-01, ground check: the roof blocks lay on the walls' tops with nothing under them - stone pillars in the corners carry it)
+place Block_Pillar_Tier3 hcposts at 0.15 0.15 y=0
+place Block_Pillar_Tier3 hcposts at 0.15 4.35 y=0
+place Block_Pillar_Tier3 hcposts at 4.35 0.15 y=0
+place Block_Pillar_Tier3 hcposts at 4.35 4.35 y=0
+# (fxT 11-01, REACH: a second course of roof blocks, as houses 1 and 2 - the audit's swimmer went in through a seam of the
+# one-slab roof and stuck on it)
+for fx 0.75 3.75 1.5
+for fz 0.75 3.75 1.5
+place Block_Floor_Tier3 hcposts at $fx $fz y=2.835
+next
+next
 pop
 call airpocketat x=1.4 z=20.5 h=12 id=house_3 al=house3air bub=house3bub r=2.2 msg="Air - and someone breathing in it. A cage, and in it a diver."
 
@@ -110,13 +148,21 @@ place "Pickup_Landmark_Mushroom 2" - at 2.3 0.9 y=0 sit
 place "Pickup_Landmark_Mushroom 3" - at 0.7 2.2 y=0 sit
 place "Pickup_Landmark_Mushroom 1" - at 2.3 2.0 y=0 sit
 pop
-call airpocketat x=6.5 z=4.5 h=0 id=cellar al=cellarair bub=cellarbub r=1.8 msg="A dry cellar. Mushrooms in the dark."
+# (fxT 11-01, REACH: the air zones 1.8-2 m round centre 1.6 m over the floor - no spot of the audit's (1 m) fitted; 2.4)
+call airpocketat x=6.5 z=4.5 h=0 id=cellar al=cellarair bub=cellarbub r=2.4 msg="A dry cellar. Mushrooms in the dark."
 
 # --- The warden's post and the great doors ------------------------------------------------------------------------------
 push at 5 -11 h=0
 call stonehouse w=2 d=2 a=houses
 place Loot_Chest wardenchest at 2.2 2.2 y=0 sit yaw=180
+# (fxT 11-01, ground check: the roof blocks lay on the walls' tops with nothing under them - stone pillars in the corners carry it)
+place Block_Pillar_Tier3 hcposts at 0.15 0.15 y=0
+place Block_Pillar_Tier3 hcposts at 0.15 2.85 y=0
+place Block_Pillar_Tier3 hcposts at 2.85 0.15 y=0
+place Block_Pillar_Tier3 hcposts at 2.85 2.85 y=0
 pop
+prop hcposts tint.color=#3d4146
+prop hcposts tint.amount=0.6
 place UT_MainEntranceDoor greatdoors at 0 -13 ground sit yaw=0
 call ringwave x=0 z=-13.6 h=7.5 yaw=0 s=2 al=ringwave
 place Zone_Trigger doorszone at 0 -9 h=2
@@ -128,8 +174,8 @@ place Block_Foundation airdeck at 14.85 10 h=15
 place Block_Foundation airdeck at 14.85 10 h=30
 prop airdeck tint.color=#5b6266
 prop airdeck tint.amount=0.5
-call airpocketat x=14.85 z=10 h=15 id=chain_air2 al=chainair2 bub=chainbub2 r=2 msg="An air platform on the chain, 30 m down."
-call airpocketat x=14.85 z=10 h=30 id=chain_air1 al=chainair1 bub=chainbub1 r=2 msg="An air platform on the chain, 15 m down."
+call airpocketat x=14.85 z=10 h=15 id=chain_air2 al=chainair2 bub=chainbub2 r=2.6 msg="An air platform on the chain, 30 m down."
+call airpocketat x=14.85 z=10 h=30 id=chain_air1 al=chainair1 bub=chainbub1 r=2.6 msg="An air platform on the chain, 15 m down."
 
 # --- The dark, reefs on the ledges, vines -------------------------------------------------------------------------------
 place Zone_Atmosphere darkcity at 0 4 h=6
@@ -205,9 +251,14 @@ call sk_reef x=-56 z=-42 r=5 seed=24730
 
 # the summit: the trench spire - the tower (ladder inside), the locker, the note, the zone
 call ladtower x=-12 z=74 h0=47.5 lv=3 a=hctower
-place Loot_ChestSmall hclocker at -12.75 74.75 h=54.98 sit yaw=180
+# (fxT 11-02, REACH: the locker on the tower's deck failed in two of three runs, in either cell: the grid's walks went over
+# its lid (55.6), and the walker pushed onto it dropped through the deck's thin floor to the tower's foot, 7 m down - on
+# the spire's dry top instead, by the tower's east wall, where the boast's "up here" still holds; the boast stays on the deck)
+place Loot_ChestSmall hclocker at -8.8 74.5 ground sit yaw=270
 place Note_Paper hcsumnote at -12.75 73.25 h=55.08 drop yaw=20
-place Zone_Trigger hcsummit at -12 74 h=55.98
+# (fxT 11-01, REACH: in the tower's top the walker's route went straight up 8 m beside the ladder and stuck (the locker and
+# the boast up the ladder pass) - the zone on the spire's dry top by the tower, where its message says you are)
+place Zone_Trigger hcsummit at -8.4 71 h=48.5
 # (R 10-31: REACH - no walk got out of the sea onto the spire's dry top (47.5; summit, locker, boast): its sides drop
 # sheer from the top into deep water, and a pool ladder in the sea had no floor at its top. A beach is cut down the
 # spire's south side instead, from the dry top's edge to 3 m under the sea, 0.7 m a step)
@@ -222,8 +273,7 @@ brush flatten at -8 57.9 r=3.2 s=20 frames=300 h=42.6
 brush flatten at -8 56.6 r=3.2 s=20 frames=300 h=41.9
 clear from -8 67 to -8 56.6 r=4.2 body
 place Loot_ChestSmall hcledge at -24.1 74 ground sit yaw=40
-place SmallRock_02 - at -7 76 ground sit scale=0.5
-place SmallRock_02 - at -7 76 ground y=0.6 sit scale=0.32 yaw=40
+# (fxT 11-01: the two small rocks that stood here floated 1.5 m over the summit - ground check; taken out)
 call treasure x=-9.5 z=76 r=12 n=1 seed=24711
 prop treasure24711 treasure.loot=TitaniumOre*3;CopperOre*2
 call treasure x=57.7 z=-17.16 r=5 n=1 seed=24712
@@ -234,7 +284,9 @@ call sk_dark x=74 z=-20 h=1 r=7 al=hccave2dark
 call sk_drowned x=-66 z=-48 h0=-6 n=3 w=RT_WallWindowBroken a=hcbld cap=0 cal=hccap
 place Loot_Chest hcdeep at -67.8 -50.5 h=-6 sit yaw=0
 place Placeable_Table_Basic - at -67.5 -47 h=-3 sit yaw=0
-place Note_Paper hcbldnote at -67.5 -47 h=-1.7 drop yaw=10
+# (fxT 11-01, REACH: on the table on storey 1 (all under water) the audit's swimmer ended 3.7 m from the note at 1x and 3x -
+# the inventory beside the strongbox on the ground floor, the step before it)
+place Note_Paper hcbldnote at -66.8 -50.6 h=-5.7 drop yaw=10
 call airpocketat x=-66.5 z=-50 h=-3 id=hc_dair al=hcdair bub=hcdbub r=2.2 msg="Air trapped under the stairs of the drowned building. Breathe."
 call sk_zone x=-66 z=-59 al=hcdeepzone id=hc_deep r=4 msg="The pit floor: the drowned building stands below you."
 
@@ -256,6 +308,16 @@ place Zone_Trigger hcspike3 at -56.8 -42 ground y=1
 clear at 12.85 12.01 r=1.5 only=SmallRock
 # (and the generator's things under the warden's post, which kept its floor's posts out and left its roof unheld)
 clear at 31.3 -9.5 r=3
+# (fxT 11-01, ground check: a generator boulder by the ruin hung 2.4 m over the slope)
+clear at 63.4 57.3 r=1 only=SmallBoulder
+# (and the ruin's own stone that had sat on it, left 2.4 m up in the water - "all" for a placed one)
+clear at 63.65 57.2 r=0.8 all only=SmallBoulder2
+# (fxT 11-01: the drowned building's top-storey walls by the hatch stood over the hatch shafts, 6 m of nothing under
+# them - ground check; gone, as fallen in, and the roof rail by the hatch too: the walk from the roof out of the pit
+# to trap 3 caught on it - REACH)
+clear at -63 -43.5 r=0.3 all only=RT_WallWindowBroken above=-1 below=1
+clear at -63 -46.5 r=0.3 all only=RT_WallWindowBroken above=-1 below=1
+clear at -63 -44.25 r=0.8 all only=RT_Fence above=2 below=4
 
 info title=Hadal Commons
 info author=Custom Islands
