@@ -146,6 +146,10 @@ place SmallBoulder4 - at 72.5 -57 ground yaw=110 scale=0.8
 call ar_plane x=46 z=46 h=3 yaw=210 al=mailplane crate=mailcrate
 # G The trawler (north-west): run aground on the beach below the ridge
 call hw_wreck x=-54 z=46 h=2 yaw=60 obj=BoatStranded al=trawler crate=trawlercrate r=9
+# (RA3 11-02, REACH: the channel between the east and south-east land bridges is 16 m deep with banks 0.9 m+ over the
+# water - whoever fell in could not climb out (agent Q's steps down into it made a pocket of their own): a ladder up
+# the bank at its west end, its foot in the water, its top just over the bank)
+place Block_Ladder chanladder at 30.6 -24 h=-1.2 yaw=180
 # (agent Q 10-30, REACH: the sea cave's mouth path ended 2.4 m over the sea and the rock filled the land round it - the
 # cave and the Smugglers' cache unreached: a beach down from the path's end into the water)
 brush flatten at 71 -57.9 r=2.2 s=20 frames=200 h=1.8

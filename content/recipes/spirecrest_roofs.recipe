@@ -72,7 +72,9 @@ ramp Block_Floor_Tier3 from 0 -11.5 5 to 0 -10.75 5 len=1.5 top=0
 ramp Block_Floor_Tier3 from 0 -5.25 5 to 0 -4.5 5 len=1.5 top=0
 
 # --- Ladders up from the water: the coop tower's south face, the west tower's west face -------------------------------
-place LandmarkLadder_6m - at 0 -20.7 h=-1.2 yaw=0
+# (RA3 11-02: at x 0 it stood on the seam of the two front walls and nothing could take hold of it from below - 0.75 m
+# to the side, still in the railing's open middle)
+place LandmarkLadder_6m - at 0.75 -20.7 h=-1.2 yaw=0
 place LandmarkLadder_6m - at -18.2 0 h=-1.2 yaw=90
 
 # --- The beacon roof: the beacon hut (distress card, the Receiver plans), the beacon mast and its light ---------------
@@ -104,10 +106,10 @@ place Pickup_Landmark_Flower_Yellow - at 1.5 13.5 h=5.68 sit
 place Pickup_Landmark_Flower_Red - at -1.5 16 h=5.68 sit
 place Pickup_Landmark_BerryBush - at 1.8 16.2 h=5.05 sit
 place "Box Small" - at 2.2 19.8 h=5.05 sit
-place Note_Paper diary at 2.2 19.8 h=5.75 drop yaw=40
+place Note_Paper diary at 2.2 19.8 h=6.65 drop yaw=40
 # STORY 10-24s: Ines's first slate on the coop roof, by the hens
 place "Box Small" - at -2.2 -19.6 h=5.05 sit
-place Note_Paper inesslate1 at -2.2 -19.6 h=5.75 drop yaw=-20
+place Note_Paper inesslate1 at -2.2 -19.6 h=6.65 drop yaw=-20
 
 # --- The hen coop (south tower): a roof on four posts, hens ---------------------------------------------------------
 push at -2.5 -15.5 h=5
@@ -134,7 +136,8 @@ scatter SeaVine3_klump 14 at 0 0 r=44 seed=10111 free=2
 call tower x=-24 z=26 h=-7 n=3 a=towers2
 prop towers2 tint.color=#7d8a8c
 prop towers2 tint.amount=0.35
-place LandmarkLadder_6m - at -27 21.3 h=-4.2 yaw=0
+# (RA3 11-02: at x -27 it stood on the seam of the two front walls - no hold from below; moved to the solid wall's middle)
+place LandmarkLadder_6m - at -25.5 21.3 h=-4.2 yaw=0
 place Loot_Chest annexchest at -27.5 27.5 h=2.05 sit yaw=90
 place BoatStranded - at 26 -28 ground yaw=35
 place Loot_ChestSmall wreckchest at 22 -24 ground sit yaw=200
