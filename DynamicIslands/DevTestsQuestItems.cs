@@ -37,7 +37,7 @@ namespace DynamicIslands
 			yield return PlaceableCatalog.EnsureIndex();
 			List<string> models = PlaceableCatalog.Browse().SelectMany(cat => cat.Value).Select(en => en.Name).Where(QuestItemPickups.IsModel).Distinct().OrderBy(n => n).ToList();
 			Check(ref ok, models.Count >= 20, models.Count + " of Raft's quest item pickups in the object list");
-			var pick = new[] { "QuestItemPickup_Vasagatan_KeyCardOffice", "QuestItemPickup_VP_CraneKey", "QuestItemPickup_Utopia_Cable", "QuestItemPickup_Tangaroa_Tape" }.Where(models.Contains).ToList();
+			var pick = new[] { "QuestItemPickup_Vasagatan_KeyCardOffice", "QuestItemPickup_Utopia_KeyEntrance", "QuestItemPickup_VP_CraneKey", "QuestItemPickup_Utopia_Cable", "QuestItemPickup_Tangaroa_Tape" }.Where(models.Contains).ToList();
 			var finds = new[] { "Pickup_Landmark_Beehive" }.ToList();
 			yield return PlaceableCatalog.EnsureLoaded(pick.Concat(finds).ToList());
 			foreach (string m in pick) Check(ref ok, QuestItemPickups.StoryId(m) != null && StoryItems.Find(QuestItemPickups.StoryId(m)) != null, m + " gives " + (QuestItemPickups.StoryId(m) ?? "nothing known") + " (" + StoryItems.Label(QuestItemPickups.StoryId(m) ?? "") + ")");
@@ -52,6 +52,8 @@ namespace DynamicIslands
 			int k = 0;
 			foreach (string n in pick.Concat(finds))
 			{
+				// (RK10: a listed pickup that never loads fails by name, not with a null reference)
+				if (PlaceableCatalog.Get(n) == null) { Fail("quest item pickups: " + n + " is in the object list but never loads"); yield break; }
 				float x = c.x + (k % 4) * 5f - 7.5f, z = c.y + (k / 4) * 5f;
 				Dictionary<string, string> props = ObjectProps.Defaults(n);
 				props[BehaviourProps.Name] = "piece" + k;

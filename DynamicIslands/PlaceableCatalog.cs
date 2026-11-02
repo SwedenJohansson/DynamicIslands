@@ -1589,7 +1589,8 @@ namespace DynamicIslands.Editor
 			if (!questItem && (excluded.IsMatch(name) || excludedExtra.IsMatch(name) || treeParent.IsMatch(name))) return false;
 			// Inside a pickup (harvestable tree, quest item...): its parts aren't objects of their own
 			for (Transform p = questItem ? t.parent : t; p != null; p = p.parent)
-				if (pickupAncestor.IsMatch(p.name)) return false;
+				// (RK10: Raft's plain folders "QuestItem Pickups" (Vasagatan) and "QuestItems" (Utopia) hold quest pickups)
+				if (pickupAncestor.IsMatch(p.name) && !(questItem && questFolder.IsMatch(p.name))) return false;
 			// Must show a mesh (not only an effect, and not a hidden collider shape)
 			foreach (Renderer r in t.GetComponentsInChildren<Renderer>(true))
 				if (r.enabled && (r is MeshRenderer || r is SkinnedMeshRenderer)) return true;
@@ -1597,6 +1598,7 @@ namespace DynamicIslands.Editor
 		}
 
 		static readonly Regex pickupAncestor = new Regex(@"^(Pickup_|QuestItem|NotePickup)", RegexOptions.IgnoreCase);
+		static readonly Regex questFolder = new Regex(@"^QuestItem(s| Pickups)$", RegexOptions.IgnoreCase);
 
 		#endregion
 
