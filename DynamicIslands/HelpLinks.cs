@@ -16,6 +16,8 @@ namespace DynamicIslands.Editor
 		public const string Issues = Repo + "/issues";
 		/// <summary>The mod's page on raftmodding.com, where new versions come out (the mod never updates itself).</summary>
 		public const string ModPage = "https://www.raftmodding.com/mods/custom-islands";
+		/// <summary>The newest version's number on raftmodding.com (the updateUrl in modinfo.json, which RML reads too).</summary>
+		public const string VersionUrl = "https://www.raftmodding.com/api/v1/mods/custom-islands/version.txt";
 		public const string GuideOnline = Repo + "/blob/master/docs/GUIDE.md";
 		public const string GuidePdfOnline = Repo + "/blob/master/docs/Custom-Islands-Guide.pdf";
 		/// <summary>The guide as a PDF: in the .rmod (pack.ps1 puts it there), written to Mods\DynamicIslands\ to open it.</summary>
@@ -34,6 +36,8 @@ namespace DynamicIslands.Editor
 		{
 			LastOpened = url;
 			Debug.Log("[CUSTOM ISLANDS] Opening " + url + (NotOpened ? " (test: not opened)" : ""));
+			// (a Raft run by the tests' command file says so, or a click on it seems to do nothing - user, 2026-11-02)
+			if (Automated && !TestMode) DynamicIslands.Notify("This Raft is run by the tests: links don't open here (" + url + ")");
 			if (NotOpened) return;
 			try { Application.OpenURL(url); }
 			catch (Exception e) { DynamicIslands.Notify("Could not open " + url + ": " + e.Message, true); }

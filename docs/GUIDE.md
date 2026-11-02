@@ -147,7 +147,8 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
 > `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User`). The main menu shows this in the **EXPERIMENTAL ALPHA
 > RELEASE** box right of the middle, with the mod's version and four buttons: **Discord** (the Custom Islands Discord
 > server), **Guide (PDF)** (this guide, which comes with the mod), **Report a problem** ([section 14](#14-reporting-a-problem))
-> and **Check for updates** (the mod's page on raftmodding.com, where new versions come out; the mod never updates itself).
+> and **Check for updates** (it asks raftmodding.com for the newest version and tells you whether you have it, with a
+> button to the mod's page, where new versions come out; the mod never updates itself).
 > Drag the box anywhere you like; it stays where you put it. It steps aside while another window of the main menu is
 > open (New Game, Load World, Settings, the island library...) and comes back when you close it. **Got it** folds it into a slim bar with the same buttons (its
 > **Show** opens it again); its **X** closes it altogether, and then only a small **Custom Islands: help** button is left in

@@ -22,8 +22,8 @@ Not in this release yet; these come in the next update:
 ## 3.0 alpha - 2026-11-02: Tunnels and fixes
 
 ### New
-- **Check for updates** (the alpha box on the main menu): opens the mod's page on raftmodding.com, where new
-  versions come out.
+- **Check for updates** (the alpha box on the main menu): asks raftmodding.com for the newest version and says
+  whether you have it, with a button to the mod's page, where new versions come out.
 - **Dig brush** (editor, Terrain tab, Caves): a second tunnel tool beside the drag one, now called **Straight tunnel**.
   Press on a hillside or cliff and hold: a passage is dug in toward where the mouse points, so you paint your own winding
   tunnel or cave entrance. **Dig size** (2.8-10 m) and **Dig slope** (up to 25°) as with the other brushes; press on a tunnel
