@@ -145,8 +145,10 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
 > **Experimental Alpha Release:** this is the mod's first release, an early alpha. Things are likely to change, some systems might be
 > unstable, and progress is not guaranteed to be saved - back up the worlds you care about (Raft keeps them in
 > `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User`). The main menu shows this in the **EXPERIMENTAL ALPHA
-> RELEASE** box right of the middle, with the mod's version and three buttons: **Discord** (the Custom Islands Discord
-> server), **Guide (PDF)** (this guide, which comes with the mod) and **Report a problem** ([section 14](#14-reporting-a-problem)).
+> RELEASE** box right of the middle, with the mod's version and four buttons: **Discord** (the Custom Islands Discord
+> server), **Guide (PDF)** (this guide, which comes with the mod), **Report a problem** ([section 14](#14-reporting-a-problem))
+> and **Check for updates** (it asks raftmodding.com for the newest version and tells you whether you have it, with a
+> button to the mod's page, where new versions come out; the mod never updates itself).
 > Drag the box anywhere you like; it stays where you put it. It steps aside while another window of the main menu is
 > open (New Game, Load World, Settings, the island library...) and comes back when you close it. **Got it** folds it into a slim bar with the same buttons (its
 > **Show** opens it again); its **X** closes it altogether, and then only a small **Custom Islands: help** button is left in
@@ -688,8 +690,8 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
 - **Caves:** **Tunnel** digs a cave you can walk into. Press where its mouth is to be and drag the way it goes, into a
   hill or across flat ground: Raft's own cave tunnels (the ones on Temperance) are laid end to end along the drag, as
   many as fit (up to 12, about 10 m each), and the ground is raised over them into a hill, filled up under them and
-  levelled in front of the mouth, which stays open. The mouth gets a frame of the same rock, flush with the hill's
-  face, with a level doorstep before it, and the ground is cut away along the whole passage, so you walk straight in
+  levelled in front of the mouth (easing into the hill, worn bare round the doorstep), which stays open. The mouth gets rough rock of the same kind round it, standing out
+  of the hill like Raft's own cave entrances, with the floor running level in under it, and the ground is cut away along the whole passage, so you walk straight in
   and through to the end (an open far end gets the same frame). Even a short drag lays at least one tunnel. **Slope** tips the tunnel down into the ground or up (up to 12°);
   **Size** makes the whole cave smaller or bigger than Raft's own, from **0.7x** (a narrow passage you can still
   walk) to **1.5x** (a big cavern); pick it before you drag - an outline of the mouth at that size follows the mouse;
@@ -703,12 +705,20 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
   toward where the mouse points. Move the mouse to steer it round bends; keep it still and it digs on the way you look.
   Let go and press again on the tunnel to dig on from that spot or branch off; **Shift**+drag fills a passage back in.
   **Dig size** is the passage's width and height (2.8 m: a tight passage you can still walk; 6 m and more: a hall);
-  **Dig slope** makes it climb or go down as you dig (up to 25°; down from flat ground is a ramp in). The passage is lined
+  **Dig slope** makes it climb or go down as you dig (up to 25°; down from flat ground is a ramp in). With the slope
+  level, a stroke on flat ground or a gentle slope (the mouse not pointing up into a hill) goes down into the ground by
+  itself: a walkable 25° ramp until there is a metre of rock over the passage, then on level. The passage is lined
   with Raft's brown island rock, closed all round under the ground; only its mouth, where it comes out of the hill, is
-  open to the sky. The mouth gets a rim of rock rising out of the ground round it - low at the doorstep, higher at its
-  sides and as a brow over it - whose top takes the ground's own look (grass on a grassy hill, rock on a cliff). Placed objects the passage goes through or its rim would bury (a boulder, a bush, a buried rock) are taken away
+  open to the sky. The mouth gets a low, uneven rim of rock round it that blends into the slope: its top is drawn
+  with the ground's own textures in the editor (grass on a grassy hill, rock on a cliff; in a world it is rock for now), with bare rock on its sides and at the opening; before a
+  cliff the floor runs straight out onto the ground (the cliff above the mouth stays whole, no sky through it). The
+  lining inside is smooth rock, and it grows darker the farther in you are, in the editor and in a world. Placed objects the passage goes through or its rim would bury (a boulder, a bush, a buried rock) are taken away
   with the stroke. Each stroke is one **Ctrl+Z** (it brings them back too). A dug tunnel is saved with the island and comes along into Test and
   multiplayer; it follows the ground if you sculpt over it later. It has no move arrows: dig, fill or undo it.
+  The ground is cut only where the passage comes out through it (its mouth, or the open top of a ramp), never over a
+  buried part. Fly the camera into the mouth to build inside: it goes in rather than up onto the hill, and inside it
+  stops at the rock; in a tunnel it flies slowly so you can steer round bends, and slides along the walls. **God mode (camera through walls)**, under the Dig brush's sliders, lets the camera fly through
+  the ground, rock and walls anywhere (into a cave or a tunnel from above); it is off each time the editor starts.
 
 **Sea floor.** On the Island tab, **Sea floor: Deep / Shallow** switches the sea around the island without making it
 again: the land keeps its height above the sea, the untouched sea floor goes down (a slope falls away from the shore)

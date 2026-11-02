@@ -59,6 +59,10 @@ brush auto at 32 58 r=12 s=10 frames=25
 # the pads: the cave (Smugglers' Cave), the ruined house, the plane
 call r2_pad x=46 z=-66 r=14 h=3
 brush flatten from 46 -58 to 46 -42 r=6 s=20 frames=300 h=3
+# (reach 11-02: a pocket at the head of the inlet 1.5 m deep with a 0.7 m lip to the rest - a player wading in it
+# could not step back out: its floor brought up to the inlet's)
+brush flatten at 41.6 -37.2 r=1.8 s=20 frames=40 h=-0.7
+brush smooth at 41.6 -37.2 r=3 s=4 frames=15
 call r2_pad x=66 z=32 r=11 h=3
 call r2_pad x=18 z=-86 r=11 h=3
 # Gull Head: summit 18 m, base r 20, the trail from the foot toward the house
@@ -207,6 +211,10 @@ line WaterPipe_Long_2 from 14.5 -10.5 to 6.8 -6.8 follow y=0.12
 # each floor (a ladder ends where the floor above goes on in front of the climber: south-west hole, then north-east, then
 # south-east), a lantern room with rope rails and a wooden roof on top; the harbour lamp, its light (dark until it
 # is lit), the screechers -------------------------------------------------------------------------------------------------
+# (reach 11-02: the horn's ground under and round the tower brought up to the pad's 3 m - it lay at 2.5 and its first
+# floor's edge stood 0.7 m proud in front of the ladder: a player walked into the edge and never took hold)
+brush flatten at -40 48 r=4 s=20 frames=150 h=3
+clear at -40 48 r=5 body
 push at -41.5 46.5 h=3
 for fx 0.75 2.25 1.5
 for fz 0.75 2.25 1.5
@@ -292,7 +300,9 @@ call r2_hidden x=67 z=36.6 al=hh_lampchest
 place Creature_Chicken hh_hens at 74 38 ground
 prop hh_hens creature.count=3
 call ar_plane x=18 z=-86 h=3 yaw=30 al=hh_plane crate=hh_planecrate
-place Note_Paper hh_pilot at 15.54 -82.27 ground y=0.1 drop yaw=60
+# (reach 11-02: the note lay deep in the plants' broad leaves round 14 -76 - nowhere to stand within reach of it:
+# out on the bare sand by the plane's tail)
+place Note_Paper hh_pilot at 13.4 -87.4 ground y=0.1 drop yaw=60
 call hw_zone x=18 z=-86 al=hh_planez id=hh_plane r=6 h=1 msg="A spotter plane on the south bank, its floats crumpled."
 # JUMP hh pad=3 at=40 70
 push at 40 70

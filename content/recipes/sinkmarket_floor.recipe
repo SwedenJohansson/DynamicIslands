@@ -220,7 +220,7 @@ step read|Salt merchant Ada Sund's note|1|Find Ada's salt cellar on the seabed a
 step collect|story:valvewheel|1|Take the cistern valve's wheel from the salt cellar box
 step collect|story:drained|1|Set the wheel on the cistern valve and turn it
 step reach|cistern|1|Breathe in the drained cistern hall
-step kill|Stingray|3|Drive the stingrays out of the cistern hall
+step kill|Stingray|3|Kill the stingrays in the cistern hall
 step blueprint|Blueprint_WaterTank|1|Take the water tank plans from the cistern store
 step blueprint|Blueprint_Pipe_Water|1|Take the water pipe plans from the cistern store
 step blueprint|Blueprint_ElectricPurifier|1|Take the electric purifier plans from the cistern store

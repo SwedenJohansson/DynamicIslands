@@ -159,17 +159,27 @@ namespace DynamicIslands.Editor
 			return best;
 		}
 
-		/// <summary>The approach to the mouth: the ground before it as high as its floor at the mouth, rising gently further
-		/// out (cut down where higher, filled where lower near the mouth), or NaN out of it. weight: how much of it to take.</summary>
+		/// <summary>The approach to the mouth: the ground before it as high as its floor at the mouth, as wide as the threshold's
+		/// rock and past its front so that sinks into it on every side, its outline wandering and its edges easing into the
+		/// ground around over 5 m, rising gently further out (cut down where higher, filled where lower near the mouth), or NaN
+		/// out of it. weight: how much of it to take. A straight-edged 7 m strip narrower than the threshold left that a slab
+		/// standing on a hump with steep sides until 11-02.</summary>
 		public static float ApronAt(Layout l, Vector3 p, out float weight)
 		{
 			weight = 0f;
 			Vector3 rel = p - l.Mouth; rel.y = 0f;
 			float s = Vector3.Dot(rel, l.Flat), q = Mathf.Abs(Vector3.Dot(rel, Vector3.Cross(Vector3.up, l.Flat)));
-			float len = ApronLength * l.Size, half = ApronHalf * l.Size;
-			if (s > 0.5f || s < -len - 6f || q > half + 3f) return float.NaN;
-			weight = Mathf.Clamp01((half + 3f - q) / 3f) * Mathf.Clamp01((len + 6f + s) / 6f);
-			return l.Mouth.y - 0.05f + Mathf.Max(0f, -s - len) * 0.25f; // (level up to the mouth: it rose into a hump)
+			float len = ApronLength * l.Size, half = ApronHalf * l.Size, fall = 5f;
+			Portal d = PortalOf(l.Size, l.Slope);
+			float wide = Mathf.Max(half, d.Half + 1.5f), longest = Mathf.Max(0.8f * len, 4f - d.SillFrom);
+			if (s > 0.5f || s < -longest - 1.3f - fall || q > wide + 0.7f + fall) return float.NaN;
+			float n = Mathf.PerlinNoise(p.x * 0.21f + 17.3f, p.z * 0.21f + 5.9f), n2 = Mathf.PerlinNoise(p.x * 0.09f + 3.1f, p.z * 0.09f + 29.7f);
+			float flatHalf = wide + 1.4f * (n - 0.5f), flatLen = longest + 2.5f * (n2 - 0.5f);
+			Func<float, float> smooth01 = x => { x = Mathf.Clamp01(x); return x * x * (3f - 2f * x); };
+			// (narrow by the rock's face, so the hill stays beside it: cut back that wide, the rock stood alone like a boulder)
+			float t = smooth01((d.SillFrom + 1f - s) / 4f), halfHere = Mathf.Lerp(half, flatHalf, t), fallHere = Mathf.Lerp(3f, fall, t);
+			weight = smooth01((halfHere + fallHere - q) / fallHere) * smooth01((flatLen + fall + s) / fall);
+			return l.Mouth.y - 0.05f + Mathf.Max(0f, -s - flatLen) * 0.2f + Mathf.Max(0f, q - halfHere) * 0.12f;
 		}
 
 		/// <summary>
@@ -222,6 +232,54 @@ namespace DynamicIslands.Editor
 			}
 			if (q < d.Half + 0.3f && s > d.Wall && s <= d.CapTo + 0.3f) ny = Mathf.Min(ny, l.Mouth.y + d.CapAt(s) - 0.1f);
 			return ny;
+		}
+
+		/// <summary>The ground about a mouth worn bare: sand and rock showing through the grass around the threshold, thinning
+		/// out raggedly over about 3 m, so the threshold's rock doesn't end in a line on green (11-02). Marked painted by hand
+		/// (mask), so the automatic paint leaves it.</summary>
+		static void WearMouthGround(Terrain terrain, Layout l, float[,] mask)
+		{
+			if (l.Tunnels <= 0) return;
+			WearAt(terrain, l, PortalOf(l.Size, l.Slope), mask);
+			if (!l.Room) WearAt(terrain, FarEnd(l), PortalOf(l.Size, -l.Slope), mask);
+		}
+
+		static void WearAt(Terrain terrain, Layout l, Portal d, float[,] mask)
+		{
+			TerrainData data = terrain.terrainData;
+			int layers = data.alphamapLayers, res = data.alphamapWidth;
+			if (layers < TerrainPainter.LayerCount) return;
+			Vector3 across = Vector3.Cross(Vector3.up, l.Flat), o = terrain.transform.position;
+			float half = d.Half + 0.5f, front = d.SillFrom - 1.8f, reach = 4.5f;
+			Vector3 min = l.Mouth, max = l.Mouth;
+			foreach (float s in new[] { front - reach, d.Wall + 0.5f })
+				foreach (float q in new[] { -half - reach, half + reach })
+				{
+					Vector3 c = l.Mouth + l.Flat * s + across * q;
+					min = Vector3.Min(min, c); max = Vector3.Max(max, c);
+				}
+			RectInt area;
+			if (!TerrainPainter.WorldToAlphamapRect(terrain, min, max, out area)) return;
+			float[,,] maps = data.GetAlphamaps(area.x, area.y, area.width, area.height);
+			Func<float, float> smooth01 = x => { x = Mathf.Clamp01(x); return x * x * (3f - 2f * x); };
+			for (int z = 0; z < area.height; z++)
+				for (int x = 0; x < area.width; x++)
+				{
+					Vector3 p = new Vector3(o.x + (area.x + x + 0.5f) / res * data.size.x, 0f, o.z + (area.y + z + 0.5f) / res * data.size.z);
+					Vector3 rel = p - l.Mouth; rel.y = 0f;
+					float s = Vector3.Dot(rel, l.Flat), q = Mathf.Abs(Vector3.Dot(rel, across));
+					if (s > d.Wall + 0.5f) continue;
+					// (how far outside the threshold, its outline wandering)
+					float n = Mathf.PerlinNoise(p.x * 0.35f + 7.7f, p.z * 0.35f + 1.3f), n2 = Mathf.PerlinNoise(p.x * 1.1f + 19f, p.z * 1.1f + 43f);
+					float outside = Mathf.Max(q - half, front - s) - 2.4f * (n - 0.5f);
+					float wear = 0.8f * (1f - smooth01(outside / 3.2f)) * (0.6f + 0.4f * n2);
+					if (wear < 0.02f) continue;
+					for (int k = 0; k < layers; k++) maps[z, x, k] *= 1f - wear;
+					maps[z, x, TerrainPainter.Sand] += wear * 0.55f;
+					maps[z, x, TerrainPainter.Rock] += wear * 0.45f;
+					if (mask != null && wear > 0.1f && area.y + z < mask.GetLength(0) && area.x + x < mask.GetLength(1)) mask[area.y + z, area.x + x] = 1f;
+				}
+			data.SetAlphamaps(area.x, area.y, maps);
 		}
 
 		/// <summary>Without a hill: the ground under the rock up to its underside (NaN: not under it), so no piece hangs in the air.</summary>
@@ -329,6 +387,9 @@ namespace DynamicIslands.Editor
 		/// with its piece, as a child turned otherwise under the stretched piece is skewed (its doorstep's front 0.16 m
 		/// up going down, down under the ground going up; 11-01).</summary>
 		public const string FrameSpaceName = "CaveMouthSpace";
+		/// <summary>A mouth frame's footprint (a child of its FrameSpaceName: its position the middle, its scale the size),
+		/// where CaveGround cuts the ground under it.</summary>
+		public const string FootName = "CaveMouthFoot";
 
 		/// <summary>
 		/// A mouth's frame's measures (metres, from the mouth's floor, s along the way in, at size k, the floor rising slope
@@ -494,9 +555,9 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>
-		/// Puts the rock frame at a cave tool tunnel's mouth (far: its open far end - ObjectProps.CaveMouth / CaveEnd): a wall
-		/// across the hillside with the passage's own outline cut in it, its sides lined back to the tunnel, a doorstep level
-		/// with the floor before it and a top the ground meets behind it. The ground under it is taken out (CaveGround), so
+		/// Puts the rock frame at a cave tool tunnel's mouth (far: its open far end - ObjectProps.CaveMouth / CaveEnd): rough
+		/// rock across the hillside with the passage's own outline through it, its sides lined back to the tunnel, a
+		/// threshold level with the floor before it and a top that falls away into the ground behind and beside it. The ground under it is taken out (CaveGround), so
 		/// the way in is the passage's full size, flush with the rock. size: the tunnel's size over Raft's own. In the editor
 		/// and in a world; made again when called again.
 		/// </summary>
@@ -545,82 +606,117 @@ namespace DynamicIslands.Editor
 			}
 			outline.Sort((a, b) => Mathf.Atan2(a.y - mid.y, a.x - mid.x).CompareTo(Mathf.Atan2(b.y - mid.y, b.x - mid.x)));
 
-			var verts = new List<Vector3>();
-			var tris = new List<int>();
-			Action<Vector3, Vector3, Vector3> tri = (a, b, c) =>
-			{
-				// (both sides, each its own corners: shared ones made its light cancel out)
-				int i = verts.Count;
-				verts.Add(a); verts.Add(b); verts.Add(c); verts.Add(a); verts.Add(c); verts.Add(b);
-				tris.AddRange(new[] { i, i + 1, i + 2, i + 3, i + 4, i + 5 });
-			};
-			Action<Vector3, Vector3, Vector3, Vector3> quad = (a, b, c, e) => { tri(a, b, c); tri(a, c, e); };
-			float bottom = -0.6f, wz = d.Wall, top = d.CapAt(0f);
-			// the wall: from the hole out to its edges (a corner of it put in where the edge turns)
-			var corners = new[] { new Vector2(d.Half, bottom), new Vector2(d.Half, top), new Vector2(-d.Half, top), new Vector2(-d.Half, bottom) };
-			Func<Vector3, Vector2> edge = p =>
-			{
-				Vector2 dir = new Vector2(p.x - mid.x, p.y - mid.y).normalized;
-				float best = float.PositiveInfinity;
-				if (dir.x > 1e-5f) best = Mathf.Min(best, (d.Half - mid.x) / dir.x);
-				if (dir.x < -1e-5f) best = Mathf.Min(best, (-d.Half - mid.x) / dir.x);
-				if (dir.y > 1e-5f) best = Mathf.Min(best, (top - mid.y) / dir.y);
-				if (dir.y < -1e-5f) best = Mathf.Min(best, (bottom - mid.y) / dir.y);
-				return new Vector2(mid.x, mid.y) + dir * best;
-			};
-			Func<Vector2, float> angle = p => { float a = Mathf.Atan2(p.y - mid.y, p.x - mid.x); return a < 0f ? a + Mathf.PI * 2f : a; };
-			int n = outline.Count;
-			for (int i = 0; i < n; i++)
-			{
-				Vector3 a = outline[i], b = outline[(i + 1) % n];
-				Vector3 wa = new Vector3(a.x, a.y, wz), wb = new Vector3(b.x, b.y, wz);
-				Vector2 ea = edge(a), eb = edge(b);
-				float from = angle(new Vector2(a.x, a.y)), span = angle(new Vector2(b.x, b.y)) - from;
-				if (span < 0f) span += Mathf.PI * 2f;
-				var chain = new List<Vector3> { new Vector3(ea.x, ea.y, wz) };
-				foreach (Vector2 c in corners.OrderBy(c => { float x = angle(c) - from; return x < 0f ? x + Mathf.PI * 2f : x; }))
+			// The rock (a field over a grid in the frame's level metres, below 0 rock, made a surface by RockNets): a rough
+			// outcrop across the hillside, its face uneven and leaning back near its top, its top falling away into the
+			// hill on both sides and behind; a threshold low before it whose front edge goes down under the ground; the
+			// passage's outline through it, flaring out toward the front; and room left for the tunnel's own rock behind the
+			// piece's end. It was a square wall with a flat doorstep plate and straight edges until 11-02.
+			float h = Mathf.Clamp(0.32f * k, 0.25f, 0.7f), wz = d.Wall, capF = d.CapAt(0f);
+			float zBack = d.CapTo + 0.2f + (Mathf.Max(capF, d.CapAt(d.CapTo)) + 2.2f) / 3f;
+			float topMax = Mathf.Max(capF, d.CapAt(zBack)) + 0.6f;
+			float v = topMax + 2.2f, dxMax = v <= 4.5f ? v : 4.5f + (v - 4.5f) / 2.5f;
+			float x0 = -(d.Half + dxMax) - 2f * h, y0 = -1.6f - 2f * h, z0 = d.SillFrom - 2.6f - 2f * h;
+			int nx = Mathf.CeilToInt((-2f * x0) / h) + 1, ny = Mathf.CeilToInt((topMax + 2f * h - y0) / h) + 1, nz = Mathf.CeilToInt((zBack + 2f * h - z0) / h) + 1;
+			Vector3 o = new Vector3(x0, y0, z0);
+			// (its own roughness, the same each time for the same piece)
+			Vector3 lp = t.localPosition;
+			float sx = Mathf.Repeat(lp.x * 0.137f + lp.z * 0.071f + (far ? 37f : 0f), 200f), sz = Mathf.Repeat(lp.z * 0.113f - lp.x * 0.059f + (far ? 53f : 0f), 200f);
+			Func<float, float, float> noise = (a, b) => Mathf.PerlinNoise(a + sx, b + sz);
+			Func<float, float> smooth01 = s => { s = Mathf.Clamp01(s); return s * s * (3f - 2f * s); };
+			var hole = new List<Vector2>(outline.Select(p => new Vector2(p.x, p.y)));
+			float shellHalf = ShellHalfWidth * k - 0.25f, shellUp = (ShellTop - Floor + EndDip) * k * 1.02f - 0.3f;
+			// (what depends on x and y alone, and on x and z alone)
+			var dPoly = new float[nx * ny];
+			var faceN = new float[nx * ny];
+			var flareN = new float[nx * ny];
+			for (int y = 0; y < ny; y++)
+				for (int x = 0; x < nx; x++)
 				{
-					float x = angle(c) - from;
-					if (x < 0f) x += Mathf.PI * 2f;
-					if (x > 0f && x < span) chain.Add(new Vector3(c.x, c.y, wz));
+					float px = x0 + x * h, py = y0 + y * h;
+					dPoly[x + y * nx] = RockNets.PolygonDistance(hole, new Vector2(px, py));
+					faceN[x + y * nx] = noise(px * 0.35f, py * 0.35f) * 0.55f + noise(px * 0.9f + 7.1f, py * 0.9f + 3.3f) * 0.3f + noise(px * 1.9f + 61f, py * 1.9f + 47f) * 0.15f;
+					flareN[x + y * nx] = noise(px * 0.6f + 41f, py * 0.6f + 23f);
 				}
-				chain.Add(new Vector3(eb.x, eb.y, wz));
-				for (int j = 0; j + 1 < chain.Count; j++) tri(wa, chain[j], chain[j + 1]);
-				tri(wa, chain[chain.Count - 1], wb);
-				// (the hole's sides, back to the piece's end - not along the floor)
-				if (!(a.y < 0.05f && b.y < 0.05f) && (a.z > wz + 0.01f || b.z > wz + 0.01f)) quad(wa, wb, b, a);
-			}
-			// the doorstep, under the way in too
-			quad(new Vector3(-d.Half, -0.02f, d.SillFrom), new Vector3(d.Half, -0.02f, d.SillFrom), new Vector3(d.Half, -0.02f, 0.1f), new Vector3(-d.Half, -0.02f, 0.1f));
-			// the top: level to the mouth, then with the tunnel
-			Vector3 c0 = new Vector3(-d.Half, top, wz), c1 = new Vector3(d.Half, top, wz);
-			Vector3 c2 = new Vector3(d.Half, d.CapAt(0f), 0f), c3 = new Vector3(-d.Half, d.CapAt(0f), 0f);
-			Vector3 c4 = new Vector3(d.Half, d.CapAt(d.CapTo), d.CapTo), c5 = new Vector3(-d.Half, d.CapAt(d.CapTo), d.CapTo);
-			if (wz < -0.01f) quad(c0, c1, c2, c3);
-			quad(c3, c2, c4, c5);
-			// its sides
-			foreach (float x in new[] { -d.Half, d.Half })
-			{
-				quad(new Vector3(x, bottom, wz), new Vector3(x, top, wz), new Vector3(x, top, 0f), new Vector3(x, bottom, 0f));
-				quad(new Vector3(x, bottom, 0f), new Vector3(x, top, 0f), new Vector3(x, d.CapAt(d.CapTo), d.CapTo), new Vector3(x, bottom, d.CapTo));
-			}
-			// its back, around the tunnel's rock (which runs on through it)
-			float shell = (ShellTop - Floor + EndDip) * k * 1.02f + d.Rise * d.CapTo - 0.3f, half = ShellHalfWidth * k - 0.2f, back = d.CapTo, capB = d.CapAt(d.CapTo);
-			if (shell < capB) quad(new Vector3(-d.Half, shell, back), new Vector3(d.Half, shell, back), new Vector3(d.Half, capB, back), new Vector3(-d.Half, capB, back));
-			if (half < d.Half)
-				foreach (float sgn in new[] { -1f, 1f })
-					quad(new Vector3(sgn * half, bottom, back), new Vector3(sgn * d.Half, bottom, back), new Vector3(sgn * d.Half, capB, back), new Vector3(sgn * half, capB, back));
+			var topN = new float[nx * nz];
+			var rubN = new float[nx * nz];
+			for (int z = 0; z < nz; z++)
+				for (int x = 0; x < nx; x++)
+				{
+					float px = x0 + x * h, pz = z0 + z * h;
+					topN[x + z * nx] = noise(px * 0.3f + 11f, pz * 0.3f + 5f) * 0.65f + noise(px * 0.8f + 2f, pz * 0.8f + 17f) * 0.35f;
+					rubN[x + z * nx] = noise(px * 0.7f + 53f, pz * 0.7f + 29f);
+				}
+			var frontN = new float[nx];
+			for (int x = 0; x < nx; x++) frontN[x] = noise((x0 + x * h) * 0.5f + 31f, 9.7f);
+			var sideN = new float[nz];
+			for (int z = 0; z < nz; z++) sideN[z] = noise(71f, (z0 + z * h) * 0.6f + 13f);
+			// (the passage's floor at the outline: as wide as the threshold before it)
+			float floorHalf = 1f;
+			foreach (Vector2 p in hole) if (p.y < 0.35f) floorHalf = Mathf.Max(floorHalf, Mathf.Abs(p.x));
 
-			var mesh = new Mesh { name = MouthName };
-			if (verts.Count > 65000) mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-			mesh.SetVertices(verts.Select(v => toFrame * v).ToList());
-			mesh.SetTriangles(tris, 0);
-			mesh.SetUVs(0, verts.Select(v => new Vector2((v.x + v.z) / 6f, v.y / 6f)).ToList()); // (level metres: as it was)
-			mesh.RecalculateNormals();
+			var field = new float[nx * ny * nz];
+			for (int z = 0; z < nz; z++)
+				for (int y = 0; y < ny; y++)
+					for (int x = 0; x < nx; x++)
+					{
+						float px = x0 + x * h, py = y0 + y * h, pz = z0 + z * h, ax = Mathf.Abs(px);
+						int xy = x + y * nx, xz = x + z * nx;
+						float dx = Mathf.Max(0f, ax - d.Half);
+						// the outcrop
+						float top = d.CapAt(pz) + 0.35f + 0.8f * topN[xz] - dx - 1.5f * Mathf.Max(0f, dx - 4.5f) - 3f * Mathf.Max(0f, pz - (d.CapTo + 0.2f));
+						float zf = wz - 0.15f * k - 0.9f * k * faceN[xy] + 0.6f * Mathf.Max(0f, py - (top - 2.5f)) + 0.35f * dx;
+						float body = Mathf.Max(Mathf.Max(zf - pz, py - top), Mathf.Max(-1.6f - py, Mathf.Max(ax - (d.Half + dxMax), pz - zBack)));
+						// its flanks: rock coming out of the cut's walls beside the way in (CutSlope), in patches further out and
+						// rising to the face, so the walls don't meet it in a straight edge
+						float wallY = (ax - d.Half) * CutSlope;
+						float bump = -0.3f + (rubN[xz] - 0.35f) * 1.4f * k * smooth01((pz - (zf - 3f * k)) / (0.8f * k)) + 2.5f * k * smooth01((pz - (zf - 2f * k)) / (2f * k));
+						float flank = Mathf.Max(Mathf.Max(d.Half - 0.3f - 0.8f * topN[xz] - ax, py - (wallY + bump)), Mathf.Max(zf - 3f * k - pz, Mathf.Max(-1.6f - py, ax - (d.Half + dxMax))));
+						// the threshold: rock level with the floor (just over the ground beside it), its ragged edges going down
+						// under the ground (no plate edge); over every ground cell CaveGround may cut before the mouth (all of the
+						// footprint, x within Half, z from SillFrom) and 0.45 m past, so no cut cell's square edge shows
+						float zFront = d.SillFrom - 1.8f + 0.6f * (2f * frontN[x] - 1f);
+						float edge = Mathf.Min(pz - zFront, Mathf.Max(floorHalf + 0.5f, d.Half + 0.5f) + 1f * sideN[z] - ax);
+						float thrTop = -0.02f - 1f * (1f - smooth01(edge / 1.5f));
+						float thr = Mathf.Max(Mathf.Max(-edge, py - thrTop), -1.6f - py);
+						float solid = Mathf.Min(Mathf.Min(body, flank), thr);
+						// the way in: the passage's outline, flared toward the front; and the tunnel's own rock behind its end
+						float flare = 0.75f * k * (0.6f + 0.8f * flareN[xy]) * (1f - smooth01((pz - zf) / 1.6f));
+						float holeAir = Mathf.Max(dPoly[xy] - flare, -0.02f - py);
+						float boxAir = Mathf.Max(Mathf.Max(ax - shellHalf, py - (shellUp + d.Rise * pz)), Mathf.Max(-d.Rise * py + 0.05f - pz, Mathf.Min(-0.02f, d.Rise * pz - 0.05f) - py));
+						field[x + y * nx + z * nx * ny] = Mathf.Max(solid, -Mathf.Min(holeAir, boxAir));
+					}
+
+			int triangles;
+			float flatY = 0.6f * h;
+			Mesh mesh = RockNets.Build(MouthName, field, nx, ny, nz, o, h, (air, rock) => 0, 1, 2,
+				(before, after) => Mathf.Abs(before.y + 0.02f) < flatY && Mathf.Abs(after.y + 0.02f) < flatY ? new Vector3(after.x, -0.02f, after.z) : after, 1f / 6f, out triangles);
+			field = null;
+			// (into the frame's own space: the mesh was made level)
+			Vector3[] mv = mesh.vertices, mn = mesh.normals;
+			for (int i = 0; i < mv.Length; i++) { mv[i] = toFrame * mv[i]; mn[i] = toFrame * mn[i]; }
+			mesh.vertices = mv;
+			mesh.normals = mn;
 			mesh.RecalculateBounds();
+			try { mesh.RecalculateTangents(); } catch { }
 			go.AddComponent<MeshFilter>().sharedMesh = mesh;
-			go.AddComponent<MeshRenderer>().sharedMaterial = look.sharedMaterial;
+			var mr = go.AddComponent<MeshRenderer>();
+			mr.sharedMaterial = look.sharedMaterial;
+			// (less shine: the smoothed rock caught wet-looking highlights the pieces' own rock doesn't)
+			if (mr.sharedMaterial.HasProperty("_Smoothness_Multiplyer"))
+			{
+				var block = new MaterialPropertyBlock();
+				block.SetFloat("_Smoothness_Multiplyer", 0.45f);
+				mr.SetPropertyBlock(block);
+			}
 			go.AddComponent<MeshCollider>().sharedMesh = mesh;
+
+			// (the footprint the ground is cut under, CaveGround: the frame's as it was, not the rock's rough outline)
+			var foot = new GameObject(FootName).transform;
+			foot.SetParent(space, false);
+			float yTop = Mathf.Max(capF, d.CapAt(d.CapTo)), yBot = -0.6f;
+			foot.localPosition = new Vector3(0f, (yTop + yBot) * 0.5f, (d.SillFrom + d.CapTo) * 0.5f);
+			foot.localRotation = Quaternion.identity;
+			foot.localScale = new Vector3(2f * d.Half, yTop - yBot, d.CapTo - d.SillFrom);
 		}
 
 		#endregion
@@ -784,6 +880,7 @@ namespace DynamicIslands.Editor
 				Vector3 min, max;
 				ShapeGround(terrain, l, hill, out min, out max);
 				TerrainPainter.PaintWorldArea(terrain, DynamicIslands.EditorWaterLevel, min, max, terraineditor.paintMask);
+				WearMouthGround(terrain, l, terraineditor.paintMask);
 				// (what stood in the rock goes - plants and rocks only, anything set up stays; what stood on the ground moves with it)
 				List<GameObject> cleared;
 				List<Move> moved;
