@@ -300,7 +300,7 @@ loot backroom TradeToken*4;Plastic*4;Glass*2;story:raft-Vasagatan_BoltCutter*1
 prop backroom loot.refill=0
 loot seedbox Raw_Beet*4;Raw_Potato*2
 prop seedbox loot.refill=0
-place Note_Paper warning at 12 59 h=1.1 drop
+place Note_Paper warning at 12 83.8 h=1.1 drop
 prop warning obj.name=warning
 prop warning beh.hidden=1
 prop backroom on.open=show|warning\nmessage||Filters, stacked to the ceiling. On the strongbox, a folded note.

@@ -419,7 +419,7 @@ call ab_piece x=12 z=-66 al=tag5 set="Dog tags" nm="Dog tag 5"
 prop tag1 on.set=give||TitaniumIngot*1;MetalIngot*2\nmessage||All five dog tags. The garrison of Shelter No. 7 is accounted for.
 # The decontamination maze: its heart's chest (a secret)
 call hw_zone x=1.5 z=-66 al=decongatez id=decongate r=4 msg="DECONTAMINATION - walk the lanes slowly. A maze of concrete walls."
-call hw_zone x=1.5 z=-76.5 al=deconheartz id=deconheart r=1.5 msg="The heart of the maze: the decontamination crew's chest."
+call hw_zone x=1.5 z=-76.5 h=1 al=deconheartz id=deconheart r=1.5 msg="The heart of the maze: the decontamination crew's chest."
 place Loot_Chest deconchest at 1.5 -77 ground sit yaw=0
 note deconchest Decon crew's chest | The decontamination crew's chest: suits, soap - and a crate of good salve.
 loot deconchest HealingSalve_Good*2;Plastic*3;MetalIngot*2

@@ -149,6 +149,10 @@ place "Box Big" - at -84 2 ground sit yaw=30
 # C The north-west ridge and the gravel barge run aground below it
 call ar_ridge x1=-52 z1=36 x2=-26 z2=48 h=5 top=6 r=8
 call hw_wreck x=-62 z=50 h=2 yaw=50 obj=BoatStranded al=barge crate=bargecrate r=9
+brush flatten at -57.2 41.2 r=2 s=20 frames=60 h=1.5
+brush flatten at -56.5 39.9 r=2 s=20 frames=60 h=0.9
+brush flatten at -55.8 38.6 r=2 s=20 frames=60 h=0.3
+brush flatten at -55.1 37.3 r=2 s=20 frames=60 h=-0.4
 # D The hidden cave (south-west): a rock with a hole, its mouth to the sea
 call ar_cave x=-50 z=-46 h=3 yaw=180 al=caverock chest=cavebox
 place SmallBoulder4 - at -47.5 -67 ground yaw=110 scale=0.8
@@ -176,7 +180,7 @@ place Block_Foundation_Tier3 jpvp at -5.12 -5.64 h=8.50
 place Block_Foundation_Tier3 jpvp at -5.12 -2.02 h=9.40 sx=2 sz=2
 # JUMP from 11
 place Block_Foundation_Tier3 jpvp at 1.30 -2.02 h=9.70 sx=2 sz=2
-place Block_Foundation_Tier3 jpvp at 1.30 3.21 h=10.00
+place Block_Foundation_Tier3 jpvp at 1.30 3.21 h=10.00 sx=2 sz=2
 # JUMP end
 # (each slab on one solid column of its own footprint, from under the pad up to the slab; the first rests on the pad)
 place Block_Foundation_Tier3 jppvp at 2.92 5.64 h=3.418 sy=1.493
@@ -190,7 +194,7 @@ place Block_Foundation_Tier3 jppvp at -2.41 -5.64 h=6.868 sy=6.551
 place Block_Foundation_Tier3 jppvp at -5.12 -5.64 h=7.818 sy=7.944
 place Block_Foundation_Tier3 jppvp at -5.12 -2.02 h=8.718 sy=9.264 sx=2 sz=2
 place Block_Foundation_Tier3 jppvp at 1.30 -2.02 h=9.018 sy=9.704 sx=2 sz=2
-place Block_Foundation_Tier3 jppvp at 1.30 3.21 h=9.318 sy=10.144
+place Block_Foundation_Tier3 jppvp at 1.30 3.21 h=9.318 sy=10.144 sx=2 sz=2
 prop jpvp tint.color=#8a8070
 prop jpvp tint.amount=0.35
 prop jppvp tint.color=#8a8070
@@ -199,7 +203,7 @@ place Loot_Chest jcvp at -5.12 -2.02 h=9.40 sit yaw=0
 note jcvp Slab stack chest | On top of the stacked slabs: the site's good tools, put out of the crew's reach.
 loot jcvp CopperIngot*2;TitaniumOre*1;Bolt*3
 prop jcvp loot.refill=0
-place Loot_ChestSmall jbvp at 1.30 3.21 h=10.00 sit yaw=0
+place Loot_ChestSmall jbvp at 1.30 3.9 h=10.00 sit yaw=0
 note jbvp Concrete gang's tin | Wedged on a slab half-way: the concrete gang's tea money.
 loot jbvp Nail*6;Scrap*3;MetalIngot*1
 prop jbvp loot.refill=0
