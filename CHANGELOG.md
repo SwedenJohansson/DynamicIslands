@@ -16,6 +16,8 @@ Not in this release yet; these come in the next update:
   minute); now only the first start after an update does.
 - **Vasagatan and Utopia quest item pickups** (keys, keycards, the bolt cutters...) placed in the editor show up and
   can be picked up; before, the ones from those islands' quest item folders never appeared.
+- Trade stands on islands of more than 8191 objects each keep their own stock (two could share one, and a once-only
+  trade could be had again after an edit).
 - **Dig brush look in a world**: the mouth's rim top drawn with the ground's grass as in the editor (rock in a world for
   now), and the passage near the mouth as brown as in the editor (it is paler there, lit by the sky).
 - Reach fixes still being checked on Steamvent Harbour, Rootweave Caves, Caravan Town Remade, Old Mine Islet, Cistern

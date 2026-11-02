@@ -1,0 +1,67 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using DynamicIslands.Editor;
+using HarmonyLib;
+using HMLLibrary;
+using RaftModLoader;
+using UnityEngine;
+
+namespace DynamicIslands
+{
+	/// <summary>Fixes after the 11-02 release (ROADMAP 3h/3i, branch next-fixes): one test per fix.</summary>
+	public static partial class DevTests
+	{
+
+		[ConsoleCommand(name: "CIStandKeysWide", docs: "Dev: RK9 - trade stand keys past object 8191 are their own (no two stands share a key, none in another range), and an island edit carries them across the 8191 line")]
+		public static void StandKeysWideCommand()
+		{
+			bool ok = true;
+			string tmp = Path.Combine(DynamicIslands.assetpath, "ci_standwide.island");
+			try
+			{
+				var seen = new HashSet<int>();
+				int clash = 0, outside = 0, back = 0;
+				for (int i = 0; i < 0x10000; i++)
+					for (int u = 0; u < TradeStand.MaxStock; u++)
+					{
+						int k = TradeStand.KeyFor(i, u), bi, bu;
+						if (!seen.Add(k)) clash++;
+						if (!((k >= TradeStand.KeyBase && k < TradeStand.KeyBase + 0x10000) || (k >= TradeStand.WideKeyBase && k < TradeStand.WideKeyBase + 0x80000))) outside++;
+						if (!TradeStand.FromKey(k, out bi, out bu) || bi != i || bu != u) back++;
+					}
+				Check(ref ok, clash == 0 && outside == 0 && back == 0, "65536 stands x " + TradeStand.MaxStock + " units: " + clash + " shared keys, " + outside + " outside the two ranges, " + back + " not read back");
+				Check(ref ok, TradeStand.KeyFor(5, 1) == TradeStand.KeyBase + 5 * TradeStand.MaxStock + 1, "a stand below 8192 keeps its old key (saves made before stay right)");
+				Check(ref ok, TradeStand.KeyFor(8192, 0) != TradeStand.KeyFor(0, 0), "stand 8192 and stand 0 differ (the old mask made them one)");
+
+				if (!PlaceableCatalog.IsBuilt) { Check(ref ok, false, "the object catalog isn't loaded yet"); }
+				else
+				{
+					var f1 = new IslandFile { Name = "ci_standwide", TerrainSize = new Vector3(10, 10, 10), HeightmapResolution = 33, Heights = new float[33, 33] };
+					for (int i = 0; i < 8195; i++)
+						f1.Objects.Add(new IslandObject { Name = "Loot_Chest", Position = new Vector3(i % 100, 5, i / 100), EulerRotation = Vector3.zero, Scale = Vector3.one });
+					f1.Save(tmp);
+					IslandFile a = IslandFile.Load(tmp);
+					IslandFile b = IslandFile.Load(tmp);
+					b.Objects.Insert(0, new IslandObject { Name = "Loot_Chest", Position = new Vector3(-5, 5, -5), EulerRotation = Vector3.zero, Scale = Vector3.one });
+					StableIds.Prepare(b, a);
+					b.Save(tmp);
+					IslandFile c = IslandFile.Load(tmp);
+					Func<bool, ObjectState> st = active => new ObjectState { Active = active, Yield = -1, Day = 3 };
+					var was = new Dictionary<int, ObjectState> { { TradeStand.KeyFor(8191, 2), st(false) }, { TradeStand.KeyFor(8193, 0), st(true) } };
+					var expect = new Dictionary<int, ObjectState> { { TradeStand.KeyFor(8192, 2), was[TradeStand.KeyFor(8191, 2)] }, { TradeStand.KeyFor(8194, 0), was[TradeStand.KeyFor(8193, 0)] } };
+					int dropped;
+					string unsure;
+					string moved = StableIds.Carry(a, c, IslandObjectState.Encode(was), false, out dropped, out unsure);
+					Check(ref ok, moved != null && moved == IslandObjectState.Encode(expect) && dropped == 0,
+						"stand units carried over the 8191 line and past it (dropped " + dropped + ")\n    got    " + moved + "\n    wanted " + IslandObjectState.Encode(expect));
+				}
+			}
+			catch (Exception ex) { Check(ref ok, false, "threw " + ex); }
+			finally { try { File.Delete(tmp); } catch { } }
+			if (ok) Log("PASS: stand keys wide"); else Fail("stand keys wide");
+		}
+	}
+}

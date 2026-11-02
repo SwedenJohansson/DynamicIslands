@@ -182,12 +182,15 @@ namespace DynamicIslands.Editor
 	/// <summary>
 	/// A stall with one offer ("trade.give", "trade.get", "trade.stock" in its settings): looking at it shows "[E] Trade
 	/// 12 Plank for 1 Mango seed (2 left)"; trading takes the price from the player's inventory and gives the goods. Each
-	/// unit of stock is a key of the island's state (KeyBase + object index * 8 + unit): used for everyone, one player
+	/// unit of stock is a key of the island's state (KeyFor: KeyBase + object index * 8 + unit; past object 8191 WideKeyBase): used for everyone, one player
 	/// gets each (Claims).
 	/// </summary>
 	public class TradeStand : MonoBehaviour, IRaycastable
 	{
 		public const int KeyBase = 0xC0000, MaxStock = 8; // (after QuestItemPickups.KeyBase 0xB0000 + 0xFFFF)
+		/// <summary>RK9: stands past object 8191 (0x2000 * 8 keys fill KeyBase's range): their own range, after
+		/// StoryItems.StoryGivenBase 0x170000 + 0xFFFF, so a big island's stands don't share keys. Indices below keep the old keys.</summary>
+		public const int WideKeyBase = 0x180000, NarrowCount = 0x2000;
 		public const string GiveProp = "trade.give", GetProp = "trade.get", StockProp = "trade.stock";
 		/// <summary>The stall's object: the floating raft's table.</summary>
 		public const string StallObject = "Table_Floor";
@@ -220,7 +223,23 @@ namespace DynamicIslands.Editor
 			return t;
 		}
 
-		public int KeyOf(int unit) { return KeyBase + (Index & 0x1FFF) * MaxStock + unit; }
+		public int KeyOf(int unit) { return KeyFor(Index, unit); }
+
+		/// <summary>A stand's unit key from its object index (0..0xFFFF).</summary>
+		public static int KeyFor(int index, int unit)
+		{
+			index &= 0xFFFF;
+			return index < NarrowCount ? KeyBase + index * MaxStock + unit : WideKeyBase + index * MaxStock + unit;
+		}
+
+		/// <summary>The object index and unit of a stand key, or false when the key isn't one.</summary>
+		public static bool FromKey(int key, out int index, out int unit)
+		{
+			index = unit = -1;
+			if (key >= KeyBase && key < KeyBase + NarrowCount * MaxStock) { index = (key - KeyBase) / MaxStock; unit = (key - KeyBase) % MaxStock; return true; }
+			if (key >= WideKeyBase + NarrowCount * MaxStock && key < WideKeyBase + 0x10000 * MaxStock) { index = (key - WideKeyBase) / MaxStock; unit = (key - WideKeyBase) % MaxStock; return true; }
+			return false;
+		}
 
 		IslandWorldState.Entry Entry { get { return ContentState.EntryOf(transform); } }
 

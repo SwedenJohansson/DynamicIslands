@@ -327,15 +327,15 @@ namespace DynamicIslands.Editor
 					moved = b + j;
 					return j >= 0 && j < 0x10000;
 				}
-			// (a trade stand's units: KeyBase + (object index & 0x1FFF) * MaxStock + unit - they stayed put on an edit, and a
-			// stand's once-only trade could be had again, another's was gone; bughunt 10-30)
-			if (key >= TradeStand.KeyBase && key < TradeStand.KeyBase + 0x2000 * TradeStand.MaxStock)
+			// (a trade stand's units: TradeStand.KeyFor(object index, unit) - they stayed put on an edit, and a
+			// stand's once-only trade could be had again, another's was gone; bughunt 10-30. Past object 8191 its own range, RK9)
+			int si, sunit;
+			if (TradeStand.FromKey(key, out si, out sunit))
 			{
-				int i = (key - TradeStand.KeyBase) / TradeStand.MaxStock, unit = (key - TradeStand.KeyBase) % TradeStand.MaxStock;
-				if (i >= was.Uids.Length) return true;
-				int j = indexNow(uidAt(i));
-				moved = TradeStand.KeyBase + j * TradeStand.MaxStock + unit;
-				return j >= 0 && j < 0x2000;
+				if (si >= was.Uids.Length) return true;
+				int j = indexNow(uidAt(si));
+				moved = j >= 0 ? TradeStand.KeyFor(j, sunit) : key;
+				return j >= 0 && j < 0x10000;
 			}
 			foreach (int pb in new[] { Behaviours.PendingBase, Behaviours.MorePendingBase })
 				if (key >= pb && key < pb + 0x100000)

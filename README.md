@@ -1007,7 +1007,6 @@ How some things work that can surprise players and island builders. What players
 - A generated island (`gen-...`) whose file is gone and has no copy in `deleted\` is made again by the host from its name: one of the same kind and seed in its place, not quite the same island, its used objects fresh (R15). With a copy there it is put back (see Features).
 - A world follows the host's version of an island (RK1): a next host who has one of its islands in another version (same name, changed in their editor) plays theirs until a player with the world's version joins, and a save before that keeps the host's version, with what was used there possibly on other objects. Let a player who hosted before join first ([Hosting on another day](docs/GUIDE.md#hosting-on-another-day)).
 - Loose items on the ground of a custom island can fall into the sea when the island unloads or while it loads again after a save is loaded (RK2): keep them in the inventory or a storage on the raft.
-- A trade stand on an island of more than 8191 objects shares its key with another (RK9): after an edit reaches a world, a once-only trade there can be had again.
 - Editor: Utopia's KeyRescue places without a visible model (RK11).
 - Caves of the `ar_cave` kind can look see-through from outside the island: the cave shell is one-sided, so from outside you can see into the cave through its wall (RK15).
 - If you get stuck somewhere you cannot get out of, use **Esc > SPAWN TO RAFT**: it asks once, and **Yes** puts you on your raft.
