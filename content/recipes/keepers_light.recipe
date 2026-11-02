@@ -91,6 +91,9 @@ place Relay_support_beam_wood - at 24.4 6.8 h=-3 rot=0,0,-90 sx=1.11
 place Relay_support_beam_wood - at 24.4 11.4 h=-3 rot=0,0,-90 sx=1.11
 place Relay_support_beam_wood - at 22.2 6.8 h=-3 rot=0,0,-90 sx=1.11
 place ReefHuts_Pillar1 - at 24.6 -16.4 h=1.8
+# (REACH 11-02 RA1: no way up out of the sea - the jetty's deck stands 2.6 m over the water on all sides; a ladder from
+# the water up its south end, between the posts, its foot in the sea)
+place Block_Ladder jettyladder at 22.6 -17.1 h=-1.1 yaw=0 sy=1.15
 place "Box Small" landingbox at 21.0 -8.4 h=1.8 sit yaw=15
 place Zone_Trigger landing at 21.5 9 h=8.5
 

@@ -60,7 +60,9 @@ ramp Block_Floor_Tier3 from -14.25 0 3 to -46.25 0 3 len=1.5 top=0
 ramp Block_Floor_Tier3 from -14.25 1.5 3 to -45.5 1.5 3 len=1.5 top=0
 ramp Block_Wall_Fence_Tier3 - from -14.25 -2.25 3 to -46.25 -2.25 3 len=1.5 top=-0.1
 ramp Block_Wall_Fence_Tier3 - from -14.25 2.25 3 to -44.75 2.25 3 len=1.5 top=-0.1
-place Note_Sign endsign at -45.5 0 h=3 sit yaw=90
+# (REACH 11-02 RA1: the sign faced the broken end, so its only use spot hung in the air past the deck's end - turned to
+# face the road and read from the deck)
+place Note_Sign endsign at -45.5 0 h=3 sit yaw=270
 
 # --- The toll booth at the top of the ramp: the log, the strongbox (the booth key opens it) ---------------------------
 push at 4.8 3.2 h=2.7
@@ -309,5 +311,11 @@ step open|Depot chest|1|Dive into the depot and open its stock chest at the bott
 step read|Depot foreman's note|1|Read the foreman's last page by the stairs
 quest done=The road goes on under the sea to the Brinelab tower, where the shuttle stopped for tea. The Receiver picks it up on band 800.
 quest reward=Rope*3;Nail*10
+
+# (REACH 11-01 N, kept 11-02 RA1: a hollow under a rock on the north shore a player drops into, its side a 1.2-1.6 m step,
+# too low a roof for a ladder: its floor raised up into the rock's underside, so nothing is left to drop into)
+brush flatten from -4.2 53.5 to -5.8 60.5 r=3.8 s=20 frames=300 h=7.2
+brush smooth from -4.2 53.5 to -5.8 60.5 r=4.3 s=10 frames=12
+clear from -4.2 53.5 to -5.8 60.5 r=4.3 body
 
 save Overpass Shoal
