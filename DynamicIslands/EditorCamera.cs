@@ -24,6 +24,13 @@ namespace DynamicIslands.Editor
 	{
 		public static EditorCamera Instance { get; private set; }
 
+		/// <summary>God mode (the Dig brush's panel): the camera flies through the ground and rock, e.g. into a dug tunnel to build in it.</summary>
+		public static bool GodMode;
+		/// <summary>Tests: keys held (x right, z forward, y up), flying along the view as with the right mouse held; null: the real keys.</summary>
+		public static Vector3? TestKeys;
+		/// <summary>Flying speed (m/s, x the speed setting) in a dug tunnel or under the ground: slow enough to steer round a bend.</summary>
+		public const float TunnelSpeed = 4f;
+
 		/// <summary>Multiplier of the flying speed (right mouse + wheel, or the Move speed setting), 0.1 .. 10; saved.</summary>
 		public static float SpeedFactor { get { return CameraSettings.Speed; } set { CameraSettings.Set(CameraSettings.SpeedNumber, value); } }
 		/// <summary>Degrees the view turns per pixel the mouse moves at the Look sensitivity setting x1.</summary>
@@ -140,7 +147,8 @@ namespace DynamicIslands.Editor
 				if (looking) keys.y += (Input.GetKey(CameraSettings.UpKey) ? 1f : 0f) - (Input.GetKey(CameraSettings.DownKey) ? 1f : 0f);
 				keys.y = Mathf.Clamp(keys.y, -1f, 1f);
 			}
-			Move(keys, looking, EditorInput.Shift, dt);
+			if (TestKeys.HasValue) keys = TestKeys.Value;
+			Move(keys, looking || TestKeys.HasValue, EditorInput.Shift && !TestKeys.HasValue, dt);
 
 			// Wheel: zoom towards what is under the cursor; with the right mouse held: the flying speed
 			float wheel = overUI || typing ? 0f : Input.GetAxis("Mouse ScrollWheel") * (CameraSettings.WheelReversed ? -1f : 1f);
@@ -304,11 +312,34 @@ namespace DynamicIslands.Editor
 
 		#endregion
 
-		/// <summary>Flying speed (m/s): faster high above the ground, slow close to it.</summary>
+		/// <summary>Turns the view along a direction (tests: steering as the mouse would).</summary>
+		public void Face(Vector3 dir)
+		{
+			if (dir.sqrMagnitude < 1e-6f) return;
+			Vector3 e = Quaternion.LookRotation(dir).eulerAngles;
+			yaw = e.y;
+			pitch = Mathf.Clamp(Mathf.DeltaAngle(0f, e.x), -89f, 89f);
+			flying = false;
+		}
+
+		/// <summary>Flying speed (m/s): faster high above the ground, slow close to it; slow in a dug tunnel and under the ground.</summary>
 		float Speed()
 		{
+			// (in a dug tunnel the ground is far overhead: TunnelSpeed, or it flies past a bend - 11-02)
+			if (position.y < GroundY(position) || DigTunnel.InsideAny(position, 0.5f)) return TunnelSpeed * SpeedFactor;
 			float above = Mathf.Abs(position.y - GroundY(position));
 			return Mathf.Clamp(above * 0.9f, 6f, 250f) * SpeedFactor;
+		}
+
+		/// <summary>Without God mode, a place under the ground the camera may be: in a dug tunnel's passage, or at its mouth over the cut ground (flying in).</summary>
+		static bool OpenUnder(Terrain t, Vector3 p)
+		{
+			if (DigTunnel.InsideAny(p, -0.15f)) return true;
+			TerrainData d = t.terrainData;
+			int res = d.holesResolution;
+			Vector3 o = t.transform.position;
+			int cx = Mathf.Clamp((int)((p.x - o.x) / d.size.x * res), 0, res - 1), cz = Mathf.Clamp((int)((p.z - o.z) / d.size.z * res), 0, res - 1);
+			return !d.GetHoles(cx, cz, 1, 1)[0, 0] && DigTunnel.InsideAny(p, 1f);
 		}
 
 		/// <summary>Near the build area, above the ground, not absurdly high.</summary>
@@ -321,6 +352,26 @@ namespace DynamicIslands.Editor
 			position.z = Mathf.Clamp(position.z, o.z - 400f, o.z + size.z + 400f);
 			bool overTerrain = position.x >= o.x && position.z >= o.z && position.x <= o.x + size.x && position.z <= o.z + size.z;
 			float floor = overTerrain ? GroundY(position) + 0.6f : o.y + 0.6f;
+			// God mode (the dig panel): through the ground, rock and walls. Else under the ground only inside a dug
+			// tunnel's passage (or over the cut ground at its mouth) - flown into its mouth, the camera goes in rather than
+			// up onto the hill (11-02); flown into its rock from inside, it slides along the wall (each axis kept that stays open).
+			if (GodMode) floor = Mathf.Min(floor, o.y - 50f);
+			else if (position.y < floor && overTerrain)
+			{
+				if (OpenUnder(t, position)) floor = position.y;
+				else if (lastPosition.y < GroundY(lastPosition) + 0.59f && OpenUnder(t, lastPosition))
+				{
+					Vector3 q = lastPosition, step = position - lastPosition;
+					for (int a = 0; a < 3; a++)
+					{
+						Vector3 r = q;
+						r[a] += step[a];
+						if (OpenUnder(t, r) || r.y >= GroundY(r) + 0.6f) q = r;
+					}
+					position = q;
+					floor = Mathf.Min(floor, position.y);
+				}
+			}
 			position.y = Mathf.Clamp(position.y, floor, SeaY + 900f);
 		}
 

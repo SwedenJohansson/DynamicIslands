@@ -66,6 +66,7 @@
     <Compile Include="CaveGround.cs" />
     <Compile Include="CaveMountain.cs" />
     <Compile Include="CaveTool.cs" />
+    <Compile Include="RockNets.cs" />
     <Compile Include="CustomIslandSpawner.cs" />
     <Compile Include="DigTunnel.cs" />
     <Compile Include="DevTests.cs" />
@@ -257,6 +258,7 @@
     <Compile Include="PlanProgressWindow.cs" />
     <Compile Include="RaftFeatures.cs" />
     <Compile Include="DevTestsLeftovers.cs" />
+    <Compile Include="DevTestsNoIdWorld.cs" />
     <Compile Include="EditorLighting.cs" />
     <Compile Include="RaftSkySea.cs" />
     <Compile Include="ScrambledBlueprints.cs" />

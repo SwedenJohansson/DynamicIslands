@@ -9,17 +9,49 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
-## Next update
+## Next update (planned)
+
+Not in this release yet; these come in the next update:
+- **Dig brush look in a world**: the mouth's rim top drawn with the ground's grass as in the editor (rock in a world for
+  now), and the passage near the mouth as brown as in the editor (it is paler there, lit by the sky).
+- Reach fixes still being checked on Steamvent Harbour, Rootweave Caves, Caravan Town Remade, Old Mine Islet, Cistern
+  Hall, Spirecrest Roofs, Radio Tower Remade, The Rootcore, Ironreef Caverns, Colossus of the Strait and the rest of
+  Primeval Park.
+- Old worlds (made before Raft gave worlds an id): quest rewards are kept per world, and players who join such a world
+  get the host's custom islands state.
+- Cave tool: a thin spike of ground left beside the cut over some tunnel mouths.
+
+## 3.0 alpha - 2026-11-02: Tunnels and fixes
 
 ### New
+- **Check for updates** (the alpha box on the main menu): asks raftmodding.com for the newest version and says
+  whether you have it, with a button to the mod's page, where new versions come out.
 - **Dig brush** (editor, Terrain tab, Caves): a second tunnel tool beside the drag one, now called **Straight tunnel**.
   Press on a hillside or cliff and hold: a passage is dug in toward where the mouse points, so you paint your own winding
   tunnel or cave entrance. **Dig size** (2.8-10 m) and **Dig slope** (up to 25°) as with the other brushes; press on a tunnel
   to branch off, **Shift** fills a passage in, one **Ctrl+Z** per stroke. Objects in the passage's way, or buried by its rim, are taken away with the stroke. The passage is lined with Raft's brown rock and closed
   under the ground, open only at its mouth, which has a rim of rock round it (a doorstep, sides and a brow) topped like
   the ground there; it saves with the island and comes along into Test and multiplayer.
+- **God mode (camera through walls)** (editor, Terrain tab, Caves, under the Dig brush): the editor camera flies through
+  the ground, rock and walls, e.g. into a dug tunnel or a cave to build in it.
+- **Dig brush digs down**: with **Dig slope** level, a stroke on flat ground or a gentle slope goes down into it as a
+  walkable 25° ramp until it has a metre of rock over it, then on level (it was an open trench).
 
 ### Fixed
+- **Dig brush**: the editor camera flown into a dug tunnel's mouth goes in (it rose onto the hill, so you could not
+  build inside; in the passage it now flies slowly and slides along the walls); the ground over the hill above a tunnel is no longer cut into see-through squares - only where the
+  passage really comes out through the ground.
+- **Dig brush**: the passage darkens the farther in you are, in the editor and in a world (in a world it was as bright
+  as the hillside); on a cliff, no strip of sky shows above the mouth any more, and no cut square of the hilltop shows
+  the rock just under the grass. In a world the mouth's rim top is rock for now (it came out a flat grey-blue patch).
+- **Cave mouths look natural** (Straight tunnel and Dig brush): the straight tunnel's mouth is now rough, uneven rock
+  standing out of the hill like Raft's own cave entrances - no square slab, no straight edges, no stone plate before
+  it; its top falls away into the hill on both sides, and its threshold is a flush patch of rock level with the floor
+  whose edges sink into the ground; the levelled ground before it is wider than the threshold, with a wandering outline
+  that eases into the hill, and is worn bare (sand and rock through the grass) around it, so no raised slab shows. The Dig brush's mouth on a grassy hill has a low, patchy rim whose top is drawn
+  with the ground's own textures (same colour, same grass), with rock on its sides and at the opening, instead of a
+  raised green blob with a sharp outline; before a cliff the floor runs straight out onto the ground with no green apron. The dug passage's lining is smooth inside, without spikes in its floor and
+  walls, and its rock texture no longer streaks. Walking in is unchanged.
 - **Cave tool (Terrain tab, Caves - Tunnel)**: the mouth no longer comes out as a narrow dark slit with rock spikes
   through it, walking in no longer pushes you up, and every drag makes an entrance. The mouth gets a frame of the same
   rock, flush with the hill, with a level doorstep; the ground is cut along the whole passage so you can walk from the
@@ -48,6 +80,13 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   can drop onto traps you, and quest notes and chests were moved to where you can stand next to them.
 
 ### Fixed
+- **Shot stingrays count for the quest:** a quest animal hit by a player that sinks or swims off and is taken away by
+  Raft within 30 s counts as killed, not as taken away (Sinkmarket Floor's "kill 3 stingrays" stayed at 0/3 after bow
+  kills). A harmless quest animal that Raft does take away alive is matched more loosely to the quest step (label, type,
+  plural) and logs why when it is not put back.
+- **Old worlds keep their plan and story**: a world made before Raft gave worlds an id (older Raft versions) never saved
+  its custom islands, so a plan given with `WorldPlan` and its story progress were gone after loading the world again.
+  Such a world now keeps them under its name.
 - **Quest locks wait for their step**: on about 60 islands a lock, gate or lift that a quest key opens now stays shut
   until the quest step that asks for it, so a quest can no longer be skipped ahead by walking in with the key. Hollow
   Mountain's lifts and throne lock wait too, and its entry-hall step now counts only from inside the hall.

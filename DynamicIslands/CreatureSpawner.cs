@@ -73,6 +73,14 @@ namespace DynamicIslands.Editor
 		/// <summary>Host: our animals a hit left dead (instance ids), until the next look: one Raft removes at once (a
 		/// stingray) was killed, not taken away (The Frontier's stingray counted as taken away, 2026-10-12).</summary>
 		static readonly HashSet<int> felled = new HashSet<int>();
+		/// <summary>Host: when one of our animals was last hit, or last seen with less health (instance id -> unscaled
+		/// time). One that goes while alive soon after (HitKillWindow) was killed, not taken away: a bow-shot stingray
+		/// sinks and Raft removes it, and the hit itself often doesn't leave it dead (Sinkmarket Floor's three stingrays
+		/// stayed 0/3, 2026-11-02).</summary>
+		static readonly Dictionary<int, float> lastHit = new Dictionary<int, float>();
+		/// <summary>Host: each of our animals' health at the last look (to see hits that came another way).</summary>
+		static readonly Dictionary<int, float> lastHealth = new Dictionary<int, float>();
+		const float HitKillWindow = 30f;
 		/// <summary>Speed multiplier per animal's movement component (read by the movement patches).</summary>
 		static readonly Dictionary<AI_Movement, float> speed = new Dictionary<AI_Movement, float>();
 		static float nextTick;
@@ -194,6 +202,9 @@ namespace DynamicIslands.Editor
 		{
 			ours.Clear();
 			speed.Clear();
+			lastHit.Clear();
+			lastHealth.Clear();
+			felled.Clear();
 			HealthBefore.Clear();
 			clientTinted.Clear();
 			spotOf.Clear();
@@ -920,8 +931,13 @@ namespace DynamicIslands.Editor
 					Debug.Log("[CUSTOM ISLANDS] A " + p.Kind.Label + " of '" + e.HostName + "' was caught");
 					continue;
 				}
-				if (ai.networkEntity == null || !ai.networkEntity.IsDead) { p.LastAt[id] = ai.transform.position; seen.Add(id); }
-				else { p.LastAt.Remove(id); felled.Remove(id); }
+				if (ai.networkEntity == null || !ai.networkEntity.IsDead)
+				{
+					p.LastAt[id] = ai.transform.position; seen.Add(id);
+					float hp = HealthOf(ai.networkEntity), was;
+					if (hp >= 0f) { if (lastHealth.TryGetValue(id, out was) && hp < was - 0.01f) lastHit[id] = Time.unscaledTime; lastHealth[id] = hp; }
+				}
+				else { p.LastAt.Remove(id); felled.Remove(id); lastHit.Remove(id); lastHealth.Remove(id); }
 			}
 			// Gone while alive (Raft may drop it from the list before the object goes, so this goes by the ones last seen
 			// alive): far from every player - or one of Raft's harmless sea animals, which it takes away on its own timer
@@ -930,26 +946,44 @@ namespace DynamicIslands.Editor
 			foreach (int id in p.LastAt.Keys.Where(k => !seen.Contains(k)).ToList())
 			{
 				Vector3 at = p.LastAt[id];
-				if (felled.Remove(id)) { p.LastAt.Remove(id); continue; }
+				lastHealth.Remove(id);
+				if (felled.Remove(id)) { p.LastAt.Remove(id); lastHit.Remove(id); continue; }
+				// Hit not long before it went: killed (it sank or fled wounded and Raft took the body away)
+				float hitAt;
+				if (lastHit.TryGetValue(id, out hitAt))
+				{
+					lastHit.Remove(id);
+					if (Time.unscaledTime - hitAt <= HitKillWindow)
+					{
+						Debug.Log("[CUSTOM ISLANDS] A " + p.Kind.Label + " of '" + e.HostName + "' went " + (Time.unscaledTime - hitAt).ToString("0") + " s after a hit: defeated");
+						p.LastAt.Remove(id);
+						continue;
+					}
+				}
 				if (Harmless(p.Kind.Type) || !Players.All.Any(pl => pl != null && Vector2.Distance(new Vector2(pl.transform.position.x, pl.transform.position.z), new Vector2(at.x, at.z)) < StrayDistance)) strayed++;
 				p.LastAt.Remove(id);
 			}
 			// A harmless sea animal one of the island's quests asks for, taken away alive: back at its spot at once, so the quest
 			// can still be done (keeping it out of Raft's sea events wasn't always enough: Lowstreet's big stingray still went
 			// mid-play, SL13 step 16, 10-26)
-			if (strayed > 0 && Harmless(p.Kind.Type) && IsQuestTarget(e, p.Kind))
+			if (strayed > 0 && Harmless(p.Kind.Type))
 			{
-				Network_Host_Entities host = HostEntities;
-				int back = 0;
-				for (int i = 0; host != null && i < strayed; i++)
+				if (IsQuestTarget(e, p.Kind))
 				{
-					AI_NetworkBehaviour ai = Spawn(host, p, 0, 1);
-					if (ai == null) continue;
-					KeepFromRaftEvents(e, ai, p.Kind);
-					back++;
+					Network_Host_Entities host = HostEntities;
+					int back = 0;
+					for (int i = 0; host != null && i < strayed; i++)
+					{
+						AI_NetworkBehaviour ai = Spawn(host, p, 0, 1);
+						if (ai == null) continue;
+						KeepFromRaftEvents(e, ai, p.Kind);
+						back++;
+					}
+					if (back > 0) Debug.Log("[CUSTOM ISLANDS] " + back + " quest " + p.Kind.Label + "(s) of '" + e.HostName + "' taken away by Raft: back at the spot");
+					if (back < strayed) Debug.LogWarning("[CUSTOM ISLANDS] " + (strayed - back) + " quest " + p.Kind.Label + "(s) of '" + e.HostName + "' could not be put back (" + (host == null ? "no host entities" : "spawn failed") + ")");
+					strayed -= back;
 				}
-				if (back > 0) Debug.Log("[CUSTOM ISLANDS] " + back + " quest " + p.Kind.Label + "(s) of '" + e.HostName + "' taken away by Raft: back at the spot");
-				strayed -= back;
+				else Debug.Log("[CUSTOM ISLANDS] '" + e.HostName + "': no kill/catch step for " + p.Kind.Label + " (" + p.Kind.Type + ") in its " + QuestTracker.QuestsOf(e) + " quest(s): not put back");
 			}
 			// (just spawned, Raft may not have set up its network entity yet: that one is alive, not killed)
 			int alive = p.Spawned.Count(ai => ai != null && (ai.networkEntity == null || !ai.networkEntity.IsDead));
@@ -974,10 +1008,19 @@ namespace DynamicIslands.Editor
 		/// <summary>Host, after a hit: notes one of our animals the hit left dead (see felled).</summary>
 		public static void Hit(Network_Entity entity)
 		{
-			if (entity == null || !(entity.IsDead || (entity.stat_health != null && entity.stat_health.Value <= 0f))) return;
+			if (entity == null) return;
 			AI_NetworkBehaviour ai = entity.GetComponentInParent<AI_NetworkBehaviour>();
 			if (ai == null) ai = entity.GetComponentInChildren<AI_NetworkBehaviour>();
-			if (ai != null && ours.Contains(ai)) felled.Add(ai.GetInstanceID());
+			if (ai == null || !ours.Contains(ai)) return;
+			int id = ai.GetInstanceID();
+			lastHit[id] = Time.unscaledTime;
+			if (entity.IsDead || (entity.stat_health != null && entity.stat_health.Value <= 0f)) felled.Add(id);
+		}
+
+		/// <summary>An animal's health now, or -1 when it has none to read.</summary>
+		static float HealthOf(Network_Entity entity)
+		{
+			try { return entity != null && entity.stat_health != null ? entity.stat_health.Value : -1f; } catch { return -1f; }
 		}
 
 		/// <summary>Host, after any hit on one of our animals (a guest's too: Raft's DamageEntity runs here for it): a boss
@@ -1025,19 +1068,47 @@ namespace DynamicIslands.Editor
 		/// <summary>True when one of the island's quests has a kill or catch step for this kind (an empty target: any kind).</summary>
 		static bool IsQuestTarget(IslandWorldState.Entry e, ContentCatalog.CreatureKind kind)
 		{
-			int q = QuestTracker.QuestsOf(e);
+			if (e == null || kind == null) return false;
+			try
+			{
+				// The island's live settings, then the island file's own (the fallback when the live settings miss the quest)
+				if (HasKillStep(IslandCache.PropsOf(e), kind)) return true;
+				if (!string.IsNullOrEmpty(e.Name) && HasKillStep(IslandCache.Props(e.Name), kind)) return true;
+			}
+			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] quest target check: " + ex.Message); }
+			return false;
+		}
+
+		static bool HasKillStep(IDictionary<string, string> props, ContentCatalog.CreatureKind kind)
+		{
+			if (props == null) return false;
+			int q = IslandQuest.CountIn(props);
 			for (int n = 0; n < q; n++)
 			{
-				IslandQuest quest = QuestTracker.QuestOf(e, n);
-				if (quest == null) continue;
+				IslandQuest quest = IslandQuest.From(props, n);
+				if (quest == null || quest.Steps == null) continue;
 				foreach (IslandQuest.Step st in quest.Steps)
 				{
 					if (st == null) continue;
 					string ty = (st.Type ?? "").Trim().ToLowerInvariant();
 					if (ty != "kill" && ty != "catch") continue;
-					string tg = (st.Target ?? "").Trim();
-					if (tg.Length == 0 || string.Equals(tg, kind.Label, StringComparison.OrdinalIgnoreCase)) return true;
+					if (NamesKind(st.Target, kind)) return true;
 				}
+			}
+			return false;
+		}
+
+		/// <summary>True when a quest target names this kind: its label or Raft's type, with or without "Creature_" or a
+		/// plural s; an empty target is any kind.</summary>
+		static bool NamesKind(string target, ContentCatalog.CreatureKind kind)
+		{
+			string tg = IslandQuest.Clean(target).Replace(" ", "").Replace("_", "").ToLowerInvariant();
+			if (tg.StartsWith("creature")) tg = tg.Substring(8);
+			if (tg.Length == 0) return true;
+			foreach (string name in new[] { kind.Label, kind.Type.ToString() })
+			{
+				string k = (name ?? "").Replace(" ", "").Replace("_", "").ToLowerInvariant();
+				if (k.Length > 0 && (tg == k || tg == k + "s" || tg + "s" == k)) return true;
 			}
 			return false;
 		}

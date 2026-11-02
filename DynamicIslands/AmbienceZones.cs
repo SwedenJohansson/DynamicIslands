@@ -184,7 +184,7 @@ namespace DynamicIslands.Editor
 			return sunFound;
 		}
 
-		static void Hook()
+		internal static void Hook()
 		{
 			if (hooked) return;
 			hooked = true;
@@ -222,13 +222,20 @@ namespace DynamicIslands.Editor
 			return best;
 		}
 
+		/// <summary>A dug tunnel's light deep in: the sky's light (ambient, reflections) dimmed and warmed - Raft's blue sky
+		/// made the passage blue-white - and the sun, which Raft doesn't shadow there, nearly gone.</summary>
+		static readonly Color TunnelLight = new Color(0.42f, 0.34f, 0.26f), TunnelSun = new Color(0.22f, 0.2f, 0.18f);
+
 		static void PreRender(Camera cam)
 		{
 			if (cam != Camera.main || applied) return;
 			float w;
 			AtmosphereZone z = Strongest(cam.transform.position, out w);
 			SetScreenTint(z, w);
-			if (z == null || w <= 0.001f || (z.FogAmount <= 0f && z.LightAmount <= 0f)) return;
+			bool zone = z != null && w > 0.001f && (z.FogAmount > 0f || z.LightAmount > 0f);
+			// (in a dug tunnel's passage, away from its open mouth: its own dim light - DigTunnel.DarkAt)
+			float dark = DigTunnel.DarkAt(cam.transform.position);
+			if (!zone && dark <= 0.001f) return;
 			saved = new Saved
 			{
 				Fog = RenderSettings.fog, FogColor = RenderSettings.fogColor, Density = RenderSettings.fogDensity,
@@ -236,7 +243,7 @@ namespace DynamicIslands.Editor
 				Reflection = RenderSettings.reflectionIntensity, Equator = RenderSettings.ambientEquatorColor, Ground = RenderSettings.ambientGroundColor
 			};
 			applied = true;
-			if (z.FogAmount > 0f)
+			if (zone && z.FogAmount > 0f)
 			{
 				float f = w * z.FogAmount;
 				RenderSettings.fog = true;
@@ -245,9 +252,10 @@ namespace DynamicIslands.Editor
 				RenderSettings.fogStartDistance = Mathf.Lerp(saved.Fog ? saved.Start : 300f, 0f, f);
 				RenderSettings.fogEndDistance = Mathf.Lerp(saved.Fog ? saved.End : 1000f, 40f, f);
 			}
-			if (z.LightAmount > 0f)
+			Color k = zone && z.LightAmount > 0f ? Color.Lerp(Color.white, z.Light, w * z.LightAmount) : Color.white, sunK = k;
+			if (dark > 0.001f) { k *= Color.Lerp(Color.white, TunnelLight, dark); sunK *= Color.Lerp(Color.white, TunnelSun, dark); }
+			if (k != Color.white || sunK != Color.white)
 			{
-				Color k = Color.Lerp(Color.white, z.Light, w * z.LightAmount);
 				SphericalHarmonicsL2 sh = saved.Probe;
 				for (int c = 0; c < 9; c++) { sh[0, c] *= k.r; sh[1, c] *= k.g; sh[2, c] *= k.b; }
 				RenderSettings.ambientProbe = sh;
@@ -259,7 +267,7 @@ namespace DynamicIslands.Editor
 				// (the sun and the sky's reflections take the tint too: Raft's sun lit a cave or a buried room as brightly
 				// as the beach, so a dark zone wasn't dark - found building the library's Shelter Atoll)
 				saved.Sun = Sun();
-				if (saved.Sun != null) { saved.SunColor = saved.Sun.color; saved.Sun.color = saved.SunColor * k; SunBefore = saved.SunColor; SunWhileDrawn = saved.Sun.color; }
+				if (saved.Sun != null) { saved.SunColor = saved.Sun.color; saved.Sun.color = saved.SunColor * sunK; SunBefore = saved.SunColor; SunWhileDrawn = saved.Sun.color; }
 				RenderSettings.reflectionIntensity = saved.Reflection * (k.r + k.g + k.b) / 3f;
 			}
 		}
