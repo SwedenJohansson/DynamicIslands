@@ -136,7 +136,7 @@ place TP_Moontown_Barrel02 - at 61 -1.5 ground sit yaw=40
 place Loot_Crate icelocker at 70 12 ground sit yaw=180
 # C The west crags, the whaler run aground below them, the ice cave in the crags
 call ar_ridge x1=-58 z1=-26 x2=-44 z2=-50 h=4 top=7 r=9
-call hw_wreck x=-70 z=-12 h=2 yaw=110 obj=BoatStranded al=whaler crate=whalercrate r=9
+# (the whaler is wrecked further down, after the crag's smoothing - see 'reach 11-02')
 # 10-27: mouth turned inland (yaw 0): facing the sea, the mouth showed the hollow inside as a cut face
 call ar_cave x=-50 z=-40 h=4 yaw=0 al=icecaverock chest=icecavebox
 # 10-27 c: the crag built up over the cave - in a world the cave gets its own rock skin (a smooth dome draped over its
@@ -198,6 +198,10 @@ brush flatten at -32 -50 r=4 s=20 frames=150 h=16
 brush flatten at -30 -38 r=3.5 s=20 frames=150 h=9
 brush flatten from -51 -15 to -51 -23.5 r=4.5 s=20 frames=60 h=4.4
 brush auto at -50 -46 r=40 s=10 frames=25
+# (reach 11-02: the crag's smoothing reached out to the whaler's pad and raised the ground round the wreck - the
+# whaler's crate, the cave key in it, lay buried with nowhere to use it from: the wreck moved here, after the smoothing,
+# so its pad, hull and crate sit on the final ground)
+call hw_wreck x=-70 z=-12 h=2 yaw=110 obj=BoatStranded al=whaler crate=whalercrate r=9
 brush rock at -50 -43 r=15 s=10 frames=30
 place TP_IcePillar04_Snow - at -48 -69 ground sit yaw=200
 # D The supply plane (north-east): down on the flats past the village
