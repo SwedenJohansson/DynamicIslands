@@ -22,6 +22,9 @@ include lib_raft_remade
 new
 # (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
 randomize Utopia like Seed=7108 Radius=55 Height=22 Cliffs=0.25 BeachWidth=0.5 Hostiles=0 Friendly=0 SeaLife=0.3 Trees=0.4 Bushes=0.5 Rocks=0.75 Harvest=0.7 Water=0.5
+# (U 11-01: REACH - Randomize's drowned tower east of the island had a roofed ledge 1.8 m under the water: a swimmer got
+# onto it and not off - taken out)
+clear at 115 53 r=8 all only=UT_Set_Tower
 
 # --- Terrain: the quay on the north beach (1.8 m), the prison house's flats (6 m), the warden's yard on the summit
 # (18 m) and the path from the quay up to its gate ----------------------------------------------------------------------
@@ -35,6 +38,12 @@ for i 0 10 1
 brush flatten at {4-$i*1.05} {41-$i*3.6} r=2.8 s=20 frames=30 h={2.5+$i*1.51}
 next
 brush smooth from 4 41 to -6.5 5 r=3 s=10 frames=20
+# (U 11-01: REACH - the path's flanks stood 3.5 m over the flat beside its foot: the walker went up one and stuck short of
+# the yard - the path made wider and its flanks smoothed)
+for i 1 9 1
+brush flatten at {4-$i*1.05} {41-$i*3.6} r=4.2 s=20 frames=30 h={2.5+$i*1.51}
+next
+brush smooth from 3 37.4 to -5.5 8.6 r=5 s=10 frames=25
 origin
 clear from -2 45 to 18 45 r=8
 clear at 22 12 r=20
@@ -156,6 +165,263 @@ brush flatten at 40.8 -27.8 r=1.4 s=20 frames=200 h=-0.2
 brush flatten at 41.2 -28.6 r=1.4 s=20 frames=200 h=-0.9
 brush flatten at 41.6 -29.4 r=1.4 s=20 frames=200 h=-1.6
 clear from 40.4 -27.0 to 41.6 -29.4 r=2.4 body
+# (U 11-01: REACH - the steps still left the bay a trap (the bank 1 m over the water where a swimmer comes to it): wide
+# beaches from the bank down under the water, under 0.5 m a step, on the bay's two land sides)
+for i 0 7 1
+brush flatten at {38.6+$i*0.75} {-26.6-$i*0.8} r=2.8 s=20 frames=200 h={1.0-$i*0.45}
+next
+for i 0 10 1
+brush flatten at {38.0+$i*0.8} -36.0 r=2.6 s=20 frames=200 h={1.4-$i*0.5}
+next
+for i 0 9 1
+brush flatten at {43.6+$i*0.3} {-43.6+$i*0.42} r=2.6 s=20 frames=200 h={2.4-$i*0.5}
+next
+clear from 38 -26 to 44 -32.5 r=3.5 body
+clear from 38 -36 to 46 -36 r=3 body
+clear from 43.6 -43.6 to 46.3 -39.8 r=3 body
+# (U 11-01: REACH - two small traps were left where the bay runs in under the quarry ridge's cave rock: the rock's skirt
+# hangs 0-2 m over the water there and a swimmer under it has no room to climb out - the floor under the skirt brought
+# up level with the sea, so whoever comes in there wades out to the bay's shallows)
+brush flatten from 40.9 -28.3 to 42.4 -36.6 r=2.2 s=20 frames=200 h=0
+# (that cut off the deep pool further in under the rock, at the third beach's foot, from the water it left by: it is
+# brought up level with the sea too, and joined to the rest, so the third beach and the shallows lead out of it)
+brush flatten from 42.4 -36.6 to 46.7 -40.5 r=2.2 s=20 frames=200 h=0
+brush flatten at 46.7 -40.5 r=3.2 s=20 frames=200 h=0
+# (U 11-01: REACH - the quarry cave's rock hangs out over the bay on its west side, and the ground under that skirt drops
+# away, so thin roofed pockets were left between the sand and the rock that a swimmer could get into and not out of; they
+# moved from build to build. The ground under the skirt is raised to just under the rock's top (never lowered, at most
+# 6 m), measured on a 1 m grid with and without the rock, so nothing is left between them.)
+brush flatten at 43.58 -18.99 r=0.9 s=20 frames=200 h=2.9
+brush flatten at 44.58 -18.99 r=0.9 s=20 frames=200 h=3.8
+brush flatten at 45.58 -18.99 r=0.9 s=20 frames=200 h=4.5
+brush flatten at 46.58 -18.99 r=0.9 s=20 frames=200 h=5.1
+brush flatten at 47.58 -18.99 r=0.9 s=20 frames=200 h=5.8
+brush flatten at 48.58 -18.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -19.99 r=0.9 s=20 frames=200 h=2.6
+brush flatten at 43.58 -19.99 r=0.9 s=20 frames=200 h=3.5
+brush flatten at 44.58 -19.99 r=0.9 s=20 frames=200 h=4.4
+brush flatten at 45.58 -19.99 r=0.9 s=20 frames=200 h=5.1
+brush flatten at 46.58 -19.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -19.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -19.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -20.99 r=0.9 s=20 frames=200 h=3.0
+brush flatten at 43.58 -20.99 r=0.9 s=20 frames=200 h=4.1
+brush flatten at 44.58 -20.99 r=0.9 s=20 frames=200 h=5.1
+brush flatten at 45.58 -20.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -20.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -20.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -20.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 41.58 -21.99 r=0.9 s=20 frames=200 h=2.4
+brush flatten at 42.58 -21.99 r=0.9 s=20 frames=200 h=3.5
+brush flatten at 43.58 -21.99 r=0.9 s=20 frames=200 h=4.8
+brush flatten at 44.58 -21.99 r=0.9 s=20 frames=200 h=5.9
+brush flatten at 45.58 -21.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -21.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -21.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -21.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 41.58 -22.99 r=0.9 s=20 frames=200 h=2.7
+brush flatten at 42.58 -22.99 r=0.9 s=20 frames=200 h=3.9
+brush flatten at 43.58 -22.99 r=0.9 s=20 frames=200 h=5.3
+brush flatten at 44.58 -22.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 45.58 -22.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -22.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -22.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -22.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 40.58 -23.99 r=0.9 s=20 frames=200 h=1.8
+brush flatten at 41.58 -23.99 r=0.9 s=20 frames=200 h=2.7
+brush flatten at 42.58 -23.99 r=0.9 s=20 frames=200 h=3.9
+brush flatten at 43.58 -23.99 r=0.9 s=20 frames=200 h=5.6
+brush flatten at 44.58 -23.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 45.58 -23.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -23.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -23.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -23.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 40.58 -24.99 r=0.9 s=20 frames=200 h=1.6
+brush flatten at 41.58 -24.99 r=0.9 s=20 frames=200 h=2.6
+brush flatten at 42.58 -24.99 r=0.9 s=20 frames=200 h=4.1
+brush flatten at 43.58 -24.99 r=0.9 s=20 frames=200 h=5.8
+brush flatten at 44.58 -24.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 45.58 -24.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -24.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -24.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -24.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 39.58 -25.99 r=0.9 s=20 frames=200 h=0.8
+brush flatten at 40.58 -25.99 r=0.9 s=20 frames=200 h=1.5
+brush flatten at 41.58 -25.99 r=0.9 s=20 frames=200 h=2.6
+brush flatten at 42.58 -25.99 r=0.9 s=20 frames=200 h=4.1
+brush flatten at 43.58 -25.99 r=0.9 s=20 frames=200 h=5.8
+brush flatten at 44.58 -25.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 45.58 -25.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -25.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -25.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -25.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 39.58 -26.99 r=0.9 s=20 frames=200 h=0.7
+brush flatten at 40.58 -26.99 r=0.9 s=20 frames=200 h=1.5
+brush flatten at 41.58 -26.99 r=0.9 s=20 frames=200 h=2.5
+brush flatten at 42.58 -26.99 r=0.9 s=20 frames=200 h=4.0
+brush flatten at 43.58 -26.99 r=0.9 s=20 frames=200 h=5.7
+brush flatten at 44.58 -26.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 45.58 -26.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -26.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -26.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -26.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 39.58 -27.99 r=0.9 s=20 frames=200 h=0.6
+brush flatten at 40.58 -27.99 r=0.9 s=20 frames=200 h=1.4
+brush flatten at 41.58 -27.99 r=0.9 s=20 frames=200 h=2.5
+brush flatten at 42.58 -27.99 r=0.9 s=20 frames=200 h=4.0
+brush flatten at 43.58 -27.99 r=0.9 s=20 frames=200 h=5.7
+brush flatten at 44.58 -27.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 45.58 -27.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -27.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -27.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -27.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 39.58 -28.99 r=0.9 s=20 frames=200 h=0.6
+brush flatten at 40.58 -28.99 r=0.9 s=20 frames=200 h=1.4
+brush flatten at 41.58 -28.99 r=0.9 s=20 frames=200 h=2.5
+brush flatten at 42.58 -28.99 r=0.9 s=20 frames=200 h=3.9
+brush flatten at 43.58 -28.99 r=0.9 s=20 frames=200 h=5.5
+brush flatten at 44.58 -28.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 45.58 -28.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -28.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -28.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -28.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 39.58 -29.99 r=0.9 s=20 frames=200 h=0.5
+brush flatten at 40.58 -29.99 r=0.9 s=20 frames=200 h=1.2
+brush flatten at 41.58 -29.99 r=0.9 s=20 frames=200 h=2.3
+brush flatten at 42.58 -29.99 r=0.9 s=20 frames=200 h=3.6
+brush flatten at 43.58 -29.99 r=0.9 s=20 frames=200 h=5.1
+brush flatten at 44.58 -29.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 45.58 -29.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -29.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -29.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -29.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 40.58 -30.99 r=0.9 s=20 frames=200 h=1.0
+brush flatten at 41.58 -30.99 r=0.9 s=20 frames=200 h=2.0
+brush flatten at 42.58 -30.99 r=0.9 s=20 frames=200 h=3.2
+brush flatten at 43.58 -30.99 r=0.9 s=20 frames=200 h=4.6
+brush flatten at 44.58 -30.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 45.58 -30.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -30.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -30.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -30.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 40.58 -31.99 r=0.9 s=20 frames=200 h=0.7
+brush flatten at 41.58 -31.99 r=0.9 s=20 frames=200 h=1.7
+brush flatten at 42.58 -31.99 r=0.9 s=20 frames=200 h=2.8
+brush flatten at 43.58 -31.99 r=0.9 s=20 frames=200 h=4.1
+brush flatten at 44.58 -31.99 r=0.9 s=20 frames=200 h=5.2
+brush flatten at 45.58 -31.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -31.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -31.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -31.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 41.58 -32.99 r=0.9 s=20 frames=200 h=1.2
+brush flatten at 42.58 -32.99 r=0.9 s=20 frames=200 h=2.2
+brush flatten at 43.58 -32.99 r=0.9 s=20 frames=200 h=3.2
+brush flatten at 44.58 -32.99 r=0.9 s=20 frames=200 h=4.3
+brush flatten at 45.58 -32.99 r=0.9 s=20 frames=200 h=5.3
+brush flatten at 46.58 -32.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -32.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -32.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 41.58 -33.99 r=0.9 s=20 frames=200 h=0.7
+brush flatten at 42.58 -33.99 r=0.9 s=20 frames=200 h=1.6
+brush flatten at 43.58 -33.99 r=0.9 s=20 frames=200 h=2.3
+brush flatten at 44.58 -33.99 r=0.9 s=20 frames=200 h=3.3
+brush flatten at 45.58 -33.99 r=0.9 s=20 frames=200 h=4.4
+brush flatten at 46.58 -33.99 r=0.9 s=20 frames=200 h=5.3
+brush flatten at 47.58 -33.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -33.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 41.58 -34.99 r=0.9 s=20 frames=200 h=0.4
+brush flatten at 42.58 -34.99 r=0.9 s=20 frames=200 h=1.1
+brush flatten at 43.58 -34.99 r=0.9 s=20 frames=200 h=1.7
+brush flatten at 44.58 -34.99 r=0.9 s=20 frames=200 h=2.7
+brush flatten at 45.58 -34.99 r=0.9 s=20 frames=200 h=3.6
+brush flatten at 46.58 -34.99 r=0.9 s=20 frames=200 h=4.6
+brush flatten at 47.58 -34.99 r=0.9 s=20 frames=200 h=5.8
+brush flatten at 48.58 -34.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -35.99 r=0.9 s=20 frames=200 h=0.8
+brush flatten at 43.58 -35.99 r=0.9 s=20 frames=200 h=1.5
+brush flatten at 44.58 -35.99 r=0.9 s=20 frames=200 h=2.4
+brush flatten at 45.58 -35.99 r=0.9 s=20 frames=200 h=3.4
+brush flatten at 46.58 -35.99 r=0.9 s=20 frames=200 h=4.5
+brush flatten at 47.58 -35.99 r=0.9 s=20 frames=200 h=5.7
+brush flatten at 48.58 -35.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -36.99 r=0.9 s=20 frames=200 h=0.9
+brush flatten at 43.58 -36.99 r=0.9 s=20 frames=200 h=1.6
+brush flatten at 44.58 -36.99 r=0.9 s=20 frames=200 h=2.5
+brush flatten at 45.58 -36.99 r=0.9 s=20 frames=200 h=3.5
+brush flatten at 46.58 -36.99 r=0.9 s=20 frames=200 h=4.7
+brush flatten at 47.58 -36.99 r=0.9 s=20 frames=200 h=5.9
+brush flatten at 48.58 -36.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 41.58 -37.99 r=0.9 s=20 frames=200 h=0.6
+brush flatten at 42.58 -37.99 r=0.9 s=20 frames=200 h=1.1
+brush flatten at 43.58 -37.99 r=0.9 s=20 frames=200 h=1.9
+brush flatten at 44.58 -37.99 r=0.9 s=20 frames=200 h=2.9
+brush flatten at 45.58 -37.99 r=0.9 s=20 frames=200 h=3.9
+brush flatten at 46.58 -37.99 r=0.9 s=20 frames=200 h=5.2
+brush flatten at 47.58 -37.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -37.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -38.99 r=0.9 s=20 frames=200 h=1.5
+brush flatten at 43.58 -38.99 r=0.9 s=20 frames=200 h=2.4
+brush flatten at 44.58 -38.99 r=0.9 s=20 frames=200 h=3.4
+brush flatten at 45.58 -38.99 r=0.9 s=20 frames=200 h=4.6
+brush flatten at 46.58 -38.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -38.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -38.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -39.99 r=0.9 s=20 frames=200 h=2.1
+brush flatten at 43.58 -39.99 r=0.9 s=20 frames=200 h=2.9
+brush flatten at 44.58 -39.99 r=0.9 s=20 frames=200 h=3.9
+brush flatten at 45.58 -39.99 r=0.9 s=20 frames=200 h=5.3
+brush flatten at 46.58 -39.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -39.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -39.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -40.99 r=0.9 s=20 frames=200 h=2.5
+brush flatten at 43.58 -40.99 r=0.9 s=20 frames=200 h=3.3
+brush flatten at 44.58 -40.99 r=0.9 s=20 frames=200 h=4.4
+brush flatten at 45.58 -40.99 r=0.9 s=20 frames=200 h=5.9
+brush flatten at 46.58 -40.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -40.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -40.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -41.99 r=0.9 s=20 frames=200 h=2.8
+brush flatten at 43.58 -41.99 r=0.9 s=20 frames=200 h=3.6
+brush flatten at 44.58 -41.99 r=0.9 s=20 frames=200 h=4.8
+brush flatten at 45.58 -41.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -41.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -41.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -41.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 41.58 -42.99 r=0.9 s=20 frames=200 h=2.5
+brush flatten at 42.58 -42.99 r=0.9 s=20 frames=200 h=3.0
+brush flatten at 43.58 -42.99 r=0.9 s=20 frames=200 h=3.8
+brush flatten at 44.58 -42.99 r=0.9 s=20 frames=200 h=5.2
+brush flatten at 45.58 -42.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -42.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -42.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -42.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -43.99 r=0.9 s=20 frames=200 h=3.3
+brush flatten at 43.58 -43.99 r=0.9 s=20 frames=200 h=3.9
+brush flatten at 44.58 -43.99 r=0.9 s=20 frames=200 h=5.2
+brush flatten at 45.58 -43.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -43.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -43.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -43.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 41.58 -44.99 r=0.9 s=20 frames=200 h=2.8
+brush flatten at 42.58 -44.99 r=0.9 s=20 frames=200 h=3.4
+brush flatten at 43.58 -44.99 r=0.9 s=20 frames=200 h=4.1
+brush flatten at 44.58 -44.99 r=0.9 s=20 frames=200 h=5.3
+brush flatten at 45.58 -44.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -44.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -44.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -44.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -45.99 r=0.9 s=20 frames=200 h=3.5
+brush flatten at 43.58 -45.99 r=0.9 s=20 frames=200 h=4.2
+brush flatten at 44.58 -45.99 r=0.9 s=20 frames=200 h=5.3
+brush flatten at 45.58 -45.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -45.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -45.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -45.99 r=0.9 s=20 frames=200 h=6.0
+# (U 11-01: REACH - the crew's journal: a swimmer coming to the camp's north shore stood in water a metre deep under a
+# bank a metre over the sea and could not climb it - a beach from the water up the bank, under 0.5 m a step)
+for i 0 7 1
+brush flatten at {-60.9-$i*0.1} {14.2-$i*0.8} r=2.2 s=20 frames=200 h={-1.2+$i*0.35}
+next
 # --- JUMP COURSE ut (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---
 # JUMP ut pad=3 at=66 32
 push at 66 32
@@ -197,6 +463,14 @@ prop jput tint.color=#857a68
 prop jput tint.amount=0.35
 prop jpput tint.color=#857a68
 prop jpput tint.amount=0.35
+# (U 11-01: REACH - the stack-top chest, the guards' tin and the finale stood on slabs only a run of hops reaches, and
+# nobody who can't make them gets up (or, once up, down but by a drop): a ladder up the stack-top slab's west side and
+# one up the tin's slab's east side, their tops just over the slabs, their feet in the pad; a Block_Ladder is climbed
+# from its back looking along its forward, so each faces its slab - turned the other way the walker never took hold)
+for k 0 3 1
+place Block_Ladder jladut at -7.08 -2.02 h={0.8+$k*2.42} yaw=90
+place Block_Ladder jladut at 2.46 3.21 h={1.2+$k*2.42} yaw=-90
+next
 place Loot_Chest jcut at -5.12 -2.02 h=9.40 sit yaw=0
 note jcut Stack-top chest | On top of the slab stacks: what the warden's guards hid from him.
 loot jcut CopperIngot*2;TitaniumOre*1;Bolt*3
@@ -233,7 +507,8 @@ call shallows r=75 deep=5 n=2
 
 # --- RAFT REMADE 10-26: the new areas' zones and notes, the gate's third key, the secrets ------------------------------
 call hw_zone x=-70 z=2 al=crewz id=crewcamp r=9 h=1 msg="Olof's crew camp. A stone hut, a tent, a fire long cold - they waited here for the warden to fall."
-place Note_Paper crewjournal at -72.75 8 h=4.45 drop yaw=20
+# (U 11-01: REACH - the journal lay mid-table, out of reach from beside it: at the table's door end)
+place Note_Paper crewjournal at -72.95 7.3 h=4.45 drop yaw=20
 note crewjournal Crew's journal | OLOF'S CREW - THE JOURNAL\n\nThe warden had a third lock put on his gate after we tried it the first time. The third key went to the old lighthouse keeper - he'd never come down.\nThe keeper's box is up the lighthouse mast on Lighthouse Head, the hill with the old mast.\nThe rest of us are marking our tokens round the island. Find all six and you'll know we were here.
 call hw_zone x=0 z=-56 al=headfootz id=headfoot r=6 msg="Lighthouse Head. A path cut round the hill to the old lighthouse mast on its top."
 call hw_zone x=0 z=-74 al=headtopz id=lighthouse r=8 h=1 msg="The top of Lighthouse Head. The mast's ladder runs up inside it - the keeper's box hangs on the deck."
@@ -408,5 +683,16 @@ clear at -60.07 -0.98 r=0.5 all body only=BigBoulder1_Low
 clear at -62.66 4.63 r=0.5 all body only=SmallBoulder2
 clear at -75.57 12.49 r=0.5 all body only=SmallBoulder2
 clear at -78.82 5.18 r=0.5 all body only=SmallBoulder2
+# (U 11-01: GROUND - the check found 9 trunks wrong: 7 trees and bamboo sunk 1.3-4.1 m in slopes the strokes raised
+# (set back on the land at the save), a bamboo 0.5 m over the ground by the warden's plane and one on a rim over the
+# drop by the quarry ridge's foot (taken out; the report is from the land centre 2.5616 -7.998, added here))
+clear at -38.07 26.10 r=0.8 all only=Bamboo
+clear at 47.52 -4.77 r=0.8 all only=Bamboo
+# (a second check found three more bamboo: two on rims over drops - by the keeper's cliff and the west shore - and one
+# sunk 2.8 m in the quarry ridge's flank that the reseat could not lift; taken out)
+clear at 1.21 -65.89 r=0.8 all only=Bamboo
+clear at -69.91 14.99 r=0.8 all only=Bamboo
+clear at 58.66 -24.19 r=0.8 all only=Bamboo
+reseat trees
 
 save Utopia Remade

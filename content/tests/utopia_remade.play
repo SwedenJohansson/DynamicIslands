@@ -3,7 +3,7 @@
 # warden's yard on the summit (18 m), its gate in the north side.
 # Quest "The Warden's Gate", 20 steps: the docks (1-9), the prison house (10-14), the summit (15-20).
 island Utopia Remade
-offset 2.5752 -7.9918
+offset 3.1551 -8.3517
 expect step 0
 expect title The Warden's Gate
 
