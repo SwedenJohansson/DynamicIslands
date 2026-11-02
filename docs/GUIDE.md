@@ -689,8 +689,8 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
 - **Caves:** **Tunnel** digs a cave you can walk into. Press where its mouth is to be and drag the way it goes, into a
   hill or across flat ground: Raft's own cave tunnels (the ones on Temperance) are laid end to end along the drag, as
   many as fit (up to 12, about 10 m each), and the ground is raised over them into a hill, filled up under them and
-  levelled in front of the mouth, which stays open. The mouth gets a frame of the same rock, flush with the hill's
-  face, with a level doorstep before it, and the ground is cut away along the whole passage, so you walk straight in
+  levelled in front of the mouth (easing into the hill, worn bare round the doorstep), which stays open. The mouth gets rough rock of the same kind round it, standing out
+  of the hill like Raft's own cave entrances, with the floor running level in under it, and the ground is cut away along the whole passage, so you walk straight in
   and through to the end (an open far end gets the same frame). Even a short drag lays at least one tunnel. **Slope** tips the tunnel down into the ground or up (up to 12°);
   **Size** makes the whole cave smaller or bigger than Raft's own, from **0.7x** (a narrow passage you can still
   walk) to **1.5x** (a big cavern); pick it before you drag - an outline of the mouth at that size follows the mouse;
@@ -706,8 +706,9 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
   **Dig size** is the passage's width and height (2.8 m: a tight passage you can still walk; 6 m and more: a hall);
   **Dig slope** makes it climb or go down as you dig (up to 25°; down from flat ground is a ramp in). The passage is lined
   with Raft's brown island rock, closed all round under the ground; only its mouth, where it comes out of the hill, is
-  open to the sky. The mouth gets a rim of rock rising out of the ground round it - low at the doorstep, higher at its
-  sides and as a brow over it - whose top takes the ground's own look (grass on a grassy hill, rock on a cliff). Placed objects the passage goes through or its rim would bury (a boulder, a bush, a buried rock) are taken away
+  open to the sky. The mouth gets a low, uneven rim of rock round it that blends into the slope: its top is drawn
+  with the ground's own textures (grass on a grassy hill, rock on a cliff), with bare rock on its sides and at the opening; before a
+  cliff the floor runs straight out onto the ground. The lining inside is smooth rock. Placed objects the passage goes through or its rim would bury (a boulder, a bush, a buried rock) are taken away
   with the stroke. Each stroke is one **Ctrl+Z** (it brings them back too). A dug tunnel is saved with the island and comes along into Test and
   multiplayer; it follows the ground if you sculpt over it later. It has no move arrows: dig, fill or undo it.
 
