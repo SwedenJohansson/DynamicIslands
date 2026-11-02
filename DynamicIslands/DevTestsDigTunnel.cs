@@ -128,6 +128,7 @@ namespace DynamicIslands
 			Vector3 o = land.transform.position;
 			float cw = data.size.x / data.holesResolution, ch = data.size.z / data.holesResolution;
 			int over = 0, open = 0, other = 0;
+			string where = "";
 			sunken = 0;
 			Physics.SyncTransforms();
 			foreach (Vector2Int q in cut)
@@ -138,9 +139,55 @@ namespace DynamicIslands
 				if (!Physics.Raycast(new Vector3(w.x, g + 30f, w.z), Vector3.down, out hit, 60f, ~0, QueryTriggerInteraction.Ignore) || !IsDigRock(hit.collider)) { other++; continue; }
 				if (hit.point.y >= g - 0.05f) over++;
 				else if (t.Distance(t.transform.InverseTransformPoint(hit.point + Vector3.up * 0.3f)) < 0f) open++;
-				else sunken++;
+				else { sunken++; if (where.Length < 200) where += " (" + q.x + "," + q.y + ": " + (hit.point.y - g).ToString("0.00") + " m, passage " + t.Distance(t.transform.InverseTransformPoint(hit.point)).ToString("0.00") + ")"; }
 			}
-			return over + " under the rim, " + open + " the open mouth, " + sunken + " sunken, " + other + " under something else";
+			return over + " under the rim, " + open + " the open mouth, " + sunken + " sunken" + where + ", " + other + " under something else; cells " + cw.ToString("0.00") + " m";
+		}
+
+		/// <summary>
+		/// The mouth looked at from outside: points of the ground's surface over the cut cells (5 x 5 a cell, the mouth's own
+		/// opening left out) looked at from each eye, or from straight over them (eye null): a look that meets nothing, or meets
+		/// something 0.6 m or more past the point, sees through the hill (the sky or the hill's inside).
+		/// </summary>
+		static int SeeThrough(DigTunnel t, Terrain land, IEnumerable<Vector2Int> cut, IList<Vector3> eyes, List<string> seen, out int looked)
+		{
+			TerrainData data = land.terrainData;
+			Vector3 o = land.transform.position;
+			float cw = data.size.x / data.holesResolution, ch = data.size.z / data.holesResolution;
+			int through = 0;
+			looked = 0;
+			Physics.SyncTransforms();
+			foreach (Vector2Int q in cut)
+				for (int a = 0; a < 5; a++)
+					for (int b = 0; b < 5; b++)
+					{
+						var p = new Vector3(o.x + (q.x + 0.1f + a * 0.2f) * cw, 0f, o.z + (q.y + 0.1f + b * 0.2f) * ch);
+						p.y = land.SampleHeight(p) + o.y;
+						if (t.Distance(t.transform.InverseTransformPoint(p)) < 0.3f) continue; // (the opening)
+						// (and its lip: where a shallow passage runs under the ground with less than the mesh's step (0.35-0.6 m) of roof, the
+						// lining can't be thinner than a step and the mouth reaches that far - looking in there is looking into the mouth)
+						bool lip = false;
+						for (float k = 0.15f; k <= 0.61f && !lip; k += 0.15f) lip = t.Distance(t.transform.InverseTransformPoint(p - Vector3.up * k)) < 0f;
+						if (lip) continue;
+						IEnumerable<Vector3> from = eyes != null ? eyes : (IEnumerable<Vector3>)new[] { p + Vector3.up * 25f };
+						foreach (Vector3 eye in from)
+						{
+							Vector3 d = p - eye;
+							float dist = d.magnitude;
+							if (dist < 1f) continue;
+							d /= dist;
+							looked++;
+							RaycastHit hit;
+							bool any = Physics.Raycast(eye, d, out hit, dist + 40f, ~0, QueryTriggerInteraction.Ignore);
+							while (any && (hit.collider.GetComponentInParent<Network_Player>() != null || hit.collider.GetComponentInParent<AI_NetworkBehaviour>() != null))
+								any = Physics.Raycast(hit.point + d * 0.05f, d, out hit, dist + 40f, ~0, QueryTriggerInteraction.Ignore);
+							float past = any ? Vector3.Dot(hit.point - p, d) : 999f;
+							if (past < 0.6f) continue;
+							through++;
+							if (seen.Count < 8) seen.Add("(" + q.x + "," + q.y + ") " + (p.y - o.y).ToString("0.0") + " m high: " + (any ? hit.collider.name + " " + past.ToString("0.0") + " m past it" : "the sky"));
+						}
+					}
+			return through;
 		}
 
 		/// <summary>The rim's look: its columns, the ground texture on its top, the rock's shader and what it takes.</summary>
@@ -151,8 +198,23 @@ namespace DynamicIslands
 			Material m = mr != null && mr.sharedMaterials.Length > 1 ? mr.sharedMaterials[1] : null;
 			MeshFilter mf = rock != null ? rock.GetComponent<MeshFilter>() : null;
 			int top = mf != null && mf.sharedMesh != null && mf.sharedMesh.subMeshCount > 1 ? mf.sharedMesh.GetTriangles(1).Length / 3 : 0;
+			string tex = "";
+			if (mr != null)
+			{
+				Material[] ms = mr.sharedMaterials;
+				var pb = new MaterialPropertyBlock();
+				mr.GetPropertyBlock(pb, 0);
+				Texture side = pb.GetTexture("_SideDiffuse");
+				tex = "; " + ms.Length + " materials, the lining's rock " + (side != null ? side.name : "(no block: " + (ms.Length > 0 && ms[0] != null && ms[0].HasProperty("_SideDiffuse") && ms[0].GetTexture("_SideDiffuse") != null ? ms[0].GetTexture("_SideDiffuse").name : "none") + ")");
+				if (ms.Length > 2 && ms[2] != null)
+				{
+					// (the terrain shaders don't declare their splat maps: asking the material says "none" - the tunnel keeps them)
+					Terrain land = t.SkinLand;
+					tex += ", the top (" + ms[2].shader.name + ", ground's " + (land != null && land.materialTemplate != null ? land.materialTemplate.shader.name : "built-in") + ") " + t.TopTextures;
+				}
+			}
 			return t.RimColumns + " rim columns, " + top + " rim triangles, its top " + (t.RimTop == "" ? "rock" : t.RimTop)
-				+ (m != null ? "; material " + m.name + ", shader " + m.shader.name + " (" + string.Join(", ", m.GetTexturePropertyNames()) + ")" : "; no second material");
+				+ (m != null ? "; material " + m.name + ", shader " + m.shader.name + " (" + string.Join(", ", m.GetTexturePropertyNames()) + ")" : "; no second material") + tex;
 		}
 
 		static IEnumerator DigTunnelEditorRoutine()
@@ -255,6 +317,31 @@ namespace DynamicIslands
 				string cover = RimCover(tun, t, cut, out sunken);
 				Check(ref ok, tun.RimColumns > 0 && sunken == 0, "the mouth's rim: " + RimLook(tun) + "; the cut cells: " + cover);
 			}
+			// From outside, in front and from over it: no look through the hill at the mouth (11-02)
+			{
+				var seen = new List<string>();
+				int looked, looked2;
+				int front = SeeThrough(tun, t, cut, new[] { mouth - dir * 12f + Vector3.up * 5f, mouth - dir * 6f + side * 7f + Vector3.up * 2.5f, mouth - dir * 6f - side * 7f + Vector3.up * 2.5f }, seen, out looked);
+				int above = SeeThrough(tun, t, cut, null, seen, out looked2);
+				Check(ref ok, front == 0 && above == 0 && looked > 0, "the mouth from outside: " + front + " of " + looked + " looks from in front and " + above + " of " + looked2 + " from over it see through the hill" + (seen.Count > 0 ? ": " + string.Join("; ", seen.ToArray()) : ""));
+			}
+			// No ground cut over a buried part: every cut cell has the passage within 1.5 m of its ground somewhere (11-02)
+			{
+				int buried = 0;
+				foreach (Vector2Int q in cut)
+				{
+					float bestD = float.MaxValue;
+					for (int a = 0; a <= 2; a++)
+						for (int b2 = 0; b2 <= 2; b2++)
+						{
+							Vector3 w = ground(new Vector3(o.x + (q.x + a * 0.5f) * cellSize, 0f, o.z + (q.y + b2 * 0.5f) * cellSize));
+							bestD = Mathf.Min(bestD, tun.Distance(tun.transform.InverseTransformPoint(w)));
+						}
+					if (bestD > 1.5f) buried++;
+				}
+				Check(ref ok, buried == 0, "no ground cut over a buried part: " + buried + " of " + cut.Count + " cut cells have the passage deeper than 1.5 m under them");
+			}
+			// (the editor camera flown into the mouth, and God mode: CIDigTunnelCamera)
 			yield return CameraShot(mouth - dir * 12f + Vector3.up * 5f, mouth + Vector3.up * 1.5f, "digtunnel_mouth");
 			yield return CameraShot(mouth - dir * 6f + side * 7f + Vector3.up * 2.5f, mouth + dir * 1f + Vector3.up * 1.2f, "digtunnel_mouth_side");
 			yield return CameraShot(line[3] + Vector3.down * 0.4f, line[Mathf.Min(line.Count - 1, 24)], "digtunnel_inside");
@@ -365,6 +452,13 @@ namespace DynamicIslands
 						int sunken;
 						string cover = RimCover(ct, t, cliffCut, out sunken);
 						Check(ref ok, ct.RimColumns > 0 && sunken == 0, "the cliff mouth's rim: " + RimLook(ct) + "; the cut cells: " + cover);
+						{
+							var cseen = new List<string>();
+							int looked, looked2;
+							int front = SeeThrough(ct, t, cliffCut, new[] { foot + Vector3.left * 11f + Vector3.up * 3f, foot + Vector3.left * 5f + Vector3.forward * 7f + Vector3.up * 2f, foot + Vector3.left * 5f + Vector3.back * 7f + Vector3.up * 2f, foot + Vector3.left * 8f + Vector3.up * 9f }, cseen, out looked);
+							int above = SeeThrough(ct, t, cliffCut, null, cseen, out looked2);
+							Check(ref ok, front == 0 && above == 0 && looked > 0, "the cliff mouth from outside: " + front + " of " + looked + " looks from in front and " + above + " of " + looked2 + " from over it see through the cliff" + (cseen.Count > 0 ? ": " + string.Join("; ", cseen.ToArray()) : ""));
+						}
 						List<Vector3> cl = DigLine(ct);
 						var ceyes = new List<Vector3>();
 						for (int i = 2; i < cl.Count; i += 4) ceyes.Add(cl[i] + Vector3.down * (DigTunnel.CentreUp * DigTunnel.Radius) + Vector3.up * 1.6f);
@@ -379,6 +473,112 @@ namespace DynamicIslands
 					}
 					data.SetHeights(hx0, hz0, h0);
 					TerrainPainter.PaintWorldArea(t, sea, cliff + new Vector3(-4f, 0f, -17f), cliff + new Vector3(27f, 0f, 17f));
+					DigTunnel.EditorNow(t);
+				}
+			}
+			// Dug down: a level stroke over flat ground goes down into it on a walkable ramp until it has rock over it, then on
+			// level; the ground cut only at the ramp's top (11-02)
+			{
+				data = t.terrainData;
+				o = t.transform.position;
+				Vector3 flatAt = Vector3.zero;
+				bool flat = false;
+				for (float r = 24f; r < 110f && !flat; r += 6f)
+					for (int k = 0; k < 16 && !flat; k++)
+					{
+						float an = (k + 0.5f) * Mathf.PI / 8f;
+						Vector3 p = ground(c + new Vector3(Mathf.Cos(an), 0f, Mathf.Sin(an)) * r);
+						if (p.y < sea + 2.5f || (p - mouth).magnitude < 45f || (p - end).magnitude < 30f) continue;
+						float lo = float.MaxValue, hi = float.MinValue;
+						for (int gx = -1; gx <= 4; gx++)
+							for (int gz = -1; gz <= 1; gz++)
+							{
+								float y = ground(p + new Vector3(gx * 5f, 0f, gz * 5f)).y;
+								lo = Mathf.Min(lo, y); hi = Mathf.Max(hi, y);
+							}
+						if (hi - lo < 1.5f && lo > sea + 2f) { flatAt = p; flat = true; }
+					}
+				Check(ref ok, flat, "a flat place to dig down" + (flat ? " " + (flatAt.y - sea).ToString("0.0") + " m above the sea" : ""));
+				if (flat)
+				{
+					DigTunnel.Slope = 0f;
+					DigTunnel dt = DigTunnel.TestStroke(t, new List<Vector3> { flatAt, ground(flatAt + Vector3.right * 18f) });
+					yield return null;
+					DigTunnel.EditorNow(t);
+					HashSet<Vector2Int> downCut = new HashSet<Vector2Int>();
+					if (dt != null) dt.CellsToCut(t, downCut);
+					Check(ref ok, dt != null && dt.PointCount > 10 && downCut.Count > 0, "dug down: " + (dt != null ? dt.PointCount + " points, " + downCut.Count + " cells cut" : "none"));
+					if (dt != null && dt.PointCount > 10)
+					{
+						List<DigTunnel.Point> s0 = dt.Strokes[0];
+						Vector3 endAt = dt.transform.TransformPoint(s0[s0.Count - 1].At);
+						float roofCover = ground(endAt).y - DigTunnel.Under - (endAt.y + (DigTunnel.CentreUp + 1f) * s0[s0.Count - 1].R);
+						float steepest = 0f;
+						for (int i = 1; i < s0.Count; i++)
+						{
+							Vector3 a = dt.transform.TransformPoint(s0[i - 1].At), b2 = dt.transform.TransformPoint(s0[i].At);
+							float run = new Vector2(b2.x - a.x, b2.z - a.z).magnitude;
+							if (run > 0.01f) steepest = Mathf.Max(steepest, Mathf.Atan2(Mathf.Abs(b2.y - a.y), run) * Mathf.Rad2Deg);
+						}
+						Check(ref ok, roofCover > DigTunnel.DownCover - 0.1f && ground(endAt).y - endAt.y > 3.5f && steepest <= DigTunnel.MaxSlope + 0.5f,
+							"down into the ground: the end's floor " + (ground(endAt).y - endAt.y).ToString("0.0") + " m under the ground, " + roofCover.ToString("0.0") + " m of rock over its roof, the ramp at most " + steepest.ToString("0") + " degrees");
+						// walkable both ways (the way out is the ramp)
+						List<Vector3> dl = DigLine(dt);
+						int dNoFloor = 0, dLow = 0;
+						float dStep = 0f, dLast = float.NaN;
+						var deyes = new List<Vector3>();
+						var dBad = new List<string>();
+						for (int i = 0; i < dl.Count; i++)
+						{
+							RaycastHit fh;
+							if (!DigFloor(dl[i], out fh)) { dNoFloor++; dBad.Add("no floor at " + i); continue; }
+							if (!IsDigRock(fh.collider) && !(fh.collider is TerrainCollider)) { dNoFloor++; dBad.Add(fh.collider.name + " at " + i); continue; }
+							if (!float.IsNaN(dLast)) dStep = Mathf.Max(dStep, Mathf.Abs(fh.point.y - dLast));
+							dLast = fh.point.y;
+							RaycastHit up;
+							Physics.queriesHitBackfaces = true;
+							bool roof = Physics.Raycast(fh.point + Vector3.up * 0.1f, Vector3.up, out up, 10f, ~0, QueryTriggerInteraction.Ignore);
+							Physics.queriesHitBackfaces = false;
+							if (roof && up.distance + 0.1f < 2f) { dLow++; dBad.Add("room " + (up.distance + 0.1f).ToString("0.0") + " m at " + i); }
+							if (i % 4 == 2) deyes.Add(fh.point + Vector3.up * 1.6f);
+						}
+						Check(ref ok, dNoFloor == 0 && dLow == 0 && dStep < 0.6f, "the ramp down walkable: " + dl.Count + " points, " + dNoFloor + " without a floor, " + dLow + " too low, the biggest step " + dStep.ToString("0.00") + " m" + (dBad.Count > 0 ? ": " + string.Join(", ", dBad.Take(6).ToArray()) : ""));
+						// the cut: only where the ramp meets the ground, none over its covered part
+						int buried = 0;
+						float farCut = 0f;
+						Vector3 top = dt.transform.TransformPoint(s0[0].At);
+						foreach (Vector2Int q in downCut)
+						{
+							float bestD = float.MaxValue;
+							for (int a = 0; a <= 2; a++)
+								for (int b2 = 0; b2 <= 2; b2++)
+								{
+									Vector3 w = ground(new Vector3(o.x + (q.x + a * 0.5f) * cellSize, 0f, o.z + (q.y + b2 * 0.5f) * cellSize));
+									bestD = Mathf.Min(bestD, dt.Distance(dt.transform.InverseTransformPoint(w)));
+								}
+							if (bestD > 1.5f) buried++;
+							farCut = Mathf.Max(farCut, new Vector2(o.x + (q.x + 0.5f) * cellSize - top.x, o.z + (q.y + 0.5f) * cellSize - top.z).magnitude);
+						}
+						float rampRun = new Vector2(endAt.x - top.x, endAt.z - top.z).magnitude;
+						Check(ref ok, buried == 0 && farCut < rampRun - 2f, "the ground cut at the ramp's top only: " + downCut.Count + " cells, the farthest " + farCut.ToString("0.0") + " m on (the passage " + rampRun.ToString("0.0") + " m long), " + buried + " over a buried part");
+						int sunken;
+						string cover = RimCover(dt, t, downCut, out sunken);
+						Check(ref ok, sunken == 0, "the ramp's rim: the cut cells: " + cover);
+						{
+							var rseen = new List<string>();
+							int looked, looked2;
+							int front = SeeThrough(dt, t, downCut, new[] { top + Vector3.left * 9f + Vector3.up * 4f, top + Vector3.left * 4f + Vector3.forward * 7f + Vector3.up * 3f, top + Vector3.right * 10f + Vector3.up * 6f }, rseen, out looked);
+							int above = SeeThrough(dt, t, downCut, null, rseen, out looked2);
+							Check(ref ok, front == 0 && above == 0 && looked > 0, "the ramp from outside: " + front + " of " + looked + " looks from round it and " + above + " of " + looked2 + " from over it see through the ground" + (rseen.Count > 0 ? ": " + string.Join("; ", rseen.ToArray()) : ""));
+						}
+						var seen = new List<string>();
+						int under;
+						int leaks = DigLeaks(dt, t, deyes, seen, out under);
+						Check(ref ok, leaks == 0 && under == 0, "the ramp from inside (" + deyes.Count + " places): " + leaks + " looks out through the rock, " + under + " to the ground from below" + (seen.Count > 0 ? ": " + string.Join("; ", seen.Take(6).ToArray()) : ""));
+						yield return CameraShot(top + Vector3.left * 9f + Vector3.forward * 4f + Vector3.up * 5f, top + Vector3.right * 4f, "digtunnel_down_top");
+						yield return CameraShot(dl[dl.Count - 1] + Vector3.down * 0.3f, dl[0], "digtunnel_down_inside");
+					}
+					if (dt != null) { CommandUndoRedo.UndoRedoManager.Undo(); yield return null; }
 					DigTunnel.EditorNow(t);
 				}
 			}
@@ -566,6 +766,10 @@ namespace DynamicIslands
 
 			Vector3 out0 = line[0] - (line[Mathf.Min(6, line.Count - 1)] - line[0]).normalized * 12f; out0.y = line[0].y + 4f;
 			yield return CameraShot(out0, line[0], "digtunnel_world_mouth");
+			{
+				Light sun = RenderSettings.sun != null ? RenderSettings.sun : Object.FindObjectsOfType<Light>().Where(l => l.type == LightType.Directional && l.enabled).OrderByDescending(l => l.intensity).FirstOrDefault();
+				Log("  (light: ambient " + RenderSettings.ambientMode + " " + RenderSettings.ambientSkyColor + ", intensity " + RenderSettings.ambientIntensity.ToString("0.00") + ", reflections " + RenderSettings.reflectionIntensity.ToString("0.00") + "; sun " + (sun != null ? sun.name + " " + sun.color + " x" + sun.intensity.ToString("0.00") + ", shadows " + sun.shadows + ", lights the rock's layer " + ((sun.cullingMask & (1 << rock.gameObject.layer)) != 0) + ", the ground's " + ((sun.cullingMask & (1 << land.gameObject.layer)) != 0) : "none") + "; rock layer " + LayerMask.LayerToName(rock.gameObject.layer) + ", ground layer " + LayerMask.LayerToName(land.gameObject.layer) + "; the rock casts " + mr.shadowCastingMode + ", receives " + mr.receiveShadows + ", probes " + mr.lightProbeUsage + "/" + mr.reflectionProbeUsage + "; the ground probes " + land.reflectionProbeUsage + "; camera " + (Camera.main != null ? Camera.main.actualRenderingPath.ToString() : "none") + "; QualitySettings shadows " + QualitySettings.shadows + ")");
+			}
 			yield return CameraShot(line[2] + Vector3.down * 0.3f, line[Mathf.Min(line.Count - 1, 22)], "digtunnel_world_inside");
 			yield return CameraShot(line[line.Count - 1] + Vector3.down * 0.3f, line[Mathf.Max(0, line.Count - 14)], "digtunnel_world_back");
 
@@ -577,6 +781,163 @@ namespace DynamicIslands
 				try { File.Delete(path); } catch { }
 			}
 			if (ok) Log("PASS: dig tunnel world"); else Fail("dig tunnel world");
+		}
+
+		[ConsoleCommand(name: "CIDigTunnelCamera", docs: "Dev, editor: the editor camera and a dug tunnel - a tunnel dug into a generated island's hill (24 m in, round a bend), the camera flown (its own controls, normal speed, steered at the passage's points) from in front of the mouth to the end: every step in the passage, under the hill's surface, near the path, not too fast; into the wall it stays inside, up into the roof it stops; God mode on: on up through the rock, and into the hillside away from the mouth (off: kept over the ground). Pictures from inside")]
+		public static void DigTunnelCameraCommand(string[] args) { StartTest(DigTunnelCameraRoutine()); }
+
+		/// <summary>The editor camera flown with its own controls (EditorCamera.TestKeys) for some seconds, facing aim each frame (null: as it is).</summary>
+		static IEnumerator FlyCamera(EditorCamera ec, Vector3 keys, float seconds, System.Func<Vector3> aim)
+		{
+			float t0 = Time.unscaledTime;
+			while (Time.unscaledTime < t0 + seconds)
+			{
+				if (aim != null) ec.Face(aim());
+				EditorCamera.TestKeys = keys;
+				yield return null;
+			}
+			EditorCamera.TestKeys = null;
+			for (int i = 0; i < 15; i++) yield return null; // (it slows down)
+		}
+
+		static IEnumerator DigTunnelCameraRoutine()
+		{
+			if (!DynamicIslands.InEditor()) { Fail("dig tunnel camera: in the editor"); yield break; }
+			EditorCamera ec = EditorCamera.Instance;
+			if (ec == null) { Fail("dig tunnel camera: no editor camera"); yield break; }
+			bool ok = true;
+			float radius0 = DigTunnel.Radius, slope0 = DigTunnel.Slope, speed0 = EditorCamera.SpeedFactor;
+			bool god0 = EditorCamera.GodMode;
+			DigTunnel.Radius = 1.75f; DigTunnel.Slope = 0f;
+			EditorCamera.SpeedFactor = 1f; EditorCamera.GodMode = false;
+			DynamicIslands.NewIsland();
+			yield return null;
+			IslandGenerator.GenerateInEditor(new IslandGenSettings { Seed = 4242, Radius = 130f, Height = 30f, Style = TerrainPainter.Tropical });
+			yield return null;
+			yield return new WaitForSecondsRealtime(0.6f);
+			Terrain t = terraineditor.terrain;
+			TerrainData data = t.terrainData;
+			Vector3 o = t.transform.position, c = o + new Vector3(data.size.x / 2f, 0f, data.size.z / 2f);
+			float sea = DynamicIslands.EditorWaterLevel;
+			System.Func<Vector3, Vector3> ground = p => { p.y = t.SampleHeight(p) + o.y; return p; };
+
+			// A hill's foot (as CIDigTunnelEditor): the ground 10 m on 3 m higher, 24 m on and round the bend 5.5 m higher
+			Vector3 mouth = Vector3.zero, dir = Vector3.zero, side = Vector3.zero;
+			bool found = false;
+			float bestScore = 0f;
+			foreach (Vector3 d in new[] { Vector3.right, Vector3.left, Vector3.forward, Vector3.back })
+				for (float s = 90f; s > 10f; s -= 2f)
+				{
+					Vector3 p = ground(c - d * s);
+					if (p.y < sea + 1.5f) continue;
+					foreach (Vector3 sd in new[] { Vector3.Cross(Vector3.up, d), -Vector3.Cross(Vector3.up, d) })
+					{
+						float score = Mathf.Min(Mathf.Min(ground(p + d * 10f).y - p.y - 3f, ground(p + d * 24f).y - p.y - 5.5f),
+							Mathf.Min(ground(p + d * 24f + sd * 10f).y - p.y - 5.5f, ground(p + d * 16f + sd * 8f).y - p.y - 5f));
+						if (score >= bestScore) { bestScore = score; mouth = p; dir = d; side = sd; found = true; }
+					}
+				}
+			DigTunnel tun = found ? DigTunnel.TestStroke(t, new List<Vector3> { mouth, mouth + dir * 24f, mouth + dir * 24f + side * 10f }) : null;
+			yield return null;
+			DigTunnel.EditorNow(t);
+			yield return null;
+			if (tun == null) { Fail("dig tunnel camera: no tunnel dug (hillside found " + found + ")"); DigTunnel.Radius = radius0; DigTunnel.Slope = slope0; EditorCamera.SpeedFactor = speed0; EditorCamera.GodMode = god0; yield break; }
+			List<Vector3> line = DigLine(tun);
+			System.Func<Vector3, float> inside = p => tun.Distance(tun.transform.InverseTransformPoint(p));
+			System.Func<Vector3, float> fromPath = p =>
+			{
+				float best = float.MaxValue;
+				for (int i = 0; i + 1 < line.Count; i++)
+				{
+					Vector3 a = line[i], ab = line[i + 1] - a;
+					float k = Mathf.Clamp01(Vector3.Dot(p - a, ab) / Mathf.Max(1e-6f, ab.sqrMagnitude));
+					best = Mathf.Min(best, (a + ab * k - p).magnitude);
+				}
+				return best;
+			};
+			Log("  the tunnel: " + line.Count + " points, the mouth " + (mouth.y - sea).ToString("0.0") + " m above the sea, dug " + dir + " then " + side);
+
+			// 1. Flown from 6 m in front of the mouth along the passage's points to its end, steered at the next point
+			Vector3 start = line[0] - dir * 6f;
+			start.y = Mathf.Max(line[0].y, ground(start).y + 1.2f);
+			ec.transform.SetPositionAndRotation(start, Quaternion.LookRotation(line[0] - start));
+			ec.Sync();
+			yield return null;
+			List<Vector3> way = line;
+			int w = 0, frames = 0, notIn = 0, notUnder = 0, offPath = 0, deepFrames = 0;
+			float maxStep = 0f, maxSpeed = 0f, maxOff = 0f, maxUp = float.MinValue, t0 = Time.unscaledTime;
+			bool shotMid = false;
+			var bad = new List<string>();
+			Vector3 last = ec.transform.position;
+			while (w < way.Count && Time.unscaledTime < t0 + 40f)
+			{
+				Vector3 cp = ec.transform.position;
+				while (w < way.Count && (way[w] - cp).magnitude < (w == way.Count - 1 ? 0.6f : 1.2f)) w++;
+				if (w >= way.Count) break;
+				ec.Face(way[w] - cp);
+				EditorCamera.TestKeys = new Vector3(0f, 0f, 1f);
+				yield return null;
+				frames++;
+				cp = ec.transform.position;
+				float step = (cp - last).magnitude;
+				last = cp;
+				maxStep = Mathf.Max(maxStep, step);
+				maxSpeed = Mathf.Max(maxSpeed, step / Mathf.Max(1e-4f, Time.unscaledDeltaTime));
+				// (past the mouth by 3 m: in the passage, under the hill's surface, near the path)
+				if (Vector3.Dot(cp - line[0], dir) < 3f) continue;
+				deepFrames++;
+				float din = inside(cp), dg = cp.y - ground(cp).y, dp = fromPath(cp);
+				maxUp = Mathf.Max(maxUp, dg); maxOff = Mathf.Max(maxOff, dp);
+				if (din >= 0f) { notIn++; if (bad.Count < 6) bad.Add("out of the passage " + din.ToString("0.00") + " m at point " + w); }
+				if (dg >= 0f) { notUnder++; if (bad.Count < 6) bad.Add(dg.ToString("0.0") + " m over the ground at point " + w); }
+				if (dp > 1.5f) { offPath++; if (bad.Count < 6) bad.Add(dp.ToString("0.0") + " m off the path at point " + w); }
+				if (!shotMid && w >= way.Count / 2)
+				{
+					shotMid = true;
+					EditorCamera.TestKeys = null;
+					yield return CameraShot(cp, cp + ec.transform.forward * 10f, "digtunnel_camera_mid");
+					last = ec.transform.position;
+				}
+			}
+			EditorCamera.TestKeys = null;
+			for (int i = 0; i < 15; i++) yield return null;
+			Vector3 endP = ec.transform.position;
+			bool reached = w >= way.Count;
+			Check(ref ok, reached && deepFrames > 20 && notIn == 0 && notUnder == 0 && offPath == 0 && maxSpeed < 7f,
+				"the camera flown in at the mouth and along the passage: " + (reached ? "reached its end" : "stuck at point " + w + " of " + way.Count) + " in " + (Time.unscaledTime - t0).ToString("0.0") + " s, " + frames + " frames (" + deepFrames + " past the mouth): "
+				+ notIn + " out of the passage, " + notUnder + " over the ground (highest " + maxUp.ToString("0.0") + " m), " + offPath + " off the path (farthest " + maxOff.ToString("0.0") + " m); the fastest " + maxSpeed.ToString("0.0") + " m/s, " + maxStep.ToString("0.00") + " m a frame" + (bad.Count > 0 ? ": " + string.Join(", ", bad.ToArray()) : ""));
+			yield return CameraShot(endP, line[Mathf.Max(0, line.Count - 14)], "digtunnel_camera_back");
+
+			// 2. Into the wall: it stays in; up into the roof: it stops there; God mode: on up through the rock
+			Vector3 segDir = (line[line.Count - 1] - line[Mathf.Max(0, line.Count - 4)]).normalized;
+			Vector3 wallDir = (Vector3.Cross(Vector3.up, segDir) + segDir * 0.3f).normalized;
+			yield return FlyCamera(ec, new Vector3(0f, 0f, 1f), 1.5f, () => wallDir);
+			Vector3 cw = ec.transform.position;
+			yield return FlyCamera(ec, new Vector3(0f, 1f, 0f), 1.5f, null);
+			Vector3 cr = ec.transform.position;
+			Check(ref ok, inside(cw) < 0f && inside(cr) < 0f && cr.y < ground(cr).y, "God mode off: flown into the wall the camera stays in the passage (" + inside(cw).ToString("0.00") + " m), up into the roof too (" + inside(cr).ToString("0.00") + " m, " + (ground(cr).y - cr.y).ToString("0.0") + " m under the ground)");
+			EditorCamera.GodMode = true;
+			yield return FlyCamera(ec, new Vector3(0f, 1f, 0f), 2f, null);
+			Vector3 cg = ec.transform.position;
+			Check(ref ok, inside(cg) > 0.2f && cg.y > cr.y + 2f, "God mode on: up on through the rock (" + (cg.y - cr.y).ToString("0.0") + " m up, " + inside(cg).ToString("0.0") + " m out of the passage, " + (ground(cg).y - cg.y).ToString("0.0") + " m under the ground)");
+
+			// 3. Into the hillside 12 m beside the mouth: off, over the ground; on, into it
+			Vector3 h0 = ground(mouth - side * 12f - dir * 4f) + Vector3.up * 1.2f;
+			EditorCamera.GodMode = false;
+			ec.transform.SetPositionAndRotation(h0, Quaternion.LookRotation(dir)); ec.Sync(); yield return null;
+			yield return FlyCamera(ec, new Vector3(0f, 0f, 1f), 3f, () => dir);
+			Vector3 hOff = ec.transform.position;
+			EditorCamera.GodMode = true;
+			ec.transform.SetPositionAndRotation(h0, Quaternion.LookRotation(dir)); ec.Sync(); yield return null;
+			yield return FlyCamera(ec, new Vector3(0f, 0f, 1f), 3f, () => dir);
+			Vector3 hOn = ec.transform.position;
+			Check(ref ok, hOff.y >= ground(hOff).y + 0.5f && hOn.y < ground(hOn).y - 1f && Vector3.Dot(hOn - h0, dir) > 6f,
+				"into the hillside: God mode off keeps over the ground (" + (hOff.y - ground(hOff).y).ToString("0.0") + " m over it), on flies in (" + (ground(hOn).y - hOn.y).ToString("0.0") + " m under it, " + Vector3.Dot(hOn - h0, dir).ToString("0.0") + " m on)");
+
+			EditorCamera.TestKeys = null;
+			EditorCamera.GodMode = god0; EditorCamera.SpeedFactor = speed0;
+			DigTunnel.Radius = radius0; DigTunnel.Slope = slope0;
+			if (ok) Log("PASS: dig tunnel camera"); else Fail("dig tunnel camera");
 		}
 	}
 }

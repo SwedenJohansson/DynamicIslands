@@ -136,7 +136,7 @@ place TP_Moontown_Barrel02 - at 61 -1.5 ground sit yaw=40
 place Loot_Crate icelocker at 70 12 ground sit yaw=180
 # C The west crags, the whaler run aground below them, the ice cave in the crags
 call ar_ridge x1=-58 z1=-26 x2=-44 z2=-50 h=4 top=7 r=9
-call hw_wreck x=-70 z=-12 h=2 yaw=110 obj=BoatStranded al=whaler crate=whalercrate r=9
+# (the whaler is wrecked further down, after the crag's smoothing - see 'reach 11-02')
 # 10-27: mouth turned inland (yaw 0): facing the sea, the mouth showed the hollow inside as a cut face
 call ar_cave x=-50 z=-40 h=4 yaw=0 al=icecaverock chest=icecavebox
 # 10-27 c: the crag built up over the cave - in a world the cave gets its own rock skin (a smooth dome draped over its
@@ -198,6 +198,10 @@ brush flatten at -32 -50 r=4 s=20 frames=150 h=16
 brush flatten at -30 -38 r=3.5 s=20 frames=150 h=9
 brush flatten from -51 -15 to -51 -23.5 r=4.5 s=20 frames=60 h=4.4
 brush auto at -50 -46 r=40 s=10 frames=25
+# (reach 11-02: the crag's smoothing reached out to the whaler's pad and raised the ground round the wreck - the
+# whaler's crate, the cave key in it, lay buried with nowhere to use it from: the wreck moved here, after the smoothing,
+# so its pad, hull and crate sit on the final ground)
+call hw_wreck x=-70 z=-12 h=2 yaw=110 obj=BoatStranded al=whaler crate=whalercrate r=9
 brush rock at -50 -43 r=15 s=10 frames=30
 place TP_IcePillar04_Snow - at -48 -69 ground sit yaw=200
 # D The supply plane (north-east): down on the flats past the village
@@ -232,7 +236,7 @@ loot weatherbox story:cable*1;Rope*2;Bolt*2
 prop weatherbox loot.refill=0
 call hw_zone x=64 z=4 al=fishz id=fishcamp r=9 h=1 msg="The ice fishing camp. A stone hut, a sled, barrels of salted fish - and the holes in the ice frozen over."
 place Note_Paper fisherslog at 65.25 10 h=4.45 drop yaw=20
-note fisherslog Fisherman's log | ICE CAMP - FISHERMAN'S LOG\n\nThe chief came out herself for the last drum - she wants it kept away from the station in case the reactor goes. It's in my locker by the hut.\nMikkel went the short way over the bay ice. I told him not to.\nThe whalers' old cave key? Still in their wreck under the west crags, if the sea left it.
+note fisherslog Fisherman's log | ICE CAMP - FISHERMAN'S LOG\n\nThe chief came out herself for the last drum - she wants it kept away from the station in case the reactor goes. It's in my locker by the hut.\nMikkel went the short way over the bay ice. I told him not to.\nThe whalers' old cave key? Still in their wreck under the crags, if the sea left it.
 note icelocker Ice hut locker | The fisherman's locker: hooks, line, salted fish - and the chief's last drum of cable.
 loot icelocker story:cable*1;Rope*2;Scrap*2
 prop icelocker loot.refill=0
@@ -335,5 +339,10 @@ prop treasure8805 treasure.loot=TitaniumOre*3
 # --- RAFT REMADE 10-27: groundall - rocks the scatters/randomizer left off a slope or edge (CIGroundIslands): taken away by their
 # bounds centre (the report's point; "body", as a rock's pivot can stand a metre or more off it)
 clear at -60.92 -36.48 r=0.5 all body only=SmallBoulder4
+
+# (reach 11-02: two of the randomizer's loot boxes left on the crag's ledges over the ice cave, 15 and 20 m up a wall
+# with no way up: taken away)
+clear at -29.3 -26.1 r=1.2 all only=^Loot_
+clear at -29.3 -24.1 r=1.2 all only=^Loot_
 
 save Temperance Remade

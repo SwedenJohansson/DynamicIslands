@@ -378,6 +378,14 @@ place Creature_Goat pp_goats at -37.91 68.37 ground
 prop pp_goats creature.count=2
 call hw_mast x=-53 z=80 h0=16 lv=6 a=pp_mast chest=pp_topchest top=Placeable_Flag_01
 call ar_cave x=-86 z=-44 h=3 yaw=0 al=pp_caverock chest=pp_cavechest
+# (RA4 11-02, REACH: the cave's own passage flatten (h 3.4 out to its mouth at z -23, r 4.5) laid after Q's spit rose
+# the spit's top half back up - a 3 m bank again before the mouth; the spit laid again after the cave, mouth to sea)
+for k 0 7
+brush flatten at -87 {-25+1.4*$k} r=2.5 s=20 frames=60 h={3.2-0.6*$k}
+next
+brush smooth from -87 -25 to -87 -15 r=3 s=10 frames=20
+brush sand from -87 -22 to -87 -15 r=3 s=10 frames=20
+clear from -87 -25 to -87 -15 r=3.5 body
 call hw_zone x=-87 z=-35 al=pp_cavez id=pp_cave r=4 h=1 msg="Nest Cave. Water drips somewhere in the dark."
 call ar_ruin x=-60 z=-84 h=3 yaw=0 w=3 d=2 al=pp_ruin
 call ss_islander x=-61 z=-88.5 yaw=200 al=pp_isl nm="Rosa Okafor" pose=lean
