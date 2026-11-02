@@ -66,6 +66,7 @@
     <Compile Include="CaveGround.cs" />
     <Compile Include="CaveMountain.cs" />
     <Compile Include="CaveTool.cs" />
+    <Compile Include="RockNets.cs" />
     <Compile Include="CustomIslandSpawner.cs" />
     <Compile Include="DigTunnel.cs" />
     <Compile Include="DevTests.cs" />

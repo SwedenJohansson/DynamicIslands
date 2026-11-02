@@ -20,6 +20,14 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   the ground there; it saves with the island and comes along into Test and multiplayer.
 
 ### Fixed
+- **Cave mouths look natural** (Straight tunnel and Dig brush): the straight tunnel's mouth is now rough, uneven rock
+  standing out of the hill like Raft's own cave entrances - no square slab, no straight edges, no stone plate before
+  it; its top falls away into the hill on both sides, and its threshold is a flush patch of rock level with the floor
+  whose edges sink into the ground; the levelled ground before it is wider than the threshold, with a wandering outline
+  that eases into the hill, and is worn bare (sand and rock through the grass) around it, so no raised slab shows. The Dig brush's mouth on a grassy hill has a low, patchy rim whose top is drawn
+  with the ground's own textures (same colour, same grass), with rock on its sides and at the opening, instead of a
+  raised green blob with a sharp outline; before a cliff the floor runs straight out onto the ground with no green apron. The dug passage's lining is smooth inside, without spikes in its floor and
+  walls, and its rock texture no longer streaks. Walking in is unchanged.
 - **Cave tool (Terrain tab, Caves - Tunnel)**: the mouth no longer comes out as a narrow dark slit with rock spikes
   through it, walking in no longer pushes you up, and every drag makes an entrance. The mouth gets a frame of the same
   rock, flush with the hill, with a level doorstep; the ground is cut along the whole passage so you can walk from the
