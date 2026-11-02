@@ -330,6 +330,11 @@ namespace DynamicIslands.Editor
 				v => DigTunnel.Radius = Mathf.Round(v * 5f) / 10f, "Dig brush: how wide (and high) the passage is. 2.8 m is a tight crawl you can still walk, 3.5 m a passage, 6 m and more a hall", false);
 			UIKit.Slider(caves, "Dig slope", -DigTunnel.MaxSlope, DigTunnel.MaxSlope, DigTunnel.Slope, v => Mathf.Abs(v) < 0.5f ? "level" : (v < 0 ? "down " : "up ") + Mathf.RoundToInt(Mathf.Abs(v)) + "°",
 				v => DigTunnel.Slope = v, "Dig brush: how the passage climbs as you dig - level, down into the ground (from flat ground: a ramp in) or up", true);
+			Button god = null;
+			god = UIKit.Check(caves, "God mode (camera through walls)", () => { EditorCamera.GodMode = !EditorCamera.GodMode; UIKit.SetCheck(god, EditorCamera.GodMode); },
+				"The editor camera flies through the ground, rock and walls - into a dug tunnel or a cave to build in it. Off: it keeps over the ground (it still flies into a dug tunnel's open mouth)");
+			god.name = "Check_GodMode";
+			UIKit.SetCheck(god, EditorCamera.GodMode);
 
 			RectTransform paint = UIKit.Group(s, "Paint ground");
 			RectTransform p1 = UIKit.Row(paint), p2 = UIKit.Row(paint), p3 = UIKit.Row(paint);
