@@ -130,5 +130,28 @@ namespace DynamicIslands
 			}
 			if (ok) Log("PASS: radar copy done"); else Fail("radar copy done");
 		}
+
+		[ConsoleCommand(name: "CIUnderSeaShift", docs: "Dev, anywhere: RK5 - an object moved across the island's own sea level counts as a shift of saved state (a flying world leaves objects under it out of the numbering); a zone moved so doesn't, nor a move above it")]
+		public static void UnderSeaShiftCommand()
+		{
+			bool ok = true;
+			try
+			{
+				Func<string, float, IslandObject> obj = (n, y) => new IslandObject { Name = n, Position = new Vector3(1, y, 1), EulerRotation = Vector3.zero, Scale = Vector3.one };
+				Func<float, float, IslandFile> file = (chestY, zoneY) =>
+				{
+					var f = new IslandFile { Name = "ci_undersea", WaterLevel = IslandFile.DefaultWaterLevel };
+					f.Objects.Add(obj("Loot_Chest", chestY)); f.Objects.Add(obj(ContentCatalog.TriggerZone, zoneY)); f.Objects.Add(obj("Loot_Chest", 30f));
+					return f;
+				};
+				float above = IslandFile.DefaultWaterLevel + 5f, under = IslandFile.DefaultWaterLevel - 5f;
+				Check(ref ok, !DynamicIslands.ObjectsShift(file(above, above), file(above + 3f, above)), "a chest moved, still above the island's sea: no shift");
+				Check(ref ok, DynamicIslands.ObjectsShift(file(above, above), file(under, above)), "a chest moved under the island's sea: a shift (a flying world numbers the rest differently)");
+				Check(ref ok, DynamicIslands.ObjectsShift(file(under, above), file(above, above)), "... and back up: a shift");
+				Check(ref ok, !DynamicIslands.ObjectsShift(file(above, above), file(above, under)), "a zone moved under it: no shift (zones count either way)");
+			}
+			catch (Exception ex) { Check(ref ok, false, "threw " + ex); }
+			if (ok) Log("PASS: under sea shift"); else Fail("under sea shift");
+		}
 	}
 }

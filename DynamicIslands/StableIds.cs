@@ -226,6 +226,13 @@ namespace DynamicIslands.Editor
 			return shippedPickups.TryGetValue(name, out n) ? n : 0;
 		}
 
+		/// <summary>Whether an object under a flying island's sea is left out of its numbering (LayoutOf: not creatures,
+		/// zones, treasure or helpers - those count either way).</summary>
+		public static bool CountsUnderSea(string name)
+		{
+			return !ContentCatalog.IsCreature(name) && !ContentCatalog.IsZone(name) && !ContentCatalog.IsTreasure(name) && !ContentCatalog.IsHelper(name);
+		}
+
 		/// <summary>
 		/// The running numbers of an island in a world as IslandSpawner.SpawnBody gives them (flying: the objects under its
 		/// own sea level are left out, but creatures, zones and treasure still count them) and RegisterNetworkIds (pickups in

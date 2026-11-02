@@ -969,9 +969,13 @@ namespace DynamicIslands
 		/// <summary>Whether the objects of the old file aren't all at the beginning of the new one, in order (ShiftsState).</summary>
 		public static bool ObjectsShift(IslandFile before, IslandFile after)
 		{
-			Func<IslandObject, string> sig = o => o.Name + (ObjectProps.IsLoot(o.Name, o.Props) ? "|loot" : "");
+			// (and whether it is under the island's own sea: a world that flies the island leaves those objects out of the
+			// numbering (StableIds.LayoutOf), so one moved across the water line shifts the state after it there. The file
+			// doesn't know if a world flies it: counted as a shift either way - a carry that wasn't needed is harmless - RK5)
+			Func<IslandFile, IslandObject, string> sig = (f, o) => o.Name + (ObjectProps.IsLoot(o.Name, o.Props) ? "|loot" : "")
+				+ (StableIds.CountsUnderSea(o.Name) && o.Position.y < f.WaterLevel - 0.5f ? "|under" : "");
 			if (after.Objects.Count < before.Objects.Count) return true;
-			for (int i = 0; i < before.Objects.Count; i++) if (sig(before.Objects[i]) != sig(after.Objects[i])) return true;
+			for (int i = 0; i < before.Objects.Count; i++) if (sig(before, before.Objects[i]) != sig(after, after.Objects[i])) return true;
 			return false;
 		}
 
