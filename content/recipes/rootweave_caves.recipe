@@ -308,9 +308,11 @@ prop rwhut obj.name=rwhut
 prop rwtw obj.name=rwtw
 # (TRAP 11-01 N: two hollows in the caves a player drops into, their only side a 1.5 m step: a ladder up each)
 # (named, not `-`: a `-` piece under the cave roof counts as under the ground and is left out)
+# (no posts under them: a post under the cave roof reads as buried; the ladders stand on the hollow floor)
 place Block_Ladder nrwl1 at -15.3 -18.9 h=4.9 yaw=90
-place Block_Pillar_Wood nrwp1 at -15.1 -18.9 h=4.9
 place Block_Ladder nrwl2 at -11.9 -8.9 h=5.7 yaw=180
-place Block_Pillar_Wood nrwp2 at -11.9 -9.1 h=5.7
+
+# (GROUND 11-01 N: a generator palm on the hill sunk 4.9 m into it: taken off)
+clear at -12.26 -6.72 r=0.8 all only=Tree_Palm
 
 save Rootweave Caves
