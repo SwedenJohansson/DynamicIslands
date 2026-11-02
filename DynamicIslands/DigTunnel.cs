@@ -64,6 +64,40 @@ namespace DynamicIslands.Editor
 		/// texture laid on its top, and where the ground is cut (the middle of the cut cells, world space).</summary>
 		[NonSerialized] public int RimColumns;
 		[NonSerialized] public string RimTop = "";
+
+		/// <summary>Where the passage opens to the sky: the cut ground cells' centres (world x, z), from the last build.</summary>
+		[NonSerialized] public readonly List<Vector2> Openings = new List<Vector2>();
+
+		static readonly List<DigTunnel> live = new List<DigTunnel>();
+		void OnEnable() { if (!live.Contains(this)) live.Add(this); AtmosphereZone.Hook(); }
+		void OnDisable() { live.Remove(this); }
+
+		/// <summary>Light in a dug passage fades out from this far (horizontally) from its open mouth...</summary>
+		const float DarkFrom = 1.5f;
+		/// <summary>...to the passage's own dim light this far in.</summary>
+		const float DarkFull = 7f;
+
+		/// <summary>How dark it is at a point (the camera) in a dug tunnel, in the editor or a world: 0 outside every passage
+		/// or at its open mouth, rising to 1 at DarkFull m in. (11-02: in a world Raft's sun and its blue sky light reached the
+		/// passage's far end as brightly as the hillside - Raft draws no shadow there - so it came out pale blue-white;
+		/// AmbienceZones dims the light for the camera by this.)</summary>
+		public static float DarkAt(Vector3 world)
+		{
+			float dark = 0f;
+			for (int i = 0; i < live.Count; i++)
+			{
+				DigTunnel t = live[i];
+				if (t == null || !t.isActiveAndEnabled || t.ownMesh == null) continue;
+				float sY = Mathf.Abs(t.transform.lossyScale.y) > 1e-4f ? Mathf.Abs(t.transform.lossyScale.y) : 1f;
+				if (t.Distance(t.transform.InverseTransformPoint(world)) * sY >= 0f) continue;
+				float near = float.MaxValue;
+				var at = new Vector2(world.x, world.z);
+				for (int k = 0; k < t.Openings.Count; k++) near = Mathf.Min(near, (t.Openings[k] - at).sqrMagnitude);
+				float d = near == float.MaxValue ? DarkFull : Mathf.Sqrt(near);
+				dark = Mathf.Max(dark, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(DarkFrom, DarkFull, d)));
+			}
+			return dark;
+		}
 		[NonSerialized] Vector3 mouthMin, mouthMax;
 
 		/// <summary>The rim's rock over the cut ground: a skin just over the ground (RimSkin), so the cut's square cells are
@@ -338,6 +372,14 @@ namespace DynamicIslands.Editor
 			MeshFilter mf = mr.GetComponent<MeshFilter>();
 			Mesh mesh = mf != null ? mf.sharedMesh : null;
 			if (land == null || RimColumns == 0 || mesh == null || mesh.subMeshCount < 2) return;
+			// (11-02: in a world - Raft's camera draws deferred there - the terrain shader on a mesh came out a flat grey-blue
+			// patch, its textures set and lit or not; the editor's is right. Until that is solved the top stays rock in a world.)
+			if (!DynamicIslands.InEditor())
+			{
+				if (!toldDeferred) Debug.Log("[CUSTOM ISLANDS] Dug tunnel's rim: in a world its top stays rock (the ground's look there is a known issue)");
+				toldDeferred = true;
+				return;
+			}
 			try
 			{
 				Material ground = GroundMaterial(land);
@@ -346,6 +388,7 @@ namespace DynamicIslands.Editor
 				Material[] mats = mr.sharedMaterials;
 				mr.sharedMaterials = new[] { mats[0], mats[1], ground };
 				RimTop = "the ground's own (" + ground.shader.name + ")";
+				Dressed(land);
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Dug tunnel's rim: " + e.Message); }
 		}
@@ -410,7 +453,66 @@ namespace DynamicIslands.Editor
 			return tops.Count > 0;
 		}
 
-		static bool toldNoGround;
+		static bool toldNoGround, toldDeferred;
+
+		float nextLookCheck;
+		static bool toldLookBack;
+		// (what the top was dressed with: the terrain shaders don't declare their splat maps, so the material can't be asked)
+		Texture lookControl, lookSplat;
+		/// <summary>For the tests: the splat map and first layer the rim's top was last dressed with, and whether the ground
+		/// still has them.</summary>
+		public string TopTextures
+		{
+			get
+			{
+				Texture c, s0; Wanted(skinLand, out c, out s0);
+				return "control " + (lookControl != null ? lookControl.name + " " + lookControl.width : "none") + ", splat0 " + (lookSplat != null ? lookSplat.name : "none") + (c == lookControl && s0 == lookSplat ? " (current)" : " (stale)");
+			}
+		}
+
+		static void Wanted(Terrain land, out Texture control0, out Texture splat0)
+		{
+			control0 = null; splat0 = null;
+			TerrainData td = land != null ? land.terrainData : null;
+			if (td == null) return;
+			Texture2D[] control = td.alphamapTextures;
+			TerrainLayer[] layers = td.terrainLayers;
+			control0 = control != null && control.Length > 0 ? control[0] : null;
+			splat0 = layers != null && layers.Length > 0 && layers[0] != null ? layers[0].diffuseTexture : null;
+		}
+
+		void Dressed(Terrain land) { Wanted(land, out lookControl, out lookSplat); }
+
+		/// <summary>The terrain this tunnel's rim top was dressed from (tests).</summary>
+		public Terrain SkinLand { get { return skinLand; } }
+
+		/// <summary>Every second: the rim's top still wears the ground's splat map and layers. (11-02: in a world the top came
+		/// out a flat grey-blue patch - its splat map and layer textures were gone by the time it was drawn, the island's
+		/// ground paint set after the tunnel was made; the editor's stayed.) Put back when they changed.</summary>
+		void Update()
+		{
+			if (Time.unscaledTime < nextLookCheck || RimTop == "" || skinLand == null) return;
+			nextLookCheck = Time.unscaledTime + 1f;
+			try
+			{
+				Transform r = transform.Find(RockName);
+				MeshRenderer mr = r != null ? r.GetComponent<MeshRenderer>() : null;
+				if (mr == null) return;
+				Material[] mats = mr.sharedMaterials;
+				if (mats.Length < 3 || mats[2] == null) return;
+				Texture want0, wantS;
+				Wanted(skinLand, out want0, out wantS);
+				if (want0 == lookControl && wantS == lookSplat) return;
+				Material ground = GroundMaterial(skinLand);
+				if (ground == null) return;
+				mats[2] = ground;
+				mr.sharedMaterials = mats;
+				Dressed(skinLand);
+				if (!toldLookBack) Debug.Log("[CUSTOM ISLANDS] Dug tunnel's rim: the ground's paint changed after the rim was made - its top takes it again");
+				toldLookBack = true;
+			}
+			catch (Exception e) { nextLookCheck = Time.unscaledTime + 30f; Debug.LogWarning("[CUSTOM ISLANDS] Dug tunnel's rim: " + e.Message); }
+		}
 
 		/// <summary>A face of the rim turned up at least this much (its normal's height) takes the ground's look.</summary>
 		const float TopUp = 0.6f;
@@ -556,7 +658,32 @@ namespace DynamicIslands.Editor
 			List<Seg> segs = Segments(Shell + 2f * h);
 			Bounds b = PathBounds();
 			b.Expand(4f * h);
-			int nx = Mathf.CeilToInt(b.size.x / h) + 1, ny = Mathf.CeilToInt(b.size.y / h) + 1, nz = Mathf.CeilToInt(b.size.z / h) + 1;
+			// (the cut cells first: a hole takes the ground's whole column in its cell - on a cliff over the mouth, the face up to
+			// its top - so the grid reaches up to the ground's top over them, and the rock fills them up to it (11-02: a strip of
+			// the cliff cut away over the mouth, the sky through it))
+			Vector3 scale = transform.lossyScale;
+			float sY = Mathf.Abs(scale.y) > 1e-4f ? scale.y : 1f;
+			bool upright = Vector3.Dot(transform.up, Vector3.up) > 0.9995f;
+			var cutSet = new HashSet<Vector2Int>();
+			Openings.Clear();
+			if (upright && land != null)
+			{
+				CellsToCut(land, cutSet);
+				TerrainData td0 = land.terrainData;
+				Vector3 lo0 = land.transform.position;
+				float cw0 = td0.size.x / td0.holesResolution, ch0 = td0.size.z / td0.holesResolution, high = float.MinValue;
+				foreach (Vector2Int q in cutSet) Openings.Add(new Vector2(lo0.x + (q.x + 0.5f) * cw0, lo0.z + (q.y + 0.5f) * ch0));
+				foreach (Vector2Int q in cutSet)
+					for (int a = -1; a <= 5; a++)
+						for (int c = -1; c <= 5; c++)
+							high = Mathf.Max(high, GroundY(land, new Vector3(lo0.x + (q.x + a * 0.25f) * cw0, 0f, lo0.z + (q.y + c * 0.25f) * ch0)));
+				if (high > float.MinValue)
+				{
+					float top0 = Mathf.Min((high - transform.position.y) / sY + RimHeight(rMax) + 2f * h, b.max.y + 30f);
+					if (top0 > b.max.y) b.max = new Vector3(b.max.x, top0, b.max.z);
+				}
+			}
+			int nx =Mathf.CeilToInt(b.size.x / h) + 1, ny = Mathf.CeilToInt(b.size.y / h) + 1, nz = Mathf.CeilToInt(b.size.z / h) + 1;
 			while ((long)nx * ny * nz > 3000000L)
 			{
 				h *= 1.25f;
@@ -593,9 +720,6 @@ namespace DynamicIslands.Editor
 			}
 
 			// (the rock's field: below 0 rock; and which air is the hill's own, past the rock's outside)
-			Vector3 scale = transform.lossyScale;
-			float sY = Mathf.Abs(scale.y) > 1e-4f ? scale.y : 1f;
-			bool upright = Vector3.Dot(transform.up, Vector3.up) > 0.9995f;
 			var top = new float[nx * nz]; // the rock's top (object space y), per column when upright
 			if (upright)
 				for (int z = 0; z < nz; z++)
@@ -608,12 +732,11 @@ namespace DynamicIslands.Editor
 			// under rock; past the cut it sinks gently back under the ground by RimOut, along a ragged line; round the opening,
 			// patches of rock stand up out of it)
 			float[] rimFade = null, rimH = null;
+			bool[] fillUp = null; // (columns over the cut cells, and h round them: rock up to the ground's top, past Shell)
 			RimColumns = 0;
 			mouthMin = mouthMax = Vector3.zero;
 			if (upright && land != null)
 			{
-				var cutSet = new HashSet<Vector2Int>();
-				CellsToCut(land, cutSet);
 				if (cutSet.Count > 0)
 				{
 					TerrainData td = land.terrainData;
@@ -630,6 +753,7 @@ namespace DynamicIslands.Editor
 					int reachX = Mathf.CeilToInt((wOut + 0.5f) / cw) + 1, reachZ = Mathf.CeilToInt((wOut + 0.5f) / ch) + 1;
 					rimFade = new float[nx * nz];
 					rimH = new float[nx * nz];
+					fillUp = new bool[nx * nz];
 					for (int z = 0; z < nz; z++)
 						for (int x = 0; x < nx; x++)
 						{
@@ -648,6 +772,7 @@ namespace DynamicIslands.Editor
 								}
 							if (best == float.MaxValue) continue;
 							best = Mathf.Sqrt(best);
+							if (best <= h) fillUp[x + z * nx] = true;
 							float rag = (Mathf.PerlinNoise(w.x * 0.55f + 7.7f, w.z * 0.55f + 3.1f) - 0.5f) * 0.6f * Mathf.Clamp01(best / 0.4f);
 							float f = 1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((best + rag) / wOut));
 							if (f <= 0f) continue;
@@ -660,6 +785,19 @@ namespace DynamicIslands.Editor
 				}
 			}
 
+			// (over the cut cells the rock's top is the ground's highest within half a step: on a rounded hilltop the ground
+			// between the samples stood over the flat top's skin, a cut square showing it 6 cm down - 11-02)
+			if (fillUp != null)
+				for (int z = 0; z < nz; z++)
+					for (int x = 0; x < nx; x++)
+					{
+						if (!fillUp[x + z * nx]) continue;
+						float g = float.MinValue;
+						for (int dz = -1; dz <= 1; dz++)
+							for (int dx = -1; dx <= 1; dx++)
+								g = Mathf.Max(g, GroundY(land, transform.TransformPoint(new Vector3(o.x + (x + dx * 0.5f) * h, 0f, o.z + (z + dz * 0.5f) * h))));
+						top[x + z * nx] = Mathf.Max(top[x + z * nx], (g - Under - transform.position.y) / sY);
+					}
 			var field = new float[N];
 			var outer = new bool[N];
 			var passage = new bool[N];
@@ -669,9 +807,10 @@ namespace DynamicIslands.Editor
 					{
 						int i = x + y * sy + z * sz;
 						float s = dist[i];
-						if (s == float.MaxValue) { field[i] = 1e6f; outer[i] = true; continue; }
+						bool fu = fillUp != null && fillUp[x + z * nx];
+						if (s == float.MaxValue && !fu) { field[i] = 1e6f; outer[i] = true; continue; }
 						var p = new Vector3(o.x + x * h, o.y + y * h, o.z + z * h);
-						s += Bumps(p, floorAt[i], radAt[i]);
+						if (s == float.MaxValue) s = 1e3f; else s += Bumps(p, floorAt[i], radAt[i]);
 						passage[i] = s < 0f;
 						float t;
 						if (upright)
@@ -683,7 +822,9 @@ namespace DynamicIslands.Editor
 								// (the skin; and the rocks, highest at the opening, lower further from the passage - never as fast as the
 								// height itself, so the top is one surface)
 								float near = Mathf.Clamp01((1.8f - s) / 1.8f);
-								float lift = rf * (Under + RimSkin + rimH[x + z * nx] * near * near) * Mathf.Clamp01((Shell - 0.4f - s) / 1.2f);
+								float shellIn = Mathf.Clamp01((Shell - 0.4f - s) / 1.2f);
+								float lift = fu ? rf * (Under + RimSkin) + rf * rimH[x + z * nx] * near * near * shellIn
+									: rf * (Under + RimSkin + rimH[x + z * nx] * near * near) * shellIn;
 								t += lift / sY;
 							}
 						}
@@ -692,7 +833,7 @@ namespace DynamicIslands.Editor
 							Vector3 w = transform.TransformPoint(p);
 							t = p.y + (GroundY(land, w) - Under - w.y) / sY;
 						}
-						float a = -s, c = s - Shell, e = p.y - t;
+						float a = -s, c = fu ? -1e6f : s - Shell, e = p.y - t;
 						float m = a > c ? a : c;
 						if (e > m) m = e;
 						field[i] = m;
@@ -715,9 +856,9 @@ namespace DynamicIslands.Editor
 		#region Ground cut
 
 		/// <summary>
-		/// The ground cells to cut over the passage: those whose ground (at any of 3 x 3 points over the cell) comes within
-		/// CutMargin of it, from just over the ground down to just under the rock's top - where the passage meets the ground
-		/// (its mouth) or would have only the ground's underside for a roof. Not where the ground is the passage's floor (level
+		/// The ground cells to cut over the passage: those whose ground (at any of 3 x 3 points over the cell) is inside it -
+		/// where the passage comes out through the ground (its mouth) - and the cells next to those whose ground comes within
+		/// CutMargin of it (11-02: a thin roof over a buried part was cut too: see-through squares on the hill). Not where the ground is the passage's floor (level
 		/// with it, before a cliff): cut there, the rim lay over flat ground before the mouth as a green apron (11-02).
 		/// </summary>
 		public void CellsToCut(Terrain land, HashSet<Vector2Int> into)
@@ -732,32 +873,40 @@ namespace DynamicIslands.Editor
 			int x0 = Mathf.Clamp(Mathf.FloorToInt((wb.min.x - o.x) / cw), 0, cells - 1), x1 = Mathf.Clamp(Mathf.CeilToInt((wb.max.x - o.x) / cw), 0, cells - 1);
 			int z0 = Mathf.Clamp(Mathf.FloorToInt((wb.min.z - o.z) / ch), 0, cells - 1), z1 = Mathf.Clamp(Mathf.CeilToInt((wb.max.z - o.z) / ch), 0, cells - 1);
 			float sY = Mathf.Abs(transform.lossyScale.y) > 1e-4f ? Mathf.Abs(transform.lossyScale.y) : 1f;
+			// (only where the passage comes up through the ground - its mouth - and the cells right round it; never over a
+			// buried part: a thin roof was cut too, and the hill over the mouth showed see-through squares (11-02))
+			var core = new HashSet<Vector2Int>();
+			var near = new List<Vector2Int>();
 			for (int z = z0; z <= z1; z++)
 				for (int x = x0; x <= x1; x++)
 				{
-					bool cut = false;
-					for (int a = 0; a <= 2 && !cut; a++)
-						for (int c = 0; c <= 2 && !cut; c++)
+					bool cut = false, through = false;
+					for (int a = 0; a <= 2 && !through; a++)
+						for (int c = 0; c <= 2 && !through; c++)
 						{
 							var w = new Vector3(o.x + (x + a * 0.5f) * cw, 0f, o.z + (z + c * 0.5f) * ch);
-							float g = GroundY(land, w);
-							bool near = false;
-							for (int k = 0; k < 3 && !near; k++)
-							{
-								w.y = g + 0.1f - k * (Under + 0.3f) * 0.5f;
-								if (Distance(segs, transform.InverseTransformPoint(w)) * sY < CutMargin) near = true;
-							}
-							if (!near) continue;
-							// (the ground here level with the passage's floor: it is the floor, left as it is)
-							w.y = g;
-							float floor;
+							w.y = GroundY(land, w);
 							Vector3 pg = transform.InverseTransformPoint(w);
+							float d = Distance(segs, pg) * sY;
+							if (d >= CutMargin) continue;
+							// (the ground here level with the passage's floor: it is the floor, left as it is)
+							float floor;
 							Distance(segs, pg + Vector3.up * (0.5f / sY), out floor);
 							float over = (pg.y - floor) * sY;
-							if (over > FloorGround || over < -0.4f) cut = true;
+							if (over > FloorGround || over < -0.4f) { cut = true; if (d < 0.05f) through = true; }
 						}
-					if (cut) into.Add(new Vector2Int(x, z));
+					var cell = new Vector2Int(x, z);
+					if (through) core.Add(cell); else if (cut) near.Add(cell);
 				}
+			foreach (Vector2Int cell in core) into.Add(cell);
+			foreach (Vector2Int cell in near)
+			{
+				bool next = false;
+				for (int dz = -1; dz <= 1 && !next; dz++)
+					for (int dx = -1; dx <= 1 && !next; dx++)
+						if (core.Contains(new Vector2Int(cell.x + dx, cell.y + dz))) next = true;
+				if (next) into.Add(cell);
+			}
 		}
 
 		/// <summary>A world's island spawned and switched on: the ground cut over its dug tunnels (after CaveGround's cut).</summary>
@@ -810,6 +959,23 @@ namespace DynamicIslands.Editor
 			GameObject placed = GameObject.Find("PlacedObjects");
 			if (placed != null) list.AddRange(placed.GetComponentsInChildren<DigTunnel>(false).Where(t => t.PointCount > 0));
 			return list;
+		}
+
+		static List<DigTunnel> insideList;
+		static float insideListAt = -1f;
+
+		/// <summary>The editor camera: a world point inside a dug tunnel's passage (margin: its distance from the rock below this, metres).</summary>
+		public static bool InsideAny(Vector3 world, float margin)
+		{
+			if (insideList == null || Time.unscaledTime > insideListAt + 0.5f || Time.unscaledTime < insideListAt) { insideList = EditorTunnels(); insideListAt = Time.unscaledTime; }
+			for (int i = 0; i < insideList.Count; i++)
+			{
+				DigTunnel t = insideList[i];
+				if (t == null || !t.isActiveAndEnabled) continue;
+				float sY = Mathf.Abs(t.transform.lossyScale.y) > 1e-4f ? Mathf.Abs(t.transform.lossyScale.y) : 1f;
+				if (t.Distance(t.transform.InverseTransformPoint(world)) * sY < margin) return true;
+			}
+			return false;
 		}
 
 		/// <summary>The editor, twice a second when no stroke is under way: tunnels moved, undone, or the ground sculpted over them - made again and the ground cut again.</summary>
@@ -877,6 +1043,10 @@ namespace DynamicIslands.Editor
 		static bool madeNew, filling, changedSinceBuild;
 		static HashSet<GameObject> insideBefore = new HashSet<GameObject>();
 		static float carry, nextBuild;
+		/// <summary>The stroke goes down into flat ground (-1: not known yet; 0 no; 1 yes) - see DigToward.</summary>
+		static int autoDown = -1;
+		/// <summary>Digging down into flat ground: rock this thick over the passage (between its roof and the lining's top) before it levels out.</summary>
+		public const float DownCover = 1.0f;
 		static LineRenderer ring;
 		static string shownHint;
 
@@ -949,6 +1119,7 @@ namespace DynamicIslands.Editor
 		{
 			filling = fill;
 			carry = 0f;
+			autoDown = -1;
 			madeNew = false;
 			current = null;
 			head = null;
@@ -1028,11 +1199,26 @@ namespace DynamicIslands.Editor
 			carry += Mathf.Min(speed * dt, dist);
 			Vector3 dir = flat / dist;
 			float climb = Mathf.Tan(Mathf.Clamp(Slope, -MaxSlope, MaxSlope) * Mathf.Deg2Rad) * step;
+			// (the slope level and the mouse not pointing up into a hill - on flat ground or a gentle slope: the passage
+			// goes down into the ground at the steepest slope, a walkable ramp, until it has DownCover of rock over it, then
+			// on level (11-02: dug level there it was an open trench))
+			if (autoDown < 0) autoDown = Mathf.Abs(Slope) < 0.5f && target.y - last.At.y < (CentreUp + 1f) * r ? 1 : 0;
+			Terrain land = autoDown == 1 ? current.Land() : null;
+			float down = -Mathf.Tan(MaxSlope * Mathf.Deg2Rad) * step;
 			while (carry >= step && current.PointCount < MaxPoints)
 			{
 				carry -= step;
 				last = head[head.Count - 1];
-				head.Add(new Point(last.At + dir * step + Vector3.up * climb, Radius));
+				float c = climb;
+				if (land != null)
+				{
+					Vector3 next = last.At + dir * step;
+					Vector3 nw = current.transform.TransformPoint(next);
+					float g = current.transform.InverseTransformPoint(new Vector3(nw.x, GroundY(land, nw), nw.z)).y;
+					float roof = next.y + (CentreUp + 1f) * Radius;
+					if (g - Under - roof < DownCover) c = Mathf.Max(down, (g - Under - DownCover) - roof);
+				}
+				head.Add(new Point(last.At + dir * step + Vector3.up * c, Radius));
 				changedSinceBuild = true;
 			}
 			return true;

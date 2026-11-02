@@ -12,6 +12,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next update (planned)
 
 Not in this release yet; these come in the next update:
+- **Dig brush look in a world**: the mouth's rim top drawn with the ground's grass as in the editor (rock in a world for
+  now), and the passage near the mouth as brown as in the editor (it is paler there, lit by the sky).
 - Reach fixes still being checked on Steamvent Harbour, Rootweave Caves, Caravan Town Remade, Old Mine Islet, Cistern
   Hall, Spirecrest Roofs, Radio Tower Remade, The Rootcore, Ironreef Caverns, Colossus of the Strait and the rest of
   Primeval Park.
@@ -30,8 +32,18 @@ Not in this release yet; these come in the next update:
   to branch off, **Shift** fills a passage in, one **Ctrl+Z** per stroke. Objects in the passage's way, or buried by its rim, are taken away with the stroke. The passage is lined with Raft's brown rock and closed
   under the ground, open only at its mouth, which has a rim of rock round it (a doorstep, sides and a brow) topped like
   the ground there; it saves with the island and comes along into Test and multiplayer.
+- **God mode (camera through walls)** (editor, Terrain tab, Caves, under the Dig brush): the editor camera flies through
+  the ground, rock and walls, e.g. into a dug tunnel or a cave to build in it.
+- **Dig brush digs down**: with **Dig slope** level, a stroke on flat ground or a gentle slope goes down into it as a
+  walkable 25° ramp until it has a metre of rock over it, then on level (it was an open trench).
 
 ### Fixed
+- **Dig brush**: the editor camera flown into a dug tunnel's mouth goes in (it rose onto the hill, so you could not
+  build inside; in the passage it now flies slowly and slides along the walls); the ground over the hill above a tunnel is no longer cut into see-through squares - only where the
+  passage really comes out through the ground.
+- **Dig brush**: the passage darkens the farther in you are, in the editor and in a world (in a world it was as bright
+  as the hillside); on a cliff, no strip of sky shows above the mouth any more, and no cut square of the hilltop shows
+  the rock just under the grass. In a world the mouth's rim top is rock for now (it came out a flat grey-blue patch).
 - **Cave mouths look natural** (Straight tunnel and Dig brush): the straight tunnel's mouth is now rough, uneven rock
   standing out of the hill like Raft's own cave entrances - no square slab, no straight edges, no stone plate before
   it; its top falls away into the hill on both sides, and its threshold is a flush patch of rock level with the floor
