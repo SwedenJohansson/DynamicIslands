@@ -48,6 +48,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   can drop onto traps you, and quest notes and chests were moved to where you can stand next to them.
 
 ### Fixed
+- **Shot stingrays count for the quest:** a quest animal hit by a player that sinks or swims off and is taken away by
+  Raft within 30 s counts as killed, not as taken away (Sinkmarket Floor's "kill 3 stingrays" stayed at 0/3 after bow
+  kills). A harmless quest animal that Raft does take away alive is matched more loosely to the quest step (label, type,
+  plural) and logs why when it is not put back.
 - **Quest locks wait for their step**: on about 60 islands a lock, gate or lift that a quest key opens now stays shut
   until the quest step that asks for it, so a quest can no longer be skipped ahead by walking in with the key. Hollow
   Mountain's lifts and throne lock wait too, and its entry-hall step now counts only from inside the hall.
