@@ -94,6 +94,38 @@ namespace DynamicIslands.Editor
 			return false;
 		}
 
+		/// <summary>
+		/// This player was granted the thing but doesn't use it after all (a trade they can no longer pay - RK6): the
+		/// host's hold for them ends now, not 6 s later, so another player isn't told no meanwhile. A client tells the host
+		/// with a Claim of Count -1 (an older host takes it as a question, grants it again and the answer is ignored: the
+		/// hold then ends by itself, as before).
+		/// </summary>
+		public static void Release(IslandWorldState.Entry e, int key)
+		{
+			if (e == null) return;
+			long k = K(e.Id, key);
+			if (Raft_Network.IsHost) { HostRelease(k, LocalId); return; }
+			granted.Remove(k);
+			if (IslandNetwork.InGame) IslandNetwork.SendClaim(e.Id, key, 0, ReleaseMark);
+		}
+		/// <summary>A claim message's Count that means "let it go" (questions send 0 or more).</summary>
+		public const int ReleaseMark = -1;
+
+		static bool HostRelease(long k, ulong who)
+		{
+			KeyValuePair<ulong, float> h;
+			if (!held.TryGetValue(k, out h) || h.Key != who) return false;
+			held.Remove(k);
+			return true;
+		}
+
+		/// <summary>Tests: whether the host holds this for someone now.</summary>
+		internal static bool IsHeld(IslandWorldState.Entry e, int key)
+		{
+			KeyValuePair<ulong, float> h;
+			return e != null && held.TryGetValue(K(e.Id, key), out h) && Time.unscaledTime < h.Value;
+		}
+
 		static IEnumerator NoAnswer(long k)
 		{
 			yield return new WaitForSeconds(NoAnswerSeconds);
@@ -169,6 +201,12 @@ namespace DynamicIslands.Editor
 			if (Raft_Network.IsHost)
 			{
 				IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == msg.Ids[0]);
+				if (msg.Count == ReleaseMark)
+				{
+					// (only that player's own hold; nothing is answered)
+					if (HostRelease(K(msg.Ids[0], msg.Index), from)) Debug.Log("[CUSTOM ISLANDS] [net] Claim of " + msg.Index.ToString("X") + " on island " + msg.Ids[0] + " let go by " + from);
+					return;
+				}
 				// (held longer for a client whose answers come late: Count = how late, from the client)
 				int hold = Mathf.RoundToInt(HoldSeconds + Mathf.Clamp(msg.Count, 0, MaxExtraHold));
 				// (CB2: refused here too when the host wouldn't take this player's "used" of it - they gave themselves the loot,

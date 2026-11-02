@@ -63,5 +63,36 @@ namespace DynamicIslands
 			finally { try { File.Delete(tmp); } catch { } }
 			if (ok) Log("PASS: stand keys wide"); else Fail("stand keys wide");
 		}
+
+		[ConsoleCommand(name: "CIClaimRelease", docs: "Dev, in a world (host): RK6 - a granted claim let go (a trade that can no longer be paid) ends the host's hold at once, for that player only; an older host's question path is unchanged")]
+		public static void ClaimReleaseCommand()
+		{
+			bool ok = true;
+			if (!Raft_Network.IsHost) { Fail("claim release: needs a world this Raft hosts"); return; }
+			try
+			{
+				var e = new IslandWorldState.Entry { Id = 990061, Name = "ciclaimrelease", HostName = "ciclaimrelease" };
+				int key = TradeStand.KeyFor(4, 0);
+				ulong a = 76561190000000011UL, b = 76561190000000012UL;
+				Check(ref ok, Claims.HostGrant(e, key, a) && !Claims.HostGrant(e, key, b), "player A is granted the stand's unit, B is told no while A holds it");
+				// (B's let go: not B's hold - nothing changes)
+				Claims.OnMessage(new IslandNetMessage { Kind = IslandNetMessage.Claim, Ids = new[] { e.Id, 0 }, Index = key, Count = Claims.ReleaseMark }, b, x => { });
+				Check(ref ok, Claims.IsHeld(e, key) && !Claims.HostGrant(e, key, b), "a let go from another player doesn't end A's hold");
+				IslandNetMessage answer = null;
+				Claims.OnMessage(new IslandNetMessage { Kind = IslandNetMessage.Claim, Ids = new[] { e.Id, 0 }, Index = key, Count = Claims.ReleaseMark }, a, x => answer = x);
+				Check(ref ok, answer == null, "a let go isn't answered");
+				Check(ref ok, !Claims.IsHeld(e, key) && Claims.HostGrant(e, key, b), "A lets go (could no longer pay): B gets it at once, not 6 s later");
+				// (the host's own grant, let go the same way)
+				Claims.Release(e, key);
+				Check(ref ok, Claims.IsHeld(e, key), "the host's Release doesn't end B's hold");
+				int key2 = TradeStand.KeyFor(4, 1);
+				Check(ref ok, Claims.May(e, key2, y => { }) && Claims.IsHeld(e, key2), "the host itself is granted another unit");
+				Claims.Release(e, key2);
+				Check(ref ok, !Claims.IsHeld(e, key2) && Claims.HostGrant(e, key2, a), "... and its own Release ends that hold at once");
+			}
+			catch (Exception ex) { Check(ref ok, false, "threw " + ex); }
+			finally { Claims.Reset(); }
+			if (ok) Log("PASS: claim release"); else Fail("claim release");
+		}
 	}
 }

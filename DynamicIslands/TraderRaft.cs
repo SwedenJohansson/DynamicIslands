@@ -312,7 +312,8 @@ namespace DynamicIslands.Editor
 			}
 			// (paid and marked first, so a second press in the same moment can't trade twice)
 			Network_Player player = RAPI.GetLocalPlayer();
-			if (Lacks().Length > 0) return new List<string>();
+			// (granted, but the goods to pay with went meanwhile: the hold is let go at once - RK6)
+			if (Lacks().Length > 0) { Claims.Release(Entry, key); return new List<string>(); }
 			foreach (KeyValuePair<string, int> l in Give) player.Inventory.RemoveItem(l.Key, l.Value);
 			ContentState.MarkUsed(transform, key);
 			List<string> given = TriggerZone.Give(Get);

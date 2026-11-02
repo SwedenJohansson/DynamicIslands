@@ -18,6 +18,8 @@ Not in this release yet; these come in the next update:
   can be picked up; before, the ones from those islands' quest item folders never appeared.
 - Trade stands on islands of more than 8191 objects each keep their own stock (two could share one, and a once-only
   trade could be had again after an edit).
+- Multiplayer trade stands: a trade that can no longer be paid lets go of its item at once, so another player can
+  buy it straight away (it was held for 6 s).
 - **Dig brush look in a world**: the mouth's rim top drawn with the ground's grass as in the editor (rock in a world for
   now), and the passage near the mouth as brown as in the editor (it is paler there, lit by the sky).
 - Reach fixes still being checked on Steamvent Harbour, Rootweave Caves, Caravan Town Remade, Old Mine Islet, Cistern
