@@ -76,9 +76,7 @@ pop
 
 # --- The smelter workshop on its own platform -------------------------------------------------------------------
 push at 15 -22 h=1
-# (RA3 11-02, REACH: the shelf behind the workshop (0.4) runs up to its back railing - the walk from the shore stopped
-# there, the bench out of reach: the back railing's middle open, a step of 0.6 m up onto the floor)
-call hw_roof d=8 a=stone lm=none bm=none
+call hw_roof d=8 a=stone lm=none
 place Placeable_CookingStand_Smelter_Electric - at -4.35 2.5 y=0.05 sit yaw=180
 place Placeable_CookingStand_Smelter - at -4.5 -2.5 y=0.05 sit
 place Loot_Chest smelterbench at -1.4 3.4 y=0.05 sit yaw=180
@@ -96,9 +94,7 @@ pop
 
 # --- The pump house: the oldest pump, its builder's plate, the camera on it ------------------------------------------
 push at 3 -31 h=1
-# (RA3 11-02, REACH: the doorway of RT_WallDoor1 sat half behind the walkway's corner railing - nothing came in, the
-# pump, its plate and the locker out of reach: an open bay instead, as on Cooling Spire)
-call hw_penthouse d=8 a=stone b2=none f2=RT_Wall1 l2=RT_Wall1 r2=RT_Wall1
+call hw_penthouse d=8 a=stone b2=RT_WallDoor1 f2=RT_Wall1 l2=RT_Wall1 r2=RT_Wall1
 place "VG_DecorationPrefabBase_Engine Variant" oldpump at -3 -1 y=0.1 sit
 prop oldpump obj.name=oldpump
 place Note_Sign plate at -3 -2.6 y=0.1 sit yaw=180
