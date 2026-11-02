@@ -324,7 +324,9 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Name of the wall a den gets around the tunnel's end (a child of the den).</summary>
 		public const string PlugName = "CavePlug";
-		const float PlugIn = 0.8f, PlugHalf = 12f, PlugBelow = 3f, HoleHalf = 2.6f, HoleBelow = 1f, HoleUp = 5.6f;
+		// (the wall's rock texture over this many metres: at 6 m its fine cracks read as a flat paved wall - 11-03)
+		const float PlugTile = 20f;
+		const float PlugIn = 0.8f, PlugBelow = 3f, HoleHalf = 2.6f, HoleBelow = 1f, HoleUp = 5.6f;
 
 		/// <summary>
 		/// The bear den's mouth opens far wider than a tunnel: in Balboa its cliff closes the rest, here the hill does from
@@ -349,17 +351,20 @@ namespace DynamicIslands.Editor
 			go.transform.localScale = new Vector3(size / Mathf.Max(0.001f, ls.x), size / Mathf.Max(0.001f, ls.y), size / Mathf.Max(0.001f, ls.z));
 			// (in the den's frame at the size the layout uses: its mouth at +z, the tunnel past it)
 			float z = RoomMax.z + PlugIn, mx = RoomMouth.x, my = RoomMouth.y;
-			float x0 = Mathf.Max(RoomMin.x + 0.5f, mx - PlugHalf), x1 = Mathf.Min(RoomMax.x - 0.5f, mx + PlugHalf);
-			float y0 = my - PlugBelow, y1 = RoomMax.y - 1f;
+			// (across the den's whole mouth and up past its roof: a metre under it the sky showed over the wall - 11-03)
+			float x0 = RoomMin.x - 0.5f, x1 = RoomMax.x + 0.5f;
+			float y0 = my - PlugBelow, y1 = RoomMax.y + 0.5f;
 			float hx0 = mx - HoleHalf, hx1 = mx + HoleHalf, hy0 = my - HoleBelow, hy1 = my + HoleUp;
 			var verts = new List<Vector3>();
 			var tris = new List<int>();
 			Action<float, float, float, float> quad = (ax, ay, bx, by) =>
 			{
+				// (each side its own corners: on shared ones the two sides' normals cancelled out and the wall drew black - 11-03)
 				int i = verts.Count;
 				verts.Add(new Vector3(ax, ay, z)); verts.Add(new Vector3(bx, ay, z)); verts.Add(new Vector3(bx, by, z)); verts.Add(new Vector3(ax, by, z));
+				verts.Add(new Vector3(ax, ay, z)); verts.Add(new Vector3(bx, ay, z)); verts.Add(new Vector3(bx, by, z)); verts.Add(new Vector3(ax, by, z));
 				tris.AddRange(new[] { i, i + 2, i + 1, i, i + 3, i + 2 }); // (facing -z: into the den)
-				tris.AddRange(new[] { i, i + 1, i + 2, i, i + 2, i + 3 }); // (and the other way)
+				tris.AddRange(new[] { i + 4, i + 5, i + 6, i + 4, i + 6, i + 7 }); // (and the other way)
 			};
 			quad(x0, y0, x1, hy0);  // under the hole
 			quad(x0, hy1, x1, y1);  // over it
@@ -368,7 +373,7 @@ namespace DynamicIslands.Editor
 			var mesh = new Mesh { name = PlugName };
 			mesh.SetVertices(verts);
 			mesh.SetTriangles(tris, 0);
-			mesh.SetUVs(0, verts.Select(v => new Vector2(v.x / 6f, v.y / 6f)).ToList());
+			mesh.SetUVs(0, verts.Select(v => new Vector2(v.x / PlugTile, v.y / PlugTile)).ToList());
 			mesh.RecalculateNormals();
 			mesh.RecalculateBounds();
 			go.AddComponent<MeshFilter>().sharedMesh = mesh;
