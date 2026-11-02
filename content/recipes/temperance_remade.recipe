@@ -232,7 +232,7 @@ loot weatherbox story:cable*1;Rope*2;Bolt*2
 prop weatherbox loot.refill=0
 call hw_zone x=64 z=4 al=fishz id=fishcamp r=9 h=1 msg="The ice fishing camp. A stone hut, a sled, barrels of salted fish - and the holes in the ice frozen over."
 place Note_Paper fisherslog at 65.25 10 h=4.45 drop yaw=20
-note fisherslog Fisherman's log | ICE CAMP - FISHERMAN'S LOG\n\nThe chief came out herself for the last drum - she wants it kept away from the station in case the reactor goes. It's in my locker by the hut.\nMikkel went the short way over the bay ice. I told him not to.\nThe whalers' old cave key? Still in their wreck under the west crags, if the sea left it.
+note fisherslog Fisherman's log | ICE CAMP - FISHERMAN'S LOG\n\nThe chief came out herself for the last drum - she wants it kept away from the station in case the reactor goes. It's in my locker by the hut.\nMikkel went the short way over the bay ice. I told him not to.\nThe whalers' old cave key? Still in their wreck under the crags, if the sea left it.
 note icelocker Ice hut locker | The fisherman's locker: hooks, line, salted fish - and the chief's last drum of cable.
 loot icelocker story:cable*1;Rope*2;Scrap*2
 prop icelocker loot.refill=0
@@ -335,5 +335,10 @@ prop treasure8805 treasure.loot=TitaniumOre*3
 # --- RAFT REMADE 10-27: groundall - rocks the scatters/randomizer left off a slope or edge (CIGroundIslands): taken away by their
 # bounds centre (the report's point; "body", as a rock's pivot can stand a metre or more off it)
 clear at -60.92 -36.48 r=0.5 all body only=SmallBoulder4
+
+# (reach 11-02: two of the randomizer's loot boxes left on the crag's ledges over the ice cave, 15 and 20 m up a wall
+# with no way up: taken away)
+clear at -29.3 -26.1 r=1.2 all only=^Loot_
+clear at -29.3 -24.1 r=1.2 all only=^Loot_
 
 save Temperance Remade
