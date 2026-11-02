@@ -302,8 +302,12 @@ namespace DynamicIslands.Editor
 			float want = Mathf.Max(5f, Visibility * DistanceFactor);
 			float from = Mathf.Max(want, s.fogDistance);
 			// (never thinner than Raft's own: its foggy weather may already be closer)
-			s.fogDistance = Mathf.Min(saved.Distance, Mathf.Exp(Mathf.Lerp(Mathf.Log(from), Mathf.Log(want), w)));
-			s.fogDensity = Mathf.Lerp(s.fogDensity, 1f, w);
+			// (both worked out before either is set: nothing between them can throw and leave the sky half-changed with no
+			// saved values to put back - RK12 L5)
+			float distance = Mathf.Min(saved.Distance, Mathf.Exp(Mathf.Lerp(Mathf.Log(from), Mathf.Log(want), w)));
+			float density = Mathf.Lerp(saved.Density, 1f, w);
+			s.fogDistance = distance;
+			s.fogDensity = density;
 			ShownDistance = s.fogDistance; ShownDensity = s.fogDensity;
 			return saved;
 		}

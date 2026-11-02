@@ -258,6 +258,8 @@ namespace DynamicIslands.Editor
 			ResetStep("StoryBook.Reset", () => StoryBook.Reset());
 			ResetStep("PlayerPlaces.Reset", () => PlayerPlaces.Reset());
 			ResetStep("Claims.Reset", () => Claims.Reset());
+			// (a story island brought back by hand in the world before isn't "on its way" in this one - RK12 L2)
+			ResetStep("handBrought", () => DynamicIslands.handBrought.Clear());
 			ResetStep("MechFeatures.Reset", () => MechFeatures.Reset());
 			ResetStep("WorldRandomizer.Reset", () => WorldRandomizer.Reset());
 			ResetStep("PlayerLevels.Reset", () => PlayerLevels.Reset());
