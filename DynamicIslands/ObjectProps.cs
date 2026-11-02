@@ -301,6 +301,14 @@ namespace DynamicIslands.Editor
 			return true;
 		}
 
+		/// <summary>Raft's brown island rock texture and its normal map (false when not loaded).</summary>
+		public static bool RockTextures(out Texture diffuse, out Texture normal)
+		{
+			bool ok = FindRock();
+			diffuse = rockDiffuse; normal = rockNormal;
+			return ok;
+		}
+
 		static readonly string[] RockDiffuseProps = { "_TopDiffuse", "_SideDiffuse" }, RockNormalProps = { "_TopNormal", "_SideNormal" };
 
 		/// <summary>Swaps the top and side rock textures of root's rock materials (the CaravanIslandRocks shader) for Raft's

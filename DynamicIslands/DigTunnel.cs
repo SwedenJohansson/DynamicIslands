@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -57,6 +58,17 @@ namespace DynamicIslands.Editor
 		[NonSerialized] Mesh ownMesh;
 		[NonSerialized] float groundLook = float.NaN;
 		[NonSerialized] public int Triangles;
+		/// <summary>The mouth's rim: how many of the lining's columns are raised over the ground (0: no mouth), the ground
+		/// texture laid on its top, and where the ground is cut (the middle of the cut cells, world space).</summary>
+		[NonSerialized] public int RimColumns;
+		[NonSerialized] public string RimTop = "";
+		[NonSerialized] Vector3 mouthMin, mouthMax;
+
+		/// <summary>The rim's rock over the ground at the mouth's floor (just over it), and how much higher round its sides and over it.</summary>
+		const float RimBase = Under + 0.16f;
+		static float RimHeight(float r) { return 0.3f + 0.25f * r; }
+		/// <summary>How far past the cut ground the rim goes down into it.</summary>
+		static float RimOut(float r) { return 1.4f + 0.15f * r; }
 
 		#region Path text
 
@@ -264,23 +276,126 @@ namespace DynamicIslands.Editor
 			mc.sharedMesh = null;
 			mc.sharedMesh = mesh;
 			mc.enabled = true;
-			if (mr.sharedMaterial == null || mr.sharedMaterial.name == "Default-Material") mr.sharedMaterial = RockMaterial();
 			mr.shadowCastingMode = ShadowCastingMode.TwoSided;
 			mr.receiveShadows = true;
-			ObjectProps.ApplyRockSkin(rock); // (Raft's brown island rock, as the cave pieces' "skin=rock")
+			skinLand = land;
+			Skin(mr, land);
+			if (RockMaterial() == rockFallback && !rockLoading && !PlaceableCatalog.IsLoaded(CaveTool.Tunnel) && PlaceableCatalog.IsIndexed(CaveTool.Tunnel))
+				StartCoroutine(LoadRock());
+		}
+
+		Terrain skinLand;
+		static bool rockLoading;
+
+		void Skin(MeshRenderer mr, Terrain land)
+		{
+			Material m = RockMaterial();
+			if (mr.sharedMaterials.Length != 2 || mr.sharedMaterials[0] != m || mr.sharedMaterials[1] != m) mr.sharedMaterials = new[] { m, m };
+			mr.SetPropertyBlock(null); mr.SetPropertyBlock(null, 0); mr.SetPropertyBlock(null, 1);
+			ObjectProps.ApplyRockSkin(mr.gameObject); // (Raft's brown island rock, as the cave pieces' "skin=rock")
+			GroundTop(mr, land);
+		}
+
+		/// <summary>Raft's rock shader comes with the cave tunnel piece, which loads on demand: load it, then dress every
+		/// dug tunnel in it (they wore the plain stand-in until then).</summary>
+		IEnumerator LoadRock()
+		{
+			rockLoading = true;
+			try { yield return PlaceableCatalog.EnsureLoaded(new[] { CaveTool.Tunnel }); }
+			finally { rockLoading = false; }
+			if (RockMaterial() == rockFallback) yield break;
+			foreach (DigTunnel t in FindObjectsOfType<DigTunnel>())
+			{
+				Transform r = t.transform.Find(RockName);
+				MeshRenderer mr = r != null ? r.GetComponent<MeshRenderer>() : null;
+				if (mr != null) t.Skin(mr, t.skinLand);
+			}
+		}
+
+		/// <summary>The rim's top (the lining's second part) takes the ground's own texture round the mouth on its top, so the
+		/// rock rising from the ground there is grassed (or sanded) over as the ground is; its steep sides stay rock.</summary>
+		void GroundTop(MeshRenderer mr, Terrain land)
+		{
+			RimTop = "";
+			if (land == null || RimColumns == 0) return;
+			Material[] mats = mr.sharedMaterials;
+			if (mats.Length < 2 || mats[1] == null || !mats[1].HasProperty("_TopDiffuse")) return;
+			try
+			{
+				TerrainData td = land.terrainData;
+				TerrainLayer[] layers = td.terrainLayers;
+				if (layers == null || layers.Length == 0) return;
+				int aw = td.alphamapWidth, ah = td.alphamapHeight;
+				Vector3 lo = land.transform.position;
+				float pad = RimOut(MaxR()) + 1f;
+				int x0 = Mathf.Clamp(Mathf.FloorToInt((mouthMin.x - pad - lo.x) / td.size.x * aw), 0, aw - 1), x1 = Mathf.Clamp(Mathf.CeilToInt((mouthMax.x + pad - lo.x) / td.size.x * aw), 0, aw - 1);
+				int z0 = Mathf.Clamp(Mathf.FloorToInt((mouthMin.z - pad - lo.z) / td.size.z * ah), 0, ah - 1), z1 = Mathf.Clamp(Mathf.CeilToInt((mouthMax.z + pad - lo.z) / td.size.z * ah), 0, ah - 1);
+				float[,,] a = td.GetAlphamaps(x0, z0, x1 - x0 + 1, z1 - z0 + 1);
+				int n = Mathf.Min(layers.Length, a.GetLength(2));
+				var sum = new float[n];
+				for (int z = 0; z <= z1 - z0; z++)
+					for (int x = 0; x <= x1 - x0; x++)
+					{
+						// (the flatter ground counts most: that is where the rim's top shows the ground's look)
+						float steep = td.GetSteepness((x0 + x + 0.5f) / aw, (z0 + z + 0.5f) / ah);
+						float w = steep < 30f ? 1f : 0.2f;
+						for (int l = 0; l < n; l++) sum[l] += a[z, x, l] * w;
+					}
+				int best = 0;
+				for (int l = 1; l < n; l++) if (sum[l] > sum[best]) best = l;
+				TerrainLayer layer = layers[best];
+				if (layer == null || layer.diffuseTexture == null) return;
+				var block = new MaterialPropertyBlock();
+				mr.GetPropertyBlock(block, 1);
+				block.SetTexture("_TopDiffuse", layer.diffuseTexture);
+				if (layer.normalMapTexture != null && mats[1].HasProperty("_TopNormal")) block.SetTexture("_TopNormal", layer.normalMapTexture);
+				mr.SetPropertyBlock(block, 1);
+				RimTop = layer.diffuseTexture.name;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Dug tunnel's rim: " + e.Message); }
+		}
+
+		float MaxR()
+		{
+			float r = 0f;
+			foreach (List<Point> s in Strokes) foreach (Point p in s) r = Mathf.Max(r, p.R);
+			return r;
 		}
 
 		static Material rockMaterial;
 
+		static Material rockFallback;
+
+		/// <summary>Raft's island rock material (its top/side rock shader, as the cave pieces and big rocks have), from the
+		/// cave tunnel piece or a big rock; until one is found, a plain material with Raft's rock texture (11-02: a big rock's
+		/// first renderer had a plain Standard material, and the lining came out flat brown).</summary>
 		static Material RockMaterial()
 		{
 			if (rockMaterial != null) return rockMaterial;
-			GameObject big = PlaceableCatalog.Get("BigRock_1");
-			MeshRenderer r = big != null ? big.GetComponentInChildren<MeshRenderer>(true) : null;
-			if (r != null && r.sharedMaterial != null) return rockMaterial = r.sharedMaterial;
-			Shader s = Shader.Find("Standard") ?? Shader.Find("Diffuse");
-			rockMaterial = new Material(s) { name = "DigTunnelRock", color = new Color(0.45f, 0.36f, 0.28f) };
-			return rockMaterial;
+			foreach (string name in new[] { CaveTool.Tunnel, "BigRock_1", "BigRock_2", "BigRock_3" })
+			{
+				GameObject proto = PlaceableCatalog.Get(name);
+				if (proto == null) continue;
+				Material found = proto.GetComponentsInChildren<MeshRenderer>(true).SelectMany(r => r.sharedMaterials)
+					.FirstOrDefault(x => x != null && x.HasProperty("_TopDiffuse") && x.HasProperty("_SideDiffuse"));
+				if (found != null) return rockMaterial = found;
+			}
+			// (or any loaded rock wearing it: the island's own rocks)
+			Material any = Resources.FindObjectsOfTypeAll<Material>().Where(x => x != null && x.shader != null && x.HasProperty("_TopDiffuse") && x.HasProperty("_SideDiffuse"))
+				.OrderBy(x => x.shader.name.IndexOf("Rock", StringComparison.OrdinalIgnoreCase) >= 0 ? 0 : 1).FirstOrDefault();
+			if (any != null) return rockMaterial = any;
+			if (rockFallback == null)
+			{
+				Shader s = Shader.Find("Standard") ?? Shader.Find("Diffuse");
+				rockFallback = new Material(s) { name = "DigTunnelRock", color = new Color(0.8f, 0.72f, 0.64f) };
+				Texture d, n;
+				if (ObjectProps.RockTextures(out d, out n))
+				{
+					rockFallback.mainTexture = d;
+					if (n != null && rockFallback.HasProperty("_BumpMap")) { rockFallback.SetTexture("_BumpMap", n); rockFallback.EnableKeyword("_NORMALMAP"); }
+				}
+			}
+			return rockFallback;
 		}
 
 		/// <summary>A number standing for the ground's heights around the tunnel (it changed: the lining is made again).</summary>
@@ -384,8 +499,63 @@ namespace DynamicIslands.Editor
 						Vector3 w = transform.TransformPoint(new Vector3(o.x + x * h, 0f, o.z + z * h));
 						top[x + z * nx] = (GroundY(land, w) - Under - transform.position.y) / sY;
 					}
+			// (the mouth's rim: round the cut ground, the rock's top over the ground - a lip round the mouth, low at its floor,
+			// higher at its sides and over it - so the cut's square cells are under rock and the rock meets the ground in a
+			// ragged round line; as far from the cut as RimOut it is back under the ground)
+			float[] rimFade = null, rimH = null;
+			RimColumns = 0;
+			mouthMin = mouthMax = Vector3.zero;
+			if (upright && land != null)
+			{
+				var cutSet = new HashSet<Vector2Int>();
+				CellsToCut(land, cutSet);
+				if (cutSet.Count > 0)
+				{
+					TerrainData td = land.terrainData;
+					int cells = td.holesResolution;
+					Vector3 lo = land.transform.position;
+					float cw = td.size.x / cells, ch = td.size.z / cells;
+					bool first = true;
+					foreach (Vector2Int q in cutSet)
+					{
+						Vector3 a = new Vector3(lo.x + q.x * cw, 0f, lo.z + q.y * ch), bq = a + new Vector3(cw, 0f, ch);
+						if (first) { mouthMin = a; mouthMax = bq; first = false; } else { mouthMin = Vector3.Min(mouthMin, a); mouthMax = Vector3.Max(mouthMax, bq); }
+					}
+					float wOut = RimOut(rMax), hTop = RimHeight(rMax);
+					int reachX = Mathf.CeilToInt((wOut + 0.5f) / cw) + 1, reachZ = Mathf.CeilToInt((wOut + 0.5f) / ch) + 1;
+					rimFade = new float[nx * nz];
+					rimH = new float[nx * nz];
+					for (int z = 0; z < nz; z++)
+						for (int x = 0; x < nx; x++)
+						{
+							Vector3 w = transform.TransformPoint(new Vector3(o.x + x * h, 0f, o.z + z * h));
+							float fx = (w.x - lo.x) / cw, fz = (w.z - lo.z) / ch;
+							int ix = Mathf.FloorToInt(fx), iz = Mathf.FloorToInt(fz);
+							float best = float.MaxValue;
+							for (int dz = -reachZ; dz <= reachZ && best > 0f; dz++)
+								for (int dx = -reachX; dx <= reachX; dx++)
+								{
+									if (!cutSet.Contains(new Vector2Int(ix + dx, iz + dz))) continue;
+									float ex = Mathf.Max(0f, Mathf.Max((ix + dx - fx) * cw, (fx - ix - dx - 1) * cw));
+									float ez = Mathf.Max(0f, Mathf.Max((iz + dz - fz) * ch, (fz - iz - dz - 1) * ch));
+									float d2 = ex * ex + ez * ez;
+									if (d2 < best) best = d2;
+								}
+							if (best == float.MaxValue) continue;
+							best = Mathf.Sqrt(best);
+							float rag = (Mathf.PerlinNoise(w.x * 0.55f + 7.7f, w.z * 0.55f + 3.1f) - 0.5f) * 1.0f * Mathf.Clamp01(best / 0.6f);
+							float f = 1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((best + rag) / wOut));
+							if (f <= 0f) continue;
+							rimFade[x + z * nx] = f;
+							rimH[x + z * nx] = hTop * (0.55f + 0.9f * Mathf.PerlinNoise(w.x * 0.3f + 19.1f, w.z * 0.3f + 2.3f));
+							RimColumns++;
+						}
+				}
+			}
+
 			var field = new float[N];
 			var outer = new bool[N];
+			var passage = new bool[N];
 			for (int z = 0; z < nz; z++)
 				for (int y = 0; y < ny; y++)
 					for (int x = 0; x < nx; x++)
@@ -395,8 +565,22 @@ namespace DynamicIslands.Editor
 						if (s == float.MaxValue) { field[i] = 1e6f; outer[i] = true; continue; }
 						var p = new Vector3(o.x + x * h, o.y + y * h, o.z + z * h);
 						s += Bumps(p, floorAt[i], radAt[i]);
+						passage[i] = s < 0f;
 						float t;
-						if (upright) t = top[x + z * nx];
+						if (upright)
+						{
+							t = top[x + z * nx];
+							float rf = rimFade != null ? rimFade[x + z * nx] : 0f;
+							if (rf > 0f)
+							{
+								// (higher with the height over the passage's floor - never as fast as the height itself, so the top is one surface)
+								float rh = rimH[x + z * nx];
+								float wv = Mathf.Clamp01((p.y - floorAt[i] - 0.3f) / Mathf.Max(0.8f * radAt[i], 2f * rh));
+								wv = wv * wv * (3f - 2f * wv);
+								float lift = rf * (RimBase + rh * wv) * Mathf.Clamp01((Shell - 0.4f - s) / 1.2f);
+								t += lift / sY;
+							}
+						}
 						else
 						{
 							Vector3 w = transform.TransformPoint(p);
@@ -442,8 +626,10 @@ namespace DynamicIslands.Editor
 						verts.Add(o + (new Vector3(x, y, z) + sum / n) * h);
 					}
 
-			// (a quad across each grid edge the surface crosses, facing the air - not the hill's own air past the rock)
+			// (a quad across each grid edge the surface crosses, facing the air - not the hill's own air past the rock; facing the
+			// passage, or the open air over the rock's top - the mouth's rim, which takes the ground's look on its top)
 			var tris = new List<int>();
+			var trisTop = new List<int>();
 			for (int z = 1; z < nz - 1; z++)
 				for (int y = 1; y < ny - 1; y++)
 					for (int x = 1; x < nx - 1; x++)
@@ -474,8 +660,9 @@ namespace DynamicIslands.Editor
 							int v0 = cellVert[c0], v1 = cellVert[c1], v2 = cellVert[c2], v3 = cellVert[c3];
 							if (v0 < 0 || v1 < 0 || v2 < 0 || v3 < 0) continue;
 							// (its front - Unity's Cross(b - a, c - a) - toward the air: the plus side when the rock is on the minus one)
-							if (rock) { tris.Add(v0); tris.Add(v1); tris.Add(v2); tris.Add(v0); tris.Add(v2); tris.Add(v3); }
-							else { tris.Add(v0); tris.Add(v2); tris.Add(v1); tris.Add(v0); tris.Add(v3); tris.Add(v2); }
+							List<int> into = passage[rock ? j : i] ? tris : trisTop;
+							if (rock) { into.Add(v0); into.Add(v1); into.Add(v2); into.Add(v0); into.Add(v2); into.Add(v3); }
+							else { into.Add(v0); into.Add(v2); into.Add(v1); into.Add(v0); into.Add(v3); into.Add(v2); }
 						}
 					}
 
@@ -483,19 +670,21 @@ namespace DynamicIslands.Editor
 			var remap = new int[verts.Count];
 			for (int k = 0; k < remap.Length; k++) remap[k] = -1;
 			var used = new List<Vector3>();
-			for (int k = 0; k < tris.Count; k++)
-			{
-				int v = tris[k];
-				if (remap[v] < 0) { remap[v] = used.Count; used.Add(verts[v]); }
-				tris[k] = remap[v];
-			}
+			foreach (List<int> list in new[] { tris, trisTop })
+				for (int k = 0; k < list.Count; k++)
+				{
+					int v = list[k];
+					if (remap[v] < 0) { remap[v] = used.Count; used.Add(verts[v]); }
+					list[k] = remap[v];
+				}
 			var norms = new Vector3[used.Count];
-			for (int k = 0; k + 2 < tris.Count; k += 3)
-			{
-				Vector3 a = used[tris[k]], bb = used[tris[k + 1]], c = used[tris[k + 2]];
-				Vector3 nrm = Vector3.Cross(bb - a, c - a);
-				norms[tris[k]] += nrm; norms[tris[k + 1]] += nrm; norms[tris[k + 2]] += nrm;
-			}
+			foreach (List<int> list in new[] { tris, trisTop })
+				for (int k = 0; k + 2 < list.Count; k += 3)
+				{
+					Vector3 a = used[list[k]], bb = used[list[k + 1]], c = used[list[k + 2]];
+					Vector3 nrm = Vector3.Cross(bb - a, c - a);
+					norms[list[k]] += nrm; norms[list[k + 1]] += nrm; norms[list[k + 2]] += nrm;
+				}
 			var uvs = new Vector2[used.Count];
 			for (int k = 0; k < used.Count; k++)
 			{
@@ -510,10 +699,12 @@ namespace DynamicIslands.Editor
 			mesh.SetVertices(used);
 			mesh.normals = norms;
 			mesh.uv = uvs;
+			mesh.subMeshCount = 2;
 			mesh.SetTriangles(tris, 0);
+			mesh.SetTriangles(trisTop, 1);
 			mesh.RecalculateBounds();
 			try { mesh.RecalculateTangents(); } catch { }
-			Triangles = tris.Count / 3;
+			Triangles = (tris.Count + trisTop.Count) / 3;
 			return mesh;
 		}
 
@@ -943,6 +1134,24 @@ namespace DynamicIslands.Editor
 							if (e != null && top.Contains(e)) { set.Add(e.gameObject); break; }
 						}
 					}
+			// (and what the mouth's rim buries: a plant or rock standing where the rim rises out of the ground, 11-02)
+			Transform rockT = t.transform.Find(RockName);
+			Collider rc = rockT != null ? rockT.GetComponent<Collider>() : null;
+			Terrain land = t.Land();
+			if (rc != null && land != null && t.RimColumns > 0)
+			{
+				var rim = new Bounds((t.mouthMin + t.mouthMax) * 0.5f, t.mouthMax - t.mouthMin);
+				rim.Expand(new Vector3(2f * RimOut(t.MaxR()) + 1f, 40f, 2f * RimOut(t.MaxR()) + 1f));
+				foreach (EditorGameObject e in top)
+				{
+					if (set.Contains(e.gameObject)) continue;
+					Vector3 p = e.transform.position;
+					RaycastHit h;
+					if (!rim.Contains(p) || !rc.Raycast(new Ray(new Vector3(p.x, p.y + 30f, p.z), Vector3.down), out h, 60f)) continue;
+					float ground = land.SampleHeight(p) + land.transform.position.y;
+					if (h.point.y > ground + 0.1f && h.point.y > p.y + 0.25f) set.Add(e.gameObject);
+				}
+			}
 			return set;
 		}
 

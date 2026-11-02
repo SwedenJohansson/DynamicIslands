@@ -15,11 +15,14 @@ namespace DynamicIslands
 	{
 		const string DigIsland = "citest-digtunnel";
 
-		[ConsoleCommand(name: "CIDigTunnelEditor", docs: "Dev, editor: the Dig brush on a generated island - a tunnel dug into a hill from its foot, on 24 m and round a bend: its rock lining made, the ground cut only at its mouth, walkable end to end (a floor every step, steps under 0.6 m, 2 m of room), no look from inside out through the hill; one Ctrl+Z per stroke (the tunnel, a branch, a Shift fill), the ground's holes back as they were; saved and loaded with the island. Leaves the island citest-digtunnel for CIDigTunnelWorld")]
+		[ConsoleCommand(name: "CIDigTunnelEditor", docs: "Dev, editor: the Dig brush on a generated island - a tunnel dug into a hill from its foot, on 24 m and round a bend: its rock lining made, the ground cut only at its mouth, walkable end to end (a floor every step, steps under 0.6 m, 2 m of room), no look from inside out through the hill, a rim of rock over every cut cell round the mouth (none sunken); one Ctrl+Z per stroke (the tunnel, a branch, a Shift fill), the ground's holes back as they were; saved and loaded with the island; then a tunnel dug into a raised cliff's foot (its rim, no leaks; pictures of both mouths). Leaves the island citest-digtunnel for CIDigTunnelWorld")]
 		public static void DigTunnelEditorCommand(string[] args) { StartTest(DigTunnelEditorRoutine()); }
 
 		[ConsoleCommand(name: "CIDigTunnelWorld", docs: "Dev, in a world (host): the island CIDigTunnelEditor left spawned ahead of the raft - the ground cut over its tunnel's mouth, the lining there with its collider, the player walked from the mouth to the tunnel's end, no look from inside to the sky or the ground from below; pictures of the mouth and inside. The island and its file are taken away after (keep: kept)")]
 		public static void DigTunnelWorldCommand(string[] args) { args0Keep = args.Contains("keep"); StartTest(DigTunnelWorldRoutine()); }
+
+		[ConsoleCommand(name: "CIDigTunnelWalk", docs: "Dev, in a world (either player; the two-player test): a dug tunnel already in the world (CIDigTunnelWorld keep on the host) - its rock lining and the ground cut over its mouth on this PC, then this player walks in from its mouth to its end with Raft's controller and looks round inside for gaps to the sky")]
+		public static void DigTunnelWalkCommand(string[] args) { StartTest(DigTunnelWalkRoutine()); }
 
 		static int OpenCells(TerrainData data)
 		{
@@ -112,6 +115,44 @@ namespace DynamicIslands
 		static List<Vector3> DigLine(DigTunnel t, int stroke = 0)
 		{
 			return t.Strokes[stroke].Select(p => t.transform.TransformPoint(p.At + Vector3.up * (DigTunnel.CentreUp * p.R))).ToList();
+		}
+
+		/// <summary>
+		/// The mouth's rim over the cut ground: looked at from straight over each cut cell, the first thing met is the dug rock -
+		/// over the ground there (the rim), or down in the passage (the open mouth); a cell whose rock top is under the ground
+		/// (a sunken square of the cut) is counted in sunken.
+		/// </summary>
+		static string RimCover(DigTunnel t, Terrain land, IEnumerable<Vector2Int> cut, out int sunken)
+		{
+			TerrainData data = land.terrainData;
+			Vector3 o = land.transform.position;
+			float cw = data.size.x / data.holesResolution, ch = data.size.z / data.holesResolution;
+			int over = 0, open = 0, other = 0;
+			sunken = 0;
+			Physics.SyncTransforms();
+			foreach (Vector2Int q in cut)
+			{
+				var w = new Vector3(o.x + (q.x + 0.5f) * cw, 0f, o.z + (q.y + 0.5f) * ch);
+				float g = land.SampleHeight(w) + o.y;
+				RaycastHit hit;
+				if (!Physics.Raycast(new Vector3(w.x, g + 30f, w.z), Vector3.down, out hit, 60f, ~0, QueryTriggerInteraction.Ignore) || !IsDigRock(hit.collider)) { other++; continue; }
+				if (hit.point.y >= g - 0.05f) over++;
+				else if (t.Distance(t.transform.InverseTransformPoint(hit.point + Vector3.up * 0.3f)) < 0f) open++;
+				else sunken++;
+			}
+			return over + " under the rim, " + open + " the open mouth, " + sunken + " sunken, " + other + " under something else";
+		}
+
+		/// <summary>The rim's look: its columns, the ground texture on its top, the rock's shader and what it takes.</summary>
+		static string RimLook(DigTunnel t)
+		{
+			Transform rock = t.transform.Find(DigTunnel.RockName);
+			MeshRenderer mr = rock != null ? rock.GetComponent<MeshRenderer>() : null;
+			Material m = mr != null && mr.sharedMaterials.Length > 1 ? mr.sharedMaterials[1] : null;
+			MeshFilter mf = rock != null ? rock.GetComponent<MeshFilter>() : null;
+			int top = mf != null && mf.sharedMesh != null && mf.sharedMesh.subMeshCount > 1 ? mf.sharedMesh.GetTriangles(1).Length / 3 : 0;
+			return t.RimColumns + " rim columns, " + top + " rim triangles, its top " + (t.RimTop == "" ? "rock" : t.RimTop)
+				+ (m != null ? "; material " + m.name + ", shader " + m.shader.name + " (" + string.Join(", ", m.GetTexturePropertyNames()) + ")" : "; no second material");
 		}
 
 		static IEnumerator DigTunnelEditorRoutine()
@@ -208,7 +249,14 @@ namespace DynamicIslands
 				int leaks = DigLeaks(tun, t, eyes, seen, out under);
 				Check(ref ok, eyes.Count >= 6 && leaks == 0 && under == 0, "from inside (" + eyes.Count + " places, 81 looks each): " + leaks + " looks out through the hill, " + under + " to the ground from below" + (seen.Count > 0 ? ": " + string.Join("; ", seen.Take(6).ToArray()) : ""));
 			}
+			// The mouth: a rim of rock round it, over the cut ground (none of the cut's squares sunken), its top the ground's look
+			{
+				int sunken;
+				string cover = RimCover(tun, t, cut, out sunken);
+				Check(ref ok, tun.RimColumns > 0 && sunken == 0, "the mouth's rim: " + RimLook(tun) + "; the cut cells: " + cover);
+			}
 			yield return CameraShot(mouth - dir * 12f + Vector3.up * 5f, mouth + Vector3.up * 1.5f, "digtunnel_mouth");
+			yield return CameraShot(mouth - dir * 6f + side * 7f + Vector3.up * 2.5f, mouth + dir * 1f + Vector3.up * 1.2f, "digtunnel_mouth_side");
 			yield return CameraShot(line[3] + Vector3.down * 0.4f, line[Mathf.Min(line.Count - 1, 24)], "digtunnel_inside");
 
 			// One undo takes the tunnel and its holes back; redo brings them
@@ -263,8 +311,212 @@ namespace DynamicIslands
 			Check(ref ok, back != null && back.PointCount == n0 && back.Triangles > 0 && Mathf.Abs(back.Triangles - tri0) < tri0 / 20 + 10 && (back.transform.position - at0).magnitude < 0.05f && cutBack == cut.Count,
 				"loaded again: the tunnel where it was (" + (back != null ? back.PointCount + " points, " + back.Triangles + " triangles (" + tri0 + " before), " : "none, ") + cutBack + " cells cut, " + cut.Count + " before)");
 			Check(ref ok, back == null || back.transform.Find(DigTunnel.RockName) != null && back.GetComponent<EditorGameObject>() != null, "loaded: an editor object with its lining");
+
+			// A cliff: flat ground raised 10 m behind a steep face (painted by slope, as the islands are), a tunnel dug into its foot
+			{
+				data = t.terrainData;
+				o = t.transform.position;
+				Vector3 cliff = Vector3.zero;
+				bool flat = false;
+				for (float r = 20f; r < 110f && !flat; r += 6f)
+					for (int k = 0; k < 16 && !flat; k++)
+					{
+						float an = k * Mathf.PI / 8f;
+						Vector3 p = ground(c + new Vector3(Mathf.Cos(an), 0f, Mathf.Sin(an)) * r);
+						if (p.y < sea + 2f || (p - mouth).magnitude < 45f || (p - end).magnitude < 30f) continue;
+						float lo = float.MaxValue, hi = float.MinValue;
+						for (int gx = -1; gx <= 4; gx++)
+							for (int gz = -2; gz <= 2; gz++)
+							{
+								float y = ground(p + new Vector3(gx * 6f, 0f, gz * 6f)).y;
+								lo = Mathf.Min(lo, y); hi = Mathf.Max(hi, y);
+							}
+						if (hi - lo < 2.5f && lo > sea + 1.5f) { cliff = p; flat = true; }
+					}
+				Check(ref ok, flat, "a flat place for a cliff" + (flat ? " " + (cliff.y - sea).ToString("0.0") + " m above the sea" : ""));
+				if (flat)
+				{
+					int res = data.heightmapResolution;
+					Vector3 size = data.size;
+					int hx0 = Mathf.Clamp(Mathf.FloorToInt((cliff.x - 3f - o.x) / size.x * (res - 1)), 0, res - 1), hx1 = Mathf.Clamp(Mathf.CeilToInt((cliff.x + 26f - o.x) / size.x * (res - 1)), 0, res - 1);
+					int hz0 = Mathf.Clamp(Mathf.FloorToInt((cliff.z - 16f - o.z) / size.z * (res - 1)), 0, res - 1), hz1 = Mathf.Clamp(Mathf.CeilToInt((cliff.z + 16f - o.z) / size.z * (res - 1)), 0, res - 1);
+					float[,] h0 = data.GetHeights(hx0, hz0, hx1 - hx0 + 1, hz1 - hz0 + 1);
+					var h1 = (float[,])h0.Clone();
+					for (int z = 0; z <= hz1 - hz0; z++)
+						for (int x = 0; x <= hx1 - hx0; x++)
+						{
+							float wx = o.x + (hx0 + x) * size.x / (res - 1), wz = o.z + (hz0 + z) * size.z / (res - 1);
+							float d = wx - cliff.x, lat = Mathf.Abs(wz - cliff.z);
+							float k = Mathf.SmoothStep(0f, 1f, d / 1.5f) * Mathf.SmoothStep(0f, 1f, (14f - lat) / 1.5f) * Mathf.SmoothStep(0f, 1f, (24f - d) / 6f);
+							h1[z, x] += 10f * k / size.y;
+						}
+					data.SetHeights(hx0, hz0, h1);
+					TerrainPainter.PaintWorldArea(t, sea, cliff + new Vector3(-4f, 0f, -17f), cliff + new Vector3(27f, 0f, 17f));
+					yield return null;
+					Vector3 foot = ground(cliff + Vector3.left * 1f);
+					DigTunnel ct = DigTunnel.TestStroke(t, new List<Vector3> { foot, foot + Vector3.right * 16f });
+					yield return null;
+					DigTunnel.EditorNow(t);
+					HashSet<Vector2Int> cliffCut = new HashSet<Vector2Int>();
+					if (ct != null) ct.CellsToCut(t, cliffCut);
+					Check(ref ok, ct != null && ct != back && ct.PointCount > 10 && cliffCut.Count > 0, "a tunnel dug into the cliff's face: " + (ct != null ? ct.PointCount + " points, " + cliffCut.Count + " cells cut" : "none"));
+					if (ct != null)
+					{
+						int sunken;
+						string cover = RimCover(ct, t, cliffCut, out sunken);
+						Check(ref ok, ct.RimColumns > 0 && sunken == 0, "the cliff mouth's rim: " + RimLook(ct) + "; the cut cells: " + cover);
+						List<Vector3> cl = DigLine(ct);
+						var ceyes = new List<Vector3>();
+						for (int i = 2; i < cl.Count; i += 4) ceyes.Add(cl[i] + Vector3.down * (DigTunnel.CentreUp * DigTunnel.Radius) + Vector3.up * 1.6f);
+						var seen = new List<string>();
+						int under;
+						int leaks = DigLeaks(ct, t, ceyes, seen, out under);
+						Check(ref ok, leaks == 0 && under == 0, "the cliff tunnel from inside (" + ceyes.Count + " places): " + leaks + " looks out through the rock, " + under + " to the ground from below" + (seen.Count > 0 ? ": " + string.Join("; ", seen.Take(6).ToArray()) : ""));
+						yield return CameraShot(foot + Vector3.left * 11f + Vector3.up * 3f, foot + Vector3.up * 2f, "digtunnel_cliff_mouth");
+						yield return CameraShot(foot + Vector3.left * 5f + Vector3.forward * 7f + Vector3.up * 2f, foot + Vector3.up * 1.5f, "digtunnel_cliff_side");
+						CommandUndoRedo.UndoRedoManager.Undo();
+						yield return null;
+					}
+					data.SetHeights(hx0, hz0, h0);
+					TerrainPainter.PaintWorldArea(t, sea, cliff + new Vector3(-4f, 0f, -17f), cliff + new Vector3(27f, 0f, 17f));
+					DigTunnel.EditorNow(t);
+				}
+			}
 			DigTunnel.Radius = radius0; DigTunnel.Slope = slope0;
 			if (ok) Log("PASS: dig tunnel editor"); else Fail("dig tunnel editor");
+		}
+
+		class DigWalk { public bool Ok; public string Text = ""; }
+
+		/// <summary>Walks the local player with Raft's controller from a dug tunnel's mouth along its first stroke to its end.</summary>
+		static IEnumerator WalkDig(Network_Player player, DigTunnel tun, DigWalk res)
+		{
+			List<Vector3> line = DigLine(tun);
+			var route = new List<Vector3>();
+			for (int i = 2; i < line.Count; i += 3) route.Add(tun.transform.InverseTransformPoint(line[i]));
+			route.Add(tun.transform.InverseTransformPoint(line[line.Count - 1]));
+			RaycastHit fh;
+			Vector3 start = line[0];
+			if (DigFloor(line[0] + Vector3.up * 1f, out fh)) start = fh.point;
+			PlayerMove.To(player, start + Vector3.up * 1.1f); // (as the cave tool's walk: 0.3 m up, the player dropped through the floor at once, 11-02)
+			yield return new WaitForSeconds(1f);
+			PersonController pc = player.PersonController;
+			CharacterController cc = pc.controller;
+			pc.SwitchControllerType(ControllerType.Ground);
+			string stoppedAt = null, fell = null;
+			int reached = 0;
+			Vector3 lastGood = player.transform.position;
+			foreach (Vector3 rel in route)
+			{
+				float stuck = 0f, total = 0f;
+				Vector3 last = player.transform.position;
+				while (ScFlat(player.transform.position, tun.transform.TransformPoint(rel)) > 0.7f)
+				{
+					KeepAlive(player);
+					Vector3 d = tun.transform.TransformPoint(rel) - player.transform.position; d.y = 0f;
+					Vector3 dirW = d.normalized;
+					Look(player, Quaternion.LookRotation(dirW).eulerAngles.y, 0f);
+					cc.Move(dirW * pc.normalSpeed * Time.deltaTime);
+					Vector3 now = player.transform.position;
+					stuck = ScFlat(now, last) < pc.normalSpeed * Time.deltaTime * 0.3f ? stuck + Time.deltaTime : 0f;
+					last = now;
+					total += Time.deltaTime;
+					if (fell == null) fell = FallNote(player, tun, line, ref lastGood);
+					if (stuck > 2.5f || total > 20f)
+					{
+						Collider bl = WhatBlocks(player, dirW);
+						stoppedAt = "stopped " + ScFlat(now, tun.transform.TransformPoint(rel)).ToString("0.0") + " m short of point " + (reached + 1) + " (" + (bl != null ? bl.name : "nothing ahead") + ", grounded " + cc.isGrounded + ")";
+						break;
+					}
+					yield return null;
+				}
+				if (stoppedAt != null) break;
+				reached++;
+			}
+			if (fell != null) fell += " (the walk began " + (start.y - line[0].y).ToString("0.0") + " m from the line's start)";
+			Vector3 endAt = tun.transform.TransformPoint(route.Last());
+			float drop = endAt.y - DigTunnel.CentreUp * tun.Strokes[0][tun.Strokes[0].Count - 1].R - player.transform.position.y;
+			res.Ok = stoppedAt == null && Mathf.Abs(drop) < 1.5f;
+			res.Text = reached + " of " + route.Count + " points" + (stoppedAt != null ? ", " + stoppedAt : "") + (fell != null ? ", " + fell : "") + " (" + drop.ToString("0.0") + " m under the passage's floor at the end)";
+		}
+
+		/// <summary>A fall through the passage's floor while walking: where it began (the last place on the floor, how far
+		/// along the line), what is under the player now and under the line there, and whether the ground there is cut.
+		/// Null while on the floor.</summary>
+		static string FallNote(Network_Player player, DigTunnel tun, List<Vector3> line, ref Vector3 lastGood)
+		{
+			Vector3 pp = player.transform.position;
+			int near = 0;
+			for (int i = 1; i < line.Count; i++) if (ScFlat(line[i], pp) < ScFlat(line[near], pp)) near = i;
+			float floorY = line[near].y - DigTunnel.CentreUp * tun.Strokes[0][Mathf.Min(near, tun.Strokes[0].Count - 1)].R;
+			if (pp.y > floorY - 0.6f) { lastGood = pp; return null; }
+			if (pp.y > floorY - 1.5f) return null;
+			System.Func<Vector3, string> under = from =>
+			{
+				RaycastHit[] all = Physics.RaycastAll(from, Vector3.down, 40f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).ToArray();
+				foreach (RaycastHit h in all)
+					if (h.collider.GetComponentInParent<Network_Player>() == null) return h.collider.name + " " + h.distance.ToString("0.0") + " m under";
+				return "nothing";
+			};
+			string hole = "";
+			Terrain land = tun.Land();
+			if (land != null)
+			{
+				TerrainData td = land.terrainData;
+				int res = td.holesResolution;
+				Vector3 lp = lastGood - land.transform.position;
+				int hx = Mathf.Clamp(Mathf.FloorToInt(lp.x / td.size.x * res), 0, res - 1), hz = Mathf.Clamp(Mathf.FloorToInt(lp.z / td.size.z * res), 0, res - 1);
+				hole = ", the ground there " + (td.GetHoles(hx, hz, 1, 1)[0, 0] ? "whole" : "cut") + " (ground " + (land.SampleHeight(lastGood) + land.transform.position.y - floorY).ToString("0.0") + " m over the floor)";
+			}
+			int nearGood = 0;
+			for (int i = 1; i < line.Count; i++) if (ScFlat(line[i], lastGood) < ScFlat(line[nearGood], lastGood)) nearGood = i;
+			return "fell " + (floorY - pp.y).ToString("0.0") + " m near line point " + nearGood + " of " + line.Count + " (" + ScFlat(line[nearGood], lastGood).ToString("0.0") + " m off it, last on the floor at "
+				+ (lastGood.y - floorY).ToString("0.0") + " m; under the player now: " + under(pp + Vector3.up * 0.5f) + "; under the line there: " + under(line[nearGood]) + hole + ")";
+		}
+
+		static IEnumerator DigTunnelWalkRoutine()
+		{
+			if (DynamicIslands.InEditor() || RAPI.GetLocalPlayer() == null) { Fail("dig tunnel walk: in a world"); yield break; }
+			bool ok = true;
+			DigTunnel tun = null;
+			for (float w = 0f; w < 30f && tun == null; w += 1f)
+			{
+				tun = UnityEngine.Object.FindObjectsOfType<DigTunnel>().FirstOrDefault(t => t.PointCount >= 30 && t.gameObject.activeInHierarchy && t.Land() != null);
+				if (tun == null) yield return new WaitForSeconds(1f);
+			}
+			if (tun == null) { Fail("dig tunnel walk: no dug tunnel in this world (CIDigTunnelWorld keep on the host first)"); yield break; }
+			Terrain land = tun.Land();
+			Transform rock = tun.transform.Find(DigTunnel.RockName);
+			MeshCollider mc = rock != null ? rock.GetComponent<MeshCollider>() : null;
+			MeshRenderer mr = rock != null ? rock.GetComponent<MeshRenderer>() : null;
+			Check(ref ok, tun.Triangles > 1000 && mc != null && mc.sharedMesh != null && mc.enabled && mr != null && mr.enabled, "the tunnel is here (" + (Raft_Network.IsHost ? "host" : "player 2") + "): " + tun.PointCount + " points, " + tun.Triangles + " triangles, collider and renderer on");
+			{
+				// (the tunnel's own cells open, not LastWorldCut: a later cut on this PC - a player joining - finds them open and counts 0)
+				var need = new HashSet<Vector2Int>();
+				tun.CellsToCut(land, need);
+				int res = land.terrainData.holesResolution;
+				bool[,] solid = land.terrainData.GetHoles(0, 0, res, res);
+				int open = need.Count(c => !solid[c.y, c.x]);
+				Check(ref ok, need.Count > 0 && open == need.Count, "the ground cut over its mouth on this PC: " + open + " of " + need.Count + " cells");
+			}
+			Log("  the mouth's rim: " + RimLook(tun));
+			Network_Player player = RAPI.GetLocalPlayer();
+			var walk = new DigWalk();
+			yield return WalkDig(player, tun, walk);
+			Check(ref ok, walk.Ok, "walked from the mouth to the end: " + walk.Text);
+			List<Vector3> line = DigLine(tun);
+			RaycastHit fh;
+			var eyes = new List<Vector3>();
+			for (int i = 2; i < line.Count; i += 4)
+				if (DigFloor(line[i], out fh) && IsDigRock(fh.collider)) eyes.Add(fh.point + Vector3.up * 1.6f);
+			var seen = new List<string>();
+			int under;
+			Vector3 back = line[0] - (line[Mathf.Min(6, line.Count - 1)] - line[0]).normalized * 4f;
+			if (Physics.Raycast(back + Vector3.up * 30f, Vector3.down, out fh, 60f, ~0, QueryTriggerInteraction.Ignore)) back = fh.point;
+			PlayerMove.To(player, back + Vector3.up * 0.5f); // (out of the looks' way, before the mouth)
+			int leaks = DigLeaks(tun, land, eyes, seen, out under);
+			Check(ref ok, eyes.Count >= 6 && leaks == 0 && under == 0, "from inside (" + eyes.Count + " places): " + leaks + " looks out through the hill, " + under + " to the ground from below" + (seen.Count > 0 ? ": " + string.Join("; ", seen.Take(6).ToArray()) : ""));
+			if (ok) Log("PASS: dig tunnel walk"); else Fail("dig tunnel walk");
 		}
 
 		static IEnumerator DigTunnelWorldRoutine()
@@ -291,52 +543,16 @@ namespace DynamicIslands
 			Check(ref ok, tun.Triangles > 1000 && mc != null && mc.sharedMesh != null && mc.enabled && mr != null && mr.enabled && tun.gameObject.activeInHierarchy, "its rock lining: " + tun.Triangles + " triangles, collider and renderer on (" + (mr != null && mr.sharedMaterial != null ? mr.sharedMaterial.name : "no material") + ")");
 			Check(ref ok, DigTunnel.LastWorldCut > 0 && OpenCells(land.terrainData) >= DigTunnel.LastWorldCut, "the ground cut over its mouth: " + DigTunnel.LastWorldCut + " cells");
 
+			Log("  the mouth's rim: " + RimLook(tun));
+
 			// Walked from the mouth to its end with Raft's controller
 			Network_Player player = RAPI.GetLocalPlayer();
 			List<Vector3> line = DigLine(tun);
 			Vector3 rel0 = line[0] - e.Position;
-			var route = new List<Vector3>();
-			for (int i = 2; i < line.Count; i += 3) route.Add(line[i] - e.Position);
-			route.Add(line[line.Count - 1] - e.Position);
 			RaycastHit fh;
-			Vector3 start = line[0];
-			if (DigFloor(line[0] + Vector3.up * 1f, out fh)) start = fh.point;
-			PlayerMove.To(player, start + Vector3.up * 0.3f);
-			yield return new WaitForSeconds(1f);
-			PersonController pc = player.PersonController;
-			CharacterController cc = pc.controller;
-			pc.SwitchControllerType(ControllerType.Ground);
-			string stoppedAt = null;
-			int reached = 0;
-			foreach (Vector3 rel in route)
-			{
-				float stuck = 0f, total = 0f;
-				Vector3 last = player.transform.position;
-				while (ScFlat(player.transform.position, e.Position + rel) > 0.7f)
-				{
-					KeepAlive(player);
-					Vector3 d = e.Position + rel - player.transform.position; d.y = 0f;
-					Vector3 dirW = d.normalized;
-					Look(player, Quaternion.LookRotation(dirW).eulerAngles.y, 0f);
-					cc.Move(dirW * pc.normalSpeed * Time.deltaTime);
-					Vector3 now = player.transform.position;
-					stuck = ScFlat(now, last) < pc.normalSpeed * Time.deltaTime * 0.3f ? stuck + Time.deltaTime : 0f;
-					last = now;
-					total += Time.deltaTime;
-					if (stuck > 2.5f || total > 20f)
-					{
-						Collider bl = WhatBlocks(player, dirW);
-						stoppedAt = "stopped " + ScFlat(now, e.Position + rel).ToString("0.0") + " m short of point " + (reached + 1) + " (" + (bl != null ? bl.name : "nothing ahead") + ", grounded " + cc.isGrounded + ")";
-						break;
-					}
-					yield return null;
-				}
-				if (stoppedAt != null) break;
-				reached++;
-			}
-			Vector3 endAt = e.Position + route.Last();
-			float drop = endAt.y - DigTunnel.CentreUp * tun.Strokes[0][tun.Strokes[0].Count - 1].R - player.transform.position.y;
-			Check(ref ok, stoppedAt == null && Mathf.Abs(drop) < 1.5f, "walked from the mouth to the end: " + reached + " of " + route.Count + " points" + (stoppedAt != null ? ", " + stoppedAt : "") + " (" + drop.ToString("0.0") + " m under the passage's floor at the end)");
+			var walk = new DigWalk();
+			yield return WalkDig(player, tun, walk);
+			Check(ref ok, walk.Ok, "walked from the mouth to the end: " + walk.Text);
 
 			// From inside: no look to the sky or the ground from below
 			var eyes = new List<Vector3>();
