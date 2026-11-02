@@ -146,9 +146,16 @@ namespace DynamicIslands
 		public static void RmlCacheCommand()
 		{
 			string folder = RmlCache.Folder;
-			FileInfo[] ours = Directory.Exists(folder) ? new DirectoryInfo(folder).GetFiles("*.cachedmod").Where(f => f.Name.Contains(RmlCache.Key)).ToArray() : new FileInfo[0];
-			bool ok = ours.Length == 1 && (ours[0].Attributes & FileAttributes.ReadOnly) != 0 && RmlCache.Compiled != null;
-			Log((ok ? "PASS" : "FAIL") + ": RML cache in " + folder + ": " + string.Join(", ", ours.Select(f => f.Name + ((f.Attributes & FileAttributes.ReadOnly) != 0 ? " (read-only)" : "")).ToArray()) +
+			FileInfo[] ours = Directory.Exists(folder) ? RmlCache.Ours(folder) : new FileInfo[0];
+			// (an old copy under another author line stays read-only = the 88a6f3f regression: it is never read again)
+			FileInfo[] stuck = Directory.Exists(folder) ? new DirectoryInfo(folder).GetFiles("*.cachedmod").Where(f => RmlCache.IsOlderAuthor(f.Name, RmlCache.Key) && (f.Attributes & FileAttributes.ReadOnly) != 0).ToArray() : new FileInfo[0];
+			// (the key from modinfo.json: name + author, letters and digits)
+			bool keyOk = RmlCache.Key.StartsWith(RmlCache.NamePart) && RmlCache.Key.Length > RmlCache.NamePart.Length
+				&& RmlCache.IsOurs("510D3588639278720591068906" + RmlCache.Key + "1.1.010.cachedmod", RmlCache.Key)
+				&& !RmlCache.IsOurs("510D35886392787205910689" + RmlCache.Key + "Extra1.1.010.cachedmod", RmlCache.Key)
+				&& RmlCache.IsOlderAuthor("510D3588639278720591068906CustomIslandsFranzFischer78MegaMatrixs1.1.010.cachedmod", "CustomIslandsSwedenJohanssonFranzFischer78MegaMatrixs");
+			bool ok = keyOk && stuck.Length == 0 && ours.Length == 1 && (ours[0].Attributes & FileAttributes.ReadOnly) != 0 && RmlCache.Compiled != null;
+			Log((ok ? "PASS" : "FAIL") + ": RML cache key " + RmlCache.Key + (keyOk ? "" : " (key checks FAIL)") + (stuck.Length > 0 ? "; old read-only: " + stuck[0].Name : "") + "; in " + folder + ": " + string.Join(", ", ours.Select(f => f.Name + ((f.Attributes & FileAttributes.ReadOnly) != 0 ? " (read-only)" : "")).ToArray()) +
 				"; this start " + (RmlCache.Compiled == true ? "compiled" : RmlCache.Compiled == false ? "loaded the cache" : "unknown") + ", mod started " + RmlCache.StartedAt.ToString("0.0") + " s after Raft");
 		}
 	}

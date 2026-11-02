@@ -19,8 +19,68 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public static class RmlCache
 	{
-		/// <summary>RML's file name part for this mod: its name and author, letters and digits only.</summary>
-		public const string Key = "CustomIslandsFranzFischer78MegaMatrixs";
+		/// <summary>RML's file name part for this mod: modinfo.json's name and author, letters and digits only (worked out
+		/// from the shipped modinfo, so an author change doesn't lose the cache - the hard-coded key did, 88a6f3f).</summary>
+		public static string Key
+		{
+			get
+			{
+				if (key != null) return key;
+				string name = "Custom Islands", author = null;
+				try
+				{
+					byte[] info = null;
+					var files = DynamicIslands.instance != null ? DynamicIslands.instance.modlistEntry.modinfo.modFiles : null;
+					if (files != null) files.TryGetValue("modinfo.json", out info);
+					if (info != null)
+					{
+						string json = System.Text.Encoding.UTF8.GetString(info);
+						name = JsonText(json, "name") ?? name;
+						author = JsonText(json, "author");
+					}
+				}
+				catch { }
+				string k = Letters(name) + Letters(author);
+				// (no modinfo yet: not remembered, and the name part alone still finds the file)
+				if (author != null) key = k;
+				return k;
+			}
+		}
+		static string key;
+		/// <summary>The name part every copy of this mod has, whoever the author line says (older copies: other authors).</summary>
+		public static string NamePart { get { return Letters("Custom Islands"); } }
+
+		public static string Letters(string s)
+		{
+			return s == null ? "" : new string(s.Where(char.IsLetterOrDigit).ToArray());
+		}
+
+		static string JsonText(string json, string field)
+		{
+			var m = System.Text.RegularExpressions.Regex.Match(json, "\"" + field + @"""\s*:\s*""((?:[^""\\]|\\.)*)""");
+			return m.Success ? m.Groups[1].Value : null;
+		}
+
+		/// <summary>A cache file of this mod: RML's name is &lt;hex hash and date&gt;&lt;name+author&gt;&lt;Raft version&gt;&lt;cache version&gt;.cachedmod.</summary>
+		public static bool IsOurs(string file, string k)
+		{
+			int i = file.IndexOf(k, StringComparison.OrdinalIgnoreCase);
+			if (i <= 0) return false;
+			// (right after the hash/date digits, and Raft's version right after the key: not another mod whose name starts the same)
+			if (!Uri.IsHexDigit(file[i - 1])) return false;
+			int after = i + k.Length;
+			return after < file.Length && char.IsDigit(file[after]);
+		}
+
+		/// <summary>An older copy of this mod under another author line (before 88a6f3f: "FranzFischer78 + MegaMatrixs").</summary>
+		public static bool IsOlderAuthor(string file, string k)
+		{
+			if (IsOurs(file, k)) return false;
+			int i = file.IndexOf(NamePart, StringComparison.OrdinalIgnoreCase);
+			if (i <= 0 || !Uri.IsHexDigit(file[i - 1])) return false;
+			string rest = file.Substring(i + NamePart.Length);
+			return rest.IndexOf("FranzFischer78", StringComparison.OrdinalIgnoreCase) >= 0;
+		}
 		const string Extension = ".cachedmod", NotedFile = "rml_cache_noted.txt";
 
 		/// <summary>This start: RML compiled the mod (its file was written after Raft started); null until known.</summary>
@@ -52,10 +112,28 @@ namespace DynamicIslands.Editor
 			host.StartCoroutine(Keep());
 		}
 
-		static FileInfo[] Ours(string folder)
+		public static FileInfo[] Ours(string folder)
 		{
-			return new DirectoryInfo(folder).GetFiles("*" + Extension).Where(f => f.Name.IndexOf(Key, StringComparison.OrdinalIgnoreCase) >= 0)
+			string k = Key;
+			return new DirectoryInfo(folder).GetFiles("*" + Extension).Where(f => IsOurs(f.Name, k))
 				.OrderByDescending(f => f.LastWriteTimeUtc).ToArray();
+		}
+
+		/// <summary>This mod's files kept read-only under an older author line: no longer read (RML looks for the new name),
+		/// so they lose read-only and RML's start removes them as it does any old cache file.</summary>
+		static void FreeOlderAuthors(string folder)
+		{
+			string k = Key;
+			foreach (FileInfo f in new DirectoryInfo(folder).GetFiles("*" + Extension).Where(x => IsOlderAuthor(x.Name, k)))
+			{
+				if ((f.Attributes & FileAttributes.ReadOnly) == 0) continue;
+				try
+				{
+					f.Attributes &= ~FileAttributes.ReadOnly;
+					Debug.Log("[CUSTOM ISLANDS] RML's cache: an old copy of this mod (another author line) is no longer kept, RML removes it next start: " + f.Name);
+				}
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] RML's cache: " + f.Name + ": " + e.Message); }
+			}
 		}
 
 		static IEnumerator Keep()
@@ -64,6 +142,8 @@ namespace DynamicIslands.Editor
 			try { raftStarted = System.Diagnostics.Process.GetCurrentProcess().StartTime.ToUniversalTime(); }
 			catch { raftStarted = DateTime.UtcNow.AddSeconds(-Time.realtimeSinceStartup); }
 			string folder = Folder;
+			try { if (Directory.Exists(folder)) FreeOlderAuthors(folder); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] RML's cache: " + e.Message); }
 			// (RML writes its file after the compile, in the background: looked for up to three minutes)
 			for (float until = Time.realtimeSinceStartup + 180f; Time.realtimeSinceStartup < until; )
 			{
@@ -92,7 +172,7 @@ namespace DynamicIslands.Editor
 				if (Compiled == true) Tell(newest.Name);
 				yield break;
 			}
-			Debug.Log("[CUSTOM ISLANDS] RML's cache: no file of this mod in " + folder + " - every start compiles it");
+			Debug.Log("[CUSTOM ISLANDS] RML's cache: no file of this mod (" + Key + ") in " + folder + " - every start compiles it");
 		}
 
 		/// <summary>The compile start is told once per file (a cache that can't be kept isn't told again every start).</summary>

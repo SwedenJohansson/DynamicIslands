@@ -922,7 +922,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `IslandSummaries.cs` | What the island lists show of each saved island (title, author, description, quests, monsters), kept in `summarycache.txt` and read again only when a file changes |
 | `IslandThumbs.cs` | Small top-down maps of saved islands (kept in `thumbcache\`), Raft's island pictures as stock pictures |
 | `MissingIslandsCheck.cs` | When the host loads a world: the island files it uses (island lines, the plan's rules still to come) that aren't on this PC, the **Islands missing** box (library source; Play without them / Main menu) |
-| `RmlCache.cs` | RML's compiled copy of the mod kept read-only (RML's start would delete it, so every start compiled), older copies removed; the once-only "first start was slow" note |
+| `RmlCache.cs` | RML's compiled copy of the mod kept read-only (RML's start would delete it, so every start compiled), found by name + author from modinfo.json, older copies removed (old author lines lose read-only); the once-only "first start was slow" note |
 | `HelpLinks.cs`, `InfoWindow.cs` | Where help is: the guide (the PDF in the .rmod, or online), the Discord, GitHub issues, Raft's log folder; a message box (Report a problem, the Help of the World plans window) |
 | `WorldIslands.cs`, `IslandPickerWindow.cs` | The islands a world gets while sailing (the world file's `@islandsoff=`, the `WorldIslands` command) and the list in World settings (rows with picture, quest badge and description) |
 | `QuestBook.cs`, `QuestBookPreview.cs`, `MainStoryHelper.cs` | The main story in Raft's notebook (tabs, pages, ending), the world plan window's Preview notebook, and the New main story line helper |
