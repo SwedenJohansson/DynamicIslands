@@ -98,6 +98,49 @@ brush flatten at 0 9.5 r=1.8 s=20 frames=200 h=0.5
 brush flatten at 0 10.5 r=1.8 s=20 frames=200 h=0.0
 clear from 0 2.5 to 0 10.5 r=2.4 body
 origin
+# (fxT 11-01, REACH: the strokes above are in the generator's frame - 1.3 m west and 1.5 m north of the island's middle
+# that the objects and the reach audit use; the heightmap has a point every 1.95 m. These are in the objects' frame, each
+# on two of its points. The pit: the altar's stair ended at -0.3 m with 9 m of water at its foot - no swimmer climbs that
+# out (the floor must be 0.75 m under the sea): its foot carried on under the water, -1.1 and -2.2)
+brush flatten at 1.25 12.6 r=2 s=20 frames=200 h=-1.1
+brush flatten at 1.25 14.55 r=2 s=20 frames=200 h=-2.2
+# (the pump bank: from the steps out of the hole at 82 -25 the stair rose 1.6 m in one point, out of the sea, beside a
+# hole to the floor of the basin - a ramp on its own two rows of points (z -24.5 and -26.5, x every 1.95 m from 80.3),
+# each point set on its own (r=1, 8 frames: the nearest point in full, its neighbours hardly - at 200 frames an r=1 or r=2
+# stroke drags the points beside it all the way too, and the ramp came out one point short with a 1.1 m wall at its
+# foot): the hole's edge 2.4 m under the sea (a swimmer floats with the feet at -2.3..-3), then 0.9-1.1 m a point up to
+# the land's 4.6 at 94)
+brush flatten at 80.3 -24.5 r=1 s=20 frames=8 h=-2.4
+brush flatten at 80.3 -26.5 r=1 s=20 frames=8 h=-2.4
+brush flatten at 82.25 -24.5 r=1 s=20 frames=8 h=-1.5
+brush flatten at 82.25 -26.5 r=1 s=20 frames=8 h=-1.5
+brush flatten at 84.2 -24.5 r=1 s=20 frames=8 h=-0.6
+brush flatten at 84.2 -26.5 r=1 s=20 frames=8 h=-0.6
+brush flatten at 86.15 -24.5 r=1 s=20 frames=8 h=0.4
+brush flatten at 86.15 -26.5 r=1 s=20 frames=8 h=0.4
+brush flatten at 88.1 -24.5 r=1 s=20 frames=8 h=1.4
+brush flatten at 88.1 -26.5 r=1 s=20 frames=8 h=1.4
+brush flatten at 90.05 -24.5 r=1 s=20 frames=8 h=2.5
+brush flatten at 90.05 -26.5 r=1 s=20 frames=8 h=2.5
+brush flatten at 92.0 -24.5 r=1 s=20 frames=8 h=3.6
+brush flatten at 92.0 -26.5 r=1 s=20 frames=8 h=3.6
+brush flatten at 93.95 -24.5 r=1 s=20 frames=8 h=4.6
+brush flatten at 93.95 -26.5 r=1 s=20 frames=8 h=4.6
+clear from 80.3 -25.5 to 94 -25.5 r=2.4 body
+# (the ramp's top: its south side fell to the basin floor (-11.6 at 90.05 -28.4) right under the corner onto the land -
+# the walker slid off there: that point to the ramp's height (now part of the ramp's third row, below). And a one-point hole to -13.8 in the bank at 84.2 -22.6 -
+# a 2 m pothole a swimmer could not leave: filled to its neighbours')
+brush flatten at 84.2 -22.6 r=1 s=20 frames=8 h=0.6
+# (fxT 11-01, REACH: still the audit's way out of the pump house left the ramp's top for its south edge (z -29), where the
+# bank stepped 2.5 m up in one point (1.3 to 3.8; -3.4 at 90.05 -30.4) - the ramp a third row wide (z -28.4, the same
+# heights), and that low point to the ramp's height, so the corner onto the land rises like the ramp)
+brush flatten at 84.2 -28.4 r=1 s=20 frames=8 h=-0.6
+brush flatten at 86.15 -28.4 r=1 s=20 frames=8 h=0.4
+brush flatten at 88.1 -28.4 r=1 s=20 frames=8 h=1.4
+brush flatten at 90.05 -28.4 r=1 s=20 frames=8 h=2.5
+brush flatten at 92.0 -28.4 r=1 s=20 frames=8 h=3.6
+brush flatten at 93.95 -28.4 r=1 s=20 frames=8 h=4.6
+brush flatten at 90.05 -30.4 r=1 s=20 frames=8 h=2.5
 clear at 0 4 r=35
 clear from 0 -66 to 0 -32 r=5
 clear from 0 -66 to 0 -112 r=9
@@ -163,7 +206,10 @@ place Survivor_Cage wrencage at 11 -10 ground yaw=90
 place Loot_Chest wrenbundle at 11.4 -13.2 ground sit yaw=0
 place Note_Paper wrenwarning at 13.2 -7 ground sit drop yaw=30
 place Creature_Hyena choirdogs at 22 -20 ground y=0.5
-place TP_SeleneReactorChimney - at 27 -16 ground sit scale=0.5
+# (fxT 11-02, REACH: at half size the chimney's body still fills 13 x 12 m (x 17..31, z -24.5..-12.5), its north edge
+# 2.5 m from the bell - the walk in to the chapel from the east squeezed between them and the walker went through the
+# chimney's edge: 4 m south, the way past the bell 6 m wide)
+place TP_SeleneReactorChimney - at 28 -20 ground sit scale=0.5
 
 # --- Area C, the crane: Varuna's crane by the pit, its lever and hook; the cab on a pillar tower, its ladder ----------
 place VP_ApexCrane crane at 18 22 ground yaw=270
@@ -183,7 +229,10 @@ place Block_Pillar_Tier3 - at 4.5 3 y=2.55
 call shed w=3 d=2 door=1 y=5.04
 # (T 11-01, REACH: the ladder's top stood 1.8 m over the cab's floor - no floor to step off onto, the cab and its note
 # unreachable: 1.2 m lower, its foot in the ground, its top 0.5 m over the floor)
-place LandmarkLadder_6m cabladder at 2.25 -0.4 y=-1.2 sit yaw=0
+# (fxT 11-02, REACH: with its top 0.6 m over the cab's floor the walk down from the cab took hold of it and never went
+# down (Raft held the player at the ladder's top end, two runs): its top level with the floor, as the hatch ladders
+# that are walked both ways - 0.45 m lower)
+place LandmarkLadder_6m cabladder at 2.25 -0.4 y=-1.65 sit yaw=0
 place Note_Paper operatornote at 0.9 2.3 y=5.1 sit drop yaw=80
 # (T 11-01, REACH: the cab had no spot to stand in - the claw panel at 1.5x filled it: full size, in the corner)
 place TP_LaserControlPanel_lever claw at 3.8 2.5 y=5.04 sit drop yaw=270
@@ -196,8 +245,10 @@ place Block_Wall_Tier3 sluicegate at -0.75 -12 ground
 place Block_Wall_Tier3 sluicegate at 0.75 -12 ground
 place Placeable_Lantern_Metal lure at 0.4 -10.4 ground sit
 place Zone_Trigger pit_edge at 0 2 ground y=1
-place Placeable_Brick_Wet pitaltar at 0.7 2 ground y=0.15 sit scale=2.5
-place Candle_02 - at 1.6 2 ground y=0.9 sit drop
+# (fxT 11-01, REACH: the stair down is two points wide (x 0.3 and 2.2, steep walls past them); the altar at 0.7 and its
+# candle at 1.6 stood across both - the audit found no way up past them. The altar at the west wall, the candle on it)
+place Placeable_Brick_Wet pitaltar at 0.2 2 ground y=0.15 sit scale=2.5
+place Candle_02 - at 0.2 2 ground y=0.9 sit drop
 place Zone_Trigger bosszone at 0 2 ground y=1
 place Creature_AnglerFish lanternmother at 0 16 h=-4
 place Zone_Atmosphere redlight at 0 16 h=2
@@ -237,7 +288,8 @@ scatter "Pickup_Landmark_Rock 1" 3 at -66 24 r=26 seed=30705 free=2
 place Creature_Goat hillgoats at -37.63 17.77 ground
 prop hillgoats creature.count=2
 # --- The pump house (east), drowned in a hole 14 m down, an air pocket: Dora's note, the back room's chest ------------
-call hw_sunkhouse x=76 z=-30 h=-14 yaw=0 a=pumphouse chest=pumpchest air=pumpair bub=pumpbub dal=pumpdoor
+# (fxT 11-01, REACH: the pump chest - the audit's way in came down through the front room's roof and stuck on it: the back tile over the chest left open, as on Old Mine Islet)
+call hw_sunkhouse x=76 z=-30 h=-14 yaw=0 a=pumphouse chest=pumpchest air=pumpair bub=pumpbub dal=pumpdoor rn=2
 call hw_zone x=76 z=-30 al=pumpzone id=pumphouse r=7 h=1 msg="The quarry's pump house, 14 m down. Its pumps kept the pit dry for forty years. Their valves are all open. Its front room still holds air."
 place Note_Paper doranote at 76.6 -32.2 h=-13.7 drop yaw=20
 loot pumpchest TitaniumIngot*1;Bolt*4;MetalIngot*2;Rope*2
