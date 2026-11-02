@@ -9,6 +9,22 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## Next update
+
+### Fixed
+- **Cave tool (Terrain tab, Caves - Tunnel)**: the mouth no longer comes out as a narrow dark slit with rock spikes
+  through it, walking in no longer pushes you up, and every drag makes an entrance. The mouth gets a frame of the same
+  rock, flush with the hill, with a level doorstep; the ground is cut along the whole passage so you can walk from the
+  mouth to the end (an open far end gets the same frame). Even a short drag lays at least one tunnel before the den.
+  The laid cave is no longer selected, so the move gizmo no longer appears on it. One Ctrl+Z still undoes it all.
+- **Cave tool**: the frame now stands exactly at the tunnel's end on every slope (it was 1.5 m out in front, so the
+  doorstep floated going down and sank under the grass going up), no sea shows under the doorstep, rocks and plants on
+  the doorstep are cleared (a boulder half on it too), and the joins between tunnels and into the den get a floor plate,
+  with the ground under it cut - at 1.5x their grooves were a metre deep, and ground stood up through them. The den
+  sits a little over the tunnel's end: flush, a slot beside the doorway showed the sky.
+
+---
+
 ## 3.0 alpha - 2026-11-01: Island reach fixes
 
 ### New

@@ -30,6 +30,9 @@ namespace DynamicIslands.Editor
 		public const float EndDip = 0.9f;
 		// (the den's floor at its mouth is about 0.6 under the line it was measured on: it sits that much higher too)
 		public const float RoomLift = 0.6f;
+		// (and that much into the tunnel's end: the bear's front wall bows back from its mouth, so flush it left a slot each
+		// side where the tunnel's end met it - a look sideways down from the doorway went out to the sky, 11-02)
+		public const float RoomIn = 0.6f;
 		// BalboaCave_Bear: its mouth at +z (box end 15.99), the passage there at x -1.072 with its floor 4.05 under the pivot
 		// (the labyrinth: the bear's pivot 4.05 m over the tunnels' - their faces meet flush); its box -10.43..11.65 high,
 		// x -15.85..13.71, z -15.79..15.99.
@@ -84,8 +87,8 @@ namespace DynamicIslands.Editor
 
 		/// <summary>
 		/// Lays a cave out: the mouth's floor at mouth, the tunnel towards toward (only its direction and flat distance count),
-		/// as many tunnel pieces as fit (one at least, MaxTunnels at most; none when only a room is wanted and the drag is
-		/// shorter than one), sloping slope degrees, the bear's den at the far end when room; size times Raft's own size.
+		/// as many tunnel pieces as fit (one at least - a den alone had no mouth of its own, 11-01 - MaxTunnels at most),
+		/// sloping slope degrees, the bear's den at the far end when room; size times Raft's own size.
 		/// </summary>
 		public static Layout Plan(Vector3 mouth, Vector3 toward, float slope, bool room, float size = 1f)
 		{
@@ -97,7 +100,7 @@ namespace DynamicIslands.Editor
 			float a = l.Slope * Mathf.Deg2Rad;
 			l.Dir = (l.Flat * Mathf.Cos(a) + Vector3.up * Mathf.Sin(a)).normalized;
 			int n = Mathf.RoundToInt(dist / (step * Mathf.Cos(a)));
-			l.Tunnels = Mathf.Clamp(n, room ? 0 : 1, MaxTunnels);
+			l.Tunnels = Mathf.Clamp(n, 1, MaxTunnels);
 			Quaternion r = Quaternion.LookRotation(l.Dir, Vector3.up);
 			Vector3 entry = new Vector3(PassX, Floor - EndDip, FaceMin) * k;
 			for (int i = 0; i < l.Tunnels; i++)
@@ -106,9 +109,9 @@ namespace DynamicIslands.Editor
 			l.Length = l.Tunnels * step * Mathf.Cos(a);
 			if (room)
 			{
-				// (the den's mouth meets the tunnel's far end flush, its floor level with it; it faces back up the tunnel)
+				// (the den's mouth over the tunnel's far end, its floor level with it; it faces back up the tunnel)
 				l.RoomRotation = Quaternion.LookRotation(-l.Flat, Vector3.up);
-				l.RoomPivot = l.End - l.RoomRotation * l.RoomMouth + Vector3.up * (RoomLift * k);
+				l.RoomPivot = l.End - l.RoomRotation * l.RoomMouth + Vector3.up * (RoomLift * k) - l.Flat * (RoomIn * k);
 				l.Pieces.Add(new Piece { Name = Room, Scale = k, Rotation = l.RoomRotation, Position = l.RoomPivot });
 			}
 			return l;
@@ -137,6 +140,7 @@ namespace DynamicIslands.Editor
 					best = top - d * SideSlope;
 					// (beside the way in, the cut's walls slope up from it: not straight up - they stood as two flat slabs)
 					if (beforeMouth) best = Mathf.Min(best, l.Mouth.y + (Mathf.Abs(q) - l.HalfWidth - 0.5f) * CutSlope);
+					else if (pastEnd) best = Mathf.Min(best, l.End.y + (Mathf.Abs(q) - l.HalfWidth - 0.5f) * CutSlope);
 				}
 			}
 			if (l.Room)
@@ -185,6 +189,9 @@ namespace DynamicIslands.Editor
 			int w = x1 - x0 + 1, h = z1 - z0 + 1;
 			if (w <= 0 || h <= 0) return;
 			float[,] heights = data.GetHeights(x0, z0, w, h);
+			Portal at = PortalOf(l.Size, l.Slope);
+			Layout far = !l.Room && l.Tunnels > 0 ? FarEnd(l) : null;
+			Portal farAt = PortalOf(l.Size, -l.Slope);
 			for (int z = 0; z < h; z++)
 				for (int x = 0; x < w; x++)
 				{
@@ -192,16 +199,29 @@ namespace DynamicIslands.Editor
 					float y = heights[z, x] * size.y + o.y, ny = y;
 					float target = hill ? HillAt(l, p) : UnderAt(l, p);
 					if (!float.IsNaN(target) && target > ny) ny = target;
-					float wgt, apron = ApronAt(l, p, out wgt);
-					if (!float.IsNaN(apron) && wgt > 0f)
-					{
-						Vector3 rel = p - l.Mouth; rel.y = 0f;
-						bool near = Vector3.Dot(rel, l.Flat) > -ApronLength * l.Size;
-						if (ny > apron || near) ny = Mathf.Lerp(ny, apron, wgt);
-					}
+					ny = Approach(l, at, p, ny);
+					if (far != null) ny = Approach(far, farAt, p, ny);
 					if (ny != y) heights[z, x] = Mathf.Clamp01((ny - o.y) / size.y);
 				}
 			data.SetHeights(x0, z0, heights);
+		}
+
+		/// <summary>The ground at a mouth (l: its way in): its approach levelled (Apron), a doorstep's length of it level with
+		/// the floor before the frame, and none higher than the frame's top over it - the ground under the frame is taken out
+		/// (CaveGround), and the frame's top is where the hill meets it.</summary>
+		static float Approach(Layout l, Portal d, Vector3 p, float ny)
+		{
+			Vector3 rel = p - l.Mouth; rel.y = 0f;
+			float s = Vector3.Dot(rel, l.Flat), q = Mathf.Abs(Vector3.Dot(rel, Vector3.Cross(Vector3.up, l.Flat)));
+			float wgt, apron = ApronAt(l, p, out wgt);
+			if (!float.IsNaN(apron))
+			{
+				if (q < d.Half + 0.5f && s >= d.SillFrom - 1f && s <= Mathf.Max(d.Wall, 0f) + 0.3f) wgt = 1f; // (under all the doorstep)
+				bool near = s > -ApronLength * l.Size;
+				if (wgt > 0f && (ny > apron || near)) ny = Mathf.Lerp(ny, apron, wgt);
+			}
+			if (q < d.Half + 0.3f && s > d.Wall && s <= d.CapTo + 0.3f) ny = Mathf.Min(ny, l.Mouth.y + d.CapAt(s) - 0.1f);
+			return ny;
 		}
 
 		/// <summary>Without a hill: the ground under the rock up to its underside (NaN: not under it), so no piece hangs in the air.</summary>
@@ -300,12 +320,319 @@ namespace DynamicIslands.Editor
 
 		#endregion
 
-		/// <summary>Whether a point is in a cave's rock: its tunnel's shell or its den's box.</summary>
+		#region The mouth's frame
+
+		/// <summary>Name of the rock frame a cave tool tunnel gets at its mouth, and at an open far end (children of the piece).</summary>
+		public const string MouthName = "CaveMouth";
+
+		/// <summary>A mouth's frame's own space (its child): level, facing the way in, at its floor - the frame itself turns
+		/// with its piece, as a child turned otherwise under the stretched piece is skewed (its doorstep's front 0.16 m
+		/// up going down, down under the ground going up; 11-01).</summary>
+		public const string FrameSpaceName = "CaveMouthSpace";
+
+		/// <summary>
+		/// A mouth's frame's measures (metres, from the mouth's floor, s along the way in, at size k, the floor rising slope
+		/// degrees going in): the wall across the hillside at Wall, Half to each side, Height high, with the passage's hole in it;
+		/// a doorstep from SillFrom to the wall; its top from the wall to CapTo, level up to the mouth and then with the tunnel.
+		/// The ground is one height map: it could not turn from the level way in to the hill over the rock at the mouth, so its
+		/// slope ran through the opening - a narrow way in, rock spikes in it, a slope that pushed you up (11-01).
+		/// </summary>
+		public struct Portal
+		{
+			public float Half, Height, Wall, CapTo, SillFrom, Rise;
+			public float CapAt(float s) { return Height + Rise * Mathf.Max(0f, s) + 0.05f; }
+		}
+
+		public static Portal PortalOf(float size, float slope)
+		{
+			float k = Mathf.Clamp(size, 0.1f, 10f), a = Mathf.Clamp(slope, -60f, 60f) * Mathf.Deg2Rad, top = (ShellTop - Floor + EndDip) * k;
+			var d = new Portal { Half = Mathf.Max(ShellHalfWidth * k + 0.5f, 1.6f * k + 3.2f), Height = top + Cover, Rise = Mathf.Tan(a) };
+			// (the piece's end leans out over the mouth going up, back going down: the wall stands at its front)
+			d.Wall = -Mathf.Max(0f, Mathf.Sin(a)) * top - 0.05f;
+			d.CapTo = Mathf.Max(d.Wall + 3f, Mathf.Max(0f, -Mathf.Sin(a)) * top + 1f);
+			d.SillFrom = d.Wall - 3f;
+			return d;
+		}
+
+		/// <summary>A point of a tunnel piece's own measures (raft_props': metres at the piece's own scale, which stretches it
+		/// 1.18 along) in the world: its transform's own point was that far again out - the frame stood 1.5 m before the rock,
+		/// higher than the way in going down (11-01).</summary>
+		static Vector3 AtMeasure(Transform t, Vector3 m)
+		{
+			return t.position + t.rotation * Vector3.Scale(m, CaveMountain.OverMeasured(t, Tunnel));
+		}
+
+		/// <summary>The far end of a cave laid out seen as a mouth (an open far end gets one too).</summary>
+		public static Layout FarEnd(Layout l)
+		{
+			return new Layout { Mouth = l.End, End = l.Mouth, Flat = -l.Flat, Dir = -l.Dir, Slope = -l.Slope, Length = l.Length, Size = l.Size, Tunnels = l.Tunnels, Room = false };
+		}
+
+		/// <summary>Takes the frames off a piece (ObjectProps sets them again).</summary>
+		public static void ClearMouths(GameObject piece)
+		{
+			if (piece == null) return;
+			var old = new List<GameObject>();
+			foreach (Transform c in piece.transform) if (c.name == MouthName || c.name == JoinName) old.Add(c.gameObject);
+			foreach (GameObject go in old) UnityEngine.Object.DestroyImmediate(go);
+		}
+
+		/// <summary>Name of the floor plate over the join to the next tunnel or the den (a child of the piece; ObjectProps.CaveJoin).</summary>
+		public const string JoinName = "CaveJoin";
+
+		/// <summary>
+		/// Lays a plate of the rock over the groove where a cave tool tunnel meets the next (ObjectProps.CaveJoin): the piece's
+		/// floor dips at its ends, and two leave a groove across the way - at 1.5x a metre and a half wide and as deep, a step
+		/// the player could not walk out of (11-01). Level with the line the floor ends meet on, so it hides under them either
+		/// side. size: the tunnel's size over Raft's own. Made again when called again (ClearMouths takes it away).
+		/// </summary>
+		public static void Join(GameObject piece, float size)
+		{
+			if (piece == null || size <= 0f) return;
+			Transform t = piece.transform;
+			Renderer look = piece.GetComponentsInChildren<MeshRenderer>(true).Where(r => r.sharedMaterial != null && r.name != MouthName && r.name != JoinName)
+				.OrderByDescending(r => r.bounds.size.x * r.bounds.size.z).FirstOrDefault();
+			if (look == null) return;
+			var go = new GameObject(JoinName);
+			go.layer = look.gameObject.layer;
+			Transform j = go.transform;
+			j.SetParent(t, false);
+			// (turned with the piece, its scale undone: metres along the line, which runs along the piece)
+			j.position = AtMeasure(t, new Vector3(PassX, Floor - EndDip, FaceMin + Step));
+			j.localRotation = Quaternion.identity;
+			Vector3 ls = t.lossyScale;
+			j.localScale = new Vector3(1f / Mathf.Max(0.001f, Mathf.Abs(ls.x)), 1f / Mathf.Max(0.001f, Mathf.Abs(ls.y)), 1f / Mathf.Max(0.001f, Mathf.Abs(ls.z)));
+			float k = Mathf.Max(0.1f, size), half = JoinHalfWidth * k, len = JoinHalfLength * k, y = 0.03f;
+			var verts = new List<Vector3> { new Vector3(-half, y, -len), new Vector3(half, y, -len), new Vector3(half, y, len), new Vector3(-half, y, len) };
+			verts.AddRange(verts.ToArray()); // (both sides, each its own corners)
+			var mesh = new Mesh { name = JoinName };
+			mesh.SetVertices(verts);
+			mesh.SetTriangles(new[] { 0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7 }, 0);
+			mesh.SetUVs(0, verts.Select(v => new Vector2(v.x / 6f, v.z / 6f)).ToList());
+			mesh.RecalculateNormals();
+			mesh.RecalculateBounds();
+			go.AddComponent<MeshFilter>().sharedMesh = mesh;
+			go.AddComponent<MeshRenderer>().sharedMaterial = look.sharedMaterial;
+			go.AddComponent<MeshCollider>().sharedMesh = mesh;
+		}
+
+		// (the join's plate: across the passage into its walls, and along over the groove onto the floor either side)
+		const float JoinHalfWidth = 2.4f, JoinHalfLength = 1.3f;
+
+		// (the passage's outline at a piece's end, its own measures: distance from its middle at each of Rays angles - per mesh)
+		const int Rays = 64;
+		const float RimY = 1.8f;
+		static readonly Dictionary<string, float[]> rims = new Dictionary<string, float[]>();
+
+		/// <summary>
+		/// The passage's outline at a tunnel piece's end (far: its far end) in its own measures, as distances from (PassX,
+		/// Floor + RimY) at Rays angles: the nearest of its rock a little way in from the end, so the frame's hole is never
+		/// wider than the passage (the shell's dark outside showed past it). Measured from its collider's mesh once.
+		/// </summary>
+		static float[] Rim(Transform piece, bool far)
+		{
+			var meshes = new List<KeyValuePair<Mesh, Matrix4x4>>();
+			string key = far ? "far" : "mouth";
+			foreach (MeshCollider mc in piece.GetComponentsInChildren<MeshCollider>(true))
+			{
+				if (mc.sharedMesh == null || mc.name == MouthName || mc.name == PlugName || !mc.sharedMesh.isReadable) continue;
+				meshes.Add(new KeyValuePair<Mesh, Matrix4x4>(mc.sharedMesh, Matrix4x4.TRS(piece.position, piece.rotation, CaveMountain.OverMeasured(piece, Tunnel)).inverse * mc.transform.localToWorldMatrix));
+				key += "|" + mc.sharedMesh.GetInstanceID();
+			}
+			float[] found;
+			if (rims.TryGetValue(key, out found)) return found;
+			found = new float[Rays];
+			for (int i = 0; i < Rays; i++) found[i] = float.PositiveInfinity;
+			float face = far ? FaceMin + Step : FaceMin, inward = far ? -1f : 1f;
+			var segs = new List<Vector4>();
+			foreach (float depth in new[] { 0.15f, 0.5f, 0.9f })
+			{
+				float zc = face + inward * depth;
+				segs.Clear();
+				foreach (KeyValuePair<Mesh, Matrix4x4> m in meshes)
+				{
+					Vector3[] v = m.Key.vertices;
+					int[] tri = m.Key.triangles;
+					var w = new Vector3[v.Length];
+					for (int i = 0; i < v.Length; i++) w[i] = m.Value.MultiplyPoint3x4(v[i]);
+					for (int i = 0; i + 2 < tri.Length; i += 3)
+					{
+						Vector3 a = w[tri[i]], b = w[tri[i + 1]], c = w[tri[i + 2]];
+						float da = a.z - zc, db = b.z - zc, dc = c.z - zc;
+						if (da >= 0f && db >= 0f && dc >= 0f || da < 0f && db < 0f && dc < 0f) continue;
+						var cut = new List<Vector2>(2);
+						if (da >= 0f != db >= 0f) cut.Add(Vector2.Lerp(a, b, da / (da - db)));
+						if (db >= 0f != dc >= 0f) cut.Add(Vector2.Lerp(b, c, db / (db - dc)));
+						if (dc >= 0f != da >= 0f) cut.Add(Vector2.Lerp(c, a, dc / (dc - da)));
+						if (cut.Count == 2) segs.Add(new Vector4(cut[0].x, cut[0].y, cut[1].x, cut[1].y));
+					}
+				}
+				var o = new Vector2(PassX, Floor + RimY);
+				for (int r = 0; r < Rays; r++)
+				{
+					float ang = r * Mathf.PI * 2f / Rays;
+					var dir = new Vector2(Mathf.Cos(ang), Mathf.Sin(ang));
+					foreach (Vector4 s in segs)
+					{
+						Vector2 p = new Vector2(s.x, s.y), e = new Vector2(s.z - s.x, s.w - s.y), op = p - o;
+						float den = dir.x * e.y - dir.y * e.x;
+						if (Mathf.Abs(den) < 1e-7f) continue;
+						float t = (op.x * e.y - op.y * e.x) / den, u = (op.x * dir.y - op.y * dir.x) / den;
+						if (t > 0.05f && u >= 0f && u <= 1f && t < found[r]) found[r] = t;
+					}
+				}
+			}
+			// (no rock found that way: the passage's own size - 3.2 m wide, its floor 2.7 under the middle, its roof 2.2 over it)
+			for (int i = 0; i < Rays; i++)
+				if (float.IsInfinity(found[i]) || found[i] > 4f)
+				{
+					float ang = i * Mathf.PI * 2f / Rays, cx = Mathf.Cos(ang) / 1.5f, cy = Mathf.Sin(ang) / (Mathf.Sin(ang) < 0f ? RimY + EndDip : 2.2f);
+					found[i] = 1f / Mathf.Sqrt(cx * cx + cy * cy);
+				}
+			rims[key] = found;
+			return found;
+		}
+
+		/// <summary>
+		/// Puts the rock frame at a cave tool tunnel's mouth (far: its open far end - ObjectProps.CaveMouth / CaveEnd): a wall
+		/// across the hillside with the passage's own outline cut in it, its sides lined back to the tunnel, a doorstep level
+		/// with the floor before it and a top the ground meets behind it. The ground under it is taken out (CaveGround), so
+		/// the way in is the passage's full size, flush with the rock. size: the tunnel's size over Raft's own. In the editor
+		/// and in a world; made again when called again.
+		/// </summary>
+		public static void Mouth(GameObject piece, float size, bool far)
+		{
+			if (piece == null || size <= 0f) return;
+			Transform t = piece.transform;
+			Vector3 fwd = t.forward, flat = new Vector3(fwd.x, 0f, fwd.z);
+			if (flat.sqrMagnitude < 1e-6f) return;
+			flat.Normalize();
+			float slope = Mathf.Asin(Mathf.Clamp(fwd.y, -1f, 1f)) * Mathf.Rad2Deg;
+			if (far) { flat = -flat; slope = -slope; }
+			Renderer look = piece.GetComponentsInChildren<MeshRenderer>(true).Where(r => r.sharedMaterial != null && r.name != MouthName && r.name != PlugName)
+				.OrderByDescending(r => r.bounds.size.x * r.bounds.size.z).FirstOrDefault();
+			if (look == null) return;
+			float[] rim = Rim(t, far);
+			Portal d = PortalOf(size, slope);
+
+			var go = new GameObject(MouthName);
+			go.layer = look.gameObject.layer;
+			Transform f = go.transform;
+			f.SetParent(t, false);
+			f.position = AtMeasure(t, new Vector3(PassX, Floor - EndDip, far ? FaceMin + Step : FaceMin));
+			// (turned with the piece, so its scale is undone exactly; the mesh is turned level in it - see FrameSpaceName)
+			f.localRotation = Quaternion.identity;
+			Vector3 ls = t.lossyScale;
+			f.localScale = new Vector3(1f / Mathf.Max(0.001f, Mathf.Abs(ls.x)), 1f / Mathf.Max(0.001f, Mathf.Abs(ls.y)), 1f / Mathf.Max(0.001f, Mathf.Abs(ls.z)));
+			Quaternion level = Quaternion.LookRotation(flat, Vector3.up), toFrame = Quaternion.Inverse(f.rotation) * level;
+			var space = new GameObject(FrameSpaceName).transform;
+			space.SetParent(f, false);
+			space.rotation = level;
+			Func<Vector3, Vector3> inFrame = w => Quaternion.Inverse(level) * (w - f.position);
+
+			// (the outline at the piece's end in the frame's metres: a little inside the rock, its floor part level with the floor)
+			float face = far ? FaceMin + Step : FaceMin, k = Mathf.Max(0.1f, size);
+			Vector3 mid = inFrame(AtMeasure(t, new Vector3(PassX, Floor + RimY, face)));
+			var outline = new List<Vector3>();
+			for (int i = 0; i < Rays; i++)
+			{
+				float ang = i * Mathf.PI * 2f / Rays, r = Mathf.Max(0.3f, rim[i] - 0.12f / k);
+				Vector3 p = inFrame(AtMeasure(t, new Vector3(PassX + Mathf.Cos(ang) * r, Floor + RimY + Mathf.Sin(ang) * r, face)));
+				if (p.y < 0.35f) p.y = -0.02f;
+				p.x = Mathf.Clamp(p.x, -d.Half + 0.3f, d.Half - 0.3f);
+				p.y = Mathf.Min(p.y, d.Height - 0.3f);
+				outline.Add(p);
+			}
+			outline.Sort((a, b) => Mathf.Atan2(a.y - mid.y, a.x - mid.x).CompareTo(Mathf.Atan2(b.y - mid.y, b.x - mid.x)));
+
+			var verts = new List<Vector3>();
+			var tris = new List<int>();
+			Action<Vector3, Vector3, Vector3> tri = (a, b, c) =>
+			{
+				// (both sides, each its own corners: shared ones made its light cancel out)
+				int i = verts.Count;
+				verts.Add(a); verts.Add(b); verts.Add(c); verts.Add(a); verts.Add(c); verts.Add(b);
+				tris.AddRange(new[] { i, i + 1, i + 2, i + 3, i + 4, i + 5 });
+			};
+			Action<Vector3, Vector3, Vector3, Vector3> quad = (a, b, c, e) => { tri(a, b, c); tri(a, c, e); };
+			float bottom = -0.6f, wz = d.Wall, top = d.CapAt(0f);
+			// the wall: from the hole out to its edges (a corner of it put in where the edge turns)
+			var corners = new[] { new Vector2(d.Half, bottom), new Vector2(d.Half, top), new Vector2(-d.Half, top), new Vector2(-d.Half, bottom) };
+			Func<Vector3, Vector2> edge = p =>
+			{
+				Vector2 dir = new Vector2(p.x - mid.x, p.y - mid.y).normalized;
+				float best = float.PositiveInfinity;
+				if (dir.x > 1e-5f) best = Mathf.Min(best, (d.Half - mid.x) / dir.x);
+				if (dir.x < -1e-5f) best = Mathf.Min(best, (-d.Half - mid.x) / dir.x);
+				if (dir.y > 1e-5f) best = Mathf.Min(best, (top - mid.y) / dir.y);
+				if (dir.y < -1e-5f) best = Mathf.Min(best, (bottom - mid.y) / dir.y);
+				return new Vector2(mid.x, mid.y) + dir * best;
+			};
+			Func<Vector2, float> angle = p => { float a = Mathf.Atan2(p.y - mid.y, p.x - mid.x); return a < 0f ? a + Mathf.PI * 2f : a; };
+			int n = outline.Count;
+			for (int i = 0; i < n; i++)
+			{
+				Vector3 a = outline[i], b = outline[(i + 1) % n];
+				Vector3 wa = new Vector3(a.x, a.y, wz), wb = new Vector3(b.x, b.y, wz);
+				Vector2 ea = edge(a), eb = edge(b);
+				float from = angle(new Vector2(a.x, a.y)), span = angle(new Vector2(b.x, b.y)) - from;
+				if (span < 0f) span += Mathf.PI * 2f;
+				var chain = new List<Vector3> { new Vector3(ea.x, ea.y, wz) };
+				foreach (Vector2 c in corners.OrderBy(c => { float x = angle(c) - from; return x < 0f ? x + Mathf.PI * 2f : x; }))
+				{
+					float x = angle(c) - from;
+					if (x < 0f) x += Mathf.PI * 2f;
+					if (x > 0f && x < span) chain.Add(new Vector3(c.x, c.y, wz));
+				}
+				chain.Add(new Vector3(eb.x, eb.y, wz));
+				for (int j = 0; j + 1 < chain.Count; j++) tri(wa, chain[j], chain[j + 1]);
+				tri(wa, chain[chain.Count - 1], wb);
+				// (the hole's sides, back to the piece's end - not along the floor)
+				if (!(a.y < 0.05f && b.y < 0.05f) && (a.z > wz + 0.01f || b.z > wz + 0.01f)) quad(wa, wb, b, a);
+			}
+			// the doorstep, under the way in too
+			quad(new Vector3(-d.Half, -0.02f, d.SillFrom), new Vector3(d.Half, -0.02f, d.SillFrom), new Vector3(d.Half, -0.02f, 0.1f), new Vector3(-d.Half, -0.02f, 0.1f));
+			// the top: level to the mouth, then with the tunnel
+			Vector3 c0 = new Vector3(-d.Half, top, wz), c1 = new Vector3(d.Half, top, wz);
+			Vector3 c2 = new Vector3(d.Half, d.CapAt(0f), 0f), c3 = new Vector3(-d.Half, d.CapAt(0f), 0f);
+			Vector3 c4 = new Vector3(d.Half, d.CapAt(d.CapTo), d.CapTo), c5 = new Vector3(-d.Half, d.CapAt(d.CapTo), d.CapTo);
+			if (wz < -0.01f) quad(c0, c1, c2, c3);
+			quad(c3, c2, c4, c5);
+			// its sides
+			foreach (float x in new[] { -d.Half, d.Half })
+			{
+				quad(new Vector3(x, bottom, wz), new Vector3(x, top, wz), new Vector3(x, top, 0f), new Vector3(x, bottom, 0f));
+				quad(new Vector3(x, bottom, 0f), new Vector3(x, top, 0f), new Vector3(x, d.CapAt(d.CapTo), d.CapTo), new Vector3(x, bottom, d.CapTo));
+			}
+			// its back, around the tunnel's rock (which runs on through it)
+			float shell = (ShellTop - Floor + EndDip) * k * 1.02f + d.Rise * d.CapTo - 0.3f, half = ShellHalfWidth * k - 0.2f, back = d.CapTo, capB = d.CapAt(d.CapTo);
+			if (shell < capB) quad(new Vector3(-d.Half, shell, back), new Vector3(d.Half, shell, back), new Vector3(d.Half, capB, back), new Vector3(-d.Half, capB, back));
+			if (half < d.Half)
+				foreach (float sgn in new[] { -1f, 1f })
+					quad(new Vector3(sgn * half, bottom, back), new Vector3(sgn * d.Half, bottom, back), new Vector3(sgn * d.Half, capB, back), new Vector3(sgn * half, capB, back));
+
+			var mesh = new Mesh { name = MouthName };
+			if (verts.Count > 65000) mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+			mesh.SetVertices(verts.Select(v => toFrame * v).ToList());
+			mesh.SetTriangles(tris, 0);
+			mesh.SetUVs(0, verts.Select(v => new Vector2((v.x + v.z) / 6f, v.y / 6f)).ToList()); // (level metres: as it was)
+			mesh.RecalculateNormals();
+			mesh.RecalculateBounds();
+			go.AddComponent<MeshFilter>().sharedMesh = mesh;
+			go.AddComponent<MeshRenderer>().sharedMaterial = look.sharedMaterial;
+			go.AddComponent<MeshCollider>().sharedMesh = mesh;
+		}
+
+		#endregion
+
+		/// <summary>Whether a point is in a cave's rock: its tunnel's shell or its den's box, or a mouth's frame.</summary>
 		public static bool InRock(Layout l, Vector3 p)
 		{
 			Vector3 rel = p - l.Mouth; rel.y = 0f;
 			float s = Vector3.Dot(rel, l.Flat), q = Mathf.Abs(Vector3.Dot(rel, Vector3.Cross(Vector3.up, l.Flat)));
 			if (l.Tunnels > 0 && s > -0.3f && s < l.Length + 0.3f && q < l.HalfWidth && p.y > l.FloorAt(s) - 2f * l.Size && p.y < l.FloorAt(s) + l.Top + 0.5f) return true;
+			if (l.Tunnels > 0 && InFrame(l, PortalOf(l.Size, l.Slope), p)) return true;
+			if (l.Tunnels > 0 && !l.Room && InFrame(FarEnd(l), PortalOf(l.Size, -l.Slope), p)) return true;
 			if (l.Room)
 			{
 				Vector3 lp = Quaternion.Inverse(l.RoomRotation) * (p - l.RoomPivot);
@@ -313,6 +640,13 @@ namespace DynamicIslands.Editor
 				if (lp.x > rmin.x && lp.x < rmax.x && lp.y > rmin.y && lp.y < rmax.y && lp.z > rmin.z && lp.z < rmax.z) return true;
 			}
 			return false;
+		}
+
+		static bool InFrame(Layout l, Portal d, Vector3 p)
+		{
+			Vector3 rel = p - l.Mouth; rel.y = 0f;
+			float s = Vector3.Dot(rel, l.Flat), q = Mathf.Abs(Vector3.Dot(rel, Vector3.Cross(Vector3.up, l.Flat)));
+			return q < d.Half && s > d.Wall && s < d.CapTo && p.y > l.Mouth.y - 0.6f && p.y < l.Mouth.y + d.CapAt(s) + 0.5f;
 		}
 
 		public struct Move { public Transform T; public Vector3 From, To; }
@@ -343,13 +677,16 @@ namespace DynamicIslands.Editor
 				float h = Mathf.Lerp(Mathf.Lerp(before[iz, ix], before[iz, ix + 1], tx), Mathf.Lerp(before[iz + 1, ix], before[iz + 1, ix + 1], tx), tz);
 				return o.y + h * size.y;
 			};
+			// (a boulder's middle can be off the doorstep while its rock lies on it - 11-02: what any collider puts there counts too)
+			HashSet<EditorGameObject> onStep = OnDoorsteps(l);
 			foreach (EditorGameObject e in placedRoot.GetComponentsInChildren<EditorGameObject>(false))
 			{
 				Vector3 p = e.transform.position;
-				if (p.x < min.x || p.x > max.x || p.z < min.z || p.z > max.z) continue;
 				if (e.GameObjectName == Tunnel || e.GameObjectName == Room) continue;
 				bool setUp = e.Props != null && e.Props.Count > 0;
-				if (!setUp && InRock(l, p)) { cleared.Add(e.gameObject); continue; }
+				if (!setUp && onStep.Contains(e)) { cleared.Add(e.gameObject); continue; }
+				if (p.x < min.x || p.x > max.x || p.z < min.z || p.z > max.z) continue;
+				if (!setUp && (InRock(l, p) || OnWayIn(l, p))) { cleared.Add(e.gameObject); continue; }
 				float was = oldGround(p), now = terrain.SampleHeight(p) + o.y;
 				if (Mathf.Abs(p.y - was) > 1.5f || Mathf.Abs(now - was) < 0.05f) continue;
 				Vector3 to = p + Vector3.up * (now - was);
@@ -358,6 +695,48 @@ namespace DynamicIslands.Editor
 			}
 			foreach (GameObject go in cleared) go.SetActive(false);
 			foreach (Move m in moved) m.T.position = m.To;
+			// (and what the ground's move brought onto a doorstep)
+			foreach (EditorGameObject e in OnDoorsteps(l))
+				if (e.GameObjectName != Tunnel && e.GameObjectName != Room && (e.Props == null || e.Props.Count == 0) && !cleared.Contains(e.gameObject) && e.transform.IsChildOf(placedRoot.transform))
+				{
+					cleared.Add(e.gameObject);
+					e.gameObject.SetActive(false);
+				}
+		}
+
+		/// <summary>Whether a point is on a mouth's way in (its doorstep and a little before it, the frame's width; an open far
+		/// end's too): a rock or plant there stood in the way in (a boulder before the doorstep, 11-01).</summary>
+		static bool OnWayIn(Layout l, Vector3 p)
+		{
+			if (l.Tunnels <= 0) return false;
+			foreach (Layout m in l.Room ? new[] { l } : new[] { l, FarEnd(l) })
+			{
+				Portal d = PortalOf(m.Size, m.Slope);
+				Vector3 rel = p - m.Mouth; rel.y = 0f;
+				float s = Vector3.Dot(rel, m.Flat), q = Mathf.Abs(Vector3.Dot(rel, Vector3.Cross(Vector3.up, m.Flat)));
+				if (q < d.Half + 0.5f && s > d.SillFrom - 2f && s <= d.Wall + 0.1f && p.y > m.Mouth.y - 3f && p.y < m.Mouth.y + d.Height) return true;
+			}
+			return false;
+		}
+
+		/// <summary>The objects with a collider on a mouth's doorstep or the metre and a half before it (an open far end's too), above its floor.</summary>
+		static HashSet<EditorGameObject> OnDoorsteps(Layout l)
+		{
+			var found = new HashSet<EditorGameObject>();
+			if (l.Tunnels <= 0) return found;
+			Physics.SyncTransforms();
+			foreach (Layout m in l.Room ? new[] { l } : new[] { l, FarEnd(l) })
+			{
+				Portal d = PortalOf(m.Size, m.Slope);
+				float s0 = d.SillFrom - 1.5f, s1 = Mathf.Max(d.Wall + 0.1f, s0 + 0.5f), y0 = 0.3f, y1 = Mathf.Max(d.Height, 1f);
+				Vector3 mid = m.Mouth + m.Flat * ((s0 + s1) / 2f) + Vector3.up * ((y0 + y1) / 2f);
+				foreach (Collider c in Physics.OverlapBox(mid, new Vector3(d.Half + 0.3f, (y1 - y0) / 2f, (s1 - s0) / 2f), Quaternion.LookRotation(m.Flat, Vector3.up), ~0, QueryTriggerInteraction.Collide))
+				{
+					EditorGameObject e = c is TerrainCollider ? null : c.GetComponentInParent<EditorGameObject>();
+					if (e != null) found.Add(e);
+				}
+			}
+			return found;
 		}
 
 		#region Laying it in the editor
@@ -371,7 +750,8 @@ namespace DynamicIslands.Editor
 
 		/// <summary>
 		/// Lays a cave in the editor's island (the scenes its pieces come from loaded first): the pieces, the ground shaped
-		/// around them, one undo step; the pieces selected after. Says what it did. done gets the objects (none: refused).
+		/// around them, one undo step. Nothing is selected after: the gizmo stood on the cave (11-01). Says what it did, or
+		/// why it can't. done gets the objects (none: refused).
 		/// size: times Raft's own size (Size).
 		/// </summary>
 		public static IEnumerator Lay(Vector3 mouth, Vector3 toward, float slope, bool room, bool hill, float size, Action<List<GameObject>> done = null)
@@ -410,17 +790,28 @@ namespace DynamicIslands.Editor
 				SettleObjects(placedRoot, terrain, heightsBefore, l, min, max, out cleared, out moved);
 
 				var props = new Dictionary<string, string> { { ObjectProps.Skin, ObjectProps.SkinRock } };
-				foreach (Piece p in l.Pieces)
+				string sized = l.Size.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+				for (int i = 0; i < l.Pieces.Count; i++)
 				{
+					Piece p = l.Pieces[i];
 					GameObject go = PlaceableCatalog.Spawn(p.Name, placedRoot.transform);
 					if (go == null) continue;
 					go.transform.position = p.Position;
 					go.transform.rotation = p.Rotation;
 					if (p.Scale > 0f && Mathf.Abs(p.Scale - 1f) > 0.001f) go.transform.localScale *= p.Scale;
 					foreach (Collider c in go.GetComponentsInChildren<Collider>()) c.enabled = true;
-					// (the tunnels' icy rock takes the den's brown island rock; the den keeps its own)
-					EditorGameObject.Attach(go, p.Name, p.Name == Tunnel ? new Dictionary<string, string>(props)
-						: l.Tunnels > 0 ? new Dictionary<string, string> { { ObjectProps.CavePlug, l.Size.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) } } : null);
+					// (the tunnels' icy rock takes the den's brown island rock; the den keeps its own. The first tunnel gets the
+					// mouth's frame, the last an open far end's)
+					Dictionary<string, string> own;
+					if (p.Name == Tunnel)
+					{
+						own = new Dictionary<string, string>(props);
+						if (i == 0) own[ObjectProps.CaveMouth] = sized;
+						if (i == l.Tunnels - 1 && !l.Room) own[ObjectProps.CaveEnd] = sized;
+						if (i < l.Tunnels - 1 || l.Room) own[ObjectProps.CaveJoin] = sized; // (and into the den)
+					}
+					else own = new Dictionary<string, string> { { ObjectProps.CavePlug, sized } };
+					EditorGameObject.Attach(go, p.Name, own);
 					made.Add(go);
 				}
 
@@ -439,11 +830,6 @@ namespace DynamicIslands.Editor
 						alphaRect, TerrainStrokeCommand.Crop(alphaBefore, alphaRect), maskBefore != null ? TerrainStrokeCommand.Crop(maskBefore, alphaRect) : null, terraineditor.paintMask));
 				CommandUndoRedo.UndoRedoManager.Insert(group);
 
-				if (DynamicIslands.EditorGizmoHandler != null)
-				{
-					DynamicIslands.EditorGizmoHandler.ClearTargets(false);
-					foreach (GameObject go in made) DynamicIslands.EditorGizmoHandler.AddTarget(go.transform, false);
-				}
 				LastLayout = l;
 				LastPieces = made;
 				float sea = DynamicIslands.EditorWaterLevel;
@@ -512,7 +898,7 @@ namespace DynamicIslands.Editor
 		public static List<Vector3> MouthOutline(Vector3 floor, Vector3 dir, float size)
 		{
 			Vector3 across = Vector3.Cross(Vector3.up, dir).normalized;
-			float k = Mathf.Clamp(size, MinSize, MaxSize), rock = ShellHalfWidth * k, half = HoleHalf * k, up = HoleUp * k;
+			float k = Mathf.Clamp(size, MinSize, MaxSize), rock = PortalOf(k, 0f).Half, half = 1.6f * k, up = 4.9f * k;
 			Vector3 b = floor + Vector3.up * 0.15f;
 			var pts = new List<Vector3> { b - across * rock, b - across * half };
 			// (the opening: straight sides to two thirds of its height, a half-ellipse over them)

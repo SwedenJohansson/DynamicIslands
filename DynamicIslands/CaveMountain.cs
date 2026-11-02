@@ -181,10 +181,10 @@ namespace DynamicIslands.Editor
 				Vector3 sc = OverMeasured(t, p.Name);
 				float floorY = t.position.y + p.Floor * sc.y;
 				foreach (Collider c in t.GetComponentsInChildren<Collider>())
-					if (c.enabled && !c.isTrigger) { cols.Add(c); floorOf[c] = floorY; ownerOf[c] = mouths.Count; }
+					if (c.enabled && !c.isTrigger && c.name != CaveTool.MouthName && c.name != CaveTool.JoinName) { cols.Add(c); floorOf[c] = floorY; ownerOf[c] = mouths.Count; }
 				foreach (Renderer r in t.GetComponentsInChildren<Renderer>())
 				{
-					if (!r.enabled || !(r is MeshRenderer)) continue;
+					if (!r.enabled || !(r is MeshRenderer) || r.name == CaveTool.MouthName || r.name == CaveTool.JoinName) continue;
 					if (!any) { b = r.bounds; any = true; } else b.Encapsulate(r.bounds);
 					float s = r.bounds.size.x * r.bounds.size.z;
 					if (s > lookSize && r.sharedMaterial != null) { lookSize = s; look = r; }

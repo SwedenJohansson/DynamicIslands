@@ -688,12 +688,14 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
 - **Caves:** **Tunnel** digs a cave you can walk into. Press where its mouth is to be and drag the way it goes, into a
   hill or across flat ground: Raft's own cave tunnels (the ones on Temperance) are laid end to end along the drag, as
   many as fit (up to 12, about 10 m each), and the ground is raised over them into a hill, filled up under them and
-  levelled in front of the mouth, which stays open. **Slope** tips the tunnel down into the ground or up (up to 12°);
+  levelled in front of the mouth, which stays open. The mouth gets a frame of the same rock, flush with the hill's
+  face, with a level doorstep before it, and the ground is cut away along the whole passage, so you walk straight in
+  and through to the end (an open far end gets the same frame). Even a short drag lays at least one tunnel. **Slope** tips the tunnel down into the ground or up (up to 12°);
   **Size** makes the whole cave smaller or bigger than Raft's own, from **0.7x** (a narrow passage you can still
   walk) to **1.5x** (a big cavern); pick it before you drag - an outline of the mouth at that size follows the mouse;
   **Cave room at the end** ends it in Balboa's bear den (off: an open far end, a tunnel through the hill); **Hill over
   it** off leaves the ground as it is (for a cave inside a hill you made yourself). Esc cancels the drag; one **Ctrl+Z**
-  takes the pieces and the ground back together. The pieces are ordinary objects: move, delete or tint them like any
+  takes the pieces and the ground back together. Nothing is selected after laying, so no gizmo stands on the cave. The pieces are ordinary objects: move, delete or tint them like any
   other; they save with the island and come along into Test and multiplayer. In a world the rock over them is solid
   and no daylight shows through.
 

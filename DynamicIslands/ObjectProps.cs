@@ -26,6 +26,11 @@ namespace DynamicIslands.Editor
 		public const string Skin = "skin", SkinRock = "rock";
 		/// <summary>"1" (or the cave's size, e.g. "0.7"): a bear den laid at a cave tool tunnel's end - a rock wall across its wide mouth around the tunnel (CaveTool.Plug), at that size.</summary>
 		public const string CavePlug = "cave.plug";
+		/// <summary>The cave's size (e.g. "1"): a cave tool tunnel's rock frame at its mouth (CaveMouth: its first piece) or
+		/// at its open far end (CaveEnd: its last) - CaveTool.Mouth.</summary>
+		public const string CaveMouth = "cave.mouth", CaveEnd = "cave.end";
+		/// <summary>The cave's size: a cave tool tunnel followed by another or the den gets a floor plate over their join - CaveTool.Join.</summary>
+		public const string CaveJoin = "cave.join";
 		/// <summary>Loot: "UniqueItemName*amount;..." (Raft's item names), and "0" = never fills up again.</summary>
 		public const string LootItems = "loot.items", LootRefill = "loot.refill";
 		/// <summary>Buried treasure: Raft's treasure kind (its uniqueTreasureIndex; 0 = the common chest).</summary>
@@ -255,6 +260,16 @@ namespace DynamicIslands.Editor
 
 		public static void ApplyTint(GameObject root, IDictionary<string, string> props)
 		{
+			// (the cave tool's frames first: they take the tint and the rock skin with the piece)
+			float mouth, end;
+			bool hasMouth = float.TryParse(Get(props, CaveMouth, ""), NumberStyles.Float, CultureInfo.InvariantCulture, out mouth) && mouth > 0f;
+			bool hasEnd = float.TryParse(Get(props, CaveEnd, ""), NumberStyles.Float, CultureInfo.InvariantCulture, out end) && end > 0f;
+			float join;
+			bool hasJoin = float.TryParse(Get(props, CaveJoin, ""), NumberStyles.Float, CultureInfo.InvariantCulture, out join) && join > 0f;
+			if (hasMouth || hasEnd || hasJoin || root != null && (root.transform.Find(CaveTool.MouthName) != null || root.transform.Find(CaveTool.JoinName) != null)) CaveTool.ClearMouths(root);
+			if (hasMouth) CaveTool.Mouth(root, mouth, false);
+			if (hasEnd) CaveTool.Mouth(root, end, true);
+			if (hasJoin) CaveTool.Join(root, join);
 			if (HasTint(props)) ApplyTint(root, Tint(props), TintStrength(props));
 			else ApplyTint(root, Color.white, 0f);
 			if (Get(props, Skin, "") == SkinRock) ApplyRockSkin(root);

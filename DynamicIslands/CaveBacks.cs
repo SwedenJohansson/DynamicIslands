@@ -44,7 +44,7 @@ namespace DynamicIslands.Editor
 			if (piece == null || !Wants(name)) return;
 			foreach (MeshFilter mf in piece.GetComponentsInChildren<MeshFilter>(true))
 			{
-				if (mf.name == Name || mf.sharedMesh == null || mf.transform.Find(Name) != null) continue;
+				if (mf.name == Name || mf.name == CaveTool.MouthName || mf.name == CaveTool.JoinName || mf.sharedMesh == null || mf.transform.Find(Name) != null) continue;
 				MeshRenderer r = mf.GetComponent<MeshRenderer>();
 				if (r == null) continue;
 				Mesh back = Back(mf.sharedMesh);

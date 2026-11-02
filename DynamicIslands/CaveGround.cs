@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -32,7 +33,11 @@ namespace DynamicIslands.Editor
 			if (objects == null || piece == null || p == null || !p.IsCave) return;
 			CaveGround g = objects.GetComponent<CaveGround>() ?? objects.gameObject.AddComponent<CaveGround>();
 			g.caves.Add(piece.transform);
+			names[piece.transform.GetInstanceID()] = name;
 		}
+
+		// (a world's cave pieces' names, for their measures: the editor's are on their EditorGameObject)
+		static readonly Dictionary<int, string> names = new Dictionary<int, string>();
 
 		/// <summary>The island's objects all there and switched on (their colliders can be hit): the ground in its caves' rooms taken out.</summary>
 		public static void Cut(Transform objects)
@@ -192,7 +197,8 @@ namespace DynamicIslands.Editor
 		/// <summary>A cave piece's colliders, their bounds, and the ground points under them (false: none).</summary>
 		static bool Reach(Terrain land, Transform cave, out HashSet<Collider> own, out Bounds b, out int x0, out int x1, out int z0, out int z1)
 		{
-			own = new HashSet<Collider>(cave.GetComponentsInChildren<Collider>().Where(c => c.enabled && !c.isTrigger));
+			// (a cave tool mouth's frame is not the piece's room: CutTunnels takes the ground under it)
+			own = new HashSet<Collider>(cave.GetComponentsInChildren<Collider>().Where(c => c.enabled && !c.isTrigger && c.name != CaveTool.MouthName && c.name != CaveTool.JoinName));
 			b = new Bounds();
 			x0 = x1 = z0 = z1 = 0;
 			if (own.Count == 0) return false;
@@ -280,7 +286,7 @@ namespace DynamicIslands.Editor
 			}
 			// (and the cells whose ground still runs steeply through a room between their corners)
 			var across = new List<Vector2Int>();
-			try { Across(land, caves, inside, across); }
+			try { Across(land, caves, inside, across); CutTunnels(land, caves, across); }
 			finally { Physics.queriesHitBackfaces = backs0; }
 			if (hi < 0 && across.Count == 0) return 0;
 			// (a cell goes when all four of its corners are in a room: none is cut out past a wall, where it would open a gap
@@ -352,6 +358,198 @@ namespace DynamicIslands.Editor
 								p.y = o.y + land.SampleHeight(p);
 								through = p.y > floorY + 0.05f && p.y < roofY - 0.05f && Inside(p, own, b, out under, out over);
 							}
+						if (!through) continue;
+						seen.Add(z * cells + x);
+						found.Add(new Vector2Int(x, z));
+					}
+			}
+		}
+
+		/// <summary>A way through narrower than this (m, at the piece's size) is a tunnel's (CutTunnels): the cave tool's is 3.2 m.</summary>
+		const float NarrowWidth = 6f;
+
+		/// <summary>Dev (CICaveToolProbe): told why each cell near TraceAt is cut or not by CutTunnels' tunnel rule.</summary>
+		internal static Action<string> Trace;
+		internal static Vector3 TraceAt;
+
+		/// <summary>A cave piece's measures (raft_props), or null.</summary>
+		static PropInfo InfoOf(Transform t)
+		{
+			EditorGameObject e = t.GetComponent<EditorGameObject>();
+			string name = e != null ? e.GameObjectName : null;
+			if (name == null) names.TryGetValue(t.GetInstanceID(), out name);
+			PropInfo p = RaftProps.Get(name ?? "");
+			return p != null && p.IsCave ? p : null;
+		}
+
+		/// <summary>A point (world) in a cave piece's own measures (raft_props', at the size it was measured at).</summary>
+		static Vector3 InMeasures(Transform t, PropInfo p, Vector3 world)
+		{
+			Vector3 sc = CaveMountain.OverMeasured(t, p.Name), l = Quaternion.Inverse(t.rotation) * (world - t.position);
+			return new Vector3(l.x / Mathf.Max(1e-4f, Mathf.Abs(sc.x)), l.y / Mathf.Max(1e-4f, Mathf.Abs(sc.y)), l.z / Mathf.Max(1e-4f, Mathf.Abs(sc.z)));
+		}
+
+		/// <summary>A cave tool mouth's frames on a piece (CaveTool.Mouth) and their footprints (each frame's level space,
+		/// CaveTool.FrameSpaceName: metres, z along the way in, y up from its floor).</summary>
+		static List<KeyValuePair<Transform, Bounds>> Frames(Transform cave)
+		{
+			var found = new List<KeyValuePair<Transform, Bounds>>();
+			foreach (Transform c in cave)
+			{
+				MeshFilter mf = c.name == CaveTool.MouthName ? c.GetComponent<MeshFilter>() : null;
+				if (mf == null || mf.sharedMesh == null || !c.gameObject.activeInHierarchy) continue;
+				Transform space = c.Find(CaveTool.FrameSpaceName) ?? c;
+				Vector3[] v = mf.sharedMesh.vertices;
+				if (v.Length == 0) continue;
+				var b = new Bounds(space.InverseTransformPoint(c.TransformPoint(v[0])), Vector3.zero);
+				foreach (Vector3 x in v) b.Encapsulate(space.InverseTransformPoint(c.TransformPoint(x)));
+				found.Add(new KeyValuePair<Transform, Bounds>(space, b));
+			}
+			return found;
+		}
+
+		/// <summary>
+		/// The cells whose ground runs anywhere through a tunnel's way (a piece narrower than NarrowWidth - the cave tool's,
+		/// 3.2 m wide where the ground's cells are 1.95 m): each looked over finely, and cut where any of its ground is in the
+		/// way, when all four of its corners are within the caves' rock (none opens a gap beside it) or under a cave tool
+		/// mouth's frame (which covers it); and every cell under a frame. The rooms' rule (a cell wholly in one, or steep
+		/// through it with the room under its middle) left wedges of ground across a tunnel: rock spikes up through its floor,
+		/// a slope that pushed you up, its mouth closed (the cave tool, 11-01).
+		/// </summary>
+		static void CutTunnels(Terrain land, List<Transform> caves, List<Vector2Int> found)
+		{
+			var infos = new List<KeyValuePair<Transform, PropInfo>>();
+			var frames = new List<KeyValuePair<Transform, Bounds>>();
+			var joins = new List<KeyValuePair<Transform, Bounds>>();
+			foreach (Transform t in caves)
+			{
+				if (t == null) continue;
+				PropInfo p = InfoOf(t);
+				if (p != null) infos.Add(new KeyValuePair<Transform, PropInfo>(t, p));
+				else if (Trace != null) Trace(t.name + ": no measures");
+				frames.AddRange(Frames(t));
+				foreach (Transform c in t)
+					if (c.name == CaveTool.JoinName && c.gameObject.activeInHierarchy && c.GetComponent<MeshFilter>() != null && c.GetComponent<MeshFilter>().sharedMesh != null)
+						joins.Add(new KeyValuePair<Transform, Bounds>(c, c.GetComponent<MeshFilter>().sharedMesh.bounds));
+			}
+			TerrainData data = land.terrainData;
+			int res = data.heightmapResolution, cells = res - 1;
+			float sx = data.size.x / cells, sz = data.size.z / cells, sy = data.size.y;
+			Vector3 o = land.transform.position;
+			var seen = new HashSet<int>(found.Select(c => c.y * cells + c.x));
+			Func<int, int, float, Vector3> at = (x, z, h) => new Vector3(o.x + x * sx, o.y + h * sy, o.z + z * sz);
+			// (under a frame: the ground there is hidden by it - its sill, its front, its top - and the way in runs through it)
+			Func<Vector3, bool> underFrame = c =>
+			{
+				foreach (KeyValuePair<Transform, Bounds> f in frames)
+				{
+					Vector3 l = f.Key.InverseTransformPoint(c);
+					Bounds fb = f.Value;
+					if (l.x > fb.min.x + 0.02f && l.x < fb.max.x - 0.02f && l.z > fb.min.z + 0.02f && l.z < fb.max.z - 0.02f && l.y > fb.min.y - 3f && l.y < fb.max.y + 0.5f) return true;
+				}
+				return false;
+			};
+			// (under its doorstep, before the passage: kept - a hole there showed the sea under the doorstep's edge)
+			Func<Transform, Vector3, bool> underStep = (fs, c) => { Vector3 l = fs.InverseTransformPoint(c); return l.z < 0.1f && l.y < 0f; };
+			Func<Vector3, bool> covered = c =>
+			{
+				foreach (KeyValuePair<Transform, PropInfo> i in infos)
+				{
+					Vector3 l = InMeasures(i.Key, i.Value, c), half = i.Value.Size * 0.5f + Vector3.one * 0.3f;
+					if (Mathf.Abs(l.x - i.Value.Centre.x) < half.x && Mathf.Abs(l.z - i.Value.Centre.z) < half.z) return true;
+				}
+				return underFrame(c);
+			};
+			foreach (KeyValuePair<Transform, Bounds> f in frames)
+			{
+				Bounds w = new Bounds(f.Key.position, Vector3.zero);
+				Bounds fb = f.Value;
+				for (int i = 0; i < 4; i++) w.Encapsulate(f.Key.TransformPoint(new Vector3((i & 1) == 0 ? fb.min.x : fb.max.x, 0f, (i & 2) == 0 ? fb.min.z : fb.max.z)));
+				int x0 = Mathf.Max(0, Mathf.FloorToInt((w.min.x - o.x) / sx)), x1 = Mathf.Min(cells, Mathf.CeilToInt((w.max.x - o.x) / sx));
+				int z0 = Mathf.Max(0, Mathf.FloorToInt((w.min.z - o.z) / sz)), z1 = Mathf.Min(cells, Mathf.CeilToInt((w.max.z - o.z) / sz));
+				if (x0 >= x1 || z0 >= z1) continue;
+				float[,] h = data.GetHeights(x0, z0, x1 - x0 + 1, z1 - z0 + 1);
+				for (int z = z0; z < z1; z++)
+					for (int x = x0; x < x1; x++)
+						if (!seen.Contains(z * cells + x) && underFrame(at(x, z, h[z - z0, x - x0])) && underFrame(at(x + 1, z, h[z - z0, x + 1 - x0]))
+							&& underFrame(at(x, z + 1, h[z + 1 - z0, x - x0])) && underFrame(at(x + 1, z + 1, h[z + 1 - z0, x + 1 - x0]))
+							&& !(underStep(f.Key, at(x, z, h[z - z0, x - x0])) && underStep(f.Key, at(x + 1, z, h[z - z0, x + 1 - x0]))
+								&& underStep(f.Key, at(x, z + 1, h[z + 1 - z0, x - x0])) && underStep(f.Key, at(x + 1, z + 1, h[z + 1 - z0, x + 1 - x0]))))
+						{
+							seen.Add(z * cells + x);
+							found.Add(new Vector2Int(x, z));
+						}
+			}
+			// (over a join's plate: the floor dips where two tunnels meet, and the rule below finds no way through there - the
+			// ground stood up through the plate, 11-02; a cell whose middle is on the plate's middle part and whose corners are all
+			// low in the passage is cut: the plate is the floor over it, the tunnels' rock its sides)
+			foreach (KeyValuePair<Transform, Bounds> j in joins)
+			{
+				Bounds jb = j.Value;
+				float k = jb.extents.x / 2.4f, roof = 1.6f * k;
+				Bounds w = new Bounds(j.Key.position, Vector3.zero);
+				for (int i = 0; i < 4; i++) w.Encapsulate(j.Key.TransformPoint(new Vector3((i & 1) == 0 ? jb.min.x : jb.max.x, 0f, (i & 2) == 0 ? jb.min.z : jb.max.z)));
+				int x0 = Mathf.Max(0, Mathf.FloorToInt((w.min.x - o.x) / sx) - 1), x1 = Mathf.Min(cells, Mathf.CeilToInt((w.max.x - o.x) / sx) + 1);
+				int z0 = Mathf.Max(0, Mathf.FloorToInt((w.min.z - o.z) / sz) - 1), z1 = Mathf.Min(cells, Mathf.CeilToInt((w.max.z - o.z) / sz) + 1);
+				if (x0 >= x1 || z0 >= z1) continue;
+				float[,] h = data.GetHeights(x0, z0, x1 - x0 + 1, z1 - z0 + 1);
+				Func<Vector3, bool> low = c => { Vector3 l = j.Key.InverseTransformPoint(c); return l.y > -3f && l.y < roof; };
+				for (int z = z0; z < z1; z++)
+					for (int x = x0; x < x1; x++)
+					{
+						if (seen.Contains(z * cells + x)) continue;
+						Vector3 m = j.Key.InverseTransformPoint(new Vector3(o.x + (x + 0.5f) * sx, j.Key.position.y, o.z + (z + 0.5f) * sz));
+						if (Mathf.Abs(m.x) > 1.2f * k || m.z < jb.min.z - 0.3f || m.z > jb.max.z + 0.3f) continue;
+						if (!low(at(x, z, h[z - z0, x - x0])) || !low(at(x + 1, z, h[z - z0, x + 1 - x0])) || !low(at(x, z + 1, h[z + 1 - z0, x - x0])) || !low(at(x + 1, z + 1, h[z + 1 - z0, x + 1 - x0]))) continue;
+						seen.Add(z * cells + x);
+						found.Add(new Vector2Int(x, z));
+					}
+			}
+			foreach (KeyValuePair<Transform, PropInfo> i in infos)
+			{
+				Transform t = i.Key;
+				PropInfo p = i.Value;
+				Vector3 sc = CaveMountain.OverMeasured(t, p.Name);
+				if (Trace != null) Trace(t.name + ": width " + p.Width + " axis " + p.Axis + " scale " + sc.ToString("F2"));
+				if (p.Width <= 0f || p.Width * Mathf.Abs(p.Axis == 0 ? sc.z : sc.x) >= NarrowWidth) continue;
+				HashSet<Collider> own;
+				Bounds b;
+				int x0, x1, z0, z1;
+				if (!Reach(land, t, out own, out b, out x0, out x1, out z0, out z1)) continue;
+				if (Trace != null) Trace(t.name + ": cells " + x0 + ".." + x1 + ", " + z0 + ".." + z1 + " trace at " + TraceAt.ToString("F1"));
+				Vector3 mid = p.Inside != Vector3.zero ? p.Inside : p.Centre;
+				float across = p.Width * 0.5f + 1.2f, along = (p.Axis == 0 ? p.Size.x : p.Size.z) * 0.5f + 0.5f;
+				float[,] h = data.GetHeights(x0, z0, x1 - x0 + 1, z1 - z0 + 1);
+				for (int z = z0; z < z1; z++)
+					for (int x = x0; x < x1; x++)
+					{
+						bool tr = Trace != null && Mathf.Abs(o.x + (x + 0.5f) * sx - TraceAt.x) < 1.2f && Mathf.Abs(o.z + (z + 0.5f) * sz - TraceAt.z) < 1.2f;
+						if (seen.Contains(z * cells + x)) { if (tr) Trace("cell " + x + "," + z + " " + t.name + ": seen"); continue; }
+						float c00 = h[z - z0, x - x0], c10 = h[z - z0, x + 1 - x0], c01 = h[z + 1 - z0, x - x0], c11 = h[z + 1 - z0, x + 1 - x0];
+						float top = o.y + Mathf.Max(Mathf.Max(c00, c10), Mathf.Max(c01, c11)) * sy, bottom = o.y + Mathf.Min(Mathf.Min(c00, c10), Mathf.Min(c01, c11)) * sy;
+						if (top <= b.min.y || bottom >= b.max.y) { if (tr) Trace("cell " + x + "," + z + " " + t.name + ": out of bounds y"); continue; }
+						if (!covered(at(x, z, c00)) || !covered(at(x + 1, z, c10)) || !covered(at(x, z + 1, c01)) || !covered(at(x + 1, z + 1, c11)))
+						{
+							if (tr) Trace("cell " + x + "," + z + " " + t.name + ": covered " + covered(at(x, z, c00)) + covered(at(x + 1, z, c10)) + covered(at(x, z + 1, c01)) + covered(at(x + 1, z + 1, c11)) + " local " + InMeasures(t, p, at(x, z, c00)).ToString("F2") + " " + InMeasures(t, p, at(x, z + 1, c01)).ToString("F2") + " centre " + p.Centre.ToString("F2") + " size " + p.Size.ToString("F2"));
+							continue;
+						}
+						// (finer the steeper: a way 3.5 m high is crossed in under half a metre by a cell 9 m high)
+						int n = Mathf.Clamp(Mathf.CeilToInt((top - bottom) / 1.5f) + 4, 6, 20);
+						bool through = false;
+						float under, over;
+						int inRange = 0;
+						for (int a = 0; a <= n && !through; a++)
+							for (int c = 0; c <= n && !through; c++)
+							{
+								Vector3 q = new Vector3(o.x + (x + (float)a / n) * sx, 0f, o.z + (z + (float)c / n) * sz);
+								q.y = o.y + land.SampleHeight(q);
+								Vector3 l = InMeasures(t, p, q);
+								float side = p.Axis == 0 ? l.z - mid.z : l.x - mid.x, run = p.Axis == 0 ? l.x - p.Centre.x : l.z - p.Centre.z;
+								if (Mathf.Abs(side) > across || Mathf.Abs(run) > along || l.y < p.Floor - 2.5f || l.y > p.Floor + p.Headroom + 2.5f) continue;
+								inRange++;
+								through = Inside(q, own, b, out under, out over);
+							}
+						if (tr) Trace("cell " + x + "," + z + " " + t.name + ": " + inRange + " of " + ((n + 1) * (n + 1)) + " samples in range, through " + through);
 						if (!through) continue;
 						seen.Add(z * cells + x);
 						found.Add(new Vector2Int(x, z));
