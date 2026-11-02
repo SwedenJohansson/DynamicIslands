@@ -62,6 +62,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   Raft within 30 s counts as killed, not as taken away (Sinkmarket Floor's "kill 3 stingrays" stayed at 0/3 after bow
   kills). A harmless quest animal that Raft does take away alive is matched more loosely to the quest step (label, type,
   plural) and logs why when it is not put back.
+- **Old worlds keep their plan and story**: a world made before Raft gave worlds an id (older Raft versions) never saved
+  its custom islands, so a plan given with `WorldPlan` and its story progress were gone after loading the world again.
+  Such a world now keeps them under its name.
 - **Quest locks wait for their step**: on about 60 islands a lock, gate or lift that a quest key opens now stays shut
   until the quest step that asks for it, so a quest can no longer be skipped ahead by walking in with the key. Hollow
   Mountain's lifts and throne lock wait too, and its entry-hall step now counts only from inside the hall.
