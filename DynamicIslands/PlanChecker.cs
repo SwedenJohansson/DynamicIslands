@@ -65,6 +65,8 @@ namespace DynamicIslands.Editor
 			public readonly List<Finding> Traps = new List<Finding>();
 			/// <summary>Islanders' names (PlayerFeatures).</summary>
 			public readonly PlayerFeatures.PlanFacts Player = new PlayerFeatures.PlanFacts();
+			/// <summary>QE1/QE4: signals, named objects and hand-in places for the new step kinds.</summary>
+			public readonly QuestSteps.PlanFacts Steps = new QuestSteps.PlanFacts();
 			public string Describe { get { return Sample ? "a new " + Name + " island (checked on a sample of that map type)" : "'" + Name + "'"; } }
 		}
 
@@ -83,11 +85,13 @@ namespace DynamicIslands.Editor
 			// (creatures come back by default, after the island's regrow days - unless the island says never)
 			int regrow;
 			bool islandNever = int.TryParse(ObjectProps.Get(f.Props, IslandProps.RegrowDays), out regrow) && regrow <= 0;
+			QuestSteps.AddIslandFacts(x.Steps, f.Props);
 			foreach (IslandObject o in f.Objects)
 			{
 				IDictionary<string, string> p = o.Props ?? new Dictionary<string, string>();
 				if (o.Name == ContentCatalog.TriggerZone) { string z = ObjectProps.Get(p, ObjectProps.ZoneId); if (z.Length > 0) x.Zones.Add(IslandQuest.AsTarget(z)); }
 				PlayerFeatures.AddFacts(x.Player, o.Name, p);
+				QuestSteps.AddFacts(x.Steps, o.Name, p);
 				if (ObjectProps.IsNote(o.Name, p))
 				{
 					x.NoteCount++;
@@ -1027,6 +1031,9 @@ namespace DynamicIslands.Editor
 					default:
 						string player = PlayerFeatures.StepProblem(f.Player, st.Type, st.Target, st.Count);
 						if (player != null) c.Add(i, Level.Problem, head + ": " + player + tail, fix);
+						bool stepWarn;
+						string step = QuestSteps.StepProblem(f.Steps, st.Type, st.Target, st.Count, out stepWarn);
+						if (step != null) c.Add(i, stepWarn ? Level.Warning : Level.Problem, head + ": " + step + tail, fix);
 						break;
 				}
 			}

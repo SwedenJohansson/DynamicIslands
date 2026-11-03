@@ -21,10 +21,10 @@ namespace DynamicIslands.Editor
 	public class IslandQuest
 	{
 		public const string KeyTitle = "quest.title", KeyIntro = "quest.intro", KeySteps = "quest.steps", KeyReward = "quest.reward", KeyDone = "quest.done";
-		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch", "collect", "pages", "blueprint", Islanders.QuestType, Collectibles.QuestType, Lights.QuestType };
+		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch", "collect", "pages", "blueprint", Islanders.QuestType, Collectibles.QuestType, Lights.QuestType, QuestSteps.Signal, QuestSteps.Bring, QuestSteps.Craft };
 
 		/// <summary>Steps the crew's story book counts (the host checks them), not events.</summary>
-		public static bool Counted(string type) { return type == "collect" || type == "pages" || PlayerFeatures.Counted(type); }
+		public static bool Counted(string type) { return type == "collect" || type == "pages" || PlayerFeatures.Counted(type) || QuestSteps.Counted(type); }
 
 		public class Step
 		{
@@ -46,7 +46,7 @@ namespace DynamicIslands.Editor
 					case "pages": return "Find " + (Count > 1 ? Count + " pages" : "a page") + (Target == "all" ? " (on any island)" : " on this island");
 					case "blueprint": return Target.Length > 0 ? "Find the " + PlanChecker.Pretty(Target.Trim()) + " blueprint" : "Find one of Raft's blueprints";
 				}
-				return PlayerFeatures.DescribeStep(Type, Target, Count) ?? Type;
+				return PlayerFeatures.DescribeStep(Type, Target, Count) ?? QuestSteps.Describe(Type, Target, Count) ?? Type;
 			}
 		}
 
@@ -90,8 +90,9 @@ namespace DynamicIslands.Editor
 		/// the quest panel - ROADMAP X6); raw keeps them as written, for the quest editor, which writes them back (review
 		/// 2026-10-06: saving in the editor stripped every quest's formatting and cut long texts).
 		/// </summary>
-		/// <summary>Steps the quest editor adds up to (a recipe's quest has more: the library's finales run to 40).</summary>
-		public const int MaxStepCount = 10;
+		/// <summary>Steps the quest editor adds up to: the same as a file's (QE2 11-03 - it was 10, and the library's finales
+		/// run to 40).</summary>
+		public const int MaxStepCount = 99;
 
 		/// <summary>Steps a quest file is read up to: a hand-edited file with thousands is cut there. (Cut at the editor's 10
 		/// for a day, it cut every long library quest short - Ironreef's play, X7 2026-10-13.)</summary>
@@ -220,7 +221,8 @@ namespace DynamicIslands.Editor
 			for (int n = 0; n < count; n++) Event(e, n, type, target, amount);
 		}
 
-		static void Event(IslandWorldState.Entry e, int n, string type, string target, int amount)
+		/// <summary>Something happened for quest n of the island (QuestSteps: a hand-over, a craft for its current step).</summary>
+		internal static void Event(IslandWorldState.Entry e, int n, string type, string target, int amount)
 		{
 			IslandQuest q = QuestOf(e, n);
 			int step = StepOf(e, n);
@@ -513,7 +515,7 @@ namespace DynamicIslands.Editor
 
 		static bool Near(IslandWorldState.Entry e) { return Near(e, NearDistance); }
 
-		static bool Near(IslandWorldState.Entry e, float distance)
+		internal static bool Near(IslandWorldState.Entry e, float distance)
 		{
 			Network_Player p = RAPI.GetLocalPlayer();
 			if (p == null || e.Root == null) return false;
@@ -704,6 +706,7 @@ namespace DynamicIslands.Editor
 				string island = StoryBook.PageIsland(e);
 				return StoryBook.Pages.Count(p => p.Key.StartsWith("note:" + island + ":") || p.Key.StartsWith("act:" + island + ":"));
 			}
+			if (QuestSteps.Counted(s.Type)) return QuestSteps.Found(e, s);
 			return PlayerFeatures.Found(e, s);
 		}
 

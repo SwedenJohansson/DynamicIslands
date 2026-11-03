@@ -1714,9 +1714,9 @@ while you are in the zone - for a cave, a mine or a buried room (Old Mine Islet 
 
 ### 6.1 Quests
 
-**Island tab → Edit quest...**: a title, an introduction (shown when players arrive), up to 10 steps in order, a
-reward and a closing message. (**+ Add a step** stops at 10. A quest file with more steps - the library's finales have
-up to 40 - is read up to 99 steps, more are cut, and the editor shows them all.) Under **Reward and ending**, **Choose reward...** opens the ITEMS window - the island's story items first, then every item of Raft, with a
+**Island tab → Edit quest...**: a title, an introduction (shown when players arrive), up to 99 steps in order, a
+reward and a closing message. (**+ Add a step** stops at 99, as many as a quest file holds. More than ten steps scroll
+in a box ten rows high, and a new step scrolls into view.) Under **Reward and ending**, **Choose reward...** opens the ITEMS window - the island's story items first, then every item of Raft, with a
 search; click an item to add one, again to add more, then **Done** - and the line beside the button lists what the
 reward is ("Reward: Plank ×4, Rope ×2"). **None** takes the reward away. **When done** is the closing message shown with
 "Quest complete". Raft's items go to the players near the island when the last step is done.
@@ -1752,11 +1752,32 @@ name on the Receiver.*
 
 Steps: **go to** a trigger zone, **read** a note, **open** a chest (one of the mod's chests - Raft's abandoned raft crate doesn't count), **defeat** or **catch** a number of animals,
 **collect** a number of a story item, **find** journal pages, find a **Blueprint** of Raft's, **talk to** an islander
-(6.3; by its name, the **▾** lists the island's islanders), **find** a number of a collectible **set** (6.3), **light up** a number of a light group's puzzle lights (6.3). Each step's kind is a **▼ list** (each kind says what it
+(6.3; by its name, the **▾** lists the island's islanders), **find** a number of a collectible **set** (6.3), **light up** a number of a light group's puzzle lights (6.3),
+**Signal / object is**, **Bring items** and **Craft or cook** (below). Each step's kind is a **▼ list** (each kind says what it
 asks). Steps point at things on the island by name: the small **▾** beside the name lists the names this island has
 for that kind - its trigger zones, note titles, chest titles or creatures - so you can pick one instead of typing it
 (place the zones, notes, chests and creatures first). A **collect** step picks its story item with **…**. **When the quest is done, bring a new island** (main quest only) chooses from a
 list too (nothing, a saved island, a new island of a map type), and so does its direction.
+
+**Signal / object is** waits for a signal or for an object's state. A signal is a word an action sends (a lever's
+`signal||lever`, a ready piece's own signal, a light group's, a set's, a boss's phase, a survivor's cage): the step is
+done once the island has had it - also when it came before the step. An object's state is written `Name=open`
+(or `closed`, `shown`, `hidden`), with the name from the object's **Behaviour & events...**: "Gate=open" is done
+while the gate is switched open (a lever's **switch**, a door turned or moved). The **▾** lists the signals the
+island's objects send and its named objects (`Name=open`, `Name=shown`). A state is checked while the island is near
+the host; a signal is kept with the island. Check and the plan checker say when no object has that name, and warn
+when nothing on the island sends the signal (it may come from another island or the world plan).
+
+**Bring items** asks for a number of one of Raft's items handed over: `Plank@Mara` is planks for the islander Mara (by
+talking to her), `Rope@Supplies` rope for the chest titled "Supplies" (its hint says **Hand over 2 × Rope**; press E).
+Without a name after `@` any islander or empty chest takes them. The player hands what they have, up to what is still
+wanted ("1 more wanted"), and the items are taken from their inventory; the step counts for every player like the
+others. The **…** picks the item and the **▾** the islander or chest. A named chest with loot shows the hand-over first
+and opens as usual once the step is done.
+
+**Craft or cook** asks for a number of an item made while the step is active: crafted at the crafting menu, or taken
+off a grill, smelter, purifier, cooking pot or juicer, by a player within 300 m of the island. The item is one of
+Raft's (`Rope`, a cooked food's name; empty = anything made); what was made before the step came doesn't count.
 
 **Steps done in another order count too:** a chest opened or animals defeated before their step has come are
 remembered, and count the moment their step comes - the guide's camp quest done backwards (warthogs, supplies, then

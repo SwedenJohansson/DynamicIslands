@@ -118,6 +118,7 @@ namespace DynamicIslands.Editor
 			Debug.Log("[CUSTOM ISLANDS] Talked to '" + name + "' on '" + e.HostName + "'" + (choice > 0 ? ", answer " + choice : ""));
 			if (choice > 0) Behaviours.Fire(e, index, ChoicePrefix + choice, true);
 			Behaviours.Fire(e, index, TalkEvent, true);
+			QuestSteps.HandIn(e, name); // (a "Bring items" step for them: the items are handed over - QE4)
 			QuestTracker.Event(e, QuestType, name);
 		}
 
