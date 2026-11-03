@@ -32,16 +32,16 @@ namespace DynamicIslands
 			yield return WaitForEditor(false);
 			bool ok = true;
 
-			// The curve (90 % of 100, 200, 400... since 11-03): level 2 after 1 kill of Bruce (EXP gained is nine times the measure),
+			// The curve (75 % of 100, 200, 400... since 11-03): level 2 after 1 kill of Bruce (EXP gained is nine times the measure),
 			// level 3 1 more, level 4 2 more, level 5 3 more
 			int bruce = LevelRules.XpOf(LevelRules.SharkHealth, LevelRules.SharkDamage);
 			Check(ref ok, bruce == LevelRules.BruceXp && bruce == 9 * LevelRules.ReferenceXp, "Bruce is worth " + bruce + " EXP (nine times what the levels are measured in)");
 			int[] kills = Enumerable.Range(1, 5).Select(l => Mathf.CeilToInt(LevelRules.XpFor(l) / (float)bruce)).ToArray();
 			Check(ref ok, kills.SequenceEqual(new[] { 1, 1, 2, 3, 4 }), "kills of Bruce from each level to the next: " + string.Join(", ", kills.Select(k => k.ToString()).ToArray()));
-			Check(ref ok, LevelRules.TotalFor(1) == 0 && LevelRules.TotalFor(2) == 90 && LevelRules.TotalFor(3) == 270 && LevelRules.TotalFor(4) == 630 && LevelRules.TotalFor(5) == 1170,
+			Check(ref ok, LevelRules.TotalFor(1) == 0 && LevelRules.TotalFor(2) == 75 && LevelRules.TotalFor(3) == 225 && LevelRules.TotalFor(4) == 525 && LevelRules.TotalFor(5) == 975,
 				"EXP at which levels 2-5 start: " + string.Join(", ", Enumerable.Range(2, 4).Select(l => LevelRules.TotalFor(l).ToString()).ToArray()));
-			Check(ref ok, LevelRules.LevelOf(0) == 1 && LevelRules.LevelOf(89) == 1 && LevelRules.LevelOf(90) == 2 && LevelRules.LevelOf(269) == 2 && LevelRules.LevelOf(270) == 3 && LevelRules.LevelOf(1170) == 5,
-				"levels from EXP at the edges (89 -> 1, 90 -> 2, 269 -> 2, 270 -> 3, 1170 -> 5)");
+			Check(ref ok, LevelRules.LevelOf(0) == 1 && LevelRules.LevelOf(74) == 1 && LevelRules.LevelOf(75) == 2 && LevelRules.LevelOf(224) == 2 && LevelRules.LevelOf(225) == 3 && LevelRules.LevelOf(975) == 5,
+				"levels from EXP at the edges (74 -> 1, 75 -> 2, 224 -> 2, 225 -> 3, 975 -> 5)");
 			Check(ref ok, Mathf.Approximately(LevelRules.Factor(0), 1f) && Mathf.Approximately(LevelRules.Factor(4), 1.04f) && Mathf.Approximately(LevelRules.Factor(15), 1.15f) && Mathf.Approximately(LevelRules.Factor(20), 1.15f),
 				"a point is +1%, 15 points at most (+15%)");
 			// A monster's EXP: from its health and its damage, both count

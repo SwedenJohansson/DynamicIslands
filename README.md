@@ -708,14 +708,14 @@ The level up system comes on in a world by the **Level up system** switch in Wor
 
   | From level | To level | EXP needed | About (kills of Bruce) | EXP in all |
   |---|---|---|---|---|
-  | 1 | 2 | 90 | 1 | 90 |
-  | 2 | 3 | 180 | 1 | 270 |
-  | 3 | 4 | 360 | 2 | 630 |
-  | 4 | 5 | 540 | 3 | 1170 |
-  | 5 | 6 | 720 | 4 | 1890 |
-  | *n* | *n*+1 | 180 × (*n* − 1) | *n* − 1 | |
+  | 1 | 2 | 75 | 1 | 75 |
+  | 2 | 3 | 150 | 1 | 225 |
+  | 3 | 4 | 300 | 2 | 525 |
+  | 4 | 5 | 450 | 3 | 975 |
+  | 5 | 6 | 600 | 4 | 1575 |
+  | *n* | *n*+1 | 150 × (*n* − 1) | about 0.83 × (*n* − 1), rounded up | |
 
-  (The EXP each level needs was cut by 10 % on 2026-11-03, so players level up a little faster.)
+  (The EXP each level needs was cut by 25 % on 2026-11-03, so players level up faster.)
 
 - **Stat points:** every level gives **2 points**. Spend them on the **stats page**. The page shows the level, the EXP bar, the monsters defeated and nine stats with fifteen pips each (at most 15 points, +15%, in a stat). **+** puts a point in, and **−** takes one back as long as the page is open. Each point is **+1%**. All 135 points are there at level 69. **The levels go on after that**, without points: the level up box says every stat is full.
 

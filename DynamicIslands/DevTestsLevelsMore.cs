@@ -276,7 +276,7 @@ namespace DynamicIslands
 
 		#region IL22 - high levels
 
-		[ConsoleCommand(name: "CILevelHigh", docs: "Dev, anywhere (the page check only in a world, as the host): high levels (IL22) - a record at level 200 (3 546 270 EXP) and at 20 000 000 EXP reads, writes and reads back whole (EXP, kills, points), its level is exact (TotalFor / LevelOf agree at the edges), the points stop at all stats full (135), the level loop takes under 50 ms; in a world the stats page of such a record says 'Every stat is full' past the last point (level 69 and up), and shows the points left at level 200 with nothing spent")]
+		[ConsoleCommand(name: "CILevelHigh", docs: "Dev, anywhere (the page check only in a world, as the host): high levels (IL22) - a record at level 200 (2 955 225 EXP) and at 20 000 000 EXP reads, writes and reads back whole (EXP, kills, points), its level is exact (TotalFor / LevelOf agree at the edges), the points stop at all stats full (135), the level loop takes under 50 ms; in a world the stats page of such a record says 'Every stat is full' past the last point (level 69 and up), and shows the points left at level 200 with nothing spent")]
 		public static void LevelHighCommand() { StartTest(LevelHighRoutine()); }
 
 		static IEnumerator LevelHighRoutine()
