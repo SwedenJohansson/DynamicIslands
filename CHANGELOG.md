@@ -20,6 +20,9 @@ Not in this release yet; these come in the next update:
 - Old worlds (made before Raft gave worlds an id): quest rewards are kept per world, and players who join such a world
   get the host's custom islands state.
 - Cave tool: a thin spike of ground left beside the cut over some tunnel mouths.
+- **Dropped items stay on custom islands:** an item dropped on a custom island no longer falls into the sea when the
+  island unloads (the raft far away); it waits where it lay. Such items are also kept in the save and lie there again
+  after the world is loaded (Raft's own save keeps no dropped items) (RK2).
 
 ## 3.0 alpha - 2026-11-02: Tunnels and fixes
 

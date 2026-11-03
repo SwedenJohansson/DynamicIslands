@@ -308,9 +308,10 @@ Custom islands work like Raft's own: you can **walk** on them, the **raft runs a
 flowers and more. What you took **stays taken** (also after saving, loading and sailing away), and it **grows
 back** after 3 in-game days (the island's builder or `spawnpool.txt` can change that).
 
-**Don't leave loose items on the ground of a custom island.** An item you drop there can fall into the sea when the
-island unloads (the raft sails far away) or while it loads again after loading a save. Keep them in your inventory or
-a storage on the raft. (This is being fixed.)
+**Items you drop on a custom island stay there.** While the island is away (the raft sailed far off) they wait where
+they lay and settle on the ground again once it is back. They are also kept when the world is saved and loaded again
+(Raft itself keeps no dropped items in a save, so items dropped on the sea or on Raft's own islands are still gone
+then).
 
 ![On a generated island](images/world-on-a-generated-island.jpg)
 *On a generated tropical island: Raft's bamboo, palms and plants, placed where Raft's own islands have them.*

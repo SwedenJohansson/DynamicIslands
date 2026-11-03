@@ -400,6 +400,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Raft events", e); }
 			try { CustomIslandSpawner.Tick(); }
 			catch (Exception e) { TickError("Island spawner", e); }
+			try { ItemHold.Tick(); }
+			catch (Exception e) { TickError("Dropped items", e); }
 			try { IslandNetwork.Tick(); }
 			catch (Exception e) { TickError("Island network", e); }
 			try { IslandObjectState.Tick(); }

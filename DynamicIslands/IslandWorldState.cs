@@ -196,6 +196,8 @@ namespace DynamicIslands.Editor
 				lines.AddRange(StoryChain.WriteLines());
 				// (this version keeps the zones' story-loot keys: a file without the line is migrated on reading - TriggerZone)
 				lines.Add(TriggerZone.StoryLootLine);
+				// (dropped items on custom islands: Raft's save keeps none - RK2)
+				lines.AddRange(ItemHold.WriteLines());
 				foreach (Entry e in islands)
 				{
 					IslandObjectState.Capture(e);
@@ -249,6 +251,7 @@ namespace DynamicIslands.Editor
 			if (loadedFor.StartsWith(NoIdPrefix)) Debug.Log("[CUSTOM ISLANDS] This world has no world id in Raft's save (an old world): its custom islands are kept under its name (" + loadedFor + ")");
 			loadFailed = loadFailedTold = false;
 			keptLines.Clear();
+			ItemHold.ClearSaved();
 			WorldCopy.ForgetHostLines();
 			CustomIslandSpawner.Enabled = true;
 			ResetStep("CustomIslandSpawner.OnWorldLoaded", () => CustomIslandSpawner.OnWorldLoaded());
@@ -289,7 +292,7 @@ namespace DynamicIslands.Editor
 				if (line.StartsWith("@auto=")) { CustomIslandSpawner.Enabled = !line.Substring(6).Trim().Equals("off", StringComparison.OrdinalIgnoreCase); continue; }
 				if (line.StartsWith("@modversion=")) { NewerFile(line.Substring("@modversion=".Length).Trim()); continue; }
 				int eq = line.IndexOf('=');
-				if (line.StartsWith("@") && eq > 1 && (WorldCopy.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || WorldRules.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || StoryBook.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
+				if (line.StartsWith("@") && eq > 1 && (ItemHold.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || WorldCopy.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || WorldRules.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || StoryBook.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
 					PlayerPlaces.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
 					WorldRandomizer.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
 					PlayerLevels.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
