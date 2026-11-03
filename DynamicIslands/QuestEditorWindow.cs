@@ -373,6 +373,7 @@ namespace DynamicIslands.Editor
 		{
 			foreach (Transform child in stepsRoot) { child.gameObject.SetActive(false); Destroy(child.gameObject); }
 			fields.RemoveAll(f => f == null || f.transform.IsChildOf(stepsRoot));
+			List<EditorGameObject> placedNow = Placed();
 			for (int i = 0; i < quest.Steps.Count; i++)
 			{
 				int index = i;
@@ -388,7 +389,7 @@ namespace DynamicIslands.Editor
 				UIKit.Size(target.gameObject, 196, 28);
 				target.onEndEdit.AddListener(v => s.Target = v.Trim());
 				fields.Add(target);
-				List<DropList.Option> names = QuestSteps.NamesFor(s.Type, s.Target, Placed()) ?? NamesFor(s.Type);
+				List<DropList.Option> names = QuestSteps.NamesFor(s.Type, s.Target, placedNow) ?? NamesFor(s.Type);
 				if (names.Count > 0)
 				{
 					// (a small \u25BE: the island's zones, notes, chests or creatures that this kind of step can point at)
