@@ -37,9 +37,14 @@ Not in this release yet; these come in the next update:
   to its roof (it drew black, with a band of sky above it).
 - **Dig brush look in a world**: the rock over the mouth has the ground's grass on top in a world too (it was bare
   rock), and the passage near the mouth is darker and less shiny (the sky's blue light and the sun washed it out there).
-- Reach fixes still being checked on Steamvent Harbour, Rootweave Caves, Caravan Town Remade, Old Mine Islet, Cistern
-  Hall, Spirecrest Roofs, Radio Tower Remade, The Rootcore, Ironreef Caverns, Colossus of the Strait and the rest of
-  Primeval Park.
+- **Reach fixes** (a place a player could not get to, or a spot to get stuck in) on Steamvent Harbour, Old Mine Islet,
+  Cistern Hall, Ironreef Caverns, Brinelab Tower, Thalassa Mooring, Shelter Atoll, The Command Well, The Fogworks, Raft
+  Row Bazaar, Iron Whale Bow, Caravan Town Remade, Drowned Labyrinth and The Rootcore. A few islands are still being
+  checked.
+- **Kingsrest Isle**: a floating boulder is cleared.
+- Story items and fog (review leftovers): a story item rule that names an island also matches a copy of it by the host's
+  name, in any letters; a world load forgets the islands the last world had just called with `SpawnIsland` (so the new
+  world is not told "on its way" by mistake); a fog bank's lent distance and density are worked out before either is set.
 - Old worlds (made before Raft gave worlds an id): quest rewards are kept per world, and players who join such a world
   get the host's custom islands state.
 - Cave tool: a thin spike of ground left beside the cut over some tunnel mouths.
