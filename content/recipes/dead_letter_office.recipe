@@ -358,4 +358,8 @@ quest reward=Plank*6;Rope*3;Scrap*4;Cooked_Potato*2
 # (CIGroundIslands 10-26: gen rocks left floating over a slope)
 clear at 33 66.1 r=1.5 all only=SmallBoulder1
 clear at -58 59.7 r=1.5 all only=SmallBoulder2
+# (11-03 fixC, CIFloatingSweep: a scattered coral hung over the ground, cleared the stray scatter)
+clear at -89.68 3.09 r=1.5 only=Coral2 all
+# (11-03 fixC, CIFloatingSweep: a scattered coral hung over the ground, cleared the stray scatter)
+clear at -91.08 -0.64 r=1.5 only=TableCoral_1 all
 save The Dead Letter Office

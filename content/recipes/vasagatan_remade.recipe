@@ -420,4 +420,6 @@ clear at 40.38 -57.51 r=0.5 all body only=SmallBoulder2
 clear at 42.44 -62.16 r=0.5 all body only=SmallBoulder4
 clear at 52.32 72.63 r=0.5 all body only=SmallBoulder4
 
+# (11-03 fixC, CIFloatingSweep: a scattered coral hung over the ground, cleared the stray scatter)
+clear at 49.74 -24.87 r=1.5 only=LeafCoral_1 all
 save Vasagatan Remade

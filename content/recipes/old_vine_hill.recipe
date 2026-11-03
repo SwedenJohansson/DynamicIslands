@@ -261,4 +261,6 @@ step read|The vintner's toast|1|Pour a glass of the founding vintage on Tomas's 
 quest done=The hill is yours: four terraces, four casks, and a glass poured for the man who planted them. Salut.
 quest reward=Mango*3;Seed_Strawberry*3;Plank*4
 
+# (11-03 fixC, CIFloatingSweep: a scattered grass tuft hung over the ground, cleared the stray scatter)
+clear at 12.45 22.48 r=1.5 only=CaravanIsland_YellowGrass all
 save Old Vine Hill

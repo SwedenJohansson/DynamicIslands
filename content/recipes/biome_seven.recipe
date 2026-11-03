@@ -353,4 +353,6 @@ quest reward=Seed_Watermelon*3;Seed_Mango*1
 clear at -3.17 49.29 r=1.2 all only=SmallBoulder2
 clear at -19.54 -64.04 r=1.2 all only=SmallRock_02
 
+# (11-03 fixC, CIFloatingSweep: a scattered sea vine hung over the ground, cleared the stray scatter)
+clear at -11.83 -58.04 r=1.5 only=SeaVine3 all
 save Biome Seven

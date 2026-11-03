@@ -317,4 +317,6 @@ place Block_Pillar_Wood nskp2 at 51.66 -27.36 h=1.9
 # (GROUND 11-01 N: a generator pineapple sunk 1.7 m into the ground: taken off)
 clear at 25.6 18.39 r=0.8 all only=Pineapple
 
+# (11-03 fixC, CIFloatingSweep: a scattered bush hung over the ground, cleared the stray scatter)
+clear at 32.81 -0.95 r=1.5 only=Banana_Bush_3 all
 save Skyhook Mast

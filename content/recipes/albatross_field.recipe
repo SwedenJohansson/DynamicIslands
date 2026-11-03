@@ -511,4 +511,6 @@ clear at 56.3 48.3 r=1.5 all only=^SmallBoulder2
 clear at -39.7 85.5 r=1.5 all only=^SmallBoulder2
 clear at -55.7 78.5 r=1.5 all only=^BigBoulder1_Low
 
+# (11-03 fixC, CIFloatingSweep: a scattered clay pickup hung over the ground, cleared the stray scatter)
+clear at 91.35 -36.07 r=1.5 only=Pickup_Landmark_Clay all
 save Albatross Field
