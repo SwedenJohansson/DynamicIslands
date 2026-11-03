@@ -328,13 +328,18 @@ place TP_LaserControlPanel gatepanel at 0 52.15 y=0 yaw=180
 place Zone_Trigger queengatezone at -12 66 y=1
 place Creature_MamaBear queen at -10 76 ground
 place Balboa_Shack - at 2 84 h=3.5
-place Placeable_Table_Basic - at 0 84 h=5 drop
-place Loot_ChestLarge vault at 1 86.6 h=5 drop yaw=180
+# (fixA 11-03, REACH: at 0 84 / 1 86.6 the desk and the vault stood in the shack's back corner, inside its fridge and
+# behind its partition - and the walks never get through the shack's door at all (moved onto the room's open floor the
+# vault still failed: "nearest reached" outside) - so the Founder left them on the porch, by the window north of the
+# door: the vault's back to the wall, the desk at the porch's north end, the farewell note on the desk)
+place Placeable_Table_Basic - at 8.2 87.1 h=5 drop
+place Loot_ChestLarge vault at 8.1 85.6 h=5 drop yaw=90
 # (REACH 10-29: dropped on the desk it ended inside the shack's fridge - laid beside the vault now)
 # (REACH 10-29 (2): beside the vault it sank into the shack's floor - dropped onto the vault's lid)
 # (REACH 10-29 (3): on the lid it fell through the chest and the floor into the hill (y 3.5) - set on the shack's floor
 # by the vault's front at the floor's height, no drop)
-place Note_Book farewell at 0 85.3 h=4.22 sit yaw=20
+# (fixA 11-03: the desk is on the porch now, out of the fridge - dropped onto the desk again)
+place Note_Book farewell at 8.2 87.1 h=6 drop yaw=20
 
 # --- Along the tour road: the road's lights on poles (dark till the power is back), direction signs ------------------
 place Antenna_pole - at 14 -21 ground
