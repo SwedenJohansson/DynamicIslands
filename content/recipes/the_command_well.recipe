@@ -412,7 +412,7 @@ step collect|story:ringset|1|Use the ring console that answers what the court wa
 step read|Closing note|1|Read the closing note
 step open|Mara's post|1|Lay the Keeper's letter at Mara's post by the door
 step read|Mara's last call|1|Read what Mara left at her post
-step read|Keeper's log: Well|1|Read the Keeper's last log on her chair
+step read|Keeper's log: Well|1|Read the Keeper's last log on her desk
 step reach|wellridge|1|Swim out to the sunken ridge, where the rings' glow comes up
 step read|Pump house book|1|Read the book in the drowned pump house beyond the ridge
 step collect|story:wellfuse|3|Find the three fuses: the cable cave, the supply plane and the pump house

@@ -179,7 +179,7 @@ place Block_Foundation_Tier3 jpvp at -2.41 -5.64 h=7.55
 place Block_Foundation_Tier3 jpvp at -5.12 -5.64 h=8.50
 place Block_Foundation_Tier3 jpvp at -5.12 -2.02 h=9.40 sx=2 sz=2
 # JUMP from 11
-place Block_Foundation_Tier3 jpvp at 1.30 -2.02 h=9.70 sx=2 sz=2
+place Block_Foundation_Tier3 jpvp at 0.80 -2.02 h=9.70 sx=2 sz=2
 place Block_Foundation_Tier3 jpvp at 1.30 3.21 h=10.00 sx=2 sz=2
 # JUMP end
 # (each slab on one solid column of its own footprint, from under the pad up to the slab; the first rests on the pad)
@@ -193,7 +193,7 @@ place Block_Foundation_Tier3 jppvp at 0.40 -5.64 h=5.918 sy=5.158
 place Block_Foundation_Tier3 jppvp at -2.41 -5.64 h=6.868 sy=6.551
 place Block_Foundation_Tier3 jppvp at -5.12 -5.64 h=7.818 sy=7.944
 place Block_Foundation_Tier3 jppvp at -5.12 -2.02 h=8.718 sy=9.264 sx=2 sz=2
-place Block_Foundation_Tier3 jppvp at 1.30 -2.02 h=9.018 sy=9.704 sx=2 sz=2
+place Block_Foundation_Tier3 jppvp at 0.80 -2.02 h=9.018 sy=9.704 sx=2 sz=2
 place Block_Foundation_Tier3 jppvp at 1.30 3.21 h=9.318 sy=10.144 sx=2 sz=2
 prop jpvp tint.color=#8a8070
 prop jpvp tint.amount=0.35
