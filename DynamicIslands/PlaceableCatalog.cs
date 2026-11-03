@@ -525,6 +525,7 @@ namespace DynamicIslands.Editor
 			clone.transform.localPosition = Vector3.zero;
 			clone.transform.localRotation = source.rotation;
 			clone.transform.localScale = source.lossyScale;
+			BringSeparateModel(clone, source);
 			// (a quest item pickup: which of Raft's quest items it is, read before its scripts go)
 			if (QuestItemPickups.IsModel(name)) QuestItemPickups.Remember(name, source.gameObject);
 			// Island decoration from story places carries quest, AI and trigger scripts that expect their own island
@@ -534,6 +535,31 @@ namespace DynamicIslands.Editor
 			KeepVisibleFarAway(clone);
 			prototypes.Add(name, clone);
 			categories[name] = category;
+		}
+
+		/// <summary>The model a quest item pickup shows from somewhere else in its scene (Utopia's KeyRescue hangs from Olof's
+		/// rope while its pickup sits apart), or null when the pickup carries its own.</summary>
+		static GameObject SeparateModelOf(Transform t)
+		{
+			PickupItem_Networked_SeparateModel sm = t.GetComponent<PickupItem_Networked_SeparateModel>();
+			GameObject m = sm != null ? sm.separateModel : null;
+			return m != null && !m.transform.IsChildOf(t) ? m : null;
+		}
+
+		/// <summary>RK11: a copy of a pickup's separate model goes inside the catalog's copy, right where the pickup is - before,
+		/// the pickup was placed with nothing to see.</summary>
+		static void BringSeparateModel(GameObject clone, Transform source)
+		{
+			GameObject sep = SeparateModelOf(source);
+			if (sep == null) return;
+			GameObject m = UnityEngine.Object.Instantiate(sep, clone.transform);
+			m.name = "model";
+			m.transform.localPosition = Vector3.zero;
+			m.transform.localRotation = Quaternion.Inverse(source.rotation) * sep.transform.rotation;
+			Vector3 a = sep.transform.lossyScale, b = source.lossyScale;
+			m.transform.localScale = new Vector3(a.x / Mathf.Max(b.x, 1e-4f), a.y / Mathf.Max(b.y, 1e-4f), a.z / Mathf.Max(b.z, 1e-4f));
+			m.SetActive(true);
+			foreach (Renderer r in m.GetComponentsInChildren<Renderer>(true)) r.enabled = true;
 		}
 
 		/// <summary>
@@ -1583,6 +1609,37 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		/// <summary>Dev (RK11): opens a scene and logs every object of that name in it: where it sits, what it renders, and
+		/// whether the catalog takes it.</summary>
+		public static IEnumerator DescribeInScene(string sceneName, string name, Action<string> log)
+		{
+			var opened = new OpenedScene();
+			yield return OpenScene(sceneName, opened, true);
+			if (!opened.Scene.IsValid()) { log("  scene " + sceneName + " did not open"); yield break; }
+			foreach (Transform t in AllTransforms(opened.Scene))
+			{
+				if (CleanName(t.name) != name) continue;
+				string path = t.name;
+				for (Transform p = t.parent; p != null; p = p.parent) path = p.name + "/" + path;
+				log("  in scene: " + path + " active " + t.gameObject.activeInHierarchy + "/" + t.gameObject.activeSelf + " placeable " + IsPlaceable(t, name)
+					+ " parts " + string.Join(",", t.GetComponents<Component>().Select(c => c == null ? "null" : c.GetType().Name).ToArray()));
+				foreach (Renderer r in t.GetComponentsInChildren<Renderer>(true))
+					log("    " + r.GetType().Name + " '" + r.name + "' enabled " + r.enabled + " active " + r.gameObject.activeSelf + " mats " + string.Join("/", r.sharedMaterials.Select(m => m == null ? "null" : m.name).ToArray()));
+				foreach (Transform c in t) log("    child " + c.name + " active " + c.gameObject.activeSelf);
+				foreach (Component c in t.GetComponents<Component>())
+				{
+					if (c == null || c is Transform) continue;
+					foreach (var f in c.GetType().GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic))
+					{
+						object v = null; try { v = f.GetValue(c); } catch { }
+						UnityEngine.Object uo = v as UnityEngine.Object;
+						if (uo != null || (v != null && !(v is System.Collections.ICollection) && f.FieldType.IsPrimitive)) log("    " + c.GetType().Name + "." + f.Name + " = " + (uo != null ? uo.GetType().Name + " '" + uo.name + "'" : v.ToString()));
+					}
+				}
+			}
+			yield return CloseScene(opened);
+		}
+
 		static bool IsPlaceable(Transform t, string name)
 		{
 			bool questItem = QuestItemPickups.IsModel(name);
@@ -1594,7 +1651,9 @@ namespace DynamicIslands.Editor
 			// Must show a mesh (not only an effect, and not a hidden collider shape)
 			foreach (Renderer r in t.GetComponentsInChildren<Renderer>(true))
 				if (r.enabled && (r is MeshRenderer || r is SkinnedMeshRenderer)) return true;
-			return false;
+			// (a quest item whose model sits elsewhere in the scene: BringSeparateModel)
+			GameObject sep = questItem ? SeparateModelOf(t) : null;
+			return sep != null && sep.GetComponentsInChildren<Renderer>(true).Any(r => r is MeshRenderer || r is SkinnedMeshRenderer);
 		}
 
 		static readonly Regex pickupAncestor = new Regex(@"^(Pickup_|QuestItem|NotePickup)", RegexOptions.IgnoreCase);

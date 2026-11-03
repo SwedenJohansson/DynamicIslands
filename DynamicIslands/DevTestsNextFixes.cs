@@ -210,5 +210,52 @@ namespace DynamicIslands
 			}
 			if (ok) Log("PASS: spawn box stays"); else Fail("spawn box stays");
 		}
+
+		[ConsoleCommand(name: "CIPickupLook", docs: "Dev, in game or editor: RK11 - logs what a quest item pickup shows (renderers, meshes, materials, parts) for Utopia's KeyRescue and KeyEntrance (or the names given), as listed and as placed")]
+		public static void PickupLookCommand(string[] args) { StartTest(PickupLookRoutine(args != null && args.Length > 0 ? args : new[] { "QuestItemPickup_Utopia_KeyRescue", "QuestItemPickup_Utopia_KeyEntrance" })); }
+
+		static void LogLook(string what, GameObject g)
+		{
+			Log("  " + what + ": active " + g.activeInHierarchy + ", scale " + g.transform.lossyScale + ", parts " + string.Join(",", g.GetComponents<Component>().Select(x => x.GetType().Name).ToArray()));
+			foreach (Renderer r in g.GetComponentsInChildren<Renderer>(true))
+			{
+				MeshFilter mf = r.GetComponent<MeshFilter>();
+				Mesh m = mf != null ? mf.sharedMesh : r is SkinnedMeshRenderer ? ((SkinnedMeshRenderer)r).sharedMesh : null;
+				Log("    " + r.GetType().Name + " '" + r.name + "' enabled " + r.enabled + " active " + r.gameObject.activeInHierarchy + " layer " + LayerMask.LayerToName(r.gameObject.layer)
+					+ " mesh " + (m == null ? "none" : m.name + " (" + m.vertexCount + " v, readable " + m.isReadable + ")") + " bounds " + r.bounds.size
+					+ " mats " + string.Join("/", r.sharedMaterials.Select(x => x == null ? "null" : x.name + ":" + (x.shader != null ? x.shader.name : "?")).ToArray())
+					+ " parts " + string.Join(",", r.GetComponents<Component>().Select(x => x.GetType().Name).ToArray()));
+			}
+			foreach (LODGroup l in g.GetComponentsInChildren<LODGroup>(true)) Log("    LODGroup '" + l.name + "' enabled " + l.enabled + " lods " + l.lodCount);
+		}
+
+		static IEnumerator PickupLookRoutine(string[] names)
+		{
+			Camera cam = Camera.main;
+			var made = new List<GameObject>();
+			PlaceableCatalog.Browse();
+			foreach (string n in names) Log("  " + n + ": indexed " + PlaceableCatalog.IsIndexed(n) + ", scene " + PlaceableCatalog.SceneOf(n));
+			yield return PlaceableCatalog.EnsureLoaded(names);
+			foreach (string n in names) if (PlaceableCatalog.Get(n) == null) { Log("  " + n + " in Utopia's scene:"); yield return PlaceableCatalog.DescribeInScene("56#Landmark_Utopia#", n, Log); }
+			try
+			{
+				foreach (string n in names)
+				{
+					GameObject proto = PlaceableCatalog.Get(n);
+					if (proto == null) { Log("FAIL: " + n + ": not in the catalog"); yield break; }
+					LogLook(n + " listed", proto);
+					GameObject g = UnityEngine.Object.Instantiate(proto);
+					g.SetActive(true);
+					if (cam != null) g.transform.position = cam.transform.position + cam.transform.forward * 4f;
+					made.Add(g);
+					yield return new WaitForSecondsRealtime(1.5f);
+					LogLook(n + " placed", g);
+					if (!g.GetComponentsInChildren<Renderer>().Any(r => r.enabled && r.isVisible || r.enabled && r is MeshRenderer && r.GetComponent<MeshFilter>() != null && r.GetComponent<MeshFilter>().sharedMesh != null))
+					{ Log("FAIL: " + n + " placed shows no model"); yield break; }
+				}
+			}
+			finally { foreach (GameObject g in made) if (g != null) UnityEngine.Object.Destroy(g); }
+			Log("PASS: pickup look: every pickup shows its model");
+		}
 	}
 }
