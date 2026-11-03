@@ -36,6 +36,8 @@ Not in this release yet; these come in the next update:
 - Old worlds (made before Raft gave worlds an id): quest rewards are kept per world, and players who join such a world
   get the host's custom islands state.
 - Cave tool: a thin spike of ground left beside the cut over some tunnel mouths.
+- The Rainmakers: the library picture of The Isobar Club's lounge is retaken; the old one still showed the pillars
+  through the grand piano and pool table that were fixed on 10-18.
 
 ## 3.0 alpha - 2026-11-02: Tunnels and fixes
 
