@@ -378,6 +378,7 @@
     <Compile Include="DevTestsMerge1031.cs" />
     <Compile Include="DevTestsFix3.cs" />
     <Compile Include="DevTestsNoteCarry.cs" />
+    <Compile Include="DevTestsSweep.cs" />
     <Compile Include="ScatterTool.cs" />
     <Compile Include="StableIds.cs" />
     <Compile Include="ObjectThumbnails.cs" />
