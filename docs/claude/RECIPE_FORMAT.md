@@ -121,7 +121,7 @@ plan save
 | `note` | `<alias> <title> \| <text>` | The note editor's Apply (`NoteEditorWindow.Apply`). |
 | `story` | `id\|name\|icon\|description[\|raft=<Raft item>]` | A story item added, or replaced by id (`StoryItemDef.Parse`). |
 | `quest` | `title=`, `intro=`, `done=` or `reward=` (one a line) | The island's quest. `quest2`..`quest9`: further quests. |
-| `step` | `type\|target\|count\|text` | A quest step. Types are `IslandQuest.Types`: `reach read open kill catch collect pages blueprint` (`blueprint\|Blueprint_X\|1\|text`: one of Raft's blueprints carried or learned while at the island; empty target = any story blueprint). `step2`..`step9` for further quests. |
+| `step` | `type\|target\|count\|text` | A quest step. Types are `IslandQuest.Types`: `reach read open kill catch collect pages blueprint ... signal bring craft` (`blueprint\|Blueprint_X\|1\|text`: one of Raft's blueprints carried or learned while at the island; empty target = any story blueprint; `signal\|lever` or `signal\|Gate=open`; `bring\|Plank@Mara\|3`; `craft\|Rope\|2`). Up to 99 steps. `step2`..`step9` for further quests. |
 | `questbring` | `<rule line>` | `QuestEditorWindow.SetQuestBringRule`. |
 | `rule` | `id \| what \| when \| where \| message \| label` | An island rule (`IntroRule.Parse`); the same id replaces. |
 | `posts` | `[off]` | Posts (`RT_Pillar`, stretched) under each floor or deck corner nothing holds, down into the ground or sea floor (`StandPosts`, the check `FloorsOverNothing`, ROADMAP_DONE CA30). `save` does it too; `posts off` leaves them out at the save (a deck meant to hang). |

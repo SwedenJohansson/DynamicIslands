@@ -19,6 +19,12 @@ Not in this release yet; these come in the next update:
 - **Level up system: faster levels.** Every level needs less EXP: 75 for level 2, 150 more for level 3, then 100 more than the level before (level 5 at 825 instead of 1300). Players in an existing world keep their EXP, so some go up a level at once.
 - **Order puzzles** (editor, "In this order"): levers, lights or buttons pressed in a set order - **Make order piece** in the object panel. A wrong press starts the puzzle again and puts its pieces back; the last step sends a signal (`order:<name>`) and runs each piece's "solved" actions.
 - **Puzzle story sets** (Story items window, Puzzles row): one click places a working puzzle of Raft's own pieces - levers in order, three water wheels and a gate, a generator and a radio, a laser with mirrors and a door panel - each with a hint note.
+- **Quest editor: up to 99 steps** (was 10); more than ten steps scroll in a box, and a new step scrolls into view.
+- **New quest step "Signal / object is"**: waits for a signal sent on the island (a lever's, a light group's, a set's...)
+  or for an object's state (`Gate=open`, `closed`, `shown`, `hidden`); its ▾ lists the island's signals and named objects.
+- **New quest step "Bring items"**: a number of one of Raft's items handed to an islander (by talking) or a chest
+  (`Plank@Mara`, `Rope@Supplies`); the items are taken from the player.
+- **New quest step "Craft or cook"**: a number of an item crafted or cooked near the island while the step is active.
 - **Bear dens in a hill** (The Abyss and other islands): a tinted den now tints the rock hill round it too, so a dark den no longer sits in a bright orange mountain; dens inside are lit warm, not blue.
 - **Cave tool**: dens and tunnels in a world look as they do in the editor, warm and dim, no longer lit blue by the sky.
 - **Dig brush**: the ground on top of a dug rim keeps the same sharp grass detail as the ground round it, not a smoother, blurred patch.

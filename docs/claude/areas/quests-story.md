@@ -6,6 +6,7 @@ What players do on an island: quests, behaviours and events, trigger zones, note
 | File | Role |
 |---|---|
 | `Quest.cs` | `IslandQuest` (a quest in island settings), `QuestTracker` (progress, quest panel, rewards) |
+| `QuestSteps.cs` | Step kinds `signal`, `bring`, `craft` (QE1/4/7): Describe, Found/Holds, HandIn/ChestRayed, Made + craft/cook Harmony hooks, editor `NamesFor`, `PlanFacts`/`StepProblem`; tests `DevTestsQuestSteps.cs` |
 | `QuestEditorWindow.cs` | Quest editor (Island tab), also the island's when-the-quest-is-done bring rule |
 | `StoryItems.cs` | `StoryItemDef`, `StoryItems`, `StoryBook` (crew's items and journal pages), `QuestCount`, `NoteCount`, `WorldProgress`, `QuestMilestones`, `JournalWindow` |
 | `StoryItemsWindow.cs` | Story items editor; `StorySets` (`LockedDoor`, `TreasureMap`, `LockedChest`, `NoteTrail`); the window's Puzzles row loads Raft's pieces (`PlaceableCatalog.EnsureLoaded`) then places a puzzle set |
@@ -37,7 +38,7 @@ range). Points = `Camera_Point` (Zones & triggers; props cam.path/order/look/spe
 
 ## Quests: how steps are defined
 - Settings `quest.title`, `quest.intro`, `quest.steps`, `quest.reward`, `quest.done`; further quests `quest2.*` to `quest9.*` (`IslandQuest.Key(key, n)`, `MaxQuests` = 9, n = 0 is the main quest). Read/write with `IslandQuest.From` / `To`.
-- `quest.steps`: one line per step, `type|target|count|text`. `IslandQuest.Types`: `reach` (zone id), `read` (note title), `open` (the chest's note title; empty = any), `kill` / `catch` (creature `Kind.Label`), `collect` (story item, `story:<id>` or id), `pages` (empty = this island, `all` = any). `collect` and `pages` are `Counted`. Empty target matches anything.
+- `quest.steps`: one line per step, `type|target|count|text`. `IslandQuest.Types`: `reach` (zone id), `read` (note title), `open` (the chest's note title; empty = any), `kill` / `catch` (creature `Kind.Label`), `collect` (story item, `story:<id>` or id), `pages` (empty = this island, `all` = any). `collect` and `pages` are `Counted`. Empty target matches anything. QE1/4/7 (11-03, `QuestSteps.cs`): `signal` (a signal name, or `Name=open|closed|shown|hidden` via `Behaviours.Passes` state check - only while `e.Root` is loaded on the host; `Counted`, polled by `CheckCounted`), `bring` (`Item@Receiver`, count; `QuestSteps.HandIn` from `Islanders.Talked` and `LootCrate.OnIsRayed` via `ChestRayed`: takes from the local player's inventory, then `QuestTracker.Event(e,n,...)` with the amount), `craft` (item, count; Harmony on `CraftingMenu.CraftItem`, `Block_CookingStand.CollectItem`, `CookingTable.PickupFood` -> `QuestSteps.Made`: only the current step, within 300 m, never early). `IslandQuest.MaxStepCount` 99 = the editor's cap (steps in a ScrollList box).
 
 ## Main flow
 1. On the acting machine: `TriggerZone.Enter` -> `QuestTracker.Event(e, "reach", Id)`; `NoteReader.Show` -> `read`; `LootCrate.Open` -> `open`. The host's `CreatureSpawner` -> `kill` / `catch`.
