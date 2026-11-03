@@ -34,6 +34,8 @@ namespace DynamicIslands.Editor
 			if (!Wants(name)) return;
 			PropInfo p = RaftProps.Get(name);
 			CaveMountain m = island.GetComponent<CaveMountain>() ?? island.gameObject.AddComponent<CaveMountain>();
+			// (lit as the cave tool's dens are: warm and dim, not by the blue sky probe outside - a blue den under a brown hill, 11-03)
+			CaveLit.Mark(piece);
 			m.caves.Add(piece.transform);
 			m.infos.Add(p);
 			m.props.Add(props);
@@ -478,8 +480,42 @@ namespace DynamicIslands.Editor
 			// (Raft's own island rock - CaravanIslandRocks - has no colour to tint: it then stays as it is; the den's rock material
 			// stretched over the hill looked blotchy, grey-blue patches - tried 11-03)
 			IDictionary<string, string> tinted = props.FirstOrDefault(ObjectProps.HasTint);
-			if (tinted != null) ObjectProps.ApplyTint(skin, ObjectProps.Tint(tinted), ObjectProps.TintStrength(tinted));
-			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name);
+			if (tinted != null)
+			{
+				Color factor = Color.Lerp(Color.white, ObjectProps.Tint(tinted), ObjectProps.TintStrength(tinted));
+				int n = ObjectProps.ApplyTint(skin, ObjectProps.Tint(tinted), ObjectProps.TintStrength(tinted));
+				if (n == 0) TintRockTextures(mr, factor);
+				Debug.Log("[CUSTOM ISLANDS] Cave mountain tint " + factor + " (colour " + n + ")");
+			}
+			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0"));
+		}
+
+		/// <summary>Raft's island rock (CaravanIslandRocks) has no colour property, so ApplyTint leaves it orange under a dark
+		/// den (The Abyss, Balboa Remade): its diffuse textures are swapped, on this renderer only, for copies multiplied by
+		/// the tint (11-03).</summary>
+		static void TintRockTextures(MeshRenderer mr, Color factor)
+		{
+			Material m = mr.sharedMaterial;
+			if (m == null) return;
+			var block = new MaterialPropertyBlock();
+			mr.GetPropertyBlock(block);
+			var done = new List<string>();
+			Shader sh = m.shader;
+			// (every colour texture of the shader: island rocks differ - _TopDiffuse/_SideDiffuse on CaravanIslandRocks, others on
+			// Balboa's and The Abyss's rock; normal, mask and noise maps keep theirs)
+			for (int i = 0; i < sh.GetPropertyCount(); i++)
+			{
+				if (sh.GetPropertyType(i) != ShaderPropertyType.Texture) continue;
+				string tp = sh.GetPropertyName(i), low = tp.ToLowerInvariant();
+				if (low.Contains("normal") || low.Contains("bump") || low.Contains("mask") || low.Contains("noise") || low.Contains("height")
+					|| low.Contains("occlusion") || low.Contains("metal") || low.Contains("smooth") || low.Contains("emission")) continue;
+				Texture2D t = DigTunnel.Scaled(m.GetTexture(tp), factor, " (cave tint)");
+				if (t == null) continue;
+				block.SetTexture(tp, t);
+				done.Add(tp);
+			}
+			if (done.Count > 0) mr.SetPropertyBlock(block);
+			Debug.Log("[CUSTOM ISLANDS] Cave mountain rock " + m.name + " [" + sh.name + "] textures tinted: " + string.Join(",", done.ToArray()));
 		}
 
 		/// <summary>A cave piece's scale over the one raft_props measured it at (its catalog copy's); 1 when that copy isn't loaded.</summary>
