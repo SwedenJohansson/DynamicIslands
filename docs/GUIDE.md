@@ -2908,12 +2908,12 @@ who joins with it brings it. Get a missing island from the plan's maker (their p
 entry the message names. (Worlds saved before 2026-10-06 still look up the islands not brought yet by name: there,
 **Rename** an own island named like the plan's - F10 `WorldPlan` lists them.)
 
-**Let a player who hosted before join first.** A world follows the host's version of an island. When the next host
-has an island of the world in another version (same name, changed in their editor), they play theirs until a player
-who has the world's version joins. If the world is saved before that, it keeps the host's version from then on, and
-what was used on that island may sit on other objects. So the next host waits for a player who hosted the world
-before (or who has its islands unchanged) before playing on. (The same rule lets your own edits reach your saved
-worlds, [4.7](#47-saving-and-sharing). This is being fixed.)
+**An island in another version on the next host's PC.** When the next host has an island of the world in another
+version (same name, changed in their editor), they play theirs in its place, but the world keeps its own version:
+saving doesn't replace it. The players are asked for the world's version; once one who has it joins, it is sent, and
+it plays from the island's next load (when the raft has sailed away from it and back, or the world is loaded again).
+What was used on the island while the host's version stood in may sit on other objects then. Your own edits still
+reach the worlds you saved yourself ([4.7](#47-saving-and-sharing)).
 
 #### Everyone runs the same version of the mod
 

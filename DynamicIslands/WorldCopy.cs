@@ -520,7 +520,9 @@ namespace DynamicIslands.Editor
 		/// asked for it (AU6): with no file of that name here the island waits for it (name_hash, the name it arrives as);
 		/// with another version of it here, that one plays until a player sends the right one.
 		/// </summary>
-		public static string LocalFileFor(string name, string hash)
+		/// <param name="other">The world was saved with another host's version (RK1). Not so, a different own file is this PC's
+		/// edit since the world was saved: it plays, and the players aren't asked for the old one.</param>
+		public static string LocalFileFor(string name, string hash, bool other = true)
 		{
 			if (string.IsNullOrEmpty(hash)) return name;
 			string own = IslandNetwork.HashOf(name);
@@ -531,6 +533,7 @@ namespace DynamicIslands.Editor
 			if (IslandNetwork.IsHash(hash) && IslandNetwork.HashOf(downloaded) == hash) { Debug.Log("[CUSTOM ISLANDS] '" + name + "' is played from the copy downloaded from its first host: " + downloaded); return downloaded; }
 			string same = IslandNetwork.IsHash(hash) ? IslandNetwork.FileWithHash(hash, null) : null;
 			if (same != null) { Debug.Log("[CUSTOM ISLANDS] '" + name + "' is played from " + same + ", the same island under another name"); return same; }
+			if (own != null && !other) { Debug.Log("[CUSTOM ISLANDS] '" + name + "' was edited on this PC since the world was saved: the world plays the edit"); return name; }
 			if (IslandNetwork.IsHash(hash) && Raft_Network.IsHost) IslandNetwork.WantFromPlayers(name, hash);
 			if (own != null) { Debug.LogWarning("[CUSTOM ISLANDS] '" + name + "' differs from the one this world was saved with (" + own + ", not " + hash + "): playing this PC's own until a player has that one"); return name; }
 			return IslandNetwork.IsHash(hash) && Raft_Network.IsHost ? downloaded : name;

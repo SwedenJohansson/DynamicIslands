@@ -267,6 +267,8 @@ namespace DynamicIslands.Editor
 					IslandSpawner.Despawn(e.Root);
 					e.Root = null;
 					Debug.Log("[CUSTOM ISLANDS] Unloaded island '" + e.Name + "' (" + d.ToString("F0") + " m away)");
+					// (the world's version of it came while it was loaded: it plays from now on - RK1)
+					try { IslandNetwork.AfterUnload(e); } catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Switching the island's version failed: " + x.Message); }
 				}
 				else if (e.Root == null && !e.Loading && !e.Failed && !e.WaitingForFile && !e.Excluded && d < reload)
 				{

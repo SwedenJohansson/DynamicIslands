@@ -27,7 +27,9 @@ namespace DynamicIslands.Editor
 		static ulong LocalSteamId { get { try { return Steamworks.SteamUser.GetSteamID().m_SteamID; } catch { return 0UL; } } }
 
 		/// <summary>The line that says which PC hosted the world when this state was saved (IslandWorldState.Save).</summary>
-		public static string SavedByLine() { ulong id = LocalSteamId; return id != 0 ? "@savedby=" + id.ToString(CultureInfo.InvariantCulture) : null; }
+		/// <summary>Tests: a Steam id the next saves name instead of this PC's (0: this PC's) - a world saved by another host (RK1).</summary>
+		internal static ulong SavedByForTest;
+		public static string SavedByLine() { ulong id = SavedByForTest != 0 ? SavedByForTest : LocalSteamId; return id != 0 ? "@savedby=" + id.ToString(CultureInfo.InvariantCulture) : null; }
 
 		/// <summary>What a look through the files found.</summary>
 		public class Scan

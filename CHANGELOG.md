@@ -23,6 +23,9 @@ Not in this release yet; these come in the next update:
 - **Dropped items stay on custom islands:** an item dropped on a custom island no longer falls into the sea when the
   island unloads (the raft far away); it waits where it lay. Such items are also kept in the save and lie there again
   after the world is loaded (Raft's own save keeps no dropped items) (RK2).
+- **Hosting another player's world:** when the next host has one of the world's islands in another version, the world
+  keeps its own version (a save no longer replaces it with the host's); the host's plays in its place until a player
+  brings the world's, which then plays from the island's next load (RK1).
 
 ## 3.0 alpha - 2026-11-02: Tunnels and fixes
 
