@@ -171,7 +171,8 @@ brush smooth at -84 6 r=17 s=4 frames=40
 brush flatten at -84 6 r=9 s=20 frames=400 h=3
 clear at -84 6 r=10
 place Balboa_DecorationPrefabBase_SimpleTent - at -86.5 8.5 h=3 sit yaw=120
-place Balboa_DecorationPrefabBase_SimpleTent - at -81 9 h=3 sit yaw=200
+# (11-03 fixC, CIFloatingSweep: the tent's base stood up to 1.26 m over the slope, set on the ground)
+place Balboa_DecorationPrefabBase_SimpleTent - at -81 9 ground sit yaw=200
 place campfire_1 - at -83.5 5 ground sit
 place Placeable_Table_Basic calderdesk at -87 3.5 ground sit yaw=30
 place Crate_Big_01 - at -88.5 6.5 ground sit yaw=70
