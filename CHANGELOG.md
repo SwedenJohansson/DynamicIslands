@@ -12,6 +12,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next update (planned)
 
 Not in this release yet; these come in the next update:
+- **Cave tool**: dens and tunnels in a world look as they do in the editor, warm and dim, no longer lit blue by the sky.
 - **Dig brush**: the ground on top of a dug rim keeps the same sharp grass detail as the ground round it, not a smoother, blurred patch.
 - **Dug tunnels**: the passage floor just inside the mouth is cave-dark rock now, not lit pale like snow by the sun.
 - **Fast starts again**: since 3.0's new author line, Raft's mod loader compiled Custom Islands on every start (about a

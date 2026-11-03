@@ -1001,5 +1001,90 @@ namespace DynamicIslands
 			DigTunnel.Radius = radius0; DigTunnel.Slope = slope0;
 			if (ok) Log("PASS: dig tunnel camera"); else Fail("dig tunnel camera");
 		}
+
+		[ConsoleCommand(name: "CILookProbe", docs: "Dev, editor or world: logs what the look fixes of 11-03 need (CILookProbe ground|den|mountain|light): ground - the first dug tunnel's ground material, layers and rim top; den - every cave piece's renderers (shader, colours, probes); mountain - every cave mountain's skin and its caves' tint; light - the sun, shadows and ambient")]
+		public static void LookProbeCommand(string[] args) { StartTest(LookProbeRoutine(args.Length > 0 ? args[0] : "light")); }
+
+		static string MatInfo(Material m)
+		{
+			if (m == null) return "null";
+			Shader s = m.shader;
+			var parts = new List<string>();
+			for (int i = 0; i < s.GetPropertyCount(); i++)
+			{
+				string n = s.GetPropertyName(i);
+				switch (s.GetPropertyType(i))
+				{
+					case UnityEngine.Rendering.ShaderPropertyType.Color: parts.Add(n + "=" + m.GetColor(n)); break;
+					case UnityEngine.Rendering.ShaderPropertyType.Float:
+					case UnityEngine.Rendering.ShaderPropertyType.Range: parts.Add(n + "=" + m.GetFloat(n).ToString("0.###")); break;
+					case UnityEngine.Rendering.ShaderPropertyType.Vector: parts.Add(n + "=" + m.GetVector(n)); break;
+					case UnityEngine.Rendering.ShaderPropertyType.Texture: { Texture t = m.GetTexture(n); parts.Add(n + "=" + (t != null ? t.name + "(" + t.width + "x" + t.height + ")" : "-") + " st" + m.GetTextureScale(n) + m.GetTextureOffset(n)); break; }
+				}
+			}
+			return m.name + " [" + s.name + "] kw:" + string.Join(",", m.shaderKeywords) + " | " + string.Join("; ", parts.ToArray());
+		}
+
+		static IEnumerator LookProbeRoutine(string what)
+		{
+			yield return null;
+			Light sun = RenderSettings.sun != null ? RenderSettings.sun : Object.FindObjectsOfType<Light>().Where(l => l.type == LightType.Directional && l.enabled).OrderByDescending(l => l.intensity).FirstOrDefault();
+			if (what == "light")
+			{
+				Log("  sun " + (sun != null ? sun.name + " " + sun.color + " x" + sun.intensity + " shadows " + sun.shadows + " str " + sun.shadowStrength + " mask " + sun.cullingMask + " bias " + sun.shadowBias + "/" + sun.shadowNormalBias : "none")
+					+ "; quality " + QualitySettings.GetQualityLevel() + " shadows " + QualitySettings.shadows + " dist " + QualitySettings.shadowDistance + " cascades " + QualitySettings.shadowCascades + " res " + QualitySettings.shadowResolution
+					+ "; ambient " + RenderSettings.ambientMode + " sky " + RenderSettings.ambientSkyColor + " eq " + RenderSettings.ambientEquatorColor + " gr " + RenderSettings.ambientGroundColor + " x" + RenderSettings.ambientIntensity
+					+ "; probe dc " + RenderSettings.ambientProbe[0, 0].ToString("0.00") + "," + RenderSettings.ambientProbe[1, 0].ToString("0.00") + "," + RenderSettings.ambientProbe[2, 0].ToString("0.00")
+					+ "; camera " + (Camera.main != null ? Camera.main.actualRenderingPath + " far " + Camera.main.farClipPlane : "none"));
+				bool shot = GfxShotBegin();
+				Log("  at the pictures' quality (" + shot + "): " + QualitySettings.GetQualityLevel() + " shadows " + QualitySettings.shadows + " dist " + QualitySettings.shadowDistance + " cascades " + QualitySettings.shadowCascades
+					+ " res " + QualitySettings.shadowResolution + "; sun shadows " + (sun != null ? sun.shadows.ToString() : "-"));
+				GfxShotEnd(shot);
+			}
+			if (what == "ground")
+			{
+				DigTunnel tun = Object.FindObjectsOfType<DigTunnel>().FirstOrDefault(x => x.PointCount > 10);
+				Terrain land = tun != null ? tun.Land() : Terrain.activeTerrain;
+				if (land != null)
+				{
+					Log("  terrain " + land.name + " instanced " + land.drawInstanced + " basemap " + land.basemapDistance + " shadows " + land.shadowCastingMode + " detail " + land.detailObjectDistance + "/" + land.terrainData.detailPrototypes.Length + " layer " + LayerMask.LayerToName(land.gameObject.layer));
+					Log("  ground material " + MatInfo(land.materialTemplate));
+					foreach (TerrainLayer l in land.terrainData.terrainLayers)
+						if (l != null) Log("  layer " + l.name + " diffuse " + (l.diffuseTexture != null ? l.diffuseTexture.name + " " + l.diffuseTexture.width : "-") + " normal " + (l.normalMapTexture != null ? l.normalMapTexture.name + " " + l.normalMapTexture.width + " " + l.normalMapTexture.graphicsFormat : "-") + " mask " + (l.maskMapTexture != null ? l.maskMapTexture.name : "-") + " tile " + l.tileSize + " off " + l.tileOffset + " smooth " + l.smoothness + " metal " + l.metallic + " nscale " + l.normalScale + " spec " + l.specular + " remap " + l.diffuseRemapMin + "-" + l.diffuseRemapMax);
+				}
+				if (tun != null)
+				{
+					MeshRenderer mr = tun.transform.Find(DigTunnel.RockName).GetComponent<MeshRenderer>();
+					Mesh mesh = mr.GetComponent<MeshFilter>().sharedMesh;
+					var tg = new List<Vector4>(); mesh.GetTangents(tg);
+					Log("  rim top " + tun.RimTop + "; mesh parts " + mesh.subMeshCount + " verts " + mesh.vertexCount + " tangents " + tg.Count);
+					Material[] ms = mr.sharedMaterials;
+					for (int i = 0; i < ms.Length; i++) Log("  rock part " + i + ": " + MatInfo(ms[i]));
+				}
+			}
+			if (what == "den")
+			{
+				foreach (Transform t in Object.FindObjectsOfType<Transform>().Where(x => x.parent != null && (x.name.StartsWith(CaveTool.Room) || x.name.StartsWith(CaveTool.Tunnel) || x.name.ToLowerInvariant().Contains("cave"))).Take(30))
+				{
+					foreach (Renderer r in t.GetComponentsInChildren<MeshRenderer>().Take(6))
+					{
+						var b = new MaterialPropertyBlock(); r.GetPropertyBlock(b);
+						Log("  " + t.name + "/" + r.name + " at " + r.bounds.center + " probes " + r.lightProbeUsage + " block " + (b.isEmpty ? "empty" : "set") + " shadows " + r.shadowCastingMode + " layer " + LayerMask.LayerToName(r.gameObject.layer));
+						foreach (Material m in r.sharedMaterials.Take(3)) Log("    " + MatInfo(m));
+					}
+				}
+			}
+			if (what == "mountain")
+			{
+				foreach (CaveMountain cm in Object.FindObjectsOfType<CaveMountain>())
+				{
+					Transform sk = cm.transform.Find(CaveMountain.SkinName);
+					MeshRenderer mr = sk != null ? sk.GetComponent<MeshRenderer>() : null;
+					Log("  mountain on " + cm.name + " at " + cm.transform.position + ": " + (mr != null ? MatInfo(mr.sharedMaterial) : "no skin"));
+					if (mr != null) { var b = new MaterialPropertyBlock(); mr.GetPropertyBlock(b); Log("    block " + (b.isEmpty ? "empty" : "set") + " top " + (b.GetTexture("_TopDiffuse") != null ? b.GetTexture("_TopDiffuse").name : "-")); }
+				}
+			}
+			Log("PASS: look probe " + what);
+		}
 	}
 }

@@ -226,6 +226,10 @@ namespace DynamicIslands.Editor
 		/// made the passage blue-white - and the sun, which Raft doesn't shadow there, nearly gone.</summary>
 		static readonly Color TunnelLight = new Color(0.42f, 0.34f, 0.26f), TunnelSun = new Color(0.22f, 0.2f, 0.18f);
 
+		/// <summary>The cave tool's pieces' light in a world (CaveLit): the sky's, grey, CaveDark of the way to CaveWarm.</summary>
+		static readonly Color CaveWarm = new Color(0.5f, 0.42f, 0.32f);
+		const float CaveDark = 0.75f;
+
 		static void PreRender(Camera cam)
 		{
 			if (cam != Camera.main || applied) return;
@@ -242,6 +246,12 @@ namespace DynamicIslands.Editor
 				SphericalHarmonicsL2 sky = RenderSettings.ambientProbe;
 				DigTunnel.LightLinings(Tinted(sky, zk * Color.Lerp(Color.white, TunnelLight, Mathf.Max(dark, DigTunnel.LiningDark))),
 					Tinted(sky, zk * Color.Lerp(Color.white, TunnelLight, dark)));
+			}
+			// (the cave tool's pieces: the sky's light grey and warm, as the editor's - not Raft's blue sky light)
+			if (CaveLit.AnyLive)
+			{
+				Color zk = zone && z.LightAmount > 0f ? Color.Lerp(Color.white, z.Light, w * z.LightAmount) : Color.white;
+				CaveLit.LightAll(CaveLit.GreyWarm(RenderSettings.ambientProbe, zk * Color.Lerp(Color.white, CaveWarm, Mathf.Max(dark, CaveDark))));
 			}
 			if (!zone && dark <= 0.001f) return;
 			saved = new Saved

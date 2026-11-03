@@ -275,7 +275,10 @@ namespace DynamicIslands.Editor
 			else ApplyTint(root, Color.white, 0f);
 			if (Get(props, Skin, "") == SkinRock) ApplyRockSkin(root);
 			float plug;
-			if (float.TryParse(Get(props, CavePlug, ""), NumberStyles.Float, CultureInfo.InvariantCulture, out plug) && plug > 0f) CaveTool.Plug(root, plug);
+			bool hasPlug = float.TryParse(Get(props, CavePlug, ""), NumberStyles.Float, CultureInfo.InvariantCulture, out plug) && plug > 0f;
+			if (hasPlug) CaveTool.Plug(root, plug);
+			// (the cave tool's pieces take a warm grey light in a world, as in the editor - not Raft's blue sky light)
+			if ((hasMouth || hasEnd || hasJoin || hasPlug) && root != null) CaveLit.Mark(root);
 		}
 
 		static Texture rockDiffuse, rockNormal;

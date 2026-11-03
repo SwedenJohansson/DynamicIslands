@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace DynamicIslands.Editor
 {
@@ -1163,5 +1164,87 @@ namespace DynamicIslands.Editor
 		}
 
 		#endregion
+	}
+
+	/// <summary>
+	/// The cave tool's pieces (tunnels with a mouth, join or end, and dens with a plug) lit in a world as in the editor: Raft
+	/// lights a world with a strong blue sky (ambient intensity ~8), so the pieces came out pale blue-white, where the editor's
+	/// warm light shows them brown-grey. For the camera about to draw (AmbienceZones.PreRender) each piece's renderers get
+	/// their own light probe - the sky's light made grey and warm, and dimmed - and less of the sky's shine, through their
+	/// property blocks (the tint and rock skin in them kept). The editor's light is left alone (11-03).
+	/// </summary>
+	public class CaveLit : MonoBehaviour
+	{
+		static readonly List<CaveLit> live = new List<CaveLit>();
+		[NonSerialized] Renderer[] rends;
+		static readonly MaterialPropertyBlock block = new MaterialPropertyBlock();
+		static readonly SphericalHarmonicsL2[] one = new SphericalHarmonicsL2[1];
+		/// <summary>How much of the rock's shine is kept (as the dug tunnel's lining: its blue reflections washed the walls out).</summary>
+		const float Shine = 0.45f;
+		/// <summary>Dev probes: leave the pieces' light alone.</summary>
+		public static bool Off;
+		static bool told;
+
+		public static bool AnyLive { get { return live.Count > 0; } }
+
+		/// <summary>Marks a cave tool piece (again after its parts changed: its renderers are looked up anew).</summary>
+		public static void Mark(GameObject piece)
+		{
+			if (piece == null) return;
+			CaveLit c = piece.GetComponent<CaveLit>();
+			if (c == null) c = piece.AddComponent<CaveLit>();
+			c.rends = null;
+		}
+
+		void OnEnable() { if (!live.Contains(this)) live.Add(this); }
+		void OnDisable() { live.Remove(this); }
+
+		public static void LightAll(SphericalHarmonicsL2 sh)
+		{
+			if (live.Count == 0 || Off || DynamicIslands.InEditor()) return;
+			one[0] = sh;
+			for (int i = live.Count - 1; i >= 0; i--)
+			{
+				CaveLit c = live[i];
+				if (c == null) { live.RemoveAt(i); continue; }
+				try { c.Light(); }
+				catch (Exception e) { if (!told) Debug.LogWarning("[CUSTOM ISLANDS] Cave piece's light: " + e.Message); told = true; }
+			}
+		}
+
+		void Light()
+		{
+			if (rends == null || rends.Any(r => r == null))
+				rends = GetComponentsInChildren<Renderer>(true).Where(r => !(r is ParticleSystemRenderer) && !(r is LineRenderer) && !(r is TrailRenderer)).ToArray();
+			foreach (Renderer r in rends)
+			{
+				if (!r.enabled || !r.gameObject.activeInHierarchy) continue;
+				if (r.lightProbeUsage != LightProbeUsage.CustomProvided) r.lightProbeUsage = LightProbeUsage.CustomProvided;
+				Material[] mats = r.sharedMaterials;
+				if (mats.Length != 1)
+					for (int i = 0; i < mats.Length; i++) { r.GetPropertyBlock(block, i); Set(mats[i]); r.SetPropertyBlock(block, i); }
+				// (the renderer's own block too: a part drawn without its own block would be lit by nothing)
+				r.GetPropertyBlock(block);
+				Set(mats.Length == 1 ? mats[0] : null);
+				r.SetPropertyBlock(block);
+			}
+		}
+
+		static void Set(Material m)
+		{
+			block.CopySHCoefficientArraysFrom(one);
+			if (m != null && m.HasProperty("_Smoothness_Multiplyer")) block.SetFloat("_Smoothness_Multiplyer", m.GetFloat("_Smoothness_Multiplyer") * Shine);
+		}
+
+		/// <summary>The sky's light made grey (each colour's share by its brightness) and multiplied by warm.</summary>
+		public static SphericalHarmonicsL2 GreyWarm(SphericalHarmonicsL2 sh, Color warm)
+		{
+			for (int c = 0; c < 9; c++)
+			{
+				float y = 0.3f * sh[0, c] + 0.59f * sh[1, c] + 0.11f * sh[2, c];
+				sh[0, c] = y * warm.r; sh[1, c] = y * warm.g; sh[2, c] = y * warm.b;
+			}
+			return sh;
+		}
 	}
 }
