@@ -109,6 +109,7 @@ namespace DynamicIslands.Editor
 			raft = null;
 			lastRaftPosition = null;
 			TestRaftFarAway = false;
+			TestPlayersFarAway = false;
 			sailedSinceSpawn = 0f;
 			nextTick = 0f; // (stream the islands in at once: a player may be standing on one - PlayerHold)
 			// (Raft's islands counted afresh: the same world loaded again kept its GUID, so the old set stayed - its keys are
@@ -235,6 +236,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Unloads far-away islands (keeping their entry) and loads them again when the raft comes back.</summary>
 		/// <summary>Tests (SC46/SC47, player 2): stream as if the raft were far away too - only this player's position counts.</summary>
 		internal static bool TestRaftFarAway;
+		/// <summary>Tests (mprk34 RK3, host): the players don't hold an island either - with TestRaftFarAway the host's copy unloads under player 2.</summary>
+		internal static bool TestPlayersFarAway;
 
 		static void StreamIslands(Vector3 raftPos)
 		{
@@ -251,7 +254,7 @@ namespace DynamicIslands.Editor
 				// centre was further away than the unload distance)
 				float edge = e.WaitingForFile ? 0f : Mathf.Max(0f, LandRadius(e.Name));
 				float d = TestRaftFarAway ? float.PositiveInfinity : Mathf.Max(0f, Flat(e.Position - raftPos).magnitude - edge);
-				foreach (Vector3 pp in players) d = Mathf.Min(d, Mathf.Max(0f, Flat(e.Position - pp).magnitude - edge));
+				if (!TestPlayersFarAway) foreach (Vector3 pp in players) d = Mathf.Min(d, Mathf.Max(0f, Flat(e.Position - pp).magnitude - edge));
 				// The randomizer's extras on one of Raft's islands are there only while Raft's island is
 				if (WorldRandomizer.IsExtras(e) && !WorldRandomizer.HasIslandUnder(e)) d = float.PositiveInfinity;
 				// (the host's distance on every machine: WorldRules)
