@@ -74,6 +74,11 @@ brush flatten from 40 -39 to 40 -41 r=2 s=20 frames=60 h=2.1
 brush flatten from -4.5 -2 to 11 -1.8 r=1.5 s=20 frames=100 h=4
 # (GROUND 10-31 G1: the prow plate's foot hung 3.3 m over the ice at 13.7 -1.3 - the walk carried on under it)
 brush flatten from 11 -1.8 to 14.2 -1.2 r=1.5 s=20 frames=60 h=4
+# (FIX-B 11-03 G1: the ramp up the ridge's south face (x -4.5) rose in 1 m steps from h 1 at z -30 - out of the sea a
+# 1 m climb and then 1 m steps; now one even slope from under the water (z -36, h -0.8) to the top (z -8, h 4), 29 pads)
+for k 0 28
+brush flatten at -4.5 {-36+$k} r=2.5 s=20 frames=60 h={-0.8+4.8*$k/28}
+next
 brush flatten from 25 -15.6 to 26.6 -14.5 r=1.8 s=20 frames=60 h=-0.5
 brush flatten from 35 -32.8 to 38.4 -32.4 r=1.8 s=20 frames=60 h=-0.5
 brush flatten at 13.7 39.7 r=5 s=8 frames=40
