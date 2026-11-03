@@ -154,7 +154,7 @@ call sk_zone x=38 z=63 al=lu_ridge id=lu_ridge r=7 msg="The coral ridge on the s
 call sk_cave x=-68 z=-4 h=2 yaw=0 al=lu_caverock chest=lu_cavechest
 call sk_zone x=-68 z=1 al=lu_cave id=lu_cave r=4 msg="The lamp line ends at this cave. Inside, it is darker than the sea."
 call sk_dark x=-68 z=1 h=1 r=7 al=lu_dark
-call airpocketat x=-65.4 z=0 h=2.7 id=lu_air al=lu_air bub=lu_airbub r=2.2 msg="Air under the rock - breathe."
+call airpocketat x=-65.4 z=0 h=3.6 id=lu_air al=lu_air bub=lu_airbub r=2.2 msg="Air under the rock - breathe."
 call sk_ruin x=40 z=-64 h=2 al=lu_ruin
 call sk_notebox x=42.5 z=-68.5 yaw=10 al=lu_ruinnote
 call sk_wreck x=-50 z=-40 h=2 yaw=70 v=Caravan_Green_01 al=lu_wreck crate=lu_wreckcrate scale=1
@@ -162,13 +162,6 @@ call sk_notebox x=-44 z=-44 yaw=70 al=lu_wrecknote
 
 # --- Unique layer (10-24): the lamp line: five survey lamps lead west to the dark cave, each one keeps the anglers at bay
 # (beh.repel, gaps-1024); the cave itself is dark (a dark hazard zone: the advanced headlight from step 7 sees in it)
-# (GROUND 10-30 G1: lamps 1, 2 and 5 stood on a slope, their foot stones 0.7 m off it on the low side: a level patch under each)
-brush flatten at -20 0 r=1.6 s=8 frames=40
-clear at -20 0 r=2.6 body
-brush flatten at -32 -1 r=1.6 s=8 frames=40
-clear at -32 -1 r=2.6 body
-brush flatten at -62 0 r=1.6 s=8 frames=40
-clear at -62 0 r=2.6 body
 call stonelamp x=-20 z=0 al=lulamp1
 call stonelamp x=-32 z=-1 al=lulamp2
 call stonelamp x=-44 z=-2 al=lulamp3
@@ -201,7 +194,7 @@ place Note_Paper lusumnote at -6.75 -66.75 h=35.08 drop yaw=20
 place Zone_Trigger lusummit at -6 -66 h=35.98
 place Loot_ChestSmall luledge at -18.1 -66 ground sit yaw=40
 place SmallRock_02 - at -1 -64 ground sit scale=0.5
-place SmallRock_02 - at -1 -64 ground y=0.1 sit scale=0.32 yaw=40
+place SmallRock_02 - at -1 -64 ground y=0.6 sit scale=0.32 yaw=40
 call treasure x=-3.5 z=-64 r=12 n=1 seed=24511
 prop treasure24511 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 call treasure x=50.52 z=-22.97 r=5 n=1 seed=24512
@@ -353,6 +346,4 @@ step collect|story:lu_lit|1|Fit the four lens glasses into the broken floodlight
 quest done=The pit is lit and something big has learned to come to lights. The team went to the Caisson Yard over the trench - the Receiver finds it on band 1000.
 quest reward=Battery*1;CopperIngot*2
 
-# (GROUND 10-30 G1: a scattered boulder 2.4 m off the slope (CIGroundIslands 11:28) taken out)
-clear at 43.37 -62.69 r=1.5 all body only=SmallBoulder2
 save Lumen Shelf
