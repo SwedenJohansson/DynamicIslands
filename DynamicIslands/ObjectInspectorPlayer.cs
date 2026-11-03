@@ -67,9 +67,9 @@ namespace DynamicIslands.Editor
 				Button b = UIKit.Button(prow, ps, () => { Set(target, Islanders.PoseProp, chosen); Refresh(); }, "The islander " + (ps == "stand" ? "stands" : ps == "sit" ? "sits" : ps == "fish" ? "fishes with a rod" : ps == "sleep" ? "lies asleep" : "leans") + " (place it where that fits: on a seat, at the water, against a wall)", -1, 26f, 11);
 				if (ps == pose) UIKit.Primary(b);
 			}
-			Text markup = UIKit.Label(g, "What it says. Markup: a line with only --- starts the next page; a line starting with > is an answer (up to 3 per dialogue, shown under the page they follow). Plain lines are the speech.", 12, UIKit.TextMuted, TextAnchor.UpperLeft);
+			Text markup = UIKit.Label(g, "What it says. A line of only --- = next page. A line starting with > = an answer (up to 3). Hover for an example.", 12, UIKit.TextMuted, TextAnchor.UpperLeft);
 			markup.horizontalOverflow = HorizontalWrapMode.Wrap;
-			UIKit.Size(markup.gameObject, -1, 32);
+			UIKit.Size(markup.gameObject, -1, 48);
 			UIKit.Hint(markup.gameObject, "Example: \"Hello there.\", then a line ---, then \"Will you help me?\", then the lines \"> Yes\" and \"> Not now\". Answer 1 fires this islander's choice1 event, answer 2 choice2, answer 3 choice3. Closing the dialogue fires \"talk\" (what a quest's \"Talk to\" step waits for). In a \"show dialogue\" action, write \\n for a new line instead");
 			InputField text = UIKit.TextArea(g, "Hello there.\n---\nWill you help me?\n> Yes\n> Not now", 110f, "The dialogue players get with the interact key. Answer 1..3 fires the islander's choice1..choice3 event; closing it fires \"talk\"");
 			text.text = ObjectProps.Get(p, Islanders.TextProp);

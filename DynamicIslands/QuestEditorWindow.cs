@@ -88,6 +88,9 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Shows quest n of the island (its edits kept while another is shown).</summary>
+		/// <summary>Dev tests (CIWindowShot questside): the open window shows quest n.</summary>
+		internal static void ShowTab(int n) { if (instance == null) return; instance.Keep(); instance.Show(n); }
+
 		void Show(int n)
 		{
 			number = n;
