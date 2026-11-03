@@ -39,6 +39,8 @@ Not in this release yet; these come in the next update:
   Primeval Park.
 - **The Rain Engine**: a path climbs from the east shore up to Tor's shelf by the ruin, so Tor and his tin can be
   reached on foot (the shelf was a 12 m cliff from the sea).
+- **The Floelane**: a path winds up round the iceberg from the sea to its flat top (the cairn, chest and lookout), and
+  the bears' den passage steps down into the lead instead of ending in a 1.6 m drop.
 - Old worlds (made before Raft gave worlds an id): quest rewards are kept per world, and players who join such a world
   get the host's custom islands state.
 - Cave tool: a thin spike of ground left beside the cut over some tunnel mouths.
