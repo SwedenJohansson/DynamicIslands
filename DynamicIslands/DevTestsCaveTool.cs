@@ -405,6 +405,137 @@ namespace DynamicIslands
 			if (ok) Log("PASS: cave tool cases"); else Fail("cave tool cases (" + (run - passed) + " of " + run + ")");
 		}
 
+		[ConsoleCommand(name: "CICaveToolInside", docs: "Dev, editor: the cave tool's tunnel seen from inside (TN1) - laid as the user laid it (CICaveToolInside [slope] [size] [room 1/0] [hill 1/0] [keep], default -2 0.8 1 1) on a generated island, and on three more ways round: from eye height along the passage and in the den, 81 looks each meet the cave's rock or the ground from above - none the sky, the ground from below or anything through the hill; the tunnel and den pieces each pass the X7 see-through check; pictures from the den back up the tunnel and from the passage out of the mouth")]
+		public static void CaveToolInsideCommand(string[] args)
+		{
+			System.Func<int, float, float> arg = (i, d) => { float v; return args.Length > i && float.TryParse(args[i], NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : d; };
+			StartTest(CaveToolInsideRoutine(arg(0, -2f), arg(1, 0.8f), arg(2, 1f) > 0f, arg(3, 1f) > 0f, args.Contains("keep")));
+		}
+
+		static IEnumerator CaveToolInsideRoutine(float slope, float size, bool room, bool hill, bool keep)
+		{
+			if (!DynamicIslands.InEditor()) { Fail("cave tool inside: in the editor"); yield break; }
+			bool ok = true;
+			DynamicIslands.NewIsland();
+			yield return null;
+			IslandGenerator.GenerateInEditor(new IslandGenSettings { Seed = 4242, Radius = 130f, Height = 30f, Style = TerrainPainter.Tropical });
+			yield return null;
+			Terrain t = terraineditor.terrain;
+			TerrainData data = t.terrainData;
+			Vector3 o = t.transform.position, c = o + new Vector3(data.size.x / 2f, 0f, data.size.z / 2f);
+			float sea = DynamicIslands.EditorWaterLevel;
+			System.Func<Vector3, Vector3> ground = p => { p.y = t.SampleHeight(p) + o.y; return p; };
+			var looks = new List<Vector3>();
+			foreach (float pitch in new[] { -20f, 0f, 15f, 35f, 60f })
+				for (int i = 0; i < 16; i++) looks.Add(Quaternion.Euler(-pitch, i * 22.5f, 0f) * Vector3.forward);
+			looks.Add(Vector3.up);
+			System.Func<Collider, bool> counts = col => col != null && !col.isTrigger && col.GetComponentInParent<AI_NetworkBehaviour>() == null && col.GetComponentInParent<Network_Player>() == null;
+			int ways = 0;
+			foreach (float ang in new[] { 0f, 135f, 225f, 300f })
+			{
+				Vector3 dir = Quaternion.Euler(0f, ang, 0f) * Vector3.forward;
+				Vector3 mouth = ground(c - dir * 55f);
+				for (int j = 0; j < 8 && mouth.y < sea + 3f; j++) mouth = ground(mouth + dir * 6f);
+				List<GameObject> laid = null;
+				yield return CaveTool.Lay(mouth, mouth + dir * ((room ? 22f : 32f) * size), slope, room, hill, size, m => laid = m);
+				CaveTool.Layout l = CaveTool.LastLayout;
+				string name = ang + "°, " + slope + "°, " + size + "x, " + (room ? "room" : "open") + ", " + (hill ? "hill" : "no hill");
+				if (laid == null || laid.Count == 0 || l == null) { Check(ref ok, false, name + ": nothing laid"); continue; }
+				ways++;
+				int dug;
+				CaveGround.EditorNow(t, out dug);
+				yield return null;
+				Physics.SyncTransforms();
+				var pieces = new HashSet<Transform>(laid.Select(g => g.transform));
+				System.Func<Collider, bool> caveRock = col =>
+				{
+					for (Transform tr = col.transform; tr != null; tr = tr.parent) if (pieces.Contains(tr)) return true;
+					return false;
+				};
+				// (eyes: along the passage every 3 m, and round the den's floor)
+				var eyes = new List<Vector3>();
+				float far = l.Length + (room ? 12f * size : 0f);
+				for (float s = 2f; s <= far; s += 3f * Mathf.Min(1f, size))
+				{
+					Vector3 p = l.Mouth + l.Flat * s; p.y = l.FloorAt(s) + 1.2f * size;
+					foreach (float q in s > l.Length ? new[] { -4f * size, 0f, 4f * size } : new[] { 0f })
+					{
+						RaycastHit fh;
+						Vector3 pq = p + Vector3.Cross(Vector3.up, l.Flat) * q;
+						if (!Physics.Raycast(pq, Vector3.down, out fh, 4f * size, ~0, QueryTriggerInteraction.Ignore) || fh.collider is TerrainCollider || !caveRock(fh.collider)) continue;
+						eyes.Add(fh.point + Vector3.up * 1.6f);
+					}
+				}
+				int sky = 0, under = 0, other = 0;
+				var seen = new List<string>();
+				bool backs0 = Physics.queriesHitBackfaces;
+				try
+				{
+					foreach (Vector3 eye in eyes)
+						foreach (Vector3 d in looks)
+						{
+							Physics.queriesHitBackfaces = true;
+							RaycastHit[] all = Physics.RaycastAll(eye, d, 150f, ~0, QueryTriggerInteraction.Ignore).Where(h => counts(h.collider)).OrderBy(h => h.distance).ToArray();
+							Physics.queriesHitBackfaces = false;
+							// (out by the mouth's own opening: a look that crosses the mouth's plane inside the passage before meeting anything)
+							float back = Vector3.Dot(d, -l.Flat);
+							if (back > 0.05f)
+							{
+								float tm = Vector3.Dot(eye - l.Mouth, l.Flat) / back;
+								Vector3 cross = eye + d * tm, rel = cross - l.Mouth; rel.y = 0f;
+								if ((all.Length == 0 || all[0].distance > tm - 0.3f) && Mathf.Abs(Vector3.Dot(rel, Vector3.Cross(Vector3.up, l.Flat))) < CaveTool.ShellHalfWidth * size && cross.y < l.Mouth.y + l.Top) continue;
+							}
+							if (!room && Vector3.Dot(d, l.Flat) > 0.05f)
+							{
+								float te = Vector3.Dot(l.End - eye, l.Flat) / Vector3.Dot(d, l.Flat);
+								if (all.Length == 0 || all[0].distance > te - 0.3f) continue;
+							}
+							float inAt = Vector3.Dot(eye - l.Mouth, l.Flat);
+							string where = inAt.ToString("0") + " m in, " + d.ToString("F1");
+							if (all.Length == 0) { sky++; seen.Add("sky " + where); }
+							else if (all[0].collider is TerrainCollider) { if (all[0].normal.y < 0f) { under++; seen.Add("the ground from below " + all[0].distance.ToString("0.0") + " m off, " + where); } }
+							// (a thing deep in the hill - a boulder its ground was raised over - is seen by no one: the den's rock is
+							// drawn round it, which the X7 check below makes sure of; only its collider is missing up there)
+							else if (!caveRock(all[0].collider) && all[0].point.y > t.SampleHeight(all[0].point) + o.y - 0.3f) { other++; seen.Add("out to " + all[0].collider.name + " " + all[0].distance.ToString("0") + " m, " + where); }
+						}
+				}
+				finally { Physics.queriesHitBackfaces = backs0; }
+				Check(ref ok, eyes.Count >= 5 && sky + under + other == 0, name + ", from inside (" + eyes.Count + " places, 81 looks each): " + sky + " looks to the sky, " + under + " to the ground from below, " + other + " to other things" + (seen.Count > 0 ? ": " + string.Join("; ", seen.Take(6).ToArray()) : ""));
+				// (each piece by the X7 check)
+				var badPieces = new List<string>();
+				foreach (GameObject g in laid)
+				{
+					string detail; Vector3 e2, l2;
+					string n = g.name.Replace("(Clone)", "").Trim();
+					EditorGameObject ego = g.GetComponent<EditorGameObject>();
+					if (ego != null) n = ego.GameObjectName;
+					if (CaveSeeThrough(g.transform, RaftProps.Get(n), out detail, out e2, out l2) > 0) badPieces.Add(n + ": " + detail);
+				}
+				Check(ref ok, badPieces.Count == 0, name + ", each piece from inside: " + (laid.Count - badPieces.Count) + " of " + laid.Count + " not seen through" + (badPieces.Count > 0 ? ": " + string.Join("; ", badPieces.Take(3).ToArray()) : ""));
+				if (ang == 0f || badPieces.Count > 0 || sky + under + other > 0)
+				{
+					string tag = "caveinside_" + (int)ang;
+					if (room)
+					{
+						Vector3 den = l.End + l.Flat * 7f * size; den.y = l.FloorAt(l.Length) + 1.8f * size;
+						yield return CameraShot(den, l.End + Vector3.up * 1.4f * size, tag + "_den");
+						yield return CameraShot(l.End - l.Flat * 2f + Vector3.up * 1.6f * size, l.End + l.Flat * 10f + Vector3.up * 1.6f * size, tag + "_intoden");
+					}
+					Vector3 mid = l.Mouth + l.Flat * (l.Length * 0.6f); mid.y = l.FloorAt(l.Length * 0.6f) + 1.6f * size;
+					yield return CameraShot(mid, l.Mouth + Vector3.up * 1.4f * size, tag + "_out");
+					yield return CameraShot(l.Mouth + l.Flat * 1.5f + Vector3.up * 1.6f * size, l.Mouth - l.Flat * 6f + Vector3.up * 1.2f * size, tag + "_mouth");
+					yield return CameraShot(l.Mouth - l.Flat * 12f * size + Vector3.up * 3f * size, l.Mouth + Vector3.up * 2f * size, tag + "_front");
+				}
+				if (!keep || ang != 300f)
+				{
+					CommandUndoRedo.UndoRedoManager.Undo();
+					yield return null;
+					CaveGround.EditorNow(t, out dug);
+				}
+			}
+			if (ok && ways == 4) Log("PASS: cave tool inside"); else Fail("cave tool inside");
+		}
+
 		static bool SameHeights(float[,] a, float[,] b, float tol) { return Differ(a, b, tol) == 0; }
 
 		static int Differ(float[,] a, float[,] b, float tol = 0.0005f)

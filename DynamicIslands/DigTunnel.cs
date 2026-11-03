@@ -98,6 +98,96 @@ namespace DynamicIslands.Editor
 			}
 			return dark;
 		}
+
+		/// <summary>How far toward the passage's own dim light (AmbienceZones' TunnelLight, 1 = all the way) the lining's sky
+		/// light is in a world, wherever the camera is: DarkAt dims the light for the camera only from DarkFrom m in, so seen
+		/// from the mouth or just inside it the passage took the world's strong blue sky light (ambient intensity 8) and came out
+		/// pale blue-white, far paler than in the editor (TN3, 11-03).</summary>
+		public const float LiningDark = 0.75f;
+		/// <summary>The lining's shine in a world (its rock's smoothness times this; the cave tool's smoothed rock takes 0.45 too).</summary>
+		const float LiningShine = 0.45f;
+		/// <summary>The lining's rock colour in a world, times this (its diffuse textures copied darker, LiningTextures).</summary>
+		const float LiningAlbedo = 0.7f;
+		[NonSerialized] bool madeDark;
+		static readonly string[] LiningTextures = { "_TopDiffuse", "_SideDiffuse" };
+		static readonly Dictionary<Texture, Texture2D> darkened = new Dictionary<Texture, Texture2D>();
+
+		/// <summary>A copy of a rock texture LiningAlbedo as bright (read back by Readable, at its size up to 1024), with
+		/// mip maps, cached; null if it can't be read (the lining then keeps its own).</summary>
+		static Texture2D Darkened(Texture src)
+		{
+			if (src == null) return null;
+			Texture2D got;
+			if (darkened.TryGetValue(src, out got)) return got;
+			darkened[src] = null;
+			int size = Mathf.Clamp(Mathf.NextPowerOfTwo(Mathf.Max(src.width, src.height)), 32, 1024);
+			Texture2D c = Readable(src, size);
+			if (c == null) return null;
+			Color32[] px = c.GetPixels32();
+			for (int i = 0; i < px.Length; i++) { Color32 p = px[i]; px[i] = new Color32((byte)(p.r * LiningAlbedo), (byte)(p.g * LiningAlbedo), (byte)(p.b * LiningAlbedo), p.a); }
+			got = new Texture2D(size, size, TextureFormat.RGBA32, true) { name = src.name + " (lining)", wrapMode = src.wrapMode, filterMode = FilterMode.Trilinear, anisoLevel = 4 };
+			got.SetPixels32(px);
+			got.Apply(true, true);
+			darkened[src] = got;
+			return got;
+		}
+		public static bool AnyLive { get { return live.Count > 0; } }
+		[NonSerialized] MeshRenderer litRenderer;
+		[NonSerialized] MaterialPropertyBlock lightBlock;
+		static readonly SphericalHarmonicsL2[] oneLight = new SphericalHarmonicsL2[1];
+		static readonly List<Material> litMats = new List<Material>();
+
+		/// <summary>In a world, for the camera about to draw (AmbienceZones): every dug tunnel's lining (part 0) gets the sky
+		/// light deep (its own light probe, dimmed), its rim and the rim's top (parts 1, 2: out on the hillside) open, the light
+		/// the world round them gets. Each part by its own property block (the renderer's block - the rock's skin - copied in).
+		/// The editor's light is right as it is: left alone there.</summary>
+		public static void LightLinings(SphericalHarmonicsL2 deep, SphericalHarmonicsL2 open)
+		{
+			if (live.Count == 0 || DynamicIslands.InEditor() || LiningLightOff) return;
+			for (int i = 0; i < live.Count; i++)
+			{
+				DigTunnel t = live[i];
+				if (t == null || !t.isActiveAndEnabled) continue;
+				try { t.LightLining(deep, open); }
+				catch (Exception e) { if (!toldLight) Debug.LogWarning("[CUSTOM ISLANDS] Dug tunnel's light: " + e.Message); toldLight = true; }
+			}
+		}
+		static bool toldLight;
+		/// <summary>Dev probes: leave the linings' light alone.</summary>
+		public static bool LiningLightOff;
+
+		void LightLining(SphericalHarmonicsL2 deep, SphericalHarmonicsL2 open)
+		{
+			if (litRenderer == null)
+			{
+				Transform r = transform.Find(RockName);
+				litRenderer = r != null ? r.GetComponent<MeshRenderer>() : null;
+				if (litRenderer == null) return;
+			}
+			MeshRenderer mr = litRenderer;
+			if (mr.lightProbeUsage != LightProbeUsage.CustomProvided) mr.lightProbeUsage = LightProbeUsage.CustomProvided;
+			if (lightBlock == null) lightBlock = new MaterialPropertyBlock();
+			mr.GetSharedMaterials(litMats);
+			for (int i = 0; i < litMats.Count; i++)
+			{
+				mr.GetPropertyBlock(lightBlock);
+				oneLight[0] = i == 0 ? deep : open;
+				lightBlock.CopySHCoefficientArraysFrom(oneLight);
+				// (and less of the sky's shine on the lining: its blue reflections washed the walls out by the mouth)
+				if (i == 0 && litMats[0] != null && litMats[0].HasProperty("_Smoothness_Multiplyer")) lightBlock.SetFloat("_Smoothness_Multiplyer", LiningShine);
+				// (and darker rock: Raft casts no sun shadow in the passage, so from the mouth its floor was in full sun - only
+				// the rock's own colour can take that down; deep in DarkAt dims the sun as well)
+				if (i == 0 && litMats[0] != null)
+					foreach (string tp in LiningTextures)
+						if (litMats[0].HasProperty(tp)) { Texture2D d; Texture src = litMats[0].GetTexture(tp); if (src != null && darkened.TryGetValue(src, out d) && d != null) lightBlock.SetTexture(tp, d); }
+				mr.SetPropertyBlock(lightBlock, i);
+			}
+			// (the renderer's own block too: a part drawn without its own block would be lit by nothing)
+			mr.GetPropertyBlock(lightBlock);
+			oneLight[0] = open;
+			lightBlock.CopySHCoefficientArraysFrom(oneLight);
+			mr.SetPropertyBlock(lightBlock);
+		}
 		[NonSerialized] Vector3 mouthMin, mouthMax;
 
 		/// <summary>The rim's rock over the cut ground: a skin just over the ground (RimSkin), so the cut's square cells are
@@ -373,21 +463,24 @@ namespace DynamicIslands.Editor
 			Mesh mesh = mf != null ? mf.sharedMesh : null;
 			if (land == null || RimColumns == 0 || mesh == null || mesh.subMeshCount < 2) return;
 			// (11-02: in a world - Raft's camera draws deferred there - the terrain shader on a mesh came out a flat grey-blue
-			// patch, its textures set and lit or not; the editor's is right. Until that is solved the top stays rock in a world.)
-			if (!DynamicIslands.InEditor())
-			{
-				if (!toldDeferred) Debug.Log("[CUSTOM ISLANDS] Dug tunnel's rim: in a world its top stays rock (the ground's look there is a known issue)");
-				toldDeferred = true;
-				return;
-			}
+			// patch, its textures set and lit or not; the editor's is right. TN2, 11-03: in a world the top wears the ground's
+			// look baked into a texture of its own - the layers mixed by the splat map - on Unity's Standard shader, which
+			// draws in the deferred camera as the ground does.)
+			bool world = !DynamicIslands.InEditor();
 			try
 			{
-				Material ground = GroundMaterial(land);
-				if (ground == null) { if (!toldNoGround) Debug.Log("[CUSTOM ISLANDS] Dug tunnel's rim: the ground's shader (" + (land.materialTemplate != null ? land.materialTemplate.shader.name : "built-in") + ") is not a terrain shader; its top stays rock"); toldNoGround = true; return; }
+				Material ground = world ? null : GroundMaterial(land);
+				if (!world && ground == null) { if (!toldNoGround) Debug.Log("[CUSTOM ISLANDS] Dug tunnel's rim: the ground's shader (" + (land.materialTemplate != null ? land.materialTemplate.shader.name : "built-in") + ") is not a terrain shader; its top stays rock"); toldNoGround = true; return; }
 				if (!SplitTop(mesh, mr.transform, land)) return;
+				if (world)
+				{
+					topRect = TopRect(mesh);
+					ground = BakedGround(land, topRect, ref bakedTop);
+					if (ground == null) { if (!toldDeferred) Debug.Log("[CUSTOM ISLANDS] Dug tunnel's rim: the ground has no layers to bake; its top stays rock"); toldDeferred = true; return; }
+				}
 				Material[] mats = mr.sharedMaterials;
 				mr.sharedMaterials = new[] { mats[0], mats[1], ground };
-				RimTop = "the ground's own (" + ground.shader.name + ")";
+				RimTop = world ? "the ground's baked (" + ground.shader.name + ", " + bakedTop.mainTexture.width + "x" + bakedTop.mainTexture.height + ")" : "the ground's own (" + ground.shader.name + ")";
 				Dressed(land);
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Dug tunnel's rim: " + e.Message); }
@@ -444,16 +537,172 @@ namespace DynamicIslands.Editor
 			var tops = new List<int>();
 			mesh.GetTriangles(tops, 2);
 			Vector3 lo = land.transform.position, size = land.terrainData.size;
+			// (and turned as the ground there is: lit as the slope beside it, not as the rim's own rounded shape - in a world
+			// its outline showed as a lighter patch, TN2 11-03)
+			if (norms.Count != verts.Count) { norms.Clear(); mesh.GetNormals(norms); }
 			foreach (int v in tops)
 			{
 				Vector3 w = at.TransformPoint(verts[v]);
 				uvs[v] = new Vector2((w.x - lo.x) / size.x, (w.z - lo.z) / size.z);
+				if (v < norms.Count) norms[v] = at.InverseTransformDirection(land.terrainData.GetInterpolatedNormal(uvs[v].x, uvs[v].y)).normalized;
 			}
 			mesh.SetUVs(0, uvs);
+			if (norms.Count == verts.Count) mesh.SetNormals(norms);
 			return tops.Count > 0;
 		}
 
 		static bool toldNoGround, toldDeferred;
+
+		/// <summary>In a world: the rim top's own material and the ground baked for it, and where that lies on the terrain (0..1).</summary>
+		[NonSerialized] Material bakedTop;
+		[NonSerialized] Rect topRect;
+
+		void OnDestroy()
+		{
+			if (bakedTop == null) return;
+			if (bakedTop.mainTexture != null) Destroy(bakedTop.mainTexture);
+			Destroy(bakedTop);
+		}
+
+		/// <summary>Where the rim's top (part 2) lies over the terrain: its corners' uvs (SplitTop lays them 0..1 over the
+		/// terrain), with half a metre's margin.</summary>
+		static Rect TopRect(Mesh mesh)
+		{
+			var uvs = new List<Vector2>();
+			var tops = new List<int>();
+			mesh.GetUVs(0, uvs);
+			mesh.GetTriangles(tops, 2);
+			float x0 = 1f, z0 = 1f, x1 = 0f, z1 = 0f;
+			foreach (int v in tops) { Vector2 u = uvs[v]; x0 = Mathf.Min(x0, u.x); x1 = Mathf.Max(x1, u.x); z0 = Mathf.Min(z0, u.y); z1 = Mathf.Max(z1, u.y); }
+			if (x1 < x0) return new Rect(0f, 0f, 1f, 1f);
+			const float m = 0.002f;
+			return Rect.MinMaxRect(x0 - m, z0 - m, x1 + m, z1 + m);
+		}
+
+		/// <summary>Pixels per metre of the baked ground (and the layers' copies at about twice that).</summary>
+		const float BakePerMetre = 48f;
+
+		/// <summary>
+		/// The ground's look over part of the terrain (r: 0..1 over it) baked into a texture: each layer's diffuse texture
+		/// tiled as the terrain tiles it, mixed by the splat map's weights there - on Unity's Standard shader, matt, so the
+		/// world's deferred camera lights it as it lights the ground. The layers' textures can't be read by the mod: each is
+		/// copied back from the graphics card once (Graphics.Blit to a small RenderTexture). mat: made once, its texture
+		/// replaced. Null when the ground has no layers.
+		/// </summary>
+		static Material BakedGround(Terrain land, Rect r, ref Material mat)
+		{
+			TerrainData td = land != null ? land.terrainData : null;
+			TerrainLayer[] layers = td != null ? td.terrainLayers : null;
+			if (layers == null || layers.Length == 0 || r.width <= 0f || r.height <= 0f) return null;
+			Vector3 size = td.size;
+			int tw = Mathf.Clamp(Mathf.CeilToInt(r.width * size.x * BakePerMetre), 16, 1024), th = Mathf.Clamp(Mathf.CeilToInt(r.height * size.z * BakePerMetre), 16, 1024);
+			int ar = td.alphamapResolution;
+			int ax0 = Mathf.Clamp(Mathf.FloorToInt(r.xMin * ar - 1f), 0, ar - 1), az0 = Mathf.Clamp(Mathf.FloorToInt(r.yMin * ar - 1f), 0, ar - 1);
+			int ax1 = Mathf.Clamp(Mathf.CeilToInt(r.xMax * ar + 1f), ax0 + 1, ar), az1 = Mathf.Clamp(Mathf.CeilToInt(r.yMax * ar + 1f), az0 + 1, ar);
+			float[,,] w = td.GetAlphamaps(ax0, az0, ax1 - ax0, az1 - az0);
+			int nl = Mathf.Min(layers.Length, w.GetLength(2));
+			var pix = new Color32[nl][];
+			var pw = new int[nl];
+			var ph = new int[nl];
+			for (int l = 0; l < nl; l++)
+			{
+				TerrainLayer tl = layers[l];
+				Texture d = tl != null ? tl.diffuseTexture : null;
+				if (d == null) continue;
+				int want = Mathf.Clamp(Mathf.NextPowerOfTwo(Mathf.CeilToInt(Mathf.Max(tl.tileSize.x, tl.tileSize.y) * BakePerMetre * 2f)), 32, 1024);
+				Texture2D c = Readable(d, want);
+				if (c == null) continue;
+				pix[l] = c.GetPixels32(); pw[l] = c.width; ph[l] = c.height;
+			}
+			var outPix = new Color32[tw * th];
+			int wz = w.GetLength(0), wx = w.GetLength(1);
+			for (int j = 0; j < th; j++)
+				for (int i = 0; i < tw; i++)
+				{
+					float u = r.xMin + (i + 0.5f) / tw * r.width, v = r.yMin + (j + 0.5f) / th * r.height;
+					// (the splat map's weights there, bilinear between its texels' centres)
+					float fx = Mathf.Clamp(u * ar - 0.5f - ax0, 0f, wx - 1), fz = Mathf.Clamp(v * ar - 0.5f - az0, 0f, wz - 1);
+					int x0 = Mathf.Min((int)fx, wx - 1), z0 = Mathf.Min((int)fz, wz - 1), x1 = Mathf.Min(x0 + 1, wx - 1), z1 = Mathf.Min(z0 + 1, wz - 1);
+					float tx = fx - x0, tz = fz - z0;
+					float cr = 0f, cg = 0f, cb = 0f, sum = 0f;
+					float lx = u * size.x, lz = v * size.z;
+					for (int l = 0; l < nl; l++)
+					{
+						if (pix[l] == null) continue;
+						float wt = Mathf.Lerp(Mathf.Lerp(w[z0, x0, l], w[z0, x1, l], tx), Mathf.Lerp(w[z1, x0, l], w[z1, x1, l], tx), tz);
+						if (wt <= 0.001f) continue;
+						TerrainLayer tl = layers[l];
+						float su = (lx + tl.tileOffset.x) / Mathf.Max(0.01f, tl.tileSize.x), sv = (lz + tl.tileOffset.y) / Mathf.Max(0.01f, tl.tileSize.y);
+						int px = ((int)Mathf.Floor(su * pw[l]) % pw[l] + pw[l]) % pw[l], py = ((int)Mathf.Floor(sv * ph[l]) % ph[l] + ph[l]) % ph[l];
+						Color32 c = pix[l][py * pw[l] + px];
+						cr += c.r * wt; cg += c.g * wt; cb += c.b * wt; sum += wt;
+					}
+					if (sum <= 0f) { outPix[j * tw + i] = new Color32(128, 128, 128, 255); continue; }
+					outPix[j * tw + i] = new Color32((byte)Mathf.Clamp(cr / sum, 0f, 255f), (byte)Mathf.Clamp(cg / sum, 0f, 255f), (byte)Mathf.Clamp(cb / sum, 0f, 255f), 255);
+				}
+			var tex = new Texture2D(tw, th, TextureFormat.RGBA32, true) { name = "DigTunnelGroundBaked", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear, anisoLevel = 4 };
+			tex.SetPixels32(outPix);
+			tex.Apply(true, true);
+			if (mat == null)
+			{
+				Shader s = Shader.Find("Standard");
+				if (s == null) { Destroy(tex); return null; }
+				mat = new Material(s) { name = "DigTunnelGroundBaked" };
+				mat.SetFloat("_Glossiness", 0f);
+				mat.SetFloat("_GlossMapScale", 0f);
+				mat.SetFloat("_Metallic", 0f);
+				mat.SetFloat("_SpecularHighlights", 0f);
+				mat.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
+				mat.SetFloat("_GlossyReflections", 0f);
+				mat.EnableKeyword("_GLOSSYREFLECTIONS_OFF");
+			}
+			else if (mat.mainTexture != null) Destroy(mat.mainTexture);
+			mat.mainTexture = tex;
+			mat.mainTextureScale = new Vector2(1f / r.width, 1f / r.height);
+			mat.mainTextureOffset = new Vector2(-r.xMin / r.width, -r.yMin / r.height);
+			return mat;
+		}
+
+		static readonly Dictionary<KeyValuePair<Texture, int>, Texture2D> readable = new Dictionary<KeyValuePair<Texture, int>, Texture2D>();
+
+		/// <summary>A copy of a texture the mod can read, size x size: drawn into a RenderTexture (halved step by step, so
+		/// nothing is skipped) and read back. Cached.</summary>
+		static Texture2D Readable(Texture src, int size)
+		{
+			var key = new KeyValuePair<Texture, int>(src, size);
+			Texture2D got;
+			if (readable.TryGetValue(key, out got) && got != null) return got;
+			RenderTexture prev = RenderTexture.active;
+			var temps = new List<RenderTexture>();
+			try
+			{
+				Texture cur = src;
+				int cw = src.width, ch = src.height;
+				while (cw > size * 2 || ch > size * 2)
+				{
+					cw = Mathf.Max(size, cw / 2); ch = Mathf.Max(size, ch / 2);
+					RenderTexture h = RenderTexture.GetTemporary(cw, ch, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+					temps.Add(h);
+					Graphics.Blit(cur, h);
+					cur = h;
+				}
+				RenderTexture rt = RenderTexture.GetTemporary(size, size, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+				temps.Add(rt);
+				Graphics.Blit(cur, rt);
+				RenderTexture.active = rt;
+				got = new Texture2D(size, size, TextureFormat.RGBA32, false);
+				got.ReadPixels(new Rect(0, 0, size, size), 0, 0);
+				got.Apply();
+				readable[key] = got;
+				return got;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Dug tunnel's rim: the ground's layer couldn't be read (" + e.Message + ")"); return null; }
+			finally
+			{
+				RenderTexture.active = prev;
+				foreach (RenderTexture t in temps) RenderTexture.ReleaseTemporary(t);
+			}
+		}
 
 		float nextLookCheck;
 		static bool toldLookBack;
@@ -491,6 +740,13 @@ namespace DynamicIslands.Editor
 		/// ground paint set after the tunnel was made; the editor's stayed.) Put back when they changed.</summary>
 		void Update()
 		{
+			// (the lining's darker rock for a world made here, not while a camera draws: LightLining only uses it)
+			if (litRenderer != null && !madeDark && !DynamicIslands.InEditor())
+			{
+				madeDark = true;
+				Material m = litRenderer.sharedMaterial;
+				if (m != null) foreach (string tp in LiningTextures) if (m.HasProperty(tp)) Darkened(m.GetTexture(tp));
+			}
 			if (Time.unscaledTime < nextLookCheck || RimTop == "" || skinLand == null) return;
 			nextLookCheck = Time.unscaledTime + 1f;
 			try
@@ -503,7 +759,7 @@ namespace DynamicIslands.Editor
 				Texture want0, wantS;
 				Wanted(skinLand, out want0, out wantS);
 				if (want0 == lookControl && wantS == lookSplat) return;
-				Material ground = GroundMaterial(skinLand);
+				Material ground = DynamicIslands.InEditor() ? GroundMaterial(skinLand) : BakedGround(skinLand, topRect, ref bakedTop);
 				if (ground == null) return;
 				mats[2] = ground;
 				mr.sharedMaterials = mats;

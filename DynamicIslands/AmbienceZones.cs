@@ -235,6 +235,14 @@ namespace DynamicIslands.Editor
 			bool zone = z != null && w > 0.001f && (z.FogAmount > 0f || z.LightAmount > 0f);
 			// (in a dug tunnel's passage, away from its open mouth: its own dim light - DigTunnel.DarkAt)
 			float dark = DigTunnel.DarkAt(cam.transform.position);
+			// (a dug tunnel's lining keeps its own dim light wherever the camera is, its rim the world's - TN3)
+			if (DigTunnel.AnyLive)
+			{
+				Color zk = zone && z.LightAmount > 0f ? Color.Lerp(Color.white, z.Light, w * z.LightAmount) : Color.white;
+				SphericalHarmonicsL2 sky = RenderSettings.ambientProbe;
+				DigTunnel.LightLinings(Tinted(sky, zk * Color.Lerp(Color.white, TunnelLight, Mathf.Max(dark, DigTunnel.LiningDark))),
+					Tinted(sky, zk * Color.Lerp(Color.white, TunnelLight, dark)));
+			}
 			if (!zone && dark <= 0.001f) return;
 			saved = new Saved
 			{
@@ -270,6 +278,12 @@ namespace DynamicIslands.Editor
 				if (saved.Sun != null) { saved.SunColor = saved.Sun.color; saved.Sun.color = saved.SunColor * sunK; SunBefore = saved.SunColor; SunWhileDrawn = saved.Sun.color; }
 				RenderSettings.reflectionIntensity = saved.Reflection * (k.r + k.g + k.b) / 3f;
 			}
+		}
+
+		static SphericalHarmonicsL2 Tinted(SphericalHarmonicsL2 sh, Color k)
+		{
+			for (int c = 0; c < 9; c++) { sh[0, c] *= k.r; sh[1, c] *= k.g; sh[2, c] *= k.b; }
+			return sh;
 		}
 
 		static void PostRender(Camera cam)
