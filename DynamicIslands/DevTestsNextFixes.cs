@@ -14,7 +14,6 @@ namespace DynamicIslands
 	/// <summary>Fixes after the 11-02 release (ROADMAP 3h/3i, branch next-fixes): one test per fix.</summary>
 	public static partial class DevTests
 	{
-
 		[ConsoleCommand(name: "CIStandKeysWide", docs: "Dev: RK9 - trade stand keys past object 8191 are their own (no two stands share a key, none in another range), and an island edit carries them across the 8191 line")]
 		public static void StandKeysWideCommand()
 		{
@@ -210,6 +209,92 @@ namespace DynamicIslands
 			}
 			if (ok) Log("PASS: spawn box stays"); else Fail("spawn box stays");
 		}
+		[ConsoleCommand(name: "CICameraMouthWall", docs: "Dev, editor: TN4 - a tunnel dug into a generated island's hill; the camera in the passage just inside the mouth, above the ground there, flown into the side wall (God mode off): it stays in the passage; God mode on: out through the rock")]
+		public static void CameraMouthWallCommand() { StartTest(CameraMouthWallRoutine()); }
+
+		static IEnumerator CameraMouthWallRoutine()
+		{
+			if (!DynamicIslands.InEditor()) { Fail("camera mouth wall: in the editor"); yield break; }
+			EditorCamera ec = EditorCamera.Instance;
+			if (ec == null) { Fail("camera mouth wall: no editor camera"); yield break; }
+			bool ok = true;
+			float radius0 = DigTunnel.Radius, slope0 = DigTunnel.Slope, speed0 = EditorCamera.SpeedFactor;
+			bool god0 = EditorCamera.GodMode;
+			DigTunnel.Radius = 1.75f; DigTunnel.Slope = 0f; EditorCamera.SpeedFactor = 1f; EditorCamera.GodMode = false;
+			try
+			{
+				DynamicIslands.NewIsland();
+				yield return null;
+				IslandGenerator.GenerateInEditor(new IslandGenSettings { Seed = 4242, Radius = 130f, Height = 30f, Style = TerrainPainter.Tropical });
+				yield return null;
+				yield return new WaitForSecondsRealtime(0.6f);
+				Terrain t = terraineditor.terrain;
+				TerrainData data = t.terrainData;
+				Vector3 o = t.transform.position, c = o + new Vector3(data.size.x / 2f, 0f, data.size.z / 2f);
+				float sea = DynamicIslands.EditorWaterLevel;
+				Func<Vector3, Vector3> ground = q => { q.y = t.SampleHeight(q) + o.y; return q; };
+				// (a hill's foot, as CIDigTunnelCamera: the ground 10 m on 3 m higher, 20 m on 5 m)
+				Vector3 mouth = Vector3.zero, dir = Vector3.zero;
+				float best = 0f;
+				bool found = false;
+				foreach (Vector3 d in new[] { Vector3.right, Vector3.left, Vector3.forward, Vector3.back })
+					for (float s2 = 90f; s2 > 10f; s2 -= 2f)
+					{
+						Vector3 q = ground(c - d * s2);
+						if (q.y < sea + 1.5f) continue;
+						float score = Mathf.Min(ground(q + d * 10f).y - q.y - 3f, ground(q + d * 20f).y - q.y - 5f);
+						if (score >= best) { best = score; mouth = q; dir = d; found = true; }
+					}
+				DigTunnel tun = found ? DigTunnel.TestStroke(t, new List<Vector3> { mouth, mouth + dir * 20f }) : null;
+				yield return null;
+				DigTunnel.EditorNow(t);
+				yield return null;
+				if (tun == null) { Fail("camera mouth wall: no tunnel dug (hillside found " + found + ")"); yield break; }
+				Func<Vector3, float> inside = q => tun.Distance(tun.transform.InverseTransformPoint(q));
+				// (just inside the mouth, where the passage's floor is dug and the ground beside it is lower than the camera)
+				Vector3 side = Vector3.Cross(Vector3.up, dir);
+				Vector3 start = Vector3.zero;
+				bool placed = false;
+				// (and the lining's rock on both sides within 3 m: the wall the camera is flown into. Above the ground under it
+				//  first - TN4's case - else anywhere near the mouth)
+				Func<Vector3, Vector3, float> wall = (q, d) =>
+				{
+					foreach (RaycastHit h in Physics.RaycastAll(q, d, 3f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
+						if (h.collider != null && h.collider.GetComponentInParent<DigTunnel>() != null) return h.distance;
+					return -1f;
+				};
+				for (int pass = 0; pass < 2 && !placed; pass++)
+					for (float k = 0.5f; k < 8f && !placed; k += 0.25f)
+						for (float up = 0.7f; up <= 1.6f && !placed; up += 0.3f)
+						{
+							Vector3 q = mouth + dir * k;
+							q.y = mouth.y + up;
+							if (inside(q) < -0.6f && (pass == 1 || q.y > ground(q).y + 0.1f) && wall(q, side) > 0f && wall(q, -side) > 0f) { start = q; placed = true; }
+						}
+				if (!placed) { Fail("camera mouth wall: no place in the passage with its rock on both sides within 3 m"); yield break; }
+				Log("  rock beside: " + wall(start, side).ToString("0.00") + " m and " + wall(start, -side).ToString("0.00") + " m");
+				Log("  the camera at " + (Vector3.Dot(start - mouth, dir)).ToString("0.0") + " m in, " + (start.y - ground(start).y).ToString("0.0") + " m over the ground under it, " + (start.y - ground(start + side * 2.2f).y).ToString("0.0") + " m over the ground beside the passage, " + inside(start).ToString("0.00") + " m in");
+				foreach (float sign in new[] { 1f, -1f })
+				{
+					ec.transform.SetPositionAndRotation(start, Quaternion.LookRotation(side * sign));
+					ec.Sync();
+					yield return null;
+					yield return FlyCamera(ec, new Vector3(0f, 0f, 1f), 1.5f, () => side * sign);
+					Vector3 cw = ec.transform.position;
+					float across = Vector3.Dot(cw - start, side * sign), rock = wall(start, side * sign);
+					Check(ref ok, across < rock && inside(cw) < 1.5f, "God mode off: flown into the " + (sign > 0 ? "left" : "right") + " wall near the mouth the camera stops at the rock (" + across.ToString("0.00") + " m across of " + rock.ToString("0.00") + " m to the rock, " + inside(cw).ToString("0.00") + " m from the passage, moved " + (cw - start).magnitude.ToString("0.0") + " m)");
+				}
+				EditorCamera.GodMode = true;
+				ec.transform.SetPositionAndRotation(start, Quaternion.LookRotation(side));
+				ec.Sync();
+				yield return null;
+				yield return FlyCamera(ec, new Vector3(0f, 0f, 1f), 1.5f, () => side);
+				Vector3 cg = ec.transform.position;
+				Check(ref ok, inside(cg) > 0.2f, "God mode on: on out through the rock (" + inside(cg).ToString("0.00") + " m out of the passage)");
+			}
+			finally { DigTunnel.Radius = radius0; DigTunnel.Slope = slope0; EditorCamera.SpeedFactor = speed0; EditorCamera.GodMode = god0; EditorCamera.TestKeys = null; }
+			if (ok) Log("PASS: camera mouth wall"); else Fail("camera mouth wall");
+		}
 
 		[ConsoleCommand(name: "CIGodModeClick", docs: "Dev, editor: TN5 - the Caves panel's God mode tick box clicked as a mouse does it: God mode flips and the box shows it; clicked again, back")]
 		public static void GodModeClickCommand() { StartTest(GodModeClickRoutine()); }
@@ -237,7 +322,6 @@ namespace DynamicIslands
 			finally { EditorCamera.GodMode = god0; UIKit.SetCheck(b, god0); }
 			if (ok) Log("PASS: god mode click"); else Fail("god mode click");
 		}
-
 		[ConsoleCommand(name: "CIPickupLook", docs: "Dev, in game or editor: RK11 - logs what a quest item pickup shows (renderers, meshes, materials, parts) for Utopia's KeyRescue and KeyEntrance (or the names given), as listed and as placed")]
 		public static void PickupLookCommand(string[] args) { StartTest(PickupLookRoutine(args != null && args.Length > 0 ? args : new[] { "QuestItemPickup_Utopia_KeyRescue", "QuestItemPickup_Utopia_KeyEntrance" })); }
 

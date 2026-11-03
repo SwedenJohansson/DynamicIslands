@@ -342,6 +342,17 @@ namespace DynamicIslands.Editor
 			return !d.GetHoles(cx, cz, 1, 1)[0, 0] && DigTunnel.InsideAny(p, 1f);
 		}
 
+		/// <summary>Whether a camera move from a to b passes through a dug tunnel's rock lining (its collider; 0.3 m kept off it).</summary>
+		static bool ThroughRock(Vector3 a, Vector3 b)
+		{
+			Vector3 d = b - a;
+			float len = d.magnitude;
+			if (len < 1e-5f) return false;
+			foreach (RaycastHit h in Physics.RaycastAll(a, d / len, len + 0.3f, ~0, QueryTriggerInteraction.Ignore))
+				if (h.collider != null && h.collider.GetComponentInParent<DigTunnel>() != null) return true;
+			return false;
+		}
+
 		/// <summary>Near the build area, above the ground, not absurdly high.</summary>
 		void Keep()
 		{
@@ -356,6 +367,23 @@ namespace DynamicIslands.Editor
 			// tunnel's passage (or over the cut ground at its mouth) - flown into its mouth, the camera goes in rather than
 			// up onto the hill (11-02); flown into its rock from inside, it slides along the wall (each axis kept that stays open).
 			if (GodMode) floor = Mathf.Min(floor, o.y - 50f);
+			// (in the passage where it is above the ground - near the mouth, a lining standing out of a slope - nothing below
+			// held it: flown into the wall it went out through the rock. A move from in or near the passage through a tunnel's
+			// rock slides along it the same way - TN4. Near: at the mouth the rock's face stands up to a metre or so outside
+			// the passage's own shape, and a camera between the two went on through)
+			else if (position != lastPosition && DigTunnel.InsideAny(lastPosition, DigTunnel.Shell) && ThroughRock(lastPosition, position))
+			{
+				Vector3 q = lastPosition, step = position - lastPosition;
+				for (int a = 0; a < 3; a++)
+				{
+					Vector3 r = q;
+					r[a] += step[a];
+					if (!ThroughRock(q, r)) q = r;
+				}
+				position = q;
+				floor = Mathf.Min(floor, position.y);
+			}
+			if (GodMode) { }
 			else if (position.y < floor && overTerrain)
 			{
 				if (OpenUnder(t, position)) floor = position.y;
