@@ -255,7 +255,7 @@ namespace DynamicIslands.Editor
 			stepsRoot = UIKit.ScrollList(stepsBox, out stepsScroll, 4f);
 			UIKit.Stretch((RectTransform)stepsScroll.transform);
 			RectTransform addRow = UIKit.Row(stepsGroup, 26f, 6f, "Add");
-			UIKit.Button(addRow, "+ Add a step", () => { if (quest.Steps.Count < MaxSteps) { Keep(); quest.Steps.Add(new IslandQuest.Step()); ShowSteps(); ScrollStepsToEnd(); } }, "Another step (up to " + MaxSteps + ")", 140, 26f, 12);
+			UIKit.Button(addRow, "+ Add a step", AddStep, "Another step (up to " + MaxSteps + ")", 140, 26f, 12);
 			namesText = UIKit.Label(addRow, "", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "Names");
 			namesText.verticalOverflow = VerticalWrapMode.Truncate;
 
@@ -371,65 +371,132 @@ namespace DynamicIslands.Editor
 		/// <summary>Takes what was typed into the step rows before they are rebuilt.</summary>
 		void ShowSteps()
 		{
-			foreach (Transform child in stepsRoot) { child.gameObject.SetActive(false); Destroy(child.gameObject); }
 			fields.RemoveAll(f => f == null || f.transform.IsChildOf(stepsRoot));
+			foreach (Transform child in stepsRoot.Cast<Transform>().ToList()) DropRow(child);
+			stepRows.Clear();
 			List<EditorGameObject> placedNow = Placed();
-			for (int i = 0; i < quest.Steps.Count; i++)
+			for (int i = 0; i < quest.Steps.Count; i++) StepRow(quest.Steps[i], i, placedNow);
+			SizeStepsBox();
+		}
+
+		/// <summary>The row of each step: rows are added, redone, moved and removed one at a time (a rebuild of all 99
+		/// took seconds per click). The buttons look up their step's place when clicked.</summary>
+		readonly Dictionary<IslandQuest.Step, RectTransform> stepRows = new Dictionary<IslandQuest.Step, RectTransform>();
+
+		RectTransform StepRow(IslandQuest.Step s, int i, List<EditorGameObject> placedNow)
+		{
+			RectTransform row = UIKit.Row(stepsRoot, 28f, 4f, "Step");
+			stepRows[s] = row;
+			row.SetSiblingIndex(i);
+			UIKit.Size(UIKit.Label(row, (i + 1) + ".", 13, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Normal, "Num").gameObject, 22);
+			DropList.Make(row, "Drop_StepType", IslandQuest.Types.Select(t => new DropList.Option(t, TypeLabels[t], TypeHints[t])).ToList(), s.Type, v =>
 			{
-				int index = i;
-				IslandQuest.Step s = quest.Steps[i];
-				RectTransform row = UIKit.Row(stepsRoot, 28f, 4f, "Step");
-				UIKit.Size(UIKit.Label(row, (i + 1) + ".", 13, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 22);
-				DropList.Make(row, "Drop_StepType", IslandQuest.Types.Select(t => new DropList.Option(t, TypeLabels[t], TypeHints[t])).ToList(), s.Type, v =>
-				{
-					s.Type = v;
-					ShowSteps();
-				}, 104, "What the player must do: go to, read, open, defeat, catch, collect story items, find journal pages", 28f, 12);
-				InputField target = UIKit.Field(row, TargetHints[s.Type], s.Target, 28f, "Must match a name on the island exactly: \u25BE lists the ones it has");
-				UIKit.Size(target.gameObject, 196, 28);
-				target.onEndEdit.AddListener(v => s.Target = v.Trim());
-				fields.Add(target);
-				List<DropList.Option> names = QuestSteps.NamesFor(s.Type, s.Target, placedNow) ?? NamesFor(s.Type, placedNow);
-				if (names.Count > 0)
-				{
-					// (a small \u25BE: the island's zones, notes, chests or creatures that this kind of step can point at)
-					Button pick = DropList.Make(row, "Pick_Target", names, s.Target, v => { Keep(); s.Target = v; ShowSteps(); }, 26, "Pick one of the names on this island", 28f, 11);
-					UIKit.LabelOf(pick).text = "";
-				}
-				if (s.Type == "collect") UIKit.Button(row, "\u2026", () => { Keep(); ItemPickerWindow.PickOne(v => { s.Target = v; ShowSteps(); }, true); }, "Choose one of the island's story items", 28, 28f, 12);
-				if (s.Type == QuestSteps.Bring || s.Type == QuestSteps.Craft)
-					UIKit.Button(row, "\u2026", () =>
-					{
-						Keep();
-						ItemPickerWindow.PickOne(v =>
-						{
-							string item, to;
-							QuestSteps.SplitBring(s.Target, out item, out to);
-							s.Target = s.Type == QuestSteps.Bring && to.Length > 0 ? v + "@" + to : v;
-							ShowSteps();
-						});
-					}, "Choose one of Raft's items", 28, 28f, 12);
-				if ((s.Type == "kill" || s.Type == "catch" || IslandQuest.Counted(s.Type) || QuestSteps.HasCount(s.Type)) && s.Type != QuestSteps.Signal)
-				{
-					InputField count = UIKit.Field(row, "1", s.Count.ToString(), 28f, "How many");
-					UIKit.Size(count.gameObject, 44, 28);
-					count.contentType = InputField.ContentType.IntegerNumber;
-					count.characterLimit = 2;
-					count.onEndEdit.AddListener(v => { int n; s.Count = int.TryParse(v, out n) ? Mathf.Clamp(n, 1, 99) : 1; });
-					fields.Add(count);
-				}
-				InputField text = UIKit.Field(row, s.Describe(), s.Text, 28f, "What players read for this step (empty: made from the step)");
-				text.characterLimit = 80;
-				text.onEndEdit.AddListener(v => s.Text = v.Trim());
-				fields.Add(text);
-				UIKit.Button(row, "\u25B2", () => { if (index > 0) { Keep(); quest.Steps.Reverse(index - 1, 2); ShowSteps(); } }, "Earlier", 26, 28f, 11);
-				UIKit.Button(row, "\u25BC", () => { if (index < quest.Steps.Count - 1) { Keep(); quest.Steps.Reverse(index, 2); ShowSteps(); } }, "Later", 26, 28f, 11);
-				Button del = UIKit.Button(row, "\u00D7", () => { Keep(); quest.Steps.RemoveAt(index); ShowSteps(); }, "Remove this step", 26, 28f, 12);
-				UIKit.DangerButton(del);
+				s.Type = v;
+				RedoRow(s);
+			}, 104, "What the player must do: go to, read, open, defeat, catch, collect story items, find journal pages", 28f, 12);
+			InputField target = UIKit.Field(row, TargetHints[s.Type], s.Target, 28f, "Must match a name on the island exactly: \u25BE lists the ones it has");
+			UIKit.Size(target.gameObject, 196, 28);
+			target.onEndEdit.AddListener(v => s.Target = v.Trim());
+			fields.Add(target);
+			List<DropList.Option> names = QuestSteps.NamesFor(s.Type, s.Target, placedNow) ?? NamesFor(s.Type, placedNow);
+			if (names.Count > 0)
+			{
+				// (a small \u25BE: the island's zones, notes, chests or creatures that this kind of step can point at)
+				Button pick = DropList.Make(row, "Pick_Target", names, s.Target, v => { Keep(); s.Target = v; RedoRow(s); }, 26, "Pick one of the names on this island", 28f, 11);
+				UIKit.LabelOf(pick).text = "";
 			}
-			// (the box is as tall as the steps, up to 10 rows: more scroll)
+			if (s.Type == "collect") UIKit.Button(row, "\u2026", () => { Keep(); ItemPickerWindow.PickOne(v => { s.Target = v; RedoRow(s); }, true); }, "Choose one of the island's story items", 28, 28f, 12);
+			if (s.Type == QuestSteps.Bring || s.Type == QuestSteps.Craft)
+				UIKit.Button(row, "\u2026", () =>
+				{
+					Keep();
+					ItemPickerWindow.PickOne(v =>
+					{
+						string item, to;
+						QuestSteps.SplitBring(s.Target, out item, out to);
+						s.Target = s.Type == QuestSteps.Bring && to.Length > 0 ? v + "@" + to : v;
+						RedoRow(s);
+					});
+				}, "Choose one of Raft's items", 28, 28f, 12);
+			if ((s.Type == "kill" || s.Type == "catch" || IslandQuest.Counted(s.Type) || QuestSteps.HasCount(s.Type)) && s.Type != QuestSteps.Signal)
+			{
+				InputField count = UIKit.Field(row, "1", s.Count.ToString(), 28f, "How many");
+				UIKit.Size(count.gameObject, 44, 28);
+				count.contentType = InputField.ContentType.IntegerNumber;
+				count.characterLimit = 2;
+				count.onEndEdit.AddListener(v => { int n; s.Count = int.TryParse(v, out n) ? Mathf.Clamp(n, 1, 99) : 1; });
+				fields.Add(count);
+			}
+			InputField text = UIKit.Field(row, s.Describe(), s.Text, 28f, "What players read for this step (empty: made from the step)");
+			text.characterLimit = 80;
+			text.onEndEdit.AddListener(v => s.Text = v.Trim());
+			fields.Add(text);
+			UIKit.Button(row, "\u25B2", () => { int index = quest.Steps.IndexOf(s); if (index > 0) { Keep(); quest.Steps.Reverse(index - 1, 2); Renumber(); } }, "Earlier", 26, 28f, 11);
+			UIKit.Button(row, "\u25BC", () => { int index = quest.Steps.IndexOf(s); if (index >= 0 && index < quest.Steps.Count - 1) { Keep(); quest.Steps.Reverse(index, 2); Renumber(); } }, "Later", 26, 28f, 11);
+			Button del = UIKit.Button(row, "\u00D7", () => { Keep(); RemoveStep(s); }, "Remove this step", 26, 28f, 12);
+			UIKit.DangerButton(del);
+			return row;
+		}
+
+		/// <summary>The box is as tall as the steps, up to 10 rows: more scroll.</summary>
+		void SizeStepsBox()
+		{
 			if (stepsBoxSize != null) stepsBoxSize.preferredHeight = Mathf.Min(quest.Steps.Count, 10) * 32f + 4f;
 		}
+
+		/// <summary>Takes a row out now (Destroy waits for the frame's end, and the rows' places must be right at once).</summary>
+		void DropRow(Transform row)
+		{
+			fields.RemoveAll(f => f == null || f.transform.IsChildOf(row));
+			row.gameObject.SetActive(false);
+			row.SetParent(null, false);
+			Destroy(row.gameObject);
+		}
+
+		/// <summary>Builds one step's row again in its place (its kind or target changed).</summary>
+		void RedoRow(IslandQuest.Step s)
+		{
+			RectTransform old;
+			int i = quest.Steps.IndexOf(s);
+			if (i < 0 || !stepRows.TryGetValue(s, out old) || old == null) { ShowSteps(); return; }
+			DropRow(old);
+			StepRow(s, i, Placed());
+		}
+
+		/// <summary>Puts the rows in the steps' order and numbers them.</summary>
+		void Renumber()
+		{
+			for (int i = 0; i < quest.Steps.Count; i++)
+			{
+				RectTransform row;
+				if (!stepRows.TryGetValue(quest.Steps[i], out row) || row == null) { ShowSteps(); return; }
+				row.SetSiblingIndex(i);
+				Transform num = row.Find("Num");
+				if (num != null) num.GetComponent<Text>().text = (i + 1) + ".";
+			}
+		}
+
+		void AddStep()
+		{
+			if (quest.Steps.Count >= MaxSteps) return;
+			Keep();
+			var s = new IslandQuest.Step();
+			quest.Steps.Add(s);
+			StepRow(s, quest.Steps.Count - 1, Placed());
+			SizeStepsBox();
+			ScrollStepsToEnd();
+		}
+
+		void RemoveStep(IslandQuest.Step s)
+		{
+			RectTransform row;
+			quest.Steps.Remove(s);
+			if (stepRows.TryGetValue(s, out row) && row != null) DropRow(row);
+			stepRows.Remove(s);
+			Renumber();
+			SizeStepsBox();
+		}
+
 
 		/// <summary>Shows the last step (one just added below the box's 10 rows).</summary>
 		void ScrollStepsToEnd()

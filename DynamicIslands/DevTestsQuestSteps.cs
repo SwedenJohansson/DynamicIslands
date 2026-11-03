@@ -96,6 +96,35 @@ namespace DynamicIslands
 			Check(ref ok, scroll != null && scroll.verticalNormalizedPosition < 0.05f, "the box scrolled to the new step at the end (" + (scroll != null ? scroll.verticalNormalizedPosition.ToString("0.00") : "?") + ")");
 			Screenshot(new[] { "qsteps_editor_99" });
 			yield return new WaitForSecondsRealtime(0.5f);
+
+			// One row at a time: move, change the kind, remove (each quick with 99 steps; the numbers follow)
+			Transform content = scroll != null ? scroll.content : null;
+			Func<int, string> kindAt = i => content != null && i < content.childCount ? UIKit.LabelOf(content.GetChild(i).GetComponentsInChildren<Button>(true).First(b => b.name == "Drop_StepType")).text : "?";
+			Func<string> numbers = () => content == null ? "?" : string.Join(",", content.Cast<Transform>().Select(r => r.Find("Num") != null ? r.Find("Num").GetComponent<Text>().text.TrimEnd('.') : "?").ToArray());
+			Func<int, string, Button> buttonAt = (i, label) => content.GetChild(i).GetComponentsInChildren<Button>(true).First(b => b.name == "Button_" + label);
+			string expectNumbers = string.Join(",", Enumerable.Range(1, 99).Select(n => n.ToString()).ToArray());
+			if (content != null)
+			{
+				float t0 = Time.realtimeSinceStartup;
+				buttonAt(2, "\u25B2").onClick.Invoke();
+				float tMove = Time.realtimeSinceStartup - t0;
+				yield return null;
+				Check(ref ok, kindAt(0) == "Signal / object is" && kindAt(1) == "Bring items" && kindAt(2) == "Signal / object is" && numbers() == expectNumbers && tMove < 0.5f,
+					"step 3 moves up one place, the rows renumbered (" + kindAt(1) + ", " + (tMove * 1000f).ToString("0") + " ms)");
+				DropdownButton kind = content.GetChild(4).GetComponentsInChildren<DropdownButton>(true).First(d => d.name == "Drop_StepType");
+				t0 = Time.realtimeSinceStartup;
+				kind.Set(QuestSteps.Bring);
+				float tKind = Time.realtimeSinceStartup - t0;
+				yield return null;
+				Check(ref ok, kindAt(4) == "Bring items" && content.childCount == 99 && numbers() == expectNumbers && tKind < 0.5f,
+					"a new kind rebuilds only its own row, in its place (" + kindAt(4) + ", " + (tKind * 1000f).ToString("0") + " ms)");
+				t0 = Time.realtimeSinceStartup;
+				buttonAt(0, "\u00D7").onClick.Invoke();
+				float tDel = Time.realtimeSinceStartup - t0;
+				yield return null;
+				Check(ref ok, content.childCount == 98 && kindAt(0) == "Bring items" && numbers() == string.Join(",", Enumerable.Range(1, 98).Select(n => n.ToString()).ToArray()) && tDel < 0.5f,
+					"step 1 removed: 98 rows numbered 1-98 (" + (tDel * 1000f).ToString("0") + " ms)");
+			}
 			QuestEditorWindow.Close();
 
 			// 99 steps save and load (the recipe's limit)
