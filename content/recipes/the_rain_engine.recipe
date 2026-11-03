@@ -289,6 +289,16 @@ prop re_lamp3 on.use=light|Keeper's lamp 4|toggle
 prop re_lamp4 on.use=light|Keeper's lamp 1|toggle
 prop re_lamp1 on.alllit=show|re_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
 call rn_hidden x=69 z=-25.4 al=re_lampchest
+# (FIX-B 11-03: Tor's ground (a 12-14 m shelf, x 46-80) had no way up from the sea - its east side a 12 m cliff: a path
+# cut into the shelf from the east shore (88 -3, at the sea) up to the shelf's top by the ruin (60 -21, 13 m), 39 pads
+# 0.36 m apart)
+for k 0 38
+set t {$k/38}
+brush flatten at {88-28*$t} {-3-18*$t} r=2.6 s=20 frames=120 h={-0.8+13.8*$t}
+clear at {88-28*$t} {-3-18*$t} r=3
+next
+# (the cut left a snow drift 0.6 m over the path's edge at 65.5 -13.8 - CIGroundIslands)
+clear at 65.5 -13.8 r=1.5 all only=TP_SnowDrift03
 place Creature_Chicken re_hens at 76 -24 ground
 prop re_hens creature.count=3
 call ar_plane x=-50 z=-44 h=3 yaw=40 al=re_plane crate=re_planecrate
