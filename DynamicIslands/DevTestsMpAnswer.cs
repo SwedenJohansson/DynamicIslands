@@ -27,7 +27,7 @@ namespace DynamicIslands
 			if (part == "setup" || part == "end")
 			{
 				if (!Raft_Network.IsHost) { Fail("rk34 " + part + ": on the host"); yield break; }
-				CustomIslandSpawner.TestRaftFarAway = false;
+				CustomIslandSpawner.TestRaftFarAway = CustomIslandSpawner.TestPlayersFarAway = false;
 				IslandWorldState.Remove(Rk34Island);
 				StoryBook.Take("rk-key", StoryBook.Count("rk-key"));
 				if (part == "end")
@@ -52,6 +52,7 @@ namespace DynamicIslands
 			{
 				if (!Raft_Network.IsHost) { Fail("rk34 away: on the host"); yield break; }
 				CustomIslandSpawner.TestRaftFarAway = arg != "off";
+				CustomIslandSpawner.TestPlayersFarAway = CustomIslandSpawner.TestRaftFarAway; // (player 2 stands on it: PlayerHold would keep it)
 				IslandWorldState.Entry h = IslandWorldState.Islands.FirstOrDefault(i => i.HostName == Rk34Island);
 				for (float t = 0; h != null && (h.Root != null) == CustomIslandSpawner.TestRaftFarAway && t < 30f; t += 0.25f) yield return new WaitForSeconds(0.25f);
 				bool done = h != null && (h.Root == null) == CustomIslandSpawner.TestRaftFarAway;
@@ -67,8 +68,17 @@ namespace DynamicIslands
 				PutPlayerNear(note.transform);
 				Behaviours.Fire(e, note.Index, "read", true);
 				Log("read the note (" + GupRole + "), waiting for the host");
-				Log("waiting for the host's answer: " + Behaviours.AwaitingForTest(e, note.Index, "read"));
-				yield return new WaitForSeconds(3f);
+				// (the note takes items: the host's claim comes first, the event waits for its answer only after that - watched
+				// every frame, not just once at the start)
+				bool waited = false;
+				for (float t0 = Time.unscaledTime; Time.unscaledTime - t0 < 6f; )
+				{
+					bool now = Behaviours.AwaitingForTest(e, note.Index, "read");
+					if (now) waited = true; else if (waited) break;
+					yield return null;
+				}
+				Log("waiting for the host's answer: " + waited);
+				yield return new WaitForSeconds(1f);
 				Log("answered: " + !Behaviours.AwaitingForTest(e, note.Index, "read"));
 			}
 			else if (part == "double")

@@ -27,6 +27,8 @@ Not in this release yet; these come in the next update:
   keeps its own version (a save no longer replaces it with the host's); the host's plays in its place until a player
   brings the world's, which then plays from the island's next load (RK1).
 - **Two players:** a player using a thing twice before its own signal bars it does it only once (RK4).
+- **Two players:** a note or arrival that takes a player's items and that the host refuses (the crew's key already used,
+  or the island not loaded on the host) gives the items back and stays unread, so it can be used again (RK3).
 - **Bear den caves no longer see-through:** a bear den set on its own (`ar_cave`) gets a rock wall across its open front,
   with a doorway at the mouth, so from outside you no longer look into the cave through its missing side (RK15).
 
