@@ -58,7 +58,13 @@ clear from 0 -44 to 0 -20 r=4
 # --- The boardwalks: the street across the bay (deck 2 m over the sea), the dock south to the bay mouth (the path north to
 # the yard is cut through the bank) - Raft's wooden floor blocks on reef hut posts down to the bay floor --------------------------------------
 push at -36 -46.5 h=-2.5
-call boardwalk n=48 wide=2 y=4.5 rs=none
+call boardwalk n=21 wide=2 y=4.5 rs=none
+pop
+push at -4.5 -46.5 h=-2.5
+call boardwalk n=6 wide=2 y=4.5 rs=none rn=none
+pop
+push at 4.5 -46.5 h=-2.5
+call boardwalk n=21 wide=2 y=4.5 rs=none
 pop
 push at 1.5 -72 h=-2.5 yaw=270
 call boardwalk n=17 wide=2 y=4.5 rs=none rn=none
