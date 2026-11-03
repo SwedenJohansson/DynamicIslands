@@ -26,11 +26,15 @@ generate
 # --- Terrain: the rock shelf, the moonpool shaft ------------------------------------------------------------------------
 brush flatten at 0 0 r=14 s=20 frames=240 h=2
 brush flatten at 5.25 0 r=3 s=30 frames=300 h=-22
+# (REACH 10-30 G1: the shaft's sides went 2 m straight up from the water under the deck - whoever fell in, or swam up
+# from the bell, never got out; a ledge 1 m over the water on its north side, a step up to the shelf)
+brush flatten at 5.25 3.4 r=1.5 s=20 frames=150 h=1
 brush grass at -9 3 r=6 s=20 frames=20
 brush flatten at 14 -36.4 r=5 s=8 frames=40
 origin
 clear at 14 -36.4 r=6
 clear at 0 0 r=13
+clear at 5.25 3.4 r=2.4 body
 
 # --- The steel deck on posts, the hole over the shaft -------------------------------------------------------------------
 for dx -2.25 6.75 1.5
@@ -54,7 +58,9 @@ place RT_Pillar - at 7.5 4.5 ground sy=0.76
 place RT_Pillar - at -3 0 ground sy=0.76
 ramp Block_Wall_Fence_Rope from -2.25 -4.5 4.5 to 6.75 -4.5 4.5 len=1.5 top=-0.1
 ramp Block_Wall_Fence_Rope from 7.5 -3.75 4.5 to 7.5 3.75 4.5 len=1.5 top=-0.1
-place Block_Ladder_Tier3 - at -3.15 -0.75 ground yaw=270
+# (REACH 10-30 G1: Block_Ladder_Tier3's climb trigger is 0.3 m in front of it at yaw 0 - at 270 it lay under the deck and
+# nobody took hold; both ladders here turned to face their climbers, as the ladder towers')
+place Block_Ladder_Tier3 - at -3.15 -0.75 ground yaw=90
 place Zone_Trigger deckzone at 0 0 h=5.5
 place Placeable_Table_Basic - at -1.5 2.6 h=4.5 sit yaw=0
 place Note_Paper handbook at -1.5 2.6 h=5.4 drop yaw=10
@@ -76,7 +82,7 @@ place RT_Pillar - at -7.1 6.9 ground sy=1.05
 place Block_Foundation towertop at -8 6 h=5.65 sx=1.25 sz=1.25
 place Placeable_WaterTank - at -8.3 6.3 h=5.65 sit
 place Loot_ChestSmall towerchest at -7.5 5.3 h=5.65 sit yaw=180
-place Block_Ladder_Tier3 - at -8 4.85 ground sy=1.45 yaw=180
+place Block_Ladder_Tier3 - at -8 4.85 ground sy=1.45 yaw=0
 place WaterPipe_Short_1 pipes at -6 6 h=3 rot=0,0,90
 place WaterPipe_Short_1 pipes at -4.5 5 h=3 rot=0,60,90
 place Loot_Chest pipecrate at -4.6 6.6 ground sit yaw=270
