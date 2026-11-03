@@ -382,6 +382,8 @@ clear at -11.65 -6.82 r=1.5 only=SmallBoulder
 clear at 28.12 39.72 r=1.5 only=BigBoulder
 clear at -11.74 46.03 r=1.5 only=SmallBoulder
 clear at -13.33 34.59 r=1.5 only=SmallBoulder
+# (RA4 11-02: a generated palm stood 2 m in the air over the meadow at -11 80 - picture a4rc_2)
+clear at -11 80 r=2.5 only=Palm
 
 # (box agent 10-25: names for the guide pictures' snap points)
 prop rcmast obj.name=rcmast

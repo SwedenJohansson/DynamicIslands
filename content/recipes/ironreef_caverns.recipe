@@ -149,7 +149,7 @@ place Loot_ChestLarge strongbox at -0.5 -35 ground sit
 # (REACH 10-29: d=1.2 on the default side put it in the hall's rock wall - the other side)
 # (REACH 10-29b: beside put it at the terrain under the cave floor, 1 m down - placed on the floor by the strongbox)
 # (agent Q 10-30, REACH: behind the strongbox, against the hall's back wall, nobody could stand by it - now on the floor in front of it)
-place Note_Paper davynote at -0.5 -33.4 h=5.62 yaw=180
+place Note_Paper davynote at -0.5 -33.4 h=6.2 drop yaw=180
 place Zone_Atmosphere halldark at 0 -20 y=5
 place Zone_Sound hallsound at 0 -20 y=3
 pop
