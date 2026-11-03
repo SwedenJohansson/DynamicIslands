@@ -24,7 +24,7 @@ namespace DynamicIslands.Editor
 		RectTransform questTabs, bringGroup;
 		InputField titleField, introField, doneField;
 		RectTransform stepsRoot;
-		Text rewardText, namesText;
+		Text rewardText, namesText, mainNote;
 		readonly List<InputField> fields = new List<InputField>();
 		bool pickingReward;
 
@@ -88,6 +88,9 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Shows quest n of the island (its edits kept while another is shown).</summary>
+		/// <summary>Dev tests (CIWindowShot questside): the open window shows quest n.</summary>
+		internal static void ShowTab(int n) { if (instance == null) return; instance.Keep(); instance.Show(n); }
+
 		void Show(int n)
 		{
 			number = n;
@@ -104,6 +107,27 @@ namespace DynamicIslands.Editor
 			ShowTabs();
 			// ("bring a new island" belongs to the main quest)
 			if (bringGroup != null) bringGroup.gameObject.SetActive(n == 0);
+			if (mainNote != null)
+			{
+				mainNote.text = n == 0 ? MainOnlyMain : MainOnlySide;
+				UIKit.Hint(mainNote.gameObject, MainOnlyList);
+			}
+		}
+
+		/// <summary>QE3: what only the island's MAIN quest drives (a side quest, "Quest 2" and on, does none of this).</summary>
+		const string MainOnlyList = "Only the MAIN quest does these: the island's \"quest is done\" event (Island events), the \"Only if... quest step\" check, a world rule or island rule \"step(s) of its quest are done\", \"When the quest is done, bring a new island\", and the story / notebook waiting for the island. " +
+			"A world rule \"quest done\" can wait for a side quest by its number (Quest 2 = 2). A side quest has its own steps, reward and messages, and shows in the quest panel after the quests before it are done";
+		const string MainOnlyMain = "Main quest: the panel shows it first. Only it drives the island's \"quest is done\" event, \"quest step\" checks, \"step(s) done\" rules, the new island below and the story. Side quests (+ Another quest) do not.";
+		const string MainOnlySide = "Side quest: own steps, reward and messages, shown after the quests before it. It does NOT fire the island's \"quest is done\" event, \"quest step\" checks, \"step(s) done\" rules or the new island: those follow the Main quest tab. A world rule \"quest done\" can wait for it by number.";
+
+		/// <summary>QE3: every kind of step by its name in the list, for tooltips (a kind added later is named too). The newest three
+		/// are named here whether or not this build has them yet, so the tooltip is complete after any merge order.</summary>
+		public static string StepNamesText()
+		{
+			var names = new List<string>();
+			foreach (string t in IslandQuest.Types) { string l; if (TypeLabels.TryGetValue(t, out l)) names.Add(l); }
+			foreach (string n in new[] { "Signal / object is", "Bring items", "Craft or cook" }) if (!names.Contains(n)) names.Add(n);
+			return string.Join(", ", names.ToArray());
 		}
 
 		/// <summary>The fields' text into the quest shown.</summary>
@@ -126,7 +150,7 @@ namespace DynamicIslands.Editor
 				IslandQuest q;
 				string label = n == 0 ? "Main quest" : "Quest " + (n + 1);
 				if (working.TryGetValue(n, out q) && q.Title.Trim().Length > 0) label += ": " + (q.Title.Trim().Length > 16 ? q.Title.Trim().Substring(0, 15) + "\u2026" : q.Title.Trim());
-				Button b = UIKit.Button(questTabs, label, () => { Keep(); Show(n); }, n == 0 ? "The island's main quest: the panel shows it first, world plans and the story wait for it" : "Another quest of the island, with its own steps and reward", -1, 26f, 12);
+				Button b = UIKit.Button(questTabs, label, () => { Keep(); Show(n); }, n == 0 ? "The island's main quest: the panel shows it first, world plans and the story wait for it. Only the main quest drives the island's \"quest is done\" event, quest-step checks, \"step(s) done\" rules and the new island" : "Another quest of the island, with its own steps and reward. It does not fire the island's \"quest is done\" event, quest-step checks or the new island (those are the main quest's)", -1, 26f, 12);
 				if (n == number) UIKit.SetActive(b, true);
 			}
 			if (count < IslandQuest.MaxQuests)
@@ -233,6 +257,10 @@ namespace DynamicIslands.Editor
 			UIKit.Label(head, "Players see the quest when they come to the island; steps are done in order", 12, UIKit.TextMuted, TextAnchor.MiddleRight);
 			// (the island's quests: the main one and up to eight more - LM4)
 			questTabs = UIKit.Row(panel, 26f, 6f, "Quests");
+			// (QE3: which things belong to the main quest only - the line changes with the tab)
+			mainNote = UIKit.Label(panel, "", 11, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "MainQuestNote");
+			mainNote.horizontalOverflow = HorizontalWrapMode.Wrap;
+			UIKit.Size(mainNote.gameObject, -1, 30);
 
 			// (each field says what it is, also once it's filled in)
 			RectTransform top = UIKit.Row(panel, 30f, 8f, "Top");
@@ -371,7 +399,7 @@ namespace DynamicIslands.Editor
 				{
 					s.Type = v;
 					ShowSteps();
-				}, 104, "What the player must do: go to, read, open, defeat, catch, collect story items, find journal pages", 28f, 12);
+				}, 104, "What the player must do. Kinds: " + StepNamesText() + ". Point at one in the list to see what it asks", 28f, 12);
 				InputField target = UIKit.Field(row, TargetHints[s.Type], s.Target, 28f, "Must match a name on the island exactly: \u25BE lists the ones it has");
 				UIKit.Size(target.gameObject, 196, 28);
 				target.onEndEdit.AddListener(v => s.Target = v.Trim());

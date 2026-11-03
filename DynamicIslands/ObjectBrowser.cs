@@ -280,6 +280,20 @@ namespace DynamicIslands.Editor
 				UIKit.Stretch(wait.rectTransform);
 			}
 
+			// (QE3: a ready piece says it works as placed, and which signal it sends)
+			string readyTag = ReadyPieces.Tag(e.Name);
+			if (readyTag != null)
+			{
+				RectTransform tag = UIKit.Rect("ReadyTag", pic);
+				tag.anchorMin = new Vector2(0, 0); tag.anchorMax = new Vector2(1, 0); tag.pivot = new Vector2(0.5f, 0);
+				tag.offsetMin = Vector2.zero; tag.offsetMax = new Vector2(0, 14);
+				UIKit.Background(tag.gameObject, new Color(0.1f, 0.18f, 0.08f, 0.88f), 3).raycastTarget = false;
+				Text tt = UIKit.Label(tag, readyTag, 9, new Color(0.75f, 1f, 0.65f, 1f), TextAnchor.MiddleCenter, FontStyle.Bold, "Text");
+				UIKit.Stretch(tt.rectTransform);
+				tt.raycastTarget = false;
+				tt.resizeTextForBestFit = true; tt.resizeTextMinSize = 7; tt.resizeTextMaxSize = 9;
+			}
+
 			Text label = UIKit.Label(r, e.Label, 11, UIKit.SlotText, TextAnchor.UpperCenter, FontStyle.Normal, "Label");
 			label.rectTransform.anchorMin = new Vector2(0, 0); label.rectTransform.anchorMax = new Vector2(1, 0); label.rectTransform.pivot = new Vector2(0.5f, 0);
 			label.rectTransform.offsetMin = new Vector2(3, 2); label.rectTransform.offsetMax = new Vector2(-3, TileHeight - TileWidth + 4);

@@ -174,7 +174,7 @@ namespace DynamicIslands.Editor
 			if (exportButton != null) { exportButton.gameObject.SetActive(!islandMode); importButton.gameObject.SetActive(!islandMode); shareHelp.gameObject.SetActive(!islandMode); }
 			if (previewButton != null) previewButton.gameObject.SetActive(!islandMode);
 			if (progressButton != null) progressButton.gameObject.SetActive(!islandMode);
-			planNameText.text = islandMode ? "Islands that '" + p.Name + "' brings into a world (saved with the island; \"self\" = this island)" : "";
+			planNameText.text = islandMode ? "Islands that '" + p.Name + "' brings into a world (saved with the island; \"self\" = this island). \"Quest done\" waits for the MAIN quest unless quest no. says 2, 3...; \"steps done\" counts the main quest's steps; a signal rule waits for a lever, generator... (\"signal name\")" : "";
 			UIKit.LabelOf(planButton).text = "Plan: " + p.Name + "  \u25BC";
 			descriptionField.text = p.Description;
 			ShowRandom();

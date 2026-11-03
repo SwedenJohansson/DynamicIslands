@@ -1728,6 +1728,23 @@ when others are open), the journal lists each, and world plans and the story wai
 one by its number (a rule's "quest 2"). **Remove this quest** takes one off; the ones after it move up. **Remove quest**
 at the bottom takes all of the island's quests off at once (one Ctrl+Z brings them back).
 
+**What belongs to the main quest only (the quest editor says so under its tabs).** Only the **Main quest** fires the island's
+**"quest is done"** event (Island events), is read by the **"Only if... quest step"** check and by a rule's **"step(s) of its
+quest are done"**, brings the new island under **When the quest is done, bring a new island**, and is what the story and
+the notebook wait for. A side quest (Quest 2 and on) does none of these: it has its own steps, reward and messages, and a
+world rule's **"quest done"** can wait for it by its number. Hover the **Kind** list for the name of every kind of step;
+**Island events...** and **Islands it brings...** now say what they are for in their windows and tooltips.
+
+**Ready pieces are tagged in the object list.** A piece that works as soon as it is placed (levers, cranks, generators,
+radios, wheels, mirrors, lasers, sockets...) carries a green strip on its tile, e.g. **works: sends lever**, and its
+hover text says what it does and which signal it sends - the word a **send signal** action, an **Only if... signal sent**
+check, an island rule or a world plan can wait for. The signals: lever, crank, power, radio, engine, cage, mirror, wheel,
+pipe, wire, claw, scales, laser, socket, blast, collapse, vehicle.
+
+**Islander dialogue markup:** a line with only `---` starts the next page; a line starting with `>` is an answer (up to 3
+in a dialogue, under the page they follow); other lines are speech. Answer 1..3 fires the islander's **choice1..choice3**
+event, closing it fires **talk**. In a **show dialogue** action write `\n` for a new line (the action is one line).
+
 ![The quest editor](images/editor-quest.jpg)
 *The quest "The lost camp": go to the camp, read the diary, open the supplies, chase off 2 warthogs. The reward is
 planks and rope, and when the quest is done it brings a saved island "Old camp" 700 m north, with a message and a

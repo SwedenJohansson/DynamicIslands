@@ -381,12 +381,24 @@ namespace DynamicIslands
 			if (ok) Log("PASS: plan picks"); else Fail("plan picks");
 		}
 
-		[ConsoleCommand(name: "CIWindowShot", docs: "Dev, editor: opens one editor window at the current screen size and takes its picture (shot_window_<name>), for the guide - works with Raft minimised, the screen size is not changed. Names: report (Report a problem, also on the main menu), worldplans (the test plan CI Adventure), behaviours (the island's events), islandfiles, quest, storyitems, generator")]
+		[ConsoleCommand(name: "CIWindowShot", docs: "Dev, editor: opens one editor window at the current screen size and takes its picture (shot_window_<name>), for the guide - works with Raft minimised, the screen size is not changed. Names: islandrules, questside, islander, objects_<word> (the object list searched for a word), report (Report a problem, also on the main menu), worldplans (the test plan CI Adventure), behaviours (the island's events), islandfiles, quest, storyitems, generator")]
 		public static void WindowShotCommand(string[] args) { StartTest(WindowShotRoutine(args != null && args.Length > 0 ? args[0] : "worldplans")); }
 
 		static IEnumerator WindowShotRoutine(string name)
 		{
 			Action open = null, close = null;
+			if (name.StartsWith("objects_") && DynamicIslands.InEditor() && ObjectBrowser.Instance != null)
+			{
+				// (QE3: the object list searched for a word: ready pieces carry their "works" strip)
+				EditorUI.SetTab(TAB.ObjectPlace);
+				ObjectBrowser.Instance.Search = name.Substring(8);
+				yield return new WaitForSecondsRealtime(1.5f);
+				Screenshot(new[] { "window_" + name });
+				yield return new WaitForSecondsRealtime(0.6f);
+				ObjectBrowser.Instance.Search = "";
+				Log("PASS: window shot " + name);
+				yield break;
+			}
 			if (name != "report" && !DynamicIslands.InEditor()) { Fail("window shot: open the editor first"); yield break; }
 			switch (name)
 			{
@@ -396,6 +408,22 @@ namespace DynamicIslands
 				case "islandfiles": open = IslandFilesWindow.Open; close = IslandFilesWindow.Close; break;
 				case "quest": open = QuestEditorWindow.Open; close = QuestEditorWindow.Close; break;
 				case "storyitems": open = StoryItemsWindow.Open; close = StoryItemsWindow.Close; break;
+				case "islandrules": open = WorldPlanWindow.OpenIsland; close = WorldPlanWindow.Close; break;
+				case "questside": open = () => { QuestEditorWindow.Open(); QuestEditorWindow.ShowTab(1); }; close = QuestEditorWindow.Close; break;
+				case "islander":
+					{
+						// (QE3: an islander placed and selected: its inspector with the dialogue markup help)
+						EditorGameObject placedIslander = null;
+						open = () =>
+						{
+							EditorUI.SetTab(TAB.ObjectPlace);
+							Vector3 at = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel + 1f, 500f);
+							placedIslander = PlaceForTest(Islanders.ObjectName, at, GameObject.Find("PlacedObjects").transform);
+							if (placedIslander != null) TransformGizmoSelect(placedIslander.transform);
+						};
+						close = () => { DynamicIslands.EditorGizmoHandler.ClearTargets(false); if (placedIslander != null) UnityEngine.Object.Destroy(placedIslander.gameObject); };
+						break;
+					}
 				case "pieces": open = () => PiecesWindow.Open(false); close = PiecesWindow.Close; break;
 				case "generator": open = () => { GeneratorWindow.Open(); GeneratorWindow.ShowTab(0); }; close = GeneratorWindow.Close; break;
 			}

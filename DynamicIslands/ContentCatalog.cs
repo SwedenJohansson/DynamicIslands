@@ -297,6 +297,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Extra text for the object list's hint (null for Raft's plain objects).</summary>
 		public static string Hint(string name)
 		{
+			string ready = ReadyPieces.Hint(name);
+			if (ready != null) return ready;
 			string player = PlayerFeatures.Hint(name);
 			if (player != null) return player;
 			CreatureKind k = CreatureOf(name);

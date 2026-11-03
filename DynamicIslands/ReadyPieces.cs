@@ -107,6 +107,88 @@ namespace DynamicIslands.Editor
 		/// <summary>Kinds that turn a quarter (open = turned) each use and send their signal: a puzzle is a check on their states.</summary>
 		public static bool Turns(string kind) { return kind == Mirror || kind == Wheel || kind == Pipe; }
 
+		/// <summary>QE3: the signal a piece sends when used (empty: none).</summary>
+		public static string SignalOf(Piece p)
+		{
+			switch (p.Kind)
+			{
+				case Lever: return "lever";
+				case Crank: return "crank";
+				case Generator: return PowerSignal;
+				case Radio: return RadioSignal;
+				case Engine: return EngineSignal;
+				case Cage: return CageSignal;
+				case Mirror: return MirrorSignal;
+				case Wheel: return WheelSignal;
+				case Pipe: return PipeSignal;
+				case Wire: return WireSignal;
+				case Claw: return ClawSignal;
+				case Scales: return ScalesSignal;
+				case LaserTarget: return LaserSignal;
+				case Socket: return SocketSignal;
+				case Barrel: return BlastSignal;
+				case Pillar: return CollapseSignal;
+				case Vehicle: return VehicleSignal;
+			}
+			return "";
+		}
+
+		/// <summary>QE3: the short tag on a ready piece's tile in the object list ("works: sends lever"); null for other objects.</summary>
+		public static string Tag(string name)
+		{
+			Piece p = Of(name);
+			if (p == null) return null;
+			string sig = SignalOf(p);
+			if (sig.Length > 0) return "works: sends " + sig;
+			switch (p.Kind)
+			{
+				case Door: return "works: needs a key";
+				case Hatch: return "works: opens";
+				case Lift: return "works: lift";
+				case Camera: return "works: sweeps";
+				case Laser: return "works: laser";
+				case FixedMirror: return "works: bends laser";
+				case Spotlight: return "works: keeps creatures off";
+			}
+			return "works";
+		}
+
+		/// <summary>QE3: what a ready piece does as placed, for the object list's hint and the editor (null for other objects).</summary>
+		public static string Hint(string name)
+		{
+			Piece p = Of(name);
+			if (p == null) return null;
+			string sig = SignalOf(p), item = p.Item != null ? p.Item.Replace('_', ' ') : "";
+			string what;
+			switch (p.Kind)
+			{
+				case Door: what = "a locked door: the player needs its key item (" + item + ", from a chest or an action) and the door goes when used"; break;
+				case Hatch: what = "a hatch: it opens (goes) when used"; break;
+				case Lift: what = "a lift: goes up 6 m and down on each use, carrying the players on it"; break;
+				case Cage: what = "a cage: opens when the player has " + item; break;
+				case Camera: what = "a security camera: sweeps 70 degrees and back, for ever"; break;
+				case Generator: what = "a generator: starts when used with its part (" + item + ") and then runs for good"; break;
+				case Radio: what = "a radio: works once the power signal was sent and the player has " + item; break;
+				case Engine: what = "an engine: starts with " + item; break;
+				case Mirror: what = "a mirror: turns a quarter on each use and bends a laser beam"; break;
+				case Wheel: what = "a wheel: turns a quarter on each use (open = turned)"; break;
+				case Pipe: what = "a pipe: turns a quarter on each use (open = turned)"; break;
+				case Wire: what = "a connector: takes " + item + " once, for good (open = connected)"; break;
+				case Claw: what = "a claw machine: whirs when used"; break;
+				case Scales: what = "scales: tip when used"; break;
+				case Laser: what = "a laser emitter: sends a beam along its front"; break;
+				case FixedMirror: what = "a fixed mirror: bends a laser beam"; break;
+				case LaserTarget: what = "a laser target: reacts when the beam stops on it"; break;
+				case Socket: what = "a socket: takes " + item + " once (open = filled)"; break;
+				case Barrel: what = "an explosive barrel: hurts the creature spot named \"boss\" by a third"; break;
+				case Pillar: what = "a pillar: knocked down when used, hurts the creature spot named \"boss\" by a third"; break;
+				case Spotlight: what = "a spotlight: keeps creatures back (8 m)"; break;
+				case Vehicle: what = "a broken-down vehicle: 3 bolts repair it, then it carries the players on it 24 m and back"; break;
+				default: what = "works as placed"; break;
+			}
+			return "READY PIECE, works as placed (no setup): " + what + (sig.Length > 0 ? ". Sends the signal \"" + sig + "\" (a check, island rule or quest step can wait for it)" : "") + ". Change it in Behaviour & events";
+		}
+
 
 		public static Piece Of(string name) { return All.FirstOrDefault(p => p.Name == name); }
 
