@@ -1008,7 +1008,6 @@ How some things work that can surprise players and island builders. What players
 - A next host who has one of the world's islands in another version (same name, changed in their editor) plays theirs in its place until a player brings the world's version (RK1); the world keeps its own version meanwhile, and what was used there while the stand-in played may sit on other objects once the world's version is back.
 - A trade stand on an island of more than 8191 objects shares its key with another (RK9): after an edit reaches a world, a once-only trade there can be had again.
 - Editor: the Vasagatan's and Utopia's quest item pickups (the ones under their quest item folders) are in the object list but never appear when placed (RK10); the Tangaroa token and the Vasagatan scrap work. KeyRescue places without a visible model (RK11).
-- Caves of the `ar_cave` kind can look see-through from outside the island: the cave shell is one-sided, so from outside you can see into the cave through its wall (RK15).
 - If you get stuck somewhere you cannot get out of, use **Esc > SPAWN TO RAFT**: it asks once, and **Yes** puts you on your raft.
 - **Which island first?** A few quests need an item from another island, so play that island first:
   - Colossus of the Strait: a gear each from Sandsunk Necropolis, Skyhook Mast and The Hollow Fang (the last one late in the quest).

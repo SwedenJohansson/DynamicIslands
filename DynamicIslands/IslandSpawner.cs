@@ -592,13 +592,18 @@ namespace DynamicIslands.Editor
 				EnableColliders(go);
 				if (!editable && o.Name.StartsWith("Block_Foundation", System.StringComparison.Ordinal)) AddDeck(go);
 				CaveBacks.Add(go, o.Name); // (a cave piece's rock, or a Selene room's wall, seen from outside too - X7)
-				if (!editable) CaveMountain.Add(parent, go, o.Name); // (a rock mountain over the island's caves - AU83)
+				if (!editable) CaveMountain.Add(parent, go, o.Name, o.Props); // (a rock mountain over the island's caves - AU83)
 				if (!editable) CaveGround.Add(parent, go, o.Name); // (and the ground cut out of their rooms - X7)
 
 				if (editable)
 					EditorGameObject.Attach(go, o.Name, o.Props ?? new Dictionary<string, string>()).Uid = o.Uid;
 				else
 				{
+					// (a bear den on its own - ar_cave - has its full-width mouth open: from outside, over the hill, you looked into
+					// the den. It gets a wall cut to its opening with a passage-sized hole, once the island is up: its rock answers
+					// rays only then - RK15)
+					if (o.Name == CaveTool.Room && ObjectProps.Get(o.Props, ObjectProps.CavePlug, "") == "")
+						DynamicIslands.instance.StartCoroutine(CaveTool.PlugOpeningLater(go, o.Props));
 					ObjectProps.ApplyTint(go, o.Props);
 					ZiplineEnds.Apply(go, o.Props, parent.position);
 					if (ObjectProps.IsNote(o.Name, o.Props))

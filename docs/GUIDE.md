@@ -4094,9 +4094,6 @@ is there at once when you are under the sea or haven't got anywhere for 20 secon
 and it takes you back to your raft. If that doesn't help, **Esc > SPAWN TO RAFT** is the last way out: it asks
 "Only use this if you have gotten stuck in a place you cannot get out of", and **Yes** puts you on your raft.
 
-**A cave looks see-through from outside.** Some caves (the `ar_cave` kind) have a one-sided shell: from outside the
-island you can see into the cave through its wall. It is only how it looks; inside, the cave is as it should be.
-
 **I can't get onto a flying island (or a cliff island).** Build stairs or pillars up from the raft. The generator's
 reach line tells a builder beforehand.
 
