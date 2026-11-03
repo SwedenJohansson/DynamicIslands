@@ -211,6 +211,33 @@ namespace DynamicIslands
 			if (ok) Log("PASS: spawn box stays"); else Fail("spawn box stays");
 		}
 
+		[ConsoleCommand(name: "CIGodModeClick", docs: "Dev, editor: TN5 - the Caves panel's God mode tick box clicked as a mouse does it: God mode flips and the box shows it; clicked again, back")]
+		public static void GodModeClickCommand() { StartTest(GodModeClickRoutine()); }
+
+		static IEnumerator GodModeClickRoutine()
+		{
+			if (!DynamicIslands.InEditor()) { Fail("god mode click: in the editor"); yield break; }
+			bool ok = true, god0 = EditorCamera.GodMode;
+			EditorUI.SetTab(TAB.TerrainEdit);
+			yield return null;
+			yield return null;
+			UnityEngine.UI.Button b = Resources.FindObjectsOfTypeAll<UnityEngine.UI.Button>().FirstOrDefault(x => x.name == "Check_GodMode" && x.gameObject.scene.IsValid());
+			if (b == null || !b.gameObject.activeInHierarchy) { Fail("god mode click: no God mode tick box shown on the terrain tab (" + (b == null ? "none" : "hidden") + ")"); yield break; }
+			try
+			{
+				Check(ref ok, UIKit.IsChecked(b) == god0, "the box shows God mode as it is (" + god0 + ")");
+				for (int i = 1; i <= 2; i++)
+				{
+					PointerClick(b.gameObject);
+					yield return null;
+					bool want = i == 1 ? !god0 : god0;
+					Check(ref ok, EditorCamera.GodMode == want && UIKit.IsChecked(b) == want, "click " + i + ": God mode " + EditorCamera.GodMode + ", the box ticked " + UIKit.IsChecked(b) + " (want " + want + ")");
+				}
+			}
+			finally { EditorCamera.GodMode = god0; UIKit.SetCheck(b, god0); }
+			if (ok) Log("PASS: god mode click"); else Fail("god mode click");
+		}
+
 		[ConsoleCommand(name: "CIPickupLook", docs: "Dev, in game or editor: RK11 - logs what a quest item pickup shows (renderers, meshes, materials, parts) for Utopia's KeyRescue and KeyEntrance (or the names given), as listed and as placed")]
 		public static void PickupLookCommand(string[] args) { StartTest(PickupLookRoutine(args != null && args.Length > 0 ? args : new[] { "QuestItemPickup_Utopia_KeyRescue", "QuestItemPickup_Utopia_KeyEntrance" })); }
 
