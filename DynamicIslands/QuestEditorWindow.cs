@@ -417,7 +417,7 @@ namespace DynamicIslands.Editor
 				UIKit.Size(target.gameObject, 196, 28);
 				target.onEndEdit.AddListener(v => s.Target = v.Trim());
 				fields.Add(target);
-				List<DropList.Option> names = QuestSteps.NamesFor(s.Type, s.Target, placedNow) ?? NamesFor(s.Type);
+				List<DropList.Option> names = QuestSteps.NamesFor(s.Type, s.Target, placedNow) ?? NamesFor(s.Type, placedNow);
 				if (names.Count > 0)
 				{
 					// (a small \u25BE: the island's zones, notes, chests or creatures that this kind of step can point at)
@@ -516,14 +516,14 @@ namespace DynamicIslands.Editor
 			return placed != null ? placed.GetComponentsInChildren<EditorGameObject>().ToList() : new List<EditorGameObject>();
 		}
 
-		static List<DropList.Option> NamesFor(string type)
+		/// <summary>(all: the placed objects, listed once per rebuild: GameObject.Find walks the whole scene, and a
+		/// rebuild of 99 rows doing it per row took seconds)</summary>
+		static List<DropList.Option> NamesFor(string type, List<EditorGameObject> all)
 		{
-			GameObject placed = GameObject.Find("PlacedObjects");
-			List<EditorGameObject> all = placed != null ? placed.GetComponentsInChildren<EditorGameObject>().ToList() : new List<EditorGameObject>();
 			IEnumerable<string> names;
 			switch (type)
 			{
-				case "reach": names = ContentCatalog.ZoneIdsInEditor(); break;
+				case "reach": names = all.Where(e => e.GameObjectName == ContentCatalog.TriggerZone).Select(e => ObjectProps.Get(e.Props, ObjectProps.ZoneId)); break;
 				case "read": names = all.Where(e => ObjectProps.IsNote(e.GameObjectName, e.Props)).Select(e => ObjectProps.Get(e.Props, ObjectProps.NoteTitle)); break;
 				case "open": names = all.Where(e => ObjectProps.IsLoot(e.GameObjectName, e.Props)).Select(e => ObjectProps.Get(e.Props, ObjectProps.NoteTitle)); break;
 				case "kill": names = all.Select(e => ContentCatalog.CreatureOf(e.GameObjectName)).Where(k => k != null).Select(k => k.Label); break;
