@@ -3706,11 +3706,11 @@ An island's own Hard or Boss animals are worth more than Raft's plain ones.
 
 | From level | EXP to the next | About |
 |---|---|---|
-| 1 → 2 | 100 | 1 shark |
-| 2 → 3 | 200 | 2 sharks |
-| 3 → 4 | 400 | 3 sharks |
-| 4 → 5 | 600 | 4 sharks |
-| then | 200 more each level | 1 or 2 more sharks each level |
+| 1 → 2 | 90 | 1 shark |
+| 2 → 3 | 180 | 1 shark |
+| 3 → 4 | 360 | 2 sharks |
+| 4 → 5 | 540 | 3 sharks |
+| then | 180 more each level | 1 more shark each level |
 
 #### Levelling up and spending points
 

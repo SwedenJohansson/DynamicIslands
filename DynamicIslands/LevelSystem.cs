@@ -44,7 +44,7 @@ namespace DynamicIslands.Editor
 
 		/// <summary>EXP gained is nine times what the levels are measured in (the user: doubled 2026-10-02, tripled again
 		/// 2026-10-04, +50 % 2026-10-09) - Bruce gives 180 - so a level takes a ninth of the kills; the EXP each level needs
-		/// stays as it was (100, 200, 400...).</summary>
+		/// is NeededPercent of 100, 200, 400... (90, 180, 360... since 2026-11-03).</summary>
 		public const float GainMultiplier = 9f;
 
 		/// <summary>What Bruce gives (ReferenceXp x GainMultiplier).</summary>
@@ -54,10 +54,13 @@ namespace DynamicIslands.Editor
 		/// Bruce, GainMultiplier).</summary>
 		public static int KillsFor(int level) { return level <= 1 ? 5 : 10 * (level - 1); }
 
-		/// <summary>EXP from this level to the next: 100, 200, 400, 600, 800, ...</summary>
-		public static int XpFor(int level) { return ReferenceXp * KillsFor(level); }
+		/// <summary>Share of the EXP each level needs (the user 2026-11-03: 10 % less, to level up a little faster).</summary>
+		public const int NeededPercent = 90;
 
-		/// <summary>Total EXP at which this level starts (level 1 at 0, level 2 at 100, level 3 at 300, level 4 at 700, level 5 at 1300).</summary>
+		/// <summary>EXP from this level to the next: 90, 180, 360, 540, 720, ... (NeededPercent of 100, 200, 400, ...).</summary>
+		public static int XpFor(int level) { return ReferenceXp * KillsFor(level) * NeededPercent / 100; }
+
+		/// <summary>Total EXP at which this level starts (level 1 at 0, level 2 at 90, level 3 at 270, level 4 at 630, level 5 at 1170).</summary>
 		public static int TotalFor(int level)
 		{
 			int total = 0;

@@ -12,6 +12,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next update (planned)
 
 Not in this release yet; these come in the next update:
+- **Level up system: faster levels.** Every level needs 10 % less EXP (level 2 at 90, level 5 at 1170 instead of 100 and 1300). Players in an existing world keep their EXP, so some go up a level at once.
 - **Bear dens in a hill** (The Abyss and other islands): a tinted den now tints the rock hill round it too, so a dark den no longer sits in a bright orange mountain; dens inside are lit warm, not blue.
 - **Cave tool**: dens and tunnels in a world look as they do in the editor, warm and dim, no longer lit blue by the sky.
 - **Dig brush**: the ground on top of a dug rim keeps the same sharp grass detail as the ground round it, not a smoother, blurred patch.
