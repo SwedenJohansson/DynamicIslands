@@ -613,8 +613,11 @@ namespace DynamicIslands.Editor
 			return Rect.MinMaxRect(x0 - m, z0 - m, x1 + m, z1 + m);
 		}
 
-		/// <summary>Pixels per metre of the baked ground (and the layers' copies at about twice that).</summary>
-		const float BakePerMetre = 48f;
+		/// <summary>Pixels per metre of the baked ground and the layers' copies, as the ground's own (a grass layer's 1024 pixels
+		/// over 8 m), up to BakeMax a side. (11-03: 48 was a third of that, so the top came out a blurred, smoother patch than
+		/// the ground round it, its grass blades gone.)</summary>
+		const float BakePerMetre = 128f;
+		const int BakeMax = 2048;
 
 		/// <summary>
 		/// The ground's look over part of the terrain (r: 0..1 over it) baked into a texture: each layer's diffuse texture
@@ -629,7 +632,7 @@ namespace DynamicIslands.Editor
 			TerrainLayer[] layers = td != null ? td.terrainLayers : null;
 			if (layers == null || layers.Length == 0 || r.width <= 0f || r.height <= 0f) return null;
 			Vector3 size = td.size;
-			int tw = Mathf.Clamp(Mathf.CeilToInt(r.width * size.x * BakePerMetre), 16, 1024), th = Mathf.Clamp(Mathf.CeilToInt(r.height * size.z * BakePerMetre), 16, 1024);
+			int tw = Mathf.Clamp(Mathf.CeilToInt(r.width * size.x * BakePerMetre), 16, BakeMax), th = Mathf.Clamp(Mathf.CeilToInt(r.height * size.z * BakePerMetre), 16, BakeMax);
 			int ar = td.alphamapResolution;
 			int ax0 = Mathf.Clamp(Mathf.FloorToInt(r.xMin * ar - 1f), 0, ar - 1), az0 = Mathf.Clamp(Mathf.FloorToInt(r.yMin * ar - 1f), 0, ar - 1);
 			int ax1 = Mathf.Clamp(Mathf.CeilToInt(r.xMax * ar + 1f), ax0 + 1, ar), az1 = Mathf.Clamp(Mathf.CeilToInt(r.yMax * ar + 1f), az0 + 1, ar);
@@ -643,7 +646,7 @@ namespace DynamicIslands.Editor
 				TerrainLayer tl = layers[l];
 				Texture d = tl != null ? tl.diffuseTexture : null;
 				if (d == null) continue;
-				int want = Mathf.Clamp(Mathf.NextPowerOfTwo(Mathf.CeilToInt(Mathf.Max(tl.tileSize.x, tl.tileSize.y) * BakePerMetre * 2f)), 32, 1024);
+				int want = Mathf.Clamp(Mathf.NextPowerOfTwo(Mathf.CeilToInt(Mathf.Max(tl.tileSize.x, tl.tileSize.y) * BakePerMetre)), 32, Mathf.Min(BakeMax, Mathf.Max(d.width, d.height)));
 				Texture2D c = Readable(d, want);
 				if (c == null) continue;
 				pix[l] = c.GetPixels32(); pw[l] = c.width; ph[l] = c.height;
