@@ -42,6 +42,7 @@ Not in this release yet; these come in the next update:
 - **The Floelane**: a path winds up round the iceberg from the sea to its flat top (the cairn, chest and lookout), and
   the bears' den passage steps down into the lead instead of ending in a 1.6 m drop.
 - **The Iron Whale - Bow**: the ramp up the pressure ridge from the sea is one even slope instead of 1 m steps.
+- **Lowstreet**: the sand that walled in the four shop doors is dug out down to the shop floors, so a diver swims in through each door.
 - Old worlds (made before Raft gave worlds an id): quest rewards are kept per world, and players who join such a world
   get the host's custom islands state.
 - Cave tool: a thin spike of ground left beside the cut over some tunnel mouths.
