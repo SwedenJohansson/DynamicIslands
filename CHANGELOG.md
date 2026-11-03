@@ -12,6 +12,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next update (planned)
 
 Not in this release yet; these come in the next update:
+- **Dug tunnels**: the passage floor just inside the mouth is cave-dark rock now, not lit pale like snow by the sun.
 - **Fast starts again**: since 3.0's new author line, Raft's mod loader compiled Custom Islands on every start (about a
   minute); now only the first start after an update does.
 - **Vasagatan and Utopia quest item pickups** (keys, keycards, the bolt cutters...) placed in the editor show up and
