@@ -428,4 +428,19 @@ clear at 57.25 3.91 r=1.5 all body only=TP_BigRock03
 # (REACH 10-31 N: generator big rocks west of the town leaned over a dip at their foot - a player dropped in under them
 # and couldn't jump out again (three roofed traps between runs): cleared)
 clear at -42 35.5 r=5 all body only=TP_BigRock
+# (REACH 11-02 RA1, after N's 11-01 idea, which went in 24.2 m north of the spots: (1) a dip under leaning big rocks
+# west of the town, its side a 1 m step and rock overhead - the rocks off, a ramp up its south side; (2) a pond inland
+# of the east shore whose banks stood 0.6-1 m over the water - a beach ramp up its east bank)
+clear at -55 10.4 r=6 all body only=TP_BigRock
+for i 0 3 1
+brush flatten at -56.9 {7.4-0.8*$i} r=1.6 s=20 frames=200 h={2.9+0.33*$i}
+next
+brush smooth from -56.9 7.6 to -56.9 4.6 r=2 s=10 frames=12
+clear from -56.9 7.6 to -56.9 4.6 r=2.6 body
+for i 0 5 1
+brush flatten at {61.2+0.7*$i} -66 r=1.6 s=20 frames=200 h={-0.6+0.3*$i}
+next
+brush smooth from 61.2 -66 to 64.7 -66 r=2 s=10 frames=12
+clear from 61.2 -66 to 64.7 -66 r=2.6 body
+
 save Steamvent Harbour
