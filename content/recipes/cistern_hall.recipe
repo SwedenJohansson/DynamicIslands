@@ -99,6 +99,9 @@ push at 3 -31 h=1
 # (RA3 11-02, REACH: the doorway of RT_WallDoor1 sat half behind the walkway's corner railing - nothing came in, the
 # pump, its plate and the locker out of reach: an open bay instead, as on Cooling Spire)
 call hw_penthouse d=8 a=stone b2=none f2=RT_Wall1 l2=RT_Wall1 r2=RT_Wall1
+# (fixC 11-03: floating sweep - two front legs ended 0.98 m over the sloping basin floor: a short stub under each)
+place RT_PillarThick - at -5.9 -4.4 y=-7.2 sy=0.25
+place RT_PillarThick - at -0.1 -4.4 y=-7.2 sy=0.25
 place "VG_DecorationPrefabBase_Engine Variant" oldpump at -3 -1 y=0.1 sit
 prop oldpump obj.name=oldpump
 place Note_Sign plate at -3 -2.6 y=0.1 sit yaw=180
