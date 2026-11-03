@@ -80,7 +80,16 @@ namespace DynamicIslands
 
 			Button add = qw.GetComponentsInChildren<Button>(true).FirstOrDefault(b => UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text == "+ Add a step");
 			Check(ref ok, add != null, "the + Add a step button");
-			if (add != null) for (int i = 0; i < 100; i++) add.onClick.Invoke();
+			// (one click a frame, as a builder clicks: the box is rebuilt per click)
+			float slowest = 0f;
+			if (add != null) for (int i = 0; i < 88; i++)
+			{
+				float t0 = Time.realtimeSinceStartup;
+				add.onClick.Invoke();
+				slowest = Mathf.Max(slowest, Time.realtimeSinceStartup - t0);
+				yield return null;
+			}
+			Check(ref ok, slowest < 1f, "a click on + Add a step stays quick with 98 steps (slowest " + (slowest * 1000f).ToString("0") + " ms)");
 			yield return null;
 			int rows = qw.GetComponentsInChildren<Button>(true).Count(b => b.name == "Drop_StepType");
 			Check(ref ok, rows == 99, "+ Add a step stops at 99 steps (" + rows + ")");
