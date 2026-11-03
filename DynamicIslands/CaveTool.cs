@@ -381,6 +381,118 @@ namespace DynamicIslands.Editor
 			go.AddComponent<MeshCollider>().sharedMesh = mesh;
 		}
 
+		/// <summary>
+		/// A bear den on its own (ar_cave: no tunnel at its mouth) - RK15. Its mouth is open its full width, and the hill over it
+		/// (CaveMountain) stops at the open end, so from outside over the hill you looked into the den. Plug's rectangle stood out
+		/// past the den's shell there as a dark board, so this wall is cut to the shell's own opening: 2 m in from the mouth,
+		/// every 0.5 m cell with the den's rock over it, under it and on both sides of it (one cell more all round, its edge in
+		/// the rock), with the same passage-sized hole as Plug's. World only (IslandSpawner, before the tint, so it is tinted).
+		/// </summary>
+		/// <summary>PlugOpening once the den is active and in place (an island is built inactive), tinted as the den.</summary>
+		public static IEnumerator PlugOpeningLater(GameObject den, IDictionary<string, string> props)
+		{
+			for (float t = 0f; den != null && !den.activeInHierarchy && t < 60f; t += 0.25f) yield return new WaitForSeconds(0.25f);
+			yield return null;
+			if (den == null || !den.activeInHierarchy) yield break;
+			try
+			{
+				PlugOpening(den, CaveMountain.OverMeasured(den.transform, Room).x);
+				Transform plug = den.transform.Find(PlugName);
+				if (plug != null && ObjectProps.HasTint(props)) ObjectProps.ApplyTint(plug.gameObject, ObjectProps.Tint(props), ObjectProps.TintStrength(props));
+			}
+			catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Walling a den's mouth failed: " + x.Message); }
+		}
+
+		public static void PlugOpening(GameObject den, float size = 1f)
+		{
+			if (den == null) return;
+			Transform old = den.transform.Find(PlugName);
+			if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
+			Renderer look = den.GetComponentsInChildren<MeshRenderer>(true).Where(r => r.sharedMaterial != null)
+				.OrderByDescending(r => r.bounds.size.x * r.bounds.size.z).FirstOrDefault();
+			Collider[] rock = den.GetComponentsInChildren<Collider>(true).Where(c => c.enabled && !c.isTrigger).ToArray();
+			if (look == null || rock.Length == 0) return;
+			var go = new GameObject(PlugName);
+			go.layer = look.gameObject.layer;
+			go.transform.SetParent(den.transform, false);
+			Vector3 ls = den.transform.lossyScale;
+			go.transform.localScale = new Vector3(size / Mathf.Max(0.001f, ls.x), size / Mathf.Max(0.001f, ls.y), size / Mathf.Max(0.001f, ls.z));
+			Physics.SyncTransforms();
+			const float cell = 0.5f, inFrom = 2f;
+			float z = RoomMax.z - inFrom, mx = RoomMouth.x, my = RoomMouth.y;
+			float x0 = RoomMin.x, y0 = my - PlugBelow;
+			int nx = Mathf.CeilToInt((RoomMax.x - x0) / cell), ny = Mathf.CeilToInt((RoomMax.y - y0) / cell);
+			float reach = 40f * Mathf.Max(0.1f, size);
+			Vector3 up = den.transform.up, right = den.transform.right;
+			Func<Vector3, Vector3, bool> hits = (from, dir) =>
+			{
+				var ray = new Ray(from, dir);
+				RaycastHit h;
+				foreach (Collider c in rock) if (c.Raycast(ray, out h, reach)) return true;
+				return false;
+			};
+			var inside = new bool[nx, ny];
+			bool backs = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				for (int i = 0; i < nx; i++)
+					for (int k = 0; k < ny; k++)
+					{
+						Vector3 w = go.transform.TransformPoint(new Vector3(x0 + (i + 0.5f) * cell, y0 + (k + 0.5f) * cell, z));
+						inside[i, k] = hits(w, up) && hits(w, -up) && hits(w, right) && hits(w, -right);
+					}
+			}
+			finally { Physics.queriesHitBackfaces = backs; }
+			// (one cell more all round: the wall's edge goes into the rock, no slit of sky along it)
+			var keep = new bool[nx, ny];
+			for (int i = 0; i < nx; i++)
+				for (int k = 0; k < ny; k++)
+					for (int di = -1; di <= 1 && !keep[i, k]; di++)
+						for (int dk = -1; dk <= 1 && !keep[i, k]; dk++)
+						{
+							int a = i + di, b = k + dk;
+							if (a >= 0 && b >= 0 && a < nx && b < ny && inside[a, b]) keep[i, k] = true;
+						}
+			float hx0 = mx - HoleHalf, hx1 = mx + HoleHalf, hy0 = my - HoleBelow, hy1 = my + HoleUp;
+			var verts = new List<Vector3>();
+			var tris = new List<int>();
+			for (int k = 0; k < ny; k++)
+			{
+				float ya = y0 + k * cell, yb = ya + cell;
+				int run = -1;
+				for (int i = 0; i <= nx; i++)
+				{
+					bool on = false;
+					if (i < nx && keep[i, k])
+					{
+						float xa = x0 + i * cell, xb = xa + cell;
+						on = !(xb > hx0 && xa < hx1 && yb > hy0 && ya < hy1); // (the passage's hole)
+					}
+					if (on && run < 0) run = i;
+					if (!on && run >= 0)
+					{
+						float ax = x0 + run * cell, bx = x0 + i * cell;
+						int n = verts.Count;
+						verts.Add(new Vector3(ax, ya, z)); verts.Add(new Vector3(bx, ya, z)); verts.Add(new Vector3(bx, yb, z)); verts.Add(new Vector3(ax, yb, z));
+						tris.AddRange(new[] { n, n + 2, n + 1, n, n + 3, n + 2, n, n + 1, n + 2, n, n + 2, n + 3 }); // (both sides)
+						run = -1;
+					}
+				}
+			}
+			if (tris.Count == 0) { UnityEngine.Object.DestroyImmediate(go); return; }
+			var mesh = new Mesh { name = PlugName };
+			mesh.SetVertices(verts);
+			mesh.SetTriangles(tris, 0);
+			mesh.SetUVs(0, verts.Select(v => new Vector2(v.x / 6f, v.y / 6f)).ToList());
+			mesh.RecalculateNormals();
+			mesh.RecalculateBounds();
+			go.AddComponent<MeshFilter>().sharedMesh = mesh;
+			go.AddComponent<MeshRenderer>().sharedMaterial = look.sharedMaterial;
+			go.AddComponent<MeshCollider>().sharedMesh = mesh;
+			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + (verts.Count / 4) + " strips");
+		}
+
 		#endregion
 
 		#region The mouth's frame

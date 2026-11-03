@@ -38,6 +38,15 @@ Not in this release yet; these come in the next update:
 - Cave tool: a thin spike of ground left beside the cut over some tunnel mouths.
 - The Rainmakers: the library picture of The Isobar Club's lounge is retaken; the old one still showed the pillars
   through the grand piano and pool table that were fixed on 10-18.
+- **Dropped items stay on custom islands:** an item dropped on a custom island no longer falls into the sea when the
+  island unloads (the raft far away); it waits where it lay. Such items are also kept in the save and lie there again
+  after the world is loaded (Raft's own save keeps no dropped items) (RK2).
+- **Hosting another player's world:** when the next host has one of the world's islands in another version, the world
+  keeps its own version (a save no longer replaces it with the host's); the host's plays in its place until a player
+  brings the world's, which then plays from the island's next load (RK1).
+- **Two players:** a player using a thing twice before its own signal bars it does it only once (RK4).
+- **Bear den caves no longer see-through:** a bear den set on its own (`ar_cave`) gets a rock wall across its open front,
+  with a doorway at the mouth, so from outside you no longer look into the cave through its missing side (RK15).
 
 ## 3.0 alpha - 2026-11-02: Tunnels and fixes
 

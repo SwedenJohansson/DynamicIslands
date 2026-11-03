@@ -262,9 +262,13 @@ namespace DynamicIslands.Editor
 				if (e.Root != null && d > unload)
 				{
 					IslandObjectState.Capture(e);
+					// (loose items dropped on it wait in the air until it is back: RK2)
+					try { ItemHold.HoldOn(e); } catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Holding dropped items failed: " + x.Message); }
 					IslandSpawner.Despawn(e.Root);
 					e.Root = null;
 					Debug.Log("[CUSTOM ISLANDS] Unloaded island '" + e.Name + "' (" + d.ToString("F0") + " m away)");
+					// (the world's version of it came while it was loaded: it plays from now on - RK1)
+					try { IslandNetwork.AfterUnload(e); } catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Switching the island's version failed: " + x.Message); }
 				}
 				else if (e.Root == null && !e.Loading && !e.Failed && !e.WaitingForFile && !e.Excluded && d < reload)
 				{

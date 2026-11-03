@@ -492,6 +492,40 @@ namespace DynamicIslands.Editor
 			return msg;
 		}
 
+		/// <summary>An island was unloaded here: a version change that waited for it is made now (RK1).</summary>
+		internal static void AfterUnload(IslandWorldState.Entry e)
+		{
+			if (e == null || e.Root != null) return;
+			if (Raft_Network.IsHost && e.SwitchTo != null)
+			{
+				string to = e.SwitchTo;
+				e.SwitchTo = null;
+				if (!File.Exists(IslandSpawner.PathFor(to))) return;
+				e.Name = to;
+				e.StandIn = false;
+				e.Failed = false;
+				Log("'" + e.HostName + "' plays the world's version from now on (" + to + ")");
+				SendToClients(IslandsMessage(new[] { e }, false));
+			}
+			else if (!Raft_Network.IsHost && e.PendingHash != null)
+			{
+				string h = e.PendingHash;
+				e.PendingHash = null;
+				SwitchVersion(e, h);
+			}
+		}
+
+		/// <summary>Client: the host plays another version of a known island - this one takes that file too (RK1).</summary>
+		static void SwitchVersion(IslandWorldState.Entry e, string hash)
+		{
+			e.Hash = hash;
+			e.Failed = false;
+			e.WaitingForFile = false;
+			e.PendingHash = null;
+			ResolveFile(e);
+			Log("Island " + e.Id + " '" + e.HostName + "': the host plays another version of it now (" + hash + ")");
+		}
+
 		public static void BroadcastAdded(IslandWorldState.Entry entry)
 		{
 			if (!Raft_Network.IsHost) return;
@@ -933,6 +967,13 @@ namespace DynamicIslands.Editor
 						ResolveFile(known);
 						Log("Island " + known.Id + " '" + known.HostName + "' had no file here: trying again with the host's");
 					}
+					// (the host plays another version of it now - the world's, which a player sent: RK1. Loaded here, it changes
+					// once it is unloaded - AfterUnload)
+					else if (hash.Length > 0 && !string.IsNullOrEmpty(known.Hash) && hash != known.Hash)
+					{
+						if (known.Root != null || known.Loading) known.PendingHash = hash;
+						else SwitchVersion(known, hash);
+					}
 					// (still waiting for its file after a Resync, which forgot the requests: asked for again - AU64)
 					else if (known.WaitingForFile && known.Root == null && !string.IsNullOrEmpty(known.Hash) && !requested.Contains(known.Hash)) ResolveFile(known);
 					// (the whole list - a Resync: a known island's things as the host has them, as for a new one - drift from a
@@ -1094,14 +1135,24 @@ namespace DynamicIslands.Editor
 				catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Copying '" + name + "' for '" + e.HostName + "': " + ex.Message); }
 				// (the host: an island of its world that waited for this file - or played another version of it, not loaded
 				// yet - plays the one the world was saved with now, and players who joined meanwhile get it - AU6)
+				// (a stand-in for it is loaded - players may stand on it: the world's version comes at its next load - RK1)
+				if (Raft_Network.IsHost && e.StandIn && (e.Root != null || e.Loading))
+				{
+					e.SwitchTo = want;
+					Log("'" + e.HostName + "': the world's version came while this PC's own plays - it loads from the island's next load");
+					continue;
+				}
 				if (Raft_Network.IsHost && (e.WaitingForFile || (e.Root == null && !e.Loading && HashOf(e.Name) != msg.Hash)))
 				{
-					bool waited = e.WaitingForFile;
+					bool waited = e.WaitingForFile, stood = e.StandIn;
 					e.Name = want;
 					e.Failed = false;
 					e.WaitingForFile = false;
 					e.Excluded = false; // (MissingIslandsCheck: the file is here now)
-					if (waited) SendToClients(IslandsMessage(new[] { e }, false));
+					e.StandIn = false;
+					e.SwitchTo = null;
+					// (players who joined meanwhile have the stand-in's hash: they take this one - RK1)
+					if (waited || stood) SendToClients(IslandsMessage(new[] { e }, false));
 					continue;
 				}
 				e.WaitingForFile = false;

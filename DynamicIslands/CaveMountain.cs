@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -19,6 +20,7 @@ namespace DynamicIslands.Editor
 
 		readonly List<Transform> caves = new List<Transform>();
 		readonly List<PropInfo> infos = new List<PropInfo>();
+		readonly List<IDictionary<string, string>> props = new List<IDictionary<string, string>>();
 		float due = -1f;
 		GameObject skin;
 
@@ -26,7 +28,7 @@ namespace DynamicIslands.Editor
 		public bool Pending { get { return due >= 0f; } }
 
 		/// <summary>A cave piece spawned in a world under this island: (re)build the island's mountain once the island is all there.</summary>
-		public static void Add(Transform island, GameObject piece, string name)
+		public static void Add(Transform island, GameObject piece, string name, IDictionary<string, string> props = null)
 		{
 			if (island == null || piece == null) return;
 			if (!Wants(name)) return;
@@ -34,6 +36,7 @@ namespace DynamicIslands.Editor
 			CaveMountain m = island.GetComponent<CaveMountain>() ?? island.gameObject.AddComponent<CaveMountain>();
 			m.caves.Add(piece.transform);
 			m.infos.Add(p);
+			m.props.Add(props);
 			m.due = Time.realtimeSinceStartup + 1f;
 		}
 
@@ -204,7 +207,9 @@ namespace DynamicIslands.Editor
 					HalfWidth = p.Width * (p.Axis == 0 ? sc.z : sc.x) / 2f + 1f, FloorY = floorY, OwnPlus = ownPlus, OwnMinus = ownMinus, Plus = p.OpenPlus, Minus = p.OpenMinus, Name = t.name
 				});
 			}
-			caves.RemoveAll(t => t == null);
+			// (the three lists side by side: one gone from all of them)
+			for (int i = caves.Count - 1; i >= 0; i--)
+				if (caves[i] == null) { caves.RemoveAt(i); if (i < infos.Count) infos.RemoveAt(i); if (i < props.Count) props.RemoveAt(i); }
 			if (!any || look == null || cols.Count == 0) return;
 
 			Physics.SyncTransforms();
@@ -468,6 +473,12 @@ namespace DynamicIslands.Editor
 			mr.shadowCastingMode = look.shadowCastingMode;
 			mr.receiveShadows = look.receiveShadows;
 			skin.AddComponent<MeshCollider>().sharedMesh = mesh;
+			// (tinted as its caves are: a dark den under an untinted orange hill showed where the one ended and the other began -
+			// the first tinted cave's tint, multiplied into the island's rock as ApplyTint does - RK15)
+			// (Raft's own island rock - CaravanIslandRocks - has no colour to tint: it then stays as it is; the den's rock material
+			// stretched over the hill looked blotchy, grey-blue patches - tried 11-03)
+			IDictionary<string, string> tinted = props.FirstOrDefault(ObjectProps.HasTint);
+			if (tinted != null) ObjectProps.ApplyTint(skin, ObjectProps.Tint(tinted), ObjectProps.TintStrength(tinted));
 			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name);
 		}
 

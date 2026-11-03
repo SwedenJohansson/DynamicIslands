@@ -26,6 +26,13 @@ namespace DynamicIslands.Editor
 			/// <summary>Client: the island's name on the host, and its file's content hash.</summary>
 			public string HostName;
 			public string Hash;
+			/// <summary>Host: the world was saved with another version of this island (another host's), not on this PC: this PC's own
+			/// version plays in its place, the world keeps its version's hash, and a player who has it sends it (RK1).</summary>
+			public bool StandIn;
+			/// <summary>Host: the world's version came while the stand-in was loaded - the file it plays from its next load (RK1).</summary>
+			public string SwitchTo;
+			/// <summary>Client: the host plays another version of this loaded island now - the hash it takes once it is unloaded (RK1).</summary>
+			public string PendingHash;
 			/// <summary>Client: the island file is still coming from the host.</summary>
 			public bool WaitingForFile;
 			/// <summary>Host: its file isn't on this PC and the world plays without it (MissingIslandsCheck) - not loaded, no
@@ -196,12 +203,18 @@ namespace DynamicIslands.Editor
 				lines.AddRange(StoryChain.WriteLines());
 				// (this version keeps the zones' story-loot keys: a file without the line is migrated on reading - TriggerZone)
 				lines.Add(TriggerZone.StoryLootLine);
+				// (dropped items on custom islands: Raft's save keeps none - RK2)
+				lines.AddRange(ItemHold.WriteLines());
+				// (islands this host plays in place of another host's version it lacks: the next load - saved by this PC then - still
+				// tells them apart from its own edits and keeps asking the players for the world's version - RK1)
+				foreach (Entry e in islands)
+					if (e.StandIn && !string.IsNullOrEmpty(e.Hash)) lines.Add("@foreign=" + e.HostName.Replace("|", "/") + "|" + e.Hash);
 				foreach (Entry e in islands)
 				{
 					IslandObjectState.Capture(e);
 					// (the island file's hash: another player hosting the world later finds their copy of it - WorldCopy)
 					lines.Add(string.Format(CultureInfo.InvariantCulture, "{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}", e.HostName, e.Position.x, e.Position.y, e.Position.z, IslandObjectState.Encode(e.State),
-						e.Rule.Replace("|", "/"), e.Label.Replace("|", "/"), IslandNetwork.HashOf(e.Name) ?? e.Hash ?? "") + (e.Extra != null ? "|" + e.Extra : ""));
+						e.Rule.Replace("|", "/"), e.Label.Replace("|", "/"), (e.StandIn ? e.Hash : IslandNetwork.HashOf(e.Name) ?? e.Hash) ?? "") + (e.Extra != null ? "|" + e.Extra : ""));
 				}
 				lines.AddRange(keptLines);
 				// (the version that wrote it: an older one reading it warns - AU5)
@@ -249,6 +262,7 @@ namespace DynamicIslands.Editor
 			if (loadedFor.StartsWith(NoIdPrefix)) Debug.Log("[CUSTOM ISLANDS] This world has no world id in Raft's save (an old world): its custom islands are kept under its name (" + loadedFor + ")");
 			loadFailed = loadFailedTold = false;
 			keptLines.Clear();
+			ItemHold.ClearSaved();
 			WorldCopy.ForgetHostLines();
 			CustomIslandSpawner.Enabled = true;
 			ResetStep("CustomIslandSpawner.OnWorldLoaded", () => CustomIslandSpawner.OnWorldLoaded());
@@ -284,14 +298,16 @@ namespace DynamicIslands.Editor
 				DynamicIslands.Notify("This world's custom islands couldn't be read (see the log, F10): nothing of them is saved until it loads again", true);
 			}
 			if (fileLines == null) { WorldRules.OnWorldRead(); WorldDirector.OnWorldLoaded(); HeadStart.OnWorldRead(); return; }
+			var foreign = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			foreach (string line in fileLines)
 			try
 			{
 				if (line.StartsWith("#") || line.Trim().Length == 0) continue;
+				if (line.StartsWith("@foreign=")) { foreign.Add(line.Substring("@foreign=".Length).Trim()); continue; }
 				if (line.StartsWith("@auto=")) { CustomIslandSpawner.Enabled = !line.Substring(6).Trim().Equals("off", StringComparison.OrdinalIgnoreCase); continue; }
 				if (line.StartsWith("@modversion=")) { NewerFile(line.Substring("@modversion=".Length).Trim()); continue; }
 				int eq = line.IndexOf('=');
-				if (line.StartsWith("@") && eq > 1 && (WorldCopy.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || WorldRules.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || StoryBook.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
+				if (line.StartsWith("@") && eq > 1 && (ItemHold.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || WorldCopy.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || WorldRules.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || StoryBook.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
 					PlayerPlaces.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
 					WorldRandomizer.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
 					PlayerLevels.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
@@ -317,10 +333,13 @@ namespace DynamicIslands.Editor
 				string bad = FileNames.ReceivedProblem(p[0]);
 				if (bad != null) { Debug.LogWarning("[CUSTOM ISLANDS] An island of " + FilePath + " is left out (kept in the file): its name " + bad); keptLines.Add(line); continue; }
 				string hash = p.Length > 7 ? p[7].Trim() : "";
-				var read = new Entry { Id = IslandNetwork.NewId(), Name = WorldCopy.LocalFileFor(p[0], hash), HostName = p[0], Hash = hash.Length > 0 ? hash : null, Position = new Vector3(x, y, z),
+				// (another host's version of the island, not an edit of this PC's own: saved last by another PC, or marked so - RK1)
+				bool other = WorldDirector.SavedElsewhere || foreign.Contains(p[0] + "|" + hash);
+				var read = new Entry { Id = IslandNetwork.NewId(), Name = WorldCopy.LocalFileFor(p[0], hash, other), HostName = p[0], Hash = hash.Length > 0 ? hash : null, Position = new Vector3(x, y, z),
 					State = IslandObjectState.Decode(p.Length > 4 ? p[4] : null), Rule = p.Length > 5 ? p[5] : "", Label = p.Length > 6 ? p[6] : "",
 						// (fields a newer version added: read past, and written back as they were - AU5)
 						Extra = p.Length > 8 ? string.Join("|", p, 8, p.Length - 8) : null };
+				read.StandIn = other && read.Hash != null && IslandNetwork.IsHash(read.Hash) && read.Name == p[0] && IslandNetwork.HashOf(p[0]) != null && IslandNetwork.HashOf(p[0]) != read.Hash;
 				// (no file of it on this PC: it waits for a player to send it, instead of failing - AU6)
 				if (read.Hash != null && !File.Exists(IslandSpawner.PathFor(read.Name)) && IslandNetwork.Wanted.Contains(read.Hash))
 				{

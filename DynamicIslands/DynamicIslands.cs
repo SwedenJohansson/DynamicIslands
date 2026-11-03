@@ -400,6 +400,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Raft events", e); }
 			try { CustomIslandSpawner.Tick(); }
 			catch (Exception e) { TickError("Island spawner", e); }
+			try { ItemHold.Tick(); }
+			catch (Exception e) { TickError("Dropped items", e); }
 			try { IslandNetwork.Tick(); }
 			catch (Exception e) { TickError("Island network", e); }
 			try { IslandObjectState.Tick(); }
@@ -1344,7 +1346,8 @@ namespace DynamicIslands
 					WorldDirector.Fresh.Remove(entry);
 					// (the host's list says which version the world plays: an island edited in the editor since the world was
 					// saved kept its old hash there until the next save)
-					if (Raft_Network.IsHost) entry.Hash = IslandNetwork.HashOf(entry.Name) ?? entry.Hash;
+					// (not for a stand-in for another host's version: the world keeps that one - RK1)
+					if (Raft_Network.IsHost && !entry.StandIn) entry.Hash = IslandNetwork.HashOf(entry.Name) ?? entry.Hash;
 					IslandSpawner.RegisterNetworkIds(root, entry.Id);
 					StableIds.CheckPickups(island, root, position.y > IslandSpawner.FlyingThreshold);
 					IslandObjectState.Apply(entry, IslandRules.RegrowDays(entry));

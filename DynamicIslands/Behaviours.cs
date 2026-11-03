@@ -683,6 +683,9 @@ namespace DynamicIslands.Editor
 		/// checks use their items up (Raft's items from this player's inventory, story items from the crew's): all of
 		/// them, or with any, only the one that passed first.
 		/// </summary>
+		/// <summary>The player's own Raft items the last Passes took (given back when the host refuses the event - RK3).</summary>
+		static readonly List<KeyValuePair<string, int>> LastTaken = new List<KeyValuePair<string, int>>();
+
 		public static bool Passes(IslandWorldState.Entry e, int index, List<ObjCheck> checks, bool any = false, bool take = true)
 		{
 			PlayerInventory inv = RAPI.GetLocalPlayer() != null ? RAPI.GetLocalPlayer().Inventory : null;
@@ -709,10 +712,11 @@ namespace DynamicIslands.Editor
 				}
 			}
 			if (!take) return true;
+			LastTaken.Clear();
 			foreach (ObjCheck c in passed.Where(x => x.Kind == "take" && !x.Not))
 			{
 				if (StoryItems.IsStory(c.Target)) StoryBook.Take(StoryItems.IdOf(c.Target), c.Count);
-				else if (inv != null) inv.RemoveItem(c.Target, c.Count);
+				else if (inv != null) { inv.RemoveItem(c.Target, c.Count); LastTaken.Add(new KeyValuePair<string, int>(c.Target, c.Count)); }
 			}
 			return true;
 		}
@@ -800,6 +804,8 @@ namespace DynamicIslands.Editor
 			List<ObjAction> actions = ActionsOf(e, index, ev);
 			List<ObjCheck> checks = ChecksOf(e, index, ev);
 			if (actions.Count == 0 && checks.Count == 0) return;
+			// (a client's second use while the host's signal that bars it is on its way: nothing - RK4)
+			if (localPlayer && !Raft_Network.IsHost && SignalLocked(e, index, ev)) { Debug.Log("[CUSTOM ISLANDS] '" + ev + "' on '" + e.HostName + "' again before the host's signal came: left out"); return; }
 			// Reading a note counts once per world
 			bool once = ev == "read" || ev == "arrive";
 			int key = DoneBase + index;
@@ -815,19 +821,81 @@ namespace DynamicIslands.Editor
 				if (Raft_Network.IsHost) Schedule(e, index, actions, false, true, ev);
 				return;
 			}
+			LastTaken.Clear();
 			if (!skipChecks && checks.Count > 0 && !Passes(e, index, checks, AnyOf(e, index, ev)))
 			{
 				Otherwise(e, index, ev, localPlayer);
 				return;
 			}
+			// (a client's event the host checks again and may refuse - Run: its once mark and the Raft items its checks took
+			// wait for the answer. Marked for good at once, a refusal left the note or arrival used with nothing done - RK3)
+			bool waits = localPlayer && !Raft_Network.IsHost && actions.Count > 0 && IslandNetwork.HostAnswersEvents && HostRechecks(e, index, ev);
+			if (waits) awaiting[AwaitKey(e.Id, index, ev)] = new Awaiting { OnceKey = once ? key : -1, Taken = LastTaken.ToList(), At = Time.unscaledTime };
+			LastTaken.Clear();
 			if (once)
 			{
 				e.State[key] = new ObjectState { Active = false, Day = Today };
-				IslandNetwork.SendUsed(e.Id, key, Today);
+				if (!waits) IslandNetwork.SendUsed(e.Id, key, Today);
 			}
+			if (localPlayer && !Raft_Network.IsHost) LockForSignal(e, index, ev, actions, checks);
 			Run(e, index, ev, actions, localPlayer);
 			if (Fired != null) try { Fired(e.Id, index, ev); } catch { }
 		}
+
+		class Awaiting { public int OnceKey; public List<KeyValuePair<string, int>> Taken; public float At; }
+		/// <summary>Client: events waiting for the host's yes or no (RK3), by island, object and event.</summary>
+		static readonly Dictionary<string, Awaiting> awaiting = new Dictionary<string, Awaiting>();
+		static string AwaitKey(int id, int index, string ev) { return id + ":" + index + ":" + ev.TrimEnd('!'); }
+
+		/// <summary>Client: the host answered an event this player waited for (ev ends in "!": refused). A yes marks a once
+		/// event used for everyone; a no takes the once mark back and gives back the Raft items its checks took (RK3).</summary>
+		static void HostAnswered(IslandWorldState.Entry e, int index, string ev)
+		{
+			string k = AwaitKey(e.Id, index, ev);
+			Awaiting a;
+			if (!awaiting.TryGetValue(k, out a)) return;
+			awaiting.Remove(k);
+			if (!ev.EndsWith("!"))
+			{
+				if (a.OnceKey >= 0) IslandNetwork.SendUsed(e.Id, a.OnceKey, Today);
+				return;
+			}
+			if (a.OnceKey >= 0) e.State.Remove(a.OnceKey);
+			PlayerInventory inv = RAPI.GetLocalPlayer() != null ? RAPI.GetLocalPlayer().Inventory : null;
+			if (inv != null) foreach (KeyValuePair<string, int> t in a.Taken) inv.AddItem(t.Key, t.Value);
+			signalLocks.Remove(k);
+			Debug.Log("[CUSTOM ISLANDS] The host refused '" + ev.TrimEnd('!') + "' on '" + e.HostName + "': " + (a.OnceKey >= 0 ? "not marked used, " : "") + a.Taken.Count + " kind(s) of item given back");
+		}
+
+		/// <summary>Client: until when an object's event is barred (RK4) - its checks wait for a signal the same event sends,
+		/// which only the host's echo sets here: a second use within that time ran the player's part (items, messages) twice.</summary>
+		static readonly Dictionary<string, float> signalLocks = new Dictionary<string, float>();
+		const float SignalEchoSeconds = 4f;
+
+		static bool SignalLocked(IslandWorldState.Entry e, int index, string ev)
+		{
+			float until;
+			string k = AwaitKey(e.Id, index, ev);
+			if (!signalLocks.TryGetValue(k, out until)) return false;
+			if (Time.unscaledTime < until) return true;
+			signalLocks.Remove(k);
+			return false;
+		}
+
+		static void LockForSignal(IslandWorldState.Entry e, int index, string ev, List<ObjAction> actions, List<ObjCheck> checks)
+		{
+			if (ev.EndsWith("!")) return;
+			var sent = new HashSet<string>(actions.Where(a => a.Verb == "signal").Select(a => a.Arg), StringComparer.OrdinalIgnoreCase);
+			if (sent.Count == 0 || !checks.Any(c => c.Kind == "signal" && c.Not && sent.Contains(c.Target))) return;
+			// (the signal comes after the actions' waits: barred that much longer)
+			float waits = 0f;
+			foreach (ObjAction a in actions) { if (a.Verb == "signal" && sent.Contains(a.Arg)) break; if (a.Verb == "wait") waits += a.Seconds; }
+			signalLocks[AwaitKey(e.Id, index, ev)] = Time.unscaledTime + SignalEchoSeconds + waits;
+		}
+
+		/// <summary>Tests: whether an event is barred on this client until its signal comes (RK4); an event waiting for the host (RK3).</summary>
+		internal static bool SignalLockedForTest(IslandWorldState.Entry e, int index, string ev) { return SignalLocked(e, index, ev); }
+		internal static bool AwaitingForTest(IslandWorldState.Entry e, int index, string ev) { return awaiting.ContainsKey(AwaitKey(e.Id, index, ev)); }
 
 		/// <summary>A check failed: the event's "otherwise" actions (usually a message for the player who tried).</summary>
 		static void Otherwise(IslandWorldState.Entry e, int index, string ev, bool localPlayer)
@@ -986,7 +1054,12 @@ namespace DynamicIslands.Editor
 				// (yes: the player's own part runs now)
 				if (answer && from.HasValue) IslandNetwork.SendEventTo(from.Value, e.Id, index, ev);
 			}
-			else if (fromHost && (answer || Near(e))) Schedule(e, index, actions, false, false, ev);
+			else if (fromHost && (answer || Near(e)))
+			{
+				// (this player's event the host answered: its once mark and taken items - RK3)
+				if (answer) HostAnswered(e, index, ev);
+				Schedule(e, index, actions, false, false, ev);
+			}
 		}
 
 		/// <summary>

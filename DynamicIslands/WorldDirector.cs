@@ -1407,6 +1407,17 @@ namespace DynamicIslands.Editor
 			Log("This world names no owner of its plan (saved before worlds kept one): this PC's islands are the plan's from now on");
 		}
 
+		/// <summary>The world was saved last by another PC ("@savedby=" names another Steam id): an island file here that differs from
+		/// the world's is this PC's own version of it, not the world's (RK1). False when not known.</summary>
+		internal static bool SavedElsewhere
+		{
+			get
+			{
+				if (localId == 0) localId = LocalSteamId;
+				return savedBy != 0 && localId != 0 && savedBy != localId;
+			}
+		}
+
 		/// <summary>For tests: the world file's @savedby id.</summary>
 		internal static ulong SavedByForTest { get { return savedBy; } set { savedBy = value; } }
 

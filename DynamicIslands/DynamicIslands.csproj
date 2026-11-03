@@ -164,6 +164,7 @@
     <Compile Include="IslandGenerator.cs" />
     <Compile Include="IslandNetwork.cs" />
     <Compile Include="IslandObjectState.cs" />
+    <Compile Include="ItemHold.cs" />
     <Compile Include="IslandRadar.cs" />
     <Compile Include="IslandSpawner.cs" />
     <Compile Include="IslandWorldState.cs" />
@@ -371,6 +372,9 @@
     <Compile Include="DevTestsGenSweep.cs" />
     <Compile Include="DevTestsEditor1030.cs" />
     <Compile Include="DevTestsLifecycle1030.cs" />
+    <Compile Include="DevTestsItemHold.cs" />
+    <Compile Include="DevTestsStandIn.cs" />
+    <Compile Include="DevTestsMpAnswer.cs" />
     <Compile Include="DevTestsMerge1031.cs" />
     <Compile Include="DevTestsFix3.cs" />
     <Compile Include="DevTestsNoteCarry.cs" />

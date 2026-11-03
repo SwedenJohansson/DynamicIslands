@@ -308,9 +308,10 @@ Custom islands work like Raft's own: you can **walk** on them, the **raft runs a
 flowers and more. What you took **stays taken** (also after saving, loading and sailing away), and it **grows
 back** after 3 in-game days (the island's builder or `spawnpool.txt` can change that).
 
-**Don't leave loose items on the ground of a custom island.** An item you drop there can fall into the sea when the
-island unloads (the raft sails far away) or while it loads again after loading a save. Keep them in your inventory or
-a storage on the raft. (This is being fixed.)
+**Items you drop on a custom island stay there.** While the island is away (the raft sailed far off) they wait where
+they lay and settle on the ground again once it is back. They are also kept when the world is saved and loaded again
+(Raft itself keeps no dropped items in a save, so items dropped on the sea or on Raft's own islands are still gone
+then).
 
 ![On a generated island](images/world-on-a-generated-island.jpg)
 *On a generated tropical island: Raft's bamboo, palms and plants, placed where Raft's own islands have them.*
@@ -2907,12 +2908,12 @@ who joins with it brings it. Get a missing island from the plan's maker (their p
 entry the message names. (Worlds saved before 2026-10-06 still look up the islands not brought yet by name: there,
 **Rename** an own island named like the plan's - F10 `WorldPlan` lists them.)
 
-**Let a player who hosted before join first.** A world follows the host's version of an island. When the next host
-has an island of the world in another version (same name, changed in their editor), they play theirs until a player
-who has the world's version joins. If the world is saved before that, it keeps the host's version from then on, and
-what was used on that island may sit on other objects. So the next host waits for a player who hosted the world
-before (or who has its islands unchanged) before playing on. (The same rule lets your own edits reach your saved
-worlds, [4.7](#47-saving-and-sharing). This is being fixed.)
+**An island in another version on the next host's PC.** When the next host has an island of the world in another
+version (same name, changed in their editor), they play theirs in its place, but the world keeps its own version:
+saving doesn't replace it. The players are asked for the world's version; once one who has it joins, it is sent, and
+it plays from the island's next load (when the raft has sailed away from it and back, or the world is loaded again).
+What was used on the island while the host's version stood in may sit on other objects then. Your own edits still
+reach the worlds you saved yourself ([4.7](#47-saving-and-sharing)).
 
 #### Everyone runs the same version of the mod
 
@@ -4092,9 +4093,6 @@ before you stop.
 is there at once when you are under the sea or haven't got anywhere for 20 seconds (Raft itself waits 30 seconds),
 and it takes you back to your raft. If that doesn't help, **Esc > SPAWN TO RAFT** is the last way out: it asks
 "Only use this if you have gotten stuck in a place you cannot get out of", and **Yes** puts you on your raft.
-
-**A cave looks see-through from outside.** Some caves (the `ar_cave` kind) have a one-sided shell: from outside the
-island you can see into the cave through its wall. It is only how it looks; inside, the cave is as it should be.
 
 **I can't get onto a flying island (or a cliff island).** Build stairs or pillars up from the raft. The generator's
 reach line tells a builder beforehand.
