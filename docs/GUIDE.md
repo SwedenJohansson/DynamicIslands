@@ -2790,7 +2790,7 @@ rule = id | what | when | where | message | Receiver name
 
 Two more parts put an island into the main story: `| first` / `after:<story island or rule id>` / `instead:<story island>` / `beside`
 and when it's done: `quest`, `visit`, `step:<n>`, `zone:<zone>`, `signal:<signal>`, `note:<note number>` (empty: its quest, or reaching it). Three more parts style its notebook tab: `| tab title | tab colour | tab intro`; the colour is a number, 1 pink, 2 sand, 4 purple, 5 teal, 6 olive, 7 red, 8 green, 9 blue, 10 light blue (there is no 3; empty or 0 = by the island's place in the story). Other lines: `description = ...`, `storyending = ...` (the last page; `\n` = a new line), `endingtitle = ...` and `credits = ...` (the credits' title and the makers' names, `\n` between names),
-`random = on/off` (no line: off), `story = on/off`, `storyleaveout = Balboa, Tangaroa`. The mod writes two more lines itself, which you leave as they are: `id = <12 letters and digits>` (which plan this is, whatever its name: a world remembers it, so a new plan later given an old plan's name isn't taken for an edit of it; plans from before 2026-10-10 and library plans have none) and `modversion = 3.0` (the version of the mod that saved the plan: a plan saved by a newer version keeps the lines this version can't read, and when it has some you are told to update the mod). Lines this version can't read are kept as they are. Save the file; the World plan window and the New Game box read it the
+`random = on/off` (no line: off), `story = on/off`, `storyleaveout = Balboa, Tangaroa`. The mod writes two more lines itself, which you leave as they are: `id = <12 letters and digits>` (which plan this is, whatever its name: a world remembers it, so a new plan later given an old plan's name isn't taken for an edit of it; plans from before 2026-10-10 and library plans have none) and `modversion = 3.1` (the version of the mod that saved the plan: a plan saved by a newer version keeps the lines this version can't read, and when it has some you are told to update the mod). Lines this version can't read are kept as they are. Save the file; the World plan window and the New Game box read it the
 next time they open.
 
 ## 8. Playing together
@@ -2917,7 +2917,7 @@ worlds, [4.7](#47-saving-and-sharing). This is being fixed.)
 #### Everyone runs the same version of the mod
 
 Joining with another version shows a warning naming both versions, and the game goes on. Every release of a version
-says the same number (3.0), so each build also carries a short stamp: another build of the same version shows a notice
+says the same number (3.1), so each build also carries a short stamp: another build of the same version shows a notice
 naming both stamps. Either way, everyone installs the same, newest release - check the **EXPERIMENTAL ALPHA RELEASE**
 box on the main menu, which shows the version - and updates **before** the next session, not in the middle of an
 adventure. A newer world hosted by an older version keeps the lines it doesn't know and warns ("saved by a newer Custom
@@ -4173,7 +4173,7 @@ happened, and make it happen again on their own PC. Please include:
    - **Playing together:** the logs of every player, the host's first, and who was the host.
    - The logs may show your Windows user name (in file paths) and your Steam name and id.
 5. **The settings you used:**
-   - **the versions:** Custom Islands (the box at the top right of the main menu says, for example, 3.0), Raft (bottom
+   - **the versions:** Custom Islands (the box at the top right of the main menu says, for example, 3.1), Raft (bottom
      left of the main menu, for example 1.1.01), the mod loader (top of the main menu, for example v2.8.10), and which
      other mods you have;
    - **the world's settings:** Raft's game mode, the Custom Islands plan, and what you chose in World settings. In the
@@ -4221,7 +4221,7 @@ Steps to make it happen:
   3.
 What I expected:
 How often: every time / now and then / once
-Versions: Custom Islands 3.0, Raft 1.1.01, mod loader v2.8.10, other mods:
+Versions: Custom Islands 3.1, Raft 1.1.01, mod loader v2.8.10, other mods:
 Single player or together: (host / joined, how many players)
 World settings: (what WorldOptions, Monsters, BuildCost, Randomizer, WorldPlan, WorldIslands, SpawnPool print)
 Islands and world plans used: (names, files or download links)
@@ -4640,7 +4640,7 @@ vans, caravans, excavators, forklifts, cranes, ore wagons, snow vehicles, planes
 
 ---
 
-*This guide describes Custom Islands 3.0, the Experimental Alpha Release. It is kept up to date with the mod: every
+*This guide describes Custom Islands 3.1, the Experimental Alpha Release. It is kept up to date with the mod: every
 change to a feature updates this guide, the README and the PDF copy of this guide (`docs/Custom-Islands-Guide.pdf`)
 together.*
 
