@@ -203,7 +203,10 @@ loot odapack Rope*2;HoneyComb*1;Leather*1
 prop odapack loot.refill=0
 place Note_Paper odapacklog at -26.2 -26.6 ground y=0.3 drop
 note odapacklog Page from Oda's pack | O.F. - ROOTWEAVE\n\nLost my pack in the Flooded Passage. Burr pulled it out for me and then ate the strap, which I suppose is his fee.\n\nI am tying his bell to it and leaving it here at the survey camp, so the next person down knows a ranger came this way and is still, more or less, fine. If you are the next person: take what you need. Leave the apple. That is Burr's apple.\n\nThe roots move when I am not looking. I have stopped looking. Burr has not; he stares at the walls and stamps. He is braver than me, or he is just a goat.\n\nThe survey says there are four caves. The roots say there are more.
-place Note_Paper denmark at -6 41 ground y=0.3 drop
+# (fixA 11-03, REACH: dropped at -6 41 it fell into the path's bank, 1.3 m under the floor the walks reached (RA1 11-02) -
+# laid in front of the den mouth, on the levelled ground the walks cross on their way in (inside the mouth, at -4.6 40.4 and
+# -3.8 41.2, it lay against the cave's rock lip with nowhere to stand within reach))
+place Note_Paper denmark at -3 46.5 ground y=0.08 yaw=20
 note denmark Carved mark at the Den | Cut into a root at the Den's mouth with a ranger knife, deep and careful:\n\nO.F. + B.  ->  MARSH\n\nUnder it, older and in a smaller, neater hand:\n\nM.F. WAS HERE. THE BEAR IS NICE IF YOU SING. (SHE IS NOT NICE. - A.)
 
 # --- Settings, notes, behaviours, quest -------------------------------------------------------------------------
