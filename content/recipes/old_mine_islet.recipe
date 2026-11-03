@@ -69,7 +69,23 @@ for k 0 4
 brush flatten at -46 {-37.5+2*$k} r=2.3 s=20 frames=250 h={0.3+1.0*$k}
 clear at -46 {-37.5+2*$k} r=2.6
 next
+# (RA3 11-02, REACH: the pit's walls are sheer and the lowest step stands out of a swimmer's reach - the quarry was a
+# trap: a landing ledge just over the water, pushed out into the pit, and a half step up to the steps)
+brush flatten at -46 -40.0 r=2.0 s=20 frames=600 h=0.35
+clear at -46 -40.0 r=3.0 body
+brush flatten at -46 -38.6 r=1.6 s=20 frames=600 h=0.8
+clear at -46 -38.6 r=2.6 body
 call hw_sunkhouse x=-46 z=-48 h=-10 yaw=45 a=pumphouse chest=pumpbox air=pumpair bub=pumpbub dal=pumpdoor rn=2
+# (RA3 11-02, REACH: two flooded inlets with banks 1.4-1.6 m over the water, too high to climb out of the sea - traps:
+# a notch cut in each bank, a landing just over the water and a step up to the bank)
+brush flatten at -41 -17.8 r=2.0 s=20 frames=600 h=0.4
+clear at -41 -17.8 r=3.0 body
+brush flatten at -41 -16.0 r=1.5 s=20 frames=600 h=0.9
+clear at -41 -16.0 r=2.5 body
+brush flatten at 18.6 -29.7 r=2.0 s=20 frames=600 h=0.4
+clear at 18.6 -29.7 r=3.0 body
+brush flatten at 20.3 -29.7 r=1.5 s=20 frames=600 h=0.95
+clear at 20.3 -29.7 r=2.5 body
 # D Slag Ridge (south) and the slag stacks: a jump course at its west end
 brush flatten from 12 -54 to 40 -48 r=9 s=20 frames=600 h=3
 call hw_mount x=22 z=-55 b=12 h=10
