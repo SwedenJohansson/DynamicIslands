@@ -44,23 +44,22 @@ namespace DynamicIslands.Editor
 
 		/// <summary>EXP gained is nine times what the levels are measured in (the user: doubled 2026-10-02, tripled again
 		/// 2026-10-04, +50 % 2026-10-09) - Bruce gives 180 - so a level takes a ninth of the kills; the EXP each level needs
-		/// is NeededPercent of 100, 200, 400... (75, 150, 300... since 2026-11-03).</summary>
+		/// is 75, 150, then 100 more each level (since 2026-11-03).</summary>
 		public const float GainMultiplier = 9f;
 
 		/// <summary>What Bruce gives (ReferenceXp x GainMultiplier).</summary>
 		public static int BruceXp { get { return Mathf.RoundToInt(ReferenceXp * GainMultiplier); } }
 
-		/// <summary>Monster kills worth ReferenceXp each from this level to the next: 5, 10, 20, 30, 40, ... (a sixth as many of
-		/// Bruce, GainMultiplier).</summary>
-		public static int KillsFor(int level) { return level <= 1 ? 5 : 10 * (level - 1); }
+		/// <summary>EXP from level 1 to 2, and from level 2 to 3 (the user 2026-11-03: 75 % of the old 100 and 200).</summary>
+		public const int FirstLevelXp = 75, SecondLevelXp = 150;
 
-		/// <summary>Share of the EXP each level needs (the user 2026-11-03: 10 % less, then 25 % less, to level up faster).</summary>
-		public const int NeededPercent = 75;
+		/// <summary>How much more EXP each level after that needs than the one before (the user 2026-11-03: +100, was +150).</summary>
+		public const int StepXp = 100;
 
-		/// <summary>EXP from this level to the next: 75, 150, 300, 450, 600, ... (NeededPercent of 100, 200, 400, ...).</summary>
-		public static int XpFor(int level) { return ReferenceXp * KillsFor(level) * NeededPercent / 100; }
+		/// <summary>EXP from this level to the next: 75, 150, 250, 350, 450, ...</summary>
+		public static int XpFor(int level) { return level <= 1 ? FirstLevelXp : SecondLevelXp + StepXp * (level - 2); }
 
-		/// <summary>Total EXP at which this level starts (level 1 at 0, level 2 at 75, level 3 at 225, level 4 at 525, level 5 at 975).</summary>
+		/// <summary>Total EXP at which this level starts (level 1 at 0, level 2 at 75, level 3 at 225, level 4 at 475, level 5 at 825).</summary>
 		public static int TotalFor(int level)
 		{
 			int total = 0;
