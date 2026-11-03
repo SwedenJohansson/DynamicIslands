@@ -54,6 +54,12 @@ range). Points = `Camera_Point` (Zones & triggers; props cam.path/order/look/spe
 - `Mods\DynamicIslands\worlds\<WorldGuid>-<steam id>.rewards`: this machine's `rewarded` / `owed` lines (`QuestRewards`), never sent. Plus `after <ticks> <island>` lines: the Raft save (lastPlayedDateTicks) each reward was given after. A reward given after the save the world loaded from (crash, quit without saving, older save) is paid again once when its quest is redone; no stamp (old files) = refused as before (review 10-30).
 - Network: `ObjectUsed` 6, `QuestStep` 7, `ObjectSet` 9, `EventFired` 10, `Story` 11, `Claim` 16, `QuestCount` 20, `QuestStepMore` 25.
 
+## Quest text rules (user, 2026-10-27; ROADMAP PQ1-PQ10, guide 6.1 "Writing steps players can follow")
+
+- Step and note texts never use compass sides; they name landmarks a player can see from any arrival side. Each step says plainly what to do and where ("kill the rats", not "free the area"); an item in a crate or chest is said to be in one.
+- The first step's place is marked (a gold beam, label "Start: ..."; `Minimap.cs`, the opening message in `Quest.cs`) and the opening message names it. Every island message goes to the journal once.
+- Nothing unreachable, no spot to get stuck in: every pit, shaft and cave has a ladder or ramp out; Unstuck works under the sea and after 20 s stuck. Kill steps have a spare creature. `CIReach` (testing.md) walks every target.
+
 ## Where to change X
 | Task | Edit |
 |---|---|

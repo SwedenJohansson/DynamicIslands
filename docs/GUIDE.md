@@ -116,7 +116,7 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
 10. [Settings files](#10-settings-files)
 11. [Console commands](#11-console-commands)
 12. [Limitations: what can't be changed](#12-limitations-what-cant-be-changed)
-13. [Questions and problems](#13-questions-and-problems)
+13. [Questions and problems](#13-questions-and-problems) - and [Can I...?](#can-i)
 14. [Reporting a problem](#14-reporting-a-problem)
 15. [Learn from the library: example islands and plans](#15-learn-from-the-library-example-islands-and-plans)
    - [15.1 Opening an example in the editor](#151-opening-an-example-in-the-editor) ·
@@ -1764,6 +1764,30 @@ Raft doesn't have, or one no island of the plan gives.
 **Collect and find-pages steps** count what the whole crew holds, and finish while a player is at the island - so the
 reward reaches someone. Two copies of the same island in one world each count their own: the pages read and story items
 found on one copy don't finish the other's step (items found away from both count for both).
+
+**Writing steps players can follow.** Players reach an island from any side, so a step has to say plainly what to do
+and where, in words anyone can follow:
+- Point at things you can see, by name: "go to the lighthouse", "the chest under the big tree", "the camp by the
+  water". Never use compass sides ("go south"): nobody knows which way they arrived from. Give a step's **go to**
+  zone a title players can find, and make the first step's place easy to see from every side (the gold beam above marks
+  it, and the opening message names it).
+- Say what to do, not what it is for: "kill the rats", not "free the area"; "open the chest in the hut", not "find what
+  the keeper hid". If an item is in a crate or chest, say so.
+- Every message an island shows (a note, a zone's words, the opening and closing messages) is kept in the journal ([3](#the-journal-j)),
+  so it can be read again; write each one so it still makes sense later.
+- Leave a way out of every cave, shaft and pit (a ladder or a ramp), and nothing a player needs out of reach or inside
+  rock. Raft's **Unstuck** (Esc menu) works at once under the sea and after 20 seconds without getting anywhere near a
+  custom island, and takes the player back to the raft, so a mistake is not the end of a world.
+- For a quest that has to be done by killing, put one more of the creature than the step asks for: one can despawn or
+  fall into the sea.
+- Show the story as well as telling it: a door that opens, a bridge that lowers, a sound or an effect, with the note
+  ([6.2](#62-behaviour-and-events)).
+
+**Check the way to every target.** **Check** ([7.5](#75-check-finding-and-fixing-problems)) finds quests that can't be
+finished, but not a target that can't be reached. Walk to each one from the sea, from more than one side, then back out
+(**Test**, [4.9](#49-trying-the-island-in-a-world-test)): a note or chest on a roof, in a pit, behind a wall that is too high
+to climb, or under the ground is a quest that can't be finished. The library's islands were all walked this way by a
+test tool before release (it is for developers: the mod's `CIReach` test commands are left out of the released mod).
 
 **Traps to avoid** when you make a quest (toggles in events that happen again, keys, rewards): see the notes under
 6.2; **Check** finds most of them ([7.5](#75-check-finding-and-fixing-problems)). Play your adventure once with
@@ -4152,6 +4176,57 @@ background (a minute or two; the object browser's status line says so).
 **Something went wrong.** Press F10: the mod's messages start with `[CUSTOM ISLANDS]`. Raft's log is
 `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\Player.log`. To tell us about it, see
 [section 14](#14-reporting-a-problem).
+
+### Can I...?
+
+Questions players and island builders have asked, with short answers.
+
+**Can I tie a questline to notes on random islands, or to Raft's own crates?** Partly. Notes go on your own islands, and
+an island that comes by chance while you sail brings its quest and notes with it. Story items belong to the whole world:
+a note or chest on one island can give one, and checks, locked chests and quest steps on any other island can ask for
+it. So a questline can run over several islands that arrive by chance. A plan rule can also bring the next island when
+a quest is done or a note is read ([7.4](#74-everything-a-rule-can-do)). What you can't do yet: put the mod's notes or
+story items in Raft's own floating barrels and abandoned-raft crates (only the mod's chests hold them), make a rule that
+puts note N of a questline on whichever random island comes next, or give a world a questline that belongs to no island.
+
+**Can players do the quest steps out of order?** Yes. A chest opened or animals defeated before their step has come are
+remembered and count when the step comes. If several later steps could take the same work, the step that names it gets
+it: a Vault opened early counts for a later "open the Vault" step, not for an "open any chest" step before it. To keep
+the order, hide a later step's chest or animals until the step before shows them. A story item from a trigger zone or a
+loot crate is given once only, so a key can't be had twice to skip ahead ([6.1](#61-quests)).
+
+**Can I leave an island before its quest is done and come back?** Yes. An island you still need (its story step not
+done, a quest begun and not finished, or a Receiver rule not finished) keeps its dot on the Receiver at any distance,
+and every Receiver frequency in the world works. If its file failed to load, it is tried again; a story step whose
+island fails three times goes on without it, and the journal gets a page with the new frequency ("The signal moved") when
+one had to change ([6.5](#65-your-islands-in-rafts-story-the-receiver)). `SpawnIsland <name>` (F10) on a story island the
+world already has brings that island back with its quest as you left it, not a fresh copy.
+
+**Can I start with a better raft?** Yes. **World settings** has a head start level from 1 to 10. Level 1 is a small step
+up; level 10 is about 20 hours of play: a full raft with the best grills and water tanks, smelters, storages, flippers,
+oxygen tanks, lamps and canisters, and catching nets round most of it. Nothing of titanium or later. Every level adds
+about 15 planks for walls and an upper floor. Chests and equipment sit in the middle of the raft, so the shark can't bite
+them off. Pick the level that fits: easy, hard, or getting back to where a world was ([Head start raft](#head-start-raft)).
+
+**Do I need a new world after updating?** No. A world made with an earlier version plays on. When the host loads it, the
+mod puts right what an island that went missing left behind: an island you left before its quest was done shows its
+Receiver dot again however far away it is, and a quest you finished on a copy you spawned earlier counts, so the next
+frequency comes. Back up the worlds you care about first (this is an alpha).
+
+**Raft crashed, or I loaded an older save, right after a quest's reward. Is the reward gone?** No. A reward follows
+Raft's saves: the quest goes back with the save, and when you finish it again the reward is paid again, once. A reward
+kept in a save is never paid twice. (A reward paid before the world's very first save can't come again.)
+
+**Another player hosted our world and one of my islands looked different.** The world keeps its own version of each
+island. If the next host has an island of the world in another version (same name, changed in their editor), they play
+theirs until a player who has the world's version joins; that version is then sent and plays from the island's next
+load. What was used on the island meanwhile may sit on other objects. Letting a player who hosted the world before join
+first avoids it ([Hosting on another day](#hosting-on-another-day)).
+
+**Items I dropped on a custom island - will they be there when I come back?** Yes. An item dropped on a custom island
+waits where it lay when the island unloads (the raft far away) and is kept in the world's save. Items dropped on the sea
+or on Raft's own islands are still lost, as Raft keeps no dropped items in a save: keep what matters in your inventory
+or in a storage on the raft.
 
 More: the [README](../README.md) (every feature, file and command, the limitations and what has been tested).
 

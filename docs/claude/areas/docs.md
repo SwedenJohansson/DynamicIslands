@@ -37,7 +37,7 @@ Then `## N. Title` chapters, `### N.M Title` subsections, and unnumbered `####` 
 - 6 Stories: quests, behaviour and events, story items, islands that bring islands, Raft's story and notebook.
 - 7 World plans: the three kinds of islands, the shipped plans, first plan, rule card, every rule, Check, sharing, the plan file.
 - 8 Playing together. 9 World settings: window, rules, randomizer, extra options, islands while sailing, level up.
-- 10 Settings files. 11 Console commands (Command/Where/What it does). 12 Limitations. 14 Reporting a problem. 15 Learn from the library (15.1-15.13: example islands, plans, the storylines). 16 Learn from the islands (open any island in the editor, every feature and an island that shows it).
+- 10 Settings files. 11 Console commands (Command/Where/What it does). 12 Limitations. 13 Questions and problems (plain `**Question.**` answers; its last part `### Can I...?` is the FAQ, built from questions users asked: add new ones there and in README `## Can I...? (questions and answers)`). 14 Reporting a problem. 15 Learn from the library (15.1-15.13: example islands, plans, the storylines). 16 Learn from the islands (open any island in the editor, every feature and an island that shows it).
 - No known-issues chapter (removed 2026-10-23): advice on how to avoid a problem goes in the topic's own section, written as plain advice; can't-change limits go to 12.
 - 13 Questions and problems: a paragraph that starts with the problem in bold, ending in a full stop
   (`**No islands appear while I sail.**`), then the answer.

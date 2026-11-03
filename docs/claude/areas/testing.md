@@ -117,6 +117,15 @@ Use `ci.ps1` in the repo root to run this mod's console commands (the CI* test c
 - Exit 0 no FAIL, 1 FAIL, 2 setup problem (one line says which), 3 timeout.
 - Second Raft under Sandboxie: `-Player 2 -LogPath <its Player.log>` uses `dev_commands_2.txt`. The box must open that file to the real folder (`OpenFilePath`).
 
+## Reach audit: can a player get to every quest target? (`DevTestsReach.cs`, ROADMAP PQ11)
+
+- `CIReach <island>` (world, host, a world named `CI ...`): brings the island in and, with Raft's own colliders, measures whether every quest target (note, chest, zone, used object, islander) can be got to from the open sea on four sides and left again to the sea; it then walks the targets with the real player (`CharacterController`), uses them, and walks back out. A quest island with a target no player can reach fails.
+- `CIReachOn [label]` / `CIReachOff`: every `CIPlay` measures each island it leaves, in the state the quest left it (`CIReachOff` for a play that only needs pictures).
+- Speed: `CIReachSpeed <n> [pace]` - n moves a frame (1 = a player's pace, 0 = no walks, the grid alone; 3x to 5x in audits), and `pace` multiplies Raft's walk and swim speed on the ground and in the water (not in the air). Raft moves by swept `CharacterController.Move`, so there is no tunnelling; a guard casts from the old to the new position each frame and marks a tunnelled walk INVALID. `CIReachControls`: the walker also walks straight at walls too high to step or jump over; none may be got through. Every FAIL is walked again at 1x before it counts.
+- Precheck: an open target under the sky with a path in from two or more sides and back to the water may pass by the grid alone ("PASS (precheck)"). Caves, shafts, roofs, under-water spots and chests in buildings are always walked.
+- Tools: `CIReachProbe` (the walker alone between two points, logging what is round its feet), `CIReachHeights` (a grid of heights to plan a ramp), `CIReachSwim`, `CIReachWhy` (the player's movement state). The mod logs `[CITEST] HB` every 10 s; a walker that moves under 0.5 m in 10 s is unstuck once, and after 30-90 s without a waypoint the walk fails as "stuck".
+- Plans, results and the open list: `_ProjectDocs/plans/REACH_AUDIT.md` (outside git).
+
 ## Low graphics for test runs: CIGfx (`DevTestsGfx.cs`)
 
 - `CIGfx low [fps]`: windowed 1280x720, quality level 0, shadows off, lowest water, AO/AA/volumetric light off, vsync off, frame cap (default 30, `0` = none). `CIGfx high`: the user's values back (taken when low was first set). `CIGfx status`.
