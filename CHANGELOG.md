@@ -14,8 +14,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 Not in this release yet; these come in the next update:
 - **Straight cave tunnel seen from inside**: the den's wall round the mouth is rock now, across the whole den and up
   to its roof (it drew black, with a band of sky above it).
-- **Dig brush look in a world**: the mouth's rim top drawn with the ground's grass as in the editor (rock in a world for
-  now), and the passage near the mouth as brown as in the editor (it is paler there, lit by the sky).
+- **Dig brush look in a world**: the rock over the mouth has the ground's grass on top in a world too (it was bare
+  rock), and the passage near the mouth is darker and less shiny (the sky's blue light and the sun washed it out there).
 - Reach fixes still being checked on Steamvent Harbour, Rootweave Caves, Caravan Town Remade, Old Mine Islet, Cistern
   Hall, Spirecrest Roofs, Radio Tower Remade, The Rootcore, Ironreef Caverns, Colossus of the Strait and the rest of
   Primeval Park.

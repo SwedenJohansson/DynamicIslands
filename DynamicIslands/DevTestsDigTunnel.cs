@@ -783,6 +783,68 @@ namespace DynamicIslands
 			if (ok) Log("PASS: dig tunnel world"); else Fail("dig tunnel world");
 		}
 
+		[ConsoleCommand(name: "CIDigLookProbe", docs: "Dev, editor or world: the first dug tunnel's lining tried with a light trick, pictures before and after (CIDigLookProbe vc|sh|none): vc vertex colours black, sh its own black ambient (a custom light probe); then put back")]
+		public static void DigLookProbeCommand(string[] args) { StartTest(DigLookProbeRoutine(args.Length > 0 ? args[0] : "none")); }
+
+		static IEnumerator DigLookProbeRoutine(string mode)
+		{
+			DigTunnel tun = Object.FindObjectsOfType<DigTunnel>().FirstOrDefault(x => x.PointCount > 10);
+			if (tun == null) { Fail("dig look probe: no tunnel"); yield break; }
+			List<Vector3> line = DigLine(tun);
+			MeshRenderer mr = tun.transform.Find(DigTunnel.RockName).GetComponent<MeshRenderer>();
+			Mesh mesh = mr.GetComponent<MeshFilter>().sharedMesh;
+			Vector3 from = line[2] + Vector3.down * 0.3f, to = line[Mathf.Min(line.Count - 1, 22)];
+			Vector3 out0 = line[0] - (line[Mathf.Min(6, line.Count - 1)] - line[0]).normalized * 6f; out0.y = line[0].y + 1.5f;
+			yield return CameraShot(from, to, "digprobe_" + mode + "_0");
+			yield return CameraShot(out0, line[Mathf.Min(line.Count - 1, 10)], "digprobe_" + mode + "_out0");
+			var cols = new List<Color>(); mesh.GetColors(cols);
+			if (mode == "vc") { var c = new Color[mesh.vertexCount]; for (int i = 0; i < c.Length; i++) c[i] = (i / 64) % 2 == 0 ? Color.black : Color.white; mesh.colors = c; }
+			UnityEngine.Rendering.LightProbeUsage lpu = mr.lightProbeUsage;
+			var saved = new MaterialPropertyBlock(); mr.GetPropertyBlock(saved);
+			DigTunnel.LiningLightOff = true;
+			if (mode == "amb" || mode == "gi" || mode == "none")
+			{
+				// (what the lining's light is when left to Unity, and the two places a light probe could be taken from)
+				for (int i = 0; i < 4; i++) mr.SetPropertyBlock(null, i);
+				mr.SetPropertyBlock(null);
+				mr.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.BlendProbes;
+				yield return null;
+				yield return CameraShot(from, to, "digprobe_" + mode + "_base");
+				UnityEngine.Rendering.SphericalHarmonicsL2 amb = RenderSettings.ambientProbe, gi;
+				LightProbes.GetInterpolatedProbe(mr.bounds.center, mr, out gi);
+				System.Func<UnityEngine.Rendering.SphericalHarmonicsL2, string> dc = h => h[0, 0].ToString("0.00") + "," + h[1, 0].ToString("0.00") + "," + h[2, 0].ToString("0.00");
+				Log("  ambient mode " + RenderSettings.ambientMode + " intensity " + RenderSettings.ambientIntensity + " sky " + RenderSettings.ambientSkyColor + " eq " + RenderSettings.ambientEquatorColor + " ground " + RenderSettings.ambientGroundColor
+					+ "; probe dc " + dc(amb) + "; interpolated dc " + dc(gi) + "; probes " + (LightmapSettings.lightProbes != null ? LightmapSettings.lightProbes.count : -1)
+					+ "; SHAr " + Shader.GetGlobalVector("unity_SHAr") + " SHAb " + Shader.GetGlobalVector("unity_SHAb"));
+				Shader sd = mr.sharedMaterial.shader; var props = new List<string>();
+				for (int i = 0; i < sd.GetPropertyCount(); i++) if (sd.GetPropertyType(i) == UnityEngine.Rendering.ShaderPropertyType.Color || sd.GetPropertyType(i) == UnityEngine.Rendering.ShaderPropertyType.Float || sd.GetPropertyType(i) == UnityEngine.Rendering.ShaderPropertyType.Range) props.Add(sd.GetPropertyName(i));
+				Log("  lining props " + string.Join(" ", props));
+				if (mode != "none")
+				{
+					mr.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.CustomProvided;
+					var mpb = new MaterialPropertyBlock(); mr.GetPropertyBlock(mpb);
+					mpb.CopySHCoefficientArraysFrom(new[] { mode == "amb" ? amb : gi });
+					mr.SetPropertyBlock(mpb);
+				}
+			}
+			if (mode == "sh")
+			{
+				mr.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.CustomProvided;
+				var mpb = new MaterialPropertyBlock();
+				mr.GetPropertyBlock(mpb);
+				mpb.CopySHCoefficientArraysFrom(new[] { new UnityEngine.Rendering.SphericalHarmonicsL2() });
+				mr.SetPropertyBlock(mpb);
+			}
+			yield return null;
+			yield return CameraShot(from, to, "digprobe_" + mode + "_1");
+			yield return CameraShot(out0, line[Mathf.Min(line.Count - 1, 10)], "digprobe_" + mode + "_out1");
+			Log("  shader " + mr.sharedMaterial.shader.name + ", colours before " + cols.Count + ", probes " + lpu);
+			if (mode == "vc") mesh.SetColors(cols);
+			if (mode == "sh" || mode == "amb" || mode == "gi") { mr.lightProbeUsage = lpu; mr.SetPropertyBlock(saved); }
+			DigTunnel.LiningLightOff = false;
+			Log("PASS: dig look probe " + mode);
+		}
+
 		[ConsoleCommand(name: "CIDigTunnelCamera", docs: "Dev, editor: the editor camera and a dug tunnel - a tunnel dug into a generated island's hill (24 m in, round a bend), the camera flown (its own controls, normal speed, steered at the passage's points) from in front of the mouth to the end: every step in the passage, under the hill's surface, near the path, not too fast; into the wall it stays inside, up into the roof it stops; God mode on: on up through the rock, and into the hillside away from the mouth (off: kept over the ground). Pictures from inside")]
 		public static void DigTunnelCameraCommand(string[] args) { StartTest(DigTunnelCameraRoutine()); }
 
