@@ -373,6 +373,7 @@
     <Compile Include="DevTestsLifecycle1030.cs" />
     <Compile Include="DevTestsItemHold.cs" />
     <Compile Include="DevTestsStandIn.cs" />
+    <Compile Include="DevTestsMpAnswer.cs" />
     <Compile Include="DevTestsMerge1031.cs" />
     <Compile Include="DevTestsFix3.cs" />
     <Compile Include="DevTestsNoteCarry.cs" />
