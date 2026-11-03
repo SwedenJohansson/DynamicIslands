@@ -153,5 +153,62 @@ namespace DynamicIslands
 			catch (Exception ex) { Check(ref ok, false, "threw " + ex); }
 			if (ok) Log("PASS: under sea shift"); else Fail("under sea shift");
 		}
+
+		[ConsoleCommand(name: "CISpawnBoxStays", docs: "Dev, in game: RK16 - SPAWN TO RAFT clicked as a mouse does it (pointer down, up, click): its yes/no box and the Esc menu stay open until answered; No closes only the box")]
+		public static void SpawnBoxStaysCommand() { StartTest(SpawnBoxStaysRoutine()); }
+
+		static void PointerClick(GameObject g)
+		{
+			var ev = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current) { button = UnityEngine.EventSystems.PointerEventData.InputButton.Left, clickCount = 1 };
+			ev.position = RectTransformUtility.WorldToScreenPoint(null, g.transform.position);
+			// (as a mouse: what the UI's raycast finds on top at that point gets the events, which go up to its button)
+			var hits = new List<UnityEngine.EventSystems.RaycastResult>();
+			if (UnityEngine.EventSystems.EventSystem.current != null) UnityEngine.EventSystems.EventSystem.current.RaycastAll(ev, hits);
+			if (hits.Count > 0)
+			{
+				Log("  click at " + ev.position + " hits " + string.Join(" > ", hits.Take(4).Select(h => h.gameObject.name + "[" + string.Join(",", h.gameObject.GetComponents<Component>().Select(x => x.GetType().Name).ToArray()) + "]").ToArray()));
+				if (hits[0].gameObject.transform.IsChildOf(g.transform)) g = hits[0].gameObject;
+				else Log("  (the top hit is not inside " + g.name + ")");
+			}
+			ev.pointerPress = g; ev.pointerEnter = g; ev.rawPointerPress = g;
+			UnityEngine.EventSystems.ExecuteEvents.ExecuteHierarchy(g, ev, UnityEngine.EventSystems.ExecuteEvents.pointerEnterHandler);
+			UnityEngine.EventSystems.ExecuteEvents.ExecuteHierarchy(g, ev, UnityEngine.EventSystems.ExecuteEvents.pointerDownHandler);
+			UnityEngine.EventSystems.ExecuteEvents.ExecuteHierarchy(g, ev, UnityEngine.EventSystems.ExecuteEvents.pointerUpHandler);
+			UnityEngine.EventSystems.ExecuteEvents.ExecuteHierarchy(g, ev, UnityEngine.EventSystems.ExecuteEvents.pointerClickHandler);
+		}
+
+		static IEnumerator SpawnBoxStaysRoutine()
+		{
+			bool ok = true;
+			PauseMenu menu = UnityEngine.Object.FindObjectOfType<PauseMenu>();
+			if (menu == null || RAPI.GetLocalPlayer() == null) { Fail("spawn box stays: no player or pause menu"); yield break; }
+			SpawnToRaft.TraceClose = true;
+			try
+			{
+				CallPrivate(menu, "Pause");
+				yield return new WaitForSecondsRealtime(0.6f);
+				UnityEngine.UI.Button b = SpawnToRaft.Button;
+				if (b == null || !b.gameObject.activeInHierarchy) { Fail("spawn box stays: no SPAWN TO RAFT button in the menu"); yield break; }
+				Log("  button parts: " + string.Join(", ", b.GetComponents<Component>().Select(x => x.GetType().Name).ToArray()));
+				Log("  button's children: " + string.Join("; ", b.GetComponentsInChildren<Transform>(true).Where(x => x != b.transform).Select(x => x.name + "[" + string.Join(",", x.GetComponents<Component>().Select(y => y.GetType().Name).ToArray()) + "]").ToArray()));
+				Log("  box parts: " + string.Join(", ", SpawnToRaft.Box.GetComponentsInChildren<Component>(true).Select(x => x.GetType().Name).Distinct().ToArray()));
+				if (!b.interactable) { Fail("spawn box stays: the button is greyed (" + SpawnToRaft.WhyNot() + ")"); yield break; }
+				PointerClick(b.gameObject);
+				yield return new WaitForSecondsRealtime(3f);
+				Check(ref ok, SpawnToRaft.Asking && CanvasHelper.ActiveMenu == MenuType.PauseMenu, "clicked with the mouse: 3 s later the box and the menu are still open (box " + SpawnToRaft.Asking + ", menu " + CanvasHelper.ActiveMenu + ")");
+				if (SpawnToRaft.NoButton != null && SpawnToRaft.Asking)
+				{
+					PointerClick(SpawnToRaft.NoButton.gameObject);
+					yield return new WaitForSecondsRealtime(1f);
+					Check(ref ok, !SpawnToRaft.Asking && CanvasHelper.ActiveMenu == MenuType.PauseMenu && menu.buttonHolderPanel.activeSelf, "No clicked: only the box closes, the menu stays");
+				}
+			}
+			finally
+			{
+				SpawnToRaft.TraceClose = false;
+				try { if (CanvasHelper.ActiveMenu == MenuType.PauseMenu) menu.ContinuePlaying(); } catch { }
+			}
+			if (ok) Log("PASS: spawn box stays"); else Fail("spawn box stays");
+		}
 	}
 }

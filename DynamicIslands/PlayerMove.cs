@@ -238,6 +238,8 @@ namespace DynamicIslands.Editor
 		public static UnityEngine.UI.Button NoButton { get { return noButton; } }
 		public static GameObject Box { get { return box; } }
 		public static bool Asking { get { return box != null && box.activeSelf; } }
+		/// <summary>Tests: log where a menu close with the box open came from.</summary>
+		public static bool TraceClose;
 
 		/// <summary>Null when the local player can be sent to the raft now, else why not.</summary>
 		public static string WhyNot()
@@ -410,7 +412,8 @@ namespace DynamicIslands.Editor
 		[HarmonyLib.HarmonyPatch(typeof(PauseMenu), "Update")]
 		static class GreyPatch
 		{
-			static float next;
+			static float next, noBlockSince = -1f;
+			static string shown;
 
 			static void Postfix(PauseMenu __instance)
 			{
@@ -419,11 +422,20 @@ namespace DynamicIslands.Editor
 					if (button == null || __instance != menu) return;
 					// (Esc or anything else closing the menu takes the box with it; nothing is checked while the menu is shut.
 					//  Not pausePanel's state: the box hides the button holder, which made that panel read as shut)
-					if (CanvasHelper.ActiveMenu != MenuType.PauseMenu) { Hide(); return; }
+					if (CanvasHelper.ActiveMenu != MenuType.PauseMenu) { Hide(); noBlockSince = -1f; return; }
 					if (Time.unscaledTime < next) return;
 					next = Time.unscaledTime + 0.25f;
-					button.interactable = WhyNot() == null;
-					if (Asking && !button.interactable) Hide();
+					string why = WhyNot();
+					// (RK16: the room check above a raft block can miss for a moment - something drifting by - and that closed the
+					//  open question at once. "No raft block" greys the button only once it has lasted a second, and never closes
+					//  the box: Yes checks again. Dead, asleep or on a zipline close it as before)
+					bool noBlock = why == "no raft block";
+					if (!noBlock) noBlockSince = -1f;
+					else if (noBlockSince < 0f) noBlockSince = Time.unscaledTime;
+					bool grey = why != null && (!noBlock || Time.unscaledTime - noBlockSince >= 1f);
+					if (why != shown) { Debug.Log("[CUSTOM ISLANDS] Spawn to raft: " + (why == null ? "ready" : "not now (" + why + ")") + (Asking ? ", the box open" : "")); shown = why; }
+					button.interactable = !grey;
+					if (Asking && why != null && !noBlock) Hide();
 				}
 				catch { }
 			}
@@ -432,7 +444,15 @@ namespace DynamicIslands.Editor
 		[HarmonyLib.HarmonyPatch(typeof(PauseMenu), "MenuClose")]
 		static class ClosePatch
 		{
-			static void Postfix() { try { Hide(); } catch { } }
+			static void Postfix()
+			{
+				try
+				{
+					if (Asking && TraceClose) Debug.Log("[CUSTOM ISLANDS] Spawn to raft: the menu closed with the box open, from:\n" + System.Environment.StackTrace);
+					Hide();
+				}
+				catch { }
+			}
 		}
 	}
 }
