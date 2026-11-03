@@ -459,4 +459,6 @@ quest reward=OxygenBottle*2;Wool*4;MetalIngot*6
 # SILVER 10-26 ground fixes: rocks the new terrain left floating (or buried) taken away, each by its spot and name
 clear at 32.7 30.3 r=1.5 all only=^TP_BigRock04
 
+# (11-03 fixC, CIFloatingSweep: a scattered sand pickup hung over the ground, cleared the stray scatter)
+clear at 12.45 76.95 r=1.5 only=Pickup_Landmark_Sand all
 save The Sunken Liner

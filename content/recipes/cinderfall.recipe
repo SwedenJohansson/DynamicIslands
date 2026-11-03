@@ -246,7 +246,8 @@ place Block_Wall_Tier3 cf_maze at 15 9.75 y=0.05 yaw=90
 place Block_Wall_Tier3 cf_maze at 15 11.25 y=0.05 yaw=90
 place Block_Wall_Tier3 cf_maze at 15 12.75 y=0.05 yaw=90
 place Block_Wall_Tier3 cf_maze at 15 14.25 y=0.05 yaw=90
-place Loot_ChestSmall cf_mazechest at 13.5 1.5 y=0.05 sit yaw=0
+# (11-03 fixC, CIFloatingSweep: the maze chest stood 0.38 m over the ground, lowered by the gap)
+place Loot_ChestSmall cf_mazechest at 13.5 1.5 y=-0.33 sit yaw=0
 pop
 prop cf_maze tint.color=#5a5a52
 prop cf_maze tint.amount=0.55

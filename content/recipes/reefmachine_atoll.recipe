@@ -260,4 +260,8 @@ step reach|cage|1|Go into the drained intake cage
 quest done=The intake is open and the cage is dry. Something on the Receiver answers now - three relays, out on the water.
 quest reward=Rope*4;Scrap*6;Nail*10
 
+# (11-03 fixC, CIFloatingSweep: a scattered boulder hung over the ground, cleared the stray scatter)
+clear at 43.56 -1.67 r=1.5 only=SmallBoulder1 all
+# (11-03 fixC, CIFloatingSweep: a scattered boulder hung over the ground, cleared the stray scatter)
+clear at 37.91 41.85 r=1.5 only=SmallBoulder2 all
 save Reefmachine Atoll

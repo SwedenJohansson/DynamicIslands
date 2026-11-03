@@ -59,7 +59,8 @@ place Zone_Trigger marketzone at 0 50 h=1.2
 # --- Four drowned towers' roofs at the market's corners ---------------------------------------------------------------
 push at -9 47 h=1
 call hw_roof d=12 a=concrete rm=none
-place Loot_Chest enginecrate at -3 0 y=0.05 sit yaw=90
+# (11-03 fixC: the sand rose 0.8 m over this roof since - at y=0.05 the crate lay buried, nothing to open: set on the sand)
+place Loot_Chest enginecrate at -3 0 ground sit yaw=90
 place "VG_DecorationPrefabBase_Engine Variant" - at -4.5 -2.5 y=0.05 sit
 pop
 push at -9 57 h=1
@@ -108,7 +109,9 @@ place Note_Sign shortage at 1.5 0.4 y=0.1 sit
 pop
 place Note_Sign pricesign at 0 46.2 h=1.05 sit yaw=180
 push at -6 52 h=1.05
-call hw_laundry n=4
+# (11-03 fixC: its east post stood over the sand off the market floor, 0.41 m up: both posts down to the sand as the
+# line beside it - the west one through the floor)
+call hw_laundry n=4 y=-0.42
 pop
 push at 2 52 h=1.05
 call hw_laundry n=3 y=-0.42
@@ -229,7 +232,8 @@ place Loot_ChestLarge rb_strongchest at -63.55 15.56 ground sit yaw=320.83
 place Note_Paper rb_friendnote at -62.4 16.6 ground y=0.05 drop yaw=30
 prop rb_friendnote obj.name=rb_friendnote
 prop rb_friendnote beh.hidden=1
-place "VG_DecorationPrefabBase_Speaker Variant" rb_speaker at 0 82.3 h=1.05 sit yaw=180
+# (11-03 fixC, CIFloatingSweep: the speaker stood 0.7 m over its block - no market floor here: set on the block, h=0.35)
+place "VG_DecorationPrefabBase_Speaker Variant" rb_speaker at 0 82.3 h=0.35 sit yaw=180
 prop rb_speaker obj.name=rb_speaker
 prop rb_speaker beh.use=Listen to the speaker
 prop rb_speaker on.use=show|rb_broadcast\nsound||event:/raft/radio/casette_switch\nmessage||A crackle, a cough, then a calm, tired voice over the whole market. The stallholders go quiet, and then, very deliberately, louder.
@@ -433,4 +437,6 @@ call ar_plants_hill x=-46 z=4 r=12 seed=6210
 call ar_plants_hill x=16 z=-18 r=12 seed=6220
 # (a hill rock that stood off a steep slope, CIGroundIslands 10-25)
 clear at -53.67 9.45 r=3 only=SmallBoulder4 all
+# (11-03 fixC, CIFloatingSweep: a hill palm 2.5 m over the ground at 37.2 23.2)
+clear at 37.2 23.2 r=1.5 only=Tree_Palm all
 save Raft Row Bazaar

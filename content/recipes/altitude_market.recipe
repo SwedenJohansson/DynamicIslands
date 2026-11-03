@@ -79,7 +79,8 @@ place Loot_Chest portertools at -11 -6.5 ground sit yaw=200
 push at 8 6 h=5
 # (REACH 10-28: deck 2.6 -> 2.3 m: the 2.42 m ladder on the ground (4.8) ended 0.4 m under the deck and the climber
 # stuck under its edge)
-call stilt_hut y=2.3
+# (fixC 11-03: floating sweep - one pillar foot 0.56 m above the slope; foot=0.7 sinks all four into the ground)
+call stilt_hut y=2.3 foot=0.7
 place Placeable_Clock_Basic - at 0.9 3.6 y=2.4 sit yaw=90
 place Loot_Chest clockroom at 3.6 3.6 y=2.4 sit yaw=270
 place Loot_Chest riggerchest at 0.9 1.2 y=2.4 sit yaw=90

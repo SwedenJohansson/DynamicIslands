@@ -83,8 +83,10 @@ place Block_Foundation towertop at -8 6 h=5.65 sx=1.25 sz=1.25
 place Placeable_WaterTank - at -8.3 6.3 h=5.65 sit
 place Loot_ChestSmall towerchest at -7.5 5.3 h=5.65 sit yaw=180
 place Block_Ladder_Tier3 - at -8 4.85 ground sy=1.45 yaw=0
-place WaterPipe_Short_1 pipes at -6 6 h=3 rot=0,0,90
-place WaterPipe_Short_1 pipes at -4.5 5 h=3 rot=0,60,90
+# (11-03 fixC, CIFloatingSweep: the water pipe hung 0.98 m over the ground, lowered by the gap)
+place WaterPipe_Short_1 pipes at -6 6 h=2.02 rot=0,0,90
+# (11-03 fixC, CIFloatingSweep: the water pipe hung 0.99 m over the ground, lowered by the gap)
+place WaterPipe_Short_1 pipes at -4.5 5 h=2.01 rot=0,60,90
 place Loot_Chest pipecrate at -4.6 6.6 ground sit yaw=270
 prop pipes tint.color=#6d7f86
 prop pipes tint.amount=0.4

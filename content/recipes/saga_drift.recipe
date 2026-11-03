@@ -112,7 +112,8 @@ call hut w=4 d=3 y=0.1
 place Bench_01 - at 2.8 1.5 y=0.1 sit yaw=180
 place Bench_01 - at 4.9 1.5 y=0.1 sit yaw=180
 place Placeable_Candlestick - at 3 4 y=0.1 sit
-place Loot_Chest chapelbox at 1 4 y=1.1 sit yaw=180
+# (11-03 fixC, CIFloatingSweep: the chapel strongbox hung 1 m over the floor with nothing under it, set on the floor like the benches)
+place Loot_Chest chapelbox at 1 4 y=0.1 sit yaw=180
 place RT_PowerBox chapelpad at 0.2 3 y=1.2 yaw=90
 place Note_Paper sermon at 4.6 3.8 y=1.1 drop yaw=170
 pop

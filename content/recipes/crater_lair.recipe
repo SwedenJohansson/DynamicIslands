@@ -74,7 +74,8 @@ next
 # (the north end piece over the dock pool's bank: footing and wall as one piece from -2 m to 4 m, 30% thicker than the
 # one on it. The footing's top stood 0.66 m under the ground at its middle, the wall on it over the bank 2.7 m up, and
 # the one above it 3 m up - the ground check, IG2, 2026-10-12)
-place RT_Wall1 - at -42.6 7.5 h=-2 yaw=90 sx=0.538 sy=2 sz=1.3
+# (11-03 fixC, CIFloatingSweep: the north end wall's foot stood 0.99 m over the bank, foot 1 m lower, stretched to keep its top)
+place RT_Wall1 - at -42.6 7.5 h=-3 yaw=90 sx=0.538 sy=2.34 sz=1.3
 place RT_Wall1 - at -42.6 7.5 h=4 yaw=90 sx=0.538
 place RT_Wall1 - at -42.6 7.5 h=7 yaw=90 sx=0.538 sy=0.17
 place RT_Wall1 - at -42.6 0.5 h=6.5 yaw=90 sx=2.3333 sy=0.34
@@ -403,4 +404,6 @@ clear at 18.40 20.61 r=1.2 all only=CaravanIsland_SmallRock_2
 clear at 18.41 18.02 r=1.2 all only=CaravanIsland_SmallRock_2
 clear at 22.41 12.16 r=1.2 all only=CaravanIsland_SmallRock_2
 clear at -39.26 -15.93 r=1.2 all only=SmallBoulder2
+# (11-03 fixC, CIFloatingSweep: a scattered grass tuft hung over the ground, cleared the stray scatter)
+clear at -33.06 -13.97 r=1.5 only=CaravanIsland_BrownGrass all
 save Crater Lair

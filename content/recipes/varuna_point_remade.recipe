@@ -60,6 +60,9 @@ place RT_PillarThick - at $lx $lz y=0
 place RT_PillarThick - at $lx $lz y=-6
 next
 next
+# (11-03 fixC, CIFloatingSweep: two tower legs (x -5.9 and -0.1, z 4.4) stood 0.45 m over the ground, a short stub leg under each, down into it)
+place RT_PillarThick - at -5.9 4.4 y=-6.5 sy=0.2
+place RT_PillarThick - at -0.1 4.4 y=-6.5 sy=0.2
 place RT_Floor lightdeckfloor at 0 4.5 y=6.3
 call rt_railing y=6.37 fm=none
 place LandmarkLadder_6m towerladder at -1.5 -4.62 y=0

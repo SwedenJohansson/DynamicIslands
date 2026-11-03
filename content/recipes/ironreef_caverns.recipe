@@ -193,6 +193,9 @@ place Relay_Floor_deck - at $jx 0.6 h=2.2
 place Relay_support_beam_wood - at {$jx-5} -4.4 h=-3 rot=0,0,-90 sx=0.55
 place Relay_support_beam_wood - at {$jx-5} 0.4 h=-3 rot=0,0,-90 sx=0.55
 next
+# (11-03 fixC, CIFloatingSweep: the last deck's east corners hung 2 m over the ground, two posts under its east edge, as the west ones)
+place Relay_support_beam_wood - at 108.6 -4.4 h=-3 rot=0,0,-90 sx=0.55
+place Relay_support_beam_wood - at 108.6 0.4 h=-3 rot=0,0,-90 sx=0.55
 # the plank road up the cliff to the mountain's shoulder: two lanes of raft planks on posts
 # (10-25: a cut under the road's upper half, 0.4 m under its planks - on the bigger island the cliff came up through
 # the road and the walker stuck at z -24.5; 10-27: the whole road - a cut starting part way up left a lip the walker stuck on, at z -14.8 and -9.5)
