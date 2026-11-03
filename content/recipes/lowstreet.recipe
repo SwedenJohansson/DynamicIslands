@@ -156,6 +156,11 @@ pop
 # (REACH 10-29: the street's sand lay at -16.9 in front of the shops, over the tops of their doors (shop floors at -20) - the
 # strip before the four shop fronts dug down to the shop floors, so a diver swims in through the doors)
 brush flatten from -24 3.6 to 31 3.6 r=2.2 s=20 frames=200 h=-20.1
+# (FIX-B 11-03: the 10-29 strip stopped short of the shop fronts (front walls at z 5.5): the sand rose from -20.1 to
+# -14.4 / -7 / -2.2 in that last metre and walled the doors in - a second strip from the old one through the fronts; the
+# walk then stood on the shop floors' front metre and met sand again: the shops' insides dug out to their back walls too)
+brush flatten from -24 6.2 to 31 6.2 r=2.6 s=20 frames=200 h=-20.1
+brush flatten from -24 10.8 to 31 10.8 r=3.6 s=20 frames=200 h=-20.1
 prop air4 obj.name=air4
 prop air4 zone.id=shop_4
 prop air4 zone.radius=2.5

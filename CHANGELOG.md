@@ -49,6 +49,15 @@ Not in this release yet; these come in the next update:
 - Story items and fog (review leftovers): a story item rule that names an island also matches a copy of it by the host's
   name, in any letters; a world load forgets the islands the last world had just called with `SpawnIsland` (so the new
   world is not told "on its way" by mistake); a fog bank's lent distance and density are worked out before either is set.
+- Reach fixes still being checked on Steamvent Harbour, Rootweave Caves, Caravan Town Remade, Old Mine Islet, Cistern
+  Hall, Spirecrest Roofs, Radio Tower Remade, The Rootcore, Ironreef Caverns, Colossus of the Strait and the rest of
+  Primeval Park.
+- **The Rain Engine**: a path climbs from the east shore up to Tor's shelf by the ruin, so Tor and his tin can be
+  reached on foot (the shelf was a 12 m cliff from the sea).
+- **The Floelane**: a path winds up round the iceberg from the sea to its flat top (the cairn, chest and lookout), and
+  the bears' den passage steps down into the lead instead of ending in a 1.6 m drop.
+- **The Iron Whale - Bow**: the ramp up the pressure ridge from the sea is one even slope instead of 1 m steps.
+- **Lowstreet**: the sand that walled in the four shop doors is dug out down to the shop floors, so a diver swims in through each door.
 - Old worlds (made before Raft gave worlds an id): quest rewards are kept per world, and players who join such a world
   get the host's custom islands state.
 - Cave tool: a thin spike of ground left beside the cut over some tunnel mouths.
