@@ -4,7 +4,7 @@ A [Raft](https://raft-game.com/) mod for the [Raft Mod Loader](https://www.raftm
 
 Custom Islands version 3 by **SwedenJohansson**: rebuilt for Raft 1.1 (Unity 2021.3) and extended with the editor, generator, quests, world plans, storylines, island library and multiplayer described below. Based on DynamicIslands by FranzFischer78 (code) and MegaMatrixs (design).
 
-> **EXPERIMENTAL ALPHA RELEASE** - this is the first release of Custom Islands (version 3.0), an early alpha. Things are likely to change, some
+> **EXPERIMENTAL ALPHA RELEASE** - this is the first release of Custom Islands (version 3.1), an early alpha. Things are likely to change, some
 > systems might be unstable, and we do not guarantee that progress is always saved: back up the worlds you care about.
 > The main menu shows this in a box (**Got it** folds it, **X** closes it, both until the next version). Found a problem? See
 > [Reporting a problem](#reporting-a-problem).

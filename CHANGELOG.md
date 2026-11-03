@@ -54,6 +54,10 @@ Not in this release yet; these come in the next update:
 - **Bear den caves no longer see-through:** a bear den set on its own (`ar_cave`) gets a rock wall across its open front,
   with a doorway at the mouth, so from outside you no longer look into the cave through its missing side (RK15).
 
+## 3.1 alpha - 2026-11-03: Version number
+
+- The version number is now **3.1**. The mod is the same as the 3.0 alpha of 2026-11-02 below; only the number changed.
+
 ## 3.0 alpha - 2026-11-02: Tunnels and fixes
 
 ### New
