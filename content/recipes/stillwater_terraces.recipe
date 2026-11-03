@@ -128,7 +128,7 @@ next
 for wx 0.75 8.25 1.5
 place Block_Wall_Tier3 - at $wx 4.5 y=2.42
 next
-place Block_Stair_Tier3 altarstair at 5.25 -1.535 y=0 sit centred yaw=0
+place Block_Stair_Tier3 altarstair at 4.5 -1.535 y=0 sit centred yaw=0
 place Note_Sign confession at 6.5 4.1 y=2.42 sit yaw=180
 place Loot_Chest offeringbox at 2.4 3.8 y=2.42 sit yaw=180
 place Bench_01 - at 4.5 3.2 y=2.42 sit yaw=180

@@ -39,8 +39,7 @@ clear at 0 -40 r=6
 
 # --- The trackers' watch tower on four posts: the tower chest on its deck; the zipline down to the cove ---------------
 push at -14 -12 h=6
-call stilt_hut y=2.6 ladder=none
-place Block_Ladder - at 2.25 -0.12 y=1.1
+call stilt_hut y=2.6
 place Loot_Chest towerchest at 3.6 3.6 y=2.7 sit yaw=180
 # REDO 10-24: the tower's map table (the island's machine) and Oda's map case it opens
 place MapTable maptable at 1.4 3.4 y=2.7 sit yaw=0

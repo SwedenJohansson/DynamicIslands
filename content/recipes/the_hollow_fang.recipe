@@ -46,7 +46,6 @@ brush flatten at 0 15 r=3 s=20 frames=80 h=3
 call hw_mount x=-52 z=-18 b=16 h=18
 call hw_trail x=-52 z=-18 b=16 h=18 a0=180 turn=300 n=28 h0=3
 call ar_cave x=60 z=-30 h=2 yaw=180 al=mercrock chest=mercchest
-brush flatten at 45.85 -26.55 r=1.2 s=20 frames=60 h=4.4
 call hw_basin x=40 z=62 r=12 h=-10
 origin
 clear from 0 -84 to 0 48 r=6
