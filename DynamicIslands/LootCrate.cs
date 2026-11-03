@@ -164,6 +164,8 @@ namespace DynamicIslands.Editor
 			DisplayTextManager hints = CustomNote.Hints;
 			bool looted = Looted || Items.Count == 0;
 			CustomNote note = GetComponent<CustomNote>();
+			// (a "Bring items" step for this chest: hand them over here - QE4)
+			if (QuestSteps.ChestRayed(ContentState.EntryOf(transform), note != null ? note.Title : "", looted, hints)) return;
 			if (hints != null)
 			{
 				if (!looted) hints.ShowText("Open the " + Label, CustomNote.InteractKey, 0, 0, true);

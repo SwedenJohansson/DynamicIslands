@@ -24,6 +24,8 @@ namespace DynamicIslands.Editor
 		RectTransform questTabs, bringGroup;
 		InputField titleField, introField, doneField;
 		RectTransform stepsRoot;
+		ScrollRect stepsScroll;
+		LayoutElement stepsBoxSize;
 		Text rewardText, namesText;
 		readonly List<InputField> fields = new List<InputField>();
 		bool pickingReward;
@@ -247,10 +249,13 @@ namespace DynamicIslands.Editor
 			fields.Add(introField);
 
 			RectTransform stepsGroup = UIKit.Group(panel, "Steps");
-			stepsRoot = UIKit.Rect("Steps", stepsGroup);
-			UIKit.Vertical(stepsRoot.gameObject, 4f, new RectOffset(0, 0, 0, 0));
+			// (up to 99 steps: they scroll in a box up to 10 rows high - QE2)
+			RectTransform stepsBox = UIKit.Rect("StepsBox", stepsGroup);
+			stepsBoxSize = UIKit.Size(stepsBox.gameObject, -1, 4);
+			stepsRoot = UIKit.ScrollList(stepsBox, out stepsScroll, 4f);
+			UIKit.Stretch((RectTransform)stepsScroll.transform);
 			RectTransform addRow = UIKit.Row(stepsGroup, 26f, 6f, "Add");
-			UIKit.Button(addRow, "+ Add a step", () => { if (quest.Steps.Count < MaxSteps) { Keep(); quest.Steps.Add(new IslandQuest.Step()); ShowSteps(); } }, "Another step (up to " + MaxSteps + ")", 140, 26f, 12);
+			UIKit.Button(addRow, "+ Add a step", () => { if (quest.Steps.Count < MaxSteps) { Keep(); quest.Steps.Add(new IslandQuest.Step()); ShowSteps(); ScrollStepsToEnd(); } }, "Another step (up to " + MaxSteps + ")", 140, 26f, 12);
 			namesText = UIKit.Label(addRow, "", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "Names");
 			namesText.verticalOverflow = VerticalWrapMode.Truncate;
 
@@ -330,6 +335,7 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, string> TypeLabels = new Dictionary<string, string>
 		{
 			{ "reach", "Go to" }, { "read", "Read" }, { "open", "Open" }, { "kill", "Defeat" }, { "catch", "Catch" }, { "collect", "Collect" }, { "pages", "Find pages" }, { "blueprint", "Blueprint" }, { Islanders.QuestType, "Talk to" }, { Collectibles.QuestType, "Find set" }, { Lights.QuestType, "Light up" },
+			{ QuestSteps.Signal, "Signal / object is" }, { QuestSteps.Bring, "Bring items" }, { QuestSteps.Craft, "Craft or cook" },
 		};
 
 		/// <summary>What each kind of step asks (the step list's lines).</summary>
@@ -343,6 +349,9 @@ namespace DynamicIslands.Editor
 			{ Islanders.QuestType, "Talk to an islander (Story_Islander, by its name; empty = any islander): done when the dialogue closes" },
 			{ Lights.QuestType, "Switch on a number of the puzzle lights of a group on this island (its Count; the quest panel counts them)" },
 			{ Collectibles.QuestType, "Find a number of the pieces of a collectible set on this island (objects with that Set; the HUD counts them)" },
+			{ QuestSteps.Signal, "Wait for a signal (a lever's \"lever\", the generator's \"power\", an action's own) or an object's state (Gate=open, closed, shown, hidden): a signal sent before counts" },
+			{ QuestSteps.Bring, "Hand a number of a Raft item to an islander (by talking) or a chest (at the chest): Item@Name; the items are taken" },
+			{ QuestSteps.Craft, "Craft or cook a number of a Raft item at the island while this step is the current one (empty = anything)" },
 		};
 
 		static readonly Dictionary<string, string> TargetHints = new Dictionary<string, string>
@@ -354,6 +363,9 @@ namespace DynamicIslands.Editor
 			{ Islanders.QuestType, "islander's name (\u25BE lists this island's; empty = any)" },
 			{ Collectibles.QuestType, "set name (\u25BE lists this island's sets)" },
 			{ Lights.QuestType, "light group (\u25BE lists this island's groups)" },
+			{ QuestSteps.Signal, "signal, or Name=open (\u25BE lists this island's)" },
+			{ QuestSteps.Bring, "Item@Name (\u2026 item, \u25BE who takes it)" },
+			{ QuestSteps.Craft, "Raft item (\u2026 to choose; empty = any)" },
 		};
 
 		/// <summary>Takes what was typed into the step rows before they are rebuilt.</summary>
@@ -376,7 +388,7 @@ namespace DynamicIslands.Editor
 				UIKit.Size(target.gameObject, 196, 28);
 				target.onEndEdit.AddListener(v => s.Target = v.Trim());
 				fields.Add(target);
-				List<DropList.Option> names = NamesFor(s.Type);
+				List<DropList.Option> names = QuestSteps.NamesFor(s.Type, s.Target, Placed()) ?? NamesFor(s.Type);
 				if (names.Count > 0)
 				{
 					// (a small \u25BE: the island's zones, notes, chests or creatures that this kind of step can point at)
@@ -384,7 +396,19 @@ namespace DynamicIslands.Editor
 					UIKit.LabelOf(pick).text = "";
 				}
 				if (s.Type == "collect") UIKit.Button(row, "\u2026", () => { Keep(); ItemPickerWindow.PickOne(v => { s.Target = v; ShowSteps(); }, true); }, "Choose one of the island's story items", 28, 28f, 12);
-				if (s.Type == "kill" || s.Type == "catch" || IslandQuest.Counted(s.Type))
+				if (s.Type == QuestSteps.Bring || s.Type == QuestSteps.Craft)
+					UIKit.Button(row, "\u2026", () =>
+					{
+						Keep();
+						ItemPickerWindow.PickOne(v =>
+						{
+							string item, to;
+							QuestSteps.SplitBring(s.Target, out item, out to);
+							s.Target = s.Type == QuestSteps.Bring && to.Length > 0 ? v + "@" + to : v;
+							ShowSteps();
+						});
+					}, "Choose one of Raft's items", 28, 28f, 12);
+				if ((s.Type == "kill" || s.Type == "catch" || IslandQuest.Counted(s.Type) || QuestSteps.HasCount(s.Type)) && s.Type != QuestSteps.Signal)
 				{
 					InputField count = UIKit.Field(row, "1", s.Count.ToString(), 28f, "How many");
 					UIKit.Size(count.gameObject, 44, 28);
@@ -402,6 +426,16 @@ namespace DynamicIslands.Editor
 				Button del = UIKit.Button(row, "\u00D7", () => { Keep(); quest.Steps.RemoveAt(index); ShowSteps(); }, "Remove this step", 26, 28f, 12);
 				UIKit.DangerButton(del);
 			}
+			// (the box is as tall as the steps, up to 10 rows: more scroll)
+			if (stepsBoxSize != null) stepsBoxSize.preferredHeight = Mathf.Min(quest.Steps.Count, 10) * 32f + 4f;
+		}
+
+		/// <summary>Shows the last step (one just added below the box's 10 rows).</summary>
+		void ScrollStepsToEnd()
+		{
+			if (stepsScroll == null) return;
+			Canvas.ForceUpdateCanvases();
+			stepsScroll.verticalNormalizedPosition = 0f;
 		}
 
 		/// <summary>Takes what was typed into the "bring" fields.</summary>
@@ -447,6 +481,12 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The names on the island a step of this kind can point at (the \u25BE list beside its name).</summary>
+		static List<EditorGameObject> Placed()
+		{
+			GameObject placed = GameObject.Find("PlacedObjects");
+			return placed != null ? placed.GetComponentsInChildren<EditorGameObject>().ToList() : new List<EditorGameObject>();
+		}
+
 		static List<DropList.Option> NamesFor(string type)
 		{
 			GameObject placed = GameObject.Find("PlacedObjects");
