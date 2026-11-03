@@ -73,22 +73,25 @@ brush flatten from 24 -66 to 10 -70 r=8 s=20 frames=400 h=3.5
 # circles left both walls in place)
 # (10-31: the reach walk got stuck on the walls either side of the r 2.8 slope (a 1.5 m step at 38.8 -17.5) and at its
 # top (2.9 against the ring's 3.5): wider, one more circle onto the ring, then smoothed)
-brush flatten at 43.6 -12.9 r=3.5 s=20 frames=200 h=3.5
-brush flatten at 42.2 -13.5 r=3.5 s=20 frames=200 h=2.9
-brush flatten at 40.8 -14.1 r=3.5 s=20 frames=200 h=2.3
-brush flatten at 39.4 -14.7 r=3.5 s=20 frames=200 h=1.7
-brush flatten at 38 -15.3 r=3.5 s=20 frames=200 h=1.1
-brush flatten at 36.6 -15.9 r=3.5 s=20 frames=200 h=0.5
-brush smooth from 38 -15.3 to 43.6 -12.9 r=4.5 s=4 frames=8
-clear from 38 -15.3 to 43.6 -12.9 r=5.5 body
-# (the hole at 31.5 11 under the islet's east bank held water below the sea's level - a pool nobody could climb out
+# (11-03 fixC: both fixes had been laid at the walker's stuck coordinates, which leave out the play's offset
+# 14.72 -1.31 - the slope sat on the ring's grass and the fill in the lagoon. Moved by the offset: the slope now climbs
+# the pool's east wall onto the barrier, the fill lies under the bank the walk could not climb)
+brush flatten at 58.3 -14.2 r=3.5 s=20 frames=200 h=3.5
+brush flatten at 56.9 -14.8 r=3.5 s=20 frames=200 h=2.9
+brush flatten at 55.5 -15.4 r=3.5 s=20 frames=200 h=2.3
+brush flatten at 54.1 -16 r=3.5 s=20 frames=200 h=1.7
+brush flatten at 52.7 -16.6 r=3.5 s=20 frames=200 h=1.1
+brush flatten at 51.3 -17.2 r=3.5 s=20 frames=200 h=0.5
+brush smooth from 52.7 -16.6 to 58.3 -14.2 r=4.5 s=4 frames=8
+clear from 52.7 -16.6 to 58.3 -14.2 r=5.5 body
+# (the hole at 46.2 9.7 under the islet's east bank held water below the sea's level - a pool nobody could climb out
 # of: filled to a sand slope above the water instead)
-brush flatten at 29.6 10.8 r=2.8 s=20 frames=200 h=1.3
-brush flatten at 31.1 10.8 r=2.8 s=20 frames=200 h=0.9
-brush flatten at 32.6 10.8 r=2.8 s=20 frames=200 h=0.6
-brush flatten at 34 10.8 r=2.8 s=20 frames=200 h=0.5
-brush smooth from 29.6 10.8 to 34 10.8 r=4.5 s=4 frames=8
-clear from 29.6 10.8 to 34 10.8 r=5.5 body
+brush flatten at 44.3 9.5 r=2.8 s=20 frames=200 h=1.3
+brush flatten at 45.8 9.5 r=2.8 s=20 frames=200 h=0.9
+brush flatten at 47.3 9.5 r=2.8 s=20 frames=200 h=0.6
+brush flatten at 48.7 9.5 r=2.8 s=20 frames=200 h=0.5
+brush smooth from 44.3 9.5 to 48.7 9.5 r=4.5 s=4 frames=8
+clear from 44.3 9.5 to 48.7 9.5 r=5.5 body
 call hw_mount x=78 z=-24 b=12 h=9
 call hw_mount x=50 z=-76 b=10 h=7
 call ab_ruin x=64 z=-30 h=3.5 yaw=90 w=2 d=2 al=pillbox
@@ -356,7 +359,8 @@ call shallows r=70 deep=5 n=2
 # --- DEEP 10-25: Lookout Dune - the observation post, Nadia Ferris's log, her cache, her tin ------------------------
 call hw_zone x=-40.0 z=-4.0 al=dunefootz id=dunefoot r=5 msg="Steps dug into the dune and shored with planks, a rope rail beside them."
 call hw_zone x=-40 z=10 al=dunetopz id=dunetop r=7 h=1 msg="Lookout Dune. The shelter's observation post: the whole atoll below you, the slab on the islet and its hatch."
-call hw_mast x=-40 z=10 h0=11 lv=2 a=dunepost chest=dunepostchest top=Placeable_Lantern_Metal
+# (11-03 fixC, CIFloatingSweep: the dune top under the post's door is 10.47, the door stood 0.36 m over it: h0 10.65)
+call hw_mast x=-40 z=10 h0=10.65 lv=2 a=dunepost chest=dunepostchest top=Placeable_Lantern_Metal
 place Note_Paper ferrisnote at -36.5 8 h=11.1 drop yaw=200
 loot dunepostchest Rope*2;Battery*1;Plastic*2
 prop dunepostchest loot.refill=0
