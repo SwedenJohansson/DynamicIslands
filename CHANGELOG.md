@@ -12,6 +12,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next update (planned)
 
 Not in this release yet; these come in the next update:
+- **Clearer quest and event windows** (QE3): the step kind list names every kind of step, the quest editor says under its tabs which things only the **main quest** drives (the island's "quest is done" event, quest-step checks, "step(s) done" rules, the new island), **Island events** and **Islands it brings** explain themselves, signals are explained where they are sent and waited for, the islander's dialogue box shows the `---` and `>` markup, and **ready pieces** (levers, generators, wheels, lasers...) carry a green "works: sends lever" strip in the object list and say what they do in their hover text.
 - **Bear dens in a hill** (The Abyss and other islands): a tinted den now tints the rock hill round it too, so a dark den no longer sits in a bright orange mountain; dens inside are lit warm, not blue.
 - **Cave tool**: dens and tunnels in a world look as they do in the editor, warm and dim, no longer lit blue by the sky.
 - **Dig brush**: the ground on top of a dug rim keeps the same sharp grass detail as the ground round it, not a smoother, blurred patch.

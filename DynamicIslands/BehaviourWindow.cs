@@ -62,7 +62,7 @@ namespace DynamicIslands.Editor
 			{ "show", "Objects with a name appear (they were hidden)" }, { "hide", "Objects with a name disappear" }, { "toggle", "Hidden ones appear, shown ones disappear" },
 			{ "open", "A door, gate, bridge or lift opens" }, { "close", "It closes" }, { "switch", "Open if closed, closed if open (a lever)" },
 			{ "message", "Players read a message on the screen" }, { "give", "The player gets items or story items" }, { "sound", "One of Raft's sounds plays once, for the player who set it off" },
-			{ "teleport", "The player is moved to an object with a name" }, { "signal", "A signal world plans and island rules can wait for" },
+			{ "teleport", "The player is moved to an object with a name" }, { "signal", "Sends a named signal on this island, once and for good (any word, e.g. lever). Checks (Only if... signal sent), island rules and world plans (signal rules) wait for it; ready pieces send their own: lever, crank, power, radio, laser..." },
 			{ "journal", "A page is written into the crew's journal (J) - or, on a main story island, onto its tab in Raft's notebook (T)" }, { "wait", "Waits some seconds before the actions below" },
 			{ "character", "Unlocks one of Raft's characters for the player (its name or number, e.g. Rouhi or 3) - kept in the player's Raft profile" },
 			{ "playsound", "One of Raft's sounds or music cues, for every player: once or on a loop, near the object or for the whole island (a loop comes back after a reload; it stops when a player leaves)" },
@@ -82,7 +82,7 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, string> CheckHints = new Dictionary<string, string>
 		{
 			{ "has", "The player has an item or story item (it stays)" }, { "take", "The player has it, and it is used up (like a key)" },
-			{ "state", "Objects with a name are open, closed, shown or hidden" }, { "signal", "A signal was sent on this island" },
+			{ "state", "Objects with a name are open, closed, shown or hidden" }, { "signal", "A signal was sent on this island, by a \"send signal\" action or by a ready piece (lever, crank, power, radio, engine, cage, mirror, wheel, pipe, wire, claw, scales, laser, socket, blast, collapse, vehicle)" },
 			{ "quest", "The island's quest reached a step (or is done)" },
 			{ "wears", "The player wears an item (a headlight, flippers, an oxygen tank...). Name* = any kind of it" },
 			{ "holds", "The player holds an item in their hand (binoculars, a hook, an axe...). Name* = any kind of it" },
@@ -244,6 +244,14 @@ namespace DynamicIslands.Editor
 				NameGroup();
 				if (!zone && !creature) MovementGroup();
 				WorldGroup(zone, creature, helper);
+			}
+			if (islandMode)
+			{
+				// (QE3: what these two events are, and where signals come from)
+				Text help = UIKit.Label(body, "Two events belong to the island itself. \"Players first come\" fires once, when the first player arrives. \"The island's quest is done\" fires when the MAIN quest is done (not a side quest: Quest 2 and on). " +
+					"Actions here can send signals (\"send signal\": any word, kept for good on this island) that checks (\"Only if... signal sent\"), island rules and world plans wait for. Ready pieces (levers, generators, wheels, lasers...) send their own: a tag in the object list tells which.", 12, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "IslandHelp");
+				help.horizontalOverflow = HorizontalWrapMode.Wrap;
+				UIKit.Size(help.gameObject, -1, 64);
 			}
 			foreach (string ev in Events()) EventGroup(ev);
 			if (Events().Count == 0) UIKit.Label(body, "<i>This object has no events. Make it usable (\"Players can use it\") to give it actions.</i>", 12, UIKit.TextMuted);
@@ -461,7 +469,7 @@ namespace DynamicIslands.Editor
 				Field(row, c.Kind == "wears" ? "item worn (HeadLight*, Flipper*...)" : "item in hand (Binoculars, Hook*, Axe*...)", c.Target, -1, "Raft's unique item name; a * at the end matches every kind (Axe* = any axe). The mod's upgrades count as the item they improve", v => c.Target = v.Trim());
 				UIKit.Button(row, "\u2026", () => { Keep(); ItemPickerWindow.PickOne(v => { c.Target = v; Rebuild(); }, false); }, "Choose an item", 28, 28f, 12);
 			}
-			else if (c.Kind == "signal") Field(row, "signal name", c.Target, -1, "A signal sent on this island (a \"send signal\" action)", v => c.Target = v.Trim());
+			else if (c.Kind == "signal") Field(row, "signal name", c.Target, -1, "The signal's name as the \"send signal\" action or a ready piece wrote it (capitals do not matter), e.g. lever, power, laser. True once it was sent, on this island, for every player", v => c.Target = v.Trim());
 			else if (PlayerFeatures.CheckPlaceholder(c.Kind) != null)
 			{
 				string second = PlayerFeatures.CheckArgPlaceholder(c.Kind);
@@ -512,7 +520,7 @@ namespace DynamicIslands.Editor
 			else if (ObjAction.HasArg(a.Verb))
 			{
 				string ph = a.Verb == "message" ? "What players read" : a.Verb == "give" ? "items (\u2026 to choose)" : a.Verb == "sound" ? "event:/... (\u2026 to choose)" : a.Verb == "journal" ? "What the page says" : a.Verb == "suit" ? "seconds (120)" : a.Verb == "hit" ? "% of their health (25)" : a.Verb == "collapse" ? "seconds (3)" : a.Verb == "moveto" ? "marker name, seconds (4)" : a.Verb == PlayerFeatures.DialogueVerb ? "What is said (\\n new line, --- new page, > answer)" : a.Verb == Lights.Verb ? "on, off or toggle" : "signal name (world plans wait for it)";
-				Field(row, ph, a.Arg, -1, a.Verb == "signal" ? "World plans and island rules can wait for it: \"signal sent at\" this island" : a.Verb == "journal" ? "Written into the crew's journal (J in a world)" : "", v => a.Arg = v.Trim());
+				Field(row, ph, a.Arg, -1, a.Verb == "signal" ? "Any word, e.g. lever or gate-open. It is kept for good on this island: checks (\"signal sent\"), island rules and world plans (\"signal sent at\" this island) can wait for it. Ready pieces send lever, crank, power, radio, laser... too" : a.Verb == PlayerFeatures.DialogueVerb ? "Pages and answers: write \n for a new line, a line --- for the next page, a line starting with > for an answer (up to 3; answer n fires the choice n event of the object that says it). Closing it fires \"talk\"" : a.Verb == "journal" ? "Written into the crew's journal (J in a world)" : "", v => a.Arg = v.Trim());
 				if (a.Verb == "give") UIKit.Button(row, "\u2026", () => { Keep(); ItemPickerWindow.OpenFor(() => a.Arg, v => { a.Arg = v; }); StartCoroutine(RebuildWhenClosed()); }, "Choose Raft's items or the island's story items", 28, 28f, 12);
 				if (a.Verb == "sound") UIKit.Button(row, "\u2026", () => { Keep(); SoundPickerWindow.OpenFor(v => { a.Arg = v; Rebuild(); }); }, "Choose one of Raft's sounds (you can listen first)", 28, 28f, 12);
 			}
