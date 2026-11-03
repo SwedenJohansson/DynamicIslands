@@ -14,6 +14,7 @@ namespace DynamicIslands.Editor
 			if (Islanders.Is(target.GameObjectName)) IslanderGroup(target);
 			if (Collectibles.Is(target.GameObjectName) || Collectibles.IsPiece(target.Props)) CollectibleGroup(target);
 			if (Lights.IsLight(target.GameObjectName, target.Props)) LightGroup(target);
+			if (OrderPuzzle.IsPiece(target.Props)) OrderGroup(target);
 			MakeFeatureGroup(target);
 		}
 
@@ -22,14 +23,50 @@ namespace DynamicIslands.Editor
 		static void MakeFeatureGroup(EditorGameObject target)
 		{
 			if (Islanders.Is(target.GameObjectName)) return;
-			bool piece = Collectibles.IsPiece(target.Props), light = Lights.IsLight(target.GameObjectName, target.Props);
-			if (piece && light) return;
+			bool piece = Collectibles.IsPiece(target.Props), light = Lights.IsLight(target.GameObjectName, target.Props), order = OrderPuzzle.IsPiece(target.Props);
+			if (piece && light && order) return;
 			RectTransform g = UIKit.Group(root, "Story puzzle");
 			RectTransform row = UIKit.Row(g, UIKit.RowHeight, 4f, "MakeStoryFeature");
 			if (!piece)
 				UIKit.Button(row, "Make collectible (set)", () => { Set(target, Collectibles.SetProp, "Relics"); Refresh(); }, "Makes this object a hidden piece of a collectible set (Relics; change it below): players pick it up with E, the HUD counts the set, the whole set runs the \"set\" event");
 			if (!light)
 				UIKit.Button(row, "Make puzzle light (group)", () => { Set(target, Lights.GroupProp, "Lamps"); Refresh(); }, "Makes this object a puzzle light of a group (Lamps; change it below): players switch it with E; events lit, unlit, alllit");
+			if (!order)
+				UIKit.Button(row, "Make order piece (in this order)", () =>
+				{
+					List<int> steps;
+					int next = OrderPuzzle.EditorSteps(PlacedEditorObjects()).TryGetValue(OrderPuzzle.DefaultGroup, out steps) && steps.Count > 0 ? steps.Max() + 1 : 1;
+					PropsCommand.Change(target, OrderPuzzle.MakePiece(target.Props, OrderPuzzle.DefaultGroup, next));
+					Refresh();
+				}, "Makes this object the next step of an order puzzle (" + OrderPuzzle.DefaultGroup + "; change it below): levers, lights or buttons pressed in a set order. A wrong order starts it again; the last step sends the signal order:<puzzle> and runs every piece's \"solved\" event");
+		}
+
+		static IEnumerable<EditorGameObject> PlacedEditorObjects()
+		{
+			GameObject placed = GameObject.Find("PlacedObjects");
+			return placed == null ? Enumerable.Empty<EditorGameObject>() : placed.GetComponentsInChildren<EditorGameObject>();
+		}
+
+		/// <summary>A piece of an order puzzle (QE6): its puzzle's name, its step, and what the puzzle still lacks.</summary>
+		static void OrderGroup(EditorGameObject target)
+		{
+			RectTransform g = UIKit.Group(root, "Order puzzle (in this order)");
+			ObjAction a = OrderPuzzle.ActionsIn(target.Props)[0];
+			string group = OrderPuzzle.GroupOf(a);
+			int step = OrderPuzzle.StepOf(a);
+			InputField f = SurvivorField(g, "Puzzle", group, 26f, "The order puzzle's name: every piece with this name is one puzzle; solved, the island sends the signal order:<name>");
+			f.characterLimit = 32;
+			f.onEndEdit.AddListener(v => { PropsCommand.Change(target, OrderPuzzle.MakePiece(target.Props, v.Trim().Length > 0 ? v.Trim() : OrderPuzzle.DefaultGroup, step)); Refresh(); });
+			amountFields.Add(f);
+			InputField s = SurvivorField(g, "Step", step.ToString(System.Globalization.CultureInfo.InvariantCulture), 26f, "This piece's place in the order: 1 = pressed first");
+			s.contentType = InputField.ContentType.IntegerNumber;
+			s.onEndEdit.AddListener(v => { int n; if (int.TryParse(v.Trim(), out n) && n > 0) PropsCommand.Change(target, OrderPuzzle.MakePiece(target.Props, group, System.Math.Min(n, 99))); Refresh(); });
+			amountFields.Add(s);
+			List<int> steps;
+			OrderPuzzle.EditorSteps(PlacedEditorObjects()).TryGetValue(group, out steps);
+			string problem = OrderPuzzle.Problem(group, steps);
+			int pieces = steps != null ? steps.Count : 0;
+			UIKit.Size(UIKit.Label(g, (problem != null ? "<color=#e0a040>" + char.ToUpper(problem[0]) + problem.Substring(1) + ".</color> " : pieces + " pieces in \"" + group + "\". ") + "Events: \"solved\", \"wrong\"; signal order:" + group.ToLowerInvariant() + " (check \"signal\", world plans)", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic).gameObject, -1, 30);
 		}
 
 		static void IslanderGroup(EditorGameObject target)

@@ -1905,6 +1905,15 @@ Select any object → **Behaviour & events...**. No code needed:
   action **switch light** (`light|Lamp 2|on`, `light|group:Lamps|off`, empty = toggle; empty name = this light;
   shared, saved) and the checks **light is** (`light|Lamp 2|on`; empty name = this one) and **all lights**
   (`lights|Lamps|on`, or `off`).
+- **In this order** (2026-11-03): levers, lights or buttons - any objects - pressed in a set order. Select a piece →
+  **Make order piece (in this order)** in the object panel: it becomes the next step of the puzzle "Order" (the
+  action **press in order**, `order|Order|2`, last on its **use**; change the puzzle's name and the step there or in
+  the action). The right next piece moves the puzzle on; any other piece is a wrong press: the puzzle starts again,
+  the pressed piece runs its event **wrong** ("Wrong order! Everything clicks back." unless you give it actions) and
+  half a second later the pieces go back as placed (lights off, opened pieces closed). The last step sends the signal
+  `order:<name>` (a door's **Only if** signal check, a quest step) and runs every piece's event **solved**, once:
+  after that the pieces are just pieces. Shared and saved (the host keeps how far the crew got). The object panel warns
+  about a step no piece has (it could never be solved).
 - **Sounds and camera moments** (actions in the same ▼ list, shared by every player): **play sound/music** plays one of
   Raft's sound events or music cues (pick it with **…**, a list of every one Raft has), with a volume, **once** or on a
   **loop**, **near** the object (or the objects named) or for **everyone on the island**. Every player near the island

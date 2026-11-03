@@ -54,6 +54,7 @@ namespace DynamicIslands.Editor
 			{ PlayerFeatures.DialogueVerb, "show dialogue" },
 			{ Lights.Verb, "switch light" },
 			{ "flythrough", "camera fly-through" },
+			{ OrderPuzzle.Verb, "press in order" },
 		};
 
 		/// <summary>What each action does (the action list's lines).</summary>
@@ -76,6 +77,7 @@ namespace DynamicIslands.Editor
 			{ PlayerFeatures.DialogueVerb, "A dialogue for the player who set it off, said by the named object (empty = this one). \\n starts a new line, a line --- a new page, a line > an answer (its choice1.. event on this object)" },
 			{ Lights.Verb, "Switches puzzle lights on, off or over (empty = toggle): a light by its name (empty = this one) or group:G for every light of group G. Saved, for every player" },
 			{ "flythrough", "The camera of every player near a camera path flies once along its camera points (Zones & triggers), looking where they say; the players are held, Esc skips it" },
+			{ OrderPuzzle.Verb, "This object is step N of an order puzzle (levers, lights, buttons pressed in a set order; put it last on \"use\"). The right next piece moves the puzzle on; any other starts it again (\"wrong\" event, its pieces go back). The last step sends the signal order:<puzzle> and runs every piece's \"solved\" event" },
 		};
 
 		/// <summary>What each check asks (the check list's lines).</summary>
@@ -496,7 +498,8 @@ namespace DynamicIslands.Editor
 				if (a.Verb == "wait" && a.Seconds <= 0f) a.Arg = "5";
 				Rebuild();
 			}, 120, "What happens: show, hide, show/hide, open, close, open/close, say, give items, sound, teleport to, send signal, journal page, wait, unlock character, play sound/music, stop sound, camera moment, protective suit, hurt creatures, pick up (carry), collapse, move to marker, camera fly-through", 28f, 12);
-			if (ObjAction.HasTarget(a.Verb))
+			if (a.Verb == OrderPuzzle.Verb) OrderFields(row, a);
+			else if (ObjAction.HasTarget(a.Verb))
 			{
 				Field(row, a.Verb == "camera" ? "marker (empty = itself)" : "name (empty = itself)", a.Target, a.Verb == "camera" || a.Verb.EndsWith("sound") ? 120 : 170,
 					a.Verb == "camera" ? "The object the camera moves to (players within range of it see the moment)" : a.Verb.EndsWith("sound") ? "The object the sound plays at" : "The name of the objects it acts on", v => a.Target = v.Trim());
@@ -517,6 +520,7 @@ namespace DynamicIslands.Editor
 			}
 			else if (a.Verb == "camera") CameraFields(row, a);
 			else if (a.Verb == "flythrough") FlyFields(row, a);
+			else if (a.Verb == OrderPuzzle.Verb) { }
 			else if (ObjAction.HasArg(a.Verb))
 			{
 				string ph = a.Verb == "message" ? "What players read" : a.Verb == "give" ? "items (\u2026 to choose)" : a.Verb == "sound" ? "event:/... (\u2026 to choose)" : a.Verb == "journal" ? "What the page says" : a.Verb == "suit" ? "seconds (120)" : a.Verb == "hit" ? "% of their health (25)" : a.Verb == "collapse" ? "seconds (3)" : a.Verb == "moveto" ? "marker name, seconds (4)" : a.Verb == PlayerFeatures.DialogueVerb ? "What is said (\\n new line, --- new page, > answer)" : a.Verb == Lights.Verb ? "on, off or toggle" : "signal name (world plans wait for it)";
@@ -550,6 +554,19 @@ namespace DynamicIslands.Editor
 				s.Loop ? "loop" : "once", v => { Keep(); s.Loop = v == "loop"; save(); Rebuild(); }, 62, "Once or on a loop", 28f, 12);
 			DropList.Make(row, "Drop_Where", new List<DropList.Option> { new DropList.Option("near", "near it", "Heard near the object"), new DropList.Option("island", "island", "Heard the same everywhere on the island (music)") },
 				s.Island ? "island" : "near", v => { Keep(); s.Island = v == "island"; save(); Rebuild(); }, 72, "Near the object, or for everyone on the island", 28f, 12);
+		}
+
+		/// <summary>order (QE6): the puzzle's name and this piece's step.</summary>
+		void OrderFields(Transform row, ObjAction a)
+		{
+			Field(row, "puzzle (" + OrderPuzzle.DefaultGroup + ")", a.Target, 120, "The order puzzle's name: every piece with the same name is one puzzle (signal order:<name> when solved)", v => a.Target = v.Trim());
+			UIKit.Label(row, "step", 11, UIKit.TextMuted);
+			InputField s = Field(row, "1", a.Arg, 40, "This piece's place in the order: 1 = pressed first", v =>
+			{
+				int n;
+				a.Arg = int.TryParse(v.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out n) && n > 0 ? Math.Min(n, 99).ToString(CultureInfo.InvariantCulture) : "1";
+			});
+			s.contentType = InputField.ContentType.IntegerNumber;
 		}
 
 		/// <summary>flythrough: the camera path's name (… picks a placed one) and the range around its points.</summary>

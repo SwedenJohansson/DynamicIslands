@@ -20,8 +20,8 @@ namespace DynamicIslands.Editor
 		public static readonly string[] ResumableEvents = { Islanders.TalkEvent, Islanders.ChoicePrefix + "1", Islanders.ChoicePrefix + "2", Islanders.ChoicePrefix + "3", Collectibles.SetEvent, Lights.LitEvent, Lights.UnlitEvent, Lights.AllLitEvent };
 
 		/// <summary>ObjAction.HasTarget / HasArg for these verbs.</summary>
-		public static bool HasTarget(string verb) { return verb == DialogueVerb || verb == Lights.Verb; }
-		public static bool HasArg(string verb) { return verb == DialogueVerb || verb == Lights.Verb; }
+		public static bool HasTarget(string verb) { return verb == DialogueVerb || verb == Lights.Verb || verb == OrderPuzzle.Verb; }
+		public static bool HasArg(string verb) { return verb == DialogueVerb || verb == Lights.Verb || verb == OrderPuzzle.Verb; }
 
 		/// <summary>What a placed object starts with (ObjectProps.Defaults).</summary>
 		public static void Defaults(string name, Dictionary<string, string> props)
@@ -43,7 +43,7 @@ namespace DynamicIslands.Editor
 		/// <summary>World: an object's lines as if the builder had written them (a set piece is picked up when used).</summary>
 		public static IDictionary<string, string> Expand(string objectName, IDictionary<string, string> props)
 		{
-			return Lights.Expand(objectName, Collectibles.Expand(objectName, props));
+			return OrderPuzzle.Expand(objectName, Lights.Expand(objectName, Collectibles.Expand(objectName, props)));
 		}
 
 		/// <summary>Host, from the mod's update: sets found (Collectibles).</summary>
@@ -72,12 +72,17 @@ namespace DynamicIslands.Editor
 				list.Add(new KeyValuePair<string, string>(Lights.UnlitEvent, "it was switched off"));
 				list.Add(new KeyValuePair<string, string>(Lights.AllLitEvent, "every light of its group is on now (runs on each of them)"));
 			}
+			if (OrderPuzzle.IsPiece(p))
+			{
+				list.Add(new KeyValuePair<string, string>(OrderPuzzle.SolvedEvent, "its order puzzle was solved: the last piece was pressed in the right order (runs on each piece, once)"));
+				list.Add(new KeyValuePair<string, string>(OrderPuzzle.WrongEvent, "it was pressed out of order: the puzzle starts again (its pieces go back)"));
+			}
 		}
 
 		/// <summary>Whether an event name belongs to these features (for the behaviour window's lists).</summary>
 		public static bool IsEvent(string ev)
 		{
-			return ev == Islanders.TalkEvent || ev == Collectibles.SetEvent || ev == Lights.LitEvent || ev == Lights.UnlitEvent || ev == Lights.AllLitEvent || (ev != null && ev.StartsWith(Islanders.ChoicePrefix) && ev.Length == Islanders.ChoicePrefix.Length + 1);
+			return ev == Islanders.TalkEvent || ev == Collectibles.SetEvent || ev == OrderPuzzle.SolvedEvent || ev == OrderPuzzle.WrongEvent || ev == Lights.LitEvent || ev == Lights.UnlitEvent || ev == Lights.AllLitEvent || (ev != null && ev.StartsWith(Islanders.ChoicePrefix) && ev.Length == Islanders.ChoicePrefix.Length + 1);
 		}
 
 		/// <summary>World: the parts of these features an object gets (Behaviours.Attach).</summary>
@@ -98,6 +103,7 @@ namespace DynamicIslands.Editor
 			switch (a.Verb)
 			{
 				case DialogueVerb: return "show a dialogue" + (a.Target.Length > 0 ? " said by '" + a.Target + "'" : "") + ": \"" + Short(a.Arg) + "\"";
+				case OrderPuzzle.Verb: return OrderPuzzle.Describe(a);
 				case Lights.Verb: return "switch " + ((a.Arg ?? "").Trim().Length > 0 ? a.Arg.Trim() : "over") + " " + (a.Target.Trim().Length == 0 ? "this light" : a.Target.Trim().StartsWith(Lights.GroupPrefix) ? "the lights of '" + a.Target.Trim().Substring(Lights.GroupPrefix.Length) + "'" : "'" + a.Target + "'");
 			}
 			return null;
@@ -146,6 +152,7 @@ namespace DynamicIslands.Editor
 			switch (a.Verb)
 			{
 				case Lights.Verb: Lights.HostRun(e, index, a); return true;
+				case OrderPuzzle.Verb: OrderPuzzle.HostRun(e, index, a); return true;
 			}
 			return false;
 		}
