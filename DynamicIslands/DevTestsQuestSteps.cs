@@ -261,11 +261,11 @@ namespace DynamicIslands
 				QuestSteps.Made("Plank", 1);
 				Check(ref ok, QuestTracker.StepOf(e) == 5, "another item doesn't count for the cook step");
 				Vector3 home = RAPI.GetLocalPlayer().transform.position;
-				IslandInfoTag tag = e.Root.GetComponent<IslandInfoTag>();
-				Vector3 mid = e.Root.transform.position + tag.LocalCentre;
+				// (the craft reach is measured like QuestTracker.Near: from the entry's position plus the land radius)
+				Vector3 mid = e.Position;
 				Vector3 away = new Vector3(home.x - mid.x, 0f, home.z - mid.z).normalized;
 				if (away.sqrMagnitude < 0.01f) away = Vector3.forward;
-				yield return PutPlayer(RAPI.GetLocalPlayer(), mid + away * (tag.Radius + QuestSteps.CraftReach + 60f), true);
+				yield return PutPlayer(RAPI.GetLocalPlayer(), mid + away * (Mathf.Max(30f, CustomIslandSpawner.LandRadius(e.Name)) + QuestSteps.CraftReach + 60f), true);
 				QuestSteps.Made(cooked, 1);
 				Check(ref ok, QuestTracker.StepOf(e) == 5, "cooking far off the island doesn't count");
 				yield return StandRoutine(e.Root);
