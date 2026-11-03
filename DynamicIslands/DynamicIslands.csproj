@@ -53,6 +53,7 @@
     <Compile Include="SoundPickerWindow.cs" />
     <Compile Include="StoryItems.cs" />
     <Compile Include="StoryItemsWindow.cs" />
+    <Compile Include="StorySetsPuzzles.cs" />
     <Compile Include="ContentCatalog.cs" />
     <Compile Include="CreatureSpawner.cs" />
     <Compile Include="CustomNote.cs" />

@@ -1913,7 +1913,7 @@ Select any object → **Behaviour & events...**. No code needed:
   half a second later the pieces go back as placed (lights off, opened pieces closed). The last step sends the signal
   `order:<name>` (a door's **Only if** signal check, a quest step) and runs every piece's event **solved**, once:
   after that the pieces are just pieces. Shared and saved (the host keeps how far the crew got). The object panel warns
-  about a step no piece has (it could never be solved).
+  about a step no piece has (it could never be solved). Or place the story set **Levers in order** ([6.3](#63-story-items-and-story-sets)).
 - **Sounds and camera moments** (actions in the same ▼ list, shared by every player): **play sound/music** plays one of
   Raft's sound events or music cues (pick it with **…**, a list of every one Raft has), with a volume, **once** or on a
   **loop**, **near** the object (or the objects named) or for **everyone on the island**. Every player near the island
@@ -1983,6 +1983,24 @@ only a way out. Raft's own quest item pickups (search "QuestItemPickup") work as
 **Story sets** place a ready piece of a story in one step: **a locked door and its key** (in a chest with a note),
 **a trail of notes** leading to a hidden chest, **a treasure map** (a bottle gives the map; the X digs up a chest
 only for someone who has it), or **a locked chest** whose key is hidden in driftwood nearby.
+
+**Puzzle sets** (the window's **Puzzles** row, 2026-11-03) place a working puzzle made of Raft's own pieces (loaded
+from Raft's islands first, a few seconds the first time), each with a note that hints the answer:
+
+- **Levers in order:** three levers, an order puzzle ([6.2](#62-behaviour-and-events), "In this order"): the right
+  one, the left one, the middle one (as seen from the note). Solved, a hidden chest behind them shows.
+- **Three wheels:** Utopia's three water wheels and a gate that opens only when the outer two are turned and the
+  middle one is not (**Only if** checks on their state); the gate sends `wheels`.
+- **Generator and radio:** a broken generator, its spare part (Raft's generator part) in a chest nearby, and a radio
+  that only works once the generator runs: the generator sends `power`, the radio `radio` and writes a journal page.
+- **Laser and mirrors:** Temperance's laser, a fixed and a turning mirror and the laser door panel on a wall. Placed,
+  the turning mirror sends the beam past; turned a quarter, it sends it to the panel, which shows a hidden chest
+  behind the wall and sends `laser`. The set lines itself up from the laser; place it on level ground - if the
+  ground or another object is in the beam's way, the message says so (move the pieces, or Ctrl+Z and place it on
+  flatter ground).
+
+Every set is one undo step, and each piece is an ordinary object afterwards: move it, change its texts and actions,
+or chain the signals on (a quest step, a door's **Only if** signal check).
 
 ![Story items and story sets](images/editor-story-items.jpg)
 *The Story items window: the island's story items ("Old key") and the four story sets.*

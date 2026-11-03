@@ -206,6 +206,12 @@ namespace DynamicIslands.Editor
 			UIKit.Button(row, "A trail of notes", () => Place(StorySets.NoteTrail), "Three notes that lead to a hidden chest with a story item; they go into the journal", -1, 30f, 13);
 			UIKit.Button(row, "A treasure map", () => Place(StorySets.TreasureMap), "A message in a bottle gives a treasure map; walking to the spot with it digs up a buried chest", -1, 30f, 13);
 			UIKit.Button(row, "A locked chest", () => Place(StorySets.LockedChest), "A chest that only opens with a small key, and driftwood nearby that hides the key", -1, 30f, 13);
+			// (QE5, 2026-11-03: puzzles that work with signals and checks today; Raft's pieces loaded first)
+			RectTransform puzzles = UIKit.Row(g, 30f, 8f, "Puzzles");
+			UIKit.Button(puzzles, "Levers in order", () => PlacePuzzle(StorySets.LeversInOrder, StorySets.LeverNeeds), "Three levers pulled in the right order (an order puzzle: a wrong one starts it again) show a hidden chest; a note hints the order", -1, 30f, 13);
+			UIKit.Button(puzzles, "Three wheels", () => PlacePuzzle(StorySets.ThreeWheels, StorySets.WheelNeeds), "Utopia's three water wheels and a gate that opens only when the outer two are turned and the middle one is not; a note hints it", -1, 30f, 13);
+			UIKit.Button(puzzles, "Generator and radio", () => PlacePuzzle(StorySets.GeneratorRadio, StorySets.GeneratorNeeds), "A broken generator, its spare part in a chest nearby, and a radio that only works once the generator runs (signals power, radio)", -1, 30f, 13);
+			UIKit.Button(puzzles, "Laser and mirrors", () => PlacePuzzle(StorySets.LaserMirrors, StorySets.LaserNeeds), "A laser, a fixed and a turning mirror and a door panel on a wall: turn the mirror and the beam reaches the panel, which shows a hidden chest. Place it on level ground", -1, 30f, 13);
 		}
 
 		void Place(Func<List<StoryItemDef>, Vector3, List<GameObject>> set)
@@ -215,13 +221,29 @@ namespace DynamicIslands.Editor
 			// (its new items' ids don't take an id renamed here before Save: see Taken)
 			List<StoryItemDef> work = Taken(null);
 			List<StoryItemDef> ghosts = work.Where(x => !defs.Contains(x)).ToList();
+			StorySets.Warning = null;
 			List<GameObject> placed = set(work, at);
 			foreach (StoryItemDef d in work) if (!ghosts.Contains(d) && !defs.Contains(d)) defs.Add(d);
 			if (placed.Count == 0) { DynamicIslands.Notify("Could not place the story set here", true); return; }
 			// (its story items in the same undo step as its objects: the first Ctrl+Z took only the key away and left the door)
 			SaveDefs(true);
 			Close();
-			DynamicIslands.Notify("Story set placed: " + placed.Count + " objects (Ctrl+Z removes them)");
+			if (StorySets.Warning != null) DynamicIslands.Notify("Story set placed: " + placed.Count + " objects - but " + StorySets.Warning, true, 8);
+			else DynamicIslands.Notify("Story set placed: " + placed.Count + " objects (Ctrl+Z removes them)");
+		}
+
+		/// <summary>A puzzle set: Raft's pieces it needs loaded first (from their islands' scenes, as the object browser does).</summary>
+		void PlacePuzzle(Func<List<StoryItemDef>, Vector3, List<GameObject>> set, string[] needs)
+		{
+			if (needs.All(n => PlaceableCatalog.IsLoaded(n) || !PlaceableCatalog.IsIndexed(n))) { Place(set); return; }
+			StartCoroutine(LoadThenPlace(set, needs));
+		}
+
+		System.Collections.IEnumerator LoadThenPlace(Func<List<StoryItemDef>, Vector3, List<GameObject>> set, string[] needs)
+		{
+			DynamicIslands.Notify("Loading the set's pieces from Raft's islands...");
+			yield return PlaceableCatalog.EnsureLoaded(needs);
+			Place(set);
 		}
 
 		InputField Field(Transform row, string placeholder, string text, float width, string hint, Action<string> set)
@@ -407,7 +429,7 @@ namespace DynamicIslands.Editor
 	}
 
 	/// <summary>Ready pieces of a story (the "story item generator"): objects with their settings, placed in the editor.</summary>
-	public static class StorySets
+	public static partial class StorySets
 	{
 		/// <summary>Where the editor camera looks at the ground (or the build area's middle).</summary>
 		public static Vector3 ViewCentre()
