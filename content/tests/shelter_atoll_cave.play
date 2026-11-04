@@ -3,7 +3,7 @@
 # second answer (CITalk "Shelter Atoll" "Dr. Shogo" pick 2 after this play: the island is kept); the den has air and a
 # dry way down to the water. Pictures of Dr. Shogo, the storeroom, the dinghy by the mouth and the den.
 island Shelter Atoll keep
-offset 14.7199 -1.3105
+offset 14.8414 -1.2974
 hour 11
 weather Calm
 expect hidden shelsupply

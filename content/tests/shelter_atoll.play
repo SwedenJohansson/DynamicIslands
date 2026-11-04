@@ -2,7 +2,7 @@
 # floor is 1.69 m above the sea, the roof slab 7.75 m.
 island Shelter Atoll
 # DEEP 10-25: the dune moved the land's centre (the recipe's save prints the exact offset)
-offset 14.7199 -1.3105
+offset 14.8414 -1.2974
 expect step 0
 expect title Shelter No. 7
 

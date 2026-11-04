@@ -235,8 +235,10 @@ next
 place RT_Floor - at 9 -10 y=-0.07 sx=0.993 sz=0.778
 place RT_Floor - at 3 -10 y=-0.07 sx=0.993 sz=0.778
 place RT_Floor - at -3 -10 y=-0.07 sx=0.993 sz=0.778
+# (11-04: the lagoon cave's approach is cut down to its mouth's floor, about 7 m, under the landing's middle: its
+# pillars go 3 m deeper now, so they stand in the cut and not over it - CIFloating)
 for lx -8.7 8.7 5.8
-place RT_PillarThick - at $lx -16.7 y=-6
+place RT_PillarThick - at $lx -16.7 y=-9 sy=1.5
 next
 place "Box Small" - at -7.6 -11.3 sit yaw=15
 place "Box Small" - at -6.4 -11.1 sit yaw=-10
