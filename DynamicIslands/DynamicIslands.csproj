@@ -102,6 +102,7 @@
     <Compile Include="DevTestsGenerator.cs" />
     <Compile Include="DevTestsLooks.cs" />
     <Compile Include="DevTestsMore.cs" />
+    <Compile Include="DevTestsTestTools.cs" />
     <Compile Include="DevTestsLand.cs" />
     <Compile Include="DevTestsRandomizer.cs" />
     <Compile Include="DevTestsReach.cs" />

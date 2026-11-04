@@ -202,12 +202,18 @@ namespace DynamicIslands
 			Vector3? middle = CustomIslandSpawner.RaftPosition;
 			if (!middle.HasValue) { Fail("no raft"); return; }
 			Vector3 target = middle.Value + Vector3.up * 1.5f;
-			RaycastHit hit;
-			if (Physics.Raycast(middle.Value + Vector3.up * 20f, Vector3.down, out hit, 40f, ~(1 << LayerMask.NameToLayer("LocalPlayer")), QueryTriggerInteraction.Ignore)) target.y = hit.point.y + 1.2f;
+			// (the raft's own floor first: a raft beached under an island's slope had terrain above its middle - the
+			// player was put on the island, 8 m above the deck)
+			RaycastHit hit = default(RaycastHit);
+			RaycastHit[] hits = Physics.RaycastAll(middle.Value + Vector3.up * 20f, Vector3.down, 40f, ~(1 << LayerMask.NameToLayer("LocalPlayer")), QueryTriggerInteraction.Ignore).OrderBy(x => x.distance).ToArray();
+			bool onBlock = false;
+			foreach (RaycastHit h in hits) if (h.collider.GetComponentInParent<Block>() != null) { hit = h; onBlock = true; break; }
+			if (!onBlock && hits.Length > 0) hit = hits[0];
+			if (hit.collider != null) target.y = hit.point.y + 1.2f;
 			// (off the raft first: a player still a child of the rocking raft was swung 14 m out of the gift zone - PlayerMove)
 			PlayerMove.To(player, target);
 			KeepAlive(player);
-			Log("On the raft: " + (player.transform.position - middle.Value).magnitude.ToString("F0") + " m from its middle, standing on " + (hit.collider != null ? hit.collider.name : "nothing"));
+			Log("On the raft: " + (player.transform.position - middle.Value).magnitude.ToString("F0") + " m from its middle, standing on " + (hit.collider != null ? hit.collider.name : "nothing") + (onBlock ? " (a raft block" + (hits[0].collider != hit.collider ? ", under " + hits[0].collider.name : "") + ")" : " (not the raft)"));
 		}
 
 		[ConsoleCommand(name: "CIUse", docs: "Dev, in game (either player): uses an object as a player pressing E would: CIUse <island> <object name or index>")]

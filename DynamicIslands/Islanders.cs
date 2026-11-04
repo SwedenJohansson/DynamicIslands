@@ -253,6 +253,8 @@ namespace DynamicIslands.Editor
 		Transform at;
 		Action<int> done;
 		float openedAt;
+		/// <summary>What last closed the dialogue on its own: a key, the scene, the distance (tests).</summary>
+		public static string LastClose;
 		bool cursorWasFree;
 
 		public static void Open(Transform at, string speaker, string text, Action<int> done)
@@ -347,11 +349,12 @@ namespace DynamicIslands.Editor
 			if (Time.unscaledTime - openedAt < 0.2f) return;
 			bool interact;
 			try { interact = MyInput.GetButtonDown("Interact"); } catch { interact = false; }
-			if (interact) { Advance(); return; }
-			if (Input.GetKeyDown(KeyCode.Tab) || EscKey.Down(this)) { Finish(0); return; }
+			if (interact) { LastClose = "the interact key"; Advance(); return; }
+			if (Input.GetKeyDown(KeyCode.Tab) || EscKey.Down(this)) { LastClose = "Tab or Esc"; Finish(0); return; }
 			Network_Player player = null;
 			try { player = ComponentManager<Network_Player>.Value; } catch { }
-			if (!LoadSceneManager.IsGameSceneLoaded || (at != null && player != null && Vector3.Distance(player.transform.position, at.position) > 8f)) Finish(0);
+			if (!LoadSceneManager.IsGameSceneLoaded) { LastClose = "no game scene"; Finish(0); return; }
+			if (at != null && player != null && Vector3.Distance(player.transform.position, at.position) > 8f) { LastClose = "the player " + Vector3.Distance(player.transform.position, at.position).ToString("F1") + " m away"; Finish(0); }
 		}
 	}
 }

@@ -143,6 +143,9 @@ namespace DynamicIslands.Editor
 			return new List<Upgrade>
 			{
 				new Upgrade { Index = LargeBatteryIndex, Name = LargeBatteryName, BaseName = "Battery", Display = "Large battery", Tint = LargeBatteryTint, UsesFactor = LargeBatteryFactor,
+					// (held like Raft's battery: a tinted copy of its hand model - without a hand connection of its own RML's
+					// UseItemController patch warned "DI_LargeBattery is not correctly configured" each time it was picked)
+					Held = HeldAsIs,
 					Description = "Holds twice the charge of a battery: machines run twice as long on it. Charged in the battery charger like a battery (twice as long, twice the fuel)." },
 				new Upgrade { Index = 29412, Name = "DI_TitaniumGrill", BaseName = "Placeable_CookingStand_Food_Two", Display = "Titanium grill", Tint = new Color(0.75f, 0.82f, 0.95f),
 					ExtraCostItem = "TitaniumIngot", ExtraCostAmount = 2, Setup = FastCooking,
@@ -638,6 +641,9 @@ namespace DynamicIslands.Editor
 				x.intensity *= LightIntensityFactor;
 			}
 		}
+
+		/// <summary>A hand-held upgrade whose hand model needs no stats of its own (the large battery).</summary>
+		static void HeldAsIs(GameObject go) { }
 
 		static void Telescope(GameObject go)
 		{

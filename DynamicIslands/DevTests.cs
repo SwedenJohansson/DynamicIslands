@@ -2110,6 +2110,7 @@ namespace DynamicIslands
 			// A Raft that isn't in front pauses, and then never reads the command file (not even a CIBackground):
 			// dev builds always keep running, so a Raft started behind other windows can still be driven.
 			Application.runInBackground = true;
+			InstallFakeKeys(); // (CIKey: keys with Raft minimised; before the mod's key code is first compiled)
 			DynamicIslands.instance.StartCoroutine(PollCommandFile());
 			DynamicIslands.instance.StartCoroutine(HeartbeatLoop());
 		}
@@ -2365,7 +2366,7 @@ namespace DynamicIslands
 			EditorUI.SetTab(t.StartsWith("o") ? TAB.ObjectPlace : t.StartsWith("i") ? TAB.Island : TAB.TerrainEdit);
 		}
 
-		[ConsoleCommand(name: "CILoadWorld", docs: "Dev, main menu: loads a saved world through Raft's own Load Game box (no clicking). CILoadWorld [part of the world's name] [backup:N] (default: the newest world; backup:1 = its save before the newest, as Raft's Load Game box offers them)")]
+		[ConsoleCommand(name: "CILoadWorld", docs: "Dev, main menu: loads a saved world through Raft's own Load Game box (no clicking). CILoadWorld [part of the world's name] [backup:N] (a name: straight from the world's folder, without Raft's list - fast with thousands of saved worlds; default: the newest world; backup:1 = its save before the newest, as Raft's Load Game box offers them)")]
 		public static void LoadWorld(string[] args)
 		{
 			PlayerTrust.ForTests = true; // (CB2: the CI tests set players' records and use things from afar - CITrust turns it off)
@@ -2381,6 +2382,18 @@ namespace DynamicIslands
 			LoadGameBox box = Resources.FindObjectsOfTypeAll<LoadGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
 			if (box == null) { Fail("no Load Game box (go to the main menu first)"); yield break; }
 			box.gameObject.SetActive(true);
+			// A world named: straight from its folder, without Raft's list (Raft reads every saved world's newest save
+			// before it lists any - a box with ~2000 test worlds never listed them in 180 s: "no saved worlds listed")
+			if (name != null)
+			{
+				bool direct = false;
+				string why = null;
+				try { direct = LoadWorldDirect(box, name, backup, out why); }
+				catch (Exception ex) { why = "reading it threw " + (ex.InnerException ?? ex).Message; }
+				if (direct) { yield return WaitForWorld(); yield break; }
+				if (why != null) { Fail(why); yield break; }
+				Log("  (no world folder called '" + name + "': Raft's Load Game list)");
+			}
 			try { box.Close(); } catch { } box.Open(); // (Raft's Open subscribes to input changes each time, Close unsubscribes: never open twice)
 			// Raft fills the list asynchronously: wait until it stops growing
 			// (with many saved worlds Raft takes a while - 77 worlds took over 20 s - so up to 90 s)
@@ -2425,6 +2438,52 @@ namespace DynamicIslands
 			if (box.loadButton != null && !box.loadButton.interactable) { Fail("Load is disabled (Steam offline?)"); yield break; }
 			box.Button_LoadGame();
 			yield return WaitForWorld();
+		}
+
+		/// <summary>CILoadWorld with a name: the world's folder in SaveAndLoad.WorldPath (the name exactly, any case, else
+		/// the newest folder whose name holds it), its newest save as Raft's Load Game box reads it
+		/// (GetLatestRGDGameFromBackupFolders) or the older one backup:N names, then Raft's Load button (Button_LoadGame
+		/// loads SaveAndLoad.WorldToLoad). False with <paramref name="why"/> null: no such folder (the list then).</summary>
+		static bool LoadWorldDirect(LoadGameBox box, string name, int backup, out string why)
+		{
+			why = null;
+			var root = new DirectoryInfo(SaveAndLoad.WorldPath);
+			if (!root.Exists) return false;
+			DirectoryInfo[] all = root.GetDirectories();
+			DirectoryInfo dir = all.FirstOrDefault(d => d.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+				?? all.Where(d => d.Name.IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0).OrderByDescending(d => d.LastWriteTimeUtc).FirstOrDefault();
+			if (dir == null) return false;
+			RGD_Game game;
+			string which;
+			if (backup > 0)
+			{
+				var older = dir.GetDirectories().Where(d => !d.Name.EndsWith("-Latest") && d.GetFiles("*.rgd").Length > 0)
+					.Select(d => { DateTime t; return new KeyValuePair<DirectoryInfo, DateTime>(d, SaveAndLoad.ConvertBackupFolderNameToDateTime(d.Name, out t) ? t : DateTime.MinValue); })
+					.OrderByDescending(kv => kv.Value).Select(kv => kv.Key).ToList();
+				if (older.Count < backup) { why = "the world '" + dir.Name + "' has " + older.Count + " older save(s), not " + backup; return false; }
+				game = SaveAndLoad.Load<RGD_Game>(older[backup - 1].GetFiles("*.rgd")[0].FullName);
+				which = "older save " + older[backup - 1].Name;
+			}
+			else
+			{
+				DirectoryInfo from;
+				game = SaveAndLoad.GetLatestRGDGameFromBackupFolders(dir, out from);
+				which = from != null ? from.Name : "?";
+			}
+			if (game == null) { why = "could not read a save of the world '" + dir.Name + "'"; return false; }
+			if (backup > 0) Log("Loading an older save: " + which);
+			Log("Loading world: " + dir.Name + " (its folder, " + which + "; " + all.Length + " saved worlds, Raft's list not read)");
+			SaveAndLoad.WorldToLoad = game;
+			GameModeValueManager.SelectCurrentGameMode(game.mode);
+			// (not signed in to PlayFab - a box with Steam offline: the world is hosted solo, as CINewWorld does; hosted for
+			// friends it loaded the scene but never let the player in)
+			if (!Raft_Network.SignedIntoPlayfab)
+			{
+				UnityEngine.UI.Dropdown auth = HarmonyLib.Traverse.Create(box).Field("authSettingDropdown").GetValue<UnityEngine.UI.Dropdown>();
+				if (auth != null && auth.options != null && auth.options.Count >= 2 && auth.value != 1) { auth.value = 1; Log("Not signed in to PlayFab: the world is loaded solo"); }
+			}
+			box.Button_LoadGame();
+			return true;
 		}
 
 		/// <summary>
