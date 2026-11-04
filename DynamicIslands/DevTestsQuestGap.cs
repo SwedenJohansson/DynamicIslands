@@ -23,18 +23,19 @@ namespace DynamicIslands
 			bool ok = true;
 
 			// words, plan check, editor list (no world needed)
-			bool warn;
 			var facts = new QuestSteps.PlanFacts();
 			List<string> fish = QuestSteps.FishNames();
 			Check(ref ok, fish.Contains("Raw_Pomfret") && fish.Count >= 4, "the rod's fish: " + string.Join(", ", fish.ToArray()));
 			Check(ref ok, new IslandQuest.Step { Type = QuestSteps.Fish, Target = "Raw_Pomfret", Count = 2 }.Describe().StartsWith("Catch 2") && new IslandQuest.Step { Type = QuestSteps.Fish, Count = 3 }.Describe() == "Catch 3 fish with the rod"
 				&& new IslandQuest.Step { Type = QuestSteps.Gather, Target = "Plank", Count = 3 }.Describe().StartsWith("Gather 3"),
 				"the words: " + new IslandQuest.Step { Type = QuestSteps.Fish, Target = "Raw_Pomfret", Count = 2 }.Describe() + " / " + new IslandQuest.Step { Type = QuestSteps.Gather, Target = "Plank", Count = 3 }.Describe());
-			string notFish = QuestSteps.StepProblem(facts, QuestSteps.Fish, "Plank", 1, out warn);
-			Check(ref ok, QuestSteps.StepProblem(facts, QuestSteps.Fish, "Raw_Pomfret", 1, out warn) == null && QuestSteps.StepProblem(facts, QuestSteps.Fish, "", 1, out warn) == null
-				&& notFish != null && warn && QuestSteps.StepProblem(facts, QuestSteps.Fish, "Unobtainium", 1, out warn) != null && !warn
-				&& QuestSteps.StepProblem(facts, QuestSteps.Gather, "Plank", 3, out warn) == null && QuestSteps.StepProblem(facts, QuestSteps.Gather, "Unobtainium", 3, out warn) != null,
-				"the plan check: a fish is fine, a plank to fish a warning (" + notFish + "), unknown items problems");
+			bool w1, w2, w3, w4, w5, w6;
+			string pFish = QuestSteps.StepProblem(facts, QuestSteps.Fish, "Raw_Pomfret", 1, out w1), pAny = QuestSteps.StepProblem(facts, QuestSteps.Fish, "", 1, out w2),
+				notFish = QuestSteps.StepProblem(facts, QuestSteps.Fish, "Plank", 1, out w3), pNone = QuestSteps.StepProblem(facts, QuestSteps.Fish, "Unobtainium", 1, out w4),
+				gPlank = QuestSteps.StepProblem(facts, QuestSteps.Gather, "Plank", 3, out w5), gNone = QuestSteps.StepProblem(facts, QuestSteps.Gather, "Unobtainium", 3, out w6);
+			Check(ref ok, pFish == null && pAny == null && notFish != null && w3 && pNone != null && !w4 && gPlank == null && gNone != null,
+				"the plan check: a fish is fine, a plank to fish a warning, unknown items problems (pomfret " + (pFish ?? "ok") + "; any " + (pAny ?? "ok") + "; plank " + (notFish ?? "ok") + " warn " + w3
+				+ "; unknown " + (pNone ?? "ok") + " warn " + w4 + "; gather plank " + (gPlank ?? "ok") + "; gather unknown " + (gNone ?? "ok") + ")");
 			List<DropList.Option> fishList = QuestSteps.NamesFor(QuestSteps.Fish, "", new EditorGameObject[0]);
 			Check(ref ok, fishList != null && fishList.Count == fish.Count + 1 && QuestSteps.HasCount(QuestSteps.Fish) && QuestSteps.HasCount(QuestSteps.Gather)
 				&& IslandQuest.Types.Contains(QuestSteps.Fish) && IslandQuest.Types.Contains(QuestSteps.Gather), "the editor: both kinds, with a count; the fish list has 'any' + " + fish.Count);
@@ -50,7 +51,7 @@ namespace DynamicIslands
 			int flower = -1;
 			IslandFile f = PlayerTestIsland((file, add) =>
 			{
-				flower = add("Pickup_Landmark_Flower_Red", 2f, 3f, new Dictionary<string, string>());
+				flower = add("Pickup_Landmark_Flower_Red", 2f, 3f, new Dictionary<string, string> { { BehaviourProps.Name, "ci-flower" } });
 				file.Props[IslandQuest.KeyTitle] = "CI fish and gather";
 				file.Props[IslandQuest.KeySteps] = "fish|Raw_Pomfret|2|\nfish||1|\ngather|Plank|3|\ngather||1|";
 			});
@@ -87,9 +88,13 @@ namespace DynamicIslands
 				Check(ref ok, rod != null && bait != null, "the player's rod and its bait handler");
 				if (rod != null && bait != null)
 				{
+					QuestSteps.Caught("Placeable_GlassCandle", 1);
+					yield return new WaitForSeconds(0.5f);
+					Check(ref ok, QuestTracker.StepOf(e) == 1 && QuestTracker.ProgressOf(e, 0) == 0, "the rod's glass candle is no fish: step 2 still waits");
 					int fished = QuestSteps.Fished;
 					AccessTools.Method(typeof(QuestStepsFish), "Prefix").Invoke(null, new object[0]);
-					Item_Base got = bait.GetRandomItemFromCurrentBaitPool(false);
+					Item_Base got = null;
+					for (int i = 0; i < 200 && (got == null || !QuestSteps.IsFish(got.UniqueName)); i++) got = bait.GetRandomItemFromCurrentBaitPool(false);
 					AccessTools.Method(typeof(QuestStepsFish), "Postfix").Invoke(null, new object[] { rod });
 					yield return WaitStep(e, 2, 3f);
 					Check(ref ok, got != null && QuestSteps.Fished == fished + 1 && QuestSteps.LastCaught == got.UniqueName && QuestTracker.StepOf(e) == 2,

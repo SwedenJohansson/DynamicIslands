@@ -1790,7 +1790,7 @@ Raft's (`Rope`, a cooked food's name; empty = anything made); what was made befo
 
 **Catch fish** asks for a number of fish pulled out with Raft's fishing rod while the step is active, by a player
 fishing within 300 m of the island (from its shore or a raft moored off it). The **▾** lists the fish Raft's rod catches
-(`Raw_Pomfret`, `Raw_Mackerel`...); empty = any fish. Fish caught before the step came don't count. The plan checker
+(`Raw_Pomfret`, `Raw_Mackerel`...); empty = any fish (not the other things the rod brings up, such as a candle). Fish caught before the step came don't count. The plan checker
 warns when the item is not one of the rod's fish.
 
 **Gather / harvest** asks for a number of one of Raft's items that came into a player's inventory on the island while

@@ -271,6 +271,7 @@ namespace DynamicIslands.Editor
 					if (!q.Exists || step >= q.Steps.Count || q.Steps[step].Type != kind) continue;
 					string want = q.Steps[step].Target.Trim();
 					if (want.Length > 0 && !want.Equals(item, StringComparison.OrdinalIgnoreCase)) continue;
+					if (want.Length == 0 && kind == Fish && !IsFish(item)) continue; // (any fish: not the rod's junk, a lucky cat or a candle)
 					Debug.Log("[CUSTOM ISLANDS] [quest] " + e.Name + ": " + verb + " " + count + " " + item + " for step " + (step + 1));
 					QuestTracker.Event(e, n, kind, want.Length > 0 ? want : item, count);
 				}
@@ -300,6 +301,9 @@ namespace DynamicIslands.Editor
 		public static string LastGathered { get; private set; }
 
 		static List<string> fishNames;
+
+		/// <summary>A fish ("any fish" steps): Raft's raw fish (Raw_...) and trophy fish, not the other things its rod brings up.</summary>
+		internal static bool IsFish(string item) { return item != null && (item.StartsWith("Raw_", StringComparison.OrdinalIgnoreCase) || item.StartsWith("TrophyFish_", StringComparison.OrdinalIgnoreCase)); }
 
 		/// <summary>The fish Raft's rod catches (its bait pools), or a fixed list while none is loaded.</summary>
 		public static List<string> FishNames()
@@ -373,7 +377,7 @@ namespace DynamicIslands.Editor
 				}
 				case Fish:
 				{
-					var list = new List<DropList.Option> { new DropList.Option("", "Any fish", "Any fish the rod brings up counts") };
+					var list = new List<DropList.Option> { new DropList.Option("", "Any fish", "Any fish the rod brings up counts (raw or trophy fish; not the other things it pulls, a lucky cat or a candle)") };
 					list.AddRange(FishNames().Select(n => new DropList.Option(n, ContentCatalog.ItemLabel(n), "Only " + ContentCatalog.ItemLabel(n) + " counts")));
 					return list;
 				}
@@ -535,6 +539,7 @@ namespace DynamicIslands.Editor
 			try
 			{
 				Network_Player p = Traverse.Create(__instance).Field("playerNetwork").GetValue<Network_Player>();
+				for (Transform t = __instance.transform; p == null && t != null; t = t.parent) p = t.GetComponent<Network_Player>();
 				if (got != null && p != null && p.IsLocalPlayer) QuestSteps.Caught(got.UniqueName, 1);
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [quest fish] " + e.Message); }
