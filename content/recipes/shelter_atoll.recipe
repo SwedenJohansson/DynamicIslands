@@ -406,19 +406,9 @@ place Story_Islander signe at -16 55 ground yaw=74
 prop signe obj.name=Dr. Shogo
 prop signe islander.character=Shogo
 prop signe islander.pose=sit
-prop signe talk.text=You came down the mine road? Then you have seen the old drifts. The expedition went deeper, to the Abyss.
----
-The patrol boat on the channel's floor kept a signal coil in its locker, for the relay by the slab. Its sailors never got it there.
-The runway lights on the barrier? Each one throws its neighbours too. Start at the second and walk out to the sea - leave the first alone.
----
-You have a diver's look. Ask, then.
-> What happened to them?
-> Is there a safe way through the reef caves?
-> Not now.
-prop signe on.choice1=journal|Expedition log|Abyss Expedition, Shelter No. 7. Day 1: the shelter makes a fine base; the commander's men left their stores. Day 6: the reef caves run deeper than the charts say. Day 11: the deep team went down past the drifts and has not come back. I stay with the boat and the log.
-message||Shogo hands you the log.
-prop signe on.choice2=show|shelsupply
-message||Dive by the sunken dinghy off the landing at the blast gate: a cave opens in the lagoon floor there and climbs into the sea rock past the reef, to a dry cave. We left a chest of diving supplies in it.
+prop signe talk.text=You came down the mine road? Then you have seen the old drifts. The expedition went deeper, to the Abyss.\n---\nThe patrol boat on the channel's floor kept a signal coil in its locker, for the relay by the slab. Its sailors never got it there.\nThe runway lights on the barrier? Each one throws its neighbours too. Start at the second and walk out to the sea - leave the first alone.\n---\nYou have a diver's look. Ask, then.\n> What happened to them?\n> Is there a safe way through the reef caves?\n> Not now.
+prop signe on.choice1=journal|Expedition log|Abyss Expedition, Shelter No. 7. Day 1: the shelter makes a fine base; the commander's men left their stores. Day 6: the reef caves run deeper than the charts say. Day 11: the deep team went down past the drifts and has not come back. I stay with the boat and the log.\nmessage||Shogo hands you the log.
+prop signe on.choice2=show|shelsupply\nmessage||Dive by the sunken dinghy off the landing at the blast gate: a cave opens in the lagoon floor there and climbs into the sea rock past the reef, to a dry cave. We left a chest of diving supplies in it.
 prop signe on.choice3=message||Come back when you are ready to dive.
 place Loot_Crate boatlocker at 6.5 62.5 ground sit yaw=160
 note boatlocker Patrol boat locker | The patrol boat's locker, jammed half shut: a signal coil in oilcloth, labelled RELAY, and a sailor's tin.
@@ -541,8 +531,7 @@ prop cmddoorR beh.moveMode=switch
 prop storedoor obj.name=storedoor
 prop storedoor beh.use=Lift the storeroom's bar
 prop storedoor if.use=talked|Dr. Shogo
-prop storedoor on.use=hide|storedoor
-message||You reach through the gap the way Dr. Shogo told you and lift the bar. The expedition's storeroom.
+prop storedoor on.use=hide|storedoor\nmessage||You reach through the gap the way Dr. Shogo told you and lift the bar. The expedition's storeroom.
 prop storedoor else.use=message||The door is barred from inside.
 note storecrate Expedition stores | The expedition's stores, packed for the dive: rope, air and tins.
 loot storecrate OxygenBottle*1;PlasticBottle_Water*2;Rope*2;Battery*1;Scrap*3
