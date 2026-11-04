@@ -656,6 +656,8 @@ call kit_st x=-4 z=-22 yaw=205 len=35.6 slope=12 end=room size=0.7 hill=0 dirt=2
 place RT_PlasticBoat dinghy at -12 -13.5 ground sit yaw=130 tilt=12
 prop dinghy obj.name=dinghy
 place TP_BigRock02 - at -11.5 -19.6 ground sit scale=0.3 yaw=40
+# (and one close by the mouth's right lip: from inside the mouth a slit beside it looked out through the shell's back)
+place TP_BigRock02 - at -7.9 -19.5 ground sit scale=0.3 yaw=100
 place TP_BigRock02 - at 2.65 -26.2 ground sit scale=0.3 yaw=160
 # (a palm the den's rock grew round stood out of the sea stack's side, its crown inside: cleared)
 clear at -23.6 -64 r=16 all body only=Tree
