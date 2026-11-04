@@ -155,40 +155,16 @@ brush flatten at 71 -61.8 r=2.2 s=20 frames=200 h=-0.3
 brush flatten at 71 -63.1 r=2.2 s=20 frames=200 h=-1.0
 brush flatten at 71 -64.4 r=2.2 s=20 frames=200 h=-1.6
 clear from 71 -57.9 to 71 -64.4 r=3.2 body
-# (fixA 11-03, REACH: the deep pool south of the radio towers (water at sea level, banks 1-2.5 m sheer) was a trap - a
-# swimmer could not climb out: a ramp from the south bank down into the water, as at the sea cave)
-brush flatten at 30.0 -25.00 r=3.0 s=20 frames=300 h=1.80
-brush flatten at 30.0 -24.35 r=3.0 s=20 frames=300 h=1.47
-brush flatten at 30.0 -23.70 r=3.0 s=20 frames=300 h=1.14
-brush flatten at 30.0 -23.05 r=3.0 s=20 frames=300 h=0.81
-brush flatten at 30.0 -22.40 r=3.0 s=20 frames=300 h=0.48
-brush flatten at 30.0 -21.75 r=3.0 s=20 frames=300 h=0.15
-brush flatten at 30.0 -21.10 r=3.0 s=20 frames=300 h=-0.18
-brush flatten at 30.0 -20.45 r=3.0 s=20 frames=300 h=-0.51
-brush flatten at 30.0 -19.80 r=3.0 s=20 frames=300 h=-0.84
-brush flatten at 30.0 -19.15 r=3.0 s=20 frames=300 h=-1.17
-brush flatten at 30.0 -18.50 r=3.0 s=20 frames=300 h=-1.50
-brush flatten at 30.0 -25.00 r=3.0 s=20 frames=300 h=1.80
-brush flatten at 30.0 -24.35 r=3.0 s=20 frames=300 h=1.47
-brush flatten at 30.0 -23.70 r=3.0 s=20 frames=300 h=1.14
-brush flatten at 30.0 -23.05 r=3.0 s=20 frames=300 h=0.81
-brush flatten at 30.0 -22.40 r=3.0 s=20 frames=300 h=0.48
-brush flatten at 30.0 -21.75 r=3.0 s=20 frames=300 h=0.15
-brush flatten at 30.0 -21.10 r=3.0 s=20 frames=300 h=-0.18
-brush flatten at 30.0 -20.45 r=3.0 s=20 frames=300 h=-0.51
-brush flatten at 30.0 -19.80 r=3.0 s=20 frames=300 h=-0.84
-brush flatten at 30.0 -19.15 r=3.0 s=20 frames=300 h=-1.17
-brush flatten at 30.0 -18.50 r=3.0 s=20 frames=300 h=-1.50
-clear from 30.0 -25.0 to 30.0 -18.0 r=3.6 body
-# (and, where the walks still found the bank 0.9 m over the water at 30.6 -24.6, a landing stage: a deck tile on posts at
-# the water's edge, 0.45 m over the water and 0.45 m under the bank)
-place Block_Floor_Tier3 - at 30.6 -23.3 h=0.45
-# (a second tile, laid on the bank lip itself at 0.9, so the stage and the bank make one stair with no gap between them)
-place Block_Floor_Tier3 - at 30.6 -24.6 h=0.9
-place Block_Pillar_Tier3 - at 30.0 -22.8 h=-2.32
-place Block_Pillar_Tier3 - at 30.0 -22.8 h=-4.87
-place Block_Pillar_Tier3 - at 31.2 -22.8 h=-2.32
-place Block_Pillar_Tier3 - at 31.2 -22.8 h=-4.87
+# (UT 11-04) the deep pool south of the towers: a swimmer could not climb its sheer south bank. A ladder on a wooden
+# pillar against the bank, climbed from the water (+z side), its top over the bank lip. (Replaces fixA 11-03's landing
+# stage, which was placed by walker coords - 7.3 m off - and stood in the wrong place.) Two ladders wide: a swimmer
+# coming at one ladder's edge was squeezed into the nook beside its pillar.
+for lx 39.11 39.91 0.8
+place Block_Ladder - at $lx -18.28 h=-3.0 yaw=180
+place Block_Pillar_Wood - at $lx -18.48 h=-3.0
+place Block_Ladder - at $lx -18.28 h=-0.58 yaw=180
+place Block_Pillar_Wood - at $lx -18.48 h=-0.58
+next
 # --- JUMP COURSE rt (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---
 # JUMP rt pad=4 at=40 -56
 push at 40 -56

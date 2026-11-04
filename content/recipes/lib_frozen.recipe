@@ -78,10 +78,12 @@ end
 # fz_tower: a ladder tower standing on the ground at x z (h m over the sea there): n ladders (2.42 m each) on wooden
 # pillars, climbed from its +z side, and a 3 x 3 plank platform at its top (h + 2.42 n) behind it (-z; `save` posts
 # its corners down to the ground). On the platform: a chest (chest), a lantern, a zone (zal, zone id zid, msg). al: the
-# tower's pieces (for one tint).
-macro fz_tower x=0 z=0 h=20 n=8 al=tower chest=towerchest zal=towerzone zid=tower_top msg=""
+# tower's pieces (for one tint). ly: the ladders' yaw - 180 (the default) takes hold from +z, outside, and the climber
+# steps off onto the platform at the top; 0 takes hold from -z, under the platform, where a climber gets stuck (UT 11-04:
+# all five towers stalled so; they pass ly=180 too).
+macro fz_tower x=0 z=0 h=20 n=8 al=tower chest=towerchest zal=towerzone zid=tower_top msg="" ly=180
 for k 0 {$n-1} 1
-place Block_Ladder $al at $x $z h={$h+2.42*$k} yaw=0
+place Block_Ladder $al at $x $z h={$h+2.42*$k} yaw=$ly
 place Block_Pillar_Wood $al at $x {$z-0.2} h={$h+2.42*$k}
 next
 for fx -1.5 1.5 1.5

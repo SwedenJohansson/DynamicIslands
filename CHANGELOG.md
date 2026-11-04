@@ -68,6 +68,13 @@ Not in this release yet; these come in the next update:
 - **Lowstreet**: the sand that walled in the four shop doors is dug out down to the shop floors, so a diver swims in through each door.
 - **Lowstreet**: the four shop chests, the shops' tables and lamps and Jonah's letter stand on the shop floors again (they had sunk into the sand under them).
 - **The Iron Whale - Bow**: the port prow plate no longer hangs 2 m over the ice; a second plate under it carries it down into the ice.
+- **The Iron Whale - Bow**: the crane's ladder tower is climbed from outside and its top steps off onto the cab's floor
+- **The Iron Whale - Engine Decks, Signalstack Rock, Squall Shelf, Steamvent Harbour**: the ladder towers (the funnel, the beacon on the Needle, the weather mast, the derrick) are climbed from outside and step off onto their platforms; their ladders could only be taken hold of from under the platform, where a climber got stuck.
+  (a climber got stuck under the floor, so the cab locker and the crane driver's note could not be reached); the ladder
+  from the ice to the foredeck is climbed from the ice side (it faced the hull's window wall); the mast's ladders stand
+  east of the mast and end at the crow's nest plank instead of under the nest's floor.
+- **Lowstreet**: the ladder up to the cinema roof reaches down under the water and is climbed from the open water, so a swimmer can take hold of it and step off onto the roof.
+- **Radio Tower Remade**: the deep pool south of the towers has a ladder, two wide, up its sheer bank, so a swimmer can climb out; the landing stage that was built 7 m off, in the wrong place, is gone.
 - Old worlds (made before Raft gave worlds an id): quest rewards are kept per world, and players who join such a world
   get the host's custom islands state.
 - Cave tool: a thin spike of ground left beside the cut over some tunnel mouths.

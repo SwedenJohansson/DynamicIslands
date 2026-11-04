@@ -46,7 +46,8 @@ brush flatten at 45 40.5 r=16 s=20 frames=400 h=10
 brush smooth at 45 40.5 r=21 s=6 frames=60
 brush flatten at 45 40.5 r=16 s=20 frames=500 h=10
 brush auto at 45 40.5 r=22 s=10 frames=25
-call fz_tower x=42 z=44 h=10 n=3 al=funnelladder chest=funnelchest zal=funnelzone zid=funnel_top msg="The top of the funnel, out of the sea. The way the Whale's smoke went - and the way out."
+# (UT 11-04: its ladders took hold only from under the platform, where the climber stalled: climbed from outside now)
+call fz_tower x=42 z=44 h=10 n=3 ly=180 al=funnelladder chest=funnelchest zal=funnelzone zid=funnel_top msg="The top of the funnel, out of the sea. The way the Whale's smoke went - and the way out."
 place TP_SeleneReactorChimney funnel at 46 41 h=10 centred sit
 prop funnel tint.color=#5a2a24
 prop funnel tint.amount=0.5

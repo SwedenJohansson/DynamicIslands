@@ -57,7 +57,11 @@ push at 3 -15.5 h=1
 # its railing: the railing's west middle left open and a ladder up the slab's edge there, its top just over the slab)
 call hw_roof d=21 a=city lm=none
 # (R 11-01: reach - the walker climbed it but got stuck under the slab's edge: the ladder 0.6 m higher, its top well over the slab)
-place Block_Ladder roofladder at -6.35 -0.75 y=-1.4 yaw=-90
+# (UT 11-04: its foot was at the water's surface - a swimmer sinks to -2.5 and passed under it: a second ladder under it,
+# foot at -3.2; and both turned (yaw 90): a Block_Ladder takes hold only from its -z side, which at -90 faced the roof -
+# the climber was squeezed under the slab's edge. Now climbed from the open water (west), stepping east onto the slab.)
+place Block_Ladder roofladder at -6.35 -0.75 y=-1.4 yaw=90
+place Block_Ladder roofladder at -6.35 -0.75 y=-4.2 yaw=90
 place Placeable_WindTurbine - at -3 1.5 y=0.05 sit
 place Loot_Chest projectorbox at -4.8 -3.4 y=0.05 sit
 place RT_Spotlight - at -0.8 -3.6 y=0.05 sit yaw=160
