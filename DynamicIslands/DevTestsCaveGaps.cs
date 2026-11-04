@@ -655,11 +655,47 @@ namespace DynamicIslands
 			return ways;
 		}
 
-		[ConsoleCommand(name: "CICaveGapsLook", docs: "Dev, a world (host): one cave gaps test island (CICaveGapsLook <cgaps-dig|cgaps-st|cgaps-uw> [noshots]), the kept one or brought next to the raft: each cave's way in (cave tool tunnels to the room or the far end, each dug stroke) - pictures from outside at the mouth and over the hill, from inside looking in, looking out, at the walls and roof at its end, by day and by night (shot_cg_<island>_<n>_<view>.png); a clear way along it (no rock across it); walked in with Raft's controller and back out past the mouth where it is dry; where it is under the sea: water there (Raft's swimming, the breath going down) and, in a room above the sea, dry ground with the breath coming back")]
+		[ConsoleCommand(name: "CICaveGapsLook", docs: "Dev, a world (host): one cave gaps test island or any saved island with caves (CICaveGapsLook <cgaps-dig|cgaps-st|cgaps-uw|island name, spaces allowed> [noshots]), the kept one or brought next to the raft: each cave's way in (cave tool tunnels to the room or the far end, each dug stroke) - pictures from outside at the mouth and over the hill, from inside looking in, looking out, at the walls and roof at its end, by day and by night (shot_cg_<island>_<n>_<view>.png); a clear way along it (no rock across it); walked in with Raft's controller and back out past the mouth where it is dry; where it is under the sea: water there (Raft's swimming, the breath going down) and, in a room above the sea, dry ground with the breath coming back")]
 		public static void CaveGapsLookCommand(string[] args)
 		{
-			if (args == null || args.Length == 0) { Fail("CICaveGapsLook <island>"); return; }
-			StartTest(CaveGapsLookRoutine(args[0], !args.Contains("noshots")));
+			string name = CaveGapsLookName(args);
+			if (name.Length == 0) { Fail("CICaveGapsLook <island>"); return; }
+			StartTest(CaveGapsLookRoutine(name, args == null || !args.Contains("noshots")));
+		}
+
+		/// <summary>The island's name for CICaveGapsLook: all the words but "noshots", quotes round it dropped - a library
+		/// island's name has spaces (Old Mine Islet) and the console splits it into words; only the first word was taken, with
+		/// its quote, and the world then tried to read that island ('"Old') every frame (11-04).</summary>
+		static string CaveGapsLookName(string[] args)
+		{
+			if (args == null) return "";
+			return string.Join(" ", args.Where(a => !string.Equals(a, "noshots", StringComparison.OrdinalIgnoreCase)).ToArray()).Trim().Trim('"', '\'').Trim();
+		}
+
+		[ConsoleCommand(name: "CICaveGapsLookName", docs: "Dev, anywhere: CICaveGapsLook's island name from the console's words - a name with spaces, with or without quotes, with noshots after it; a name with no saved island is refused before anything is brought into the world")]
+		public static void CaveGapsLookNameCommand(string[] args)
+		{
+			var cases = new[]
+			{
+				new { a = new[] { "Old", "Mine", "Islet" }, w = "Old Mine Islet" },
+				new { a = new[] { "\"Old", "Mine", "Islet\"", "noshots" }, w = "Old Mine Islet" },
+				new { a = new[] { "cgaps-dig" }, w = "cgaps-dig" },
+				new { a = new[] { "noshots" }, w = "" },
+			};
+			int bad = 0;
+			foreach (var c in cases)
+			{
+				string got = CaveGapsLookName(c.a);
+				if (got != c.w) { bad++; Log("  " + string.Join(" ", c.a) + " -> '" + got + "', not '" + c.w + "'"); }
+			}
+			if (CaveGapsLookIslandMissing("\"Old")) Log("  '\"Old' refused: no saved island"); else { bad++; Log("  '\"Old' not refused"); }
+			if (bad == 0) Log("PASS: cave gaps look name: " + cases.Length + " cases, a missing island refused"); else Fail("cave gaps look name: " + bad + " wrong");
+		}
+
+		static bool CaveGapsLookIslandMissing(string name)
+		{
+			try { return name.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) >= 0 || !System.IO.File.Exists(IslandSpawner.PathFor(name)); }
+			catch { return true; }
 		}
 
 		static IEnumerator CaveGapsLookRoutine(string name, bool shots)
@@ -672,6 +708,7 @@ namespace DynamicIslands
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Root != null && string.Equals(x.HostName, name, StringComparison.OrdinalIgnoreCase));
 			if (e == null)
 			{
+				if (CaveGapsLookIslandMissing(name)) { Fail("cave gaps look: no saved island '" + name + "'"); yield break; }
 				Vector3? spot = ScSpot(name, 400f);
 				if (!spot.HasValue) { Fail("cave gaps look: no open sea near the raft"); yield break; }
 				var made = new List<IslandWorldState.Entry>();
