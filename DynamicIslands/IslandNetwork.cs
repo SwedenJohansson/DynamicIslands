@@ -611,6 +611,27 @@ namespace DynamicIslands.Editor
 			SendToPlayer(new IslandNetMessage { Kind = QuestKind(n), Ids = n == 0 ? new[] { islandId } : new[] { islandId, n }, Index = QuestTracker.StepOf(e, n), Count = QuestTracker.ProgressOf(e, n), Name = "set" }, player);
 		}
 
+		/// <summary>Host -> everyone: quest n's step and progress as the host has them, Name "set" (QuestTest set it back:
+		/// the players take it even when older than their own; an older version takes it as a plain step: never back).</summary>
+		internal static void SendQuestSet(int islandId, int n)
+		{
+			if (!Raft_Network.IsHost) return;
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
+			if (e == null) return;
+			SendToClients(new IslandNetMessage { Kind = QuestKind(n), Ids = n == 0 ? new[] { islandId } : new[] { islandId, n }, Index = QuestTracker.StepOf(e, n), Count = QuestTracker.ProgressOf(e, n), Name = "set" });
+		}
+
+		/// <summary>Host -> everyone: the island was set back to new (QuestTest reset): its islands entry with Name "reset" -
+		/// a player takes the host's (empty) state and makes the island again if it is loaded there. An older version takes
+		/// it as a known island's entry (nothing changes there until it joins again).</summary>
+		internal static void SendReset(IslandWorldState.Entry e)
+		{
+			if (!Raft_Network.IsHost || e == null) return;
+			IslandNetMessage msg = IslandsMessage(new[] { e }, false);
+			msg.Name = "reset";
+			SendToClients(msg);
+		}
+
 		/// <summary>Host: tells everyone a rule brought this island (the banner with its direction).</summary>
 		public static void SendAnnounce(IslandWorldState.Entry e, string title, string message)
 		{
@@ -944,6 +965,20 @@ namespace DynamicIslands.Editor
 				bool whole = msg.Names != null && i < msg.Names.Length && !string.IsNullOrEmpty(msg.Names[i]) && msg.Offsets != null && i * 3 + 2 < msg.Offsets.Length;
 				IslandWorldState.Entry known = IslandWorldState.Islands.FirstOrDefault(e => e.Id == msg.Ids[i]);
 				if (known != null && msg.Rules != null && i < msg.Rules.Length && !string.IsNullOrEmpty(msg.Rules[i])) known.Rule = msg.Rules[i];
+				if (known != null && msg.Name == "reset" && msg.States != null && i < msg.States.Length)
+				{
+					// (QuestTest reset: the host's island is new again - its state here too, made again if loaded; nothing captured)
+					if (known.Root != null)
+					{
+						QuestTestCommands.KeepOnTop(known);
+						try { ItemHold.HoldOn(known); } catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Holding dropped items failed: " + x.Message); }
+						IslandSpawner.Despawn(known.Root);
+						known.Root = null;
+					}
+					known.State = IslandObjectState.Decode(msg.States[i] ?? "");
+					Log("Island " + known.Id + " '" + known.HostName + "' was set back to new by the host (QuestTest reset)");
+					continue;
+				}
 				if (known != null)
 				{
 					// (moved by the host: an island the players still need came back ahead of the raft - ReturningIslands)

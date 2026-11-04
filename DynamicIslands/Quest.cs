@@ -21,7 +21,7 @@ namespace DynamicIslands.Editor
 	public class IslandQuest
 	{
 		public const string KeyTitle = "quest.title", KeyIntro = "quest.intro", KeySteps = "quest.steps", KeyReward = "quest.reward", KeyDone = "quest.done";
-		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch", "collect", "pages", "blueprint", Islanders.QuestType, Collectibles.QuestType, Lights.QuestType, QuestSteps.Signal, QuestSteps.Bring, QuestSteps.Craft };
+		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch", "collect", "pages", "blueprint", Islanders.QuestType, Collectibles.QuestType, Lights.QuestType, QuestSteps.Signal, QuestSteps.Bring, QuestSteps.Craft, QuestSteps.Fish, QuestSteps.Gather };
 
 		/// <summary>Steps the crew's story book counts (the host checks them), not events.</summary>
 		public static bool Counted(string type) { return type == "collect" || type == "pages" || PlayerFeatures.Counted(type) || QuestSteps.Counted(type); }
@@ -461,6 +461,26 @@ namespace DynamicIslands.Editor
 			IslandQuest q = QuestOf(e, n);
 			Debug.Log("[CUSTOM ISLANDS] Quest " + (n + 1) + " of '" + e.HostName + "': the host has step " + (step + 1) + " (this player's step " + (before + 1) + " wasn't counted there)");
 			if (q.Exists && step < q.Steps.Count) Show(q.ShownTitle, "Next: " + q.Steps[step].Describe());
+			return true;
+		}
+
+		/// <summary>Host, the QuestTest command (gap idea 9): quest n to this step (0-based; the step count = done), back too.
+		/// Forward it moves on as play does (events, rules, the reward at the end); back (or the same step) the step, its
+		/// progress and the work done early for it and later steps are set back here and on every player ("set", as a
+		/// refused step's correction). False when there is no such quest.</summary>
+		internal static bool JumpTo(IslandWorldState.Entry e, int n, int step)
+		{
+			IslandQuest q = QuestOf(e, n);
+			if (!Raft_Network.IsHost || !q.Exists) return false;
+			step = Mathf.Clamp(step, 0, q.Steps.Count);
+			int before = StepOf(e, n);
+			if (step > before) return Set(e, n, step, 0, true);
+			e.State[StepKeyOf(n)] = new ObjectState { Active = true, Yield = step, Day = Today };
+			e.State.Remove(ProgressKeyOf(n));
+			for (int s = step; s <= q.Steps.Count; s++) e.State.Remove(EarlyKeyOf(n, s));
+			IslandNetwork.SendQuestSet(e.Id, n);
+			Debug.Log("[CUSTOM ISLANDS] Quest " + (n + 1) + " of '" + e.HostName + "': set back to step " + (step + 1) + " (QuestTest)");
+			if (step < q.Steps.Count) Show(q.ShownTitle, "Next: " + q.Steps[step].Describe());
 			return true;
 		}
 

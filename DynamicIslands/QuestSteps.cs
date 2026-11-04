@@ -15,17 +15,25 @@ namespace DynamicIslands.Editor
 	///     target "Plank@Mara" (no "@": to any islander or chest of the island). The items are taken from the player.
 	///   - "craft" (QE7, "Craft or cook"): N of a Raft item crafted, cooked (grill, purifier, cooking pot) while the step is
 	///     the quest's current one, at the island. Never early: what was made before the step came doesn't count.
-	/// Bring and craft go through QuestTracker.Event like a note read: a player's machine tells the host, everyone sees it.
+	///   - "fish" (11-04 gap idea 3, "Catch fish"): N fish (of a kind, or any) pulled out with Raft's fishing rod at the island
+	///     (from its shore or a raft moored off it, CraftReach) while the step is the current one.
+	///   - "gather" (11-04 gap idea 4, "Gather / harvest"): N of a Raft item picked up, dug or harvested by hand, shovel or axe
+	///     at the island (GatherReach) while the step is the current one: what came into the player's inventory.
+	/// Bring, craft, fish and gather go through QuestTracker.Event like a note read: a player's machine tells the host, everyone sees it.
 	/// </summary>
 	public static class QuestSteps
 	{
-		public const string Signal = "signal", Bring = "bring", Craft = "craft";
-		/// <summary>How far from the island's land a craft still counts for its quest (a raft moored off it).</summary>
+		public const string Signal = "signal", Bring = "bring", Craft = "craft", Fish = "fish", Gather = "gather";
+		/// <summary>How far from the island's land a craft or a catch still counts for its quest (a raft moored off it).</summary>
 		internal const float CraftReach = 300f;
+		/// <summary>How far from the island's land a pickup still counts for a gather step (its beach and shallows).</summary>
+		internal const float GatherReach = 40f;
 
 		public static bool Counted(string type) { return type == Signal; }
 		/// <summary>Steps with a number of things (the editor's count field).</summary>
-		public static bool HasCount(string type) { return type == Bring || type == Craft; }
+		public static bool HasCount(string type) { return type == Bring || type == Craft || type == Fish || type == Gather; }
+		/// <summary>Steps whose target is a Raft item (the editor's … item picker).</summary>
+		public static bool TakesItem(string type) { return type == Bring || type == Craft || type == Fish || type == Gather; }
 
 		/// <summary>"Gate=open" = an object's state: the object's name and the state; else false (a signal's name).</summary>
 		public static bool IsState(string target, out string obj, out string state)
@@ -76,6 +84,10 @@ namespace DynamicIslands.Editor
 					return "Bring " + Item(item, count) + (to.Length > 0 ? " to " + to : "");
 				case Craft:
 					return "Craft or cook " + Item(target.Trim(), count);
+				case Fish:
+					return target.Trim().Length == 0 ? "Catch " + (count > 1 ? count + " fish" : "a fish") + " with the rod" : "Catch " + Item(target.Trim(), count) + " with the rod";
+				case Gather:
+					return target.Trim().Length == 0 ? "Gather " + (count > 1 ? count + " things" : "something") + " here" : "Gather " + Item(target.Trim(), count);
 			}
 			return null;
 		}
@@ -225,20 +237,104 @@ namespace DynamicIslands.Editor
 			if (string.IsNullOrEmpty(item) || count <= 0) return;
 			Crafted++;
 			LastMade = item;
+			Credit(Craft, CraftReach, item, count, "made");
+		}
+
+		/// <summary>The local player caught a fish with the rod: counts for fish steps waiting for it (now, never before).</summary>
+		public static void Caught(string item, int count)
+		{
+			if (string.IsNullOrEmpty(item) || count <= 0) return;
+			Fished++;
+			LastCaught = item;
+			Credit(Fish, CraftReach, item, count, "caught");
+		}
+
+		/// <summary>The local player picked up, dug or harvested count of an item: counts for gather steps waiting for it.</summary>
+		public static void Gathered(string item, int count)
+		{
+			if (string.IsNullOrEmpty(item) || count <= 0) return;
+			GatheredCount++;
+			LastGathered = item;
+			Credit(Gather, GatherReach, item, count, "gathered");
+		}
+
+		/// <summary>Counts for the current step of this kind of every quest of the islands within reach that wants the item.</summary>
+		static void Credit(string kind, float reach, string item, int count, string verb)
+		{
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.ToList())
 			{
-				if (e.Root == null || !QuestTracker.Near(e, CraftReach)) continue;
+				if (e.Root == null || !QuestTracker.Near(e, reach)) continue;
 				for (int n = 0, quests = QuestTracker.QuestsOf(e); n < quests; n++)
 				{
 					IslandQuest q = QuestTracker.QuestOf(e, n);
 					int step = QuestTracker.StepOf(e, n);
-					if (!q.Exists || step >= q.Steps.Count || q.Steps[step].Type != Craft) continue;
+					if (!q.Exists || step >= q.Steps.Count || q.Steps[step].Type != kind) continue;
 					string want = q.Steps[step].Target.Trim();
 					if (want.Length > 0 && !want.Equals(item, StringComparison.OrdinalIgnoreCase)) continue;
-					Debug.Log("[CUSTOM ISLANDS] [quest] " + e.Name + ": made " + count + " " + item + " for step " + (step + 1));
-					QuestTracker.Event(e, n, Craft, want.Length > 0 ? want : item, count);
+					if (want.Length == 0 && kind == Fish && !IsFish(item)) continue; // (any fish: not the rod's junk, a lucky cat or a candle)
+					Debug.Log("[CUSTOM ISLANDS] [quest] " + e.Name + ": " + verb + " " + count + " " + item + " for step " + (step + 1));
+					QuestTracker.Event(e, n, kind, want.Length > 0 ? want : item, count);
 				}
 			}
+		}
+
+		/// <summary>Whether an island within GatherReach waits for a gather step now (the pickup hooks count only then).</summary>
+		internal static bool GatherWaiting()
+		{
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
+			{
+				if (e.Root == null) continue;
+				for (int n = 0, quests = QuestTracker.QuestsOf(e); n < quests; n++)
+				{
+					IslandQuest q = QuestTracker.QuestOf(e, n);
+					int step = QuestTracker.StepOf(e, n);
+					if (q.Exists && step < q.Steps.Count && q.Steps[step].Type == Gather && QuestTracker.Near(e, GatherReach)) return true;
+				}
+			}
+			return false;
+		}
+
+		/// <summary>Fish and gather counts this session (tests), and the last item of each.</summary>
+		public static int Fished { get; private set; }
+		public static string LastCaught { get; private set; }
+		public static int GatheredCount { get; private set; }
+		public static string LastGathered { get; private set; }
+
+		static List<string> fishNames;
+
+		/// <summary>A fish ("any fish" steps): Raft's raw fish (Raw_...) and trophy fish, not the other things its rod brings up.</summary>
+		internal static bool IsFish(string item) { return item != null && (item.StartsWith("Raw_", StringComparison.OrdinalIgnoreCase) || item.StartsWith("TrophyFish_", StringComparison.OrdinalIgnoreCase)); }
+
+		/// <summary>The fish Raft's rod catches (its bait pools), or a fixed list while none is loaded.</summary>
+		public static List<string> FishNames()
+		{
+			if (fishNames != null) return fishNames;
+			var names = new List<string>();
+			try
+			{
+				foreach (FishingBaitHandler h in Resources.FindObjectsOfTypeAll<FishingBaitHandler>())
+				{
+					var droppers = new List<RandomDropper>
+					{
+						Traverse.Create(h).Field("defaultDropper").GetValue<RandomDropper>(), Traverse.Create(h).Field("metalRodDropper").GetValue<RandomDropper>()
+					};
+					var links = Traverse.Create(h).Field("baitConnections").GetValue<List<BaitConnection>>();
+					if (links != null) droppers.AddRange(links.Where(b => b != null).Select(b => b.dropper));
+					foreach (RandomDropper d in droppers)
+					{
+						if (d == null || d.randomDropperAsset == null || d.randomDropperAsset.randomizer == null || d.randomDropperAsset.randomizer.items == null) continue;
+						foreach (RandomItem it in d.randomDropperAsset.randomizer.items)
+						{
+							Item_Base b = it != null ? it.obj as Item_Base : null;
+							if (b != null && !names.Contains(b.UniqueName)) names.Add(b.UniqueName);
+						}
+					}
+					if (names.Count > 0) break;
+				}
+			}
+			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] [quest fish] " + ex.Message); }
+			if (names.Count > 0) { fishNames = names; return names; }
+			return new List<string> { "Raw_Pomfret", "Raw_Mackerel", "Raw_Herring", "Raw_Tilapia", "Raw_Catfish", "Raw_Salmon" };
 		}
 
 		/// <summary>Crafts and cooks this session (tests), and the last item.</summary>
@@ -278,6 +374,12 @@ namespace DynamicIslands.Editor
 						.Concat(all.Where(g => ObjectProps.IsLoot(g.GameObjectName, g.Props)).Select(g => ObjectProps.Get(g.Props, ObjectProps.NoteTitle).Trim()))
 						.Where(n => n.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase);
 					return names.Select(n => new DropList.Option(item + "@" + n, n, "Hand the items to " + n + " (an islander: by talking; a chest: at the chest)")).ToList();
+				}
+				case Fish:
+				{
+					var list = new List<DropList.Option> { new DropList.Option("", "Any fish", "Any fish the rod brings up counts (raw or trophy fish; not the other things it pulls, a lucky cat or a candle)") };
+					list.AddRange(FishNames().Select(n => new DropList.Option(n, ContentCatalog.ItemLabel(n), "Only " + ContentCatalog.ItemLabel(n) + " counts")));
+					return list;
 				}
 			}
 			return null;
@@ -336,7 +438,14 @@ namespace DynamicIslands.Editor
 					if (to.Length > 0 && !f.Receivers.Contains(to)) return "no islander or chest is called '" + to + "'";
 					break;
 				case Craft:
+				case Gather:
 					if (target.Length > 0 && ItemManager.GetAllItems() != null && ItemManager.GetAllItems().Count > 0 && ItemManager.GetItemByName(target) == null) return "Raft has no item '" + target + "'";
+					break;
+				case Fish:
+					if (target.Length == 0) break;
+					if (ItemManager.GetAllItems() != null && ItemManager.GetAllItems().Count > 0 && ItemManager.GetItemByName(target) == null) return "Raft has no item '" + target + "'";
+					warning = true;
+					if (!FishNames().Contains(target, StringComparer.OrdinalIgnoreCase)) return "Raft's rod doesn't catch '" + target + "' (▾ lists the fish): the step may never be done";
 					break;
 			}
 			return null;
@@ -411,5 +520,120 @@ namespace DynamicIslands.Editor
 			try { if (__result && __state != null) QuestSteps.Made(__state.UniqueName, 1); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [quest cook] " + e.Message); }
 		}
+	}
+
+	/// <summary>"Catch fish" steps: the fish this player's rod pulls out (the item Raft's bait pool gave: QuestSteps.Caught).</summary>
+	[HarmonyPatch(typeof(FishingRod), "PullItemsFromSea")]
+	static class QuestStepsFish
+	{
+		internal static bool pulling;
+		internal static Item_Base pulled;
+
+		static void Prefix() { pulling = true; pulled = null; }
+
+		static void Postfix(FishingRod __instance)
+		{
+			Item_Base got = pulled;
+			pulling = false;
+			pulled = null;
+			try
+			{
+				Network_Player p = Traverse.Create(__instance).Field("playerNetwork").GetValue<Network_Player>();
+				for (Transform t = __instance.transform; p == null && t != null; t = t.parent) p = t.GetComponent<Network_Player>();
+				if (got != null && p != null && p.IsLocalPlayer) QuestSteps.Caught(got.UniqueName, 1);
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [quest fish] " + e.Message); }
+		}
+	}
+
+	/// <summary>"Catch fish" steps: which item the bait pool gave while a rod is pulled in.</summary>
+	[HarmonyPatch(typeof(FishingBaitHandler), "GetRandomItemFromCurrentBaitPool")]
+	static class QuestStepsFishPool
+	{
+		static void Postfix(Item_Base __result) { if (QuestStepsFish.pulling && __result != null) QuestStepsFish.pulled = __result; }
+	}
+
+	/// <summary>
+	/// "Gather" steps: what came into this player's inventory by a pickup (hand, shovel), a channelled pickup or a tree or
+	/// bush harvested with the axe - the counts before and after, only while an island near the player waits for a gather
+	/// step. The outermost hook counts (a harvest may go through a pickup).
+	/// </summary>
+	static class QuestStepsGather
+	{
+		static int depth;
+		static Dictionary<string, int> before;
+
+		internal static Dictionary<string, int> Counts(PlayerInventory inv)
+		{
+			var d = new Dictionary<string, int>();
+			if (inv == null || inv.allSlots == null) return d;
+			foreach (Slot s in inv.allSlots)
+			{
+				if (s == null || s.itemInstance == null || s.itemInstance.baseItem == null) continue;
+				string n = s.itemInstance.UniqueName;
+				int had;
+				d.TryGetValue(n, out had);
+				d[n] = had + s.itemInstance.Amount;
+			}
+			return d;
+		}
+
+		static PlayerInventory Local(Network_Player p) { return p != null && p.IsLocalPlayer ? p.Inventory : null; }
+
+		internal static void Before(Network_Player p)
+		{
+			depth++;
+			if (depth != 1) return;
+			before = null;
+			try
+			{
+				PlayerInventory inv = Local(p);
+				if (inv != null && QuestSteps.GatherWaiting()) before = Counts(inv);
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [quest gather] " + e.Message); }
+		}
+
+		internal static void After(Network_Player p)
+		{
+			depth = Math.Max(0, depth - 1);
+			if (depth != 0 || before == null) return;
+			Dictionary<string, int> had = before;
+			before = null;
+			PlayerInventory inv = Local(p);
+			if (inv == null) return;
+			foreach (var kv in Counts(inv))
+			{
+				int was;
+				had.TryGetValue(kv.Key, out was);
+				if (kv.Value > was) QuestSteps.Gathered(kv.Key, kv.Value - was);
+			}
+		}
+
+		internal static Network_Player OwnerOf(PlayerInventory inv)
+		{
+			Network_Player p = RAPI.GetLocalPlayer();
+			return p != null && inv != null && p.Inventory == inv ? p : null;
+		}
+	}
+
+	[HarmonyPatch(typeof(Pickup), "AddItemToInventory")]
+	static class QuestStepsPickup
+	{
+		static void Prefix(Pickup __instance) { Network_Player p = null; try { p = Traverse.Create(__instance).Field("playerNetwork").GetValue<Network_Player>(); } catch { } QuestStepsGather.Before(p); }
+		static void Postfix(Pickup __instance) { Network_Player p = null; try { p = Traverse.Create(__instance).Field("playerNetwork").GetValue<Network_Player>(); } catch { } try { QuestStepsGather.After(p); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [quest gather] " + e.Message); } }
+	}
+
+	[HarmonyPatch(typeof(PickupChanneling), "AddItemToInventory")]
+	static class QuestStepsChannel
+	{
+		static void Prefix(PickupChanneling __instance) { Network_Player p = null; try { p = Traverse.Create(__instance).Field("player").GetValue<Network_Player>(); } catch { } QuestStepsGather.Before(p); }
+		static void Postfix(PickupChanneling __instance) { Network_Player p = null; try { p = Traverse.Create(__instance).Field("player").GetValue<Network_Player>(); } catch { } try { QuestStepsGather.After(p); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [quest gather] " + e.Message); } }
+	}
+
+	[HarmonyPatch(typeof(HarvestableTree), "Harvest")]
+	static class QuestStepsHarvest
+	{
+		static void Prefix(PlayerInventory __0) { QuestStepsGather.Before(QuestStepsGather.OwnerOf(__0)); }
+		static void Postfix(PlayerInventory __0) { try { QuestStepsGather.After(QuestStepsGather.OwnerOf(__0)); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [quest gather] " + e.Message); } }
 	}
 }

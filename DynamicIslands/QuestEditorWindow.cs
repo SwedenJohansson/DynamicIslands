@@ -363,7 +363,7 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, string> TypeLabels = new Dictionary<string, string>
 		{
 			{ "reach", "Go to" }, { "read", "Read" }, { "open", "Open" }, { "kill", "Defeat" }, { "catch", "Catch" }, { "collect", "Collect" }, { "pages", "Find pages" }, { "blueprint", "Blueprint" }, { Islanders.QuestType, "Talk to" }, { Collectibles.QuestType, "Find set" }, { Lights.QuestType, "Light up" },
-			{ QuestSteps.Signal, "Signal / object is" }, { QuestSteps.Bring, "Bring items" }, { QuestSteps.Craft, "Craft or cook" },
+			{ QuestSteps.Signal, "Signal / object is" }, { QuestSteps.Bring, "Bring items" }, { QuestSteps.Craft, "Craft or cook" }, { QuestSteps.Fish, "Catch fish" }, { QuestSteps.Gather, "Gather / harvest" },
 		};
 
 		/// <summary>What each kind of step asks (the step list's lines).</summary>
@@ -380,6 +380,8 @@ namespace DynamicIslands.Editor
 			{ QuestSteps.Signal, "Wait for a signal (a lever's \"lever\", the generator's \"power\", an action's own) or an object's state (Gate=open, closed, shown, hidden): a signal sent before counts" },
 			{ QuestSteps.Bring, "Hand a number of a Raft item to an islander (by talking) or a chest (at the chest): Item@Name; the items are taken" },
 			{ QuestSteps.Craft, "Craft or cook a number of a Raft item at the island while this step is the current one (empty = anything)" },
+			{ QuestSteps.Fish, "Catch a number of fish with Raft's fishing rod at the island (its shore or a raft moored off it) while this step is the current one (empty = any fish)" },
+			{ QuestSteps.Gather, "Pick up, dig or harvest a number of a Raft item on the island (by hand, shovel or axe) while this step is the current one (empty = anything)" },
 		};
 
 		static readonly Dictionary<string, string> TargetHints = new Dictionary<string, string>
@@ -394,6 +396,8 @@ namespace DynamicIslands.Editor
 			{ QuestSteps.Signal, "signal, or Name=open (\u25BE lists this island's)" },
 			{ QuestSteps.Bring, "Item@Name (\u2026 item, \u25BE who takes it)" },
 			{ QuestSteps.Craft, "Raft item (\u2026 to choose; empty = any)" },
+			{ QuestSteps.Fish, "fish (\u25be lists Raft's; empty = any)" },
+			{ QuestSteps.Gather, "Raft item (\u2026 to choose; e.g. Clay; empty = any)" },
 		};
 
 		/// <summary>Takes what was typed into the step rows before they are rebuilt.</summary>
@@ -434,7 +438,7 @@ namespace DynamicIslands.Editor
 				UIKit.LabelOf(pick).text = "";
 			}
 			if (s.Type == "collect") UIKit.Button(row, "\u2026", () => { Keep(); ItemPickerWindow.PickOne(v => { s.Target = v; RedoRow(s); }, true); }, "Choose one of the island's story items", 28, 28f, 12);
-			if (s.Type == QuestSteps.Bring || s.Type == QuestSteps.Craft)
+			if (QuestSteps.TakesItem(s.Type) && s.Type != QuestSteps.Fish)
 				UIKit.Button(row, "\u2026", () =>
 				{
 					Keep();

@@ -28,6 +28,9 @@ Not in this release yet; these come in the next update:
 - **New quest step "Bring items"**: a number of one of Raft's items handed to an islander (by talking) or a chest
   (`Plank@Mara`, `Rope@Supplies`); the items are taken from the player.
 - **New quest step "Craft or cook"**: a number of an item crafted or cooked near the island while the step is active.
+- **New quest step "Catch fish"**: a number of fish (of a kind, or any) caught with Raft's fishing rod at the island while the step is active.
+- **New quest step "Gather / harvest"**: a number of an item picked up, dug with the shovel or harvested with the axe on the island while the step is active.
+- **Console command `QuestTest`** to try a quest: the nearest island's quests and steps, a jump to any step (back too), a signal sent on the island, a story item given to the crew, or the island set back to new and made again. Host only; players who joined see the same.
 - **Bear dens in a hill** (The Abyss and other islands): a tinted den now tints the rock hill round it too, so a dark den no longer sits in a bright orange mountain; dens inside are lit warm, not blue.
 - **Cave tool**: dens and tunnels in a world look as they do in the editor, warm and dim, no longer lit blue by the sky.
 - **Dig brush**: the ground on top of a dug rim keeps the same sharp grass detail as the ground round it, not a smoother, blurred patch.
