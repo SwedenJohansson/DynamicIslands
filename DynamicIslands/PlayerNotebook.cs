@@ -231,9 +231,7 @@ namespace DynamicIslands.Editor
 		/// <summary>A text field outside the notebook (chat, console) has the keyboard.</summary>
 		static bool OtherTyping()
 		{
-			GameObject sel = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
-			InputField f = sel != null ? sel.GetComponent<InputField>() : null;
-			return f != null && f.isFocused;
+			return ModKeys.SomeoneTyping();
 		}
 
 		bool Typing { get { return (titleField != null && titleField.isFocused) || (textField != null && textField.isFocused); } }

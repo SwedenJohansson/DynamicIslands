@@ -141,9 +141,7 @@ namespace DynamicIslands.Editor
 		static bool KeysFree()
 		{
 			if (ModKeys.Listening || NoteReader.IsOpen || PlayerNotebookWindow.IsOpen) return false;
-			GameObject sel = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
-			InputField f = sel != null ? sel.GetComponent<InputField>() : null;
-			return f == null || !f.isFocused;
+			return !ModKeys.SomeoneTyping();
 		}
 
 		/// <summary>The map key: corner -> full screen -> off -> corner.</summary>

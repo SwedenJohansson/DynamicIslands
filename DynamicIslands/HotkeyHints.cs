@@ -2,6 +2,8 @@ using System;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using TMPro;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DynamicIslands.Editor
@@ -25,6 +27,51 @@ namespace DynamicIslands.Editor
 		static bool listening;
 		static int setFrame = -1;
 		internal static void Listen(bool on) { listening = on; if (!on) setFrame = Time.frameCount; }
+
+		/// <summary>A text field (Raft's chat, a sign, the console, a mod window) has the keyboard. The chat is the mod
+		/// loader's (a TextMesh Pro field), the mod's fields are Unity UI ones.</summary>
+		public static bool SomeoneTyping()
+		{
+			bool chatOpen = ChatTextFieldController.IsChatWindowSelected || RmlChatOpen();
+			GameObject sel = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+			bool r = chatOpen, inChat = false;
+			if (!r && sel != null)
+			{
+				InputField f = sel.GetComponent<InputField>();
+				TMP_InputField t = sel.GetComponent<TMP_InputField>();
+				// (the chat's field stays selected and focused after Esc hides the chat: the chat flags above say when it is in use)
+				inChat = t != null && InChat(sel.transform);
+				r = (f != null && f.isFocused) || (t != null && t.isFocused && !inChat);
+			}
+			return r;
+		}
+
+		static GameObject chatField;
+		static System.Reflection.FieldInfo rmlChatOpen;
+		static bool rmlLooked;
+
+		/// <summary>The mod loader's own chat (RaftModLoader.RChat, which takes Raft's place) is open for typing.</summary>
+		static bool RmlChatOpen()
+		{
+			if (!rmlLooked)
+			{
+				rmlLooked = true;
+				Type t = AccessTools.TypeByName("RaftModLoader.RChat");
+				rmlChatOpen = t != null ? AccessTools.Field(t, "isInputfieldOpen") : null;
+				if (rmlChatOpen == null || !rmlChatOpen.IsStatic || rmlChatOpen.FieldType != typeof(bool)) { rmlChatOpen = null; Debug.Log("[CUSTOM ISLANDS] RML chat state not found: typing in its chat is told by Raft's chat flag only"); }
+			}
+			try { return rmlChatOpen != null && (bool)rmlChatOpen.GetValue(null); }
+			catch (Exception) { rmlChatOpen = null; return false; }
+		}
+
+		static bool InChat(Transform x)
+		{
+			if (chatField != null) return x.gameObject == chatField;
+			for (Transform p = x; p != null; p = p.parent)
+				if (p.GetComponent<ChatTextFieldController>() != null || p.GetComponent<ChatVisibilityController>() != null
+					|| p.name.IndexOf("chat", StringComparison.OrdinalIgnoreCase) >= 0) { chatField = x.gameObject; return true; }
+			return false;
+		}
 
 		static KeyCode Read(string setting, KeyCode fallback)
 		{
