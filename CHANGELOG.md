@@ -16,7 +16,7 @@ Not in this release yet; these come in the next update:
 - **The large battery** shows in the hand like Raft's battery (blue), and the log no longer warns that it "is not correctly configured".
 - **Typing in Raft's chat or on a sign** no longer opens the stats page (K), the journal (J) or the minimap keys' actions: the mod's keys did not see the mod loader's chat field.
 - **Raft's pause menu (Esc)** open: the stats page (K), journal (J), notebook and minimap keys do nothing; they opened their pages over the menu. The menu's Custom Islands window works as before.
-- **The mouse after an islander's dialogue** (and the other mod windows: notes, journal, notebook, stats page, code lock, credits): closing the window locks the mouse again and gives the game back its controls, also when two windows were open or one answer led straight to the next dialogue. Before, the mouse could stay free with the game thinking its pause menu was open: K, J and the minimap keys did nothing and a sign's text box did not open.
+- **The mouse after an islander's dialogue** (and the other mod windows: notes, journal, notebook, stats page, code lock, credits): closing the window locks the mouse again and gives the game back its controls, also when two windows were open or one answer led straight to the next dialogue. Before, the mouse could stay free with the game thinking its pause menu was open: K, J and the minimap keys did nothing.
 - **Guide and README**: a new **Can I...?** question-and-answer list (guide chapter 13, README), and a **Writing steps
   players can follow** part in the guide's quest chapter (name what players see, no compass sides, say what to do, a
   spare creature for a kill step, a way out of every pit, walk to every target before you share an island).
