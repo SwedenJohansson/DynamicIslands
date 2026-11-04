@@ -46,6 +46,17 @@ namespace DynamicIslands.Editor
 			return r;
 		}
 
+		/// <summary>Raft's pause menu (Esc in a world) is open, with or without its Custom Islands window on top.</summary>
+		public static bool PauseOpen()
+		{
+			try { return CanvasHelper.ActiveMenu == MenuType.PauseMenu; }
+			catch (Exception) { return false; }
+		}
+
+		/// <summary>The mod's keys in a world (stats, journal, notebook, minimap, ping) do nothing: someone is typing, or
+		/// Raft's pause menu is open (user 11-04: they opened their pages over it).</summary>
+		public static bool Blocked() { return SomeoneTyping() || PauseOpen(); }
+
 		static GameObject chatField;
 		static System.Reflection.FieldInfo rmlChatOpen;
 		static bool rmlLooked;

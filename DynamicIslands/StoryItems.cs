@@ -1114,14 +1114,8 @@ namespace DynamicIslands.Editor
 		public static void Tick()
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || DynamicIslands.InEditor()) { if (IsOpen) instance.Hide(); return; }
-			if (!Input.GetKeyDown(Key) || Typing() || NoteReader.IsOpen || ModKeys.Listening) return;
+			if (!Input.GetKeyDown(Key) || ModKeys.Blocked() || NoteReader.IsOpen || ModKeys.Listening) return;
 			if (IsOpen) instance.Hide(); else Open();
-		}
-
-		/// <summary>A text field (chat, console) has the keyboard.</summary>
-		static bool Typing()
-		{
-			return ModKeys.SomeoneTyping();
 		}
 
 		public static void Open()

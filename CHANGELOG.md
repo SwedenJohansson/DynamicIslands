@@ -13,6 +13,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 Not in this release yet; these come in the next update:
 - **Typing in Raft's chat or on a sign** no longer opens the stats page (K), the journal (J) or the minimap keys' actions: the mod's keys did not see the mod loader's chat field.
+- **Raft's pause menu (Esc)** open: the stats page (K), journal (J), notebook and minimap keys do nothing; they opened their pages over the menu. The menu's Custom Islands window works as before.
 - **Guide and README**: a new **Can I...?** question-and-answer list (guide chapter 13, README), and a **Writing steps
   players can follow** part in the guide's quest chapter (name what players see, no compass sides, say what to do, a
   spare creature for a kill step, a way out of every pit, walk to every target before you share an island).

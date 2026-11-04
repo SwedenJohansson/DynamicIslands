@@ -224,14 +224,8 @@ namespace DynamicIslands.Editor
 			if (!LoadSceneManager.IsGameSceneLoaded || DynamicIslands.InEditor()) { if (IsOpen) instance.Hide(); return; }
 			if (!Input.GetKeyDown(Key) || ModKeys.Listening || NoteReader.IsOpen) return;
 			if (IsOpen) { if (!instance.Typing) instance.Hide(); return; }
-			if (OtherTyping()) return;
+			if (ModKeys.Blocked()) return;
 			Open();
-		}
-
-		/// <summary>A text field outside the notebook (chat, console) has the keyboard.</summary>
-		static bool OtherTyping()
-		{
-			return ModKeys.SomeoneTyping();
 		}
 
 		bool Typing { get { return (titleField != null && titleField.isFocused) || (textField != null && textField.isFocused); } }
