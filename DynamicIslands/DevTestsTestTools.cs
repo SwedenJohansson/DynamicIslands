@@ -28,19 +28,6 @@ namespace DynamicIslands
 			Log("Keys state: " + KeysState());
 		}
 
-		/// <summary>A minimised Raft opens its pause menu when it loses focus (ActiveMenu PauseMenu, with no one there to
-		/// press Continue): Raft's sign box didn't open behind it (CISign write: writing False). Closed as Continue does,
-		/// where a player is back in the game.</summary>
-		static bool LeavePauseMenu()
-		{
-			if (CanvasHelper.ActiveMenu != MenuType.PauseMenu) return false;
-			PauseMenu pause = UnityEngine.Object.FindObjectOfType<PauseMenu>();
-			if (pause == null) return false;
-			try { pause.ContinuePlaying(); } catch (Exception ex) { Log("(Raft's pause menu: Continue threw " + ex.Message + ")"); return false; }
-			Log("(Raft's pause menu was open - a minimised window loses focus: closed as Continue does; ActiveMenu now " + CanvasHelper.ActiveMenu + ")");
-			return true;
-		}
-
 		static string KeysState()
 		{
 			GameObject sel = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
@@ -128,7 +115,6 @@ namespace DynamicIslands
 				if (sign == null || menu == null) { Fail("CISign write: " + (sign == null ? "no sign within 8 m (CISign place)" : "no sign writing box")); yield break; }
 				Vector3 look = sign.transform.position + Vector3.up * 0.8f - Helper.MainCamera.transform.position;
 				Look(player, Quaternion.LookRotation(Flat(look)).eulerAngles.y, -Mathf.Atan2(look.y, Flat(look).magnitude) * Mathf.Rad2Deg);
-				if (LeavePauseMenu()) yield return null;
 				menu.StartWriting(sign);
 				yield return null;
 				yield return new WaitForSeconds(0.3f);
@@ -242,7 +228,6 @@ namespace DynamicIslands
 		static IEnumerator KeyRoutine(KeyCode k)
 		{
 			InstallFakeKeys();
-			if (LeavePauseMenu()) yield return null;
 			string before = KeysState();
 			GameObject sel = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
 			InputField f = sel != null ? sel.GetComponent<InputField>() : null;
