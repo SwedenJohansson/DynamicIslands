@@ -1753,7 +1753,7 @@ name on the Receiver.*
 Steps: **go to** a trigger zone, **read** a note, **open** a chest (one of the mod's chests - Raft's abandoned raft crate doesn't count), **defeat** or **catch** a number of animals,
 **collect** a number of a story item, **find** journal pages, find a **Blueprint** of Raft's, **talk to** an islander
 (6.3; by its name, the **▾** lists the island's islanders), **find** a number of a collectible **set** (6.3), **light up** a number of a light group's puzzle lights (6.3),
-**Signal / object is**, **Bring items** and **Craft or cook** (below). Each step's kind is a **▼ list** (each kind says what it
+**Signal / object is**, **Bring items**, **Craft or cook**, **Catch fish** and **Gather / harvest** (below). Each step's kind is a **▼ list** (each kind says what it
 asks). Steps point at things on the island by name: the small **▾** beside the name lists the names this island has
 for that kind - its trigger zones, note titles, chest titles or creatures - so you can pick one instead of typing it
 (place the zones, notes, chests and creatures first). A **collect** step picks its story item with **…**. **When the quest is done, bring a new island** (main quest only) chooses from a
@@ -1779,6 +1779,17 @@ and opens as usual once the step is done.
 off a grill, smelter, purifier, cooking pot or juicer, by a player within 300 m of the island. The item is one of
 Raft's (`Rope`, a cooked food's name; empty = anything made); what was made before the step came doesn't count.
 
+**Catch fish** asks for a number of fish pulled out with Raft's fishing rod while the step is active, by a player
+fishing within 300 m of the island (from its shore or a raft moored off it). The **▾** lists the fish Raft's rod catches
+(`Raw_Pomfret`, `Raw_Mackerel`...); empty = any fish. Fish caught before the step came don't count. The plan checker
+warns when the item is not one of the rod's fish.
+
+**Gather / harvest** asks for a number of one of Raft's items that came into a player's inventory on the island while
+the step is active: picked up by hand (flowers, fruit, loose items), dug with the shovel (sand, clay), held to pick
+up, or harvested from a tree or bush with the axe - within 40 m of the island's land. The **…** picks the item (`Clay`,
+`Plank`); empty = anything. Hooked from the sea, crafted or given as a reward doesn't count, nor what was gathered
+before the step came. Place what players gather on the island (the generator's **Gather** and **Shallows**, or loose
+items and plants) and say where in the step's text.
 **Steps done in another order count too:** a chest opened or animals defeated before their step has come are
 remembered, and count the moment their step comes - the guide's camp quest done backwards (warthogs, supplies, then
 the diary) finishes when the diary is read. If more than one later step could take the same work, the step that names
