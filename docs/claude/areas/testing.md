@@ -108,23 +108,28 @@ Real keys can't reach a minimised Raft, and no test may bring a Raft window up. 
   key handlers run as for a real press. A letter key also types into the text field that has the keyboard
   (`InputField`/`TMP_InputField.ProcessEvent`). Logs `PASS: CIKey <key> - before: <state>` and `CIKey <key> after: <state>`.
 - `CIKeysState`: one line - typing (`ModKeys.SomeoneTyping`), the selected field (focus, text), sign writing, stats page,
-  journal, notebook, note, dialogue, minimap, Raft's open menu.
+  journal, notebook, note, dialogue, minimap, Raft's open menu, the cursor (shown/hidden, lock).
 - `CISign give [n] | place | write | stop | text | status`: Raft's sign (`Placeable_Sign`): give it, place it (cheat
   build on the raft floor 1.5 m ahead, facing the player), `write` opens Raft's sign text menu on the nearest sign
   (`TextWriterManager.StartWriting`) and focuses its field, `stop` aborts typing.
 - `CINoteHere [title] | close`: a custom note 1 m in front of the player, opened (`NoteReader.Open`); `close` closes and removes it.
-- IL20 recipe: `CISign give; CISign place; CISign write; CIKey K; CIKey J; CIKeysState; CISign stop` (nothing opens, the
+- K opens the stats page only with the level up system on: `Levels on` first.
+- IL20 recipe: `Levels on; CIOnRaft; CISign give; CISign place; CISign write; CIKey K; CIKey J; CIKeysState; CISign stop` (nothing opens, the
   letters land on the sign), then `CINoteHere; CIKey K; CINoteHere close` (the stats page stays shut).
 - `CIFace <island> <name | note title | islander name or its start>` (either player): stand points on solid ground (a
   floor too, at the object's own height) with room to stand and a clear view; an islander is aimed at the chest. No
   point where Raft's ray (`Helper.FindInteractable`) finds it = the player goes back where they were. Raft's ray goes
   through the screen's middle, which a minimised window doesn't have: `AheadInteractable` casts the same ray from the
-  camera straight ahead when Raft's misses (the Facing line then says so).
+  camera straight ahead when Raft's misses, and a minimised Raft may not turn the view at all (its mouse look
+  waits for a drawn frame), so it then turns the camera itself to the object and casts in the same frame (the Facing
+  line says which); the player is held still (controller off) while it looks. A miss logs the first try's distances, angle and the first thing on the line. The player goes back
+  to the same spot of the raft (raft-relative: the raft drifts; the old world spot left them under it).
 - `CITalk <island> <islander> [read | pick <n>]` (either player): `CIFace`, then `Islander.Talk` (E's path) and
   `DialoguePanel.Close` (Esc's path), which ends in `Islanders.Talked` (talk events, a "Bring items" hand-in, talk steps).
   `PASS: talked to '<name>' on '<island>' (host|client; Islanders.Talked ran[, message ...])`.
 - `CILoadWorld <name>` loads the world straight from its folder in `SaveAndLoad.WorldPath` (`LoadWorldDirect`:
-  newest save via `GetLatestRGDGameFromBackupFolders`, then Raft's `Button_LoadGame`), without Raft's Load Game list,
+  newest save via `GetLatestRGDGameFromBackupFolders`, then Raft's `Button_LoadGame`; not signed in to PlayFab = hosted solo, as `CINewWorld` does - hosted for friends
+  offline the scene loaded but the player never came in), without Raft's Load Game list,
   which reads every world first (a box with ~2000 worlds: "no saved worlds listed"). No name = the list, as before.
 - `CIRecipe`'s unnamed-target check skips `order|<puzzle>|n` (its target is a puzzle group, not an object).
 
