@@ -96,5 +96,93 @@ namespace DynamicIslands
 			}
 			if (ok) Log("PASS: bring items given back"); else Fail("bring items given back");
 		}
+
+		const string BringMpIsland = "ci-bring-mp";
+
+		[ConsoleCommand(name: "CIBringMp", docs: "Dev, two players: Bring items given back over the network, on host + box. setup (host): spawns 'ci-bring-mp' (islander Mara, step 1: bring 6 planks to Mara). wait: until the island is here. give [unix ms]: this player gets 4 planks and talks to Mara (at that moment, when given). push: as a player whose view was behind - 4 planks sent to the host for step 1 (taken from the bag). planks <n>: waits up to 8 s for n planks in this bag. step <s> <p>: waits up to 8 s for step s (from 0) with p counted. state: logs. drop (host): removes the island")]
+		public static void BringMpCommand(string[] args) { StartTest(BringMpRoutine(args ?? new string[0])); }
+
+		static IEnumerator BringMpRoutine(string[] args)
+		{
+			string what = args.Length > 0 ? args[0] : "";
+			string side = Raft_Network.IsHost ? "host" : "client";
+			Func<IslandWorldState.Entry> entry = () => IslandWorldState.Islands.FirstOrDefault(i => i.Root != null && i.HostName == BringMpIsland);
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (what == "setup")
+			{
+				if (!Raft_Network.IsHost) { Fail("BR mp setup: as the host"); yield break; }
+				Func<float, float, Vector3> at;
+				IslandFile f = Gw4File(BringMpIsland, out at);
+				f.Objects.Add(new IslandObject { Name = Islanders.ObjectName, Position = at(0f, 4f), Props = P(BehaviourProps.Name, "Mara", Islanders.TextProp, "Bring me planks.") });
+				f.Props[IslandQuest.KeyTitle] = "CI bring mp";
+				f.Props[IslandQuest.KeySteps] = "bring|Plank@Mara|6|\nsignal|never|1|";
+				var g = new GwIsland();
+				yield return GwSpawnFile(g, f, BringMpIsland);
+				if (g.E != null) Log("PASS: BR mp setup - " + BringMpIsland + " is island " + g.E.Id);
+				yield break;
+			}
+			if (what == "drop")
+			{
+				var g = new GwIsland { E = entry() };
+				GwDrop(g, BringMpIsland);
+				Log("PASS: BR mp drop");
+				yield break;
+			}
+			if (what == "wait")
+			{
+				for (float t = 0f; t < 90f && entry() == null; t += 1f) yield return new WaitForSeconds(1f);
+				if (entry() == null) Fail("BR mp: '" + BringMpIsland + "' did not come (" + side + ")");
+				else Log("PASS: BR mp wait - the island is here (" + side + ")");
+				yield break;
+			}
+			IslandWorldState.Entry e = entry();
+			if (e == null || player == null) { Fail("BR mp: no '" + BringMpIsland + "' or no player here (" + side + ")"); yield break; }
+			Func<string> state = () => "step " + QuestTracker.StepOf(e) + ", " + QuestTracker.ProgressOf(e, 0) + " counted, " + player.Inventory.GetItemCount("Plank") + " planks here, last: \"" + QuestSteps.LastMessage + "\"";
+			if (what == "give")
+			{
+				Islander isl = e.Root.GetComponentsInChildren<Islander>(true).FirstOrDefault();
+				if (isl == null) { Fail("BR mp give: no islander (" + side + ")"); yield break; }
+				Gw4Take(player, "Plank");
+				player.Inventory.AddItem("Plank", 4);
+				PutPlayerNear(isl.transform, 2f);
+				long when;
+				if (args.Length > 1 && long.TryParse(args[1], out when))
+				{
+					DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(when);
+					for (float t = 0f; t < 60f && DateTime.UtcNow < start; t += Time.unscaledDeltaTime) yield return null;
+				}
+				isl.Talk();
+				DialoguePanel.Close();
+				yield return new WaitForSeconds(1f);
+				Log("PASS: BR mp give (" + side + ") - " + state());
+				yield break;
+			}
+			if (what == "push")
+			{
+				// (what a player's machine sends when its view was still at 6 wanted: the hand-over's amount for step 1)
+				Gw4Take(player, "Plank");
+				IslandNetwork.SendQuestAdd(e.Id, 0, 0, 4);
+				yield return new WaitForSeconds(0.5f);
+				Log("PASS: BR mp push (" + side + ") - 4 planks sent for step 1");
+				yield break;
+			}
+			int a, b;
+			if (what == "planks" && args.Length > 1 && int.TryParse(args[1], out a))
+			{
+				for (float t = 0f; t < 8f && player.Inventory.GetItemCount("Plank") != a; t += 0.5f) yield return new WaitForSeconds(0.5f);
+				if (player.Inventory.GetItemCount("Plank") == a) Log("PASS: BR mp planks " + a + " (" + side + ") - " + state());
+				else Fail("BR mp planks: wanted " + a + " (" + side + ") - " + state());
+				yield break;
+			}
+			if (what == "step" && args.Length > 2 && int.TryParse(args[1], out a) && int.TryParse(args[2], out b))
+			{
+				for (float t = 0f; t < 8f && (QuestTracker.StepOf(e) != a || QuestTracker.ProgressOf(e, 0) != b); t += 0.5f) yield return new WaitForSeconds(0.5f);
+				if (QuestTracker.StepOf(e) == a && QuestTracker.ProgressOf(e, 0) == b) Log("PASS: BR mp step " + a + " " + b + " (" + side + ") - " + state());
+				else Fail("BR mp step: wanted step " + a + " with " + b + " (" + side + ") - " + state());
+				yield break;
+			}
+			if (what == "state") { Log("PASS: BR mp state (" + side + ") - " + state()); yield break; }
+			Fail("CIBringMp setup|wait|give [unix ms]|push|planks <n>|step <s> <p>|state|drop");
+		}
 	}
 }
