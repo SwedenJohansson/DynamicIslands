@@ -24,7 +24,6 @@ namespace DynamicIslands.Editor
 
 		Text titleText, madeText, noteText;
 		float openedAt;
-		bool cursorWasFree;
 
 		static bool seenNotOver;
 		static float nextCheck;
@@ -122,8 +121,7 @@ namespace DynamicIslands.Editor
 			noteText.transform.parent.gameObject.SetActive(noteText.text.Length > 0);
 			gameObject.SetActive(true);
 			openedAt = Time.unscaledTime;
-			cursorWasFree = Cursor.visible;
-			if (!cursorWasFree) try { RAPI.ToggleCursor(true); } catch { }
+			ModCursor.Take(this);
 			TimesShown++;
 			ShownTitle = titleText.text;
 			ShownCredits = madeText.text;
@@ -135,7 +133,7 @@ namespace DynamicIslands.Editor
 		{
 			if (!gameObject.activeSelf) return;
 			gameObject.SetActive(false);
-			if (!cursorWasFree) try { RAPI.ToggleCursor(false); } catch { }
+			ModCursor.Give(this);
 		}
 
 		void Update()

@@ -1096,7 +1096,7 @@ namespace DynamicIslands.Editor
 		string shownKey;
 		/// <summary>T8: "Take out" on a story item that names a Raft item (StoryBook.TakeOut).</summary>
 		Button takeOut;
-		bool cursorWasFree, dirty;
+		bool dirty;
 		/// <summary>The quests' count in the head: a button (the list on the paper) with a bar behind its words.</summary>
 		Button questButton;
 		RectTransform questFill;
@@ -1272,8 +1272,7 @@ namespace DynamicIslands.Editor
 		void Show()
 		{
 			gameObject.SetActive(true);
-			cursorWasFree = Cursor.visible;
-			if (!cursorWasFree) try { RAPI.ToggleCursor(true); } catch { }
+			ModCursor.Take(this);
 			Fill();
 		}
 
@@ -1281,7 +1280,7 @@ namespace DynamicIslands.Editor
 		{
 			if (!gameObject.activeSelf) return;
 			gameObject.SetActive(false);
-			if (!cursorWasFree) try { RAPI.ToggleCursor(false); } catch { }
+			ModCursor.Give(this);
 		}
 
 		void Update()

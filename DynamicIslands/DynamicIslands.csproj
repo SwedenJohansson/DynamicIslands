@@ -307,6 +307,7 @@
     <Compile Include="DevTestsKrakenLook.cs" />
     <Compile Include="DevTestsRf.cs" />
     <Compile Include="DevTestsPauseKeys.cs" />
+    <Compile Include="DevTestsCursor.cs" />
     <Compile Include="DevTestsSpawnToRaft.cs" />
     <Compile Include="DevTestsRf35.cs" />
     <Compile Include="DevTestsErrors.cs" />
@@ -328,6 +329,7 @@
     <Compile Include="HelpLinks.cs" />
     <Compile Include="InfoWindow.cs" />
     <Compile Include="MissingIslandsCheck.cs" />
+    <Compile Include="ModCursor.cs" />
     <Compile Include="RmlCache.cs" />
     <Compile Include="DevTestsLoad.cs" />
     <Compile Include="NewWorldOptions.cs" />

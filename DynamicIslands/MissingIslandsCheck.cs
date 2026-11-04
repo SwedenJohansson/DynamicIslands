@@ -37,6 +37,8 @@ namespace DynamicIslands.Editor
 		internal static bool Asking { get { return waiting || leaving || (shown && InfoWindow.Closed == (Action)OnClosed); } } // (another box in its place: not)
 		/// <summary>Tests: the box had the cursor free (it was free already, or the box freed it).</summary>
 		public static bool CursorFree;
+		/// <summary>The box's hold on the mouse (ModCursor).</summary>
+		static readonly object CursorToken = "MissingIslandsCheck";
 		static float showAt;
 
 		/// <summary>From IslandWorldState.OnWorldLoaded on the host, after the world's file and plan are read.</summary>
@@ -134,7 +136,7 @@ namespace DynamicIslands.Editor
 				shown = false;
 				if (!answered) { answered = true; Debug.Log("[CUSTOM ISLANDS] Another box replaced the missing islands box: playing on without them"); StoryChain.PlayWithoutMissing(); }
 			}
-			if (!shown && cursorFreed && !InfoWindow.IsOpen) { cursorFreed = false; try { RAPI.ToggleCursor(false); } catch { } }
+			if (!shown && cursorFreed && !InfoWindow.IsOpen) { cursorFreed = false; ModCursor.Give(CursorToken); }
 			if (!waiting || Time.unscaledTime < showAt) return;
 			if (!LoadSceneManager.IsGameSceneLoaded) { waiting = false; return; }
 			if (RAPI.GetLocalPlayer() == null) return;
@@ -150,9 +152,9 @@ namespace DynamicIslands.Editor
 			InfoWindow.Closed = OnClosed;
 			answered = false;
 			shown = true;
-			cursorFreed = !Cursor.visible;
-			CursorFree = !cursorFreed;
-			if (cursorFreed) try { RAPI.ToggleCursor(true); CursorFree = true; } catch { }
+			cursorFreed = true;
+			ModCursor.Take(CursorToken);
+			CursorFree = Cursor.visible || ModCursor.Holders > 0;
 		}
 
 		/// <summary>Whether a button closed the box: closed with Esc or its X, the world plays on - as "Play without".</summary>
@@ -160,7 +162,7 @@ namespace DynamicIslands.Editor
 
 		static void OnClosed()
 		{
-			if (cursorFreed) try { RAPI.ToggleCursor(false); } catch { }
+			if (cursorFreed) ModCursor.Give(CursorToken);
 			cursorFreed = false;
 			if (!answered) { answered = true; Debug.Log("[CUSTOM ISLANDS] The missing islands box closed: playing on without them"); StoryChain.PlayWithoutMissing(); }
 			shown = false;

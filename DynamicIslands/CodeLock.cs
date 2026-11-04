@@ -27,7 +27,6 @@ namespace DynamicIslands.Editor
 		string code = "", typed = "";
 		Text display, said;
 		float openedAt;
-		bool cursorWasFree;
 		Transform at;
 
 		public static bool HasCode(System.Collections.Generic.IDictionary<string, string> props) { return ObjectProps.Get(props, Code).Trim().Length > 0; }
@@ -44,8 +43,7 @@ namespace DynamicIslands.Editor
 			instance.Refresh();
 			instance.gameObject.SetActive(true);
 			instance.openedAt = Time.unscaledTime;
-			instance.cursorWasFree = Cursor.visible;
-			if (!instance.cursorWasFree) try { RAPI.ToggleCursor(true); } catch { }
+			ModCursor.Take(instance);
 		}
 
 		/// <summary>Presses a key of the keypad (a digit, "C" to clear, "OK").</summary>
@@ -103,7 +101,7 @@ namespace DynamicIslands.Editor
 		{
 			if (!gameObject.activeSelf) return;
 			gameObject.SetActive(false);
-			if (!cursorWasFree) try { RAPI.ToggleCursor(false); } catch { }
+			ModCursor.Give(this);
 		}
 
 		void Update()

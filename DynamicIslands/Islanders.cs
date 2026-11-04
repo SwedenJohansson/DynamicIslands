@@ -255,7 +255,6 @@ namespace DynamicIslands.Editor
 		float openedAt;
 		/// <summary>What last closed the dialogue on its own: a key, the scene, the distance (tests).</summary>
 		public static string LastClose;
-		bool cursorWasFree;
 
 		public static void Open(Transform at, string speaker, string text, Action<int> done)
 		{
@@ -302,8 +301,7 @@ namespace DynamicIslands.Editor
 			gameObject.SetActive(true);
 			ShowPage();
 			openedAt = Time.unscaledTime;
-			cursorWasFree = Cursor.visible;
-			if (!cursorWasFree) try { RAPI.ToggleCursor(true); } catch { }
+			ModCursor.Take(this);
 		}
 
 		void ShowPage()
@@ -338,7 +336,7 @@ namespace DynamicIslands.Editor
 		{
 			if (!gameObject.activeSelf) return;
 			gameObject.SetActive(false);
-			if (!cursorWasFree) try { RAPI.ToggleCursor(false); } catch { }
+			ModCursor.Give(this);
 			Action<int> d = done;
 			done = null;
 			if (d != null) try { d(choice); } catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] After a dialogue: " + ex.Message); }
