@@ -1614,7 +1614,7 @@ namespace DynamicIslands.Editor
 			Physics.SyncTransforms();
 			foreach (List<Point> stroke in t.Strokes)
 				foreach (Point q in stroke)
-					foreach (Collider c in Physics.OverlapSphere(t.transform.TransformPoint(q.Centre), q.R * 0.8f * Mathf.Abs(t.transform.lossyScale.y), ~0, QueryTriggerInteraction.Ignore))
+					foreach (Collider c in Physics.OverlapSphere(t.transform.TransformPoint(q.Centre), q.R * Mathf.Abs(t.transform.lossyScale.y), ~0, QueryTriggerInteraction.Ignore))
 					{
 						if (c == null || c is TerrainCollider) continue;
 						for (Transform x = c.transform; x != null; x = x.parent)
@@ -1712,6 +1712,58 @@ namespace DynamicIslands.Editor
 			BuildNow(land);
 			EndStroke();
 			return t;
+		}
+
+		/// <summary>The middle of the editor's dug passage under (or over) a point, within its radius across: where a recipe's
+		/// stroke pressed there branches from it (null: none).</summary>
+		public static Vector3? PassageAt(Vector3 world)
+		{
+			Vector3? best = null;
+			float bestD = float.MaxValue;
+			foreach (DigTunnel t in EditorTunnels())
+				foreach (List<Point> s in t.Strokes)
+					foreach (Point q in s)
+					{
+						Vector3 c = t.transform.TransformPoint(q.Centre);
+						float d = new Vector2(c.x - world.x, c.z - world.z).magnitude;
+						if (d < q.R && d < bestD) { bestD = d; best = c; }
+					}
+			return best;
+		}
+
+		/// <summary>
+		/// A recipe's dig step (G1, 11-04): a stroke as TestStroke digs it, the brush's radius set to radii[k] from points[k] on and
+		/// its slope to slope (degrees) for the stroke, both put back after. fill: the stroke fills the tunnel it is pressed on back
+		/// in at every point. Returns the tunnel (null: none made, or none to fill).
+		/// </summary>
+		public static DigTunnel RecipeStroke(Terrain land, IList<Vector3> points, IList<float> radii, float slope, bool fill)
+		{
+			if (land == null || points == null || points.Count == 0 || Digging) return null;
+			float r0 = Radius, s0 = Slope;
+			try
+			{
+				Func<int, float> rad = k => Mathf.Clamp(radii != null && radii.Count > k ? radii[k] : r0, MinRadius, MaxRadius);
+				Radius = rad(0);
+				Slope = Mathf.Clamp(slope, -MaxSlope, MaxSlope);
+				BeginStroke(land, points[0], null, fill);
+				if (!Digging) return null;
+				DigTunnel t = current;
+				for (int k = fill ? 0 : 1; k < points.Count; k++)
+				{
+					if (fill) { DigToward(points[k], 0.05f); continue; }
+					Radius = rad(k);
+					for (int guard = 0; guard < 4000; guard++)
+						if (!DigToward(points[k], 0.05f) || current.PointCount >= MaxPoints) break;
+				}
+				BuildNow(land);
+				EndStroke();
+				return t != null && t.gameObject != null ? t : null;
+			}
+			finally
+			{
+				if (Digging) EndStroke();
+				Radius = r0; Slope = s0;
+			}
 		}
 
 		#endregion

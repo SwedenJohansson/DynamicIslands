@@ -1157,7 +1157,7 @@ namespace DynamicIslands
 
 		/// <summary>How far the first thing under <paramref name="foot"/> that isn't <paramref name="self"/> is (the land, another object,
 		/// the sea floor); 9999 = nothing.</summary>
-		[ConsoleCommand(name: "CICaveInside", docs: "Dev, editor or world: every cave piece (the editor's island, or the loaded custom islands) looked round from inside at eye height - nothing seen through: no face seen from its back (Raft draws the shells, the ground and the hill over them from one side only), no sky but out through an open end (X7). CICaveInside [part of the name] [shots: a picture of each piece's worst look, shot_caveinside_<n>.png]")]
+		[ConsoleCommand(name: "CICaveInside", docs: "Dev, editor or world: every cave piece and dug tunnel (the editor's island, or the loaded custom islands; a dug tunnel from eyes along each of its strokes, joined tunnels and cave pieces counted as inside) looked round from inside at eye height - nothing seen through: no face seen from its back (Raft draws the shells, the ground and the hill over them from one side only), no sky but out through an open end (X7). CICaveInside [part of the name] [shots: a picture of each piece's worst look, shot_caveinside_<n>.png]")]
 		public static void CaveInsideCommand(string[] args)
 		{
 			string only = args != null && args.Length > 0 && args[0] != "*" ? args[0] : "";
@@ -1180,6 +1180,17 @@ namespace DynamicIslands
 					foreach (Transform t in e.Root.GetComponentsInChildren<Transform>().Where(t => RaftProps.Get(t.name.Replace("(Clone)", "").Trim()) != null && RaftProps.Get(t.name.Replace("(Clone)", "").Trim()).IsCave))
 						caves.Add(new KeyValuePair<string, Transform>(e.Name, t));
 			caves = caves.Where(c => only.Length == 0 || c.Key.IndexOf(only, StringComparison.OrdinalIgnoreCase) >= 0 || c.Value.name.IndexOf(only, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+			// (and the dug tunnels - G3, 11-04: the Dig brush's caves, alone or joined to others and to cave pieces)
+			var digs = new List<KeyValuePair<string, DigTunnel>>();
+			if (DynamicIslands.InEditor())
+			{
+				foreach (EditorGameObject e in PlacedEditorObjects())
+					if (e != null && e.GetComponent<DigTunnel>() != null && e.gameObject.activeInHierarchy) digs.Add(new KeyValuePair<string, DigTunnel>("editor", e.GetComponent<DigTunnel>()));
+			}
+			else
+				foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(x => x.Root != null && !x.Loading).ToList())
+					foreach (DigTunnel d in e.Root.GetComponentsInChildren<DigTunnel>()) digs.Add(new KeyValuePair<string, DigTunnel>(e.Name, d));
+			digs = digs.Where(c => only.Length == 0 || c.Key.IndexOf(only, StringComparison.OrdinalIgnoreCase) >= 0 || "DigTunnel".IndexOf(only, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
 			int n = 0, bad = 0;
 			foreach (var c in caves)
 			{
@@ -1193,9 +1204,23 @@ namespace DynamicIslands
 				if (shots && eye != Vector3.zero) yield return CameraShot(eye, eye + look * 5f, "caveinside_" + n);
 				yield return null;
 			}
-			if (n == 0) Fail("cave inside: no cave pieces" + (only.Length > 0 ? " named *" + only + "*" : ""));
-			else if (bad > 0) Fail("cave inside: " + bad + " of " + n + " cave pieces seen through from inside (above)");
-			else Log("PASS: cave inside - " + n + " cave pieces, nothing seen through from inside");
+			int dn = 0;
+			if (digs.Count > 0 && DynamicIslands.InEditor()) DigTunnel.EditorNow(terraineditor.terrain);
+			foreach (var c in digs)
+			{
+				if (c.Value == null) continue;
+				n++; dn++;
+				string detail;
+				Vector3 eye, look;
+				int seen = DugSeeThrough(c.Value, digs.Where(x => x.Key == c.Key).Select(x => x.Value).ToList(), out detail, out eye, out look);
+				Log("  " + n + " '" + c.Key + "' DigTunnel at " + c.Value.transform.position.ToString("F0") + ": " + detail);
+				if (seen > 0) bad++;
+				if (shots && eye != Vector3.zero) yield return CameraShot(eye, eye + look * 5f, "caveinside_" + n);
+				yield return null;
+			}
+			if (n == 0) Fail("cave inside: no cave pieces or dug tunnels" + (only.Length > 0 ? " named *" + only + "*" : ""));
+			else if (bad > 0) Fail("cave inside: " + bad + " of " + n + " cave pieces and dug tunnels seen through from inside (above)");
+			else Log("PASS: cave inside - " + (n - dn) + " cave pieces, " + dn + " dug tunnels, nothing seen through from inside");
 		}
 
 		[ConsoleCommand(name: "CIShotFrom", docs: "Dev, editor or world: a picture through Raft's camera from a point, and what the looks round from it meet - for checking a see-through CICaveInside found (X7). CIShotFrom <x> <y> <z> <yaw> <pitch> [name]: shot_from_<name>.png; logs the first things hit (front or back, metres) every 45 degrees round at that pitch, and straight up and down")]

@@ -1471,6 +1471,25 @@ namespace DynamicIslands
 					placed += laid.Count;
 					continue;
 				}
+				if (verb == "dig")
+				{
+					// dig <x,z | x,y,z | x,y,z,r> ... [| <next stroke> ...] [r=1.75] [slope=0] [fill] [as=<group>]: the editor's Dig brush
+					// (G1, 11-04) - each stroke pressed at its first point and dug on toward the others in turn, as the mouse steers it
+					string derr;
+					List<GameObject> dug = DigStep(t, out derr);
+					if (derr != null) { Fail("recipe " + name + ", " + rl.Where + " (" + line + "): " + derr); yield break; }
+					var dopt = Options(t.Skip(1).Where(x => x.Contains("=")));
+					foreach (GameObject g in dug) recipePlaced.Add(g);
+					if (dopt.ContainsKey("as"))
+					{
+						List<EditorGameObject> dg;
+						if (!recipeGroups.TryGetValue(dopt["as"], out dg)) recipeGroups[dopt["as"]] = dg = new List<EditorGameObject>();
+						dg.AddRange(dug.Select(g => g.GetComponent<EditorGameObject>()).Where(e => e != null && !dg.Contains(e)));
+					}
+					placed += dug.Count;
+					yield return null;
+					continue;
+				}
 				// (a generate with buildings or caves: their objects of Raft's islands loaded first)
 				if (verb == "generate") yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(IslandGenSettings.FromText(gen.ToString())));
 				try
@@ -2191,6 +2210,62 @@ namespace DynamicIslands
 		{
 			Terrain terrain = terraineditor.terrain;
 			return terrain.SampleHeight(new Vector3(x, 0f, z)) + terrain.transform.position.y;
+		}
+
+		/// <summary>
+		/// The dig step (G1): strokes of the editor's Dig brush, split by "|"; a point is x,z (on the ground), x,y,z (y metres
+		/// above the ground there, below 0 under it) or x,y,z,r (r: the passage's radius as it is dug to that point, 1.4-5 m). Each stroke
+		/// is pressed at its first point - a first point x,z over a dug passage is pressed in it there: a branch from it - and dug on
+		/// toward each next point as the mouse would be; slope= the up/down in degrees (0: level - a level stroke on flat ground goes
+		/// down until it has rock over it), r= the radius where a point names none (default 1.75), fill: Shift - the strokes fill
+		/// dug tunnels back in at their points. The tunnels made or changed (null error) or why not.
+		/// </summary>
+		static List<GameObject> DigStep(string[] t, out string error)
+		{
+			error = null;
+			var made = new List<GameObject>();
+			Terrain land = terraineditor.terrain;
+			if (land == null) { error = "dig: no island ground"; return made; }
+			var opt = Options(t.Skip(1).Where(x => x.Contains("=") || x == "fill"));
+			float r = opt.ContainsKey("r") ? F(opt["r"]) : 1.75f, slope = opt.ContainsKey("slope") ? F(opt["slope"]) : 0f;
+			bool fill = opt.ContainsKey("fill");
+			if (r < DigTunnel.MinRadius || r > DigTunnel.MaxRadius) { error = "dig: r= " + DigTunnel.MinRadius + "-" + DigTunnel.MaxRadius; return made; }
+			if (Mathf.Abs(slope) > DigTunnel.MaxSlope) { error = "dig: slope= -" + DigTunnel.MaxSlope + ".." + DigTunnel.MaxSlope; return made; }
+			var strokes = new List<List<string>> { new List<string>() };
+			foreach (string tok in t.Skip(1))
+			{
+				if (tok == "|") { strokes.Add(new List<string>()); continue; }
+				if (tok.Contains("=") || tok == "fill") continue;
+				strokes[strokes.Count - 1].Add(tok);
+			}
+			strokes = strokes.Where(s => s.Count > 0).ToList();
+			const string usage = "dig <x,z | x,y,z | x,y,z,r> ... [| <next stroke>] [r=1.75] [slope=0] [fill] [as=<group>]";
+			if (strokes.Count == 0) { error = usage; return made; }
+			foreach (List<string> s in strokes)
+			{
+				if (s.Count < (fill ? 1 : 2)) { error = "dig: a stroke needs two points or more (" + string.Join(" ", s.ToArray()) + "): " + usage; return made; }
+				var pts = new List<Vector3>();
+				var radii = new List<float>();
+				foreach (string p in s)
+				{
+					string[] v = p.Split(',');
+					if (v.Length < 2 || v.Length > 4) { error = "dig: '" + p + "' is no point: " + usage; return made; }
+					float x = F(v[0]), z = F(v[v.Length == 2 ? 1 : 2]), y = v.Length >= 3 ? F(v[1]) : 0f;
+					float pr = v.Length == 4 ? F(v[3]) : r;
+					if (pr < DigTunnel.MinRadius || pr > DigTunnel.MaxRadius) { error = "dig: radius " + pr + " in '" + p + "': " + DigTunnel.MinRadius + "-" + DigTunnel.MaxRadius; return made; }
+					Vector2 w = WorldXZ(x, z);
+					var at = new Vector3(w.x, GroundY(w.x, w.y) + y, w.y);
+					// (x,z over a dug passage: pressed in it - a stroke's first point branches from it there, a fill's points fill it)
+					Vector3? passage = v.Length == 2 && (fill || pts.Count == 0) ? DigTunnel.PassageAt(at) : null;
+					pts.Add(passage ?? at);
+					radii.Add(pr);
+				}
+				DigTunnel tun = DigTunnel.RecipeStroke(land, pts, radii, slope, fill);
+				if (tun == null) { error = fill ? "dig fill: no dug tunnel at " + s[0] : "dig: the stroke from " + s[0] + " dug nothing"; return made; }
+				if (!fill && tun.PointCount < 2) { error = "dig: the stroke from " + s[0] + " dug only " + tun.PointCount + " point(s)"; return made; }
+				if (!made.Contains(tun.gameObject)) made.Add(tun.gameObject);
+			}
+			return made;
 		}
 
 		/// <summary>A terrain stroke through the editor's brush: brush raise|lower|flatten|smooth|sample|sand|grass|rock|seabed|auto|stamp:i

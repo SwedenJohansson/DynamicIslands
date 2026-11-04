@@ -59,9 +59,10 @@ namespace DynamicIslands
 		/// <summary>
 		/// Looks from eyes in the passage: one that meets nothing or anything but the dug rock (or the ground from above outside) leaks,
 		/// unless it has left by the passage into the open air first (out of the mouth) - the ray followed in 0.25 m steps up to what
-		/// it meets: still in the passage until it is over the ground, never through the lining.
+		/// it meets: still in the passage until it is over the ground, never through the lining. A joined system (G3, 11-04):
+		/// in the passage of any of joined counts as in it, and alsoRock's rock (a cave piece's) met from the front is the cave's own.
 		/// </summary>
-		static int DigLeaks(DigTunnel t, Terrain land, List<Vector3> eyes, List<string> seen, out int under)
+		static int DigLeaks(DigTunnel t, Terrain land, List<Vector3> eyes, List<string> seen, out int under, IList<DigTunnel> joined = null, System.Func<Collider, bool> alsoRock = null, List<Ray> rays = null)
 		{
 			under = 0;
 			int leaks = 0;
@@ -89,7 +90,7 @@ namespace DynamicIslands
 						{
 							Vector3 p = eye + d * s;
 							if (p.y > land.SampleHeight(p) + o + 0.05f) { outside = true; break; }
-							if (t.Distance(t.transform.InverseTransformPoint(p)) > 0.4f)
+							if (t.Distance(t.transform.InverseTransformPoint(p)) > 0.4f && (joined == null || joined.All(j => j == null || j == t || j.Distance(j.transform.InverseTransformPoint(p)) > 0.4f)))
 							{
 								// (out of the passage at the lining's top, under the cut ground, with nothing met: out by the open mouth; lower: through the lining)
 								left = s;
@@ -102,9 +103,11 @@ namespace DynamicIslands
 						string where = (eye - eyes[0]).magnitude.ToString("0") + " m in, " + d.ToString("F1") + " (left the passage " + left.ToString("0.0") + " m on, "
 							+ (lp.y - land.SampleHeight(lp) - o).ToString("0.0") + " m from the ground there"
 							+ (all.Length > 0 ? ", hit at " + (all[0].point.y - land.SampleHeight(all[0].point) - o).ToString("0.0") + " m from the ground, normal " + all[0].normal.ToString("F1") : "") + ")";
+						int was = leaks + under;
 						if (all.Length == 0) { leaks++; seen.Add("sky " + where); }
 						else if (all[0].collider is TerrainCollider) { if (all[0].normal.y < 0f) { under++; seen.Add("the ground from below " + where); } else { leaks++; seen.Add("the ground " + all[0].distance.ToString("0.0") + " m off " + where); } }
-						else if (!IsDigRock(all[0].collider)) { leaks++; seen.Add("out to " + all[0].collider.name + " " + all[0].distance.ToString("0") + " m, " + where); }
+						else if (!IsDigRock(all[0].collider) && !(alsoRock != null && alsoRock(all[0].collider) && Vector3.Dot(all[0].normal, d) < 0f)) { leaks++; seen.Add("out to " + all[0].collider.name + " " + all[0].distance.ToString("0") + " m, " + where); }
+						if (rays != null && leaks + under > was) rays.Add(new Ray(eye, d));
 					}
 			}
 			finally { Physics.queriesHitBackfaces = backs0; }

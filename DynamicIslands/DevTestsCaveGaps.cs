@@ -1,0 +1,865 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using DynamicIslands.Editor;
+using HMLLibrary;
+using RaftModLoader;
+using UnityEngine;
+
+namespace DynamicIslands
+{
+	// Cave gaps (content round 11-04): the recipe's dig step (G1) and the checks that the cave tools' caves need.
+	public static partial class DevTests
+	{
+		const string RecipeDigIsland = "citest-recipedig";
+
+		[ConsoleCommand(name: "CIRecipeDig", docs: "Dev, the editor (opened when needed): G1 - a recipe's dig step. A recipe generates an island; a second one digs a tunnel into a hill's foot (dig 0,0 ... as=group), a branch pressed on its passage (a first point x,z over it) and saves the island; the tunnel has 2 strokes, its path in its props, the ground cut at its mouth, the group; a boulder reaching into the passage from its side is taken away with the rock (11-04); loaded again it is there; a third recipe fills the branch's end (dig ... fill); bad dig lines are refused with a reason. Leaves citest-recipedig saved")]
+		public static void RecipeDigCommand(string[] args) { StartTest(RecipeDigRoutine()); }
+
+		static IEnumerator RecipeDigRoutine()
+		{
+			bool ok = true;
+			string pa = Path.Combine(RecipeFolder, "ci_dig_a.recipe"), pb = Path.Combine(RecipeFolder, "ci_dig_b.recipe"), pc = Path.Combine(RecipeFolder, "ci_dig_c.recipe");
+			try
+			{
+				Directory.CreateDirectory(RecipeFolder);
+				File.WriteAllLines(pa, new[]
+				{
+					"# G1 check (CIRecipeDig): the island",
+					"new",
+					"gen Seed=4242 Radius=130 Height=30 Style=0",
+					"generate",
+				});
+			}
+			catch (Exception e) { Fail("recipe dig: writing " + pa + ": " + e.Message); yield break; }
+			yield return RecipeRoutine("ci_dig_a");
+			yield return new WaitForSecondsRealtime(0.6f);
+			Terrain t = terraineditor.terrain;
+			if (t == null) { Fail("recipe dig: no island after the first recipe"); yield break; }
+			TerrainData data = t.terrainData;
+			Vector3 o = t.transform.position, c = o + new Vector3(data.size.x / 2f, 0f, data.size.z / 2f);
+			float sea = DynamicIslands.EditorWaterLevel;
+			Func<Vector3, Vector3> ground = p => { p.y = t.SampleHeight(p) + o.y; return p; };
+			int open0 = OpenCells(data);
+
+			// A hill's foot (as CIDigTunnelEditor finds it)
+			Vector3 mouth = Vector3.zero, dir = Vector3.zero, side = Vector3.zero;
+			bool found = false;
+			float bestScore = 0f;
+			foreach (Vector3 d in new[] { Vector3.right, Vector3.left, Vector3.forward, Vector3.back })
+				for (float s = 90f; s > 10f; s -= 2f)
+				{
+					Vector3 p = ground(c - d * s);
+					if (p.y < sea + 1.5f) continue;
+					foreach (Vector3 sd in new[] { Vector3.Cross(Vector3.up, d), -Vector3.Cross(Vector3.up, d) })
+					{
+						float score = Mathf.Min(Mathf.Min(ground(p + d * 10f).y - p.y - 3f, ground(p + d * 24f).y - p.y - 5.5f),
+							Mathf.Min(ground(p + d * 24f + sd * 10f).y - p.y - 5.5f, ground(p + d * 16f + sd * 8f).y - p.y - 5f));
+						if (score >= bestScore) { bestScore = score; mouth = p; dir = d; side = sd; found = true; }
+					}
+				}
+			if (!found) { Fail("recipe dig: no hillside on the generated island"); yield break; }
+			Log("  the mouth " + (mouth.y - sea).ToString("0.0") + " m above the sea at " + mouth.x.ToString("0.0") + " " + mouth.z.ToString("0.0") + ", dug " + dir + " then " + side);
+			Func<Vector3, string> xz = v => v.x.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "," + v.z.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+			Vector3 a = dir * 24f, b = dir * 24f + side * 10f, br = dir * 12f, brEnd = dir * 12f - side * 8f;
+			string inv(float f) { return f.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture); }
+			try
+			{
+				File.WriteAllLines(pb, new[]
+				{
+					"# G1 check (CIRecipeDig): a tunnel, a branch from it, saved",
+					"origin " + inv(mouth.x) + " " + inv(mouth.z),
+					"dig 0,0 " + xz(a) + " " + xz(b) + " r=1.75 as=cidig",
+					"dig " + xz(br) + " " + xz(brEnd),
+					"save " + RecipeDigIsland,
+				});
+			}
+			catch (Exception e) { Fail("recipe dig: writing " + pb + ": " + e.Message); yield break; }
+			yield return RecipeRoutine("ci_dig_b");
+			yield return null;
+			DigTunnel[] tuns = UnityEngine.Object.FindObjectsOfType<DigTunnel>();
+			DigTunnel tun = tuns.FirstOrDefault();
+			Check(ref ok, tuns.Length == 1, "one dug tunnel on the island (" + tuns.Length + ")");
+			if (tun == null) { Fail("recipe dig"); yield break; }
+			int n1 = tun.PointCount;
+			Check(ref ok, tun.Strokes.Count == 2 && n1 >= 30, "the passage and its branch: " + tun.Strokes.Count + " strokes, " + n1 + " points");
+			Vector3 first = DigLine(tun).First();
+			Check(ref ok, new Vector2(first.x - mouth.x, first.z - mouth.z).magnitude < 1.5f, "pressed at the hill's foot (" + new Vector2(first.x - mouth.x, first.z - mouth.z).magnitude.ToString("0.0") + " m off)");
+			if (tun.Strokes.Count > 1)
+			{
+				Vector3 bs = DigLine(tun, 1).First(), be = DigLine(tun, 1).Last();
+				Vector3 want = mouth + br;
+				Check(ref ok, new Vector2(bs.x - want.x, bs.z - want.z).magnitude < 2.5f && new Vector2(be.x - (mouth + brEnd).x, be.z - (mouth + brEnd).z).magnitude < 2.5f,
+					"the branch from the passage 12 m in to 8 m aside (starts " + new Vector2(bs.x - want.x, bs.z - want.z).magnitude.ToString("0.0") + " m off, ends " + new Vector2(be.x - (mouth + brEnd).x, be.z - (mouth + brEnd).z).magnitude.ToString("0.0") + " m off)");
+			}
+			EditorGameObject ego = tun.GetComponent<EditorGameObject>();
+			Check(ref ok, ego != null && ego.Props != null && ego.Props.ContainsKey(DigTunnel.PathKey) && ego.Props[DigTunnel.PathKey].Length > 20, "the path kept in its props");
+			List<EditorGameObject> grp;
+			Check(ref ok, recipeGroups.TryGetValue("cidig", out grp) && grp.Count == 1 && grp[0] == ego, "as=cidig: the tunnel in the group (" + (grp != null ? grp.Count : 0) + ")");
+			DigTunnel.EditorNow(t);
+			int cut = DigTunnel.EditorCutCells.Count;
+			Check(ref ok, cut > 0 && OpenCells(data) >= open0 + cut, "the ground cut at its mouth: " + cut + " cells");
+			Check(ref ok, RecipeSaved == RecipeDigIsland, "saved as " + RecipeDigIsland + " (" + (RecipeSaved ?? "not saved") + ")");
+
+			// The brush takes away what reaches into the passage (11-04: a boulder on a chamber's rim hung into it - only objects
+			// within 0.8 of the radius of a point went before)
+			{
+				string pp = Path.Combine(RecipeFolder, "ci_dig_p.recipe");
+				List<Vector3> line0 = DigLine(tun);
+				Vector3 at18 = mouth + dir * 18f;
+				Vector3 lc = line0.OrderBy(p => new Vector2(p.x - at18.x, p.z - at18.z).sqrMagnitude).First();
+				try { File.WriteAllLines(pp, new[] { "# G1 check (CIRecipeDig): a boulder beside the passage", "origin " + inv(lc.x) + " " + inv(lc.z), "place SmallBoulder4 ciboulder at 0 0 h=" + inv(lc.y - sea) + " centred" }); }
+				catch (Exception ex) { Fail("recipe dig: writing " + pp + ": " + ex.Message); yield break; }
+				yield return RecipeRoutine("ci_dig_p");
+				yield return null;
+				try { File.Delete(pp); } catch { }
+				EditorGameObject bo = SelectionTools.Placed().Where(x => x != null && x.GameObjectName == "SmallBoulder4").OrderBy(x => (x.transform.position - lc).sqrMagnitude).FirstOrDefault();
+				Collider[] bc = bo != null ? bo.GetComponentsInChildren<Collider>().Where(x => !x.isTrigger).ToArray() : new Collider[0];
+				if (bc.Length == 0) Check(ref ok, false, "a boulder placed beside the passage (" + (bo == null ? "not placed" : "no collider") + ")");
+				else
+				{
+					Physics.SyncTransforms();
+					Bounds bb = bc[0].bounds;
+					foreach (Collider x in bc) bb.Encapsulate(x.bounds);
+					float half = Mathf.Abs(Vector3.Dot(bb.extents, new Vector3(Mathf.Abs(side.x), 0f, Mathf.Abs(side.z))));
+					bo.transform.position += lc + side * (0.9f * 1.75f + half) - bb.center;
+					Physics.SyncTransforms();
+					bb = bc[0].bounds;
+					foreach (Collider x in bc) bb.Encapsulate(x.bounds);
+					float near = (bb.ClosestPoint(lc) - lc).magnitude;
+					bool gone = DigTunnel.InsideObjects(tun).Contains(bo.gameObject);
+					Check(ref ok, gone && near > 0.8f * 1.75f, "a boulder (its middle " + (bb.center - lc).magnitude.ToString("0.0") + " m off) reaching " + (1.75f - near).ToString("0.00") + " m into the passage's side: " + (gone ? "taken away with the rock" : "LEFT standing in the passage"));
+					bo.gameObject.SetActive(false);
+				}
+			}
+
+			// Loaded again
+			DynamicIslands.NewIsland();
+			yield return null;
+			yield return new WaitForSecondsRealtime(0.7f);
+			DynamicIslands.LoadIsland(RecipeDigIsland);
+			yield return null;
+			yield return null;
+			yield return new WaitForSecondsRealtime(0.7f);
+			t = terraineditor.terrain;
+			DigTunnel back = GameObject.Find("PlacedObjects").GetComponentsInChildren<DigTunnel>(false).FirstOrDefault();
+			int cutBack = DigTunnel.EditorNow(t);
+			Check(ref ok, back != null && back.PointCount == n1 && back.Strokes.Count == 2 && cutBack == cut, "loaded again: " + (back != null ? back.PointCount + " points in " + back.Strokes.Count + " strokes, " : "no tunnel, ") + cutBack + " cells cut");
+
+			// A fill at the branch's end (Shift); bad lines refused
+			if (back != null)
+			{
+				Vector3 end = DigLine(back, 1).Last() - mouth;
+				try { File.WriteAllLines(pc, new[] { "# G1 check (CIRecipeDig): the branch's end filled", "origin " + inv(mouth.x) + " " + inv(mouth.z), "dig " + xz(end) + " fill" }); }
+				catch (Exception e) { Fail("recipe dig: writing " + pc + ": " + e.Message); yield break; }
+				yield return RecipeRoutine("ci_dig_c");
+				yield return null;
+				Check(ref ok, back.PointCount < n1, "dig ... fill: the branch's end filled in (" + n1 + " -> " + back.PointCount + " points)");
+			}
+			string err;
+			foreach (string bad in new[] { "dig 0,0", "dig 0,0 5,5 r=9", "dig 0,0 5,5 slope=60", "dig 0,0 zz 5,5", "dig 400,400 fill" })
+			{
+				DigStep(Tokens(bad), out err);
+				Check(ref ok, err != null, "refused: '" + bad + "' (" + (err ?? "taken") + ")");
+			}
+			foreach (string p in new[] { pa, pb, pc }) try { File.Delete(p); } catch { }
+			if (ok) Log("PASS: recipe dig"); else Fail("recipe dig");
+		}
+
+		/// <summary>
+		/// A dug tunnel seen from where a player stands in it (G3, the X7 sweep): eyes 1.6 m over the floor every 4 points along
+		/// each of its strokes, 81 looks each (DigLeaks) - none to the sky, out through the hill or to the ground from below. A
+		/// joined system: the other tunnels' passages count as inside, a cave piece's rock met from the front as the cave's. The
+		/// looks that see through (0: none); detail: how many, and the worst place; eye/look: the first such look.
+		/// </summary>
+		static int DugSeeThrough(DigTunnel t, IList<DigTunnel> joined, out string detail, out Vector3 eye, out Vector3 look)
+		{
+			eye = look = Vector3.zero;
+			Terrain land = t != null ? t.Land() : null;
+			if (t == null || land == null || t.Strokes == null) { detail = "no ground under it"; return 0; }
+			var eyes = new List<Vector3>();
+			int noFloor = 0;
+			for (int k = 0; k < t.Strokes.Count; k++)
+			{
+				List<Vector3> line = DigLine(t, k);
+				for (int i = k == 0 ? 2 : 3; i < line.Count; i += 4)
+				{
+					RaycastHit fh;
+					if (DigFloor(line[i], out fh) && (IsDigRock(fh.collider) || CaveRock(fh.collider))) eyes.Add(fh.point + Vector3.up * 1.6f);
+					else noFloor++;
+				}
+			}
+			var seen = new List<string>();
+			var rays = new List<Ray>();
+			int under;
+			int leaks = DigLeaks(t, land, eyes, seen, out under, joined, CaveRock, rays);
+			if (rays.Count > 0) { eye = rays[0].origin; look = rays[0].direction; }
+			else if (eyes.Count > 1) { eye = eyes[eyes.Count / 2]; look = (eyes[0] - eye).normalized; }
+			detail = t.Strokes.Count + " stroke(s), " + t.PointCount + " points, " + eyes.Count + " eyes (" + noFloor + " without a floor): " + leaks + " looks out, " + under + " to the ground from below"
+				+ (seen.Count > 0 ? ": " + string.Join("; ", seen.Take(3).ToArray()) : "");
+			return leaks + under;
+		}
+	
+
+		// G4: Raft's six characters as islanders (islander.character), first use
+		static readonly string[] SixCharacters = { "Johnny", "Elaine", "Tala", "Shogo", "Maya", "Rouhi" };
+		static readonly string[] SixPoses = { "stand", "sit", "fish", "sleep", "lean", "stand" };
+
+		[ConsoleCommand(name: "CIIslanderChars", docs: "Dev, in a world: G4 - Raft's characters as islanders. No part (host): every character Raft has logged (index, name), the six names Johnny, Elaine, Tala, Shogo, Maya, Rouhi each read by islander.character (any case, or the index) to its own character; 'ciplayer' spawned with the six in a row (stand, sit, fish, sleep, lean, stand): each shows its character, talks with its name; pictures shot_chars_*.png. Parts for two players: setup (host: the island kept), check (either player: the models and a talk on this machine; 'CHARS host|client: ...'), end (host: removed)")]
+		public static void IslanderCharsCommand(string[] args) { StartTest(IslanderCharsRoutine(args != null && args.Length > 0 ? args[0].ToLowerInvariant() : "")); }
+
+		static IEnumerator IslanderCharsRoutine(string part)
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || RAPI.GetLocalPlayer() == null) { Fail("islander chars: run in a world"); yield break; }
+			bool ok = true;
+			if (part == "end")
+			{
+				RemovePlayerIsland(IslandWorldState.Islands.FirstOrDefault(i => i.HostName == PlayerIsland));
+				Log("PASS: islander chars end");
+				yield break;
+			}
+			if (part == "check")
+			{
+				IslandWorldState.Entry here = IslandWorldState.Islands.FirstOrDefault(i => i.Root != null && i.HostName == PlayerIsland);
+				if (here == null) { Fail("islander chars: '" + PlayerIsland + "' is not loaded here (" + GupRole + ")"); yield break; }
+				yield return CharsCheck(here, GupRole, false, r => ok = r);
+				if (ok) Log("PASS: islander chars " + GupRole); else Fail("islander chars " + GupRole);
+				yield break;
+			}
+			if (!Raft_Network.IsHost) { Fail("islander chars: the host spawns the island"); yield break; }
+			yield return EnsureAlive();
+
+			// The names Raft has
+			List<SO_Character> all = Behaviours.Characters();
+			Log("  Raft's characters (" + all.Count + "): " + string.Join(", ", all.Where(c => c != null).Select(c => c.index + "=" + c.displayName + (c.modelPrefab == null ? " (no model)" : "")).ToArray()));
+			var got = new List<SO_Character>();
+			foreach (string n in SixCharacters)
+			{
+				SO_Character c = Behaviours.CharacterOf(n), lower = Behaviours.CharacterOf(" " + n.ToLowerInvariant() + " ");
+				SO_Character byIndex = c != null ? Behaviours.CharacterOf(c.index.ToString()) : null;
+				Check(ref ok, c != null && c.modelPrefab != null && lower == c && byIndex == c, "islander.character=" + n + ": " + (c != null ? "'" + c.displayName + "' (index " + c.index + ")" + (c.modelPrefab != null ? "" : ", no model") + (lower == c ? "" : ", lower case not read") : "not known"));
+				got.Add(c);
+			}
+			Check(ref ok, got.Where(c => c != null).Distinct().Count() == SixCharacters.Length, "six different characters");
+			Check(ref ok, Behaviours.CharacterOf("Nobody") == null && Survivors.CharacterFor("Nobody", "x/1") != null, "an unknown name: a character picked for it, no error");
+
+			IslandFile f = PlayerTestIsland((file, add) =>
+			{
+				for (int i = 0; i < SixCharacters.Length; i++)
+					add(Islanders.ObjectName, (i - 2.5f) * 3f, 5f, P(BehaviourProps.Name, SixCharacters[i], Islanders.PoseProp, SixPoses[i], Islanders.CharacterProp, i == 5 ? SixCharacters[i].ToUpperInvariant() : SixCharacters[i],
+						Islanders.TextProp, "I am " + SixCharacters[i] + "."));
+				file.Props[IslandQuest.KeyTitle] = "CI characters";
+			});
+			IslandWorldState.Entry e = null;
+			yield return SpawnPlayerIsland(f, x => e = x);
+			if (e == null || e.Root == null) { Fail("islander chars: the island did not spawn"); RemovePlayerIsland(e); yield break; }
+			bool keep = part == "setup";
+			try
+			{
+				yield return new WaitForSeconds(1.5f);
+				yield return CharsCheck(e, "host", true, r => ok &= r);
+			}
+			finally
+			{
+				DialoguePanel.Close();
+				if (!keep) RemovePlayerIsland(e);
+			}
+			if (ok) Log("PASS: islander chars" + (keep ? " setup (island " + e.Id + ")" : "")); else Fail("islander chars");
+		}
+
+		/// <summary>The six islanders on this machine: each shows its own character, talks with its name; pictures when shots.</summary>
+		static IEnumerator CharsCheck(IslandWorldState.Entry e, string role, bool shots, Action<bool> result)
+		{
+			bool ok = true;
+			var line = new List<string>();
+			Islander[] isls = e.Root.GetComponentsInChildren<Islander>(true);
+			Check(ref ok, isls.Length == SixCharacters.Length, role + ": six islanders (" + isls.Length + ")");
+			Vector3 sum = Vector3.zero;
+			Islander first = null;
+			foreach (string n in SixCharacters)
+			{
+				Islander isl = isls.FirstOrDefault(x => x.Ref != null && Islanders.NameOf(x.Ref.Props) == n);
+				SO_Character want = Behaviours.CharacterOf(n);
+				bool right = isl != null && isl.HasModel && want != null && isl.Character == want;
+				Check(ref ok, right, role + ": " + n + " shows " + (isl == null ? "nothing" : !isl.HasModel ? "the marker figure" : isl.Character != null ? isl.Character.displayName : "?"));
+				line.Add(n + "=" + (right ? "ok" : "bad"));
+				if (isl == null) continue;
+				sum += isl.transform.position;
+				if (first == null) first = isl;
+				PutPlayerNear(isl.transform, 2f);
+				yield return new WaitForSeconds(0.3f);
+				isl.Talk();
+				yield return new WaitForSeconds(0.3f);
+				bool talks = DialoguePanel.IsOpen && DialoguePanel.ShownSpeaker == n && DialoguePanel.ShownText == "I am " + n + ".";
+				Check(ref ok, talks, role + ": " + n + " talks (" + (DialoguePanel.ShownSpeaker ?? "no dialogue") + ": " + (DialoguePanel.ShownText ?? "") + ")");
+				DialoguePanel.Close();
+				yield return new WaitForSeconds(0.2f);
+			}
+			Log("CHARS " + role + ": " + string.Join(" ", line.ToArray()));
+			if (shots && first != null)
+			{
+				Vector3 mid = sum / SixCharacters.Length;
+				Vector3 fwd = first.transform.forward; fwd.y = 0f;
+				if (fwd.sqrMagnitude < 0.01f) fwd = Vector3.forward;
+				fwd.Normalize();
+				Vector3 along = Vector3.Cross(Vector3.up, fwd);
+				SetHour(12f);
+				yield return new WaitForSeconds(0.5f);
+				yield return CameraShot(mid + fwd * 9f + Vector3.up * 2f, mid + Vector3.up * 0.9f, "chars_all");
+				yield return CameraShot(mid + fwd * 4.5f + along * 4.5f + Vector3.up * 1.6f, mid + along * 4.5f + Vector3.up * 0.9f, "chars_a");
+				yield return CameraShot(mid + fwd * 4.5f - along * 4.5f + Vector3.up * 1.6f, mid - along * 4.5f + Vector3.up * 0.9f, "chars_b");
+			}
+			result(ok);
+		}
+	
+
+		// G2 and the look checks: test islands made with the Dig brush and the cave tool (CICaveGapsBuild), then seen in a world
+		// (CICaveGapsLook): pictures from outside and inside by day and night, walked in and back out, the flooded part water
+		// and the raised room dry with breath coming back.
+		static readonly string[] GapIslands = { "cgaps-dig", "cgaps-st", "cgaps-uw" };
+		static string CgInv(float f) { return f.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture); }
+		static string XZ(Vector3 v) { return CgInv(v.x) + "," + CgInv(v.z); }
+		static string XZs(Vector3 v) { return CgInv(v.x) + " " + CgInv(v.z); }
+
+		/// <summary>The foot of a hill dug into along d (toward the island's middle): the best place minOut-90 m out; score:
+		/// how much rock over a 24 m way in at its thinnest.</summary>
+		static bool HillFoot(Terrain t, Vector3 d, float minOut, out Vector3 mouth, out Vector3 side, out float score)
+		{
+			TerrainData data = t.terrainData;
+			Vector3 o = t.transform.position, c = o + new Vector3(data.size.x / 2f, 0f, data.size.z / 2f);
+			float sea = DynamicIslands.EditorSeaInWorld;
+			Func<Vector3, Vector3> ground = p => { p.y = t.SampleHeight(p) + o.y; return p; };
+			mouth = side = Vector3.zero; score = float.MinValue;
+			bool found = false;
+			for (float s = 90f; s > minOut; s -= 2f)
+			{
+				Vector3 p = ground(c - d * s);
+				if (p.y < sea + 1.5f) continue;
+				foreach (Vector3 sd in new[] { Vector3.Cross(Vector3.up, d), -Vector3.Cross(Vector3.up, d) })
+				{
+					float sc = Mathf.Min(Mathf.Min(ground(p + d * 10f).y - p.y - 3f, ground(p + d * 24f).y - p.y - 5.5f),
+						Mathf.Min(ground(p + d * 24f + sd * 10f).y - p.y - 5.5f, ground(p + d * 16f + sd * 8f).y - p.y - 5f));
+					if (sc > score) { score = sc; mouth = p; side = sd; found = true; }
+				}
+			}
+			return found;
+		}
+
+		/// <summary>The sea floor depth m under the sea on the way in along d (toward the middle): the outermost such point
+		/// whose way in climbs above the sea within 45 m; climb: how far in that is.</summary>
+		static bool Seabed(Terrain t, Vector3 d, float depth, out Vector3 at, out float climb)
+		{
+			TerrainData data = t.terrainData;
+			Vector3 o = t.transform.position, c = o + new Vector3(data.size.x / 2f, 0f, data.size.z / 2f);
+			float sea = DynamicIslands.EditorSeaInWorld;
+			Func<Vector3, Vector3> ground = p => { p.y = t.SampleHeight(p) + o.y; return p; };
+			at = Vector3.zero; climb = 999f;
+			for (float s = 20f; s < data.size.x / 2f - 5f; s += 1f)
+			{
+				Vector3 p = ground(c - d * s);
+				if (p.y > sea - depth) continue;
+				for (float k = 1f; k < 45f; k += 1f)
+					if (ground(p + d * k).y > sea + 1f) { at = p; climb = k; return true; }
+				return false;
+			}
+			return false;
+		}
+
+		[ConsoleCommand(name: "CICaveGapsBuild", docs: "Dev, the editor: builds the cave gaps' test islands from recipes (CICaveGapsBuild [dig|st|uw], default all): cgaps-dig (Dig brush: a tunnel into a hill with a branch and a wide chamber, a second tunnel from beside it dug into the first - a joined system with two mouths - and a tunnel from the sea floor climbing into the land), cgaps-st (cave tool: a cave with a room into one hill, a tunnel through another, open at its far end), cgaps-uw (cave tool: the mouth on the sea floor 5 m down, 12 degrees up to a room above the sea). Saved to Mods; the recipes are kept in recipes/cgaps_*.recipe")]
+		public static void CaveGapsBuildCommand(string[] args)
+		{
+			string which = args != null && args.Length > 0 ? args[0].ToLowerInvariant() : "all";
+			StartTest(CaveGapsBuildRoutine(which));
+		}
+
+		static IEnumerator CaveGapsBuildRoutine(string which)
+		{
+			bool ok = true;
+			foreach (string isl in GapIslands)
+			{
+				if (which != "all" && isl != "cgaps-" + which) continue;
+				bool one = true;
+				yield return CaveGapsBuildOne(isl, r => one = r);
+				ok &= one;
+			}
+			if (ok) Log("PASS: cave gaps build"); else Fail("cave gaps build");
+		}
+
+		static IEnumerator CaveGapsBuildOne(string isl, Action<bool> result)
+		{
+			bool ok = true;
+			string tag = isl.Substring(6);
+			string pa = Path.Combine(RecipeFolder, "cgaps_" + tag + "_a.recipe"), pb = Path.Combine(RecipeFolder, "cgaps_" + tag + ".recipe");
+			int seed = tag == "uw" ? 5151 : 4242;
+			try { Directory.CreateDirectory(RecipeFolder); File.WriteAllLines(pa, new[] { "# cave gaps test island " + isl + ": the ground", "new", "gen Seed=" + seed + " Radius=130 Height=30 Style=0", "generate" }); }
+			catch (Exception e) { Fail("cave gaps build: " + e.Message); result(false); yield break; }
+			yield return RecipeRoutine(Path.GetFileNameWithoutExtension(pa));
+			yield return new WaitForSecondsRealtime(0.6f);
+			Terrain t = terraineditor.terrain;
+			if (t == null) { Fail("cave gaps build " + isl + ": no island"); result(false); yield break; }
+			float sea = DynamicIslands.EditorSeaInWorld;
+			Vector3[] dirs = Enumerable.Range(0, 8).Select(i => Quaternion.Euler(0f, i * 45f, 0f) * Vector3.forward).ToArray();
+			var lines = new List<string> { "# cave gaps test island " + isl + " (CICaveGapsBuild; run after " + Path.GetFileName(pa) + ")" };
+			Func<Vector3, float> ground = p => t.SampleHeight(p) + t.transform.position.y;
+			if (tag == "dig" || tag == "st")
+			{
+				var feet = new List<KeyValuePair<float, Vector3[]>>();
+				foreach (Vector3 d in dirs)
+				{
+					Vector3 m, sd; float sc;
+					if (HillFoot(t, d, tag == "st" ? 44f : 10f, out m, out sd, out sc)) feet.Add(new KeyValuePair<float, Vector3[]>(sc, new[] { m, d, sd }));
+				}
+				feet = feet.OrderByDescending(f => f.Key).ToList();
+				if (feet.Count == 0) { Fail("cave gaps build " + isl + ": no hillside"); result(false); yield break; }
+				Vector3[] a = feet[0].Value;
+				// (the second: a way in at right angles, so the two never cross)
+				Vector3[] b = feet.Skip(1).Where(f => Mathf.Abs(Vector3.Dot(f.Value[1], a[1])) < 0.2f).Select(f => f.Value).FirstOrDefault();
+				Log("  " + isl + ": hill feet " + string.Join(", ", feet.Take(4).Select(f => f.Value[1].ToString("F1") + " " + (f.Value[0].y - sea).ToString("0.0") + " m up, rock " + f.Key.ToString("0.0")).ToArray()));
+				if (tag == "dig")
+				{
+					Vector3 dir = a[1], side = a[2];
+					Vector3 br = dir * 12f, brEnd = dir * 12f - side * 8f;
+					lines.Add("origin " + XZs(a[0]));
+					lines.Add("dig 0,0 " + XZ(dir * 24f) + " " + XZ(dir * 24f + side * 10f) + " r=1.75 as=gapdig");
+					lines.Add("dig " + XZ(br) + " " + XZ(brEnd));
+					lines.Add("dig " + XZ(brEnd) + " " + XZ(brEnd - side * 6f + dir * 2f) + " r=3.5");
+					// (a second mouth beside the first, dug in to meet the first tunnel's far end)
+					Vector3 mb = a[0] + side * 16f;
+					mb.y = ground(mb);
+					Check(ref ok, Mathf.Abs(mb.y - a[0].y) < 4f, "the second mouth's ground near the first's (" + (mb.y - a[0].y).ToString("0.0") + " m)");
+					lines.Add("origin " + XZs(mb));
+					lines.Add("dig 0,0 " + XZ(dir * 14f) + " " + XZ(a[0] + dir * 24f + side * 10f - mb) + " r=1.75 as=gapdig");
+					// (from the sea floor in, rising into the land: a dug tunnel under the sea)
+					Vector3 sb = Vector3.zero, sbd = Vector3.zero; float best = 999f;
+					foreach (Vector3 d in dirs)
+					{
+						if (Vector3.Dot(d, dir) > 0.5f) continue;
+						Vector3 at; float climb;
+						if (Seabed(t, d, 4f, out at, out climb) && climb < best) { best = climb; sb = at; sbd = d; }
+					}
+					Check(ref ok, best < 999f, "a sea floor 4 m down by the land (" + (best < 999f ? best.ToString("0") + " m to the shore" : "none") + ")");
+					if (best < 999f)
+					{
+						lines.Add("origin " + XZs(sb));
+						lines.Add("dig 0,0 " + XZ(sbd * 16f) + " r=1.9 as=gapdiguw");
+						lines.Add("dig " + XZ(sbd * 16f) + " " + XZ(sbd * 46f) + " r=1.9 slope=14");
+						lines.Add("dig " + XZ(sbd * 46f) + " " + XZ(sbd * 52f) + " r=3.2");
+					}
+				}
+				else
+				{
+					Check(ref ok, b != null, "two hillsides at right angles");
+					lines.Add("origin " + XZs(a[0]));
+					lines.Add("cave from 0 0 to " + XZs(a[1] * 26f) + " slope=0 end=room hill=1 as=gapst1");
+					if (b != null)
+					{
+						lines.Add("origin " + XZs(b[0]));
+						lines.Add("cave from 0 0 to " + XZs(b[1] * 32f) + " slope=-4 end=open hill=1 as=gapst2");
+					}
+				}
+			}
+			else
+			{
+				Vector3 sb = Vector3.zero, sbd = Vector3.zero; float best = 999f;
+				foreach (Vector3 d in dirs)
+				{
+					Vector3 at; float climb;
+					if (Seabed(t, d, 5f, out at, out climb) && climb < best) { best = climb; sb = at; sbd = d; }
+				}
+				if (best >= 999f) { Fail("cave gaps build " + isl + ": no sea floor 5 m down by the land"); result(false); yield break; }
+				float depth = sea - ground(sb);
+				int pieces = Mathf.Clamp(Mathf.CeilToInt((depth + 2.5f) / (CaveTool.Step * Mathf.Sin(12f * Mathf.Deg2Rad))), 2, 12);
+				Log("  " + isl + ": sea floor " + depth.ToString("0.0") + " m down, the shore " + best.ToString("0") + " m in; " + pieces + " pieces up at 12 degrees");
+				lines.Add("origin " + XZs(sb));
+				lines.Add("cave from 0 0 to " + XZs(sbd * (pieces * CaveTool.Step + 1f)) + " slope=12 end=room hill=1 as=gapuw");
+			}
+			lines.Add("save " + isl);
+			try { File.WriteAllLines(pb, lines.ToArray()); } catch (Exception e) { Fail("cave gaps build: " + e.Message); result(false); yield break; }
+			foreach (string l in lines.Skip(1)) Log("    " + l);
+			yield return RecipeRoutine(Path.GetFileNameWithoutExtension(pb));
+			yield return new WaitForSecondsRealtime(0.5f);
+			Check(ref ok, RecipeSaved == isl, isl + " saved (" + (RecipeSaved ?? "not saved") + ")");
+			DigTunnel[] tuns = UnityEngine.Object.FindObjectsOfType<DigTunnel>();
+			if (tag == "dig")
+			{
+				Check(ref ok, tuns.Length >= 3, isl + ": " + tuns.Length + " dug tunnels (" + string.Join("; ", tuns.Select(x => x.Strokes.Count + " strokes, " + x.PointCount + " points").ToArray()) + ")");
+				foreach (DigTunnel x in tuns)
+				{
+					List<Vector3> l0 = DigLine(x, 0);
+					Log("  tunnel from " + (l0[0].y - sea).ToString("0.0") + " m (to the sea) to " + string.Join(", ", Enumerable.Range(0, x.Strokes.Count).Select(k => (DigLine(x, k).Last().y - sea).ToString("0.0")).ToArray()) + " m");
+				}
+			}
+			if (tag == "uw" && CaveTool.LastLayout != null)
+			{
+				CaveTool.Layout l = CaveTool.LastLayout;
+				Check(ref ok, l.Mouth.y < sea - 3f && l.End.y > sea + 0.5f && l.Room, "the mouth " + (l.Mouth.y - sea).ToString("0.0") + " m (to the sea), the room's floor " + (l.End.y - sea).ToString("0.0") + " m: flooded at the mouth, dry at the room");
+			}
+			try { File.Copy(pb, Path.Combine(@"D:\Temp\scratch_8e762ddb\cgaps", Path.GetFileName(pb)), true); } catch { }
+			result(ok);
+		}
+
+		/// <summary>One cave's way: mouth first, floor points, the room's or the far end's last; In: the way in, level.</summary>
+		class GapWay { public string Kind; public List<Vector3> Floor = new List<Vector3>(); public Vector3 In; }
+
+		static Vector3 GapFloor(Vector3 p, float up = 1.2f, float down = 4f)
+		{
+			foreach (RaycastHit h in Physics.RaycastAll(p + Vector3.up * up, Vector3.down, up + down, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
+			{
+				if (h.collider.GetComponentInParent<Network_Player>() != null || h.collider.GetComponentInParent<AI_NetworkBehaviour>() != null) continue;
+				return h.point;
+			}
+			return p;
+		}
+
+		/// <summary>The ways into an island's caves: each cave tool cave from its mouth piece through its tunnels to its room or
+		/// far end; each dug tunnel's strokes (a branch reached along the passage it leaves).</summary>
+		static List<GapWay> GapWays(IslandWorldState.Entry e)
+		{
+			var ways = new List<GapWay>();
+			Func<Transform, IslandObjectRef> refOf = tr => tr.GetComponent<IslandObjectRef>() ?? tr.GetComponentInParent<IslandObjectRef>();
+			Func<Transform, float> sizeOf = tr =>
+			{
+				IslandObjectRef r = refOf(tr);
+				string v = null;
+				if (r != null) foreach (string k in new[] { ObjectProps.CaveMouth, ObjectProps.CaveJoin, ObjectProps.CaveEnd }) if (r.Props.TryGetValue(k, out v) && v.Length > 0) break;
+				float s;
+				return v != null && float.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out s) && s > 0.1f ? s : 1f;
+			};
+			Func<Transform, float, Vector3> pass = (tr, z) => tr.position + tr.rotation * (new Vector3(CaveTool.PassX, CaveTool.Floor, z) * sizeOf(tr));
+			List<Transform> tunnels = e.Root.GetComponentsInChildren<Transform>(true).Where(x => x.name == CaveTool.Tunnel).ToList();
+			List<Transform> rooms = e.Root.GetComponentsInChildren<Transform>(true).Where(x => x.name == CaveTool.Room).ToList();
+			foreach (Transform first in tunnels.Where(x => { IslandObjectRef r = refOf(x); return r != null && r.Props.ContainsKey(ObjectProps.CaveMouth); }))
+			{
+				var w = new GapWay { Kind = "cave" };
+				Transform cur = first;
+				var used = new HashSet<Transform>();
+				Vector3 exit = Vector3.zero;
+				while (cur != null && used.Add(cur))
+				{
+					float sz = sizeOf(cur);
+					Vector3 a = pass(cur, CaveTool.FaceMin), b = pass(cur, CaveTool.FaceMin + CaveTool.Step);
+					foreach (float f in new[] { 0.12f, 0.5f, 0.88f }) w.Floor.Add(GapFloor(Vector3.Lerp(a, b, f)));
+					exit = b;
+					Vector3 ex = b;
+					cur = tunnels.FirstOrDefault(x => !used.Contains(x) && (pass(x, CaveTool.FaceMin) - ex).magnitude < 1.5f * sz);
+				}
+				w.In = exit - pass(first, CaveTool.FaceMin); w.In.y = 0f; w.In.Normalize();
+				Transform room = rooms.Where(x => (x.position - exit).magnitude < 25f).OrderBy(x => (x.position - exit).magnitude).FirstOrDefault();
+				if (room != null) { w.Kind = "cave+room"; w.Floor.Add(GapFloor(exit + w.In * 4f)); w.Floor.Add(GapFloor(exit + w.In * 8f)); }
+				else { w.Kind = "cave, open end"; w.Floor.Add(GapFloor(exit + w.In * 4f, 2f, 8f)); }
+				w.Floor.Insert(0, GapFloor(pass(first, CaveTool.FaceMin) - w.In * 0.5f));
+				ways.Add(w);
+			}
+			foreach (DigTunnel t in e.Root.GetComponentsInChildren<DigTunnel>(true))
+			{
+				if (t.Strokes == null || t.Strokes.Count == 0) continue;
+				List<Vector3> main = DigLine(t, 0);
+				for (int k = 0; k < t.Strokes.Count; k++)
+				{
+					var w = new GapWay { Kind = "dug " + (k == 0 ? "tunnel" : "branch " + k) };
+					List<Vector3> line = DigLine(t, k);
+					var pts = new List<Vector3>();
+					if (k > 0)
+					{
+						int near = Enumerable.Range(0, main.Count).OrderBy(i => (main[i] - line[0]).sqrMagnitude).First();
+						pts.AddRange(main.Take(near + 1));
+					}
+					pts.AddRange(line);
+					RaycastHit fh;
+					for (int i = 0; i < pts.Count; i += 3) w.Floor.Add(DigFloor(pts[i], out fh) ? fh.point : pts[i]);
+					if ((pts.Count - 1) % 3 != 0) w.Floor.Add(DigFloor(pts.Last(), out fh) ? fh.point : pts.Last());
+					w.In = pts[Mathf.Min(pts.Count - 1, 6)] - pts[0]; w.In.y = 0f; w.In.Normalize();
+					ways.Add(w);
+				}
+			}
+			return ways;
+		}
+
+		[ConsoleCommand(name: "CICaveGapsLook", docs: "Dev, a world (host): one cave gaps test island (CICaveGapsLook <cgaps-dig|cgaps-st|cgaps-uw> [noshots]), the kept one or brought next to the raft: each cave's way in (cave tool tunnels to the room or the far end, each dug stroke) - pictures from outside at the mouth and over the hill, from inside looking in, looking out, at the walls and roof at its end, by day and by night (shot_cg_<island>_<n>_<view>.png); a clear way along it (no rock across it); walked in with Raft's controller and back out past the mouth where it is dry; where it is under the sea: water there (Raft's swimming, the breath going down) and, in a room above the sea, dry ground with the breath coming back")]
+		public static void CaveGapsLookCommand(string[] args)
+		{
+			if (args == null || args.Length == 0) { Fail("CICaveGapsLook <island>"); return; }
+			StartTest(CaveGapsLookRoutine(args[0], !args.Contains("noshots")));
+		}
+
+		static IEnumerator CaveGapsLookRoutine(string name, bool shots)
+		{
+			Network_Player me = RAPI.GetLocalPlayer();
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || me == null) { Fail("cave gaps look: host, in a world"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Root != null && string.Equals(x.HostName, name, StringComparison.OrdinalIgnoreCase));
+			if (e == null)
+			{
+				Vector3? spot = ScSpot(name, 400f);
+				if (!spot.HasValue) { Fail("cave gaps look: no open sea near the raft"); yield break; }
+				var made = new List<IslandWorldState.Entry>();
+				yield return ScBring(name, spot.Value, made);
+				e = made.LastOrDefault();
+				if (e == null || e.Root == null) { Fail("cave gaps look: " + name + " didn't come"); yield break; }
+				yield return new WaitForSeconds(4f);
+			}
+			for (float w = 0f; w < 20f; w += 0.5f)
+			{
+				CaveMountain m = e.Root.GetComponentInChildren<CaveMountain>();
+				if ((m == null || !m.Pending) && e.Root.GetComponentsInChildren<DigTunnel>(true).All(t => t.Triangles > 0 && t.Land() != null)) break;
+				yield return new WaitForSeconds(0.5f);
+			}
+			yield return new WaitForSeconds(1f);
+			Physics.SyncTransforms();
+			playEntry = e;
+			const float sea = 0f;
+			List<GapWay> ways = GapWays(e);
+			Check(ref ok, ways.Count > 0, name + ": " + ways.Count + " ways in (" + string.Join(", ", ways.Select(w => w.Kind + " " + w.Floor.Count + " points, " + (w.Floor[0].y - sea).ToString("0.0") + " to " + (w.Floor.Last().y - sea).ToString("0.0") + " m").ToArray()) + ")");
+			Vector3 eyeUp = Vector3.up * 1.6f;
+			Vector3 home = me.transform.position;
+			int n = 0;
+			try
+			{
+				foreach (GapWay w in ways)
+				{
+					n++;
+					string label = name + " " + n + " (" + w.Kind + ")";
+					string shot = "cg_" + name.Replace("cgaps-", "") + "_" + n + "_";
+					List<Vector3> f = w.Floor;
+					Vector3 mouth = f[0], end = f.Last();
+					int c = f.Count;
+					bool wet = mouth.y < sea - 0.5f;
+					// A clear way: nothing solid across the passage between its points (a body 0.35 m round, knee to head)
+					int blocked = 0;
+					string where = "";
+					for (int i = 1; i < c; i++)
+					{
+						Vector3 a = f[i - 1] + Vector3.up * 0.7f, b = f[i] + Vector3.up * 0.7f;
+						Vector3 d = b - a;
+						if (d.magnitude < 0.2f) continue;
+						RaycastHit h;
+						if (Physics.CapsuleCast(a, a + Vector3.up * 0.9f, 0.35f, d.normalized, out h, d.magnitude, ~0, QueryTriggerInteraction.Ignore)
+							&& h.collider.GetComponentInParent<Network_Player>() == null && h.collider.GetComponentInParent<AI_NetworkBehaviour>() == null
+							&& Vector3.Angle(h.normal, Vector3.up) > 50f)
+						{ blocked++; if (where.Length == 0) where = " - first at point " + i + " (" + h.collider.name + ", " + (f[i].y - sea).ToString("0.0") + " m)"; }
+					}
+					Check(ref ok, blocked == 0, label + ": a clear way along it, " + c + " points" + (blocked > 0 ? ": " + blocked + " blocked" + where : ""));
+
+					if (shots)
+					{
+						Vector3 outside = mouth - w.In * (wet ? 7f : 10f) + Vector3.up * (wet ? 1.2f : 2.5f);
+						foreach (bool night in new[] { false, true })
+						{
+							SetHour(night ? 23f : 12f);
+							yield return new WaitForSeconds(0.6f);
+							string tod = night ? "night_" : "";
+							yield return CameraShot(outside, mouth + Vector3.up * 1.5f, shot + tod + "out");
+							if (!night) yield return CameraShot(mouth - w.In * 2f + Vector3.up * 26f, mouth + w.In * 12f, shot + "above");
+							yield return CameraShot(f[c / 3] + eyeUp, f[Mathf.Min(c - 1, 2 * c / 3 + 1)] + eyeUp, shot + tod + "in");
+							yield return CameraShot(f[Mathf.Max(1, 2 * c / 3)] + eyeUp, mouth + eyeUp, shot + tod + "lookout");
+							Vector3 dEnd = end - f[Mathf.Max(0, c - 3)]; dEnd.y = 0f;
+							if (dEnd.sqrMagnitude < 0.01f) dEnd = w.In;
+							yield return CameraShot(f[Mathf.Max(0, c - 2)] + eyeUp, end + dEnd.normalized * 3f + Vector3.up * 4.5f, shot + tod + "endroof");
+						}
+						SetHour(12f);
+					}
+
+					// Water where it is under the sea; dry ground above it
+					PersonController pc = me.PersonController;
+					Stat_Oxygen air = me.Stats.stat_oxygen;
+					Vector3? deep = f.Where(p => p.y < sea - 2.5f).OrderBy(p => p.y).Select(p => (Vector3?)p).FirstOrDefault();
+					if (deep.HasValue)
+					{
+						Vector3 at = deep.Value + Vector3.up * 0.9f;
+						PlayerMove.To(me, at, ControllerType.Ground);
+						KeepAlive(me);
+						yield return new WaitForSeconds(1.5f);
+						bool swims = pc.controllerType == ControllerType.Water;
+						air.Value = air.Max;
+						float a0 = air.Value;
+						for (float s = 0f; s < 3f; s += Time.deltaTime)
+						{
+							if ((me.transform.position - at).magnitude > 1f) PlayerMove.To(me, at, ControllerType.Water);
+							yield return null;
+						}
+						Check(ref ok, swims && air.Value < a0 - 0.01f, label + ": " + (sea - deep.Value.y).ToString("0.0") + " m under the sea it is water (" + (swims ? "swimming" : pc.controllerType.ToString()) + ", breath " + a0.ToString("0") + " -> " + air.Value.ToString("0.0") + ")");
+						if (shots) yield return CameraShot(deep.Value + Vector3.up * 1.4f - w.In * 0.5f, deep.Value + Vector3.up * 1.4f + w.In * 6f, shot + "underwater");
+					}
+					if (wet && end.y > sea + 0.3f)
+					{
+						air.Value = air.Max * 0.3f;
+						PlayerMove.To(me, end + Vector3.up * 0.3f, ControllerType.Ground);
+						KeepAlive(me);
+						float a0 = air.Value;
+						yield return new WaitForSeconds(3f);
+						Check(ref ok, pc.controllerType == ControllerType.Ground && air.Value > a0 + 1f, label + ": the end above the sea (" + (end.y - sea).ToString("0.0") + " m) is dry, the breath comes back (" + pc.controllerType + ", " + a0.ToString("0") + " -> " + air.Value.ToString("0") + ")");
+						air.Value = air.Max;
+					}
+					// Walked in with Raft's controller and back out past the mouth (where it is dry the whole way)
+					if (f.All(p => p.y > sea + 0.2f))
+					{
+						PlayerMove.To(me, GapFloor(mouth - w.In * 3f, 3f, 6f) + Vector3.up * 0.3f, ControllerType.Ground);
+						yield return new WaitForSeconds(0.8f);
+						bool inOk = false, outOk = false; string why = "", why2 = "";
+						yield return PlayWalk(me, new List<Vector3>(f), (r, m) => { inOk = r; why = m; });
+						if (inOk)
+						{
+							var back = new List<Vector3>(f); back.Reverse();
+							back.Add(GapFloor(mouth - w.In * 5f, 3f, 6f));
+							yield return PlayWalk(me, back, (r, m) => { outOk = r; why2 = m; });
+						}
+						Check(ref ok, inOk && outOk, label + ": walked in to its end" + (inOk ? " and back out past the mouth" + (outOk ? "" : " - NOT: " + why2) : " - NOT: " + why));
+					}
+					else if (!wet) Log("  " + label + ": dips under the sea on the way (" + (f.Min(p => p.y) - sea).ToString("0.0") + " m): not walked");
+				}
+			}
+			finally
+			{
+				SetHour(12f);
+				try { PlayerMove.To(me, home, ControllerType.Ground); } catch { }
+			}
+			if (ok) Log("PASS: cave gaps look " + name); else Fail("cave gaps look " + name);
+		}
+	
+
+		// G5: Raft's machete vines over a cave tool mouth close it until they are cut (no code of their own: their colliders)
+		[ConsoleCommand(name: "CICaveVineGate", docs: "Dev, a world (host): machete vines over a cave's mouth - cgaps-st (CICaveGapsBuild st) saved again as cgaps-vine with Raft's ChoppableVines on its first cave's mouth, brought next to the raft: a body's width finds no way past them anywhere across the mouth, the player walking in is stopped outside, they stay without a machete, the machete cuts them, then the way is clear and the player walks in and back out (pictures shot_cg_vine_before/after.png). CICaveVineGate [yaw] turns the vines that many more degrees")]
+		public static void CaveVineGateCommand(string[] args)
+		{
+			float yaw = 0f;
+			if (args != null && args.Length > 0) float.TryParse(args[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out yaw);
+			StartTest(CaveVineGateRoutine(yaw));
+		}
+
+		const string VineGateIsland = "cgaps-vine";
+
+		/// <summary>Ways past the vines at the mouth: a body (0.3 m round, knee to head) sent in from 2 m outside at each step
+		/// across the mouth; those that reach 2 m inside. Also how wide the mouth is (its walls at chest height).</summary>
+		static List<float> VineGaps(Vector3 mouth, Vector3 inDir, Transform vines, out float width, out int byVines)
+		{
+			Vector3 side = Vector3.Cross(Vector3.up, inDir).normalized;
+			Vector3 chest = mouth + inDir * 0.8f + Vector3.up * 1.2f;
+			Func<Vector3, float> wall = d =>
+			{
+				foreach (RaycastHit h in Physics.RaycastAll(chest, d, 6f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
+					if (vines == null || !h.collider.transform.IsChildOf(vines)) if (h.collider.GetComponentInParent<Network_Player>() == null) return h.distance;
+				return 6f;
+			};
+			float l = wall(-side), r = wall(side);
+			width = l + r;
+			var gaps = new List<float>();
+			byVines = 0;
+			for (float o = -l + 0.3f; o <= r - 0.3f + 0.001f; o += 0.25f)
+			{
+				Vector3 a = mouth - inDir * 2f + side * o + Vector3.up * 0.45f;
+				RaycastHit[] hits = Physics.CapsuleCastAll(a, a + Vector3.up * 1.0f, 0.3f, inDir, 4f, ~0, QueryTriggerInteraction.Ignore)
+					.Where(h => h.collider.GetComponentInParent<Network_Player>() == null && h.collider.GetComponentInParent<AI_NetworkBehaviour>() == null && h.distance > 0f)
+					.OrderBy(h => h.distance).ToArray();
+				bool vine = vines != null && hits.Any(h => h.collider.transform.IsChildOf(vines));
+				// (a rock hit with its face turned up is the floor rising: not a block)
+				bool rock = hits.Any(h => (vines == null || !h.collider.transform.IsChildOf(vines)) && Vector3.Angle(h.normal, Vector3.up) > 50f);
+				if (vine) byVines++;
+				if (!vine && !rock) gaps.Add(o);
+			}
+			return gaps;
+		}
+
+		static IEnumerator CaveVineGateRoutine(float yawMore)
+		{
+			Network_Player me = RAPI.GetLocalPlayer();
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || me == null) { Fail("cave vine gate: host, in a world"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			string src = IslandSpawner.PathFor("cgaps-st");
+			if (!File.Exists(src)) { Fail("cave vine gate: no cgaps-st (CICaveGapsBuild st in the editor first)"); yield break; }
+			IslandFile f = IslandFile.Load(src);
+			IslandObject m = f.Objects.FirstOrDefault(o => o.Name == CaveTool.Tunnel && o.Props != null && o.Props.ContainsKey(ObjectProps.CaveMouth));
+			if (m == null) { Fail("cave vine gate: cgaps-st has no cave mouth"); yield break; }
+			float size;
+			if (!float.TryParse(ObjectProps.Get(m.Props, ObjectProps.CaveMouth), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out size) || size < 0.1f) size = m.Scale.x;
+			Quaternion rot = Quaternion.Euler(m.EulerRotation);
+			Vector3 at = m.Position + rot * (new Vector3(CaveTool.PassX, CaveTool.Floor, CaveTool.FaceMin) * size);
+			Vector3 inDir = rot * Vector3.forward; inDir.y = 0f; inDir.Normalize();
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { ContentCatalog.MacheteVines });
+			Dictionary<string, string> vp = ObjectProps.Defaults(ContentCatalog.MacheteVines);
+			vp[BehaviourProps.Name] = "gatevines";
+			f.Objects.RemoveAll(o => o.Name == ContentCatalog.MacheteVines);
+			f.Objects.Add(new IslandObject { Name = ContentCatalog.MacheteVines, Position = at + inDir * 0.3f, EulerRotation = new Vector3(0f, Quaternion.LookRotation(inDir).eulerAngles.y + yawMore, 0f), Props = vp });
+			IslandWorldState.Remove(VineGateIsland);
+			f.Save(IslandSpawner.PathFor(VineGateIsland));
+			Vector3? spot = ScSpot(VineGateIsland, 400f);
+			if (!spot.HasValue) { Fail("cave vine gate: no open sea near the raft"); yield break; }
+			var made = new List<IslandWorldState.Entry>();
+			yield return ScBring(VineGateIsland, spot.Value, made);
+			IslandWorldState.Entry e = made.LastOrDefault();
+			if (e == null || e.Root == null) { Fail("cave vine gate: " + VineGateIsland + " didn't come"); yield break; }
+			for (float w = 0f; w < 20f; w += 0.5f)
+			{
+				CaveMountain cm = e.Root.GetComponentInChildren<CaveMountain>();
+				if (cm == null || !cm.Pending) break;
+				yield return new WaitForSeconds(0.5f);
+			}
+			yield return new WaitForSeconds(3f);
+			Physics.SyncTransforms();
+			playEntry = e;
+			Vector3 home = me.transform.position;
+			try
+			{
+				IslandObjectRef vines = ScObjOf(e, "gatevines");
+				GapWay way = GapWays(e).FirstOrDefault(x => x.Kind.StartsWith("cave") && (x.Floor[0] - (e.Root.transform.TransformPoint(at))).magnitude < 3f) ?? GapWays(e).FirstOrDefault(x => x.Kind.StartsWith("cave"));
+				Check(ref ok, vines != null && way != null, "the vines and the cave are on the island");
+				if (vines == null || way == null) yield break;
+				Vector3 mouth = way.Floor[0];
+				Collider[] cols = vines.GetComponentsInChildren<Collider>(true).Where(c => !c.isTrigger && c.enabled).ToArray();
+				Bounds b = cols.Length > 0 ? cols[0].bounds : new Bounds(vines.transform.position, Vector3.zero);
+				foreach (Collider c in cols) b.Encapsulate(c.bounds);
+				Vector3 side = Vector3.Cross(Vector3.up, way.In);
+				Log("  the vines: " + cols.Length + " solid colliders (" + string.Join(", ", cols.Select(c => c.GetType().Name + " " + LayerMask.LayerToName(c.gameObject.layer)).Distinct().ToArray()) + "), " + Mathf.Abs(Vector3.Dot(b.size, side)).ToString("0.0") + " m across the way, " + b.size.y.ToString("0.0") + " m high, from " + (b.min.y - mouth.y).ToString("0.0") + " m over the floor");
+				float width; int byVines;
+				List<float> gaps = VineGaps(mouth, way.In, vines.transform, out width, out byVines);
+				Check(ref ok, gaps.Count == 0 && byVines > 0, "the mouth (" + width.ToString("0.0") + " m wide) closed by the vines: " + byVines + " body-wide ways in stopped by them, " + (gaps.Count == 0 ? "none open" : gaps.Count + " open at " + string.Join(", ", gaps.Select(g => g.ToString("0.0")).ToArray()) + " m from the middle"));
+				yield return CameraShot(mouth - way.In * 7f + Vector3.up * 2f, mouth + Vector3.up * 1.4f, "cg_vine_before");
+
+				// Walked at: stopped outside
+				PlayerMove.To(me, GapFloor(mouth - way.In * 4f, 3f, 6f) + Vector3.up * 0.3f, ControllerType.Ground);
+				yield return new WaitForSeconds(0.8f);
+				bool walked = false; string why = "";
+				yield return PlayWalk(me, way.Floor.Take(Mathf.Min(way.Floor.Count, 5)).ToList(), (r, s) => { walked = r; why = s; });
+				float inside = Vector3.Dot(me.transform.position - mouth, way.In);
+				Check(ref ok, !walked && inside < 1f, "walking in is stopped at the vines (" + (walked ? "got in" : why) + ", " + inside.ToString("0.0") + " m past the mouth)");
+
+				// Not without a machete; with it they go
+				PlayerInventory inv = me.Inventory;
+				int had = inv.GetItemCount(ContentCatalog.MacheteItem);
+				inv.RemoveItem(ContentCatalog.MacheteItem, 99);
+				ScUse(e, "gatevines");
+				yield return new WaitForSeconds(0.5f);
+				Check(ref ok, vines.gameObject.activeInHierarchy, "without a machete the vines stay");
+				inv.AddItem(ContentCatalog.MacheteItem, 1);
+				ScUse(e, "gatevines");
+				yield return new WaitForSeconds(0.8f);
+				Check(ref ok, !vines.gameObject.activeInHierarchy, "the machete cuts them");
+				inv.RemoveItem(ContentCatalog.MacheteItem, 99);
+				if (had > 0) inv.AddItem(ContentCatalog.MacheteItem, had);
+				Physics.SyncTransforms();
+				gaps = VineGaps(mouth, way.In, null, out width, out byVines);
+				Check(ref ok, gaps.Count > 0, "then the way is open (" + gaps.Count + " body-wide ways in)");
+				yield return CameraShot(mouth - way.In * 7f + Vector3.up * 2f, mouth + Vector3.up * 1.4f, "cg_vine_after");
+				PlayerMove.To(me, GapFloor(mouth - way.In * 4f, 3f, 6f) + Vector3.up * 0.3f, ControllerType.Ground);
+				yield return new WaitForSeconds(0.8f);
+				bool inOk = false, outOk = false; string w1 = "", w2 = "";
+				yield return PlayWalk(me, new List<Vector3>(way.Floor), (r, s) => { inOk = r; w1 = s; });
+				if (inOk)
+				{
+					var back = new List<Vector3>(way.Floor); back.Reverse();
+					back.Add(GapFloor(mouth - way.In * 5f, 3f, 6f));
+					yield return PlayWalk(me, back, (r, s) => { outOk = r; w2 = s; });
+				}
+				Check(ref ok, inOk && outOk, "after the cut the player walks in and back out" + (inOk ? (outOk ? "" : " - NOT out: " + w2) : " - NOT in: " + w1));
+			}
+			finally
+			{
+				try { PlayerMove.To(me, home, ControllerType.Ground); } catch { }
+			}
+			if (ok) Log("PASS: cave vine gate"); else Fail("cave vine gate");
+		}
+	}
+}

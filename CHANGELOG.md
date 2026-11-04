@@ -12,6 +12,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next update (planned)
 
 Not in this release yet; these come in the next update:
+- **Dig brush**: a boulder or plant that only reaches into the passage from its side (on the rim of a room dug up out of the ground) now goes with the stroke too, so none hangs into a tunnel; before, only objects deeper in the passage went.
 - **Typing in Raft's chat or on a sign** no longer opens the stats page (K), the journal (J) or the minimap keys' actions: the mod's keys did not see the mod loader's chat field.
 - **Guide and README**: a new **Can I...?** question-and-answer list (guide chapter 13, README), and a **Writing steps
   players can follow** part in the guide's quest chapter (name what players see, no compass sides, say what to do, a
