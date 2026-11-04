@@ -692,6 +692,57 @@ namespace DynamicIslands
 			if (bad == 0) Log("PASS: cave gaps look name: " + cases.Length + " cases, a missing island refused"); else Fail("cave gaps look name: " + bad + " wrong");
 		}
 
+		/// <summary>The way out of a dug mouth to walk in from (CICaveGapsLook): straight out (-In) if the ground 3 m out is
+		/// within a step of the mouth's floor, else the first of 30, 60, 90 degrees to either side that is - a man-way on a
+		/// ledge over a sea slope is come at along the ledge; straight out it was 4 m down the slope and the walk failed
+		/// though a player walks in along the ledge (Old Mine Islet, 11-04). None within a step: the one closest in height.</summary>
+		static Vector3 GapWalkOut(Vector3 mouth, Vector3 inDir)
+		{
+			float floor = GapFloor(mouth, 1.2f, 2f).y;
+			var dirs = new List<Vector3>();
+			var dys = new List<float>();
+			foreach (float a in GapWalkAngles)
+			{
+				Vector3 d = Quaternion.Euler(0f, a, 0f) * -inDir;
+				dirs.Add(d);
+				dys.Add(GapFloor(mouth + d * 3f, 3f, 6f).y - floor);
+			}
+			return dirs[GapWalkPick(dys)];
+		}
+
+		static readonly float[] GapWalkAngles = { 0f, 30f, -30f, 60f, -60f, 90f, -90f };
+		const float GapWalkStep = 1.0f;
+
+		/// <summary>Which of GapWalkAngles to walk in from, by the ground's height there less the mouth's floor (in order):
+		/// the first within GapWalkStep, else the closest.</summary>
+		static int GapWalkPick(IList<float> dys)
+		{
+			for (int i = 0; i < dys.Count; i++) if (Mathf.Abs(dys[i]) <= GapWalkStep) return i;
+			int best = 0;
+			for (int i = 1; i < dys.Count; i++) if (Mathf.Abs(dys[i]) < Mathf.Abs(dys[best])) best = i;
+			return best;
+		}
+
+		[ConsoleCommand(name: "CICaveGapsWalkFrom", docs: "Dev, anywhere: where CICaveGapsLook walks into a dug mouth from - straight out when the ground there is within a step of the floor, else the first side direction that is (a mouth on a ledge), else the closest in height")]
+		public static void CaveGapsWalkFromCommand(string[] args)
+		{
+			var cases = new[]
+			{
+				new { d = new[] { 0.2f, 0f, 0f, 0f, 0f, 0f, 0f }, w = 0 },
+				new { d = new[] { -4f, -3.5f, -2.5f, -1.5f, -0.8f, 0.1f, -3f }, w = 4 },
+				new { d = new[] { -4f, -3f, -3f, -2f, -2f, -0.3f, -0.6f }, w = 5 },
+				new { d = new[] { -4f, -3f, -3.5f, -2.2f, -2.5f, -1.8f, -3f }, w = 5 },
+				new { d = new[] { 1.0f, -3f, -3f, -3f, -3f, -3f, -3f }, w = 0 },
+			};
+			int bad = 0;
+			foreach (var c in cases)
+			{
+				int got = GapWalkPick(c.d);
+				if (got != c.w) { bad++; Log("  " + string.Join(" ", c.d.Select(x => x.ToString("0.0")).ToArray()) + " -> " + got + ", not " + c.w); }
+			}
+			if (bad == 0) Log("PASS: cave gaps walk from: " + cases.Length + " cases (straight out, a ledge to the side, the closest)"); else Fail("cave gaps walk from: " + bad + " wrong");
+		}
+
 		static bool CaveGapsLookIslandMissing(string name)
 		{
 			try { return name.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) >= 0 || !System.IO.File.Exists(IslandSpawner.PathFor(name)); }
@@ -862,14 +913,16 @@ namespace DynamicIslands
 					// Walked in with Raft's controller and back out past the mouth (where it is dry the whole way)
 					if (f.All(p => p.y > sea + 0.2f))
 					{
-						PlayerMove.To(me, GapFloor(mouth - w.In * 3f, 3f, 6f) + Vector3.up * 0.3f, ControllerType.Ground);
+						// (from the side when the ground straight out falls away: a mouth on a ledge is come at along the ledge)
+						Vector3 outDir = GapWalkOut(mouth, w.In);
+						PlayerMove.To(me, GapFloor(mouth + outDir * 3f, 3f, 6f) + Vector3.up * 0.3f, ControllerType.Ground);
 						yield return new WaitForSeconds(0.8f);
 						bool inOk = false, outOk = false; string why = "", why2 = "";
 						yield return PlayWalk(me, new List<Vector3>(f), (r, m) => { inOk = r; why = m; });
 						if (inOk)
 						{
 							var back = new List<Vector3>(f); back.Reverse();
-							back.Add(GapFloor(mouth - w.In * 5f, 3f, 6f));
+							back.Add(GapFloor(mouth + outDir * 5f, 3f, 6f));
 							yield return PlayWalk(me, back, (r, m) => { outOk = r; why2 = m; });
 						}
 						Check(ref ok, inOk && outOk, label + ": walked in to its end" + (inOk ? " and back out past the mouth" + (outOk ? "" : " - NOT: " + why2) : " - NOT: " + why));

@@ -13,8 +13,8 @@ open Miner's chest
 picture om_t1_powder 54 5 -5 55 3.5 1
 picture om_t1_drift 54.5 5 -2 54.5 4.5 -9
 # out by the man-way
-walk 54.5 -9 to 57.5 -13.5 to 60.9 -18 to 64.2 -19.8 to 66.5 -20.5 below=7
-picture om_t1_manway_out 68 7.5 -21.5 64.2 6 -19.8
+walk 54.5 -9 to 57.5 -13.5 to 61.2 -19 to 64.7 -19.4 to 67.5 -19.8 below=7
+picture om_t1_manway_out 69 8 -22 64.7 6.5 -19.4
 
 # The back drift into the rock mound and its cavern
 picture om_back_out -12 7 30 -12 3.5 22

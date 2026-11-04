@@ -370,9 +370,9 @@ prop minesound zone.radius=18
 # the second adit), the knob's plateau keeps them 6 m off the headframe, and Grey's old den is across the island.
 call kit_st x=-12 z=22 yaw=180 len=7 end=room size=0.7 dirt=1 mush=1 stone=1 vines=1 as=backdrift
 # (both adits open level with the ground outside: the shore adit off the flat by the knob's foot, climbing to the
-# drift; the man-way on the ledge above the south slope - 11-04 look test: mouths 4 m up a slope had no way in)
+# drift; the man-way along the ledge above the south slope - 11-04 look test: mouths 4 m up a slope had no way in)
 dig 44.7,-12.0 54.5,-9.0 r=1.75 slope=12 as=oldwork
-dig 64.2,-19.8 60.9,-18.0 57.5,-13.5 54.5,-9.0 r=1.75 slope=-3 as=oldwork
+dig 64.7,-19.4 61.2,-19.0 57.5,-13.5 54.5,-9.0 r=1.75 slope=-5 as=oldwork
 dig 54.5,-9.0 54.0,-4.5 r=1.75 slope=-10 as=oldwork
 dig 54.0,-4.5 55.0,1.0 r=3.0 as=oldwork
 caveloot oldwork dirt=3 mush=2 stone=2 vines=2
