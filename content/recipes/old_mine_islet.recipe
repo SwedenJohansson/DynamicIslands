@@ -378,15 +378,7 @@ caveloot oldwork dirt=3 mush=2 stone=2 vines=2
 place Loot_ChestSmall minerchest at 54.6 -1.0 h=5.5 drop yaw=240
 prop minerchest obj.name=minerchest
 prop minerchest loot.refill=0
-note minerchest Miner's chest | MINE No. 2 - TUNNEL 1
-
-We dug this one by hand, before the company came with the winch and the rails. Powder kept in here, dry, away from the lamps.
-
-The company says Tunnel 1 is played out. It isn't. The copper runs on under the knob, down towards the headframe. They wanted the deep vein and the deep vein only.
-
-If the roof talks, go out by the man-way, the second adit, not back the way you came.
-
-- T. Pike, hewer
+note minerchest Miner's chest | MINE No. 2 - TUNNEL 1\n\nWe dug this one by hand, before the company came with the winch and the rails. Powder kept in here, dry, away from the lamps.\n\nThe company says Tunnel 1 is played out. It isn't. The copper runs on under the knob, down towards the headframe. They wanted the deep vein and the deep vein only.\n\nIf the roof talks, go out by the man-way, the second adit, not back the way you came.\n\n- T. Pike, hewer
 loot minerchest CopperOre*4;MetalOre*2;Rope*2;Battery*1
 
 quest title=Down the Old Mine
