@@ -632,7 +632,7 @@ namespace DynamicIslands.Editor
 		/// <summary>SendEvent; waits: a player whose own part waits for the host's answer (Count 1 - an older host leaves it).</summary>
 		public static void SendEvent(int islandId, int index, string ev, bool fromHost, bool waits)
 		{
-			var msg = new IslandNetMessage { Kind = IslandNetMessage.EventFired, Ids = new[] { islandId }, Index = index, Name = ev, FullList = fromHost, Count = waits ? 1 : 0 };
+			var msg = new IslandNetMessage { Kind = IslandNetMessage.EventFired, Ids = new[] { islandId, GapBehaviours.Seed }, Index = index, Name = ev, FullList = fromHost, Count = waits ? 1 : 0 };
 			if (Raft_Network.IsHost) { if (fromHost) SendToClients(msg); }
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
 		}
@@ -642,7 +642,7 @@ namespace DynamicIslands.Editor
 		public static void SendEventTo(Network_UserId player, int islandId, int index, string ev)
 		{
 			if (!Raft_Network.IsHost) return;
-			SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.EventFired, Ids = new[] { islandId }, Index = index, Name = ev, FullList = true, Count = 1 }, player);
+			SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.EventFired, Ids = new[] { islandId, GapBehaviours.Seed }, Index = index, Name = ev, FullList = true, Count = 1 }, player);
 		}
 
 		/// <summary>Client: asks the host for a thing only one player can have (Claims). The question's number goes as Ids[1]:
@@ -771,6 +771,8 @@ namespace DynamicIslands.Editor
 							if (msg.Count == 1 && !(msg.Name ?? "").EndsWith("!")) SendEventTo(from, msg.Ids[0], msg.Index, (msg.Name ?? "") + "!");
 							break;
 						}
+						// (Ids[1]: the event's seed - its random choice picks the same here; an older version sends none)
+						if (msg.Ids != null && msg.Ids.Length > 1) GapBehaviours.Seed = msg.Ids[1]; else GapBehaviours.NewSeed();
 						if (msg.Ids != null && msg.Ids.Length > 0) Behaviours.OnEventMessage(msg.Ids[0], msg.Index, msg.Name ?? "", msg.FullList, from, msg.Count == 1);
 						break;
 					case IslandNetMessage.Story:

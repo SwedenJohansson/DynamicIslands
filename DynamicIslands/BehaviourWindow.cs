@@ -55,6 +55,10 @@ namespace DynamicIslands.Editor
 			{ Lights.Verb, "switch light" },
 			{ "flythrough", "camera fly-through" },
 			{ OrderPuzzle.Verb, "press in order" },
+			{ GapBehaviours.WeatherVerb, "change weather" },
+			{ GapBehaviours.RandomVerb, "one at random" },
+			{ GapBehaviours.CountVerb, "count" },
+			{ GapBehaviours.HealVerb, "heal / feed / drink" },
 		};
 
 		/// <summary>What each action does (the action list's lines).</summary>
@@ -78,6 +82,10 @@ namespace DynamicIslands.Editor
 			{ Lights.Verb, "Switches puzzle lights on, off or over (empty = toggle): a light by its name (empty = this one) or group:G for every light of group G. Saved, for every player" },
 			{ "flythrough", "The camera of every player near a camera path flies once along its camera points (Zones & triggers), looking where they say; the players are held, Esc skips it" },
 			{ OrderPuzzle.Verb, "This object is step N of an order puzzle (levers, lights, buttons pressed in a set order; put it last on \"use\"). The right next piece moves the puzzle on; any other starts it again (\"wrong\" event, its pieces go back). The last step sends the signal order:<puzzle> and runs every piece's \"solved\" event" },
+			{ GapBehaviours.WeatherVerb, "Raft's weather changes for every player: clear, calm, fog, waves, rain, storm or snow, held for some minutes (empty = 10); then Raft chooses again (raft = at once)" },
+			{ GapBehaviours.RandomVerb, "Only ONE of the next actions runs, picked at random (how many: empty = 2; a wait ends the group). The same pick for every player" },
+			{ GapBehaviours.CountVerb, "A counter of this island goes up (+1 when empty; +N, -N, =N, reset): saved, the same for every player. The check \"counter\" asks its value (fish brought: 3 of 5...)" },
+			{ GapBehaviours.HealVerb, "The player who set it off gets health, food and drink back: empty or all = all three full; or health / food / drink, with an amount (drink 40), several with commas" },
 		};
 
 		/// <summary>What each check asks (the check list's lines).</summary>
@@ -92,6 +100,9 @@ namespace DynamicIslands.Editor
 			{ Collectibles.CheckKind, "A number of a collectible set's pieces on this island were found (empty = all)" },
 			{ Lights.LightCheck, "A puzzle light (by its name; empty = this one) is on (or off)" },
 			{ Lights.GroupCheck, "Every puzzle light of a group on this island is on (or off)" },
+			{ GapBehaviours.TimeCheck, "The time of day is day, night, dawn, dusk or between some hours (20-6)" },
+			{ GapBehaviours.WeatherCheck, "Raft's weather is now rain, storm, fog, calm, waves, snow or clear" },
+			{ GapBehaviours.CountCheck, "A counter of this island (the \"count\" action) is at least, at most or exactly a number" },
 		};
 
 		public static void Create(Transform canvas)
@@ -405,7 +416,7 @@ namespace DynamicIslands.Editor
 
 		static readonly Dictionary<string, string> CheckLabels =new Dictionary<string, string>
 		{
-			{ "has", "has item" }, { "take", "uses up item" }, { "state", "object is" }, { "signal", "signal sent" }, { "quest", "quest step" }, { "wears", "wears item" }, { "holds", "holds item" }, { PlayerFeatures.TalkedCheck, "talked to" }, { Collectibles.CheckKind, "set found" }, { Lights.LightCheck, "light is" }, { Lights.GroupCheck, "all lights" },
+			{ "has", "has item" }, { "take", "uses up item" }, { "state", "object is" }, { "signal", "signal sent" }, { "quest", "quest step" }, { "wears", "wears item" }, { "holds", "holds item" }, { PlayerFeatures.TalkedCheck, "talked to" }, { Collectibles.CheckKind, "set found" }, { Lights.LightCheck, "light is" }, { Lights.GroupCheck, "all lights" }, { GapBehaviours.TimeCheck, "time of day" }, { GapBehaviours.WeatherCheck, "weather is" }, { GapBehaviours.CountCheck, "counter" },
 		};
 
 		/// <summary>"Only if ..." (every check must pass) and "Otherwise say ...".</summary>
@@ -497,7 +508,7 @@ namespace DynamicIslands.Editor
 				a.Verb = verb;
 				if (a.Verb == "wait" && a.Seconds <= 0f) a.Arg = "5";
 				Rebuild();
-			}, 120, "What happens: show, hide, show/hide, open, close, open/close, say, give items, sound, teleport to, send signal, journal page, wait, unlock character, play sound/music, stop sound, camera moment, protective suit, hurt creatures, pick up (carry), collapse, move to marker, camera fly-through", 28f, 12);
+			}, 120, "What happens: show, hide, show/hide, open, close, open/close, say, give items, sound, teleport to, send signal, journal page, wait, unlock character, play sound/music, stop sound, camera moment, protective suit, hurt creatures, pick up (carry), collapse, move to marker, camera fly-through, change weather, one at random, count, heal / feed / drink", 28f, 12);
 			if (a.Verb == OrderPuzzle.Verb) OrderFields(row, a);
 			else if (ObjAction.HasTarget(a.Verb))
 			{
@@ -521,6 +532,7 @@ namespace DynamicIslands.Editor
 			else if (a.Verb == "camera") CameraFields(row, a);
 			else if (a.Verb == "flythrough") FlyFields(row, a);
 			else if (a.Verb == OrderPuzzle.Verb) { }
+			else if (GapBehaviours.Owns(a.Verb)) GapFields(row, a);
 			else if (ObjAction.HasArg(a.Verb))
 			{
 				string ph = a.Verb == "message" ? "What players read" : a.Verb == "give" ? "items (\u2026 to choose)" : a.Verb == "sound" ? "event:/... (\u2026 to choose)" : a.Verb == "journal" ? "What the page says" : a.Verb == "suit" ? "seconds (120)" : a.Verb == "hit" ? "% of their health (25)" : a.Verb == "collapse" ? "seconds (3)" : a.Verb == "moveto" ? "marker name, seconds (4)" : a.Verb == PlayerFeatures.DialogueVerb ? "What is said (\\n new line, --- new page, > answer)" : a.Verb == Lights.Verb ? "on, off or toggle" : "signal name (world plans wait for it)";
@@ -554,6 +566,39 @@ namespace DynamicIslands.Editor
 				s.Loop ? "loop" : "once", v => { Keep(); s.Loop = v == "loop"; save(); Rebuild(); }, 62, "Once or on a loop", 28f, 12);
 			DropList.Make(row, "Drop_Where", new List<DropList.Option> { new DropList.Option("near", "near it", "Heard near the object"), new DropList.Option("island", "island", "Heard the same everywhere on the island (music)") },
 				s.Island ? "island" : "near", v => { Keep(); s.Island = v == "island"; save(); Rebuild(); }, 72, "Near the object, or for everyone on the island", 28f, 12);
+		}
+
+		/// <summary>weather, random, count, heal (GapBehaviours): their fields.</summary>
+		void GapFields(Transform row, ObjAction a)
+		{
+			switch (a.Verb)
+			{
+				case GapBehaviours.WeatherVerb:
+					string w = (a.Target ?? "").Trim().ToLowerInvariant();
+					if (!GapBehaviours.WeatherNames.Contains(w)) { w = "rain"; a.Target = w; }
+					DropList.Make(row, "Drop_Weather", GapBehaviours.WeatherNames.Select(n => new DropList.Option(n, n, n == "raft" ? "Raft chooses its weather again, at once" : n == "storm" ? "Raft's rain storm (rough snow in the snow seas)" : "Raft's " + n + " weather")).ToList(),
+						w, v => { Keep(); a.Target = v; Rebuild(); }, 90, "The weather every player gets", 28f, 12);
+					if (w != "raft")
+					{
+						InputField m = Field(row, GapBehaviours.DefaultWeatherMinutes.ToString(CultureInfo.InvariantCulture), a.Arg, 44, "How many minutes it stays before Raft chooses again (empty = 10)", v => a.Arg = v.Trim());
+						m.contentType = InputField.ContentType.IntegerNumber;
+						UIKit.Label(row, "min", 11, UIKit.TextMuted);
+					}
+					break;
+				case GapBehaviours.RandomVerb:
+					UIKit.Label(row, "one of the next", 11, UIKit.TextMuted);
+					InputField n2 = Field(row, "2", a.Arg, 40, "How many of the actions below it to choose from (2-20; a wait ends the group)", v => a.Arg = v.Trim());
+					n2.contentType = InputField.ContentType.IntegerNumber;
+					UIKit.Label(row, "actions", 11, UIKit.TextMuted);
+					break;
+				case GapBehaviours.CountVerb:
+					Field(row, "counter name", a.Target, 120, "The counter's name (any word; capitals do not matter). The check \"counter\" asks its value", v => a.Target = v.Trim());
+					Field(row, "+1", a.Arg, 60, "+1 (empty), +N, -N, =N or reset", v => a.Arg = v.Trim());
+					break;
+				case GapBehaviours.HealVerb:
+					Field(row, "all (or drink 40, food, health)", a.Arg, -1, "Empty or all = health, food and drink full. Or health, food, drink - each with an amount, several with commas (food, drink 40)", v => a.Arg = v.Trim());
+					break;
+			}
 		}
 
 		/// <summary>order (QE6): the puzzle's name and this piece's step.</summary>

@@ -49,10 +49,10 @@ namespace DynamicIslands.Editor
 		public const string EventPrefix = "on.";
 		public static readonly string[] ObjectEvents = { "use", "enter", "read", "open", "defeat", "laser", BossPhases.Event, MechFeatures.StackEvent };
 		public static readonly string[] IslandEvents = { "arrive", "quest" };
-		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character", "playsound", "stopsound", "camera", "suit", "hit", "carry", "collapse", "moveto", PlayerFeatures.DialogueVerb, Lights.Verb, "flythrough", OrderPuzzle.Verb };
-		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal", "playsound", "stopsound", "camera", "hit", "collapse", "moveto", Lights.Verb, "flythrough", OrderPuzzle.Verb };
+		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character", "playsound", "stopsound", "camera", "suit", "hit", "carry", "collapse", "moveto", PlayerFeatures.DialogueVerb, Lights.Verb, "flythrough", OrderPuzzle.Verb, GapBehaviours.WeatherVerb, GapBehaviours.RandomVerb, GapBehaviours.CountVerb, GapBehaviours.HealVerb };
+		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal", "playsound", "stopsound", "camera", "hit", "collapse", "moveto", Lights.Verb, "flythrough", OrderPuzzle.Verb, GapBehaviours.WeatherVerb, GapBehaviours.CountVerb };
 		public const string CheckPrefix = "if.", ElsePrefix = "else.";
-		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest", "wears", "holds", PlayerFeatures.TalkedCheck, Collectibles.CheckKind, Lights.LightCheck, Lights.GroupCheck };
+		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest", "wears", "holds", PlayerFeatures.TalkedCheck, Collectibles.CheckKind, Lights.LightCheck, Lights.GroupCheck, GapBehaviours.TimeCheck, GapBehaviours.WeatherCheck, GapBehaviours.CountCheck };
 		public static readonly string[] States = { "open", "closed", "shown", "hidden" };
 		public static readonly string[] CollisionModes = { "", "none", "box", "solid" };
 
@@ -838,6 +838,7 @@ namespace DynamicIslands.Editor
 				if (!waits) IslandNetwork.SendUsed(e.Id, key, Today);
 			}
 			if (localPlayer && !Raft_Network.IsHost) LockForSignal(e, index, ev, actions, checks);
+			GapBehaviours.NewSeed(); // (a random choice: the same pick here and on the host - it goes with the event's message)
 			Run(e, index, ev, actions, localPlayer);
 			if (Fired != null) try { Fired(e.Id, index, ev); } catch { }
 		}
@@ -912,6 +913,7 @@ namespace DynamicIslands.Editor
 		static void Run(IslandWorldState.Entry e, int index, string ev, List<ObjAction> actions, bool localPlayer)
 		{
 			if (actions.Count == 0) return;
+			int seed = GapBehaviours.Seed; // (the actions may set off other events, each with its own seed)
 			if (localPlayer && !Raft_Network.IsHost && IslandNetwork.HostAnswersEvents && HostRechecks(e, index, ev))
 			{
 				IslandNetwork.SendEvent(e.Id, index, ev, false, true);
@@ -920,6 +922,7 @@ namespace DynamicIslands.Editor
 			if (localPlayer) Schedule(e, index, actions, false, false, ev);
 			if (HasSharedPart(actions))
 			{
+				GapBehaviours.Seed = seed;
 				if (Raft_Network.IsHost) { if (SharedOnce(e, index, ev)) Schedule(e, index, actions, true, false, ev); }
 				else IslandNetwork.SendEvent(e.Id, index, ev, false);
 			}
@@ -1011,8 +1014,11 @@ namespace DynamicIslands.Editor
 			}
 			if (checks.Count > 0 && !Passes(e, index, checks, AnyOf(e, index, ev))) ev += "!";
 			actions = ActionsOf(e, index, ev);
+			int seed = GapBehaviours.NewSeed();
 			if (Near(e)) Schedule(e, index, actions, false, false, ev);
+			GapBehaviours.Seed = seed;
 			Schedule(e, index, actions, true, false, ev);
+			GapBehaviours.Seed = seed;
 			IslandNetwork.SendEvent(e.Id, index, ev, true);
 			if (Fired != null) try { Fired(e.Id, index, ev); } catch { }
 		}
@@ -1050,8 +1056,10 @@ namespace DynamicIslands.Editor
 					if (from.HasValue) IslandNetwork.SendEventTo(from.Value, e.Id, index, ev.TrimEnd('!') + "!");
 					return;
 				}
+				int seed = GapBehaviours.Seed; // (the player's, from the message: their random pick)
 				if (HasSharedPart(actions) && SharedOnce(e, index, ev)) Schedule(e, index, actions, true, false, ev);
 				// (yes: the player's own part runs now)
+				GapBehaviours.Seed = seed;
 				if (answer && from.HasValue) IslandNetwork.SendEventTo(from.Value, e.Id, index, ev);
 			}
 			else if (fromHost && (answer || Near(e)))
@@ -1125,6 +1133,7 @@ namespace DynamicIslands.Editor
 
 		static void Schedule(IslandWorldState.Entry e, int index, List<ObjAction> actions, bool shared, bool messagesOnly, string ev = null, int firstPart = 0)
 		{
+			actions = GapBehaviours.Pick(actions, GapBehaviours.Seed); // (a "random" line: one of its next actions - waits stay, parts keep their numbers)
 			float delay = 0f;
 			int deathsThen = deaths, partNo = 0, parts = actions.Count(a => a.Verb == "wait") + 1;
 			bool keep = shared && ev != null && Raft_Network.IsHost && Resumable(ev);
@@ -1357,6 +1366,10 @@ namespace DynamicIslands.Editor
 						case "suit":
 							if (messagesOnly) break;
 							Hazards.PutOnSuit(a.Arg);
+							break;
+						case GapBehaviours.HealVerb:
+							if (messagesOnly) break;
+							GapBehaviours.Heal(a.Arg);
 							break;
 						case "carry":
 							if (messagesOnly) break;

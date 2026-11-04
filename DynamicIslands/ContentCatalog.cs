@@ -340,6 +340,7 @@ namespace DynamicIslands.Editor
 			PlaceableCatalog.AddCustom(HelperWall, BuildHelperMarker(HelperWall, "Invisible wall"), ZoneCategory, "Invisible wall");
 			PlaceableCatalog.AddCustom(HelperRamp, BuildHelperMarker(HelperRamp, "Invisible ramp"), ZoneCategory, "Invisible ramp");
 			PlaceableCatalog.AddCustom(Lights.ObjectName, Lights.BuildMarker(), ZoneCategory, "Puzzle light (switch)");
+			PlaceableCatalog.AddCustom(GapBehaviours.SpringName, GapBehaviours.BuildSpring(), ZoneCategory, "Drinking spring (heals)");
 			PlaceableCatalog.AddCustom(BuriedTreasure, BuildTreasureMarker(), LootCategory, "Buried treasure (metal detector)");
 			Survivors.Register(); // (a survivor in a cage, RF3)
 			PlaceableCatalog.AddCustom(Islanders.ObjectName, Islanders.BuildMarker(), NotesCategory, "Islander (talks)");
