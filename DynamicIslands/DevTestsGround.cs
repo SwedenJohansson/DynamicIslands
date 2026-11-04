@@ -1160,8 +1160,11 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CICaveInside", docs: "Dev, editor or world: every cave piece and dug tunnel (the editor's island, or the loaded custom islands; a dug tunnel from eyes along each of its strokes, joined tunnels and cave pieces counted as inside) looked round from inside at eye height - nothing seen through: no face seen from its back (Raft draws the shells, the ground and the hill over them from one side only), no sky but out through an open end (X7). CICaveInside [part of the name] [shots: a picture of each piece's worst look, shot_caveinside_<n>.png]")]
 		public static void CaveInsideCommand(string[] args)
 		{
-			string only = args != null && args.Length > 0 && args[0] != "*" ? args[0] : "";
-			bool shots = args != null && args.Length > 1 && args[1] == "shots";
+			// (the name may have spaces - "Ironreef Caverns": every word but "shots" is part of it, 11-04)
+			string[] a = args ?? new string[0];
+			bool shots = a.Length > 1 && a[a.Length - 1] == "shots";
+			string only = string.Join(" ", a.Take(shots ? a.Length - 1 : a.Length).ToArray());
+			if (only == "*") only = "";
 			StartTest(CaveInsideRoutine(only, shots));
 		}
 

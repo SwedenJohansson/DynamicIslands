@@ -4708,7 +4708,7 @@ copper ore, scrap and a giant clam to gather just off the shore, as every one of
 
 | Island | What it is | What it shows you how to build |
 |---|---|---|
-| ![](images/library/ironreef_caverns.jpg) **Ironreef Caverns** | A jungle mountain over four caves: a mine, a vine crawl, a flooded shaft and the Bear Hall behind a rockfall | Several caves in one mountain, a plank road up a flank, a rockfall blown with charges (an object hidden by a behaviour), a boss in its hall; a Raft store on the north beach |
+| ![](images/library/ironreef_caverns.jpg) **Ironreef Caverns** | A jungle mountain over four caves: a mine, a vine crawl, a flooded shaft and the Bear Hall behind a rockfall | Several caves in one mountain, a plank road up a flank, a rockfall blown with charges (an object hidden by a behaviour), a boss in its hall; a Raft store on the north beach; the Reef Workings, three dug tunnels joined in a hall, with a vine-gated titanium gallery and a spike drift crossed on planks |
 | ![](images/library/drowned_metropolis.jpg) **The Drowned Metropolis** | Meridian, a city the sea took: tower crowns over the water, a ferry, a penthouse, offices on the sea floor, the Lantern Lord | Buildings standing in the sea, a penthouse on legs, three keycards, an angler fish boss in deep water; Raft's vending machine |
 | ![](images/library/thornwood.jpg) **Thornwood** | A jungle split by a river gorge: a rope bridge, three shrines, a stone circle where the Warthog King guards the idol | A gorge cut with the terrain brushes, a rope bridge, trails through dense jungle, a boss and its guards |
 | ![](images/library/glacier_station.jpg) **Glacier Station** | A station on a glacier: glowing domes, an observatory on the peak, a crevasse with the Polar Bear Queen, a reactor | A reactor that, once running, sends a **signal** that opens its vault; a crevasse cut into the ice; a Raft store by the domes |
@@ -4890,7 +4890,7 @@ Raft's order (Check and Progression, [7.5](#75-check-finding-and-fixing-problems
 | A lift or anything that moves the player | The Frontier (the Corps' lift: **teleport to** its other end), The Safe Room (a hatch down an escape shaft and back), Rookery Cliffs (Raft's own scissor lift, which carries you) |
 | Roads and terraces up a steep slope (the terrain brushes) | The Frontier (two farm terraces and three wide ramps up a 35 m mesa), The Iron Graveyard (a ramp cut up the mesa's cliff), The Safe Room (a driveway cut along a cliff face) |
 | A town | Hightide Harbor (a fishing town on stilts), The Frontier (a harbour town and an upper town of four quarters) |
-| Caves | Old Mine Islet, Ironreef Caverns (four), Wreckers' Cove (a sea cave) |
+| Caves | Old Mine Islet, Ironreef Caverns (four, and the dug Reef Workings), Wreckers' Cove (a sea cave) |
 | Rooms under the ground | Shelter Atoll |
 | Darkness and light (atmosphere zones, lamps that come on) | Shelter Atoll, Old Mine Islet, Ironreef Caverns, The Abyss (its lair) |
 | Things under water to dive for | The Stranded Gull, Mayor's Wharf, Crane Yard, The Drowned Metropolis, Coral Observatory, The Abyss |

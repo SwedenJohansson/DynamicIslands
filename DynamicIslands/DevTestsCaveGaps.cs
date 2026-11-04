@@ -676,7 +676,8 @@ namespace DynamicIslands
 		public static void CaveGapsLookCommand(string[] args)
 		{
 			if (args == null || args.Length == 0) { Fail("CICaveGapsLook <island>"); return; }
-			StartTest(CaveGapsLookRoutine(args[0], !args.Contains("noshots")));
+			// (an island name may have spaces - "Ironreef Caverns": every word but "noshots" is part of it, 11-04)
+			StartTest(CaveGapsLookRoutine(string.Join(" ", args.Where(x => x != "noshots").ToArray()), !args.Contains("noshots")));
 		}
 
 		static IEnumerator CaveGapsLookRoutine(string name, bool shots)
