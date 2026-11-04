@@ -57,7 +57,8 @@ namespace DynamicIslands
 		}
 
 		/// <summary>
-		/// Looks from eyes in the passage: one that meets nothing or anything but the dug rock (or the ground from above outside) leaks,
+		/// Looks from eyes in the passage: one that meets nothing or anything but the dug rock (or the ground from above outside) leaks
+		/// (a thing met before the ray leaves the passage stands in the cave and is no leak),
 		/// unless it has left by the passage into the open air first (out of the mouth) - the ray followed in 0.25 m steps up to what
 		/// it meets: still in the passage until it is over the ground, never through the lining. A joined system (G3, 11-04):
 		/// in the passage of any of joined counts as in it, and alsoRock's rock (a cave piece's) met from the front is the cave's own.
@@ -106,6 +107,9 @@ namespace DynamicIslands
 						int was = leaks + under;
 						if (all.Length == 0) { leaks++; seen.Add("sky " + where); }
 						else if (all[0].collider is TerrainCollider) { if (all[0].normal.y < 0f) { under++; seen.Add("the ground from below " + where); } else { leaks++; seen.Add("the ground " + all[0].distance.ToString("0.0") + " m off " + where); } }
+						// (a thing met while the ray is still in the passage stands in the cave - a sign, a chest, a plank: no leak;
+						// 11-04, Ironreef's drift sign 4 m in front of an eye failed the check though the ray never left the passage)
+						else if (left < 0f && first < 60f) { }
 						else if (!IsDigRock(all[0].collider) && !(alsoRock != null && alsoRock(all[0].collider) && Vector3.Dot(all[0].normal, d) < 0f)) { leaks++; seen.Add("out to " + all[0].collider.name + " " + all[0].distance.ToString("0") + " m, " + where); }
 						if (rays != null && leaks + under > was) rays.Add(new Ray(eye, d));
 					}
