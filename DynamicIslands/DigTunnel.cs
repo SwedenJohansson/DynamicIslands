@@ -1305,10 +1305,11 @@ namespace DynamicIslands.Editor
 		static List<DigTunnel> insideList;
 		static float insideListAt = -1f;
 
-		/// <summary>The editor camera: a world point inside a dug tunnel's passage (margin: its distance from the rock below this, metres).</summary>
-		public static bool InsideAny(Vector3 world, float margin)
+		/// <summary>The editor camera: a world point inside a dug tunnel's passage (margin: its distance from the rock below this, metres).
+		/// fresh: the tunnels looked up now, not the list kept for half a second (a recipe digs and places in one frame).</summary>
+		public static bool InsideAny(Vector3 world, float margin, bool fresh = false)
 		{
-			if (insideList == null || Time.unscaledTime > insideListAt + 0.5f || Time.unscaledTime < insideListAt) { insideList = EditorTunnels(); insideListAt = Time.unscaledTime; }
+			if (fresh || insideList == null || Time.unscaledTime > insideListAt + 0.5f || Time.unscaledTime < insideListAt) { insideList = EditorTunnels(); insideListAt = Time.unscaledTime; }
 			for (int i = 0; i < insideList.Count; i++)
 			{
 				DigTunnel t = insideList[i];

@@ -403,6 +403,7 @@ namespace DynamicIslands
 			float sea = DynamicIslands.EditorSeaInWorld;
 			Vector3[] dirs = Enumerable.Range(0, 8).Select(i => Quaternion.Euler(0f, i * 45f, 0f) * Vector3.forward).ToArray();
 			// (G6: laid with the cave kits of lib_caves.recipe - these islands are the kits' look check)
+			Vector3 sysGate = Vector3.zero, sysMouth = Vector3.zero;
 			var lines = new List<string> { "# cave gaps test island " + isl + " (CICaveGapsBuild; run after " + Path.GetFileName(pa) + ")", "include lib_caves" };
 			Func<Vector3, string> yawOf = d => Num(Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg);
 			Func<Vector3, float> ground = p => t.SampleHeight(p) + t.transform.position.y;
@@ -431,6 +432,10 @@ namespace DynamicIslands
 					Check(ref ok, Mathf.Abs(mb.y - a[0].y) < 4f, "the second mouth's ground near the first's (" + (mb.y - a[0].y).ToString("0.0") + " m)");
 					lines.Add("origin " + XZs(a[0]));
 					lines.Add("call kit_sys yaw=" + yawOf(dir) + " side=" + Num(sgn) + " as=gapdig");
+					// (cavegate at=: vines across the side branch half way along it, not at the system's first mouth)
+					sysGate = dir * 12f - Vector3.Cross(Vector3.up, dir) * sgn * 4f;
+					sysMouth = a[0];
+					lines.Add("cavegate gapdig at=" + Num(sysGate.x) + "," + Num(sysGate.z) + " as=gapdig_side");
 					// (from the sea floor in, rising into the land: a dug tunnel under the sea)
 					// (the way in with rock over the whole climb: level under the sea floor to 2 m past the shore, then up at a slope
 					// of 12-24 degrees until the floor is 0.8 m over the sea, and 8 m more - the land at least 1 m over the roof all
@@ -519,6 +524,18 @@ namespace DynamicIslands
 				Check(ref ok, resting >= 3 && bad.Count == 0, isl + " " + kv.Key + ": " + resting + " loot on the floor, " + vinesN + " vines" + (bad.Count > 0 ? " - " + string.Join(", ", bad.ToArray()) : ""));
 			}
 			if (tag == "st") Check(ref ok, RecipeObjects.ContainsKey("gapst1_vines"), isl + ": machete vines on gapst1's mouth (cavegate)");
+			if (tag == "dig")
+			{
+				EditorGameObject sv;
+				if (!RecipeObjects.TryGetValue("gapdig_side", out sv) || sv == null) Check(ref ok, false, isl + ": machete vines across gapdig's side branch (cavegate at=)");
+				else
+				{
+					Vector3 vp = sv.transform.position, want = sysMouth + sysGate;
+					float off = new Vector2(vp.x - want.x, vp.z - want.z).magnitude, fromMouth = new Vector2(vp.x - sysMouth.x, vp.z - sysMouth.z).magnitude;
+					RaycastHit? roof = FirstSolid(vp + Vector3.up * 0.5f, Vector3.up, 6f);
+					Check(ref ok, off < 2.5f && fromMouth > 8f && roof.HasValue, isl + ": cavegate at= vines " + off.ToString("0.0") + " m from the side branch point, " + fromMouth.ToString("0.0") + " m in from the mouth, " + (roof.HasValue ? "rock over them" : "no roof over them"));
+				}
+			}
 			DigTunnel[] tuns = UnityEngine.Object.FindObjectsOfType<DigTunnel>();
 			if (tag == "dig")
 			{
@@ -1207,12 +1224,35 @@ namespace DynamicIslands
 			return null;
 		}
 
-		/// <summary>cavegate: Raft's machete vines across the mouth of the cave laid as=group (alias as=, else group_vines).</summary>
+		/// <summary>cavegate: Raft's machete vines across the mouth of the cave laid as=group (alias as=, else group_vines);
+		/// at=x,z: across its way nearest that point instead (a gated side gallery inside).</summary>
 		static string CaveGateStep(string group, Dictionary<string, string> opt, ref int placed)
 		{
 			Vector3 mouth, inDir;
 			CaveTool.Layout l;
-			if (recipeCaves.TryGetValue(group, out l) && l != null) { mouth = l.Mouth; inDir = l.Flat; }
+			if (opt.ContainsKey("at"))
+			{
+				// at=x,z: across the passage at the dug or laid way nearest that point (a side gallery of a dug system:
+				// its branch belongs to the same tunnel, so the group's first mouth would be the wrong place)
+				string[] p = opt["at"].Split(',');
+				if (p.Length != 2) return "cavegate: at= wants x,z";
+				Vector2 want = new Vector2(F(p[0]), F(p[1]));
+				List<List<Vector3>> lines = CaveLines(group);
+				List<Vector3> best = null;
+				int bi = -1;
+				float bd = float.MaxValue;
+				foreach (List<Vector3> line in lines)
+					for (int i = 0; i < line.Count; i++)
+					{
+						float d = (FrameXZ(line[i]) - want).sqrMagnitude;
+						if (d < bd) { bd = d; best = line; bi = i; }
+					}
+				if (best == null || best.Count < 2) return "cavegate: no cave or dug tunnel laid as=" + group + " before it";
+				if (bd > 36f) return "cavegate: at=" + opt["at"] + " is " + Mathf.Sqrt(bd).ToString("0.#", Inv) + " m from the ways of " + group + " (6 m at most)";
+				mouth = best[bi] + Vector3.down * 1.2f;
+				inDir = best[Mathf.Min(bi + 1, best.Count - 1)] - best[Mathf.Max(bi - 1, 0)];
+			}
+			else if (recipeCaves.TryGetValue(group, out l) && l != null) { mouth = l.Mouth; inDir = l.Flat; }
 			else
 			{
 				List<List<Vector3>> lines = CaveLines(group);
@@ -1224,7 +1264,7 @@ namespace DynamicIslands
 			if (inDir.sqrMagnitude < 0.001f) return "cavegate: the cave " + group + " has no way in";
 			inDir.Normalize();
 			string alias = opt.ContainsKey("as") ? opt["as"] : group + "_vines";
-			Vector3 at = mouth + inDir * 0.3f;
+			Vector3 at = opt.ContainsKey("at") ? mouth : mouth + inDir * 0.3f;
 			Vector2 f = FrameXZ(at);
 			var o = new Dictionary<string, string> { { "h", (at.y - DynamicIslands.EditorWaterLevel).ToString("0.###", Inv) } };
 			if (opt.ContainsKey("scale")) o["scale"] = opt["scale"];

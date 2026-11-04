@@ -21,6 +21,7 @@ include lib_features
 include lib_highwater
 include lib_areas
 include lib_abyss
+include lib_caves
 new
 # (nature: a jungle mountain: twice Raft's trees and bushes, a little rockier - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.4 Bushes=0.38 Rocks=0.5 Harvest=0.24 BeachThings=0.3
@@ -456,6 +457,65 @@ prop jyir zone.repeat=never
 prop jyir zone.message=The top of the scaffold run - a tin is wedged on the last post.
 pop
 # --- end of jump course ir ---
+
+# --- Reef Workings (Abyss Expedition, 11-04): a dug cave system in the south-west flank ---
+# Three tunnels into the reef rock - the west mouth (A) down into a hall, the south mouth (B) up into it, the gully
+# mouth (C) level into B - with a vine-choked side gallery (titanium) and a dead-end drift whose floor fell in onto
+# old spike traps: a plank way along its east wall, a warning sign at its start, a small box at its end.
+# (All dug with the Dig brush: dug tunnels join only dug tunnels, so the plan's three cave-tool tunnels are dug too.
+# Nowhere near the quest: the Iron Gate's rock is 6 m east of the gallery, the Drowned Shaft 13 m north of mouth A.)
+clear at -40.3 -22.3 r=1 only=Pickup_Landmark_Tree_Mango
+clear at -35.9 -22.9 r=1.5 only=BigBoulder3_Low
+clear at -35.4 -44.4 r=1 only=Monstera_2
+# (the tree stood in mouth A: its trunk filled the way out and the walker stuck on its roots - 11-04)
+clear at -41.3 -23 r=2.5
+# (a spoil heap up to mouth A: the slope fell 1.5 m in the last metre before its floor, a lip the walker and a player
+# without a jump could not climb - 11-04)
+brush flatten at -42.9 -24.4 r=1.6 s=20 frames=40 h=19.2
+brush flatten at -41.9 -24 r=1.6 s=20 frames=40 h=19.85
+brush flatten at -40.9 -23.65 r=1.6 s=20 frames=40 h=20.45
+dig -39,-23 -33,-24 -26,-30 r=1.75 slope=-8 as=irreef
+dig -26,-30 -21,-31 r=3.5
+dig -35,-43 -30,-40 -25,-32 r=1.75 slope=3 as=irreef
+dig -18,-44 -23,-41 -29,-38 r=1.75 slope=2 as=irreef
+dig -24,-28 -25,-19 r=2.8
+dig -21,-30 -18,-29 r=1.75
+dig -18,-29 -16,-28 r=2.6
+cavegate irreef at=-19.5,-29.6 as=irreef_vines
+place Pickup_Landmark_Titanium_Land irti at -16.3 -28.1 h=19 drop
+caveloot irreef dirt=5 mush=4 stone=3
+# the fallen drift: spikes where the floor gave way, planks along the east wall
+place Note_Sign irwarn at -25.9 -26.6 h=20.5 sit drop yaw=174
+note irwarn DANGER - DRIFT 4 | Floor gave way onto the old trap pit. Spikes under the rubble. Keep to the planks on the right.\n- Ironreef Mining Co.
+place VP_SpikeTrap_01 - at -25.18 -25.51 h=20.5 drop yaw=84
+place VP_SpikeTrap_03 - at -25.58 -23.75 h=20.5 drop yaw=20
+place VP_SpikeTrap_01 - at -25.48 -21.93 h=20.5 drop yaw=-40
+place VP_Rubble_Plank01 - at -24.42 -24.55 h=20.5 drop yaw=30
+place VP_Rubble_Plank01 - at -25.6 -22.9 h=20.5 drop yaw=-70
+place Block_Floor_Wood - at -22.96 -26.07 h=20.5 drop yaw=-6
+place Block_Floor_Wood - at -23.12 -24.58 h=20.5 drop yaw=-6
+place Block_Floor_Wood - at -23.29 -23.09 h=20.5 drop yaw=-6
+place Block_Floor_Wood - at -23.45 -21.6 h=20.5 drop yaw=-6
+place Zone_Trigger irspike1 at -25.25 -24.92 h=19.6
+place Zone_Trigger irspike2 at -25.53 -22.33 h=19.6
+prop irspike1 zone.id=irspike1
+prop irspike1 zone.radius=1.5
+prop irspike1 zone.hazard=spikes
+prop irspike1 zone.damage=4
+prop irspike1 zone.safe=none
+prop irspike1 zone.hazardMsg=Spikes under the rubble! Keep to the planks.
+prop irspike2 zone.id=irspike2
+prop irspike2 zone.radius=1.5
+prop irspike2 zone.hazard=spikes
+prop irspike2 zone.damage=4
+prop irspike2 zone.safe=none
+prop irspike2 zone.hazardMsg=Spikes under the rubble! Keep to the planks.
+place Loot_ChestSmall irdrift at -24.88 -20.05 h=20.5 drop yaw=174
+note irdrift Drift 4 tin | The last shift's tin, left when the floor went - and the foreman's machete, for the vines in the side gallery. Whoever reads this: you walked the planks. Good.
+loot irdrift Machete*1;MetalIngot*2;Rope*2;Bolt*1
+prop irdrift loot.refill=0
+# cavecheck inside irti irwarn irdrift irspike1 irspike2 irreef_vines
+# --- end of Reef Workings ---
 
 # (generator stones left in the air by the shaping - taken out, 10-25)
 clear at 23.03 -9.93 r=1.5 only=BigBoulder1_Low
