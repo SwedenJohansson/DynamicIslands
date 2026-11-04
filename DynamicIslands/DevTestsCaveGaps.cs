@@ -692,13 +692,13 @@ namespace DynamicIslands
 			if (bad == 0) Log("PASS: cave gaps look name: " + cases.Length + " cases, a missing island refused"); else Fail("cave gaps look name: " + bad + " wrong");
 		}
 
-		/// <summary>The way out of a dug mouth to walk in from (CICaveGapsLook): straight out (-In) if the ground 3 m out is
+		/// <summary>The way out of a dug mouth (its first floor point) to walk in from (CICaveGapsLook): straight out (-In) if the ground 3 m out is
 		/// within a step of the mouth's floor, else the first of 30, 60, 90 degrees to either side that is - a man-way on a
 		/// ledge over a sea slope is come at along the ledge; straight out it was 4 m down the slope and the walk failed
 		/// though a player walks in along the ledge (Old Mine Islet, 11-04). None within a step: the one closest in height.</summary>
 		static Vector3 GapWalkOut(Vector3 mouth, Vector3 inDir)
 		{
-			float floor = GapFloor(mouth, 1.2f, 2f).y;
+			float floor = mouth.y; // (the way's first floor point; a ray down at the mouth can stop on the rim over it)
 			var dirs = new List<Vector3>();
 			var dys = new List<float>();
 			foreach (float a in GapWalkAngles)
