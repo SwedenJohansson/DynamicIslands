@@ -125,6 +125,9 @@ pop
 
 # --- The prow: rust plates closing the bow on the ice ------------------------------------------------------------
 place RT_Wall1 whalehull at 15 0.75 h=4 yaw=-56
+# (FIX-B 11-04: the ice falls away under the port plate's outer corner - it stood 2.1 m over it; a second plate under it,
+# 3 m lower, carries it down into the ice)
+place RT_Wall1 whalehull at 15 0.75 h=1 yaw=-56
 place RT_Wall1 whalehull at 15 8.25 h=4 yaw=56
 
 # --- The upper deck: the crew mess (vending machine, the captain's table and log, the safe and its keypad), the galley,
