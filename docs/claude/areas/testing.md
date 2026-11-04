@@ -117,10 +117,15 @@ Real keys can't reach a minimised Raft, and no test may bring a Raft window up. 
   letters land on the sign), then `CINoteHere; CIKey K; CINoteHere close` (the stats page stays shut).
 - `CIFace <island> <name | note title | islander name or its start>` (either player): stand points on solid ground (a
   floor too, at the object's own height) with room to stand and a clear view; an islander is aimed at the chest. No
-  point where Raft's ray (`Helper.FindInteractable`) finds it = the player goes back where they were.
+  point where Raft's ray (`Helper.FindInteractable`) finds it = the player goes back where they were. Raft's ray goes
+  through the screen's middle, which a minimised window doesn't have: `AheadInteractable` casts the same ray from the
+  camera straight ahead when Raft's misses (the Facing line then says so).
 - `CITalk <island> <islander> [read | pick <n>]` (either player): `CIFace`, then `Islander.Talk` (E's path) and
   `DialoguePanel.Close` (Esc's path), which ends in `Islanders.Talked` (talk events, a "Bring items" hand-in, talk steps).
   `PASS: talked to '<name>' on '<island>' (host|client; Islanders.Talked ran[, message ...])`.
+- `CILoadWorld <name>` loads the world straight from its folder in `SaveAndLoad.WorldPath` (`LoadWorldDirect`:
+  newest save via `GetLatestRGDGameFromBackupFolders`, then Raft's `Button_LoadGame`), without Raft's Load Game list,
+  which reads every world first (a box with ~2000 worlds: "no saved worlds listed"). No name = the list, as before.
 - `CIRecipe`'s unnamed-target check skips `order|<puzzle>|n` (its target is a puzzle group, not an object).
 
 ## Running dev commands: ci.ps1

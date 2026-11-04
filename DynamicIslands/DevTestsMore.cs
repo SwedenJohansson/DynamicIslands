@@ -1271,6 +1271,20 @@ namespace DynamicIslands
 			return true;
 		}
 
+		/// <summary>Helper.FindInteractable's ray, from the camera straight ahead instead of through the screen's middle
+		/// (Camera.ScreenPointToRay of a minimised window's size is no ray through the view): the interactable hit, its
+		/// redirect's target, or null.</summary>
+		static RaycastInteractable AheadInteractable(Camera cam, float dist)
+		{
+			if (cam == null) return null;
+			RaycastHit hit;
+			if (!Physics.Raycast(new Ray(cam.transform.position, cam.transform.forward), out hit, dist, LayerMasks.MASK_RaycastInteractable, QueryTriggerInteraction.Collide) || hit.collider == null) return null;
+			RaycastInteractable ri = hit.collider.GetComponent<RaycastInteractable>();
+			if (ri != null) return ri;
+			RaycastInteractable_Redirect rd = hit.collider.GetComponent<RaycastInteractable_Redirect>();
+			return rd != null ? rd.RaycastInteractable : null;
+		}
+
 		static IEnumerator FaceRoutine(IslandWorldState.Entry e, string what)
 		{
 			faceFound = null;
@@ -1316,6 +1330,7 @@ namespace DynamicIslands
 			Camera cam = Helper.MainCamera;
 			RaycastInteractable found = null;
 			int tried = 0;
+			bool byAhead = false;
 			foreach (Vector3 stand in spots.Take(8))
 			{
 				tried++;
@@ -1327,13 +1342,17 @@ namespace DynamicIslands
 				yield return new WaitForSeconds(0.5f);
 				found = Helper.FindInteractable(Player.UseDistance * 1.1f, QueryTriggerInteraction.Collide);
 				if (found != null && found.transform.IsChildOf(r.transform)) break;
+				// (a minimised Raft: Raft's ray goes through the screen's middle, and a minimised window has no screen size -
+				// the same ray from the camera straight ahead, which is what the screen's middle is when the window has one)
+				RaycastInteractable ahead = AheadInteractable(cam, Player.UseDistance * 1.1f);
+				if (ahead != null && ahead.transform.IsChildOf(r.transform)) { found = ahead; byAhead = true; break; }
 			}
 			typeof(Behaviours).GetProperty("LastMessage").SetValue(null, "", null);
 			if (found != null && found.transform.IsChildOf(r.transform))
 			{
 				faceFound = found;
 				faceRef = r;
-				Log("Facing '" + label + "': Raft's interaction ray finds it from " + Vector3.Distance(cam.transform.position, target).ToString("F1") + " m");
+				Log("Facing '" + label + "': Raft's interaction ray finds it" + (byAhead ? " (the camera's straight-ahead ray: the screen's middle missed - screen " + Screen.width + "x" + Screen.height + ")" : "") + " from " + Vector3.Distance(cam.transform.position, target).ToString("F1") + " m");
 				yield break;
 			}
 			// (never left in the ground or under a floor: back where the player was)
