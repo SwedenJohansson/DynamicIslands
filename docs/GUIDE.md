@@ -761,7 +761,8 @@ three honeycombs, refilling after the island's regrow days like any chest.
 
 **Raft's story pieces that use the player's quest tools.** Balboa's **ChoppableVines** come ready to cut: a player
 with Raft's **machete** cuts them away (without one they are told they need it), and keeps the machete for the next
-vines on any later island - the vines stay cut. Raft's **zipline lines** (**ZiplinePath** from Tangaroa,
+vines on any later island - the vines stay cut. Until then they are solid: vines across a path or a cave's mouth close
+it (Collision in the object panel changes that). Raft's **zipline lines** (**ZiplinePath** from Tangaroa,
 **ZiplinePath_Landmark** from Caravan Town) keep Raft's own zipline: a player with the **zipline tool** rides them as
 on Raft's islands. Search the browser for them. Select a line to set its **far end**: **Far end: where I look**
 puts the far end's floor on the ground the camera looks at (keep it lower - a zipline runs downhill); in a world Raft
