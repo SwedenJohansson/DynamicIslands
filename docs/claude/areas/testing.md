@@ -110,7 +110,7 @@ Real keys can't reach a minimised Raft, and no test may bring a Raft window up. 
 - `CIKeysState`: one line - typing (`ModKeys.SomeoneTyping`), the selected field (focus, text), sign writing, stats page,
   journal, notebook, note, dialogue, minimap, Raft's open menu, the cursor (shown/hidden, lock).
 - `CISign give [n] | place | write | stop | text | status`: Raft's sign (`Placeable_Sign`): give it, place it (cheat
-  build on the raft floor 1.5 m ahead, facing the player), `write` opens Raft's sign text menu on the nearest sign
+  build on the raft floor 1.5 m ahead, facing the player; the first raft block under the spot, through terrain over a beached raft), `write` opens Raft's sign text menu on the nearest sign
   (`TextWriterManager.StartWriting`) and focuses its field, `stop` aborts typing.
 - `CINoteHere [title] | close`: a custom note 1 m in front of the player, opened (`NoteReader.Open`); `close` closes and removes it.
 - K opens the stats page only with the level up system on: `Levels on` first.
@@ -127,6 +127,9 @@ Real keys can't reach a minimised Raft, and no test may bring a Raft window up. 
 - `CITalk <island> <islander> [read | pick <n>]` (either player): `CIFace`, then `Islander.Talk` (E's path) and
   `DialoguePanel.Close` (Esc's path), which ends in `Islanders.Talked` (talk events, a "Bring items" hand-in, talk steps).
   `PASS: talked to '<name>' on '<island>' (host|client; Islanders.Talked ran[, message ...])`.
+  A dialogue that closes by itself within 0.5 s fails with its cause (`DialoguePanel.LastClose`: a key, the scene, the player N m away).
+- `CIOnRaft` puts the player on the raft's top block under its middle (`RaycastAll`, island terrain above a beached raft
+  skipped); the line says `(a raft block[, under <terrain>])` or `(not the raft)`.
 - `CILoadWorld <name>` loads the world straight from its folder in `SaveAndLoad.WorldPath` (`LoadWorldDirect`:
   newest save via `GetLatestRGDGameFromBackupFolders`, then Raft's `Button_LoadGame`; not signed in to PlayFab = hosted solo, as `CINewWorld` does - hosted for friends
   offline the scene loaded but the player never came in), without Raft's Load Game list,
