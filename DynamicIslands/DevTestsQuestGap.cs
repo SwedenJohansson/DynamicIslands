@@ -144,5 +144,117 @@ namespace DynamicIslands
 			finally { RemovePlayerIsland(e); }
 			if (ok) Log("PASS: fish and gather steps"); else Fail("fish and gather steps");
 		}
+
+		const int QuestTestFakeId = 987651104;
+
+		[ConsoleCommand(name: "CIQuestTestCommands", docs: "Dev, in a world (host): gap idea 9 - QuestTest on an island with 2 quests: the list, a signal sent, a jump forward and back (the players told \"set\"), quest 2 done, a story item given, the island reset (made again: its flower back, quests at step 1, signals gone; the players told \"reset\", a player's copy takes it); bad arguments refused")]
+		public static void QuestTestCommandsTest() { StartTest(QuestTestCommandsRoutine()); }
+
+		static IEnumerator QuestTestCommandsRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			int flower = -1;
+			IslandFile f = PlayerTestIsland((file, add) =>
+			{
+				flower = add("Pickup_Landmark_Flower_Red", 2f, 3f, new Dictionary<string, string>());
+				file.Props[IslandQuest.KeyTitle] = "CI bells";
+				file.Props[IslandQuest.KeySteps] = "signal|ci-bell|1|\nsignal|ci-gong|1|\nsignal|ci-horn|1|";
+				file.Props[IslandQuest.Key(IslandQuest.KeyTitle, 1)] = "CI drums";
+				file.Props[IslandQuest.Key(IslandQuest.KeySteps, 1)] = "signal|ci-drum|1|\nsignal|ci-flute|1|";
+			});
+			IslandWorldState.Entry e = null;
+			yield return SpawnPlayerIsland(f, x => e = x);
+			if (e == null || e.Root == null) { Fail("the island did not spawn"); RemovePlayerIsland(e); yield break; }
+			Network_Player me = RAPI.GetLocalPlayer();
+			var sent = new List<IslandNetMessage>();
+			var nt = Traverse.Create(typeof(IslandNetwork));
+			bool worldWas = nt.Field("worldReceived").GetValue<bool>();
+			const string gem = "ci_questtest_gem";
+			int gemsBefore = StoryBook.Count(gem);
+			try
+			{
+				yield return StandRoutine(e.Root);
+				yield return new WaitForSeconds(1.5f);
+				Check(ref ok, QuestTestCommands.Nearest(true) == e, "the island nearest the player is the one QuestTest works on");
+
+				// the list
+				QuestTestCommands.QuestTestCommand(new string[0]);
+				string list = QuestTestCommands.Describe(e);
+				Check(ref ok, list.Contains("Quest 1 'CI bells': step 1 of 3") && list.Contains("Quest 2 'CI drums': step 1 of 2") && list.Contains(" > 1. "), "the list: both quests, step 1 marked (" + list.Replace("\n", " / ") + ")");
+
+				// a signal: the main quest's step 1 is done by it
+				QuestTestCommands.QuestTestCommand(new[] { "signal", "ci-bell" });
+				yield return WaitStep(e, 1, 3f);
+				Check(ref ok, Behaviours.HasSignal(e, "ci-bell") && QuestTracker.StepOf(e) == 1, "QuestTest signal ci-bell: the signal is had, step 1 done");
+
+				// forward, then back (the players told "set")
+				QuestTestCommands.QuestTestCommand(new[] { "step", "3" });
+				Check(ref ok, QuestTracker.StepOf(e) == 2 && QuestTracker.LastMessage.Contains("ci-horn"), "QuestTest step 3: at step 3 (" + QuestTracker.LastMessage + ")");
+				IslandNetwork.Loopback = x => sent.Add(x);
+				QuestTestCommands.QuestTestCommand(new[] { "step", "1" });
+				IslandNetwork.Loopback = null;
+				IslandNetMessage set = sent.FirstOrDefault(x => x.Kind == IslandNetMessage.QuestStep && x.Name == "set");
+				Check(ref ok, QuestTracker.StepOf(e) == 0 && QuestTracker.ProgressOf(e, 0) == 0 && set != null && set.Ids[0] == e.Id && set.Index == 0,
+					"QuestTest step 1: back at step 1, the players told \"set\" step 1 (" + sent.Count + " message(s))");
+				QuestTestCommands.QuestTestCommand(new[] { "step", "done", "2" });
+				Check(ref ok, QuestTracker.StepOf(e, 1) == 2 && QuestTracker.StepOf(e) == 0, "QuestTest step done 2: quest 2 done, the main quest left at step 1");
+				QuestTestCommands.QuestTestCommand(new[] { "step", "9" });
+				QuestTestCommands.QuestTestCommand(new[] { "step", "1", "3" });
+				QuestTestCommands.QuestTestCommand(new[] { "jump" });
+				Check(ref ok, QuestTracker.StepOf(e) == 0 && QuestTracker.StepOf(e, 1) == 2, "bad arguments (step 9, quest 3, jump) change nothing");
+
+				// a story item
+				QuestTestCommands.QuestTestCommand(new[] { "give", gem, "2" });
+				yield return new WaitForSeconds(0.5f);
+				Check(ref ok, StoryBook.Count(gem) == gemsBefore + 2, "QuestTest give " + gem + " 2: the crew has " + StoryBook.Count(gem));
+
+				// reset: the flower picked first, then the island as new
+				IslandObjectRef r = e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(x => x.Index == flower);
+				PickupItem pick = r != null ? r.GetComponentInChildren<PickupItem>(true) : null;
+				if (pick != null) me.PickupScript.PickupItem(pick, true, false);
+				yield return new WaitForSeconds(1f);
+				IslandObjectState.Capture(e);
+				Check(ref ok, pick != null && e.State.Count > 3, "the flower picked: the island has " + e.State.Count + " things in its state");
+				sent.Clear();
+				IslandNetwork.Loopback = x => sent.Add(x);
+				QuestTestCommands.QuestTestCommand(new[] { "reset" });
+				IslandNetwork.Loopback = null;
+				IslandNetMessage reset = sent.FirstOrDefault(x => x.Kind == IslandNetMessage.Islands && x.Name == "reset");
+				Check(ref ok, e.Root == null && e.State.Count == 0 && reset != null && reset.Ids.Length == 1 && reset.Ids[0] == e.Id && reset.States[0] == "" && !reset.FullList,
+					"QuestTest reset: unloaded, its state empty, the players told \"reset\"");
+				for (float t = 0; t < 40f && (e.Root == null || e.Loading); t += 0.5f) yield return new WaitForSeconds(0.5f);
+				yield return new WaitForSeconds(2f);
+				r = e.Root != null ? e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(x => x.Index == flower) : null;
+				pick = r != null ? r.GetComponentInChildren<PickupItem>(true) : null;
+				Check(ref ok, e.Root != null && pick != null && pick.gameObject.activeInHierarchy, "... made again by streaming: the flower is back");
+				Check(ref ok, QuestTracker.StepOf(e) == 0 && QuestTracker.StepOf(e, 1) == 0 && !Behaviours.HasSignal(e, "ci-bell"), "... both quests at step 1, the signal gone");
+				Screenshot(new[] { "qtest_reset" });
+
+				// a player's copy takes the "reset" (the client side, on this machine): a known island not loaded there
+				IslandWorldState.RemoveIds(new[] { QuestTestFakeId }, false);
+				IslandWorldState.Entry fake = IslandWorldState.AddRemote(QuestTestFakeId, "ciquesttestfake", "", CustomIslandSpawner.RaftPosition.Value + new Vector3(40000f, 0f, 40000f));
+				fake.State[QuestTracker.StepKey] = new ObjectState { Active = true, Yield = 2, Day = 1 };
+				fake.State[0x123] = new ObjectState { Active = false, Yield = -1, Day = 1 };
+				nt.Field("worldReceived").SetValue(true);
+				var msg = new IslandNetMessage { Kind = IslandNetMessage.Islands, Name = "reset", Ids = new[] { QuestTestFakeId }, Names = new[] { "ciquesttestfake" }, Hashes = new[] { "" }, States = new[] { "" }, Labels = new[] { "" }, Rules = new[] { "" }, Offsets = new[] { 40000f, 0f, 40000f } };
+				string threw = null;
+				try { nt.Method("ReceiveIslands", new[] { typeof(IslandNetMessage) }).GetValue(msg); }
+				catch (Exception ex) { threw = (ex.InnerException ?? ex).GetType().Name + ": " + (ex.InnerException ?? ex).Message; }
+				Check(ref ok, threw == null && fake.State.Count == 0 && IslandWorldState.Contains(fake), "a player's copy takes the host's reset: its state empty" + (threw != null ? " (" + threw + ")" : ""));
+				yield return new WaitForSeconds(0.6f);
+			}
+			finally
+			{
+				IslandNetwork.Loopback = null;
+				nt.Field("worldReceived").SetValue(worldWas);
+				IslandWorldState.RemoveIds(new[] { QuestTestFakeId }, false);
+				int extra = StoryBook.Count(gem) - gemsBefore;
+				if (extra > 0) StoryBook.Take(gem, extra);
+				RemovePlayerIsland(e);
+			}
+			if (ok) Log("PASS: QuestTest commands"); else Fail("QuestTest commands");
+		}
 	}
 }

@@ -77,7 +77,7 @@ namespace DynamicIslands
 			Log("PASS: server signature (" + (Raft_Network.IsHost ? "host" : "player who joined") + ")");
 		}
 
-		[ConsoleCommand(name: "CIHostOnlyCheck", docs: "Dev, in game (a player who joined): tries every command that changes the host's settings or islands (Monsters, BuildCost, Randomizer, WorldPlan, CustomIslandsAuto, SpawnIsland, RemoveIsland, WorldOptions, Levels, RegrowDays, WorldIslands, WorldIslandsGap, HeadStart, RogueShark spawn/giant, Traders bring, Barrels/StormDays roll, Resync); each must be refused (or, where it only reads, do nothing) and change nothing here")]
+		[ConsoleCommand(name: "CIHostOnlyCheck", docs: "Dev, in game (a player who joined): tries every command that changes the host's settings or islands (Monsters, BuildCost, Randomizer, WorldPlan, CustomIslandsAuto, SpawnIsland, RemoveIsland, WorldOptions, Levels, RegrowDays, WorldIslands, WorldIslandsGap, QuestTest step/reset/give, HeadStart, RogueShark spawn/giant, Traders bring, Barrels/StormDays roll, Resync); each must be refused (or, where it only reads, do nothing) and change nothing here")]
 		public static void HostOnlyCheck()
 		{
 			StartTest(HostOnlyRoutine());
@@ -110,6 +110,9 @@ namespace DynamicIslands
 				new KeyValuePair<string, Action>("WorldIslands all", () => WorldIslands.WorldIslandsCommand(new[] { "all" })),
 				new KeyValuePair<string, Action>("RegrowDays " + (WorldRules.RegrowDays == 9 ? "4" : "9"), () => DynamicIslands.RegrowDaysCommand(new[] { WorldRules.RegrowDays == 9 ? "4" : "9" })),
 				new KeyValuePair<string, Action>("WorldIslandsGap 20-50", () => WorldIslands.GapCommand(new[] { "20-50" })),
+				new KeyValuePair<string, Action>("QuestTest step 2", () => QuestTestCommands.QuestTestCommand(new[] { "step", "2" })),
+				new KeyValuePair<string, Action>("QuestTest reset", () => QuestTestCommands.QuestTestCommand(new[] { "reset" })),
+				new KeyValuePair<string, Action>("QuestTest give ci_gem", () => QuestTestCommands.QuestTestCommand(new[] { "give", "ci_gem" })),
 			};
 			// (these say something else, or nothing, when a client tries: only that nothing changes is checked)
 			var quiet = new List<KeyValuePair<string, Action>>

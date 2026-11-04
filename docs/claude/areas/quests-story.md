@@ -7,6 +7,7 @@ What players do on an island: quests, behaviours and events, trigger zones, note
 |---|---|
 | `Quest.cs` | `IslandQuest` (a quest in island settings), `QuestTracker` (progress, quest panel, rewards) |
 | `QuestSteps.cs` | Step kinds `signal`, `bring`, `craft` (QE1/4/7), `fish`, `gather` (11-04): Describe, Found/Holds, HandIn/ChestRayed, Made/Caught/Gathered -> `Credit` + craft/cook/fish/gather Harmony hooks, editor `NamesFor`, `PlanFacts`/`StepProblem`; tests `DevTestsQuestSteps.cs`, `DevTestsQuestGap.cs` |
+| `QuestTestCommands.cs` | F10 `QuestTest` (gap idea 9, 11-04): list / `step` (`QuestTracker.JumpTo`: forward = `Set`, back = state written + `IslandNetwork.SendQuestSet` "set" to all, clients `Correct`) / `signal` / `give` / `reset` (state cleared, despawned, streaming makes it again; `SendReset` = islands message Name "reset", `ReceiveIslands` takes the state and despawns). Host only (in `CIHostOnlyCheck`). Test `CIQuestTestCommands` (DevTestsQuestGap.cs) |
 | `QuestEditorWindow.cs` | Quest editor (Island tab), also the island's when-the-quest-is-done bring rule |
 | `StoryItems.cs` | `StoryItemDef`, `StoryItems`, `StoryBook` (crew's items and journal pages), `QuestCount`, `NoteCount`, `WorldProgress`, `QuestMilestones`, `JournalWindow` |
 | `StoryItemsWindow.cs` | Story items editor; `StorySets` (`LockedDoor`, `TreasureMap`, `LockedChest`, `NoteTrail`); the window's Puzzles row loads Raft's pieces (`PlaceableCatalog.EnsureLoaded`) then places a puzzle set |

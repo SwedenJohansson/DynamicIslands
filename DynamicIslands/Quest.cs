@@ -464,6 +464,26 @@ namespace DynamicIslands.Editor
 			return true;
 		}
 
+		/// <summary>Host, the QuestTest command (gap idea 9): quest n to this step (0-based; the step count = done), back too.
+		/// Forward it moves on as play does (events, rules, the reward at the end); back (or the same step) the step, its
+		/// progress and the work done early for it and later steps are set back here and on every player ("set", as a
+		/// refused step's correction). False when there is no such quest.</summary>
+		internal static bool JumpTo(IslandWorldState.Entry e, int n, int step)
+		{
+			IslandQuest q = QuestOf(e, n);
+			if (!Raft_Network.IsHost || !q.Exists) return false;
+			step = Mathf.Clamp(step, 0, q.Steps.Count);
+			int before = StepOf(e, n);
+			if (step > before) return Set(e, n, step, 0, true);
+			e.State[StepKeyOf(n)] = new ObjectState { Active = true, Yield = step, Day = Today };
+			e.State.Remove(ProgressKeyOf(n));
+			for (int s = step; s <= q.Steps.Count; s++) e.State.Remove(EarlyKeyOf(n, s));
+			IslandNetwork.SendQuestSet(e.Id, n);
+			Debug.Log("[CUSTOM ISLANDS] Quest " + (n + 1) + " of '" + e.HostName + "': set back to step " + (step + 1) + " (QuestTest)");
+			if (step < q.Steps.Count) Show(q.ShownTitle, "Next: " + q.Steps[step].Describe());
+			return true;
+		}
+
 		/// <summary>Where this player's share of quest n's reward is kept (QuestRewards). By the island's copy (PageIsland: the
 		/// first is its plain name, as before): a second copy of an island never paid its quest's reward, the first had it.</summary>
 		static string RewardKey(IslandWorldState.Entry e, int n) { string island = StoryBook.PageIsland(e); return n == 0 ? island : island + "#quest" + (n + 1); }

@@ -1488,6 +1488,15 @@ moment, with other islands after it ([7.2](#72-your-first-world-plan-step-by-ste
 5. **Esc → Custom Islands → Back to the editor**: the test world is left **without saving** and the editor opens
    again with your island, where you left it.
 
+**Trying a long quest without playing it all:** press **F10** and type `QuestTest` near the island (in the test world
+or any world you host). `QuestTest` lists the island's quests and steps, the current one marked **>**.
+`QuestTest step 4` jumps the main quest to step 4 - back as well as forward (`QuestTest step 2 2` = quest 2's step 2,
+`QuestTest step done` finishes it, with its reward); `QuestTest signal gate-open` sends a signal on the island, as a
+lever or an action does; `QuestTest give brass_key 2` gives the crew a story item; `QuestTest reset` sets the island
+back to new - quests at step 1, chests full, pickups back, signals gone - and makes it again (stand clear: you are in
+the sea for a moment). Rewards a player already had stay had. Only the host changes things; players who joined see
+the same.
+
 While the test starts, a **STARTING THE TEST** box covers the screen (Raft's main menu loads the test world behind
 it). **Cancel** takes you back to the editor. If the test can't start, you are back in the editor with the reason in the
 status bar - click **Test** again.
@@ -4020,6 +4029,7 @@ Press **F10** for RML's console.
 | `Monsters` / `Monsters <level>` | World or main menu | The monster difficulty / change it (host; at the main menu: the next new world). The level is `timid`, `normal`, `fierce`, `savage` or `nightmare`; `easy`, `moderate`, `hard` and `impossible` (the words the levels were first called: they mean timid, fierce, savage and nightmare) and the numbers 0-4 (timid to nightmare) work too; any other word is refused and the five are listed |
 | `BuildCost` / `BuildCost <0-100>` | World or main menu | The build cost / change it (host; at the main menu: the next new world). Any whole number from 0 to 100, with or without `%` (`BuildCost 25%`); the slider in World settings moves in steps of 5 |
 | `AnimalLooks` / `AnimalLooks <level>` | World or main menu | Rare animal looks and the looks tamed per animal / change it (host; at the main menu: the next new world). The level is `Normal`, `More`, `Lots` or 0-2 |
+| `QuestTest` / `QuestTest step <n\|done> [quest]` / `signal <name>` / `give <story item> [count]` / `reset` | World | Try the quest of the custom island nearest you: its quests and steps / jump to a step, back too / send a signal on it / give the crew a story item / the island back to new and made again (all but the list: host) |
 | `RegrowDays` / `RegrowDays <days>` | World | This world's days until things come back / change it (host; 0 = never; an island's own rule wins) |
 | `DailyQuest` / `DailyQuest new [gather/fish/monsters n [item]]` | World | Today's daily quest (option Daily quest): the task, how far you are, the reward / a new quest now (host; with a kind and a number: that quest, e.g. `DailyQuest new gather 20 Plank`) |
 | `UpgradeTable` | World | The upgrade research table (option Extra upgrades): what this world has researched and learned there |
