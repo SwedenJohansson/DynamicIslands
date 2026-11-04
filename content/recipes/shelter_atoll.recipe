@@ -650,10 +650,10 @@ clear at 61.4 -2.7 r=2.4 all only=Coral
 # the shelter as first planned: the den is some 21 x 22 m and 11 m high at the least size, the lagoon 2-6 m deep and
 # the shelter's rooms fill the islet. hill=0: no ridge over the lagoon (a ridge would fill the landing's water).
 call kit_st x=-4 z=-22 yaw=205 len=35.6 slope=12 end=room size=0.7 hill=0 dirt=2 mush=2 stone=1 vines=1 as=shelcave
-# (the dinghy in front of the mouth, off its right side; the mouth's sides are walled with two boulders on the cut's
+# (the dinghy in front of the mouth, off its right side and clear of the landing's deck; the mouth's sides are walled with two boulders on the cut's
 # floor: hill=0 leaves the mouth piece's flanks bare where its approach is cut down, and a diver beside the mouth saw
 # into the tunnel through the shell's back - X7, CICaveInside)
-place RT_PlasticBoat dinghy at -6.5 -14.3 ground sit yaw=130 tilt=12
+place RT_PlasticBoat dinghy at -12 -13.5 ground sit yaw=130 tilt=12
 prop dinghy obj.name=dinghy
 place TP_BigRock02 - at -11.5 -19.6 ground sit scale=0.3 yaw=40
 place TP_BigRock02 - at 2.65 -26.2 ground sit scale=0.3 yaw=160
