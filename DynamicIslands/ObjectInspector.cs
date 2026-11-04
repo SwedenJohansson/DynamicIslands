@@ -100,7 +100,7 @@ namespace DynamicIslands.Editor
 				// (nothing to colour: zones are invisible in a world)
 				if (target.GameObjectName == ContentCatalog.AtmosphereZoneName) AtmosphereGroup(target);
 				else if (target.GameObjectName == ContentCatalog.SoundZoneName) SoundGroup(target);
-				else { ZoneGroup(target); HazardGroup(target); MechZoneGroup(target); LootGroup(target, true); }
+				else { ZoneGroup(target); HazardGroup(target); MechZoneGroup(target); CoopZoneGroup(target); LootGroup(target, true); }
 				BehaviourGroup(target);
 				return;
 			}
@@ -119,7 +119,9 @@ namespace DynamicIslands.Editor
 				{
 					if (note) NoteGroup(target);
 					if (loot) LootGroup(target, false);
-					if (!note || !loot) AddFeatureGroup(target, note, loot);
+					// (GW1: a trade stand - neither readable nor a chest: those take the same interact key)
+					if (!note && !loot && TradeStand.IsTrade(target.Props)) TradeGroup(target);
+					else if (!note || !loot) AddFeatureGroup(target, note, loot);
 				}
 				if (target.GameObjectName.StartsWith("ZiplinePath", System.StringComparison.Ordinal)) ZiplineGroup(target);
 				if (Survivors.IsCage(target.GameObjectName)) SurvivorGroup(target);
@@ -458,6 +460,8 @@ namespace DynamicIslands.Editor
 					Refresh();
 					ItemPickerWindow.Open(target);
 				}, "Put items in this object: players open it and take them");
+			if (!note && !loot)
+				UIKit.Button(row, "Trade stand...", () => MakeTradeStand(target), "Players trade with it: they pay items you set and get others (your own offer, a stock or no limit)");
 		}
 
 		#endregion

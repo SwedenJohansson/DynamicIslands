@@ -150,6 +150,7 @@ namespace DynamicIslands.Editor
 			float[] f = Floats(ObjectProps.Get(p, PulseProp));
 			if (f.Length >= 2 && f[0] > 0f && f[1] > 0f) t += " · on " + F(f[0]) + " s / off " + F(f[1]) + " s";
 			if (IsStack(p)) t += " · stack " + DescribeStack(p);
+			t += GapWorld.DescribeZone(p);
 			return t;
 		}
 

@@ -52,7 +52,7 @@ namespace DynamicIslands.Editor
 		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character", "playsound", "stopsound", "camera", "suit", "hit", "carry", "collapse", "moveto", PlayerFeatures.DialogueVerb, Lights.Verb, "flythrough", OrderPuzzle.Verb };
 		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal", "playsound", "stopsound", "camera", "hit", "collapse", "moveto", Lights.Verb, "flythrough", OrderPuzzle.Verb };
 		public const string CheckPrefix = "if.", ElsePrefix = "else.";
-		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest", "wears", "holds", PlayerFeatures.TalkedCheck, Collectibles.CheckKind, Lights.LightCheck, Lights.GroupCheck };
+		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest", "wears", "holds", PlayerFeatures.TalkedCheck, Collectibles.CheckKind, Lights.LightCheck, Lights.GroupCheck, GapWorld.PlayersCheck };
 		public static readonly string[] States = { "open", "closed", "shown", "hidden" };
 		public static readonly string[] CollisionModes = { "", "none", "box", "solid" };
 

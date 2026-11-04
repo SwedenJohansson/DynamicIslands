@@ -92,6 +92,7 @@ namespace DynamicIslands.Editor
 			{ Collectibles.CheckKind, "A number of a collectible set's pieces on this island were found (empty = all)" },
 			{ Lights.LightCheck, "A puzzle light (by its name; empty = this one) is on (or off)" },
 			{ Lights.GroupCheck, "Every puzzle light of a group on this island is on (or off)" },
+			{ GapWorld.PlayersCheck, "Enough living players stand in a trigger zone (a co-op plate). It scales with the players online: never more than are online, so one player alone is always enough" },
 		};
 
 		public static void Create(Transform canvas)
@@ -406,6 +407,7 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, string> CheckLabels =new Dictionary<string, string>
 		{
 			{ "has", "has item" }, { "take", "uses up item" }, { "state", "object is" }, { "signal", "signal sent" }, { "quest", "quest step" }, { "wears", "wears item" }, { "holds", "holds item" }, { PlayerFeatures.TalkedCheck, "talked to" }, { Collectibles.CheckKind, "set found" }, { Lights.LightCheck, "light is" }, { Lights.GroupCheck, "all lights" },
+			{ GapWorld.PlayersCheck, "players in zone" },
 		};
 
 		/// <summary>"Only if ..." (every check must pass) and "Otherwise say ...".</summary>

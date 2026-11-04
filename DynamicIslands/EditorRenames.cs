@@ -92,6 +92,22 @@ namespace DynamicIslands.Editor
 			List<IDictionary<string, string>> zones = others.Where(e => e.GameObjectName == ContentCatalog.TriggerZone).Select(e => (IDictionary<string, string>)e.Props).ToList();
 			if (Taken(zones, ObjectProps.ZoneId, newId)) { TellTaken("zone id", newId); return; }
 			Island(new[] { "reach" }, oldId, newId, "zone");
+			// (GW8: "players|zone|N" checks on any object follow too)
+			int count = 0;
+			GameObject placed = GameObject.Find("PlacedObjects");
+			if (placed != null)
+				foreach (EditorGameObject e in placed.GetComponentsInChildren<EditorGameObject>(true))
+				{
+					if (e.Props == null) continue;
+					var after = new Dictionary<string, string>(e.Props);
+					int n = GapWorld.ZoneRefs(after, oldId, newId);
+					if (n == 0) continue;
+					var cmd = new PropsCommand(e, e.Props, after);
+					cmd.Execute();
+					UndoRedoManager.AppendToLast(cmd);
+					count += n;
+				}
+			if (count > 0) DynamicIslands.Notify(count + " co-op check(s) now name the zone \"" + newId.Trim() + "\"");
 		}
 
 		/// <summary>The other placed objects - hidden ones too (an object "Hidden until shown" may be inactive).</summary>
@@ -117,7 +133,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Check kinds whose target is an object's name (obj.name).</summary>
-		static readonly string[] NamedChecks = { "state", PlayerFeatures.TalkedCheck, Lights.LightCheck };
+		static readonly string[] NamedChecks = { "state", PlayerFeatures.TalkedCheck, Lights.LightCheck, GapWorld.PlayersCheck };
 
 		/// <summary>One set of settings (an object's or the island's): actions that act on an object by its name (show, open,
 		/// teleport...: ObjAction.HasTarget), checks of a named object (state, talked to, light) and a camera point's look-at

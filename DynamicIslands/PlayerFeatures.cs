@@ -77,6 +77,7 @@ namespace DynamicIslands.Editor
 				list.Add(new KeyValuePair<string, string>(OrderPuzzle.SolvedEvent, "its order puzzle was solved: the last piece was pressed in the right order (runs on each piece, once)"));
 				list.Add(new KeyValuePair<string, string>(OrderPuzzle.WrongEvent, "it was pressed out of order: the puzzle starts again (its pieces go back)"));
 			}
+			GapWorld.Events(list, objectName, p);
 		}
 
 		/// <summary>Whether an event name belongs to these features (for the behaviour window's lists).</summary>
@@ -112,6 +113,8 @@ namespace DynamicIslands.Editor
 		/// <summary>A check's words for the builder, or null when it isn't one of these.</summary>
 		internal static string What(ObjCheck c)
 		{
+			string gw = GapWorld.What(c);
+			if (gw != null) return gw;
 			switch (c.Kind)
 			{
 				case TalkedCheck: return "someone talked to " + (c.Target.Length > 0 ? "'" + c.Target + "'" : "this islander");
@@ -126,6 +129,7 @@ namespace DynamicIslands.Editor
 		internal static bool Holds(IslandWorldState.Entry e, int index, ObjCheck c, out bool result)
 		{
 			result = false;
+			if (GapWorld.Holds(e, index, c, out result)) return true;
 			switch (c.Kind)
 			{
 				case TalkedCheck: result = Islanders.TalkedTo(e, index, c.Target); return true;
@@ -190,6 +194,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The behaviour window's placeholder for a check's name field, or null when it isn't one of these.</summary>
 		internal static string CheckPlaceholder(string kind)
 		{
+			if (GapWorld.CheckPlaceholder(kind) != null) return GapWorld.CheckPlaceholder(kind);
 			switch (kind)
 			{
 				case TalkedCheck: return "islander name (empty = this one)";
@@ -202,6 +207,7 @@ namespace DynamicIslands.Editor
 
 		internal static string CheckHint(string kind)
 		{
+			if (GapWorld.CheckHint(kind) != null) return GapWorld.CheckHint(kind);
 			switch (kind)
 			{
 				case TalkedCheck: return "The name of an islander (empty = this one): true once anyone of the crew talked to it";
@@ -215,6 +221,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The behaviour window's second field of a check (its Arg), or null when it has none.</summary>
 		internal static string CheckArgPlaceholder(string kind)
 		{
+			if (GapWorld.CheckArgPlaceholder(kind) != null) return GapWorld.CheckArgPlaceholder(kind);
 			switch (kind)
 			{
 				case Collectibles.CheckKind: return "how many (empty = all)";
@@ -226,6 +233,7 @@ namespace DynamicIslands.Editor
 
 		internal static string CheckArgHint(string kind)
 		{
+			if (GapWorld.CheckArgHint(kind) != null) return GapWorld.CheckArgHint(kind);
 			switch (kind)
 			{
 				case Collectibles.CheckKind: return "How many pieces must be found (empty = every piece of the set on this island)";

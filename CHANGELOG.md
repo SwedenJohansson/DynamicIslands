@@ -12,6 +12,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next update (planned)
 
 Not in this release yet; these come in the next update:
+- **Trade stands with your own offers**: the object panel's **Trade stand...** button makes any object a trader - what players pay and what they get (Raft items or the island's story items), and a stock for the whole crew (or no limit). Each trade runs the object's new `trade` event, so a trade can move a quest on. Shared in multiplayer and saved.
+- **Co-op zones (pressure plates for several players)**: a trigger zone can ask for 2-8 players standing in it together, once (a gate that stays open) or while they stand (`crowd` / `crowdleft` events). The number needed is never more than the players online, so one player alone can always play it. New check: players in zone.
 - **Typing in Raft's chat or on a sign** no longer opens the stats page (K), the journal (J) or the minimap keys' actions: the mod's keys did not see the mod loader's chat field.
 - **Guide and README**: a new **Can I...?** question-and-answer list (guide chapter 13, README), and a **Writing steps
   players can follow** part in the guide's quest chapter (name what players see, no compass sides, say what to do, a

@@ -183,7 +183,8 @@ namespace DynamicIslands.Editor
 	/// A stall with one offer ("trade.give", "trade.get", "trade.stock" in its settings): looking at it shows "[E] Trade
 	/// 12 Plank for 1 Mango seed (2 left)"; trading takes the price from the player's inventory and gives the goods. Each
 	/// unit of stock is a key of the island's state (KeyFor: KeyBase + object index * 8 + unit; past object 8191 WideKeyBase): used for everyone, one player
-	/// gets each (Claims).
+	/// gets each (Claims). Stock 0 (GW1, the editor's "no limit"): never sells out, no keys. The price may hold story
+	/// items ("story:id*1"); a trade fires the stand's "trade" event (its behaviours: on.trade=signal|...).
 	/// </summary>
 	public class TradeStand : MonoBehaviour, IRaycastable
 	{
@@ -192,6 +193,8 @@ namespace DynamicIslands.Editor
 		/// StoryItems.StoryGivenBase 0x170000 + 0xFFFF, so a big island's stands don't share keys. Indices below keep the old keys.</summary>
 		public const int WideKeyBase = 0x180000, NarrowCount = 0x2000;
 		public const string GiveProp = "trade.give", GetProp = "trade.get", StockProp = "trade.stock";
+		/// <summary>The behaviour event a trade fires on the stand (GW1).</summary>
+		public const string TradeEvent = "trade";
 		/// <summary>The stall's object: the floating raft's table.</summary>
 		public const string StallObject = "Table_Floor";
 
@@ -218,10 +221,25 @@ namespace DynamicIslands.Editor
 			t.Give = Items(props, GiveProp);
 			t.Get = Items(props, GetProp);
 			int n;
-			t.Stock = int.TryParse(ObjectProps.Get(props, StockProp), NumberStyles.Integer, CultureInfo.InvariantCulture, out n) ? Mathf.Clamp(n, 1, MaxStock) : 1;
+			t.Stock = StockOf(props, out n) ? (n <= 0 ? 0 : Mathf.Clamp(n, 1, MaxStock)) : 1;
 			t.Index = index;
 			return t;
 		}
+
+		static bool StockOf(IDictionary<string, string> props, out int n)
+		{
+			return int.TryParse(ObjectProps.Get(props, StockProp).Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out n);
+		}
+
+		/// <summary>The stock a stand's settings give (0 = no limit; no setting = 1).</summary>
+		public static int StockIn(IDictionary<string, string> props)
+		{
+			int n;
+			return StockOf(props, out n) ? (n <= 0 ? 0 : Mathf.Clamp(n, 1, MaxStock)) : 1;
+		}
+
+		/// <summary>Stock 0: the stand never sells out (no unit keys, no claims).</summary>
+		public bool Unlimited { get { return Stock <= 0; } }
 
 		public int KeyOf(int unit) { return KeyFor(Index, unit); }
 
@@ -248,6 +266,7 @@ namespace DynamicIslands.Editor
 		{
 			get
 			{
+				if (Unlimited) return 0;
 				IslandWorldState.Entry e = Entry;
 				for (int i = 0; i < Stock; i++) if (!ContentState.IsUsed(e, KeyOf(i))) return i;
 				return -1;
@@ -256,7 +275,7 @@ namespace DynamicIslands.Editor
 
 		public int Left
 		{
-			get { IslandWorldState.Entry e = Entry; int n = 0; for (int i = 0; i < Stock; i++) if (!ContentState.IsUsed(e, KeyOf(i))) n++; return n; }
+			get { if (Unlimited) return int.MaxValue; IslandWorldState.Entry e = Entry; int n = 0; for (int i = 0; i < Stock; i++) if (!ContentState.IsUsed(e, KeyOf(i))) n++; return n; }
 		}
 
 		/// <summary>What the local player lacks for this trade ("" = nothing).</summary>
@@ -264,8 +283,14 @@ namespace DynamicIslands.Editor
 		{
 			Network_Player player = RAPI.GetLocalPlayer();
 			if (player == null || player.Inventory == null) return "no player";
-			var lack = Give.Where(l => player.Inventory.GetItemCount(l.Key) < l.Value).ToList();
+			var lack = Give.Where(l => Have(player, l.Key) < l.Value).ToList();
 			return lack.Count == 0 ? "" : TraderRaft.Text(lack);
+		}
+
+		/// <summary>How many of an item the player has (a story item: the crew's).</summary>
+		static int Have(Network_Player player, string item)
+		{
+			return StoryItems.IsStory(item) ? StoryBook.Count(StoryItems.IdOf(item)) : player.Inventory.GetItemCount(item);
 		}
 
 		void IRaycastable.OnIsRayed()
@@ -279,7 +304,7 @@ namespace DynamicIslands.Editor
 			{
 				if (left == 0) hints.ShowText("Sold out (" + TraderRaft.Text(Get) + ")", 0, true, 0);
 				else if (lacks.Length > 0) hints.ShowText(offer + " - you need " + lacks, 0, true, 0);
-				else hints.ShowText(offer + " (" + left + " left)", CustomNote.InteractKey, 0, 0, true);
+				else hints.ShowText(offer + (Unlimited ? "" : " (" + left + " left)"), CustomNote.InteractKey, 0, 0, true);
 			}
 			if (left > 0 && lacks.Length == 0 && CustomNote.InteractPressed())
 			{
@@ -304,22 +329,37 @@ namespace DynamicIslands.Editor
 		{
 			int unit = NextUnit;
 			if (unit < 0 || Lacks().Length > 0) return new List<string>();
+			if (Unlimited) return Pay(-1);
 			int key = KeyOf(unit);
 			if (!Claims.May(Entry, key, yes => { if (this == null) return; if (yes) Trade(); else Beaten(); }))
 			{
 				if (Raft_Network.IsHost) Beaten();
 				return new List<string>();
 			}
-			// (paid and marked first, so a second press in the same moment can't trade twice)
-			Network_Player player = RAPI.GetLocalPlayer();
 			// (granted, but the goods to pay with went meanwhile: the hold is let go at once - RK6)
 			if (Lacks().Length > 0) { Claims.Release(Entry, key); return new List<string>(); }
-			foreach (KeyValuePair<string, int> l in Give) player.Inventory.RemoveItem(l.Key, l.Value);
-			ContentState.MarkUsed(transform, key);
+			return Pay(key);
+		}
+
+		/// <summary>Pays, marks the unit (key; -1: a stand without a limit) and gives the goods; then the "trade" event.</summary>
+		List<string> Pay(int key)
+		{
+			// (paid and marked first, so a second press in the same moment can't trade twice)
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player == null || player.Inventory == null || Lacks().Length > 0) return new List<string>();
+			foreach (KeyValuePair<string, int> l in Give)
+			{
+				if (StoryItems.IsStory(l.Key)) StoryBook.Take(StoryItems.IdOf(l.Key), l.Value);
+				else player.Inventory.RemoveItem(l.Key, l.Value);
+			}
+			if (key >= 0) ContentState.MarkUsed(transform, key);
 			List<string> given = TriggerZone.Give(Get);
 			LastGiven = given;
-			Debug.Log("[CUSTOM ISLANDS] [trader] Traded " + TraderRaft.Text(Give) + " for " + string.Join(", ", given.ToArray()) + " (" + Left + " left)");
+			Debug.Log("[CUSTOM ISLANDS] [trader] Traded " + TraderRaft.Text(Give) + " for " + string.Join(", ", given.ToArray()) + (Unlimited ? " (no limit)" : " (" + Left + " left)"));
 			IslandInfo.ShowMessage("Traded for " + TraderRaft.Text(Get));
+			// (GW1: the island maker's quests hear of it - "on.trade=signal|paid")
+			try { Behaviours.Fire(Entry, Index, TradeEvent, true); }
+			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] [trader] trade event: " + ex.Message); }
 			return given;
 		}
 
