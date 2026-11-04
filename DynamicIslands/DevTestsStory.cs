@@ -216,6 +216,19 @@ namespace DynamicIslands
 			var ord = new Dictionary<string, string> { { BehaviourProps.EventPrefix + "use", "order|Bells|2\nopen|Bells|" } };
 			n = EditorRenames.NameRefs(ord, "Bells", "Bell");
 			Check(ref ok, n == 1 && ord[BehaviourProps.EventPrefix + "use"] == "order|Bells|2\nopen|Bell|", "an object's new name: an order puzzle of that name stays, open follows (" + n + ")");
+			// (CIRecipe's unnamed-target check: an order puzzle's group is no object's name)
+			var ugo = new GameObject("CI_UnnamedOrder");
+			try
+			{
+				EditorGameObject ueg = ugo.AddComponent<EditorGameObject>();
+				ueg.GameObjectName = "lever";
+				ueg.Props = new Dictionary<string, string> { { BehaviourProps.Name, "Lever" }, { BehaviourProps.EventPrefix + "use", "order|Bells|2" } };
+				string u1 = UnnamedTargets(new[] { ueg });
+				ueg.Props[BehaviourProps.EventPrefix + "use"] = "order|Bells|2\nopen|Bells|";
+				string u2 = UnnamedTargets(new[] { ueg });
+				Check(ref ok, u1 == null && u2 != null && u2.Contains("'Bells'"), "CIRecipe's unnamed-target check: order|Bells|2 passes, open|Bells| is caught (" + (u2 ?? "null") + ")");
+			}
+			finally { UnityEngine.Object.Destroy(ugo); }
 			var t = new Dictionary<string, string> { { k0, "talk|Mira|1|\nread|Mira|1|" } };
 			Check(ref ok, EditorRenames.QuestTargets(t, new[] { Islanders.QuestType }, "Mira", "Mara") == 1 && t[k0] == "talk|Mara|1|\nread|Mira|1|", "an islander's new name: the talk step follows, a note of that title stays");
 			// (a rename to a title/id/name another object has: the references stay - moved, they would mean both)

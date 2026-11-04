@@ -499,6 +499,12 @@ namespace DynamicIslands
 			var conns = uic != null ? HarmonyLib.Traverse.Create(uic).Field("connectionDictionary").GetValue<Dictionary<string, ItemConnection>>() : null;
 			ItemConnection held = conns != null && conns.ContainsKey(large.UniqueName) ? conns[large.UniqueName] : null;
 			Check(ref ok, held != null && held.obj != null && held.inventoryItem == large, "held in the hand: its own hand model " + (held != null && held.obj != null ? held.obj.name : "(none)"));
+			if (held != null && GrHold(player, large.UniqueName))
+			{
+				yield return new WaitForSeconds(0.5f);
+				ItemConnection active = HarmonyLib.Traverse.Create(uic).Field("activeObject").GetValue<ItemConnection>();
+				Check(ref ok, active == held && held.obj.activeInHierarchy, "taken in hand: its hand model shows (" + (active != null ? active.name : "nothing active") + ")");
+			}
 			// Learned with the option and at the upgrade research table (the battery itself learned or not)
 			var optionsBefore = new HashSet<string>(WorldOptions.Current);
 			bool batteryLearned = battery.settings_recipe.Learned;
