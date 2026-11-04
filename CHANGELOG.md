@@ -64,6 +64,8 @@ Not in this release yet; these come in the next update:
   the bears' den passage steps down into the lead instead of ending in a 1.6 m drop.
 - **The Iron Whale - Bow**: the ramp up the pressure ridge from the sea is one even slope instead of 1 m steps.
 - **Lowstreet**: the sand that walled in the four shop doors is dug out down to the shop floors, so a diver swims in through each door.
+- **Lowstreet**: the four shop chests, the shops' tables and lamps and Jonah's letter stand on the shop floors again (they had sunk into the sand under them).
+- **The Iron Whale - Bow**: the port prow plate no longer hangs 2 m over the ice; a second plate under it carries it down into the ice.
 - Old worlds (made before Raft gave worlds an id): quest rewards are kept per world, and players who join such a world
   get the host's custom islands state.
 - Cave tool: a thin spike of ground left beside the cut over some tunnel mouths.
