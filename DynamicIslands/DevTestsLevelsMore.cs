@@ -284,7 +284,7 @@ namespace DynamicIslands
 			bool ok = true;
 			// Level 200
 			int t200 = LevelRules.TotalFor(200);
-			Check(ref ok, t200 == 100 + 100 * 199 * 198, "level 200 starts at " + t200 + " EXP (100 + 100 x 199 x 198)");
+			Check(ref ok, t200 == 75 + 150 * 198 + 50 * 198 * 197, "level 200 starts at " + t200 + " EXP (75 + 150 x 198 + 50 x 198 x 197)");
 			Check(ref ok, LevelRules.LevelOf(t200) == 200 && LevelRules.LevelOf(t200 - 1) == 199 && LevelRules.LevelOf(t200 + LevelRules.XpFor(200) - 1) == 200 && LevelRules.LevelOf(t200 + LevelRules.XpFor(200)) == 201,
 				"levels 199 / 200 / 201 start exactly where TotalFor says");
 			Check(ref ok, LevelRules.PointsAt(200) == LevelRules.AllPoints && LevelRules.PointsAt(69) == LevelRules.AllPoints && LevelRules.PointsAt(68) == 134, "the points stop at " + LevelRules.AllPoints + " (level 69 and up)");
@@ -321,7 +321,7 @@ namespace DynamicIslands
 			sw.Stop();
 			Check(ref ok, sw.Elapsed.TotalMilliseconds < 50.0, "LevelOf at the largest EXP (" + int.MaxValue + ") takes " + sw.Elapsed.TotalMilliseconds.ToString("F3") + " ms");
 			int near = LevelRules.LevelOf(2000000000);
-			Check(ref ok, near > 4000 && near < 5000 && LevelRules.TotalFor(near) <= 2000000000, "2 000 000 000 EXP is level " + near);
+			Check(ref ok, near > 6000 && near < 7000 && LevelRules.TotalFor(near) <= 2000000000, "2 000 000 000 EXP is level " + near);
 			// (the loop adds up in an int: past about 2 146 000 000 EXP it could wrap; noted, not a failure)
 			if (worst < 4000 || worst >= 9999) Log("  NOTE: LevelOf(int.MaxValue) = " + worst + " - the level loop's int total wraps past ~2.146 billion EXP (a monster is worth ~180 EXP: not reachable in play)");
 			else Log("  (LevelOf(int.MaxValue) = " + worst + ")");
