@@ -283,13 +283,21 @@ namespace DynamicIslands
 						break;
 					case "air":
 					{
-						// air <zone id>: a diver in the air pocket breathes - put there with little breath left, it is full again a
-						// moment later (only a shown zone: one still hidden isn't found)
-						string zid = Rest(line, 1).Trim();
+						// air <zone id> [here]: a diver in the air pocket breathes - put there with little breath left, it is full again a
+						// moment later (only a shown zone: one still hidden isn't found). here: not put there - the player came in on
+						// their own (a walk or swim before it) and must stand in the pocket already
+						string[] aw = Rest(line, 1).Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+						string zid = aw.Length > 0 ? aw[0] : "";
+						bool airHere = aw.Length > 1 && aw[1] == "here";
 						TriggerZone pocket = playEntry.Root.GetComponentsInChildren<TriggerZone>(false).FirstOrDefault(x => x.Id == zid && x.Air);
 						Check(ref ok, pocket != null, "an air pocket '" + zid + "' there");
 						if (pocket == null) break;
-						PlayerMove.To(me, pocket.transform.position);
+						if (airHere)
+						{
+							float off = Vector3.Distance(me.transform.position, pocket.transform.position);
+							Check(ref ok, off <= pocket.Radius + 0.5f, "the player in the air pocket '" + zid + "' on their own (" + off.ToString("F1") + " m from its middle, radius " + pocket.Radius.ToString("F1") + ")");
+						}
+						else PlayerMove.To(me, pocket.transform.position);
 						yield return new WaitForSeconds(0.5f);
 						me.Stats.stat_oxygen.Value = me.Stats.stat_oxygen.Max * 0.1f;
 						yield return new WaitForSeconds(1.2f);

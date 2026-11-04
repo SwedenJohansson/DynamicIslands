@@ -2,6 +2,7 @@
 """cavecheck - an offline check of where a recipe's caves go (G7, 11-04; no Raft needed).
 
 Run: tools\\content.ps1 cavecheck <recipe> [-repo <worktree>]   or   python content/cavecheck.py <recipe|path> [--machete]
+     python content/cavecheck.py --selftest   (the cave tool's layout against CaveTool.Plan's numbers)
 Expands the recipe as the mod does (set, $vars, {arithmetic}, for/next, macro/call, include; DevTestsRecipe.ExpandLines),
 follows origin/push/pop frames, and collects per island (new ... save):
   caves   - `cave from .. to ..` (the cave tool: passage half width 3 m x size, a room of 6 m x size at end=room) and `dig`
@@ -27,7 +28,14 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 CLEAR = 6.0          # metres a cave keeps from people and things
 WALK = 3.0           # half width of the main walk line
 ST_HALF = 3.0        # cave tool passage half width (CaveTool.PassX 3.0) x size
-ST_ROOM = 6.0        # cave tool end room radius x size
+# The cave tool's layout (CaveTool.Plan): tunnels of Step x size up the slope, as many as fit the distance (rounded,
+# 1..MaxTunnels); the den beyond the last one, from RoomIn back over the tunnel's end to its far wall, RoomMin/RoomMax
+# across (its mouth, RoomMouth.x, on the tunnel's line). Before 11-04 the room was a 6 m disc at the `to` point: the
+# real den (BalboaCave_Bear, about 30 x 32 m x size) reaches some 30 m x size past it (Shelter Atoll's lagoon cave).
+ST_STEP, ST_MAXSLOPE, ST_MAXTUNNELS, ST_MINSIZE, ST_MAXSIZE = 10.399, 12.0, 12, 0.7, 1.5
+ST_ROOM_BACK = 0.6                       # RoomIn: the den reaches this far back over the tunnel's end
+ST_ROOM_LEN = 15.99 + 15.79              # RoomMax.z - RoomMin.z
+ST_ROOM_HALF = 15.85 - 1.072             # RoomMin.x - RoomMouth.x (= RoomMax.x - RoomMouth.x, 14.78)
 LAND_CENTRE = (500.0, 500.0)
 
 
@@ -273,15 +281,39 @@ def seg_dist(p, a, b):
     return math.hypot(px - ax - t * dx, pz - az - t * dz)
 
 
+def box_dist(p, s, u, length, half):
+    """How far p is outside a rectangle from s along unit u (length) and half wide across (below 0: inside)."""
+    dx, dz = p[0] - s[0], p[1] - s[1]
+    along, across = dx * u[0] + dz * u[1], abs(-dx * u[1] + dz * u[0])
+    ox, oz = max(-along, along - length, 0.0), max(across - half, 0.0)
+    if ox > 0 or oz > 0: return math.hypot(ox, oz)
+    return -min(along, length - along, half - across)
+
+
+def st_layout(a, b, slope, size):
+    """The cave tool's plan of `cave from a to b` (CaveTool.Plan): the tunnels' far end and the den's rectangle."""
+    k = max(ST_MINSIZE, min(ST_MAXSIZE, size))
+    sl = math.radians(max(-ST_MAXSLOPE, min(ST_MAXSLOPE, slope)))
+    dx, dz = b[0] - a[0], b[1] - a[1]
+    d = math.hypot(dx, dz)
+    u = (dx / d, dz / d) if d > 0.01 else (0.0, 1.0)
+    n = max(1, min(ST_MAXTUNNELS, int(math.floor(d / (ST_STEP * k * math.cos(sl)) + 0.5))))
+    ln = n * ST_STEP * k * math.cos(sl)
+    end = (a[0] + u[0] * ln, a[1] + u[1] * ln)
+    room = ((end[0] - u[0] * ST_ROOM_BACK * k, end[1] - u[1] * ST_ROOM_BACK * k), u, ST_ROOM_LEN * k, ST_ROOM_HALF * k)
+    return k, end, room
+
+
 class Cave:
     """A cave's ground plan: segments (a, b, half width) and its mouths."""
     def __init__(self, kind, group, where):
         self.kind, self.group, self.where = kind, group, where
         self.segs, self.mouths, self.gated = [], [], False
+        self.boxes = []   # (start, unit direction, length, half width): a rectangle along the direction
 
     def dist(self, p):
         """How far p is outside the volume (below 0: inside)."""
-        return min(seg_dist(p, a, b) - r for a, b, r in self.segs)
+        return min([seg_dist(p, a, b) - r for a, b, r in self.segs] + [box_dist(p, *bx) for bx in self.boxes])
 
     def mouth_dist(self, p):
         return min(math.hypot(p[0] - m[0], p[1] - m[1]) for m in self.mouths) if self.mouths else math.inf
@@ -375,13 +407,13 @@ def read_islands(lines):
                 cf, ct = t.index('from'), t.index('to')
                 o = opts(t[ct + 3:])
                 a, b = world(f(t[cf + 1]), f(t[cf + 2])), world(f(t[ct + 1]), f(t[ct + 2]))
-                size = f(o['size']) if 'size' in o else 1.0
+                k, end, room = st_layout(a, b, f(o['slope']) if 'slope' in o else 0.0, f(o['size']) if 'size' in o else 1.0)
                 c = Cave('cave', o.get('as', ''), top)
-                c.segs.append((a, b, ST_HALF * size))
+                c.segs.append((a, end, ST_HALF * k))
                 if o.get('end', 'room') != 'open':
-                    c.segs.append((b, b, ST_ROOM * size))
+                    c.boxes.append(room)
                 c.mouths.append(a)
-                if o.get('end', 'room') == 'open': c.mouths.append(b)
+                if o.get('end', 'room') == 'open': c.mouths.append(end)
                 cur(top).caves.append(c)
             elif verb == 'dig':
                 o = opts([x for x in t[1:] if '=' in x or x == 'fill'])
@@ -540,7 +572,28 @@ def check_island(I, markers, machete_before):
     return issues
 
 
+def selftest():
+    """--selftest: the cave tool's plan against CaveTool.Plan's numbers (size 1: 3 tunnels for 26 m, the den 31.78 m
+    long and 29.56 m wide from 0.6 m back over their end; size 0.7 at 12 degrees: 5 tunnels for 35.6 m)."""
+    ok = True
+    def chk(name, got, want, tol=0.02):
+        nonlocal ok
+        if abs(got - want) > tol: ok = False; print('  FAIL selftest %s: %.3f, not %.3f' % (name, got, want))
+    k, end, room = st_layout((0.0, 0.0), (0.0, 26.0), 0.0, 1.0)
+    chk('end z', end[1], 3 * ST_STEP); chk('room start', room[0][1], 3 * ST_STEP - 0.6); chk('room length', room[2], 31.78)
+    chk('room half width', room[3], 14.778)
+    chk('inside the den', box_dist((5.0, 50.0), *room), -9.778)
+    chk('past the den', box_dist((0.0, 31.2 - 0.6 + 31.78 + 4.0), *room), 4.0)
+    chk('beside the den', box_dist((14.778 + 3.0, 40.0), *room), 3.0)
+    k, end, room = st_layout((0.0, 0.0), (0.0, -35.6), 12.0, 0.7)
+    chk('uw end z', end[1], -5 * ST_STEP * 0.7 * math.cos(math.radians(12)))
+    chk('uw den far wall', room[0][1] + room[1][1] * room[2], end[1] + 0.42 - 31.78 * 0.7)
+    print('cavecheck selftest: %s' % ('PASS' if ok else 'FAIL'))
+    return 0 if ok else 1
+
+
 def main(argv):
+    if '--selftest' in argv: return selftest()
     machete = '--machete' in argv
     args = [a for a in argv if not a.startswith('--')]
     if not args:

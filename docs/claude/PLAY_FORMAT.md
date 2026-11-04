@@ -55,7 +55,7 @@ expect message isn't whole
 | `walk` | `<x> <z> to <x> <z> [to <x> <z> ...] [h=] [below=] [blocked]` | The player is put on the first point, then walks the rest with Raft's controller (`PlayWalk`). Each point must be reached within 0.7 m before 2 s stuck. `h=`: must end within 1.6 m of that height. `below=`: start on what is under that height. `blocked`: passes when the walk does not get there. |
 | `climb` | `<x> <z> [h=]` | The nearest collider whose name contains `climb`, within 3 m; the player 1 m above its foot. Passes when Raft's controller is climbing within 3 s. |
 | `zone` | `<id>` | The trigger zone with that id (any case) is entered (`ScEnterZone`). |
-| `air` | `<zone id>` | A shown zone with Air: a player with 10 % breath has over 90 % a moment later. |
+| `air` | `<zone id> [here]` | A shown zone with Air: a player with 10 % breath has over 90 % a moment later. The player is put in it; with `here` they must already stand in it (a walk or swim in before it, no teleport). |
 | `read` | `<title>` | Reads the note whose title contains the text, any case (or the note of a chest). |
 | `open` | `<title>` | Opens the chest whose note title is the text (`ScOpenChest`). |
 | `reach` | `<title>` | That chest is within 2.5 m of the player's eye with nothing solid between (`ScReach`; a slain creature's loose body does not count). The player is not moved. |

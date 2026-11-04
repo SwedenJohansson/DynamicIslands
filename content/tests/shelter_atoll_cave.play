@@ -1,0 +1,45 @@
+# Shelter Atoll's lagoon cave and Dr. Shogo (CIPlay shelter_atoll_cave, 11-04; in a test world 'CI ...'). Points as in
+# its recipe. The storeroom is barred until someone talked to Dr. Shogo; the cave's supply chest stays hidden until his
+# second answer (CITalk Shelter Dr. Shogo pick 2 after this play - unquoted, the first word picks the island; the chest is not
+# checked there, as the next play respawns the island); the den has air and a
+# dry way down to the water. Pictures of Dr. Shogo, the storeroom, the dinghy by the mouth and the den.
+island Shelter Atoll keep
+offset 14.8414 -1.2974
+hour 11
+weather Calm
+expect hidden shelsupply
+
+# The storeroom off the radio room: barred
+at 6 0 h=1.9
+use storedoor stay
+expect message barred from inside
+expect shown storedoor
+
+# Dr. Shogo at the channel, sitting on his chair
+snap sa_shogo shogochair 250 4 1.2
+snap sa_shogo_chair shogochair 160 2.5 0.6
+use Dr. Shogo
+expect step 0
+
+# Now the bar lifts
+at 6 0 h=1.9
+use storedoor stay
+expect message lift the bar
+expect hidden storedoor
+picture sa_storeroom 6 3.3 0.6 6 2.2 7
+
+# The dinghy by the cave's mouth on the lagoon floor, from the landing
+picture sa_cave_landing 2 4 -12 -5 -3 -22
+snap sa_dinghy dinghy 30 5 2
+
+# Swim in: from the lagoon floor before the mouth up the flooded tunnel into the den, and breathe there (G2: no
+# teleport into the pocket)
+walk -2.3 -18.4 to -4 -22 to -15.5 -46.5 to -19 -54.3 to -23.6 -64 below=-3
+air shelair here
+
+# The den: dry, air, and a dry way down the tunnel to the water
+walk -23.6 -64 to -19 -54.3 to -15.5 -46.5 below=7
+picture sa_den_in -19 3.5 -54 -26 3 -68
+picture sa_den_out -26 3.5 -68 -15 1.5 -47
+air shelair
+picture sa_den_outside -45 12 -45 -24 4 -64
