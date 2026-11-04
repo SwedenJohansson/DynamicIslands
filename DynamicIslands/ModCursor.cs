@@ -15,6 +15,8 @@ namespace DynamicIslands
 	/// A window that opened while another one (or a second Show of itself) had freed the mouse read "free" and never gave it
 	/// back, and a window closing under another one locked the mouse while that one was still open: ActiveMenu stayed
 	/// PauseMenu with a free mouse - the mod's keys (ModKeys.Blocked) and Raft's sign box treated it as the Esc menu.
+	/// The main cause (CICursorTrace 11-04): RAPI.ToggleCursor(false) does nothing while RML's MainMenu.IsOpen is set, and that
+	/// stays set in a world - every close left PauseMenu and a free mouse. Give now does ToggleCursor(false)'s work itself then.
 	/// </summary>
 	public static class ModCursor
 	{
@@ -63,11 +65,19 @@ namespace DynamicIslands
 			// (only RML's own marker 666 goes back; a Raft value seen before - a stale PauseMenu left by an older build - becomes None)
 			MenuType back = Enum.IsDefined(typeof(MenuType), menuBefore) ? MenuType.None : menuBefore;
 			try { RAPI.ToggleCursor(false); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Locking the mouse: " + e.Message); }
-			if (CanvasHelper.ActiveMenu == MenuType.PauseMenu)
+			if (CanvasHelper.ActiveMenu == MenuType.PauseMenu && RmlConsoleOpen())
 			{
-				// (RML skips ToggleCursor(false) while its console or mod menu is open: the mouse stays with that, the menu goes back)
+				// (RML's console is open: the mouse stays with it, the menu goes back)
 				CanvasHelper.ActiveMenu = back;
-				LastGiveBack = "menu " + back + " (RML kept the mouse)";
+				LastGiveBack = "menu " + back + " (RML's console keeps the mouse)";
+			}
+			else if (CanvasHelper.ActiveMenu == MenuType.PauseMenu)
+			{
+				// (RML's ToggleCursor(false) also does nothing while its MainMenu.IsOpen is set - and that stays set in a world (seen
+				// 11-04 on every close): the cause of the stuck PauseMenu and free mouse. Do what it does.)
+				LockLikeRml();
+				if (back != MenuType.None) CanvasHelper.ActiveMenu = back;
+				LastGiveBack = "menu " + CanvasHelper.ActiveMenu + ", mouse locked by the mod (RML skipped it)";
 			}
 			else
 			{
@@ -75,6 +85,29 @@ namespace DynamicIslands
 				if (CanvasHelper.ActiveMenu == MenuType.None && back != MenuType.None) CanvasHelper.ActiveMenu = back;
 				LastGiveBack = "menu " + CanvasHelper.ActiveMenu + ", mouse locked";
 			}
+		}
+
+		/// <summary>What RAPI.ToggleCursor(false) does when it runs: a hidden, locked mouse, no menu, Raft's player controls.</summary>
+		static void LockLikeRml()
+		{
+			try { Helper.SetCursorVisibleAndLockState(false, CursorLockMode.Locked); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Locking the mouse: " + e.Message); }
+			CanvasHelper.ActiveMenu = MenuType.None;
+			try { CanvasHelper ch = ComponentManager<CanvasHelper>.Value; if (ch != null) ch.SetUIState(true); } catch { }
+			try { CustomInputConfig c = SimpleMonoBehaviourSingleton<CustomInputConfig>.Instance; if (c != null) c.SwitchCurrentActionMap("Player"); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Player keys back: " + e.Message); }
+		}
+
+		static System.Reflection.FieldInfo consoleOpen;
+		static bool consoleLooked;
+
+		/// <summary>RML's console is open (RConsole.isOpen): it has the mouse.</summary>
+		public static bool RmlConsoleOpen()
+		{
+			try
+			{
+				if (!consoleLooked) { consoleLooked = true; consoleOpen = HarmonyLib.AccessTools.Field(HarmonyLib.AccessTools.TypeByName("RConsole"), "isOpen"); }
+				return consoleOpen != null && (bool)consoleOpen.GetValue(null);
+			}
+			catch { return false; }
 		}
 
 		/// <summary>Windows destroyed while open (a scene change) let go.</summary>
