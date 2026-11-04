@@ -18,6 +18,7 @@ include lib_features
 include lib_highwater
 include lib_areas
 include lib_abyss
+include lib_caves
 new
 # (nature: forest: Like Raft's Balboa, a little more wooded - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.25 Bushes=0.38 Rocks=0.45 Harvest=0.1 BeachThings=0.3
@@ -358,6 +359,35 @@ prop minedark zone.radius=15
 prop minesound sound.event=event:/amb/cave
 prop minesound sound.volume=0.7
 prop minesound zone.radius=18
+
+# --- 11-04 (Abyss caves, G6): the old workings ------------------------------------------------------------------
+# The back drift: the company's first drift into the rock mound, from its back (the side away from the yard), until it
+# broke into a cavern (the cave tool: a den room at its end; it keeps 7 m of rock from the mine's own tunnel). Tunnel 1
+# on Copper Knob: the first workings, dug by hand into the knob's foot by the shore before the company sank the main
+# mine - two adits (the second the man-way out), a drift between them and a side drift to the old powder room, the
+# deepest, where a hewer left his chest and his note. Not as the plan first had it: dug passages can't join the cave
+# tool's pieces or the mine's mound and climb at most 25 degrees (no ladder shaft up to the headframe: the man-way is
+# the second adit), the knob's plateau keeps them 6 m off the headframe, and Grey's old den is across the island.
+call kit_st x=-12 z=22 yaw=180 len=7 end=room size=0.7 dirt=1 mush=1 stone=1 vines=1 as=backdrift
+dig 49.5,-13.5 54.5,-9.0 r=1.75 as=oldwork
+dig 60.9,-19.5 57.5,-13.5 54.5,-9.0 r=1.75 as=oldwork
+dig 54.5,-9.0 54.0,-4.5 r=1.75 slope=-10 as=oldwork
+dig 54.0,-4.5 55.0,1.0 r=3.0 as=oldwork
+caveloot oldwork dirt=3 mush=2 stone=2 vines=2
+# cavecheck inside minerchest
+place Loot_ChestSmall minerchest at 54.6 -1.0 h=5.5 drop yaw=240
+prop minerchest obj.name=minerchest
+prop minerchest loot.refill=0
+note minerchest Miner's chest | MINE No. 2 - TUNNEL 1
+
+We dug this one by hand, before the company came with the winch and the rails. Powder kept in here, dry, away from the lamps.
+
+The company says Tunnel 1 is played out. It isn't. The copper runs on under the knob, down towards the headframe. They wanted the deep vein and the deep vein only.
+
+If the roof talks, go out by the man-way, the second adit, not back the way you came.
+
+- T. Pike, hewer
+loot minerchest CopperOre*4;MetalOre*2;Rope*2;Battery*1
 
 quest title=Down the Old Mine
 quest intro=An old mine in a rock mound, closed since a tunnel broke into a burrow. The notice at the mouth says the last ore cart is still down there - and the foreman took the mine winch apart before he left.

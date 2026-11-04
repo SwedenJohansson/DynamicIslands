@@ -1,0 +1,23 @@
+# Old Mine Islet's caves (CIPlay old_mine_islet_caves, 11-04; in a test world 'CI ...'). Points as in its recipe.
+# Tunnel 1 on Copper Knob: in by the shore adit, up the side drift to the powder room and the miner's chest, out by
+# the man-way on the knob's south strip. The back drift into the rock mound: in to the cavern and out again.
+island Old Mine Islet keep
+offset 2.8622 -2.0096
+hour 11
+weather Calm
+
+# Tunnel 1: the shore adit, the drift, the powder room
+picture om_t1_adit_out 44 7 -19 49.5 5 -13.5
+walk 47.5 -15.5 to 49.5 -13.5 to 54.5 -9 to 54 -4.5 to 54.6 -1.5
+open Miner's chest
+picture om_t1_powder 54 5 -5 55 3.5 1
+picture om_t1_drift 54.5 5 -2 54.5 4.5 -9
+# out by the man-way
+walk 54.5 -9 to 57.5 -13.5 to 60.9 -19.5 to 61.5 -21
+picture om_t1_manway_out 61 7 -25 60.9 5 -19.5
+
+# The back drift into the rock mound and its cavern
+picture om_back_out -12 7 30 -12 3.5 22
+walk -12 26 to -12 22 to -12 14 to -12 5
+picture om_back_cavern -12 4 12 -12 3 0
+walk -12 5 to -12 14 to -12 22 to -12 27
