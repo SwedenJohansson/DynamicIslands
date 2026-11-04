@@ -307,6 +307,8 @@ Two small windows come up in many places. A **list to choose from** has a title 
 
 The blue plane is sea level. Anything below it is under water in game. For a flying or sunken island (Island tab > Height) the plane moves to where the sea will be in a world: below a flying island, above a sunken one.
 
+**Making your first quests:** the guide builds three small quests on one island click by click, each with other parts of the editor (an islander, a trigger zone, a story item and **Bring items**; puzzle lights in order, a **Signal** step and a gate that waits for it; a note, a chest, a **Craft or cook** step and a table that takes the dish), with pictures of the editor and of the quests in play, how to test each one and what to check when it goes wrong: [Three small quests, step by step](docs/GUIDE.md#66-step-by-step-three-small-quests).
+
 ## The island generator
 
 **Generate** (top bar, or the Island tab) opens the generator. The preview map on the right follows every change; the seed below it picks which island of all possible ones you get (the same seed with the same settings always gives exactly the same island, on every PC: the generator picks from Raft's own island objects in a fixed order, whatever the PC's language, `placeables.txt` or other mods). Every setting has a **?** to hover for help.

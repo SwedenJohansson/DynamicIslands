@@ -96,7 +96,8 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
 6. [Stories: quests, behaviours, story items](#6-stories-quests-behaviours-story-items)
    - [6.1 Quests](#61-quests) · [6.2 Behaviour and events](#62-behaviour-and-events) · [6.3 Story items](#63-story-items-and-story-sets)
    - [6.4 Islands that bring islands](#64-islands-that-bring-islands) · [6.5 Your islands in Raft's story (the Receiver)](#65-your-islands-in-rafts-story-the-receiver) ·
-     [The main story in Raft's notebook](#the-main-story-in-rafts-notebook-side-quests-in-the-journal) · [Making a main story](#making-a-main-story-the-helper-and-preview-notebook)
+     [The main story in Raft's notebook](#the-main-story-in-rafts-notebook-side-quests-in-the-journal) · [Making a main story](#making-a-main-story-the-helper-and-preview-notebook) ·
+     [6.6 Step by step: three small quests](#66-step-by-step-three-small-quests)
 7. [World plans: which islands a world gets](#7-world-plans-which-islands-a-world-gets)
    - [7.1 The plans that come with the mod](#71-the-plans-that-come-with-the-mod)
    - [7.2 Your first world plan, step by step](#72-your-first-world-plan-step-by-step)
@@ -2238,6 +2239,209 @@ on the island.
 
 The world option **Story islands in a new order** ([9.4](#94-extra-options)) works the same way for the notebook:
 the numbers on Raft's notes follow the world's order.
+
+### 6.6 Step by step: three small quests
+
+This section builds three short quests on one small island, click by click. Each one uses other parts of the editor:
+
+| Quest | Steps | What it teaches |
+|---|---|---|
+| [The lost crate](#quest-1-the-lost-crate) | 4 | an islander who talks, a trigger zone, a story item given by an object, **Bring items** |
+| [Lights in order](#quest-2-lights-in-order) | 4 | puzzle lights pressed **in this order**, a **Signal** step, a gate that opens only after the puzzle, a sign with the hint |
+| [Supper for the keeper](#quest-3-supper-for-the-keeper) | 4 | a note, a chest, a **Craft or cook** step, an object that takes an item and ends the quest |
+
+**Before you start:** make a small island (Island tab → **Generate**, [4.5](#45-the-island-generator), or the first
+island of [4.8](#48-your-first-island-step-by-step)) and save it once with **Save as**. The first quest is the
+island's **Main quest**; the other two are **+ Another quest** in the same quest editor, so all three can be played on
+one island. Good quest text names what the player sees (a hut, a well, a wreck on the beach), never a compass
+direction, and says when something is in a chest - see the steps below.
+
+#### Quest 1: The lost crate
+
+Old Finn stands by his stilt hut. His boat ran onto the beach in a storm, and his crate lies beside it. The player
+talks to him, walks to the wreck, picks up the crate and brings him the planks that were in it.
+
+![Old Finn by his stilt hut, with the quest's banner](images/world-tut-finn.jpg)
+
+**Make it:**
+
+1. **Objects tab**, search `islander`, place the **Islander** in front of a hut (any hut: "Buildings" has the stilt
+   huts). In the object panel's **Islander** group type the name `Old Finn`, and his words in the box under it (**What it says**):
+   `Ahoy! My boat ran onto the beach in the storm, and my crate is still lying beside her.` - a line with only `---`
+   - `Would you fetch it for me? Bring me four of the planks that are in it, and I can mend my hut.`
+   (`---` starts a new page, [6.1](#61-quests)).
+
+![The Islander's name and words in the object panel](images/editor-tut-islander.jpg)
+
+2. Down on the beach, place a small boat (`RT_PlasticBoat`, search `boat`) as the wreck, and a **Crate** beside it.
+   Place a **Trigger zone** ("Zones & triggers") over the wreck: name `wreck`, size 4 m, message
+   `Finn's wrecked boat, high on the sand. His crate lies beside it.`
+
+![The trigger zone over the wrecked boat on the beach](images/editor-tut-zone.jpg)
+
+3. **Island tab → Story items... → + Add a story item**: name `Finn's crate`, the line
+   `Old Finn's crate from the wrecked boat: his tools and a bundle of planks.`, story id `finncrate`, and a picture
+   with **Raft item...**.
+
+![Finn's crate in the Story items window](images/editor-tut-storyitem.jpg)
+
+4. Select the crate → **Behaviour & events...**: name `Finn's crate`; **Players can use it**: `Pick up Finn's crate`.
+   Under **When a player uses it**: **+ Add an action** → **give items** `story:finncrate*1;Plank*4`, **+ Add an action** →
+   **say** `You pick up Finn's crate. Four planks are tied to the lid.`, **+ Add an action** → **hide** with the name
+   empty (the crate itself).
+
+![The crate's Behaviour & events: give items, say, hide](images/editor-tut-crate.jpg)
+
+5. **Island tab → Edit quest...** (the **Main quest**): title `The lost crate`, introduction
+   `An old man waves from the stilt hut on the hill.` Then four steps with **+ Add a step**:
+
+   | # | Kind | What | Count | Text |
+   |---|---|---|---|---|
+   | 1 | Talk to | Old Finn (pick him with **▾**) | 1 | Talk to Old Finn by his stilt hut |
+   | 2 | Go to | wreck | 1 | Go down to the wrecked boat on the beach |
+   | 3 | Collect | `story:finncrate` (pick Finn's crate with **…**) | 1 | Pick up Finn's crate beside the wrecked boat |
+   | 4 | Bring items | `Plank@Old Finn` | 4 | Bring Old Finn the 4 planks from his crate |
+
+   **Choose reward...**: nails, rope and scrap; **When done**: `Old Finn grins and gets to work on his hut.`
+
+![The lost crate in the quest editor, four steps](images/editor-tut-quest1.jpg)
+
+**Test it:** **Save**, then **Test** ([4.9](#49-trying-the-island-in-a-world-test)). Walk to Finn and press E: his
+dialogue opens and the quest moves on. At the wreck the zone's message shows; E on the crate gives the planks; talk
+to Finn again and the 4 planks are handed over.
+
+![Old Finn after the planks are handed over: the reward comes in, and Quest 2 starts](images/world-tut-finn-done.jpg)
+
+**What went wrong?**
+
+- *The Bring step takes no planks.* The name after `@` must be the islander's name exactly (`Old Finn`, not `Finn`),
+  and the player must have planks: the test world's starter kit has some, so the step can finish before the crate.
+  Use **▾** to pick the islander instead of typing the name.
+- *The crate stays after E.* Its **hide** action needs an empty name (or **(itself)** from **…**).
+
+#### Quest 2: Lights in order
+
+Three lamps stand by three landmarks: a stack of crates, the well and the campfire. The lamplighter's yard behind a
+fence opens only when the lamps are lit in the order her sign gives. Her box (a chest) waits in the yard.
+
+![The lamplighter's fenced yard with its gate, sign and box](images/world-tut-yard.jpg)
+
+**Make it:**
+
+1. Place three **Puzzle light (switch)** objects ("Zones & triggers"), one beside the stacked crates, one beside the
+   well, one beside the campfire. In each one's **Puzzle light** group: **Group** `Lamps`, **Starts: Off**.
+2. Select the lamp that comes **first** (the crate lamp) → **Make order piece (in this order)** in the object panel's
+   **Story puzzle** group. Then the well lamp, then the campfire lamp: each becomes the next step of the puzzle
+   (1, 2, 3). In each lamp's **Order puzzle (in this order)** group, change **Puzzle** from `Order` to `Lamps`, so
+   the signal is `order:Lamps`.
+
+![A puzzle light as an order piece of the Lamps puzzle](images/editor-tut-lamp.jpg)
+
+3. Open each lamp's **Behaviour & events...**: name (`Crate lamp`, `Well lamp`, `Campfire lamp`), **Players can use
+   it**: `Light the lamp`, and under **When a player uses it** the action **switch light** (name empty = itself)
+   **on**, above the **press in order** action that step 2 added. On the last lamp only, scroll down to the event
+   **When its order puzzle was solved** and add a **say** action:
+   `All three lamps burn. Over at the yard, the gate's latch clicks.` (that event runs on every piece, so one lamp
+   is enough).
+
+![The last lamp's events: switch light, press in order, and the solved event](images/editor-tut-lamp-events.jpg)
+
+4. Build a small yard: fences ("Building") around a square with a **Gate** in one side. Select the gate →
+   **Behaviour & events...**: name `Gate`, **Moves: Opens and closes**, turn `90`° in `1.5` s; **Players can use
+   it**: `Open the gate`. Under **When a player uses it**: the action **open** (name empty = itself), then
+   **+ Only if...** → **Signal sent** `order:Lamps`, and **Otherwise say**:
+   `The gate is latched. The lamplighter's sign beside it says how to open it.`
+
+![The gate's Behaviour & events with the Only if... check](images/editor-tut-gate.jpg)
+
+5. Put a **Sign** ("Notes & signs") by the gate → **Edit note...**: title `Lamplighter's sign`, text
+   `My yard opens when the lamps are lit in the right order: first the lamp by the stacked crates, then the lamp by
+   the well, last the lamp by the campfire. A wrong one and they all go out. - Mara, lamplighter` The order is told
+   with landmarks the player can see - no compass directions.
+
+![The lamplighter's sign in the note editor](images/editor-tut-sign.jpg)
+
+6. A **Chest** inside the yard: in its **Note** group **Edit note...** with the title `Lamplighter's box`, and in its
+   **Loot** group **Add items...**: a lantern, 2 rope and 8 nails ([5.3](#53-chests-and-loot)).
+7. **Edit quest... → + Another quest** (Quest 2): title `Lights in order`, introduction
+   `Three lamps stand around the island, and the lamplighter's yard is locked.`
+
+   | # | Kind | What | Count | Text |
+   |---|---|---|---|---|
+   | 1 | Read | Lamplighter's sign | 1 | Read the lamplighter's sign by the fenced yard |
+   | 2 | Signal / object is | `order:Lamps` | 1 | Light the three lamps in the order the sign gives |
+   | 3 | Signal / object is | `Gate=open` | 1 | Open the gate of the lamplighter's yard |
+   | 4 | Open | Lamplighter's box | 1 | Open the lamplighter's box in the yard (it is a chest) |
+
+![Lights in order in the quest editor](images/editor-tut-quest2.jpg)
+
+**Test it:** in the test world, E on the gate first: it stays shut and says why. Light the lamps in the wrong order -
+they all go out - then in the right one; the gate opens with E and the box is in the yard.
+
+![At the gate before the puzzle: the quest asks for the lamps first](images/world-tut-latched.jpg)
+
+![The last lamp lit in order: the puzzle is solved](images/world-tut-lamps.jpg)
+
+![The gate of the lamplighter's yard stands open, the box inside](images/world-tut-yard-open.jpg)
+
+**What went wrong?**
+
+- *The gate opens at once.* Its **Only if...** check must be in the **When a player uses it** event with the signal written
+  exactly `order:Lamps` (the puzzle's name after `order:`).
+- *The puzzle never ends.* The object panel warns about a step no piece has: each of the three lamps needs its own
+  number (1, 2, 3) in the same puzzle.
+
+#### Quest 3: Supper for the keeper
+
+A table at the foot of the hill, a note on it and a cool box (a chest) beside it. The keeper asks for a cooked
+pomfret: the player cooks it on a grill and sets it on the table, and the keeper's lantern lights up.
+
+![The keeper's table with the note and the cool box](images/world-tut-table.jpg)
+
+**Make it:**
+
+1. Place a **Table** and a paper note on it ("Notes & signs"; place the note above the table, it falls onto it). The
+   note: title `Keeper's note`, text `Back at dusk. Be a dear and cook a pomfret for my supper. The fish and my spare
+   grill are in the cool box, the chest beside this table. Put the grill on your raft, cook the fish and set it here
+   on the table.`
+2. A **Chest** beside the table: **Edit note...** with the title `Cool box` (and a line such as
+   `Two raw pomfret on ice, and the keeper's spare grill.`), then **Add items...** in its **Loot** group:
+   2 **Raw pomfret**, 1 **Simple grill** and 6 planks.
+
+![The cool box chest with its note and loot](images/editor-tut-coolbox.jpg)
+
+3. A lantern on the table, **Behaviour & events...**: name `Supper lantern`, **At first: hidden until shown**.
+4. Select the table → **Behaviour & events...**: name `Keeper's table`, use text `Set the supper on the table`.
+   **When a player uses it**: the actions **send signal** `supper`, **show** `Supper lantern`, **say**
+   `You set the fish on the table and light the keeper's lantern. Supper is ready.`, then **+ Only if...** →
+   **Uses up item** `Cooked_Pomfret` × 1, and **Otherwise say**: `The keeper's table. Her note asks for a cooked pomfret.`
+
+![The keeper's table: actions and the Uses up item check](images/editor-tut-table.jpg)
+
+5. **Edit quest... → + Another quest** (Quest 3): title `Supper for the keeper`, introduction
+   `A table is laid for one at the foot of the hill, with a note on it.`
+
+   | # | Kind | What | Count | Text |
+   |---|---|---|---|---|
+   | 1 | Read | Keeper's note | 1 | Read the note on the keeper's table |
+   | 2 | Open | Cool box | 1 | Open the cool box beside the table (it is a chest) |
+   | 3 | Craft or cook | Cooked_Pomfret | 1 | Put the grill on your raft and cook a pomfret on it |
+   | 4 | Signal / object is | `supper` | 1 | Set the cooked pomfret on the keeper's table |
+
+![Supper for the keeper in the quest editor](images/editor-tut-quest3.jpg)
+
+**Test it:** read the note, open the cool box, place the grill on the raft (the test world's raft is beside the
+island, within the 300 m a **Craft or cook** step needs), cook a pomfret and take it off the grill. E on the table
+with the fish: the lantern lights and Quest 3 is done.
+
+![The keeper's lantern lit on the table: Quest 3 is done](images/world-tut-supper.jpg)
+
+**What went wrong?**
+
+- *Cooking doesn't count.* Only what is made **while the step is the current one** counts, within 300 m of the
+  island: open the cool box first (step 2), then cook. A pomfret cooked before does not count.
+- *The table says "Her note asks..." with the fish in hand.* The item name must be Raft's own: `Cooked_Pomfret`
+  (pick it with **…**), not the raw fish.
 
 ## 7. World plans: which islands a world gets
 

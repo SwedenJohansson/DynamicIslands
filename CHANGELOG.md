@@ -12,6 +12,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next update (planned)
 
 Not in this release yet; these come in the next update:
+- **Guide: three small quests, step by step** (guide 6.6, README): Old Finn's lost crate (an islander, a trigger zone, a
+  story item, **Bring items**), the lamplighter's lamps (puzzle lights in order, a **Signal** step, a gate that waits for
+  it) and a supper for the keeper (a note, a chest, **Craft or cook**, a table that takes the dish), click by click with
+  pictures of the editor and of each quest in play, how to test it and what to check when it goes wrong.
 - **Typing in Raft's chat or on a sign** no longer opens the stats page (K), the journal (J) or the minimap keys' actions: the mod's keys did not see the mod loader's chat field.
 - **Guide and README**: a new **Can I...?** question-and-answer list (guide chapter 13, README), and a **Writing steps
   players can follow** part in the guide's quest chapter (name what players see, no compass sides, say what to do, a

@@ -1348,7 +1348,7 @@ namespace DynamicIslands
 				foreach (KeyValuePair<string, string> kv in o.Props)
 				{
 					IEnumerable<string> targets = kv.Key.StartsWith(BehaviourProps.CheckPrefix) ? ObjCheck.ParseLines(kv.Value).Where(c => c.Kind == "state").Select(c => c.Target)
-						: kv.Key.StartsWith(BehaviourProps.EventPrefix) || kv.Key.StartsWith(BehaviourProps.ElsePrefix) ? ObjAction.ParseLines(kv.Value).Where(a => ObjAction.HasTarget(a.Verb)).Select(a => a.Target)
+						: kv.Key.StartsWith(BehaviourProps.EventPrefix) || kv.Key.StartsWith(BehaviourProps.ElsePrefix) ? ObjAction.ParseLines(kv.Value).Where(a => ObjAction.HasTarget(a.Verb) && a.Verb != OrderPuzzle.Verb).Select(a => a.Target)
 						: Enumerable.Empty<string>();
 					foreach (string t in targets.Where(x => x.Length > 0 && !x.Equals("self", StringComparison.OrdinalIgnoreCase) && !names.Contains(x)))
 						missing.Add("'" + t + "' (" + kv.Key + " of " + o.GameObjectName + ")");
