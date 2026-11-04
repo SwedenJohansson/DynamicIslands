@@ -479,8 +479,7 @@ place Pickup_Landmark_Titanium_Land irti at -16.3 -28.1 h=19 drop
 caveloot irreef dirt=5 mush=4 stone=3
 # the fallen drift: spikes where the floor gave way, planks along the east wall
 place Note_Sign irwarn at -22.22 -26.8 h=19 sit drop yaw=174
-note irwarn DANGER - DRIFT 4 | Floor gave way onto the old trap pit. Spikes under the rubble. Keep to the planks on the right.
-- Ironreef Mining Co.
+note irwarn DANGER - DRIFT 4 | Floor gave way onto the old trap pit. Spikes under the rubble. Keep to the planks on the right.\n- Ironreef Mining Co.
 place VP_SpikeTrap_01 - at -25.18 -25.51 h=19 drop yaw=84
 place VP_SpikeTrap_03 - at -25.58 -23.75 h=19 drop yaw=20
 place VP_SpikeTrap_01 - at -25.48 -21.93 h=19 drop yaw=-40
