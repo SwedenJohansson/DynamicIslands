@@ -1302,6 +1302,10 @@ namespace DynamicIslands
 			yield return EnsureAlive();
 			Physics.SyncTransforms();
 			Vector3 back = player.transform.position;
+			// (a player on the raft goes back to the same spot of the raft: it drifts while the test runs, and the world spot
+			// it had is open sea a minute later - the player ended under the raft)
+			Transform backParent = player.transform.parent;
+			Vector3 backLocal = backParent != null ? backParent.InverseTransformPoint(back) : back;
 			Vector3 target = col.bounds.center;
 			bool islander = r.GetComponentInChildren<Islander>(true) != null;
 			// (an islander: aim at the chest; the floor they stand on is the height to stand at - in a hut on stilts the
@@ -1330,7 +1334,8 @@ namespace DynamicIslands
 			Camera cam = Helper.MainCamera;
 			RaycastInteractable found = null;
 			int tried = 0;
-			bool byAhead = false;
+			bool byAhead = false, aimedCam = false;
+			string miss = null;
 			foreach (Vector3 stand in spots.Take(8))
 			{
 				tried++;
@@ -1346,19 +1351,31 @@ namespace DynamicIslands
 				// the same ray from the camera straight ahead, which is what the screen's middle is when the window has one)
 				RaycastInteractable ahead = AheadInteractable(cam, Player.UseDistance * 1.1f);
 				if (ahead != null && ahead.transform.IsChildOf(r.transform)) { found = ahead; byAhead = true; break; }
+				// (a minimised Raft may not turn the view (its mouse look waits for a frame drawn): the camera itself turned to
+				// the object, and the same ray in the same frame, before anything turns it back)
+				cam.transform.rotation = Quaternion.LookRotation(target - cam.transform.position);
+				ahead = AheadInteractable(cam, Player.UseDistance * 1.1f);
+				if (ahead != null && ahead.transform.IsChildOf(r.transform)) { found = ahead; byAhead = true; aimedCam = true; break; }
+				if (miss == null)
+				{
+					RaycastHit any;
+					bool hitAny = Physics.Raycast(cam.transform.position, target - cam.transform.position, out any, 10f, ~0, QueryTriggerInteraction.Collide);
+					miss = "camera " + Vector3.Distance(cam.transform.position, target).ToString("F1") + " m off, player " + Vector3.Distance(player.transform.position, stand).ToString("F1") + " m from the stand point, turned " + Vector3.Angle(cam.transform.forward, target - cam.transform.position).ToString("F0") + " deg off before the camera was turned; the first thing towards it: " + (hitAny ? any.collider.name + " (layer " + LayerMask.LayerToName(any.collider.gameObject.layer) + ", " + any.distance.ToString("F1") + " m)" : "nothing") + ", use distance " + Player.UseDistance.ToString("F1");
+				}
 			}
 			typeof(Behaviours).GetProperty("LastMessage").SetValue(null, "", null);
 			if (found != null && found.transform.IsChildOf(r.transform))
 			{
 				faceFound = found;
 				faceRef = r;
-				Log("Facing '" + label + "': Raft's interaction ray finds it" + (byAhead ? " (the camera's straight-ahead ray: the screen's middle missed - screen " + Screen.width + "x" + Screen.height + ")" : "") + " from " + Vector3.Distance(cam.transform.position, target).ToString("F1") + " m");
+				Log("Facing '" + label + "': Raft's interaction ray finds it" + (byAhead ? " (the camera's straight-ahead ray" + (aimedCam ? ", the camera turned to it" : "") + ": the screen's middle missed - screen " + Screen.width + "x" + Screen.height + ")" : "") + " from " + Vector3.Distance(cam.transform.position, target).ToString("F1") + " m");
 				yield break;
 			}
 			// (never left in the ground or under a floor: back where the player was)
-			PlayerMove.To(player, back);
+			Vector3 to = backParent != null && backParent.gameObject.activeInHierarchy ? backParent.TransformPoint(backLocal) : back;
+			PlayerMove.To(player, to + Vector3.up * 0.1f);
 			KeepAlive(player);
-			Fail("facing '" + label + "': Raft's ray found " + (found != null ? found.name : "nothing") + " (" + spots.Count + " stand points with room and a clear view, " + tried + " tried); the player is back where they were");
+			Fail("facing '" + label + "': Raft's ray found " + (found != null ? found.name : "nothing") + " (" + spots.Count + " stand points with room and a clear view, " + tried + " tried" + (miss != null ? "; first try: " + miss : "") + "); the player is back where they were");
 		}
 
 		[ConsoleCommand(name: "CITalk", docs: "Dev, in game (either player): talks to an islander as a player does - faces them (CIFace), opens the dialogue through the E key's path (Islander.Talk), then closes it as Esc does (or picks an answer, or reads every page with E), which ends in Islanders.Talked: talk events, a \"Bring items\" step's hand-in, the quest's talk step: CITalk <island> <islander name> [read | pick <n>]")]

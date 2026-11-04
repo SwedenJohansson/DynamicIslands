@@ -2475,6 +2475,13 @@ namespace DynamicIslands
 			Log("Loading world: " + dir.Name + " (its folder, " + which + "; " + all.Length + " saved worlds, Raft's list not read)");
 			SaveAndLoad.WorldToLoad = game;
 			GameModeValueManager.SelectCurrentGameMode(game.mode);
+			// (not signed in to PlayFab - a box with Steam offline: the world is hosted solo, as CINewWorld does; hosted for
+			// friends it loaded the scene but never let the player in)
+			if (!Raft_Network.SignedIntoPlayfab)
+			{
+				UnityEngine.UI.Dropdown auth = HarmonyLib.Traverse.Create(box).Field("authSettingDropdown").GetValue<UnityEngine.UI.Dropdown>();
+				if (auth != null && auth.options != null && auth.options.Count >= 2 && auth.value != 1) { auth.value = 1; Log("Not signed in to PlayFab: the world is loaded solo"); }
+			}
 			box.Button_LoadGame();
 			return true;
 		}

@@ -39,7 +39,7 @@ namespace DynamicIslands
 			try { menu = CanvasHelper.ActiveMenu.ToString(); } catch { menu = "?"; }
 			return "typing " + ModKeys.SomeoneTyping() + ", field " + field + ", sign writing " + (tw != null && tw.IsWriting)
 				+ ", stats page " + LevelWindow.IsOpen + ", journal " + JournalWindow.IsOpen + ", notebook " + PlayerNotebookWindow.IsOpen + ", note " + NoteReader.IsOpen + ", dialogue " + DialoguePanel.IsOpen
-				+ ", minimap mode " + Minimap.Mode + " shown " + Minimap.Shown + ", ActiveMenu " + menu;
+				+ ", minimap mode " + Minimap.Mode + " shown " + Minimap.Shown + ", ActiveMenu " + menu + ", cursor " + (Cursor.visible ? "shown" : "hidden") + " " + Cursor.lockState;
 		}
 
 		/// <summary>Raft's sign writing box (one in the game scene).</summary>
