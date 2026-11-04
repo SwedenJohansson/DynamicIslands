@@ -72,7 +72,18 @@ ramp Block_Floor_Tier3 from 0 -11.5 5 to 0 -10.75 5 len=1.5 top=0
 ramp Block_Floor_Tier3 from 0 -5.25 5 to 0 -4.5 5 len=1.5 top=0
 
 # --- Ladders up from the water: the coop tower's south face, the west tower's west face -------------------------------
-place LandmarkLadder_6m - at 0 -20.7 h=-1.2 yaw=0
+# (fixA 11-03, REACH: from the water nothing could take hold of the coop ladder (a swimmer's hand at the water line meets
+# the wall, not the rungs) - the ladder moved onto the window panel, and a boat landing (a deck tile on two posts down to
+# the street) in front of its foot: climb out of the water onto it (0.3 m), then up the ladder; the ladder stands 0.5 m off
+# the wall, since at 0.2 m the window frame kept the walks from taking hold of it)
+place LandmarkLadder_6m - at -1 -21.0 h=-1.2 yaw=180
+place Block_Floor_Tier3 - at -1 -21.85 h=0.3
+place Block_Pillar_Tier3 - at -1.6 -22.15 h=-7.6
+place Block_Pillar_Tier3 - at -1.6 -22.15 h=-5.05
+place Block_Pillar_Tier3 - at -1.6 -22.15 h=-2.5
+place Block_Pillar_Tier3 - at -0.4 -22.15 h=-7.6
+place Block_Pillar_Tier3 - at -0.4 -22.15 h=-5.05
+place Block_Pillar_Tier3 - at -0.4 -22.15 h=-2.5
 place LandmarkLadder_6m - at -18.2 0 h=-1.2 yaw=90
 
 # --- The beacon roof: the beacon hut (distress card, the Receiver plans), the beacon mast and its light ---------------
@@ -134,7 +145,15 @@ scatter SeaVine3_klump 14 at 0 0 r=44 seed=10111 free=2
 call tower x=-24 z=26 h=-7 n=3 a=towers2
 prop towers2 tint.color=#7d8a8c
 prop towers2 tint.amount=0.35
-place LandmarkLadder_6m - at -27 21.3 h=-4.2 yaw=0
+# (fixA 11-03, REACH: as the coop ladder - moved onto the window panel, a boat landing in front of its foot)
+place LandmarkLadder_6m - at -28.5 21.3 h=-4.2 yaw=180
+place Block_Floor_Tier3 - at -28.5 20.45 h=0.3
+place Block_Pillar_Tier3 - at -29.1 20.15 h=-7.6
+place Block_Pillar_Tier3 - at -29.1 20.15 h=-5.05
+place Block_Pillar_Tier3 - at -29.1 20.15 h=-2.5
+place Block_Pillar_Tier3 - at -27.9 20.15 h=-5.05
+place Block_Pillar_Tier3 - at -27.9 20.15 h=-7.6
+place Block_Pillar_Tier3 - at -27.9 20.15 h=-2.5
 place Loot_Chest annexchest at -27.5 27.5 h=2.05 sit yaw=90
 place BoatStranded - at 26 -28 ground yaw=35
 place Loot_ChestSmall wreckchest at 22 -24 ground sit yaw=200
