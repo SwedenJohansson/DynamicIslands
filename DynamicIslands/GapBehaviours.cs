@@ -13,7 +13,7 @@ namespace DynamicIslands.Editor
 	///   time|night            check: the time of day - day, night, dawn, dusk or an hour range "20-6" (Raft's clock, the
 	///                         same on every machine: Raft keeps it in step). A list "dawn,dusk" = any of them.
 	///   weather|rain|10       shared action (host): Raft's weather becomes rain (clear, calm, fog, waves, rain, storm,
-	///                         snow; raft = Raft chooses again) and is held for 10 minutes (empty = 10), then Raft chooses
+	///                         snow; raft = Raft chooses again; Raft's seas have no fog weather) and is held for 10 minutes (empty = 10), then Raft chooses
 	///                         again. Raft sends its weather to every player.
 	///   weather|rain,storm    check: the weather now is one of these.
 	///   random||3             the next 3 actions (empty = 2; stops at a wait): only one of them runs, picked at random. The
@@ -167,9 +167,21 @@ namespace DynamicIslands.Editor
 			{
 				if (TestWeather != null) return TestWeather;
 				WeatherManager wm = Manager;
-				try { return wm != null ? NameOf(wm.GetCurrentWeatherType()) : ""; } catch { return ""; }
+				try
+				{
+					if (wm == null) return "";
+					// Raft fades the old weather out first (some seconds): a weather action's weather counts from the start
+					if (changingTo.HasValue && Changing(wm)) return NameOf(changingTo.Value);
+					changingTo = null;
+					return NameOf(wm.GetCurrentWeatherType());
+				}
+				catch { return ""; }
 			}
 		}
+
+		/// <summary>The weather a weather action started and Raft is still fading in.</summary>
+		static UniqueWeatherType? changingTo;
+		static bool Changing(WeatherManager wm) { return Traverse.Create(wm).Field("changingWeather").GetValue<bool>(); }
 
 		/// <summary>Whether a weather check's names ("rain,storm") hold for a weather. storm = Raft's rain storm or rough snow.</summary>
 		public static bool WeatherMatches(string spec, string now)
@@ -194,6 +206,7 @@ namespace DynamicIslands.Editor
 			if (want == "raft" || want == "auto")
 			{
 				wm.WeatherTimer = 5f;
+				changingTo = null;
 				Log("Weather on '" + (e != null ? e.HostName : "?") + "': Raft chooses its weather again");
 				return;
 			}
@@ -201,11 +214,37 @@ namespace DynamicIslands.Editor
 			if (!WeatherType(wm, want, out type)) { Log("Weather '" + want + "' isn't one of " + string.Join(", ", WeatherNames)); return; }
 			try
 			{
-				if (wm.GetCurrentWeatherType() != type) wm.SetWeather(type, false);
+				bool has = true;
+				if (wm.GetCurrentWeatherType() != type)
+				{
+					// (Raft looks for the weather in all its seas' lists; one it has starts fading in at once)
+					wm.SetWeather(type, false);
+					has = Changing(wm) || wm.GetCurrentWeatherType() == type;
+					if (!has)
+					{
+						// (a weather in the scene but in none of the seas' lists)
+						Weather w = StormSeas.FindWeather(type);
+						if (w != null) { wm.SetWeather(w, false); has = Changing(wm) || wm.GetCurrentWeatherType() == type; }
+					}
+					changingTo = has ? type : (UniqueWeatherType?)null;
+				}
 				wm.WeatherTimer = Minutes(a.Arg) * 60f;
-				Log("Weather on '" + (e != null ? e.HostName : "?") + "': " + want + " (" + type + ") for " + Minutes(a.Arg) + " min" + (wm.GetCurrentWeatherType() != type ? " - Raft has no such weather here, it stays " + wm.GetCurrentWeatherType() : ""));
+				Log("Weather on '" + (e != null ? e.HostName : "?") + "': " + want + " (" + type + ") for " + Minutes(a.Arg) + " min" + (has ? "" : " - Raft has no such weather (it has " + Available() + "), it stays " + wm.GetCurrentWeatherType()));
 			}
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Weather '" + want + "' failed: " + ex.Message); }
+		}
+
+		/// <summary>The weathers Raft has in this world ("clear, calm, rain, ..."), for the log.</summary>
+		internal static string Available()
+		{
+			var names = new List<string>();
+			foreach (Weather w in Resources.FindObjectsOfTypeAll<Weather>())
+			{
+				if (w == null || !w.gameObject.scene.IsValid()) continue;
+				SO_Weather so = Traverse.Create(w).Field("so_weather").GetValue<SO_Weather>();
+				if (so != null && !names.Contains(NameOf(so.uniqueWeatherType) + "/" + so.uniqueWeatherType)) names.Add(NameOf(so.uniqueWeatherType) + "/" + so.uniqueWeatherType);
+			}
+			return names.Count > 0 ? string.Join(", ", names.ToArray()) : "none";
 		}
 
 		static bool WeatherType(WeatherManager wm, string name, out UniqueWeatherType t)
@@ -475,14 +514,16 @@ namespace DynamicIslands.Editor
 			m.SetParent(root.transform, false);
 			Material stone = ContentCatalog.MarkerMaterial(new Color(0.46f, 0.44f, 0.4f)), dark = ContentCatalog.MarkerMaterial(new Color(0.36f, 0.34f, 0.31f));
 			Material water = ContentCatalog.MarkerMaterial(new Color(0.22f, 0.52f, 0.68f));
-			// A ring of stones round a pool, the water a little below their tops
+			// A ring of stones round a pool, the water a little below their tops; the stones and a stone footing reach
+			// 0.8 m into the ground, so on a slope its low side still stands on the ground
 			for (int i = 0; i < 10; i++)
 			{
 				float a = i * Mathf.PI * 2f / 10f;
-				ContentCatalog.Part(PrimitiveType.Sphere, "Stone" + i, m, new Vector3(Mathf.Cos(a) * 0.85f, 0.12f, Mathf.Sin(a) * 0.85f), Quaternion.Euler(0f, i * 37f, 0f),
-					new Vector3(0.48f, 0.34f, 0.4f), i % 3 == 0 ? dark : stone);
+				ContentCatalog.Part(PrimitiveType.Sphere, "Stone" + i, m, new Vector3(Mathf.Cos(a) * 0.85f, 0f, Mathf.Sin(a) * 0.85f), Quaternion.Euler(0f, i * 37f, 0f),
+					new Vector3(0.5f, 0.62f, 0.42f), i % 3 == 0 ? dark : stone);
 			}
 			ContentCatalog.Part(PrimitiveType.Cylinder, "Basin", m, new Vector3(0f, 0.02f, 0f), Quaternion.identity, new Vector3(1.7f, 0.04f, 1.7f), dark);
+			ContentCatalog.Part(PrimitiveType.Cylinder, "Footing", m, new Vector3(0f, -0.4f, 0f), Quaternion.identity, new Vector3(2.05f, 0.42f, 2.05f), dark);
 			ContentCatalog.Part(PrimitiveType.Cylinder, "Water", m, new Vector3(0f, 0.16f, 0f), Quaternion.identity, new Vector3(1.55f, 0.02f, 1.55f), water);
 			ContentCatalog.AddLabel(root.transform, "Spring", 0.9f);
 			return root;
@@ -545,7 +586,7 @@ namespace DynamicIslands.Editor
 			switch (kind)
 			{
 				case TimeCheck: return "day, night, dawn, dusk or 20-6";
-				case WeatherCheck: return "rain, storm, fog, calm...";
+				case WeatherCheck: return "rain, storm, calm, snow...";
 				case CountCheck: return "counter name";
 			}
 			return null;
@@ -556,7 +597,7 @@ namespace DynamicIslands.Editor
 			switch (kind)
 			{
 				case TimeCheck: return "The time of day: day, night, dawn (5-8), dusk (18-21), or hours like 20-6 (past midnight) or 12 (12:00-13:00). Several with commas: any of them. Raft's clock, the same for every player";
-				case WeatherCheck: return "Raft's weather now: clear, calm, fog, waves, rain, storm (Raft's rain storm or rough snow), snow. Several with commas: any of them";
+				case WeatherCheck: return "Raft's weather now: clear, calm, fog, waves, rain, storm (Raft's rain storm or rough snow), snow (Raft's seas have no fog weather). Several with commas: any of them";
 				case CountCheck: return "The name of one of the island's counters (the \"count\" action sets it)";
 			}
 			return null;

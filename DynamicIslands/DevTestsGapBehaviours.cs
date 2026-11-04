@@ -144,9 +144,12 @@ namespace DynamicIslands
 			bool ok = true;
 			int fog = -1, look = -1, back = -1;
 			IslandWorldState.Entry e = null;
+			// fog when Raft has a fog weather in this world, else rain (Raft's storm weather, always there)
+			string want = GapBehaviours.Available().Contains("/Fog") ? "fog" : "rain";
+			UniqueWeatherType wantType = want == "fog" ? UniqueWeatherType.Fog : UniqueWeatherType.Rain;
 			yield return GapIsland((file, add) =>
 			{
-				fog = add("Log", 0f, 4f, P(BehaviourProps.Use, "Fog", "on.use", "weather|fog|2"));
+				fog = add("Log", 0f, 4f, P(BehaviourProps.Use, "Fog", "on.use", "weather|" + want + "|2"));
 				look = add("Log", 3f, 4f, P(BehaviourProps.Use, "Look", "if.use", "weather|fog,rain", "on.use", "count|fogseen|", "else.use", "count|clearseen|"));
 				back = add("Log", -3f, 4f, P(BehaviourProps.Use, "Back", "on.use", "weather|raft|"));
 			}, x => e = x);
@@ -157,13 +160,18 @@ namespace DynamicIslands
 				Check(ref ok, wm != null, "the world has Raft's weather");
 				if (wm != null)
 				{
-					Log("weather before: " + GapBehaviours.WeatherNow + " (" + wm.GetCurrentWeatherType() + "), timer " + wm.WeatherTimer.ToString("F0"));
+					Log("weather before: " + GapBehaviours.WeatherNow + " (" + wm.GetCurrentWeatherType() + "), timer " + wm.WeatherTimer.ToString("F0") + "; Raft's weathers here: " + GapBehaviours.Available());
 					yield return GapUse(e, fog);
 					yield return new WaitForSeconds(1f);
-					Check(ref ok, wm.GetCurrentWeatherType() == UniqueWeatherType.Fog && GapBehaviours.WeatherNow == "fog", "weather|fog|2 makes fog (" + wm.GetCurrentWeatherType() + ")");
-					Check(ref ok, wm.WeatherTimer > 100f && wm.WeatherTimer <= 120f, "for 2 minutes (timer " + wm.WeatherTimer.ToString("F0") + " s)");
+					Check(ref ok, GapBehaviours.WeatherNow == want, "weather|" + want + "|2 makes " + want + " (" + GapBehaviours.WeatherNow + ", Raft fading from " + wm.GetCurrentWeatherType() + ")");
 					yield return GapUse(e, look);
-					Check(ref ok, GapBehaviours.Counter(e, "fogseen") == 1 && GapBehaviours.Counter(e, "clearseen") == 0, "the weather|fog,rain check passes in fog");
+					Check(ref ok, GapBehaviours.Counter(e, "fogseen") == 1 && GapBehaviours.Counter(e, "clearseen") == 0, "the weather|fog,rain check passes while the fog comes in");
+					float t0 = Time.time;
+					while (wm.GetCurrentWeatherType() != wantType && Time.time - t0 < 120f) yield return new WaitForSeconds(1f);
+					Check(ref ok, wm.GetCurrentWeatherType() == wantType && GapBehaviours.WeatherNow == want, "Raft's weather is " + want + " after " + (Time.time - t0).ToString("F0") + " s (" + wm.GetCurrentWeatherType() + ")");
+					Check(ref ok, wm.WeatherTimer > 100f - (Time.time - t0) - 3f && wm.WeatherTimer <= 120f, "for 2 minutes (timer " + wm.WeatherTimer.ToString("F0") + " s)");
+					yield return GapUse(e, look);
+					Check(ref ok, GapBehaviours.Counter(e, "fogseen") == 2 && GapBehaviours.Counter(e, "clearseen") == 0, "the weather|fog,rain check passes in fog");
 					GapBehaviours.TestWeather = "clear";
 					yield return GapUse(e, look);
 					GapBehaviours.TestWeather = null;
@@ -264,8 +272,24 @@ namespace DynamicIslands
 			IslandWorldState.Entry e = null;
 			yield return GapIsland((file, add) =>
 			{
-				spring = add(GapBehaviours.SpringName, 0f, 4f, P(BehaviourProps.Use, "Drink"));
-				stone = add("Log", 3f, 4f, P(BehaviourProps.Use, "Rest", "on.use", "heal||health 20"));
+				// The spring on the gentlest of a few spots near the middle (a builder puts a pool on fairly level ground)
+				Vector2 c = IslandSpawner.LandCentre(file);
+				int res = file.HeightmapResolution;
+				float step = file.TerrainSize.x / (res - 1);
+				Func<float, float, float> hAt = (x, z) => file.Heights[Mathf.Clamp(Mathf.RoundToInt(z / step), 0, res - 1), Mathf.Clamp(Mathf.RoundToInt(x / step), 0, res - 1)] * file.TerrainSize.y;
+				Vector2 best = new Vector2(0f, 4f); float bestRange = float.MaxValue;
+				foreach (Vector2 o in new[] { new Vector2(0f, 4f), new Vector2(4f, 0f), new Vector2(-4f, 0f), new Vector2(0f, -4f), new Vector2(5f, 5f), new Vector2(-5f, 5f), new Vector2(5f, -5f), new Vector2(-5f, -5f), new Vector2(0f, 8f), new Vector2(8f, 0f), new Vector2(-8f, 0f), new Vector2(0f, -8f) })
+				{
+					float lo = float.MaxValue, hi = float.MinValue;
+					for (int k = 0; k < 9; k++)
+					{
+						Vector2 q = c + o + (k == 0 ? Vector2.zero : new Vector2(Mathf.Cos(k * Mathf.PI / 4f), Mathf.Sin(k * Mathf.PI / 4f)) * 1.2f);
+						float h = hAt(q.x, q.y); lo = Mathf.Min(lo, h); hi = Mathf.Max(hi, h);
+					}
+					if (hi - lo < bestRange) { bestRange = hi - lo; best = o; }
+				}
+				spring = add(GapBehaviours.SpringName, best.x, best.y, P(BehaviourProps.Use, "Drink"));
+				stone = add("Log", best.x + 3f, best.y, P(BehaviourProps.Use, "Rest", "on.use", "heal||health 20"));
 			}, x => e = x);
 			if (e == null) yield break;
 			Network_Player p = RAPI.GetLocalPlayer();
@@ -279,11 +303,30 @@ namespace DynamicIslands
 				if (s != null && r != null)
 				{
 					h0 = s.stat_health.Value; f0 = s.stat_hunger.Normal.Value; d0 = s.stat_thirst.Normal.Value;
-					Vector3 at = r.transform.position;
 					Check(ref ok, r.GetComponentsInChildren<TextMesh>(true).All(t => !t.gameObject.activeInHierarchy), "its editor name tag is hidden in the world");
-					RaycastHit hit;
-					bool grounded = Physics.Raycast(at + Vector3.up * 3f, Vector3.down, out hit, 10f, 1 << IslandSpawner.TerrainLayer) && Mathf.Abs(hit.point.y - at.y) < 0.4f;
-					Check(ref ok, grounded, "it sits on the ground (" + (grounded ? (at.y - hit.point.y).ToString("F2") + " m" : "no ground under it") + ")");
+					// The ground under its middle and under its rim (8 points): none of it below the footing (0.8 m down)
+					Transform sp = r.transform;
+					Func<Vector3, float?> groundAt = q =>
+					{
+						foreach (RaycastHit h in Physics.RaycastAll(q + Vector3.up * 4f, Vector3.down, 12f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
+							if (!h.transform.IsChildOf(sp) && h.collider.GetComponentInParent<Network_Player>() == null) return h.point.y;
+						return null;
+					};
+					// (The test island's file heights are the nearest heightmap sample; the editor puts a piece on the real ground,
+					// so the spring goes there first)
+					float? mid = groundAt(sp.position);
+					if (mid.HasValue && Mathf.Abs(mid.Value - sp.position.y) < 1.5f) sp.position = new Vector3(sp.position.x, mid.Value, sp.position.z);
+					Vector3 at = sp.position;
+					Log("the spring's spot: " + (sp.position - e.Root.transform.position).ToString("F1") + " on the island");
+					float worst = 0f; int missing = 0;
+					for (int k = 0; k < 8; k++)
+					{
+						float ang = k * Mathf.PI / 4f;
+						float? g = groundAt(at + new Vector3(Mathf.Cos(ang) * 0.95f, 0f, Mathf.Sin(ang) * 0.95f));
+						if (!g.HasValue) missing++; else worst = Mathf.Max(worst, at.y - g.Value);
+					}
+					Check(ref ok, mid.HasValue && Mathf.Abs(mid.Value - at.y) < 0.4f && missing == 0 && worst < 0.8f,
+						"it sits on the ground (middle " + (mid.HasValue ? (at.y - mid.Value).ToString("F2") + " m above it" : "no ground") + ", rim at most " + worst.ToString("F2") + " m above it" + (missing > 0 ? ", " + missing + " rim points without ground" : "") + ")");
 					yield return CameraShot(at + new Vector3(2.4f, 1.6f, -2.4f), at + Vector3.up * 0.2f, "from_gap_spring");
 					PutPlayerNear(r.transform, 1.5f);
 					yield return new WaitForSeconds(0.5f);

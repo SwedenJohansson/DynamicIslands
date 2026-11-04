@@ -1939,10 +1939,11 @@ Select any object → **Behaviour & events...**. No code needed:
   `dawn` 5-8, `dusk` 18-21, hours like `20-6` - past midnight - or `12` for 12:00-13:00; several with commas: any of
   them) reads Raft's clock, the same for every player: a ghost that only shows at night, a shop open by day. The
   check **weather is** (`weather|rain,storm`; clear, calm, fog, waves, rain, storm, snow - storm is Raft's rain storm
-  or rough snow) and the action **change weather** (shared, `weather|fog|10`: the weather for every player for some
+  or rough snow) and the action **change weather** (shared, `weather|rain|10`: the weather for every player for some
   minutes, 10 at first, up to 600; then Raft chooses again; `weather|raft` hands it back at once). Raft has some
   weathers only in some seas (snow in the cold ones): a weather it hasn't there is left as it is, and the log says
-  so. **one at random** (`random||3`) does ONE of the next 3 actions (2-20; 2 at first), picked at random each time,
+  so (Raft's own seas have no fog weather, so `fog` changes nothing: for fog use an atmosphere zone). Raft fades
+  from one weather to the next; the check **weather is** sees the new one at once. **one at random** (`random||3`) does ONE of the next 3 actions (2-20; 2 at first), picked at random each time,
   the same one for every player; the group stops at a **wait**, and the actions after the group run as usual - a
   chest that gives one of three things, a parrot with three sayings. **count** (shared, saved, `count|Fish|` adds 1;
   `+5`, `-1`, `=0`, `reset`; never below 0) keeps a number per island under a name, and the check **counter**
