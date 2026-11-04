@@ -1406,10 +1406,12 @@ namespace DynamicIslands
 			string name = Islanders.NameOf(isl.Ref != null ? isl.Ref.Props : null);
 			int talks = Islanders.Talks;
 			// E: what Islander.OnIsRayed does on the interact key
+			DialoguePanel.LastClose = null;
 			isl.Talk();
-			yield return new WaitForSeconds(0.5f);
 			if (!DialoguePanel.IsOpen) { Fail("talking to '" + name + "': no dialogue opened"); yield break; }
 			Log("Dialogue open: '" + DialoguePanel.ShownSpeaker + "', page 1: " + TalkShort(DialoguePanel.ShownText));
+			yield return new WaitForSeconds(0.5f);
+			if (!DialoguePanel.IsOpen) { Fail("talking to '" + name + "': the dialogue closed by itself within 0.5 s (" + (DialoguePanel.LastClose ?? "unknown") + ")"); yield break; }
 			if (pick > 0) { DialoguePanel.Pick(pick); Log("Picked answer " + pick); }
 			else if (read)
 			{

@@ -83,10 +83,10 @@ namespace DynamicIslands
 					Vector3 p = player.transform.position + dir * 1.5f + Vector3.up * 1.5f;
 					foreach (RaycastHit h in Physics.RaycastAll(p, Vector3.down, 4f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore).OrderBy(x => x.distance))
 					{
+						// (the first raft block under the spot: terrain over a beached raft is passed through)
 						if (h.collider.transform.IsChildOf(player.transform)) continue;
 						floor = h.collider.GetComponentInParent<Block>();
-						if (floor != null) { hit = h; fwd = dir; }
-						break;
+						if (floor != null) { hit = h; fwd = dir; break; }
 					}
 				}
 				if (floor == null || floor.transform.parent == null) { Fail("CISign place: no raft floor near the player (stand on the raft)"); yield break; }
