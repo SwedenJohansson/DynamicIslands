@@ -103,6 +103,7 @@ namespace DynamicIslands.Editor
 			{ GapBehaviours.TimeCheck, "The time of day is day, night, dawn, dusk or between some hours (20-6)" },
 			{ GapBehaviours.WeatherCheck, "Raft's weather is now rain, storm, fog, calm, waves, snow or clear" },
 			{ GapBehaviours.CountCheck, "A counter of this island (the \"count\" action) is at least, at most or exactly a number" },
+			{ GapWorld.PlayersCheck, "Enough living players stand in a trigger zone (a co-op plate). It scales with the players online: never more than are online, so one player alone is always enough" },
 		};
 
 		public static void Create(Transform canvas)
@@ -417,6 +418,7 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, string> CheckLabels =new Dictionary<string, string>
 		{
 			{ "has", "has item" }, { "take", "uses up item" }, { "state", "object is" }, { "signal", "signal sent" }, { "quest", "quest step" }, { "wears", "wears item" }, { "holds", "holds item" }, { PlayerFeatures.TalkedCheck, "talked to" }, { Collectibles.CheckKind, "set found" }, { Lights.LightCheck, "light is" }, { Lights.GroupCheck, "all lights" }, { GapBehaviours.TimeCheck, "time of day" }, { GapBehaviours.WeatherCheck, "weather is" }, { GapBehaviours.CountCheck, "counter" },
+			{ GapWorld.PlayersCheck, "players in zone" },
 		};
 
 		/// <summary>"Only if ..." (every check must pass) and "Otherwise say ...".</summary>

@@ -1694,6 +1694,19 @@ that name standing in the zone (pieces players **carry**, [6.2](#62-behaviour-an
 "Stacked 2 of 4", and with enough its **stack** event runs once (the host): open a gate, send a signal. In a recipe:
 `zone.push=0,1,0,9`, `zone.push=1,0,0,0,14` (a knock only), `zone.pulse=3,2`, `zone.stack=Crate|4` with `on.stack=open|Gate`.
 
+**Co-op zones** (2026-11-04, the zone's **Co-op zone** group): pressure plates for a crew. **Players** (1-8; off to
+begin with) is how many players must stand in the zone together; then its **crowd** event runs (the host counts,
+twice a second). **How it counts:** the number needed is the number set, but never more than the players online. A
+player alone is always enough; with 2 online a zone set to 2 (or 3) needs both; with 3 online a 3 needs all three.
+Only living players count, both online and in the zone. **Once**: crowd runs the first time enough players stand there,
+once ever in that world (a gate that stays open; saved). **While they stand**: crowd runs each time the zone fills and
+**crowdleft** when it no longer holds enough - a door held open while the crew stands on the plate
+(`on.crowd=open|Door`, `on.crowdleft=close|Door`); a world loaded while it was full closes again when nobody stands
+there. Players near a zone that needs more than one read "Co-op zone: 1 of 2 players here". The check **players in
+zone** (`players|Plate|2`; empty number = the zone's own, empty name = this zone) asks the same from any object's
+**Only if**, counted the same way. The zone's message, items and enter event work as before, for each player. In a
+recipe: `zone.players=2`, `zone.players=2|hold`.
+
 **Invisible walls and ramps** (also in "Zones & triggers") are solid in the world but not seen: block a path, fence
 an arena, or make a cliff climbable.
 
@@ -1976,6 +1989,18 @@ Select any object → **Behaviour & events...**. No code needed:
   off: a well, a cook's meal, a healer. The ready piece **Drinking spring** (the object list, **Zones & triggers**) is a ring of stones round
   a pool that fills the thirst of whoever drinks from it, as often as they like; its own use actions run after the
   drink (give it `heal||` instead to fill everything).
+- **Trade stands** (2026-11-04): select any object → **Trade stand...** in the object panel (beside **Readable...**
+  and **A chest...**). Players look at it and press E to trade: they pay what you set in **Players pay**
+  (`Plank*12;Rope*2`; a story item, `story:old-coin*1`, is taken from the crew's) and get **They get** (Raft items or
+  a story item). **Stock** is how many trades it has in a world for the whole crew (1-8; each trade goes to one
+  player, the host decides who was first) or **no limit**. The panel shows the offer as players will read it and names
+  any item neither Raft nor your story items know. Each trade runs the stand's event **trade**: `on.trade=signal||paid`
+  moves a quest on or opens a door. What was sold is saved; **Not a trade stand** takes the offer off again. In a
+  recipe: `trade.give=Plank*10`, `trade.get=Rope*1`, `trade.stock=3` (0 = no limit; none = 1). The trader raft's
+  stalls ([9.4](#trader-raft)) are the same stands.
+- **Co-op zones** (2026-11-04): a trigger zone that needs several players standing in it at once has the events
+  **crowd** and **crowdleft** and the check **players in zone** (`players|Plate|2`) - how it counts:
+  [5.4](#54-trigger-zones-and-ambushes).
 - **Sounds and camera moments** (actions in the same ▼ list, shared by every player): **play sound/music** plays one of
   Raft's sound events or music cues (pick it with **…**, a list of every one Raft has), with a volume, **once** or on a
   **loop**, **near** the object (or the objects named) or for **everyone on the island**. Every player near the island
