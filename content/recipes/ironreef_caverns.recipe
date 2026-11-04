@@ -469,6 +469,11 @@ clear at -35.9 -22.9 r=1.5 only=BigBoulder3_Low
 clear at -35.4 -44.4 r=1 only=Monstera_2
 # (the tree stood in mouth A: its trunk filled the way out and the walker stuck on its roots - 11-04)
 clear at -41.3 -23 r=2.5
+# (a spoil heap up to mouth A: the slope fell 1.5 m in the last metre before its floor, a lip the walker and a player
+# without a jump could not climb - 11-04)
+brush flatten at -42.9 -24.4 r=1.6 s=20 frames=40 h=19.2
+brush flatten at -41.9 -24 r=1.6 s=20 frames=40 h=19.85
+brush flatten at -40.9 -23.65 r=1.6 s=20 frames=40 h=20.45
 dig -39,-23 -33,-24 -26,-30 r=1.75 slope=-8 as=irreef
 dig -26,-30 -21,-31 r=3.5
 dig -35,-43 -30,-40 -25,-32 r=1.75 slope=3 as=irreef
