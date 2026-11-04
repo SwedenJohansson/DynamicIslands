@@ -25,6 +25,9 @@ Not in this release yet; these come in the next update:
   or for an object's state (`Gate=open`, `closed`, `shown`, `hidden`); its ▾ lists the island's signals and named objects.
 - **New quest step "Bring items"**: a number of one of Raft's items handed to an islander (by talking) or a chest
   (`Plank@Mara`, `Rope@Supplies`); the items are taken from the player.
+- **Bring items in multiplayer**: items no longer get lost when two players hand over at the same moment or a hand-over
+  reaches the host after the step was done: what the host did not count goes back to the player's bag, with a short note
+  ("2 × Plank given back: another player brought the rest").
 - **New quest step "Craft or cook"**: a number of an item crafted or cooked near the island while the step is active.
 - **Bear dens in a hill** (The Abyss and other islands): a tinted den now tints the rock hill round it too, so a dark den no longer sits in a bright orange mountain; dens inside are lit warm, not blue.
 - **Cave tool**: dens and tunnels in a world look as they do in the editor, warm and dim, no longer lit blue by the sky.

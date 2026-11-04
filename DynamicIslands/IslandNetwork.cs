@@ -113,6 +113,10 @@ namespace DynamicIslands.Editor
 		/// <summary>Both ways: a ping on the island map (Minimap, PF5). Ids = { island } with Offsets = x, y, z in the island's space, or no Ids and
 		/// Offsets from the raft (at sea); Data = the pinging player's id. A player sends it to the host, the host shows it and sends it to everyone. An older version ignores it.</summary>
 		public const int Ping = 40;
+		/// <summary>Host -> one player: items of a "Bring items" hand-over the host did not count (another player brought the rest
+		/// first, the step had moved on, or the hand-over was refused), given back (QuestSteps.ItemsBack). Ids = { island, quest },
+		/// Index = the step, Data = the item, Count = how many, Name = why ("over", "late", "refused"). An older version ignores it.</summary>
+		public const int QuestItemsBack = 41;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -379,8 +383,12 @@ namespace DynamicIslands.Editor
 		/// <summary>A player: a message for the host (Kraken "hit").</summary>
 		public static void SendToTheHost(IslandNetMessage msg) { if (Loopback != null) { Loopback(msg); return; } if (InMultiplayerGame) SendToHost(msg); }
 
+		/// <summary>Tests: the player the last message for one player went to.</summary>
+		internal static ulong LastSentTo;
+
 		static void SendToPlayer(IslandNetMessage msg, Network_UserId player)
 		{
+			LastSentTo = player.Id;
 			if (Loopback != null) { Loopback(msg); return; }
 			try { DynamicIslands.instance.SendNetworkMessageToPlayer(msg, player, EP2PSend.k_EP2PSendReliable); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Sending failed: " + e.Message); }
@@ -601,6 +609,14 @@ namespace DynamicIslands.Editor
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
 		}
 
+		/// <summary>Host -> one player: items of their bring hand-over it did not count, given back (QuestItemsBack).</summary>
+		internal static void SendItemsBack(Network_UserId player, int islandId, int n, int step, string item, int amount, string why)
+		{
+			if (!Raft_Network.IsHost || amount <= 0 || string.IsNullOrEmpty(item)) return;
+			Debug.Log("[CUSTOM ISLANDS] [quest] " + amount + " " + item + " given back to player " + player.Id + " (" + why + ", quest " + (n + 1) + " step " + (step + 1) + " of island " + islandId + ")");
+			SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.QuestItemsBack, Ids = new[] { islandId, n }, Index = step, Count = amount, Data = item, Name = why }, player);
+		}
+
 		/// <summary>Host -> one player: quest n's step and progress as the host has them, Name "set" - the player takes them even
 		/// when older than its own (a step the host refused). An older version takes it as a plain step: never back.</summary>
 		internal static void SendQuestCorrection(Network_UserId player, int islandId, int n)
@@ -753,10 +769,15 @@ namespace DynamicIslands.Editor
 							// (CB2: a player's progress only on an island near them - loaded on their side)
 							// (refused: that player is told the host's step - its own view had moved on already and stayed ahead for
 							// good, the others never saw the step done - review 10-30)
-							if (Raft_Network.IsHost && !PlayerTrust.MayMark(from.Id, msg.Ids[0], "quest step")) { SendQuestCorrection(from, msg.Ids[0], questNo); break; }
+							if (Raft_Network.IsHost && !PlayerTrust.MayMark(from.Id, msg.Ids[0], "quest step"))
+							{
+								SendQuestCorrection(from, msg.Ids[0], questNo);
+								if (msg.Name == "add") QuestTracker.GiveBack(msg.Ids[0], questNo, msg.Index, msg.Count, from.Id, "refused"); // (a bring hand-over's items)
+								break;
+							}
 							// (the host's answer to a refused step: the host's step, even an older one)
 							if (!Raft_Network.IsHost && msg.Name == "set") { QuestTracker.Correct(msg.Ids[0], questNo, msg.Index, msg.Count); break; }
-							if (Raft_Network.IsHost && msg.Name == "add") { QuestTracker.AddFromPlayer(msg.Ids[0], questNo, msg.Index, msg.Count); break; }
+							if (Raft_Network.IsHost && msg.Name == "add") { QuestTracker.AddFromPlayer(msg.Ids[0], questNo, msg.Index, msg.Count, from.Id); break; }
 							// (one it ignored - stale, or older than what it has - isn't passed on: it lowered the others' count)
 							if (QuestTracker.Apply(msg.Ids[0], questNo, msg.Index, msg.Count) && Raft_Network.IsHost) SendToClients(msg);
 						}
@@ -784,6 +805,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.Ping:
 						Minimap.OnMessage(msg, from.Id);
+						break;
+					case IslandNetMessage.QuestItemsBack:
+						if (!Raft_Network.IsHost) QuestSteps.ItemsBack(msg.Data, msg.Count, msg.Name);
 						break;
 					case IslandNetMessage.AlphaHealth:
 						if (!Raft_Network.IsHost && msg.Offsets != null && msg.Offsets.Length >= 2) CreatureSpawner.HostHealth(unchecked((uint)msg.Index), msg.Offsets[0], msg.Offsets[1]);

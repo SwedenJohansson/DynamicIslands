@@ -290,7 +290,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Host: something a later step of the quest asks for was done now - kept for that step. More than the step
 		/// needs goes on to the next later step asking for the same (two "defeat a polar bear" steps with both bears dead
 		/// early: both went to the first, and the second step could never be done - CB11).</summary>
-		static void Remember(IslandWorldState.Entry e, int quest, int step, int amount)
+		static int Remember(IslandWorldState.Entry e, int quest, int step, int amount)
 		{
 			IslandQuest q = QuestOf(e, quest);
 			while (amount > 0)
@@ -313,6 +313,7 @@ namespace DynamicIslands.Editor
 				if (next < 0) break;
 				step = next;
 			}
+			return amount; // (what no step had room for)
 		}
 
 		/// <summary>Host: the quest reached this step - what was done for it early counts now (it may finish it at once).</summary>
@@ -364,7 +365,12 @@ namespace DynamicIslands.Editor
 		/// count and sent to everyone. A step the quest has moved past counted already; a later one keeps it for then.</summary>
 		public static void AddFromPlayer(int islandId, int step, int amount) { AddFromPlayer(islandId, 0, step, amount); }
 
-		public static void AddFromPlayer(int islandId, int n, int step, int amount)
+		public static void AddFromPlayer(int islandId, int n, int step, int amount) { AddFromPlayer(islandId, n, step, amount, 0UL); }
+
+		/// <summary>from: the player who sent it (0 = unknown). A "Bring items" step's items the host doesn't count - more than
+		/// the step still needed (two players handing over in the same moment), or a step already done - go back to that player
+		/// (QuestItemsBack): they were taken from their bag and were lost.</summary>
+		public static void AddFromPlayer(int islandId, int n, int step, int amount, ulong from)
 		{
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
 			if (e == null || amount <= 0) return;
@@ -376,7 +382,8 @@ namespace DynamicIslands.Editor
 			if (step > now && step < q.Steps.Count)
 			{
 				int p = LaterStep(e, n, q, now, q.Steps[step].Type, q.Steps[step].Target);
-				Remember(e, n, p >= 0 ? p : step, amount);
+				int left = Remember(e, n, p >= 0 ? p : step, amount);
+				if (left > 0) GiveBack(e, n, step, left, from, "over");
 				return;
 			}
 			// (an older step: another player did that step a moment before. A chest is opened once, so what this player opened
@@ -399,10 +406,35 @@ namespace DynamicIslands.Editor
 				}
 				return;
 			}
-			if (step != now || now >= q.Steps.Count) { IslandNetwork.SendQuest(e.Id, n, now, ProgressOf(e, n)); return; } // (the player's view put right)
+			if (step != now || now >= q.Steps.Count)
+			{
+				IslandNetwork.SendQuest(e.Id, n, now, ProgressOf(e, n)); // (the player's view put right)
+				GiveBack(e, n, step, amount, from, "late");
+				return;
+			}
 			int progress = ProgressOf(e, n) + amount;
+			if (progress > q.Steps[now].Count) GiveBack(e, n, step, progress - q.Steps[now].Count, from, "over");
 			if (progress >= q.Steps[now].Count) Set(e, n, now + 1, 0, true);
 			else Set(e, n, now, progress, true);
+		}
+
+		/// <summary>Host: a player's amount for quest n's step that wasn't counted (why: "over", "late", "refused"). For a "Bring
+		/// items" step those are items taken from their bag: they go back to them, never more than the step asks for (a hand-over
+		/// takes at most that). Other kinds of step: nothing - a kill or a craft has nothing to give back.</summary>
+		public static void GiveBack(int islandId, int n, int step, int amount, ulong from, string why)
+		{
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
+			if (e != null) GiveBack(e, n, step, amount, from, why);
+		}
+
+		static void GiveBack(IslandWorldState.Entry e, int n, int step, int amount, ulong from, string why)
+		{
+			if (from == 0UL || amount <= 0 || !Raft_Network.IsHost) return;
+			IslandQuest q = QuestOf(e, n);
+			if (!q.Exists || step < 0 || step >= q.Steps.Count || q.Steps[step].Type != QuestSteps.Bring) return;
+			string item, to;
+			QuestSteps.SplitBring(q.Steps[step].Target, out item, out to);
+			IslandNetwork.SendItemsBack(new Network_UserId(from), e.Id, n, step, item, Mathf.Min(amount, Mathf.Max(1, q.Steps[step].Count)), why);
 		}
 
 		/// <summary>Records the quest's state here, tells the others (unless it came from them), and shows what changed.</summary>
