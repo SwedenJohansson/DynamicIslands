@@ -369,13 +369,15 @@ prop minesound zone.radius=18
 # tool's pieces or the mine's mound and climb at most 25 degrees (no ladder shaft up to the headframe: the man-way is
 # the second adit), the knob's plateau keeps them 6 m off the headframe, and Grey's old den is across the island.
 call kit_st x=-12 z=22 yaw=180 len=7 end=room size=0.7 dirt=1 mush=1 stone=1 vines=1 as=backdrift
-dig 49.5,-13.5 54.5,-9.0 r=1.75 as=oldwork
-dig 60.9,-19.5 57.5,-13.5 54.5,-9.0 r=1.75 as=oldwork
+# (both adits open level with the ground outside: the shore adit off the flat by the knob's foot, climbing to the
+# drift; the man-way on the ledge above the south slope - 11-04 look test: mouths 4 m up a slope had no way in)
+dig 44.7,-12.0 54.5,-9.0 r=1.75 slope=12 as=oldwork
+dig 64.2,-19.8 60.9,-18.0 57.5,-13.5 54.5,-9.0 r=1.75 slope=-3 as=oldwork
 dig 54.5,-9.0 54.0,-4.5 r=1.75 slope=-10 as=oldwork
 dig 54.0,-4.5 55.0,1.0 r=3.0 as=oldwork
 caveloot oldwork dirt=3 mush=2 stone=2 vines=2
 # cavecheck inside minerchest
-place Loot_ChestSmall minerchest at 54.6 -1.0 h=5.5 drop yaw=240
+place Loot_ChestSmall minerchest at 53.0 -0.7 h=5.5 drop yaw=240
 prop minerchest obj.name=minerchest
 prop minerchest loot.refill=0
 note minerchest Miner's chest | MINE No. 2 - TUNNEL 1\n\nWe dug this one by hand, before the company came with the winch and the rails. Powder kept in here, dry, away from the lamps.\n\nThe company says Tunnel 1 is played out. It isn't. The copper runs on under the knob, down towards the headframe. They wanted the deep vein and the deep vein only.\n\nIf the roof talks, go out by the man-way, the second adit, not back the way you came.\n\n- T. Pike, hewer
