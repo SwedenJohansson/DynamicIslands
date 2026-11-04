@@ -1493,8 +1493,8 @@ or any world you host). `QuestTest` lists the island's quests and steps, the cur
 `QuestTest step 4` jumps the main quest to step 4 - back as well as forward (`QuestTest step 2 2` = quest 2's step 2,
 `QuestTest step done` finishes it, with its reward); `QuestTest signal gate-open` sends a signal on the island, as a
 lever or an action does; `QuestTest give brass_key 2` gives the crew a story item; `QuestTest reset` sets the island
-back to new - quests at step 1, chests full, pickups back, signals gone - and makes it again (stand clear: you are in
-the sea for a moment). Rewards a player already had stay had. Only the host changes things; players who joined see
+back to new - quests at step 1, chests full, pickups back, signals gone - and makes it again (players standing on it
+drop into the sea for a moment and are put back on its ground). Rewards a player already had stay had. Only the host changes things; players who joined see
 the same.
 
 While the test starts, a **STARTING THE TEST** box covers the screen (Raft's main menu loads the test world behind

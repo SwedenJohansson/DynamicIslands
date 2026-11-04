@@ -163,7 +163,7 @@ namespace DynamicIslands
 			int flower = -1;
 			IslandFile f = PlayerTestIsland((file, add) =>
 			{
-				flower = add("Pickup_Landmark_Flower_Red", 2f, 3f, new Dictionary<string, string>());
+				flower = add("Pickup_Landmark_Flower_Red", 2f, 3f, new Dictionary<string, string> { { BehaviourProps.Name, "ci-flower" } });
 				file.Props[IslandQuest.KeyTitle] = "CI bells";
 				file.Props[IslandQuest.KeySteps] = "signal|ci-bell|1|\nsignal|ci-gong|1|\nsignal|ci-horn|1|";
 				file.Props[IslandQuest.Key(IslandQuest.KeyTitle, 1)] = "CI drums";
@@ -234,6 +234,8 @@ namespace DynamicIslands
 				r = e.Root != null ? e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(x => x.Index == flower) : null;
 				pick = r != null ? r.GetComponentInChildren<PickupItem>(true) : null;
 				Check(ref ok, e.Root != null && pick != null && pick.gameObject.activeInHierarchy, "... made again by streaming: the flower is back");
+				yield return new WaitForSeconds(1f);
+				Check(ref ok, me.transform.position.y > 1f, "... the player is put back on its ground, not left in the sea under it (y " + me.transform.position.y.ToString("0.0") + ")");
 				Check(ref ok, QuestTracker.StepOf(e) == 0 && QuestTracker.StepOf(e, 1) == 0 && !Behaviours.HasSignal(e, "ci-bell"), "... both quests at step 1, the signal gone");
 				Screenshot(new[] { "qtest_reset" });
 

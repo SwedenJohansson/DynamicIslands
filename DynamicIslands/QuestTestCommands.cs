@@ -97,6 +97,7 @@ namespace DynamicIslands
 		internal static void Reset(IslandWorldState.Entry e)
 		{
 			if (!Raft_Network.IsHost || e == null) return;
+			KeepOnTop(e);
 			if (e.Root != null)
 			{
 				// (loose items dropped on it wait in the air until it is back: RK2; its state is not captured - it goes)
@@ -108,7 +109,32 @@ namespace DynamicIslands
 			e.Regrown.Clear();
 			IslandNetwork.SendReset(e);
 			IslandWorldState.Save();
-			DynamicIslands.Notify("'" + e.HostName + "' is set back to new: it is made again (stand clear; rewards had stay had)", false, 6);
+			DynamicIslands.Notify("'" + e.HostName + "' is set back to new: it is made again (you are put back on it; rewards had stay had)", false, 6);
+		}
+
+		/// <summary>An island set back to new (reset, here or by the host): when this machine's player is on it, they are put
+		/// back on its ground once it is made again (it goes away under them for a moment - not left in the sea under it).</summary>
+		internal static void KeepOnTop(IslandWorldState.Entry e)
+		{
+			Network_Player me = RAPI.GetLocalPlayer();
+			if (e == null || e.Root == null || me == null || DynamicIslands.instance == null) return;
+			Vector3 at = me.transform.position;
+			if (new Vector2(at.x - e.Position.x, at.z - e.Position.z).magnitude > CustomIslandSpawner.LandRadius(e.Name) + 10f || at.y < -2f) return;
+			DynamicIslands.instance.StartCoroutine(BackOnTop(e, me, at));
+		}
+
+		static System.Collections.IEnumerator BackOnTop(IslandWorldState.Entry e, Network_Player me, Vector3 at)
+		{
+			yield return null; // (started before it goes: gone by now)
+			for (float t = 0f; t < 60f && (e.Root == null || e.Loading); t += 0.25f) yield return new WaitForSeconds(0.25f);
+			yield return new WaitForSeconds(0.5f);
+			if (e.Root == null || me == null) yield break;
+			// (the highest ground there that is not the player)
+			RaycastHit[] hits = Physics.RaycastAll(new Vector3(at.x, at.y + 300f, at.z), Vector3.down, 600f, ~0, QueryTriggerInteraction.Ignore);
+			RaycastHit[] ground = hits.Where(h => h.collider != null && !h.collider.transform.IsChildOf(me.transform)).OrderByDescending(h => h.point.y).Take(1).ToArray();
+			if (ground.Length == 0 || ground[0].point.y < -1f || me.transform.position.y > ground[0].point.y - 0.5f) yield break;
+			PlayerMove.To(me, ground[0].point + Vector3.up * 0.3f);
+			Debug.Log("[CUSTOM ISLANDS] [QuestTest] put back on '" + e.HostName + "' after its reset");
 		}
 	}
 }

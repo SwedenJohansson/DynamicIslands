@@ -968,6 +968,7 @@ namespace DynamicIslands.Editor
 					// (QuestTest reset: the host's island is new again - its state here too, made again if loaded; nothing captured)
 					if (known.Root != null)
 					{
+						QuestTestCommands.KeepOnTop(known);
 						try { ItemHold.HoldOn(known); } catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Holding dropped items failed: " + x.Message); }
 						IslandSpawner.Despawn(known.Root);
 						known.Root = null;
