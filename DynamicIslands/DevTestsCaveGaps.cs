@@ -568,6 +568,18 @@ namespace DynamicIslands
 
 		/// <summary>One cave's way: mouth first, floor points, the room's or the far end's last; In: the way in, level.</summary>
 		class GapWay { public string Kind; public List<Vector3> Floor = new List<Vector3>(); public Vector3 In; }
+		/// <summary>The point s m along a floor line (by its length); false past its end.</summary>
+		static bool PointAlong(List<Vector3> f, float s, out Vector3 p)
+		{
+			p = f.Count > 0 ? f[0] : Vector3.zero;
+			for (int i = 1; i < f.Count; i++)
+			{
+				float d = Vector3.Distance(f[i - 1], f[i]);
+				if (s <= d) { p = Vector3.Lerp(f[i - 1], f[i], d > 1e-4f ? s / d : 0f); return true; }
+				s -= d;
+			}
+			return false;
+		}
 
 		static Vector3 GapFloor(Vector3 p, float up = 1.2f, float down = 4f)
 		{
@@ -724,6 +736,27 @@ namespace DynamicIslands
 						{ blocked++; if (where.Length == 0) where = " - first at point " + i + " (" + h.collider.name + ", " + (f[i].y - sea).ToString("0.0") + " m)"; }
 					}
 					Check(ref ok, blocked == 0, label + ": a clear way along it, " + c + " points" + (blocked > 0 ? ": " + blocked + " blocked" + where : ""));
+					// A whole roof over the way in: rays straight down from 40 m over it, from 1 m to 6 m in and across the passage
+					// every 0.2 m, all stop on the rock over it, none reaches the floor (at the mouth's frame a flare once reached
+					// through the top - small holes seen from above, 11-04; down, as rays up miss the ground's back faces; cave tool
+					// ways only: a dug stroke's mouth is open to the sky for metres by design, a cut ramp down into the hill)
+					int rays = 0, sky = 0;
+					string skyAt = "";
+					Vector3 across = Vector3.Cross(Vector3.up, w.In).normalized;
+					for (float s = 1f; s <= 6f && !w.Kind.StartsWith("dug"); s += 0.25f)
+					{
+						Vector3 p;
+						if (!PointAlong(f, s, out p)) break;
+						for (float x = -0.6f; x <= 0.61f; x += 0.2f)
+						{
+							rays++;
+							RaycastHit top;
+							if (!Physics.Raycast(p + across * x + Vector3.up * 40f, Vector3.down, out top, 41f, ~0, QueryTriggerInteraction.Ignore)
+								|| top.point.y < p.y + 1.3f)
+							{ sky++; if (skyAt.Length == 0) skyAt = " - first " + s.ToString("0.0") + " m in, " + x.ToString("0.0") + " across"; }
+						}
+					}
+					if (rays > 0) Check(ref ok, sky == 0, label + ": a whole roof over the way in, " + rays + " rays down" + (sky > 0 ? ": " + sky + " reach the floor" + skyAt : ""));
 
 					if (shots)
 					{
@@ -768,7 +801,8 @@ namespace DynamicIslands
 					if (wet && end.y > sea + 0.3f)
 					{
 						// (KeepAlive fills the breath: first it, then the breath set low)
-						PlayerMove.To(me, end + Vector3.up * 0.3f, ControllerType.Ground);
+						Vector3 dryAt = end;
+						PlayerMove.To(me, dryAt + Vector3.up * 0.3f, ControllerType.Ground);
 						KeepAlive(me);
 						yield return new WaitForSeconds(1.5f);
 						Vector3 p1 = me.transform.position;
@@ -777,8 +811,15 @@ namespace DynamicIslands
 						float a0 = air.Value;
 						yield return new WaitForSeconds(3f);
 						Vector3 p2 = me.transform.position;
-						Log("  " + label + ": at the end " + (p1.y - sea).ToString("0.0") + " m over the sea (" + c1 + ") after 1.5 s, " + (p2.y - sea).ToString("0.0") + " m (" + pc.controllerType + ") 3 s later, " + new Vector2(p2.x - end.x, p2.z - end.z).magnitude.ToString("0.0") + " m from the end point");
-						Check(ref ok, pc.controllerType == ControllerType.Ground && air.Value > a0 + 1f, label + ": the end above the sea (" + (end.y - sea).ToString("0.0") + " m) is dry, the breath comes back (" + pc.controllerType + ", " + a0.ToString("0") + " -> " + air.Value.ToString("0") + ")");
+						Log("  " + label + ": at the end " + (p1.y - sea).ToString("0.0") + " m over the sea (" + c1 + ") after 1.5 s, " + (p2.y - sea).ToString("0.0") + " m (" + pc.controllerType + ") 3 s later, " + new Vector2(p2.x - dryAt.x, p2.z - dryAt.z).magnitude.ToString("0.0") + " m from where it was put");
+						if (pc.controllerType != ControllerType.Ground)
+						{
+							// (what is under the end: every collider on a ray down from 3 m over it, and the ground's height there)
+							string under = string.Join(", ", Physics.RaycastAll(dryAt + Vector3.up * 3f, Vector3.down, 15f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).Select(h => h.collider.name + " " + (h.point.y - sea).ToString("0.0")).ToArray());
+							Terrain land = Terrain.activeTerrains.FirstOrDefault(t2 => { Vector3 o = t2.transform.position, z = t2.terrainData.size; return dryAt.x >= o.x && dryAt.x <= o.x + z.x && dryAt.z >= o.z && dryAt.z <= o.z + z.z; });
+							Log("  " + label + ": under the end: " + (under.Length > 0 ? under : "nothing") + "; the ground there " + (land != null ? (land.SampleHeight(dryAt) + land.transform.position.y - sea).ToString("0.0") + " m" : "none"));
+						}
+						Check(ref ok, pc.controllerType == ControllerType.Ground && air.Value > a0 + 1f, label + ": the end above the sea (" + (dryAt.y - sea).ToString("0.0") + " m) is dry, the breath comes back (" + pc.controllerType + ", " + a0.ToString("0") + " -> " + air.Value.ToString("0") + ")");
 						air.Value = air.Max;
 					}
 					// Walked in with Raft's controller and back out past the mouth (where it is dry the whole way)
