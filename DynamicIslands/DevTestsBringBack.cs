@@ -99,7 +99,7 @@ namespace DynamicIslands
 
 		const string BringMpIsland = "ci-bring-mp";
 
-		[ConsoleCommand(name: "CIBringMp", docs: "Dev, two players: Bring items given back over the network, on host + box. setup (host): spawns 'ci-bring-mp' (islander Mara, step 1: bring 6 planks to Mara). wait: until the island is here. give [unix ms]: this player gets 4 planks and talks to Mara (at that moment, when given). push: as a player whose view was behind - 4 planks sent to the host for step 1 (taken from the bag). planks <n>: waits up to 8 s for n planks in this bag. step <s> <p>: waits up to 8 s for step s (from 0) with p counted. state: logs. drop (host): removes the island")]
+		[ConsoleCommand(name: "CIBringMp", docs: "Dev, two players: Bring items given back over the network, on host + box. setup (host): spawns 'ci-bring-mp' (islander Mara, step 1: bring 6 planks to Mara); setup fish: its steps are catch 2 fish, gather 2 planks instead (QG4). wait: until the island is here. give [unix ms]: this player gets 4 planks and talks to Mara (at that moment, when given). push: as a player whose view was behind - 4 planks sent to the host for step 1 (taken from the bag). planks <n>: waits up to 8 s for n planks in this bag. step <s> <p>: waits up to 8 s for step s (from 0) with p counted. catch / gather: this player, by Mara, catches a fish / picks up a plank. state: logs. drop (host): removes the island")]
 		public static void BringMpCommand(string[] args) { StartTest(BringMpRoutine(args ?? new string[0])); }
 
 		static IEnumerator BringMpRoutine(string[] args)
@@ -115,7 +115,7 @@ namespace DynamicIslands
 				IslandFile f = Gw4File(BringMpIsland, out at);
 				f.Objects.Add(new IslandObject { Name = Islanders.ObjectName, Position = at(0f, 4f), Props = P(BehaviourProps.Name, "Mara", Islanders.TextProp, "Bring me planks.") });
 				f.Props[IslandQuest.KeyTitle] = "CI bring mp";
-				f.Props[IslandQuest.KeySteps] = "bring|Plank@Mara|6|\nsignal|never|1|";
+				f.Props[IslandQuest.KeySteps] = args.Length > 1 && args[1] == "fish" ? "fish||2|\ngather|Plank|2|\nsignal|never|1|" : "bring|Plank@Mara|6|\nsignal|never|1|";
 				var g = new GwIsland();
 				yield return GwSpawnFile(g, f, BringMpIsland);
 				if (g.E != null) Log("PASS: BR mp setup - " + BringMpIsland + " is island " + g.E.Id);
@@ -157,6 +157,16 @@ namespace DynamicIslands
 				Log("PASS: BR mp give (" + side + ") - " + state());
 				yield break;
 			}
+			if (what == "catch" || what == "gather")
+			{
+				Islander isl = e.Root.GetComponentsInChildren<Islander>(true).FirstOrDefault();
+				if (isl != null) PutPlayerNear(isl.transform, 2f);
+				yield return new WaitForSeconds(0.5f);
+				if (what == "catch") QuestSteps.Caught("Raw_Pomfret", 1); else QuestSteps.Gathered("Plank", 1);
+				yield return new WaitForSeconds(1f);
+				Log("PASS: BR mp " + what + " (" + side + ") - " + state());
+				yield break;
+			}
 			if (what == "push")
 			{
 				// (what a player's machine sends when its view was still at 6 wanted: the hand-over's amount for step 1)
@@ -182,7 +192,7 @@ namespace DynamicIslands
 				yield break;
 			}
 			if (what == "state") { Log("PASS: BR mp state (" + side + ") - " + state()); yield break; }
-			Fail("CIBringMp setup|wait|give [unix ms]|push|planks <n>|step <s> <p>|state|drop");
+			Fail("CIBringMp setup [fish]|wait|give [unix ms]|push|catch|gather|planks <n>|step <s> <p>|state|drop");
 		}
 	}
 }
