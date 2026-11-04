@@ -147,7 +147,6 @@ namespace DynamicIslands.Editor
 		internal static bool ClickCopy() { if (!IsOpen) return false; instance.copyButton.onClick.Invoke(); return true; }
 		ScrollRect scroll;
 		float openedAt;
-		bool cursorWasFree;
 
 		public static void Open(CustomNote n)
 		{
@@ -204,8 +203,7 @@ namespace DynamicIslands.Editor
 			Canvas.ForceUpdateCanvases();
 			scroll.verticalNormalizedPosition = 1f;
 			openedAt = Time.unscaledTime;
-			cursorWasFree = Cursor.visible;
-			if (!cursorWasFree) try { RAPI.ToggleCursor(true); } catch { }
+			ModCursor.Take(this);
 			Debug.Log("[CUSTOM ISLANDS] Reading note '" + titleText.text + "'");
 			QuestTracker.Event(ContentState.EntryOf(n.transform), "read", n.Title);
 			IslandObjectRef r = n.GetComponentInParent<IslandObjectRef>();
@@ -228,7 +226,7 @@ namespace DynamicIslands.Editor
 			if (!gameObject.activeSelf) return;
 			gameObject.SetActive(false);
 			note = null;
-			if (!cursorWasFree) try { RAPI.ToggleCursor(false); } catch { }
+			ModCursor.Give(this);
 		}
 
 		void Update()

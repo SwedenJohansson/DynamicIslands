@@ -17,6 +17,7 @@ Automated tests and content tools, run as `CI*` console commands. Players never 
 - `DevTestsNoteCarry.cs` -> `CINoteCarry` (journal pages follow their notes through Give my worlds this version; a removed note's page is kept as `gone<n>`).
 - `DevTestsTestTools.cs` -> keys, sign and note with Raft minimised: `CIKey`, `CIKeysState`, `CISign`, `CINoteHere` (see "Keys, sign, note, islanders" below).
 - `DevTestsMore.cs` -> also `CIFace` (stand in front of an object and check Raft's interaction ray finds it) and `CITalk` (talk to an islander).
+- `DevTestsCursor.cs` -> the mouse and `CanvasHelper.ActiveMenu` around the mod's windows (`ModCursor`): `CICursorState` (one line: menu, mouse, focus, RML's ToggleCursor guard, Raft's Esc menu open, the mod's holders, `ModKeys.Blocked`), `CICursorTrace on|off` (logs every `RAPI.ToggleCursor`/`TogglePriorityCursor` and `CanvasHelper.CloseMenu` with its caller), `CICursorFix <island> <islander>` (needs `Levels on`; many PASS lines - run with `-done`).
 - `DevTestsPlay.cs` -> `CIPlay` play tests (see `PLAY_FORMAT.md`).
 - `DevTestsScenarios.cs` -> `Sc*` helpers to bring, use and remove islands in a world; many `CISc*` scenario tests.
 - `DevTestsEditorStart.cs` -> the start window, plan on the main menu, Use in a plan..., Edit island, plan tabs (`CICreateWindow`, `CIPlanFromMenu`, `CIUseInPlan`, `CIEditIslandFromMenu`, `CIPlanTabs`, `CIStoryNewIsland`).

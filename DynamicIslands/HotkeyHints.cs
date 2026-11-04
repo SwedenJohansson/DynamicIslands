@@ -46,10 +46,12 @@ namespace DynamicIslands.Editor
 			return r;
 		}
 
-		/// <summary>Raft's pause menu (Esc in a world) is open, with or without its Custom Islands window on top.</summary>
+		/// <summary>Raft's pause menu (Esc in a world) is open, with or without its Custom Islands window on top. Its GameMenu must be
+		/// open: RML's ToggleCursor(true) behind the mod's own windows (dialogue, journal, stats page) also sets ActiveMenu PauseMenu
+		/// (cursor fix 11-04).</summary>
 		public static bool PauseOpen()
 		{
-			try { return CanvasHelper.ActiveMenu == MenuType.PauseMenu; }
+			try { return CanvasHelper.ActiveMenu == MenuType.PauseMenu && ModCursor.RaftMenuOpen(MenuType.PauseMenu); }
 			catch (Exception) { return false; }
 		}
 

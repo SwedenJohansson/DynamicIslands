@@ -213,7 +213,7 @@ namespace DynamicIslands.Editor
 		Button deleteButton;
 		int shown = -1;
 		float deleteArmedUntil;
-		bool cursorWasFree, dirtyList;
+		bool dirtyList;
 		readonly List<Button> pageButtons = new List<Button>();
 		readonly List<Behaviour> held = new List<Behaviour>();
 
@@ -294,8 +294,7 @@ namespace DynamicIslands.Editor
 		void Show()
 		{
 			gameObject.SetActive(true);
-			cursorWasFree = Cursor.visible;
-			if (!cursorWasFree) try { RAPI.ToggleCursor(true); } catch { }
+			ModCursor.Take(this);
 			Hold(true);
 			if (shown < 0 || shown >= PlayerNotebook.Pages.Count) shown = PlayerNotebook.Pages.Count - 1;
 			RefreshList();
@@ -308,7 +307,7 @@ namespace DynamicIslands.Editor
 			if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
 			gameObject.SetActive(false);
 			Hold(false);
-			if (!cursorWasFree) try { RAPI.ToggleCursor(false); } catch { }
+			ModCursor.Give(this);
 			PlayerNotebook.Save();
 		}
 

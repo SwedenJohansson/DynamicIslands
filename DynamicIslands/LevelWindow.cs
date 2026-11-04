@@ -571,7 +571,6 @@ namespace DynamicIslands.Editor
 		readonly Button[] plus = new Button[LevelRules.StatCount], minus = new Button[LevelRules.StatCount];
 		int[] openedWith = new int[LevelRules.StatCount];
 		static Text keyHint;
-		bool cursorWasFree;
 
 		static readonly Color PipOn = new Color(0.97f, 0.8f, 0.42f, 1f), PipOff = new Color(0.16f, 0.09f, 0.04f, 0.85f);
 
@@ -688,8 +687,7 @@ namespace DynamicIslands.Editor
 		{
 			gameObject.SetActive(true);
 			if (keyHint != null) keyHint.text = ModKeys.Name(PlayerLevels.Key) + " or Esc to close";
-			cursorWasFree = Cursor.visible;
-			if (!cursorWasFree) try { RAPI.ToggleCursor(true); } catch { }
+			ModCursor.Take(this);
 			LevelRecord r = PlayerLevels.Mine;
 			openedWith = r != null ? (int[])r.Points.Clone() : new int[LevelRules.StatCount];
 			Fill();
@@ -699,8 +697,7 @@ namespace DynamicIslands.Editor
 		{
 			if (!gameObject.activeSelf) return;
 			gameObject.SetActive(false);
-			// (only in a world: after a disconnect it locked the cursor on the main menu - CA17)
-			if (!cursorWasFree && LoadSceneManager.IsGameSceneLoaded) try { RAPI.ToggleCursor(false); } catch { }
+			ModCursor.Give(this); // (in a world only - CA17)
 		}
 
 		void Update()
