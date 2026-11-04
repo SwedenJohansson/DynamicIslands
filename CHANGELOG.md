@@ -68,6 +68,7 @@ Not in this release yet; these come in the next update:
 - **Lowstreet**: the four shop chests, the shops' tables and lamps and Jonah's letter stand on the shop floors again (they had sunk into the sand under them).
 - **The Iron Whale - Bow**: the port prow plate no longer hangs 2 m over the ice; a second plate under it carries it down into the ice.
 - **The Iron Whale - Bow**: the crane's ladder tower is climbed from outside and its top steps off onto the cab's floor
+- **The Iron Whale - Engine Decks, Signalstack Rock, Squall Shelf, Steamvent Harbour**: the ladder towers (the funnel, the beacon on the Needle, the weather mast, the derrick) are climbed from outside and step off onto their platforms; their ladders could only be taken hold of from under the platform, where a climber got stuck.
   (a climber got stuck under the floor, so the cab locker and the crane driver's note could not be reached); the ladder
   from the ice to the foredeck is climbed from the ice side (it faced the hull's window wall); the mast's ladders stand
   east of the mast and end at the crow's nest plank instead of under the nest's floor.

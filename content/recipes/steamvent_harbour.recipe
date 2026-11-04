@@ -42,7 +42,8 @@ call ar_plants_snowy x=10 z=62 r=28 seed=12401
 for k 0 16
 clear at {10+(11-0.25*$k)*cos(200+9*$k)} {62+(11-0.25*$k)*sin(200+9*$k)} r=2.5 body
 next
-call fz_tower x=10 z=64 h=30 n=6 al=derrick chest=derrickchest zal=derrickzone zid=derrick_top msg="The derrick's top. The vent's pipe climbs here from the town - and the relief valve's housing sits on it, clamped shut."
+# (UT 11-04: its ladders took hold only from under the platform, where the climber stalled: climbed from outside now)
+call fz_tower x=10 z=64 h=30 n=6 ly=180 al=derrick chest=derrickchest zal=derrickzone zid=derrick_top msg="The derrick's top. The vent's pipe climbs here from the town - and the relief valve's housing sits on it, clamped shut."
 place Note_Sign derricksign at 9.2 62.4 h=44.57 sit yaw=180
 # the ridge west of the mountain (the ridge mast) and the east rise (the east mast)
 call ar_ridge x1=-44 z1=58 x2=-12 z2=70 h=10 top=6 r=8

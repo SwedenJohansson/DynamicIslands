@@ -62,7 +62,8 @@ pop
 # written), the ice cave (NW), the shuttle to the pillar ledge (W, M27 fallback), a second buried treasure.
 call fz_mount x=20 z=40 h=20 r=6
 call ar_plants_snowy x=20 z=40 r=20 seed=13141
-call fz_tower x=20 z=42 h=20 n=3 al=weathermast chest=mastchest zal=mastzone zid=mast_top msg="The weather mast. The anemometer still turns; the whole shelf below you, and the grey lanes it drifts in."
+# (UT 11-04: its ladders took hold only from under the platform, where the climber stalled: climbed from outside now)
+call fz_tower x=20 z=42 h=20 n=3 ly=180 al=weathermast chest=mastchest zal=mastzone zid=mast_top msg="The weather mast. The anemometer still turns; the whole shelf below you, and the grey lanes it drifts in."
 place Note_Book weatherlog at 19.1 39 h=27.35 drop yaw=120
 # the ice cave (NW): its mouth south
 call ar_cave x=-30 z=40 h=4 yaw=180 al=icecave chest=icecavechest

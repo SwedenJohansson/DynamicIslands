@@ -127,7 +127,8 @@ call ar_plants_snowy x=0 z=58 r=26 seed=12131
 for k 0 14
 clear at {6.8*cos(200+9*$k)} {58+6.8*sin(200+9*$k)} r=2.5 body
 next
-call fz_tower x=0 z=60 h=26 n=6 al=beacon chest=beaconchest zal=beaconzone zid=beacon_top msg="The beacon on the Needle. The white sea all round - and the stack's mast, small as a pin."
+# (UT 11-04: its ladders took hold only from under the platform, where the climber stalled: climbed from outside now)
+call fz_tower x=0 z=60 h=26 n=6 ly=180 al=beacon chest=beaconchest zal=beaconzone zid=beacon_top msg="The beacon on the Needle. The white sea all round - and the stack's mast, small as a pin."
 place Note_Sign stardome at -0.9 58.6 h=40.57 sit yaw=180
 place Note_Paper chart4 at 0.6 58.4 h=40.6 drop yaw=30
 call fz_zone x=0 z=31 al=needlezone id=needle_foot r=6 msg="The foot of the Needle. A way of sorts climbs its rock face; at the top, the beacon tower."
