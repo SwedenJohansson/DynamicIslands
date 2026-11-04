@@ -1227,51 +1227,217 @@ namespace DynamicIslands
 
 		#region Raft's interact key on a note and a lever
 
-		[ConsoleCommand(name: "CIFace", docs: "Dev, in game: stands the player in front of an island object (its name, or a note's title) looking at it, and checks Raft's interaction ray finds it (the keys test then presses E): CIFace <island> <name or title>")]
+		[ConsoleCommand(name: "CIFace", docs: "Dev, in game (either player): stands the player in front of an island object (its name, a note's title, an islander's name or the start of it) looking at it, and checks Raft's interaction ray finds it (the keys test then presses E). Stand points are on solid ground (a floor too), with room to stand and a clear view; none found = the player goes back where they were: CIFace <island> <name or title>")]
 		public static void FaceCommand(string[] args)
 		{
 			IslandWorldState.Entry e = LoadedIsland(args);
 			if (e != null) StartTest(FaceRoutine(e, args.Length > 1 ? string.Join(" ", args.Skip(1).ToArray()) : ""));
 		}
 
+		/// <summary>What the last FaceRoutine found with Raft's ray (its object's interact holder), or null.</summary>
+		static RaycastInteractable faceFound;
+		static IslandObjectRef faceRef;
+
+		/// <summary>The island object called <paramref name="what"/>: its name or note title (any case), else an object whose
+		/// name starts with it ("Mara" finds the islander "Mara Quill"), else one whose name holds it.</summary>
+		static IslandObjectRef FaceTarget(IslandWorldState.Entry e, string what)
+		{
+			what = (what ?? "").Trim();
+			if (what.Length == 0) return null;
+			IslandObjectRef[] all = e.Root.GetComponentsInChildren<IslandObjectRef>(true).Where(o => o.transform.Find(CustomNote.HolderName) != null || o.GetComponentInChildren<RaycastInteractable>(true) != null).ToArray();
+			return all.FirstOrDefault(o => string.Equals(o.Name.Trim(), what, StringComparison.OrdinalIgnoreCase) || string.Equals(ObjectProps.Get(o.Props, ObjectProps.NoteTitle).Trim(), what, StringComparison.OrdinalIgnoreCase))
+				?? all.FirstOrDefault(o => o.Name.Trim().StartsWith(what, StringComparison.OrdinalIgnoreCase))
+				?? all.FirstOrDefault(o => o.Name.IndexOf(what, StringComparison.OrdinalIgnoreCase) >= 0 || ObjectProps.Get(o.Props, ObjectProps.NoteTitle).IndexOf(what, StringComparison.OrdinalIgnoreCase) >= 0);
+		}
+
+		/// <summary>The nearest solid hit (no triggers) of a ray that isn't part of the player or the target.</summary>
+		static bool FaceSolidHit(Vector3 from, Vector3 dir, float dist, Transform a, Transform b, out RaycastHit hit)
+		{
+			hit = default(RaycastHit);
+			bool any = false;
+			foreach (RaycastHit h in Physics.RaycastAll(from, dir, dist, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+			{
+				if (h.collider == null || (a != null && h.collider.transform.IsChildOf(a)) || (b != null && h.collider.transform.IsChildOf(b))) continue;
+				if (!any || h.distance < hit.distance) { hit = h; any = true; }
+			}
+			return any;
+		}
+
+		/// <summary>Room for a player standing with their feet at <paramref name="feet"/> (nothing solid in the capsule).</summary>
+		static bool FaceRoom(Vector3 feet, Transform a, Transform b)
+		{
+			foreach (Collider c in Physics.OverlapCapsule(feet + Vector3.up * 0.5f, feet + Vector3.up * 1.5f, 0.3f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+				if (!((a != null && c.transform.IsChildOf(a)) || (b != null && c.transform.IsChildOf(b)))) return false;
+			return true;
+		}
+
+		/// <summary>Helper.FindInteractable's ray, from the camera straight ahead instead of through the screen's middle
+		/// (Camera.ScreenPointToRay of a minimised window's size is no ray through the view): the interactable hit, its
+		/// redirect's target, or null.</summary>
+		static RaycastInteractable AheadInteractable(Camera cam, float dist)
+		{
+			if (cam == null) return null;
+			RaycastHit hit;
+			if (!Physics.Raycast(new Ray(cam.transform.position, cam.transform.forward), out hit, dist, LayerMasks.MASK_RaycastInteractable, QueryTriggerInteraction.Collide) || hit.collider == null) return null;
+			RaycastInteractable ri = hit.collider.GetComponent<RaycastInteractable>();
+			if (ri != null) return ri;
+			RaycastInteractable_Redirect rd = hit.collider.GetComponent<RaycastInteractable_Redirect>();
+			return rd != null ? rd.RaycastInteractable : null;
+		}
+
 		static IEnumerator FaceRoutine(IslandWorldState.Entry e, string what)
 		{
+			faceFound = null;
+			faceRef = null;
 			Network_Player player = RAPI.GetLocalPlayer();
-			IslandObjectRef r = e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(o => string.Equals(o.Name, what, StringComparison.OrdinalIgnoreCase) ||
-				string.Equals(ObjectProps.Get(o.Props, ObjectProps.NoteTitle), what, StringComparison.OrdinalIgnoreCase));
-			if (r == null || player == null) { Fail("no object '" + what + "' on '" + e.HostName + "'"); yield break; }
+			IslandObjectRef r = player != null ? FaceTarget(e, what) : null;
+			if (r == null) { Fail("no object '" + what + "' on '" + e.HostName + "'"); yield break; }
 			Transform holder = r.transform.Find(CustomNote.HolderName);
+			if (holder == null) { RaycastInteractable ri = r.GetComponentInChildren<RaycastInteractable>(true); holder = ri != null ? ri.transform : null; }
 			Collider col = holder != null ? holder.GetComponent<Collider>() : null;
 			if (col == null) { Fail("'" + what + "' has nothing to interact with"); yield break; }
+			string label = r.Name.Trim().Length > 0 ? r.Name.Trim() : what;
 			NoteReader.Close();
+			DialoguePanel.Close();
 			yield return EnsureAlive();
 			Physics.SyncTransforms();
+			Vector3 back = player.transform.position;
+			// (a player on the raft goes back to the same spot of the raft: it drifts while the test runs, and the world spot
+			// it had is open sea a minute later - the player ended under the raft)
+			Transform backParent = player.transform.parent;
+			Vector3 backLocal = backParent != null ? backParent.InverseTransformPoint(back) : back;
 			Vector3 target = col.bounds.center;
-			// On the ground 1.6 m from it, first on the side towards the island's middle (open ground), then around it
-			// until Raft's ray finds it (a rock or the slope can be in the way from one side)
+			bool islander = r.GetComponentInChildren<Islander>(true) != null;
+			// (an islander: aim at the chest; the floor they stand on is the height to stand at - in a hut on stilts the
+			// ground under the floor was the old stand point: the player went under the hut, the floor hid the islander)
+			float floorY = islander ? r.transform.position.y : col.bounds.min.y;
+			if (islander) target = new Vector3(target.x, Mathf.Clamp(r.transform.position.y + 1.2f, col.bounds.min.y, col.bounds.max.y), target.z);
 			Vector3 toMiddle = Flat(new Vector3(e.Position.x, 0f, e.Position.z) - target).normalized;
 			if (toMiddle.sqrMagnitude < 0.01f) toMiddle = Vector3.forward;
-			CharacterController cc = player.PersonController.controller;
+			// Stand points 1-2.6 m off, first towards the island's middle, then round it: solid ground (a floor too) near the
+			// object's foot, room to stand, nothing solid between the eyes and the object
+			var spots = new List<Vector3>();
+			foreach (float d in new[] { 1.6f, 1.2f, 2.2f, 2.6f })
+				for (int k = 0; k < 8; k++)
+				{
+					Vector3 p = target + Quaternion.Euler(0f, (k % 2 == 0 ? 1 : -1) * ((k + 1) / 2) * 45f, 0f) * toMiddle * d;
+					RaycastHit ground;
+					if (!FaceSolidHit(new Vector3(p.x, floorY + 1.8f, p.z), Vector3.down, 4f, player.transform, r.transform, out ground)) continue;
+					if (Mathf.Abs(ground.point.y - floorY) > 1.6f || ground.normal.y < 0.6f) continue;
+					Vector3 feet = ground.point + Vector3.up * 0.05f;
+					if (!FaceRoom(feet, player.transform, r.transform)) continue;
+					Vector3 eye = feet + Vector3.up * 1.6f;
+					RaycastHit block;
+					if (FaceSolidHit(eye, target - eye, Vector3.Distance(eye, target), player.transform, r.transform, out block)) continue;
+					spots.Add(feet);
+				}
 			Camera cam = Helper.MainCamera;
 			RaycastInteractable found = null;
-			for (int k = 0; k < 8 && (found == null || found.gameObject != holder.gameObject); k++)
+			int tried = 0;
+			bool byAhead = false, aimedCam = false;
+			string miss = null;
+			foreach (Vector3 stand in spots.Take(8))
 			{
-				Vector3 stand = target + Quaternion.Euler(0f, k * 45f, 0f) * toMiddle * 1.6f;
-				RaycastHit ground;
-				if (Physics.Raycast(stand + Vector3.up * 10f, Vector3.down, out ground, 30f, 1 << IslandSpawner.TerrainLayer)) stand.y = ground.point.y + 0.2f;
-				cc.enabled = false;
-				player.transform.position = stand;
-				player.PersonController.SwitchControllerType(ControllerType.Ground);
-				cc.enabled = true;
-				yield return new WaitForSeconds(k == 0 ? 1f : 0.6f);
+				tried++;
+				PlayerMove.To(player, stand);
+				KeepAlive(player);
+				// (held on the spot while it looks: a minimised box Raft let the player slide off it - 4.9 m off and down in
+				// the water a second later, out of reach)
+				CharacterController hold = player.PersonController != null ? player.PersonController.controller : null;
+				if (hold != null) hold.enabled = false;
+				Physics.SyncTransforms();
+				yield return new WaitForSeconds(tried == 1 ? 1f : 0.6f);
 				Vector3 look = target - cam.transform.position;
 				Look(player, Quaternion.LookRotation(Flat(look)).eulerAngles.y, -Mathf.Atan2(look.y, Flat(look).magnitude) * Mathf.Rad2Deg);
 				yield return new WaitForSeconds(0.5f);
 				found = Helper.FindInteractable(Player.UseDistance * 1.1f, QueryTriggerInteraction.Collide);
+				if (found != null && found.transform.IsChildOf(r.transform)) break;
+				// (a minimised Raft: Raft's ray goes through the screen's middle, and a minimised window has no screen size -
+				// the same ray from the camera straight ahead, which is what the screen's middle is when the window has one)
+				RaycastInteractable ahead = AheadInteractable(cam, Player.UseDistance * 1.1f);
+				if (ahead != null && ahead.transform.IsChildOf(r.transform)) { found = ahead; byAhead = true; break; }
+				// (a minimised Raft may not turn the view (its mouse look waits for a frame drawn): the camera itself turned to
+				// the object, and the same ray in the same frame, before anything turns it back)
+				cam.transform.rotation = Quaternion.LookRotation(target - cam.transform.position);
+				ahead = AheadInteractable(cam, Player.UseDistance * 1.1f);
+				if (ahead != null && ahead.transform.IsChildOf(r.transform)) { found = ahead; byAhead = true; aimedCam = true; break; }
+				if (miss == null)
+				{
+					RaycastHit any;
+					bool hitAny = Physics.Raycast(cam.transform.position, target - cam.transform.position, out any, 10f, ~0, QueryTriggerInteraction.Collide);
+					miss = "camera " + Vector3.Distance(cam.transform.position, target).ToString("F1") + " m off, player " + Vector3.Distance(player.transform.position, stand).ToString("F1") + " m from the stand point (" + (player.transform.position.y - stand.y).ToString("F1") + " m up), turned " + Vector3.Angle(cam.transform.forward, target - cam.transform.position).ToString("F0") + " deg off before the camera was turned; the first thing towards it: " + (hitAny ? any.collider.name + " (layer " + LayerMask.LayerToName(any.collider.gameObject.layer) + ", " + any.distance.ToString("F1") + " m)" : "nothing") + ", use distance " + Player.UseDistance.ToString("F1");
+				}
 			}
+			if (player.PersonController != null && player.PersonController.controller != null) player.PersonController.controller.enabled = true;
 			typeof(Behaviours).GetProperty("LastMessage").SetValue(null, "", null);
-			if (found != null && found.gameObject == holder.gameObject) Log("Facing '" + what + "': Raft's interaction ray finds it from " + Vector3.Distance(cam.transform.position, target).ToString("F1") + " m");
-			else Fail("facing '" + what + "': Raft's ray found " + (found != null ? found.name : "nothing"));
+			if (found != null && found.transform.IsChildOf(r.transform))
+			{
+				faceFound = found;
+				faceRef = r;
+				Log("Facing '" + label + "': Raft's interaction ray finds it" + (byAhead ? " (the camera's straight-ahead ray" + (aimedCam ? ", the camera turned to it" : "") + ": the screen's middle missed - screen " + Screen.width + "x" + Screen.height + ")" : "") + " from " + Vector3.Distance(cam.transform.position, target).ToString("F1") + " m");
+				yield break;
+			}
+			// (never left in the ground or under a floor: back where the player was)
+			Vector3 to = backParent != null && backParent.gameObject.activeInHierarchy ? backParent.TransformPoint(backLocal) : back;
+			PlayerMove.To(player, to + Vector3.up * 0.1f);
+			KeepAlive(player);
+			Fail("facing '" + label + "': Raft's ray found " + (found != null ? found.name : "nothing") + " (" + spots.Count + " stand points with room and a clear view, " + tried + " tried" + (miss != null ? "; first try: " + miss : "") + "); the player is back where they were");
+		}
+
+		[ConsoleCommand(name: "CITalk", docs: "Dev, in game (either player): talks to an islander as a player does - faces them (CIFace), opens the dialogue through the E key's path (Islander.Talk), then closes it as Esc does (or picks an answer, or reads every page with E), which ends in Islanders.Talked: talk events, a \"Bring items\" step's hand-in, the quest's talk step: CITalk <island> <islander name> [read | pick <n>]")]
+		public static void TalkCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			List<string> words = args.Skip(1).ToList();
+			int pick = 0;
+			bool read = false;
+			if (words.Count > 2 && words[words.Count - 2].Equals("pick", StringComparison.OrdinalIgnoreCase) && int.TryParse(words[words.Count - 1], out pick)) words.RemoveRange(words.Count - 2, 2);
+			else if (words.Count > 1 && words[words.Count - 1].Equals("read", StringComparison.OrdinalIgnoreCase)) { read = true; words.RemoveAt(words.Count - 1); }
+			StartTest(TalkRoutine(e, string.Join(" ", words.ToArray()), pick, read));
+		}
+
+		static IEnumerator TalkRoutine(IslandWorldState.Entry e, string who, int pick, bool read)
+		{
+			yield return FaceRoutine(e, who);
+			if (faceFound == null) yield break;
+			Islander isl = faceFound.GetComponent<Islander>() ?? faceRef.GetComponentInChildren<Islander>(true);
+			if (isl == null) { Fail("'" + who + "' on '" + e.HostName + "' is not an islander"); yield break; }
+			string name = Islanders.NameOf(isl.Ref != null ? isl.Ref.Props : null);
+			int talks = Islanders.Talks;
+			// E: what Islander.OnIsRayed does on the interact key
+			DialoguePanel.LastClose = null;
+			isl.Talk();
+			if (!DialoguePanel.IsOpen) { Fail("talking to '" + name + "': no dialogue opened"); yield break; }
+			Log("Dialogue open: '" + DialoguePanel.ShownSpeaker + "', page 1: " + TalkShort(DialoguePanel.ShownText));
+			yield return new WaitForSeconds(0.5f);
+			if (!DialoguePanel.IsOpen) { Fail("talking to '" + name + "': the dialogue closed by itself within 0.5 s (" + (DialoguePanel.LastClose ?? "unknown") + ")"); yield break; }
+			if (pick > 0) { DialoguePanel.Pick(pick); Log("Picked answer " + pick); }
+			else if (read)
+			{
+				// (E on every page: Next, Goodbye on the last; a page with answers waits for one - then Esc)
+				for (int n = 0; n < 30 && DialoguePanel.IsOpen; n++)
+				{
+					int was = DialoguePanel.ShownPage;
+					DialoguePanel.Next();
+					yield return new WaitForSeconds(0.3f);
+					if (DialoguePanel.IsOpen && DialoguePanel.ShownPage == was) { Log("Page " + (was + 1) + " wants an answer: closed with Esc"); break; }
+					if (DialoguePanel.IsOpen) Log("Page " + (DialoguePanel.ShownPage + 1) + ": " + TalkShort(DialoguePanel.ShownText));
+				}
+			}
+			// Esc: DialoguePanel.Update's Finish(0) - the same close
+			DialoguePanel.Close();
+			yield return new WaitForSeconds(0.5f);
+			if (DialoguePanel.IsOpen) { Fail("talking to '" + name + "': the dialogue is still open"); yield break; }
+			if (Islanders.Talks == talks) { Fail("talking to '" + name + "': the dialogue closed but Islanders.Talked didn't run"); yield break; }
+			string msg = Behaviours.LastMessage;
+			Log("PASS: talked to '" + name + "' on '" + e.HostName + "' (" + (Raft_Network.IsHost ? "host" : "client") + "; Islanders.Talked ran" + (string.IsNullOrEmpty(msg) ? "" : ", message '" + TalkShort(msg) + "'") + ")");
+		}
+
+		static string TalkShort(string s)
+		{
+			s = (s ?? "").Replace("\n", " / ");
+			return s.Length > 120 ? s.Substring(0, 117) + "..." : s;
 		}
 
 		[ConsoleCommand(name: "CILastMessage", docs: "Dev, in game: the last message an island object gave this player, and whether the note reader is open")]
