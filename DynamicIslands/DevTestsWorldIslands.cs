@@ -90,7 +90,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: island picker box"); else Fail("island picker box");
 		}
 
-		[ConsoleCommand(name: "CIWorldIslandsCheck", docs: "Dev, world (host): the world leaves out exactly these entries of the spawn pool - the world file's line, the pool the spawner picks from (400 picks: never one left out, every other one possible), the WorldIslands command (-/+ an entry, saved at once), SpawnPool's text: CIWorldIslandsCheck [entry|entry...]")]
+		[ConsoleCommand(name: "CIWorldIslandsCheck", docs: "Dev, world (host): the world leaves out exactly these entries of the spawn pool - the world file's line, the pool the spawner picks from (the rest, less what it holds back for now and names: a plan's island, one in this world, one not before N km; 400 picks: never one left out), the WorldIslands command (-/+ an entry, saved at once), SpawnPool's text: CIWorldIslandsCheck [entry|entry...]")]
 		public static void WorldIslandsCheckCommand(string[] args)
 		{
 			HashSet<string> want = EntriesArg(args);
@@ -99,7 +99,19 @@ namespace DynamicIslands
 			Check(ref ok, WorldIslands.Off.SetEquals(want), "the world leaves out: " + WorldIslands.Describe() + " (wanted " + (want.Count == 0 ? "none" : string.Join(", ", want.ToArray())) + ")");
 			List<string> all = WorldIslands.Candidates();
 			List<string> pool = CustomIslandSpawner.Pool().Select(p => p.Key).ToList();
-			Check(ref ok, pool.All(WorldIslands.TakesPart) && all.Where(WorldIslands.TakesPart).All(pool.Contains), "the spawner's pool is the whole pool less those (" + pool.Count + " of " + all.Count + ")");
+			// The spawner also holds entries back for this world for now, for its own reasons (CustomIslandSpawner.Pool): a
+			// world plan's island, one this world has now or finished, one whose "not before" km this world hasn't sailed (a
+			// fresh world: Lockkeeper's Isle, 8 km - this check failed on it as "one of the pool missing", 10-31..11-04). Those
+			// are named and must be exactly the ones missing; anything else missing, or a left-out one in the pool, fails.
+			HashSet<string> planned = CustomIslandSpawner.PlanIslandNames();
+			Func<string, string> heldBy = e => planned.Contains(e) ? "a plan's" : CustomIslandSpawner.NotAgain(e) ? "in this world" :
+				CustomIslandSpawner.TooEarly(e) ? "not before " + IslandCache.NotBeforeKm(e) + " km, sailed " + (WorldDirector.Sailed / 1000f).ToString("0.0") : null;
+			List<string> held = all.Where(e => WorldIslands.TakesPart(e) && heldBy(e) != null).ToList();
+			var expectPool = new HashSet<string>(all.Where(e => WorldIslands.TakesPart(e) && heldBy(e) == null), StringComparer.OrdinalIgnoreCase);
+			List<string> missing = expectPool.Where(e => !pool.Contains(e)).ToList(), extraIn = pool.Where(e => !expectPool.Contains(e)).ToList();
+			Check(ref ok, missing.Count == 0 && extraIn.Count == 0, "the spawner's pool is the whole pool less those (" + pool.Count + " of " + all.Count +
+				(held.Count > 0 ? "; held back for now: " + string.Join(", ", held.Select(e => e + " - " + heldBy(e)).ToArray()) : "") + ")" +
+				(missing.Count > 0 ? " - missing: " + string.Join(", ", missing.ToArray()) : "") + (extraIn.Count > 0 ? " - in it but shouldn't be: " + string.Join(", ", extraIn.ToArray()) : ""));
 			var picked = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			for (int i = 0; i < 400; i++) { string p = CustomIslandSpawner.PickFromPool(); if (p != null) picked.Add(p); }
 			Check(ref ok, !picked.Any(p => want.Contains(p)), "400 picks: none left out (" + picked.Count + " different ones picked)");
