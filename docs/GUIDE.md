@@ -704,7 +704,9 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
 - **Caves: Dig brush:** the other tunnel tool (the one above is now called **Straight tunnel**). Paint your own
   passage into a hill or cliff, as the Sculpt brushes paint the ground: press on a hillside and hold - a tunnel is dug in
   toward where the mouse points. Move the mouse to steer it round bends; keep it still and it digs on the way you look.
-  Let go and press again on the tunnel to dig on from that spot or branch off; **Shift**+drag fills a passage back in.
+  Let go and press again on the tunnel to dig on from that spot or branch off; dig a tunnel on into another one (a
+  second mouth into the first tunnel) and the two join: the rock between them is cut away on both sides and the floor
+  ramps to meet the other's at 20 degrees or less. **Shift**+drag fills a passage back in.
   **Dig size** is the passage's width and height (2.8 m: a tight passage you can still walk; 6 m and more: a hall);
   **Dig slope** makes it climb or go down as you dig (up to 25°; down from flat ground is a ramp in). With the slope
   level, a stroke on flat ground or a gentle slope (the mouse not pointing up into a hill) goes down into the ground by

@@ -1059,6 +1059,8 @@ namespace DynamicIslands
 		/// <summary>Every object placed under an alias: prop, loot and note set them all (seven lamps that a generator
 		/// shows, seven dark zones it hides - before, only the last lamp got its settings).</summary>
 		static readonly Dictionary<string, List<EditorGameObject>> recipeGroups = new Dictionary<string, List<EditorGameObject>>(StringComparer.OrdinalIgnoreCase);
+		/// <summary>The cave tool's caves laid by this recipe, by their as= group (caveloot, cavegate).</summary>
+		static readonly Dictionary<string, CaveTool.Layout> recipeCaves = new Dictionary<string, CaveTool.Layout>(StringComparer.OrdinalIgnoreCase);
 		static readonly HashSet<GameObject> recipePlaced = new HashSet<GameObject>();
 		/// <summary>The quest the recipe is writing (the quest window's fields before Save).</summary>
 		static IslandQuest pendingQuest;
@@ -1416,6 +1418,7 @@ namespace DynamicIslands
 			RecipeSaved = null;
 			RecipeObjects.Clear();
 			recipeGroups.Clear();
+			recipeCaves.Clear();
 			recipePlaced.Clear();
 			recipeNoPosts = false;
 			recipeReseat = false;
@@ -1467,8 +1470,21 @@ namespace DynamicIslands
 						List<EditorGameObject> cg;
 						if (!recipeGroups.TryGetValue(copt["as"], out cg)) recipeGroups[copt["as"]] = cg = new List<EditorGameObject>();
 						cg.AddRange(laid.Select(g => g.GetComponent<EditorGameObject>()));
+						if (CaveTool.LastLayout != null) recipeCaves[copt["as"]] = CaveTool.LastLayout;
 					}
 					placed += laid.Count;
+					continue;
+				}
+				if (verb == "caveloot" || verb == "cavegate")
+				{
+					// caveloot <group> [dirt=3] [mush=3] [stone=2] [vines=2] [titanium=0] [light=0]: Raft's cave loot on the floor of the
+					// cave (cave tool or Dig brush) laid as=<group>, cave vines from its roof; cavegate <group> [scale=1]: Raft's machete
+					// vines across its mouth (G6 kits, 11-04)
+					if (t.Length < 2) { Fail("recipe " + name + ", " + rl.Where + " (" + line + "): " + verb + " <group> [options]"); yield break; }
+					yield return PlaceableCatalog.EnsureLoaded(CaveKitObjects);
+					Physics.SyncTransforms();
+					string kerr = verb == "caveloot" ? CaveLootStep(t[1], Options(t.Skip(2)), ref placed) : CaveGateStep(t[1], Options(t.Skip(2)), ref placed);
+					if (kerr != null) { Fail("recipe " + name + ", " + rl.Where + " (" + line + "): " + kerr); yield break; }
 					continue;
 				}
 				if (verb == "dig")

@@ -36,6 +36,8 @@ namespace DynamicIslands.Editor
 		public const float Under = 0.2f;
 		/// <summary>The passage's middle stands this much of its radius over its floor (a flat floor, an arched roof).</summary>
 		public const float CentreUp = 0.6f;
+		/// <summary>Another tunnel's passage is cut this much wider out of a tunnel's rock where it comes into it (its own walls in front).</summary>
+		const float JoinGap = 0.15f;
 		public const float MinRadius = 1.4f, MaxRadius = 5f, MaxSlope = 25f;
 		const int MaxPoints = 2000;
 		/// <summary>A ground cell is cut when the passage comes this close to its ground (between the points looked at).</summary>
@@ -912,6 +914,33 @@ namespace DynamicIslands.Editor
 			return (float)sum;
 		}
 
+		/// <summary>The other dug tunnels beside this one (the same parent - the editor's placed objects or the island's - and their
+		/// rock's bounds meeting this one's): where their passages come into this rock, it is open (a joined system, 11-04).</summary>
+		List<DigTunnel> Neighbours(IList<DigTunnel> all = null)
+		{
+			var list = new List<DigTunnel>();
+			if (transform.parent == null || PointCount == 0) return list;
+			Bounds wb = WorldBounds();
+			foreach (DigTunnel t in all ?? transform.parent.GetComponentsInChildren<DigTunnel>(false))
+				if (t != this && t.PointCount > 0 && t.transform.parent == transform.parent && t.WorldBounds().Intersects(wb)) list.Add(t);
+			return list;
+		}
+
+		/// <summary>What this tunnel's lining was made against: its neighbours' paths and places (changed: make it again).</summary>
+		string JoinKey(List<DigTunnel> near)
+		{
+			if (near.Count == 0) return "";
+			var k = new StringBuilder();
+			foreach (DigTunnel t in near.OrderBy(t => t.GetInstanceID()))
+				k.Append(t.GetInstanceID()).Append(':').Append((t.built ?? "").GetHashCode()).Append(t.transform.position).Append(t.transform.rotation).Append(t.transform.lossyScale).Append('/');
+			return k.ToString();
+		}
+
+		[NonSerialized] string joinBuilt = "";
+
+		/// <summary>The neighbours moved, dug on or newly there since the lining was made (a world's island: built one by one).</summary>
+		public bool JoinsChanged(IList<DigTunnel> all = null) { return PointCount > 0 && JoinKey(Neighbours(all)) != joinBuilt; }
+
 		Bounds WorldBounds()
 		{
 			Bounds b = PathBounds();
@@ -985,6 +1014,13 @@ namespace DynamicIslands.Editor
 			Vector3 o = b.min;
 			int N = nx * ny * nz;
 			int sy = nx, sz = nx * ny; // index = x + y*sy + z*sz
+			// (other tunnels' passages coming into this rock (11-04: a second tunnel dug into the first met its closed lining, a
+			// wall across the way): their passage, a little wider, cut out of this rock; their own lining makes the walls there)
+			List<DigTunnel> joined = Neighbours();
+			joinBuilt = JoinKey(joined);
+			var joinSegs = new List<List<Seg>>();
+			var joinBox = new List<Bounds>();
+			foreach (DigTunnel t in joined) { joinSegs.Add(t.Segments(Shell)); joinBox.Add(t.WorldBounds()); }
 			var dist = new float[N];
 			var floorAt = new float[N];
 			var radAt = new float[N];
@@ -1131,6 +1167,18 @@ namespace DynamicIslands.Editor
 						if (e > m) m = e;
 						field[i] = m;
 						outer[i] = c > 0f && e <= 0f; // (past the rock's outside, under its top: the hill's own, never seen)
+						if (joined.Count > 0 && m < JoinGap / sY)
+						{
+							Vector3 w = transform.TransformPoint(p);
+							for (int j = 0; j < joined.Count; j++)
+							{
+								if (!joinBox[j].Contains(w)) continue;
+								DigTunnel t2 = joined[j];
+								float s2 = Mathf.Abs(t2.transform.lossyScale.y) > 1e-4f ? Mathf.Abs(t2.transform.lossyScale.y) : 1f;
+								float d2 = (Distance(joinSegs[j], t2.transform.InverseTransformPoint(w)) * s2 - JoinGap) / sY;
+								if (d2 < 0f && -d2 > field[i]) { field[i] = -d2; passage[i] = true; outer[i] = false; }
+							}
+						}
 					}
 			dist = null; floorAt = null; radAt = null;
 
@@ -1215,7 +1263,7 @@ namespace DynamicIslands.Editor
 					if (t.PointCount == 0) continue;
 					Terrain land = t.Land();
 					if (land == null) continue;
-					if (Mathf.Abs(t.GroundLook(land) - t.groundLook) > 1e-4f) t.Rebuild(); // (the ground set after the lining was made)
+					if (Mathf.Abs(t.GroundLook(land) - t.groundLook) > 1e-4f || t.JoinsChanged()) t.Rebuild(); // (the ground set after the lining was made; a tunnel joining it came after it)
 					HashSet<Vector2Int> set;
 					if (!byLand.TryGetValue(land, out set)) byLand[land] = set = new HashSet<Vector2Int>();
 					t.CellsToCut(land, set);
@@ -1292,7 +1340,7 @@ namespace DynamicIslands.Editor
 			foreach (DigTunnel t in tunnels)
 			{
 				float look = t.GroundLook(land);
-				if (Mathf.Abs(look - t.groundLook) > 1e-4f) t.Rebuild(); // (the ground sculpted over it)
+				if (Mathf.Abs(look - t.groundLook) > 1e-4f || t.JoinsChanged(tunnels)) t.Rebuild(); // (the ground sculpted over it; a tunnel joining it dug or moved)
 				Transform tr = t.transform;
 				key.Append(t.GetInstanceID()).Append(':').Append((t.built ?? "").GetHashCode()).Append(':').Append(tr.position).Append(tr.rotation).Append(tr.lossyScale).Append(':').Append(t.groundLook).Append('/');
 			}
@@ -1498,11 +1546,27 @@ namespace DynamicIslands.Editor
 			if (autoDown < 0) autoDown = Mathf.Abs(Slope) < 0.5f && target.y - last.At.y < (CentreUp + 1f) * r ? 1 : 0;
 			Terrain land = autoDown == 1 ? current.Land() : null;
 			float down = -Mathf.Tan(MaxSlope * Mathf.Deg2Rad) * step;
+			// (steered into another passage - another tunnel, or another stroke of this one: its floor met on a ramp at most
+			// JoinSlope, begun as late as that allows (11-04: a second tunnel dug into the first came in 1.6 m under its floor, a
+			// step no one climbs))
+			float? joinY = JoinFloor(world);
 			while (carry >= step && current.PointCount < MaxPoints)
 			{
 				carry -= step;
 				last = head[head.Count - 1];
 				float c = climb;
+				if (joinY.HasValue)
+				{
+					Vector3 lw = current.transform.TransformPoint(last.At);
+					float left = new Vector2(world.x - lw.x, world.z - lw.z).magnitude;
+					float dy = (joinY.Value - lw.y) / (Mathf.Abs(current.transform.lossyScale.y) > 1e-4f ? Mathf.Abs(current.transform.lossyScale.y) : 1f);
+					if (Mathf.Abs(dy) > 0.05f && Mathf.Abs(dy) / JoinSlopeTan >= left - 2f * step - 0.6f * r)
+					{
+						head.Add(new Point(last.At + dir * step + Vector3.up * Mathf.Clamp(dy * step / Mathf.Max(step, left - 0.6f * r), down, -down), Radius));
+						changedSinceBuild = true;
+						continue;
+					}
+				}
 				if (land != null)
 				{
 					Vector3 next = last.At + dir * step;
@@ -1515,6 +1579,28 @@ namespace DynamicIslands.Editor
 				changedSinceBuild = true;
 			}
 			return true;
+		}
+
+		const float JoinSlopeTan = 0.36f; // (20 degrees)
+
+		/// <summary>The floor (world y) of a dug passage over or under a point - another tunnel's, or another stroke's of the
+		/// tunnel being dug - within its radius across; null: none.</summary>
+		static float? JoinFloor(Vector3 world)
+		{
+			float? best = null;
+			float bestD = float.MaxValue;
+			foreach (DigTunnel t in EditorTunnels())
+				foreach (List<Point> s in t.Strokes)
+				{
+					if (ReferenceEquals(s, head)) continue;
+					foreach (Point q in s)
+					{
+						Vector3 a = t.transform.TransformPoint(q.At);
+						float d = new Vector2(a.x - world.x, a.z - world.z).magnitude;
+						if (d < q.R * Mathf.Abs(t.transform.lossyScale.x) && d < bestD) { bestD = d; best = a.y; }
+					}
+				}
+			return best;
 		}
 
 		static void FillAt(Vector3 world)

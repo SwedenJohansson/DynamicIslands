@@ -77,7 +77,18 @@ plan save
 - `rnd` is seeded from the top file's name, so a recipe gives the same numbers every run. `scatter` without `seed=` draws
   from the same generator.
 - A `set` inside a `for` body or a macro call stays inside it. Nesting deeper than 40 is an error.
-- Shared macro files: `lib_huts`, `lib_rt`, `lib_sea`, `lib_relay`, `lib_selene`, `lib_features`.
+- Shared macro files: `lib_huts`, `lib_rt`, `lib_sea`, `lib_relay`, `lib_selene`, `lib_features`, `lib_caves`.
+- `lib_caves` (G6 cave kits, look-checked once in Raft: inside and out by day and night, the X7 probes, host + box):
+  `call kit_st x z yaw len [slope] [end=room|open] [size]` a straight cave (cave tool); `call kit_uw x z yaw len [slope]`
+  an underwater straight cave climbing to a dry room; `call kit_dig x z yaw len [flat] [r] [slope] [room]` a dug tunnel
+  (Dig brush); `call kit_sys x z yaw [side] ...` a joined system of three dug tunnels with two mouths. Each lays
+  `caveloot` (dirt mush stone vines titanium light) and, with `gate=1`, `cavegate`; `as=` names the group. The macro
+  file's header lists every option.
+- `tools\content.ps1 cavecheck <recipe> [-machete]` (offline, `content\cavecheck.py`) checks where a recipe's caves go:
+  a cave or dug volume or mouth 6 m from quest objects, islanders, signs, chests, ladders, spawns and dens; no cave over or
+  under a quest object; no mouth on the main walk line (3 m from the line through the quest steps' targets); a vine-gated
+  cave off the quest path before the machete step (`-machete` or `# cavecheck machete`: an earlier island gives it).
+  `# cavecheck inside <alias> ...` marks objects meant to be in a cave. Exit 1 on FAIL.
 
 ## Coordinates and units
 
@@ -107,6 +118,8 @@ plan save
 | `brush` | `<tool> at x z` or `<tool> from x1 z1 to x2 z2`, `[r=15] [s=4] [frames=30] [rot=] [h=]` | A terrain stroke (`Brush`). Tools: `raise lower flatten smooth sample sand grass rock seabed auto stamp:<i>`. r 2-80, s 0.5-20, frames 1-600. `h=`: flatten to that height above the sea. `rot=`: the stamp's turn (plus the frame's yaw). |
 | `cave` | `from x1 z1 to x2 z2 [slope=] [end=room\|open] [hill=1\|0] [size=] [as=group]` | The editor's cave tool (`CaveTool`, PF-D2): Raft's cave tunnels from the mouth (x1 z1) towards x2 z2, a bear-den room at the end or an open end, the ground raised over them; `slope=` degrees, below 0 down; `size=` 0.7-1.5 times Raft's own (default 1). |
 | `dig` | `<x,z \| x,y,z \| x,y,z,r> ... [\| <next stroke> ...] [r=1.75] [slope=0] [fill] [as=group]` | The editor's Dig brush (`DigTunnel`): each stroke pressed at its first point and dug on through the others, as the mouse steers it. A point is x,z (on the ground), x,y,z (y m over the ground, below 0 under it) or x,y,z,r (the radius to there, 1.4-5 m). A stroke whose first point x,z is over a dug passage branches from it; a stroke ending in another tunnel joins it. `slope=` degrees up (-25..25; 0 level, which on flat ground first goes down until there is rock overhead); `fill`: Shift, fills dug tunnels back in at the points. |
+| `caveloot` | `<group> [dirt=3] [mush=3] [stone=2] [vines=2] [titanium=0] [light=0]` | Raft's cave loot on the dry floor of the cave or dug tunnel laid `as=<group>` (`CaveLootStep`, DevTestsCaveGaps.cs, G6): dirt spots, mushrooms, stones, titanium ore and a metal lantern, from 5 m in (rock over the spot, no sky within 5 m, floor 0.3 m over the sea), to the passage's sides in turn; `vines` cave vines hung from the roof, scaled to leave 1.95 m to walk under (a vine with no room is hidden). Laid as `<group>_loot`. Error when no dry spot is found (it counts the points near open sky, without roof or floor, and wet). |
+| `cavegate` | `<group> [scale=1]` | Raft's machete vines (`ChoppableVines`) across the mouth of the cave laid `as=<group>`, alias `<group>_vines`: the player cuts them with the machete to get in. |
 | `clear` | `at x z [r=5]` or `from x1 z1 to x2 z2 [r=5]`, `[all] [body] [only=<regex>] [below=] [above=] [on=sand\|grass\|rock\|seabed]` | Hides the editor objects in the circle or along the line, as one undo step. Without `all` the recipe's own objects stay. `body`: by how near each object's body (its renderers' box) comes, not its pivot (big look pieces whose pivot stands metres off them). `below`/`above`: height above the sea. |
 | `store` | `[alias\|-] at x z [options]` | Raft's trading post as a working store (`place TradingPost ...`, SL7 `RaftStore.cs`): Raft's goods and prices, plus the story blueprints the player lacks (Trashcube*6, one each). Use `ground`. |
 | `vending` | `[alias\|-] at x z [options]` | Tangaroa's vending machine, working (`place VendingMachine ...`, SL7b `RaftVending.cs`): Raft's goods and prices (Tangaroa tokens; place `QuestItemPickup_Tangaroa_Token` pickups near it). Use `ground`. |
