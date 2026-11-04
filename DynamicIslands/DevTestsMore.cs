@@ -1336,10 +1336,12 @@ namespace DynamicIslands
 			int tried = 0;
 			bool byAhead = false, aimedCam = false;
 			string miss = null;
+			// (the player's position is not their feet: put at a stand point's height they started half in the ground)
+			Vector3 lift = Vector3.up * (PlayerMove.StandHeight(player) - 0.05f);
 			foreach (Vector3 stand in spots.Take(8))
 			{
 				tried++;
-				PlayerMove.To(player, stand);
+				PlayerMove.To(player, stand + lift);
 				KeepAlive(player);
 				// (held on the spot while it looks: a minimised box Raft let the player slide off it - 4.9 m off and down in
 				// the water a second later, out of reach)
@@ -1365,7 +1367,7 @@ namespace DynamicIslands
 				{
 					RaycastHit any;
 					bool hitAny = Physics.Raycast(cam.transform.position, target - cam.transform.position, out any, 10f, ~0, QueryTriggerInteraction.Collide);
-					miss = "camera " + Vector3.Distance(cam.transform.position, target).ToString("F1") + " m off, player " + Vector3.Distance(player.transform.position, stand).ToString("F1") + " m from the stand point (" + (player.transform.position.y - stand.y).ToString("F1") + " m up), turned " + Vector3.Angle(cam.transform.forward, target - cam.transform.position).ToString("F0") + " deg off before the camera was turned; the first thing towards it: " + (hitAny ? any.collider.name + " (layer " + LayerMask.LayerToName(any.collider.gameObject.layer) + ", " + any.distance.ToString("F1") + " m)" : "nothing") + ", use distance " + Player.UseDistance.ToString("F1");
+					miss = "camera " + Vector3.Distance(cam.transform.position, target).ToString("F1") + " m off, player " + Vector3.Distance(player.transform.position, stand + lift).ToString("F1") + " m from the stand point (" + (player.transform.position.y - stand.y - lift.y).ToString("F1") + " m up), turned " + Vector3.Angle(cam.transform.forward, target - cam.transform.position).ToString("F0") + " deg off before the camera was turned; the first thing towards it: " + (hitAny ? any.collider.name + " (layer " + LayerMask.LayerToName(any.collider.gameObject.layer) + ", " + any.distance.ToString("F1") + " m)" : "nothing") + ", use distance " + Player.UseDistance.ToString("F1");
 				}
 			}
 			if (player.PersonController != null && player.PersonController.controller != null) player.PersonController.controller.enabled = true;

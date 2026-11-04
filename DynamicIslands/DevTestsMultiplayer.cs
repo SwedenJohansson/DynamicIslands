@@ -148,6 +148,53 @@ namespace DynamicIslands
 			return e;
 		}
 
+		[ConsoleCommand(name: "CIGroundProbe", docs: "Dev, in game (either player): the ground at an island object on this machine, to compare host and client - the island's root, its terrains, and at the object and 8 points 2 m round it: each terrain's SampleHeight and the solid hits of a ray down (name, layer, whether the player collides with it); then the local player. CIGroundProbe <island> <object>")]
+		public static void GroundProbeCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			IslandObjectRef r = FaceTarget(e, args.Length > 1 ? string.Join(" ", args.Skip(1).ToArray()) : "");
+			if (r == null) { Fail("no object '" + string.Join(" ", args.Skip(1).ToArray()) + "' on '" + e.HostName + "'"); return; }
+			Network_Player player = RAPI.GetLocalPlayer();
+			int playerLayer = player != null ? player.gameObject.layer : 0;
+			Vector3 at = r.transform.position;
+			Log("Ground probe (" + (Raft_Network.IsHost ? "host" : "client") + ") '" + e.HostName + "' root " + e.Root.transform.position.ToString("F2") + " entry " + e.Position.ToString("F2") +
+				", '" + r.Name.Trim() + "' at " + at.ToString("F2") + " (local " + e.Root.transform.InverseTransformPoint(at).ToString("F2") + ")");
+			Terrain[] terrains = e.Root.GetComponentsInChildren<Terrain>(true);
+			foreach (Terrain t in terrains)
+			{
+				TerrainCollider tc = t.GetComponent<TerrainCollider>();
+				Log("  terrain '" + t.name + "' active " + t.gameObject.activeInHierarchy + " at " + t.transform.position.ToString("F2") + " size " + t.terrainData.size.ToString("F1") +
+					" res " + t.terrainData.heightmapResolution + ", collider " + (tc == null ? "none" : (tc.enabled ? "on" : "OFF") + " data " + (tc.terrainData == t.terrainData ? "same" : "OTHER")) + ", layer " + t.gameObject.layer);
+			}
+			for (int k = -1; k < 8; k++)
+			{
+				Vector3 p = k < 0 ? at : at + Quaternion.Euler(0f, k * 45f, 0f) * Vector3.forward * 2f;
+				var sb = new System.Text.StringBuilder();
+				sb.Append(k < 0 ? "  at the object" : "  point " + k).Append(" (" + p.x.ToString("F1") + ", " + p.z.ToString("F1") + "):");
+				foreach (Terrain t in terrains)
+				{
+					Vector3 tp = t.transform.position, ts = t.terrainData.size;
+					bool inside = p.x >= tp.x && p.x <= tp.x + ts.x && p.z >= tp.z && p.z <= tp.z + ts.z;
+					sb.Append(" terrain " + (inside ? (t.SampleHeight(p) + tp.y).ToString("F2") : "outside"));
+				}
+				RaycastHit[] hits = Physics.RaycastAll(new Vector3(p.x, at.y + 30f, p.z), Vector3.down, 80f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).Take(5).ToArray();
+				sb.Append("; ray:");
+				if (hits.Length == 0) sb.Append(" nothing");
+				foreach (RaycastHit h in hits)
+					sb.Append(" " + h.collider.name + "@" + h.point.y.ToString("F2") + " L" + h.collider.gameObject.layer + (Physics.GetIgnoreLayerCollision(playerLayer, h.collider.gameObject.layer) ? " (player passes)" : "") + ";");
+				Log(sb.ToString());
+			}
+			if (player != null)
+			{
+				RaycastHit under;
+				bool any = Physics.Raycast(player.transform.position + Vector3.up * 0.5f, Vector3.down, out under, 60f, ~0, QueryTriggerInteraction.Ignore);
+				Log("  player at " + player.transform.position.ToString("F2") + " layer " + playerLayer + ", under: " + (any ? under.collider.name + "@" + under.point.y.ToString("F2") : "nothing") +
+					", controller " + (player.PersonController != null && player.PersonController.controller != null ? (player.PersonController.controller.enabled ? "on" : "OFF") + " grounded " + player.PersonController.controller.isGrounded : "?"));
+			}
+			Log("PASS: ground probe");
+		}
+
 		static void PutPlayerNear(Transform t, float offset = 1.5f)
 		{
 			Network_Player player = RAPI.GetLocalPlayer();
