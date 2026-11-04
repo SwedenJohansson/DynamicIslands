@@ -5,7 +5,7 @@ Automated tests and content tools, run as `CI*` console commands. Players never 
 ## Files
 
 - `DevTests.cs` -> `Log`, `Fail`, `Check`, `Init`, the command file (`PollCommandFile`, `RunCommand`), editor and world drivers.
-- `DevTests*.cs` (113 files) -> one `public static partial class DevTests`; each file adds one area's commands.
+- `DevTests*.cs` (114 files) -> one `public static partial class DevTests`; each file adds one area's commands.
 - `DevTestsRecipe.cs` -> `CIRecipe` and recipe-writing helpers (see `RECIPE_FORMAT.md`).
 - `DevTestsT8cb.cs` -> `CIT8Items` (story take-out), `CICB1Recipe` (decorative ready pieces), `CITrust` (two players: host trust, a player's take-out). CI world commands set `PlayerTrust.ForTests`; `CITrust setup` clears it, `CITrust on` sets it again.
 - `DevTestsMp1030.cs` -> `CIMp1030` (one machine, host, Loopback: review 10-30 multiplayer fixes - corrections of refused used/harvest, full-list state re-apply, list without names, event on an island the host hasn't loaded, the day before's daily reward, ping sender, join size).
@@ -15,6 +15,8 @@ Automated tests and content tools, run as `CI*` console commands. Players never 
 - `DevTestsFix3.cs` -> `CIFix3RunShared` (a throwing shared action doesn't stop the chain), `CIFix3HostRefused` (a refusal shows its messages), `CIFix3Chest` (on.open gives a story item -> no refill), `CIFix3Pending` (pending keys of events 16-19), `CIFix3Stable` (MechFeatures keys move on a carry), `CIFix3WorldsUsing` (Raft's world folders scanned), `CIFix3LocalFile` (a damaged name_hash copy isn't played).
 - `DevTestsUpgrade.cs` -> `CIUpgradeHeal` (worlds from Release 2026-10-23: `StoryUpgrade` re-arms a removed island's rule and adopts a hand-spawned copy; `QuestTracker.HealSpentChests`).
 - `DevTestsNoteCarry.cs` -> `CINoteCarry` (journal pages follow their notes through Give my worlds this version; a removed note's page is kept as `gone<n>`).
+- `DevTestsTestTools.cs` -> keys, sign and note with Raft minimised: `CIKey`, `CIKeysState`, `CISign`, `CINoteHere` (see "Keys, sign, note, islanders" below).
+- `DevTestsMore.cs` -> also `CIFace` (stand in front of an object and check Raft's interaction ray finds it) and `CITalk` (talk to an islander).
 - `DevTestsPlay.cs` -> `CIPlay` play tests (see `PLAY_FORMAT.md`).
 - `DevTestsScenarios.cs` -> `Sc*` helpers to bring, use and remove islands in a world; many `CISc*` scenario tests.
 - `DevTestsEditorStart.cs` -> the start window, plan on the main menu, Use in a plan..., Edit island, plan tabs (`CICreateWindow`, `CIPlanFromMenu`, `CIUseInPlan`, `CIEditIslandFromMenu`, `CIPlanTabs`, `CIStoryNewIsland`).
@@ -97,6 +99,29 @@ Prefix families (`CIGen*`, `CIRandomizer*`, `CIStory*`, `CIPlan*`, `CIQuestBook*
 - `CI<Check>World` measures the loaded islands, `CI<Check>Islands <which>` saved islands one by one, `CI<Check>Types [types] [n]` brand-new generated islands (ground and overlap only; host, a `CI ...` test world). Each `IslandCheck` writes `Mods\DynamicIslands\<file>_<world|islands|types>.txt`.
 - `CIOverlap*` (`OverlapProblems`): building pieces through furniture/props (`PieceOverlaps`), then `SceneOverlaps`: a themed scene's props, chest and note (`RandomizerIslands.SceneProp` = `set.scene`, the theme's name) against each other by their collider boxes as turned (big mesh colliders too, meshes when none; 3D separating axes), fail over 6 cm, lines `scene <theme>: A ... goes d m into B`. Islands made before 10-21 have no `set.scene`: their set pieces named in `RandomizerIslands.Themes` are measured instead. Dish + pole pairs skipped.
 - The generator keeps the same rule (`RandomizerIslands.FootOf`/`Into`, 2D turned boxes, 5 cm gap) in `Dress`, `Sprinkle`, `DressWorld`; `CIIslandsSound` checks it on the files (no Raft objects needed).
+
+## Keys, sign, note, islanders (Raft minimised, 11-04)
+
+Real keys can't reach a minimised Raft, and no test may bring a Raft window up. These go through the game's own code instead:
+- `CIKey <KeyCode>` (either player): for one frame `Input.GetKeyDown(<key>)` answers true (a Harmony postfix that
+  `DevTests.Init` installs at start-up, before the mod's key code is first compiled), so the mod's K, J and minimap
+  key handlers run as for a real press. A letter key also types into the text field that has the keyboard
+  (`InputField`/`TMP_InputField.ProcessEvent`). Logs `PASS: CIKey <key> - before: <state>` and `CIKey <key> after: <state>`.
+- `CIKeysState`: one line - typing (`ModKeys.SomeoneTyping`), the selected field (focus, text), sign writing, stats page,
+  journal, notebook, note, dialogue, minimap, Raft's open menu.
+- `CISign give [n] | place | write | stop | text | status`: Raft's sign (`Placeable_Sign`): give it, place it (cheat
+  build on the raft floor 1.5 m ahead, facing the player), `write` opens Raft's sign text menu on the nearest sign
+  (`TextWriterManager.StartWriting`) and focuses its field, `stop` aborts typing.
+- `CINoteHere [title] | close`: a custom note 1 m in front of the player, opened (`NoteReader.Open`); `close` closes and removes it.
+- IL20 recipe: `CISign give; CISign place; CISign write; CIKey K; CIKey J; CIKeysState; CISign stop` (nothing opens, the
+  letters land on the sign), then `CINoteHere; CIKey K; CINoteHere close` (the stats page stays shut).
+- `CIFace <island> <name | note title | islander name or its start>` (either player): stand points on solid ground (a
+  floor too, at the object's own height) with room to stand and a clear view; an islander is aimed at the chest. No
+  point where Raft's ray (`Helper.FindInteractable`) finds it = the player goes back where they were.
+- `CITalk <island> <islander> [read | pick <n>]` (either player): `CIFace`, then `Islander.Talk` (E's path) and
+  `DialoguePanel.Close` (Esc's path), which ends in `Islanders.Talked` (talk events, a "Bring items" hand-in, talk steps).
+  `PASS: talked to '<name>' on '<island>' (host|client; Islanders.Talked ran[, message ...])`.
+- `CIRecipe`'s unnamed-target check skips `order|<puzzle>|n` (its target is a puzzle group, not an object).
 
 ## Running dev commands: ci.ps1
 

@@ -2110,6 +2110,7 @@ namespace DynamicIslands
 			// A Raft that isn't in front pauses, and then never reads the command file (not even a CIBackground):
 			// dev builds always keep running, so a Raft started behind other windows can still be driven.
 			Application.runInBackground = true;
+			InstallFakeKeys(); // (CIKey: keys with Raft minimised; before the mod's key code is first compiled)
 			DynamicIslands.instance.StartCoroutine(PollCommandFile());
 			DynamicIslands.instance.StartCoroutine(HeartbeatLoop());
 		}

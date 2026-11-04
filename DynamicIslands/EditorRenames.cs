@@ -144,7 +144,8 @@ namespace DynamicIslands.Editor
 					string[] p = lines[i].Split('|');
 					if (p.Length < 2 || !p[1].Trim().Equals(from, StringComparison.OrdinalIgnoreCase)) continue;
 					string head = p[0].Trim();
-					if (actions ? !ObjAction.HasTarget(head) : Array.IndexOf(NamedChecks, head.TrimStart('!')) < 0) continue;
+					// (order|<puzzle>|n names a puzzle group, not an object: an object renamed "Bells" leaves puzzle "Bells" alone)
+					if (actions ? !ObjAction.HasTarget(head) || head == OrderPuzzle.Verb :Array.IndexOf(NamedChecks, head.TrimStart('!')) < 0) continue;
 					p[1] = to;
 					lines[i] = string.Join("|", p);
 					any = true; count++;

@@ -494,6 +494,11 @@ namespace DynamicIslands
 				"shown as '" + large.settings_Inventory.DisplayName + "' with its own (blue) icon");
 			Check(ref ok, HarmonyLib.Traverse.Create(large.settings_recipe).Field("_hiddenInResearchTable").GetValue<bool>() && large.settings_recipe.CraftingCategory == battery.settings_recipe.CraftingCategory,
 				"out of the research table, in the battery's crafting category (" + large.settings_recipe.CraftingCategory + ")");
+			// Held like Raft's battery: a hand connection of its own (none = RML's "not correctly configured" warning on each pick)
+			UseItemController uic = player.GetComponentInChildren<UseItemController>(true);
+			var conns = uic != null ? HarmonyLib.Traverse.Create(uic).Field("connectionDictionary").GetValue<Dictionary<string, ItemConnection>>() : null;
+			ItemConnection held = conns != null && conns.ContainsKey(large.UniqueName) ? conns[large.UniqueName] : null;
+			Check(ref ok, held != null && held.obj != null && held.inventoryItem == large, "held in the hand: its own hand model " + (held != null && held.obj != null ? held.obj.name : "(none)"));
 			// Learned with the option and at the upgrade research table (the battery itself learned or not)
 			var optionsBefore = new HashSet<string>(WorldOptions.Current);
 			bool batteryLearned = battery.settings_recipe.Learned;

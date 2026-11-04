@@ -212,6 +212,10 @@ namespace DynamicIslands
 				&& b[BehaviourProps.CheckPrefix + "use"] == "state|Old gate|open\n!state|Old gate|open\nsignal|Gate|" && b[CameraPath.LookProp] == "Old gate" && b["obj.name"] == "Gate",
 				"an object's new name: open/close actions, state checks and the camera look-at follow, messages, signals and the name itself stay (" + n + ")");
 			Check(ref ok, EditorRenames.NameRefs(b, "Old gate", "a|b") == 0 && EditorRenames.NameRefs(b, "Old gate", "OLD GATE") == 0, "no change for a name with |, or a change of case only");
+			// (11-04: order|<puzzle>|n names a puzzle group, not an object - an object renamed off "Bells" leaves the puzzle alone)
+			var ord = new Dictionary<string, string> { { BehaviourProps.EventPrefix + "use", "order|Bells|2\nopen|Bells|" } };
+			n = EditorRenames.NameRefs(ord, "Bells", "Bell");
+			Check(ref ok, n == 1 && ord[BehaviourProps.EventPrefix + "use"] == "order|Bells|2\nopen|Bell|", "an object's new name: an order puzzle of that name stays, open follows (" + n + ")");
 			var t = new Dictionary<string, string> { { k0, "talk|Mira|1|\nread|Mira|1|" } };
 			Check(ref ok, EditorRenames.QuestTargets(t, new[] { Islanders.QuestType }, "Mira", "Mara") == 1 && t[k0] == "talk|Mara|1|\nread|Mira|1|", "an islander's new name: the talk step follows, a note of that title stays");
 			// (a rename to a title/id/name another object has: the references stay - moved, they would mean both)
