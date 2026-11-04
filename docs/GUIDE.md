@@ -1781,7 +1781,8 @@ when nothing on the island sends the signal (it may come from another island or 
 talking to her), `Rope@Supplies` rope for the chest titled "Supplies" (its hint says **Hand over 2 × Rope**; press E).
 Without a name after `@` any islander or empty chest takes them. The player hands what they have, up to what is still
 wanted ("1 more wanted"), and the items are taken from their inventory; the step counts for every player like the
-others. The **…** picks the item and the **▾** the islander or chest. A named chest with loot shows the hand-over first
+others. In multiplayer, items the host could not count (another player brought the rest at the same moment, or the step
+was already done) go back to the player who handed them over, with a note. The **…** picks the item and the **▾** the islander or chest. A named chest with loot shows the hand-over first
 and opens as usual once the step is done.
 
 **Craft or cook** asks for a number of an item made while the step is active: crafted at the crafting menu, or taken

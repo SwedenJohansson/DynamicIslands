@@ -217,6 +217,17 @@ namespace DynamicIslands.Editor
 			return true;
 		}
 
+		/// <summary>A player: the host gave back items of this player's hand-over it didn't count (IslandNetwork QuestItemsBack;
+		/// why "over": another player brought the rest in the same moment, "late": the step was done already, "refused": the host
+		/// didn't count it). Into the bag; what doesn't fit is dropped in front of them.</summary>
+		internal static void ItemsBack(string item, int amount, string why)
+		{
+			if (string.IsNullOrEmpty(item) || amount <= 0 || amount > 9999 || ItemManager.GetItemByName(item) == null) return;
+			TriggerZone.Give(new[] { new KeyValuePair<string, int>(item, amount) });
+			Debug.Log("[CUSTOM ISLANDS] [quest] the host gave back " + amount + " " + item + " (" + why + ")");
+			Say(Item(item, amount) + " given back: " + (why == "over" ? "another player brought the rest" : why == "late" ? "that step was already done" : "the host didn't count it") + ".");
+		}
+
 		static void Say(string text)
 		{
 			LastMessage = text;

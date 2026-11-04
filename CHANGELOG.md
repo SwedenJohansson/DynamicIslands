@@ -27,6 +27,9 @@ Not in this release yet; these come in the next update:
   or for an object's state (`Gate=open`, `closed`, `shown`, `hidden`); its ▾ lists the island's signals and named objects.
 - **New quest step "Bring items"**: a number of one of Raft's items handed to an islander (by talking) or a chest
   (`Plank@Mara`, `Rope@Supplies`); the items are taken from the player.
+- **Bring items in multiplayer**: items no longer get lost when two players hand over at the same moment or a hand-over
+  reaches the host after the step was done: what the host did not count goes back to the player's bag, with a short note
+  ("2 × Plank given back: another player brought the rest").
 - **New quest step "Craft or cook"**: a number of an item crafted or cooked near the island while the step is active.
 - **New quest step "Catch fish"**: a number of fish (of a kind, or any) caught with Raft's fishing rod at the island while the step is active.
 - **New quest step "Gather / harvest"**: a number of an item picked up, dug with the shovel or harvested with the axe on the island while the step is active.
