@@ -1,7 +1,7 @@
 # Ironreef Caverns' Reef Workings (CIPlay ironreef_caverns_caves, 11-04; in a test world 'CI ...'). Points as in its
 # recipe. The dug system in the south-west flank: in by the west mouth (A) down to the hall, out by the south mouth
 # (B); in by the gully mouth (C) through B to the hall; the vine gallery shut until the vines are cut; the fallen drift
-# walked along its planks to the tin at its end and back.
+# walked along its planks to the tin at its end and back. Run under CIGapsWatchHealth: no walk here may cost health.
 island Ironreef Caverns keep
 offset 1.3339 0.1645
 hour 11
@@ -9,30 +9,37 @@ weather Calm
 where Pickup_Landmark_Titanium
 where Loot_ChestSmall
 where Zone_Trigger
+where Block_Floor_Wood
+where VP_SpikeTrap_01
 
 # Mouth A (west): in, down to the hall
 picture ir_a_out -46 24 -19 -39 20 -23
 walk -41 -22.6 to -39 -23 to -33 -24 to -26 -30 to -23 -30.5
-picture ir_hall -27 19.5 -30 -21 18.5 -31
-picture ir_a_in -27 19.5 -29.5 -39 20 -23
+picture ir_hall -27 21 -30 -21 19.5 -31
+picture ir_a_in -27 21 -29.5 -39 20 -23
 # out by mouth B (south)
-walk -23 -30.5 to -25 -32 to -30 -40 to -35 -43 to -37 -44.5
+walk -23 -30.5 below=22 to -25 -32 to -30 -40 to -35 -43 to -37 -44.5
 picture ir_b_out -40 19 -49 -35 16.5 -43
-picture ir_b_in -30 17.5 -40 -26 18 -33
+picture ir_b_in -30 18.2 -40 -26 18 -33
 
 # Mouth C (the gully): level in, into B, on to the hall
 picture ir_c_out -12 17 -48 -18 15 -44
 walk -16 -45 to -18 -44 to -23 -41 to -29 -38 to -26 -33 to -23 -30.5
 picture ir_c_in -22 16 -41.5 -29 16 -38
 
-# The vine gallery: shut by the vines
-walk -23 -30.5 to -21.5 -30.2 to -18 -29 blocked
-picture ir_vines -23 19 -31 -19.5 18.5 -29.6
+# The vine gallery: shut by the vines; cut, the way on to the titanium
+walk -23 -30.5 below=22 to -21.5 -30.2 to -18 -29 blocked
+picture ir_vines -23 21 -31 -19.5 19.5 -29.6
+expect shown irreef_vines
+use irreef_vines
+expect hidden irreef_vines
+walk -23 -30.5 below=22 to -21.5 -30.2 to -19 -29.4 to -16.8 -28.3
+picture ir_gallery -20.5 21 -29.8 -16.3 19 -28.1
 
 # The fallen drift: the sign, the planks along the east wall, the tin
-picture ir_drift_sign -24 19.5 -31 -22.2 18.5 -26.8
-picture ir_drift -23.5 19.6 -27.8 -25 18 -21
-walk -23 -30 to -22.9 -27 to -22.96 -26.07 to -23.12 -24.58 to -23.29 -23.09 to -23.45 -21.6 to -24.6 -20.8
+picture ir_drift_sign -23.5 21 -31 -25.2 19.5 -27.6
+picture ir_drift -23.3 21 -28.2 -24.6 19 -21
+walk -23 -30 below=22 to -22.9 -27 to -22.96 -26.07 to -23.12 -24.58 to -23.29 -23.09 to -23.45 -21.6 to -24.6 -20.8
 open Drift 4 tin
-picture ir_drift_back -24.7 19.6 -20.5 -23.5 18.3 -27
-walk -24.6 -20.8 to -23.45 -21.6 to -23.12 -24.58 to -22.96 -26.07 to -23 -30
+picture ir_drift_back -24.4 20.8 -20.3 -23.6 19.2 -27
+walk -24.6 -20.8 below=21.5 to -23.45 -21.6 to -23.12 -24.58 to -22.96 -26.07 to -23 -30

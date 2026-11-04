@@ -478,19 +478,19 @@ cavegate irreef at=-19.5,-29.6 as=irreef_vines
 place Pickup_Landmark_Titanium_Land irti at -16.3 -28.1 h=19 drop
 caveloot irreef dirt=5 mush=4 stone=3
 # the fallen drift: spikes where the floor gave way, planks along the east wall
-place Note_Sign irwarn at -22.22 -26.8 h=19 sit drop yaw=174
+place Note_Sign irwarn at -25.2 -27.6 h=20.5 sit drop yaw=174
 note irwarn DANGER - DRIFT 4 | Floor gave way onto the old trap pit. Spikes under the rubble. Keep to the planks on the right.\n- Ironreef Mining Co.
-place VP_SpikeTrap_01 - at -25.18 -25.51 h=19 drop yaw=84
-place VP_SpikeTrap_03 - at -25.58 -23.75 h=19 drop yaw=20
-place VP_SpikeTrap_01 - at -25.48 -21.93 h=19 drop yaw=-40
-place VP_Rubble_Plank01 - at -24.42 -24.55 h=19 drop yaw=30
-place VP_Rubble_Plank01 - at -25.6 -22.9 h=19 drop yaw=-70
-place Block_Floor_Wood - at -22.96 -26.07 h=19 drop yaw=-6
-place Block_Floor_Wood - at -23.12 -24.58 h=19 drop yaw=-6
-place Block_Floor_Wood - at -23.29 -23.09 h=19 drop yaw=-6
-place Block_Floor_Wood - at -23.45 -21.6 h=19 drop yaw=-6
-place Zone_Trigger irspike1 at -25.25 -24.92 h=18.4
-place Zone_Trigger irspike2 at -25.53 -22.33 h=18.4
+place VP_SpikeTrap_01 - at -25.18 -25.51 h=20.5 drop yaw=84
+place VP_SpikeTrap_03 - at -25.58 -23.75 h=20.5 drop yaw=20
+place VP_SpikeTrap_01 - at -25.48 -21.93 h=20.5 drop yaw=-40
+place VP_Rubble_Plank01 - at -24.42 -24.55 h=20.5 drop yaw=30
+place VP_Rubble_Plank01 - at -25.6 -22.9 h=20.5 drop yaw=-70
+place Block_Floor_Wood - at -22.96 -26.07 h=20.5 drop yaw=-6
+place Block_Floor_Wood - at -23.12 -24.58 h=20.5 drop yaw=-6
+place Block_Floor_Wood - at -23.29 -23.09 h=20.5 drop yaw=-6
+place Block_Floor_Wood - at -23.45 -21.6 h=20.5 drop yaw=-6
+place Zone_Trigger irspike1 at -25.25 -24.92 h=19.6
+place Zone_Trigger irspike2 at -25.53 -22.33 h=19.6
 prop irspike1 zone.id=irspike1
 prop irspike1 zone.radius=1.5
 prop irspike1 zone.hazard=spikes
@@ -503,7 +503,7 @@ prop irspike2 zone.hazard=spikes
 prop irspike2 zone.damage=4
 prop irspike2 zone.safe=none
 prop irspike2 zone.hazardMsg=Spikes under the rubble! Keep to the planks.
-place Loot_ChestSmall irdrift at -24.88 -20.05 h=19 drop yaw=174
+place Loot_ChestSmall irdrift at -24.88 -20.05 h=20.5 drop yaw=174
 note irdrift Drift 4 tin | The last shift's tin, left when the floor went. Whoever reads this: you walked the planks. Good.
 loot irdrift MetalIngot*2;Rope*2;Bolt*2;CopperIngot*1
 prop irdrift loot.refill=0
