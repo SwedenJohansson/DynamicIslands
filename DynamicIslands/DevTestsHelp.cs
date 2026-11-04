@@ -495,6 +495,18 @@ namespace DynamicIslands
 			{
 				check(ExperimentalNotice.DiscordButton != null && ExperimentalNotice.GuideButton != null && ExperimentalNotice.ReportButton != null
 					&& ExperimentalNotice.DiscordButton.gameObject.activeInHierarchy && ExperimentalNotice.ReportButton.gameObject.activeInHierarchy, "Discord, Guide (PDF) and Report a problem on the box");
+				{
+					var pulse = ExperimentalNotice.DiscordButton.GetComponent<ExperimentalNotice.Pulse>();
+					Color c0 = ((Image)ExperimentalNotice.DiscordButton.targetGraphic).color;
+					float s0 = ExperimentalNotice.DiscordButton.transform.localScale.x;
+					float t0 = Time.unscaledTime;
+					while (Time.unscaledTime < t0 + 0.5f) yield return null;
+					Color c1 = ((Image)ExperimentalNotice.DiscordButton.targetGraphic).color;
+					float s1 = ExperimentalNotice.DiscordButton.transform.localScale.x;
+					check(pulse != null && pulse.enabled && c0.b > c0.r + 0.3f && c1.b > c1.r + 0.3f && (Mathf.Abs(s1 - s0) > 0.005f || Mathf.Abs(c1.r - c0.r) > 0.01f)
+						&& s0 >= 0.999f && s0 <= 1.071f && s1 >= 0.999f && s1 <= 1.071f,
+						"Discord button is blue and pulses: colour " + c0 + " -> " + c1 + ", scale " + s0.ToString("F3") + " -> " + s1.ToString("F3"));
+				}
 				ExperimentalNotice.DiscordButton.onClick.Invoke();
 				check(HelpLinks.LastOpened == HelpLinks.Discord, "Discord opens " + HelpLinks.LastOpened);
 				HelpLinks.LastOpened = null;

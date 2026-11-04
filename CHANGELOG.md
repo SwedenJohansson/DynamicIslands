@@ -12,6 +12,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next update (planned)
 
 Not in this release yet; these come in the next update:
+- **The alpha box's Discord button** is Discord blue and pulses gently, so new players find the Custom Islands community.
 - **Renaming an object** no longer renames an **order puzzle** of the same name in other objects' actions (`order|Bells|2` stays when an object called "Bells" is renamed).
 - **The large battery** shows in the hand like Raft's battery (blue), and the log no longer warns that it "is not correctly configured".
 - **Guide: three small quests, step by step** (guide 6.6, README): Old Finn's lost crate (an islander, a trigger zone, a

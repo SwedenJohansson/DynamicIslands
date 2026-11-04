@@ -160,6 +160,7 @@ namespace DynamicIslands.Editor
 			RectTransform buttons = UIKit.Row(panel, 32f, 6f, "Buttons");
 			discordButton = UIKit.Button(buttons, "Discord", () => HelpLinks.Open(HelpLinks.Discord), "The Custom Islands Discord server: questions, islands, news", 104, 32f, 14);
 			discordButton.name = "Discord";
+			DiscordLook(discordButton);
 			guideButton = UIKit.Button(buttons, "Guide (PDF)", HelpLinks.OpenGuide, "The illustrated guide: installing, sailing, the editor, world plans, playing together", 124, 32f, 14);
 			guideButton.name = "Guide";
 			reportButton = UIKit.Button(buttons, "Report a problem", InfoWindow.OpenReport, "How to report a problem, on GitHub or Discord", 164, 32f, 14);
@@ -181,6 +182,50 @@ namespace DynamicIslands.Editor
 			// (on the menu's canvas, not the box: it keeps looking while the box is hidden)
 			if (canvas.GetComponent<Watcher>() == null) canvas.gameObject.AddComponent<Watcher>();
 			Debug.Log("[CUSTOM ISLANDS] Alpha notice shown" + (closed ? " (closed for " + Version + ": the help link only)" : Folded ? " (folded: seen for " + Version + ")" : ""));
+		}
+
+		/// <summary>Discord's blue, white lettering, and a slow pulse, so new players see where the community is.</summary>
+		static void DiscordLook(Button b)
+		{
+			Image img = b.targetGraphic as Image;
+			if (img != null)
+			{
+				img.sprite = UIKit.Rounded(6);
+				img.type = img.sprite.border != Vector4.zero ? Image.Type.Sliced : Image.Type.Simple;
+				img.pixelsPerUnitMultiplier = 1f;
+				img.color = DiscordBlue;
+			}
+			ColorBlock cb = b.colors;
+			cb.normalColor = Color.white; cb.highlightedColor = new Color(1.15f, 1.15f, 1.15f); cb.pressedColor = new Color(0.8f, 0.8f, 0.85f);
+			cb.selectedColor = cb.normalColor; cb.colorMultiplier = 1f;
+			b.colors = cb;
+			Transform border = b.transform.Find("Border");
+			if (border != null) border.GetComponent<Image>().color = Color.clear;
+			Text t = UIKit.LabelOf(b);
+			if (t != null)
+			{
+				t.color = Color.white;
+				Shadow s = t.GetComponent<Shadow>() ?? t.gameObject.AddComponent<Shadow>();
+				s.effectColor = new Color(0.1f, 0.12f, 0.35f, 0.9f);
+			}
+			if (b.GetComponent<Pulse>() == null) b.gameObject.AddComponent<Pulse>();
+		}
+
+		/// <summary>Discord's own blue (#5865F2).</summary>
+		public static readonly Color DiscordBlue = new Color(0.345f, 0.396f, 0.949f);
+
+		/// <summary>Grows a little and glows brighter, then back, every 1.6 s (unscaled time: the menu may be paused).</summary>
+		public class Pulse : MonoBehaviour
+		{
+			Image img;
+			void Awake() { img = GetComponent<Button>().targetGraphic as Image; }
+			void Update()
+			{
+				float k = 0.5f - 0.5f * Mathf.Cos(Time.unscaledTime * Mathf.PI * 2f / 1.6f);
+				transform.localScale = Vector3.one * (1f + 0.07f * k);
+				if (img != null) img.color = Color.Lerp(DiscordBlue, new Color(0.52f, 0.58f, 1f), k);
+			}
+			void OnDisable() { transform.localScale = Vector3.one; if (img != null) img.color = DiscordBlue; }
 		}
 
 		/// <summary>The small "Custom Islands: help" link in the menu's bottom right corner, shown while the box is closed.</summary>

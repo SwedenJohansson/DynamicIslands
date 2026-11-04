@@ -147,7 +147,7 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
 > unstable, and progress is not guaranteed to be saved - back up the worlds you care about (Raft keeps them in
 > `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User`). The main menu shows this in the **EXPERIMENTAL ALPHA
 > RELEASE** box right of the middle, with the mod's version and four buttons: **Discord** (the Custom Islands Discord
-> server), **Guide (PDF)** (this guide, which comes with the mod), **Report a problem** ([section 14](#14-reporting-a-problem))
+> server; Discord blue, it pulses gently so new players find the community), **Guide (PDF)** (this guide, which comes with the mod), **Report a problem** ([section 14](#14-reporting-a-problem))
 > and **Check for updates** (it asks raftmodding.com for the newest version and tells you whether you have it, with a
 > button to the mod's page, where new versions come out; the mod never updates itself).
 > Drag the box anywhere you like; it stays where you put it. It steps aside while another window of the main menu is
