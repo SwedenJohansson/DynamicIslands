@@ -1,7 +1,7 @@
 # Play test of Old Mine Islet (CIPlay old_mine_islet, in a test world 'CI ...'). Points as in its recipe.
 island Old Mine Islet
 # DEEP 10-25 / ABYSS 10-26: the added land moved the land's centre (the recipe's save prints the exact offset)
-offset 2.8622 -2.0096
+offset 2.6829 -2.0027
 expect step 0
 expect title Down the Old Mine
 
