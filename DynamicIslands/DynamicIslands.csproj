@@ -77,6 +77,7 @@
     <Compile Include="DevTestsMech.cs" />
     <Compile Include="DevTestsPlayerFeatures.cs" />
     <Compile Include="DevTestsQuestPuzzle.cs" />
+    <Compile Include="DevTestsGapBehaviours.cs" />
     <Compile Include="DevTestsQuestSteps.cs" />
     <Compile Include="DevTestsStateWatch.cs" />
     <Compile Include="DevTestsContent.cs" />
@@ -188,6 +189,7 @@
     <Compile Include="Collectibles.cs" />
     <Compile Include="Lights.cs" />
     <Compile Include="OrderPuzzle.cs" />
+    <Compile Include="GapBehaviours.cs" />
     <Compile Include="ObjectInspectorPlayer.cs" />
     <Compile Include="ObjectInspectorMech.cs" />
     <Compile Include="WorldDirector.cs" />

@@ -29,6 +29,7 @@ namespace DynamicIslands.Editor
 			Islanders.Defaults(name, props);
 			Collectibles.Defaults(name, props);
 			Lights.Defaults(name, props);
+			GapBehaviours.Defaults(name, props);
 		}
 
 		/// <summary>The catalog's hint for one of these objects, or null.</summary>
@@ -37,13 +38,14 @@ namespace DynamicIslands.Editor
 			if (Islanders.Is(name)) return Islanders.Hint;
 			if (Collectibles.Is(name)) return Collectibles.Hint;
 			if (Lights.Is(name)) return Lights.Hint;
+			if (GapBehaviours.IsSpring(name)) return GapBehaviours.SpringHint;
 			return null;
 		}
 
 		/// <summary>World: an object's lines as if the builder had written them (a set piece is picked up when used).</summary>
 		public static IDictionary<string, string> Expand(string objectName, IDictionary<string, string> props)
 		{
-			return OrderPuzzle.Expand(objectName, Lights.Expand(objectName, Collectibles.Expand(objectName, props)));
+			return GapBehaviours.Expand(objectName, OrderPuzzle.Expand(objectName, Lights.Expand(objectName, Collectibles.Expand(objectName, props))));
 		}
 
 		/// <summary>Host, from the mod's update: sets found (Collectibles).</summary>
@@ -93,6 +95,7 @@ namespace DynamicIslands.Editor
 				if (Islanders.Is(r.ObjectName)) Islanders.Attach(go, r);
 				if (Collectibles.IsPiece(r.Props)) Collectibles.Attach(go, r);
 				if (Lights.IsLight(r.ObjectName, r.Props)) Lights.Attach(go, r);
+				if (GapBehaviours.IsSpring(r.ObjectName)) GapBehaviours.Attach(go);
 			}
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] '" + r.ObjectName + "': " + ex.Message); }
 		}
@@ -100,6 +103,8 @@ namespace DynamicIslands.Editor
 		/// <summary>An action's words for the builder, or null when it isn't one of these.</summary>
 		internal static string Describe(ObjAction a)
 		{
+			string gap = GapBehaviours.Describe(a);
+			if (gap != null) return gap;
 			switch (a.Verb)
 			{
 				case DialogueVerb: return "show a dialogue" + (a.Target.Length > 0 ? " said by '" + a.Target + "'" : "") + ": \"" + Short(a.Arg) + "\"";
@@ -112,6 +117,8 @@ namespace DynamicIslands.Editor
 		/// <summary>A check's words for the builder, or null when it isn't one of these.</summary>
 		internal static string What(ObjCheck c)
 		{
+			string gap = GapBehaviours.What(c);
+			if (gap != null) return gap;
 			switch (c.Kind)
 			{
 				case TalkedCheck: return "someone talked to " + (c.Target.Length > 0 ? "'" + c.Target + "'" : "this islander");
@@ -125,7 +132,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Whether a check holds (Behaviours.Holds); false for a kind that isn't one of these.</summary>
 		internal static bool Holds(IslandWorldState.Entry e, int index, ObjCheck c, out bool result)
 		{
-			result = false;
+			if (GapBehaviours.Holds(e, c, out result)) return true;
 			switch (c.Kind)
 			{
 				case TalkedCheck: result = Islanders.TalkedTo(e, index, c.Target); return true;
@@ -154,7 +161,7 @@ namespace DynamicIslands.Editor
 				case Lights.Verb: Lights.HostRun(e, index, a); return true;
 				case OrderPuzzle.Verb: OrderPuzzle.HostRun(e, index, a); return true;
 			}
-			return false;
+			return GapBehaviours.RunShared(e, a);
 		}
 
 		/// <summary>A quest step's words (Step.Describe), or null.</summary>
@@ -190,6 +197,8 @@ namespace DynamicIslands.Editor
 		/// <summary>The behaviour window's placeholder for a check's name field, or null when it isn't one of these.</summary>
 		internal static string CheckPlaceholder(string kind)
 		{
+			string gap = GapBehaviours.CheckPlaceholder(kind);
+			if (gap != null) return gap;
 			switch (kind)
 			{
 				case TalkedCheck: return "islander name (empty = this one)";
@@ -202,6 +211,8 @@ namespace DynamicIslands.Editor
 
 		internal static string CheckHint(string kind)
 		{
+			string gap = GapBehaviours.CheckHint(kind);
+			if (gap != null) return gap;
 			switch (kind)
 			{
 				case TalkedCheck: return "The name of an islander (empty = this one): true once anyone of the crew talked to it";
@@ -215,6 +226,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The behaviour window's second field of a check (its Arg), or null when it has none.</summary>
 		internal static string CheckArgPlaceholder(string kind)
 		{
+			if (kind == GapBehaviours.CountCheck) return GapBehaviours.CheckArgPlaceholder(kind);
 			switch (kind)
 			{
 				case Collectibles.CheckKind: return "how many (empty = all)";
@@ -226,6 +238,7 @@ namespace DynamicIslands.Editor
 
 		internal static string CheckArgHint(string kind)
 		{
+			if (kind == GapBehaviours.CountCheck) return GapBehaviours.CheckArgHint(kind);
 			switch (kind)
 			{
 				case Collectibles.CheckKind: return "How many pieces must be found (empty = every piece of the set on this island)";

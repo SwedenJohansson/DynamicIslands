@@ -1935,6 +1935,24 @@ Select any object → **Behaviour & events...**. No code needed:
   `order:<name>` (a door's **Only if** signal check, a quest step) and runs every piece's event **solved**, once:
   after that the pieces are just pieces. Shared and saved (the host keeps how far the crew got). The object panel warns
   about a step no piece has (it could never be solved). Or place the story set **Levers in order** ([6.3](#63-story-items-and-story-sets)).
+- **Time, weather, chance, counters and healing** (2026-11-04): the check **time of day** (`time|night`; also `day`,
+  `dawn` 5-8, `dusk` 18-21, hours like `20-6` - past midnight - or `12` for 12:00-13:00; several with commas: any of
+  them) reads Raft's clock, the same for every player: a ghost that only shows at night, a shop open by day. The
+  check **weather is** (`weather|rain,storm`; clear, calm, fog, waves, rain, storm, snow - storm is Raft's rain storm
+  or rough snow) and the action **change weather** (shared, `weather|fog|10`: the weather for every player for some
+  minutes, 10 at first, up to 600; then Raft chooses again; `weather|raft` hands it back at once). Raft has some
+  weathers only in some seas (snow in the cold ones): a weather it hasn't there is left as it is, and the log says
+  so. **one at random** (`random||3`) does ONE of the next 3 actions (2-20; 2 at first), picked at random each time,
+  the same one for every player; the group stops at a **wait**, and the actions after the group run as usual - a
+  chest that gives one of three things, a parrot with three sayings. **count** (shared, saved, `count|Fish|` adds 1;
+  `+5`, `-1`, `=0`, `reset`; never below 0) keeps a number per island under a name, and the check **counter**
+  (`count|Fish|>=3`; also `>`, `<`, `<=`, `=`, `!=`; a bare number = at least that, empty = at least 1) asks it:
+  "bring 3 fish to the cook", "ring the bell 5 times". Counters belong to the island, so every player's catch adds
+  to the same one, and they are kept with the world. **heal / feed / drink** (`heal||` fills the player's health,
+  food and drink; `heal||drink`, `heal||food`, `heal||health 20`, several with commas) is for the player who set it
+  off: a well, a cook's meal, a healer. The ready piece **Drinking spring** (the object list, **Zones & triggers**) is a ring of stones round
+  a pool that fills the thirst of whoever drinks from it, as often as they like; its own use actions run after the
+  drink (give it `heal||` instead to fill everything).
 - **Sounds and camera moments** (actions in the same ▼ list, shared by every player): **play sound/music** plays one of
   Raft's sound events or music cues (pick it with **…**, a list of every one Raft has), with a volume, **once** or on a
   **loop**, **near** the object (or the objects named) or for **everyone on the island**. Every player near the island

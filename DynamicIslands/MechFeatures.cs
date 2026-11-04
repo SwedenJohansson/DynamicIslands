@@ -837,6 +837,9 @@ namespace DynamicIslands.Editor
 			if (Raft_Network.IsHost) return;
 			switch (msg.Name)
 			{
+				case "count": // (an island counter the host changed: GapBehaviours)
+					GapBehaviours.OnCountMessage(msg);
+					break;
 				case "held":
 					if (index >= 0 && ulong.TryParse(msg.Data, NumberStyles.Integer, CultureInfo.InvariantCulture, out who)) OnHeld(island, index, who);
 					break;
