@@ -23,6 +23,7 @@ include lib_features
 include lib_highwater
 include lib_areas
 include lib_abyss
+include lib_caves
 new
 # (nature: the atoll's palms are the recipe's own; little else - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0 Bushes=0.25 Rocks=0.3 Harvest=0.15 BeachThings=0.5
@@ -185,7 +186,12 @@ brush lower from -8 -21 to 8 -21 r=6 s=20 frames=20
 place TP_Selene_Int_Tunnel_Ladder_Bot - at -3 9
 call selene_cell -3 3 n=TP_Selene_Int_Room_Entrance s=none w=TP_Selene_Int_Room_Entrance e=TP_Selene_Int_Room_Entrance
 call selene_cell -9 3 e=TP_Selene_Int_Room_Entrance
-call selene_cell 3 3 w=TP_Selene_Int_Room_Entrance
+call selene_cell 3 3 w=TP_Selene_Int_Room_Entrance n=TP_Selene_Int_Room_Entrance
+# (11-04: the expedition's storeroom north of the radio room, its doorway barred - it opens for those who talked to
+# Dr. Shogo at the channel; optional, off the quest)
+call selene_cell 3 9 s=none
+place TP_Selene_Int_DoorLargeL storedoor at 6 3 yaw=90 sy=1.051
+place TP_Selene_Int_DoorLargeR storedoor at 6 3 yaw=90 sy=1.051
 call selene_cell -3 -3 n=none s=none w=TP_Selene_Int_Room_Entrance e=TP_Selene_Int_Room_Entrance
 call selene_cell -9 -3 e=TP_Selene_Int_Room_Entrance
 call selene_cell 3 -3 w=TP_Selene_Int_Room_Entrance
@@ -307,8 +313,8 @@ prop opradio obj.name=opradio
 place Model_Radio - at 7.8 -0.6 y=0.8 sit yaw=90
 place Note_Book radiolog at 7.3 0 y=0.81 yaw=90
 place "Chair Office" - at 6.5 0 sit yaw=270
-place Balboa_DecorationPrefabBase_Microphone - at 6.7 1.9 sit yaw=200
-place RT_RadarScreen - at 6 2.4 sit yaw=180
+place Balboa_DecorationPrefabBase_Microphone - at 8.2 1.8 sit yaw=200
+place RT_RadarScreen - at 4.1 2.4 sit yaw=180
 place TP_Selene_ComputerGeneric_01 - at 6 -2.4 sit
 
 # The gate hall: crates of supplies, the second emergency light
@@ -346,6 +352,14 @@ place Zone_Atmosphere dark at 0 -6 y=1
 place Zone_Atmosphere dark at -6 -6 y=1
 place Zone_Atmosphere dark at 6 -6 y=1
 place Zone_Sound drips at 0 -1 y=2
+place Loot_Crate storecrate at 7.6 7.6 sit yaw=10
+place "Box Small" - at 4.0 8.0 sit yaw=15
+place "Box Small" - at 4.9 8.2 sit yaw=-10
+place "Box Small" - at 4.4 8.1 y=0.55 sit yaw=40
+place VP_Cable_Roll01 - at 8.1 4.4 sit
+place Balboa_DecorationPrefabBase_ToxicBarrel - at 3.8 4.3 sit
+place Stairwell_CeilingLamp lamps at 6 6 y=4.6
+place Zone_Atmosphere dark at 6 6 y=1
 pop
 
 # --- Settings, notes, behaviours, quest ---------------------------------------------------------------------
@@ -385,10 +399,27 @@ note radarbox Radar deck box | A box bolted to the mast's deck: a radar valve in
 loot radarbox story:radarvalve*1;Battery*1;Plastic*2
 # The north channel: the bank, the patrol boat on the channel's floor, its locker and an air pocket beside it
 call hw_zone x=-14 z=58 al=channelz id=channel r=5 msg="The channel. Down in the green water, a patrol boat lies on its side."
-place Story_Islander signe at -16 55 ground
-prop signe obj.name=Signe
-prop signe islander.pose=fish
-prop signe talk.text=Nobody fishes the channel but me. The patrol boat scares the rest off.\n---\nThe sailors kept their coil in the boat's locker, for the relay by the slab. They never got it there.\n---\nThe runway lights on the barrier? Each one throws its neighbours too. Start at the second and walk out to the sea - leave the first alone.
+# 11-04: Dr. Shogo of the Abyss Expedition, on a chair at the channel (a sitter needs a seat: on the bare ground the
+# sit pose floats). His answers: the expedition's log, the way to the supplies in the lagoon cave, or later
+place Placeable_Chair_Wood shogochair at -16 55 ground sit yaw=74
+place Story_Islander signe at -16 55 ground yaw=74
+prop signe obj.name=Dr. Shogo
+prop signe islander.character=Shogo
+prop signe islander.pose=sit
+prop signe talk.text=You came down the mine road? Then you have seen the old drifts. The expedition went deeper, to the Abyss.
+---
+The patrol boat on the channel's floor kept a signal coil in its locker, for the relay by the slab. Its sailors never got it there.
+The runway lights on the barrier? Each one throws its neighbours too. Start at the second and walk out to the sea - leave the first alone.
+---
+You have a diver's look. Ask, then.
+> What happened to them?
+> Is there a safe way through the reef caves?
+> Not now.
+prop signe on.choice1=journal|Expedition log|Abyss Expedition, Shelter No. 7. Day 1: the shelter makes a fine base; the commander's men left their stores. Day 6: the reef caves run deeper than the charts say. Day 11: the deep team went down past the drifts and has not come back. I stay with the boat and the log.
+message||Shogo hands you the log.
+prop signe on.choice2=show|shelsupply
+message||Dive by the sunken dinghy off the landing at the blast gate: a cave opens in the lagoon floor there and climbs into the sea rock past the reef, to a dry cave. We left a chest of diving supplies in it.
+prop signe on.choice3=message||Come back when you are ready to dive.
 place Loot_Crate boatlocker at 6.5 62.5 ground sit yaw=160
 note boatlocker Patrol boat locker | The patrol boat's locker, jammed half shut: a signal coil in oilcloth, labelled RELAY, and a sailor's tin.
 loot boatlocker story:sigcoil*1;Rope*2;Bolt*2
@@ -507,6 +538,15 @@ prop cmddoorR obj.name=cmddoor
 prop cmddoorR beh.move=0,0,-1.3
 prop cmddoorR beh.moveTime=1.5
 prop cmddoorR beh.moveMode=switch
+prop storedoor obj.name=storedoor
+prop storedoor beh.use=Lift the storeroom's bar
+prop storedoor if.use=talked|Dr. Shogo
+prop storedoor on.use=hide|storedoor
+message||You reach through the gap the way Dr. Shogo told you and lift the bar. The expedition's storeroom.
+prop storedoor else.use=message||The door is barred from inside.
+note storecrate Expedition stores | The expedition's stores, packed for the dive: rope, air and tins.
+loot storecrate OxygenBottle*1;PlasticBottle_Water*2;Rope*2;Battery*1;Scrap*3
+prop storecrate loot.refill=0
 prop lamps obj.name=lamps
 prop lamps beh.hidden=1
 prop dark obj.name=dark
@@ -612,4 +652,25 @@ clear at 54.9 -2.3 r=5.5 all only=Coral
 clear at 60.5 -13.5 r=2.0 all only=Coral
 clear at 61.7 -6.8 r=5.4 all only=Coral
 clear at 61.4 -2.7 r=2.4 all only=Coral
+# --- 11-04: the lagoon cave ---
+# (11-04) A cave from the lagoon floor in front of the landing, under the ring and up into a sea stack in the bay past
+# the reef: an underwater mouth by a sunken dinghy, the tunnel climbing out of the water, a dry den with air. Not under
+# the shelter as first planned: the den is some 21 x 22 m and 11 m high at the least size, the lagoon 2-6 m deep and
+# the shelter's rooms fill the islet. hill=0: no ridge over the lagoon (a ridge would fill the landing's water).
+call kit_st x=-4 z=-22 yaw=205 len=35.6 slope=12 end=room size=0.7 hill=0 dirt=2 mush=2 stone=1 vines=1 as=shelcave
+place RT_PlasticBoat dinghy at -9.5 -18 ground sit yaw=130 tilt=12
+place Zone_Trigger shelair at -23.6 -64 h=3.6
+prop shelair obj.name=shelair
+prop shelair zone.id=shelair
+prop shelair zone.radius=7
+prop shelair zone.repeat=1
+prop shelair zone.air=1
+prop shelair zone.message=A dry cave in the sea rock - air. The expedition camped here.
+# cavecheck inside shelsupply
+place Loot_ChestSmall shelsupply at -26 -66.5 h=6 drop yaw=25
+prop shelsupply obj.name=shelsupply
+prop shelsupply beh.hidden=1
+prop shelsupply loot.refill=0
+note shelsupply Expedition supply chest | The Abyss Expedition's chest, left in the dry cave for the divers: air, water and salve.
+loot shelsupply OxygenBottle*2;PlasticBottle_Water*2;HealingSalve_Good*1;Rope*2
 save Shelter Atoll
