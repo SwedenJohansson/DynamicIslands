@@ -38,6 +38,18 @@ namespace DynamicIslands.Editor
 			}
 			if (cc != null) cc.enabled = true;
 		}
+
+		/// <summary>How high above the ground Raft's player stands: their position over the bottom of their capsule, plus the
+		/// skin and a hair. A player put with their position on the ground starts with the lower half of the capsule in it: on
+		/// terrain they dropped through it and ended in the sea under the island (a test facing Mara Quill on Frontier Beacon).</summary>
+		public static float StandHeight(Network_Player player)
+		{
+			CharacterController cc = player != null && player.PersonController != null ? player.PersonController.controller : null;
+			if (cc == null) return 1f;
+			Transform t = cc.transform;
+			float bottom = t.TransformPoint(cc.center).y - Mathf.Max(cc.height * 0.5f, cc.radius) * Mathf.Abs(t.lossyScale.y);
+			return Mathf.Max(0f, player.transform.position.y - bottom) + cc.skinWidth + 0.05f;
+		}
 	}
 
 	/// <summary>

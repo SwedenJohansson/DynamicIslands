@@ -133,7 +133,7 @@ namespace DynamicIslands
 			RaycastHit[] hits = Physics.RaycastAll(new Vector3(at.x, at.y + 300f, at.z), Vector3.down, 600f, ~0, QueryTriggerInteraction.Ignore);
 			RaycastHit[] ground = hits.Where(h => h.collider != null && !h.collider.transform.IsChildOf(me.transform)).OrderByDescending(h => h.point.y).Take(1).ToArray();
 			if (ground.Length == 0 || ground[0].point.y < -1f || me.transform.position.y > ground[0].point.y - 0.5f) yield break;
-			PlayerMove.To(me, ground[0].point + Vector3.up * 0.3f);
+			PlayerMove.To(me, ground[0].point + Vector3.up * PlayerMove.StandHeight(me));
 			Debug.Log("[CUSTOM ISLANDS] [QuestTest] put back on '" + e.HostName + "' after its reset");
 		}
 	}
