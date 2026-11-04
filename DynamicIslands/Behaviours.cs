@@ -946,6 +946,9 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		internal static bool SharedOnce(IslandWorldState.Entry e, int index, string ev)
 		{
+			// (11-04: each trade was paid for, and the host alone fires a co-op zone's crowd/crowdleft once per change - every
+			// one runs its shared part, also two in the same second: a counter "add 1" per trade)
+			if (ev == TradeStand.TradeEvent || ev == GapWorld.CrowdEvent || ev == GapWorld.CrowdLeftEvent) return true;
 			if (ev != "read" && ev != "arrive") return NotSameMoment(e, index, ev);
 			int key = SharedOnceBase + index;
 			if (e.State.ContainsKey(key)) return false;

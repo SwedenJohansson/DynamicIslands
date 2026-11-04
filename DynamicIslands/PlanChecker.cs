@@ -45,8 +45,8 @@ namespace DynamicIslands.Editor
 			/// <summary>The island's own rules: plan rules may point at the islands they bring by their names.</summary>
 			public List<IntroRule> Rules = new List<IntroRule>();
 			public string AllText = ""; // (every setting's value: to see whether a story item is given anywhere)
-			/// <summary>Story items the island's checks want (has/take story:...) and those it gives (loot, zones, give actions,
-			/// Raft's quest item pickups) - the plan's order of them (Check).</summary>
+			/// <summary>Story items the island's checks and trade stand prices want (has/take story:..., trade.give) and those it
+			/// gives (loot, zones, give actions, trade stands' goods, Raft's quest item pickups) - the plan's order of them (Check).</summary>
 			public readonly HashSet<string> NeedsStory = new HashSet<string>(StringComparer.OrdinalIgnoreCase), GivesStory = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			/// <summary>Raft's tools its features want (RaftFeatures): tool item -> the features wanting it ("vines", "buried
 			/// treasure"...). MainNeeds: "tool|feature" pairs its main quest can't do without (vines in front of the chest a step
@@ -149,6 +149,13 @@ namespace DynamicIslands.Editor
 			{
 				bool check = kv.Key.StartsWith(BehaviourProps.CheckPrefix);
 				if (check && OpenBySignal(kv.Value, sends[i], senders)) continue;
+				// (an own trade stand gives its trade.get - counted below with the rest - and wants its price: a story item in
+				// trade.give is one the crew must have found first, not one the island gives)
+				if (kv.Key == TradeStand.GiveProp)
+				{
+					foreach (System.Text.RegularExpressions.Match m in GiveRx.Matches(kv.Value ?? "")) x.NeedsStory.Add(m.Groups[1].Value);
+					continue;
+				}
 				foreach (string line in (kv.Value ?? "").Split('\n'))
 				{
 					if (check)

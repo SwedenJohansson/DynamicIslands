@@ -1995,7 +1995,8 @@ Select any object → **Behaviour & events...**. No code needed:
   a story item). **Stock** is how many trades it has in a world for the whole crew (1-8; each trade goes to one
   player, the host decides who was first) or **no limit**. The panel shows the offer as players will read it and names
   any item neither Raft nor your story items know. Each trade runs the stand's event **trade**: `on.trade=signal||paid`
-  moves a quest on or opens a door. What was sold is saved; **Not a trade stand** takes the offer off again. In a
+  moves a quest on or opens a door. Every trade runs it, also two in the same second (each trade was paid for), and the
+  plan checker counts a story item a stand gives as given and one it asks as its price as wanted. What was sold is saved; **Not a trade stand** takes the offer off again. In a
   recipe: `trade.give=Plank*10`, `trade.get=Rope*1`, `trade.stock=3` (0 = no limit; none = 1). The trader raft's
   stalls ([9.4](#trader-raft)) are the same stands.
 - **Co-op zones** (2026-11-04): a trigger zone that needs several players standing in it at once has the events

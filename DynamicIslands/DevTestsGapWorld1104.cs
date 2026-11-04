@@ -83,10 +83,18 @@ namespace DynamicIslands
 				Func<float, float, Vector3> at;
 				IslandFile f = Gw4File(island, out at);
 				f.Objects.Add(new IslandObject { Name = TradeStand.StallObject, Position = at(-3f, 0f), Props = P(BehaviourProps.Name, "gw-stand-a", TradeStand.GiveProp, "Plank*2", TradeStand.GetProp, "Rope*1",
-					TradeStand.StockProp, "0", BehaviourProps.EventKey(TradeStand.TradeEvent), "signal||gw-paid") });
+					TradeStand.StockProp, "0", BehaviourProps.EventKey(TradeStand.TradeEvent), "signal||gw-paid\ntoggle|gw-lamp|") });
+				f.Objects.Add(new IslandObject { Name = "Log", Position = at(-3f, 4f), Props = P(BehaviourProps.Name, "gw-lamp") });
 				f.Objects.Add(new IslandObject { Name = TradeStand.StallObject, Position = at(3f, 0f), Props = P(BehaviourProps.Name, "gw-stand-b", TradeStand.GiveProp, "story:gw-coin*1", TradeStand.GetProp, "Scrap*3",
 					TradeStand.StockProp, "2") });
 				f.Props[StoryItems.Key] = "gw-coin|Old coin||A coin the stall keeper takes.";
+				// (the plan checker: a stand's story goods are given, its story price is wanted - stand C only for the facts)
+				var standC = new IslandObject { Name = TradeStand.StallObject, Position = at(0f, 4f), Props = P(TradeStand.GiveProp, "Plank*1", TradeStand.GetProp, "story:gw-prize*1") };
+				f.Objects.Add(standC);
+				PlanChecker.Facts facts = PlanChecker.FromFile(f, island, false);
+				f.Objects.Remove(standC);
+				Check(ref ok, facts.GivesStory.Contains("gw-prize"), "the plan checker counts the story item stand C gives (" + string.Join(",", facts.GivesStory.ToArray()) + ")");
+				Check(ref ok, facts.NeedsStory.Contains("gw-coin") && !facts.GivesStory.Contains("gw-coin"), "the plan checker counts B's story price as wanted, not given (needs " + string.Join(",", facts.NeedsStory.ToArray()) + ")");
 				yield return GwSpawnFile(g, f, island);
 				IslandWorldState.Entry e = g.E;
 				if (e == null) yield break;
@@ -97,14 +105,27 @@ namespace DynamicIslands
 
 				// Stand A: three trades, no keys, the event each time
 				Gw4Take(player, "Plank"); Gw4Take(player, "Rope"); Gw4Take(player, "Scrap");
-				player.Inventory.AddItem("Plank", 6);
+				player.Inventory.AddItem("Plank", 8);
 				int keysBefore = e.State.Count;
-				for (int i = 0; i < 3; i++) { a.Trade(); yield return new WaitForSeconds(0.3f); }
-				Check(ref ok, player.Inventory.GetItemCount("Rope") == 3 && player.Inventory.GetItemCount("Plank") == 0, "three trades at A: 6 planks paid, 3 ropes got (" + player.Inventory.GetItemCount("Rope") + " rope, " + player.Inventory.GetItemCount("Plank") + " plank)");
+				// (four trades within a second: each runs the shared part - the lamp toggles 4 times and is back on show)
+				int sameMoment = 0;
+				Application.LogCallback guard = (msg, st, lt) => { if (msg != null && msg.Contains("again within a second") && msg.Contains(island)) sameMoment++; };
+				Application.logMessageReceived += guard;
+				for (int i = 0; i < 4; i++) { a.Trade(); yield return new WaitForSeconds(0.2f); }
+				yield return new WaitForSeconds(1f);
+				Application.logMessageReceived -= guard;
+				Check(ref ok, player.Inventory.GetItemCount("Rope") == 4 && player.Inventory.GetItemCount("Plank") == 0, "four trades at A: 8 planks paid, 4 ropes got (" + player.Inventory.GetItemCount("Rope") + " rope, " + player.Inventory.GetItemCount("Plank") + " plank)");
+				bool lampVis, lampOpen;
+				IslandObjectRef lamp = ScObjOf(e, "gw-lamp");
+				if (lamp != null) Behaviours.StateNow(e, lamp, out lampVis, out lampOpen); else lampVis = false;
+				Check(ref ok, sameMoment == 0, "no trade's shared part was held back as 'again within a second' (" + sameMoment + ")");
+				Check(ref ok, lamp != null && lampVis, "the lamp toggled once per trade (4 times: shown again)");
+				Check(ref ok, Behaviours.SharedOnce(e, a.Index, TradeStand.TradeEvent) && Behaviours.SharedOnce(e, a.Index, TradeStand.TradeEvent), "'trade' has no 1-second guard");
+				Check(ref ok, Behaviours.SharedOnce(e, a.Index, "gw-guard") && !Behaviours.SharedOnce(e, a.Index, "gw-guard"), "other events keep the 1-second guard");
 				Check(ref ok, a.Lacks() == "2 Plank" || a.Lacks().Length > 0, "with no planks left A says what is missing (" + a.Lacks() + ")");
-				Check(ref ok, a.Trade().Count == 0 && player.Inventory.GetItemCount("Rope") == 3, "a trade without the price gives nothing");
+				Check(ref ok, a.Trade().Count == 0 && player.Inventory.GetItemCount("Rope") == 4, "a trade without the price gives nothing");
 				Check(ref ok, !e.State.Keys.Any(k => { int ix, u; return TradeStand.FromKey(k, out ix, out u) && ix == a.Index; }), "A keeps no sold key");
-				Check(ref ok, trades == 3, "A ran its 'trade' event 3 times (" + trades + ")");
+				Check(ref ok, trades == 4, "A ran its 'trade' event 4 times (" + trades + ")");
 				Check(ref ok, Behaviours.HasSignal(e, "gw-paid"), "A's on.trade sent the signal 'gw-paid'");
 
 				// Stand B: priced in a story item, sells out
@@ -130,7 +151,7 @@ namespace DynamicIslands
 					player.Inventory.AddItem("Plank", 2);
 					int rope = player.Inventory.GetItemCount("Rope");
 					a.Trade(); yield return new WaitForSeconds(0.3f);
-					Check(ref ok, a.Unlimited && player.Inventory.GetItemCount("Rope") == rope + 1 && trades == 4, "A trades again after the reload (event " + trades + ")");
+					Check(ref ok, a.Unlimited && player.Inventory.GetItemCount("Rope") == rope + 1 && trades == 5, "A trades again after the reload (event " + trades + ")");
 				}
 			}
 			finally
@@ -141,7 +162,7 @@ namespace DynamicIslands
 				StoryBook.Take("gw-coin", StoryBook.Count("gw-coin"));
 				GwDrop(g, island);
 			}
-			if (ok) Log("PASS: GW1 trade stand (no limit, story-item price, trade event, reload)");
+			if (ok) Log("PASS: GW1 trade stand (no limit, story-item price, trade event, each trade runs its actions, plan checker, reload)");
 			else Fail("GW1 trade stand: see the FAIL lines above");
 		}
 
