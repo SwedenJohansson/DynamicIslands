@@ -15,9 +15,9 @@ expect message barred from inside
 expect shown storedoor
 
 # Dr. Shogo at the channel, sitting on his chair
-picture sa_shogo -13.5 2.2 57.2 -16 0.9 55
-snap sa_shogo_chair shogochair 250 3 1
-use signe
+snap sa_shogo shogochair 250 4 1.2
+snap sa_shogo_chair shogochair 160 2.5 0.6
+use Dr. Shogo
 expect step 0
 
 # Now the bar lifts
@@ -30,6 +30,11 @@ picture sa_storeroom 6 3.3 0.6 6 2.2 7
 # The dinghy by the cave's mouth on the lagoon floor, from the landing
 picture sa_cave_landing 2 4 -12 -5 -3 -22
 snap sa_dinghy dinghy 30 5 2
+
+# Swim in: from the lagoon floor before the mouth up the flooded tunnel into the den, and breathe there (G2: no
+# teleport into the pocket)
+walk -2.3 -18.4 to -4 -22 to -15.5 -46.5 to -19 -54.3 to -23.6 -64 below=-3
+air shelair here
 
 # The den: dry, air, and a dry way down the tunnel to the water
 walk -23.6 -64 to -19 -54.3 to -15.5 -46.5 below=7
