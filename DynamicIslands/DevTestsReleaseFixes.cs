@@ -275,7 +275,7 @@ namespace DynamicIslands
 			if (n > 0) Log("PASS: pictures of " + n + " cave pieces"); else Fail("no cave pieces on the loaded islands");
 		}
 
-		[ConsoleCommand(name: "CICaveIslands", docs: "Dev, world (host, a test world 'CI ...'): every saved island with cave pieces brought next to the raft in turn - its rock mountain over the caves (AU83) is there, mapped (cavemap_<island>.txt) and pictured from four sides and above (shot_caveisl_<n>_<side>.png; each side picture must have the island in 15 % of it), nothing seen through from inside (CICaveInside's look round, a picture of the worst look: shot_caveisl_<n>_inside_<k>.png), then the island is taken away again: CICaveIslands [part of the name] [most]")]
+		[ConsoleCommand(name: "CICaveIslands", docs: "Dev, world (host, a test world 'CI ...'): every saved island with cave pieces or dug tunnels brought next to the raft in turn - its rock mountain over the caves (AU83) is there, mapped (cavemap_<island>.txt) and pictured from four sides and above (shot_caveisl_<n>_<side>.png; each side picture must have the island in 15 % of it), nothing seen through from inside (CICaveInside's look round, a picture of the worst look: shot_caveisl_<n>_inside_<k>.png, a dug tunnel's shot_caveisl_<n>_dug_<k>.png), then the island is taken away again: CICaveIslands [part of the name] [most]")]
 		public static void CaveIslandsCommand(string[] args)
 		{
 			string only = args != null && args.Length > 0 && args[0] != "*" ? args[0] : "";
@@ -295,7 +295,7 @@ namespace DynamicIslands
 				if (only.Length > 0 && !only.Split('|').Any(x => name.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0)) continue;
 				IslandFile f = null;
 				try { f = IslandFile.Load(Path.Combine(DynamicIslands.assetpath, name + IslandFile.Extension)); } catch (Exception) { }
-				if (f != null && f.Objects.Any(o => only.Length > 0 ? RaftProps.Get(o.Name) != null && RaftProps.Get(o.Name).IsCave : CaveMountain.Wants(o.Name))) names.Add(name); // (named ones: the Vines cave too, to look at)
+				if (f != null && f.Objects.Any(o => only.Length > 0 ? RaftProps.Get(o.Name) != null && RaftProps.Get(o.Name).IsCave : CaveMountain.Wants(o.Name)) || f.Objects.Any(o => o.Name == DigTunnel.ObjectName)) names.Add(name); // (named ones: the Vines cave too, to look at)
 			}
 			Log("Saved islands with cave pieces: " + names.Count + " (" + string.Join(", ", names.ToArray()) + ")");
 			int n = 0, bad = 0, blockedIslands = 0, insideIslands = 0, framedIslands = 0;
@@ -317,14 +317,18 @@ namespace DynamicIslands
 				if (m != null) File.WriteAllText(Path.Combine(DynamicIslands.assetpath, "cavemap_" + name + ".txt"), m.LastMap ?? "");
 				var caves = e.Root.GetComponentsInChildren<Transform>().Where(t => CaveMountain.Wants(t.name)).ToList();
 				string map = m != null ? m.LastMap ?? "" : "";
-				Log("  " + n + " " + name + ": " + caves.Count + " cave piece(s), mountain " + (skin != null ? "there" : "MISSING") + " - roof " + map.Count(c => c == 'R') + ", sides " + map.Count(c => c == 's') + ", ways in " + map.Count(c => c == 'c') + "; " + (map.Split('\n').FirstOrDefault() ?? ""));
-				if (skin == null && caves.Count > 0) bad++;
+				Log("  " + n + " " + name + ": " + caves.Count + " cave piece(s), mountain " + (skin != null ? "there" : caves.Count == 0 ? "none (no cave pieces)" : map.Count(c => c == 'R') == 0 ? "none needed (the ground covers the caves)" : "MISSING") + " - roof " + map.Count(c => c == 'R') + ", sides " + map.Count(c => c == 's') + ", ways in " + map.Count(c => c == 'c') + "; " + (map.Split('\n').FirstOrDefault() ?? ""));
+				if (skin == null && caves.Count > 0 && map.Count(c => c == 'R') > 0) bad++; // (no roof cell: the ground is over every cave piece, nothing to cover - a cave tool hill, 11-04)
 				// (its ways in clear: a play walking into a den stuck on the hill across its mouth - AU83)
 				List<string> blocked = m != null ? m.BlockedWays() : new List<string>();
 				foreach (string w in blocked.Take(6)) Log("    way in blocked: " + w);
 				if (blocked.Count > 0) { bad++; blockedIslands++; }
 				var looks =e.Root.GetComponentsInChildren<Transform>().Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
-				if (looks.Count > 0)
+				// (the dug tunnels too - G3, 11-04: built when the island comes, their lining and the ground cut over their mouths)
+				var digs = e.Root.GetComponentsInChildren<DigTunnel>().ToList();
+				for (float w = 0f; w < 10f && digs.Any(x => x.Triangles == 0 || x.Land() == null); w += 0.5f) yield return new WaitForSeconds(0.5f);
+				if (digs.Count > 0) Log("    dug tunnels: " + digs.Count + " (" + string.Join(", ", digs.Select(x => x.Strokes.Count + " stroke(s), " + x.PointCount + " points, " + x.Triangles + " triangles").ToArray()) + ")");
+				if (looks.Count > 0 || digs.Count > 0)
 				{
 					caves = looks; // (the pictures: every cave piece, the Vines cave too)
 					// (flooded: a cave whose passage roof is under the sea - Shellback's den on the sea floor, the Drowned Labyrinth's
@@ -332,7 +336,7 @@ namespace DynamicIslands
 					// in the Labyrinth's (10-21). An island whose caves are all flooded is pictured from just under the water; one with
 					// dry caves too frames the dry ones)
 					var flooded = caves.Where(t => CaveRoofY(t) < 0f).ToList();
-					bool drowned = flooded.Count == caves.Count;
+					bool drowned = caves.Count > 0 && flooded.Count == caves.Count;
 					if (flooded.Count > 0) Log("    flooded (the passage's roof under the sea): " + string.Join(", ", flooded.Select(t => t.name + " " + CaveRoofY(t).ToString("F1") + " m").ToArray()) + (drowned ? " - the side pictures from under the water" : " - the pictures frame the dry ones"));
 					// (the pictures framed on what is there: the caves' and the mountain's meshes, only those within the island's land - from
 					// its land centre and radius, as d9ebe75 - and a camera 20 degrees up at a distance that fits them in the picture. Until
@@ -344,6 +348,7 @@ namespace DynamicIslands
 					bool any = false;
 					var meshes = caves.Where(t => drowned || !flooded.Contains(t)).SelectMany(t => t.GetComponentsInChildren<Renderer>()).ToList();
 					if (skin != null) meshes.AddRange(skin.GetComponentsInChildren<Renderer>());
+					foreach (DigTunnel dt in digs) meshes.AddRange(dt.GetComponentsInChildren<Renderer>());
 					foreach (Renderer rr in meshes)
 					{
 						if (rr == null || !rr.enabled || !(rr is MeshRenderer || rr is SkinnedMeshRenderer)) continue;
@@ -412,6 +417,16 @@ namespace DynamicIslands
 						if (seen == 0) continue;
 						seenThrough = true;
 						yield return CameraShot(eye, eye + look * 5f, "caveisl_" + n + "_inside_" + caves.IndexOf(t));
+					}
+					foreach (DigTunnel dt in digs)
+					{
+						string detail;
+						Vector3 eye, look;
+						int seen = DugSeeThrough(dt, digs, out detail, out eye, out look);
+						Log("    inside the dug tunnel at " + dt.transform.position.ToString("F0") + ": " + detail);
+						if (seen == 0) continue;
+						seenThrough = true;
+						yield return CameraShot(eye, eye + look * 5f, "caveisl_" + n + "_dug_" + digs.IndexOf(dt));
 					}
 					if (seenThrough) { bad++; insideIslands++; }
 				}

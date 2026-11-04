@@ -1,0 +1,72 @@
+# lib_caves - cave kits ("include lib_caves"; G6, 11-04): caves checked once in Raft - pictures inside and out by day and night,
+# the X7 probes, a walk in and out - laid by one call each, with Raft's cave loot inside and, if wanted, machete vines
+# over the mouth. x z: the mouth's floor at the hill's foot (the ground there); yaw: degrees, the way in (0 = +z ahead,
+# 90 = +x); len: metres in. Loot: dirt mush stone titanium light (Raft's dirt spots, mushrooms, stones, titanium ore, a
+# metal lantern) spread on the dry floor from 5 m in; vines: cave vines from the roof (high enough to walk under);
+# gate=1: Raft's ChoppableVines across the mouth (cut with the machete; alias <as>_vines). Loot is laid as=<as>_loot.
+# Keep caves 6 m from quest objects, people, signs, chests and ladders, off the main walk line, and a gated cave off the
+# main path before the plan's machete step: tools\content.ps1 cavecheck <recipe> checks it (G7).
+#
+# kit_st: a straight cave (the cave tool): Raft's cave tunnels into a hill, a bear-den room at the end (end=room) or
+# an open end (end=open; through a hill), slope degrees (below 0 down), size 0.7-1.5 times Raft's own
+macro kit_st x=0 z=0 yaw=0 len=26 slope=0 end=room size=1 hill=1 dirt=3 mush=3 stone=2 vines=2 titanium=0 light=0 gate=0 as=kitst
+cave from $x $z to {$x+$len*sin($yaw)} {$z+$len*cos($yaw)} slope=$slope end=$end hill=$hill size=$size as=$as
+caveloot $as dirt=$dirt mush=$mush stone=$stone vines=$vines titanium=$titanium light=$light
+for _g 1 $gate
+cavegate $as
+next
+end
+#
+# kit_uw: an underwater straight cave: the mouth on the sea floor (x z there, 4 m down or more), climbing slope degrees
+# (default 12) to a room above the sea - water only in the flooded part, the room dry with air (the loot only there).
+# len: enough pieces to climb out of the sea - (depth + 2.5) / (10.4 * sin(slope)) pieces of 10.4 m
+macro kit_uw x=0 z=0 yaw=0 len=42 slope=12 size=1 dirt=2 mush=2 stone=1 vines=1 titanium=1 light=0 as=kituw
+call kit_st x=$x z=$z yaw=$yaw len=$len slope=$slope end=room size=$size dirt=$dirt mush=$mush stone=$stone vines=$vines titanium=$titanium light=$light as=$as
+end
+#
+# kit_dig: a dug tunnel (the Dig brush): flat m level from the mouth, then len m on at slope degrees (-25..25), r its
+# radius (1.4-5), room=1 a wider chamber (roomr, roomlen m) at the end
+macro kit_dig x=0 z=0 yaw=0 len=24 flat=0 r=1.75 slope=0 room=1 roomr=3.5 roomlen=6 dirt=3 mush=3 stone=2 vines=2 titanium=0 light=0 gate=0 as=kitdig
+set _dx {sin($yaw)}
+set _dz {cos($yaw)}
+set _sx {$x+$flat*$_dx}
+set _sz {$z+$flat*$_dz}
+set _ex {$_sx+$len*$_dx}
+set _ez {$_sz+$len*$_dz}
+for _f 1 {min(ceil($flat),1)}
+dig {$x},{$z} {$_sx},{$_sz} r=$r as=$as
+next
+dig {$_sx},{$_sz} {$_ex},{$_ez} r=$r slope=$slope as=$as
+for _r 1 $room
+dig {$_ex},{$_ez} {$_ex+$roomlen*$_dx},{$_ez+$roomlen*$_dz} r=$roomr
+next
+caveloot $as dirt=$dirt mush=$mush stone=$stone vines=$vines titanium=$titanium light=$light
+for _g 1 $gate
+cavegate $as
+next
+end
+#
+# kit_sys: a joined system of three dug tunnels with two mouths (the Dig brush): a trunk len m in, bending bend m to one
+# side (side=1 right of the way in, -1 left); a branch from branch m along it, blen m to the other side, ending in a
+# chamber (roomr); a second mouth gap m to the bend's side of the first, dug in2 m in and on into the trunk's end.
+# Needs the hillside to go on gap m along (both mouths at about the same ground)
+macro kit_sys x=0 z=0 yaw=0 side=1 len=24 bend=10 branch=12 blen=8 gap=16 in2=14 r=1.75 roomr=3.5 dirt=4 mush=4 stone=3 vines=3 titanium=1 light=0 gate=0 as=kitsys
+set _dx {sin($yaw)}
+set _dz {cos($yaw)}
+set _rx {$side*cos($yaw)}
+set _rz {0-$side*sin($yaw)}
+set _tx {$x+$len*$_dx+$bend*$_rx}
+set _tz {$z+$len*$_dz+$bend*$_rz}
+set _bx {$x+$branch*$_dx-$blen*$_rx}
+set _bz {$z+$branch*$_dz-$blen*$_rz}
+set _mx {$x+$gap*$_rx}
+set _mz {$z+$gap*$_rz}
+dig {$x},{$z} {$x+$len*$_dx},{$z+$len*$_dz} {$_tx},{$_tz} r=$r as=$as
+dig {$x+$branch*$_dx},{$z+$branch*$_dz} {$_bx},{$_bz}
+dig {$_bx},{$_bz} {$_bx-6*$_rx+2*$_dx},{$_bz-6*$_rz+2*$_dz} r=$roomr
+dig {$_mx},{$_mz} {$_mx+$in2*$_dx},{$_mz+$in2*$_dz} {$_tx},{$_tz} r=$r as=$as
+caveloot $as dirt=$dirt mush=$mush stone=$stone vines=$vines titanium=$titanium light=$light
+for _g 1 $gate
+cavegate $as
+next
+end

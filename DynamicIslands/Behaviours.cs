@@ -537,7 +537,11 @@ namespace DynamicIslands.Editor
 				u.Hint = ObjectProps.Get(props, BehaviourProps.Use);
 				u.Ref = r;
 			}
-			ApplyCollision(go, ObjectProps.Get(props, BehaviourProps.Collision));
+			// (Raft's machete vines have no collider of their own - meshes only: solid unless the builder chose otherwise, so
+			// vines over a way in close it until they are cut; cut, the object hides and the box goes with it - G5, 11-04)
+			string collision = ObjectProps.Get(props, BehaviourProps.Collision);
+			if (string.IsNullOrEmpty(collision) && objectName == ContentCatalog.MacheteVines) collision = "solid";
+			ApplyCollision(go, collision);
 			if (BehaviourProps.StartsHidden(props)) go.SetActive(false);
 		}
 

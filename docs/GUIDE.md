@@ -705,7 +705,9 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
 - **Caves: Dig brush:** the other tunnel tool (the one above is now called **Straight tunnel**). Paint your own
   passage into a hill or cliff, as the Sculpt brushes paint the ground: press on a hillside and hold - a tunnel is dug in
   toward where the mouse points. Move the mouse to steer it round bends; keep it still and it digs on the way you look.
-  Let go and press again on the tunnel to dig on from that spot or branch off; **Shift**+drag fills a passage back in.
+  Let go and press again on the tunnel to dig on from that spot or branch off; dig a tunnel on into another one (a
+  second mouth into the first tunnel) and the two join: the rock between them is cut away on both sides and the floor
+  ramps to meet the other's at 20 degrees or less. **Shift**+drag fills a passage back in.
   **Dig size** is the passage's width and height (2.8 m: a tight passage you can still walk; 6 m and more: a hall);
   **Dig slope** makes it climb or go down as you dig (up to 25°; down from flat ground is a ramp in). With the slope
   level, a stroke on flat ground or a gentle slope (the mouse not pointing up into a hill) goes down into the ground by
@@ -714,7 +716,7 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
   open to the sky. The mouth gets a low, uneven rim of rock round it that blends into the slope: its top is drawn
   with the ground's own textures in the editor (grass on a grassy hill, rock on a cliff; the same in a world), with bare rock on its sides and at the opening; before a
   cliff the floor runs straight out onto the ground (the cliff above the mouth stays whole, no sky through it). The
-  lining inside is smooth rock, and it grows darker the farther in you are, in the editor and in a world (the floor just inside the mouth is dark rock too, not lit pale by the sun). Placed objects the passage goes through or its rim would bury (a boulder, a bush, a buried rock) are taken away
+  lining inside is smooth rock, and it grows darker the farther in you are, in the editor and in a world (the floor just inside the mouth is dark rock too, not lit pale by the sun). Placed objects the passage goes through, that reach into it (a boulder on the rim of a room that breaks out of the ground) or that its rim would bury (a boulder, a bush, a buried rock) are taken away
   with the stroke. Each stroke is one **Ctrl+Z** (it brings them back too). A dug tunnel is saved with the island and comes along into Test and
   multiplayer; it follows the ground if you sculpt over it later. It has no move arrows: dig, fill or undo it.
   The ground is cut only where the passage comes out through it (its mouth, or the open top of a ramp), never over a
@@ -760,7 +762,8 @@ three honeycombs, refilling after the island's regrow days like any chest.
 
 **Raft's story pieces that use the player's quest tools.** Balboa's **ChoppableVines** come ready to cut: a player
 with Raft's **machete** cuts them away (without one they are told they need it), and keeps the machete for the next
-vines on any later island - the vines stay cut. Raft's **zipline lines** (**ZiplinePath** from Tangaroa,
+vines on any later island - the vines stay cut. Until then they are solid: vines across a path or a cave's mouth close
+it (Collision in the object panel changes that). Raft's **zipline lines** (**ZiplinePath** from Tangaroa,
 **ZiplinePath_Landmark** from Caravan Town) keep Raft's own zipline: a player with the **zipline tool** rides them as
 on Raft's islands. Search the browser for them. Select a line to set its **far end**: **Far end: where I look**
 puts the far end's floor on the ground the camera looks at (keep it lower - a zipline runs downhill); in a world Raft

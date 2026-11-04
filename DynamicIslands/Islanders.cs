@@ -170,6 +170,8 @@ namespace DynamicIslands.Editor
 		float cooldown;
 
 		public bool HasModel { get { return model != null; } }
+		/// <summary>Raft's character it shows (null: the marker figure).</summary>
+		public SO_Character Character { get; private set; }
 
 		void Start()
 		{
@@ -188,6 +190,7 @@ namespace DynamicIslands.Editor
 			m.transform.localRotation = Quaternion.identity;
 			m.SetActive(true);
 			model = m;
+			Character = c;
 			string pose = Islanders.PoseOf(Ref.Props);
 			Animator an = m.GetComponent<Animator>();
 			Islanders.Pose(an, pose);
