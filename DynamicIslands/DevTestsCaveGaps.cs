@@ -733,7 +733,11 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CICaveGapsWalkFrom", docs: "Dev, anywhere: where CICaveGapsLook walks into a dug mouth from - straight out when the ground there is within a step of the floor, else the first side direction that is (a mouth on a ledge), else the closest in height")]
-		public static void CaveGapsWalkFromCommand(string[] args)
+		public static void CaveGapsWalkFromCommand(string[] args) { StartTest(CaveGapsWalkFromRoutine()); }
+
+		/// <summary>(Run as a test so it ends with the IDLE line ci.ps1 -done waits for: as a plain command it printed its
+		/// PASS and no done marker, and the run waited out its timeout - 11-05.)</summary>
+		static IEnumerator CaveGapsWalkFromRoutine()
 		{
 			var cases = new[]
 			{
@@ -752,6 +756,7 @@ namespace DynamicIslands
 				if (got != c.w) { bad++; Log("  " + string.Join(" ", c.d.Select(x => x.ToString("0.0")).ToArray()) + " -> " + got + ", not " + c.w); }
 			}
 			if (bad == 0) Log("PASS: cave gaps walk from: " + cases.Length + " cases (straight out, a ledge to the side, the closest, no ground is a drop)"); else Fail("cave gaps walk from: " + bad + " wrong");
+			yield break;
 		}
 
 		static bool CaveGapsLookIslandMissing(string name)
@@ -806,6 +811,15 @@ namespace DynamicIslands
 			const float sea = 0f;
 			List<GapWay> ways = GapWays(e);
 			Check(ref ok, ways.Count > 0, name + ": " + ways.Count + " ways in (" + string.Join(", ", ways.Select(w => w.Kind + " " + w.Floor.Count + " points, " + (w.Floor[0].y - sea).ToString("0.0") + " to " + (w.Floor.Last().y - sea).ToString("0.0") + " m").ToArray()) + ")");
+			// The dug mouths' rims: none of the rock's faces lying on the ground beside them (pale saw-tooth shards where the rim's
+			// skin crosses a steep slope - Old Mine Islet's shore adit, 11-05)
+			foreach (DigTunnel dt in e.Root.GetComponentsInChildren<DigTunnel>(true))
+			{
+				if (dt.RimColumns == 0) continue;
+				string at = "";
+				int shards = dt.RimTop == "" ? 0 : dt.RimShards(out at);
+				Check(ref ok, shards == 0, name + ": dug tunnel " + dt.name + "'s rim (" + dt.RimColumns + " columns, its top " + (dt.RimTop == "" ? "rock" : "the ground's") + "): " + shards + " rock shards on the ground" + (shards > 0 ? " at " + at : ""));
+			}
 			Vector3 eyeUp = Vector3.up * 1.6f;
 			Vector3 home = me.transform.position;
 			int n = 0;

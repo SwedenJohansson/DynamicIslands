@@ -258,12 +258,20 @@ namespace DynamicIslands.Editor
 			finally { Physics.queriesHitBackfaces = backfaces; }
 			// The ways in: from where the roof ends along the passage, out (not from the inside point: a stretch of the den
 			// with no roof over it was left open, and the den showed through the hill from above - AU83)
+			// (a way in follows its own chain's roof - the pieces joined end to end - and stops at another cave's roof: a straight
+			// cave's room ended by the old mine's mound, its roof run went on over the mound and its way in ran on past it, a
+			// slot 3 cells wide down the mound's far side to the sea floor, under water traps under the hill - Old Mine Islet 11-05)
+			int[] chain = Chains(mouths);
 			var startPlus = new float[mouths.Count];
 			var startMinus = new float[mouths.Count];
+			var stopPlus = new float[mouths.Count];
+			var stopMinus = new float[mouths.Count];
 			for (int j = 0; j < mouths.Count; j++)
 			{
-				startPlus[j] = RoofEnd(mouths[j], 1f, top, x0, z0, nx, nz);
-				startMinus[j] = RoofEnd(mouths[j], -1f, top, x0, z0, nx, nz);
+				startPlus[j] = RoofEnd(mouths[j], 1f, top, own, chain, j, x0, z0, nx, nz);
+				startMinus[j] = RoofEnd(mouths[j], -1f, top, own, chain, j, x0, z0, nx, nz);
+				stopPlus[j] = WayStop(mouths[j], 1f, startPlus[j], top, own, chain, j, x0, z0, nx, nz);
+				stopMinus[j] = WayStop(mouths[j], -1f, startMinus[j], top, own, chain, j, x0, z0, nx, nz);
 			}
 			// How far out past each cave's open ends (m past where its roof ends; under 0.5: not out past them). The hill of a
 			// cave's roof stops there, a face of rock across its front: it spread on over the ledge and the paths before the
@@ -290,7 +298,7 @@ namespace DynamicIslands.Editor
 						// a square with no roof there was hill with a wall down to the ground across the way in - Ranger's Rest)
 						if (Mathf.Abs(s) < m.HalfWidth - 1f && ((m.Plus && a > 0f) || (m.Minus && a < 0f)) && float.IsNaN(mouthAt[i, k])) mouthAt[i, k] = m.FloorY;
 						if (!float.IsNaN(top[i, k])) continue;
-						if (Mathf.Abs(s) < m.HalfWidth && ((m.Plus && a > startPlus[j]) || (m.Minus && a < -startMinus[j]))) { corridor[i, k] = m.FloorY; break; }
+						if (Mathf.Abs(s) < m.HalfWidth && ((m.Plus && a > startPlus[j] && a < stopPlus[j]) || (m.Minus && a < -startMinus[j] && a > -stopMinus[j]))) { corridor[i, k] = m.FloorY; break; }
 					}
 				}
 			lastMouths.Clear();
@@ -574,7 +582,55 @@ namespace DynamicIslands.Editor
 		/// How far from a cave's inside point its roof goes along the passage (dir 1: its plus end, -1: its minus end): the last
 		/// roof on the passage's middle or either side of it, past gaps in the roof of up to 5 m.
 		/// </summary>
-		static float RoofEnd(Mouth m, float dir, float[,] top, float x0, float z0, int nx, int nz)
+		/// <summary>Which pieces are one passage: joined end to end (an open end within 2.5 m of another's, floors within 3 m) - the
+		/// cave tool's tunnels and its den. Each piece's chain number.</summary>
+		static int[] Chains(List<Mouth> mouths)
+		{
+			int n = mouths.Count;
+			var chain = new int[n];
+			for (int j = 0; j < n; j++) chain[j] = j;
+			System.Func<int, int> root = null;
+			root = j => chain[j] == j ? j : (chain[j] = root(chain[j]));
+			System.Func<Mouth, float, Vector3> end = (m, dir) => m.Pos + m.Along * (m.InsideAlong + dir * (dir > 0f ? m.OwnPlus : m.OwnMinus)) + m.Side * m.InsideSide;
+			for (int j = 0; j < n; j++)
+				for (int l = j + 1; l < n; l++)
+				{
+					if (Mathf.Abs(mouths[j].FloorY - mouths[l].FloorY) > 3f) continue;
+					bool joined = false;
+					foreach (float d1 in new[] { 1f, -1f })
+						foreach (float d2 in new[] { 1f, -1f })
+						{
+							Vector3 e = end(mouths[j], d1) - end(mouths[l], d2);
+							if (new Vector2(e.x, e.z).magnitude < 2.5f) joined = true;
+						}
+					if (joined) chain[root(j)] = root(l);
+				}
+			for (int j = 0; j < n; j++) chain[j] = root(j);
+			return chain;
+		}
+
+		/// <summary>A roof cell of the piece's own chain (or one no piece claims).</summary>
+		static bool OwnRoof(int[,] own, int[] chain, int j, int i, int k)
+		{
+			int o = own[i, k];
+			return o < 0 || o >= chain.Length || chain[o] == chain[j];
+		}
+
+		/// <summary>How far out a way in may run (m along the passage past the inside point): to the first roof of another cave
+		/// past where its own roof ends - the way in doesn't go on through another cave's hill and out the far side.</summary>
+		static float WayStop(Mouth m, float dir, float start, float[,] top, int[,] own, int[] chain, int j, float x0, float z0, int nx, int nz)
+		{
+			for (float a = start; a < 80f; a += Cell * 0.5f)
+			{
+				Vector3 p = m.Pos + m.Along * (m.InsideAlong + dir * a) + m.Side * m.InsideSide;
+				int i = Mathf.RoundToInt((p.x - x0) / Cell), k = Mathf.RoundToInt((p.z - z0) / Cell);
+				if (i < 0 || k < 0 || i >= nx || k >= nz) break;
+				if (!float.IsNaN(top[i, k]) && !OwnRoof(own, chain, j, i, k)) return a - start < 5f ? start : a; // (another cave right on: no way in between, as the roof run bridged 5 m before)
+			}
+			return float.PositiveInfinity;
+		}
+
+		static float RoofEnd(Mouth m, float dir, float[,] top, int[,] own, int[] chain, int j, float x0, float z0, int nx, int nz)
 		{
 			float last = 0f;
 			foreach (float s in new[] { 0f, -m.HalfWidth * 0.5f, m.HalfWidth * 0.5f })
@@ -585,6 +641,7 @@ namespace DynamicIslands.Editor
 					Vector3 p = m.Pos + m.Along * (m.InsideAlong + dir * a) + m.Side * (m.InsideSide + s);
 					int i = Mathf.RoundToInt((p.x - x0) / Cell), k = Mathf.RoundToInt((p.z - z0) / Cell);
 					if (i < 0 || k < 0 || i >= nx || k >= nz) break;
+					if (!float.IsNaN(top[i, k]) && !OwnRoof(own, chain, j, i, k)) break;
 					if (!float.IsNaN(top[i, k])) seen = a;
 					else if (a - seen > 5f) break;
 				}

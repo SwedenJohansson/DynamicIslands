@@ -366,7 +366,7 @@ namespace DynamicIslands
 			string name = e.HostName;
 			var report = new List<string>();
 			int problems = 0;
-			reachStuckAt.Clear(); reachStuckN.Clear(); reachBlocked = null;
+			reachStuckAt.Clear(); reachStuckN.Clear(); reachBlocked = null; reachHoles.Clear();
 			hbWhat = "reach " + name; // (from the start: the grid takes a minute, and the HB keeps the player alive while it is "reach")
 			// (a player opens a plain door with E: Raft's own doors (Door) with no use check of the island's on them are opened
 			// first - every drowned house's back room failed behind its closed Block_Wall_Door, PQ11 10-28; a gate or key door
@@ -902,6 +902,10 @@ namespace DynamicIslands
 		/// An overhang's underside faces down and is no hit.</summary>
 		static bool InsideSolid(Vector3 p)
 		{
+			// (a dug passage's open air is never solid: under the terrain it was - at the mouth the cut cells keep the ground's
+			// height over the floor with no ground there, and a ray up in the bumpy passage met a wall, not a roof facing down;
+			// Old Mine Islet's Miner's chest in Tunnel 1 was 'can't get there' though the play walks to it, 11-05)
+			if (DigTunnel.InPassage(p, 0.3f)) return false;
 			// (under a terrain: a heightfield has no inside to hit - unless p is in a cave of the island's own pieces under it, a
 			// ceiling facing down over p and a floor facing up under it, both below the terrain: Temperance tunnels under a reef
 			// (Drowned Labyrinth: every tunnel spot was ruled out, 'no spot' for all its targets, PQ11 10-28))
@@ -909,7 +913,11 @@ namespace DynamicIslands
 			{
 				Vector3 tp = t.transform.position, ts = t.terrainData.size;
 				if (p.x >= tp.x && p.x <= tp.x + ts.x && p.z >= tp.z && p.z <= tp.z + ts.z && tp.y + t.SampleHeight(p) > p.y)
+				{
+					// (a cut cell (a dug mouth's hole) has no ground: what is over p there is found by the ray below)
+					if (TerrainHoleAt(t, p)) break;
 					return !CaveUnder(p, tp.y + t.SampleHeight(p));
+				}
 			}
 			bool was = Physics.queriesHitBackfaces;
 			Physics.queriesHitBackfaces = true;
@@ -919,6 +927,20 @@ namespace DynamicIslands
 				return Physics.Raycast(p, Vector3.up, out h, 40f, reachMask, QueryTriggerInteraction.Ignore) && h.normal.y > 0.1f;
 			}
 			finally { Physics.queriesHitBackfaces = was; }
+		}
+
+		/// <summary>The terrain's holes (cut cells), read once per audit: ReachAnalyze clears them.</summary>
+		static readonly Dictionary<Terrain, bool[,]> reachHoles = new Dictionary<Terrain, bool[,]>();
+
+		/// <summary>p's column is a cut cell of t (a dug tunnel's mouth): no ground there, though the height map is kept.</summary>
+		static bool TerrainHoleAt(Terrain t, Vector3 p)
+		{
+			TerrainData td = t.terrainData;
+			bool[,] solid;
+			if (!reachHoles.TryGetValue(t, out solid)) reachHoles[t] = solid = td.GetHoles(0, 0, td.holesResolution, td.holesResolution);
+			int n = td.holesResolution;
+			int x = Mathf.FloorToInt((p.x - t.transform.position.x) / td.size.x * n), z = Mathf.FloorToInt((p.z - t.transform.position.z) / td.size.z * n);
+			return x >= 0 && z >= 0 && x < n && z < n && !solid[z, x];
 		}
 
 		/// <summary>p (under a terrain whose surface is at ground) lies in a hollow of the island's own pieces: the first thing over it

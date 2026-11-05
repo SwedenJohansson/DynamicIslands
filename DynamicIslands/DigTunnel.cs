@@ -101,6 +101,27 @@ namespace DynamicIslands.Editor
 			return dark;
 		}
 
+		/// <summary>A world point in the open air of a dug passage (in the editor or a world), at least margin metres in from
+		/// its walls, floor and roof. The reach audit (CIReach) asks this: under a terrain it took a dug passage for solid
+		/// ground - at the mouth the cut cells leave the ground's height over the floor with nothing there, and in a bumpy
+		/// passage a ray up met a wall, not a roof facing down - so a chest in a dug tunnel was never reached (11-05).</summary>
+		public static bool InPassage(Vector3 world, float margin)
+		{
+			for (int i = 0; i < live.Count; i++)
+			{
+				DigTunnel t = live[i];
+				if (t == null || !t.isActiveAndEnabled || t.PointCount == 0) continue;
+				Bounds b = t.WorldBounds();
+				b.Expand(1f);
+				if (!b.Contains(world)) continue;
+				float sY = Mathf.Abs(t.transform.lossyScale.y) > 1e-4f ? Mathf.Abs(t.transform.lossyScale.y) : 1f;
+				// (the walls and roof stand up to Bumps (0.15 r) inside the passage's round: the margin is past them)
+				float d = Distance(t.Segments(Shell), t.transform.InverseTransformPoint(world)) * sY;
+				if (d < -margin) return true;
+			}
+			return false;
+		}
+
 		/// <summary>How far toward the passage's own dim light (AmbienceZones' TunnelLight, 1 = all the way) the lining's sky
 		/// light is in a world, wherever the camera is: DarkAt dims the light for the camera only from DarkFrom m in, so seen
 		/// from the mouth or just inside it the passage took the world's strong blue sky light (ambient intensity 8) and came out
@@ -543,7 +564,11 @@ namespace DynamicIslands.Editor
 				{
 					// (by its corners' normals: the way it faces, smooth across the rim as its light is)
 					Vector3 n = at.TransformDirection(norms[rim[i]] + norms[rim[i + 1]] + norms[rim[i + 2]]);
-					if (n.sqrMagnitude < 1e-12f || n.normalized.y < TopUp) { side.Add(rim[i]); side.Add(rim[i + 1]); side.Add(rim[i + 2]); continue; }
+					// (or lying on the ground, however steep the slope: the rim's skin over a steep slope kept the rock's paler look,
+					// saw-tooth shards along the line where it crosses the ground - Old Mine Islet's shore adit, 11-05)
+					bool up = n.sqrMagnitude >= 1e-12f && n.normalized.y >= TopUp;
+					if (!up && n.sqrMagnitude >= 1e-12f && FaceOnGround(land, at.TransformPoint(verts[rim[i]]), at.TransformPoint(verts[rim[i + 1]]), at.TransformPoint(verts[rim[i + 2]]), n.normalized, OnGroundBy, OnGroundFacing)) up = true;
+					if (!up) { side.Add(rim[i]); side.Add(rim[i + 1]); side.Add(rim[i + 2]); continue; }
 					for (int e = 0; e < 3; e++)
 					{
 						int v = rim[i + e], to;
@@ -811,6 +836,56 @@ namespace DynamicIslands.Editor
 
 		/// <summary>A face of the rim turned up at least this much (its normal's height) takes the ground's look.</summary>
 		const float TopUp = 0.6f;
+		/// <summary>A face of the rim with its corners this close to the ground (m, across the slope) and turned with it at least
+		/// this much (its normal on the ground's) lies on the ground: it takes the ground's look too, whatever the slope.</summary>
+		const float OnGroundBy = 0.3f, OnGroundFacing = 0.5f;
+
+		/// <summary>The face (corners in the world, its normal) lies on the ground: every corner within by of it across the
+		/// slope (the height off it times the ground's normal's height) and the face turned with the ground at least facing.</summary>
+		static bool FaceOnGround(Terrain land, Vector3 a, Vector3 b, Vector3 c, Vector3 n, float by, float facing)
+		{
+			if (land == null || land.terrainData == null) return false;
+			Vector3 lo = land.transform.position, size = land.terrainData.size;
+			Vector3 mid = (a + b + c) / 3f;
+			Vector3 gn = land.terrainData.GetInterpolatedNormal((mid.x - lo.x) / size.x, (mid.z - lo.z) / size.z);
+			if (Vector3.Dot(n, gn) < facing) return false;
+			foreach (Vector3 p in new[] { a, b, c })
+				if (Mathf.Abs((p.y - GroundY(land, p)) * gn.y) > by) return false;
+			return true;
+		}
+
+		/// <summary>Tests: the rim's rock faces (part 1) that lie on the ground - their middle within 0.3 m over it across the
+		/// slope, turned up out of it - pale shards on the ground beside the mouth (the rock's look where the ground's belongs).
+		/// (Part 0, the lining, isn't the rim.) where: the first few.</summary>
+		public int RimShards(out string where)
+		{
+			where = "";
+			Transform r = transform.Find(RockName);
+			MeshFilter mf = r != null ? r.GetComponent<MeshFilter>() : null;
+			Terrain land = skinLand;
+			if (mf == null || mf.sharedMesh == null || land == null || mf.sharedMesh.subMeshCount < 2) return 0;
+			Mesh mesh = mf.sharedMesh;
+			var verts = new List<Vector3>();
+			mesh.GetVertices(verts);
+			int[] tris = mesh.GetTriangles(1);
+			Vector3 lo = land.transform.position, size = land.terrainData.size;
+			int n = 0;
+			var seen = new List<string>();
+			for (int i = 0; i + 2 < tris.Length; i += 3)
+			{
+				Vector3 a = r.TransformPoint(verts[tris[i]]), b = r.TransformPoint(verts[tris[i + 1]]), c = r.TransformPoint(verts[tris[i + 2]]);
+				Vector3 cross = Vector3.Cross(b - a, c - a);
+				if (cross.magnitude < 2e-4f) continue;
+				Vector3 mid = (a + b + c) / 3f;
+				Vector3 gn = land.terrainData.GetInterpolatedNormal((mid.x - lo.x) / size.x, (mid.z - lo.z) / size.z);
+				float off = (mid.y - GroundY(land, mid)) * gn.y;
+				if (off < -0.05f || off > 0.3f || Vector3.Dot(cross.normalized, gn) <= 0f) continue;
+				n++;
+				if (seen.Count < 4) seen.Add(mid.ToString("0.0"));
+			}
+			where = string.Join(" ", seen.ToArray());
+			return n;
+		}
 
 		static readonly Dictionary<Terrain, Material> groundMaterials = new Dictionary<Terrain, Material>();
 

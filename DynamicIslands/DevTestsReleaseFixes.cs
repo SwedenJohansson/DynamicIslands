@@ -278,9 +278,15 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CICaveIslands", docs: "Dev, world (host, a test world 'CI ...'): every saved island with cave pieces or dug tunnels brought next to the raft in turn - its rock mountain over the caves (AU83) is there, mapped (cavemap_<island>.txt) and pictured from four sides and above (shot_caveisl_<n>_<side>.png; each side picture must have the island in 15 % of it), nothing seen through from inside (CICaveInside's look round, a picture of the worst look: shot_caveisl_<n>_inside_<k>.png, a dug tunnel's shot_caveisl_<n>_dug_<k>.png), then the island is taken away again: CICaveIslands [part of the name] [most]")]
 		public static void CaveIslandsCommand(string[] args)
 		{
-			string only = args != null && args.Length > 0 && args[0] != "*" ? args[0] : "";
-			int most = args != null && args.Length > 1 ? int.Parse(args[1]) : 99;
-			bool keep = args != null && args.Length > 2 && args[2] == "keep"; // (the islands stay, for player 2 to see: CICaveIslands <name> 1 keep)
+			// (the name may have spaces - "CICaveIslands Old Mine Islet" read "Mine" as the count and threw (11-05): the count
+			// and "keep" are taken off the end, the rest is the name)
+			var rest = new List<string>(args ?? new string[0]);
+			bool keep = rest.Count > 0 && rest[rest.Count - 1] == "keep"; // (the islands stay, for player 2 to see: CICaveIslands <name> 1 keep)
+			if (keep) rest.RemoveAt(rest.Count - 1);
+			int most = 99, n;
+			if (rest.Count > 1 && int.TryParse(rest[rest.Count - 1], out n)) { most = n; rest.RemoveAt(rest.Count - 1); }
+			string only = string.Join(" ", rest.ToArray()).Trim();
+			if (only == "*") only = "";
 			StartTest(CaveIslandsRoutine(only, most, keep));
 		}
 

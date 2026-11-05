@@ -220,6 +220,9 @@ namespace DynamicIslands
 				+ (m != null ? "; material " + m.name + ", shader " + m.shader.name + " (" + string.Join(", ", m.GetTexturePropertyNames()) + ")" : "; no second material") + tex;
 		}
 
+		/// <summary>Where a dug mouth's rim has rock shards on the ground (DigTunnel.RimShards), the first few.</summary>
+		internal static string RimShardsAt(DigTunnel t) { string w; t.RimShards(out w); return w; }
+
 		static IEnumerator DigTunnelEditorRoutine()
 		{
 			if (!DynamicIslands.InEditor()) { Fail("dig tunnel: in the editor"); yield break; }
@@ -318,7 +321,8 @@ namespace DynamicIslands
 			{
 				int sunken;
 				string cover = RimCover(tun, t, cut, out sunken);
-				Check(ref ok, tun.RimColumns > 0 && sunken == 0, "the mouth's rim: " + RimLook(tun) + "; the cut cells: " + cover);
+				int shards = tun.RimTop == "" ? 0 : tun.RimShards(out _);
+				Check(ref ok, tun.RimColumns > 0 && sunken == 0 && shards == 0, "the mouth's rim: " + RimLook(tun) + "; the cut cells: " + cover + "; " + shards + " rock shards on the ground" + (shards > 0 ? " (" + RimShardsAt(tun) + ")" : ""));
 			}
 			// From outside, in front and from over it: no look through the hill at the mouth (11-02)
 			{
@@ -454,7 +458,8 @@ namespace DynamicIslands
 					{
 						int sunken;
 						string cover = RimCover(ct, t, cliffCut, out sunken);
-						Check(ref ok, ct.RimColumns > 0 && sunken == 0, "the cliff mouth's rim: " + RimLook(ct) + "; the cut cells: " + cover);
+						int cshards = ct.RimTop == "" ? 0 : ct.RimShards(out _);
+						Check(ref ok, ct.RimColumns > 0 && sunken == 0 && cshards == 0, "the cliff mouth's rim: " + RimLook(ct) + "; the cut cells: " + cover + "; " + cshards + " rock shards on the ground" + (cshards > 0 ? " (" + RimShardsAt(ct) + ")" : ""));
 						{
 							var cseen = new List<string>();
 							int looked, looked2;
