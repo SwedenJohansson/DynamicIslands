@@ -47,6 +47,17 @@ namespace DynamicIslands
 		}
 
 		static IslandWorldState.Entry playEntry;
+		static readonly Dictionary<string, List<Vector3>> animalsSeen = new Dictionary<string, List<Vector3>>();
+
+		/// <summary>How far an animal's feet are over the first thing under them that is not itself (-1: nothing within 3 m).</summary>
+		static float AnimalFloorGap(AI_NetworkBehaviour a)
+		{
+			Vector3 from = a.transform.position + Vector3.up * 0.5f;
+			float best = -1f;
+			foreach (RaycastHit h in Physics.RaycastAll(from, Vector3.down, 3.5f, ~0, QueryTriggerInteraction.Ignore))
+				if (!h.collider.transform.IsChildOf(a.transform) && (best < 0 || h.distance < best)) best = h.distance;
+			return best < 0 ? -1f : Mathf.Max(0f, best - 0.5f);
+		}
 		// Raft story blueprints the player held during this play (hands are emptied at each island: 'expect blueprints' counts these)
 		static readonly HashSet<string> playBlueprints = new HashSet<string>();
 		// (Hazards.Taken at the play's start or its last expect hurt / unhurt)
@@ -792,6 +803,31 @@ namespace DynamicIslands
 					string label = string.Join(" ", t.Skip(2).Take(t.Length - 3).ToArray());
 					int n = ScAnimals(playEntry, label).Count;
 					Check(ref ok, n == (int)F(t[t.Length - 1]), "animals '" + label + "' alive: " + n + " (expected " + t[t.Length - 1] + ")");
+					// (each one's place in recipe coordinates and its gap over the floor under it, kept for animalsmoved)
+					List<Vector3> at = new List<Vector3>();
+					foreach (AI_NetworkBehaviour a in ScAnimals(playEntry, label))
+					{
+						Vector3 w = a.transform.position;
+						at.Add(w);
+						float gap = AnimalFloorGap(a);
+						Vector3 r = w - playEntry.Position;
+						Log("  " + label + " at " + (r.x + playOffset.x).ToString("0.0") + " " + (r.z + playOffset.y).ToString("0.0") + " y " + w.y.ToString("0.00")
+							+ ", over its floor " + (gap < 0 ? "nothing within 3 m" : gap.ToString("0.00") + " m"));
+						if (a.GetComponentInChildren<UnityEngine.AI.NavMeshAgent>(true) != null) Check(ref ok, gap >= 0 && gap < 0.6f, label + " stands on its floor (gap " + gap.ToString("0.00") + ", under 0.6)");
+					}
+					animalsSeen[label] = at;
+					break;
+				}
+				case "animalsmoved":
+				{
+					// (expect animalsmoved <label> <metres>: the one that went furthest since the last expect animals of it)
+					string label = string.Join(" ", t.Skip(2).Take(t.Length - 3).ToArray());
+					List<Vector3> was;
+					float most = 0f;
+					if (animalsSeen.TryGetValue(label, out was))
+						foreach (AI_NetworkBehaviour a in ScAnimals(playEntry, label))
+							most = Mathf.Max(most, was.Count == 0 ? 0f : was.Min(v => Vector3.Distance(v, a.transform.position)));
+					Check(ref ok, was != null && most >= F(t[t.Length - 1]), "animals '" + label + "' moved " + most.ToString("0.0") + " m (at least " + t[t.Length - 1] + ")");
 					break;
 				}
 				case "height":
