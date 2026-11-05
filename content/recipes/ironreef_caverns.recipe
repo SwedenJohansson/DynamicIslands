@@ -475,21 +475,44 @@ brush flatten at -42.9 -24.4 r=1.6 s=20 frames=40 h=19.2
 brush flatten at -41.9 -24 r=1.6 s=20 frames=40 h=19.85
 brush flatten at -40.9 -23.65 r=1.6 s=20 frames=40 h=20.45
 dig -39,-23 -33,-24 -26,-30 r=1.75 slope=-8 as=irreef
-dig -26,-30 -21,-31 r=3.5
+# (the hall stops 2 m short of the side gallery's room, so the gallery has a neck the vines close wall to wall: the hall's
+# round end reached the room and the vines stood free in the open like a cube - 11-05)
+dig -26,-30 -23.5,-30.8 r=3.5
 dig -35,-43 -30,-40 -25,-32 r=1.75 slope=3 as=irreef
 dig -18,-44 -23,-41 -29,-38 r=1.75 slope=2 as=irreef
 dig -24,-28 -25,-19 r=2.8
-dig -21,-30 -18,-29 r=1.75
-dig -18,-29 -16,-28 r=2.6
-cavegate irreef at=-19.5,-29.6 as=irreef_vines
-place Pickup_Landmark_Titanium_Land irti at -16.3 -28.1 h=19 drop
+# (the gallery's neck is in the system's group, so cavegate at= finds it: outside the group the nearest way was mouth
+# B's end in the hall, and the vines stood there free like a cube - 11-05; a quarter larger, so they fill the neck wall to wall)
+dig -23.5,-30.8 -21,-30 -16.8,-28.6 r=1.75 as=irreef
+dig -16.8,-28.6 -15,-27.9 r=2.2
+cavegate irreef at=-19.7,-29.6 scale=1.25 as=irreef_vines
+place Pickup_Landmark_Titanium_Land irti at -15.4 -27.9 h=19 drop
 caveloot irreef dirt=5 mush=4 stone=3
+# (no loot at the lens of the vine and drift views: a mushroom filled the look at the vines - 11-05)
+clear from -23.7 -30.6 to -21.6 -29.9 r=1.6 all only=^Pickup_Landmark_(Mushroom|DirtPickup|Rock)
+clear from -23.3 -28.2 to -24.2 -27 r=1.6 all only=^Pickup_Landmark_(Mushroom|DirtPickup|Rock)
+clear from -22.8 -26.3 to -23.3 -24.3 r=1.2 all only=^Pickup_Landmark_(Mushroom|DirtPickup|Rock)
+# (the plants before mouths A and B filled a look at them from a few metres: cleared, the rocks left - 11-05)
+clear from -46.5 -21.6 to -40.2 -23.4 r=2.6 body only=^(?!.*(Boulder|Rock|Cliff|Stone)).*$
+clear from -40 -46.8 to -35.2 -43.2 r=2.6 body only=^(?!.*(Boulder|Rock|Cliff|Stone)).*$
+clear from -13.5 -46.5 to -18 -44 r=2 body only=^(?!.*(Boulder|Rock|Cliff|Stone)).*$
+# (mouth C in the gully was a bare hole in the hillside: framed with boulders on both sides - 11-05)
+place SmallBoulder3 - at -16.5 -42.3 ground sit scale=0.6 yaw=30
+place SmallBoulder3 - at -18.75 -46.1 ground sit scale=0.6 yaw=200
 # the fallen drift: spikes where the floor gave way, planks along the east wall
 place Note_Sign irwarn at -25.9 -26.6 h=20.5 sit drop yaw=174
 note irwarn DANGER - DRIFT 4 | Floor gave way onto the old trap pit. Spikes under the rubble. Keep to the planks on the right.\n- Ironreef Mining Co.
-place VP_SpikeTrap_01 - at -25.18 -25.51 h=20.5 drop yaw=84
-place VP_SpikeTrap_03 - at -25.58 -23.75 h=20.5 drop yaw=20
-place VP_SpikeTrap_01 - at -25.48 -21.93 h=20.5 drop yaw=-40
+# (the trap pit's spike rigs sunk in the fallen floor to their tips, in rubble - stood upright whole they looked like a
+# saw workshop; Raft's only natural spikes, Temperance's stalagmites, are ice blue and hang stalactites in the air at
+# this size, and a tint does not take on them - 11-05; the rigs' pivot is their top bar, so h= is where the bar lies: just
+# over the floor, the saws half out of the rubble)
+place VP_SpikeTrap_01 - at -25.18 -25.51 h=19.3 scale=0.75 yaw=84
+place VP_SpikeTrap_04 - at -25.58 -23.75 h=19.2 scale=0.75 yaw=20
+place VP_SpikeTrap_01 - at -25.48 -21.93 h=19.3 scale=0.75 yaw=-40
+place SmallBoulder3 - at -24.7 -25.9 h=20.5 drop scale=0.3 yaw=10
+place SmallBoulder3 - at -26.2 -24.6 h=20.5 drop scale=0.35 yaw=130
+place SmallBoulder3 - at -24.9 -22.6 h=20.5 drop scale=0.3 yaw=250
+place SmallBoulder3 - at -26.1 -21.3 h=20.5 drop scale=0.3 yaw=60
 place VP_Rubble_Plank01 - at -24.42 -24.55 h=20.5 drop yaw=30
 place VP_Rubble_Plank01 - at -25.6 -22.9 h=20.5 drop yaw=-70
 place Block_Floor_Wood - at -22.96 -26.07 h=20.5 drop yaw=-6

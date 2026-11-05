@@ -2489,7 +2489,9 @@ namespace DynamicIslands
 			foreach (Renderer r in rs) b.Encapsulate(r.bounds);
 			// (its top in a dug tunnel's passage: under the hill's terrain but in the open - 11-04, Ironreef's planks and spikes
 			// placed with h= in the spike drift were all left out as buried)
-			if (DigTunnel.InsideAny(new Vector3(b.center.x, b.max.y, b.center.z), 0f, true)) return false;
+			// (or its middle: a thing taller than the passage - cavegate's vines in a gallery's neck, their top in the roof's rock -
+			// was left out at save, 11-05)
+			if (DigTunnel.InsideAny(new Vector3(b.center.x, b.max.y, b.center.z), 0f, true) || DigTunnel.InsideAny(b.center, 0f, true)) return false;
 			return !ShowsAboveGround(b, ground);
 		}
 

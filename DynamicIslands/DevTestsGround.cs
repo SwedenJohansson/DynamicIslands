@@ -1234,6 +1234,10 @@ namespace DynamicIslands
 				int seen = CaveSeeThrough(c.Value, RaftProps.Get(name), out detail, out eye, out look);
 				Log("  " + n + " '" + c.Key + "' " + name + " at " + c.Value.position.ToString("F0") + ": " + detail);
 				if (seen > 0) bad++;
+				// (a den's front wall under the rock: it stood out of a low hill's top as a dark board - 11-05)
+				int open = DynamicIslands.InEditor() ? -1 : CaveTool.PlugInOpen(c.Value);
+				if (open >= 0) Log("    its front wall: " + (open == 0 ? "under the rock" : open + " points of it with open sky over them"));
+				if (open > 0 && seen == 0) bad++;
 				if (shots && eye != Vector3.zero) yield return CameraShot(eye, eye + look * 5f, "caveinside_" + n);
 				yield return null;
 			}

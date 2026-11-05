@@ -359,7 +359,7 @@ place "Box Small" - at 4.0 8.0 sit yaw=15
 place "Box Small" - at 4.9 8.2 sit yaw=-10
 place "Box Small" - at 4.4 8.1 y=0.55 sit yaw=40
 place VP_Cable_Roll01 - at 8.1 4.4 sit
-place Balboa_DecorationPrefabBase_ToxicBarrel - at 3.8 4.3 sit
+place "Box Small" - at 3.9 4.4 sit yaw=25
 place Stairwell_CeilingLamp lamps at 6 6 y=4.6
 place Zone_Atmosphere dark at 6 6 y=1
 pop
@@ -653,12 +653,15 @@ call kit_st x=-4 z=-22 yaw=205 len=35.6 slope=12 end=room size=0.7 hill=0 dirt=2
 # (the dinghy in front of the mouth, off its right side and clear of the landing's deck; the mouth's sides are walled with two boulders on the cut's
 # floor: hill=0 leaves the mouth piece's flanks bare where its approach is cut down, and a diver beside the mouth saw
 # into the tunnel through the shell's back - X7, CICaveInside)
-place RT_PlasticBoat dinghy at -12 -13.5 ground sit yaw=130 tilt=12
+# (11-05: "ground sit" sat it on the landing deck's corner, up in the air over the water: dropped from under the surface
+# onto the lagoon floor, sunk as the islanders' notes say)
+place RT_PlasticBoat dinghy at -12.5 -14 h=-2.5 drop yaw=130 tilt=12
 prop dinghy obj.name=dinghy
-place TP_BigRock02 - at -11.5 -19.6 ground sit scale=0.3 yaw=40
+# (Raft's grey boulders, not Temperance's snow-capped blue rock - it stood out navy blue on the lagoon's sand, 11-05)
+place SmallBoulder3 - at -11.5 -19.6 ground sit scale=0.65 yaw=40
 # (and one close by the mouth's right lip: from inside the mouth a slit beside it looked out through the shell's back)
-place TP_BigRock02 - at -7.9 -19.5 ground sit scale=0.3 yaw=100
-place TP_BigRock02 - at 2.65 -26.2 ground sit scale=0.3 yaw=160
+place SmallBoulder3 - at -7.9 -19.5 ground sit scale=0.65 yaw=100
+place SmallBoulder3 - at 2.65 -26.2 ground sit scale=0.65 yaw=160
 # (a palm the den's rock grew round stood out of the sea stack's side, its crown inside: cleared)
 clear at -23.6 -64 r=16 all body only=Tree
 place Zone_Trigger shelair at -23.6 -64 h=3.6

@@ -2,6 +2,8 @@
 # spikes' rubble for a few seconds. Run under CIGapsWatchHealth: the spikes must cost health (zone.damage 4).
 island Ironreef Caverns keep
 offset 1.3339 0.1645
+hour 11
+weather Calm
 expect stand -25.25 -24.92 h=19.2 below=22
 expect stand -25.53 -22.33 h=19.2 below=22
 expect stand -23.12 -24.58 h=19.3 below=22
@@ -9,3 +11,6 @@ at -25.25 -24.92 h=20.4
 wait 3
 picture ir_spikes -22.6 20.8 -26.5 -25.4 19.2 -23.5
 wait 3
+# off the spikes again when done (left standing on them, the player died over and over after the play - 11-05)
+at -23.12 -24.58 h=20.4
+wait 2

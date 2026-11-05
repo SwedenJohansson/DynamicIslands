@@ -604,6 +604,9 @@ namespace DynamicIslands.Editor
 					// rays only then - RK15)
 					if (o.Name == CaveTool.Room && ObjectProps.Get(o.Props, ObjectProps.CavePlug, "") == "")
 						DynamicIslands.instance.StartCoroutine(CaveTool.PlugOpeningLater(go, o.Props));
+					// (a den at a tunnel's end: its front wall cut to the rock round it, so it never stands out of a low hill - 11-05)
+					else if (o.Name == CaveTool.Room)
+						DynamicIslands.instance.StartCoroutine(CaveTool.PlugClipLater(go));
 					ObjectProps.ApplyTint(go, o.Props);
 					ZiplineEnds.Apply(go, o.Props, parent.position);
 					if (ObjectProps.IsNote(o.Name, o.Props))

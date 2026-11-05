@@ -34,7 +34,7 @@ picture sa_storeroom 6 3.3 0.6 6 2.2 7
 
 # The dinghy by the cave's mouth on the lagoon floor, from the landing
 picture sa_cave_landing 2 4 -12 -5 -3 -22
-snap sa_dinghy dinghy 30 5 2
+snap sa_dinghy dinghy 320 4.5 1
 
 # Swim in: from the lagoon floor before the mouth up the flooded tunnel into the den, and breathe there (G2: no
 # teleport into the pocket)

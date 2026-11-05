@@ -383,6 +383,188 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>
+		/// Plug's wall is a rectangle up past the den's roof and out past its sides: a small den under a low hill (size 0.7, no
+		/// hill - Shelter Atoll's sea stack) had it standing out of the stack's top as a dark board (11-05). In a world, once the
+		/// island and its hill are up (their rock answers rays only then), the wall is cut to the rock: every 0.5 m cell with
+		/// rock - the den, the tunnel, the hill, the ground - over it, under it and on both sides, and every cell of the den's own
+		/// opening (its mouth's outline, 2 m in), each with one cell more round it for an edge in the rock; nothing else - no
+		/// board out past the den's shell into the sky or the sea.
+		/// </summary>
+		/// <summary>The mesh name of a den's front wall cut by PlugClip (CICaveInside checks only those).</summary>
+		public const string ClippedMesh = "CavePlugClipped";
+
+		public static IEnumerator PlugClipLater(GameObject den)
+		{
+			for (float t = 0f; den != null && !den.activeInHierarchy && t < 60f; t += 0.25f) yield return new WaitForSeconds(0.25f);
+			if (den == null || !den.activeInHierarchy) yield break;
+			// (the hill over the caves is built a second after the island: wait for it, it is what covers the wall's top)
+			CaveMountain m = den.transform.parent != null ? den.transform.parent.GetComponent<CaveMountain>() : null;
+			for (float t = 0f; m != null && m.transform.Find(CaveMountain.SkinName) == null && t < 15f; t += 0.25f) yield return new WaitForSeconds(0.25f);
+			yield return null;
+			if (den == null) yield break;
+			try { PlugClip(den); }
+			catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Cutting a den's front wall to its rock failed: " + x.Message); }
+		}
+
+		/// <summary>The rock round a den that may cover its front wall: cave pieces, dug tunnels, the hill over them, the ground.</summary>
+		static Collider[] PlugRock(Transform den, Bounds near)
+		{
+			Transform island = den.parent != null ? den.parent : den;
+			return island.GetComponentsInChildren<Collider>(false).Where(c => c.enabled && !c.isTrigger && c.name != PlugName && c.bounds.Intersects(near)
+				&& (c is TerrainCollider || c.gameObject.layer == IslandSpawner.TerrainLayer || c.name == CaveMountain.SkinName || c.GetComponentInParent<DigTunnel>() != null
+					|| c.GetComponentsInParent<Transform>(true).Any(t => { PropInfo p = RaftProps.Get(t.name.Replace("(Clone)", "").Trim()); return p != null && p.IsCave; }))).ToArray();
+		}
+
+		static bool PlugRockHit(Collider[] rock, Vector3 from, Vector3 dir, float reach)
+		{
+			var ray = new Ray(from, dir);
+			RaycastHit h;
+			foreach (Collider c in rock) if (c.Raycast(ray, out h, reach)) return true;
+			return false;
+		}
+
+		static Collider[] PlugDenRock(GameObject den)
+		{
+			return den.GetComponentsInChildren<Collider>(false).Where(c => c.enabled && !c.isTrigger && c.name != PlugName).ToArray();
+		}
+
+		/// <summary>A point of the wall (its own x, y) in the den's opening: 2 m inside its mouth, the den's rock over it, under it
+		/// and on both sides (as PlugOpening's cells).</summary>
+		static bool PlugInOpening(Transform plug, Collider[] own, float x, float y, float reach)
+		{
+			Vector3 w = plug.TransformPoint(new Vector3(x, y, RoomMax.z - 2f));
+			return PlugRockHit(own, w, plug.up, reach) && PlugRockHit(own, w, -plug.up, reach) && PlugRockHit(own, w, plug.right, reach) && PlugRockHit(own, w, -plug.right, reach);
+		}
+
+		/// <summary>Cuts a den's front wall (Plug) to the rock round it - see PlugClipLater. Returns the cells kept, -1: no wall.</summary>
+		public static int PlugClip(GameObject den)
+		{
+			Transform plug = den != null ? den.transform.Find(PlugName) : null;
+			MeshFilter mf = plug != null ? plug.GetComponent<MeshFilter>() : null;
+			if (mf == null || mf.sharedMesh == null) return -1;
+			float size = Mathf.Max(0.1f, plug.lossyScale.x), cell = 0.5f / size, reach = 40f * size;
+			Bounds near = mf.GetComponent<Renderer>() != null ? mf.GetComponent<Renderer>().bounds : new Bounds(plug.position, Vector3.one * 20f);
+			near.Expand(2f * reach);
+			Physics.SyncTransforms();
+			Collider[] rock = PlugRock(den.transform, near);
+			float z = RoomMax.z + PlugIn, mx = RoomMouth.x, my = RoomMouth.y;
+			float x0 = RoomMin.x - 0.5f, x1 = RoomMax.x + 0.5f, y0 = my - PlugBelow, y1 = RoomMax.y + 0.5f;
+			float hx0 = mx - HoleHalf, hx1 = mx + HoleHalf, hy0 = my - HoleBelow, hy1 = my + HoleUp;
+			int nx = Mathf.CeilToInt((x1 - x0) / cell), ny = Mathf.CeilToInt((y1 - y0) / cell);
+			Vector3 up = plug.up, right = plug.right;
+			var inside = new bool[nx, ny];
+			var roofed = new bool[nx, ny];
+			var opening = new bool[nx, ny];
+			Collider[] own = PlugDenRock(den);
+			bool backs = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				for (int i = 0; i < nx; i++)
+					for (int k = 0; k < ny; k++)
+					{
+						Vector3 w = plug.TransformPoint(new Vector3(x0 + (i + 0.5f) * cell, y0 + (k + 0.5f) * cell, z));
+						roofed[i, k] = PlugRockHit(rock, w, up, reach);
+						inside[i, k] = roofed[i, k] && PlugRockHit(rock, w, -up, reach) && PlugRockHit(rock, w, right, reach) && PlugRockHit(rock, w, -right, reach);
+						opening[i, k] = PlugInOpening(plug, own, x0 + (i + 0.5f) * cell, y0 + (k + 0.5f) * cell, reach);
+					}
+			}
+			finally { Physics.queriesHitBackfaces = backs; }
+			var verts = new List<Vector3>();
+			var tris = new List<int>();
+			int kept = 0;
+			for (int k = 0; k < ny; k++)
+			{
+				float ya = y0 + k * cell, yb = Mathf.Min(y1, ya + cell);
+				int run = -1;
+				for (int i = 0; i <= nx; i++)
+				{
+					bool on = false;
+					if (i < nx)
+					{
+						// (the den's own opening - its mouth's outline, where the wall closes it - and the rock round the tunnel's end
+						// under cover; each with one cell more round it, its edge in the rock)
+						for (int di = -1; di <= 1 && !on; di++)
+							for (int dk = -1; dk <= 1 && !on; dk++)
+							{
+								int a = i + di, b = k + dk;
+								if (a >= 0 && b >= 0 && a < nx && b < ny && (opening[a, b] || roofed[i, k] && inside[a, b])) on = true;
+							}
+						float xa = x0 + i * cell, xb = xa + cell;
+						if (on && xb > hx0 && xa < hx1 && yb > hy0 && ya < hy1) on = false; // (the passage's hole)
+					}
+					if (on) kept++;
+					if (on && run < 0) run = i;
+					if (!on && run >= 0)
+					{
+						float ax = x0 + run * cell, bx = Mathf.Min(x1, x0 + i * cell);
+						int n = verts.Count;
+						// (each side its own corners, as Plug's: shared ones drew the wall black - 11-03)
+						verts.Add(new Vector3(ax, ya, z)); verts.Add(new Vector3(bx, ya, z)); verts.Add(new Vector3(bx, yb, z)); verts.Add(new Vector3(ax, yb, z));
+						verts.Add(new Vector3(ax, ya, z)); verts.Add(new Vector3(bx, ya, z)); verts.Add(new Vector3(bx, yb, z)); verts.Add(new Vector3(ax, yb, z));
+						tris.AddRange(new[] { n, n + 2, n + 1, n, n + 3, n + 2, n + 4, n + 5, n + 6, n + 4, n + 6, n + 7 });
+						run = -1;
+					}
+				}
+			}
+			var mesh = new Mesh { name = ClippedMesh };
+			mesh.SetVertices(verts);
+			mesh.SetTriangles(tris, 0);
+			mesh.SetUVs(0, verts.Select(v => new Vector2(v.x / PlugTile, v.y / PlugTile)).ToList());
+			mesh.RecalculateNormals();
+			mesh.RecalculateBounds();
+			mf.sharedMesh = mesh;
+			MeshCollider mc = plug.GetComponent<MeshCollider>();
+			if (mc != null) mc.sharedMesh = tris.Count > 0 ? mesh : null;
+			plug.gameObject.SetActive(tris.Count > 0);
+			Debug.Log("[CUSTOM ISLANDS] Den's front wall cut to its rock: " + kept + " of " + (nx * ny) + " cells kept");
+			return kept;
+		}
+
+		/// <summary>Tests: points of a den's front wall with open sky over them and outside the den's opening (none: the wall is in
+		/// the rock; -1: no wall).</summary>
+		public static int PlugInOpen(Transform den)
+		{
+			Transform plug = den != null ? den.Find(PlugName) : null;
+			MeshFilter mf = plug != null ? plug.GetComponent<MeshFilter>() : null;
+			if (mf == null || mf.sharedMesh == null || !plug.gameObject.activeInHierarchy
+				|| mf.sharedMesh.name != ClippedMesh) return -1;
+			// (only a wall PlugClip cut: a lone den's wall with its passage hole - PlugOpening - is built to stand in the den's open
+			// mouth, and its mesh is laid out otherwise - 11-05)
+			float size = Mathf.Max(0.1f, plug.lossyScale.x), reach = 40f * size;
+			Bounds near = plug.GetComponent<Renderer>().bounds;
+			near.Expand(2f * reach);
+			Physics.SyncTransforms();
+			Collider[] rock = PlugRock(den, near), own = PlugDenRock(den.gameObject);
+			float step = 0.5f / size;
+			Vector3[] v = mf.sharedMesh.vertices;
+			int open = 0;
+			bool backs = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				// (each strip's points every 0.5 m along its middle)
+				for (int s = 0; s + 3 < v.Length; s += 8)
+				{
+					Vector3 a = v[s], b = v[s + 2];
+					float y = (a.y + b.y) * 0.5f;
+					int steps = Mathf.Max(1, Mathf.RoundToInt(Mathf.Abs(b.x - a.x) * size / 0.5f));
+					for (int j = 0; j < steps; j++)
+					{
+						float x = Mathf.Lerp(a.x, b.x, (j + 0.5f) / steps);
+						if (PlugRockHit(rock, plug.TransformPoint(new Vector3(x, y, a.z)), plug.up, reach)) continue;
+						bool mouth = false;
+						for (int di = -1; di <= 1 && !mouth; di++)
+							for (int dk = -1; dk <= 1 && !mouth; dk++) mouth = PlugInOpening(plug, own, x + di * step, y + dk * step, reach);
+						if (!mouth) open++;
+					}
+				}
+			}
+			finally { Physics.queriesHitBackfaces = backs; }
+			return open;
+		}
+
+		/// <summary>
 		/// A bear den on its own (ar_cave: no tunnel at its mouth) - RK15. Its mouth is open its full width, and the hill over it
 		/// (CaveMountain) stops at the open end, so from outside over the hill you looked into the den. Plug's rectangle stood out
 		/// past the den's shell there as a dark board, so this wall is cut to the shell's own opening: 2 m in from the mouth,
