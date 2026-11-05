@@ -3,7 +3,7 @@
 # burns: expect hurt checks the health it took (11-05: a run with 0 damage passed - a health watch run before the play
 # had ended when it began). The suit run is the_abyss_acidsuit.
 island The Abyss keep
-offset -2.8577 -0.3744
+offset -2.8571 -0.3744
 hour 11
 weather Calm
 at 79.5 13
