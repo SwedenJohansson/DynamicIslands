@@ -317,6 +317,23 @@ namespace DynamicIslands
 		/// middle was "nothing can take hold of it" (Old Mine's barge ladder, round 5, 11-05).</summary>
 		public static float LadderHandReach(int kind) { return kind == 1 || kind == 2 ? 1.5f : 1.0f; }
 
+		/// <summary>" (nearest swim spot x m off at x z h)" - where the sea's grid comes nearest a ladder no one can grab.</summary>
+		static string LadderNearestSwim(ReachGrid g, Bounds lb, IslandWorldState.Entry e)
+		{
+			float best = float.MaxValue; int bk = -1;
+			for (int k = 0; k < g.Pos.Count; k++)
+			{
+				if (g.Kind[k] != 1 && g.Kind[k] != 2) continue;
+				Vector3 p = g.Pos[k];
+				Vector3 f = lb.ClosestPoint(new Vector3(p.x, lb.center.y, p.z));
+				float d = new Vector2(f.x - p.x, f.z - p.z).magnitude;
+				if (d < best) { best = d; bk = k; }
+			}
+			if (bk < 0) return " (no swim spots at all)";
+			Vector3 q = g.Pos[bk] - e.Position;
+			return " (nearest " + (g.Kind[bk] == 1 ? "swim" : "dive") + " spot " + best.ToString("F1") + " m off, at h=" + q.y.ToString("F1") + ")";
+		}
+
 		/// <summary>Targets the reach grid can't judge (a hop course: it has no jumps across gaps), from the island's
 		/// "island reach.byplay=name;name" line - each one counts when the island's own play test goes to it (zone/open/reach
 		/// &lt;name&gt;), and is "CHECKED BY PLAY" instead of a fail; one the play never visits stays a fail (Old Mine's slag stacks 11-05).</summary>
@@ -693,7 +710,7 @@ namespace DynamicIslands
 				if (grabs == 0 || tops == 0)
 				{
 					problems++;
-					report.Add("REACH " + name + " | " + where + " | - | FAIL " + (grabs == 0 ? "nothing can take hold of it from below" + (why != null ? " - " + why : " - no spot within 1.6 m") : "") + (grabs == 0 && tops == 0 ? ", " : "") + (tops == 0 ? "no floor to step off onto at its top" : "") + " (" + facing + ")");
+					report.Add("REACH " + name + " | " + where + " | - | FAIL " + (grabs == 0 ? "nothing can take hold of it from below" + (why != null ? " - " + why : " - no spot within 1.6 m") + LadderNearestSwim(g, lb, e) : "") + (grabs == 0 && tops == 0 ? ", " : "") + (tops == 0 ? "no floor to step off onto at its top" : "") + " (" + facing + ")");
 				}
 				else report.Add("REACH " + name + " | " + where + " | - | PASS " + grabs + " foot spots, " + tops + " top spots (" + facing + ")");
 			}
