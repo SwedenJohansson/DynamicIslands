@@ -603,6 +603,7 @@ namespace DynamicIslands
 					if (lf.sqrMagnitude > 0.01f) { lf.Normalize(); g.LadderF[node] = LadderRoom(lb, lf) || !LadderRoom(lb, -lf) ? lf : -lf; }
 				}
 				int grabs = 0, tops = 0;
+				string why = null; float whyHd = float.MaxValue;
 				for (int k = 0; k < node; k++)
 				{
 					Vector3 p = g.Pos[k];
@@ -620,8 +621,12 @@ namespace DynamicIslands
 						Vector3 at = lb.ClosestPoint(new Vector3(eye.x, Mathf.Clamp(eye.y, lb.min.y + 0.2f, lb.max.y - 0.2f), eye.z));
 						// (and to its middle: a spot behind the wall it is fixed to saw the climb box's back face poke through the wall
 						// and counted as a foot spot - the walker stood outside the mast pressing on the wall, hw_mast PQ11 10-28)
-						if (LadderClear(eye, at, ch) && LadderClear(eye, new Vector3(lb.center.x, at.y, lb.center.z) + (g.LadderF.ContainsKey(node) ? g.LadderF[node] * 0.25f : Vector3.zero), ch)) { g.Link(k, node); g.Link(node, k); grabs++; }
+						bool c1 = LadderClear(eye, at, ch), c2 = c1 && LadderClear(eye, new Vector3(lb.center.x, at.y, lb.center.z) + (g.LadderF.ContainsKey(node) ? g.LadderF[node] * 0.25f : Vector3.zero), ch);
+						if (c1 && c2) { g.Link(k, node); g.Link(node, k); grabs++; }
+						else if (hd < whyHd) { whyHd = hd; why = "nearest foot spot " + (g.Kind[k] == 0 ? "on foot" : g.Kind[k] == 1 ? "swimming" : "diving") + " " + hd.ToString("F1") + " m off, feet " + (feet - e.Position.y).ToString("F1") + ": " + (c1 ? "the line to its middle is blocked" : "the line to the ladder is blocked"); }
 					}
+					else if (hd < whyHd && feet < lb.min.y - 1.8f) { whyHd = hd; why = "nearest spot " + hd.ToString("F1") + " m off has its feet " + (lb.min.y - feet).ToString("F1") + " m under the ladder's foot"; }
+					else if (hd < whyHd && hd > 1.0f) { whyHd = hd; why = "nearest spot " + hd.ToString("F1") + " m off (a hand reaches 1.0 m)"; }
 				}
 				Vector3 lr = Rel(e, lb.center, offset);
 				string where = "ladder " + LadderName(ch[0], e) + " at " + lr.x.ToString("F1") + " " + lr.z.ToString("F1") + " h=" + (lb.min.y - e.Position.y).ToString("F1") + ".." + (lb.max.y - e.Position.y).ToString("F1");
@@ -629,7 +634,7 @@ namespace DynamicIslands
 				if (grabs == 0 || tops == 0)
 				{
 					problems++;
-					report.Add("REACH " + name + " | " + where + " | - | FAIL " + (grabs == 0 ? "nothing can take hold of it from below" : "") + (grabs == 0 && tops == 0 ? ", " : "") + (tops == 0 ? "no floor to step off onto at its top" : "") + " (" + facing + ")");
+					report.Add("REACH " + name + " | " + where + " | - | FAIL " + (grabs == 0 ? "nothing can take hold of it from below" + (why != null ? " - " + why : " - no spot within 1.6 m") : "") + (grabs == 0 && tops == 0 ? ", " : "") + (tops == 0 ? "no floor to step off onto at its top" : "") + " (" + facing + ")");
 				}
 				else report.Add("REACH " + name + " | " + where + " | - | PASS " + grabs + " foot spots, " + tops + " top spots (" + facing + ")");
 			}
