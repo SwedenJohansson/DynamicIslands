@@ -66,6 +66,23 @@ namespace DynamicIslands
 			chk(ByPlayNote(set, new ReachTarget { Name = "Ore barge's crate" }) == null, "not listed: the grid's own verdict");
 			chk(ByPlayNote(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "No such chest anywhere 11-05" }, new ReachTarget { Name = "No such chest anywhere 11-05" }) == null, "listed, no play visits it: the grid's own verdict");
 			chk(LadderHandReach(0) == 1.0f && LadderHandReach(1) == 1.5f && LadderHandReach(2) == 1.5f, "a ladder's hand reach: 1.0 m on foot, 1.5 m swimming or diving (cells 1 m apart)");
+			// a ladder's room: none under the ground (a terrain at y -500, flat at 4 m)
+			var td = new TerrainData { heightmapResolution = 33 };
+			td.size = new Vector3(20f, 10f, 20f);
+			var hts = new float[33, 33];
+			for (int i = 0; i < 33; i++) for (int j = 0; j < 33; j++) hts[i, j] = 0.4f;
+			td.SetHeights(0, 0, hts);
+			GameObject tgo = Terrain.CreateTerrainGameObject(td);
+			tgo.transform.position = new Vector3(0f, -500f, 0f);
+			int was = reachMask;
+			try
+			{
+				Physics.SyncTransforms();
+				reachMask = 1 << tgo.layer;
+				chk(!LadderRoom(new Bounds(new Vector3(10f, -499f, 10f), new Vector3(0.6f, 4f, 0.2f)), Vector3.forward), "a ladder's room under the ground: none");
+				chk(LadderRoom(new Bounds(new Vector3(10f, -490f, 10f), new Vector3(0.6f, 4f, 0.2f)), Vector3.forward), "a ladder's room in the air over it: room");
+			}
+			finally { reachMask = was; UnityEngine.Object.Destroy(tgo); }
 			if (ok) Log("PASS: reach by play"); else Fail("reach by play");
 		}
 
@@ -1302,6 +1319,9 @@ namespace DynamicIslands
 			{
 				Vector3 c = new Vector3(lb.center.x, y, lb.center.z) + dir * 0.75f;
 				if (Physics.CheckSphere(c, 0.28f, reachMask, QueryTriggerInteraction.Ignore)) return false;
+				// (nor under the ground: a heightfield has no inside for a sphere to touch - a sea ladder on a cliff found "room" in
+				// the rock behind it, faced into the cliff and nobody could take hold of it, Old Mine's two sea ladders round 5)
+				if (InsideSolid(c)) return false;
 			}
 			return true;
 		}
