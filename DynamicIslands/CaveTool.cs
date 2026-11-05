@@ -488,13 +488,36 @@ namespace DynamicIslands.Editor
 			if (verts.Count > 65000) mesh.indexFormat = IndexFormat.UInt32;
 			mesh.SetVertices(verts);
 			mesh.SetTriangles(tris, 0);
-			mesh.SetUVs(0, verts.Select(v => new Vector2(v.x / PlugTile, v.y / PlugTile)).ToList());
+			// (the den's texture is an atlas of colour patches: the wall's own UVs at 20 m showed all of it - blue, white and
+			// orange - beside The Abyss's acid path, 11-05. The wall takes the den's colour from round its mouth instead)
+			Vector2 swatch;
+			bool atlas = MouthSwatch(look, go.transform.TransformPoint(new Vector3(mx, my + HoleUp + 1f, RoomMax.z)), out swatch);
+			mesh.SetUVs(0, verts.Select(v => atlas ? swatch + new Vector2(v.x, v.y) * (0.004f / PlugTile)
+				: new Vector2(v.x / PlugTile, v.y / PlugTile)).ToList());
 			mesh.RecalculateNormals();
 			mesh.RecalculateBounds();
 			go.AddComponent<MeshFilter>().sharedMesh = mesh;
 			go.AddComponent<MeshRenderer>().sharedMaterial = look.sharedMaterial;
 			go.AddComponent<MeshCollider>().sharedMesh = mesh;
-			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + (verts.Count / 12) + " cells, rock relief");
+			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + (verts.Count / 12) + " cells, rock relief" + (atlas ? ", den colour at uv " + swatch.ToString("0.000") : ""));
+		}
+
+		/// <summary>The UV of the den mesh's corner nearest a point by its mouth (its rock colour), when the mesh is readable.</summary>
+		public static bool MouthSwatch(Renderer look, Vector3 near, out Vector2 uv)
+		{
+			uv = Vector2.zero;
+			MeshFilter mf = look != null ? look.GetComponent<MeshFilter>() : null;
+			Mesh m = mf != null ? mf.sharedMesh : null;
+			if (m == null || !m.isReadable) return false;
+			Vector3[] vs = m.vertices;
+			var uvs = new List<Vector2>();
+			m.GetUVs(0, uvs);
+			if (vs.Length == 0 || uvs.Count != vs.Length) return false;
+			Vector3 at = look.transform.InverseTransformPoint(near);
+			int best = 0; float bd = float.MaxValue;
+			for (int i = 0; i < vs.Length; i++) { float d = (vs[i] - at).sqrMagnitude; if (d < bd) { bd = d; best = i; } }
+			uv = uvs[best];
+			return true;
 		}
 
 		#endregion

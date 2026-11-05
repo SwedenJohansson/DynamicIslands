@@ -101,6 +101,14 @@ namespace DynamicIslands
 							Vector3[] vs = m.vertices;
 							float spread = vs.Max(v => v.z) - vs.Min(v => v.z);
 							int tilted = nr.Count(v => Mathf.Abs(v.z) < 0.97f);
+							// (one colour of the den's atlas, not the whole atlas at 20 m: blue, white and orange patches, 11-05)
+							var uv = new List<Vector2>(); m.GetUVs(0, uv);
+							float uvSpan = uv.Count == 0 ? 0f : Mathf.Max(uv.Max(u => u.x) - uv.Min(u => u.x), uv.Max(u => u.y) - uv.Min(u => u.y));
+							Vector2 sw;
+							bool readable = CaveTool.MouthSwatch(probe.GetComponentsInChildren<MeshRenderer>(true).Where(r => r.sharedMaterial != null && r.transform != pl)
+								.OrderByDescending(r => r.bounds.size.x * r.bounds.size.z).First(), pl.position, out sw);
+							Check(ref ok, !readable || uvSpan < 0.01f, "a lone den's wall takes one colour of the den's texture: its UVs span " + uvSpan.ToString("0.0000")
+								+ (readable ? " (under 0.01)" : " (the den's mesh is not readable: tiled instead)"));
 							Check(ref ok, spread > 0.5f && tilted > nr.Length / 4, "a lone den's wall has rock relief: " + spread.ToString("0.00") + " m deep (over 0.5), "
 								+ tilted + " of " + nr.Length + " corners on tilted facets (over a quarter)");
 						}
