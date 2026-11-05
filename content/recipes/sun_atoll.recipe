@@ -47,18 +47,18 @@ brush flatten from -28.5 5.5 to -28.5 12 r=3.5 s=20 frames=40 h=0.8
 # (the blockhouse: room x -36..-30, z 4..13 - its pit on the lines x -36.09 to -28.28 (the cut), z 3.49 to 13.25 (the
 # trench); the bunker: room x -31..-25, z 16..25 - its pit on the lines x -32.18 to -24.37, z 15.2 (the trench) to 24.97)
 for px -36.09 -28.2 1.953125
-brush flatten from $px 3.49 to $px 13.25 r=1.9 s=20 frames=120 h=0.8
+brush flatten from $px 3.49 to $px 13.25 r=1.9 s=20 frames=120 h=0.8 line
 next
 for px -32.18 -24.3 1.953125
-brush flatten from $px 15.2 to $px 24.97 r=1.9 s=20 frames=120 h=0.8
+brush flatten from $px 15.2 to $px 24.97 r=1.9 s=20 frames=120 h=0.8 line
 next
 # (the dune's edges under the slabs, on the second line out: the blockhouse's west and south, the bunker's west, north
 # and east)
-brush flatten from -38.04 1.53 to -38.04 11.3 r=1.9 s=20 frames=80 h=3.85
-brush flatten from -38.04 1.53 to -30.23 1.53 r=1.9 s=20 frames=80 h=3.85
-brush flatten from -34.14 17.16 to -34.14 26.92 r=1.9 s=20 frames=80 h=3.85
-brush flatten from -34.14 26.92 to -22.42 26.92 r=1.9 s=20 frames=80 h=3.85
-brush flatten from -22.42 17.16 to -22.42 26.92 r=1.9 s=20 frames=80 h=3.85
+brush flatten from -38.04 1.53 to -38.04 11.3 r=1.9 s=20 frames=80 h=3.85 line
+brush flatten from -38.04 1.53 to -30.23 1.53 r=1.9 s=20 frames=80 h=3.85 line
+brush flatten from -34.14 17.16 to -34.14 26.92 r=1.9 s=20 frames=80 h=3.85 line
+brush flatten from -34.14 26.92 to -22.42 26.92 r=1.9 s=20 frames=80 h=3.85 line
+brush flatten from -22.42 17.16 to -22.42 26.92 r=1.9 s=20 frames=80 h=3.85 line
 # (ground zero: the rim's shallows, then the crater in them)
 brush flatten at 0 0 r=13 s=20 frames=80 h=-0.7
 brush flatten at 0 0 r=7 s=20 frames=80 h=-9.5

@@ -33,7 +33,7 @@ end
 
 # ===== The ground: the yard, the slipway down into the bay, the drying rack's clearing, the loft's pad, the spar's hole ==
 for yz -2 12 2
-brush flatten from -42 $yz to -6 $yz r=1.9 s=20 frames=60 h=2
+brush flatten from -42 $yz to -6 $yz r=1.9 s=20 frames=60 h=2 line
 next
 call dabs -24 -4 2 -24 -26 -3 n=12 r=5
 brush flatten at -66 2 r=4.5 s=20 frames=60 h=6
