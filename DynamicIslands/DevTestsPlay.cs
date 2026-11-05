@@ -732,7 +732,7 @@ namespace DynamicIslands
 		// hit of a 16-20 s wait - Blightmire and Engine Court hurt plays, 11-05)
 		static readonly HashSet<string> PlayMotionExpects = new HashSet<string> { "height", "stand", "hurt", "unhurt", "animalsmoved" };
 		// (expects that only read the state - no wait of their own, no side effect)
-		static readonly HashSet<string> PlayQuietKinds = new HashSet<string> { "step", "title", "done", "story", "survivor", "shown", "hidden", "message", "item", "animals" };
+		static readonly HashSet<string> PlayQuietKinds = new HashSet<string> { "step", "title", "done", "story", "survivor", "shown", "hidden", "message", "item", "animals", "animalsinside" };
 
 		static bool PlayPlainExpect(RLine r)
 		{
@@ -856,6 +856,23 @@ namespace DynamicIslands
 						if (a.GetComponentInChildren<UnityEngine.AI.NavMeshAgent>(true) != null) Check(ref ok, gap >= 0 && gap < 0.6f, label + " stands on its floor (gap " + gap.ToString("0.00") + ", under 0.6)");
 					}
 					animalsSeen[label] = at;
+					break;
+				}
+				case "animalsinside":
+				{
+					// (expect animalsinside <label> <n>: n of them have rock or a roof over them within 12 m - in the cave, not
+					// on the hill over it: a herd's ring in a narrow tunnel put rats on the slope outside, standing on a floor - 11-05)
+					string label = string.Join(" ", t.Skip(2).Take(t.Length - 3).ToArray());
+					int inside = 0;
+					foreach (AI_NetworkBehaviour a in ScAnimals(playEntry, label))
+					{
+						bool roof = false;
+						foreach (RaycastHit h in Physics.RaycastAll(a.transform.position + Vector3.up * 0.3f, Vector3.up, 12f, ~0, QueryTriggerInteraction.Ignore))
+							if (!h.collider.transform.IsChildOf(a.transform)) { roof = true; break; }
+						if (roof) inside++;
+						else Log("  " + label + " with open sky over it at " + (a.transform.position - playEntry.Position + new Vector3(playOffset.x, 0f, playOffset.y)).ToString("F1"));
+					}
+					Check(ref ok, inside == (int)F(t[t.Length - 1]), "animals '" + label + "' under a roof: " + inside + " (expected " + t[t.Length - 1] + ")");
 					break;
 				}
 				case "animalsmoved":

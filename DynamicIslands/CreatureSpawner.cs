@@ -393,6 +393,26 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Spawns one live animal at a spawn point (index i of n: a herd stands in a ring around the point).</summary>
+		/// <summary>
+		/// A herd member's place (on the NavMesh, sampled from its spot on the herd's ring) kept on the floor the herd's centre
+		/// stands on: in a cave passage narrower than the ring (a dug tunnel 3.5 m wide, the ring 3 m out) the ring's spot lies
+		/// in the rock, and the nearest NavMesh to it was the hillside over the tunnel - two of Ironreef Caverns' four tunnel
+		/// rats stood outside on the slope (11-05). When the sampled place is on another level than the centre's floor and not
+		/// joined to it straight along the NavMesh, the member stands where the way from the centre towards its spot meets the
+		/// floor's edge. On open ground (joined, or on the same level) nothing changes.
+		/// </summary>
+		static Vector3 OnCentresFloor(Vector3 sampled, Vector3 centre, bool ring)
+		{
+			NavMeshHit c, edge, back;
+			if (!ring || !NavMesh.SamplePosition(centre, out c, 8f, NavMesh.AllAreas)) return sampled;
+			if (Mathf.Abs(sampled.y - c.position.y) < 1.5f || !NavMesh.Raycast(c.position, sampled, out edge, NavMesh.AllAreas)) return sampled;
+			// (towards the ring's spot at the centre floor's height, stopped at the edge and drawn 0.4 m back onto the floor)
+			Vector3 target = new Vector3(sampled.x, c.position.y, sampled.z);
+			if (!NavMesh.Raycast(c.position, target, out edge, NavMesh.AllAreas)) return NavMesh.SamplePosition(target, out back, 1.5f, NavMesh.AllAreas) ? back.position : c.position;
+			Vector3 at = edge.position - (edge.position - c.position).normalized * Mathf.Min(0.4f, Vector3.Distance(edge.position, c.position));
+			return NavMesh.SamplePosition(at, out back, 1f, NavMesh.AllAreas) ? back.position : c.position;
+		}
+
 		public static AI_NetworkBehaviour Spawn(Network_Host_Entities host, CreatureSpawnPoint p, int i, int n)
 		{
 			return Spawn(host, p, p.Kind, p.transform.position, i, n, p.Props, false);
@@ -415,7 +435,7 @@ namespace DynamicIslands.Editor
 				if (prefab.GetComponentInChildren<NavMeshAgent>(true) != null)
 				{
 					NavMeshHit hit;
-					if (NavMesh.SamplePosition(pos, out hit, 8f, NavMesh.AllAreas)) pos = hit.position;
+					if (NavMesh.SamplePosition(pos, out hit, 8f, NavMesh.AllAreas)) pos = OnCentresFloor(hit.position, centre, pos != centre);
 					else if (NavMesh.SamplePosition(centre, out hit, 8f, NavMesh.AllAreas)) pos = hit.position;
 					else if (NavMesh.SamplePosition(p.transform.position, out hit, 8f, NavMesh.AllAreas)) pos = hit.position;
 					else Debug.LogWarning("[CUSTOM ISLANDS] No walkable ground near the " + kind.Label + " spawn point at " + p.transform.position);
@@ -712,18 +732,23 @@ namespace DynamicIslands.Editor
 				// The passage runs through the measured point inside it, from the closed end (or the outcrop's edge) to the other
 				float centre = alongX ? p.Centre.x : p.Centre.z, half = (alongX ? p.Size.x : p.Size.z) / 2f, inside = alongX ? p.Inside.x : p.Inside.z;
 				float lo = Mathf.Max(centre - half, inside - Mathf.Min(p.ToMinus, 2f * half)), hi = Mathf.Min(centre + half, inside + Mathf.Min(p.ToPlus, 2f * half));
-				float len = Mathf.Max(1f, hi - lo), mid = (lo + hi) / 2f;
-				Vector3 local = alongX ? new Vector3(mid, p.Floor - 0.15f, p.Inside.z) : new Vector3(p.Inside.x, p.Floor - 0.15f, mid);
+				// (in world metres: the piece's scale - the cave tool's size= - counts. Shelter Atoll's den at size 0.7 got a floor
+				// 1/0.7 too long, out through its rock, and too high, so its rats found no floor in the den - 11-05)
+				Vector3 sc = t.lossyScale;
+				float sAxis = Mathf.Abs(alongX ? sc.x : sc.z), sAcross = Mathf.Abs(alongX ? sc.z : sc.x), sUp = Mathf.Abs(sc.y);
+				float width = p.Width * sAcross, headroom = p.Headroom * sUp;
+				float len = Mathf.Max(1f, (hi - lo) * sAxis), mid = (lo + hi) / 2f;
+				Vector3 local = alongX ? new Vector3(mid, p.Floor, p.Inside.z) : new Vector3(p.Inside.x, p.Floor, mid);
 				Quaternion rot = t.rotation;
 				Vector3 axis = rot * (alongX ? Vector3.right : Vector3.forward), across = rot * (alongX ? Vector3.forward : Vector3.right);
-				Vector3 floor = t.position + rot * local;
+				Vector3 floor = t.TransformPoint(local) - Vector3.up * 0.15f;
 				Func<Vector3, Vector3, NavMeshBuildSource> box = (size, at) => new NavMeshBuildSource { shape = NavMeshBuildSourceShape.Box, size = size, transform = Matrix4x4.TRS(at, rot, Vector3.one) };
-				sources.Add(box(alongX ? new Vector3(len, 0.3f, p.Width) : new Vector3(p.Width, 0.3f, len), floor));
+				sources.Add(box(alongX ? new Vector3(len, 0.3f, width) : new Vector3(width, 0.3f, len), floor));
 				foreach (int s in new[] { -1, 1 })
-					sources.Add(box(alongX ? new Vector3(len, p.Headroom, 0.6f) : new Vector3(0.6f, p.Headroom, len), floor + across * s * (p.Width / 2f + 0.3f) + Vector3.up * (p.Headroom / 2f)));
+					sources.Add(box(alongX ? new Vector3(len, headroom, 0.6f) : new Vector3(0.6f, headroom, len), floor + across * s * (width / 2f + 0.3f) + Vector3.up * (headroom / 2f)));
 				// The back wall of a den
-				if (p.ToMinus < 90f) sources.Add(box(alongX ? new Vector3(0.6f, p.Headroom, p.Width) : new Vector3(p.Width, p.Headroom, 0.6f), floor - axis * (len / 2f + 0.3f) + Vector3.up * (p.Headroom / 2f)));
-				if (p.ToPlus < 90f) sources.Add(box(alongX ? new Vector3(0.6f, p.Headroom, p.Width) : new Vector3(p.Width, p.Headroom, 0.6f), floor + axis * (len / 2f + 0.3f) + Vector3.up * (p.Headroom / 2f)));
+				if (p.ToMinus < 90f) sources.Add(box(alongX ? new Vector3(0.6f, headroom, width) : new Vector3(width, headroom, 0.6f), floor - axis * (len / 2f + 0.3f) + Vector3.up * (headroom / 2f)));
+				if (p.ToPlus < 90f) sources.Add(box(alongX ? new Vector3(0.6f, headroom, width) : new Vector3(width, headroom, 0.6f), floor + axis * (len / 2f + 0.3f) + Vector3.up * (headroom / 2f)));
 			}
 		}
 
