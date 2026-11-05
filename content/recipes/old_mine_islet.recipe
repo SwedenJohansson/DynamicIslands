@@ -409,9 +409,9 @@ brush flatten from -36.3 22.2 to -35.0 22.2 r=1.2 s=20 frames=600 h=7.4
 # (Grey's claim: the bear cave's mouth opens on a shelf 3.4 m up with cliffs into deep sea on three sides - its low
 # east lip raised to the shelf, and a ladder up the east cliff from the water)
 brush flatten from -49.9 51.5 to -49.9 55.5 r=1.2 s=20 frames=600 h=3.3
-place LandmarkLadder_6m greyladder at -46.8 53.5 h=-3.4 yaw=270
+place LandmarkLadder_6m greyladder at -46.4 53.5 h=-3.4 yaw=270
 # (the ore barge's yard: boxed in by the wreck and two cliffs - a ladder up the south cliff from the water)
-place LandmarkLadder_6m bargeladder at 52 -40.6 h=-4.4 yaw=0
+place LandmarkLadder_6m bargeladder at 52 -41.0 h=-4.4 yaw=0
 brush flatten at 67.2 -20.2 r=2.6 s=20 frames=600 h=5.6
 clear at 67.2 -20.2 r=3.0
 call om_ledge x0=67.2 z0=-20.2 x1=63.2 z1=-22.4 h0=5.6 h1=5.2 n=4
