@@ -2,7 +2,7 @@
 # low shelf on the lagoon side of the lava tube's path (recipe 79.5 13). Run it under CIGapsWatchHealth: without the
 # suit (CIGapsSuit off) the watch takes damage and the burn message shows; the suit run is the_abyss_acidsuit.
 island The Abyss keep
-offset -1.0393 0.1205
+offset -2.1808 -0.171
 hour 11
 weather Calm
 at 79.5 13
