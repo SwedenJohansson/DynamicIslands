@@ -474,9 +474,14 @@ namespace DynamicIslands.Editor
 					if (!on && run >= 0)
 					{
 						float ax = x0 + run * cell, bx = x0 + i * cell;
+						// (both sides, each with its own corners: on shared ones the two sides' normals cancelled out and the wall
+						// drew as a flat black board - seen from inside The Abyss's lava tube, 11-05; Plug had the same fault, TN1)
 						int n = verts.Count;
-						verts.Add(new Vector3(ax, ya, z)); verts.Add(new Vector3(bx, ya, z)); verts.Add(new Vector3(bx, yb, z)); verts.Add(new Vector3(ax, yb, z));
-						tris.AddRange(new[] { n, n + 2, n + 1, n, n + 3, n + 2, n, n + 1, n + 2, n, n + 2, n + 3 }); // (both sides)
+						for (int side = 0; side < 2; side++)
+						{
+							verts.Add(new Vector3(ax, ya, z)); verts.Add(new Vector3(bx, ya, z)); verts.Add(new Vector3(bx, yb, z)); verts.Add(new Vector3(ax, yb, z));
+						}
+						tris.AddRange(new[] { n, n + 2, n + 1, n, n + 3, n + 2, n + 4, n + 5, n + 6, n + 4, n + 6, n + 7 });
 						run = -1;
 					}
 				}
@@ -485,13 +490,13 @@ namespace DynamicIslands.Editor
 			var mesh = new Mesh { name = PlugName };
 			mesh.SetVertices(verts);
 			mesh.SetTriangles(tris, 0);
-			mesh.SetUVs(0, verts.Select(v => new Vector2(v.x / 6f, v.y / 6f)).ToList());
+			mesh.SetUVs(0, verts.Select(v => new Vector2(v.x / PlugTile, v.y / PlugTile)).ToList());
 			mesh.RecalculateNormals();
 			mesh.RecalculateBounds();
 			go.AddComponent<MeshFilter>().sharedMesh = mesh;
 			go.AddComponent<MeshRenderer>().sharedMaterial = look.sharedMaterial;
 			go.AddComponent<MeshCollider>().sharedMesh = mesh;
-			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + (verts.Count / 4) + " strips");
+			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + (verts.Count / 8) + " strips");
 		}
 
 		#endregion

@@ -68,6 +68,30 @@ namespace DynamicIslands
 			Check(ref ok, beside < over - 5f, "the hill falls away beside it (" + beside.ToString("0.0") + ")");
 			float w;
 			Check(ref ok, Mathf.Abs(CaveTool.ApronAt(down, a + new Vector3(0f, 0f, 1f), out w) - (a.y - 0.05f)) < 0.01f && w > 0.99f, "the ground before the mouth at its floor");
+
+			// (the den's walls - Plug at a tunnel's end, PlugOpening on a lone den - drawn both ways with real normals: shared
+			// corners cancelled them and the wall drew as a flat black board, TN1 and The Abyss's lava tube 11-05)
+			GameObject denProto = PlaceableCatalog.Get(CaveTool.Room);
+			if (denProto == null) Log("(den prefab not loaded: the den walls' normals not checked)");
+			else
+			{
+				GameObject probe = UnityEngine.Object.Instantiate(denProto, new Vector3(-4000f, -300f, -4000f), Quaternion.identity);
+				probe.SetActive(true);
+				try
+				{
+					foreach (bool lone in new[] { false, true })
+					{
+						if (lone) CaveTool.PlugOpening(probe); else CaveTool.Plug(probe);
+						Transform pl = probe.transform.Find(CaveTool.PlugName);
+						Mesh m = pl != null ? pl.GetComponent<MeshFilter>().sharedMesh : null;
+						Vector3[] nr = m != null ? m.normals : new Vector3[0];
+						int fwd = nr.Count(v => v.z > 0.99f), back = nr.Count(v => v.z < -0.99f);
+						Check(ref ok, m != null && nr.Length > 0 && fwd + back == nr.Length && fwd == back,
+							(lone ? "a lone den's wall (PlugOpening)" : "a tunnel-end den's wall (Plug)") + ": every corner's normal faces one way out of the wall, as many each way (" + fwd + " + " + back + " of " + nr.Length + ")");
+					}
+				}
+				finally { UnityEngine.Object.DestroyImmediate(probe); }
+			}
 			if (ok) Log("PASS: cave tool unit"); else Fail("cave tool unit");
 		}
 

@@ -136,7 +136,7 @@ namespace DynamicIslands.Editor
 #           type as in Creature_<type> (Bear, Rat, PolarBear, Turtle...); difficulty Easy/Normal/Hard/Boss...
 #   zone = <where> | <zone name> | <radius m> | <message>
 #   atmosphere = <where> | <radius m> | <fog #RRGGBB> | <fog 0-1> | <light #RRGGBB> | <light 0-1> | <particles>
-#           particles: none, fireflies, mist, snow, embers, bubbles
+#           particles: none, fireflies, mist, snow, embers, bubbles, steam
 #   object = <object name> | <where> | <turn in degrees (empty: random)>
 #   clear = <where> | <radius m>                            (removes trees and plants there)
 #   quest = <title> | <intro> | <done text> | <reward>      then one line per step:

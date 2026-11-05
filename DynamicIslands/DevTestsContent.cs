@@ -1640,6 +1640,20 @@ namespace DynamicIslands
 			AtmosphereZone az = atmo.GetComponent<AtmosphereZone>();
 			ParticleSystem ps = atmo.GetComponentInChildren<ParticleSystem>();
 			Check(ref ok, az != null && az.FogAmount > 0f && ps != null && ps.isPlaying && ps.particleCount > 0, "the atmosphere zone shows in the editor: fog, light, " + (ps != null ? ps.particleCount + " fireflies" : "no particles"));
+			{
+				// (steam, 11-05: plumes rising from the middle in the fog's colour - a green fog, green steam; then fireflies again)
+				PropsCommand.Change(atmo, ObjectProps.With(ObjectProps.With(atmo.Props, ObjectProps.AtmoParticles, "steam"), ObjectProps.AtmoFog, "#60B030"));
+				yield return new WaitForSeconds(1.5f);
+				ParticleSystem st = atmo.GetComponentInChildren<ParticleSystem>();
+				Color sc = st != null ? st.main.startColor.color : Color.clear;
+				ParticleSystem.Particle[] pts = new ParticleSystem.Particle[st != null ? st.particleCount : 0];
+				int nPts = st != null ? st.GetParticles(pts) : 0;
+				bool rising = nPts > 0 && pts.Take(nPts).Average(x => x.velocity.y) > 0.3f;
+				Check(ref ok, st != null && st.isPlaying && nPts > 0 && rising && sc.g > sc.r + 0.1f && sc.g > sc.b + 0.1f && sc.a > 0.25f,
+					"steam: " + nPts + " plumes rising from the zone, green as its fog (" + sc.r.ToString("F2") + " " + sc.g.ToString("F2") + " " + sc.b.ToString("F2") + " a " + sc.a.ToString("F2") + ")");
+				PropsCommand.Change(atmo, p);
+				yield return new WaitForSeconds(1f);
+			}
 
 			Camera cam = Camera.main;
 			cam.transform.position = c0 + new Vector3(0, 3, -6);
