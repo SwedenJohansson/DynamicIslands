@@ -76,7 +76,7 @@ namespace DynamicIslands
 
 			// (the den's walls - Plug at a tunnel's end, PlugOpening on a lone den - drawn both ways with real normals: shared
 			// corners cancelled them and the wall drew as a flat black board, TN1 and The Abyss's lava tube 11-05)
-			yield return PlaceableCatalog.EnsureLoaded(new[] { CaveTool.Room });
+			yield return PlaceableCatalog.EnsureLoaded(new[] { CaveTool.Room, CaveTool.WallRock });
 			GameObject denProto = PlaceableCatalog.Get(CaveTool.Room);
 			if (denProto == null) Check(ref ok, false, "the bear den could be loaded (to check its walls)");
 			else
@@ -101,14 +101,11 @@ namespace DynamicIslands
 							Vector3[] vs = m.vertices;
 							float spread = vs.Max(v => v.z) - vs.Min(v => v.z);
 							int tilted = nr.Count(v => Mathf.Abs(v.z) < 0.97f);
-							// (one colour of the den's atlas, not the whole atlas at 20 m: blue, white and orange patches, 11-05)
-							var uv = new List<Vector2>(); m.GetUVs(0, uv);
-							float uvSpan = uv.Count == 0 ? 0f : Mathf.Max(uv.Max(u => u.x) - uv.Min(u => u.x), uv.Max(u => u.y) - uv.Min(u => u.y));
-							Vector2 sw;
-							bool readable = CaveTool.MouthSwatch(probe.GetComponentsInChildren<MeshRenderer>(true).Where(r => r.sharedMaterial != null && r.transform != pl)
-								.OrderByDescending(r => r.bounds.size.x * r.bounds.size.z).First(), pl.position, out sw);
-							Check(ref ok, !readable || uvSpan < 0.01f, "a lone den's wall takes one colour of the den's texture: its UVs span " + uvSpan.ToString("0.0000")
-								+ (readable ? " (under 0.01)" : " (the den's mesh is not readable: tiled instead)"));
+							// (not the den's atlas texture at 20 m: blue, white and orange patches beside The Abyss's acid path, 11-05)
+							Material denMat = probe.GetComponentsInChildren<MeshRenderer>(true).Where(r => r.sharedMaterial != null && r.transform != pl)
+								.OrderByDescending(r => r.bounds.size.x * r.bounds.size.z).First().sharedMaterial;
+							Material wm = pl.GetComponent<MeshRenderer>().sharedMaterial;
+							Check(ref ok, wm != denMat, "a lone den's wall is drawn with Raft's rock (" + (wm != null ? wm.name : "none") + "), not the den's atlas (" + denMat.name + ")");
 							Check(ref ok, spread > 0.5f && tilted > nr.Length / 4, "a lone den's wall has rock relief: " + spread.ToString("0.00") + " m deep (over 0.5), "
 								+ tilted + " of " + nr.Length + " corners on tilted facets (over a quarter)");
 						}

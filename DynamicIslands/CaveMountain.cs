@@ -493,7 +493,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Raft's island rock (CaravanIslandRocks) has no colour property, so ApplyTint leaves it orange under a dark
 		/// den (The Abyss, Balboa Remade): its diffuse textures are swapped, on this renderer only, for copies multiplied by
 		/// the tint (11-03).</summary>
-		static void TintRockTextures(MeshRenderer mr, Color factor)
+		internal static void TintRockTextures(MeshRenderer mr, Color factor)
 		{
 			Material m = mr.sharedMaterial;
 			if (m == null) return;

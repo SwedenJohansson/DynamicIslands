@@ -132,6 +132,13 @@ for a 65 225 10
 brush smooth at {78.5+11*cos($a)} {13+11*sin($a)} r=4 s=3 frames=20
 brush smooth at {78.5+17*cos($a)} {13+17*sin($a)} r=4 s=3 frames=20
 brush smooth at {78.5+23*cos($a)} {13+23*sin($a)} r=4 s=3 frames=20
+next
+# (the outer drop softened, but not by the buried treasure at 60 36 - its scatter needs that ground as it was)
+for a 65 105 10
+brush smooth at {78.5+27*cos($a)} {13+27*sin($a)} r=6 s=4 frames=30
+brush smooth at {78.5+31*cos($a)} {13+31*sin($a)} r=6 s=4 frames=30
+next
+for a 155 225 10
 brush smooth at {78.5+27*cos($a)} {13+27*sin($a)} r=6 s=4 frames=30
 brush smooth at {78.5+31*cos($a)} {13+31*sin($a)} r=6 s=4 frames=30
 next

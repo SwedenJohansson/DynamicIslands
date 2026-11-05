@@ -329,6 +329,8 @@ namespace DynamicIslands.Editor
 		const float PlugTile = 20f;
 		/// <summary>How far a lone den's wall (PlugOpening) bulges in or out at most, in metres: rock relief, not a flat board.</summary>
 		public const float PlugRelief = 0.7f;
+		/// <summary>The rock a lone den's wall is drawn with (the den's own texture is an atlas of colour patches).</summary>
+		public const string WallRock = "BigRock_1";
 		const float PlugIn = 0.8f, PlugBelow = 3f, HoleHalf = 2.6f, HoleBelow = 1f, HoleUp = 5.6f;
 
 		/// <summary>
@@ -401,7 +403,9 @@ namespace DynamicIslands.Editor
 			{
 				PlugOpening(den, CaveMountain.OverMeasured(den.transform, Room).x);
 				Transform plug = den.transform.Find(PlugName);
-				if (plug != null && ObjectProps.HasTint(props)) ObjectProps.ApplyTint(plug.gameObject, ObjectProps.Tint(props), ObjectProps.TintStrength(props));
+				if (plug != null && ObjectProps.HasTint(props)
+					&& ObjectProps.ApplyTint(plug.gameObject, ObjectProps.Tint(props), ObjectProps.TintStrength(props)) == 0)
+					CaveMountain.TintRockTextures(plug.GetComponent<MeshRenderer>(), Color.Lerp(Color.white, ObjectProps.Tint(props), ObjectProps.TintStrength(props)));
 			}
 			catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Walling a den's mouth failed: " + x.Message); }
 		}
@@ -490,16 +494,21 @@ namespace DynamicIslands.Editor
 			mesh.SetTriangles(tris, 0);
 			// (the den's texture is an atlas of colour patches: the wall's own UVs at 20 m showed all of it - blue, white and
 			// orange - beside The Abyss's acid path, 11-05. The wall takes the den's colour from round its mouth instead)
-			Vector2 swatch;
-			bool atlas = MouthSwatch(look, go.transform.TransformPoint(new Vector3(mx, my + HoleUp + 1f, RoomMax.z)), out swatch);
-			mesh.SetUVs(0, verts.Select(v => atlas ? swatch + new Vector2(v.x, v.y) * (0.004f / PlugTile)
+			// The den's mesh is not readable in the game, so it is Raft's big rock instead (as the cave mountain's skin), at 14 m
+			// like the skin; only without it, one patch of the den's own texture (readable mesh) or the old 20 m tiling.
+			GameObject bigRock = PlaceableCatalog.Get(WallRock);
+			Renderer rockLook = bigRock != null ? bigRock.GetComponentsInChildren<MeshRenderer>(true).FirstOrDefault(r => r.sharedMaterial != null) : null;
+			Vector2 swatch = Vector2.zero;
+			bool atlas = rockLook == null && MouthSwatch(look, go.transform.TransformPoint(new Vector3(mx, my + HoleUp + 1f, RoomMax.z)), out swatch);
+			mesh.SetUVs(0, verts.Select(v => rockLook != null ? new Vector2(v.x, v.y) / 14f : atlas ? swatch + new Vector2(v.x, v.y) * (0.004f / PlugTile)
 				: new Vector2(v.x / PlugTile, v.y / PlugTile)).ToList());
 			mesh.RecalculateNormals();
 			mesh.RecalculateBounds();
 			go.AddComponent<MeshFilter>().sharedMesh = mesh;
-			go.AddComponent<MeshRenderer>().sharedMaterial = look.sharedMaterial;
+			MeshRenderer wr = go.AddComponent<MeshRenderer>();
+			wr.sharedMaterial = rockLook != null ? rockLook.sharedMaterial : look.sharedMaterial;
 			go.AddComponent<MeshCollider>().sharedMesh = mesh;
-			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + (verts.Count / 12) + " cells, rock relief" + (atlas ? ", den colour at uv " + swatch.ToString("0.000") : ""));
+			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + (verts.Count / 12) + " cells, rock relief, " + wr.sharedMaterial.name + (atlas ? " at uv " + swatch.ToString("0.000") : ""));
 		}
 
 		/// <summary>The UV of the den mesh's corner nearest a point by its mouth (its rock colour), when the mesh is readable.</summary>
