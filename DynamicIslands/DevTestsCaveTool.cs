@@ -18,6 +18,11 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CICaveToolUnit", docs: "Dev, anywhere: the cave tool's layout - tunnel pieces end to end from the mouth (their passages and floors meeting), the slope kept to 12 degrees and the pieces to 12, the den's mouth on the tunnel's end, a short drag one tunnel and the den; the hill over it, none before the mouth or past an open end")]
 		public static void CaveToolUnitCommand(string[] args)
 		{
+			StartTest(CaveToolUnitRoutine());
+		}
+
+		static IEnumerator CaveToolUnitRoutine()
+		{
 			bool ok = true;
 			Vector3 a = new Vector3(500f, 20f, 500f);
 			CaveTool.Layout l = CaveTool.Plan(a, a + new Vector3(40f, 7f, 0f), 0f, true);
@@ -71,8 +76,9 @@ namespace DynamicIslands
 
 			// (the den's walls - Plug at a tunnel's end, PlugOpening on a lone den - drawn both ways with real normals: shared
 			// corners cancelled them and the wall drew as a flat black board, TN1 and The Abyss's lava tube 11-05)
+			yield return PlaceableCatalog.EnsureLoaded(new[] { CaveTool.Room });
 			GameObject denProto = PlaceableCatalog.Get(CaveTool.Room);
-			if (denProto == null) Log("(den prefab not loaded: the den walls' normals not checked)");
+			if (denProto == null) Check(ref ok, false, "the bear den could be loaded (to check its walls)");
 			else
 			{
 				GameObject probe = UnityEngine.Object.Instantiate(denProto, new Vector3(-4000f, -300f, -4000f), Quaternion.identity);
