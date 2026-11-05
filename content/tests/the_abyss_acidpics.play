@@ -10,7 +10,7 @@ picture abyss_acid_close 74.5 +2.2 18 79.5 0 13
 picture abyss_acid_close2 85 +2.5 9 79.5 0 13
 picture abyss_acid_wide 64 16 28 81 1 10
 # from inside the lava tube's mouth (its den wall drew as a black board here before 11-05), and from the path
-picture abyss_acid_path 87 5 2 81 1 14
+picture abyss_acid_path 87 6.5 3 80 0.5 13
 # (the tube's rock is over 87 2, so a +h camera there stands on the hill: the mouth's shots use plain heights)
 picture abyss_acid_den 87 5 5 88 4 -8
 picture abyss_acid_path2 87 +1.7 9 79.5 0 13
