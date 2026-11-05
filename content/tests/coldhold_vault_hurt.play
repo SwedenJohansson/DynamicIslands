@@ -1,0 +1,13 @@
+# The Coldhold Vault hazard test (11-05): cold vents (1/s, r 13) shown by the timed terminal run. CIPlay coldhold_vault_hurt, in a test world 'CI ...', CIGapsSuit off (no suit: the zone must hurt).
+island The Coldhold Vault keep
+offset 0 22
+hour 11
+weather Calm
+code term1 3317
+wait 4
+expect shown coldrun
+at 3 10
+wait 10
+expect message The vents blow freezing air
+# (4 is about half of the expected damage)
+expect hurt 4

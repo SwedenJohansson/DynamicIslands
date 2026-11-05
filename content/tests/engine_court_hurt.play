@@ -1,0 +1,10 @@
+# Engine Court hazard test (11-05): spark landing ec_spark1 (shock 2/s, pulse 2 on 3 off) on the tower's first landing. CIPlay engine_court_hurt, in a test world 'CI ...', CIGapsSuit off (no suit: the zone must hurt).
+island Engine Court keep
+offset 0 0
+hour 11
+weather Calm
+at -19 80 y=8.2
+wait 20
+expect message Sparks crawl over the landing
+# (6 is about half of the expected damage)
+expect hurt 6

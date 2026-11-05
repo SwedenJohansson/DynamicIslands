@@ -108,6 +108,21 @@ namespace DynamicIslands
 							Check(ref ok, wm != denMat, "a lone den's wall is drawn with Raft's rock (" + (wm != null ? wm.name : "none") + "), not the den's atlas (" + denMat.name + ")");
 							Check(ref ok, spread > 0.5f && tilted > nr.Length / 4, "a lone den's wall has rock relief: " + spread.ToString("0.00") + " m deep (over 0.5), "
 								+ tilted + " of " + nr.Length + " corners on tilted facets (over a quarter)");
+							// (the den's colour, not the big rock's grey: a grey wall beside the lava tube's khaki shell, 11-05)
+							Color shell, rockMean, wallMean = Color.black;
+							bool read = CaveTool.ShellColour(probe, out shell) & CaveTool.TextureMean(wm, out rockMean);
+							Color factor = CaveTool.TintWall(probe, null);
+							MeshRenderer wr = pl.GetComponent<MeshRenderer>();
+							var blk = new MaterialPropertyBlock();
+							wr.GetPropertyBlock(blk);
+							string tp;
+							CaveTool.ColourTexture(wm, out tp);
+							Texture worn = tp != null && !blk.isEmpty ? blk.GetTexture(tp) : null;
+							Texture2D wornRead = worn != null ? DigTunnel.Readable(worn, 64) : null;
+							if (wornRead != null) { Color s = Color.clear; Color[] px = wornRead.GetPixels(); foreach (Color c in px) s += c; wallMean = s / px.Length; }
+							float off = Mathf.Max(Mathf.Abs(wallMean.r - shell.r), Mathf.Abs(wallMean.g - shell.g), Mathf.Abs(wallMean.b - shell.b));
+							Check(ref ok, read && wornRead != null && off < 0.08f, "a lone den's wall wears the den's colour: den " + shell.ToString("0.00") + ", big rock "
+								+ rockMean.ToString("0.00") + ", wall " + wallMean.ToString("0.00") + " (factor " + factor.ToString("0.00") + ", off " + off.ToString("0.00") + ", under 0.08)");
 						}
 					}
 				}
