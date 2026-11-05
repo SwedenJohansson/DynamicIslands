@@ -142,6 +142,14 @@ for a 155 225 10
 brush smooth at {78.5+27*cos($a)} {13+27*sin($a)} r=6 s=4 frames=30
 brush smooth at {78.5+31*cos($a)} {13+31*sin($a)} r=6 s=4 frames=30
 next
+# (11-05 round 3) The lava tube's rock (ar_cave above) runs down into the sea west of the shelf, x 62-69 z -3..5, its
+# foot on the seabed 6.7 m down: the rings lowered the ground round it, and its pale rock under 1-5 m of water read from
+# afar as a see-through patch with a soft edge beside the shelf. The seabed comes back up over that foot, a slope from the
+# rock's waterline (x 69) down to the shelf's depth (x 62), so only the rock above the water shows.
+brush flatten from 68.6 -3 to 68.6 6 r=1.8 s=20 frames=200 h=0
+brush flatten from 66.6 -3 to 66.6 6 r=1.8 s=20 frames=200 h=-1.5
+brush flatten from 64.6 -3 to 64.6 6 r=1.8 s=20 frames=200 h=-3
+brush flatten from 62.6 -2 to 62.6 6 r=1.8 s=20 frames=200 h=-4.5
 clear from 68 4 to 72 22 r=4 body
 clear from 61 2 to 65 26 r=4 body
 clear from 66 24 to 84 30 r=4 body

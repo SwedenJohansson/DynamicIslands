@@ -408,34 +408,38 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>
-		/// Colours a lone den's wall (PlugOpening) as the den's shell: Raft's big rock is grey, and stood as a grey patch beside
-		/// the khaki shell of The Abyss's lava tube (11-05). Every den: its rock texture is multiplied by the shell's colour
-		/// over the rock's (ShellColour, TextureMean), and then by the den's tint as the den itself is. The factor used, or
-		/// white when the colours could not be read.
+		/// Colours a lone den's wall (PlugOpening) as the den's shell looks: Raft's big rock read as a grey-blue patch beside the
+		/// khaki shell of The Abyss's lava tube (11-05), though the two textures' mean colours are alike - the two shaders light
+		/// them differently. So both are drawn lit, as the game draws them (with the den's tint, when the den has one), and the
+		/// wall's rock texture is multiplied by the shell's lit colour over the wall's (LitColour). Every den. The factor used,
+		/// or white when the colours could not be read.
 		/// </summary>
 		public static Color TintWall(GameObject den, IDictionary<string, string> props)
 		{
 			Transform plug = den != null ? den.transform.Find(PlugName) : null;
 			MeshRenderer wr = plug != null ? plug.GetComponent<MeshRenderer>() : null;
 			if (wr == null) return Color.white;
-			Color factor = Color.white, shell, rock = Color.white;
-			bool matched = ShellColour(den, out shell) && TextureMean(wr.sharedMaterial, out rock);
+			Color factor = Color.white, shell, wall = Color.white, after = Color.white;
+			bool matched = LitColour(DenShell(den), out shell) && LitColour(new Renderer[] { wr }, out wall);
 			if (matched)
 			{
 				Func<float, float, float> ratio = (s, r) => Mathf.Clamp(s / Mathf.Max(0.02f, r), 0.1f, 4f);
-				factor = new Color(ratio(shell.r, rock.r), ratio(shell.g, rock.g), ratio(shell.b, rock.b), 1f);
+				factor = new Color(ratio(shell.r, wall.r), ratio(shell.g, wall.g), ratio(shell.b, wall.b), 1f);
 			}
-			if (ObjectProps.HasTint(props) && ObjectProps.ApplyTint(plug.gameObject, ObjectProps.Tint(props), ObjectProps.TintStrength(props)) == 0)
-				factor *= Color.Lerp(Color.white, ObjectProps.Tint(props), ObjectProps.TintStrength(props));
-			factor.a = 1f;
 			if (factor != Color.white) CaveMountain.TintRockTextures(wr, factor);
-			Debug.Log("[CUSTOM ISLANDS] Den's wall coloured as its shell: " + (matched ? "shell " + shell.ToString("0.00") + ", rock " + rock.ToString("0.00") : "colours not read")
-				+ ", factor " + factor.ToString("0.00"));
+			bool reread = matched && LitColour(new Renderer[] { wr }, out after);
+			Debug.Log("[CUSTOM ISLANDS] Den's wall coloured as its shell: " + (matched ? "shell " + shell.ToString("0.00") + ", wall " + wall.ToString("0.00") : "colours not read")
+				+ ", factor " + factor.ToString("0.00") + (reread ? ", wall now " + after.ToString("0.00") : ""));
 			return factor;
 		}
 
-		/// <summary>Shaders that draw a texture without light, tried in turn (whichever Raft's build holds).</summary>
-		static readonly string[] FlatShaders = { "Unlit/Texture", "Sprites/Default", "UI/Default" };
+		/// <summary>A den's own renderers: all but its wall (PlugName).</summary>
+		public static Renderer[] DenShell(GameObject den)
+		{
+			return den == null ? new Renderer[0] : den.GetComponentsInChildren<MeshRenderer>(true)
+				.Where(r => r.sharedMaterial != null && r.enabled && !r.transform.name.StartsWith(PlugName)).Cast<Renderer>().ToArray();
+		}
+
 		static readonly Color Key = new Color(1f, 0f, 1f, 1f);
 
 		/// <summary>A material's colour texture: _MainTex, else its shader's first texture that is not a normal, mask or such map.</summary>
@@ -456,102 +460,76 @@ namespace DynamicIslands.Editor
 			return null;
 		}
 
-		/// <summary>The mean colour of a material's colour texture (read back at 64 x 64).</summary>
-		public static bool TextureMean(Material m, out Color mean)
-		{
-			mean = Color.white;
-			string tp;
-			Texture t = ColourTexture(m, out tp);
-			Texture2D r = t != null ? DigTunnel.Readable(t, 64) : null;
-			if (r == null) return false;
-			Color[] px = r.GetPixels();
-			Color sum = Color.clear;
-			foreach (Color c in px) sum += c;
-			mean = sum / Mathf.Max(1, px.Length);
-			mean.a = 1f;
-			return true;
-		}
-
 		/// <summary>
-		/// The colour a den's rock shows, without light. Its texture is an atlas of colour patches and its mesh can't be read in
-		/// the game, so the patches its shell wears are found by drawing it: each of its renderers with its own texture through
-		/// an unlit shader, from four sides and above, into a small picture whose den pixels are averaged. The wall (PlugName)
-		/// and anything not drawn are left out.
+		/// The colour some renderers show as the game draws them: lit by the scene's lights, with their own shaders, property
+		/// blocks (a tint) and textures. They alone are drawn - moved for a moment to a layer nothing else uses, for a camera
+		/// that sees only that layer - from four sides and above into a small picture without fog, whose drawn pixels are
+		/// averaged. The den's atlas texture and mesh can't be read in the game, so drawing is how its look is measured.
 		/// </summary>
-		public static bool ShellColour(GameObject den, out Color colour)
+		public static bool LitColour(Renderer[] rs, out Color colour)
 		{
 			colour = Color.white;
-			if (den == null) return false;
-			MeshRenderer[] rs = den.GetComponentsInChildren<MeshRenderer>(true)
-				.Where(r => r.sharedMaterial != null && r.enabled && !r.transform.name.StartsWith(PlugName)).ToArray();
-			Shader flat = FlatShaders.Select(Shader.Find).FirstOrDefault(s => s != null && s.isSupported);
-			if (rs.Length == 0 || flat == null) { Debug.Log("[CUSTOM ISLANDS] Den's colour: " + (flat == null ? "no unlit shader" : "nothing drawn")); return false; }
+			rs = rs != null ? rs.Where(r => r != null).ToArray() : new Renderer[0];
+			if (rs.Length == 0) return false;
+			int layer = -1;
+			for (int i = 31; i >= 8 && layer < 0; i--) if (string.IsNullOrEmpty(LayerMask.LayerToName(i))) layer = i;
+			if (layer < 0) { Debug.Log("[CUSTOM ISLANDS] Lit colour: no free layer"); return false; }
 			Bounds b = rs[0].bounds;
-			foreach (MeshRenderer r in rs) b.Encapsulate(r.bounds);
+			foreach (Renderer r in rs) b.Encapsulate(r.bounds);
 			float ext = Mathf.Max(0.5f, b.extents.magnitude);
 			const int size = 96;
 			RenderTexture rt = RenderTexture.GetTemporary(size, size, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
 			RenderTexture prev = RenderTexture.active;
-			var mats = new List<Material>();
 			var read = new Texture2D(size, size, TextureFormat.RGBA32, false);
+			var layers = rs.Select(r => r.gameObject.layer).ToArray();
+			bool fog = RenderSettings.fog;
+			var go = new GameObject("CI lit colour");
 			try
 			{
-				// (one unlit material per material of the den: its texture at its tiling)
-				var flatOf = new Dictionary<Material, Material>();
-				foreach (MeshRenderer r in rs)
-					foreach (Material m in r.sharedMaterials)
-					{
-						if (m == null || flatOf.ContainsKey(m)) continue;
-						string tp;
-						Texture t = ColourTexture(m, out tp);
-						var f = new Material(flat) { mainTexture = t != null ? t : Texture2D.whiteTexture };
-						if (t != null) { f.mainTextureScale = m.GetTextureScale(tp); f.mainTextureOffset = m.GetTextureOffset(tp); }
-						if (f.HasProperty("_Color")) f.SetColor("_Color", Color.white);
-						flatOf[m] = f;
-						mats.Add(f);
-					}
+				Camera cam = go.AddComponent<Camera>();
+				cam.enabled = false;
+				cam.orthographic = true;
+				cam.orthographicSize = ext;
+				cam.nearClipPlane = 0.01f;
+				cam.farClipPlane = ext * 4f;
+				cam.clearFlags = CameraClearFlags.SolidColor;
+				cam.backgroundColor = Key;
+				cam.cullingMask = 1 << layer;
+				cam.allowHDR = false;
+				cam.allowMSAA = false;
+				cam.targetTexture = rt;
+				foreach (Renderer r in rs) r.gameObject.layer = layer;
+				RenderSettings.fog = false;
 				Color sum = Color.clear;
 				int n = 0;
 				foreach (Vector3 dir in new[] { Vector3.forward, Vector3.back, Vector3.left, Vector3.right, Vector3.down })
 				{
-					Vector3 eye = b.center - dir * ext * 2f;
-					Matrix4x4 view = Matrix4x4.Scale(new Vector3(1f, 1f, -1f))
-						* Matrix4x4.TRS(eye, Quaternion.LookRotation(dir, Mathf.Abs(dir.y) > 0.9f ? Vector3.forward : Vector3.up), Vector3.one).inverse;
-					var cb = new CommandBuffer { name = "den colour" };
-					cb.SetRenderTarget(rt);
-					cb.ClearRenderTarget(true, true, Key);
-					cb.SetViewProjectionMatrices(view, Matrix4x4.Ortho(-ext, ext, -ext, ext, 0.01f, ext * 4f));
-					foreach (MeshRenderer r in rs)
-					{
-						Material[] sm = r.sharedMaterials;
-						for (int i = 0; i < sm.Length; i++) if (sm[i] != null) cb.DrawRenderer(r, flatOf[sm[i]], i);
-					}
-					Graphics.ExecuteCommandBuffer(cb);
-					cb.Release();
+					go.transform.SetPositionAndRotation(b.center - dir * ext * 2f, Quaternion.LookRotation(dir, Mathf.Abs(dir.y) > 0.9f ? Vector3.forward : Vector3.up));
+					cam.Render();
 					RenderTexture.active = rt;
 					read.ReadPixels(new Rect(0, 0, size, size), 0, 0);
 					read.Apply();
 					foreach (Color c in read.GetPixels())
 					{
-						if (c.r > 0.9f && c.g < 0.1f && c.b > 0.9f) continue; // (the key: no den there)
+						if (c.r > 0.9f && c.g < 0.1f && c.b > 0.9f) continue; // (the key: nothing drawn there)
 						sum += c; n++;
 					}
 				}
-				if (n < 50) { Debug.Log("[CUSTOM ISLANDS] Den's colour: only " + n + " pixels drawn (" + flat.name + ")"); return false; }
+				if (n < 50) { Debug.Log("[CUSTOM ISLANDS] Lit colour: only " + n + " pixels drawn"); return false; }
 				colour = sum / n;
 				colour.a = 1f;
-				// (a shader that multiplies by vertex colours the den has none of draws it black)
-				if (colour.maxColorComponent < 0.03f) { Debug.Log("[CUSTOM ISLANDS] Den's colour: drawn black (" + flat.name + ")"); colour = Color.white; return false; }
-				Debug.Log("[CUSTOM ISLANDS] Den's colour " + colour.ToString("0.00") + " from " + n + " pixels (" + flat.name + ", " + rs.Length + " renderer(s))");
+				if (colour.maxColorComponent < 0.01f) { Debug.Log("[CUSTOM ISLANDS] Lit colour: drawn black"); colour = Color.white; return false; }
 				return true;
 			}
-			catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Den's colour could not be read: " + x.Message); return false; }
+			catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Lit colour could not be read: " + x.Message); return false; }
 			finally
 			{
+				for (int i = 0; i < rs.Length; i++) if (rs[i] != null) rs[i].gameObject.layer = layers[i];
+				RenderSettings.fog = fog;
 				RenderTexture.active = prev;
 				RenderTexture.ReleaseTemporary(rt);
 				UnityEngine.Object.Destroy(read);
-				foreach (Material m in mats) UnityEngine.Object.Destroy(m);
+				UnityEngine.Object.Destroy(go);
 			}
 		}
 
