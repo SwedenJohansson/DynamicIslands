@@ -914,8 +914,9 @@ namespace DynamicIslands
 				Vector3 tp = t.transform.position, ts = t.terrainData.size;
 				if (p.x >= tp.x && p.x <= tp.x + ts.x && p.z >= tp.z && p.z <= tp.z + ts.z && tp.y + t.SampleHeight(p) > p.y)
 				{
-					// (a cut cell (a dug mouth's hole) has no ground: what is over p there is found by the ray below)
-					if (TerrainHoleAt(t, p)) break;
+					// (a cut cell (a dug mouth's hole) has no ground: what is over p there is found by the ray below; only by a dug
+					// passage - a cave piece's hole under its hill let the audit into the earth under it: a 'trap' in the rock, 11-05)
+					if (TerrainHoleAt(t, p) && DigTunnel.InPassage(p, -1f)) break;
 					return !CaveUnder(p, tp.y + t.SampleHeight(p));
 				}
 			}

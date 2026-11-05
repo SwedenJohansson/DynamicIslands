@@ -12,6 +12,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next update (planned)
 
 Not in this release yet; these come in the next update:
+- **Dug tunnels' mouths** have a clean edge on steep slopes: the rim's rock faces lying on the ground take the ground's look, so no pale saw-tooth shards show round the opening.
+- **Caves under a rock mountain**: a cave's way in no longer runs on through a neighbouring cave's hill, which left a narrow slot down to the sea floor. Its hill no longer stands out over the sea, where it closed in a pool of water a swimmer could not get out of.
 - **Old Mine Islet: the old workings** - two caves off the quest: a back drift into the rock mound that breaks into a cavern, and Tunnel 1, the first hand-dug workings in Copper Knob's foot (in by the shore adit, out by the man-way), with a hewer's chest and note in the old powder room.
 - **The alpha box's Discord button** is Discord blue and pulses gently, so new players find the Custom Islands community.
 - **Renaming an object** no longer renames an **order puzzle** of the same name in other objects' actions (`order|Bells|2` stays when an object called "Bells" is renamed).

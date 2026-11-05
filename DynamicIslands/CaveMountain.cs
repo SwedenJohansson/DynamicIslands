@@ -376,6 +376,10 @@ namespace DynamicIslands.Editor
 					bool past = false;
 					for (int j = 0; j < mouths.Count && !past; j++) past = ahead[j][i, k] > 0.5f;
 					cut[i, k] = past && float.IsNaN(cover[i, k]) && !(raw[i, k] > ground[i, k] - 0.6f);
+					// (nor out over the sea from a roof above it: the hill's skin over the water, its foot on the sea floor, closed a
+					// pool of sea under it - a swimmer under a roof with no air, Old Mine Islet's mound over its south shore 11-05;
+					// a cave's own roof under the sea keeps its hill, and the hill's surface under the water too)
+					if (!cut[i, k] && float.IsNaN(cover[i, k]) && ground[i, k] < SeaLevel - SeaFloorBy && raw[i, k] > SeaLevel) cut[i, k] = true;
 					otherHill[i, k] = past && float.IsNaN(cover[i, k]) && !cut[i, k];
 				}
 			for (int i = 0; i < nx; i++)
@@ -722,6 +726,9 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The caves' open ends where the hill's faces cross them.</summary>
+		/// <summary>The sea's surface (world y) and how far under it the ground must be for the hill not to go out over it.</summary>
+		const float SeaLevel = 0f, SeaFloorBy = 1f;
+
 		sealed class Arch
 		{
 			public const int Strips = 8; // (per edge of a square: 0.16 m)

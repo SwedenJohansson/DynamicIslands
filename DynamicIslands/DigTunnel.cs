@@ -567,7 +567,7 @@ namespace DynamicIslands.Editor
 					// (or lying on the ground, however steep the slope: the rim's skin over a steep slope kept the rock's paler look,
 					// saw-tooth shards along the line where it crosses the ground - Old Mine Islet's shore adit, 11-05)
 					bool up = n.sqrMagnitude >= 1e-12f && n.normalized.y >= TopUp;
-					if (!up && n.sqrMagnitude >= 1e-12f && FaceOnGround(land, at.TransformPoint(verts[rim[i]]), at.TransformPoint(verts[rim[i + 1]]), at.TransformPoint(verts[rim[i + 2]]), n.normalized, OnGroundBy, OnGroundFacing)) up = true;
+					if (!up && FaceOnGround(land, at.TransformPoint(verts[rim[i]]), at.TransformPoint(verts[rim[i + 1]]), at.TransformPoint(verts[rim[i + 2]]))) up = true;
 					if (!up) { side.Add(rim[i]); side.Add(rim[i + 1]); side.Add(rim[i + 2]); continue; }
 					for (int e = 0; e < 3; e++)
 					{
@@ -836,27 +836,27 @@ namespace DynamicIslands.Editor
 
 		/// <summary>A face of the rim turned up at least this much (its normal's height) takes the ground's look.</summary>
 		const float TopUp = 0.6f;
-		/// <summary>A face of the rim with its corners this close to the ground (m, across the slope) and turned with it at least
-		/// this much (its normal on the ground's) lies on the ground: it takes the ground's look too, whatever the slope.</summary>
-		const float OnGroundBy = 0.3f, OnGroundFacing = 0.5f;
+		/// <summary>A face of the rim with its middle this close over the ground (m, across the slope; a little under it too)
+		/// and turned up out of it (its own face, not its corners' smoothed normals) lies on the ground: it takes the ground's look,
+		/// whatever the slope or however steeply it crosses the ground (the saw-tooth along the line where the rim's skin meets it).</summary>
+		const float OnGroundUnder = 0.05f, OnGroundBy = 0.3f;
 
-		/// <summary>The face (corners in the world, its normal) lies on the ground: every corner within by of it across the
-		/// slope (the height off it times the ground's normal's height) and the face turned with the ground at least facing.</summary>
-		static bool FaceOnGround(Terrain land, Vector3 a, Vector3 b, Vector3 c, Vector3 n, float by, float facing)
+		/// <summary>The face (corners in the world) lies on the ground - see OnGroundBy. The one rule for SplitTop and RimShards.</summary>
+		static bool FaceOnGround(Terrain land, Vector3 a, Vector3 b, Vector3 c)
 		{
 			if (land == null || land.terrainData == null) return false;
+			Vector3 cross = Vector3.Cross(b - a, c - a);
+			if (cross.magnitude < 2e-4f) return false;
 			Vector3 lo = land.transform.position, size = land.terrainData.size;
 			Vector3 mid = (a + b + c) / 3f;
 			Vector3 gn = land.terrainData.GetInterpolatedNormal((mid.x - lo.x) / size.x, (mid.z - lo.z) / size.z);
-			if (Vector3.Dot(n, gn) < facing) return false;
-			foreach (Vector3 p in new[] { a, b, c })
-				if (Mathf.Abs((p.y - GroundY(land, p)) * gn.y) > by) return false;
-			return true;
+			float off = (mid.y - GroundY(land, mid)) * gn.y;
+			return off >= -OnGroundUnder && off <= OnGroundBy && Vector3.Dot(cross, gn) > 0f;
 		}
 
-		/// <summary>Tests: the rim's rock faces (part 1) that lie on the ground - their middle within 0.3 m over it across the
-		/// slope, turned up out of it - pale shards on the ground beside the mouth (the rock's look where the ground's belongs).
-		/// (Part 0, the lining, isn't the rim.) where: the first few.</summary>
+		/// <summary>Tests: the rim's rock faces (part 1) that lie on the ground (FaceOnGround) - pale shards on the ground beside
+		/// the mouth, the rock's look where the ground's belongs - left after SplitTop. (Part 0, the lining, isn't the rim; with no
+		/// ground look - SplitTop not run - the whole rim is part 1 and every such face counts.) where: the first few.</summary>
 		public int RimShards(out string where)
 		{
 			where = "";
@@ -868,20 +868,14 @@ namespace DynamicIslands.Editor
 			var verts = new List<Vector3>();
 			mesh.GetVertices(verts);
 			int[] tris = mesh.GetTriangles(1);
-			Vector3 lo = land.transform.position, size = land.terrainData.size;
 			int n = 0;
 			var seen = new List<string>();
 			for (int i = 0; i + 2 < tris.Length; i += 3)
 			{
 				Vector3 a = r.TransformPoint(verts[tris[i]]), b = r.TransformPoint(verts[tris[i + 1]]), c = r.TransformPoint(verts[tris[i + 2]]);
-				Vector3 cross = Vector3.Cross(b - a, c - a);
-				if (cross.magnitude < 2e-4f) continue;
-				Vector3 mid = (a + b + c) / 3f;
-				Vector3 gn = land.terrainData.GetInterpolatedNormal((mid.x - lo.x) / size.x, (mid.z - lo.z) / size.z);
-				float off = (mid.y - GroundY(land, mid)) * gn.y;
-				if (off < -0.05f || off > 0.3f || Vector3.Dot(cross.normalized, gn) <= 0f) continue;
+				if (!FaceOnGround(land, a, b, c)) continue;
 				n++;
-				if (seen.Count < 4) seen.Add(mid.ToString("0.0"));
+				if (seen.Count < 4) seen.Add(((a + b + c) / 3f).ToString("0.0"));
 			}
 			where = string.Join(" ", seen.ToArray());
 			return n;
