@@ -12,6 +12,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next update (planned)
 
 Not in this release yet; these come in the next update:
+- **Dug tunnels' mouths under a cave hill** wear the hill's sandy rock on their rim walls, not the island rock that looked blue in shade.
+- **Cave hills over the sea** no longer leave a thin flap of rock at the water line over a gap of sea, which trapped swimmers under it.
+- **Old Mine Islet**: long ramps out of the inland pond and the deep pit by the arch, a ramp up the slag spit, ladders up to Grey's claim and the ore barge's yard, the gap under Grey's den hill closed - and two rats in Tunnel 1.
 - **Cave hills by the sea** no longer reach one cell out over the water past a cave's rock: that edge's wall closed a pocket of sea under it.
 - **Dug tunnels' mouths** have a clean edge on steep slopes: the rim's rock faces lying on the ground take the ground's look, so no pale saw-tooth shards show round the opening.
 - **Caves under a rock mountain**: a cave's way in no longer runs on through a neighbouring cave's hill, which left a narrow slot down to the sea floor. Its hill no longer stands out over the sea or leans out over the water from the shore, where it closed in a pool of water a swimmer could not get out of.

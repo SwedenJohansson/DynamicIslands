@@ -591,6 +591,16 @@ namespace DynamicIslands
 			return p;
 		}
 
+		/// <summary>Where a dug branch starting at <paramref name="start"/> leaves the main stroke's line: the index of the
+		/// main point nearest it, or -1 when it starts more than <paramref name="within"/> m from the main line (a stroke from
+		/// its own mouth that meets the passage further in).</summary>
+		public static int BranchJoin(List<Vector3> main, Vector3 start, float within)
+		{
+			if (main == null || main.Count == 0) return -1;
+			int near = Enumerable.Range(0, main.Count).OrderBy(i => (main[i] - start).sqrMagnitude).First();
+			return (main[near] - start).magnitude <= within ? near : -1;
+		}
+
 		/// <summary>The ways into an island's caves: each cave tool cave from its mouth piece through its tunnels to its room or
 		/// far end; each dug tunnel's strokes (a branch reached along the passage it leaves).</summary>
 		static List<GapWay> GapWays(IslandWorldState.Entry e)
@@ -639,11 +649,11 @@ namespace DynamicIslands
 					var w = new GapWay { Kind = "dug " + (k == 0 ? "tunnel" : "branch " + k) };
 					List<Vector3> line = DigLine(t, k);
 					var pts = new List<Vector3>();
-					if (k > 0)
-					{
-						int near = Enumerable.Range(0, main.Count).OrderBy(i => (main[i] - line[0]).sqrMagnitude).First();
-						pts.AddRange(main.Take(near + 1));
-					}
+					// a branch that leaves the passage: walked in along the main stroke to where it starts; a stroke that starts
+					// at its own mouth outside and only meets the passage further in (Old Mine's man-way, round 4) is its own way
+					// in - its shots and walk start at that mouth, not at the main stroke's
+					int near = k > 0 ? BranchJoin(main, line[0], 3f) : -1;
+					if (near >= 0) pts.AddRange(main.Take(near + 1));
 					pts.AddRange(line);
 					RaycastHit fh;
 					for (int i = 0; i < pts.Count; i += 3) w.Floor.Add(DigFloor(pts[i], out fh) ? fh.point : pts[i]);
@@ -653,6 +663,19 @@ namespace DynamicIslands
 				}
 			}
 			return ways;
+		}
+
+		[ConsoleCommand(name: "CIGapWaysUnit", docs: "Dev, anywhere: dug-tunnel ways (BranchJoin) - a branch that starts on the passage is walked in along the main stroke; a stroke from its own mouth outside (Old Mine's man-way, round 4) is its own way in, its shots from its own mouth")]
+		public static void GapWaysUnitCommand()
+		{
+			bool ok = true;
+			var main = new List<Vector3>();
+			for (int i = 0; i <= 10; i++) main.Add(new Vector3(44.7f + i * 0.98f, 4f, -12f + i * 0.3f));
+			Check(ref ok, BranchJoin(main, new Vector3(54.5f, 4f, -9f), 3f) == 10, "a branch from the passage's end: joins at its end");
+			Check(ref ok, BranchJoin(main, new Vector3(49.6f, 4f, -10.9f), 3f) == 5, "a branch from the passage's middle: joins there");
+			Check(ref ok, BranchJoin(main, new Vector3(64.7f, 5f, -19.4f), 3f) == -1, "the man-way from its own mouth 12 m off: its own way in");
+			Check(ref ok, BranchJoin(new List<Vector3>(), Vector3.zero, 3f) == -1, "no main line: its own way in");
+			if (ok) Log("PASS: gap ways"); else Fail("gap ways");
 		}
 
 		[ConsoleCommand(name: "CICaveGapsLook", docs: "Dev, a world (host): one cave gaps test island or any saved island with caves (CICaveGapsLook <cgaps-dig|cgaps-st|cgaps-uw|island name, spaces allowed> [noshots]), the kept one or brought next to the raft: each cave's way in (cave tool tunnels to the room or the far end, each dug stroke) - pictures from outside at the mouth and over the hill, from inside looking in, looking out, at the walls and roof at its end, by day and by night (shot_cg_<island>_<n>_<view>.png); a clear way along it (no rock across it); walked in with Raft's controller and back out past the mouth where it is dry; where it is under the sea: water there (Raft's swimming, the breath going down) and, in a room above the sea, dry ground with the breath coming back")]
