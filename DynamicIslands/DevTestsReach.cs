@@ -53,6 +53,22 @@ namespace DynamicIslands
 			Log("PASS: reach speed " + reachSpeed + ", pace " + reachPace.ToString("F1") + " (" + reachPrechecked + " prechecked, " + reachWalked + " walked, " + reachRewalked + " walked again at 1x so far)");
 		}
 
+		[ConsoleCommand(name: "CIReachByPlayUnit", docs: "Dev, anywhere: the reach's 'checked by play' (island reach.byplay=...) - a target a play goes to (zone/open) is found in the plays, case aside; a made-up one is not")]
+		public static void CIReachByPlayUnit()
+		{
+			bool ok = true;
+			Action<bool, string> chk = (c, w) => { Log((c ? "PASS: " : "FAIL: ") + w); ok &= c; };
+			chk(ByPlayFile("jump_om_finale") == "old_mine_islet.play", "a zone the play goes to: " + (ByPlayFile("jump_om_finale") ?? "none"));
+			chk(ByPlayFile("slag STACK prize") == "old_mine_islet.play", "a chest it opens, any case");
+			chk(ByPlayFile("No such chest anywhere 11-05") == null, "a target no play visits: none");
+			var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Slag stack prize" };
+			chk(ByPlayNote(set, new ReachTarget { Name = "Slag stack prize" }).StartsWith("CHECKED BY PLAY"), "listed + played: checked by play");
+			chk(ByPlayNote(set, new ReachTarget { Name = "Ore barge's crate" }) == null, "not listed: the grid's own verdict");
+			chk(ByPlayNote(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "No such chest anywhere 11-05" }, new ReachTarget { Name = "No such chest anywhere 11-05" }) == null, "listed, no play visits it: the grid's own verdict");
+			chk(LadderHandReach(0) == 1.0f && LadderHandReach(1) == 1.5f && LadderHandReach(2) == 1.5f, "a ladder's hand reach: 1.0 m on foot, 1.5 m swimming or diving (cells 1 m apart)");
+			if (ok) Log("PASS: reach by play"); else Fail("reach by play");
+		}
+
 		[ConsoleCommand(name: "CIReachFallUnit", docs: "Dev, anywhere: the reach's drop check (FallCaught) - a roof whose top is a back face (a cave skin seen from above, Old Mine's wedge, round 4) catches a fall like a floor does; open air below does not")]
 		public static void ReachFallUnitCommand()
 		{
@@ -294,6 +310,49 @@ namespace DynamicIslands
 		{
 			Bounds b;
 			return ReachBounds(e.Root, out b) ? Mathf.Max(b.extents.x, b.extents.z) : 40f;
+		}
+
+		/// <summary>How far off a ladder a spot may be and still take hold of it: 1.0 m on foot; a swimmer 0.5 m more - its spots
+		/// are 1 m cells' middles and it swims the rest of the way, so a ladder at the sea's edge 1.1 m from the nearest cell
+		/// middle was "nothing can take hold of it" (Old Mine's barge ladder, round 5, 11-05).</summary>
+		public static float LadderHandReach(int kind) { return kind == 1 || kind == 2 ? 1.5f : 1.0f; }
+
+		/// <summary>Targets the reach grid can't judge (a hop course: it has no jumps across gaps), from the island's
+		/// "island reach.byplay=name;name" line - each one counts when the island's own play test goes to it (zone/open/reach
+		/// &lt;name&gt;), and is "CHECKED BY PLAY" instead of a fail; one the play never visits stays a fail (Old Mine's slag stacks 11-05).</summary>
+		static HashSet<string> ReachByPlay(IslandWorldState.Entry e, string island)
+		{
+			var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			string v;
+			IDictionary<string, string> props = IslandCache.PropsOf(e);
+			if (props == null || !props.TryGetValue("reach.byplay", out v) || string.IsNullOrEmpty(v)) return set;
+			foreach (string n in v.Split(';')) if (n.Trim().Length > 0) set.Add(n.Trim());
+			return set;
+		}
+
+		/// <summary>"CHECKED BY PLAY (file)" for a target listed as checked by play that the island's play goes to, null when none does (a plain fail)
+		/// or it isn't listed.</summary>
+		static string ByPlayNote(HashSet<string> byPlay, ReachTarget t)
+		{
+			if (byPlay == null || !byPlay.Contains(t.Name)) return null;
+			string file = ByPlayFile(t.Name);
+			return file != null ? "CHECKED BY PLAY (" + file + ": hops the grid can't jump)" : null;
+		}
+
+		/// <summary>The play test (file name) with a "zone/open/reach &lt;name&gt;" line, or null.</summary>
+		public static string ByPlayFile(string target)
+		{
+			try
+			{
+				foreach (string f in Directory.GetFiles(RecipeFolder, "*.play"))
+					foreach (string l in File.ReadAllLines(f))
+					{
+						string[] w = l.Trim().Split(new[] { ' ' }, 2);
+						if (w.Length == 2 && (w[0] == "zone" || w[0] == "open" || w[0] == "reach") && string.Equals(w[1].Trim(), target, StringComparison.OrdinalIgnoreCase)) return Path.GetFileName(f);
+					}
+			}
+			catch (Exception) { }
+			return null;
 		}
 
 		/// <summary>The offset line of the island's own play test (its recipe's coordinates), or zero.</summary>
@@ -615,7 +674,7 @@ namespace DynamicIslands
 					// (or over its top end: a ladder up through a hole in a landing - the line to its middle crossed the landing, PQ11 10-27)
 					if (g.Kind[k] == 0 && feet >= lb.max.y - 1.0f && feet <= lb.max.y + 1.3f && (LadderClear(p + Vector3.up * 1.0f, flat, ch) || LadderClear(p + Vector3.up * 1.0f, new Vector3(flat.x, lb.max.y + 0.6f, flat.z), ch))) { g.Link(node, k); g.Link(k, node); tops++; continue; }
 					// (the foot, and any spot beside it up its length: a hand reaches it with nothing solid in between)
-					if (hd <= 1.0f && feet >= lb.min.y - 1.8f && feet <= lb.max.y - 1.0f)
+					if (hd <= LadderHandReach(g.Kind[k]) && feet >= lb.min.y - 1.8f && feet <= lb.max.y - 1.0f)
 					{
 						Vector3 eye = g.Kind[k] == 0 ? p + Vector3.up * 1.3f : p + Vector3.up * 0.2f;
 						Vector3 at = lb.ClosestPoint(new Vector3(eye.x, Mathf.Clamp(eye.y, lb.min.y + 0.2f, lb.max.y - 0.2f), eye.z));
@@ -626,7 +685,7 @@ namespace DynamicIslands
 						else if (hd < whyHd) { whyHd = hd; why = "nearest foot spot " + (g.Kind[k] == 0 ? "on foot" : g.Kind[k] == 1 ? "swimming" : "diving") + " " + hd.ToString("F1") + " m off, feet " + (feet - e.Position.y).ToString("F1") + ": " + (c1 ? "the line to its middle is blocked" : "the line to the ladder is blocked"); }
 					}
 					else if (hd < whyHd && feet < lb.min.y - 1.8f) { whyHd = hd; why = "nearest spot " + hd.ToString("F1") + " m off has its feet " + (lb.min.y - feet).ToString("F1") + " m under the ladder's foot"; }
-					else if (hd < whyHd && hd > 1.0f) { whyHd = hd; why = "nearest spot " + hd.ToString("F1") + " m off (a hand reaches 1.0 m)"; }
+					else if (hd < whyHd && hd > LadderHandReach(g.Kind[k])) { whyHd = hd; why = "nearest spot " + hd.ToString("F1") + " m off (a hand reaches " + LadderHandReach(g.Kind[k]).ToString("F1") + " m)"; }
 				}
 				Vector3 lr = Rel(e, lb.center, offset);
 				string where = "ladder " + LadderName(ch[0], e) + " at " + lr.x.ToString("F1") + " " + lr.z.ToString("F1") + " h=" + (lb.min.y - e.Position.y).ToString("F1") + ".." + (lb.max.y - e.Position.y).ToString("F1");
@@ -787,6 +846,7 @@ namespace DynamicIslands
 				useOf[t] = u;
 				relOf[t] = Rel(e, t.B.center, offset);
 			}
+			HashSet<string> byPlay = ReachByPlay(e, name);
 			foreach (ReachTarget t in targets)
 			{
 				hbWhat = "reach " + name; hbStep = hbT++; hbProg++;
@@ -800,6 +860,8 @@ namespace DynamicIslands
 					SurvivorCage sc = t.Root.GetComponentInChildren<SurvivorCage>(false);
 					if (sc != null && sc.IsOpen) { report.Add(head + "NOTE opened in the play (the cage is gone now): not checked"); continue; }
 				}
+				string playNote = ByPlayNote(byPlay, t);
+				if (use.Count == 0 && playNote != null) { report.Add(head + playNote + " - the grid: no spot to use it from (" + WhyNoSpot(t) + ")"); continue; }
 				if (use.Count == 0)
 				{
 					problems++;
@@ -827,6 +889,7 @@ namespace DynamicIslands
 					else if (walked.StartsWith("PASS")) report.Add(head + walked + " (" + grid + ")");
 					else { problems++; report.Add(head + walked + " (the grid found a way: " + grid + ")"); }
 				}
+				else if (playNote != null) report.Add(head + playNote + " - the grid: " + string.Join("; ", bad.Distinct().ToArray()) + NearestReached(e, g, fwd, use, offset));
 				else
 				{
 					problems++;

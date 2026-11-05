@@ -323,6 +323,8 @@ prop treasure26181 treasure.loot=CopperIngot*2;TitaniumOre*1;Nail*8
 info title=Old Mine Islet
 info author=Custom Islands
 info description=A wooded mining island as big as Raft's own: a rock mound with an old mine inside, a headframe on Copper Knob, a miners' row, a flooded quarry with a pump house under the water, slag stacks, an assay plane and an ore barge - and a prospector's camp on the wooded hill. Pitch dark in the mine, where something big has dug in. Bring a light.
+# (the slag stacks' hop course: CIReach has no jumps across gaps - old_mine_islet.play goes to these instead)
+island reach.byplay=Slag tipper's perch;Slag stack prize;jump_om_finale
 island on.arrive=message||A rock mound with a timbered mine mouth. Rails run into the dark.
 
 note greynote Prospector Elias Grey's note | E. GREY - FIRST CLAIM, OLD MINE ISLET\n\nI found the vein from up here. You can see the colour in the rock of the mound when the sun is low, a rusty stripe down one face. I staked the claim, and the company built the mine around my stake and paid me a tenth of what it was worth.\n\nThey dug too deep. The lowest tunnel broke into a burrow under the mound, and something big lives in it. It came out of the dark and the men ran, and the last cart was left full at the end of the line.\n\nTake the head lamp from the miner's locker before you go in. It is darker down there than you think.\n\nMy tools are under the hatch by the tent. My nuggets I buried at the foot of the hill on the sea side. The company never saw them.
@@ -407,9 +409,9 @@ brush flatten from -36.3 22.2 to -35.0 22.2 r=1.2 s=20 frames=600 h=7.4
 # (Grey's claim: the bear cave's mouth opens on a shelf 3.4 m up with cliffs into deep sea on three sides - its low
 # east lip raised to the shelf, and a ladder up the east cliff from the water)
 brush flatten from -49.9 51.5 to -49.9 55.5 r=1.2 s=20 frames=600 h=3.3
-place LandmarkLadder_6m greyladder at -48.3 53.5 h=-3.4 yaw=270
+place LandmarkLadder_6m greyladder at -49.3 53.5 h=-3.4 yaw=270
 # (the ore barge's yard: boxed in by the wreck and two cliffs - a ladder up the south cliff from the water)
-place LandmarkLadder_6m bargeladder at 52 -38.9 h=-4.4 yaw=0
+place LandmarkLadder_6m bargeladder at 52 -38.5 h=-4.4 yaw=0
 brush flatten at 67.2 -20.2 r=2.6 s=20 frames=600 h=5.6
 clear at 67.2 -20.2 r=3.0
 call om_ledge x0=67.2 z0=-20.2 x1=63.2 z1=-22.4 h0=5.6 h1=5.2 n=4
