@@ -16,6 +16,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Name of the mountain's object (under the island).</summary>
 		public const string SkinName = "CaveSkin";
 		/// <summary>Grid step, how steep the sides fall (m down per m out), how far they reach, and how far above the roofs.</summary>
+		public const float CellSize = Cell;
 		const float Cell = 1.25f, Slope = 1.5f, Reach = 16f, Over = 0.3f;
 
 		readonly List<Transform> caves = new List<Transform>();
@@ -127,6 +128,20 @@ namespace DynamicIslands.Editor
 
 		bool[,] otherHill; // (last build: out past an open end, where another cave's hill reaches)
 		float hillX0, hillZ0;
+		// (tests: the last build's cells, for CICaveCell)
+		float[,] dTop, dRim, dGround, dRaw, dHeight, dCover, dCorr; bool[,] dCut, dSea, dOn; string[,] dGroundBy;
+
+		/// <summary>Tests: what the last build made of the cell nearest a world point (CICaveCell), or null off the grid.</summary>
+		public string CellText(Vector3 at)
+		{
+			if (dTop == null) return null;
+			int i = Mathf.RoundToInt((at.x - hillX0) / Cell), k = Mathf.RoundToInt((at.z - hillZ0) / Cell);
+			if (i < 0 || k < 0 || i >= dTop.GetLength(0) || k >= dTop.GetLength(1)) return null;
+			System.Func<float, string> F = v => float.IsNaN(v) ? "-" : float.IsInfinity(v) ? "inf" : v.ToString("0.00");
+			return "cell " + i + "," + k + " (" + F(hillX0 + i * Cell) + " " + F(hillZ0 + k * Cell) + "): top " + F(dTop[i, k]) + " rim " + F(dRim[i, k]) + " ground " + F(dGround[i, k]) +
+				" (" + (dGroundBy[i, k] ?? "-") + ") cover " + F(dCover[i, k]) + " corridor " + F(dCorr[i, k]) + " raw " + F(dRaw[i, k]) + " height " + F(dHeight[i, k]) +
+				(dCut[i, k] ? " CUT" : "") + (dSea[i, k] ? " SEA" : "") + (dOn[i, k] ? " ON" : "");
+		}
 
 		/// <summary>What a ray down at a spot hits, highest first, when the hill is the top and something is under it; else null.</summary>
 		static RaycastHit[] UnderSkin(Vector3 at, float fromY, Collider skin)
@@ -449,6 +464,7 @@ namespace DynamicIslands.Editor
 				for (int k = 0; k < nz; k++)
 					if (!on[i, k] && float.IsNaN(corridor[i, k]) && height[i, k] < ground[i, k] - 3f && groundBy[i, k] != null)
 						tall[groundBy[i, k]] = (tall.ContainsKey(groundBy[i, k]) ? tall[groundBy[i, k]] : 0) + 1;
+			dTop = top; dRim = rimY; dGround = ground; dRaw = raw; dHeight = height; dCover = cover; dCorr = corridor; dCut = cut; dSea = sea; dOn = on; dGroundBy = groundBy;
 			LastMap = "higher ground: " + string.Join(", ", System.Linq.Enumerable.Select(tall, kv => kv.Key + " " + kv.Value)) + "\nx " + x0.ToString("0.0") + " z " + z0.ToString("0.0") + " step " + Cell + " (rows from +z)\n" + map;
 			var verts = new List<Vector3>();
 			var norms = new List<Vector3>();

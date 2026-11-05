@@ -1083,11 +1083,38 @@ namespace DynamicIslands
 			{
 				float f = i / (float)(n - 1), x = Mathf.Lerp(x1, x2, f), z = Mathf.Lerp(z1, z2, f);
 				Vector3 from = new Vector3(e.Position.x + x, 40f, e.Position.z + z);
-				RaycastHit[] hits = Physics.RaycastAll(from, Vector3.down, 80f, ~0, QueryTriggerInteraction.Ignore).OrderByDescending(h => h.point.y).ToArray();
+				// round 4: back faces too (cave shells face inward, so their roofs only show from above this way); "v" marks a
+				// face turned down, so a hit seen from behind
+				bool back = Physics.queriesHitBackfaces;
+				Physics.queriesHitBackfaces = true;
+				RaycastHit[] hits;
+				try { hits = Physics.RaycastAll(from, Vector3.down, 80f, ~0, QueryTriggerInteraction.Ignore).OrderByDescending(h => h.point.y).ToArray(); }
+				finally { Physics.queriesHitBackfaces = back; }
 				Log("RAY " + x.ToString("F2") + " " + z.ToString("F2") + ": " + (hits.Length == 0 ? "nothing" :
-					string.Join(", ", hits.Select(h => h.collider.name + (h.collider.GetComponent<Terrain>() != null ? " (terrain)" : "") + " " + h.point.y.ToString("F2")).ToArray())));
+					string.Join(", ", hits.Select(h => h.collider.name + (h.collider.GetComponent<Terrain>() != null ? " (terrain)" : "") + " " + h.point.y.ToString("F2") + (h.normal.y < 0f ? "v" : "")).ToArray())));
 			}
 			Log("PASS: ray line");
+		}
+
+		[ConsoleCommand(name: "CICaveCell", docs: "Dev, in game: what the cave hill skin's last build made of the cells round a point on a custom island (shell roof, rim, ground and what it was, cover, raw and softened height, cut/sea/on) - why the skin is or isn't somewhere: CICaveCell <island> <x> <z> [half m, 0] (m from its middle)")]
+		public static void CaveCellCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			if (args.Length < 3) { Fail("CICaveCell <island> <x> <z> [half]"); return; }
+			Func<int, float> num = i => float.Parse(args[i], System.Globalization.CultureInfo.InvariantCulture);
+			float x = num(1), z = num(2), half = args.Length > 3 ? num(3) : 0f;
+			int shown = 0;
+			for (float dz = -half; dz <= half + 0.01f; dz += CaveMountain.CellSize)
+				for (float dx = -half; dx <= half + 0.01f; dx += CaveMountain.CellSize)
+					foreach (CaveMountain m in e.Root.GetComponentsInChildren<CaveMountain>())
+					{
+						string t = m.CellText(new Vector3(e.Position.x + x + dx, 0f, e.Position.z + z + dz));
+						if (t == null) continue;
+						Log("CELL " + (x + dx).ToString("F2") + " " + (z + dz).ToString("F2") + " " + m.name + ": " + t);
+						shown++;
+					}
+			if (shown == 0) Fail("no cave hill cell there (or no build yet)"); else Log("PASS: cave cells");
 		}
 
 		[ConsoleCommand(name: "CIRaySlice", docs: "Dev, in game: a doorway's opening on a custom island - from <x> <z> (m from its middle) rays toward <x2> <z2>, one every 25 cm of height from <h1> to <h2> above the sea: how far each goes and what stops it: CIRaySlice <island> <x> <z> <x2> <z2> <h1> <h2>")]
