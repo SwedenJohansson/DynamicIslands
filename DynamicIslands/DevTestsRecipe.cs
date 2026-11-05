@@ -88,6 +88,7 @@ namespace DynamicIslands
 		{
 			var decks = new List<FloorGap>();
 			var held = new HashSet<EditorGameObject>();
+			List<Bounds> building = null;
 			foreach (EditorGameObject e in placed)
 			{
 				string n = e.GameObjectName ?? "";
@@ -121,6 +122,15 @@ namespace DynamicIslands
 							ok = true;
 							break;
 						}
+					// (a building piece drawn under it holds it too, if its top is within 1.5 m: a roof slab over a room whose
+					// ceiling has no collider - Shelter Atoll's storeroom, RF5 11-05)
+					if (!ok)
+					{
+						if (building == null) building = PostBuilding(placed);
+						Bounds own = whole;
+						ok = building.Any(b => !own.Contains(b.center) && b.max.y < p.y - 0.05f && b.max.y > p.y - gap - 1.5f &&
+							p.x > b.min.x + 0.1f && p.x < b.max.x - 0.1f && p.z > b.min.z + 0.1f && p.z < b.max.z - 0.1f);
+					}
 					if (ok) held.Add(e);
 					else d.Corners.Add(p);
 				}
@@ -1985,6 +1995,7 @@ namespace DynamicIslands
 							if (recipeReseat) ReseatSunkTrees(seaY);
 							// (and plants, rocks, corals and finds the recipe's own strokes buried whole - a footing flattened over the shelf:
 							// Signal Rock's table coral 0.3 m under its platform's sea floor; nothing showed of them, the review 2026-10-03)
+							KeptByMiddle.Clear();
 							var covered = GameObject.Find("PlacedObjects").transform.GetComponentsInChildren<EditorGameObject>()
 								.Where(e => e.gameObject.activeSelf && (NotABase.IsMatch(e.GameObjectName ?? "") || RaftUnderwater.CategoryOf(e.GameObjectName ?? "") != null) &&
 									(e.GameObjectName ?? "").IndexOf("Cave", StringComparison.OrdinalIgnoreCase) < 0 && (e.GameObjectName ?? "").IndexOf("Tunnel", StringComparison.OrdinalIgnoreCase) < 0 && BuriedWhole(e.gameObject))
@@ -1994,6 +2005,7 @@ namespace DynamicIslands
 								CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(covered, false));
 								Log("  " + covered.Count + " plants, rocks, corals or finds under the ground (buried by the recipe's strokes) left out");
 							}
+							if (KeptByMiddle.Count > 0) Log("  " + KeptByMiddle.Count + " kept though under the ground, their middle in a dug passage: " + string.Join("; ", KeptByMiddle.Take(12).ToArray()));
 							// (and posts under the floors and decks over nothing - CA30: the corners nothing holds, down to the ground or
 							// the sea floor; "posts off" in the recipe leaves them out)
 							if (!recipeNoPosts) StandPosts();
@@ -2396,13 +2408,18 @@ namespace DynamicIslands
 			List<FloorGap> gaps = FloorsOverNothing(placedRoot.GetComponentsInChildren<EditorGameObject>(), 0.3f, ground, DynamicIslands.EditorWaterLevel, out floors);
 			var stood = new List<Vector3>();
 			List<Bounds> things = gaps.Count > 0 ? PostObstacles(placedRoot) : new List<Bounds>();
-			int dodged = 0, blocked = 0;
+			List<Bounds> building = gaps.Count > 0 ? PostBuilding(placedRoot.GetComponentsInChildren<EditorGameObject>()) : new List<Bounds>();
+			int dodged = 0, blocked = 0, overBuilding = 0;
 			foreach (FloorGap d in gaps)
 				foreach (Vector3 corner in d.Corners)
 				{
 					if (stood.Any(s => new Vector2(s.x - corner.x, s.z - corner.z).magnitude < 0.4f && Mathf.Abs(s.y - corner.y) < 0.5f)) continue;
 					float foot = GroundY(corner.x, corner.z) - 0.3f;
 					if (corner.y - foot < 0.5f || !ObjectLimit.Allow(1)) continue;
+					// (not down through a building under the floor: a roof slab's corner over a room's ceiling with no collider
+					// read as over nothing, and its post went through the room from the roof to the pit's floor - Shelter
+					// Atoll's storeroom, RF5 11-05. The building holds the floor there; no post)
+					if (PostBlocked(building.Where(bb => bb.max.y < corner.y - 0.3f).ToList(), corner, foot)) { overBuilding++; continue; }
 					// (not through a thing: in under the floor, towards its middle, until the post's line is clear)
 					Vector3 p = corner;
 					if (PostBlocked(things, p, foot))
@@ -2441,6 +2458,7 @@ namespace DynamicIslands
 				}
 			if (stood.Count > 0) Log("  " + stood.Count + " posts stood under " + gaps.Count + " floors and decks over nothing" + (dodged > 0 ? ", " + dodged + " moved off things" : ""));
 			if (blocked > 0) Log("  " + blocked + " posts left out: a thing under the floor's corner (furniture, a prop, a trunk)");
+			if (overBuilding > 0) Log("  " + overBuilding + " posts left out: a building under the floor's corner (a room, a floor below)");
 			return stood.Count;
 		}
 
@@ -2466,6 +2484,22 @@ namespace DynamicIslands
 			return boxes;
 		}
 
+		/// <summary>What a post must not go down through either (StandPosts): the building pieces' boxes - floors, walls, ceilings and
+		/// roofs (the land's own, pipes and ladders left out as in PostObstacles). Only the ones wholly under the floor count.</summary>
+		static List<Bounds> PostBuilding(IEnumerable<EditorGameObject> placed)
+		{
+			var boxes = new List<Bounds>();
+			foreach (EditorGameObject e in placed)
+			{
+				string n = e.GameObjectName ?? "";
+				if (!e.gameObject.activeInHierarchy || n.StartsWith("Zone_") || OverlapIgnore.IsMatch(n) || n.IndexOf("Pillar", StringComparison.OrdinalIgnoreCase) >= 0 ||
+					!(Structural.IsMatch(n) || FloorLike.IsMatch(n) || n.IndexOf("Ceiling", StringComparison.OrdinalIgnoreCase) >= 0)) continue;
+				foreach (Renderer r in e.GetComponentsInChildren<Renderer>(false))
+					if (r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly) boxes.Add(r.bounds);
+			}
+			return boxes;
+		}
+
 		/// <summary>Whether a post at <paramref name="top"/> (the floor's underside) down to <paramref name="foot"/> goes more than the
 		/// overlap check's margin into one of <paramref name="things"/> (its radius ~0.1 m).</summary>
 		static bool PostBlocked(List<Bounds> things, Vector3 top, float foot)
@@ -2479,6 +2513,9 @@ namespace DynamicIslands
 			return false;
 		}
 
+		/// <summary>What BuriedWhole kept only because its middle is in a dug passage (its top in the rock): the save logs them.</summary>
+		static readonly List<string> KeptByMiddle = new List<string>();
+
 		/// <summary>Whether an object is under the ground whole (ShowsAboveGround).</summary>
 		static bool BuriedWhole(GameObject go)
 		{
@@ -2491,7 +2528,13 @@ namespace DynamicIslands
 			// placed with h= in the spike drift were all left out as buried)
 			// (or its middle: a thing taller than the passage - cavegate's vines in a gallery's neck, their top in the roof's rock -
 			// was left out at save, 11-05)
-			if (DigTunnel.InsideAny(new Vector3(b.center.x, b.max.y, b.center.z), 0f, true) || DigTunnel.InsideAny(b.center, 0f, true)) return false;
+			if (DigTunnel.InsideAny(new Vector3(b.center.x, b.max.y, b.center.z), 0f, true)) return false;
+			if (DigTunnel.InsideAny(b.center, 0f, true))
+			{
+				// (the save logs what only the middle kept, so a recipe can see what the rule keeps - the review 11-05)
+				if (!ShowsAboveGround(b, ground)) KeptByMiddle.Add(go.name + " at " + Num(b.center.x) + " " + Num(b.center.y) + " " + Num(b.center.z));
+				return false;
+			}
 			return !ShowsAboveGround(b, ground);
 		}
 

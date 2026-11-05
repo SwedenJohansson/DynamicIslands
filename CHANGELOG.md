@@ -12,6 +12,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next update (planned)
 
 Not in this release yet; these come in the next update:
+- **Cave hills over dug passages**: the rock hill over an island's caves no longer stands on over a dug passage that is open to the sky as a bridge (Ironreef Caverns' mouth C looked out from under a pale overhang); the passage stays an open cut with rock faces down to its floor.
+- **Shelter Atoll and Ironreef Caverns touch-ups**: Shelter's sunken dinghy lies keeled over and half in the sand on the lagoon floor by the cave's mouth, and its storeroom has a lamp and no longer has a post standing through it (a roof's support post is no longer stood down through a room under the roof); in Ironreef the rubble boulders in the fallen drift lie on its floor, not on the spike rigs, and a rock lip covers the dug lining at mouth B.
 - **Test plays: `use <islander> pick <n>`** picks answer n of an islander's dialogue as a click does, so a play can check what each answer does (a chest shown, a message).
 - **The alpha box's Discord button** is Discord blue and pulses gently, so new players find the Custom Islands community.
 - **Renaming an object** no longer renames an **order puzzle** of the same name in other objects' actions (`order|Bells|2` stays when an object called "Bells" is renamed).

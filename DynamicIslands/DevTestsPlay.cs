@@ -1037,6 +1037,12 @@ namespace DynamicIslands
 			catch (Exception e) { Log("  weather: " + pick.name + " failed - " + (e.InnerException ?? e).Message); }
 		}
 
+		/// <summary>The camera's effects that draw water drops running down the screen (Raft's WaterDropsIME), switched on.</summary>
+		internal static List<Behaviour> ScreenDrops(Camera cam)
+		{
+			return cam.GetComponents<Behaviour>().Where(b => b != null && b.enabled && !(b is Camera) && b.GetType().Name.IndexOf("WaterDrops", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+		}
+
 		static IEnumerator PlayPicture(string file, Vector3 from, Vector3 look)
 		{
 			Camera cam = Camera.main;
@@ -1048,6 +1054,10 @@ namespace DynamicIslands
 			int mask = cam.cullingMask;
 			foreach (Renderer r in cam.GetComponentsInChildren<Renderer>(true)) if (r.gameObject.layer != 0) cam.cullingMask &= ~(1 << r.gameObject.layer);
 			Vector3 lp = cam.transform.localPosition; Quaternion lr = cam.transform.localRotation;
+			// (the drops on the screen after the player came out of the water bent every picture of the play that followed a
+			// dive - Shelter Atoll's storeroom and Dr. Shogo wavy, the review 11-05: off for the picture; the underwater look stays)
+			List<Behaviour> drops = ScreenDrops(cam);
+			foreach (Behaviour b in drops) b.enabled = false;
 			byte[] pic;
 			try
 			{
@@ -1059,8 +1069,10 @@ namespace DynamicIslands
 			{
 				cam.transform.localPosition = lp; cam.transform.localRotation = lr;
 				cam.cullingMask = mask;
+				foreach (Behaviour b in drops) b.enabled = true;
 				GfxShotEnd(gfx);
 			}
+			if (drops.Count > 0) Log("  (the screen's water drops off for the picture: " + string.Join(", ", drops.Select(b => b.GetType().Name).ToArray()) + ")");
 			string path = Path.Combine(RecipeFolder, "play_" + file + ".jpg");
 			File.WriteAllBytes(path, pic);
 			Network_Player me = RAPI.GetLocalPlayer();

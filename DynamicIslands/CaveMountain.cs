@@ -51,6 +51,7 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Tests: a map of the last build (R roof, s side, c a way in, - cut off out past an open end, g lower than the ground, . nothing), one line per row.</summary>
 		public string LastMap;
+		public int OverDug; // (cells over an open dug passage left without hill - tests)
 
 		/// <summary>Tests: builds it again now.</summary>
 		public void Rebuild() { due = -1f; Build(); }
@@ -361,6 +362,7 @@ namespace DynamicIslands.Editor
 			// (out past an open end with no rock of its own and no other hill there: none - the rounding had spread the hill
 			// on over it again; a face down to the ground stands at the cut)
 			var cut = new bool[nx, nz];
+			OverDug = 0;
 			otherHill = new bool[nx, nz]; hillX0 = x0; hillZ0 = z0;
 			for (int i = 0; i < nx; i++)
 				for (int k = 0; k < nz; k++)
@@ -368,6 +370,9 @@ namespace DynamicIslands.Editor
 					bool past = false;
 					for (int j = 0; j < mouths.Count && !past; j++) past = ahead[j][i, k] > 0.5f;
 					cut[i, k] = past && float.IsNaN(cover[i, k]) && !(raw[i, k] > ground[i, k] - 0.6f);
+					// (over a dug passage open to the sky - the dug rock is the highest ground there - none: the hill stood on over
+					// Ironreef's mouth C as a bridge 5-13 m over the dug cut, its underside blue-white in the shade - RF3, 11-05)
+					if (float.IsNaN(top[i, k]) && float.IsNaN(corridor[i, k]) && groundBy[i, k] != null && groundBy[i, k].StartsWith(DigTunnel.RockName, System.StringComparison.Ordinal)) { cut[i, k] = true; otherHill[i, k] = false; OverDug++; }
 					otherHill[i, k] = past && float.IsNaN(cover[i, k]) && !cut[i, k];
 				}
 			for (int i = 0; i < nx; i++)
@@ -487,7 +492,7 @@ namespace DynamicIslands.Editor
 				if (n == 0) TintRockTextures(mr, factor);
 				Debug.Log("[CUSTOM ISLANDS] Cave mountain tint " + factor + " (colour " + n + ")");
 			}
-			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0"));
+			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : ""));
 		}
 
 		/// <summary>Raft's island rock (CaravanIslandRocks) has no colour property, so ApplyTint leaves it orange under a dark

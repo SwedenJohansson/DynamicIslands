@@ -1455,7 +1455,7 @@ namespace DynamicIslands
 			foreach (float pitch in new[] { -20f, 0f, 15f, 35f, 60f })
 				for (int i = 0; i < 16; i++) looks.Add(Quaternion.Euler(-pitch, i * 22.5f, 0f) * Vector3.forward);
 			looks.Add(Vector3.up);
-			int bad = 0, worstBad = 0;
+			int bad = 0, worstBad = 0, inSolid = 0;
 			string worst = "";
 			var what = new Dictionary<string, int>();
 			bool backs0 = Physics.queriesHitBackfaces;
@@ -1473,6 +1473,10 @@ namespace DynamicIslands
 							// (room to stand: nothing within 1.7 m over the floor)
 							if (first(h.point + Vector3.up * 0.1f, Vector3.up, 1.6f, true) != null) continue;
 							Vector3 e = h.point + Vector3.up * 1.6f;
+							// (not inside something solid that isn't the piece's own: a boulder set into the gap beside a mouth fills it, its
+							// collider holds the place - no player stands there, and from inside it the look round met the shell's back: RF3, 11-05)
+							if (Physics.OverlapSphere(e, 0.1f, ~0, QueryTriggerInteraction.Ignore).Concat(Physics.OverlapSphere(h.point + Vector3.up * 0.6f, 0.1f, ~0, QueryTriggerInteraction.Ignore))
+								.Any(c => counts(c) && !own.Contains(c) && !(c is TerrainCollider))) { inSolid++; continue; }
 							// (in the cave: its roof over it, seen from below - on the shell's own floor or on the ground; not in a gap
 							// under the shell, where its floor's back is over it, nor on a rock of the piece's own that stands out of the
 							// shell, under its outside - Balboa's dead end has one, under the ground and in the sea)
@@ -1553,7 +1557,7 @@ namespace DynamicIslands
 			}
 			finally { Physics.queriesHitBackfaces = backs0; }
 			if (eyes.Count == 0) { detail = "no place to stand under its roof found"; return 0; }
-			detail = eyes.Count + " places to stand, " + (eyes.Count * looks.Count) + " looks: " + bad + " see through" +
+			detail = eyes.Count + " places to stand" + (inSolid > 0 ? " (" + inSolid + " inside a solid thing left out)" : "") + ", " + (eyes.Count * looks.Count) + " looks: " + bad + " see through" +
 				(bad > 0 ? " (" + string.Join(", ", what.OrderByDescending(x => x.Value).Select(x => x.Key + " " + x.Value).ToArray()) + "); worst " + worst : "");
 			return bad;
 		}

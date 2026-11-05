@@ -499,6 +499,9 @@ clear from -13.5 -46.5 to -18 -44 r=2 body only=^(?!.*(Boulder|Rock|Cliff|Stone)
 # (mouth C in the gully was a bare hole in the hillside: framed with boulders on both sides - 11-05)
 place SmallBoulder3 - at -16.5 -42.3 ground sit scale=0.6 yaw=30
 place SmallBoulder3 - at -18.75 -46.1 ground sit scale=0.6 yaw=200
+# (mouth B's dug lining stood out of the slope in front as a flat grey flap: a rock lip over it - RF4, 11-05)
+# (west of the way out, which runs south from -35 -43: two in it stopped the walk)
+place SmallBoulder3 - at -37.2 -43.2 ground y=-0.3 sit scale=0.6 yaw=70
 # the fallen drift: spikes where the floor gave way, planks along the east wall
 place Note_Sign irwarn at -25.9 -26.6 h=20.5 sit drop yaw=174
 note irwarn DANGER - DRIFT 4 | Floor gave way onto the old trap pit. Spikes under the rubble. Keep to the planks on the right.\n- Ironreef Mining Co.
@@ -506,15 +509,16 @@ note irwarn DANGER - DRIFT 4 | Floor gave way onto the old trap pit. Spikes unde
 # saw workshop; Raft's only natural spikes, Temperance's stalagmites, are ice blue and hang stalactites in the air at
 # this size, and a tint does not take on them - 11-05; the rigs' pivot is their top bar, so h= is where the bar lies: just
 # over the floor, the saws half out of the rubble)
+# (sunk a third in the floor (19.0 m here) at a set height: dropped, they landed on the saws' bars and sat a metre over it - RF6, 11-05)
+place SmallBoulder3 - at -24.7 -25.9 h=18.6 sit scale=0.3 yaw=10
+place SmallBoulder3 - at -26.2 -24.6 h=18.55 sit scale=0.35 yaw=130
+place SmallBoulder3 - at -24.9 -22.6 h=18.6 sit scale=0.3 yaw=250
+place SmallBoulder3 - at -26.1 -21.3 h=18.6 sit scale=0.3 yaw=60
+place VP_Rubble_Plank01 - at -24.42 -24.55 h=20.5 drop yaw=30
+place VP_Rubble_Plank01 - at -25.6 -22.9 h=20.5 drop yaw=-70
 place VP_SpikeTrap_01 - at -25.18 -25.51 h=19.3 scale=0.75 yaw=84
 place VP_SpikeTrap_04 - at -25.58 -23.75 h=19.2 scale=0.75 yaw=20
 place VP_SpikeTrap_01 - at -25.48 -21.93 h=19.3 scale=0.75 yaw=-40
-place SmallBoulder3 - at -24.7 -25.9 h=20.5 drop scale=0.3 yaw=10
-place SmallBoulder3 - at -26.2 -24.6 h=20.5 drop scale=0.35 yaw=130
-place SmallBoulder3 - at -24.9 -22.6 h=20.5 drop scale=0.3 yaw=250
-place SmallBoulder3 - at -26.1 -21.3 h=20.5 drop scale=0.3 yaw=60
-place VP_Rubble_Plank01 - at -24.42 -24.55 h=20.5 drop yaw=30
-place VP_Rubble_Plank01 - at -25.6 -22.9 h=20.5 drop yaw=-70
 place Block_Floor_Wood - at -22.96 -26.07 h=20.5 drop yaw=-6
 place Block_Floor_Wood - at -23.12 -24.58 h=20.5 drop yaw=-6
 place Block_Floor_Wood - at -23.29 -23.09 h=20.5 drop yaw=-6

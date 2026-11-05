@@ -327,6 +327,27 @@ namespace DynamicIslands
 				// (the dug tunnels too - G3, 11-04: built when the island comes, their lining and the ground cut over their mouths)
 				var digs = e.Root.GetComponentsInChildren<DigTunnel>().ToList();
 				for (float w = 0f; w < 10f && digs.Any(x => x.Triangles == 0 || x.Land() == null); w += 0.5f) yield return new WaitForSeconds(0.5f);
+				// (no hill over a dug passage open to the sky: Ironreef's mouth C ran under a rock bridge of it, blue-white in its shade - RF3)
+				if (digs.Count > 0 && skin != null)
+				{
+					var roofed = new List<string>();
+					foreach (DigTunnel dt in digs)
+						foreach (List<DigTunnel.Point> s in dt.Strokes)
+							foreach (DigTunnel.Point q in s)
+							{
+								Vector3 w = dt.transform.TransformPoint(q.At);
+								float dug = float.NegativeInfinity, other = float.NegativeInfinity, hill = float.NegativeInfinity;
+								foreach (RaycastHit h in Physics.RaycastAll(new Vector3(w.x, w.y + 80f, w.z), Vector3.down, 160f, ~0, QueryTriggerInteraction.Ignore))
+								{
+									if (h.collider.name == CaveMountain.SkinName) hill = Mathf.Max(hill, h.point.y);
+									else if (h.collider.name.StartsWith(DigTunnel.RockName, StringComparison.Ordinal)) dug = Mathf.Max(dug, h.point.y);
+									else if (h.collider.gameObject.layer == IslandSpawner.TerrainLayer) other = Mathf.Max(other, h.point.y);
+								}
+								if (dug > other && hill > dug + 1.5f) roofed.Add((w - e.Root.transform.position).ToString("F1") + " hill " + (hill - dug).ToString("F1") + " m over it");
+							}
+					Log("    hill over the open dug passages: " + (roofed.Count == 0 ? "none" : roofed.Count + " point(s): " + string.Join("; ", roofed.Take(6).ToArray())));
+					if (roofed.Count > 0) bad++;
+				}
 				if (digs.Count > 0) Log("    dug tunnels: " + digs.Count + " (" + string.Join(", ", digs.Select(x => x.Strokes.Count + " stroke(s), " + x.PointCount + " points, " + x.Triangles + " triangles").ToArray()) + ")");
 				if (looks.Count > 0 || digs.Count > 0)
 				{

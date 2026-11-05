@@ -24,7 +24,8 @@ picture ir_b_out -37.6 +1.7 -46.4 -34.6 17 -42.6
 picture ir_b_in -30 18.2 -40 -26 18 -33
 
 # Mouth C (the gully): level in, into B, on to the hall
-picture ir_c_out -12 17.5 -46.5 -17.5 15.8 -44.3
+# (from the gully floor: the old lens at -12 -46.5 stood in the hill over the gully - RF3, 11-05)
+picture ir_c_out -14 17.2 -45.4 -19 16.2 -43.6
 walk -16 -45 to -18 -44 to -23 -41 to -29 -38 to -26 -33 to -23 -30.5
 picture ir_c_in -22 16 -41.5 -29 16 -38
 

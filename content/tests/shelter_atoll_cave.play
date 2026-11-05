@@ -30,11 +30,15 @@ at 6 0 h=1.9
 use storedoor stay
 expect message lift the bar
 expect hidden storedoor
-picture sa_storeroom 6 3.3 0.6 6 2.2 7
+# (from beside the doorway, not on its middle line: from there the open left leaf, swung into the room on the doorway's
+# middle, stood edge-on as a dark bar down the picture - RF7, 11-05)
+picture sa_storeroom 4.6 3.3 0.8 6.6 2.2 8
 
 # The dinghy by the cave's mouth on the lagoon floor, from the landing
 picture sa_cave_landing 2 4 -12 -5 -3 -22
-snap sa_dinghy dinghy 320 4.5 1
+# (from beside it, looking past the wreck to the mouth: the snap's camera stood in the shore's ground - RF1)
+# (under the water, from the lagoon floor: the landing's deck covers the dinghy and the mouth from above - RF1, 11-05)
+picture sa_dinghy 2.5 -5.8 -14 -3 -6.8 -19.5
 
 # Swim in: from the lagoon floor before the mouth up the flooded tunnel into the den, and breathe there (G2: no
 # teleport into the pocket)

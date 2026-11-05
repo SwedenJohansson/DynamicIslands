@@ -1709,7 +1709,7 @@ namespace DynamicIslands
 				cam.farClipPlane = Mathf.Max(far, 2500f);
 				cam.targetTexture = rt;
 				// (the player's underwater and wobble effects on Raft's camera would bend the picture: off for this one frame)
-				var effects = cam.GetComponents<Behaviour>().Where(b => b != null && b.enabled && !(b is Camera) && System.Text.RegularExpressions.Regex.IsMatch(b.GetType().Name, "(?i)underwater|wobble|distort|refract|drunk|blur|wave")).ToList();
+				var effects = cam.GetComponents<Behaviour>().Where(b => b != null && b.enabled && !(b is Camera) && System.Text.RegularExpressions.Regex.IsMatch(b.GetType().Name, "(?i)underwater|wobble|distort|refract|drunk|blur|wave|waterdrops")).ToList();
 				if (!effectsLogged) { effectsLogged = true; Log("  (the camera's effects: " + string.Join(", ", cam.GetComponents<Behaviour>().Where(b => b != null && !(b is Camera)).Select(b => b.GetType().Name + (b.enabled ? "" : " off")).ToArray()) + "; off for pictures: " + effects.Count + ")"); }
 				foreach (Behaviour b in effects) b.enabled = false;
 				bool gfx = GfxShotBegin(); // (CIGfx low: the user's quality)
