@@ -1320,6 +1320,20 @@ namespace DynamicIslands.Editor
 			return false;
 		}
 
+		/// <summary>A world point inside a live dug tunnel's passage, in a world or the editor (tests: a play's walk started in a dug
+		/// cave - 11-05).</summary>
+		public static bool InPassage(Vector3 world)
+		{
+			for (int i = 0; i < live.Count; i++)
+			{
+				DigTunnel t = live[i];
+				if (t == null || !t.isActiveAndEnabled || t.PointCount == 0) continue;
+				float sY = Mathf.Abs(t.transform.lossyScale.y) > 1e-4f ? Mathf.Abs(t.transform.lossyScale.y) : 1f;
+				if (t.Distance(t.transform.InverseTransformPoint(world)) * sY < 0f) return true;
+			}
+			return false;
+		}
+
 		/// <summary>The editor, twice a second when no stroke is under way: tunnels moved, undone, or the ground sculpted over them - made again and the ground cut again.</summary>
 		public static void EditorTick(Terrain land, bool busy)
 		{

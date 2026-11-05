@@ -52,7 +52,7 @@ expect message isn't whole
 | `offset` | `<x> <z>` | See Coordinates. |
 | `stand` | | The player on the highest gentle spot near the island terrain's top (`StandRoutine`). |
 | `at` | `<x> <z> [y=\|h=]` | The player put at the point, on what is there. |
-| `walk` | `<x> <z> to <x> <z> [to <x> <z> ...] [h=] [below=] [blocked]` | The player is put on the first point, then walks the rest with Raft's controller (`PlayWalk`). Each point must be reached within 0.7 m before 2 s stuck. `h=`: must end within 1.6 m of that height. `below=`: start on what is under that height. `blocked`: passes when the walk does not get there. |
+| `walk` | `<x> <z> to <x> <z> [to <x> <z> ...] [h=] [below=] [blocked]` | The player is put on the first point, then walks the rest with Raft's controller (`PlayWalk`). Each point must be reached within 0.7 m before 2 s stuck. `h=`: must end within 1.6 m of that height. `below=`: start on what is under that height. In a cave (a cave piece or a dug tunnel over the point) a walk starts on the cave floor, not the hill above. `blocked`: passes when the walk does not get there. |
 | `climb` | `<x> <z> [h=]` | The nearest collider whose name contains `climb`, within 3 m; the player 1 m above its foot. Passes when Raft's controller is climbing within 3 s. |
 | `zone` | `<id>` | The trigger zone with that id (any case) is entered (`ScEnterZone`). |
 | `air` | `<zone id> [here]` | A shown zone with Air: a player with 10 % breath has over 90 % a moment later. The player is put in it; with `here` they must already stand in it (a walk or swim in before it, no teleport). |
@@ -61,6 +61,7 @@ expect message isn't whole
 | `reach` | `<title>` | That chest is within 2.5 m of the player's eye with nothing solid between (`ScReach`; a slain creature's loose body does not count). The player is not moved. |
 | `openat` | `<x> <z>` | Opens the nearest chest; it must be within 4 m of the point. |
 | `use` | `<name> [stay]` | Fires `use` on the object (`Behaviours.Fire`). The player is put next to it (`ScUse`); with `stay`, used from where they stand (a lift carries them). A survivor cage is opened as a player's E opens it (`SurvivorCage.Use`); an islander is talked to and a collectible (`collect.set`) is claimed as E does. |
+| `use ... pick` | `<islander> pick <n>` | Talks to the islander (the player put next to it) and picks answer n (1-3) of its dialogue as a click does: passes when the dialogue opened, closed with that answer and `Islanders.Talked` ran, so its `on.choice<n>` effects (`show`, `message`...) are checked in the same play (a `CITalk` after the play cannot be: the next play spawns the island again). |
 | `code` | `<name> <digits> [wrong]` | Opens the object's keypad code lock (`lock.code`) as a player does, types the digits and OK; passes when the keypad closed and the lock is open (`CodeLock`). With `wrong`: passes when the digits did not open it. |
 | `dig` | `[n]` | Digs up the island's buried treasure n (0, the first: `treasure` / `Treasure_Buried`) as a player's shovel does, three digs, and picks up its chest (`BuriedTreasure`, `TreasurePoint`); its `treasure.loot` is given then. |
 | `kill` | `<label>` | Waits up to 15 s for the island's animals of that label, then defeats all of them (`ScKill`), the player moved to each, and puts the player back where it stood. |

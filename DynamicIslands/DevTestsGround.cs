@@ -1157,7 +1157,7 @@ namespace DynamicIslands
 
 		/// <summary>How far the first thing under <paramref name="foot"/> that isn't <paramref name="self"/> is (the land, another object,
 		/// the sea floor); 9999 = nothing.</summary>
-		[ConsoleCommand(name: "CICaveInside", docs: "Dev, editor or world: every cave piece and dug tunnel (the editor's island, or the loaded custom islands; a dug tunnel from eyes along each of its strokes, joined tunnels and cave pieces counted as inside) looked round from inside at eye height - nothing seen through: no face seen from its back (Raft draws the shells, the ground and the hill over them from one side only), no sky but out through an open end (X7). CICaveInside [part of the name] [shots: a picture of each piece's worst look, shot_caveinside_<n>.png]")]
+		[ConsoleCommand(name: "CICaveInside", docs: "Dev, editor or world: every cave piece and dug tunnel (the editor's island, or the loaded custom islands; a dug tunnel from eyes along each of its strokes, joined tunnels and cave pieces counted as inside) looked round from inside at eye height - nothing seen through: no face seen from its back (Raft draws the shells, the ground and the hill over them from one side only), no sky but out through an open end (X7). CICaveInside [part of the name: in a world, a saved island of that name not loaded here is brought next to the raft first (host)] [shots: a picture of each piece's worst look, shot_caveinside_<n>.png]")]
 		public static void CaveInsideCommand(string[] args)
 		{
 			// (an island's name may have spaces - "Shelter Atoll shots": the last word shots, the rest the name; it took the
@@ -1173,6 +1173,34 @@ namespace DynamicIslands
 		static IEnumerator CaveInsideRoutine(string only, bool shots)
 		{
 			var caves = new List<KeyValuePair<string, Transform>>(); // (island: piece)
+			// (a saved island named that and not loaded here: brought next to the raft first, as CICaveIslands does - it was found
+			// only after a CIPlay had loaded it until 11-05)
+			if (!DynamicIslands.InEditor() && only.Length > 0 && LoadSceneManager.IsGameSceneLoaded
+				&& !IslandWorldState.Islands.Any(x => x.Root != null && !x.Loading && x.Name.IndexOf(only, StringComparison.OrdinalIgnoreCase) >= 0))
+			{
+				var kept = new System.Text.RegularExpressions.Regex("_[0-9a-f]{12}$");
+				List<string> saved = IslandSpawner.ListSavedIslands().Where(s => !kept.IsMatch(s)).ToList();
+				string file = saved.FirstOrDefault(s => s.Equals(only, StringComparison.OrdinalIgnoreCase))
+					?? saved.FirstOrDefault(s => s.Replace("_", " ").Equals(only, StringComparison.OrdinalIgnoreCase))
+					?? saved.FirstOrDefault(s => s.IndexOf(only, StringComparison.OrdinalIgnoreCase) >= 0);
+				if (file != null)
+				{
+					if (!Raft_Network.IsHost) { Fail("cave inside: '" + file + "' is not loaded here (the host brings it: CICaveInside " + only + " there)"); yield break; }
+					var left = IslandWorldState.Islands.Where(x => string.Equals(x.Name, file, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
+					if (left.Count > 0) { IslandWorldState.RemoveIds(left, true); IslandCache.Forget(); yield return new WaitForSeconds(1f); }
+					Vector3? spot = ScSpot(file, 400f);
+					if (!spot.HasValue) { Fail("cave inside: no open sea near the raft for '" + file + "'"); yield break; }
+					var made = new List<IslandWorldState.Entry>();
+					yield return ScBring(file, spot.Value, made);
+					IslandWorldState.Entry be = made.LastOrDefault();
+					if (be == null || be.Root == null) { Fail("cave inside: '" + file + "' didn't come"); yield break; }
+					Log("  '" + file + "' was not loaded: brought next to the raft at " + spot.Value.ToString("F0"));
+					yield return new WaitForSeconds(4f);
+					// (its dug tunnels' linings built, as CICaveIslands waits)
+					var bd = be.Root.GetComponentsInChildren<DigTunnel>().ToList();
+					for (float w = 0f; w < 10f && bd.Any(x => x.Triangles == 0 || x.Land() == null); w += 0.5f) yield return new WaitForSeconds(0.5f);
+				}
+			}
 			if (DynamicIslands.InEditor())
 			{
 				int dug, cut = CaveGround.EditorNow(terraineditor.terrain, out dug); // (the ground out of the rooms now, not in a second)

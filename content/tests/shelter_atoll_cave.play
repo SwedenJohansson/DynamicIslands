@@ -1,7 +1,7 @@
 # Shelter Atoll's lagoon cave and Dr. Shogo (CIPlay shelter_atoll_cave, 11-04; in a test world 'CI ...'). Points as in
 # its recipe. The storeroom is barred until someone talked to Dr. Shogo; the cave's supply chest stays hidden until his
-# second answer (CITalk Shelter Dr. Shogo pick 2 after this play - unquoted, the first word picks the island; the chest is not
-# checked there, as the next play respawns the island); the den has air and a
+# second answer (use Dr. Shogo pick 2 - 11-05: picked in this play, so the chest is checked here; a CITalk after the play
+# can't be checked, as the next play respawns the island); the den has air and a
 # dry way down to the water. Pictures of Dr. Shogo, the storeroom, the dinghy by the mouth and the den.
 island Shelter Atoll keep
 offset 14.8414 -1.2974
@@ -20,6 +20,10 @@ snap sa_shogo shogochair 250 4 1.2
 snap sa_shogo_chair shogochair 160 2.5 0.6
 use Dr. Shogo
 expect step 0
+
+# His second answer (the dive): the cave's supply chest shows
+use Dr. Shogo pick 2
+expect shown shelsupply
 
 # Now the bar lifts
 at 6 0 h=1.9

@@ -1,0 +1,11 @@
+# Cave tools 11-05 (CIPlay cavetools_dugwalk; in a test world 'CI ...'): a walk started in a dug tunnel (Ironreef Caverns'
+# hall, under its hill) starts on the tunnel's floor with no below= - PlaySurface's inCave counts DigTunnel passages as cave.
+island Ironreef Caverns keep
+offset 1.3339 0.1645
+hour 11
+weather Calm
+
+# The hall to the north passage's end, all inside the dug rock: ends on its floor, not on the hill over it
+walk -23 -30 to -22.9 -27 to -23.12 -24.58 to -23.45 -21.6 h=19.3
+# and back, started in the passage
+walk -23.45 -21.6 to -23.12 -24.58 to -23 -30 h=19.3

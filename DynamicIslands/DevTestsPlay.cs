@@ -106,6 +106,11 @@ namespace DynamicIslands
 					RaycastHit under = hits.Skip(1).FirstOrDefault(h => h.point.y < hits[0].point.y - 2.5f && h.collider.name != CaveMountain.SkinName);
 					if (under.collider != null) return under.point.y;
 				}
+				// (a dug tunnel under the spot - 11-05: the first surface down with the passage over it, its floor - not the hill
+				// over the tunnel; Ironreef's plays worked round it with below=)
+				if (DigTunnel.AnyLive)
+					foreach (RaycastHit dh in hits)
+						if (DigTunnel.InPassage(dh.point + Vector3.up * 0.6f)) return dh.point.y;
 			}
 			RaycastHit hit;
 			return Physics.Raycast(new Vector3(p.x, below, p.z), Vector3.down, out hit, below + 300f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : playEntry.Position.y;
@@ -361,6 +366,31 @@ namespace DynamicIslands
 					{
 						// (use <name> stay: used from where the player is - standing on a lift, it carries them)
 						string what = Rest(line, 1).Trim();
+						// (use <islander> pick <n>, 11-05: answer n of the islander's dialogue picked as a player's click does - ends in
+						// Islanders.Talked with that choice, so its on.choice effects are checked in this play; a CITalk after the play
+						// can't be, as the next play spawns the island again)
+						System.Text.RegularExpressions.Match pm = System.Text.RegularExpressions.Regex.Match(what, @"^(.+?)\s+pick\s+(\d+)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+						if (pm.Success)
+						{
+							string who = pm.Groups[1].Value.Trim();
+							int answer = int.Parse(pm.Groups[2].Value);
+							IslandObjectRef talker = ScObjOf(playEntry, who);
+							Islander isl = talker != null ? talker.GetComponentInChildren<Islander>(true) : null;
+							Check(ref ok, isl != null, "islander '" + who + "' there");
+							if (isl == null) break;
+							PutPlayerNear(talker.transform);
+							int talks = Islanders.Talks;
+							DialoguePanel.LastClose = null;
+							isl.Talk();
+							Check(ref ok, DialoguePanel.IsOpen, "'" + who + "' opens a dialogue");
+							yield return new WaitForSeconds(0.4f);
+							Check(ref ok, DialoguePanel.IsOpen, "'" + who + "''s dialogue stays open (" + (DialoguePanel.LastClose ?? "-") + ")");
+							DialoguePanel.Pick(answer);
+							Check(ref ok, !DialoguePanel.IsOpen && Islanders.Talks > talks, "answer " + answer + " picked: dialogue closed, Islanders.Talked ran");
+							Log("  (islander '" + who + "': answer " + answer + " picked)");
+							owed += 1.2f;
+							break;
+						}
 						bool stay = what.EndsWith(" stay");
 						if (stay) what = what.Substring(0, what.Length - 5).Trim();
 						IslandObjectRef used = ScObjOf(playEntry, what);
