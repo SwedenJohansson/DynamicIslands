@@ -915,8 +915,10 @@ namespace DynamicIslands
 				if (p.x >= tp.x && p.x <= tp.x + ts.x && p.z >= tp.z && p.z <= tp.z + ts.z && tp.y + t.SampleHeight(p) > p.y)
 				{
 					// (a cut cell (a dug mouth's hole) has no ground: what is over p there is found by the ray below; only by a dug
-					// passage - a cave piece's hole under its hill let the audit into the earth under it: a 'trap' in the rock, 11-05)
-					if (TerrainHoleAt(t, p) && DigTunnel.InPassage(p, -1f)) break;
+					// passage - a cave piece's hole under its hill let the audit into the earth under it: a 'trap' in the rock, 11-05;
+					// in the cave piece itself its roof may stand over the kept height map: a roof facing down over p, a floor under
+					// it - Old Mine Islet's Last ore cart in the quarry cave was walled off and the walker sent through its rock)
+					if (TerrainHoleAt(t, p)) { if (DigTunnel.InPassage(p, -1f)) break; return !CaveUnder(p, p.y + 30f); }
 					return !CaveUnder(p, tp.y + t.SampleHeight(p));
 				}
 			}

@@ -705,9 +705,17 @@ namespace DynamicIslands
 			{
 				Vector3 d = Quaternion.Euler(0f, a, 0f) * -inDir;
 				dirs.Add(d);
-				Vector3 at = mouth + d * 3f;
-				Vector3 g = GapFloor(at, 3f, GapWalkDown);
-				dys.Add(GapWalkDy(g != at, g.y, floor));
+				// (the worst of 1, 2 and 3 m out: the walk to the mouth is a straight line, and a start on a ledge's far end with
+				// a drop between - the slope under the man-way of Old Mine Islet - let the walker slide off on the way in, 11-05)
+				float worst = 0f;
+				for (float m = 1f; m <= 3f; m += 1f)
+				{
+					Vector3 at = mouth + d * m;
+					Vector3 g = GapFloor(at, 3f, GapWalkDown);
+					float dy = GapWalkDy(g != at, g.y, floor);
+					if (Mathf.Abs(dy) > Mathf.Abs(worst)) worst = dy;
+				}
+				dys.Add(worst);
 			}
 			return dirs[GapWalkPick(dys)];
 		}

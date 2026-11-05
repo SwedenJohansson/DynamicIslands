@@ -369,6 +369,7 @@ namespace DynamicIslands.Editor
 			// (out past an open end with no rock of its own and no other hill there: none - the rounding had spread the hill
 			// on over it again; a face down to the ground stands at the cut)
 			var cut = new bool[nx, nz];
+			var sea = new bool[nx, nz];
 			otherHill = new bool[nx, nz]; hillX0 = x0; hillZ0 = z0;
 			for (int i = 0; i < nx; i++)
 				for (int k = 0; k < nz; k++)
@@ -379,8 +380,24 @@ namespace DynamicIslands.Editor
 					// (nor out over the sea from a roof above it: the hill's skin over the water, its foot on the sea floor, closed a
 					// pool of sea under it - a swimmer under a roof with no air, Old Mine Islet's mound over its south shore 11-05;
 					// a cave's own roof under the sea keeps its hill, and the hill's surface under the water too)
-					if (!cut[i, k] && float.IsNaN(cover[i, k]) && ground[i, k] < SeaLevel - SeaFloorBy && raw[i, k] > SeaLevel) cut[i, k] = true;
+					if (!cut[i, k] && float.IsNaN(cover[i, k]) && ground[i, k] < SeaLevel - SeaFloorBy && raw[i, k] > SeaLevel) { cut[i, k] = true; sea[i, k] = true; }
 					otherHill[i, k] = past && float.IsNaN(cover[i, k]) && !cut[i, k];
+				}
+			// (and its shore ring: the face down from the last cell left to a cut one leant out over the water, a hollow of sea
+			// under it with its mouth under the water - Old Mine Islet's south shore trap at -7 -36, 11-05; the face now stands
+			// on the shore, the ground there over the sea or nearly)
+			for (int i = 0; i < nx; i++)
+				for (int k = 0; k < nz; k++)
+				{
+					if (cut[i, k] || !float.IsNaN(cover[i, k]) || !(raw[i, k] > SeaLevel) || !(ground[i, k] < SeaLevel + SeaShoreBy)) continue;
+					bool bySea = false;
+					for (int di = -1; di <= 1 && !bySea; di++)
+						for (int dk = -1; dk <= 1 && !bySea; dk++)
+						{
+							int a = i + di, c = k + dk;
+							bySea = a >= 0 && a < nx && c >= 0 && c < nz && sea[a, c];
+						}
+					if (bySea) { cut[i, k] = true; otherHill[i, k] = false; }
 				}
 			for (int i = 0; i < nx; i++)
 				for (int k = 0; k < nz; k++)
@@ -725,10 +742,11 @@ namespace DynamicIslands.Editor
 			Quad(verts, norms, uvs, tris, origin, new Vector3(a.x, ya0, a.z), new Vector3(a.x, ya1, a.z), new Vector3(b.x, yb1, b.z), new Vector3(b.x, yb0, b.z), n, true);
 		}
 
-		/// <summary>The caves' open ends where the hill's faces cross them.</summary>
-		/// <summary>The sea's surface (world y) and how far under it the ground must be for the hill not to go out over it.</summary>
-		const float SeaLevel = 0f, SeaFloorBy = 1f;
+		/// <summary>The sea's surface (world y) and how far under it the ground must be for the hill not to go out over it; the shore cells
+		/// next to those, up to SeaShoreBy over it, go too.</summary>
+		const float SeaLevel = 0f, SeaFloorBy = 1f, SeaShoreBy = 0.5f;
 
+		/// <summary>The caves' open ends where the hill's faces cross them.</summary>
 		sealed class Arch
 		{
 			public const int Strips = 8; // (per edge of a square: 0.16 m)
