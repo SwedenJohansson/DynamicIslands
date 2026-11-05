@@ -705,10 +705,19 @@ namespace DynamicIslands
 			{
 				Vector3 d = Quaternion.Euler(0f, a, 0f) * -inDir;
 				dirs.Add(d);
-				dys.Add(GapFloor(mouth + d * 3f, 3f, 6f).y - floor);
+				Vector3 at = mouth + d * 3f;
+				Vector3 g = GapFloor(at, 3f, GapWalkDown);
+				dys.Add(GapWalkDy(g != at, g.y, floor));
 			}
 			return dirs[GapWalkPick(dys)];
 		}
+
+		/// <summary>How far down GapWalkOut looks for the ground beside a mouth (from 3 m over the floor).</summary>
+		const float GapWalkDown = 30f;
+
+		/// <summary>The ground's height beside a mouth less its floor; no ground under the probe (a cliff, the sea far
+		/// below) is a drop past the probe's reach, never level ground.</summary>
+		static float GapWalkDy(bool hit, float groundY, float floor) => hit ? groundY - floor : -(GapWalkDown - 3f);
 
 		static readonly float[] GapWalkAngles = { 0f, 30f, -30f, 60f, -60f, 90f, -90f };
 		const float GapWalkStep = 1.0f;
@@ -733,6 +742,8 @@ namespace DynamicIslands
 				new { d = new[] { -4f, -3f, -3f, -2f, -2f, -0.3f, -0.6f }, w = 5 },
 				new { d = new[] { -4f, -3f, -3.5f, -2.2f, -2.5f, -1.8f, -3f }, w = 5 },
 				new { d = new[] { 1.0f, -3f, -3f, -3f, -3f, -3f, -3f }, w = 0 },
+				// (no ground under the probe straight out or to one side: a drop, so the ledge at -60 is taken, not the miss)
+				new { d = new[] { GapWalkDy(false, 0f, 5.7f), GapWalkDy(true, 1.4f, 5.7f), GapWalkDy(false, 0f, 5.7f), GapWalkDy(true, 7.6f, 5.7f), GapWalkDy(true, 5.4f, 5.7f), -3f, -3f }, w = 4 },
 			};
 			int bad = 0;
 			foreach (var c in cases)
@@ -740,7 +751,7 @@ namespace DynamicIslands
 				int got = GapWalkPick(c.d);
 				if (got != c.w) { bad++; Log("  " + string.Join(" ", c.d.Select(x => x.ToString("0.0")).ToArray()) + " -> " + got + ", not " + c.w); }
 			}
-			if (bad == 0) Log("PASS: cave gaps walk from: " + cases.Length + " cases (straight out, a ledge to the side, the closest)"); else Fail("cave gaps walk from: " + bad + " wrong");
+			if (bad == 0) Log("PASS: cave gaps walk from: " + cases.Length + " cases (straight out, a ledge to the side, the closest, no ground is a drop)"); else Fail("cave gaps walk from: " + bad + " wrong");
 		}
 
 		static bool CaveGapsLookIslandMissing(string name)
@@ -915,14 +926,14 @@ namespace DynamicIslands
 					{
 						// (from the side when the ground straight out falls away: a mouth on a ledge is come at along the ledge)
 						Vector3 outDir = GapWalkOut(mouth, w.In);
-						PlayerMove.To(me, GapFloor(mouth + outDir * 3f, 3f, 6f) + Vector3.up * 0.3f, ControllerType.Ground);
+						PlayerMove.To(me, GapFloor(mouth + outDir * 3f, 3f, GapWalkDown) + Vector3.up * 0.3f, ControllerType.Ground);
 						yield return new WaitForSeconds(0.8f);
 						bool inOk = false, outOk = false; string why = "", why2 = "";
 						yield return PlayWalk(me, new List<Vector3>(f), (r, m) => { inOk = r; why = m; });
 						if (inOk)
 						{
 							var back = new List<Vector3>(f); back.Reverse();
-							back.Add(GapFloor(mouth + outDir * 5f, 3f, 6f));
+							back.Add(GapFloor(mouth + outDir * 5f, 3f, GapWalkDown));
 							yield return PlayWalk(me, back, (r, m) => { outOk = r; why2 = m; });
 						}
 						Check(ref ok, inOk && outOk, label + ": walked in to its end" + (inOk ? " and back out past the mouth" + (outOk ? "" : " - NOT: " + why2) : " - NOT: " + why));
