@@ -1,17 +1,21 @@
-# Guide pictures of Old Mine Islet (CIPlay old_mine_islet_pics): Raft's camera and water at midday, inside the mine
-island Old Mine Islet
+# Review pictures of Old Mine Islet (CIPlay old_mine_islet_pics, round 5 11-05): the ways out of every pit, the dug
+# mouths' rim walls, the ladders. Raft's camera, midday, calm; points as in its recipe.
+island Old Mine Islet keep
 offset 2.6829 -2.0027
 hour 11
 weather Calm
-at 22 -12
-wait 2
-picture old_mine_islet_island 46 17 -44 2 6 -12
-picture old_mine_islet_portal 31 6 -19 14 6.5 -19
-picture old_mine_islet_yard 27 9 -2 20 5 -17
-picture om_prospect_hill 14 8 18 -5 9 42
-picture om_hill_path 3.0 5 21.0 -5 6.5 42
-picture om_prospect_camp 3 17 34 -5 14 42
-picture om_mine_from_hill -3 21 38 2 6 -18
-at 12 -17.4
-wait 2
-picture old_mine_islet_inside 15 6.8 -17.6 -8 6 -19.4
+at 0 -12
+wait 3
+picture old_mine_islet_backdrift_out -12 6.5 34 -12 3.5 25
+picture old_mine_islet_backdrift_in -12 4.6 26 -12 3.5 15
+picture om5_mouth_oldwork_west 38 7.5 -15 44.7 4 -12
+picture om5_mouth_oldwork_east 71 9.5 -25 64.7 6 -19.4
+picture om5_mouth_oldwork_north 55 8 6 54.5 4.5 0
+picture om5_ramp_pond 24 5 -29 17.5 0 -29
+picture om5_ramp_arch -33 7 -14 -40 1 -15
+picture om5_ramp_spit 7 5 -78 0.5 0 -82
+picture om5_wedge -30.5 8.5 20 -35.6 5.5 20
+picture om5_grey_lip -40 7 53.5 -48 2 53.5
+picture om5_grey_ladder -42 2 59 -46.4 0.5 53.5
+picture om5_barge_ladder 52 3.5 -49 52 0.5 -41.8
+picture om5_portal_17 23 6.5 -18 17 5 -20
