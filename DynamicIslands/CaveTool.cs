@@ -327,6 +327,8 @@ namespace DynamicIslands.Editor
 		public const string PlugName = "CavePlug";
 		// (the wall's rock texture over this many metres: at 6 m its fine cracks read as a flat paved wall - 11-03)
 		const float PlugTile = 20f;
+		/// <summary>How far a lone den's wall (PlugOpening) bulges in or out at most, in metres: rock relief, not a flat board.</summary>
+		public const float PlugRelief = 0.7f;
 		const float PlugIn = 0.8f, PlugBelow = 3f, HoleHalf = 2.6f, HoleBelow = 1f, HoleUp = 5.6f;
 
 		/// <summary>
@@ -456,38 +458,34 @@ namespace DynamicIslands.Editor
 							if (a >= 0 && b >= 0 && a < nx && b < ny && inside[a, b]) keep[i, k] = true;
 						}
 			float hx0 = mx - HoleHalf, hx1 = mx + HoleHalf, hy0 = my - HoleBelow, hy1 = my + HoleUp;
+			// (rock relief: a flat board with the den's texture at 20 m drew as a smooth marbled blue-white sheet beside
+			// The Abyss's acid path, 11-05. Each corner is pushed in or out by coarse noise and every triangle has its own
+			// corners, so the wall reads as faceted rock like the den's own walls)
+			Func<float, float, float> depth = (px, py) => PlugRelief * (2f * Mathf.PerlinNoise(px / 1.6f + 17.3f, py / 1.6f + 5.1f) - 1f)
+				+ 0.35f * PlugRelief * (2f * Mathf.PerlinNoise(px / 0.7f + 3.7f, py / 0.7f + 41.9f) - 1f);
 			var verts = new List<Vector3>();
 			var tris = new List<int>();
 			for (int k = 0; k < ny; k++)
 			{
 				float ya = y0 + k * cell, yb = ya + cell;
-				int run = -1;
-				for (int i = 0; i <= nx; i++)
+				for (int i = 0; i < nx; i++)
 				{
-					bool on = false;
-					if (i < nx && keep[i, k])
+					if (!keep[i, k]) continue;
+					float xa = x0 + i * cell, xb = xa + cell;
+					if (xb > hx0 && xa < hx1 && yb > hy0 && ya < hy1) continue; // (the passage's hole)
+					Vector3 p00 = new Vector3(xa, ya, z + depth(xa, ya)), p10 = new Vector3(xb, ya, z + depth(xb, ya));
+					Vector3 p11 = new Vector3(xb, yb, z + depth(xb, yb)), p01 = new Vector3(xa, yb, z + depth(xa, yb));
+					// (both sides, each with its own corners: on shared ones the two sides' normals cancelled out and the wall
+					// drew as a flat black board - seen from inside The Abyss's lava tube, 11-05; Plug had the same fault, TN1)
+					foreach (Vector3[] t in new[] { new[] { p00, p11, p10 }, new[] { p00, p01, p11 }, new[] { p00, p10, p11 }, new[] { p00, p11, p01 } })
 					{
-						float xa = x0 + i * cell, xb = xa + cell;
-						on = !(xb > hx0 && xa < hx1 && yb > hy0 && ya < hy1); // (the passage's hole)
-					}
-					if (on && run < 0) run = i;
-					if (!on && run >= 0)
-					{
-						float ax = x0 + run * cell, bx = x0 + i * cell;
-						// (both sides, each with its own corners: on shared ones the two sides' normals cancelled out and the wall
-						// drew as a flat black board - seen from inside The Abyss's lava tube, 11-05; Plug had the same fault, TN1)
-						int n = verts.Count;
-						for (int side = 0; side < 2; side++)
-						{
-							verts.Add(new Vector3(ax, ya, z)); verts.Add(new Vector3(bx, ya, z)); verts.Add(new Vector3(bx, yb, z)); verts.Add(new Vector3(ax, yb, z));
-						}
-						tris.AddRange(new[] { n, n + 2, n + 1, n, n + 3, n + 2, n + 4, n + 5, n + 6, n + 4, n + 6, n + 7 });
-						run = -1;
+						tris.Add(verts.Count); verts.Add(t[0]); tris.Add(verts.Count); verts.Add(t[1]); tris.Add(verts.Count); verts.Add(t[2]);
 					}
 				}
 			}
 			if (tris.Count == 0) { UnityEngine.Object.DestroyImmediate(go); return; }
 			var mesh = new Mesh { name = PlugName };
+			if (verts.Count > 65000) mesh.indexFormat = IndexFormat.UInt32;
 			mesh.SetVertices(verts);
 			mesh.SetTriangles(tris, 0);
 			mesh.SetUVs(0, verts.Select(v => new Vector2(v.x / PlugTile, v.y / PlugTile)).ToList());
@@ -496,7 +494,7 @@ namespace DynamicIslands.Editor
 			go.AddComponent<MeshFilter>().sharedMesh = mesh;
 			go.AddComponent<MeshRenderer>().sharedMaterial = look.sharedMaterial;
 			go.AddComponent<MeshCollider>().sharedMesh = mesh;
-			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + (verts.Count / 8) + " strips");
+			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + (verts.Count / 12) + " cells, rock relief");
 		}
 
 		#endregion

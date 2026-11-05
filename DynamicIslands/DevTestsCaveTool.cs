@@ -91,9 +91,19 @@ namespace DynamicIslands
 						Transform pl = probe.transform.Find(CaveTool.PlugName);
 						Mesh m = pl != null ? pl.GetComponent<MeshFilter>().sharedMesh : null;
 						Vector3[] nr = m != null ? m.normals : new Vector3[0];
-						int fwd = nr.Count(v => v.z > 0.99f), back = nr.Count(v => v.z < -0.99f);
+						float face = lone ? 0.3f : 0.99f; // (a lone den's wall has rock relief: its facets lean, but each still faces out one way)
+						int fwd = nr.Count(v => v.z > face), back = nr.Count(v => v.z < -face);
 						Check(ref ok, m != null && nr.Length > 0 && fwd + back == nr.Length && fwd == back,
 							(lone ? "a lone den's wall (PlugOpening)" : "a tunnel-end den's wall (Plug)") + ": every corner's normal faces one way out of the wall, as many each way (" + fwd + " + " + back + " of " + nr.Length + ")");
+						if (lone && m != null && nr.Length > 0)
+						{
+							// (not a flat board: a smooth marbled sheet beside The Abyss's acid path, 11-05)
+							Vector3[] vs = m.vertices;
+							float spread = vs.Max(v => v.z) - vs.Min(v => v.z);
+							int tilted = nr.Count(v => Mathf.Abs(v.z) < 0.97f);
+							Check(ref ok, spread > 0.5f && tilted > nr.Length / 4, "a lone den's wall has rock relief: " + spread.ToString("0.00") + " m deep (over 0.5), "
+								+ tilted + " of " + nr.Length + " corners on tilted facets (over a quarter)");
+						}
 					}
 				}
 				finally { UnityEngine.Object.DestroyImmediate(probe); }
