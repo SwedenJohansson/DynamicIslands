@@ -98,6 +98,7 @@ expect message isn't whole
 | `expect hurt [min]` / `expect unhurt` | Hazard zones (`zone.hazard`) took at least min health (default 1) / none from the player since the play's start or the last of these two (`Hazards.Taken`, measured round each hit). A hazard play checks its own damage: a health watch run as a separate CI command can end before the play starts. Like `height`/`stand` it waits out the step's whole settle time.
 | `expect item <item> <n>` | The player has at least n of the item (Raft's unique item name, as in `content\objects\items.txt`). |
 | `expect animals <label> <n>` | Exactly n of the island's animals of that label are alive; each land one stands on a floor (under 0.6 m over the first thing under it). Logs each one's place in recipe coordinates. |
+| `expect animalsinside <label> <n>` | n of the live animals of that label stand under something solid (a cave's rock: a collider within 12 m over them); ones under open sky are logged with their place. |
 | `expect animalsmoved <label> <m>` | One of them went at least m metres since the last `expect animals` of that label. |
 | `expect height <h>` | The player is within 1.2 m of h above `Position.y`. |
 | `expect stand <x> <z> h=<h> [below=<m>]` | What is at the point is within 0.6 m of h above `Position.y`. |
