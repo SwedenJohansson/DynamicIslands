@@ -399,7 +399,10 @@ namespace DynamicIslands.Editor
 					// water was the flap the 11-05 face stood under - its wall down to the sea floor shut the water under it, Old Mine
 					// Islet's -7 -36 trap after the first sea cut; its own roof or low edge still keeps a cell)
 					bool bare = float.IsNaN(top[i, k]) && float.IsNaN(rimY[i, k]);
-					if (!cut[i, k] && bare && ground[i, k] < SeaLevel - SeaFloorBy && raw[i, k] > SeaLevel) { cut[i, k] = true; sea[i, k] = true; }
+					// (round 4, 11-05: and where the hill's surface was under the water but the rounding lifted it to the water line
+					// over a sea floor well under it - its neighbours on a pad over the shore pulled it up - a lid at the surface over
+					// a pool of sea: Old Mine Islet's -51.5 8.2 trap off the miners' row, skin at 0 over a 6-8 m deep floor)
+					if (!cut[i, k] && bare && SeaCut(raw[i, k], height[i, k], ground[i, k])) { cut[i, k] = true; sea[i, k] = true; }
 					otherHill[i, k] = past && float.IsNaN(cover[i, k]) && !cut[i, k];
 				}
 			// (and its shore ring: the face down from the last cell left to a cut one leant out over the water, a hollow of sea
@@ -536,6 +539,7 @@ namespace DynamicIslands.Editor
 				if (n == 0) TintRockTextures(mr, factor);
 				Debug.Log("[CUSTOM ISLANDS] Cave mountain tint " + factor + " (colour " + n + ")");
 			}
+			DressTunnels();
 			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0"));
 		}
 
@@ -599,6 +603,51 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The biggest rock or boulder placed on this island (not a cave piece), or null.</summary>
+		/// <summary>A dug tunnel's rim walls (its rock's part 1, round the mouth out in the open) wear the cave hill's skin as it is drawn -
+		/// its material and its tint - not Raft's island rock, which went blue-grey in the shade beside the hill's sand-brown rock
+		/// (Ironreef Caverns' mouth C, 11-05). No hill built yet: the rock it will wear (the island's biggest, else Raft's big rock);
+		/// the hill dresses its tunnels again once it is built. Returns the material's name, null when it left them.</summary>
+		/// <summary>Tests: the skin's renderer (null before a build).</summary>
+		public MeshRenderer SkinRenderer { get { return skin != null ? skin.GetComponent<MeshRenderer>() : null; } }
+
+		public static string DressRimWalls(MeshRenderer mr)
+		{
+			if (mr == null) return null;
+			Material[] mats = mr.sharedMaterials;
+			if (mats.Length < 2) return null;
+			CaveMountain hill = mr.GetComponentInParent<CaveMountain>();
+			MeshRenderer skinLook = hill != null && hill.skin != null ? hill.skin.GetComponent<MeshRenderer>() : null;
+			Material m = skinLook != null ? skinLook.sharedMaterial : null;
+			var block = new MaterialPropertyBlock();
+			if (m != null) skinLook.GetPropertyBlock(block);
+			else
+			{
+				Renderer rock = hill != null ? hill.IslandRock() : null;
+				if (rock == null)
+				{
+					GameObject big = PlaceableCatalog.Get("BigRock_1");
+					rock = big != null ? big.GetComponentInChildren<MeshRenderer>(true) : null;
+				}
+				m = rock != null ? rock.sharedMaterial : null;
+			}
+			if (m == null) return null;
+			mats[1] = m;
+			mr.sharedMaterials = mats;
+			mr.SetPropertyBlock(block, 1);
+			return m.name;
+		}
+
+		/// <summary>The skin's material and tint onto every dug tunnel's rim walls under this island (DressRimWalls).</summary>
+		void DressTunnels()
+		{
+			foreach (DigTunnel t in GetComponentsInChildren<DigTunnel>(true))
+			{
+				Transform r = t.transform.Find(DigTunnel.RockName);
+				MeshRenderer mr = r != null ? r.GetComponent<MeshRenderer>() : null;
+				if (mr != null) t.RimWalls = DressRimWalls(mr) ?? "";
+			}
+		}
+
 		Renderer IslandRock()
 		{
 			Renderer best = null;
@@ -765,6 +814,17 @@ namespace DynamicIslands.Editor
 		/// <summary>The sea's surface (world y) and how far under it the ground must be for the hill not to go out over it; the shore cells
 		/// next to those, up to SeaShoreBy over it, go too.</summary>
 		const float SeaLevel = 0f, SeaFloorBy = 1f, SeaShoreBy = 0.5f;
+		/// <summary>A surface the rounding lifted to within SeaLidBy under the water line, standing more than SeaGap over the sea floor, is a lid
+		/// over the water and goes as well (round 4).</summary>
+		const float SeaLidBy = 2f, SeaGap = 1f;
+
+		/// <summary>Whether a bare cell (no roof or low edge of its own) goes for the sea: its ground well under the water and the hill over it
+		/// either above the water (raw: before the rounding) or lifted by the rounding to a lid near the water line over a gap of sea.</summary>
+		public static bool SeaCut(float raw, float height, float ground)
+		{
+			if (!(ground < SeaLevel - SeaFloorBy)) return false;
+			return raw > SeaLevel || height > SeaLevel - SeaLidBy && height > ground + SeaGap;
+		}
 
 		/// <summary>The caves' open ends where the hill's faces cross them.</summary>
 		sealed class Arch

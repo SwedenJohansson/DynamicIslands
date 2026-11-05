@@ -479,6 +479,8 @@ namespace DynamicIslands.Editor
 
 		Terrain skinLand;
 		static bool rockLoading;
+		/// <summary>Tests: what the rim walls (part 1) wear - the cave hill skin's material (CaveMountain.DressRimWalls); "" when left as the rock.</summary>
+		[NonSerialized] public string RimWalls = "";
 
 		void Skin(MeshRenderer mr, Terrain land)
 		{
@@ -489,6 +491,9 @@ namespace DynamicIslands.Editor
 			mr.sharedMaterials = parts == 3 ? new[] { m, m, m } : new[] { m, m };
 			mr.SetPropertyBlock(null); for (int i = 0; i < parts; i++) mr.SetPropertyBlock(null, i);
 			ObjectProps.ApplyRockSkin(mr.gameObject); // (Raft's brown island rock, as the cave pieces' "skin=rock")
+			// (the rim walls out in the open as the cave hill's skin: its rock and tint - 11-05, Raft's island rock went blue-grey
+			// in the shade beside the hill)
+			RimWalls = CaveMountain.DressRimWalls(mr) ?? "";
 			GroundTop(mr, land);
 		}
 

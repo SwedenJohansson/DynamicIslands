@@ -15,6 +15,38 @@ namespace DynamicIslands
 	{
 		const string DigIsland = "citest-digtunnel";
 
+		[ConsoleCommand(name: "CIRimWalls", docs: "Dev, in a world: every dug tunnel on the loaded custom islands wears the cave hill skin's rock and tint on its rim walls (part 1, out in the open round the mouth) - the skin's material and colour where the island has a hill, else the rock the hill would wear (11-05: Raft's island rock went blue-grey in the shade beside the sand-brown hill)")]
+		public static void RimWallsCommand() { StartTest(RimWallsRoutine()); }
+
+		static IEnumerator RimWallsRoutine()
+		{
+			bool ok = true;
+			int n = 0;
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(x => x.Root != null && !x.Loading).ToList())
+				foreach (DigTunnel t in e.Root.GetComponentsInChildren<DigTunnel>(true))
+				{
+					Transform r = t.transform.Find(DigTunnel.RockName);
+					MeshRenderer mr = r != null ? r.GetComponent<MeshRenderer>() : null;
+					if (mr == null || mr.sharedMaterials.Length < 2) continue;
+					n++;
+					Material walls = mr.sharedMaterials[1];
+					CaveMountain hill = mr.GetComponentInParent<CaveMountain>();
+					MeshRenderer skin = hill != null ? hill.SkinRenderer : null;
+					string what = "'" + e.Name + "' " + t.name + " at " + (t.transform.position - e.Position).ToString("0") + ": rim walls " + (walls != null ? walls.name : "none");
+					if (skin != null)
+					{
+						var a = new MaterialPropertyBlock(); var b = new MaterialPropertyBlock();
+						skin.GetPropertyBlock(a); mr.GetPropertyBlock(b, 1);
+						Texture ta = a.isEmpty ? null : a.GetTexture("_MainTex"), tb = b.isEmpty ? null : b.GetTexture("_MainTex");
+						Check(ref ok, walls == skin.sharedMaterial && ta == tb, what + ", the hill's skin " + skin.sharedMaterial.name + (ta != null ? " (tinted " + ta.name + ")" : ""));
+					}
+					else Check(ref ok, walls != null && t.RimWalls == walls.name, what + " (no hill on the island: the rock it would wear, " + (t.RimWalls == "" ? "not dressed" : t.RimWalls) + ")");
+				}
+			Check(ref ok, n > 0, n + " dug tunnels on the loaded islands");
+			if (ok) Log("PASS: rim walls wear the hill's rock"); else Fail("rim walls wear the hill's rock");
+			yield break;
+		}
+
 		[ConsoleCommand(name: "CIDigTunnelEditor", docs: "Dev, editor: the Dig brush on a generated island - a tunnel dug into a hill from its foot, on 24 m and round a bend: its rock lining made, the ground cut only at its mouth, walkable end to end (a floor every step, steps under 0.6 m, 2 m of room), no look from inside out through the hill, a rim of rock over every cut cell round the mouth (none sunken); one Ctrl+Z per stroke (the tunnel, a branch, a Shift fill), the ground's holes back as they were; saved and loaded with the island; then a tunnel dug into a raised cliff's foot (its rim, no leaks; pictures of both mouths). Leaves the island citest-digtunnel for CIDigTunnelWorld")]
 		public static void DigTunnelEditorCommand(string[] args) { StartTest(DigTunnelEditorRoutine()); }
 

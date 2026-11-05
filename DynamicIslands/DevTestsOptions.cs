@@ -1117,6 +1117,20 @@ namespace DynamicIslands
 			if (shown == 0) Fail("no cave hill cell there (or no build yet)"); else Log("PASS: cave cells");
 		}
 
+		[ConsoleCommand(name: "CICaveSeaCutUnit", docs: "Dev, anywhere: the cave hill's sea cut (CaveMountain.SeaCut) - a hill over the water over a deep floor goes, a surface the rounding lifted to a lid at the water line over a gap of sea goes (Old Mine Islet's -51.5 8.2, round 4), a surface on the sea floor or deep under the water and anything over shore ground stays")]
+		public static void CaveSeaCutUnitCommand()
+		{
+			bool ok = true;
+			Check(ref ok, CaveMountain.SeaCut(11.3f, -16.5f, -13f), "a hill over the water, its floor 13 m down: cut");
+			Check(ref ok, CaveMountain.SeaCut(-4.42f, -0.32f, -6.38f), "a lid the rounding lifted to -0.3 over a 6.4 m deep floor (Old Mine -51.5 10.25): cut");
+			Check(ref ok, CaveMountain.SeaCut(-0.67f, 0.36f, -7.99f), "a lid lifted just over the water line: cut");
+			Check(ref ok, !CaveMountain.SeaCut(-5f, -5.6f, -6f), "a surface on the sea floor (0.4 m over it): kept");
+			Check(ref ok, !CaveMountain.SeaCut(-8f, -4.5f, -10f), "a surface deep under the water: kept");
+			Check(ref ok, !CaveMountain.SeaCut(3f, 2f, -0.5f), "over shore ground under 1 m of water: kept (the shore ring's)");
+			Check(ref ok, !CaveMountain.SeaCut(6f, 5f, 0.8f), "over dry ground: kept");
+			if (ok) Log("PASS: cave sea cut"); else Fail("cave sea cut");
+		}
+
 		[ConsoleCommand(name: "CIRaySlice", docs: "Dev, in game: a doorway's opening on a custom island - from <x> <z> (m from its middle) rays toward <x2> <z2>, one every 25 cm of height from <h1> to <h2> above the sea: how far each goes and what stops it: CIRaySlice <island> <x> <z> <x2> <z2> <h1> <h2>")]
 		public static void RaySliceCommand(string[] args)
 		{

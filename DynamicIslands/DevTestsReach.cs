@@ -822,7 +822,7 @@ namespace DynamicIslands
 				Vector3 cr = Rel(e, cb.center, offset);
 				bool roofed = Physics.Raycast(cb.center + Vector3.up * 2f, Vector3.up, 60f, mask, QueryTriggerInteraction.Ignore);
 				report.Add("REACH " + name + " | trap at " + cr.x.ToString("F1") + " " + cr.z.ToString("F1") + " h=" + (cb.min.y - e.Position.y).ToString("F1") + ".." + (cb.max.y - e.Position.y).ToString("F1") +
-					" (" + cb.size.x.ToString("F0") + "x" + cb.size.z.ToString("F0") + " m, " + cluster.Count + " spots" + (roofed ? ", roofed" : ", open sky") + (cluster.Any(a => g.Kind[a] == 2) ? ", under water" : "") + ") | - | FAIL a player gets in but not out" + TrapNearestOut(e, g, cluster, back));
+					" (" + cb.size.x.ToString("F0") + "x" + cb.size.z.ToString("F0") + " m, " + cluster.Count + " spots" + (roofed ? ", roofed" : ", open sky") + (cluster.Any(a => g.Kind[a] == 2) ? ", under water" : "") + ") | - | FAIL a player gets in but not out" + TrapNearestOut(e, g, cluster, back) + TrapWayIn(e, g, cluster, trapped));
 			}
 			int pass = report.Count(r => r.Contains("| PASS"));
 			report.Add("REACH " + name + " | summary | " + state + " | " + (problems == 0 ? "PASS" : "FAIL") + " " + targets.Count + " targets, " + chains.Count + " ladders, " + traps + " traps, " + problems + " problems, " + pass + " pass (" + (sw.ElapsedMilliseconds / 1000f).ToString("F1") + " s)");
@@ -840,6 +840,19 @@ namespace DynamicIslands
 			GC.Collect();
 			shiftGrid = null; shiftTargets = null;
 			done(problems);
+		}
+
+		/// <summary>How a player gets into a trap (round 4, 11-05: the report gave only the way out it lacks): the links into it from spots
+		/// outside it, as many as there are and the first one's ends (raw feet, island-relative, kinds).</summary>
+		static string TrapWayIn(IslandWorldState.Entry e, ReachGrid g, List<int> cluster, bool[] trapped)
+		{
+			int n = 0, fa = -1, fb = -1;
+			foreach (int b in cluster)
+				foreach (int a in g.In[b])
+					if (!trapped[a]) { n++; if (fa < 0) { fa = a; fb = b; } }
+			if (n == 0) return " (way in: none from outside it)";
+			Func<int, string> P = i => { Vector3 v = g.Pos[i] - g.Anchor; return v.x.ToString("F1", CultureInfo.InvariantCulture) + " " + v.y.ToString("F1", CultureInfo.InvariantCulture) + " " + v.z.ToString("F1", CultureInfo.InvariantCulture); };
+			return " (way in: " + n + " links, e.g. " + P(fa) + " -> " + P(fb) + ", kinds " + g.Kind[fa] + "->" + g.Kind[fb] + ")";
 		}
 
 		/// <summary>The closest a trap comes to a spot with a way back out (raw feet, island-relative: CIReachProbe's frame).</summary>

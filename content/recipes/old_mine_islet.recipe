@@ -33,6 +33,9 @@ brush flatten from 22 -18 to -16 -18 r=12 s=20 frames=30
 brush flatten from 22 -18 to 4 -10 r=8 s=20 frames=16
 clear at 2 -19 r=22
 clear at 24 -16 r=8
+# (round 4, 11-05, REACH: the mound's west end hung its roof rock out over the south cliff, 12 m of sea under it shut
+# in by the hill's face - a swimmer's pocket with no air: land under it, the shore moved out past the rock)
+brush flatten from -5 -31 to -11 -34 r=5 s=20 frames=500 h=3
 # --- DEEP 10-25 terrain: Prospect Hill on the north shore (summit 13 m, base r 14) and its path from the south
 call hw_mount x=-5 z=42 b=14 h=13
 call hw_trail x=-5 z=42 b=14 h=13 a0=180 turn=300 n=22 h0=3
@@ -380,6 +383,10 @@ brush flatten at {$x0+($x1-$x0)*$t} {$z0+($z1-$z0)*$t} r=1.8 s=20 frames=300 h={
 clear at {$x0+($x1-$x0)*$t} {$z0+($z1-$z0)*$t} r=2.2
 next
 end
+# (round 4, 11-05, REACH: the two inlets' notches still left the swimmer under a bank over deep water - out of the sea
+# needs a floor under the swimmer: a ramp from each bank down under the water, 4 m long)
+call om_ledge x0=-41 z0=-16.4 x1=-41 z1=-20.4 h0=1.0 h1=-1.8 n=5
+call om_ledge x0=18.6 z0=-27.4 x1=18.6 z1=-31.4 h0=0.9 h1=-1.8 n=5
 brush flatten at 67.2 -20.2 r=2.6 s=20 frames=600 h=5.6
 clear at 67.2 -20.2 r=3.0
 call om_ledge x0=67.2 z0=-20.2 x1=63.2 z1=-22.4 h0=5.6 h1=5.2 n=4
