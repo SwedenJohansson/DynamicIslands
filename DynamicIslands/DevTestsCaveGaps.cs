@@ -948,7 +948,9 @@ namespace DynamicIslands
 					{
 						// (from the side when the ground straight out falls away: a mouth on a ledge is come at along the ledge)
 						Vector3 outDir = GapWalkOut(mouth, w.In);
-						PlayerMove.To(me, GapFloor(mouth + outDir * 3f, 3f, GapWalkDown) + Vector3.up * 0.3f, ControllerType.Ground);
+						Vector3 from = GapFloor(mouth + outDir * 3f, 3f, GapWalkDown);
+						Log("  " + label + ": walks in from " + from.ToString("F1") + " (world), the mouth " + mouth.ToString("F1") + ", out " + outDir.ToString("F2"));
+						PlayerMove.To(me, from + Vector3.up * 0.3f, ControllerType.Ground);
 						yield return new WaitForSeconds(0.8f);
 						bool inOk = false, outOk = false; string why = "", why2 = "";
 						yield return PlayWalk(me, new List<Vector3>(f), (r, m) => { inOk = r; why = m; });
