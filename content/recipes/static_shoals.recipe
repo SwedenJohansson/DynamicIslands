@@ -173,7 +173,9 @@ prop spottercrate loot.refill=0
 # of 8 x 6 cells (1.5 m) on a pad by the dune peak, roofed and unlit (a dark hazard: bring a light), its entrance in the
 # south-west corner, the floor plan beside it; the coil store, the wiring room locker and two small finds in dead ends.
 # The dune peak keeps its cairn and buried tin. The maze was laid by a seeded walk (seed 14933), so every cell is reached.
-brush flatten at 36 -55 r=9 s=20 frames=300 h=5.9
+# (the pad 0.15 m under the floor: a flatten leaves the ground a few cm over its height, and the sand poked through the
+# cell floors laid flush on it - 47 floors "buried", 11-05)
+brush flatten at 36 -55 r=9 s=20 frames=300 h=5.75
 clear at 36 -55 r=10
 push at 30 -59.5 h=5.9
 place Block_Floor_Tier3 ssmaze at 0.75 0.75 y=0

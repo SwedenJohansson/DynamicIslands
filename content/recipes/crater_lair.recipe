@@ -24,24 +24,24 @@ generate
 # --- Terrain: the hangar dug into the west plateau (7.5 m) from its bluff over the sea; the crater on the cone's top -----
 # (the land's heights lie on a grid every 1.953125 m, the ground straight between them; here its columns are at
 # x -42.0 + k*1.953125 and its rows at z 1.30 + k*1.953125 (found with CIStandOn: the kinks in the bluff and in a test
-# dig). Strokes narrower than 1.95 m drawn along the lines touch only their own: the hangar's floor (1 m) on the lines
+# dig). Strokes narrower than 1.95 m drawn along the lines with "line" (the brush's own reach) touch only their own: the hangar's floor (1 m) on the lines
 # x -42.0..-26.38, z -10.42..7.16; the roof slab's edges on the rim lines x -24.42, z -12.37 and 9.11 (7.5 m); the dock
 # pool (6 m deep) on x -43.95..-36.14, z 5.21..7.16, running out under the door to the sea; the pet pool (7 m below the
 # floor) on x -32.23..-26.38, z -10.42..-2.61)
 for px -42.0 -26.3 1.953125
-brush flatten from $px -10.419 to $px 7.159 r=1.9 s=20 frames=120 h=1.0
+brush flatten from $px -10.419 to $px 7.159 r=1.9 s=20 frames=120 h=1.0 line
 next
 # (the north and south rims run on one column past the facade: stopped at x -42.0, the ground fell away between it and
 # the facade at -42.6, and the sky showed in the hangar's two front corners under the slab - X7, 2026-10-13)
-brush flatten from -43.953 -12.372 to -24.422 -12.372 r=1.9 s=20 frames=120 h=7.5
-brush flatten from -43.953 9.113 to -24.422 9.113 r=1.9 s=20 frames=120 h=7.5
-brush flatten from -24.422 -12.372 to -24.422 9.113 r=1.9 s=20 frames=120 h=7.5
-brush flatten from -43.953 1.3 to -43.953 3.253 r=1.9 s=20 frames=40 h=1.0
+brush flatten from -43.953 -12.372 to -24.422 -12.372 r=1.9 s=20 frames=120 h=7.5 line
+brush flatten from -43.953 9.113 to -24.422 9.113 r=1.9 s=20 frames=120 h=7.5 line
+brush flatten from -24.422 -12.372 to -24.422 9.113 r=1.9 s=20 frames=120 h=7.5 line
+brush flatten from -43.953 1.3 to -43.953 3.253 r=1.9 s=20 frames=40 h=1.0 line
 for px -43.953 -36.1 1.953125
-brush flatten from $px 5.206 to $px 7.159 r=1.9 s=20 frames=60 h=-6
+brush flatten from $px 5.206 to $px 7.159 r=1.9 s=20 frames=60 h=-6 line
 next
 for px -32.234 -26.3 1.953125
-brush flatten from $px -10.419 to $px -2.606 r=1.9 s=20 frames=100 h=-6
+brush flatten from $px -10.419 to $px -2.606 r=1.9 s=20 frames=100 h=-6 line
 next
 # (the crater: the summit levelled to a broad top at 26 m, a bowl 6 m deep sunk into it, smoothed, painted rock)
 brush flatten at -3 -3 r=9 s=20 frames=60 h=26
