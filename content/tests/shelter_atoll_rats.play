@@ -1,0 +1,12 @@
+# Cave rats (11-05, CIPlay shelter_atoll_rats; in a test world): two Tangaroa rats at the back of the ammo cave and three
+# in the lagoon cave's dry den - alive, on the floor, walking; pictures of both pairs. Points as in its recipe.
+island Shelter Atoll keep
+offset 14.8414 -1.2974
+hour 12
+weather Calm
+at 61 100
+wait 5
+expect animals Tangaroa rat 5
+wait 15
+expect animalsmoved Tangaroa rat 1
+expect animals Tangaroa rat 5

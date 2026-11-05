@@ -1,0 +1,12 @@
+# Cave rats (11-05, CIPlay ironreef_caverns_rats; in a test world): two rats in the Reef Workings' tunnel B and two in
+# tunnel C - alive, on the dug floor, walking; pictures of both pairs. Points as in its recipe.
+island Ironreef Caverns keep
+offset 1.3339 0.1645
+hour 11
+weather Calm
+at -23 -30.5 h=19.5
+wait 5
+expect animals Rat 4
+wait 15
+expect animalsmoved Rat 1
+expect animals Rat 4

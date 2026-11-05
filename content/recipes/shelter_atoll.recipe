@@ -688,4 +688,16 @@ prop shelsupply beh.hidden=1
 prop shelsupply loot.refill=0
 note shelsupply Expedition supply chest | The Abyss Expedition's chest, left in the dry cave for the divers: air, water and salve.
 loot shelsupply OxygenBottle*2;PlasticBottle_Water*2;HealingSalve_Good*1;Rope*2
+# --- 11-05: cave rats (the user: "in some caves there can be a monster, like a rat") ---
+# Tangaroa rats, not Raft's rats: the quest's "Clear the rats out of the dormitory" counts animals labelled Rat, and
+# rats killed in a cave must not count for the dormitory. Each pair on its cave's floor, 6 m and more from the chests
+# and off the way in. No respawn.
+# The ammo cave: two at its back, 12 m from its chest by the mouth (the same den as The Abyss's lava tube)
+place Creature_Rat_Tangaroa ammorats at 63 75 h=4.5
+prop ammorats creature.count=2
+prop ammorats creature.respawn=0
+# The lagoon cave's dry den: three on the den's floor on the side away from the supply chest, off the tunnel's end
+place Creature_Rat_Tangaroa denrats at -19.1 -66.2 h=3.5
+prop denrats creature.count=3
+prop denrats creature.respawn=0
 save Shelter Atoll

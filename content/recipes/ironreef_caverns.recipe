@@ -542,6 +542,15 @@ note irdrift Drift 4 tin | The last shift's tin, left when the floor went - and 
 loot irdrift Machete*1;MetalIngot*2;Rope*2;Bolt*1
 prop irdrift loot.refill=0
 # cavecheck inside irti irwarn irdrift irspike1 irspike2 irreef_vines
+# (11-05) Rats in the Reef Workings (the user: "in some caves there can be a monster, like a rat"): two in tunnel B and
+# two in tunnel C, on the dug floor, 13 m and more from the drift's sign, tin and spikes, the vines and the titanium.
+# The hall has three ways in (A, B, C), so neither pair is the only way to anything. No respawn.
+place Creature_Rat bratsB at -30 -40 h=17.4
+prop bratsB creature.count=2
+prop bratsB creature.respawn=0
+place Creature_Rat bratsC at -23 -41 h=15.2
+prop bratsC creature.count=2
+prop bratsC creature.respawn=0
 # --- end of Reef Workings ---
 
 # (generator stones left in the air by the shaping - taken out, 10-25)
