@@ -112,6 +112,8 @@ Not in this release yet; these come in the next update:
   or the island not loaded on the host) gives the items back and stays unread, so it can be used again (RK3).
 - **Bear den caves no longer see-through:** a bear den set on its own (`ar_cave`) gets a rock wall across its open front,
   with a doorway at the mouth, so from outside you no longer look into the cave through its missing side (RK15).
+- **The Abyss: a vent pool** beside the lava tube's path: a misty hot-spring pool ringed with sulphur-yellow stones.
+  Its water is acid ("The vent water burns."); a protective suit keeps it off, and a shallow slope leads out of it.
 
 ## 3.1 alpha - 2026-11-03: Version number
 

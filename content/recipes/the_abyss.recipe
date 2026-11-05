@@ -103,6 +103,32 @@ brush flatten at 87 19.5 r=2.2 s=20 frames=200 h=-0.1
 brush flatten at 87 20.8 r=2.2 s=20 frames=200 h=-0.8
 brush flatten at 87 22.1 r=2.2 s=20 frames=200 h=-1.5
 clear from 87 14.3 to 87 22.1 r=3.2 body
+# (content 11-04, ACID) The vent pool: a low ash shelf on the lagoon side of the lava tube's path (the path is a spit
+# with deep lagoon west of it) and in it a hot-spring pool fed by a vent - mist over it, sulphur-yellow stones round
+# its rim. Acid (a suit keeps it off). The path itself is the way past it; a shallow slope on the path's side leads out of it.
+# Its middle (79.5 13) is 17 m from the lava tube's chest and zone, clear of the tube's rock (z 7 and less).
+# The terrain grid is ~2 m, so the pool's strokes are wide (a 2 m brush leaves no hollow), and unsmoothed (a smooth
+# over it filled the hollow back up to the shelf).
+brush flatten from 78.5 9 to 78.5 17 r=6.5 s=20 frames=400 h=1.3
+brush flatten at 79.5 13 r=4 s=20 frames=300 h=-1.2
+# a shallow way out on the path's side (a swimmer can't climb the hollow's 1 m lip): steps of 0.7 m, smoothed into a slope
+brush flatten at 81.8 11.4 r=2 s=20 frames=150 h=-0.3
+brush flatten at 83.2 10.4 r=2 s=20 frames=150 h=0.5
+brush flatten at 84.6 9.4 r=2 s=20 frames=150 h=1.4
+brush smooth from 81.8 11.4 to 84.6 9.4 r=2 s=3 frames=20
+clear at 79.5 13 r=6.5
+place SmallRock_02 ventrock at 75.3 12.2 ground sit yaw=20
+place SmallRock_02 ventrock at 77.6 17.4 ground sit yaw=140
+place SmallRock_02 ventrock at 83.6 14.6 ground sit yaw=250
+place SmallRock_02 ventrock at 76.4 9.6 ground sit yaw=310
+prop ventrock tint.color=#b8a040
+prop ventrock tint.amount=0.45
+place Zone_Atmosphere ventmist at 79.5 13 ground y=0.5
+prop ventmist zone.radius=3.5
+prop ventmist atmo.particles=mist
+prop ventmist atmo.fog=#a8b860
+prop ventmist atmo.fogAmount=0.3
+call hw_hazard x=79.5 z=13 al=ventacid kind=acid r=3 dmg=5 safe=suit msg="The vent water burns." h=0.6
 
 # --- JUMP COURSE ab (Abyss pass 10-26): kz-style hop course of floor slabs on its own pad (the bs course, turned) ---
 # JUMP ab pad=4 at=48 66

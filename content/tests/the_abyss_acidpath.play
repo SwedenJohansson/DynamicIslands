@@ -1,0 +1,8 @@
+# The Abyss's acid vent pool (content 11-04): the way past it - the lava tube's path from the tube's mouth down to the
+# beach, beside the pool. Run it under CIGapsWatchHealth: the
+# path walk takes no acid damage. CIPlay the_abyss_acidpath
+island The Abyss keep
+offset -1.2308 0.0529
+hour 11
+weather Calm
+walk 87 -1 to 87 5 to 87 10 to 87 14

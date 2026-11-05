@@ -1,0 +1,11 @@
+# Pictures of The Abyss's acid vent pool (content 11-04), midday, calm: CIPlay the_abyss_acidpics
+island The Abyss keep
+offset -1.2308 0.0529
+hour 12
+weather Calm
+at 87 -1
+wait 3
+picture abyss_acid_close 74.5 3 18 79.5 0 13
+picture abyss_acid_close2 85 4.5 9 79.5 0 13
+picture abyss_acid_wide 64 16 28 81 1 10
+picture abyss_acid_path 87 5 2 81 1 14
