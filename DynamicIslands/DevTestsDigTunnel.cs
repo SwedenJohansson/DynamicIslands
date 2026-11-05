@@ -22,13 +22,21 @@ namespace DynamicIslands
 		{
 			bool ok = true;
 			int n = 0;
+			// (an island just spawned builds its tunnels and hill over a few frames - wait for them, at most a minute)
+			for (float w = 0f; w < 60f; w += 0.5f)
+			{
+				List<IslandWorldState.Entry> up = IslandWorldState.Islands.Where(x => x.Root != null && !x.Loading).ToList();
+				if (up.Count > 0 && up.All(x => { CaveMountain m = x.Root.GetComponentInChildren<CaveMountain>(); return m == null || !m.Pending; })
+					&& up.Any(x => x.Root.GetComponentsInChildren<DigTunnel>(true).Any(t => t.Triangles > 0))) break;
+				yield return new WaitForSeconds(0.5f);
+			}
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(x => x.Root != null && !x.Loading).ToList())
 				foreach (DigTunnel t in e.Root.GetComponentsInChildren<DigTunnel>(true))
 				{
 					Transform r = t.transform.Find(DigTunnel.RockName);
 					MeshRenderer mr = r != null ? r.GetComponent<MeshRenderer>() : null;
-					if (mr == null || mr.sharedMaterials.Length < 2) continue;
 					n++;
+					if (mr == null || mr.sharedMaterials.Length < 2) { Check(ref ok, false, "'" + e.Name + "' " + t.name + ": " + (mr == null ? "no rock renderer" : mr.sharedMaterials.Length + " materials on its rock")); continue; }
 					Material walls = mr.sharedMaterials[1];
 					CaveMountain hill = mr.GetComponentInParent<CaveMountain>();
 					MeshRenderer skin = hill != null ? hill.SkinRenderer : null;
@@ -44,7 +52,6 @@ namespace DynamicIslands
 				}
 			Check(ref ok, n > 0, n + " dug tunnels on the loaded islands");
 			if (ok) Log("PASS: rim walls wear the hill's rock"); else Fail("rim walls wear the hill's rock");
-			yield break;
 		}
 
 		[ConsoleCommand(name: "CIDigTunnelEditor", docs: "Dev, editor: the Dig brush on a generated island - a tunnel dug into a hill from its foot, on 24 m and round a bend: its rock lining made, the ground cut only at its mouth, walkable end to end (a floor every step, steps under 0.6 m, 2 m of room), no look from inside out through the hill, a rim of rock over every cut cell round the mouth (none sunken); one Ctrl+Z per stroke (the tunnel, a branch, a Shift fill), the ground's holes back as they were; saved and loaded with the island; then a tunnel dug into a raised cliff's foot (its rim, no leaks; pictures of both mouths). Leaves the island citest-digtunnel for CIDigTunnelWorld")]
