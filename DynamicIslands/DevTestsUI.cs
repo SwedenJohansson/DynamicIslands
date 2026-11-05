@@ -80,6 +80,31 @@ namespace DynamicIslands
 			Log("UI dump: " + file + " (" + saved.Count + " sprites saved to " + dir + ")");
 		}
 
+		[ConsoleCommand(name: "CIZoneWatch", docs: "Dev, in game: CIZoneWatch <zone id> [s] - each second, the player's distance to the zone, its radius, pulse on/off, protected, health and hazards taken")]
+		public static void ZoneWatch(string[] args)
+		{
+			string id = args != null && args.Length > 0 ? args[0] : "";
+			float secs = args != null && args.Length > 1 ? F(args[1]) : 10f;
+			StartTest(ZoneWatchRoutine(id, secs));
+		}
+
+		static IEnumerator ZoneWatchRoutine(string id, float secs)
+		{
+			TriggerZone z = UnityEngine.Object.FindObjectsOfType<TriggerZone>().FirstOrDefault(x => string.Equals(x.Id, id, StringComparison.OrdinalIgnoreCase));
+			if (z == null) { Log("FAIL: no zone '" + id + "'"); yield break; }
+			for (float t = 0; t <= secs; t += 1f)
+			{
+				Network_Player p = RAPI.GetLocalPlayer();
+				float d = p != null ? Vector3.Distance(p.transform.position, z.transform.position) : -1f;
+				bool safe = false;
+				try { safe = p != null && Hazards.Protected(z, p); } catch { }
+				Log("Zone '" + id + "' t " + t.ToString("0") + ": dist " + d.ToString("0.00") + " (radius " + z.Radius.ToString("0.0") + "), on " + MechFeatures.PulseOn(z.Props)
+					+ ", protected " + safe + ", active " + z.isActiveAndEnabled + ", hp " + (p != null ? p.Stats.stat_health.Value.ToString("0") : "-") + ", taken " + Hazards.Taken.ToString("0.0"));
+				yield return new WaitForSeconds(1f);
+			}
+			Log("PASS: zone watch");
+		}
+
 		[ConsoleCommand(name: "CIClock", docs: "Dev, in game: the clocks Raft shares between players (water time) next to Time.time")]
 		public static void Clock()
 		{

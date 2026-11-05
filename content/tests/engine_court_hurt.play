@@ -3,7 +3,7 @@ island Engine Court keep
 offset 0 0
 hour 11
 weather Calm
-at -19 80 y=8.2
+zone ec_spark1
 wait 20
 expect message Sparks crawl over the landing
 # (6 is about half of the expected damage)

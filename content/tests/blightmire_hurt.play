@@ -3,7 +3,7 @@ island Blightmire keep
 offset 0 8.8
 hour 11
 weather Calm
-at 56 40
+at 52 41
 wait 16
 expect message The bog water is acid
 # (20 is about half of the expected damage)
