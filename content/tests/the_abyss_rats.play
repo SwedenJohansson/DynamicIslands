@@ -1,0 +1,12 @@
+# Rats (11-05): two rats at the back of the lava tube - alive, on the den's floor, walking; a picture of them.
+island The Abyss keep
+offset -2.8571 -0.3744
+hour 12
+weather Calm
+at 88 6
+wait 5
+expect animals Rat 2
+wait 15
+expect animalsmoved Rat 1
+expect animals Rat 2
+picture abyss_den_rats 88 5.2 -2 88.5 3.8 -14

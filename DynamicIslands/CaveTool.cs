@@ -327,6 +327,10 @@ namespace DynamicIslands.Editor
 		public const string PlugName = "CavePlug";
 		// (the wall's rock texture over this many metres: at 6 m its fine cracks read as a flat paved wall - 11-03)
 		const float PlugTile = 20f;
+		/// <summary>How far a lone den's wall (PlugOpening) bulges in or out at most, in metres: rock relief, not a flat board.</summary>
+		public const float PlugRelief = 0.7f;
+		/// <summary>The rock a lone den's wall is drawn with (the den's own texture is an atlas of colour patches).</summary>
+		public const string WallRock = "BigRock_1";
 		const float PlugIn = 0.8f, PlugBelow = 3f, HoleHalf = 2.6f, HoleBelow = 1f, HoleUp = 5.6f;
 
 		/// <summary>
@@ -580,10 +584,135 @@ namespace DynamicIslands.Editor
 			try
 			{
 				PlugOpening(den, CaveMountain.OverMeasured(den.transform, Room).x);
-				Transform plug = den.transform.Find(PlugName);
-				if (plug != null && ObjectProps.HasTint(props)) ObjectProps.ApplyTint(plug.gameObject, ObjectProps.Tint(props), ObjectProps.TintStrength(props));
+				TintWall(den, props);
 			}
 			catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Walling a den's mouth failed: " + x.Message); }
+		}
+
+		/// <summary>
+		/// Colours a lone den's wall (PlugOpening) as the den's shell looks: Raft's big rock read as a grey-blue patch beside the
+		/// khaki shell of The Abyss's lava tube (11-05), though the two textures' mean colours are alike - the two shaders light
+		/// them differently. So both are drawn lit, as the game draws them (with the den's tint, when the den has one), and the
+		/// wall's rock texture is multiplied by the shell's lit colour over the wall's (LitColour). Every den. The factor used,
+		/// or white when the colours could not be read.
+		/// </summary>
+		public static Color TintWall(GameObject den, IDictionary<string, string> props)
+		{
+			Transform plug = den != null ? den.transform.Find(PlugName) : null;
+			MeshRenderer wr = plug != null ? plug.GetComponent<MeshRenderer>() : null;
+			if (wr == null) return Color.white;
+			Color factor = Color.white, shell, wall = Color.white, after = Color.white;
+			bool matched = LitColour(DenShell(den), out shell) && LitColour(new Renderer[] { wr }, out wall);
+			if (matched)
+			{
+				Func<float, float, float> ratio = (s, r) => Mathf.Clamp(s / Mathf.Max(0.02f, r), 0.1f, 4f);
+				factor = new Color(ratio(shell.r, wall.r), ratio(shell.g, wall.g), ratio(shell.b, wall.b), 1f);
+			}
+			if (factor != Color.white) CaveMountain.TintRockTextures(wr, factor);
+			bool reread = matched && LitColour(new Renderer[] { wr }, out after);
+			Debug.Log("[CUSTOM ISLANDS] Den's wall coloured as its shell: " + (matched ? "shell " + shell.ToString("0.00") + ", wall " + wall.ToString("0.00") : "colours not read")
+				+ ", factor " + factor.ToString("0.00") + (reread ? ", wall now " + after.ToString("0.00") : ""));
+			return factor;
+		}
+
+		/// <summary>A den's own renderers: all but its wall (PlugName).</summary>
+		public static Renderer[] DenShell(GameObject den)
+		{
+			return den == null ? new Renderer[0] : den.GetComponentsInChildren<MeshRenderer>(true)
+				.Where(r => r.sharedMaterial != null && r.enabled && !r.transform.name.StartsWith(PlugName)).Cast<Renderer>().ToArray();
+		}
+
+		static readonly Color Key = new Color(1f, 0f, 1f, 1f);
+
+		/// <summary>A material's colour texture: _MainTex, else its shader's first texture that is not a normal, mask or such map.</summary>
+		internal static Texture ColourTexture(Material m, out string prop)
+		{
+			prop = null;
+			if (m == null) return null;
+			if (m.HasProperty("_MainTex") && m.GetTexture("_MainTex") != null) { prop = "_MainTex"; return m.GetTexture(prop); }
+			Shader sh = m.shader;
+			for (int i = 0; i < sh.GetPropertyCount(); i++)
+			{
+				if (sh.GetPropertyType(i) != ShaderPropertyType.Texture) continue;
+				string tp = sh.GetPropertyName(i), low = tp.ToLowerInvariant();
+				if (low.Contains("normal") || low.Contains("bump") || low.Contains("mask") || low.Contains("noise") || low.Contains("height")
+					|| low.Contains("occlusion") || low.Contains("metal") || low.Contains("smooth") || low.Contains("emission")) continue;
+				if (m.GetTexture(tp) != null) { prop = tp; return m.GetTexture(tp); }
+			}
+			return null;
+		}
+
+		/// <summary>
+		/// The colour some renderers show as the game draws them: lit by the scene's lights, with their own shaders, property
+		/// blocks (a tint) and textures. They alone are drawn - moved for a moment to a layer nothing else uses, for a camera
+		/// that sees only that layer - from four sides and above into a small picture without fog, whose drawn pixels are
+		/// averaged. The den's atlas texture and mesh can't be read in the game, so drawing is how its look is measured.
+		/// </summary>
+		public static bool LitColour(Renderer[] rs, out Color colour)
+		{
+			colour = Color.white;
+			rs = rs != null ? rs.Where(r => r != null).ToArray() : new Renderer[0];
+			if (rs.Length == 0) return false;
+			int layer = -1;
+			for (int i = 31; i >= 8 && layer < 0; i--) if (string.IsNullOrEmpty(LayerMask.LayerToName(i))) layer = i;
+			if (layer < 0) { Debug.Log("[CUSTOM ISLANDS] Lit colour: no free layer"); return false; }
+			Bounds b = rs[0].bounds;
+			foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+			float ext = Mathf.Max(0.5f, b.extents.magnitude);
+			const int size = 96;
+			RenderTexture rt = RenderTexture.GetTemporary(size, size, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+			RenderTexture prev = RenderTexture.active;
+			var read = new Texture2D(size, size, TextureFormat.RGBA32, false);
+			var layers = rs.Select(r => r.gameObject.layer).ToArray();
+			bool fog = RenderSettings.fog;
+			var go = new GameObject("CI lit colour");
+			try
+			{
+				Camera cam = go.AddComponent<Camera>();
+				cam.enabled = false;
+				cam.orthographic = true;
+				cam.orthographicSize = ext;
+				cam.nearClipPlane = 0.01f;
+				cam.farClipPlane = ext * 4f;
+				cam.clearFlags = CameraClearFlags.SolidColor;
+				cam.backgroundColor = Key;
+				cam.cullingMask = 1 << layer;
+				cam.allowHDR = false;
+				cam.allowMSAA = false;
+				cam.targetTexture = rt;
+				foreach (Renderer r in rs) r.gameObject.layer = layer;
+				RenderSettings.fog = false;
+				Color sum = Color.clear;
+				int n = 0;
+				foreach (Vector3 dir in new[] { Vector3.forward, Vector3.back, Vector3.left, Vector3.right, Vector3.down })
+				{
+					go.transform.SetPositionAndRotation(b.center - dir * ext * 2f, Quaternion.LookRotation(dir, Mathf.Abs(dir.y) > 0.9f ? Vector3.forward : Vector3.up));
+					cam.Render();
+					RenderTexture.active = rt;
+					read.ReadPixels(new Rect(0, 0, size, size), 0, 0);
+					read.Apply();
+					foreach (Color c in read.GetPixels())
+					{
+						if (c.r > 0.9f && c.g < 0.1f && c.b > 0.9f) continue; // (the key: nothing drawn there)
+						sum += c; n++;
+					}
+				}
+				if (n < 50) { Debug.Log("[CUSTOM ISLANDS] Lit colour: only " + n + " pixels drawn"); return false; }
+				colour = sum / n;
+				colour.a = 1f;
+				if (colour.maxColorComponent < 0.01f) { Debug.Log("[CUSTOM ISLANDS] Lit colour: drawn black"); colour = Color.white; return false; }
+				return true;
+			}
+			catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Lit colour could not be read: " + x.Message); return false; }
+			finally
+			{
+				for (int i = 0; i < rs.Length; i++) if (rs[i] != null) rs[i].gameObject.layer = layers[i];
+				RenderSettings.fog = fog;
+				RenderTexture.active = prev;
+				RenderTexture.ReleaseTemporary(rt);
+				UnityEngine.Object.Destroy(read);
+				UnityEngine.Object.Destroy(go);
+			}
 		}
 
 		public static void PlugOpening(GameObject den, float size = 1f)
@@ -638,42 +767,71 @@ namespace DynamicIslands.Editor
 							if (a >= 0 && b >= 0 && a < nx && b < ny && inside[a, b]) keep[i, k] = true;
 						}
 			float hx0 = mx - HoleHalf, hx1 = mx + HoleHalf, hy0 = my - HoleBelow, hy1 = my + HoleUp;
+			// (rock relief: a flat board with the den's texture at 20 m drew as a smooth marbled blue-white sheet beside
+			// The Abyss's acid path, 11-05. Each corner is pushed in or out by coarse noise and every triangle has its own
+			// corners, so the wall reads as faceted rock like the den's own walls)
+			Func<float, float, float> depth = (px, py) => PlugRelief * (2f * Mathf.PerlinNoise(px / 1.6f + 17.3f, py / 1.6f + 5.1f) - 1f)
+				+ 0.35f * PlugRelief * (2f * Mathf.PerlinNoise(px / 0.7f + 3.7f, py / 0.7f + 41.9f) - 1f);
 			var verts = new List<Vector3>();
 			var tris = new List<int>();
 			for (int k = 0; k < ny; k++)
 			{
 				float ya = y0 + k * cell, yb = ya + cell;
-				int run = -1;
-				for (int i = 0; i <= nx; i++)
+				for (int i = 0; i < nx; i++)
 				{
-					bool on = false;
-					if (i < nx && keep[i, k])
+					if (!keep[i, k]) continue;
+					float xa = x0 + i * cell, xb = xa + cell;
+					if (xb > hx0 && xa < hx1 && yb > hy0 && ya < hy1) continue; // (the passage's hole)
+					Vector3 p00 = new Vector3(xa, ya, z + depth(xa, ya)), p10 = new Vector3(xb, ya, z + depth(xb, ya));
+					Vector3 p11 = new Vector3(xb, yb, z + depth(xb, yb)), p01 = new Vector3(xa, yb, z + depth(xa, yb));
+					// (both sides, each with its own corners: on shared ones the two sides' normals cancelled out and the wall
+					// drew as a flat black board - seen from inside The Abyss's lava tube, 11-05; Plug had the same fault, TN1)
+					foreach (Vector3[] t in new[] { new[] { p00, p11, p10 }, new[] { p00, p01, p11 }, new[] { p00, p10, p11 }, new[] { p00, p11, p01 } })
 					{
-						float xa = x0 + i * cell, xb = xa + cell;
-						on = !(xb > hx0 && xa < hx1 && yb > hy0 && ya < hy1); // (the passage's hole)
-					}
-					if (on && run < 0) run = i;
-					if (!on && run >= 0)
-					{
-						float ax = x0 + run * cell, bx = x0 + i * cell;
-						int n = verts.Count;
-						verts.Add(new Vector3(ax, ya, z)); verts.Add(new Vector3(bx, ya, z)); verts.Add(new Vector3(bx, yb, z)); verts.Add(new Vector3(ax, yb, z));
-						tris.AddRange(new[] { n, n + 2, n + 1, n, n + 3, n + 2, n, n + 1, n + 2, n, n + 2, n + 3 }); // (both sides)
-						run = -1;
+						tris.Add(verts.Count); verts.Add(t[0]); tris.Add(verts.Count); verts.Add(t[1]); tris.Add(verts.Count); verts.Add(t[2]);
 					}
 				}
 			}
 			if (tris.Count == 0) { UnityEngine.Object.DestroyImmediate(go); return; }
 			var mesh = new Mesh { name = PlugName };
+			if (verts.Count > 65000) mesh.indexFormat = IndexFormat.UInt32;
 			mesh.SetVertices(verts);
 			mesh.SetTriangles(tris, 0);
-			mesh.SetUVs(0, verts.Select(v => new Vector2(v.x / 6f, v.y / 6f)).ToList());
+			// (the den's texture is an atlas of colour patches: the wall's own UVs at 20 m showed all of it - blue, white and
+			// orange - beside The Abyss's acid path, 11-05. The wall takes the den's colour from round its mouth instead)
+			// The den's mesh is not readable in the game, so it is Raft's big rock instead (as the cave mountain's skin), at 14 m
+			// like the skin; only without it, one patch of the den's own texture (readable mesh) or the old 20 m tiling.
+			GameObject bigRock = PlaceableCatalog.Get(WallRock);
+			Renderer rockLook = bigRock != null ? bigRock.GetComponentsInChildren<MeshRenderer>(true).FirstOrDefault(r => r.sharedMaterial != null) : null;
+			Vector2 swatch = Vector2.zero;
+			bool atlas = rockLook == null && MouthSwatch(look, go.transform.TransformPoint(new Vector3(mx, my + HoleUp + 1f, RoomMax.z)), out swatch);
+			mesh.SetUVs(0, verts.Select(v => rockLook != null ? new Vector2(v.x, v.y) / 14f : atlas ? swatch + new Vector2(v.x, v.y) * (0.004f / PlugTile)
+				: new Vector2(v.x / PlugTile, v.y / PlugTile)).ToList());
 			mesh.RecalculateNormals();
 			mesh.RecalculateBounds();
 			go.AddComponent<MeshFilter>().sharedMesh = mesh;
-			go.AddComponent<MeshRenderer>().sharedMaterial = look.sharedMaterial;
+			MeshRenderer wr = go.AddComponent<MeshRenderer>();
+			wr.sharedMaterial = rockLook != null ? rockLook.sharedMaterial : look.sharedMaterial;
 			go.AddComponent<MeshCollider>().sharedMesh = mesh;
-			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + (verts.Count / 4) + " strips");
+			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + (verts.Count / 12) + " cells, rock relief, " + wr.sharedMaterial.name + (atlas ? " at uv " + swatch.ToString("0.000") : ""));
+		}
+
+		/// <summary>The UV of the den mesh's corner nearest a point by its mouth (its rock colour), when the mesh is readable.</summary>
+		public static bool MouthSwatch(Renderer look, Vector3 near, out Vector2 uv)
+		{
+			uv = Vector2.zero;
+			MeshFilter mf = look != null ? look.GetComponent<MeshFilter>() : null;
+			Mesh m = mf != null ? mf.sharedMesh : null;
+			if (m == null || !m.isReadable) return false;
+			Vector3[] vs = m.vertices;
+			var uvs = new List<Vector2>();
+			m.GetUVs(0, uvs);
+			if (vs.Length == 0 || uvs.Count != vs.Length) return false;
+			Vector3 at = look.transform.InverseTransformPoint(near);
+			int best = 0; float bd = float.MaxValue;
+			for (int i = 0; i < vs.Length; i++) { float d = (vs[i] - at).sqrMagnitude; if (d < bd) { bd = d; best = i; } }
+			uv = uvs[best];
+			return true;
 		}
 
 		#endregion

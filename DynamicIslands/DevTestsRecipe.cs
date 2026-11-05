@@ -2024,7 +2024,9 @@ namespace DynamicIslands
 							// (a world puts an island's land centre - the land above the sea, as saved - where it spawns; the recipe's
 							// points are from its origin, the land centre when it was generated: land changed since moves them)
 							Vector2 moved = EditorLandCentre() - frames[0].Origin;
-							if (moved.magnitude > 0.5f) Log("  the land centre is " + Num(moved.x) + " " + Num(moved.y) + " from the recipe's origin: play tests of '" + island + "' need 'offset " + Num(moved.x) + " " + Num(moved.y) + "'");
+							// (logged however small: land added under 0.5 m from the origin made it say nothing, and the island's plays
+							// kept an old 'offset' 1 m out - The Abyss's vent pool, 11-05)
+							Log("  the land centre is " + Num(moved.x) + " " + Num(moved.y) + " from the recipe's origin: play tests of '" + island + "' need 'offset " + Num(moved.x) + " " + Num(moved.y) + "'" + (moved.magnitude > 0.5f ? "" : " (or none: under 0.5 m)"));
 							break;
 						}
 						case "plan":

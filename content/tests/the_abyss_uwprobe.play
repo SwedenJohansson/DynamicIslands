@@ -1,0 +1,13 @@
+# Probe (11-05, round 3): the pale patch in abyss_acid_wide, west of the acid shelf - from under water and from above.
+island The Abyss keep
+offset -2.8571 -0.3744
+hour 12
+weather Calm
+at 87 -1
+wait 3
+picture abyss_acid_wide 64 16 28 81 1 10
+picture abyss_uw_top 64 22 6 64.2 0 5.9
+picture abyss_uw_west 50 -2 6 66 -4 6
+picture abyss_uw_south 64 -2 -12 64 -4 6
+picture abyss_uw_north 60 -2 22 66 -4 2
+picture abyss_uw_shelf 70 -2.5 12 60 -4 2

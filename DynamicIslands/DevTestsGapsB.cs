@@ -193,6 +193,24 @@ namespace DynamicIslands
 			Log("PASS: watch result");
 		}
 
+		// (content 11-04, The Abyss: an island whose acid has safe=suit but no suit locker of its own - its suit check
+		// needs the suit put on by hand)
+		[ConsoleCommand(name: "CIGapsSuit", docs: "Dev, in game (either player): puts the protective suit on this player as the suit action does (Hazards.PutOnSuit), or takes it off: CIGapsSuit <seconds>|off; logs SUIT on|off")]
+		public static void GapsSuitCommand(string[] args)
+		{
+			string a = args != null && args.Length > 0 ? args[0] : "120";
+			Network_Player p = RAPI.GetLocalPlayer();
+			if (a == "off")
+			{
+				Hazards.SuitUntil = 0f;
+				try { if (p != null && p.HazmatSuit != null && p.HazmatSuit.Equipped) p.HazmatSuit.UnEquip(); } catch (Exception ex) { Log("  (hazmat suit off: " + ex.Message + ")"); }
+			}
+			else Hazards.PutOnSuit(a);
+			bool on = Hazards.SuitOn(p);
+			Log("SUIT " + (on ? "on" : "off") + " (" + GWho() + ")");
+			Log((on == (a != "off") ? "PASS" : "FAIL") + ": suit " + a);
+		}
+
 		[ConsoleCommand(name: "CIGapsHitPlayer", docs: "Dev, in game (either player; player 2), IL4: hits the other player once for <damage>, as a weapon would (Raft's DamageEntity, from a player): CIGapsHitPlayer <damage>; logs HITPLAYER")]
 		public static void GapsHitPlayerCommand(string[] args)
 		{

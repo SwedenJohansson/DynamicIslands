@@ -1,0 +1,20 @@
+# Pictures of The Abyss's acid vent pool (content 11-04), midday, calm: CIPlay the_abyss_acidpics
+island The Abyss keep
+offset -2.8571 -0.3744
+hour 12
+weather Calm
+at 87 -1
+wait 3
+# (11-05: camera heights over the ground below them, +h; the wide view stays over the sea)
+picture abyss_acid_close 74.5 +2.2 18 79.5 0 13
+picture abyss_acid_close2 85 +2.5 9 79.5 0 13
+picture abyss_acid_wide 64 16 28 81 1 10
+# from inside the lava tube's mouth (its den wall drew as a black board here before 11-05), and from the path
+picture abyss_acid_path 87 6.5 3 80 0.5 13
+# (the tube's rock is over 87 2, so a +h camera there stands on the hill: the mouth's shots use plain heights)
+picture abyss_acid_den 87 5 5 88 4 -8
+picture abyss_acid_path2 87 +1.7 9 79.5 0 13
+# a player's own view, standing on the rim by the way out
+at 83 11
+wait 2
+picture abyss_acid_player 83 +1.6 11 79.5 0 13

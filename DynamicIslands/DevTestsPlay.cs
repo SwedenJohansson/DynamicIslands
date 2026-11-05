@@ -47,8 +47,21 @@ namespace DynamicIslands
 		}
 
 		static IslandWorldState.Entry playEntry;
+		static readonly Dictionary<string, List<Vector3>> animalsSeen = new Dictionary<string, List<Vector3>>();
+
+		/// <summary>How far an animal's feet are over the first thing under them that is not itself (-1: nothing within 3 m).</summary>
+		static float AnimalFloorGap(AI_NetworkBehaviour a)
+		{
+			Vector3 from = a.transform.position + Vector3.up * 0.5f;
+			float best = -1f;
+			foreach (RaycastHit h in Physics.RaycastAll(from, Vector3.down, 3.5f, ~0, QueryTriggerInteraction.Ignore))
+				if (!h.collider.transform.IsChildOf(a.transform) && (best < 0 || h.distance < best)) best = h.distance;
+			return best < 0 ? -1f : Mathf.Max(0f, best - 0.5f);
+		}
 		// Raft story blueprints the player held during this play (hands are emptied at each island: 'expect blueprints' counts these)
 		static readonly HashSet<string> playBlueprints = new HashSet<string>();
+		// (Hazards.Taken at the play's start or its last expect hurt / unhurt)
+		static float playHurtFrom;
 		static void NotePlayBlueprints(Network_Player me)
 		{
 			if (me == null || me.Inventory == null) return;
@@ -130,6 +143,7 @@ namespace DynamicIslands
 			var made = new List<IslandWorldState.Entry>();
 			playEntry = null;
 			playBlueprints.Clear();
+			playHurtFrom = Hazards.Taken;
 			int checks = 0;
 			// (settle time: a step's wait after its action is owed, not slept. The expects right after it are polled and
 			// checked as soon as all of them hold - only when each was false before the action, so nothing true all along
@@ -714,7 +728,9 @@ namespace DynamicIslands
 		// (steps that may follow an early group at once: they act on what the expects saw, they don't move or look)
 		static readonly HashSet<string> PlayNoSettleVerbs = new HashSet<string> { "zone", "read", "open", "openat", "use", "code", "dig", "reach", "expect", "note" };
 		// (expects that read where things are: they wait out a step's whole settle time, also after an early group)
-		static readonly HashSet<string> PlayMotionExpects = new HashSet<string> { "height", "stand" };
+		// (hurt/unhurt measure what the time did: after an early "expect message" group they were checked at once and saw one
+		// hit of a 16-20 s wait - Blightmire and Engine Court hurt plays, 11-05)
+		static readonly HashSet<string> PlayMotionExpects = new HashSet<string> { "height", "stand", "hurt", "unhurt", "animalsmoved" };
 		// (expects that only read the state - no wait of their own, no side effect)
 		static readonly HashSet<string> PlayQuietKinds = new HashSet<string> { "step", "title", "done", "story", "survivor", "shown", "hidden", "message", "item", "animals" };
 
@@ -802,6 +818,18 @@ namespace DynamicIslands
 					Check(ref ok, got.Any(m => (m ?? "").IndexOf(want, StringComparison.OrdinalIgnoreCase) >= 0), "a message with '" + want + "' (last: '" + string.Join("' / '", got.Take(3).Select(m => m ?? "").ToArray()) + "')");
 					break;
 				}
+				case "hurt":
+				case "unhurt":
+				{
+					// expect hurt [min] / expect unhurt: the health hazard zones took from the player since the play's start or the
+					// last of these (Hazards.Taken, measured round each hit). 11-05: the acid run passed with 0 taken - its health
+					// watch had ended before the play began; a hazard play now checks itself
+					float took = Hazards.Taken - playHurtFrom, min = what == "hurt" ? (t.Length > 2 ? F(t[2]) : 1f) : 0f;
+					bool hurtOk = what == "hurt" ? took >= min : took <= 0.001f;
+					if (!quietCheck) playHurtFrom = Hazards.Taken;
+					Check(ref ok, hurtOk, "hazards took " + took.ToString("F2", CultureInfo.InvariantCulture) + " health" + (what == "hurt" ? " (at least " + min.ToString("F1", CultureInfo.InvariantCulture) + ")" : " (none wanted)"));
+					break;
+				}
 				case "item":
 				{
 					Network_Player p = RAPI.GetLocalPlayer();
@@ -815,6 +843,31 @@ namespace DynamicIslands
 					string label = string.Join(" ", t.Skip(2).Take(t.Length - 3).ToArray());
 					int n = ScAnimals(playEntry, label).Count;
 					Check(ref ok, n == (int)F(t[t.Length - 1]), "animals '" + label + "' alive: " + n + " (expected " + t[t.Length - 1] + ")");
+					// (each one's place in recipe coordinates and its gap over the floor under it, kept for animalsmoved)
+					List<Vector3> at = new List<Vector3>();
+					foreach (AI_NetworkBehaviour a in ScAnimals(playEntry, label))
+					{
+						Vector3 w = a.transform.position;
+						at.Add(w);
+						float gap = AnimalFloorGap(a);
+						Vector3 r = w - playEntry.Position;
+						Log("  " + label + " at " + (r.x + playOffset.x).ToString("0.0") + " " + (r.z + playOffset.y).ToString("0.0") + " y " + w.y.ToString("0.00")
+							+ ", over its floor " + (gap < 0 ? "nothing within 3 m" : gap.ToString("0.00") + " m"));
+						if (a.GetComponentInChildren<UnityEngine.AI.NavMeshAgent>(true) != null) Check(ref ok, gap >= 0 && gap < 0.6f, label + " stands on its floor (gap " + gap.ToString("0.00") + ", under 0.6)");
+					}
+					animalsSeen[label] = at;
+					break;
+				}
+				case "animalsmoved":
+				{
+					// (expect animalsmoved <label> <metres>: the one that went furthest since the last expect animals of it)
+					string label = string.Join(" ", t.Skip(2).Take(t.Length - 3).ToArray());
+					List<Vector3> was;
+					float most = 0f;
+					if (animalsSeen.TryGetValue(label, out was))
+						foreach (AI_NetworkBehaviour a in ScAnimals(playEntry, label))
+							most = Mathf.Max(most, was.Count == 0 ? 0f : was.Min(v => Vector3.Distance(v, a.transform.position)));
+					Check(ref ok, was != null && most >= F(t[t.Length - 1]), "animals '" + label + "' moved " + most.ToString("0.0") + " m (at least " + t[t.Length - 1] + ")");
 					break;
 				}
 				case "height":
@@ -1043,6 +1096,40 @@ namespace DynamicIslands
 			return cam.GetComponents<Behaviour>().Where(b => b != null && b.enabled && !(b is Camera) && b.GetType().Name.IndexOf("WaterDrops", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
 		}
 
+		/// <summary>What a picture shows, by name: the first solid thing hit through 5 x 3 points of the frame (left to
+		/// right, top to bottom) with its distance - to name a piece seen in a shot (11-05: a flat wall and a box in The Abyss's
+		/// acid shots). Logs a FRAME line per row.</summary>
+		static void LogFrameHits(Camera cam)
+		{
+			var rows = new List<string>();
+			bool backs = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				Physics.SyncTransforms();
+				foreach (float vy in new[] { 0.75f, 0.5f, 0.25f })
+				{
+					var parts = new List<string>();
+					foreach (float vx in new[] { 0.1f, 0.3f, 0.5f, 0.7f, 0.9f })
+					{
+						RaycastHit h;
+						Ray ray = cam.ViewportPointToRay(new Vector3(vx, vy, 0f));
+						string what = "-";
+						if (Physics.Raycast(ray, out h, 400f, ~0, QueryTriggerInteraction.Ignore))
+						{
+							Transform tr = h.collider.transform;
+							what = (tr.parent != null ? tr.parent.name + "/" : "") + tr.name + " " + h.distance.ToString("F1", CultureInfo.InvariantCulture);
+						}
+						parts.Add(what);
+					}
+					rows.Add("FRAME " + (vy > 0.6f ? "top" : vy > 0.4f ? "mid" : "low") + ": " + string.Join(" | ", parts.ToArray()));
+				}
+			}
+			catch (Exception e) { rows.Add("FRAME (" + e.Message + ")"); }
+			finally { Physics.queriesHitBackfaces = backs; }
+			foreach (string r in rows) Log(r);
+		}
+
 		static IEnumerator PlayPicture(string file, Vector3 from, Vector3 look)
 		{
 			Camera cam = Camera.main;
@@ -1064,6 +1151,7 @@ namespace DynamicIslands
 				cam.transform.position = from;
 				cam.transform.LookAt(look);
 				pic = RenderCam(cam, 1280, 720).EncodeToJPG(88);
+				LogFrameHits(cam);
 			}
 			finally
 			{

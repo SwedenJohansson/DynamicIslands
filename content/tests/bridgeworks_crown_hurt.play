@@ -1,0 +1,10 @@
+# Bridgeworks Crown hazard test (11-05): cable bed shockcoil (8/s, r 4). CIPlay bridgeworks_crown_hurt, in a test world 'CI ...', CIGapsSuit off (no suit: the zone must hurt).
+island Bridgeworks Crown keep
+offset 0 0
+hour 11
+weather Calm
+at 25 -74
+wait 8
+expect message The cable bed is live
+# (24 is about half of the expected damage)
+expect hurt 24

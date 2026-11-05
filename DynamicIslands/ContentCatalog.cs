@@ -307,7 +307,7 @@ namespace DynamicIslands.Editor
 			if (IsNoteObject(name)) return "players read it in a world with the interact key (E). Select it to write the text";
 			if (IsLootObject(name)) return "players open it in a world with the interact key (E) and get what's inside. Select it to choose the items";
 			if (name == TriggerZone) return "invisible in a world: when a player walks in it shows a message, gives items or wakes up creatures linked to it. Select it to set it up";
-			if (name == AtmosphereZoneName) return "fog colour, light tint and particles (fireflies, mist, snow, embers) around it in a world. Fly the camera in to see it";
+			if (name == AtmosphereZoneName) return "fog colour, light tint and particles (fireflies, mist, snow, embers, bubbles, steam) around it in a world. Fly the camera in to see it";
 			if (name == SoundZoneName) return "plays one of Raft's sounds while players are in it, or once when they walk in. Select it to choose the sound";
 			if (name == HelperWall) return "invisible in a world, but solid: blocks a path or keeps players in. Scale and turn it to fit";
 			if (name == HelperRamp) return "invisible in a world, but players can walk up it: makes a cliff or a sea stack climbable. Scale and turn it to fit";

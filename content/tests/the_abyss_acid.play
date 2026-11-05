@@ -1,0 +1,17 @@
+# The Abyss's acid vent pool (content 11-04): CIPlay the_abyss_acid, in a test world 'CI ...'. The pool lies on a
+# low shelf on the lagoon side of the lava tube's path (recipe 79.5 13). Without the suit (CIGapsSuit off) the acid
+# burns: expect hurt checks the health it took (11-05: a run with 0 damage passed - a health watch run before the play
+# had ended when it began). The suit run is the_abyss_acidsuit.
+island The Abyss keep
+offset -2.8571 -0.3744
+hour 11
+weather Calm
+at 79.5 13
+wait 5
+expect message The vent water burns.
+at 79.5 13
+wait 4
+# (5 a second for ~9 s: at least 20)
+expect hurt 20
+# the way out: from the pool's middle up the shallow slope on the path's side, onto the path
+walk 79.5 13 to 81.8 11.4 to 84.6 9.4 to 87 9 h=3

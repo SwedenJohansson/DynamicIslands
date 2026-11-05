@@ -11,7 +11,7 @@ namespace DynamicIslands.Editor
 {
 	/// <summary>
 	/// The atmosphere editor's zones: near one, the fog takes the zone's colour and thickness, the ambient light takes
-	/// its tint, and its particles (fireflies, mist, snow, embers) drift around. The strength fades in over the outer
+	/// its tint, and its particles (fireflies, mist, snow, embers, bubbles, steam) drift around. The strength fades in over the outer
 	/// third of the radius. The changes are made only while the main camera renders and undone right after, so Raft's
 	/// own weather and day/night cycle are never touched. Works in the editor too (fly the camera into the zone).
 	/// </summary>
@@ -28,7 +28,7 @@ namespace DynamicIslands.Editor
 		void OnEnable() { zones.Add(this); Hook(); }
 		void OnDisable() { zones.Remove(this); }
 
-		public static readonly string[] ParticleKinds = { "none", "fireflies", "mist", "snow", "embers", "bubbles" };
+		public static readonly string[] ParticleKinds = { "none", "fireflies", "mist", "snow", "embers", "bubbles", "steam" };
 
 		/// <summary>Sets a zone up from its settings (on a spawned island, or live in the editor).</summary>
 		public void Configure(IDictionary<string, string> p)
@@ -39,10 +39,19 @@ namespace DynamicIslands.Editor
 			Light = ObjectProps.HasColor(p, ObjectProps.AtmoLight) ? ObjectProps.ColorOf(p, ObjectProps.AtmoLight) : Color.white;
 			LightAmount = ObjectProps.HasColor(p, ObjectProps.AtmoLight) ? Mathf.Clamp01(ObjectProps.GetFloat(p, ObjectProps.AtmoLightAmount, 0.5f)) : 0f;
 			string kind = ObjectProps.Get(p, ObjectProps.AtmoParticles, "none");
-			if (kind != Particles || transform.Find("CI_Particles") == null || Mathf.Abs(particleRadius - Radius) > 0.01f) MakeParticles(kind);
+			if (kind != Particles || transform.Find("CI_Particles") == null || Mathf.Abs(particleRadius - Radius) > 0.01f || (kind == "steam" && particleFog != SteamColour())) MakeParticles(kind);
 		}
 
 		float particleRadius;
+		Color particleFog;
+
+		/// <summary>Steam takes the zone's fog colour (a sulphur-green vent, a white geyser), lightened so it reads as vapour.</summary>
+		Color SteamColour()
+		{
+			Color c = FogAmount > 0f ? Color.Lerp(Fog, Color.white, 0.35f) : new Color(0.95f, 0.95f, 0.95f);
+			c.a = 0.38f;
+			return c;
+		}
 
 		void MakeParticles(string kind)
 		{
@@ -50,6 +59,7 @@ namespace DynamicIslands.Editor
 			if (old != null) Destroy(old.gameObject);
 			Particles = kind;
 			particleRadius = Radius;
+			particleFog = SteamColour();
 			if (kind == "none" || !ParticleKinds.Contains(kind)) return;
 			var go = new GameObject("CI_Particles");
 			go.transform.SetParent(transform, false);
@@ -100,6 +110,19 @@ namespace DynamicIslands.Editor
 					emission.rateOverTime = Mathf.Clamp(area * 0.5f, 10f, 120f);
 					shape.shapeType = ParticleSystemShapeType.Circle; shape.rotation = new Vector3(90, 0, 0); shape.radius = Mathf.Min(Radius, 1.5f);
 					noise.enabled = true; noise.strength = 0.25f; noise.frequency = 1.2f;
+					break;
+				case "steam":
+					// (a vent or a hot pool: thick plumes rising from its middle and growing as they climb, in the fog's colour -
+					// the mist is a faint white haze, too weak to say "this water burns" by day; 11-05, The Abyss's acid pool)
+					main.startLifetime = new ParticleSystem.MinMaxCurve(4f, 7f); main.startSpeed = new ParticleSystem.MinMaxCurve(0.6f, 1.3f);
+					main.startSize = new ParticleSystem.MinMaxCurve(1.2f, 2.4f); main.maxParticles = 400; main.gravityModifier = -0.02f;
+					main.startColor = SteamColour();
+					emission.rateOverTime = Mathf.Clamp(area * 0.4f, 8f, 40f);
+					shape.shapeType = ParticleSystemShapeType.Cone; shape.angle = 12f; shape.rotation = new Vector3(-90, 0, 0); shape.radius = Mathf.Max(0.5f, Radius * 0.6f);
+					noise.enabled = true; noise.strength = 0.35f; noise.frequency = 0.3f;
+					var grow = ps.sizeOverLifetime;
+					grow.enabled = true;
+					grow.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 0.5f), new Keyframe(1f, 2.2f)));
 					break;
 				case "embers":
 					main.startLifetime = 4f; main.startSpeed = 1f; main.startSize = 0.07f; main.maxParticles = 800; main.gravityModifier = -0.08f;

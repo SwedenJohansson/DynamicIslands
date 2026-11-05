@@ -1715,13 +1715,16 @@ an arena, or make a cliff climbable.
 
 ### 5.5 Atmosphere and sound
 
-An **atmosphere zone** changes the fog colour, the light and adds particles (fireflies, mist, snow, embers, bubbles)
+An **atmosphere zone** changes the fog colour, the light and adds particles (fireflies, mist, snow, embers, bubbles,
+steam)
 around a spot; a **sound zone** plays one of Raft's 500+ sounds while a player is inside (**While inside**, louder
 towards the middle) or once on entering (**Once on entering**). **Choose sound...** picks the sound (► listens, ■
 stops), the **Volume** slider sets how loud it is in the middle of the zone (5 to 100 %, 80 % to begin with), and the
 zone has a size like any zone.
 **Bubbles** rise from the zone's middle in a column, about 14 m high - under water, for an air pocket filling or a
 vent; give the zone only bubbles (no fog or light) and it changes nothing else.
+**Steam** rises in thick plumes from the zone's middle, growing as it climbs: a hot spring, a vent, an acid pool. It
+takes the zone's fog colour (lightened), so a sulphur-green fog gives green steam and no fog white steam.
 A **dark light tint** makes the inside really dark: Raft's sun, the sky's light and its reflections all take the tint
 while you are in the zone - for a cave, a mine or a buried room (Old Mine Islet and Shelter Atoll in the library).
 
