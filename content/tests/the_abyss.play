@@ -4,7 +4,7 @@
 # (18 m), the shack on the floor (42 m) - and the lair on the floor. The quest has 26 steps (ABYSS 10-26: seven new ones first - the shore camp, Black Peak, Wreck Cove, the compressor): the raft, the dive, the
 # lair, the way back up; its pages steps are the journal's pages (the log, the chests' tags, the valve, the angler).
 island The Abyss
-offset -1.2308 0.0529
+offset -0.1963 0.2773
 expect step 0
 expect title The Bottom of the Abyss
 

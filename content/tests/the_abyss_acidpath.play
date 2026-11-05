@@ -2,7 +2,7 @@
 # beach, beside the pool. Run it under CIGapsWatchHealth: the
 # path walk takes no acid damage. CIPlay the_abyss_acidpath
 island The Abyss keep
-offset -1.2308 0.0529
+offset -0.1963 0.2773
 hour 11
 weather Calm
 walk 87 -1 to 87 5 to 87 10 to 87 14

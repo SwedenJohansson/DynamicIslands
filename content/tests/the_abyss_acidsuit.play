@@ -2,7 +2,7 @@
 # the_abyss_acidsuit, then CIGapsWatchResult: the watch takes nothing (and no burn message shows; the_abyss_acid is the
 # run without the suit). The suit must outlast the run: each CI command takes about a minute.
 island The Abyss keep
-offset -1.2308 0.0529
+offset -0.1963 0.2773
 hour 11
 weather Calm
 at 79.5 13
