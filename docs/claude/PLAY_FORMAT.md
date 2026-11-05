@@ -78,7 +78,7 @@ expect message isn't whole
 | `empty` | | In a `CI ` world: the player's inventory emptied (its blueprints noted first), as a player makes room before a chest whose loot would drop for a full bag. |
 | `storespot` | `[x z] [count] [size]` | Logs up to `count` (6) clear squares of `size` m (8) on the island's own ground for a Raft store, nearest to x z first, as ready `store - at X Z ground` lines: level within 0.6 m, at least 1 m above the sea, nothing of the island in the square up to 5 m high (`DevTests.StoreSpots` in `DevTestsStore.cs`). |
 | `where` | `<name>` | Logs where the island's objects whose name starts with it are, in test coordinates. |
-| `picture` | `<file> <x> <h> <z> <lx> <lh> <lz>` | A 1280x720 picture with Raft's camera to `recipes\play_<file>.jpg`. Heights above `Position.y`, or `+h` above what is below. |
+| `picture` | `<file> <x> <h> <z> <lx> <lh> <lz>` | A 1280x720 picture with Raft's camera to `recipes\play_<file>.jpg`. Heights above `Position.y`, or `+h` above what is below. Logs three `FRAME top/mid/low:` lines: the first solid thing (parent/name and metres) through 5 points across each row of the frame - to name a piece seen in a shot. |
 | `beam` | `<emitter>` | Traces a laser emitter's beam now and logs it: where it starts, its points, the mirrors, what it ends on, and the emitter's renderers (their middle is the beam's start). Diagnostics only: checks just that the emitter is there |
 | `snap` | `<file> <object> [from] [dist] [up]` | A picture like `picture`, framed on the object's middle: seen from compass bearing `from` (0 = from the north, default 180), `dist` m off (default twice its size, at least 4), `up` m higher (default 0.4 x dist). Logs where the object is. |
 
@@ -94,6 +94,7 @@ expect message isn't whole
 | `expect survivor <id>` | That survivor (`survivor.id`) is on the world's rescued list (`Survivors.Has`). |
 | `expect shown <name>` / `expect hidden <name>` | The object is shown / hidden. |
 | `expect message <text>` | One of the last messages contains the text (any case). |
+| `expect hurt [min]` / `expect unhurt` | Hazard zones (`zone.hazard`) took at least min health (default 1) / none from the player since the play's start or the last of these two (`Hazards.Taken`, measured round each hit). A hazard play checks its own damage: a health watch run as a separate CI command can end before the play starts.
 | `expect item <item> <n>` | The player has at least n of the item (Raft's unique item name, as in `content\objects\items.txt`). |
 | `expect animals <label> <n>` | Exactly n of the island's animals of that label are alive. |
 | `expect height <h>` | The player is within 1.2 m of h above `Position.y`. |

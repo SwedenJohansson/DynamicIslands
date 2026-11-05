@@ -159,7 +159,12 @@ namespace DynamicIslands.Editor
 			}
 			if (Time.time < nextHazard || dmg <= 0f) return;
 			nextHazard = Time.time + 1f;
-			try { player.Stats.Damage(dmg, player.transform.position + Vector3.up, Vector3.up, EntityType.Environment, true, null); }
+			try
+			{
+				float h0 = player.Stats.stat_health.Value;
+				player.Stats.Damage(dmg, player.transform.position + Vector3.up, Vector3.up, EntityType.Environment, true, null);
+				Hazards.Taken += Mathf.Max(0f, h0 - player.Stats.stat_health.Value);
+			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Hazard damage: " + e.Message); }
 			Tell();
 		}

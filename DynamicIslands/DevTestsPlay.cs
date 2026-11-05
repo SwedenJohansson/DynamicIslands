@@ -49,6 +49,8 @@ namespace DynamicIslands
 		static IslandWorldState.Entry playEntry;
 		// Raft story blueprints the player held during this play (hands are emptied at each island: 'expect blueprints' counts these)
 		static readonly HashSet<string> playBlueprints = new HashSet<string>();
+		// (Hazards.Taken at the play's start or its last expect hurt / unhurt)
+		static float playHurtFrom;
 		static void NotePlayBlueprints(Network_Player me)
 		{
 			if (me == null || me.Inventory == null) return;
@@ -125,6 +127,7 @@ namespace DynamicIslands
 			var made = new List<IslandWorldState.Entry>();
 			playEntry = null;
 			playBlueprints.Clear();
+			playHurtFrom = Hazards.Taken;
 			int checks = 0;
 			// (settle time: a step's wait after its action is owed, not slept. The expects right after it are polled and
 			// checked as soon as all of them hold - only when each was false before the action, so nothing true all along
@@ -764,6 +767,18 @@ namespace DynamicIslands
 					Check(ref ok, got.Any(m => (m ?? "").IndexOf(want, StringComparison.OrdinalIgnoreCase) >= 0), "a message with '" + want + "' (last: '" + string.Join("' / '", got.Take(3).Select(m => m ?? "").ToArray()) + "')");
 					break;
 				}
+				case "hurt":
+				case "unhurt":
+				{
+					// expect hurt [min] / expect unhurt: the health hazard zones took from the player since the play's start or the
+					// last of these (Hazards.Taken, measured round each hit). 11-05: the acid run passed with 0 taken - its health
+					// watch had ended before the play began; a hazard play now checks itself
+					float took = Hazards.Taken - playHurtFrom, min = what == "hurt" ? (t.Length > 2 ? F(t[2]) : 1f) : 0f;
+					bool hurtOk = what == "hurt" ? took >= min : took <= 0.001f;
+					if (!quietCheck) playHurtFrom = Hazards.Taken;
+					Check(ref ok, hurtOk, "hazards took " + took.ToString("F2", CultureInfo.InvariantCulture) + " health" + (what == "hurt" ? " (at least " + min.ToString("F1", CultureInfo.InvariantCulture) + ")" : " (none wanted)"));
+					break;
+				}
 				case "item":
 				{
 					Network_Player p = RAPI.GetLocalPlayer();
@@ -999,6 +1014,40 @@ namespace DynamicIslands
 			catch (Exception e) { Log("  weather: " + pick.name + " failed - " + (e.InnerException ?? e).Message); }
 		}
 
+		/// <summary>What a picture shows, by name: the first solid thing hit through 5 x 3 points of the frame (left to
+		/// right, top to bottom) with its distance - to name a piece seen in a shot (11-05: a flat wall and a box in The Abyss's
+		/// acid shots). Logs a FRAME line per row.</summary>
+		static void LogFrameHits(Camera cam)
+		{
+			var rows = new List<string>();
+			bool backs = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				Physics.SyncTransforms();
+				foreach (float vy in new[] { 0.75f, 0.5f, 0.25f })
+				{
+					var parts = new List<string>();
+					foreach (float vx in new[] { 0.1f, 0.3f, 0.5f, 0.7f, 0.9f })
+					{
+						RaycastHit h;
+						Ray ray = cam.ViewportPointToRay(new Vector3(vx, vy, 0f));
+						string what = "-";
+						if (Physics.Raycast(ray, out h, 400f, ~0, QueryTriggerInteraction.Ignore))
+						{
+							Transform tr = h.collider.transform;
+							what = (tr.parent != null ? tr.parent.name + "/" : "") + tr.name + " " + h.distance.ToString("F1", CultureInfo.InvariantCulture);
+						}
+						parts.Add(what);
+					}
+					rows.Add("FRAME " + (vy > 0.6f ? "top" : vy > 0.4f ? "mid" : "low") + ": " + string.Join(" | ", parts.ToArray()));
+				}
+			}
+			catch (Exception e) { rows.Add("FRAME (" + e.Message + ")"); }
+			finally { Physics.queriesHitBackfaces = backs; }
+			foreach (string r in rows) Log(r);
+		}
+
 		static IEnumerator PlayPicture(string file, Vector3 from, Vector3 look)
 		{
 			Camera cam = Camera.main;
@@ -1016,6 +1065,7 @@ namespace DynamicIslands
 				cam.transform.position = from;
 				cam.transform.LookAt(look);
 				pic = RenderCam(cam, 1280, 720).EncodeToJPG(88);
+				LogFrameHits(cam);
 			}
 			finally
 			{
