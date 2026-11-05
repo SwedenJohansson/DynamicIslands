@@ -329,9 +329,17 @@ namespace DynamicIslands
 				float d = new Vector2(f.x - p.x, f.z - p.z).magnitude;
 				if (d < best) { best = d; bk = k; }
 			}
-			if (bk < 0) return " (no swim spots at all)";
+			string sides = "";
+			foreach (Vector3 dir in new[] { Vector3.forward, Vector3.back, Vector3.left, Vector3.right })
+			{
+				Vector3 c = lb.center + dir * (Vector3.Scale(lb.extents, dir).magnitude + 0.9f);
+				var hits = Physics.RaycastAll(new Vector3(c.x, lb.max.y + 30f, c.z), Vector3.down, 80f, reachMask, QueryTriggerInteraction.Ignore).Where(h => h.point.y > RSea - 1.1f).OrderByDescending(h => h.point.y).Select(h => h.collider.name + "@" + (h.point.y - e.Position.y).ToString("F1")).ToArray();
+				Collider[] cap = Physics.OverlapCapsule(new Vector3(c.x, RSea - 1.1f, c.z), new Vector3(c.x, RSea + 0.3f, c.z), RRadius, reachMask, QueryTriggerInteraction.Ignore);
+				sides += " " + (dir.x + dir.z * 2).ToString("F0") + ":" + (hits.Length > 0 ? "over " + string.Join(",", hits) : "") + (InsideSolid(new Vector3(c.x, RSea - 1.1f, c.z)) ? " inside" : "") + (cap.Length > 0 ? " capsule " + string.Join(",", cap.Select(x => x.name).ToArray()) : "") + ";";
+			}
+			if (bk < 0) return " (no swim spots at all;" + sides + ")";
 			Vector3 q = g.Pos[bk] - e.Position;
-			return " (nearest " + (g.Kind[bk] == 1 ? "swim" : "dive") + " spot " + best.ToString("F1") + " m off, at h=" + q.y.ToString("F1") + ")";
+			return " (nearest " + (g.Kind[bk] == 1 ? "swim" : "dive") + " spot " + best.ToString("F1") + " m off, at h=" + q.y.ToString("F1") + "; 0.9 m out" + sides + ")";
 		}
 
 		/// <summary>Targets the reach grid can't judge (a hop course: it has no jumps across gaps), from the island's
