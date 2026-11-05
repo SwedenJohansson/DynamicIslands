@@ -380,7 +380,11 @@ namespace DynamicIslands.Editor
 					// (nor out over the sea from a roof above it: the hill's skin over the water, its foot on the sea floor, closed a
 					// pool of sea under it - a swimmer under a roof with no air, Old Mine Islet's mound over its south shore 11-05;
 					// a cave's own roof under the sea keeps its hill, and the hill's surface under the water too)
-					if (!cut[i, k] && float.IsNaN(cover[i, k]) && ground[i, k] < SeaLevel - SeaFloorBy && raw[i, k] > SeaLevel) { cut[i, k] = true; sea[i, k] = true; }
+					// (a cell kept only by the roof beside it counts as uncovered here: that one-cell margin past a shell's edge over the
+					// water was the flap the 11-05 face stood under - its wall down to the sea floor shut the water under it, Old Mine
+					// Islet's -7 -36 trap after the first sea cut; its own roof or low edge still keeps a cell)
+					bool bare = float.IsNaN(top[i, k]) && float.IsNaN(rimY[i, k]);
+					if (!cut[i, k] && bare && ground[i, k] < SeaLevel - SeaFloorBy && raw[i, k] > SeaLevel) { cut[i, k] = true; sea[i, k] = true; }
 					otherHill[i, k] = past && float.IsNaN(cover[i, k]) && !cut[i, k];
 				}
 			// (and its shore ring: the face down from the last cell left to a cut one leant out over the water, a hollow of sea
@@ -389,7 +393,7 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < nx; i++)
 				for (int k = 0; k < nz; k++)
 				{
-					if (cut[i, k] || !float.IsNaN(cover[i, k]) || !(raw[i, k] > SeaLevel) || !(ground[i, k] < SeaLevel + SeaShoreBy)) continue;
+					if (cut[i, k] || !float.IsNaN(top[i, k]) || !float.IsNaN(rimY[i, k]) || !(raw[i, k] > SeaLevel) || !(ground[i, k] < SeaLevel + SeaShoreBy)) continue;
 					bool bySea = false;
 					for (int di = -1; di <= 1 && !bySea; di++)
 						for (int dk = -1; dk <= 1 && !bySea; dk++)

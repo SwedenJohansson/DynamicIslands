@@ -371,6 +371,22 @@ prop minesound zone.radius=18
 call kit_st x=-12 z=22 yaw=180 len=7 end=room size=0.7 dirt=1 mush=1 stone=1 vines=1 as=backdrift
 # (both adits open level with the ground outside: the shore adit off the flat by the knob's foot, climbing to the
 # drift; the man-way along the ledge above the south slope - 11-04 look test: mouths 4 m up a slope had no way in)
+# (11-05: the man-way's ledge - its mouth opened on a 1 m lip of a spur over the deep south inlet, the walk-in slid off
+# it into the sea: a landing level with its floor, and a path along the south shore down to the flat by the knob's foot)
+macro om_ledge x0=0 z0=0 x1=0 z1=0 h0=0 h1=0 n=4
+for k 0 $n
+set t {$k/$n}
+brush flatten at {$x0+($x1-$x0)*$t} {$z0+($z1-$z0)*$t} r=1.8 s=20 frames=300 h={$h0+($h1-$h0)*$t}
+clear at {$x0+($x1-$x0)*$t} {$z0+($z1-$z0)*$t} r=2.2
+next
+end
+brush flatten at 67.2 -20.2 r=2.6 s=20 frames=600 h=5.6
+clear at 67.2 -20.2 r=3.0
+call om_ledge x0=67.2 z0=-20.2 x1=63.2 z1=-22.4 h0=5.6 h1=5.2 n=4
+call om_ledge x0=63.2 z0=-22.4 x1=59.7 z1=-21.8 h0=5.2 h1=4.5 n=4
+call om_ledge x0=59.7 z0=-21.8 x1=55.7 z1=-20.3 h0=4.5 h1=3.8 n=4
+call om_ledge x0=55.7 z0=-20.3 x1=52.2 z1=-18.0 h0=3.8 h1=3.3 n=4
+call om_ledge x0=52.2 z0=-18.0 x1=48.7 z1=-15.0 h0=3.3 h1=2.9 n=4
 dig 44.7,-12.0 54.5,-9.0 r=1.75 slope=12 as=oldwork
 dig 64.7,-19.4 61.2,-19.0 57.5,-13.5 54.5,-9.0 r=1.75 slope=-5 as=oldwork
 dig 54.5,-9.0 54.0,-4.5 r=1.75 slope=-10 as=oldwork

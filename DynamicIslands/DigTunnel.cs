@@ -838,10 +838,14 @@ namespace DynamicIslands.Editor
 		const float TopUp = 0.6f;
 		/// <summary>A face of the rim with its middle this close over the ground (m, across the slope; a little under it too)
 		/// and turned up out of it (its own face, not its corners' smoothed normals) lies on the ground: it takes the ground's look,
-		/// whatever the slope or however steeply it crosses the ground (the saw-tooth along the line where the rim's skin meets it).</summary>
-		const float OnGroundUnder = 0.05f, OnGroundBy = 0.3f;
+		/// whatever the slope or however steeply it crosses the ground (the saw-tooth along the line where the rim's skin meets it).
+		/// A face crossing the ground counts too - its middle under it, a corner out of it (11-05: on the steep slope under Old Mine
+		/// Islet's man-way the skin dipped in and out of the ground between the rim's samples, and the rock's corners poking out
+		/// were pale angular shards the rule, the middle within OnGroundUnder, never saw): down to OnGroundCross under.</summary>
+		const float OnGroundUnder = 0.05f, OnGroundBy = 0.3f, OnGroundCross = 0.6f;
 
-		/// <summary>The face (corners in the world) lies on the ground - see OnGroundBy. The one rule for SplitTop and RimShards.</summary>
+		/// <summary>The face (corners in the world) lies on the ground or crosses it - see OnGroundBy. The one rule for SplitTop
+		/// and RimShards.</summary>
 		static bool FaceOnGround(Terrain land, Vector3 a, Vector3 b, Vector3 c)
 		{
 			if (land == null || land.terrainData == null) return false;
@@ -850,8 +854,13 @@ namespace DynamicIslands.Editor
 			Vector3 lo = land.transform.position, size = land.terrainData.size;
 			Vector3 mid = (a + b + c) / 3f;
 			Vector3 gn = land.terrainData.GetInterpolatedNormal((mid.x - lo.x) / size.x, (mid.z - lo.z) / size.z);
+			if (Vector3.Dot(cross, gn) <= 0f) return false;
 			float off = (mid.y - GroundY(land, mid)) * gn.y;
-			return off >= -OnGroundUnder && off <= OnGroundBy && Vector3.Dot(cross, gn) > 0f;
+			if (off > OnGroundBy || off < -OnGroundCross) return false;
+			if (off >= -OnGroundUnder) return true;
+			// (under the ground at its middle: on it only when a corner pokes out)
+			float top = Mathf.Max(a.y - GroundY(land, a), Mathf.Max(b.y - GroundY(land, b), c.y - GroundY(land, c))) * gn.y;
+			return top > 0f;
 		}
 
 		/// <summary>Tests: the rim's rock faces (part 1) that lie on the ground (FaceOnGround) - pale shards on the ground beside

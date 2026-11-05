@@ -918,6 +918,10 @@ namespace DynamicIslands
 					// passage - a cave piece's hole under its hill let the audit into the earth under it: a 'trap' in the rock, 11-05;
 					// in the cave piece itself its roof may stand over the kept height map: a roof facing down over p, a floor under
 					// it - Old Mine Islet's Last ore cart in the quarry cave was walled off and the walker sent through its rock)
+					// (and first of all: the first thing over p met from behind - p in the rock or the earth, not in a cave; a cave's
+					// ceiling faces down at it. Old Mine Islet's 'traps' at -31.3 24.2 (in the earth by a mouth's hole cell, the
+					// terrain over it seen from below) and 4.3 -1.9 (under the den's floor in the mound) were points in the solid, 11-05)
+					if (BehindOver(p)) return true;
 					if (TerrainHoleAt(t, p)) { if (DigTunnel.InPassage(p, -1f)) break; return !CaveUnder(p, p.y + 30f); }
 					return !CaveUnder(p, tp.y + t.SampleHeight(p));
 				}
@@ -928,6 +932,19 @@ namespace DynamicIslands
 			{
 				RaycastHit h;
 				return Physics.Raycast(p, Vector3.up, out h, 40f, reachMask, QueryTriggerInteraction.Ignore) && h.normal.y > 0.1f;
+			}
+			finally { Physics.queriesHitBackfaces = was; }
+		}
+
+		/// <summary>The first surface over p (30 m up) is met from behind: it faces up, p is under its solid side.</summary>
+		static bool BehindOver(Vector3 p)
+		{
+			bool was = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				RaycastHit h;
+				return Physics.Raycast(p, Vector3.up, out h, 30f, reachMask, QueryTriggerInteraction.Ignore) && h.normal.y > 0.1f;
 			}
 			finally { Physics.queriesHitBackfaces = was; }
 		}
