@@ -80,6 +80,7 @@ namespace DynamicIslands
 				Physics.SyncTransforms();
 				reachMask = 1 << tgo.layer;
 				chk(!LadderRoom(new Bounds(new Vector3(10f, -499f, 10f), new Vector3(0.6f, 4f, 0.2f)), Vector3.forward), "a ladder's room under the ground: none");
+				chk(LadderFree(new Bounds(new Vector3(10f, -496.5f, 10f), new Vector3(0.6f, 4f, 0.2f)), Vector3.forward) == 1, "a ladder half in the ground: 1 of its 3 spots free, over it (" + LadderFree(new Bounds(new Vector3(10f, -496.5f, 10f), new Vector3(0.6f, 4f, 0.2f)), Vector3.forward) + ")");
 				chk(LadderRoom(new Bounds(new Vector3(10f, -490f, 10f), new Vector3(0.6f, 4f, 0.2f)), Vector3.forward), "a ladder's room in the air over it: room");
 			}
 			finally { reachMask = was; UnityEngine.Object.Destroy(tgo); }
@@ -701,7 +702,7 @@ namespace DynamicIslands
 				{
 					// (the side a player climbs it from: its front, or its back when only the back has room)
 					Vector3 lf = LadderRoot(ch[0]).forward; lf.y = 0f;
-					if (lf.sqrMagnitude > 0.01f) { lf.Normalize(); g.LadderF[node] = LadderRoom(lb, lf) || !LadderRoom(lb, -lf) ? lf : -lf; }
+					if (lf.sqrMagnitude > 0.01f) { lf.Normalize(); g.LadderF[node] = LadderRoom(lb, lf) || !LadderRoom(lb, -lf) && LadderFree(lb, lf) >= LadderFree(lb, -lf) ? lf : -lf; }
 				}
 				int grabs = 0, tops = 0;
 				string why = null; float whyHd = float.MaxValue;
@@ -1311,6 +1312,20 @@ namespace DynamicIslands
 			f.Normalize();
 			bool front = LadderRoom(lb, f), backside = LadderRoom(lb, -f);
 			return "room at its front " + (front ? "yes" : "no") + ", at its back " + (backside ? "yes" : "no") + ", yaw " + t.eulerAngles.y.ToString("F0");
+		}
+
+		/// <summary>How many of a ladder's climbing spots on one side have room (LadderRoom's samples): with room on neither side -
+		/// a sea ladder whose foot is by the cliff's sloping underwater face - it is climbed from the side with more (the open
+		/// sea, not the rock: Old Mine's barge ladder faced into its cliff, round 5).</summary>
+		static int LadderFree(Bounds lb, Vector3 dir)
+		{
+			int n = 0;
+			for (float y = lb.min.y + 0.8f; y < lb.max.y - 0.4f; y += 1f)
+			{
+				Vector3 c = new Vector3(lb.center.x, y, lb.center.z) + dir * 0.75f;
+				if (!Physics.CheckSphere(c, 0.28f, reachMask, QueryTriggerInteraction.Ignore) && !InsideSolid(c)) n++;
+			}
+			return n;
 		}
 
 		static bool LadderRoom(Bounds lb, Vector3 dir)
