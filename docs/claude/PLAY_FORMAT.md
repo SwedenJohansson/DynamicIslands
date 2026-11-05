@@ -94,7 +94,7 @@ expect message isn't whole
 | `expect survivor <id>` | That survivor (`survivor.id`) is on the world's rescued list (`Survivors.Has`). |
 | `expect shown <name>` / `expect hidden <name>` | The object is shown / hidden. |
 | `expect message <text>` | One of the last messages contains the text (any case). |
-| `expect hurt [min]` / `expect unhurt` | Hazard zones (`zone.hazard`) took at least min health (default 1) / none from the player since the play's start or the last of these two (`Hazards.Taken`, measured round each hit). A hazard play checks its own damage: a health watch run as a separate CI command can end before the play starts.
+| `expect hurt [min]` / `expect unhurt` | Hazard zones (`zone.hazard`) took at least min health (default 1) / none from the player since the play's start or the last of these two (`Hazards.Taken`, measured round each hit). A hazard play checks its own damage: a health watch run as a separate CI command can end before the play starts. Like `height`/`stand` it waits out the step's whole settle time.
 | `expect item <item> <n>` | The player has at least n of the item (Raft's unique item name, as in `content\objects\items.txt`). |
 | `expect animals <label> <n>` | Exactly n of the island's animals of that label are alive; each land one stands on a floor (under 0.6 m over the first thing under it). Logs each one's place in recipe coordinates. |
 | `expect animalsmoved <label> <m>` | One of them went at least m metres since the last `expect animals` of that label. |

@@ -690,7 +690,9 @@ namespace DynamicIslands
 		// (steps that may follow an early group at once: they act on what the expects saw, they don't move or look)
 		static readonly HashSet<string> PlayNoSettleVerbs = new HashSet<string> { "zone", "read", "open", "openat", "use", "code", "dig", "reach", "expect", "note" };
 		// (expects that read where things are: they wait out a step's whole settle time, also after an early group)
-		static readonly HashSet<string> PlayMotionExpects = new HashSet<string> { "height", "stand" };
+		// (hurt/unhurt measure what the time did: after an early "expect message" group they were checked at once and saw one
+		// hit of a 16-20 s wait - Blightmire and Engine Court hurt plays, 11-05)
+		static readonly HashSet<string> PlayMotionExpects = new HashSet<string> { "height", "stand", "hurt", "unhurt", "animalsmoved" };
 		// (expects that only read the state - no wait of their own, no side effect)
 		static readonly HashSet<string> PlayQuietKinds = new HashSet<string> { "step", "title", "done", "story", "survivor", "shown", "hidden", "message", "item", "animals" };
 
