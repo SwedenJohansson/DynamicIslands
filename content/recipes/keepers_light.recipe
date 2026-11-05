@@ -32,19 +32,19 @@ generate
 # The stacks: the landing stack B (x 12..20, z 4..12, 7.7 m, already level), the cottage stack D (x 0.3..8.1, z -7.6..0.2,
 # its top lowered from 14 to 9.8 m), the light stack C (x 12..20, z 21.7..33.4, 8.5 m); wild stacks A (-8 17), E (-18 -16)
 # and F (-6 -30)
-brush flatten from 0.320 -7.641 to 0.320 -1.781 r=1.9 s=20 frames=60 h=9.8
-brush flatten from 2.274 -7.641 to 2.274 0.172 r=1.9 s=20 frames=60 h=9.8
-brush flatten from 4.227 -7.641 to 4.227 0.172 r=1.9 s=20 frames=60 h=9.8
-brush flatten from 6.180 -7.641 to 6.180 0.172 r=1.9 s=20 frames=60 h=9.8
-brush flatten from 8.133 -5.688 to 8.133 -1.781 r=1.9 s=20 frames=60 h=9.8
+brush flatten from 0.320 -7.641 to 0.320 -1.781 r=1.9 s=20 frames=60 h=9.8 line
+brush flatten from 2.274 -7.641 to 2.274 0.172 r=1.9 s=20 frames=60 h=9.8 line
+brush flatten from 4.227 -7.641 to 4.227 0.172 r=1.9 s=20 frames=60 h=9.8 line
+brush flatten from 6.180 -7.641 to 6.180 0.172 r=1.9 s=20 frames=60 h=9.8 line
+brush flatten from 8.133 -5.688 to 8.133 -1.781 r=1.9 s=20 frames=60 h=9.8 line
 # (the cistern's shelf at the cottage stack's south foot, 3.9 m: from the stack's foot (z -9.59) to z -27.17, x -1.63 to
 # 15.95; the pit in it 7 m deep - its floor on the lines x 2.27..12.04, z -23.27..-15.45, its rim (the slab's edges) on
 # x 0.32 and 13.99, z -25.22 and -13.50)
 for pz -27.172 -9.5 1.953125
-brush flatten from -1.633 $pz to 15.946 $pz r=1.9 s=20 frames=160 h=3.9
+brush flatten from -1.633 $pz to 15.946 $pz r=1.9 s=20 frames=160 h=3.9 line
 next
 for px -9 -4 1
-brush flatten from {19.852+$px*1.953125} -23.266 to {19.852+$px*1.953125} -15.453 r=1.9 s=20 frames=120 h=-7
+brush flatten from {19.852+$px*1.953125} -23.266 to {19.852+$px*1.953125} -15.453 r=1.9 s=20 frames=120 h=-7 line
 next
 # (the shelf's corners and some of its outer edge worn down, its top and sides painted rock, a few boulders on it)
 brush flatten at -1.633 -27.172 r=1.9 s=20 frames=40 h=1.0
@@ -63,16 +63,16 @@ clear at 16 27 r=7
 clear at 4 -4 r=6
 # (the stacks' tops levelled on their grid lines: the landing stack at 7.75 m, the light stack at 8.5 m - its south-east
 # and north-east corners brought up to it, room for the tower and the oil store)
-brush flatten from 12.040 6.031 to 12.040 9.938 r=1.9 s=20 frames=60 h=7.75
+brush flatten from 12.040 6.031 to 12.040 9.938 r=1.9 s=20 frames=60 h=7.75 line
 for px 13.993 17.9 1.953125
-brush flatten from $px 4.078 to $px 11.891 r=1.9 s=20 frames=60 h=7.75
+brush flatten from $px 4.078 to $px 11.891 r=1.9 s=20 frames=60 h=7.75 line
 next
-brush flatten from 19.852 6.031 to 19.852 9.938 r=1.9 s=20 frames=60 h=7.75
-brush flatten from 12.040 21.656 to 12.040 27.516 r=1.9 s=20 frames=60 h=8.5
-brush flatten from 13.993 21.656 to 13.993 29.469 r=1.9 s=20 frames=60 h=8.5
-brush flatten from 15.946 21.656 to 15.946 29.469 r=1.9 s=20 frames=60 h=8.5
-brush flatten from 17.899 21.656 to 17.899 27.516 r=1.9 s=20 frames=60 h=8.5
-brush flatten from 19.852 21.656 to 19.852 27.516 r=1.9 s=20 frames=60 h=8.5
+brush flatten from 19.852 6.031 to 19.852 9.938 r=1.9 s=20 frames=60 h=7.75 line
+brush flatten from 12.040 21.656 to 12.040 27.516 r=1.9 s=20 frames=60 h=8.5 line
+brush flatten from 13.993 21.656 to 13.993 29.469 r=1.9 s=20 frames=60 h=8.5 line
+brush flatten from 15.946 21.656 to 15.946 29.469 r=1.9 s=20 frames=60 h=8.5 line
+brush flatten from 17.899 21.656 to 17.899 27.516 r=1.9 s=20 frames=60 h=8.5 line
+brush flatten from 19.852 21.656 to 19.852 27.516 r=1.9 s=20 frames=60 h=8.5 line
 
 # --- The landing: a jetty of Balboa's decking on posts east of the landing stack, a stair of two flights up the
 # stack's side to a deck at its top; the mooring post, the box under the stair ------------------------------------------
@@ -141,11 +141,11 @@ pop
 # --- The stair from the cottage stack down to the cistern's slab: two flights on posts --------------------------------
 place Relay_stairs_30_tall - at 3.0 -13.9 h=6.85 yaw=180
 # (reach audit 10-29: the lower flight stood 0.45 m high - its foot over the slab, its top over the upper flight's foot)
-place Relay_stairs_30_tall - at 3.0 -20.32 h=3.45 yaw=180
+place Relay_stairs_30_tall - at 3.0 -19.82 h=3.73 yaw=180
 # (agent Q 10-30: the ground check found both flights "held up by nothing": the posts stopped 3 cm under the upper flight
 # and stood on the slab without reaching into it - from 0.2 m inside the slab up to the upper flight's foot now)
-place Relay_support_beam_wood - at 3.0 -14.0 h=3.7 rot=0,0,-90 sx=0.3375
-place Relay_support_beam_wood - at 4.15 -14.0 h=3.7 rot=0,0,-90 sx=0.3375
+place Relay_support_beam_wood - at 3.0 -14.0 h=3.7 rot=0,0,-90 sx=0.3205
+place Relay_support_beam_wood - at 4.15 -14.0 h=3.7 rot=0,0,-90 sx=0.3205
 
 # --- The cistern: its slab of the radio tower's floor over the pit, a hatch hole with the lid lying open beside it and
 # the ladder down into the black water; the iron oil box at the bottom, the thing in the water, darkness and drips -----
@@ -153,6 +153,7 @@ place RT_Floor - at 7.155 -13.5 h=3.9 sx=1.1316 sz=1.3022
 place RT_Floor - at 13.993 -19.5 h=3.9 sx=1.1316 sz=0.6356
 place RT_Floor - at 13.993 -13.5 h=3.9 sx=1.1316 sz=0.5
 place RT_Floor - at 13.993 -18.0 h=3.9 sx=0.8833 sz=0.1667
+place RT_PillarThick - at 7.3 -19.75 h=-7.3 sy=1.85
 place TangaroaHatchRoom_Hatch - at 7.9 -20.4 h=3.96 yaw=10
 place TangaroaHatchLadder hatchladder at 7.9 -18.1 h=-3.44 yaw=180
 place "Box Small" oilbox at 7.2 -19.4 ground yaw=25
