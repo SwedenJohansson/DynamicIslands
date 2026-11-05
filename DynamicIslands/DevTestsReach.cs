@@ -53,6 +53,37 @@ namespace DynamicIslands
 			Log("PASS: reach speed " + reachSpeed + ", pace " + reachPace.ToString("F1") + " (" + reachPrechecked + " prechecked, " + reachWalked + " walked, " + reachRewalked + " walked again at 1x so far)");
 		}
 
+		[ConsoleCommand(name: "CIReachFallUnit", docs: "Dev, anywhere: the reach's drop check (FallCaught) - a roof whose top is a back face (a cave skin seen from above, Old Mine's wedge, round 4) catches a fall like a floor does; open air below does not")]
+		public static void ReachFallUnitCommand()
+		{
+			bool ok = true;
+			int was = reachMask;
+			var go = new GameObject("CIReachFallUnit");
+			try
+			{
+				go.transform.position = new Vector3(0f, -500f, 0f);
+				var m = new Mesh();
+				// (a quad at y 0 whose front faces down: from above only its back face shows)
+				m.vertices = new[] { new Vector3(-2, 0, -2), new Vector3(2, 0, -2), new Vector3(2, 0, 2), new Vector3(-2, 0, 2) };
+				m.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+				m.RecalculateNormals();
+				var mc = go.AddComponent<MeshCollider>();
+				mc.sharedMesh = m;
+				Physics.SyncTransforms();
+				reachMask = 1 << go.layer;
+				bool down = m.normals[0].y < 0f;
+				Check(ref ok, down, "the test roof faces down (normal y " + m.normals[0].y.ToString("0.0") + ")");
+				Check(ref ok, FallCaught(new Vector3(0f, -500f, 0f), -497.4f, -502.6f), "a drop through a back-facing roof: caught");
+				Check(ref ok, !FallCaught(new Vector3(10f, -500f, 0f), -497.4f, -502.6f), "a drop beside it, open air: not caught");
+				m.triangles = new[] { 0, 2, 1, 0, 3, 2 };
+				mc.sharedMesh = null; mc.sharedMesh = m;
+				Physics.SyncTransforms();
+				Check(ref ok, FallCaught(new Vector3(0f, -500f, 0f), -497.4f, -502.6f), "a drop onto a floor facing up: caught");
+			}
+			finally { reachMask = was; UnityEngine.Object.Destroy(go); }
+			if (ok) Log("PASS: reach fall"); else Fail("reach fall");
+		}
+
 		[ConsoleCommand(name: "CIReachControls", docs: "Dev, anywhere: PQ11 - with each island measured, the walker also walks straight at walls (a floor beyond a wall too high to step or jump) at the reach speed: none may be got through (a walker slipping through walls would pass what a player can't). CIReachControls on|off")]
 		public static void ReachControlsCommand(string[] args)
 		{
@@ -1110,7 +1141,18 @@ namespace DynamicIslands
 			// the grid dropped through the seamount's skin into the cave, the walk stood on it, PQ11 10-28)
 			bool was = Physics.queriesHitBackfaces;
 			Physics.queriesHitBackfaces = true;
-			try { return dist > 0f && Physics.SphereCast(new Vector3(at.x, from + 0.6f, at.z), r, Vector3.down, out h, dist, reachMask, QueryTriggerInteraction.Ignore) && (!floorOnly || h.normal.y > 0.7f); }
+			try
+			{
+				if (dist <= 0f) return false;
+				Vector3 top = new Vector3(at.x, from + 0.6f, at.z);
+				if (Physics.SphereCast(top, r, Vector3.down, out h, dist, reachMask, QueryTriggerInteraction.Ignore) && (!floorOnly || h.normal.y > 0.7f)) return true;
+				// (sweeps miss a mesh's back faces whatever queriesHitBackfaces says - only rays honour it: a cave hill's skirt
+				// skin, its roof a back face from above, let the grid drop through it where Raft's walker stood on it, Old Mine
+				// Islet's wedge under Grey's den hill, round 4. Rays down the sphere's middle and its four sides as well)
+				foreach (Vector3 o in new[] { Vector3.zero, Vector3.right * r, Vector3.left * r, Vector3.forward * r, Vector3.back * r })
+					if (Physics.Raycast(top + o, Vector3.down, out h, dist + r, reachMask, QueryTriggerInteraction.Ignore) && (!floorOnly || h.normal.y > 0.7f || h.normal.y < -0.7f)) return true;
+				return false;
+			}
 			finally { Physics.queriesHitBackfaces = was; }
 		}
 
