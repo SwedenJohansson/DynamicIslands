@@ -151,8 +151,8 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
 > and **Check for updates** (it asks raftmodding.com for the newest version and tells you whether you have it, with a
 > button to the mod's page, where new versions come out; the mod never updates itself). Under it, **Check automatically**
 > (ticked unless you untick it) asks the same once each time Raft starts, while you are on the main menu; when a newer
-> version is out, a box names it with a button to the mod's page and **Don't show again for this version** (the next
-> version is shown again). The box only tells you: nothing is downloaded or installed, and **Close** (or Esc) closes it
+> version is out, a box names it with a button to the mod's page, a tip that you may be able to update from the Raft
+> Mod Loader's mods menu, and **Don't show again for this version** (the next version is shown again). The box only tells you: nothing is downloaded or installed, and **Close** (or Esc) closes it
 > for the rest of that start; it also closes when you start or join a world. Without internet it says nothing.
 > *Tip: you may be able to update from the Raft Mod Loader's mods menu.*
 > Drag the box anywhere you like; it stays where you put it. It steps aside while another window of the main menu is
@@ -1019,7 +1019,12 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
     Balboa's vine cave is a whole rock already and gets none.
     A bear den set on its own gets a rock wall across its open front, with a doorway at the mouth, so from outside you
     don't look into the cave through its missing side. A den and the tunnels of the cave tool are lit warm and dim in a
-    world, as in the editor (not blue from the sky), and a tinted den tints the rock hill round it too.
+    world, as in the editor (not blue from the sky), and a tinted den tints the rock hill round it too. A den's front wall is
+    rock like the hill over it, with an uneven arched way in that gets darker the further in, so from outside it reads as
+    a dark cave opening. The hill and the wall are shaded as one smooth surface, with no mosaic of squares. A hill raised
+    from the sea floor keeps its slope into the sea; give one of its cave pieces the setting `cave.seacut=1` (in a recipe
+    `prop <alias> cave.seacut=1`) and the hill leaves out its skin over deep sea, so it closes no pool of water under it
+    (Old Mine Islet's mound has it).
     Every cave piece's rock is drawn from outside as well as from inside (Raft draws it from inside only), and the
     island's ground where it runs through a cave's rooms is let down under the room's floor, or cut away where it lies
     wholly inside or runs steeply through (a hole dug down to a tunnel's end): from inside a cave you see only rock - no ground across a room, no sea or sky through a wall. The
@@ -1686,7 +1691,7 @@ object. A zone **hidden** by a behaviour gives no air until it is shown: *The Ab
 pockets empty until the air line's valve is opened (the valve's action shows them, with bubbles - [5.5](#55-atmosphere-and-sound)).
 
 **Hazards.** A trigger zone's **Hazard** group makes the zone hurt the players standing in it (each player's own
-machine, every second) unless something protects them: **Acid** and **Fumes** (a protective suit protects),
+machine, every second) unless something protects them: **Acid** and **Fumes** (a protective suit protects; *The Abyss* has an acid vent pool by its lava tube),
 **Live water**, **Spikes** and **Cold** (damage per second, 0-50), **Darkness** (no damage: the screen goes black
 unless the player **wears a headlight** - then they see a headlight's cone) and **Deep water** (the breath runs out
 fast unless the player **wears an oxygen tank**). **Protected when** takes lines like the behaviour window's checks,
@@ -4714,7 +4719,7 @@ copper ore, scrap and a giant clam to gather just off the shore, as every one of
 | ![](images/library/crane_yard.jpg) **Crane Yard** | A construction islet under a giant crane; the spotlight's parts went down with the pier's end (Raft's Varuna Point) | Three story items to collect under water, angler fish, a spotlight that is fixed and points to the reward |
 | ![](images/library/frost_hollow.jpg) **Frost Hollow** | A snowy islet with igloos, a telescope and a dark lab; three cables, a power box, a polar bear (Raft's Temperance) | A power box that takes three story items, a sliding lab door that opens on a signal |
 | ![](images/library/tide_farm.jpg) **Tide Farm** | A floating farm of Raft's foundations: crop beds, a glasshouse, a water wheel jammed by a crate (Raft's Utopia) | An island of only building blocks over water, a turning wheel, animals to **catch** as a quest step |
-| ![](images/library/old_mine_islet.jpg) **Old Mine Islet** | An old mine in a rock mound: timbered tunnels, rails, ore carts - dark further in, where something has dug in | A cave from Balboa's cave pieces set into the land, darkness (an atmosphere zone) and lanterns, a head lamp in a locker; two old workings to find off the quest: a drift into the mound's back that breaks into a cavern (the cave tool) and Tunnel 1 dug into Copper Knob's foot (Dig brush: two adits, a side drift, a miner's chest and note) |
+| ![](images/library/old_mine_islet.jpg) **Old Mine Islet** | An old mine in a rock mound: timbered tunnels, rails, ore carts - dark further in, where something has dug in | A cave from Balboa's cave pieces set into the land, darkness (an atmosphere zone) and lanterns, a head lamp in a locker; two old workings to find off the quest: a drift into the mound's back that breaks into a cavern (the cave tool) and Tunnel 1 dug into Copper Knob's foot (Dig brush: two adits, a side drift, a miner's chest and note, two rats) |
 | ![](images/library/shelter_atoll.jpg) **Shelter Atoll** | A bomb shelter under an atoll's islet: seven dark rooms, rats, a dry generator, a blast gate | Rooms **under the ground** (a pit under a concrete roof), a hatch and a ladder down, a generator that lights the rooms, opens doors and runs the radio room; an **underwater cave** from the lagoon floor up to a dry den in a sea rock, and **Dr. Shogo** at the channel: three answers (a journal page, the way to the cave's supply chest) and a storeroom barred until you talked to him; Tangaroa rats at the back of the ammo cave |
 
 ### 15.3 The very large islands
@@ -4809,7 +4814,7 @@ light puzzles and secrets round every quest.
 
 | The plan's last island | What it is | What it shows you how to build |
 |---|---|---|
-| ![](images/library/the_abyss.jpg) **The Abyss** | A ring of black sea stacks around a trench 42 m deep: the expedition's raft moored over its edge, its air line running down to three air pockets (a container on a shelf, a gas tank on a ledge, a shack on the floor) and, on the floor, the lair of the Abyssal Angler and its brood | A raft of Raft's foundations, a trench cut with the brushes (a bowl, a shaft, a shelf and a ledge flattened into its walls), **air pockets** - trigger zones with Air, hidden until the valve shows them, with rising bubbles ([5.4](#54-trigger-zones-and-ambushes)) |
+| ![](images/library/the_abyss.jpg) **The Abyss** | A ring of black sea stacks around a trench 42 m deep: the expedition's raft moored over its edge, its air line running down to three air pockets (a container on a shelf, a gas tank on a ledge, a shack on the floor) and, on the floor, the lair of the Abyssal Angler and its brood | A raft of Raft's foundations, a trench cut with the brushes (a bowl, a shaft, a shelf and a ledge flattened into its walls), **air pockets** - trigger zones with Air, hidden until the valve shows them, with rising bubbles ([5.4](#54-trigger-zones-and-ambushes)); a lone bear den as a lava tube in its own rock with two rats at the back, and a vent pool beside its path: an **Acid** hazard zone with steam over it, which a protective suit keeps off ([5.4](#54-trigger-zones-and-ambushes)) |
 
 The plan has **Random islands while sailing: off** and **Raft's story islands: on**.
 

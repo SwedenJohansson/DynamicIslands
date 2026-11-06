@@ -89,6 +89,9 @@ plan save
   under a quest object; no mouth on the main walk line (3 m from the line through the quest steps' targets); a vine-gated
   cave off the quest path before the machete step (`-machete` or `# cavecheck machete`: an earlier island gives it).
   `# cavecheck inside <alias> ...` marks objects meant to be in a cave. Exit 1 on FAIL.
+- `prop <cave piece alias> cave.seacut=1` (`ObjectProps.CaveSeaCut`): the cave hill over that island leaves out its skin over
+  deep sea and the shore ring (`CaveMountain.SeaCut`), so a mound raised from the sea floor closes no pool under it
+  (Old Mine Islet). Off by default: on Shelter Atoll's islet the cut would take the whole sea side of the hill.
 - In Raft, `tools\cavecheckrun.ps1 <island> [...] [-player 2|3]` checks a built island's caves in one world load:
   CICaveGapsLook (pictures out/in by day and night, walked in and out, flooded parts), CICaveInside shots (X7) and
   CIReach (traps). One summary line per island plus the pictures; exit 1 on FAIL.
