@@ -2067,7 +2067,7 @@ namespace DynamicIslands
 				return;
 			}
 			// (already at the main menu: nothing to leave - LeaveGame threw a NullReferenceException there)
-			if (!LoadSceneManager.IsGameSceneLoaded || ComponentManager<Raft_Network>.Value == null) { Log("At the main menu already (not in a world or the editor)"); return; }
+			if (!LoadSceneManager.IsGameSceneLoaded || ComponentManager<Raft_Network>.Value == null) { Log("At the main menu already (not in a world or the editor)"); StartTest(WaitForMainMenu()); return; } // (a test, so IDLE follows: ci.ps1 -done waited its whole timeout - 11-06)
 			Log("Leaving the world");
 			ComponentManager<Raft_Network>.Value.LeaveGame((DisconnectReason)2, (SceneName)1, true, false);
 			StartTest(WaitForMainMenu());
