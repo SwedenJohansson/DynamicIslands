@@ -55,6 +55,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Tests: a map of the last build (R roof, s side, c a way in, - cut off out past an open end, g lower than the ground, . nothing), one line per row.</summary>
 		public string LastMap;
 		public int OverDug; // (cells over an open dug passage left without hill - tests)
+		public int SeaCutCells, SeaKept; // (last build: sea cells cut at the hill's open edge, and sea cells kept inside a ring of skin - tests)
 
 		/// <summary>Tests: builds it again now.</summary>
 		public void Rebuild() { due = -1f; Build(); }
@@ -389,6 +390,7 @@ namespace DynamicIslands.Editor
 			var cut = new bool[nx, nz];
 			OverDug = 0;
 			var sea = new bool[nx, nz];
+			var pastAt = new bool[nx, nz];
 			otherHill = new bool[nx, nz]; hillX0 = x0; hillZ0 = z0;
 			for (int i = 0; i < nx; i++)
 				for (int k = 0; k < nz; k++)
@@ -411,6 +413,35 @@ namespace DynamicIslands.Editor
 					// a pool of sea: Old Mine Islet's -51.5 8.2 trap off the miners' row, skin at 0 over a 6-8 m deep floor)
 					if (!cut[i, k] && bare && SeaCut(raw[i, k], height[i, k], ground[i, k])) { cut[i, k] = true; sea[i, k] = true; }
 					otherHill[i, k] = past && float.IsNaN(cover[i, k]) && !cut[i, k];
+					pastAt[i, k] = past;
+				}
+			// (but not a sea cell the skin would close all round - its slope on out to the sea floor past it: the cut left a pit in
+			// the hill there, sheer faces down to the floor inside a ring of skin under the water, and closed nothing off; Shelter
+			// Atoll's islet slope into the sea, cavemerge 11-06. A hollow only opens where the cut reaches the hill's open edge)
+			SeaKept = 0; SeaCutCells = 0;
+			var open = new bool[nx, nz];
+			var walk = new Queue<int>();
+			System.Func<int, int, bool> skinAt = (i, k) => !cut[i, k] && float.IsNaN(corridor[i, k]) && height[i, k] > ground[i, k] - 0.6f && raw[i, k] > ground[i, k] - 0.6f - 2f * Slope * Cell;
+			for (int i = 0; i < nx; i++)
+				for (int k = 0; k < nz; k++)
+					if ((i == 0 || k == 0 || i == nx - 1 || k == nz - 1) && !skinAt(i, k)) { open[i, k] = true; walk.Enqueue(i * nz + k); }
+			while (walk.Count > 0)
+			{
+				int c0 = walk.Dequeue(), i0 = c0 / nz, k0 = c0 % nz;
+				for (int d = 0; d < 4; d++)
+				{
+					int a = i0 + (d == 0 ? 1 : d == 1 ? -1 : 0), c = k0 + (d == 2 ? 1 : d == 3 ? -1 : 0);
+					if (a < 0 || c < 0 || a >= nx || c >= nz || open[a, c] || skinAt(a, c)) continue;
+					open[a, c] = true; walk.Enqueue(a * nz + c);
+				}
+			}
+			for (int i = 0; i < nx; i++)
+				for (int k = 0; k < nz; k++)
+				{
+					if (!sea[i, k]) continue;
+					if (open[i, k]) { SeaCutCells++; continue; }
+					cut[i, k] = false; sea[i, k] = false; SeaKept++;
+					otherHill[i, k] = pastAt[i, k] && float.IsNaN(cover[i, k]);
 				}
 			// (and its shore ring: the face down from the last cell left to a cut one leant out over the water, a hollow of sea
 			// under it with its mouth under the water - Old Mine Islet's south shore trap at -7 -36, 11-05; the face now stands
@@ -566,7 +597,7 @@ namespace DynamicIslands.Editor
 				Debug.Log("[CUSTOM ISLANDS] Cave mountain tint " + factor + " (colour " + n + ")");
 			}
 			DressTunnels();
-			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : ""));
+			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : "") + (SeaCutCells + SeaKept > 0 ? ", sea cells " + SeaCutCells + " cut, " + SeaKept + " kept inside the skin" : ""));
 			// (lone dens walled before the hill was built: their walls' outsides drawn as the hill now)
 			foreach (Transform t in caves)
 				if (t != null) CaveTool.WallLikeHill(t.gameObject, mr);
