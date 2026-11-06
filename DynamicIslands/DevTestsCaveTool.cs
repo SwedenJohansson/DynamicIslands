@@ -897,5 +897,27 @@ namespace DynamicIslands
 			}
 			Log("PASS: materials probed");
 		}
+
+		[ConsoleCommand(name: "CIDenWalls", docs: "Dev, in a world: the wall across each lone bear den's mouth (ar_cave, CaveTool.PlugOpening) on a loaded island - every face's normal set (zero ones draw flat black: the dark slabs round its mouth, 11-06), faces both into the den and out of its mouth, and lit as the den (CaveLit). CIDenWalls <island>")]
+		public static void DenWallsCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			var walls = e.Root.GetComponentsInChildren<MeshFilter>(true).Where(f => f.name == CaveTool.PlugName && f.sharedMesh != null).ToList();
+			if (walls.Count == 0) { Fail("no den wall (" + CaveTool.PlugName + ") on " + e.HostName); return; }
+			int bad = 0;
+			foreach (MeshFilter f in walls)
+			{
+				Vector3[] n = f.sharedMesh.normals;
+				int zero = n.Count(v => v.sqrMagnitude < 0.25f), inn = n.Count(v => v.z < -0.9f), outn = n.Count(v => v.z > 0.9f);
+				Renderer r = f.GetComponent<Renderer>();
+				bool lit = r != null && r.lightProbeUsage == UnityEngine.Rendering.LightProbeUsage.CustomProvided;
+				bool ok = n.Length > 0 && zero == 0 && inn > 0 && outn > 0 && lit;
+				if (!ok) bad++;
+				Log("  " + f.transform.parent.name + " at " + (f.transform.parent.position - e.Position).ToString("F1") + ": " + n.Length + " points, normals zero " + zero + ", into the den " + inn + ", out " + outn + ", lit as the den " + lit + (ok ? "" : " - BAD"));
+			}
+			if (bad > 0) Fail(bad + " of " + walls.Count + " den walls drawn wrong");
+			else Log("PASS: den walls " + walls.Count + ", each face lit both ways");
+		}
 	}
 }

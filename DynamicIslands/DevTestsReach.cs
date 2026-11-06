@@ -55,7 +55,7 @@ namespace DynamicIslands
 			Log("PASS: reach speed " + reachSpeed + ", pace " + reachPace.ToString("F1") + " (" + reachPrechecked + " prechecked, " + reachWalked + " walked, " + reachRewalked + " walked again at 1x so far)");
 		}
 
-		[ConsoleCommand(name: "CIReachOnly", docs: "Dev, anywhere: the next CIReach runs walk only the quest targets whose name holds this text (case aside), the rest reported 'skipped (CIReachOnly)' - to walk one failing target again without the whole island; no text = all again")]
+		[ConsoleCommand(name: "CIReachOnly", docs: "Dev, anywhere: the next CIReach runs walk only the quest targets whose name holds this text (case aside), the rest reported 'skipped (CIReachOnly)' - to walk one failing target again without the whole island; several texts split by | walk each match in the island's order (a sequence that failed in the full run); no text = all again")]
 		public static void ReachOnlyCommand(string[] args)
 		{
 			reachOnly = args == null ? "" : string.Join(" ", args).Trim();
@@ -917,7 +917,7 @@ namespace DynamicIslands
 				var use = useOf[t];
 				Vector3 tr = relOf[t];
 				string head = "REACH " + name + " | " + t.Kind + " '" + t.Name + "' at " + tr.x.ToString("F1") + " " + tr.z.ToString("F1") + " h=" + tr.y.ToString("F1") + " | " + (t.Steps.Length > 0 ? t.Steps : "-") + " | ";
-				if (reachOnly != "" && (t.Name ?? "").IndexOf(reachOnly, StringComparison.OrdinalIgnoreCase) < 0) { report.Add(head + "skipped (CIReachOnly)"); continue; }
+				if (reachOnly != "" && !reachOnly.Split('|').Any(o => o.Trim() != "" && (t.Name ?? "").IndexOf(o.Trim(), StringComparison.OrdinalIgnoreCase) >= 0)) { report.Add(head + "skipped (CIReachOnly)"); continue; }
 				// (a cage the play opened is hidden (Survivors.cs: open = gone for everyone), its model off and its bounds a 0.3 m box
 				// at its root - "no spot" for Teo's and Oda's cages after their quests freed them, PQ11 10-28: not checkable now)
 				if (use.Count == 0 && t.Kind == "cage")
@@ -1890,6 +1890,7 @@ namespace DynamicIslands
 			}
 			Vector3 prev = ReachFeet(pl) + Vector3.up * 0.9f;
 			string bad = null;
+			int wpAt = 0; // (the waypoint walked to now: in an INVALID's details)
 			// (stall rule, the user 10-28 - no multi-minute waits on one target: real seconds, whatever the speed. Under 0.5 m in a 10 s
 			// window: one unstick (a jump and a turn). No waypoint for 30 s while stalled, or for 90 s with under 3 m in the last window:
 			// FAIL "stuck" - it still counts as a fail to triage)
@@ -1923,7 +1924,8 @@ namespace DynamicIslands
 						// set to ignore - is passed through by a real player too, e.g. a landmark zipline's rope: not tunnelling, PQ11 10-27)
 						CharacterController gcc = pl.GetComponent<CharacterController>();
 						if (gcc != null && (Physics.GetIgnoreLayerCollision(gcc.gameObject.layer, h.collider.gameObject.layer) || Physics.GetIgnoreCollision(gcc, h.collider))) continue;
-						r = "INVALID: the walker crossed " + BlockerName(h.collider) + " (layer " + LayerMask.LayerToName(h.collider.gameObject.layer) + ", player " + (gcc != null ? LayerMask.LayerToName(gcc.gameObject.layer) : "?") + ") at " + (h.point - e.Position).ToString("F1"); break;
+						r = "INVALID: the walker crossed " + BlockerName(h.collider) + " (layer " + LayerMask.LayerToName(h.collider.gameObject.layer) + ", player " + (gcc != null ? LayerMask.LayerToName(gcc.gameObject.layer) : "?") + ") at " + (h.point - e.Position).ToString("F1")
+							+ " [chest line " + (prev - e.Position).ToString("F1") + " to " + (now - e.Position).ToString("F1") + ", " + d.magnitude.ToString("F2") + " m in a frame, waypoint " + wpAt + "/" + way.Count + ", " + pl.PersonController.controllerType + (gcc != null ? (gcc.enabled ? "" : ", controller off") + (gcc.isGrounded ? ", grounded" : "") : "") + "]"; break;
 					}
 				prev = now;
 				return r;
@@ -1932,7 +1934,7 @@ namespace DynamicIslands
 			bool ladderUpTop = false;
 			for (int i = 1; i < way.Count; i++)
 			{
-				wdWay = Time.realtimeSinceStartup; wdTried = false; wdMoved = 99f; hbProg++;
+				wdWay = Time.realtimeSinceStartup; wdTried = false; wdMoved = 99f; hbProg++; wpAt = i;
 				int k = way[i];
 				byte kind = g.Kind[k];
 				// (a teleport step: the player at the object uses it and is put where it puts them - the grid's link, see above)

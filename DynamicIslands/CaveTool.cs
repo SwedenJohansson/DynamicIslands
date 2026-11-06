@@ -400,6 +400,8 @@ namespace DynamicIslands.Editor
 				PlugOpening(den, CaveMountain.OverMeasured(den.transform, Room).x);
 				Transform plug = den.transform.Find(PlugName);
 				if (plug != null && ObjectProps.HasTint(props)) ObjectProps.ApplyTint(plug.gameObject, ObjectProps.Tint(props), ObjectProps.TintStrength(props));
+				// (lit as the den round it: CaveLit looked its renderers up before the wall came, so it drew by the blue sky alone)
+				if (plug != null) CaveLit.Mark(den);
 			}
 			catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Walling a den's mouth failed: " + x.Message); }
 		}
@@ -474,9 +476,15 @@ namespace DynamicIslands.Editor
 					if (!on && run >= 0)
 					{
 						float ax = x0 + run * cell, bx = x0 + i * cell;
+						// (each side its own corners, as Plug's: on shared ones the two sides' normals cancelled out and the wall drew
+						// flat black - the dark slabs round an ar_cave mouth from the sea and from the shelf, Old Mine 11-06)
 						int n = verts.Count;
-						verts.Add(new Vector3(ax, ya, z)); verts.Add(new Vector3(bx, ya, z)); verts.Add(new Vector3(bx, yb, z)); verts.Add(new Vector3(ax, yb, z));
-						tris.AddRange(new[] { n, n + 2, n + 1, n, n + 3, n + 2, n, n + 1, n + 2, n, n + 2, n + 3 }); // (both sides)
+						for (int side = 0; side < 2; side++)
+						{
+							verts.Add(new Vector3(ax, ya, z)); verts.Add(new Vector3(bx, ya, z)); verts.Add(new Vector3(bx, yb, z)); verts.Add(new Vector3(ax, yb, z));
+						}
+						tris.AddRange(new[] { n, n + 2, n + 1, n, n + 3, n + 2 }); // (facing -z: into the den)
+						tris.AddRange(new[] { n + 4, n + 5, n + 6, n + 4, n + 6, n + 7 }); // (and out of its mouth)
 						run = -1;
 					}
 				}
@@ -485,13 +493,13 @@ namespace DynamicIslands.Editor
 			var mesh = new Mesh { name = PlugName };
 			mesh.SetVertices(verts);
 			mesh.SetTriangles(tris, 0);
-			mesh.SetUVs(0, verts.Select(v => new Vector2(v.x / 6f, v.y / 6f)).ToList());
+			mesh.SetUVs(0, verts.Select(v => new Vector2(v.x / PlugTile, v.y / PlugTile)).ToList());
 			mesh.RecalculateNormals();
 			mesh.RecalculateBounds();
 			go.AddComponent<MeshFilter>().sharedMesh = mesh;
 			go.AddComponent<MeshRenderer>().sharedMaterial = look.sharedMaterial;
 			go.AddComponent<MeshCollider>().sharedMesh = mesh;
-			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + (verts.Count / 4) + " strips");
+			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + (verts.Count / 8) + " strips");
 		}
 
 		#endregion
