@@ -468,11 +468,15 @@ namespace DynamicIslands.Editor
 			Func<float, float, bool> inHole = (cx, cy) =>
 			{
 				if (cy < hy0) return false;
-				float half = HoleHalf + 0.45f + 0.4f * Mathf.PerlinNoise(cy * 0.6f + s + 9f, s * 0.5f);
-				float archC = hy1 - half;
+				// (each side its own noise, two sizes of it: one noise for both read as a straight-sided door from the shelf)
+				float side = cx < mx ? 0f : 31f, least = HoleHalf + 0.45f;
+				float half = least + 0.55f * Mathf.PerlinNoise(cy * 0.9f + s + 9f + side, s * 0.5f) + 0.35f * Mathf.PerlinNoise(cy * 2.3f + s + side, 7f + s);
+				float archC = hy1 - least;
 				float dx = cx - mx;
 				if (cy <= archC) return Mathf.Abs(dx) < half;
-				return dx * dx + (cy - archC) * (cy - archC) < half * half;
+				float dy = cy - archC, ang = Mathf.Atan2(dy, dx);
+				float r = least + 0.55f * Mathf.PerlinNoise(ang * 1.6f + s, 3f) + 0.35f * Mathf.PerlinNoise(ang * 4f + s, 11f);
+				return dx * dx + dy * dy < r * r;
 			};
 			Func<int, int, Vector3> corner = (i, k) =>
 			{
@@ -1206,6 +1210,9 @@ namespace DynamicIslands.Editor
 		const float Shine = 0.45f;
 		/// <summary>Dev probes: leave the pieces' light alone.</summary>
 		public static bool Off;
+		/// <summary>Dev (CIRockLook): the shine kept multiplied by this; the pieces lit by no light at all.</summary>
+		internal static float TestShine = 1f;
+		internal static bool TestDark;
 		static bool told;
 
 		public static bool AnyLive { get { return live.Count > 0; } }
@@ -1225,7 +1232,7 @@ namespace DynamicIslands.Editor
 		public static void LightAll(SphericalHarmonicsL2 sh)
 		{
 			if (live.Count == 0 || Off || DynamicIslands.InEditor()) return;
-			one[0] = sh;
+			one[0] = TestDark ? new SphericalHarmonicsL2() : sh;
 			for (int i = live.Count - 1; i >= 0; i--)
 			{
 				CaveLit c = live[i];
@@ -1256,7 +1263,7 @@ namespace DynamicIslands.Editor
 		static void Set(Material m)
 		{
 			block.CopySHCoefficientArraysFrom(one);
-			if (m != null && m.HasProperty("_Smoothness_Multiplyer")) block.SetFloat("_Smoothness_Multiplyer", m.GetFloat("_Smoothness_Multiplyer") * Shine);
+			if (m != null && m.HasProperty("_Smoothness_Multiplyer")) block.SetFloat("_Smoothness_Multiplyer", m.GetFloat("_Smoothness_Multiplyer") * Shine * TestShine);
 		}
 
 		/// <summary>The sky's light made grey (each colour's share by its brightness) and multiplied by warm.</summary>

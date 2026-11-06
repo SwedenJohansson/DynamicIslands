@@ -999,6 +999,52 @@ namespace DynamicIslands
 			Log("PASS: backs " + mode + " (" + backs.Count + ")");
 		}
 
+		[ConsoleCommand(name: "CIRockLook", docs: "Dev, in a world: the island rock (Raft's Mountains shader) for finding the blue rock (11-06). props: each Mountains material's settings and the scene's light; vanilla / lit: the cave light (CaveLit) off and Raft's probes back, or on again; dark: the cave pieces lit by nothing; shine <k>: their shine times k; noprobe / probe: reflection probes off or on for every Mountains renderer; sand: Balboa_BigRocks_Dirt swapped for the hill's sand rock. CIRockLook <mode> [k]")]
+		public static void RockLookCommand(string[] args)
+		{
+			string mode = args != null && args.Length > 0 ? args[0] : "";
+			var rends = Object.FindObjectsOfType<MeshRenderer>().Where(r => r.sharedMaterials.Any(m => m != null && m.shader != null && m.shader.name.Contains("Mountains"))).ToList();
+			if (mode == "props")
+			{
+				Log("  ambient " + RenderSettings.ambientMode + " x" + RenderSettings.ambientIntensity + " sky " + RenderSettings.ambientSkyColor + ", reflections " + RenderSettings.defaultReflectionMode + " x" + RenderSettings.reflectionIntensity + " bounces " + RenderSettings.reflectionBounces + ", probes in scene " + Object.FindObjectsOfType<ReflectionProbe>().Length + ", sun " + (RenderSettings.sun != null ? RenderSettings.sun.color + " x" + RenderSettings.sun.intensity : "none"));
+				foreach (ReflectionProbe rp in Object.FindObjectsOfType<ReflectionProbe>().Take(6)) Log("  probe " + rp.name + " " + rp.mode + " at " + rp.transform.position + " size " + rp.size + " x" + rp.intensity + " importance " + rp.importance);
+				foreach (Material m in rends.SelectMany(r => r.sharedMaterials).Where(m => m != null && m.shader.name.Contains("Mountains")).Distinct())
+				{
+					var sb = new System.Text.StringBuilder("  " + m.name + " (" + m.shader.name + ", keywords " + string.Join(" ", m.shaderKeywords) + "):");
+					for (int i = 0; i < m.shader.GetPropertyCount(); i++)
+					{
+						string n = m.shader.GetPropertyName(i);
+						switch (m.shader.GetPropertyType(i))
+						{
+							case UnityEngine.Rendering.ShaderPropertyType.Float: case UnityEngine.Rendering.ShaderPropertyType.Range: sb.Append(" " + n + "=" + m.GetFloat(n).ToString("0.###")); break;
+							case UnityEngine.Rendering.ShaderPropertyType.Color: sb.Append(" " + n + "=" + m.GetColor(n)); break;
+							case UnityEngine.Rendering.ShaderPropertyType.Vector: sb.Append(" " + n + "=" + m.GetVector(n)); break;
+							case UnityEngine.Rendering.ShaderPropertyType.Texture: Texture t = m.GetTexture(n); sb.Append(" " + n + "=" + (t != null ? t.name : "-")); break;
+						}
+					}
+					Log(sb.ToString());
+				}
+				foreach (var g in rends.GroupBy(r => r.lightProbeUsage + "/" + r.reflectionProbeUsage + "/" + (r.probeAnchor != null ? "anchor" : "-"))) Log("  renderers " + g.Key + ": " + g.Count());
+			}
+			else if (mode == "vanilla" || mode == "lit")
+			{
+				CaveLit.Off = mode == "vanilla";
+				if (CaveLit.Off) foreach (MeshRenderer r in rends) { r.SetPropertyBlock(null); for (int i = 0; i < r.sharedMaterials.Length; i++) r.SetPropertyBlock(null, i); r.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.BlendProbes; }
+			}
+			else if (mode == "dark") CaveLit.TestDark = true;
+			else if (mode == "light") CaveLit.TestDark = false;
+			else if (mode == "shine") CaveLit.TestShine = args.Length > 1 ? float.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture) : 1f;
+			else if (mode == "noprobe" || mode == "probe") foreach (MeshRenderer r in rends) r.reflectionProbeUsage = mode == "probe" ? UnityEngine.Rendering.ReflectionProbeUsage.BlendProbes : UnityEngine.Rendering.ReflectionProbeUsage.Off;
+			else if (mode == "sand")
+			{
+				Material sand = rends.SelectMany(r => r.sharedMaterials).FirstOrDefault(m => m != null && m.name.StartsWith("Balboa_BigRocks_Sand"));
+				if (sand == null) { Fail("rock look: no sand rock"); return; }
+				foreach (MeshRenderer r in rends) r.sharedMaterials = r.sharedMaterials.Select(m => m != null && m.name.StartsWith("Balboa_BigRocks_Dirt") ? sand : m).ToArray();
+			}
+			else { Fail("CIRockLook <props|vanilla|lit|dark|light|shine k|noprobe|probe|sand>"); return; }
+			Log("PASS: rock look " + mode + " (" + rends.Count + " renderers)");
+		}
+
 		[ConsoleCommand(name: "CICaveLit", docs: "Dev, in a world: every Balboa cave piece placed on a loaded island (a mine's dead-end mound, an ar_cave den, the cave tool's tunnels) lit as a cave - its renderers on the cave light (CaveLit), not Raft's blue sky light that drew its faces bright blue (11-06). CICaveLit [island]")]
 		public static void CaveLitCommand(string[] args)
 		{
