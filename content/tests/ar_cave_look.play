@@ -1,10 +1,9 @@
 # The lone bear den (lib_areas ar_cave) on three more islands after its mouth wall drew lit (11-06, CIDenWalls): each
 # mouth from its shelf and from the sea - natural rock round it, no flat dark slabs. Points as in each island's recipe.
-hour 11
-weather Calm
-
 island Balboa Remade keep
 offset 0.5743 -0.6511
+hour 11
+weather Calm
 at -41 -63
 wait 3
 picture arcave_balboa_out -41 +1.7 -63 -41 4.0 -72

@@ -1108,13 +1108,61 @@ namespace DynamicIslands
 				int n = global::DynamicIslands.Editor.CaveRock.Remake(c);
 				Log("  cave rock hue " + c + ": " + n + " renderers; " + global::DynamicIslands.Editor.CaveRock.LastNote);
 			}
-			else { Fail("CIRockLook <props|vanilla|lit|dark|light|shine k|noprobe|probe|sand|noterrain|terrain|rocktint r g b|cavehue r g b|nosun|sun|norefl|refl|flatnormal|flatall|normal>"); return; }
+			else if (mode == "info")
+			{
+				// (the backs and the hill skin, and the pieces they belong to: how each is lit)
+				Log("  ambient " + RenderSettings.ambientMode + " x" + RenderSettings.ambientIntensity + " sky " + RenderSettings.ambientSkyColor + " equator " + RenderSettings.ambientEquatorColor + " ground " + RenderSettings.ambientGroundColor + " probe dc " + RenderSettings.ambientProbe[0, 0].ToString("0.##") + "/" + RenderSettings.ambientProbe[1, 0].ToString("0.##") + "/" + RenderSettings.ambientProbe[2, 0].ToString("0.##") + ", cave lit live " + CaveLit.AnyLive);
+				foreach (var g in rends.GroupBy(r => (r.name == global::DynamicIslands.Editor.CaveBacks.Name ? "back" : r.name == CaveMountain.SkinName ? "skin" : "other") + " " + r.lightProbeUsage + " block " + r.HasPropertyBlock() + " cavelit " + (r.GetComponentInParent<CaveLit>() != null) + " " + string.Join(",", r.sharedMaterials.Where(m => m != null).Select(m => m.shader.name).Distinct().ToArray())))
+					Log("  " + g.Key + ": " + g.Count() + " e.g. " + string.Join(", ", g.Take(3).Select(r => (r.transform.parent != null ? r.transform.parent.name + "/" : "") + r.name).ToArray()));
+			}
+			else if (mode == "noamb" || mode == "amb")
+			{
+				if (mode == "noamb")
+				{
+					if (ambWas == null) ambWas = new object[] { RenderSettings.ambientIntensity, RenderSettings.ambientProbe, RenderSettings.ambientSkyColor, RenderSettings.ambientEquatorColor, RenderSettings.ambientGroundColor, RenderSettings.ambientLight };
+					RenderSettings.ambientIntensity = 0f; RenderSettings.ambientProbe = new UnityEngine.Rendering.SphericalHarmonicsL2();
+					RenderSettings.ambientSkyColor = RenderSettings.ambientEquatorColor = RenderSettings.ambientGroundColor = RenderSettings.ambientLight = Color.black;
+				}
+				else if (ambWas != null)
+				{
+					RenderSettings.ambientIntensity = (float)ambWas[0]; RenderSettings.ambientProbe = (UnityEngine.Rendering.SphericalHarmonicsL2)ambWas[1];
+					RenderSettings.ambientSkyColor = (Color)ambWas[2]; RenderSettings.ambientEquatorColor = (Color)ambWas[3]; RenderSettings.ambientGroundColor = (Color)ambWas[4]; RenderSettings.ambientLight = (Color)ambWas[5];
+					ambWas = null;
+				}
+				Log("  scene ambient " + (mode == "noamb" ? "off" : "back"));
+			}
+			else if (mode == "blockdark" || mode == "blockoff")
+			{
+				// (the backs and the skin given a black light probe straight through their blocks, the cave light kept off them)
+				CaveLit.Off = mode == "blockdark";
+				var mpb = new MaterialPropertyBlock();
+				var sh = new UnityEngine.Rendering.SphericalHarmonicsL2[] { new UnityEngine.Rendering.SphericalHarmonicsL2() };
+				int n = 0;
+				foreach (MeshRenderer r in rends)
+				{
+					if (r.name != global::DynamicIslands.Editor.CaveBacks.Name && r.name != CaveMountain.SkinName) continue;
+					if (mode == "blockoff") { r.SetPropertyBlock(null); continue; }
+					r.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.CustomProvided;
+					r.GetPropertyBlock(mpb); mpb.CopySHCoefficientArraysFrom(sh); r.SetPropertyBlock(mpb);
+					for (int i = 0; i < r.sharedMaterials.Length; i++) { r.GetPropertyBlock(mpb, i); mpb.CopySHCoefficientArraysFrom(sh); r.SetPropertyBlock(mpb, i); }
+					n++;
+				}
+				Log("  backs and skin black probe: " + n);
+			}
+			else if (mode == "skinlit")
+			{
+				int n = 0;
+				foreach (MeshRenderer r in rends) if (r.name == CaveMountain.SkinName && r.GetComponentInParent<CaveLit>() == null) { CaveLit.Mark(r.gameObject); n++; }
+				Log("  hill skins lit as cave pieces: " + n);
+			}
+			else { Fail("CIRockLook <props|vanilla|lit|dark|light|shine k|noprobe|probe|sand|noterrain|terrain|rocktint r g b|cavehue r g b|nosun|sun|norefl|refl|flatnormal|flatall|normal|info|noamb|amb|blockdark|blockoff|skinlit>"); return; }
 			Log("PASS: rock look " + mode + " (" + rends.Count + " renderers)");
 		}
 
 		static readonly Dictionary<string, Texture2D> rockOrig = new Dictionary<string, Texture2D>();
 		static readonly Dictionary<Material, Material> flatOrig = new Dictionary<Material, Material>();
 		static float reflWas = -1f;
+		static object[] ambWas;
 
 		[ConsoleCommand(name: "CIDownRays", docs: "Dev, in a world: what lies over and under points of a loaded island (island frame) - a ray down from 80 m at each, every collider it meets with its height, and the terrain's height there: is a cave's shell covered by ground, or out in the open over the sea (11-06). CIDownRays <island> <x> <z> [<x> <z> ...]")]
 		public static void DownRaysCommand(string[] args)
