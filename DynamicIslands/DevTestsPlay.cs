@@ -109,7 +109,7 @@ namespace DynamicIslands
 				var hits = new List<RaycastHit>();
 				Vector3 from = new Vector3(p.x, below, p.z);
 				RaycastHit down;
-				while (hits.Count < 40 && Physics.Raycast(from, Vector3.down, out down, from.y + 300f, ~0, QueryTriggerInteraction.Ignore))
+				while (hits.Count < 40 && DownPastPlayers(from, from.y + 300f, out down))
 				{
 					hits.Add(down);
 					from = down.point + Vector3.down * 0.02f;
@@ -126,7 +126,24 @@ namespace DynamicIslands
 						if (DigTunnel.InPassage(dh.point + Vector3.up * 0.6f)) return dh.point.y;
 			}
 			RaycastHit hit;
-			return Physics.Raycast(new Vector3(p.x, below, p.z), Vector3.down, out hit, below + 300f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : playEntry.Position.y;
+			return DownPastPlayers(new Vector3(p.x, below, p.z), below + 300f, out hit) ? hit.point.y : playEntry.Position.y;
+		}
+
+		/// <summary>The first surface straight down, through any player (11-06: 'expect stand' at Shelter Atoll's blast gate
+		/// read 3.1-3.2 m instead of the landing's 1.68 on and off - its ray met the top of the walker's own body when the
+		/// walk had stopped right on the point, and the deck under it when a little to one side).</summary>
+		static bool DownPastPlayers(Vector3 from, float dist, out RaycastHit hit)
+		{
+			for (int i = 0; i < 8; i++)
+			{
+				if (!Physics.Raycast(from, Vector3.down, out hit, dist, ~0, QueryTriggerInteraction.Ignore)) return false;
+				if (hit.collider.GetComponentInParent<Network_Player>() == null) return true;
+				float past = from.y - hit.point.y + 0.02f;
+				from.y -= past;
+				dist -= past;
+			}
+			hit = default(RaycastHit);
+			return false;
 		}
 
 		static IEnumerator PlayRoutine(string name)
@@ -902,6 +919,10 @@ namespace DynamicIslands
 					Vector3 p = PlayPoint(F(t[2]), F(t[3]));
 					var o = Options(t.Skip(4));
 					float top = PlaySurface(p, o.ContainsKey("below") ? playEntry.Position.y + F(o["below"]) : 400f) - playEntry.Position.y, want = o.ContainsKey("h") ? F(o["h"]) : 0f;
+					RaycastHit body;
+					if (Physics.Raycast(new Vector3(p.x, o.ContainsKey("below") ? playEntry.Position.y + F(o["below"]) : 400f, p.z), Vector3.down, out body, 700f, ~0, QueryTriggerInteraction.Ignore)
+						&& body.collider.GetComponentInParent<Network_Player>() != null)
+						Log("  (a player stands there: looked past " + body.collider.name + " at " + (body.point.y - playEntry.Position.y).ToString("F2") + " m)");
 					Check(ref ok, Mathf.Abs(top - want) < 0.6f, "standing at " + t[2] + "," + t[3] + ": " + top.ToString("F2") + " m above the sea (expected " + want + ")");
 					break;
 				}
