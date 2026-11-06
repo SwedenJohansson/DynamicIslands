@@ -920,44 +920,68 @@ namespace DynamicIslands
 			else Log("PASS: den walls " + walls.Count + ", each face lit both ways");
 		}
 
-		static Cubemap shineTest;
-		[ConsoleCommand(name: "CIRockShine", docs: "Dev, in a world: what draws Balboa cave rock blue (11-06). black: the sky's reflection made black for everything (Raft's default reflection, a probe); spec: only the cave pieces' renderers get a grey reflection through their property block; reset. CIRockShine <black|spec|reset>")]
-		public static void RockShineCommand(string[] args)
+		[ConsoleCommand(name: "CIRayLook", docs: "Dev, in a world: what is seen from a point toward another on a loaded island (points in the island's frame, as a play's picture) - a fan of 9x9 rays over 30 degrees, each ray's first renderer (its mesh's triangles, colliders or not); logs each thing seen with its share of the rays, path, material, shader and textures. For finding what draws an odd look (the blue rock, 11-06). CIRayLook <island> <x> <y> <z> <tx> <ty> <tz>")]
+		public static void RayLookCommand(string[] args)
 		{
-			string mode = args != null && args.Length > 0 ? args[0] : "";
-			if (shineTest == null)
-			{
-				shineTest = new Cubemap(8, TextureFormat.RGBA32, false);
-				var px = Enumerable.Repeat(new Color(0.02f, 0.02f, 0.02f, 1f), 64).ToArray();
-				foreach (CubemapFace f in new[] { CubemapFace.PositiveX, CubemapFace.NegativeX, CubemapFace.PositiveY, CubemapFace.NegativeY, CubemapFace.PositiveZ, CubemapFace.NegativeZ }) shineTest.SetPixels(px, f);
-				shineTest.Apply();
-			}
-			var rends = Object.FindObjectsOfType<CaveLit>().SelectMany(c => c.GetComponentsInChildren<Renderer>(true)).Where(r => r is MeshRenderer).ToList();
-			if (mode == "black")
-			{
-				Log("  default reflection was " + RenderSettings.defaultReflectionMode + " " + (RenderSettings.customReflection != null ? RenderSettings.customReflection.name : "-") + ", intensity " + RenderSettings.reflectionIntensity);
-				RenderSettings.defaultReflectionMode = UnityEngine.Rendering.DefaultReflectionMode.Custom;
-				RenderSettings.customReflection = shineTest;
-				RenderSettings.reflectionIntensity = 0f;
-				foreach (ReflectionProbe rp in Object.FindObjectsOfType<ReflectionProbe>()) rp.intensity = 0f;
-			}
-			else if (mode == "spec")
-			{
-				var b = new MaterialPropertyBlock();
-				foreach (Renderer r in rends)
+			if (args == null || args.Length < 7) { Fail("CIRayLook <island> <x> <y> <z> <tx> <ty> <tz>"); return; }
+			float[] v = args.Skip(args.Length - 6).Select(a => float.Parse(a, CultureInfo.InvariantCulture)).ToArray();
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args.Take(args.Length - 6).ToArray()) });
+			if (e == null) return;
+			Vector3 from = e.Position + e.Root.transform.rotation * new Vector3(v[0], v[1], v[2]), to = e.Position + e.Root.transform.rotation * new Vector3(v[3], v[4], v[5]);
+			Quaternion look = Quaternion.LookRotation(to - from);
+			var rends = Object.FindObjectsOfType<Renderer>().Where(r => r.enabled && r.gameObject.activeInHierarchy && !(r is ParticleSystemRenderer) && r.bounds.SqrDistance(from) < 80f * 80f).ToList();
+			var seen = new Dictionary<Renderer, int>();
+			int rays = 0;
+			for (int i = -4; i <= 4; i++)
+				for (int k = -4; k <= 4; k++)
 				{
-					r.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
-					r.GetPropertyBlock(b); b.SetTexture("unity_SpecCube0", shineTest); b.SetVector("unity_SpecCube0_HDR", new Vector4(1f, 1f, 0f, 0f)); r.SetPropertyBlock(b);
+					Ray ray = new Ray(from, look * Quaternion.Euler(k * 3.75f, i * 3.75f, 0f) * Vector3.forward);
+					rays++;
+					Renderer best = null; float bd = 80f;
+					foreach (Renderer r in rends)
+					{
+						float bdist;
+						if (!r.bounds.IntersectRay(ray, out bdist) || bdist > bd) continue;
+						float d = RayMeshDistance(r, ray);
+						if (d < bd) { bd = d; best = r; }
+					}
+					if (best != null) seen[best] = (seen.ContainsKey(best) ? seen[best] : 0) + 1;
 				}
-			}
-			else if (mode == "reset")
+			foreach (var kv in seen.OrderByDescending(p => p.Value))
 			{
-				RenderSettings.defaultReflectionMode = UnityEngine.Rendering.DefaultReflectionMode.Skybox;
-				RenderSettings.reflectionIntensity = 1f;
-				foreach (Renderer r in rends) r.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.BlendProbes;
+				Renderer r = kv.Key;
+				string path = r.name; for (Transform t = r.transform.parent; t != null && t != e.Root.transform.parent; t = t.parent) path = t.name + "/" + path;
+				string mats = string.Join("; ", r.sharedMaterials.Where(m => m != null).Select(m => m.name + " (" + m.shader.name + ": " + string.Join(" ", m.GetTexturePropertyNames().Where(t => m.GetTexture(t) != null).Select(t => t + "=" + m.GetTexture(t).name).ToArray()) + ")").ToArray());
+				var b = new MaterialPropertyBlock(); r.GetPropertyBlock(b);
+				Log("  " + kv.Value + "/" + rays + " " + path + " at " + (r.transform.position - e.Position).ToString("F1") + " [" + r.GetType().Name + (b.isEmpty ? "" : ", property block") + ", probes " + r.lightProbeUsage + "]: " + mats);
 			}
-			Log("  probes in the world " + Object.FindObjectsOfType<ReflectionProbe>().Length + ", cave renderers " + rends.Count + ", their usage " + string.Join(",", rends.Select(r => r.reflectionProbeUsage.ToString()).Distinct().ToArray()));
-			Log("PASS: rock shine " + mode);
+			Log("PASS: ray look " + seen.Count + " things");
+		}
+
+		// The distance along the ray to the renderer's mesh, or infinity (a skinned or unreadable mesh: its bounds).
+		static float RayMeshDistance(Renderer r, Ray ray)
+		{
+			MeshFilter f = r.GetComponent<MeshFilter>();
+			Mesh m = f != null ? f.sharedMesh : null;
+			float bd;
+			if (m == null || !m.isReadable) return r.bounds.IntersectRay(ray, out bd) ? bd : float.PositiveInfinity;
+			Transform t = r.transform;
+			Vector3 o = t.InverseTransformPoint(ray.origin), dir = t.InverseTransformDirection(ray.direction);
+			Vector3[] p = m.vertices; int[] tri = m.triangles;
+			float best = float.PositiveInfinity;
+			for (int i = 0; i < tri.Length; i += 3)
+			{
+				Vector3 a = p[tri[i]], e1 = p[tri[i + 1]] - a, e2 = p[tri[i + 2]] - a;
+				Vector3 h = Vector3.Cross(dir, e2); float det = Vector3.Dot(e1, h);
+				if (Mathf.Abs(det) < 1e-7f) continue;
+				float inv = 1f / det; Vector3 s = o - a; float u = Vector3.Dot(s, h) * inv;
+				if (u < 0f || u > 1f) continue;
+				Vector3 q = Vector3.Cross(s, e1); float w = Vector3.Dot(dir, q) * inv;
+				if (w < 0f || u + w > 1f) continue;
+				float d = Vector3.Dot(e2, q) * inv;
+				if (d > 0f && d < best) best = d;
+			}
+			return best == float.PositiveInfinity ? best : Vector3.Distance(ray.origin, t.TransformPoint(o + dir * best));
 		}
 
 		[ConsoleCommand(name: "CICaveLit", docs: "Dev, in a world: every Balboa cave piece placed on a loaded island (a mine's dead-end mound, an ar_cave den, the cave tool's tunnels) lit as a cave - its renderers on the cave light (CaveLit), not Raft's blue sky light that drew its faces bright blue (11-06). CICaveLit [island]")]
