@@ -1007,6 +1007,8 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
     yourself - gets a rock hill built over its back and sides, down to the ground and open only at its mouth, made of
     the island's own biggest rock (snowy rock on a snowy island). The hill stops where the cave's roof ends, in a face
     down to the ground, so the ground in front of the mouth and beside it stays free for paths and ledges.
+    Balboa's rock on custom islands - cave pieces, their hills and Balboa's big rocks - shows its steep faces in the
+    island rock's brown-grey, not the grey-blue of Balboa's own stone, which read as blue patches away from Balboa's light.
     Balboa's vine cave is a whole rock already and gets none.
     A bear den set on its own gets a rock wall across its open front, with a doorway at the mouth, so from outside you
     don't look into the cave through its missing side. A den and the tunnels of the cave tool are lit warm and dim in a
