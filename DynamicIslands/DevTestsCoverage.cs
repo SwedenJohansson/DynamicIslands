@@ -607,7 +607,7 @@ namespace DynamicIslands
 
 		#region COV7 - No update check; the version notice
 
-		[ConsoleCommand(name: "CIUpdateCheck", docs: "Dev, anywhere: COV7 - the mod has no update check any more (Franz, 2026-10-17: the only source is raftmodding.com): no UpdateCheck type, no GitHub releases address in the mod's code, the main menu's hook asks nothing; MismatchText's wording for the host and for a client (both versions, which one to install, raftmodding.com when a version can't be told)")]
+		[ConsoleCommand(name: "CIUpdateCheck", docs: "Dev, anywhere: COV7 - the mod's old GitHub update check is gone (Franz, 2026-10-17: the only source is raftmodding.com; the check on start asks it - UP1, CIUpdateOnStart): no UpdateCheck type, no GitHub releases address in the mod's code; MismatchText's wording for the host and for a client (both versions, which one to install, raftmodding.com when a version can't be told)")]
 		public static void UpdateCheckTestCommand() { StartTest(UpdateCheckRoutine()); }
 
 		static IEnumerator UpdateCheckRoutine()

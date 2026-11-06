@@ -17,7 +17,7 @@ namespace DynamicIslands
 	{
 		const string Rk34Island = "cirk34";
 
-		[ConsoleCommand(name: "CIRk34", docs: "Dev, two-player test (mprk34.ps1): CIRk34 setup (host) = island 'cirk34' near the raft with a once note that needs the crew's story key and takes 2 planks, and a lever that takes 1 plank, gives 1 scrap and sends the signal barring it after 3 s; CIRk34 away on|off (host) = the host's copy of the island unloaded (the host refuses a player's event there); CIRk34 read (player 2) = reads the note; CIRk34 double (player 2) = uses the lever twice 1 s apart; CIRk34 status (either) = one line 'RK34 status <role>: ...'; CIRk34 end (host)")]
+		[ConsoleCommand(name: "CIRk34", docs: "Dev, two-player test (mprk34.ps1): CIRk34 setup (host) = island 'cirk34' near the raft with a once note that needs the crew's story key and takes 2 planks, and a lever that takes 1 plank, gives 1 scrap and sends the signal barring it after 3 s; CIRk34 refuse on|off (host) = the host refuses every player's event that waits for its answer (RK3: a test hook in Behaviours.OnEventMessage); CIRk34 away on|off (host) = the host's copy of the island unloaded (the host refuses a player's event there); CIRk34 read (player 2) = reads the note; CIRk34 double (player 2) = uses the lever twice 1 s apart; CIRk34 status (either) = one line 'RK34 status <role>: ...'; CIRk34 end (host)")]
 		public static void Rk34Command(string[] args) { StartTest(Rk34Routine(args != null && args.Length > 0 ? args[0].ToLowerInvariant() : "status", args != null && args.Length > 1 ? args[1].ToLowerInvariant() : "")); }
 
 		static IEnumerator Rk34Routine(string part, string arg)
@@ -28,6 +28,7 @@ namespace DynamicIslands
 			{
 				if (!Raft_Network.IsHost) { Fail("rk34 " + part + ": on the host"); yield break; }
 				CustomIslandSpawner.TestRaftFarAway = CustomIslandSpawner.TestPlayersFarAway = false;
+				Behaviours.RefuseForTests = false;
 				IslandWorldState.Remove(Rk34Island);
 				StoryBook.Take("rk-key", StoryBook.Count("rk-key"));
 				if (part == "end")
@@ -46,6 +47,15 @@ namespace DynamicIslands
 				if (made == null || made.Root == null) { Fail("rk34: the island did not spawn"); yield break; }
 				StoryBook.Give("rk-key", 1);
 				Log("PASS: rk34 setup (island " + made.Id + ")");
+				yield break;
+			}
+			if (part == "refuse")
+			{
+				// (the host refuses a player's event that waits for its answer, as when another player used the crew's key at the
+				// same moment: 'away' could not unload the host's copy while player 2 stood on it - RK3, 11-06)
+				if (!Raft_Network.IsHost) { Fail("rk34 refuse: on the host"); yield break; }
+				Behaviours.RefuseForTests = arg != "off";
+				Log("PASS: rk34 refuse " + (Behaviours.RefuseForTests ? "on" : "off"));
 				yield break;
 			}
 			if (part == "away")
