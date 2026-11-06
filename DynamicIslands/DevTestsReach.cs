@@ -1003,6 +1003,7 @@ namespace DynamicIslands
 			g.Pos = null; g.Kind = null; g.Out = null; g.In = null; g.Col = null; g.Vox = null; fwd = null; back = null; parent = null; backParent = null; trapped = null; seen = null;
 			GC.Collect();
 			shiftGrid = null; shiftTargets = null;
+			ReachCreaturesBack();
 			done(problems);
 		}
 
@@ -1848,6 +1849,21 @@ namespace DynamicIslands
 			try { reachHarmony.UnpatchAll("ci.reachwalk"); } catch (Exception ex) { Log("(unpatching the reach walker: " + ex.Message + ")"); }
 			reachHarmony = null;
 		}
+		// (the island's creatures, put away while its walks run: the walker tests the ground, not a fight - a boar awake in a mine
+		// hit the walker 1 m through a beam mid-walk, and the walk after it set off from inside the rock. Old Mine Islet 11-06)
+		static readonly List<GameObject> reachAway = new List<GameObject>();
+
+		static void ReachCreaturesAway()
+		{
+			foreach (AI_NetworkBehaviour a in UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>())
+				if (a != null && a.gameObject.activeSelf) { reachAway.Add(a.gameObject); a.gameObject.SetActive(false); }
+		}
+
+		static void ReachCreaturesBack()
+		{
+			foreach (GameObject go in reachAway) if (go != null) go.SetActive(true);
+			reachAway.Clear();
+		}
 
 		/// <summary>The player through a path of the grid, moved by Raft itself: the first point is the start in the sea (the
 		/// one teleport); then the walker looks at the next point and holds Walk (swimming and diving look up or down at it),
@@ -1856,6 +1872,7 @@ namespace DynamicIslands
 		/// Null when it got to the end, else where it stopped.</summary>
 		static IEnumerator ReachWalkPath(Network_Player pl, IslandWorldState.Entry e, ReachGrid g, List<int> path, int speed, Action<string> result)
 		{
+			ReachCreaturesAway();
 			List<int> way = Waypoints(g, path);
 			Func<int, Vector3> W = k => e.Position + (g.Pos[k] - g.Anchor);
 			// (a player who died in the play - drowned on a dive step - is "dead" with full health: Raft's PersonController then
@@ -1890,6 +1907,7 @@ namespace DynamicIslands
 				for (int f = 0; f < 10; f++) { MmHold(pl, false); yield return null; }
 				if (ReachFree(pl)) for (int f = 0; f < 5; f++) { MmHold(pl, false); yield return null; }
 			}
+			if (reachOnly != "") Log("  walk start: " + way.Count + " waypoints, first kind " + g.Kind[way[0]] + " at " + (W(way[0]) - e.Position).ToString("F1") + ", player at " + (ReachFeet(pl) - e.Position).ToString("F1") + ", walk-in " + reachWalkIn + ReachCreatures(pl));
 			Vector3 prev = ReachFeet(pl) + Vector3.up * 0.9f;
 			string bad = null;
 			int wpAt = 0; // (the waypoint walked to now: in an INVALID's details)
@@ -1929,6 +1947,7 @@ namespace DynamicIslands
 						r = "INVALID: the walker crossed " + BlockerName(h.collider) + " (layer " + LayerMask.LayerToName(h.collider.gameObject.layer) + ", player " + (gcc != null ? LayerMask.LayerToName(gcc.gameObject.layer) : "?") + ") at " + (h.point - e.Position).ToString("F1")
 							+ " [chest line " + (prev - e.Position).ToString("F1") + " to " + (now - e.Position).ToString("F1") + ", " + d.magnitude.ToString("F2") + " m in a frame, waypoint " + wpAt + "/" + way.Count + ", " + pl.PersonController.controllerType + (gcc != null ? (gcc.enabled ? "" : ", controller off") + (gcc.isGrounded ? ", grounded" : "") : "") + "]"; break;
 					}
+				if (r != null) r += ReachCreatures(pl);
 				prev = now;
 				return r;
 			};
@@ -2079,7 +2098,7 @@ namespace DynamicIslands
 						else if (turns < 2) { turns++; turnLeft = 0.7f; turnDir = turns == 1 ? 1f : -1f; since2 = 0f; }
 						else
 						{
-							string diag = ReachDiag(pl);
+							string diag = ReachDiag(pl) + ReachCreatures(pl);
 							mmWalk = 0f; mmJump = false;
 							result("stuck at " + (p - e.Position).ToString("F1") + " on the way to " + (aim - e.Position).ToString("F1") + (hops > 0 ? " (" + hops + " jumps, rose up to " + hopPeak.ToString("F2") + " m)" : "") + " (in the way: " + ReachBlocker(pl, flat.sqrMagnitude > 0.01f ? flat.normalized : d.normalized) + ")" + diag);
 							yield break;
@@ -2160,6 +2179,20 @@ namespace DynamicIslands
 			Traverse.Create(pl.PersonController).Field("isMovementFree").SetValue(true);
 			if (cc0 != null) cc0.enabled = true;
 			return true;
+		}
+
+		/// <summary>Creatures within 6 m of the player (name, distance): a boar in a mine pushes the walker about.</summary>
+		static string ReachCreatures(Network_Player pl)
+		{
+			string s = "";
+			Vector3 f = ReachFeet(pl);
+			foreach (AI_NetworkBehaviour a in UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>())
+			{
+				if (a == null) continue;
+				float dd = (a.transform.position - f).magnitude;
+				if (dd < 6f) s += (s.Length > 0 ? ", " : "") + a.name + " " + dd.ToString("F1") + " m";
+			}
+			return s.Length > 0 ? " [creatures near: " + s + "]" : "";
 		}
 
 		static string ReachDiag(Network_Player pl)
