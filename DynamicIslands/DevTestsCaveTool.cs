@@ -113,7 +113,15 @@ namespace DynamicIslands
 								Transform po = pl.Find(CaveTool.PlugOutName);
 								Mesh om = po != null && po.GetComponent<MeshFilter>() != null ? po.GetComponent<MeshFilter>().sharedMesh : null;
 								int inT = m.triangles.Length, outT = om != null ? om.triangles.Length : 0;
-								Check(ref ok, om != null && outT == inT && outT > 0, "a lone den's wall has its outside as a child of its own (" + outT + " to " + inT + " triangle corners)");
+								// (its shade bands cut along smooth lines: more triangles than the inside, one part per band)
+								Check(ref ok, om != null && outT >= inT && inT > 0 && om.subMeshCount == CaveTool.PlugShadeOut.Length + 1,
+									"a lone den's wall has its outside as a child of its own (" + outT + " to " + inT + " triangle corners, "
+									+ (om != null ? om.subMeshCount : 0) + " parts, the shade bands' edges cut smooth)");
+								// (shade in the way in, seen from outside: the den beyond read as a light window, 11-06 review)
+								Transform pv = pl.Find(CaveTool.PlugVeilName);
+								Mesh vm = pv != null && pv.GetComponent<MeshFilter>() != null ? pv.GetComponent<MeshFilter>().sharedMesh : null;
+								Check(ref ok, vm != null && vm.vertexCount > 0 && pv.GetComponent<Collider>() == null && pv.GetComponent<CaveTool.CaveVeil>() != null,
+									"a lone den's way in has its shade (" + (vm != null ? vm.vertexCount : 0) + " corners, no collider)");
 							// (the den's colour as drawn, not the big rock's grey-blue: a grey wall beside the lava tube's khaki shell, 11-05;
 							// the textures' means were alike, the shaders' light was not - so both are compared lit, after TintWall)
 							Color before, shell, wallLit;

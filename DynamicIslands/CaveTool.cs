@@ -339,9 +339,12 @@ namespace DynamicIslands.Editor
 		/// <summary>How far a lone den's wall's outer edge leans out to the mouth: no straight edge of a wall set back behind the hill.</summary>
 		public const float PlugLean = 1.6f;
 		/// <summary>A lone den's way in in shade: its wall's outside round the arch drawn darker, in bands out to the arch's size times
-		/// these (the first band darkest, by PlugShade), the rest as the hill.</summary>
-		public static readonly float[] PlugShadeOut = { 1.3f, 1.65f };
-		public static readonly float[] PlugShade = { 0.3f, 0.55f };
+		/// these (the first band darkest, by PlugShade), the rest as the hill. Each band's edge is a smooth, uneven line (the
+		/// triangles cut along it): whole 0.5 m cells drew it as a staircase, 11-06 review.</summary>
+		public static readonly float[] PlugShadeOut = { 1.2f, 1.45f, 1.8f };
+		public static readonly float[] PlugShade = { 0.28f, 0.45f, 0.68f };
+		/// <summary>The name of a lone den's shade in its way in (CaveVeil): darker the further in, seen from outside only.</summary>
+		public const string PlugVeilName = "CavePlugVeil";
 
 		/// <summary>
 		/// The bear den's mouth opens far wider than a tunnel: in Balboa its cliff closes the rest, here the hill does from
@@ -690,6 +693,84 @@ namespace DynamicIslands.Editor
 		/// <summary>Marks a lone den's wall's outside drawn as the hill: CaveLit leaves its light alone.</summary>
 		public class HillWall : MonoBehaviour { }
 
+		/// <summary>
+		/// Shade in a lone den's way in: three see-through dark sheets the shape of its arch, one behind the other going in (the
+		/// deeper ones larger, their edges soft, none on the floor), so the den reads darker the further in, as a cave's mouth -
+		/// the den beyond the arch, lit evenly, read as a light window from the sea (Shelter Atoll's ammo cave, 11-06 review).
+		/// Drawn only for a camera outside the way in, fading as it comes near, and far off (no fog on it); no collider.
+		/// </summary>
+		public class CaveVeil : MonoBehaviour
+		{
+			[NonSerialized] Material mat;
+			[NonSerialized] float front;
+			static readonly float[] Depth = { 1.2f, 2.9f, 4.8f }, Size = { 1.15f, 1.5f, 1.9f }, Alpha = { 0.5f, 0.38f, 0.38f };
+			const int Seg = 40;
+
+			public static GameObject Build(GameObject plug, float cx, float cy, float ha, float hb, float hp, Func<float, float, float> noise, float front, float floorY)
+			{
+				Shader sh = Shader.Find("Sprites/Default");
+				if (plug == null || sh == null) return null;
+				var vv = new List<Vector3>();
+				var vc = new List<Color>();
+				var vt = new List<int>();
+				Func<float, float> floorFade = py => Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((py - floorY + 0.2f) / 1.8f));
+				for (int j = 0; j < Depth.Length; j++)
+				{
+					float vz = front - Depth[j];
+					int c0 = vv.Count;
+					vv.Add(new Vector3(cx, cy, vz));
+					vc.Add(new Color(0.015f, 0.02f, 0.025f, Alpha[j] * floorFade(cy)));
+					float[] rings = { 0.7f, 1f };
+					foreach (float rr in rings)
+						for (int s = 0; s < Seg; s++)
+						{
+							float ang = 2f * Mathf.PI * s / Seg, ux = Mathf.Cos(ang), uy = Mathf.Sin(ang), sc = noise(ux, uy);
+							float t = Size[j] * rr / Mathf.Pow(Mathf.Pow(Mathf.Abs(ux) / (ha * sc), hp) + Mathf.Pow(Mathf.Abs(uy) / (hb * sc), hp), 1f / hp);
+							float px = cx + ux * t, py = cy + uy * t;
+							vv.Add(new Vector3(px, py, vz));
+							// (the first sheet hard to its edge, tucked behind the arch's rim; the deeper ones fade out to theirs)
+							vc.Add(new Color(0.015f, 0.02f, 0.025f, Alpha[j] * (rr < 1f || j == 0 ? 1f : 0f) * floorFade(py)));
+						}
+					for (int s = 0; s < Seg; s++)
+					{
+						int a = c0 + 1 + s, b = c0 + 1 + (s + 1) % Seg, a2 = a + Seg, b2 = b + Seg;
+						vt.AddRange(new[] { c0, a, b, a, a2, b2, a, b2, b });
+					}
+				}
+				var mesh = new Mesh { name = PlugVeilName };
+				mesh.SetVertices(vv);
+				mesh.SetColors(vc);
+				mesh.SetTriangles(vt, 0);
+				mesh.RecalculateBounds();
+				var go = new GameObject(PlugVeilName);
+				go.layer = plug.layer;
+				go.transform.SetParent(plug.transform, false);
+				go.AddComponent<MeshFilter>().sharedMesh = mesh;
+				MeshRenderer r = go.AddComponent<MeshRenderer>();
+				var veil = go.AddComponent<CaveVeil>();
+				veil.mat = new Material(sh) { name = PlugVeilName, renderQueue = 3000 };
+				veil.front = front;
+				r.sharedMaterial = veil.mat;
+				r.shadowCastingMode = ShadowCastingMode.Off;
+				r.receiveShadows = false;
+				r.lightProbeUsage = LightProbeUsage.Off;
+				r.reflectionProbeUsage = ReflectionProbeUsage.Off;
+				return go;
+			}
+
+			void OnWillRenderObject()
+			{
+				Camera c = Camera.current;
+				if (c == null || mat == null) return;
+				Vector3 lp = transform.InverseTransformPoint(c.transform.position);
+				float dist = Vector3.Distance(c.transform.position, transform.position);
+				float k = Mathf.Clamp01((lp.z - front - 0.5f) / 3f) * Mathf.Clamp01((160f - dist) / 80f);
+				mat.color = new Color(1f, 1f, 1f, k);
+			}
+
+			void OnDestroy() { if (mat != null) Destroy(mat); }
+		}
+
 		/// <summary>A den's own renderers: all but its wall (PlugName).</summary>
 		public static Renderer[] DenShell(GameObject den)
 		{
@@ -915,24 +996,86 @@ namespace DynamicIslands.Editor
 			// its own corners and flat normal drew the wall in 45-degree halves of orange and black - the rock shader (Mountains)
 			// blends its rock and sand by the normal - Shelter Atoll's ammo cave from the sea, 11-06)
 			var corner = new Dictionary<int, int>[] { new Dictionary<int, int>(), new Dictionary<int, int>() };
+			// (a point on the wall from its place in the wall's plane, and its smooth normal; 0: facing -z, into the den)
+			Func<float, float, Vector3> pos3 = (px, py) => new Vector3(px, py, z + depth(px, py));
+			Func<float, float, int, Vector3> normAt = (px, py, side) =>
+			{
+				float e = cell, fx = (depth(px + e, py) - depth(px - e, py)) / (2f * e), fy = (depth(px, py + e) - depth(px, py - e)) / (2f * e);
+				return side == 0 ? new Vector3(fx, fy, -1f).normalized : new Vector3(-fx, -fy, 1f).normalized;
+			};
 			Func<int, int, int, int> at = (side, ci, ck) =>
 			{
 				int key = ci * (ny + 2) + ck, n;
 				if (corner[side].TryGetValue(key, out n)) return n;
 				Vector2 pp = place(ci, ck);
-				float px = pp.x, py = pp.y, e = cell;
-				float fx = (depth(px + e, py) - depth(px - e, py)) / (2f * e), fy = (depth(px, py + e) - depth(px, py - e)) / (2f * e);
 				n = verts.Count;
-				verts.Add(new Vector3(px, py, z + depth(px, py)));
-				norms.Add(side == 0 ? new Vector3(fx, fy, -1f).normalized : new Vector3(-fx, -fy, 1f).normalized); // (0: facing -z, into the den)
+				verts.Add(pos3(pp.x, pp.y));
+				norms.Add(normAt(pp.x, pp.y, side));
 				corner[side][key] = n;
 				return n;
 			};
 			int cells = 0;
 			var trisOut = new List<int>();
-			// (the outside in bands by how near the way in: shade round it - the den beyond, lit evenly, showed as a light window)
+			// (the outside in bands by how near the way in: shade round it - the den beyond, lit evenly, showed as a light window.
+			// Each band's edge an uneven line by noise, the triangles cut along it, so it is no staircase of cells)
+			Func<float, float, float> shadeQ = (px, py) => archQ(px, py) + 0.3f * (Mathf.PerlinNoise(px * 0.55f + 51.3f, py * 0.55f + 8.9f) - 0.5f)
+				+ 0.12f * (Mathf.PerlinNoise(px * 1.7f + 3.1f, py * 1.7f + 77.7f) - 0.5f);
 			var bands = new List<int>[PlugShadeOut.Length + 1];
 			for (int b = 0; b < bands.Length; b++) bands[b] = new List<int>();
+			var outV = new List<Vector3>();
+			var outN = new List<Vector3>();
+			var outQ = new List<float>();
+			var outOf = new Dictionary<int, int>();
+			var cutOf = new Dictionary<long, int>();
+			Func<int, int> outAt = src =>
+			{
+				int n;
+				if (outOf.TryGetValue(src, out n)) return n;
+				n = outV.Count;
+				outV.Add(verts[src]);
+				outN.Add(norms[src]);
+				outQ.Add(shadeQ(verts[src].x, verts[src].y));
+				outOf[src] = n;
+				return n;
+			};
+			// (the point where an edge crosses a band's edge, shared by the two triangles on that edge: no crack)
+			Func<int, int, int, int> cutAt = (a, b, ti) =>
+			{
+				int lo = Math.Min(a, b), hi = Math.Max(a, b), n;
+				long key = ((long)lo * 1000003L + hi) * 8L + ti;
+				if (cutOf.TryGetValue(key, out n)) return n;
+				float th = PlugShadeOut[ti], s = Mathf.Clamp01((th - outQ[lo]) / (outQ[hi] - outQ[lo]));
+				float px = Mathf.Lerp(outV[lo].x, outV[hi].x, s), py = Mathf.Lerp(outV[lo].y, outV[hi].y, s);
+				n = outV.Count;
+				outV.Add(pos3(px, py));
+				outN.Add(normAt(px, py, 1));
+				outQ.Add(th);
+				cutOf[key] = n;
+				return n;
+			};
+			Action<List<int>, int> emit = (poly, band) =>
+			{
+				for (int j = 1; j + 1 < poly.Count; j++) { bands[band].Add(poly[0]); bands[band].Add(poly[j]); bands[band].Add(poly[j + 1]); }
+			};
+			Action<int, int, int> shadeTri = (a, b, c) =>
+			{
+				var poly = new List<int> { outAt(a), outAt(b), outAt(c) };
+				for (int ti = 0; ti < PlugShadeOut.Length && poly.Count >= 3; ti++)
+				{
+					var below = new List<int>();
+					var above = new List<int>();
+					for (int j = 0; j < poly.Count; j++)
+					{
+						int p = poly[j], q = poly[(j + 1) % poly.Count];
+						bool pb = outQ[p] < PlugShadeOut[ti], qb = outQ[q] < PlugShadeOut[ti];
+						(pb ? below : above).Add(p);
+						if (pb != qb) { int x = cutAt(p, q, ti); below.Add(x); above.Add(x); }
+					}
+					if (below.Count >= 3) emit(below, ti);
+					poly = above;
+				}
+				if (poly.Count >= 3) emit(poly, PlugShadeOut.Length);
+			};
 			for (int k = 0; k < ny; k++)
 				for (int i = 0; i < nx; i++)
 				{
@@ -943,10 +1086,8 @@ namespace DynamicIslands.Editor
 					tris.AddRange(new[] { at(0, i, k), at(0, i + 1, k + 1), at(0, i + 1, k), at(0, i, k), at(0, i, k + 1), at(0, i + 1, k + 1) });
 					var outCell = new[] { at(1, i, k), at(1, i + 1, k), at(1, i + 1, k + 1), at(1, i, k), at(1, i + 1, k + 1), at(1, i, k + 1) };
 					trisOut.AddRange(outCell);
-					float cx = x0 + (i + 0.5f) * cell, cy = y0 + (k + 0.5f) * cell, q = archQ(cx, cy) + 0.25f * (Mathf.PerlinNoise(cx * 0.8f + 51.3f, cy * 0.8f + 8.9f) - 0.5f);
-					int band = 0;
-					while (band < PlugShadeOut.Length && q >= PlugShadeOut[band]) band++;
-					bands[band].AddRange(outCell);
+					shadeTri(outCell[0], outCell[1], outCell[2]);
+					shadeTri(outCell[3], outCell[4], outCell[5]);
 				}
 			if (tris.Count == 0) { UnityEngine.Object.DestroyImmediate(go); return; }
 			// (the wall itself draws its inside, lit as the den; its outside is a child of its own (PlugOutName), so it can be
@@ -968,8 +1109,9 @@ namespace DynamicIslands.Editor
 			Renderer rockLook = bigRock != null ? bigRock.GetComponentsInChildren<MeshRenderer>(true).FirstOrDefault(r => r.sharedMaterial != null) : null;
 			Vector2 swatch = Vector2.zero;
 			bool atlas = rockLook == null && MouthSwatch(look, go.transform.TransformPoint(new Vector3(mx, my + HoleUp + 1f, RoomMax.z)), out swatch);
-			mesh.SetUVs(0, verts.Select(v => rockLook != null ? new Vector2(v.x, v.y) / 14f : atlas ? swatch + new Vector2(v.x, v.y) * (0.004f / PlugTile)
-				: new Vector2(v.x / PlugTile, v.y / PlugTile)).ToList());
+			Func<Vector3, Vector2> uvOf = v => rockLook != null ? new Vector2(v.x, v.y) / 14f : atlas ? swatch + new Vector2(v.x, v.y) * (0.004f / PlugTile)
+				: new Vector2(v.x / PlugTile, v.y / PlugTile);
+			mesh.SetUVs(0, verts.Select(uvOf).ToList());
 			mesh.SetNormals(norms);
 			mesh.RecalculateBounds();
 			go.AddComponent<MeshFilter>().sharedMesh = mesh;
@@ -979,8 +1121,11 @@ namespace DynamicIslands.Editor
 			var outGo = new GameObject(PlugOutName);
 			outGo.layer = go.layer;
 			outGo.transform.SetParent(go.transform, false);
-			var outMesh = UnityEngine.Object.Instantiate(mesh);
-			outMesh.name = PlugOutName;
+			var outMesh = new Mesh { name = PlugOutName };
+			if (outV.Count > 65000) outMesh.indexFormat = IndexFormat.UInt32;
+			outMesh.SetVertices(outV);
+			outMesh.SetNormals(outN);
+			outMesh.SetUVs(0, outV.Select(uvOf).ToList());
 			// (submesh 0 as the hill, then the shade bands from the way in out: PlugShade, WallLikeHill)
 			outMesh.subMeshCount = bands.Length;
 			outMesh.SetTriangles(bands[bands.Length - 1], 0);
@@ -988,6 +1133,9 @@ namespace DynamicIslands.Editor
 			outMesh.RecalculateBounds();
 			outGo.AddComponent<MeshFilter>().sharedMesh = outMesh;
 			outGo.AddComponent<MeshRenderer>().sharedMaterials = Enumerable.Repeat(wr.sharedMaterial, bands.Length).ToArray();
+			// (and shade in the way in, darker the further in: the den beyond, lit evenly, still read as a light window in the
+			// dark arch from the sea, 11-06 review)
+			CaveVeil.Build(go, hcx, hcy, ha, hb, hp, archNoise, z - PlugFunnel, my);
 			// (lit as the den, its own parts looked up again; the outside is left out once it is drawn as the hill)
 			if (den.GetComponent<CaveLit>() != null) CaveLit.Mark(den);
 			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + cells + " cells, rock relief, smooth, arched way in, " + wr.sharedMaterial.name + (atlas ? " at uv " + swatch.ToString("0.000") : ""));
@@ -1754,7 +1902,7 @@ namespace DynamicIslands.Editor
 		{
 			// (not a lone den's wall's outside drawn as the hill: lit as the hill - CaveTool.WallLikeHill)
 			rends = GetComponentsInChildren<Renderer>(true).Where(r => !(r is ParticleSystemRenderer) && !(r is LineRenderer) && !(r is TrailRenderer)
-				&& r.GetComponent<CaveTool.HillWall>() == null).ToArray();
+				&& r.GetComponent<CaveTool.HillWall>() == null && r.GetComponent<CaveTool.CaveVeil>() == null).ToArray();
 			subShine = new float[rends.Length][];
 			ownShine = new float[rends.Length];
 			for (int k = 0; k < rends.Length; k++)

@@ -133,18 +133,19 @@ call ar_cave x=62 z=82 h=3 yaw=0 al=ammorock chest=ammochest
 # both sides of it: a beach as wide as the rock, from its pad (h=3) down into the sea at about 15 degrees)
 # (11-06 second review: that beach read as a wide flat sand slab: now a shore as wide as the rock only at its foot, so
 # no underside shows, narrowing as it goes down into the sea - a spit of beach, its sides sloping down as well, smoothed)
-brush flatten from 49 97 to 75 97 r=3.5 s=20 frames=200 h=3
-brush flatten from 51 100 to 73 100 r=3.5 s=20 frames=200 h=2.3
-brush flatten from 53 103 to 71 103 r=3.5 s=20 frames=200 h=1.5
-brush flatten from 55 106 to 69 106 r=3.5 s=20 frames=200 h=0.7
-brush flatten from 56 109 to 67 109 r=3.5 s=20 frames=200 h=-0.1
-brush flatten from 57 112 to 66 112 r=3.5 s=20 frames=200 h=-0.9
-brush flatten from 58 115 to 65 115 r=3.5 s=20 frames=200 h=-1.7
-brush smooth from 48 100 to 76 100 r=6 s=4 frames=10
-brush smooth from 51 106 to 72 106 r=6 s=4 frames=10
-brush smooth from 54 112 to 69 112 r=6 s=4 frames=10
-clear from 61 101.5 to 61 110.5 r=7 body
-clear from 53 104 to 70 104 r=6 body
+# (11-06 third review: rows of flattened sand still read as a wide flat slab with sheer sides, and the beach at its top
+# (h 3) left the den's floor lip (3.9) showing as a straight brown ledge: now a rounded fan of shore from the lip down
+# into the sea, its rings laid from the largest and lowest up, then smoothed - its sides slope as its front does)
+brush flatten at 61 107 r=10 s=20 frames=200 h=-2.6
+brush flatten at 61 105 r=8.5 s=20 frames=200 h=-1
+brush flatten at 61 103.2 r=7 s=20 frames=200 h=0.5
+brush flatten at 61 101.6 r=5.5 s=20 frames=200 h=1.9
+brush flatten from 54 99.5 to 68 99.5 r=3 s=20 frames=200 h=3.2
+brush smooth at 61 103 r=12 s=4 frames=40
+brush flatten from 55 99 to 67 99 r=2.2 s=20 frames=60 h=3.6
+brush smooth from 52 100.5 to 70 100.5 r=4 s=4 frames=10
+clear from 61 101 to 61 110 r=7 body
+clear from 54 103 to 68 103 r=6 body
 # The new land planted (palms, bamboo, bushes as on the ring; boulders only on the flats)
 call ar_plants_tropical x=40 z=38 r=10 seed=26301
 call ar_plants_hill x=60 z=54 r=22 seed=26311
