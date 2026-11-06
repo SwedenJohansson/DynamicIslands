@@ -10,7 +10,8 @@ picture old_mine_islet_backdrift_out -12 6.5 34 -12 3.5 25
 picture old_mine_islet_backdrift_in -12 4.6 26 -12 3.5 15
 picture om5_mouth_oldwork_west 38 7.5 -15 44.7 4 -12
 picture om5_mouth_oldwork_east 71 9.5 -25 64.7 6 -19.4
-picture om5_mouth_oldwork_north 55 8 6 54.5 4.5 0
+# (round 6: no om5_mouth_oldwork_north - the drift's north end is the dead-end powder chamber, no mouth; that camera
+# stood inside Copper Knob's hill and saw the dug tube from the rock's back side over the sea. om_t1_powder shows it inside)
 picture om5_ramp_pond 24 5 -29 17.5 0 -29
 picture om5_ramp_arch -33 7 -14 -40 1 -15
 picture om5_ramp_spit 7 5 -78 0.5 0 -82

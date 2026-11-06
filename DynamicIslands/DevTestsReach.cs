@@ -30,6 +30,8 @@ namespace DynamicIslands
 	{
 		static bool reachHook, reachControls;
 		static string reachLabel = "";
+		// (CIReachOnly: walk only targets whose name holds this)
+		static string reachOnly = "";
 		// (how many of the walker's moves a frame: 1 = a player's pace; every FAIL and every walk that crossed a collider is
 		// walked again at 1)
 		static int reachSpeed = 3;
@@ -51,6 +53,25 @@ namespace DynamicIslands
 			if (args != null && args.Length > 0) reachSpeed = Mathf.Clamp((int)F(args[0]), 0, 10);
 			if (args != null && args.Length > 1) reachPace = Mathf.Clamp(F(args[1]), 1f, 4f);
 			Log("PASS: reach speed " + reachSpeed + ", pace " + reachPace.ToString("F1") + " (" + reachPrechecked + " prechecked, " + reachWalked + " walked, " + reachRewalked + " walked again at 1x so far)");
+		}
+
+		[ConsoleCommand(name: "CIReachOnly", docs: "Dev, anywhere: the next CIReach runs walk only the quest targets whose name holds this text (case aside), the rest reported 'skipped (CIReachOnly)' - to walk one failing target again without the whole island; no text = all again")]
+		public static void ReachOnlyCommand(string[] args)
+		{
+			reachOnly = args == null ? "" : string.Join(" ", args).Trim();
+			Log("PASS: reach only " + (reachOnly == "" ? "(all targets)" : "'" + reachOnly + "'"));
+		}
+
+		[ConsoleCommand(name: "CIReachDismountUnit", docs: "Dev, anywhere: the walker's jump off a ladder's top - after a climb up, a next floor 0.25 to 1.2 m above the feet (a hatch beside or behind the ladder) is jumped onto; one level with the feet, one out of a jump's reach, or a walk not off a ladder is walked")]
+		public static void CIReachDismountUnit()
+		{
+			bool ok = true;
+			Action<bool, string> chk = (c, w) => { Log((c ? "PASS: " : "FAIL: ") + w); ok &= c; };
+			chk(ReachLadderDismount(true, 31.25f, 31.73f), "headframe: feet 0.48 m under the deck at the ladder's top - jump onto it");
+			chk(!ReachLadderDismount(true, 31.7f, 31.73f), "feet level with the floor - walk off");
+			chk(!ReachLadderDismount(true, 30.0f, 31.73f), "the floor 1.7 m up - out of a jump's reach, no jump");
+			chk(!ReachLadderDismount(false, 31.25f, 31.73f), "not after a climb up - the walk's own jumps only");
+			Log(ok ? "PASS: reach dismount unit" : "FAIL: reach dismount unit");
 		}
 
 		[ConsoleCommand(name: "CIReachByPlayUnit", docs: "Dev, anywhere: the reach's 'checked by play' (island reach.byplay=...) - a target a play goes to (zone/open) is found in the plays, case aside; a made-up one is not")]
@@ -896,6 +917,7 @@ namespace DynamicIslands
 				var use = useOf[t];
 				Vector3 tr = relOf[t];
 				string head = "REACH " + name + " | " + t.Kind + " '" + t.Name + "' at " + tr.x.ToString("F1") + " " + tr.z.ToString("F1") + " h=" + tr.y.ToString("F1") + " | " + (t.Steps.Length > 0 ? t.Steps : "-") + " | ";
+				if (reachOnly != "" && (t.Name ?? "").IndexOf(reachOnly, StringComparison.OrdinalIgnoreCase) < 0) { report.Add(head + "skipped (CIReachOnly)"); continue; }
 				// (a cage the play opened is hidden (Survivors.cs: open = gone for everyone), its model off and its bounds a 0.3 m box
 				// at its root - "no spot" for Teo's and Oda's cages after their quests freed them, PQ11 10-28: not checkable now)
 				if (use.Count == 0 && t.Kind == "cage")
@@ -1906,6 +1928,8 @@ namespace DynamicIslands
 				prev = now;
 				return r;
 			};
+			// (set when a ladder was climbed to its top: the next floor may be one to jump onto - ReachLadderDismount)
+			bool ladderUpTop = false;
 			for (int i = 1; i < way.Count; i++)
 			{
 				wdWay = Time.realtimeSinceStartup; wdTried = false; wdMoved = 99f; hbProg++;
@@ -1998,6 +2022,7 @@ namespace DynamicIslands
 							yield break;
 						}
 					}
+					ladderUpTop = up && Climbing(pl);
 					mmJump = false;
 					continue;
 				}
@@ -2009,6 +2034,11 @@ namespace DynamicIslands
 				Vector3 seg = W(k) - W(way[i - 1]); seg.y = 0f;
 				int hops = 0, turns = 0, steps = 0;
 				float hopFrom = float.NaN, hopPeak = 0f;
+				// (off a ladder's top onto a floor still above the feet - a hatch, the floor beside or behind the ladder: a player jumps
+				// off toward it. The walker walked off at the ladder's end 0.5 m under the deck and fell back down the hatch, Old Mine's
+				// headframe (hw_mast) 11-06; the jump is at once, not after 2.5 s stopped)
+				if (ReachLadderDismount(ladderUpTop, ReachFeet(pl).y, W(k).y)) { jumpT = 0.45f; hopFrom = ReachFeet(pl).y; }
+				ladderUpTop = false;
 				for (int n = 0; ; n++)
 				{
 					// (aimed afresh each frame: a world shift mid-step moved the island but left the aim 1000 m off, PQ11 10-28)
@@ -2075,6 +2105,14 @@ namespace DynamicIslands
 		}
 
 		static bool inWaterNow(Network_Player pl) { return pl.PersonController.controllerType == ControllerType.Water; }
+
+		/// <summary>After a climb to a ladder's top: jump off toward the next spot when its floor is still above the feet (0.25 to
+		/// 1.2 m: within a jump) - a hatch with its floor beside or behind the ladder. CIReachDismountUnit.</summary>
+		internal static bool ReachLadderDismount(bool afterLadderUp, float feetY, float floorY)
+		{
+			float up = floorY - feetY;
+			return afterLadderUp && up > 0.25f && up < 1.2f;
+		}
 
 		/// <summary>The sea floor under a swimmer (where a player would stand), or far down when there is none within 3 m.</summary>
 		static float StandBed(Vector3 p)
