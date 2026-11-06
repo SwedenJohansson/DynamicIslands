@@ -101,6 +101,13 @@ namespace DynamicIslands.Editor
 			Hold(target, "The host saw the player on '" + island + "', " + (off < Misplaced ? "not loaded here yet: held there" : off.ToString("F0") + " m from where Raft put them: back there"));
 		}
 
+		/// <summary>The player chose to go elsewhere (Spawn to raft, Unstuck): no hold or settling puts them back.</summary>
+		public static void LetGo(string why)
+		{
+			settled = null;
+			if (spot.HasValue) Release(null, why);
+		}
+
 		/// <summary>Dev tests (CIHoldAtSea): hold the player here, as a join would.</summary>
 		internal static void TestHold(Vector3 at) { settled = null; Hold(at, "Dev: holding the player at " + at.ToString("F1")); }
 
@@ -127,7 +134,7 @@ namespace DynamicIslands.Editor
 				// (a client whose island near them is still downloading - a big file, a slow host - keeps waiting: let go
 				// after 60 s, they fell into the sea and Raft put them on the raft - AU64)
 				Vector3 near = spot.Value;
-				bool downloading = !Raft_Network.IsHost && IslandWorldState.Islands.Any(e => e.WaitingForFile && !e.Failed && Flat(e.Position - near) < NearIsland);
+				bool downloading = !Raft_Network.IsHost && IslandWorldState.Islands.Any(e => e.WaitingForFile && !e.Failed && !e.Excluded && Flat(e.Position - near) < NearIsland);
 				bool coming = IslandNetwork.HasList && IslandWorldState.Islands.Any(e => StillComing(e) && CouldBeUnder(e, near));
 				float held = Time.unscaledTime - heldSince;
 				if (coming) lastComing = Time.unscaledTime;
@@ -137,6 +144,9 @@ namespace DynamicIslands.Editor
 			Network_Player player = RAPI.GetLocalPlayer();
 			if (player == null) return;
 			Vector3 at = spot.Value;
+			// (moved far off since the last frame's Put - Raft's Unstuck, the pause menu's Spawn to raft, a console gotoraft: the
+			//  player asked to go there. Put back every frame, they hung in the air until the hold timed out - UR2)
+			if (holding && Flat(player.transform.position - at) > Misplaced) { Release(null, "was moved " + Flat(player.transform.position - at).ToString("F0") + " m away while held: let go"); return; }
 			// (hurt while held - a shark biting a player frozen over the water: let go at once - AU82)
 			float health = Health();
 			if (heldHealth > 0f && health > 0f && health < heldHealth - 0.5f) { Release(null, "was hurt while held: let go"); return; }
@@ -245,7 +255,9 @@ namespace DynamicIslands.Editor
 		/// the open sea for a minute, frozen, while a shark bit him (AU82).</summary>
 		static bool StillComing(IslandWorldState.Entry e)
 		{
-			if (e.Failed || (e.Root != null && !e.Loading)) return false;
+			// (left out - its file isn't on this PC, MissingIslandsCheck: it never comes. Islands deleted from Mods kept a player
+			//  saved near them hanging in the air for the whole ComingWait, two minutes, with Unstuck and gotoraft undone - UR2)
+			if (e.Failed || e.Excluded || (e.Root != null && !e.Loading)) return false;
 			return !(WorldRandomizer.IsExtras(e) && e.Root == null && !WorldRandomizer.HasIslandUnder(e));
 		}
 

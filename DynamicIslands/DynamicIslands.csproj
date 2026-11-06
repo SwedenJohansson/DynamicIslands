@@ -311,6 +311,7 @@
     <Compile Include="DevTestsPauseKeys.cs" />
     <Compile Include="DevTestsCursor.cs" />
     <Compile Include="DevTestsSpawnToRaft.cs" />
+    <Compile Include="DevTestsUR2.cs" />
     <Compile Include="DevTestsRf35.cs" />
     <Compile Include="DevTestsErrors.cs" />
     <Compile Include="DevTestsHelp.cs" />
