@@ -226,7 +226,7 @@ namespace DynamicIslands.Editor
 		/// A darkened / tinted copy of a (non-readable) texture, made on the GPU: blit through a tinting material into a
 		/// render texture and read that back. Used for the volcanic style, which Raft has no textures of its own for.
 		/// </summary>
-		static Texture2D Tinted(Texture2D source, Color tint)
+		internal static Texture2D Tinted(Texture2D source, Color tint)
 		{
 			try
 			{

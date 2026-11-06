@@ -1041,8 +1041,54 @@ namespace DynamicIslands
 				if (sand == null) { Fail("rock look: no sand rock"); return; }
 				foreach (MeshRenderer r in rends) r.sharedMaterials = r.sharedMaterials.Select(m => m != null && m.name.StartsWith("Balboa_BigRocks_Dirt") ? sand : m).ToArray();
 			}
-			else { Fail("CIRockLook <props|vanilla|lit|dark|light|shine k|noprobe|probe|sand>"); return; }
+			else if (mode == "noterrain" || mode == "terrain") foreach (Terrain t in Terrain.activeTerrains) t.drawHeightmap = mode == "terrain";
+			else if (mode == "rocktint" && args.Length >= 4)
+			{
+				var c = new Color(float.Parse(args[1], CultureInfo.InvariantCulture), float.Parse(args[2], CultureInfo.InvariantCulture), float.Parse(args[3], CultureInfo.InvariantCulture));
+				int n = 0;
+				foreach (Terrain t in Terrain.activeTerrains)
+				{
+					TerrainLayer[] ls = t.terrainData != null ? t.terrainData.terrainLayers : null;
+					if (ls == null) continue;
+					for (int i = 0; i < ls.Length; i++)
+					{
+						if (ls[i] == null || ls[i].diffuseTexture == null || !ls[i].name.StartsWith("CI_") || !(ls[i].name.EndsWith("_3") || ls[i].name.EndsWith("_7"))) continue;
+						Texture2D orig;
+						if (!rockOrig.TryGetValue(ls[i].name, out orig)) rockOrig[ls[i].name] = orig = ls[i].diffuseTexture;
+						ls[i].diffuseTexture = c == Color.white ? orig : TerrainPainter.Tinted(orig, c);
+						n++;
+					}
+					t.terrainData.terrainLayers = ls;
+				}
+				Log("  steep layers tinted " + c + ": " + n);
+			}
+			else { Fail("CIRockLook <props|vanilla|lit|dark|light|shine k|noprobe|probe|sand|noterrain|terrain|rocktint r g b>"); return; }
 			Log("PASS: rock look " + mode + " (" + rends.Count + " renderers)");
+		}
+
+		static readonly Dictionary<string, Texture2D> rockOrig = new Dictionary<string, Texture2D>();
+
+		[ConsoleCommand(name: "CIDownRays", docs: "Dev, in a world: what lies over and under points of a loaded island (island frame) - a ray down from 80 m at each, every collider it meets with its height, and the terrain's height there: is a cave's shell covered by ground, or out in the open over the sea (11-06). CIDownRays <island> <x> <z> [<x> <z> ...]")]
+		public static void DownRaysCommand(string[] args)
+		{
+			int nums = 0;
+			float f;
+			while (args != null && nums < args.Length && float.TryParse(args[args.Length - 1 - nums], NumberStyles.Float, CultureInfo.InvariantCulture, out f)) nums++;
+			nums -= nums % 2;
+			if (nums < 2) { Fail("CIDownRays <island> <x> <z> [<x> <z> ...]"); return; }
+			float[] v = args.Skip(args.Length - nums).Select(a => float.Parse(a, CultureInfo.InvariantCulture)).ToArray();
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args.Take(args.Length - nums).ToArray()) });
+			if (e == null) return;
+			Quaternion rot = e.Root.transform.rotation;
+			for (int i = 0; i + 1 < v.Length; i += 2)
+			{
+				Vector3 top = e.Position + rot * new Vector3(v[i], 80f, v[i + 1]);
+				RaycastHit[] hits = Physics.RaycastAll(top, Vector3.down, 140f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).ToArray();
+				Terrain ter = Terrain.activeTerrains.FirstOrDefault(t => { Vector3 p = t.transform.position, s = t.terrainData.size; return top.x >= p.x && top.x <= p.x + s.x && top.z >= p.z && top.z <= p.z + s.z; });
+				string ground = ter != null ? (ter.SampleHeight(top) + ter.transform.position.y - e.Position.y).ToString("0.0") : "none";
+				Log("  (" + v[i] + ", " + v[i + 1] + ") terrain " + ground + ": " + string.Join(", ", hits.Take(8).Select(h => h.collider.name + " " + (h.point.y - e.Position.y).ToString("0.0")).ToArray()));
+			}
+			Log("PASS: down rays " + v.Length / 2);
 		}
 
 		[ConsoleCommand(name: "CICaveLit", docs: "Dev, in a world: every Balboa cave piece placed on a loaded island (a mine's dead-end mound, an ar_cave den, the cave tool's tunnels) lit as a cave - its renderers on the cave light (CaveLit), not Raft's blue sky light that drew its faces bright blue (11-06). CICaveLit [island]")]
