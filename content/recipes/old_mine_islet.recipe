@@ -202,6 +202,8 @@ call ab_plants_forest x=-80 z=0 r=12 seed=26211
 
 # --- The mine: Balboa's dead-end cave as the rock mound, its mouth to the east; floor 4.2 m up -----------------
 place BalboaCave_DeadEnd mine at 0 -18 h=11.7 yaw=90
+# (its hill is cut where it would stand over deep sea: the mound closed pools of sea under it at the south shore)
+prop mine cave.seacut=1
 
 # --- The portal: timber posts and a lintel at the mouth, and timbering further in ------------------------------
 for tx -5 6 11

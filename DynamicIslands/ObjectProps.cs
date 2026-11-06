@@ -31,6 +31,9 @@ namespace DynamicIslands.Editor
 		public const string CaveMouth = "cave.mouth", CaveEnd = "cave.end";
 		/// <summary>The cave's size: a cave tool tunnel followed by another or the den gets a floor plate over their join - CaveTool.Join.</summary>
 		public const string CaveJoin = "cave.join";
+		/// <summary>"1" on any cave piece under a cave hill: the hill leaves out its skin over deep sea (CaveMountain.SeaCut and its shore ring) -
+		/// Old Mine Islet, whose mound over the sea closed pools of water under it. Without it a hill raised from the sea floor keeps its slope into the sea.</summary>
+		public const string CaveSeaCut = "cave.seacut";
 		/// <summary>Loot: "UniqueItemName*amount;..." (Raft's item names), and "0" = never fills up again.</summary>
 		public const string LootItems = "loot.items", LootRefill = "loot.refill";
 		/// <summary>Buried treasure: Raft's treasure kind (its uniqueTreasureIndex; 0 = the common chest).</summary>
