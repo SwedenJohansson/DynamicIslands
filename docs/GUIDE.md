@@ -152,7 +152,9 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
 > button to the mod's page, where new versions come out; the mod never updates itself). Under it, **Check automatically**
 > (ticked unless you untick it) asks the same once each time Raft starts, while you are on the main menu; when a newer
 > version is out, a box names it with a button to the mod's page and **Don't show again for this version** (the next
-> version is shown again). Without internet it says nothing.
+> version is shown again). The box only tells you: nothing is downloaded or installed, and **Close** (or Esc) closes it
+> for the rest of that start; it also closes when you start or join a world. Without internet it says nothing.
+> *Tip: you may be able to update from the Raft Mod Loader's mods menu.*
 > Drag the box anywhere you like; it stays where you put it. It steps aside while another window of the main menu is
 > open (New Game, Load World, Settings, the island library...) and comes back when you close it. **Got it** folds it into a slim bar with the same buttons (its
 > **Show** opens it again); its **X** closes it altogether, and then only a small **Custom Islands: help** button is left in

@@ -576,7 +576,7 @@ namespace DynamicIslands
 			finally { HelpLinks.TestMode = false; InfoWindow.Close(); }
 		}
 
-		[ConsoleCommand(name: "CIUpdateOnStart", docs: "Dev, main menu: UP1 - the check for a new version on start, raftmodding.com's answer faked (no network): 'Check automatically' under Check for updates (ticked by default, saved in notice.txt); once per start; a newer version waits for a window that is open (Report a problem), then shows the popup (the version, the mod's page, Don't show again for this version); Don't show again keeps that version quiet, a newer one shows again; the same or an older version, offline and a changed page show nothing; one log line each; unticked it asks nothing; the player's settings are put back")]
+		[ConsoleCommand(name: "CIUpdateOnStart", docs: "Dev, main menu: UP1 - the check for a new version on start, raftmodding.com's answer faked (no network): 'Check automatically' under Check for updates (ticked by default, saved in notice.txt); once per start; a newer version waits for a window that is open (Report a problem), then shows the popup (the version, the mod's page, the Raft Mod Loader tip, Don't show again for this version); Don't show again keeps that version quiet, a newer one shows again; closed, not again this start; it closes when the main menu is left; the same or an older version, offline, a changed page and a real request to an unreachable address (within the 8 s timeout) show nothing; one log line each, no errors; unticked it asks nothing; the player's settings are put back")]
 		public static void UpdateOnStartCommand() { StartTest(UpdateOnStartRoutine()); }
 
 		static IEnumerator UpdateOnStartRoutine()
@@ -586,7 +586,12 @@ namespace DynamicIslands
 			bool autoBefore = ExperimentalNotice.AutoCheck;
 			string skipBefore = ExperimentalNotice.SkippedVersion;
 			var lines = new List<string>();
-			Application.LogCallback grab = (msg, st, type) => { if (msg != null && msg.StartsWith("[CUSTOM ISLANDS] Update check on start:")) lines.Add(msg); };
+			var errors = new List<string>();
+			Application.LogCallback grab = (msg, st, type) =>
+			{
+				if (msg != null && msg.StartsWith("[CUSTOM ISLANDS] Update check on start:")) lines.Add(msg);
+				if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert) errors.Add(msg);
+			};
 			Application.logMessageReceived += grab;
 			HelpLinks.TestMode = true;
 			ExperimentalNotice.PopupForTests = true;
@@ -628,8 +633,9 @@ namespace DynamicIslands
 				Check(ref ok, ExperimentalNotice.LastStartCheck == null && InfoWindow.Title == "REPORT A PROBLEM", "a newer version waits while Report a problem's box is open (" + (ExperimentalNotice.LastStartCheck ?? "waiting") + ")");
 				InfoWindow.Close();
 				for (float t = 0f; ExperimentalNotice.LastStartCheck == null && t < 5f; t += Time.unscaledDeltaTime) yield return null;
-				Check(ref ok, ExperimentalNotice.LastStartCheck == "told 99.0" && InfoWindow.IsOpen && InfoWindow.Body.Contains("99.0 is out") && InfoWindow.Body.Contains("you have " + ExperimentalNotice.Version) && InfoWindow.Body.Contains(HelpLinks.ModPage),
-					"then the popup: 99.0, this version (" + ExperimentalNotice.Version + "), the mod's page (" + ExperimentalNotice.LastStartCheck + ")");
+				Check(ref ok, ExperimentalNotice.LastStartCheck == "told 99.0" && InfoWindow.IsOpen && InfoWindow.Body.Contains("99.0 is out") && InfoWindow.Body.Contains("you have " + ExperimentalNotice.Version) && InfoWindow.Body.Contains(HelpLinks.ModPage)
+					&& InfoWindow.Body.Contains(ExperimentalNotice.RmlTip) && InfoWindow.Body.IndexOf(ExperimentalNotice.RmlTip) > InfoWindow.Body.IndexOf("99.0 is out"),
+					"then the popup: 99.0, this version (" + ExperimentalNotice.Version + "), the mod's page, the Raft Mod Loader tip under it (" + ExperimentalNotice.LastStartCheck + ")");
 				Check(ref ok, InfoWindow.ButtonNamed("Open the mod's page") != null && InfoWindow.ButtonNamed(ExperimentalNotice.DontShowAgain) != null && InfoWindow.ButtonNamed("Close") != null && InfoWindow.ButtonsOutside().Count == 0,
 					"its buttons, inside the box: " + string.Join(", ", InfoWindow.ButtonLabels.ToArray()));
 				Screenshot(new[] { "update_popup" });
@@ -649,6 +655,14 @@ namespace DynamicIslands
 				InfoWindow.ButtonNamed("Close").onClick.Invoke();
 				yield return null;
 				Check(ref ok, !InfoWindow.IsOpen && ExperimentalNotice.SkippedVersion == "99.0", "Close closes it, 99.1 not skipped");
+				Check(ref ok, !ExperimentalNotice.CheckOnStart(), "closed: not again this start");
+				// Left open while a world starts: it closes (it never shows over a game)
+				yield return run("99.2", null);
+				bool shown = found == "told 99.2" && InfoWindow.IsOpen;
+				ExperimentalNotice.TestMenuLeft = true;
+				yield return new WaitForSecondsRealtime(0.8f);
+				Check(ref ok, shown && !InfoWindow.IsOpen, "the popup closes when the main menu is left (shown " + shown + ", open after " + InfoWindow.IsOpen + ")");
+				ExperimentalNotice.TestMenuLeft = false;
 				yield return run(ExperimentalNotice.Version, null);
 				Check(ref ok, found == "newest" && !InfoWindow.IsOpen && logged == 1, "the same version (" + ExperimentalNotice.Version + "): nothing (" + found + ")");
 				yield return run("1.0", null);
@@ -661,17 +675,27 @@ namespace DynamicIslands
 				Check(ref ok, found == "failed" && !InfoWindow.IsOpen && logged == 1 && (lines.LastOrDefault() ?? "").Contains("an unexpected answer"), "a changed page (HTML): nothing (" + (lines.LastOrDefault() ?? "") + ")");
 				yield return run("Not found", null);
 				Check(ref ok, found == "failed" && !InfoWindow.IsOpen && logged == 1, "a changed page (text): nothing (" + found + ")");
+				// The real request to an address that can't be reached (as offline): quiet, within the start's timeout
+				ExperimentalNotice.TestUrl = "https://custom-islands-update-check.invalid/version.txt";
+				float asked = Time.realtimeSinceStartup;
+				yield return run(null, null);
+				float took = Time.realtimeSinceStartup - asked;
+				ExperimentalNotice.TestUrl = null;
+				Check(ref ok, found == "failed" && !InfoWindow.IsOpen && logged == 1 && took < ExperimentalNotice.StartTimeout + 1.5f,
+					"unreachable site, a real request: nothing, one log line, " + took.ToString("F1") + " s (" + (lines.LastOrDefault() ?? "") + ")");
 				// Unticked: nothing asked
 				ExperimentalNotice.AutoCheck = false;
 				ExperimentalNotice.TestReply = "99.5";
 				bool started = ExperimentalNotice.CheckOnStart(true);
 				yield return new WaitForSecondsRealtime(0.5f);
 				Check(ref ok, !started && ExperimentalNotice.LastStartCheck == "off" && !InfoWindow.IsOpen, "unticked: nothing asked (" + ExperimentalNotice.LastStartCheck + ")");
+				Check(ref ok, errors.Count == 0, "no errors in the log (" + errors.Count + (errors.Count > 0 ? ": " + errors[0] : "") + ")");
 			}
 			finally
 			{
 				Application.logMessageReceived -= grab;
-				ExperimentalNotice.TestReply = ExperimentalNotice.TestError = null;
+				ExperimentalNotice.TestReply = ExperimentalNotice.TestError = ExperimentalNotice.TestUrl = null;
+				ExperimentalNotice.TestMenuLeft = false;
 				ExperimentalNotice.PopupForTests = false;
 				HelpLinks.TestMode = false;
 				InfoWindow.Close();
@@ -689,7 +713,7 @@ namespace DynamicIslands
 			int before = lines.Count;
 			ExperimentalNotice.TestReply = reply; ExperimentalNotice.TestError = error;
 			ExperimentalNotice.CheckOnStart(true);
-			for (float t = 0f; ExperimentalNotice.LastStartCheck == null && t < 5f; t += Time.unscaledDeltaTime) yield return null;
+			for (float t = 0f; ExperimentalNotice.LastStartCheck == null && t < ExperimentalNotice.StartTimeout + 4f; t += Time.unscaledDeltaTime) yield return null;
 			yield return null;
 			found(ExperimentalNotice.LastStartCheck);
 			logged(lines.Count - before);

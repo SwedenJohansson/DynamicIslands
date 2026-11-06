@@ -297,10 +297,16 @@ namespace DynamicIslands.Editor
 		/// <summary>Tests: raftmodding.com's answer faked, no network (UP1): TestReply is the text it sends, TestError a request
 		/// that failed (offline, a timeout). Both null: the real site.</summary>
 		public static string TestReply, TestError;
+		/// <summary>Tests: another address asked for real (an unreachable one: the offline case through the real request).</summary>
+		public static string TestUrl;
+		/// <summary>Tests: act as if the main menu was left (a world loading).</summary>
+		public static bool TestMenuLeft;
+		/// <summary>The check on start waits at most this long for raftmodding.com (the button: 15 s).</summary>
+		public const int StartTimeout = 8;
 
 		/// <summary>Asks raftmodding.com for the newest version (the version.txt RML reads too; 15 s at most, never blocking:
 		/// a coroutine waits for it). Used by Check for updates and by the check on start.</summary>
-		static IEnumerator FetchNewest(Answer a)
+		static IEnumerator FetchNewest(Answer a, int timeout = 15)
 		{
 			if (TestReply != null || TestError != null)
 			{
@@ -308,9 +314,9 @@ namespace DynamicIslands.Editor
 				if (TestError != null) a.Error = TestError; else ParseNewest(TestReply, a);
 				yield break;
 			}
-			using (UnityWebRequest req = UnityWebRequest.Get(HelpLinks.VersionUrl))
+			using (UnityWebRequest req = UnityWebRequest.Get(TestUrl ?? HelpLinks.VersionUrl))
 			{
-				req.timeout = 15;
+				req.timeout = timeout;
 				yield return req.SendWebRequest();
 				if (req.result != UnityWebRequest.Result.Success) a.Error = req.error;
 				else ParseNewest(req.downloadHandler.text, a);
@@ -403,18 +409,24 @@ namespace DynamicIslands.Editor
 		static IEnumerator StartCheckRoutine()
 		{
 			var a = new Answer();
-			yield return FetchNewest(a);
+			yield return FetchNewest(a, StartTimeout);
 			string newest = a.Newest;
 			if (newest == null) { StartCheckDone("failed", "could not ask raftmodding.com (" + a.Error + ")"); yield break; }
 			if (CompareVersions(newest, Version) <= 0) { StartCheckDone("newest", "this is the newest version (" + Version + ", raftmodding.com has " + newest + ")"); yield break; }
 			if (SkippedVersion == newest) { StartCheckDone("skipped " + newest, newest + " is out (this is " + Version + "): not shown, the player chose \"Don't show again\" for it"); yield break; }
 			if (DevBuild && !PopupForTests) { StartCheckDone("dev " + newest, newest + " is out (this is " + Version + "): a dev build, no popup"); yield break; }
 			// (on the main menu, when no other window is open - Raft's boxes, an info box such as a failed patch's: never over one)
-			while (PlaceableCatalog.InMainMenu() && OtherWindow() != null) yield return new WaitForSecondsRealtime(0.5f);
-			if (!PlaceableCatalog.InMainMenu()) { StartCheckDone("left " + newest, newest + " is out (this is " + Version + "): not shown, the main menu was left"); yield break; }
+			while (OnMenu() && OtherWindow() != null) yield return new WaitForSecondsRealtime(0.5f);
+			if (!OnMenu()) { StartCheckDone("left " + newest, newest + " is out (this is " + Version + "): not shown, the main menu was left"); yield break; }
 			ShowNewer(newest);
 			StartCheckDone("told " + newest, newest + " is out (this is " + Version + "): told the player");
+			// (it only informs: when the player starts or joins a world with it still open, it closes - never over a game)
+			string title = InfoWindow.Title;
+			while (InfoWindow.IsOpen && InfoWindow.Title == title && OnMenu()) yield return new WaitForSecondsRealtime(0.25f);
+			if (InfoWindow.IsOpen && InfoWindow.Title == title) InfoWindow.Close();
 		}
+
+		static bool OnMenu() { return !TestMenuLeft && PlaceableCatalog.InMainMenu(); }
 
 		/// <summary>The check on start's one log line.</summary>
 		static void StartCheckDone(string result, string line)
@@ -429,14 +441,17 @@ namespace DynamicIslands.Editor
 			InfoWindow.Open("A new version of Custom Islands",
 				"<b>Custom Islands " + newest + " is out</b> (you have " + Version + ").\n\n" +
 				"Get it from the mod's page: " + HelpLinks.ModPage + "\n" +
-				"Put the new .rmod in Raft's mods folder in place of this one, or let the Raft Mod Loader update it. Back up the worlds you care about first.\n\n" +
-				"<i>Untick \"Check automatically\" on the Custom Islands box to stop looking on every start.</i>",
+				"Put the new .rmod in Raft's mods folder in place of this one. Back up the worlds you care about first.\n" +
+				"<size=13><i>" + RmlTip + "</i></size>\n\n" +
+				"<size=13><i>Untick \"Check automatically\" on the Custom Islands box to stop looking on every start.</i></size>",
 				new InfoWindow.Choice("Open the mod's page", () => { HelpLinks.Open(HelpLinks.ModPage); InfoWindow.SetStatus("Opened raftmodding.com in your browser"); }, "The mod's page on raftmodding.com, where new versions come out", true),
 				new InfoWindow.Choice(DontShowAgain, () => { SkippedVersion = newest; InfoWindow.Close(); }, "No more notices about " + newest + " (a newer version shows one again)"),
 				new InfoWindow.Choice("Close", InfoWindow.Close, "Close this box (Esc); it shows again on the next start"));
 		}
 
 		public const string DontShowAgain = "Don't show again for this version";
+		/// <summary>A suggestion, not a promise: Raft Mod Loader's mods menu may update mods (user, 11-06).</summary>
+		public const string RmlTip = "Tip: you may be able to update from the Raft Mod Loader's mods menu.";
 
 		#endregion
 
