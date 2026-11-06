@@ -56,7 +56,7 @@ brush flatten from 26 -28 to 42 -32 r=8 s=20 frames=500 h=2.5
 call hw_mount x=64 z=-4 b=22 h=22
 call hw_trail x=64 z=-4 b=22 h=22 a0=270 turn=300 n=30 h0=3
 brush flatten at 64 -4 r=8 s=20 frames=400 h=22
-call hw_mast x=64 z=-4 h0=22 lv=4 a=headframe chest=windbox top=Placeable_Lantern_Metal
+call hw_mast x=64 z=-4 h0=22 lv=4 a=headframe chest=windbox top=Placeable_Lantern_Metal deckdrop=0.45
 # B Miners' Row (west): a street of three roofless cottages on a pad, the lamps between them
 brush flatten at -52 -10 r=17 s=20 frames=500 h=4
 brush smooth at -52 -10 r=22 s=4 frames=40
