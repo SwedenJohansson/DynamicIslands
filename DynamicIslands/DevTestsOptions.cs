@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -2317,6 +2317,22 @@ namespace DynamicIslands
 			StartExclusiveTest("options matrix", OptionsMatrixRoutine(minutes * 60f));
 		}
 
+		/// <summary>
+		/// The idle test player through the matrix's ~22 min: kept fed, and the raft under them whole. In a fresh world the
+		/// shark bit the four foundations away one by one (the heartbeat keeps nobody alive while a test runs); the player
+		/// fell in and was bitten and drowned over and over until the matrix ended.
+		/// </summary>
+		static void MatrixGuard()
+		{
+			Network_Player pl = RAPI.GetLocalPlayer();
+			if (pl != null && (pl.Stats == null || pl.Stats.stat_health.Value > 0f)) { try { KeepAlive(pl); } catch { } }
+			Raft raft = ComponentManager<Raft>.Value;
+			var placed = BlockCreator.GetPlacedBlocks();
+			if (raft == null || placed == null) return;
+			foreach (Block b in placed)
+				if (b != null && b.Health > 0 && b.Health < b.MaxHealth && b.transform.IsChildOf(raft.transform)) b.SetHealth(b.MaxHealth);
+		}
+
 		static IEnumerator OptionsMatrixRoutine(float limit)
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("options matrix: host, in a world"); yield break; }
@@ -2353,7 +2369,7 @@ namespace DynamicIslands
 					done++;
 					var on = new HashSet<string>(groups.Where((g, i) => (mask & (1 << i)) != 0).SelectMany(g => g));
 					WorldOptions.Set(on);
-					yield return new WaitForSeconds(2.5f);
+					for (int w = 0; w < 5; w++) { MatrixGuard(); yield return new WaitForSeconds(0.5f); }
 					// (Raft's autosave prunes builders of storages not in the world - the made-up one too: noted again)
 					if (PrivateStorage.BuilderOf(999999u) == 0UL) PrivateStorage.Decode(PrivateStorage.Encode() + ";999999:12345");
 					string sig = string.Join("|", ServerSig().ToArray());
