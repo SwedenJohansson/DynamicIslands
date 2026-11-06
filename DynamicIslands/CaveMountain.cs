@@ -523,10 +523,14 @@ namespace DynamicIslands.Editor
 				GameObject rock = PlaceableCatalog.Get("BigRock_1");
 				rockLook = rock != null ? rock.GetComponentInChildren<MeshRenderer>(true) : null;
 			}
-			mr.sharedMaterial = CaveRock.Warmed(rockLook != null && rockLook.sharedMaterial != null ? rockLook.sharedMaterial : look.sharedMaterial);
+			mr.sharedMaterial = rockLook != null && rockLook.sharedMaterial != null ? rockLook.sharedMaterial : look.sharedMaterial;
 			mr.shadowCastingMode = look.shadowCastingMode;
 			mr.receiveShadows = look.receiveShadows;
 			skin.AddComponent<MeshCollider>().sharedMesh = mesh;
+			// (lit as its caves are - warm, dim, through its own light probe - not by Raft's blue sky light (Trilight x8): out of
+			// Balboa its steep faces showed bright blue and patterned, on a mine's mound and through the gaps of a den's back;
+			// user 11-06, Old Mine Islet. The piece's own backs were lit so already; the hill wasn't)
+			CaveLit.Mark(skin);
 			// (tinted as its caves are: a dark den under an untinted orange hill showed where the one ended and the other began -
 			// the first tinted cave's tint, multiplied into the island's rock as ApplyTint does - RK15)
 			// (Raft's own island rock - CaravanIslandRocks - has no colour to tint: it then stays as it is; the den's rock material
@@ -628,7 +632,7 @@ namespace DynamicIslands.Editor
 					GameObject big = PlaceableCatalog.Get("BigRock_1");
 					rock = big != null ? big.GetComponentInChildren<MeshRenderer>(true) : null;
 				}
-				m = rock != null ? CaveRock.Warmed(rock.sharedMaterial) : null;
+				m = rock != null ? rock.sharedMaterial : null;
 			}
 			if (m == null) return null;
 			mats[1] = m;

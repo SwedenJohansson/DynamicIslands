@@ -999,7 +999,7 @@ namespace DynamicIslands
 			Log("PASS: backs " + mode + " (" + backs.Count + ")");
 		}
 
-		[ConsoleCommand(name: "CIRockLook", docs: "Dev, in a world: the island rock (Raft's Mountains shader) for finding the blue rock (11-06). props: each Mountains material's settings and the scene's light; vanilla / lit: the cave light (CaveLit) off and Raft's probes back, or on again; dark: the cave pieces lit by nothing; shine <k>: their shine times k; noprobe / probe: reflection probes off or on for every Mountains renderer; sand: Balboa_BigRocks_Dirt swapped for the hill's sand rock; noterrain / terrain: the island ground hidden or shown; rocktint <r g b>: the ground's steep layer tinted; cavehue <r g b>: the warmed Balboa rock (CaveRock) made again with that hue; nosun / sun: the sun off or on; norefl / refl: reflections off (intensity 0, probes off) or back; flatnormal / flatall / normal: the backs' and hill skins' (or every Mountains renderer's) main normal map flat, or back. CIRockLook <mode> [k]")]
+		[ConsoleCommand(name: "CIRockLook", docs: "Dev, in a world: the island rock (Raft's Mountains shader) for finding the blue rock (11-06). props: each Mountains material's settings and the scene's light; vanilla / lit: the cave light (CaveLit) off and Raft's probes back, or on again; dark: the cave pieces lit by nothing; shine <k>: their shine times k; noprobe / probe: reflection probes off or on for every Mountains renderer; sand: Balboa_BigRocks_Dirt swapped for the hill's sand rock; noterrain / terrain: the island ground hidden or shown; rocktint <r g b>: the ground's steep layer tinted; nosun / sun: the sun off or on; norefl / refl: reflections off (intensity 0, probes off) or back; flatnormal / flatall / normal: the backs' and hill skins' (or every Mountains renderer's) main normal map flat, or back; info: how the backs, the hill skin and the rest are lit (probe use, block, cave light); noamb / amb: the scene's ambient light off or back; blockdark / blockoff: the backs and skin given a black probe straight through their blocks (cave light off), or their blocks cleared. CIRockLook <mode> [k]")]
 		public static void RockLookCommand(string[] args)
 		{
 			string mode = args != null && args.Length > 0 ? args[0] : "";
@@ -1102,12 +1102,6 @@ namespace DynamicIslands
 				}
 				Log("  main normal " + mode + ": " + n + " renderers");
 			}
-			else if (mode == "cavehue" && args.Length >= 4)
-			{
-				var c = new Color(float.Parse(args[1], CultureInfo.InvariantCulture), float.Parse(args[2], CultureInfo.InvariantCulture), float.Parse(args[3], CultureInfo.InvariantCulture));
-				int n = global::DynamicIslands.Editor.CaveRock.Remake(c);
-				Log("  cave rock hue " + c + ": " + n + " renderers; " + global::DynamicIslands.Editor.CaveRock.LastNote);
-			}
 			else if (mode == "info")
 			{
 				// (the backs and the hill skin, and the pieces they belong to: how each is lit)
@@ -1149,13 +1143,7 @@ namespace DynamicIslands
 				}
 				Log("  backs and skin black probe: " + n);
 			}
-			else if (mode == "skinlit")
-			{
-				int n = 0;
-				foreach (MeshRenderer r in rends) if (r.name == CaveMountain.SkinName && r.GetComponentInParent<CaveLit>() == null) { CaveLit.Mark(r.gameObject); n++; }
-				Log("  hill skins lit as cave pieces: " + n);
-			}
-			else { Fail("CIRockLook <props|vanilla|lit|dark|light|shine k|noprobe|probe|sand|noterrain|terrain|rocktint r g b|cavehue r g b|nosun|sun|norefl|refl|flatnormal|flatall|normal|info|noamb|amb|blockdark|blockoff|skinlit>"); return; }
+			else { Fail("CIRockLook <props|vanilla|lit|dark|light|shine k|noprobe|probe|sand|noterrain|terrain|rocktint r g b|nosun|sun|norefl|refl|flatnormal|flatall|normal|info|noamb|amb|blockdark|blockoff>"); return; }
 			Log("PASS: rock look " + mode + " (" + rends.Count + " renderers)");
 		}
 
