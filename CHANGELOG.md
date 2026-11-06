@@ -15,6 +15,7 @@ Not in this release yet; these come in the next update:
 - **Cave hills look like mountain rock:** the rock hill over Balboa cave pieces is lit as its caves are, so it no longer shows bright blue patterned patches in Raft's blue sky light - on a mine's mound, round a den's sides and through the gaps of a den's back (Old Mine Islet, and every island with Balboa caves under a hill).
 - **Lone bear dens** (ar_cave) have a rock face with an arched, ragged hole round their mouth instead of flat dark slabs.
 - **Old Mine Islet:** the headframe deck sits a little lower, level with a climber at the ladder's top, so a player can step off the ladder onto it (it was out of reach at full speed).
+- **Island test (cave inside):** a lone bear den with its mouth wall no longer counts as drawn from one side only, so its shell's backs aren't reported as see-through.
 - **Island test (reach):** the walker jumps off a ladder's top onto a floor beside or behind it (a hatch), as a player does, instead of falling back down the shaft; `CIReachOnly` walks one target again; play pictures can turn to animals and light a dark tunnel.
 - **Island test (reach):** a drop through a cave roof seen from above is now caught where Raft's own walker would stand (FallCaught), and a branch tunnel with its own mouth is shot and walked from that mouth (BranchJoin).
 - **Island test (reach):** swimmers grab ladders from 1.5 m, ladders never face into solid rock, a failing ladder says what blocks it, and jumps the grid can't make can be marked `reach.byplay` and proven by a play.

@@ -79,11 +79,13 @@ namespace DynamicIslands.Editor
 			return n;
 		}
 
-		/// <summary>The cave piece's meshes have their backs (tests).</summary>
+		/// <summary>The cave piece's meshes have their backs (tests). Not the mod's own rock on it - a mouth, a join, a den's wall
+		/// (made later, drawn from both sides itself): without a back of its own, a walled den counted as drawn one-sided, so
+		/// CICaveInside called its shell's backs see-through (Ada's Round, 11-06).</summary>
 		public static bool Has(Transform piece)
 		{
 			foreach (MeshFilter mf in piece.GetComponentsInChildren<MeshFilter>(true))
-				if (mf.name != Name && mf.sharedMesh != null && mf.GetComponent<MeshRenderer>() != null && mf.transform.Find(Name) == null) return false;
+				if (mf.name != Name && mf.name != CaveTool.MouthName && mf.name != CaveTool.JoinName && mf.name != CaveTool.PlugName && mf.sharedMesh != null && mf.GetComponent<MeshRenderer>() != null && mf.transform.Find(Name) == null) return false;
 			return true;
 		}
 

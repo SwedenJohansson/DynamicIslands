@@ -14,11 +14,11 @@ offset 0 0
 at -57 25
 wait 3
 picture arcave_beacon_out -57 +1.7 25 -57 4.5 16
-picture arcave_beacon_sea -55 3.5 36 -57 4.5 17
+picture arcave_beacon_sea -46 +3 28 -56 5 7
 
 island Ada's Round keep
 offset 0 33
-at 49 29
+at 49 38
 wait 3
-picture arcave_adas_out 49 +1.7 29 49 4.5 38
-picture arcave_adas_sea 47 3.5 18 49 4.5 37
+picture arcave_adas_out 49 +1.7 38 48 7 50
+picture arcave_adas_sea 58 8 26 48 6 50
