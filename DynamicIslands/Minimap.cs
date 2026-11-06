@@ -68,6 +68,10 @@ namespace DynamicIslands.Editor
 		/// <summary>Dev tests: pings sent (by this player) and shown.</summary>
 		public static int PingsSent, PingsShown;
 		public static bool Shown { get { return panel != null && panel.gameObject.activeSelf; } }
+		/// <summary>Tests: the map panel's size in UI units (CornerSize square in the corner, 700 full screen) and how much of
+		/// the screen's height it takes; zero when there is no panel.</summary>
+		internal static Vector2 PanelSize { get { return panel != null ? panel.sizeDelta : Vector2.zero; } }
+		internal static float PanelScreenShare { get { return panel != null && canvas != null && Screen.height > 0 ? panel.rect.height * canvas.scaleFactor / Screen.height : 0f; } }
 		/// <summary>The small map is on the screen in the top right corner (the quest panel moves under it).</summary>
 		public static bool CornerShown { get { return Mode == Corner && Shown && canvas != null && canvas.gameObject.activeSelf; } }
 		/// <summary>How far down from the top of the screen the corner map reaches, its island name under it included (UI units, see Layout).</summary>
@@ -119,7 +123,7 @@ namespace DynamicIslands.Editor
 			if (me == null) return;
 			if (KeysFree())
 			{
-				if (Available && Input.GetKeyDown(ModKeys.MapKey.Key)) Cycle();
+				if (Input.GetKeyDown(ModKeys.MapKey.Key)) MapKeyPressed();
 				if (Input.GetKeyDown(ModKeys.PingKey.Key)) PingLook();
 				if (Available && Mode != Off && (Input.GetKeyDown(ModKeys.ZoomInKey.Key) || Input.GetKeyDown(KeyCode.KeypadPlus))) SetZoom(Zoom * 2);
 				if (Available && Mode != Off && (Input.GetKeyDown(ModKeys.ZoomOutKey.Key) || Input.GetKeyDown(KeyCode.KeypadMinus))) SetZoom(Zoom / 2);
@@ -146,6 +150,9 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The map key: corner -> full screen -> off -> corner.</summary>
 		public static void Cycle() { if (Available) Mode = (Mode + 1) % 3; }
+
+		/// <summary>The map key pressed.</summary>
+		public static void MapKeyPressed() { Cycle(); }
 
 		public static void SetZoom(int z) { if (!Available) return; Zoom = z >= 4 ? 4 : z >= 2 ? 2 : 1; }
 
