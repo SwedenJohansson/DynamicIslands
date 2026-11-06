@@ -1226,7 +1226,9 @@ namespace DynamicIslands.Editor
 			c.rends = null;
 		}
 
-		void OnEnable() { if (!live.Contains(this)) live.Add(this); }
+		// (the camera hook too: it was only set by an atmosphere zone or a dug tunnel, so on an island with neither, loaded
+		// first after Raft started, nothing lit the pieces - they and the cave hill showed Raft's blue sky light; 11-06)
+		void OnEnable() { if (!live.Contains(this)) live.Add(this); AtmosphereZone.Hook(); }
 		void OnDisable() { live.Remove(this); }
 
 		public static void LightAll(SphericalHarmonicsL2 sh)

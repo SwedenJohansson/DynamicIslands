@@ -12,7 +12,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next update (planned)
 
 Not in this release yet; these come in the next update:
-- **Cave hills look like mountain rock:** the rock hill over Balboa cave pieces is lit as its caves are, so it no longer shows bright blue patterned patches in Raft's blue sky light - on a mine's mound, round a den's sides and through the gaps of a den's back (Old Mine Islet, and every island with Balboa caves under a hill).
+- **Cave hills look like mountain rock:** the rock hill over Balboa cave pieces is lit as its caves are, so it no longer shows bright blue patterned patches in Raft's blue sky light - on a mine's mound, round a den's sides and through the gaps of a den's back (Old Mine Islet, and every island with Balboa caves under a hill). Cave tool pieces and lone bear dens are now lit so on every island: on one without an atmosphere zone or dug tunnel, the first loaded after Raft started, they stayed in the blue sky light.
 - **Lone bear dens** (ar_cave) have a rock face with an arched, ragged hole round their mouth instead of flat dark slabs.
 - **Old Mine Islet:** the headframe deck sits a little lower, level with a climber at the ladder's top, so a player can step off the ladder onto it (it was out of reach at full speed).
 - **Island test (cave inside):** a lone bear den with its mouth wall no longer counts as drawn from one side only, so its shell's backs aren't reported as see-through.
