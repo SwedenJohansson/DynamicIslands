@@ -1036,6 +1036,9 @@ namespace DynamicIslands.Editor
 		/// <summary>OnEventMessage, with the player who sent it (the host tells them when their event is refused).</summary>
 		public static void OnEventMessage(int islandId, int index, string ev, bool fromHost, Network_UserId? from) { OnEventMessage(islandId, index, ev, fromHost, from, false); }
 
+		/// <summary>Tests (RK3): the host refuses every player's event that waits for its answer.</summary>
+		internal static bool RefuseForTests;
+
 		/// <summary>OnEventMessage; answer: a player who waits for the host's yes or no (host), or that answer (player: their
 		/// own part, wherever they are now).</summary>
 		public static void OnEventMessage(int islandId, int index, string ev, bool fromHost, Network_UserId? from, bool answer)
@@ -1056,7 +1059,10 @@ namespace DynamicIslands.Editor
 					return;
 				}
 				string failed;
-				if (!StoryChecksHold(e, index, ev, from.HasValue ? from.Value.Id : 0UL, out failed))
+				bool holds = StoryChecksHold(e, index, ev, from.HasValue ? from.Value.Id : 0UL, out failed);
+				// (tests: refused as when another player used the crew's item at the same moment - RK3, CIRk34 refuse)
+				if (holds && answer && RefuseForTests) { holds = false; failed = "the crew's check (a test refusal)"; }
+				if (!holds)
 				{
 					Debug.Log("[CUSTOM ISLANDS] A player's '" + ev + "' on '" + e.HostName + "' is refused: " + failed + " no longer holds for the crew (another player used it at the same moment)");
 					// (the player who tried gets the event's "otherwise" part, as when their own check fails)

@@ -16,7 +16,7 @@ namespace DynamicIslands.Editor
 	/// likely to change, some systems might be unstable and progress isn't guaranteed to be saved. It starts on the right
 	/// half of Raft's main menu, clear of the menu buttons and the New Game box, and can be dragged anywhere (the place is
 	/// remembered). Its buttons lead to help: the Discord server, the guide (PDF), Report a problem and Check for updates (the
-	/// mod's raftmodding.com page). "Got it" folds it
+	/// mod's raftmodding.com page; with "Check automatically" ticked it asks on every start - UP1). "Got it" folds it
 	/// into a slim bar with those buttons (Show opens it again); the X closes it altogether (Franz, 2026-10-17), and then
 	/// only a small "Custom Islands: help" link in the menu's bottom right corner is left, which opens it again. Both are
 	/// remembered for this version of the mod only (Mods\DynamicIslands\notice.txt), so a new version shows the whole box again.
@@ -40,7 +40,10 @@ namespace DynamicIslands.Editor
 		const float Width = 760f; // (the button row needs ~714 inside the 18+18 padding)
 
 		static RectTransform panel, body;
-		static Button toggle, discordButton, guideButton, reportButton, updatesButton, closeButton, helpLink;
+		static Button toggle, discordButton, guideButton, reportButton, updatesButton, closeButton, helpLink, autoBox;
+		/// <summary>Where Check for updates starts in the button row (Discord 104 + Guide 124 + Report 164 + 3 gaps of 6): the
+		/// Check automatically box sits under it.</summary>
+		const float AutoRowIndent = 410f;
 		/// <summary>The X was pressed (for this version): the box is gone, the help link shows instead.</summary>
 		static bool closed;
 
@@ -53,6 +56,8 @@ namespace DynamicIslands.Editor
 		public static Button GuideButton { get { return guideButton; } }
 		public static Button ReportButton { get { return reportButton; } }
 		public static Button UpdatesButton { get { return updatesButton; } }
+		/// <summary>The "Check automatically" tick box under Check for updates (UP1).</summary>
+		public static Button AutoCheckBox { get { return autoBox; } }
 		public static Button CloseButton { get { return closeButton; } }
 		/// <summary>The small link left on the menu while the box is closed: opens the box again.</summary>
 		public static Button HelpLink { get { return helpLink; } }
@@ -168,6 +173,15 @@ namespace DynamicIslands.Editor
 			updatesButton = UIKit.Button(buttons, "Check for updates", CheckForUpdates, "Asks raftmodding.com for the newest version of Custom Islands (this is " + Version + ")", 150, 32f, 14);
 			updatesButton.name = "Updates";
 			UIKit.Label(buttons, "", 12);
+			// (Check automatically, under Check for updates: the button row has no room left beside it - UP1)
+			RectTransform autoRow = UIKit.Row(panel, 20f, 6f, "AutoRow");
+			UIKit.Size(UIKit.Label(autoRow, "", 12, null, TextAnchor.MiddleLeft, FontStyle.Normal, "Gap").gameObject, AutoRowIndent, 20f);
+			autoBox = UIKit.Check(autoRow, "Check automatically", () => AutoCheck = !AutoCheck,
+				"Each time Raft starts, ask raftmodding.com for a newer Custom Islands and tell you when there is one", 20f, 12);
+			autoBox.name = "AutoCheck";
+			UIKit.Size(autoBox.gameObject, 170f, 20f);
+			UIKit.SetCheck(autoBox, AutoCheck);
+			UIKit.Label(autoRow, "", 12);
 			toggle = UIKit.Button(buttons, "", Flip, null, 92, 32f, 14);
 			toggle.name = "Toggle";
 			UIKit.Primary(toggle);
@@ -277,20 +291,46 @@ namespace DynamicIslands.Editor
 			};
 		}
 
-		static IEnumerator AskNewest()
+		/// <summary>What raftmodding.com said: the newest version, or why there is none.</summary>
+		class Answer { public string Newest, Error; }
+
+		/// <summary>Tests: raftmodding.com's answer faked, no network (UP1): TestReply is the text it sends, TestError a request
+		/// that failed (offline, a timeout). Both null: the real site.</summary>
+		public static string TestReply, TestError;
+
+		/// <summary>Asks raftmodding.com for the newest version (the version.txt RML reads too; 15 s at most, never blocking:
+		/// a coroutine waits for it). Used by Check for updates and by the check on start.</summary>
+		static IEnumerator FetchNewest(Answer a)
 		{
-			string newest = null, error = null;
+			if (TestReply != null || TestError != null)
+			{
+				yield return null;
+				if (TestError != null) a.Error = TestError; else ParseNewest(TestReply, a);
+				yield break;
+			}
 			using (UnityWebRequest req = UnityWebRequest.Get(HelpLinks.VersionUrl))
 			{
 				req.timeout = 15;
 				yield return req.SendWebRequest();
-				if (req.result != UnityWebRequest.Result.Success) error = req.error;
-				else
-				{
-					newest = (req.downloadHandler.text ?? "").Trim();
-					if (newest.Length == 0 || newest.Length > 20 || newest.Contains("<")) { error = "an unexpected answer"; newest = null; }
-				}
+				if (req.result != UnityWebRequest.Result.Success) a.Error = req.error;
+				else ParseNewest(req.downloadHandler.text, a);
 			}
+		}
+
+		/// <summary>The answer is a version number ("3.1", "3.0.1"); anything else (a web page, an error text - the site
+		/// changed) is "an unexpected answer".</summary>
+		static void ParseNewest(string text, Answer a)
+		{
+			string newest = (text ?? "").Trim();
+			if (newest.Length == 0 || newest.Length > 20 || !System.Text.RegularExpressions.Regex.IsMatch(newest, @"^\d+(\.[0-9A-Za-z\-]+)*$")) a.Error = "an unexpected answer";
+			else a.Newest = newest;
+		}
+
+		static IEnumerator AskNewest()
+		{
+			var a = new Answer();
+			yield return FetchNewest(a);
+			string newest = a.Newest, error = a.Error;
 			string text;
 			if (newest == null)
 			{
@@ -314,6 +354,91 @@ namespace DynamicIslands.Editor
 			if (InfoWindow.IsOpen && InfoWindow.ButtonNamed("Open the mod's page") != null)
 				InfoWindow.Open("Check for updates", text, UpdateChoices());
 		}
+
+		#region The check on start (UP1)
+
+		/// <summary>"Check automatically" (the tick box under Check for updates): on by default, notice.txt autocheck=off when
+		/// unticked. Kept for every version.</summary>
+		public static bool AutoCheck
+		{
+			get { return Read("autocheck") != "off"; }
+			set { Write("autocheck", value ? null : "off"); if (autoBox != null) UIKit.SetCheck(autoBox, value); }
+		}
+
+		/// <summary>The version the player said "Don't show again for this version" for (notice.txt skip=); a newer one shows again.</summary>
+		public static string SkippedVersion { get { return Read("skip"); } set { Write("skip", value); } }
+
+		/// <summary>The check on start was made in this game start (it is made once).</summary>
+		public static bool StartCheckMade { get { return startAsked; } }
+		static bool startAsked;
+
+		/// <summary>Tests: what the check on start found, null while it asks: "off", "failed", "newest", "skipped X",
+		/// "dev X" (a dev build: logged, no popup), "told X" (the popup shown) or "left X" (the menu was left before it could show).</summary>
+		public static string LastStartCheck;
+
+		/// <summary>Tests: the popup shows in a dev build too (dev builds only log it, so a Raft run by the tests never has
+		/// a box over the menu when the site has a newer version).</summary>
+		public static bool PopupForTests;
+
+		static bool DevBuild { get { return typeof(ExperimentalNotice).Assembly.GetType("DynamicIslands.DevTests") != null; } }
+
+		/// <summary>
+		/// The main menu appeared (DynamicIslands.HookUI): with Check automatically ticked, asks raftmodding.com for the
+		/// newest version once per game start, in a coroutine (nothing waits for it). A newer one than this mod's
+		/// (modinfo.json) shows a popup on the menu (never in a world), unless the player said "Don't show again" for that
+		/// version. Offline, a timeout or a changed page: one log line and nothing else. again: tests, once more.
+		/// Whether a check started.
+		/// </summary>
+		public static bool CheckOnStart(bool again = false)
+		{
+			if (!AutoCheck) { if (!startAsked || again) { LastStartCheck = "off"; Debug.Log("[CUSTOM ISLANDS] Update check on start: off (Check automatically unticked)"); } startAsked = true; return false; }
+			if (startAsked && !again) return false;
+			if (DynamicIslands.instance == null) return false;
+			startAsked = true;
+			LastStartCheck = null;
+			DynamicIslands.instance.StartCoroutine(StartCheckRoutine());
+			return true;
+		}
+
+		static IEnumerator StartCheckRoutine()
+		{
+			var a = new Answer();
+			yield return FetchNewest(a);
+			string newest = a.Newest;
+			if (newest == null) { StartCheckDone("failed", "could not ask raftmodding.com (" + a.Error + ")"); yield break; }
+			if (CompareVersions(newest, Version) <= 0) { StartCheckDone("newest", "this is the newest version (" + Version + ", raftmodding.com has " + newest + ")"); yield break; }
+			if (SkippedVersion == newest) { StartCheckDone("skipped " + newest, newest + " is out (this is " + Version + "): not shown, the player chose \"Don't show again\" for it"); yield break; }
+			if (DevBuild && !PopupForTests) { StartCheckDone("dev " + newest, newest + " is out (this is " + Version + "): a dev build, no popup"); yield break; }
+			// (on the main menu, when no other window is open - Raft's boxes, an info box such as a failed patch's: never over one)
+			while (PlaceableCatalog.InMainMenu() && OtherWindow() != null) yield return new WaitForSecondsRealtime(0.5f);
+			if (!PlaceableCatalog.InMainMenu()) { StartCheckDone("left " + newest, newest + " is out (this is " + Version + "): not shown, the main menu was left"); yield break; }
+			ShowNewer(newest);
+			StartCheckDone("told " + newest, newest + " is out (this is " + Version + "): told the player");
+		}
+
+		/// <summary>The check on start's one log line.</summary>
+		static void StartCheckDone(string result, string line)
+		{
+			LastStartCheck = result;
+			Debug.Log("[CUSTOM ISLANDS] Update check on start: " + line);
+		}
+
+		/// <summary>The popup: the new version, the mod's page, and Don't show again for this version.</summary>
+		static void ShowNewer(string newest)
+		{
+			InfoWindow.Open("A new version of Custom Islands",
+				"<b>Custom Islands " + newest + " is out</b> (you have " + Version + ").\n\n" +
+				"Get it from the mod's page: " + HelpLinks.ModPage + "\n" +
+				"Put the new .rmod in Raft's mods folder in place of this one, or let the Raft Mod Loader update it. Back up the worlds you care about first.\n\n" +
+				"<i>Untick \"Check automatically\" on the Custom Islands box to stop looking on every start.</i>",
+				new InfoWindow.Choice("Open the mod's page", () => { HelpLinks.Open(HelpLinks.ModPage); InfoWindow.SetStatus("Opened raftmodding.com in your browser"); }, "The mod's page on raftmodding.com, where new versions come out", true),
+				new InfoWindow.Choice(DontShowAgain, () => { SkippedVersion = newest; InfoWindow.Close(); }, "No more notices about " + newest + " (a newer version shows one again)"),
+				new InfoWindow.Choice("Close", InfoWindow.Close, "Close this box (Esc); it shows again on the next start"));
+		}
+
+		public const string DontShowAgain = "Don't show again for this version";
+
+		#endregion
 
 		/// <summary>Compares "3.0", "3.0.1", "3.1" part by part as numbers; text that isn't numbers compares as text.</summary>
 		public static int CompareVersions(string a, string b)

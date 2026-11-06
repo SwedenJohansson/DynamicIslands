@@ -149,7 +149,10 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
 > RELEASE** box right of the middle, with the mod's version and four buttons: **Discord** (the Custom Islands Discord
 > server; Discord blue, it pulses gently so new players find the community), **Guide (PDF)** (this guide, which comes with the mod), **Report a problem** ([section 14](#14-reporting-a-problem))
 > and **Check for updates** (it asks raftmodding.com for the newest version and tells you whether you have it, with a
-> button to the mod's page, where new versions come out; the mod never updates itself).
+> button to the mod's page, where new versions come out; the mod never updates itself). Under it, **Check automatically**
+> (ticked unless you untick it) asks the same once each time Raft starts, while you are on the main menu; when a newer
+> version is out, a box names it with a button to the mod's page and **Don't show again for this version** (the next
+> version is shown again). Without internet it says nothing.
 > Drag the box anywhere you like; it stays where you put it. It steps aside while another window of the main menu is
 > open (New Game, Load World, Settings, the island library...) and comes back when you close it. **Got it** folds it into a slim bar with the same buttons (its
 > **Show** opens it again); its **X** closes it altogether, and then only a small **Custom Islands: help** button is left in
@@ -4244,7 +4247,7 @@ Other files:
 | `worlds\<world id>-<player id>.rewards` | Which quest rewards this player has had, or is still owed, in each world (each player gets their own share of a reward of Raft's items) |
 | `groups\`, `stamps\` | Your saved object groups and terrain stamps |
 | `generator_presets\` | Your generator presets (**Save these settings...**) |
-| `notice.txt` | That you folded the alpha box (**Got it**) or closed it with its **X**, for this version of the mod, and where you dragged it |
+| `notice.txt` | That you folded the alpha box (**Got it**) or closed it with its **X**, for this version of the mod, and where you dragged it; that you unticked **Check automatically**, and a new version you chose not to be told about again |
 | `editor_start.txt` | The last island and plan you worked on, for **Continue** in the EDITOR start window |
 | `library\updated.txt` | The islands a pack update replaced, so a world that has one says so once when it loads |
 | `rml_cache_noted.txt` | That the "first start compiles" note has been shown for this build of the mod |
