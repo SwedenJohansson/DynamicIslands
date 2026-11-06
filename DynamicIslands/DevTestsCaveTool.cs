@@ -909,7 +909,7 @@ namespace DynamicIslands
 			foreach (MeshFilter f in walls)
 			{
 				Vector3[] n = f.sharedMesh.normals;
-				int zero = n.Count(v => v.sqrMagnitude < 0.25f), inn = n.Count(v => v.z < -0.9f), outn = n.Count(v => v.z > 0.9f);
+				int zero = n.Count(v => v.sqrMagnitude < 0.25f), inn = n.Count(v => v.z < -0.3f), outn = n.Count(v => v.z > 0.3f); // (a rock face now, not flat: 11-06)
 				Renderer r = f.GetComponent<Renderer>();
 				bool lit = r != null && r.lightProbeUsage == UnityEngine.Rendering.LightProbeUsage.CustomProvided;
 				bool ok = n.Length > 0 && zero == 0 && inn > 0 && outn > 0 && lit;

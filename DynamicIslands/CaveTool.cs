@@ -457,38 +457,53 @@ namespace DynamicIslands.Editor
 							int a = i + di, b = k + dk;
 							if (a >= 0 && b >= 0 && a < nx && b < ny && inside[a, b]) keep[i, k] = true;
 						}
-			float hx0 = mx - HoleHalf, hx1 = mx + HoleHalf, hy0 = my - HoleBelow, hy1 = my + HoleUp;
+			// (rock, not a flat slab with a door cut in it - the user 11-06, Old Mine's grey cave from the sea and its shelf: the wall
+			// bulges and dips over a metre, bends back into a throat round the hole, and the hole is an arch with ragged sides. One grid
+			// of corners, each side its own copy (shared ones cancel the normals: the dark slabs, 11-06). The hole is never narrower
+			// than the passage's HoleHalf, nor lower than HoleUp at its middle)
+			Vector3 dp = den.transform.position;
+			float s = Mathf.Repeat(dp.x * 0.37f + dp.z * 0.11f, 97f);
+			float hy0 = my - HoleBelow, hy1 = my + HoleUp;
+			Func<float, float, float> pn = (u, v) => Mathf.PerlinNoise(u, v) * 2f - 1f;
+			Func<float, float, bool> inHole = (cx, cy) =>
+			{
+				if (cy < hy0) return false;
+				float half = HoleHalf + 0.45f + 0.4f * Mathf.PerlinNoise(cy * 0.6f + s + 9f, s * 0.5f);
+				float archC = hy1 - half;
+				float dx = cx - mx;
+				if (cy <= archC) return Mathf.Abs(dx) < half;
+				return dx * dx + (cy - archC) * (cy - archC) < half * half;
+			};
+			Func<int, int, Vector3> corner = (i, k) =>
+			{
+				float x = x0 + i * cell, y = y0 + k * cell;
+				float jx = 0.15f * pn(x * 1.3f + 17f + s, y * 1.3f + 5f), jy = 0.15f * pn(x * 1.3f + 3f, y * 1.3f + 29f + s);
+				float dz = 0.75f * pn(x * 0.3f + s, y * 0.3f + s) + 0.35f * pn(x * 0.9f + s + 40f, y * 0.9f + s);
+				float ex = Mathf.Max(Mathf.Abs(x - mx) - HoleHalf - 0.5f, 0f), ey = Mathf.Max(Mathf.Max(hy0 - y, y - hy1), 0f);
+				dz -= 1.1f * Mathf.Exp(-Mathf.Sqrt(ex * ex + ey * ey) / 1.3f); // (the throat: into the den round the hole)
+				return new Vector3(x + jx, y + jy, z + Mathf.Clamp(dz, -1.6f, 1.1f));
+			};
 			var verts = new List<Vector3>();
 			var tris = new List<int>();
-			for (int k = 0; k < ny; k++)
+			var front = new int[nx + 1, ny + 1];
+			var back = new int[nx + 1, ny + 1];
+			for (int i = 0; i <= nx; i++) for (int k = 0; k <= ny; k++) { front[i, k] = -1; back[i, k] = -1; }
+			Func<int[,], int, int, int> at = (map, i, k) =>
 			{
-				float ya = y0 + k * cell, yb = ya + cell;
-				int run = -1;
-				for (int i = 0; i <= nx; i++)
+				if (map[i, k] < 0) { map[i, k] = verts.Count; verts.Add(corner(i, k)); }
+				return map[i, k];
+			};
+			int cells = 0;
+			for (int i = 0; i < nx; i++)
+				for (int k = 0; k < ny; k++)
 				{
-					bool on = false;
-					if (i < nx && keep[i, k])
-					{
-						float xa = x0 + i * cell, xb = xa + cell;
-						on = !(xb > hx0 && xa < hx1 && yb > hy0 && ya < hy1); // (the passage's hole)
-					}
-					if (on && run < 0) run = i;
-					if (!on && run >= 0)
-					{
-						float ax = x0 + run * cell, bx = x0 + i * cell;
-						// (each side its own corners, as Plug's: on shared ones the two sides' normals cancelled out and the wall drew
-						// flat black - the dark slabs round an ar_cave mouth from the sea and from the shelf, Old Mine 11-06)
-						int n = verts.Count;
-						for (int side = 0; side < 2; side++)
-						{
-							verts.Add(new Vector3(ax, ya, z)); verts.Add(new Vector3(bx, ya, z)); verts.Add(new Vector3(bx, yb, z)); verts.Add(new Vector3(ax, yb, z));
-						}
-						tris.AddRange(new[] { n, n + 2, n + 1, n, n + 3, n + 2 }); // (facing -z: into the den)
-						tris.AddRange(new[] { n + 4, n + 5, n + 6, n + 4, n + 6, n + 7 }); // (and out of its mouth)
-						run = -1;
-					}
+					if (!keep[i, k] || inHole(x0 + (i + 0.5f) * cell, y0 + (k + 0.5f) * cell)) continue;
+					cells++;
+					int a = at(front, i, k), b = at(front, i + 1, k), c = at(front, i + 1, k + 1), d = at(front, i, k + 1);
+					tris.AddRange(new[] { a, c, b, a, d, c }); // (facing -z: into the den)
+					a = at(back, i, k); b = at(back, i + 1, k); c = at(back, i + 1, k + 1); d = at(back, i, k + 1);
+					tris.AddRange(new[] { a, b, c, a, c, d }); // (and out of its mouth)
 				}
-			}
 			if (tris.Count == 0) { UnityEngine.Object.DestroyImmediate(go); return; }
 			var mesh = new Mesh { name = PlugName };
 			mesh.SetVertices(verts);
@@ -499,7 +514,7 @@ namespace DynamicIslands.Editor
 			go.AddComponent<MeshFilter>().sharedMesh = mesh;
 			go.AddComponent<MeshRenderer>().sharedMaterial = look.sharedMaterial;
 			go.AddComponent<MeshCollider>().sharedMesh = mesh;
-			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + (verts.Count / 8) + " strips");
+			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + cells + " cells");
 		}
 
 		#endregion
