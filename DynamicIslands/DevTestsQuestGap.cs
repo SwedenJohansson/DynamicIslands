@@ -113,6 +113,7 @@ namespace DynamicIslands
 				QuestStepsGather.Before(me);
 				inv.AddItem("Plank", 3);
 				QuestStepsGather.After(me);
+				QuestStepsGather.Leave(); // (the finalizer, as Harmony calls it)
 				yield return new WaitForSeconds(0.5f);
 				Check(ref ok, !QuestSteps.GatherWaiting() && QuestTracker.StepOf(e) == 2 && QuestTracker.ProgressOf(e, 0) == 0, "planks picked up far off the island don't count");
 
@@ -122,13 +123,16 @@ namespace DynamicIslands
 				inv.AddItem("Plank", 2);
 				inv.AddItem("Nail", 4);
 				QuestStepsGather.After(me);
+				QuestStepsGather.Leave(); // (the finalizer, as Harmony calls it)
 				yield return new WaitForSeconds(0.3f);
 				Check(ref ok, QuestTracker.StepOf(e) == 2 && QuestTracker.ProgressOf(e, 0) == 2, "2 planks (and nails) picked up on the island: 2 of 3 (" + QuestTracker.ProgressOf(e, 0) + ")");
 				QuestStepsGather.Before(me);
 				QuestStepsGather.Before(me); // (a harvest through a pickup: the outer one counts, once)
 				inv.AddItem("Plank", 1);
 				QuestStepsGather.After(me);
+				QuestStepsGather.Leave(); // (the finalizer, as Harmony calls it)
 				QuestStepsGather.After(me);
+				QuestStepsGather.Leave(); // (the finalizer, as Harmony calls it)
 				yield return WaitStep(e, 3, 3f);
 				Check(ref ok, QuestTracker.StepOf(e) == 3, "the 3rd plank: step 3 done (counted once in nested hooks)");
 
