@@ -336,6 +336,12 @@ namespace DynamicIslands.Editor
 		public const string PlugOutName = "CavePlugOut";
 		/// <summary>How far a lone den's way in is set back into the den at its edge: the wall leans in round it as a funnel.</summary>
 		public const float PlugFunnel = 2.2f;
+		/// <summary>How far a lone den's wall's outer edge leans out to the mouth: no straight edge of a wall set back behind the hill.</summary>
+		public const float PlugLean = 1.6f;
+		/// <summary>A lone den's way in in shade: its wall's outside round the arch drawn darker, in bands out to the arch's size times
+		/// these (the first band darkest, by PlugShade), the rest as the hill.</summary>
+		public static readonly float[] PlugShadeOut = { 1.3f, 1.65f };
+		public static readonly float[] PlugShade = { 0.3f, 0.55f };
 
 		/// <summary>
 		/// The bear den's mouth opens far wider than a tunnel: in Balboa its cliff closes the rest, here the hill does from
@@ -641,7 +647,7 @@ namespace DynamicIslands.Editor
 			MeshRenderer r = outT != null ? outT.GetComponent<MeshRenderer>() : null;
 			MeshFilter mf = outT != null ? outT.GetComponent<MeshFilter>() : null;
 			if (r == null || mf == null || mf.sharedMesh == null || skin == null || skin.sharedMaterial == null) return false;
-			r.sharedMaterial = skin.sharedMaterial;
+			r.sharedMaterials = Enumerable.Repeat(skin.sharedMaterial, mf.sharedMesh.subMeshCount).ToArray();
 			r.shadowCastingMode = skin.shadowCastingMode;
 			r.receiveShadows = skin.receiveShadows;
 			r.lightProbeUsage = skin.lightProbeUsage;
@@ -649,6 +655,8 @@ namespace DynamicIslands.Editor
 			var block = new MaterialPropertyBlock();
 			skin.GetPropertyBlock(block);
 			r.SetPropertyBlock(block);
+			for (int i = 0; i < r.sharedMaterials.Length; i++)
+				r.SetPropertyBlock(i == 0 || i > PlugShade.Length ? block : Darker(r, skin.sharedMaterial, PlugShade[i - 1]), i);
 			Mesh m = mf.sharedMesh;
 			Vector3 f = den.transform.forward;
 			bool alongX = Mathf.Abs(f.x) >= Mathf.Abs(f.z);
@@ -657,6 +665,26 @@ namespace DynamicIslands.Editor
 			if (den.GetComponent<CaveLit>() != null) CaveLit.Mark(den);
 			Debug.Log("[CUSTOM ISLANDS] Den's wall outside drawn as the hill: " + skin.sharedMaterial.name);
 			return true;
+		}
+
+		/// <summary>The renderer's own block (copied) with every colour texture of the material - the block's own, else the
+		/// material's - darker by a factor.</summary>
+		static MaterialPropertyBlock Darker(Renderer r, Material m, float by)
+		{
+			var b = new MaterialPropertyBlock();
+			r.GetPropertyBlock(b);
+			Shader sh = m.shader;
+			for (int i = 0; i < sh.GetPropertyCount(); i++)
+			{
+				if (sh.GetPropertyType(i) != ShaderPropertyType.Texture) continue;
+				string tp = sh.GetPropertyName(i), low = tp.ToLowerInvariant();
+				if (low.Contains("normal") || low.Contains("bump") || low.Contains("mask") || low.Contains("noise") || low.Contains("height")
+					|| low.Contains("occlusion") || low.Contains("metal") || low.Contains("smooth") || low.Contains("emission")) continue;
+				Texture src = b.HasTexture(tp) ? b.GetTexture(tp) : m.GetTexture(tp);
+				Texture2D dark = src != null ? DigTunnel.Scaled(src, new Color(by, by, by, 1f), " (den shade " + by.ToString("0.00") + ")") : null;
+				if (dark != null) b.SetTexture(tp, dark);
+			}
+			return b;
 		}
 
 		/// <summary>Marks a lone den's wall's outside drawn as the hill: CaveLit leaves its light alone.</summary>
@@ -836,7 +864,9 @@ namespace DynamicIslands.Editor
 			// edge in shade, not a flat panel with a hole)
 			Func<float, float, float> depth = (px, py) => PlugRelief * (2f * Mathf.PerlinNoise(px / 1.6f + 17.3f, py / 1.6f + 5.1f) - 1f)
 				+ 0.35f * PlugRelief * (2f * Mathf.PerlinNoise(px / 0.7f + 3.7f, py / 0.7f + 41.9f) - 1f)
-				- PlugFunnel * (1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(archQ(px, py) - 1f)));
+				- PlugFunnel * (1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(archQ(px, py) - 1f)))
+				// (and leans out at its outer edge, over the hill's own edge at the mouth: the wall's straight side, 2 m behind it, showed)
+				+ PlugLean * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((archQ(px, py) - 1.6f) / 0.8f));
 			// (each cell: 0 none, 1 wall, 2 the way in)
 			var state = new int[nx, ny];
 			for (int i = 0; i < nx; i++)
@@ -900,6 +930,9 @@ namespace DynamicIslands.Editor
 			};
 			int cells = 0;
 			var trisOut = new List<int>();
+			// (the outside in bands by how near the way in: shade round it - the den beyond, lit evenly, showed as a light window)
+			var bands = new List<int>[PlugShadeOut.Length + 1];
+			for (int b = 0; b < bands.Length; b++) bands[b] = new List<int>();
 			for (int k = 0; k < ny; k++)
 				for (int i = 0; i < nx; i++)
 				{
@@ -908,7 +941,12 @@ namespace DynamicIslands.Editor
 					// (both sides, each with its own corners: on shared ones the two sides' normals cancelled out and the wall
 					// drew as a flat black board - seen from inside The Abyss's lava tube, 11-05; Plug had the same fault, TN1)
 					tris.AddRange(new[] { at(0, i, k), at(0, i + 1, k + 1), at(0, i + 1, k), at(0, i, k), at(0, i, k + 1), at(0, i + 1, k + 1) });
-					trisOut.AddRange(new[] { at(1, i, k), at(1, i + 1, k), at(1, i + 1, k + 1), at(1, i, k), at(1, i + 1, k + 1), at(1, i, k + 1) });
+					var outCell = new[] { at(1, i, k), at(1, i + 1, k), at(1, i + 1, k + 1), at(1, i, k), at(1, i + 1, k + 1), at(1, i, k + 1) };
+					trisOut.AddRange(outCell);
+					float cx = x0 + (i + 0.5f) * cell, cy = y0 + (k + 0.5f) * cell, q = archQ(cx, cy) + 0.25f * (Mathf.PerlinNoise(cx * 0.8f + 51.3f, cy * 0.8f + 8.9f) - 0.5f);
+					int band = 0;
+					while (band < PlugShadeOut.Length && q >= PlugShadeOut[band]) band++;
+					bands[band].AddRange(outCell);
 				}
 			if (tris.Count == 0) { UnityEngine.Object.DestroyImmediate(go); return; }
 			// (the wall itself draws its inside, lit as the den; its outside is a child of its own (PlugOutName), so it can be
@@ -943,10 +981,13 @@ namespace DynamicIslands.Editor
 			outGo.transform.SetParent(go.transform, false);
 			var outMesh = UnityEngine.Object.Instantiate(mesh);
 			outMesh.name = PlugOutName;
-			outMesh.SetTriangles(trisOut, 0);
+			// (submesh 0 as the hill, then the shade bands from the way in out: PlugShade, WallLikeHill)
+			outMesh.subMeshCount = bands.Length;
+			outMesh.SetTriangles(bands[bands.Length - 1], 0);
+			for (int b = 0; b < bands.Length - 1; b++) outMesh.SetTriangles(bands[b], b + 1);
 			outMesh.RecalculateBounds();
 			outGo.AddComponent<MeshFilter>().sharedMesh = outMesh;
-			outGo.AddComponent<MeshRenderer>().sharedMaterial = wr.sharedMaterial;
+			outGo.AddComponent<MeshRenderer>().sharedMaterials = Enumerable.Repeat(wr.sharedMaterial, bands.Length).ToArray();
 			// (lit as the den, its own parts looked up again; the outside is left out once it is drawn as the hill)
 			if (den.GetComponent<CaveLit>() != null) CaveLit.Mark(den);
 			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + cells + " cells, rock relief, smooth, arched way in, " + wr.sharedMaterial.name + (atlas ? " at uv " + swatch.ToString("0.000") : ""));
