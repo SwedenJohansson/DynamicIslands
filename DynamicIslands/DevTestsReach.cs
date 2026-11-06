@@ -2002,6 +2002,7 @@ namespace DynamicIslands
 						Look(pl, d.sqrMagnitude > 0.01f ? Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg : pl.transform.eulerAngles.y, lpitch);
 						mmWalk = walkSign;
 						MmHold(pl, false);
+						ReachTrace(pl, e, "ladder up=" + up + " top=" + (ladTop - e.Position.y).ToString("F2") + " next=" + (nextY - e.Position.y).ToString("F2"));
 						yield return null;
 						if ((bad = guard()) != null) { result(bad); yield break; }
 						int wd = watchdog();
@@ -2091,6 +2092,7 @@ namespace DynamicIslands
 					Look(pl, yaw, pitch);
 					mmWalk = 1f;
 					MmHold(pl, false);
+					ReachTrace(pl, e, "walk to " + (aim - e.Position).ToString("F1") + " jump=" + mmJump);
 					yield return null;
 					if (!float.IsNaN(hopFrom)) hopPeak = Mathf.Max(hopPeak, ReachFeet(pl).y - hopFrom);
 					if ((bad = guard()) != null) { mmWalk = 0f; result(bad); yield break; }
@@ -2102,6 +2104,16 @@ namespace DynamicIslands
 			}
 			mmWalk = 0f; mmJump = false;
 			result(null);
+		}
+
+		static float reachTraceT;
+		/// <summary>With CIReachOnly set: the walker's state each 0.2 s (feet, climbing, grounded) - to see one target's walk.</summary>
+		static void ReachTrace(Network_Player pl, IslandWorldState.Entry e, string what)
+		{
+			if (reachOnly == "" || Time.realtimeSinceStartup - reachTraceT < 0.2f) return;
+			reachTraceT = Time.realtimeSinceStartup;
+			CharacterController cc = pl.GetComponent<CharacterController>();
+			Log("  trace " + what + " feet " + (ReachFeet(pl) - e.Position).ToString("F2") + " climb " + Climbing(pl) + " grounded " + (cc != null && cc.isGrounded) + " yaw " + pl.transform.eulerAngles.y.ToString("F0"));
 		}
 
 		static bool inWaterNow(Network_Player pl) { return pl.PersonController.controllerType == ControllerType.Water; }

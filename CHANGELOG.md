@@ -12,6 +12,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next update (planned)
 
 Not in this release yet; these come in the next update:
+- **Island test (reach):** the walker jumps off a ladder's top onto a floor beside or behind it (a hatch), as a player does, instead of falling back down the shaft; `CIReachOnly` walks one target again; play pictures can turn to animals and light a dark tunnel.
 - **Island test (reach):** a drop through a cave roof seen from above is now caught where Raft's own walker would stand (FallCaught), and a branch tunnel with its own mouth is shot and walked from that mouth (BranchJoin).
 - **Island test (reach):** swimmers grab ladders from 1.5 m, ladders never face into solid rock, a failing ladder says what blocks it, and jumps the grid can't make can be marked `reach.byplay` and proven by a play.
 - **Dug tunnels' mouths under a cave hill** wear the hill's sandy rock on their rim walls, not the island rock that looked blue in shade.
