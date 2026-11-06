@@ -13,7 +13,10 @@ namespace DynamicIslands.Editor
 	/// above (an orthographic camera, rendered once per island and when the full map opens), the player as an arrow,
 	/// the other players, the markers of every quest's current step (objects named as the step's target) and the
 	/// builder's own map markers ("Map marker" objects, Zones &amp; triggers). The map key (M) goes corner -> full
-	/// screen -> off; + and - zoom (1x, 2x, 4x, centred on the player). The ping key (G) marks the spot the player
+	/// screen -> off; + and - zoom (1x, 2x, 4x, centred on the player). These keys work only while there is a map to show
+	/// (near an island), and a map that comes up after the sea always comes up small: full screen is for the island it was
+	/// opened on (UR1: a full map left open on an island, or the key pressed at sea, came back full screen when a ghost
+	/// ship or a small raft drifted by). The ping key (G) marks the spot the player
 	/// looks at for the crew: a beam with the name in the world, a dot on the map and a sound, for a few seconds.
 	/// A player sends a ping to the host (IslandNetMessage.Ping), the host shows it and passes it to everyone.
 	/// </summary>
@@ -68,6 +71,10 @@ namespace DynamicIslands.Editor
 		/// <summary>Dev tests: pings sent (by this player) and shown.</summary>
 		public static int PingsSent, PingsShown;
 		public static bool Shown { get { return panel != null && panel.gameObject.activeSelf; } }
+		/// <summary>Tests: the map panel's size in UI units (CornerSize square in the corner, 700 full screen) and how much of
+		/// the screen's height it takes; zero when there is no panel.</summary>
+		internal static Vector2 PanelSize { get { return panel != null ? panel.sizeDelta : Vector2.zero; } }
+		internal static float PanelScreenShare { get { return panel != null && canvas != null && Screen.height > 0 ? panel.rect.height * canvas.scaleFactor / Screen.height : 0f; } }
 		/// <summary>The small map is on the screen in the top right corner (the quest panel moves under it).</summary>
 		public static bool CornerShown { get { return Mode == Corner && Shown && canvas != null && canvas.gameObject.activeSelf; } }
 		/// <summary>How far down from the top of the screen the corner map reaches, its island name under it included (UI units, see Layout).</summary>
@@ -119,10 +126,10 @@ namespace DynamicIslands.Editor
 			if (me == null) return;
 			if (KeysFree())
 			{
-				if (Available && Input.GetKeyDown(ModKeys.MapKey.Key)) Cycle();
+				if (Input.GetKeyDown(ModKeys.MapKey.Key)) MapKeyPressed();
 				if (Input.GetKeyDown(ModKeys.PingKey.Key)) PingLook();
-				if (Available && Mode != Off && (Input.GetKeyDown(ModKeys.ZoomInKey.Key) || Input.GetKeyDown(KeyCode.KeypadPlus))) SetZoom(Zoom * 2);
-				if (Available && Mode != Off && (Input.GetKeyDown(ModKeys.ZoomOutKey.Key) || Input.GetKeyDown(KeyCode.KeypadMinus))) SetZoom(Zoom / 2);
+				if (Available && Mode != Off && Island != null && (Input.GetKeyDown(ModKeys.ZoomInKey.Key) || Input.GetKeyDown(KeyCode.KeypadPlus))) SetZoom(Zoom * 2);
+				if (Available && Mode != Off && Island != null && (Input.GetKeyDown(ModKeys.ZoomOutKey.Key) || Input.GetKeyDown(KeyCode.KeypadMinus))) SetZoom(Zoom / 2);
 			}
 			UpdatePings();
 			if (Time.unscaledTime >= nextFind) { nextFind = Time.unscaledTime + 0.5f; FindIsland(me.transform.position); }
@@ -146,6 +153,10 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The map key: corner -> full screen -> off -> corner.</summary>
 		public static void Cycle() { if (Available) Mode = (Mode + 1) % 3; }
+
+		/// <summary>The map key pressed: cycles the map only where there is one (UR1: at sea, out of sight, it went to full
+		/// screen unseen and the next ghost ship or small raft brought the map up full screen).</summary>
+		public static void MapKeyPressed() { if (Island != null) Cycle(); }
 
 		public static void SetZoom(int z) { if (!Available) return; Zoom = z >= 4 ? 4 : z >= 2 ? 2 : 1; }
 
@@ -179,6 +190,8 @@ namespace DynamicIslands.Editor
 		{
 			IslandWorldState.Entry e = IslandAt(at);
 			if (e == Island) return;
+			// (UR1: back from the sea the map comes up small - full screen was for the island it was opened on)
+			if (Island == null && e != null && Mode == Full) Mode = Corner;
 			Island = e;
 			islandTitle = "";
 			if (e != null)
