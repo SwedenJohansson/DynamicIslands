@@ -604,10 +604,10 @@ namespace DynamicIslands.Editor
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [quest gather] " + e.Message); }
 		}
 
+		/// <summary>Postfix: counts what came in (outermost hook only). The depth is left by Leave, the finalizer.</summary>
 		internal static void After(Network_Player p)
 		{
-			depth = Math.Max(0, depth - 1);
-			if (depth != 0 || before == null) return;
+			if (depth != 1 || before == null) return;
 			Dictionary<string, int> had = before;
 			before = null;
 			PlayerInventory inv = Local(p);
@@ -618,6 +618,14 @@ namespace DynamicIslands.Editor
 				had.TryGetValue(kv.Key, out was);
 				if (kv.Value > was) QuestSteps.Gathered(kv.Key, kv.Value - was);
 			}
+		}
+
+		/// <summary>Finalizer: runs even when the patched method (or another mod's patch) throws, where a Postfix is skipped
+		/// and the depth stayed up - gather steps then never counted again.</summary>
+		internal static void Leave()
+		{
+			depth = Math.Max(0, depth - 1);
+			if (depth == 0) before = null;
 		}
 
 		internal static Network_Player OwnerOf(PlayerInventory inv)
@@ -632,6 +640,7 @@ namespace DynamicIslands.Editor
 	{
 		static void Prefix(Pickup __instance) { Network_Player p = null; try { p = Traverse.Create(__instance).Field("playerNetwork").GetValue<Network_Player>(); } catch { } QuestStepsGather.Before(p); }
 		static void Postfix(Pickup __instance) { Network_Player p = null; try { p = Traverse.Create(__instance).Field("playerNetwork").GetValue<Network_Player>(); } catch { } try { QuestStepsGather.After(p); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [quest gather] " + e.Message); } }
+		static void Finalizer() { QuestStepsGather.Leave(); }
 	}
 
 	[HarmonyPatch(typeof(PickupChanneling), "AddItemToInventory")]
@@ -639,6 +648,7 @@ namespace DynamicIslands.Editor
 	{
 		static void Prefix(PickupChanneling __instance) { Network_Player p = null; try { p = Traverse.Create(__instance).Field("player").GetValue<Network_Player>(); } catch { } QuestStepsGather.Before(p); }
 		static void Postfix(PickupChanneling __instance) { Network_Player p = null; try { p = Traverse.Create(__instance).Field("player").GetValue<Network_Player>(); } catch { } try { QuestStepsGather.After(p); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [quest gather] " + e.Message); } }
+		static void Finalizer() { QuestStepsGather.Leave(); }
 	}
 
 	[HarmonyPatch(typeof(HarvestableTree), "Harvest")]
@@ -646,5 +656,6 @@ namespace DynamicIslands.Editor
 	{
 		static void Prefix(PlayerInventory __0) { QuestStepsGather.Before(QuestStepsGather.OwnerOf(__0)); }
 		static void Postfix(PlayerInventory __0) { try { QuestStepsGather.After(QuestStepsGather.OwnerOf(__0)); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [quest gather] " + e.Message); } }
+		static void Finalizer() { QuestStepsGather.Leave(); }
 	}
 }

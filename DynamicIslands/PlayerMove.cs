@@ -217,6 +217,7 @@ namespace DynamicIslands.Editor
 				try
 				{
 					if (!Stuck(__instance)) return true;
+					PlayerHold.LetGo("used Unstuck: let go"); // (else held back in the air - UR2)
 					HarmonyLib.AccessTools.Method(__instance.GetType(), "StuckFixTPRaft").Invoke(__instance, null);
 					HarmonyLib.AccessTools.Method(typeof(Unstuck_Tracker), "SetIsStuck").Invoke(__instance, new object[] { false });
 					since = -1f;
@@ -314,6 +315,7 @@ namespace DynamicIslands.Editor
 				Network_Player p = ComponentManager<Network_Player>.Value;
 				Vector3 at;
 				Spot(p, out at);
+				PlayerHold.LetGo("chose Spawn to raft: let go"); // (else held back in the air - UR2)
 				PlayerMove.To(p, at, ControllerType.Ground);
 				if (p.UnstuckTracker != null) try { HarmonyLib.AccessTools.Method(typeof(Unstuck_Tracker), "SetIsStuck").Invoke(p.UnstuckTracker, new object[] { false }); } catch { }
 				Debug.Log("[CUSTOM ISLANDS] Spawn to raft: the player stands on the raft at " + at.ToString("F1"));
