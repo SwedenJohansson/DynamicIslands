@@ -159,6 +159,12 @@ brush flatten from 54 99.5 to 68 99.5 r=3 s=20 frames=200 h=3.2
 brush smooth at 61 106 r=8.5 s=4 frames=40
 brush flatten from 55 99 to 67 99 r=2.2 s=20 frames=60 h=3.6
 brush smooth from 52 100.5 to 70 100.5 r=4 s=4 frames=10
+# (fourth review: the smoothing left the shore's top 0.9 m under the den's floor lip, a straight brown step with its dark
+# underside showing on both sides of the beach: the top laid last, as wide as the lip and level with it, with a
+# shoulder below it on each side, and sand up to the lip instead of grass)
+brush flatten from 51 100.3 to 71 100.3 r=3 s=20 frames=60 h=2.4
+brush flatten from 53 98.6 to 69 98.6 r=2.2 s=20 frames=60 h=3.92
+brush sand from 53 100 to 69 100 r=4 s=20 frames=40
 clear from 61 101 to 61 110 r=7 body
 clear from 54 103 to 68 103 r=6 body
 # The new land planted (palms, bamboo, bushes as on the ring; boulders only on the flats)

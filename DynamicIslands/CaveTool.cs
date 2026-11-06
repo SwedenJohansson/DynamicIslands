@@ -703,7 +703,7 @@ namespace DynamicIslands.Editor
 		{
 			[NonSerialized] Material mat;
 			[NonSerialized] float front;
-			static readonly float[] Depth = { 1.2f, 2.9f, 4.8f }, Size = { 1.15f, 1.5f, 1.9f }, Alpha = { 0.75f, 0.6f, 0.55f };
+			static readonly float[] Depth = { 1.2f, 2.9f, 4.8f }, Size = { 1.15f, 1.5f, 1.9f }, Alpha = { 0.85f, 0.7f, 0.6f };
 			const int Seg = 40;
 
 			public static GameObject Build(GameObject plug, float cx, float cy, float ha, float hb, float hp, Func<float, float, float> noise, float front, float floorY)
@@ -713,7 +713,7 @@ namespace DynamicIslands.Editor
 				var vv = new List<Vector3>();
 				var vc = new List<Color>();
 				var vt = new List<int>();
-				Func<float, float> floorFade = py => Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((py - floorY + 0.2f) / 1.8f));
+				Func<float, float> floorFade = py => Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((py - floorY + 0.15f) / 0.75f));
 				for (int j = 0; j < Depth.Length; j++)
 				{
 					float vz = front - Depth[j];
