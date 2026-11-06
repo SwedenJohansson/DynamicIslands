@@ -326,6 +326,7 @@ namespace DynamicIslands
 			}
 			// The first release: a box telling new players it is experimental
 			ExperimentalNotice.Show(MainMenuParent.transform);
+			ExperimentalNotice.CheckOnStart(); // (a newer version on raftmodding.com: a popup, once per start - UP1)
 			PatchHealth.ShowIfFailed(); // (a patch that no longer fits this Raft: which parts are off)
 			PcCheck.ShowIfProblems(); // (the PC: a folder the mod can't write, an unzipped .rmod... - AU45)
 			// The editor's start window and the world plan editor live on the menu too (back from the editor: open again)

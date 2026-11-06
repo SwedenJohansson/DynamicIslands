@@ -576,7 +576,150 @@ namespace DynamicIslands
 			finally { HelpLinks.TestMode = false; InfoWindow.Close(); }
 		}
 
-		[ConsoleCommand(name: "CIHoverTips", docs: "Dev, main menu or editor (X9): where no status bar shows a control's hover text - the main menu's windows (here the plan picker), the stats page - it comes in a small tip by the mouse after a moment, on the screen, and goes when the mouse leaves; in the editor its status bar has it and no tip comes")]
+		[ConsoleCommand(name: "CIUpdateOnStart", docs: "Dev, main menu: UP1 - the check for a new version on start, raftmodding.com's answer faked (no network): 'Check automatically' under Check for updates (ticked by default, saved in notice.txt); once per start; a newer version waits for a window that is open (Report a problem), then shows the popup (the version, the mod's page, the Raft Mod Loader tip, Don't show again for this version); Don't show again keeps that version quiet, a newer one shows again; closed, not again this start; it closes when the main menu is left; the same or an older version, offline, a changed page and a real request to an unreachable address (within the 8 s timeout) show nothing; one log line each, no errors; unticked it asks nothing; the player's settings are put back")]
+		public static void UpdateOnStartCommand() { StartTest(UpdateOnStartRoutine()); }
+
+		static IEnumerator UpdateOnStartRoutine()
+		{
+			if (ExperimentalNotice.AutoCheckBox == null || GameObject.Find("MainMenuCanvas") == null) { Fail("update on start: run on the main menu (no alpha box)"); yield break; }
+			bool ok = true;
+			bool autoBefore = ExperimentalNotice.AutoCheck;
+			string skipBefore = ExperimentalNotice.SkippedVersion;
+			var lines = new List<string>();
+			var errors = new List<string>();
+			Application.LogCallback grab = (msg, st, type) =>
+			{
+				if (msg != null && msg.StartsWith("[CUSTOM ISLANDS] Update check on start:")) lines.Add(msg);
+				if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert) errors.Add(msg);
+			};
+			Application.logMessageReceived += grab;
+			HelpLinks.TestMode = true;
+			ExperimentalNotice.PopupForTests = true;
+			bool closedBefore = ExperimentalNotice.Closed;
+			if (closedBefore) ExperimentalNotice.Reopen();
+			InfoWindow.Close();
+			string notice = Path.Combine(DynamicIslands.assetpath, "notice.txt");
+			Func<string> noticeText = () => { try { return File.Exists(notice) ? File.ReadAllText(notice) : ""; } catch { return ""; } };
+			try
+			{
+				// Once per start: the menu's check was made when Raft started (with the box ticked then)
+				Check(ref ok, ExperimentalNotice.StartCheckMade && !ExperimentalNotice.CheckOnStart(), "once per start: made when the menu came (" + (ExperimentalNotice.LastStartCheck ?? "still asking") + "), not again");
+				// The tick box: under Check for updates, ticked unless unticked (notice.txt)
+				Button box = ExperimentalNotice.AutoCheckBox;
+				RectTransform br = (RectTransform)box.transform, ur = (RectTransform)ExperimentalNotice.UpdatesButton.transform;
+				Canvas.ForceUpdateCanvases();
+				var bc = new Vector3[4]; var uc = new Vector3[4];
+				br.GetWorldCorners(bc); ur.GetWorldCorners(uc);
+				Check(ref ok, box.gameObject.activeInHierarchy && UIKit.LabelOf(box).text == "Check automatically" && Mathf.Abs(bc[0].x - uc[0].x) < 6f && bc[1].y <= uc[0].y + 1f,
+					"'Check automatically' under Check for updates (left " + bc[0].x.ToString("F0") + " vs " + uc[0].x.ToString("F0") + ")");
+				ExperimentalNotice.AutoCheck = true;
+				Check(ref ok, UIKit.IsChecked(box) && !noticeText().Contains("autocheck="), "ticked by default (nothing in notice.txt)");
+				box.onClick.Invoke();
+				Check(ref ok, !ExperimentalNotice.AutoCheck && !UIKit.IsChecked(box) && noticeText().Contains("autocheck=off"), "a click unticks it: saved (autocheck=off)");
+				box.onClick.Invoke();
+				Check(ref ok, ExperimentalNotice.AutoCheck && UIKit.IsChecked(box) && !noticeText().Contains("autocheck="), "a click ticks it again");
+
+				// One faked answer: what the check found, the one log line it wrote, and whether the popup is open
+				string found = null;
+				int logged = 0;
+				Func<string, string, IEnumerator> run = (reply, error) => Ask(reply, error, r => found = r, n => logged = n, lines);
+
+				ExperimentalNotice.SkippedVersion = null;
+				// A newer version while another window is open: the popup waits for it
+				InfoWindow.OpenReport();
+				ExperimentalNotice.TestReply = "99.0"; ExperimentalNotice.TestError = null;
+				Check(ref ok, ExperimentalNotice.CheckOnStart(true), "the check starts (99.0 on the site)");
+				yield return new WaitForSecondsRealtime(1.5f);
+				Check(ref ok, ExperimentalNotice.LastStartCheck == null && InfoWindow.Title == "REPORT A PROBLEM", "a newer version waits while Report a problem's box is open (" + (ExperimentalNotice.LastStartCheck ?? "waiting") + ")");
+				InfoWindow.Close();
+				for (float t = 0f; ExperimentalNotice.LastStartCheck == null && t < 5f; t += Time.unscaledDeltaTime) yield return null;
+				Check(ref ok, ExperimentalNotice.LastStartCheck == "told 99.0" && InfoWindow.IsOpen && InfoWindow.Body.Contains("99.0 is out") && InfoWindow.Body.Contains("you have " + ExperimentalNotice.Version) && InfoWindow.Body.Contains(HelpLinks.ModPage)
+					&& InfoWindow.Body.Contains(ExperimentalNotice.RmlTip) && InfoWindow.Body.IndexOf(ExperimentalNotice.RmlTip) > InfoWindow.Body.IndexOf("99.0 is out"),
+					"then the popup: 99.0, this version (" + ExperimentalNotice.Version + "), the mod's page, the Raft Mod Loader tip under it (" + ExperimentalNotice.LastStartCheck + ")");
+				Check(ref ok, InfoWindow.ButtonNamed("Open the mod's page") != null && InfoWindow.ButtonNamed(ExperimentalNotice.DontShowAgain) != null && InfoWindow.ButtonNamed("Close") != null && InfoWindow.ButtonsOutside().Count == 0,
+					"its buttons, inside the box: " + string.Join(", ", InfoWindow.ButtonLabels.ToArray()));
+				Screenshot(new[] { "update_popup" });
+				yield return new WaitForSecondsRealtime(0.6f);
+				HelpLinks.LastOpened = null;
+				InfoWindow.ButtonNamed("Open the mod's page").onClick.Invoke();
+				Check(ref ok, HelpLinks.LastOpened == HelpLinks.ModPage, "Open the mod's page opens " + HelpLinks.LastOpened);
+				InfoWindow.ButtonNamed(ExperimentalNotice.DontShowAgain).onClick.Invoke();
+				yield return null;
+				Check(ref ok, !InfoWindow.IsOpen && ExperimentalNotice.SkippedVersion == "99.0" && noticeText().Contains("skip=99.0"), "Don't show again: closed, 99.0 saved (skip=99.0)");
+				Check(ref ok, lines.Count == 1, "one log line for it (" + lines.Count + ")");
+
+				yield return run("99.0", null);
+				Check(ref ok, found == "skipped 99.0" && !InfoWindow.IsOpen && logged == 1, "99.0 again: no popup (" + found + ", " + logged + " log line)");
+				yield return run("99.1\n", null);
+				Check(ref ok, found == "told 99.1" && InfoWindow.IsOpen && InfoWindow.Body.Contains("99.1 is out") && logged == 1, "a newer one, 99.1: the popup again (" + found + ")");
+				InfoWindow.ButtonNamed("Close").onClick.Invoke();
+				yield return null;
+				Check(ref ok, !InfoWindow.IsOpen && ExperimentalNotice.SkippedVersion == "99.0", "Close closes it, 99.1 not skipped");
+				Check(ref ok, !ExperimentalNotice.CheckOnStart(), "closed: not again this start");
+				// Left open while a world starts: it closes (it never shows over a game)
+				yield return run("99.2", null);
+				bool shown = found == "told 99.2" && InfoWindow.IsOpen;
+				ExperimentalNotice.TestMenuLeft = true;
+				yield return new WaitForSecondsRealtime(0.8f);
+				Check(ref ok, shown && !InfoWindow.IsOpen, "the popup closes when the main menu is left (shown " + shown + ", open after " + InfoWindow.IsOpen + ")");
+				ExperimentalNotice.TestMenuLeft = false;
+				yield return run(ExperimentalNotice.Version, null);
+				Check(ref ok, found == "newest" && !InfoWindow.IsOpen && logged == 1, "the same version (" + ExperimentalNotice.Version + "): nothing (" + found + ")");
+				yield return run("1.0", null);
+				Check(ref ok, found == "newest" && !InfoWindow.IsOpen && logged == 1, "an older one (1.0): nothing (" + found + ")");
+				yield return run(null, "Cannot resolve destination host");
+				Check(ref ok, found == "failed" && !InfoWindow.IsOpen && logged == 1 && (lines.LastOrDefault() ?? "").Contains("Cannot resolve destination host"), "offline: nothing, one log line (" + (lines.LastOrDefault() ?? "") + ")");
+				yield return run(null, "Request timeout");
+				Check(ref ok, found == "failed" && !InfoWindow.IsOpen && logged == 1, "a timeout: nothing (" + found + ")");
+				yield return run("<!DOCTYPE html><html><body>Custom Islands</body></html>", null);
+				Check(ref ok, found == "failed" && !InfoWindow.IsOpen && logged == 1 && (lines.LastOrDefault() ?? "").Contains("an unexpected answer"), "a changed page (HTML): nothing (" + (lines.LastOrDefault() ?? "") + ")");
+				yield return run("Not found", null);
+				Check(ref ok, found == "failed" && !InfoWindow.IsOpen && logged == 1, "a changed page (text): nothing (" + found + ")");
+				// The real request to an address that can't be reached (as offline): quiet, within the start's timeout
+				ExperimentalNotice.TestUrl = "https://custom-islands-update-check.invalid/version.txt";
+				float asked = Time.realtimeSinceStartup;
+				yield return run(null, null);
+				float took = Time.realtimeSinceStartup - asked;
+				ExperimentalNotice.TestUrl = null;
+				Check(ref ok, found == "failed" && !InfoWindow.IsOpen && logged == 1 && took < ExperimentalNotice.StartTimeout + 1.5f,
+					"unreachable site, a real request: nothing, one log line, " + took.ToString("F1") + " s (" + (lines.LastOrDefault() ?? "") + ")");
+				// Unticked: nothing asked
+				ExperimentalNotice.AutoCheck = false;
+				ExperimentalNotice.TestReply = "99.5";
+				bool started = ExperimentalNotice.CheckOnStart(true);
+				yield return new WaitForSecondsRealtime(0.5f);
+				Check(ref ok, !started && ExperimentalNotice.LastStartCheck == "off" && !InfoWindow.IsOpen, "unticked: nothing asked (" + ExperimentalNotice.LastStartCheck + ")");
+				Check(ref ok, errors.Count == 0, "no errors in the log (" + errors.Count + (errors.Count > 0 ? ": " + errors[0] : "") + ")");
+			}
+			finally
+			{
+				Application.logMessageReceived -= grab;
+				ExperimentalNotice.TestReply = ExperimentalNotice.TestError = ExperimentalNotice.TestUrl = null;
+				ExperimentalNotice.TestMenuLeft = false;
+				ExperimentalNotice.PopupForTests = false;
+				HelpLinks.TestMode = false;
+				InfoWindow.Close();
+				ExperimentalNotice.AutoCheck = autoBefore;
+				ExperimentalNotice.SkippedVersion = skipBefore;
+				if (closedBefore) ExperimentalNotice.Close();
+			}
+			if (ok) Log("PASS: update on start"); else Fail("update on start");
+		}
+
+		/// <summary>CIUpdateOnStart: one check on start with this faked answer; what it found and how many log lines it wrote.</summary>
+		static IEnumerator Ask(string reply, string error, Action<string> found, Action<int> logged, List<string> lines)
+		{
+			InfoWindow.Close();
+			int before = lines.Count;
+			ExperimentalNotice.TestReply = reply; ExperimentalNotice.TestError = error;
+			ExperimentalNotice.CheckOnStart(true);
+			for (float t = 0f; ExperimentalNotice.LastStartCheck == null && t < ExperimentalNotice.StartTimeout + 4f; t += Time.unscaledDeltaTime) yield return null;
+			yield return null;
+			found(ExperimentalNotice.LastStartCheck);
+			logged(lines.Count - before);
+		}
+
+		[ConsoleCommand(name: "CIHoverTips",docs: "Dev, main menu or editor (X9): where no status bar shows a control's hover text - the main menu's windows (here the plan picker), the stats page - it comes in a small tip by the mouse after a moment, on the screen, and goes when the mouse leaves; in the editor its status bar has it and no tip comes")]
 		public static void HoverTipsCommand() { StartTest(HoverTipsRoutine()); }
 
 		static IEnumerator HoverTipsRoutine()
