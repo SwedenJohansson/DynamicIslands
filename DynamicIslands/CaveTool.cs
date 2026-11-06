@@ -332,6 +332,10 @@ namespace DynamicIslands.Editor
 		/// <summary>The rock a lone den's wall is drawn with (the den's own texture is an atlas of colour patches).</summary>
 		public const string WallRock = "BigRock_1";
 		const float PlugIn = 0.8f, PlugBelow = 3f, HoleHalf = 2.6f, HoleBelow = 1f, HoleUp = 5.6f;
+		/// <summary>A lone den's wall's outside faces (a child of its wall): drawn as the hill over the den when there is one.</summary>
+		public const string PlugOutName = "CavePlugOut";
+		/// <summary>How far a lone den's way in is set back into the den at its edge: the wall leans in round it as a funnel.</summary>
+		public const float PlugFunnel = 2.2f;
 
 		/// <summary>
 		/// The bear den's mouth opens far wider than a tunnel: in Balboa its cliff closes the rest, here the hill does from
@@ -585,6 +589,9 @@ namespace DynamicIslands.Editor
 			{
 				PlugOpening(den, CaveMountain.OverMeasured(den.transform, Room).x);
 				TintWall(den, props);
+				// (its outside as the hill over the den, when the hill is already there; else the hill does it once built)
+				CaveMountain hill = den.GetComponentInParent<CaveMountain>();
+				if (hill != null && hill.Skin != null) WallLikeHill(den, hill.Skin);
 			}
 			catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Walling a den's mouth failed: " + x.Message); }
 		}
@@ -608,12 +615,52 @@ namespace DynamicIslands.Editor
 				Func<float, float, float> ratio = (s, r) => Mathf.Clamp(s / Mathf.Max(0.02f, r), 0.1f, 4f);
 				factor = new Color(ratio(shell.r, wall.r), ratio(shell.g, wall.g), ratio(shell.b, wall.b), 1f);
 			}
-			if (factor != Color.white) CaveMountain.TintRockTextures(wr, factor);
+			if (factor != Color.white)
+			{
+				CaveMountain.TintRockTextures(wr, factor);
+				Transform outT = plug.Find(PlugOutName);
+				MeshRenderer or = outT != null ? outT.GetComponent<MeshRenderer>() : null;
+				if (or != null && or.GetComponent<HillWall>() == null) CaveMountain.TintRockTextures(or, factor);
+			}
 			bool reread = matched && LitColour(new Renderer[] { wr }, out after);
 			Debug.Log("[CUSTOM ISLANDS] Den's wall coloured as its shell: " + (matched ? "shell " + shell.ToString("0.00") + ", wall " + wall.ToString("0.00") : "colours not read")
 				+ ", factor " + factor.ToString("0.00") + (reread ? ", wall now " + after.ToString("0.00") : ""));
 			return factor;
 		}
+
+		/// <summary>
+		/// A lone den's wall's outside drawn as the hill over the den (CaveMountain's skin): the same rock, tint and light, its
+		/// texture mapped as the skin's (world metres / 14, from the side it faces). Raft's big rock tinted as the den's shell
+		/// still read as an orange and black panel in grey rock, framing a lighter square - Shelter Atoll's ammo cave from the
+		/// sea, 11-06 review. The inside stays as the den. False when there is no outside or hill.
+		/// </summary>
+		public static bool WallLikeHill(GameObject den, MeshRenderer skin)
+		{
+			Transform plug = den != null ? den.transform.Find(PlugName) : null;
+			Transform outT = plug != null ? plug.Find(PlugOutName) : null;
+			MeshRenderer r = outT != null ? outT.GetComponent<MeshRenderer>() : null;
+			MeshFilter mf = outT != null ? outT.GetComponent<MeshFilter>() : null;
+			if (r == null || mf == null || mf.sharedMesh == null || skin == null || skin.sharedMaterial == null) return false;
+			r.sharedMaterial = skin.sharedMaterial;
+			r.shadowCastingMode = skin.shadowCastingMode;
+			r.receiveShadows = skin.receiveShadows;
+			r.lightProbeUsage = skin.lightProbeUsage;
+			r.reflectionProbeUsage = skin.reflectionProbeUsage;
+			var block = new MaterialPropertyBlock();
+			skin.GetPropertyBlock(block);
+			r.SetPropertyBlock(block);
+			Mesh m = mf.sharedMesh;
+			Vector3 f = den.transform.forward;
+			bool alongX = Mathf.Abs(f.x) >= Mathf.Abs(f.z);
+			m.SetUVs(0, m.vertices.Select(v => { Vector3 w = outT.TransformPoint(v); return (alongX ? new Vector2(w.z, w.y) : new Vector2(w.x, w.y)) / 14f; }).ToList());
+			if (r.GetComponent<HillWall>() == null) r.gameObject.AddComponent<HillWall>();
+			if (den.GetComponent<CaveLit>() != null) CaveLit.Mark(den);
+			Debug.Log("[CUSTOM ISLANDS] Den's wall outside drawn as the hill: " + skin.sharedMaterial.name);
+			return true;
+		}
+
+		/// <summary>Marks a lone den's wall's outside drawn as the hill: CaveLit leaves its light alone.</summary>
+		public class HillWall : MonoBehaviour { }
 
 		/// <summary>A den's own renderers: all but its wall (PlugName).</summary>
 		public static Renderer[] DenShell(GameObject den)
@@ -767,11 +814,70 @@ namespace DynamicIslands.Editor
 							if (a >= 0 && b >= 0 && a < nx && b < ny && inside[a, b]) keep[i, k] = true;
 						}
 			float hx0 = mx - HoleHalf, hx1 = mx + HoleHalf, hy0 = my - HoleBelow, hy1 = my + HoleUp;
+			// (the way in: a rounded, uneven arch round the passage's rectangle, not a square window - the rectangle cut in a
+			// flat panel read as a texture board stuck on the hill, Shelter Atoll's ammo cave from the sea, 11-06 review. The
+			// arch is a superellipse a bit wider than the passage, its edge pushed out by noise round it, so the passage stays clear)
+			float hcx = mx, hcy = (hy0 + hy1) * 0.5f, ha = HoleHalf * 1.5f, hb = (hy1 - hy0) * 0.5f * 1.35f;
+			const float hp = 2.2f;
+			Func<float, float, float> archNoise = (dx, dy) =>
+			{
+				float ang = Mathf.Atan2(dy, dx);
+				return 1f + 0.22f * Mathf.PerlinNoise(1.3f * Mathf.Cos(ang) + 7.7f, 1.3f * Mathf.Sin(ang) + 2.9f);
+			};
+			// (how far out of the arch a point is: 1 on its edge, under 1 inside)
+			Func<float, float, float> archQ = (px, py) =>
+			{
+				float dx = px - hcx, dy = py - hcy, s = archNoise(dx, dy);
+				return Mathf.Pow(Mathf.Pow(Mathf.Abs(dx) / (ha * s), hp) + Mathf.Pow(Mathf.Abs(dy) / (hb * s), hp), 1f / hp);
+			};
 			// (rock relief: a flat board with the den's texture at 20 m drew as a smooth marbled blue-white sheet beside
-			// The Abyss's acid path, 11-05. Each corner is pushed in or out by coarse noise and every triangle has its own
-			// corners, so the wall reads as faceted rock like the den's own walls)
+			// The Abyss's acid path, 11-05. Each corner is pushed in or out by coarse noise, so the wall reads as rock. And
+			// the wall leans back into the den round the way in (PlugFunnel): a funnel of rock, as a dug tunnel's mouth, its
+			// edge in shade, not a flat panel with a hole)
 			Func<float, float, float> depth = (px, py) => PlugRelief * (2f * Mathf.PerlinNoise(px / 1.6f + 17.3f, py / 1.6f + 5.1f) - 1f)
-				+ 0.35f * PlugRelief * (2f * Mathf.PerlinNoise(px / 0.7f + 3.7f, py / 0.7f + 41.9f) - 1f);
+				+ 0.35f * PlugRelief * (2f * Mathf.PerlinNoise(px / 0.7f + 3.7f, py / 0.7f + 41.9f) - 1f)
+				- PlugFunnel * (1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(archQ(px, py) - 1f)));
+			// (each cell: 0 none, 1 wall, 2 the way in)
+			var state = new int[nx, ny];
+			for (int i = 0; i < nx; i++)
+				for (int k = 0; k < ny; k++)
+				{
+					if (!keep[i, k]) continue;
+					float xa = x0 + i * cell, xb = xa + cell, ya = y0 + k * cell, yb = ya + cell;
+					bool rect = xb > hx0 && xa < hx1 && yb > hy0 && ya < hy1;
+					state[i, k] = rect || archQ(xa + cell * 0.5f, ya + cell * 0.5f) < 1f ? 2 : 1;
+				}
+			Func<int, int, int> stateAt = (i, k) => i >= 0 && k >= 0 && i < nx && k < ny ? state[i, k] : 0;
+			// (a corner on the way in's edge lies on the arch; one on the wall's outer edge is pushed out a little by noise, so
+			// neither edge is a straight row of 0.5 m cells)
+			Func<int, int, Vector2> place = (ci, ck) =>
+			{
+				float px = x0 + ci * cell, py = y0 + ck * cell;
+				bool wall = false, hole = false, none = false;
+				for (int di = -1; di <= 0; di++)
+					for (int dk = -1; dk <= 0; dk++)
+					{
+						int s = stateAt(ci + di, ck + dk);
+						if (s == 1) wall = true; else if (s == 2) hole = true; else none = true;
+					}
+				float dx = px - hcx, dy = py - hcy, len = Mathf.Sqrt(dx * dx + dy * dy);
+				if (len < 1e-3f) return new Vector2(px, py);
+				if (wall && hole)
+				{
+					float sc = archNoise(dx, dy), ux = dx / len, uy = dy / len;
+					float t = 1f / Mathf.Pow(Mathf.Pow(Mathf.Abs(ux) / (ha * sc), hp) + Mathf.Pow(Mathf.Abs(uy) / (hb * sc), hp), 1f / hp);
+					// (never into the passage's rectangle)
+					Vector2 on = new Vector2(hcx + ux * t, hcy + uy * t);
+					if (on.x > hx0 && on.x < hx1 && on.y > hy0 && on.y < hy1) return new Vector2(px, py);
+					return on;
+				}
+				if (wall && none)
+				{
+					float push = 0.5f * Mathf.PerlinNoise(px * 0.9f + 31.1f, py * 0.9f + 12.7f);
+					return new Vector2(px + dx / len * push, py + dy / len * push);
+				}
+				return new Vector2(px, py);
+			};
 			var verts = new List<Vector3>();
 			var norms = new List<Vector3>();
 			var tris = new List<int>();
@@ -783,7 +889,8 @@ namespace DynamicIslands.Editor
 			{
 				int key = ci * (ny + 2) + ck, n;
 				if (corner[side].TryGetValue(key, out n)) return n;
-				float px = x0 + ci * cell, py = y0 + ck * cell, e = cell;
+				Vector2 pp = place(ci, ck);
+				float px = pp.x, py = pp.y, e = cell;
 				float fx = (depth(px + e, py) - depth(px - e, py)) / (2f * e), fy = (depth(px, py + e) - depth(px, py - e)) / (2f * e);
 				n = verts.Count;
 				verts.Add(new Vector3(px, py, z + depth(px, py)));
@@ -792,26 +899,29 @@ namespace DynamicIslands.Editor
 				return n;
 			};
 			int cells = 0;
+			var trisOut = new List<int>();
 			for (int k = 0; k < ny; k++)
-			{
-				float ya = y0 + k * cell, yb = ya + cell;
 				for (int i = 0; i < nx; i++)
 				{
-					if (!keep[i, k]) continue;
-					float xa = x0 + i * cell, xb = xa + cell;
-					if (xb > hx0 && xa < hx1 && yb > hy0 && ya < hy1) continue; // (the passage's hole)
+					if (state[i, k] != 1) continue; // (none, or the way in)
 					cells++;
 					// (both sides, each with its own corners: on shared ones the two sides' normals cancelled out and the wall
 					// drew as a flat black board - seen from inside The Abyss's lava tube, 11-05; Plug had the same fault, TN1)
 					tris.AddRange(new[] { at(0, i, k), at(0, i + 1, k + 1), at(0, i + 1, k), at(0, i, k), at(0, i, k + 1), at(0, i + 1, k + 1) });
-					tris.AddRange(new[] { at(1, i, k), at(1, i + 1, k), at(1, i + 1, k + 1), at(1, i, k), at(1, i + 1, k + 1), at(1, i, k + 1) });
+					trisOut.AddRange(new[] { at(1, i, k), at(1, i + 1, k), at(1, i + 1, k + 1), at(1, i, k), at(1, i + 1, k + 1), at(1, i, k + 1) });
 				}
-			}
 			if (tris.Count == 0) { UnityEngine.Object.DestroyImmediate(go); return; }
+			// (the wall itself draws its inside, lit as the den; its outside is a child of its own (PlugOutName), so it can be
+			// drawn and lit as the hill over the den - WallLikeHill. The collider has both)
 			var mesh = new Mesh { name = PlugName };
 			if (verts.Count > 65000) mesh.indexFormat = IndexFormat.UInt32;
 			mesh.SetVertices(verts);
 			mesh.SetTriangles(tris, 0);
+			var both = new Mesh { name = PlugName + " collider" };
+			if (verts.Count > 65000) both.indexFormat = IndexFormat.UInt32;
+			both.SetVertices(verts);
+			both.SetTriangles(tris.Concat(trisOut).ToList(), 0);
+			both.RecalculateBounds();
 			// (the den's texture is an atlas of colour patches: the wall's own UVs at 20 m showed all of it - blue, white and
 			// orange - beside The Abyss's acid path, 11-05. The wall takes the den's colour from round its mouth instead)
 			// The den's mesh is not readable in the game, so it is Raft's big rock instead (as the cave mountain's skin), at 14 m
@@ -827,8 +937,19 @@ namespace DynamicIslands.Editor
 			go.AddComponent<MeshFilter>().sharedMesh = mesh;
 			MeshRenderer wr = go.AddComponent<MeshRenderer>();
 			wr.sharedMaterial = rockLook != null ? rockLook.sharedMaterial : look.sharedMaterial;
-			go.AddComponent<MeshCollider>().sharedMesh = mesh;
-			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + cells + " cells, rock relief, smooth, " + wr.sharedMaterial.name + (atlas ? " at uv " + swatch.ToString("0.000") : ""));
+			go.AddComponent<MeshCollider>().sharedMesh = both;
+			var outGo = new GameObject(PlugOutName);
+			outGo.layer = go.layer;
+			outGo.transform.SetParent(go.transform, false);
+			var outMesh = UnityEngine.Object.Instantiate(mesh);
+			outMesh.name = PlugOutName;
+			outMesh.SetTriangles(trisOut, 0);
+			outMesh.RecalculateBounds();
+			outGo.AddComponent<MeshFilter>().sharedMesh = outMesh;
+			outGo.AddComponent<MeshRenderer>().sharedMaterial = wr.sharedMaterial;
+			// (lit as the den, its own parts looked up again; the outside is left out once it is drawn as the hill)
+			if (den.GetComponent<CaveLit>() != null) CaveLit.Mark(den);
+			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + cells + " cells, rock relief, smooth, arched way in, " + wr.sharedMaterial.name + (atlas ? " at uv " + swatch.ToString("0.000") : ""));
 		}
 
 		/// <summary>The UV of the den mesh's corner nearest a point by its mouth (its rock colour), when the mesh is readable.</summary>
@@ -1590,7 +1711,9 @@ namespace DynamicIslands.Editor
 
 		void Find()
 		{
-			rends = GetComponentsInChildren<Renderer>(true).Where(r => !(r is ParticleSystemRenderer) && !(r is LineRenderer) && !(r is TrailRenderer)).ToArray();
+			// (not a lone den's wall's outside drawn as the hill: lit as the hill - CaveTool.WallLikeHill)
+			rends = GetComponentsInChildren<Renderer>(true).Where(r => !(r is ParticleSystemRenderer) && !(r is LineRenderer) && !(r is TrailRenderer)
+				&& r.GetComponent<CaveTool.HillWall>() == null).ToArray();
 			subShine = new float[rends.Length][];
 			ownShine = new float[rends.Length];
 			for (int k = 0; k < rends.Length; k++)

@@ -108,6 +108,12 @@ namespace DynamicIslands
 							Check(ref ok, wm != denMat, "a lone den's wall is drawn with Raft's rock (" + (wm != null ? wm.name : "none") + "), not the den's atlas (" + denMat.name + ")");
 							Check(ref ok, spread > 0.5f && tilted > nr.Length / 4, "a lone den's wall has rock relief: " + spread.ToString("0.00") + " m deep (over 0.5), "
 								+ tilted + " of " + nr.Length + " corners on tilted facets (over a quarter)");
+								// (its outside a child of its own, to be drawn as the hill: an orange panel round a light square from the sea,
+								// Shelter Atoll 11-06)
+								Transform po = pl.Find(CaveTool.PlugOutName);
+								Mesh om = po != null && po.GetComponent<MeshFilter>() != null ? po.GetComponent<MeshFilter>().sharedMesh : null;
+								int inT = m.triangles.Length, outT = om != null ? om.triangles.Length : 0;
+								Check(ref ok, om != null && outT == inT && outT > 0, "a lone den's wall has its outside as a child of its own (" + outT + " to " + inT + " triangle corners)");
 							// (the den's colour as drawn, not the big rock's grey-blue: a grey wall beside the lava tube's khaki shell, 11-05;
 							// the textures' means were alike, the shaders' light was not - so both are compared lit, after TintWall)
 							Color before, shell, wallLit;

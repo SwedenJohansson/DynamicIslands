@@ -23,6 +23,8 @@ namespace DynamicIslands.Editor
 		readonly List<IDictionary<string, string>> props = new List<IDictionary<string, string>>();
 		float due = -1f;
 		GameObject skin;
+		/// <summary>The hill's renderer once built (lone dens' walls are drawn as it outside - CaveTool.WallLikeHill), else null.</summary>
+		public MeshRenderer Skin { get { return skin != null ? skin.GetComponent<MeshRenderer>() : null; } }
 
 		/// <summary>A cave piece came and the mountain isn't (re)built yet (the tests wait for it instead of a fixed wait).</summary>
 		public bool Pending { get { return due >= 0f; } }
@@ -508,6 +510,9 @@ namespace DynamicIslands.Editor
 				Debug.Log("[CUSTOM ISLANDS] Cave mountain tint " + factor + " (colour " + n + ")");
 			}
 			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : ""));
+			// (lone dens walled before the hill was built: their walls' outsides drawn as the hill now)
+			foreach (Transform t in caves)
+				if (t != null) CaveTool.WallLikeHill(t.gameObject, mr);
 		}
 
 		/// <summary>Raft's island rock (CaravanIslandRocks) has no colour property, so ApplyTint leaves it orange under a dark
