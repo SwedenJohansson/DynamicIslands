@@ -4476,7 +4476,8 @@ host hasn't sent its custom islands yet"; [8](#8-playing-together)); press F10 a
 **I joined and couldn't move.** When you join where you stood last time, the mod holds you there until the island under
 you has come ("Waiting for the island you stood on to load..."): about half a minute, longer while that island is
 still loading on a slow start (up to two minutes) or downloading (up to five), and it lets go at once if you are
-hurt. A player who comes back onto the raft is never held: the raft drifts, so Raft itself puts them on it. Builds from
+hurt or use Spawn to raft or Unstuck. An island you deleted from your Mods folder never holds you: you are let go in a
+few seconds. A player who comes back onto the raft is never held: the raft drifts, so Raft itself puts them on it. Builds from
 before 2026-10-11 could hold a player over the sea, where the shark came: install the newest release on every machine.
 
 **"Some parts of Custom Islands are off".** A Raft update changed something the mod relies on: the box names the parts
