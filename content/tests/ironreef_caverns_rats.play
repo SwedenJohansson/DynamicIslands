@@ -9,8 +9,10 @@ at -23 -30.5 h=19.5
 wait 5
 expect animals Rat 2
 expect animalsinside Rat 2
-picture ir_b_rats -26.3 17.9 -35 -29 16.5 -40
-picture ir_c_rats -19.5 15.6 -43.2 -24 14.7 -40.8
+picture rat_ironreef_b_out -37.6 +1.7 -46.4 -34.6 17 -42.6
+picture rat_ironreef_b_in -26.8 18.3 -35.5 -29.5 16.7 -40
+picture rat_ironreef_c_out -14 17.2 -45.4 -19 16.2 -43.6
+picture rat_ironreef_c_in -19.5 16.4 -43.2 -24 15 -40.8
 wait 15
 expect animalsmoved Rat 1
 expect animals Rat 2

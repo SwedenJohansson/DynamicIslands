@@ -692,6 +692,9 @@ loot shelsupply OxygenBottle*2;PlasticBottle_Water*2;HealingSalve_Good*1;Rope*2
 # Tangaroa rats, not Raft's rats: the quest's "Clear the rats out of the dormitory" counts animals labelled Rat, and
 # rats killed in a cave must not count for the dormitory. On the cave's floor, 6 m and more from the chests
 # and off the way in. No respawn.
+# (11-06 review: Radar Hill's planting (ar_plants_hill at 60 54 r=22) put palms under the ammo cave's rock, at its back
+# where the rats live - no trees under rock: taken out of the cave)
+clear at 62 80 r=11 all only=Palm|Tree|Bamboo|Banana|Mango below=9
 # The ammo cave: two at its back, 12 m from its chest by the mouth (the same den as The Abyss's lava tube). The lagoon cave's den is reached only under water and gets no NavMesh floor: no rats there
 place Creature_Rat_Tangaroa ammorats at 63 75 h=4.5
 prop ammorats creature.count=2
