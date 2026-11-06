@@ -999,7 +999,7 @@ namespace DynamicIslands
 			Log("PASS: backs " + mode + " (" + backs.Count + ")");
 		}
 
-		[ConsoleCommand(name: "CIRockLook", docs: "Dev, in a world: the island rock (Raft's Mountains shader) for finding the blue rock (11-06). props: each Mountains material's settings and the scene's light; vanilla / lit: the cave light (CaveLit) off and Raft's probes back, or on again; dark: the cave pieces lit by nothing; shine <k>: their shine times k; noprobe / probe: reflection probes off or on for every Mountains renderer; sand: Balboa_BigRocks_Dirt swapped for the hill's sand rock; noterrain / terrain: the island ground hidden or shown; rocktint <r g b>: the ground's steep layer tinted; cavehue <r g b>: the warmed Balboa rock (CaveRock) made again with that hue. CIRockLook <mode> [k]")]
+		[ConsoleCommand(name: "CIRockLook", docs: "Dev, in a world: the island rock (Raft's Mountains shader) for finding the blue rock (11-06). props: each Mountains material's settings and the scene's light; vanilla / lit: the cave light (CaveLit) off and Raft's probes back, or on again; dark: the cave pieces lit by nothing; shine <k>: their shine times k; noprobe / probe: reflection probes off or on for every Mountains renderer; sand: Balboa_BigRocks_Dirt swapped for the hill's sand rock; noterrain / terrain: the island ground hidden or shown; rocktint <r g b>: the ground's steep layer tinted; cavehue <r g b>: the warmed Balboa rock (CaveRock) made again with that hue; nosun / sun: the sun off or on; norefl / refl: reflections off (intensity 0, probes off) or back; flatnormal / flatall / normal: the backs' and hill skins' (or every Mountains renderer's) main normal map flat, or back. CIRockLook <mode> [k]")]
 		public static void RockLookCommand(string[] args)
 		{
 			string mode = args != null && args.Length > 0 ? args[0] : "";
@@ -1062,17 +1062,59 @@ namespace DynamicIslands
 				}
 				Log("  steep layers tinted " + c + ": " + n);
 			}
+			else if (mode == "nosun" || mode == "sun")
+			{
+				int n = 0;
+				foreach (Light l in Object.FindObjectsOfType<Light>(true))
+					if (l.type == LightType.Directional) { l.enabled = mode == "sun"; n++; }
+				Log("  directional lights " + (mode == "sun" ? "on" : "off") + ": " + n);
+			}
+			else if (mode == "norefl" || mode == "refl")
+			{
+				if (mode == "norefl") { reflWas = RenderSettings.reflectionIntensity; RenderSettings.reflectionIntensity = 0f; }
+				else if (reflWas >= 0f) RenderSettings.reflectionIntensity = reflWas;
+				int n = 0;
+				foreach (ReflectionProbe rp in Object.FindObjectsOfType<ReflectionProbe>(true)) { rp.enabled = mode == "refl"; n++; }
+				Log("  reflections x" + RenderSettings.reflectionIntensity + ", probes " + (mode == "refl" ? "on" : "off") + ": " + n);
+			}
+			else if (mode == "flatnormal" || mode == "flatall" || mode == "normal")
+			{
+				// (the backs and the hill skin: their main normal map flat - or every Mountains renderer's, flatall)
+				int n = 0;
+				foreach (MeshRenderer r in rends)
+				{
+					bool back = r.name == global::DynamicIslands.Editor.CaveBacks.Name || r.name == CaveMountain.SkinName;
+					if (mode == "flatnormal" && !back) continue;
+					Material[] mats = r.sharedMaterials;
+					for (int i = 0; i < mats.Length; i++)
+					{
+						Material m = mats[i], o;
+						if (m == null) continue;
+						if (flatOrig.TryGetValue(m, out o)) { if (mode == "normal") mats[i] = o; continue; }
+						if (mode == "normal" || !m.HasProperty("_MainNormal")) continue;
+						var f = new Material(m) { name = m.name };
+						f.SetTexture("_MainNormal", Texture2D.normalTexture);
+						flatOrig[f] = m;
+						mats[i] = f;
+					}
+					r.sharedMaterials = mats;
+					n++;
+				}
+				Log("  main normal " + mode + ": " + n + " renderers");
+			}
 			else if (mode == "cavehue" && args.Length >= 4)
 			{
 				var c = new Color(float.Parse(args[1], CultureInfo.InvariantCulture), float.Parse(args[2], CultureInfo.InvariantCulture), float.Parse(args[3], CultureInfo.InvariantCulture));
 				int n = global::DynamicIslands.Editor.CaveRock.Remake(c);
 				Log("  cave rock hue " + c + ": " + n + " renderers; " + global::DynamicIslands.Editor.CaveRock.LastNote);
 			}
-			else { Fail("CIRockLook <props|vanilla|lit|dark|light|shine k|noprobe|probe|sand|noterrain|terrain|rocktint r g b|cavehue r g b>"); return; }
+			else { Fail("CIRockLook <props|vanilla|lit|dark|light|shine k|noprobe|probe|sand|noterrain|terrain|rocktint r g b|cavehue r g b|nosun|sun|norefl|refl|flatnormal|flatall|normal>"); return; }
 			Log("PASS: rock look " + mode + " (" + rends.Count + " renderers)");
 		}
 
 		static readonly Dictionary<string, Texture2D> rockOrig = new Dictionary<string, Texture2D>();
+		static readonly Dictionary<Material, Material> flatOrig = new Dictionary<Material, Material>();
+		static float reflWas = -1f;
 
 		[ConsoleCommand(name: "CIDownRays", docs: "Dev, in a world: what lies over and under points of a loaded island (island frame) - a ray down from 80 m at each, every collider it meets with its height, and the terrain's height there: is a cave's shell covered by ground, or out in the open over the sea (11-06). CIDownRays <island> <x> <z> [<x> <z> ...]")]
 		public static void DownRaysCommand(string[] args)
