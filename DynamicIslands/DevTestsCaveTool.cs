@@ -901,7 +901,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIDenWalls", docs: "Dev, in a world: the wall across each lone bear den's mouth (ar_cave, CaveTool.PlugOpening) on a loaded island - every face's normal set (zero ones draw flat black: the dark slabs round its mouth, 11-06), faces both into the den and out of its mouth, and lit as the den (CaveLit). CIDenWalls <island>")]
 		public static void DenWallsCommand(string[] args)
 		{
-			IslandWorldState.Entry e = LoadedIsland(args);
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args ?? new string[0]) });
 			if (e == null) return;
 			var walls = e.Root.GetComponentsInChildren<MeshFilter>(true).Where(f => f.name == CaveTool.PlugName && f.sharedMesh != null).ToList();
 			if (walls.Count == 0) { Fail("no den wall (" + CaveTool.PlugName + ") on " + e.HostName); return; }
@@ -918,6 +918,67 @@ namespace DynamicIslands
 			}
 			if (bad > 0) Fail(bad + " of " + walls.Count + " den walls drawn wrong");
 			else Log("PASS: den walls " + walls.Count + ", each face lit both ways");
+		}
+
+		static Cubemap shineTest;
+		[ConsoleCommand(name: "CIRockShine", docs: "Dev, in a world: what draws Balboa cave rock blue (11-06). black: the sky's reflection made black for everything (Raft's default reflection, a probe); spec: only the cave pieces' renderers get a grey reflection through their property block; reset. CIRockShine <black|spec|reset>")]
+		public static void RockShineCommand(string[] args)
+		{
+			string mode = args != null && args.Length > 0 ? args[0] : "";
+			if (shineTest == null)
+			{
+				shineTest = new Cubemap(8, TextureFormat.RGBA32, false);
+				var px = Enumerable.Repeat(new Color(0.02f, 0.02f, 0.02f, 1f), 64).ToArray();
+				foreach (CubemapFace f in new[] { CubemapFace.PositiveX, CubemapFace.NegativeX, CubemapFace.PositiveY, CubemapFace.NegativeY, CubemapFace.PositiveZ, CubemapFace.NegativeZ }) shineTest.SetPixels(px, f);
+				shineTest.Apply();
+			}
+			var rends = Object.FindObjectsOfType<CaveLit>().SelectMany(c => c.GetComponentsInChildren<Renderer>(true)).Where(r => r is MeshRenderer).ToList();
+			if (mode == "black")
+			{
+				Log("  default reflection was " + RenderSettings.defaultReflectionMode + " " + (RenderSettings.customReflection != null ? RenderSettings.customReflection.name : "-") + ", intensity " + RenderSettings.reflectionIntensity);
+				RenderSettings.defaultReflectionMode = UnityEngine.Rendering.DefaultReflectionMode.Custom;
+				RenderSettings.customReflection = shineTest;
+				RenderSettings.reflectionIntensity = 0f;
+				foreach (ReflectionProbe rp in Object.FindObjectsOfType<ReflectionProbe>()) rp.intensity = 0f;
+			}
+			else if (mode == "spec")
+			{
+				var b = new MaterialPropertyBlock();
+				foreach (Renderer r in rends)
+				{
+					r.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+					r.GetPropertyBlock(b); b.SetTexture("unity_SpecCube0", shineTest); b.SetVector("unity_SpecCube0_HDR", new Vector4(1f, 1f, 0f, 0f)); r.SetPropertyBlock(b);
+				}
+			}
+			else if (mode == "reset")
+			{
+				RenderSettings.defaultReflectionMode = UnityEngine.Rendering.DefaultReflectionMode.Skybox;
+				RenderSettings.reflectionIntensity = 1f;
+				foreach (Renderer r in rends) r.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.BlendProbes;
+			}
+			Log("  probes in the world " + Object.FindObjectsOfType<ReflectionProbe>().Length + ", cave renderers " + rends.Count + ", their usage " + string.Join(",", rends.Select(r => r.reflectionProbeUsage.ToString()).Distinct().ToArray()));
+			Log("PASS: rock shine " + mode);
+		}
+
+		[ConsoleCommand(name: "CICaveLit", docs: "Dev, in a world: every Balboa cave piece placed on a loaded island (a mine's dead-end mound, an ar_cave den, the cave tool's tunnels) lit as a cave - its renderers on the cave light (CaveLit), not Raft's blue sky light that drew its faces bright blue (11-06). CICaveLit [island]")]
+		public static void CaveLitCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args ?? new string[0]) });
+			if (e == null) return;
+			var pieces = e.Root.GetComponentsInChildren<Transform>(true).Where(t => t.name.StartsWith("BalboaCave", System.StringComparison.Ordinal)
+				&& (t.parent == null || !t.parent.name.StartsWith("BalboaCave", System.StringComparison.Ordinal))).ToList();
+			if (pieces.Count == 0) { Fail("no Balboa cave piece on " + e.HostName); return; }
+			int bad = 0;
+			foreach (Transform t in pieces)
+			{
+				Renderer[] rs = t.GetComponentsInChildren<Renderer>(false).Where(r => r.enabled && !(r is ParticleSystemRenderer)).ToArray();
+				int off = rs.Count(r => r.lightProbeUsage != UnityEngine.Rendering.LightProbeUsage.CustomProvided);
+				bool marked = t.GetComponentInParent<CaveLit>() != null;
+				if (!marked || off > 0) bad++;
+				Log("  " + t.name + " at " + (t.position - e.Position).ToString("F1") + ": " + rs.Length + " renderers, " + (marked ? "cave light" : "NOT marked") + ", on the sky's light " + off);
+			}
+			if (bad > 0) Fail(bad + " of " + pieces.Count + " Balboa cave pieces lit by the sky");
+			else Log("PASS: Balboa cave pieces " + pieces.Count + ", all on the cave light");
 		}
 	}
 }

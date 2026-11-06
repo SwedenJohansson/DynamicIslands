@@ -1877,7 +1877,9 @@ namespace DynamicIslands
 				for (int f = 0; f < 10; f++) { MmHold(pl, false); yield return null; }
 				if (ReachFree(pl)) for (int f = 0; f < 5; f++) { MmHold(pl, false); yield return null; }
 			}
-			else if (reachWalkIn && g.Kind[way[0]] == 0 && g.Pos[way[0]].y < RSea + 0.3f && (ReachFeet(pl) - W(way[0])).magnitude > 1.5f)
+			// (any standing start, not only the shallows': a walk in whose way begins on land set off from where the last target's
+			// walk left the player - maybe inside a mine, its first steps then through rock to the way: Old Mine Islet INVALIDs 11-06)
+			else if (reachWalkIn && g.Kind[way[0]] == 0 && (ReachFeet(pl) - W(way[0])).magnitude > 1.5f)
 			{
 				// (a sea start in the shallows - a standing spot at or under the sea's surface, PQ11 10-29 - was never moved to: the
 				// walker set off from where the last walk left it. Coldhold on box/box3 10-30: every walk "stuck on the way to

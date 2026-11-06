@@ -605,6 +605,10 @@ namespace DynamicIslands.Editor
 					if (o.Name == CaveTool.Room && ObjectProps.Get(o.Props, ObjectProps.CavePlug, "") == "")
 						DynamicIslands.instance.StartCoroutine(CaveTool.PlugOpeningLater(go, o.Props));
 					ObjectProps.ApplyTint(go, o.Props);
+					// (Balboa's cave rock placed on its own - a dead-end cave as a mine's mound, a bear den - had Raft's blue sky light:
+					// out of Balboa's own cave zones its faces came out bright blue and patterned, in the den's back and on the mound's
+					// top (user 11-06, Old Mine Islet). Lit as the cave tool's pieces: warm grey, less shine)
+					if (o.Name != null && o.Name.StartsWith("BalboaCave", System.StringComparison.Ordinal)) CaveLit.Mark(go);
 					ZiplineEnds.Apply(go, o.Props, parent.position);
 					if (ObjectProps.IsNote(o.Name, o.Props))
 					{
