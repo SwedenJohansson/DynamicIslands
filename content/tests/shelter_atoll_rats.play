@@ -9,7 +9,7 @@ at 61 100
 wait 5
 expect animals Tangaroa rat 2
 expect animalsinside Tangaroa rat 2
-picture rat_shelter_ammo_out 61 +1.7 109 62 4.5 90
+picture rat_shelter_ammo_out 61 4.4 102.5 62 3.4 86
 picture rat_shelter_ammo_in 63 4.6 81.5 63.5 3.3 75.5
 wait 15
 expect animalsmoved Tangaroa rat 1
