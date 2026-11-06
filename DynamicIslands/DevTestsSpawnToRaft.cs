@@ -81,7 +81,9 @@ namespace DynamicIslands
 				Raft raft = ComponentManager<Raft>.Value;
 				RaycastHit hit;
 				bool onRaft = Physics.Raycast(p.transform.position, Vector3.down, out hit, 3f, ~(1 << LayerMask.NameToLayer("LocalPlayer")), QueryTriggerInteraction.Ignore)
-					&& raft != null && hit.collider.transform.IsChildOf(raft.transform);
+					&& raft != null && (hit.collider.transform.IsChildOf(raft.transform)
+						// (Raft's FoundationCollider stands in for foundation blocks and is not under the raft)
+						|| hit.collider.name.Contains("FoundationCollider") || hit.collider.GetType().Name.Contains("FoundationCollider"));
 				Check(ref ok, onRaft, "Yes: the player stands on the raft (" + (hit.collider != null ? hit.collider.name : "nothing") + " below, "
 					+ (p.transform.position - CustomIslandSpawner.RaftPosition.Value).magnitude.ToString("F1") + " m from its middle, y " + p.transform.position.y.ToString("F1") + ")");
 				Check(ref ok, p.PersonController.controllerType == ControllerType.Ground, "... walking, not swimming");
