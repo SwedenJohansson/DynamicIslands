@@ -829,7 +829,7 @@ namespace DynamicIslands
 			if (!Minimap.Available) { Fail("minimap rafts: the world has 'No minimap' on"); Minimap.Enabled = was; yield break; }
 			string[] kinds = { GhostShip.TypeName, GhostRafts.TypeName, TraderRaft.TypeName };
 			List<IslandWorldState.Entry> made = new List<IslandWorldState.Entry>();
-			for (int k = 0; k < kinds.Length && ok; k++)
+			for (int k = 0; k < kinds.Length; k++)
 			{
 				// Open sea first: no map
 				Vector3? sea = MapSeaSpot();
