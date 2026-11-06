@@ -999,7 +999,7 @@ namespace DynamicIslands
 			Log("PASS: backs " + mode + " (" + backs.Count + ")");
 		}
 
-		[ConsoleCommand(name: "CIRockLook", docs: "Dev, in a world: the island rock (Raft's Mountains shader) for finding the blue rock (11-06). props: each Mountains material's settings and the scene's light; vanilla / lit: the cave light (CaveLit) off and Raft's probes back, or on again; dark: the cave pieces lit by nothing; shine <k>: their shine times k; noprobe / probe: reflection probes off or on for every Mountains renderer; sand: Balboa_BigRocks_Dirt swapped for the hill's sand rock. CIRockLook <mode> [k]")]
+		[ConsoleCommand(name: "CIRockLook", docs: "Dev, in a world: the island rock (Raft's Mountains shader) for finding the blue rock (11-06). props: each Mountains material's settings and the scene's light; vanilla / lit: the cave light (CaveLit) off and Raft's probes back, or on again; dark: the cave pieces lit by nothing; shine <k>: their shine times k; noprobe / probe: reflection probes off or on for every Mountains renderer; sand: Balboa_BigRocks_Dirt swapped for the hill's sand rock; noterrain / terrain: the island ground hidden or shown; rocktint <r g b>: the ground's steep layer tinted; cavehue <r g b>: the warmed Balboa rock (CaveRock) made again with that hue. CIRockLook <mode> [k]")]
 		public static void RockLookCommand(string[] args)
 		{
 			string mode = args != null && args.Length > 0 ? args[0] : "";
@@ -1062,7 +1062,13 @@ namespace DynamicIslands
 				}
 				Log("  steep layers tinted " + c + ": " + n);
 			}
-			else { Fail("CIRockLook <props|vanilla|lit|dark|light|shine k|noprobe|probe|sand|noterrain|terrain|rocktint r g b>"); return; }
+			else if (mode == "cavehue" && args.Length >= 4)
+			{
+				var c = new Color(float.Parse(args[1], CultureInfo.InvariantCulture), float.Parse(args[2], CultureInfo.InvariantCulture), float.Parse(args[3], CultureInfo.InvariantCulture));
+				int n = global::DynamicIslands.Editor.CaveRock.Remake(c);
+				Log("  cave rock hue " + c + ": " + n + " renderers; " + global::DynamicIslands.Editor.CaveRock.LastNote);
+			}
+			else { Fail("CIRockLook <props|vanilla|lit|dark|light|shine k|noprobe|probe|sand|noterrain|terrain|rocktint r g b|cavehue r g b>"); return; }
 			Log("PASS: rock look " + mode + " (" + rends.Count + " renderers)");
 		}
 

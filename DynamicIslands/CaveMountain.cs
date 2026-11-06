@@ -523,7 +523,7 @@ namespace DynamicIslands.Editor
 				GameObject rock = PlaceableCatalog.Get("BigRock_1");
 				rockLook = rock != null ? rock.GetComponentInChildren<MeshRenderer>(true) : null;
 			}
-			mr.sharedMaterial = rockLook != null && rockLook.sharedMaterial != null ? rockLook.sharedMaterial : look.sharedMaterial;
+			mr.sharedMaterial = CaveRock.Warmed(rockLook != null && rockLook.sharedMaterial != null ? rockLook.sharedMaterial : look.sharedMaterial);
 			mr.shadowCastingMode = look.shadowCastingMode;
 			mr.receiveShadows = look.receiveShadows;
 			skin.AddComponent<MeshCollider>().sharedMesh = mesh;
@@ -628,7 +628,7 @@ namespace DynamicIslands.Editor
 					GameObject big = PlaceableCatalog.Get("BigRock_1");
 					rock = big != null ? big.GetComponentInChildren<MeshRenderer>(true) : null;
 				}
-				m = rock != null ? rock.sharedMaterial : null;
+				m = rock != null ? CaveRock.Warmed(rock.sharedMaterial) : null;
 			}
 			if (m == null) return null;
 			mats[1] = m;

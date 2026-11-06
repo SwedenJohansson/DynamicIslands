@@ -191,4 +191,110 @@ namespace DynamicIslands.Editor
 				}
 		}
 	}
+	/// <summary>
+	/// Balboa's rock shader ("Mountains": Raft's big rocks, its cave pieces and the cave hills made from them) draws its steep faces
+	/// with Rock_Stylized - a grey-blue stone. Out of Balboa's own light, on a custom island's caves and hills, those faces read as
+	/// bright blue patterned patches, not mountain rock (11-06 user: Old Mine Islet's den and mine mouth). Every such piece wears a
+	/// copy of its material (one per material, shared) with that texture turned brown-grey: its own pattern, the island rock's hue.
+	/// Raft's own Balboa keeps its materials.
+	/// </summary>
+	public static class CaveRock
+	{
+		const string Prop = "_RockDiffuse";
+		/// <summary>The hue the steep rock takes (its brightness kept): Raft's brown-grey island rock.</summary>
+		internal static Color Hue = new Color(1f, 0.85f, 0.68f);
+		static readonly Dictionary<Material, Material> warmed = new Dictionary<Material, Material>();
+		static readonly Dictionary<Material, Material> original = new Dictionary<Material, Material>();
+		/// <summary>Tests: the last texture's average colour before and the factor it was multiplied by.</summary>
+		internal static string LastNote = "";
+
+		/// <summary>The material with its steep rock warmed (the same material when it has none, or is already a warmed copy).</summary>
+		public static Material Warmed(Material m)
+		{
+			if (m == null || original.ContainsKey(m) || !m.HasProperty(Prop)) return m;
+			Material w;
+			if (warmed.TryGetValue(m, out w) && w != null) return w;
+			Texture2D t = m.GetTexture(Prop) as Texture2D;
+			if (t == null) return m;
+			Color avg = Average(t);
+			// (each channel scaled so the average lands on Hue's balance; the strongest channel kept, the others lowered)
+			Color f = new Color(Hue.r / Mathf.Max(avg.r, 0.01f), Hue.g / Mathf.Max(avg.g, 0.01f), Hue.b / Mathf.Max(avg.b, 0.01f));
+			float top = Mathf.Max(f.r, Mathf.Max(f.g, f.b));
+			f = new Color(f.r / top, f.g / top, f.b / top, 1f);
+			w = new Material(m) { name = m.name };
+			w.SetTexture(Prop, TerrainPainter.Tinted(t, f));
+			warmed[m] = w;
+			original[w] = m;
+			LastNote = t.name + " average " + avg + ", factor " + f;
+			Debug.Log("[CUSTOM ISLANDS] Cave rock " + m.name + ": " + LastNote);
+			return w;
+		}
+
+		/// <summary>Every renderer under the object: its Balboa rock materials swapped for the warmed copies. Returns how many renderers.</summary>
+		public static int Apply(GameObject go)
+		{
+			if (go == null) return 0;
+			int n = 0;
+			foreach (Renderer r in go.GetComponentsInChildren<Renderer>(true))
+			{
+				if (r is ParticleSystemRenderer) continue;
+				Material[] mats = r.sharedMaterials;
+				bool changed = false;
+				for (int i = 0; i < mats.Length; i++)
+				{
+					Material w = Warmed(mats[i]);
+					if (w != mats[i]) { mats[i] = w; changed = true; }
+				}
+				if (changed) { r.sharedMaterials = mats; n++; }
+			}
+			return n;
+		}
+
+		/// <summary>Tests (CIRockLook cavehue): every warmed copy made again with another hue; renderers re-pointed. Returns how many.</summary>
+		internal static int Remake(Color hue)
+		{
+			Hue = hue;
+			var swap = new Dictionary<Material, Material>();
+			foreach (KeyValuePair<Material, Material> p in warmed) swap[p.Value] = p.Key;
+			warmed.Clear();
+			original.Clear();
+			int n = 0;
+			foreach (Renderer r in Object.FindObjectsOfType<Renderer>())
+			{
+				Material[] mats = r.sharedMaterials;
+				bool changed = false;
+				for (int i = 0; i < mats.Length; i++)
+				{
+					Material o;
+					if (mats[i] != null && swap.TryGetValue(mats[i], out o)) { mats[i] = Warmed(o); changed = true; }
+				}
+				if (changed) { r.sharedMaterials = mats; n++; }
+			}
+			return n;
+		}
+
+		/// <summary>A texture's average colour (read back small from the graphics card: Raft's textures can't be read).</summary>
+		static Color Average(Texture t)
+		{
+			var rt = RenderTexture.GetTemporary(32, 32, 0, RenderTextureFormat.ARGB32);
+			RenderTexture previous = RenderTexture.active;
+			try
+			{
+				Graphics.Blit(t, rt);
+				RenderTexture.active = rt;
+				var small = new Texture2D(32, 32, TextureFormat.RGBA32, false);
+				small.ReadPixels(new Rect(0, 0, 32, 32), 0, 0);
+				Color sum = Color.black;
+				foreach (Color c in small.GetPixels()) sum += c;
+				Object.Destroy(small);
+				return sum / 1024f;
+			}
+			catch { return new Color(0.5f, 0.5f, 0.5f); }
+			finally
+			{
+				RenderTexture.active = previous;
+				RenderTexture.ReleaseTemporary(rt);
+			}
+		}
+	}
 }
