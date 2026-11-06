@@ -12,6 +12,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next update (planned)
 
 Not in this release yet; these come in the next update:
+- **The island map stays small near ghost ships and drifting rafts**: back from open sea the map always comes up in the top-right corner. Before, a full map left open on an island (or M pressed at sea, with no map in sight) came back full screen over the middle of the screen when a ghost ship or a small raft drifted by. At sea M, + and - now do nothing.
 - **Cave hills over dug passages**: the rock hill over an island's caves no longer stands on over a dug passage that is open to the sky as a bridge (Ironreef Caverns' mouth C looked out from under a pale overhang); the passage stays an open cut with rock faces down to its floor.
 - **Shelter Atoll and Ironreef Caverns touch-ups**: Shelter's sunken dinghy lies keeled over and half in the sand on the lagoon floor by the cave's mouth, and its storeroom has a lamp and no longer has a post standing through it (a roof's support post is no longer stood down through a room under the roof); in Ironreef the rubble boulders in the fallen drift lie on its floor, not on the spike rigs, and a rock lip covers the dug lining at mouth B.
 - **Test plays: `use <islander> pick <n>`** picks answer n of an islander's dialogue as a click does, so a play can check what each answer does (a chest shown, a message).
