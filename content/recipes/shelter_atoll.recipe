@@ -136,12 +136,27 @@ call ar_cave x=62 z=82 h=3 yaw=0 al=ammorock chest=ammochest
 # (11-06 third review: rows of flattened sand still read as a wide flat slab with sheer sides, and the beach at its top
 # (h 3) left the den's floor lip (3.9) showing as a straight brown ledge: now a rounded fan of shore from the lip down
 # into the sea, its rings laid from the largest and lowest up, then smoothed - its sides slope as its front does)
+# (11-06 fourth review: the sea floor here is 70-150 m down, so the fan stood on a sheer column whose sides showed under
+# the water, and smoothing next to that drop pulled the fan's top down: first a shelf under it and along the rock's
+# sides, sloping down to 26 m, so the shore goes on down under the water as the island's own does; smoothing kept off
+# the rock's foot, where the den's room is cut out of the ground)
+brush flatten at 61 117 r=22 s=20 frames=200 h=-26
+brush flatten from 41 78 to 41 104 r=4 s=20 frames=200 h=-20
+brush flatten from 81.5 78 to 81.5 104 r=4 s=20 frames=200 h=-20
+brush flatten at 61 113 r=19 s=20 frames=200 h=-18
+brush flatten from 45 82 to 45 102 r=5 s=20 frames=200 h=-12
+brush flatten from 77.5 82 to 77.5 102 r=5 s=20 frames=200 h=-12
+brush flatten at 61 110 r=15.5 s=20 frames=200 h=-11
+brush flatten from 47.5 84 to 47.5 100 r=3.5 s=20 frames=200 h=-5
+brush flatten from 75 84 to 75 100 r=3.5 s=20 frames=200 h=-5
+brush flatten at 61 108 r=12.5 s=20 frames=200 h=-5.5
+brush smooth at 61 115 r=17 s=4 frames=20
 brush flatten at 61 107 r=10 s=20 frames=200 h=-2.6
 brush flatten at 61 105 r=8.5 s=20 frames=200 h=-1
 brush flatten at 61 103.2 r=7 s=20 frames=200 h=0.5
 brush flatten at 61 101.6 r=5.5 s=20 frames=200 h=1.9
 brush flatten from 54 99.5 to 68 99.5 r=3 s=20 frames=200 h=3.2
-brush smooth at 61 103 r=12 s=4 frames=40
+brush smooth at 61 106 r=8.5 s=4 frames=40
 brush flatten from 55 99 to 67 99 r=2.2 s=20 frames=60 h=3.6
 brush smooth from 52 100.5 to 70 100.5 r=4 s=4 frames=10
 clear from 61 101 to 61 110 r=7 body

@@ -703,7 +703,7 @@ namespace DynamicIslands.Editor
 		{
 			[NonSerialized] Material mat;
 			[NonSerialized] float front;
-			static readonly float[] Depth = { 1.2f, 2.9f, 4.8f }, Size = { 1.15f, 1.5f, 1.9f }, Alpha = { 0.5f, 0.38f, 0.38f };
+			static readonly float[] Depth = { 1.2f, 2.9f, 4.8f }, Size = { 1.15f, 1.5f, 1.9f }, Alpha = { 0.75f, 0.6f, 0.55f };
 			const int Seg = 40;
 
 			public static GameObject Build(GameObject plug, float cx, float cy, float ha, float hb, float hp, Func<float, float, float> noise, float front, float floorY)
