@@ -9,9 +9,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
-## Next update (planned)
+## 3.2 alpha - 2026-11-07: Caves and islanders
 
-Not in this release yet; these come in the next update:
+New in this release:
 - **Fewer small stutters near caves**: cave pieces only redo their light when the light changes, and items dropped on islands that never load are checked twice a second, not every frame. Gather quest steps can no longer stop counting after another mod's error during a pickup or harvest.
 - **Check for updates on start**: a **Check automatically** box under the main menu's **Check for updates** button (ticked by default) asks raftmodding.com once each time Raft starts. When a newer version is out, a box names it, with a button to the mod's page and **Don't show again for this version**; it only informs, closes with **Close** or Esc, and suggests trying the Raft Mod Loader's mods menu to update. Offline it says nothing.
 - **No more hanging in the air after deleting islands**: loading a world saved near islands you since deleted from your Mods folder (a whole plan, say) held you in the air for two minutes, waiting for islands that could never come, and put you back when you used Spawn to raft, Unstuck or `gotoraft`. Islands that are gone no longer hold you, and moving yourself (Spawn to raft, Unstuck) lets go at once.
