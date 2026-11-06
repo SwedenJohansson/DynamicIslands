@@ -773,7 +773,25 @@ namespace DynamicIslands.Editor
 			Func<float, float, float> depth = (px, py) => PlugRelief * (2f * Mathf.PerlinNoise(px / 1.6f + 17.3f, py / 1.6f + 5.1f) - 1f)
 				+ 0.35f * PlugRelief * (2f * Mathf.PerlinNoise(px / 0.7f + 3.7f, py / 0.7f + 41.9f) - 1f);
 			var verts = new List<Vector3>();
+			var norms = new List<Vector3>();
 			var tris = new List<int>();
+			// (each side's corners shared by the cells that meet there, with the relief's own smooth normal: every triangle with
+			// its own corners and flat normal drew the wall in 45-degree halves of orange and black - the rock shader (Mountains)
+			// blends its rock and sand by the normal - Shelter Atoll's ammo cave from the sea, 11-06)
+			var corner = new Dictionary<int, int>[] { new Dictionary<int, int>(), new Dictionary<int, int>() };
+			Func<int, int, int, int> at = (side, ci, ck) =>
+			{
+				int key = ci * (ny + 2) + ck, n;
+				if (corner[side].TryGetValue(key, out n)) return n;
+				float px = x0 + ci * cell, py = y0 + ck * cell, e = cell;
+				float fx = (depth(px + e, py) - depth(px - e, py)) / (2f * e), fy = (depth(px, py + e) - depth(px, py - e)) / (2f * e);
+				n = verts.Count;
+				verts.Add(new Vector3(px, py, z + depth(px, py)));
+				norms.Add(side == 0 ? new Vector3(fx, fy, -1f).normalized : new Vector3(-fx, -fy, 1f).normalized); // (0: facing -z, into the den)
+				corner[side][key] = n;
+				return n;
+			};
+			int cells = 0;
 			for (int k = 0; k < ny; k++)
 			{
 				float ya = y0 + k * cell, yb = ya + cell;
@@ -782,14 +800,11 @@ namespace DynamicIslands.Editor
 					if (!keep[i, k]) continue;
 					float xa = x0 + i * cell, xb = xa + cell;
 					if (xb > hx0 && xa < hx1 && yb > hy0 && ya < hy1) continue; // (the passage's hole)
-					Vector3 p00 = new Vector3(xa, ya, z + depth(xa, ya)), p10 = new Vector3(xb, ya, z + depth(xb, ya));
-					Vector3 p11 = new Vector3(xb, yb, z + depth(xb, yb)), p01 = new Vector3(xa, yb, z + depth(xa, yb));
+					cells++;
 					// (both sides, each with its own corners: on shared ones the two sides' normals cancelled out and the wall
 					// drew as a flat black board - seen from inside The Abyss's lava tube, 11-05; Plug had the same fault, TN1)
-					foreach (Vector3[] t in new[] { new[] { p00, p11, p10 }, new[] { p00, p01, p11 }, new[] { p00, p10, p11 }, new[] { p00, p11, p01 } })
-					{
-						tris.Add(verts.Count); verts.Add(t[0]); tris.Add(verts.Count); verts.Add(t[1]); tris.Add(verts.Count); verts.Add(t[2]);
-					}
+					tris.AddRange(new[] { at(0, i, k), at(0, i + 1, k + 1), at(0, i + 1, k), at(0, i, k), at(0, i, k + 1), at(0, i + 1, k + 1) });
+					tris.AddRange(new[] { at(1, i, k), at(1, i + 1, k), at(1, i + 1, k + 1), at(1, i, k), at(1, i + 1, k + 1), at(1, i, k + 1) });
 				}
 			}
 			if (tris.Count == 0) { UnityEngine.Object.DestroyImmediate(go); return; }
@@ -807,13 +822,13 @@ namespace DynamicIslands.Editor
 			bool atlas = rockLook == null && MouthSwatch(look, go.transform.TransformPoint(new Vector3(mx, my + HoleUp + 1f, RoomMax.z)), out swatch);
 			mesh.SetUVs(0, verts.Select(v => rockLook != null ? new Vector2(v.x, v.y) / 14f : atlas ? swatch + new Vector2(v.x, v.y) * (0.004f / PlugTile)
 				: new Vector2(v.x / PlugTile, v.y / PlugTile)).ToList());
-			mesh.RecalculateNormals();
+			mesh.SetNormals(norms);
 			mesh.RecalculateBounds();
 			go.AddComponent<MeshFilter>().sharedMesh = mesh;
 			MeshRenderer wr = go.AddComponent<MeshRenderer>();
 			wr.sharedMaterial = rockLook != null ? rockLook.sharedMaterial : look.sharedMaterial;
 			go.AddComponent<MeshCollider>().sharedMesh = mesh;
-			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + (verts.Count / 12) + " cells, rock relief, " + wr.sharedMaterial.name + (atlas ? " at uv " + swatch.ToString("0.000") : ""));
+			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + cells + " cells, rock relief, smooth, " + wr.sharedMaterial.name + (atlas ? " at uv " + swatch.ToString("0.000") : ""));
 		}
 
 		/// <summary>The UV of the den mesh's corner nearest a point by its mouth (its rock colour), when the mesh is readable.</summary>

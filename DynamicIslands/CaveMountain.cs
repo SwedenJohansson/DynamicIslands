@@ -426,13 +426,13 @@ namespace DynamicIslands.Editor
 			var norms = new List<Vector3>();
 			var uvs = new List<Vector2>();
 			var tris = new List<int>();
-			outward = new List<Vector3>();
 			Vector3 origin = new Vector3(b.center.x, b.min.y, b.center.z);
 			System.Func<int, int, Vector3> P = (i, k) => new Vector3(x0 + i * Cell, height[i, k], z0 + k * Cell);
 			// Top: both sides (from inside a cave, a hole in its shell shows rock). Its normals are the surface's at each grid point
 			// (from the heights round it), shared by the squares that meet there: each square's own flat one lit the steep sides
 			// as a patchwork, and Balboa's rock shader (Mountains) blends its rock and sand by the normal, so each square came out
-			// orange or black on its own - a mosaic of 45-degree rectangles (11-06, Shelter Atoll's ammo cave)
+			// orange or black on its own (11-06; the mosaic of 45-degree rectangles over Shelter Atoll's ammo cave was the den's
+			// front wall, though - CaveTool.PlugOpening)
 			var gn = new Vector3[nx, nz];
 			for (int i = 0; i < nx; i++)
 				for (int k = 0; k < nz; k++)
@@ -468,8 +468,6 @@ namespace DynamicIslands.Editor
 					}
 			}
 			finally { Physics.queriesHitBackfaces = backs; }
-			List<Vector3> outN = outward;
-			outward = null;
 			if (tris.Count == 0) return;
 
 			var mesh = new Mesh { name = SkinName };
@@ -494,22 +492,8 @@ namespace DynamicIslands.Editor
 				rockLook = rock != null ? rock.GetComponentInChildren<MeshRenderer>(true) : null;
 			}
 			mr.sharedMaterial = rockLook != null && rockLook.sharedMaterial != null ? rockLook.sharedMaterial : look.sharedMaterial;
+			mr.shadowCastingMode = look.shadowCastingMode;
 			mr.receiveShadows = look.receiveShadows;
-			// (its shadow from a copy whose every face, both windings, has the outward normal: the look's back faces have turned
-			// normals, and the shadow's normal bias moved those out from the hill onto its own face - the steep sides came out
-			// in rectangles of light and shadow, a mosaic of 45-degree steps in the rock's orange and black, 11-06 Shelter Atoll)
-			mr.shadowCastingMode = ShadowCastingMode.Off;
-			if (look.shadowCastingMode != ShadowCastingMode.Off)
-			{
-				var shade = new GameObject(SkinName + " shadow");
-				shade.layer = skin.layer;
-				shade.transform.SetParent(skin.transform, false);
-				shade.AddComponent<MeshFilter>().sharedMesh = ShadowMesh(mesh, verts, outN, tris);
-				var sr = shade.AddComponent<MeshRenderer>();
-				sr.sharedMaterial = mr.sharedMaterial;
-				sr.shadowCastingMode = ShadowCastingMode.ShadowsOnly;
-				sr.receiveShadows = false;
-			}
 			skin.AddComponent<MeshCollider>().sharedMesh = mesh;
 			// (tinted as its caves are: a dark den under an untinted orange hill showed where the one ended and the other began -
 			// the first tinted cave's tint, multiplied into the island's rock as ApplyTint does - RK15)
@@ -580,26 +564,6 @@ namespace DynamicIslands.Editor
 			mesh.SetVertices(v2);
 			mesh.SetNormals(n2);
 			mesh.SetUVs(0, u2);
-			mesh.SetTriangles(t2, 0);
-			mesh.bounds = one.bounds;
-			return mesh;
-		}
-
-		/// <summary>The mountain's shadow caster: its faces both ways round, every one with the outward normal (so the shadow's
-		/// normal bias moves it into the hill, never out over its own face).</summary>
-		static Mesh ShadowMesh(Mesh one, List<Vector3> verts, List<Vector3> outN, List<int> tris)
-		{
-			int n = verts.Count;
-			var v2 = new List<Vector3>(verts);
-			var n2 = new List<Vector3>(outN);
-			var t2 = new List<int>(tris);
-			v2.AddRange(verts);
-			n2.AddRange(outN);
-			for (int i = 0; i + 2 < tris.Count; i += 3) { t2.Add(tris[i] + n); t2.Add(tris[i + 2] + n); t2.Add(tris[i + 1] + n); }
-			var mesh = new Mesh { name = one.name + " (shadow)" };
-			if (v2.Count > 65000) mesh.indexFormat = IndexFormat.UInt32;
-			mesh.SetVertices(v2);
-			mesh.SetNormals(n2);
 			mesh.SetTriangles(t2, 0);
 			mesh.bounds = one.bounds;
 			return mesh;
@@ -757,9 +721,6 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		/// <summary>While the mountain is built: each point's outward normal (the front side's, for the back side's points too).</summary>
-		static List<Vector3> outward;
-
 		/// <summary>A four-sided face a-b-c-d with normal n (the other side too when both).</summary>
 		static void Quad(List<Vector3> verts, List<Vector3> norms, List<Vector2> uvs, List<int> tris, Vector3 origin,
 			Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 n, bool both, Vector3[] smooth = null)
@@ -775,7 +736,6 @@ namespace DynamicIslands.Editor
 					verts.Add(v - origin);
 					// (smooth: each corner's own, shared with the squares round it - see the top's)
 					norms.Add(smooth != null ? (side == 0 ? smooth[j] : -smooth[j]) : nn);
-					if (outward != null) outward.Add(smooth != null ? smooth[j] : n);
 					// (mapped from the side it faces most, in world metres: the rock's texture lines up across squares)
 					float ax = Mathf.Abs(n.x), ay = Mathf.Abs(n.y), az = Mathf.Abs(n.z);
 					uvs.Add(ay >= ax && ay >= az ? new Vector2(v.x, v.z) / 14f : ax >= az ? new Vector2(v.z, v.y) / 14f : new Vector2(v.x, v.y) / 14f);
