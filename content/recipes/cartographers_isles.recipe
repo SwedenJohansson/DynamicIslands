@@ -39,7 +39,7 @@ brush flatten at 10 -16 r=3.4 s=20 frames=60 h=12
 brush flatten at 50 20 r=4 s=20 frames=60 h=4.6
 brush flatten at 34 22 r=4.5 s=20 frames=80 h=-6
 for sz 28 42 2
-brush flatten from 10 $sz to 26 $sz r=1.9 s=20 frames=60 h=1
+brush flatten from 10 $sz to 26 $sz r=1.9 s=20 frames=60 h=1 line
 next
 brush sand at 18 35 r=9 s=20 frames=40
 clear at -39 -5 r=5

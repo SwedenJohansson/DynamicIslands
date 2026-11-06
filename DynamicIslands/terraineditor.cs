@@ -1,4 +1,4 @@
-using DynamicIslands.Editor;
+﻿using DynamicIslands.Editor;
 using System;
 using System.Collections.Generic;
 using CommandUndoRedo;
@@ -387,6 +387,13 @@ namespace DynamicIslands
 			return true;
 		}
 
+		/// <summary>
+		/// A recipe's "line" stroke (brush ... line): the reach is the brush's own radius, at least one point - the footprint
+		/// before E12 (10-25). A 2 m stroke drawn along a row of ground points then moves that row only; the eased reach
+		/// (1.39 points at 2 m) also pulls the next row by a fifth each frame (Crater Lair's hangar floor sank into its pools).
+		/// </summary>
+		public static bool LineReach;
+
 		/// <summary>A brush smaller than the ground's point spacing (radius in points): the 1 m and 2 m brushes.</summary>
 		static bool Small(float radiusInPoints) { return radiusInPoints < 1f; }
 
@@ -398,6 +405,7 @@ namespace DynamicIslands
 		/// </summary>
 		public static float Footprint(float radiusInPoints)
 		{
+			if (LineReach) return Mathf.Max(1f, radiusInPoints);
 			return radiusInPoints < 2f ? 0.75f + 0.625f * Mathf.Max(0f, radiusInPoints) : radiusInPoints;
 		}
 

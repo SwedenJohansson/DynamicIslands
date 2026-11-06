@@ -42,11 +42,11 @@ clear at 0 0 r=11
 # rooms were inside the ground, so the walk went over the roofs and no spot inside was found: a pad at each floor's
 # height under every house, and a level path from its stairs to its door)
 brush flatten from -15.75 -0.5 to -15.75 0.5 r=3.2 s=20 frames=200 h=3.9
-brush flatten from -11.5 -3.6 to -18.6 -3.6 r=1.9 s=20 frames=200 h=3.95
+brush flatten from -11.5 -3.6 to -18.6 -3.6 r=1.9 s=20 frames=200 h=3.95 line
 brush flatten from -13.75 15 to -13.75 16 r=3.2 s=20 frames=200 h=7.9
-brush flatten from -14 9.5 to -15.6 12.4 r=1.9 s=20 frames=200 h=7.95
+brush flatten from -14 9.5 to -15.6 12.4 r=1.9 s=20 frames=200 h=7.95 line
 brush flatten from 2.25 20.5 to 2.25 22 r=3.2 s=20 frames=200 h=11.9
-brush flatten from -3 17 to 1.2 17.4 r=1.9 s=20 frames=200 h=11.95
+brush flatten from -3 17 to 1.2 17.4 r=1.9 s=20 frames=200 h=11.95 line
 brush flatten at 6.5 4.5 r=2.6 s=20 frames=200 h=-0.1
 brush flatten from 5.75 1.4 to 3 0 r=1.8 s=20 frames=200 h=0
 brush flatten at 6.5 -9.5 r=2.6 s=20 frames=200 h=-0.1
@@ -63,7 +63,10 @@ place Note_Board minutes at -3.5 6 ground yaw=180
 ramp Block_Floor_Tier3 from -7 -1 0.4 to -11.5 -1 3.9 len=1.5 top=0
 ramp Block_Floor_Tier3 from -14 5 4.4 to -14 9.5 7.9 len=1.5 top=0
 ramp Block_Floor_Tier3 from -9 15 8.4 to -3 17 11.9 len=1.5 top=0
-call stonelamp x=-5 z=-3
+# (CIFloating 11-05: the plaza slopes under this lamp, its post stood 0.5 m over the ground: the post sits lower in its stone)
+place SmallRock_02 - at -5 -3 ground sit scale=0.45 sy=0.9
+place Antenna_pole - at -5 -3 ground y=0.1 sy=0.45
+place Placeable_Lantern_Metal - at -5 -3 ground y=3 sit drop
 call stonelamp x=5 z=3
 call stonelamp x=-12 z=12
 # the Commons' streets: a camper van and a caravan, parked when the city went down
@@ -197,7 +200,8 @@ place Zone_Trigger hctrenchdark at 62 -58 ground y=1
 # --- DEEP 1-HOUR (10-24): the trench spire (47.5 m from the floor - the highest climb under the sea) and the scavenger's hideout in the south-west pit behind a gauntlet of traps
 # the rock that breaks the surface (47.5 m up from the floor), a beacon tower on its dry top
 call sk_seamount x=-12 z=74 top=47.5 r=22
-call sk_pit x=-66 z=-48 h0=-6
+# (CIFloating 11-05: the pit floor at the block's own -6 left its ground floor a few cm under the ground)
+call sk_pit x=-66 z=-48 h0=-6.15
 call sk_cave x=74 z=-22 h=2 yaw=0 al=hccave2 chest=hccave2chest
 call sk_reef x=7.8 z=74 r=6 seed=24710
 call sk_reef x=-27.4 z=87.2 r=6 seed=24720
@@ -205,7 +209,7 @@ call sk_reef x=-56 z=-42 r=5 seed=24730
 
 # the summit: the trench spire - the tower (ladder inside), the locker, the note, the zone
 call ladtower x=-12 z=74 h0=47.5 lv=3 a=hctower
-place Loot_ChestSmall hclocker at -12.75 74.75 h=54.98 sit yaw=180
+place Loot_ChestSmall hclocker at -12.75 74.75 h=55.3 drop yaw=180
 place Note_Paper hcsumnote at -12.75 73.25 h=55.08 drop yaw=20
 place Zone_Trigger hcsummit at -12 74 h=55.98
 # (R 10-31: REACH - no walk got out of the sea onto the spire's dry top (47.5; summit, locker, boast): its sides drop
@@ -223,7 +227,7 @@ brush flatten at -8 56.6 r=3.2 s=20 frames=300 h=41.9
 clear from -8 67 to -8 56.6 r=4.2 body
 place Loot_ChestSmall hcledge at -24.1 74 ground sit yaw=40
 place SmallRock_02 - at -7 76 ground sit scale=0.5
-place SmallRock_02 - at -7 76 ground y=0.6 sit scale=0.32 yaw=40
+place SmallRock_02 - at -7 76 ground y=0.35 sit scale=0.32 yaw=40
 call treasure x=-9.5 z=76 r=12 n=1 seed=24711
 prop treasure24711 treasure.loot=TitaniumOre*3;CopperOre*2
 call treasure x=57.7 z=-17.16 r=5 n=1 seed=24712

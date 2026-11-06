@@ -31,7 +31,7 @@ end
 
 # ===== The ground: the stall square on the west shore, the hill path's four legs, the stage's pad; the shore walk swept
 for sz 3 9 2
-brush flatten from -17 $sz to -8 $sz r=1.9 s=20 frames=60 h=1
+brush flatten from -17 $sz to -8 $sz r=1.9 s=20 frames=60 h=1 line
 next
 call dabs 34 27.5 0.6 44 25.5 4.3 n=10 r=2.6
 call dabs 44 25.5 4.3 40 17 7.6 n=9 r=2.6

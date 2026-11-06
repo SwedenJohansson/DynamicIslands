@@ -813,6 +813,97 @@ namespace DynamicIslands
 			if (ok) Log("PASS: minimap off"); else Fail("minimap off");
 		}
 
+		[ConsoleCommand(name: "CIMinimapRafts", docs: "Dev (UR1): the island map stays small near drifting rafts. Host, world 'CI ...': a ghost ship, a ghost raft and a trader raft are brought beside Raft's raft one by one, the player put aboard each from open sea: the map shows in the corner (its panel CornerSize, under 35% of the screen), zoom and picture size as before. On the ghost ship the map key opens it full screen and it is left open when the ship goes; at sea before the trader raft the map key is pressed with no map in sight. Shots ur1_map_<kind>.png in the mod folder. The rafts are removed after")]
+		public static void MinimapRaftsCommand(string[] args) { StartTest(MinimapRafts()); }
+
+		static IEnumerator MinimapRafts()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ") || !CustomIslandSpawner.RaftPosition.HasValue) { Fail("minimap rafts: host, in a test world 'CI ...'"); yield break; }
+			yield return EnsureAlive();
+			Network_Player me = RAPI.GetLocalPlayer();
+			bool ok = true;
+			bool was = Minimap.Enabled; int mode = Minimap.Mode, zoom = Minimap.Zoom;
+			Minimap.Enabled = true;
+			Minimap.Mode = Minimap.Corner;
+			Minimap.SetZoom(1);
+			if (!Minimap.Available) { Fail("minimap rafts: the world has 'No minimap' on"); Minimap.Enabled = was; yield break; }
+			string[] kinds = { GhostShip.TypeName, GhostRafts.TypeName, TraderRaft.TypeName };
+			List<IslandWorldState.Entry> made = new List<IslandWorldState.Entry>();
+			for (int k = 0; k < kinds.Length; k++)
+			{
+				// Open sea first: no map
+				Vector3? sea = MapSeaSpot();
+				if (!sea.HasValue) { Check(ref ok, false, "an open sea spot with no island near"); break; }
+				PlayerMove.To(me, sea.Value); KeepAlive(me);
+				yield return new WaitForSecondsRealtime(1.5f);
+				Check(ref ok, Minimap.Island == null && !Minimap.Shown, kinds[k] + ": at sea first, no map (mode " + Minimap.Mode + ")");
+				if (k == 2) Minimap.MapKeyPressed(); // (the key pressed at sea, no map in sight)
+				IslandWorldState.Entry e = null;
+				yield return MapRaftMake(kinds[k], 4100 + k, x => e = x);
+				if (e == null || e.Root == null) { Check(ref ok, false, kinds[k] + ": brought beside the raft"); break; }
+				made.Add(e);
+				PlayerMove.To(me, DeckSpot(e)); KeepAlive(me);
+				yield return WaitFor(() => Minimap.Island == e && Minimap.Shown, 8f);
+				yield return new WaitForSecondsRealtime(1f);
+				Vector2 size = Minimap.PanelSize;
+				float share = Minimap.PanelScreenShare, most = Mathf.Max(40f, CustomIslandSpawner.LandRadius(e.Name) + 25f);
+				Check(ref ok, Minimap.Island == e && Minimap.Shown && Minimap.Mode == Minimap.Corner && Mathf.Abs(size.x - Minimap.CornerSize) < 0.5f && Mathf.Abs(size.y - Minimap.CornerSize) < 0.5f && share > 0f && share < 0.35f,
+					kinds[k] + " aboard: the map in the corner (mode " + Minimap.Mode + ", panel " + size.x.ToString("F0") + "x" + size.y.ToString("F0") + ", " + (share * 100f).ToString("F0") + "% of the screen's height, '" + e.HostName + "')");
+				Check(ref ok, Minimap.Zoom == 1 && Minimap.HalfSize >= 40f && Minimap.HalfSize <= most + 0.01f && Minimap.View(me.transform.position).width == 1f,
+					kinds[k] + ": zoom 1x, picture half-size " + Minimap.HalfSize.ToString("F0") + " m (40.." + most.ToString("F0") + "), the whole picture shown");
+				ScreenCapture.CaptureScreenshot(Path.Combine(DynamicIslands.assetpath, "ur1_map_" + kinds[k] + ".png"));
+				yield return new WaitForSecondsRealtime(1f);
+				if (k == 0)
+				{
+					Minimap.MapKeyPressed(); // (the player opens the full map aboard and leaves it open)
+					yield return new WaitForSecondsRealtime(0.5f);
+					Check(ref ok, Minimap.Mode == Minimap.Full && Mathf.Abs(Minimap.PanelSize.x - 700f) < 0.5f, "the map key aboard: full screen (" + Minimap.PanelSize.x.ToString("F0") + ")");
+				}
+				// (it drifts away / sinks: gone before the next, which gets its room)
+				IslandWorldState.RemoveIds(new[] { e.Id }, true);
+				yield return new WaitForSecondsRealtime(1f);
+			}
+			IslandWorldState.RemoveIds(made.Where(x => IslandWorldState.Contains(x)).Select(x => x.Id).ToList(), true);
+			IslandWorldState.Save();
+			Minimap.Enabled = was; Minimap.Mode = mode; Minimap.Zoom = zoom;
+			OnRaftCommand();
+			if (ok) Log("PASS: minimap rafts"); else Fail("minimap rafts");
+		}
+
+		/// <summary>A spot on the open sea near Raft's raft with no island (of the mod) within the map's reach.</summary>
+		static Vector3? MapSeaSpot()
+		{
+			Vector3 r = CustomIslandSpawner.RaftPosition.Value;
+			for (float d = 40f; d <= 900f; d += 60f)
+				for (int a = 0; a < 12; a++)
+				{
+					Vector3 p = r + Quaternion.Euler(0f, a * 30f, 0f) * Vector3.forward * d;
+					p.y = 0.5f;
+					if (Minimap.IslandAt(p) == null) return p;
+				}
+			return null;
+		}
+
+		/// <summary>One drifting raft of that map type beside Raft's raft, as the world options bring them.</summary>
+		static IEnumerator MapRaftMake(string type, int seed, Action<IslandWorldState.Entry> done)
+		{
+			MapType t = MapTypes.Get(type);
+			if (t == null) { Log("  no map type '" + type + "'"); yield break; }
+			float el;
+			IslandGenSettings s = MapTypes.Roll(t, new System.Random(seed), out el);
+			string name = CustomIslandSpawner.FreeName(CustomIslandSpawner.GeneratedPrefix + type + "-" + s.Seed);
+			IslandFile f = MapTypes.Create(t, s, el, name);
+			f.Save(IslandSpawner.PathFor(name));
+			// (out to 900 m: the CI world keeps islands of earlier runs, and Raft's own islands may be near)
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(CustomIslandSpawner.RaftPosition.Value, s.Radius, 900f);
+			if (!spot.HasValue) { Log("  no open sea near the raft for '" + name + "' (land radius " + s.Radius.ToString("F0") + " m)"); yield break; }
+			int before = IslandWorldState.Islands.Count;
+			yield return DynamicIslands.instance.SpawnIslandFile(name, spot.Value, true);
+			IslandWorldState.Entry e = IslandWorldState.Islands.Skip(before).FirstOrDefault();
+			for (float w = 0f; w < 20f && e != null && (e.Root == null || e.Loading); w += 0.5f) yield return new WaitForSecondsRealtime(0.5f);
+			done(e);
+		}
+
 		[ConsoleCommand(name: "CIMinimapLook", docs: "Dev (PF5): how the island map looks. World 'CI ...': on the map test island logs the sea (Raft's water: height, layer, colours) and what is drawn on the picture by layer and height, saves the picture as it was before 10-31 (minimap_before.png) and now (minimap_after.png), the corner map and the full map on screen (minimap_corner.png, minimap_full.png). CIMinimapLook <folder> (default the mod folder)")]
 		public static void MinimapLookCommand(string[] args) { StartTest(MinimapLook(args != null && args.Length > 0 ? string.Join(" ", args) : DynamicIslands.assetpath)); }
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -89,6 +89,9 @@ namespace DynamicIslands
 			var decks = new List<FloorGap>();
 			var held = new HashSet<EditorGameObject>();
 			List<Bounds> building = null;
+			// (an island sunk by 'elevation -45' has the real sea 45 m over the editor's water line: a deck under it is under
+			// the sea in the game - Hadal Commons' air platforms and drowned block, 11-05)
+			if (DynamicIslands.currentElevation < 0f) sea -= DynamicIslands.currentElevation;
 			foreach (EditorGameObject e in placed)
 			{
 				string n = e.GameObjectName ?? "";
@@ -449,12 +452,18 @@ namespace DynamicIslands
 					// (on something right at its foot: a pillar stacked on another starts inside the one below it, a pole or a
 					// locker set down a few centimetres into the roof or floor it stands on)
 					if (Physics.OverlapSphere(foot + Vector3.up * 0.03f, 0.12f, ~0, QueryTriggerInteraction.Ignore).Any(c => c.gameObject != r.gameObject && !c.transform.IsChildOf(r.transform) && c.GetComponent<Terrain>() == null)) continue;
-					RaycastHit hit;
+				RaycastHit hit;
 					bool under = Physics.Raycast(foot + Vector3.down * 0.02f, Vector3.down, out hit, 300f, ~0, QueryTriggerInteraction.Ignore);
 					float support = Mathf.Max(land, under ? hit.point.y : float.MinValue);
 					if (foot.y - support <= gap) continue;
 					// (above another part of the same object - a chimney on its roof - it is attached, not standing)
 					if (under && hit.point.y >= land && hit.collider.GetComponentInParent<EditorGameObject>() == e) continue;
+					// (or inside one with no collider in the editor: a gate's leaves in its own frame, on its landing - UT_MainEntranceDoor,
+					// Hadal Commons 11-05)
+					if (e.GetComponentsInChildren<Renderer>(false).Any(o => o != r && o is MeshRenderer && o.enabled && o.GetComponent<Collider>() == null && o.bounds.min.y < foot.y - 0.05f &&
+						o.bounds.max.y >= foot.y - gap && foot.x > o.bounds.min.x && foot.x < o.bounds.max.x && foot.z > o.bounds.min.z && foot.z < o.bounds.max.z)) continue;
+					// (on the hill a world drapes over a cave piece's roof (CaveMountain): the editor has no such hill to stand on)
+					if (under && UnderCaveHill(foot, hit.collider, gap)) continue;
 					found++;
 					FLog("  floating: " + n + " (" + r.name + ") at " + Num(foot.x - mid.x) + " " + Num(foot.z - mid.y) + ": its foot h=" + Num(foot.y - sea) + " is " + Num(foot.y - support) + " m above " +
 						(under && hit.point.y >= land && hit.collider != null ? hit.collider.name : "the ground"));
@@ -498,9 +507,7 @@ namespace DynamicIslands
 				// (only what stands on the ground somewhere: decks on posts, roofs and things on tables touch no ground; and not
 				// what stands on another object - a wall on its floor, rubble on a roof)
 				if (lowest > 0.4f) continue;
-				RaycastHit on;
-				if (Physics.Raycast(new Vector3(b.center.x, b.min.y + 0.1f, b.center.z), Vector3.down, out on, 0.6f, ~0, QueryTriggerInteraction.Ignore) && on.collider.GetComponent<Terrain>() == null &&
-					on.collider.GetComponentInParent<EditorGameObject>() != null && on.collider.GetComponentInParent<EditorGameObject>() != e) continue;
+				if (OnAnotherObject(b, e)) continue;
 				bases++;
 				if (highest <= 0.6f) continue;
 				partly++;
@@ -2300,7 +2307,7 @@ namespace DynamicIslands
 
 		/// <summary>A terrain stroke through the editor's brush: brush raise|lower|flatten|smooth|sample|sand|grass|rock|seabed|auto|stamp:i
 		/// at x z (a stroke there) or from x1 z1 to x2 z2 (dragged) [r=radius] [s=strength] [frames=n] [rot=degrees] [h=: flatten to
-		/// that height above the sea].</summary>
+		/// that height above the sea] [line: the brush's own reach (pre-E12), for strokes along one row of ground points].</summary>
 		static string Brush(string[] t)
 		{
 			int at = Array.IndexOf(t, "at"), from = Array.IndexOf(t, "from"), to = Array.IndexOf(t, "to");
@@ -2335,16 +2342,22 @@ namespace DynamicIslands
 			// (flatten h=: to that height above the sea instead of the ground's where the stroke starts - a sunken building's
 			// pit dug down to its floor)
 			float? flattenTo = opt.ContainsKey("h") ? DynamicIslands.EditorWaterLevel + F(opt["h"]) : (float?)null;
-			if (at >= 0)
+			// (line: the brush's own reach, as before E12 - a stroke along one row of ground points moves that row only)
+			terraineditor.LineReach = opt.ContainsKey("line");
+			try
 			{
-				Vector2 p = WorldXZ(F(t[at + 1]), F(t[at + 2]));
-				te.SimulateStroke(new Vector3(p.x, GroundY(p.x, p.y), p.y), frames, 0.05f, flattenTo);
+				if (at >= 0)
+				{
+					Vector2 p = WorldXZ(F(t[at + 1]), F(t[at + 2]));
+					te.SimulateStroke(new Vector3(p.x, GroundY(p.x, p.y), p.y), frames, 0.05f, flattenTo);
+				}
+				else
+				{
+					Vector2 a = WorldXZ(F(t[from + 1]), F(t[from + 2])), b = WorldXZ(F(t[to + 1]), F(t[to + 2]));
+					te.SimulateDrag(new Vector3(a.x, GroundY(a.x, a.y), a.y), new Vector3(b.x, GroundY(b.x, b.y), b.y), frames, 0.05f, flattenTo);
+				}
 			}
-			else
-			{
-				Vector2 a = WorldXZ(F(t[from + 1]), F(t[from + 2])), b = WorldXZ(F(t[to + 1]), F(t[to + 2]));
-				te.SimulateDrag(new Vector3(a.x, GroundY(a.x, a.y), a.y), new Vector3(b.x, GroundY(b.x, b.y), b.y), frames, 0.05f, flattenTo);
-			}
+			finally { terraineditor.LineReach = false; }
 			return null;
 		}
 
@@ -2545,6 +2558,35 @@ namespace DynamicIslands
 		/// in): its top at least 3 cm over the ground there (a third of a very flat thing's height). A floor laid flush with
 		/// the ground shows 4 cm, a flat flower 5 cm; a boulder sunk to 1 cm doesn't.
 		/// </summary>
+		/// <summary>
+		/// CIFloating: whether an object's base rests on another placed object (a wall on its deck) rather than on the ground -
+		/// a ray down from the middle of its base, then a ball 0.15 m round: a wall on a deck's very edge (Balboa's relay house:
+		/// its walls' pivots on the deck's rim) has its middle a hair outside the deck, and the plain ray fell to the ground
+		/// below - Saltpan Delta's and Paradise Archipelago's relay houses on posts read "partly in the air" (2026-11-05).
+		/// </summary>
+		// A foot over a cave piece and no higher than its roof: in a world it stands on the rock hill CaveMountain drapes
+		// over the cave (its skin), which the editor does not build.
+		internal static bool UnderCaveHill(Vector3 foot, Collider c, float gap)
+		{
+			EditorGameObject cave = c != null ? c.GetComponentInParent<EditorGameObject>() : null;
+			if (cave == null || !CaveMountain.Wants(cave.GameObjectName ?? "")) return false;
+			Renderer[] rs = cave.GetComponentsInChildren<Renderer>(false);
+			if (rs.Length == 0) return false;
+			Bounds cb = rs[0].bounds;
+			foreach (Renderer r in rs) cb.Encapsulate(r.bounds);
+			return foot.x >= cb.min.x && foot.x <= cb.max.x && foot.z >= cb.min.z && foot.z <= cb.max.z && foot.y <= cb.max.y + gap;
+		}
+
+		internal static bool OnAnotherObject(Bounds b, EditorGameObject e)
+		{
+			Func<RaycastHit, bool> other = h => h.collider.GetComponent<Terrain>() == null && h.collider.GetComponentInParent<EditorGameObject>() != null &&
+				h.collider.GetComponentInParent<EditorGameObject>() != e;
+			RaycastHit on;
+			if (Physics.Raycast(new Vector3(b.center.x, b.min.y + 0.1f, b.center.z), Vector3.down, out on, 0.6f, ~0, QueryTriggerInteraction.Ignore) && other(on)) return true;
+			// (the ball starts 0.35 m up, clear of a deck's top just under the base - a cast misses what it starts in)
+			return Physics.SphereCast(new Vector3(b.center.x, b.min.y + 0.35f, b.center.z), 0.15f, Vector3.down, out on, 0.7f, ~0, QueryTriggerInteraction.Ignore) && other(on);
+		}
+
 		static bool ShowsAboveGround(Bounds b, Terrain ground)
 		{
 			float need = Mathf.Min(0.03f, 0.3f * b.size.y);

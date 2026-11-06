@@ -4,7 +4,7 @@
 # ladder on the south side, the gallery at 26 m; the oil store's door south, by the bridge's end); the stair from the
 # cottage stack south down onto the cistern's slab (3.96 m), the hatch at 7.9 -18.75 (the water 7 m deep under it).
 island Keeper's Light
-offset 1.2994 -2.9908
+offset 1.5612 -3.4453
 expect step 0
 expect title The Dark Light
 wait 5

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -160,6 +160,13 @@ namespace DynamicIslands
 				float f1 = terraineditor.Footprint(0.5f / spacing), f2 = terraineditor.Footprint(1f / spacing), f4 = terraineditor.Footprint(2f / spacing), f8 = terraineditor.Footprint(4f / spacing), f10 = terraineditor.Footprint(5f / spacing);
 				Check(ref ok, f1 < 1f && f2 > 1f && f2 < 1.5f && f4 > f2 && f8 > f4 && Mathf.Abs(f8 - 4f / spacing) < 0.05f && Mathf.Approximately(f10, 5f / spacing),
 					"reach in ground points: 1 m " + f1.ToString("F2") + " (the nearest only), 2 m " + f2.ToString("F2") + ", 4 m " + f4.ToString("F2") + ", 8 m " + f8.ToString("F2") + ", 10 m " + f10.ToString("F2") + " (the brush itself)");
+				// (a recipe's "line" stroke keeps the brush's own reach: a 2 m stroke reaches 1.02 points, the next row at 1 point gets nothing)
+				terraineditor.LineReach = true;
+				float l4 = terraineditor.Footprint(2f / spacing), l1 = terraineditor.Footprint(0.5f / spacing);
+				terraineditor.LineReach = false;
+				float nextRow = TerrainBrushes.Weight(1f / (l4 * l4));
+				Check(ref ok, Mathf.Approximately(l4, 2f / spacing) && Mathf.Approximately(l1, 1f) && nextRow < 0.005f && Mathf.Approximately(terraineditor.Footprint(2f / spacing), f4),
+					"line strokes: 4 m reaches " + l4.ToString("F3") + " points (the next row's weight " + nextRow.ToString("F4") + ", eased " + TerrainBrushes.Weight(1f / (f4 * f4)).ToString("F2") + "), 1 m " + l1.ToString("F2") + "; off again after");
 
 				// 2. Raise on the flat sea floor, on a ground point: how many points move
 				terraineditor.modificationAction = terraineditor.TerrainModificationAction.Raise;
