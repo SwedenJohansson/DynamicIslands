@@ -125,14 +125,16 @@ namespace DynamicIslands.Editor
 			darkened[src] = got;
 			return got;
 		}
-		static readonly Dictionary<KeyValuePair<Texture, Color32>, Texture2D> scaled = new Dictionary<KeyValuePair<Texture, Color32>, Texture2D>();
+		// (keyed by the factor in hundredths: a Color32 key held every factor over 1 as 255)
+		static readonly Dictionary<KeyValuePair<Texture, Vector3Int>, Texture2D> scaled = new Dictionary<KeyValuePair<Texture, Vector3Int>, Texture2D>();
 
 		/// <summary>A copy of a texture with its colour multiplied by factor (read back by Readable, at its size up to 1024), with
-		/// mip maps, cached; null if it can't be read. For a shader with no colour to tint (Raft's island rock).</summary>
+		/// mip maps, cached; null if it can't be read. For a shader with no colour to tint (Raft's island rock). A factor over 1
+		/// brightens (up to 4; a channel stops at full), as a lone den's wall needs to wear the den's lighter shell.</summary>
 		internal static Texture2D Scaled(Texture src, Color factor, string tag)
 		{
 			if (src == null) return null;
-			var key = new KeyValuePair<Texture, Color32>(src, (Color32)factor);
+			var key = new KeyValuePair<Texture, Vector3Int>(src, new Vector3Int(Mathf.RoundToInt(factor.r * 100f), Mathf.RoundToInt(factor.g * 100f), Mathf.RoundToInt(factor.b * 100f)));
 			Texture2D got;
 			if (scaled.TryGetValue(key, out got)) return got;
 			scaled[key] = null;
@@ -140,8 +142,8 @@ namespace DynamicIslands.Editor
 			Texture2D c = Readable(src, size);
 			if (c == null) return null;
 			Color32[] px = c.GetPixels32();
-			float fr = Mathf.Clamp01(factor.r), fg = Mathf.Clamp01(factor.g), fb = Mathf.Clamp01(factor.b);
-			for (int i = 0; i < px.Length; i++) { Color32 p = px[i]; px[i] = new Color32((byte)(p.r * fr), (byte)(p.g * fg), (byte)(p.b * fb), p.a); }
+			float fr = Mathf.Clamp(factor.r, 0f, 4f), fg = Mathf.Clamp(factor.g, 0f, 4f), fb = Mathf.Clamp(factor.b, 0f, 4f);
+			for (int i = 0; i < px.Length; i++) { Color32 p = px[i]; px[i] = new Color32((byte)Mathf.Min(255f, p.r * fr), (byte)Mathf.Min(255f, p.g * fg), (byte)Mathf.Min(255f, p.b * fb), p.a); }
 			got = new Texture2D(size, size, TextureFormat.RGBA32, true) { name = src.name + (tag ?? " (tinted)"), wrapMode = src.wrapMode, filterMode = FilterMode.Trilinear, anisoLevel = 4 };
 			got.SetPixels32(px);
 			got.Apply(true, true);
@@ -706,7 +708,7 @@ namespace DynamicIslands.Editor
 
 		/// <summary>A copy of a texture the mod can read, size x size: drawn into a RenderTexture (halved step by step, so
 		/// nothing is skipped) and read back. Cached.</summary>
-		static Texture2D Readable(Texture src, int size)
+		internal static Texture2D Readable(Texture src, int size)
 		{
 			var key = new KeyValuePair<Texture, int>(src, size);
 			Texture2D got;

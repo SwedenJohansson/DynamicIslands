@@ -16,6 +16,10 @@ Not in this release yet; these come in the next update:
 - **Cave hills over dug passages**: the rock hill over an island's caves no longer stands on over a dug passage that is open to the sky as a bridge (Ironreef Caverns' mouth C looked out from under a pale overhang); the passage stays an open cut with rock faces down to its floor.
 - **Shelter Atoll and Ironreef Caverns touch-ups**: Shelter's sunken dinghy lies keeled over and half in the sand on the lagoon floor by the cave's mouth, and its storeroom has a lamp and no longer has a post standing through it (a roof's support post is no longer stood down through a room under the roof); in Ironreef the rubble boulders in the fallen drift lie on its floor, not on the spike rigs, and a rock lip covers the dug lining at mouth B.
 - **Test plays: `use <islander> pick <n>`** picks answer n of an islander's dialogue as a click does, so a play can check what each answer does (a chest shown, a message).
+- **Steam** for atmosphere zones: thick plumes rising from the middle, in the zone's fog colour (a green vent, a white hot spring).
+- **The Abyss's acid pool** reads as acid by day: green steam and haze over it, sickly yellow-green crust round its rim, and the shelf's shallows slope away in uneven rings instead of a square outline.
+- **A lone bear den's front wall** (The Abyss's lava tube and other `ar_cave` dens) is drawn as rock from inside, not as a flat black board, and has rock relief: no longer a smooth, marbled sheet beside the path. It takes the den's colour as the game draws it (both lit, compared), so it no longer stands grey beside the den's khaki rock; and The Abyss's pale underwater patch west of the acid shelf (the lava tube rock's foot standing in the sea) is now under the seabed.
+- **The Abyss's lava tube has rats**: two rats live at the back of the den, well away from its chest and the acid. Play checks: `expect animals` now also checks land animals stand on a floor, and `expect animalsmoved` checks they walk.
 - **The alpha box's Discord button** is Discord blue and pulses gently, so new players find the Custom Islands community.
 - **Renaming an object** no longer renames an **order puzzle** of the same name in other objects' actions (`order|Bells|2` stays when an object called "Bells" is renamed).
 - **The large battery** shows in the hand like Raft's battery (blue), and the log no longer warns that it "is not correctly configured".
@@ -123,6 +127,8 @@ Not in this release yet; these come in the next update:
   or the island not loaded on the host) gives the items back and stays unread, so it can be used again (RK3).
 - **Bear den caves no longer see-through:** a bear den set on its own (`ar_cave`) gets a rock wall across its open front,
   with a doorway at the mouth, so from outside you no longer look into the cave through its missing side (RK15).
+- **The Abyss: a vent pool** beside the lava tube's path: a misty hot-spring pool ringed with sulphur-yellow stones.
+  Its water is acid ("The vent water burns."); a protective suit keeps it off, and a shallow slope leads out of it.
 
 ## 3.1 alpha - 2026-11-03: Version number
 

@@ -1,0 +1,10 @@
+# Pumpcrown Works hazard test (11-05): sludge acid (6/s, r 5). CIPlay pumpcrown_works_hurt, in a test world 'CI ...', CIGapsSuit off (no suit: the zone must hurt).
+island Pumpcrown Works keep
+offset 0 0
+hour 11
+weather Calm
+at 24 46
+wait 8
+expect message The purifiers' sludge burns
+# (20 is about half of the expected damage)
+expect hurt 20

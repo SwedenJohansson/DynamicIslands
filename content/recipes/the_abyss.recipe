@@ -91,6 +91,8 @@ prop supplyboat tint.amount=0.5
 # D The ash ridge (east, on the bank) and E the lava tube in its own rock at the ridge's sea foot, mouth north
 call ar_ridge x1=72 z1=-26 x2=64 z2=28 h=9 top=7 r=8
 call ar_cave x=88 z=-8 h=3 yaw=0 al=lavarock chest=lavachest
+# (11-05) Two rats live at the back of the lava tube, on its floor 12 m in from the chest and the tube's zone at its mouth.
+place Creature_Rat tuberats at 89 -15 h=4.5
 prop lavarock tint.color=#2e2a28
 prop lavarock tint.amount=0.5
 # (agent Q 10-30, REACH: the lava tube's mouth path ended 3.4 m over the sea - the tube and its chest unreached: a
@@ -103,6 +105,79 @@ brush flatten at 87 19.5 r=2.2 s=20 frames=200 h=-0.1
 brush flatten at 87 20.8 r=2.2 s=20 frames=200 h=-0.8
 brush flatten at 87 22.1 r=2.2 s=20 frames=200 h=-1.5
 clear from 87 14.3 to 87 22.1 r=3.2 body
+# (content 11-04, ACID) The vent pool: a low ash shelf on the lagoon side of the lava tube's path (the path is a spit
+# with deep lagoon west of it) and in it a hot-spring pool fed by a vent - mist over it, sulphur-yellow stones round
+# its rim. Acid (a suit keeps it off). The path itself is the way past it; a shallow slope on the path's side leads out of it.
+# Its middle (79.5 13) is 17 m from the lava tube's chest and zone, clear of the tube's rock (z 7 and less).
+# The terrain grid is ~2 m, so the pool's strokes are wide (a 2 m brush leaves no hollow), and unsmoothed (a smooth
+# over it filled the hollow back up to the shelf).
+brush flatten from 78.5 9 to 78.5 17 r=6.5 s=20 frames=400 h=1.3
+brush flatten at 79.5 13 r=4 s=20 frames=300 h=-1.2
+# a shallow way out on the path's side (a swimmer can't climb the hollow's 1 m lip): steps of 0.7 m, smoothed into a slope
+brush flatten at 81.8 11.4 r=2 s=20 frames=150 h=-0.3
+brush flatten at 83.2 10.4 r=2 s=20 frames=150 h=0.5
+brush flatten at 84.6 9.4 r=2 s=20 frames=150 h=1.4
+brush smooth from 81.8 11.4 to 84.6 9.4 r=2 s=3 frames=20
+# (11-05 polish) the lagoon side of the shelf sloped down into the water: it ended in a sheer 1-3 m lip over the lagoon
+# that read as a terrace hanging over the sea from afar. (11-05 round 2) Straight strokes along x and z left the shallows
+# a square step in the sea, its waterline foam a hard box from afar: the slope now runs out in rings round the shelf
+# (its middle 78.5 13) from the path's end (65 deg) round the lagoon side to the tube's rock (225 deg), each ring's
+# radius wobbling 1.8 m with the angle, 1-1.3 m down every 2.5 m (under Raft's rock-paint slope), out to 6.3 m deep
+for ring 0 6
+set rr {9.5+2.5*$ring}
+set rh {0.6-1.15*$ring-0.03*$ring*$ring}
+for a 65 225 4
+brush flatten at {78.5+($rr+1.2*sin(2.7*$a+20)+0.6*sin(6.1*$a+55))*cos($a)} {13+($rr+1.2*sin(2.7*$a+20)+0.6*sin(6.1*$a+55))*sin($a)} r=2.5 s=20 frames=150 h=$rh
+next
+next
+for a 65 225 10
+brush smooth at {78.5+11*cos($a)} {13+11*sin($a)} r=4 s=3 frames=20
+brush smooth at {78.5+17*cos($a)} {13+17*sin($a)} r=4 s=3 frames=20
+brush smooth at {78.5+23*cos($a)} {13+23*sin($a)} r=4 s=3 frames=20
+next
+# (the outer drop softened, but not by the buried treasure at 60 36 - its scatter needs that ground as it was)
+for a 65 105 10
+brush smooth at {78.5+27*cos($a)} {13+27*sin($a)} r=6 s=4 frames=30
+brush smooth at {78.5+31*cos($a)} {13+31*sin($a)} r=6 s=4 frames=30
+next
+for a 155 225 10
+brush smooth at {78.5+27*cos($a)} {13+27*sin($a)} r=6 s=4 frames=30
+brush smooth at {78.5+31*cos($a)} {13+31*sin($a)} r=6 s=4 frames=30
+next
+# (11-05 round 3) The lava tube's hill (the cave mountain over its rock) falls 1.5 m per m from the rock to the ground;
+# west of the shelf (x 62-69 z -3..5) the rings had cut the ash ridge's ground there down to 6 m under the sea, so the
+# hill's flank stood in the water, a pale lobe with a straight edge that read from afar as a see-through patch. The ridge's
+# ground comes back there as a low spit 1.4 m over the sea (2 m brushes miss the 2 m terrain grid: wide ones), so the
+# hill meets the ground above the sea, and the spit slopes away under the water on its shelf side.
+brush flatten from 63 -3 to 69 7 r=4.5 s=20 frames=400 h=1.4
+brush flatten from 60 2 to 63.5 9 r=3 s=20 frames=300 h=-0.8
+brush flatten from 57.5 4 to 60.5 10 r=2.5 s=20 frames=200 h=-2.6
+brush smooth from 60 0 to 66 7 r=4 s=3 frames=15
+clear from 68 4 to 72 22 r=4 body
+clear from 61 2 to 65 26 r=4 body
+clear from 66 24 to 84 30 r=4 body
+clear at 79.5 13 r=6.5
+place SmallRock_02 ventrock at 75.3 12.2 ground sit yaw=20
+place SmallRock_02 ventrock at 77.6 17.4 ground sit yaw=140
+place SmallRock_02 ventrock at 83.6 14.6 ground sit yaw=250
+place SmallRock_02 ventrock at 76.4 9.6 ground sit yaw=310
+# sulphur crust: flat yellow-green patches on the rim's ground (clear of the way out to the south-east)
+place SmallRock_02 ventrock at 74.3 14.6 ground sit yaw=60 scale=1.3 sy=0.22
+place SmallRock_02 ventrock at 79.8 18.1 ground sit yaw=170 scale=1.2 sy=0.22
+place SmallRock_02 ventrock at 79.2 8.2 ground sit yaw=280 scale=1.2 sy=0.22
+place SmallRock_02 ventrock at 82.9 17.0 ground sit yaw=20 scale=1.1 sy=0.22
+place SmallRock_02 ventrock at 73.9 10.9 ground sit yaw=110 scale=1.1 sy=0.22
+prop ventrock tint.color=#a4c428
+prop ventrock tint.amount=0.7
+# thick green steam over the water (and a sickly green haze and light when you come close)
+place Zone_Atmosphere ventmist at 79.5 13 h=0.1
+prop ventmist zone.radius=5
+prop ventmist atmo.particles=steam
+prop ventmist atmo.fog=#8cc030
+prop ventmist atmo.fogAmount=0.35
+prop ventmist atmo.light=#c8ff70
+prop ventmist atmo.lightAmount=0.3
+call hw_hazard x=79.5 z=13 al=ventacid kind=acid r=3 dmg=5 safe=suit msg="The vent water burns." h=0.6
 
 # --- JUMP COURSE ab (Abyss pass 10-26): kz-style hop course of floor slabs on its own pad (the bs course, turned) ---
 # JUMP ab pad=4 at=48 66
@@ -362,6 +437,8 @@ prop lairdark zone.radius=16
 prop brood creature.count=3
 prop brood creature.respawn=0
 prop brood creature.zone=lair
+prop tuberats creature.count=2
+prop tuberats creature.respawn=0
 prop abyssal creature.count=1
 prop abyssal creature.size=3.2
 prop abyssal creature.health=12

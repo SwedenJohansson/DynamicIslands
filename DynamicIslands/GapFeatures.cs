@@ -104,6 +104,10 @@ namespace DynamicIslands.Editor
 			return Kinds.Contains(k) ? k : "";
 		}
 
+		/// <summary>Health the local player has lost to hazard zones so far, measured round each hit (what Raft took, not what
+		/// was asked): a play's expect hurt / unhurt reads it (11-05: a watch run after the play ended passed with 0 taken).</summary>
+		public static float Taken;
+
 		public static float DamageOf(IDictionary<string, string> p)
 		{
 			string k = KindOf(p);

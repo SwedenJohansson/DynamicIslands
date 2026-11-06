@@ -18,6 +18,11 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CICaveToolUnit", docs: "Dev, anywhere: the cave tool's layout - tunnel pieces end to end from the mouth (their passages and floors meeting), the slope kept to 12 degrees and the pieces to 12, the den's mouth on the tunnel's end, a short drag one tunnel and the den; the hill over it, none before the mouth or past an open end")]
 		public static void CaveToolUnitCommand(string[] args)
 		{
+			StartTest(CaveToolUnitRoutine());
+		}
+
+		static IEnumerator CaveToolUnitRoutine()
+		{
 			bool ok = true;
 			Vector3 a = new Vector3(500f, 20f, 500f);
 			CaveTool.Layout l = CaveTool.Plan(a, a + new Vector3(40f, 7f, 0f), 0f, true);
@@ -68,6 +73,56 @@ namespace DynamicIslands
 			Check(ref ok, beside < over - 5f, "the hill falls away beside it (" + beside.ToString("0.0") + ")");
 			float w;
 			Check(ref ok, Mathf.Abs(CaveTool.ApronAt(down, a + new Vector3(0f, 0f, 1f), out w) - (a.y - 0.05f)) < 0.01f && w > 0.99f, "the ground before the mouth at its floor");
+
+			// (the den's walls - Plug at a tunnel's end, PlugOpening on a lone den - drawn both ways with real normals: shared
+			// corners cancelled them and the wall drew as a flat black board, TN1 and The Abyss's lava tube 11-05)
+			yield return PlaceableCatalog.EnsureLoaded(new[] { CaveTool.Room, CaveTool.WallRock });
+			GameObject denProto = PlaceableCatalog.Get(CaveTool.Room);
+			if (denProto == null) Check(ref ok, false, "the bear den could be loaded (to check its walls)");
+			else
+			{
+				GameObject probe = UnityEngine.Object.Instantiate(denProto, new Vector3(-4000f, -300f, -4000f), Quaternion.identity);
+				probe.SetActive(true);
+				try
+				{
+					foreach (bool lone in new[] { false, true })
+					{
+						if (lone) CaveTool.PlugOpening(probe); else CaveTool.Plug(probe);
+						Transform pl = probe.transform.Find(CaveTool.PlugName);
+						Mesh m = pl != null ? pl.GetComponent<MeshFilter>().sharedMesh : null;
+						Vector3[] nr = m != null ? m.normals : new Vector3[0];
+						float face = lone ? 0.3f : 0.99f; // (a lone den's wall has rock relief: its facets lean, but each still faces out one way)
+						int fwd = nr.Count(v => v.z > face), back = nr.Count(v => v.z < -face);
+						Check(ref ok, m != null && nr.Length > 0 && fwd + back == nr.Length && fwd == back,
+							(lone ? "a lone den's wall (PlugOpening)" : "a tunnel-end den's wall (Plug)") + ": every corner's normal faces one way out of the wall, as many each way (" + fwd + " + " + back + " of " + nr.Length + ")");
+						if (lone && m != null && nr.Length > 0)
+						{
+							// (not a flat board: a smooth marbled sheet beside The Abyss's acid path, 11-05)
+							Vector3[] vs = m.vertices;
+							float spread = vs.Max(v => v.z) - vs.Min(v => v.z);
+							int tilted = nr.Count(v => Mathf.Abs(v.z) < 0.97f);
+							// (not the den's atlas texture at 20 m: blue, white and orange patches beside The Abyss's acid path, 11-05)
+							Material denMat = probe.GetComponentsInChildren<MeshRenderer>(true).Where(r => r.sharedMaterial != null && r.transform != pl)
+								.OrderByDescending(r => r.bounds.size.x * r.bounds.size.z).First().sharedMaterial;
+							Material wm = pl.GetComponent<MeshRenderer>().sharedMaterial;
+							Check(ref ok, wm != denMat, "a lone den's wall is drawn with Raft's rock (" + (wm != null ? wm.name : "none") + "), not the den's atlas (" + denMat.name + ")");
+							Check(ref ok, spread > 0.5f && tilted > nr.Length / 4, "a lone den's wall has rock relief: " + spread.ToString("0.00") + " m deep (over 0.5), "
+								+ tilted + " of " + nr.Length + " corners on tilted facets (over a quarter)");
+							// (the den's colour as drawn, not the big rock's grey-blue: a grey wall beside the lava tube's khaki shell, 11-05;
+							// the textures' means were alike, the shaders' light was not - so both are compared lit, after TintWall)
+							Color before, shell, wallLit;
+							MeshRenderer wr = pl.GetComponent<MeshRenderer>();
+							bool readBefore = CaveTool.LitColour(new Renderer[] { wr }, out before);
+							Color factor = CaveTool.TintWall(probe, null);
+							bool read = readBefore & CaveTool.LitColour(CaveTool.DenShell(probe), out shell) & CaveTool.LitColour(new Renderer[] { wr }, out wallLit);
+							float off = Mathf.Max(Mathf.Abs(wallLit.r - shell.r), Mathf.Abs(wallLit.g - shell.g), Mathf.Abs(wallLit.b - shell.b));
+							Check(ref ok, read && off < 0.08f, "a lone den's wall looks as the den: den " + shell.ToString("0.00") + ", wall " + before.ToString("0.00")
+								+ " before, " + wallLit.ToString("0.00") + " after (factor " + factor.ToString("0.00") + ", off " + off.ToString("0.00") + ", under 0.08)");
+						}
+					}
+				}
+				finally { UnityEngine.Object.DestroyImmediate(probe); }
+			}
 			if (ok) Log("PASS: cave tool unit"); else Fail("cave tool unit");
 		}
 
