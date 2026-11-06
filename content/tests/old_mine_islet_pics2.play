@@ -1,0 +1,15 @@
+# Old Mine Islet: the portal frame at x 17 seen from inside and out (round 5 check, CIPlay old_mine_islet_pics2)
+island Old Mine Islet keep
+offset 2.6829 -2.0027
+hour 11
+weather Calm
+at 0 -12
+wait 3
+picture om5_portal17_in 10 7 -19.7 17 8 -19.7
+picture om5_portal17_out 26 8 -19.7 17 7 -19.7
+picture om5_portal17_side 17.5 7 -10 17 8 -20
+picture om5_ramp_arch2 -47 10 -7 -40 1 -15
+picture om5_ramp_arch3 -33 9 -24 -40 1 -15
+picture om5_wedge2 -27 13 13 -35.6 5 20
+picture om5_wedge3 -29 9 26 -35.6 5 20
+picture om5_ramp_pond2 23 8 -37 17.5 0 -29

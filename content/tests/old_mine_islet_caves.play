@@ -1,0 +1,34 @@
+# Old Mine Islet's caves (CIPlay old_mine_islet_caves, 11-04; in a test world 'CI ...'). Points as in its recipe.
+# Tunnel 1 on Copper Knob: in by the shore adit, up the side drift to the powder room and the miner's chest, out by
+# the man-way on the knob's south strip. The back drift into the rock mound: in to the cavern and out again.
+island Old Mine Islet keep
+offset 2.6829 -2.0027
+hour 11
+weather Calm
+
+# Tunnel 1: the shore adit, the drift, the powder room
+picture om_t1_adit_out 40 5 -13.5 44.7 3.8 -12
+walk 42.7 -11.5 to 44.7 -12 to 54.5 -9 to 54 -4.5 to 53.8 -1.5
+open Miner's chest
+picture om_t1_powder 54 5 -5 55 3.5 1
+picture om_t1_drift 54.5 5 -2 54.5 4.5 -9
+# the two rats in the drift (11-05): both alive on the dug floor, they come at the player, and a fight clears them
+walk 54.5 -9 to 55.8 -11 below=7
+expect animals Rat 2
+# (round 6: aimed at the rats as they come, a flashlight on - the drift is dark and they had left their spawn)
+wait 2
+picture om_t1_rats 55.8 6.2 -11 59 5 -15.8 aim=Rat light=20
+wait 4 # (shorter: on a Fierce world 2+8 s of bites killed the player, 11-06)
+expect animalsmoved Rat 1
+expect animals Rat 2
+kill Rat
+expect animals Rat 0
+# out by the man-way
+walk 54.5 -9 to 57.5 -13.5 to 61.2 -19 to 64.7 -19.4 to 67.5 -19.8 below=7
+picture om_t1_manway_out 69 8 -22 64.7 6.5 -19.4
+
+# The back drift into the rock mound and its cavern
+picture om_back_out -12 7 30 -12 3.5 22
+walk -12 26 to -12 22 to -12 14 to -12 5
+picture om_back_cavern -12 4 12 -12 3 0
+walk -12 5 to -12 14 to -12 22 to -12 27

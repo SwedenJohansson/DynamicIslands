@@ -18,6 +18,7 @@ include lib_features
 include lib_highwater
 include lib_areas
 include lib_abyss
+include lib_caves
 new
 # (nature: forest: Like Raft's Balboa, a little more wooded - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.25 Bushes=0.38 Rocks=0.45 Harvest=0.1 BeachThings=0.3
@@ -32,6 +33,9 @@ brush flatten from 22 -18 to -16 -18 r=12 s=20 frames=30
 brush flatten from 22 -18 to 4 -10 r=8 s=20 frames=16
 clear at 2 -19 r=22
 clear at 24 -16 r=8
+# (round 4, 11-05, REACH: the mound's west end hung its roof rock out over the south cliff, 12 m of sea under it shut
+# in by the hill's face - a swimmer's pocket with no air: land under it, the shore moved out past the rock)
+brush flatten from -5 -31 to -11 -34 r=5 s=20 frames=500 h=3
 # --- DEEP 10-25 terrain: Prospect Hill on the north shore (summit 13 m, base r 14) and its path from the south
 call hw_mount x=-5 z=42 b=14 h=13
 call hw_trail x=-5 z=42 b=14 h=13 a0=180 turn=300 n=22 h0=3
@@ -52,7 +56,7 @@ brush flatten from 26 -28 to 42 -32 r=8 s=20 frames=500 h=2.5
 call hw_mount x=64 z=-4 b=22 h=22
 call hw_trail x=64 z=-4 b=22 h=22 a0=270 turn=300 n=30 h0=3
 brush flatten at 64 -4 r=8 s=20 frames=400 h=22
-call hw_mast x=64 z=-4 h0=22 lv=4 a=headframe chest=windbox top=Placeable_Lantern_Metal
+call hw_mast x=64 z=-4 h0=22 lv=4 a=headframe chest=windbox top=Placeable_Lantern_Metal deckdrop=0.45
 # B Miners' Row (west): a street of three roofless cottages on a pad, the lamps between them
 brush flatten at -52 -10 r=17 s=20 frames=500 h=4
 brush smooth at -52 -10 r=22 s=4 frames=40
@@ -183,7 +187,6 @@ clear from -8 -74 to 4 -92 r=9
 place SmallBoulder4 - at -3 -81 ground yaw=10 scale=0.7
 place SmallBoulder4 - at 1.5 -88 ground yaw=130 scale=0.6
 place VP_Wagon02 - at -5.5 -77 ground sit yaw=60 tilt=14
-place VP_Wagon02 - at 0.5 -84.5 ground sit yaw=150 tilt=20
 # The new land planted (pines, birches, berries as on the core)
 call ab_plants_forest x=64 z=-4 r=24 seed=26101
 call ab_plants_forest x=-52 z=-10 r=18 seed=26111
@@ -201,11 +204,15 @@ call ab_plants_forest x=-80 z=0 r=12 seed=26211
 place BalboaCave_DeadEnd mine at 0 -18 h=11.7 yaw=90
 
 # --- The portal: timber posts and a lintel at the mouth, and timbering further in ------------------------------
-for tx -5 17 11
+for tx -5 6 11
 place Relay_support_beam_wood - at $tx -24.3 h=1 rot=0,0,-90
 place Relay_support_beam_wood - at $tx -14.6 h=1 rot=0,0,-90
 place Relay_support_beam_wood - at $tx -24.6 h=10 rot=0,0,0 yaw=90
 next
+# (the mouth frame at x 17: its south post stood 1.7 m short of the lintel - round 5, CIFloating; raised to meet it)
+place Relay_support_beam_wood - at 17 -24.3 h=2.7 rot=0,0,-90
+place Relay_support_beam_wood - at 17 -14.6 h=1 rot=0,0,-90
+place Relay_support_beam_wood - at 17 -24.6 h=10 rot=0,0,0 yaw=90
 
 # --- Inside: rails of beams on the floor, ore carts, lanterns on crates --------------------------------------------
 for rx 14 -10 -3.4
@@ -218,8 +225,8 @@ place VP_Wagon02 orecart at -11 -19.4 h=4.25 sit yaw=90
 # (the near crate 4 m further in and off the south wall: at 12 -23.6 the den's floor doesn't reach under it by the mouth - it stood 1.24 m over the ground let down under the rock, 2026-10-21; its lantern on its top, 0.433 m up)
 place Crate_Big_01 - at 8 -23.2 h=4.2 sit yaw=10
 place Placeable_Lantern_Metal - at 8 -23.2 h=4.65 sit
-place Crate_Big_01 - at 3.5 -15 h=4.2 sit yaw=80
-place Placeable_Lantern_Metal - at 3.5 -15 h=4.65 sit
+place Crate_Big_01 - at 2.5 -23.4 h=4.2 sit yaw=80
+place Placeable_Lantern_Metal - at 2.5 -23.4 h=4.65 sit
 place Crate_Big_01 - at -6 -23.6 h=4.2 sit yaw=20
 place Placeable_Lantern_Metal - at -6 -23.6 h=4.65 sit
 place VP_Cable_Roll01 - at 8 -15.2 h=4.2 sit
@@ -319,6 +326,8 @@ prop treasure26181 treasure.loot=CopperIngot*2;TitaniumOre*1;Nail*8
 info title=Old Mine Islet
 info author=Custom Islands
 info description=A wooded mining island as big as Raft's own: a rock mound with an old mine inside, a headframe on Copper Knob, a miners' row, a flooded quarry with a pump house under the water, slag stacks, an assay plane and an ore barge - and a prospector's camp on the wooded hill. Pitch dark in the mine, where something big has dug in. Bring a light.
+# (the slag stacks' hop course: CIReach has no jumps across gaps - old_mine_islet.play goes to these instead)
+island reach.byplay=Slag tipper's perch;Slag stack prize;jump_om_finale
 island on.arrive=message||A rock mound with a timbered mine mouth. Rails run into the dark.
 
 note greynote Prospector Elias Grey's note | E. GREY - FIRST CLAIM, OLD MINE ISLET\n\nI found the vein from up here. You can see the colour in the rock of the mound when the sun is low, a rusty stripe down one face. I staked the claim, and the company built the mine around my stake and paid me a tenth of what it was worth.\n\nThey dug too deep. The lowest tunnel broke into a burrow under the mound, and something big lives in it. It came out of the dark and the men ran, and the last cart was left full at the end of the line.\n\nTake the head lamp from the miner's locker before you go in. It is darker down there than you think.\n\nMy tools are under the hatch by the tent. My nuggets I buried at the foot of the hill on the sea side. The company never saw them.
@@ -358,6 +367,80 @@ prop minedark zone.radius=15
 prop minesound sound.event=event:/amb/cave
 prop minesound sound.volume=0.7
 prop minesound zone.radius=18
+
+# --- 11-04 (Abyss caves, G6): the old workings ------------------------------------------------------------------
+# The back drift: the company's first drift into the rock mound, from its back (the side away from the yard), until it
+# broke into a cavern (the cave tool: a den room at its end; it keeps 7 m of rock from the mine's own tunnel). Tunnel 1
+# on Copper Knob: the first workings, dug by hand into the knob's foot by the shore before the company sank the main
+# mine - two adits (the second the man-way out), a drift between them and a side drift to the old powder room, the
+# deepest, where a hewer left his chest and his note. Not as the plan first had it: dug passages can't join the cave
+# tool's pieces or the mine's mound and climb at most 25 degrees (no ladder shaft up to the headframe: the man-way is
+# the second adit), the knob's plateau keeps them 6 m off the headframe, and Grey's old den is across the island.
+call kit_st x=-12 z=22 yaw=180 len=7 end=room size=0.7 dirt=1 mush=1 stone=1 vines=1 as=backdrift
+# (both adits open level with the ground outside: the shore adit off the flat by the knob's foot, climbing to the
+# drift; the man-way along the ledge above the south slope - 11-04 look test: mouths 4 m up a slope had no way in)
+# (11-05: the man-way's ledge - its mouth opened on a 1 m lip of a spur over the deep south inlet, the walk-in slid off
+# it into the sea: a landing level with its floor, and a path along the south shore down to the flat by the knob's foot)
+macro om_ledge x0=0 z0=0 x1=0 z1=0 h0=0 h1=0 n=4
+for k 0 $n
+set t {$k/$n}
+brush flatten at {$x0+($x1-$x0)*$t} {$z0+($z1-$z0)*$t} r=1.8 s=20 frames=300 h={$h0+($h1-$h0)*$t}
+clear at {$x0+($x1-$x0)*$t} {$z0+($z1-$z0)*$t} r=2.2
+next
+end
+# (round 4, 11-05, REACH: the two inlets' notches still left the swimmer under a bank over deep water - out of the sea
+# needs a floor under the swimmer: a ramp from each bank down under the water, 4 m long)
+# (round 4b, 11-05: those ramps were too short and too steep - the flatten stalled half way down, a 1 m step was left
+# at the waterline. Now long ramps at about 0.4 m per m, from the bank top down under the water: om_ramp, stronger)
+macro om_ramp x0=0 z0=0 x1=0 z1=0 h0=0 h1=0 n=4
+for k 0 $n
+set t {$k/$n}
+brush flatten at {$x0+($x1-$x0)*$t} {$z0+($z1-$z0)*$t} r=1.8 s=20 frames=600 h={$h0+($h1-$h0)*$t}
+clear at {$x0+($x1-$x0)*$t} {$z0+($z1-$z0)*$t} r=1.5
+next
+end
+call om_ramp x0=-38 z0=-10.5 x1=-42 z1=-19.5 h0=3.4 h1=-1.2 n=13
+call om_ramp x0=17.5 z0=-26 x1=17.5 z1=-32.5 h0=1.2 h1=-1.4 n=10
+# (the slag spit: steep both sides, the only land to the slag stacks - a ramp down its east side into the sea)
+call om_ramp x0=-1.0 z0=-77 x1=2.2 z1=-84 h0=1.3 h1=-1.2 n=10
+# (a tipped cart on the spit, set down after the ramp so it sits on the ramp's ground; the pond ramp starts 1.7 m clear of
+# the portal post at 17 -24.3 - its clear had taken the post and left the lintel hanging)
+place VP_Wagon02 - at 0.5 -84.5 ground sit yaw=150 tilt=20
+# (the wedge under Grey's den hill: its skin hangs 3-5 m over the slope and closes on the shore side - a drop in, no
+# way out. The ground under it raised to 1 m under the skin, so nobody fits in)
+brush flatten from -36.3 18 to -35.0 18 r=1.2 s=20 frames=600 h=4.1
+brush flatten from -36.3 19.5 to -35.0 19.5 r=1.2 s=20 frames=600 h=5.2
+brush flatten from -36.3 21 to -35.0 21 r=1.2 s=20 frames=600 h=6.4
+brush flatten from -36.3 22.2 to -35.0 22.2 r=1.2 s=20 frames=600 h=7.4
+# (Grey's claim: the bear cave's mouth opens on a shelf 3.4 m up with cliffs into deep sea on three sides - its low
+# east lip raised to the shelf, and a ladder up the east cliff from the water)
+brush flatten from -49.9 51.5 to -49.9 55.5 r=1.2 s=20 frames=600 h=3.3
+place LandmarkLadder_6m greyladder at -46.4 53.5 h=-3.4 yaw=270
+# (the ore barge's yard: boxed in by the wreck and two cliffs - a ladder up the south cliff from the water)
+place LandmarkLadder_6m bargeladder at 52 -41.8 h=-4.4 yaw=0
+brush flatten at 67.2 -20.2 r=2.6 s=20 frames=600 h=5.6
+clear at 67.2 -20.2 r=3.0
+call om_ledge x0=67.2 z0=-20.2 x1=63.2 z1=-22.4 h0=5.6 h1=5.2 n=4
+call om_ledge x0=63.2 z0=-22.4 x1=59.7 z1=-21.8 h0=5.2 h1=4.5 n=4
+call om_ledge x0=59.7 z0=-21.8 x1=55.7 z1=-20.3 h0=4.5 h1=3.8 n=4
+call om_ledge x0=55.7 z0=-20.3 x1=52.2 z1=-18.0 h0=3.8 h1=3.3 n=4
+call om_ledge x0=52.2 z0=-18.0 x1=48.7 z1=-15.0 h0=3.3 h1=2.9 n=4
+dig 44.7,-12.0 54.5,-9.0 r=1.75 slope=12 as=oldwork
+dig 64.7,-19.4 61.2,-19.0 57.5,-13.5 54.5,-9.0 r=1.75 slope=-5 as=oldwork
+dig 54.5,-9.0 54.0,-4.5 r=1.75 slope=-10 as=oldwork
+dig 54.0,-4.5 55.0,1.0 r=3.0 as=oldwork
+# (11-05 user: monsters in caves - two rats in the old work's drift, between the man-way and the chest chamber,
+# 6+ m from both; the shore adit is a second way past them)
+place Creature_Rat oldrats at 59.0 -15.8 h=6.0 drop
+prop oldrats creature.count=2
+prop oldrats creature.respawn=0
+caveloot oldwork dirt=3 mush=2 stone=2 vines=2
+# cavecheck inside minerchest
+place Loot_ChestSmall minerchest at 53.0 -0.7 h=5.5 drop yaw=240
+prop minerchest obj.name=minerchest
+prop minerchest loot.refill=0
+note minerchest Miner's chest | MINE No. 2 - TUNNEL 1\n\nWe dug this one by hand, before the company came with the winch and the rails. Powder kept in here, dry, away from the lamps.\n\nThe company says Tunnel 1 is played out. It isn't. The copper runs on under the knob, down towards the headframe. They wanted the deep vein and the deep vein only.\n\nIf the roof talks, go out by the man-way, the second adit, not back the way you came.\n\n- T. Pike, hewer
+loot minerchest CopperOre*4;MetalOre*2;Rope*2;Battery*1
 
 quest title=Down the Old Mine
 quest intro=An old mine in a rock mound, closed since a tunnel broke into a burrow. The notice at the mouth says the last ore cart is still down there - and the foreman took the mine winch apart before he left.

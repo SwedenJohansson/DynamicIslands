@@ -601,6 +601,9 @@ namespace DynamicIslands.Editor
 				// (its outside as the hill over the den, when the hill is already there; else the hill does it once built)
 				CaveMountain hill = den.GetComponentInParent<CaveMountain>();
 				if (hill != null && hill.Skin != null) WallLikeHill(den, hill.Skin);
+				// (lit as the den round it, the wall's parts with it: CaveLit looked the den's renderers up before the wall came, or the
+				// den had none yet, so the wall drew by Raft's blue sky alone - abyss-oldmine, 11-06)
+				if (den.transform.Find(PlugName) != null) CaveLit.Mark(den);
 			}
 			catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Walling a den's mouth failed: " + x.Message); }
 		}
@@ -665,7 +668,7 @@ namespace DynamicIslands.Editor
 			bool alongX = Mathf.Abs(f.x) >= Mathf.Abs(f.z);
 			m.SetUVs(0, m.vertices.Select(v => { Vector3 w = outT.TransformPoint(v); return (alongX ? new Vector2(w.z, w.y) : new Vector2(w.x, w.y)) / 14f; }).ToList());
 			if (r.GetComponent<HillWall>() == null) r.gameObject.AddComponent<HillWall>();
-			if (den.GetComponent<CaveLit>() != null) CaveLit.Mark(den);
+			CaveLit.Mark(den);
 			Debug.Log("[CUSTOM ISLANDS] Den's wall outside drawn as the hill: " + skin.sharedMaterial.name);
 			return true;
 		}
@@ -690,7 +693,8 @@ namespace DynamicIslands.Editor
 			return b;
 		}
 
-		/// <summary>Marks a lone den's wall's outside drawn as the hill: CaveLit leaves its light alone.</summary>
+		/// <summary>Marks a lone den's wall's outside drawn as the hill: TintWall leaves it as the hill. CaveLit lights it as it lights
+		/// the hill (CaveMountain marks its skin), so the two stay one rock.</summary>
 		public class HillWall : MonoBehaviour { }
 
 		/// <summary>
@@ -931,7 +935,10 @@ namespace DynamicIslands.Editor
 			Func<float, float, float> archNoise = (dx, dy) =>
 			{
 				float ang = Mathf.Atan2(dy, dx);
-				return 1f + 0.22f * Mathf.PerlinNoise(1.3f * Mathf.Cos(ang) + 7.7f, 1.3f * Mathf.Sin(ang) + 2.9f);
+				// (and a finer, ragged edge on it, so its sides aren't smooth curves - the oldmine wall's ragged arch, 11-06 merge; round
+				// the angle's circle, no seam at its left)
+				return 1f + 0.19f * Mathf.PerlinNoise(1.3f * Mathf.Cos(ang) + 7.7f, 1.3f * Mathf.Sin(ang) + 2.9f)
+					+ 0.08f * Mathf.PerlinNoise(2.7f * Mathf.Cos(ang) + 23.1f, 2.7f * Mathf.Sin(ang) + 14.3f);
 			};
 			// (how far out of the arch a point is: 1 on its edge, under 1 inside)
 			Func<float, float, float> archQ = (px, py) =>
@@ -1136,8 +1143,8 @@ namespace DynamicIslands.Editor
 			// (and shade in the way in, darker the further in: the den beyond, lit evenly, still read as a light window in the
 			// dark arch from the sea, 11-06 review)
 			CaveVeil.Build(go, hcx, hcy, ha, hb, hp, archNoise, z - PlugFunnel, my);
-			// (lit as the den, its own parts looked up again; the outside is left out once it is drawn as the hill)
-			if (den.GetComponent<CaveLit>() != null) CaveLit.Mark(den);
+			// (lit as the den, its own parts looked up again, the outside too)
+			CaveLit.Mark(den);
 			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + cells + " cells, rock relief, smooth, arched way in, " + wr.sharedMaterial.name + (atlas ? " at uv " + swatch.ToString("0.000") : ""));
 		}
 
@@ -1855,10 +1862,14 @@ namespace DynamicIslands.Editor
 		const float Shine = 0.45f;
 		/// <summary>Dev probes: leave the pieces' light alone.</summary>
 		public static bool Off;
+		/// <summary>Dev (CIRockLook): the shine kept multiplied by this; the pieces lit by no light at all.</summary>
+		internal static float TestShine = 1f;
+		internal static bool TestDark;
 		static bool told;
 		/// <summary>The light last set, and whether it was set at all since a skip (Off, editor); some piece not lit with it yet.</summary>
 		static SphericalHarmonicsL2 lastSh;
-		static bool haveLast, pending;
+		static bool haveLast, pending, lastDark;
+		static float lastTestShine = 1f;
 
 		public static bool AnyLive { get { return live.Count > 0; } }
 
@@ -1873,7 +1884,9 @@ namespace DynamicIslands.Editor
 			pending = true;
 		}
 
-		void OnEnable() { if (!live.Contains(this)) live.Add(this); lit = false; pending = true; }
+		// (the camera hook too: it was only set by an atmosphere zone or a dug tunnel, so on an island with neither, loaded
+		// first after Raft started, nothing lit the pieces - they and the cave hill showed Raft's blue sky light; 11-06)
+		void OnEnable() { if (!live.Contains(this)) live.Add(this); lit = false; pending = true; AtmosphereZone.Hook(); }
 		void OnDisable() { live.Remove(this); }
 
 		public static void LightAll(SphericalHarmonicsL2 sh)
@@ -1881,12 +1894,12 @@ namespace DynamicIslands.Editor
 			if (live.Count == 0) return;
 			if (Off || DynamicIslands.InEditor()) { haveLast = false; return; }
 			// (the same light as last frame and every piece lit with it: nothing to do - the blocks keep it)
-			bool all = !haveLast || sh != lastSh;
+			bool all = !haveLast || sh != lastSh || TestDark != lastDark || TestShine != lastTestShine;
 			if (!all && !pending) return;
-			lastSh = sh;
+			lastSh = sh; lastDark = TestDark; lastTestShine = TestShine;
 			haveLast = true;
 			pending = false;
-			one[0] = sh;
+			one[0] = TestDark ? new SphericalHarmonicsL2() : sh;
 			for (int i = live.Count - 1; i >= 0; i--)
 			{
 				CaveLit c = live[i];
@@ -1900,9 +1913,10 @@ namespace DynamicIslands.Editor
 
 		void Find()
 		{
-			// (not a lone den's wall's outside drawn as the hill: lit as the hill - CaveTool.WallLikeHill)
+			// (a lone den's wall's outside drawn as the hill (HillWall) is lit too: the hill's skin is CaveLit, so the two match -
+			// left out, it drew by Raft's blue sky beside the warm hill once the skin was lit, 11-06 merge. Not the veil: see-through shade)
 			rends = GetComponentsInChildren<Renderer>(true).Where(r => !(r is ParticleSystemRenderer) && !(r is LineRenderer) && !(r is TrailRenderer)
-				&& r.GetComponent<CaveTool.HillWall>() == null && r.GetComponent<CaveTool.CaveVeil>() == null).ToArray();
+				&& r.GetComponent<CaveTool.CaveVeil>() == null).ToArray();
 			subShine = new float[rends.Length][];
 			ownShine = new float[rends.Length];
 			for (int k = 0; k < rends.Length; k++)
@@ -1946,7 +1960,7 @@ namespace DynamicIslands.Editor
 		static void Set(float shine)
 		{
 			block.CopySHCoefficientArraysFrom(one);
-			if (!float.IsNaN(shine)) block.SetFloat(SmoothId, shine);
+			if (!float.IsNaN(shine)) block.SetFloat(SmoothId, shine * TestShine);
 		}
 
 		/// <summary>The sky's light made grey (each colour's share by its brightness) and multiplied by warm.</summary>

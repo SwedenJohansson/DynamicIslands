@@ -61,11 +61,31 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		/// <summary>The cave piece's meshes have their backs (tests).</summary>
+		/// <summary>Tests (CIBackLook): 0 normals and tangents' handedness flipped (the backs as made), 1 faces turned only, 2 normals only.</summary>
+		internal static int TestFlip;
+
+		/// <summary>Tests: every back made again from its piece's mesh (after TestFlip changed); returns how many.</summary>
+		internal static int Remake()
+		{
+			made.Clear();
+			int n = 0;
+			foreach (MeshFilter mf in Object.FindObjectsOfType<MeshFilter>())
+			{
+				MeshFilter front = mf.name == Name && mf.transform.parent != null ? mf.transform.parent.GetComponent<MeshFilter>() : null;
+				if (front == null || front.sharedMesh == null) continue;
+				Mesh b = Back(front.sharedMesh);
+				if (b != null) { mf.sharedMesh = b; n++; }
+			}
+			return n;
+		}
+
+		/// <summary>The cave piece's meshes have their backs (tests). Not the mod's own rock on it - a mouth, a join, a den's wall
+		/// (made later, drawn from both sides itself): without a back of its own, a walled den counted as drawn one-sided, so
+		/// CICaveInside called its shell's backs see-through (Ada's Round, 11-06).</summary>
 		public static bool Has(Transform piece)
 		{
 			foreach (MeshFilter mf in piece.GetComponentsInChildren<MeshFilter>(true))
-				if (mf.name != Name && mf.sharedMesh != null && mf.GetComponent<MeshRenderer>() != null && mf.transform.Find(Name) == null) return false;
+				if (mf.name != Name && mf.name != CaveTool.MouthName && mf.name != CaveTool.JoinName && mf.name != CaveTool.PlugName && mf.sharedMesh != null && mf.GetComponent<MeshRenderer>() != null && mf.transform.Find(Name) == null) return false;
 			return true;
 		}
 
@@ -87,8 +107,8 @@ namespace DynamicIslands.Editor
 						vb.GetData(streams[s]);
 					}
 				// (the normals reversed; and the tangents' handedness, so a bumpy surface stays bumped the same way)
-				Flip(m, streams, VertexAttribute.Normal, 3);
-				Flip(m, streams, VertexAttribute.Tangent, 1);
+				if (TestFlip != 1) Flip(m, streams, VertexAttribute.Normal, 3);
+				if (TestFlip == 0) Flip(m, streams, VertexAttribute.Tangent, 1);
 				byte[] index;
 				using (GraphicsBuffer ib = m.GetIndexBuffer())
 				{

@@ -654,7 +654,18 @@ namespace DynamicIslands
 						from.y = t[3].StartsWith("+") ? PlaySurface(from) + F(t[3].Substring(1)) : playEntry.Position.y + F(t[3]);
 						Vector3 look = PlayPoint(F(t[5]), F(t[7]));
 						look.y = t[6].StartsWith("+") ? PlaySurface(look) + F(t[6].Substring(1)) : playEntry.Position.y + F(t[6]);
-						yield return PlayPicture(file, from, look);
+						// (aim=<animals label>: turned to the living animals of that label - rats move, and a picture at their spawn
+						// showed an empty drift; light[=m]: a spot light from the camera along the look, as a player's flashlight -
+						// a dug tunnel is dark. Old Mine round 6, 11-06)
+						string aimL;
+						if (opt.TryGetValue("aim", out aimL))
+						{
+							List<AI_NetworkBehaviour> an = ScAnimals(playEntry, aimL).Where(a => Vector3.Distance(a.transform.position, from) < 30f).ToList();
+							if (an.Count > 0) { Vector3 m = Vector3.zero; foreach (AI_NetworkBehaviour a in an) m += a.transform.position; look = m / an.Count + Vector3.up * 0.25f; }
+							Log("  picture " + file + ": " + an.Count + " living '" + aimL + "' within 30 m" + (an.Count > 0 ? ", aimed at their middle" : ", aimed as written"));
+						}
+						float lightM = opt.ContainsKey("light") ? (opt["light"] == "" ? 25f : F(opt["light"])) : 0f;
+						yield return PlayPicture(file, from, look, lightM);
 						break;
 					}
 					case "beam":
@@ -1168,7 +1179,7 @@ namespace DynamicIslands
 			foreach (string r in rows) Log(r);
 		}
 
-		static IEnumerator PlayPicture(string file, Vector3 from, Vector3 look)
+		static IEnumerator PlayPicture(string file, Vector3 from, Vector3 look, float lightM = 0f)
 		{
 			Camera cam = Camera.main;
 			if (cam == null) yield break;
@@ -1184,15 +1195,25 @@ namespace DynamicIslands
 			List<Behaviour> drops = ScreenDrops(cam);
 			foreach (Behaviour b in drops) b.enabled = false;
 			byte[] pic;
+			GameObject lamp = null;
 			try
 			{
 				cam.transform.position = from;
 				cam.transform.LookAt(look);
+				if (lightM > 0f)
+				{
+					lamp = new GameObject("CIPictureLight");
+					lamp.transform.position = from;
+					lamp.transform.rotation = cam.transform.rotation;
+					Light li = lamp.AddComponent<Light>();
+					li.type = LightType.Spot; li.range = lightM; li.spotAngle = 70f; li.intensity = 1.6f; li.shadows = LightShadows.None;
+				}
 				pic = RenderCam(cam, 1280, 720).EncodeToJPG(88);
 				LogFrameHits(cam);
 			}
 			finally
 			{
+				if (lamp != null) UnityEngine.Object.Destroy(lamp);
 				cam.transform.localPosition = lp; cam.transform.localRotation = lr;
 				cam.cullingMask = mask;
 				foreach (Behaviour b in drops) b.enabled = true;

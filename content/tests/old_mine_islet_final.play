@@ -1,0 +1,30 @@
+# Old Mine Islet's tunnels for the user (CIPlay old_mine_islet_final, round 6 11-06): each one's mouth from where a
+# player stands outside it, and a look in from just inside, a flashlight on in the dug ones. Points as in its recipe.
+island Old Mine Islet keep
+offset 2.6829 -2.0027
+hour 11
+weather Calm
+at 0 -12
+wait 3
+
+# the mine: Balboa's dead-end cave in the rock mound, its framed mouth at x 17
+picture om_final_mine_out 25 +1.7 -21.5 17 6.5 -19.7
+picture om_final_mine_in 16 6.4 -19.7 6 5.5 -18.5 light=30
+# the back drift into the mound's north side
+picture om_final_backdrift_out -15.5 +1.7 31.5 -12 3.8 25.5
+picture om_final_backdrift_in -12 4.8 25.5 -12 3.5 15 light=25
+# Tunnel 1's shore adit at the knob's foot
+picture om_final_adit_out 35 +1.7 -12.5 44.7 4.5 -12
+picture om_final_adit_in 47 4.6 -11.4 54.5 5.2 -9 light=25
+# Tunnel 1's man-way on the ledge over the south inlet
+picture om_final_manway_out 67.8 7.3 -20.9 64.7 6.4 -19.4
+picture om_final_manway_in 64.2 7.0 -19.1 59 5.8 -15.8 light=25
+# (round 7: the old work's end chamber from its drift, the chest and mushrooms on its floor; and Copper Knob from a raft
+# off the north shore - the chamber lies 14-17 m under the knob's top, all in the hill: no cave shell over the sea)
+picture om7_oldwork_chamber 54.4 6.6 -7.5 53.2 5.4 -0.7 light=25
+picture om7_oldwork_knob_north 55 2.5 36 55 12 2
+# Grey's claim: the bear cave's mouth on the shelf over the north-west cliffs
+picture om_final_greycave_out -49 5.1 55 -49 4.5 45
+# (from a raft at sea: shows the bear cave rock's dark front face round the mouth - an open finding, 11-06)
+picture om_final_greycave_sea -47 3.5 66 -49 4.5 47
+picture om_final_greycave_in -49 5.2 45 -48.5 4.2 36 light=25

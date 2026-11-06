@@ -669,6 +669,16 @@ namespace DynamicIslands
 			return p;
 		}
 
+		/// <summary>Where a dug branch starting at <paramref name="start"/> leaves the main stroke's line: the index of the
+		/// main point nearest it, or -1 when it starts more than <paramref name="within"/> m from the main line (a stroke from
+		/// its own mouth that meets the passage further in).</summary>
+		public static int BranchJoin(List<Vector3> main, Vector3 start, float within)
+		{
+			if (main == null || main.Count == 0) return -1;
+			int near = Enumerable.Range(0, main.Count).OrderBy(i => (main[i] - start).sqrMagnitude).First();
+			return (main[near] - start).magnitude <= within ? near : -1;
+		}
+
 		/// <summary>The ways into an island's caves: each cave tool cave from its mouth piece through its tunnels to its room or
 		/// far end; each dug tunnel's strokes (a branch reached along the passage it leaves).</summary>
 		static List<GapWay> GapWays(IslandWorldState.Entry e)
@@ -717,11 +727,11 @@ namespace DynamicIslands
 					var w = new GapWay { Kind = "dug " + (k == 0 ? "tunnel" : "branch " + k) };
 					List<Vector3> line = DigLine(t, k);
 					var pts = new List<Vector3>();
-					if (k > 0)
-					{
-						int near = Enumerable.Range(0, main.Count).OrderBy(i => (main[i] - line[0]).sqrMagnitude).First();
-						pts.AddRange(main.Take(near + 1));
-					}
+					// a branch that leaves the passage: walked in along the main stroke to where it starts; a stroke that starts
+					// at its own mouth outside and only meets the passage further in (Old Mine's man-way, round 4) is its own way
+					// in - its shots and walk start at that mouth, not at the main stroke's
+					int near = k > 0 ? BranchJoin(main, line[0], 3f) : -1;
+					if (near >= 0) pts.AddRange(main.Take(near + 1));
 					pts.AddRange(line);
 					RaycastHit fh;
 					for (int i = 0; i < pts.Count; i += 3) w.Floor.Add(DigFloor(pts[i], out fh) ? fh.point : pts[i]);
@@ -733,12 +743,135 @@ namespace DynamicIslands
 			return ways;
 		}
 
-		[ConsoleCommand(name: "CICaveGapsLook", docs: "Dev, a world (host): one cave gaps test island (CICaveGapsLook <cgaps-dig|cgaps-st|cgaps-uw> [noshots]), the kept one or brought next to the raft: each cave's way in (cave tool tunnels to the room or the far end, each dug stroke) - pictures from outside at the mouth and over the hill, from inside looking in, looking out, at the walls and roof at its end, by day and by night (shot_cg_<island>_<n>_<view>.png); a clear way along it (no rock across it); walked in with Raft's controller and back out past the mouth where it is dry; where it is under the sea: water there (Raft's swimming, the breath going down) and, in a room above the sea, dry ground with the breath coming back")]
+		[ConsoleCommand(name: "CIGapWaysUnit", docs: "Dev, anywhere: dug-tunnel ways (BranchJoin) - a branch that starts on the passage is walked in along the main stroke; a stroke from its own mouth outside (Old Mine's man-way, round 4) is its own way in, its shots from its own mouth")]
+		public static void GapWaysUnitCommand()
+		{
+			bool ok = true;
+			var main = new List<Vector3>();
+			for (int i = 0; i <= 10; i++) main.Add(new Vector3(44.7f + i * 0.98f, 4f, -12f + i * 0.3f));
+			Check(ref ok, BranchJoin(main, new Vector3(54.5f, 4f, -9f), 3f) == 10, "a branch from the passage's end: joins at its end");
+			Check(ref ok, BranchJoin(main, new Vector3(49.6f, 4f, -10.9f), 3f) == 5, "a branch from the passage's middle: joins there");
+			Check(ref ok, BranchJoin(main, new Vector3(64.7f, 5f, -19.4f), 3f) == -1, "the man-way from its own mouth 12 m off: its own way in");
+			Check(ref ok, BranchJoin(new List<Vector3>(), Vector3.zero, 3f) == -1, "no main line: its own way in");
+			if (ok) Log("PASS: gap ways"); else Fail("gap ways");
+		}
+
+		[ConsoleCommand(name: "CICaveGapsLook", docs: "Dev, a world (host): one cave gaps test island or any saved island with caves (CICaveGapsLook <cgaps-dig|cgaps-st|cgaps-uw|island name, spaces allowed> [noshots]), the kept one or brought next to the raft: each cave's way in (cave tool tunnels to the room or the far end, each dug stroke) - pictures from outside at the mouth and over the hill, from inside looking in, looking out, at the walls and roof at its end, by day and by night (shot_cg_<island>_<n>_<view>.png); a clear way along it (no rock across it); walked in with Raft's controller and back out past the mouth where it is dry; where it is under the sea: water there (Raft's swimming, the breath going down) and, in a room above the sea, dry ground with the breath coming back")]
 		public static void CaveGapsLookCommand(string[] args)
 		{
-			if (args == null || args.Length == 0) { Fail("CICaveGapsLook <island>"); return; }
-			// (an island's name may have spaces: every word but noshots - the first word alone brought another island, 11-04)
-			StartTest(CaveGapsLookRoutine(string.Join(" ", args.Where(a => a != "noshots").ToArray()), !args.Contains("noshots")));
+			string name = CaveGapsLookName(args);
+			if (name.Length == 0) { Fail("CICaveGapsLook <island>"); return; }
+			StartTest(CaveGapsLookRoutine(name, args == null || !args.Contains("noshots")));
+		}
+
+		/// <summary>The island's name for CICaveGapsLook: all the words but "noshots", quotes round it dropped - a library
+		/// island's name has spaces (Old Mine Islet) and the console splits it into words; only the first word was taken, with
+		/// its quote, and the world then tried to read that island ('"Old') every frame (11-04).</summary>
+		static string CaveGapsLookName(string[] args)
+		{
+			if (args == null) return "";
+			return string.Join(" ", args.Where(a => !string.Equals(a, "noshots", StringComparison.OrdinalIgnoreCase)).ToArray()).Trim().Trim('"', '\'').Trim();
+		}
+
+		[ConsoleCommand(name: "CICaveGapsLookName", docs: "Dev, anywhere: CICaveGapsLook's island name from the console's words - a name with spaces, with or without quotes, with noshots after it; a name with no saved island is refused before anything is brought into the world")]
+		public static void CaveGapsLookNameCommand(string[] args)
+		{
+			var cases = new[]
+			{
+				new { a = new[] { "Old", "Mine", "Islet" }, w = "Old Mine Islet" },
+				new { a = new[] { "\"Old", "Mine", "Islet\"", "noshots" }, w = "Old Mine Islet" },
+				new { a = new[] { "cgaps-dig" }, w = "cgaps-dig" },
+				new { a = new[] { "noshots" }, w = "" },
+			};
+			int bad = 0;
+			foreach (var c in cases)
+			{
+				string got = CaveGapsLookName(c.a);
+				if (got != c.w) { bad++; Log("  " + string.Join(" ", c.a) + " -> '" + got + "', not '" + c.w + "'"); }
+			}
+			if (CaveGapsLookIslandMissing("\"Old")) Log("  '\"Old' refused: no saved island"); else { bad++; Log("  '\"Old' not refused"); }
+			if (bad == 0) Log("PASS: cave gaps look name: " + cases.Length + " cases, a missing island refused"); else Fail("cave gaps look name: " + bad + " wrong");
+		}
+
+		/// <summary>The way out of a dug mouth (its first floor point) to walk in from (CICaveGapsLook): straight out (-In) if the ground 3 m out is
+		/// within a step of the mouth's floor, else the first of 30, 60, 90 degrees to either side that is - a man-way on a
+		/// ledge over a sea slope is come at along the ledge; straight out it was 4 m down the slope and the walk failed
+		/// though a player walks in along the ledge (Old Mine Islet, 11-04). None within a step: the one closest in height.</summary>
+		static Vector3 GapWalkOut(Vector3 mouth, Vector3 inDir)
+		{
+			float floor = mouth.y; // (the way's first floor point; a ray down at the mouth can stop on the rim over it)
+			var dirs = new List<Vector3>();
+			var dys = new List<float>();
+			foreach (float a in GapWalkAngles)
+			{
+				Vector3 d = Quaternion.Euler(0f, a, 0f) * -inDir;
+				dirs.Add(d);
+				// (the worst of 1, 2 and 3 m out: the walk to the mouth is a straight line, and a start on a ledge's far end with
+				// a drop between - the slope under the man-way of Old Mine Islet - let the walker slide off on the way in, 11-05)
+				float worst = 0f;
+				for (float m = 1f; m <= 3f; m += 1f)
+				{
+					Vector3 at = mouth + d * m;
+					Vector3 g = GapFloor(at, 3f, GapWalkDown);
+					float dy = GapWalkDy(g != at, g.y, floor);
+					if (Mathf.Abs(dy) > Mathf.Abs(worst)) worst = dy;
+				}
+				dys.Add(worst);
+			}
+			return dirs[GapWalkPick(dys)];
+		}
+
+		/// <summary>How far down GapWalkOut looks for the ground beside a mouth (from 3 m over the floor).</summary>
+		const float GapWalkDown = 30f;
+
+		/// <summary>The ground's height beside a mouth less its floor; no ground under the probe (a cliff, the sea far
+		/// below) is a drop past the probe's reach, never level ground.</summary>
+		static float GapWalkDy(bool hit, float groundY, float floor) => hit ? groundY - floor : -(GapWalkDown - 3f);
+
+		static readonly float[] GapWalkAngles = { 0f, 30f, -30f, 60f, -60f, 90f, -90f };
+		const float GapWalkStep = 1.0f;
+
+		/// <summary>Which of GapWalkAngles to walk in from, by the ground's height there less the mouth's floor (in order):
+		/// the first within GapWalkStep, else the closest.</summary>
+		static int GapWalkPick(IList<float> dys)
+		{
+			for (int i = 0; i < dys.Count; i++) if (Mathf.Abs(dys[i]) <= GapWalkStep) return i;
+			int best = 0;
+			for (int i = 1; i < dys.Count; i++) if (Mathf.Abs(dys[i]) < Mathf.Abs(dys[best])) best = i;
+			return best;
+		}
+
+		[ConsoleCommand(name: "CICaveGapsWalkFrom", docs: "Dev, anywhere: where CICaveGapsLook walks into a dug mouth from - straight out when the ground there is within a step of the floor, else the first side direction that is (a mouth on a ledge), else the closest in height")]
+		public static void CaveGapsWalkFromCommand(string[] args) { StartTest(CaveGapsWalkFromRoutine()); }
+
+		/// <summary>(Run as a test so it ends with the IDLE line ci.ps1 -done waits for: as a plain command it printed its
+		/// PASS and no done marker, and the run waited out its timeout - 11-05.)</summary>
+		static IEnumerator CaveGapsWalkFromRoutine()
+		{
+			var cases = new[]
+			{
+				new { d = new[] { 0.2f, 0f, 0f, 0f, 0f, 0f, 0f }, w = 0 },
+				new { d = new[] { -4f, -3.5f, -2.5f, -1.5f, -0.8f, 0.1f, -3f }, w = 4 },
+				new { d = new[] { -4f, -3f, -3f, -2f, -2f, -0.3f, -0.6f }, w = 5 },
+				new { d = new[] { -4f, -3f, -3.5f, -2.2f, -2.5f, -1.8f, -3f }, w = 5 },
+				new { d = new[] { 1.0f, -3f, -3f, -3f, -3f, -3f, -3f }, w = 0 },
+				// (no ground under the probe straight out or to one side: a drop, so the ledge at -60 is taken, not the miss)
+				new { d = new[] { GapWalkDy(false, 0f, 5.7f), GapWalkDy(true, 1.4f, 5.7f), GapWalkDy(false, 0f, 5.7f), GapWalkDy(true, 7.6f, 5.7f), GapWalkDy(true, 5.4f, 5.7f), -3f, -3f }, w = 4 },
+			};
+			int bad = 0;
+			foreach (var c in cases)
+			{
+				int got = GapWalkPick(c.d);
+				if (got != c.w) { bad++; Log("  " + string.Join(" ", c.d.Select(x => x.ToString("0.0")).ToArray()) + " -> " + got + ", not " + c.w); }
+			}
+			if (bad == 0) Log("PASS: cave gaps walk from: " + cases.Length + " cases (straight out, a ledge to the side, the closest, no ground is a drop)"); else Fail("cave gaps walk from: " + bad + " wrong");
+			yield break;
+		}
+
+		static bool CaveGapsLookIslandMissing(string name)
+		{
+			try { return name.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) >= 0 || !System.IO.File.Exists(IslandSpawner.PathFor(name)); }
+			catch { return true; }
 		}
 
 		static IEnumerator CaveGapsLookRoutine(string name, bool shots)
@@ -751,6 +884,7 @@ namespace DynamicIslands
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Root != null && string.Equals(x.HostName, name, StringComparison.OrdinalIgnoreCase));
 			if (e == null)
 			{
+				if (CaveGapsLookIslandMissing(name)) { Fail("cave gaps look: no saved island '" + name + "'"); yield break; }
 				Vector3? spot = ScSpot(name, 400f);
 				if (!spot.HasValue) { Fail("cave gaps look: no open sea near the raft"); yield break; }
 				var made = new List<IslandWorldState.Entry>();
@@ -786,6 +920,15 @@ namespace DynamicIslands
 			const float sea = 0f;
 			List<GapWay> ways = GapWays(e);
 			Check(ref ok, ways.Count > 0, name + ": " + ways.Count + " ways in (" + string.Join(", ", ways.Select(w => w.Kind + " " + w.Floor.Count + " points, " + (w.Floor[0].y - sea).ToString("0.0") + " to " + (w.Floor.Last().y - sea).ToString("0.0") + " m").ToArray()) + ")");
+			// The dug mouths' rims: none of the rock's faces lying on the ground beside them (pale saw-tooth shards where the rim's
+			// skin crosses a steep slope - Old Mine Islet's shore adit, 11-05)
+			foreach (DigTunnel dt in e.Root.GetComponentsInChildren<DigTunnel>(true))
+			{
+				if (dt.RimColumns == 0) continue;
+				string at = "";
+				int shards = dt.RimTop == "" ? 0 : dt.RimShards(out at);
+				Check(ref ok, shards == 0, name + ": dug tunnel " + dt.name + "'s rim (" + dt.RimColumns + " columns, its top " + (dt.RimTop == "" ? "rock" : "the ground's") + "): " + shards + " rock shards on the ground" + (shards > 0 ? " at " + at : ""));
+			}
 			Vector3 eyeUp = Vector3.up * 1.6f;
 			Vector3 home = me.transform.position;
 			int n = 0;
@@ -904,14 +1047,18 @@ namespace DynamicIslands
 					// Walked in with Raft's controller and back out past the mouth (where it is dry the whole way)
 					if (f.All(p => p.y > sea + 0.2f))
 					{
-						PlayerMove.To(me, GapFloor(mouth - w.In * 3f, 3f, 6f) + Vector3.up * 0.3f, ControllerType.Ground);
+						// (from the side when the ground straight out falls away: a mouth on a ledge is come at along the ledge)
+						Vector3 outDir = GapWalkOut(mouth, w.In);
+						Vector3 from = GapFloor(mouth + outDir * 3f, 3f, GapWalkDown);
+						Log("  " + label + ": walks in from " + from.ToString("F1") + " (world), the mouth " + mouth.ToString("F1") + ", out " + outDir.ToString("F2"));
+						PlayerMove.To(me, from + Vector3.up * 0.3f, ControllerType.Ground);
 						yield return new WaitForSeconds(0.8f);
 						bool inOk = false, outOk = false; string why = "", why2 = "";
 						yield return PlayWalk(me, new List<Vector3>(f), (r, m) => { inOk = r; why = m; });
 						if (inOk)
 						{
 							var back = new List<Vector3>(f); back.Reverse();
-							back.Add(GapFloor(mouth - w.In * 5f, 3f, 6f));
+							back.Add(GapFloor(mouth + outDir * 5f, 3f, GapWalkDown));
 							yield return PlayWalk(me, back, (r, m) => { outOk = r; why2 = m; });
 						}
 						Check(ref ok, inOk && outOk, label + ": walked in to its end" + (inOk ? " and back out past the mouth" + (outOk ? "" : " - NOT: " + why2) : " - NOT: " + why));

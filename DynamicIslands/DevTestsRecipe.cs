@@ -425,6 +425,12 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIFloating", docs: "Dev, editor: legs, posts and pillars of the island's objects that don't reach down to anything - a slim upright part whose foot is more than <gap> m (default 0.3) above the ground or what is under it - and objects that stand on the ground with part of their base only (a stilt house set on a slope: the legs over its low side end in the air), floors and decks over nothing (a big deck needs every corner held, a small floor one corner or a held neighbour) and chests and crates with nothing under them (ROADMAP CA30): CIFloating [gap] [name part]")]
+		public static void FloatingConsoleCommand(string[] args) { StartTest(OnceAsTest(() => FloatingCommand(args))); }
+
+		/// <summary>A plain command run as a test, so ci.ps1 -done gets the IDLE line it waits for: CIFloating and CIChestReach
+		/// printed their PASS or FAIL and no done marker, and the run waited out its timeout (11-05).</summary>
+		static IEnumerator OnceAsTest(Action run) { run(); yield break; }
+
 		public static void FloatingCommand(string[] args)
 		{
 			if (!DynamicIslands.InEditor()) { floatProblems = 1; Fail("CIFloating [gap] (in the editor)"); return; }
@@ -760,6 +766,8 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIChestReach", docs: "Dev, editor: can every chest (Loot_*) of the island be used? For each, spots round it 0.9-1.8 m out with a floor and room to stand, and from a standing eye there a clear line within 2.5 m to it - a chest under a table or wedged in a wall has none (Whalebone Bay's altar box, PQ5, 2026-10-27). CIChestReach")]
+		public static void ChestReachConsoleCommand(string[] args) { StartTest(OnceAsTest(() => ChestReachCommand(args))); }
+
 		public static void ChestReachCommand(string[] args)
 		{
 			if (!DynamicIslands.InEditor()) { Fail("CIChestReach (in the editor)"); return; }

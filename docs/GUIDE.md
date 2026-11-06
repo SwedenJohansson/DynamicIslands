@@ -1014,6 +1014,8 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
     yourself - gets a rock hill built over its back and sides, down to the ground and open only at its mouth, made of
     the island's own biggest rock (snowy rock on a snowy island). The hill stops where the cave's roof ends, in a face
     down to the ground, so the ground in front of the mouth and beside it stays free for paths and ledges.
+    The hill is lit as its caves are, warm and dim, so away from Balboa its rock shows as brown-grey mountain rock, not
+    the bright blue patterned patches Raft's blue sky light gave it.
     Balboa's vine cave is a whole rock already and gets none.
     A bear den set on its own gets a rock wall across its open front, with a doorway at the mouth, so from outside you
     don't look into the cave through its missing side. A den and the tunnels of the cave tool are lit warm and dim in a
@@ -4712,7 +4714,7 @@ copper ore, scrap and a giant clam to gather just off the shore, as every one of
 | ![](images/library/crane_yard.jpg) **Crane Yard** | A construction islet under a giant crane; the spotlight's parts went down with the pier's end (Raft's Varuna Point) | Three story items to collect under water, angler fish, a spotlight that is fixed and points to the reward |
 | ![](images/library/frost_hollow.jpg) **Frost Hollow** | A snowy islet with igloos, a telescope and a dark lab; three cables, a power box, a polar bear (Raft's Temperance) | A power box that takes three story items, a sliding lab door that opens on a signal |
 | ![](images/library/tide_farm.jpg) **Tide Farm** | A floating farm of Raft's foundations: crop beds, a glasshouse, a water wheel jammed by a crate (Raft's Utopia) | An island of only building blocks over water, a turning wheel, animals to **catch** as a quest step |
-| ![](images/library/old_mine_islet.jpg) **Old Mine Islet** | An old mine in a rock mound: timbered tunnels, rails, ore carts - dark further in, where something has dug in | A cave from Balboa's cave pieces set into the land, darkness (an atmosphere zone) and lanterns, a head lamp in a locker |
+| ![](images/library/old_mine_islet.jpg) **Old Mine Islet** | An old mine in a rock mound: timbered tunnels, rails, ore carts - dark further in, where something has dug in | A cave from Balboa's cave pieces set into the land, darkness (an atmosphere zone) and lanterns, a head lamp in a locker; two old workings to find off the quest: a drift into the mound's back that breaks into a cavern (the cave tool) and Tunnel 1 dug into Copper Knob's foot (Dig brush: two adits, a side drift, a miner's chest and note) |
 | ![](images/library/shelter_atoll.jpg) **Shelter Atoll** | A bomb shelter under an atoll's islet: seven dark rooms, rats, a dry generator, a blast gate | Rooms **under the ground** (a pit under a concrete roof), a hatch and a ladder down, a generator that lights the rooms, opens doors and runs the radio room; an **underwater cave** from the lagoon floor up to a dry den in a sea rock, and **Dr. Shogo** at the channel: three answers (a journal page, the way to the cave's supply chest) and a storeroom barred until you talked to him; Tangaroa rats at the back of the ammo cave |
 
 ### 15.3 The very large islands
@@ -4901,7 +4903,7 @@ Raft's order (Check and Progression, [7.5](#75-check-finding-and-fixing-problems
 | A lift or anything that moves the player | The Frontier (the Corps' lift: **teleport to** its other end), The Safe Room (a hatch down an escape shaft and back), Rookery Cliffs (Raft's own scissor lift, which carries you) |
 | Roads and terraces up a steep slope (the terrain brushes) | The Frontier (two farm terraces and three wide ramps up a 35 m mesa), The Iron Graveyard (a ramp cut up the mesa's cliff), The Safe Room (a driveway cut along a cliff face) |
 | A town | Hightide Harbor (a fishing town on stilts), The Frontier (a harbour town and an upper town of four quarters) |
-| Caves | Old Mine Islet, Ironreef Caverns (four, and the dug Reef Workings), Wreckers' Cove (a sea cave) |
+| Caves | Old Mine Islet (the mine, a back drift and Tunnel 1), Ironreef Caverns (four, and the dug Reef Workings), Wreckers' Cove (a sea cave) |
 | Rooms under the ground | Shelter Atoll |
 | Darkness and light (atmosphere zones, lamps that come on) | Shelter Atoll, Old Mine Islet, Ironreef Caverns, The Abyss (its lair) |
 | Things under water to dive for | The Stranded Gull, Mayor's Wharf, Crane Yard, The Drowned Metropolis, Coral Observatory, The Abyss |

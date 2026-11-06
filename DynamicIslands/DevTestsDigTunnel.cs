@@ -15,6 +15,45 @@ namespace DynamicIslands
 	{
 		const string DigIsland = "citest-digtunnel";
 
+		[ConsoleCommand(name: "CIRimWalls", docs: "Dev, in a world: every dug tunnel on the loaded custom islands wears the cave hill skin's rock and tint on its rim walls (part 1, out in the open round the mouth) - the skin's material and colour where the island has a hill, else the rock the hill would wear (11-05: Raft's island rock went blue-grey in the shade beside the sand-brown hill)")]
+		public static void RimWallsCommand() { StartTest(RimWallsRoutine()); }
+
+		static IEnumerator RimWallsRoutine()
+		{
+			bool ok = true;
+			int n = 0;
+			// (an island just spawned builds its tunnels and hill over a few frames - wait for them, at most a minute)
+			for (float w = 0f; w < 60f; w += 0.5f)
+			{
+				List<IslandWorldState.Entry> up = IslandWorldState.Islands.Where(x => x.Root != null && !x.Loading).ToList();
+				if (up.Count > 0 && up.All(x => { CaveMountain m = x.Root.GetComponentInChildren<CaveMountain>(); return m == null || !m.Pending; })
+					&& up.Any(x => x.Root.GetComponentsInChildren<DigTunnel>(true).Any(t => t.Triangles > 0))) break;
+				yield return new WaitForSeconds(0.5f);
+			}
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(x => x.Root != null && !x.Loading).ToList())
+				foreach (DigTunnel t in e.Root.GetComponentsInChildren<DigTunnel>(true))
+				{
+					Transform r = t.transform.Find(DigTunnel.RockName);
+					MeshRenderer mr = r != null ? r.GetComponent<MeshRenderer>() : null;
+					n++;
+					if (mr == null || mr.sharedMaterials.Length < 2) { Check(ref ok, false, "'" + e.Name + "' " + t.name + ": " + (mr == null ? "no rock renderer" : mr.sharedMaterials.Length + " materials on its rock")); continue; }
+					Material walls = mr.sharedMaterials[1];
+					CaveMountain hill = mr.GetComponentInParent<CaveMountain>();
+					MeshRenderer skin = hill != null ? hill.SkinRenderer : null;
+					string what = "'" + e.Name + "' " + t.name + " at " + (t.transform.position - e.Position).ToString("0") + ": rim walls " + (walls != null ? walls.name : "none");
+					if (skin != null)
+					{
+						var a = new MaterialPropertyBlock(); var b = new MaterialPropertyBlock();
+						skin.GetPropertyBlock(a); mr.GetPropertyBlock(b, 1);
+						Texture ta = a.isEmpty ? null : a.GetTexture("_MainTex"), tb = b.isEmpty ? null : b.GetTexture("_MainTex");
+						Check(ref ok, walls == skin.sharedMaterial && ta == tb, what + ", the hill's skin " + skin.sharedMaterial.name + (ta != null ? " (tinted " + ta.name + ")" : ""));
+					}
+					else Check(ref ok, walls != null && t.RimWalls == walls.name, what + " (no hill on the island: the rock it would wear, " + (t.RimWalls == "" ? "not dressed" : t.RimWalls) + ")");
+				}
+			Check(ref ok, n > 0, n + " dug tunnels on the loaded islands");
+			if (ok) Log("PASS: rim walls wear the hill's rock"); else Fail("rim walls wear the hill's rock");
+		}
+
 		[ConsoleCommand(name: "CIDigTunnelEditor", docs: "Dev, editor: the Dig brush on a generated island - a tunnel dug into a hill from its foot, on 24 m and round a bend: its rock lining made, the ground cut only at its mouth, walkable end to end (a floor every step, steps under 0.6 m, 2 m of room), no look from inside out through the hill, a rim of rock over every cut cell round the mouth (none sunken); one Ctrl+Z per stroke (the tunnel, a branch, a Shift fill), the ground's holes back as they were; saved and loaded with the island; then a tunnel dug into a raised cliff's foot (its rim, no leaks; pictures of both mouths). Leaves the island citest-digtunnel for CIDigTunnelWorld")]
 		public static void DigTunnelEditorCommand(string[] args) { StartTest(DigTunnelEditorRoutine()); }
 
@@ -224,6 +263,9 @@ namespace DynamicIslands
 				+ (m != null ? "; material " + m.name + ", shader " + m.shader.name + " (" + string.Join(", ", m.GetTexturePropertyNames()) + ")" : "; no second material") + tex;
 		}
 
+		/// <summary>Where a dug mouth's rim has rock shards on the ground (DigTunnel.RimShards), the first few.</summary>
+		internal static string RimShardsAt(DigTunnel t) { string w; t.RimShards(out w); return w; }
+
 		static IEnumerator DigTunnelEditorRoutine()
 		{
 			if (!DynamicIslands.InEditor()) { Fail("dig tunnel: in the editor"); yield break; }
@@ -322,7 +364,8 @@ namespace DynamicIslands
 			{
 				int sunken;
 				string cover = RimCover(tun, t, cut, out sunken);
-				Check(ref ok, tun.RimColumns > 0 && sunken == 0, "the mouth's rim: " + RimLook(tun) + "; the cut cells: " + cover);
+				int shards = tun.RimTop == "" ? 0 : tun.RimShards(out _);
+				Check(ref ok, tun.RimColumns > 0 && sunken == 0 && shards == 0, "the mouth's rim: " + RimLook(tun) + "; the cut cells: " + cover + "; " + shards + " rock shards on the ground" + (shards > 0 ? " (" + RimShardsAt(tun) + ")" : ""));
 			}
 			// From outside, in front and from over it: no look through the hill at the mouth (11-02)
 			{
@@ -458,7 +501,8 @@ namespace DynamicIslands
 					{
 						int sunken;
 						string cover = RimCover(ct, t, cliffCut, out sunken);
-						Check(ref ok, ct.RimColumns > 0 && sunken == 0, "the cliff mouth's rim: " + RimLook(ct) + "; the cut cells: " + cover);
+						int cshards = ct.RimTop == "" ? 0 : ct.RimShards(out _);
+						Check(ref ok, ct.RimColumns > 0 && sunken == 0 && cshards == 0, "the cliff mouth's rim: " + RimLook(ct) + "; the cut cells: " + cover + "; " + cshards + " rock shards on the ground" + (cshards > 0 ? " (" + RimShardsAt(ct) + ")" : ""));
 						{
 							var cseen = new List<string>();
 							int looked, looked2;

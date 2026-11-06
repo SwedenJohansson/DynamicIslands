@@ -966,5 +966,308 @@ namespace DynamicIslands
 			}
 			Log("PASS: materials probed");
 		}
+
+		[ConsoleCommand(name: "CIDenWalls", docs: "Dev, in a world: the wall across each lone bear den's mouth (ar_cave, CaveTool.PlugOpening) on a loaded island - every face's normal set (zero ones draw flat black: the dark slabs round its mouth, 11-06), faces both into the den and out of its mouth, and lit as the den (CaveLit). CIDenWalls <island>")]
+		public static void DenWallsCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args ?? new string[0]) });
+			if (e == null) return;
+			var walls = e.Root.GetComponentsInChildren<MeshFilter>(true).Where(f => f.name == CaveTool.PlugName && f.sharedMesh != null).ToList();
+			if (walls.Count == 0) { Fail("no den wall (" + CaveTool.PlugName + ") on " + e.HostName); return; }
+			int bad = 0;
+			foreach (MeshFilter f in walls)
+			{
+				// (the wall's inside is its own mesh, its outside a child (CavePlugOut, drawn as the hill when there is one): both
+				// sides counted over the two, each lit as the cave - 11-06 merge)
+				Transform outT = f.transform.Find(CaveTool.PlugOutName);
+				MeshFilter of = outT != null ? outT.GetComponent<MeshFilter>() : null;
+				Vector3[] n = f.sharedMesh.normals.Concat(of != null && of.sharedMesh != null ? of.sharedMesh.normals : new Vector3[0]).ToArray();
+				int zero = n.Count(v => v.sqrMagnitude < 0.25f), inn = n.Count(v => v.z < -0.3f), outn = n.Count(v => v.z > 0.3f); // (a rock face now, not flat: 11-06)
+				Renderer r = f.GetComponent<Renderer>(), ro = of != null ? of.GetComponent<Renderer>() : null;
+				bool lit = r != null && r.lightProbeUsage == UnityEngine.Rendering.LightProbeUsage.CustomProvided
+					&& (ro == null || ro.lightProbeUsage == UnityEngine.Rendering.LightProbeUsage.CustomProvided);
+				bool ok = n.Length > 0 && zero == 0 && inn > 0 && outn > 0 && lit;
+				if (!ok) bad++;
+				Log("  " + f.transform.parent.name + " at " + (f.transform.parent.position - e.Position).ToString("F1") + ": " + n.Length + " points, normals zero " + zero + ", into the den " + inn + ", out " + outn + ", lit as the den " + lit + (ok ? "" : " - BAD"));
+			}
+			if (bad > 0) Fail(bad + " of " + walls.Count + " den walls drawn wrong");
+			else Log("PASS: den walls " + walls.Count + ", each face lit both ways");
+		}
+
+		[ConsoleCommand(name: "CIRayLook", docs: "Dev, in a world: what is seen from a point toward another on a loaded island (points in the island's frame, as a play's picture) - a fan of 9x9 rays over 30 degrees, each ray's first renderer (its mesh's triangles, colliders or not); logs each thing seen with its share of the rays, path, material, shader and textures. For finding what draws an odd look (the blue rock, 11-06). CIRayLook <island> <x> <y> <z> <tx> <ty> <tz>")]
+		public static void RayLookCommand(string[] args)
+		{
+			if (args == null || args.Length < 7) { Fail("CIRayLook <island> <x> <y> <z> <tx> <ty> <tz>"); return; }
+			float[] v = args.Skip(args.Length - 6).Select(a => float.Parse(a, CultureInfo.InvariantCulture)).ToArray();
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args.Take(args.Length - 6).ToArray()) });
+			if (e == null) return;
+			Vector3 from = e.Position + e.Root.transform.rotation * new Vector3(v[0], v[1], v[2]), to = e.Position + e.Root.transform.rotation * new Vector3(v[3], v[4], v[5]);
+			Quaternion look = Quaternion.LookRotation(to - from);
+			var rends = Object.FindObjectsOfType<Renderer>().Where(r => r.enabled && r.gameObject.activeInHierarchy && !(r is ParticleSystemRenderer) && r.GetComponentInParent<Network_Player>() == null && r.bounds.SqrDistance(from) < 80f * 80f).ToList();
+			var seen = new Dictionary<Renderer, int>();
+			int rays = 0;
+			for (int i = -4; i <= 4; i++)
+				for (int k = -4; k <= 4; k++)
+				{
+					Ray ray = new Ray(from, look * Quaternion.Euler(k * 3.75f, i * 3.75f, 0f) * Vector3.forward);
+					rays++;
+					Renderer best = null; float bd = 80f;
+					foreach (Renderer r in rends)
+					{
+						float bdist;
+						if (!r.bounds.IntersectRay(ray, out bdist) || bdist > bd) continue;
+						float d = RayMeshDistance(r, ray);
+						if (d < bd) { bd = d; best = r; }
+					}
+					if (best != null) seen[best] = (seen.ContainsKey(best) ? seen[best] : 0) + 1;
+				}
+			foreach (var kv in seen.OrderByDescending(p => p.Value))
+			{
+				Renderer r = kv.Key;
+				string path = r.name; for (Transform t = r.transform.parent; t != null && t != e.Root.transform.parent; t = t.parent) path = t.name + "/" + path;
+				string mats = string.Join("; ", r.sharedMaterials.Where(m => m != null).Select(m => m.name + " (" + m.shader.name + ": " + string.Join(" ", m.GetTexturePropertyNames().Where(t => m.GetTexture(t) != null).Select(t => t + "=" + m.GetTexture(t).name).ToArray()) + ")").ToArray());
+				var b = new MaterialPropertyBlock(); r.GetPropertyBlock(b);
+				Log("  " + kv.Value + "/" + rays + " " + path + " at " + (r.transform.position - e.Position).ToString("F1") + " [" + r.GetType().Name + (b.isEmpty ? "" : ", property block") + ", probes " + r.lightProbeUsage + "]: " + mats);
+			}
+			Log("PASS: ray look " + seen.Count + " things");
+		}
+
+		// The distance along the ray to the renderer's mesh, or infinity (a skinned or unreadable mesh: its bounds).
+		static float RayMeshDistance(Renderer r, Ray ray)
+		{
+			MeshFilter f = r.GetComponent<MeshFilter>();
+			Mesh m = f != null ? f.sharedMesh : null;
+			float bd;
+			if (m == null || !m.isReadable) return !r.bounds.Contains(ray.origin) && r.bounds.IntersectRay(ray, out bd) ? bd : float.PositiveInfinity; // (around the eye: can't tell)
+			Transform t = r.transform;
+			Vector3 o = t.InverseTransformPoint(ray.origin), dir = t.InverseTransformDirection(ray.direction);
+			Vector3[] p = m.vertices; int[] tri = m.triangles;
+			float best = float.PositiveInfinity;
+			for (int i = 0; i < tri.Length; i += 3)
+			{
+				Vector3 a = p[tri[i]], e1 = p[tri[i + 1]] - a, e2 = p[tri[i + 2]] - a;
+				Vector3 h = Vector3.Cross(dir, e2); float det = Vector3.Dot(e1, h);
+				if (Mathf.Abs(det) < 1e-7f) continue;
+				float inv = 1f / det; Vector3 s = o - a; float u = Vector3.Dot(s, h) * inv;
+				if (u < 0f || u > 1f) continue;
+				Vector3 q = Vector3.Cross(s, e1); float w = Vector3.Dot(dir, q) * inv;
+				if (w < 0f || u + w > 1f) continue;
+				float d = Vector3.Dot(e2, q) * inv;
+				if (d > 0f && d < best) best = d;
+			}
+			return best == float.PositiveInfinity ? best : Vector3.Distance(ray.origin, t.TransformPoint(o + dir * best));
+		}
+
+		[ConsoleCommand(name: "CIBackLook", docs: "Dev, in a world: the cave pieces' backs (CaveBacks: their shells seen from outside) for finding the blue rock (11-06). off / on: every back hidden or shown; full / plain / normals: every back made again with normals and tangents' handedness flipped (as made), faces turned only, or normals only. CIBackLook <off|on|full|plain|normals>")]
+		public static void BackLookCommand(string[] args)
+		{
+			string mode = args != null && args.Length > 0 ? args[0] : "";
+			var backs = Object.FindObjectsOfType<MeshRenderer>().Where(r => r.name == CaveBacks.Name).ToList();
+			if (mode == "off" || mode == "on") foreach (MeshRenderer r in backs) r.enabled = mode == "on";
+			else if (mode == "full" || mode == "plain" || mode == "normals")
+			{
+				CaveBacks.TestFlip = mode == "full" ? 0 : mode == "plain" ? 1 : 2;
+				Log("  backs made again: " + CaveBacks.Remake());
+			}
+			else { Fail("CIBackLook <off|on|full|plain|normals>"); return; }
+			Log("PASS: backs " + mode + " (" + backs.Count + ")");
+		}
+
+		[ConsoleCommand(name: "CIRockLook", docs: "Dev, in a world: the island rock (Raft's Mountains shader) for finding the blue rock (11-06). props: each Mountains material's settings and the scene's light; vanilla / lit: the cave light (CaveLit) off and Raft's probes back, or on again; dark: the cave pieces lit by nothing; shine <k>: their shine times k; noprobe / probe: reflection probes off or on for every Mountains renderer; sand: Balboa_BigRocks_Dirt swapped for the hill's sand rock; noterrain / terrain: the island ground hidden or shown; rocktint <r g b>: the ground's steep layer tinted; nosun / sun: the sun off or on; norefl / refl: reflections off (intensity 0, probes off) or back; flatnormal / flatall / normal: the backs' and hill skins' (or every Mountains renderer's) main normal map flat, or back; info: how the backs, the hill skin and the rest are lit (probe use, block, cave light); noamb / amb: the scene's ambient light off or back; blockdark / blockoff: the backs and skin given a black probe straight through their blocks (cave light off), or their blocks cleared. CIRockLook <mode> [k]")]
+		public static void RockLookCommand(string[] args)
+		{
+			string mode = args != null && args.Length > 0 ? args[0] : "";
+			var rends = Object.FindObjectsOfType<MeshRenderer>().Where(r => r.sharedMaterials.Any(m => m != null && m.shader != null && m.shader.name.Contains("Mountains"))).ToList();
+			if (mode == "props")
+			{
+				Log("  ambient " + RenderSettings.ambientMode + " x" + RenderSettings.ambientIntensity + " sky " + RenderSettings.ambientSkyColor + ", reflections " + RenderSettings.defaultReflectionMode + " x" + RenderSettings.reflectionIntensity + " bounces " + RenderSettings.reflectionBounces + ", probes in scene " + Object.FindObjectsOfType<ReflectionProbe>().Length + ", sun " + (RenderSettings.sun != null ? RenderSettings.sun.color + " x" + RenderSettings.sun.intensity : "none"));
+				foreach (ReflectionProbe rp in Object.FindObjectsOfType<ReflectionProbe>().Take(6)) Log("  probe " + rp.name + " " + rp.mode + " at " + rp.transform.position + " size " + rp.size + " x" + rp.intensity + " importance " + rp.importance);
+				foreach (Material m in rends.SelectMany(r => r.sharedMaterials).Where(m => m != null && m.shader.name.Contains("Mountains")).Distinct())
+				{
+					var sb = new System.Text.StringBuilder("  " + m.name + " (" + m.shader.name + ", keywords " + string.Join(" ", m.shaderKeywords) + "):");
+					for (int i = 0; i < m.shader.GetPropertyCount(); i++)
+					{
+						string n = m.shader.GetPropertyName(i);
+						switch (m.shader.GetPropertyType(i))
+						{
+							case UnityEngine.Rendering.ShaderPropertyType.Float: case UnityEngine.Rendering.ShaderPropertyType.Range: sb.Append(" " + n + "=" + m.GetFloat(n).ToString("0.###")); break;
+							case UnityEngine.Rendering.ShaderPropertyType.Color: sb.Append(" " + n + "=" + m.GetColor(n)); break;
+							case UnityEngine.Rendering.ShaderPropertyType.Vector: sb.Append(" " + n + "=" + m.GetVector(n)); break;
+							case UnityEngine.Rendering.ShaderPropertyType.Texture: Texture t = m.GetTexture(n); sb.Append(" " + n + "=" + (t != null ? t.name : "-")); break;
+						}
+					}
+					Log(sb.ToString());
+				}
+				foreach (var g in rends.GroupBy(r => r.lightProbeUsage + "/" + r.reflectionProbeUsage + "/" + (r.probeAnchor != null ? "anchor" : "-"))) Log("  renderers " + g.Key + ": " + g.Count());
+			}
+			else if (mode == "vanilla" || mode == "lit")
+			{
+				CaveLit.Off = mode == "vanilla";
+				if (CaveLit.Off) foreach (MeshRenderer r in rends) { r.SetPropertyBlock(null); for (int i = 0; i < r.sharedMaterials.Length; i++) r.SetPropertyBlock(null, i); r.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.BlendProbes; }
+			}
+			else if (mode == "dark") CaveLit.TestDark = true;
+			else if (mode == "light") CaveLit.TestDark = false;
+			else if (mode == "shine") CaveLit.TestShine = args.Length > 1 ? float.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture) : 1f;
+			else if (mode == "noprobe" || mode == "probe") foreach (MeshRenderer r in rends) r.reflectionProbeUsage = mode == "probe" ? UnityEngine.Rendering.ReflectionProbeUsage.BlendProbes : UnityEngine.Rendering.ReflectionProbeUsage.Off;
+			else if (mode == "sand")
+			{
+				Material sand = rends.SelectMany(r => r.sharedMaterials).FirstOrDefault(m => m != null && m.name.StartsWith("Balboa_BigRocks_Sand"));
+				if (sand == null) { Fail("rock look: no sand rock"); return; }
+				foreach (MeshRenderer r in rends) r.sharedMaterials = r.sharedMaterials.Select(m => m != null && m.name.StartsWith("Balboa_BigRocks_Dirt") ? sand : m).ToArray();
+			}
+			else if (mode == "noterrain" || mode == "terrain") foreach (Terrain t in Terrain.activeTerrains) t.drawHeightmap = mode == "terrain";
+			else if (mode == "rocktint" && args.Length >= 4)
+			{
+				var c = new Color(float.Parse(args[1], CultureInfo.InvariantCulture), float.Parse(args[2], CultureInfo.InvariantCulture), float.Parse(args[3], CultureInfo.InvariantCulture));
+				int n = 0;
+				foreach (Terrain t in Terrain.activeTerrains)
+				{
+					TerrainLayer[] ls = t.terrainData != null ? t.terrainData.terrainLayers : null;
+					if (ls == null) continue;
+					for (int i = 0; i < ls.Length; i++)
+					{
+						if (ls[i] == null || ls[i].diffuseTexture == null || !ls[i].name.StartsWith("CI_") || !(ls[i].name.EndsWith("_3") || ls[i].name.EndsWith("_7"))) continue;
+						Texture2D orig;
+						if (!rockOrig.TryGetValue(ls[i].name, out orig)) rockOrig[ls[i].name] = orig = ls[i].diffuseTexture;
+						ls[i].diffuseTexture = c == Color.white ? orig : TerrainPainter.Tinted(orig, c);
+						n++;
+					}
+					t.terrainData.terrainLayers = ls;
+				}
+				Log("  steep layers tinted " + c + ": " + n);
+			}
+			else if (mode == "nosun" || mode == "sun")
+			{
+				int n = 0;
+				foreach (Light l in Object.FindObjectsOfType<Light>(true))
+					if (l.type == LightType.Directional) { l.enabled = mode == "sun"; n++; }
+				Log("  directional lights " + (mode == "sun" ? "on" : "off") + ": " + n);
+			}
+			else if (mode == "norefl" || mode == "refl")
+			{
+				if (mode == "norefl") { reflWas = RenderSettings.reflectionIntensity; RenderSettings.reflectionIntensity = 0f; }
+				else if (reflWas >= 0f) RenderSettings.reflectionIntensity = reflWas;
+				int n = 0;
+				foreach (ReflectionProbe rp in Object.FindObjectsOfType<ReflectionProbe>(true)) { rp.enabled = mode == "refl"; n++; }
+				Log("  reflections x" + RenderSettings.reflectionIntensity + ", probes " + (mode == "refl" ? "on" : "off") + ": " + n);
+			}
+			else if (mode == "flatnormal" || mode == "flatall" || mode == "normal")
+			{
+				// (the backs and the hill skin: their main normal map flat - or every Mountains renderer's, flatall)
+				int n = 0;
+				foreach (MeshRenderer r in rends)
+				{
+					bool back = r.name == global::DynamicIslands.Editor.CaveBacks.Name || r.name == CaveMountain.SkinName;
+					if (mode == "flatnormal" && !back) continue;
+					Material[] mats = r.sharedMaterials;
+					for (int i = 0; i < mats.Length; i++)
+					{
+						Material m = mats[i], o;
+						if (m == null) continue;
+						if (flatOrig.TryGetValue(m, out o)) { if (mode == "normal") mats[i] = o; continue; }
+						if (mode == "normal" || !m.HasProperty("_MainNormal")) continue;
+						var f = new Material(m) { name = m.name };
+						f.SetTexture("_MainNormal", Texture2D.normalTexture);
+						flatOrig[f] = m;
+						mats[i] = f;
+					}
+					r.sharedMaterials = mats;
+					n++;
+				}
+				Log("  main normal " + mode + ": " + n + " renderers");
+			}
+			else if (mode == "info")
+			{
+				// (the backs and the hill skin, and the pieces they belong to: how each is lit)
+				Log("  ambient " + RenderSettings.ambientMode + " x" + RenderSettings.ambientIntensity + " sky " + RenderSettings.ambientSkyColor + " equator " + RenderSettings.ambientEquatorColor + " ground " + RenderSettings.ambientGroundColor + " probe dc " + RenderSettings.ambientProbe[0, 0].ToString("0.##") + "/" + RenderSettings.ambientProbe[1, 0].ToString("0.##") + "/" + RenderSettings.ambientProbe[2, 0].ToString("0.##") + ", cave lit live " + CaveLit.AnyLive);
+				foreach (var g in rends.GroupBy(r => (r.name == global::DynamicIslands.Editor.CaveBacks.Name ? "back" : r.name == CaveMountain.SkinName ? "skin" : "other") + " " + r.lightProbeUsage + " block " + r.HasPropertyBlock() + " cavelit " + (r.GetComponentInParent<CaveLit>() != null) + " " + string.Join(",", r.sharedMaterials.Where(m => m != null).Select(m => m.shader.name).Distinct().ToArray())))
+					Log("  " + g.Key + ": " + g.Count() + " e.g. " + string.Join(", ", g.Take(3).Select(r => (r.transform.parent != null ? r.transform.parent.name + "/" : "") + r.name).ToArray()));
+			}
+			else if (mode == "noamb" || mode == "amb")
+			{
+				if (mode == "noamb")
+				{
+					if (ambWas == null) ambWas = new object[] { RenderSettings.ambientIntensity, RenderSettings.ambientProbe, RenderSettings.ambientSkyColor, RenderSettings.ambientEquatorColor, RenderSettings.ambientGroundColor, RenderSettings.ambientLight };
+					RenderSettings.ambientIntensity = 0f; RenderSettings.ambientProbe = new UnityEngine.Rendering.SphericalHarmonicsL2();
+					RenderSettings.ambientSkyColor = RenderSettings.ambientEquatorColor = RenderSettings.ambientGroundColor = RenderSettings.ambientLight = Color.black;
+				}
+				else if (ambWas != null)
+				{
+					RenderSettings.ambientIntensity = (float)ambWas[0]; RenderSettings.ambientProbe = (UnityEngine.Rendering.SphericalHarmonicsL2)ambWas[1];
+					RenderSettings.ambientSkyColor = (Color)ambWas[2]; RenderSettings.ambientEquatorColor = (Color)ambWas[3]; RenderSettings.ambientGroundColor = (Color)ambWas[4]; RenderSettings.ambientLight = (Color)ambWas[5];
+					ambWas = null;
+				}
+				Log("  scene ambient " + (mode == "noamb" ? "off" : "back"));
+			}
+			else if (mode == "blockdark" || mode == "blockoff")
+			{
+				// (the backs and the skin given a black light probe straight through their blocks, the cave light kept off them)
+				CaveLit.Off = mode == "blockdark";
+				var mpb = new MaterialPropertyBlock();
+				var sh = new UnityEngine.Rendering.SphericalHarmonicsL2[] { new UnityEngine.Rendering.SphericalHarmonicsL2() };
+				int n = 0;
+				foreach (MeshRenderer r in rends)
+				{
+					if (r.name != global::DynamicIslands.Editor.CaveBacks.Name && r.name != CaveMountain.SkinName) continue;
+					if (mode == "blockoff") { r.SetPropertyBlock(null); continue; }
+					r.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.CustomProvided;
+					r.GetPropertyBlock(mpb); mpb.CopySHCoefficientArraysFrom(sh); r.SetPropertyBlock(mpb);
+					for (int i = 0; i < r.sharedMaterials.Length; i++) { r.GetPropertyBlock(mpb, i); mpb.CopySHCoefficientArraysFrom(sh); r.SetPropertyBlock(mpb, i); }
+					n++;
+				}
+				Log("  backs and skin black probe: " + n);
+			}
+			else { Fail("CIRockLook <props|vanilla|lit|dark|light|shine k|noprobe|probe|sand|noterrain|terrain|rocktint r g b|nosun|sun|norefl|refl|flatnormal|flatall|normal|info|noamb|amb|blockdark|blockoff>"); return; }
+			Log("PASS: rock look " + mode + " (" + rends.Count + " renderers)");
+		}
+
+		static readonly Dictionary<string, Texture2D> rockOrig = new Dictionary<string, Texture2D>();
+		static readonly Dictionary<Material, Material> flatOrig = new Dictionary<Material, Material>();
+		static float reflWas = -1f;
+		static object[] ambWas;
+
+		[ConsoleCommand(name: "CIDownRays", docs: "Dev, in a world: what lies over and under points of a loaded island (island frame) - a ray down from 80 m at each, every collider it meets with its height, and the terrain's height there: is a cave's shell covered by ground, or out in the open over the sea (11-06). CIDownRays <island> <x> <z> [<x> <z> ...]")]
+		public static void DownRaysCommand(string[] args)
+		{
+			int nums = 0;
+			float f;
+			while (args != null && nums < args.Length && float.TryParse(args[args.Length - 1 - nums], NumberStyles.Float, CultureInfo.InvariantCulture, out f)) nums++;
+			nums -= nums % 2;
+			if (nums < 2) { Fail("CIDownRays <island> <x> <z> [<x> <z> ...]"); return; }
+			float[] v = args.Skip(args.Length - nums).Select(a => float.Parse(a, CultureInfo.InvariantCulture)).ToArray();
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args.Take(args.Length - nums).ToArray()) });
+			if (e == null) return;
+			Quaternion rot = e.Root.transform.rotation;
+			for (int i = 0; i + 1 < v.Length; i += 2)
+			{
+				Vector3 top = e.Position + rot * new Vector3(v[i], 80f, v[i + 1]);
+				RaycastHit[] hits = Physics.RaycastAll(top, Vector3.down, 140f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).ToArray();
+				Terrain ter = Terrain.activeTerrains.FirstOrDefault(t => { Vector3 p = t.transform.position, s = t.terrainData.size; return top.x >= p.x && top.x <= p.x + s.x && top.z >= p.z && top.z <= p.z + s.z; });
+				string ground = ter != null ? (ter.SampleHeight(top) + ter.transform.position.y - e.Position.y).ToString("0.0") : "none";
+				Log("  (" + v[i] + ", " + v[i + 1] + ") terrain " + ground + ": " + string.Join(", ", hits.Take(8).Select(h => h.collider.name + " " + (h.point.y - e.Position.y).ToString("0.0")).ToArray()));
+			}
+			Log("PASS: down rays " + v.Length / 2);
+		}
+
+		[ConsoleCommand(name: "CICaveLit", docs: "Dev, in a world: every Balboa cave piece placed on a loaded island (a mine's dead-end mound, an ar_cave den, the cave tool's tunnels) lit as a cave - its renderers on the cave light (CaveLit), not Raft's blue sky light that drew its faces bright blue (11-06). CICaveLit [island]")]
+		public static void CaveLitCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args ?? new string[0]) });
+			if (e == null) return;
+			var pieces = e.Root.GetComponentsInChildren<Transform>(true).Where(t => t.name.StartsWith("BalboaCave", System.StringComparison.Ordinal)
+				&& (t.parent == null || !t.parent.name.StartsWith("BalboaCave", System.StringComparison.Ordinal))).ToList();
+			if (pieces.Count == 0) { Fail("no Balboa cave piece on " + e.HostName); return; }
+			int bad = 0;
+			foreach (Transform t in pieces)
+			{
+				Renderer[] rs = t.GetComponentsInChildren<Renderer>(false).Where(r => r.enabled && !(r is ParticleSystemRenderer)).ToArray();
+				int off = rs.Count(r => r.lightProbeUsage != UnityEngine.Rendering.LightProbeUsage.CustomProvided);
+				bool marked = t.GetComponentInParent<CaveLit>() != null;
+				if (!marked || off > 0) bad++;
+				Log("  " + t.name + " at " + (t.position - e.Position).ToString("F1") + ": " + rs.Length + " renderers, " + (marked ? "cave light" : "NOT marked") + ", on the sky's light " + off);
+			}
+			if (bad > 0) Fail(bad + " of " + pieces.Count + " Balboa cave pieces lit by the sky");
+			else Log("PASS: Balboa cave pieces " + pieces.Count + ", all on the cave light");
+		}
 	}
 }

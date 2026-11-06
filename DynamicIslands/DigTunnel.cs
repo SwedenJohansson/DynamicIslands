@@ -101,6 +101,27 @@ namespace DynamicIslands.Editor
 			return dark;
 		}
 
+		/// <summary>A world point in the open air of a dug passage (in the editor or a world), at least margin metres in from
+		/// its walls, floor and roof. The reach audit (CIReach) asks this: under a terrain it took a dug passage for solid
+		/// ground - at the mouth the cut cells leave the ground's height over the floor with nothing there, and in a bumpy
+		/// passage a ray up met a wall, not a roof facing down - so a chest in a dug tunnel was never reached (11-05).</summary>
+		public static bool InPassage(Vector3 world, float margin)
+		{
+			for (int i = 0; i < live.Count; i++)
+			{
+				DigTunnel t = live[i];
+				if (t == null || !t.isActiveAndEnabled || t.PointCount == 0) continue;
+				Bounds b = t.WorldBounds();
+				b.Expand(1f);
+				if (!b.Contains(world)) continue;
+				float sY = Mathf.Abs(t.transform.lossyScale.y) > 1e-4f ? Mathf.Abs(t.transform.lossyScale.y) : 1f;
+				// (the walls and roof stand up to Bumps (0.15 r) inside the passage's round: the margin is past them)
+				float d = Distance(t.Segments(Shell), t.transform.InverseTransformPoint(world)) * sY;
+				if (d < -margin) return true;
+			}
+			return false;
+		}
+
 		/// <summary>How far toward the passage's own dim light (AmbienceZones' TunnelLight, 1 = all the way) the lining's sky
 		/// light is in a world, wherever the camera is: DarkAt dims the light for the camera only from DarkFrom m in, so seen
 		/// from the mouth or just inside it the passage took the world's strong blue sky light (ambient intensity 8) and came out
@@ -463,6 +484,8 @@ namespace DynamicIslands.Editor
 
 		Terrain skinLand;
 		static bool rockLoading;
+		/// <summary>Tests: what the rim walls (part 1) wear - the cave hill skin's material (CaveMountain.DressRimWalls); "" when left as the rock.</summary>
+		[NonSerialized] public string RimWalls = "";
 
 		void Skin(MeshRenderer mr, Terrain land)
 		{
@@ -473,6 +496,9 @@ namespace DynamicIslands.Editor
 			mr.sharedMaterials = parts == 3 ? new[] { m, m, m } : new[] { m, m };
 			mr.SetPropertyBlock(null); for (int i = 0; i < parts; i++) mr.SetPropertyBlock(null, i);
 			ObjectProps.ApplyRockSkin(mr.gameObject); // (Raft's brown island rock, as the cave pieces' "skin=rock")
+			// (the rim walls out in the open as the cave hill's skin: its rock and tint - 11-05, Raft's island rock went blue-grey
+			// in the shade beside the hill)
+			RimWalls = CaveMountain.DressRimWalls(mr) ?? "";
 			GroundTop(mr, land);
 		}
 
@@ -548,7 +574,11 @@ namespace DynamicIslands.Editor
 				{
 					// (by its corners' normals: the way it faces, smooth across the rim as its light is)
 					Vector3 n = at.TransformDirection(norms[rim[i]] + norms[rim[i + 1]] + norms[rim[i + 2]]);
-					if (n.sqrMagnitude < 1e-12f || n.normalized.y < TopUp) { side.Add(rim[i]); side.Add(rim[i + 1]); side.Add(rim[i + 2]); continue; }
+					// (or lying on the ground, however steep the slope: the rim's skin over a steep slope kept the rock's paler look,
+					// saw-tooth shards along the line where it crosses the ground - Old Mine Islet's shore adit, 11-05)
+					bool up = n.sqrMagnitude >= 1e-12f && n.normalized.y >= TopUp;
+					if (!up && FaceOnGround(land, at.TransformPoint(verts[rim[i]]), at.TransformPoint(verts[rim[i + 1]]), at.TransformPoint(verts[rim[i + 2]]))) up = true;
+					if (!up) { side.Add(rim[i]); side.Add(rim[i + 1]); side.Add(rim[i + 2]); continue; }
 					for (int e = 0; e < 3; e++)
 					{
 						int v = rim[i + e], to;
@@ -816,6 +846,59 @@ namespace DynamicIslands.Editor
 
 		/// <summary>A face of the rim turned up at least this much (its normal's height) takes the ground's look.</summary>
 		const float TopUp = 0.6f;
+		/// <summary>A face of the rim with its middle this close over the ground (m, across the slope; a little under it too)
+		/// and turned up out of it (its own face, not its corners' smoothed normals) lies on the ground: it takes the ground's look,
+		/// whatever the slope or however steeply it crosses the ground (the saw-tooth along the line where the rim's skin meets it).
+		/// A face crossing the ground counts too - its middle under it, a corner out of it (11-05: on the steep slope under Old Mine
+		/// Islet's man-way the skin dipped in and out of the ground between the rim's samples, and the rock's corners poking out
+		/// were pale angular shards the rule, the middle within OnGroundUnder, never saw): down to OnGroundCross under.</summary>
+		const float OnGroundUnder = 0.05f, OnGroundBy = 0.3f, OnGroundCross = 0.6f;
+
+		/// <summary>The face (corners in the world) lies on the ground or crosses it - see OnGroundBy. The one rule for SplitTop
+		/// and RimShards.</summary>
+		static bool FaceOnGround(Terrain land, Vector3 a, Vector3 b, Vector3 c)
+		{
+			if (land == null || land.terrainData == null) return false;
+			Vector3 cross = Vector3.Cross(b - a, c - a);
+			if (cross.magnitude < 2e-4f) return false;
+			Vector3 lo = land.transform.position, size = land.terrainData.size;
+			Vector3 mid = (a + b + c) / 3f;
+			Vector3 gn = land.terrainData.GetInterpolatedNormal((mid.x - lo.x) / size.x, (mid.z - lo.z) / size.z);
+			if (Vector3.Dot(cross, gn) <= 0f) return false;
+			float off = (mid.y - GroundY(land, mid)) * gn.y;
+			if (off > OnGroundBy || off < -OnGroundCross) return false;
+			if (off >= -OnGroundUnder) return true;
+			// (under the ground at its middle: on it only when a corner pokes out)
+			float top = Mathf.Max(a.y - GroundY(land, a), Mathf.Max(b.y - GroundY(land, b), c.y - GroundY(land, c))) * gn.y;
+			return top > 0f;
+		}
+
+		/// <summary>Tests: the rim's rock faces (part 1) that lie on the ground (FaceOnGround) - pale shards on the ground beside
+		/// the mouth, the rock's look where the ground's belongs - left after SplitTop. (Part 0, the lining, isn't the rim; with no
+		/// ground look - SplitTop not run - the whole rim is part 1 and every such face counts.) where: the first few.</summary>
+		public int RimShards(out string where)
+		{
+			where = "";
+			Transform r = transform.Find(RockName);
+			MeshFilter mf = r != null ? r.GetComponent<MeshFilter>() : null;
+			Terrain land = skinLand;
+			if (mf == null || mf.sharedMesh == null || land == null || mf.sharedMesh.subMeshCount < 2) return 0;
+			Mesh mesh = mf.sharedMesh;
+			var verts = new List<Vector3>();
+			mesh.GetVertices(verts);
+			int[] tris = mesh.GetTriangles(1);
+			int n = 0;
+			var seen = new List<string>();
+			for (int i = 0; i + 2 < tris.Length; i += 3)
+			{
+				Vector3 a = r.TransformPoint(verts[tris[i]]), b = r.TransformPoint(verts[tris[i + 1]]), c = r.TransformPoint(verts[tris[i + 2]]);
+				if (!FaceOnGround(land, a, b, c)) continue;
+				n++;
+				if (seen.Count < 4) seen.Add(((a + b + c) / 3f).ToString("0.0"));
+			}
+			where = string.Join(" ", seen.ToArray());
+			return n;
+		}
 
 		static readonly Dictionary<Terrain, Material> groundMaterials = new Dictionary<Terrain, Material>();
 

@@ -30,6 +30,8 @@ namespace DynamicIslands
 	{
 		static bool reachHook, reachControls;
 		static string reachLabel = "";
+		// (CIReachOnly: walk only targets whose name holds this)
+		static string reachOnly = "";
 		// (how many of the walker's moves a frame: 1 = a player's pace; every FAIL and every walk that crossed a collider is
 		// walked again at 1)
 		static int reachSpeed = 3;
@@ -51,6 +53,90 @@ namespace DynamicIslands
 			if (args != null && args.Length > 0) reachSpeed = Mathf.Clamp((int)F(args[0]), 0, 10);
 			if (args != null && args.Length > 1) reachPace = Mathf.Clamp(F(args[1]), 1f, 4f);
 			Log("PASS: reach speed " + reachSpeed + ", pace " + reachPace.ToString("F1") + " (" + reachPrechecked + " prechecked, " + reachWalked + " walked, " + reachRewalked + " walked again at 1x so far)");
+		}
+
+		[ConsoleCommand(name: "CIReachOnly", docs: "Dev, anywhere: the next CIReach runs walk only the quest targets whose name holds this text (case aside), the rest reported 'skipped (CIReachOnly)' - to walk one failing target again without the whole island; several texts split by | walk each match in the island's order (a sequence that failed in the full run); no text = all again")]
+		public static void ReachOnlyCommand(string[] args)
+		{
+			reachOnly = args == null ? "" : string.Join(" ", args).Trim();
+			Log("PASS: reach only " + (reachOnly == "" ? "(all targets)" : "'" + reachOnly + "'"));
+		}
+
+		[ConsoleCommand(name: "CIReachDismountUnit", docs: "Dev, anywhere: the walker's jump off a ladder's top - after a climb up, a next floor 0.25 to 1.2 m above the feet (a hatch beside or behind the ladder) is jumped onto; one level with the feet, one out of a jump's reach, or a walk not off a ladder is walked")]
+		public static void CIReachDismountUnit()
+		{
+			bool ok = true;
+			Action<bool, string> chk = (c, w) => { Log((c ? "PASS: " : "FAIL: ") + w); ok &= c; };
+			chk(ReachLadderDismount(true, 31.25f, 31.73f), "headframe: feet 0.48 m under the deck at the ladder's top - jump onto it");
+			chk(!ReachLadderDismount(true, 31.7f, 31.73f), "feet level with the floor - walk off");
+			chk(!ReachLadderDismount(true, 30.0f, 31.73f), "the floor 1.7 m up - out of a jump's reach, no jump");
+			chk(!ReachLadderDismount(false, 31.25f, 31.73f), "not after a climb up - the walk's own jumps only");
+			Log(ok ? "PASS: reach dismount unit" : "FAIL: reach dismount unit");
+		}
+
+		[ConsoleCommand(name: "CIReachByPlayUnit", docs: "Dev, anywhere: the reach's 'checked by play' (island reach.byplay=...) - a target a play goes to (zone/open) is found in the plays, case aside; a made-up one is not")]
+		public static void CIReachByPlayUnit()
+		{
+			bool ok = true;
+			Action<bool, string> chk = (c, w) => { Log((c ? "PASS: " : "FAIL: ") + w); ok &= c; };
+			chk(ByPlayFile("jump_om_finale") == "old_mine_islet.play", "a zone the play goes to: " + (ByPlayFile("jump_om_finale") ?? "none"));
+			chk(ByPlayFile("slag STACK prize") == "old_mine_islet.play", "a chest it opens, any case");
+			chk(ByPlayFile("No such chest anywhere 11-05") == null, "a target no play visits: none");
+			var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Slag stack prize" };
+			chk(ByPlayNote(set, new ReachTarget { Name = "Slag stack prize" }).StartsWith("CHECKED BY PLAY"), "listed + played: checked by play");
+			chk(ByPlayNote(set, new ReachTarget { Name = "Ore barge's crate" }) == null, "not listed: the grid's own verdict");
+			chk(ByPlayNote(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "No such chest anywhere 11-05" }, new ReachTarget { Name = "No such chest anywhere 11-05" }) == null, "listed, no play visits it: the grid's own verdict");
+			chk(LadderHandReach(0) == 1.0f && LadderHandReach(1) == 1.5f && LadderHandReach(2) == 1.5f, "a ladder's hand reach: 1.0 m on foot, 1.5 m swimming or diving (cells 1 m apart)");
+			// a ladder's room: none under the ground (a terrain at y -500, flat at 4 m)
+			var td = new TerrainData { heightmapResolution = 33 };
+			td.size = new Vector3(20f, 10f, 20f);
+			var hts = new float[33, 33];
+			for (int i = 0; i < 33; i++) for (int j = 0; j < 33; j++) hts[i, j] = 0.4f;
+			td.SetHeights(0, 0, hts);
+			GameObject tgo = Terrain.CreateTerrainGameObject(td);
+			tgo.transform.position = new Vector3(0f, -500f, 0f);
+			int was = reachMask;
+			try
+			{
+				Physics.SyncTransforms();
+				reachMask = 1 << tgo.layer;
+				chk(!LadderRoom(new Bounds(new Vector3(10f, -499f, 10f), new Vector3(0.6f, 4f, 0.2f)), Vector3.forward), "a ladder's room under the ground: none");
+				chk(LadderFree(new Bounds(new Vector3(10f, -496.5f, 10f), new Vector3(0.6f, 4f, 0.2f)), Vector3.forward) == 1, "a ladder half in the ground: 1 of its 3 spots free, over it (" + LadderFree(new Bounds(new Vector3(10f, -496.5f, 10f), new Vector3(0.6f, 4f, 0.2f)), Vector3.forward) + ")");
+				chk(LadderRoom(new Bounds(new Vector3(10f, -490f, 10f), new Vector3(0.6f, 4f, 0.2f)), Vector3.forward), "a ladder's room in the air over it: room");
+			}
+			finally { reachMask = was; UnityEngine.Object.Destroy(tgo); }
+			if (ok) Log("PASS: reach by play"); else Fail("reach by play");
+		}
+
+		[ConsoleCommand(name: "CIReachFallUnit", docs: "Dev, anywhere: the reach's drop check (FallCaught) - a roof whose top is a back face (a cave skin seen from above, Old Mine's wedge, round 4) catches a fall like a floor does; open air below does not")]
+		public static void ReachFallUnitCommand()
+		{
+			bool ok = true;
+			int was = reachMask;
+			var go = new GameObject("CIReachFallUnit");
+			try
+			{
+				go.transform.position = new Vector3(0f, -500f, 0f);
+				var m = new Mesh();
+				// (a quad at y 0 whose front faces down: from above only its back face shows)
+				m.vertices = new[] { new Vector3(-2, 0, -2), new Vector3(2, 0, -2), new Vector3(2, 0, 2), new Vector3(-2, 0, 2) };
+				m.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+				m.RecalculateNormals();
+				var mc = go.AddComponent<MeshCollider>();
+				mc.sharedMesh = m;
+				Physics.SyncTransforms();
+				reachMask = 1 << go.layer;
+				bool down = m.normals[0].y < 0f;
+				Check(ref ok, down, "the test roof faces down (normal y " + m.normals[0].y.ToString("0.0") + ")");
+				Check(ref ok, FallCaught(new Vector3(0f, -500f, 0f), -497.4f, -502.6f), "a drop through a back-facing roof: caught");
+				Check(ref ok, !FallCaught(new Vector3(10f, -500f, 0f), -497.4f, -502.6f), "a drop beside it, open air: not caught");
+				m.triangles = new[] { 0, 2, 1, 0, 3, 2 };
+				mc.sharedMesh = null; mc.sharedMesh = m;
+				Physics.SyncTransforms();
+				Check(ref ok, FallCaught(new Vector3(0f, -500f, 0f), -497.4f, -502.6f), "a drop onto a floor facing up: caught");
+			}
+			finally { reachMask = was; UnityEngine.Object.Destroy(go); }
+			if (ok) Log("PASS: reach fall"); else Fail("reach fall");
 		}
 
 		[ConsoleCommand(name: "CIReachControls", docs: "Dev, anywhere: PQ11 - with each island measured, the walker also walks straight at walls (a floor beyond a wall too high to step or jump) at the reach speed: none may be got through (a walker slipping through walls would pass what a player can't). CIReachControls on|off")]
@@ -265,6 +351,74 @@ namespace DynamicIslands
 			return ReachBounds(e.Root, out b) ? Mathf.Max(b.extents.x, b.extents.z) : 40f;
 		}
 
+		/// <summary>How far off a ladder a spot may be and still take hold of it: 1.0 m on foot; a swimmer 0.5 m more - its spots
+		/// are 1 m cells' middles and it swims the rest of the way, so a ladder at the sea's edge 1.1 m from the nearest cell
+		/// middle was "nothing can take hold of it" (Old Mine's barge ladder, round 5, 11-05).</summary>
+		public static float LadderHandReach(int kind) { return kind == 1 || kind == 2 ? 1.5f : 1.0f; }
+
+		/// <summary>" (nearest swim spot x m off at x z h)" - where the sea's grid comes nearest a ladder no one can grab.</summary>
+		static string LadderNearestSwim(ReachGrid g, Bounds lb, IslandWorldState.Entry e)
+		{
+			float best = float.MaxValue; int bk = -1;
+			for (int k = 0; k < g.Pos.Count; k++)
+			{
+				if (g.Kind[k] != 1 && g.Kind[k] != 2) continue;
+				Vector3 p = g.Pos[k];
+				Vector3 f = lb.ClosestPoint(new Vector3(p.x, lb.center.y, p.z));
+				float d = new Vector2(f.x - p.x, f.z - p.z).magnitude;
+				if (d < best) { best = d; bk = k; }
+			}
+			string sides = "";
+			foreach (Vector3 dir in new[] { Vector3.forward, Vector3.back, Vector3.left, Vector3.right })
+			{
+				Vector3 c = lb.center + dir * (Vector3.Scale(lb.extents, dir).magnitude + 0.9f);
+				var hits = Physics.RaycastAll(new Vector3(c.x, lb.max.y + 30f, c.z), Vector3.down, 80f, reachMask, QueryTriggerInteraction.Ignore).Where(h => h.point.y > RSea - 1.1f).OrderByDescending(h => h.point.y).Select(h => h.collider.name + "@" + (h.point.y - e.Position.y).ToString("F1")).ToArray();
+				Collider[] cap = Physics.OverlapCapsule(new Vector3(c.x, RSea - 1.1f, c.z), new Vector3(c.x, RSea + 0.3f, c.z), RRadius, reachMask, QueryTriggerInteraction.Ignore);
+				sides += " " + (dir.x + dir.z * 2).ToString("F0") + ":" + (hits.Length > 0 ? "over " + string.Join(",", hits) : "") + (InsideSolid(new Vector3(c.x, RSea - 1.1f, c.z)) ? " inside" : "") + (cap.Length > 0 ? " capsule " + string.Join(",", cap.Select(x => x.name).ToArray()) : "") + ";";
+			}
+			if (bk < 0) return " (no swim spots at all;" + sides + ")";
+			Vector3 q = g.Pos[bk] - e.Position;
+			return " (nearest " + (g.Kind[bk] == 1 ? "swim" : "dive") + " spot " + best.ToString("F1") + " m off, at h=" + q.y.ToString("F1") + "; 0.9 m out" + sides + ")";
+		}
+
+		/// <summary>Targets the reach grid can't judge (a hop course: it has no jumps across gaps), from the island's
+		/// "island reach.byplay=name;name" line - each one counts when the island's own play test goes to it (zone/open/reach
+		/// &lt;name&gt;), and is "CHECKED BY PLAY" instead of a fail; one the play never visits stays a fail (Old Mine's slag stacks 11-05).</summary>
+		static HashSet<string> ReachByPlay(IslandWorldState.Entry e, string island)
+		{
+			var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			string v;
+			IDictionary<string, string> props = IslandCache.PropsOf(e);
+			if (props == null || !props.TryGetValue("reach.byplay", out v) || string.IsNullOrEmpty(v)) return set;
+			foreach (string n in v.Split(';')) if (n.Trim().Length > 0) set.Add(n.Trim());
+			return set;
+		}
+
+		/// <summary>"CHECKED BY PLAY (file)" for a target listed as checked by play that the island's play goes to, null when none does (a plain fail)
+		/// or it isn't listed.</summary>
+		static string ByPlayNote(HashSet<string> byPlay, ReachTarget t)
+		{
+			if (byPlay == null || !byPlay.Contains(t.Name)) return null;
+			string file = ByPlayFile(t.Name);
+			return file != null ? "CHECKED BY PLAY (" + file + ": hops the grid can't jump)" : null;
+		}
+
+		/// <summary>The play test (file name) with a "zone/open/reach &lt;name&gt;" line, or null.</summary>
+		public static string ByPlayFile(string target)
+		{
+			try
+			{
+				foreach (string f in Directory.GetFiles(RecipeFolder, "*.play"))
+					foreach (string l in File.ReadAllLines(f))
+					{
+						string[] w = l.Trim().Split(new[] { ' ' }, 2);
+						if (w.Length == 2 && (w[0] == "zone" || w[0] == "open" || w[0] == "reach") && string.Equals(w[1].Trim(), target, StringComparison.OrdinalIgnoreCase)) return Path.GetFileName(f);
+					}
+			}
+			catch (Exception) { }
+			return null;
+		}
+
 		/// <summary>The offset line of the island's own play test (its recipe's coordinates), or zero.</summary>
 		static Vector2 ReachPlayOffset(string island)
 		{
@@ -366,7 +520,7 @@ namespace DynamicIslands
 			string name = e.HostName;
 			var report = new List<string>();
 			int problems = 0;
-			reachStuckAt.Clear(); reachStuckN.Clear(); reachBlocked = null;
+			reachStuckAt.Clear(); reachStuckN.Clear(); reachBlocked = null; reachHoles.Clear();
 			hbWhat = "reach " + name; // (from the start: the grid takes a minute, and the HB keeps the player alive while it is "reach")
 			// (a player opens a plain door with E: Raft's own doors (Door) with no use check of the island's on them are opened
 			// first - every drowned house's back room failed behind its closed Block_Wall_Door, PQ11 10-28; a gate or key door
@@ -569,9 +723,10 @@ namespace DynamicIslands
 				{
 					// (the side a player climbs it from: its front, or its back when only the back has room)
 					Vector3 lf = LadderRoot(ch[0]).forward; lf.y = 0f;
-					if (lf.sqrMagnitude > 0.01f) { lf.Normalize(); g.LadderF[node] = LadderRoom(lb, lf) || !LadderRoom(lb, -lf) ? lf : -lf; }
+					if (lf.sqrMagnitude > 0.01f) { lf.Normalize(); g.LadderF[node] = LadderRoom(lb, lf) || !LadderRoom(lb, -lf) && LadderFree(lb, lf) >= LadderFree(lb, -lf) ? lf : -lf; }
 				}
 				int grabs = 0, tops = 0;
+				string why = null; float whyHd = float.MaxValue;
 				for (int k = 0; k < node; k++)
 				{
 					Vector3 p = g.Pos[k];
@@ -583,14 +738,18 @@ namespace DynamicIslands
 					// (or over its top end: a ladder up through a hole in a landing - the line to its middle crossed the landing, PQ11 10-27)
 					if (g.Kind[k] == 0 && feet >= lb.max.y - 1.0f && feet <= lb.max.y + 1.3f && (LadderClear(p + Vector3.up * 1.0f, flat, ch) || LadderClear(p + Vector3.up * 1.0f, new Vector3(flat.x, lb.max.y + 0.6f, flat.z), ch))) { g.Link(node, k); g.Link(k, node); tops++; continue; }
 					// (the foot, and any spot beside it up its length: a hand reaches it with nothing solid in between)
-					if (hd <= 1.0f && feet >= lb.min.y - 1.8f && feet <= lb.max.y - 1.0f)
+					if (hd <= LadderHandReach(g.Kind[k]) && feet >= lb.min.y - 1.8f && feet <= lb.max.y - 1.0f)
 					{
 						Vector3 eye = g.Kind[k] == 0 ? p + Vector3.up * 1.3f : p + Vector3.up * 0.2f;
 						Vector3 at = lb.ClosestPoint(new Vector3(eye.x, Mathf.Clamp(eye.y, lb.min.y + 0.2f, lb.max.y - 0.2f), eye.z));
 						// (and to its middle: a spot behind the wall it is fixed to saw the climb box's back face poke through the wall
 						// and counted as a foot spot - the walker stood outside the mast pressing on the wall, hw_mast PQ11 10-28)
-						if (LadderClear(eye, at, ch) && LadderClear(eye, new Vector3(lb.center.x, at.y, lb.center.z) + (g.LadderF.ContainsKey(node) ? g.LadderF[node] * 0.25f : Vector3.zero), ch)) { g.Link(k, node); g.Link(node, k); grabs++; }
+						bool c1 = LadderClear(eye, at, ch), c2 = c1 && LadderClear(eye, new Vector3(lb.center.x, at.y, lb.center.z) + (g.LadderF.ContainsKey(node) ? g.LadderF[node] * 0.25f : Vector3.zero), ch);
+						if (c1 && c2) { g.Link(k, node); g.Link(node, k); grabs++; }
+						else if (hd < whyHd) { whyHd = hd; why = "nearest foot spot " + (g.Kind[k] == 0 ? "on foot" : g.Kind[k] == 1 ? "swimming" : "diving") + " " + hd.ToString("F1") + " m off, feet " + (feet - e.Position.y).ToString("F1") + ": " + (c1 ? "the line to its middle is blocked" : "the line to the ladder is blocked"); }
 					}
+					else if (hd < whyHd && feet < lb.min.y - 1.8f) { whyHd = hd; why = "nearest spot " + hd.ToString("F1") + " m off has its feet " + (lb.min.y - feet).ToString("F1") + " m under the ladder's foot"; }
+					else if (hd < whyHd && hd > LadderHandReach(g.Kind[k])) { whyHd = hd; why = "nearest spot " + hd.ToString("F1") + " m off (a hand reaches " + LadderHandReach(g.Kind[k]).ToString("F1") + " m)"; }
 				}
 				Vector3 lr = Rel(e, lb.center, offset);
 				string where = "ladder " + LadderName(ch[0], e) + " at " + lr.x.ToString("F1") + " " + lr.z.ToString("F1") + " h=" + (lb.min.y - e.Position.y).ToString("F1") + ".." + (lb.max.y - e.Position.y).ToString("F1");
@@ -598,7 +757,7 @@ namespace DynamicIslands
 				if (grabs == 0 || tops == 0)
 				{
 					problems++;
-					report.Add("REACH " + name + " | " + where + " | - | FAIL " + (grabs == 0 ? "nothing can take hold of it from below" : "") + (grabs == 0 && tops == 0 ? ", " : "") + (tops == 0 ? "no floor to step off onto at its top" : "") + " (" + facing + ")");
+					report.Add("REACH " + name + " | " + where + " | - | FAIL " + (grabs == 0 ? "nothing can take hold of it from below" + (why != null ? " - " + why : " - no spot within 1.6 m") + LadderNearestSwim(g, lb, e) : "") + (grabs == 0 && tops == 0 ? ", " : "") + (tops == 0 ? "no floor to step off onto at its top" : "") + " (" + facing + ")");
 				}
 				else report.Add("REACH " + name + " | " + where + " | - | PASS " + grabs + " foot spots, " + tops + " top spots (" + facing + ")");
 			}
@@ -751,12 +910,14 @@ namespace DynamicIslands
 				useOf[t] = u;
 				relOf[t] = Rel(e, t.B.center, offset);
 			}
+			HashSet<string> byPlay = ReachByPlay(e, name);
 			foreach (ReachTarget t in targets)
 			{
 				hbWhat = "reach " + name; hbStep = hbT++; hbProg++;
 				var use = useOf[t];
 				Vector3 tr = relOf[t];
 				string head = "REACH " + name + " | " + t.Kind + " '" + t.Name + "' at " + tr.x.ToString("F1") + " " + tr.z.ToString("F1") + " h=" + tr.y.ToString("F1") + " | " + (t.Steps.Length > 0 ? t.Steps : "-") + " | ";
+				if (reachOnly != "" && !reachOnly.Split('|').Any(o => o.Trim() != "" && (t.Name ?? "").IndexOf(o.Trim(), StringComparison.OrdinalIgnoreCase) >= 0)) { report.Add(head + "skipped (CIReachOnly)"); continue; }
 				// (a cage the play opened is hidden (Survivors.cs: open = gone for everyone), its model off and its bounds a 0.3 m box
 				// at its root - "no spot" for Teo's and Oda's cages after their quests freed them, PQ11 10-28: not checkable now)
 				if (use.Count == 0 && t.Kind == "cage")
@@ -764,6 +925,8 @@ namespace DynamicIslands
 					SurvivorCage sc = t.Root.GetComponentInChildren<SurvivorCage>(false);
 					if (sc != null && sc.IsOpen) { report.Add(head + "NOTE opened in the play (the cage is gone now): not checked"); continue; }
 				}
+				string playNote = ByPlayNote(byPlay, t);
+				if (use.Count == 0 && playNote != null) { report.Add(head + playNote + " - the grid: no spot to use it from (" + WhyNoSpot(t) + ")"); continue; }
 				if (use.Count == 0)
 				{
 					problems++;
@@ -791,6 +954,7 @@ namespace DynamicIslands
 					else if (walked.StartsWith("PASS")) report.Add(head + walked + " (" + grid + ")");
 					else { problems++; report.Add(head + walked + " (the grid found a way: " + grid + ")"); }
 				}
+				else if (playNote != null) report.Add(head + playNote + " - the grid: " + string.Join("; ", bad.Distinct().ToArray()) + NearestReached(e, g, fwd, use, offset));
 				else
 				{
 					problems++;
@@ -822,7 +986,7 @@ namespace DynamicIslands
 				Vector3 cr = Rel(e, cb.center, offset);
 				bool roofed = Physics.Raycast(cb.center + Vector3.up * 2f, Vector3.up, 60f, mask, QueryTriggerInteraction.Ignore);
 				report.Add("REACH " + name + " | trap at " + cr.x.ToString("F1") + " " + cr.z.ToString("F1") + " h=" + (cb.min.y - e.Position.y).ToString("F1") + ".." + (cb.max.y - e.Position.y).ToString("F1") +
-					" (" + cb.size.x.ToString("F0") + "x" + cb.size.z.ToString("F0") + " m, " + cluster.Count + " spots" + (roofed ? ", roofed" : ", open sky") + (cluster.Any(a => g.Kind[a] == 2) ? ", under water" : "") + ") | - | FAIL a player gets in but not out" + TrapNearestOut(e, g, cluster, back));
+					" (" + cb.size.x.ToString("F0") + "x" + cb.size.z.ToString("F0") + " m, " + cluster.Count + " spots" + (roofed ? ", roofed" : ", open sky") + (cluster.Any(a => g.Kind[a] == 2) ? ", under water" : "") + ") | - | FAIL a player gets in but not out" + TrapNearestOut(e, g, cluster, back) + TrapWayIn(e, g, cluster, trapped));
 			}
 			int pass = report.Count(r => r.Contains("| PASS"));
 			report.Add("REACH " + name + " | summary | " + state + " | " + (problems == 0 ? "PASS" : "FAIL") + " " + targets.Count + " targets, " + chains.Count + " ladders, " + traps + " traps, " + problems + " problems, " + pass + " pass (" + (sw.ElapsedMilliseconds / 1000f).ToString("F1") + " s)");
@@ -840,6 +1004,19 @@ namespace DynamicIslands
 			GC.Collect();
 			shiftGrid = null; shiftTargets = null;
 			done(problems);
+		}
+
+		/// <summary>How a player gets into a trap (round 4, 11-05: the report gave only the way out it lacks): the links into it from spots
+		/// outside it, as many as there are and the first one's ends (raw feet, island-relative, kinds).</summary>
+		static string TrapWayIn(IslandWorldState.Entry e, ReachGrid g, List<int> cluster, bool[] trapped)
+		{
+			int n = 0, fa = -1, fb = -1;
+			foreach (int b in cluster)
+				foreach (int a in g.In[b])
+					if (!trapped[a]) { n++; if (fa < 0) { fa = a; fb = b; } }
+			if (n == 0) return " (way in: none from outside it)";
+			Func<int, string> P = i => { Vector3 v = g.Pos[i] - g.Anchor; return v.x.ToString("F1", CultureInfo.InvariantCulture) + " " + v.y.ToString("F1", CultureInfo.InvariantCulture) + " " + v.z.ToString("F1", CultureInfo.InvariantCulture); };
+			return " (way in: " + n + " links, e.g. " + P(fa) + " -> " + P(fb) + ", kinds " + g.Kind[fa] + "->" + g.Kind[fb] + ")";
 		}
 
 		/// <summary>The closest a trap comes to a spot with a way back out (raw feet, island-relative: CIReachProbe's frame).</summary>
@@ -902,6 +1079,10 @@ namespace DynamicIslands
 		/// An overhang's underside faces down and is no hit.</summary>
 		static bool InsideSolid(Vector3 p)
 		{
+			// (a dug passage's open air is never solid: under the terrain it was - at the mouth the cut cells keep the ground's
+			// height over the floor with no ground there, and a ray up in the bumpy passage met a wall, not a roof facing down;
+			// Old Mine Islet's Miner's chest in Tunnel 1 was 'can't get there' though the play walks to it, 11-05)
+			if (DigTunnel.InPassage(p, 0.3f)) return false;
 			// (under a terrain: a heightfield has no inside to hit - unless p is in a cave of the island's own pieces under it, a
 			// ceiling facing down over p and a floor facing up under it, both below the terrain: Temperance tunnels under a reef
 			// (Drowned Labyrinth: every tunnel spot was ruled out, 'no spot' for all its targets, PQ11 10-28))
@@ -909,7 +1090,18 @@ namespace DynamicIslands
 			{
 				Vector3 tp = t.transform.position, ts = t.terrainData.size;
 				if (p.x >= tp.x && p.x <= tp.x + ts.x && p.z >= tp.z && p.z <= tp.z + ts.z && tp.y + t.SampleHeight(p) > p.y)
+				{
+					// (a cut cell (a dug mouth's hole) has no ground: what is over p there is found by the ray below; only by a dug
+					// passage - a cave piece's hole under its hill let the audit into the earth under it: a 'trap' in the rock, 11-05;
+					// in the cave piece itself its roof may stand over the kept height map: a roof facing down over p, a floor under
+					// it - Old Mine Islet's Last ore cart in the quarry cave was walled off and the walker sent through its rock)
+					// (and first of all: the first thing over p met from behind - p in the rock or the earth, not in a cave; a cave's
+					// ceiling faces down at it. Old Mine Islet's 'traps' at -31.3 24.2 (in the earth by a mouth's hole cell, the
+					// terrain over it seen from below) and 4.3 -1.9 (under the den's floor in the mound) were points in the solid, 11-05)
+					if (BehindOver(p)) return true;
+					if (TerrainHoleAt(t, p)) { if (DigTunnel.InPassage(p, -1f)) break; return !CaveUnder(p, p.y + 30f); }
 					return !CaveUnder(p, tp.y + t.SampleHeight(p));
+				}
 			}
 			bool was = Physics.queriesHitBackfaces;
 			Physics.queriesHitBackfaces = true;
@@ -919,6 +1111,33 @@ namespace DynamicIslands
 				return Physics.Raycast(p, Vector3.up, out h, 40f, reachMask, QueryTriggerInteraction.Ignore) && h.normal.y > 0.1f;
 			}
 			finally { Physics.queriesHitBackfaces = was; }
+		}
+
+		/// <summary>The first surface over p (30 m up) is met from behind: it faces up, p is under its solid side.</summary>
+		static bool BehindOver(Vector3 p)
+		{
+			bool was = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				RaycastHit h;
+				return Physics.Raycast(p, Vector3.up, out h, 30f, reachMask, QueryTriggerInteraction.Ignore) && h.normal.y > 0.1f;
+			}
+			finally { Physics.queriesHitBackfaces = was; }
+		}
+
+		/// <summary>The terrain's holes (cut cells), read once per audit: ReachAnalyze clears them.</summary>
+		static readonly Dictionary<Terrain, bool[,]> reachHoles = new Dictionary<Terrain, bool[,]>();
+
+		/// <summary>p's column is a cut cell of t (a dug tunnel's mouth): no ground there, though the height map is kept.</summary>
+		static bool TerrainHoleAt(Terrain t, Vector3 p)
+		{
+			TerrainData td = t.terrainData;
+			bool[,] solid;
+			if (!reachHoles.TryGetValue(t, out solid)) reachHoles[t] = solid = td.GetHoles(0, 0, td.holesResolution, td.holesResolution);
+			int n = td.holesResolution;
+			int x = Mathf.FloorToInt((p.x - t.transform.position.x) / td.size.x * n), z = Mathf.FloorToInt((p.z - t.transform.position.z) / td.size.z * n);
+			return x >= 0 && z >= 0 && x < n && z < n && !solid[z, x];
 		}
 
 		/// <summary>p (under a terrain whose surface is at ground) lies in a hollow of the island's own pieces: the first thing over it
@@ -1055,7 +1274,18 @@ namespace DynamicIslands
 			// the grid dropped through the seamount's skin into the cave, the walk stood on it, PQ11 10-28)
 			bool was = Physics.queriesHitBackfaces;
 			Physics.queriesHitBackfaces = true;
-			try { return dist > 0f && Physics.SphereCast(new Vector3(at.x, from + 0.6f, at.z), r, Vector3.down, out h, dist, reachMask, QueryTriggerInteraction.Ignore) && (!floorOnly || h.normal.y > 0.7f); }
+			try
+			{
+				if (dist <= 0f) return false;
+				Vector3 top = new Vector3(at.x, from + 0.6f, at.z);
+				if (Physics.SphereCast(top, r, Vector3.down, out h, dist, reachMask, QueryTriggerInteraction.Ignore) && (!floorOnly || h.normal.y > 0.7f)) return true;
+				// (sweeps miss a mesh's back faces whatever queriesHitBackfaces says - only rays honour it: a cave hill's skirt
+				// skin, its roof a back face from above, let the grid drop through it where Raft's walker stood on it, Old Mine
+				// Islet's wedge under Grey's den hill, round 4. Rays down the sphere's middle and its four sides as well)
+				foreach (Vector3 o in new[] { Vector3.zero, Vector3.right * r, Vector3.left * r, Vector3.forward * r, Vector3.back * r })
+					if (Physics.Raycast(top + o, Vector3.down, out h, dist + r, reachMask, QueryTriggerInteraction.Ignore) && (!floorOnly || h.normal.y > 0.7f || h.normal.y < -0.7f)) return true;
+				return false;
+			}
 			finally { Physics.queriesHitBackfaces = was; }
 		}
 
@@ -1106,12 +1336,29 @@ namespace DynamicIslands
 			return "room at its front " + (front ? "yes" : "no") + ", at its back " + (backside ? "yes" : "no") + ", yaw " + t.eulerAngles.y.ToString("F0");
 		}
 
+		/// <summary>How many of a ladder's climbing spots on one side have room (LadderRoom's samples): with room on neither side -
+		/// a sea ladder whose foot is by the cliff's sloping underwater face - it is climbed from the side with more (the open
+		/// sea, not the rock: Old Mine's barge ladder faced into its cliff, round 5).</summary>
+		static int LadderFree(Bounds lb, Vector3 dir)
+		{
+			int n = 0;
+			for (float y = lb.min.y + 0.8f; y < lb.max.y - 0.4f; y += 1f)
+			{
+				Vector3 c = new Vector3(lb.center.x, y, lb.center.z) + dir * 0.75f;
+				if (!Physics.CheckSphere(c, 0.28f, reachMask, QueryTriggerInteraction.Ignore) && !InsideSolid(c)) n++;
+			}
+			return n;
+		}
+
 		static bool LadderRoom(Bounds lb, Vector3 dir)
 		{
 			for (float y = lb.min.y + 0.8f; y < lb.max.y - 0.4f; y += 1f)
 			{
 				Vector3 c = new Vector3(lb.center.x, y, lb.center.z) + dir * 0.75f;
 				if (Physics.CheckSphere(c, 0.28f, reachMask, QueryTriggerInteraction.Ignore)) return false;
+				// (nor under the ground: a heightfield has no inside for a sphere to touch - a sea ladder on a cliff found "room" in
+				// the rock behind it, faced into the cliff and nobody could take hold of it, Old Mine's two sea ladders round 5)
+				if (InsideSolid(c)) return false;
 			}
 			return true;
 		}
@@ -1630,7 +1877,9 @@ namespace DynamicIslands
 				for (int f = 0; f < 10; f++) { MmHold(pl, false); yield return null; }
 				if (ReachFree(pl)) for (int f = 0; f < 5; f++) { MmHold(pl, false); yield return null; }
 			}
-			else if (reachWalkIn && g.Kind[way[0]] == 0 && g.Pos[way[0]].y < RSea + 0.3f && (ReachFeet(pl) - W(way[0])).magnitude > 1.5f)
+			// (any standing start, not only the shallows': a walk in whose way begins on land set off from where the last target's
+			// walk left the player - maybe inside a mine, its first steps then through rock to the way: Old Mine Islet INVALIDs 11-06)
+			else if (reachWalkIn && g.Kind[way[0]] == 0 && (ReachFeet(pl) - W(way[0])).magnitude > 1.5f)
 			{
 				// (a sea start in the shallows - a standing spot at or under the sea's surface, PQ11 10-29 - was never moved to: the
 				// walker set off from where the last walk left it. Coldhold on box/box3 10-30: every walk "stuck on the way to
@@ -1643,6 +1892,7 @@ namespace DynamicIslands
 			}
 			Vector3 prev = ReachFeet(pl) + Vector3.up * 0.9f;
 			string bad = null;
+			int wpAt = 0; // (the waypoint walked to now: in an INVALID's details)
 			// (stall rule, the user 10-28 - no multi-minute waits on one target: real seconds, whatever the speed. Under 0.5 m in a 10 s
 			// window: one unstick (a jump and a turn). No waypoint for 30 s while stalled, or for 90 s with under 3 m in the last window:
 			// FAIL "stuck" - it still counts as a fail to triage)
@@ -1676,14 +1926,17 @@ namespace DynamicIslands
 						// set to ignore - is passed through by a real player too, e.g. a landmark zipline's rope: not tunnelling, PQ11 10-27)
 						CharacterController gcc = pl.GetComponent<CharacterController>();
 						if (gcc != null && (Physics.GetIgnoreLayerCollision(gcc.gameObject.layer, h.collider.gameObject.layer) || Physics.GetIgnoreCollision(gcc, h.collider))) continue;
-						r = "INVALID: the walker crossed " + BlockerName(h.collider) + " (layer " + LayerMask.LayerToName(h.collider.gameObject.layer) + ", player " + (gcc != null ? LayerMask.LayerToName(gcc.gameObject.layer) : "?") + ") at " + (h.point - e.Position).ToString("F1"); break;
+						r = "INVALID: the walker crossed " + BlockerName(h.collider) + " (layer " + LayerMask.LayerToName(h.collider.gameObject.layer) + ", player " + (gcc != null ? LayerMask.LayerToName(gcc.gameObject.layer) : "?") + ") at " + (h.point - e.Position).ToString("F1")
+							+ " [chest line " + (prev - e.Position).ToString("F1") + " to " + (now - e.Position).ToString("F1") + ", " + d.magnitude.ToString("F2") + " m in a frame, waypoint " + wpAt + "/" + way.Count + ", " + pl.PersonController.controllerType + (gcc != null ? (gcc.enabled ? "" : ", controller off") + (gcc.isGrounded ? ", grounded" : "") : "") + "]"; break;
 					}
 				prev = now;
 				return r;
 			};
+			// (set when a ladder was climbed to its top: the next floor may be one to jump onto - ReachLadderDismount)
+			bool ladderUpTop = false;
 			for (int i = 1; i < way.Count; i++)
 			{
-				wdWay = Time.realtimeSinceStartup; wdTried = false; wdMoved = 99f; hbProg++;
+				wdWay = Time.realtimeSinceStartup; wdTried = false; wdMoved = 99f; hbProg++; wpAt = i;
 				int k = way[i];
 				byte kind = g.Kind[k];
 				// (a teleport step: the player at the object uses it and is put where it puts them - the grid's link, see above)
@@ -1753,6 +2006,7 @@ namespace DynamicIslands
 						Look(pl, d.sqrMagnitude > 0.01f ? Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg : pl.transform.eulerAngles.y, lpitch);
 						mmWalk = walkSign;
 						MmHold(pl, false);
+						ReachTrace(pl, e, "ladder up=" + up + " top=" + (ladTop - e.Position.y).ToString("F2") + " next=" + (nextY - e.Position.y).ToString("F2"));
 						yield return null;
 						if ((bad = guard()) != null) { result(bad); yield break; }
 						int wd = watchdog();
@@ -1773,6 +2027,7 @@ namespace DynamicIslands
 							yield break;
 						}
 					}
+					ladderUpTop = up && Climbing(pl);
 					mmJump = false;
 					continue;
 				}
@@ -1784,6 +2039,11 @@ namespace DynamicIslands
 				Vector3 seg = W(k) - W(way[i - 1]); seg.y = 0f;
 				int hops = 0, turns = 0, steps = 0;
 				float hopFrom = float.NaN, hopPeak = 0f;
+				// (off a ladder's top onto a floor still above the feet - a hatch, the floor beside or behind the ladder: a player jumps
+				// off toward it. The walker walked off at the ladder's end 0.5 m under the deck and fell back down the hatch, Old Mine's
+				// headframe (hw_mast) 11-06; the jump is at once, not after 2.5 s stopped)
+				if (ReachLadderDismount(ladderUpTop, ReachFeet(pl).y, W(k).y)) { jumpT = 0.45f; hopFrom = ReachFeet(pl).y; }
+				ladderUpTop = false;
 				for (int n = 0; ; n++)
 				{
 					// (aimed afresh each frame: a world shift mid-step moved the island but left the aim 1000 m off, PQ11 10-28)
@@ -1836,6 +2096,7 @@ namespace DynamicIslands
 					Look(pl, yaw, pitch);
 					mmWalk = 1f;
 					MmHold(pl, false);
+					ReachTrace(pl, e, "walk to " + (aim - e.Position).ToString("F1") + " jump=" + mmJump);
 					yield return null;
 					if (!float.IsNaN(hopFrom)) hopPeak = Mathf.Max(hopPeak, ReachFeet(pl).y - hopFrom);
 					if ((bad = guard()) != null) { mmWalk = 0f; result(bad); yield break; }
@@ -1849,7 +2110,25 @@ namespace DynamicIslands
 			result(null);
 		}
 
+		static float reachTraceT;
+		/// <summary>With CIReachOnly set: the walker's state each 0.2 s (feet, climbing, grounded) - to see one target's walk.</summary>
+		static void ReachTrace(Network_Player pl, IslandWorldState.Entry e, string what)
+		{
+			if (reachOnly == "" || Time.realtimeSinceStartup - reachTraceT < 0.2f) return;
+			reachTraceT = Time.realtimeSinceStartup;
+			CharacterController cc = pl.GetComponent<CharacterController>();
+			Log("  trace " + what + " feet " + (ReachFeet(pl) - e.Position).ToString("F2") + " climb " + Climbing(pl) + " grounded " + (cc != null && cc.isGrounded) + " yaw " + pl.transform.eulerAngles.y.ToString("F0"));
+		}
+
 		static bool inWaterNow(Network_Player pl) { return pl.PersonController.controllerType == ControllerType.Water; }
+
+		/// <summary>After a climb to a ladder's top: jump off toward the next spot when its floor is still above the feet (0.25 to
+		/// 1.2 m: within a jump) - a hatch with its floor beside or behind the ladder. CIReachDismountUnit.</summary>
+		internal static bool ReachLadderDismount(bool afterLadderUp, float feetY, float floorY)
+		{
+			float up = floorY - feetY;
+			return afterLadderUp && up > 0.25f && up < 1.2f;
+		}
 
 		/// <summary>The sea floor under a swimmer (where a player would stand), or far down when there is none within 3 m.</summary>
 		static float StandBed(Vector3 p)

@@ -142,8 +142,10 @@ namespace DynamicIslands
 
 		static IslandWorldState.Entry LoadedIsland(string[] args)
 		{
+			// (the island's own name or its host's: "Old Mine Islet" is no host's name, 11-06)
 			string name = args != null && args.Length > 0 ? args[0] : "";
-			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(i => i.Root != null && i.HostName.IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(i => i.Root != null && ((i.Name ?? "").IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0
+				|| (i.HostName ?? "").IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0));
 			if (e == null) Fail("no loaded island called '" + name + "' here");
 			return e;
 		}

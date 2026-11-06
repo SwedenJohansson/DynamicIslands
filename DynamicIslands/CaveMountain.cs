@@ -16,6 +16,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Name of the mountain's object (under the island).</summary>
 		public const string SkinName = "CaveSkin";
 		/// <summary>Grid step, how steep the sides fall (m down per m out), how far they reach, and how far above the roofs.</summary>
+		public const float CellSize = Cell;
 		const float Cell = 1.25f, Slope = 1.5f, Reach = 16f, Over = 0.3f;
 
 		readonly List<Transform> caves = new List<Transform>();
@@ -130,6 +131,20 @@ namespace DynamicIslands.Editor
 
 		bool[,] otherHill; // (last build: out past an open end, where another cave's hill reaches)
 		float hillX0, hillZ0;
+		// (tests: the last build's cells, for CICaveCell)
+		float[,] dTop, dRim, dGround, dRaw, dHeight, dCover, dCorr; bool[,] dCut, dSea, dOn; string[,] dGroundBy;
+
+		/// <summary>Tests: what the last build made of the cell nearest a world point (CICaveCell), or null off the grid.</summary>
+		public string CellText(Vector3 at)
+		{
+			if (dTop == null) return null;
+			int i = Mathf.RoundToInt((at.x - hillX0) / Cell), k = Mathf.RoundToInt((at.z - hillZ0) / Cell);
+			if (i < 0 || k < 0 || i >= dTop.GetLength(0) || k >= dTop.GetLength(1)) return null;
+			System.Func<float, string> F = v => float.IsNaN(v) ? "-" : float.IsInfinity(v) ? "inf" : v.ToString("0.00");
+			return "cell " + i + "," + k + " (" + F(hillX0 + i * Cell) + " " + F(hillZ0 + k * Cell) + "): top " + F(dTop[i, k]) + " rim " + F(dRim[i, k]) + " ground " + F(dGround[i, k]) +
+				" (" + (dGroundBy[i, k] ?? "-") + ") cover " + F(dCover[i, k]) + " corridor " + F(dCorr[i, k]) + " raw " + F(dRaw[i, k]) + " height " + F(dHeight[i, k]) +
+				(dCut[i, k] ? " CUT" : "") + (dSea[i, k] ? " SEA" : "") + (dOn[i, k] ? " ON" : "");
+		}
 
 		/// <summary>What a ray down at a spot hits, highest first, when the hill is the top and something is under it; else null.</summary>
 		static RaycastHit[] UnderSkin(Vector3 at, float fromY, Collider skin)
@@ -261,12 +276,20 @@ namespace DynamicIslands.Editor
 			finally { Physics.queriesHitBackfaces = backfaces; }
 			// The ways in: from where the roof ends along the passage, out (not from the inside point: a stretch of the den
 			// with no roof over it was left open, and the den showed through the hill from above - AU83)
+			// (a way in follows its own chain's roof - the pieces joined end to end - and stops at another cave's roof: a straight
+			// cave's room ended by the old mine's mound, its roof run went on over the mound and its way in ran on past it, a
+			// slot 3 cells wide down the mound's far side to the sea floor, under water traps under the hill - Old Mine Islet 11-05)
+			int[] chain = Chains(mouths);
 			var startPlus = new float[mouths.Count];
 			var startMinus = new float[mouths.Count];
+			var stopPlus = new float[mouths.Count];
+			var stopMinus = new float[mouths.Count];
 			for (int j = 0; j < mouths.Count; j++)
 			{
-				startPlus[j] = RoofEnd(mouths[j], 1f, top, x0, z0, nx, nz);
-				startMinus[j] = RoofEnd(mouths[j], -1f, top, x0, z0, nx, nz);
+				startPlus[j] = RoofEnd(mouths[j], 1f, top, own, chain, j, x0, z0, nx, nz);
+				startMinus[j] = RoofEnd(mouths[j], -1f, top, own, chain, j, x0, z0, nx, nz);
+				stopPlus[j] = WayStop(mouths[j], 1f, startPlus[j], top, own, chain, j, x0, z0, nx, nz);
+				stopMinus[j] = WayStop(mouths[j], -1f, startMinus[j], top, own, chain, j, x0, z0, nx, nz);
 			}
 			// How far out past each cave's open ends (m past where its roof ends; under 0.5: not out past them). The hill of a
 			// cave's roof stops there, a face of rock across its front: it spread on over the ledge and the paths before the
@@ -293,7 +316,7 @@ namespace DynamicIslands.Editor
 						// a square with no roof there was hill with a wall down to the ground across the way in - Ranger's Rest)
 						if (Mathf.Abs(s) < m.HalfWidth - 1f && ((m.Plus && a > 0f) || (m.Minus && a < 0f)) && float.IsNaN(mouthAt[i, k])) mouthAt[i, k] = m.FloorY;
 						if (!float.IsNaN(top[i, k])) continue;
-						if (Mathf.Abs(s) < m.HalfWidth && ((m.Plus && a > startPlus[j]) || (m.Minus && a < -startMinus[j]))) { corridor[i, k] = m.FloorY; break; }
+						if (Mathf.Abs(s) < m.HalfWidth && ((m.Plus && a > startPlus[j] && a < stopPlus[j]) || (m.Minus && a < -startMinus[j] && a > -stopMinus[j]))) { corridor[i, k] = m.FloorY; break; }
 					}
 				}
 			lastMouths.Clear();
@@ -365,6 +388,7 @@ namespace DynamicIslands.Editor
 			// on over it again; a face down to the ground stands at the cut)
 			var cut = new bool[nx, nz];
 			OverDug = 0;
+			var sea = new bool[nx, nz];
 			otherHill = new bool[nx, nz]; hillX0 = x0; hillZ0 = z0;
 			for (int i = 0; i < nx; i++)
 				for (int k = 0; k < nz; k++)
@@ -375,7 +399,34 @@ namespace DynamicIslands.Editor
 					// (over a dug passage open to the sky - the dug rock is the highest ground there - none: the hill stood on over
 					// Ironreef's mouth C as a bridge 5-13 m over the dug cut, its underside blue-white in the shade - RF3, 11-05)
 					if (float.IsNaN(top[i, k]) && float.IsNaN(corridor[i, k]) && groundBy[i, k] != null && groundBy[i, k].StartsWith(DigTunnel.RockName, System.StringComparison.Ordinal)) { cut[i, k] = true; otherHill[i, k] = false; OverDug++; }
+					// (nor out over the sea from a roof above it: the hill's skin over the water, its foot on the sea floor, closed a
+					// pool of sea under it - a swimmer under a roof with no air, Old Mine Islet's mound over its south shore 11-05;
+					// a cave's own roof under the sea keeps its hill, and the hill's surface under the water too)
+					// (a cell kept only by the roof beside it counts as uncovered here: that one-cell margin past a shell's edge over the
+					// water was the flap the 11-05 face stood under - its wall down to the sea floor shut the water under it, Old Mine
+					// Islet's -7 -36 trap after the first sea cut; its own roof or low edge still keeps a cell)
+					bool bare = float.IsNaN(top[i, k]) && float.IsNaN(rimY[i, k]);
+					// (round 4, 11-05: and where the hill's surface was under the water but the rounding lifted it to the water line
+					// over a sea floor well under it - its neighbours on a pad over the shore pulled it up - a lid at the surface over
+					// a pool of sea: Old Mine Islet's -51.5 8.2 trap off the miners' row, skin at 0 over a 6-8 m deep floor)
+					if (!cut[i, k] && bare && SeaCut(raw[i, k], height[i, k], ground[i, k])) { cut[i, k] = true; sea[i, k] = true; }
 					otherHill[i, k] = past && float.IsNaN(cover[i, k]) && !cut[i, k];
+				}
+			// (and its shore ring: the face down from the last cell left to a cut one leant out over the water, a hollow of sea
+			// under it with its mouth under the water - Old Mine Islet's south shore trap at -7 -36, 11-05; the face now stands
+			// on the shore, the ground there over the sea or nearly)
+			for (int i = 0; i < nx; i++)
+				for (int k = 0; k < nz; k++)
+				{
+					if (cut[i, k] || !float.IsNaN(top[i, k]) || !float.IsNaN(rimY[i, k]) || !(raw[i, k] > SeaLevel) || !(ground[i, k] < SeaLevel + SeaShoreBy)) continue;
+					bool bySea = false;
+					for (int di = -1; di <= 1 && !bySea; di++)
+						for (int dk = -1; dk <= 1 && !bySea; dk++)
+						{
+							int a = i + di, c = k + dk;
+							bySea = a >= 0 && a < nx && c >= 0 && c < nz && sea[a, c];
+						}
+					if (bySea) { cut[i, k] = true; otherHill[i, k] = false; }
 				}
 			for (int i = 0; i < nx; i++)
 				for (int k = 0; k < nz; k++)
@@ -423,6 +474,7 @@ namespace DynamicIslands.Editor
 				for (int k = 0; k < nz; k++)
 					if (!on[i, k] && float.IsNaN(corridor[i, k]) && height[i, k] < ground[i, k] - 3f && groundBy[i, k] != null)
 						tall[groundBy[i, k]] = (tall.ContainsKey(groundBy[i, k]) ? tall[groundBy[i, k]] : 0) + 1;
+			dTop = top; dRim = rimY; dGround = ground; dRaw = raw; dHeight = height; dCover = cover; dCorr = corridor; dCut = cut; dSea = sea; dOn = on; dGroundBy = groundBy;
 			LastMap = "higher ground: " + string.Join(", ", System.Linq.Enumerable.Select(tall, kv => kv.Key + " " + kv.Value)) + "\nx " + x0.ToString("0.0") + " z " + z0.ToString("0.0") + " step " + Cell + " (rows from +z)\n" + map;
 			var verts = new List<Vector3>();
 			var norms = new List<Vector3>();
@@ -497,6 +549,10 @@ namespace DynamicIslands.Editor
 			mr.shadowCastingMode = look.shadowCastingMode;
 			mr.receiveShadows = look.receiveShadows;
 			skin.AddComponent<MeshCollider>().sharedMesh = mesh;
+			// (lit as its caves are - warm, dim, through its own light probe - not by Raft's blue sky light (Trilight x8): out of
+			// Balboa its steep faces showed bright blue and patterned, on a mine's mound and through the gaps of a den's back;
+			// user 11-06, Old Mine Islet. The piece's own backs were lit so already; the hill wasn't)
+			CaveLit.Mark(skin);
 			// (tinted as its caves are: a dark den under an untinted orange hill showed where the one ended and the other began -
 			// the first tinted cave's tint, multiplied into the island's rock as ApplyTint does - RK15)
 			// (Raft's own island rock - CaravanIslandRocks - has no colour to tint: it then stays as it is; the den's rock material
@@ -509,6 +565,7 @@ namespace DynamicIslands.Editor
 				if (n == 0) TintRockTextures(mr, factor);
 				Debug.Log("[CUSTOM ISLANDS] Cave mountain tint " + factor + " (colour " + n + ")");
 			}
+			DressTunnels();
 			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : ""));
 			// (lone dens walled before the hill was built: their walls' outsides drawn as the hill now)
 			foreach (Transform t in caves)
@@ -575,6 +632,51 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The biggest rock or boulder placed on this island (not a cave piece), or null.</summary>
+		/// <summary>A dug tunnel's rim walls (its rock's part 1, round the mouth out in the open) wear the cave hill's skin as it is drawn -
+		/// its material and its tint - not Raft's island rock, which went blue-grey in the shade beside the hill's sand-brown rock
+		/// (Ironreef Caverns' mouth C, 11-05). No hill built yet: the rock it will wear (the island's biggest, else Raft's big rock);
+		/// the hill dresses its tunnels again once it is built. Returns the material's name, null when it left them.</summary>
+		/// <summary>Tests: the skin's renderer (null before a build).</summary>
+		public MeshRenderer SkinRenderer { get { return skin != null ? skin.GetComponent<MeshRenderer>() : null; } }
+
+		public static string DressRimWalls(MeshRenderer mr)
+		{
+			if (mr == null) return null;
+			Material[] mats = mr.sharedMaterials;
+			if (mats.Length < 2) return null;
+			CaveMountain hill = mr.GetComponentInParent<CaveMountain>();
+			MeshRenderer skinLook = hill != null && hill.skin != null ? hill.skin.GetComponent<MeshRenderer>() : null;
+			Material m = skinLook != null ? skinLook.sharedMaterial : null;
+			var block = new MaterialPropertyBlock();
+			if (m != null) skinLook.GetPropertyBlock(block);
+			else
+			{
+				Renderer rock = hill != null ? hill.IslandRock() : null;
+				if (rock == null)
+				{
+					GameObject big = PlaceableCatalog.Get("BigRock_1");
+					rock = big != null ? big.GetComponentInChildren<MeshRenderer>(true) : null;
+				}
+				m = rock != null ? rock.sharedMaterial : null;
+			}
+			if (m == null) return null;
+			mats[1] = m;
+			mr.sharedMaterials = mats;
+			mr.SetPropertyBlock(block, 1);
+			return m.name;
+		}
+
+		/// <summary>The skin's material and tint onto every dug tunnel's rim walls under this island (DressRimWalls).</summary>
+		void DressTunnels()
+		{
+			foreach (DigTunnel t in GetComponentsInChildren<DigTunnel>(true))
+			{
+				Transform r = t.transform.Find(DigTunnel.RockName);
+				MeshRenderer mr = r != null ? r.GetComponent<MeshRenderer>() : null;
+				if (mr != null) t.RimWalls = DressRimWalls(mr) ?? "";
+			}
+		}
+
 		Renderer IslandRock()
 		{
 			Renderer best = null;
@@ -599,7 +701,55 @@ namespace DynamicIslands.Editor
 		/// How far from a cave's inside point its roof goes along the passage (dir 1: its plus end, -1: its minus end): the last
 		/// roof on the passage's middle or either side of it, past gaps in the roof of up to 5 m.
 		/// </summary>
-		static float RoofEnd(Mouth m, float dir, float[,] top, float x0, float z0, int nx, int nz)
+		/// <summary>Which pieces are one passage: joined end to end (an open end within 2.5 m of another's, floors within 3 m) - the
+		/// cave tool's tunnels and its den. Each piece's chain number.</summary>
+		static int[] Chains(List<Mouth> mouths)
+		{
+			int n = mouths.Count;
+			var chain = new int[n];
+			for (int j = 0; j < n; j++) chain[j] = j;
+			System.Func<int, int> root = null;
+			root = j => chain[j] == j ? j : (chain[j] = root(chain[j]));
+			System.Func<Mouth, float, Vector3> end = (m, dir) => m.Pos + m.Along * (m.InsideAlong + dir * (dir > 0f ? m.OwnPlus : m.OwnMinus)) + m.Side * m.InsideSide;
+			for (int j = 0; j < n; j++)
+				for (int l = j + 1; l < n; l++)
+				{
+					if (Mathf.Abs(mouths[j].FloorY - mouths[l].FloorY) > 3f) continue;
+					bool joined = false;
+					foreach (float d1 in new[] { 1f, -1f })
+						foreach (float d2 in new[] { 1f, -1f })
+						{
+							Vector3 e = end(mouths[j], d1) - end(mouths[l], d2);
+							if (new Vector2(e.x, e.z).magnitude < 2.5f) joined = true;
+						}
+					if (joined) chain[root(j)] = root(l);
+				}
+			for (int j = 0; j < n; j++) chain[j] = root(j);
+			return chain;
+		}
+
+		/// <summary>A roof cell of the piece's own chain (or one no piece claims).</summary>
+		static bool OwnRoof(int[,] own, int[] chain, int j, int i, int k)
+		{
+			int o = own[i, k];
+			return o < 0 || o >= chain.Length || chain[o] == chain[j];
+		}
+
+		/// <summary>How far out a way in may run (m along the passage past the inside point): to the first roof of another cave
+		/// past where its own roof ends - the way in doesn't go on through another cave's hill and out the far side.</summary>
+		static float WayStop(Mouth m, float dir, float start, float[,] top, int[,] own, int[] chain, int j, float x0, float z0, int nx, int nz)
+		{
+			for (float a = start; a < 80f; a += Cell * 0.5f)
+			{
+				Vector3 p = m.Pos + m.Along * (m.InsideAlong + dir * a) + m.Side * m.InsideSide;
+				int i = Mathf.RoundToInt((p.x - x0) / Cell), k = Mathf.RoundToInt((p.z - z0) / Cell);
+				if (i < 0 || k < 0 || i >= nx || k >= nz) break;
+				if (!float.IsNaN(top[i, k]) && !OwnRoof(own, chain, j, i, k)) return a - start < 5f ? start : a; // (another cave right on: no way in between, as the roof run bridged 5 m before)
+			}
+			return float.PositiveInfinity;
+		}
+
+		static float RoofEnd(Mouth m, float dir, float[,] top, int[,] own, int[] chain, int j, float x0, float z0, int nx, int nz)
 		{
 			float last = 0f;
 			foreach (float s in new[] { 0f, -m.HalfWidth * 0.5f, m.HalfWidth * 0.5f })
@@ -610,6 +760,7 @@ namespace DynamicIslands.Editor
 					Vector3 p = m.Pos + m.Along * (m.InsideAlong + dir * a) + m.Side * (m.InsideSide + s);
 					int i = Mathf.RoundToInt((p.x - x0) / Cell), k = Mathf.RoundToInt((p.z - z0) / Cell);
 					if (i < 0 || k < 0 || i >= nx || k >= nz) break;
+					if (!float.IsNaN(top[i, k]) && !OwnRoof(own, chain, j, i, k)) break;
 					if (!float.IsNaN(top[i, k])) seen = a;
 					else if (a - seen > 5f) break;
 				}
@@ -687,6 +838,21 @@ namespace DynamicIslands.Editor
 			if (ya1 <= ya0 + 0.01f && yb1 <= yb0 + 0.01f) return;
 			ya0 = Mathf.Min(ya0, ya1); yb0 = Mathf.Min(yb0, yb1);
 			Quad(verts, norms, uvs, tris, origin, new Vector3(a.x, ya0, a.z), new Vector3(a.x, ya1, a.z), new Vector3(b.x, yb1, b.z), new Vector3(b.x, yb0, b.z), n, true);
+		}
+
+		/// <summary>The sea's surface (world y) and how far under it the ground must be for the hill not to go out over it; the shore cells
+		/// next to those, up to SeaShoreBy over it, go too.</summary>
+		const float SeaLevel = 0f, SeaFloorBy = 1f, SeaShoreBy = 0.5f;
+		/// <summary>A surface the rounding lifted to within SeaLidBy under the water line, standing more than SeaGap over the sea floor, is a lid
+		/// over the water and goes as well (round 4).</summary>
+		const float SeaLidBy = 2f, SeaGap = 1f;
+
+		/// <summary>Whether a bare cell (no roof or low edge of its own) goes for the sea: its ground well under the water and the hill over it
+		/// either above the water (raw: before the rounding) or lifted by the rounding to a lid near the water line over a gap of sea.</summary>
+		public static bool SeaCut(float raw, float height, float ground)
+		{
+			if (!(ground < SeaLevel - SeaFloorBy)) return false;
+			return raw > SeaLevel || height > SeaLevel - SeaLidBy && height > ground + SeaGap;
 		}
 
 		/// <summary>The caves' open ends where the hill's faces cross them.</summary>
