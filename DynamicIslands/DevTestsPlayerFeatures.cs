@@ -859,8 +859,11 @@ namespace DynamicIslands
 					yield return new WaitForSecondsRealtime(0.5f);
 					Check(ref ok, Minimap.Mode == Minimap.Full && Mathf.Abs(Minimap.PanelSize.x - 700f) < 0.5f, "the map key aboard: full screen (" + Minimap.PanelSize.x.ToString("F0") + ")");
 				}
+				// (it drifts away / sinks: gone before the next, which gets its room)
+				IslandWorldState.RemoveIds(new[] { e.Id }, true);
+				yield return new WaitForSecondsRealtime(1f);
 			}
-			IslandWorldState.RemoveIds(made.Select(x => x.Id).ToList(), true);
+			IslandWorldState.RemoveIds(made.Where(x => IslandWorldState.Contains(x)).Select(x => x.Id).ToList(), true);
 			IslandWorldState.Save();
 			Minimap.Enabled = was; Minimap.Mode = mode; Minimap.Zoom = zoom;
 			OnRaftCommand();
@@ -891,9 +894,9 @@ namespace DynamicIslands
 			string name = CustomIslandSpawner.FreeName(CustomIslandSpawner.GeneratedPrefix + type + "-" + s.Seed);
 			IslandFile f = MapTypes.Create(t, s, el, name);
 			f.Save(IslandSpawner.PathFor(name));
-			// (out to 400 m: the CI world keeps islands of earlier runs)
-			Vector3? spot = CustomIslandSpawner.FindClearSpot(CustomIslandSpawner.RaftPosition.Value, Mathf.Max(30f, s.Radius), 400f);
-			if (!spot.HasValue) { Log("  no open sea near the raft for '" + name + "'"); yield break; }
+			// (out to 900 m: the CI world keeps islands of earlier runs, and Raft's own islands may be near)
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(CustomIslandSpawner.RaftPosition.Value, s.Radius, 900f);
+			if (!spot.HasValue) { Log("  no open sea near the raft for '" + name + "' (land radius " + s.Radius.ToString("F0") + " m)"); yield break; }
 			int before = IslandWorldState.Islands.Count;
 			yield return DynamicIslands.instance.SpawnIslandFile(name, spot.Value, true);
 			IslandWorldState.Entry e = IslandWorldState.Islands.Skip(before).FirstOrDefault();
