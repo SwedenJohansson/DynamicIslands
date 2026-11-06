@@ -929,7 +929,7 @@ namespace DynamicIslands
 			if (e == null) return;
 			Vector3 from = e.Position + e.Root.transform.rotation * new Vector3(v[0], v[1], v[2]), to = e.Position + e.Root.transform.rotation * new Vector3(v[3], v[4], v[5]);
 			Quaternion look = Quaternion.LookRotation(to - from);
-			var rends = Object.FindObjectsOfType<Renderer>().Where(r => r.enabled && r.gameObject.activeInHierarchy && !(r is ParticleSystemRenderer) && r.bounds.SqrDistance(from) < 80f * 80f).ToList();
+			var rends = Object.FindObjectsOfType<Renderer>().Where(r => r.enabled && r.gameObject.activeInHierarchy && !(r is ParticleSystemRenderer) && r.GetComponentInParent<Network_Player>() == null && r.bounds.SqrDistance(from) < 80f * 80f).ToList();
 			var seen = new Dictionary<Renderer, int>();
 			int rays = 0;
 			for (int i = -4; i <= 4; i++)
@@ -964,7 +964,7 @@ namespace DynamicIslands
 			MeshFilter f = r.GetComponent<MeshFilter>();
 			Mesh m = f != null ? f.sharedMesh : null;
 			float bd;
-			if (m == null || !m.isReadable) return r.bounds.IntersectRay(ray, out bd) ? bd : float.PositiveInfinity;
+			if (m == null || !m.isReadable) return !r.bounds.Contains(ray.origin) && r.bounds.IntersectRay(ray, out bd) ? bd : float.PositiveInfinity; // (around the eye: can't tell)
 			Transform t = r.transform;
 			Vector3 o = t.InverseTransformPoint(ray.origin), dir = t.InverseTransformDirection(ray.direction);
 			Vector3[] p = m.vertices; int[] tri = m.triangles;
@@ -982,6 +982,21 @@ namespace DynamicIslands
 				if (d > 0f && d < best) best = d;
 			}
 			return best == float.PositiveInfinity ? best : Vector3.Distance(ray.origin, t.TransformPoint(o + dir * best));
+		}
+
+		[ConsoleCommand(name: "CIBackLook", docs: "Dev, in a world: the cave pieces' backs (CaveBacks: their shells seen from outside) for finding the blue rock (11-06). off / on: every back hidden or shown; full / plain / normals: every back made again with normals and tangents' handedness flipped (as made), faces turned only, or normals only. CIBackLook <off|on|full|plain|normals>")]
+		public static void BackLookCommand(string[] args)
+		{
+			string mode = args != null && args.Length > 0 ? args[0] : "";
+			var backs = Object.FindObjectsOfType<MeshRenderer>().Where(r => r.name == CaveBacks.Name).ToList();
+			if (mode == "off" || mode == "on") foreach (MeshRenderer r in backs) r.enabled = mode == "on";
+			else if (mode == "full" || mode == "plain" || mode == "normals")
+			{
+				CaveBacks.TestFlip = mode == "full" ? 0 : mode == "plain" ? 1 : 2;
+				Log("  backs made again: " + CaveBacks.Remake());
+			}
+			else { Fail("CIBackLook <off|on|full|plain|normals>"); return; }
+			Log("PASS: backs " + mode + " (" + backs.Count + ")");
 		}
 
 		[ConsoleCommand(name: "CICaveLit", docs: "Dev, in a world: every Balboa cave piece placed on a loaded island (a mine's dead-end mound, an ar_cave den, the cave tool's tunnels) lit as a cave - its renderers on the cave light (CaveLit), not Raft's blue sky light that drew its faces bright blue (11-06). CICaveLit [island]")]
