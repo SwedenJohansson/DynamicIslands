@@ -9,7 +9,11 @@ at 61 100
 wait 5
 expect animals Tangaroa rat 2
 expect animalsinside Tangaroa rat 2
-picture rat_shelter_ammo_out 61 4.4 102.5 62 3.4 86
+# (from the sea, the beach up to the mouth; from the mouth, the mountain's sides round it - 11-06: no rock underside
+# over the water, no orange and black squares on the sides)
+picture rat_shelter_ammo_out 61 6 121 61 3.5 96
+picture rat_shelter_ammo_side 45 7 113 60 4 93
+picture rat_shelter_ammo_mouth 61 4.4 102.5 62 3.4 86
 picture rat_shelter_ammo_in 63 4.6 81.5 63.5 3.3 75.5
 wait 15
 expect animalsmoved Tangaroa rat 1

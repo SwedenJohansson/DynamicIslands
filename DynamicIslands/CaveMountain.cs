@@ -428,14 +428,28 @@ namespace DynamicIslands.Editor
 			var tris = new List<int>();
 			Vector3 origin = new Vector3(b.center.x, b.min.y, b.center.z);
 			System.Func<int, int, Vector3> P = (i, k) => new Vector3(x0 + i * Cell, height[i, k], z0 + k * Cell);
-			// Top: both sides (from inside a cave, a hole in its shell shows rock)
+			// Top: both sides (from inside a cave, a hole in its shell shows rock). Its normals are the surface's at each grid point
+			// (from the heights round it), shared by the squares that meet there: each square's own flat one lit the steep sides
+			// as a patchwork, and Balboa's rock shader (Mountains) blends its rock and sand by the normal, so each square came out
+			// orange or black on its own - a mosaic of 45-degree rectangles (11-06, Shelter Atoll's ammo cave)
+			var gn = new Vector3[nx, nz];
+			for (int i = 0; i < nx; i++)
+				for (int k = 0; k < nz; k++)
+				{
+					if (!on[i, k]) continue;
+					int il = i > 0 && on[i - 1, k] ? i - 1 : i, ir = i + 1 < nx && on[i + 1, k] ? i + 1 : i;
+					int kd = k > 0 && on[i, k - 1] ? k - 1 : k, ku = k + 1 < nz && on[i, k + 1] ? k + 1 : k;
+					float sx = ir > il ? (height[ir, k] - height[il, k]) / ((ir - il) * Cell) : 0f;
+					float sz = ku > kd ? (height[i, ku] - height[i, kd]) / ((ku - kd) * Cell) : 0f;
+					gn[i, k] = new Vector3(-sx, 1f, -sz).normalized;
+				}
 			for (int i = 0; i + 1 < nx; i++)
 				for (int k = 0; k + 1 < nz; k++)
 				{
 					if (!on[i, k] || !on[i + 1, k] || !on[i, k + 1] || !on[i + 1, k + 1]) continue;
 					Vector3 a = P(i, k), c = P(i + 1, k), d = P(i + 1, k + 1), e = P(i, k + 1);
 					Vector3 n = Vector3.Cross(e - a, c - a).normalized;
-					Quad(verts, norms, uvs, tris, origin, a, e, d, c, n, true);
+					Quad(verts, norms, uvs, tris, origin, a, e, d, c, n, true, new[] { gn[i, k], gn[i, k + 1], gn[i + 1, k + 1], gn[i + 1, k] });
 				}
 			// Walls where the surface is cut off: down to the ground; at a way in, only a skirt under its floor
 			var arch = new Arch { Shells = cols, Box = b, Own = own, Ahead = ahead, Mouths = mouths, Top = top };
@@ -708,16 +722,19 @@ namespace DynamicIslands.Editor
 
 		/// <summary>A four-sided face a-b-c-d with normal n (the other side too when both).</summary>
 		static void Quad(List<Vector3> verts, List<Vector3> norms, List<Vector2> uvs, List<int> tris, Vector3 origin,
-			Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 n, bool both)
+			Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 n, bool both, Vector3[] smooth = null)
 		{
 			for (int side = 0; side < (both ? 2 : 1); side++)
 			{
 				int s = verts.Count;
 				Vector3 nn = side == 0 ? n : -n;
-				foreach (Vector3 v in new[] { a, b, c, d })
+				Vector3[] corner = { a, b, c, d };
+				for (int j = 0; j < 4; j++)
 				{
+					Vector3 v = corner[j];
 					verts.Add(v - origin);
-					norms.Add(nn);
+					// (smooth: each corner's own, shared with the squares round it - see the top's)
+					norms.Add(smooth != null ? (side == 0 ? smooth[j] : -smooth[j]) : nn);
 					// (mapped from the side it faces most, in world metres: the rock's texture lines up across squares)
 					float ax = Mathf.Abs(n.x), ay = Mathf.Abs(n.y), az = Mathf.Abs(n.z);
 					uvs.Add(ay >= ax && ay >= az ? new Vector2(v.x, v.z) / 14f : ax >= az ? new Vector2(v.z, v.y) / 14f : new Vector2(v.x, v.y) / 14f);

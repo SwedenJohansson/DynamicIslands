@@ -170,6 +170,67 @@ namespace DynamicIslands
 		}
 
 		/// <summary>
+		/// A dug tunnel's rim rock standing out of the ground apart from its mouth (11-06: Ironreef's tunnel B had flat grey
+		/// shards in the grass beside it): from over the ground round each opening (3 m out, every 0.2 m) a ray down on the
+		/// tunnel's own rock; where it meets the rock over the ground, that rock must join the mouth (over a cut cell) through
+		/// more such rock. Returns how many points of loose rock (0: none); detail says how many and where the first is.
+		/// </summary>
+		static int LooseRim(DigTunnel t, out string detail)
+		{
+			detail = "no rim";
+			Transform rockT = t != null ? t.transform.Find(DigTunnel.RockName) : null;
+			MeshCollider mc = rockT != null ? rockT.GetComponent<MeshCollider>() : null;
+			Terrain land = t != null ? t.Land() : null;
+			if (mc == null || land == null || t.Openings.Count == 0) return 0;
+			const float step = 0.2f, reach = 3f, over = 0.05f;
+			TerrainData td = land.terrainData;
+			float cell = Mathf.Max(td.size.x, td.size.z) / td.holesResolution;
+			float x0 = t.Openings.Min(o => o.x) - reach, z0 = t.Openings.Min(o => o.y) - reach;
+			int nx = Mathf.CeilToInt((t.Openings.Max(o => o.x) + reach - x0) / step) + 1, nz = Mathf.CeilToInt((t.Openings.Max(o => o.y) + reach - z0) / step) + 1;
+			var up = new bool[nx * nz];
+			var seen = new bool[nx * nz];
+			var todo = new Queue<int>();
+			for (int z = 0; z < nz; z++)
+				for (int x = 0; x < nx; x++)
+				{
+					var at = new Vector2(x0 + x * step, z0 + z * step);
+					float near = t.Openings.Min(o => (o - at).sqrMagnitude);
+					if (near > reach * reach) continue;
+					float g = land.SampleHeight(new Vector3(at.x, 0f, at.y)) + land.transform.position.y;
+					RaycastHit hit;
+					if (!mc.Raycast(new Ray(new Vector3(at.x, g + 6f, at.y), Vector3.down), out hit, 12f) || hit.point.y < g + over) continue;
+					int i = x + z * nx;
+					up[i] = true;
+					if (near <= cell * cell) { seen[i] = true; todo.Enqueue(i); } // (over a cut cell: the mouth's own rock)
+				}
+			while (todo.Count > 0)
+			{
+				int i = todo.Dequeue(), x = i % nx, z = i / nx;
+				for (int dz = -1; dz <= 1; dz++)
+					for (int dx = -1; dx <= 1; dx++)
+					{
+						int ax = x + dx, az = z + dz;
+						if (ax < 0 || az < 0 || ax >= nx || az >= nz) continue;
+						int j = ax + az * nx;
+						if (!up[j] || seen[j]) continue;
+						seen[j] = true;
+						todo.Enqueue(j);
+					}
+			}
+			int loose = 0, rim = 0;
+			Vector2 first = Vector2.zero;
+			for (int i = 0; i < up.Length; i++)
+			{
+				if (!up[i]) continue;
+				if (seen[i]) { rim++; continue; }
+				if (loose++ == 0) first = new Vector2(x0 + (i % nx) * step, z0 + (i / nx) * step);
+			}
+			detail = loose == 0 ? "rim " + rim + " points over the ground, none loose"
+				: loose + " points of loose rim rock over the ground apart from the mouth, first at " + first.ToString("F1");
+			return loose;
+		}
+
+		/// <summary>
 		/// A dug tunnel seen from where a player stands in it (G3, the X7 sweep): eyes 1.6 m over the floor every 4 points along
 		/// each of its strokes, 81 looks each (DigLeaks) - none to the sky, out through the hill or to the ground from below. A
 		/// joined system: the other tunnels' passages count as inside, a cave piece's rock met from the front as the cave's. The

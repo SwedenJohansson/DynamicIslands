@@ -1252,11 +1252,16 @@ namespace DynamicIslands
 				int seen = DugSeeThrough(c.Value, digs.Where(x => x.Key == c.Key).Select(x => x.Value).ToList(), out detail, out eye, out look);
 				Log("  " + n + " '" + c.Key + "' DigTunnel at " + c.Value.transform.position.ToString("F0") + ": " + detail);
 				if (seen > 0) bad++;
+				// (and its rim: no loose bits of it standing in the grass apart from the mouth - 11-06)
+				string rimDetail;
+				int loose = LooseRim(c.Value, out rimDetail);
+				Log("    its rim: " + rimDetail);
+				if (loose > 0 && seen == 0) bad++;
 				if (shots && eye != Vector3.zero) yield return CameraShot(eye, eye + look * 5f, "caveinside_" + n);
 				yield return null;
 			}
 			if (n == 0) Fail("cave inside: no cave pieces or dug tunnels" + (only.Length > 0 ? " named *" + only + "*" : ""));
-			else if (bad > 0) Fail("cave inside: " + bad + " of " + n + " cave pieces and dug tunnels seen through from inside (above)");
+			else if (bad > 0) Fail("cave inside: " + bad + " of " + n + " cave pieces and dug tunnels seen through from inside, or with loose rim rock (above)");
 			else Log("PASS: cave inside - " + (n - dn) + " cave pieces, " + dn + " dug tunnels, nothing seen through from inside");
 		}
 

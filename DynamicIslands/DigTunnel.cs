@@ -235,6 +235,9 @@ namespace DynamicIslands.Editor
 		static float RimHeight(float r) { return 0.3f + 0.25f * r; }
 		/// <summary>How far past the cut ground the rim goes down into it (gently, so it meets the ground in a soft line).</summary>
 		static float RimOut(float r) { return 0.8f + 0.1f * r; }
+		/// <summary>How far past the cut ground the rim's rocks stand (none further: loose shards in the grass, 11-06), and
+		/// their highest (0.8 m read as a pipe's end sticking out of the hill, 11-06).</summary>
+		const float RimLip = 0.5f, RimRocksTop = 0.45f;
 
 		#region Path text
 
@@ -1080,7 +1083,7 @@ namespace DynamicIslands.Editor
 						Vector3 a = new Vector3(lo.x + q.x * cw, 0f, lo.z + q.y * ch), bq = a + new Vector3(cw, 0f, ch);
 						if (first) { mouthMin = a; mouthMax = bq; first = false; } else { mouthMin = Vector3.Min(mouthMin, a); mouthMax = Vector3.Max(mouthMax, bq); }
 					}
-					float wOut = RimOut(rMax), hTop = Mathf.Min(0.8f, RimHeight(rMax));
+					float wOut = RimOut(rMax), hTop = Mathf.Min(RimRocksTop, RimHeight(rMax));
 					int reachX = Mathf.CeilToInt((wOut + 0.5f) / cw) + 1, reachZ = Mathf.CeilToInt((wOut + 0.5f) / ch) + 1;
 					rimFade = new float[nx * nz];
 					rimH = new float[nx * nz];
@@ -1089,6 +1092,9 @@ namespace DynamicIslands.Editor
 						for (int x = 0; x < nx; x++)
 						{
 							Vector3 w = transform.TransformPoint(new Vector3(o.x + x * h, 0f, o.z + z * h));
+							// (the noise on the tunnel's own ground plan, not the world's: on the world's, the rim came out
+							// differently wherever the island lay - 11-06, Ironreef's tunnel B grew loose shards one day, not the day before)
+							float nxL = (o.x + x * h) * Mathf.Abs(scale.x), nzL = (o.z + z * h) * Mathf.Abs(scale.z);
 							float fx = (w.x - lo.x) / cw, fz = (w.z - lo.z) / ch;
 							int ix = Mathf.FloorToInt(fx), iz = Mathf.FloorToInt(fz);
 							float best = float.MaxValue;
@@ -1104,13 +1110,15 @@ namespace DynamicIslands.Editor
 							if (best == float.MaxValue) continue;
 							best = Mathf.Sqrt(best);
 							if (best <= h) fillUp[x + z * nx] = true;
-							float rag = (Mathf.PerlinNoise(w.x * 0.55f + 7.7f, w.z * 0.55f + 3.1f) - 0.5f) * 0.6f * Mathf.Clamp01(best / 0.4f);
+							float rag = (Mathf.PerlinNoise(nxL * 0.55f + 7.7f, nzL * 0.55f + 3.1f) - 0.5f) * 0.6f * Mathf.Clamp01(best / 0.4f);
 							float f = 1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((best + rag) / wOut));
 							if (f <= 0f) continue;
 							rimFade[x + z * nx] = f;
-							// (the rocks round the opening: in patches, none between)
-							float patch = Mathf.PerlinNoise(w.x * 0.45f + 19.1f, w.z * 0.45f + 2.3f) * 0.7f + Mathf.PerlinNoise(w.x * 1.1f + 5.3f, w.z * 1.1f + 13.7f) * 0.3f;
-							rimH[x + z * nx] = hTop * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((patch - 0.42f) * 3.5f));
+							// (the rocks round the opening: in patches, none between - and only at its lip: further out, where the rim
+							// is all but under the ground, a patch's top stood out of the grass as a loose flat shard - 11-06)
+							float patch = Mathf.PerlinNoise(nxL * 0.45f + 19.1f, nzL * 0.45f + 2.3f) * 0.7f + Mathf.PerlinNoise(nxL * 1.1f + 5.3f, nzL * 1.1f + 13.7f) * 0.3f;
+							float lip = 1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(best / RimLip));
+							rimH[x + z * nx] = hTop * lip * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((patch - 0.42f) * 3.5f));
 							RimColumns++;
 						}
 				}

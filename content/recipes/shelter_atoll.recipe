@@ -129,16 +129,19 @@ line Block_Wall_Tier3 from 9 -84 to 9 -69 step=1.5 y=-0.15
 call ar_cave x=62 z=82 h=3 yaw=0 al=ammorock chest=ammochest
 # (REACH 10-30: the cave floor ended 3 m over the sea in a cliff - no way in from the water (reach: ammo chest and the
 # cave "can't get there"): a beach slope from the mouth down into the sea)
-# (widening out to the sea as it goes down, then smoothed, so it reads as a sand fan, not a causeway)
-brush flatten at 61 101.5 r=2.4 s=20 frames=200 h=2.6
-brush flatten at 61 103 r=3 s=20 frames=200 h=1.9
-brush flatten at 61 104.5 r=4 s=20 frames=200 h=1.2
-brush flatten at 61 106 r=4.5 s=20 frames=200 h=0.5
-brush flatten at 61 107.5 r=5 s=20 frames=200 h=-0.2
-brush flatten at 61 109 r=5 s=20 frames=200 h=-0.9
-brush flatten at 61 110.5 r=5 s=20 frames=200 h=-1.6
-brush smooth from 61 104.5 to 61 110.5 r=6 s=4 frames=8
+# (11-06 review: a narrow fan read as a causeway, and from the sea the rock's flat underside showed over the water on
+# both sides of it: a beach as wide as the rock, from its pad (h=3) down into the sea at about 15 degrees)
+brush flatten from 49 97 to 75 97 r=3.5 s=20 frames=200 h=3
+brush flatten from 48 100 to 75 100 r=3.5 s=20 frames=200 h=2.4
+brush flatten from 47 103 to 76 103 r=3.5 s=20 frames=200 h=1.7
+brush flatten from 47 106 to 76 106 r=4 s=20 frames=200 h=0.9
+brush flatten from 47 109 to 76 109 r=4 s=20 frames=200 h=0.1
+brush flatten from 48 112 to 75 112 r=4.5 s=20 frames=200 h=-0.8
+brush flatten from 50 115 to 73 115 r=4.5 s=20 frames=200 h=-1.7
+brush smooth from 48 101 to 75 101 r=6 s=4 frames=8
+brush smooth from 48 108 to 75 108 r=6 s=4 frames=8
 clear from 61 101.5 to 61 110.5 r=7 body
+clear from 50 106 to 73 106 r=8 body
 # The new land planted (palms, bamboo, bushes as on the ring; boulders only on the flats)
 call ar_plants_tropical x=40 z=38 r=10 seed=26301
 call ar_plants_hill x=60 z=54 r=22 seed=26311
