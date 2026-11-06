@@ -89,6 +89,9 @@ namespace DynamicIslands
 			var decks = new List<FloorGap>();
 			var held = new HashSet<EditorGameObject>();
 			List<Bounds> building = null;
+			// (an island sunk by 'elevation -45' has the real sea 45 m over the editor's water line: a deck under it is under
+			// the sea in the game - Hadal Commons' air platforms and drowned block, 11-05)
+			if (DynamicIslands.currentElevation < 0f) sea -= DynamicIslands.currentElevation;
 			foreach (EditorGameObject e in placed)
 			{
 				string n = e.GameObjectName ?? "";
@@ -455,6 +458,10 @@ namespace DynamicIslands
 					if (foot.y - support <= gap) continue;
 					// (above another part of the same object - a chimney on its roof - it is attached, not standing)
 					if (under && hit.point.y >= land && hit.collider.GetComponentInParent<EditorGameObject>() == e) continue;
+					// (or inside one with no collider in the editor: a gate's leaves in its own frame, on its landing - UT_MainEntranceDoor,
+					// Hadal Commons 11-05)
+					if (e.GetComponentsInChildren<Renderer>(false).Any(o => o != r && o is MeshRenderer && o.enabled && o.GetComponent<Collider>() == null && o.bounds.min.y < foot.y - 0.05f &&
+						o.bounds.max.y >= foot.y - gap && foot.x > o.bounds.min.x && foot.x < o.bounds.max.x && foot.z > o.bounds.min.z && foot.z < o.bounds.max.z)) continue;
 					// (on the hill a world drapes over a cave piece's roof (CaveMountain): the editor has no such hill to stand on)
 					if (under && UnderCaveHill(foot, hit.collider, gap)) continue;
 					found++;

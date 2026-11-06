@@ -15,7 +15,7 @@ namespace DynamicIslands
 	/// </summary>
 	public static partial class DevTests
 	{
-		[ConsoleCommand(name: "CIPreFaults", docs: "Dev, the editor (opened when needed): a recipe 'brush flatten ... line' stroke along a row of ground points moves that row only (without 'line' the next row moves too); a wall on a deck's edge counts as standing on the deck, a wall in the air does not")]
+		[ConsoleCommand(name: "CIPreFaults", docs: "Dev, the editor (opened when needed): a recipe 'brush flatten ... line' stroke along a row of ground points moves that row only (without 'line' the next row moves too); a wall on a deck's edge counts as standing on the deck, a wall in the air does not; a deck on nothing under the real sea of an island sunk by elevation is not checked; a gate's leaves on its own landing are not floating")]
 		public static void PreFaultsCommand(string[] args) { StartTest(PreFaultsRoutine()); }
 
 		static IEnumerator PreFaultsRoutine()
@@ -54,6 +54,9 @@ namespace DynamicIslands
 					"place Relay_Wall - at -20 -20 h=2",
 					"place Relay_Wall - at -40 -20 h=2",
 					"place BalboaCave_Bear - at 30 -40 h=-2",
+					"place Block_Foundation sunkdeck at -60 -40 h=10",
+					"brush flatten at -40 40 r=8 s=20 frames=200 h=-3",
+					"place UT_MainEntranceDoor - at -40 40 ground sit",
 				});
 			}
 			catch (Exception e) { Fail("prefaults: writing " + pb + ": " + e.Message); yield break; }
@@ -97,8 +100,23 @@ namespace DynamicIslands
 					Check(ref ok, !UnderCaveHill(new Vector3(db.max.x + 2f, db.max.y - 1f, db.center.z), dc, 0.3f), "nor one beside it");
 				}
 			}
+			// 3. A deck 10 m over the editor's water line, on nothing: over nothing on an island at the sea, under the real sea
+			// (and so not checked) on one sunk by 'elevation -45' - Hadal Commons' air platforms
+			float wasElevation = DynamicIslands.currentElevation;
+			int nFloors;
+			Func<bool> deckFlagged = () => FloorsOverNothing(PlacedEditorObjects(), 0.3f, t, sea, out nFloors).Any(g => g.Floor.GameObjectName == "Block_Foundation");
+			DynamicIslands.currentElevation = 0f;
+			bool atSea = deckFlagged();
+			DynamicIslands.currentElevation = -45f;
+			bool sunk = deckFlagged();
+			DynamicIslands.currentElevation = wasElevation;
+			Check(ref ok, atSea, "a deck 10 m over the water on nothing is over nothing at elevation 0");
+			Check(ref ok, !sunk, "the same deck at elevation -45 is under the real sea and not checked");
+			// 4. A gate on flat ground: its leaves stand on its own landing (no collider in the editor), not in the air
+			FloatingCommand(new[] { "0.3", "UT_MainEntranceDoor" });
+			Check(ref ok, floatProblems == 0, "a gate's leaves on its own landing are not floating (" + floatProblems + " found)");
 			try { File.Delete(pa); File.Delete(pb); } catch { }
-			Log((ok ? "PASS" : "FAIL") + ": prefaults (line strokes, walls on a deck's edge)");
+			Log((ok ? "PASS" : "FAIL") + ": prefaults (line strokes, walls on a deck's edge, sunk decks, gate leaves)");
 		}
 	}
 }
