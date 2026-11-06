@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -2350,12 +2350,28 @@ namespace DynamicIslands
 		#endregion
 		#region Every combination
 
-		[ConsoleCommand(name: "CIOptionsMatrix", docs: "Dev, world (host): every combination (512) of the world options switched on in turn (the retired ones together, as one; the ones that only add something at sea together: rogue shark, barrels, storm days, trader raft, night is dangerous, fog banks, storm seas, UFO, glowing sea, lightning, ghost ship, whale breach); [minutes] = its time limit (23, under alltests' 25); it stops when another test starts: each is the world's (the world file's lines, the host's message, CIServerSig's lines), what follows from it holds (the story order only with its option, the blueprints' pairs only with theirs, the storages' refusal only with theirs, ghost rafts only with theirs), no exceptions while the mod's ticks run a few seconds with it; the world's own options back after")]
+		[ConsoleCommand(name: "CIOptionsMatrix", docs: "Dev, world (host): every combination (512) of the world options switched on in turn (the retired ones together, as one; the ones that only add something at sea together: rogue shark, barrels, storm days, trader raft, night is dangerous, fog banks, storm seas, UFO, glowing sea, lightning, ghost ship, whale breach, fuller islands); [minutes] = its time limit (23, under alltests' 25); it stops when another test starts: each is the world's (the world file's lines, the host's message, CIServerSig's lines), what follows from it holds (the story order only with its option, the blueprints' pairs only with theirs, the storages' refusal only with theirs, ghost rafts only with theirs), no exceptions while the mod's ticks run a few seconds with it; the world's own options back after")]
 		public static void OptionsMatrixCommand(string[] args)
 		{
 			float minutes;
 			if (args == null || args.Length == 0 || !float.TryParse(args[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out minutes)) minutes = 23f;
 			StartExclusiveTest("options matrix", OptionsMatrixRoutine(minutes * 60f));
+		}
+
+		/// <summary>
+		/// The idle test player through the matrix's ~22 min: kept fed, and the raft under them whole. In a fresh world the
+		/// shark bit the four foundations away one by one (the heartbeat keeps nobody alive while a test runs); the player
+		/// fell in and was bitten and drowned over and over until the matrix ended.
+		/// </summary>
+		static void MatrixGuard()
+		{
+			Network_Player pl = RAPI.GetLocalPlayer();
+			if (pl != null && (pl.Stats == null || pl.Stats.stat_health.Value > 0f)) { try { KeepAlive(pl); } catch { } }
+			Raft raft = ComponentManager<Raft>.Value;
+			var placed = BlockCreator.GetPlacedBlocks();
+			if (raft == null || placed == null) return;
+			foreach (Block b in placed)
+				if (b != null && b.Health > 0 && b.Health < b.MaxHealth && b.transform.IsChildOf(raft.transform)) b.SetHealth(b.MaxHealth);
 		}
 
 		static IEnumerator OptionsMatrixRoutine(float limit)
@@ -2378,11 +2394,11 @@ namespace DynamicIslands
 			try
 			{
 				// (switched together: the retired options, and the ones that only add something at sea or make it harsher (the
-				// rogue shark, the barrels, storm days, the trader raft, night is dangerous, and the 10-19 sea options): 512
-				// combinations - ~22 min; with the upgrades option alone it was 1024 and ran past alltests' 25 min, and with
+				// rogue shark, the barrels, storm days, the trader raft, night is dangerous, and the 10-19 sea options, fuller islands): 512
+				// combinations, 2 s each - ~20 min; with the upgrades option or fuller islands alone it was 1024 and ran past alltests' 25 min, and with
 				// the sea options one by one 32768 (~23 h))
 				string[] sea = { WorldOptions.RogueShark, WorldOptions.Barrels, WorldOptions.StormDays, WorldOptions.TraderRaft, WorldOptions.NightDanger, WorldOptions.Fog, WorldOptions.Kraken, WorldOptions.FogSight, WorldOptions.MirrorIslands, WorldOptions.NoMinimap,
-					WorldOptions.StormSeas, WorldOptions.Ufo, WorldOptions.GlowSea, WorldOptions.Lightning, WorldOptions.GhostShip, WorldOptions.WhaleBreach };
+					WorldOptions.StormSeas, WorldOptions.Ufo, WorldOptions.GlowSea, WorldOptions.Lightning, WorldOptions.GhostShip, WorldOptions.WhaleBreach, WorldOptions.FullerIslands };
 				string[][] groups = WorldOptions.Offered.Where(o => !sea.Contains(o)).Select(o => new[] { o }).Concat(new[] { sea, WorldOptions.Retired }).ToArray();
 				// (no rogue shark rolled meanwhile: before day 3 there's none)
 				RogueShark.TestDay = 1;
@@ -2394,7 +2410,7 @@ namespace DynamicIslands
 					done++;
 					var on = new HashSet<string>(groups.Where((g, i) => (mask & (1 << i)) != 0).SelectMany(g => g));
 					WorldOptions.Set(on);
-					yield return new WaitForSeconds(2.5f);
+					for (int w = 0; w < 4; w++) { MatrixGuard(); yield return new WaitForSeconds(0.5f); }
 					// (Raft's autosave prunes builders of storages not in the world - the made-up one too: noted again)
 					if (PrivateStorage.BuilderOf(999999u) == 0UL) PrivateStorage.Decode(PrivateStorage.Encode() + ";999999:12345");
 					string sig = string.Join("|", ServerSig().ToArray());

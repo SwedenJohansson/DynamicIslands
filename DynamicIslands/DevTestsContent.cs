@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -27,11 +27,22 @@ namespace DynamicIslands
 			Func<bool> down = () => (player.Stats != null && player.Stats.stat_health.Value <= 0f) || (p != null && p.IsDead);
 			// (a respawn while the player is held over an island that is still loading - PlayerHold - didn't take: the player
 			// stayed down, and every two-player check after it failed. Tried again until they are up)
+			bool revived = false;
 			for (int tries = 0; tries < 3 && down() && p != null; tries++)
 			{
 				Log("The test player was down: respawning them (inventory kept)" + (tries > 0 ? " - again (" + (tries + 1) + ")" : ""));
 				p.RespawnWithoutBed(false);
+				revived = true;
 				for (float t = 0f; t < 6f && down(); t += 0.5f) yield return new WaitForSeconds(0.5f);
+			}
+			// (RespawnWithoutBed revives in place: a player who drowned or was bitten in the sea came back in the sea and died
+			// again every 10 s - CIOptionsMatrix's idle player after the shark ate a fresh world's raft under them: back onto
+			// the raft, as Raft's own respawn does)
+			Vector3 at;
+			if (revived && !down() && player.PersonController != null && player.PersonController.controllerType == ControllerType.Water && SpawnToRaft.Spot(player, out at))
+			{
+				PlayerMove.To(player, at);
+				Log("The test player was in the sea: put back on the raft");
 			}
 			KeepAlive(player);
 			if (down()) Log("The test player is STILL DOWN (health " + (player.Stats != null ? player.Stats.stat_health.Value.ToString("F0") : "?") + ", " + (p != null && p.IsDead ? "dead" : "not dead") + ")");
