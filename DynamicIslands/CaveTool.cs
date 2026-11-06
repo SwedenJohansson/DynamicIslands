@@ -1517,13 +1517,23 @@ namespace DynamicIslands.Editor
 	{
 		static readonly List<CaveLit> live = new List<CaveLit>();
 		[NonSerialized] Renderer[] rends;
+		/// <summary>Per renderer (as rends): each material's shine to set, or null when it has one material (NaN: no shine property).</summary>
+		[NonSerialized] float[][] subShine;
+		/// <summary>Per renderer: the shine for its own block (its one material's), NaN for none.</summary>
+		[NonSerialized] float[] ownShine;
+		/// <summary>Lit with the light now set: false when newly marked or enabled, or a renderer was skipped (hidden) or gone.</summary>
+		[NonSerialized] bool lit;
 		static readonly MaterialPropertyBlock block = new MaterialPropertyBlock();
 		static readonly SphericalHarmonicsL2[] one = new SphericalHarmonicsL2[1];
+		static readonly int SmoothId = Shader.PropertyToID("_Smoothness_Multiplyer");
 		/// <summary>How much of the rock's shine is kept (as the dug tunnel's lining: its blue reflections washed the walls out).</summary>
 		const float Shine = 0.45f;
 		/// <summary>Dev probes: leave the pieces' light alone.</summary>
 		public static bool Off;
 		static bool told;
+		/// <summary>The light last set, and whether it was set at all since a skip (Off, editor); some piece not lit with it yet.</summary>
+		static SphericalHarmonicsL2 lastSh;
+		static bool haveLast, pending;
 
 		public static bool AnyLive { get { return live.Count > 0; } }
 
@@ -1534,46 +1544,82 @@ namespace DynamicIslands.Editor
 			CaveLit c = piece.GetComponent<CaveLit>();
 			if (c == null) c = piece.AddComponent<CaveLit>();
 			c.rends = null;
+			c.lit = false;
+			pending = true;
 		}
 
-		void OnEnable() { if (!live.Contains(this)) live.Add(this); }
+		void OnEnable() { if (!live.Contains(this)) live.Add(this); lit = false; pending = true; }
 		void OnDisable() { live.Remove(this); }
 
 		public static void LightAll(SphericalHarmonicsL2 sh)
 		{
-			if (live.Count == 0 || Off || DynamicIslands.InEditor()) return;
+			if (live.Count == 0) return;
+			if (Off || DynamicIslands.InEditor()) { haveLast = false; return; }
+			// (the same light as last frame and every piece lit with it: nothing to do - the blocks keep it)
+			bool all = !haveLast || sh != lastSh;
+			if (!all && !pending) return;
+			lastSh = sh;
+			haveLast = true;
+			pending = false;
 			one[0] = sh;
 			for (int i = live.Count - 1; i >= 0; i--)
 			{
 				CaveLit c = live[i];
 				if (c == null) { live.RemoveAt(i); continue; }
+				if (!all && c.lit) continue;
 				try { c.Light(); }
-				catch (Exception e) { if (!told) Debug.LogWarning("[CUSTOM ISLANDS] Cave piece's light: " + e.Message); told = true; }
+				catch (Exception e) { c.lit = true; if (!told) Debug.LogWarning("[CUSTOM ISLANDS] Cave piece's light: " + e.Message); told = true; }
+				if (!c.lit) pending = true;
 			}
+		}
+
+		void Find()
+		{
+			rends = GetComponentsInChildren<Renderer>(true).Where(r => !(r is ParticleSystemRenderer) && !(r is LineRenderer) && !(r is TrailRenderer)).ToArray();
+			subShine = new float[rends.Length][];
+			ownShine = new float[rends.Length];
+			for (int k = 0; k < rends.Length; k++)
+			{
+				Material[] mats = rends[k].sharedMaterials;
+				ownShine[k] = mats.Length == 1 ? ShineOf(mats[0]) : float.NaN;
+				if (mats.Length != 1)
+				{
+					subShine[k] = new float[mats.Length];
+					for (int i = 0; i < mats.Length; i++) subShine[k][i] = ShineOf(mats[i]);
+				}
+			}
+		}
+
+		static float ShineOf(Material m)
+		{
+			return m != null && m.HasProperty(SmoothId) ? m.GetFloat(SmoothId) * Shine : float.NaN;
 		}
 
 		void Light()
 		{
-			if (rends == null || rends.Any(r => r == null))
-				rends = GetComponentsInChildren<Renderer>(true).Where(r => !(r is ParticleSystemRenderer) && !(r is LineRenderer) && !(r is TrailRenderer)).ToArray();
-			foreach (Renderer r in rends)
+			if (rends == null) Find();
+			lit = true;
+			for (int k = 0; k < rends.Length; k++)
 			{
-				if (!r.enabled || !r.gameObject.activeInHierarchy) continue;
+				Renderer r = rends[k];
+				// (a part gone: looked up anew next frame)
+				if (r == null) { rends = null; lit = false; return; }
+				if (!r.enabled || !r.gameObject.activeInHierarchy) { lit = false; continue; }
 				if (r.lightProbeUsage != LightProbeUsage.CustomProvided) r.lightProbeUsage = LightProbeUsage.CustomProvided;
-				Material[] mats = r.sharedMaterials;
-				if (mats.Length != 1)
-					for (int i = 0; i < mats.Length; i++) { r.GetPropertyBlock(block, i); Set(mats[i]); r.SetPropertyBlock(block, i); }
+				float[] sub = subShine[k];
+				if (sub != null)
+					for (int i = 0; i < sub.Length; i++) { r.GetPropertyBlock(block, i); Set(sub[i]); r.SetPropertyBlock(block, i); }
 				// (the renderer's own block too: a part drawn without its own block would be lit by nothing)
 				r.GetPropertyBlock(block);
-				Set(mats.Length == 1 ? mats[0] : null);
+				Set(ownShine[k]);
 				r.SetPropertyBlock(block);
 			}
 		}
 
-		static void Set(Material m)
+		static void Set(float shine)
 		{
 			block.CopySHCoefficientArraysFrom(one);
-			if (m != null && m.HasProperty("_Smoothness_Multiplyer")) block.SetFloat("_Smoothness_Multiplyer", m.GetFloat("_Smoothness_Multiplyer") * Shine);
+			if (!float.IsNaN(shine)) block.SetFloat(SmoothId, shine);
 		}
 
 		/// <summary>The sky's light made grey (each colour's share by its brightness) and multiplied by warm.</summary>

@@ -116,10 +116,13 @@ namespace DynamicIslands.Editor
 			return true;
 		}
 
+		static float nextPlace;
+
 		/// <summary>Called every frame by the mod.</summary>
 		public static void Tick()
 		{
-			if (saved.Count > 0) PlaceSaved();
+			// (twice a second: an island that never loads here keeps its items waiting the whole session)
+			if (saved.Count > 0 && Time.unscaledTime >= nextPlace) { nextPlace = Time.unscaledTime + 0.5f; PlaceSaved(); }
 			if (held.Count == 0) return;
 			if (!LoadSceneManager.IsGameSceneLoaded) { held.Clear(); return; }
 			float now = Time.unscaledTime;
