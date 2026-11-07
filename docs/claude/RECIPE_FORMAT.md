@@ -94,6 +94,10 @@ plan save
   (Old Mine Islet). Off by default: on Shelter Atoll's islet the cut would take the whole sea side of the hill.
 - `prop <cave piece alias> cave.rock=den` (`ObjectProps.CaveRock`): the cave hill's rock texture is multiplied by that piece's
   lit shell colour over the hill rock's (`CaveMountain.RockAsDen`); sand on gentle slopes stays. Ignored when a cave of the hill is tinted.
+- `prop <cave piece alias> cave.foot=dry` (`ObjectProps.CaveFoot`): opt-in, Shelter Atoll only (11-07). `CaveGround.CutIn` lets
+  ground down only where `Walled()` (rock on 5 of 8 sides within 25 m), `CaveMountain` drops loose skin cells (`DropLoose`),
+  puts the sunk rim on dry sea-cut cells (ground > `DryBy` 0.3) and caps every way in at `DryWay` 12 m past its roof.
+  Without the prop all of it is skipped: other islands build byte for byte as before (Old Mine Islet checked).
 - In Raft, `tools\cavecheckrun.ps1 <island> [...] [-player 2|3]` checks a built island's caves in one world load:
   CICaveGapsLook (pictures out/in by day and night, walked in and out, flooded parts), CICaveInside shots (X7) and
   CIReach (traps). One summary line per island plus the pictures; exit 1 on FAIL.

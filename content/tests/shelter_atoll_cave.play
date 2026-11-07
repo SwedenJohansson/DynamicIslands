@@ -4,7 +4,7 @@
 # can't be checked, as the next play respawns the island); the den has air and a
 # dry way down to the water. Pictures of Dr. Shogo, the storeroom, the dinghy by the mouth and the den.
 island Shelter Atoll keep
-offset 20.1537 8.0482
+offset 20.3141 8.6569
 hour 11
 weather Calm
 expect hidden shelsupply

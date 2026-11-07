@@ -27,13 +27,25 @@ namespace DynamicIslands.Editor
 		public int LastCut, LastDug;
 
 		/// <summary>A cave piece spawned in a world under this island's objects.</summary>
-		public static void Add(Transform objects, GameObject piece, string name)
+		public static void Add(Transform objects, GameObject piece, string name, IDictionary<string, string> props = null)
 		{
 			PropInfo p = RaftProps.Get(name ?? "");
 			if (objects == null || piece == null || p == null || !p.IsCave) return;
 			CaveGround g = objects.GetComponent<CaveGround>() ?? objects.gameObject.AddComponent<CaveGround>();
 			g.caves.Add(piece.transform);
 			names[piece.transform.GetInstanceID()] = name;
+			string foot;
+			if (props != null && props.TryGetValue(ObjectProps.CaveFoot, out foot) && foot == "dry") dryFoot.Add(piece.transform.GetInstanceID()); else dryFoot.Remove(piece.transform.GetInstanceID());
+		}
+
+		// (a world's cave pieces with cave.foot=dry; the editor's say so in their EditorGameObject's props)
+		static readonly HashSet<int> dryFoot = new HashSet<int>();
+
+		static bool DryFoot(Transform t)
+		{
+			EditorGameObject e = t.GetComponent<EditorGameObject>();
+			string foot;
+			return e != null ? e.Props != null && e.Props.TryGetValue(ObjectProps.CaveFoot, out foot) && foot == "dry" : dryFoot.Contains(t.GetInstanceID());
 		}
 
 		// (a world's cave pieces' names, for their measures: the editor's are on their EditorGameObject)
@@ -240,6 +252,7 @@ namespace DynamicIslands.Editor
 					Bounds b;
 					int x0, x1, z0, z1;
 					if (cave == null || !Reach(land, cave, out own, out b, out x0, out x1, out z0, out z1)) continue;
+					bool walled = DryFoot(cave);
 					float[,] h = data.GetHeights(x0, z0, x1 - x0 + 1, z1 - z0 + 1);
 					for (int z = z0; z <= z1; z++)
 						for (int x = x0; x <= x1; x++)
@@ -247,7 +260,7 @@ namespace DynamicIslands.Editor
 							if (inside[z, x]) continue;
 							Vector3 p = new Vector3(o.x + x * sx, o.y + h[z - z0, x - x0] * sy, o.z + z * sz);
 							float under, over;
-							if (p.y <= b.min.y || p.y >= b.max.y || !Inside(p, own, b, out under, out over)) continue;
+							if (p.y <= b.min.y || p.y >= b.max.y || !Inside(p, own, b, out under, out over) || (walled && !Walled(p, own))) continue;
 							inside[z, x] = true;
 							floor[z * res + x] = p.y - under;
 							lo = Mathf.Min(lo, z); hi = Mathf.Max(hi, z); left = Mathf.Min(left, x); right = Mathf.Max(right, x);
@@ -570,6 +583,27 @@ namespace DynamicIslands.Editor
 			over += 0.02f;
 			return true;
 		}
+
+		/// <summary>
+		/// Whether the piece's rock is round p on most sides (WalledSides of 8, out to WalledReach m): in a room it is, but
+		/// under a wall leaning out over the ground outside, with the piece's foot buried under it, only on the rock's side.
+		/// There the ground was let down too and left a pit by the rock, open to the sky (11-07 review: Shelter Atoll's den).
+		/// Only for a piece with cave.foot=dry.
+		/// </summary>
+		static bool Walled(Vector3 p, HashSet<Collider> own)
+		{
+			Vector3 from = p + Vector3.up * 0.5f;
+			int hits = 0;
+			for (int i = 0; i < 8; i++)
+			{
+				float a = i * Mathf.PI / 4f;
+				if (Nearest(from, new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)), WalledReach, own, true) < float.PositiveInfinity) hits++;
+			}
+			return hits >= WalledSides;
+		}
+
+		const int WalledSides = 5;
+		const float WalledReach = 25f;
 
 		static bool FrontFirst(Vector3 from, Vector3 dir, float len, HashSet<Collider> own, out float front)
 		{
