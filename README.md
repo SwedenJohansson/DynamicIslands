@@ -699,7 +699,7 @@ copied piece (Balboa's cave holds the Machete blueprint, Mama Bear's pickup and 
 story comes along. In a world every cave piece (dens, the generator's caves, those placed by hand; not the vine cave, a
 whole rock already) sits inside a rock hill built over its back and sides down to the ground, of the island's own rock,
 open only at its mouth and stopping where the roof ends, so the ground in front stays clear (`CaveMountain`; a hill raised from the sea floor keeps its slope into the sea unless a cave piece of
-the island has `cave.seacut=1`, which leaves out the hill's skin over deep sea; `cave.rock=den` colours the hill's rock as that piece's shell; `cave.foot=dry` keeps the hill's foot on dry land: no let-down by leaning outer walls, no loose skin, rim on raised shore, ways in 12 m). A lone den's front wall is rock like the hill, with an arched way in
+the island has `cave.seacut=1`, which leaves out the hill's skin over deep sea; `cave.rock=den` colours the hill's rock as that piece's shell; `cave.foot=dry` keeps the hill's foot on dry land: no let-down by leaning outer walls, no loose skin, rim on raised shore also beside a far way in's line, ways in 12 m, a softened foot). A lone den's front wall is rock like the hill, with an arched way in
 that darkens inward, and wall and hill are shaded smooth. Cave rock
 is drawn from both sides (`CaveBacks`; Selene's room pieces too), and the ground in a cave's rooms is let down under its floor or cut away
 (`CaveGround`; in the editor the sculpted heights are kept). Every prop's size and footprint is measured

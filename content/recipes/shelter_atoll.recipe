@@ -202,6 +202,9 @@ brush flatten from 47 101.5 to 75 101.5 r=4.5 s=20 frames=200 h=1.5
 # shoulder below it on each side, and sand up to the lip instead of grass)
 brush flatten from 51 100.3 to 71 100.3 r=3 s=20 frames=60 h=2.4
 brush flatten from 53 98.6 to 69 98.6 r=2.2 s=20 frames=60 h=3.92
+# (11-07 third review: a pale gap under each of the den's front corners, its shell's foot over a pit the trenches left)
+brush flatten from 72 99 to 79 99 r=3 s=20 frames=60 h=2.8
+brush flatten from 44 99 to 50 99 r=2.5 s=20 frames=60 h=2.8
 brush sand from 53 100 to 69 100 r=4 s=20 frames=40
 brush sand from 36 103 to 86 103 r=6 s=20 frames=40
 brush sand from 39 78 to 40 110 r=6 s=20 frames=40
