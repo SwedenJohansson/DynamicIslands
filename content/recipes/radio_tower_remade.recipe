@@ -146,6 +146,8 @@ place SmallBoulder4 - at 72.5 -57 ground yaw=110 scale=0.8
 call ar_plane x=46 z=46 h=3 yaw=210 al=mailplane crate=mailcrate
 # G The trawler (north-west): run aground on the beach below the ridge
 call hw_wreck x=-54 z=46 h=2 yaw=60 obj=BoatStranded al=trawler crate=trawlercrate r=9
+# libx 11-07: sand bank under the trawler's hull
+brush flatten from -51 48 to -48 51 r=3.5 s=20 frames=300 h=1.9
 # (agent Q 10-30, REACH: the sea cave's mouth path ended 2.4 m over the sea and the rock filled the land round it - the
 # cave and the Smugglers' cache unreached: a beach down from the path's end into the water)
 brush flatten at 71 -57.9 r=2.2 s=20 frames=200 h=1.8
@@ -161,9 +163,9 @@ clear from 71 -57.9 to 71 -64.4 r=3.2 body
 # coming at one ladder's edge was squeezed into the nook beside its pillar.
 for lx 39.11 39.91 0.8
 place Block_Ladder - at $lx -18.28 h=-3.0 yaw=180
-place Block_Pillar_Wood - at $lx -18.48 h=-3.0
+place Block_Pillar_Wood - at $lx -18.48 h={-3.0-($lx-39.11)*0.55}
 place Block_Ladder - at $lx -18.28 h=-0.58 yaw=180
-place Block_Pillar_Wood - at $lx -18.48 h=-0.58
+place Block_Pillar_Wood - at $lx -18.48 h={-0.58-($lx-39.11)*0.55}
 next
 # --- JUMP COURSE rt (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---
 # JUMP rt pad=4 at=40 -56
