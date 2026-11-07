@@ -529,24 +529,26 @@ namespace DynamicIslands.Editor
 							}
 						floor[i, k] = (cover[i, k] + up) / 2f + Over;
 					}
-				// (a cell off a roof beside one falls at most half a slope's step under that roof's floor: the roof's flat edge
+				// (round a roof's edge the skin falls at most EdgeDrop of a slope's step a cell for EdgeRings cells: the roof's flat edge
 				// went down a full step (1.9 m) to the cells beside it in a staircase round the shell's top, and seen from low on
-				// the den's west side its corners stood up as a row of square teeth on the skyline, 11-07 den round 2)
+				// the den's west side its corners stood up as a row of square teeth on the skyline, 11-07 den round 2; it only lifts)
 				for (int i = 0; i < nx; i++)
 					for (int k = 0; k < nz; k++)
-					{
-						if (!float.IsNaN(cover[i, k])) continue;
-						float edge = float.NaN;
-						for (int di = -1; di <= 1; di++)
-							for (int dk = -1; dk <= 1; dk++)
-							{
-								int a = i + di, c = k + dk;
-								if (a < 0 || c < 0 || a >= nx || c >= nz || float.IsNaN(cover[a, c])) continue;
-								float f = floor[a, c] - EdgeDrop * Slope * Cell * ((di != 0 && dk != 0) ? 1.41f : 1f);
-								if (float.IsNaN(edge) || f > edge) edge = f;
-							}
-						floor[i, k] = edge;
-					}
+						if (float.IsNaN(cover[i, k])) floor[i, k] = float.NaN;
+				for (int ring = 0; ring < EdgeRings; ring++)
+				{
+					var held = (float[,])floor.Clone();
+					for (int i = 0; i < nx; i++)
+						for (int k = 0; k < nz; k++)
+							for (int di = -1; di <= 1; di++)
+								for (int dk = -1; dk <= 1; dk++)
+								{
+									int a = i + di, c = k + dk;
+									if (a < 0 || c < 0 || a >= nx || c >= nz || float.IsNaN(held[a, c])) continue;
+									float f = held[a, c] - EdgeDrop * Slope * Cell * ((di != 0 && dk != 0) ? 1.41f : 1f);
+									if (float.IsNaN(floor[i, k]) || f > floor[i, k]) floor[i, k] = f;
+								}
+				}
 				for (int pass = 0; pass < FootPasses; pass++)
 				{
 					var was = (float[,])height.Clone();
@@ -706,8 +708,10 @@ namespace DynamicIslands.Editor
 		internal const float DryFront = 2f;
 		// (cave.foot=dry: softening passes over the skin off the roofs after its sunk rim)
 		internal const int FootPasses = 3;
-		// (cave.foot=dry: a cell beside a roof falls at most this part of a full slope's step under the roof's floor)
-		internal const float EdgeDrop = 0.5f;
+		// (cave.foot=dry: a cell round a roof's edge falls at most this part of a full slope's step a cell)
+		internal const float EdgeDrop = 0.4f;
+		// (cave.foot=dry: how many cells round a roof's edge fall by EdgeDrop)
+		internal const int EdgeRings = 2;
 		/// <summary>Tests: how many cells of loose skin the last build left out.</summary>
 		public static int LooseDropped;
 

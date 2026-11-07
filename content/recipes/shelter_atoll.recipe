@@ -213,6 +213,10 @@ brush flatten from 53 98.6 to 69 98.6 r=2.2 s=20 frames=60 h=3.92
 # (11-07 third review: a pale gap under each of the den's front corners, its shell's foot over a pit the trenches left)
 brush flatten from 72 99 to 79 99 r=3 s=20 frames=60 h=2.8
 brush flatten from 44 99 to 50 99 r=2.5 s=20 frames=60 h=2.8
+# (11-07 den round 2: from the east, a dark hollow under the hill's front-east corner, the skin's last cell a flap over
+# the shell's wall: sand banked up against that corner, under the flap)
+brush flatten from 73.5 97.5 to 77 97.5 r=1.8 s=20 frames=60 h=5
+brush smooth from 72 98 to 79 98 r=3 s=4 frames=10
 brush sand from 53 100 to 69 100 r=4 s=20 frames=40
 brush sand from 36 103 to 86 103 r=6 s=20 frames=40
 brush sand from 39 78 to 40 110 r=6 s=20 frames=40
