@@ -655,7 +655,12 @@ namespace DynamicIslands
 						foreach (Transform tr in playEntry.Root.GetComponentsInChildren<Transform>(true).Where(x => x.parent != null && x.name.StartsWith(what, StringComparison.OrdinalIgnoreCase) && x.parent.name.IndexOf(what, StringComparison.OrdinalIgnoreCase) < 0))
 						{
 							Vector3 d = tr.position - playEntry.Position + new Vector3(playOffset.x, 0f, playOffset.y);
-							Log("  where " + tr.name + ": " + d.x.ToString("F1", CultureInfo.InvariantCulture) + " " + d.z.ToString("F1", CultureInfo.InvariantCulture) + " h=" + d.y.ToString("F1", CultureInfo.InvariantCulture));
+							// (and its solid colliders' extent x/z, in the same coordinates: what a walk meets - 11-07)
+							Vector3 sh = new Vector3(playOffset.x, 0f, playOffset.y) - playEntry.Position;
+							string solid = string.Join(" ", tr.GetComponentsInChildren<Collider>(false).Where(c => c.enabled && !c.isTrigger).Select(c =>
+								"x " + (c.bounds.min.x + sh.x).ToString("F2", CultureInfo.InvariantCulture) + ".." + (c.bounds.max.x + sh.x).ToString("F2", CultureInfo.InvariantCulture)
+								+ " z " + (c.bounds.min.z + sh.z).ToString("F2", CultureInfo.InvariantCulture) + ".." + (c.bounds.max.z + sh.z).ToString("F2", CultureInfo.InvariantCulture)).ToArray());
+							Log("  where " + tr.name + ": " + d.x.ToString("F1", CultureInfo.InvariantCulture) + " " + d.z.ToString("F1", CultureInfo.InvariantCulture) + " h=" + d.y.ToString("F1", CultureInfo.InvariantCulture) + (solid.Length > 0 ? " solid " + solid : ""));
 						}
 						break;
 					}
@@ -667,6 +672,27 @@ namespace DynamicIslands
 					case "log":
 						Log("  " + Rest(line, 1));
 						break;
+					case "hide":
+					case "show":
+					{
+						// hide <name> / show <name>: the island's renderers on objects of that exact name ("<name>/": and all under
+						// them) turned off or on - which piece draws an odd look in a picture (the den wall's blades, 11-07)
+						string what = Rest(line, 1).Trim();
+						bool under = what.EndsWith("/");
+						what = what.TrimEnd('/');
+						int count = 0;
+						foreach (Renderer r in playEntry.Root.GetComponentsInChildren<Renderer>(true))
+						{
+							bool hit = false;
+							for (Transform tr = r.transform; tr != null && tr != playEntry.Root.transform && !hit; tr = under ? tr.parent : null)
+								hit = string.Equals(tr.name, what, StringComparison.OrdinalIgnoreCase);
+							if (!hit) continue;
+							r.enabled = verb == "show";
+							count++;
+						}
+						Log("  " + verb + " " + what + ": " + count + " renderer(s)");
+						break;
+					}
 					case "empty":
 						// the player's inventory emptied, as a player makes room (a long play carries a full bag by a vault whose plans
 						// would drop to the floor - Sundown's bank, SL6 2026-10-19); only in a CI world, its blueprints noted first
