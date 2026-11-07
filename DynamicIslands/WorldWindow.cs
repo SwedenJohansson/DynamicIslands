@@ -29,7 +29,7 @@ namespace DynamicIslands.Editor
 		static WorldWindow instance;
 		static Text hostText, planText, islandsText, hintText, headStartText;
 		static RectTransform panel, body, bodyView, islandList;
-		static Text stuckText;
+		static Text stuckText, skipNote;
 		static readonly Dictionary<string, Button> buttons = new Dictionary<string, Button>();
 		static float nextRefresh;
 		/// <summary>
@@ -263,6 +263,8 @@ namespace DynamicIslands.Editor
 			Note(box, IslandsMidGame, 1);
 		}
 
+		const string SkipNoteHost = "Asks first. Can't be undone. (F10: SkipStep)";
+
 		/// <summary>3.2 "Stuck on a quest?" (QuestSkip): the current quest's step and "Skip current quest step" (host; asks first).</summary>
 		static void BuildStuck(Transform left)
 		{
@@ -272,7 +274,7 @@ namespace DynamicIslands.Editor
 			UIKit.Size(stuckText.gameObject, -1, 27);
 			RectTransform row = UIKit.Row(box, 26f, 6f, "SkipRow");
 			Add("SkipStep", UIKit.Button(row, "Skip current quest step", QuestSkip.AskCurrent, "Only if a step can no longer be done (a key used up, a lever that won't move): the current quest's step counts as done and the quest moves on, for every player. Asks first; can't be undone. F10: SkipStep", 200, 26f, 12));
-			Note(row, "Asks first. Can't be undone. (F10: SkipStep)", 1, "SkipNote");
+			skipNote = Note(row, SkipNoteHost, 1, "SkipNote");
 		}
 
 		/// <summary>The current quest and its step, and the button (host only).</summary>
@@ -282,7 +284,8 @@ namespace DynamicIslands.Editor
 			stuckText.text = now.Length == 0 ? QuestSkip.NoQuest + "." : "Now: " + now;
 			buttons["SkipStep"].interactable = host && now.Length > 0;
 			buttons["SkipStep"].gameObject.SetActive(host);
-			if (!host) stuckText.text += "\nOnly the host can skip a step.";
+			// (a guest: the note beside the hidden button says why - added under the quest's two lines it was cut off, MP check 11-07)
+			skipNote.text = host ? SkipNoteHost : "Only the host can skip a step.";
 		}
 
 		static void BuildOptions(Transform right)
