@@ -127,6 +127,10 @@ namespace DynamicIslands
 		static bool lockLetGo;
 		static CursorLockMode lockBefore;
 		static int letGoLogged;
+		/// <summary>Dev tests only (CICursorMinFront): acts as if Raft were minimised and the window in front - never set by the mod itself.</summary>
+		internal static bool TestMinimisedInFront;
+		internal static bool LockLetGo { get { return lockLetGo; } }
+		internal static int LetGoCount { get { return letGoLogged; } }
 
 		/// <summary>Raft minimised but still the window in front holds no mouse lock (every frame, DynamicIslands.Update).
 		/// (11-07, the user: the mouse kept jumping to the screen's top-left corner while the tests ran on minimised Rafts.
@@ -137,8 +141,8 @@ namespace DynamicIslands
 		public static void Tick()
 		{
 			if (Application.isEditor || (Cursor.lockState == CursorLockMode.None && !lockLetGo)) return;
-			bool minimisedInFront = false;
-			IntPtr h = GetForegroundWindow();
+			bool minimisedInFront = TestMinimisedInFront;
+			IntPtr h = minimisedInFront ? IntPtr.Zero : GetForegroundWindow();
 			if (h != IntPtr.Zero && IsIconic(h))
 			{
 				if (ownPid == 0) ownPid = (uint)System.Diagnostics.Process.GetCurrentProcess().Id;

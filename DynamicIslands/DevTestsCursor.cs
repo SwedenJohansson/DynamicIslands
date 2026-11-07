@@ -197,5 +197,61 @@ namespace DynamicIslands
 
 			if (ok) Log("PASS: cursor fix (" + (Raft_Network.IsHost ? "host" : "client") + ")"); else Fail("cursor fix");
 		}
+
+		[System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool GetCursorPos(out CursorPoint p);
+		struct CursorPoint { public int X, Y; }
+		static string ScreenCursor() { CursorPoint p; return GetCursorPos(out p) ? p.X + "," + p.Y : "?"; }
+
+		[ConsoleCommand(name: "CICursorMinFront", docs: "Dev, in game, no menu open, Levels on (either player): ModCursor.Tick with 'Raft minimised but in front' faked (no focus taken) - false: the lock is left alone; true: let go, logged once; false again: locked again; a mod window that showed the mouse meanwhile keeps it free, untouched by Tick, and its close locks it")]
+		public static void CursorMinFrontCommand() { StartTest(CursorMinFrontRoutine()); }
+
+		static IEnumerator CursorMinFrontRoutine()
+		{
+			bool ok = true;
+			if (Cursor.lockState != CursorLockMode.Locked || Cursor.visible) { Fail("cursor min front: needs a locked, hidden mouse (in game, no menu open) - " + CursorState()); yield break; }
+			string before = ScreenCursor();
+			Log("Cursor min front start: " + CursorState() + ", screen cursor " + before);
+			try
+			{
+				int logged = ModCursor.LetGoCount;
+				ModCursor.TestMinimisedInFront = false;
+				yield return new WaitForSecondsRealtime(0.5f);
+				Check(ref ok, Cursor.lockState == CursorLockMode.Locked && !ModCursor.LockLetGo && ModCursor.LetGoCount == logged, "condition false: Tick leaves the lock alone - " + CursorState());
+
+				ModCursor.TestMinimisedInFront = true;
+				yield return new WaitForSecondsRealtime(0.3f);
+				Check(ref ok, Cursor.lockState == CursorLockMode.None && ModCursor.LockLetGo && !Cursor.visible && ModCursor.LetGoCount > logged, "minimised in front: lock let go, mouse stays hidden, logged - " + CursorState());
+				Check(ref ok, ScreenCursor() == before, "the screen cursor did not move (" + before + " -> " + ScreenCursor() + ")");
+
+				ModCursor.TestMinimisedInFront = false;
+				yield return new WaitForSecondsRealtime(0.3f);
+				Check(ref ok, Cursor.lockState == CursorLockMode.Locked && !ModCursor.LockLetGo, "shown again / another window in front: locked again - " + CursorState());
+
+				// (a mod window that opened meanwhile shows the mouse: not locked again under it; Raft re-hides a mouse shown with no window open)
+				ModCursor.TestMinimisedInFront = true;
+				yield return new WaitForSecondsRealtime(0.3f);
+				LevelWindow.Open();
+				yield return new WaitForSecondsRealtime(0.3f);
+				if (!LevelWindow.IsOpen) { Fail("cursor min front: the stats page didn't open - run Levels on first"); yield break; }
+				ModCursor.TestMinimisedInFront = false;
+				yield return new WaitForSecondsRealtime(0.3f);
+				Check(ref ok, Cursor.lockState == CursorLockMode.None && Cursor.visible && !ModCursor.LockLetGo, "a window showed the mouse meanwhile: it is not locked again - " + CursorState());
+
+				int count = ModCursor.LetGoCount;
+				yield return new WaitForSecondsRealtime(0.5f);
+				Check(ref ok, Cursor.lockState == CursorLockMode.None && Cursor.visible && ModCursor.LetGoCount == count, "an unlocked mouse, condition false: Tick leaves it alone - " + CursorState());
+				LevelWindow.Close();
+				yield return new WaitForSecondsRealtime(0.4f);
+				Check(ref ok, CursorBack(MenuType.None), "the window closed: menu and mouse back - " + CursorState());
+			}
+			finally
+			{
+				ModCursor.TestMinimisedInFront = false;
+				if (LevelWindow.IsOpen) LevelWindow.Close();
+			}
+			yield return new WaitForSecondsRealtime(0.3f);
+			Check(ref ok, Cursor.lockState == CursorLockMode.Locked && !Cursor.visible, "back as it was - " + CursorState() + ", screen cursor " + ScreenCursor());
+			if (ok) Log("PASS: cursor min front"); else Fail("cursor min front");
+		}
 	}
 }
