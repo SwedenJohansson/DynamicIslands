@@ -943,7 +943,14 @@ namespace DynamicIslands
 					// (expect animals <label, may have spaces> <count>)
 					string label = string.Join(" ", t.Skip(2).Take(t.Length - 3).ToArray());
 					int n = ScAnimals(playEntry, label).Count;
-					Check(ref ok, n == (int)F(t[t.Length - 1]), "animals '" + label + "' alive: " + n + " (expected " + t[t.Length - 1] + ")");
+					// (harmless sea animals with no quest step stay in Raft's own sea events: when Raft's dolphin event ends it
+					// sends them away, any time, and the island keeps them as "taken away" - not a fault. Highmoor Lodge's two
+					// dolphins went the moment the island loaded in Silver Screen Seas, 11-07)
+					int strayed = playEntry != null && playEntry.Root != null ? playEntry.Root.GetComponentsInChildren<CreatureSpawnPoint>(true)
+						.Where(p => p.Kind != null && p.Kind.Label.Equals(label, StringComparison.OrdinalIgnoreCase) && (p.Kind.Type == AI_NetworkBehaviourType.Dolphin || p.Kind.Type == AI_NetworkBehaviourType.Turtle || p.Kind.Type == AI_NetworkBehaviourType.Stingray || p.Kind.Type == AI_NetworkBehaviourType.Whale)).Sum(p => p.Strayed) : 0;
+					int want = (int)F(t[t.Length - 1]);
+					if (n < want && n + strayed >= want) Log("  " + (want - n) + " " + label + "(s) taken away by Raft's own sea event (harmless, back with the island): counted");
+					Check(ref ok, n == want || (n < want && n + strayed >= want), "animals '" + label + "' alive: " + n + (strayed > 0 ? " + " + strayed + " taken away by Raft" : "") + " (expected " + t[t.Length - 1] + ")");
 					// (each one's place in recipe coordinates and its gap over the floor under it, kept for animalsmoved)
 					List<Vector3> at = new List<Vector3>();
 					foreach (AI_NetworkBehaviour a in ScAnimals(playEntry, label))
