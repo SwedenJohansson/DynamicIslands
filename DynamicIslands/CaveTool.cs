@@ -1036,9 +1036,20 @@ namespace DynamicIslands.Editor
 				if (!Physics.Raycast(w, dir, out h, reach, ~0, QueryTriggerInteraction.Ignore)) return 0;
 				return Vector3.Dot(h.normal, dir) > 0f ? 1 : h.distance <= nearRock ? -1 : 0;
 			};
+			// (the same, the den's own rock only: an open pocket of air under the hill's overhang beside the den, by the den's
+			// rock, met rock from outside all round too and passed as the hollow - the last blades on The Abyss's path)
+			Func<Vector3, Vector3, int> denMet = (w, dir) =>
+			{
+				var ray = new Ray(w, dir);
+				RaycastHit h, best = default(RaycastHit);
+				float near = float.MaxValue;
+				foreach (Collider c in rock)
+					if (c.Raycast(ray, out h, reach) && h.distance < near) { near = h.distance; best = h; }
+				if (near == float.MaxValue) return 0;
+				return Vector3.Dot(best.normal, dir) > 0f ? 1 : near <= nearRock ? -1 : 0;
+			};
 			var hollow = new bool[nx, ny];
 			var open = new bool[nx, ny];
-			var sky = new bool[nx, ny];
 			bool backsOpen = Physics.queriesHitBackfaces;
 			Physics.queriesHitBackfaces = true;
 			try
@@ -1050,9 +1061,8 @@ namespace DynamicIslands.Editor
 						float cx = x0 + (i + 0.5f) * cell, cy = y0 + (k + 0.5f) * cell;
 						Vector3 w = go.transform.TransformPoint(new Vector3(cx, cy, z + depth(cx, cy)));
 						int u = firstMet(w, up), r = firstMet(w, right), l = firstMet(w, -right);
-						hollow[i, k] = u == -1 && r == -1 && l == -1 && firstMet(w, -up) == -1;
+						hollow[i, k] = denMet(w, up) == -1 && denMet(w, right) == -1 && denMet(w, -right) == -1 && denMet(w, -up) == -1;
 						open[i, k] = !hollow[i, k] && !(u == 1 && r == 1 && l == 1 && firstMet(w, outward) == 1);
-						sky[i, k] = u == 0;
 					}
 			}
 			finally { Physics.queriesHitBackfaces = backsOpen; }
@@ -1061,18 +1071,14 @@ namespace DynamicIslands.Editor
 				for (int k = 0; k < ny; k++)
 				{
 					if (!open[i, k]) continue;
-					bool byHollow = false, byWayIn = false;
-					for (int di = -1; di <= 1; di++)
-						for (int dk = -1; dk <= 1; dk++)
+					bool byHollow = false;
+					for (int di = -1; di <= 1 && !byHollow; di++)
+						for (int dk = -1; dk <= 1 && !byHollow; dk++)
 						{
 							int a = i + di, b = k + dk;
-							if (a < 0 || b < 0 || a >= nx || b >= ny) continue;
-							if (hollow[a, b]) byHollow = true;
-							if (state[a, b] == 2) byWayIn = true;
+							if (a >= 0 && b >= 0 && a < nx && b < ny && hollow[a, b]) byHollow = true;
 						}
-					// (nor one beside the hollow with only sky over it, away from the way in: where the den's own rock comes out
-					// of the hill, such a cell stood out past it - the last blades on The Abyss's path)
-					if (!byHollow || (sky[i, k] && !byWayIn)) { state[i, k] = 0; leftOut++; }
+					if (!byHollow) { state[i, k] = 0; leftOut++; }
 				}
 			int cells = 0;
 			var trisOut = new List<int>();
