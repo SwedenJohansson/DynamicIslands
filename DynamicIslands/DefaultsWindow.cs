@@ -109,6 +109,8 @@ namespace DynamicIslands.Editor
 			Add("Key_Journal", UIKit.Button(keyRow, "", () => ListenFor(true), "The key that opens the crew's journal in a world: click, then press the new key (Esc: keep it)", 80, 28f, 13));
 			UIKit.Label(keyRow, "Stats", 13, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "StatsLabel");
 			Add("Key_Stats", UIKit.Button(keyRow, "", () => ListenFor(false), "The key that opens the stats page (level up system) in a world: click, then press the new key (Esc: keep it)", 80, 28f, 13));
+			// (3.2: the quest panel's "Stuck? Skip this step" button - QuestSkip)
+			Add("questSkipOn", UIKit.Button(keyRow, "", () => { QuestSkip.Enabled = !QuestSkip.Enabled; Refresh(); }, "Skip step: the quest panel's \"Stuck? Skip this step\" button (this PC). Off: it is hidden; the host can still use F10 QuestTest skip", 120, 28f, 13));
 			// (PF1/PF5: the player notebook, the island map and the ping)
 			RectTransform keyRow2 = UIKit.Row(keysGroup, 28f, 6f, "Row_Keys2");
 			RectTransform keyRow3 = UIKit.Row(keysGroup, 28f, 6f, "Row_Keys3");
@@ -346,6 +348,8 @@ namespace DynamicIslands.Editor
 			}
 			UIKit.LabelOf(buttons["minimapOn"]).text = "Minimap:  " + (Minimap.Enabled ? "ON" : "off");
 			UIKit.SetActive(buttons["minimapOn"], Minimap.Enabled);
+			UIKit.LabelOf(buttons["questSkipOn"]).text = "Skip step:  " + (QuestSkip.Enabled ? "ON" : "off");
+			UIKit.SetActive(buttons["questSkipOn"], QuestSkip.Enabled);
 			if (refreshCamera != null) refreshCamera();
 			Button receiver = buttons["showOnReceiver"];
 			UIKit.LabelOf(receiver).text = "Receiver dots:  " + (CustomIslandSpawner.ShowOnReceiver ? "ON" : "off");

@@ -81,6 +81,7 @@
     <Compile Include="DevTestsQuestPuzzle.cs" />
     <Compile Include="DevTestsGapBehaviours.cs" />
     <Compile Include="DevTestsQuestGap.cs" />
+    <Compile Include="DevTestsQuestSkip.cs" />
     <Compile Include="DevTestsQuestSteps.cs" />
     <Compile Include="DevTestsStateWatch.cs" />
     <Compile Include="DevTestsContent.cs" />
@@ -186,6 +187,7 @@
     <Compile Include="QuestEditorWindow.cs" />
     <Compile Include="QuestSteps.cs" />
     <Compile Include="QuestTestCommands.cs" />
+    <Compile Include="QuestSkip.cs" />
     <Compile Include="TriggerZone.cs" />
     <Compile Include="GapFeatures.cs" />
     <Compile Include="ObjectInspectorGaps.cs" />
