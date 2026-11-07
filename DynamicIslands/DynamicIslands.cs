@@ -400,6 +400,8 @@ namespace DynamicIslands
 		{
 			try { HookRaftEvents(); }
 			catch (Exception e) { TickError("Raft events", e); }
+			try { ModCursor.Tick(); }
+			catch (Exception e) { TickError("Mouse lock", e); }
 			try { CustomIslandSpawner.Tick(); }
 			catch (Exception e) { TickError("Island spawner", e); }
 			try { ItemHold.Tick(); }

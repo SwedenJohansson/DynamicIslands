@@ -162,6 +162,9 @@ New in this release:
 - **Library island touch-ups (11-07)**: Coyote Mesa's middle ledge on the west mesa is back at the ladders' height (it had sunk
   0.6 m below them), Longpier Haven's boars start on the grass instead of half off a rock step, and Ironreef Caverns' tunnel
   rat starts deeper in its tunnel instead of out under the mouth.
+- **Mouse no longer pulled to the screen's corner (11-07)**: a Raft that is minimised while still the window in front
+  (Windows leaves it so until another window is clicked) lets go of its mouse lock meanwhile, so the cursor is not pulled
+  to the top-left corner of the screen; the lock comes back when Raft is shown again.
 
 ## 3.1 alpha - 2026-11-03: Version number
 

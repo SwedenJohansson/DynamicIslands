@@ -120,6 +120,46 @@ namespace DynamicIslands
 			}
 		}
 
+		[System.Runtime.InteropServices.DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+		[System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool IsIconic(IntPtr h);
+		[System.Runtime.InteropServices.DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+		static uint ownPid;
+		static bool lockLetGo;
+		static CursorLockMode lockBefore;
+		static int letGoLogged;
+
+		/// <summary>Raft minimised but still the window in front holds no mouse lock (every frame, DynamicIslands.Update).
+		/// (11-07, the user: the mouse kept jumping to the screen's top-left corner while the tests ran on minimised Rafts.
+		/// quiet.ps1 / raft.ps1 minimise a Raft that came up in front, and Windows leaves it the foreground window, minimised,
+		/// until the user clicks something else - logged: "FG Raft(27008) iconic=True" up to a minute at a time. Unity keeps a locked mouse
+		/// at the middle of a focused window, and a minimised one sits at -32000,-32000: the cursor is pulled to the corner.
+		/// The lock is let go while that lasts and given back once Raft is shown again or another window is in front.)</summary>
+		public static void Tick()
+		{
+			if (Application.isEditor || (Cursor.lockState == CursorLockMode.None && !lockLetGo)) return;
+			bool minimisedInFront = false;
+			IntPtr h = GetForegroundWindow();
+			if (h != IntPtr.Zero && IsIconic(h))
+			{
+				if (ownPid == 0) ownPid = (uint)System.Diagnostics.Process.GetCurrentProcess().Id;
+				uint pid; GetWindowThreadProcessId(h, out pid);
+				minimisedInFront = pid == ownPid;
+			}
+			if (minimisedInFront && Cursor.lockState != CursorLockMode.None)
+			{
+				if (!lockLetGo) lockBefore = Cursor.lockState;
+				lockLetGo = true;
+				Cursor.lockState = CursorLockMode.None;
+				if (letGoLogged++ < 5) Debug.Log("[CUSTOM ISLANDS] Mouse: Raft is minimised but in front - its mouse lock is let go meanwhile (the cursor isn't pulled to the screen's corner)");
+			}
+			else if (!minimisedInFront && lockLetGo)
+			{
+				lockLetGo = false;
+				// (only when nothing changed it meanwhile: a menu Raft opened in between keeps its free mouse)
+				if (Cursor.lockState == CursorLockMode.None && !Cursor.visible) Cursor.lockState = lockBefore;
+			}
+		}
+
 		/// <summary>One of Raft's own menus (inventory, build menu, Esc menu, ...) is the active one - not None, not RML's 666.</summary>
 		public static bool RaftMenu(MenuType m)
 		{
