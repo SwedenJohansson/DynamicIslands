@@ -37,9 +37,6 @@ namespace DynamicIslands.Editor
 		/// <summary>"den" on a cave piece under a cave hill: the hill's rock texture coloured as that piece's own shell (CaveMountain.RockAsDen) -
 		/// Balboa's sandy rock showed blue-grey round Shelter Atoll's brown ammo den. Only on a hill none of whose caves is tinted.</summary>
 		public const string CaveRock = "cave.rock";
-		/// <summary>"round" on a cave piece under a cave hill: past its open end the hill stops only over the way in and a margin beside it
-		/// (CaveMountain.RoundMargin) and rounds off forward round the rest of its front - no sheer face across the whole front.</summary>
-		public const string CaveFront = "cave.front";
 		/// <summary>Loot: "UniqueItemName*amount;..." (Raft's item names), and "0" = never fills up again.</summary>
 		public const string LootItems = "loot.items", LootRefill = "loot.refill";
 		/// <summary>Buried treasure: Raft's treasure kind (its uniqueTreasureIndex; 0 = the common chest).</summary>

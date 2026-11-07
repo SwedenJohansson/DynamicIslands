@@ -178,7 +178,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>One cave piece's open ends: where the mountain must leave the way in clear.</summary>
-		struct Mouth { public Vector3 Pos, Along, Side; public float InsideAlong, InsideSide, HalfWidth, FloorY, OwnPlus, OwnMinus, StartPlus, StartMinus; public bool Plus, Minus, Round; public string Name; }
+		struct Mouth { public Vector3 Pos, Along, Side; public float InsideAlong, InsideSide, HalfWidth, FloorY, OwnPlus, OwnMinus, StartPlus, StartMinus; public bool Plus, Minus; public string Name; }
 		readonly List<Mouth> lastMouths = new List<Mouth>();
 
 		void Build()
@@ -203,8 +203,6 @@ namespace DynamicIslands.Editor
 				// as roof and its inside point lay 8 m out past its mouth, and the hill ran out over the ground before it - Stormwing's
 				// strip, Balboa Remade's path, f72b954)
 				Vector3 sc = OverMeasured(t, p.Name);
-				string frontOpt;
-				bool round = i < props.Count && props[i] != null && props[i].TryGetValue(ObjectProps.CaveFront, out frontOpt) && frontOpt == "round";
 				float floorY = t.position.y + p.Floor * sc.y;
 				foreach (Collider c in t.GetComponentsInChildren<Collider>())
 					if (c.enabled && !c.isTrigger && c.name != CaveTool.MouthName && c.name != CaveTool.JoinName) { cols.Add(c); floorOf[c] = floorY; ownerOf[c] = mouths.Count; }
@@ -227,7 +225,7 @@ namespace DynamicIslands.Editor
 				{
 					Pos = t.position, Along = along, Side = side,
 					InsideAlong = Vector3.Dot(inside - t.position, along), InsideSide = Vector3.Dot(inside - t.position, side),
-					HalfWidth = p.Width * (p.Axis == 0 ? sc.z : sc.x) / 2f + 1f, FloorY = floorY, OwnPlus = ownPlus, OwnMinus = ownMinus, Plus = p.OpenPlus, Minus = p.OpenMinus, Round = round, Name = t.name
+					HalfWidth = p.Width * (p.Axis == 0 ? sc.z : sc.x) / 2f + 1f, FloorY = floorY, OwnPlus = ownPlus, OwnMinus = ownMinus, Plus = p.OpenPlus, Minus = p.OpenMinus, Name = t.name
 				});
 			}
 			// (the three lists side by side: one gone from all of them)
@@ -308,10 +306,6 @@ namespace DynamicIslands.Editor
 					for (int j = 0; j < mouths.Count; j++)
 					{
 						float a = Vector3.Dot(at - mouths[j].Pos, mouths[j].Along) - mouths[j].InsideAlong;
-						// (cave.front=round: out past the open end only the way in's own width and a margin is left clear - the hill
-						// rounds off forward on either side of it, round the den's front corners, instead of a sheer face across the
-						// whole width at the end of the roof: Shelter Atoll's ammo den, its sides cut off as slabs in the water 11-07)
-						if (mouths[j].Round && Mathf.Abs(Vector3.Dot(at - mouths[j].Pos, mouths[j].Side) - mouths[j].InsideSide) > mouths[j].HalfWidth + RoundMargin) { ahead[j][i, k] = float.NegativeInfinity; continue; }
 						ahead[j][i, k] = Mathf.Max(mouths[j].Plus ? a - startPlus[j] : float.NegativeInfinity, mouths[j].Minus ? -a - startMinus[j] : float.NegativeInfinity);
 					}
 					for (int j = 0; j < mouths.Count; j++)
@@ -599,8 +593,6 @@ namespace DynamicIslands.Editor
 		/// no texture named rock or a colour could not be read.
 		/// </summary>
 		internal const float DenRockGrey = 0.35f;
-		/// <summary>cave.front=round: the clear width either side of a way in, past its open end, over its half width (m).</summary>
-		internal const float RoundMargin = 2.5f;
 		internal static bool RockAsDen(MeshRenderer mr, GameObject den)
 		{
 			Material m = mr != null ? mr.sharedMaterial : null;
