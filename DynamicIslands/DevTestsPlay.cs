@@ -305,7 +305,11 @@ namespace DynamicIslands
 						// (below=: what is there under that height - a deck under a crane's jib)
 						start.y = PlaySurface(start, wopt.ContainsKey("below") ? playEntry.Position.y + F(wopt["below"]) : 400f, true) + 1.1f;
 						PlayerMove.To(me, start);
+						Vector3 islandAt = playEntry.Position;
 						yield return new WaitForSeconds(1f);
+						// (the points follow a world shift made in that second: they were 1000 m off - Frost Hollow, 11-07)
+						Vector3 moved = playEntry.Position - islandAt;
+						if (moved.sqrMagnitude > 1f) points = points.Select(q => q + moved).ToList();
 						bool got = true;
 						string where = "";
 						yield return PlayWalk(me, points.Skip(1).ToList(), (g, w) => { got = g; where = w; });
@@ -1052,9 +1056,22 @@ namespace DynamicIslands
 				int animalWaits = 0, sidesteps = 0, hops = 0;
 				Vector3 last = player.transform.position;
 				Vector3 target = playEntry.Position + rel;
+				Vector3 shifted = IslandWorldState.ShiftedBy;
 				while (ScFlat(player.transform.position, target = playEntry.Position + rel) > 0.7f)
 				{
 					KeepAlive(player);
+					// (a world shift mid-walk: the controller kept its place from before it and the next Move put the player back
+					// there, 1000 m off the island - Frost Hollow in The Long Voyage, 11-07; the player goes where the shift put it)
+					if (IslandWorldState.ShiftedBy != shifted)
+					{
+						player.transform.position = last - (IslandWorldState.ShiftedBy - shifted);
+						shifted = IslandWorldState.ShiftedBy;
+						Physics.SyncTransforms();
+						last = player.transform.position;
+						Log("  (the world shifted during the walk: the player kept its place on the island)");
+						yield return null;
+						continue;
+					}
 					Vector3 d = target - player.transform.position;
 					d.y = 0f;
 					Vector3 dir = d.normalized;
