@@ -296,16 +296,17 @@ prop bigray creature.respawn=0
 prop inesreport obj.name=inesreport
 prop inesreport beh.hidden=1
 
+prop inescage obj.name=inescage
 prop inescage survivor.name=Ines Marlowe
 prop inescage survivor.id=highwater_ines
 prop inescage survivor.key=storekey
 prop inescage survivor.signal=inesfree
-prop inescage survivor.line=You found my notes, then. Yes - I'm the friend. Throw the release for the others, then read what I wrote. I'll explain the rest when we can breathe.
+prop inescage survivor.line=You found my notes, then. Yes - I'm the friend. The release by the door opens the divers' cages - throw it if you haven't. Then read what I wrote; I'll explain the rest when we can breathe.
 
 prop cagerelease obj.name=cagerelease
 prop cagerelease beh.use=Pull the cage release
-prop cagerelease if.use=has|story:storekey|1\n!signal|cagesopen
-prop cagerelease on.use=signal||cagesopen\nhide|divercage\nshow|inesreport\ngive||story:cagesopen*1\nsound||event:/raft/radar/lever\nmessage||The cages clang open. Okonjo, Fenn and the two Daly brothers swim out, thin and grinning, then Ines Marlowe - the friend whose notes brought you here. Ines Marlowe has joined the crew.\ncharacter||Mayu
+prop cagerelease if.use=any\nhas|story:storekey|1\nsignal|inesfree
+prop cagerelease on.use=signal||cagesopen\nhide|divercage\nshow|inesreport\ngive||story:cagesopen*1\nsound||event:/raft/radar/lever\nmessage||The release clanks home and the store's cages swing open. Okonjo, Fenn and the two Daly brothers swim out, thin and grinning.\ncharacter||Mayu
 prop cagerelease else.use=message||The release is locked. The store's cage key - the floor manager kept it in his office.
 
 note expedition Expedition plan | UNION EXPEDITION - LOWSTREET\nLeader: Ines Marlowe. Divers: four - Okonjo, Fenn, Daly, the other Daly.\n\n1. Tram stop: rope down. 2. Air in the shops, every fifteen metres. 3. Map the old pumps under the department store.\n\nIf we are not up by the third tide, the store is where to look.\n\n(In grease pencil, under it: Bram says the Council never asked anyone to look at these pumps. Not once in nine years. Bram says that is either because the Council is lazy or because the Council knows what we'll find. The Council is many things. Lazy isn't one of them. - I.M.)\n\n(And: Daly - the other Daly - please stop naming the anglers. We are not keeping them.)

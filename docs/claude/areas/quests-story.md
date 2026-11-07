@@ -92,3 +92,5 @@ range). Points = `Camera_Point` (Zones & triggers; props cam.path/order/look/spe
 - Atmosphere and sound zones act per machine only (no state, no network).
 - C# 7.3: no switch expressions, `??=`, ranges or `using var`.
 - Docs: docs/GUIDE.md `5.2` to `5.5`, `6.1 Quests`, `6.2 Behaviour and events`, `6.3 Story items and story sets`; README.md `### Source overview`.
+
+- Spent survivor keys: `Behaviours.Holds` adds `Survivors.KeysSpent(e, id)` to a story item's count for `has` (not `take`): keys used up on opened survivor cages of the same island (survivor.key = id, `ContentState.IsUsed(e, Survivors.KeyBase + index)`). Fixes key-on-cage-first softlocks (Lowstreet cagerelease, Cirrus Silo Farm silohatch, 11-07). Recipes for 3.1 worlds also use `any` + `signal|<cage signal>` on the lock.

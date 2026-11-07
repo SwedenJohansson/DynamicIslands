@@ -53,6 +53,25 @@ namespace DynamicIslands.Editor
 
 		public static bool IsCage(string name) { return name == CageObject; }
 
+		/// <summary>
+		/// How many of the story item the island's opened survivor cages used up (each cage locked with it, opened in this
+		/// world). A "has" check on the island counts them as still held (Behaviours.Holds), so freeing the survivor first
+		/// never locks another object out that needs the same key.
+		/// </summary>
+		public static int KeysSpent(IslandWorldState.Entry e, string storyId)
+		{
+			if (e == null || string.IsNullOrEmpty(storyId)) return 0;
+			int n = 0;
+			foreach (IslandObjectRef r in Behaviours.RefsOf(e))
+			{
+				if (r == null || !IsCage(r.ObjectName)) continue;
+				string key = StoryItems.IdOf(ObjectProps.Get(r.Props, KeyProp).Trim());
+				if (key.Length == 0 || !string.Equals(key, storyId, StringComparison.OrdinalIgnoreCase)) continue;
+				if (ContentState.IsUsed(e, KeyBase + (r.Index & 0xFFFF))) n++;
+			}
+			return n;
+		}
+
 		/// <summary>A placed cage's settings (ObjectProps.Defaults).</summary>
 		public static void Defaults(string name, Dictionary<string, string> props)
 		{
