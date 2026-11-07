@@ -182,8 +182,7 @@ call hw_hazard x=79.5 z=13 al=ventacid kind=acid r=3 dmg=5 safe=suit msg="The ve
 place "Box Big" ventsuits at 85.8 15 ground sit yaw=250
 prop ventsuits obj.name=ventsuits
 prop ventsuits beh.use=Put on a vent suit
-prop ventsuits on.use=suit||180
-message||A rubber vent suit with a hood and gloves - three minutes before the acid gets through.
+prop ventsuits on.use=suit||180\nmessage||A rubber vent suit with a hood and gloves - three minutes before the acid gets through.
 
 # --- JUMP COURSE ab (Abyss pass 10-26): kz-style hop course of floor slabs on its own pad (the bs course, turned) ---
 # JUMP ab pad=4 at=48 66
