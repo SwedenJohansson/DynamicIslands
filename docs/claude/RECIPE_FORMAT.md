@@ -100,6 +100,8 @@ plan save
   cell counts as past a mouth only within `DryWay` and `DryFront` 2 m of the mouth's width (a far tunnel's line no longer skips
   the rim), then `FootPasses` 3 smoothing passes over the skin (rim and corridor cells kept, roof cells held at half-way to the
   highest roof beside them + Over).
+  The falloff also goes on past that piece's own mouth plane beside the opening (more than HalfWidth + `DryFront` off its
+  centre line, on dry ground only), capped at ground + Slope x distance from the opening: a rounded shoulder, not a sheer face.
   Without the prop all of it is skipped: other islands build byte for byte as before (Old Mine Islet checked).
 - In Raft, `tools\cavecheckrun.ps1 <island> [...] [-player 2|3]` checks a built island's caves in one world load:
   CICaveGapsLook (pictures out/in by day and night, walked in and out, flooded parts), CICaveInside shots (X7) and
