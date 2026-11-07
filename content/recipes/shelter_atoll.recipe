@@ -151,6 +151,15 @@ brush flatten from 77.5 82 to 77.5 102 r=5 s=20 frames=200 h=-12
 brush flatten at 61 110 r=15.5 s=20 frames=200 h=-11
 brush flatten from 47.5 84 to 47.5 100 r=3.5 s=20 frames=200 h=-5
 brush flatten from 75 84 to 75 100 r=3.5 s=20 frames=200 h=-5
+brush flatten from 30 74 to 30 104 r=4 s=20 frames=200 h=-8
+brush flatten from 94 74 to 94 104 r=4 s=20 frames=200 h=-8
+brush flatten from 35 74 to 35 106 r=4 s=20 frames=200 h=-3
+brush flatten from 89 74 to 89 106 r=4 s=20 frames=200 h=-3
+brush flatten from 40 74 to 40 104 r=4 s=20 frames=200 h=0.5
+brush flatten from 84 74 to 84 104 r=4 s=20 frames=200 h=0.5
+brush flatten from 40 104 to 84 104 r=3 s=20 frames=200 h=0.5
+brush smooth from 33 76 to 33 104 r=6 s=4 frames=30
+brush smooth from 91 76 to 91 104 r=6 s=4 frames=30
 brush flatten at 61 108 r=12.5 s=20 frames=200 h=-5.5
 brush smooth at 61 115 r=17 s=4 frames=20
 brush flatten at 61 107 r=10 s=20 frames=200 h=-2.6
@@ -161,15 +170,14 @@ brush flatten from 54 99.5 to 68 99.5 r=3 s=20 frames=200 h=3.2
 brush smooth at 61 106 r=8.5 s=4 frames=40
 brush flatten from 55 99 to 67 99 r=2.2 s=20 frames=60 h=3.6
 brush smooth from 52 100.5 to 70 100.5 r=4 s=4 frames=10
-# (11-07 review: the hill's face across the den's front stood on the shelves at -5 and deeper on both sides of the beach,
-# sheer cut slabs down into clear water, and the beach's sides were a hard box edge: a low shore along the whole front
-# (h 0.8, out to 12 m past the rock's sides) and a shoulder (h 1.5) round the beach, so the face stands on sand at the
-# water line and the beach falls to the sea in steps of a metre or less, rounded off away from the den's foot)
-brush flatten from 36 103 to 50 103 r=5.5 s=20 frames=200 h=0.8
-brush flatten from 72 103 to 86 103 r=5.5 s=20 frames=200 h=0.8
-brush flatten from 38 108 to 84 108 r=4 s=20 frames=200 h=-1.2
-brush smooth from 34 106 to 48 106 r=6 s=4 frames=30
-brush smooth from 74 106 to 88 106 r=6 s=4 frames=30
+# (11-07 review: the den (30 m wide) stood half over the sea on its 28 m pad: the hill's sides went down into clear
+# water, cut off in sheer slabs at the mouth's plane, and bridged the water to Radar Hill; the beach's sides were a hard
+# box edge. Now the den's whole footprint is land at its pad's height (h 3, laid after the beach fan), its sides fall
+# by a shore (0.5) and shelves (-3, -8, laid with the fan's shelves) to the sea, and a shoulder (1.5) rounds the beach)
+brush flatten from 50 82 to 74 82 r=8 s=20 frames=200 h=3
+brush flatten from 50 93 to 74 93 r=7 s=20 frames=200 h=3
+brush smooth from 39 80 to 39 104 r=5 s=4 frames=20
+brush smooth from 85 80 to 85 104 r=5 s=4 frames=20
 brush flatten from 47 101.5 to 75 101.5 r=4.5 s=20 frames=200 h=1.5
 # (fourth review: the smoothing left the shore's top 0.9 m under the den's floor lip, a straight brown step with its dark
 # underside showing on both sides of the beach: the top laid last, as wide as the lip and level with it, with a
@@ -178,6 +186,8 @@ brush flatten from 51 100.3 to 71 100.3 r=3 s=20 frames=60 h=2.4
 brush flatten from 53 98.6 to 69 98.6 r=2.2 s=20 frames=60 h=3.92
 brush sand from 53 100 to 69 100 r=4 s=20 frames=40
 brush sand from 36 103 to 86 103 r=6 s=20 frames=40
+brush sand from 39 78 to 39 103 r=5 s=20 frames=40
+brush sand from 85 78 to 85 103 r=5 s=20 frames=40
 clear from 61 101 to 61 110 r=7 body
 clear from 34 104 to 88 104 r=7 body
 clear from 54 103 to 68 103 r=6 body

@@ -592,6 +592,7 @@ namespace DynamicIslands.Editor
 		/// texture alone multiplied by the one over the other - the sand on its gentle slopes stays. False when the material has
 		/// no texture named rock or a colour could not be read.
 		/// </summary>
+		internal const float DenRockGrey = 0.35f;
 		internal static bool RockAsDen(MeshRenderer mr, GameObject den)
 		{
 			Material m = mr != null ? mr.sharedMaterial : null;
@@ -621,6 +622,10 @@ namespace DynamicIslands.Editor
 			if (!read) { Debug.Log("[CUSTOM ISLANDS] Cave mountain rock as den: colours not read"); return false; }
 			System.Func<float, float, float> ratio = (a, b) => Mathf.Clamp(a / Mathf.Max(0.02f, b), 0.1f, 4f);
 			Color factor = new Color(ratio(shell.r, hill.r), ratio(shell.g, hill.g), ratio(shell.b, hill.b), 1f);
+			// (a third of the way to grey: the full factor turned Balboa's rock red-orange next to the den's olive-brown faces, the
+			// same mean colour but a stronger hue - 11-07)
+			float mean = (factor.r + factor.g + factor.b) / 3f;
+			factor = Color.Lerp(factor, new Color(mean, mean, mean, 1f), DenRockGrey);
 			Texture2D t = DigTunnel.Scaled(rock, factor, " (den rock)");
 			if (t == null) return false;
 			keep.SetTexture(rockTex, t);
