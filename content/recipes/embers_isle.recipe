@@ -202,6 +202,8 @@ prop keeperchest loot.refill=0
 prop keeperchest on.open=show|hunters\nshow|chase\nsound||event:/crafting/horns/bugle\nmessage||A horn on the ridge - and the grunting of boars, coming fast. The hunters are back. RUN - the shore path, round the headland!
 note seachest Botanist's sea chest | The botanist's sea chest under the boat's thwart: her seed collection in labelled jars, plans for raised growing beds, salves - and a note: "I swam for it. Take my boat. Tell the mainland the Bountiful's men are alive."
 loot seachest Blueprint_Cropplot_Medium_Tier3*1;Seed_Mango*2;Seed_Banana*2;Seed_Pineapple*2;HealingSalve_Good*2
+# (the sea cave's hanging vines are its ceiling: walk through - their own collider closed the way to the boat and the chest, 11-07)
+prop vinecave col.mode=none
 prop seachest loot.refill=0
 prop seachest if.open=has|story:chainkey|1
 prop seachest else.open=message||The boat is chained to an iron ring and the chest under its thwart is padlocked with the same lock. The key is up in the village above the bay.

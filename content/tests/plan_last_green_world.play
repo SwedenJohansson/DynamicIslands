@@ -23,6 +23,8 @@ tune heart
 include heart_of_green.play
 tune rootcore
 include the_rootcore.play
+# (Oda's key from Ranger Landing opened her last locker)
+expect shown rangercache
 arrive ridge
 include thornback_ridge.play
 expect blueprints

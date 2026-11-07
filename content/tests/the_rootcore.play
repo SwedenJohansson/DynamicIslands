@@ -66,7 +66,8 @@ expect step 14
 use heartseed
 expect story heartseed 1
 use rangerlock
-expect hidden rangercache
+# (the locker opens only with Oda's key from Ranger Landing: on its own this island's player has none, so the cache
+# stays hidden; in The Last Green World it opens - plan_last_green_world checks it shown, 11-07)
 expect step 15
 zone oda_camp
 expect step 16
