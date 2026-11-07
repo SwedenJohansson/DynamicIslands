@@ -80,7 +80,8 @@ place Loot_Crate - at -25.6 22.5 h=2.05 sit yaw=20
 place Loot_Crate - at -25.8 24 h=2.05 sit yaw=-10
 
 # ===== Boars; things to gather: palms, mangoes, pineapples, berries, hives, dirt, a treasure; the shallows; turtles =====
-place Creature_Boar boars at 10 10 ground
+# (11-07: at 10 10 the pair's ring put one boar on the rock step at 7 10, 3 m over the grass, hanging off its edge)
+place Creature_Boar boars at 12.5 12.5 ground
 prop boars creature.count=2
 scatter "Pickup_Landmark_Tree_Palm 1" 5 at 0 0 r=38 seed=7792 free=6
 scatter "Pickup_Landmark_Tree_Mango" 2 at -10 0 r=30 seed=7793 free=6

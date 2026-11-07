@@ -1,6 +1,6 @@
 # Blightmire hazard test (11-05): bog acid (4/s, pulse 5 on 3 off, r 9) at 56 40. CIPlay blightmire_hurt, in a test world 'CI ...', CIGapsSuit off (no suit: the zone must hurt).
 island Blightmire keep
-offset 0 8.8
+offset -0.4861 0.0378
 hour 11
 weather Calm
 at 52 41

@@ -545,7 +545,9 @@ prop irdrift loot.refill=0
 # (11-05) Rats in the Reef Workings (the user: "in some caves there can be a monster, like a rat"): one in tunnel B (a pair's ring put one out at the mouth) and
 # one in tunnel C (a pair's ring, 3 m out, put one on the hill over the narrow tunnel), on the dug floor, 13 m and more from the drift's sign, tin and spikes, the vines and the titanium.
 # The hall has three ways in (A, B, C), so neither pair is the only way to anything. No respawn.
-place Creature_Rat bratsB at -30 -40 h=17.4
+# (11-07: the tunnel B rat, set 6 m in from the mouth, roamed out under the mouth's open arch - expect animalsinside
+# found it under open sky; it now starts 9 m in, mid-tunnel)
+place Creature_Rat bratsB at -28.5 -37.5 h=17.6
 prop bratsB creature.count=1
 prop bratsB creature.respawn=0
 place Creature_Rat bratsC at -23 -41 h=15.2
