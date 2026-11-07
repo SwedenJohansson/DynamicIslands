@@ -593,6 +593,11 @@ namespace DynamicIslands.Editor
 		{
 			for (float t = 0f; den != null && !den.activeInHierarchy && t < 60f; t += 0.25f) yield return new WaitForSeconds(0.25f);
 			yield return null;
+			// (and once the hill over it is built: the wall leaves out the cells in the open air, found by what rock is round
+			// them - walled before the hill, all the cells by the hill passed as open air, and The Abyss's wall came out
+			// different from one load to the next - fix1107)
+			CaveMountain over = den != null ? den.GetComponentInParent<CaveMountain>() : null;
+			for (float t = 0f; over != null && over.Pending && t < 60f; t += 0.25f) yield return new WaitForSeconds(0.25f);
 			if (den == null || !den.activeInHierarchy) yield break;
 			try
 			{
