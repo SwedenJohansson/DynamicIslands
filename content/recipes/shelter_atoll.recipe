@@ -129,6 +129,7 @@ line Block_Wall_Tier3 from 9 -84 to 9 -69 step=1.5 y=-0.15
 call ar_cave x=62 z=82 h=3 yaw=0 al=ammorock chest=ammochest
 # (11-07 review: the hill over it Balboa's sandy rock, blue-grey on its steep faces round the brown den: its rock as the den's)
 prop ammorock cave.rock=den
+prop ammorock cave.front=round
 # (REACH 10-30: the cave floor ended 3 m over the sea in a cliff - no way in from the water (reach: ammo chest and the
 # cave "can't get there"): a beach slope from the mouth down into the sea)
 # (11-06 review: a narrow fan read as a causeway, and from the sea the rock's flat underside showed over the water on
