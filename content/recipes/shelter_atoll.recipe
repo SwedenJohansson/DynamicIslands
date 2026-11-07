@@ -196,6 +196,14 @@ brush smooth from 32 112 to 92 112 r=8 s=4 frames=30
 brush smooth from 32 120 to 92 120 r=8 s=4 frames=30
 brush smooth from 39 80 to 39 112 r=5 s=4 frames=20
 brush smooth from 85 80 to 85 112 r=5 s=4 frames=20
+# (11-07 den round 2: the den pad (h 3, r 6 round z 70) cut Radar Hill's north foot into a sheer 10 m wall right behind
+# the shell, its top just over the hill's skin (13-14): its square heightmap edge stood out as teeth on the skyline from
+# the south-west. Now a ramp from under the skin's back (10) up to the hill (18), the shell's back and room (z 66.5+) left at 3)
+brush flatten from 53 65 to 72 65 r=1.6 s=20 frames=60 h=10
+brush flatten from 49 63.3 to 75 63.3 r=1.6 s=20 frames=60 h=13.5
+brush flatten from 48 61.6 to 76 61.6 r=1.6 s=20 frames=60 h=16
+brush flatten from 47 59.9 to 77 59.9 r=1.6 s=20 frames=60 h=18
+brush smooth from 48 62.5 to 76 62.5 r=3 s=4 frames=10
 brush flatten from 47 101.5 to 75 101.5 r=4.5 s=20 frames=200 h=1.5
 # (fourth review: the smoothing left the shore's top 0.9 m under the den's floor lip, a straight brown step with its dark
 # underside showing on both sides of the beach: the top laid last, as wide as the lip and level with it, with a
@@ -205,6 +213,10 @@ brush flatten from 53 98.6 to 69 98.6 r=2.2 s=20 frames=60 h=3.92
 # (11-07 third review: a pale gap under each of the den's front corners, its shell's foot over a pit the trenches left)
 brush flatten from 72 99 to 79 99 r=3 s=20 frames=60 h=2.8
 brush flatten from 44 99 to 50 99 r=2.5 s=20 frames=60 h=2.8
+# (11-07 den round 2: from the east, a dark hollow under the hill's east flank: the old trench along x 77.5-81.5 (dug
+# down to -10 before the den pad, which only reached its edge) still ran under the skin there. Filled up to the pad)
+brush flatten from 79.5 80 to 79.5 97 r=3 s=20 frames=60 h=2.6
+brush smooth from 80 79 to 80 98 r=4 s=4 frames=10
 brush sand from 53 100 to 69 100 r=4 s=20 frames=40
 brush sand from 36 103 to 86 103 r=6 s=20 frames=40
 brush sand from 39 78 to 40 110 r=6 s=20 frames=40
