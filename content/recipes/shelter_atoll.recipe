@@ -152,14 +152,14 @@ brush flatten at 61 110 r=15.5 s=20 frames=200 h=-11
 brush flatten from 47.5 84 to 47.5 100 r=3.5 s=20 frames=200 h=-5
 brush flatten from 75 84 to 75 100 r=3.5 s=20 frames=200 h=-5
 brush flatten from 30 74 to 30 104 r=4 s=20 frames=200 h=-8
-brush flatten from 94 74 to 94 104 r=4 s=20 frames=200 h=-8
+brush flatten from 100 74 to 100 104 r=4 s=20 frames=200 h=-8
 brush flatten from 35 74 to 35 106 r=4 s=20 frames=200 h=-3
-brush flatten from 89 74 to 89 106 r=4 s=20 frames=200 h=-3
+brush flatten from 95 74 to 95 106 r=4 s=20 frames=200 h=-3
 brush flatten from 40 74 to 40 104 r=4 s=20 frames=200 h=0.5
 brush flatten from 84 74 to 84 104 r=4 s=20 frames=200 h=0.5
 brush flatten from 40 104 to 84 104 r=3 s=20 frames=200 h=0.5
 brush smooth from 33 76 to 33 104 r=6 s=4 frames=30
-brush smooth from 91 76 to 91 104 r=6 s=4 frames=30
+brush smooth from 97 76 to 97 104 r=6 s=4 frames=30
 brush flatten at 61 108 r=12.5 s=20 frames=200 h=-5.5
 brush smooth at 61 115 r=17 s=4 frames=20
 brush flatten at 61 107 r=10 s=20 frames=200 h=-2.6
@@ -182,7 +182,11 @@ brush flatten from 50 93 to 74 93 r=7 s=20 frames=200 h=3
 brush flatten from 34 118 to 90 118 r=5 s=20 frames=200 h=-3
 brush flatten from 30 124 to 94 124 r=5 s=20 frames=200 h=-8
 brush flatten from 26 70 to 26 120 r=4 s=20 frames=200 h=-12
-brush flatten from 98 70 to 98 120 r=4 s=20 frames=200 h=-12
+brush flatten from 104 70 to 104 120 r=4 s=20 frames=200 h=-12
+brush flatten from 80 62 to 90 62 r=5 s=20 frames=200 h=1.5
+brush flatten from 88 64 to 88 100 r=5 s=20 frames=200 h=1.5
+brush flatten from 41 70 to 41 98 r=3 s=20 frames=200 h=2
+brush smooth from 91 62 to 91 104 r=6 s=4 frames=20
 brush smooth from 32 112 to 92 112 r=8 s=4 frames=30
 brush smooth from 32 120 to 92 120 r=8 s=4 frames=30
 brush smooth from 39 80 to 39 112 r=5 s=4 frames=20
@@ -196,7 +200,7 @@ brush flatten from 53 98.6 to 69 98.6 r=2.2 s=20 frames=60 h=3.92
 brush sand from 53 100 to 69 100 r=4 s=20 frames=40
 brush sand from 36 103 to 86 103 r=6 s=20 frames=40
 brush sand from 39 78 to 40 110 r=6 s=20 frames=40
-brush sand from 85 78 to 84 110 r=6 s=20 frames=40
+brush sand from 88 62 to 86 110 r=7 s=20 frames=40
 clear from 61 101 to 61 110 r=7 body
 clear from 34 104 to 88 104 r=7 body
 clear from 54 103 to 68 103 r=6 body
