@@ -395,7 +395,8 @@ namespace DynamicIslands.Editor
 								Mouth dm = mouths[coverBy[i, k]];
 								if (!dm.Dry) continue;
 								float off = Mathf.Abs(Vector3.Dot(new Vector3(x0 + a * Cell, 0f, z0 + c * Cell) - dm.Pos, dm.Side) - dm.InsideSide) - dm.HalfWidth - DryFront;
-								if (off <= 0f) continue;
+								// (on dry land only: out over the sea it stood as slabs under the water)
+								if (off <= 0f || !(ground[a, c] > SeaLevel + DryBy)) continue;
 								h = Mathf.Min(h, ground[a, c] + Slope * off);
 							}
 							if (h > height[a, c]) height[a, c] = h;
