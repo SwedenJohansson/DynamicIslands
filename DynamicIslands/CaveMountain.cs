@@ -192,7 +192,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>One cave piece's open ends: where the mountain must leave the way in clear.</summary>
-		struct Mouth { public Vector3 Pos, Along, Side; public float InsideAlong, InsideSide, HalfWidth, FloorY, OwnPlus, OwnMinus, StartPlus, StartMinus; public bool Plus, Minus; public string Name; }
+		struct Mouth { public Vector3 Pos, Along, Side; public float InsideAlong, InsideSide, HalfWidth, FloorY, OwnPlus, OwnMinus, StartPlus, StartMinus; public bool Plus, Minus, Dry; public string Name; }
 		readonly List<Mouth> lastMouths = new List<Mouth>();
 
 		void Build()
@@ -239,7 +239,8 @@ namespace DynamicIslands.Editor
 				{
 					Pos = t.position, Along = along, Side = side,
 					InsideAlong = Vector3.Dot(inside - t.position, along), InsideSide = Vector3.Dot(inside - t.position, side),
-					HalfWidth = p.Width * (p.Axis == 0 ? sc.z : sc.x) / 2f + 1f, FloorY = floorY, OwnPlus = ownPlus, OwnMinus = ownMinus, Plus = p.OpenPlus, Minus = p.OpenMinus, Name = t.name
+					HalfWidth = p.Width * (p.Axis == 0 ? sc.z : sc.x) / 2f + 1f, FloorY = floorY, OwnPlus = ownPlus, OwnMinus = ownMinus, Plus = p.OpenPlus, Minus = p.OpenMinus, Name = t.name,
+					Dry = i < props.Count && IsDryFoot(props[i])
 				});
 			}
 			// (the three lists side by side: one gone from all of them)
@@ -385,8 +386,18 @@ namespace DynamicIslands.Editor
 						{
 							int a = i + di, c = k + dk;
 							if (a < 0 || c < 0 || a >= nx || c >= nz) continue;
-							if (past != null && past[a, c] > 0.5f && (di != 0 || dk != 0)) continue;
 							float h = peak - Slope * Cell * Mathf.Sqrt(di * di + dk * dk);
+							if (past != null && past[a, c] > 0.5f && (di != 0 || dk != 0))
+							{
+								// (cave.foot=dry, that piece's own: beside its opening the hill goes on out past the mouth's plane as a
+								// shoulder, falling to the ground towards the opening too - the den's front corners stood as flat
+								// sheer faces with square corners at the mouth's plane, Shelter Atoll's ammo den from the east, 11-07)
+								Mouth dm = mouths[coverBy[i, k]];
+								if (!dm.Dry) continue;
+								float off = Mathf.Abs(Vector3.Dot(new Vector3(x0 + a * Cell, 0f, z0 + c * Cell) - dm.Pos, dm.Side) - dm.InsideSide) - dm.HalfWidth - DryFront;
+								if (off <= 0f) continue;
+								h = Mathf.Min(h, ground[a, c] + Slope * off);
+							}
 							if (h > height[a, c]) height[a, c] = h;
 						}
 				}
@@ -697,6 +708,12 @@ namespace DynamicIslands.Editor
 		/// no texture named rock or a colour could not be read.
 		/// </summary>
 		internal const float DenRockGrey = 0.35f;
+
+		static bool IsDryFoot(IDictionary<string, string> p)
+		{
+			string v;
+			return p != null && p.TryGetValue(ObjectProps.CaveFoot, out v) && v == "dry";
+		}
 
 		/// <summary>Skin pieces of at most this many cells, over no cave's roof, cut off from the rest are left out (DropLoose).</summary>
 		internal const int LooseCells = 40;
