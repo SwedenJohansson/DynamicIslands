@@ -1038,6 +1038,7 @@ namespace DynamicIslands.Editor
 			};
 			var hollow = new bool[nx, ny];
 			var open = new bool[nx, ny];
+			var sky = new bool[nx, ny];
 			bool backsOpen = Physics.queriesHitBackfaces;
 			Physics.queriesHitBackfaces = true;
 			try
@@ -1051,6 +1052,7 @@ namespace DynamicIslands.Editor
 						int u = firstMet(w, up), r = firstMet(w, right), l = firstMet(w, -right);
 						hollow[i, k] = u == -1 && r == -1 && l == -1 && firstMet(w, -up) == -1;
 						open[i, k] = !hollow[i, k] && !(u == 1 && r == 1 && l == 1 && firstMet(w, outward) == 1);
+						sky[i, k] = u == 0;
 					}
 			}
 			finally { Physics.queriesHitBackfaces = backsOpen; }
@@ -1059,14 +1061,18 @@ namespace DynamicIslands.Editor
 				for (int k = 0; k < ny; k++)
 				{
 					if (!open[i, k]) continue;
-					bool byHollow = false;
-					for (int di = -1; di <= 1 && !byHollow; di++)
-						for (int dk = -1; dk <= 1 && !byHollow; dk++)
+					bool byHollow = false, byWayIn = false;
+					for (int di = -1; di <= 1; di++)
+						for (int dk = -1; dk <= 1; dk++)
 						{
 							int a = i + di, b = k + dk;
-							if (a >= 0 && b >= 0 && a < nx && b < ny && hollow[a, b]) byHollow = true;
+							if (a < 0 || b < 0 || a >= nx || b >= ny) continue;
+							if (hollow[a, b]) byHollow = true;
+							if (state[a, b] == 2) byWayIn = true;
 						}
-					if (!byHollow) { state[i, k] = 0; leftOut++; }
+					// (nor one beside the hollow with only sky over it, away from the way in: where the den's own rock comes out
+					// of the hill, such a cell stood out past it - the last blades on The Abyss's path)
+					if (!byHollow || (sky[i, k] && !byWayIn)) { state[i, k] = 0; leftOut++; }
 				}
 			int cells = 0;
 			var trisOut = new List<int>();
