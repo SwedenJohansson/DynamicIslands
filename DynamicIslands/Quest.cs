@@ -589,6 +589,8 @@ namespace DynamicIslands.Editor
 		static int followedIsland = -1, followedStep = -1;
 		static readonly HashSet<int> introduced = new HashSet<int>();
 		static Button closeButton;
+		/// <summary>3.2: "Stuck? Skip step" under the steps (QuestSkip): the host asks, players who joined see it greyed.</summary>
+		static Button skipButton;
 		/// <summary>The panel closed with its X: hidden for this quest and step while the player stays at the island.</summary>
 		static int closedKey = -1, closedStep = -1;
 		/// <summary>When each finished quest was first seen done (island * 16 + quest): its panel goes 30 s later (ROADMAP CT10).</summary>
@@ -632,6 +634,7 @@ namespace DynamicIslands.Editor
 			if (Time.unscaledTime < nextHud) return;
 			nextHud = Time.unscaledTime + 0.5f;
 			tickQuests.Clear();
+			QuestSkip.Tick();
 			if (!LoadSceneManager.IsGameSceneLoaded) { introduced.Clear(); panelIsland = -1; doneSince.Clear(); closedKey = -1; DoneHideSeconds = 30f; if (panel != null) panel.gameObject.SetActive(false); return; }
 			TickCount++;
 			if (Raft_Network.IsHost) CheckCounted();
@@ -689,7 +692,27 @@ namespace DynamicIslands.Editor
 				else lines.Add("<color=#b39a6c>\u2022 ?</color>");
 			}
 			ShowSteps(lines, step, at.Id * 16 + shown);
+			ShowSkip(at, shown, step, q);
 		}
+
+		/// <summary>The panel's "Stuck? Skip step" (QuestSkip): on the quest shown, while it has a step to do and this PC has it
+		/// on. The host gets the confirm box; a player who joined sees it greyed (the host's skip reaches them as a step done).</summary>
+		static void ShowSkip(IslandWorldState.Entry at, int shown, int step, IslandQuest q)
+		{
+			bool show = QuestSkip.Enabled && step < q.Steps.Count;
+			if (skipButton.gameObject.activeSelf != show) skipButton.gameObject.SetActive(show);
+			if (!show) return;
+			bool host = Raft_Network.IsHost;
+			skipButton.interactable = host;
+			string label = host ? "Stuck? Skip this step" : "Skip step: only the host can skip";
+			Text t = UIKit.LabelOf(skipButton);
+			if (t != null && t.text != label) t.text = label;
+			skipButton.onClick.RemoveAllListeners();
+			if (host) skipButton.onClick.AddListener(() => QuestSkip.AskFor(at, shown, step));
+		}
+
+		/// <summary>Tests: the panel's skip button as it is now (null before the panel is built).</summary>
+		internal static Button SkipButton { get { return skipButton; } }
 
 		/// <summary>
 		/// The steps, one line each, in a list at most VisibleSteps tall: a longer quest scrolls - by itself to the
@@ -838,10 +861,14 @@ namespace DynamicIslands.Editor
 			stepsView.name = "Steps";
 			UIKit.Size(stepsView.gameObject, -1, 20f);
 			stepsScroll.scrollSensitivity = 18f;
+			skipButton = UIKit.Button(panel, "Stuck? Skip this step", () => { }, "Only if you are stuck: the step counts as done and the quest moves on (the host; asks first). Defaults > Keys hides this button", -1, 22f, 12);
+			skipButton.name = "SkipStep";
+			skipButton.gameObject.SetActive(false);
 			stepLines.Clear();
 			followedIsland = followedStep = -1;
 			foreach (Graphic g in panel.GetComponentsInChildren<Graphic>()) g.raycastTarget = false;
 			foreach (Graphic g in closeButton.GetComponentsInChildren<Graphic>()) g.raycastTarget = true;
+			foreach (Graphic g in skipButton.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = true;
 			// (only the list's own background and its scrollbar take the mouse: the wheel scrolls it while the cursor is free)
 			stepsScroll.GetComponent<Image>().raycastTarget = true;
 			if (stepsScroll.verticalScrollbar != null)
