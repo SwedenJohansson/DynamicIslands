@@ -548,10 +548,15 @@ prop irdrift loot.refill=0
 # (11-07: the tunnel B rat, set 6 m in from the mouth, roamed out under the mouth's open arch - expect animalsinside
 # found it under open sky; it now starts 1.5 m deeper. Not deeper still: at -28.5 -37.5, 9 m from the hall's middle, it
 # ran out to a player standing there and killed him - kept 11 m off, like tunnel C's rat)
-place Creature_Rat bratsB at -29.5 -39.2 h=17.5
+# (11-07 fix1107i: rats wander up to 9 m from their spot, and the rock is open over the last 3-4 m of each mouth
+# (CIShotFrom up: B open to -32.5 -41.5, C at its mouth, A to -35 -23.7). Tunnel C runs from its mouth into tunnel B
+# by that open stretch, so no spot in it is far enough: in 3 runs one rat stood under open sky at B's or C's mouth
+# twice. Both now 10.5 m and more from every open mouth: B's at the hall end of tunnel B, C's at the hall's east end by
+# the vines. A player in the hall meets them - that is what a cave rat is for; the rats play watches from outside mouth A)
+place Creature_Rat bratsB at -25.8 -33.4 h=19.3
 prop bratsB creature.count=1
 prop bratsB creature.respawn=0
-place Creature_Rat bratsC at -23 -41 h=15.2
+place Creature_Rat bratsC at -21.5 -30.2 h=19.6
 prop bratsC creature.count=1
 prop bratsC creature.respawn=0
 # --- end of Reef Workings ---

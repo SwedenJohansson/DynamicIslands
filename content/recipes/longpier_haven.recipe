@@ -85,6 +85,8 @@ place Creature_Boar boars at 12.5 12.5 ground
 prop boars creature.count=2
 scatter "Pickup_Landmark_Tree_Palm 1" 5 at 0 0 r=38 seed=7792 free=6
 scatter "Pickup_Landmark_Tree_Mango" 2 at -10 0 r=30 seed=7793 free=6
+# (a mango at the edge of the west flattening stood 0.7 m over the lowered ground - CIFloating, 11-07; cleared after the scatter that puts it there)
+clear at -37.7 7.1 r=1 all only=^Pickup_Landmark_Tree_Mango
 scatter "Pickup_Landmark_BerryBush" 3 at 0 0 r=36 seed=7794 free=3
 call hives x=10 z=10 r=26 n=2 seed=7795
 call dirt x=0 z=0 r=30 n=3 seed=7796
