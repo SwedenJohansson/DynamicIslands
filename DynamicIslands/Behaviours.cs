@@ -771,7 +771,15 @@ namespace DynamicIslands.Editor
 			{
 				case "has":
 				case "take":
-					if (StoryItems.IsStory(c.Target)) return StoryBook.Count(StoryItems.IdOf(c.Target)) >= c.Count;
+					if (StoryItems.IsStory(c.Target))
+					{
+						// (a "has" check still counts a key spent on a survivor cage of this island: freed first, that lock
+						// would stay shut for good - Lowstreet's cage release, 3.1 player softlock)
+						string sid = StoryItems.IdOf(c.Target);
+						int have = StoryBook.Count(sid);
+						if (c.Kind == "has") have += Survivors.KeysSpent(e, sid);
+						return have >= c.Count;
+					}
 					return inv != null && c.Target.Length > 0 && inv.GetItemCount(c.Target) >= c.Count;
 				case "state":
 					List<IslandObjectRef> refs = Targets(e, index, c.Target);

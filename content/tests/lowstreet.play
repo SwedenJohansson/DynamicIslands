@@ -40,6 +40,9 @@ expect story storekey 1
 use cagerelease
 expect story cagesopen 1
 expect step 11
+use inescage
+expect survivor highwater_ines
+expect story storekey 0
 read Ines's report
 expect step 12
 # STORY 10-24: Ines's chalk hooks along the street to the sewer mouth

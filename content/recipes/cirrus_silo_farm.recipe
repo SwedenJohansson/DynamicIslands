@@ -324,7 +324,7 @@ prop seedbox if.open=signal|teofree
 prop seedbox else.open=message||A seed box with a padlock and a tag: TEO'S - NOT THE COMPANY'S.
 
 prop silohatch obj.name=silohatch
-prop silohatch if.use=has|story:silokey|1
+prop silohatch if.use=any\nhas|story:silokey|1\nsignal|teofree
 prop silohatch on.use=message||The silo key turns. The hatch lifts on a dry store under silo three - sacks of grey salt, and a chest.\nhide|\ngive||story:silohatch*1\nshow|silostore
 prop silohatch else.use=message||The hatch at the foot of silo three is locked. The key must be somewhere on the farm.
 

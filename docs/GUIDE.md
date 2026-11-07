@@ -2119,7 +2119,9 @@ id), **What the survivor says when freed**, the **Key item** (a story item, used
 id** and a **Signal** ("survivor" unless you name one). A player whose crew holds the key presses **E** at the cage:
 the cage opens for everyone, the survivor says the line in a speech bubble over the cage, and a few seconds later
 stands on the raft (as decoration: no needs, no work). The world remembers its survivors: one per id, also across
-islands and after a reload, so two cages with one id free one survivor.
+islands and after a reload, so two cages with one id free one survivor. A key used up on a cage still counts for
+"has" checks (**Player has**) on the same island: a door or lever that only checks for that key still opens after
+the survivor was freed first. A check that takes the key does not get it back.
 
 **Islanders to talk to** (2026-10-25). **Notes & signs** has **Islander (talks)**: in the editor a plain figure with a
 name tag, in a world one of Raft's six characters. In its **Islander** group set its **Name** (who quests and checks
