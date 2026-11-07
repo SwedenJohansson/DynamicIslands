@@ -72,7 +72,7 @@ prop labwalls tint.amount=0.3
 
 # --- s5, the lobby (floor 0.3): the safety board, the reception desk, planters, the vines over the hatch --------------
 place Zone_Trigger lobbyzone at 3 0 h=1.8
-place Note_Board safetyboard at 4.5 4.15 h=1.5 yaw=0
+place Note_Board safetyboard at 4.5 4.33 h=1.5 yaw=0
 place Placeable_Table_Basic - at 5 -2.5 h=0.3 sit yaw=90
 place Loot_ChestSmall reception at 5 -2.5 h=1.6 drop yaw=270
 place Block_Foundation - at -3 -2.5 h=0.98
@@ -195,7 +195,7 @@ clear at 33.37 75.77 r=1.9 body
 
 # the summit: Brine Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
 call ladtower x=24 z=66 h0=24 lv=6 a=bltower
-place Loot_ChestSmall bllocker at 23.25 66.75 h=38.73 sit yaw=180
+place Loot_ChestSmall bllocker at 23.25 66.75 h=38.6 sit yaw=180
 # (REACH 10-28: the zipline post and the note swapped cells - the tower's ladder now comes up onto the zipline's old cell)
 place Note_Paper blsumnote at 24.75 65.25 h=38.84 drop yaw=20
 place Zone_Trigger blsummit at 24 66 h=39.73
@@ -203,7 +203,7 @@ place ZiplinePath_Landmark blzip at 23.25 65.25 h=38.73 yaw=0
 zipto blzip 12 33
 place Loot_ChestSmall blledge at 13.82 76.18 ground sit yaw=40
 place SmallRock_02 - at 35.13 42.32 ground sit scale=0.5
-place SmallRock_02 - at 35.13 42.32 ground y=0.6 sit scale=0.32 yaw=40
+place SmallRock_02 - at 35.13 42.32 ground y=0.3 sit scale=0.32 yaw=40
 call treasure x=32.63 z=42.32 r=12 n=1 seed=24211
 prop treasure24211 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 call treasure x=-19.23 z=-3.21 r=5 n=1 seed=24212
@@ -211,7 +211,7 @@ prop treasure24212 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
 call sk_dark x=-36 z=-4 h=1 r=7 al=blcave2dark
 
 # the drowned building: the lab's pump house, its ground floor 12 m down; the deep chest at the bottom, air on storey 1
-call sk_drowned x=-30 z=-66 h0=-12 n=3 w=RT_WallWindowBroken a=blbld cap=0 cal=blcap
+call sk_drowned x=-30 z=-66 h0=-11.94 n=3 w=RT_WallWindowBroken a=blbld cap=0 cal=blcap
 place Loot_Chest bldeep at -31.8 -68.5 h=-12 sit yaw=0
 place Placeable_Table_Basic - at -31.5 -65 h=-9 sit yaw=0
 place Note_Paper blbldnote at -31.5 -65 h=-7.7 drop yaw=10
