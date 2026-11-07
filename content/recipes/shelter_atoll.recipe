@@ -127,6 +127,8 @@ line Block_Wall_Tier3 from 6 -78 to 6 -69 step=1.5 y=-0.15
 line Block_Wall_Tier3 from 9 -84 to 9 -69 step=1.5 y=-0.15
 # F The ammo cave (Radar Hill's north foot): a rock with a hole in it, its mouth to the sea
 call ar_cave x=62 z=82 h=3 yaw=0 al=ammorock chest=ammochest
+# (11-07 review: the hill over it Balboa's sandy rock, blue-grey on its steep faces round the brown den: its rock as the den's)
+prop ammorock cave.rock=den
 # (REACH 10-30: the cave floor ended 3 m over the sea in a cliff - no way in from the water (reach: ammo chest and the
 # cave "can't get there"): a beach slope from the mouth down into the sea)
 # (11-06 review: a narrow fan read as a causeway, and from the sea the rock's flat underside showed over the water on
@@ -159,13 +161,25 @@ brush flatten from 54 99.5 to 68 99.5 r=3 s=20 frames=200 h=3.2
 brush smooth at 61 106 r=8.5 s=4 frames=40
 brush flatten from 55 99 to 67 99 r=2.2 s=20 frames=60 h=3.6
 brush smooth from 52 100.5 to 70 100.5 r=4 s=4 frames=10
+# (11-07 review: the hill's face across the den's front stood on the shelves at -5 and deeper on both sides of the beach,
+# sheer cut slabs down into clear water, and the beach's sides were a hard box edge: a low shore along the whole front
+# (h 0.8, out to 12 m past the rock's sides) and a shoulder (h 1.5) round the beach, so the face stands on sand at the
+# water line and the beach falls to the sea in steps of a metre or less, rounded off away from the den's foot)
+brush flatten from 36 103 to 50 103 r=5.5 s=20 frames=200 h=0.8
+brush flatten from 72 103 to 86 103 r=5.5 s=20 frames=200 h=0.8
+brush flatten from 38 108 to 84 108 r=4 s=20 frames=200 h=-1.2
+brush smooth from 34 106 to 48 106 r=6 s=4 frames=30
+brush smooth from 74 106 to 88 106 r=6 s=4 frames=30
+brush flatten from 47 101.5 to 75 101.5 r=4.5 s=20 frames=200 h=1.5
 # (fourth review: the smoothing left the shore's top 0.9 m under the den's floor lip, a straight brown step with its dark
 # underside showing on both sides of the beach: the top laid last, as wide as the lip and level with it, with a
 # shoulder below it on each side, and sand up to the lip instead of grass)
 brush flatten from 51 100.3 to 71 100.3 r=3 s=20 frames=60 h=2.4
 brush flatten from 53 98.6 to 69 98.6 r=2.2 s=20 frames=60 h=3.92
 brush sand from 53 100 to 69 100 r=4 s=20 frames=40
+brush sand from 36 103 to 86 103 r=6 s=20 frames=40
 clear from 61 101 to 61 110 r=7 body
+clear from 34 104 to 88 104 r=7 body
 clear from 54 103 to 68 103 r=6 body
 # The new land planted (palms, bamboo, bushes as on the ring; boulders only on the flats)
 call ar_plants_tropical x=40 z=38 r=10 seed=26301
