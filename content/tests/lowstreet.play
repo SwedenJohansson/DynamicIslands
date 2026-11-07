@@ -1,9 +1,9 @@
 # Lowstreet (CIPlay lowstreet): the tram stop, the expedition plan, the cinema's projection box (wind turbine), the
 # shops' air, the anglers, the electronics shop (advanced battery), the department store, the cage release refusing
 # until the office's key, Ines's report, the lamp shop (advanced headlight), the big stingray, the diner.
-# offset 0 0 is a placeholder: phase 2 sets it from the recipe's save log (PLAY_FORMAT: Coordinates).
+# offset: the land centre from CIRecipe lowstreet (11-07).
 island Lowstreet
-offset 0 0
+offset -1.0632 0.7632
 expect step 0
 expect title The Drowned District
 zone tram_stop

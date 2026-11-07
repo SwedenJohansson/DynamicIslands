@@ -296,6 +296,7 @@ prop bigray creature.respawn=0
 prop inesreport obj.name=inesreport
 prop inesreport beh.hidden=1
 
+prop inescage obj.name=inescage
 prop inescage survivor.name=Ines Marlowe
 prop inescage survivor.id=highwater_ines
 prop inescage survivor.key=storekey
