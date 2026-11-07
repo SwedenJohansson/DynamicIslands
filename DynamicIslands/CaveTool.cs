@@ -1004,52 +1004,10 @@ namespace DynamicIslands.Editor
 			// blends its rock and sand by the normal - Shelter Atoll's ammo cave from the sea, 11-06)
 			var corner = new Dictionary<int, int>[] { new Dictionary<int, int>(), new Dictionary<int, int>() };
 			// (a point on the wall from its place in the wall's plane, and its smooth normal; 0: facing -z, into the den)
-			// (and kept in the rock: the lean and relief took the outer edge up to 2.5 m toward the mouth, out of the den's rock
-			// and the hill, where its outside - shaded dark round the way in - stood out as black blades over The Abyss's acid
-			// path - fix1107. A leaned point must be buried: up, to both sides and out toward the mouth the first thing met is
-			// rock seen from inside (a back face) - any of the island's rock, the hill and ground too. One that isn't leans less,
-			// down to the flat wall; inward (the funnel) stays as it is)
-			Vector3 outward = go.transform.TransformDirection(Vector3.forward).normalized;
-			var buriedDirs = new[] { up, right, -right, outward };
-			Func<Vector3, bool> buried = w =>
-			{
-				foreach (Vector3 dir in buriedDirs)
-				{
-					RaycastHit h;
-					if (!Physics.Raycast(w, dir, out h, reach, ~0, QueryTriggerInteraction.Ignore) || Vector3.Dot(h.normal, dir) <= 0f) return false;
-				}
-				return true;
-			};
-			var heldDepth = new Dictionary<long, float>();
-			Func<float, float, float> held = (px, py) =>
-			{
-				long key = (long)Mathf.RoundToInt(px * 20f) * 1000003L + Mathf.RoundToInt(py * 20f);
-				float d;
-				if (heldDepth.TryGetValue(key, out d)) return d;
-				d = depth(px, py);
-				if (d > 0f)
-				{
-					bool backsNow = Physics.queriesHitBackfaces;
-					Physics.queriesHitBackfaces = true;
-					try
-					{
-						float keepD = 0f;
-						for (int s = 4; s > 0; s--)
-						{
-							Vector3 w = go.transform.TransformPoint(new Vector3(px, py, z + d * s / 4f));
-							if (buried(w)) { keepD = d * s / 4f; break; }
-						}
-						d = keepD;
-					}
-					finally { Physics.queriesHitBackfaces = backsNow; }
-				}
-				heldDepth[key] = d;
-				return d;
-			};
-			Func<float, float, Vector3> pos3 = (px, py) => new Vector3(px, py, z + held(px, py));
+			Func<float, float, Vector3> pos3 = (px, py) => new Vector3(px, py, z + depth(px, py));
 			Func<float, float, int, Vector3> normAt = (px, py, side) =>
 			{
-				float e = cell, fx = (held(px + e, py) - held(px - e, py)) / (2f * e), fy = (held(px, py + e) - held(px, py - e)) / (2f * e);
+				float e = cell, fx = (depth(px + e, py) - depth(px - e, py)) / (2f * e), fy = (depth(px, py + e) - depth(px, py - e)) / (2f * e);
 				return side == 0 ? new Vector3(fx, fy, -1f).normalized : new Vector3(-fx, -fy, 1f).normalized;
 			};
 			Func<int, int, int, int> at = (side, ci, ck) =>
@@ -1063,6 +1021,53 @@ namespace DynamicIslands.Editor
 				corner[side][key] = n;
 				return n;
 			};
+			// (a cell out in the open air is left out, both sides: the wall's plane, its relief and its lean took its outer cells
+			// out of the den's rock and the hill, in front of the hill's face, where its outside - shaded dark round the way in -
+			// stood as black blades over The Abyss's acid path - fix1107. Such a cell closes nothing: the den's hollow isn't
+			// there (that is rock near on all four sides, met from inside the hollow) and it isn't in rock (up, both sides and
+			// out toward the mouth, the first thing met is rock seen from inside - a back face). A cell beside the hollow stays,
+			// so the wall's edge still goes into the rock round it)
+			Vector3 outward = go.transform.TransformDirection(Vector3.forward).normalized;
+			float nearRock = 8f * Mathf.Max(0.1f, size);
+			// (the first thing met: 1 rock from inside, -1 rock from outside near by, 0 nothing or far)
+			Func<Vector3, Vector3, int> firstMet = (w, dir) =>
+			{
+				RaycastHit h;
+				if (!Physics.Raycast(w, dir, out h, reach, ~0, QueryTriggerInteraction.Ignore)) return 0;
+				return Vector3.Dot(h.normal, dir) > 0f ? 1 : h.distance <= nearRock ? -1 : 0;
+			};
+			var hollow = new bool[nx, ny];
+			var open = new bool[nx, ny];
+			bool backsOpen = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				for (int i = 0; i < nx; i++)
+					for (int k = 0; k < ny; k++)
+					{
+						if (state[i, k] != 1) { hollow[i, k] = state[i, k] == 2; continue; }
+						float cx = x0 + (i + 0.5f) * cell, cy = y0 + (k + 0.5f) * cell;
+						Vector3 w = go.transform.TransformPoint(new Vector3(cx, cy, z + depth(cx, cy)));
+						int u = firstMet(w, up), r = firstMet(w, right), l = firstMet(w, -right);
+						hollow[i, k] = u == -1 && r == -1 && l == -1 && firstMet(w, -up) == -1;
+						open[i, k] = !hollow[i, k] && !(u == 1 && r == 1 && l == 1 && firstMet(w, outward) == 1);
+					}
+			}
+			finally { Physics.queriesHitBackfaces = backsOpen; }
+			int leftOut = 0;
+			for (int i = 0; i < nx; i++)
+				for (int k = 0; k < ny; k++)
+				{
+					if (!open[i, k]) continue;
+					bool byHollow = false;
+					for (int di = -1; di <= 1 && !byHollow; di++)
+						for (int dk = -1; dk <= 1 && !byHollow; dk++)
+						{
+							int a = i + di, b = k + dk;
+							if (a >= 0 && b >= 0 && a < nx && b < ny && hollow[a, b]) byHollow = true;
+						}
+					if (!byHollow) { state[i, k] = 0; leftOut++; }
+				}
 			int cells = 0;
 			var trisOut = new List<int>();
 			// (the outside in bands by how near the way in: shade round it - the den beyond, lit evenly, showed as a light window.
@@ -1187,7 +1192,7 @@ namespace DynamicIslands.Editor
 			CaveVeil.Build(go, hcx, hcy, ha, hb, hp, archNoise, z - PlugFunnel, my);
 			// (lit as the den, its own parts looked up again, the outside too)
 			CaveLit.Mark(den);
-			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + cells + " cells, rock relief, smooth, arched way in, " + wr.sharedMaterial.name + (atlas ? " at uv " + swatch.ToString("0.000") : ""));
+			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + cells + " cells (" + leftOut + " out in the open left out), rock relief, smooth, arched way in, " + wr.sharedMaterial.name + (atlas ? " at uv " + swatch.ToString("0.000") : ""));
 		}
 
 		/// <summary>The UV of the den mesh's corner nearest a point by its mouth (its rock colour), when the mesh is readable.</summary>
