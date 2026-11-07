@@ -1024,17 +1024,23 @@ namespace DynamicIslands.Editor
 			// (a cell out in the open air is left out, both sides: the wall's plane, its relief and its lean took its outer cells
 			// out of the den's rock and the hill, in front of the hill's face, where its outside - shaded dark round the way in -
 			// stood as black blades over The Abyss's acid path - fix1107. Such a cell closes nothing: the den's hollow isn't
-			// there (that is rock near on all four sides, met from inside the hollow) and it isn't in rock (up, both sides and
-			// out toward the mouth, the first thing met is rock seen from inside - a back face). A cell beside the hollow stays,
-			// so the wall's edge still goes into the rock round it)
+			// there (the den's own rock near on all four sides, met from inside the hollow) and it isn't in the hill (up, both
+			// sides and out toward the mouth, the first thing met other than the den is rock seen from inside - a back face). The
+			// den's rock doesn't count for that: its shell is one surface, so from outside the den it too is met from behind, and
+			// the cells round the den in the open air passed as in rock. A cell beside the hollow stays, so the wall's edge still
+			// goes into the rock round it)
 			Vector3 outward = go.transform.TransformDirection(Vector3.forward).normalized;
 			float nearRock = 8f * Mathf.Max(0.1f, size);
-			// (the first thing met: 1 rock from inside, -1 rock from outside near by, 0 nothing or far)
+			var denRock = new HashSet<Collider>(rock);
+			// (the first thing met but the den: 1 rock from inside, -1 rock from outside near by, 0 nothing or far)
 			Func<Vector3, Vector3, int> firstMet = (w, dir) =>
 			{
-				RaycastHit h;
-				if (!Physics.Raycast(w, dir, out h, reach, ~0, QueryTriggerInteraction.Ignore)) return 0;
-				return Vector3.Dot(h.normal, dir) > 0f ? 1 : h.distance <= nearRock ? -1 : 0;
+				RaycastHit best = default(RaycastHit);
+				float near = float.MaxValue;
+				foreach (RaycastHit h in Physics.RaycastAll(w, dir, reach, ~0, QueryTriggerInteraction.Ignore))
+					if (h.distance < near && !denRock.Contains(h.collider)) { near = h.distance; best = h; }
+				if (near == float.MaxValue) return 0;
+				return Vector3.Dot(best.normal, dir) > 0f ? 1 : near <= nearRock ? -1 : 0;
 			};
 			// (the same, the den's own rock only: an open pocket of air under the hill's overhang beside the den, by the den's
 			// rock, met rock from outside all round too and passed as the hollow - the last blades on The Abyss's path)
