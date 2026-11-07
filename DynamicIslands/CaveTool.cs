@@ -1004,10 +1004,40 @@ namespace DynamicIslands.Editor
 			// blends its rock and sand by the normal - Shelter Atoll's ammo cave from the sea, 11-06)
 			var corner = new Dictionary<int, int>[] { new Dictionary<int, int>(), new Dictionary<int, int>() };
 			// (a point on the wall from its place in the wall's plane, and its smooth normal; 0: facing -z, into the den)
-			Func<float, float, Vector3> pos3 = (px, py) => new Vector3(px, py, z + depth(px, py));
+			// (and kept in the den's rock: the lean and relief took the outer edge up to 2.5 m toward the mouth, past the den's
+			// front and over its top, where it stood out as dark blades over The Abyss's acid path - fix1107. A point that leaves
+			// the rock there (no rock round it in the wall's plane, the test the cells were kept by) leans less, down to the flat
+			// wall; inward (the funnel) stays as it is)
+			var heldDepth = new Dictionary<long, float>();
+			Func<float, float, float> held = (px, py) =>
+			{
+				long key = (long)Mathf.RoundToInt(px * 20f) * 1000003L + Mathf.RoundToInt(py * 20f);
+				float d;
+				if (heldDepth.TryGetValue(key, out d)) return d;
+				d = depth(px, py);
+				if (d > 0f)
+				{
+					bool backsNow = Physics.queriesHitBackfaces;
+					Physics.queriesHitBackfaces = true;
+					try
+					{
+						float keepD = 0f;
+						for (int s = 4; s > 0; s--)
+						{
+							Vector3 w = go.transform.TransformPoint(new Vector3(px, py, z + d * s / 4f));
+							if (hits(w, up) && hits(w, -up) && hits(w, right) && hits(w, -right)) { keepD = d * s / 4f; break; }
+						}
+						d = keepD;
+					}
+					finally { Physics.queriesHitBackfaces = backsNow; }
+				}
+				heldDepth[key] = d;
+				return d;
+			};
+			Func<float, float, Vector3> pos3 = (px, py) => new Vector3(px, py, z + held(px, py));
 			Func<float, float, int, Vector3> normAt = (px, py, side) =>
 			{
-				float e = cell, fx = (depth(px + e, py) - depth(px - e, py)) / (2f * e), fy = (depth(px, py + e) - depth(px, py - e)) / (2f * e);
+				float e = cell, fx = (held(px + e, py) - held(px - e, py)) / (2f * e), fy = (held(px, py + e) - held(px, py - e)) / (2f * e);
 				return side == 0 ? new Vector3(fx, fy, -1f).normalized : new Vector3(-fx, -fy, 1f).normalized;
 			};
 			Func<int, int, int, int> at = (side, ci, ck) =>

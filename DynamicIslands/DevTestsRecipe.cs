@@ -553,6 +553,11 @@ namespace DynamicIslands
 			// Gull's boat was set down by its middle and sank under the beach - its locker and crate hung in the air over it)
 			int all = 0, alone = 0, buried = 0;
 			List<EditorGameObject> placed = PlacedEditorObjects().ToList();
+			// (ladders stacked into one tall ladder - dp_tower's shaft, Ashfall's, Glacier Mouth's crevasse: a ladder's colliders
+			// are triggers, so the middle one of three touched nothing. One that meets a held ladder end to end is held, up the
+			// whole stack, as long as its bottom or top one rests on something: fix1107, Beacon Saddle)
+			List<KeyValuePair<EditorGameObject, Bounds>> laddersHeld = new List<KeyValuePair<EditorGameObject, Bounds>>();
+			List<KeyValuePair<EditorGameObject, Bounds>> laddersAir = new List<KeyValuePair<EditorGameObject, Bounds>>();
 			foreach (EditorGameObject e in placed)
 			{
 				string n = e.GameObjectName ?? "";
@@ -566,16 +571,24 @@ namespace DynamicIslands
 				float land = ground.SampleHeight(whole.center) + ground.transform.position.y;
 				// (things on the water - a buoy, a raft's foundation - float; the sea holds them)
 				bool onWater = whole.min.y < sea && whole.max.y > sea - 0.3f;
+				bool ladder = n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0;
+				bool inAir = false;
 				if (!onWater && whole.min.y - land > 0.5f)
 				{
 					Collider[] touching = Physics.OverlapBox(whole.center, whole.extents + Vector3.one * 0.15f, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
 					// (the terrain counts where the box meets its surface: a beam laid across a gap rests on the rock at its ends)
 					if (!touching.Any(c => !c.transform.IsChildOf(e.transform)))
 					{
-						alone++;
-						if (alone <= floatDetail) FLog("  in the air, touching nothing: " + n + " at " + Num(whole.center.x - mid.x) + " " + Num(whole.center.z - mid.y) + ": its bottom h=" + Num(whole.min.y - sea) + " is " + Num(whole.min.y - land) + " m above the ground");
+						inAir = true;
+						if (ladder) laddersAir.Add(new KeyValuePair<EditorGameObject, Bounds>(e, whole));
+						else
+						{
+							alone++;
+							if (alone <= floatDetail) FLog("  in the air, touching nothing: " + n + " at " + Num(whole.center.x - mid.x) + " " + Num(whole.center.z - mid.y) + ": its bottom h=" + Num(whole.min.y - sea) + " is " + Num(whole.min.y - land) + " m above the ground");
+						}
 					}
 				}
+				if (ladder && !inAir) laddersHeld.Add(new KeyValuePair<EditorGameObject, Bounds>(e, whole));
 				// (buried whole: its top under the ground everywhere over its footprint - a rock sunk into a slope shows on its low
 				// side and is meant so - and not inside a cave or a building of other objects)
 				if (!ShowsAboveGround(whole, ground) && !n.Contains("Cave") && !n.Contains("Tunnel") &&
@@ -584,6 +597,24 @@ namespace DynamicIslands
 					buried++;
 					if (buried <= floatDetail) FLog("  buried under the ground: " + n + " at " + Num(whole.center.x - mid.x) + " " + Num(whole.center.z - mid.y) + ": its top h=" + Num(whole.max.y - sea) + " is " + Num(land - whole.max.y) + " m under the ground");
 				}
+			}
+			for (bool more = true; more; )
+			{
+				more = false;
+				foreach (KeyValuePair<EditorGameObject, Bounds> l in laddersAir.ToList())
+				{
+					Bounds near = l.Value;
+					near.Expand(0.3f);
+					if (!laddersHeld.Any(h => h.Value.Intersects(near))) continue;
+					laddersAir.Remove(l); laddersHeld.Add(l); more = true;
+				}
+			}
+			foreach (KeyValuePair<EditorGameObject, Bounds> l in laddersAir)
+			{
+				Bounds whole = l.Value;
+				float land = ground.SampleHeight(whole.center) + ground.transform.position.y;
+				alone++;
+				if (alone <= floatDetail) FLog("  in the air, touching nothing: " + (l.Key.GameObjectName ?? "") + " at " + Num(whole.center.x - mid.x) + " " + Num(whole.center.z - mid.y) + ": its bottom h=" + Num(whole.min.y - sea) + " is " + Num(whole.min.y - land) + " m above the ground (no held ladder above or below it)");
 			}
 			// Things on the sea floor under a deck that stands above the sea - more than 4 m under it, so not a flooded room:
 			// set down "on the ground", Tide Farm's crop beds, scarecrow and table lay 7-10 m down under its farm raft (the

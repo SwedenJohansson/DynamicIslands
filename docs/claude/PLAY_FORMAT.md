@@ -99,7 +99,7 @@ expect message isn't whole
 | `expect item <item> <n>` | The player has at least n of the item (Raft's unique item name, as in `content\objects\items.txt`). |
 | `expect animals <label> <n>` | Exactly n of the island's animals of that label are alive; each land one stands on a floor (under 0.6 m over the first thing under it). Logs each one's place in recipe coordinates. |
 | `expect animalsinside <label> <n>` | n of the live animals of that label stand under something solid (a cave's rock: a collider within 12 m over them); ones under open sky are logged with their place. |
-| `expect animalsmoved <label> <m>` | One of them went at least m metres since the last `expect animals` of that label. |
+| `expect animalsmoved <label> <m>` | One of them got at least m metres from its own place at the last `expect animals` of that label (the furthest it went, sampled every 0.2 s - a rat that ran off and came back counts). |
 | `expect height <h>` | The player is within 1.2 m of h above `Position.y`. |
 | `expect stand <x> <z> h=<h> [below=<m>]` | What is at the point is within 0.6 m of h above `Position.y`. |
 | `expect spinsown <name>` | The object turns about its own up axis. |

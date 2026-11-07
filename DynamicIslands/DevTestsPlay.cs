@@ -49,6 +49,32 @@ namespace DynamicIslands
 		static IslandWorldState.Entry playEntry;
 		static readonly Dictionary<string, List<Vector3>> animalsSeen = new Dictionary<string, List<Vector3>>();
 
+		/// <summary>animalsmoved's measure (fix1107): each animal's own start (at the last expect animals of its label) and the
+		/// furthest it got from it, sampled every 0.2 s - only its place at the check missed a rat that ran off and came back
+		/// (the_abyss_rats: "moved 0.8 m", a rat wandering round its den).</summary>
+		static readonly Dictionary<string, Dictionary<AI_NetworkBehaviour, Vector3>> animalsStart = new Dictionary<string, Dictionary<AI_NetworkBehaviour, Vector3>>();
+		static readonly Dictionary<string, Dictionary<AI_NetworkBehaviour, float>> animalsFurthest = new Dictionary<string, Dictionary<AI_NetworkBehaviour, float>>();
+		static readonly Dictionary<string, int> animalsSampleRun = new Dictionary<string, int>();
+
+		static void AnimalsSample(string label)
+		{
+			Dictionary<AI_NetworkBehaviour, Vector3> st;
+			Dictionary<AI_NetworkBehaviour, float> far;
+			if (!animalsStart.TryGetValue(label, out st) || !animalsFurthest.TryGetValue(label, out far)) return;
+			foreach (KeyValuePair<AI_NetworkBehaviour, Vector3> kv in st.ToList())
+				if (kv.Key != null) far[kv.Key] = Mathf.Max(far[kv.Key], Vector3.Distance(kv.Value, kv.Key.transform.position));
+		}
+
+		static IEnumerator AnimalsSampler(string label, int run)
+		{
+			// (until the label is counted again; at most 10 minutes)
+			for (float t = 0f; t < 600f && animalsSampleRun[label] == run; t += 0.2f)
+			{
+				AnimalsSample(label);
+				yield return new WaitForSeconds(0.2f);
+			}
+		}
+
 		/// <summary>How far an animal's feet are over the first thing under them that is not itself (-1: nothing within 3 m).</summary>
 		static float AnimalFloorGap(AI_NetworkBehaviour a)
 		{
@@ -884,6 +910,14 @@ namespace DynamicIslands
 						if (a.GetComponentInChildren<UnityEngine.AI.NavMeshAgent>(true) != null) Check(ref ok, gap >= 0 && gap < 0.6f, label + " stands on its floor (gap " + gap.ToString("0.00") + ", under 0.6)");
 					}
 					animalsSeen[label] = at;
+					Dictionary<AI_NetworkBehaviour, Vector3> st = new Dictionary<AI_NetworkBehaviour, Vector3>();
+					foreach (AI_NetworkBehaviour a in ScAnimals(playEntry, label)) if (a != null) st[a] = a.transform.position;
+					animalsStart[label] = st;
+					animalsFurthest[label] = st.Keys.ToDictionary(a => a, a => 0f);
+					int sr;
+					animalsSampleRun.TryGetValue(label, out sr);
+					animalsSampleRun[label] = ++sr;
+					DynamicIslands.instance.StartCoroutine(AnimalsSampler(label, sr));
 					break;
 				}
 				case "animalsinside":
@@ -905,13 +939,17 @@ namespace DynamicIslands
 				}
 				case "animalsmoved":
 				{
-					// (expect animalsmoved <label> <metres>: the one that went furthest since the last expect animals of it)
+					// (expect animalsmoved <label> <metres>: the one that went furthest from its own start since the last expect
+					// animals of it - the furthest it got, sampled, not only where it is now: fix1107)
 					string label = string.Join(" ", t.Skip(2).Take(t.Length - 3).ToArray());
 					List<Vector3> was;
 					float most = 0f;
 					if (animalsSeen.TryGetValue(label, out was))
-						foreach (AI_NetworkBehaviour a in ScAnimals(playEntry, label))
-							most = Mathf.Max(most, was.Count == 0 ? 0f : was.Min(v => Vector3.Distance(v, a.transform.position)));
+					{
+						AnimalsSample(label);
+						Dictionary<AI_NetworkBehaviour, float> far;
+						if (animalsFurthest.TryGetValue(label, out far) && far.Count > 0) most = far.Values.Max();
+					}
 					Check(ref ok, was != null && most >= F(t[t.Length - 1]), "animals '" + label + "' moved " + most.ToString("0.0") + " m (at least " + t[t.Length - 1] + ")");
 					break;
 				}
