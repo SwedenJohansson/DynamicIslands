@@ -351,6 +351,8 @@ namespace DynamicIslands
 			IslandTest.Start();
 			Check(ref ok, IslandTest.Busy && IslandTest.Island == name, "Test in a world: on its way");
 			for (float t = 0; t < 300f && !IslandTest.Testing; t += 1f) yield return new WaitForSeconds(1f);
+			// (Testing is on as the island is brought; on a first start Raft's scenes and the animal looks take a while: wait for the player to be put on it)
+			for (float t = 0; t < 120f && IslandTest.Testing && !((IslandTest.LastStep ?? "").StartsWith("Testing '") || (IslandTest.LastStep ?? "").StartsWith("Starter kit")); t += 1f) yield return new WaitForSeconds(1f);
 			yield return new WaitForSeconds(6f);
 			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(x => x.Name == name);
 			Network_Player me = RAPI.GetLocalPlayer();
