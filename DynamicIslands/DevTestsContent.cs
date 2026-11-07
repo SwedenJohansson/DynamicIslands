@@ -895,6 +895,15 @@ namespace DynamicIslands
 					"which ones are needed: begun " + (ReturningIslands.Why(begun) ?? "no") + ", awaited " + (ReturningIslands.Why(awaited) ?? "no") + ", done " + (ReturningIslands.Why(done) ?? "no") + ", unseen " + (ReturningIslands.Why(unseen) ?? "no") + ", came back 3 times " + (ReturningIslands.Why(often) ?? "no"));
 				ReturningIslands.ReturnMinutes = 0.05f;
 				for (float t = 0f; t < 40f && returnedCount < 2; t += 0.5f) yield return new WaitForSeconds(0.5f);
+				// (none came back for want of room: a test world crowded by the earlier suites' islands, or the raft at one of
+				// Raft's islands - the 3.2 full run, 4 of 4. The sea's layout isn't what this tests, so once more with any spot
+				// clear of the raft, as CIPoolAgain does)
+				if (returnedCount < 2 && CustomIslandSpawner.LastSpotRejects != null)
+				{
+					Log("  (no free spot ahead of the raft: " + CustomIslandSpawner.LastSpotRejects + " - once more with any spot clear of the raft)");
+					CustomIslandSpawner.TestAllRound = true;
+					for (float t = 0f; t < 30f && returnedCount < 2; t += 0.5f) yield return new WaitForSeconds(0.5f);
+				}
 				yield return new WaitForSeconds(3f);
 				if (returnedCount < 2) foreach (string l in ReturningIslands.Describe().Where(l => l.Contains("cireturn") || l.StartsWith("host"))) Log("  " + l);
 				Vector3 raftNow = CustomIslandSpawner.RaftPosition ?? raftAt.Value;
@@ -913,6 +922,7 @@ namespace DynamicIslands
 			{
 				ReturningIslands.Returned -= onReturn;
 				ReturningIslands.ReturnMinutes = minutesBefore;
+				CustomIslandSpawner.TestAllRound = false;
 				WorldDirector.Plan = planBefore;
 				IslandWorldState.RemoveIds(made.Select(e => e.Id).ToList(), false);
 				foreach (string n in names) File.Delete(IslandSpawner.PathFor(n));
