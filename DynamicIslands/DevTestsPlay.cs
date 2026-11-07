@@ -604,7 +604,23 @@ namespace DynamicIslands
 						// (brought is enough: one brought past the unload distance from a player still on the last island loads,
 						// unloads a moment later and loads again as the raft comes near - "island" takes the player there. Waiting for
 						// it loaded failed a plan run now and then: Silver Screen's Keeper's Light brought 900 m off, 2026-10-19)
-						yield return WaitFor(() => IslandWorldState.Islands.Any(x => x.Rule == rule && !x.Failed && (x.Root != null || !x.Loading)), 90f);
+						Func<bool> came = () => IslandWorldState.Islands.Any(x => x.Rule == rule && !x.Failed && (x.Root != null || !x.Loading));
+						yield return WaitFor(came, 20f);
+						// (not yet: most often no free spot ahead of the test's raft, which stood still while the earlier islands came
+						// all round it - in a game it sails on. The raft moves 600 m on, up to 4 times: The Long Voyage's Crane Yard
+						// waited with Thornwood 148 m off while the player swam at Mayor's Wharf, and a puffer fish killed him, 11-07)
+						for (int move = 0; move < 4 && !came(); move++)
+						{
+							Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+							if (raft == null || raft.body == null) break;
+							Vector3 dir = Flat(Raft.direction).sqrMagnitude > 0.01f ? Flat(Raft.direction).normalized : Vector3.forward;
+							raft.body.position = raft.body.position + dir * 600f;
+							raft.body.velocity = Vector3.zero;
+							Physics.SyncTransforms();
+							OnRaftCommand();
+							Log("  ('" + rule + "' not here after a while: the raft, which stood still, moved 600 m on)");
+							yield return WaitFor(came, 20f);
+						}
 						IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Rule == rule && !x.Failed);
 						Check(ref ok, e != null, "'" + rule + "' comes" + (e != null ? " ('" + e.HostName + "', " + (e.Position - me.transform.position).magnitude.ToString("F0") + " m away" + (e.Root == null ? ", not loaded yet" : "") + ")" : ""));
 						checks++;
