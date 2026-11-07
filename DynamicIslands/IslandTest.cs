@@ -495,7 +495,37 @@ namespace DynamicIslands.Editor
 			try { saved = !string.IsNullOrEmpty(SaveAndLoad.WorldPath) && System.IO.Directory.Exists(System.IO.Path.Combine(SaveAndLoad.WorldPath, WorldName)); } catch { }
 			// (a plan is tested in a world of its own, new each time: a plan's rules start with its world)
 			if (PlanToTest != null) saved = false;
+			// (Raft clears IsLeavingGame only at the end of the menu's fade: a world loaded or made before that never lets
+			// the player in - Raft_Network.OnSceneLoaded skips the host's connection to itself while it is set)
+			for (float until = Time.realtimeSinceStartup + 30f; Time.realtimeSinceStartup < until && (GameManager.IsLeavingGame || LoadSceneManager.IsLoadingScene); )
+				yield return new WaitForSecondsRealtime(0.1f);
+			// The test world straight from its folder, as Raft's Load box reads a world's newest save (11-07: Raft reads every
+			// saved world before its list shows any - with 300 saved worlds the list was still empty after 90 s and Test gave up)
+			bool loadedDirect = false;
 			if (saved)
+			{
+				RGD_Game game = null;
+				LoadGameBox direct = LiveBox<LoadGameBox>();
+				try
+				{
+					DirectoryInfo from;
+					game = SaveAndLoad.GetLatestRGDGameFromBackupFolders(new DirectoryInfo(Path.Combine(SaveAndLoad.WorldPath, WorldName)), out from);
+				}
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [test] Reading the test world's save: " + e.Message); }
+				if (game != null && direct != null)
+				{
+					Step("Loading the test world (its newest save, read from its folder)");
+					TestCover.Status("Raft is loading the test world");
+					direct.gameObject.SetActive(true);
+					SaveAndLoad.WorldToLoad = game;
+					GameModeValueManager.SelectCurrentGameMode(game.mode);
+					direct.Button_LoadGame();
+					loadedDirect = true;
+				}
+				Step("The test world's save couldn't be read from its folder: Raft's Load list");
+			}
+			if (loadedDirect) { }
+			else if (saved)
 			{
 				Step("Opening Raft's Load list");
 				TestCover.Status("Finding the test world in Raft's saved worlds");

@@ -151,6 +151,9 @@ New in this release:
   with a doorway at the mouth, so from outside you no longer look into the cave through its missing side (RK15).
 - **The Abyss: a vent pool** beside the lava tube's path: a misty hot-spring pool ringed with sulphur-yellow stones.
   Its water is acid ("The vent water burns."); a protective suit keeps it off, and a shallow slope leads out of it.
+- **Test in a world with many saved worlds**: the editor's **Test** loads the test world straight from its folder
+  instead of waiting for Raft's Load Game list, which reads every saved world first (with a few hundred worlds it
+  was still empty after 90 s and Test gave up).
 
 ## 3.1 alpha - 2026-11-03: Version number
 
