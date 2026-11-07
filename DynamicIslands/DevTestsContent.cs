@@ -2092,7 +2092,18 @@ namespace DynamicIslands
 			yield return null;
 			while (Time.realtimeSinceStartup < end && MenuNewGameBox() == null) yield return new WaitForSecondsRealtime(0.1f);
 			if (MenuNewGameBox() == null) { Fail("main menu: not there after 60 s"); yield break; }
+			yield return WaitMenuSettled(end);
 			Log("At the main menu (after " + Took(start) + ")");
+		}
+
+		/// <summary>Until Raft has finished loading the menu (11-07): its scene loader clears GameManager.IsLeavingGame only
+		/// at the end of the menu's fade, about 2 s after the New Game box is there. A world loaded or created before that
+		/// never came in: Raft_Network.OnSceneLoaded skips "connection to self" while IsLeavingGame is set (the load stall of
+		/// the 3.2 full run: "the world was not in after 180 s").</summary>
+		internal static IEnumerator WaitMenuSettled(float end)
+		{
+			while (Time.realtimeSinceStartup < end && (GameManager.IsLeavingGame || LoadSceneManager.IsLoadingScene)) yield return new WaitForSecondsRealtime(0.1f);
+			if (GameManager.IsLeavingGame || LoadSceneManager.IsLoadingScene) Log("  (Raft still leaving the last world: IsLeavingGame=" + GameManager.IsLeavingGame + ", IsLoadingScene=" + LoadSceneManager.IsLoadingScene + ")");
 		}
 
 		[ConsoleCommand(name: "CIModelCheck", docs: "Dev, editor (after a world): creatures show Raft's real models instead of markers; places a few and takes a screenshot")]

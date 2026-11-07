@@ -2382,6 +2382,7 @@ namespace DynamicIslands
 			LoadGameBox box = Resources.FindObjectsOfTypeAll<LoadGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
 			if (box == null) { Fail("no Load Game box (go to the main menu first)"); yield break; }
 			box.gameObject.SetActive(true);
+			yield return WaitMenuSettled(Time.realtimeSinceStartup + 30f); // (straight after leaving a world: see WaitMenuSettled)
 			// A world named: straight from its folder, without Raft's list (Raft reads every saved world's newest save
 			// before it lists any - a box with ~2000 test worlds never listed them in 180 s: "no saved worlds listed")
 			if (name != null)
