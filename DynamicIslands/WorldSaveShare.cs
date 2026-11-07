@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace DynamicIslands.Editor
 {
@@ -81,10 +82,15 @@ namespace DynamicIslands.Editor
 			string text = Convert.ToBase64String(packed);
 			int count = Mathf.Max(1, (text.Length + ChunkChars - 1) / ChunkChars);
 			float started = Time.realtimeSinceStartup;
+			// (the world left - the save Raft makes on the way out to the main menu: no one to send it to. Still going while
+			// the next world loaded, its parts went out in the middle of Raft's start as host, and Raft never restored that
+			// world - no LoadComplete, the custom islands not read; every quick leave-and-load of the 3.2 full run - fix1107b)
+			Scene world = SceneManager.GetActiveScene();
 			for (int i = 0; i < count; i++)
 			{
 				if (!to.HasValue && gen != sendGeneration) yield break;
 				if (!Raft_Network.IsHost) yield break;
+				if (!IslandNetwork.InGame || SceneManager.GetActiveScene() != world) { Debug.Log("[CUSTOM ISLANDS] [net] Sending the world's save " + saveName + " stopped: the world was left"); yield break; }
 				var msg = new IslandNetMessage { Name = guid, Hash = saveName, Index = i, Count = count, Data = text.Substring(i * ChunkChars, Mathf.Min(ChunkChars, text.Length - i * ChunkChars)) };
 				try { IslandNetwork.SendWorldSave(msg, to); }
 				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Sending the world's save, part " + i + ": " + e.Message); }
