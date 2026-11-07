@@ -292,6 +292,16 @@ namespace DynamicIslands.Editor
 				stopPlus[j] = WayStop(mouths[j], 1f, startPlus[j], top, own, chain, j, x0, z0, nx, nz);
 				stopMinus[j] = WayStop(mouths[j], -1f, startMinus[j], top, own, chain, j, x0, z0, nx, nz);
 			}
+			// (cave.foot=dry: a way in runs at most DryWay past its roof. Shelter Atoll's lagoon cave's way in ran on some 100 m
+			// over the islet and past the ammo den's west side: a slot through the den's hill, its back open to the land, 11-07)
+			string footOpt;
+			bool dryFootOn = props.Any(p => p != null && p.TryGetValue(ObjectProps.CaveFoot, out footOpt) && footOpt == "dry");
+			if (dryFootOn)
+				for (int j = 0; j < mouths.Count; j++)
+				{
+					stopPlus[j] = Mathf.Min(stopPlus[j], startPlus[j] + DryWay);
+					stopMinus[j] = Mathf.Min(stopMinus[j], startMinus[j] + DryWay);
+				}
 			// How far out past each cave's open ends (m past where its roof ends; under 0.5: not out past them). The hill of a
 			// cave's roof stops there, a face of rock across its front: it spread on over the ledge and the paths before the
 			// mouth, beside the way in (Sundown Canyons' switchbacks, the Iron Gate's shoulder - AU83)
@@ -451,7 +461,17 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < nx; i++)
 				for (int k = 0; k < nz; k++)
 				{
-					if (on[i, k] || !float.IsNaN(corridor[i, k]) || cut[i, k]) continue;
+					// (a cell the sea cut took, now dry land, gets it too: the skin there stood on the sand on a dark stepped wall, a
+					// row of teeth along its foot - Shelter Atoll's den, its flanks raised from the sea, 11-07; not out past a mouth; only on a
+					// hill one of whose pieces has cave.foot=dry)
+					if (on[i, k] || !float.IsNaN(corridor[i, k])) continue;
+					if (cut[i, k])
+					{
+						if (!dryFootOn) continue;
+						bool pastMouth = false;
+						for (int j = 0; j < mouths.Count && !pastMouth; j++) pastMouth = ahead[j][i, k] > 0.5f;
+						if (pastMouth || !(ground[i, k] > SeaLevel + DryBy)) continue;
+					}
 					bool next = false;
 					for (int di = -1; di <= 1 && !next; di++)
 						for (int dk = -1; dk <= 1 && !next; dk++)
@@ -467,12 +487,15 @@ namespace DynamicIslands.Editor
 				height[i, k] = ground[i, k] - 0.8f;
 				on[i, k] = true;
 			}
+			// (and no loose bits: a few cells of skin cut off from the hill, over no cave, stood alone on the shore as a slab with a
+			// wall under it - by Shelter Atoll's ammo den, where the cut past its mouth left one at its corner, 11-07)
+			LooseDropped = dryFootOn ? DropLoose(on, top, height, ground, nx, nz) : 0; // (only on a hill with cave.foot=dry)
 
 			var map = new System.Text.StringBuilder();
 			for (int k = nz - 1; k >= 0; k--)
 			{
 				for (int i = 0; i < nx; i++)
-					map.Append(!float.IsNaN(corridor[i, k]) ? 'c' : cut[i, k] ? '-' : on[i, k] ? (!float.IsNaN(top[i, k]) ? 'R' : 's') : float.IsNegativeInfinity(height[i, k]) || height[i, k] < ground[i, k] - 3f ? '.' : 'g');
+					map.Append(!float.IsNaN(corridor[i, k]) ? 'c' : on[i, k] ? (!float.IsNaN(top[i, k]) ? 'R' : 's') : cut[i, k] ? '-' : float.IsNegativeInfinity(height[i, k]) || height[i, k] < ground[i, k] - 3f ? '.' : 'g');
 				map.Append('\n');
 			}
 			var tall = new Dictionary<string, int>();
@@ -481,7 +504,7 @@ namespace DynamicIslands.Editor
 					if (!on[i, k] && float.IsNaN(corridor[i, k]) && height[i, k] < ground[i, k] - 3f && groundBy[i, k] != null)
 						tall[groundBy[i, k]] = (tall.ContainsKey(groundBy[i, k]) ? tall[groundBy[i, k]] : 0) + 1;
 			dTop = top; dRim = rimY; dGround = ground; dRaw = raw; dHeight = height; dCover = cover; dCorr = corridor; dCut = cut; dSea = sea; dOn = on; dGroundBy = groundBy;
-			LastMap = "higher ground: " + string.Join(", ", System.Linq.Enumerable.Select(tall, kv => kv.Key + " " + kv.Value)) + "\nx " + x0.ToString("0.0") + " z " + z0.ToString("0.0") + " step " + Cell + " (rows from +z)\n" + map;
+			LastMap = "loose skin left out: " + LooseDropped + " cells\nhigher ground: " + string.Join(", ", System.Linq.Enumerable.Select(tall, kv => kv.Key + " " + kv.Value)) + "\nx " + x0.ToString("0.0") + " z " + z0.ToString("0.0") + " step " + Cell + " (rows from +z)\n" + map;
 			var verts = new List<Vector3>();
 			var norms = new List<Vector3>();
 			var uvs = new List<Vector2>();
@@ -593,6 +616,48 @@ namespace DynamicIslands.Editor
 		/// no texture named rock or a colour could not be read.
 		/// </summary>
 		internal const float DenRockGrey = 0.35f;
+
+		/// <summary>Skin pieces of at most this many cells, over no cave's roof, cut off from the rest are left out (DropLoose).</summary>
+		internal const int LooseCells = 40;
+		/// <summary>How far over the sea the ground of a cut cell must be for the hill's sunk rim to go on it (m).</summary>
+		internal const float DryBy = 0.3f;
+		// (cave.foot=dry: how far a way in runs past its roof's end, m)
+		internal const float DryWay = 12f;
+		/// <summary>Tests: how many cells of loose skin the last build left out.</summary>
+		public static int LooseDropped;
+
+		/// <summary>Leaves out each piece of the skin (cells joined side by side) of LooseCells or fewer with no cave roof under
+		/// any of it. How many cells it left out.</summary>
+		static int DropLoose(bool[,] on, float[,] top, float[,] height, float[,] ground, int nx, int nz)
+		{
+			var seen = new bool[nx, nz];
+			var piece = new List<int>();
+			var todo = new Stack<int>();
+			int dropped = 0;
+			for (int i0 = 0; i0 < nx; i0++)
+				for (int k0 = 0; k0 < nz; k0++)
+				{
+					if (!on[i0, k0] || seen[i0, k0]) continue;
+					piece.Clear();
+					bool roofed = false;
+					seen[i0, k0] = true;
+					todo.Push(i0 * nz + k0);
+					while (todo.Count > 0)
+					{
+						int c = todo.Pop(), i = c / nz, k = c % nz;
+						piece.Add(c);
+						roofed |= !float.IsNaN(top[i, k]);
+						if (i > 0 && on[i - 1, k] && !seen[i - 1, k]) { seen[i - 1, k] = true; todo.Push((i - 1) * nz + k); }
+						if (i + 1 < nx && on[i + 1, k] && !seen[i + 1, k]) { seen[i + 1, k] = true; todo.Push((i + 1) * nz + k); }
+						if (k > 0 && on[i, k - 1] && !seen[i, k - 1]) { seen[i, k - 1] = true; todo.Push(i * nz + k - 1); }
+						if (k + 1 < nz && on[i, k + 1] && !seen[i, k + 1]) { seen[i, k + 1] = true; todo.Push(i * nz + k + 1); }
+					}
+					if (roofed || piece.Count > LooseCells) continue;
+					foreach (int c in piece) { int i = c / nz, k = c % nz; on[i, k] = false; height[i, k] = ground[i, k] - 3.5f; }
+					dropped += piece.Count;
+				}
+			return dropped;
+		}
 		internal static bool RockAsDen(MeshRenderer mr, GameObject den)
 		{
 			Material m = mr != null ? mr.sharedMaterial : null;
@@ -617,7 +682,17 @@ namespace DynamicIslands.Editor
 			foreach (string o in others) measure.SetTexture(o, rock);
 			mr.SetPropertyBlock(measure);
 			Color shell, hill = Color.white;
-			bool read = CaveTool.LitColour(CaveTool.DenShell(den), out shell) && CaveTool.LitColour(new Renderer[] { mr }, out hill);
+			// (from the sides only, as it is seen from the shore: from above, the den's brown floor and rubble through its open back
+			// counted, and the hill came out red-brown next to its grey-olive outer faces - 11-07)
+			// (and the den only across it, from its sides: looking along it, through its mouth and its open back, its brown inside
+			// counted too, and the hill still came out redder than the den's outer faces - 11-07 second look)
+			Vector3 across = den.transform.right;
+			across.y = 0f;
+			across = across.sqrMagnitude > 0.01f ? across.normalized : Vector3.right;
+			Color along;
+			bool read = CaveTool.LitColour(CaveTool.DenShell(den), out shell, true, new[] { across, -across }) && CaveTool.LitColour(new Renderer[] { mr }, out hill, true);
+			if (read && CaveTool.LitColour(CaveTool.DenShell(den), out along, true, new[] { Vector3.Cross(Vector3.up, across), -Vector3.Cross(Vector3.up, across) }))
+				Debug.Log("[CUSTOM ISLANDS] Cave mountain rock as den: shell seen along it " + along.ToString("0.00"));
 			mr.SetPropertyBlock(keep);
 			if (!read) { Debug.Log("[CUSTOM ISLANDS] Cave mountain rock as den: colours not read"); return false; }
 			System.Func<float, float, float> ratio = (a, b) => Mathf.Clamp(a / Mathf.Max(0.02f, b), 0.1f, 4f);

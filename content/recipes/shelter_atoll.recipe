@@ -129,6 +129,8 @@ line Block_Wall_Tier3 from 9 -84 to 9 -69 step=1.5 y=-0.15
 call ar_cave x=62 z=82 h=3 yaw=0 al=ammorock chest=ammochest
 # (11-07 review: the hill over it Balboa's sandy rock, blue-grey on its steep faces round the brown den: its rock as the den's)
 prop ammorock cave.rock=den
+# (11-07 second review: pits by the rock's leaning walls, teeth along the hill's foot on the raised flanks: its foot on dry land)
+prop ammorock cave.foot=dry
 # (REACH 10-30: the cave floor ended 3 m over the sea in a cliff - no way in from the water (reach: ammo chest and the
 # cave "can't get there"): a beach slope from the mouth down into the sea)
 # (11-06 review: a narrow fan read as a causeway, and from the sea the rock's flat underside showed over the water on
@@ -151,9 +153,9 @@ brush flatten from 77.5 82 to 77.5 102 r=5 s=20 frames=200 h=-12
 brush flatten at 61 110 r=15.5 s=20 frames=200 h=-11
 brush flatten from 47.5 84 to 47.5 100 r=3.5 s=20 frames=200 h=-5
 brush flatten from 75 84 to 75 100 r=3.5 s=20 frames=200 h=-5
-brush flatten from 30 74 to 30 104 r=4 s=20 frames=200 h=-8
+brush flatten from 30 86 to 30 104 r=4 s=20 frames=200 h=-8
 brush flatten from 100 74 to 100 104 r=4 s=20 frames=200 h=-8
-brush flatten from 35 74 to 35 106 r=4 s=20 frames=200 h=-3
+brush flatten from 35 86 to 35 106 r=4 s=20 frames=200 h=-3
 brush flatten from 95 74 to 95 106 r=4 s=20 frames=200 h=-3
 brush flatten from 40 74 to 40 104 r=4 s=20 frames=200 h=0.5
 brush flatten from 84 74 to 84 104 r=4 s=20 frames=200 h=0.5
@@ -185,7 +187,10 @@ brush flatten from 26 70 to 26 120 r=4 s=20 frames=200 h=-12
 brush flatten from 104 70 to 104 120 r=4 s=20 frames=200 h=-12
 brush flatten from 80 62 to 90 62 r=5 s=20 frames=200 h=1.5
 brush flatten from 88 64 to 88 100 r=5 s=20 frames=200 h=1.5
+brush flatten from 34 62 to 44 62 r=5 s=20 frames=200 h=1.5
+brush flatten from 37 64 to 37 84 r=5 s=20 frames=200 h=1.5
 brush flatten from 41 70 to 41 98 r=3 s=20 frames=200 h=2
+brush smooth from 33 62 to 33 92 r=6 s=4 frames=20
 brush smooth from 91 62 to 91 104 r=6 s=4 frames=20
 brush smooth from 32 112 to 92 112 r=8 s=4 frames=30
 brush smooth from 32 120 to 92 120 r=8 s=4 frames=30
