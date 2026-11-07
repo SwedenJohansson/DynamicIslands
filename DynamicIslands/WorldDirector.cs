@@ -2064,7 +2064,7 @@ namespace DynamicIslands.Editor
 		{
 			float radius = Mathf.Max(10f, CustomIslandSpawner.LandRadius(e.Name));
 			Vector3? spot = CustomIslandSpawner.SpotAhead(raft, radius, e.Position.y, e);
-			if (!spot.HasValue) { Debug.Log("[CUSTOM ISLANDS] [returning] '" + e.HostName + "' can't come back yet: no free spot ahead of the raft"); return false; }
+			if (!spot.HasValue) { Debug.Log("[CUSTOM ISLANDS] [returning] '" + e.HostName + "' can't come back yet: no free spot ahead of the raft (" + CustomIslandSpawner.LastSpotRejects + ")"); return false; }
 			float behind = Flat(e.Position - raft);
 			e.Position = spot.Value;
 			int returned = Returns(e) + (count ? 1 : 0);

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -538,6 +538,7 @@ namespace DynamicIslands.Editor
 		internal static Vector3? SpotAhead(Vector3 raftPos, float radius, float y, IslandWorldState.Entry ignore)
 		{
 			Vector3 dir = SailDirection();
+			var why = new List<string>();
 			for (int attempt = 0; attempt < 12; attempt++)
 			{
 				float side = UnityEngine.Random.value < 0.5f ? -1f : 1f;
@@ -546,10 +547,16 @@ namespace DynamicIslands.Editor
 				float distance = Mathf.Max(UnityEngine.Random.Range(SpawnDistanceMin, SpawnDistanceMax + attempt * 20f), radius + Clearance + RaftRadius);
 				Vector3 c = raftPos + Quaternion.Euler(0, angle, 0) * dir * distance;
 				c.y = y;
-				if (Rejects(c, radius, raftPos, true, 0f, ignore) == null) return c;
+				string no = Rejects(c, radius, raftPos, true, 0f, ignore);
+				if (no == null) { LastSpotRejects = null; return c; }
+				if (why.Count < 3 && !why.Contains(no)) why.Add(no);
 			}
+			LastSpotRejects = string.Join("; ", why.ToArray());
 			return null;
 		}
+
+		/// <summary>Why the last SpotAhead found no spot (a few of its tries' reasons), for the log; null after a spot.</summary>
+		internal static string LastSpotRejects;
 
 		/// <summary>Why an island of this land radius shouldn't go at candidate because one of Raft's islands is there, or null.</summary>
 		public static string OverlapsRaftIsland(Vector3 candidate, float radius)

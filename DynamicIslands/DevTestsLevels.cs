@@ -265,10 +265,10 @@ namespace DynamicIslands
 			Check(ref ok, Mathf.Abs(took - 11f) < 0.05f, "with 10 points in Damage a hit of 10 takes " + took.ToString("F2"));
 			PlayerLevels.SetMine(new LevelRecord());
 
-			// Level up: 99 EXP, then a hit's worth more
-			PlayerLevels.SetMine(new LevelRecord { Xp = 99 });
+			// Level up: one EXP short of level 2, then a hit's worth more (the curve's own numbers: level 2 starts at 75 EXP since 11-03)
+			PlayerLevels.SetMine(new LevelRecord { Xp = LevelRules.TotalFor(2) - 1 });
 			PlayerLevels.GiveXp(1, player.transform.position + player.transform.forward * 3f);
-			Check(ref ok, PlayerLevels.Mine.Level == 2 && PlayerLevels.Mine.Unspent == 2, "100 EXP is level 2 with 2 stat points");
+			Check(ref ok, PlayerLevels.Mine.Level == 2 && PlayerLevels.Mine.Unspent == 2, LevelRules.TotalFor(2) + " EXP is level 2 with 2 stat points (" + PlayerLevels.Mine.Xp + " EXP: level " + PlayerLevels.Mine.Level + ")");
 			Check(ref ok, LevelHud.LastAnnounce != null && LevelHud.LastAnnounce.StartsWith("LEVEL 2!") && LevelHud.LastAnnounce.Contains("Click here"), "a box: " + LevelHud.LastAnnounce);
 			yield return new WaitForSeconds(1.2f);
 			Screenshot(new[] { "levels_levelup" });

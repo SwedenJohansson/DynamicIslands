@@ -50,7 +50,9 @@ namespace DynamicIslands
 
 			// The world file keeps the Raft item (and a line from before has none)
 			string line = StoryBook.WriteLines().FirstOrDefault(l => l.StartsWith("@story.item=" + T8Id));
-			Check(ref ok, line != null && line.EndsWith("|" + T8Raft), "the world's line ends with the Raft item (" + line + ")");
+			// (id|count|name|icon|description|found|Raft item|where from: the Raft item is the 7th field, the source after it)
+			string[] fields = line != null ? line.Substring("@story.item=".Length).Split('|') : new string[0];
+			Check(ref ok, fields.Length >= 7 && Uri.UnescapeDataString(fields[6]) == T8Raft, "the world's line has the Raft item in its 7th field (" + line + ")");
 
 			// The journal: Take out on that item, not on the plain one
 			JournalWindow.Open();

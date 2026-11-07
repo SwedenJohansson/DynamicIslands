@@ -213,7 +213,12 @@ namespace DynamicIslands
 			{
 				string source = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "Crowfield Farm") ?? IslandSpawner.ListSavedIslands().First(n => !n.StartsWith("ci") && !IslandNetwork.IsDownloadName(n));
 				IslandFile f = IslandFile.Load(IslandSpawner.PathFor(source));
-				Check(ref ok, f.Tail.Count == 0, "a file of today has no tail");
+				// (an island saved since R1b carries its stable object ids, the "uid" tag: the only tag today; taken off here, the
+				// file is one without a tail)
+				Check(ref ok, f.Tail.Keys.All(k => k == StableIds.Tag), "a file of today has no tail but its object ids: " + (f.Tail.Count == 0 ? "none" : string.Join(", ", f.Tail.Keys.ToArray())));
+				f.Tail.Remove(StableIds.Tag);
+				for (int i = 0; i < f.Objects.Count; i++) f.Objects[i].Uid = i + 1; // (numbers 1, 2, 3...: Save writes no "uid" block then)
+				f.NextUid = f.Objects.Count + 1;
 				// (without a tail the bytes are what they were: hashes of saved worlds' islands don't change)
 				f.Save(path);
 				byte[] plain = System.IO.File.ReadAllBytes(path);

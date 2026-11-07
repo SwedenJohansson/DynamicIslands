@@ -133,7 +133,7 @@ namespace DynamicIslands
 			// (Franz, 2026-10-17: the journal's tab showed no key, where the inventory's shows TAB)
 			Check(ref ok, HotkeyHints.KeyShown(HotkeyHints.JournalName) == ModKeys.Name(JournalWindow.Key), "the journal's tab shows its key as the inventory's shows TAB (switched on, drawn, opaque): " + HotkeyHints.KeyShown(HotkeyHints.JournalName));
 			KeyCode was = ModKeys.Journal;
-			KeyCode other = new[] { KeyCode.H, KeyCode.U, KeyCode.Y, KeyCode.O, KeyCode.P }.FirstOrDefault(c => c != was && c != ModKeys.Stats && ModKeys.Problem(c) == null);
+			KeyCode other = new[] { KeyCode.H, KeyCode.U, KeyCode.Y, KeyCode.O, KeyCode.P }.FirstOrDefault(c => c != was && c != ModKeys.Stats && ModKeys.Problem(c) == null && !ModKeys.Extras.Any(x => x.Key == c));
 			string setProblem = ModKeys.Set(true, other);
 			yield return new WaitForSeconds(0.7f);
 			Check(ref ok, setProblem == null && HotkeyHints.KeyShown(HotkeyHints.JournalName) == ModKeys.Name(other), "the journal's key changed to " + other + ": its tab says so (" + (setProblem ?? HotkeyHints.KeyShown(HotkeyHints.JournalName)) + ")");
