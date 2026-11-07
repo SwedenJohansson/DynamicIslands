@@ -9,6 +9,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## Next (after 3.2)
+
+- **Rounder hill tops over dry-footed caves**: where a cave hill stands on dry land (`cave.foot=dry`), the skin now falls away gently round the cave's roof instead of in square steps, so the hill's top has no sawtooth edge against the sky. Shelter Atoll's den hill also lost a dark hollow under its east side (an old trench was still under the skin there; it is filled now).
+
 ## 3.2 alpha - 2026-11-07: Caves and islanders
 
 New in this release:
