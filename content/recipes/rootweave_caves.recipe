@@ -239,13 +239,13 @@ prop mushroombasket loot.refill=0
 # (box agent 10-25: a spare machete here - the vines need one, and a fresh world or a lost one from the delta left the island stuck)
 loot mastbox Blueprint_WindTurbine*1;CopperIngot*2;Machete*1
 prop mastbox loot.refill=0
-loot beecache Blueprint_BatteryAdvanced*1;Battery*1;story:fuse*1;OxygenBottle*1
+loot beecache Blueprint_BatteryAdvanced*1;Battery*1;story:rwfuse*1;OxygenBottle*1
 prop beecache loot.refill=0
-loot drownedcrate Blueprint_HeadLight_Advanced*1;CaveMushroom*2;story:fuse*1
+loot drownedcrate Blueprint_HeadLight_Advanced*1;CaveMushroom*2;story:rwfuse*1
 prop drownedcrate loot.refill=0
-loot dencache story:fuse*1;Leather*2
+loot dencache story:rwfuse*1;Leather*2
 prop dencache loot.refill=0
-story fuse|Fuse|Placeable_Lantern_Metal|A ceramic fuse from the survey team's kit. The camp's fuse box takes three.
+story rwfuse|Fuse|Placeable_Lantern_Metal|A ceramic fuse from the survey team's kit. The camp's fuse box takes three.
 story camplight|Camp lights on|Placeable_Lantern_Metal|The Fungus Hall's lamps burn again; the lab corner is lit.
 prop beecache obj.name=beecache
 prop beecache beh.hidden=1
@@ -253,7 +253,7 @@ prop beevines obj.name=beevines
 prop beevines on.use=hide|\nshow|beecache\nmessage||The machete clears the Bee Hall's back wall of vines. A chest, waxed shut by the bees.
 prop fusebox obj.name=fusebox
 prop fusebox beh.use=Fit the fuses
-prop fusebox if.use=take|story:fuse|3
+prop fusebox if.use=take|story:rwfuse|3
 prop fusebox on.use=message||Three fuses in. The turbine's charge reaches the lamps: the Fungus Hall glows, and the lab corner at the back comes out of the dark.\ngive||story:camplight*1\nshow|labchest\nshow|samplereport
 prop fusebox else.use=message||The survey camp's fuse box: three empty fuse clips. The survey kit was split between the far caves.
 note labchest Lab chest | The survey lab's chest: an electric grill's plans (for the samples), and glass.
@@ -299,7 +299,7 @@ step blueprint|Blueprint_BatteryAdvanced|1|Take the advanced battery plans from 
 step reach|flooded_passage|1|Swim into the Flooded Passage
 step blueprint|Blueprint_HeadLight_Advanced|1|Take the headlight plans from the drowned crate
 step kill|Mama bear|1|Defeat the mama bear in the Den
-step collect|story:fuse|3|Find the three fuses: the Bee Hall, the Flooded Passage and the Den
+step collect|story:rwfuse|3|Find the three fuses: the Bee Hall, the Flooded Passage and the Den
 step collect|story:camplight|1|Fit the fuses to the survey camp's fuse box
 step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans from the lab chest
 step read|Poison sample report|1|Read the poison sample report in the lab

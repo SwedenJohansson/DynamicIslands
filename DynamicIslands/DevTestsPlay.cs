@@ -554,7 +554,24 @@ namespace DynamicIslands
 						Check(ref ok, freq != null, "a frequency on the Receiver for '" + rule + "' (" + (freq ?? "none") + ")");
 						// (brought is enough: with the test's raft standing still, earlier islands take the spots ahead and one may come
 						// beyond the load distance - Thornwood 1530 m off - loading as the player goes there, as in a game)
-						yield return TuneTo(rule, 60f, false);
+						yield return TuneTo(rule, 60f, false, () => StoryChain.WaitsForRoom(rule));
+						// (no room ahead of the test's raft, which stood still while the player went from island to island: the earlier
+						// islands lie all round it. In a game the raft is at the last island. The raft moved 600 m on, up to 4 times -
+						// The End of the Ocean's Command Well (300 m) and The City That Never Sank's Foundation Piles (400 m), 11-07)
+						for (int move = 0; move < 4 && !IslandWorldState.Islands.Any(x => x.Rule == rule) && StoryChain.WaitsForRoom(rule); move++)
+						{
+							Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+							if (raft == null || raft.body == null) break;
+							Vector3 dir = Flat(Raft.direction).sqrMagnitude > 0.01f ? Flat(Raft.direction).normalized : Vector3.forward;
+							raft.body.position = raft.body.position + dir * 600f;
+							raft.body.velocity = Vector3.zero;
+							Physics.SyncTransforms();
+							OnRaftCommand();
+							Log("  (no room for '" + rule + "' ahead of the raft, which stood still: the raft moved 600 m on)");
+							yield return new WaitForSeconds(3f);
+							StoryChain.RetryNow(rule);
+							yield return TuneTo(rule, 40f, false);
+						}
 						// (one that comes within the load distance spawns a moment later: the steps after it need it loaded - The
 						// Abyss Expedition's sunken island, 293 m off, wasn't yet)
 						yield return WaitFor(() => IslandWorldState.Islands.Any(x => x.Rule == rule && (x.Root != null || (x.Position - me.transform.position).magnitude > 450f)), 30f);

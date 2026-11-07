@@ -59,6 +59,13 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, float> due = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 		static readonly Dictionary<string, float> retryAt = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 		static readonly HashSet<string> warned = new HashSet<string>();
+		static readonly HashSet<string> noRoom = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+		/// <summary>Tests: the rule's island waits for room ahead of the raft ("no free spot" at its last try).</summary>
+		internal static bool WaitsForRoom(string ruleId) { return noRoom.Contains(ruleId); }
+
+		/// <summary>Tests: the rule tries again at the next tick (the raft was moved).</summary>
+		internal static void RetryNow(string ruleId) { retryAt.Remove(ruleId); noRoom.Remove(ruleId); }
 		/// <summary>The host chose "Play without them" for islands whose files are missing (MissingIslandsCheck), at this game time.</summary>
 		internal static bool PlayingWithoutMissing;
 		internal static float PlayingWithoutSince;
@@ -495,8 +502,9 @@ namespace DynamicIslands.Editor
 			float t;
 			if (retryAt.TryGetValue(r.Id, out t) && Time.unscaledTime < t) return;
 			string why = WorldDirector.Bring(r, null, null);
-			if (why == null) { Brought.Add(r.Id); retryAt.Remove(r.Id); answerFirst.Remove(r.Id); Changed(); return; }
+			if (why == null) { Brought.Add(r.Id); retryAt.Remove(r.Id); answerFirst.Remove(r.Id); noRoom.Remove(r.Id); Changed(); return; }
 			retryAt[r.Id] = Time.unscaledTime + RetrySeconds;
+			if (why.StartsWith("no free spot")) noRoom.Add(r.Id);
 			if (warned.Add(r.Id + why)) Log("Rule '" + r.Id + "' waits: " + why);
 			// (the host is told when the island isn't on this PC: the Receiver gave nothing and the story stopped, silently)
 			WorldDirector.NoteMissingIf(why, r, null);
@@ -740,7 +748,7 @@ namespace DynamicIslands.Editor
 			Rules.Clear();
 			Frequencies.Clear();
 			Unlocked.Clear(); Done.Clear(); Fired.Clear(); Brought.Clear();
-			due.Clear(); retryAt.Clear(); warned.Clear(); PlayingWithoutMissing = false; PlayingWithoutSince = 0f;
+			due.Clear(); retryAt.Clear(); warned.Clear(); noRoom.Clear(); PlayingWithoutMissing = false; PlayingWithoutSince = 0f;
 			// (the last world's: a rule of the same id in the next world gave up after one failure; bughunt 10-30)
 			failedMaking.Clear(); Moved.Clear(); tunedAt.Clear(); tuneSeen.Clear(); answerFirst.Clear();
 			StoryEnding = "";

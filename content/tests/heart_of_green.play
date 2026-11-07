@@ -29,7 +29,7 @@ use spore3
 expect story spore 3
 expect step 9
 use sporepress
-expect story pressed 1
+expect story hgpressed 1
 expect step 10
 read Organism file 2
 expect step 11

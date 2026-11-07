@@ -207,7 +207,7 @@ island on.arrive=message||The biggest tree in the world. Pollen falls off it lik
 
 story power|Heart powered|Note_Paper|The Heart's generator, running.
 story spore|Spore cartridge|Placeable_Lantern_Metal|A glass cartridge of green spores, labelled HEART - BATCH 7.
-story pressed|Spores pressed|Note_Paper|The spore press, loaded and wound.
+story hgpressed|Spores pressed|Note_Paper|The spore press, loaded and wound.
 story crown|Crown unlocked|Note_Paper|The crown terrace's keypad, unlocked.
 story choice|The choice|Note_Paper|One valve turned. The Heart will BURN or SPREAD.
 story burnway|The Heart set to BURN|Note_Paper|The BURN valve turned on the crown terrace. The core must burn too.
@@ -239,7 +239,7 @@ prop spore3 beh.use=Take the spore cartridge
 prop spore3 on.use=give||story:spore*1\nhide|\nmessage||A glass cartridge, green dust inside. It is warm.
 prop sporepress beh.use=Load the cartridges and wind the press
 prop sporepress if.use=has|story:spore|3\n!signal|pressed
-prop sporepress on.use=signal||pressed\ngive||story:pressed*1\nmessage||The press takes the three cartridges and grinds them. A green puff goes up the trunk, toward the crown.
+prop sporepress on.use=signal||pressed\ngive||story:hgpressed*1\nmessage||The press takes the three cartridges and grinds them. A green puff goes up the trunk, toward the crown.
 prop sporepress else.use=message||The press wants three spore cartridges - or it has already run.
 prop crownpad obj.name=crownpad
 prop crownpad beh.use=Type the crown code
@@ -329,7 +329,7 @@ step read|Organism file 1|1|Read organism file 1
 step reach|balcony_1|1|Go to the first balcony
 step reach|balcony_2|1|Ride the zipline to the second balcony
 step collect|story:spore|3|Gather the three spore cartridges
-step collect|story:pressed|1|Wind the spore press
+step collect|story:hgpressed|1|Wind the spore press
 step read|Organism file 2|1|Read organism file 2 on the second balcony
 step reach|balcony_3|1|Ride the zipline to the third balcony
 step read|The purpose|1|Read the purpose

@@ -32,7 +32,7 @@ wait 3
 expect step 9
 expect hidden labchest
 use fusebox
-expect story fuse 0
+expect story rwfuse 0
 expect shown labchest
 expect step 10
 open Lab chest
