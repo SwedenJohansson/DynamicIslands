@@ -92,6 +92,8 @@ plan save
 - `prop <cave piece alias> cave.seacut=1` (`ObjectProps.CaveSeaCut`): the cave hill over that island leaves out its skin over
   deep sea and the shore ring (`CaveMountain.SeaCut`), so a mound raised from the sea floor closes no pool under it
   (Old Mine Islet). Off by default: on Shelter Atoll's islet the cut would take the whole sea side of the hill.
+- `prop <cave piece alias> cave.rock=den` (`ObjectProps.CaveRock`): the cave hill's rock texture is multiplied by that piece's
+  lit shell colour over the hill rock's (`CaveMountain.RockAsDen`); sand on gentle slopes stays. Ignored when a cave of the hill is tinted.
 - In Raft, `tools\cavecheckrun.ps1 <island> [...] [-player 2|3]` checks a built island's caves in one world load:
   CICaveGapsLook (pictures out/in by day and night, walked in and out, flooded parts), CICaveInside shots (X7) and
   CIReach (traps). One summary line per island plus the pictures; exit 1 on FAIL.
