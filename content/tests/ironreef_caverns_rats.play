@@ -1,19 +1,22 @@
-# Cave rats (11-05, CIPlay ironreef_caverns_rats; in a test world): one rat in the Reef Workings' tunnel B and one in
-# tunnel C - alive, on the dug floor, under the rock (not on the hill over the tunnel), walking; pictures of both
+# Cave rats (11-05, CIPlay ironreef_caverns_rats; in a test world): one rat at the hall end of the Reef Workings'
+# tunnel B and one at the hall's east end - alive, on the dug floor, under the rock (not on the hill over the tunnel), walking; pictures of both
 # pairs. Points as in its recipe.
+# (11-07: the player waits outside mouth A, 20 m and more from both rats: in the hall, 9-11 m from them, a rat ran out
+# and killed him; the checks don't need him near. fix1107i: rats moved under the hall's roof, 10.5 m and more from
+# the open mouths - see the recipe; the wait is 30 s: in 15 s neither rat once got 1 m from its start)
 island Ironreef Caverns keep
 offset 1.3339 0.1645
 hour 11
 weather Calm
-at -23 -30.5 h=19.5
+at -44.6 -22.4
 wait 5
 expect animals Rat 2
 expect animalsinside Rat 2
 picture rat_ironreef_b_out -37.6 +1.7 -46.4 -34.6 17 -42.6
-picture rat_ironreef_b_in -26.8 18.3 -35.5 -29.5 16.7 -40
+picture rat_ironreef_b_in -28.8 18.6 -38 -25.8 19.3 -33.4
 picture rat_ironreef_c_out -14 17.2 -45.4 -19 16.2 -43.6
-picture rat_ironreef_c_in -19.5 16.4 -43.2 -24 15 -40.8
-wait 15
+picture rat_ironreef_c_in -26 21 -30 -21.5 19.6 -30.2
+wait 30
 expect animalsmoved Rat 1
 expect animals Rat 2
 expect animalsinside Rat 2
