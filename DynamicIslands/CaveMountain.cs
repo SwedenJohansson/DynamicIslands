@@ -571,11 +571,67 @@ namespace DynamicIslands.Editor
 				if (n == 0) TintRockTextures(mr, factor);
 				Debug.Log("[CUSTOM ISLANDS] Cave mountain tint " + factor + " (colour " + n + ")");
 			}
+			else
+			{
+				// (cave.rock=den: the hill's rock as the den's own - Balboa's sandy rock showed blue-grey on its steep faces round the
+				// brown den, the den's facets through the skin as tan shards; Shelter Atoll's ammo cave, review 11-06)
+				string rockOpt;
+				int asDen = props.FindIndex(p => p != null && p.TryGetValue(ObjectProps.CaveRock, out rockOpt) && rockOpt == "den");
+				if (asDen >= 0 && caves[asDen] != null) RockAsDen(mr, caves[asDen].gameObject);
+			}
 			DressTunnels();
 			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : "") + (SeaCutCells > 0 ? ", " + SeaCutCells + " sea cell(s) cut (cave.seacut)" : ""));
 			// (lone dens walled before the hill was built: their walls' outsides drawn as the hill now)
 			foreach (Transform t in caves)
 				if (t != null) CaveTool.WallLikeHill(t.gameObject, mr);
+		}
+
+		/// <summary>
+		/// The hill's rock coloured as a den's shell (cave.rock=den): the skin drawn lit with its rock texture alone (the sand and
+		/// other colour textures swapped for it for the measure) against the den's shell (CaveTool.LitColour), and its rock
+		/// texture alone multiplied by the one over the other - the sand on its gentle slopes stays. False when the material has
+		/// no texture named rock or a colour could not be read.
+		/// </summary>
+		internal const float DenRockGrey = 0.35f;
+		internal static bool RockAsDen(MeshRenderer mr, GameObject den)
+		{
+			Material m = mr != null ? mr.sharedMaterial : null;
+			if (m == null) return false;
+			Shader sh = m.shader;
+			string rockTex = null;
+			var others = new List<string>();
+			for (int i = 0; i < sh.GetPropertyCount(); i++)
+			{
+				if (sh.GetPropertyType(i) != ShaderPropertyType.Texture) continue;
+				string tp = sh.GetPropertyName(i), low = tp.ToLowerInvariant();
+				if (low.Contains("normal") || low.Contains("bump") || low.Contains("mask") || low.Contains("noise") || low.Contains("height")
+					|| low.Contains("occlusion") || low.Contains("metal") || low.Contains("smooth") || low.Contains("emission") || m.GetTexture(tp) == null) continue;
+				if (rockTex == null && low.Contains("rock")) rockTex = tp; else others.Add(tp);
+			}
+			if (rockTex == null) { Debug.Log("[CUSTOM ISLANDS] Cave mountain rock as den: " + m.name + " [" + sh.name + "] has no rock texture"); return false; }
+			Texture rock = m.GetTexture(rockTex);
+			var keep = new MaterialPropertyBlock();
+			mr.GetPropertyBlock(keep);
+			var measure = new MaterialPropertyBlock();
+			mr.GetPropertyBlock(measure);
+			foreach (string o in others) measure.SetTexture(o, rock);
+			mr.SetPropertyBlock(measure);
+			Color shell, hill = Color.white;
+			bool read = CaveTool.LitColour(CaveTool.DenShell(den), out shell) && CaveTool.LitColour(new Renderer[] { mr }, out hill);
+			mr.SetPropertyBlock(keep);
+			if (!read) { Debug.Log("[CUSTOM ISLANDS] Cave mountain rock as den: colours not read"); return false; }
+			System.Func<float, float, float> ratio = (a, b) => Mathf.Clamp(a / Mathf.Max(0.02f, b), 0.1f, 4f);
+			Color factor = new Color(ratio(shell.r, hill.r), ratio(shell.g, hill.g), ratio(shell.b, hill.b), 1f);
+			// (a third of the way to grey: the full factor turned Balboa's rock red-orange next to the den's olive-brown faces, the
+			// same mean colour but a stronger hue - 11-07)
+			float mean = (factor.r + factor.g + factor.b) / 3f;
+			factor = Color.Lerp(factor, new Color(mean, mean, mean, 1f), DenRockGrey);
+			Texture2D t = DigTunnel.Scaled(rock, factor, " (den rock)");
+			if (t == null) return false;
+			keep.SetTexture(rockTex, t);
+			mr.SetPropertyBlock(keep);
+			Debug.Log("[CUSTOM ISLANDS] Cave mountain rock as den: shell " + shell.ToString("0.00") + ", hill rock " + hill.ToString("0.00") + ", " + rockTex + " x " + factor.ToString("0.00"));
+			return true;
 		}
 
 		/// <summary>Raft's island rock (CaravanIslandRocks) has no colour property, so ApplyTint leaves it orange under a dark

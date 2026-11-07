@@ -1036,7 +1036,8 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
     a dark cave opening. The hill and the wall are shaded as one smooth surface, with no mosaic of squares. A hill raised
     from the sea floor keeps its slope into the sea; give one of its cave pieces the setting `cave.seacut=1` (in a recipe
     `prop <alias> cave.seacut=1`) and the hill leaves out its skin over deep sea, so it closes no pool of water under it
-    (Old Mine Islet's mound has it).
+    (Old Mine Islet's mound has it). The setting `cave.rock=den` on a cave piece colours the hill's rock as that piece's
+    own rock, so a brown den does not sit in blue-grey hill rock (Shelter Atoll's ammo cave has it; a tinted cave's tint wins).
     Every cave piece's rock is drawn from outside as well as from inside (Raft draws it from inside only), and the
     island's ground where it runs through a cave's rooms is let down under the room's floor, or cut away where it lies
     wholly inside or runs steeply through (a hole dug down to a tunnel's end): from inside a cave you see only rock - no ground across a room, no sea or sky through a wall. The
