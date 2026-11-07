@@ -29,6 +29,7 @@ namespace DynamicIslands.Editor
 		static WorldWindow instance;
 		static Text hostText, planText, islandsText, hintText, headStartText;
 		static RectTransform panel, body, bodyView, islandList;
+		static Text stuckText;
 		static readonly Dictionary<string, Button> buttons = new Dictionary<string, Button>();
 		static float nextRefresh;
 		/// <summary>
@@ -143,6 +144,7 @@ namespace DynamicIslands.Editor
 			BuildRules(left);
 			BuildRandomizer(left);
 			BuildIslands(left);
+			BuildStuck(left);
 			BuildOptions(right);
 			BuildPlan(right);
 
@@ -261,6 +263,28 @@ namespace DynamicIslands.Editor
 			Note(box, IslandsMidGame, 1);
 		}
 
+		/// <summary>3.2 "Stuck on a quest?" (QuestSkip): the current quest's step and "Skip current quest step" (host; asks first).</summary>
+		static void BuildStuck(Transform left)
+		{
+			RectTransform box = Section(left, "Stuck on a quest?", "StuckOnAQuest");
+			stuckText = Note(box, "", 2, "StuckNote");
+			stuckText.fontSize = 11; stuckText.color = UIKit.TextColor;
+			UIKit.Size(stuckText.gameObject, -1, 27);
+			RectTransform row = UIKit.Row(box, 26f, 6f, "SkipRow");
+			Add("SkipStep", UIKit.Button(row, "Skip current quest step", QuestSkip.AskCurrent, "Only if a step can no longer be done (a key used up, a lever that won't move): the current quest's step counts as done and the quest moves on, for every player. Asks first; can't be undone. F10: SkipStep", 200, 26f, 12));
+			Note(row, "Asks first. Can't be undone. (F10: SkipStep)", 1, "SkipNote");
+		}
+
+		/// <summary>The current quest and its step, and the button (host only).</summary>
+		static void RefreshStuck(bool host)
+		{
+			string now = QuestSkip.DescribeCurrent();
+			stuckText.text = now.Length == 0 ? QuestSkip.NoQuest + "." : "Now: " + now;
+			buttons["SkipStep"].interactable = host && now.Length > 0;
+			buttons["SkipStep"].gameObject.SetActive(host);
+			if (!host) stuckText.text += "\nOnly the host can skip a step.";
+		}
+
 		static void BuildOptions(Transform right)
 		{
 			RectTransform box = Section(right, "Extra options", "ExtraOptions");
@@ -372,12 +396,13 @@ namespace DynamicIslands.Editor
 
 		public static void Close()
 		{
+			QuestSkip.CloseConfirm();
 			if (canvas != null) canvas.gameObject.SetActive(false);
 		}
 
 		void Update()
 		{
-			if (EscKey.Down(this)) { Close(); return; }
+			if (EscKey.Down(this)) { if (QuestSkip.ConfirmShown) QuestSkip.CloseConfirm(); else Close(); return; }
 			if (!LoadSceneManager.IsGameSceneLoaded) { Close(); return; }
 			// (a client sees the host's changes as they come)
 			if (Time.unscaledTime >= nextRefresh) { nextRefresh = Time.unscaledTime + 1f; Refresh(); }
@@ -415,6 +440,7 @@ namespace DynamicIslands.Editor
 			bool host = Host;
 			hostText.text = host ? "you are the host: changes are for every player" : "the host's settings - only the host changes them";
 			foreach (var kv in buttons) kv.Value.interactable = host && kv.Key != "BuildCost_Value";
+			RefreshStuck(host);
 			buttons["BackToEditor"].gameObject.SetActive(IslandTest.Testing);
 			buttons["TestKit"].gameObject.SetActive(IslandTest.Testing);
 			buttons["GiveKit"].gameObject.SetActive(IslandTest.Testing);

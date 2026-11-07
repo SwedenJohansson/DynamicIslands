@@ -16,21 +16,22 @@ namespace DynamicIslands
 	/// </summary>
 	public static class QuestTestCommands
 	{
-		const string Usage = "QuestTest [show] | step <n|done> [quest] | signal <name> | give <story item> [count] | reset";
+		const string Usage = "QuestTest [show] | step <n|done> [quest] | skip [quest] | signal <name> | give <story item> [count] | reset";
 
-		[ConsoleCommand(name: "QuestTest", docs: "Try a quest (the custom island nearest you): QuestTest = its quests and steps, the current one marked; QuestTest step <n|done> [quest] = jump to step n of the main quest (or quest 2, 3...), back too (host); QuestTest signal <name> = send a signal on it (host); QuestTest give <story item> [count] = the crew gets a story item (host); QuestTest reset = the island as new: quests, chests, pickups, signals (host; it is made again)")]
+		[ConsoleCommand(name: "QuestTest", docs: "Try a quest (the custom island nearest you): QuestTest = its quests and steps, the current one marked; QuestTest step <n|done> [quest] = jump to step n of the main quest (or quest 2, 3...), back too (host); QuestTest skip [quest] = skip the current step as SkipStep does: what it gives is given, then the next step (host); QuestTest signal <name> = send a signal on it (host); QuestTest give <story item> [count] = the crew gets a story item (host); QuestTest reset = the island as new: quests, chests, pickups, signals (host; it is made again)")]
 		public static void QuestTestCommand(string[] args)
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded) { DynamicIslands.Notify("QuestTest works in a world, near a custom island", true); return; }
 			string what = args != null && args.Length > 0 ? args[0].Trim().ToLowerInvariant() : "show";
-			if (what != "show" && what != "step" && what != "signal" && what != "give" && what != "reset") { DynamicIslands.Notify(Usage, true); return; }
+			if (what != "show" && what != "step" && what != "skip" && what != "signal" && what != "give" && what != "reset") { DynamicIslands.Notify(Usage, true); return; }
 			if (what != "show" && !Raft_Network.IsHost) { DynamicIslands.Notify("Only the host changes an island's quest (QuestTest " + what + ")", true); return; }
-			IslandWorldState.Entry e = Nearest(what == "show" || what == "step");
-			if (e == null) { DynamicIslands.Notify(what == "show" || what == "step" ? "No custom island with a quest is loaded near you" : "No custom island is loaded near you", true); return; }
+			IslandWorldState.Entry e = Nearest(what == "show" || what == "step" || what == "skip");
+			if (e == null) { DynamicIslands.Notify(what == "show" || what == "step" || what == "skip" ? "No custom island with a quest is loaded near you" : "No custom island is loaded near you", true); return; }
 			switch (what)
 			{
 				case "show": DynamicIslands.Notify(Describe(e), false, 8); break;
 				case "step": Step(e, args); break;
+				case "skip": SkipStep(e, args); break;
 				case "signal":
 					string name = args.Length > 1 ? string.Join(" ", args.Skip(1).ToArray()).Trim() : "";
 					if (name.Length == 0) { DynamicIslands.Notify("QuestTest signal <name>", true); return; }
@@ -90,6 +91,18 @@ namespace DynamicIslands
 			IslandWorldState.Save();
 			int now = QuestTracker.StepOf(e, quest - 1);
 			DynamicIslands.Notify("Quest " + quest + " of '" + e.HostName + "': " + (now >= q.Steps.Count ? "done" : "step " + (now + 1) + ": " + q.Steps[now].Describe()));
+		}
+
+		/// <summary>QuestTest skip [quest]: the current step skipped (QuestSkip.Skip - as SkipStep and the settings page's button, without the box).</summary>
+		static void SkipStep(IslandWorldState.Entry e, string[] args)
+		{
+			int quest = 1;
+			if (args.Length > 1 && (!int.TryParse(args[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out quest) || quest < 1 || quest > QuestTracker.QuestsOf(e)))
+			{ DynamicIslands.Notify("QuestTest skip [1-" + QuestTracker.QuestsOf(e) + "]", true); return; }
+			if (!QuestSkip.Skip(e, quest - 1)) { DynamicIslands.Notify("Quest " + quest + " of '" + e.HostName + "' has no step to skip", true); return; }
+			IslandQuest q = QuestTracker.QuestOf(e, quest - 1);
+			int now = QuestTracker.StepOf(e, quest - 1);
+			DynamicIslands.Notify("Quest " + quest + " of '" + e.HostName + "': skipped, " + (now >= q.Steps.Count ? "done" : "step " + (now + 1) + ": " + q.Steps[now].Describe()));
 		}
 
 		/// <summary>Host: the island as new - its state (quests, chests, pickups, signals, used things) gone, made again here

@@ -34,6 +34,13 @@ namespace DynamicIslands.Editor
 		/// <summary>"1" on any cave piece under a cave hill: the hill leaves out its skin over deep sea (CaveMountain.SeaCut and its shore ring) -
 		/// Old Mine Islet, whose mound over the sea closed pools of water under it. Without it a hill raised from the sea floor keeps its slope into the sea.</summary>
 		public const string CaveSeaCut = "cave.seacut";
+		/// <summary>"den" on a cave piece under a cave hill: the hill's rock texture coloured as that piece's own shell (CaveMountain.RockAsDen) -
+		/// Balboa's sandy rock showed blue-grey round Shelter Atoll's brown ammo den. Only on a hill none of whose caves is tinted.</summary>
+		public const string CaveRock = "cave.rock";
+		/// <summary>"dry" on a cave piece: its hill's foot meets raised dry land cleanly - the ground under the piece's walls leaning
+		/// out over it outside is not let down (CaveGround.Walled), and the hill's sunk rim goes on over dry land the sea cut took
+		/// (CaveMountain). Shelter Atoll's ammo den, 11-07; without it nothing changes.</summary>
+		public const string CaveFoot = "cave.foot";
 		/// <summary>Loot: "UniqueItemName*amount;..." (Raft's item names), and "0" = never fills up again.</summary>
 		public const string LootItems = "loot.items", LootRefill = "loot.refill";
 		/// <summary>Buried treasure: Raft's treasure kind (its uniqueTreasureIndex; 0 = the common chest).</summary>

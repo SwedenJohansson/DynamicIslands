@@ -811,9 +811,9 @@ namespace DynamicIslands.Editor
 		/// The colour some renderers show as the game draws them: lit by the scene's lights, with their own shaders, property
 		/// blocks (a tint) and textures. They alone are drawn - moved for a moment to a layer nothing else uses, for a camera
 		/// that sees only that layer - from four sides and above into a small picture without fog, whose drawn pixels are
-		/// averaged. The den's atlas texture and mesh can't be read in the game, so drawing is how its look is measured.
+		/// averaged (from: the directions to look in instead). The den's atlas texture and mesh can't be read in the game, so drawing is how its look is measured.
 		/// </summary>
-		public static bool LitColour(Renderer[] rs, out Color colour)
+		public static bool LitColour(Renderer[] rs, out Color colour, bool sidesOnly = false, Vector3[] from = null)
 		{
 			colour = Color.white;
 			rs = rs != null ? rs.Where(r => r != null).ToArray() : new Renderer[0];
@@ -849,7 +849,7 @@ namespace DynamicIslands.Editor
 				RenderSettings.fog = false;
 				Color sum = Color.clear;
 				int n = 0;
-				foreach (Vector3 dir in new[] { Vector3.forward, Vector3.back, Vector3.left, Vector3.right, Vector3.down })
+				foreach (Vector3 dir in from != null ? from : sidesOnly ? new[] { Vector3.forward, Vector3.back, Vector3.left, Vector3.right } : new[] { Vector3.forward, Vector3.back, Vector3.left, Vector3.right, Vector3.down })
 				{
 					go.transform.SetPositionAndRotation(b.center - dir * ext * 2f, Quaternion.LookRotation(dir, Mathf.Abs(dir.y) > 0.9f ? Vector3.forward : Vector3.up));
 					cam.Render();

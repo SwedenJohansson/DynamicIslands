@@ -1,7 +1,7 @@
 # Old Mine Islet's tunnels for the user (CIPlay old_mine_islet_final, round 6 11-06): each one's mouth from where a
 # player stands outside it, and a look in from just inside, a flashlight on in the dug ones. Points as in its recipe.
 island Old Mine Islet keep
-offset 2.6829 -2.0027
+offset 2.7895 -1.945
 hour 11
 weather Calm
 at 0 -12
