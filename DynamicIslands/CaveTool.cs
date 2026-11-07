@@ -1004,10 +1004,22 @@ namespace DynamicIslands.Editor
 			// blends its rock and sand by the normal - Shelter Atoll's ammo cave from the sea, 11-06)
 			var corner = new Dictionary<int, int>[] { new Dictionary<int, int>(), new Dictionary<int, int>() };
 			// (a point on the wall from its place in the wall's plane, and its smooth normal; 0: facing -z, into the den)
-			// (and kept in the den's rock: the lean and relief took the outer edge up to 2.5 m toward the mouth, past the den's
-			// front and over its top, where it stood out as dark blades over The Abyss's acid path - fix1107. A point that leaves
-			// the rock there (no rock round it in the wall's plane, the test the cells were kept by) leans less, down to the flat
-			// wall; inward (the funnel) stays as it is)
+			// (and kept in the rock: the lean and relief took the outer edge up to 2.5 m toward the mouth, out of the den's rock
+			// and the hill, where its outside - shaded dark round the way in - stood out as black blades over The Abyss's acid
+			// path - fix1107. A leaned point must be buried: up, to both sides and out toward the mouth the first thing met is
+			// rock seen from inside (a back face) - any of the island's rock, the hill and ground too. One that isn't leans less,
+			// down to the flat wall; inward (the funnel) stays as it is)
+			Vector3 outward = go.transform.TransformDirection(Vector3.forward).normalized;
+			var buriedDirs = new[] { up, right, -right, outward };
+			Func<Vector3, bool> buried = w =>
+			{
+				foreach (Vector3 dir in buriedDirs)
+				{
+					RaycastHit h;
+					if (!Physics.Raycast(w, dir, out h, reach, ~0, QueryTriggerInteraction.Ignore) || Vector3.Dot(h.normal, dir) <= 0f) return false;
+				}
+				return true;
+			};
 			var heldDepth = new Dictionary<long, float>();
 			Func<float, float, float> held = (px, py) =>
 			{
@@ -1025,7 +1037,7 @@ namespace DynamicIslands.Editor
 						for (int s = 4; s > 0; s--)
 						{
 							Vector3 w = go.transform.TransformPoint(new Vector3(px, py, z + d * s / 4f));
-							if (hits(w, up) && hits(w, -up) && hits(w, right) && hits(w, -right)) { keepD = d * s / 4f; break; }
+							if (buried(w)) { keepD = d * s / 4f; break; }
 						}
 						d = keepD;
 					}

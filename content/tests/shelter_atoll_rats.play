@@ -2,7 +2,7 @@
 # - alive, on the floor, under the cave's rock (not on the rock over it), walking; a picture
 # of them. Points as in its recipe.
 island Shelter Atoll keep
-offset 16.0795 1.4286
+offset 15.2675 -0.3116
 hour 12
 weather Calm
 at 61 100
