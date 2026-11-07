@@ -1057,6 +1057,7 @@ namespace DynamicIslands.Editor
 			var hollow = new bool[nx, ny];
 			var open = new bool[nx, ny];
 			var sky = new bool[nx, ny];
+			var free = new bool[nx, ny];
 			bool backsOpen = Physics.queriesHitBackfaces;
 			Physics.queriesHitBackfaces = true;
 			try
@@ -1070,6 +1071,7 @@ namespace DynamicIslands.Editor
 						int u = firstMet(w, up), r = firstMet(w, right), l = firstMet(w, -right);
 						hollow[i, k] = denMet(w, up) == -1 && denMet(w, right) == -1 && denMet(w, -right) == -1 && denMet(w, -up) == -1;
 						open[i, k] = !hollow[i, k] && !(u == 1 && r == 1 && l == 1 && firstMet(w, outward) == 1);
+						free[i, k] = u == 0 && r == 0 && l == 0 && firstMet(w, outward) == 0 && firstMet(w, -up) == 0;
 						sky[i, k] = u == 0;
 					}
 			}
@@ -1080,7 +1082,8 @@ namespace DynamicIslands.Editor
 				{
 					if (!open[i, k]) continue;
 					// (an open cell with nothing over it, the sky, is the wall's rim standing out over the hill - seen from the side it
-					// was a dark blade. It stays only right beside the way in, so the way in keeps its frame)
+					// was a dark blade. It stays only right beside the way in, so the way in keeps its frame - and not even there when
+					// nothing of the hill is met any way round it: then the den's own shell stands out of the hill and frames the way in)
 					bool byHollow = false, byWayIn = false;
 					for (int di = -1; di <= 1; di++)
 						for (int dk = -1; dk <= 1; dk++)
@@ -1090,7 +1093,7 @@ namespace DynamicIslands.Editor
 							if (hollow[a, b]) byHollow = true;
 							if (state[a, b] == 2) byWayIn = true;
 						}
-					if (!byHollow || (sky[i, k] && !byWayIn)) { state[i, k] = 0; leftOut++; }
+					if (!byHollow || (sky[i, k] && !byWayIn) || free[i, k]) { state[i, k] = 0; leftOut++; }
 				}
 			int cells = 0;
 			var trisOut = new List<int>();
