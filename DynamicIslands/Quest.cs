@@ -150,6 +150,9 @@ namespace DynamicIslands.Editor
 		const float ShowDistance = 70f;
 		/// <summary>The island whose panel is up (kept until the player is NearDistance away), or -1.</summary>
 		static int panelIsland = -1;
+		/// <summary>The island and quest the quest panel shows now (-1 = none; QuestSkip's current quest).</summary>
+		internal static int PanelIsland { get { return panelIsland; } }
+		internal static int PanelQuest = -1;
 
 		/// <summary>Raised on every machine when a quest moves on (tests listen): island id, new step (== steps count when done).</summary>
 		public static event Action<int, int> Advanced;
@@ -201,6 +204,13 @@ namespace DynamicIslands.Editor
 				if (q.Exists && step < q.Steps.Count) return true;
 			}
 			return false;
+		}
+
+		/// <summary>The day quest n's step was last set (-1 = never; QuestSkip picks the latest after a load).</summary>
+		internal static int StepDayOf(IslandWorldState.Entry e, int n)
+		{
+			ObjectState s;
+			return e != null && e.State.TryGetValue(StepKeyOf(n), out s) ? s.Day : -1;
 		}
 
 		/// <summary>Whether quest n of the island is done (it has steps, all done).</summary>
@@ -448,6 +458,7 @@ namespace DynamicIslands.Editor
 			int before = StepOf(e, n);
 			if (step < before || (step == before && progress <= ProgressOf(e, n))) return false;
 			e.State[StepKeyOf(n)] = new ObjectState { Active = true, Yield = step, Day = Today };
+			QuestSkip.Noted(e.Id, n);
 			if (progress > 0) e.State[ProgressKeyOf(n)] = new ObjectState { Active = true, Yield = progress, Day = Today };
 			else e.State.Remove(ProgressKeyOf(n));
 			if (send) IslandNetwork.SendQuest(e.Id, n, step, progress);
@@ -488,6 +499,7 @@ namespace DynamicIslands.Editor
 			int before = StepOf(e, n);
 			if (step > before || (step == before && progress >= ProgressOf(e, n))) return Set(e, n, step, progress, false);
 			e.State[StepKeyOf(n)] = new ObjectState { Active = true, Yield = step, Day = Today };
+			QuestSkip.Noted(e.Id, n);
 			if (progress > 0) e.State[ProgressKeyOf(n)] = new ObjectState { Active = true, Yield = progress, Day = Today };
 			else e.State.Remove(ProgressKeyOf(n));
 			IslandQuest q = QuestOf(e, n);
@@ -589,8 +601,6 @@ namespace DynamicIslands.Editor
 		static int followedIsland = -1, followedStep = -1;
 		static readonly HashSet<int> introduced = new HashSet<int>();
 		static Button closeButton;
-		/// <summary>3.2: "Stuck? Skip step" under the steps (QuestSkip): the host asks, players who joined see it greyed.</summary>
-		static Button skipButton;
 		/// <summary>The panel closed with its X: hidden for this quest and step while the player stays at the island.</summary>
 		static int closedKey = -1, closedStep = -1;
 		/// <summary>When each finished quest was first seen done (island * 16 + quest): its panel goes 30 s later (ROADMAP CT10).</summary>
@@ -642,6 +652,7 @@ namespace DynamicIslands.Editor
 			// (shows within ShowDistance, stays up out to NearDistance)
 			IslandWorldState.Entry at = IslandWorldState.Islands.FirstOrDefault(e => e.Root != null && Near(e, e.Id == panelIsland ? NearDistance : ShowDistance) && Enumerable.Range(0, QuestsOf(e)).Any(n => TickQuest(e, n).Exists));
 			panelIsland = at != null ? at.Id : -1;
+			PanelQuest = -1;
 			if (at == null) { closedKey = -1; if (panel != null) panel.gameObject.SetActive(false); return; }
 			int quests = QuestsOf(at);
 			// (a reward kept for this player, who wasn't here when a quest was done: now - LM8. Also for a player who joined
@@ -661,6 +672,7 @@ namespace DynamicIslands.Editor
 			if (!TickQuest(at, shown).Exists) shown = Enumerable.Range(0, quests).First(n => TickQuest(at, n).Exists);
 			IslandQuest q = TickQuest(at, shown);
 			int step = StepOf(at, shown);
+			PanelQuest = shown;
 			if (introduced.Add(at.Id) && step == 0 && q.Intro.Length > 0) Show(q.ShownTitle, q.Intro + StartHint(at));
 			if (panel == null) Build();
 			int open = Enumerable.Range(0, quests).Count(n => n != shown && TickQuest(at, n).Exists && StepOf(at, n) < TickQuest(at, n).Steps.Count);
@@ -692,27 +704,7 @@ namespace DynamicIslands.Editor
 				else lines.Add("<color=#b39a6c>\u2022 ?</color>");
 			}
 			ShowSteps(lines, step, at.Id * 16 + shown);
-			ShowSkip(at, shown, step, q);
 		}
-
-		/// <summary>The panel's "Stuck? Skip step" (QuestSkip): on the quest shown, while it has a step to do and this PC has it
-		/// on. The host gets the confirm box; a player who joined sees it greyed (the host's skip reaches them as a step done).</summary>
-		static void ShowSkip(IslandWorldState.Entry at, int shown, int step, IslandQuest q)
-		{
-			bool show = QuestSkip.Enabled && step < q.Steps.Count;
-			if (skipButton.gameObject.activeSelf != show) skipButton.gameObject.SetActive(show);
-			if (!show) return;
-			bool host = Raft_Network.IsHost;
-			skipButton.interactable = host;
-			string label = host ? "Stuck? Skip this step" : "Skip step: only the host can skip";
-			Text t = UIKit.LabelOf(skipButton);
-			if (t != null && t.text != label) t.text = label;
-			skipButton.onClick.RemoveAllListeners();
-			if (host) skipButton.onClick.AddListener(() => QuestSkip.AskFor(at, shown, step));
-		}
-
-		/// <summary>Tests: the panel's skip button as it is now (null before the panel is built).</summary>
-		internal static Button SkipButton { get { return skipButton; } }
 
 		/// <summary>
 		/// The steps, one line each, in a list at most VisibleSteps tall: a longer quest scrolls - by itself to the
@@ -861,14 +853,10 @@ namespace DynamicIslands.Editor
 			stepsView.name = "Steps";
 			UIKit.Size(stepsView.gameObject, -1, 20f);
 			stepsScroll.scrollSensitivity = 18f;
-			skipButton = UIKit.Button(panel, "Stuck? Skip this step", () => { }, "Only if you are stuck: the step counts as done and the quest moves on (the host; asks first). Defaults > Keys hides this button", -1, 22f, 12);
-			skipButton.name = "SkipStep";
-			skipButton.gameObject.SetActive(false);
 			stepLines.Clear();
 			followedIsland = followedStep = -1;
 			foreach (Graphic g in panel.GetComponentsInChildren<Graphic>()) g.raycastTarget = false;
 			foreach (Graphic g in closeButton.GetComponentsInChildren<Graphic>()) g.raycastTarget = true;
-			foreach (Graphic g in skipButton.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = true;
 			// (only the list's own background and its scrollbar take the mouse: the wheel scrolls it while the cursor is free)
 			stepsScroll.GetComponent<Image>().raycastTarget = true;
 			if (stepsScroll.verticalScrollbar != null)

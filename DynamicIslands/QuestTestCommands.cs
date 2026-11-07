@@ -18,7 +18,7 @@ namespace DynamicIslands
 	{
 		const string Usage = "QuestTest [show] | step <n|done> [quest] | skip [quest] | signal <name> | give <story item> [count] | reset";
 
-		[ConsoleCommand(name: "QuestTest", docs: "Try a quest (the custom island nearest you): QuestTest = its quests and steps, the current one marked; QuestTest step <n|done> [quest] = jump to step n of the main quest (or quest 2, 3...), back too (host); QuestTest skip [quest] = skip the current step as the quest panel's Stuck? button does: what it gives is given, then the next step (host); QuestTest signal <name> = send a signal on it (host); QuestTest give <story item> [count] = the crew gets a story item (host); QuestTest reset = the island as new: quests, chests, pickups, signals (host; it is made again)")]
+		[ConsoleCommand(name: "QuestTest", docs: "Try a quest (the custom island nearest you): QuestTest = its quests and steps, the current one marked; QuestTest step <n|done> [quest] = jump to step n of the main quest (or quest 2, 3...), back too (host); QuestTest skip [quest] = skip the current step as SkipStep does: what it gives is given, then the next step (host); QuestTest signal <name> = send a signal on it (host); QuestTest give <story item> [count] = the crew gets a story item (host); QuestTest reset = the island as new: quests, chests, pickups, signals (host; it is made again)")]
 		public static void QuestTestCommand(string[] args)
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded) { DynamicIslands.Notify("QuestTest works in a world, near a custom island", true); return; }
@@ -93,7 +93,7 @@ namespace DynamicIslands
 			DynamicIslands.Notify("Quest " + quest + " of '" + e.HostName + "': " + (now >= q.Steps.Count ? "done" : "step " + (now + 1) + ": " + q.Steps[now].Describe()));
 		}
 
-		/// <summary>QuestTest skip [quest]: the current step skipped (QuestSkip.Skip - the quest panel's button without its box).</summary>
+		/// <summary>QuestTest skip [quest]: the current step skipped (QuestSkip.Skip - as SkipStep and the settings page's button, without the box).</summary>
 		static void SkipStep(IslandWorldState.Entry e, string[] args)
 		{
 			int quest = 1;

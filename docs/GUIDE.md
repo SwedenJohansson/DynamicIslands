@@ -386,17 +386,19 @@ and with the mouse wheel over the panel while the cursor is free (the inventory,
 Once every quest of the island is done, the panel goes by itself **30 seconds** later; its **×** (top right, while the
 cursor is free) closes it at any time - it comes back with the next step, or when you come to the island again.
 
-**Stuck? Skip this step.** If a step can no longer be done (a story key used up by the wrong lock, a lever that will
-not move), the panel's **Stuck? Skip this step** button (under the steps, while the cursor is free) is the way out. It asks
-first - "Only if you are stuck: this step counts as done and the quest moves on. Can't be undone." - and **Skip step**
-then counts the step as done: the quest moves on as if you had done it (the next step, and the reward after the last
-one), and what the step would have given is given, so the steps after it can still be done: a **collect** step gives
-the crew the story items it is short of, a **signal** step sends its signal (or puts its object in the state it waits
-for, such as `Gate=open`). Other steps just count as done; their notes, chests and zones stay as they are. Only the
-host can skip (players who joined see the button greyed, "only the host can skip"); everyone sees the quest move on,
-and it is saved with the world. The panel shows the island's first unfinished quest, so a side quest's step can be
-skipped there once the quests before it are done (F10 `QuestTest skip <quest>` skips any). The **Skip step** button in
-**Defaults... > Keys (this PC)** (ON by default, kept per PC as `questSkip=on/off`) hides the button on this PC.
+**Stuck? Skip the current quest step.** If a step can no longer be done (a story key used up by the wrong lock, a
+lever that will not move), the host can skip it: **Esc > Custom Islands > Skip current quest step** (under **Stuck on a
+quest?**, which names the current quest and its step), or the console command `SkipStep` (F10). The button asks first -
+"Only if you are stuck: this step counts as done and the quest moves on. Can't be undone." - and **Skip step** then
+counts the step as done: the quest moves on as if you had done it (the next step, and the reward and the finished
+quest after the last one), and what the step would have given is given, so the steps after it can still be done: a
+**collect** step gives the crew the story items it is short of, a **signal** step sends its signal (or puts its object
+in the state it waits for, such as `Gate=open`). Other steps just count as done; their notes, chests and zones stay as
+they are. It works on the **current quest** - any quest: a storyline island's, a plan's or a random island's, main or
+side quest: the one on the quest panel while it shows one, else the quest that last started or moved on (in a saved
+world just loaded, the one that moved on last). With no quest under way it says **No quest in progress**. Only the
+host can skip (players who joined don't get the button, and `SkipStep` tells them only the host can); everyone sees the
+quest move on, and it is saved with the world.
 
 **A reward lost with a save.** A reward follows Raft's saves: if Raft crashes, you quit without saving or you load an
 older save after a quest's reward was paid, the reward went with it - so when you finish the quest again, it is paid
@@ -1523,8 +1525,8 @@ moment, with other islands after it ([7.2](#72-your-first-world-plan-step-by-ste
 or any world you host). `QuestTest` lists the island's quests and steps, the current one marked **>**.
 `QuestTest step 4` jumps the main quest to step 4 - back as well as forward (`QuestTest step 2 2` = quest 2's step 2,
 `QuestTest step done` finishes it, with its reward); `QuestTest signal gate-open` sends a signal on the island, as a
-lever or an action does; `QuestTest give brass_key 2` gives the crew a story item; `QuestTest skip` skips the main quest's current step as the
-quest panel's **Stuck? Skip this step** does (`QuestTest skip 2` = quest 2's); `QuestTest reset` sets the island
+lever or an action does; `QuestTest give brass_key 2` gives the crew a story item; `QuestTest skip` skips the nearest island's main quest's current step as
+`SkipStep` does (`QuestTest skip 2` = quest 2's); `QuestTest reset` sets the island
 back to new - quests at step 1, chests full, pickups back, signals gone - and makes it again (players standing on it
 drop into the sea for a moment and are put back on its ground). Rewards a player already had stay had. Only the host changes things; players who joined see
 the same.
@@ -3366,7 +3368,7 @@ final until you click **Create** in the New Game box.
 
 **In a world:** press **Esc → Custom Islands** (a button in Raft's pause menu). The world's own settings window
 opens: monster difficulty, build cost, the world randomizer, the extra options, the level up system and the islands
-while sailing, plus the world's plan and story (where each island's quest stands is in the quest book). The **host** changes them there, and every player gets the change at
+while sailing, plus the world's plan and story (where each island's quest stands is in the quest book), and **Stuck on a quest?** with **Skip current quest step** (host; [Quests](#quests): "Stuck? Skip the current quest step"). The **host** changes them there, and every player gets the change at
 once. Players who joined see the host's settings, greyed out. (While you try an island from the editor, the same
 window has **Back to the editor**, [4.9](#49-trying-the-island-in-a-world-test).)
 
@@ -4185,7 +4187,7 @@ get the settings they share at once.
 | Group | What is in it |
 |---|---|
 | **Random islands while sailing** | Random islands on or off (0 = off), the quiet minutes in a new world, the spacing, how far ahead an island appears (**Appear from** and **to**), and when a needed island returns |
-| **Keys (this PC)** | The **Journal** key (J), the **Stats** key (K) and, on the second line, **Notebook** (U, your own notebook), **Map** (M, the minimap) and **Ping** (G, a ping for the crew), on the third line **Map zoom in** (=, the + key) and **Map zoom out** (-): click one, then press the new key (Esc keeps the old one). Beside them the **Minimap** button (ON) switches the island map off on this PC, and the **Skip step** button (ON) hides the quest panel's **Stuck? Skip this step** on this PC. A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why |
+| **Keys (this PC)** | The **Journal** key (J), the **Stats** key (K) and, on the second line, **Notebook** (U, your own notebook), **Map** (M, the minimap) and **Ping** (G, a ping for the crew), on the third line **Map zoom in** (=, the + key) and **Map zoom out** (-): click one, then press the new key (Esc keeps the old one). Beside them the **Minimap** button (ON) switches the island map off on this PC. A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why |
 | **Shared with every player** | **Receiver dots** on or off, the **Receiver range**, **Unload beyond** and **Regrow days (new worlds)** |
 | **Generated islands** | The weight of new generated islands, the chance one flies, **Things to gather**, **Finds in the shallows** and how far down they go, the five styles (at least one stays lit) and a button for each kind of thing to gather (lit = on) |
 | **Editor camera (this PC)** | The island editor's camera: **Look sensitivity**, **Move speed**, **Zoom speed**, **Pan speed**, **Drag up: look up / down** and **Wheel up: zoom in / out** - the same as the editor's **Camera...** button ([4.1](#41-the-screen)); kept in `world_rules.txt` |
@@ -4315,7 +4317,8 @@ Press **F10** for RML's console.
 | `Monsters` / `Monsters <level>` | World or main menu | The monster difficulty / change it (host; at the main menu: the next new world). The level is `timid`, `normal`, `fierce`, `savage` or `nightmare`; `easy`, `moderate`, `hard` and `impossible` (the words the levels were first called: they mean timid, fierce, savage and nightmare) and the numbers 0-4 (timid to nightmare) work too; any other word is refused and the five are listed |
 | `BuildCost` / `BuildCost <0-100>` | World or main menu | The build cost / change it (host; at the main menu: the next new world). Any whole number from 0 to 100, with or without `%` (`BuildCost 25%`); the slider in World settings moves in steps of 5 |
 | `AnimalLooks` / `AnimalLooks <level>` | World or main menu | Rare animal looks and the looks tamed per animal / change it (host; at the main menu: the next new world). The level is `Normal`, `More`, `Lots` or 0-2 |
-| `QuestTest` / `QuestTest step <n\|done> [quest]` / `signal <name>` / `give <story item> [count]` / `skip [quest]` / `reset` | World | Try the quest of the custom island nearest you: its quests and steps / jump to a step, back too / send a signal on it / give the crew a story item / skip the current step as **Stuck? Skip this step** does (its story items or signal given) / the island back to new and made again (all but the list: host) |
+| `SkipStep` | World (host) | Stuck on a quest? The current quest's step counts as done and the quest moves on (a collect step's story items or a signal step's signal given first; the last step finishes the quest). The same as **Esc > Custom Islands > Skip current quest step**, without the question. No quest under way: "No quest in progress" |
+| `QuestTest` / `QuestTest step <n\|done> [quest]` / `signal <name>` / `give <story item> [count]` / `skip [quest]` / `reset` | World | Try the quest of the custom island nearest you: its quests and steps / jump to a step, back too / send a signal on it / give the crew a story item / skip the current step as `SkipStep` does (its story items or signal given) / the island back to new and made again (all but the list: host) |
 | `RegrowDays` / `RegrowDays <days>` | World | This world's days until things come back / change it (host; 0 = never; an island's own rule wins) |
 | `DailyQuest` / `DailyQuest new [gather/fish/monsters n [item]]` | World | Today's daily quest (option Daily quest): the task, how far you are, the reward / a new quest now (host; with a kind and a number: that quest, e.g. `DailyQuest new gather 20 Plank`) |
 | `UpgradeTable` | World | The upgrade research table (option Extra upgrades): what this world has researched and learned there |
