@@ -357,7 +357,9 @@ namespace DynamicIslands
 			float dist = e != null && me != null ? new Vector2(me.transform.position.x - e.Position.x, me.transform.position.z - e.Position.z).magnitude : -1f;
 			Check(ref ok, IslandTest.Testing && (SaveAndLoad.CurrentGameFileName ?? "") == IslandTest.WorldName, "in the test world '" + SaveAndLoad.CurrentGameFileName + "' (" + IslandTest.LastStep + ")");
 			Check(ref ok, e != null && e.Root != null && dist >= 0f && dist < CustomIslandSpawner.LandRadius(name) + 5f, "the island is beside the raft and the player on it (" + dist.ToString("0") + " m from its middle)");
-			Check(ref ok, IslandWorldState.Islands.Count() == 1, "only the island being tried is in the test world (" + IslandWorldState.Islands.Count() + " island(s); ones tried before are taken away)");
+			// (randomizer finds on Raft's own islands aren't islands tried before: a test world made with the randomizer on has them)
+			int tried = IslandWorldState.Islands.Count(x => !global::DynamicIslands.Editor.WorldRandomizer.IsExtras(x));
+			Check(ref ok, tried == 1, "only the island being tried is in the test world (" + tried + " island(s), randomizer finds not counted; ones tried before are taken away)");
 			// The starter kit (the user, 2026-10-03): weapons, tools, food and water, hunger and thirst full
 			PlayerInventory inv = me != null ? me.Inventory : null;
 			List<string> missing = IslandTest.KitItems.Where(k => inv == null || inv.GetItemCount(k.Key) < 1).Select(k => k.Key).ToList();

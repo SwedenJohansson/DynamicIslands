@@ -522,7 +522,7 @@ namespace DynamicIslands.Editor
 					direct.Button_LoadGame();
 					loadedDirect = true;
 				}
-				Step("The test world's save couldn't be read from its folder: Raft's Load list");
+				else Step("The test world's save couldn't be read from its folder: Raft's Load list");
 			}
 			if (loadedDirect) { }
 			else if (saved)
