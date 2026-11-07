@@ -1,9 +1,11 @@
-# The Abyss's acid vent pool with the suit on (content 11-04): CIGapsSuit 600, then CIPlay the_abyss_acidsuit: the
-# acid takes nothing (expect unhurt; the_abyss_acid is the run without the suit). The suit must outlast the run.
+# The Abyss's acid vent pool with the suit on (content 11-04; 11-07: the suit from the box of vent suits on the path,
+# no CIGapsSuit): the acid takes nothing (expect unhurt; the_abyss_acid is the run without the suit).
 island The Abyss keep
-offset -2.8571 -0.3744
+offset -2.2948 -0.3458
 hour 11
 weather Calm
+at 86.6 14.3 h=2.7
+use ventsuits
 at 79.5 13
 wait 9
 expect unhurt

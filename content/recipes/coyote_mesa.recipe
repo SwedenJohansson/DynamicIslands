@@ -27,9 +27,11 @@ brush flatten from -22 $hz to -14 $hz r=1.8 s=20 frames=160 h=17.4
 brush flatten from 10 $hz to 18 $hz r=1.8 s=20 frames=160 h=17.4
 next
 brush flatten from -7 0 to 3 0 r=4 s=20 frames=60 h=3
-brush flatten from -20 -6 to -16 -6 r=1.8 s=20 frames=100 h=12.6
-brush flatten from -20 -9.5 to -16 -9.5 r=1.8 s=20 frames=100 h=7.8
-brush flatten from -20 -13 to -16 -13 r=1.6 s=20 frames=60 h=3
+# (the ledges 3.5 m apart: line keeps each stroke to its own row of ground points, as the brush reached before E12 -
+# with the wider reach the foot's stroke pulled the middle ledge down to 7.15, under its ladder - 11-07)
+brush flatten from -20 -6 to -16 -6 r=1.8 s=20 frames=100 h=12.6 line
+brush flatten from -20 -9.5 to -16 -9.5 r=1.8 s=20 frames=100 h=7.8 line
+brush flatten from -20 -13 to -16 -13 r=1.6 s=20 frames=60 h=3 line
 brush flatten at -25.75 -20.5 r=5 s=20 frames=60 h=3
 brush rock at -18 0 r=10 s=20 frames=30
 brush rock at 14 0 r=9 s=20 frames=30

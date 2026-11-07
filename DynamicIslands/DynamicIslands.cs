@@ -359,6 +359,7 @@ namespace DynamicIslands
 		{
 			RaftEvent("the world loading", IslandWorldState.OnWorldLoaded);
 			RaftEvent("the world loading (creatures)", CreatureSpawner.OnWorldLoaded);
+			RaftEvent("the world loading (suit)", () => Hazards.SuitUntil = 0f); // a suit put on in another world ends with it
 		}
 
 		/// <summary>The mod's part of one of Raft's events, never throwing into it (R16).</summary>
