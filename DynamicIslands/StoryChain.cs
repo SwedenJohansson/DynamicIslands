@@ -577,18 +577,29 @@ namespace DynamicIslands.Editor
 			return fresh;
 		}
 
-		/// <summary>Tests: forget the asks noted for a rule.</summary>
-		internal static void ForgetTunes(string id) { tuneSeen.Remove(id); }
+		/// <summary>Tests: forget the asks noted for a rule, and when it was last asked back.</summary>
+		internal static void ForgetTunes(string id) { tuneSeen.Remove(id); tunedAt.Remove(id); }
 
-		/// <summary>The frequency of an island already brought, tuned again: left far behind with its quest unfinished it comes
-		/// back ahead of the raft (counted as one of its returns, up to MaxReturns) - a Receiver island never comes back by
-		/// itself, and with showOnReceiver 0 it had no dot either: lost for good (review 10-30).</summary>
+		/// <summary>The frequency of an island already brought, tuned again: left far behind it comes back ahead of the raft - a
+		/// main story island always while the Receiver is set to it (finished or not, no returns counted); another Receiver
+		/// island on a fresh tune with its quest unfinished (counted as one of its returns, up to MaxReturns). A Receiver
+		/// island never comes back by itself, and with showOnReceiver 0 it had no dot either: lost for good (review 10-30).</summary>
 		static void BringBackTuned(IntroRule r)
 		{
-			// (Raft asks every frame while the Receiver stays tuned: only a fresh tune brings it back, else each time the island
-			// unloaded behind the raft it was pulled back and used up one of its returns - lost for good; merge review 10-31)
-			if (!TuneIsFresh(r.Id, Time.unscaledTime, Time.frameCount)) return;
-			if (r.InStory && Done.Contains(RuleKey(r.Id))) return;
+			// A main story island (in the chain, or beside it) on its own frequency comes back whenever the Receiver is set to
+			// it, as Raft's own story islands do: finished or not, its step done or not, the Receiver just tuned or left tuned,
+			// and it never uses up a return. Before (questdive 11-01): a finished one, or one whose step was done (a step:N
+			// rule with the rest of its quest still open), never came back at all; one left behind with the Receiver left on
+			// its frequency came back only after a re-tune (Raft asks every frame while tuned, so no tune counted as new); and
+			// after MaxReturns it was lost for good - the user: "mainstory island and you have the receiver set, those island
+			// should always come back". Moved, it keeps its quest, chests and rewards as they were (the same entry), and the
+			// chain already counts its step: nothing is given or done twice.
+			bool story = r.MainStory;
+			// (Raft asks every frame while the Receiver stays tuned: for other Receiver islands only a fresh tune brings it
+			// back, else each time the island unloaded behind the raft it was pulled back and used up one of its returns -
+			// lost for good; merge review 10-31)
+			bool fresh = TuneIsFresh(r.Id, Time.unscaledTime, Time.frameCount);
+			if (!story && !fresh) return;
 			float t;
 			if (tunedAt.TryGetValue(r.Id, out t) && Time.unscaledTime - t < RetrySeconds) return;
 			tunedAt[r.Id] = Time.unscaledTime;
@@ -597,11 +608,13 @@ namespace DynamicIslands.Editor
 			List<IslandWorldState.Entry> own = IslandWorldState.Islands.Where(e => e.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase) && !WorldRandomizer.IsExtras(e)).ToList();
 			// (one of them here or on its way: nothing to do)
 			if (own.Count == 0 || own.Any(e => e.Root != null || e.Loading)) return;
-			IslandWorldState.Entry far = own.FirstOrDefault(e => !e.Failed && !e.Excluded && !e.WaitingForFile && !ReturningIslands.Finished(e) &&
-				ReturningIslands.Returns(e) < ReturningIslands.MaxReturns &&
+			IslandWorldState.Entry far = own.FirstOrDefault(e => !e.Failed && !e.Excluded && !e.WaitingForFile &&
+				(story || (!ReturningIslands.Finished(e) && ReturningIslands.Returns(e) < ReturningIslands.MaxReturns)) &&
 				new Vector2(e.Position.x - raft.Value.x, e.Position.z - raft.Value.z).magnitude - Mathf.Max(0f, CustomIslandSpawner.LandRadius(e.Name)) > WorldRules.UnloadDistance);
 			if (far == null) return;
-			if (ReturningIslands.BringAgain(far, raft.Value)) Log("Rule '" + r.Id + "': its frequency tuned again - its island, left behind unfinished, comes back");
+			if (ReturningIslands.BringAgain(far, raft.Value, !story))
+				Log("Rule '" + r.Id + "': " + (story ? "the Receiver is set to its frequency - the main story island, left behind" + (ReturningIslands.Finished(far) ? " finished" : "") + ", comes back"
+					: "its frequency tuned again - its island, left behind unfinished, comes back"));
 		}
 
 		/// <summary>The rule's island counts as done (its quest, step N, a zone, a signal, players at it).</summary>
