@@ -261,7 +261,7 @@ and without a Receiver nothing shows the way back. An island the players still n
 it - its quest where it was, opened chests still open - and a banner says "Back in sight". That is:
 
 - an island whose quest you began and didn't finish: it comes back up to **three times** (an island you left on purpose
-  stops coming back);
+  stops coming back by itself, but the spawn pool may still bring it at random);
 - an island a world plan still waits for - one that leads to the next island, like The Abyss Expedition's sunken
   island: it comes back every time, until you've done there what the plan waits for;
 - an island a plan brought on a set day or distance with **again until done** ([7.4](#74-everything-a-rule-can-do)): it
@@ -269,22 +269,24 @@ it - its quest where it was, opened chests still open - and a banner says "Back 
   reached it and finished its quest.
 
 An island found with a Receiver frequency stays where it is (the Receiver shows the way, however far, until its quest is done), and so do islands nobody
-needs. With several players the host decides, and the island moves for everyone. (`returnMinutes` in
+needs. A **main story** island is the exception, like Raft's own story islands: while the Receiver is set to its
+frequency and the raft is far from it (800 m and more), it comes up ahead of the raft again, as you left it - finished
+or not, as often as you like. A main story island left with a **side quest** begun and not done also joins the random
+picks, with the same chance as every other island, until its side quests are done. With several players the host decides, and the island moves for everyone. (`returnMinutes` in
 `spawnpool.txt`, [10](#10-settings-files); 0 = never.)
 
-**A finished island never comes again by chance.** When the spawn pool picks an island this world already has:
+**Only a finished quest island never comes again by chance.** When the spawn pool picks an island this world already has:
 
-- **finished** - its quest done, or, for an island without a quest, reached by a player, and every note on it found
-  - it isn't picked; another island comes instead;
-- **notes left** - its quest done but a note on it not found yet (the journal shows "(6/7 notes)") - it may come
-  back as you left it, so a missed note isn't lost for good;
-- **not finished** - its quest begun and not done, or never reached - it comes back ahead of the raft **as you left
-  it** (quest steps, opened chests, harvest), with a banner "Back in sight", instead of a second, fresh copy;
+- **its journal quest done** (a note on it missed or not, and its side quests done too) - it isn't picked; another
+  island comes instead;
+- **any other** - an island without a quest (reached or not, notes found or not), one whose quest is begun and not
+  done, one with a side quest still open (however often it came back), or one never reached - it comes back ahead
+  of the raft **as you left it** (quest steps, opened chests, harvest), with a banner "Back in sight", instead of a
+  second, fresh copy (also one that once failed to load: it tries again there);
 - already near the players (loaded) - not picked.
 
-Each pick is a fresh random draw by the islands' weights, so the same island can come twice - but one this world
-already has (left behind, not finished) counts only **a quarter** of its weight, so islands you haven't seen come
-first. An island whose builder set **"Comes by chance after ... km sailed"** isn't picked before the world has sailed
+Each pick is a fresh random draw by the islands' weights, so the same island can come twice - every island that may
+come has the **same chance**, visited or not: with 50 such islands each is 1 in 50. An island whose builder set **"Comes by chance after ... km sailed"** isn't picked before the world has sailed
 that far.
 
 **On the Receiver:** once you have built Raft's Receiver, custom islands show as **green dots** with their distance,
@@ -2231,7 +2233,10 @@ chain, in the **World plan** window (its **Settings** and **Main story line** ta
 - **Where** it appears, for any rule:
   - **on the Receiver**: it gets its own 4-digit frequency, made for each world. When it is unlocked, every player sees
     a banner "Tune the Receiver to #4821", the journal gets a page, and the number on the note before it shows it.
-    **Any player** can dial it on the Receiver; the island then comes up ahead of the raft, like Raft's story islands;
+    **Any player** can dial it on the Receiver; the island then comes up ahead of the raft, like Raft's story islands.
+    A **main story** island comes back the same way whenever the Receiver is set to its frequency and the raft has left
+    it far behind - its quest, chests and rewards as you left them, finished or not. A side quest island on the
+    Receiver comes back only when you dial its frequency again, until its quest is done;
   - **by chance while sailing**: it comes up ahead some time after it is unlocked;
   - **ahead of the raft** or **near an island**, as soon as it is unlocked.
 ![Raft's story in the World plan window](images/editor-story-chain.jpg)
@@ -2661,7 +2666,7 @@ island). The span is the world's: chosen in **World settings > Islands while sai
 `WorldIslandsGap` in a world. None in a new world's first **10 minutes** of play (`quietMinutes`; game time, kept with
 the world - worlds made before this don't wait). `chancePerKm` only switches them on (above 0) or off (0).
 `spawnDistanceMin` / `spawnDistanceMax` (250-350 m ahead), `minSpacing` (800 m between custom islands) - all in
-`spawnpool.txt` ([10](#10-settings-files)). A finished island isn't picked again; an unfinished one (or one with notes not found) comes back as it was
+`spawnpool.txt` ([10](#10-settings-files)). A finished island isn't picked again; an unfinished one (or one without a quest with notes not found) comes back as it was
 ([3](#islands-appear-while-you-sail)). None appears while the raft is at one of Raft's own islands, and Raft won't put one of its
 islands on top of a custom one later.
 

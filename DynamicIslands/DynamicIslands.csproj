@@ -399,6 +399,7 @@
     <Compile Include="DevTestsStandIn.cs" />
     <Compile Include="DevTestsMpAnswer.cs" />
     <Compile Include="DevTestsMerge1031.cs" />
+    <Compile Include="DevTestsQuestStory1101.cs" />
     <Compile Include="DevTestsFix3.cs" />
     <Compile Include="DevTestsNoteCarry.cs" />
     <Compile Include="ScatterTool.cs" />
