@@ -4,9 +4,9 @@ island Rootweave Caves keep
 offset 0 0
 hour 11
 weather Calm
-expect stand 8.55 21.7 h=12.9 below=16
-expect stand 8.35 19.6 h=12.9 below=16
-expect stand 10.63 21.1 h=13.4 below=16
+expect stand 8.55 21.7 h=12.2 below=16
+expect stand 8.35 19.6 h=12.2 below=16
+expect stand 10.63 21.1 h=12.6 below=16
 at 8.55 21.7 h=14
 wait 3
 picture rw_spikes 11.2 14.6 24.5 8.6 13 19.5

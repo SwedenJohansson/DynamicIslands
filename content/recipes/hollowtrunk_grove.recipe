@@ -201,19 +201,23 @@ prop hgvine note.title=Root-choked crate
 # one stroke gently UP into the ridge (5 degrees, walkable both ways), the den branched off its end and dug level-ish,
 # floor about 3.3 m over the sea; boulders and roots break the mouth's square outline; one rat each at the den floor)
 brush smooth at 7.4 -7.6 r=3.5 s=8 frames=120
-brush flatten at 12.8 -17.2 r=4.5 s=20 frames=600 h=8.8
-brush smooth at 12.8 -17.2 r=9 s=8 frames=200
-dig 6.8,-7.2 10.0,-10.4 11.0,-15.4 r=1.75 slope=5 as=rootden
-dig 11.0,-15.4 13.5,-17.9 r=2.2 slope=2 as=rootden
+# (11-08 c, box run: the den's roof broke the knoll - dig log floor 5.1, ground 7.2, so a 2.2 m den stood 2 m out of it
+# and caveloot found no spot away from open sky. Now the knoll is 2 m higher and the strokes go gently down, not up.)
+# (11-08 d, box run: still no roof - floor 3.8, ground 7.4, the knoll flatten does not raise the terrain the dig log reads.
+# Now the first stroke goes down 9 degrees: floor ~2.7, over 2 m of rock; rats dropped from 4.0 inside the den.)
+brush flatten at 12.8 -17.2 r=5 s=20 frames=600 h=11
+brush smooth at 12.8 -17.2 r=10 s=8 frames=200
+dig 6.8,-7.2 10.0,-10.4 11.0,-15.4 r=1.75 slope=-9 as=rootden
+dig 11.0,-15.4 13.5,-17.9 r=2 slope=-1 as=rootden
 caveloot rootden dirt=2 mush=4 stone=0 vines=2
-place SmallBoulder3 - at 8.6 -5.5 ground y=-0.4 yaw=30 scale=1.3
+place SmallBoulder3 - at 10.3 -6.3 ground y=-0.4 yaw=30 scale=1.3
 place SmallBoulder4 - at 5.0 -8.9 ground y=-0.4 yaw=200 scale=1.2
 place SmallRock_02 - at 7.9 -4.7 ground y=-0.1 yaw=80
 # cavecheck inside rootratA rootratB
-place Creature_Rat rootratA at 12.3 -16.7 h=3.6
+place Creature_Rat rootratA at 12.3 -16.7 h=4.0 drop
 prop rootratA creature.count=1
 prop rootratA creature.respawn=0
-place Creature_Rat rootratB at 13.6 -18.1 h=3.6
+place Creature_Rat rootratB at 13.6 -18.1 h=4.0 drop
 prop rootratB creature.count=1
 prop rootratB creature.respawn=0
 call vd_spot x=-35 z=61 al=hglook id=hg_view r=5 msg="From the lookout rocks the five trunks stand like pillars holding the sky up."

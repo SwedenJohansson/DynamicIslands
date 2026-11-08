@@ -13,4 +13,4 @@ wait 4
 # (5 a second for ~9 s: at least 20)
 expect hurt 20
 # out of the cut onto the room's floor
-walk -25.4 4.05 to -23 4.6 to -21 5.5 below=20
+walk -25.4 4.05 to -23 4.6 to -21 5.5 below=6

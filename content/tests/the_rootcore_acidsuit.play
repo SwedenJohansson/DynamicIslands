@@ -7,5 +7,5 @@ weather Calm
 at -25.4 4.05 h=2.3
 wait 9
 expect unhurt
-walk -25.4 4.05 to -23 4.6 to -21 5.5 below=20
+walk -25.4 4.05 to -23 4.6 to -21 5.5 below=6
 expect unhurt

@@ -1,7 +1,7 @@
 # The Rootcore's deep cave (CIPlay the_rootcore_caves, 11-08; in a test world 'CI ...'). Points as in the recipe (no
 # frame offset - the caves block comes after the old-frame pushes). In at the mouth under the dome's hill, down the
 # descent (two rats on its long leg), the core room and its acid cut (not entered - the_rootcore_acid does that), up the
-# ladder shaft to the landing; then back in by the mouth and out again the same way (both ways out).
+# ladder shaft into the long leg and out; then back in by the mouth and out again the same way (both ways out).
 island The Rootcore keep
 offset 0 0
 hour 11
@@ -21,14 +21,16 @@ walk -14.1 14 to -14 4 to -14 -1.5 to -19.5 1.8 to -21 4 to -21 10 below=20
 expect unhurt
 picture rc_cave_in -21.5 3.2 3.5 -21.5 2.5 12 light=25
 picture rc_acid -22 3.4 6.5 -25.4 1.6 4.05 light=25
-# up the ladder shaft (floor 1.5, two 6 m ladders, top 13.5) onto the landing
-walk -21 10 to -24.5 11 to -25.5 11 below=20
-climb -25.5 12.3 h=1.5
-climb -25.5 12.3 h=7.5
-expect stand -25.5 13.8 h=13.1 below=15
-walk -25.5 13.8 to -28 15 to -31 18 h=11
+# up the ladder shaft (the foot level with the room's floor 1.5, one 6 m ladder, top 7.5) into the descent's long leg
+walk -21 10 to -19 12.6 to -16.6 14 below=6
+picture rc_shaft -19.5 4.3 13 -16.6 7 14 light=25
+climb -15.5 14 h=1.5
+expect stand -14.3 14 h=8.8 below=11
+picture rc_shaft_top -13.6 10.4 14 -16.6 3 14 light=25
+# up the long leg and out at the mouth
+walk -14.3 14 to -14.1 18 to -15.8 26.1 to -22 26.7 to -29 27 to -31 27.5 below=12
 expect unhurt
 # back in by the mouth to the room, then out the descent again
-walk -31 18 to -33 24 to -31 27.5 to -29 27 to -22 26.7 to -15.8 26.1 to -14.1 14 to -14 -1.5 to -19.5 1.8 to -21 6
+walk -31 27.5 to -29 27 to -22 26.7 to -15.8 26.1 to -14.1 14 to -14 -1.5 to -19.5 1.8 to -21 6
 walk -21 6 to -19.5 1.8 to -14 -1.5 to -14.1 14 to -15.8 26.1 to -22 26.7 to -29 27 to -31 27.5 below=20
 expect unhurt
