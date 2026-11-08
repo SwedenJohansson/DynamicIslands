@@ -388,10 +388,13 @@ namespace DynamicIslands.Editor
 							if (a < 0 || c < 0 || a >= nx || c >= nz) continue;
 							float dist = Cell * Mathf.Sqrt(di * di + dk * dk);
 							float h = peak - Slope * dist;
-							// (cave.foot=dry: on dry land its last FlareHigh m flare out at FlareSlope into the sand - the den hill's flanks
+							// (cave.foot=dry: on dry land its last FlareHigh m flare out into the sand - the den hill's flanks
 							// came down at the full slope and met the sand at a hard, steep line, Shelter Atoll from the east, 11-08)
+							// (11-08 b: a straight flare left flat, angular sand wedges - now a curve that leaves the hill at its own
+							// slope and runs out ever flatter, dipping under the sand FlareSink m down)
 							if (dryFootOn && ground[a, c] > SeaLevel + DryBy && peak > ground[a, c] + FlareHigh)
-								h = Mathf.Max(h, ground[a, c] + FlareHigh - FlareSlope * (dist - (peak - ground[a, c] - FlareHigh) / Slope));
+								h = Mathf.Max(h, ground[a, c] - FlareSink + (FlareHigh + FlareSink)
+									* Mathf.Exp(-Slope * (dist - (peak - ground[a, c] - FlareHigh) / Slope) / (FlareHigh + FlareSink)));
 							if (past != null && past[a, c] > 0.5f && (di != 0 || dk != 0))
 							{
 								// (cave.foot=dry, that piece's own: beside its opening the hill goes on out past the mouth's plane as a
@@ -402,7 +405,7 @@ namespace DynamicIslands.Editor
 								float off = Mathf.Abs(Vector3.Dot(new Vector3(x0 + a * Cell, 0f, z0 + c * Cell) - dm.Pos, dm.Side) - dm.InsideSide) - dm.HalfWidth - DryFront;
 								// (on dry land only: out over the sea it stood as slabs under the water)
 								if (off <= 0f || !(ground[a, c] > SeaLevel + DryBy)) continue;
-								h = Mathf.Min(h, ground[a, c] + ShoulderSlope * off); // (gentler than the hill: its inner faces by the opening stood steep and dark, 11-08)
+								h = SoftMin(h, ground[a, c] + ShoulderSlope * off); // (gentler than the hill: its inner faces by the opening stood steep and dark, 11-08)
 							}
 							if (h > height[a, c]) height[a, c] = h;
 						}
@@ -737,9 +740,17 @@ namespace DynamicIslands.Editor
 						float sd = Mathf.Abs(Vector3.Dot(new Vector3(x0 + i * Cell, 0f, z0 + k * Cell) - m.Pos, m.Side) - m.InsideSide) - m.HalfWidth;
 						if (sd <= 0f) continue;
 						float ramp = ground[i, k] - 0.6f + ShoulderSlope * sd;
-						if (on[i, k] && !cut[i, k] && height[i, k] > ramp) height[i, k] = ramp;
+						if (on[i, k] && !cut[i, k]) height[i, k] = SoftMin(height[i, k], ramp); // (soft: a plain min left a crisp seam beside the mouth, 11-08 b)
 					}
 			}
+		}
+
+		/// <summary>The lower of a and b, rounded off where they are within SeamSoft m of each other (no crease where two
+		/// slopes meet).</summary>
+		static float SoftMin(float a, float b)
+		{
+			float t = Mathf.Max(SeamSoft - Mathf.Abs(a - b), 0f) / SeamSoft;
+			return Mathf.Min(a, b) - t * t * SeamSoft * 0.25f;
 		}
 
 		static bool IsDryFoot(IDictionary<string, string> p)
@@ -762,8 +773,8 @@ namespace DynamicIslands.Editor
 		internal const float EdgeDrop = 0.4f;
 		// (cave.foot=dry: how many cells round a roof's edge fall by EdgeDrop)
 		internal const int EdgeRings = 2;
-		// (cave.foot=dry: on dry land the hill's last FlareHigh m over the ground fall at FlareSlope, m a m, not Slope: a foot that flares out)
-		internal const float FlareHigh = 3f, FlareSlope = 0.7f;
+		// (cave.foot=dry: on dry land the hill's last FlareHigh m over the ground curve out from Slope ever flatter and dip FlareSink m under the sand: a foot that flares out; SeamSoft: how wide SoftMin rounds a seam)
+		internal const float FlareHigh = 3f, FlareSink = 0.3f, SeamSoft = 2.5f;
 		// (cave.foot=dry: how steeply a shoulder beside a mouth's opening rises from the ground, m a m out from the opening's side)
 		internal const float ShoulderSlope = 0.9f;
 		/// <summary>Tests: how many cells of loose skin the last build left out.</summary>

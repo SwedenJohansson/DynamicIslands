@@ -102,7 +102,7 @@ plan save
   highest roof beside them + Over).
   The falloff also goes on past that piece's own mouth plane beside the opening (more than HalfWidth + `DryFront` off its
   centre line, on dry ground only), capped at ground + `ShoulderSlope` 0.9 x distance from the opening: a rounded shoulder, not a sheer face. 11-08: on dry land
-  the hill's last `FlareHigh` 3 m over the ground fall at `FlareSlope` 0.7 (a flared foot), and `ShoulderRamps` (before the
+  the hill's last `FlareHigh` 3 m over the ground curve out ever flatter from the hill's slope and dip `FlareSink` 0.3 m under the sand (a flared foot; a straight flare showed flat wedges), `SoftMin` (`SeamSoft` 2.5 m) rounding where the shoulder caps meet the hill, and `ShoulderRamps` (before the
   rim and again after `FootPasses`) caps every skin cell out past a dry mouth (to `DryWay` + 4 m) at ground - 0.6 +
   `ShoulderSlope` x its distance past the opening's HalfWidth (cut cells stay cut): the den's other pieces' roofs had
   kept the shoulders' inner faces sheer.
