@@ -741,7 +741,7 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
   cliff the floor runs straight out onto the ground (the cliff above the mouth stays whole, no sky through it). The
   lining inside is smooth rock, and it grows darker the farther in you are, in the editor and in a world (the floor just inside the mouth is dark rock too, not lit pale by the sun). Placed objects the passage goes through, that reach into it (a boulder on the rim of a room that breaks out of the ground) or that its rim would bury (a boulder, a bush, a buried rock) are taken away
   with the stroke. Each stroke is one **Ctrl+Z** (it brings them back too). A dug tunnel is saved with the island and comes along into Test and
-  multiplayer; it follows the ground if you sculpt over it later. It has no move arrows: dig, fill or undo it.
+  multiplayer; it follows the ground if you sculpt over it later. It has no move arrows: dig, fill or undo it. (Recipes can also lay a straight **ladder shaft** with `dig ... shaft`: up from a dug room to the ground at any angle; the ladders go in by hand.)
   The ground is cut only where the passage comes out through it (its mouth, or the open top of a ramp), never over a
   buried part. Fly the camera into the mouth to build inside: it goes in rather than up onto the hill, and inside it
   stops at the rock; in a tunnel it flies slowly so you can steer round bends, and slides along the walls (near the mouth too: it no longer flies out through the rock beside it). **God mode (camera through walls)**, under the Dig brush's sliders, lets the camera fly through
