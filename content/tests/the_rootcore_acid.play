@@ -1,0 +1,16 @@
+# The Rootcore's acid seep (CIPlay the_rootcore_acid, 11-08; in a test world 'CI ...'): the green pool at the end of the
+# side cut off the core room (recipe -25.4 4.05, floor 1.5). Without the suit (CIGapsSuit off) the seep burns.
+# The suit run is the_rootcore_acidsuit.
+island The Rootcore keep
+offset 0 0
+hour 11
+weather Calm
+at -25.4 4.05 h=2.3
+wait 5
+expect message The seep water burns.
+at -25.4 4.05 h=2.3
+wait 4
+# (5 a second for ~9 s: at least 20)
+expect hurt 20
+# out of the cut onto the room's floor
+walk -25.4 4.05 to -23 4.6 to -21 5.5 below=20
