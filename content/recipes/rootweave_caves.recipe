@@ -336,8 +336,7 @@ caveloot rwroot dirt=4 mush=5 stone=0 vines=3
 clear from 9.5 24 to 9.2 17.5 r=2.6 all only=^Pickup_Landmark_(Mushroom|DirtPickup|Rock)
 # the thorn pit: the drift's floor fell into a root hollow full of sharpened stakes; planks along the hall side
 place Note_Sign rwwarn at 9.3 25.8 h=14.5 sit drop yaw=18
-note rwwarn DANGER - THORN PIT | The floor past this sign dropped into a pit of root thorns. Walk the planks along the wall on your left, not the rubble.
-- Verdance survey team
+note rwwarn DANGER - THORN PIT | The floor past this sign dropped into a pit of root thorns. Walk the planks along the wall on your left, not the rubble.\n- Verdance survey team
 place SmallBoulder3 - at 8.2 22.4 h=12.6 sit scale=0.3 yaw=10
 place SmallBoulder3 - at 8.9 20.6 h=12.55 sit scale=0.35 yaw=130
 place SmallBoulder3 - at 8.0 18.9 h=12.6 sit scale=0.3 yaw=250

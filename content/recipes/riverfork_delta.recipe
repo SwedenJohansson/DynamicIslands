@@ -351,7 +351,7 @@ clear at 51.5 -59 r=15 all body only=Tree|Palm|Mango|Bush|Rock|Pineapple|Flower 
 # mouth
 place SmallBoulder3 - at 27 -83 ground sit scale=0.9 yaw=30
 place SmallBoulder3 - at 28.2 -84.2 ground sit scale=0.6 yaw=140
-place SmallBoulder3 - at 26.6 -84.6 ground y=0.5 sit scale=0.45 yaw=250
+place SmallBoulder3 - at 26.6 -84.6 ground sit scale=0.45 yaw=250
 place SmallBoulder3 - at 26.5 -101 ground sit scale=0.65 yaw=60
 place SmallBoulder3 - at 33.5 -100.5 ground sit scale=0.65 yaw=200
 place Zone_Trigger rdair at 51.5 -59 h=3.6
