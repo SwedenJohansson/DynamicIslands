@@ -219,6 +219,18 @@ call vd_spot x=60 z=61.5 al=rcknollz id=rc_knoll r=3 msg="From the knoll the dom
 place Creature_Chicken rchens at 30 -60 ground
 prop rchens creature.count=3
 
+# --- CAVES 11-08 (content round 11-04, world 02): the Rootcore's deep cave - the old root's own way down. Off the quest's
+#     line, 6 m+ from its things: a mouth in the slope over the lower camp, a dug descent (two switchbacks, each stroke
+#     at most 20 degrees) down to the core room deep under the island; a ladder shaft from the room's far end straight
+#     up to a landing - the second way out. Loot: mushrooms, a titanium vein. Rats on the descent. ACID: green seep
+#     water in a side alcove of the core room (optional; a warning at its mouth; the room's floor walks past it).
+dig -14,-44 -34,-44 r=1.9 slope=-18 as=rootdeep
+dig -34,-44 -38,-48 -37,-53 -20,-55 r=1.9 slope=-16 as=rootdeep
+dig -20,-55 -12,-57 r=3.4 slope=0 as=rootdeep
+dig -17,-56.5 -17.5,-63 r=1.8 slope=0 as=rootdeep
+dig -10.5,-57.5 -10.5,0.3,-57.5 shaft r=1.6 as=rootdeep
+caveloot rootdeep dirt=3 mush=3 stone=2 vines=2 titanium=1
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Rootcore
 info author=Custom Islands

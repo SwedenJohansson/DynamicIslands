@@ -2341,6 +2341,16 @@ namespace DynamicIslands
 				if (tun == null) { error = fill ? "dig fill: no dug tunnel at " + s[0] : "dig: the stroke from " + s[0] + " dug nothing"; return made; }
 				if (!fill && tun.PointCount < 2) { error = "dig: the stroke from " + s[0] + " dug only " + tun.PointCount + " point(s)"; return made; }
 				if (!made.Contains(tun.gameObject)) made.Add(tun.gameObject);
+				// (11-08, The Rootcore) where the stroke ends, in recipe x z and metres over the sea, with its floor - to set a
+				// ladder, a rat or a zone down in a dug room (a ray from over the island meets the ground above it)
+				if (!fill && tun.Strokes.Count > 0 && tun.Strokes[tun.Strokes.Count - 1].Count > 0)
+				{
+					var endP = tun.Strokes[tun.Strokes.Count - 1][tun.Strokes[tun.Strokes.Count - 1].Count - 1];
+					Vector3 e = tun.transform.TransformPoint(endP.At);
+					Frame f = TopFrame;
+					Vector3 rz = Quaternion.Euler(0f, -f.Yaw, 0f) * new Vector3(e.x - f.Origin.x, 0f, e.z - f.Origin.y);
+					Log("dig: stroke from " + s[0] + " ends at " + rz.x.ToString("0.0") + " " + rz.z.ToString("0.0") + ", floor h=" + (e.y - DynamicIslands.EditorWaterLevel).ToString("0.0") + " r=" + endP.R.ToString("0.0") + " (ground h=" + (GroundY(e.x, e.z) - DynamicIslands.EditorWaterLevel).ToString("0.0") + ")");
+				}
 			}
 			return made;
 		}

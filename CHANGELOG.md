@@ -11,7 +11,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ## Next (in work)
 
-- **Recipes: ladder shafts for dug caves**: `dig ... shaft` lays a dug passage straight through its points at any angle (the Dig brush climbs at most 25 degrees), so a dug room can have a ladder shaft up to the ground - The Rootcore's core room is the first.
+- **Recipes: ladder shafts for dug caves**: `dig ... shaft` lays a dug passage straight through its points at any angle (the Dig brush climbs at most 25 degrees), so a dug room can have a ladder shaft up to the ground - The Rootcore's core room is the first. The recipe player now prints where each dig stroke ends (x z, floor height, the ground over it), to set ladders, rats and zones down in a dug room, and the offline cave check (`content.ps1 cavecheck`) knows a shaft's top as a second mouth.
 
 ## 3.2 alpha - 2026-11-07: Caves and islanders
 
