@@ -1930,7 +1930,9 @@ namespace DynamicIslands.Editor
 		/// its slope to slope (degrees) for the stroke, both put back after. fill: the stroke fills the tunnel it is pressed on back
 		/// in at every point. Returns the tunnel (null: none made, or none to fill).
 		/// </summary>
-		public static DigTunnel RecipeStroke(Terrain land, IList<Vector3> points, IList<float> radii, float slope, bool fill)
+		/// <summary>A recipe's dig stroke (or fill). shaft (11-08): the passage laid straight through the points as given, up
+		/// or down at any angle - a ladder shaft from a dug room up to the ground (the brush itself climbs at most MaxSlope).</summary>
+		public static DigTunnel RecipeStroke(Terrain land, IList<Vector3> points, IList<float> radii, float slope, bool fill, bool shaft = false)
 		{
 			if (land == null || points == null || points.Count == 0 || Digging) return null;
 			float r0 = Radius, s0 = Slope;
@@ -1946,6 +1948,17 @@ namespace DynamicIslands.Editor
 				{
 					if (fill) { DigToward(points[k], 0.05f); continue; }
 					Radius = rad(k);
+					if (shaft && head != null && head.Count > 0)
+					{
+						Point last = head[head.Count - 1];
+						Vector3 to = current.transform.InverseTransformPoint(points[k]);
+						float step = Mathf.Max(0.4f, 0.4f * Radius);
+						int n = Mathf.Max(1, Mathf.CeilToInt((to - last.At).magnitude / step));
+						for (int i = 1; i <= n && current.PointCount < MaxPoints; i++)
+							head.Add(new Point(Vector3.Lerp(last.At, to, i / (float)n), Radius));
+						changedSinceBuild = true;
+						continue;
+					}
 					for (int guard = 0; guard < 4000; guard++)
 						if (!DigToward(points[k], 0.05f) || current.PointCount >= MaxPoints) break;
 				}

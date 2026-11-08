@@ -2302,20 +2302,21 @@ namespace DynamicIslands
 			var made = new List<GameObject>();
 			Terrain land = terraineditor.terrain;
 			if (land == null) { error = "dig: no island ground"; return made; }
-			var opt = Options(t.Skip(1).Where(x => x.Contains("=") || x == "fill"));
+			var opt = Options(t.Skip(1).Where(x => x.Contains("=") || x == "fill" || x == "shaft"));
 			float r = opt.ContainsKey("r") ? F(opt["r"]) : 1.75f, slope = opt.ContainsKey("slope") ? F(opt["slope"]) : 0f;
-			bool fill = opt.ContainsKey("fill");
+			bool fill = opt.ContainsKey("fill"), shaft = opt.ContainsKey("shaft");
+			if (fill && shaft) { error = "dig: shaft or fill, not both"; return made; }
 			if (r < DigTunnel.MinRadius || r > DigTunnel.MaxRadius) { error = "dig: r= " + DigTunnel.MinRadius + "-" + DigTunnel.MaxRadius; return made; }
 			if (Mathf.Abs(slope) > DigTunnel.MaxSlope) { error = "dig: slope= -" + DigTunnel.MaxSlope + ".." + DigTunnel.MaxSlope; return made; }
 			var strokes = new List<List<string>> { new List<string>() };
 			foreach (string tok in t.Skip(1))
 			{
 				if (tok == "|") { strokes.Add(new List<string>()); continue; }
-				if (tok.Contains("=") || tok == "fill") continue;
+				if (tok.Contains("=") || tok == "fill" || tok == "shaft") continue;
 				strokes[strokes.Count - 1].Add(tok);
 			}
 			strokes = strokes.Where(s => s.Count > 0).ToList();
-			const string usage = "dig <x,z | x,y,z | x,y,z,r> ... [| <next stroke>] [r=1.75] [slope=0] [fill] [as=<group>]";
+			const string usage = "dig <x,z | x,y,z | x,y,z,r> ... [| <next stroke>] [r=1.75] [slope=0] [fill | shaft] [as=<group>]";
 			if (strokes.Count == 0) { error = usage; return made; }
 			foreach (List<string> s in strokes)
 			{
@@ -2336,10 +2337,20 @@ namespace DynamicIslands
 					pts.Add(passage ?? at);
 					radii.Add(pr);
 				}
-				DigTunnel tun = DigTunnel.RecipeStroke(land, pts, radii, slope, fill);
+				DigTunnel tun = DigTunnel.RecipeStroke(land, pts, radii, slope, fill, shaft);
 				if (tun == null) { error = fill ? "dig fill: no dug tunnel at " + s[0] : "dig: the stroke from " + s[0] + " dug nothing"; return made; }
 				if (!fill && tun.PointCount < 2) { error = "dig: the stroke from " + s[0] + " dug only " + tun.PointCount + " point(s)"; return made; }
 				if (!made.Contains(tun.gameObject)) made.Add(tun.gameObject);
+				// (11-08, The Rootcore) where the stroke ends, in recipe x z and metres over the sea, with its floor - to set a
+				// ladder, a rat or a zone down in a dug room (a ray from over the island meets the ground above it)
+				if (!fill && tun.Strokes.Count > 0 && tun.Strokes[tun.Strokes.Count - 1].Count > 0)
+				{
+					var endP = tun.Strokes[tun.Strokes.Count - 1][tun.Strokes[tun.Strokes.Count - 1].Count - 1];
+					Vector3 e = tun.transform.TransformPoint(endP.At);
+					Frame f = TopFrame;
+					Vector3 rz = Quaternion.Euler(0f, -f.Yaw, 0f) * new Vector3(e.x - f.Origin.x, 0f, e.z - f.Origin.y);
+					Log("dig: stroke from " + s[0] + " ends at " + rz.x.ToString("0.0") + " " + rz.z.ToString("0.0") + ", floor h=" + (e.y - DynamicIslands.EditorWaterLevel).ToString("0.0") + " r=" + endP.R.ToString("0.0") + " (ground h=" + (GroundY(e.x, e.z) - DynamicIslands.EditorWaterLevel).ToString("0.0") + ")");
+				}
 			}
 			return made;
 		}

@@ -416,14 +416,14 @@ def read_islands(lines):
                 if o.get('end', 'room') == 'open': c.mouths.append(end)
                 cur(top).caves.append(c)
             elif verb == 'dig':
-                o = opts([x for x in t[1:] if '=' in x or x == 'fill'])
+                o = opts([x for x in t[1:] if '=' in x or x in ('fill', 'shaft')])
                 r0 = f(o['r']) if 'r' in o else 1.75
                 strokes, s = [], []
                 for tok in t[1:]:
                     if tok == '|':
                         if s: strokes.append(s)
                         s = []
-                    elif '=' not in tok and tok != 'fill':
+                    elif '=' not in tok and tok not in ('fill', 'shaft'):
                         s.append(tok)
                 if s: strokes.append(s)
                 I = cur(top)
@@ -449,6 +449,8 @@ def read_islands(lines):
                     if len(pts) == 1: pts.append(pts[0])
                     for (a, ra), (b, rb) in zip(pts, pts[1:]):
                         c.segs.append((a, b, max(ra, rb)))
+                    # (11-08: a shaft - straight up out of the passage - opens on the ground at its last point)
+                    if 'shaft' in o: c.mouths.append(pts[-1][0])
             elif verb == 'cavegate':
                 cur(top).gates.add(t[1])
             elif verb in ('place', 'store', 'vending', 'beside', 'scatter', 'line'):
@@ -588,6 +590,11 @@ def selftest():
     k, end, room = st_layout((0.0, 0.0), (0.0, -35.6), 12.0, 0.7)
     chk('uw end z', end[1], -5 * ST_STEP * 0.7 * math.cos(math.radians(12)))
     chk('uw den far wall', room[0][1] + room[1][1] * room[2], end[1] + 0.42 - 31.78 * 0.7)
+    # (11-08) a dig shaft: one cave with the passage's mouth and the shaft's top as its two mouths
+    isl = read_islands([(l, 'selftest', 'selftest') for l in
+                        ('new', 'dig 0,0 10,0 slope=-10 as=g', 'dig 10,0 10,0.3,0 shaft r=1.6 as=g')])[0]
+    chk('shaft: caves', len(isl.caves), 1); chk('shaft: mouths', len(isl.caves[0].mouths), 2)
+    chk('shaft: top x', isl.caves[0].mouths[-1][0] - LAND_CENTRE[0], 10.0)
     print('cavecheck selftest: %s' % ('PASS' if ok else 'FAIL'))
     return 0 if ok else 1
 

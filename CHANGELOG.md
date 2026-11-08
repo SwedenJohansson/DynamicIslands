@@ -16,6 +16,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Side quests keep an island coming back until they are done** - no three-return limit any more; a main story island with a side quest open joins the random picks until its side quests are done.
 - **Shelter Atoll's ammo cave hill meets the sand gently**: on dry land (`cave.foot=dry`) the hill's foot now flares out into the sand instead of meeting it at a hard, steep line, and the rock beside the cave's opening slopes up from the beach instead of standing as sheer dark walls. The way in stays open.
 - **Radio Tower Remade's trawler** rests on its pad from stern to bow; its stern no longer hangs out over the sea.
+- **Recipes: ladder shafts for dug caves**: `dig ... shaft` lays a dug passage straight through its points at any angle (the Dig brush climbs at most 25 degrees), so a dug room can have a ladder shaft up to the ground - The Rootcore's core room is the first. The recipe player now prints where each dig stroke ends (x z, floor height, the ground over it), to set ladders, rats and zones down in a dug room, and the offline cave check (`content.ps1 cavecheck`) knows a shaft's top as a second mouth.
 
 ---
 
