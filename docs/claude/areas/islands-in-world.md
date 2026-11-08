@@ -6,7 +6,7 @@ How a saved `.island` file becomes an island in a Raft world, streams in and out
 |---|---|
 | `IslandFile.cs` | `IslandFile`: the `.island` format; `Save`, `Load`, `LoadOffThread`, `FromBytes`, `Capture` (private `Read` parses) |
 | `IslandSpawner.cs` | Builds an island in the scene: `SpawnInWorldSliced`, `MakeRoot` (cropped terrain, paint, `MakeFlying`), `SpawnObjectsSliced`/`SpawnBody`, `RegisterNetworkIds`, `Despawn`, `PathFor`, `SpawnedRoots` |
-| `CustomIslandSpawner.cs` | `Tick` every 2 s: `StreamIslands` (every machine), random islands while sailing (`TrySpawn`, host); spawnpool.txt (`LoadPool`, `SetValue`) |
+| `CustomIslandSpawner.cs` | `Tick` every 2 s: `StreamIslands` (every machine), random islands while sailing (`TrySpawn`, host); spawnpool.txt (`LoadPool`, `SetValue`); `Pool`: every island full weight, `NotAgain` = journal quest done or here now, `AddOpenStoryIslands` = main story islands with a side quest open (11-08) |
 | `DynamicIslands.cs` | `SpawnIslandFile` coroutine (read, spawn, wire up); `SpawnIslandCommand` (F10 `SpawnIsland`: a world's unfinished rule island is brought back by `ReturningIslands.BringAgain` instead of a fresh copy); `OnLoadComplete`; `Update` calls each class's `Tick` |
 | `IslandWorldState.cs` | The world's island list (`Entry`), `Save`/`OnWorldLoaded` of the world file, `OnWorldShift`; `SaveWorldPatch`, `CreateRGDGamePatch`, `RestoreRGDGamePatch` |
 | `WorldCopy.cs` | Copies of the world file (Raft's world and save folders, every player); `Choose` picks the copy to read; `LocalFileFor` finds a saved island's file here |
