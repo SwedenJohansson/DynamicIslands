@@ -13,7 +13,7 @@ walk -31 27.5 to -29 27 to -22 26.7 to -15.8 26.1
 walk -15.8 26.1 to -14.1 18 to -14.1 14 below=20
 expect animals Rat 2
 wait 2
-wait 4
+wait 8
 expect animalsmoved Rat 1
 kill Rat
 expect animals Rat 0
@@ -32,5 +32,5 @@ walk -14.3 14 to -14.1 18 to -15.8 26.1 to -22 26.7 to -29 27 to -31 27.5 below=
 expect unhurt
 # back in by the mouth to the room, then out the descent again
 walk -31 27.5 to -29 27 to -22 26.7 to -15.8 26.1 to -14.1 14 to -14 -1.5 to -19.5 1.8 to -21 6
-walk -21 6 to -19.5 1.8 to -14 -1.5 to -14.1 14 to -15.8 26.1 to -22 26.7 to -29 27 to -31 27.5 below=20
+walk -21 6 to -19.5 1.8 to -16.5 -0.8 to -14 -1.5 to -14 4 to -14.1 14 to -15.8 26.1 to -22 26.7 to -29 27 to -31 27.5 below=20
 expect unhurt
