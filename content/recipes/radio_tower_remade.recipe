@@ -148,6 +148,9 @@ call ar_plane x=46 z=46 h=3 yaw=210 al=mailplane crate=mailcrate
 call hw_wreck x=-54 z=46 h=2 yaw=60 obj=BoatStranded al=trawler crate=trawlercrate r=9
 # libx 11-07: sand bank under the trawler's hull
 brush flatten from -51 48 to -48 51 r=3.5 s=20 frames=300 h=1.9
+# (11-08: its stern and the north side of its hull still hung over the sea past the pad's edge - the pad's land runs on under
+# the whole hull now, stern to bow)
+brush flatten from -61.5 41.5 to -46.5 50.5 r=5.5 s=20 frames=300 h=2
 # (agent Q 10-30, REACH: the sea cave's mouth path ended 2.4 m over the sea and the rock filled the land round it - the
 # cave and the Smugglers' cache unreached: a beach down from the path's end into the water)
 brush flatten at 71 -57.9 r=2.2 s=20 frames=200 h=1.8
