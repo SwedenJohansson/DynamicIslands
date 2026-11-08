@@ -316,4 +316,63 @@ place Block_Pillar_Wood nrwp1 at -15.1 -18.9 h=4.9
 place Block_Ladder nrwl2 at -11.9 -8.9 h=5.7 yaw=180
 place Block_Pillar_Wood nrwp2 at -11.9 -9.1 h=5.7
 
+# (11-08) The Root Warrens (plan 02 row: big dug system, two levels, ramp, dead end, spikes): the grove's roots split the
+# north-east hill into a dug warren. Mouth C on the hill's flank over the den path (upper level) slopes down into the
+# root hall; a ramp (under 20 degrees) goes down to the lower level, which runs out to mouth A on the shelf under the
+# Bee Hall's cliff, with a root cellar off it. Off the hall's west end a dead-end drift: the thorn pit, a warning
+# sign, planks along its side, the survey team's kit at the end. All dug, so the joints are dug (dug joins only dug).
+# Kept 6 m and more from the den, the turbine, the mast box, the tower and the quest walk (cavecheck).
+clear from 7.5 43.5 to 9 39.5 r=2.4 body only=^(?!.*(Boulder|Rock|Cliff|Stone)).*$
+clear from 44 18.2 to 39 18.5 r=2.4 body only=^(?!.*(Boulder|Rock|Cliff|Stone)).*$
+dig 9,39.5 10,33 11,29 r=1.75 slope=-14 as=rwroot
+dig 11,29 14.5,27.5 r=3.2 as=rwroot
+dig 39,18.5 31,20.5 22,23.5 r=1.75 slope=0 as=rwroot
+dig 14.5,27.5 17,24.5 22,23.5 r=1.75 slope=-18 as=rwroot
+dig 22,23.5 20,19.5 r=2.5 as=rwroot
+dig 11,28 9.5,23.5 r=1.75 as=rwroot
+dig 9.5,23.5 9,18 r=2.8 as=rwroot
+caveloot rwroot dirt=4 mush=5 stone=0 vines=3
+# (no loot on the thorn pit's planks and spikes)
+clear from 9.5 24 to 9.2 17.5 r=2.6 all only=^Pickup_Landmark_(Mushroom|DirtPickup|Rock)
+# the thorn pit: the drift's floor fell into a root hollow full of sharpened stakes; planks along the hall side
+place Note_Sign rwwarn at 9.3 25.8 h=14.5 sit drop yaw=18
+note rwwarn DANGER - THORN PIT | The floor past this sign dropped into a pit of root thorns. Walk the planks along the wall on your left, not the rubble.
+- Verdance survey team
+place SmallBoulder3 - at 8.2 22.4 h=12.6 sit scale=0.3 yaw=10
+place SmallBoulder3 - at 8.9 20.6 h=12.55 sit scale=0.35 yaw=130
+place SmallBoulder3 - at 8.0 18.9 h=12.6 sit scale=0.3 yaw=250
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 8.55 21.7 h=13.1 sit scale=0.25 yaw=95
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 8.35 19.6 h=13.1 sit scale=0.25 yaw=80
+place Block_Floor_Wood - at 10.77 22.6 h=14.5 drop yaw=5
+place Block_Floor_Wood - at 10.63 21.1 h=14.5 drop yaw=5
+place Block_Floor_Wood - at 10.50 19.6 h=14.5 drop yaw=5
+place Block_Floor_Wood - at 10.36 18.1 h=14.5 drop yaw=5
+place Zone_Trigger rwspike1 at 8.55 21.7 h=13.6
+place Zone_Trigger rwspike2 at 8.35 19.6 h=13.6
+prop rwspike1 zone.id=rwspike1
+prop rwspike1 zone.radius=1.5
+prop rwspike1 zone.hazard=spikes
+prop rwspike1 zone.damage=4
+prop rwspike1 zone.safe=none
+prop rwspike1 zone.hazardMsg=Root thorns! Keep to the planks.
+prop rwspike2 zone.id=rwspike2
+prop rwspike2 zone.radius=1.5
+prop rwspike2 zone.hazard=spikes
+prop rwspike2 zone.damage=4
+prop rwspike2 zone.safe=none
+prop rwspike2 zone.hazardMsg=Root thorns! Keep to the planks.
+place Loot_ChestSmall rwchest at 9.3 16.6 h=14.5 drop yaw=18
+note rwchest Survey kit | Left past the thorn pit when the floor went. Rope, a bar of metal and leather for the walk back - you crossed on the planks, so you know the way.
+loot rwchest Rope*2;MetalIngot*1;Leather*2;Bolt*2
+prop rwchest loot.refill=0
+# cavecheck inside rwwarn rwchest rwspike1 rwspike2 rwratA rwratB
+# two rats on the lower level (root cellar and the foot of the ramp), 11 m and more from mouth A's open stretch, far
+# from mouth C and 6 m and more from the sign, spikes and chest; the hall has two ways out, so neither is in the only way
+place Creature_Rat rwratA at 20.5 20.5 h=10.3
+prop rwratA creature.count=1
+prop rwratA creature.respawn=0
+place Creature_Rat rwratB at 22.5 22 h=10.3
+prop rwratB creature.count=1
+prop rwratB creature.respawn=0
+
 save Rootweave Caves
