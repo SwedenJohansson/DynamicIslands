@@ -88,7 +88,7 @@ call ringwall x=-46 z=-10 r=7 a0=20 da=45 n=6 len=5 hgt=3
 place SmallBoulder2 splitstone at -46 -10 ground sit y=-0.4 scale=0.35 yaw=40
 place Zone_Trigger track1 at -46 -10 ground
 # the bear cave (mark 2: the bent birch in front of it); the ranger's stash inside
-place "Pickup_Landmark_Tree_Birch" bentbirch at -33 13 ground sit roll=14
+place "Pickup_Landmark_Tree_Birch" bentbirch at -33 13 ground sit y=-0.85 roll=14
 place Zone_Trigger track2 at -37 13 ground
 place Loot_ChestSmall dcavechest at -35.5 28 h=5.45 sit yaw=200
 place Placeable_Lantern_Metal - at -40.6 29 h=5.45 sit

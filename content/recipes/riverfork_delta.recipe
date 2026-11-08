@@ -340,29 +340,31 @@ brush smooth from 1.5 -18.5 to 5.5 -24.5 r=2.2 s=10 frames=12
 clear from 1.5 -18.5 to 5.5 -24.5 r=2.5 body
 
 # --- 11-08 (w02): the otter's sea cave - optional, no quest step needs it ---------------------------------------------
-# An underwater mouth on the sea floor some 5 m down off the east arm's mouth, the tunnel climbing out of the water under
-# the shore into a dry den in a rock knoll on the beach east of the river mouth: air, stone, mushrooms and a seed chest.
-# hill=0 as Shelter Atoll's lagoon cave: no ridge over the sea (it would fill the river mouth's water). No rats: the den is
-# reached only under water and gets no NavMesh floor.
-call kit_st x=30 z=-102 yaw=26.6 len=38 slope=12 end=room size=0.7 hill=0 dirt=0 mush=2 stone=2 vines=1 as=rdcave
-# (the den's rock grew round palms and bushes of the fill: cleared)
-clear at 51.5 -59 r=15 all body only=Tree|Palm|Mango|Bush|Rock|Pineapple|Flower below=14
-# the way to it: a cairn of grey boulders on the east bank where the arm meets the sea, two more on the sea floor by the
-# mouth
-place SmallBoulder3 - at 27 -83 ground sit scale=0.9 yaw=30
-place SmallBoulder3 - at 28.2 -84.2 ground sit scale=0.6 yaw=140
-place SmallBoulder3 - at 26.6 -84.6 ground sit scale=0.45 yaw=250
-place SmallBoulder3 - at 26.5 -101 ground sit scale=0.65 yaw=60
-place SmallBoulder3 - at 33.5 -100.5 ground sit scale=0.65 yaw=200
-place Zone_Trigger rdair at 51.5 -59 h=3.6
+# An underwater mouth on the sea floor some 10 m down off the east beach, below the crane's mountain; the tunnel climbs
+# under the beach (a low rocky spit over it) into a dry den inside the mountain: air, stone, mushrooms and a seed chest.
+# (moved 11-08: the first mouth, off the east arm's mouth, lay on a shelf only 5 m deep that rose as fast as the tunnel -
+# the tunnel ran along the sea floor in the open and broke the surface by the beach. Here the floor falls ~17 degrees, so
+# a 12-degree tunnel goes under it; probed with 'place ... ground' + 'where' along the line: x 110 -8.4 m, 86 -1.8, 77 0.)
+# No rats: the den is reached only under water and gets no NavMesh floor.
+call kit_st x=116 z=30 yaw=270 len=58 slope=12 end=room size=0.7 hill=1 dirt=0 mush=2 stone=2 vines=1 as=rdcave
+# (the hill over the tunnel and den raises the ground round any plants there: cleared)
+clear from 62 30 to 100 30 r=7 all body only=Tree|Palm|Mango|Bush|Rock|Pineapple|Flower
+clear at 48 30 r=10 all body only=Tree|Palm|Mango|Bush|Pineapple|Flower below=12
+# the way to it: a cairn of grey boulders on the east beach by the spit, two more on the sea floor by the mouth
+place SmallBoulder3 - at 76 37 ground sit scale=0.9 yaw=30
+place SmallBoulder3 - at 77.2 38.2 ground sit scale=0.6 yaw=140
+place SmallBoulder3 - at 75.6 38.6 ground sit scale=0.45 yaw=250
+place SmallBoulder3 - at 115 26.5 ground sit scale=0.65 yaw=60
+place SmallBoulder3 - at 115 33.5 ground sit scale=0.65 yaw=200
+place Zone_Trigger rdair at 48 30 h=3.2
 prop rdair obj.name=rdair
 prop rdair zone.id=rd_den
 prop rdair zone.radius=7
 prop rdair zone.repeat=1
 prop rdair zone.air=1
-prop rdair zone.message=A dry den in the rock over the sea - air. Otter tracks in the sand, and a little chest.
+prop rdair zone.message=A dry den in the rock under the mountain - air. Otter tracks in the sand, and a little chest.
 # cavecheck inside rdseeds
-place Loot_ChestSmall rdseeds at 54.5 -61 h=6 drop yaw=200
+place Loot_ChestSmall rdseeds at 48.4 33.6 h=4.8 drop yaw=110
 prop rdseeds obj.name=rdseeds
 prop rdseeds loot.refill=0
 note rdseeds Seed tin | The river people's seed tin, kept dry in the otter's den: seeds of the delta's own fruit.
