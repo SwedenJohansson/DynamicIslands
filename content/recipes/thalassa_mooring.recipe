@@ -16,6 +16,7 @@ include lib_gravity
 include lib_sl1
 include lib_features
 include lib_sea
+include lib_caves
 # RESIZE 10-24: Radius 34 -> 85 (Height 6 -> 8), the island grows round the old content, which stays where it was.
 new
 gen Trees=0.25 Bushes=0.3 Rocks=0.4 Harvest=0.3 BeachThings=0.4
@@ -350,5 +351,52 @@ step read|Ines's slate (salvage store)|1|Read the diver's slate in the salvage s
 step reach|bell|1|Ride the diving bell 20 m down the shaft after her
 quest done=The Spire ordered its own cables cut. Down the shaft the shelf glows; the Receiver picks up the survey lamps on band 600.
 quest reward=Rope*4;Plank*6
+
+# --- 11-08 (w03): the old sea gate under the flag hill; Harbourmistress Elaine at the office - optional ---------------
+# An underwater mouth on the sea floor off the shore below the rocky hill by the office's side of the island, barred by
+# the harbour's old sea gate (Selene room bars): Harbourmistress Elaine's second answer opens it (the talked gate). Behind it the tunnel climbs out of the water under the hill into a dry
+# room - air, mushrooms, and the kingdom's charter in a chest. A flag on the hilltop marks it. No quest step needs it;
+# the bell and its zone are not gated. No rats: reached only under water, no NavMesh floor. cavecheck: 6 m and more from
+# the quest's things and the walks between them.
+call kit_st x=-102 z=8 yaw=90 len=29 slope=12 end=room size=0.7 hill=1 dirt=0 mush=2 stone=1 vines=1 as=thgatecave
+# the sea gate: two of Selene's room bars stacked across the tunnel 2 m in (the bars' mesh lies 3 m off its pivot along
+# its own x: at yaw 90 that is -z, so the pivot sits 3 m to the +z side). Plain bars: Elaine's second answer hides
+# them (a use on the bars themselves would make them a quest object in the tunnel's mouth).
+place TP_Selene_Int_Room_Bars thgate at -100 11 h=-4.7 yaw=90
+place TP_Selene_Int_Room_Bars thgate at -100 11 h=-1.95 yaw=90
+prop thgate obj.name=thgate
+# the flag on the hilltop over the room
+place Placeable_Flag_01 - at -70 2 ground sit yaw=90
+place Zone_Trigger thgateair at -64 8 h=3
+prop thgateair obj.name=thgateair
+prop thgateair zone.id=th_seagate
+prop thgateair zone.radius=8
+prop thgateair zone.repeat=1
+prop thgateair zone.air=1
+prop thgateair zone.message=A dry room behind the sea gate - air. The harbour kept its papers here, out of the floods' reach.
+# cavecheck inside thcharter
+place Loot_ChestSmall thcharter at -61 11 h=3 drop yaw=250
+prop thcharter obj.name=thcharter
+prop thcharter loot.refill=0
+note thcharter Kingdom charter | THE CHARTER OF THE SUNKEN KINGDOM
+
+We who stayed when the water came over the walls: the Network keeps the gardens, the mooring keeps the bell, and the bell keeps the people. Nobody is to be left below.
+
+(Below, in another hand: the bell still goes down. Nobody comes up.)
+loot thcharter Rope*2;Nail*6;Seed_Pineapple*1;Battery*1
+# Harbourmistress Elaine at the office, standing by its door and looking out over the deck
+place Story_Islander thelaine at -13 -4.5 ground yaw=60
+prop thelaine obj.name=Harbourmistress Elaine
+prop thelaine islander.character=Elaine
+prop thelaine islander.pose=stand
+prop thelaine talk.text=Mooring fees are waived for the living. What brings you down the old canal?
+> Where did the kingdom go?
+> I need to get below.
+> Just passing.
+prop thelaine on.choice1=journal|Harbourmistress Elaine: the flood|The kingdom did not sink in a day. The sea came up a little every year, and every year the walls went higher, until one spring the walls went under. Those who stayed went down in the bell to the gardens and the halls below. The bell still goes down. Ask the deep why it comes up empty.
+message||Elaine tells you about the flood and the bell. It is in your journal.
+prop thelaine on.choice2=hide|thgate
+message||The sea gate under the flag hill is open.
+prop thelaine on.choice3=message||Then pass quickly. The tide has a long memory here.
 
 save Thalassa Mooring

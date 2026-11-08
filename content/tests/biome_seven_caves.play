@@ -1,0 +1,35 @@
+# Biome Seven's root room (CIPlay biome_seven_caves, 11-08). Run it in a new world whose name does NOT start with 'CI '
+# (e.g. 'W03 bscaves'): in a 'CI ' world each `island` line empties the inventory and Brinelab's machete is lost on the
+# way. Points as in its recipe (11-08 w03; heights over the island's own water line, all 18 m under the sea): the vine
+# mouth at -62 -4 on the seabed west of the dome, the straight service tunnel east to the root room round -30 -4 (air
+# zone bs_rootroom, mushrooms, dirt, lamps). The machete comes from Brinelab Tower's reception drawer, as in the plan.
+# Shut by the vines, cut, swum in, air taken, swum back out.
+island Brinelab Tower
+offset 0 0
+open Reception drawer
+wait 3
+expect item Machete 1
+
+island Biome Seven
+offset 0 0
+hour 11
+weather Calm
+where ChoppableVines
+where Pickup_Landmark_Mushroom
+where Pickup_Landmark_DirtPickup
+
+# The mouth on the seabed: shut by the vines
+picture bs_cave_out -72 5 -4 -62 4 -4
+walk -70 -4 to -64 -4 to -56 -4 blocked
+expect shown bsroot_vines
+use bsroot_vines
+expect hidden bsroot_vines
+picture bs_cave_cut -72 5 -4 -62 4 -4
+# in to the root room, and breathe there
+walk -70 -4 to -62 -4 to -50 -4 to -40 -4 to -30 -4
+air bs_rootroom here
+picture bs_cave_in -40 5 -4 -24 4 -4 light=20
+picture bs_room_back -22 5 -4 -42 4 -4 light=20
+air bs_rootroom
+# back out to the seabed
+walk -30 -4 to -40 -4 to -50 -4 to -62 -4 to -70 -4

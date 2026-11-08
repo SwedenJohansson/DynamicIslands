@@ -346,4 +346,26 @@ step collect|story:lu_lit|1|Fit the four lens glasses into the broken floodlight
 quest done=The pit is lit and something big has learned to come to lights. The team went to the Caisson Yard over the trench - the Receiver finds it on band 1000.
 quest reward=Battery*1;CopperIngot*2
 
+# --- 11-08 (w03): the lamp-lit galleries under the survey rock - optional, no quest step needs it --------------------
+# A cave system through the lower half of the survey rock (the cone with the beacon locker on top), on the side away from
+# its ladder: two straight cave tool tunnels, one from each foot of the rock, joined in its heart by a dug gallery with a
+# chamber where the lamp fitters kept their spares - lit by their lamps, dirt, mushrooms and cave vines, and an air
+# pocket in the chamber. Swim in at one foot and out at the other. No rats: under water, no NavMesh floor. cavecheck:
+# 6 m and more from the locker, the ladder, the fitter's cache on the rock's shelf and the quest's walks.
+cave from -30 -78 to -15.4 -78 slope=0 end=open size=0.7 hill=0 as=lugal
+cave from 18 -78 to 3.4 -78 slope=0 end=open size=0.7 hill=0 as=lugal
+# the gallery: one level stroke from the west tunnel's end through the chamber to the east tunnel's end, its centre
+# ~1.5 m over the tunnels' floor (y under the rock's ground there: 16.2 / 18.8 / 18.8 / 16.3 m, from the saved island),
+# then a side alcove off the chamber away from the ladder
+dig -15.4,-14.7,-78,2 -9,-17.3,-79,3.5 -3,-17.3,-79,3.5 3.4,-14.8,-78,2 slope=0 as=lugal
+dig -6,-17,-80 -6,-11.3,-83,3 slope=0 as=lugal
+caveloot lugal dirt=3 mush=3 stone=0 vines=2 light=2
+place Zone_Trigger lugalair at -6 -80 h=2
+prop lugalair obj.name=lugalair
+prop lugalair zone.id=lu_galleries
+prop lugalair zone.radius=5
+prop lugalair zone.repeat=1
+prop lugalair zone.air=1
+prop lugalair zone.message=The fitters' gallery under the survey rock. Their lamps still burn, and the air they pumped down is still here.
+
 save Lumen Shelf

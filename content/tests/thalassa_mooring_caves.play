@@ -1,0 +1,39 @@
+# Thalassa Mooring's sea gate cave and Harbourmistress Elaine (CIPlay thalassa_mooring_caves, 11-08; in a test world
+# 'CI ...'). Points as in its recipe: the mouth on the sea floor at -102 8 (5 m down) off the shore below the flag hill,
+# the sea gate (two Selene bars, alias thgate) 2 m in, the flooded tunnel climbing east under the hill to the dry room
+# round -63 8 (air zone th_seagate, the kingdom charter chest at -61 11); Elaine stands by the office at -13 -4.5.
+# The gate is shut until her second answer; her other two answers; swim in, breathe, take the charter, swim out.
+island Thalassa Mooring keep
+offset 0 0
+hour 11
+weather Calm
+expect shown thgate
+
+# Outside: the flag hill from the shore, the mouth and the gate from the water
+picture th_cave_out -92 3 18 -70 6 2
+picture th_cave_mouth -108 -3.5 8 -100 -4 8
+# The gate: shut
+walk -108 8 to -104 8 to -96 8 below=-2 blocked
+
+# Harbourmistress Elaine at the office
+snap th_islander thelaine 240 3.5 0.6
+use Harbourmistress Elaine pick 1
+expect message flood and the bell
+use Harbourmistress Elaine pick 3
+expect message tide has a long memory
+use Harbourmistress Elaine pick 2
+expect message sea gate under the flag hill is open
+expect hidden thgate
+
+# Swim in: from the sea floor up the tunnel into the room, and breathe there
+walk -108 8 to -102 8 to -92 8 to -82 8 to -72 8 to -64 8 below=-2
+air th_seagate here
+picture th_cave_in -74 3.5 8 -60 2.5 10 light=20
+picture th_room_back -54 3.5 8 -72 1 8 light=20
+open Kingdom charter
+wait 2
+expect item Battery 1
+air th_seagate
+
+# Back out: down the tunnel and out of the mouth onto the sea floor
+walk -64 8 to -72 8 to -82 8 to -92 8 to -102 8 to -108 8 below=5

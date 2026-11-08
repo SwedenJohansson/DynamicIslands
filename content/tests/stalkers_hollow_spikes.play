@@ -1,0 +1,19 @@
+# The Stalker's Hollow's bone pit (CIPlay stalkers_hollow_spikes, 11-08; in a test world, under CIGapsWatchHealth): the
+# pit behind the den rock (dig 60..66 x 34.5, floor about -1.6), three stakes with spike zones shspike1-3 at x 61, 63,
+# 65 (radius 1.5, damage 4, safe=none), plank ledges along both rims (z 36.6 and 32.4), the sign at 55 42.
+# The pit floor is real floor (expect stand), standing on it costs health, the planks do not.
+island The Stalker's Hollow keep
+offset 0 0
+hour 11
+weather Calm
+expect stand 61 34.5 h=-1.6 below=3
+expect stand 65 34.5 h=-1.6 below=3
+expect stand 62.25 36.6 h=2.1 below=4
+picture sh_pit_out 56 5 42 63 0 34.5
+at 63 34.5 h=-1
+wait 3
+picture sh_spikes 63 3 39 63 -1.5 34.5
+wait 3
+at 62.25 36.6 h=2.6
+wait 2
+picture sh_pit_ledge 58 4 36.6 66 2 33

@@ -13,6 +13,7 @@ include lib_features
 include lib_sea
 include lib_gravity
 include lib_sunken
+include lib_caves
 # RESIZE 10-24: Radius 40 -> 95 (Height 10 -> 10), the island grows round the old content, which stays where it was.
 new
 gen Trees=0 Bushes=0 Rocks=0.5 Harvest=0 BeachThings=0
@@ -320,6 +321,66 @@ loot shcrown TitaniumIngot*4;MetalIngot*4;CircuitBoard*2;Battery*2
 prop shcrown loot.refill=0
 prop shcrown if.open=has|story:sk_crest|9
 prop shcrown else.open=message||Nine sockets in the vault's lid, shaped like crest shards. Every drowned building of the kingdom kept one.
+
+# --- 11-08 (w03): the Stalker's warren under the lip rock (plan 03 row: big system, dug hollow + 2 straight tunnels) ---
+cave from 44 50 to 44 63 slope=0 end=open size=0.7 hill=0 as=shsys
+cave from 71 68 to 58 68 slope=0 end=open size=0.7 hill=0 as=shsys
+# The lip rock's foot holds the Stalker's warren: a straight tunnel in from the south foot (the side facing the arena)
+# and one from the east foot over the trench meet in a dug hollow under the rock, where the Stalker sleeps off a hunt -
+# air under its roof, mushrooms on its leavings, a titanium seam in the wall. Two ways out to the sea; no rats (sunken).
+# The hollow keeps 7 m and more from the summit ladder, the locker and the ledge chest (cavecheck).
+dig 44,-23.3,64.6,2.4 45,-24.5,66,2.6 slope=0 as=shsys
+dig 56.4,-20.4,68,2.4 52,-27.1,68.5,2.6 slope=0 as=shsys
+dig 45,-24.5,66,4.5 49,-27.6,69,4.5 slope=0 as=shsys
+caveloot shsys dirt=0 mush=3 stone=0 vines=0 titanium=1 light=1
+place Zone_Trigger shsysair at 47 67.5 h=8
+prop shsysair obj.name=shsysair
+prop shsysair zone.id=sh_warren
+prop shsysair zone.radius=5
+prop shsysair zone.repeat=1
+prop shsysair zone.air=1
+prop shsysair zone.message=Air under the lip rock - the Stalker's own hollow. The floor is scraped smooth where it lies.
+# The bone pit behind the den rock: the Stalker drops what it does not eat into a hollow in the basin floor, and the
+# wardens drove stakes in to keep it from nesting there. A plank ledge runs round the rim; the pit floor hurts.
+dig 60,-1.6,34.5,2 66,-1.6,34.5,2 slope=0 as=shpit
+place Note_Sign shpitwarn at 55 42 ground sit yaw=210
+note shpitwarn DANGER - BONE PIT | The Stalker's bone pit. Stakes in the floor, under the bones. Keep to the planks round the rim.
+- G. Fennick, warden
+place Block_Floor_Wood - at 60.75 36.6 ground drop yaw=0
+place Block_Floor_Wood - at 60.75 32.4 ground drop yaw=0
+place Block_Floor_Wood - at 62.25 36.6 ground drop yaw=0
+place Block_Floor_Wood - at 62.25 32.4 ground drop yaw=0
+place Block_Floor_Wood - at 63.75 36.6 ground drop yaw=0
+place Block_Floor_Wood - at 63.75 32.4 ground drop yaw=0
+place Block_Floor_Wood - at 65.25 36.6 ground drop yaw=0
+place Block_Floor_Wood - at 65.25 32.4 ground drop yaw=0
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 61 34.5 h=-1.5 sit scale=0.25 yaw=40
+place SmallBoulder3 - at 61.9 35.3 h=-1.6 sit scale=0.3 yaw=100
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 63 34.5 h=-1.5 sit scale=0.25 yaw=150
+place SmallBoulder3 - at 63.9 33.7 h=-1.6 sit scale=0.3 yaw=210
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 65 34.5 h=-1.5 sit scale=0.25 yaw=265
+place SmallBoulder3 - at 65.9 35.3 h=-1.6 sit scale=0.3 yaw=325
+place Zone_Trigger shspike1 at 61 34.5 h=-1
+prop shspike1 zone.id=shspike1
+prop shspike1 zone.radius=1.5
+prop shspike1 zone.hazard=spikes
+prop shspike1 zone.damage=4
+prop shspike1 zone.safe=none
+prop shspike1 zone.hazardMsg=Stakes under the bones! Back up onto the planks.
+place Zone_Trigger shspike2 at 63 34.5 h=-1
+prop shspike2 zone.id=shspike2
+prop shspike2 zone.radius=1.5
+prop shspike2 zone.hazard=spikes
+prop shspike2 zone.damage=4
+prop shspike2 zone.safe=none
+prop shspike2 zone.hazardMsg=Stakes under the bones! Back up onto the planks.
+place Zone_Trigger shspike3 at 65 34.5 h=-1
+prop shspike3 zone.id=shspike3
+prop shspike3 zone.radius=1.5
+prop shspike3 zone.hazard=spikes
+prop shspike3 zone.damage=4
+prop shspike3 zone.safe=none
+prop shspike3 zone.hazardMsg=Stakes under the bones! Back up onto the planks.
 
 quest title=The Deep
 quest intro=Fennick and the Director went down to the Hollow. Go down the chain to the trench lip after them.

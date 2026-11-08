@@ -1,0 +1,27 @@
+# Lumen Shelf's lamp-lit galleries (CIPlay lumen_shelf_caves, 11-08; in a test world 'CI ...'). Points as in its recipe
+# (heights over the island's own water line, all 25 m under the sea): the west mouth at -30 -78 at the survey rock's foot,
+# the cave tool tunnel east to -15.4 -78, the dug gallery and its chamber round -6 -79 (air zone lu_galleries, lamps,
+# mushrooms, dirt, cave vines; an alcove towards -6 -83), the east tunnel out to the mouth at 18 -78. The gallery's
+# floor height comes from the saved island: the [CITEST] dig lines give the real one. In at one foot, out at the other.
+island Lumen Shelf keep
+offset 0 0
+hour 11
+weather Calm
+where Pickup_Landmark_Mushroom
+where Pickup_Landmark_DirtPickup
+where CaveVine
+
+# Outside: both mouths at the rock's feet
+picture lu_cave_out -42 4 -78 -30 2 -78
+picture lu_cave_out2 30 4 -78 18 2 -78
+
+# Swim in from the west foot to the chamber, and breathe there
+walk -38 -78 to -30 -78 to -22 -78 to -15 -78 to -9 -79 to -6 -79 below=5
+air lu_galleries here
+picture lu_cave_in -14 2 -78 -4 1.5 -80 light=20
+picture lu_chamber -6 2 -76.5 -6 1 -83 light=20
+air lu_galleries
+
+# On through the east tunnel and out at the other foot
+walk -6 -79 to -3 -79 to 3.4 -78 to 10 -78 to 18 -78 to 26 -78 below=5
+picture lu_cave_back 10 2 -78 -2 1.5 -79 light=20
