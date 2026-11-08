@@ -1,7 +1,7 @@
 # Ranger Landing's cache cave and Ranger Maya (CIPlay ranger_landing_caves, 11-08; in a test world 'CI ...'). Points as
 # in its recipe (the island's frame, after the RESIZE push). The cache hatch in the den under the training hill is
 # locked until someone talked to Ranger Maya at the camp's fire pit; her three answers (journal, the cache, goodbye);
-# the walk in from the mouth at the hill's west foot to the den's back and out again; the cache chest.
+# the walk in from the mouth at the hill's foot to the den's back and out again; the cache chest. Den floor ~4.9 m.
 island Ranger Landing keep
 offset 0 0
 hour 11
@@ -9,9 +9,9 @@ weather Calm
 expect hidden rlcachechest
 
 # The cave from outside, the walk in to the den's back
-picture rl_cave_out 4 6 33 12 4 38
+picture rl_cave_out 4 7.8 33 12 6.5 38
 walk 9 36.3 to 12 38 to 24.6 45.3 to 33.9 50.6 to 36.5 52.1
-picture rl_cave_in 22 3 44 36 2 52 light=20
+picture rl_cave_in 22 6.8 44 36 6.2 52 light=20
 
 # The cache hatch: locked before anyone talked to Maya
 use rlcachedoor stay
@@ -43,4 +43,4 @@ expect message under the lookout
 
 # Out of the cave again past the mouth
 walk 36.5 52.1 to 33.9 50.6 to 24.6 45.3 to 12 38 to 8 35.7
-picture rl_cave_mouth_in 30 3 48.5 12 3 38
+picture rl_cave_mouth_in 30 6.8 48.5 12 6 38 light=20
