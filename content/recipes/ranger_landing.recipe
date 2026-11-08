@@ -279,7 +279,8 @@ quest reward=Seed_Birch*2;Seed_Pine*2
 # from both. No rats here. cavecheck: 6 m from the tower, its box and ladders, the goats and the camp's things.
 call kit_st x=12 z=38 yaw=60 len=16 size=0.7 dirt=3 mush=2 stone=0 vines=0 as=rlcache
 # cavecheck inside rlcachedoor rlcachechest
-place TangaroaHatchRoom_Hatch rlcachedoor at 38.2 53.1 h=4 sit yaw=240
+# (den floor = the mouth's ground, ~4.9 m over the sea (slope 0; from the saved island's heightmap): set down from 6.5 m)
+place TangaroaHatchRoom_Hatch rlcachedoor at 38.2 53.1 h=6.5 drop yaw=240
 prop rlcachedoor obj.name=rlcachedoor
 prop rlcachedoor beh.use=Open the cache hatch
 prop rlcachedoor if.use=talked|Ranger Maya
@@ -287,7 +288,7 @@ prop rlcachedoor on.use=hide|rlcachedoor
 show|rlcachechest
 message||The hatch swings up on the rangers' cache - a chest stowed in the rock.
 prop rlcachedoor else.use=message||The cache door is locked. Ask the ranger at the camp.
-beside Loot_ChestSmall rlcachechest rlcachedoor d=0.01
+place Loot_ChestSmall rlcachechest at 39.3 53.75 h=6.5 drop yaw=240
 prop rlcachechest obj.name=rlcachechest
 prop rlcachechest beh.hidden=1
 prop rlcachechest loot.refill=0
