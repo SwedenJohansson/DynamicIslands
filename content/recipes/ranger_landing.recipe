@@ -7,6 +7,8 @@
 # Built by the recipe player (CIRecipe ranger_landing) through the editor's own operations. Points (metres over the
 # sea): the station pad at 1.4 m round -10 -24 (the stilt hut x -12..-7.5, z -26..-21.5, deck 2.6 m over the pad), the
 # fire pit -2 -18, the trail marks -6 -6, 4 4, -2 14, the boat shed x -5..-0.5, z 18..21.
+# (11-08 w02: a straight cave under the training hill and its tower - the rangers' cache den, its cache hatch opened by
+# Ranger Maya at the camp; Ranger Maya by the fire pit, leaning on a crate)
 include lib_sea
 include lib_features
 include lib_huts
@@ -14,6 +16,7 @@ include lib_gravity
 include lib_verdance
 include lib_ni7a
 include lib_ni8
+include lib_caves
 # RESIZE 10-24: Radius 46 -> 85 (Height 12 -> 12), the old content moved 0 -21.5 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 new
 # RESIZE 10-24 rework: the bigger island was a wide bare sand plain - now wooded hills at Raft's density, the quest
@@ -268,6 +271,45 @@ step collect|story:rack|1|Hang the tools back on the rack by the station
 step read|Ranger log 3|1|Read Ranger log 3
 quest done=Oda went upriver. The delta's band is 800.
 quest reward=Seed_Birch*2;Seed_Pine*2
+
+# --- 11-08 (w02): the ranger cache under the lookout; Ranger Maya at the camp -----------------------------------------
+# A straight cave (kit_st) into the training hill's west foot, under the tower (the lookout), to a den: the rangers' cache.
+# Its chest lies under a steel hatch in the den's floor, locked until someone talked to Ranger Maya (talked gate); her
+# second answer opens it too. Not the old dens: the bear cave and the fox den keep their quest chests; this den is 70 m
+# from both. No rats here. cavecheck: 6 m from the tower, its box and ladders, the goats and the camp's things.
+call kit_st x=12 z=38 yaw=60 len=16 size=0.7 dirt=3 mush=2 stone=0 vines=0 as=rlcache
+# cavecheck inside rlcachedoor rlcachechest
+place TangaroaHatchRoom_Hatch rlcachedoor at 38.2 53.1 h=4 sit yaw=240
+prop rlcachedoor obj.name=rlcachedoor
+prop rlcachedoor beh.use=Open the cache hatch
+prop rlcachedoor if.use=talked|Ranger Maya
+prop rlcachedoor on.use=hide|rlcachedoor
+show|rlcachechest
+message||The hatch swings up on the rangers' cache - a chest stowed in the rock.
+prop rlcachedoor else.use=message||The cache door is locked. Ask the ranger at the camp.
+beside Loot_ChestSmall rlcachechest rlcachedoor d=0.01
+prop rlcachechest obj.name=rlcachechest
+prop rlcachechest beh.hidden=1
+prop rlcachechest loot.refill=0
+note rlcachechest Ranger cache | The rangers' cache under the training hill: dry rope, nails, a lamp's battery and seeds for the burnt ground.
+loot rlcachechest Rope*3;Nail*10;Battery*1;Seed_Birch*1;Seed_Pine*1
+# Ranger Maya by the fire pit, leaning on a crate (a leaner needs something at her back), facing the fire; 6 m and more
+# from the station's zone, the job board and the tool rack
+place Crate_Big_01 - at -0.1 -45.6 ground sit yaw=20
+place Story_Islander rlmaya at -0.5 -46.6 ground yaw=203
+prop rlmaya obj.name=Ranger Maya
+prop rlmaya islander.character=Maya
+prop rlmaya islander.pose=lean
+prop rlmaya talk.text=The green is dying from the mire outward. Start at the delta - the river carries everything.
+> What is in the mire?
+> Can I use the ranger cache?
+> I will manage.
+prop rlmaya on.choice1=journal|Ranger Maya: the mire|The mire's blight pools burn - green water that eats through boots and skin. Walk them only in a suit; it keeps the blight off.
+message||Maya writes it down for you: the blight pools burn, a suit protects.
+prop rlmaya on.choice2=hide|rlcachedoor
+show|rlcachechest
+message||The cache is in the rock under the lookout.
+prop rlmaya on.choice3=message||Then go carefully. The river does not wait for anyone.
 
 # a fill rock that floated over the slope (ground check, 2026-10-24)
 clear at 10.56 15.27 r=1.5 only=CaravanIsland_SmallRock all
