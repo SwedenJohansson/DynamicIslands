@@ -101,7 +101,11 @@ plan save
   the rim), then `FootPasses` 3 smoothing passes over the skin (rim and corridor cells kept, roof cells held at half-way to the
   highest roof beside them + Over).
   The falloff also goes on past that piece's own mouth plane beside the opening (more than HalfWidth + `DryFront` off its
-  centre line, on dry ground only), capped at ground + Slope x distance from the opening: a rounded shoulder, not a sheer face.
+  centre line, on dry ground only), capped at ground + `ShoulderSlope` 0.9 x distance from the opening: a rounded shoulder, not a sheer face. 11-08: on dry land
+  the hill's last `FlareHigh` 3 m over the ground fall at `FlareSlope` 0.7 (a flared foot), and `ShoulderRamps` (before the
+  rim and again after `FootPasses`) caps every skin cell out past a dry mouth (to `DryWay` + 4 m) at ground - 0.6 +
+  `ShoulderSlope` x its distance past the opening's HalfWidth (cut cells stay cut): the den's other pieces' roofs had
+  kept the shoulders' inner faces sheer.
   Without the prop all of it is skipped: other islands build byte for byte as before (Old Mine Islet checked).
 - In Raft, `tools\cavecheckrun.ps1 <island> [...] [-player 2|3]` checks a built island's caves in one world load:
   CICaveGapsLook (pictures out/in by day and night, walked in and out, flooded parts), CICaveInside shots (X7) and

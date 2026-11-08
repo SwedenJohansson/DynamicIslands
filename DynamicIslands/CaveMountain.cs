@@ -386,7 +386,12 @@ namespace DynamicIslands.Editor
 						{
 							int a = i + di, c = k + dk;
 							if (a < 0 || c < 0 || a >= nx || c >= nz) continue;
-							float h = peak - Slope * Cell * Mathf.Sqrt(di * di + dk * dk);
+							float dist = Cell * Mathf.Sqrt(di * di + dk * dk);
+							float h = peak - Slope * dist;
+							// (cave.foot=dry: on dry land its last FlareHigh m flare out at FlareSlope into the sand - the den hill's flanks
+							// came down at the full slope and met the sand at a hard, steep line, Shelter Atoll from the east, 11-08)
+							if (dryFootOn && ground[a, c] > SeaLevel + DryBy && peak > ground[a, c] + FlareHigh)
+								h = Mathf.Max(h, ground[a, c] + FlareHigh - FlareSlope * (dist - (peak - ground[a, c] - FlareHigh) / Slope));
 							if (past != null && past[a, c] > 0.5f && (di != 0 || dk != 0))
 							{
 								// (cave.foot=dry, that piece's own: beside its opening the hill goes on out past the mouth's plane as a
@@ -397,7 +402,7 @@ namespace DynamicIslands.Editor
 								float off = Mathf.Abs(Vector3.Dot(new Vector3(x0 + a * Cell, 0f, z0 + c * Cell) - dm.Pos, dm.Side) - dm.InsideSide) - dm.HalfWidth - DryFront;
 								// (on dry land only: out over the sea it stood as slabs under the water)
 								if (off <= 0f || !(ground[a, c] > SeaLevel + DryBy)) continue;
-								h = Mathf.Min(h, ground[a, c] + Slope * off);
+								h = Mathf.Min(h, ground[a, c] + ShoulderSlope * off); // (gentler than the hill: its inner faces by the opening stood steep and dark, 11-08)
 							}
 							if (h > height[a, c]) height[a, c] = h;
 						}
@@ -482,6 +487,10 @@ namespace DynamicIslands.Editor
 					// comes near the ground - the rounding alone lifted rock out of a pit or a dug stair far from the cave, Ashfall's crypt)
 					on[i, k] = float.IsNaN(corridor[i, k]) && height[i, k] > ground[i, k] - 0.6f && raw[i, k] > ground[i, k] - 0.6f - 2f * Slope * Cell;
 				}
+			// (cave.foot=dry: out past a mouth the hill's sides by its opening slope up from its edge at ShoulderSlope - the shoulders'
+			// inner faces stood as sheer dark walls the shell's whole height, the den's other pieces' roofs reaching them unclamped,
+			// Shelter Atoll's ammo den 11-08; the strip beside the opening the cut took is a low ramp now, the opening itself stays cut)
+			if (dryFootOn) ShoulderRamps(mouths, ahead, cover, corridor, ground, height, on, cut, x0, z0, nx, nz);
 			// (one more ring round it, sunk under the ground: its edge slopes into the ground, not a stepped wall over it)
 			var rim = new List<int>();
 			for (int i = 0; i < nx; i++)
@@ -582,6 +591,7 @@ namespace DynamicIslands.Editor
 			}
 			// (and no loose bits: a few cells of skin cut off from the hill, over no cave, stood alone on the shore as a slab with a
 			// wall under it - by Shelter Atoll's ammo den, where the cut past its mouth left one at its corner, 11-07)
+			if (dryFootOn) ShoulderRamps(mouths, ahead, cover, corridor, ground, height, on, cut, x0, z0, nx, nz); // (again: the passes above lifted them)
 			LooseDropped = dryFootOn ? DropLoose(on, top, height, ground, nx, nz) : 0; // (only on a hill with cave.foot=dry)
 
 			var map = new System.Text.StringBuilder();
@@ -710,6 +720,28 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		internal const float DenRockGrey = 0.35f;
 
+		/// <summary>cave.foot=dry: each cell out past a dry mouth (within DryWay + 4 m of its roof's end, on dry land, off any roof
+		/// or way in) is kept at most ShoulderSlope a m over the ground, less 0.6, for each m it lies to the side past the opening's
+		/// half width (cut cells stay cut: turning them into skin left dark slivers at the sand, 11-08).</summary>
+		static void ShoulderRamps(List<Mouth> mouths, float[][,] ahead, float[,] cover, float[,] corridor, float[,] ground, float[,] height, bool[,] on, bool[,] cut, float x0, float z0, int nx, int nz)
+		{
+			for (int j = 0; j < mouths.Count; j++)
+			{
+				Mouth m = mouths[j];
+				if (!m.Dry) continue;
+				for (int i = 0; i < nx; i++)
+					for (int k = 0; k < nz; k++)
+					{
+						float past = ahead[j][i, k];
+						if (!(past > 0f) || past > DryWay + 4f || !float.IsNaN(cover[i, k]) || !float.IsNaN(corridor[i, k]) || !(ground[i, k] > SeaLevel + DryBy)) continue;
+						float sd = Mathf.Abs(Vector3.Dot(new Vector3(x0 + i * Cell, 0f, z0 + k * Cell) - m.Pos, m.Side) - m.InsideSide) - m.HalfWidth;
+						if (sd <= 0f) continue;
+						float ramp = ground[i, k] - 0.6f + ShoulderSlope * sd;
+						if (on[i, k] && !cut[i, k] && height[i, k] > ramp) height[i, k] = ramp;
+					}
+			}
+		}
+
 		static bool IsDryFoot(IDictionary<string, string> p)
 		{
 			string v;
@@ -730,6 +762,10 @@ namespace DynamicIslands.Editor
 		internal const float EdgeDrop = 0.4f;
 		// (cave.foot=dry: how many cells round a roof's edge fall by EdgeDrop)
 		internal const int EdgeRings = 2;
+		// (cave.foot=dry: on dry land the hill's last FlareHigh m over the ground fall at FlareSlope, m a m, not Slope: a foot that flares out)
+		internal const float FlareHigh = 3f, FlareSlope = 0.7f;
+		// (cave.foot=dry: how steeply a shoulder beside a mouth's opening rises from the ground, m a m out from the opening's side)
+		internal const float ShoulderSlope = 0.9f;
 		/// <summary>Tests: how many cells of loose skin the last build left out.</summary>
 		public static int LooseDropped;
 

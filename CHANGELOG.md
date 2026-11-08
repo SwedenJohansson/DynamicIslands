@@ -9,6 +9,13 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## Next (after 3.2)
+
+- **Shelter Atoll's ammo cave hill meets the sand gently**: on dry land (`cave.foot=dry`) the hill's foot now flares out into the sand instead of meeting it at a hard, steep line, and the rock beside the cave's opening slopes up from the beach instead of standing as sheer dark walls. The way in stays open.
+- **Radio Tower Remade's trawler** rests on its pad from stern to bow; its stern no longer hangs out over the sea.
+
+---
+
 ## 3.2 alpha - 2026-11-07: Caves and islanders
 
 New in this release:

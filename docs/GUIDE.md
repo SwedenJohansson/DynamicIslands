@@ -1042,7 +1042,7 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
     own rock, so a brown den does not sit in blue-grey hill rock (Shelter Atoll's ammo cave has it; a tinted cave's tint wins).
     The setting `cave.foot=dry` on a cave piece sets the hill's foot firmly on dry land: no pits or pools dug beside a
     room's leaning outer walls, no loose bits of skin, the sunken rim kept on raised shore ground, and a cave's way in kept
-    clear for only 12 m past its roof, and the hill's foot smoothed so it meets the sand without a dark band (Shelter Atoll's ammo cave has it). Without it nothing changes.
+    clear for only 12 m past its roof, and the hill's foot smoothed so it meets the sand without a dark band, flaring out gently into it, with the rock beside the cave's opening sloping up from it rather than standing as a sheer face (Shelter Atoll's ammo cave has it). Without it nothing changes.
     Every cave piece's rock is drawn from outside as well as from inside (Raft draws it from inside only), and the
     island's ground where it runs through a cave's rooms is let down under the room's floor, or cut away where it lies
     wholly inside or runs steeply through (a hole dug down to a tunnel's end): from inside a cave you see only rock - no ground across a room, no sea or sky through a wall. The
