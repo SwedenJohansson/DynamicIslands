@@ -1971,9 +1971,10 @@ namespace DynamicIslands.Editor
 			// (never reached and no step done: not finished whatever its quest - without reading its file, which the spawn
 			// pool's first pick did for every island the world has, IM43)
 			if (!e.State.ContainsKey(WorldDirector.VisitKey) && QuestTracker.StepOf(e) <= 0) return false;
-			// (a side quest begun and not done keeps it unfinished only while it may still come back (MaxReturns): a side quest
-			// left or stuck kept it unfinished for good - its dot and its SpawnIsland copy forever - review 10-30)
-			if (QuestTracker.SideQuestOpen(e) && Returns(e) < MaxReturns) return false;
+			// (a side quest begun and not done keeps it unfinished until it is done, however often it came back: the user,
+			// 2026-11-08 "They should be able to come back randomly until the side quests are finished" - from 10-30 only
+			// while Returns < MaxReturns)
+			if (QuestTracker.SideQuestOpen(e)) return false;
 			int steps = IslandQuest.From(IslandCache.PropsOf(e)).Steps.Count;
 			if (steps > 0) return QuestTracker.StepOf(e) >= steps;
 			return e.State.ContainsKey(WorldDirector.VisitKey);
@@ -1982,9 +1983,10 @@ namespace DynamicIslands.Editor
 		/// <summary>Host: the spawn pool picked an island this world already has, not finished and left behind: it comes
 		/// back ahead of the raft as it was (quest, chests and harvest kept) instead of a second, fresh copy.</summary>
 		/// <param name="count">false: a player's own SpawnIsland - it doesn't use up one of the island's MaxReturns</param>
-		public static bool BringAgain(IslandWorldState.Entry e, Vector3 raft, bool count = true)
+		/// <param name="why">the reason shown ("pool": the spawn pool picked it again); null = Why(e), else "again"</param>
+		public static bool BringAgain(IslandWorldState.Entry e, Vector3 raft, bool count = true, string why = null)
 		{
-			return Bring(e, raft, Why(e) ?? "again", count);
+			return Bring(e, raft, why ?? Why(e) ?? "again", count);
 		}
 
 		public static int Returns(IslandWorldState.Entry e)

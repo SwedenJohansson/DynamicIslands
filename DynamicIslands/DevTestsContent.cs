@@ -1082,7 +1082,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: again until done"); else Fail("again until done");
 		}
 
-		[ConsoleCommand(name: "CISpawnSpread", docs: "Dev, in game (host, a test world 'CI ...'): the spread of random picks from the spawn pool - 8000 picks: every island in the pool comes, each about as often as its weight says, one this world has already (left behind, not finished) as often as the others (the user, 2026-11-01); an island 'not before 5 km' only once the world has sailed 5 km")]
+		[ConsoleCommand(name: "CISpawnSpread", docs: "Dev, in game (host, a test world 'CI ...'): the spread of random picks from the spawn pool - 8000 picks: every island in the pool comes, each about as often as its weight says, one this world has already (left behind; without a quest, also reached) as often as the others (the user, 2026-11-01 / 11-08: 1 in N for each); an island 'not before 5 km' only once the world has sailed 5 km")]
 		public static void SpawnSpreadTest(string[] args)
 		{
 			Vector3? raftAt = CustomIslandSpawner.RaftPosition;
@@ -1102,6 +1102,8 @@ namespace DynamicIslands
 			{
 				Vector3 at = raftAt.Value - CustomIslandSpawner.SailDirection() * (WorldRules.UnloadDistance + 2000f); at.y = 0f;
 				here = IslandWorldState.Add(names[3], at, null, false);
+				// (reached: an island without a quest may always come back, at the same chance - the user, 2026-11-08)
+				here.State[WorldDirector.VisitKey] = new ObjectState { Active = true, Yield = 0, Day = WorldDirector.Today };
 				var pool = CustomIslandSpawner.Pool().Where(p => !p.Key.Equals(late, StringComparison.OrdinalIgnoreCase)).ToList();
 				var missing = names.Where(n => !pool.Any(p => p.Key.Equals(n, StringComparison.OrdinalIgnoreCase))).ToList();
 				if (missing.Count > 0) { Fail("not in the pool (this world's island list leaves them out?): " + string.Join(", ", missing.ToArray())); return; }
@@ -1128,7 +1130,7 @@ namespace DynamicIslands
 				bool after = CustomIslandSpawner.Pool().Any(p => p.Key.Equals(late, StringComparison.OrdinalIgnoreCase));
 				WorldDirector.Sailed = sailedWas;
 				Check(ref ok, !early && after, "an island 'not before 5 km' is out of the pool at 4 km (" + !early + "), in at 5.1 km (" + after + ")");
-				Check(ref ok, ratio > 0.75f && ratio < 1.33f, "the one this world has already comes as often as the others: " + counts[names[3]] + " vs " + counts[names[0]] + " (" + ratio.ToString("F2") + ")");
+				Check(ref ok, ratio > 0.75f && ratio < 1.33f, "the one this world has already (reached, no quest) comes as often as the others: " + counts[names[3]] + " vs " + counts[names[0]] + " (" + ratio.ToString("F2") + ")");
 			}
 			finally
 			{
@@ -1140,7 +1142,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: random picks spread by weight, every island comes, ones the world has as often"); else Fail("random picks spread by weight, every island comes, ones the world has as often");
 		}
 
-		[ConsoleCommand(name: "CIPoolAgain", docs: "Dev, in game (host, a test world 'CI ...'): the spawn pool and islands this world already has - a finished one (quest done, a note missed on it or not; or without a quest, reached with every note found) is never picked again, also when it failed to load; an unfinished one (quest begun, or never reached, or without a quest a note not found) may be: picked, it comes back ahead of the raft as it was (its quest step kept, one copy), not a second fresh copy - also one that failed to load (it tries again there)")]
+		[ConsoleCommand(name: "CIPoolAgain", docs: "Dev, in game (host, a test world 'CI ...'): the spawn pool and islands this world already has - one whose quest is done (a note missed on it or not, a side quest done) is never picked again, also when it failed to load; every other may be (quest begun, a side quest open however often it came back, never reached, or without a quest - reached or not, notes found or not: the user, 2026-11-08): picked, it comes back ahead of the raft as it was (its quest step kept, one copy), not a second fresh copy - also one that failed to load (it tries again there)")]
 		public static void PoolAgainTest() { StartTest(PoolAgainRoutine()); }
 
 		static IEnumerator PoolAgainRoutine()
@@ -1184,14 +1186,19 @@ namespace DynamicIslands
 				// (code audit 2026-10-30: a side quest begun and not done - not finished, it comes back; done, it is finished)
 				QuestTracker.Set(done, 1, 1, 0, false);
 				bool sideOpen = !ReturningIslands.Finished(done) && ReturningIslands.Why(done) == "quest";
+				// (past MaxReturns too: no cap until its side quests are done - the user, 2026-11-08; it stopped after 3 from 10-30)
+				done.State[ReturningIslands.ReturnsKey] = new ObjectState { Active = true, Yield = ReturningIslands.MaxReturns + 2, Day = 0 };
+				bool sidePast = !ReturningIslands.Finished(done) && CustomIslandSpawner.Pool().Any(p => p.Key.Equals(names[0], StringComparison.OrdinalIgnoreCase));
+				done.State.Remove(ReturningIslands.ReturnsKey);
 				QuestTracker.Set(done, 1, 2, 0, false);
-				Check(ref ok, sideOpen && ReturningIslands.Finished(done), "a side quest begun keeps the island unfinished, done it is finished: " + sideOpen + ", " + ReturningIslands.Finished(done));
+				Check(ref ok, sideOpen && sidePast && ReturningIslands.Finished(done), "a side quest begun keeps the island unfinished and in the pool (past " + ReturningIslands.MaxReturns +
+					" returns too: " + sidePast + "), done it is finished: " + sideOpen + ", " + ReturningIslands.Finished(done));
 				var pool = CustomIslandSpawner.Pool().Select(p => p.Key).ToList();
 				Func<string, bool> inPool = n => pool.Contains(n, StringComparer.OrdinalIgnoreCase);
-				Check(ref ok, !inPool(names[0]) && !inPool(names[2]), "the finished ones are not in the pool: done " + inPool(names[0]) + ", reached " + inPool(names[2]));
-				Check(ref ok, inPool(names[1]) && inPool(names[3]), "the unfinished ones are: begun " + inPool(names[1]) + ", never reached " + inPool(names[3]));
+				Check(ref ok, !inPool(names[0]), "the quest-done one is not in the pool (" + inPool(names[0]) + ")");
+				Check(ref ok, inPool(names[1]) && inPool(names[2]) && inPool(names[3]), "the others are: begun " + inPool(names[1]) + ", no quest reached " + inPool(names[2]) + ", never reached " + inPool(names[3]));
 				// A note not found yet: an island whose quest is done never comes again all the same (the user, 2026-11-01: "finished
-				// quest islands should not return"); one without a quest, reached, comes back until every note is found
+				// quest islands should not return"); one without a quest, reached, comes back with its notes found or not (11-08)
 				Func<int, bool> withMissedNote = i =>
 				{
 					IslandFile noted = IslandFile.Load(IslandSpawner.PathFor(names[i]));
@@ -1204,10 +1211,10 @@ namespace DynamicIslands
 				bool questMissed = withMissedNote(0), seenMissed = withMissedNote(2);
 				string noteKey = "note:" + seen.HostName + ":0";
 				StoryBook.AddPage(noteKey, "Missed", "A note the players missed.", "Again");
-				bool allFound = !CustomIslandSpawner.Pool().Any(p => p.Key.Equals(names[2], StringComparison.OrdinalIgnoreCase));
+				bool allFound = CustomIslandSpawner.Pool().Any(p => p.Key.Equals(names[2], StringComparison.OrdinalIgnoreCase));
 				foreach (StoryBook.Page added in StoryBook.Pages.Where(x => x.Key == noteKey).ToList()) StoryBook.Pages.Remove(added);
 				Check(ref ok, !questMissed && seenMissed && allFound, "a note not found: the quest-done island stays out (" + !questMissed + "), the reached one without a quest comes back (" +
-					seenMissed + "), not once every note is found (" + allFound + ")");
+					seenMissed + "), also once every note is found (" + allFound + ")");
 				// One that failed to load (Failed for this session): finished, still never again; unfinished, picked, it is the one that comes
 				done.Failed = true; unseen.Failed = true;
 				var failedPool = CustomIslandSpawner.Pool().Select(p => p.Key).ToList();
@@ -1249,7 +1256,7 @@ namespace DynamicIslands
 				foreach (string n in names) File.Delete(IslandSpawner.PathFor(n));
 				CustomIslandSpawner.LoadPool(true);
 			}
-			if (ok) Log("PASS: finished islands are not picked again, unfinished ones come back"); else Fail("finished islands are not picked again, unfinished ones come back");
+			if (ok) Log("PASS: quest-done islands are not picked again, all others come back"); else Fail("quest-done islands are not picked again, all others come back");
 		}
 
 		[ConsoleCommand(name: "CIRaftGap", docs: "Dev, in game (host, a test world 'CI ...' with random islands): random custom islands come after every min-max of Raft's own islands met - the span's limits (min 2-20, max 4-50, default 3-6), the world file lines, no island before its turn, none in a new world's first 10 minutes of play, one when its turn came (then a new count), and a long sail: Raft's islands met and custom islands brought (at most one per min). CIRaftGap [km]")]

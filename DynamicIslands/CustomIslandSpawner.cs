@@ -345,7 +345,7 @@ namespace DynamicIslands.Editor
 					// (one that failed to load: it tries again where it comes - a second, fresh copy had its quest anew)
 					known.Failed = false;
 					// (count false: the pool picking it isn't a return - it used up the quest's MaxReturns, review 10-30)
-					if (!ReturningIslands.BringAgain(known, raftPos, false)) return Skip("no free spot ahead of the raft for '" + name + "' (it comes again)");
+					if (!ReturningIslands.BringAgain(known, raftPos, false, ReturningIslands.Why(known) ?? "pool")) return Skip("no free spot ahead of the raft for '" + name + "' (it comes again)");
 					sailedSinceSpawn = 0f;
 					spawned = true;
 					return "'" + name + "' comes again, " + Flat(known.Position - raftPos).magnitude.ToString("F0") + " m ahead";
@@ -747,8 +747,46 @@ namespace DynamicIslands.Editor
 			// (the world's islands by name, once: each name looked through all of them - 40 ms with 150 islands, US1)
 			ILookup<string, IslandWorldState.Entry> inWorld = forWorld ? IslandWorldState.Islands.ToLookup(e => e.HostName ?? e.Name ?? "", StringComparer.OrdinalIgnoreCase) : null;
 			var pool = result.Where(p => p.Value > 0f && (!forWorld || (WorldIslands.TakesPart(p.Key) && !planned.Contains(p.Key) && !NotAgain(p.Key, inWorld[p.Key]) && !TooEarly(p.Key)))).ToList();
+			if (forWorld) AddOpenStoryIslands(pool);
 			IslandCache.SaveNotBefore();
 			return pool;
+		}
+
+		/// <summary>
+		/// A main story island of this world (its rule InStory or beside) left behind with a side quest begun and not done
+		/// joins the random pick with the same weight as every other island ("*"), so it comes back at random until its side
+		/// quests are done - no cap on its returns (the user, 2026-11-08: "They should be able to come back randomly until
+		/// the side quests are finished"; it stopped after MaxReturns from 10-30). Picked, TrySpawn brings that very island
+		/// ahead of the raft as it was (InWorld). The Receiver set to its frequency brings it back as well (StoryChain).
+		/// </summary>
+		static void AddOpenStoryIslands(List<KeyValuePair<string, float>> pool)
+		{
+			float weight = poolLines.Where(p => p.Key == "*").Select(p => p.Value).DefaultIfEmpty(pool.Count > 0 ? pool.Average(p => p.Value) : 1f).First();
+			if (weight <= 0f) return;
+			var names = new HashSet<string>(pool.Select(p => p.Key), StringComparer.OrdinalIgnoreCase);
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
+			{
+				string name = e.HostName ?? e.Name;
+				if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(e.Rule) || names.Contains(name) || !StoryIslandToBringBack(e)) continue;
+				// (the same name loaded or loading near the players: not now)
+				if (NotAgainHere(name)) continue;
+				names.Add(name);
+				pool.Add(new KeyValuePair<string, float>(name, weight));
+			}
+		}
+
+		/// <summary>A main story island with a side quest still open, left behind and able to come (StoryIslandToBringBack).</summary>
+		internal static bool StoryIslandToBringBack(IslandWorldState.Entry e)
+		{
+			if (e == null || e.Failed || e.Excluded || e.WaitingForFile || e.Root != null || e.Loading || WorldRandomizer.IsExtras(e)) return false;
+			IntroRule r = ReturningIslands.RuleThatBrought(e);
+			return r != null && r.MainStory && QuestTracker.SideQuestOpen(e);
+		}
+
+		static bool NotAgainHere(string name)
+		{
+			return IslandWorldState.Islands.Any(x => (x.Root != null || x.Loading || x.WaitingForFile) &&
+				string.Equals(x.HostName ?? x.Name, name, StringComparison.OrdinalIgnoreCase));
 		}
 
 		/// <summary>An island whose "not before" (IslandProps.NotBeforeKm) this world hasn't sailed yet: not picked by chance until then.</summary>
@@ -837,18 +875,12 @@ namespace DynamicIslands.Editor
 			return failed;
 		}
 
-		/// <summary>Whether players haven't read all the notes on this island yet.</summary>
-		internal static bool NotesLeft(IslandWorldState.Entry e)
-		{
-			int found, total;
-			return NoteCount.OfIsland(e.HostName, out found, out total) && found < total;
-		}
-
-		/// <summary>An island the pool must not pick now: this world has it and it is finished - its quest done (it never comes
-		/// again, a note missed on it or not: the user, 2026-11-01 "finished quest islands should not return"), or, without a
-		/// quest, reached with none of its notes left unread - or it is here already (loaded or loading near the players). An
-		/// island the world has that isn't finished and was left behind may be picked: it comes back as it was (TrySpawn).
-		/// A copy that failed to load counts as well: left out, its finished quest came again as a fresh copy (quest dive 11-01).</summary>
+		/// <summary>An island the pool must not pick now: this world has it and its journal quest is done (it never comes again,
+		/// a note missed on it or not), or it is here already (loaded or loading near the players). Every other island may be
+		/// picked, with its full weight - one the world has comes back as it was (TrySpawn); an island without a quest can
+		/// always come back, reached or not (the user, 2026-11-08: "Only finished journal quest islands will not show again.
+		/// Normal islands with no quests can always come back"; reached, it counted finished and never came again). A copy
+		/// that failed to load counts as well: left out, its finished quest came again as a fresh copy (quest dive 11-01).</summary>
 		internal static bool NotAgain(string name) { return NotAgain(name, IslandWorldState.Islands); }
 
 		static bool NotAgain(string name, IEnumerable<IslandWorldState.Entry> islands)
@@ -858,12 +890,13 @@ namespace DynamicIslands.Editor
 			{
 				if (WorldRandomizer.IsExtras(e) || !string.Equals(e.HostName ?? e.Name, name, StringComparison.OrdinalIgnoreCase)) continue;
 				if (e.Root != null || e.Loading || e.WaitingForFile) return true;
-				if (ReturningIslands.Finished(e) && (HasQuest(e) || !NotesLeft(e))) return true;
+				if (HasQuest(e) && ReturningIslands.Finished(e)) return true;
 			}
 			return false;
 		}
 
-		/// <summary>Whether the island has a main quest (steps): finished, it never comes again by chance, notes left or not.</summary>
+		/// <summary>Whether the island has a main quest (steps): finished, it never comes again by chance, notes left or not.
+		/// Without one it always may (ReturningIslands.Finished still counts it done once reached: no dot, no timed return).</summary>
 		static bool HasQuest(IslandWorldState.Entry e) { return IslandQuest.From(IslandCache.PropsOf(e)).Steps.Count > 0; }
 
 		/// <summary>Dev tests: the next pick, instead of a random one.</summary>
