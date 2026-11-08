@@ -10,7 +10,7 @@ picture arcave_balboa_out -41 +1.7 -63 -41 4.0 -72
 picture arcave_balboa_sea -39 3.5 -52 -41 4.0 -71
 
 island Beacon Saddle keep
-offset 0 0
+offset 0.3777 1.2139
 at -57 25
 wait 3
 picture arcave_beacon_out -57 +1.7 25 -57 4.5 16

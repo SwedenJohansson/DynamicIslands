@@ -1,7 +1,7 @@
 # Beacon Saddle (CIPlay beacon_saddle): the saddle plateau at 4 m (round 0 0); the beacon, the pilgrims' log, the radio
 # hut chest, the tower chest, the bearing card, the radio set (used twice: the second use is refused).
 island Beacon Saddle
-offset 0 0
+offset 0.3777 1.2139
 expect step 0
 expect title The Last Beacon
 zone beacon
