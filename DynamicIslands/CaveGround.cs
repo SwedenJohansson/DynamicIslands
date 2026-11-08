@@ -34,8 +34,7 @@ namespace DynamicIslands.Editor
 			CaveGround g = objects.GetComponent<CaveGround>() ?? objects.gameObject.AddComponent<CaveGround>();
 			g.caves.Add(piece.transform);
 			names[piece.transform.GetInstanceID()] = name;
-			string foot;
-			if (props != null && props.TryGetValue(ObjectProps.CaveFoot, out foot) && foot == "dry") dryFoot.Add(piece.transform.GetInstanceID()); else dryFoot.Remove(piece.transform.GetInstanceID());
+			if (CaveMountain.DryFootFor(props, name)) dryFoot.Add(piece.transform.GetInstanceID()); else dryFoot.Remove(piece.transform.GetInstanceID());
 		}
 
 		// (a world's cave pieces with cave.foot=dry; the editor's say so in their EditorGameObject's props)
@@ -44,8 +43,8 @@ namespace DynamicIslands.Editor
 		static bool DryFoot(Transform t)
 		{
 			EditorGameObject e = t.GetComponent<EditorGameObject>();
-			string foot;
-			return e != null ? e.Props != null && e.Props.TryGetValue(ObjectProps.CaveFoot, out foot) && foot == "dry" : dryFoot.Contains(t.GetInstanceID());
+			string name;
+			return e != null ? CaveMountain.DryFootFor(e.Props, names.TryGetValue(t.GetInstanceID(), out name) ? name : null) : dryFoot.Contains(t.GetInstanceID());
 		}
 
 		// (a world's cave pieces' names, for their measures: the editor's are on their EditorGameObject)
@@ -243,6 +242,8 @@ namespace DynamicIslands.Editor
 			// from inside - and the height of the floor under it)
 			var inside = new bool[res, res];
 			var floor = new Dictionary<int, float>();
+			var aprons = new List<KeyValuePair<Transform, List<int>>>(); // (each piece's own room points: its mouth's apron)
+			var apronBoth = new HashSet<Transform>();
 			int lo = res, hi = -1, left = res, right = -1;
 			try
 			{
@@ -253,6 +254,10 @@ namespace DynamicIslands.Editor
 					int x0, x1, z0, z1;
 					if (cave == null || !Reach(land, cave, out own, out b, out x0, out x1, out z0, out z1)) continue;
 					bool walled = DryFoot(cave);
+					// (every cave's own room points: its mouths' aprons - a walled den's both ways, an open cave's only down, 11-08)
+					List<int> mine = new List<int>();
+					aprons.Add(new KeyValuePair<Transform, List<int>>(cave, mine));
+					if (walled) apronBoth.Add(cave);
 					float[,] h = data.GetHeights(x0, z0, x1 - x0 + 1, z1 - z0 + 1);
 					for (int z = z0; z <= z1; z++)
 						for (int x = x0; x <= x1; x++)
@@ -263,6 +268,7 @@ namespace DynamicIslands.Editor
 							if (p.y <= b.min.y || p.y >= b.max.y || !Inside(p, own, b, out under, out over) || (walled && !Walled(p, own))) continue;
 							inside[z, x] = true;
 							floor[z * res + x] = p.y - under;
+							if (mine != null) mine.Add(z * res + x);
 							lo = Mathf.Min(lo, z); hi = Mathf.Max(hi, z); left = Mathf.Min(left, x); right = Mathf.Max(right, x);
 						}
 				}
@@ -297,6 +303,7 @@ namespace DynamicIslands.Editor
 					}
 				}
 			}
+			foreach (KeyValuePair<Transform, List<int>> a in aprons) dug += Apron(land, a.Key, a.Value, inside, floor, dugTo, apronBoth.Contains(a.Key));
 			// (and the cells whose ground still runs steeply through a room between their corners)
 			var across = new List<Vector2Int>();
 			try { Across(land, caves, inside, across); CutTunnels(land, caves, across); }
@@ -323,6 +330,74 @@ namespace DynamicIslands.Editor
 				}
 			if (n > 0) data.SetHoles(0, 0, solid);
 			return n;
+		}
+
+		const float ApronReach = 4f;
+
+		/// <summary>
+		/// The ground out in front of a dry-foot den's open end eased to its floor (11-08 user: before every den's mouth the sand
+		/// stood as a flat slab with a square edge over the den's floor, or the floor's lip stood square on the sand): each point
+		/// out past the room, within ApronReach of its nearest room point and ahead of it (towards the open end), goes towards
+		/// that point's floor less 5 cm, all the way at the room and none at ApronReach, on a smooth curve - a rounded slope in.
+		/// How many points it moved.
+		/// </summary>
+		static int Apron(Terrain land, Transform cave, List<int> pts, bool[,] inside, Dictionary<int, float> floor, Dictionary<int, Vector2> dugTo, bool raise = true)
+		{
+			string name;
+			PropInfo info = cave != null && names.TryGetValue(cave.GetInstanceID(), out name) ? RaftProps.Get(name) : null;
+			if (info == null || !info.IsCave || pts.Count == 0 || !(info.OpenPlus || info.OpenMinus)) return 0;
+			Vector3 along = cave.rotation * (info.Axis == 0 ? Vector3.right : Vector3.forward);
+			along.y = 0f;
+			if (along.sqrMagnitude < 1e-4f) return 0;
+			along.Normalize();
+			TerrainData data = land.terrainData;
+			int res = data.heightmapResolution;
+			float sx = data.size.x / (res - 1), sz = data.size.z / (res - 1), sy = data.size.y;
+			Vector3 o = land.transform.position;
+			int rx = Mathf.CeilToInt(ApronReach / sx), rz = Mathf.CeilToInt(ApronReach / sz);
+			int x0 = res, x1 = -1, z0 = res, z1 = -1;
+			foreach (int k in pts) { int z = k / res, x = k % res; x0 = Mathf.Min(x0, x); x1 = Mathf.Max(x1, x); z0 = Mathf.Min(z0, z); z1 = Mathf.Max(z1, z); }
+			x0 = Mathf.Max(0, x0 - rx); x1 = Mathf.Min(res - 1, x1 + rx); z0 = Mathf.Max(0, z0 - rz); z1 = Mathf.Min(res - 1, z1 + rz);
+			float[,] h = data.GetHeights(x0, z0, x1 - x0 + 1, z1 - z0 + 1);
+			int moved = 0;
+			for (int z = z0; z <= z1; z++)
+				for (int x = x0; x <= x1; x++)
+				{
+					if (inside[z, x]) continue;
+					float best = ApronReach, to = 0f;
+					Vector3 away = Vector3.zero;
+					foreach (int k in pts)
+					{
+						float dx = (x - k % res) * sx, dz = (z - k / res) * sz, d = Mathf.Sqrt(dx * dx + dz * dz);
+						if (d < best) { best = d; to = floor[k]; away = new Vector3(dx, 0f, dz); }
+					}
+					if (best >= ApronReach || best < 1e-3f) continue;
+					// (an open cave: only its dry ways in, and only cut down - the sand's step lip over a Balboa cave's floor, 11-08)
+					if (!raise && to < 0.5f) continue;
+					float ahead = Vector3.Dot(away / best, along);
+					if (!((info.OpenPlus && ahead > 0.5f) || (info.OpenMinus && ahead < -0.5f))) continue;
+					float own = h[z - z0, x - x0], target = Mathf.Clamp01((to - 0.05f - o.y) / sy);
+					float t = best / ApronReach, wgt = 1f - t * t * (3f - 2f * t);
+					float now = Mathf.Lerp(own, target, wgt);
+					if (Mathf.Abs(now - own) * sy < 0.02f || (!raise && now > own)) continue;
+					h[z - z0, x - x0] = now;
+					moved++;
+					if (dugTo != null && !dugTo.ContainsKey(z * res + x)) dugTo[z * res + x] = new Vector2(own, -1f);
+				}
+			if (moved == 0) return 0;
+			data.SetHeights(x0, z0, h);
+			if (dugTo != null)
+			{
+				// (as kept: the heights are stored rounded, and the editor puts back only a point still at its kept height)
+				float[,] kept = data.GetHeights(x0, z0, x1 - x0 + 1, z1 - z0 + 1);
+				for (int z = z0; z <= z1; z++)
+					for (int x = x0; x <= x1; x++)
+					{
+						Vector2 v;
+						if (dugTo.TryGetValue(z * res + x, out v) && v.y < 0f) dugTo[z * res + x] = new Vector2(v.x, kept[z - z0, x - x0]);
+					}
+			}
+			return moved;
 		}
 
 		/// <summary>

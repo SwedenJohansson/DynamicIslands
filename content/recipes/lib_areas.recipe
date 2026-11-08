@@ -56,14 +56,15 @@ end
 #
 # ar_cave: Raft's bear-cave rock as a hump on a pad h m over the sea at x z, its mouth to +z (yaw=0) or -z (yaw=180),
 # a passage dug 20 m out from the mouth; inside, a small chest and a lamp on the floor (h+0.45). The caller puts a tzone
-# in it (x, z+5 for yaw 0 / z-5 for yaw 180). al: the rock, chest: the chest's alias.
-macro ar_cave x=0 z=0 h=2 yaw=0 al=caverock chest=cavechest
+# in it (x, z+5 for yaw 0 / z-5 for yaw 180). al: the rock, chest: the chest's alias. s: the rock's scale
+# (its floor stays at h+0.9, its mouth 16*s m from x z).
+macro ar_cave x=0 z=0 h=2 yaw=0 al=caverock chest=cavechest s=1
 set cs {cos($yaw)}
 brush flatten at $x $z r=14 s=20 frames=80 h=$h
 brush flatten from {$x-$cs} {$z+21*$cs} to {$x-$cs} {$z+6*$cs} r=4.5 s=20 frames=60 h={$h+0.4}
 clear at $x $z r=19
 clear from {$x-$cs} {$z+20*$cs} to {$x-$cs} {$z+26*$cs} r=4
-place BalboaCave_Bear $al at $x $z h={$h+4.95} yaw=$yaw
+place BalboaCave_Bear $al at $x $z h={$h+0.9+4.05*$s} yaw=$yaw scale=$s
 place Loot_ChestSmall $chest at {$x-2.5*$cs} {$z+5*$cs} h={$h+0.45} sit yaw={60+$yaw}
 place Placeable_Lantern_Metal - at {$x+2.6*$cs} {$z+4*$cs} h={$h+0.45} sit
 end
