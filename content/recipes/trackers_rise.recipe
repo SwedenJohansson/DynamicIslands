@@ -15,6 +15,7 @@ include lib_huts
 include lib_verdance
 include lib_ni7a
 include lib_ni8
+include lib_caves
 # RESIZE 10-24: Radius 50 -> 85 (Height 11 -> 11), the old content moved 17.7 -7.6 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 new
 gen Trees=0.25 Bushes=0.3 Rocks=0.3 Harvest=0.3 BeachThings=0.3
@@ -113,6 +114,23 @@ prop dcavechest beh.hidden=1
 beside ChoppableVines cavevines dcavechest d=1.6
 prop cavevines on.use=hide|\nshow|dcavechest\nmessage||The machete bites through the vines. A trapper's chest was hidden behind them.
 place Placeable_Lantern_Metal - at -12.6 56 h=3.65 sit
+# CAVE 11-08 (content round 11-04, VINE): the trackers' cut - a straight cave-tool tunnel through the ridge's west
+# shoulder, from the pasture to the north shore, machete vines over both mouths, a tracker's cache half way. Optional:
+# a short cut beside the trail; the quest never goes through it, so the island still plays without a machete.
+brush flatten at -36 44 r=5 s=20 frames=120 h=3
+brush flatten at -36 69 r=5 s=20 frames=120 h=3
+# (11-08: the north mouth's floor ramps down to the beach - a 2 m step there kept a player out of the cut from the shore)
+brush flatten at -36 72.5 r=3.5 s=20 frames=80 h=2.2
+brush flatten at -36 75.5 r=3.5 s=20 frames=80 h=1.4
+brush smooth from -36 70 to -36 79 r=6 s=10 frames=40
+clear from -36 42 to -36 71 r=9
+call kit_st x=-36 z=46 yaw=0 len=21 slope=0 end=open dirt=2 mush=0 stone=0 vines=2 gate=1 as=trcut
+cavegate trcut at=-36,66 as=trcut_vines2
+place Loot_ChestSmall trcutcache at -34.6 56 h=4.5 drop yaw=270
+note trcutcache Tracker's cache | TRACKERS - THE CUT. Sten's cache, half way through: rope, leather, dried meat. Cut the vines behind you; the goats find their way in otherwise.
+loot trcutcache Rope*2;Leather*2;Cooked_GenericMeat*1
+prop trcutcache loot.refill=0
+# cavecheck inside trcutcache trcut_vines trcut_vines2
 place BoatStranded dboat at 66 -30 ground sit yaw=150
 place Loot_ChestSmall dboatchest at 60 -24 ground sit yaw=40
 for ga 0 315 45
@@ -158,6 +176,9 @@ scatter "Balboa_Bush_03 Variant" 30 at 0 0 r=74 seed=11396 free=2.5
 scatter CaravanIsland_SmallRock_1 14 at 0 0 r=74 seed=11397 free=3 ground y=-0.6
 scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=74 seed=11398 free=3
 scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=74 seed=11399 free=2
+# (CAVE 11-08: the fill kept off the trackers' cut's two mouths and the ways up to them)
+clear from -36 38 to -36 47 r=3.5 all body only=^(?!.*(Boulder|Rock|Cliff|Stone|Vines|Chest|Cave)).*$
+clear from -36 66 to -36 78 r=3.5 all body only=^(?!.*(Boulder|Rock|Cliff|Stone|Vines|Chest|Cave)).*$
 
 # --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): Antler Peak and its summit tower (climb, zipline back to the meadow), the hunters' trailer off the cove (dive), the tracker's broken carving (M6 + D7), the east bluff lookout
 # the climb: a mountain (trail winding up from bearing 40); on the summit no tower (STORY 10-24: the chain's towers
