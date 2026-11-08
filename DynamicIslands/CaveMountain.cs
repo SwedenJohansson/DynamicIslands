@@ -728,6 +728,7 @@ namespace DynamicIslands.Editor
 		/// half width (cut cells stay cut: turning them into skin left dark slivers at the sand, 11-08).</summary>
 		static void ShoulderRamps(List<Mouth> mouths, float[][,] ahead, float[,] cover, float[,] corridor, float[,] ground, float[,] height, bool[,] on, bool[,] cut, float x0, float z0, int nx, int nz)
 		{
+			var near = new bool[nx, nz];
 			for (int j = 0; j < mouths.Count; j++)
 			{
 				Mouth m = mouths[j];
@@ -736,13 +737,27 @@ namespace DynamicIslands.Editor
 					for (int k = 0; k < nz; k++)
 					{
 						float past = ahead[j][i, k];
-						if (!(past > 0f) || past > DryWay + 4f || !float.IsNaN(cover[i, k]) || !float.IsNaN(corridor[i, k]) || !(ground[i, k] > SeaLevel + DryBy)) continue;
+						if (!(past > -BackBand) || past > DryWay + 4f || !float.IsNaN(cover[i, k]) || !float.IsNaN(corridor[i, k]) || !(ground[i, k] > SeaLevel + DryBy)) continue;
 						float sd = Mathf.Abs(Vector3.Dot(new Vector3(x0 + i * Cell, 0f, z0 + k * Cell) - m.Pos, m.Side) - m.InsideSide) - m.HalfWidth;
 						if (sd <= 0f) continue;
-						float ramp = ground[i, k] - 0.6f + ShoulderSlope * sd;
-						if (on[i, k] && !cut[i, k]) height[i, k] = SoftMin(height[i, k], ramp); // (soft: a plain min left a crisp seam beside the mouth, 11-08 b)
+						float back = Mathf.Max(-past, 0f); // (behind the opening's plane the cap rises fast: no seam where the ramps stop, 11-08 c)
+						float ramp = ground[i, k] - 0.6f + ShoulderSlope * sd * (1f + sd / ShoulderCurve) + BackSlope * back * (1f + back / ShoulderCurve); // (curved, not a plane: a plane showed as flat wedges)
+						if (on[i, k] && !cut[i, k]) { height[i, k] = SoftMin(height[i, k], ramp); near[i, k] = true; } // (soft: a plain min left a crisp seam beside the mouth, 11-08 b)
 					}
 			}
+			// (11-08 c: the shoulders' cells lowered toward their neighbours' mean a few times: the ridge where the shoulder cap meets the
+			// hill's slope showed as a crisp edge with flat facets; only lowering, so no roof or way in is covered more)
+			for (int pass = 0; pass < RoundPasses; pass++)
+				for (int i = 1; i < nx - 1; i++)
+					for (int k = 1; k < nz - 1; k++)
+					{
+						if (!near[i, k]) continue;
+						float sum = 0f; int n = 0;
+						for (int a = i - 1; a <= i + 1; a++)
+							for (int c = k - 1; c <= k + 1; c++)
+								if ((a != i || c != k) && on[a, c] && !cut[a, c]) { sum += height[a, c]; n++; }
+						if (n >= 5) height[i, k] = Mathf.Min(height[i, k], Mathf.Max(sum / n, ground[i, k] - FlareSink));
+					}
 		}
 
 		/// <summary>The lower of a and b, rounded off where they are within SeamSoft m of each other (no crease where two
@@ -777,6 +792,10 @@ namespace DynamicIslands.Editor
 		internal const float FlareHigh = 3f, FlareSink = 0.3f, SeamSoft = 2.5f;
 		// (cave.foot=dry: how steeply a shoulder beside a mouth's opening rises from the ground, m a m out from the opening's side)
 		internal const float ShoulderSlope = 0.9f;
+		// (cave.foot=dry: the shoulder cap curves up (steeper by 1/ShoulderCurve a m) and reaches BackBand m behind the opening's plane, rising BackSlope a m there)
+		internal const float ShoulderCurve = 4f, BackSlope = 1.5f, BackBand = 6f;
+		// (cave.foot=dry: how many times the shoulders' cells are lowered toward their neighbours' mean)
+		internal const int RoundPasses = 3;
 		/// <summary>Tests: how many cells of loose skin the last build left out.</summary>
 		public static int LooseDropped;
 
