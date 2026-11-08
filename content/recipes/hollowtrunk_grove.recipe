@@ -18,6 +18,8 @@ include lib_huts
 include lib_gravity
 include lib_verdance
 include lib_ni8
+# ROOT DEN 11-08 (content round 11-04, world 02): a dug tunnel (the Dig brush) from the big tree's pad into the ridge at
+# its foot, gently down to a root den under the ridge: mushrooms, dirt, cave vines and two rats. Optional, no quest step.
 # RESIZE 10-24: Radius 72 -> 88 (Height 8 -> 8), the old content moved 0 -8.8 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 new
 gen Trees=0.25 Bushes=0.3 Rocks=0.15 Harvest=0.3 BeachThings=0.25
@@ -190,6 +192,18 @@ prop hgmother creature.respawn=0
 place "Box Big" trough at 52 -6 ground sit yaw=30
 call vinecache x=12 z=69 r=8 seed=11361 chest=hgvine vines=hgvinevines items=Rope*2;Nail*8;Seed_Pine*1
 prop hgvine note.title=Root-choked crate
+# (ROOT DEN 11-08: the trunk itself is a tree model, no room in it - so the mouth is at trunk 1's foot, where its pad
+# meets the ridge by the big tree's roots, 9 m from the trunk; the root hole (the quest's last step) stays 11 m off on the
+# pad's far side. A dug tunnel into the ridge, gently down (6-9 degrees, walkable both ways) to a root den 0.9 m over the
+# sea under 2 m of ridge; 11 m from the mouth, so the rats stay inside. Optional: loot and rats, no quest step.)
+dig 6.8,-7.2 10.0,-10.4 r=1.75 slope=-6 as=rootden
+dig 10.0,-10.4 11.0,-15.4 r=1.75 slope=-9 as=rootden
+dig 11.0,-15.4 13.5,-17.9 r=2.6 as=rootden
+caveloot rootden dirt=2 mush=4 stone=0 vines=2
+# cavecheck inside rootrats
+place Creature_Rat rootrats at 12.6 -17.0 h=1.5 drop
+prop rootrats creature.count=2
+prop rootrats creature.respawn=0
 call vd_spot x=-35 z=61 al=hglook id=hg_view r=5 msg="From the lookout rocks the five trunks stand like pillars holding the sky up."
 
 # --- STORY 10-24: Jonas's bee notes by the bee box, the greenhouse log, Oda's note on Owl Hill
