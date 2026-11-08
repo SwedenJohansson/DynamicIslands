@@ -19,7 +19,7 @@ include lib_gravity
 include lib_verdance
 include lib_ni8
 # ROOT DEN 11-08 (content round 11-04, world 02): a dug tunnel (the Dig brush) from the big tree's pad into the ridge at
-# its foot, gently down to a root den under the ridge: mushrooms, dirt, cave vines and two rats. Optional, no quest step.
+# its foot, gently up to a root den under the ridge (11-08 b: raised clear of the sea): mushrooms, dirt, cave vines and two rats. Optional, no quest step.
 # RESIZE 10-24: Radius 72 -> 88 (Height 8 -> 8), the old content moved 0 -8.8 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 new
 gen Trees=0.25 Bushes=0.3 Rocks=0.15 Harvest=0.3 BeachThings=0.25
@@ -194,16 +194,28 @@ call vinecache x=12 z=69 r=8 seed=11361 chest=hgvine vines=hgvinevines items=Rop
 prop hgvine note.title=Root-choked crate
 # (ROOT DEN 11-08: the trunk itself is a tree model, no room in it - so the mouth is at trunk 1's foot, where its pad
 # meets the ridge by the big tree's roots, 9 m from the trunk; the root hole (the quest's last step) stays 11 m off on the
-# pad's far side. A dug tunnel into the ridge, gently down (6-9 degrees, walkable both ways) to a root den 0.9 m over the
-# sea under 2 m of ridge; 11 m from the mouth, so the rats stay inside. Optional: loot and rats, no quest step.)
-dig 6.8,-7.2 10.0,-10.4 r=1.75 slope=-6 as=rootden
-dig 10.0,-10.4 11.0,-15.4 r=1.75 slope=-9 as=rootden
-dig 11.0,-15.4 13.5,-17.9 r=2.6 as=rootden
+# pad's far side. Optional: loot and rats, no quest step.)
+# (11-08 b, box run: the first den went down to 1.5 m and broke into the sea, the walk-in stuck where three strokes met,
+# the rats landed on the hill top (no dry den floor near them) and the mouth was a square slab in a sheer sand wall.
+# Now: the pad's wall at the mouth smoothed into a slope; a low knoll over the den so it keeps 2 m of rock over it;
+# one stroke gently UP into the ridge (5 degrees, walkable both ways), the den branched off its end and dug level-ish,
+# floor about 3.3 m over the sea; boulders and roots break the mouth's square outline; one rat each at the den floor)
+brush smooth at 7.4 -7.6 r=3.5 s=8 frames=120
+brush flatten at 12.8 -17.2 r=4.5 s=20 frames=600 h=8.8
+brush smooth at 12.8 -17.2 r=9 s=8 frames=200
+dig 6.8,-7.2 10.0,-10.4 11.0,-15.4 r=1.75 slope=5 as=rootden
+dig 11.0,-15.4 13.5,-17.9 r=2.2 slope=2 as=rootden
 caveloot rootden dirt=2 mush=4 stone=0 vines=2
-# cavecheck inside rootrats
-place Creature_Rat rootrats at 12.6 -17.0 h=1.5 drop
-prop rootrats creature.count=2
-prop rootrats creature.respawn=0
+place SmallBoulder3 - at 8.6 -5.5 ground y=-0.4 yaw=30 scale=1.3
+place SmallBoulder4 - at 5.0 -8.9 ground y=-0.4 yaw=200 scale=1.2
+place SmallRock_02 - at 7.9 -4.7 ground y=-0.1 yaw=80
+# cavecheck inside rootratA rootratB
+place Creature_Rat rootratA at 12.3 -16.7 h=3.6
+prop rootratA creature.count=1
+prop rootratA creature.respawn=0
+place Creature_Rat rootratB at 13.6 -18.1 h=3.6
+prop rootratB creature.count=1
+prop rootratB creature.respawn=0
 call vd_spot x=-35 z=61 al=hglook id=hg_view r=5 msg="From the lookout rocks the five trunks stand like pillars holding the sky up."
 
 # --- STORY 10-24: Jonas's bee notes by the bee box, the greenhouse log, Oda's note on Owl Hill

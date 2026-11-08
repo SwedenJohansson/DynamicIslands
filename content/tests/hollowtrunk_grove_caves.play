@@ -1,5 +1,5 @@
 # Hollowtrunk Grove's root den (CIPlay hollowtrunk_grove_caves, 11-08; in a test world 'CI ...'). Points in the recipe's
-# old frame (offset 0 8.8): the dug tunnel "rootden" from trunk 1's pad (mouth 6.8 1.6) into the ridge and down to the
+# old frame (offset 0 8.8): the dug tunnel "rootden" from trunk 1's pad (mouth 6.8 1.6) into the ridge and gently up to the (11-08 b: floor about 3.3 m over the sea)
 # root den (11 -6.6 .. 13.5 -9.1). In to the den, the loot there, the two rats, and back out to the pad.
 island Hollowtrunk Grove keep
 offset 0 8.8
@@ -9,17 +9,17 @@ weather Calm
 where Pickup_Landmark_Mushroom
 where Pickup_Landmark_DirtPickup
 where CaveVine
-picture hg_cave_out 2 4.5 5.5 6.8 2.5 1.6
-walk 3.5 4.8 to 6.8 1.6 to 10 -1.6 to 11 -6.6 to 12.2 -7.8 below=4
-picture hg_cave_in 12.2 2.5 -7.8 6.8 2.2 1.6
+picture hg_cave_out 2 4.5 5.5 6.8 3.2 1.6
+walk 3.5 4.8 to 6.8 1.6 to 10 -1.6 to 11 -6.6 to 12.2 -7.8 below=4.8
+picture hg_cave_in 12.2 4.6 -7.8 6.8 3.0 1.6
 # the two rats in the den: alive on the dug floor, under the ridge's rock
 expect animals Rat 2
 expect animalsinside Rat 2
 wait 2
-picture hg_rats 11 2.6 -6.6 12.6 1.2 -8.2 aim=Rat light=20
+picture hg_rats 11 4.4 -6.6 12.6 3.4 -8.2 aim=Rat light=20
 wait 3
 kill Rat
 expect animals Rat 0
 # out again, back up the slope to trunk 1's pad
-walk 12.2 -7.8 to 11 -6.6 to 10 -1.6 to 6.8 1.6 to 3.5 4.8 below=4
+walk 12.2 -7.8 to 11 -6.6 to 10 -1.6 to 6.8 1.6 to 3.5 4.8 below=4.8
 expect height 2
