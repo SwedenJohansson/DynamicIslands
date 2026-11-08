@@ -102,10 +102,12 @@ plan save
   highest roof beside them + Over).
   The falloff also goes on past that piece's own mouth plane beside the opening (more than HalfWidth + `DryFront` off its
   centre line, on dry ground only), capped at ground + `ShoulderSlope` 0.9 x distance from the opening: a rounded shoulder, not a sheer face. 11-08: on dry land
-  the hill's last `FlareHigh` 3 m over the ground fall at `FlareSlope` 0.7 (a flared foot), and `ShoulderRamps` (before the
+  the hill's last `FlareHigh` 3 m over the ground curve out ever flatter from the hill's slope and dip `FlareSink` 0.3 m under the sand (a flared foot; a straight flare showed flat wedges), `SoftMin` (`SeamSoft` 2.5 m) rounding where the shoulder caps meet the hill, and `ShoulderRamps` (before the
   rim and again after `FootPasses`) caps every skin cell out past a dry mouth (to `DryWay` + 4 m) at ground - 0.6 +
   `ShoulderSlope` x its distance past the opening's HalfWidth (cut cells stay cut): the den's other pieces' roofs had
-  kept the shoulders' inner faces sheer.
+  kept the shoulders' inner faces sheer. 11-08 c: that cap curves (x (1 + d / `ShoulderCurve` 4)), reaches `BackBand` 6 m
+  behind the opening's plane rising `BackSlope` 1.5 a m there (no seam where it stopped), and the capped cells get
+  `RoundPasses` 3 lower-only passes toward their neighbours' mean (no crisp crest). Cells over a roof (`cover`) stay as they are.
   Without the prop all of it is skipped: other islands build byte for byte as before (Old Mine Islet checked).
 - In Raft, `tools\cavecheckrun.ps1 <island> [...] [-player 2|3]` checks a built island's caves in one world load:
   CICaveGapsLook (pictures out/in by day and night, walked in and out, flooded parts), CICaveInside shots (X7) and

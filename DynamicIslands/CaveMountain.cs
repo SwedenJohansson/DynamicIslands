@@ -388,10 +388,13 @@ namespace DynamicIslands.Editor
 							if (a < 0 || c < 0 || a >= nx || c >= nz) continue;
 							float dist = Cell * Mathf.Sqrt(di * di + dk * dk);
 							float h = peak - Slope * dist;
-							// (cave.foot=dry: on dry land its last FlareHigh m flare out at FlareSlope into the sand - the den hill's flanks
+							// (cave.foot=dry: on dry land its last FlareHigh m flare out into the sand - the den hill's flanks
 							// came down at the full slope and met the sand at a hard, steep line, Shelter Atoll from the east, 11-08)
+							// (11-08 b: a straight flare left flat, angular sand wedges - now a curve that leaves the hill at its own
+							// slope and runs out ever flatter, dipping under the sand FlareSink m down)
 							if (dryFootOn && ground[a, c] > SeaLevel + DryBy && peak > ground[a, c] + FlareHigh)
-								h = Mathf.Max(h, ground[a, c] + FlareHigh - FlareSlope * (dist - (peak - ground[a, c] - FlareHigh) / Slope));
+								h = Mathf.Max(h, ground[a, c] - FlareSink + (FlareHigh + FlareSink)
+									* Mathf.Exp(-Slope * (dist - (peak - ground[a, c] - FlareHigh) / Slope) / (FlareHigh + FlareSink)));
 							if (past != null && past[a, c] > 0.5f && (di != 0 || dk != 0))
 							{
 								// (cave.foot=dry, that piece's own: beside its opening the hill goes on out past the mouth's plane as a
@@ -402,7 +405,7 @@ namespace DynamicIslands.Editor
 								float off = Mathf.Abs(Vector3.Dot(new Vector3(x0 + a * Cell, 0f, z0 + c * Cell) - dm.Pos, dm.Side) - dm.InsideSide) - dm.HalfWidth - DryFront;
 								// (on dry land only: out over the sea it stood as slabs under the water)
 								if (off <= 0f || !(ground[a, c] > SeaLevel + DryBy)) continue;
-								h = Mathf.Min(h, ground[a, c] + ShoulderSlope * off); // (gentler than the hill: its inner faces by the opening stood steep and dark, 11-08)
+								h = SoftMin(h, ground[a, c] + ShoulderSlope * off); // (gentler than the hill: its inner faces by the opening stood steep and dark, 11-08)
 							}
 							if (h > height[a, c]) height[a, c] = h;
 						}
@@ -725,6 +728,7 @@ namespace DynamicIslands.Editor
 		/// half width (cut cells stay cut: turning them into skin left dark slivers at the sand, 11-08).</summary>
 		static void ShoulderRamps(List<Mouth> mouths, float[][,] ahead, float[,] cover, float[,] corridor, float[,] ground, float[,] height, bool[,] on, bool[,] cut, float x0, float z0, int nx, int nz)
 		{
+			var near = new bool[nx, nz];
 			for (int j = 0; j < mouths.Count; j++)
 			{
 				Mouth m = mouths[j];
@@ -733,13 +737,35 @@ namespace DynamicIslands.Editor
 					for (int k = 0; k < nz; k++)
 					{
 						float past = ahead[j][i, k];
-						if (!(past > 0f) || past > DryWay + 4f || !float.IsNaN(cover[i, k]) || !float.IsNaN(corridor[i, k]) || !(ground[i, k] > SeaLevel + DryBy)) continue;
+						if (!(past > -BackBand) || past > DryWay + 4f || !float.IsNaN(cover[i, k]) || !float.IsNaN(corridor[i, k]) || !(ground[i, k] > SeaLevel + DryBy)) continue;
 						float sd = Mathf.Abs(Vector3.Dot(new Vector3(x0 + i * Cell, 0f, z0 + k * Cell) - m.Pos, m.Side) - m.InsideSide) - m.HalfWidth;
 						if (sd <= 0f) continue;
-						float ramp = ground[i, k] - 0.6f + ShoulderSlope * sd;
-						if (on[i, k] && !cut[i, k] && height[i, k] > ramp) height[i, k] = ramp;
+						float back = Mathf.Max(-past, 0f); // (behind the opening's plane the cap rises fast: no seam where the ramps stop, 11-08 c)
+						float ramp = ground[i, k] - 0.6f + ShoulderSlope * sd * (1f + sd / ShoulderCurve) + BackSlope * back * (1f + back / ShoulderCurve); // (curved, not a plane: a plane showed as flat wedges)
+						if (on[i, k] && !cut[i, k]) { height[i, k] = SoftMin(height[i, k], ramp); near[i, k] = true; } // (soft: a plain min left a crisp seam beside the mouth, 11-08 b)
 					}
 			}
+			// (11-08 c: the shoulders' cells lowered toward their neighbours' mean a few times: the ridge where the shoulder cap meets the
+			// hill's slope showed as a crisp edge with flat facets; only lowering, so no roof or way in is covered more)
+			for (int pass = 0; pass < RoundPasses; pass++)
+				for (int i = 1; i < nx - 1; i++)
+					for (int k = 1; k < nz - 1; k++)
+					{
+						if (!near[i, k]) continue;
+						float sum = 0f; int n = 0;
+						for (int a = i - 1; a <= i + 1; a++)
+							for (int c = k - 1; c <= k + 1; c++)
+								if ((a != i || c != k) && on[a, c] && !cut[a, c]) { sum += height[a, c]; n++; }
+						if (n >= 5) height[i, k] = Mathf.Min(height[i, k], Mathf.Max(sum / n, ground[i, k] - FlareSink));
+					}
+		}
+
+		/// <summary>The lower of a and b, rounded off where they are within SeamSoft m of each other (no crease where two
+		/// slopes meet).</summary>
+		static float SoftMin(float a, float b)
+		{
+			float t = Mathf.Max(SeamSoft - Mathf.Abs(a - b), 0f) / SeamSoft;
+			return Mathf.Min(a, b) - t * t * SeamSoft * 0.25f;
 		}
 
 		static bool IsDryFoot(IDictionary<string, string> p)
@@ -762,10 +788,14 @@ namespace DynamicIslands.Editor
 		internal const float EdgeDrop = 0.4f;
 		// (cave.foot=dry: how many cells round a roof's edge fall by EdgeDrop)
 		internal const int EdgeRings = 2;
-		// (cave.foot=dry: on dry land the hill's last FlareHigh m over the ground fall at FlareSlope, m a m, not Slope: a foot that flares out)
-		internal const float FlareHigh = 3f, FlareSlope = 0.7f;
+		// (cave.foot=dry: on dry land the hill's last FlareHigh m over the ground curve out from Slope ever flatter and dip FlareSink m under the sand: a foot that flares out; SeamSoft: how wide SoftMin rounds a seam)
+		internal const float FlareHigh = 3f, FlareSink = 0.3f, SeamSoft = 2.5f;
 		// (cave.foot=dry: how steeply a shoulder beside a mouth's opening rises from the ground, m a m out from the opening's side)
 		internal const float ShoulderSlope = 0.9f;
+		// (cave.foot=dry: the shoulder cap curves up (steeper by 1/ShoulderCurve a m) and reaches BackBand m behind the opening's plane, rising BackSlope a m there)
+		internal const float ShoulderCurve = 4f, BackSlope = 1.5f, BackBand = 6f;
+		// (cave.foot=dry: how many times the shoulders' cells are lowered toward their neighbours' mean)
+		internal const int RoundPasses = 3;
 		/// <summary>Tests: how many cells of loose skin the last build left out.</summary>
 		public static int LooseDropped;
 
