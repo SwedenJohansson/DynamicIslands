@@ -16,6 +16,7 @@ include lib_huts
 include lib_gravity
 include lib_verdance
 include lib_ni8
+include lib_caves
 new
 gen Trees=0.3 Bushes=0.35 Rocks=0.2 Harvest=0.35 BeachThings=0.3
 gen Seed=11031 Radius=85 Height=10 Roughness=0.3 Peaks=1 Shape=0 Style=0 PeakShape=0.4 Cliffs=0.2 BeachWidth=0.6
@@ -337,5 +338,34 @@ brush flatten at {1.5+0.5*$i} {-18.5-0.75*$i} r=1.8 s=20 frames=300 h={1.7+0.4*$
 next
 brush smooth from 1.5 -18.5 to 5.5 -24.5 r=2.2 s=10 frames=12
 clear from 1.5 -18.5 to 5.5 -24.5 r=2.5 body
+
+# --- 11-08 (w02): the otter's sea cave - optional, no quest step needs it ---------------------------------------------
+# An underwater mouth on the sea floor some 5 m down off the east arm's mouth, the tunnel climbing out of the water under
+# the shore into a dry den in a rock knoll on the beach east of the river mouth: air, stone, mushrooms and a seed chest.
+# hill=0 as Shelter Atoll's lagoon cave: no ridge over the sea (it would fill the river mouth's water). No rats: the den is
+# reached only under water and gets no NavMesh floor.
+call kit_st x=30 z=-102 yaw=26.6 len=38 slope=12 end=room size=0.7 hill=0 dirt=0 mush=2 stone=2 vines=1 as=rdcave
+# (the den's rock grew round palms and bushes of the fill: cleared)
+clear at 51.5 -59 r=15 all body only=Tree|Palm|Mango|Bush|Rock|Pineapple|Flower below=14
+# the way to it: a cairn of grey boulders on the east bank where the arm meets the sea, two more on the sea floor by the
+# mouth
+place SmallBoulder3 - at 27 -83 ground sit scale=0.9 yaw=30
+place SmallBoulder3 - at 28.2 -84.2 ground sit scale=0.6 yaw=140
+place SmallBoulder3 - at 26.6 -84.6 ground y=0.5 sit scale=0.45 yaw=250
+place SmallBoulder3 - at 26.5 -101 ground sit scale=0.65 yaw=60
+place SmallBoulder3 - at 33.5 -100.5 ground sit scale=0.65 yaw=200
+place Zone_Trigger rdair at 51.5 -59 h=3.6
+prop rdair obj.name=rdair
+prop rdair zone.id=rd_den
+prop rdair zone.radius=7
+prop rdair zone.repeat=1
+prop rdair zone.air=1
+prop rdair zone.message=A dry den in the rock over the sea - air. Otter tracks in the sand, and a little chest.
+# cavecheck inside rdseeds
+place Loot_ChestSmall rdseeds at 54.5 -61 h=6 drop yaw=200
+prop rdseeds obj.name=rdseeds
+prop rdseeds loot.refill=0
+note rdseeds Seed tin | The river people's seed tin, kept dry in the otter's den: seeds of the delta's own fruit.
+loot rdseeds Seed_Mango*2;Seed_Pineapple*2;Seed_Watermelon*2;Seed_Banana*1
 
 save Riverfork Delta
