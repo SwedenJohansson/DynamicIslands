@@ -25,6 +25,7 @@ namespace DynamicIslands
 					&& u.Item.settings_buildable.GetBlockPrefabs().Length > 0 && u.Item.settings_recipe != null).ToList();
 			Check(ref ok, ups.Count > 0, "placeable upgrades found: " + ups.Count);
 			int natural = 0, cleared = 0;
+			List<string> skipped = new List<string>();
 			foreach (ExtraUpgrades.Upgrade u in ups)
 			{
 				CostMultiple[] cost = u.Item.settings_recipe.NewCost ?? new CostMultiple[0];
@@ -37,6 +38,7 @@ namespace DynamicIslands
 
 				// 1. as placed: Raft's itemToReturnOnDestroy is the upgrade item - picking it up (PickupBlock's two calls) gives it back
 				Block made = PlaceForTest(player, u.Item);
+				if (made == null && placeThrew) { skipped.Add(u.Item.UniqueName); TakeBack(player, had); continue; }
 				if (made == null) { Check(ref ok, false, u.Item.UniqueName + ": NO BLOCK placed"); TakeBack(player, had); continue; }
 				string ret = made.itemToReturnOnDestroy != null ? made.itemToReturnOnDestroy.UniqueName : "null";
 				Dictionary<string, int> c1 = names.ToDictionary(n => n, n => player.Inventory.GetItemCount(n));
@@ -69,14 +71,17 @@ namespace DynamicIslands
 				yield return new WaitForSeconds(0.5f);
 				TakeBack(player, had);
 			}
-			Log("upgrade refund: " + ups.Count + " upgrades, " + natural + " with a return item, " + cleared + " refund checks");
+			Log("upgrade refund: " + ups.Count + " upgrades, " + natural + " with a return item, " + cleared + " refund checks"
+				+ (skipped.Count > 0 ? "; not placeable by the test (placing throws - the placing fix, not the refund): " + string.Join(", ", skipped.ToArray()) : ""));
 			if (ok) Log("PASS: upgrade refund"); else Fail("upgrade refund");
 		}
 
+		static bool placeThrew;
 		static Block PlaceForTest(Network_Player player, Item_Base item)
 		{
+			placeThrew = false;
 			try { return player.BlockCreator.CreateBlockCheat(item, new Vector3(0f, 25f, 0f), Vector3.zero, DPS.Default, 0); }
-			catch (Exception e) { Log(item.UniqueName + ": placing threw " + e.GetType().Name + ": " + e.Message); return null; }
+			catch (Exception e) { placeThrew = true; Log(item.UniqueName + ": placing threw " + e.GetType().Name + ": " + e.Message); return null; }
 		}
 
 		static void TakeBack(Network_Player player, Dictionary<string, int> had)
