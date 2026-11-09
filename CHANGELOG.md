@@ -12,6 +12,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next (after 3.3)
 
 - **The island minimap is now a World setting, off by default, and never covers the screen.** Tick **Island minimap** in World settings to get the small map in the top-right corner near islands; **M** hides it and shows it again. The full-screen map is gone (a player sailed into an island behind it). New worlds and worlds made before this have no map unless the host ticks it; the old **No minimap** option is replaced by it.
+- **The quest panel is never under the minimap, and you can move it.** While the corner island map shows, the quest panel sits just below it (the map covered its title and first step); with the map hidden (M) or off it goes back to its place. Drag the panel by its title while the cursor is free (inventory open) to put it anywhere on the screen: the place is kept on this PC, the panel stays on the screen and still moves out from under the map. Double-click it, or **Defaults... > Keys (this PC) > Quest panel: Reset place**, to put it back.
 
 ---
 
