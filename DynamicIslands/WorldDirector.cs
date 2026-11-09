@@ -1116,9 +1116,14 @@ namespace DynamicIslands.Editor
 			foreach (IntroRule r in after.Rules.Where(x => Done.Contains(x.Id)).ToList())
 			{
 				IntroRule old = before.Rules.FirstOrDefault(x => x.Id.Equals(r.Id, StringComparison.OrdinalIgnoreCase));
-				if (old == null || (old.What == r.What && old.WhatArg.Trim().Equals(r.WhatArg.Trim(), StringComparison.OrdinalIgnoreCase))) continue;
+				if (old != null && old.What == r.What && old.WhatArg.Trim().Equals(r.WhatArg.Trim(), StringComparison.OrdinalIgnoreCase)) continue;
+				// (done under a plan before the last one - A, then B, then C, each with its own "shelter" - or done by this very
+				// rule when the world played this plan before: done only if its island is in the world - receiver1109; before,
+				// an id done under any earlier plan kept the new plan's rule from ever coming, and switching back brought
+				// the island a second time)
+				if (r.Special || IslandWorldState.Islands.Any(e => BroughtBy(e, r))) continue;
 				Done.Remove(r.Id);
-				Log("Rule '" + r.Id + "' now brings " + r.DescribeWhat() + " (it brought " + old.DescribeWhat() + "): another rule under that name - it comes");
+				Log("Rule '" + r.Id + "' now brings " + r.DescribeWhat() + (old != null ? " (it brought " + old.DescribeWhat() + ")" : " (done under an earlier plan)") + ": another rule under that name - it comes");
 			}
 		}
 
@@ -1523,6 +1528,22 @@ namespace DynamicIslands.Editor
 			return e != null && e.Rule != null && e.Rule.StartsWith(OtherPlanMark, StringComparison.Ordinal);
 		}
 
+		/// <summary>An island's rule id, marked or not.</summary>
+		internal static string RuleIdOf(IslandWorldState.Entry e)
+		{
+			return FromOtherPlan(e) ? e.Rule.Substring(OtherPlanMark.Length) : e.Rule ?? "";
+		}
+
+		/// <summary>True when this rule brought the island: its id, and (plans reuse ids - "shelter", "mine") its island too.</summary>
+		internal static bool BroughtBy(IslandWorldState.Entry e, IntroRule r)
+		{
+			if (e == null || r == null || !r.Id.Equals(RuleIdOf(e), StringComparison.OrdinalIgnoreCase)) return false;
+			string name = e.HostName ?? e.Name ?? "";
+			if (r.What == "island") return r.WhatArg.Trim().Equals(name, StringComparison.OrdinalIgnoreCase) || (e.Name ?? "").Equals(r.WhatArg.Trim(), StringComparison.OrdinalIgnoreCase) || (r.Label.Length > 0 && r.Label == e.Label);
+			if (r.What == "oneof") return r.WhatArg.Split(',').Any(n => n.Trim().Equals(name, StringComparison.OrdinalIgnoreCase));
+			return true;
+		}
+
 		/// <summary>
 		/// Host (receiver1109, player 11-09 "the receiver is messy"): an island brought by a rule this world's plan doesn't
 		/// have - a plan played before (WorldPlan &lt;name&gt;), or one edited since - gets its rule id marked ("~id"), so
@@ -1536,17 +1557,9 @@ namespace DynamicIslands.Editor
 			var changed = new List<IslandWorldState.Entry>();
 			if (!Raft_Network.IsHost || Plan == null) return changed;
 			IList<IslandWorldState.Entry> all = IslandWorldState.Islands;
-			Func<IslandWorldState.Entry, string> idOf = e => FromOtherPlan(e) ? e.Rule.Substring(OtherPlanMark.Length) : e.Rule ?? "";
+			Func<IslandWorldState.Entry, string> idOf = RuleIdOf;
 			// (the plan's rules, the story chain's copies of them, and the own rules of an island that belongs here)
-			Func<IslandWorldState.Entry, IntroRule, bool> fits = (e, r) =>
-			{
-				if (!r.Id.Equals(idOf(e), StringComparison.OrdinalIgnoreCase)) return false;
-				// (plans reuse ids - "shelter", "mine": the island must be the rule's too)
-				string name = e.HostName ?? e.Name ?? "";
-				if (r.What == "island") return r.WhatArg.Trim().Equals(name, StringComparison.OrdinalIgnoreCase) || e.Name.Equals(r.WhatArg.Trim(), StringComparison.OrdinalIgnoreCase) || (r.Label.Length > 0 && r.Label == e.Label);
-				if (r.What == "oneof") return r.WhatArg.Split(',').Any(n => n.Trim().Equals(name, StringComparison.OrdinalIgnoreCase));
-				return true;
-			};
+			Func<IslandWorldState.Entry, IntroRule, bool> fits = BroughtBy;
 			List<IntroRule> rules = Plan.Rules.Concat(StoryChain.Rules).ToList();
 			foreach (IslandWorldState.Entry e in all.Where(x => idOf(x).Length == 0 || rules.Any(r => fits(x, r))).ToList())
 				try { rules.AddRange(RulesOf(e)); } catch { }
