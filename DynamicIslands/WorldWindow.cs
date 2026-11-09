@@ -88,7 +88,7 @@ namespace DynamicIslands.Editor
 				case WorldOptions.Fog: return "At once: a bank due now rolls in. Off: the fog lifts within half a minute.";
 				case WorldOptions.FogSight: return "At once.";
 				case WorldOptions.MirrorIslands: return "Each island when it next loads.";
-				case WorldOptions.NoMinimap: return "At once: the map closes for every player. Off: it works again.";
+				case WorldOptions.MinimapOn: return "At once: the corner map shows for every player near an island. Off: it is gone.";
 				// (fullerislands: none - its hint already ends "Islands already made stay as they are", and more would be cut off in the hint line)
 				default: return "";
 			}

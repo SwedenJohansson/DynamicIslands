@@ -121,7 +121,7 @@ namespace DynamicIslands.Editor
 				Add("Key_" + x.Setting, UIKit.Button(row, "", () => ListenFor(extra), "The key that " + x.Does + " in a world: click, then press the new key (Esc: keep it)", 64, 28f, 13));
 			}
 			// (the minimap itself: off, no map is shown or drawn and its keys do nothing; pings still work)
-			Add("minimapOn", UIKit.Button(keyRow3, "", () => { Minimap.Enabled = !Minimap.Enabled; Refresh(); }, "Minimap: the island map in a world (this PC). Off: it is never shown, the map and zoom keys do nothing and nothing is drawn. Pings still work", 110, 28f, 13));
+			Add("minimapOn", UIKit.Button(keyRow3, "", () => { Minimap.Enabled = !Minimap.Enabled; Refresh(); }, "Minimap: the corner island map on this PC, in worlds with the World setting Island minimap on. Off: it is never shown, the map and zoom keys do nothing and nothing is drawn. Pings still work", 110, 28f, 13));
 
 			// The island editor's camera (world_rules.txt, this PC's own; also the editor's Camera... button)
 			RectTransform cameraGroup = UIKit.Group(left, "Editor camera (this PC)", "EditorCamera");

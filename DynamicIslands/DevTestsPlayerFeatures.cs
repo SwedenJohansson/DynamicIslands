@@ -732,7 +732,7 @@ namespace DynamicIslands
 
 		const string MapIsland = "cipf5map";
 
-		[ConsoleCommand(name: "CIMinimap", docs: "Dev (PF5): the island map. CIMinimap unit - the map key's cycle (corner, full, off), zoom 1/2/4x and its view around the player, the map marker in the object list, the ping message / world - host, world 'CI ...': on a test island the map shows (picture taken), the quest step's target and a map marker on it, full screen and off, then pings: the message (island-local spot), at most one a second, a crew mate's ping shown and passed on, gone after its seconds; picture shot_pf5_map.png / editor - in the editor: a map marker placed, its inspector group, its text kept")]
+		[ConsoleCommand(name: "CIMinimap", docs: "Dev (PF5): the island map. CIMinimap unit - the map key's toggle (corner, hidden), zoom 1/2/4x and its view around the player, the map marker in the object list, the ping message / world - host, world 'CI ...': on a test island the map shows (picture taken), the quest step's target and a map marker on it, full screen and off, then pings: the message (island-local spot), at most one a second, a crew mate's ping shown and passed on, gone after its seconds; picture shot_pf5_map.png / editor - in the editor: a map marker placed, its inspector group, its text kept")]
 		public static void MinimapCommand(string[] args) { StartTest(MinimapRoutine(args != null && args.Length > 0 ? args[0] : "unit")); }
 
 		static IEnumerator MinimapRoutine(string what)
@@ -741,11 +741,8 @@ namespace DynamicIslands
 			if (what == "editor") { yield return MapEditor(); yield break; }
 			bool ok = true;
 			int mode = Minimap.Mode, zoom = Minimap.Zoom;
-			Minimap.Mode = Minimap.Corner;
-			Minimap.Cycle(); bool full = Minimap.Mode == Minimap.Full;
-			Minimap.Cycle(); bool off = Minimap.Mode == Minimap.Off;
-			Minimap.Cycle();
-			Check(ref ok, full && off && Minimap.Mode == Minimap.Corner, "the map key: corner -> full -> off -> corner");
+			Check(ref ok, Minimap.NextMode(Minimap.Corner) == Minimap.Off && Minimap.NextMode(Minimap.Off) == Minimap.Corner && Minimap.NextMode(1) == Minimap.Corner, "the map key: corner -> hidden -> corner, never full screen");
+			Check(ref ok, WorldOptions.Parse("nominimap").Count == 0 && WorldOptions.Parse("minimap").Contains(WorldOptions.MinimapOn), "old worlds' 'nominimap' is dropped (no map), 'minimap' turns it on");
 			Minimap.SetZoom(8); bool z4 = Minimap.Zoom == 4;
 			Minimap.SetZoom(3); bool z2 = Minimap.Zoom == 2;
 			Minimap.SetZoom(0);
@@ -773,7 +770,7 @@ namespace DynamicIslands
 			yield return EnsureAlive();
 			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Note_Sign" });
 			bool ok = true;
-			bool was = Minimap.Enabled; int mode = Minimap.Mode, zoom = Minimap.Zoom;
+			bool was = Minimap.Enabled; int mode = Minimap.Mode, zoom = Minimap.Zoom; bool opt = MapOptionOn();
 			IslandWorldState.Entry e = null;
 			yield return RfSpawn(MapBuild(), MapIsland, x => e = x);
 			if (e == null) yield break;
@@ -788,7 +785,7 @@ namespace DynamicIslands
 			int renders = Minimap.RenderCount;
 			Minimap.Cycle(); Minimap.SetZoom(4);
 			Check(ref ok, Minimap.Mode == Minimap.Corner && Minimap.Zoom == 1, "off: the map key and zoom do nothing");
-			Minimap.Mode = Minimap.Full;
+			Minimap.Mode = Minimap.Corner;
 			yield return new WaitForSecondsRealtime(1.5f);
 			Check(ref ok, !Minimap.Shown && Minimap.RenderCount == renders && !Minimap.Render(), "off: never shown, no picture taken");
 			Check(ref ok, WorldRules.ReadDefault(Minimap.SettingName) == "off", "off is saved as minimap=off");
@@ -797,19 +794,27 @@ namespace DynamicIslands
 			yield return new WaitForSecondsRealtime(1.5f);
 			Check(ref ok, Minimap.Shown, "on again: the map shows");
 			Check(ref ok, WorldRules.ReadDefault(Minimap.SettingName) == "on", "on is saved as minimap=on");
-			// (the world option: no map for anyone, whatever this PC's box says)
-			bool optWas = WorldOptions.On(WorldOptions.NoMinimap);
-			var on = WorldOptions.Current.ToList(); on.Add(WorldOptions.NoMinimap);
+			// (the M key with the map on: hides the corner map, shows it again; never full screen)
+			Minimap.MapKeyPressed();
+			yield return new WaitForSecondsRealtime(0.5f);
+			Check(ref ok, Minimap.Mode == Minimap.Off && !Minimap.Shown, "the map key: the corner map hidden");
+			Minimap.MapKeyPressed();
+			yield return new WaitForSecondsRealtime(0.5f);
+			Check(ref ok, Minimap.Mode == Minimap.Corner && Minimap.CornerShown && Mathf.Abs(Minimap.PanelSize.x - Minimap.CornerSize) < 0.5f && Minimap.PanelScreenShare < 0.35f,
+				"the map key again: back in the corner (panel " + Minimap.PanelSize.x.ToString("F0") + ", " + (Minimap.PanelScreenShare * 100f).ToString("F0") + "% of the screen's height)");
+			ScreenCapture.CaptureScreenshot(Path.Combine(DynamicIslands.assetpath, "minimap_corner_1109.png"));
+			yield return new WaitForSecondsRealtime(1f);
+			// (the world setting off - the default: no map for anyone, whatever this PC's box says)
+			var on = WorldOptions.Current.ToList(); on.Remove(WorldOptions.MinimapOn);
 			WorldOptions.Set(on);
 			yield return new WaitForSecondsRealtime(1.5f);
-			Check(ref ok, Minimap.Enabled && !Minimap.Available && !Minimap.Shown, "No minimap world option: the box is on, but the map is hidden");
-			renders = Minimap.RenderCount; Minimap.Mode = Minimap.Corner; Minimap.Cycle(); Minimap.SetZoom(4);
-			Check(ref ok, Minimap.Mode == Minimap.Corner && Minimap.Zoom == 1 && !Minimap.Render() && Minimap.RenderCount == renders, "No minimap: the map key and zoom do nothing, no picture");
-			on.Remove(WorldOptions.NoMinimap); WorldOptions.Set(on);
+			Check(ref ok, Minimap.Enabled && !Minimap.Available && !Minimap.Shown, "Island minimap off in the world: the box is on, but no map");
+			renders = Minimap.RenderCount; Minimap.Mode = Minimap.Corner; Minimap.MapKeyPressed(); Minimap.SetZoom(4);
+			Check(ref ok, Minimap.Mode == Minimap.Corner && Minimap.Zoom == 1 && !Minimap.Render() && Minimap.RenderCount == renders, "Island minimap off: the map key and zoom do nothing, no picture");
+			on.Add(WorldOptions.MinimapOn); WorldOptions.Set(on);
 			yield return new WaitForSecondsRealtime(1.5f);
-			Check(ref ok, Minimap.Available && Minimap.Shown, "No minimap off again: the map shows");
-			if (optWas) { on.Add(WorldOptions.NoMinimap); WorldOptions.Set(on); }
-			Minimap.Enabled = was; Minimap.Mode = mode; Minimap.SetZoom(zoom);
+			Check(ref ok, Minimap.Available && Minimap.Shown, "Island minimap on again: the map shows");
+			Minimap.Enabled = was; Minimap.Mode = mode; Minimap.SetZoom(zoom); MapOptionBack(opt);
 			if (ok) Log("PASS: minimap off"); else Fail("minimap off");
 		}
 
@@ -822,11 +827,11 @@ namespace DynamicIslands
 			yield return EnsureAlive();
 			Network_Player me = RAPI.GetLocalPlayer();
 			bool ok = true;
-			bool was = Minimap.Enabled; int mode = Minimap.Mode, zoom = Minimap.Zoom;
+			bool was = Minimap.Enabled; int mode = Minimap.Mode, zoom = Minimap.Zoom; bool opt = MapOptionOn();
 			Minimap.Enabled = true;
 			Minimap.Mode = Minimap.Corner;
 			Minimap.SetZoom(1);
-			if (!Minimap.Available) { Fail("minimap rafts: the world has 'No minimap' on"); Minimap.Enabled = was; yield break; }
+			if (!Minimap.Available) { Fail("minimap rafts: the map is not available"); Minimap.Enabled = was; MapOptionBack(opt); yield break; }
 			string[] kinds = { GhostShip.TypeName, GhostRafts.TypeName, TraderRaft.TypeName };
 			List<IslandWorldState.Entry> made = new List<IslandWorldState.Entry>();
 			for (int k = 0; k < kinds.Length; k++)
@@ -855,9 +860,12 @@ namespace DynamicIslands
 				yield return new WaitForSecondsRealtime(1f);
 				if (k == 0)
 				{
-					Minimap.MapKeyPressed(); // (the player opens the full map aboard and leaves it open)
+					Minimap.MapKeyPressed(); // (the player hides the map aboard, then shows it again: never full screen)
 					yield return new WaitForSecondsRealtime(0.5f);
-					Check(ref ok, Minimap.Mode == Minimap.Full && Mathf.Abs(Minimap.PanelSize.x - 700f) < 0.5f, "the map key aboard: full screen (" + Minimap.PanelSize.x.ToString("F0") + ")");
+					bool hidden = Minimap.Mode == Minimap.Off && !Minimap.Shown;
+					Minimap.MapKeyPressed();
+					yield return new WaitForSecondsRealtime(0.5f);
+					Check(ref ok, hidden && Minimap.Mode == Minimap.Corner && Mathf.Abs(Minimap.PanelSize.x - Minimap.CornerSize) < 0.5f, "the map key aboard: hidden, then back in the corner (" + Minimap.PanelSize.x.ToString("F0") + ")");
 				}
 				// (it drifts away / sinks: gone before the next, which gets its room)
 				IslandWorldState.RemoveIds(new[] { e.Id }, true);
@@ -865,9 +873,23 @@ namespace DynamicIslands
 			}
 			IslandWorldState.RemoveIds(made.Where(x => IslandWorldState.Contains(x)).Select(x => x.Id).ToList(), true);
 			IslandWorldState.Save();
-			Minimap.Enabled = was; Minimap.Mode = mode; Minimap.Zoom = zoom;
+			Minimap.Enabled = was; Minimap.Mode = mode; Minimap.Zoom = zoom; MapOptionBack(opt);
 			OnRaftCommand();
 			if (ok) Log("PASS: minimap rafts"); else Fail("minimap rafts");
+		}
+
+		/// <summary>Tests: switch the world setting Island minimap on (off by default); returns whether it was on.</summary>
+		static bool MapOptionOn()
+		{
+			bool was = WorldOptions.On(WorldOptions.MinimapOn);
+			if (!was) { var on = WorldOptions.Current.ToList(); on.Add(WorldOptions.MinimapOn); WorldOptions.Set(on); }
+			return was;
+		}
+
+		static void MapOptionBack(bool was)
+		{
+			if (was || !WorldOptions.On(WorldOptions.MinimapOn)) return;
+			var on = WorldOptions.Current.ToList(); on.Remove(WorldOptions.MinimapOn); WorldOptions.Set(on);
 		}
 
 		/// <summary>A spot on the open sea near Raft's raft with no island (of the mod) within the map's reach.</summary>
@@ -916,7 +938,7 @@ namespace DynamicIslands
 			IslandWorldState.Entry e = null;
 			yield return RfSpawn(MapBuild(), MapIsland, x => e = x);
 			if (e == null) yield break;
-			int mode = Minimap.Mode;
+			int mode = Minimap.Mode; bool opt = MapOptionOn();
 			Minimap.Mode = Minimap.Corner;
 			Minimap.SetZoom(1);
 			PutPlayerNear(ScObjOf(e, "cimapstart").transform);
@@ -966,10 +988,10 @@ namespace DynamicIslands
 			yield return new WaitForSecondsRealtime(1f);
 			Minimap.Cycle();
 			yield return new WaitForSecondsRealtime(1f);
-			Check(ref ok, Minimap.Mode == Minimap.Full && Minimap.Shown, "full screen");
-			ScreenCapture.CaptureScreenshot(Path.Combine(dir, "minimap_full.png"));
+			Check(ref ok, Minimap.Mode == Minimap.Off && !Minimap.Shown, "the map key: hidden (no full screen)");
+			ScreenCapture.CaptureScreenshot(Path.Combine(dir, "minimap_hidden.png"));
 			yield return new WaitForSecondsRealtime(1f);
-			Minimap.Mode = mode;
+			Minimap.Mode = mode; MapOptionBack(opt);
 			RfAway(e);
 			yield return new WaitForSecondsRealtime(1f);
 			RfRemove(MapIsland);
@@ -989,7 +1011,7 @@ namespace DynamicIslands
 			IslandWorldState.Entry e = null;
 			yield return RfSpawn(MapBuild(), MapIsland, x => e = x);
 			if (e == null) yield break;
-			int mode = Minimap.Mode;
+			int mode = Minimap.Mode; bool opt = MapOptionOn();
 			Minimap.Mode = Minimap.Corner;
 			Minimap.SetZoom(1);
 			PutPlayerNear(ScObjOf(e, "cimapstart").transform);
@@ -1029,12 +1051,12 @@ namespace DynamicIslands
 				yield return new WaitForSecondsRealtime(1f);
 				Log("ui: saved " + Path.Combine(dir, "minimap_quest.png") + " with the quest panel and the corner map");
 				float cornerY = qp.anchoredPosition.y;
-				Minimap.Mode = Minimap.Full;
+				Minimap.Mode = Minimap.Off;
 				yield return new WaitForSecondsRealtime(1.5f);
-				ScreenCapture.CaptureScreenshot(Path.Combine(dir, "minimap_full_quest.png"));
+				ScreenCapture.CaptureScreenshot(Path.Combine(dir, "minimap_hidden_quest.png"));
 				yield return new WaitForSecondsRealtime(1f);
-				Log("ui: saved " + Path.Combine(dir, "minimap_full_quest.png") + " with the quest panel and the big map");
-				Check(ref ok, Mathf.Abs(qp.anchoredPosition.y - (-160f)) < 0.5f && cornerY < -160f, "the quest panel goes back up with the big map open (" + cornerY.ToString("F0") + " -> " + qp.anchoredPosition.y.ToString("F0") + ")");
+				Log("ui: saved " + Path.Combine(dir, "minimap_hidden_quest.png") + " with the quest panel and the map hidden");
+				Check(ref ok, Mathf.Abs(qp.anchoredPosition.y - (-160f)) < 0.5f && cornerY < -160f, "the quest panel goes back up with the map hidden (" + cornerY.ToString("F0") + " -> " + qp.anchoredPosition.y.ToString("F0") + ")");
 				Minimap.Mode = Minimap.Corner;
 				yield return new WaitForSecondsRealtime(1.5f);
 				Check(ref ok, Mathf.Abs(qp.anchoredPosition.y - cornerY) < 0.5f, "and under the corner map again");
@@ -1048,7 +1070,7 @@ namespace DynamicIslands
 			}
 			finally { foreach (var cv in others) if (cv != null) cv.enabled = true; }
 			Log("ui: saved " + Path.Combine(dir, "minimap_clean.png") + " with the other canvases hidden");
-			Minimap.Mode = mode;
+			Minimap.Mode = mode; MapOptionBack(opt);
 			RfAway(e);
 			yield return new WaitForSecondsRealtime(1f);
 			RfRemove(MapIsland);
@@ -1108,7 +1130,7 @@ namespace DynamicIslands
 			IslandWorldState.Entry e = null;
 			yield return RfSpawn(MapBuild(), MapIsland, x => e = x);
 			if (e == null) yield break;
-			int mode = Minimap.Mode;
+			int mode = Minimap.Mode; bool opt = MapOptionOn();
 			Minimap.Mode = Minimap.Corner;
 			Minimap.SetZoom(1);
 			Minimap.ClearPings();
@@ -1126,14 +1148,11 @@ namespace DynamicIslands
 			Check(ref ok, Minimap.Marks.Any(k => k.Kind == Minimap.MarkQuest && Vector3.Distance(k.Pos, goal.position) < 0.1f), "the quest step's target on the map");
 			Check(ref ok, Minimap.Marks.Any(k => k.Kind == Minimap.MarkMarker && k.Label == "Hut"), "the map marker 'Hut' on the map");
 			Check(ref ok, Minimap.Marks.Any(k => k.Kind == Minimap.MarkMe), "the player on the map");
-			Minimap.Cycle();
-			yield return new WaitForSecondsRealtime(0.3f);
-			Check(ref ok, Minimap.Mode == Minimap.Full && Minimap.Shown && Minimap.RenderCount > renders + 1, "full screen: shown, the picture taken again");
 			Shot("pf5_map");
 			Minimap.Cycle();
 			yield return null;
 			yield return null;
-			Check(ref ok, !Minimap.Shown, "off: no map");
+			Check(ref ok, Minimap.Mode == Minimap.Off && !Minimap.Shown, "the map key: hidden");
 			Minimap.Mode = Minimap.Corner;
 
 			var sent = new List<IslandNetMessage>();
@@ -1165,7 +1184,7 @@ namespace DynamicIslands
 			yield return new WaitForSecondsRealtime(1.2f);
 			Check(ref ok, Minimap.Island != e && !Minimap.Shown, "away from the island: no map");
 			RfRemove(MapIsland);
-			Minimap.Mode = mode;
+			Minimap.Mode = mode; MapOptionBack(opt);
 			if (ok) Log("PASS: minimap world"); else Fail("minimap world");
 		}
 
