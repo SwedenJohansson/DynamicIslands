@@ -126,42 +126,80 @@ namespace DynamicIslands
 		static uint ownPid;
 		static bool lockLetGo;
 		static CursorLockMode lockBefore;
+		static bool visibleBefore;
+		static MenuType menuAtLetGo;
 		static int letGoLogged;
-		/// <summary>Dev tests only (CICursorMinFront): acts as if Raft were minimised and the window in front - never set by the mod itself.</summary>
+		static int tickFrame = -1;
+		static bool away;
+		/// <summary>Dev tests only (CICursorMinFront, CICursorFix): while TestPlaceFaked, Raft's place is not read from Windows -
+		/// TestMinimisedInFront true acts as "minimised / not in front", false as "shown and in front". Never set by the mod itself.</summary>
 		internal static bool TestMinimisedInFront;
+		internal static float TestPlaceFakedUntil;
+		static bool TestPlaceFaked { get { return TestPlaceFakedUntil > Time.realtimeSinceStartup; } }
+		/// <summary>Dev builds: a test Raft (CIBackground ran) never holds the mouse, even in front - unless a screen test raised it
+		/// (ui.ps1 focus writes %TEMP%\raft_quiet_hold, needs tools\keys_ok.txt, the user's go) in the last 10 minutes.</summary>
+		internal static bool TestRaft;
+		static float holdLooked = -100f;
+		static bool screenTest;
 		internal static bool LockLetGo { get { return lockLetGo; } }
 		internal static int LetGoCount { get { return letGoLogged; } }
 
-		/// <summary>Raft minimised but still the window in front holds no mouse lock (every frame, DynamicIslands.Update).
-		/// (11-07, the user: the mouse kept jumping to the screen's top-left corner while the tests ran on minimised Rafts.
-		/// quiet.ps1 / raft.ps1 minimise a Raft that came up in front, and Windows leaves it the foreground window, minimised,
-		/// until the user clicks something else - logged: "FG Raft(27008) iconic=True" up to a minute at a time. Unity keeps a locked mouse
-		/// at the middle of a focused window, and a minimised one sits at -32000,-32000: the cursor is pulled to the corner.
-		/// The lock is let go while that lasts and given back once Raft is shown again or another window is in front.)</summary>
+		/// <summary>Raft holds no mouse lock while it is not the player's window in front (every frame, DynamicIslands.Update and
+		/// again in LateUpdate, after Raft's own code).
+		/// (11-07, the user: the mouse kept jumping to the screen's top-left corner while the tests ran on minimised Rafts:
+		/// a minimised Raft left as the foreground window - Unity keeps a locked mouse at the middle of a focused window, at -32000.)
+		/// (11-09, the user: the mouse still jumped - to the middle of the screen. The box Rafts sat windowed, not minimised, in the
+		/// middle of the screen behind the user's windows; once one became the window in front (a window closed or minimised, the
+		/// next in line is activated) Unity locked the mouse to its middle. Now the lock is let go - and the mouse shown - whenever
+		/// Raft is minimised, or any other process's window is in front, or (dev) it is a test Raft; given back once Raft is the
+		/// window in front again, if nothing changed it meanwhile. Normal play, Raft in front, is untouched.)</summary>
 		public static void Tick()
 		{
-			if (Application.isEditor || (Cursor.lockState == CursorLockMode.None && !lockLetGo)) return;
-			bool minimisedInFront = TestMinimisedInFront;
-			IntPtr h = minimisedInFront ? IntPtr.Zero : GetForegroundWindow();
-			if (h != IntPtr.Zero && IsIconic(h))
+			if (Application.isEditor) return;
+			if (Time.frameCount != tickFrame) { tickFrame = Time.frameCount; away = Away(); }
+			if (away && Cursor.lockState != CursorLockMode.None)
 			{
-				if (ownPid == 0) ownPid = (uint)System.Diagnostics.Process.GetCurrentProcess().Id;
-				uint pid; GetWindowThreadProcessId(h, out pid);
-				minimisedInFront = pid == ownPid;
-			}
-			if (minimisedInFront && Cursor.lockState != CursorLockMode.None)
-			{
-				if (!lockLetGo) lockBefore = Cursor.lockState;
+				if (!lockLetGo) { lockBefore = Cursor.lockState; visibleBefore = Cursor.visible; menuAtLetGo = CanvasHelper.ActiveMenu; }
 				lockLetGo = true;
 				Cursor.lockState = CursorLockMode.None;
-				if (letGoLogged++ < 5) Debug.Log("[CUSTOM ISLANDS] Mouse: Raft is minimised but in front - its mouse lock is let go meanwhile (the cursor isn't pulled to the screen's corner)");
+				Cursor.visible = true;
+				if (letGoLogged++ < 5) Debug.Log("[CUSTOM ISLANDS] Mouse: Raft is not the window in front (or minimised, or a test Raft) - its mouse lock is let go meanwhile (the cursor isn't pulled to its window)");
 			}
-			else if (!minimisedInFront && lockLetGo)
+			else if (!away && lockLetGo)
 			{
 				lockLetGo = false;
-				// (only when nothing changed it meanwhile: a menu Raft opened in between keeps its free mouse)
-				if (Cursor.lockState == CursorLockMode.None && !Cursor.visible) Cursor.lockState = lockBefore;
+				// (only when nothing changed it meanwhile: a menu or mod window opened in between keeps its free mouse)
+				if (Cursor.lockState == CursorLockMode.None && Cursor.visible && CanvasHelper.ActiveMenu == menuAtLetGo && !Freed)
+				{
+					Cursor.lockState = lockBefore;
+					Cursor.visible = visibleBefore;
+				}
 			}
+		}
+
+		/// <summary>Raft is minimised, another process's window is in front, or (dev) it is a test Raft with no screen test running.</summary>
+		static bool Away()
+		{
+			if (TestPlaceFaked) return TestMinimisedInFront;
+			if (TestRaft)
+			{
+				if (Time.realtimeSinceStartup - holdLooked > 2f)
+				{
+					holdLooked = Time.realtimeSinceStartup;
+					try
+					{
+						string f = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "raft_quiet_hold");
+						screenTest = System.IO.File.Exists(f) && (DateTime.Now - System.IO.File.GetLastWriteTime(f)).TotalMinutes < 10;
+					}
+					catch { screenTest = false; }
+				}
+				if (!screenTest) return true;
+			}
+			IntPtr h = GetForegroundWindow();
+			if (h == IntPtr.Zero) return true;
+			if (ownPid == 0) ownPid = (uint)System.Diagnostics.Process.GetCurrentProcess().Id;
+			uint pid; GetWindowThreadProcessId(h, out pid);
+			return pid != ownPid || IsIconic(h);
 		}
 
 		/// <summary>One of Raft's own menus (inventory, build menu, Esc menu, ...) is the active one - not None, not RML's 666.</summary>
