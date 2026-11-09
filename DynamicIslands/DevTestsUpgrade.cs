@@ -180,21 +180,36 @@ namespace DynamicIslands
 						Check(ref ok, baseTypes > 0 && upTypes == baseTypes && upMasks == baseMasks, tag + ", " + u.Display + ": surfaces " + upTypes + "/" + baseTypes + ", overlap masks " + upMasks + "/" + baseMasks);
 
 						// a surface of the raft that takes the base item, where its ghost passes Raft's build check
-						BlockQuad spot = null; Vector3 normal = Vector3.up; object baseErr = null, upErr = null;
-						foreach (BlockQuad q in UnityEngine.Object.FindObjectsOfType<BlockQuad>().Where(q => q.quadType != null && q.GetComponentInParent<Block>() != null).OrderBy(q => (q.transform.position - player.transform.position).sqrMagnitude).Take(80))
+						BlockQuad spot = null; Vector3 normal = Vector3.up; object baseErr = null, upErr = null; Vector3 at = Vector3.zero;
+						var tried = new Dictionary<string, int>();
+						// (the cause, 11-09: Raft's own lists don't name the upgrade item - the patch answers for it)
+						int rawLists = quadTypes.Count(q => { var l = HarmonyLib.Traverse.Create(q).Field("acceptableBlockTypes").GetValue<List<Item_Base>>(); return l != null && l.Contains(u.Item); });
+						if (rawLists > 0) Log("upgrade place: " + u.Display + " is named in " + rawLists + " of Raft's surface lists itself");
+						// (a raft block's surfaces are switched off until a hammer or placeable is held: found inactive too)
+						List<BlockQuad> all = Resources.FindObjectsOfTypeAll<BlockQuad>().Where(q => q != null && q.gameObject.scene.IsValid()).ToList();
+						tried["placed blocks"] = BlockCreator.GetPlacedBlocks().Count;
+						tried["scene quads"] = all.Count;
+						tried["with type"] = all.Count(q => q.quadType != null);
+						List<BlockQuad> quads = all.Where(q => q.quadType != null).OrderBy(q => (q.transform.position - player.transform.position).sqrMagnitude).Take(120).ToList();
+						tried["surfaces"] = quads.Count;
+						foreach (BlockQuad q in quads)
 						{
-							Vector3 n = q.transform.up;
-							if (!q.AcceptsBlock(u.Base, n)) { n = Vector3.up; if (!q.AcceptsBlock(u.Base, n)) continue; }
-							object e = GhostCheck(bc, setType, canBuild, destroyGhost, u.Base, q.transform.position);
-							if (e == null || Convert.ToInt32(e) != 0) continue;
-							spot = q; normal = n; baseErr = e;
-							break;
+							Vector3 n = new[] { q.transform.up, Vector3.up, q.transform.forward, -q.transform.forward, q.transform.right, -q.transform.right, -q.transform.up }.FirstOrDefault(d => q.AcceptsBlock(u.Base, d));
+							if (n == Vector3.zero) continue;
+							Vector3 p = SurfacePoint(q, n);
+							object e = GhostCheck(bc, setType, canBuild, destroyGhost, u.Base, p);
+							string k = e == null ? "no ghost" : e.ToString(); int c; tried.TryGetValue(k, out c); tried[k] = c + 1;
+							if (e == null) continue;
+							// (the first surface that takes the base item is kept even if Raft's build check says no there - a fresh
+							//  raft is small: the check is then compared base against upgrade on the same spot)
+							if (spot == null || (Convert.ToInt32(e) == 0 && Convert.ToInt32(baseErr) != 0)) { spot = q; normal = n; baseErr = e; at = p; }
+							if (Convert.ToInt32(e) == 0) break;
 						}
-						if (spot == null) { Log("upgrade place: " + u.Display + ": no free raft surface takes " + u.Base.UniqueName + " (only the surface lists checked)"); continue; }
+						if (spot == null) { Log("upgrade place: " + u.Display + ": skipped, no surface of a fresh raft takes " + u.Base.UniqueName + " (surface and overlap lists checked above; search " + string.Join(", ", tried.Select(kv => kv.Key + " x" + kv.Value).ToArray()) + ")"); continue; }
 						bool accepts = spot.AcceptsBlock(u.Item, normal);
-						upErr = GhostCheck(bc, setType, canBuild, destroyGhost, u.Item, spot.transform.position);
+						upErr = GhostCheck(bc, setType, canBuild, destroyGhost, u.Item, at);
 						Check(ref ok, accepts && upErr != null && upErr.ToString() == baseErr.ToString(), tag + ", " + u.Display + ": the raft surface takes it (" + accepts + "), build check " + upErr + " (base " + baseErr + ")");
-						Block b = bc.CreateBlockCheat(u.Item, pivot.InverseTransformPoint(spot.transform.position), Vector3.zero, DPS.Default, 0);
+						Block b = bc.CreateBlockCheat(u.Item, pivot.InverseTransformPoint(at), Vector3.zero, DPS.Default, 0);
 						yield return null;
 						UpgradeBlock ub = b != null ? b.GetComponent<UpgradeBlock>() : null;
 						Check(ref ok, b != null && b.buildableItem == u.Item && ub != null && ub.Upgrade == u, tag + ", " + u.Display + ": placed, an upgrade block (" + (ub != null && ub.Upgrade != null) + ")");
@@ -213,6 +228,15 @@ namespace DynamicIslands
 		}
 
 		/// <summary>The build ghost of an item at a spot and Raft's build check on it (a BuildError), or null.</summary>
+		// (the middle of the quad's face that looks along n: where Raft's own aim puts a placeable)
+		static Vector3 SurfacePoint(BlockQuad q, Vector3 n)
+		{
+			BoxCollider col = q.GetComponent<BoxCollider>();
+			if (col == null) return q.transform.position;
+			Bounds b = col.bounds;
+			return b.center + n.normalized * Mathf.Abs(Vector3.Dot(b.extents, new Vector3(Mathf.Abs(n.x), Mathf.Abs(n.y), Mathf.Abs(n.z)).normalized));
+		}
+
 		static object GhostCheck(BlockCreator bc, System.Reflection.MethodInfo setType, System.Reflection.MethodInfo canBuild, System.Reflection.MethodInfo destroyGhost, Item_Base item, Vector3 at)
 		{
 			try
