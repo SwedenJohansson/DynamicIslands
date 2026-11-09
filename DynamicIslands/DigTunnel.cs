@@ -226,12 +226,17 @@ namespace DynamicIslands.Editor
 			if (mr.lightProbeUsage != LightProbeUsage.CustomProvided) mr.lightProbeUsage = LightProbeUsage.CustomProvided;
 			if (lightBlock == null) lightBlock = new MaterialPropertyBlock();
 			mr.GetSharedMaterials(litMats);
+			// (rim walls dressed as the cave hill: lit as the hill is (CaveLit), not by Raft's open sky - under the sky's light the
+			// same rock showed as a bright patterned sand-rock patch round the mouth in the hill's soft grey; Stalker's SW mouth, 11-09)
+			SphericalHarmonicsL2 hillSh = default(SphericalHarmonicsL2); float hillShine = 1f;
+			bool asHill = !string.IsNullOrEmpty(RimWalls) && CaveLit.HillLight(out hillSh, out hillShine);
 			for (int i = 0; i < litMats.Count; i++)
 			{
 				// (the part's own block: the rock skin is in it)
 				mr.GetPropertyBlock(lightBlock, i);
-				oneLight[0] = i == 0 ? deep : open;
+				oneLight[0] = i == 0 ? deep : i == 1 && asHill ? hillSh : open;
 				lightBlock.CopySHCoefficientArraysFrom(oneLight);
+				if (i == 1 && asHill && litMats[1] != null && litMats[1].HasProperty("_Smoothness_Multiplyer")) lightBlock.SetFloat("_Smoothness_Multiplyer", litMats[1].GetFloat("_Smoothness_Multiplyer") * hillShine);
 				// (and less of the sky's shine on the lining: its blue reflections washed the walls out by the mouth)
 				if (i == 0 && litMats[0] != null && litMats[0].HasProperty("_Smoothness_Multiplyer")) lightBlock.SetFloat("_Smoothness_Multiplyer", LiningShine);
 				// (and darker rock: Raft casts no sun shadow in the passage, so from the mouth its floor was in full sun - only
@@ -499,7 +504,47 @@ namespace DynamicIslands.Editor
 			// (the rim walls out in the open as the cave hill's skin: its rock and tint - 11-05, Raft's island rock went blue-grey
 			// in the shade beside the hill)
 			RimWalls = CaveMountain.DressRimWalls(mr) ?? "";
+			SideRockOnly(mr, 1);
 			GroundTop(mr, land);
+		}
+
+		/// <summary>Texture pairs of Raft's top/side rock shader: the top one is drawn on faces turned up.</summary>
+		static readonly string[][] TopSidePairs = { new[] { "_TopDiffuse", "_SideDiffuse" }, new[] { "_TopNormal", "_SideNormal" }, new[] { "_TopBump", "_SideBump" },
+			// (Raft's Mountains shader - Balboa_BigRocks(_Sand), the cave hill's rock: a rock layer and a grass/sand layer blended by the
+			// normal, its baked _MainNormal laid on our uvs tipping patches up into sand: the rim walls patterned sand-rock, 11-09;
+			// the sand layer over both came out a bright sand patch - the hill's steep faces are its rock layer, runbx12)
+			new[] { "_GrassDiffuse", "_RockDiffuse" }, new[] { "_GrassNormal", "_RockNormal" } };
+
+		/// <summary>The rim walls (part 1) wear the rock's side texture on every face, turned up or not (11-09 w03: a mouth dug
+		/// into a steep face keeps its rim there as rock - SplitTop - but Raft's rock shader drew the up-turned of those faces
+		/// with its sandy patterned top texture, a big patch up the cliff over Stalker's Hollow's south-west mouth; the cliff
+		/// round it is the ground's own steep rock, which the side texture matches). By a property block on that part, so the
+		/// shared material stays as it is.</summary>
+		public static void SideRockOnly(MeshRenderer mr, int part)
+		{
+			if (mr == null) return;
+			Material[] mats = mr.sharedMaterials;
+			if (part >= mats.Length || mats[part] == null) return;
+			Material m = mats[part];
+			var b = new MaterialPropertyBlock();
+			mr.GetPropertyBlock(b, part);
+			bool any = false;
+			foreach (string[] p in TopSidePairs)
+			{
+				if (!m.HasProperty(p[0]) || !m.HasProperty(p[1])) continue;
+				Texture side = b.isEmpty ? null : b.GetTexture(p[1]);
+				if (side == null) side = m.GetTexture(p[1]);
+				if (side == null) continue;
+				b.SetTexture(p[0], side);
+				if (m.HasProperty(p[0] + "_ST"))
+				{
+					Vector2 s = m.GetTextureScale(p[1]), o = m.GetTextureOffset(p[1]);
+					b.SetVector(p[0] + "_ST", new Vector4(s.x, s.y, o.x, o.y));
+				}
+				any = true;
+			}
+			if (any && m.HasProperty("_GrassTile") && m.HasProperty("_RockTile")) b.SetFloat("_GrassTile", m.GetFloat("_RockTile")); // (the rock at one scale over both layers)
+			if (any) mr.SetPropertyBlock(b, part);
 		}
 
 		/// <summary>Raft's rock shader comes with the cave tunnel piece, which loads on demand: load it, then dress every
@@ -577,7 +622,13 @@ namespace DynamicIslands.Editor
 					// (or lying on the ground, however steep the slope: the rim's skin over a steep slope kept the rock's paler look,
 					// saw-tooth shards along the line where it crosses the ground - Old Mine Islet's shore adit, 11-05)
 					bool up = n.sqrMagnitude >= 1e-12f && n.normalized.y >= TopUp;
-					if (!up && FaceOnGround(land, at.TransformPoint(verts[rim[i]]), at.TransformPoint(verts[rim[i + 1]]), at.TransformPoint(verts[rim[i + 2]]))) up = true;
+					// (but not on a steep slope: Raft's ground draws that as its own stretched cliff rock - its shader, not the splat
+					// map - which the baked top can't match; each dug mouth in a steep face sat in a patterned sand-rock patch up the
+					// wall, w03 11-09 Lumen/Stalker's. There the rim stays rock, its walls' look, beside the cliff's - every face over
+					// such ground, also one whose smoothed corners face up: those still left a patch over Stalker's south-west mouth)
+					Vector3 wa = at.TransformPoint(verts[rim[i]]), wb = at.TransformPoint(verts[rim[i + 1]]), wc = at.TransformPoint(verts[rim[i + 2]]);
+					if (OnSteepGround(land, (wa + wb + wc) / 3f)) up = false;
+					else if (!up && FaceOnGround(land, wa, wb, wc)) up = true;
 					if (!up) { side.Add(rim[i]); side.Add(rim[i + 1]); side.Add(rim[i + 2]); continue; }
 					for (int e = 0; e < 3; e++)
 					{
@@ -854,6 +905,18 @@ namespace DynamicIslands.Editor
 		/// were pale angular shards the rule, the middle within OnGroundUnder, never saw): down to OnGroundCross under.</summary>
 		const float OnGroundUnder = 0.05f, OnGroundBy = 0.3f, OnGroundCross = 0.6f;
 
+		/// <summary>Ground this steep (its normal's height under this, about 60 degrees and more) Raft draws as its cliff rock:
+		/// a rim face lying on it stays rock (SplitTop), not a shard (RimShards).</summary>
+		const float SteepGround = 0.5f;
+
+		/// <summary>The ground at this point (world) is a steep face - SteepGround.</summary>
+		public static bool OnSteepGround(Terrain land, Vector3 at)
+		{
+			if (land == null || land.terrainData == null) return false;
+			Vector3 lo = land.transform.position, size = land.terrainData.size;
+			return land.terrainData.GetInterpolatedNormal((at.x - lo.x) / size.x, (at.z - lo.z) / size.z).y < SteepGround;
+		}
+
 		/// <summary>The face (corners in the world) lies on the ground or crosses it - see OnGroundBy. The one rule for SplitTop
 		/// and RimShards.</summary>
 		static bool FaceOnGround(Terrain land, Vector3 a, Vector3 b, Vector3 c)
@@ -892,7 +955,33 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i + 2 < tris.Length; i += 3)
 			{
 				Vector3 a = r.TransformPoint(verts[tris[i]]), b = r.TransformPoint(verts[tris[i + 1]]), c = r.TransformPoint(verts[tris[i + 2]]);
-				if (!FaceOnGround(land, a, b, c)) continue;
+				if (!FaceOnGround(land, a, b, c) || OnSteepGround(land, (a + b + c) / 3f)) continue;
+				n++;
+				if (seen.Count < 4) seen.Add(((a + b + c) / 3f).ToString("0.0"));
+			}
+			where = string.Join(" ", seen.ToArray());
+			return n;
+		}
+
+		/// <summary>Tests: the rim's top faces (part 2, the ground's look) over steep ground (OnSteepGround) - a
+		/// patterned patch of the baked layers where Raft draws its cliff rock. where: the first few.</summary>
+		public int RimSteepTop(out string where)
+		{
+			where = "";
+			Transform r = transform.Find(RockName);
+			MeshFilter mf = r != null ? r.GetComponent<MeshFilter>() : null;
+			Terrain land = skinLand;
+			if (mf == null || mf.sharedMesh == null || land == null || mf.sharedMesh.subMeshCount < 3) return 0;
+			Mesh mesh = mf.sharedMesh;
+			var verts = new List<Vector3>();
+			mesh.GetVertices(verts);
+			int[] tris = mesh.GetTriangles(2);
+			int n = 0;
+			var seen = new List<string>();
+			for (int i = 0; i + 2 < tris.Length; i += 3)
+			{
+				Vector3 a = r.TransformPoint(verts[tris[i]]), b = r.TransformPoint(verts[tris[i + 1]]), c = r.TransformPoint(verts[tris[i + 2]]);
+				if (Vector3.Cross(b - a, c - a).sqrMagnitude < 1e-8f || !OnSteepGround(land, (a + b + c) / 3f)) continue;
 				n++;
 				if (seen.Count < 4) seen.Add(((a + b + c) / 3f).ToString("0.0"));
 			}
@@ -1280,7 +1369,22 @@ namespace DynamicIslands.Editor
 			int tri;
 			Mesh mesh = RockNets.Build("DigTunnelRock", field, nx, ny, nz, o, h, (air, rock) => outer[air] ? -1 : passage[air] ? 0 : 1, 2, 2, null, 1f / 6f, out tri);
 			Triangles = tri;
+			RimTextureScale(mesh, 1, 6f / 14f);
 			return mesh;
+		}
+
+		/// <summary>The rim walls (part 1) take the cave hill skin's texture scale (1/14 per metre, CaveMountain's Quad) instead of the
+		/// lining's 1/6: at 1/6 the same rock texture showed 2.3 times denser, a patterned sand-rock patch round the mouth in the hill's
+		/// smooth rock (Stalker's SW mouth, w03 11-09). Corners the lining shares get it too (one row at the mouth's edge).</summary>
+		static void RimTextureScale(Mesh mesh, int part, float scale)
+		{
+			if (mesh == null || part >= mesh.subMeshCount) return;
+			var uvs = new List<Vector2>();
+			mesh.GetUVs(0, uvs);
+			var done = new bool[uvs.Count];
+			foreach (int v in mesh.GetTriangles(part))
+				if (!done[v]) { done[v] = true; uvs[v] *= scale; }
+			mesh.SetUVs(0, uvs);
 		}
 
 		static int Cell(int x, int y, int z, int cx, int cy) { return x + y * cx + z * cx * cy; }

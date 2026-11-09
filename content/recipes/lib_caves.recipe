@@ -7,11 +7,12 @@
 # Keep caves 6 m from quest objects, people, signs, chests and ladders, off the main walk line, and a gated cave off the
 # main path before the plan's machete step: tools\content.ps1 cavecheck <recipe> checks it (G7).
 #
+# (wet=1: the loot may lie on the flooded floor too - a cave of a sunk island, a flooded cave with an air pocket)
 # kit_st: a straight cave (the cave tool): Raft's cave tunnels into a hill, a bear-den room at the end (end=room) or
 # an open end (end=open; through a hill), slope degrees (below 0 down), size 0.7-1.5 times Raft's own
-macro kit_st x=0 z=0 yaw=0 len=26 slope=0 end=room size=1 hill=1 dirt=3 mush=3 stone=2 vines=2 titanium=0 light=0 gate=0 as=kitst
+macro kit_st x=0 z=0 yaw=0 len=26 slope=0 end=room size=1 hill=1 dirt=3 mush=3 stone=2 vines=2 titanium=0 light=0 gate=0 wet=0 as=kitst
 cave from $x $z to {$x+$len*sin($yaw)} {$z+$len*cos($yaw)} slope=$slope end=$end hill=$hill size=$size as=$as
-caveloot $as dirt=$dirt mush=$mush stone=$stone vines=$vines titanium=$titanium light=$light
+caveloot $as dirt=$dirt mush=$mush stone=$stone vines=$vines titanium=$titanium light=$light wet=$wet
 for _g 1 $gate
 cavegate $as
 next
@@ -20,8 +21,8 @@ end
 # kit_uw: an underwater straight cave: the mouth on the sea floor (x z there, 4 m down or more), climbing slope degrees
 # (default 12) to a room above the sea - water only in the flooded part, the room dry with air (the loot only there).
 # len: enough pieces to climb out of the sea - (depth + 2.5) / (10.4 * sin(slope)) pieces of 10.4 m
-macro kit_uw x=0 z=0 yaw=0 len=42 slope=12 size=1 dirt=2 mush=2 stone=1 vines=1 titanium=1 light=0 as=kituw
-call kit_st x=$x z=$z yaw=$yaw len=$len slope=$slope end=room size=$size dirt=$dirt mush=$mush stone=$stone vines=$vines titanium=$titanium light=$light as=$as
+macro kit_uw x=0 z=0 yaw=0 len=42 slope=12 size=1 dirt=2 mush=2 stone=1 vines=1 titanium=1 light=0 wet=0 as=kituw
+call kit_st x=$x z=$z yaw=$yaw len=$len slope=$slope end=room size=$size dirt=$dirt mush=$mush stone=$stone vines=$vines titanium=$titanium light=$light wet=$wet as=$as
 end
 #
 # kit_dig: a dug tunnel (the Dig brush): flat m level from the mouth, then len m on at slope degrees (-25..25), r its

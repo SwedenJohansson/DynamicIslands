@@ -1,0 +1,38 @@
+# Brinelab Tower's spill lab (CIPlay brinelab_tower_acid, 11-08; in a test world 'CI ...', under CIGapsWatchHealth, no
+# CIGapsSuit). Points as in its recipe: the sample annex east of the loading yard (shed x 44..50, z -24..-18, floor about
+# 3.2, door in the south wall at x 45.5..47), the acid zone bl_spill at 47 -21 (r 2.6, safe=suit), the suit box at
+# 42.6 -23, the drain lever behind the annex at 47 -16.6, the locker at 49.2 -18.9. Without the suit the floor burns;
+# the lever hides the zone, then the floor is safe. The suit run is brinelab_tower_acidsuit.
+island Brinelab Tower keep
+offset 0.978 2.1699
+hour 11
+weather Calm
+
+# Outside: the annex, its door and sign from the loading yard; the lever round the back
+picture bl_spill_out 40 5 -32 47 3.5 -21
+picture bl_spill_back 52 5 -12 47 3.5 -17
+
+# In through the door without a suit: the acid burns
+expect shown blspill
+at 46.25 -25
+walk 46.25 -25 to 46.25 -23 to 47 -21
+wait 5
+expect message brine acid
+expect hurt 15
+picture bl_spill_in 46 5 -23.2 48.5 3.3 -19
+walk 47 -21 to 46.25 -23 to 46.25 -26
+# (the way out is through the acid too: counted here, so the drained walk below starts from none)
+expect hurt 1
+
+# Round the back to the drain lever: the acid goes, the floor is safe
+walk 46.25 -26 to 51.5 -25 to 51.5 -16.5 to 47.6 -16
+use bldrain
+wait 2
+expect hidden blspill
+walk 47.6 -16 to 51.5 -16.5 to 51.5 -25 to 46.25 -25 to 46.25 -23 to 47 -21 to 48.6 -19.4
+wait 5
+expect unhurt
+open Sample annex locker
+wait 2
+expect item Battery 2
+picture bl_spill_dry 46 5 -23.2 48.5 3.3 -19
