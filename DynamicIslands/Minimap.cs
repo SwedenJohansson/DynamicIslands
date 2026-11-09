@@ -149,7 +149,8 @@ namespace DynamicIslands.Editor
 			UpdatePings();
 			if (Time.unscaledTime >= nextFind) { nextFind = Time.unscaledTime + 0.5f; FindIsland(me.transform.position); }
 			UpdateStart(me);
-			bool show = Available && Mode != Off && Island != null && Island.Root != null;
+			// (audit 11-09: the corner map, canvas 480, drew over Raft's inventory, crafting and trading menus)
+			bool show = Available && Mode != Off && Island != null && Island.Root != null && !ModKeys.RaftMenuOpen();
 			if (!show) { if (panel != null) panel.gameObject.SetActive(false); return; }
 			EnsureUi();
 			canvas.gameObject.SetActive(true);

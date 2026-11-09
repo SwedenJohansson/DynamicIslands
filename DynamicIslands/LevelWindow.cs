@@ -586,6 +586,9 @@ namespace DynamicIslands.Editor
 		{
 			if (!PlayerLevels.On) return;
 			if (instance == null) Build();
+			// (audit 11-09: one page at a time - the journal and notebook were left open under the stats page)
+			JournalWindow.Close();
+			PlayerNotebookWindow.Close();
 			instance.Show();
 		}
 
