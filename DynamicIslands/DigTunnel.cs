@@ -506,6 +506,7 @@ namespace DynamicIslands.Editor
 			RimWalls = CaveMountain.DressRimWalls(mr) ?? "";
 			SideRockOnly(mr, 1);
 			GroundTop(mr, land);
+			RimMatch = MatchSkin(mr); // (after SplitTop: it sorts the faces by their own normals)
 		}
 
 		/// <summary>Texture pairs of Raft's top/side rock shader: the top one is drawn on faces turned up.</summary>
@@ -545,6 +546,149 @@ namespace DynamicIslands.Editor
 			}
 			if (any && m.HasProperty("_GrassTile") && m.HasProperty("_RockTile")) b.SetFloat("_GrassTile", m.GetFloat("_RockTile")); // (the rock at one scale over both layers)
 			if (any) mr.SetPropertyBlock(b, part);
+		}
+
+		/// <summary>Tests: what MatchSkin last did to the rim walls ("" when not run).</summary>
+		[NonSerialized] public string RimMatch = "";
+		static bool toldMatch;
+
+		/// <summary>
+		/// The rim walls (part 1) shaded as the cave hill's skin round them: each corner's normal blended into the skin's (its
+		/// nearby corners', weighted by distance) - the whole way at the rim's outer edge, its own again ~4 m in toward the
+		/// opening - and each face mapped as the skin maps it (CaveMountain's Quad: world metres / 14 from the side it faces most,
+		/// in the skin's own frame). 11-09 w03: with the skin's material, tint and light the dug mouths at Stalker's Hollow and Lumen
+		/// Shelf still sat in a brown patterned patch with a toothed outline in the hill's soft blue-grey rock: Raft's Mountains shader
+		/// blends rock and sand by the normal and lays its texture by the uvs, and the rim's own rounded normals and voxel uvs
+		/// differ from the skin's smooth heightfield normals and planar uvs. Part 1 gets corners of its own (the lining keeps its);
+		/// the rim's own normals are kept in uv channel 3, so a second run (the hill dressing its tunnels again) starts from them.
+		/// Run after SplitTop, which sorts faces by their own normals.
+		/// </summary>
+		public static string MatchSkin(MeshRenderer mr)
+		{
+			try
+			{
+				CaveMountain hill = mr != null ? mr.GetComponentInParent<CaveMountain>() : null;
+				MeshRenderer sk = hill != null ? hill.SkinRenderer : null;
+				MeshFilter smf = sk != null ? sk.GetComponent<MeshFilter>() : null;
+				MeshFilter mf = mr != null ? mr.GetComponent<MeshFilter>() : null;
+				Mesh skin = smf != null ? smf.sharedMesh : null, mesh = mf != null ? mf.sharedMesh : null;
+				if (skin == null || mesh == null || mesh.subMeshCount < 2) return "";
+				Transform rt = mr.transform, st = sk.transform;
+				var sv = new List<Vector3>(); var sn = new List<Vector3>(); var su = new List<Vector2>();
+				skin.GetVertices(sv); skin.GetNormals(sn); skin.GetUVs(0, su);
+				if (sv.Count == 0 || sn.Count != sv.Count || su.Count != sv.Count) return "";
+				Vector3 ob = SkinUvOrigin(sv, sn, su, st.position);
+				// (the skin's corners in the world, by 2 m squares over x/z)
+				const float Bin = 2f, Reach = 4f, Full = 0.75f, Fade = 3.5f;
+				var bins = new Dictionary<long, List<int>>();
+				var sw = new Vector3[sv.Count]; var swn = new Vector3[sv.Count];
+				for (int i = 0; i < sv.Count; i++)
+				{
+					sw[i] = st.TransformPoint(sv[i]); swn[i] = st.TransformDirection(sn[i]).normalized;
+					long key = BinKey(sw[i], Bin);
+					List<int> l; if (!bins.TryGetValue(key, out l)) bins[key] = l = new List<int>();
+					l.Add(i);
+				}
+				var v = new List<Vector3>(); var n = new List<Vector3>(); var u = new List<Vector2>(); var own = new List<Vector3>();
+				mesh.GetVertices(v); mesh.GetNormals(n); mesh.GetUVs(0, u); mesh.GetUVs(3, own);
+				if (n.Count != v.Count || u.Count != v.Count) return "";
+				if (own.Count != v.Count) own = new List<Vector3>(n);
+				var parts = new List<int>[mesh.subMeshCount];
+				var elsewhere = new bool[v.Count];
+				for (int p = 0; p < parts.Length; p++)
+				{
+					parts[p] = new List<int>(); mesh.GetTriangles(parts[p], p);
+					if (p != 1) foreach (int i in parts[p]) elsewhere[i] = true;
+				}
+				List<int> rim = parts[1];
+				var owner = new Dictionary<int, int>();
+				int blended = 0;
+				for (int t = 0; t + 2 < rim.Count; t += 3)
+				{
+					// (corners of its own: one mapping per face, as the skin's)
+					for (int e = 0; e < 3; e++)
+					{
+						int i = rim[t + e], was;
+						bool mine = !elsewhere[i] && (!owner.TryGetValue(i, out was) || was == t);
+						if (!mine) { int c = v.Count; v.Add(v[i]); n.Add(n[i]); u.Add(u[i]); own.Add(own[i]); rim[t + e] = c; i = c; }
+						owner[i] = t;
+					}
+					Vector3 sum = Vector3.zero;
+					var wp = new Vector3[3];
+					for (int e = 0; e < 3; e++)
+					{
+						int i = rim[t + e];
+						Vector3 w = rt.TransformPoint(v[i]), o = rt.TransformDirection(own[i]).normalized;
+						wp[e] = w;
+						Vector3 acc = Vector3.zero; float best = float.MaxValue;
+						int bx = Mathf.FloorToInt(w.x / Bin), bz = Mathf.FloorToInt(w.z / Bin), r = Mathf.CeilToInt(Reach / Bin);
+						for (int dx = -r; dx <= r; dx++)
+							for (int dz = -r; dz <= r; dz++)
+							{
+								List<int> l; if (!bins.TryGetValue(((long)(bx + dx) << 32) ^ (uint)(bz + dz), out l)) continue;
+								foreach (int s in l)
+								{
+									// (the skin's outside only: its back side and walls turned from the rim's face don't count)
+									if (Vector3.Dot(swn[s], o) <= 0f) continue;
+									float d = (sw[s] - w).magnitude;
+									if (d > Reach) continue;
+									best = Mathf.Min(best, d);
+									acc += swn[s] / (d * d + 0.25f);
+								}
+							}
+						float k = acc.sqrMagnitude > 1e-12f ? Mathf.Clamp01(1f - (best - Full) / Fade) : 0f;
+						Vector3 nn = k > 0f ? Vector3.Slerp(o, acc.normalized, k) : o;
+						if (k > 0f) blended++;
+						n[i] = rt.InverseTransformDirection(nn).normalized;
+						sum += nn;
+					}
+					// (mapped from the side the corners face most, unless that would stretch the face: CaveMountain.Quad)
+					Vector3 pn = Vector3.Cross(wp[1] - wp[0], wp[2] - wp[0]);
+					float len = pn.magnitude;
+					float[] bs = { Mathf.Abs(sum.x), Mathf.Abs(sum.y), Mathf.Abs(sum.z) }, of = { Mathf.Abs(pn.x), Mathf.Abs(pn.y), Mathf.Abs(pn.z) };
+					int axis = of[1] >= of[0] && of[1] >= of[2] ? 1 : of[0] >= of[2] ? 0 : 2;
+					for (int pick = 0; pick < 2; pick++)
+					{
+						int b = -1;
+						for (int q = 0; q < 3; q++) if (bs[q] >= 0f && (b < 0 || bs[q] > bs[b])) b = q;
+						if (b < 0 || bs[b] <= 0f) break;
+						if (of[b] > 0.35f * len) { axis = b; break; }
+						bs[b] = -1f;
+					}
+					for (int e = 0; e < 3; e++)
+					{
+						Vector3 bw = st.InverseTransformPoint(wp[e]) + ob;
+						u[rim[t + e]] = (axis == 1 ? new Vector2(bw.x, bw.z) : axis == 0 ? new Vector2(bw.z, bw.y) : new Vector2(bw.x, bw.y)) / 14f;
+					}
+				}
+				if (v.Count > 65000) mesh.indexFormat = IndexFormat.UInt32;
+				mesh.SetVertices(v); mesh.SetNormals(n); mesh.SetUVs(0, u); mesh.SetUVs(3, own);
+				for (int p = 0; p < parts.Length; p++) mesh.SetTriangles(parts[p], p);
+				string said = "rim walls shaded as the hill's skin: " + blended + " of " + rim.Count + " corners blended";
+				if (!toldMatch) Debug.Log("[CUSTOM ISLANDS] Dug tunnel's " + said);
+				toldMatch = true;
+				return said;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Dug tunnel's rim (skin match): " + e.Message); return ""; }
+		}
+
+		static long BinKey(Vector3 w, float bin) { return ((long)Mathf.FloorToInt(w.x / bin) << 32) ^ (uint)Mathf.FloorToInt(w.z / bin); }
+
+		/// <summary>Where the skin's mapping starts (CaveMountain.Quad maps the world at its build, the skin set at its origin):
+		/// read back from a flat corner (x, z) and a corner facing x or z (y); else the skin's place now.</summary>
+		static Vector3 SkinUvOrigin(List<Vector3> sv, List<Vector3> sn, List<Vector2> su, Vector3 now)
+		{
+			Vector3 ob = now;
+			bool xz = false;
+			for (int i = 0; i < sv.Count && !xz; i++)
+				if (sn[i].y > 0.97f) { ob.x = su[i].x * 14f - sv[i].x; ob.z = su[i].y * 14f - sv[i].z; xz = true; }
+			if (!xz) return now;
+			for (int i = 0; i < sv.Count; i++)
+			{
+				if (Mathf.Abs(sn[i].z) > 0.97f && Mathf.Abs(su[i].x * 14f - sv[i].x - ob.x) < 0.05f) { ob.y = su[i].y * 14f - sv[i].y; break; }
+				if (Mathf.Abs(sn[i].x) > 0.97f && Mathf.Abs(su[i].x * 14f - sv[i].z - ob.z) < 0.05f) { ob.y = su[i].y * 14f - sv[i].y; break; }
+			}
+			return ob;
 		}
 
 		/// <summary>Raft's rock shader comes with the cave tunnel piece, which loads on demand: load it, then dress every
