@@ -774,6 +774,23 @@ namespace DynamicIslands
 			yield break;
 		}
 
+		/// <summary>An island's story gates: shown objects that another object's event or answer hides (hide|name) - bars
+		/// over a sea gate opened by an islander's answer, a slab a lever lifts. Not creatures, zones or machete vines (cut
+		/// as a player cuts them).</summary>
+		static List<IslandObjectRef> StoryGates(IslandWorldState.Entry e)
+		{
+			List<IslandObjectRef> refs = Behaviours.RefsOf(e).ToList();
+			HashSet<string> hidden = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			foreach (IslandObjectRef r in refs)
+				foreach (KeyValuePair<string, string> kv in r.Props)
+				{
+					if (!kv.Key.StartsWith(BehaviourProps.EventPrefix) && !kv.Key.StartsWith(BehaviourProps.ElsePrefix)) continue;
+					foreach (ObjAction a in ObjAction.ParseLines(kv.Value)) if (a.Verb == "hide" && a.Target.Length > 0 && !a.Target.Equals("self", StringComparison.OrdinalIgnoreCase)) hidden.Add(a.Target);
+				}
+			return refs.Where(r => r.gameObject.activeInHierarchy && r.Name.Length > 0 && hidden.Contains(r.Name) && r.ObjectName != ContentCatalog.MacheteVines
+				&& !ContentCatalog.IsCreature(r.ObjectName) && !ContentCatalog.IsZone(r.ObjectName)).ToList();
+		}
+
 		/// <summary>The ways into an island's caves: each cave tool cave from its mouth piece through its tunnels to its room or
 		/// far end; each dug tunnel's strokes (a branch reached along the passage it leaves).</summary>
 		static List<GapWay> GapWays(IslandWorldState.Entry e)
@@ -900,6 +917,40 @@ namespace DynamicIslands
 			if (bad == 0) Log("PASS: cave gaps look name: " + cases.Length + " cases, a missing island refused"); else Fail("cave gaps look name: " + bad + " wrong");
 		}
 
+		[ConsoleCommand(name: "CICaveStoryGates", docs: "Dev, anywhere: CICaveGapsLook's story gates - the things an object's event or else hides by name (bars a choice opens), opened for the look; not machete vines, animals, zones, self or what is hidden already")]
+		public static void CaveStoryGatesCommand(string[] args)
+		{
+			// (w03 11-09: Thalassa Mooring's sea gate bars, hidden by Elaine's choice 2, failed the look's "a clear way along it")
+			var root = new GameObject("ci_storygates");
+			try
+			{
+				Func<string, string, string, IslandObjectRef> make = (obj, name, events) =>
+				{
+					var go = new GameObject(name);
+					go.transform.SetParent(root.transform);
+					IslandObjectRef r = go.AddComponent<IslandObjectRef>();
+					r.ObjectName = obj;
+					r.Props[BehaviourProps.Name] = name;
+					if (events != null) foreach (string ev in events.Split(';')) { int i = ev.IndexOf('='); r.Props[ev.Substring(0, i)] = ev.Substring(i + 1); }
+					return r;
+				};
+				make("Islander_Survivor", "keeper", BehaviourProps.EventPrefix + "choice2=hide|bars\nhide|self\nshow|wall;" + BehaviourProps.ElsePrefix + "use=hide|bars2");
+				make("Block_Lever", "lever", BehaviourProps.EventPrefix + "use=hide|vines\nhide|rats\nhide|zone\nhide|gone\nhide|nosuch");
+				make("TP_Selene_Int_Room_Bars", "bars", null);
+				make("TP_Selene_Int_Room_Bars", "bars2", null);
+				make("Block_Wall_Tier3", "wall", null);
+				make(ContentCatalog.MacheteVines, "vines", null);
+				make("Creature_Rat", "rats", null);
+				make(ContentCatalog.TriggerZone, "zone", null);
+				make("Block_Wall_Tier3", "gone", null).gameObject.SetActive(false);
+				var e = new IslandWorldState.Entry { Name = "ci_storygates", HostName = "ci_storygates", Root = root };
+				string got = string.Join(",", StoryGates(e).Select(g => g.Name).OrderBy(n => n).ToArray());
+				if (got == "bars,bars2") Log("PASS: cave story gates: bars (on.choice2) and bars2 (else.use) opened; vines, rats, zone, self, the hidden and the shown left");
+				else Fail("cave story gates: got '" + got + "', not 'bars,bars2'");
+			}
+			finally { UnityEngine.Object.Destroy(root); }
+		}
+
 		/// <summary>The way out of a dug mouth (its first floor point) to walk in from (CICaveGapsLook): straight out (-In) if the ground 3 m out is
 		/// within a step of the mouth's floor, else the first of 30, 60, 90 degrees to either side that is - a man-way on a
 		/// ledge over a sea slope is come at along the ledge; straight out it was 4 m down the slope and the walk failed
@@ -1023,6 +1074,11 @@ namespace DynamicIslands
 				PlayerMove.To(me, home0, ControllerType.Ground);
 				yield return new WaitForSeconds(0.5f);
 			}
+			// (a story gate across a way - bars, a slab - that another object's action hides: Thalassa Mooring's sea gate,
+			// opened by Harbourmistress Elaine's answer (w03, 11-09). Opened for the look as the story opens it, put back after)
+			List<IslandObjectRef> storyGates = StoryGates(e);
+			foreach (IslandObjectRef g in storyGates) g.gameObject.SetActive(false);
+			if (storyGates.Count > 0) Log("  " + name + ": story gates opened for the look (as their story opens them): " + string.Join(", ", storyGates.Select(g => g.Name).Distinct().ToArray()));
 			Physics.SyncTransforms();
 			const float sea = 0f;
 			List<GapWay> ways = GapWays(e);
@@ -1214,6 +1270,7 @@ namespace DynamicIslands
 			{
 				SetHour(12f);
 				try { PlayerMove.To(me, home, ControllerType.Ground); } catch { }
+				foreach (IslandObjectRef g in storyGates) if (g != null) g.gameObject.SetActive(true);
 			}
 			if (ok) Log("PASS: cave gaps look " + name); else Fail("cave gaps look " + name);
 		}

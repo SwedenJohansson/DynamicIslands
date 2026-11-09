@@ -178,7 +178,7 @@ call sk_reef x=-20 z=66 r=5 seed=24630
 
 # the summit: Crane Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
 call ladtower x=12 z=-66 h0=22 lv=6 a=cytower
-place Loot_ChestSmall cylocker at 11.25 -65.25 h=36.73 sit yaw=180
+place Loot_ChestSmall cylocker at 11.25 -65.25 h=37.2 drop yaw=180
 place Note_Paper cysumnote at 11.25 -66.75 h=36.84 drop yaw=20
 place Zone_Trigger cysummit at 12 -66 h=37.73
 place ZiplinePath_Landmark cyzip at 12.75 -66.75 h=36.73 yaw=0

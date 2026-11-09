@@ -115,6 +115,7 @@ plan save
 - In Raft, `tools\cavecheckrun.ps1 <island> [...] [-player 2|3]` checks a built island's caves in one world load:
   CICaveGapsLook (pictures out/in by day and night, walked in and out, flooded parts), CICaveInside shots (X7) and
   CIReach (traps). One summary line per island plus the pictures; exit 1 on FAIL.
+  Story gates (bars an event hides) are opened for the look; CIReach gets its own wait, `-reachTimeout` (5400 s).
 
 ## Coordinates and units
 

@@ -2,7 +2,7 @@
 # glovebox (the booth key), the booth's strongbox (refused without the key is not tested here: the key comes first),
 # the bus locker.
 island Overpass Shoal
-offset 0 0
+offset 2.1367 -0.9483
 expect step 0
 expect title The Drowned Highway
 zone ramp_top

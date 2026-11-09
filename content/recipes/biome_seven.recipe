@@ -363,6 +363,7 @@ clear at -11.83 -58.04 r=1.5 only=SeaVine3 all
 # farm's old lights. No rats: under water, no NavMesh floor. cavecheck: 6 m and more from the dome's things and the
 # walk from the buoy to the airlock.
 call kit_st x=-62 z=-4 yaw=90 len=22 slope=0 end=room size=0.7 hill=1 dirt=3 mush=5 stone=0 vines=2 light=1 gate=1 as=bsroot
+prop bsroot cave.rock=plain
 place Zone_Trigger bsrootair at -30 -4 h=4.5
 prop bsrootair obj.name=bsrootair
 prop bsrootair zone.id=bs_rootroom

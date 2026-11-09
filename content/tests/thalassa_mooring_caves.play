@@ -4,7 +4,7 @@
 # round -63 8 (air zone th_seagate, the kingdom charter chest at -61 11); Elaine stands by the office at -13 -4.5.
 # The gate is shut until her second answer; her other two answers; swim in, breathe, take the charter, swim out.
 island Thalassa Mooring keep
-offset 0 0
+offset -0.2484 -1.3339
 hour 11
 weather Calm
 expect shown thgate

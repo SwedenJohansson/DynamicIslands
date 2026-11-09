@@ -304,8 +304,7 @@ place TP_Moontown_Barrel02 - at 1 5.2 y=0.2 sit yaw=80
 place TP_Moontown_Barrel02 - at 2.4 4.6 y=0.2 sit yaw=200
 pop
 place Note_Sign blspillwarn at 43.4 -25.2 ground sit yaw=200
-note blspillwarn SAMPLE ANNEX - ACID SPILL | Brine acid on the floor since the lean. Suits in the box by the door. The drain lever is round the back of the annex.
-- Brinelab safety officer
+note blspillwarn SAMPLE ANNEX - ACID SPILL | Brine acid on the floor since the lean. Suits in the box by the door. The drain lever is round the back of the annex.\n- Brinelab safety officer
 place "Box Big" blspillsuits at 42.6 -23 ground sit yaw=250
 prop blspillsuits obj.name=blspillsuits
 prop blspillsuits beh.use=Put on a spill suit

@@ -1,7 +1,7 @@
 # Thalassa Mooring (CIPlay thalassa_mooring): the deck, the handbook, the water tower chest, the pipe crate, the office
 # chest, the store shed, the diving bell ridden 20 m down (its zone has air).
 island Thalassa Mooring
-offset 0 0
+offset -0.2484 -1.3339
 expect step 0
 expect title The Surface Station
 zone deck

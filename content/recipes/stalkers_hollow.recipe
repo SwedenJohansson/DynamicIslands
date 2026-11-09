@@ -344,8 +344,7 @@ prop shsysair zone.message=Air under the lip rock - the Stalker's own hollow. Th
 # wardens drove stakes in to keep it from nesting there. A plank ledge runs round the rim; the pit floor hurts.
 dig 60,-1.6,34.5,2 66,-1.6,34.5,2 slope=0 as=shpit
 place Note_Sign shpitwarn at 55 42 ground sit yaw=210
-note shpitwarn DANGER - BONE PIT | The Stalker's bone pit. Stakes in the floor, under the bones. Keep to the planks round the rim.
-- G. Fennick, warden
+note shpitwarn DANGER - BONE PIT | The Stalker's bone pit. Stakes in the floor, under the bones. Keep to the planks round the rim.\n- G. Fennick, warden
 place Block_Floor_Wood - at 60.75 36.6 ground drop yaw=0
 place Block_Floor_Wood - at 60.75 32.4 ground drop yaw=0
 place Block_Floor_Wood - at 62.25 36.6 ground drop yaw=0

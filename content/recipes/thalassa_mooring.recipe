@@ -196,7 +196,7 @@ call sk_reef x=-38 z=60 r=5 seed=24430
 
 # the summit: Mooring Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
 call ladtower x=54 z=-36 h0=24 lv=6 a=thtower
-place Loot_ChestSmall thlocker at 53.25 -35.25 h=38.73 sit yaw=180
+place Loot_ChestSmall thlocker at 53.25 -35.25 h=39.2 drop yaw=180
 place Note_Paper thsumnote at 53.25 -36.75 h=38.84 drop yaw=20
 place Zone_Trigger thsummit at 54 -36 h=39.73
 place ZiplinePath_Landmark thzip at 54.75 -36.75 h=38.73 yaw=0
@@ -359,6 +359,7 @@ quest reward=Rope*4;Plank*6
 # the bell and its zone are not gated. No rats: reached only under water, no NavMesh floor. cavecheck: 6 m and more from
 # the quest's things and the walks between them.
 call kit_st x=-102 z=8 yaw=90 len=29 slope=12 end=room size=0.7 hill=1 dirt=0 mush=2 stone=1 vines=1 as=thgatecave
+prop thgatecave cave.rock=plain
 # the sea gate: two of Selene's room bars stacked across the tunnel 2 m in (the bars' mesh lies 3 m off its pivot along
 # its own x: at yaw 90 that is -z, so the pivot sits 3 m to the +z side). Plain bars: Elaine's second answer hides
 # them (a use on the bars themselves would make them a quest object in the tunnel's mouth).
@@ -378,25 +379,16 @@ prop thgateair zone.message=A dry room behind the sea gate - air. The harbour ke
 place Loot_ChestSmall thcharter at -61 11 h=3 drop yaw=250
 prop thcharter obj.name=thcharter
 prop thcharter loot.refill=0
-note thcharter Kingdom charter | THE CHARTER OF THE SUNKEN KINGDOM
-
-We who stayed when the water came over the walls: the Network keeps the gardens, the mooring keeps the bell, and the bell keeps the people. Nobody is to be left below.
-
-(Below, in another hand: the bell still goes down. Nobody comes up.)
+note thcharter Kingdom charter | THE CHARTER OF THE SUNKEN KINGDOM\n\nWe who stayed when the water came over the walls: the Network keeps the gardens, the mooring keeps the bell, and the bell keeps the people. Nobody is to be left below.\n\n(Below, in another hand: the bell still goes down. Nobody comes up.)
 loot thcharter Rope*2;Nail*6;Seed_Pineapple*1;Battery*1
 # Harbourmistress Elaine at the office, standing by its door and looking out over the deck
 place Story_Islander thelaine at -13 -4.5 ground yaw=60
 prop thelaine obj.name=Harbourmistress Elaine
 prop thelaine islander.character=Elaine
 prop thelaine islander.pose=stand
-prop thelaine talk.text=Mooring fees are waived for the living. What brings you down the old canal?
-> Where did the kingdom go?
-> I need to get below.
-> Just passing.
-prop thelaine on.choice1=journal|Harbourmistress Elaine: the flood|The kingdom did not sink in a day. The sea came up a little every year, and every year the walls went higher, until one spring the walls went under. Those who stayed went down in the bell to the gardens and the halls below. The bell still goes down. Ask the deep why it comes up empty.
-message||Elaine tells you about the flood and the bell. It is in your journal.
-prop thelaine on.choice2=hide|thgate
-message||The sea gate under the flag hill is open.
+prop thelaine talk.text=Mooring fees are waived for the living. What brings you down the old canal?\n> Where did the kingdom go?\n> I need to get below.\n> Just passing.
+prop thelaine on.choice1=journal|Harbourmistress Elaine: the flood|The kingdom did not sink in a day. The sea came up a little every year, and every year the walls went higher, until one spring the walls went under. Those who stayed went down in the bell to the gardens and the halls below. The bell still goes down. Ask the deep why it comes up empty.\nmessage||Elaine tells you about the flood and the bell. It is in your journal.
+prop thelaine on.choice2=hide|thgate\nmessage||The sea gate under the flag hill is open.
 prop thelaine on.choice3=message||Then pass quickly. The tide has a long memory here.
 
 save Thalassa Mooring
