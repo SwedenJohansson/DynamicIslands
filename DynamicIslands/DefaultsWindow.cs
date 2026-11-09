@@ -122,6 +122,10 @@ namespace DynamicIslands.Editor
 			}
 			// (the minimap itself: off, no map is shown or drawn and its keys do nothing; pings still work)
 			Add("minimapOn", UIKit.Button(keyRow3, "", () => { Minimap.Enabled = !Minimap.Enabled; Refresh(); }, "Minimap: the corner island map on this PC, in worlds with the World setting Island minimap on. Off: it is never shown, the map and zoom keys do nothing and nothing is drawn. Pings still work", 110, 28f, 13));
+			// (11-09: the quest panel can be dragged while the mouse is free; this puts it back in its own place)
+			RectTransform questRow = UIKit.Row(keysGroup, 28f, 6f, "Row_QuestPanel");
+			UIKit.Label(questRow, "Quest panel", 13, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "QuestPanelLabel");
+			Add("questPanelReset", UIKit.Button(questRow, "Reset place", () => { QuestTracker.ResetPlace(); SetStatus("The quest panel is back in its own place (top right).", false); Refresh(); }, "The quest panel (top right in a world) can be dragged by its title while the mouse is free (inventory open). This puts it back in its own place on this PC (double-click on the panel does too)", 110, 28f, 13));
 
 			// The island editor's camera (world_rules.txt, this PC's own; also the editor's Camera... button)
 			RectTransform cameraGroup = UIKit.Group(left, "Editor camera (this PC)", "EditorCamera");
@@ -310,6 +314,7 @@ namespace DynamicIslands.Editor
 			values["generatedGatherOff"] = "";
 			ModKeys.Reset();
 			CameraSettings.Reset();
+			QuestTracker.ResetPlace();
 			Write(values, null);
 		}
 
@@ -346,6 +351,7 @@ namespace DynamicIslands.Editor
 			}
 			UIKit.LabelOf(buttons["minimapOn"]).text = "Minimap:  " + (Minimap.Enabled ? "ON" : "off");
 			UIKit.SetActive(buttons["minimapOn"], Minimap.Enabled);
+			UIKit.SetActive(buttons["questPanelReset"], QuestTracker.SavedPlace.HasValue);
 			if (refreshCamera != null) refreshCamera();
 			Button receiver = buttons["showOnReceiver"];
 			UIKit.LabelOf(receiver).text = "Receiver dots:  " + (CustomIslandSpawner.ShowOnReceiver ? "ON" : "off");
