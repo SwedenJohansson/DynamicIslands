@@ -37,12 +37,14 @@ namespace DynamicIslands
 		internal static string Last;
 		/// <summary>Tests: a repair copied the no-id inventory to the world's id.</summary>
 		internal static bool LastCopiedPlayer;
+		/// <summary>Tests: no repair (a world loads without its id, as before 3.4).</summary>
+		internal static bool TestOff;
 
 		/// <summary>Raft read the world's id from its save (RGD_World.RestoreWorld, inside RestoreRGDGame): before LoadComplete
 		/// and before the player's inventory is looked up.</summary>
 		internal static void AfterWorldRead()
 		{
-			if (SaveAndLoad.WorldGuid != Guid.Empty || !Raft_Network.IsHost) return;
+			if (TestOff || SaveAndLoad.WorldGuid != Guid.Empty || !Raft_Network.IsHost) return;
 			string world = WorldCopy.RaftWorldFolder;
 			if (world == null || string.IsNullOrEmpty(SaveAndLoad.CurrentGameFileName)) return;
 			string oldKey = IslandWorldState.WorldKey;
