@@ -12,13 +12,14 @@ namespace DynamicIslands
 	/// A world without Raft's world id: made before Raft gave worlds one, or saved by Esc > Quit game after Raft had cleared
 	/// the id (bug 11-09). Its custom islands' state is kept under its name (noid-<name>), and on the next load the world gets
 	/// an id back (WorldIdRepair) and that state moves to it. Run as:
-	///   CINewWorld CI NoId; CINoIdWorld strip; CIMainMenu; CILoadWorld CI NoId; CINoIdWorld repaired;
+	///   CINewWorld CI NoId; CINoIdWorld strip; CIMainMenu; CILoadWorld CI NoId; CINoIdWorld noid; CIMainMenu;
+	///   CILoadWorld CI NoId; CINoIdWorld repaired;
 	///   CIMainMenu; CILoadWorld CI NoId; CINoIdWorld check
 	/// </summary>
 	public static partial class DevTests
 	{
 		static string noIdStep, noIdRepaired;
-		[ConsoleCommand(name: "CINoIdWorld", docs: "Dev, in a world: a world without Raft's world id gets one back and keeps its plan and story chain. CINoIdWorld strip = take the world's id away, give it the plan CI Receiver adventure, mark its first story step done, save (Raft's save has no id); repaired = (after loading it again) it has an id, with the plan and the step; check = (after loading it again) the same id, the plan and the step are still there")]
+		[ConsoleCommand(name: "CINoIdWorld", docs: "Dev, in a world: a world without Raft's world id gets one back and keeps its plan and story chain. CINoIdWorld strip = take the world's id away and save (Raft's save has no id; the next load is not repaired); noid = (after loading it again) it has no id: give it the plan CI Receiver adventure, mark its first story step done, save; repaired = (after loading it again) it has an id, with the plan and the step; check = (after loading it again) the same id, the plan and the step are still there")]
 		public static void NoIdWorldCommand(string[] args)
 		{
 			string what = args != null && args.Length > 0 ? args[0].ToLowerInvariant() : "";
@@ -27,22 +28,33 @@ namespace DynamicIslands
 			if (what == "strip")
 			{
 				SaveAndLoad.WorldGuid = Guid.Empty;
+				// (the save guard stops saves once the id is cleared; this one is the damaged save of before 3.4)
+				SaveGuard.TestOff = true;
+				try { UnityEngine.Object.FindObjectOfType<SaveAndLoad>().SaveGame(false); } catch (Exception ex) { Log("  (Raft's save: " + ex.Message + ")"); }
+				finally { SaveGuard.TestOff = false; }
+				WorldIdRepair.TestOff = true;
+				Check(ref ok, SaveAndLoad.WorldGuid == Guid.Empty, "the world has no world id now (Raft saved it without one)");
+				if (ok) Log("PASS: no-id world strip"); else Fail("no-id world strip");
+				return;
+			}
+			if (what == "noid")
+			{
+				WorldIdRepair.TestOff = false;
+				Check(ref ok, SaveAndLoad.WorldGuid == Guid.Empty, "the world loaded without a world id");
 				Check(ref ok, IslandWorldState.WorldKey.StartsWith(IslandWorldState.NoIdPrefix), "its state is kept under its name (" + IslandWorldState.WorldKey + ")");
+				Check(ref ok, IslandWorldState.ForThisWorld, "the island list is this world's");
 				WriteCIPlan(CIReceiver);
 				DynamicIslands.WorldPlanCommand(new[] { CIReceiver });
 				Check(ref ok, WorldDirector.PlanName == CIReceiver, "WorldPlan gave it the plan (" + WorldDirector.PlanName + ")");
 				noIdStep = StoryChain.Steps.FirstOrDefault();
 				if (noIdStep != null) StoryChain.MarkDone(noIdStep);
 				Check(ref ok, noIdStep != null && StoryChain.Done.Contains(noIdStep), "its first step '" + noIdStep + "' is done");
-				// (the save guard stops saves once the id is cleared; this one is the damaged save of before 3.4)
-				SaveGuard.TestOff = true;
 				try { UnityEngine.Object.FindObjectOfType<SaveAndLoad>().SaveGame(false); } catch (Exception ex) { Log("  (Raft's save: " + ex.Message + ")"); }
-				finally { SaveGuard.TestOff = false; }
 				string file = IslandWorldState.WorldFilePath;
 				string[] lines = File.Exists(file) ? File.ReadAllLines(file) : new string[0];
 				Check(ref ok, lines.Any(l => l.StartsWith("@plan=") && l.Contains(CIReceiver)), "the no-id file has the plan (" + Path.GetFileName(file) + ")");
 				WorldIdRepair.Last = null;
-				if (ok) Log("PASS: no-id world strip"); else Fail("no-id world strip");
+				if (ok) Log("PASS: no-id world plan"); else Fail("no-id world plan");
 				return;
 			}
 			if (what == "repaired")
@@ -71,7 +83,7 @@ namespace DynamicIslands
 				if (ok) Log("PASS: no-id world keeps its id, plan and story"); else Fail("no-id world keeps its id, plan and story");
 				return;
 			}
-			Fail("CINoIdWorld strip|repaired|check");
+			Fail("CINoIdWorld strip|noid|repaired|check");
 		}
 	}
 }
