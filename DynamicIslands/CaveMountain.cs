@@ -682,6 +682,21 @@ namespace DynamicIslands.Editor
 					map.Append(!float.IsNaN(corridor[i, k]) ? 'c' : on[i, k] ? (!float.IsNaN(top[i, k]) ? 'R' : 's') : cut[i, k] ? '-' : float.IsNegativeInfinity(height[i, k]) || height[i, k] < ground[i, k] - 3f ? '.' : 'g');
 				map.Append('\n');
 			}
+			// (tests: skin height over the ground round each way in, m: 0-9, + over 9, _ under, c the way in, . no skin)
+			map.Append("height over ground near the ways in:\n");
+			for (int k = nz - 1; k >= 0; k--)
+			{
+				bool row = false;
+				for (int i = 0; i < nx && !row; i++)
+					for (int kb = Mathf.Max(k - 8, 0); kb <= Mathf.Min(k + 8, nz - 1) && !row; kb++) row = !float.IsNaN(corridor[i, kb]);
+				if (!row) continue;
+				for (int i = 0; i < nx; i++)
+				{
+					float d = height[i, k] - ground[i, k];
+					map.Append(!float.IsNaN(corridor[i, k]) ? 'c' : !on[i, k] ? '.' : d < 0f ? '_' : d > 9.5f ? '+' : (char)('0' + Mathf.RoundToInt(d)));
+				}
+				map.Append('\n');
+			}
 			var tall = new Dictionary<string, int>();
 			for (int i = 0; i < nx; i++)
 				for (int k = 0; k < nz; k++)
@@ -866,7 +881,10 @@ namespace DynamicIslands.Editor
 			if (anyLone)
 			{
 				var dist = new float[nx, nz];
-				for (int i = 0; i < nx; i++) for (int k = 0; k < nz; k++) dist[i, k] = on[i, k] ? 1e6f : 0f;
+				// (the way in isn't an edge: measured from it too, the cheeks beside the arch were sunk into the ground right at its
+				// sides, and the den's flat front wall stood bare round the arch down to the sand, a box notch with square sides,
+				// Caisson Yard and Shelter Atoll 11-09 r57/r59 user)
+				for (int i = 0; i < nx; i++) for (int k = 0; k < nz; k++) dist[i, k] = on[i, k] || !float.IsNaN(corridor[i, k]) ? 1e6f : 0f;
 				float dd = Cell * 1.41421356f;
 				for (int pass = 0; pass < 2; pass++)
 					for (int i0 = 0; i0 < nx; i0++)
@@ -898,6 +916,22 @@ namespace DynamicIslands.Editor
 						}
 				}
 				if (capped > 0) Debug.Log("[CUSTOM ISLANDS] Lone den skin edge sunk into the ground at " + capped + " cells");
+			}
+			// (the grid's own edge isn't the hill's: where the skin ran on to it, it was cut off there metres over the ground and
+			// stood as a flat tan wall down to the sand, Shelter Atoll's sea side 11-09 r57/r60 user - near the grid's edge the
+			// skin now goes into the ground like a lone den's edge, rising LoneEdgeRise per m in)
+			{
+				int sunk = 0;
+				for (int i = 0; i < nx; i++)
+					for (int k = 0; k < nz; k++)
+					{
+						if (!on[i, k] || cut[i, k] || !float.IsNaN(top[i, k]) || !float.IsNaN(corridor[i, k])) continue;
+						float e = Mathf.Min(Mathf.Min(i, nx - 1 - i), Mathf.Min(k, nz - 1 - k)) * Cell;
+						if (e > LoneEdgeBand) continue;
+						float cap = ground[i, k] - 0.6f + LoneEdgeRise * e;
+						if (height[i, k] > cap) { height[i, k] = cap; near[i, k] = true; sunk++; }
+					}
+				if (sunk > 0) Debug.Log("[CUSTOM ISLANDS] Cave hill skin sunk into the ground at the grid's edge at " + sunk + " cells");
 			}
 			// (11-08 c: the shoulders' cells lowered toward their neighbours' mean a few times: the ridge where the shoulder cap meets the
 			// hill's slope showed as a crisp edge with flat facets; only lowering, so no roof or way in is covered more)
