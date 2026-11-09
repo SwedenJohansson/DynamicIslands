@@ -338,11 +338,14 @@ namespace DynamicIslands.Editor
 		public const float PlugFunnel = 2.2f;
 		/// <summary>How far a lone den's wall's outer edge leans out to the mouth: no straight edge of a wall set back behind the hill.</summary>
 		public const float PlugLean = 1.6f;
+		/// <summary>How much further out than the cells' plane (2 m in from the den's mouth) a lone den's wall is drawn.</summary>
+		public const float PlugForward = 1.8f;
 		/// <summary>A lone den's way in in shade: its wall's outside round the arch drawn darker, in bands out to the arch's size times
 		/// these (the first band darkest, by PlugShade), the rest as the hill. Each band's edge is a smooth, uneven line (the
 		/// triangles cut along it): whole 0.5 m cells drew it as a staircase, 11-06 review.</summary>
 		public static readonly float[] PlugShadeOut = { 1.2f, 1.45f, 1.8f };
-		public static readonly float[] PlugShade = { 0.28f, 0.45f, 0.68f };
+		// (11-08 user: the first band at 0.28 read as a black, notched frame round every den's arch - now a soft fall-off)
+		public static readonly float[] PlugShade = { 0.78f, 0.88f, 0.95f };
 		/// <summary>The name of a lone den's shade in its way in (CaveVeil): darker the further in, seen from outside only.</summary>
 		public const string PlugVeilName = "CavePlugVeil";
 
@@ -669,9 +672,40 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < r.sharedMaterials.Length; i++)
 				r.SetPropertyBlock(i == 0 || i > PlugShade.Length ? block : Darker(r, skin.sharedMaterial, PlugShade[i - 1]), i);
 			Mesh m = mf.sharedMesh;
-			Vector3 f = den.transform.forward;
-			bool alongX = Mathf.Abs(f.x) >= Mathf.Abs(f.z);
-			m.SetUVs(0, m.vertices.Select(v => { Vector3 w = outT.TransformPoint(v); return (alongX ? new Vector2(w.z, w.y) : new Vector2(w.x, w.y)) / 14f; }).ToList());
+			// (each triangle its own corners, its texture laid along the world axis it faces most: one flat projection for the
+			// whole wall stretched the funnel's sides into stripes - the den's "zebra" frame, 11-08 user)
+			Vector3[] mv = m.vertices, mn = m.normals;
+			var nv = new List<Vector3>(); var nn = new List<Vector3>(); var nu = new List<Vector2>();
+			var subs = new List<int>[m.subMeshCount];
+			for (int s = 0; s < subs.Length; s++)
+			{
+				int[] st = m.GetTriangles(s);
+				subs[s] = new List<int>(st.Length);
+				for (int t = 0; t + 2 < st.Length; t += 3)
+				{
+					Vector3 a = outT.TransformPoint(mv[st[t]]), b = outT.TransformPoint(mv[st[t + 1]]), c = outT.TransformPoint(mv[st[t + 2]]);
+					Vector3 fn = Vector3.Cross(b - a, c - a);
+					float fx = Mathf.Abs(fn.x), fy = Mathf.Abs(fn.y), fz = Mathf.Abs(fn.z);
+					int ax = fy >= fx && fy >= fz ? 1 : fx >= fz ? 0 : 2;
+					foreach (int k in new[] { 0, 1, 2 })
+					{
+						int vi = st[t + k];
+						Vector3 w = k == 0 ? a : k == 1 ? b : c;
+						subs[s].Add(nv.Count);
+						nv.Add(mv[vi]);
+						nn.Add(mn != null && mn.Length == mv.Length ? mn[vi] : fn.normalized);
+						nu.Add((ax == 0 ? new Vector2(w.z, w.y) : ax == 1 ? new Vector2(w.x, w.z) : new Vector2(w.x, w.y)) / 14f);
+					}
+				}
+			}
+			m.Clear();
+			if (nv.Count > 65000) m.indexFormat = IndexFormat.UInt32;
+			m.SetVertices(nv);
+			m.SetNormals(nn);
+			m.SetUVs(0, nu);
+			m.subMeshCount = subs.Length;
+			for (int s = 0; s < subs.Length; s++) m.SetTriangles(subs[s], s);
+			m.RecalculateBounds();
 			if (r.GetComponent<HillWall>() == null) r.gameObject.AddComponent<HillWall>();
 			CaveLit.Mark(den);
 			Debug.Log("[CUSTOM ISLANDS] Den's wall outside drawn as the hill: " + skin.sharedMaterial.name);
@@ -711,8 +745,13 @@ namespace DynamicIslands.Editor
 		public class CaveVeil : MonoBehaviour
 		{
 			[NonSerialized] Material mat;
-			[NonSerialized] float front;
-			static readonly float[] Depth = { 1.2f, 2.9f, 4.8f }, Size = { 1.15f, 1.5f, 1.9f }, Alpha = { 0.85f, 0.7f, 0.6f };
+			[NonSerialized] float front, axisX, halfW;
+			// (11-08 user: the first sheet's hard, noisy edge read as a black notched frame, and thin sheets over the lit den as a blue
+			// haze - now every edge soft, the first inside the arch, and the deeper ones near black: the den reads dark)
+			static readonly float[] Depth = { 1.2f, 2.9f, 4.8f }, Size = { 1f, 1.5f, 1.9f }, Alpha = { 0.8f, 0.95f, 1f };
+			// (the back sheet just before the funnel's inner end, so it also hides the den hole's stepped cell edge from the side - the
+			// notched inner frame in 3/4 views, 11-08 - in the rock's own texture, very dark: the den reads as dark rock, not a black hole)
+			const float BackLead = 0.15f, BackLength = 3f, BackSize = 0.97f, BackFlare = 0.97f, BackFrom = 3.5f, BackShade = 0.2f;
 			const int Seg = 40;
 
 			public static GameObject Build(GameObject plug, float cx, float cy, float ha, float hb, float hp, Func<float, float, float> noise, float front, float floorY)
@@ -738,7 +777,7 @@ namespace DynamicIslands.Editor
 							float px = cx + ux * t, py = cy + uy * t;
 							vv.Add(new Vector3(px, py, vz));
 							// (the first sheet hard to its edge, tucked behind the arch's rim; the deeper ones fade out to theirs)
-							vc.Add(new Color(0.015f, 0.02f, 0.025f, Alpha[j] * (rr < 1f || j == 0 ? 1f : 0f) * floorFade(py)));
+							vc.Add(new Color(0.015f, 0.02f, 0.025f, Alpha[j] * (rr < 1f ? 1f : 0f) * floorFade(py)));
 						}
 					for (int s = 0; s < Seg; s++)
 					{
@@ -759,12 +798,116 @@ namespace DynamicIslands.Editor
 				var veil = go.AddComponent<CaveVeil>();
 				veil.mat = new Material(sh) { name = PlugVeilName, renderQueue = 3000 };
 				veil.front = front;
+				veil.axisX = cx;
+				veil.halfW = ha;
 				r.sharedMaterial = veil.mat;
 				r.shadowCastingMode = ShadowCastingMode.Off;
 				r.receiveShadows = false;
 				r.lightProbeUsage = LightProbeUsage.Off;
 				r.reflectionProbeUsage = ReflectionProbeUsage.Off;
+				veil.back = BuildBack(go, cx, cy, ha, hb, hp, noise, front, floorY);
 				return go;
+			}
+
+			/// <summary>
+			/// The veils' back: a solid dark sleeve the arch's shape, BackSize as big, from the arch in past the funnel. Raft's fog
+			/// (AzureSkyFogScattering) is drawn over the whole picture by its depth, after the see-through veils, so the lit den
+			/// 10-20 m in came out sky blue through them (11-08 user: a blue haze in every den's mouth); a solid sheet is in the
+			/// depth the fog reads, so the den reads dark rock. Drawn only for a camera well outside (onPreCull, per camera), where
+			/// the veils are full; nearer, the den itself.
+			/// </summary>
+			static Renderer BuildBack(GameObject veilGo, float cx, float cy, float ha, float hb, float hp, Func<float, float, float> noise, float front, float floorY)
+			{
+				Shader sh = Shader.Find("Standard") ?? Shader.Find("Legacy Shaders/Diffuse");
+				if (sh == null) return null;
+				// (a sleeve the arch's shape, BackSize as big, from just inside the arch BackLength in, closed at its end: the
+				// funnel's inside is lit as the den and read blue from the side, 11-08 - the sleeve covers it and the den beyond)
+				var vv = new List<Vector3>();
+				var vt = new List<int>();
+				var vu = new List<Vector2>();
+				var vn = new List<Vector3>();
+				// (BackFlare: wider at the arch - 1.35 stood out over the hill face and floor, 11-08; its floor kept under the den floor)
+				float z0 = front + PlugFunnel - BackLead, z1 = front - BackLength;
+				float[] rz = { z0, front, z1 }, rs = { BackFlare, BackSize, BackSize };
+				var rings = new Vector2[rz.Length][];
+				for (int ri = 0; ri < rz.Length; ri++)
+				{
+					rings[ri] = new Vector2[Seg];
+					for (int s = 0; s < Seg; s++)
+					{
+						float ang = 2f * Mathf.PI * s / Seg, ux = Mathf.Cos(ang), uy = Mathf.Sin(ang), sc = noise(ux, uy);
+						float t = rs[ri] / Mathf.Pow(Mathf.Pow(Mathf.Abs(ux) / (ha * sc), hp) + Mathf.Pow(Mathf.Abs(uy) / (hb * sc), hp), 1f / hp);
+						rings[ri][s] = new Vector2(cx + ux * t, Mathf.Max(cy + uy * t, floorY - 1f));
+					}
+				}
+				Vector2[] ring = rings[rz.Length - 1];
+				Action<Vector3[], Vector2[]> face = (p, uv) =>
+				{
+					Vector3 n = Vector3.Cross(p[1] - p[0], p[2] - p[0]).normalized;
+					for (int side = 0; side < 2; side++)
+					{
+						int b0 = vv.Count;
+						for (int k = 0; k < p.Length; k++) { vv.Add(p[k]); vu.Add(uv[k]); vn.Add(side == 0 ? n : -n); }
+						for (int k = 1; k + 1 < p.Length; k++)
+							if (side == 0) vt.AddRange(new[] { b0, b0 + k, b0 + k + 1 }); else vt.AddRange(new[] { b0, b0 + k + 1, b0 + k });
+					}
+				};
+				for (int s = 0; s < Seg; s++)
+				{
+					Vector2 a = ring[s], b = ring[(s + 1) % Seg];
+					float ua = s * 0.25f, ub = (s + 1) * 0.25f;
+					for (int ri = 0; ri + 1 < rz.Length; ri++)
+					{
+						Vector2 a0 = rings[ri][s], b0 = rings[ri][(s + 1) % Seg], a1 = rings[ri + 1][s], b1 = rings[ri + 1][(s + 1) % Seg];
+						face(new[] { new Vector3(a0.x, a0.y, rz[ri]), new Vector3(b0.x, b0.y, rz[ri]), new Vector3(b1.x, b1.y, rz[ri + 1]), new Vector3(a1.x, a1.y, rz[ri + 1]) },
+							new[] { new Vector2(ua, rz[ri] / 4f), new Vector2(ub, rz[ri] / 4f), new Vector2(ub, rz[ri + 1] / 4f), new Vector2(ua, rz[ri + 1] / 4f) });
+					}
+					face(new[] { new Vector3(cx, cy, z1), new Vector3(a.x, a.y, z1), new Vector3(b.x, b.y, z1) },
+						new[] { new Vector2(cx, cy) / 4f, a / 4f, b / 4f });
+				}
+				var mesh = new Mesh { name = PlugVeilName + "Back" };
+				mesh.SetVertices(vv);
+				mesh.SetUVs(0, vu);
+				mesh.SetNormals(vn);
+				mesh.SetTriangles(vt, 0);
+				mesh.RecalculateBounds();
+				var go = new GameObject(PlugVeilName + "Back");
+				go.layer = veilGo.layer;
+				go.transform.SetParent(veilGo.transform, false);
+				go.AddComponent<MeshFilter>().sharedMesh = mesh;
+				MeshRenderer r = go.AddComponent<MeshRenderer>();
+				MeshRenderer wall = veilGo.transform.parent != null ? veilGo.transform.parent.GetComponent<MeshRenderer>() : null;
+				Texture rock = wall != null && wall.sharedMaterial != null && wall.sharedMaterial.HasProperty("_MainTex") ? wall.sharedMaterial.mainTexture : null;
+				var m = new Material(sh) { name = PlugVeilName + "Back", color = rock != null ? new Color(BackShade, BackShade, BackShade, 1f) : Color.black };
+				if (rock != null) m.mainTexture = rock;
+				if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0f);
+				if (m.HasProperty("_Metallic")) m.SetFloat("_Metallic", 0f);
+				if (m.HasProperty("_SpecularHighlights")) { m.SetFloat("_SpecularHighlights", 0f); m.EnableKeyword("_SPECULARHIGHLIGHTS_OFF"); }
+				if (m.HasProperty("_GlossyReflections")) { m.SetFloat("_GlossyReflections", 0f); m.EnableKeyword("_GLOSSYREFLECTIONS_OFF"); }
+				r.sharedMaterial = m;
+				// (casting: the camera's depth picture is drawn with the shadow pass)
+				r.shadowCastingMode = ShadowCastingMode.On;
+				r.receiveShadows = false;
+				r.lightProbeUsage = LightProbeUsage.Off;
+				r.reflectionProbeUsage = ReflectionProbeUsage.Off;
+				r.enabled = false;
+				return r;
+			}
+
+			[NonSerialized] Renderer back;
+
+			void OnEnable() { Camera.onPreCull += BackFor; }
+			void OnDisable() { Camera.onPreCull -= BackFor; if (back != null) back.enabled = false; }
+
+			void BackFor(Camera c)
+			{
+				if (back == null || c == null) return;
+				Vector3 lp = transform.InverseTransformPoint(c.transform.position);
+				// (only for cameras looking in through the arch: from 3/4 views its outside stood as a black tube, 11-08 - the line
+				// from the camera to the sleeve's end must cross the arch within half its width)
+				float far = front - BackLength, span = front + PlugFunnel - BackLead - far;
+				back.enabled = lp.z - front > BackFrom && Vector3.Distance(c.transform.position, transform.position) < 160f
+					&& Mathf.Abs(lp.x - axisX) * span / (lp.z - far) < 0.5f * halfW;
 			}
 
 			void OnWillRenderObject()
@@ -777,7 +920,7 @@ namespace DynamicIslands.Editor
 				mat.color = new Color(1f, 1f, 1f, k);
 			}
 
-			void OnDestroy() { if (mat != null) Destroy(mat); }
+			void OnDestroy() { if (mat != null) Destroy(mat); if (back != null && back.sharedMaterial != null) Destroy(back.sharedMaterial); }
 		}
 
 		/// <summary>A den's own renderers: all but its wall (PlugName).</summary>
@@ -935,15 +1078,16 @@ namespace DynamicIslands.Editor
 			// (the way in: a rounded, uneven arch round the passage's rectangle, not a square window - the rectangle cut in a
 			// flat panel read as a texture board stuck on the hill, Shelter Atoll's ammo cave from the sea, 11-06 review. The
 			// arch is a superellipse a bit wider than the passage, its edge pushed out by noise round it, so the passage stays clear)
-			float hcx = mx, hcy = (hy0 + hy1) * 0.5f, ha = HoleHalf * 1.5f, hb = (hy1 - hy0) * 0.5f * 1.35f;
+			// (11-08 user: Raft's own notched den rim showed round the arch - the arch now tighter, so the wall's rock covers it)
+			float hcx = mx, hcy = (hy0 + hy1) * 0.5f, ha = HoleHalf * 1.2f, hb = (hy1 - hy0) * 0.5f * 1.15f;
 			const float hp = 2.2f;
 			Func<float, float, float> archNoise = (dx, dy) =>
 			{
 				float ang = Mathf.Atan2(dy, dx);
 				// (and a finer, ragged edge on it, so its sides aren't smooth curves - the oldmine wall's ragged arch, 11-06 merge; round
 				// the angle's circle, no seam at its left)
-				return 1f + 0.19f * Mathf.PerlinNoise(1.3f * Mathf.Cos(ang) + 7.7f, 1.3f * Mathf.Sin(ang) + 2.9f)
-					+ 0.08f * Mathf.PerlinNoise(2.7f * Mathf.Cos(ang) + 23.1f, 2.7f * Mathf.Sin(ang) + 14.3f);
+				return 1f + 0.1f * Mathf.PerlinNoise(1.3f * Mathf.Cos(ang) + 7.7f, 1.3f * Mathf.Sin(ang) + 2.9f)
+					+ 0.03f * Mathf.PerlinNoise(2.7f * Mathf.Cos(ang) + 23.1f, 2.7f * Mathf.Sin(ang) + 14.3f);
 			};
 			// (how far out of the arch a point is: 1 on its edge, under 1 inside)
 			Func<float, float, float> archQ = (px, py) =>
@@ -955,8 +1099,10 @@ namespace DynamicIslands.Editor
 			// The Abyss's acid path, 11-05. Each corner is pushed in or out by coarse noise, so the wall reads as rock. And
 			// the wall leans back into the den round the way in (PlugFunnel): a funnel of rock, as a dug tunnel's mouth, its
 			// edge in shade, not a flat panel with a hole)
-			Func<float, float, float> depth = (px, py) => PlugRelief * (2f * Mathf.PerlinNoise(px / 1.6f + 17.3f, py / 1.6f + 5.1f) - 1f)
-				+ 0.35f * PlugRelief * (2f * Mathf.PerlinNoise(px / 0.7f + 3.7f, py / 0.7f + 41.9f) - 1f)
+			// (11-08 user: the relief on the funnel round the arch broke it into dark shards - a ragged frame; it fades in from 0.8 out of the arch)
+			Func<float, float, float> calm = (px, py) => Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((archQ(px, py) - 1f) / 0.8f));
+			Func<float, float, float> depth = (px, py) => calm(px, py) * (PlugRelief * (2f * Mathf.PerlinNoise(px / 1.6f + 17.3f, py / 1.6f + 5.1f) - 1f)
+				+ 0.35f * PlugRelief * (2f * Mathf.PerlinNoise(px / 0.7f + 3.7f, py / 0.7f + 41.9f) - 1f))
 				- PlugFunnel * (1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(archQ(px, py) - 1f)))
 				// (and leans out at its outer edge, over the hill's own edge at the mouth: the wall's straight side, 2 m behind it, showed)
 				+ PlugLean * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((archQ(px, py) - 1.6f) / 0.8f));
@@ -1009,7 +1155,11 @@ namespace DynamicIslands.Editor
 			// blends its rock and sand by the normal - Shelter Atoll's ammo cave from the sea, 11-06)
 			var corner = new Dictionary<int, int>[] { new Dictionary<int, int>(), new Dictionary<int, int>() };
 			// (a point on the wall from its place in the wall's plane, and its smooth normal; 0: facing -z, into the den)
-			Func<float, float, Vector3> pos3 = (px, py) => new Vector3(px, py, z + depth(px, py));
+			// (11-08 user: the den's own notched rim stood in front of the wall, 2 m of it, as a dark ragged frame round every den's
+			// arch - the wall is drawn PlugForward further out, at the den's mouth, so its rock hides that rim; its cells are still
+			// found 2 m in, where the den's rock is all round)
+			float zf = z + PlugForward;
+			Func<float, float, Vector3> pos3 = (px, py) => new Vector3(px, py, zf + depth(px, py));
 			Func<float, float, int, Vector3> normAt = (px, py, side) =>
 			{
 				float e = cell, fx = (depth(px + e, py) - depth(px - e, py)) / (2f * e), fy = (depth(px, py + e) - depth(px, py - e)) / (2f * e);
@@ -1221,7 +1371,7 @@ namespace DynamicIslands.Editor
 			outGo.AddComponent<MeshRenderer>().sharedMaterials = Enumerable.Repeat(wr.sharedMaterial, bands.Length).ToArray();
 			// (and shade in the way in, darker the further in: the den beyond, lit evenly, still read as a light window in the
 			// dark arch from the sea, 11-06 review)
-			CaveVeil.Build(go, hcx, hcy, ha, hb, hp, archNoise, z - PlugFunnel, my);
+			CaveVeil.Build(go, hcx, hcy, ha, hb, hp, archNoise, zf - PlugFunnel, my);
 			// (lit as the den, its own parts looked up again, the outside too)
 			CaveLit.Mark(den);
 			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + cells + " cells (" + leftOut + " out in the open left out), rock relief, smooth, arched way in, " + wr.sharedMaterial.name + (atlas ? " at uv " + swatch.ToString("0.000") : ""));

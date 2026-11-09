@@ -94,7 +94,10 @@ plan save
   (Old Mine Islet). Off by default: on Shelter Atoll's islet the cut would take the whole sea side of the hill.
 - `prop <cave piece alias> cave.rock=den` (`ObjectProps.CaveRock`): the cave hill's rock texture is multiplied by that piece's
   lit shell colour over the hill rock's (`CaveMountain.RockAsDen`); sand on gentle slopes stays. Ignored when a cave of the hill is tinted.
-- `prop <cave piece alias> cave.foot=dry` (`ObjectProps.CaveFoot`): opt-in, Shelter Atoll only (11-07). `CaveGround.CutIn` lets
+  `cave.rock=plain`: Raft's plain big rock, one rock for hill and den wall (the standard since 11-08; Shelter Atoll uses it).
+- `prop <cave piece alias> cave.foot=dry` (`ObjectProps.CaveFoot`): the default for a bear den (`CaveTool.Room`) with no
+  `cave.foot` of its own (`CaveMountain.DryFootFor`, 11-08); `cave.foot=wet` keeps the old foot. Dry walled mouths also get
+  `CaveGround.Apron` (ground rounded 4 m out down to the den floor). `CaveGround.CutIn` lets
   ground down only where `Walled()` (rock on 5 of 8 sides within 25 m), `CaveMountain` drops loose skin cells (`DropLoose`),
   puts the sunk rim on dry sea-cut cells (ground > `DryBy` 0.3) and caps every way in at `DryWay` 12 m past its roof; a
   cell counts as past a mouth only within `DryWay` and `DryFront` 2 m of the mouth's width (a far tunnel's line no longer skips

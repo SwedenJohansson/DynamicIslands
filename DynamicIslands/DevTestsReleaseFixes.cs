@@ -432,6 +432,32 @@ namespace DynamicIslands
 					Log("    the island in the side pictures: " + string.Join(", ", fills.ToArray()) + (empty ? " - a side without the island in view" : measured == 0 ? " - flooded, no side over open water to picture it from (not measured)" : ""));
 					if (empty) { bad++; framedIslands++; }
 					yield return CameraShot(b.center + new Vector3(0.01f, b.size.y + d, -d * 0.6f), b.center, "caveisl_" + n + "_above");
+					// (every way in from outside: a close look into the mouth and a three-quarter view of it, its arch and the ground in
+					// front - user 11-08: one rock, no black stair-stepped frame, nothing seen through, no square slab before it)
+					var views = m != null ? m.MouthViews() : new List<KeyValuePair<Vector3, Vector3>>();
+					foreach (DigTunnel dt in digs)
+						foreach (List<DigTunnel.Point> st in dt.Strokes)
+						{
+							if (st.Count < 2) continue;
+							Vector3 a0 = dt.transform.TransformPoint(st[0].At), a1 = dt.transform.TransformPoint(st[1].At);
+							Vector3 o = a0 - a1; o.y = 0f;
+							if (a0.y > 0.3f && o.sqrMagnitude > 0.01f) views.Add(new KeyValuePair<Vector3, Vector3>(a0, o.normalized));
+						}
+					int mv = 0;
+					foreach (KeyValuePair<Vector3, Vector3> v in views.Take(6))
+					{
+						Vector3 at = v.Key, outDir = v.Value;
+						foreach (int q in new[] { 0, 1 })
+						{
+							Vector3 eye = q == 0 ? at + outDir * 7f + Vector3.up * 2.2f : at + (Quaternion.Euler(0f, 40f, 0f) * outDir) * 16f + Vector3.up * 7f;
+							RaycastHit gh;
+							if (Physics.Raycast(new Vector3(eye.x, eye.y + 40f, eye.z), Vector3.down, out gh, 80f, ~0, QueryTriggerInteraction.Ignore)) eye.y = Mathf.Max(eye.y, gh.point.y + 1.7f);
+							eye.y = Mathf.Max(eye.y, 1.5f);
+							yield return CameraShot(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), "caveisl_" + n + "_mouth" + mv + (q == 0 ? "_close" : "_q"));
+						}
+						Log("    mouth " + mv + " at " + (at - e.Root.transform.position).ToString("F1") + " facing " + outDir.ToString("F1"));
+						mv++;
+					}
 					// (and from inside: nothing seen through its walls or roof, the mountain over them, or the ground - X7)
 					bool seenThrough = false;
 					foreach (Transform t in caves)
