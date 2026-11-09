@@ -168,8 +168,7 @@ namespace DynamicIslands
 	{
 		static void Postfix()
 		{
-			// (a world saved without its id gets it back first - WorldIdRepair)
-			try { WorldIdRepair.AfterWorldRead(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] World id repair: " + e.Message); }
+			// (a world saved without its id got it back already - WorldIdRepair, in RGD_World.RestoreWorld)
 			try { SaveGuard.OnWorldRead(); } catch { }
 		}
 	}

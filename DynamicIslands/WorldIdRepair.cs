@@ -24,7 +24,8 @@ namespace DynamicIslands
 	/// 2. Otherwise (a world from before Raft gave worlds ids, or no older save is left) the world gets a new id, and the
 	///    shared no-id inventory is copied to it, so the player keeps what they have now.
 	/// Either way the world's custom island state kept under its name (noid-&lt;name&gt;) moves to the id when it is newer.
-	/// The world's next save has the id. Players who joined such a world keep their no-id record on their own PC: Raft
+	/// Runs right after Raft read the world's id (RGD_World.RestoreWorld), before LoadComplete: the mod's world state then
+	/// loads under the id already. The world's next save has the id. Players who joined such a world keep their no-id record on their own PC: Raft
 	/// gives them a fresh start in it once.
 	/// </summary>
 	internal static class WorldIdRepair
@@ -37,7 +38,8 @@ namespace DynamicIslands
 		/// <summary>Tests: a repair copied the no-id inventory to the world's id.</summary>
 		internal static bool LastCopiedPlayer;
 
-		/// <summary>After Raft read a world's save (RestoreRGDGame), before the player's inventory is looked up.</summary>
+		/// <summary>Raft read the world's id from its save (RGD_World.RestoreWorld, inside RestoreRGDGame): before LoadComplete
+		/// and before the player's inventory is looked up.</summary>
 		internal static void AfterWorldRead()
 		{
 			if (SaveAndLoad.WorldGuid != Guid.Empty || !Raft_Network.IsHost) return;
@@ -132,6 +134,15 @@ namespace DynamicIslands
 				}
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] World id repair, the island state: " + e.Message); }
+		}
+	}
+
+	[HarmonyPatch(typeof(RGD_World), "RestoreWorld")]
+	static class WorldIdRepairPatch
+	{
+		static void Postfix()
+		{
+			try { WorldIdRepair.AfterWorldRead(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] World id repair: " + e.Message); }
 		}
 	}
 }
