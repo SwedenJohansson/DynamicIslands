@@ -503,6 +503,10 @@ namespace DynamicIslands
 						string cover = RimCover(ct, t, cliffCut, out sunken);
 						int cshards = ct.RimTop == "" ? 0 : ct.RimShards(out _);
 						Check(ref ok, ct.RimColumns > 0 && sunken == 0 && cshards == 0, "the cliff mouth's rim: " + RimLook(ct) + "; the cut cells: " + cover + "; " + cshards + " rock shards on the ground" + (cshards > 0 ? " (" + RimShardsAt(ct) + ")" : ""));
+						// (11-09 w03: on the cliff's steep face the rim stays rock - no patch of the ground's baked layers there)
+						string steepAt;
+						int steep = ct.RimSteepTop(out steepAt);
+						Check(ref ok, steep == 0, "the cliff mouth's rim on the steep face: " + steep + " faces wearing the ground's look" + (steep > 0 ? " (" + steepAt + ")" : ""));
 						{
 							var cseen = new List<string>();
 							int looked, looked2;

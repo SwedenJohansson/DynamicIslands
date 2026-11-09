@@ -577,7 +577,14 @@ namespace DynamicIslands.Editor
 					// (or lying on the ground, however steep the slope: the rim's skin over a steep slope kept the rock's paler look,
 					// saw-tooth shards along the line where it crosses the ground - Old Mine Islet's shore adit, 11-05)
 					bool up = n.sqrMagnitude >= 1e-12f && n.normalized.y >= TopUp;
-					if (!up && FaceOnGround(land, at.TransformPoint(verts[rim[i]]), at.TransformPoint(verts[rim[i + 1]]), at.TransformPoint(verts[rim[i + 2]]))) up = true;
+					// (but not on a steep slope: Raft's ground draws that as its own stretched cliff rock - its shader, not the splat
+					// map - which the baked top can't match; each dug mouth in a steep face sat in a patterned sand-rock patch up the
+					// wall, w03 11-09 Lumen/Stalker's. There the rim stays rock, its walls' look, beside the cliff's)
+					if (!up)
+					{
+						Vector3 wa = at.TransformPoint(verts[rim[i]]), wb = at.TransformPoint(verts[rim[i + 1]]), wc = at.TransformPoint(verts[rim[i + 2]]);
+						if (FaceOnGround(land, wa, wb, wc) && !OnSteepGround(land, (wa + wb + wc) / 3f)) up = true;
+					}
 					if (!up) { side.Add(rim[i]); side.Add(rim[i + 1]); side.Add(rim[i + 2]); continue; }
 					for (int e = 0; e < 3; e++)
 					{
@@ -854,6 +861,18 @@ namespace DynamicIslands.Editor
 		/// were pale angular shards the rule, the middle within OnGroundUnder, never saw): down to OnGroundCross under.</summary>
 		const float OnGroundUnder = 0.05f, OnGroundBy = 0.3f, OnGroundCross = 0.6f;
 
+		/// <summary>Ground this steep (its normal's height under this, about 60 degrees and more) Raft draws as its cliff rock:
+		/// a rim face lying on it stays rock (SplitTop), not a shard (RimShards).</summary>
+		const float SteepGround = 0.5f;
+
+		/// <summary>The ground at this point (world) is a steep face - SteepGround.</summary>
+		public static bool OnSteepGround(Terrain land, Vector3 at)
+		{
+			if (land == null || land.terrainData == null) return false;
+			Vector3 lo = land.transform.position, size = land.terrainData.size;
+			return land.terrainData.GetInterpolatedNormal((at.x - lo.x) / size.x, (at.z - lo.z) / size.z).y < SteepGround;
+		}
+
 		/// <summary>The face (corners in the world) lies on the ground or crosses it - see OnGroundBy. The one rule for SplitTop
 		/// and RimShards.</summary>
 		static bool FaceOnGround(Terrain land, Vector3 a, Vector3 b, Vector3 c)
@@ -892,7 +911,35 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i + 2 < tris.Length; i += 3)
 			{
 				Vector3 a = r.TransformPoint(verts[tris[i]]), b = r.TransformPoint(verts[tris[i + 1]]), c = r.TransformPoint(verts[tris[i + 2]]);
-				if (!FaceOnGround(land, a, b, c)) continue;
+				if (!FaceOnGround(land, a, b, c) || OnSteepGround(land, (a + b + c) / 3f)) continue;
+				n++;
+				if (seen.Count < 4) seen.Add(((a + b + c) / 3f).ToString("0.0"));
+			}
+			where = string.Join(" ", seen.ToArray());
+			return n;
+		}
+
+		/// <summary>Tests: the rim's top faces (part 2, the ground's look) on steep ground (OnSteepGround) lying on it - a
+		/// patterned patch of the baked layers where Raft draws its cliff rock. where: the first few.</summary>
+		public int RimSteepTop(out string where)
+		{
+			where = "";
+			Transform r = transform.Find(RockName);
+			MeshFilter mf = r != null ? r.GetComponent<MeshFilter>() : null;
+			Terrain land = skinLand;
+			if (mf == null || mf.sharedMesh == null || land == null || mf.sharedMesh.subMeshCount < 3) return 0;
+			Mesh mesh = mf.sharedMesh;
+			var verts = new List<Vector3>();
+			mesh.GetVertices(verts);
+			int[] tris = mesh.GetTriangles(2);
+			int n = 0;
+			var seen = new List<string>();
+			for (int i = 0; i + 2 < tris.Length; i += 3)
+			{
+				Vector3 a = r.TransformPoint(verts[tris[i]]), b = r.TransformPoint(verts[tris[i + 1]]), c = r.TransformPoint(verts[tris[i + 2]]);
+				Vector3 up = Vector3.Cross(b - a, c - a);
+				if (up.sqrMagnitude < 1e-8f || up.normalized.y >= TopUp) continue;
+				if (!FaceOnGround(land, a, b, c) || !OnSteepGround(land, (a + b + c) / 3f)) continue;
 				n++;
 				if (seen.Count < 4) seen.Add(((a + b + c) / 3f).ToString("0.0"));
 			}

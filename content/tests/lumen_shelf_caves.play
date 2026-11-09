@@ -4,7 +4,7 @@
 # to -12.5 -56.3 (air zone lu_galleries, lamps, mushrooms, dirt, cave vines). The [CITEST] dig lines give the real floors.
 # In at one mouth, out at the other - all a swim.
 island Lumen Shelf keep
-offset 0.4186 -1.6346
+offset 0.2094 -1.8777
 hour 11
 weather Calm
 where Pickup_Landmark_Mushroom

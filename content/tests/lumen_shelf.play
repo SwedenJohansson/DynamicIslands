@@ -2,7 +2,7 @@
 # way), lamp 3 and its air, the three anglers, the survey hut, the sled box, the edge's air under the arch, the mess
 # chest, the last survey note.
 island Lumen Shelf
-offset 0.4186 -1.6346
+offset 0.2094 -1.8777
 # (room in the bag first: a full bag from earlier plays in the world drops quest loot - 11-09)
 empty
 expect step 0
