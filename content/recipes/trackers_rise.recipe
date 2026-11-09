@@ -120,15 +120,20 @@ place Placeable_Lantern_Metal - at -12.6 56 h=3.65 sit
 # a short cut beside the trail; the quest never goes through it, so the island still plays without a machete.
 brush flatten at -36 44 r=5 s=20 frames=120 h=3
 brush flatten at -36 69 r=5 s=20 frames=120 h=3
-# (11-08: the north mouth's floor ramps down to the beach - a 2 m step there kept a player out of the cut from the shore)
-brush flatten at -36 72.5 r=3.5 s=20 frames=80 h=2.2
-brush flatten at -36 75.5 r=3.5 s=20 frames=80 h=1.4
-brush smooth from -36 70 to -36 79 r=6 s=10 frames=40
 clear from -36 42 to -36 71 r=9
 call kit_st x=-36 z=46 yaw=0 len=21 slope=0 end=open dirt=2 mush=0 stone=0 vines=2 gate=1 as=trcut
 # (11-08 fix: the far vines stand in the 6 m passage, not in a narrow mouth - at their own 3.9 m width a player slipped
 # past them at the side; scale 1.6 = 6.2 m closes the whole passage)
 cavegate trcut at=-36,66 as=trcut_vines2 scale=1.6
+# (11-08: the north mouth's floor ramps down to the beach - a 2 m step there kept a player out of the cut from the shore)
+# (11-09 w02, REACH: the hill's skin closes the way in's far end at z=80 and runs 2.2-3.9 m along its west side - the
+#     floor's dip to 0 m made a pit with no way out; it stays level at 2.9 m now, the skin beside it is a step-off west)
+#     (after the cave tool: its open end digs the floor down, so a flatten before it did nothing)
+brush flatten at -35 73 r=3.5 s=20 frames=250 h=3
+brush flatten at -35 75.5 r=3.5 s=20 frames=250 h=3.1
+brush flatten at -35 78 r=3.5 s=20 frames=250 h=3.2
+brush flatten at -35.5 80 r=3 s=20 frames=250 h=3.3
+brush smooth from -35 71 to -35 80 r=3 s=4 frames=6
 place Loot_ChestSmall trcutcache at -34.6 56 h=4.5 drop yaw=270
 note trcutcache Tracker's cache | TRACKERS - THE CUT. Sten's cache, half way through: rope, leather, dried meat. Cut the vines behind you; the goats find their way in otherwise.
 loot trcutcache Rope*2;Leather*2;Cooked_GenericMeat*1
@@ -329,4 +334,12 @@ clear at -56.93 -23.17 r=1.5 only=CaravanIsland_SmallRock all
 # (box agent 10-25: names for the guide pictures' snap points)
 prop trnotch obj.name=trnotch
 prop trwreck obj.name=trwreck
+# (11-09 w02, REACH: two pools of sea under the north shore rocks met a 0.6-0.8 m lip - a swimmer got in and not
+# out: a shelf up out of the water at each)
+brush flatten at -39 82 r=1.4 s=20 frames=150 h=-0.2
+brush flatten at -39.9 81 r=1.4 s=20 frames=150 h=0.3
+brush smooth from -38.6 82.5 to -40.4 80.4 r=2 s=10 frames=12
+brush flatten at 21.6 90.7 r=1.2 s=20 frames=150 h=-0.2
+brush flatten at 22.6 90.7 r=1.2 s=20 frames=150 h=0.25
+brush smooth from 20.6 90.7 to 23.6 90.7 r=1.8 s=10 frames=12
 save Tracker's Rise

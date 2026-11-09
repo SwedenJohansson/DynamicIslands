@@ -27,12 +27,27 @@ generate
 brush flatten from -22 30 to -22 -85 r=4 s=20 frames=300 h=-1.2
 brush flatten from 22 30 to 22 -85 r=4 s=20 frames=300 h=-1.2
 brush flatten from -22 30 to 22 30 r=4 s=20 frames=300 h=-1.2
+# (11-09 w02, REACH: the north arm west of the meadow had banks over 1.3 m high - a wader got down in and found no
+# way back up: a sand ramp up its north bank, along the bank to the flat at 1.4 m - the south bank rises 7 m)
+for i 0 5 1
+brush flatten at {-15+1.5*$i} {29.3+0.45*$i} r=1.5 s=20 frames=200 h={-1+0.45*$i}
+next
+brush smooth from -15.5 29.2 to -7 31.7 r=2 s=10 frames=12
 brush sand from -22 30 to -22 -80 r=6 s=6 frames=30
 brush sand from 22 30 to 22 -80 r=6 s=6 frames=30
 brush sand from -22 30 to 22 30 r=6 s=6 frames=30
 brush flatten at 0 -52 r=6 s=20 frames=200 h=1.4
 brush flatten at 0 -14.5 r=6 s=20 frames=200 h=1.6
 brush flatten from -10 2 to -15 7 r=3 s=20 frames=120 h=1.4
+# (11-09 w02, REACH: that cut was a trench shut at both ends in the 9 m hill - the west arm zone and the ferry log
+# could not be reached: now it runs on from the outpost pad, and down the bank into the west arm by the ferry)
+brush flatten from -2 -9 to -10 2 r=3 s=20 frames=120 h=1.5
+for i 0 5 1
+brush flatten at {-15.5-0.9*$i} 7 r=2.5 s=20 frames=150 h={1.3-0.3*$i}
+next
+brush smooth from -2 -9 to -19 7 r=3.5 s=10 frames=12
+clear from -2 -9 to -10 2 r=3.5
+clear from -15 7 to -19.5 7 r=3
 brush flatten at 0 45 r=12 s=20 frames=200 h=2
 brush flatten at 8.25 43.5 r=4 s=20 frames=200 h=2
 origin
@@ -145,7 +160,8 @@ clear from 27 -40 to 33 -40 r=3
 place CaravanHubBridge3 eastbridge at 13.2 -40 h=1.1 yaw=90
 place UT_JumpPuzzle_LiftMechanism_Lever bridgelever at 10 -42.5 ground sit yaw=90
 # the outpost's map screen
-place RT_RadarScreen mapscreen at 6.5 -8.5 ground sit yaw=200
+# (11-09 w02, REACH: on the bank 5 m over the pad a reader found no way back down - on the pad by the hut now)
+place RT_RadarScreen mapscreen at 3 -12 ground sit yaw=200
 # the climb: a mountain (trail winding up from bearing 250), a 10-storey climbing tower on its top, the summit box
 call vd_mount x=55 z=25 top=22 r=20 a0=250 turns=1.25 hb=3
 call vd_tower x=55 z=25 h0=22 lv=10 a=dltw box=dlbox zal=dltopz zid=dl_top msg="The timber port's crane. The jib still points at the river mouth; the route strongbox sits out on its end."
@@ -186,7 +202,8 @@ prop treasure11380 treasure.loot=Scrap*6;Bolt*3;Nail*10
 beside Note_Paper teodortrial mapscreen d=1.4
 note teodortrial Water trial, sheet 1 | SEEDKEEPERS - HEART LAB - WATER TRIAL, SHEET 1 - T. LIND\n\nSite: river people's outpost, Riverfork Delta.\nProblem: brown foam on the stones, fish belly-up in the drawbridge arm, children with rashes. Old oil in the silt from the timber barges.\n\nTrial: one dose of V-1 in the outpost's water barrel. V-1 is a spore that eats oil and gives back clean water and flowers. Nothing else. I have checked it two hundred times.\n\nDay 1: foam gone.\nDay 3: the drawbridge arm runs clear. Hedda says the water tastes sweet. Children say it tastes like sweets.\nDay 6: vines on the ferry rope. Small. Lovely, really.\n\nI am so happy I could cry. I will tell Marit tonight. She said I would never fix the river. I have fixed the river.
 # (REACH 10-28: at 0.3 over the ground it lay in the bank - dropped from 1 m)
-place Note_Paper ferrylog at -18.5 5 ground y=1.0 drop
+# (11-09 w02: at -18.5 5 it lay in the hill beside the cut - in the cut by the ferry zone now)
+place Note_Paper ferrylog at -13 5.3 ground y=1.0 drop
 note ferrylog Ferry log | FERRY LOG - HEDDA, ferry keeper\n\nCrossings today: 31. Fares paid: 4. Fares paid in fish: 9. Fares paid in "I will pay you tomorrow, Hedda": everyone else, as usual.\n\nThe rope is growing leaves. I cut them in the morning and by supper there are more. The lab man says it is good. The lab man has never had to wind a ferry with a salad on the rope.\n\nThe water smells sweet at night. People go down to the bank and stand there, just stand. Old Ulf stood there till midnight and said he heard singing upriver.\n\nI told him that was the boars. He did not laugh. He always laughs at my jokes; that is why he pays in fish.
 place Note_Paper fishernote at 28 -16 ground y=0.3 drop
 note fishernote Fisher's diary | ULF - FISHING, drawbridge arm\n\nThe puffers have come back to the barge wreck. They feed where it lies, off the mouth, ten metres down. I have not seen puffers here since I was a boy.\n\nThe fish taste of honey now. My wife says that is not natural. I say nothing about this river has been natural since the timber men came. This is the first nice thing.\n\nThere is singing upriver at night. Not people. More like a lot of leaves moving the same way at the same time.\n\nTomorrow the whole village is going up to see. Hedda says she is staying with the ferry. Hedda says that every time, and then she comes.
@@ -373,5 +390,8 @@ prop rdseeds obj.name=rdseeds
 prop rdseeds loot.refill=0
 note rdseeds Seed tin | The river people's seed tin, kept dry in the otter's den: seeds of the delta's own fruit.
 loot rdseeds Seed_Mango*2;Seed_Pineapple*2;Seed_Watermelon*2;Seed_Banana*1
+
+# (11-09 w02: a banana bush on the trial pit's new ramp stood 0.5 m off its smoothed bank)
+clear at -8.7 32.9 r=2 all body only=Banana
 
 save Riverfork Delta
