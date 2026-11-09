@@ -358,6 +358,9 @@ quest reward=Rope*4;Plank*6
 # room - air, mushrooms, and the kingdom's charter in a chest. A flag on the hilltop marks it. No quest step needs it;
 # the bell and its zone are not gated. No rats: reached only under water, no NavMesh floor. cavecheck: 6 m and more from
 # the quest's things and the walks between them.
+# (11-09 w03: a pale flat strip stands in the mouth's +z side 2 m before the bars - the picture's rays hit the cave's
+# CaveMouth there, 4 m off, in front of the rods. Not the bars (moved 0.8 m, it stayed), not hidden by a rock (SmallRock
+# reads mossy blue), still there at size 0.8 (and the hill and room looked worse): open, see CAVE_LESSONS)
 call kit_st x=-102 z=8 yaw=90 len=29 slope=12 end=room size=0.7 hill=1 dirt=0 mush=2 stone=1 vines=1 as=thgatecave
 prop thgatecave cave.rock=plain
 # the sea gate: two of Selene's room bars stacked across the tunnel 2 m in (the bars' mesh lies 3 m off its pivot along

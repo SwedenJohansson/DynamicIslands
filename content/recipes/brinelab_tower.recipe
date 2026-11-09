@@ -38,10 +38,14 @@ brush flatten at 24 -12 r=1.8 s=20 frames=200 h=3.0
 brush flatten at 25.5 -13.5 r=1.8 s=20 frames=200 h=3.6
 # (REACH 10-28: the island's ground still stood as a ridge between the lobby and the plaza - into the lobby's east half and
 # over its door (a wall of ground seen from the plaza, the walker stuck at x 6 inside): cut down to the lobby's floor)
-brush flatten at 7.5 -1.5 r=2.2 s=20 frames=200 h=0.25
+# (w03 11-09: that cut at 7.5 -1.5 r=2.2 reached into the pit - the east walls and floors of the flooded storeys stood
+# 3-10 m deep in its ground and CIFloating named them buried; the ridge is cut as a strip just east of the lobby's
+# wall instead, and the pit dug again under the tower's east side)
+brush flatten from 9 -4.5 to 9 4.5 r=1.4 s=20 frames=200 h=0.25
 brush flatten at 10 -1 r=2.5 s=20 frames=200 h=0.3
 brush flatten at 12 -1 r=2.5 s=20 frames=200 h=0.3
 brush grass at 18 -2 r=9 s=20 frames=20
+brush flatten from 3 -4.5 to 3 4.5 r=3.8 s=20 frames=260 h=-15
 # discoveries: level spots for the evacuees' camp and the loading yard
 brush flatten at -36 30 r=5 s=8 frames=40
 brush flatten at 36 -36 r=6 s=8 frames=40
@@ -79,7 +83,10 @@ place Block_Foundation - at -3 -2.5 h=0.98
 place Block_Foundation - at -3 2.5 h=0.98
 place Pickup_Landmark_BerryBush - at -3 -2.5 h=0.98 sit
 place Pickup_Landmark_Flower_White - at -3 2.5 h=0.98 sit
-place ChoppableVines atriumvines at 1.35 3.1 h=0.3 scale=0.6 yaw=0
+# (w03 11-09: at z 2.95 the vines' middle hung over the hatch - CIFloating "15 m above the ground": on the floor tile in front of it)
+# (11-09 later: still named - its leaves reach 0.4 m under its foot, through the floor tile into the flooded lab's ceiling:
+# set 0.35 m up, its leaves' bottom on the floor)
+place ChoppableVines atriumvines at 1.35 2.4 h=0.65 scale=0.6 yaw=0
 place Stairwell_WallLamp - at -2 4.42 h=2.3 yaw=180
 
 # --- s6, the greenhouse floor (3.3): planters overrun, the boars, the stairwell zone at the hatch ------------------------
@@ -297,7 +304,7 @@ prop blsummit zone.message=The top of Brine Hill. The whole island lies below.
 # The lab's sample annex, a metal shed east of the loading yard: a carboy rack fell when the tower leaned and the floor is
 # still awash with brine acid. The annex locker is at the back past the spill. Two ways across: the spill suits in the
 # box by the door, or the drain lever behind the annex (round the back wall), which hides the acid. No quest step.
-brush flatten at 47 -21 r=5 s=20 frames=40 h=3
+brush flatten at 47 -21 r=5 s=20 frames=200 h=2.9
 push at 44 -24 h=3
 call shed w=4 d=4 door=1
 place TP_Moontown_Barrel02 - at 1 5.2 y=0.2 sit yaw=80

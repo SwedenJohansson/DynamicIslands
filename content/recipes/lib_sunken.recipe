@@ -241,7 +241,9 @@ end
 # stonelamp: a survey lamp - a lantern on a stone post (stacked rock) at x z, on the ground (also under water)
 macro stonelamp x=0 z=0 al=-
 place SmallRock_02 - at $x $z ground sit scale=0.45 sy=0.9
-place Antenna_pole - at $x $z ground y=0.5 sy=0.4
+# (w03 11-09: the post set 0.5 m up on the rock stood on nothing CIFloating could see - 0.5 m over the ground; it now
+# rises from the ground through the rock, its top where it was)
+place Antenna_pole - at $x $z ground y=0 sy=0.48
 place Placeable_Lantern_Metal $al at $x $z ground y=3 sit drop
 end
 #

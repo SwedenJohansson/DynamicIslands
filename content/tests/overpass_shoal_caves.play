@@ -24,13 +24,6 @@ wait 2
 expect item Battery 1
 expect item Rope 2
 air op_culvert
-# the rat in the room (11-09): alive under the bank's rock, then dealt with
-expect animals Rat 1
-expect animalsinside Rat 1
-wait 2
-picture op_rat -23 3.6 37 -26 2.6 31 aim=Rat light=20
-kill Rat
-expect animals Rat 0
 
 # Back out: down the culvert into the channel
 walk -24 35 to -24 26 to -24 16 to -24 5 to -24 -2 below=4

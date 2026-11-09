@@ -1,9 +1,11 @@
-﻿# The Stalker's Hollow (CIPlay stalkers_hollow): the chain's air deck, the lip and its air, the warden's entry, the north
+# The Stalker's Hollow (CIPlay stalkers_hollow): the chain's air deck, the lip and its air, the warden's entry, the north
 # alcove, the Stalker brought down at one blow (a play's kill skips its phase; on.defeat gives both story items), the east alcove, the valve - played
 # without the Spire's RESTORE, so the SEAL answer (the plug, the SEAL note; the bars stay) - the Ringwave plate, the west
 # alcove, the last word, the chain back up.
 island The Stalker's Hollow
-offset 0 0
+offset 0.6508 1.0124
+# (room in the bag first: a full bag from earlier plays in the world drops quest loot - 11-09)
+empty
 expect step 0
 expect title The Deep
 expect hidden teal

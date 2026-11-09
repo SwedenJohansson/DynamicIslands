@@ -339,14 +339,20 @@ pop
 # The caisson builders' access ramp: a dug tunnel from the flat ground behind the lagoon's cliff (the stone bridges'
 # side of the yard), down through the rock at 22 degrees and out at the cliff's foot on the lagoon floor, where the
 # caissons stand - a way in from land and out to the sea. Half way down a side store the builders cut into the rock:
-# stone and dirt. Below the sea from a few metres in (the ground here is only 4-5 m up): a flooded ramp, so no rats.
+# stone and dirt. Below the sea from about 11 m in (the ground here is only 4-5 m up): a flooded ramp, one rat on its dry top.
 # cavecheck: 6 m and more from the caissons' ladders, chests and the quest's walks.
 dig -28,12 4,12 r=2 slope=-22 as=cyramp
 dig -10,12 -10,5 r=3 slope=0 as=cyramp
-caveloot cyramp dirt=2 mush=0 stone=3 vines=0
+caveloot cyramp dirt=2 mush=0 stone=3 vines=0 wet=1
 # the way to it: a ring of grey boulders round the top of the ramp
 place SmallBoulder3 - at -31 14.5 ground sit scale=0.7 yaw=30
 place SmallBoulder3 - at -31.5 9 ground sit scale=0.6 yaw=140
+# (11-09 user rule: some caves get rats) one rat in the powder cave (sk_cave at -24 -56, its floor h=2): on the bear cave's
+# floor 2 m behind its middle, under its rock (the ramp's dry top was an open cut - a rat there stood under the sky, w03 11-09)
+# cavecheck inside cyratA
+place Creature_Rat cyratA at -24 -54.5 h=2.3
+prop cyratA creature.count=1
+prop cyratA creature.respawn=0
 
 quest title=The Caisson Yard
 quest intro=The survey team ran to this construction yard over the trench. Climb onto the yard caisson.

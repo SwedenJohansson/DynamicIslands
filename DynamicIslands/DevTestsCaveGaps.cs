@@ -562,6 +562,8 @@ namespace DynamicIslands
 				Log("  " + isl + ": sea floor " + depth.ToString("0.0") + " m down, the shore " + best.ToString("0") + " m in; " + pieces + " pieces up at 12 degrees");
 				lines.Add("origin " + XZs(sb));
 				lines.Add("call kit_uw yaw=" + yawOf(sbd) + " len=" + Num(pieces * CaveTool.Step + 1f) + " as=gapuw");
+				// (caveloot wet=1: loot on the flooded floor too, w03 11-09)
+				lines.Add("caveloot gapuw dirt=4 mush=0 stone=0 vines=0 titanium=0 light=0 wet=1");
 			}
 			lines.Add("save " + isl);
 			try { File.WriteAllLines(pb, lines.ToArray()); } catch (Exception e) { Fail("cave gaps build: " + e.Message); result(false); yield break; }
@@ -572,17 +574,20 @@ namespace DynamicIslands
 			// The kits' loot: on each cave's dry floor (resting on something, not floating, not sunk in), vines from the roof
 			foreach (var kv in recipeGroups.Where(g => g.Key.EndsWith("_loot", StringComparison.OrdinalIgnoreCase)).ToList())
 			{
-				int resting = 0, vinesN = 0; var bad = new List<string>();
+				int resting = 0, vinesN = 0, wetLoot = 0; var bad = new List<string>();
+				bool wetOk = kv.Key.Equals("gapuw_loot", StringComparison.OrdinalIgnoreCase);
 				foreach (EditorGameObject g in kv.Value.Where(x => x != null))
 				{
 					Bounds b = ShapeBounds(g.gameObject);
 					if (g.GameObjectName.StartsWith("CaveVine")) { vinesN++; RaycastHit? rf = FirstSolid(new Vector3(b.center.x, b.max.y - 0.5f, b.center.z), Vector3.up, 2f); RaycastHit? fl = FirstSolid(new Vector3(b.center.x, b.min.y - 0.05f, b.center.z), Vector3.down, 6f); if (!rf.HasValue || !fl.HasValue || b.min.y - fl.Value.point.y < 1.95f) bad.Add(g.GameObjectName + (rf.HasValue ? "" : " no roof over it") + (fl.HasValue ? " " + (b.min.y - fl.Value.point.y).ToString("0.0") + " m over the floor" : "")); continue; }
 					RaycastHit? under = FirstSolid(new Vector3(b.center.x, b.min.y + 0.3f, b.center.z), Vector3.down, 1f);
 					float gap = under.HasValue ? b.min.y - under.Value.point.y : 9f;
-					if (under.HasValue && gap > -0.35f && gap < 0.15f && under.Value.point.y > sea + 0.3f) resting++;
+					if (under.HasValue && gap > -0.35f && gap < 0.15f && under.Value.point.y <= sea + 0.3f && wetOk) { resting++; wetLoot++; }
+					else if (under.HasValue && gap > -0.35f && gap < 0.15f && under.Value.point.y > sea + 0.3f) resting++;
 					else bad.Add(g.GameObjectName + (under.HasValue ? " " + gap.ToString("0.00") + " m off its floor" + (under.Value.point.y <= sea + 0.3f ? " (wet)" : "") : " no floor under it"));
 				}
 				Check(ref ok, resting >= 3 && bad.Count == 0, isl + " " + kv.Key + ": " + resting + " loot on the floor, " + vinesN + " vines" + (bad.Count > 0 ? " - " + string.Join(", ", bad.ToArray()) : ""));
+				if (wetOk) Check(ref ok, wetLoot >= 1, isl + " " + kv.Key + ": caveloot wet=1 laid " + wetLoot + " on the flooded floor");
 			}
 			if (tag == "st") Check(ref ok, RecipeObjects.ContainsKey("gapst1_vines"), isl + ": machete vines on gapst1's mouth (cavegate)");
 			if (tag == "dig")
@@ -1043,12 +1048,18 @@ namespace DynamicIslands
 			if (e == null)
 			{
 				if (CaveGapsLookIslandMissing(name)) { Fail("cave gaps look: no saved island '" + name + "'"); yield break; }
-				Vector3? spot = ScSpot(name, 400f);
+				// (at its own height in the world, as a world brings it: brought at sea level, a deep island - Lumen Shelf, 25 m
+				// down - stood dry and its flooded galleries were walked as dry tunnels, 11-09 w03)
+				float elev = 0f, water = 0f;
+				try { IslandFile lf = IslandFile.Load(IslandSpawner.PathFor(name)); elev = lf.Elevation; water = lf.WaterLevel; } catch { }
+				Vector3? spot = ScSpot(name, 400f, elev);
 				if (!spot.HasValue) { Fail("cave gaps look: no open sea near the raft"); yield break; }
 				var made = new List<IslandWorldState.Entry>();
 				yield return ScBring(name, spot.Value, made);
 				e = made.LastOrDefault();
 				if (e == null || e.Root == null) { Fail("cave gaps look: " + name + " didn't come"); yield break; }
+				// (the root sits the island's water line under the spot: IslandSpawner puts it at elevation - WaterLevel)
+				Check(ref ok, Mathf.Abs(e.Root.transform.position.y + water - elev) < 0.5f, name + ": brought at its height in the world (" + elev.ToString("0.#") + " m, its water line at " + (e.Root.transform.position.y + water).ToString("0.#") + ")");
 				yield return new WaitForSeconds(4f);
 			}
 			for (float w = 0f; w < 20f; w += 0.5f)
@@ -1236,6 +1247,24 @@ namespace DynamicIslands
 						// or dry, 11-08; with none it must be dry ground)
 						List<TriggerZone> airs = e.Root.GetComponentsInChildren<TriggerZone>(false).Where(z => z.Air).ToList();
 						int pocket = AirCover(dryAt, airs.Select(z => z.transform.position).ToList(), airs.Select(z => z.Radius).ToList());
+						if (pocket >= 0 && pc.controllerType != ControllerType.Ground)
+						{
+							// (11-09 w03, Thalassa's sea gate: put on the line's end - a cave piece's floor, 0.9 m up - the player fell
+							// through it into the flooded tunnel under it and the breath went down. A walker comes up the floor into the
+							// room (its play does): the breath is checked again standing on the floor under the pocket's middle)
+							Vector3 zc = airs[pocket].transform.position;
+							RaycastHit fl;
+							if (Physics.Raycast(zc + Vector3.up * 0.5f, Vector3.down, out fl, 12f, ~0, QueryTriggerInteraction.Ignore) && fl.point.y > sea)
+							{
+								PlayerMove.To(me, fl.point + Vector3.up * 0.3f, ControllerType.Ground);
+								KeepAlive(me);
+								yield return new WaitForSeconds(1.5f);
+								air.Value = air.Max * 0.3f;
+								a0 = air.Value;
+								yield return new WaitForSeconds(3f);
+								Log("  " + label + ": on the floor under the pocket's middle, " + (fl.point.y - sea).ToString("0.0") + " m over the sea (" + fl.collider.name + "): " + pc.controllerType + ", " + (me.transform.position.y - sea).ToString("0.0") + " m 3 s later");
+							}
+						}
 						if (pocket >= 0)
 							Check(ref ok, air.Value > a0 + 1f, label + ": the end above the sea (" + (dryAt.y - sea).ToString("0.0") + " m) is a planned air pocket '" + airs[pocket].Id + "', the breath comes back (" + pc.controllerType + ", " + a0.ToString("0") + " -> " + air.Value.ToString("0") + ")");
 						else
@@ -1449,7 +1478,9 @@ namespace DynamicIslands
 				Vector3 last = line[line.Count - 1];
 				for (float s = 1f; s <= 9f; s += 1f) line.Add(last + flat * s);
 				lines.Add(line);
-				return lines;
+				// (11-09 w03: a group of cave pieces and dug strokes - Lumen Shelf's and Stalker's Hollow's galleries dug under
+				// their open cave pieces, shafts between - kept only the last cave piece's line, every point of it near the
+				// open sky, and caveloot found no spot: the dug strokes of the group count too)
 			}
 			List<EditorGameObject> objs;
 			if (!recipeGroups.TryGetValue(group, out objs)) return lines;
@@ -1516,6 +1547,9 @@ namespace DynamicIslands
 			if (lines.Count == 0) return "caveloot: no cave or dug tunnel laid as=" + group + " before it";
 			Func<string, int, int> num = (k, d) => opt.ContainsKey(k) ? Mathf.Clamp(Mathf.RoundToInt(F(opt[k])), 0, 20) : d;
 			int vines = num("vines", 2);
+			// (wet=1: the wet floor counts too - a flooded cave with an air pocket in it, a cave of an island sunk under the sea:
+			// Biome Seven's root room 18 m down, Caisson Yard's flooded builders' ramp, w03 11-09)
+			bool wetOk = opt.ContainsKey("wet") && F(opt["wet"]) >= 0.5f;
 			int[] left = { num("dirt", 3), num("mush", 3), num("stone", 2), num("titanium", 0), num("light", 0) };
 			string[] kind = { "dirt", "mush", "stone", "titanium", "light" };
 			// (sea: the h= base, as Place reads it; wet: the sea's surface in the editor's world)
@@ -1538,14 +1572,14 @@ namespace DynamicIslands
 					RaycastHit? up = FirstSolid(p, Vector3.up, 8f), dn = FirstSolid(p, Vector3.down, 4f);
 					if (!up.HasValue) { noRoof++; continue; }
 					if (!dn.HasValue) { noFloor++; continue; }
-					if (dn.Value.point.y < wet + 0.3f) { wetN++; continue; }
+					if (dn.Value.point.y < wet + 0.3f && !wetOk) { wetN++; continue; }
 					if (spots.Any(s => (s.Key - p).magnitude < 0.9f)) continue;
 					Vector3 along = line[Mathf.Min(i + 1, line.Count - 1)] - line[Mathf.Max(i - 1, 0)];
 					along.y = 0f;
 					spots.Add(new KeyValuePair<Vector3, Vector3>(p, along.sqrMagnitude > 0.01f ? along.normalized : Vector3.forward));
 				}
 			}
-			if (spots.Count == 0) return "caveloot: no dry spot inside the cave " + group + " (rock over it, 5 m from the mouth; of " + all + " points along it " + nearOpen + " near open sky, " + noRoof + " no roof, " + noFloor + " no floor, " + wetN + " wet)";
+			if (spots.Count == 0) return "caveloot: no dry spot inside the cave " + group + " (rock over it, 5 m from the mouth; of " + all + " points along it " + nearOpen + " near open sky, " + noRoof + " no roof, " + noFloor + " no floor, " + wetN + " wet - wet=1 lets the wet floor count)";
 			// The kinds in turn - dirt, mushroom, stone, ... - so each part of the cave gets some of each
 			var kinds = new List<string>();
 			while (left.Any(x => x > 0))
@@ -1559,7 +1593,7 @@ namespace DynamicIslands
 				float off = wall.HasValue ? Mathf.Max(0f, wall.Value.distance - 0.6f) * 0.7f : 0.8f;
 				RaycastHit? fl = FirstSolid(s.Key + side * off, Vector3.down, 4f);
 				if (!fl.HasValue || Vector3.Angle(fl.Value.normal, Vector3.up) > 35f) fl = FirstSolid(s.Key, Vector3.down, 4f);
-				if (!fl.HasValue || fl.Value.point.y < wet + 0.3f) { skipped++; continue; }
+				if (!fl.HasValue || (fl.Value.point.y < wet + 0.3f && !wetOk)) { skipped++; continue; }
 				string obj = kinds[k] == "dirt" ? "Pickup_Landmark_DirtPickup" : kinds[k] == "mush" ? "Pickup_Landmark_Mushroom " + (1 + mushN++ % 3)
 					: kinds[k] == "stone" ? "Pickup_Landmark_Rock_2_Land" : kinds[k] == "titanium" ? "Pickup_Landmark_Titanium_Land" : "Placeable_Lantern_Metal";
 				Vector2 f = FrameXZ(fl.Value.point);

@@ -342,10 +342,7 @@ prop opcrewchest obj.name=opcrewchest
 prop opcrewchest loot.refill=0
 note opcrewchest Flood store | Road crew, culvert 7: kept dry for the next flood. Rope, nails, a lamp's battery. The water came over the bank anyway.
 loot opcrewchest Rope*2;Nail*8;Battery*1;Scrap*3
-# (11-09 user rule: some caves get rats) one rat in the dry room, on the floor away from the chest
-# cavecheck inside opratA
-place Creature_Rat opratA at -26 31 h=3.5 drop
-prop opratA creature.count=1
-prop opratA creature.respawn=0
+# (11-09: no rat here after all - the room is a cave piece with no NavMesh floor, and a rat spawned there snapped to the
+# ground under it, out of sight; the world's rat is at the top of the Caisson Yard's dug ramp instead)
 
 save Overpass Shoal

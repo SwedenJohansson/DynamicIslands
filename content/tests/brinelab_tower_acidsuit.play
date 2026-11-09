@@ -2,7 +2,7 @@
 # CIGapsWatchHealth, no CIGapsSuit): the suit from the box by the annex door, then the acid takes nothing (expect
 # unhurt) all the way to the locker and back. brinelab_tower_acid is the run without the suit and the drain lever.
 island Brinelab Tower keep
-offset 0 0
+offset 0.978 2.1699
 hour 11
 weather Calm
 at 43.6 -24

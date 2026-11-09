@@ -197,7 +197,7 @@ call sk_reef x=-56 z=-24 r=5 seed=24330
 
 # the summit: the garden rock - the tower (ladder inside), the locker, the note, the zone
 call ladtower x=-24 z=-66 h0=20.5 lv=3 a=b7tower
-place Loot_ChestSmall b7locker at -24.75 -65.25 h=27.97 sit yaw=180
+place Loot_ChestSmall b7locker at -24.75 -65.25 h=28.2 drop yaw=180
 place Note_Paper b7sumnote at -24.75 -66.75 h=28.07 drop yaw=20
 place Zone_Trigger b7summit at -24 -66 h=28.97
 place Loot_ChestSmall b7ledge at -35 -66 ground sit yaw=40
@@ -362,8 +362,17 @@ clear at -11.83 -58.04 r=1.5 only=SeaVine3 all
 # a straight tunnel to the root room - mushrooms, dirt, cave vines and an air pocket the pumps still feed. Lamps: the
 # farm's old lights. No rats: under water, no NavMesh floor. cavecheck: 6 m and more from the dome's things and the
 # walk from the buoy to the airlock.
-call kit_st x=-62 z=-4 yaw=90 len=22 slope=0 end=room size=0.7 hill=1 dirt=3 mush=5 stone=0 vines=2 light=1 gate=1 as=bsroot
+call kit_st x=-62 z=-4 yaw=90 len=22 slope=0 end=room size=0.7 hill=1 dirt=3 mush=5 stone=0 vines=2 light=1 gate=1 wet=1 as=bsroot
 prop bsroot cave.rock=plain
+# (w03 11-09: CIFloating found the ground under the dome's west leaning glass up to h 2.2 - the root room's hill reached
+# the dome's rim: the rim set back to the garden floor)
+brush flatten at -8 -3.8 r=2.5 s=20 frames=200 h=0
+# (the next run: still a leaning pane at the west, its neighbour - the hill reaches the whole west half of the rim:
+# the floor laid again along it, from the airlock round the west to the south, both sides of the glass)
+brush flatten from -3.75 6.5 to -6.5 3.75 r=2.2 s=20 frames=200 h=0
+brush flatten from -6.5 3.75 to -7.5 0 r=2.2 s=20 frames=200 h=0
+brush flatten from -7.5 0 to -6.5 -3.75 r=2.2 s=20 frames=200 h=0
+brush flatten from -6.5 -3.75 to -3.75 -6.5 r=2.2 s=20 frames=200 h=0
 place Zone_Trigger bsrootair at -30 -4 h=4.5
 prop bsrootair obj.name=bsrootair
 prop bsrootair zone.id=bs_rootroom

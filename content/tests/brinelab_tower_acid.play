@@ -4,7 +4,7 @@
 # 42.6 -23, the drain lever behind the annex at 47 -16.6, the locker at 49.2 -18.9. Without the suit the floor burns;
 # the lever hides the zone, then the floor is safe. The suit run is brinelab_tower_acidsuit.
 island Brinelab Tower keep
-offset 0 0
+offset 0.978 2.1699
 hour 11
 weather Calm
 
@@ -21,6 +21,8 @@ expect message brine acid
 expect hurt 15
 picture bl_spill_in 46 5 -23.2 48.5 3.3 -19
 walk 47 -21 to 46.25 -23 to 46.25 -26
+# (the way out is through the acid too: counted here, so the drained walk below starts from none)
+expect hurt 1
 
 # Round the back to the drain lever: the acid goes, the floor is safe
 walk 46.25 -26 to 51.5 -25 to 51.5 -16.5 to 47.6 -16
