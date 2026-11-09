@@ -185,6 +185,8 @@
     <Compile Include="PlayerMove.cs" />
     <Compile Include="Quest.cs" />
     <Compile Include="SaveSoon.cs" />
+    <Compile Include="WorldIdRepair.cs" />
+    <Compile Include="DevTestsInvFix.cs" />
     <Compile Include="QuestEditorWindow.cs" />
     <Compile Include="QuestSteps.cs" />
     <Compile Include="QuestTestCommands.cs" />
