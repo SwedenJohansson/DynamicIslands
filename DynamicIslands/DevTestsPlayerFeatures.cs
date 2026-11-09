@@ -1182,6 +1182,74 @@ namespace DynamicIslands
 			if (ok) Log("PASS: quest panel place (" + dir + ")"); else Fail("quest panel place");
 		}
 
+		[ConsoleCommand(name: "CIQuestPanelRes", docs: "Dev (11-09): the quest panel and the corner map at other screen sizes. World 'CI ...': at 1920x1080, 1024x768 and 800x600 the panel (its own place, a dragged place, a place on the map) is never under the map and always on the screen; a place dragged at the big size is clamped when the screen gets smaller. Saves questpanelres_*.png. CIQuestPanelRes <folder> (default the mod folder)")]
+		public static void QuestPanelResCommand(string[] args) { StartTest(QuestPanelRes(args != null && args.Length > 0 ? string.Join(" ", args) : DynamicIslands.assetpath)); }
+
+		static IEnumerator QuestPanelRes(string dir)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("quest panel res: host, in a test world 'CI ...'"); yield break; }
+			yield return EnsureAlive();
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Note_Sign" });
+			bool ok = true;
+			CloseRmlMenuCommand();
+			IslandWorldState.Entry e = null;
+			yield return RfSpawn(MapBuild(), MapIsland, x => e = x);
+			if (e == null) yield break;
+			int mode = Minimap.Mode; bool opt = MapOptionOn();
+			Vector2? before = QuestTracker.SavedPlace;
+			int w0 = Screen.width, h0 = Screen.height; FullScreenMode fm0 = Screen.fullScreenMode;
+			try { Directory.CreateDirectory(dir); } catch { }
+			QuestTracker.ResetPlace();
+			Minimap.Mode = Minimap.Corner;
+			Minimap.SetZoom(1);
+			PutPlayerNear(ScObjOf(e, "cimapstart").transform);
+			float until = Time.realtimeSinceStartup + 6f;
+			while ((!QuestTracker.PanelShown || !Minimap.CornerShown) && Time.realtimeSinceStartup < until) yield return null;
+			yield return new WaitForSecondsRealtime(1f);
+			RectTransform qp = QuestTracker.PanelRect;
+			if (qp == null || !QuestTracker.PanelShown || !Minimap.CornerShown) { Fail("quest panel res: no panel or no map"); yield break; }
+			Func<bool> clear = () => { Rect m; return !Minimap.CornerScreenRect(out m) || !QuestTracker.PanelScreenRect().Overlaps(m); };
+			Func<bool> onScreen = () => { Rect q = QuestTracker.PanelScreenRect(); return q.xMin >= -0.5f && q.yMin >= -0.5f && q.xMax <= Screen.width + 0.5f && q.yMax <= Screen.height + 0.5f; };
+			Func<string> where = () => { Rect m; Minimap.CornerScreenRect(out m); return "panel " + QuestTracker.PanelScreenRect() + " at " + qp.anchoredPosition.ToString("F0") + ", map " + m + ", screen " + Screen.width + "x" + Screen.height; };
+			int[][] sizes = { new[] { 1920, 1080 }, new[] { 1024, 768 }, new[] { 800, 600 } };
+			// (a place dragged at the biggest size)
+			QuestTracker.SavePlace(new Vector2(-1500f, -750f));
+			foreach (int[] sz in sizes)
+			{
+				Screen.SetResolution(sz[0], sz[1], FullScreenMode.Windowed);
+				yield return new WaitForSecondsRealtime(1.5f);
+				Canvas.ForceUpdateCanvases();
+				yield return new WaitForSecondsRealtime(0.5f);
+				string tag = sz[0] + "x" + sz[1];
+				Check(ref ok, Screen.width == sz[0] && Screen.height == sz[1], tag + ": the screen is that size (" + Screen.width + "x" + Screen.height + ")");
+				Log("res " + tag + ": far place: " + where());
+				Check(ref ok, onScreen() && clear(), tag + ": a place dragged at the big size: clamped, on the screen, off the map");
+				ScreenCapture.CaptureScreenshot(Path.Combine(dir, "questpanelres_" + tag + "_clamped.png"));
+				yield return new WaitForSecondsRealtime(1f);
+				QuestTracker.ResetPlace();
+				yield return new WaitForSecondsRealtime(0.4f);
+				Log("res " + tag + ": own place: " + where());
+				Check(ref ok, onScreen() && clear(), tag + ": its own place: on the screen, off the map");
+				ScreenCapture.CaptureScreenshot(Path.Combine(dir, "questpanelres_" + tag + "_own.png"));
+				yield return new WaitForSecondsRealtime(1f);
+				QuestTracker.SavePlace(new Vector2(-40f, -60f));
+				yield return new WaitForSecondsRealtime(0.4f);
+				Log("res " + tag + ": on the map: " + where());
+				Check(ref ok, onScreen() && clear(), tag + ": a place on the map: pushed out, on the screen");
+				ScreenCapture.CaptureScreenshot(Path.Combine(dir, "questpanelres_" + tag + "_pushed.png"));
+				yield return new WaitForSecondsRealtime(1f);
+				QuestTracker.SavePlace(new Vector2(-1500f, -750f));
+			}
+			Screen.SetResolution(w0, h0, fm0);
+			yield return new WaitForSecondsRealtime(1.5f);
+			QuestTracker.SavePlace(before);
+			Minimap.Mode = mode; MapOptionBack(opt);
+			RfAway(e);
+			yield return new WaitForSecondsRealtime(1f);
+			RfRemove(MapIsland);
+			if (ok) Log("PASS: quest panel res (" + dir + ")"); else Fail("quest panel res");
+		}
+
 		static Rect MapScreenRect(RectTransform t)
 		{
 			var w = new Vector3[4];
