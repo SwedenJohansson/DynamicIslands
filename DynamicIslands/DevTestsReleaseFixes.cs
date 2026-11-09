@@ -290,6 +290,53 @@ namespace DynamicIslands
 			StartTest(CaveIslandsRoutine(only, most, keep));
 		}
 
+		/// <summary>What a shot shows, as a grid of rays (12 x 7, 60 degrees, 16:9): the object hit, its normal's height and the
+		/// distance - names the parts in a picture (a stretched pillar, a slab before a mouth).</summary>
+		static void PickGrid(Vector3 eye, Vector3 look, string label)
+		{
+			Quaternion rot = Quaternion.LookRotation(look - eye);
+			float th = Mathf.Tan(30f * Mathf.Deg2Rad), tw = th * 16f / 9f;
+			Log("    pick " + label + " (rows top to bottom: name/normal.y/distance)");
+			for (int y = 0; y < 7; y++)
+			{
+				var sb = new System.Text.StringBuilder("     ");
+				for (int x = 0; x < 12; x++)
+				{
+					Vector3 d = rot * new Vector3(((x + 0.5f) / 12f * 2f - 1f) * tw, (1f - (y + 0.5f) / 7f * 2f) * th, 1f);
+					RaycastHit h;
+					if (Physics.Raycast(eye, d, out h, 200f, ~0, QueryTriggerInteraction.Ignore))
+					{
+						string nm = h.collider.name;
+						sb.Append(' ').Append(nm.Length > 14 ? nm.Substring(0, 14) : nm).Append('/').Append(h.normal.y.ToString("F1")).Append('/').Append(h.distance.ToString("F0"));
+					}
+					else sb.Append(" sky");
+				}
+				Log(sb.ToString());
+			}
+			// (the hill's slanted faces right of the middle: their triangle and cell, to find flat slabs)
+			int told = 0;
+			for (int y = 4; y < 7 && told < 12; y++)
+				for (int x = 0; x < 12 && told < 12; x++)
+				{
+					Vector3 d = rot * new Vector3(((x + 0.5f) / 12f * 2f - 1f) * tw, (1f - (y + 0.5f) / 7f * 2f) * th, 1f);
+					RaycastHit h;
+					if (!Physics.Raycast(eye, d, out h, 200f, ~0, QueryTriggerInteraction.Ignore) || h.collider.name != CaveMountain.SkinName || (h.normal.y > 0.3f && h.normal.y < 0.95f)) continue;
+					float best = float.PositiveInfinity; foreach (Terrain tt in Terrain.activeTerrains) { float gy = tt.SampleHeight(h.point) + tt.transform.position.y; if (Mathf.Abs(gy - h.point.y) < Mathf.Abs(best - h.point.y)) best = gy; }
+					Log("     terr " + best.ToString("F2") + " for:");
+					var mc = h.collider as MeshCollider;
+					string tri = "";
+					if (mc != null && mc.sharedMesh != null && h.triangleIndex >= 0)
+					{
+						Vector3[] mv = mc.sharedMesh.vertices; int[] mt = mc.sharedMesh.triangles; int t3 = h.triangleIndex * 3;
+						if (t3 + 2 < mt.Length)
+							tri = " tri " + mc.transform.TransformPoint(mv[mt[t3]]).ToString("F1") + mc.transform.TransformPoint(mv[mt[t3 + 1]]).ToString("F1") + mc.transform.TransformPoint(mv[mt[t3 + 2]]).ToString("F1");
+					}
+					CaveMountain hill = h.collider.GetComponentInParent<CaveMountain>();
+					Log("     slant " + x + "," + y + " at " + h.point.ToString("F1") + " n " + h.normal.ToString("F2") + tri + " | " + (hill != null ? hill.CellText(h.point) : "-"));
+					told++;
+				}
+		}
+
 		static IEnumerator CaveIslandsRoutine(string only, int most, bool keep)
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("cave islands: host, in a world"); yield break; }
@@ -454,6 +501,7 @@ namespace DynamicIslands
 							if (Physics.Raycast(new Vector3(eye.x, eye.y + 40f, eye.z), Vector3.down, out gh, 80f, ~0, QueryTriggerInteraction.Ignore)) eye.y = Mathf.Max(eye.y, gh.point.y + 1.7f);
 							eye.y = Mathf.Max(eye.y, 1.5f);
 							yield return CameraShot(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), "caveisl_" + n + "_mouth" + mv + (q == 0 ? "_close" : "_q"));
+							PickGrid(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), "caveisl_" + n + "_mouth" + mv + (q == 0 ? "_close" : "_q"));
 						}
 						Log("    mouth " + mv + " at " + (at - e.Root.transform.position).ToString("F1") + " facing " + outDir.ToString("F1"));
 						mv++;
