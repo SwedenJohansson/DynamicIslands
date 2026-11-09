@@ -115,5 +115,117 @@ namespace DynamicIslands
 			finally { RemovePlayerIsland(e2); }
 			if (ok) Log("PASS: upgrade heal"); else Fail("upgrade heal");
 		}
+
+		[ConsoleCommand(name: "CIUpgradePlace", docs: "Dev, world (host, a raft with foundations): every buildable upgrade and buildable cosmetic placed the way a player places it, with the world option Extra upgrades on and off: every surface type (SO_BlockQuadType) and overlap mask (SO_BlockCollisionMask) that takes its base item takes it too; on a surface of the raft that takes the base item, the build ghost (BlockCreator.SetBlockTypeToBuild) gets the same build check result (CanBuildBlock) as the base item's ghost there; then placed there, it is an upgrade block (tinted, its stats set) and is taken down again (`keep`: the ones placed with the option off stay, for `CIUpgradePlace loaded` after CISave + CILoadWorld). The option put back")]
+		public static void UpgradePlaceCommand(string[] args)
+		{
+			string part = args != null && args.Length > 0 ? args[0] : "";
+			if (part == "loaded") StartTest(UpgradePlaceLoadedRoutine()); else StartTest(UpgradePlaceRoutine(part == "keep"));
+		}
+
+		/// <summary>The upgrades `CIUpgradePlace keep` left on the raft (statics outlive a world reload).</summary>
+		static readonly List<string> upgradePlaceKept = new List<string>();
+
+		/// <summary>`CIUpgradePlace loaded`, after CISave and CILoadWorld: every upgrade kept is on the raft again as an upgrade
+		/// block (tinted, its stats set); then all of them are taken down.</summary>
+		static IEnumerator UpgradePlaceLoadedRoutine()
+		{
+			yield return new WaitForSeconds(1f);
+			bool ok = upgradePlaceKept.Count > 0;
+			List<Block> blocks = BlockCreator.GetPlacedBlocks().Where(b => b != null && b.buildableItem != null && ExtraUpgrades.FindMade(b.buildableItem) != null).ToList();
+			foreach (string name in upgradePlaceKept)
+			{
+				Block b = blocks.FirstOrDefault(x => x.buildableItem.UniqueName == name);
+				UpgradeBlock ub = b != null ? b.GetComponent<UpgradeBlock>() : null;
+				Check(ref ok, ub != null && ub.Upgrade != null && ub.Upgrade.Name == name, "loaded: " + name + " on the raft as an upgrade block");
+			}
+			Log("upgrade place loaded: " + blocks.Count + " upgrade blocks found, " + upgradePlaceKept.Count + " kept");
+			foreach (Block b in blocks) BlockCreator.RemoveBlockNetwork(b, null, true);
+			upgradePlaceKept.Clear();
+			if (ok) Log("PASS: upgrade place loaded"); else Fail("upgrade place loaded");
+		}
+
+		static IEnumerator UpgradePlaceRoutine(bool keep)
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player == null || !Raft_Network.IsHost || !CustomIslandSpawner.RaftPosition.HasValue) { Fail("upgrade place: host, in a world"); yield break; }
+			BlockCreator bc = player.BlockCreator;
+			var setType = HarmonyLib.AccessTools.Method(typeof(BlockCreator), "SetBlockTypeToBuild", new[] { typeof(Item_Base) });
+			var canBuild = HarmonyLib.AccessTools.Method(typeof(BlockCreator), "CanBuildBlock");
+			var destroyGhost = HarmonyLib.AccessTools.Method(typeof(BlockCreator), "DestroyGhostBlock");
+			Transform pivot = HarmonyLib.Traverse.Create(typeof(BlockCreator)).Field("lockedBuildPivot").GetValue<Transform>();
+			if (setType == null || canBuild == null || destroyGhost == null || pivot == null) { Fail("upgrade place: Raft's BlockCreator methods not found"); yield break; }
+
+			List<ExtraUpgrades.Upgrade> ups = ExtraUpgrades.All.Concat(ExtraUpgrades.CosmeticItems)
+				.Where(u => u.Item != null && u.Base != null && u.Item.settings_buildable != null && u.Item.settings_buildable.Placeable && u.Item.settings_buildable.GetBlockPrefabs() != null && u.Item.settings_buildable.GetBlockPrefabs().Length > 0).ToList();
+			var quadTypes = Resources.FindObjectsOfTypeAll<SO_BlockQuadType>();
+			var masks = Resources.FindObjectsOfTypeAll<SO_BlockCollisionMask>();
+			var optionsBefore = new HashSet<string>(WorldOptions.Current);
+			bool ok = ups.Count > 0;
+			Log("upgrade place: " + ups.Count + " buildable upgrades, " + quadTypes.Length + " surface types, " + masks.Length + " overlap masks");
+			if (keep) upgradePlaceKept.Clear();
+			try
+			{
+				foreach (bool optionOn in new[] { true, false })
+				{
+					var opts = new HashSet<string>(optionsBefore);
+					if (optionOn) opts.Add(WorldOptions.Upgrades); else opts.Remove(WorldOptions.Upgrades);
+					WorldOptions.Set(opts);
+					yield return null; yield return null;
+					string tag = "option " + (optionOn ? "on" : "off");
+					foreach (ExtraUpgrades.Upgrade u in ups)
+					{
+						int baseTypes = quadTypes.Count(q => q.AcceptsBlock(u.Base)), upTypes = quadTypes.Count(q => q.AcceptsBlock(u.Base) && q.AcceptsBlock(u.Item));
+						int baseMasks = masks.Count(m => m.IgnoresBlock(u.Base)), upMasks = masks.Count(m => m.IgnoresBlock(u.Base) && m.IgnoresBlock(u.Item));
+						Check(ref ok, baseTypes > 0 && upTypes == baseTypes && upMasks == baseMasks, tag + ", " + u.Display + ": surfaces " + upTypes + "/" + baseTypes + ", overlap masks " + upMasks + "/" + baseMasks);
+
+						// a surface of the raft that takes the base item, where its ghost passes Raft's build check
+						BlockQuad spot = null; Vector3 normal = Vector3.up; object baseErr = null, upErr = null;
+						foreach (BlockQuad q in UnityEngine.Object.FindObjectsOfType<BlockQuad>().Where(q => q.quadType != null && q.GetComponentInParent<Block>() != null).OrderBy(q => (q.transform.position - player.transform.position).sqrMagnitude).Take(80))
+						{
+							Vector3 n = q.transform.up;
+							if (!q.AcceptsBlock(u.Base, n)) { n = Vector3.up; if (!q.AcceptsBlock(u.Base, n)) continue; }
+							object e = GhostCheck(bc, setType, canBuild, destroyGhost, u.Base, q.transform.position);
+							if (e == null || Convert.ToInt32(e) != 0) continue;
+							spot = q; normal = n; baseErr = e;
+							break;
+						}
+						if (spot == null) { Log("upgrade place: " + u.Display + ": no free raft surface takes " + u.Base.UniqueName + " (only the surface lists checked)"); continue; }
+						bool accepts = spot.AcceptsBlock(u.Item, normal);
+						upErr = GhostCheck(bc, setType, canBuild, destroyGhost, u.Item, spot.transform.position);
+						Check(ref ok, accepts && upErr != null && upErr.ToString() == baseErr.ToString(), tag + ", " + u.Display + ": the raft surface takes it (" + accepts + "), build check " + upErr + " (base " + baseErr + ")");
+						Block b = bc.CreateBlockCheat(u.Item, pivot.InverseTransformPoint(spot.transform.position), Vector3.zero, DPS.Default, 0);
+						yield return null;
+						UpgradeBlock ub = b != null ? b.GetComponent<UpgradeBlock>() : null;
+						Check(ref ok, b != null && b.buildableItem == u.Item && ub != null && ub.Upgrade == u, tag + ", " + u.Display + ": placed, an upgrade block (" + (ub != null && ub.Upgrade != null) + ")");
+						if (b != null && keep && !optionOn) upgradePlaceKept.Add(u.Name);
+						else if (b != null) BlockCreator.RemoveBlockNetwork(b, null, true);
+						yield return null;
+					}
+				}
+			}
+			finally
+			{
+				WorldOptions.Set(optionsBefore);
+				try { destroyGhost.Invoke(bc, null); } catch { }
+			}
+			if (ok) Log("PASS: upgrade place"); else Fail("upgrade place");
+		}
+
+		/// <summary>The build ghost of an item at a spot and Raft's build check on it (a BuildError), or null.</summary>
+		static object GhostCheck(BlockCreator bc, System.Reflection.MethodInfo setType, System.Reflection.MethodInfo canBuild, System.Reflection.MethodInfo destroyGhost, Item_Base item, Vector3 at)
+		{
+			try
+			{
+				setType.Invoke(bc, new object[] { item });
+				Block ghost = HarmonyLib.Traverse.Create(bc).Field("selectedBlock").GetValue<Block>();
+				if (ghost == null) return null;
+				ghost.transform.position = at;
+				Physics.SyncTransforms();
+				return canBuild.Invoke(bc, new object[] { ghost });
+			}
+			catch (Exception e) { Log("upgrade place: ghost of " + item.UniqueName + ": " + (e.InnerException ?? e).Message); return null; }
+			finally { try { destroyGhost.Invoke(bc, null); } catch { } }
+		}
 	}
 }
