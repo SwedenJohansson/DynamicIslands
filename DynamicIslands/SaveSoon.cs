@@ -1,4 +1,5 @@
 using System;
+using HarmonyLib;
 using UnityEngine;
 
 namespace DynamicIslands
@@ -73,9 +74,13 @@ namespace DynamicIslands
 		}
 
 		/// <summary>Host in a world Raft would autosave (not the main menu, not loading, not a quick-start game).</summary>
-		static bool CanSave()
+		/// Never while the player leaves the world (Raft_Network.LeaveGame up to the next scene): Raft has already cleared
+		/// its world id then (Disconnect -> OnSceneEvent(false)), so a save would write the world and the player's
+		/// inventory under the empty id that every such world shares (inventory bug 11-09, SaveGuard).
+		internal static bool CanSave()
 		{
 			return Raft_Network.IsHost && !Raft_Network.InMenuScene && !SaveAndLoad.IsGameLoading && !GameManager.QuickStartGame
+				&& (SaveGuard.TestOff || (!GameManager.IsLeavingGame && !GameManager.IsQuittingGame && !SaveGuard.IdLost))
 				&& ComponentManager<SaveAndLoad>.Value != null;
 		}
 
@@ -114,5 +119,53 @@ namespace DynamicIslands
 
 		/// <summary>Tests: forget the last save time, so the next request saves after Delay.</summary>
 		internal static void ResetForTest() { lastSave = -1000f; loadedAt = -1000f; pending = false; }
+	}
+
+	/// <summary>
+	/// Inventory bug 11-09: two worlds showed the same inventory. Raft keeps each player's inventory in RGD_Users.rgd
+	/// under (Steam id, world id). Leaving a world, Raft clears SaveAndLoad.WorldGuid (Disconnect -> OnSceneEvent(false))
+	/// while CurrentGameFileName still names the world; "Quit game" then calls Application.Quit, and SaveSoon's save on
+	/// quit wrote the world's newest save with an empty world id and the player under the empty id. Every world saved
+	/// that way loads with the empty id, so they all read and write one shared inventory.
+	/// This guard refuses any save (the mod's or Raft's) of a world that was loaded or saved with an id but whose id is now
+	/// empty. Old worlds that truly have no id (noid-, CINoIdWorld) still save: their id was empty from the start.
+	/// </summary>
+	[HarmonyPatch(typeof(SaveAndLoad), "SaveGame")]
+	static class SaveGuard
+	{
+		static Guid worldId = Guid.Empty;
+		static string worldFile;
+		/// <summary>Saves refused so far (tests).</summary>
+		internal static int Refused;
+		/// <summary>Tests (CIInvFix guard off): the old behaviour, to show the bug.</summary>
+		internal static bool TestOff;
+
+		/// <summary>The world in play had an id and Raft has cleared it (the player is leaving).</summary>
+		internal static bool IdLost
+		{
+			get { return !TestOff && SaveAndLoad.WorldGuid == Guid.Empty && worldId != Guid.Empty && worldFile == SaveAndLoad.CurrentGameFileName; }
+		}
+
+		/// <summary>A world was read from its save (RestoreRGDGame): its id, empty for an old world.</summary>
+		internal static void OnWorldRead() { worldId = SaveAndLoad.WorldGuid; worldFile = SaveAndLoad.CurrentGameFileName; }
+
+		static bool Prefix()
+		{
+			try
+			{
+				if (SaveAndLoad.WorldGuid != Guid.Empty) { worldId = SaveAndLoad.WorldGuid; worldFile = SaveAndLoad.CurrentGameFileName; return true; }
+				if (!IdLost) return true;
+				Refused++;
+				Debug.LogWarning("[CUSTOM ISLANDS] Save skipped: the world \"" + worldFile + "\" is being left and Raft has already cleared its world id (saving now would give it the shared empty id and another world's inventory)");
+				return false;
+			}
+			catch { return true; }
+		}
+	}
+
+	[HarmonyPatch(typeof(SaveAndLoad), "RestoreRGDGame")]
+	static class SaveGuardRestorePatch
+	{
+		static void Postfix() { try { SaveGuard.OnWorldRead(); } catch { } }
 	}
 }
