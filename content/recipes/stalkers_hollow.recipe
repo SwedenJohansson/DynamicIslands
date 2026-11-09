@@ -169,6 +169,13 @@ place Zone_Trigger shtrenchdark at 62 -61 ground y=1
 # --- DEEP 1-HOUR (10-24): the lip rock (42.5 m from the floor, a beacon at the surface) and the warden house in the south-west pit with the crown vault; three floodlights against the Stalker
 # the rock that breaks the surface (42.5 m up from the floor), a beacon tower on its dry top
 call sk_seamount x=44 z=80 top=42.5 r=24
+# REACH 11-09 (w03): the dry top stood 2.5 m over the water on a steep lip all round (surface probe: 39.8 -> 42.4 in 2 m;
+# no way out of the sea to the tower): a ramp up its west side, as on Biome Seven (the ledge chest stays 5 m off)
+brush flatten at 36 78 r=1.8 s=20 frames=200 h=39.6
+brush flatten at 37.5 78 r=1.8 s=20 frames=200 h=40.4
+brush flatten at 39 78 r=1.8 s=20 frames=200 h=41.2
+brush flatten at 40.3 78 r=1.6 s=20 frames=200 h=42
+brush smooth at 38.2 78 r=3 s=4 frames=20
 call sk_pit x=-50 z=-74 h0=-6
 call sk_cave x=86 z=-16 h=2 yaw=0 al=shcave2 chest=shcave2chest
 call sk_reef x=65.6 z=80 r=6 seed=24910

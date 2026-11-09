@@ -579,12 +579,11 @@ namespace DynamicIslands.Editor
 					bool up = n.sqrMagnitude >= 1e-12f && n.normalized.y >= TopUp;
 					// (but not on a steep slope: Raft's ground draws that as its own stretched cliff rock - its shader, not the splat
 					// map - which the baked top can't match; each dug mouth in a steep face sat in a patterned sand-rock patch up the
-					// wall, w03 11-09 Lumen/Stalker's. There the rim stays rock, its walls' look, beside the cliff's)
-					if (!up)
-					{
-						Vector3 wa = at.TransformPoint(verts[rim[i]]), wb = at.TransformPoint(verts[rim[i + 1]]), wc = at.TransformPoint(verts[rim[i + 2]]);
-						if (FaceOnGround(land, wa, wb, wc) && !OnSteepGround(land, (wa + wb + wc) / 3f)) up = true;
-					}
+					// wall, w03 11-09 Lumen/Stalker's. There the rim stays rock, its walls' look, beside the cliff's - every face over
+					// such ground, also one whose smoothed corners face up: those still left a patch over Stalker's south-west mouth)
+					Vector3 wa = at.TransformPoint(verts[rim[i]]), wb = at.TransformPoint(verts[rim[i + 1]]), wc = at.TransformPoint(verts[rim[i + 2]]);
+					if (OnSteepGround(land, (wa + wb + wc) / 3f)) up = false;
+					else if (!up && FaceOnGround(land, wa, wb, wc)) up = true;
 					if (!up) { side.Add(rim[i]); side.Add(rim[i + 1]); side.Add(rim[i + 2]); continue; }
 					for (int e = 0; e < 3; e++)
 					{
@@ -919,7 +918,7 @@ namespace DynamicIslands.Editor
 			return n;
 		}
 
-		/// <summary>Tests: the rim's top faces (part 2, the ground's look) on steep ground (OnSteepGround) lying on it - a
+		/// <summary>Tests: the rim's top faces (part 2, the ground's look) over steep ground (OnSteepGround) - a
 		/// patterned patch of the baked layers where Raft draws its cliff rock. where: the first few.</summary>
 		public int RimSteepTop(out string where)
 		{
@@ -937,9 +936,7 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i + 2 < tris.Length; i += 3)
 			{
 				Vector3 a = r.TransformPoint(verts[tris[i]]), b = r.TransformPoint(verts[tris[i + 1]]), c = r.TransformPoint(verts[tris[i + 2]]);
-				Vector3 up = Vector3.Cross(b - a, c - a);
-				if (up.sqrMagnitude < 1e-8f || up.normalized.y >= TopUp) continue;
-				if (!FaceOnGround(land, a, b, c) || !OnSteepGround(land, (a + b + c) / 3f)) continue;
+				if (Vector3.Cross(b - a, c - a).sqrMagnitude < 1e-8f || !OnSteepGround(land, (a + b + c) / 3f)) continue;
 				n++;
 				if (seen.Count < 4) seen.Add(((a + b + c) / 3f).ToString("0.0"));
 			}
