@@ -100,6 +100,8 @@ namespace DynamicIslands
 		static IEnumerator CursorFixRoutine(IslandWorldState.Entry e, string who)
 		{
 			bool ok = true;
+			// (11-09: Raft's place faked as "in front" for the test - a test Raft in the background lets the lock go otherwise; ends by itself)
+			ModCursor.TestPlaceFakedUntil = Time.realtimeSinceStartup + 300f; ModCursor.TestMinimisedInFront = false;
 			DialoguePanel.Close(); JournalWindow.Close(); LevelWindow.Close(); PlayerNotebookWindow.Close(); NoteReader.Close();
 			yield return new WaitForSecondsRealtime(0.3f);
 			MenuType start = CanvasHelper.ActiveMenu;
@@ -195,6 +197,7 @@ namespace DynamicIslands
 			}
 			else Log("(no pause menu: step 7 skipped)");
 
+			ModCursor.TestPlaceFakedUntil = 0;
 			if (ok) Log("PASS: cursor fix (" + (Raft_Network.IsHost ? "host" : "client") + ")"); else Fail("cursor fix");
 		}
 
@@ -208,7 +211,10 @@ namespace DynamicIslands
 		static IEnumerator CursorMinFrontRoutine()
 		{
 			bool ok = true;
-			if (Cursor.lockState != CursorLockMode.Locked || Cursor.visible) { Fail("cursor min front: needs a locked, hidden mouse (in game, no menu open) - " + CursorState()); yield break; }
+			// (11-09: Raft's place faked for the whole test - a test Raft in the background lets the lock go otherwise)
+			ModCursor.TestPlaceFakedUntil = Time.realtimeSinceStartup + 120f; ModCursor.TestMinimisedInFront = false;
+			yield return new WaitForSecondsRealtime(0.3f);
+			if (Cursor.lockState != CursorLockMode.Locked || Cursor.visible) { ModCursor.TestPlaceFakedUntil = 0; Fail("cursor min front: needs a locked, hidden mouse (in game, no menu open) - " + CursorState()); yield break; }
 			string before = ScreenCursor();
 			Log("Cursor min front start: " + CursorState() + ", screen cursor " + before);
 			try
@@ -220,7 +226,7 @@ namespace DynamicIslands
 
 				ModCursor.TestMinimisedInFront = true;
 				yield return new WaitForSecondsRealtime(0.3f);
-				Check(ref ok, Cursor.lockState == CursorLockMode.None && ModCursor.LockLetGo && !Cursor.visible && ModCursor.LetGoCount > logged, "minimised in front: lock let go, mouse stays hidden, logged - " + CursorState());
+				Check(ref ok, Cursor.lockState == CursorLockMode.None && ModCursor.LockLetGo && Cursor.visible && ModCursor.LetGoCount > logged, "minimised in front: lock let go, mouse shown, logged - " + CursorState());
 				Check(ref ok, ScreenCursor() == before, "the screen cursor did not move (" + before + " -> " + ScreenCursor() + ")");
 
 				ModCursor.TestMinimisedInFront = false;
@@ -232,7 +238,7 @@ namespace DynamicIslands
 				yield return new WaitForSecondsRealtime(0.3f);
 				LevelWindow.Open();
 				yield return new WaitForSecondsRealtime(0.3f);
-				if (!LevelWindow.IsOpen) { Fail("cursor min front: the stats page didn't open - run Levels on first"); yield break; }
+				if (!LevelWindow.IsOpen) { ModCursor.TestPlaceFakedUntil = 0; Fail("cursor min front: the stats page didn't open - run Levels on first"); yield break; }
 				ModCursor.TestMinimisedInFront = false;
 				yield return new WaitForSecondsRealtime(0.3f);
 				Check(ref ok, Cursor.lockState == CursorLockMode.None && Cursor.visible && !ModCursor.LockLetGo, "a window showed the mouse meanwhile: it is not locked again - " + CursorState());
@@ -251,6 +257,7 @@ namespace DynamicIslands
 			}
 			yield return new WaitForSecondsRealtime(0.3f);
 			Check(ref ok, Cursor.lockState == CursorLockMode.Locked && !Cursor.visible, "back as it was - " + CursorState() + ", screen cursor " + ScreenCursor());
+			ModCursor.TestPlaceFakedUntil = 0;
 			if (ok) Log("PASS: cursor min front"); else Fail("cursor min front");
 		}
 	}

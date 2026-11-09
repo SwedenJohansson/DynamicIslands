@@ -396,6 +396,13 @@ namespace DynamicIslands
 		}
 		static object hookedShift, hookedReceived;
 
+		// (11-09: the mouse lock let go again after Raft's own Update code - ModCursor.Tick)
+		private void LateUpdate()
+		{
+			try { ModCursor.Tick(); }
+			catch (Exception e) { TickError("Mouse lock", e); }
+		}
+
 		private void Update()
 		{
 			try { HookRaftEvents(); }
