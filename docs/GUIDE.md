@@ -389,6 +389,11 @@ just done, the one you're on and what comes after. A longer quest scrolls - to y
 and with the mouse wheel over the panel while the cursor is free (the inventory, the journal, the Esc menu).
 Once every quest of the island is done, the panel goes by itself **30 seconds** later; its **×** (top right, while the
 cursor is free) closes it at any time - it comes back with the next step, or when you come to the island again.
+**Move the panel** by dragging its title or edge while the cursor is free (inventory open, the journal, the Esc menu);
+it stays on the screen and keeps that place on this PC (`questpanel` in `world_rules.txt`), also in other worlds.
+**Double-click** it, or **Defaults... > Keys (this PC) > Quest panel: Reset place**, to put it back top right. The
+panel never sits under the corner island map: while the map shows, the panel moves just below it (or to its left, if
+you put it there and that is the shorter way), and goes back to its place when the map is hidden (M) or off.
 
 **Stuck? Skip the current quest step.** If a step can no longer be done (a story key used up by the wrong lock, a
 lever that will not move), the host can skip it: **Esc > Custom Islands > Skip current quest step** (under **Stuck on a
@@ -4202,7 +4207,7 @@ get the settings they share at once.
 | Group | What is in it |
 |---|---|
 | **Random islands while sailing** | Random islands on or off (0 = off), the quiet minutes in a new world, the spacing, how far ahead an island appears (**Appear from** and **to**), and when a needed island returns |
-| **Keys (this PC)** | The **Journal** key (J), the **Stats** key (K) and, on the second line, **Notebook** (U, your own notebook), **Map** (M, the minimap) and **Ping** (G, a ping for the crew), on the third line **Map zoom in** (=, the + key) and **Map zoom out** (-): click one, then press the new key (Esc keeps the old one). Beside them the **Minimap** button (ON) switches the island map off on this PC. A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why |
+| **Keys (this PC)** | The **Journal** key (J), the **Stats** key (K) and, on the second line, **Notebook** (U, your own notebook), **Map** (M, the minimap) and **Ping** (G, a ping for the crew), on the third line **Map zoom in** (=, the + key) and **Map zoom out** (-): click one, then press the new key (Esc keeps the old one). Beside them the **Minimap** button (ON) switches the island map off on this PC. A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why A fourth line, **Quest panel: Reset place**, puts a dragged quest panel back in its own place (lit while it was moved). |
 | **Shared with every player** | **Receiver dots** on or off, the **Receiver range**, **Unload beyond** and **Regrow days (new worlds)** |
 | **Generated islands** | The weight of new generated islands, the chance one flies, **Things to gather**, **Finds in the shallows** and how far down they go, the five styles (at least one stays lit) and a button for each kind of thing to gather (lit = on) |
 | **Editor camera (this PC)** | The island editor's camera: **Look sensitivity**, **Move speed**, **Zoom speed**, **Pan speed**, **Drag up: look up / down** and **Wheel up: zoom in / out** - the same as the editor's **Camera...** button ([4.1](#41-the-screen)); kept in `world_rules.txt` |
@@ -4256,6 +4261,7 @@ there means plain Raft.
 | `raftgap` | `min-max`, for example `3-6` (min 2-20, max 4-50) | One random island after every min to max of Raft's own islands | **One after every ... to ...** under CHOOSE ISLANDS..., at once; `WorldIslandsGap <min>-<max>` in the main menu |
 | `journalkey`, `statskey` | A Unity key name, for example `J`, `K` or `F6` | The keys of the journal (J) and the stats page (K) in a world | **Defaults...** > **Keys (this PC)**, at once. A key that can't be used falls back to J or K, and the log says so |
 | `minimap` | `on` or `off` | Whether the island map can be used on this PC (Minimap button on the third line of the Keys group). Off: never shown, M and zoom do nothing, no picture is taken; pings still work. Only worlds with the World setting Island minimap on have a map at all | **Defaults...** > **Keys (this PC)**, at once. Empty = on |
+| `questpanel` | Two numbers `x,y` (UI units from the screen's top-right corner), or empty | Where you dragged the quest panel on this PC; empty = its own place, top right | Dragging the panel; **Defaults...** > **Keys (this PC)** > **Reset place** or a double-click on it empties it |
 | `notebookkey`, `mapkey`, `pingkey`, `mapzoominkey`, `mapzoomoutkey` | A Unity key name | The keys of your own notebook (U), the minimap (M), pings (G) and the map's zoom (= and -) | **Defaults...** > **Keys (this PC)**, at once. Empty = the default: the first of U/Y/O, M/N/Comma, G/H/B, Equals/RightBracket/PageUp, Minus/LeftBracket/PageDown that Raft doesn't use (its main or second key) and no key before it has |
 | `cameralook`, `cameraspeed`, `camerazoom`, `camerapan` | A multiplier, 1 = the mod's own: look 0.2-4, speed 0.1-10, zoom and pan 0.25-4 | The island editor camera's look sensitivity, flying speed, wheel zoom step and pan speed (this PC) | The editor's **Camera...** window or **Defaults... > Editor camera (this PC)**, a moment after a change |
 | `cameradragup`, `camerawheel` | `up` / `down`; `normal` / `reversed` | Which way dragging up turns the editor's view (up, the default; only a saved `down` turns it round) and the wheel's direction | The same |

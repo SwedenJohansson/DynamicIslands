@@ -591,8 +591,32 @@ namespace DynamicIslands.Editor
 					return;
 				}
 			}
+			// (audit 11-09: a client's give is checked as the other story messages are - a positive count, and the island it
+			// names is loaded on their side (PlayerTrust.MayMark); refused, everyone gets the state again so their count is right)
+			if (msg.Name == "give" && !GiveTrusted(msg.Data ?? "", from))
+			{
+				IslandNetwork.SendStory(StateMessage());
+				return;
+			}
 			// The host: a client's change; everyone gets the new state
 			if (Apply(msg.Name ?? "", msg.Data ?? "")) { IslandNetwork.SendStory(StateMessage()); Raise(); }
+		}
+
+		/// <summary>Host: whether a player's "give" is taken - a count of 1 to 1000, and when it names the island the item
+		/// came from (the 7th field, PageIsland), that player is near it (PlayerTrust.MayMark). A give with no island (at sea)
+		/// is taken, as MayMark takes an island it doesn't know.</summary>
+		internal static bool GiveTrusted(string data, ulong from)
+		{
+			string[] f = Split(data);
+			int n;
+			if (f.Length < 2 || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out n) || n <= 0 || n > 1000)
+			{
+				Debug.Log("[CUSTOM ISLANDS] A player's story item give is refused: bad count '" + (f.Length > 1 ? f[1] : "") + "'");
+				return false;
+			}
+			if (f.Length < 7 || f[6].Length == 0) return true;
+			IslandWorldState.Entry e = StoryBook.EntryOfPageIsland(f[6]);
+			return e == null || PlayerTrust.MayMark(from, e.Id, "story item '" + f[0] + "'");
 		}
 
 		public static IslandNetMessage StateMessage()
@@ -1122,6 +1146,7 @@ namespace DynamicIslands.Editor
 		{
 			if (instance == null) Build();
 			PlayerNotebookWindow.Close();
+			LevelWindow.Close(); // (audit 11-09: the journal opened behind the stats page)
 			instance.Show();
 		}
 

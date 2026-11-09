@@ -56,8 +56,17 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The mod's keys in a world (stats, journal, notebook, minimap, ping) do nothing: someone is typing, or
-		/// Raft's pause menu is open (user 11-04: they opened their pages over it).</summary>
-		public static bool Blocked() { return SomeoneTyping() || PauseOpen(); }
+		/// Raft's pause menu is open (user 11-04: they opened their pages over it), or any other menu of Raft's is open -
+		/// inventory, crafting, trading post... (audit 11-09: J/K/U opened over the inventory, and when Tab closed it the
+		/// page stayed with the mouse locked). The mod's own freed mouse (ActiveMenu PauseMenu) doesn't count.</summary>
+		public static bool Blocked() { return SomeoneTyping() || PauseOpen() || RaftMenuOpen(); }
+
+		/// <summary>One of Raft's own menus is open (not the mod's PauseMenu marker for a freed mouse).</summary>
+		public static bool RaftMenuOpen()
+		{
+			try { return ModCursor.RaftMenu(CanvasHelper.ActiveMenu); }
+			catch (Exception) { return false; }
+		}
 
 		static GameObject chatField;
 		static System.Reflection.FieldInfo rmlChatOpen;
