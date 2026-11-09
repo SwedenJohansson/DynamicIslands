@@ -21,7 +21,7 @@ namespace DynamicIslands
 			if (player == null || !Raft_Network.IsHost) { Fail("upgrade refund: needs a world, as host"); yield break; }
 			List<ExtraUpgrades.Upgrade> ups = ItemManager.GetAllItems()
 				.Select(i => ExtraUpgrades.Find(i.UniqueIndex)).Where(u => u != null && u.Item != null && u.Base != null
-					&& u.Item.settings_buildable != null && u.Item.settings_buildable.GetBlockPrefabs() != null
+					&& u.Item.settings_buildable != null && u.Item.settings_buildable.Placeable && u.Item.settings_buildable.GetBlockPrefabs() != null
 					&& u.Item.settings_buildable.GetBlockPrefabs().Length > 0 && u.Item.settings_recipe != null).ToList();
 			Check(ref ok, ups.Count > 0, "placeable upgrades found: " + ups.Count);
 			int natural = 0, cleared = 0;
