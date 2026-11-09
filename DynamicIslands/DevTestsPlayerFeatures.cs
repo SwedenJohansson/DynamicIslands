@@ -740,7 +740,7 @@ namespace DynamicIslands
 			if (what == "world") { yield return MapWorld(); yield break; }
 			if (what == "editor") { yield return MapEditor(); yield break; }
 			bool ok = true;
-			int mode = Minimap.Mode, zoom = Minimap.Zoom;
+			int mode = Minimap.Mode, zoom = Minimap.Zoom; bool opt = MapOptionOn(); // (zoom keys work only with the world setting on)
 			Check(ref ok, Minimap.NextMode(Minimap.Corner) == Minimap.Off && Minimap.NextMode(Minimap.Off) == Minimap.Corner && Minimap.NextMode(1) == Minimap.Corner, "the map key: corner -> hidden -> corner, never full screen");
 			Check(ref ok, WorldOptions.Parse("nominimap").Count == 0 && WorldOptions.Parse("minimap").Contains(WorldOptions.MinimapOn), "old worlds' 'nominimap' is dropped (no map), 'minimap' turns it on");
 			Minimap.SetZoom(8); bool z4 = Minimap.Zoom == 4;
@@ -754,8 +754,9 @@ namespace DynamicIslands
 			Check(ref ok, Mathf.Abs(v.width - 0.25f) < 0.001f && Mathf.Abs(v.center.x - 0.5f) < 0.001f && Mathf.Abs(v.center.y - 0.5f) < 0.001f, "at 4x a quarter, around the player");
 			Rect edge = Minimap.View(Minimap.Center + new Vector3(10000f, 0f, 10000f));
 			Check(ref ok, edge.xMax <= 1.0001f && edge.yMax <= 1.0001f && edge.x >= 0f, "... kept inside the picture at its edge");
-			Minimap.Mode = mode; Minimap.Zoom = zoom;
-			Check(ref ok, PlaceableCatalog.Get(Minimap.MarkerName) != null, "the object list has the map marker");
+			Minimap.Mode = mode; Minimap.Zoom = zoom; MapOptionBack(opt);
+			if (PlaceableCatalog.IsBuilt) Check(ref ok, PlaceableCatalog.Get(Minimap.MarkerName) != null, "the object list has the map marker");
+			else Log("minimap unit: the object list is not built yet (opens with the editor) - marker check skipped");
 			IslandNetMessage m = Minimap.MessageFor(new Vector3(1f, 2f, 3f), 77UL);
 			Check(ref ok, m.Kind == IslandNetMessage.Ping && m.Kind == 40 && m.Offsets.Length == 3 && m.Data == "77", "the ping message: kind 40, a spot, the sender's id");
 			if (ok) Log("PASS: minimap unit"); else Fail("minimap unit");
