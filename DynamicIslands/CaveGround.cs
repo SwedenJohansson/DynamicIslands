@@ -363,7 +363,8 @@ namespace DynamicIslands.Editor
 		}
 		/// <summary>How far under an open cave's floor its apron digs the ground (m: crossing the floor at a slant, not grazing it in a
 		/// notched line, gen-large r36), and within how far of the end the eased ground is kept out of the rounding.</summary>
-		const float OpenSink = 0.3f, ApronPin = 1.5f, OpenNose = 0.7f;
+		const float OpenSink = 0.3f, ApronPin = 1.5f, OpenNose = 1.5f, OpenEdgeSlope = 0.4f, OpenEdgeReach = 1.5f; // (OpenEdgeSlope/Reach: the sand round an open floor's edge, m per m and how far)
+		 // (OpenNose: how far in from an open floor's edge the sand eases from SlabSink to SlabUnder under it)
 		/// <summary>How steeply a den's raised sand falls away to the sand round about (rise per metre), and how much further than
 		/// ApronReach it may spread.</summary>
 		const float ApronSlope = 0.3f, ApronSpread = 8f;
@@ -518,15 +519,19 @@ namespace DynamicIslands.Editor
 								// point of it, the sand crossed its rounded nose along the terrain's grid, a sawtooth line over a bare
 								// dirt band, gen-large r26-r49 - now the sand meets it along its own smooth contour; SlabUnder kept
 								// under its flat inner part, where the sand came up through its dips)
-								bool nose = false;
-								for (int dir = 0; dir < 4 && !nose; dir++)
-								{
-									Vector3 by = at + new Vector3(dir == 0 ? OpenNose : dir == 1 ? -OpenNose : 0f, 0f, dir == 2 ? OpenNose : dir == 3 ? -OpenNose : 0f);
-									float there = SlabTop(cols, new Vector3(by.x, endFloor[e] + SlabLook, by.z));
-									nose = float.IsNegativeInfinity(there) || there < here - 0.25f;
-								}
+								// (by its distance in from the floor's edge, a smooth ramp from SlabSink at the edge to SlabUnder OpenNose m in (0.7 m by a yes or no before):
+								// a nose-or-not choice per point left the line where the sand meets it a sawtooth, gen-large r53)
+								float edgeIn = OpenNose;
+								for (float r = 0.25f; r < edgeIn; r += 0.25f)
+									for (int dir = 0; dir < 8 && r < edgeIn; dir++)
+									{
+										float ang = dir * Mathf.PI * 0.25f;
+										Vector3 by = at + new Vector3(Mathf.Cos(ang) * r, 0f, Mathf.Sin(ang) * r);
+										float there = SlabTop(cols, new Vector3(by.x, endFloor[e] + SlabLook, by.z));
+										if (float.IsNegativeInfinity(there) || there < here - 0.25f - r * 0.35f) edgeIn = r;
+									}
 								best = 0.01f; byBox = true; to = here; slab = true; under = true; dipOnly = true;
-								sinkBy = nose ? SlabSink : SlabUnder;
+								sinkBy = Mathf.Min(SlabUnder, SlabSink + OpenEdgeSlope * edgeIn);
 							}
 						}
 					}
@@ -605,23 +610,49 @@ namespace DynamicIslands.Editor
 					float avg = sum / n;
 					h[zz, xx] = raise || upAt.Contains(q) ? avg : Mathf.Min(avg, orig[zz, xx]);
 				}
+			// (an open cave: then the sand round its floor's edge held under one sloping surface through that edge - under the floor
+			// by OpenEdgeSlope per m in, and out past the edge no higher than the edge plus that per m out: the sand's grid points
+			// each side of the edge at any heights met the floor along the grid's own lines, a sawtooth edge over the dirt floor,
+			// gen-large r26-r56 user; now the sand crosses the floor near its own edge's line)
+			if (!raise)
+			{
+				int edged = 0;
+				for (int z = z0; z <= z1; z++)
+					for (int x = x0; x <= x1; x++)
+					{
+						if (inside[z, x]) continue;
+						Vector3 at = new Vector3(o.x + x * sx, 0f, o.z + z * sz);
+						Vector3 pw = at - mid;
+						float s = Vector3.Dot(pw, along);
+						int e = !open[1] || (open[0] && s - endAt[0] >= -s - endAt[1]) ? 0 : 1;
+						if (float.IsInfinity(endFloor[e]) || (e == 0 ? s - boxS : boxS - s) - halfLen < -ApronBeside) continue; // (at its open end only: beside its walls a hole under the rock)
+						float cur = h[z - z0, x - x0] * sy + o.y;
+						if (Mathf.Abs(cur - endFloor[e]) > SlabLook + OpenEdgeReach) continue;
+						float yFrom = endFloor[e] + SlabLook;
+						float here = SlabTop(cols, new Vector3(at.x, yFrom, at.z));
+						bool onFloor = !float.IsNegativeInfinity(here) && Mathf.Abs(here - endFloor[e]) < SlabLook && here > 0.5f;
+						float cap = float.PositiveInfinity;
+						for (float r = 0.25f; r <= OpenEdgeReach + 0.01f && float.IsInfinity(cap); r += 0.25f)
+							for (int dir = 0; dir < 8; dir++)
+							{
+								float ang = dir * Mathf.PI * 0.25f;
+								Vector3 by = at + new Vector3(Mathf.Cos(ang) * r, 0f, Mathf.Sin(ang) * r);
+								float there = SlabTop(cols, new Vector3(by.x, yFrom, by.z));
+								bool thereOn = !float.IsNegativeInfinity(there) && Mathf.Abs(there - endFloor[e]) < SlabLook && there > 0.5f;
+								if (onFloor && !thereOn) { cap = here - Mathf.Min(SlabUnder, SlabSink + OpenEdgeSlope * r); break; }
+								if (!onFloor && thereOn) cap = Mathf.Min(cap, there - SlabSink + OpenEdgeSlope * r);
+							}
+						if (onFloor && float.IsInfinity(cap)) cap = here - SlabUnder;
+						if (float.IsInfinity(cap) || cur <= cap + 0.01f) continue;
+						if (dugTo != null && !dugTo.ContainsKey(z * res + x)) dugTo[z * res + x] = new Vector2(h[z - z0, x - x0], -1f);
+						h[z - z0, x - x0] = Mathf.Clamp01((cap - o.y) / sy); edged++; moved++;
+					}
+				Debug.Log("[CUSTOM ISLANDS] Apron " + cave.name + ": " + edged + " points held under its floor's edge");
+			}
 			Debug.Log("[CUSTOM ISLANDS] Apron " + cave.name + (raise ? " (both ways)" : " (down only)") + ": " + pts.Count + " room points, " + nearN + " near, "
 				+ moved + " moved, " + offSide + " to the side or behind, " + lower + " already there or lower, " + wet + " at the sea, " + slabHits + " to the slab's top");
 			if (moved == 0) return 0;
 			data.SetHeights(x0, z0, h);
-			for (int e = 0; e < 2; e++) // DEBUGPROBE
-			{
-				if (!open[e]) continue;
-				string row = "";
-				for (float d = -3f; d <= 4f; d += 0.5f)
-					for (float lw = 0f; lw <= 0f; lw += 1f)
-					{
-						Vector3 pp = boxMid + along * ((e == 0 ? 1f : -1f) * (halfLen + d)) + sideDir * (lw * (halfW - 1f));
-						float top = SlabTop(cols, new Vector3(pp.x, endFloor[e] + SlabLook, pp.z));
-						row += string.Format(" [{0:0},{1:0}] g{2:0.00} s{3:0.00}", d, lw, land.SampleHeight(pp) + o.y, top);
-					}
-				Debug.Log("[CUSTOM ISLANDS] ApronProbe " + cave.name + " end " + e + " floor " + endFloor[e].ToString("0.00") + row);
-			}
 			if (dugTo != null)
 			{
 				// (as kept: the heights are stored rounded, and the editor puts back only a point still at its kept height)

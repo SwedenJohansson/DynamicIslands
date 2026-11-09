@@ -315,12 +315,14 @@ namespace DynamicIslands
 			}
 			// (the hill's slanted faces right of the middle: their triangle and cell, to find flat slabs)
 			int told = 0;
-			for (int y = 1; y < 6 && told < 6; y++)
-				for (int x = 7; x < 12 && told < 6; x += 2)
+			for (int y = 4; y < 7 && told < 12; y++)
+				for (int x = 0; x < 12 && told < 12; x++)
 				{
 					Vector3 d = rot * new Vector3(((x + 0.5f) / 12f * 2f - 1f) * tw, (1f - (y + 0.5f) / 7f * 2f) * th, 1f);
 					RaycastHit h;
-					if (!Physics.Raycast(eye, d, out h, 200f, ~0, QueryTriggerInteraction.Ignore) || h.collider.name != CaveMountain.SkinName || h.normal.y < 0.3f || h.normal.y > 0.85f) continue;
+					if (!Physics.Raycast(eye, d, out h, 200f, ~0, QueryTriggerInteraction.Ignore) || h.collider.name != CaveMountain.SkinName || (h.normal.y > 0.3f && h.normal.y < 0.95f)) continue;
+					float best = float.PositiveInfinity; foreach (Terrain tt in Terrain.activeTerrains) { float gy = tt.SampleHeight(h.point) + tt.transform.position.y; if (Mathf.Abs(gy - h.point.y) < Mathf.Abs(best - h.point.y)) best = gy; }
+					Log("     terr " + best.ToString("F2") + " for:");
 					var mc = h.collider as MeshCollider;
 					string tri = "";
 					if (mc != null && mc.sharedMesh != null && h.triangleIndex >= 0)

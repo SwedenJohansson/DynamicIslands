@@ -1215,8 +1215,7 @@ namespace DynamicIslands.Editor
 					}
 			}
 			finally { Physics.queriesHitBackfaces = backsOpen; }
-			int leftOut = 0, dbgNH = 0, dbgFree = 0, dbgSky = 0, dbgHollow = 0; // DEBUGPLUG
-			for (int i = 0; i < nx; i++) for (int k = 0; k < ny; k++) if (hollow[i, k]) dbgHollow++; // DEBUGPLUG
+			int leftOut = 0;
 			for (int i = 0; i < nx; i++)
 				for (int k = 0; k < ny; k++)
 				{
@@ -1233,7 +1232,7 @@ namespace DynamicIslands.Editor
 							if (hollow[a, b]) byHollow = true;
 							if (state[a, b] == 2) byWayIn = true;
 						}
-					if (!byHollow || (sky[i, k] && !byWayIn) || free[i, k]) { state[i, k] = 0; leftOut++; if (!byHollow) dbgNH++; else if (free[i, k]) dbgFree++; else dbgSky++; } // DEBUGPLUG
+					if (!byHollow || (sky[i, k] && !byWayIn) || free[i, k]) { state[i, k] = 0; leftOut++; }
 				}
 			int cells = 0;
 			var trisOut = new List<int>();
@@ -1358,8 +1357,6 @@ namespace DynamicIslands.Editor
 			CaveVeil.Build(go, hcx, hcy, ha, hb, hp, archNoise, zf - PlugFunnel, my, wr.sharedMaterial);
 			// (lit as the den, its own parts looked up again, the outside too)
 			CaveLit.Mark(den);
-			Debug.Log("[CUSTOM ISLANDS] PLUGDBG at " + go.transform.TransformPoint(new Vector3(hcx, hcy, zf)).ToString("0.00") + " arch " + go.transform.TransformPoint(new Vector3(hcx, hcy, zf - PlugFunnel)).ToString("0.00") + " denMouth " + go.transform.TransformPoint(new Vector3(hcx, hcy, RoomMax.z)).ToString("0.00") + " ha " + (ha * size).ToString("0.00")); // DEBUGPLUG
-			Debug.Log("[CUSTOM ISLANDS] PLUGDBG hollow " + dbgHollow + " notByHollow " + dbgNH + " free " + dbgFree + " sky " + dbgSky + " nx " + nx + " ny " + ny + " z " + z.ToString("0.00") + " zf " + zf.ToString("0.00")); // DEBUGPLUG
 			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + cells + " cells (" + leftOut + " out in the open left out), rock relief, smooth, arched way in, " + wr.sharedMaterial.name + (atlas ? " at uv " + swatch.ToString("0.000") : ""));
 		}
 
