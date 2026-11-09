@@ -290,7 +290,9 @@ come has the **same chance**, visited or not: with 50 such islands each is 1 in 
 that far.
 
 **On the Receiver:** once you have built Raft's Receiver, custom islands show as **green dots** with their distance,
-if they are within 2 km - an island the players still need shows however far it is: its quest begun and not done, one the plan waits for, a plan's island not finished yet (one on its own Receiver frequency too), or a story step not done yet (`receiverDistance` in `spawnpool.txt`). An island a rule brought (a quest reward, a plan) carries its name on its dot.
+if they are within 2 km - an island the players still need shows however far it is: its quest begun and not done, one the plan waits for, a plan's island not finished yet (one on its own Receiver frequency too), or a story step not done yet (`receiverDistance` in `spawnpool.txt`). An island a rule brought (a quest reward, a plan) carries its name on its dot. Only **this world's plan** counts: islands that
+another plan brought (a plan the world played before `WorldPlan <name>` switched it, or a rule since taken out of the plan) stay
+in the sea but get no dot, so the Receiver shows only the plan you are playing. Plans you have downloaded or deleted change nothing here.
 
 ![Custom islands on the Receiver](images/receiver-dots.jpg)
 *Raft's Receiver with two custom islands as green dots, one 494 m away.*
@@ -3166,7 +3168,8 @@ names are the same every time, its exact places aren't.
   the changed plan plays - rules that already happened stay done, new ones come - and you're told so;
 - deleting the plan file, an **update** of a library or pack plan, or **another player** hosting the world with a
   different plan of the same name never changes the world: it plays its own copy (to give a running world another
-  plan on purpose, use the F10 command `WorldPlan <name>` in it);
+  plan on purpose, use the F10 command `WorldPlan <name>` in it - the last plan's islands then leave the Receiver, and come
+  back if you switch back);
 - a **new plan with an old plan's name** is a different plan: each plan you make or copy gets its own id (`id =` in
   the file), so if you delete a plan and make another under its name, worlds made with the old one keep playing their
   own copy and the new plan's edits don't reach them;
@@ -4313,7 +4316,7 @@ Press **F10** for RML's console.
 | `ListIslands` / `ListSpawned` | Anywhere / world | Your saved islands / the world's custom islands with their distance |
 | `SpawnPool` | Anywhere | Which islands appear on their own, and how often. A player who joined is told that the host's `spawnpool.txt` decides, and which islands the host left out (until the host's copy of the world has come: that it comes with the host's next save) |
 | `CustomIslandsAuto on` / `off` | World, host | Automatic islands on or off for this world |
-| `WorldPlan` / `WorldPlan <name>` | World | The world's plan and its rules / give it another plan (host). A player who joined sees the host's plan, which of its rules are done and the story chain; trying to change it says only the host can |
+| `WorldPlan` / `WorldPlan <name>` | World | The world's plan and its rules / give it another plan (host; the last plan's islands leave the Receiver). A player who joined sees the host's plan, which of its rules are done and the story chain; trying to change it says only the host can |
 | `StoryChain` | World | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | World | What the randomizer does here / change it (host) |
 | `WorldOptions` / `WorldOptions +option -option` | World or main menu | The world's World settings / change them (host; at the main menu: the next new world). Options: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ufo`, `glowsea`, `lightning`, `ghostship`, `whalebreach`, `fogbanks`, `kraken`, `fogsight`, `mirrorislands`, `nominimap`, `fullerislands` ([9.4](#94-extra-options)) |
