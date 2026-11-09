@@ -1078,6 +1078,110 @@ namespace DynamicIslands
 			if (ok) Log("PASS: minimap ui (" + dir + ")"); else Fail("minimap ui");
 		}
 
+		[ConsoleCommand(name: "CIQuestPanelPlace", docs: "Dev (11-09): the quest panel and the corner map. World 'CI ...': on the map test island the panel is never under the map (shown, hidden, shown), a simulated drag moves it and saves it in world_rules.txt (read again as on a new start), a place on the map is pushed out of it and comes back with the map hidden, a place off the screen is clamped, double-click and Defaults' Reset place put it back. Saves questpanel_*.png. CIQuestPanelPlace <folder> (default the mod folder)")]
+		public static void QuestPanelPlaceCommand(string[] args) { StartTest(QuestPanelPlace(args != null && args.Length > 0 ? string.Join(" ", args) : DynamicIslands.assetpath)); }
+
+		static IEnumerator QuestPanelPlace(string dir)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("quest panel place: host, in a test world 'CI ...'"); yield break; }
+			yield return EnsureAlive();
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Note_Sign" });
+			bool ok = true;
+			CloseRmlMenuCommand();
+			IslandWorldState.Entry e = null;
+			yield return RfSpawn(MapBuild(), MapIsland, x => e = x);
+			if (e == null) yield break;
+			int mode = Minimap.Mode; bool opt = MapOptionOn();
+			Vector2? before = QuestTracker.SavedPlace;
+			const string who = "CIQuestPanelPlace";
+			try { Directory.CreateDirectory(dir); } catch { }
+			QuestTracker.ResetPlace();
+			Minimap.Mode = Minimap.Corner;
+			Minimap.SetZoom(1);
+			PutPlayerNear(ScObjOf(e, "cimapstart").transform);
+			float until = Time.realtimeSinceStartup + 6f;
+			while ((!QuestTracker.PanelShown || !Minimap.CornerShown) && Time.realtimeSinceStartup < until) yield return null;
+			yield return new WaitForSecondsRealtime(1f);
+			RectTransform qp = QuestTracker.PanelRect;
+			Check(ref ok, qp != null && QuestTracker.PanelShown && Minimap.CornerShown, "the quest panel and the corner map both show");
+			if (qp == null) { Fail("quest panel place: no panel"); yield break; }
+			Func<bool> clear = () => { Rect m; return !Minimap.CornerScreenRect(out m) || !QuestTracker.PanelScreenRect().Overlaps(m); };
+			Func<bool> onScreen = () => { Rect q = QuestTracker.PanelScreenRect(); return q.xMin >= 0f && q.yMin >= 0f && q.xMax <= Screen.width + 0.5f && q.yMax <= Screen.height + 0.5f; };
+			Func<string> where = () => { Rect m; Minimap.CornerScreenRect(out m); return "panel " + QuestTracker.PanelScreenRect() + " at " + qp.anchoredPosition.ToString("F0") + ", map " + m + ", screen " + Screen.width + "x" + Screen.height; };
+			Log("place: own, map on: " + where());
+			Check(ref ok, clear() && onScreen(), "its own place: not under the map, on the screen");
+			Check(ref ok, qp.anchoredPosition.y < QuestTracker.HomePlace.y - 1f, "its own place with the map: under the map");
+			ScreenCapture.CaptureScreenshot(Path.Combine(dir, "questpanel_default.png"));
+			yield return new WaitForSecondsRealtime(1f);
+			Minimap.Mode = Minimap.Off;
+			yield return new WaitForSecondsRealtime(0.3f);
+			Check(ref ok, (qp.anchoredPosition - QuestTracker.HomePlace).magnitude < 0.5f, "map hidden: back in its own place (" + qp.anchoredPosition.ToString("F0") + ")");
+			Minimap.Mode = Minimap.Corner;
+			yield return new WaitForSecondsRealtime(0.3f);
+			Check(ref ok, clear(), "map shown again: out from under it at once");
+			// (a drag as the mouse does it, through the panel's own handlers; the mouse freed for it as an open window does)
+			ModCursor.Take(who);
+			yield return new WaitForSecondsRealtime(0.3f);
+			int drags = QuestTracker.Drags;
+			var ev = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current) { button = UnityEngine.EventSystems.PointerEventData.InputButton.Left };
+			UnityEngine.EventSystems.ExecuteEvents.Execute(qp.gameObject, ev, UnityEngine.EventSystems.ExecuteEvents.beginDragHandler);
+			for (int i = 0; i < 10; i++)
+			{
+				ev.delta = new Vector2(-60f, -25f);
+				UnityEngine.EventSystems.ExecuteEvents.Execute(qp.gameObject, ev, UnityEngine.EventSystems.ExecuteEvents.dragHandler);
+				yield return null;
+			}
+			UnityEngine.EventSystems.ExecuteEvents.Execute(qp.gameObject, ev, UnityEngine.EventSystems.ExecuteEvents.endDragHandler);
+			yield return new WaitForSecondsRealtime(0.5f);
+			Vector2? dropped = QuestTracker.SavedPlace;
+			Log("place: dragged: " + where() + ", saved " + (dropped.HasValue ? dropped.Value.ToString("F0") : "none") + ", world_rules questpanel=" + WorldRules.ReadDefault(QuestTracker.PlaceSetting) + ", cursor " + Cursor.lockState);
+			Check(ref ok, QuestTracker.Drags == drags + 1 && dropped.HasValue && dropped.Value.x < -300f, "a drag moves the panel and saves its place");
+			Check(ref ok, dropped.HasValue && (qp.anchoredPosition - dropped.Value).magnitude < 0.5f && clear() && onScreen(), "the panel stays where it was dropped");
+			ScreenCapture.CaptureScreenshot(Path.Combine(dir, "questpanel_dragged.png"));
+			yield return new WaitForSecondsRealtime(1f);
+			QuestTracker.ForgetPlace();
+			Check(ref ok, dropped.HasValue && QuestTracker.SavedPlace.HasValue && (QuestTracker.SavedPlace.Value - dropped.Value).magnitude < 1f, "the place is read back from world_rules.txt (" + WorldRules.ReadDefault(QuestTracker.PlaceSetting) + ")");
+			// (put on the map: pushed out while it shows, back at the player's place when it is hidden)
+			Vector2 onMap = new Vector2(-40f, -60f);
+			QuestTracker.SavePlace(onMap);
+			yield return new WaitForSecondsRealtime(0.3f);
+			Log("place: on the map: " + where());
+			Check(ref ok, clear() && onScreen(), "a place under the map: pushed out of it");
+			ScreenCapture.CaptureScreenshot(Path.Combine(dir, "questpanel_pushed.png"));
+			yield return new WaitForSecondsRealtime(1f);
+			Minimap.Mode = Minimap.Off;
+			yield return new WaitForSecondsRealtime(0.3f);
+			Check(ref ok, (qp.anchoredPosition - onMap).magnitude < 0.5f, "map hidden: at the player's place (" + qp.anchoredPosition.ToString("F0") + ")");
+			Minimap.Mode = Minimap.Corner;
+			// (off the screen: clamped)
+			QuestTracker.SavePlace(new Vector2(-9000f, -9000f));
+			yield return new WaitForSecondsRealtime(0.3f);
+			Log("place: far off: " + where());
+			Check(ref ok, onScreen() && clear(), "a place off the screen: the whole panel on the screen");
+			// (double-click: back in its own place)
+			var click = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current) { button = UnityEngine.EventSystems.PointerEventData.InputButton.Left, clickCount = 2 };
+			UnityEngine.EventSystems.ExecuteEvents.Execute(qp.gameObject, click, UnityEngine.EventSystems.ExecuteEvents.pointerClickHandler);
+			yield return new WaitForSecondsRealtime(0.3f);
+			Check(ref ok, !QuestTracker.SavedPlace.HasValue && string.IsNullOrEmpty(WorldRules.ReadDefault(QuestTracker.PlaceSetting)) && clear() && qp.anchoredPosition.y < QuestTracker.HomePlace.y - 1f, "double-click: back in its own place (under the map)");
+			// (Defaults > Keys > Quest panel: Reset place)
+			QuestTracker.SavePlace(new Vector2(-500f, -300f));
+			DefaultsWindow.Open();
+			yield return new WaitForSecondsRealtime(0.5f);
+			var reset = UnityEngine.Object.FindObjectsOfType<UnityEngine.UI.Button>().FirstOrDefault(b => b.name == "questPanelReset");
+			Check(ref ok, reset != null, "Defaults has the quest panel's Reset place button");
+			if (reset != null) reset.onClick.Invoke();
+			yield return new WaitForSecondsRealtime(0.3f);
+			Check(ref ok, !QuestTracker.SavedPlace.HasValue, "Reset place: back in its own place");
+			DefaultsWindow.Close();
+			ModCursor.Give(who);
+			QuestTracker.SavePlace(before);
+			Minimap.Mode = mode; MapOptionBack(opt);
+			RfAway(e);
+			yield return new WaitForSecondsRealtime(1f);
+			RfRemove(MapIsland);
+			if (ok) Log("PASS: quest panel place (" + dir + ")"); else Fail("quest panel place");
+		}
+
 		static Rect MapScreenRect(RectTransform t)
 		{
 			var w = new Vector3[4];
