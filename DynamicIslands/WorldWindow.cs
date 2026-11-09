@@ -606,7 +606,9 @@ namespace DynamicIslands.Editor
 		public static bool AnyOpen()
 		{
 			return JournalWindow.IsOpen || NoteReader.IsOpen || CodeLock.IsOpen || ChoiceWindow.IsOpen || InfoWindow.IsOpen
-				|| LevelWindow.IsOpen || BehaviourWindow.IsOpen;
+				|| LevelWindow.IsOpen || BehaviourWindow.IsOpen
+				// (audit 11-09: Esc on these closed them and opened the pause menu too)
+				|| DialoguePanel.IsOpen || StoryCredits.IsOpen || PlayerNotebookWindow.IsOpen || QuestSkip.ConfirmShown;
 		}
 
 		/// <summary>True when an Esc this frame belongs to one of our windows (tests).</summary>
