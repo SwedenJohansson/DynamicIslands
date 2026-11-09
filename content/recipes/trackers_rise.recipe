@@ -96,7 +96,8 @@ clear at -45 -10 r=8
 push at -47.25 -11.5 h=3.4
 call thatchhut w=3 d=2
 place "Box Small" - at 2.25 2.2 y=0.1 sit
-place Note_Paper rangerlog5 at 2.25 2.2 y=1.7 drop yaw=30
+# (REACH 11-09: on the box at the back 1 m short of a spot to read it - on the floor in front of the box now)
+place Note_Paper rangerlog5 at 2.25 1.2 y=0.6 drop yaw=30
 pop
 # REDO 10-24 (optional): Oda's ranger cache by the old hut, locked with her ranger key from Ranger Landing
 clear at -51 -14.5 r=2

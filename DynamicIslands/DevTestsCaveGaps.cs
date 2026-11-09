@@ -1159,7 +1159,9 @@ namespace DynamicIslands
 					{
 						// (KeepAlive fills the breath: first it, then the breath set low)
 						Vector3 dryAt = end;
-						PlayerMove.To(me, dryAt + Vector3.up * 0.3f, ControllerType.Ground);
+						// (stood on the floor by the player's stand height: put with the position 0.3 m over it, the capsule's lower half was in the
+						// floor and the player dropped through to the sea below - Riverfork, Overpass, Thalassa 11-09)
+						PlayerMove.To(me, dryAt + Vector3.up * PlayerMove.StandHeight(me), ControllerType.Ground);
 						KeepAlive(me);
 						yield return new WaitForSeconds(1.5f);
 						Vector3 p1 = me.transform.position;

@@ -31,7 +31,8 @@ push at 0 -21.5
 brush flatten at -17.55 -42.75 r=5 s=20 frames=200 h=1.4
 brush flatten from -16.2 -36 to 7.2 -36 r=5 s=20 frames=120 h=1.4
 pop
-brush flatten at 9.8 28.4 r=5 s=8 frames=40
+# (FLOAT 11-09: wider and firmer - the camp's tent at 12.8 30.4 stood 0.6 m off the slope at one corner)
+brush flatten at 11.3 29.6 r=6.5 s=20 frames=120
 origin
 clear at 9.8 28.4 r=6
 push at 0 -21.5
@@ -98,7 +99,8 @@ push at 6 68 h=2.6
 call hut w=3 d=2 y=0.1
 place Loot_Chest boatshed at 3.6 2.3 y=0.1 sit yaw=180
 place "Box Small" - at 0.8 2.3 y=0.1 sit
-place Note_Paper rangerlog3 at 0.8 2.3 y=1.7 drop yaw=10
+# (REACH 11-09: on the box in the corner no spot could read it - on the floor by the box now)
+place Note_Paper rangerlog3 at 1.8 1.6 y=0.6 drop yaw=10
 pop
 # REDO 10-24: the slipway winch (the island's machine): its crank, chain and pawl lie in three zones (bear cave, plane,
 # west ruins); the winch hauls the shed door up, and the shed chest shows
@@ -205,6 +207,8 @@ note odatrain Oda's training log | TRAINING LOG - O. FENN\n\nMonday: 41 s. Wind.
 info title=Ranger Landing
 info author=Custom Islands
 info description=The rangers' forward camp on Verdance's shore: a watch station on stilts, a hen run, a fire pit and a trail into the birch wood. The second island of The Last Green World.
+# (REACH 11-09: the tower tops are ladder climbs the 1x walker can't judge - the play climbs them)
+island reach.byplay=Training tower box
 island on.arrive=message||A watch station on stilts over the beach, hens scratching under it. Smoke from a fire pit - still warm.
 
 note jobboard Oda's job board | RANGER STATION - JOBS\n\n1. Follow the trail to the boat shed. Three marks: the split stone, the bent birch, the shed path. Walk them in order or you lose it.\n2. The shed winch is stripped - I hid its parts from the scavengers: the crank in the bear cave, the chain with the plane, the pawl in the old tower's ruins. Fit them and the door goes up. The boat's wheels are in the shed. Take them, and my stores key. A raft with a motor goes where the rivers go.\n3. Read my log before you go upriver.\n\n- Oda Fenn, ranger
@@ -277,6 +281,10 @@ quest reward=Seed_Birch*2;Seed_Pine*2
 # Its chest lies under a steel hatch in the den's floor, locked until someone talked to Ranger Maya (talked gate); her
 # second answer opens it too. Not the old dens: the bear cave and the fox den keep their quest chests; this den is 70 m
 # from both. No rats here. cavecheck: 6 m from the tower, its box and ladders, the goats and the camp's things.
+# (CC 11-09: the walk out stuck under the mouth's lip - the ground outside rose to 6.9 m 4 m out, the head hit the rock at
+# 8.4: an apron at the den floor's 4.9 m runs out of the mouth, then eases up to the camp)
+brush flatten from 12.3 37.5 to 13.4 33.4 r=2.6 s=20 frames=120 h=4.9
+brush smooth from 13.4 33.4 to 13.9 31 r=3 s=10 frames=20
 call kit_st x=12 z=38 yaw=60 len=16 size=0.7 dirt=3 mush=2 stone=0 vines=0 as=rlcache
 # cavecheck inside rlcachedoor rlcachechest
 # (den floor = the mouth's ground, ~4.9 m over the sea (slope 0; from the saved island's heightmap): set down from 6.5 m)

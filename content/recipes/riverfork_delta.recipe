@@ -74,7 +74,8 @@ push at 6 42 h=2
 call hut w=3 d=2 y=0.1
 place Loot_Chest pressshed at 3.6 2.3 y=0.1 sit yaw=180
 place "Box Small" - at 0.8 2.3 y=0.1 sit
-place Note_Paper rangerlog4 at 0.8 2.3 y=1.7 drop yaw=10
+# (REACH 11-09: on the box in the corner no spot could read it - on the floor by the box now)
+place Note_Paper rangerlog4 at 1.8 1.6 y=0.6 drop yaw=10
 pop
 
 # --- REDO 10-24: three fuel cans from three river arms for the press; the machete taught three times ----------------
@@ -196,6 +197,8 @@ note pimnote Note in the otter den | MY HIDING PLACE, by PIM (age 9). KEEP OUT. 
 info title=Riverfork Delta
 info author=Custom Islands
 info description=A jungle delta cut by river arms: the river people's outpost, vines on the paths, a rope ferry and boars upriver. The third island of The Last Green World.
+# (REACH 11-09: the crane top is a ladder climb the 1x walker can't judge - the play climbs it and reads the cab note)
+island reach.byplay=Crane cab box
 island on.arrive=message||Fresh water runs into the sea here - three river arms through the jungle. Somewhere a wheel creaks on a rope.
 
 story ferry|Ferry crossed|Note_Paper|The delta's rope ferry, wound across the ferry arm.
