@@ -1,0 +1,4 @@
+# Probe (w03 11-09): Lumen Shelf's surface heights round the survey rock (-6 -66), island frame, for placing the galleries.
+island Lumen Shelf keep
+offset 0.2094 -1.8777
+surface -34 -94 22 -38 4

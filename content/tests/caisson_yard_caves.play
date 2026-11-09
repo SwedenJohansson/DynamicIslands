@@ -1,0 +1,32 @@
+# Caisson Yard's builders' ramp (CIPlay caisson_yard_caves, 11-08; in a test world 'CI ...'). Points as in its recipe:
+# the ramp's top on the flat ground at -28 12 (two boulders by it), the dug tunnel down east at 22 degrees under the
+# lagoon's cliff and out at its foot on the lagoon floor round 4 12 (-8 m), the side store off it at -10 12..5 (stone,
+# dirt). Flooded from a few metres in. Down from the land, out onto the lagoon floor, and back up the ramp to the land.
+island Caisson Yard keep
+offset -3.2334 -5.3746
+hour 11
+weather Calm
+where Pickup_Landmark_Stone
+where Pickup_Landmark_DirtPickup
+
+# Outside: the ramp's top on the land, its foot under the cliff from the lagoon
+picture cy_cave_out -38 6 12 -28 3 12
+picture cy_cave_foot 12 -5 12 2 -7 12
+
+# Down the ramp, past the side store, out onto the lagoon floor
+walk -34 12 to -29 12
+walk -29 12 to -20 12 to -10 12 to -2 12 to 6 12
+picture cy_cave_in -24 3 12 -10 -2 12 light=20
+picture cy_store -10 -1 13 -10 -2.5 5 light=20
+
+# Back up from the lagoon floor to the land
+walk 6 12 to -2 12 to -10 12 to -20 12 to -28 12 to -34 12 below=-5
+
+# The powder cave's rat (11-09: some caves get rats): over the yard to the cave's mouth, the rat under its rock, then dealt with
+walk -34 12 to -30 -20 to -24 -72 to -24 -63
+expect animals Rat 1
+expect animalsinside Rat 1
+wait 2
+picture cy_rat -24 3.6 -63 -24 2.4 -55 aim=Rat light=20
+kill Rat
+expect animals Rat 0

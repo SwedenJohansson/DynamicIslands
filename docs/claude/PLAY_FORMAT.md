@@ -53,6 +53,7 @@ expect message isn't whole
 | `stand` | | The player on the highest gentle spot near the island terrain's top (`StandRoutine`). |
 | `at` | `<x> <z> [y=\|h=]` | The player put at the point, on what is there. |
 | `walk` | `<x> <z> to <x> <z> [to <x> <z> ...] [h=] [below=] [blocked]` | The player is put on the first point, then walks the rest with Raft's controller (`PlayWalk`). Each point must be reached within 0.7 m before 2 s stuck. `h=`: must end within 1.6 m of that height. `below=`: start on what is under that height. In a cave (a cave piece or a dug tunnel over the point) a walk starts on the cave floor, not the hill above. `blocked`: passes when the walk does not get there. |
+| `swim` | `<x> <z> <h> to <x> <z> <h> [to ...]` | Under the sea (11-09): the player put at the first point (h m over the sea) with the water controller, then swims straight at the rest, up and down too (`PlaySwim`). Each within 0.7 m before 2 s without headway. For flooded caves with a drop or climb a `walk` cannot take. |
 | `climb` | `<x> <z> [h=]` | The nearest collider whose name contains `climb`, within 3 m; the player 1 m above its foot. Passes when Raft's controller is climbing within 3 s. |
 | `zone` | `<id>` | The trigger zone with that id (any case) is entered (`ScEnterZone`). |
 | `air` | `<zone id> [here]` | A shown zone with Air: a player with 10 % breath has over 90 % a moment later. The player is put in it; with `here` they must already stand in it (a walk or swim in before it, no teleport). |
@@ -76,13 +77,14 @@ expect message isn't whole
 | `hour` | `<h>` | Time of day (`AzureSkyHour`). |
 | `weather` | `[name]` | Raft's weather whose name contains the text, set at once (`PlayWeather`); with no name or no match, logs the weathers. |
 | `log` | `<text>` | Writes the text to the log. |
-| `empty` | | In a `CI ` world: the player's inventory emptied (its blueprints noted first), as a player makes room before a chest whose loot would drop for a full bag. |
+| `empty` | | In a `CI ` world or one `CINewWorld` made this session: the player's inventory emptied (its blueprints noted first), as a player makes room before a chest whose loot would drop for a full bag. |
 | `storespot` | `[x z] [count] [size]` | Logs up to `count` (6) clear squares of `size` m (8) on the island's own ground for a Raft store, nearest to x z first, as ready `store - at X Z ground` lines: level within 0.6 m, at least 1 m above the sea, nothing of the island in the square up to 5 m high (`DevTests.StoreSpots` in `DevTestsStore.cs`). |
 | `where` | `<name>` | Logs where the island's objects whose name starts with it are, in test coordinates, and their solid colliders' x and z extent. |
+| `surface` | `<x0> <z0> <x1> <z1> [step]` | Logs the top surface's height on a grid (`step` m, 4), one `surface z=` line per row from z1 down, x0 to x1 left to right, in the island frame (as `expect stand`). Shows where a den's dome really lies before a pit or dig goes near it. |
 | `hide` / `show` | `<name>` | Turns off (or on) the island's renderers on objects of that exact name (`<name>/`: and everything under them) - which piece draws an odd look in a picture. |
 | `picture` | `<file> <x> <h> <z> <lx> <lh> <lz> [aim=<label>] [light[=m]]` | A 1280x720 picture with Raft's camera to `recipes\play_<file>.jpg`. Heights above `Position.y`, or `+h` above what is below. Logs three `FRAME top/mid/low:` lines: the first solid thing (parent/name and metres) through 5 points across each row of the frame - to name a piece seen in a shot. `aim=`: turned to the middle of that label's living animals within 30 m (they move). `light`: a spot light from the camera along the look (range m, default 25), as a flashlight in a dark tunnel. |
 | `beam` | `<emitter>` | Traces a laser emitter's beam now and logs it: where it starts, its points, the mirrors, what it ends on, and the emitter's renderers (their middle is the beam's start). Diagnostics only: checks just that the emitter is there |
-| `snap` | `<file> <object> [from] [dist] [up]` | A picture like `picture`, framed on the object's middle: seen from compass bearing `from` (0 = from the north, default 180), `dist` m off (default twice its size, at least 4), `up` m higher (default 0.4 x dist). Logs where the object is. |
+| `snap` | `<file> <object> [from] [dist] [up]` | A picture like `picture`, framed on the object's middle (its name may have spaces, e.g. an islander's `obj.name`): seen from compass bearing `from` (0 = from the north, default 180), `dist` m off (default twice its size, at least 4), `up` m higher (default 0.4 x dist). Logs where the object is. |
 
 ## Expectations (`PlayExpect`, plus `chain` and `spinsown` in `PlayRoutine`)
 
