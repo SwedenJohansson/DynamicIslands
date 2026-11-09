@@ -1,7 +1,9 @@
 # Caisson Yard (CIPlay caisson_yard): the yard, the foreman's board, crane 2 (by the zipline), the smelter chest, the
 # fuel shed, the anchor gear, the trench chart.
 island Caisson Yard
-offset 0 0
+offset -3.2334 -5.3746
+# (11-09: room in the bag first - a full bag from earlier plays in the world dropped the zipline plans)
+empty
 expect step 0
 expect title The Caisson Yard
 zone yard

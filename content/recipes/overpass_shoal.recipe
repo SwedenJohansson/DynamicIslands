@@ -16,6 +16,7 @@ include lib_sunken
 # RESIZE 10-24: Radius 36 -> 86 (x2.4). The road keeps its shape stretched along x (lanes, the booth and the vans at
 # x*2.4, the road's width and side offsets as they were); the embankment, trees and animals at x*2.4, z*2.4.
 include lib_features
+include lib_caves
 new
 gen Trees=0.25 Bushes=0.32 Rocks=0.3 Harvest=0.15 BeachThings=0.2
 gen Seed=10201 Radius=86 Height=12 Roughness=0.35 Peaks=2 Shape=0 Style=0 BeachWidth=0.25 Cliffs=0.2 PeakShape=0.5
@@ -112,6 +113,9 @@ place campfire_1 - at 40 42 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 43 44 ground sit yaw=210
 place "Box Small" - at 38 44.5 ground sit
 place Note_Paper drivernote at 38 44.5 ground y=1.6 drop yaw=15
+# (w03 11-09: CIFloating - its base hung 1.5 m off the slope: a level pad for it)
+brush flatten at -32 48 r=4.5 s=20 frames=200 h=14.4
+brush smooth at -32 48 r=7 s=4 frames=30
 place VP_Excavator digger at -32 48 ground yaw=120
 prop digger tint.color=#8a6a4e
 prop digger tint.amount=0.4
@@ -156,15 +160,15 @@ call sk_reef x=-50 z=48 r=5 seed=24130
 
 # the summit: Toll Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
 call ladtower x=60 z=-42 h0=22 lv=6 a=optower
-place Loot_ChestSmall oplocker at 59.25 -41.25 h=36.73 sit yaw=180
+place Loot_ChestSmall oplocker at 59.25 -41.25 h=37.2 drop yaw=180
 place Note_Paper opsumnote at 59.25 -42.75 h=36.84 drop yaw=20
 place Zone_Trigger opsummit at 60 -42 h=37.73
 place ZiplinePath_Landmark opzip at 60.75 -42.75 h=36.73 yaw=0
 # STORY 10-24s: the Stalker's lure seen once, far off, sweeping the drowned road (from the summit lantern)
 place Placeable_Lantern_Metal opcam at 60.4 -43.4 h=36.73 sit
 place Placeable_Lantern_Metal oplure at 104 -24 h=-5 drop scale=1.6
-place TP_Moontown_Barrel04 opscorch at 84 -4 h=-5.6 sit scale=0.8
-place TP_Moontown_Barrel04 opscorch at 79 5 h=-5 sit yaw=60 scale=0.7
+place TP_Moontown_Barrel04 opscorch at 84 -4 ground scale=0.8
+place TP_Moontown_Barrel04 opscorch at 79 5 ground yaw=60 scale=0.7
 zipto opzip 30 -21
 # (REACH 10-30 G1: the cache stood 3 m up a sheer bit of Toll Hill's side over the last ledge anyone stands on - it is
 # now on that ledge, against the rock)
@@ -317,5 +321,28 @@ quest reward=Rope*3;Nail*10
 brush flatten from -4.2 53.5 to -5.8 60.5 r=3.8 s=20 frames=300 h=7.2
 brush smooth from -4.2 53.5 to -5.8 60.5 r=4.3 s=10 frames=12
 clear from -4.2 53.5 to -5.8 60.5 r=4.3 body
+
+# --- 11-08 (w03): the culvert under the overpass - optional, no quest step needs it -----------------------------------
+# An underwater mouth in the flooded channel under the overpass, between two of its pillars: an old storm culvert that
+# climbs out of the water under the north bank into a dry room the road crew walled off as a flood store - air, stone
+# and the crew's chest. hill=1: the north bank is low (2.5-4.5 m), the ridge keeps the room under rock. No rats: reached
+# only under water, no NavMesh floor. cavecheck: 6 m and more from the quest's things and the walk over the overpass.
+call kit_st x=-24 z=5 yaw=0 len=22 slope=12 end=room size=0.7 hill=1 dirt=0 mush=0 stone=2 vines=1 as=opcave
+prop opcave cave.rock=plain
+place Zone_Trigger opair at -24 35 h=3.5
+prop opair obj.name=opair
+prop opair zone.id=op_culvert
+prop opair zone.radius=8
+prop opair zone.repeat=1
+prop opair zone.air=1
+prop opair zone.message=A dry room behind the culvert - air. The road crew's flood store: a chest on a ledge.
+# cavecheck inside opcrewchest
+place Loot_ChestSmall opcrewchest at -21 37 h=4 drop yaw=200
+prop opcrewchest obj.name=opcrewchest
+prop opcrewchest loot.refill=0
+note opcrewchest Flood store | Road crew, culvert 7: kept dry for the next flood. Rope, nails, a lamp's battery. The water came over the bank anyway.
+loot opcrewchest Rope*2;Nail*8;Battery*1;Scrap*3
+# (11-09: no rat here after all - the room is a cave piece with no NavMesh floor, and a rat spawned there snapped to the
+# ground under it, out of sight; the world's rat is at the top of the Caisson Yard's dug ramp instead)
 
 save Overpass Shoal

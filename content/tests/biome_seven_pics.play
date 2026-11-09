@@ -1,6 +1,6 @@
 # Guide pictures of Biome Seven (CIPlay biome_seven_pics): Raft's camera, midday, calm
 island Biome Seven
-offset 0 0
+offset 0.5706 0.0209
 hour 11
 weather Calm
 at 0 0 h=0.3

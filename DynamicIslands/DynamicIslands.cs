@@ -473,6 +473,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Camera paths", e); }
 			try { Minimap.Tick(); }
 			catch (Exception e) { TickError("Island map", e); }
+			try { QuestTracker.Place(); }
+			catch (Exception e) { TickError("Quest panel place", e); }
 			try { if (LoadSceneManager.IsGameSceneLoaded && !InEditor()) QuestBook.Tick(); }
 			catch (Exception e) { TickError("Quest book", e); }
 			try { if (LoadSceneManager.IsGameSceneLoaded && !InEditor()) HotkeyHints.Tick(); }

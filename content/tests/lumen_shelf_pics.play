@@ -1,6 +1,6 @@
 # Guide pictures of Lumen Shelf (CIPlay lumen_shelf_pics): Raft's camera, midday, calm
 island Lumen Shelf
-offset 0 0
+offset 0.2094 -1.8777
 hour 11
 weather Calm
 at 17.8 0 h=0.3
@@ -11,6 +11,6 @@ picture sl10_lumen_edge 32.8 3 2 42.8 -6 6
 picture sl10_lumen_shelf_ridge 31 17 51 38 8 63
 picture sl10_lumen_shelf_cave -54 12 1 -68 3 1
 picture sl10_lumen_shelf_ruin 33 12 -52 40 3 -64
-picture sl10_lumen_shelf_wreck -39 12 -31 -50 3 -40
+picture sl10_lumen_shelf_wreck -39 12 -53 -50 3 -62
 picture sl10_lumen_shelf_deep_summit -3.3 40.98 -36.3 -6 16.5 -66
 picture sl10_lumen_shelf_deep_building -29 7 51 -36 -6 60

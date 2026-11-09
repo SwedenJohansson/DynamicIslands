@@ -1181,6 +1181,10 @@ namespace DynamicIslands.Editor
 				if (block == null || block.buildableItem == null) return;
 				ExtraUpgrades.Upgrade u = ExtraUpgrades.Find(block.buildableItem.UniqueIndex);
 				if (u == null || u.Base == null) return;
+				// Only on Raft's "hand back what it holds" path (itemToReturnOnDestroy set): with it null Raft refunds half the
+				// block's recipe instead, and that must be the upgrade's own cost, not the base item's (audit 11-09: picking up
+				// an upgraded block refunded only the base recipe)
+				if (block.itemToReturnOnDestroy == null) return;
 				__state = block.buildableItem;
 				block.buildableItem = u.Base;
 			}

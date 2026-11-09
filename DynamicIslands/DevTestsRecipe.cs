@@ -88,7 +88,7 @@ namespace DynamicIslands
 		{
 			var decks = new List<FloorGap>();
 			var held = new HashSet<EditorGameObject>();
-			List<Bounds> building = null;
+			List<Bounds> building = null, rails = null;
 			// (an island sunk by 'elevation -45' has the real sea 45 m over the editor's water line: a deck under it is under
 			// the sea in the game - Hadal Commons' air platforms and drowned block, 11-05)
 			if (DynamicIslands.currentElevation < 0f) sea -= DynamicIslands.currentElevation;
@@ -120,7 +120,11 @@ namespace DynamicIslands
 						foreach (RaycastHit h in Physics.SphereCastAll(p + Vector3.up * 0.5f, 0.45f, Vector3.down, gap + 0.7f, ~0, QueryTriggerInteraction.Ignore))
 						{
 							EditorGameObject o = h.collider.GetComponentInParent<EditorGameObject>();
-							if (o == e || h.collider.bounds.min.y > p.y - 0.1f) continue;
+							// (what holds it is under it: reaching 0.1 m below its underside, or a thin floor whose top is at it -
+							// Brinelab's greenhouse planters, foundations set on the storey's 0.1 m floor with their underside 2 mm
+							// into it, read "held nowhere", w03 11-09; a wall standing on it starts above its underside)
+							Bounds hb = h.collider.bounds;
+							if (o == e || (hb.min.y > p.y - 0.1f && !(hb.max.y <= p.y + 0.06f && hb.min.y < p.y - 0.02f))) continue;
 							if (o != null && FloorLike.IsMatch(o.GameObjectName ?? "") && Mathf.Abs(h.collider.bounds.max.y - whole.max.y) < 0.3f) continue;
 							ok = true;
 							break;
@@ -133,6 +137,15 @@ namespace DynamicIslands
 						Bounds own = whole;
 						ok = building.Any(b => !own.Contains(b.center) && b.max.y < p.y - 0.05f && b.max.y > p.y - gap - 1.5f &&
 							p.x > b.min.x + 0.1f && p.x < b.max.x - 0.1f && p.z > b.min.z + 0.1f && p.z < b.max.z - 0.1f);
+					}
+					// (or a pole or beam laid right under it that has no collider in the editor - Caisson Yard's mast bridges lie on
+					// two Antenna_pole rails, their top 2 cm under the deck: the middle decks read "held nowhere", w03 11-09)
+					if (!ok)
+					{
+						if (rails == null) rails = CollisionlessParts(placed);
+						Bounds own = whole;
+						ok = rails.Any(b => !own.Contains(b.center) && b.max.y <= p.y + 0.05f && b.max.y > p.y - 0.15f &&
+							p.x > b.min.x - 0.15f && p.x < b.max.x + 0.15f && p.z > b.min.z - 0.15f && p.z < b.max.z + 0.15f);
 					}
 					if (ok) held.Add(e);
 					else d.Corners.Add(p);
@@ -489,6 +502,9 @@ namespace DynamicIslands
 				// the Lodestone Array's north line read "partly in the air" off the cliff where Raft's 27 m line ends, 2026-10-20;
 				// CIGroundIslands measures each of its ends in the world)
 				if (n.StartsWith("ZiplinePath") && ObjectProps.Get(e.Props, ZiplineEnds.ZipTo).Length > 0) continue;
+				// (Raft's air pocket is a bubble of air in the water - it stands on nothing by design: Lumen Shelf's under its arch
+				// read "partly in the air" on the slope, w03 11-09)
+				if (n == ScatterTool.AirPocketObject) continue;
 				Renderer[] rs = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
 				if (rs.Length == 0 || ground == null) continue;
 				// (its base: the parts that reach down to its bottom - not a windmill's sails or a telescope's tube above it)
@@ -542,7 +558,11 @@ namespace DynamicIslands
 					RaycastHit on;
 					if (Physics.Raycast(new Vector3(whole.center.x, whole.min.y + 0.1f, whole.center.z), Vector3.down, out on, 0.8f, ~0, QueryTriggerInteraction.Ignore) && on.collider.GetComponent<Terrain>() == null &&
 						on.collider.GetComponentInParent<EditorGameObject>() != null && on.collider.GetComponentInParent<EditorGameObject>() != e) continue;
-					// (an icicle hangs from what is over it - a cave's roof, an overhang: its top against it is set right)
+					// (its foot - the pivot - on a floor: a plant whose mesh reaches under its foot starts the ray above inside the
+						// floor tile and misses it - Brinelab's lobby vines, 0.4 m of leaves under a tile, w03 11-09)
+						if (Physics.Raycast(new Vector3(p.x, p.y + 0.3f, p.z), Vector3.down, out on, 1.1f, ~0, QueryTriggerInteraction.Ignore) && on.collider.GetComponent<Terrain>() == null &&
+							on.collider.GetComponentInParent<EditorGameObject>() != null && on.collider.GetComponentInParent<EditorGameObject>() != e) continue;
+						// (an icicle hangs from what is over it - a cave's roof, an overhang: its top against it is set right)
 					if (n.IndexOf("Icicle", StringComparison.OrdinalIgnoreCase) >= 0 && Physics.Raycast(new Vector3(whole.center.x, whole.max.y - 0.3f, whole.center.z), Vector3.up, out on, 1.1f, ~0, QueryTriggerInteraction.Ignore) &&
 						on.collider.GetComponentInParent<EditorGameObject>() != e) continue;
 				}
@@ -1533,9 +1553,9 @@ namespace DynamicIslands
 				}
 				if (verb == "caveloot" || verb == "cavegate")
 				{
-					// caveloot <group> [dirt=3] [mush=3] [stone=2] [vines=2] [titanium=0] [light=0]: Raft's cave loot on the floor of the
+					// caveloot <group> [dirt=3] [mush=3] [stone=2] [vines=2] [titanium=0] [light=0] [wet=0]: Raft's cave loot on the floor of the
 					// cave (cave tool or Dig brush) laid as=<group>, cave vines from its roof; cavegate <group> [scale=1]: Raft's machete
-					// vines across its mouth (G6 kits, 11-04)
+					// vines across its mouth (G6 kits, 11-04); wet=1 lets the flooded floor count (a sunk island's cave, w03 11-09)
 					if (t.Length < 2) { Fail("recipe " + name + ", " + rl.Where + " (" + line + "): " + verb + " <group> [options]"); yield break; }
 					yield return PlaceableCatalog.EnsureLoaded(CaveKitObjects);
 					Physics.SyncTransforms();
@@ -2551,6 +2571,22 @@ namespace DynamicIslands
 
 		/// <summary>What a post must not go down through either (StandPosts): the building pieces' boxes - floors, walls, ceilings and
 		/// roofs (the land's own, pipes and ladders left out as in PostObstacles). Only the ones wholly under the floor count.</summary>
+		/// <summary>The parts of placed things with no solid collider in the editor (a pole, a beam): what a floor may lie on that
+		/// a sphere cast can't find.</summary>
+		static List<Bounds> CollisionlessParts(IEnumerable<EditorGameObject> placed)
+		{
+			var boxes = new List<Bounds>();
+			foreach (EditorGameObject e in placed)
+			{
+				string n = e.GameObjectName ?? "";
+				if (!e.gameObject.activeInHierarchy || n.StartsWith("Zone_") || ContentCatalog.IsCreature(n) || FloorLike.IsMatch(n)) continue;
+				if (e.GetComponentsInChildren<Collider>(false).Any(c => c.enabled && !c.isTrigger)) continue;
+				foreach (Renderer r in e.GetComponentsInChildren<Renderer>(false))
+					if (r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly) boxes.Add(r.bounds);
+			}
+			return boxes;
+		}
+
 		static List<Bounds> PostBuilding(IEnumerable<EditorGameObject> placed)
 		{
 			var boxes = new List<Bounds>();
@@ -2634,7 +2670,33 @@ namespace DynamicIslands
 			RaycastHit on;
 			if (Physics.Raycast(new Vector3(b.center.x, b.min.y + 0.1f, b.center.z), Vector3.down, out on, 0.6f, ~0, QueryTriggerInteraction.Ignore) && other(on)) return true;
 			// (the ball starts 0.35 m up, clear of a deck's top just under the base - a cast misses what it starts in)
-			return Physics.SphereCast(new Vector3(b.center.x, b.min.y + 0.35f, b.center.z), 0.15f, Vector3.down, out on, 0.7f, ~0, QueryTriggerInteraction.Ignore) && other(on);
+			if (Physics.SphereCast(new Vector3(b.center.x, b.min.y + 0.35f, b.center.z), 0.15f, Vector3.down, out on, 0.7f, ~0, QueryTriggerInteraction.Ignore) && other(on)) return true;
+			// (a door wall's middle is its doorway - nothing of it there to stand on: its two sides each on what is under
+			// them, a third of the way in from its ends - Brinelab Tower's lobby door on the storey under it, w03 11-09)
+			bool alongX = b.size.x >= b.size.z;
+			float reach = 0.33f * (alongX ? b.size.x : b.size.z);
+			if (reach < 0.3f) return false;
+			// (each end tried at five points across the base's depth: a door wall's box takes in its open door leaf, so its
+			// middle line lies 0.5 m off the wall - Brinelab's lobby door read "partly in the air" over the pit, w03 11-09)
+			float depth = alongX ? b.size.z : b.size.x;
+			for (int s = -1; s <= 1; s += 2)
+			{
+				bool held = false;
+				for (int k = -2; k <= 2 && !held; k++)
+				{
+					float across = k * 0.25f * Mathf.Max(0f, depth - 0.2f);
+					Vector3 side = new Vector3(b.center.x + (alongX ? s * reach : across), b.min.y + 0.35f, b.center.z + (alongX ? across : s * reach));
+					if (Physics.SphereCast(side, 0.15f, Vector3.down, out on, 0.7f, ~0, QueryTriggerInteraction.Ignore) && other(on)) { held = true; break; }
+					// (or set into what is there - an arch's end in its rock: a cast that starts inside a rock misses it, a ray from
+					// above meets its top at the base's height or over it - Lumen Shelf's arch, w03 11-09)
+					Vector3 over = new Vector3(side.x, b.max.y + 1.5f, side.z);
+					// (what it is set into reaches down under its base - not the storey over it, whose floor the ray meets first)
+					if (Physics.RaycastAll(over, Vector3.down, over.y - (b.min.y - 0.7f), ~0, QueryTriggerInteraction.Ignore).Any(hh => other(hh) && hh.point.y >= b.min.y - 0.7f &&
+						hh.collider.bounds.min.y < b.min.y - 0.05f)) held = true;
+				}
+				if (!held) return false;
+			}
+			return true;
 		}
 
 		static bool ShowsAboveGround(Bounds b, Terrain ground)

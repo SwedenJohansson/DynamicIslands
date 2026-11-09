@@ -389,6 +389,11 @@ just done, the one you're on and what comes after. A longer quest scrolls - to y
 and with the mouse wheel over the panel while the cursor is free (the inventory, the journal, the Esc menu).
 Once every quest of the island is done, the panel goes by itself **30 seconds** later; its **×** (top right, while the
 cursor is free) closes it at any time - it comes back with the next step, or when you come to the island again.
+**Move the panel** by dragging its title or edge while the cursor is free (inventory open, the journal, the Esc menu);
+it stays on the screen and keeps that place on this PC (`questpanel` in `world_rules.txt`), also in other worlds.
+**Double-click** it, or **Defaults... > Keys (this PC) > Quest panel: Reset place**, to put it back top right. The
+panel never sits under the corner island map: while the map shows, the panel moves just below it (or to its left, if
+you put it there and that is the shorter way), and goes back to its place when the map is hidden (M) or off.
 
 **Stuck? Skip the current quest step.** If a step can no longer be done (a story key used up by the wrong lock, a
 lever that will not move), the host can skip it: **Esc > Custom Islands > Skip current quest step** (under **Stuck on a
@@ -555,26 +560,28 @@ typing), **Esc** or **Close** closes it, and **Journal** goes to the journal.
 
 ### The island map (M) and pings (G)
 
-Near a custom island a small **map** of it sits in the top-right corner: the island seen from straight above, you as
+In a world with the World setting **Island minimap** on ([9.4](#94-extra-options); **off by default**), near a custom
+island a small **map** of it sits in the top-right corner: the island seen from straight above, you as
 a white arrow (pointing the way you look), the other players as blue dots, and **gold dots** where each unfinished
 quest's current step wants you (the objects named as the step's target; one off the shown part stays at the map's
-edge, pointing the way). Green dots are **map markers** the builder placed, with their text on the full map.
+edge, pointing the way). Green dots are **map markers** the builder placed.
 
-- **M** goes corner -> **full screen** (in the middle, with every name) -> **off** -> corner.
+- **M** hides the corner map; **M** again shows it. It never covers the screen: there is no full-screen map.
 - **+** and **-** zoom in and out (1x, 2x, 4x), around you (the keypad's + and - too).
 - The map shows only near an island (within its land and 80 m; a ghost ship or a drifting raft counts as one); at open
-  sea it hides. Its picture is taken when you come to the island, when you open the full map and every 30 s.
-- Back from open sea the map always comes up **small in the corner**, even if you left the full map open on the last
-  island. At sea, where there is no map, **M**, **+** and **-** do nothing.
+  sea it hides. Its picture is taken when you come to the island and every 30 s.
+- A map you hid with **M** stays hidden on the next island until you press **M** again. At sea, where there is no
+  map, **M**, **+** and **-** do nothing.
 - **G** **pings** the spot you look at (up to 300 m; looking at the sky, 50 m ahead): everyone in the world sees a red
   beam with your name there, a red dot on the map and hears a short sound, for 6 seconds. One ping a second at most;
   a new ping of yours replaces your last one.
 - The keys can be changed in **Defaults... > Keys (this PC)** (Map, Ping, and Map zoom in / out on the third line).
-- **Turning the map off:** the **Minimap** button on the third line of **Defaults... > Keys (this PC)** (ON by default, kept
-  per PC as `minimap=on/off`). Off: the map is never shown (one that is open is hidden at once), **M**, **+** and **-**
-  do nothing and no picture is taken, so it costs nothing. **Pings still work** (G, and your crew mates' pings are shown).
-  A host can also switch the map off for **everyone** with the world option **No minimap** ([9.4](#94-extra-options)):
-  then the Minimap button has no effect.
+- **Turning the map on and off:** the host switches it on for **everyone** with the World setting **Island minimap**
+  ([9.4](#94-extra-options)); it is off in a new world unless ticked, and off in worlds made before it came. Each player
+  can still keep it off on their own PC with the **Minimap** button on the third line of **Defaults... > Keys (this PC)**
+  (ON by default, kept per PC as `minimap=on/off`). Off: the map is never shown (one that is open is hidden at once),
+  **M**, **+** and **-** do nothing and no picture is taken, so it costs nothing. **Pings still work** (G, and your crew
+  mates' pings are shown).
 
 ---
 
@@ -2072,7 +2079,7 @@ Select any object → **Behaviour & events...**. No code needed:
   (with a video editor, or `ffmpeg -framerate 30 -i frame_%05d.png trailer.mp4`). **Check** warns about a path with
   fewer than two points.
 - **Map markers** (island map): place a **Map marker** (**Zones & triggers**) where players should see a green dot on
-  the [island map](#the-island-map-m-and-pings-g); its inspector's **Text** is shown by the dot on the full map. It is
+  the [island map](#the-island-map-m-and-pings-g); its inspector's **Text** names the marker in the editor. It is
   invisible in a world. A quest step's target shows on the map by itself, without a marker.
 
 ![A lever opens a door](images/editor-behaviour.jpg)
@@ -3436,7 +3443,7 @@ already in the world is taken away. What each one does from the moment it change
 | Kraken arm | From now on (the next day or storm with one); off, an arm holding the raft lets go at once |
 | Binoculars see through fog | At once (the haze eases in over a second); off: Raft's own fog |
 | Mirrored islands | Islands that spawn from now on (one already in the world changes when it comes back into view); off: they spawn as made |
-| No minimap | At once: the island map is hidden for every player and its keys do nothing; off: it works again (if the player's own Minimap box is on) |
+| Island minimap | At once: the corner map shows for every player near an island (if the player's own Minimap box is on); off: it is gone and its keys do nothing |
 | Fuller random islands | Islands generated from now on; ones already generated stay as they are |
 | Lightning strikes | The next storm can have bolts (one blowing now too); off, a bolt already in the sky finishes |
 | Extra upgrades | Off: the recipes are hidden; upgrades built or worn keep working, learned ones are kept |
@@ -3924,12 +3931,14 @@ the island's name), the same for every player and every time it comes back into 
   way round). The editor and its picture of the island always show it as you made it.
 - Switching the option on or off in a world changes the islands not yet in view; the world remembers nothing extra.
 
-#### No minimap
+#### Island minimap
 
-No player can open the [island map](#the-island-map-m-and-pings-g): it is never shown, **M** and the zoom keys do nothing
-and no picture is taken. The **Minimap** box in each player's **Defaults... > Keys (this PC)** has no effect while it is
-on (it is that player's own switch when the option is off). **Pings** (G) still work. Off by default; the host's choice
-applies to every player, joining ones too, and can be changed in a running world.
+Near an island a small [island map](#the-island-map-m-and-pings-g) shows in the top-right corner of the screen. **M**
+hides it and shows it again; it never covers the screen. **Off by default**: without it no map is ever shown, **M** and
+the zoom keys do nothing and no picture is taken. Worlds made before this setting came (also ones that had the old
+**No minimap** option) have it off. Each player's **Minimap** box in **Defaults... > Keys (this PC)** can still keep it
+off on that PC. **Pings** (G) work either way. The host's choice applies to every player, joining ones too, and can be
+changed in a running world.
 
 #### Fuller random islands
 
@@ -4198,7 +4207,7 @@ get the settings they share at once.
 | Group | What is in it |
 |---|---|
 | **Random islands while sailing** | Random islands on or off (0 = off), the quiet minutes in a new world, the spacing, how far ahead an island appears (**Appear from** and **to**), and when a needed island returns |
-| **Keys (this PC)** | The **Journal** key (J), the **Stats** key (K) and, on the second line, **Notebook** (U, your own notebook), **Map** (M, the minimap) and **Ping** (G, a ping for the crew), on the third line **Map zoom in** (=, the + key) and **Map zoom out** (-): click one, then press the new key (Esc keeps the old one). Beside them the **Minimap** button (ON) switches the island map off on this PC. A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why |
+| **Keys (this PC)** | The **Journal** key (J), the **Stats** key (K) and, on the second line, **Notebook** (U, your own notebook), **Map** (M, the minimap) and **Ping** (G, a ping for the crew), on the third line **Map zoom in** (=, the + key) and **Map zoom out** (-): click one, then press the new key (Esc keeps the old one). Beside them the **Minimap** button (ON) switches the island map off on this PC. A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why A fourth line, **Quest panel: Reset place**, puts a dragged quest panel back in its own place (lit while it was moved). |
 | **Shared with every player** | **Receiver dots** on or off, the **Receiver range**, **Unload beyond** and **Regrow days (new worlds)** |
 | **Generated islands** | The weight of new generated islands, the chance one flies, **Things to gather**, **Finds in the shallows** and how far down they go, the five styles (at least one stays lit) and a button for each kind of thing to gather (lit = on) |
 | **Editor camera (this PC)** | The island editor's camera: **Look sensitivity**, **Move speed**, **Zoom speed**, **Pan speed**, **Drag up: look up / down** and **Wheel up: zoom in / out** - the same as the editor's **Camera...** button ([4.1](#41-the-screen)); kept in `world_rules.txt` |
@@ -4245,13 +4254,14 @@ there means plain Raft.
 | `monsters` | `timid`, `normal`, `fierce`, `savage`, `nightmare`; `easy`, `moderate`, `hard`, `impossible` or 0-4 are read too | The monster difficulty the next new world starts with | **Monster difficulty** in World settings, when you press **Create**; `Monsters <level>` in the main menu, at once |
 | `rarelooks` | 0-2 (Normal, More, Lots) | How often animals have a rare look in the next new world | **Rare animal looks** in World settings (Create); `AnimalLooks <level>` in the main menu |
 | `buildcost` | 0-100 | How many % more the build menu costs in the next new world | **Build cost** in World settings (Create); `BuildCost <0-100>` in the main menu |
-| `options` | The extra options that are on, separated by commas: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ufo`, `glowsea`, `lightning`, `ghostship`, `whalebreach`, `fogbanks`, `kraken`, `fogsight`, `mirrorislands`, `nominimap`, `fullerislands` | The extra options the next new world starts with | The option buttons in World settings (Create); `WorldOptions +option -option` in the main menu |
+| `options` | The extra options that are on, separated by commas: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ufo`, `glowsea`, `lightning`, `ghostship`, `whalebreach`, `fogbanks`, `kraken`, `fogsight`, `mirrorislands`, `minimap`, `fullerislands` | The extra options the next new world starts with | The option buttons in World settings (Create); `WorldOptions +option -option` in the main menu |
 | `levels` | `on`, `off` | The level up system in the next new world | **Level up system** in World settings (Create); `Levels on` / `Levels off` in the main menu |
 | `headstart` | 0-10 | The head start raft's level in the next new world (0 = none) | **Head start raft** in World settings (Create); `HeadStart <0-10>` in the main menu |
 | `islandsoff` | Island names separated by a vertical bar; also `type:<map type>` and `<generated>` | The islands left out of the next new world's islands while sailing | **CHOOSE ISLANDS...** in World settings (Create); `WorldIslands -<island>`, `+<island>`, `all` in the main menu |
 | `raftgap` | `min-max`, for example `3-6` (min 2-20, max 4-50) | One random island after every min to max of Raft's own islands | **One after every ... to ...** under CHOOSE ISLANDS..., at once; `WorldIslandsGap <min>-<max>` in the main menu |
 | `journalkey`, `statskey` | A Unity key name, for example `J`, `K` or `F6` | The keys of the journal (J) and the stats page (K) in a world | **Defaults...** > **Keys (this PC)**, at once. A key that can't be used falls back to J or K, and the log says so |
-| `minimap` | `on` or `off` | Whether the island map can be used on this PC (Minimap button on the third line of the Keys group). Off: never shown, M and zoom do nothing, no picture is taken; pings still work. A world with the option No minimap has no map whatever this says | **Defaults...** > **Keys (this PC)**, at once. Empty = on |
+| `minimap` | `on` or `off` | Whether the island map can be used on this PC (Minimap button on the third line of the Keys group). Off: never shown, M and zoom do nothing, no picture is taken; pings still work. Only worlds with the World setting Island minimap on have a map at all | **Defaults...** > **Keys (this PC)**, at once. Empty = on |
+| `questpanel` | Two numbers `x,y` (UI units from the screen's top-right corner), or empty | Where you dragged the quest panel on this PC; empty = its own place, top right | Dragging the panel; **Defaults...** > **Keys (this PC)** > **Reset place** or a double-click on it empties it |
 | `notebookkey`, `mapkey`, `pingkey`, `mapzoominkey`, `mapzoomoutkey` | A Unity key name | The keys of your own notebook (U), the minimap (M), pings (G) and the map's zoom (= and -) | **Defaults...** > **Keys (this PC)**, at once. Empty = the default: the first of U/Y/O, M/N/Comma, G/H/B, Equals/RightBracket/PageUp, Minus/LeftBracket/PageDown that Raft doesn't use (its main or second key) and no key before it has |
 | `cameralook`, `cameraspeed`, `camerazoom`, `camerapan` | A multiplier, 1 = the mod's own: look 0.2-4, speed 0.1-10, zoom and pan 0.25-4 | The island editor camera's look sensitivity, flying speed, wheel zoom step and pan speed (this PC) | The editor's **Camera...** window or **Defaults... > Editor camera (this PC)**, a moment after a change |
 | `cameradragup`, `camerawheel` | `up` / `down`; `normal` / `reversed` | Which way dragging up turns the editor's view (up, the default; only a saved `down` turns it round) and the wheel's direction | The same |
@@ -4319,7 +4329,7 @@ Press **F10** for RML's console.
 | `WorldPlan` / `WorldPlan <name>` | World | The world's plan and its rules / give it another plan (host; the last plan's islands leave the Receiver). A player who joined sees the host's plan, which of its rules are done and the story chain; trying to change it says only the host can |
 | `StoryChain` | World | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | World | What the randomizer does here / change it (host) |
-| `WorldOptions` / `WorldOptions +option -option` | World or main menu | The world's World settings / change them (host; at the main menu: the next new world). Options: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ufo`, `glowsea`, `lightning`, `ghostship`, `whalebreach`, `fogbanks`, `kraken`, `fogsight`, `mirrorislands`, `nominimap`, `fullerislands` ([9.4](#94-extra-options)) |
+| `WorldOptions` / `WorldOptions +option -option` | World or main menu | The world's World settings / change them (host; at the main menu: the next new world). Options: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades`, `stormseas`, `ufo`, `glowsea`, `lightning`, `ghostship`, `whalebreach`, `fogbanks`, `kraken`, `fogsight`, `mirrorislands`, `minimap`, `fullerislands` ([9.4](#94-extra-options)) |
 | `HeadStart` / `HeadStart 0-10` | World or main menu | The head start raft: this world's level and the next new world's / at the main menu choose the level for the next new world (0 = off) |
 | `Levels` / `Levels on` / `Levels off` | World or main menu | The level up system in this world / switch it (host; off keeps everyone's levels; at the main menu: for the next new world) |
 | `Resync` | World, joined player | Ask the host for its custom islands again (the list, and any island file that hasn't come) |
