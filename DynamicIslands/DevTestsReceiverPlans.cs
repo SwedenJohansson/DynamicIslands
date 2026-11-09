@@ -22,19 +22,22 @@ namespace DynamicIslands
 			if (!WorldRules.ShowOnReceiver) { Fail("custom islands are hidden on the Receiver (showOnReceiver = 0)"); yield break; }
 			bool ok = true;
 			yield return EnsureAlive();
-			string[] names = { "cirxa", "cirxb", "cirxb2", "cirxc", "cirxfree" };
+			string[] names = { "cirxa", "cirxb", "cirxb2", "cirxc", "cirxfree", "cirxd", "cirxe" };
 			for (int i = 0; i < names.Length; i++)
 			{
 				var s = new IslandGenSettings { Seed = 9100 + i, Radius = 20f, Height = 4f, Trees = 0f, Bushes = 0f, Rocks = 0f, Harvest = 0f, BeachThings = 0f, Water = 0f, SeaRocks = 0f, SeaFinds = 0f, Sunken = 0f };
 				IslandGenerator.CreateFile(s, names[i]).Save(IslandSpawner.PathFor(names[i]));
 				IslandWorldState.Remove(names[i]);
 			}
-			const string pa = "CI rx A", pb = "CI rx B", pc = "CI rx C";
+			const string pa = "CI rx A", pb = "CI rx B", pc = "CI rx C", pd = "CI rx D", pe = "CI rx E";
 			// (A and B both use the id "shelter" - library plans reuse ids too)
 			new WorldPlan { Name = pa, Id = WorldPlan.NewId(), Random = true, Rules = { IntroRule.Parse("shelter | island:cirxa | start | ahead:300 | | A Shelter") } }.Save();
 			new WorldPlan { Name = pb, Id = WorldPlan.NewId(), Random = true, Rules = { IntroRule.Parse("shelter | island:cirxb | start | ahead:300 | | B Shelter"), IntroRule.Parse("bonly | island:cirxb2 | km:5 | ahead:300 | | B Yard") } }.Save();
 			new WorldPlan { Name = pc, Id = WorldPlan.NewId(), Random = true, Rules = { IntroRule.Parse("conly | island:cirxc | start | ahead:300 | | C Hall") } }.Save();
 			File.Delete(WorldPlan.PathFor(pc));
+			// (WorldDirector.Done: a fourth plan's "shelter" and a fifth plan's "conly", never brought in this world)
+			new WorldPlan { Name = pd, Id = WorldPlan.NewId(), Random = true, Rules = { IntroRule.Parse("shelter | island:cirxd | km:900 | ahead:300 | | D Shelter") } }.Save();
+			new WorldPlan { Name = pe, Id = WorldPlan.NewId(), Random = true, Rules = { IntroRule.Parse("conly | island:cirxe | km:900 | ahead:300 | | E Hall") } }.Save();
 			string keep = WorldDirector.PlanName;
 			GameObject recv = null;
 			var made = new List<IslandWorldState.Entry>();
@@ -94,13 +97,28 @@ namespace DynamicIslands
 				Check(ref ok, a.Rule == "~shelter" && b.Rule == "shelter" && b2.Rule == "bonly" && c.Rule == "~conly", "plan B marks: " + string.Join(", ", made.Select(x => x.Name + "=" + x.Rule).ToArray()));
 				Check(ref ok, !IslandRadar.Shown.Contains(a) && IslandRadar.Shown.Contains(b) && IslandRadar.Shown.Contains(b2) && !IslandRadar.Shown.Contains(c) && IslandRadar.Shown.Contains(free),
 					"plan B: B's islands and the random one (" + shown() + ")");
+
+				// (Done per plan: an id done under another plan doesn't stop a new plan's rule; a rule whose island is here stays done)
+				WorldDirector.Done.Add("shelter");
+				DynamicIslands.WorldPlanCommand(new[] { pd });
+				Check(ref ok, !WorldDirector.Done.Contains("shelter"), "plan D: its 'shelter' (another island, none in the world) is not done - it will come");
+				WorldDirector.Done.Add("shelter");
+				DynamicIslands.WorldPlanCommand(new[] { pa });
+				Check(ref ok, WorldDirector.Done.Contains("shelter"), "back to plan A: its 'shelter' stays done (its island is here; not brought twice)");
+				WorldDirector.Done.Add("conly");
+				DynamicIslands.WorldPlanCommand(new[] { pe });
+				Check(ref ok, !WorldDirector.Done.Contains("conly"), "plan E: 'conly' done under deleted plan C (not the last plan) doesn't stop E's rule");
+				WorldDirector.Done.Add("conly");
+				DynamicIslands.WorldPlanCommand(new[] { pe });
+				Check(ref ok, WorldDirector.Done.Contains("conly"), "the same plan again: its done rule stays done");
 			}
 			finally
 			{
 				if (recv != null) UnityEngine.Object.Destroy(recv);
 				if (!string.IsNullOrEmpty(keep) && WorldPlan.Load(keep) != null) { WorldDirector.SetPlan(keep, true); StoryChain.FromPlan(WorldDirector.Plan); }
 				foreach (string n in names) IslandWorldState.Remove(n);
-				foreach (string p in new[] { pa, pb, pc }) if (File.Exists(WorldPlan.PathFor(p))) File.Delete(WorldPlan.PathFor(p));
+				WorldDirector.Done.Remove("shelter"); WorldDirector.Done.Remove("conly"); WorldDirector.Done.Remove("bonly");
+				foreach (string p in new[] { pa, pb, pc, pd, pe }) if (File.Exists(WorldPlan.PathFor(p))) File.Delete(WorldPlan.PathFor(p));
 				IslandWorldState.Save();
 			}
 			if (ok) Log("PASS: receiver other plans"); else Fail("receiver other plans");
