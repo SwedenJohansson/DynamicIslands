@@ -1372,6 +1372,7 @@ namespace DynamicIslands
 		public static void RunInBackground()
 		{
 			Application.runInBackground = true;
+			ModCursor.TestRaft = true; // (11-09: a test Raft never holds the mouse unless a screen test raised it)
 			Log("The game keeps running in the background now" + (SetMuted(true) ? ", its sound off" : ""));
 		}
 

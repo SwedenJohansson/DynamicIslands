@@ -396,6 +396,13 @@ namespace DynamicIslands
 		}
 		static object hookedShift, hookedReceived;
 
+		// (11-09: the mouse lock let go again after Raft's own Update code - ModCursor.Tick)
+		private void LateUpdate()
+		{
+			try { ModCursor.Tick(); }
+			catch (Exception e) { TickError("Mouse lock", e); }
+		}
+
 		private void Update()
 		{
 			try { HookRaftEvents(); }
@@ -1467,6 +1474,9 @@ namespace DynamicIslands
 				if (!WorldDirector.SetPlan(name, true)) { Notify("No world plan '" + name + "'. Plans: " + string.Join(", ", WorldPlan.All().ToArray()), true); return; }
 				// (its story chain replaces the world's; what is done or unlocked stays)
 				StoryChain.FromPlan(WorldDirector.Plan);
+				// (the last plan's islands leave the Receiver, this one's come back - on every player's - receiver1109)
+				List<IslandWorldState.Entry> marked = WorldDirector.MarkOtherPlans();
+				if (marked.Count > 0) IslandNetwork.SendToEveryone(IslandNetwork.IslandsMessage(marked, false));
 				IslandWorldState.Save();
 				Notify("This world now follows the plan '" + WorldDirector.PlanName + "' (kept when the world is saved)");
 			}
