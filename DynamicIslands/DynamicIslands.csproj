@@ -127,6 +127,7 @@
     <Compile Include="DevTestsRename.cs" />
     <Compile Include="DevTestsReadyPieces.cs" />
     <Compile Include="DevTestsT8cb.cs" />
+    <Compile Include="DevTestsMp34.cs" />
     <Compile Include="DevTestsMp1030.cs" />
     <Compile Include="DevTestsBringBack.cs" />
     <Compile Include="DevTestsLibrary.cs" />
