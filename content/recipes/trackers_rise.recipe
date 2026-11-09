@@ -233,6 +233,8 @@ note notchlog Notch log | NOTCH LOG - TRACKERS OF THE RISE\n\nOne notch for ever
 info title=Tracker's Rise
 info author=Custom Islands
 info description=A grass ridge with a meadow on top: goats and llamas, the trackers' watch tower, and a trail of broken bushes to a gully. The fourth island of The Last Green World.
+# (REACH 11-09: the stilt tower deck is a ladder climb the 1x walker can't judge - the play climbs it and opens the chest)
+island reach.byplay=Tower chest
 island on.arrive=message||A green ridge over the jungle. Something bleats up on the meadow - not like the goats.
 
 story burr|Burr|Note_Paper|Burr, a ranger's goat with a torn ear, freed from a cage of branches in the gully.
