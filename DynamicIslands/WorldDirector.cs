@@ -1032,6 +1032,8 @@ namespace DynamicIslands.Editor
 			RecordPlanHashes(OwnsPlan);
 			// (a world from before the story chain, whose plan changes Raft's story: the chain from the plan now)
 			if (Plan != null && !StoryChain.HasSnapshot && Plan.HasStory) StoryChain.FromPlan(Plan);
+			// (islands an earlier plan of this world brought: off the Receiver - receiver1109)
+			MarkOtherPlans();
 			if (Plan != null && Plan.Rules.Count > 0)
 				Log("Plan '" + PlanName + "'" + (PlanFromWorld ? " (the world's own copy)" : " (from its file; the world keeps a copy from the next save)") + ": " +
 					Plan.Rules.Count(r => !Done.Contains(r.Id)) + " of " + Plan.Rules.Count + " rule(s) still to come");
@@ -1510,6 +1512,56 @@ namespace DynamicIslands.Editor
 			}
 			if (!told && !string.IsNullOrEmpty(e.Rule) && failNoted.Add(e.HostName ?? ""))
 				DynamicIslands.Notify("Island '" + e.HostName + "' couldn't be built (see F10)", true);
+		}
+
+		/// <summary>The mark on an island an earlier plan of this world brought ("~" + its rule's id).</summary>
+		internal const string OtherPlanMark = "~";
+
+		/// <summary>True for an island a rule of another plan brought (OtherPlanMark): not on the Receiver.</summary>
+		internal static bool FromOtherPlan(IslandWorldState.Entry e)
+		{
+			return e != null && e.Rule != null && e.Rule.StartsWith(OtherPlanMark, StringComparison.Ordinal);
+		}
+
+		/// <summary>
+		/// Host (receiver1109, player 11-09 "the receiver is messy"): an island brought by a rule this world's plan doesn't
+		/// have - a plan played before (WorldPlan &lt;name&gt;), or one edited since - gets its rule id marked ("~id"), so
+		/// the Receiver shows only this plan's islands; its label stays, and switching back takes the mark off. Before,
+		/// every unfinished island of every plan the world ever had kept its dot at any distance. The island itself
+		/// stays in the sea. The mark is saved and reaches players in the island list (its Rule). Nothing when the
+		/// plan is paused (Plan null). Returns the islands changed.
+		/// </summary>
+		internal static List<IslandWorldState.Entry> MarkOtherPlans()
+		{
+			var changed = new List<IslandWorldState.Entry>();
+			if (!Raft_Network.IsHost || Plan == null) return changed;
+			IList<IslandWorldState.Entry> all = IslandWorldState.Islands;
+			Func<IslandWorldState.Entry, string> idOf = e => FromOtherPlan(e) ? e.Rule.Substring(OtherPlanMark.Length) : e.Rule ?? "";
+			// (the plan's rules, the story chain's copies of them, and the own rules of an island that belongs here)
+			Func<IslandWorldState.Entry, IntroRule, bool> fits = (e, r) =>
+			{
+				if (!r.Id.Equals(idOf(e), StringComparison.OrdinalIgnoreCase)) return false;
+				// (plans reuse ids - "shelter", "mine": the island must be the rule's too)
+				string name = e.HostName ?? e.Name ?? "";
+				if (r.What == "island") return r.WhatArg.Trim().Equals(name, StringComparison.OrdinalIgnoreCase) || e.Name.Equals(r.WhatArg.Trim(), StringComparison.OrdinalIgnoreCase) || (r.Label.Length > 0 && r.Label == e.Label);
+				if (r.What == "oneof") return r.WhatArg.Split(',').Any(n => n.Trim().Equals(name, StringComparison.OrdinalIgnoreCase));
+				return true;
+			};
+			List<IntroRule> rules = Plan.Rules.Concat(StoryChain.Rules).ToList();
+			foreach (IslandWorldState.Entry e in all.Where(x => idOf(x).Length == 0 || rules.Any(r => fits(x, r))).ToList())
+				try { rules.AddRange(RulesOf(e)); } catch { }
+			foreach (IslandWorldState.Entry e in all)
+			{
+				string id = idOf(e);
+				if (id.Length == 0) continue;
+				bool here = rules.Any(r => fits(e, r));
+				string want = here ? id : OtherPlanMark + id;
+				if (e.Rule == want) continue;
+				e.Rule = want;
+				changed.Add(e);
+			}
+			if (changed.Count > 0) Log(changed.Count + " island(s) of another plan " + (changed.Any(FromOtherPlan) ? "left off the Receiver" : "back on it") + ": " + string.Join(", ", changed.Select(x => x.HostName ?? x.Name).ToArray()));
+			return changed;
 		}
 
 		static IntroRule PlanRuleOf(string id)

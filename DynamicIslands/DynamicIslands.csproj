@@ -137,6 +137,7 @@
     <Compile Include="DevTestsHang.cs" />
     <Compile Include="DevTestsGuideShots.cs" />
     <Compile Include="DevTestsRadarNeeds.cs" />
+    <Compile Include="DevTestsReceiverPlans.cs" />
     <Compile Include="DevTestsRaftView.cs" />
     <Compile Include="DevTestsScenarios.cs" />
     <Compile Include="DevTestsScenarioStory.cs" />
