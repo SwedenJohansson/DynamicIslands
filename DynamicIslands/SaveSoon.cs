@@ -166,6 +166,11 @@ namespace DynamicIslands
 	[HarmonyPatch(typeof(SaveAndLoad), "RestoreRGDGame")]
 	static class SaveGuardRestorePatch
 	{
-		static void Postfix() { try { SaveGuard.OnWorldRead(); } catch { } }
+		static void Postfix()
+		{
+			// (a world saved without its id gets it back first - WorldIdRepair)
+			try { WorldIdRepair.AfterWorldRead(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] World id repair: " + e.Message); }
+			try { SaveGuard.OnWorldRead(); } catch { }
+		}
 	}
 }
