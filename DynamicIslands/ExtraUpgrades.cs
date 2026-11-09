@@ -127,6 +127,14 @@ namespace DynamicIslands.Editor
 		static IEnumerable<Upgrade> Everything { get { return All.Concat(CosmeticItems); } }
 		static IEnumerable<Upgrade> Made { get { return Everything.Where(u => u.Item != null); } }
 		public static Upgrade Find(int index) { return all == null ? null : Made.FirstOrDefault(u => u.Index == index); }
+		/// <summary>The made upgrade whose item this is, or null - a quick lookup for the placement checks, which Raft runs
+		/// for every surface the ghost block looks at, every frame.</summary>
+		public static Upgrade FindMade(Item_Base item)
+		{
+			Upgrade u;
+			return item != null && byIndex.TryGetValue(item.UniqueIndex, out u) && u.Item != null ? u : null;
+		}
+		static readonly Dictionary<int, Upgrade> byIndex = new Dictionary<int, Upgrade>();
 		public static Upgrade Find(string name) { return Everything.FirstOrDefault(u => u.Name == name); }
 
 		public static Upgrade TableUpgrade { get { return Find(TableName); } }
@@ -336,6 +344,7 @@ namespace DynamicIslands.Editor
 			u.Item = ItemManager.GetItemByIndex(u.Index);
 			if (u.Item == null) { Warn(u.Display + " couldn't be registered"); return false; }
 			u.Base = baseItem;
+			byIndex[u.Index] = u;
 			Log(u + " registered from " + u.BaseName + ", cost " + CostText(recipe.NewCost) + (u.UsesFactor != 1 ? ", uses " + u.Item.MaxUses : ""));
 			return true;
 		}
@@ -360,6 +369,7 @@ namespace DynamicIslands.Editor
 				if (buildables != null) buildables.Remove(u.Item);
 				u.Item = null;
 			}
+			byIndex.Clear();
 			if (holder != null) UnityEngine.Object.Destroy(holder);
 			holder = null;
 		}
@@ -1116,6 +1126,45 @@ namespace DynamicIslands.Editor
 				ub.Apply();
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] A placed block: " + e.Message); }
+		}
+	}
+
+	/// <summary>
+	/// Where a block may stand: each surface (BlockQuad) has a quad type that lists the items it takes
+	/// (SO_BlockQuadType.acceptableBlockTypes - floor, foundation, wall, table top...). Raft's own lists know only Raft's
+	/// items, so a crafted upgrade (the upgrade research table, fast juicer, blast furnace and every other buildable one)
+	/// fitted no surface at all and could not be placed (player report 2026-11-09; the tests placed them with
+	/// CreateBlockCheat, which skips this check). A surface takes an upgrade wherever it takes the upgrade's base item.
+	/// </summary>
+	[HarmonyPatch(typeof(SO_BlockQuadType), "AcceptsBlock")]
+	static class UpgradeQuadAcceptsPatch
+	{
+		static void Postfix(SO_BlockQuadType __instance, Item_Base __0, ref bool __result)
+		{
+			if (__result) return;
+			try
+			{
+				ExtraUpgrades.Upgrade u = ExtraUpgrades.FindMade(__0);
+				if (u != null && u.Base != null && u.Base != __0) __result = __instance.AcceptsBlock(u.Base);
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] Surface check: " + e.Message); }
+		}
+	}
+
+	/// <summary>Which blocks a placed block may overlap (SO_BlockCollisionMask.blockTypesToIgnore, by item): like the
+	/// surfaces above, Raft's lists know only Raft's items. An upgrade counts as its base item there.</summary>
+	[HarmonyPatch(typeof(SO_BlockCollisionMask), "IgnoresBlock")]
+	static class UpgradeCollisionIgnorePatch
+	{
+		static void Postfix(SO_BlockCollisionMask __instance, Item_Base __0, ref bool __result)
+		{
+			if (__result) return;
+			try
+			{
+				ExtraUpgrades.Upgrade u = ExtraUpgrades.FindMade(__0);
+				if (u != null && u.Base != null && u.Base != __0) __result = __instance.IgnoresBlock(u.Base);
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] Overlap check: " + e.Message); }
 		}
 	}
 
