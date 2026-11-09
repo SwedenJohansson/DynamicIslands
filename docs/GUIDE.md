@@ -4505,7 +4505,7 @@ the save you came from (the mod's islands and quests come back with it too).
 Raft closes (also with Alt+F4 or the window's X), about 3 seconds after each quest step, quest finish and story step
 (at most once a minute), and with Raft's own saves every few minutes; players who joined rely on the host's save. A
 crash, Task Manager or a power cut closes Raft without a save: the islands' chests, quests and story come back as at
-Raft's last save. **Esc > Main menu** is the safest way to stop; after changing a setting during play, let Raft save
+Raft's last save. Leaving with **Esc > Quit game** saves only if you answer Raft's question with a save (the mod adds no save of its own once Raft has let go of the world: such a save had no world id, and worlds saved that way shared one inventory before 3.4). **Esc > Main menu** is the safest way to stop; after changing a setting during play, let Raft save
 before you stop.
 
 **My island is far away / I can't find it.** Build Raft's Receiver: custom islands are green dots with their distance.
