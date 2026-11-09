@@ -9,8 +9,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
-## Next (after 3.3)
+## 3.4 alpha - 2026-11-10: Player fixes
 
+New in this release:
+- **The mouse stays yours while Raft is in the background.** Raft now lets go of the mouse (and shows the cursor) whenever it is minimised or another program's window is in front, so a windowed Raft behind other windows no longer pulls the cursor to the middle of the screen.
 - **Fixes from the 11-09 player audit**: picking up an upgraded block with Raft's half-cost refund gives back half of the upgrade's own recipe, not the base item's; **Esc** on an islander's dialogue, the story credits, the notebook or the quest-skip box closes just that window, without opening the pause menu too; the journal, stats and notebook keys do nothing while Raft's inventory or another Raft menu is open (they used to open behind it and leave the mouse locked); the stats page, journal and notebook close each other, so none opens hidden behind another; the corner minimap hides while Raft's menus are open; in multiplayer the host checks a player's right to change an island's story before taking a story item give from them.
 - **The island minimap is now a World setting, off by default, and never covers the screen.** Tick **Island minimap** in World settings to get the small map in the top-right corner near islands; **M** hides it and shows it again. The full-screen map is gone (a player sailed into an island behind it). New worlds and worlds made before this have no map unless the host ticks it; the old **No minimap** option is replaced by it.
 - **The quest panel is never under the minimap, and you can move it.** While the corner island map shows, the quest panel sits just below it (the map covered its title and first step); with the map hidden (M) or off it goes back to its place. Drag the panel by its title while the cursor is free (inventory open) to put it anywhere on the screen: the place is kept on this PC, the panel stays on the screen and still moves out from under the map. Double-click it, or **Defaults... > Keys (this PC) > Quest panel: Reset place**, to put it back.
