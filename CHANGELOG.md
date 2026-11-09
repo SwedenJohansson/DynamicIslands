@@ -9,11 +9,15 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
-## Next (after 3.2)
+## 3.3 alpha - 2026-11-09: Island returns and the Receiver
 
+New in this release:
+- **The Receiver shows only this world's plan.** Islands that another plan brought - a plan the world played before `WorldPlan <name>` switched it, or a rule taken out of the plan since - stay in the sea but no longer fill the Receiver with their names; switching back brings their dots back. Worlds from 3.1/3.2 are tidied when they load (player report 11-09: the Receiver was full of other plans' islands).
+- **Switching plans: a new plan's rule always gets its island.** A rule whose name (for example `shelter`) had already fired under an earlier plan was skipped after `WorldPlan <name>`; now it brings its own island. Switching back to a plan whose island is already in the sea doesn't bring a second copy.
 - **Islands come back at random with equal chance.** Every island that may come has the same chance, visited or not (50 islands: 1 in 50 each; one left behind counted a quarter). Only an island whose journal quest is finished never comes again by chance; an island without a quest always can, also once reached. Picked again, an island the world has comes back as you left it - also one that once failed to load (it made a second, fresh copy).
 - **A main story island comes back while the Receiver is set to it.** Like Raft's own story islands: with the raft 800 m or more from it, it comes up ahead again as you left it, finished or not, as often as you like (before: only on a fresh tune, up to three times, never once its step was done). A story island whose step was done before its quest keeps its Receiver dot until the quest is done.
 - **Side quests keep an island coming back until they are done** - no three-return limit any more; a main story island with a side quest open joins the random picks until its side quests are done.
+- **Recipes: ladder shafts for dug caves**: `dig ... shaft` lays a dug passage straight through its points at any angle (the Dig brush climbs at most 25 degrees), so a dug room can have a ladder shaft up to the ground.
 
 ---
 
