@@ -94,7 +94,10 @@ plan save
   (Old Mine Islet). Off by default: on Shelter Atoll's islet the cut would take the whole sea side of the hill.
 - `prop <cave piece alias> cave.rock=den` (`ObjectProps.CaveRock`): the cave hill's rock texture is multiplied by that piece's
   lit shell colour over the hill rock's (`CaveMountain.RockAsDen`); sand on gentle slopes stays. Ignored when a cave of the hill is tinted.
-- `prop <cave piece alias> cave.foot=dry` (`ObjectProps.CaveFoot`): opt-in, Shelter Atoll only (11-07). `CaveGround.CutIn` lets
+  `cave.rock=plain`: Raft's plain big rock, one rock for hill and den wall (the standard since 11-08; Shelter Atoll uses it).
+- `prop <cave piece alias> cave.foot=dry` (`ObjectProps.CaveFoot`): the default for a bear den (`CaveTool.Room`) with no
+  `cave.foot` of its own (`CaveMountain.DryFootFor`, 11-08); `cave.foot=wet` keeps the old foot. Dry walled mouths also get
+  `CaveGround.Apron` (ground rounded 4 m out down to the den floor). `CaveGround.CutIn` lets
   ground down only where `Walled()` (rock on 5 of 8 sides within 25 m), `CaveMountain` drops loose skin cells (`DropLoose`),
   puts the sunk rim on dry sea-cut cells (ground > `DryBy` 0.3) and caps every way in at `DryWay` 12 m past its roof; a
   cell counts as past a mouth only within `DryWay` and `DryFront` 2 m of the mouth's width (a far tunnel's line no longer skips
@@ -102,10 +105,12 @@ plan save
   highest roof beside them + Over).
   The falloff also goes on past that piece's own mouth plane beside the opening (more than HalfWidth + `DryFront` off its
   centre line, on dry ground only), capped at ground + `ShoulderSlope` 0.9 x distance from the opening: a rounded shoulder, not a sheer face. 11-08: on dry land
-  the hill's last `FlareHigh` 3 m over the ground fall at `FlareSlope` 0.7 (a flared foot), and `ShoulderRamps` (before the
+  the hill's last `FlareHigh` 3 m over the ground curve out ever flatter from the hill's slope and dip `FlareSink` 0.3 m under the sand (a flared foot; a straight flare showed flat wedges), `SoftMin` (`SeamSoft` 2.5 m) rounding where the shoulder caps meet the hill, and `ShoulderRamps` (before the
   rim and again after `FootPasses`) caps every skin cell out past a dry mouth (to `DryWay` + 4 m) at ground - 0.6 +
   `ShoulderSlope` x its distance past the opening's HalfWidth (cut cells stay cut): the den's other pieces' roofs had
-  kept the shoulders' inner faces sheer.
+  kept the shoulders' inner faces sheer. 11-08 c: that cap curves (x (1 + d / `ShoulderCurve` 4)), reaches `BackBand` 6 m
+  behind the opening's plane rising `BackSlope` 1.5 a m there (no seam where it stopped), and the capped cells get
+  `RoundPasses` 3 lower-only passes toward their neighbours' mean (no crisp crest). Cells over a roof (`cover`) stay as they are.
   Without the prop all of it is skipped: other islands build byte for byte as before (Old Mine Islet checked).
 - In Raft, `tools\cavecheckrun.ps1 <island> [...] [-player 2|3]` checks a built island's caves in one world load:
   CICaveGapsLook (pictures out/in by day and night, walked in and out, flooded parts), CICaveInside shots (X7) and

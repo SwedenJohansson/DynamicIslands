@@ -126,11 +126,13 @@ line Block_Wall_Tier3 from 3 -81 to 3 -78 step=1.5 y=-0.15
 line Block_Wall_Tier3 from 6 -78 to 6 -69 step=1.5 y=-0.15
 line Block_Wall_Tier3 from 9 -84 to 9 -69 step=1.5 y=-0.15
 # F The ammo cave (Radar Hill's north foot): a rock with a hole in it, its mouth to the sea
-call ar_cave x=62 z=82 h=3 yaw=0 al=ammorock chest=ammochest
+# (11-08 d: the den at 3/4 size, its mouth where it was (z 98): the full-size den's roof stood 17 m over its floor and the
+# hill over it rose as two steep towers either side of the mouth; now one rounded dome covers it - CaveMountain.DryDomes)
+call ar_cave x=62 z=86 h=3 yaw=0 al=ammorock chest=ammochest s=0.75
 # (11-07 review: the hill over it Balboa's sandy rock, blue-grey on its steep faces round the brown den: its rock as the den's)
-prop ammorock cave.rock=den
+# (11-08 user: one rock - the plain mountain rock; cave.rock=den dropped, it laid the orange den rock over the hill)
 # (11-07 second review: pits by the rock's leaning walls, teeth along the hill's foot on the raised flanks: its foot on dry land)
-prop ammorock cave.foot=dry
+prop ammorock cave.foot=dry cave.rock=plain
 # (REACH 10-30: the cave floor ended 3 m over the sea in a cliff - no way in from the water (reach: ammo chest and the
 # cave "can't get there"): a beach slope from the mouth down into the sea)
 # (11-06 review: a narrow fan read as a causeway, and from the sea the rock's flat underside showed over the water on
@@ -549,7 +551,7 @@ prop supplycrate loot.refill=0
 note ammochest Ammo cave's chest | A chest in the ammo cave under Radar Hill: the shells are long gone, but not the copper.
 loot ammochest CopperIngot*3;MetalIngot*2;TitaniumOre*2
 prop ammochest loot.refill=0
-call hw_zone x=62 z=86 al=ammoz id=ammocave r=4 msg="A hole in the rock under Radar Hill, its mouth to the sea. Ammunition crates - empty."
+call hw_zone x=62 z=90 al=ammoz id=ammocave r=4 msg="A hole in the rock under Radar Hill, its mouth to the sea. Ammunition crates - empty."
 # Dr. Calder's field note, at the north bank's west end
 place Note_Paper caldernote2 at -19.5 56.5 ground y=0.1 drop yaw=40
 call treasure x=40 z=-48 r=8 n=1 seed=26391 kind=0
@@ -781,7 +783,7 @@ loot shelsupply OxygenBottle*2;PlasticBottle_Water*2;HealingSalve_Good*1;Rope*2
 # where the rats live - no trees under rock: taken out of the cave)
 clear at 62 80 r=11 all only=Palm|Tree|Bamboo|Banana|Mango below=9
 # The ammo cave: two at its back, 12 m from its chest by the mouth (the same den as The Abyss's lava tube). The lagoon cave's den is reached only under water and gets no NavMesh floor: no rats there
-place Creature_Rat_Tangaroa ammorats at 63 75 h=4.5
+place Creature_Rat_Tangaroa ammorats at 63 79 h=4.5
 prop ammorats creature.count=2
 prop ammorats creature.respawn=0
 save Shelter Atoll

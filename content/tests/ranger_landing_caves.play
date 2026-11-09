@@ -20,12 +20,12 @@ expect shown rlcachedoor
 expect hidden rlcachechest
 
 # Ranger Maya at the camp, leaning on her crate
-snap rl_islander rlmaya 200 3.5 0.6
+picture rl_islander -1.7 6 -50 -0.5 5.4 -46.6
 use Ranger Maya
 expect step 0
 
 # Now the hatch opens on the cache chest
-walk 33.9 50.6 to 36.5 52.1
+walk 33.9 50.6 to 36.5 52.1 below=8
 use rlcachedoor stay
 expect message rangers' cache
 expect hidden rlcachedoor
@@ -42,5 +42,5 @@ use Ranger Maya pick 2
 expect message under the lookout
 
 # Out of the cave again past the mouth
-walk 36.5 52.1 to 33.9 50.6 to 24.6 45.3 to 12 38 to 8 35.7
+walk 36.5 52.1 to 33.9 50.6 to 24.6 45.3 to 12 38 to 8 35.7 below=8
 picture rl_cave_mouth_in 30 6.8 48.5 12 6 38 light=20

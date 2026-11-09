@@ -88,7 +88,7 @@ call ringwall x=-46 z=-10 r=7 a0=20 da=45 n=6 len=5 hgt=3
 place SmallBoulder2 splitstone at -46 -10 ground sit y=-0.4 scale=0.35 yaw=40
 place Zone_Trigger track1 at -46 -10 ground
 # the bear cave (mark 2: the bent birch in front of it); the ranger's stash inside
-place "Pickup_Landmark_Tree_Birch" bentbirch at -33 13 ground sit roll=14
+place "Pickup_Landmark_Tree_Birch" bentbirch at -33 13 ground sit y=-0.85 roll=14
 place Zone_Trigger track2 at -37 13 ground
 place Loot_ChestSmall dcavechest at -35.5 28 h=5.45 sit yaw=200
 place Placeable_Lantern_Metal - at -40.6 29 h=5.45 sit
@@ -284,9 +284,7 @@ place TangaroaHatchRoom_Hatch rlcachedoor at 38.2 53.1 h=6.5 drop yaw=240
 prop rlcachedoor obj.name=rlcachedoor
 prop rlcachedoor beh.use=Open the cache hatch
 prop rlcachedoor if.use=talked|Ranger Maya
-prop rlcachedoor on.use=hide|rlcachedoor
-show|rlcachechest
-message||The hatch swings up on the rangers' cache - a chest stowed in the rock.
+prop rlcachedoor on.use=hide|rlcachedoor\nshow|rlcachechest\nmessage||The hatch swings up on the rangers' cache - a chest stowed in the rock.
 prop rlcachedoor else.use=message||The cache door is locked. Ask the ranger at the camp.
 place Loot_ChestSmall rlcachechest at 39.3 53.75 h=6.5 drop yaw=240
 prop rlcachechest obj.name=rlcachechest
@@ -301,15 +299,9 @@ place Story_Islander rlmaya at -0.5 -46.6 ground yaw=203
 prop rlmaya obj.name=Ranger Maya
 prop rlmaya islander.character=Maya
 prop rlmaya islander.pose=lean
-prop rlmaya talk.text=The green is dying from the mire outward. Start at the delta - the river carries everything.
-> What is in the mire?
-> Can I use the ranger cache?
-> I will manage.
-prop rlmaya on.choice1=journal|Ranger Maya: the mire|The mire's blight pools burn - green water that eats through boots and skin. Walk them only in a suit; it keeps the blight off.
-message||Maya writes it down for you: the blight pools burn, a suit protects.
-prop rlmaya on.choice2=hide|rlcachedoor
-show|rlcachechest
-message||The cache is in the rock under the lookout.
+prop rlmaya talk.text=The green is dying from the mire outward. Start at the delta - the river carries everything.\n> What is in the mire?\n> Can I use the ranger cache?\n> I will manage.
+prop rlmaya on.choice1=journal|Ranger Maya: the mire|The mire's blight pools burn - green water that eats through boots and skin. Walk them only in a suit; it keeps the blight off.\nmessage||Maya writes it down for you: the blight pools burn, a suit protects.
+prop rlmaya on.choice2=hide|rlcachedoor\nshow|rlcachechest\nmessage||The cache is in the rock under the lookout.
 prop rlmaya on.choice3=message||Then go carefully. The river does not wait for anyone.
 
 # a fill rock that floated over the slope (ground check, 2026-10-24)

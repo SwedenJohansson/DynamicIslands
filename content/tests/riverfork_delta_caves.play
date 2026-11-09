@@ -1,30 +1,31 @@
 # Riverfork Delta's otter sea cave (CIPlay riverfork_delta_caves, 11-08; in a test world 'CI ...'). Points as in its
-# recipe: the mouth on the sea floor at 30 -102 (5 m down) off the east arm's mouth, the boulder cairn on the east bank
-# at 27 -83, the flooded tunnel climbing to the dry den round 51.5 -59 (air zone rd_den, the seed tin). Swim in from the
-# sea floor up the tunnel (no teleport into the den), breathe there, take the seeds, swim back out to the sea.
+# recipe: the mouth on the sea floor at 111 30 (some 9 m down) off the east beach below the crane's mountain, the
+# boulder cairn on the beach at 76 37, the flooded tunnel climbing west under the spit to the dry den round 40 30 (air
+# zone rd_den, the seed tin). Swim in from the sea floor up the tunnel (no teleport into the den), breathe there, take
+# the seeds, swim back out to the sea.
 island Riverfork Delta keep
 offset 0 0
 hour 11
 weather Calm
 
-# Outside: the cairn on the bank and the mouth from the water, the knoll on the beach
-picture rd_cave_out 25 3 -80 30 -4 -100
-picture rd_cave_mouth 28 -2.5 -110 30 -5 -102
-picture rd_knoll 32 5 -66 51 4 -59
+# Outside: the cairn on the beach and the spit, the mouth on the sea floor
+picture rd_cave_out 92 4 46 76 0 36
+picture rd_spit 100 8 14 80 1 30
+picture rd_cave_mouth 117 -6 24 111 -9 30
 
 # Swim in: from the sea floor before the mouth up the flooded tunnel into the den, and breathe there
-walk 28.2 -105.6 to 30 -102 to 38.5 -85 to 47 -68 to 51.5 -59 below=-3
+walk 115 30 to 111 30 to 100 30 to 80 30 to 60 30 to 40 30 below=-3
 air rd_den here
 
 # The den: dry, air, the seed tin
-picture rd_den_in 46 3.5 -70 53 3 -57
-picture rd_den_out 53 3.5 -57 40 0 -83
-picture rd_tunnel 39 0 -84 47 2 -68
+picture rd_den_in 47 5 30 38 4 31
+picture rd_den_out 36 5 30 52 3 30
+picture rd_tunnel 76 -1 30 62 1 30
 open Seed tin
 wait 2
 expect item Seed_Mango 2
 expect item Seed_Pineapple 2
 air rd_den
 
-# Back out: down the tunnel and out of the mouth onto the sea floor
-walk 51.5 -59 to 47 -68 to 38.5 -85 to 30 -102 to 28.2 -105.6 below=7
+# Back out: down the tunnel to the mouth (the walker stops at the mouth piece's lip; a swimmer goes over it)
+walk 40 30 to 60 30 to 80 30 to 100 30 to 109.5 30 below=7

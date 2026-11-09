@@ -76,7 +76,7 @@ place Loot_Crate mastbox at 26.5 12 ground sit yaw=40
 call ar_cave x=44 z=4 h=8.5 yaw=0 al=beehallcave chest=beecache
 place Zone_Trigger beehall at 44 9 h=10
 place Loot_WildHive beehive1 at 45.5 10.5 h=8.95 sit
-place Loot_WildHive beehive2 at 43 6 h=8.95 sit yaw=90
+place Loot_WildHive beehive2 at 43 6 h=8.52 sit yaw=90
 beside ChoppableVines beevines beecache d=1.6
 scatter Pickup_Landmark_Flower_Red 3 at 43 16 r=4 seed=11072 free=1
 loot beehive1 HoneyComb*3
@@ -210,6 +210,9 @@ place Note_Paper denmark at -3 46.5 ground y=0.08 yaw=20
 note denmark Carved mark at the Den | Cut into a root at the Den's mouth with a ranger knife, deep and careful:\n\nO.F. + B.  ->  MARSH\n\nUnder it, older and in a smaller, neater hand:\n\nM.F. WAS HERE. THE BEAR IS NICE IF YOU SING. (SHE IS NOT NICE. - A.)
 
 # --- Settings, notes, behaviours, quest -------------------------------------------------------------------------
+# (11-08 w02 ground check: a palm by the fungus hall stood 4.9 m deep in the hill)
+clear at -13.4 -6.9 r=1.5 only=Palm
+
 info title=Rootweave Caves
 info author=Custom Islands
 info description=A rock hill with four caves in its flanks: a fungus hall, a bee hall, a flooded passage and a bear's den - the grove's roots run through them all. The sixth island of The Last Green World.
@@ -336,8 +339,7 @@ caveloot rwroot dirt=4 mush=5 stone=0 vines=3
 clear from 9.5 24 to 9.2 17.5 r=2.6 all only=^Pickup_Landmark_(Mushroom|DirtPickup|Rock)
 # the thorn pit: the drift's floor fell into a root hollow full of sharpened stakes; planks along the hall side
 place Note_Sign rwwarn at 9.3 25.8 h=14.5 sit drop yaw=18
-note rwwarn DANGER - THORN PIT | The floor past this sign dropped into a pit of root thorns. Walk the planks along the wall on your left, not the rubble.
-- Verdance survey team
+note rwwarn DANGER - THORN PIT | The floor past this sign dropped into a pit of root thorns. Walk the planks along the wall on your left, not the rubble.\n- Verdance survey team
 place SmallBoulder3 - at 8.2 22.4 h=12.6 sit scale=0.3 yaw=10
 place SmallBoulder3 - at 8.9 20.6 h=12.55 sit scale=0.35 yaw=130
 place SmallBoulder3 - at 8.0 18.9 h=12.6 sit scale=0.3 yaw=250

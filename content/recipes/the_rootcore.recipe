@@ -220,16 +220,60 @@ place Creature_Chicken rchens at 30 -60 ground
 prop rchens creature.count=3
 
 # --- CAVES 11-08 (content round 11-04, world 02): the Rootcore's deep cave - the old root's own way down. Off the quest's
-#     line, 6 m+ from its things: a mouth in the slope over the lower camp, a dug descent (two switchbacks, each stroke
-#     at most 20 degrees) down to the core room deep under the island; a ladder shaft from the room's far end straight
-#     up to a landing - the second way out. Loot: mushrooms, a titanium vein. Rats on the descent. ACID: green seep
-#     water in a side alcove of the core room (optional; a warning at its mouth; the room's floor walks past it).
-dig -14,-44 -34,-44 r=1.9 slope=-18 as=rootdeep
-dig -34,-44 -38,-48 -37,-53 -20,-55 r=1.9 slope=-16 as=rootdeep
-dig -20,-55 -12,-57 r=3.4 slope=0 as=rootdeep
-dig -17,-56.5 -17.5,-63 r=1.8 slope=0 as=rootdeep
-dig -10.5,-57.5 -10.5,0.3,-57.5 shaft r=1.6 as=rootdeep
+#     line, 6 m+ from its things: a mouth in the slope under the dome's hill, a dug descent (two switchbacks, every
+#     stroke at most 20 degrees) down to the core room ~13 m under the hill; a ladder shaft from the room's far end
+#     straight up into the descent's long leg - the short way back up. Loot: mushrooms, a titanium vein. Rats on the
+#     descent. ACID: green seep water in a side cut off the core room (optional; a warning at its mouth; the room's
+#     floor walks past it and both ways out miss it). Floors are planned (room 1.5 m over the sea); the Raft run checks
+#     them in the [CITEST] dig log (rows RC4).
+clear at -29 27 r=3
+# (11-08 w02: the shaft first rose to a landing on the hillside - it came up in a 1 m pit wedged between the cliff and
+# the dome's hill, a bare dig slab round it, no way on; now it rises inside, into the descent's long leg)
+# the core room first: a fixed depth (floor = ground 14.38 - 12.88 = 1.5 m)
+dig -21.5,-12.88,3 -21.5,13.8 r=3.0 slope=0 as=rootdeep
+# the shaft's foot and the acid cut, level off the room's floor
+dig -21.5,12 -16.6,14 r=1.8 slope=0 as=rootdeep
+dig -21.5,5.5 -27,3.5 r=1.8 slope=0 as=rootdeep
+# the descent: in at the mouth along the hill, a turn down beside the dome, a hairpin back into the room's near end
+dig -29,27 -14.5,26 r=1.9 slope=-20 as=rootdeep
+dig -15.6,26 -14,12 -14,-3 -20.5,2.5 r=1.9 slope=-15 as=rootdeep
+# the shaft straight up from the foot into the long leg (its floor there 8.8 in plays; the shaft's top 9.3, ground 29.3)
+dig -16.6,14 -16.6,-20,14 shaft r=1.4 as=rootdeep
 caveloot rootdeep dirt=3 mush=3 stone=2 vines=2 titanium=1
+# the ladder: one 6 m ladder on the shaft's wall under the long leg, the climber faces the wall (yaw 90), top 7.5
+# cavecheck inside rootladder rootrats seeppool seeprock seepmist rc_seep rc_seepwarn
+place LandmarkLadder_6m rootladder at -15.5 14 h=1.5 yaw=90
+# rats on the descent's long leg (13 m+ from the chests in the room, the seep and the mouth)
+place Creature_Rat rootrats at -14 13 h=9.4 drop
+prop rootrats creature.count=2
+prop rootrats creature.respawn=0
+# the seep: a small pool of green water at the cut's end, crusted rocks, a green steam (the Abyss's vent look)
+place TP_SeleneReactor_Water_Radiated seeppool at -25.4 4.05 h=1.56 scale=0.1 yaw=70
+place SmallRock_02 seeprock at -26.9 3.4 h=2.5 drop yaw=60 scale=0.9 sy=0.22
+place SmallRock_02 seeprock at -26.3 5.1 h=2.5 drop yaw=170 scale=0.8 sy=0.22
+place SmallRock_02 seeprock at -24.6 2.6 h=2.5 drop yaw=280 scale=0.8 sy=0.22
+place SmallRock_02 seeprock at -27.2 4.6 h=2.5 drop yaw=20 scale=0.7 sy=0.22
+prop seeprock tint.color=#a4c428
+prop seeprock tint.amount=0.7
+place Zone_Atmosphere seepmist at -25.4 4.05 h=1.6
+prop seepmist zone.radius=3
+prop seepmist atmo.particles=steam
+prop seepmist atmo.fog=#8cc030
+prop seepmist atmo.fogAmount=0.35
+prop seepmist atmo.light=#c8ff70
+prop seepmist atmo.lightAmount=0.3
+place Zone_Trigger rc_seep at -25.4 4.05 h=2.1
+prop rc_seep obj.name=rc_seep
+prop rc_seep zone.id=rc_seep
+prop rc_seep zone.radius=1.5
+prop rc_seep zone.hazard=acid
+prop rc_seep zone.damage=5
+prop rc_seep zone.safe=suit
+prop rc_seep zone.hazardMsg=The seep water burns.
+place Zone_Trigger rc_seepwarn at -23.0 4.6 h=2.5
+prop rc_seepwarn zone.radius=2.2
+prop rc_seepwarn zone.repeat=never
+prop rc_seepwarn zone.message=Green water seeps from the side cut and the air stings. It burns bare skin - keep to the room's floor.
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Rootcore
@@ -396,6 +440,8 @@ clear at -11.74 46.03 r=1.5 only=SmallBoulder
 clear at -13.33 34.59 r=1.5 only=SmallBoulder
 # (RA4 11-02: a generated palm stood 2 m in the air over the meadow at -11 80 - picture a4rc_2)
 clear at -11 80 r=2.5 only=Palm
+# (w02 11-08 ground check: a generated palm over the deep cave's room end stood 1.35 m sunk at -21.9 14)
+clear at -21.9 14 r=1.5 only=Palm
 
 # (box agent 10-25: names for the guide pictures' snap points)
 prop rcmast obj.name=rcmast

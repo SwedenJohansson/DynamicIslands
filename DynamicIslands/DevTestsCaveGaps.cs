@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -644,8 +644,10 @@ namespace DynamicIslands
 			result(ok);
 		}
 
-		/// <summary>One cave's way: mouth first, floor points, the room's or the far end's last; In: the way in, level.</summary>
-		class GapWay { public string Kind; public List<Vector3> Floor = new List<Vector3>(); public Vector3 In; }
+		/// <summary>One cave's way: mouth first, floor points, the room's or the far end's last; In: the way in, level.
+		/// Open: the first point is a mouth to the outside (a closed start - a dug room's far end - is walked from and back to
+		/// itself, 11-08). Shaft: a dug ladder shaft's middle line (foot first) past the walked floor's last point, or null.</summary>
+		class GapWay { public string Kind; public List<Vector3> Floor = new List<Vector3>(); public Vector3 In; public bool Open = true; public List<Vector3> Shaft; public float ShaftR; }
 		/// <summary>The point s m along a floor line (by its length); false past its end.</summary>
 		static bool PointAlong(List<Vector3> f, float s, out Vector3 p)
 		{
@@ -677,6 +679,99 @@ namespace DynamicIslands
 			if (main == null || main.Count == 0) return -1;
 			int near = Enumerable.Range(0, main.Count).OrderBy(i => (main[i] - start).sqrMagnitude).First();
 			return (main[near] - start).magnitude <= within ? near : -1;
+		}
+
+		/// <summary>Where a dug line turns into a ladder shaft: the index of the point it starts rising (or falling) steeper
+		/// than 1.5 m per m across and over 0.3 m between two points, 2 m in all (Rootcore's shaft; a slope=-20 descent or a
+		/// 45-degree ramp is walked); -1: none.</summary>
+		public static int ShaftStart(List<Vector3> line)
+		{
+			// (2 m of it at least: a stroke's first point a step under or over the room it leaves - Rootcore's shaft foot and
+			// acid cut, 0.7 m - is no shaft)
+			Func<int, bool> steep = i =>
+			{
+				Vector3 d = line[i] - line[i - 1];
+				return Mathf.Abs(d.y) > 0.3f && Mathf.Abs(d.y) > 1.5f * new Vector2(d.x, d.z).magnitude;
+			};
+			for (int i = 1; line != null && i < line.Count; i++)
+			{
+				if (!steep(i)) continue;
+				int j = i;
+				while (j + 1 < line.Count && steep(j + 1)) j++;
+				if (Mathf.Abs(line[j].y - line[i - 1].y) >= 2f) return i - 1;
+				i = j;
+			}
+			return -1;
+		}
+
+		/// <summary>A dug point open to the outside: an opening the stroke cut in the ground within its radius and 2 m (flat),
+		/// or the sky straight over it. A room's far end inside the hill is neither (Rootcore: its walk started 3 m "out" of
+		/// it in the rock and came back past it into the rock, 11-08).</summary>
+		static bool DigOpenAt(DigTunnel t, Vector3 p, float r)
+		{
+			var flat = new Vector2(p.x, p.z);
+			if (t.Openings.Any(o => (o - flat).magnitude <= r + 2f)) return true;
+			bool backs = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = false;
+			try { return !Physics.Raycast(p + Vector3.up * 0.3f, Vector3.up, 60f, ~0, QueryTriggerInteraction.Ignore); }
+			finally { Physics.queriesHitBackfaces = backs; }
+		}
+
+		/// <summary>Why a ladder shaft from foot to top (heights) can't be climbed with these ladders (each one's bottom and top,
+		/// the climb colliders beside the shaft): "" when one ladder or a chain of them (gaps under 1 m) reaches from within
+		/// 1.5 m over the foot to within 3 m under the top.</summary>
+		public static string ShaftLadderGap(float foot, float top, List<Vector2> spans)
+		{
+			if (spans == null || spans.Count == 0) return "no ladder in it";
+			float reach = foot + 1.5f;
+			bool any = false;
+			foreach (Vector2 sp in spans.OrderBy(x => x.x))
+			{
+				if (sp.x > reach) break;
+				any = true;
+				reach = Mathf.Max(reach, sp.y + 1f);
+			}
+			if (!any) return "its ladder starts " + (spans.Min(x => x.x) - foot).ToString("0.0") + " m over the foot";
+			float got = reach - 1f;
+			return got >= top - 3f ? "" : "its ladder ends " + (top - got).ToString("0.0") + " m under the top";
+		}
+
+		/// <summary>The air pocket zone (its index) whose sphere holds p; -1: none (CICaveGapsLook's dry end: a den with its own
+		/// air zone - Riverfork's - passes on its breath, wet or dry, 11-08).</summary>
+		public static int AirCover(Vector3 p, IList<Vector3> centres, IList<float> radii)
+		{
+			for (int i = 0; i < centres.Count; i++) if ((p - centres[i]).sqrMagnitude <= radii[i] * radii[i]) return i;
+			return -1;
+		}
+
+		[ConsoleCommand(name: "CIGapShaftUnit", docs: "Dev, anywhere: CICaveGapsLook's dug-way helpers (11-08) - a ladder shaft found in a dug line (not a slope or a ramp), a shaft's ladders that reach or not (none, too short, a chain), the air pocket zone that holds a den's end or none")]
+		public static void GapShaftUnitCommand() { StartTest(GapShaftUnitRoutine()); }
+
+		static IEnumerator GapShaftUnitRoutine()
+		{
+			bool ok = true;
+			Func<float, float, int, List<Vector3>> ramp = (dy, dx, n) => Enumerable.Range(0, n).Select(i => new Vector3(i * dx, i * dy, 0f)).ToList();
+			Check(ref ok, ShaftStart(ramp(0f, 1.2f, 8)) == -1, "a level passage: no shaft");
+			Check(ref ok, ShaftStart(ramp(-0.4f, 1.1f, 8)) == -1, "a slope=-20 descent: no shaft");
+			Check(ref ok, ShaftStart(ramp(1f, 1f, 8)) == -1, "a 45-degree ramp: no shaft");
+			var room = ramp(0f, 1.2f, 4);
+			room.AddRange(Enumerable.Range(1, 6).Select(i => room[3] + new Vector3(0.05f, 1.2f * i, 0f)));
+			Check(ref ok, ShaftStart(room) == 3, "a room then a shaft up: it starts at the room's last point (" + ShaftStart(room) + ")");
+			Check(ref ok, ShaftStart(ramp(1.17f, 0f, 6)) == 0, "a shaft from its first point (Rootcore's branch 3)");
+			var step = ramp(0f, 1.2f, 6); step[0] += Vector3.up * 0.7f;
+			Check(ref ok, ShaftStart(step) == -1, "a first point 0.7 m over the rest (Rootcore's shaft foot): no shaft");
+			Check(ref ok, ShaftLadderGap(3.2f, 10.2f, new List<Vector2> { new Vector2(3.5f, 9.5f) }) == "", "a 6 m ladder up a 7 m shaft: climbed");
+			Check(ref ok, ShaftLadderGap(3.2f, 10.2f, new List<Vector2>()) != "", "no ladder in the shaft: refused (" + ShaftLadderGap(3.2f, 10.2f, new List<Vector2>()) + ")");
+			Check(ref ok, ShaftLadderGap(3.2f, 14f, new List<Vector2> { new Vector2(3.5f, 9.5f) }) != "", "a ladder ending 4.5 m under the top: refused");
+			Check(ref ok, ShaftLadderGap(3.2f, 10.2f, new List<Vector2> { new Vector2(6f, 9.5f) }) != "", "a ladder starting 2.8 m over the foot: refused");
+			Check(ref ok, ShaftLadderGap(0f, 14f, new List<Vector2> { new Vector2(6.5f, 12f), new Vector2(0.5f, 6f) }) == "", "two ladders, one over the other: climbed");
+			var cs = new List<Vector3> { new Vector3(40f, 5f, 30f), new Vector3(0f, 0f, 0f) };
+			var rs = new List<float> { 6f, 2f };
+			Check(ref ok, AirCover(new Vector3(43f, 4.5f, 31f), cs, rs) == 0, "a den's end inside its air zone: covered");
+			Check(ref ok, AirCover(new Vector3(52f, 5f, 30f), cs, rs) == -1, "an end 12 m off the air zone: not covered (the dry check stays)");
+			Check(ref ok, AirCover(Vector3.one, new List<Vector3>(), new List<float>()) == -1, "no air zones: not covered");
+			if (ok) Log("PASS: gap shaft unit"); else Fail("gap shaft unit");
+			yield break;
 		}
 
 		/// <summary>The ways into an island's caves: each cave tool cave from its mouth piece through its tunnels to its room or
@@ -733,10 +828,22 @@ namespace DynamicIslands
 					int near = k > 0 ? BranchJoin(main, line[0], 3f) : -1;
 					if (near >= 0) pts.AddRange(main.Take(near + 1));
 					pts.AddRange(line);
+					float r = t.Strokes[k].Count > 0 ? t.Strokes[k].Max(p => p.R) : 1.5f;
+					w.Open = DigOpenAt(t, pts[0], r);
+					// (a stroke dug from inside out: its open end is its mouth)
+					if (!w.Open && near < 0 && DigOpenAt(t, pts.Last(), r)) { pts.Reverse(); w.Open = true; }
+					// a ladder shaft (11-08, Rootcore's branch 3): walked to its foot, then checked as a ladder's way
+					int sh = ShaftStart(pts);
+					if (sh == 0 && pts.Count > 1 && pts[0].y > pts.Last().y) { pts.Reverse(); sh = ShaftStart(pts); }
+					if (sh >= 0) { w.Shaft = pts.Skip(sh).ToList(); w.ShaftR = r; pts = pts.Take(sh + 1).ToList(); w.Kind += ", ladder shaft"; }
+					w.Open = DigOpenAt(t, pts[0], r);
+					// every point's floor: a walk between every third cut the passage's bends into the rock (Rootcore, 11-08)
 					RaycastHit fh;
-					for (int i = 0; i < pts.Count; i += 3) w.Floor.Add(DigFloor(pts[i], out fh) ? fh.point : pts[i]);
-					if ((pts.Count - 1) % 3 != 0) w.Floor.Add(DigFloor(pts.Last(), out fh) ? fh.point : pts.Last());
-					w.In = pts[Mathf.Min(pts.Count - 1, 6)] - pts[0]; w.In.y = 0f; w.In.Normalize();
+					foreach (Vector3 q in pts) w.Floor.Add(DigFloor(q, out fh) ? fh.point : q);
+					w.In = pts[Mathf.Min(pts.Count - 1, 6)] - pts[0]; w.In.y = 0f;
+					if (w.In.sqrMagnitude < 0.01f && w.Shaft != null) { w.In = w.Shaft.Last() - w.Shaft[0]; w.In.y = 0f; }
+					if (w.In.sqrMagnitude < 0.01f) w.In = Vector3.forward;
+					w.In.Normalize();
 					ways.Add(w);
 				}
 			}
@@ -958,6 +1065,34 @@ namespace DynamicIslands
 						{ blocked++; if (where.Length == 0) where = " - first at point " + i + " (" + h.collider.name + ", " + (f[i].y - sea).ToString("0.0") + " m)"; }
 					}
 					Check(ref ok, blocked == 0, label + ": a clear way along it, " + c + " points" + (blocked > 0 ? ": " + blocked + " blocked" + where : ""));
+					// A ladder shaft (11-08): its middle line clear (the ladders aside) and ladders up it from its foot to near its top
+					if (w.Shaft != null && w.Shaft.Count > 1)
+					{
+						Func<Collider, bool> ladderish = col => col.name.IndexOf("climb", StringComparison.OrdinalIgnoreCase) >= 0
+							|| ((col.GetComponentInParent<IslandObjectRef>()?.ObjectName ?? "").IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0);
+						int sb = 0; string sAt = "";
+						for (int i = 1; i < w.Shaft.Count; i++)
+						{
+							Vector3 a = w.Shaft[i - 1], d = w.Shaft[i] - a;
+							if (d.magnitude < 0.1f) continue;
+							foreach (RaycastHit h in Physics.SphereCastAll(a, 0.3f, d.normalized, d.magnitude, ~0, QueryTriggerInteraction.Ignore))
+							{
+								if (h.distance <= 0f || ladderish(h.collider) || h.collider.GetComponentInParent<Network_Player>() != null || h.collider.GetComponentInParent<AI_NetworkBehaviour>() != null) continue;
+								sb++; if (sAt.Length == 0) sAt = " - first " + h.collider.name + " at " + (h.point.y - sea).ToString("0.0") + " m";
+								break;
+							}
+						}
+						float foot = w.Shaft[0].y, top = w.Shaft.Last().y;
+						var spans = new List<Vector2>();
+						foreach (Collider col in e.Root.GetComponentsInChildren<Collider>(false).Where(x => x.enabled && x.name.IndexOf("climb", StringComparison.OrdinalIgnoreCase) >= 0))
+						{
+							Bounds lb = col.bounds;
+							bool beside = w.Shaft.Any(q => new Vector2(lb.ClosestPoint(q).x - q.x, lb.ClosestPoint(q).z - q.z).magnitude <= w.ShaftR + 0.5f && q.y >= lb.min.y - 2f && q.y <= lb.max.y + 2f);
+							if (beside) spans.Add(new Vector2(lb.min.y, lb.max.y));
+						}
+						string gap = ShaftLadderGap(foot, top, spans);
+						Check(ref ok, sb == 0 && gap == "", label + ": a ladder's way up the shaft, " + (foot - sea).ToString("0.0") + " to " + (top - sea).ToString("0.0") + " m (ladders " + string.Join(", ", spans.Select(x => (x.x - sea).ToString("0.0") + "-" + (x.y - sea).ToString("0.0")).ToArray()) + ")" + (sb > 0 ? ": " + sb + " blocked" + sAt : "") + (gap.Length > 0 ? ": " + gap : ""));
+					}
 					// A whole roof over the way in: rays straight down from 40 m over it, from 1 m to 6 m in and across the passage
 					// every 0.2 m, all stop on the rock over it, none reaches the floor (at the mouth's frame a flare once reached
 					// through the top - small holes seen from above, 11-04; down, as rays up miss the ground's back faces; cave tool
@@ -1041,15 +1176,24 @@ namespace DynamicIslands
 							Terrain land = Terrain.activeTerrains.FirstOrDefault(t2 => { Vector3 o = t2.transform.position, z = t2.terrainData.size; return dryAt.x >= o.x && dryAt.x <= o.x + z.x && dryAt.z >= o.z && dryAt.z <= o.z + z.z; });
 							Log("  " + label + ": under the end: " + (under.Length > 0 ? under : "nothing") + "; the ground there " + (land != null ? (land.SampleHeight(dryAt) + land.transform.position.y - sea).ToString("0.0") + " m" : "none"));
 						}
+						// (a den with its own air pocket zone over its end - Riverfork's - is planned air: its breath comes back wet
+						// or dry, 11-08; with none it must be dry ground)
+						List<TriggerZone> airs = e.Root.GetComponentsInChildren<TriggerZone>(false).Where(z => z.Air).ToList();
+						int pocket = AirCover(dryAt, airs.Select(z => z.transform.position).ToList(), airs.Select(z => z.Radius).ToList());
+						if (pocket >= 0)
+							Check(ref ok, air.Value > a0 + 1f, label + ": the end above the sea (" + (dryAt.y - sea).ToString("0.0") + " m) is a planned air pocket '" + airs[pocket].Id + "', the breath comes back (" + pc.controllerType + ", " + a0.ToString("0") + " -> " + air.Value.ToString("0") + ")");
+						else
 						Check(ref ok, pc.controllerType == ControllerType.Ground && air.Value > a0 + 1f, label + ": the end above the sea (" + (dryAt.y - sea).ToString("0.0") + " m) is dry, the breath comes back (" + pc.controllerType + ", " + a0.ToString("0") + " -> " + air.Value.ToString("0") + ")");
 						air.Value = air.Max;
 					}
 					// Walked in with Raft's controller and back out past the mouth (where it is dry the whole way)
-					if (f.All(p => p.y > sea + 0.2f))
+					if (c < 2) Log("  " + label + ": its foot only, not walked");
+					else if (f.All(p => p.y > sea + 0.2f))
 					{
-						// (from the side when the ground straight out falls away: a mouth on a ledge is come at along the ledge)
-						Vector3 outDir = GapWalkOut(mouth, w.In);
-						Vector3 from = GapFloor(mouth + outDir * 3f, 3f, GapWalkDown);
+						// (from the side when the ground straight out falls away: a mouth on a ledge is come at along the ledge; a
+						// closed start - a room's far end in the hill - from itself, and back to it, 11-08)
+						Vector3 outDir = w.Open ? GapWalkOut(mouth, w.In) : -w.In;
+						Vector3 from = w.Open ? GapFloor(mouth + outDir * 3f, 3f, GapWalkDown) : mouth;
 						Log("  " + label + ": walks in from " + from.ToString("F1") + " (world), the mouth " + mouth.ToString("F1") + ", out " + outDir.ToString("F2"));
 						PlayerMove.To(me, from + Vector3.up * 0.3f, ControllerType.Ground);
 						yield return new WaitForSeconds(0.8f);
@@ -1058,10 +1202,10 @@ namespace DynamicIslands
 						if (inOk)
 						{
 							var back = new List<Vector3>(f); back.Reverse();
-							back.Add(GapFloor(mouth + outDir * 5f, 3f, GapWalkDown));
+							if (w.Open) back.Add(GapFloor(mouth + outDir * 5f, 3f, GapWalkDown));
 							yield return PlayWalk(me, back, (r, m) => { outOk = r; why2 = m; });
 						}
-						Check(ref ok, inOk && outOk, label + ": walked in to its end" + (inOk ? " and back out past the mouth" + (outOk ? "" : " - NOT: " + why2) : " - NOT: " + why));
+						Check(ref ok, inOk && outOk, label + ": walked in to its end" + (inOk ? (w.Open ? " and back out past the mouth" : " and back to its start (a closed end)") + (outOk ? "" : " - NOT: " + why2) : " - NOT: " + why));
 					}
 					else if (!wet) Log("  " + label + ": dips under the sea on the way (" + (f.Min(p => p.y) - sea).ToString("0.0") + " m): not walked");
 				}
