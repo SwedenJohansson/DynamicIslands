@@ -31,11 +31,13 @@ namespace DynamicIslands
 				CostMultiple[] baseCost = u.Base.settings_recipe != null && u.Base.settings_recipe.NewCost != null ? u.Base.settings_recipe.NewCost : new CostMultiple[0];
 				List<string> names = cost.Concat(baseCost).Where(c => c.items != null && c.items.Length > 0).Select(c => c.items[0].UniqueName)
 					.Concat(new[] { u.Item.UniqueName, u.Base.UniqueName }).Distinct().ToList();
+				// (what the player had: everything above it is taken back after each upgrade - a full inventory gave nothing back)
+				Dictionary<string, int> had = names.ToDictionary(n => n, n => player.Inventory.GetItemCount(n));
 				foreach (CostMultiple c in cost) if (c.items != null && c.items.Length > 0) player.Inventory.AddItem(c.items[0].UniqueName, c.amount * 3);
 
 				// 1. as placed: Raft's itemToReturnOnDestroy is the upgrade item - picking it up (PickupBlock's two calls) gives it back
-				Block made = player.BlockCreator.CreateBlockCheat(u.Item, new Vector3(0f, 25f, 0f), Vector3.zero, DPS.Default, 0);
-				if (made == null) { Check(ref ok, false, u.Item.UniqueName + ": NO BLOCK placed"); continue; }
+				Block made = PlaceForTest(player, u.Item);
+				if (made == null) { Check(ref ok, false, u.Item.UniqueName + ": NO BLOCK placed"); TakeBack(player, had); continue; }
 				string ret = made.itemToReturnOnDestroy != null ? made.itemToReturnOnDestroy.UniqueName : "null";
 				Dictionary<string, int> c1 = names.ToDictionary(n => n, n => player.Inventory.GetItemCount(n));
 				if (made.itemToReturnOnDestroy != null)
@@ -47,8 +49,8 @@ namespace DynamicIslands
 					int gotItem = player.Inventory.GetItemCount(u.Item.UniqueName) - c1[u.Item.UniqueName];
 					int gotBase = player.Inventory.GetItemCount(u.Base.UniqueName) - c1[u.Base.UniqueName];
 					Check(ref ok, made.itemToReturnOnDestroy == u.Item && gotItem == 1 && gotBase == 0, u.Item.UniqueName + " picked up (returns " + ret + "): +" + gotItem + " itself, +" + gotBase + " " + u.Base.UniqueName);
-					made = player.BlockCreator.CreateBlockCheat(u.Item, new Vector3(0f, 25f, 0f), Vector3.zero, DPS.Default, 0);
-					if (made == null) { Check(ref ok, false, u.Item.UniqueName + ": NO second block placed"); continue; }
+					made = PlaceForTest(player, u.Item);
+					if (made == null) { Check(ref ok, false, u.Item.UniqueName + ": NO second block placed"); TakeBack(player, had); continue; }
 					c1 = names.ToDictionary(n => n, n => player.Inventory.GetItemCount(n));
 				}
 
@@ -65,9 +67,21 @@ namespace DynamicIslands
 				Check(ref ok, made.buildableItem == u.Item, u.Item.UniqueName + ": the block keeps its upgrade item after the refund");
 				BlockCreator.RemoveBlockNetwork(made, null, true);
 				yield return new WaitForSeconds(0.5f);
+				TakeBack(player, had);
 			}
 			Log("upgrade refund: " + ups.Count + " upgrades, " + natural + " with a return item, " + cleared + " refund checks");
 			if (ok) Log("PASS: upgrade refund"); else Fail("upgrade refund");
+		}
+
+		static Block PlaceForTest(Network_Player player, Item_Base item)
+		{
+			try { return player.BlockCreator.CreateBlockCheat(item, new Vector3(0f, 25f, 0f), Vector3.zero, DPS.Default, 0); }
+			catch (Exception e) { Log(item.UniqueName + ": placing threw " + e.GetType().Name + ": " + e.Message); return null; }
+		}
+
+		static void TakeBack(Network_Player player, Dictionary<string, int> had)
+		{
+			foreach (KeyValuePair<string, int> kv in had) { int extra = player.Inventory.GetItemCount(kv.Key) - kv.Value; if (extra > 0) player.Inventory.RemoveItem(kv.Key, extra); }
 		}
 
 		[ConsoleCommand(name: "CIEscHotkeys1109", docs: "Dev, in game, Levels on, no menu open: Esc belongs to the islander dialogue, story credits, notebook and quest-skip box (no pause menu); J/K/notebook key do nothing over Raft's inventory; the stats page, journal and notebook close each other on open; the host refuses a story give with a bad count")]
