@@ -117,11 +117,16 @@ namespace DynamicIslands
 								Check(ref ok, om != null && outT >= inT && inT > 0 && om.subMeshCount == CaveTool.PlugShadeOut.Length + 1,
 									"a lone den's wall has its outside as a child of its own (" + outT + " to " + inT + " triangle corners, "
 									+ (om != null ? om.subMeshCount : 0) + " parts, the shade bands' edges cut smooth)");
-								// (shade in the way in, seen from outside: the den beyond read as a light window, 11-06 review)
+								// (a short rock tunnel in the way in, the hill's rock, seen from outside only: the den room read blue, 11-08 user)
 								Transform pv = pl.Find(CaveTool.PlugVeilName);
-								Mesh vm = pv != null && pv.GetComponent<MeshFilter>() != null ? pv.GetComponent<MeshFilter>().sharedMesh : null;
-								Check(ref ok, vm != null && vm.vertexCount > 0 && pv.GetComponent<Collider>() == null && pv.GetComponent<CaveTool.CaveVeil>() != null,
-									"a lone den's way in has its shade (" + (vm != null ? vm.vertexCount : 0) + " corners, no collider)");
+								CaveTool.CaveVeil cv = pv != null ? pv.GetComponent<CaveTool.CaveVeil>() : null;
+								MeshFilter sv = pv != null ? pv.GetComponentInChildren<MeshFilter>(true) : null;
+								MeshRenderer svr = sv != null ? sv.GetComponent<MeshRenderer>() : null;
+								Check(ref ok, cv != null && sv != null && sv.sharedMesh != null && sv.sharedMesh.vertexCount > 0 && svr != null
+									&& sv.GetComponent<CaveTool.SleeveShade>() != null && pv.GetComponentInChildren<Collider>(true) == null
+									&& svr.sharedMaterial != null && svr.sharedMaterial.shader == pl.GetComponent<MeshRenderer>().sharedMaterial.shader
+									&& cv.OutFrom(pv.TransformPoint(0f, 0f, 400f)) > 1f,
+									"a lone den's way in has a rock sleeve in the wall's own rock, seen from outside (" + (sv != null && sv.sharedMesh != null ? sv.sharedMesh.vertexCount : 0) + " corners, no collider)");
 							// (the den's colour as drawn, not the big rock's grey-blue: a grey wall beside the lava tube's khaki shell, 11-05;
 							// the textures' means were alike, the shaders' light was not - so both are compared lit, after TintWall)
 							Color before, shell, wallLit;
@@ -1073,7 +1078,7 @@ namespace DynamicIslands
 			Log("PASS: backs " + mode + " (" + backs.Count + ")");
 		}
 
-		[ConsoleCommand(name: "CIRockLook", docs: "Dev, in a world: the island rock (Raft's Mountains shader) for finding the blue rock (11-06). props: each Mountains material's settings and the scene's light; vanilla / lit: the cave light (CaveLit) off and Raft's probes back, or on again; dark: the cave pieces lit by nothing; shine <k>: their shine times k; noprobe / probe: reflection probes off or on for every Mountains renderer; sand: Balboa_BigRocks_Dirt swapped for the hill's sand rock; noterrain / terrain: the island ground hidden or shown; rocktint <r g b>: the ground's steep layer tinted; nosun / sun: the sun off or on; norefl / refl: reflections off (intensity 0, probes off) or back; flatnormal / flatall / normal: the backs' and hill skins' (or every Mountains renderer's) main normal map flat, or back; info: how the backs, the hill skin and the rest are lit (probe use, block, cave light); noamb / amb: the scene's ambient light off or back; blockdark / blockoff: the backs and skin given a black probe straight through their blocks (cave light off), or their blocks cleared. CIRockLook <mode> [k]")]
+		[ConsoleCommand(name: "CIRockLook", docs: "Dev, in a world: the island rock (Raft's Mountains shader) for finding the blue rock (11-06). props: each Mountains material's settings and the scene's light; vanilla / lit: the cave light (CaveLit) off and Raft's probes back, or on again; dark: the cave pieces lit by nothing; shine <k>: their shine times k; noprobe / probe: reflection probes off or on for every Mountains renderer; sand: Balboa_BigRocks_Dirt swapped for the hill's sand rock; noterrain / terrain: the island ground hidden or shown; rocktint <r g b>: the ground's steep layer tinted; nosun / sun: the sun off or on; norefl / refl: reflections off (intensity 0, probes off) or back; flatnormal / flatall / normal: the backs' and hill skins' (or every Mountains renderer's) main normal map flat, or back; info: how the backs, the hill skin and the rest are lit (probe use, block, cave light); noamb / amb: the scene's ambient light off or back; nofog / fog: the scene's fog off or back (logs its settings); blockdark / blockoff: the backs and skin given a black probe straight through their blocks (cave light off), or their blocks cleared. CIRockLook <mode> [k]")]
 		public static void RockLookCommand(string[] args)
 		{
 			string mode = args != null && args.Length > 0 ? args[0] : "";
@@ -1104,6 +1109,12 @@ namespace DynamicIslands
 			{
 				CaveLit.Off = mode == "vanilla";
 				if (CaveLit.Off) foreach (MeshRenderer r in rends) { r.SetPropertyBlock(null); for (int i = 0; i < r.sharedMaterials.Length; i++) r.SetPropertyBlock(null, i); r.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.BlendProbes; }
+			}
+			else if (mode == "nofog" || mode == "fog")
+			{
+				Log("  fog " + RenderSettings.fog + " " + RenderSettings.fogMode + " colour " + RenderSettings.fogColor + " density " + RenderSettings.fogDensity
+					+ " " + RenderSettings.fogStartDistance + "-" + RenderSettings.fogEndDistance + " ambient " + RenderSettings.ambientMode + " " + RenderSettings.ambientLight);
+				RenderSettings.fog = mode == "fog";
 			}
 			else if (mode == "dark") CaveLit.TestDark = true;
 			else if (mode == "light") CaveLit.TestDark = false;
