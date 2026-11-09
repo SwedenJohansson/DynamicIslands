@@ -11,6 +11,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ## Next (after 3.3)
 
+- **The Stalker's Hollow**: its lip rock has a ramp up its west side, out of the sea to the beacon tower, and the loose rim rock by the south-west mouth now sits on the ground. Dug mouths in a steep face wear the hill's rock (not its sand layer) round the opening; the patch there is still a different shade from the hill (being worked on).
 - **Cave den mouths look like rock openings.** Every walled den's mouth now sits in the hill's face in the hill's own grey rock: no black stepped frame, no striped rim, no pale shell edge; the way in reads dark rather than blue and hazy, and the sand in front slopes gently down to the den's floor instead of ending in a square slab. Bear dens keep their hill's foot on dry land by default (`cave.foot=wet` for the old foot). Shelter Atoll's ammo cave uses one plain grey rock (`cave.rock=plain`) instead of the orange den rock.
 - **Shelter Atoll's ammo cave hill meets the sand gently**: on dry land (`cave.foot=dry`) the hill's foot now flares out into the sand instead of meeting it at a hard, steep line, and the rock beside the cave's opening slopes up from the beach instead of standing as sheer dark walls. The way in stays open.
 - **Radio Tower Remade's trawler** rests on its pad from stern to bow; its stern no longer hangs out over the sea.

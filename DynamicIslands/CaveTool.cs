@@ -2102,6 +2102,15 @@ namespace DynamicIslands.Editor
 
 		public static bool AnyLive { get { return live.Count > 0; } }
 
+		/// <summary>The light the pieces and the cave hill are drawn with now, and the share of shine they keep - for a dug tunnel's
+		/// rim walls dressed as the hill (DigTunnel.LightLining). False before any light was set.</summary>
+		public static bool HillLight(out SphericalHarmonicsL2 sh, out float shine)
+		{
+			sh = TestDark ? new SphericalHarmonicsL2() : lastSh;
+			shine = Shine * TestShine;
+			return haveLast && !Off;
+		}
+
 		/// <summary>Marks a cave tool piece (again after its parts changed: its renderers are looked up anew).</summary>
 		public static void Mark(GameObject piece)
 		{
