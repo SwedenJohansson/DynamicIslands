@@ -1639,7 +1639,7 @@ starting Raft:
 ![The note editor](images/editor-note-editor.jpg)
 *The note editor: the title, the text (Enter starts a new line), and a preview of the paper players will see.*
 
-**A note can unlock a Receiver frequency** (3.5): in the note editor, **Reading it unlocks** picks one of Raft's story islands (Radio Tower .. Utopia). The first time anyone reads the note, that island's frequency is unlocked for every player, exactly as finding Raft's own note there would (the notebook shows the note, the Receiver gets the frequency, the story order and a plan's story chain see it as usual). Any event can do it too: the action **unlock frequency** (`frequency|Vasagatan|`).
+**A note can unlock a Receiver frequency** (3.4): in the note editor, **Reading it unlocks** picks one of Raft's story islands (Radio Tower .. Utopia). The first time anyone reads the note, that island's frequency is unlocked for every player, exactly as finding Raft's own note there would (the notebook shows the note, the Receiver gets the frequency, the story order and a plan's story chain see it as usual). Any event can do it too: the action **unlock frequency** (`frequency|Vasagatan|`).
 
 ### 5.3 Chests and loot
 
@@ -1647,7 +1647,7 @@ starting Raft:
 **Fills up again** sets whether a looted chest is full again after the island's regrow days or never. A chest holds up to 12 kinds of items, up to 999 of each. **Empty** takes everything out; **Not a chest** makes the object plain again. A chest that
 holds a **story item** never fills up again, whatever is chosen (the story's key or log comes once - the panel says so).
 
-**Random chests** (3.5): **Gives: Random** makes the chest give a random part of its list. Each item gets a **%** (its chance; 100 = always). With **Pick** at 0 every item rolls its own chance, so a fill can now and then be empty (the panel says how often); with **Pick** 2 the chest gives exactly 2 different items, the higher chances picked more often. Hover a % to see each item's real odds. The roll is new for every fill (again after a refill) and the same for every player in multiplayer. Older versions of the mod give the whole list. In a recipe: `loot chest Plank*4@25;Nail*2;Rope@50 pick=1`.
+**Random chests** (3.4): **Gives: Random** makes the chest give a random part of its list. Each item gets a **%** (its chance; 100 = always). With **Pick** at 0 every item rolls its own chance, so a fill can now and then be empty (the panel says how often); with **Pick** 2 the chest gives exactly 2 different items, the higher chances picked more often. Hover a % to see each item's real odds. The roll is new for every fill (again after a refill) and the same for every player in multiplayer. Older versions of the mod give the whole list. In a recipe: `loot chest Plank*4@25;Nail*2;Rope@50 pick=1`.
 
 ![The loot inspector](images/editor-loot.jpg)
 *A chest's loot: planks, plastic, palm leaves, rope and nails. The Basics, Metal, Food and Treasure sets fill it
@@ -1819,9 +1819,9 @@ check, an island rule or a world plan can wait for. The signals: lever, crank, p
 pipe, wire, claw, scales, laser, socket, blast, collapse, vehicle.
 
 **Islander dialogue markup:** a line with only `---` starts the next page; a line starting with `>` is an answer (up to 3
-in a dialogue, under the page they follow; up to 4 a page in 3.5); other lines are speech. Answer 1..4 fires the islander's **choice1..choice4**
+in a dialogue, under the page they follow; up to 4 a page in 3.4); other lines are speech. Answer 1..4 fires the islander's **choice1..choice4**
 event, closing it fires **talk**. `#name` starts a branch, `> Answer -> name` goes there, `+flag`/`-flag`/`?flag`/`?!flag` set,
-clear and test the island's flags (3.5, see Islanders below). In a **show dialogue** action write `\n` for a new line (the action is one line).
+clear and test the island's flags (3.4, see Islanders below). In a **show dialogue** action write `\n` for a new line (the action is one line).
 
 ![The quest editor](images/editor-quest.jpg)
 *The quest "The lost camp": go to the camp, read the diary, open the supplies, chase off 2 warthogs. The reward is
@@ -1831,7 +1831,7 @@ name on the Receiver.*
 Steps: **go to** a trigger zone, **read** a note, **open** a chest (one of the mod's chests - Raft's abandoned raft crate doesn't count), **defeat** or **catch** a number of animals,
 **collect** a number of a story item, **find** journal pages, find a **Blueprint** of Raft's, **talk to** an islander
 (6.3; by its name, the **▾** lists the island's islanders), **find** a number of a collectible **set** (6.3), **light up** a number of a light group's puzzle lights (6.3),
-**escort** an islander to a zone (3.5), **tame** animals and lead them to a pen (3.5),
+**escort** an islander to a zone (3.4), **tame** animals and lead them to a pen (3.4),
 **Signal / object is**, **Bring items**, **Craft or cook**, **Catch fish**, **Gather / harvest**, **Be there at a time**, **Weather is**, **Counter reaches** and **Players in a zone** (below). Each step's kind is a **▼ list** (each kind says what it
 asks). Steps point at things on the island by name: the small **▾** beside the name lists the names this island has
 for that kind - its trigger zones, note titles, chest titles or creatures - so you can pick one instead of typing it
@@ -1870,7 +1870,7 @@ up, or harvested from a tree or bush with the axe - within 40 m of the island's 
 `Plank`); empty = anything. Hooked from the sea, crafted or given as a reward doesn't count, nor what was gathered
 before the step came. Place what players gather on the island (the generator's **Gather** and **Shallows**, or loose
 items and plants) and say where in the step's text.
-**Timed steps** (3.5): the **time** box at the end of a step's row is a time limit in seconds (empty = none, up to 3600). While the step is active and a player is at the island, everyone near it sees a countdown at the top of the screen; when nobody is there the clock waits. If it runs out, the step starts again (its progress is set back) with a fresh clock, and players are told "Time's up". The clock is kept with the world. Best for reach, zone, talk and puzzle steps: what was killed, handed over or read stays done, so the editor warns on those kinds.
+**Timed steps** (3.4): the **time** box at the end of a step's row is a time limit in seconds (empty = none, up to 3600). While the step is active and a player is at the island, everyone near it sees a countdown at the top of the screen; when nobody is there the clock waits. If it runs out, the step starts again (its progress is set back) with a fresh clock, and players are told "Time's up". The clock is kept with the world. Best for reach, zone, talk and puzzle steps: what was killed, handed over or read stays done, so the editor warns on those kinds.
 
 
 **Be there at a time** waits until a player is at the island at that time of day: `night`, `day`, `dawn` (5:00-8:00),
@@ -2194,7 +2194,7 @@ show a dialogue: the action **show dialogue** (`dialogue|Old Finn|Hello!\n---\nB
 action's one line) opens it for the player who set it off, said by the named object (its answers run that object's
 choice events). Check warns when a **Talk to** step names no islander of the island.
 
-**Dialogue branches and flags** (3.5). A page can have up to four answers. A line `#map` starts a branch: lines of
+**Dialogue branches and flags** (3.4). A page can have up to four answers. A line `#map` starts a branch: lines of
 their own that the dialogue skips when read in order. The answer `> Where are we? -> map` goes there, `-> start` goes
 back to the top, `-> end` (or an answer without `->`) closes the dialogue. Answers can set the island's flags, shared
 by the whole crew and saved: `> Tell me more -> map +asked` also sets the flag `asked`, `-asked` clears it. An answer
@@ -2203,18 +2203,18 @@ the second time. Checks read a flag as a counter (`count|asked|>=1`). The **Add 
 in the Islander group adds an answer and its branch to rename; the group warns about an answer that goes to a branch
 that isn't there. In multiplayer the host sets the flags and every player sees the same answers.
 
-**Walking islanders** (3.5). In the Islander group, **Walks to** lists places by name (objects or trigger zones,
+**Walking islanders** (3.4). In the Islander group, **Walks to** lists places by name (objects or trigger zones,
 comma between them: `well, pier, hut`). The islander walks from where it stands to each in turn, waits **Pause s**
 there (2 s) and walks on at **Speed m/s** (1.4): **loop** walks back to the start and round again, **there and back**
 walks the same way back. The walk runs on the world's clock, so every player in a multiplayer world sees it in the
 same place without extra traffic; it still talks when spoken to. The group warns about a place the island doesn't have.
 
-**Escort step** (3.5). The quest step **Escort** (`Mia@camp`) asks the players to bring an islander to a trigger zone.
+**Escort step** (3.4). The quest step **Escort** (`Mia@camp`) asks the players to bring an islander to a trigger zone.
 While it is the current step the islander follows the nearest player and waits when they are more than 12 m away;
 inside the zone it stops, the step is done and it stays there (after a reload too). The host leads it, so all players
 see it walk. The **▾** lists the island's islanders and zones; the plan check warns when either is missing.
 
-**Tame step** (3.5). The quest step **Tame** (`Goat@pen`, with a count) asks the players to tame animals of the
+**Tame step** (3.4). The quest step **Tame** (`Goat@pen`, with a count) asks the players to tame animals of the
 island's creature spots and lead them into a trigger zone. It works with goats, llamas and chickens; `Goat` means any
 goat spot, or write a creature spot's own name. A player holds the animal's food in hand (the creature spot's **Tame
 with** in its Creature group; by default a raw beet for chickens and a raw potato for goats and llamas) within 3 m of

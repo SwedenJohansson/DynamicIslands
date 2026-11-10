@@ -9,8 +9,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
-## Next (after 3.4)
+## 3.4 alpha - 2026-11-10: Player fixes, new quest steps and islanders
 
+New in this release:
 - **Islander dialogues branch**: an answer can go to lines of its own (`#name`, `> Answer -> name`), set or clear island flags shared by the crew (`+flag`, `-flag`) and show only while a flag is set or not (`?flag`, `?!flag`); up to four answers a page. The Islander group checks the branches and has a button that adds an answer with its own lines.
 - **Walking islanders and the Escort step**: an islander can walk a path of named places (**Walks to**, loop or there and back, its speed and pause), the same for every player. The new quest step **Escort** (`Mia@camp`) has the islander follow the nearest player until it reaches the zone.
 - **Tame step**: the new quest step **Tame** (`Goat@pen`) - hold a goat's, llama's or chicken's food next to it and it follows you; lead it into the pen zone and it stays there and counts. Each creature spot sets its food (**Tame with**). Works in multiplayer (the host decides) and penned animals stay penned after a reload.
@@ -28,12 +29,6 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Multiplayer**: players ignore host-only Custom Islands messages that come from anyone but the host.
 - **Hints name your keys**: the notebook, journal and stats hints say the key as bound now (Raft's notebook key too), not a fixed letter.
 - **Level-up box below the island banner**: a long island banner no longer covers the level-up box; the box moves down while the banner is up.
-
----
-
-## 3.4 alpha - 2026-11-10: Player fixes
-
-New in this release:
 - **The mouse stays yours while Raft is in the background.** Raft now lets go of the mouse (and shows the cursor) whenever it is minimised or another program's window is in front, so a windowed Raft behind other windows no longer pulls the cursor to the middle of the screen.
 - **Fixes from the 11-09 player audit**: picking up an upgraded block with Raft's half-cost refund gives back half of the upgrade's own recipe, not the base item's; **Esc** on an islander's dialogue, the story credits, the notebook or the quest-skip box closes just that window, without opening the pause menu too; the journal, stats and notebook keys do nothing while Raft's inventory or another Raft menu is open (they used to open behind it and leave the mouse locked); the stats page, journal and notebook close each other, so none opens hidden behind another; the corner minimap hides while Raft's menus are open; in multiplayer the host checks a player's right to change an island's story before taking a story item give from them.
 - **The island minimap is now a World setting, off by default, and never covers the screen.** Tick **Island minimap** in World settings to get the small map in the top-right corner near islands; **M** hides it and shows it again. The full-screen map is gone (a player sailed into an island behind it). New worlds and worlds made before this have no map unless the host ticks it; the old **No minimap** option is replaced by it.
