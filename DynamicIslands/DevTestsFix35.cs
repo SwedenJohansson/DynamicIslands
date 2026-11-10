@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using HarmonyLib;
 using UnityEngine;
 
 namespace DynamicIslands
@@ -222,6 +223,116 @@ namespace DynamicIslands
 			if (alone.HasValue && back.HasValue) Check(ref ok, Mathf.Abs(back.Value.yMax - alone.Value.yMax) < 1f, "level box back in its place: " + back.Value.yMax.ToString("0") + " (was " + alone.Value.yMax.ToString("0") + ")");
 			LevelHud.Clear();
 			if (ok) Log("PASS: banner overlap"); else Fail("banner overlap");
+		}
+
+		[ConsoleCommand(name: "CIPlaceReal", docs: "Dev, world (host, a raft with foundations), RT18: the upgrade research table, a fast juicer and the golden shark trophy each held in the hotbar and placed by Raft's own BlockCreator.Update - its raycast from the camera (only the view turned to a raft surface), its ghost and build check (green), and a faked left click; the block is the upgrade, the hotbar item is used up; then taken down")]
+		public static void PlaceRealCommand() { StartTest(PlaceRealRoutine()); }
+
+		static Vector3? realAim;
+		static int realClickFrame = -1;
+		static bool realPatched;
+		static Quaternion realCamWas;
+
+		static void PatchPlaceReal()
+		{
+			if (realPatched) return;
+			realPatched = true;
+			var h = new HarmonyLib.Harmony("DynamicIslands.DevTests.PlaceReal");
+			h.Patch(HarmonyLib.AccessTools.Method(typeof(BlockCreator), "GetQuadAtCursor"), prefix: new HarmonyLib.HarmonyMethod(typeof(DevTests), "RealAimPrefix"), postfix: new HarmonyLib.HarmonyMethod(typeof(DevTests), "RealAimPostfix"));
+			h.Patch(HarmonyLib.AccessTools.Method(typeof(MyInput), "GetButtonDown", new[] { typeof(string) }), postfix: new HarmonyLib.HarmonyMethod(typeof(DevTests), "RealClickPostfix"));
+		}
+
+		// (the view only: the camera looks at the spot for Raft's own raycast, and is put back after it)
+		static void RealAimPrefix(BlockCreator __instance)
+		{
+			if (!realAim.HasValue) return;
+			Network_Player p = Traverse.Create(__instance).Field("playerNetwork").GetValue<Network_Player>();
+			if (p == null || !p.IsLocalPlayer || p.CameraTransform == null) return;
+			realCamWas = p.CameraTransform.rotation;
+			p.CameraTransform.rotation = Quaternion.LookRotation(realAim.Value - p.CameraTransform.position);
+		}
+		static void RealAimPostfix(BlockCreator __instance)
+		{
+			if (!realAim.HasValue) return;
+			Network_Player p = Traverse.Create(__instance).Field("playerNetwork").GetValue<Network_Player>();
+			if (p != null && p.IsLocalPlayer && p.CameraTransform != null) p.CameraTransform.rotation = realCamWas;
+		}
+		static void RealClickPostfix(string identifier, ref bool __result)
+		{
+			if (!__result && identifier == "LMB" && Time.frameCount == realClickFrame) __result = true;
+		}
+
+		static IEnumerator PlaceRealRoutine()
+		{
+			bool ok = true;
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player == null || !Raft_Network.IsHost) { Fail("place real: host, in a world"); yield break; }
+			try { PatchPlaceReal(); } catch (Exception e) { Fail("place real: patch: " + e.Message); yield break; }
+			BlockCreator bc = player.BlockCreator;
+			Hotbar hotbar = Traverse.Create(player.Inventory).Field("hotbar").GetValue<Hotbar>();
+			var opts = new HashSet<string>(WorldOptions.Current);
+			bool optionWas = opts.Contains(WorldOptions.Upgrades);
+			if (!optionWas) { opts.Add(WorldOptions.Upgrades); WorldOptions.Set(opts); }
+			MenuType menuWas = CanvasHelper.ActiveMenu;
+			var names = new[] { ExtraUpgrades.TableName, "DI_FastJuicer", Cosmetics.GoldenShark };
+			int placed = 0;
+			try
+			{
+				foreach (string name in names)
+				{
+					Item_Base item = ItemManager.GetItemByName(name);
+					if (item == null) { Check(ref ok, false, name + ": no such item"); continue; }
+					int had = player.Inventory.GetItemCount(name);
+					// (in a hotbar slot, selected: Raft's PlayerItemManager hands it to the BlockCreator as when the player picks it)
+					Slot into = player.Inventory.allSlots.Take(player.Inventory.hotslotCount > 0 ? player.Inventory.hotslotCount : 10).FirstOrDefault(sl => sl != null && sl.IsEmpty)
+						?? player.Inventory.allSlots[0];
+					into.SetItem(new ItemInstance(item, 1, item.MaxUses));
+					if (hotbar != null) hotbar.SelectItem(item);
+					yield return new WaitForSecondsRealtime(0.5f);
+					Item_Base selected = Traverse.Create(bc).Field("selectedBuildableItem").GetValue<Item_Base>();
+					Check(ref ok, selected == item, name + ": held, the build ghost is it (" + (selected != null ? selected.UniqueName : "none") + ")");
+					// a raft surface that takes it: aim at each in turn until Raft's own check shows the ghost green
+					List<BlockQuad> quads = Resources.FindObjectsOfTypeAll<BlockQuad>().Where(q => q != null && q.gameObject.scene.IsValid() && q.gameObject.activeInHierarchy && q.quadType != null && q.AcceptsBlock(item, q.transform.up))
+						.OrderBy(q => (q.transform.position - player.transform.position).sqrMagnitude).Take(30).ToList();
+					BlockQuad spot = null; string last = "no surface";
+					foreach (BlockQuad q in quads)
+					{
+						realAim = SurfacePoint(q, q.transform.up);
+						CanvasHelper.ActiveMenu = MenuType.None;
+						yield return null; yield return null; yield return null;
+						Block ghost = Traverse.Create(bc).Field("selectedBlock").GetValue<Block>();
+						BlockQuad atCursor = Traverse.Create(bc).Field("quadAtCursor").GetValue<BlockQuad>();
+						object err = ghost != null ? HarmonyLib.AccessTools.Method(typeof(BlockCreator), "CanBuildBlock").Invoke(bc, new object[] { ghost }) : null;
+						last = (atCursor != null ? "aimed" : "no quad at cursor") + ", " + (err != null ? err.ToString() : "no ghost");
+						if (atCursor != null && err != null && Convert.ToInt32(err) == 0) { spot = q; break; }
+					}
+					if (spot == null) { Check(ref ok, false, name + ": no raft surface where the ghost is green (" + quads.Count + " surfaces, last: " + last + ")"); realAim = null; continue; }
+					HashSet<Block> before = new HashSet<Block>(BlockCreator.GetPlacedBlocks());
+					CanvasHelper.ActiveMenu = MenuType.None;
+					realClickFrame = Time.frameCount + 1;
+					yield return null; yield return null; yield return null;
+					realAim = null;
+					yield return new WaitForSecondsRealtime(0.5f);
+					Block made = BlockCreator.GetPlacedBlocks().FirstOrDefault(b => b != null && !before.Contains(b));
+					UpgradeBlock ub = made != null ? made.GetComponent<UpgradeBlock>() : null;
+					int now = player.Inventory.GetItemCount(name);
+					Check(ref ok, made != null && made.buildableItem == item, name + ": placed by the click (" + (made != null ? made.buildableItem.UniqueName : "nothing") + ")");
+					Check(ref ok, ub != null && ub.Upgrade != null, name + ": an upgrade block");
+					Check(ref ok, now == had, name + ": the hotbar item was used up (" + had + " -> " + now + ")");
+					if (made != null) { placed++; BlockCreator.RemoveBlockNetwork(made, null, true); }
+					yield return new WaitForSecondsRealtime(0.3f);
+					int extra = player.Inventory.GetItemCount(name) - had;
+					if (extra > 0) player.Inventory.RemoveItem(name, extra);
+				}
+			}
+			finally
+			{
+				realAim = null; realClickFrame = -1;
+				CanvasHelper.ActiveMenu = menuWas;
+				if (!optionWas) { opts.Remove(WorldOptions.Upgrades); WorldOptions.Set(opts); }
+			}
+			Log("place real: " + placed + "/" + names.Length + " placed by Raft's own click");
+			if (ok) Log("PASS: place real"); else Fail("place real");
 		}
 	}
 }
