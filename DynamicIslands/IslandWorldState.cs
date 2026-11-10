@@ -259,6 +259,8 @@ namespace DynamicIslands.Editor
 		{
 			islands.Clear();
 			loadedFor = WorldKey;
+			// (the quest rewards are read again for this world: two worlds without an id had one key - bug 11-09)
+			QuestRewards.Forget();
 			if (loadedFor.StartsWith(NoIdPrefix)) Debug.Log("[CUSTOM ISLANDS] This world has no world id in Raft's save (an old world): its custom islands are kept under its name (" + loadedFor + ")");
 			loadFailed = loadFailedTold = false;
 			keptLines.Clear();

@@ -532,8 +532,11 @@ def check_island(I, markers, machete_before):
         if c.group and c.group in I.gates: c.gated = True
         if any(c.mouth_dist(v.p) < CLEAR for v in vines): c.gated = True
 
+    # (11-09 w03: a placed den - BalboaCave_Bear, ~30 x 32 m, the hill caves' sk_cave - is a cave too: a rat marked inside
+    # one, 10 m or less from its middle, is in it)
+    dens = [ob for ob in I.objs if re.match(r'^BalboaCave_(?!Vines)', ob.name, re.I)]
     def in_cave(p):
-        return any(c.dist(p) < 0 for c in I.caves)
+        return any(c.dist(p) < 0 for c in I.caves) or any(math.hypot(p[0] - d.p[0], p[1] - d.p[1]) < 10.0 for d in dens)
 
     for c in I.caves:
         label = '%s %s (%s)' % (c.kind, c.group or '-', c.where)
@@ -595,6 +598,11 @@ def selftest():
                         ('new', 'dig 0,0 10,0 slope=-10 as=g', 'dig 10,0 10,0.3,0 shaft r=1.6 as=g')])[0]
     chk('shaft: caves', len(isl.caves), 1); chk('shaft: mouths', len(isl.caves[0].mouths), 2)
     chk('shaft: top x', isl.caves[0].mouths[-1][0] - LAND_CENTRE[0], 10.0)
+    # (11-09) a rat marked inside a placed den (BalboaCave_Bear) is in a cave; one 20 m off is not
+    isl = read_islands([(l, 'selftest', 'selftest') for l in
+                        ('new', 'place BalboaCave_Bear den at 0 0 h=5', 'place Creature_Rat rin at 2 3 h=1', 'place Creature_Rat rout at 20 0 h=1')])[0]
+    ins = [t for r, t in check_island(isl, [('inside', ['rin', 'rout'], 'selftest')], True) if r == 'inside']
+    chk('den: rats not in a cave', len(ins), 1); ok = ok and all('rout' in t for t in ins)
     print('cavecheck selftest: %s' % ('PASS' if ok else 'FAIL'))
     return 0 if ok else 1
 

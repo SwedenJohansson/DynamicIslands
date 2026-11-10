@@ -57,6 +57,29 @@ namespace DynamicIslands
 					"place Block_Foundation sunkdeck at -60 -40 h=10",
 					"brush flatten at -40 40 r=8 s=20 frames=200 h=-3",
 					"place UT_MainEntranceDoor - at -40 40 ground sit",
+					// (a planter on a storey's floor: a foundation set 0.68 m over the floor's height, its underside a hair into
+					// the thin floor tiles - Brinelab's greenhouse, w03 11-09)
+					"place Block_Floor_Tier3 - at -60.75 39.25 h=5",
+					"place Block_Floor_Tier3 - at -59.25 39.25 h=5",
+					"place Block_Floor_Tier3 - at -60.75 40.75 h=5",
+					"place Block_Floor_Tier3 - at -59.25 40.75 h=5",
+					"place Block_Foundation - at -60 40 h=5.68",
+					// (a mast bridge's deck on two poles with no collider, over nothing else - Caisson Yard, w03 11-09)
+					"place Antenna_pole - at -82 -40.55 h=9.55 rot=0,0,-90 sy=0.75",
+					"place Antenna_pole - at -82 -39.45 h=9.55 rot=0,0,-90 sy=0.75",
+					"place Block_Floor_Tier3 - at -79.5 -40 h=10",
+				// (a door wall on the wall under it, in the air: its doorway over the wall's top - Brinelab Tower's lobby, w03 11-09)
+				"place RT_Wall1 - at -100 -40 h=10",
+				"place RT_WallDoor1 - at -100 -40 h=13",
+				// (and the storey's floor tiles beside it, their edge under its pivot line, as in the lobby)
+				"place Block_Floor_Tier3 - at -99.25 -40.75 h=13",
+				"place Block_Floor_Tier3 - at -97.75 -40.75 h=13",
+				// (an air pocket half over the gate's pit slope: a bubble in the water, not a thing on a base - Lumen Shelf, w03 11-09)
+				"place AirPocket_1 - at -32.5 40 h=-1.5",
+				// (an arch: a deck over a gap, its ends set into two big rocks - Lumen Shelf, w03 11-09)
+				"place SmallRock_02 - at -100 -60 h=10 scale=2",
+				"place SmallRock_02 - at -95 -60 h=10 scale=2",
+				"place Block_Foundation archdeck at -97.5 -60 h=11.6 sx=3.2 sz=1.6",
 				});
 			}
 			catch (Exception e) { Fail("prefaults: writing " + pb + ": " + e.Message); yield break; }
@@ -104,7 +127,7 @@ namespace DynamicIslands
 			// (and so not checked) on one sunk by 'elevation -45' - Hadal Commons' air platforms
 			float wasElevation = DynamicIslands.currentElevation;
 			int nFloors;
-			Func<bool> deckFlagged = () => FloorsOverNothing(PlacedEditorObjects(), 0.3f, t, sea, out nFloors).Any(g => g.Floor.GameObjectName == "Block_Foundation");
+			Func<bool> deckFlagged = () => FloorsOverNothing(PlacedEditorObjects(), 0.3f, t, sea, out nFloors).Any(g => g.Floor.GameObjectName == "Block_Foundation" && g.Box.max.y > sea + 8f);
 			DynamicIslands.currentElevation = 0f;
 			bool atSea = deckFlagged();
 			DynamicIslands.currentElevation = -45f;
@@ -112,9 +135,39 @@ namespace DynamicIslands
 			DynamicIslands.currentElevation = wasElevation;
 			Check(ref ok, atSea, "a deck 10 m over the water on nothing is over nothing at elevation 0");
 			Check(ref ok, !sunk, "the same deck at elevation -45 is under the real sea and not checked");
+			// (the planter: held by the floor tiles under it, at elevation 0 too)
+			bool planterOver = FloorsOverNothing(PlacedEditorObjects(), 0.3f, t, sea, out nFloors).Any(g => g.Floor.GameObjectName == "Block_Foundation" && g.Box.max.y < sea + 8f);
+			Check(ref ok, !planterOver, "a foundation set on a storey's thin floor tiles is held by them (a planter, Brinelab)");
+			bool railOver = FloorsOverNothing(PlacedEditorObjects(), 0.3f, t, sea, out nFloors).Any(g => g.Floor.GameObjectName == "Block_Floor_Tier3" && g.Box.center.x < origin.x - 70f);
+			Check(ref ok, PlacedEditorObjects().Count(e => e.GameObjectName == "Antenna_pole") == 2 && !railOver, "a deck on two poles laid under it (no collider) is held by them (Caisson Yard's mast bridges)");
+			// (the door wall stands on the wall under it, though its middle is its doorway)
+			EditorGameObject dw = PlacedEditorObjects().FirstOrDefault(e => e.GameObjectName == "RT_WallDoor1");
+			Check(ref ok, dw != null, "a door wall placed");
+			if (dw != null)
+			{
+				Renderer[] drs = dw.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
+				float dbot = drs.Min(r => r.bounds.min.y);
+				Bounds dbase = drs[0].bounds; bool first = true;
+				foreach (Renderer r in drs.Where(r => r.bounds.min.y < dbot + 0.6f)) { if (first) { dbase = r.bounds; first = false; } else dbase.Encapsulate(r.bounds); }
+				RaycastHit under;
+				string what = Physics.Raycast(new Vector3(dbase.center.x, dbase.min.y + 0.1f, dbase.center.z), Vector3.down, out under, 4f, ~0, QueryTriggerInteraction.Ignore)
+					? under.collider.name + " " + (under.distance - 0.1f).ToString("0.00") + " m under it" : "nothing within 4 m under its middle";
+				Check(ref ok, OnAnotherObject(dbase, dw), "a door wall on the wall under it stands on it (its middle is its doorway; base h=" + (dbase.min.y - sea).ToString("0.00") +
+					", size " + dbase.size.x.ToString("0.0") + " x " + dbase.size.z.ToString("0.0") + ", " + what + ")");
+			}
+			// (the arch's deck: its middle over the gap, its ends in the rocks)
+			EditorGameObject arch = PlacedEditorObjects().FirstOrDefault(e => e.GameObjectName == "Block_Foundation" && e.transform.position.x < origin.x - 90f);
+			Check(ref ok, arch != null, "an arch deck placed");
+			if (arch != null)
+			{
+				Bounds ab = arch.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled).Select(r => r.bounds).Aggregate((x, y) => { x.Encapsulate(y); return x; });
+				Check(ref ok, OnAnotherObject(ab, arch), "an arch's deck with its ends in two rocks stands on them (its base h=" + (ab.min.y - sea).ToString("0.00") + ")");
+			}
 			// 4. A gate on flat ground: its leaves stand on its own landing (no collider in the editor), not in the air
 			FloatingCommand(new[] { "0.3", "UT_MainEntranceDoor" });
 			Check(ref ok, floatProblems == 0, "a gate's leaves on its own landing are not floating (" + floatProblems + " found)");
+			FloatingCommand(new[] { "0.3", "AirPocket" });
+			Check(ref ok, floatProblems == 0, "an air pocket over a slope is not a base partly in the air (" + floatProblems + " found)");
 			try { File.Delete(pa); File.Delete(pb); } catch { }
 			Log((ok ? "PASS" : "FAIL") + ": prefaults (line strokes, walls on a deck's edge, sunk decks, gate leaves)");
 		}

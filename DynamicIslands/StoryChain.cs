@@ -219,7 +219,7 @@ namespace DynamicIslands.Editor
 				{
 					// (a kept number moved: the journal's page still gives the old one - Tick adds one with the new)
 					if (digits != null && digits.Length == 4) Moved.Add(r.Id);
-					var rnd = new System.Random(StableHash(SaveAndLoad.WorldGuid.ToString() + "/" + r.Id));
+					var rnd = new System.Random(StableHash(IslandWorldState.WorldKey + "/" + r.Id));
 					do digits = new[] { rnd.Next(10), rnd.Next(10), rnd.Next(10), rnd.Next(10) };
 					while (taken.Any(t => t.SequenceEqual(digits)));
 				}
@@ -437,7 +437,7 @@ namespace DynamicIslands.Editor
 		/// <summary>A rule by chance comes up 0.3 to 1.8 km of sailing from now (the same distance for the rule in this world).</summary>
 		static void DueFromNow(IntroRule r)
 		{
-			due[r.Id] = WorldDirector.Sailed + 300f + (float)new System.Random(StableHash(r.Id + SaveAndLoad.WorldGuid)).NextDouble() * 1500f;
+			due[r.Id] = WorldDirector.Sailed + 300f + (float)new System.Random(StableHash(r.Id + IslandWorldState.WorldKey)).NextDouble() * 1500f;
 		}
 
 		/// <summary>

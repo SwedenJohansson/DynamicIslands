@@ -1,0 +1,53 @@
+# Thalassa Mooring's sea gate cave and Harbourmistress Elaine (CIPlay thalassa_mooring_caves, 11-08; in a test world
+# 'CI ...'). Points as in its recipe: the mouth on the sea floor at -102 8 (5 m down) off the shore below the flag hill,
+# the sea gate (two Selene bars, alias thgate) 2 m in, the flooded tunnel climbing east under the hill to the dry room
+# round -63 8 (air zone th_seagate, the kingdom charter chest at -61 11); Elaine stands by the office at -13 -4.5.
+# The gate is shut until her second answer; her other two answers; swim in, breathe, take the charter, swim out.
+island Thalassa Mooring keep
+offset -0.2484 -1.3339
+hour 11
+weather Calm
+expect shown thgate
+
+# Outside: the flag hill from the shore, the mouth and the gate from the water
+picture th_cave_out -92 3 18 -70 6 2
+picture th_cave_mouth -108 -3.5 8 -100 -4 8
+# (11-09: a pale flat sheet stood beside the bars in th_cave_mouth - rays hit the cave's CaveMouth 4 m off, in front of the rods; still open)
+where TP_Selene
+where CavePlug
+where CaveMouth
+picture th_cave_mouth2 -105 -3 4.5 -100 -3.5 10
+# The gate: shut
+walk -108 8 to -104 8 to -96 8 below=-2 blocked
+walk -108 6.5 to -104 6.5 to -96 6.5 below=-2 blocked
+
+# Harbourmistress Elaine at the office
+snap th_islander Harbourmistress Elaine 240 3.5 0.6
+use Harbourmistress Elaine pick 1
+expect message flood and the bell
+use Harbourmistress Elaine pick 3
+expect message tide has a long memory
+use Harbourmistress Elaine pick 2
+expect message sea gate under the flag hill is open
+expect hidden thgate
+
+# Swim in: from the sea floor up the tunnel into the room, and breathe there
+walk -108 8 to -102 8 to -92 8 to -82 8 to -72 8 to -64 8 below=-2
+air th_seagate here
+picture th_cave_in -74 3.5 8 -60 2.5 10 light=20
+picture th_room_back -54 3.5 8 -72 1 8 light=20
+open Kingdom charter
+wait 2
+expect item Battery 1
+air th_seagate
+
+# Back out: down the tunnel and out of the mouth onto the sea floor
+# (11-09: the dry top walked, then swum - a walker going down the flooded tunnel floats up against the mouth's top and
+# sticks; a swimmer can't rise above the sea, so every swim point is under it: ~1 m over the floor, under the mouth's top)
+# (11-09 (2): after the charter the walk -64 to -72 came out 14 m up, on the hill over the tunnel, and the swim back down
+# into the rock stuck at -80: now set back in the room first, walked down the tunnel as on the way in, and swum only
+# from -92, out through the mouth at the height the walk in had there)
+at -64 8 h=2.5
+wait 1
+walk -64 8 to -72 8 to -82 8 to -92 8 below=-2
+swim -96 8 -3.4 to -102 8 -3.4 to -108 8 -3.4 to -112 8 -2

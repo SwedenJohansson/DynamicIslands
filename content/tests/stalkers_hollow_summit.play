@@ -1,0 +1,10 @@
+# Probe (w03 11-09): The Stalker's Hollow's lip rock top (44 80, top 42.5, sea 40): can a swimmer climb out of the sea
+# onto it (the reach walk found no way up to the tower's ladder foot at 42.6)? Heights round it, island frame, + pictures.
+island The Stalker's Hollow keep
+offset 0.6508 1.0124
+hour 11
+weather Calm
+surface 24 60 64 100 2
+picture shp_rock_sw 28 41 64 44 43 80
+picture shp_rock_ne 60 41 96 44 43 80
+picture shp_rock_top 44 46.5 80 28 40 64

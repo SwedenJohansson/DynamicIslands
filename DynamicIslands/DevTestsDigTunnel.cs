@@ -442,8 +442,16 @@ namespace DynamicIslands
 			yield return null;
 			yield return null;
 			yield return new WaitForSecondsRealtime(0.7f);
+			// (11-09: a Raft just started and busy loaded slower than 0.7 s - "none" and no island; wait up to 10 s for it)
+			DigTunnel back = null;
+			for (float w = 0f; w < 10f; w += 0.25f)
+			{
+				GameObject po = GameObject.Find("PlacedObjects");
+				back = po != null ? po.GetComponentsInChildren<DigTunnel>(false).FirstOrDefault() : null;
+				if (back != null && back.Triangles > 0) break;
+				yield return new WaitForSecondsRealtime(0.25f);
+			}
 			t = terraineditor.terrain;
-			DigTunnel back = GameObject.Find("PlacedObjects").GetComponentsInChildren<DigTunnel>(false).FirstOrDefault();
 			int cutBack = DigTunnel.EditorNow(t);
 			Check(ref ok, back != null && back.PointCount == n0 && back.Triangles > 0 && Mathf.Abs(back.Triangles - tri0) < tri0 / 20 + 10 && (back.transform.position - at0).magnitude < 0.05f && cutBack == cut.Count,
 				"loaded again: the tunnel where it was (" + (back != null ? back.PointCount + " points, " + back.Triangles + " triangles (" + tri0 + " before), " : "none, ") + cutBack + " cells cut, " + cut.Count + " before)");
@@ -503,6 +511,32 @@ namespace DynamicIslands
 						string cover = RimCover(ct, t, cliffCut, out sunken);
 						int cshards = ct.RimTop == "" ? 0 : ct.RimShards(out _);
 						Check(ref ok, ct.RimColumns > 0 && sunken == 0 && cshards == 0, "the cliff mouth's rim: " + RimLook(ct) + "; the cut cells: " + cover + "; " + cshards + " rock shards on the ground" + (cshards > 0 ? " (" + RimShardsAt(ct) + ")" : ""));
+						// (11-09 w03: on the cliff's steep face the rim stays rock - no patch of the ground's baked layers there)
+						string steepAt;
+						int steep = ct.RimSteepTop(out steepAt);
+						Check(ref ok, steep == 0, "the cliff mouth's rim on the steep face: " + steep + " faces wearing the ground's look" + (steep > 0 ? " (" + steepAt + ")" : ""));
+						// (11-09 w03: and the rim walls draw no sandy top texture on their up-turned faces - SideRockOnly)
+						{
+							Transform crt = ct.transform.Find(DigTunnel.RockName);
+							MeshRenderer cmr = crt != null ? crt.GetComponent<MeshRenderer>() : null;
+							Material[] cms = cmr != null ? cmr.sharedMaterials : new Material[0];
+							string topLook = "no rim walls";
+							bool sideOnly = false;
+							if (cms.Length > 1 && cms[1] != null)
+							{
+								if (!cms[1].HasProperty("_TopDiffuse")) { sideOnly = true; topLook = "a material without a top texture (" + cms[1].shader.name + ")"; }
+								else
+								{
+									var cb = new MaterialPropertyBlock();
+									cmr.GetPropertyBlock(cb, 1);
+									Texture top = cb.isEmpty ? null : cb.GetTexture("_TopDiffuse"), sideTex = cb.isEmpty ? null : cb.GetTexture("_SideDiffuse");
+									if (sideTex == null) sideTex = cms[1].GetTexture("_SideDiffuse");
+									sideOnly = top != null && top == sideTex;
+									topLook = "top " + (top != null ? top.name : "the material's " + (cms[1].GetTexture("_TopDiffuse") != null ? cms[1].GetTexture("_TopDiffuse").name : "none")) + ", side " + (sideTex != null ? sideTex.name : "none");
+								}
+							}
+							Check(ref ok, sideOnly, "the cliff mouth's rim walls wear the side rock on top too: " + topLook);
+						}
 						{
 							var cseen = new List<string>();
 							int looked, looked2;

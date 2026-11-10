@@ -1,4 +1,4 @@
-﻿# Play test of the plan 'The Sunken Kingdom' (CIPlay plan_sunken_kingdom, in a test world 'CI ...'): no Raft story -
+# Play test of the plan 'The Sunken Kingdom' (CIPlay plan_sunken_kingdom, in a test world 'CI ...'): no Raft story -
 # each island's WHEN brings the next (a quest, a signal, a zone, a rule, a step); every stop is tuned to and played to
 # its end with its own test, except that the Spire is played to RESTORE and the Hollow then checks the RESTORE answer;
 # then the shuttle wreck, sailed to (km 4).
@@ -33,7 +33,7 @@ expect chain hollow unlocked
 expect story restorechoice 1
 tune hollow
 island The Stalker's Hollow
-offset 0 0
+offset 0.6508 1.0124
 air chain_air
 zone lip
 read Warden's last entry

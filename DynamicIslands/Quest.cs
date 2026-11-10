@@ -4,6 +4,7 @@ using System.Linq;
 using HMLLibrary;
 using RaftModLoader;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DynamicIslands.Editor
@@ -610,11 +611,136 @@ namespace DynamicIslands.Editor
 		/// <summary>Whether the quest panel is on screen (for the tests).</summary>
 		const float PanelTop = -160f;
 
-		/// <summary>10-31: under the corner island map while it shows (the map is drawn over the panel and hid its title and first step); back in its place when the map is hidden or the big map is open.</summary>
-		static void PlaceUnderMap()
+		/// <summary>The panel's own place (top right, under where the corner map is), in UI units from the screen's top right corner.</summary>
+		public static readonly Vector2 HomePlace = new Vector2(-20f, PanelTop);
+		/// <summary>The gap kept between the panel and the corner map, and from the screen's edges (UI units).</summary>
+		const float MapGap = 8f, EdgeGap = 4f;
+		/// <summary>This PC's world_rules.txt line for where the player dragged the panel ("questpanel=x,y"; empty = its own place).</summary>
+		public const string PlaceSetting = "questpanel";
+		static bool placeRead, dragging;
+		static Vector2? savedPlace;
+
+		/// <summary>Where the player dragged the panel on this PC (UI units from the top right corner), or null: its own place.</summary>
+		public static Vector2? SavedPlace
 		{
-			float y = Minimap.CornerShown ? Mathf.Min(PanelTop, -(Minimap.CornerBottom + 8f)) : PanelTop;
-			if (panel.anchoredPosition.y != y) panel.anchoredPosition = new Vector2(panel.anchoredPosition.x, y);
+			get
+			{
+				if (!placeRead) { placeRead = true; savedPlace = ParsePlace(WorldRules.ReadDefault(PlaceSetting)); }
+				return savedPlace;
+			}
+		}
+
+		internal static Vector2? ParsePlace(string s)
+		{
+			if (string.IsNullOrEmpty(s)) return null;
+			string[] p = s.Split(',');
+			float x, y;
+			if (p.Length != 2 || !float.TryParse(p[0].Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out x)
+				|| !float.TryParse(p[1].Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out y)) return null;
+			return new Vector2(Mathf.Min(0f, x), Mathf.Min(0f, y));
+		}
+
+		/// <summary>Keeps the panel where the player put it (null: back to its own place), in this PC's world_rules.txt.</summary>
+		public static void SavePlace(Vector2? place)
+		{
+			placeRead = true;
+			savedPlace = place;
+			WorldRules.SaveDefault(PlaceSetting, place.HasValue ? Mathf.Round(place.Value.x).ToString(System.Globalization.CultureInfo.InvariantCulture) + "," + Mathf.Round(place.Value.y).ToString(System.Globalization.CultureInfo.InvariantCulture) : "");
+		}
+
+		/// <summary>The panel back to its own place (double-click on it, or Defaults > Keys > Quest panel "Reset place").</summary>
+		public static void ResetPlace() { dragging = false; SavePlace(null); }
+
+		/// <summary>Tests: read the place from world_rules.txt again, as a new start of Raft would.</summary>
+		internal static void ForgetPlace() { placeRead = false; }
+
+		/// <summary>
+		/// Every frame (after the corner map's own tick): the panel at the player's place or its own, inside the screen, and
+		/// never under the corner island map. The user (11-09): the map covered the panel's title and first step. While the
+		/// map shows, a panel that would overlap it moves out by the shorter way that fits on the screen (its own place: always
+		/// under the map); with the map hidden it is back where it was. A drag in progress is left alone.
+		/// </summary>
+		public static void Place()
+		{
+			if (panel == null || !panel.gameObject.activeInHierarchy || dragging) return;
+			Vector2 want = AwayFromMap(OnScreen(SavedPlace ?? HomePlace), !SavedPlace.HasValue);
+			if ((panel.anchoredPosition - want).sqrMagnitude > 0.01f) panel.anchoredPosition = want;
+		}
+
+		/// <summary>The panel's place moved so the whole panel is on the screen (with EdgeGap).</summary>
+		static Vector2 OnScreen(Vector2 p)
+		{
+			RectTransform area = panel != null ? panel.parent as RectTransform : null;
+			if (area == null) return p;
+			Rect a = area.rect, r = panel.rect;
+			p.x = Mathf.Clamp(p.x, Mathf.Min(-EdgeGap, -(a.width - r.width - EdgeGap)), -EdgeGap);
+			p.y = Mathf.Clamp(p.y, Mathf.Min(-EdgeGap, -(a.height - r.height - EdgeGap)), -EdgeGap);
+			return p;
+		}
+
+		/// <summary>Out from under the corner map (with MapGap): under it or left of it, the shorter move that fits on the
+		/// screen; under it when under: true (the panel's own place) or when neither fits.</summary>
+		static Vector2 AwayFromMap(Vector2 p, bool under)
+		{
+			Rect map;
+			if (!Minimap.CornerScreenRect(out map)) return p;
+			RectTransform area = panel.parent as RectTransform;
+			Canvas c = panel.GetComponentInParent<Canvas>();
+			float s = c != null && c.rootCanvas != null ? Mathf.Max(0.01f, c.rootCanvas.scaleFactor) : 1f;
+			// (the map in this panel's units, from the screen's top right corner, with the gap)
+			float mxMin = (map.xMin - Screen.width) / s - MapGap, mxMax = (map.xMax - Screen.width) / s + MapGap;
+			float myMin = (map.yMin - Screen.height) / s - MapGap, myMax = (map.yMax - Screen.height) / s + MapGap;
+			Rect r = panel.rect;
+			bool overlaps = p.x - r.width < mxMax && p.x > mxMin && p.y - r.height < myMax && p.y > myMin;
+			if (!overlaps) return p;
+			Vector2 below = new Vector2(p.x, myMin), left = new Vector2(mxMin, p.y);
+			float h = area != null ? area.rect.height : Screen.height / s, w = area != null ? area.rect.width : Screen.width / s;
+			bool belowFits = below.y - r.height >= -h + EdgeGap, leftFits = left.x - r.width >= -w + EdgeGap;
+			if (under || !leftFits) return below;
+			if (!belowFits) return left;
+			return Mathf.Abs(p.y - below.y) <= Mathf.Abs(p.x - left.x) ? below : left;
+		}
+
+		/// <summary>The panel's screen rectangle in pixels (tests), or an empty rect.</summary>
+		internal static Rect PanelScreenRect()
+		{
+			if (panel == null) return new Rect();
+			var c = new Vector3[4];
+			panel.GetWorldCorners(c);
+			return Rect.MinMaxRect(c[0].x, c[0].y, c[2].x, c[2].y);
+		}
+		internal static RectTransform PanelRect { get { return panel; } }
+		/// <summary>How many drags the player finished (tests).</summary>
+		public static int Drags;
+
+		/// <summary>Drags the panel by its title and edges while the mouse is free (inventory, menus, the mod's windows; the
+		/// steps list scrolls instead when it is long), keeps it on the screen, and double-click puts it back in its place.</summary>
+		class PanelDrag : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
+		{
+			public void OnBeginDrag(PointerEventData e) { dragging = e.button == PointerEventData.InputButton.Left && Cursor.lockState != CursorLockMode.Locked; }
+
+			public void OnDrag(PointerEventData e)
+			{
+				if (!dragging || panel == null) return;
+				Canvas c = GetComponentInParent<Canvas>();
+				float scale = c != null && c.rootCanvas != null ? c.rootCanvas.scaleFactor : 1f;
+				panel.anchoredPosition = OnScreen(panel.anchoredPosition + e.delta / Mathf.Max(0.01f, scale));
+			}
+
+			public void OnEndDrag(PointerEventData e)
+			{
+				if (!dragging || panel == null) return;
+				dragging = false;
+				SavePlace(OnScreen(panel.anchoredPosition));
+				Drags++;
+			}
+
+			public void OnPointerClick(PointerEventData e)
+			{
+				if (e.button == PointerEventData.InputButton.Left && e.clickCount >= 2 && Cursor.lockState != CursorLockMode.Locked) ResetPlace();
+			}
+
+			void OnDisable() { dragging = false; }
 		}
 
 		public static bool PanelShown { get { return panel != null && panel.gameObject.activeSelf; } }
@@ -687,7 +813,6 @@ namespace DynamicIslands.Editor
 			}
 			panel.gameObject.SetActive(!hide);
 			if (hide) return;
-			PlaceUnderMap();
 			closeButton.onClick.RemoveAllListeners();
 			closeButton.onClick.AddListener(() => { closedKey = shownKey; closedStep = step; panel.gameObject.SetActive(false); });
 			titleText.text = q.ShownTitle + (step >= q.Steps.Count ? "  <color=#8fdc8f>\u221A done</color>" : "") + (open > 0 ? "  <color=#b39a6c>(+" + open + " more)</color>" : "");
@@ -739,6 +864,7 @@ namespace DynamicIslands.Editor
 			if (Mathf.Abs(size.preferredHeight - height) > 0.5f) UIKit.Size(stepsView.gameObject, -1, height);
 			bool scrolls = lines.Count > VisibleSteps;
 			stepsScroll.vertical = scrolls;
+			stepsScroll.GetComponent<Image>().raycastTarget = scrolls; // (a short list: a drag there moves the panel)
 			if (island != followedIsland || step != followedStep || !scrolls)
 			{
 				followedIsland = island; followedStep = step;
@@ -859,6 +985,10 @@ namespace DynamicIslands.Editor
 			foreach (Graphic g in closeButton.GetComponentsInChildren<Graphic>()) g.raycastTarget = true;
 			// (only the list's own background and its scrollbar take the mouse: the wheel scrolls it while the cursor is free)
 			stepsScroll.GetComponent<Image>().raycastTarget = true;
+			// (11-09: the panel drags by its title and edges while the mouse is free; double-click puts it back - PanelDrag)
+			panel.GetComponent<Image>().raycastTarget = true;
+			titleText.raycastTarget = true;
+			panel.gameObject.AddComponent<PanelDrag>();
 			if (stepsScroll.verticalScrollbar != null)
 				foreach (Graphic g in stepsScroll.verticalScrollbar.GetComponentsInChildren<Graphic>()) g.raycastTarget = true;
 		}
