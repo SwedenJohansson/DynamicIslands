@@ -25,8 +25,14 @@ namespace DynamicIslands
 	///    shared no-id inventory is copied to it, so the player keeps what they have now.
 	/// Either way the world's custom island state kept under its name (noid-&lt;name&gt;) moves to the id when it is newer.
 	/// Runs right after Raft read the world's id (RGD_World.RestoreWorld), before LoadComplete: the mod's world state then
-	/// loads under the id already. The world's next save has the id. Players who joined such a world keep their no-id record on their own PC: Raft
-	/// gives them a fresh start in it once.
+	/// loads under the id already. The world's next save has the id.
+	///
+	/// Players who joined such a world keep their no-id record on their own PC. When the host had to make a NEW id (case 2),
+	/// it keeps a note (worlds/&lt;id&gt;.newid) and tells each joiner (kind WorldNewId, for NewIdDays after the repair). A joiner
+	/// whom Raft gave a fresh start in the world (no record under the id when it joined: Raft's RestoreUser runs before any
+	/// mod message comes) gets the inventory of its own no-id record put back, once per world (worlds/&lt;id&gt;.newid-copied),
+	/// and only while its bag still holds nothing but Raft's starting items: a real record is never overwritten and nothing
+	/// is doubled.
 	/// </summary>
 	internal static class WorldIdRepair
 	{
@@ -54,6 +60,7 @@ namespace DynamicIslands
 			if (!restored) id = Guid.NewGuid();
 			LastCopiedPlayer = CopyPlayer(id);
 			SaveAndLoad.WorldGuid = id;
+			if (!restored) MarkNewId(id);
 			CarryState(oldKey, id.ToString());
 			Last = restored ? "restored " + id + " from " + from : "new " + id;
 			Debug.LogWarning("[CUSTOM ISLANDS] World '" + SaveAndLoad.CurrentGameFileName + "' had no world id (an Esc > Quit game save before 3.4): "
@@ -84,6 +91,106 @@ namespace DynamicIslands
 			}
 			return Guid.Empty;
 		}
+
+		/// <summary>Days after a repair with a new id in which joiners are told (their fresh start is put right).</summary>
+		internal const int NewIdDays = 60;
+		static string NewIdPath(Guid id) { return Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), id + ".newid"); }
+
+		/// <summary>Host: the world got a new id at this load - noted so joiners get their inventory back (OnNewIdFromHost).</summary>
+		internal static void MarkNewId(Guid id)
+		{
+			try
+			{
+				Directory.CreateDirectory(Path.GetDirectoryName(NewIdPath(id)));
+				File.WriteAllText(NewIdPath(id), DateTime.UtcNow.ToString("o"));
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] World id repair, the note for joiners: " + e.Message); }
+		}
+
+		/// <summary>Host -> a joiner: this world got a new id in the last NewIdDays days (null: it didn't).</summary>
+		internal static IslandNetMessage NewIdMessage()
+		{
+			if (!Raft_Network.IsHost || SaveAndLoad.WorldGuid == Guid.Empty) return null;
+			string path = NewIdPath(SaveAndLoad.WorldGuid);
+			if (!File.Exists(path)) return null;
+			DateTime when;
+			string first = (File.ReadAllText(path) ?? "").Trim();
+			if (!DateTime.TryParse(first, null, System.Globalization.DateTimeStyles.RoundtripKind, out when)) when = File.GetLastWriteTimeUtc(path);
+			if ((DateTime.UtcNow - when.ToUniversalTime()).TotalDays > NewIdDays) return null;
+			return new IslandNetMessage { Kind = IslandNetMessage.WorldNewId, Name = SaveAndLoad.WorldGuid.ToString() };
+		}
+
+		// (client: what Raft found when this player joined - RestoreUser runs before the mod's messages)
+		static Guid joinGuid;
+		static bool joinHadRecord;
+		/// <summary>Tests: the last joiner copy ("copied N", "skipped: why"), or null.</summary>
+		internal static string LastClient;
+
+		/// <summary>Client: Raft asked whether this player has a record in the world it joins (SaveAndLoad.PlayerSaveExistsInWorld).</summary>
+		internal static void AfterRecordLookup(bool had)
+		{
+			if (Raft_Network.IsHost) return;
+			// (only the first lookup of a join counts: a later one would see the fresh record Raft saved)
+			if (joinGuid == SaveAndLoad.WorldGuid) return;
+			joinGuid = SaveAndLoad.WorldGuid;
+			joinHadRecord = had;
+		}
+
+		/// <summary>Client: left the world - the next join's lookup counts again.</summary>
+		internal static void ForgetJoin() { joinGuid = Guid.Empty; }
+
+		static readonly HashSet<string> StartingItems = new HashSet<string> { "Hook_Plastic", "Hammer", "Axe", "PaintBrush", "DevHat", "Backpack_Advanced", "ZiplineTool_Electric" };
+
+		/// <summary>Client: the host says this world got a new id. A fresh start here gets the no-id record's inventory, once.</summary>
+		internal static void OnNewIdFromHost(string name)
+		{
+			Guid id;
+			if (Raft_Network.IsHost || !Guid.TryParse(name ?? "", out id) || id == Guid.Empty || id != SaveAndLoad.WorldGuid) return;
+			string why = ClientCopy(id);
+			LastClient = why;
+			Debug.Log("[CUSTOM ISLANDS] World id repair (joiner): " + why);
+		}
+
+		static string ClientCopy(Guid id)
+		{
+			if (joinGuid != id) return "skipped: no join lookup for this world";
+			if (joinHadRecord) return "skipped: this player had a record in the world";
+			string done = NewIdPath(id) + "-copied";
+			if (File.Exists(done)) return "skipped: copied before";
+			try
+			{
+				RGD_Users users = AccessTools.Field(typeof(SaveAndLoad), "rgd_users").GetValue(null) as RGD_Users;
+				if (users == null || users.users == null) return "skipped: no records";
+				ulong steam = Steamworks.SteamUser.GetSteamID().m_SteamID;
+				RGD_User empty = users.GetUser(Guid.Empty, steam);
+				RGD_PlayerInventory inv = empty != null && empty.rgdPlayer != null ? empty.rgdPlayer.rgdInventory : null;
+				int items = inv == null ? 0 : Filled(inv).Count();
+				if (items == 0) return "skipped: no no-id inventory";
+				// (the record Raft made at the fresh start, and the bag now: Raft's starting items only)
+				RGD_User here = users.GetUser(id, steam);
+				RGD_PlayerInventory hereInv = here != null && here.rgdPlayer != null ? here.rgdPlayer.rgdInventory : null;
+				if (hereInv != null && !OnlyStarting(Filled(hereInv).Select(s => { Item_Base b = ItemManager.GetItemByIndex(s.itemIndex); return b == null ? "?" : b.UniqueName; })))
+					return "skipped: the record in the world has more than the starting items";
+				Network_Player player = ComponentManager<Network_Player>.Value;
+				if (player == null || player.Inventory == null) return "skipped: no player";
+				if (!OnlyStarting(player.Inventory.allSlots.Where(s => s != null && !s.IsEmpty && s.itemInstance != null).Select(s => s.itemInstance.UniqueName)))
+					return "skipped: the bag has more than the starting items";
+				inv.RestoreInventory(player.Inventory);
+				File.WriteAllText(done, DateTime.UtcNow.ToString("o"));
+				// (saved under the world's id now: a quit before the next save keeps it)
+				try { AccessTools.Method(typeof(SaveAndLoad), "SaveUser").Invoke(ComponentManager<SaveAndLoad>.Value, null); }
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] World id repair (joiner), saving: " + e.Message); }
+				return "copied " + items;
+			}
+			catch (Exception e) { return "skipped: " + e.Message; }
+		}
+
+		static IEnumerable<RGD_Slot> Filled(RGD_PlayerInventory inv)
+		{
+			return (inv.slots ?? new RGD_Slot[0]).Concat(inv.equipSlots ?? new RGD_Slot[0]).Where(s => s != null && s.HasItem);
+		}
+
+		static bool OnlyStarting(IEnumerable<string> names) { return names.All(n => StartingItems.Contains(n)); }
 
 		/// <summary>The local player has no record under the id: the no-id one is copied to it. True when copied.</summary>
 		static bool CopyPlayer(Guid id)
@@ -136,6 +243,15 @@ namespace DynamicIslands
 				}
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] World id repair, the island state: " + e.Message); }
+		}
+	}
+
+	[HarmonyPatch(typeof(SaveAndLoad), "PlayerSaveExistsInWorld")]
+	static class WorldIdRepairJoinPatch
+	{
+		static void Postfix(bool __result)
+		{
+			try { WorldIdRepair.AfterRecordLookup(__result); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] World id repair (join): " + e.Message); }
 		}
 	}
 

@@ -332,6 +332,7 @@ namespace DynamicIslands
 			// The editor's start window and the world plan editor live on the menu too (back from the editor: open again)
 			MenuWindows.Ensure();
 			EditorEntry.OnMainMenu();
+			WorldIdRepair.ForgetJoin(); // (the next join's record lookup counts again)
 			// (an object index from before a Raft update is made again here, in the background - not only by the editor)
 			PlaceableCatalog.CheckIndexInMenu();
 

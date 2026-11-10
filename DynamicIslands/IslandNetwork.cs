@@ -117,6 +117,9 @@ namespace DynamicIslands.Editor
 		/// first, the step had moved on, or the hand-over was refused), given back (QuestSteps.ItemsBack). Ids = { island, quest },
 		/// Index = the step, Data = the item, Count = how many, Name = why ("over", "late", "refused"). An older version ignores it.</summary>
 		public const int QuestItemsBack = 41;
+		/// <summary>Host -> a joiner: the world got a new id when it loaded without one (WorldIdRepair), Name = the id. The joiner's
+		/// fresh start there gets its own no-id inventory back (WorldIdRepair.OnNewIdFromHost). An older version ignores it.</summary>
+		public const int WorldNewId = 42;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -703,7 +706,7 @@ namespace DynamicIslands.Editor
 		/// A player drops one from anyone else (AUDIT 11-09 #14: a modified peer could set them on a public lobby).</summary>
 		internal static readonly HashSet<int> HostOnlyKinds = new HashSet<int> {
 			IslandNetMessage.Islands, IslandNetMessage.Remove, IslandNetMessage.SyncRequest, IslandNetMessage.WorldRules,
-			IslandNetMessage.ObjectSet, IslandNetMessage.QuestItemsBack, IslandNetMessage.AlphaHealth, IslandNetMessage.WorldOptions,
+			IslandNetMessage.ObjectSet, IslandNetMessage.QuestItemsBack, IslandNetMessage.WorldNewId, IslandNetMessage.AlphaHealth, IslandNetMessage.WorldOptions,
 			IslandNetMessage.Randomizer, IslandNetMessage.RogueShark, IslandNetMessage.WorldCopy, IslandNetMessage.WorldSave,
 			IslandNetMessage.StormSeas, IslandNetMessage.WhaleBreach, IslandNetMessage.VendingHatch, IslandNetMessage.StoryChain,
 			IslandNetMessage.QuestCount, IslandNetMessage.CreatureSpots, IslandNetMessage.Announce };
@@ -770,6 +773,7 @@ namespace DynamicIslands.Editor
 							JoinPart("carried pieces", () => MechFeatures.HeldMessage(), to);
 							// (after the list: the island it names is in the player's list then)
 							JoinPart("player's place", () => PlayerPlaces.PlaceMessage(to.Id), to);
+							JoinPart("new world id", () => WorldIdRepair.NewIdMessage(), to);
 							try { IslandNetMessage levels = PlayerLevels.StateFor(to.Id); if (levels != null) SendLevels(levels, to); }
 							catch (Exception e) { JoinPartFailed("levels", e); }
 							// (their own copy of the world, to host it later)
@@ -858,6 +862,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.Ping:
 						Minimap.OnMessage(msg, from.Id);
+						break;
+					case IslandNetMessage.WorldNewId:
+						if (!Raft_Network.IsHost) WorldIdRepair.OnNewIdFromHost(msg.Name);
 						break;
 					case IslandNetMessage.QuestItemsBack:
 						if (!Raft_Network.IsHost) QuestSteps.ItemsBack(msg.Data, msg.Count, msg.Name);
