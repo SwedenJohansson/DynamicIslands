@@ -48,7 +48,7 @@ Fields: `Ids`, `Names`, `Hashes`, `Offsets`, `States`, `Labels`, `Rules`, `FullL
 | 27 `RogueShark` | host -> clients | `Name` "spawn"/"dead"/"state", `Index` the rogue's object index, `Count` no new one before this day |
 | 28 `WorldSave` | host -> clients | `Name` world guid, `Hash` save folder name, parts `Index`/`Count`/`Data` (base64 of the pack, 3000 chars) |
 | 29 `UpgradeTable` | host -> everyone; client -> host | `Name` "state"/"learned" from the host, "research"/"learn" to it |
-| 33 `Moment` | host -> clients | when/then moments: `Name` "sound"/"stop" (`TriggerSounds`), "camera" (`CameraMoment`), "ending" (`StoryCredits`), "ufo" (`UfoSightings`, Data = the saucer's path, no Ids); `Ids[0]` island, `Index` object, `Data` |
+| 33 `Moment` | host -> clients | when/then moments: `Name` "sound"/"stop" (`TriggerSounds`), "camera" (`CameraMoment`), "ending" (`StoryCredits`), "ufo" (`UfoSightings`, Data = the saucer's path, no Ids), "timer" (`QuestTimers`, 3.5: `Ids` {-1, island, quest}, `Index` step, `Count` seconds left, `Data` `run|wait|fail|stop` + `|full`; every 2 s and on change; -1 so old versions' TriggerSounds ignore it); `Ids[0]` island, `Index` object, `Data` |
 | 34 `VendingHatch` | host -> clients | a vending hatch paid or emptied: `Ids` island, state key, button + 1 (0 = empty); `Count` day |
 | 35 `StormSeas` | host -> everyone | `Name` "broke", `Index` the storm, `Count` floors broken |
 | 36 `WhaleBreach` | host -> clients | a whale breach (option `whalebreach`): `Index` its number, `Offsets` { dx, dz from the raft, heading, roll side }; `WhaleBreach.OnMessage` plays it by the client's raft |

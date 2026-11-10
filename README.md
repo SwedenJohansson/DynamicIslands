@@ -20,6 +20,10 @@ This README is the full reference, in the same order: island creation first, the
 
 ## Features
 
+- **Random chests, frequency notes and timed steps** (3.5): a chest can give a random part of its list (a chance per
+  item, or pick N; a new roll every fill, the same for every player); a note or the action **unlock frequency** unlocks
+  one of Raft's Receiver frequencies for every player; a quest step can have a time limit with a countdown (run out and
+  the step starts again). See the guide, 5.2, 5.3 and 6.1.
 - **Trade stands and co-op zones** (2026-11-04): make any object a **trade stand** with your own offer (players pay
   Raft or story items, get others; a stock or no limit; a `trade` event per trade), and trigger zones that need
   **several players standing in them** (pressure plates: once, or while they stand) - the number needed never more
@@ -943,6 +947,9 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `RaftVending.cs` | Raft's vending machine (SL7b): the VendingMachine object's scripts kept, its network number from the island's id, the package waiting in the hatch (island state), restored when the island is set up again |
 | `BlueprintSteps.cs` | The quest step "blueprint" (SL8): which items a blueprint teaches, whether this player carries or learned it, Raft's story blueprints |
 | `QuestSteps.cs` | The quest steps "Signal / object is", "Bring items", "Craft or cook" (QE1/QE4/QE7, 11-03), "Catch fish" and "Gather / harvest" (11-04): signal or `Name=state` checks, hand-ins at islanders (`Islanders.Talked`) and chests (`LootCrate.OnIsRayed`), items the host gave back in multiplayer (`ItemsBack`), the crafting/cooking hooks (`CraftingMenu.CraftItem`, `Block_CookingStand.CollectItem`, `CookingTable.PickupFood`), the fishing hooks (`FishingRod.PullItemsFromSea`, `FishingBaitHandler.GetRandomItemFromCurrentBaitPool`), the gather hooks (`Pickup`/`PickupChanneling.AddItemToInventory`, `HarvestableTree.Harvest`: inventory before/after), editor lists and plan checks |
+| `RandomLoot.cs` | Random chests (3.5): `loot.mode=random`, `loot.chance` (`Item=25;...`), `loot.pick`; the roll seeded by island, chest and day (the same on every machine), the odds the inspector shows, the recipe `@` form |
+| `ReceiverUnlock.cs` | The `frequency` action (3.5): unlocks Raft's own notebook note of a story island (`UnlockSpecificNoteNetworked`, so saving, multiplayer and the story order work as Raft's); the note editor's read-event helpers |
+| `QuestTimers.cs` | Timed quest steps (3.5): `quest.timers` (`step=seconds`), the host's clock (island state `0x7C00000 + quest`), Moment "timer" to players, the countdown |
 | `QuestSkip.cs` | Skip the current quest step (3.2): `Current` (the quest panel's quest, else the last started or moved on, else the latest-day begun quest), F10 `SkipStep`, the confirm box opened from **Esc > Custom Islands** (`WorldWindow`), the step counted as done (`QuestTracker.JumpTo`) after what it gives (a collect step's story items, a signal step's signal), saved |
 | `QuestTestCommands.cs` | The `QuestTest` console command (11-04): the nearest island's quests, a jump to a step (back too: `QuestTracker.JumpTo`, the players told "set"), a signal, a story item, the island reset (the players told "reset" in an islands message) |
 | `PlayerFeatures.cs`, `ObjectInspectorPlayer.cs` | The hub of the story features players meet (islanders): their verbs, checks, quest steps, events, plan facts and editor rows, called from Behaviours, Quest, the editors and PlanChecker |

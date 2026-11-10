@@ -1639,11 +1639,15 @@ starting Raft:
 ![The note editor](images/editor-note-editor.jpg)
 *The note editor: the title, the text (Enter starts a new line), and a preview of the paper players will see.*
 
+**A note can unlock a Receiver frequency** (3.5): in the note editor, **Reading it unlocks** picks one of Raft's story islands (Radio Tower .. Utopia). The first time anyone reads the note, that island's frequency is unlocked for every player, exactly as finding Raft's own note there would (the notebook shows the note, the Receiver gets the frequency, the story order and a plan's story chain see it as usual). Any event can do it too: the action **unlock frequency** (`frequency|Vasagatan|`).
+
 ### 5.3 Chests and loot
 
 "Loot & chests" has chests, a crate, a wooden box, barrels and a wild beehive (honeycomb), and **any object can hold loot** (**A chest...**).
 **Fills up again** sets whether a looted chest is full again after the island's regrow days or never. A chest holds up to 12 kinds of items, up to 999 of each. **Empty** takes everything out; **Not a chest** makes the object plain again. A chest that
 holds a **story item** never fills up again, whatever is chosen (the story's key or log comes once - the panel says so).
+
+**Random chests** (3.5): **Gives: Random** makes the chest give a random part of its list. Each item gets a **%** (its chance; 100 = always). With **Pick** at 0 every item rolls its own chance, so a fill can now and then be empty (the panel says how often); with **Pick** 2 the chest gives exactly 2 different items, the higher chances picked more often. Hover a % to see each item's real odds. The roll is new for every fill (again after a refill) and the same for every player in multiplayer. Older versions of the mod give the whole list. In a recipe: `loot chest Plank*4@25;Nail*2;Rope@50 pick=1`.
 
 ![The loot inspector](images/editor-loot.jpg)
 *A chest's loot: planks, plastic, palm leaves, rope and nails. The Basics, Metal, Food and Treasure sets fill it
@@ -1864,6 +1868,8 @@ up, or harvested from a tree or bush with the axe - within 40 m of the island's 
 `Plank`); empty = anything. Hooked from the sea, crafted or given as a reward doesn't count, nor what was gathered
 before the step came. Place what players gather on the island (the generator's **Gather** and **Shallows**, or loose
 items and plants) and say where in the step's text.
+**Timed steps** (3.5): the **time** box at the end of a step's row is a time limit in seconds (empty = none, up to 3600). While the step is active and a player is at the island, everyone near it sees a countdown at the top of the screen; when nobody is there the clock waits. If it runs out, the step starts again (its progress is set back) with a fresh clock, and players are told "Time's up". The clock is kept with the world. Best for reach, zone, talk and puzzle steps: what was killed, handed over or read stays done, so the editor warns on those kinds.
+
 **Steps done in another order count too:** a chest opened or animals defeated before their step has come are
 remembered, and count the moment their step comes - the guide's camp quest done backwards (warthogs, supplies, then
 the diary) finishes when the diary is read. If more than one later step could take the same work, the step that names
@@ -2038,7 +2044,9 @@ Select any object → **Behaviour & events...**. No code needed:
   food and drink; `heal||drink`, `heal||food`, `heal||health 20`, several with commas) is for the player who set it
   off: a well, a cook's meal, a healer. The ready piece **Drinking spring** (the object list, **Zones & triggers**) is a ring of stones round
   a pool that fills the thirst of whoever drinks from it, as often as they like; its own use actions run after the
-  drink (give it `heal||` instead to fill everything).
+  drink (give it `heal||` instead to fill everything). **unlock frequency** (shared, `frequency|Balboa|`) unlocks the
+  Receiver frequency of one of Raft's story islands for every player, through Raft's own note for it (nothing when
+  it is unlocked already).
 - **Trade stands** (2026-11-04): select any object → **Trade stand...** in the object panel (beside **Readable...**
   and **A chest...**). Players look at it and press E to trade: they pay what you set in **Players pay**
   (`Plank*12;Rope*2`; a story item, `story:old-coin*1`, is taken from the crew's) and get **They get** (Raft items or
