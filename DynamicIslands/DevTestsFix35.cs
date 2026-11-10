@@ -203,6 +203,7 @@ namespace DynamicIslands
 		{
 			bool ok = true;
 			if (RAPI.GetLocalPlayer() == null) { Fail("banner overlap: needs a world"); yield break; }
+			if (!PlayerLevels.On) { Fail("banner overlap: the level up system is off - run 'Levels on' first"); yield break; }
 			IslandInfo.HideNow();
 			LevelHud.Announce("Level up!", "Test level 99", true);
 			yield return new WaitForSecondsRealtime(0.5f);
@@ -264,6 +265,14 @@ namespace DynamicIslands
 			if (!__result && identifier == "LMB" && Time.frameCount == realClickFrame) __result = true;
 		}
 
+		// (a floor takes most things; a trophy hangs on a side: the first face of the quad that takes the item)
+		static Vector3? FaceFor(BlockQuad q, Item_Base item)
+		{
+			foreach (Vector3 d in new[] { q.transform.up, Vector3.up, q.transform.forward, -q.transform.forward, q.transform.right, -q.transform.right })
+				if (q.AcceptsBlock(item, d)) return d;
+			return null;
+		}
+
 		static IEnumerator PlaceRealRoutine()
 		{
 			bool ok = true;
@@ -289,17 +298,19 @@ namespace DynamicIslands
 					Slot into = player.Inventory.allSlots.Take(player.Inventory.hotslotCount > 0 ? player.Inventory.hotslotCount : 10).FirstOrDefault(sl => sl != null && sl.IsEmpty)
 						?? player.Inventory.allSlots[0];
 					into.SetItem(new ItemInstance(item, 1, item.MaxUses));
-					if (hotbar != null) hotbar.SelectItem(item);
+					// (the player's number key: Raft's hotbar takes the slot index, and placing uses up the item in that slot)
+					int intoIndex = player.Inventory.allSlots.IndexOf(into);
+					if (hotbar != null) { hotbar.SetSelectedSlotIndex(intoIndex); hotbar.ReselectCurrentSlot(); }
 					yield return new WaitForSecondsRealtime(0.5f);
 					Item_Base selected = Traverse.Create(bc).Field("selectedBuildableItem").GetValue<Item_Base>();
 					Check(ref ok, selected == item, name + ": held, the build ghost is it (" + (selected != null ? selected.UniqueName : "none") + ")");
 					// a raft surface that takes it: aim at each in turn until Raft's own check shows the ghost green
-					List<BlockQuad> quads = Resources.FindObjectsOfTypeAll<BlockQuad>().Where(q => q != null && q.gameObject.scene.IsValid() && q.gameObject.activeInHierarchy && q.quadType != null && q.AcceptsBlock(item, q.transform.up))
-						.OrderBy(q => (q.transform.position - player.transform.position).sqrMagnitude).Take(30).ToList();
+					List<BlockQuad> quads = Resources.FindObjectsOfTypeAll<BlockQuad>().Where(q => q != null && q.gameObject.scene.IsValid() && q.gameObject.activeInHierarchy && q.quadType != null && FaceFor(q, item).HasValue)
+						.OrderBy(q => (q.transform.position - player.transform.position).sqrMagnitude).Take(40).ToList();
 					BlockQuad spot = null; string last = "no surface";
 					foreach (BlockQuad q in quads)
 					{
-						realAim = SurfacePoint(q, q.transform.up);
+						realAim = SurfacePoint(q, FaceFor(q, item).Value);
 						CanvasHelper.ActiveMenu = MenuType.None;
 						yield return null; yield return null; yield return null;
 						Block ghost = Traverse.Create(bc).Field("selectedBlock").GetValue<Block>();
@@ -311,16 +322,24 @@ namespace DynamicIslands
 					if (spot == null) { Check(ref ok, false, name + ": no raft surface where the ghost is green (" + quads.Count + " surfaces, last: " + last + ")"); realAim = null; continue; }
 					HashSet<Block> before = new HashSet<Block>(BlockCreator.GetPlacedBlocks());
 					CanvasHelper.ActiveMenu = MenuType.None;
-					realClickFrame = Time.frameCount + 1;
-					yield return null; yield return null; yield return null;
+					// (the click is held a few frames until Raft places it: one press, so at most one block)
+					Block made = null;
+					for (int f = 0; f < 10 && made == null; f++)
+					{
+						CanvasHelper.ActiveMenu = MenuType.None;
+						realClickFrame = Time.frameCount + 1;
+						yield return null;
+						made = BlockCreator.GetPlacedBlocks().FirstOrDefault(b => b != null && !before.Contains(b));
+					}
+					realClickFrame = -1;
 					realAim = null;
 					yield return new WaitForSecondsRealtime(0.5f);
-					Block made = BlockCreator.GetPlacedBlocks().FirstOrDefault(b => b != null && !before.Contains(b));
+					if (made == null) made = BlockCreator.GetPlacedBlocks().FirstOrDefault(b => b != null && !before.Contains(b));
 					UpgradeBlock ub = made != null ? made.GetComponent<UpgradeBlock>() : null;
 					int now = player.Inventory.GetItemCount(name);
 					Check(ref ok, made != null && made.buildableItem == item, name + ": placed by the click (" + (made != null ? made.buildableItem.UniqueName : "nothing") + ")");
 					Check(ref ok, ub != null && ub.Upgrade != null, name + ": an upgrade block");
-					Check(ref ok, now == had, name + ": the hotbar item was used up (" + had + " -> " + now + ")");
+					Check(ref ok, now == had, name + ": the hotbar item was used up (" + had + " -> " + now + ", slot " + intoIndex + ", selected " + (hotbar != null ? hotbar.GetSelectedSlotIndex() : -1) + ")");
 					if (made != null) { placed++; BlockCreator.RemoveBlockNetwork(made, null, true); }
 					yield return new WaitForSecondsRealtime(0.3f);
 					int extra = player.Inventory.GetItemCount(name) - had;
