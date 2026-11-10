@@ -59,6 +59,7 @@ namespace DynamicIslands.Editor
 			{ GapBehaviours.RandomVerb, "one at random" },
 			{ GapBehaviours.CountVerb, "count" },
 			{ GapBehaviours.HealVerb, "heal / feed / drink" },
+			{ ReceiverUnlock.Verb, "unlock frequency" },
 		};
 
 		/// <summary>What each action does (the action list's lines).</summary>
@@ -86,6 +87,7 @@ namespace DynamicIslands.Editor
 			{ GapBehaviours.RandomVerb, "Only ONE of the next actions runs, picked at random (how many: empty = 2; a wait ends the group). The same pick for every player" },
 			{ GapBehaviours.CountVerb, "A counter of this island goes up (+1 when empty; +N, -N, =N, reset): saved, the same for every player. The check \"counter\" asks its value (fish brought: 3 of 5...)" },
 			{ GapBehaviours.HealVerb, "The player who set it off gets health, food and drink back: empty or all = all three full; or health / food / drink, with an amount (drink 40), several with commas" },
+			{ ReceiverUnlock.Verb, "The Receiver gets the frequency of one of Raft's story islands (Radio Tower .. Utopia) for every player, as Raft's own note for it does: kept in the notebook and the save. With the story order on, the island chosen is the one it leads to" },
 		};
 
 		/// <summary>What each check asks (the check list's lines).</summary>
@@ -510,7 +512,7 @@ namespace DynamicIslands.Editor
 				a.Verb = verb;
 				if (a.Verb == "wait" && a.Seconds <= 0f) a.Arg = "5";
 				Rebuild();
-			}, 120, "What happens: show, hide, show/hide, open, close, open/close, say, give items, sound, teleport to, send signal, journal page, wait, unlock character, play sound/music, stop sound, camera moment, protective suit, hurt creatures, pick up (carry), collapse, move to marker, camera fly-through, change weather, one at random, count, heal / feed / drink", 28f, 12);
+			}, 120, "What happens: show, hide, show/hide, open, close, open/close, say, give items, sound, teleport to, send signal, journal page, wait, unlock character, play sound/music, stop sound, camera moment, protective suit, hurt creatures, pick up (carry), collapse, move to marker, camera fly-through, change weather, one at random, count, heal / feed / drink, unlock frequency", 28f, 12);
 			if (a.Verb == OrderPuzzle.Verb) OrderFields(row, a);
 			else if (ObjAction.HasTarget(a.Verb))
 			{
@@ -535,6 +537,9 @@ namespace DynamicIslands.Editor
 			else if (a.Verb == "flythrough") FlyFields(row, a);
 			else if (a.Verb == OrderPuzzle.Verb) { }
 			else if (GapBehaviours.Owns(a.Verb)) GapFields(row, a);
+			else if (a.Verb == ReceiverUnlock.Verb)
+				DropList.Make(row, "Drop_Frequency", ReceiverUnlock.Options("(choose)"), StoryOrder.Parse(a.Target) != ChunkPointType.None ? StoryOrder.Key(StoryOrder.Parse(a.Target)) : "",
+					v => { Keep(); a.Target = v; Rebuild(); }, 130, "Which story island's frequency the Receiver gets", 28f, 12);
 			else if (ObjAction.HasArg(a.Verb))
 			{
 				string ph = a.Verb == "message" ? "What players read" : a.Verb == "give" ? "items (\u2026 to choose)" : a.Verb == "sound" ? "event:/... (\u2026 to choose)" : a.Verb == "journal" ? "What the page says" : a.Verb == "suit" ? "seconds (120)" : a.Verb == "hit" ? "% of their health (25)" : a.Verb == "collapse" ? "seconds (3)" : a.Verb == "moveto" ? "marker name, seconds (4)" : a.Verb == PlayerFeatures.DialogueVerb ? "What is said (\\n new line, --- new page, > answer)" : a.Verb == Lights.Verb ? "on, off or toggle" : "signal name (world plans wait for it)";

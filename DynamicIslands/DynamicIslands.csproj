@@ -39,6 +39,7 @@
     <Compile Include="AwaitExtensions\Engine\ContextHelper.cs" />
     <Compile Include="BlueprintSteps.cs" />
     <Compile Include="DevTestsRecipeLeaves.cs" />
+    <Compile Include="DevTestsFix35.cs" />
     <Compile Include="DevTestsGapsRun.cs" />
     <Compile Include="DevTestsCaveGaps.cs" />
     <Compile Include="DevTestsPreFaults.cs" />
@@ -62,6 +63,9 @@
     <Compile Include="IslandInfo.cs" />
     <Compile Include="ItemPickerWindow.cs" />
     <Compile Include="LootCrate.cs" />
+    <Compile Include="RandomLoot.cs" />
+    <Compile Include="ReceiverUnlock.cs" />
+    <Compile Include="QuestTimers.cs" />
     <Compile Include="NoteEditorWindow.cs" />
     <Compile Include="ObjectInspector.cs" />
     <Compile Include="ObjectProps.cs" />
@@ -83,6 +87,7 @@
     <Compile Include="DevTestsQuestGap.cs" />
     <Compile Include="DevTestsQuestSkip.cs" />
     <Compile Include="DevTestsQuestSteps.cs" />
+    <Compile Include="DevTestsQuestWait.cs" />
     <Compile Include="DevTestsStateWatch.cs" />
     <Compile Include="DevTestsContent.cs" />
     <Compile Include="DevTestsStableIds.cs" />
@@ -190,6 +195,7 @@
     <Compile Include="DevTestsInvFix.cs" />
     <Compile Include="QuestEditorWindow.cs" />
     <Compile Include="QuestSteps.cs" />
+    <Compile Include="QuestWaitSteps.cs" />
     <Compile Include="QuestTestCommands.cs" />
     <Compile Include="QuestSkip.cs" />
     <Compile Include="TriggerZone.cs" />
@@ -199,6 +205,8 @@
     <Compile Include="GapWorld.cs" />
     <Compile Include="PlayerFeatures.cs" />
     <Compile Include="Islanders.cs" />
+    <Compile Include="IslanderWalk.cs" />
+    <Compile Include="Taming.cs" />
     <Compile Include="Collectibles.cs" />
     <Compile Include="Lights.cs" />
     <Compile Include="OrderPuzzle.cs" />
@@ -379,6 +387,7 @@
     <Compile Include="DevTestsGapPieces.cs" />
     <Compile Include="DevTestsGapWorld.cs" />
     <Compile Include="DevTestsGapWorld1104.cs" />
+    <Compile Include="DevTestsFeat35b.cs" />
     <Compile Include="DevTestsGapHost.cs" />
     <Compile Include="DevTestsGapStory.cs" />
     <Compile Include="DevTestsStorylineMp.cs" />

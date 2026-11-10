@@ -72,6 +72,8 @@ namespace DynamicIslands
 				int step = QuestTracker.StepOf(e, n);
 				lines.Add("Quest " + (n + 1) + " '" + q.ShownTitle + "': " + (step >= q.Steps.Count ? "done" : "step " + (step + 1) + " of " + q.Steps.Count + " (" + QuestTracker.ProgressOf(e, n) + " done)"));
 				for (int s = 0; s < q.Steps.Count; s++) lines.Add((s == step ? " > " : "   ") + (s + 1) + ". " + q.Steps[s].Describe());
+				string world = QuestWaitSteps.StateLine(e, q, step);
+				if (world.Length > 0) lines.Add("   (" + world + ")");
 			}
 			foreach (string l in lines) Debug.Log("[CUSTOM ISLANDS] [QuestTest] " + l);
 			return string.Join("\n", lines.ToArray());

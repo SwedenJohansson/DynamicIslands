@@ -207,12 +207,10 @@ namespace DynamicIslands.Editor
 					System.IO.File.WriteAllText(Path.Combine(part, ReceivedFile), DateTime.UtcNow.Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture));
 					// (the same save again - sent at a join: the new one replaces it; another "-Latest" becomes a dated backup, as Raft does)
 					if (Directory.Exists(target)) Directory.Delete(target, true);
+					// (AUDIT 11-09 #15: every other "-Latest" goes - before, the player's own one whose dated name was taken
+					// stayed, so the world list showed two)
 					foreach (string latest in Directory.GetDirectories(world).Where(d => d.EndsWith("-Latest", StringComparison.OrdinalIgnoreCase)))
-					{
-						string plain = latest.Substring(0, latest.Length - "-Latest".Length);
-						if (!Directory.Exists(plain)) Directory.Move(latest, plain);
-						else if (System.IO.File.Exists(Path.Combine(latest, ReceivedFile))) Directory.Delete(latest, true);
-					}
+						RetireLatest(latest);
 					Directory.Move(part, target);
 					Prune(world);
 					LastFiled = Path.GetFileName(world) + "\\" + saveName;
@@ -221,12 +219,50 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		/// <summary>The world folder a received save goes in: the host's name if free or holding this world, else the name with the id.</summary>
+		/// <summary>The world folder a received save goes in: the host's name if free or holding this world, else the name with the id.
+		/// A folder of another name that holds this world (MarkerFile: the host renamed it) is moved to that name, or used as it
+		/// is when the name is taken, so one world never shows twice (AUDIT 11-09 #15).</summary>
 		public static string WorldFolderFor(string worldsRoot, string worldName, Guid guid)
 		{
 			string plain = Path.Combine(worldsRoot, worldName);
-			if (!Directory.Exists(plain) || HoldsWorld(plain, guid)) return plain;
-			return Path.Combine(worldsRoot, worldName + " (" + guid.ToString().Substring(0, 8) + ")");
+			if (Directory.Exists(plain) && HoldsWorld(plain, guid)) return plain;
+			string named = !Directory.Exists(plain) ? plain : Path.Combine(worldsRoot, worldName + " (" + guid.ToString().Substring(0, 8) + ")");
+			if (Directory.Exists(named) && HoldsWorld(named, guid)) return named;
+			string old = null;
+			try { old = Directory.GetDirectories(worldsRoot).FirstOrDefault(d => HoldsWorld(d, guid)); } catch { }
+			if (old == null) return named;
+			if (Directory.Exists(named)) return old;
+			try { Directory.Move(old, named); Debug.Log("[CUSTOM ISLANDS] The host renamed this world: " + Path.GetFileName(old) + " -> " + Path.GetFileName(named)); return named; }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not rename the world folder " + Path.GetFileName(old) + ": " + e.Message); return old; }
+		}
+
+		/// <summary>A "-Latest" save folder becomes a plain dated backup, as Raft does on a save. When the dated name is taken: a
+		/// received copy there (or here) is replaced, else the backup takes the nearest earlier free minute.</summary>
+		internal static void RetireLatest(string latest)
+		{
+			string plain = latest.Substring(0, latest.Length - "-Latest".Length);
+			bool latestReceived = System.IO.File.Exists(Path.Combine(latest, ReceivedFile));
+			if (Directory.Exists(plain))
+			{
+				if (latestReceived) { Directory.Delete(latest, true); return; }
+				if (System.IO.File.Exists(Path.Combine(plain, ReceivedFile))) Directory.Delete(plain, true);
+				else plain = FreeDatedName(plain);
+			}
+			Directory.Move(latest, plain);
+		}
+
+		/// <summary>A free folder name an earlier minute than the dated one (yyyy.MM.dd-HH.mm), or the name with " (n)".</summary>
+		internal static string FreeDatedName(string taken)
+		{
+			string dir = Path.GetDirectoryName(taken), name = Path.GetFileName(taken);
+			DateTime t;
+			if (DateTime.TryParseExact(name, "yyyy.MM.dd-HH.mm", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out t))
+				for (int i = 1; i <= 120; i++)
+				{
+					string c = Path.Combine(dir, t.AddMinutes(-i).ToString("yyyy.MM.dd-HH.mm", System.Globalization.CultureInfo.InvariantCulture));
+					if (!Directory.Exists(c)) return c;
+				}
+			for (int n = 2; ; n++) { string c = taken + " (" + n + ")"; if (!Directory.Exists(c)) return c; }
 		}
 
 		static bool HoldsWorld(string folder, Guid guid)

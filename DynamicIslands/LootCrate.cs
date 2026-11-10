@@ -152,6 +152,9 @@ namespace DynamicIslands.Editor
 			c.Refills = ObjectProps.LootRefills(props) && !c.Items.Any(l => StoryItems.IsStory(l.Key)) &&
 				!ObjAction.ParseLines(ObjectProps.Get(props, BehaviourProps.EventKey("open"))).Any(Behaviours.GivesStory); // (nor one whose open gives one: it came again with every refill)
 			c.Ordinal = ordinal;
+			// (a random chest keeps its roll settings: what one fill gives is rolled on opening - QE14)
+			if (RandomLoot.IsRandom(props))
+				c.RandomProps = new Dictionary<string, string> { { RandomLoot.Mode, RandomLoot.RandomMode }, { RandomLoot.Chance, ObjectProps.Get(props, RandomLoot.Chance) }, { RandomLoot.Pick, ObjectProps.Get(props, RandomLoot.Pick) } };
 			c.Label = PlaceableCatalog.DisplayName(name).ToLowerInvariant();
 			return c;
 		}
@@ -211,7 +214,8 @@ namespace DynamicIslands.Editor
 			if (r != null && !Behaviours.Allows(ContentState.EntryOf(transform), r.Index, "open")) return new List<string>();
 			// Marked first, so a second press in the same moment can't give it twice
 			ContentState.MarkUsed(transform, StateKey);
-			List<string> given = TriggerZone.Give(Items); // a full inventory: the rest lands in front of the player
+			List<string> given = TriggerZone.Give(ThisFill()); // a full inventory: the rest lands in front of the player
+			if (RandomProps != null && given.Count == 0) IslandInfo.ShowMessage("The " + Label + " held nothing this time");
 			LastGiven = given;
 			Debug.Log("[CUSTOM ISLANDS] Opened a " + Label + ": " + string.Join(", ", given.ToArray()));
 			// A note inside: show it
@@ -220,6 +224,17 @@ namespace DynamicIslands.Editor
 			if (r != null) Behaviours.Fire(ContentState.EntryOf(transform), r.Index, "open", true, true); // (checked above)
 			if (note != null) NoteReader.Open(note);
 			return given;
+		}
+
+		/// <summary>A random chest's roll settings (null = it gives its whole list).</summary>
+		public Dictionary<string, string> RandomProps;
+
+		/// <summary>What this fill gives: a random chest rolls by island, chest and day (the same on every machine).</summary>
+		public List<KeyValuePair<string, int>> ThisFill()
+		{
+			if (RandomProps == null) return Items;
+			IslandWorldState.Entry e = ContentState.EntryOf(transform);
+			return RandomLoot.Roll(RandomProps, Items, RandomLoot.Seed(e != null ? e.HostName : "", Ordinal, ContentState.Today));
 		}
 
 		/// <summary>What the last opening here gave this player (tests: a client's opening waits for the host's yes).</summary>
