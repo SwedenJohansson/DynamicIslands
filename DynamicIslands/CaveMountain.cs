@@ -214,10 +214,14 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>One cave piece's open ends: where the mountain must leave the way in clear.</summary>
-		struct Mouth { public Vector3 Pos, Along, Side; public float InsideAlong, InsideSide, HalfWidth, FloorY, OwnPlus, OwnMinus, StartPlus, StartMinus, Front, ArchHalf, ArchUp; public bool Plus, Minus, Dry; public string Name; }
+		struct Mouth { public Vector3 Pos, Along, Side; public float InsideAlong, InsideSide, HalfWidth, FloorY, OwnPlus, OwnMinus, StartPlus, StartMinus, Front, ArchHalf, ArchUp, DomeMax; public bool Plus, Minus, Dry; public string Name; }
 		readonly List<Mouth> lastMouths = new List<Mouth>();
 
-		void Build()
+		void Build() { Build(Reach); }
+
+		/// <summary>The hill over the pieces on a grid <pad> m past their bounds each way (Reach; more when a dry den's dome reaches
+		/// further: Build tries again once with a pad that holds it).</summary>
+		void Build(float pad)
 		{
 			if (skin != null) { DestroyImmediate(skin); skin = null; } // (its collider must not count as ground)
 			var cols = new HashSet<Collider>();
@@ -263,6 +267,7 @@ namespace DynamicIslands.Editor
 					InsideAlong = Vector3.Dot(inside - t.position, along), InsideSide = Vector3.Dot(inside - t.position, side),
 					HalfWidth = p.Width * (p.Axis == 0 ? sc.z : sc.x) / 2f + 1f, FloorY = floorY, OwnPlus = ownPlus, OwnMinus = ownMinus, Plus = p.OpenPlus, Minus = p.OpenMinus, Name = t.name,
 					Dry = IsDryFoot(i < props.Count ? props[i] : null, p),
+					DomeMax = DomeMaxFor(i < props.Count ? props[i] : null),
 					// (a lone den: its mouth's plane, where its wall stands - see LoneDenFront)
 					Front = LoneDenFront(t, p, i < props.Count ? props[i] : null, along, Vector3.Dot(inside - t.position, along)),
 					ArchHalf = CaveTool.ArchHalf * OverMeasured(t, CaveTool.Room).x, ArchUp = CaveTool.ArchUp * OverMeasured(t, CaveTool.Room).x
@@ -274,8 +279,8 @@ namespace DynamicIslands.Editor
 			if (!any || look == null || cols.Count == 0) return;
 
 			Physics.SyncTransforms();
-			int nx = Mathf.CeilToInt((b.size.x + 2f * Reach) / Cell) + 1, nz = Mathf.CeilToInt((b.size.z + 2f * Reach) / Cell) + 1;
-			float x0 = b.min.x - Reach, z0 = b.min.z - Reach, rayTop = b.max.y + 5f, rayLen = b.size.y + 60f;
+			int nx = Mathf.CeilToInt((b.size.x + 2f * pad) / Cell) + 1, nz = Mathf.CeilToInt((b.size.z + 2f * pad) / Cell) + 1;
+			float x0 = b.min.x - pad, z0 = b.min.z - pad, rayTop = b.max.y + 5f, rayLen = b.size.y + 60f;
 			var top = new float[nx, nz];       // the shells' roofs (NaN: none)
 			var ground = new float[nx, nz];    // what is under them otherwise
 			var groundBy = new string[nx, nz]; // (tests: what that is)
@@ -409,6 +414,15 @@ namespace DynamicIslands.Editor
 					coverBy[i, k] = by;
 				}
 			float[,] dome = dryFootOn ? DryDomes(mouths, startPlus, startMinus, cover, own, ground, x0, z0, nx, nz) : null;
+			// (a den's dome reaches 40-60 m out, the grid only Reach past the shells: the dome was cut off at the grid's edge, a flat
+			// tan wall metres over the sand, and sunk there a steep straight ramp, the hill a spire - Shelter Atoll 11-09 r62. Once:
+			// a grid wide enough for the whole dome, so its bell runs out into the ground on its own)
+			if (dome != null && pad <= Reach && DomeAtEdge(dome, ground, nx, nz))
+			{
+				Debug.Log("[CUSTOM ISLANDS] Cave mountain: dome reaches the grid's edge, grid widened to " + (LastDomeReach + DomePad).ToString("0") + " m");
+				Build(Mathf.Max(Reach, LastDomeReach + DomePad));
+				return;
+			}
 			// The surface: over a roof, the highest roof around it; elsewhere falling away from the roofs nearby
 			var height = new float[nx, nz];
 			var on = new bool[nx, nz];
@@ -419,7 +433,7 @@ namespace DynamicIslands.Editor
 				for (int k = 0; k < nz; k++)
 				{
 					if (float.IsNaN(cover[i, k]) || !float.IsNaN(corridor[i, k])) continue;
-					if (dome != null && coverBy[i, k] >= 0 && mouths[coverBy[i, k]].Dry && !float.IsNaN(dome[i, k])) continue; // (its dome's)
+					if (dome != null && coverBy[i, k] >= 0 && mouths[coverBy[i, k]].Dry && !DomeCapped(mouths[coverBy[i, k]]) && !float.IsNaN(dome[i, k])) continue; // (its dome's; a cave.dome one's roof keeps its slopes)
 					float peak = cover[i, k] + Over;
 					float[,] past = coverBy[i, k] >= 0 ? ahead[coverBy[i, k]] : null;
 					for (int di = -reach; di <= reach; di++)
@@ -682,6 +696,21 @@ namespace DynamicIslands.Editor
 					map.Append(!float.IsNaN(corridor[i, k]) ? 'c' : on[i, k] ? (!float.IsNaN(top[i, k]) ? 'R' : 's') : cut[i, k] ? '-' : float.IsNegativeInfinity(height[i, k]) || height[i, k] < ground[i, k] - 3f ? '.' : 'g');
 				map.Append('\n');
 			}
+			// (tests: skin height over the ground round each way in, m: 0-9, + over 9, _ under, c the way in, . no skin)
+			map.Append("height over ground near the ways in:\n");
+			for (int k = nz - 1; k >= 0; k--)
+			{
+				bool row = false;
+				for (int i = 0; i < nx && !row; i++)
+					for (int kb = Mathf.Max(k - 8, 0); kb <= Mathf.Min(k + 8, nz - 1) && !row; kb++) row = !float.IsNaN(corridor[i, kb]);
+				if (!row) continue;
+				for (int i = 0; i < nx; i++)
+				{
+					float d = height[i, k] - ground[i, k];
+					map.Append(!float.IsNaN(corridor[i, k]) ? 'c' : !on[i, k] ? '.' : d < 0f ? '_' : d > 9.5f ? '+' : (char)('0' + Mathf.RoundToInt(d)));
+				}
+				map.Append('\n');
+			}
 			var tall = new Dictionary<string, int>();
 			for (int i = 0; i < nx; i++)
 				for (int k = 0; k < nz; k++)
@@ -866,7 +895,10 @@ namespace DynamicIslands.Editor
 			if (anyLone)
 			{
 				var dist = new float[nx, nz];
-				for (int i = 0; i < nx; i++) for (int k = 0; k < nz; k++) dist[i, k] = on[i, k] ? 1e6f : 0f;
+				// (the way in isn't an edge: measured from it too, the cheeks beside the arch were sunk into the ground right at its
+				// sides, and the den's flat front wall stood bare round the arch down to the sand, a box notch with square sides,
+				// Caisson Yard and Shelter Atoll 11-09 r57/r59 user)
+				for (int i = 0; i < nx; i++) for (int k = 0; k < nz; k++) dist[i, k] = on[i, k] || !float.IsNaN(corridor[i, k]) ? 1e6f : 0f;
 				float dd = Cell * 1.41421356f;
 				for (int pass = 0; pass < 2; pass++)
 					for (int i0 = 0; i0 < nx; i0++)
@@ -898,6 +930,22 @@ namespace DynamicIslands.Editor
 						}
 				}
 				if (capped > 0) Debug.Log("[CUSTOM ISLANDS] Lone den skin edge sunk into the ground at " + capped + " cells");
+			}
+			// (the grid's own edge isn't the hill's: where the skin ran on to it, it was cut off there metres over the ground and
+			// stood as a flat tan wall down to the sand, Shelter Atoll's sea side 11-09 r57/r60 user - near the grid's edge the
+			// skin now goes into the ground like a lone den's edge, rising LoneEdgeRise per m in)
+			{
+				int sunk = 0;
+				for (int i = 0; i < nx; i++)
+					for (int k = 0; k < nz; k++)
+					{
+						if (!on[i, k] || cut[i, k] || !float.IsNaN(top[i, k]) || !float.IsNaN(corridor[i, k])) continue;
+						float e = Mathf.Min(Mathf.Min(i, nx - 1 - i), Mathf.Min(k, nz - 1 - k)) * Cell;
+						if (e > LoneEdgeBand) continue;
+						float cap = ground[i, k] - 0.6f + LoneEdgeRise * e;
+						if (height[i, k] > cap) { height[i, k] = cap; near[i, k] = true; sunk++; }
+					}
+				if (sunk > 0) Debug.Log("[CUSTOM ISLANDS] Cave hill skin sunk into the ground at the grid's edge at " + sunk + " cells");
 			}
 			// (11-08 c: the shoulders' cells lowered toward their neighbours' mean a few times: the ridge where the shoulder cap meets the
 			// hill's slope showed as a crisp edge with flat facets; only lowering, so no roof or way in is covered more)
@@ -940,6 +988,17 @@ namespace DynamicIslands.Editor
 
 		/// <summary>cave.foot=dry, or a bear den with no cave.foot of its own (11-08 user: every den's mouth as Shelter Atoll's -
 		/// its floor slab stood square on the sand before the other dens; cave.foot=wet keeps the old foot).</summary>
+		/// <summary>cave.dome=<m>: the most its dry dome may reach (NaN: unset or not a number above 0).</summary>
+		internal static float DomeMaxFor(IDictionary<string, string> p)
+		{
+			string v; float r;
+			if (p != null && p.TryGetValue(ObjectProps.CaveDome, out v) && float.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out r) && r > 0f) return r;
+			return float.NaN;
+		}
+
+		/// <summary>Is this mouth's dome cut down by cave.dome (its roof cells then keep the hill's own slopes too)?</summary>
+		static bool DomeCapped(Mouth m) { return !float.IsNaN(m.DomeMax); }
+
 		internal static bool DryFootFor(IDictionary<string, string> p, string name)
 		{
 			string v;
@@ -986,6 +1045,22 @@ namespace DynamicIslands.Editor
 		internal const float DryHead = 2.6f;
 		/// <summary>Tests: the last dry dome's height over its base and reach (m).</summary>
 		public static string LastDome = "";
+		/// <summary>The furthest a dome reaches from its den's inside point (m, the last DryDomes); DomePad: grid room past it.</summary>
+		static float LastDomeReach;
+		const float DomePad = 4f;
+
+		/// <summary>Is a dome cut off at the grid's edge (an edge cell under it, over the ground)?</summary>
+		static bool DomeAtEdge(float[,] dome, float[,] ground, int nx, int nz)
+		{
+			for (int i = 0; i < nx; i++)
+				for (int k = 0; k < nz; k++)
+				{
+					if (i != 0 && k != 0 && i != nx - 1 && k != nz - 1) continue;
+					float g = float.IsNegativeInfinity(ground[i, k]) ? SeaLevel - 30f : ground[i, k];
+					if (!float.IsNaN(dome[i, k]) && dome[i, k] > g + 0.5f) return true;
+				}
+			return false;
+		}
 
 		/// <summary>cave.foot=dry: the height of one smooth dome over each dry piece's shell (NaN off every dome): an ellipse round
 		/// the shell's cells (DomeFlank past them at the sides and back, DomeFront past its open end) under a (1 - u^2)^2 bell,
@@ -1008,7 +1083,7 @@ namespace DynamicIslands.Editor
 		static float[,] DryDomes(List<Mouth> mouths, float[] startPlus, float[] startMinus, float[,] cover, int[,] own, float[,] ground, float x0, float z0, int nx, int nz)
 		{
 			float[,] dome = null;
-			LastDome = "";
+			LastDome = ""; LastDomeReach = 0f;
 			for (int j = 0; j < mouths.Count; j++)
 			{
 				Mouth m = mouths[j];
@@ -1053,6 +1128,10 @@ namespace DynamicIslands.Editor
 					if (area < best) { best = area; ca = ca1; rs = rs0 * grow; rb = rb0 * grow; rf = rf0 * grow; }
 				}
 				if (float.IsInfinity(best)) continue;
+				// (cave.dome: the footprint shrunk to that reach, its height kept - w02's dens reached 40-80 m and buried camps and
+				// sheds, 11-10; the roof cells keep the hill's own slopes under it so none shows)
+				float most = Mathf.Max(rs, Mathf.Max(rb, rf));
+				if (DomeCapped(m) && most > m.DomeMax) { float sh = m.DomeMax / most; rs *= sh; rb *= sh; rf *= sh; }
 				var u = new float[nx, nz];
 				for (int i = 0; i < nx; i++)
 					for (int k = 0; k < nz; k++)
@@ -1076,8 +1155,23 @@ namespace DynamicIslands.Editor
 						// (its foot on the ground where that is lower than the shell's pad: the shore round it)
 						float g = Mathf.Lerp(Mathf.Min(baseY, ground[i, k]), baseY, p);
 						float h = g - DomeSink + (tall + DomeSink) * p;
+						// (a lone den's: out past its mouth's plane no higher than the funnel ShoulderRamps makes round the arch - the
+						// dome ran on out over the way in and its corridor cut a deep sheer trench up the dome's face, the dome hanging
+						// over it, Shelter Atoll 11-10 r63s30; now the arch sits in the dome's face)
+						if (!float.IsNaN(m.Front))
+						{
+							Vector3 d = new Vector3(x0 + i * Cell, 0f, z0 + k * Cell) - m.Pos;
+							float past = f * (Vector3.Dot(d, m.Along) - m.InsideAlong) - (m.Plus ? startPlus[j] : startMinus[j]);
+							if (past > 0f)
+							{
+								float sl = Mathf.Max(0f, Mathf.Abs(Vector3.Dot(d, m.Side) - m.InsideSide) - (m.ArchHalf + LoneSlot));
+								float cap = m.FloorY + m.ArchUp * Mathf.Clamp01(1f - past / LoneEdge) + LoneSide * sl * (1f + sl / ShoulderCurve) - LoneFall * past;
+								h = Mathf.Min(h, Mathf.Max(cap, g - DomeSink));
+							}
+						}
 						if (float.IsNaN(dome[i, k]) || h > dome[i, k]) dome[i, k] = h;
 					}
+				LastDomeReach = Mathf.Max(LastDomeReach, Mathf.Max(rs, Mathf.Max(rb, rf)) + Mathf.Abs(cs) + Mathf.Abs(ca));
 				LastDome += m.Name + ": dome " + tall.ToString("0.0") + " m over " + baseY.ToString("0.0") + ", reach side " + rs.ToString("0.0") + " back " + rb.ToString("0.0") + " front " + rf.ToString("0.0") + "; ";
 			}
 			if (LastDome.Length > 0) Debug.Log("[CUSTOM ISLANDS] Cave mountain " + LastDome);
