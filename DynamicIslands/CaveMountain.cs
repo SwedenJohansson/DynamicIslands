@@ -214,7 +214,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>One cave piece's open ends: where the mountain must leave the way in clear.</summary>
-		struct Mouth { public Vector3 Pos, Along, Side; public float InsideAlong, InsideSide, HalfWidth, FloorY, OwnPlus, OwnMinus, StartPlus, StartMinus, Front, ArchHalf, ArchUp; public bool Plus, Minus, Dry; public string Name; }
+		struct Mouth { public Vector3 Pos, Along, Side; public float InsideAlong, InsideSide, HalfWidth, FloorY, OwnPlus, OwnMinus, StartPlus, StartMinus, Front, ArchHalf, ArchUp, DomeMax; public bool Plus, Minus, Dry; public string Name; }
 		readonly List<Mouth> lastMouths = new List<Mouth>();
 
 		void Build() { Build(Reach); }
@@ -267,6 +267,7 @@ namespace DynamicIslands.Editor
 					InsideAlong = Vector3.Dot(inside - t.position, along), InsideSide = Vector3.Dot(inside - t.position, side),
 					HalfWidth = p.Width * (p.Axis == 0 ? sc.z : sc.x) / 2f + 1f, FloorY = floorY, OwnPlus = ownPlus, OwnMinus = ownMinus, Plus = p.OpenPlus, Minus = p.OpenMinus, Name = t.name,
 					Dry = IsDryFoot(i < props.Count ? props[i] : null, p),
+					DomeMax = DomeMaxFor(i < props.Count ? props[i] : null),
 					// (a lone den: its mouth's plane, where its wall stands - see LoneDenFront)
 					Front = LoneDenFront(t, p, i < props.Count ? props[i] : null, along, Vector3.Dot(inside - t.position, along)),
 					ArchHalf = CaveTool.ArchHalf * OverMeasured(t, CaveTool.Room).x, ArchUp = CaveTool.ArchUp * OverMeasured(t, CaveTool.Room).x
@@ -432,7 +433,7 @@ namespace DynamicIslands.Editor
 				for (int k = 0; k < nz; k++)
 				{
 					if (float.IsNaN(cover[i, k]) || !float.IsNaN(corridor[i, k])) continue;
-					if (dome != null && coverBy[i, k] >= 0 && mouths[coverBy[i, k]].Dry && !float.IsNaN(dome[i, k])) continue; // (its dome's)
+					if (dome != null && coverBy[i, k] >= 0 && mouths[coverBy[i, k]].Dry && !DomeCapped(mouths[coverBy[i, k]]) && !float.IsNaN(dome[i, k])) continue; // (its dome's; a cave.dome one's roof keeps its slopes)
 					float peak = cover[i, k] + Over;
 					float[,] past = coverBy[i, k] >= 0 ? ahead[coverBy[i, k]] : null;
 					for (int di = -reach; di <= reach; di++)
@@ -987,6 +988,17 @@ namespace DynamicIslands.Editor
 
 		/// <summary>cave.foot=dry, or a bear den with no cave.foot of its own (11-08 user: every den's mouth as Shelter Atoll's -
 		/// its floor slab stood square on the sand before the other dens; cave.foot=wet keeps the old foot).</summary>
+		/// <summary>cave.dome=<m>: the most its dry dome may reach (NaN: unset or not a number above 0).</summary>
+		internal static float DomeMaxFor(IDictionary<string, string> p)
+		{
+			string v; float r;
+			if (p != null && p.TryGetValue(ObjectProps.CaveDome, out v) && float.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out r) && r > 0f) return r;
+			return float.NaN;
+		}
+
+		/// <summary>Is this mouth's dome cut down by cave.dome (its roof cells then keep the hill's own slopes too)?</summary>
+		static bool DomeCapped(Mouth m) { return !float.IsNaN(m.DomeMax); }
+
 		internal static bool DryFootFor(IDictionary<string, string> p, string name)
 		{
 			string v;
@@ -1116,6 +1128,10 @@ namespace DynamicIslands.Editor
 					if (area < best) { best = area; ca = ca1; rs = rs0 * grow; rb = rb0 * grow; rf = rf0 * grow; }
 				}
 				if (float.IsInfinity(best)) continue;
+				// (cave.dome: the footprint shrunk to that reach, its height kept - w02's dens reached 40-80 m and buried camps and
+				// sheds, 11-10; the roof cells keep the hill's own slopes under it so none shows)
+				float most = Mathf.Max(rs, Mathf.Max(rb, rf));
+				if (DomeCapped(m) && most > m.DomeMax) { float sh = m.DomeMax / most; rs *= sh; rb *= sh; rf *= sh; }
 				var u = new float[nx, nz];
 				for (int i = 0; i < nx; i++)
 					for (int k = 0; k < nz; k++)
