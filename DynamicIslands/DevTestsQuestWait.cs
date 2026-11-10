@@ -74,7 +74,8 @@ namespace DynamicIslands
 			Check(ref ok, weathers.Contains("rain") && weathers.Contains("storm") && !weathers.Contains("raft"), "weather's list: " + weathers);
 			Check(ref ok, counters == "ci-bells", "counter's list: the island's count action (" + counters + ")");
 			Check(ref ok, zones == "ciwait", "players' list: the island's trigger zone (" + zones + ")");
-			Check(ref ok, fieldsIn(0) == 2 && fieldsIn(1) == 2 && fieldsIn(2) == 3 && fieldsIn(3) == 3,
+			// 3.5 feat35b: every step row also has the QE9 time-limit field (one more InputField per row)
+			Check(ref ok, fieldsIn(0) == 3 && fieldsIn(1) == 3 && fieldsIn(2) == 4 && fieldsIn(3) == 4,
 				"no count field for time and weather, one for counter and players (" + fieldsIn(0) + "," + fieldsIn(1) + "," + fieldsIn(2) + "," + fieldsIn(3) + ")");
 			Screenshot(new[] { "qwait_editor" });
 			yield return new WaitForSecondsRealtime(0.5f);
