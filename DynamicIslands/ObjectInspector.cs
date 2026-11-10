@@ -82,6 +82,7 @@ namespace DynamicIslands.Editor
 			shown = target;
 			titleField = null;
 			amountFields.Clear();
+			chanceFields.Clear();
 			placeFields.Clear();
 			foreach (Transform child in root) { child.gameObject.SetActive(false); UnityEngine.Object.Destroy(child.gameObject); }
 			root.gameObject.SetActive(target != null);
@@ -636,6 +637,10 @@ namespace DynamicIslands.Editor
 				rows = UIKit.ScrollList(box, out scroll, 4f);
 				UIKit.Stretch((RectTransform)scroll.transform);
 			}
+			bool random = !zone && RandomLoot.IsRandom(target.Props);
+			Dictionary<string, int> chances = RandomLoot.Chances(target.Props);
+			float nothing;
+			List<float> odds = random ? RandomLoot.Odds(target.Props, loot, out nothing) : null;
 			if (loot.Count == 0) UIKit.Label(g, zone ? "<i>Nothing: add items to give players who walk in.</i>" : "<i>Empty: add items, or pick a ready-made set.</i>", 12, UIKit.TextMuted);
 			for (int i = 0; i < loot.Count; i++)
 			{
@@ -660,6 +665,23 @@ namespace DynamicIslands.Editor
 					SetLootAmount(target, index, Mathf.Clamp(n, 0, ObjectProps.MaxLootAmount));
 				});
 				amountFields.Add(amount);
+				if (random)
+				{
+					// (its chance in percent; the tooltip has its odds of being in one fill - QE14)
+					InputField pct = UIKit.Field(row, "100", RandomLoot.ChanceOf(chances, item).ToString(), 24f,
+						"Chance in percent (1-100). In one fill: " + odds[index].ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + "%");
+					UIKit.Size(pct.gameObject, 38, 24);
+					pct.contentType = InputField.ContentType.IntegerNumber;
+					pct.characterLimit = 3;
+					pct.onEndEdit.AddListener(v =>
+					{
+						int n;
+						if (!int.TryParse(v, out n)) n = 100;
+						PropsCommand.Change(target, RandomLoot.WithChance(target.Props, item, Mathf.Clamp(n, 0, 100)));
+						Refresh();
+					});
+					chanceFields.Add(pct); amountFields.Add(pct);
+				}
 				Button remove = UIKit.Button(row, "\u00D7", () => SetLootAmount(target, index, 0), "Take it out of the chest", 24, 24, 13);
 				UIKit.DangerButton(remove);
 			}
@@ -678,6 +700,34 @@ namespace DynamicIslands.Editor
 				}, "Fill it with a ready-made set: " + string.Join(", ", items.Select(x => x.Split('*')[0]).ToArray()), -1, 24f, 11);
 			}
 			if (zone) return;
+			// Gives everything, or a random part of the list (QE14)
+			RectTransform mode = UIKit.Row(g, 24f, 4f, "Mode");
+			UIKit.Label(mode, "Gives", 12, UIKit.TextMuted);
+			Button all = UIKit.Button(mode, "Everything", () => { PropsCommand.Change(target, ObjectProps.With(ObjectProps.With(ObjectProps.With(target.Props, RandomLoot.Mode, null), RandomLoot.Chance, null), RandomLoot.Pick, null)); Refresh(); },
+				"Every fill gives the whole list", 76, 24f, 11);
+			Button rnd = UIKit.Button(mode, "Random", () => { Set(target, RandomLoot.Mode, RandomLoot.RandomMode); Refresh(); },
+				"Every fill rolls: each item has a chance in percent (the field after its amount), or 'Pick' takes that many different items weighted by their chances", 64, 24f, 11);
+			UIKit.SetActive(all, !random);
+			UIKit.SetActive(rnd, random);
+			if (random)
+			{
+				RectTransform pickRow = UIKit.Row(g, 24f, 4f, "Pick");
+				UIKit.Label(pickRow, "Pick", 12, UIKit.TextMuted);
+				InputField pick = UIKit.Field(pickRow, "0", RandomLoot.PickCount(target.Props).ToString(), 24f, "How many different items one fill gives (0 = each item rolls its own chance)");
+				UIKit.Size(pick.gameObject, 40, 24);
+				pick.contentType = InputField.ContentType.IntegerNumber;
+				pick.characterLimit = 2;
+				pick.onEndEdit.AddListener(v =>
+				{
+					int n;
+					if (!int.TryParse(v, out n) || n < 0) n = 0;
+					Set(target, RandomLoot.Pick, n > 0 ? n.ToString() : null);
+					Refresh();
+				});
+				chanceFields.Add(pick); amountFields.Add(pick);
+				UIKit.Label(pickRow, "(0 = each rolls its chance)", 11, UIKit.TextMuted);
+				UIKit.Label(g, "<i>" + RandomLoot.Summary(target.Props, loot) + "</i>", 11, UIKit.TextMuted);
+			}
 			RectTransform refill = UIKit.Row(g, 24f, 4f, "Refill");
 			UIKit.Label(refill, "Fills up again", 12, UIKit.TextMuted);
 			bool refills = ObjectProps.LootRefills(target.Props);
@@ -698,6 +748,9 @@ namespace DynamicIslands.Editor
 		}
 
 		static readonly List<InputField> amountFields = new List<InputField>();
+		/// <summary>A random chest's chance fields, then its Pick field (tests).</summary>
+		static readonly List<InputField> chanceFields = new List<InputField>();
+		internal static IList<InputField> ChanceFields { get { return chanceFields; } }
 
 		#region Place exactly
 

@@ -110,6 +110,7 @@ namespace DynamicIslands.Editor
 			{
 				case DialogueVerb: return "show a dialogue" + (a.Target.Length > 0 ? " said by '" + a.Target + "'" : "") + ": \"" + Short(a.Arg) + "\"";
 				case OrderPuzzle.Verb: return OrderPuzzle.Describe(a);
+				case ReceiverUnlock.Verb: return ReceiverUnlock.Describe(a);
 				case Lights.Verb: return "switch " + ((a.Arg ?? "").Trim().Length > 0 ? a.Arg.Trim() : "over") + " " + (a.Target.Trim().Length == 0 ? "this light" : a.Target.Trim().StartsWith(Lights.GroupPrefix) ? "the lights of '" + a.Target.Trim().Substring(Lights.GroupPrefix.Length) + "'" : "'" + a.Target + "'");
 			}
 			return null;
@@ -165,6 +166,7 @@ namespace DynamicIslands.Editor
 			{
 				case Lights.Verb: Lights.HostRun(e, index, a); return true;
 				case OrderPuzzle.Verb: OrderPuzzle.HostRun(e, index, a); return true;
+				case ReceiverUnlock.Verb: ReceiverUnlock.HostRun(e, a); return true;
 			}
 			return GapBehaviours.RunShared(e, a);
 		}

@@ -38,6 +38,10 @@ namespace DynamicIslands.Editor
 		{
 			/// <summary>The item index: fixed for ever (worlds save it). Below RAPI's limit of 32767, far from Raft's own.</summary>
 			public int Index;
+			/// <summary>The index in Defs (0 until made). Index moves off it only when another mod already has it (AUDIT
+			/// 11-09 #8): the upgrade then takes the next free index from ClashBase on, the same one each start with the
+			/// same mods, and the world file's learned list still names it by this one (UpgradeTable).</summary>
+			public int Declared;
 			public string Name, BaseName, Display, Description;
 			public Color Tint;
 			/// <summary>A pale metal look: the model's textures lightened (dark parts lifted) in its pale tint, not made Vivid.</summary>
@@ -51,6 +55,9 @@ namespace DynamicIslands.Editor
 			public int UsesFactor = 1;
 			/// <summary>Sets a placed block's better stats (its root object), before Raft's Start code reads them.</summary>
 			public Action<GameObject> Setup;
+			/// <summary>Sets stats on the upgrade's block prefab itself (its root object) when it is registered, or null: for
+			/// fields Raft reads before UpgradeBlock.Awake can run (AUDIT 11-09 #11, the reinforced storage's slots).</summary>
+			public Action<GameObject> PrefabSetup;
 			/// <summary>Runs every 2 s on a placed block (its root object), or null.</summary>
 			public Action<GameObject> Every;
 			/// <summary>Sets a hand-held upgrade's stats on its copy of the base item's hand model, or null.</summary>
@@ -162,7 +169,7 @@ namespace DynamicIslands.Editor
 					Setup = FastCooking,
 					Description = "A smelter that smelts twice as fast." },
 				new Upgrade { Index = 29414, Name = "DI_ReinforcedStorage", BaseName = "Placeable_Storage_Large", Display = "Reinforced storage", Tint = new Color(0.75f, 0.6f, 0.45f),
-					Setup = BigStorage,
+					Setup = BigStorage, PrefabSetup = BigStorage,
 					Description = "A large storage with half as many slots again." },
 				new Upgrade { Index = 29415, Name = "DI_WideNet", BaseName = "Placeable_CollectionNet_Advanced", Display = "Wide net", Tint = new Color(0.55f, 0.95f, 0.65f),
 					Setup = WideNet,
@@ -280,12 +287,75 @@ namespace DynamicIslands.Editor
 			Log(made + " upgrades registered");
 		}
 
-		static bool Make(Upgrade u)
+		/// <summary>The first index an upgrade moves to when another mod has its own (AUDIT 11-09 #8).</summary>
+		public const int ClashBase = 29600;
+		/// <summary>The upgrades that had to move (or were left out) because another mod has their index, this start.</summary>
+		static readonly List<string> clashed = new List<string>();
+		public static IList<string> Clashed { get { return clashed.AsReadOnly(); } }
+		static bool clashShown;
+		/// <summary>For tests: the in-game clash warning was shown this session.</summary>
+		internal static bool ClashShown { get { return clashShown; } }
+		static void Clash(string display) { if (!clashed.Contains(display)) clashed.Add(display); }
+
+		/// <summary>The next index from ClashBase on that no item has and no upgrade or cosmetic declares, or -1.</summary>
+		static int FreeIndex()
+		{
+			HashSet<int> ours = new HashSet<int>(Everything.SelectMany(x => new[] { x.Declared != 0 ? x.Declared : x.Index, x.Index }));
+			for (int i = ClashBase; i < 32767; i++)
+				if (!ours.Contains(i) && ItemManager.GetItemByIndex(i) == null) return i;
+			return -1;
+		}
+
+		/// <summary>Tests: an upgrade made by a test (not in All) is taken out of Raft's items and the clash list again.</summary>
+		internal static void ForgetForTest(Upgrade u)
+		{
+			if (u == null) return;
+			Upgrade had;
+			if (byIndex.TryGetValue(u.Index, out had) && had == u) byIndex.Remove(u.Index);
+			clashed.Remove(u.Display);
+			List<Item_Base> items = Traverse.Create(typeof(ItemManager)).Field("allAvailableItems").GetValue<List<Item_Base>>();
+			if (items != null && u.Item != null) items.Remove(u.Item);
+			u.Item = null;
+		}
+
+		/// <summary>The index the upgrade declared as <paramref name="declared"/> has now (the same unless it moved).</summary>
+		public static int LiveIndex(int declared)
+		{
+			Upgrade u = Everything.FirstOrDefault(x => x.Declared == declared && x.Item != null);
+			return u != null ? u.Index : declared;
+		}
+
+		/// <summary>The declared index of the upgrade whose index is now <paramref name="live"/> (the same unless it moved).</summary>
+		public static int DeclaredIndex(int live)
+		{
+			Upgrade u;
+			return byIndex.TryGetValue(live, out u) && u.Declared != 0 ? u.Declared : live;
+		}
+
+		/// <summary>Once a session, in a world: tells the player which upgrades had to move or are missing (AUDIT 11-09 #8).</summary>
+		static void TellClashes()
+		{
+			if (clashShown || clashed.Count == 0 || UnityEngine.Object.FindObjectOfType<HNotify>() == null) return;
+			clashShown = true;
+			DynamicIslands.Notify("Another mod uses the item numbers of " + (clashed.Count == 1 ? clashed[0] : clashed.Count + " Custom Islands upgrades") +
+				": they were moved to free numbers. Keep the same mods for this world.", true, 10);
+		}
+
+		internal static bool Make(Upgrade u)
 		{
 			Item_Base baseItem = ItemManager.GetItemByName(u.BaseName);
 			if (baseItem == null) { Warn("Raft has no item '" + u.BaseName + "': no " + u.Display); return false; }
+			if (u.Declared == 0) u.Declared = u.Index;
+			u.Index = u.Declared;
 			Item_Base existing = ItemManager.GetItemByIndex(u.Index);
-			if (existing != null) { Warn("Item index " + u.Index + " is taken by '" + existing.UniqueName + "' (another mod): no " + u.Display); return false; }
+			if (existing != null)
+			{
+				int free = FreeIndex();
+				if (free < 0) { Warn("Item index " + u.Index + " is taken by '" + existing.UniqueName + "' (another mod) and no index is free: no " + u.Display); Clash(u.Display); return false; }
+				Warn("Item index " + u.Index + " is taken by '" + existing.UniqueName + "' (another mod): " + u.Display + " uses " + free + " instead");
+				Clash(u.Display);
+				u.Index = free;
+			}
 
 			Item_Base item = ScriptableObject.Instantiate(baseItem);
 			item.name = u.Name;
@@ -335,7 +405,7 @@ namespace DynamicIslands.Editor
 			if (prefabs != null && prefabs.Length > 0 && prefabs.All(p => p != null))
 			{
 				ItemInstance_Buildable b = baseItem.settings_buildable.Clone();
-				Traverse.Create(b).Field("blockPrefabs").SetValue(prefabs.Select(p => ClonePrefab(p, baseItem, item)).ToArray());
+				Traverse.Create(b).Field("blockPrefabs").SetValue(prefabs.Select(p => ClonePrefab(p, baseItem, item, u)).ToArray());
 				Traverse.Create(b).Field("mirroredVersion").SetValue(null);
 				item.settings_buildable = b;
 			}
@@ -349,13 +419,16 @@ namespace DynamicIslands.Editor
 			return true;
 		}
 
-		static Block ClonePrefab(Block prefab, Item_Base baseItem, Item_Base item)
+		static Block ClonePrefab(Block prefab, Item_Base baseItem, Item_Base item, Upgrade u)
 		{
 			Block c = UnityEngine.Object.Instantiate(prefab, holder.transform);
 			c.name = prefab.name + "_" + item.UniqueName;
 			c.buildableItem = item;
 			if (c.itemToReturnOnDestroy == null || c.itemToReturnOnDestroy == baseItem) c.itemToReturnOnDestroy = item;
 			if (c.GetComponent<UpgradeBlock>() == null) c.gameObject.AddComponent<UpgradeBlock>();
+			if (u.PrefabSetup != null)
+				try { u.PrefabSetup(c.gameObject); }
+				catch (Exception e) { Warn(u.Display + " prefab: " + e.Message); }
 			return c;
 		}
 
@@ -404,6 +477,7 @@ namespace DynamicIslands.Editor
 			}
 			UpgradeTable.Tick();
 			TurboTopSpeed();
+			TellClashes();
 		}
 
 		#region Battery slots
@@ -416,7 +490,7 @@ namespace DynamicIslands.Editor
 			if (large == null || slot == null || slot.itemEnabler == null) return false;
 			ItemObjectEnabler en = slot.itemEnabler;
 			ItemModelConnection[] cons = en.GetObjectConnections() ?? new ItemModelConnection[0];
-			if (cons.Any(c => c != null && c.item != null && c.item.UniqueIndex == LargeBatteryIndex)) return true;
+			if (cons.Any(c => c != null && c.item != null && c.item.UniqueIndex == LiveIndex(LargeBatteryIndex))) return true;
 			ItemModelConnection basic = cons.FirstOrDefault(c => c != null && c.item != null && c.model != null && c.item.UniqueName == "Battery");
 			if (basic == null) return false;
 			GameObject model = UnityEngine.Object.Instantiate(basic.model, basic.model.transform.parent);

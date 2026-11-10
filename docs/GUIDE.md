@@ -1536,7 +1536,7 @@ moment, with other islands after it ([7.2](#72-your-first-world-plan-step-by-ste
    again with your island, where you left it.
 
 **Trying a long quest without playing it all:** press **F10** and type `QuestTest` near the island (in the test world
-or any world you host). `QuestTest` lists the island's quests and steps, the current one marked **>**.
+or any world you host). `QuestTest` lists the island's quests and steps, the current one marked **>** (for a time, weather, counter or players step also what the world says now).
 `QuestTest step 4` jumps the main quest to step 4 - back as well as forward (`QuestTest step 2 2` = quest 2's step 2,
 `QuestTest step done` finishes it, with its reward); `QuestTest signal gate-open` sends a signal on the island, as a
 lever or an action does; `QuestTest give brass_key 2` gives the crew a story item; `QuestTest skip` skips the nearest island's main quest's current step as
@@ -1639,11 +1639,15 @@ starting Raft:
 ![The note editor](images/editor-note-editor.jpg)
 *The note editor: the title, the text (Enter starts a new line), and a preview of the paper players will see.*
 
+**A note can unlock a Receiver frequency** (3.5): in the note editor, **Reading it unlocks** picks one of Raft's story islands (Radio Tower .. Utopia). The first time anyone reads the note, that island's frequency is unlocked for every player, exactly as finding Raft's own note there would (the notebook shows the note, the Receiver gets the frequency, the story order and a plan's story chain see it as usual). Any event can do it too: the action **unlock frequency** (`frequency|Vasagatan|`).
+
 ### 5.3 Chests and loot
 
 "Loot & chests" has chests, a crate, a wooden box, barrels and a wild beehive (honeycomb), and **any object can hold loot** (**A chest...**).
 **Fills up again** sets whether a looted chest is full again after the island's regrow days or never. A chest holds up to 12 kinds of items, up to 999 of each. **Empty** takes everything out; **Not a chest** makes the object plain again. A chest that
 holds a **story item** never fills up again, whatever is chosen (the story's key or log comes once - the panel says so).
+
+**Random chests** (3.5): **Gives: Random** makes the chest give a random part of its list. Each item gets a **%** (its chance; 100 = always). With **Pick** at 0 every item rolls its own chance, so a fill can now and then be empty (the panel says how often); with **Pick** 2 the chest gives exactly 2 different items, the higher chances picked more often. Hover a % to see each item's real odds. The roll is new for every fill (again after a refill) and the same for every player in multiplayer. Older versions of the mod give the whole list. In a recipe: `loot chest Plank*4@25;Nail*2;Rope@50 pick=1`.
 
 ![The loot inspector](images/editor-loot.jpg)
 *A chest's loot: planks, plastic, palm leaves, rope and nails. The Basics, Metal, Food and Treasure sets fill it
@@ -1828,7 +1832,7 @@ Steps: **go to** a trigger zone, **read** a note, **open** a chest (one of the m
 **collect** a number of a story item, **find** journal pages, find a **Blueprint** of Raft's, **talk to** an islander
 (6.3; by its name, the **▾** lists the island's islanders), **find** a number of a collectible **set** (6.3), **light up** a number of a light group's puzzle lights (6.3),
 **escort** an islander to a zone (3.5), **tame** animals and lead them to a pen (3.5),
-**Signal / object is**, **Bring items**, **Craft or cook**, **Catch fish** and **Gather / harvest** (below). Each step's kind is a **▼ list** (each kind says what it
+**Signal / object is**, **Bring items**, **Craft or cook**, **Catch fish**, **Gather / harvest**, **Be there at a time**, **Weather is**, **Counter reaches** and **Players in a zone** (below). Each step's kind is a **▼ list** (each kind says what it
 asks). Steps point at things on the island by name: the small **▾** beside the name lists the names this island has
 for that kind - its trigger zones, note titles, chest titles or creatures - so you can pick one instead of typing it
 (place the zones, notes, chests and creatures first). A **collect** step picks its story item with **…**. **When the quest is done, bring a new island** (main quest only) chooses from a
@@ -1866,6 +1870,24 @@ up, or harvested from a tree or bush with the axe - within 40 m of the island's 
 `Plank`); empty = anything. Hooked from the sea, crafted or given as a reward doesn't count, nor what was gathered
 before the step came. Place what players gather on the island (the generator's **Gather** and **Shallows**, or loose
 items and plants) and say where in the step's text.
+**Timed steps** (3.5): the **time** box at the end of a step's row is a time limit in seconds (empty = none, up to 3600). While the step is active and a player is at the island, everyone near it sees a countdown at the top of the screen; when nobody is there the clock waits. If it runs out, the step starts again (its progress is set back) with a fresh clock, and players are told "Time's up". The clock is kept with the world. Best for reach, zone, talk and puzzle steps: what was killed, handed over or read stays done, so the editor warns on those kinds.
+
+
+**Be there at a time** waits until a player is at the island at that time of day: `night`, `day`, `dawn` (5:00-8:00),
+`dusk` (18:00-21:00), an hour range such as `20-6` (past midnight) or `12-14`, or one hour (`12`); commas mean any of them
+(`dawn,dusk`). **Weather is** waits for Raft's weather while a player is there: `clear`, `calm`, `fog`, `waves`,
+`rain`, `storm` or `snow` (commas = any; a storm counts as rain too). Both have no number; the **▾** lists the choices.
+
+**Counter reaches** waits until one of the island's counters (a **count** action of **Behaviour & events...**, such as
+`count|bells|+1` on a bell) reaches the number: `bells` 3 is done at the third ring. The **▾** lists the counters the
+island's count actions change; what was counted before the step came counts too.
+
+**Players in a zone** waits until that many players stand in a trigger zone at once (the **▾** lists the island's zones).
+Never more than are online: alone, one player is enough, as for a co-op zone. Raft has at most 8 players.
+
+The host decides all four (while a player is near the island) and every player sees the step move on. Check and the plan
+checker say when a time or weather is not one they know, when no count action changes the counter, and when the zone
+is missing. **QuestTest show** adds a line with the time, the weather, the counter's value or the players in the zone.
 **Steps done in another order count too:** a chest opened or animals defeated before their step has come are
 remembered, and count the moment their step comes - the guide's camp quest done backwards (warthogs, supplies, then
 the diary) finishes when the diary is read. If more than one later step could take the same work, the step that names
@@ -2040,7 +2062,9 @@ Select any object → **Behaviour & events...**. No code needed:
   food and drink; `heal||drink`, `heal||food`, `heal||health 20`, several with commas) is for the player who set it
   off: a well, a cook's meal, a healer. The ready piece **Drinking spring** (the object list, **Zones & triggers**) is a ring of stones round
   a pool that fills the thirst of whoever drinks from it, as often as they like; its own use actions run after the
-  drink (give it `heal||` instead to fill everything).
+  drink (give it `heal||` instead to fill everything). **unlock frequency** (shared, `frequency|Balboa|`) unlocks the
+  Receiver frequency of one of Raft's story islands for every player, through Raft's own note for it (nothing when
+  it is unlocked already).
 - **Trade stands** (2026-11-04): select any object → **Trade stand...** in the object panel (beside **Readable...**
   and **A chest...**). Players look at it and press E to trade: they pay what you set in **Players pay**
   (`Plank*12;Rope*2`; a story item, `story:old-coin*1`, is taken from the crew's) and get **They get** (Raft items or
@@ -3660,7 +3684,7 @@ hammer or the axe works exactly as before, and shark bait is eaten as fast as ev
 
 #### Shared EXP
 
-When a player defeats a monster, **every other player within 50 m** of it gets **60 %** of its EXP too (less what
+With the [level up system](#96-the-level-up-system) on, when a player defeats a monster, **every other player within 50 m** of it gets **60 %** of its EXP too (less what
 their own hits on it already earned, so a helper ends up with at least 60 %). It doesn't count as a defeated monster
 for them. Only defeated monsters are shared; playing alone nothing changes. See [Earning EXP](#earning-exp) for what each
 monster is worth.
@@ -3806,6 +3830,10 @@ juicer, recycler, sprinkler, the Receiver) and charges in the **battery charger*
 twice the fuel. In a machine it shows as a blue battery. Switch the option off and the upgrades are gone from the
 crafting menu again (large batteries already made keep working, what is built stays); switch it back on and the ones
 learned are back.
+
+Each upgrade has an item number of its own (29400 and up). If another mod already uses one of them, that upgrade
+moves to a free number (29600 and up) and the game tells you once; keep the same mods for that world, so its saved
+upgrades stay what they were.
 
 ##### The upgrade research table
 

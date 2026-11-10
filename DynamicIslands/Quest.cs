@@ -21,16 +21,20 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public class IslandQuest
 	{
+		/// <summary>Timed steps: "step=seconds;..." (1-based steps; QE9). Its own key, so older versions just ignore it.</summary>
+		public const string KeyTimers = "quest.timers";
 		public const string KeyTitle = "quest.title", KeyIntro = "quest.intro", KeySteps = "quest.steps", KeyReward = "quest.reward", KeyDone = "quest.done";
-		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch", "collect", "pages", "blueprint", Islanders.QuestType, Collectibles.QuestType, Lights.QuestType, IslanderWalks.QuestType, Taming.QuestType, QuestSteps.Signal, QuestSteps.Bring, QuestSteps.Craft, QuestSteps.Fish, QuestSteps.Gather };
+		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch", "collect", "pages", "blueprint", Islanders.QuestType, Collectibles.QuestType, Lights.QuestType, IslanderWalks.QuestType, Taming.QuestType, QuestSteps.Signal, QuestSteps.Bring, QuestSteps.Craft, QuestSteps.Fish, QuestSteps.Gather, QuestWaitSteps.Time, QuestWaitSteps.Weather, QuestWaitSteps.Counter, QuestWaitSteps.Players };
 
 		/// <summary>Steps the crew's story book counts (the host checks them), not events.</summary>
-		public static bool Counted(string type) { return type == "collect" || type == "pages" || PlayerFeatures.Counted(type) || QuestSteps.Counted(type); }
+		public static bool Counted(string type) { return type == "collect" || type == "pages" || PlayerFeatures.Counted(type) || QuestSteps.Counted(type) || QuestWaitSteps.Counted(type); }
 
 		public class Step
 		{
 			public string Type = "reach", Target = "", Text = "";
 			public int Count = 1;
+			/// <summary>A time limit in seconds (0 = none): run out, the step starts again (QuestTimers, QE9).</summary>
+			public int Seconds;
 
 			/// <summary>What the player is told to do: the builder's text, or one made from the step.</summary>
 			public string Describe()
@@ -47,7 +51,7 @@ namespace DynamicIslands.Editor
 					case "pages": return "Find " + (Count > 1 ? Count + " pages" : "a page") + (Target == "all" ? " (on any island)" : " on this island");
 					case "blueprint": return Target.Length > 0 ? "Find the " + PlanChecker.Pretty(Target.Trim()) + " blueprint" : "Find one of Raft's blueprints";
 				}
-				return PlayerFeatures.DescribeStep(Type, Target, Count) ?? QuestSteps.Describe(Type, Target, Count) ?? Type;
+				return PlayerFeatures.DescribeStep(Type, Target, Count) ?? QuestSteps.Describe(Type, Target, Count) ?? QuestWaitSteps.Describe(Type, Target, Count) ?? Type;
 			}
 		}
 
@@ -115,6 +119,7 @@ namespace DynamicIslands.Editor
 				int count;
 				q.Steps.Add(new Step { Type = p[0], Target = p.Length > 1 ? p[1] : "", Count = p.Length > 2 && int.TryParse(p[2], out count) ? Mathf.Clamp(count, 1, 99) : 1, Text = p.Length > 3 ? text(p[3], 400) : "" });
 			}
+			QuestTimers.Read(ObjectProps.Get(props, Key(KeyTimers, n)), q.Steps);
 			return q;
 		}
 
@@ -124,12 +129,16 @@ namespace DynamicIslands.Editor
 		public void To(IDictionary<string, string> props, int n)
 		{
 			foreach (string k in new[] { KeyTitle, KeyIntro, KeySteps, KeyReward, KeyDone }) props.Remove(Key(k, n));
+			props.Remove(Key(KeyTimers, n));
 			if (!Exists) return;
 			if (Title.Trim().Length > 0) props[Key(KeyTitle, n)] = Title.Trim();
 			if (Intro.Trim().Length > 0) props[Key(KeyIntro, n)] = Intro.Trim();
 			if (Reward.Length > 0) props[Key(KeyReward, n)] = Reward;
 			if (Done.Trim().Length > 0) props[Key(KeyDone, n)] = Done.Trim();
 			props[Key(KeySteps, n)] = string.Join("\n", Steps.Select(s => s.Type + "|" + Clean(s.Target) + "|" + s.Count + "|" + Clean(s.Text)).ToArray());
+			props.Remove(Key(KeyTimers, n));
+			string timers = QuestTimers.Write(Steps);
+			if (timers.Length > 0) props[Key(KeyTimers, n)] = timers;
 		}
 
 		public string ShownTitle { get { return Title.Trim().Length > 0 ? Title.Trim() : "Quest"; } }
@@ -771,6 +780,7 @@ namespace DynamicIslands.Editor
 			nextHud = Time.unscaledTime + 0.5f;
 			tickQuests.Clear();
 			QuestSkip.Tick();
+			QuestTimers.Tick();
 			if (!LoadSceneManager.IsGameSceneLoaded) { introduced.Clear(); panelIsland = -1; doneSince.Clear(); closedKey = -1; DoneHideSeconds = 30f; if (panel != null) panel.gameObject.SetActive(false); return; }
 			TickCount++;
 			if (Raft_Network.IsHost) CheckCounted();
@@ -900,6 +910,7 @@ namespace DynamicIslands.Editor
 				return StoryBook.Pages.Count(p => p.Key.StartsWith("note:" + island + ":") || p.Key.StartsWith("act:" + island + ":"));
 			}
 			if (QuestSteps.Counted(s.Type)) return QuestSteps.Found(e, s);
+			if (QuestWaitSteps.Counted(s.Type)) return QuestWaitSteps.Found(e, s);
 			return PlayerFeatures.Found(e, s);
 		}
 
@@ -949,7 +960,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Host: whether any player is at the island (its land and the same reach as the rewards).</summary>
-		static bool AnyPlayerNear(IslandWorldState.Entry e) { return AnyPlayerNear(e, UnityEngine.Object.FindObjectsOfType<Network_Player>()); }
+		internal static bool AnyPlayerNear(IslandWorldState.Entry e) { return AnyPlayerNear(e, UnityEngine.Object.FindObjectsOfType<Network_Player>()); }
 
 		static bool AnyPlayerNear(IslandWorldState.Entry e, Network_Player[] players)
 		{

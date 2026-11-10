@@ -364,6 +364,7 @@ namespace DynamicIslands.Editor
 		{
 			{ "reach", "Go to" }, { "read", "Read" }, { "open", "Open" }, { "kill", "Defeat" }, { "catch", "Catch" }, { "collect", "Collect" }, { "pages", "Find pages" }, { "blueprint", "Blueprint" }, { Islanders.QuestType, "Talk to" }, { Collectibles.QuestType, "Find set" }, { Lights.QuestType, "Light up" }, { IslanderWalks.QuestType, "Escort" }, { Taming.QuestType, "Tame" },
 			{ QuestSteps.Signal, "Signal / object is" }, { QuestSteps.Bring, "Bring items" }, { QuestSteps.Craft, "Craft or cook" }, { QuestSteps.Fish, "Catch fish" }, { QuestSteps.Gather, "Gather / harvest" },
+			{ QuestWaitSteps.Time, "Be there at a time" }, { QuestWaitSteps.Weather, "Weather is" }, { QuestWaitSteps.Counter, "Counter reaches" }, { QuestWaitSteps.Players, "Players in a zone" },
 		};
 
 		/// <summary>What each kind of step asks (the step list's lines).</summary>
@@ -384,6 +385,10 @@ namespace DynamicIslands.Editor
 			{ QuestSteps.Craft, "Craft or cook a number of a Raft item at the island while this step is the current one (empty = anything)" },
 			{ QuestSteps.Fish, "Catch a number of fish with Raft's fishing rod at the island (its shore or a raft moored off it) while this step is the current one (empty = any fish)" },
 			{ QuestSteps.Gather, "Pick up, dig or harvest a number of a Raft item on the island (by hand, shovel or axe) while this step is the current one (empty = anything)" },
+			{ QuestWaitSteps.Time, "Be at the island at a time of day: day, night, dawn, dusk or hours (20-6); done the moment a player is there then" },
+			{ QuestWaitSteps.Weather, "Be at the island in a weather: clear, calm, fog, waves, rain, storm or snow (commas = any); a weather action can bring it" },
+			{ QuestWaitSteps.Counter, "Wait until a counter (changed by count actions) reaches a number; a value reached before counts" },
+			{ QuestWaitSteps.Players, "A number of players stand in a trigger zone at once (never more than are online: one player alone is enough)" },
 		};
 
 		static readonly Dictionary<string, string> TargetHints = new Dictionary<string, string>
@@ -402,6 +407,10 @@ namespace DynamicIslands.Editor
 			{ QuestSteps.Craft, "Raft item (\u2026 to choose; empty = any)" },
 			{ QuestSteps.Fish, "fish (\u25be lists Raft's; empty = any)" },
 			{ QuestSteps.Gather, "Raft item (\u2026 to choose; e.g. Clay; empty = any)" },
+			{ QuestWaitSteps.Time, "night, day, dawn, dusk or 20-6 (\u25be)" },
+			{ QuestWaitSteps.Weather, "rain, storm, fog... (\u25be; commas = any)" },
+			{ QuestWaitSteps.Counter, "counter name (\u25be lists this island's)" },
+			{ QuestWaitSteps.Players, "trigger zone name (\u25be)" },
 		};
 
 		/// <summary>Takes what was typed into the step rows before they are rebuilt.</summary>
@@ -434,7 +443,7 @@ namespace DynamicIslands.Editor
 			UIKit.Size(target.gameObject, 196, 28);
 			target.onEndEdit.AddListener(v => s.Target = v.Trim());
 			fields.Add(target);
-			List<DropList.Option> names = QuestSteps.NamesFor(s.Type, s.Target, placedNow) ?? NamesFor(s.Type, placedNow);
+			List<DropList.Option> names = QuestSteps.NamesFor(s.Type, s.Target, placedNow) ?? QuestWaitSteps.NamesFor(s.Type, placedNow) ?? NamesFor(s.Type, placedNow);
 			if (names.Count > 0)
 			{
 				// (a small \u25BE: the island's zones, notes, chests or creatures that this kind of step can point at)
@@ -454,7 +463,7 @@ namespace DynamicIslands.Editor
 						RedoRow(s);
 					});
 				}, "Choose one of Raft's items", 28, 28f, 12);
-			if ((s.Type == "kill" || s.Type == "catch" || IslandQuest.Counted(s.Type) || QuestSteps.HasCount(s.Type)) && s.Type != QuestSteps.Signal && s.Type != IslanderWalks.QuestType)
+			if ((s.Type == "kill" || s.Type == "catch" || IslandQuest.Counted(s.Type) || QuestSteps.HasCount(s.Type)) && s.Type != QuestSteps.Signal && !QuestWaitSteps.NoCount(s.Type) && s.Type != IslanderWalks.QuestType)
 			{
 				InputField count = UIKit.Field(row, "1", s.Count.ToString(), 28f, "How many");
 				UIKit.Size(count.gameObject, 44, 28);
@@ -467,6 +476,15 @@ namespace DynamicIslands.Editor
 			text.characterLimit = 80;
 			text.onEndEdit.AddListener(v => s.Text = v.Trim());
 			fields.Add(text);
+			// A time limit (QE9): run out and the step starts again; empty or 0 = none
+			InputField secs = UIKit.Field(row, "time", s.Seconds > 0 ? s.Seconds.ToString() : "", 28f,
+				"Time limit in seconds (empty = none): players near the island see a countdown; run out and this step starts again" +
+				(QuestTimers.Unsafe(s.Type) ? ". Careful: this kind of step can't be undone (what was killed, handed over or read stays so) - best for reach, zone, talk or puzzle steps" : ""));
+			UIKit.Size(secs.gameObject, 52, 28);
+			secs.contentType = InputField.ContentType.IntegerNumber;
+			secs.characterLimit = 4;
+			secs.onEndEdit.AddListener(v => { int n; s.Seconds = int.TryParse(v, out n) ? Mathf.Clamp(n, 0, QuestTimers.MaxSeconds) : 0; });
+			fields.Add(secs);
 			UIKit.Button(row, "\u25B2", () => { int index = quest.Steps.IndexOf(s); if (index > 0) { Keep(); quest.Steps.Reverse(index - 1, 2); Renumber(); } }, "Earlier", 26, 28f, 11);
 			UIKit.Button(row, "\u25BC", () => { int index = quest.Steps.IndexOf(s); if (index >= 0 && index < quest.Steps.Count - 1) { Keep(); quest.Steps.Reverse(index, 2); Renumber(); } }, "Later", 26, 28f, 11);
 			Button del = UIKit.Button(row, "\u00D7", () => { Keep(); RemoveStep(s); }, "Remove this step", 26, 28f, 12);

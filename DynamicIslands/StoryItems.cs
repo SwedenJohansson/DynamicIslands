@@ -1053,7 +1053,7 @@ namespace DynamicIslands.Editor
 				foreach (int n in IslandCache.NotesOf(file)) { pt++; if (pages.Contains("note:" + island.Key + ":" + n)) pf++; }
 				foreach (string ev in IslandCache.EventPagesOf(file)) { pt++; if (pages.Contains("act:" + island.Key + ":" + ev)) pf++; }
 			}
-			rows.Add(new Row { Name = "Journal pages", Done = pf, Total = pt, Help = "The pages all the islands can give: their notes, and the pages their events write when something happens - a side quest's in this journal, a main story island's in Raft's notebook (T). (The frequencies a plan gives out aren't counted here.)" });
+			rows.Add(new Row { Name = "Journal pages", Done = pf, Total = pt, Help = "The pages all the islands can give: their notes, and the pages their events write when something happens - a side quest's in this journal, a main story island's in Raft's notebook (" + ModKeys.RaftNotebookName + "). (The frequencies a plan gives out aren't counted here.)" });
 			int sd = rows.Sum(r => r.Done), st = rows.Sum(r => r.Total);
 			rows.Add(new Row { Name = "Overall", Done = sd, Total = st, Help = "All of it together: quests, islands, notes, story items and pages done of all there is." });
 			return rows;
@@ -1100,7 +1100,7 @@ namespace DynamicIslands.Editor
 			}
 			if (done * 100 < NearPercent * total || marks.Contains(NearMark)) return null;
 			marks.Add(NearMark);
-			StoryChain.Announce(NearTitle, "You are nearing the end: " + done + " of " + total + " quests done (" + QuestCount.Percent(done, total) + "%). The journal (J) lists what is left.");
+			StoryChain.Announce(NearTitle, "You are nearing the end: " + done + " of " + total + " quests done (" + QuestCount.Percent(done, total) + "%). The journal (" + ModKeys.JournalName + ") lists what is left.");
 			return NearTitle;
 		}
 	}
