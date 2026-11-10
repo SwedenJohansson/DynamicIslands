@@ -133,8 +133,12 @@ namespace DynamicIslands.Editor
 		static AI_NetworkBehaviour[] nearby = new AI_NetworkBehaviour[0];
 		static float nearbyAt = -9f;
 
+		/// <summary>Tests: why the last local tick did not feed.</summary>
+		internal static string Why = "";
+
 		static void LocalTick()
 		{
+			Why = "no island";
 			Network_Player p = RAPI.GetLocalPlayer();
 			if (p == null || p.Inventory == null) { held = 0f; return; }
 			Vector3 me = p.transform.position;
@@ -148,18 +152,20 @@ namespace DynamicIslands.Editor
 					foreach (var s in Spots(e, who))
 					{
 						AI_NetworkBehaviour ai = NearestAnimal(s.Value, me);
-						if (ai == null) continue;
+						if (ai == null) { Why = "no " + who + " within " + FeedDistance + " m (" + s.Value.Spawned.Count + " spawned)"; continue; }
 						string food = FoodOf(s.Key.Props, s.Value.Kind.Type);
 						ItemInstance inHand = p.Inventory.GetSelectedHotbarItem();
 						if (inHand == null || inHand.UniqueName != food)
 						{
 							held = 0f;
+							Why = "in hand: " + (inHand == null ? "nothing" : inHand.UniqueName) + ", wants " + food;
 							if (Time.time - hintAt > 20f) { hintAt = Time.time; MechFeatures.Tell("Hold " + ContentCatalog.ItemLabel(food) + " close to the " + s.Value.Kind.Label.ToLowerInvariant() + " to feed it"); }
 							return;
 						}
-						if (Time.time < feedPause) return;
+						if (Time.time < feedPause) { Why = "pause"; return; }
 						held += 0.25f;
-						if (held < FeedSeconds) return;
+						if (held < FeedSeconds) { Why = "holding " + held; return; }
+						Why = "fed";
 						held = 0f;
 						feedPause = Time.time + 2f;
 						p.Inventory.RemoveItem(food, 1);
@@ -322,7 +328,10 @@ namespace DynamicIslands.Editor
 					Steer(t, a, 1f); // (its player left: it stays where it is, still tame)
 					continue;
 				}
-				Vector3 to = pl.transform.position - Flat(pl.transform.forward).normalized * FollowGap;
+				// (on its own side of the player, a gap away: it trails them whichever way they look)
+				Vector3 side = Flat(a - pl.transform.position);
+				if (side.sqrMagnitude < 0.01f) side = -Flat(pl.transform.forward);
+				Vector3 to = pl.transform.position + side.normalized * FollowGap;
 				float gy;
 				if (IslanderWalks.Ground(ai.transform, to, pl.transform.position.y, out gy)) to.y = gy; else to = pl.transform.position;
 				Steer(t, to, 0.8f);

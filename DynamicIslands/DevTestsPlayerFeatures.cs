@@ -237,7 +237,7 @@ namespace DynamicIslands
 					yield return new WaitForSeconds(0.3f);
 					Check(ref ok, DialoguePanel.IsOpen && DialoguePanel.ShownText == "What now?" && DialoguePanel.ShownAnswers.SequenceEqual(new[] { "Who are you?", "Bye", "Help" }),
 						"page 2: three answers, ?asked hidden (" + string.Join(", ", DialoguePanel.ShownAnswers.ToArray()) + ")");
-					Screenshot(new[] { "dialogue", "branch1" });
+					Screenshot(new[] { "dialogue_branch1" });
 					DialoguePanel.Pick(1);
 					yield return new WaitForSeconds(0.5f);
 					Check(ref ok, DialoguePanel.IsOpen && DialoguePanel.ShownSection == "who" && DialoguePanel.ShownText == "I'm Finn.", "answer 1 goes to #who (" + DialoguePanel.ShownSection + ": " + DialoguePanel.ShownText + ")");
@@ -251,7 +251,7 @@ namespace DynamicIslands
 					DialoguePanel.Next();
 					yield return new WaitForSeconds(0.3f);
 					Check(ref ok, DialoguePanel.ShownAnswers.Contains("You said a light?"), "with asked set, ?asked shows (" + string.Join(", ", DialoguePanel.ShownAnswers.ToArray()) + ")");
-					Screenshot(new[] { "dialogue", "branch2" });
+					Screenshot(new[] { "dialogue_branch2" });
 					DialoguePanel.Pick(3);
 					yield return new WaitForSeconds(0.3f);
 					Check(ref ok, DialoguePanel.ShownSection == "light" && DialoguePanel.ShownText.StartsWith("The old beacon"), "answer 3 goes to #light");
@@ -373,7 +373,7 @@ namespace DynamicIslands
 				}
 				Check(ref ok, moved > 1f, "it walks its path (" + moved.ToString("F1") + " m in 4 s, speed up to " + fastest.ToString("F1") + ")");
 				Check(ref ok, worst < 0.2f, "on the ground all the way (worst " + worst.ToString("F2") + " m off)");
-				Screenshot(new[] { "walk", "path" });
+				yield return ShotAt("walk_path", wr.transform.position);
 				// The escort: follows, waits, reaches the zone
 				TriggerZone camp = IslanderWalks.ZoneOf(e, "camp");
 				Check(ref ok, camp != null, "the zone camp is there");
@@ -385,7 +385,7 @@ namespace DynamicIslands
 				float gap = Vector3.Distance(Flat(RAPI.GetLocalPlayer().transform.position), Flat(mr.transform.position));
 				Check(ref ok, Vector3.Distance(home, mr.transform.position) > 2.5f && gap < 4f, "Mia follows the player (" + Vector3.Distance(home, mr.transform.position).ToString("F1") + " m walked, " + gap.ToString("F1") + " m behind; " + mw.State + ")");
 				Check(ref ok, OffGround(mr.transform) < 0.2f, "Mia stands on the ground (" + OffGround(mr.transform).ToString("F2") + ")");
-				Screenshot(new[] { "escort", "follow" });
+				yield return ShotAt("escort_follow", mr.transform.position);
 				Vector3 before = mr.transform.position;
 				MovePlayerTo(before - toCamp * 25f);
 				yield return new WaitForSeconds(2f);
@@ -409,7 +409,7 @@ namespace DynamicIslands
 				MovePlayerTo(stay + toCamp * 6f);
 				yield return new WaitForSeconds(2f);
 				Check(ref ok, Vector3.Distance(stay, mr.transform.position) < 0.3f, "after the step she stays in camp");
-				Screenshot(new[] { "escort", "arrived" });
+				yield return ShotAt("escort_arrived", mr.transform.position);
 			}
 			finally
 			{
@@ -435,6 +435,21 @@ namespace DynamicIslands
 			if (args.Length > 2 && !IslanderWalks.Inside(IslanderWalks.ZoneOf(e, args[2]), r.transform.position)) Fail(where + ": not in " + args[2]);
 			else if (OffGround(r.transform) > 0.2f) Fail(where + ": off the ground");
 			else Log("PASS: " + where);
+		}
+
+		/// <summary>Turns the local player's view to a point (a person's height above it) and takes a screenshot shot_name.png.</summary>
+		static IEnumerator ShotAt(string name, Vector3 at)
+		{
+			Network_Player p = RAPI.GetLocalPlayer();
+			if (p != null)
+			{
+				Vector3 eye = p.transform.position + Vector3.up * 1.6f, d = at + Vector3.up * 0.8f - eye;
+				float flat = new Vector2(d.x, d.z).magnitude;
+				Look(p, Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg, -Mathf.Atan2(d.y, Mathf.Max(0.01f, flat)) * Mathf.Rad2Deg); // (positive pitch looks down)
+			}
+			yield return new WaitForSeconds(0.5f); // (the view turns in the next frames)
+			Screenshot(new[] { name });
+			yield return null;
 		}
 
 		[ConsoleCommand(name: "CITameParse", docs: "Dev, anywhere: QE11 tame step's settings - Animal@zone, the food (default per kind, items exist), the plan check, the editors' lists, the pen keys")]
@@ -513,7 +528,7 @@ namespace DynamicIslands
 					if (Vector3.Distance(near.transform.position, me.transform.position) > 2f) PlayerMove.To(me, near.transform.position + Vector3.up * 1.2f + Vector3.right * 1.2f);
 					yield return new WaitForSeconds(0.25f);
 				}
-				Check(ref ok, Taming.Following == 1 && Taming.Fed == fed + 1 && me.Inventory.GetItemCount(food) == had - 1, "held next to a goat: it eats one " + food + " and follows (following " + Taming.Following + ", food " + had + " -> " + me.Inventory.GetItemCount(food) + ")");
+				Check(ref ok, Taming.Following == 1 && Taming.Fed == fed + 1 && me.Inventory.GetItemCount(food) == had - 1, "held next to a goat: it eats one " + food + " and follows (following " + Taming.Following + ", food " + had + " -> " + me.Inventory.GetItemCount(food) + "; fed " + (Taming.Fed - fed) + ", last: " + Taming.Why + ", goat " + Vector3.Distance(sp.Spawned.Where(x => x != null).OrderBy(x => Vector3.Distance(x.transform.position, me.transform.position)).First().transform.position, me.transform.position).ToString("F1") + " m)");
 				goat = sp.Spawned.FirstOrDefault(Taming.IsTamed);
 				if (goat == null) yield break;
 				yield return new WaitForSeconds(2.5f);
@@ -528,7 +543,7 @@ namespace DynamicIslands
 					MovePlayerTo(next);
 					yield return new WaitForSeconds(2.5f);
 					worstGap = Mathf.Max(worstGap, Vector3.Distance(Flat(goat.transform.position), Flat(me.transform.position)));
-					if (i == 2) Screenshot(new[] { "tame", "follow" });
+					if (i == 2) yield return ShotAt("tame_follow", goat.transform.position);
 				}
 				t0 = Time.realtimeSinceStartup;
 				while (QuestTracker.StepOf(e) == 0 && Time.realtimeSinceStartup - t0 < 8f) yield return new WaitForSeconds(0.5f);
@@ -538,7 +553,7 @@ namespace DynamicIslands
 				MovePlayerTo(pen.transform.position - dir * 14f);
 				yield return new WaitForSeconds(4f);
 				Check(ref ok, IslanderWalks.Inside(pen, goat.transform.position), "the player walks off: the goat stays in its pen");
-				Screenshot(new[] { "tame", "penned" });
+				yield return ShotAt("tame_penned", goat.transform.position);
 				// After a reload (taming forgotten): the saved pen slot puts a goat back in the pen
 				Taming.Reset();
 				goat.transform.position = gr.transform.position + Vector3.up * 0.3f;
