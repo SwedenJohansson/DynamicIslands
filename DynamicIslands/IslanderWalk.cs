@@ -264,7 +264,12 @@ namespace DynamicIslands.Editor
 				Vector3 l; float yaw;
 				bool was = saved;
 				saved = MechFeatures.Saved(entry, Ref.Index, out l, out yaw);
-				if (saved && !was) home = l;
+				if (saved && (!was || Flat(l - home).sqrMagnitude > 0.0025f))
+				{
+					home = l;
+					// client: the host's saved place wins over the last escort place still being eased to (it was sent a moment before she stepped in)
+					if (!Raft_Network.IsHost) { remoteUntil = 0f; transform.localPosition = l; }
+				}
 				string was0 = zone;
 				zone = Raft_Network.IsHost ? IslanderWalks.EscortZone(entry, Ref.Name) : null;
 				// (the step can end in the same moment she steps in, before Escort saw it: keep that place)
