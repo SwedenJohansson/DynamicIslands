@@ -257,7 +257,10 @@ namespace DynamicIslands.Editor
 				bool was = saved;
 				saved = MechFeatures.Saved(entry, Ref.Index, out l, out yaw);
 				if (saved && !was) home = l;
+				string was0 = zone;
 				zone = Raft_Network.IsHost ? IslanderWalks.EscortZone(entry, Ref.Name) : null;
+				// (the step can end in the same moment she steps in, before Escort saw it: keep that place)
+				if (zone == null && was0 != null && !arrived && IslanderWalks.Inside(IslanderWalks.ZoneOf(entry, was0), transform.position)) Arrive(was0);
 				if (zone == null) arrived = false;
 				if (anim == null) anim = GetComponentInChildren<Animator>();
 			}
@@ -285,20 +288,23 @@ namespace DynamicIslands.Editor
 			if (far < 0.05f && dir.sqrMagnitude > 1e-4f) Face(dir);
 		}
 
+		/// <summary>Host: she is in the zone - save her place there for joiners and the next load.</summary>
+		void Arrive(string zoneId)
+		{
+			arrived = true;
+			Vector3 l = transform.localPosition;
+			MechFeatures.HostPlace(entry, Ref.Index, l, transform.localEulerAngles.y);
+			home = l; saved = true;
+			Debug.Log("[CUSTOM ISLANDS] Islander '" + Ref.Name + "' reached zone '" + zoneId + "' on '" + entry.HostName + "'");
+		}
+
 		/// <summary>Host: the escort step - follow the nearest player, wait, get unstuck, stay in the zone.</summary>
 		void Escort()
 		{
 			TriggerZone z = IslanderWalks.ZoneOf(entry, zone);
 			if (arrived || IslanderWalks.Inside(z, transform.position))
 			{
-				if (!arrived)
-				{
-					arrived = true;
-					Vector3 l = transform.localPosition;
-					MechFeatures.HostPlace(entry, Ref.Index, l, transform.localEulerAngles.y);
-					home = l; saved = true;
-					Debug.Log("[CUSTOM ISLANDS] Islander '" + Ref.Name + "' reached zone '" + zone + "' on '" + entry.HostName + "'");
-				}
+				if (!arrived) Arrive(zone);
 				State = "arrived";
 				return;
 			}
