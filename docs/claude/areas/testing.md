@@ -5,7 +5,7 @@ Automated tests and content tools, run as `CI*` console commands. Players never 
 ## Files
 
 - `DevTests.cs` -> `Log`, `Fail`, `Check`, `Init`, the command file (`PollCommandFile`, `RunCommand`), editor and world drivers.
-- `DevTests*.cs` (114 files) -> one `public static partial class DevTests`; each file adds one area's commands.
+- `DevTests*.cs` (174 files) -> one `public static partial class DevTests`; each file adds one area's commands.
 - `DevTestsRecipe.cs` -> `CIRecipe` and recipe-writing helpers (see `RECIPE_FORMAT.md`).
 - `DevTestsT8cb.cs` -> `CIT8Items` (story take-out), `CICB1Recipe` (decorative ready pieces), `CITrust` (two players: host trust, a player's take-out). CI world commands set `PlayerTrust.ForTests`; `CITrust setup` clears it, `CITrust on` sets it again.
 - `DevTestsBringBack.cs` -> `CIBringBack` (one machine, host, Loopback: multiplayer "Bring items" hand-overs the host did not count - two senders over the count, a late one, a refused one - go back to their sender via `QuestItemsBack`; a player's bag gets them).
@@ -30,6 +30,8 @@ Automated tests and content tools, run as `CI*` console commands. Players never 
 - `DevTestsScenarios.cs` -> `Sc*` helpers to bring, use and remove islands in a world; many `CISc*` scenario tests.
 - `DevTestsEditorStart.cs` -> the start window, plan on the main menu, Use in a plan..., Edit island, plan tabs (`CICreateWindow`, `CIPlanFromMenu`, `CIUseInPlan`, `CIEditIslandFromMenu`, `CIPlanTabs`, `CIStoryNewIsland`).
 - `DevTestsMultiplayer.cs`, `DevTestsMultiplayerFull.cs` -> two-player helpers (`PutPlayerNear`, `OnRaftCommand`, `AnimalsOf`).
+- `DevTestsMp34.cs` -> `CIMp34` (two players, release 3.4 rows).
+- `DevTestsMp34b.cs` -> `CIMp34b <part>` (two players, release 3.4: QW3 wait steps - night, rain, counter, both in a zone, the client's panel; FB4 random chest fill, frequency note, timed step countdown and time-out on the client; FC6 walking islander place, dialogue flag, taming with the client's food, escort by the client). Host and player-2 parts alternate; driver `mp34b.ps1` (scratch, final34).
 - `DynamicIslands.cs` -> calls `DevTests.Init` through reflection at start-up, if the type exists.
 - `compile.ps1`, `pack.ps1` -> `-Release` leaves `DevTests*.cs` out.
 

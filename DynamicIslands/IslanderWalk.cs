@@ -228,6 +228,14 @@ namespace DynamicIslands.Editor
 
 		static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }
 
+		/// <summary>Tests: where its path has it at this shared-clock time (parent space; no path: where it is).</summary>
+		internal Vector3 PlaceAt(float t)
+		{
+			if (!built) Build();
+			Vector3 dir;
+			return HasPath && cycle > 0f ? PathAt(t, out dir) : transform.localPosition;
+		}
+
 		/// <summary>Where the path has it now (parent space) and which way it faces.</summary>
 		Vector3 PathAt(float t, out Vector3 dir)
 		{
