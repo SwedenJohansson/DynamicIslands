@@ -63,6 +63,7 @@
     <Compile Include="ItemPickerWindow.cs" />
     <Compile Include="LootCrate.cs" />
     <Compile Include="RandomLoot.cs" />
+    <Compile Include="ReceiverUnlock.cs" />
     <Compile Include="NoteEditorWindow.cs" />
     <Compile Include="ObjectInspector.cs" />
     <Compile Include="ObjectProps.cs" />
