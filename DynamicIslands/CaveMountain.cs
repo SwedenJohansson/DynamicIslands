@@ -217,7 +217,11 @@ namespace DynamicIslands.Editor
 		struct Mouth { public Vector3 Pos, Along, Side; public float InsideAlong, InsideSide, HalfWidth, FloorY, OwnPlus, OwnMinus, StartPlus, StartMinus, Front, ArchHalf, ArchUp; public bool Plus, Minus, Dry; public string Name; }
 		readonly List<Mouth> lastMouths = new List<Mouth>();
 
-		void Build()
+		void Build() { Build(Reach); }
+
+		/// <summary>The hill over the pieces on a grid <pad> m past their bounds each way (Reach; more when a dry den's dome reaches
+		/// further: Build tries again once with a pad that holds it).</summary>
+		void Build(float pad)
 		{
 			if (skin != null) { DestroyImmediate(skin); skin = null; } // (its collider must not count as ground)
 			var cols = new HashSet<Collider>();
@@ -274,8 +278,8 @@ namespace DynamicIslands.Editor
 			if (!any || look == null || cols.Count == 0) return;
 
 			Physics.SyncTransforms();
-			int nx = Mathf.CeilToInt((b.size.x + 2f * Reach) / Cell) + 1, nz = Mathf.CeilToInt((b.size.z + 2f * Reach) / Cell) + 1;
-			float x0 = b.min.x - Reach, z0 = b.min.z - Reach, rayTop = b.max.y + 5f, rayLen = b.size.y + 60f;
+			int nx = Mathf.CeilToInt((b.size.x + 2f * pad) / Cell) + 1, nz = Mathf.CeilToInt((b.size.z + 2f * pad) / Cell) + 1;
+			float x0 = b.min.x - pad, z0 = b.min.z - pad, rayTop = b.max.y + 5f, rayLen = b.size.y + 60f;
 			var top = new float[nx, nz];       // the shells' roofs (NaN: none)
 			var ground = new float[nx, nz];    // what is under them otherwise
 			var groundBy = new string[nx, nz]; // (tests: what that is)
@@ -409,6 +413,15 @@ namespace DynamicIslands.Editor
 					coverBy[i, k] = by;
 				}
 			float[,] dome = dryFootOn ? DryDomes(mouths, startPlus, startMinus, cover, own, ground, x0, z0, nx, nz) : null;
+			// (a den's dome reaches 40-60 m out, the grid only Reach past the shells: the dome was cut off at the grid's edge, a flat
+			// tan wall metres over the sand, and sunk there a steep straight ramp, the hill a spire - Shelter Atoll 11-09 r62. Once:
+			// a grid wide enough for the whole dome, so its bell runs out into the ground on its own)
+			if (dome != null && pad <= Reach && DomeAtEdge(dome, ground, nx, nz))
+			{
+				Debug.Log("[CUSTOM ISLANDS] Cave mountain: dome reaches the grid's edge, grid widened to " + (LastDomeReach + DomePad).ToString("0") + " m");
+				Build(Mathf.Max(Reach, LastDomeReach + DomePad));
+				return;
+			}
 			// The surface: over a roof, the highest roof around it; elsewhere falling away from the roofs nearby
 			var height = new float[nx, nz];
 			var on = new bool[nx, nz];
@@ -1020,6 +1033,22 @@ namespace DynamicIslands.Editor
 		internal const float DryHead = 2.6f;
 		/// <summary>Tests: the last dry dome's height over its base and reach (m).</summary>
 		public static string LastDome = "";
+		/// <summary>The furthest a dome reaches from its den's inside point (m, the last DryDomes); DomePad: grid room past it.</summary>
+		static float LastDomeReach;
+		const float DomePad = 4f;
+
+		/// <summary>Is a dome cut off at the grid's edge (an edge cell under it, over the ground)?</summary>
+		static bool DomeAtEdge(float[,] dome, float[,] ground, int nx, int nz)
+		{
+			for (int i = 0; i < nx; i++)
+				for (int k = 0; k < nz; k++)
+				{
+					if (i != 0 && k != 0 && i != nx - 1 && k != nz - 1) continue;
+					float g = float.IsNegativeInfinity(ground[i, k]) ? SeaLevel - 30f : ground[i, k];
+					if (!float.IsNaN(dome[i, k]) && dome[i, k] > g + 0.5f) return true;
+				}
+			return false;
+		}
 
 		/// <summary>cave.foot=dry: the height of one smooth dome over each dry piece's shell (NaN off every dome): an ellipse round
 		/// the shell's cells (DomeFlank past them at the sides and back, DomeFront past its open end) under a (1 - u^2)^2 bell,
@@ -1042,7 +1071,7 @@ namespace DynamicIslands.Editor
 		static float[,] DryDomes(List<Mouth> mouths, float[] startPlus, float[] startMinus, float[,] cover, int[,] own, float[,] ground, float x0, float z0, int nx, int nz)
 		{
 			float[,] dome = null;
-			LastDome = "";
+			LastDome = ""; LastDomeReach = 0f;
 			for (int j = 0; j < mouths.Count; j++)
 			{
 				Mouth m = mouths[j];
@@ -1112,6 +1141,7 @@ namespace DynamicIslands.Editor
 						float h = g - DomeSink + (tall + DomeSink) * p;
 						if (float.IsNaN(dome[i, k]) || h > dome[i, k]) dome[i, k] = h;
 					}
+				LastDomeReach = Mathf.Max(LastDomeReach, Mathf.Max(rs, Mathf.Max(rb, rf)) + Mathf.Abs(cs) + Mathf.Abs(ca));
 				LastDome += m.Name + ": dome " + tall.ToString("0.0") + " m over " + baseY.ToString("0.0") + ", reach side " + rs.ToString("0.0") + " back " + rb.ToString("0.0") + " front " + rf.ToString("0.0") + "; ";
 			}
 			if (LastDome.Length > 0) Debug.Log("[CUSTOM ISLANDS] Cave mountain " + LastDome);
