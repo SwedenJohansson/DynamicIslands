@@ -62,6 +62,7 @@
     <Compile Include="IslandInfo.cs" />
     <Compile Include="ItemPickerWindow.cs" />
     <Compile Include="LootCrate.cs" />
+    <Compile Include="RandomLoot.cs" />
     <Compile Include="NoteEditorWindow.cs" />
     <Compile Include="ObjectInspector.cs" />
     <Compile Include="ObjectProps.cs" />

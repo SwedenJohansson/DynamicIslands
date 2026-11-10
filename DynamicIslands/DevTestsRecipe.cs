@@ -1949,7 +1949,24 @@ namespace DynamicIslands
 						{
 							List<EditorGameObject> group = Group(t[1]);
 							if (group.Count == 0) { error = "no object '" + t[1] + "' placed by this recipe"; break; }
-							foreach (EditorGameObject e in group) PropsCommand.Change(e, ObjectProps.With(e.Props, ObjectProps.LootItems, Rest(line, 2)));
+							// loot <alias> Plank*4@25;Nail*2 [pick=N]: an @ chance (percent) or pick= makes it a random chest (QE14)
+							string text = Rest(line, 2);
+							int pick = -1;
+							System.Text.RegularExpressions.Match pm = System.Text.RegularExpressions.Regex.Match(text, @"\s+pick=(\d+)\s*$");
+							if (pm.Success) { pick = int.Parse(pm.Groups[1].Value); text = text.Substring(0, pm.Index); }
+							string chances;
+							string items = RandomLoot.SplitRecipe(text, out chances);
+							foreach (EditorGameObject e in group)
+							{
+								Dictionary<string, string> p = ObjectProps.With(e.Props, ObjectProps.LootItems, items);
+								if (chances != null || pick >= 0)
+								{
+									p = ObjectProps.With(p, RandomLoot.Mode, RandomLoot.RandomMode);
+									p = ObjectProps.With(p, RandomLoot.Chance, string.IsNullOrEmpty(chances) ? null : chances);
+									p = ObjectProps.With(p, RandomLoot.Pick, pick > 0 ? pick.ToString() : null);
+								}
+								PropsCommand.Change(e, p);
+							}
 							break;
 						}
 						case "note":
