@@ -268,7 +268,7 @@ namespace DynamicIslands
 		// (a floor takes most things; a trophy hangs on a side: the first face of the quad that takes the item)
 		static Vector3? FaceFor(BlockQuad q, Item_Base item)
 		{
-			foreach (Vector3 d in new[] { q.transform.up, Vector3.up, q.transform.forward, -q.transform.forward, q.transform.right, -q.transform.right })
+			foreach (Vector3 d in new[] { q.transform.up, Vector3.up, q.transform.forward, -q.transform.forward, q.transform.right, -q.transform.right, -q.transform.up })
 				if (q.AcceptsBlock(item, d)) return d;
 			return null;
 		}
@@ -305,8 +305,9 @@ namespace DynamicIslands
 					Item_Base selected = Traverse.Create(bc).Field("selectedBuildableItem").GetValue<Item_Base>();
 					Check(ref ok, selected == item, name + ": held, the build ghost is it (" + (selected != null ? selected.UniqueName : "none") + ")");
 					// a raft surface that takes it: aim at each in turn until Raft's own check shows the ghost green
-					List<BlockQuad> quads = Resources.FindObjectsOfTypeAll<BlockQuad>().Where(q => q != null && q.gameObject.scene.IsValid() && q.gameObject.activeInHierarchy && q.quadType != null && FaceFor(q, item).HasValue)
-						.OrderBy(q => (q.transform.position - player.transform.position).sqrMagnitude).Take(40).ToList();
+					// (a raft block's surfaces are switched off until a placeable is held: inactive ones count too)
+					List<BlockQuad> quads = Resources.FindObjectsOfTypeAll<BlockQuad>().Where(q => q != null && q.gameObject.scene.IsValid() && q.quadType != null && FaceFor(q, item).HasValue)
+						.OrderBy(q => (q.transform.position - player.transform.position).sqrMagnitude).Take(120).ToList();
 					BlockQuad spot = null; string last = "no surface";
 					foreach (BlockQuad q in quads)
 					{
