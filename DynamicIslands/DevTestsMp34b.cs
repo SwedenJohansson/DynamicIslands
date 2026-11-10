@@ -415,6 +415,7 @@ namespace DynamicIslands
 					CreatureSpawnPoint sp = gr != null ? gr.GetComponent<CreatureSpawnPoint>() : null;
 					AI_NetworkBehaviour goat = sp != null ? sp.Spawned.FirstOrDefault(Taming.IsTamed) : null;
 					Check(ref ok, Taming.Following == 1 && goat != null, "the host has one goat following (" + Taming.Following + ")");
+					if (goat != null && other != null) yield return M4Wait(() => Vector3.Distance(Flat(goat.transform.position), Flat(other.transform.position)) < 5f, 12f);
 					Check(ref ok, goat != null && other != null && Vector3.Distance(Flat(goat.transform.position), Flat(other.transform.position)) < 5f, "it follows player 2 (" + (goat != null && other != null ? Vector3.Distance(Flat(goat.transform.position), Flat(other.transform.position)).ToString("F1") : "?") + " m)");
 					Check(ref ok, Taming.Refused > m4Refused0, "the host refused player 2's other feeds (" + (Taming.Refused - m4Refused0) + ")");
 					// on to the escort step (leading the goat to its pen is the single-player test's)
@@ -448,6 +449,7 @@ namespace DynamicIslands
 					yield return M4Wait(() => QuestTracker.StepOf(e) >= 2, 6f);
 					yield return new WaitForSeconds(1f);
 					Check(ref ok, QuestTracker.StepOf(e) >= 2, "player 2 led Mia into camp: the escort step is done (step " + QuestTracker.StepOf(e) + ")");
+					yield return M4Wait(() => IslanderWalks.Received > got0 && IslanderWalks.Inside(camp, mr.transform.position), 10f);
 					Check(ref ok, IslanderWalks.Received > got0 && IslanderWalks.Inside(camp, mr.transform.position), "player 2 got her places from the host and sees her in camp (" + (IslanderWalks.Received - got0) + " places)");
 					M4Stand(e, "mp-client");
 					break;
