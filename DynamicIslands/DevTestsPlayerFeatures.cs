@@ -1211,6 +1211,27 @@ namespace DynamicIslands
 			if (ok) Log("PASS: minimap off"); else Fail("minimap off");
 		}
 
+		[ConsoleCommand(name: "CIMinimapReset", docs: "Dev (11-10): M hides the corner map for one world only. hide - in world A the map key's state is set to hidden; check - after loading or joining another world it is the corner map again")]
+		public static void MinimapResetCommand(string[] args)
+		{
+			string what = args != null && args.Length > 0 ? args[0].ToLowerInvariant() : "";
+			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("minimap reset: run in a world"); return; }
+			if (what == "hide")
+			{
+				Minimap.Mode = Minimap.Off;
+				if (Minimap.Mode == Minimap.Off) Log("PASS: minimap reset hide"); else Fail("minimap reset hide");
+				return;
+			}
+			if (what == "check")
+			{
+				bool ok = true;
+				Check(ref ok, Minimap.Mode == Minimap.Corner, "the next world starts with the corner map (mode " + Minimap.Mode + ")");
+				if (ok) Log("PASS: minimap reset check"); else Fail("minimap reset check");
+				return;
+			}
+			Fail("CIMinimapReset hide|check");
+		}
+
 		[ConsoleCommand(name: "CIMinimapRafts", docs: "Dev (UR1): the island map stays small near drifting rafts. Host, world 'CI ...': a ghost ship, a ghost raft and a trader raft are brought beside Raft's raft one by one, the player put aboard each from open sea: the map shows in the corner (its panel CornerSize, under 35% of the screen), zoom and picture size as before. On the ghost ship the map key opens it full screen and it is left open when the ship goes; at sea before the trader raft the map key is pressed with no map in sight. Shots ur1_map_<kind>.png in the mod folder. The rafts are removed after")]
 		public static void MinimapRaftsCommand(string[] args) { StartTest(MinimapRafts()); }
 

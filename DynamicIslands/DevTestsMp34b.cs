@@ -125,7 +125,8 @@ namespace DynamicIslands
 					if (bell == null) { Fail(name + ": no bell"); yield break; }
 					PutPlayerNear(bell.transform, 1.5f);
 					yield return new WaitForSeconds(0.5f);
-					for (int i = 0; i < 3; i++) { Behaviours.Fire(e, bell.Index, "use", true); yield return new WaitForSeconds(1.5f); }
+					// (each ring waits for the host's count: rings that reach the host within a second count once - a host save hitch bunches them)
+					for (int i = 0; i < 3; i++) { int want = i + 1; Behaviours.Fire(e, bell.Index, "use", true); yield return M4Wait(() => GapBehaviours.Counter(e, "ci-bells") >= want, 8f); yield return new WaitForSeconds(1.2f); }
 					yield return M4Wait(() => QuestTracker.StepOf(e) == 3 && M4Panel().Contains(q.Steps[3].Describe()), 10f);
 					Check(ref ok, GapBehaviours.Counter(e, "ci-bells") == 3 && QuestTracker.StepOf(e) == 3, "player 2 rang 3 times: the host's counter at 3, step 4 (counter " + GapBehaviours.Counter(e, "ci-bells") + ", step " + QuestTracker.StepOf(e) + ")");
 					Check(ref ok, M4Panel().Contains(q.Steps[3].Describe()), "player 2's panel shows step 4 (" + M4Panel() + ")");
@@ -280,6 +281,8 @@ namespace DynamicIslands
 					M4Stand(e, "mp-host");
 					yield return new WaitForSeconds(2f);
 					Check(ref ok, ww.HasPath && ww.State == "path", "the walker walks its path (" + ww.State + ")");
+					// (it moves at most 6 m/s towards its place: after a frame hitch it catches up within a few seconds)
+					yield return M4Wait(() => Flat(wr.transform.localPosition - ww.PlaceAt(SharedClock.Now)).magnitude < 1.5f, 5f);
 					float now = SharedClock.Now;
 					Vector3 at = wr.transform.localPosition, want = ww.PlaceAt(now);
 					Check(ref ok, Flat(at - want).magnitude < 1.5f, "on the host it is where the shared clock puts it (" + Flat(at - want).magnitude.ToString("F2") + " m off)");
