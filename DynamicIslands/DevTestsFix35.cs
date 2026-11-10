@@ -268,7 +268,10 @@ namespace DynamicIslands
 		// (a floor takes most things; a trophy hangs on a side: the first face of the quad that takes the item)
 		static Vector3? FaceFor(BlockQuad q, Item_Base item)
 		{
-			foreach (Vector3 d in new[] { q.transform.up, Vector3.up, q.transform.forward, -q.transform.forward, q.transform.right, -q.transform.right, -q.transform.up })
+			// (Raft's raycast hits the side that faces the camera: such a side first)
+			Vector3 eye = Camera.main != null ? Camera.main.transform.position : q.transform.position + Vector3.up;
+			Vector3 toEye = eye - q.transform.position;
+			foreach (Vector3 d in new[] { q.transform.up, Vector3.up, q.transform.forward, -q.transform.forward, q.transform.right, -q.transform.right, -q.transform.up }.OrderByDescending(v => Vector3.Dot(v, toEye)))
 				if (q.AcceptsBlock(item, d)) return d;
 			return null;
 		}
@@ -290,7 +293,7 @@ namespace DynamicIslands
 				Block ghost = Traverse.Create(bc).Field("selectedBlock").GetValue<Block>();
 				BlockQuad atCursor = Traverse.Create(bc).Field("quadAtCursor").GetValue<BlockQuad>();
 				object err = ghost != null ? HarmonyLib.AccessTools.Method(typeof(BlockCreator), "CanBuildBlock").Invoke(bc, new object[] { ghost }) : null;
-				found[1] = quads.Count + " surfaces, " + (atCursor != null ? "aimed" : "no quad at cursor") + ", " + (err != null ? err.ToString() : "no ghost");
+				found[1] = quads.Count + " surfaces, " + (atCursor != null ? "aimed" : "no quad at cursor (" + (realAim.Value - player.CameraTransform.position).magnitude.ToString("0.0") + " m, reach " + (Player.UseDistance * 2f).ToString("0.0") + ")") + ", " + (err != null ? err.ToString() : "no ghost");
 				if (atCursor != null && err != null && (Convert.ToInt32(err) == 0 || (costFree && err.ToString() == "NoResources"))) { realSpot = q; found[0] = "yes"; yield break; }
 			}
 		}
