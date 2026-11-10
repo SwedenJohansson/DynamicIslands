@@ -536,7 +536,7 @@ namespace DynamicIslands
 				// Lead it to the pen, a few steps at a time
 				Vector3 dir = pen.transform.position - goat.transform.position; dir.y = 0f; dir.Normalize();
 				float worstGap = 0f;
-				for (int i = 0; i < 30 && QuestTracker.StepOf(e) == 0; i++)
+				for (int i = 0; i < 50 && QuestTracker.StepOf(e) == 0; i++)
 				{
 					dir = pen.transform.position - goat.transform.position; dir.y = 0f; dir.Normalize(); // (towards the pen from where it is now)
 					Vector3 next = goat.transform.position + dir * 5f;
@@ -552,9 +552,7 @@ namespace DynamicIslands
 				Check(ref ok, IslanderWalks.Inside(pen, goat.transform.position) && Taming.Found(e, "Goat@pen") == 1, "the goat is in the pen and counted (" + Vector3.Distance(Flat(goat.transform.position), Flat(pen.transform.position)).ToString("F1") + " m from its middle; furthest behind " + worstGap.ToString("F1") + " m)");
 				Check(ref ok, QuestTracker.StepOf(e) >= 1, "the tame step is done (step " + QuestTracker.StepOf(e) + ")");
 				Check(ref ok, ContentState.IsUsed(e, Taming.KeyBase + goats), "the pen slot is in the island's state (saved, sent to joiners)");
-				MovePlayerTo(pen.transform.position - dir * 6f);
-				yield return new WaitForSeconds(1f);
-				yield return ShotAt("tame_penned", goat.transform.position);
+				yield return ShotAt("tame_penned", goat.transform.position); // (from where the lead ended, beside the pen)
 				MovePlayerTo(pen.transform.position - dir * 14f);
 				yield return new WaitForSeconds(4f);
 				Check(ref ok, IslanderWalks.Inside(pen, goat.transform.position), "the player walks off: the goat stays in its pen");
