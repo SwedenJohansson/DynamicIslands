@@ -149,6 +149,12 @@ namespace DynamicIslands
 				Hotbar hotbar = Traverse.Create(p.Inventory).Field("hotbar").GetValue<Hotbar>();
 				if (hotbar == null) { Log("  (no hotbar)"); return false; }
 				hotbar.SelectItem(it);
+				// (SelectItem can leave the old slot in hand, e.g. the starting hook in a new world: then pick the slot by its index, as the number key does)
+				if (!GapChecks.Holds(item))
+				{
+					int at = p.Inventory.allSlots.Take(hot).ToList().FindIndex(sl => sl != null && !sl.IsEmpty && sl.itemInstance.UniqueName == item);
+					if (at >= 0) { hotbar.SetSelectedSlotIndex(at); hotbar.ReselectCurrentSlot(); }
+				}
 				if (!GapChecks.Holds(item)) Log("  (took " + item + " in hand, but holds " + (p.Inventory.GetSelectedHotbarItem() != null ? p.Inventory.GetSelectedHotbarItem().UniqueName : "nothing") + ")");
 				return true;
 			}
