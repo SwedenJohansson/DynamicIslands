@@ -437,6 +437,125 @@ namespace DynamicIslands
 			else Log("PASS: " + where);
 		}
 
+		[ConsoleCommand(name: "CITameParse", docs: "Dev, anywhere: QE11 tame step's settings - Animal@zone, the food (default per kind, items exist), the plan check, the editors' lists, the pen keys")]
+		public static void TameParseCommand()
+		{
+			bool ok = true;
+			Check(ref ok, Taming.Tamable(AI_NetworkBehaviourType.Goat) && Taming.Tamable(AI_NetworkBehaviourType.Chicken) && Taming.Tamable(AI_NetworkBehaviourType.Llama) && !Taming.Tamable(AI_NetworkBehaviourType.Boar), "goats, llamas and chickens are tamable, boars not");
+			foreach (var t in new[] { AI_NetworkBehaviourType.Goat, AI_NetworkBehaviourType.Chicken, AI_NetworkBehaviourType.Llama })
+				Check(ref ok, ItemManager.GetItemByName(Taming.DefaultFood(t)) != null, "the default food of a " + t + " is an item (" + Taming.DefaultFood(t) + ")");
+			Check(ref ok, Taming.FoodOf(P(Taming.FoodProp, " Seed_Pine "), AI_NetworkBehaviourType.Goat) == "Seed_Pine" && Taming.FoodOf(P(), AI_NetworkBehaviourType.Goat) == Taming.DefaultFood(AI_NetworkBehaviourType.Goat), "the spot's own food wins");
+			ContentCatalog.CreatureKind chicken = ContentCatalog.CreatureOf("Creature_Chicken");
+			Check(ref ok, chicken != null && Taming.KindIs(chicken, "clucker") && Taming.KindIs(chicken, "Chicken") && !Taming.KindIs(chicken, "Goat"), "a chicken is called Chicken or Clucker");
+			var q = new IslandQuest.Step { Type = Taming.QuestType, Target = "Goat@pen", Count = 2 };
+			Check(ref ok, IslandQuest.Types.Contains(Taming.QuestType) && IslandQuest.Counted(Taming.QuestType) && q.Describe() == "Tame 2 goats and lead them to pen", "the Tame step, counted by the host (" + q.Describe() + ")");
+			var facts = new PlayerFeatures.PlanFacts();
+			PlayerFeatures.AddFacts(facts, "Creature_Goat", P(ObjectProps.CreatureCount, "2"));
+			PlayerFeatures.AddFacts(facts, "Creature_Llama", P(BehaviourProps.Name, "Dolly"));
+			PlayerFeatures.AddFacts(facts, ContentCatalog.TriggerZone, P(ObjectProps.ZoneId, "pen"));
+			Check(ref ok, PlayerFeatures.StepProblem(facts, Taming.QuestType, "Goat@pen", 2) == null && PlayerFeatures.StepProblem(facts, Taming.QuestType, "Dolly@pen", 1) == null
+				&& PlayerFeatures.StepProblem(facts, Taming.QuestType, "Goat@pen", 3) != null && PlayerFeatures.StepProblem(facts, Taming.QuestType, "Goat", 1) != null
+				&& PlayerFeatures.StepProblem(facts, Taming.QuestType, "Boar@pen", 1) != null && PlayerFeatures.StepProblem(facts, Taming.QuestType, "Goat@barn", 1) != null, "the plan check: a tamable animal there, a zone, enough of them");
+			Check(ref ok, Taming.KeyBases.Count() == Taming.MaxPen && Taming.KeyBases.All(b => b >= Taming.KeyBase && b < Taming.KeyBase + Taming.MaxPen * 0x10000), "pen keys: one range per slot");
+			CheckPlayerTables(ref ok);
+			if (ok) Log("PASS: tame step settings"); else Fail("tame step settings");
+		}
+
+		[ConsoleCommand(name: "CITame", docs: "Dev, in a world (host): QE11 - spawns 'ciplayer' with goats and a pen; feeding one (its food in hand) tames it, it follows the player, in the pen the step counts it and it stays (also after a reload of the taming). 'keep' leaves the island: CITame [keep]")]
+		public static void TameCommand(string[] args) { StartTest(TameRoutine(args.Any(a => a.Equals("keep", StringComparison.OrdinalIgnoreCase)))); }
+
+		static IEnumerator TameRoutine(bool keep)
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			int goats = -1;
+			IslandFile f = PlayerTestIsland((file, add) =>
+			{
+				goats = add("Creature_Goat", 6f, -4f, P(ObjectProps.CreatureCount, "2"));
+				add(ContentCatalog.TriggerZone, -8f, 10f, P(ObjectProps.ZoneId, "pen", ObjectProps.ZoneRadius, "3"));
+				file.Props[IslandQuest.KeyTitle] = "CI tame";
+				file.Props[IslandQuest.KeySteps] = "tame|Goat@pen|1|\nreach|nowhere|1|";
+			});
+			IslandWorldState.Entry e = null;
+			yield return SpawnPlayerIsland(f, x => e = x);
+			if (e == null || e.Root == null) { Fail("the island did not spawn"); RemovePlayerIsland(e); yield break; }
+			Network_Player me = RAPI.GetLocalPlayer();
+			string food = Taming.DefaultFood(AI_NetworkBehaviourType.Goat);
+			try
+			{
+				IslandObjectRef gr = e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(r => r.Index == goats);
+				CreatureSpawnPoint sp = gr != null ? gr.GetComponent<CreatureSpawnPoint>() : null;
+				TriggerZone pen = IslanderWalks.ZoneOf(e, "pen");
+				Check(ref ok, sp != null && pen != null, "the goats' spot and the pen are there");
+				if (sp == null || pen == null) yield break;
+				PutPlayerNear(gr.transform, 5f);
+				float t0 = Time.realtimeSinceStartup;
+				while (sp.Spawned.Count(a => a != null) < 2 && Time.realtimeSinceStartup - t0 < 30f) yield return new WaitForSeconds(0.5f);
+				Check(ref ok, sp.Spawned.Count(a => a != null) == 2, "two goats came (" + sp.Spawned.Count(a => a != null) + ")");
+				if (sp.Spawned.Count(a => a != null) == 0) yield break;
+				Check(ref ok, QuestTracker.StepOf(e) == 0 && Taming.Current(e).Contains("Goat@pen"), "the tame step is the current one");
+				// Without the food in hand nothing happens
+				AI_NetworkBehaviour goat = sp.Spawned.First(a => a != null);
+				int fed = Taming.Fed;
+				PlayerMove.To(me, goat.transform.position + Vector3.up * 1.2f + Vector3.right * 1.2f);
+				KeepAlive(me);
+				yield return new WaitForSeconds(2f);
+				Check(ref ok, Taming.Fed == fed && Taming.Following == 0, "next to a goat without its food: not fed");
+				// With it
+				me.Inventory.AddItem(food, 3);
+				Check(ref ok, GrHold(me, food) && me.Inventory.GetSelectedHotbarItem() != null && me.Inventory.GetSelectedHotbarItem().UniqueName == food, "the player holds " + food);
+				int had = me.Inventory.GetItemCount(food);
+				t0 = Time.realtimeSinceStartup;
+				while (Taming.Following == 0 && Time.realtimeSinceStartup - t0 < 6f)
+				{
+					AI_NetworkBehaviour near = sp.Spawned.Where(a => a != null).OrderBy(a => Vector3.Distance(a.transform.position, me.transform.position)).First();
+					if (Vector3.Distance(near.transform.position, me.transform.position) > 2f) PlayerMove.To(me, near.transform.position + Vector3.up * 1.2f + Vector3.right * 1.2f);
+					yield return new WaitForSeconds(0.25f);
+				}
+				Check(ref ok, Taming.Following == 1 && Taming.Fed == fed + 1 && me.Inventory.GetItemCount(food) == had - 1, "held next to a goat: it eats one " + food + " and follows (following " + Taming.Following + ", food " + had + " -> " + me.Inventory.GetItemCount(food) + ")");
+				goat = sp.Spawned.FirstOrDefault(Taming.IsTamed);
+				if (goat == null) yield break;
+				yield return new WaitForSeconds(2.5f);
+				Check(ref ok, Taming.Fed == fed + 1, "one feed only (no second goat while it eats)");
+				// Lead it to the pen, a few steps at a time
+				Vector3 dir = pen.transform.position - goat.transform.position; dir.y = 0f; dir.Normalize();
+				float worstGap = 0f;
+				for (int i = 0; i < 14 && QuestTracker.StepOf(e) == 0; i++)
+				{
+					Vector3 next = goat.transform.position + dir * 3f;
+					if (Vector3.Distance(Flat(next), Flat(pen.transform.position)) < 3.5f) next = pen.transform.position + dir * 1.5f;
+					MovePlayerTo(next);
+					yield return new WaitForSeconds(2.5f);
+					worstGap = Mathf.Max(worstGap, Vector3.Distance(Flat(goat.transform.position), Flat(me.transform.position)));
+					if (i == 2) Screenshot(new[] { "tame", "follow" });
+				}
+				t0 = Time.realtimeSinceStartup;
+				while (QuestTracker.StepOf(e) == 0 && Time.realtimeSinceStartup - t0 < 8f) yield return new WaitForSeconds(0.5f);
+				Check(ref ok, IslanderWalks.Inside(pen, goat.transform.position) && Taming.Found(e, "Goat@pen") == 1, "the goat is in the pen and counted (" + Vector3.Distance(Flat(goat.transform.position), Flat(pen.transform.position)).ToString("F1") + " m from its middle; furthest behind " + worstGap.ToString("F1") + " m)");
+				Check(ref ok, QuestTracker.StepOf(e) >= 1, "the tame step is done (step " + QuestTracker.StepOf(e) + ")");
+				Check(ref ok, ContentState.IsUsed(e, Taming.KeyBase + goats), "the pen slot is in the island's state (saved, sent to joiners)");
+				MovePlayerTo(pen.transform.position - dir * 14f);
+				yield return new WaitForSeconds(4f);
+				Check(ref ok, IslanderWalks.Inside(pen, goat.transform.position), "the player walks off: the goat stays in its pen");
+				Screenshot(new[] { "tame", "penned" });
+				// After a reload (taming forgotten): the saved pen slot puts a goat back in the pen
+				Taming.Reset();
+				goat.transform.position = gr.transform.position + Vector3.up * 0.3f;
+				t0 = Time.realtimeSinceStartup;
+				while (Taming.PennedNow == 0 && Time.realtimeSinceStartup - t0 < 6f) yield return new WaitForSeconds(0.5f);
+				yield return new WaitForSeconds(1f);
+				Check(ref ok, Taming.PennedNow == 1 && sp.Spawned.Any(a => a != null && IslanderWalks.Inside(pen, a.transform.position)), "after a reload a goat is back in the pen");
+			}
+			finally
+			{
+				if (!keep) RemovePlayerIsland(e);
+				try { me.Inventory.RemoveItem(food, me.Inventory.GetItemCount(food)); } catch { }
+			}
+			if (keep) Log("kept 'ciplayer'");
+			if (ok) Log("PASS: tame step"); else Fail("tame step");
+		}
+
 		[ConsoleCommand(name: "CICollectParse", docs: "Dev, anywhere: collectible sets read right (a piece's defaults and use lines, the set check, the Find set step, the set event, plan check, keys, the editors' lists)")]
 		public static void CollectParseCommand()
 		{

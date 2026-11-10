@@ -798,6 +798,7 @@ namespace DynamicIslands.Editor
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded) return;
 			if (carried.Count > 0) FollowHolders();
+			Taming.Tick(); // (QE11)
 			if (anims.Count > 0) Animate();
 			if (Time.time >= nextCache)
 			{
@@ -843,6 +844,9 @@ namespace DynamicIslands.Editor
 				case "drop":
 					if (Raft_Network.IsHost && index >= 0) HostDrop(island, index, from, msg.Offsets);
 					return;
+				case "feed": // (QE11: a client fed an animal)
+					if (Raft_Network.IsHost) Taming.OnFeed(msg, from);
+					return;
 			}
 			if (Raft_Network.IsHost) return;
 			switch (msg.Name)
@@ -858,6 +862,9 @@ namespace DynamicIslands.Editor
 					break;
 				case "at":
 					OnAt(EntryById(island), island, index, msg.Offsets);
+					break;
+				case "tamed": // (QE11: the host's answer to a feed)
+					Taming.OnTamed(msg);
 					break;
 				case "walk": // (QE12: an escorted islander's place)
 					IslanderWalks.OnWalk(msg);
@@ -889,6 +896,7 @@ namespace DynamicIslands.Editor
 			lured.Clear();
 			stackCounts.Clear();
 			IslanderWalks.Reset();
+			Taming.Reset();
 		}
 
 		#endregion

@@ -298,6 +298,17 @@ namespace DynamicIslands.Editor
 				Refresh();
 			}, choices.Count > 1 ? "Click to choose: at once, or when a player walks into one of the island's trigger zones (an ambush)" : "Place a trigger zone (Zones & triggers) to make this an ambush", -1, 26f, 12);
 			UIKit.SetActive(wake, waits.Length > 0);
+			if (Taming.Tamable(kind.Type)) // (QE11: what a tame step feeds it)
+			{
+				string food = ObjectProps.Get(p, Taming.FoodProp).Trim();
+				InputField ff = SurvivorField(g, "Tame with", food, 26f, "The food a player holds next to it to tame it for a tame quest step (an item's name, e.g. Raw_Potato). Empty = " + Taming.DefaultFood(kind.Type));
+				ff.characterLimit = 60;
+				ff.onEndEdit.AddListener(v => { Set(target, Taming.FoodProp, v.Trim().Length > 0 ? v.Trim() : null); Refresh(); });
+				amountFields.Add(ff);
+				string shown = food.Length > 0 ? food : Taming.DefaultFood(kind.Type);
+				if (ItemManager.GetItemByName(shown) == null) UIKit.Size(UIKit.Label(g, "Check: no item is called '" + shown + "'", 11, UIKit.Danger, TextAnchor.MiddleLeft).gameObject, -1, 16);
+				else if (food.Length == 0) UIKit.Size(UIKit.Label(g, "Tamed with " + ContentCatalog.ItemLabel(shown) + " (the default)", 11, UIKit.TextMuted, TextAnchor.MiddleLeft).gameObject, -1, 16);
+			}
 			BossPhaseRows(g, target);
 		}
 
