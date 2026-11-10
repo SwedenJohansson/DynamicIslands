@@ -1139,6 +1139,20 @@ namespace DynamicIslands.Editor
 						// (its foot on the ground where that is lower than the shell's pad: the shore round it)
 						float g = Mathf.Lerp(Mathf.Min(baseY, ground[i, k]), baseY, p);
 						float h = g - DomeSink + (tall + DomeSink) * p;
+						// (a lone den's: out past its mouth's plane no higher than the funnel ShoulderRamps makes round the arch - the
+						// dome ran on out over the way in and its corridor cut a deep sheer trench up the dome's face, the dome hanging
+						// over it, Shelter Atoll 11-10 r63s30; now the arch sits in the dome's face)
+						if (!float.IsNaN(m.Front))
+						{
+							Vector3 d = new Vector3(x0 + i * Cell, 0f, z0 + k * Cell) - m.Pos;
+							float past = f * (Vector3.Dot(d, m.Along) - m.InsideAlong) - (m.Plus ? startPlus[j] : startMinus[j]);
+							if (past > 0f)
+							{
+								float sl = Mathf.Max(0f, Mathf.Abs(Vector3.Dot(d, m.Side) - m.InsideSide) - (m.ArchHalf + LoneSlot));
+								float cap = m.FloorY + m.ArchUp * Mathf.Clamp01(1f - past / LoneEdge) + LoneSide * sl * (1f + sl / ShoulderCurve) - LoneFall * past;
+								h = Mathf.Min(h, Mathf.Max(cap, g - DomeSink));
+							}
+						}
 						if (float.IsNaN(dome[i, k]) || h > dome[i, k]) dome[i, k] = h;
 					}
 				LastDomeReach = Mathf.Max(LastDomeReach, Mathf.Max(rs, Mathf.Max(rb, rf)) + Mathf.Abs(cs) + Mathf.Abs(ca));
