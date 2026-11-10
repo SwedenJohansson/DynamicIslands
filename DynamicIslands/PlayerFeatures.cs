@@ -45,7 +45,7 @@ namespace DynamicIslands.Editor
 		/// <summary>World: an object's lines as if the builder had written them (a set piece is picked up when used).</summary>
 		public static IDictionary<string, string> Expand(string objectName, IDictionary<string, string> props)
 		{
-			return GapBehaviours.Expand(objectName, OrderPuzzle.Expand(objectName, Lights.Expand(objectName, Collectibles.Expand(objectName, props))));
+			return GapBehaviours.Expand(objectName, OrderPuzzle.Expand(objectName, Lights.Expand(objectName, Collectibles.Expand(objectName, Islanders.Expand(objectName, props)))));
 		}
 
 		/// <summary>Host, from the mod's update: sets found (Collectibles).</summary>

@@ -42,9 +42,28 @@ namespace DynamicIslands
 		public static void IslanderParseCommand()
 		{
 			bool ok = true;
-			List<Islanders.Page> pages = Islanders.Parse("Hello.\n---\nWill you help?\nIt's dark.\n> Yes\n> No\n> Maybe\n> Too many");
-			Check(ref ok, pages.Count == 2 && pages[0].Text == "Hello." && pages[1].Text == "Will you help?\nIt's dark." && pages[1].Choices.Count == 3 && pages[1].Choices[0] == "Yes",
-				"two pages, three answers at most (" + pages.Count + " pages)");
+			List<Islanders.Page> pages = Islanders.Parse("Hello.\n---\nWill you help?\nIt's dark.\n> Yes\n> No\n> Maybe\n> Later\n> Too many");
+			Check(ref ok, pages.Count == 2 && pages[0].Text == "Hello." && pages[1].Text == "Will you help?\nIt's dark." && pages[1].Choices.Count == 4 && pages[1].Choices[0] == "Yes",
+				"two pages, four answers at most (" + pages.Count + " pages)");
+			// QE10: branches and flags
+			pages = Islanders.Parse("Hi.\n> Who are you? -> who +asked\n> Bye\n> Again? -> who ?asked\n> First time -> end ?!asked\n#who\nI'm Finn.\n---\nI keep the light.\n> Back -> start -asked");
+			Islanders.Answer w = pages.Count > 0 && pages[0].Answers.Count > 0 ? pages[0].Answers[0] : null;
+			Check(ref ok, pages.Count == 3 && pages[0].Section == "" && pages[1].Section == "who" && pages[2].Section == "who" && pages[1].Text == "I'm Finn.",
+				"#who starts a branch of two pages (" + string.Join(" | ", pages.Select(x => x.Section + ":" + x.Text).ToArray()) + ")");
+			Check(ref ok, w != null && w.Text == "Who are you?" && w.Goto == "who" && w.Branches && w.Sets.SequenceEqual(new[] { "asked" }) && w.Number == 1,
+				"> text -> who +asked: words, branch, flag");
+			Check(ref ok, pages.Count == 3 && !pages[0].Answers[1].Branches && pages[0].Answers[2].IfSet.Contains("asked") && pages[0].Answers[3].IfNot.Contains("asked") && !pages[0].Answers[3].Branches
+				&& pages[2].Answers[0].Goto == "start" && pages[2].Answers[0].Clears.Contains("asked") && pages[2].Answers[0].Number == 5, "?flag, ?!flag, -> end, -> start -flag; answers numbered through the text");
+			Check(ref ok, Islanders.Shows(pages[0].Answers[2], f => 0) == false && Islanders.Shows(pages[0].Answers[2], f => 1) && Islanders.Shows(pages[0].Answers[3], f => 0) && !Islanders.Shows(pages[0].Answers[3], f => 1),
+				"?asked shows only while set, ?!asked only while not");
+			Check(ref ok, Islanders.BranchProblem("Hi\n> Go -> who\n#who\nMe") == null && Islanders.BranchProblem("Hi\n> Go -> nowhere") != null && Islanders.BranchProblem("Hi\n#lost\nNobody comes") != null,
+				"the editor's check: a missing branch, a branch nobody reaches");
+			IDictionary<string, string> ex = PlayerFeatures.Expand(Islanders.ObjectName, P(Islanders.TextProp, "Hi\n> Yes -> end +agreed -refused\n> No"));
+			Check(ref ok, ObjectProps.Get(ex, BehaviourProps.EventKey("answer1")).Contains("count|agreed|=1") && ObjectProps.Get(ex, BehaviourProps.EventKey("answer1")).Contains("count|refused|=0") && !ex.ContainsKey(BehaviourProps.EventKey("answer2")),
+				"flags become shared count actions on answer1 (" + ObjectProps.Get(ex, BehaviourProps.EventKey("answer1")).Replace("\n", " / ") + ")");
+			string wb = Islanders.WithBranch("Hello.\n#old\nOld lines");
+			Check(ref ok, Islanders.Sections(wb).SequenceEqual(new[] { "old", "branch1" }) && Islanders.Parse(wb)[0].Answers.Count == 1 && Islanders.Parse(wb)[0].Answers[0].Goto == "branch1",
+				"the editor's button adds an answer and its branch (" + wb.Replace("\n", " / ") + ")");
 			pages = Islanders.Parse("One\\n---\\nTwo\\n> Ok");
 			Check(ref ok, pages.Count == 2 && pages[1].Text == "Two" && pages[1].Choices.Count == 1, "an action's one line: \\n breaks lines, --- pages");
 			Check(ref ok, Islanders.Parse("").Count == 0 && Islanders.Parse("---\n---").Count == 0, "an empty dialogue has no pages");
@@ -61,7 +80,7 @@ namespace DynamicIslands
 			ObjCheck c = ObjCheck.Parse("talked|Old Finn");
 			Check(ref ok, c != null && c.Kind == "talked" && c.Target == "Old Finn" && c.Describe().Contains("talked to"), "talked|Old Finn parses (" + (c != null ? c.Describe() : "null") + ")");
 			List<string> evs = BehaviourProps.EventsFor(Islanders.ObjectName, P(Islanders.TextProp, "Hi\n> Yes")).Select(x => x.Key).ToList();
-			Check(ref ok, evs.Contains("talk") && evs.Contains("choice1") && evs.Contains("choice3") && !evs.Contains("use"), "an islander's events: talk, choice1..3, not use (" + string.Join(", ", evs.ToArray()) + ")");
+			Check(ref ok, evs.Contains("talk") && evs.Contains("choice1") && evs.Contains("choice4") && !evs.Contains("use"), "an islander's events: talk, choice1..4, not use (" + string.Join(", ", evs.ToArray()) + ")");
 			Check(ref ok, PlayerFeatures.IsEvent("choice2") && PlayerFeatures.IsEvent("talk") && !PlayerFeatures.IsEvent("choice"), "the events are known");
 
 			var q = new IslandQuest.Step { Type = "talk", Target = "Old Finn", Count = 1 };
@@ -179,6 +198,95 @@ namespace DynamicIslands
 				RemovePlayerIsland(e);
 			}
 			if (ok) Log("PASS: islanders in a world"); else Fail("islanders in a world");
+		}
+
+		/// <summary>QE10's test dialogue: answer 1 branches and sets the flag asked; answer 3 shows only once it is set; answer 4 = choice4.</summary>
+		const string BranchText = "Ahoy.\n---\nWhat now?\n> Who are you? -> who +asked\n> Bye\n> You said a light? -> light ?asked\n> Help -> end +helped\n#who\nI'm Finn.\n---\nI keep the light.\n> Back -> start\n> Bye -> end\n#light\nThe old beacon, up the hill.";
+
+		[ConsoleCommand(name: "CIDialogueBranch", docs: "Dev, in a world (host): QE10 branching - spawns 'ciplayer' with an islander whose answers branch, set island flags and show by flag; pages through each branch, choice4, the flags as counters. 'keep' leaves the island (for a second player: CITalk ciplayer Finn pick 4, then CIFlag ciplayer helped 1): CIDialogueBranch [keep]")]
+		public static void DialogueBranchCommand(string[] args) { StartTest(DialogueBranchRoutine(args.Any(a => a.Equals("keep", StringComparison.OrdinalIgnoreCase)))); }
+
+		static IEnumerator DialogueBranchRoutine(bool keep)
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			int finn = -1;
+			IslandFile f = PlayerTestIsland((file, add) =>
+			{
+				finn = add(Islanders.ObjectName, 0f, 4f, P(BehaviourProps.Name, "Finn", Islanders.PoseProp, "stand", Islanders.CharacterProp, "2",
+					Islanders.TextProp, BranchText, "on.choice4", "signal||finn-help", "on.choice1", "signal||finn-who"));
+			});
+			IslandWorldState.Entry e = null;
+			yield return SpawnPlayerIsland(f, x => e = x);
+			if (e == null || e.Root == null) { Fail("the island did not spawn"); RemovePlayerIsland(e); yield break; }
+			try
+			{
+				yield return new WaitForSeconds(1f);
+				IslandObjectRef fr = e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(r => r.Index == finn);
+				Islander isl = fr != null ? fr.GetComponentInChildren<Islander>(true) : null;
+				Check(ref ok, isl != null, "the islander has its talk");
+				if (isl != null)
+				{
+					PutPlayerNear(fr.transform, 2f);
+					yield return new WaitForSeconds(0.5f);
+					Check(ref ok, GapBehaviours.Counter(e, "asked") == 0, "the flag asked starts unset");
+					isl.Talk();
+					yield return new WaitForSeconds(0.3f);
+					DialoguePanel.Next();
+					yield return new WaitForSeconds(0.3f);
+					Check(ref ok, DialoguePanel.IsOpen && DialoguePanel.ShownText == "What now?" && DialoguePanel.ShownAnswers.SequenceEqual(new[] { "Who are you?", "Bye", "Help" }),
+						"page 2: three answers, ?asked hidden (" + string.Join(", ", DialoguePanel.ShownAnswers.ToArray()) + ")");
+					Screenshot(new[] { "dialogue", "branch1" });
+					DialoguePanel.Pick(1);
+					yield return new WaitForSeconds(0.5f);
+					Check(ref ok, DialoguePanel.IsOpen && DialoguePanel.ShownSection == "who" && DialoguePanel.ShownText == "I'm Finn.", "answer 1 goes to #who (" + DialoguePanel.ShownSection + ": " + DialoguePanel.ShownText + ")");
+					Check(ref ok, GapBehaviours.Counter(e, "asked") == 1 && Behaviours.HasSignal(e, "finn-who"), "it set the flag asked (" + GapBehaviours.Counter(e, "asked") + ") and fired choice1");
+					DialoguePanel.Next();
+					yield return new WaitForSeconds(0.3f);
+					Check(ref ok, DialoguePanel.ShownText == "I keep the light." && DialoguePanel.ShownAnswers.Count == 2, "Next stays in the branch (" + DialoguePanel.ShownText + ")");
+					DialoguePanel.Pick(5); // Back -> start
+					yield return new WaitForSeconds(0.3f);
+					Check(ref ok, DialoguePanel.IsOpen && DialoguePanel.ShownSection == "" && DialoguePanel.ShownText == "Ahoy.", "-> start goes back to the first page");
+					DialoguePanel.Next();
+					yield return new WaitForSeconds(0.3f);
+					Check(ref ok, DialoguePanel.ShownAnswers.Contains("You said a light?"), "with asked set, ?asked shows (" + string.Join(", ", DialoguePanel.ShownAnswers.ToArray()) + ")");
+					Screenshot(new[] { "dialogue", "branch2" });
+					DialoguePanel.Pick(3);
+					yield return new WaitForSeconds(0.3f);
+					Check(ref ok, DialoguePanel.ShownSection == "light" && DialoguePanel.ShownText.StartsWith("The old beacon"), "answer 3 goes to #light");
+					int talks = Islanders.Talks;
+					DialoguePanel.Next(); // (the branch's last page: Goodbye)
+					yield return new WaitForSeconds(0.3f);
+					Check(ref ok, !DialoguePanel.IsOpen && Islanders.Talks == talks + 1, "the branch's last page closes it (talk ran)");
+					isl.Talk();
+					yield return new WaitForSeconds(0.3f);
+					DialoguePanel.Next();
+					yield return new WaitForSeconds(0.3f);
+					DialoguePanel.Pick(4);
+					yield return new WaitForSeconds(0.5f);
+					Check(ref ok, !DialoguePanel.IsOpen && Behaviours.HasSignal(e, "finn-help") && GapBehaviours.Counter(e, "helped") == 1, "answer 4: -> end closes, choice4 fired, flag helped set");
+				}
+			}
+			finally
+			{
+				DialoguePanel.Close();
+				if (!keep) RemovePlayerIsland(e);
+			}
+			if (keep && e != null) { GapBehaviours.HostCount(e, ObjAction.Parse("count|helped|=0")); Log("kept 'ciplayer' (helped reset to 0)"); }
+			if (ok) Log("PASS: dialogue branches"); else Fail("dialogue branches");
+		}
+
+		[ConsoleCommand(name: "CIFlag", docs: "Dev, in game (either player): an island's flag / counter (QE10 answers' +flag): CIFlag <island> <name> [expected]")]
+		public static void FlagCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			if (args.Length < 2) { Fail("CIFlag <island> <name> [expected]"); return; }
+			int v = GapBehaviours.Counter(e, args[1]), want;
+			string who = Raft_Network.IsHost ? "host" : "client";
+			if (args.Length > 2 && int.TryParse(args[2], out want)) { if (v == want) Log("PASS: flag " + args[1] + " = " + v + " (" + who + ")"); else Fail("flag " + args[1] + " = " + v + ", expected " + want + " (" + who + ")"); }
+			else Log("PASS: flag " + args[1] + " = " + v + " (" + who + ")");
 		}
 
 		[ConsoleCommand(name: "CICollectParse", docs: "Dev, anywhere: collectible sets read right (a piece's defaults and use lines, the set check, the Find set step, the set event, plan check, keys, the editors' lists)")]
