@@ -228,7 +228,7 @@ info title=Ranger Landing
 info author=Custom Islands
 info description=The rangers' forward camp on Verdance's shore: a watch station on stilts, a hen run, a fire pit and a trail into the birch wood. The second island of The Last Green World.
 # (REACH 11-09: the tower tops are ladder climbs the 1x walker can't judge - the play climbs them)
-island reach.byplay=Training tower box
+island reach.byplay=Training tower box;rl_top
 island on.arrive=message||A watch station on stilts over the beach, hens scratching under it. Smoke from a fire pit - still warm.
 
 note jobboard Oda's job board | RANGER STATION - JOBS\n\n1. Follow the trail to the boat shed. Three marks: the split stone, the bent birch, the shed path. Walk them in order or you lose it.\n2. The shed winch is stripped - I hid its parts from the scavengers: the crank in the bear cave, the chain with the plane, the pawl in the old tower's ruins. Fit them and the door goes up. The boat's wheels are in the shed. Take them, and my stores key. A raft with a motor goes where the rivers go.\n3. Read my log before you go upriver.\n\n- Oda Fenn, ranger

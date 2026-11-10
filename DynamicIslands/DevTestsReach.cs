@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -1134,6 +1134,9 @@ namespace DynamicIslands
 					else if (reachSpeed > 0) yield return ReachWalkTarget(e, g, t, use, fwd, back, parent, backParent, sideNames, r => walked = r);
 					if (walked == null) report.Add(head + "PASS grid only, not walked (" + grid + ")");
 					else if (walked.StartsWith("PASS")) report.Add(head + walked + " (" + grid + ")");
+					// (a long ladder the walker sticks on at 1x but the island's play climbs: the play is the check - w02 11-10,
+					// Ranger's training tower and Riverfork's crane, 20 m ladders)
+					else if (playNote != null) report.Add(head + playNote + " - the walker: " + walked + " (the grid found a way: " + grid + ")");
 					else { problems++; report.Add(head + walked + " (the grid found a way: " + grid + ")"); }
 				}
 				else if (playNote != null) report.Add(head + playNote + " - the grid: " + string.Join("; ", bad.Distinct().ToArray()) + NearestReached(e, g, fwd, use, offset));

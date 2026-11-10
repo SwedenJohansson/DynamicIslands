@@ -215,7 +215,7 @@ info title=Riverfork Delta
 info author=Custom Islands
 info description=A jungle delta cut by river arms: the river people's outpost, vines on the paths, a rope ferry and boars upriver. The third island of The Last Green World.
 # (REACH 11-09: the crane top is a ladder climb the 1x walker can't judge - the play climbs it and reads the cab note)
-island reach.byplay=Crane cab box
+island reach.byplay=Crane cab box;dl_top
 island on.arrive=message||Fresh water runs into the sea here - three river arms through the jungle. Somewhere a wheel creaks on a rope.
 
 story ferry|Ferry crossed|Note_Paper|The delta's rope ferry, wound across the ferry arm.
