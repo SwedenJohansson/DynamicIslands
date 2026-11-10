@@ -36,7 +36,8 @@ namespace DynamicIslands.Editor
 			/// <summary>The island's other quests (Quest 2 is [0]): a rule may wait for one of them (ROADMAP CB6).</summary>
 			public List<IslandQuest> MoreQuests = new List<IslandQuest>();
 			public readonly HashSet<string> Zones = new HashSet<string>(StringComparer.OrdinalIgnoreCase), Signals = new HashSet<string>(StringComparer.OrdinalIgnoreCase),
-				Notes = new HashSet<string>(StringComparer.OrdinalIgnoreCase), Chests = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+				Notes = new HashSet<string>(StringComparer.OrdinalIgnoreCase), Chests = new HashSet<string>(StringComparer.OrdinalIgnoreCase),
+				Counters = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			public readonly Dictionary<string, int> Creatures = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 			public readonly HashSet<string> CreaturesComeBack = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			public int NoteCount, ChestCount, RaftCrates, Objects;
@@ -86,6 +87,7 @@ namespace DynamicIslands.Editor
 			int regrow;
 			bool islandNever = int.TryParse(ObjectProps.Get(f.Props, IslandProps.RegrowDays), out regrow) && regrow <= 0;
 			QuestSteps.AddIslandFacts(x.Steps, f.Props);
+			foreach (string n in QuestWaitSteps.CounterNames(new IDictionary<string, string>[] { f.Props }.Concat(f.Objects.Select(o => o.Props)))) x.Counters.Add(n);
 			foreach (IslandObject o in f.Objects)
 			{
 				IDictionary<string, string> p = o.Props ?? new Dictionary<string, string>();
@@ -1041,6 +1043,8 @@ namespace DynamicIslands.Editor
 						bool stepWarn;
 						string step = QuestSteps.StepProblem(f.Steps, st.Type, st.Target, st.Count, out stepWarn);
 						if (step != null) c.Add(i, stepWarn ? Level.Warning : Level.Problem, head + ": " + step + tail, fix);
+						string world = QuestWaitSteps.StepProblem(f.Zones, f.Counters, st.Type, st.Target, st.Count);
+						if (world != null) c.Add(i, Level.Problem, head + ": " + world + tail, fix);
 						break;
 				}
 			}

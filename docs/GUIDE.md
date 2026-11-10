@@ -1536,7 +1536,7 @@ moment, with other islands after it ([7.2](#72-your-first-world-plan-step-by-ste
    again with your island, where you left it.
 
 **Trying a long quest without playing it all:** press **F10** and type `QuestTest` near the island (in the test world
-or any world you host). `QuestTest` lists the island's quests and steps, the current one marked **>**.
+or any world you host). `QuestTest` lists the island's quests and steps, the current one marked **>** (for a time, weather, counter or players step also what the world says now).
 `QuestTest step 4` jumps the main quest to step 4 - back as well as forward (`QuestTest step 2 2` = quest 2's step 2,
 `QuestTest step done` finishes it, with its reward); `QuestTest signal gate-open` sends a signal on the island, as a
 lever or an action does; `QuestTest give brass_key 2` gives the crew a story item; `QuestTest skip` skips the nearest island's main quest's current step as
@@ -1830,7 +1830,7 @@ name on the Receiver.*
 Steps: **go to** a trigger zone, **read** a note, **open** a chest (one of the mod's chests - Raft's abandoned raft crate doesn't count), **defeat** or **catch** a number of animals,
 **collect** a number of a story item, **find** journal pages, find a **Blueprint** of Raft's, **talk to** an islander
 (6.3; by its name, the **▾** lists the island's islanders), **find** a number of a collectible **set** (6.3), **light up** a number of a light group's puzzle lights (6.3),
-**Signal / object is**, **Bring items**, **Craft or cook**, **Catch fish** and **Gather / harvest** (below). Each step's kind is a **▼ list** (each kind says what it
+**Signal / object is**, **Bring items**, **Craft or cook**, **Catch fish**, **Gather / harvest**, **Be there at a time**, **Weather is**, **Counter reaches** and **Players in a zone** (below). Each step's kind is a **▼ list** (each kind says what it
 asks). Steps point at things on the island by name: the small **▾** beside the name lists the names this island has
 for that kind - its trigger zones, note titles, chest titles or creatures - so you can pick one instead of typing it
 (place the zones, notes, chests and creatures first). A **collect** step picks its story item with **…**. **When the quest is done, bring a new island** (main quest only) chooses from a
@@ -1870,6 +1870,22 @@ before the step came. Place what players gather on the island (the generator's *
 items and plants) and say where in the step's text.
 **Timed steps** (3.5): the **time** box at the end of a step's row is a time limit in seconds (empty = none, up to 3600). While the step is active and a player is at the island, everyone near it sees a countdown at the top of the screen; when nobody is there the clock waits. If it runs out, the step starts again (its progress is set back) with a fresh clock, and players are told "Time's up". The clock is kept with the world. Best for reach, zone, talk and puzzle steps: what was killed, handed over or read stays done, so the editor warns on those kinds.
 
+
+**Be there at a time** waits until a player is at the island at that time of day: `night`, `day`, `dawn` (5:00-8:00),
+`dusk` (18:00-21:00), an hour range such as `20-6` (past midnight) or `12-14`, or one hour (`12`); commas mean any of them
+(`dawn,dusk`). **Weather is** waits for Raft's weather while a player is there: `clear`, `calm`, `fog`, `waves`,
+`rain`, `storm` or `snow` (commas = any; a storm counts as rain too). Both have no number; the **▾** lists the choices.
+
+**Counter reaches** waits until one of the island's counters (a **count** action of **Behaviour & events...**, such as
+`count|bells|+1` on a bell) reaches the number: `bells` 3 is done at the third ring. The **▾** lists the counters the
+island's count actions change; what was counted before the step came counts too.
+
+**Players in a zone** waits until that many players stand in a trigger zone at once (the **▾** lists the island's zones).
+Never more than are online: alone, one player is enough, as for a co-op zone. Raft has at most 8 players.
+
+The host decides all four (while a player is near the island) and every player sees the step move on. Check and the plan
+checker say when a time or weather is not one they know, when no count action changes the counter, and when the zone
+is missing. **QuestTest show** adds a line with the time, the weather, the counter's value or the players in the zone.
 **Steps done in another order count too:** a chest opened or animals defeated before their step has come are
 remembered, and count the moment their step comes - the guide's camp quest done backwards (warthogs, supplies, then
 the diary) finishes when the diary is read. If more than one later step could take the same work, the step that names
