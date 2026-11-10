@@ -1815,8 +1815,9 @@ check, an island rule or a world plan can wait for. The signals: lever, crank, p
 pipe, wire, claw, scales, laser, socket, blast, collapse, vehicle.
 
 **Islander dialogue markup:** a line with only `---` starts the next page; a line starting with `>` is an answer (up to 3
-in a dialogue, under the page they follow); other lines are speech. Answer 1..3 fires the islander's **choice1..choice3**
-event, closing it fires **talk**. In a **show dialogue** action write `\n` for a new line (the action is one line).
+in a dialogue, under the page they follow; up to 4 a page in 3.5); other lines are speech. Answer 1..4 fires the islander's **choice1..choice4**
+event, closing it fires **talk**. `#name` starts a branch, `> Answer -> name` goes there, `+flag`/`-flag`/`?flag`/`?!flag` set,
+clear and test the island's flags (3.5, see Islanders below). In a **show dialogue** action write `\n` for a new line (the action is one line).
 
 ![The quest editor](images/editor-quest.jpg)
 *The quest "The lost camp": go to the camp, read the diary, open the supplies, chase off 2 warthogs. The reward is
@@ -1826,6 +1827,7 @@ name on the Receiver.*
 Steps: **go to** a trigger zone, **read** a note, **open** a chest (one of the mod's chests - Raft's abandoned raft crate doesn't count), **defeat** or **catch** a number of animals,
 **collect** a number of a story item, **find** journal pages, find a **Blueprint** of Raft's, **talk to** an islander
 (6.3; by its name, the **▾** lists the island's islanders), **find** a number of a collectible **set** (6.3), **light up** a number of a light group's puzzle lights (6.3),
+**escort** an islander to a zone (3.5), **tame** animals and lead them to a pen (3.5),
 **Signal / object is**, **Bring items**, **Craft or cook**, **Catch fish** and **Gather / harvest** (below). Each step's kind is a **▼ list** (each kind says what it
 asks). Steps point at things on the island by name: the small **▾** beside the name lists the names this island has
 for that kind - its trigger zones, note titles, chest titles or creatures - so you can pick one instead of typing it
@@ -2167,6 +2169,36 @@ islander with that name, and a quest's **Talk to** step (6.1) is done when the d
 show a dialogue: the action **show dialogue** (`dialogue|Old Finn|Hello!\n---\nBye`, `\n` for a new line in the
 action's one line) opens it for the player who set it off, said by the named object (its answers run that object's
 choice events). Check warns when a **Talk to** step names no islander of the island.
+
+**Dialogue branches and flags** (3.5). A page can have up to four answers. A line `#map` starts a branch: lines of
+their own that the dialogue skips when read in order. The answer `> Where are we? -> map` goes there, `-> start` goes
+back to the top, `-> end` (or an answer without `->`) closes the dialogue. Answers can set the island's flags, shared
+by the whole crew and saved: `> Tell me more -> map +asked` also sets the flag `asked`, `-asked` clears it. An answer
+with `?asked` only shows while the flag is set, `?!asked` only while it isn't, so an islander can say something else
+the second time. Checks read a flag as a counter (`count|asked|>=1`). The **Add an answer with its own lines** button
+in the Islander group adds an answer and its branch to rename; the group warns about an answer that goes to a branch
+that isn't there. In multiplayer the host sets the flags and every player sees the same answers.
+
+**Walking islanders** (3.5). In the Islander group, **Walks to** lists places by name (objects or trigger zones,
+comma between them: `well, pier, hut`). The islander walks from where it stands to each in turn, waits **Pause s**
+there (2 s) and walks on at **Speed m/s** (1.4): **loop** walks back to the start and round again, **there and back**
+walks the same way back. The walk runs on the world's clock, so every player in a multiplayer world sees it in the
+same place without extra traffic; it still talks when spoken to. The group warns about a place the island doesn't have.
+
+**Escort step** (3.5). The quest step **Escort** (`Mia@camp`) asks the players to bring an islander to a trigger zone.
+While it is the current step the islander follows the nearest player and waits when they are more than 12 m away;
+inside the zone it stops, the step is done and it stays there (after a reload too). The host leads it, so all players
+see it walk. The **▾** lists the island's islanders and zones; the plan check warns when either is missing.
+
+**Tame step** (3.5). The quest step **Tame** (`Goat@pen`, with a count) asks the players to tame animals of the
+island's creature spots and lead them into a trigger zone. It works with goats, llamas and chickens; `Goat` means any
+goat spot, or write a creature spot's own name. A player holds the animal's food in hand (the creature spot's **Tame
+with** in its Creature group; by default a raw beet for chickens and a raw potato for goats and llamas) within 3 m of
+one for a second: it eats one and follows that player. Without the food in hand a hint says what it wants. A tamed
+animal walks behind its player, and waits where it is when they are more than 30 m away or leave the island. In the
+zone it stays penned and counts for the step; up to 8 a spot are remembered in the world (saved, sent to joiners), and
+penned animals are back in their pen after a reload. When the step is no longer the current one, tamed animals that
+were not penned go back to roaming. The host decides who tamed what; every player can feed.
 
 **Collectible sets** (2026-10-25). **Loot & chests** has **Collectible (set piece)**: a gold coin with a gem, one
 piece of a set. Its **Collectible set** group in the inspector has the **Set** name (default Relics; every object
