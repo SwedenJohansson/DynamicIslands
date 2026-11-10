@@ -106,8 +106,8 @@ namespace DynamicIslands.Editor
 		public static Func<TriggerZone, int> FakeCount;
 		public static int FakeOnline = -1;
 
-		static int Count(TriggerZone z, List<Network_Player> players) { return FakeCount != null ? FakeCount(z) : CountIn(z, players); }
-		static int Online(List<Network_Player> players) { return FakeOnline >= 0 ? FakeOnline : players.Count; }
+		internal static int Count(TriggerZone z, List<Network_Player> players) { return FakeCount != null ? FakeCount(z) : CountIn(z, players); }
+		internal static int Online(List<Network_Player> players) { return FakeOnline >= 0 ? FakeOnline : players.Count; }
 
 		static List<KeyValuePair<IslandWorldState.Entry, TriggerZone>> zones = new List<KeyValuePair<IslandWorldState.Entry, TriggerZone>>();
 		static readonly Dictionary<TriggerZone, int> lastCount = new Dictionary<TriggerZone, int>();

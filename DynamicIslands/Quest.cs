@@ -22,10 +22,10 @@ namespace DynamicIslands.Editor
 	public class IslandQuest
 	{
 		public const string KeyTitle = "quest.title", KeyIntro = "quest.intro", KeySteps = "quest.steps", KeyReward = "quest.reward", KeyDone = "quest.done";
-		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch", "collect", "pages", "blueprint", Islanders.QuestType, Collectibles.QuestType, Lights.QuestType, QuestSteps.Signal, QuestSteps.Bring, QuestSteps.Craft, QuestSteps.Fish, QuestSteps.Gather };
+		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch", "collect", "pages", "blueprint", Islanders.QuestType, Collectibles.QuestType, Lights.QuestType, QuestSteps.Signal, QuestSteps.Bring, QuestSteps.Craft, QuestSteps.Fish, QuestSteps.Gather, QuestWaitSteps.Time, QuestWaitSteps.Weather, QuestWaitSteps.Counter, QuestWaitSteps.Players };
 
 		/// <summary>Steps the crew's story book counts (the host checks them), not events.</summary>
-		public static bool Counted(string type) { return type == "collect" || type == "pages" || PlayerFeatures.Counted(type) || QuestSteps.Counted(type); }
+		public static bool Counted(string type) { return type == "collect" || type == "pages" || PlayerFeatures.Counted(type) || QuestSteps.Counted(type) || QuestWaitSteps.Counted(type); }
 
 		public class Step
 		{
@@ -47,7 +47,7 @@ namespace DynamicIslands.Editor
 					case "pages": return "Find " + (Count > 1 ? Count + " pages" : "a page") + (Target == "all" ? " (on any island)" : " on this island");
 					case "blueprint": return Target.Length > 0 ? "Find the " + PlanChecker.Pretty(Target.Trim()) + " blueprint" : "Find one of Raft's blueprints";
 				}
-				return PlayerFeatures.DescribeStep(Type, Target, Count) ?? QuestSteps.Describe(Type, Target, Count) ?? Type;
+				return PlayerFeatures.DescribeStep(Type, Target, Count) ?? QuestSteps.Describe(Type, Target, Count) ?? QuestWaitSteps.Describe(Type, Target, Count) ?? Type;
 			}
 		}
 
@@ -900,6 +900,7 @@ namespace DynamicIslands.Editor
 				return StoryBook.Pages.Count(p => p.Key.StartsWith("note:" + island + ":") || p.Key.StartsWith("act:" + island + ":"));
 			}
 			if (QuestSteps.Counted(s.Type)) return QuestSteps.Found(e, s);
+			if (QuestWaitSteps.Counted(s.Type)) return QuestWaitSteps.Found(e, s);
 			return PlayerFeatures.Found(e, s);
 		}
 
