@@ -273,6 +273,28 @@ namespace DynamicIslands
 			return null;
 		}
 
+		static BlockQuad realSpot;
+
+		// Aims Raft's own raycast at each raft surface that takes the item until Raft's build check says green: found[0] set, realSpot the quad;
+		// found[1] the last answer. (a raft block's surfaces are switched off until a placeable is held: inactive ones count too)
+		static IEnumerator GreenSpot(BlockCreator bc, Item_Base item, Network_Player player, string[] found)
+		{
+			realSpot = null; found[1] = "no surface";
+			List<BlockQuad> quads = Resources.FindObjectsOfTypeAll<BlockQuad>().Where(q => q != null && q.gameObject.scene.IsValid() && q.quadType != null && FaceFor(q, item).HasValue)
+				.OrderBy(q => (q.transform.position - player.transform.position).sqrMagnitude).Take(120).ToList();
+			foreach (BlockQuad q in quads)
+			{
+				realAim = SurfacePoint(q, FaceFor(q, item).Value);
+				CanvasHelper.ActiveMenu = MenuType.None;
+				yield return null; yield return null; yield return null;
+				Block ghost = Traverse.Create(bc).Field("selectedBlock").GetValue<Block>();
+				BlockQuad atCursor = Traverse.Create(bc).Field("quadAtCursor").GetValue<BlockQuad>();
+				object err = ghost != null ? HarmonyLib.AccessTools.Method(typeof(BlockCreator), "CanBuildBlock").Invoke(bc, new object[] { ghost }) : null;
+				found[1] = quads.Count + " surfaces, " + (atCursor != null ? "aimed" : "no quad at cursor") + ", " + (err != null ? err.ToString() : "no ghost");
+				if (atCursor != null && err != null && Convert.ToInt32(err) == 0) { realSpot = q; found[0] = "yes"; yield break; }
+			}
+		}
+
 		static IEnumerator PlaceRealRoutine()
 		{
 			bool ok = true;
@@ -287,6 +309,7 @@ namespace DynamicIslands
 			MenuType menuWas = CanvasHelper.ActiveMenu;
 			var names = new[] { ExtraUpgrades.TableName, "DI_FastJuicer", Cosmetics.GoldenShark };
 			int placed = 0;
+			Block wall = null;
 			try
 			{
 				foreach (string name in names)
@@ -305,22 +328,33 @@ namespace DynamicIslands
 					Item_Base selected = Traverse.Create(bc).Field("selectedBuildableItem").GetValue<Item_Base>();
 					Check(ref ok, selected == item, name + ": held, the build ghost is it (" + (selected != null ? selected.UniqueName : "none") + ")");
 					// a raft surface that takes it: aim at each in turn until Raft's own check shows the ghost green
-					// (a raft block's surfaces are switched off until a placeable is held: inactive ones count too)
-					List<BlockQuad> quads = Resources.FindObjectsOfTypeAll<BlockQuad>().Where(q => q != null && q.gameObject.scene.IsValid() && q.quadType != null && FaceFor(q, item).HasValue)
-						.OrderBy(q => (q.transform.position - player.transform.position).sqrMagnitude).Take(120).ToList();
-					BlockQuad spot = null; string last = "no surface";
-					foreach (BlockQuad q in quads)
+					string[] found = new string[2];
+					yield return GreenSpot(bc, item, player, found);
+					BlockQuad spot = found[0] != null ? realSpot : null;
+					// (a trophy hangs on a wall, and a new raft has none: one wall put up first where Raft's ghost for it is green)
+					if (spot == null && wall == null)
 					{
-						realAim = SurfacePoint(q, FaceFor(q, item).Value);
-						CanvasHelper.ActiveMenu = MenuType.None;
-						yield return null; yield return null; yield return null;
-						Block ghost = Traverse.Create(bc).Field("selectedBlock").GetValue<Block>();
-						BlockQuad atCursor = Traverse.Create(bc).Field("quadAtCursor").GetValue<BlockQuad>();
-						object err = ghost != null ? HarmonyLib.AccessTools.Method(typeof(BlockCreator), "CanBuildBlock").Invoke(bc, new object[] { ghost }) : null;
-						last = (atCursor != null ? "aimed" : "no quad at cursor") + ", " + (err != null ? err.ToString() : "no ghost");
-						if (atCursor != null && err != null && Convert.ToInt32(err) == 0) { spot = q; break; }
+						Item_Base wallItem = ItemManager.GetItemByName("Block_Wall_Wood");
+						if (wallItem != null)
+						{
+							bc.SetBlockTypeToBuild(wallItem);
+							string[] wf = new string[2];
+							yield return GreenSpot(bc, wallItem, player, wf);
+							Block wg = Traverse.Create(bc).Field("selectedBlock").GetValue<Block>();
+							if (wf[0] != null && wg != null)
+							{
+								DPS dps = Traverse.Create(bc).Field("quadSurface").Field("dpsType").GetValue<DPS>();
+								try { wall = bc.CreateBlockCheat(wallItem, wg.transform.localPosition, wg.transform.localEulerAngles, dps, -1); } catch (Exception e) { Log("place real: wall for the trophy: " + e.Message); }
+							}
+							realAim = null;
+							Log("place real: a wall for the trophy " + (wall != null ? "put up" : "not possible (" + wf[1] + ")"));
+							if (hotbar != null) hotbar.ReselectCurrentSlot();
+							yield return new WaitForSecondsRealtime(0.5f);
+							if (wall != null) { found = new string[2]; yield return GreenSpot(bc, item, player, found); spot = found[0] != null ? realSpot : null; }
+						}
 					}
-					if (spot == null) { Check(ref ok, false, name + ": no raft surface where the ghost is green (" + quads.Count + " surfaces, last: " + last + ")"); realAim = null; continue; }
+					string last = found[1]; int quadsCount = found[0] != null ? 1 : 0;
+					if (spot == null) { Check(ref ok, false, name + ": no raft surface where the ghost is green (last: " + last + ")"); realAim = null; continue; }
 					HashSet<Block> before = new HashSet<Block>(BlockCreator.GetPlacedBlocks());
 					CanvasHelper.ActiveMenu = MenuType.None;
 					// (the click is held a few frames until Raft places it: one press, so at most one block)
@@ -350,6 +384,7 @@ namespace DynamicIslands
 			finally
 			{
 				realAim = null; realClickFrame = -1;
+				if (wall != null) BlockCreator.RemoveBlockNetwork(wall, null, true);
 				CanvasHelper.ActiveMenu = menuWas;
 				if (!optionWas) { opts.Remove(WorldOptions.Upgrades); WorldOptions.Set(opts); }
 			}
