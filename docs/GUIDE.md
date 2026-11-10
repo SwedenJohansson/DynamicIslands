@@ -1826,7 +1826,7 @@ name on the Receiver.*
 Steps: **go to** a trigger zone, **read** a note, **open** a chest (one of the mod's chests - Raft's abandoned raft crate doesn't count), **defeat** or **catch** a number of animals,
 **collect** a number of a story item, **find** journal pages, find a **Blueprint** of Raft's, **talk to** an islander
 (6.3; by its name, the **▾** lists the island's islanders), **find** a number of a collectible **set** (6.3), **light up** a number of a light group's puzzle lights (6.3),
-**Signal / object is**, **Bring items**, **Craft or cook**, **Catch fish**, **Gather / harvest**, **Be there at a time**, **Be there in weather**, **Counter reaches** and **Players in a zone** (below). Each step's kind is a **▼ list** (each kind says what it
+**Signal / object is**, **Bring items**, **Craft or cook**, **Catch fish**, **Gather / harvest**, **Be there at a time**, **Weather is**, **Counter reaches** and **Players in a zone** (below). Each step's kind is a **▼ list** (each kind says what it
 asks). Steps point at things on the island by name: the small **▾** beside the name lists the names this island has
 for that kind - its trigger zones, note titles, chest titles or creatures - so you can pick one instead of typing it
 (place the zones, notes, chests and creatures first). A **collect** step picks its story item with **…**. **When the quest is done, bring a new island** (main quest only) chooses from a
@@ -1867,7 +1867,7 @@ items and plants) and say where in the step's text.
 
 **Be there at a time** waits until a player is at the island at that time of day: `night`, `day`, `dawn` (5:00-8:00),
 `dusk` (18:00-21:00), an hour range such as `20-6` (past midnight) or `12-14`, or one hour (`12`); commas mean any of them
-(`dawn,dusk`). **Be there in weather** waits for Raft's weather while a player is there: `clear`, `calm`, `fog`, `waves`,
+(`dawn,dusk`). **Weather is** waits for Raft's weather while a player is there: `clear`, `calm`, `fog`, `waves`,
 `rain`, `storm` or `snow` (commas = any; a storm counts as rain too). Both have no number; the **▾** lists the choices.
 
 **Counter reaches** waits until one of the island's counters (a **count** action of **Behaviour & events...**, such as

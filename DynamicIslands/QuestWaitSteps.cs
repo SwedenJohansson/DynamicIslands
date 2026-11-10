@@ -10,7 +10,7 @@ namespace DynamicIslands.Editor
 	/// Quest step kinds of 3.5 (feat35a) that wait for the world, not for a deed: the behaviour checks of 11-04 (GapBehaviours,
 	/// GapWorld) as quest steps.
 	///   - "time" ("Be there at a time"): target = day, night, dawn, dusk, an hour range "20-6" or an hour "12" (commas = any of them).
-	///   - "weather" ("Be there in weather"): target = clear, calm, fog, waves, rain, storm, snow (commas = any of them).
+	///   - "weather" ("Weather is"): target = clear, calm, fog, waves, rain, storm, snow (commas = any of them).
 	///   - "counter" ("Counter reaches"): target = a counter's name (the "count" action's), count = the value it must reach.
 	///   - "players" ("Players in a zone"): target = a trigger zone, count = players standing in it at once (never more than
 	///     the players online: one player alone is enough, as for co-op zones).

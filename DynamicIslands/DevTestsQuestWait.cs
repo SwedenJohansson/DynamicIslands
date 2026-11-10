@@ -11,7 +11,7 @@ using HMLLibrary;
 
 namespace DynamicIslands
 {
-	/// <summary>Tests of the quest step kinds of 3.5 (QuestWaitSteps): "Be there at a time", "Be there in weather",
+	/// <summary>Tests of the quest step kinds of 3.5 (QuestWaitSteps): "Be there at a time", "Weather is",
 	/// "Counter reaches" and "Players in a zone".</summary>
 	public static partial class DevTests
 	{
@@ -59,7 +59,7 @@ namespace DynamicIslands
 			ScrollRect scroll = qw.GetComponentsInChildren<ScrollRect>(true).FirstOrDefault(s => s.transform.parent != null && s.transform.parent.name == "StepsBox") ?? qw.GetComponentsInChildren<ScrollRect>(true).FirstOrDefault();
 			List<Button> kinds = qw.GetComponentsInChildren<Button>(true).Where(b => b.name == "Drop_StepType").ToList();
 			string[] labels = kinds.Select(b => UIKit.LabelOf(b).text).ToArray();
-			Check(ref ok, labels.Length == 4 && labels[0] == "Be there at a time" && labels[1] == "Be there in weather" && labels[2] == "Counter reaches" && labels[3] == "Players in a zone",
+			Check(ref ok, labels.Length == 4 && labels[0] == "Be there at a time" && labels[1] == "Weather is" && labels[2] == "Counter reaches" && labels[3] == "Players in a zone",
 				"the kinds' names: " + string.Join(", ", labels));
 			// each row's own ▾ list and count field
 			Func<int, Transform> row = i => kinds.Count > i ? kinds[i].transform.parent : null;
@@ -146,7 +146,7 @@ namespace DynamicIslands
 				Check(ref ok, QuestTracker.StepOf(e) == 2, "a storm: step 2 done");
 
 				// the counter: a real count action, three rings
-				for (int i = 0; i < 2; i++) { Behaviours.Fire(e, bell, "use", true); yield return new WaitForSeconds(0.4f); }
+				for (int i = 0; i < 2; i++) { Behaviours.Fire(e, bell, "use", true); yield return new WaitForSeconds(1.5f); }
 				yield return new WaitForSeconds(1.5f);
 				show = QuestTestCommands.Describe(e);
 				Check(ref ok, QuestTracker.StepOf(e) == 2 && GapBehaviours.Counter(e, "ci-bells") == 2 && show.Contains("counter 'ci-bells' = 2"), "two rings: the counter at 2, step 3 waits (" + show.Replace("\n", " / ") + ")");

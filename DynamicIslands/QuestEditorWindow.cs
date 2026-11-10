@@ -364,7 +364,7 @@ namespace DynamicIslands.Editor
 		{
 			{ "reach", "Go to" }, { "read", "Read" }, { "open", "Open" }, { "kill", "Defeat" }, { "catch", "Catch" }, { "collect", "Collect" }, { "pages", "Find pages" }, { "blueprint", "Blueprint" }, { Islanders.QuestType, "Talk to" }, { Collectibles.QuestType, "Find set" }, { Lights.QuestType, "Light up" },
 			{ QuestSteps.Signal, "Signal / object is" }, { QuestSteps.Bring, "Bring items" }, { QuestSteps.Craft, "Craft or cook" }, { QuestSteps.Fish, "Catch fish" }, { QuestSteps.Gather, "Gather / harvest" },
-			{ QuestWaitSteps.Time, "Be there at a time" }, { QuestWaitSteps.Weather, "Be there in weather" }, { QuestWaitSteps.Counter, "Counter reaches" }, { QuestWaitSteps.Players, "Players in a zone" },
+			{ QuestWaitSteps.Time, "Be there at a time" }, { QuestWaitSteps.Weather, "Weather is" }, { QuestWaitSteps.Counter, "Counter reaches" }, { QuestWaitSteps.Players, "Players in a zone" },
 		};
 
 		/// <summary>What each kind of step asks (the step list's lines).</summary>
