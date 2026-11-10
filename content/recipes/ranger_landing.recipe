@@ -105,7 +105,9 @@ place Loot_ChestSmall dcavechest at -35.5 28 h=5.45 sit yaw=200
 place Placeable_Lantern_Metal - at -40.6 29 h=5.45 sit
 # the boat shed on the north beach (mark 3: the shed path)
 place Zone_Trigger track3 at 2 58 ground
-push at 6 68 h=2.6
+# (11-10 w02, REACH: the slope in front of the south door stands 1.3-1.5 m over the shed's floor - no way in; the shed turned
+#     round on its own spot, the door on the beach side now, where the sand is level with the floor)
+push at 10.5 71 h=2.6 yaw=180
 call hut w=3 d=2 y=0.1
 place Loot_Chest boatshed at 3.6 2.3 y=0.1 sit yaw=180
 place "Box Small" - at 0.8 2.3 y=0.1 sit
@@ -188,9 +190,9 @@ note rlcrate Slipway van's toolbox | Oda's van, ten metres down, its back doors 
 loot rlcrate Bolt*4;Scrap*3;Rope*2
 # (11-09 w02, REACH: the bear cave's hill slopes over this spot at 12.4 m - the chest at 5 m was shut in under it; a
 #     quarry shelf cut level into the slope, over the hill's skin - ground shows only 0.6 m or more over it)
-brush flatten at -30 60 r=3 s=20 frames=250 h=13.6
-brush smooth at -30 60 r=5 s=6 frames=8
-place Loot_ChestSmall rlquarry at -30 60 ground sit yaw=0
+# (11-10 w02: the shelf was terrain, and the hill's skin lies over the terrain there (13.2 m) - the chest sat under it at
+#     10 m. On the skin now; the terrain under a skin is never seen)
+place Loot_ChestSmall rlquarry at -30 60 h=13.15 sit yaw=0
 note rlquarry Quarry tool chest | Oda's hammer, left where the stone was split. A chalk note: RACK. YES I KNOW.
 loot rlquarry story:tool*1;Stone*6;Nail*6
 prop rlquarry loot.refill=0

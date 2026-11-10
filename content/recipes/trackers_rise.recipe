@@ -39,11 +39,13 @@ clear at -11.75 -9.75 r=5
 clear at 0 -40 r=6
 
 # --- The trackers' watch tower on four posts: the tower chest on its deck; the zipline down to the cove ---------------
-push at -14 -12 h=6
-call stilt_hut y=2.6
+# (11-10 w02, REACH: the ground at the ladder's foot is 1.1 m over the push - the ladder stood 1.1 m over the deck, no
+#     floor to step off at its top; the tower 1.1 m up, its posts down to the old foot)
+push at -14 -12 h=7.1
+call stilt_hut y=2.6 foot=1.1
 place Loot_Chest towerchest at 3.6 3.6 y=2.7 sit yaw=180
 # REDO 10-24: the tower's map table (the island's machine) and Oda's map case it opens
-place MapTable maptable at 1.4 3.4 y=2.7 sit yaw=0
+place MapTable maptable at 1.4 3.4 y=2.66 sit yaw=0
 place Loot_ChestSmall mapcase at 3.6 1.0 y=2.7 sit yaw=270
 pop
 # (zip deck beside the tower)
@@ -132,6 +134,12 @@ cavegate trcut at=-36,66 as=trcut_vines2 scale=1.6
 brush flatten at -35 73 r=3.5 s=20 frames=250 h=3
 brush flatten at -35 75.5 r=3.5 s=20 frames=250 h=3.1
 brush flatten at -35 78 r=3.5 s=20 frames=250 h=3.2
+# (11-10 w02, REACH: the channel still ended 1.8 m under the skin's slope at z=80 - a dead end; its last 6 m ramp up to the
+#     slope's 4.5 m, and from there the slope runs down west to the beach)
+for i 0 6 1
+brush flatten at -35 {74+$i} r=2.5 s=20 frames=250 h={3+0.27*$i}
+next
+brush smooth from -35 73 to -35 80 r=2.5 s=6 frames=6
 brush flatten at -35.5 80 r=3 s=20 frames=250 h=3.3
 brush smooth from -35 71 to -35 80 r=3 s=4 frames=6
 place Loot_ChestSmall trcutcache at -34.6 56 h=4.5 drop yaw=270
