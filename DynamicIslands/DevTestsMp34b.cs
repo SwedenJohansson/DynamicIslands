@@ -418,7 +418,14 @@ namespace DynamicIslands
 					// it follows player 2
 					goat = goats().OrderBy(a => Vector3.Distance(a.transform.position, me.transform.position)).First();
 					IslandObjectRef spot = ScObjOf(e, "mp-client");
-					if (spot != null) MovePlayerTo(spot.transform.position);
+					// (led a few steps at a time, as a player walks: one long jump can leave it behind)
+					for (int i = 0; spot != null && i < 12 && Vector3.Distance(Flat(me.transform.position), Flat(spot.transform.position)) > 1f; i++)
+					{
+						Vector3 dir = spot.transform.position - goat.transform.position; dir.y = 0f;
+						Vector3 next = dir.magnitude < 6.5f ? spot.transform.position : goat.transform.position + dir.normalized * 5f;
+						MovePlayerTo(next);
+						yield return new WaitForSeconds(2.5f);
+					}
 					yield return M4Wait(() => Vector3.Distance(Flat(goat.transform.position), Flat(me.transform.position)) < 4.5f, 25f);
 					Check(ref ok, Vector3.Distance(Flat(goat.transform.position), Flat(me.transform.position)) < 4.5f, "the goat followed player 2 (" + Vector3.Distance(Flat(goat.transform.position), Flat(me.transform.position)).ToString("F1") + " m behind)");
 					break;
