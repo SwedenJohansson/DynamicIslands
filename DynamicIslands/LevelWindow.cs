@@ -113,6 +113,31 @@ namespace DynamicIslands.Editor
 			if (instance.hud != null) instance.hud.gameObject.SetActive(false);
 		}
 
+		/// <summary>The level box's usual place (from the top of the screen) and the gap it keeps under an island banner.</summary>
+		const float BannerTop = 190f, BannerGap = 12f;
+
+		/// <summary>The level box moves down while an island banner reaches its place, and back up after (AUDIT 11-09 #13).</summary>
+		void KeepBelowIslandBanner()
+		{
+			RectTransform r = (RectTransform)banner.transform;
+			float scale = canvasRect != null && canvasRect.lossyScale.y > 0f ? canvasRect.lossyScale.y : 1f;
+			float island = IslandInfo.BannerBottomPx / scale;
+			float y = island > 0f ? Mathf.Max(BannerTop, island + BannerGap) : BannerTop;
+			if (Mathf.Abs(r.anchoredPosition.y + y) > 0.5f) r.anchoredPosition = new Vector2(r.anchoredPosition.x, -y);
+		}
+
+		/// <summary>Tests: the level box's corners on screen, or null when it isn't up.</summary>
+		internal static Rect? BannerScreenRect
+		{
+			get
+			{
+				if (instance == null || !instance.banner.gameObject.activeSelf) return null;
+				Vector3[] c = new Vector3[4];
+				((RectTransform)instance.banner.transform).GetWorldCorners(c);
+				return Rect.MinMaxRect(c[0].x, c[0].y, c[2].x, c[2].y);
+			}
+		}
+
 		static void Build()
 		{
 			Canvas canvas = UIKit.CreateCanvas("CustomIslands_Levels", 410); // (above the island banners (400): an EXP number behind one would be lost)
@@ -122,7 +147,7 @@ namespace DynamicIslands.Editor
 
 			// The box, below where the island banners show; a level up's box opens the stats page when clicked
 			RectTransform n = UIKit.Rect("LevelBanner", canvas.transform);
-			UIKit.Anchor(n, new Vector2(0.5f, 1f), new Vector2(0, -190), new Vector2(560, 0));
+			UIKit.Anchor(n, new Vector2(0.5f, 1f), new Vector2(0, -BannerTop), new Vector2(560, 0));
 			UIKit.Surface(n);
 			UIKit.Vertical(n.gameObject, 4f, new RectOffset(22, 22, 12, 14), true);
 			instance.bannerTitle = UIKit.Label(n, "", 28, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold, "Title");
@@ -473,6 +498,7 @@ namespace DynamicIslands.Editor
 				float t = Time.unscaledTime - bannerShownAt;
 				banner.alpha = Mathf.Clamp01(t / 0.4f) * Mathf.Clamp01((bannerSeconds - t) / 1f);
 				if (t > bannerSeconds) banner.gameObject.SetActive(false);
+				KeepBelowIslandBanner();
 			}
 			// The level bar: placed again now and then (Raft's HUD can change size), lit up for a moment after EXP
 			// (not every frame while the bar can't be built - no Raft HUD found: a FindObjectOfType each frame. Audit 2026-10-06)

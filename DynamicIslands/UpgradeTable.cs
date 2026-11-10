@@ -87,7 +87,9 @@ namespace DynamicIslands.Editor
 			// out; while nothing is registered yet everything is kept, so a world read early loses nothing)
 			bool known = Teaches.Any();
 			HashSet<int> ok = !known ? null : into == learned ? new HashSet<int>(Teaches.Select(u => u.Index)) : new HashSet<int>(Researchable().Select(it => it.UniqueIndex));
-			foreach (int i in Ints(value)) if (ok == null || ok.Contains(i)) into.Add(i);
+			// (the learned list names upgrades by their declared index: one moved off it by another mod's item is read back
+			// to where it is now, AUDIT 11-09 #8)
+			foreach (int raw in Ints(value)) { int i = into == learned ? ExtraUpgrades.LiveIndex(raw) : raw; if (ok == null || ok.Contains(i)) into.Add(i); }
 			UpgradeTableMenu.Refresh();
 			return true;
 		}
@@ -96,7 +98,7 @@ namespace DynamicIslands.Editor
 		{
 			if (!WorldOptions.On(WorldOptions.Upgrades) && researched.Count == 0 && learned.Count == 0) yield break;
 			yield return "@upgraderesearch=" + Join(researched);
-			yield return "@upgradeslearned=" + Join(learned);
+			yield return "@upgradeslearned=" + Join(learned.Select(ExtraUpgrades.DeclaredIndex));
 		}
 
 		static string Join(IEnumerable<int> set) { return string.Join(",", set.OrderBy(i => i).Select(i => i.ToString(CultureInfo.InvariantCulture)).ToArray()); }
@@ -276,7 +278,7 @@ namespace DynamicIslands.Editor
 		{
 			if (t == null) return false;
 			Block b = t.GetComponent<Block>();
-			return b != null && b.buildableItem != null && b.buildableItem.UniqueIndex == ExtraUpgrades.TableIndex;
+			return b != null && b.buildableItem != null && b.buildableItem.UniqueIndex == ExtraUpgrades.LiveIndex(ExtraUpgrades.TableIndex);
 		}
 
 		/// <summary>An entry of the mod's items (an upgrade, or the table: that one stays hidden).</summary>

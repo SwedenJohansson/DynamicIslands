@@ -73,6 +73,31 @@ namespace DynamicIslands.Editor
 		static float nextCheck;
 		static CanvasGroup banner;
 		static Text titleText, authorText, descText;
+		static RectTransform bannerPanel;
+
+		/// <summary>How far down from the top of the screen the island banner reaches now, in screen pixels (0: none up). The
+		/// level-up banner keeps below it (AUDIT 11-09 #13: a long island banner reached over it).</summary>
+		internal static float BannerBottomPx
+		{
+			get
+			{
+				if (banner == null || bannerPanel == null || !banner.gameObject.activeSelf) return 0f;
+				Vector3[] c = new Vector3[4];
+				bannerPanel.GetWorldCorners(c);
+				return Screen.height - c[0].y;
+			}
+		}
+		/// <summary>Tests: the island banner's corners on screen (bottom-left, top-right), or null when none is up.</summary>
+		internal static Rect? BannerScreenRect
+		{
+			get
+			{
+				if (banner == null || bannerPanel == null || !banner.gameObject.activeSelf) return null;
+				Vector3[] c = new Vector3[4];
+				bannerPanel.GetWorldCorners(c);
+				return Rect.MinMaxRect(c[0].x, c[0].y, c[2].x, c[2].y);
+			}
+		}
 		static float shownAt = -100f;
 
 		/// <summary>The text of the last banner shown (the automated tests look at it).</summary>
@@ -126,6 +151,8 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The world was left: its banners still waiting aren't shown in the next one.</summary>
 		internal static void Forget() { waiting.Clear(); }
+		/// <summary>Tests: the banner goes at once, with those waiting.</summary>
+		internal static void HideNow() { waiting.Clear(); if (banner != null) banner.gameObject.SetActive(false); }
 
 		public static void Tick()
 		{
@@ -218,6 +245,7 @@ namespace DynamicIslands.Editor
 			Canvas canvas = UIKit.CreateCanvas("CustomIslands_IslandBanner", 400);
 			Object.DontDestroyOnLoad(canvas.gameObject);
 			RectTransform panel = UIKit.Rect("Banner", canvas.transform);
+			bannerPanel = panel;
 			UIKit.Anchor(panel, new Vector2(0.5f, 1f), new Vector2(0, -60), new Vector2(620, 0));
 			UIKit.Surface(panel); // Raft's menu look
 			UIKit.Vertical(panel.gameObject, 4f, new RectOffset(24, 24, 14, 16), true);

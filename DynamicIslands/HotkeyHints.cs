@@ -22,6 +22,27 @@ namespace DynamicIslands.Editor
 		public static KeyCode Journal { get { if (journal == null) journal = Read(JournalSetting, JournalDefault); return journal.Value; } }
 		public static KeyCode Stats { get { if (stats == null) stats = Read(StatsSetting, StatsDefault); return stats.Value; } }
 
+		/// <summary>Key names for hints, as bound now (AUDIT 11-09 #12: hints named fixed keys): the journal's, the stats page's,
+		/// and Raft's own notebook key (keybind "NoteBookToggle", which NoteBookUI reads; T when it can't be read).</summary>
+		public static string JournalName { get { return Name(Journal); } }
+		public static string StatsName { get { return Name(Stats); } }
+		public static string RaftNotebookName { get { return Name(RaftNotebook); } }
+		public static KeyCode RaftNotebook
+		{
+			get
+			{
+				try
+				{
+					Keybind k;
+					if (MyInput.Keybinds != null)
+						foreach (string n in new[] { "NoteBookToggle", "Notebook", "NoteBook" })
+							if (MyInput.Keybinds.TryGetValue(n, out k) && k != null && k.MainKey != KeyCode.None) return k.MainKey;
+				}
+				catch { }
+				return KeyCode.T;
+			}
+		}
+
 		/// <summary>While Defaults waits for a key to be pressed (and in the frame it got one): the journal and stats keys do nothing.</summary>
 		public static bool Listening { get { return listening || Time.frameCount == setFrame; } }
 		static bool listening;

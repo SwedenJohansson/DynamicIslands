@@ -305,7 +305,7 @@ namespace DynamicIslands.Editor
 					WorldOptions.Hints[i], MidGame(option)));
 			}
 			Add("Levels", OptionRow(list, "Level up system", () => { PlayerLevels.SetEnabled(!PlayerLevels.On); Refresh(); },
-				"Players earn EXP from monsters and spend stat points (K) on speed, damage, health and more.", LevelsMidGame));
+				"Players earn EXP from monsters and spend stat points (" + ModKeys.StatsName + ") on speed, damage, health and more.", LevelsMidGame));
 			// (the head start raft is built once, when the world is made - HeadStart.OnWorldRead: shown, not switched)
 			RectTransform hs = UIKit.Row(list, OptionRowH, 6f, "HeadStart");
 			UIKit.Hint(hs.gameObject, "The head start raft is built once, when the world is made (chosen in the New Game box's World settings). It can't be added or taken away in a running world.");

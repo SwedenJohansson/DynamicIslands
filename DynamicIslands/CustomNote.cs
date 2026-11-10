@@ -217,7 +217,7 @@ namespace DynamicIslands.Editor
 				bool first = !StoryBook.Pages.Any(p => p.Key == key);
 				StoryBook.AddPage(key, titleText.text, n.Text, Behaviours.IslandTitle(e));
 				if (first && StoryChain.BookRules.Any(x => x.Id.Equals(e.Rule ?? "", StringComparison.OrdinalIgnoreCase)))
-					IslandInfo.ShowMessage("Written into Raft's notebook (T): '" + titleText.text + "'");
+					IslandInfo.ShowMessage("Written into Raft's notebook (" + ModKeys.RaftNotebookName + "): '" + titleText.text + "'");
 			}
 		}
 

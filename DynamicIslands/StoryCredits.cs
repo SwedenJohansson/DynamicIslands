@@ -105,7 +105,7 @@ namespace DynamicIslands.Editor
 			{ Shadow sh = instance.noteText.GetComponent<Shadow>(); if (sh != null) Destroy(sh); }
 
 			RectTransform bottom = UIKit.Row(panel, 34f, 8f, "Bottom");
-			Text hint = UIKit.Label(bottom, "The world goes on. The note stays in Raft's notebook (T). Esc to close", 13, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "Hint");
+			Text hint = UIKit.Label(bottom, "The world goes on. The note stays in Raft's notebook (" + ModKeys.RaftNotebookName + "). Esc to close", 13, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "Hint");
 			UIKit.Size(hint.gameObject, -1, -1, 1);
 			UIKit.Button(bottom, "Back to the sea", Close, null, 150, 34);
 			canvas.gameObject.SetActive(false);
