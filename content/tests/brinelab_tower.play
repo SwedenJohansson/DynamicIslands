@@ -2,7 +2,9 @@
 # over the hatch, the stairwell, the boars, lab 2's cabinet, drive 1, the flooded lab, drives 2 and 3 (drive 3 hidden
 # until drive 2 is read; it sends "drives"), the pipe store, the boiler room locker.
 island Brinelab Tower
-offset 0 0
+offset 0.978 2.1699
+# (room in the bag first: a full bag from earlier plays in the world drops quest loot - 11-09)
+empty
 expect step 0
 expect title The Lab Tower
 zone lobby

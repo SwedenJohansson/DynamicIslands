@@ -1271,6 +1271,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Tests: the skin's renderer (null before a build).</summary>
 		public MeshRenderer SkinRenderer { get { return skin != null ? skin.GetComponent<MeshRenderer>() : null; } }
 
+		static readonly HashSet<string> dumped = new HashSet<string>();
 		public static string DressRimWalls(MeshRenderer mr)
 		{
 			if (mr == null) return null;
@@ -1295,6 +1296,20 @@ namespace DynamicIslands.Editor
 			mats[1] = m;
 			mr.sharedMaterials = mats;
 			mr.SetPropertyBlock(block, 1);
+			DigTunnel.SideRockOnly(mr, 1);
+			if (dumped.Add(m.name))
+			{
+				var sb = new System.Text.StringBuilder("[CUSTOM ISLANDS] Rim walls' rock " + m.name + " (" + (m.shader != null ? m.shader.name : "?") + "):");
+				Shader sh = m.shader;
+				for (int p = 0; sh != null && p < sh.GetPropertyCount(); p++)
+				{
+					string pn = sh.GetPropertyName(p);
+					var pt = sh.GetPropertyType(p);
+					if (pt == UnityEngine.Rendering.ShaderPropertyType.Texture) { Texture tx = m.GetTexture(pn); sb.Append(" " + pn + "=" + (tx != null ? tx.name : "-") + (block.isEmpty || block.GetTexture(pn) == null ? "" : "/blk " + block.GetTexture(pn).name)); }
+					else if (pt == UnityEngine.Rendering.ShaderPropertyType.Float || pt == UnityEngine.Rendering.ShaderPropertyType.Range) sb.Append(" " + pn + "=" + m.GetFloat(pn).ToString("0.##"));
+				}
+				Debug.Log(sb.ToString());
+			}
 			return m.name;
 		}
 

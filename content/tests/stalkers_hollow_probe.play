@@ -1,0 +1,5 @@
+# Probe (w03 11-09): The Stalker's Hollow's surface heights round the den (64 26) and the lip rock (44 80), island frame.
+island The Stalker's Hollow keep
+offset 0.6508 1.0124
+surface 36 -6 96 52 4
+surface 16 52 72 108 4

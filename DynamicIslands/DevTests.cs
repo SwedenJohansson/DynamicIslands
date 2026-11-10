@@ -2572,6 +2572,7 @@ namespace DynamicIslands
 			for (float t = 0; t < 5f && box.createGameButton != null && !box.createGameButton.interactable; t += 0.5f) yield return new WaitForSecondsRealtime(0.5f);
 			if (box.createGameButton != null && !box.createGameButton.interactable) { Fail("Create is disabled (name taken or invalid, or offline: PlayFab signed in " + Raft_Network.SignedIntoPlayfab + ")"); yield break; }
 			Log("Creating world '" + name + "'");
+			MadeWorld = name;
 			// (a test world gets defaultPlan unless a test chose one: not the plan the last world was made with, ROADMAP CB5)
 			if (WorldDirector.PendingPlan == null) WorldDirector.PendingPlan = WorldDirector.DefaultPlan;
 			box = MenuNewGameBox() ?? box;

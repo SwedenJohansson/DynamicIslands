@@ -254,6 +254,9 @@ namespace DynamicIslands
 						else
 						{
 							// (a copy left by an earlier run that stopped half way: removed first)
+							// (11-09 w03: a play started the moment a new world was ready brought its island before the director's
+							// new-world start, which cleared the world's islands - "didn't come". It waits for that start first)
+							for (float wt = 0f; wt < 60f && !(LoadSceneManager.IsGameSceneLoaded && WorldDirector.WorldHandled); wt += Time.unscaledDeltaTime) yield return null;
 							var left = IslandWorldState.Islands.Where(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
 							if (left.Count > 0) { Log("  (removed " + left.Count + " copy/copies of '" + island + "' left by an earlier run)"); yield return RemoveIslandsAndWait(left); }
 							Vector3? spot = ScSpot(island, 400f, IslandSpawner.ElevationOf(island));  // (a flying island flies here too)
@@ -317,6 +320,27 @@ namespace DynamicIslands
 						// ("blocked": the way must be shut - a locked gate, a wall)
 						if (blocked) Check(ref ok, !got, "the way " + line.Substring(5) + " is blocked: " + where);
 						else Check(ref ok, got, "walked " + line.Substring(5) + ": " + where);
+						checks++;
+						break;
+					}
+					case "swim":
+					{
+						// swim x z h to x z h ...: under the sea, from the first point straight through the others with Raft's water
+						// controller at swimming speed, up and down too; stuck = failed. A walk only goes along the floor - a flooded
+						// cave's drop into a dug gallery and the climb back out (Lumen Shelf, The Stalker's Hollow, w03 11-09)
+						string[] sc = t.Skip(1).Where(x => x != "to").ToArray();
+						var spts = new List<Vector3>();
+						for (int i = 0; i + 2 < sc.Length; i += 3) spts.Add(PlayPoint(F(sc[i]), F(sc[i + 1])) + Vector3.up * F(sc[i + 2]));
+						if (spts.Count < 2) { Check(ref ok, false, "swim: two points or more (x z h to x z h)"); checks++; break; }
+						PlayerMove.To(me, spts[0], ControllerType.Water);
+						Vector3 sIsland = playEntry.Position;
+						yield return new WaitForSeconds(1f);
+						Vector3 sMoved = playEntry.Position - sIsland;
+						if (sMoved.sqrMagnitude > 1f) spts = spts.Select(q => q + sMoved).ToList();
+						bool sGot = true;
+						string sWhere = "";
+						yield return PlaySwim(me, spts.Skip(1).ToList(), (g, w) => { sGot = g; sWhere = w; });
+						Check(ref ok, sGot, "swam " + line.Substring(5) + ": " + sWhere);
 						checks++;
 						break;
 					}
@@ -520,6 +544,9 @@ namespace DynamicIslands
 						// plan end: the world's story back to Raft's, the plan's islands gone
 						if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("play " + name + ": a plan only in a test world 'CI ...' (it changes the world's story)"); yield break; }
 						string plan = Rest(line, 1).Trim();
+						// (11-09 w03: a play started the moment a new world was ready set its plan before the director's new-world
+						// start, which set the world's plan back to 'Random islands' - the story stayed Raft's. It waits for that first)
+						for (float wt = 0f; wt < 60f && !(LoadSceneManager.IsGameSceneLoaded && WorldDirector.WorldHandled); wt += Time.unscaledDeltaTime) yield return null;
 						PlanCleanSlate();
 						if (plan == "end")
 						{
@@ -701,6 +728,20 @@ namespace DynamicIslands
 						}
 						break;
 					}
+					case "surface":
+					{
+						// surface <x0> <z0> <x1> <z1> [step]: logs the top surface's height (island frame, as stand) on a grid - where
+						// a cave hill's dome really lies before a pit or a dig goes near it (w03 11-09: the bone pit was buried)
+						float sx0 = F(t[1]), sz0 = F(t[2]), sx1 = F(t[3]), sz1 = F(t[4]), sst = t.Length > 5 ? F(t[5]) : 4f;
+						for (float sz = sz1; sz >= sz0 - 0.01f; sz -= sst)
+						{
+							var row = new System.Text.StringBuilder("  surface z=" + sz.ToString("F1", CultureInfo.InvariantCulture) + ":");
+							for (float sx = sx0; sx <= sx1 + 0.01f; sx += sst)
+								row.Append(" " + (PlaySurface(PlayPoint(sx, sz), 400f) - playEntry.Position.y).ToString("F1", CultureInfo.InvariantCulture));
+							Log(row.ToString());
+						}
+						break;
+					}
 					case "weather":
 						// weather <name>: Raft's weather changed at once (pictures in clear weather); weather alone lists them
 						PlayWeather(t.Length > 1 ? Rest(line, 1).Trim() : "");
@@ -733,7 +774,7 @@ namespace DynamicIslands
 					case "empty":
 						// the player's inventory emptied, as a player makes room (a long play carries a full bag by a vault whose plans
 						// would drop to the floor - Sundown's bank, SL6 2026-10-19); only in a CI world, its blueprints noted first
-						if ((SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ") && me != null && me.Inventory != null) { NotePlayBlueprints(me); me.Inventory.Clear(); Log("  inventory emptied"); }
+						if (IsTestWorld() && me != null && me.Inventory != null) { NotePlayBlueprints(me); me.Inventory.Clear(); Log("  inventory emptied"); }
 						break;
 					case "picture":
 					{
@@ -785,6 +826,13 @@ namespace DynamicIslands
 						// (snap <file> <object> [from] [dist] [up]: the object's middle seen from compass bearing "from" (0 = from the north), dist m off, up m higher;
 						// dist defaults to twice its size, at least 4 m)
 						if (t.Length < 3) { Check(ref ok, false, rl.Where + ": snap <file> <object> [from] [dist] [up]"); break; }
+						// (the object's name may have spaces - an islander's obj.name, "Harbourmistress Elaine", w03 11-09: the numbers
+						// at the end are from/dist/up, the words before them the name)
+						{
+							int nEnd = t.Length; float tmpF;
+							while (nEnd > 3 && t.Length - nEnd < 3 && float.TryParse(t[nEnd - 1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out tmpF)) nEnd--;
+							if (nEnd > 3) t = new[] { t[0], t[1], string.Join(" ", t, 2, nEnd - 2) }.Concat(t.Skip(nEnd)).ToArray();
+						}
 						IslandObjectRef o = ScObjOf(playEntry, t[2]);
 						if (o == null)
 						{
@@ -1164,6 +1212,62 @@ namespace DynamicIslands
 							// (what the player's own state was - the walks that stall with nothing ahead, 2026-10-05)
 							" [speed " + pc.normalSpeed.ToString("F2") + ", controller " + (cc.enabled ? "on" : "OFF") + ", grounded " + cc.isGrounded +
 							", parent " + (player.transform.parent != null ? player.transform.parent.name : "-") + "]");
+						yield break;
+					}
+					yield return null;
+				}
+			}
+			result(true, "got there, " + (player.transform.position.y - playEntry.Position.y).ToString("F2") + " m above the sea");
+		}
+
+		/// <summary>The world CINewWorld last made in this session (its name).</summary>
+		internal static string MadeWorld;
+
+		/// <summary>A world the tests may empty the bag in: one named 'CI ...', or one CINewWorld made in this session (a
+		/// world named otherwise to keep its bag across islands still fills up with loot - 11-09 w03: a full bag dropped
+		/// Caisson Yard's zipline plans and the quest waited for them). The play's `empty` works there; an `island` line
+		/// still empties the bag only in a 'CI ...' world, so a play can carry a tool on from an earlier island.</summary>
+		static bool IsTestWorld()
+		{
+			string w = SaveAndLoad.CurrentGameFileName ?? "";
+			return w.StartsWith("CI ") || (MadeWorld != null && w == MadeWorld);
+		}
+
+		/// <summary>
+		/// The play's `swim`: the player moved straight at each point in turn (up and down too) with Raft's water controller at
+		/// swimming speed; within 0.7 m it is reached, 2 s without headway (or 40 s in all) is stuck - what is in the way then.
+		/// </summary>
+		static IEnumerator PlaySwim(Network_Player player, List<Vector3> points, Action<bool, string> result)
+		{
+			PersonController pc = player.PersonController;
+			CharacterController cc = pc.controller;
+			pc.SwitchControllerType(ControllerType.Water);
+			float speed = Mathf.Max(2f, pc.swimSpeed);
+			foreach (Vector3 rel in points.Select(q => q - playEntry.Position).ToList())
+			{
+				float stuck = 0f, total = 0f;
+				Vector3 last = player.transform.position;
+				Vector3 target;
+				while (((target = playEntry.Position + rel) - player.transform.position).magnitude > 0.7f)
+				{
+					KeepAlive(player);
+					if (pc.controllerType != ControllerType.Water) pc.SwitchControllerType(ControllerType.Water);
+					Vector3 d = target - player.transform.position;
+					Vector3 dir = d.normalized;
+					Vector3 flat = new Vector3(d.x, 0f, d.z);
+					if (flat.sqrMagnitude > 0.01f) Look(player, Quaternion.LookRotation(flat).eulerAngles.y, 0f);
+					cc.Move(dir * Mathf.Min(speed * Time.deltaTime, d.magnitude));
+					Vector3 now = player.transform.position;
+					stuck = (now - last).magnitude < speed * Time.deltaTime * 0.3f ? stuck + Time.deltaTime : 0f;
+					last = now;
+					total += Time.deltaTime;
+					if (stuck > 2f || total > 40f)
+					{
+						RaycastHit h;
+						Vector3 eye = now + Vector3.up * 0.5f;
+						string what = Physics.SphereCast(eye, 0.3f, dir, out h, 1.5f, ~0, QueryTriggerInteraction.Ignore) && h.collider.GetComponentInParent<Network_Player>() == null
+							? BlockerName(h.collider) : "nothing found ahead";
+						result(false, "stuck at " + (now - playEntry.Position).ToString("F1") + " on the way to " + rel.ToString("F1") + " (in the way: " + what + ", " + pc.controllerType + ")");
 						yield break;
 					}
 					yield return null;

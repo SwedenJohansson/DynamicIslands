@@ -73,11 +73,11 @@ namespace DynamicIslands.Editor
 			givenNow.Add(island);
 		}
 
-		// (per world and player: a player who joins uses the host's world id, and two players on one PC - or a host who
+		// (per world (IslandWorldState.WorldKey: worlds without an id were one record - bug 11-09) and player: a player who joins uses the host's world id, and two players on one PC - or a host who
 		// later joins its own world - each have their own record)
-		static string FilePath { get { return Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), SaveAndLoad.WorldGuid + "-" + PlayerId + ".rewards"); } }
+		static string FilePath { get { return Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), IslandWorldState.WorldKey + "-" + PlayerId + ".rewards"); } }
 		/// <summary>The record before 2026-10-06, by world only: kept by the PC that hosted the world (it was that player's).</summary>
-		static string OldFilePath { get { return Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), SaveAndLoad.WorldGuid + ".rewards"); } }
+		static string OldFilePath { get { return Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), IslandWorldState.WorldKey + ".rewards"); } }
 
 		static string PlayerId
 		{
@@ -90,10 +90,10 @@ namespace DynamicIslands.Editor
 
 		static void Load()
 		{
-			string key = SaveAndLoad.WorldGuid + "-" + PlayerId;
+			string key = IslandWorldState.WorldKey + "-" + PlayerId;
 			if (loadedFor == key) return;
 			// (what happened while the player wasn't known yet is kept, and saved with the player's own record)
-			bool merge = loadedFor == SaveAndLoad.WorldGuid + "-local";
+			bool merge = loadedFor == IslandWorldState.WorldKey + "-local";
 			loadedFor = key;
 			readFailed = false;
 			if (!merge) { rewarded.Clear(); owed.Clear(); givenAfter.Clear(); }

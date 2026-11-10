@@ -238,6 +238,7 @@ namespace DynamicIslands.Editor
 			if (PlayerNotebook.LoadedFor == null) { IslandInfo.ShowMessage("Your notebook is kept per world: it opens in a world."); return; }
 			if (instance == null) Build();
 			JournalWindow.Close();
+			LevelWindow.Close(); // (audit 11-09: the notebook opened behind the stats page)
 			instance.Show();
 		}
 

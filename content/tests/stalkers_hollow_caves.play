@@ -1,0 +1,28 @@
+# The Stalker's Hollow's warren (CIPlay stalkers_hollow_caves, 11-08, redesigned 11-09; in a test world 'CI ...'; the
+# island is 40 m down, so it is all a swim). Points as in its recipe, heights in the island frame (sea floor ~3, sea 40):
+# the south-west mouth at the lip rock's foot at 30 56, the east mouth over the trench at 68 72, both tunnels dug level
+# (floor ~6, 11-09 after the faces were smoothed) to the hollow between 47 66 and 52 68 (air zone sh_warren round 49.5 67.5, titanium 1, mushrooms 3, a cave
+# light). The summit tower, locker and ledge chest stay 13 m and more off the hollow. The [CITEST] dig lines give the
+# real floors. In at one mouth, out at the other.
+island The Stalker's Hollow keep
+offset 0.6508 1.0124
+hour 11
+weather Calm
+where Pickup_Landmark_Mushroom
+where Pickup_Landmark_Titanium
+
+# Outside: both mouths from the sea floor, and the lip rock over the hollow
+picture sh_cave_out 27 9.5 47 30 7 56 light=20
+picture sh_cave_east 78 9.5 74 68 7 72 light=20
+picture sh_rock 30 25 55 47 20 70
+
+# Swim in from the south-west mouth into the hollow and breathe there
+swim 28 50 7.6 to 30 56 7.6 to 38.5 61 7.6 to 47 66 7.6 to 49.5 67.5 7.6
+air sh_warren here
+picture sh_cave_in 34 7.6 58.5 47 7.6 66 light=20
+picture sh_hollow 47 8.1 65.5 52 7.6 68.5 light=20
+air sh_warren
+
+# Out through the east tunnel to the trench side
+swim 49.5 67.5 7.6 to 52 68 7.6 to 60 70 7.6 to 68 72 7.6 to 74 74 8
+picture sh_east_back 64 7.6 71 52 7.6 68 light=20

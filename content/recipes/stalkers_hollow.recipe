@@ -13,6 +13,7 @@ include lib_features
 include lib_sea
 include lib_gravity
 include lib_sunken
+include lib_caves
 # RESIZE 10-24: Radius 40 -> 95 (Height 10 -> 10), the island grows round the old content, which stays where it was.
 new
 gen Trees=0 Bushes=0 Rocks=0.5 Harvest=0 BeachThings=0
@@ -49,6 +50,12 @@ call airpocketat x=-24.15 z=0 h=24 id=chain_air al=chainair bub=chainbub r=2 msg
 ramp Block_Floor_Tier3 from -17 0 7.8 to -11 0 0.3 len=1.5 top=0
 
 # --- The four alcoves: stone niches with air, a lamp each (teal lamps hidden until RESTORE) ------------------------------
+# (w03 11-09: CIFloating found the alcoves' floors at h=0 a few cm under the ground, the nearest-the-chain one 2.5 m
+# under the rising ground at its back - each alcove's ground flattened just under its floor first)
+brush flatten at 0 13.5 r=2.6 s=20 frames=200 h=-0.12
+brush flatten at 13.5 0 r=2.6 s=20 frames=200 h=-0.12
+brush flatten at 0 -13.5 r=2.6 s=20 frames=200 h=-0.12
+brush flatten at -12.5 7 r=2.6 s=20 frames=260 h=-0.12
 push at -1.5 12 h=0 yaw=0
 call stonehouse w=2 d=2 a=alcoves
 pop
@@ -162,6 +169,13 @@ place Zone_Trigger shtrenchdark at 62 -61 ground y=1
 # --- DEEP 1-HOUR (10-24): the lip rock (42.5 m from the floor, a beacon at the surface) and the warden house in the south-west pit with the crown vault; three floodlights against the Stalker
 # the rock that breaks the surface (42.5 m up from the floor), a beacon tower on its dry top
 call sk_seamount x=44 z=80 top=42.5 r=24
+# REACH 11-09 (w03): the dry top stood 2.5 m over the water on a steep lip all round (surface probe: 39.8 -> 42.4 in 2 m;
+# no way out of the sea to the tower): a ramp up its west side, as on Biome Seven (the ledge chest stays 5 m off)
+brush flatten at 36 78 r=1.8 s=20 frames=200 h=39.6
+brush flatten at 37.5 78 r=1.8 s=20 frames=200 h=40.4
+brush flatten at 39 78 r=1.8 s=20 frames=200 h=41.2
+brush flatten at 40.3 78 r=1.6 s=20 frames=200 h=42
+brush smooth at 38.2 78 r=3 s=4 frames=20
 call sk_pit x=-50 z=-74 h0=-6
 call sk_cave x=86 z=-16 h=2 yaw=0 al=shcave2 chest=shcave2chest
 call sk_reef x=65.6 z=80 r=6 seed=24910
@@ -170,12 +184,11 @@ call sk_reef x=-40 z=-68 r=5 seed=24930
 
 # the summit: the lip rock - the tower (ladder inside), the locker, the note, the zone
 call ladtower x=44 z=80 h0=42.5 lv=3 a=shtower
-place Loot_ChestSmall shlocker at 43.25 80.75 h=49.98 sit yaw=180
+place Loot_ChestSmall shlocker at 43.25 80.75 h=50.2 drop yaw=180
 place Note_Paper shsumnote at 43.25 79.25 h=50.08 drop yaw=20
 place Zone_Trigger shsummit at 44 80 h=50.98
 place Loot_ChestSmall shledge at 30.8 80 ground sit yaw=40
 place SmallRock_02 - at 49 82 ground sit scale=0.5
-place SmallRock_02 - at 49 82 ground y=0.6 sit scale=0.32 yaw=40
 call treasure x=46.5 z=82 r=12 n=1 seed=24911
 prop treasure24911 treasure.loot=TitaniumOre*3;CopperOre*2
 call treasure x=69.29 z=-12.89 r=5 n=1 seed=24912
@@ -320,6 +333,84 @@ loot shcrown TitaniumIngot*4;MetalIngot*4;CircuitBoard*2;Battery*2
 prop shcrown loot.refill=0
 prop shcrown if.open=has|story:sk_crest|9
 prop shcrown else.open=message||Nine sockets in the vault's lid, shaped like crest shards. Every drowned building of the kingdom kept one.
+
+# --- 11-08 (w03): the Stalker's warren under the lip rock (plan 03 row: big system, dug hollow + 2 straight tunnels) ---
+# The lip rock's foot holds the Stalker's warren: a level tunnel in from the south-west foot (the side facing the arena)
+# and one from the east foot over the trench meet in a dug hollow under the rock, where the Stalker sleeps off a hunt -
+# air under its roof, mushrooms on its leavings, a titanium seam in the wall. Two ways out to the sea; no rats (sunken).
+# The hollow keeps 13 m and more from the summit tower, the locker and the ledge chest (cavecheck).
+# (11-09 w03 (2): was two hill=0 cave pieces into the rock - they stayed buried (the tool only raises ground) - and digs
+# 18-20 m under them joined by shafts; now all dug, level from each foot, heights in the island frame: sea floor ~3, sea 40)
+# (11-09 w03 (3): a level stroke takes its floor from the ground where it starts, and a stroke starting over a dug
+# passage takes that passage's floor - 44,57 was 11 m up the rock's slope, so the south tunnel and the hollow sat 7 m
+# over the east tunnel. Now the east tunnel first (its foot at sea-floor height), the hollow branched from it, and the
+# south tunnel from the low south-west foot at 30,56 into the hollow - all three about 4 m up)
+# (11-09 w03 look: both mouths sat at the foot of a steep face, the rim's flat-ground top a big patterned patch up the
+# wall over each, and two of the island's boulders right in the south-west way in. The faces round the mouths are
+# smoothed into slopes first (CAVE_LESSONS 47) and those boulders cleared)
+brush smooth at 30.6 56.4 r=5 s=8 frames=60
+brush smooth at 67.3 71.8 r=5 s=8 frames=60
+# (11-09 w03: CICaveInside found 4 points of the south-west mouth's rim rock standing loose out of the steep face north-west
+# of the mouth at ~27.7 60.7 - the face there smoothed too, so the ground lies over the tunnel's shell)
+brush smooth at 27.9 60.4 r=3 s=8 frames=60
+clear at 29.6 54 r=2 only=(?i)boulder|rock
+dig 68,72 52,68 r=1.75 slope=0 as=shsys
+dig 52,68 49.5,67.5 47,66 r=3.2 slope=0 as=shsys
+dig 30,56 38.5,61 47,66 r=1.75 slope=0 as=shsys
+caveloot shsys dirt=0 mush=3 stone=0 vines=0 titanium=1 light=1 wet=1
+place Zone_Trigger shsysair at 49.5 67.5 h=7.6
+prop shsysair obj.name=shsysair
+prop shsysair zone.id=sh_warren
+prop shsysair zone.radius=5
+prop shsysair zone.repeat=1
+prop shsysair zone.air=1
+prop shsysair zone.message=Air under the lip rock - the Stalker's own hollow. The floor is scraped smooth where it lies.
+# The bone pit behind the den rock: the Stalker drops what it does not eat into a hollow in the basin floor, and the
+# wardens drove stakes in to keep it from nesting there. A plank ledge runs round the rim; the pit floor hurts.
+# (11-09 w03: was a dug pit - 3.7 m deep, its floor under the sea, pale dig rock inside and no way out; now a sand
+# hollow a metre deep whose soft sides walk out)
+# (11-09 w03 (2): moved 7 m further back - the den's dry dome, laid over the ground after the recipe, filled the hollow
+# at 34.5 and buried its planks and stakes)
+# (11-09 w03 (3): the den's whole back slope is dome (17 m up at 41.5, 8 m at 56); now on the flat sea floor (h 3)
+# between the dome's foot and the lip rock, east of the rock, 7 m short of the warren's east tunnel)
+brush flatten from 66.5 62.5 to 71.5 62.5 r=2 s=20 frames=200 h=1
+place Note_Sign shpitwarn at 64.5 62.5 ground sit yaw=167
+note shpitwarn DANGER - BONE PIT | The Stalker's bone pit. Stakes in the floor, under the bones. Keep to the planks round the rim.\n- G. Fennick, warden
+place Block_Floor_Wood - at 66.75 64.6 ground drop yaw=0
+place Block_Floor_Wood - at 66.75 60.4 ground drop yaw=0
+place Block_Floor_Wood - at 68.25 64.6 ground drop yaw=0
+place Block_Floor_Wood - at 68.25 60.4 ground drop yaw=0
+place Block_Floor_Wood - at 69.75 64.6 ground drop yaw=0
+place Block_Floor_Wood - at 69.75 60.4 ground drop yaw=0
+place Block_Floor_Wood - at 71.25 64.6 ground drop yaw=0
+place Block_Floor_Wood - at 71.25 60.4 ground drop yaw=0
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 67 62.5 h=1 sit scale=0.25 yaw=40
+place SmallBoulder3 - at 67.9 63.3 h=1 sit scale=0.3 yaw=100
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 69 62.5 h=1 sit scale=0.25 yaw=150
+place SmallBoulder3 - at 69.9 61.7 h=1 sit scale=0.3 yaw=210
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 71 62.5 h=1 sit scale=0.25 yaw=265
+place SmallBoulder3 - at 71.9 63.3 h=1 sit scale=0.3 yaw=325
+place Zone_Trigger shspike1 at 67 62.5 h=1.5
+prop shspike1 zone.id=shspike1
+prop shspike1 zone.radius=1.5
+prop shspike1 zone.hazard=spikes
+prop shspike1 zone.damage=4
+prop shspike1 zone.safe=none
+prop shspike1 zone.hazardMsg=Stakes under the bones! Back up onto the planks.
+place Zone_Trigger shspike2 at 69 62.5 h=1.5
+prop shspike2 zone.id=shspike2
+prop shspike2 zone.radius=1.5
+prop shspike2 zone.hazard=spikes
+prop shspike2 zone.damage=4
+prop shspike2 zone.safe=none
+prop shspike2 zone.hazardMsg=Stakes under the bones! Back up onto the planks.
+place Zone_Trigger shspike3 at 71 62.5 h=1.5
+prop shspike3 zone.id=shspike3
+prop shspike3 zone.radius=1.5
+prop shspike3 zone.hazard=spikes
+prop shspike3 zone.damage=4
+prop shspike3 zone.safe=none
+prop shspike3 zone.hazardMsg=Stakes under the bones! Back up onto the planks.
 
 quest title=The Deep
 quest intro=Fennick and the Director went down to the Hollow. Go down the chain to the trench lip after them.

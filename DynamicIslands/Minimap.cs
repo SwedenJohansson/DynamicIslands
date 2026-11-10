@@ -12,11 +12,10 @@ namespace DynamicIslands.Editor
 	/// The island map (PF5). Near an island a small map of it sits in the top-right corner: a picture from straight
 	/// above (an orthographic camera, rendered once per island and when the full map opens), the player as an arrow,
 	/// the other players, the markers of every quest's current step (objects named as the step's target) and the
-	/// builder's own map markers ("Map marker" objects, Zones &amp; triggers). The map key (M) goes corner -> full
-	/// screen -> off; + and - zoom (1x, 2x, 4x, centred on the player). These keys work only while there is a map to show
-	/// (near an island), and a map that comes up after the sea always comes up small: full screen is for the island it was
-	/// opened on (UR1: a full map left open on an island, or the key pressed at sea, came back full screen when a ghost
-	/// ship or a small raft drifted by). The ping key (G) marks the spot the player
+	/// builder's own map markers ("Map marker" objects, Zones &amp; triggers). Only in a world with the World setting
+	/// "Island minimap" (WorldOptions.MinimapOn, off by default). The map key (M) hides the corner map and shows it again;
+	/// there is no full-screen map (11-09: a player sailed into an island behind a full-screen map). + and - zoom (1x, 2x,
+	/// 4x, centred on the player). These keys work only while there is a map to show (near an island). The ping key (G) marks the spot the player
 	/// looks at for the crew: a beam with the name in the world, a dot on the map and a sound, for a few seconds.
 	/// A player sends a ping to the host (IslandNetMessage.Ping), the host shows it and passes it to everyone.
 	/// </summary>
@@ -24,12 +23,12 @@ namespace DynamicIslands.Editor
 	{
 		public const string MarkerName = "Map_Marker", LabelProp = "map.label";
 		public const float PingSeconds = 6f, PingRange = 300f, PingAhead = 50f, PingGap = 1f, NearIsland = 80f;
-		public const int Corner = 0, Full = 1, Off = 2;
+		public const int Corner = 0, Off = 2;
 		public const string PingSound = "event:/raft/door/door_unlock_keycard";
 		/// <summary>Map dots: 0 me, 1 another player, 2 a quest step's target, 3 a builder's map marker, 4 a ping.</summary>
 		public const int MarkMe = 0, MarkPlayer = 1, MarkQuest = 2, MarkMarker = 3, MarkPing = 4;
 		const int TexSize = 512;
-		/// <summary>The corner map's size on screen (the full map is 700).</summary>
+		/// <summary>The corner map's size on screen (the only size: there is no full-screen map).</summary>
 		public const float CornerSize = 180f;
 		/// <summary>The sea on the picture: seabed up to ShallowDepth m under the sea shows through a light sea blue (the shallows
 		/// by the shore), deeper is flat sea blue, like Raft's own sea from above (the map camera doesn't draw Raft's water).</summary>
@@ -71,14 +70,29 @@ namespace DynamicIslands.Editor
 		/// <summary>Dev tests: pings sent (by this player) and shown.</summary>
 		public static int PingsSent, PingsShown;
 		public static bool Shown { get { return panel != null && panel.gameObject.activeSelf; } }
-		/// <summary>Tests: the map panel's size in UI units (CornerSize square in the corner, 700 full screen) and how much of
+		/// <summary>Tests: the map panel's size in UI units (CornerSize square in the corner) and how much of
 		/// the screen's height it takes; zero when there is no panel.</summary>
 		internal static Vector2 PanelSize { get { return panel != null ? panel.sizeDelta : Vector2.zero; } }
 		internal static float PanelScreenShare { get { return panel != null && canvas != null && Screen.height > 0 ? panel.rect.height * canvas.scaleFactor / Screen.height : 0f; } }
-		/// <summary>The small map is on the screen in the top right corner (the quest panel moves under it).</summary>
+		/// <summary>The small map is on the screen in the top right corner (the quest panel keeps out of it: QuestTracker.Place).</summary>
 		public static bool CornerShown { get { return Mode == Corner && Shown && canvas != null && canvas.gameObject.activeSelf; } }
 		/// <summary>How far down from the top of the screen the corner map reaches, its island name under it included (UI units, see Layout).</summary>
 		public const float CornerBottom = CornerTop + CornerSize + 20f;
+		/// <summary>The corner map with its island name under it, in screen pixels, while it shows (the quest panel keeps out of it).</summary>
+		public static bool CornerScreenRect(out Rect r)
+		{
+			r = new Rect();
+			if (!CornerShown) return false;
+			var c = new Vector3[4];
+			panel.GetWorldCorners(c);
+			r = Rect.MinMaxRect(c[0].x, c[0].y, c[2].x, c[2].y);
+			if (title != null && title.gameObject.activeInHierarchy && !string.IsNullOrEmpty(title.text))
+			{
+				title.rectTransform.GetWorldCorners(c);
+				r = Rect.MinMaxRect(Mathf.Min(r.xMin, c[0].x), Mathf.Min(r.yMin, c[0].y), Mathf.Max(r.xMax, c[2].x), Mathf.Max(r.yMax, c[2].y));
+			}
+			return true;
+		}
 		const float CornerTop = 14f;
 
 		static Camera cam;
@@ -101,8 +115,9 @@ namespace DynamicIslands.Editor
 			get { if (enabled == null) enabled = (WorldRules.ReadDefault(SettingName) ?? "on").Trim().ToLowerInvariant() != "off"; return enabled.Value; }
 			set { enabled = value; WorldRules.SaveDefault(SettingName, value ? "on" : "off"); if (!value) Hide(); }
 		}
-		/// <summary>The map can be used: this PC has the Minimap box on and the world is not on "No minimap".</summary>
-		public static bool Available { get { return Enabled && !WorldOptions.On(WorldOptions.NoMinimap); } }
+		/// <summary>The map can be used: the world has the World setting "Island minimap" on (off by default; worlds from
+		/// before it, with or without the old "No minimap", have it off) and this PC has the Minimap box on.</summary>
+		public static bool Available { get { return Enabled && WorldOptions.On(WorldOptions.MinimapOn); } }
 		public const string SettingName = "minimap";
 		static bool? enabled;
 
@@ -134,12 +149,13 @@ namespace DynamicIslands.Editor
 			UpdatePings();
 			if (Time.unscaledTime >= nextFind) { nextFind = Time.unscaledTime + 0.5f; FindIsland(me.transform.position); }
 			UpdateStart(me);
-			bool show = Available && Mode != Off && Island != null && Island.Root != null;
+			// (audit 11-09: the corner map, canvas 480, drew over Raft's inventory, crafting and trading menus)
+			bool show = Available && Mode != Off && Island != null && Island.Root != null && !ModKeys.RaftMenuOpen();
 			if (!show) { if (panel != null) panel.gameObject.SetActive(false); return; }
 			EnsureUi();
 			canvas.gameObject.SetActive(true);
 			panel.gameObject.SetActive(true);
-			if (Mode != lastMode) { Layout(); if (Mode == Full) nextRender = 0f; lastMode = Mode; }
+			if (Mode != lastMode) { Layout(); lastMode = Mode; }
 			if (Time.unscaledTime >= nextRender) { Render(); nextRender = Time.unscaledTime + 30f; }
 			if (Time.unscaledTime >= nextMarks) { nextMarks = Time.unscaledTime + 0.5f; CollectMarks(me); }
 			Draw(me);
@@ -151,11 +167,12 @@ namespace DynamicIslands.Editor
 			return !ModKeys.Blocked();
 		}
 
-		/// <summary>The map key: corner -> full screen -> off -> corner.</summary>
-		public static void Cycle() { if (Available) Mode = (Mode + 1) % 3; }
+		/// <summary>The map key: the corner map hidden <-> shown. Never full screen (11-09).</summary>
+		public static void Cycle() { if (Available) Mode = NextMode(Mode); }
+		internal static int NextMode(int mode) { return mode == Corner ? Off : Corner; }
 
-		/// <summary>The map key pressed: cycles the map only where there is one (UR1: at sea, out of sight, it went to full
-		/// screen unseen and the next ghost ship or small raft brought the map up full screen).</summary>
+		/// <summary>The map key pressed: toggles the map only where there is one (UR1: at sea, out of sight, the key
+		/// changed the map unseen).</summary>
 		public static void MapKeyPressed() { if (Island != null) Cycle(); }
 
 		public static void SetZoom(int z) { if (!Available) return; Zoom = z >= 4 ? 4 : z >= 2 ? 2 : 1; }
@@ -190,8 +207,6 @@ namespace DynamicIslands.Editor
 		{
 			IslandWorldState.Entry e = IslandAt(at);
 			if (e == Island) return;
-			// (UR1: back from the sea the map comes up small - full screen was for the island it was opened on)
-			if (Island == null && e != null && Mode == Full) Mode = Corner;
 			Island = e;
 			islandTitle = "";
 			if (e != null)
@@ -370,16 +385,15 @@ namespace DynamicIslands.Editor
 
 		static void Layout()
 		{
-			if (Mode == Full) UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(700f, 700f));
-			else UIKit.Anchor(panel, new Vector2(1f, 1f), new Vector2(-CornerTop, -CornerTop), new Vector2(CornerSize, CornerSize));
-			UIKit.Anchor(title.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, -20f), new Vector2(Mode == Full ? 680f : CornerSize, 18f));
+			UIKit.Anchor(panel, new Vector2(1f, 1f), new Vector2(-CornerTop, -CornerTop), new Vector2(CornerSize, CornerSize));
+			UIKit.Anchor(title.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, -20f), new Vector2(CornerSize, 18f));
 		}
 
 		static void Draw(Network_Player me)
 		{
 			Rect view = View(me.transform.position);
 			image.uvRect = view;
-			float size = (Mode == Full ? 700f : CornerSize) - 8f;
+			float size = CornerSize - 8f;
 			int used = 0;
 			if (Marks.Count > 0) Marks[0] = new Mark { Pos = me.transform.position, Kind = MarkMe, Yaw = YawOf(me) };
 			foreach (Mark m in Marks) Place(ref used, m, view, size);
@@ -406,7 +420,7 @@ namespace DynamicIslands.Editor
 			Transform nose = d.Find("Nose");
 			nose.gameObject.SetActive(m.Kind == MarkMe);
 			Text t = d.Find("Name").GetComponent<Text>();
-			bool named = Mode == Full || m.Kind == MarkPing;
+			bool named = m.Kind == MarkPing;
 			t.text = named && !string.IsNullOrEmpty(m.Label) ? m.Label : "";
 			t.color = c;
 			t.transform.localRotation = Quaternion.Inverse(d.localRotation);
