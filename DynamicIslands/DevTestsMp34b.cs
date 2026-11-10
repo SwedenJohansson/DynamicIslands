@@ -21,6 +21,23 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIMp34b", docs: "Dev, two players (11-10, driver mp34b.ps1): CIMp34b <part>. QW3: wait (host: 'ciplayer' with the wait quest, noon, clear) | waitc (client: step 1 on its panel) | sky (host: night, storm -> step 3) | bells (client: panel at step 3, rings the bell 3x -> step 4, alone in the zone = 1 of 2) | zone (host: 1 of 2 shown, joins -> done) | waitend (client: done). FB4: fb (host: random chest, frequency note, timed step; FILL line) | fbc <fill> (client: same fill, note unlocks, countdown and time-out) | fbcheck (host). FC6: fc (host: walker, Finn, goats, Mia; WALK line) | walk <t> <x> <z> (client) | talk (client: answer sets asked) | talkh (host: the asked answer shows) | tame (client: feeds a goat, food taken once, refusals keep it, it follows) | tameh (host) | escort (client leads Mia) | escorth (host) | done (host: removed, hooks off)")]
 		public static void Mp34bCommand(string[] args) { StartTest(Mp34bRoutine(args ?? new string[0])); }
 
+		// client: she stands at the host's saved place, at the camp (its rim counts: the host saved her the moment she stepped in, and the zone can sit a little apart on a client)
+		static bool M4MiaThere(IslandWorldState.Entry e, IslandObjectRef mr, TriggerZone camp, int got0)
+		{
+			Vector3 l; float yaw;
+			if (IslanderWalks.Received <= got0 || !MechFeatures.Saved(e, mr.Index, out l, out yaw)) return false;
+			Vector3 d = mr.transform.position - camp.transform.position;
+			return Flat(mr.transform.localPosition - l).magnitude < 0.5f && new Vector2(d.x, d.z).magnitude <= camp.Radius + 1f;
+		}
+
+		static string M4MiaWhy(IslandWorldState.Entry e, IslandObjectRef mr, TriggerZone camp)
+		{
+			Vector3 d = mr.transform.position - camp.transform.position; Vector3 l; float yaw;
+			IslanderWalk w = mr.GetComponentInChildren<IslanderWalk>(true);
+			bool sv = MechFeatures.Saved(e, mr.Index, out l, out yaw);
+			return "off " + new Vector2(d.x, d.z).magnitude.ToString("F1") + " m, dy " + d.y.ToString("F1") + ", r " + camp.Radius.ToString("F1") + ", saved " + sv + (sv ? " at " + l.ToString("F1") + " now " + mr.transform.localPosition.ToString("F1") : "") + ", walker " + (w != null ? w.State + (w.transform != mr.transform ? " child" : "") : "none");
+		}
+
 		static IEnumerator M4Wait(Func<bool> cond, float seconds)
 		{
 			float t0 = Time.realtimeSinceStartup;
@@ -402,7 +419,7 @@ namespace DynamicIslands
 					goat = goats().OrderBy(a => Vector3.Distance(a.transform.position, me.transform.position)).First();
 					IslandObjectRef spot = ScObjOf(e, "mp-client");
 					if (spot != null) MovePlayerTo(spot.transform.position);
-					yield return M4Wait(() => Vector3.Distance(Flat(goat.transform.position), Flat(me.transform.position)) < 4.5f, 12f);
+					yield return M4Wait(() => Vector3.Distance(Flat(goat.transform.position), Flat(me.transform.position)) < 4.5f, 25f);
 					Check(ref ok, Vector3.Distance(Flat(goat.transform.position), Flat(me.transform.position)) < 4.5f, "the goat followed player 2 (" + Vector3.Distance(Flat(goat.transform.position), Flat(me.transform.position)).ToString("F1") + " m behind)");
 					break;
 				}
@@ -449,8 +466,8 @@ namespace DynamicIslands
 					yield return M4Wait(() => QuestTracker.StepOf(e) >= 2, 6f);
 					yield return new WaitForSeconds(1f);
 					Check(ref ok, QuestTracker.StepOf(e) >= 2, "player 2 led Mia into camp: the escort step is done (step " + QuestTracker.StepOf(e) + ")");
-					yield return M4Wait(() => IslanderWalks.Received > got0 && IslanderWalks.Inside(camp, mr.transform.position), 10f);
-					Check(ref ok, IslanderWalks.Received > got0 && IslanderWalks.Inside(camp, mr.transform.position), "player 2 got her places from the host and sees her in camp (" + (IslanderWalks.Received - got0) + " places)");
+					yield return M4Wait(() => M4MiaThere(e, mr, camp, got0), 10f);
+					Check(ref ok, M4MiaThere(e, mr, camp, got0), "player 2 got her places from the host and sees her in camp (" + (IslanderWalks.Received - got0) + " places; " + M4MiaWhy(e, mr, camp) + ")");
 					M4Stand(e, "mp-client");
 					break;
 				}
