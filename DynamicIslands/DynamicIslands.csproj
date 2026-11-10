@@ -39,6 +39,7 @@
     <Compile Include="AwaitExtensions\Engine\ContextHelper.cs" />
     <Compile Include="BlueprintSteps.cs" />
     <Compile Include="DevTestsRecipeLeaves.cs" />
+    <Compile Include="DevTestsFix35.cs" />
     <Compile Include="DevTestsGapsRun.cs" />
     <Compile Include="DevTestsCaveGaps.cs" />
     <Compile Include="DevTestsPreFaults.cs" />
