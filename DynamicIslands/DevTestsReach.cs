@@ -1797,6 +1797,9 @@ namespace DynamicIslands
 				// (a hazard zone - spikes, acid, a dark den - is a place to keep out of, not one to get to: the Stalker's Hollow's
 				// bone pit stakes sit inside their spike models and came out "no spot to use it from", 11-09 w03. Its play walks it)
 				if (!string.IsNullOrEmpty(z.Hazard)) continue;
+				// (a hazard zone - spikes, acid, a dark den - is a place to keep out of, not one to get to: the Stalker's Hollow's
+				// bone pit stakes sit inside their spike models and came out "no spot to use it from", 11-09 w03. Its play walks it)
+				if (!string.IsNullOrEmpty(z.Hazard)) continue;
 				list.Add(new ReachTarget { Kind = "zone", Name = z.Id, Root = z.transform, B = new Bounds(z.transform.position, Vector3.one * 2f * z.Radius), Zone = true });
 			}
 			var done = new HashSet<Transform>();
