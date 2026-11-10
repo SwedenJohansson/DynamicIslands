@@ -405,6 +405,15 @@ namespace DynamicIslands.Editor
 			OnAt(e, island, index, at);
 		}
 
+		/// <summary>Host: an object stays at this place (saved, sent to everyone and to joiners) - an escorted islander (QE12).</summary>
+		internal static void HostPlace(IslandWorldState.Entry e, int index, Vector3 local, float yaw)
+		{
+			if (e == null || !Raft_Network.IsHost) return;
+			var at = new[] { local.x, local.y, local.z, yaw };
+			IslandNetwork.SendToEveryone(new IslandNetMessage { Kind = IslandNetMessage.Mech, Name = "at", Ids = new[] { e.Id, index }, Offsets = at });
+			OnAt(e, e.Id, index, at);
+		}
+
 		static void OnAt(IslandWorldState.Entry e, int island, int index, float[] at)
 		{
 			Carried c;
@@ -850,6 +859,9 @@ namespace DynamicIslands.Editor
 				case "at":
 					OnAt(EntryById(island), island, index, msg.Offsets);
 					break;
+				case "walk": // (QE12: an escorted islander's place)
+					IslanderWalks.OnWalk(msg);
+					break;
 				case "move":
 					OnMove(EntryById(island), index, msg.Offsets);
 					break;
@@ -876,6 +888,7 @@ namespace DynamicIslands.Editor
 			anims.Clear();
 			lured.Clear();
 			stackCounts.Clear();
+			IslanderWalks.Reset();
 		}
 
 		#endregion

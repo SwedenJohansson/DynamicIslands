@@ -104,6 +104,31 @@ namespace DynamicIslands.Editor
 				Button b = UIKit.Button(prow, ps, () => { Set(target, Islanders.PoseProp, chosen); Refresh(); }, "The islander " + (ps == "stand" ? "stands" : ps == "sit" ? "sits" : ps == "fish" ? "fishes with a rod" : ps == "sleep" ? "lies asleep" : "leans") + " (place it where that fits: on a seat, at the water, against a wall)", -1, 26f, 11);
 				if (ps == pose) UIKit.Primary(b);
 			}
+			// QE12: a walking path - names of objects or trigger zones, walked in a loop or there and back
+			InputField path = SurvivorField(g, "Walks to", IslanderWalks.PathOf(p), 26f, "A walking path (empty = it stays): the names of objects or trigger zones on this island, split by commas. It walks from where it stands through them, pausing at each, on the ground. Every player sees it at the same spot. An escort step or a \"move to\" action ends its walking");
+			path.characterLimit = 200;
+			path.onEndEdit.AddListener(v => { Set(target, IslanderWalks.PathProp, v.Trim().Length > 0 ? v.Trim() : null); Refresh(); });
+			amountFields.Add(path);
+			if (IslanderWalks.PathOf(p).Length > 0)
+			{
+				string mode = IslanderWalks.ModeOf(p);
+				RectTransform wrow = UIKit.Row(g, 26f, 3f, "IslanderWalk");
+				UIKit.Size(UIKit.Label(wrow, "Walk", 13, UIKit.TextMuted).gameObject, 80);
+				foreach (string m in IslanderWalks.Modes)
+				{
+					string chosen = m;
+					Button b = UIKit.Button(wrow, m == "loop" ? "loop" : "there and back", () => { Set(target, IslanderWalks.ModeProp, chosen == "loop" ? null : chosen); Refresh(); }, m == "loop" ? "After the last place it walks back to the start and round again" : "After the last place it walks the same way back", -1, 26f, 11);
+					if (m == mode) UIKit.Primary(b);
+				}
+				InputField spd = SurvivorField(g, "Speed m/s", IslanderWalks.SpeedOf(p).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture), 26f, "How fast it walks (0.3 to 4; Raft's players walk about 3)");
+				spd.onEndEdit.AddListener(v => { float f; if (float.TryParse(v.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out f)) Set(target, IslanderWalks.SpeedProp, Mathf.Clamp(f, 0.3f, 4f).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)); Refresh(); });
+				amountFields.Add(spd);
+				InputField ps2 = SurvivorField(g, "Pause s", IslanderWalks.PauseOf(p).ToString("0", System.Globalization.CultureInfo.InvariantCulture), 26f, "How long it stands at each place of its path (seconds)");
+				ps2.onEndEdit.AddListener(v => { float f; if (float.TryParse(v.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out f)) Set(target, IslanderWalks.PauseProp, Mathf.Clamp(f, 0f, 60f).ToString("0", System.Globalization.CultureInfo.InvariantCulture)); Refresh(); });
+				amountFields.Add(ps2);
+				List<string> missing = IslanderWalks.Missing(IslanderWalks.PathOf(p), PlacedEditorObjects());
+				if (missing.Count > 0) UIKit.Size(UIKit.Label(g, "Check: nothing on the island is called " + string.Join(", ", missing.ToArray()), 11, UIKit.Danger, TextAnchor.MiddleLeft).gameObject, -1, 16);
+			}
 			Text markup = UIKit.Label(g, "What it says. A line of only --- = next page. A line starting with > = an answer (up to 4 a page). #name starts a branch; > Answer -> name goes there. Hover for more.", 12, UIKit.TextMuted, TextAnchor.UpperLeft);
 			markup.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(markup.gameObject, -1, 48);

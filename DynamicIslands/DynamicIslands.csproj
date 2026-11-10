@@ -199,6 +199,7 @@
     <Compile Include="GapWorld.cs" />
     <Compile Include="PlayerFeatures.cs" />
     <Compile Include="Islanders.cs" />
+    <Compile Include="IslanderWalk.cs" />
     <Compile Include="Collectibles.cs" />
     <Compile Include="Lights.cs" />
     <Compile Include="OrderPuzzle.cs" />

@@ -289,6 +289,154 @@ namespace DynamicIslands
 			else Log("PASS: flag " + args[1] + " = " + v + " (" + who + ")");
 		}
 
+		[ConsoleCommand(name: "CIIslanderWalkParse", docs: "Dev, anywhere: QE12 walking islanders' settings - the path's names, mode, speed, the escort step (Name@zone), its plan check and the editors' lists")]
+		public static void IslanderWalkParseCommand()
+		{
+			bool ok = true;
+			Check(ref ok, IslanderWalks.Names(" a, b ;c,, ").SequenceEqual(new[] { "a", "b", "c" }), "the path's names, split by commas");
+			Check(ref ok, IslanderWalks.ModeOf(P(IslanderWalks.ModeProp, "PingPong")) == "pingpong" && IslanderWalks.ModeOf(P()) == "loop" && IslanderWalks.ModeOf(P(IslanderWalks.ModeProp, "fly")) == "loop", "modes: loop (default), pingpong");
+			Check(ref ok, Mathf.Approximately(IslanderWalks.SpeedOf(P()), IslanderWalks.DefaultSpeed) && IslanderWalks.SpeedOf(P(IslanderWalks.SpeedProp, "99")) <= 4f && IslanderWalks.SpeedOf(P(IslanderWalks.SpeedProp, "0")) >= 0.3f, "speed: default, kept within 0.3..4");
+			string n, z;
+			IslanderWalks.SplitTarget(" Old Finn @ camp ", out n, out z);
+			Check(ref ok, n == "Old Finn" && z == "camp", "Name@zone splits (" + n + " / " + z + ")");
+			var q = new IslandQuest.Step { Type = IslanderWalks.QuestType, Target = "Mia@camp", Count = 1 };
+			Check(ref ok, IslandQuest.Types.Contains(IslanderWalks.QuestType) && IslandQuest.Counted(IslanderWalks.QuestType) && q.Describe() == "Bring Mia to camp", "the Escort step, counted by the host (" + q.Describe() + ")");
+			var facts = new PlayerFeatures.PlanFacts();
+			PlayerFeatures.AddFacts(facts, Islanders.ObjectName, P(BehaviourProps.Name, "Mia"));
+			PlayerFeatures.AddFacts(facts, ContentCatalog.TriggerZone, P(ObjectProps.ZoneId, "camp"));
+			Check(ref ok, PlayerFeatures.StepProblem(facts, "escort", "Mia@camp", 1) == null && PlayerFeatures.StepProblem(facts, "escort", "Mia", 1) != null
+				&& PlayerFeatures.StepProblem(facts, "escort", "Bob@camp", 1) != null && PlayerFeatures.StepProblem(facts, "escort", "Mia@nowhere", 1) != null, "the plan check: Name@zone needs both");
+			CheckPlayerTables(ref ok);
+			if (ok) Log("PASS: walking islanders' settings"); else Fail("walking islanders' settings");
+		}
+
+		/// <summary>QE12: how far an islander stands off the ground under it (nothing under it: 99).</summary>
+		static float OffGround(Transform t)
+		{
+			float y;
+			return IslanderWalks.Ground(t, t.position, t.position.y, out y) ? Mathf.Abs(t.position.y - y) : 99f;
+		}
+
+		static void MovePlayerTo(Vector3 at)
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player == null) return;
+			RaycastHit hit;
+			if (Physics.Raycast(at + Vector3.up * 3f, Vector3.down, out hit, 60f, 1 << IslandSpawner.TerrainLayer)) at.y = hit.point.y + 1.2f;
+			PlayerMove.To(player, at);
+			KeepAlive(player);
+		}
+
+		[ConsoleCommand(name: "CIIslanderWalk", docs: "Dev, in a world (host): QE12 - spawns 'ciplayer' with an islander on a path (walks it, on the ground) and one to escort (follows, waits when the player is far, reaches the zone, the step is done, it stays). 'keep' leaves the island for a second player (CIWalkAt ciplayer Mia camp): CIIslanderWalk [keep]")]
+		public static void IslanderWalkCommand(string[] args) { StartTest(IslanderWalkRoutine(args.Any(a => a.Equals("keep", StringComparison.OrdinalIgnoreCase)))); }
+
+		static IEnumerator IslanderWalkRoutine(bool keep)
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			int walker = -1, mia = -1;
+			IslandFile f = PlayerTestIsland((file, add) =>
+			{
+				walker = add(Islanders.ObjectName, 0f, 4f, P(BehaviourProps.Name, "Walker", Islanders.CharacterProp, "3", IslanderWalks.PathProp, "wp-a, wp-b", IslanderWalks.PauseProp, "1"));
+				add("Log", 8f, 4f, P(BehaviourProps.Name, "wp-a"));
+				add(ContentCatalog.TriggerZone, 8f, -4f, P(ObjectProps.ZoneId, "wp-b", ObjectProps.ZoneRadius, "2"));
+				mia = add(Islanders.ObjectName, -6f, 0f, P(BehaviourProps.Name, "Mia", Islanders.CharacterProp, "4"));
+				add(ContentCatalog.TriggerZone, -6f, 14f, P(ObjectProps.ZoneId, "camp", ObjectProps.ZoneRadius, "3"));
+				file.Props[IslandQuest.KeyTitle] = "CI escort";
+				file.Props[IslandQuest.KeySteps] = "escort|Mia@camp|1|\nreach|nowhere|1|";
+			});
+			IslandWorldState.Entry e = null;
+			yield return SpawnPlayerIsland(f, x => e = x);
+			if (e == null || e.Root == null) { Fail("the island did not spawn"); RemovePlayerIsland(e); yield break; }
+			Func<int, IslandObjectRef> obj = i => e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(r => r.Index == i);
+			try
+			{
+				yield return new WaitForSeconds(1f);
+				IslandObjectRef wr = obj(walker), mr = obj(mia);
+				IslanderWalk ww = wr != null ? wr.GetComponent<IslanderWalk>() : null, mw = mr != null ? mr.GetComponent<IslanderWalk>() : null;
+				Check(ref ok, ww != null && mw != null, "both islanders have their walk");
+				if (ww == null || mw == null) yield break;
+				Log("islander animator: " + ww.AnimatorParameters());
+				PutPlayerNear(wr.transform, 4f);
+				yield return new WaitForSeconds(0.5f);
+				Check(ref ok, ww.HasPath && ww.State == "path", "the walker has its path of two places (" + ww.State + ")");
+				// The path: it moves, always on the ground
+				Vector3 start = wr.transform.position;
+				float worst = 0f, moved = 0f, fastest = 0f;
+				for (int i = 0; i < 16; i++)
+				{
+					yield return new WaitForSeconds(0.25f);
+					worst = Mathf.Max(worst, OffGround(wr.transform));
+					moved = Mathf.Max(moved, Vector3.Distance(start, wr.transform.position));
+					fastest = Mathf.Max(fastest, ww.Speed);
+				}
+				Check(ref ok, moved > 1f, "it walks its path (" + moved.ToString("F1") + " m in 4 s, speed up to " + fastest.ToString("F1") + ")");
+				Check(ref ok, worst < 0.2f, "on the ground all the way (worst " + worst.ToString("F2") + " m off)");
+				Screenshot(new[] { "walk", "path" });
+				// The escort: follows, waits, reaches the zone
+				TriggerZone camp = IslanderWalks.ZoneOf(e, "camp");
+				Check(ref ok, camp != null, "the zone camp is there");
+				if (camp == null) yield break;
+				Check(ref ok, QuestTracker.StepOf(e) == 0 && IslanderWalks.EscortZone(e, "Mia") == "camp", "the escort step is the current one");
+				Vector3 home = mr.transform.position, toCamp = (camp.transform.position - home); toCamp.y = 0f; toCamp.Normalize();
+				MovePlayerTo(home + toCamp * 7f);
+				yield return new WaitForSeconds(3f);
+				float gap = Vector3.Distance(Flat(RAPI.GetLocalPlayer().transform.position), Flat(mr.transform.position));
+				Check(ref ok, Vector3.Distance(home, mr.transform.position) > 2.5f && gap < 4f, "Mia follows the player (" + Vector3.Distance(home, mr.transform.position).ToString("F1") + " m walked, " + gap.ToString("F1") + " m behind; " + mw.State + ")");
+				Check(ref ok, OffGround(mr.transform) < 0.2f, "Mia stands on the ground (" + OffGround(mr.transform).ToString("F2") + ")");
+				Screenshot(new[] { "escort", "follow" });
+				Vector3 before = mr.transform.position;
+				MovePlayerTo(before - toCamp * 25f);
+				yield return new WaitForSeconds(2f);
+				Check(ref ok, mw.State == "wait" && Vector3.Distance(before, mr.transform.position) < 0.5f, "a player 25 m off: Mia waits (" + mw.State + ", " + Vector3.Distance(before, mr.transform.position).ToString("F2") + " m)");
+				int sent = IslanderWalks.Sent;
+				// Lead her in, a few steps at a time
+				for (int i = 0; i < 12 && QuestTracker.StepOf(e) == 0; i++)
+				{
+					Vector3 next = mr.transform.position + toCamp * 4f;
+					if (Vector3.Distance(Flat(next), Flat(camp.transform.position)) < 4f) next = camp.transform.position + toCamp * 1f;
+					MovePlayerTo(next);
+					yield return new WaitForSeconds(2f);
+					if (OffGround(mr.transform) > 0.2f) { worst = OffGround(mr.transform); Check(ref ok, false, "Mia off the ground on the way (" + worst.ToString("F2") + " m)"); break; }
+				}
+				yield return new WaitForSeconds(1f);
+				Check(ref ok, QuestTracker.StepOf(e) >= 1, "Mia in camp: the escort step is done (step " + QuestTracker.StepOf(e) + ", " + mw.State + ")");
+				Vector3 l; float yaw;
+				Check(ref ok, MechFeatures.Saved(e, mia, out l, out yaw) && IslanderWalks.Inside(camp, mr.transform.position), "her place in the camp is saved (for joiners and the next load)");
+				Check(ref ok, IslanderWalks.Sent > sent, "the host sent her places (" + (IslanderWalks.Sent - sent) + ")");
+				Vector3 stay = mr.transform.position;
+				MovePlayerTo(stay + toCamp * 6f);
+				yield return new WaitForSeconds(2f);
+				Check(ref ok, Vector3.Distance(stay, mr.transform.position) < 0.3f, "after the step she stays in camp");
+				Screenshot(new[] { "escort", "arrived" });
+			}
+			finally
+			{
+				if (!keep) RemovePlayerIsland(e);
+			}
+			if (keep) Log("kept 'ciplayer'");
+			if (ok) Log("PASS: walking islanders"); else Fail("walking islanders");
+		}
+
+
+		[ConsoleCommand(name: "CIWalkAt", docs: "Dev, in game (either player): QE12 - where an islander is (island-local) and its walk state; with a zone: PASS only when it is in it: CIWalkAt <island> <name> [zone]")]
+		public static void WalkAtCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			if (args.Length < 2) { Fail("CIWalkAt <island> <name> [zone]"); return; }
+			IslandObjectRef r = Behaviours.RefsOf(e).FirstOrDefault(x => x.Name.Equals(args[1], StringComparison.OrdinalIgnoreCase));
+			IslanderWalk w = r != null ? r.GetComponent<IslanderWalk>() : null;
+			if (w == null) { Fail("no walking islander '" + args[1] + "'"); return; }
+			Vector3 p = r.transform.localPosition;
+			string where = args[1] + " at " + p.x.ToString("F1", CultureInfo.InvariantCulture) + "," + p.y.ToString("F1", CultureInfo.InvariantCulture) + "," + p.z.ToString("F1", CultureInfo.InvariantCulture)
+				+ " (" + w.State + ", off ground " + OffGround(r.transform).ToString("F2") + ", places got " + IslanderWalks.Received + ", " + (Raft_Network.IsHost ? "host" : "client") + ")";
+			if (args.Length > 2 && !IslanderWalks.Inside(IslanderWalks.ZoneOf(e, args[2]), r.transform.position)) Fail(where + ": not in " + args[2]);
+			else if (OffGround(r.transform) > 0.2f) Fail(where + ": off the ground");
+			else Log("PASS: " + where);
+		}
+
 		[ConsoleCommand(name: "CICollectParse", docs: "Dev, anywhere: collectible sets read right (a piece's defaults and use lines, the set check, the Find set step, the set event, plan check, keys, the editors' lists)")]
 		public static void CollectParseCommand()
 		{

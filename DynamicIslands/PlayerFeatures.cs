@@ -177,6 +177,7 @@ namespace DynamicIslands.Editor
 				case Islanders.QuestType: return "Talk to " + (target.Length > 0 ? target : "an islander");
 				case Lights.QuestType: return "Light " + count + " of the lights of " + (target.Length > 0 ? target : "a group");
 				case Collectibles.QuestType: return "Find " + count + " of the " + (target.Length > 0 ? target : "set");
+				case IslanderWalks.QuestType: return IslanderWalks.Describe(target);
 			}
 			return null;
 		}
@@ -195,6 +196,11 @@ namespace DynamicIslands.Editor
 				case Lights.QuestType:
 					return all.Where(g => Lights.IsLight(g.GameObjectName, g.Props)).Select(g => Lights.GroupOf(g.Props)).Where(n => n.Length > 0).GroupBy(n => n, StringComparer.OrdinalIgnoreCase)
 						.Select(n => new DropList.Option(n.Key, n.Key, n.Count() + " light(s) on this island")).ToList();
+				case IslanderWalks.QuestType: // (QE12: every islander with every zone, Name@zone)
+					List<EditorGameObject> objs = all.ToList();
+					List<string> zones = objs.Select(g => ObjectProps.Get(g.Props, ObjectProps.ZoneId).Trim()).Where(z => z.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+					return objs.Where(g => Islanders.Is(g.GameObjectName)).Select(g => Islanders.NameOf(g.Props)).Distinct()
+						.SelectMany(n => zones.Select(z => new DropList.Option(n + "@" + z, n + " to " + z, "Bring the islander " + n + " to the trigger zone " + z))).Take(60).ToList();
 			}
 			return null;
 		}
@@ -258,12 +264,13 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Quest steps the host counts (IslandQuest.Counted) and how far they are (QuestTracker.Found).</summary>
-		public static bool Counted(string type) { return type == Collectibles.QuestType || type == Lights.QuestType; }
+		public static bool Counted(string type) { return type == Collectibles.QuestType || type == Lights.QuestType || type == IslanderWalks.QuestType; }
 
 		public static int Found(IslandWorldState.Entry e, IslandQuest.Step s)
 		{
 			if (s.Type == Collectibles.QuestType) return Collectibles.Found(e, s.Target);
 			if (s.Type == Lights.QuestType) return Lights.LitCount(e, s.Target);
+			if (s.Type == IslanderWalks.QuestType) return IslanderWalks.Found(e, s.Target);
 			return 0;
 		}
 
@@ -275,6 +282,8 @@ namespace DynamicIslands.Editor
 			public readonly Dictionary<string, int> Sets = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 			/// <summary>Light groups: name, lights.</summary>
 			public readonly Dictionary<string, int> LightGroups = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+			/// <summary>Trigger zones' names (QE12: an escort step's zone).</summary>
+			public readonly HashSet<string> Zones = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		}
 
 		/// <summary>Collects one object's facts (PlanChecker.FromFile).</summary>
@@ -285,6 +294,8 @@ namespace DynamicIslands.Editor
 			if (set.Length > 0) { int n; f.Sets.TryGetValue(set, out n); f.Sets[set] = n + 1; }
 			string lg = Lights.IsLight(objectName, p) ? Lights.GroupOf(p) : "";
 			if (lg.Length > 0) { int n; f.LightGroups.TryGetValue(lg, out n); f.LightGroups[lg] = n + 1; }
+			string zone = ObjectProps.Get(p, ObjectProps.ZoneId).Trim();
+			if (zone.Length > 0) f.Zones.Add(zone);
 		}
 
 		/// <summary>What is wrong with a quest step of these features (null = fine; plan check, quest editor).</summary>
@@ -308,6 +319,8 @@ namespace DynamicIslands.Editor
 					if (!f.LightGroups.TryGetValue(target, out lamps)) return "no light is in the group '" + target + "'" + (f.LightGroups.Count > 0 ? " (" + string.Join(", ", f.LightGroups.Keys.ToArray()) + ")" : " (Puzzle light (switch), Zones & triggers)");
 					if (count > lamps) return "it wants " + count + " lights of '" + target + "' on, the group has " + lamps;
 					break;
+				case IslanderWalks.QuestType:
+					return IslanderWalks.StepProblem(f.Islanders, f.Zones, target);
 			}
 			return null;
 		}

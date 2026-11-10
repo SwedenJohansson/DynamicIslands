@@ -254,6 +254,7 @@ namespace DynamicIslands.Editor
 			Islander i = CustomNote.InteractHolder(go).AddComponent<Islander>();
 			i.Ref = r;
 			i.Body = go;
+			go.AddComponent<IslanderWalk>().Ref = r; // (QE12: its path, an escort step)
 		}
 
 		/// <summary>A player talked to an islander (the dialogue closed; choice = the last answer picked, 0 = none - its

@@ -362,7 +362,7 @@ namespace DynamicIslands.Editor
 
 		static readonly Dictionary<string, string> TypeLabels = new Dictionary<string, string>
 		{
-			{ "reach", "Go to" }, { "read", "Read" }, { "open", "Open" }, { "kill", "Defeat" }, { "catch", "Catch" }, { "collect", "Collect" }, { "pages", "Find pages" }, { "blueprint", "Blueprint" }, { Islanders.QuestType, "Talk to" }, { Collectibles.QuestType, "Find set" }, { Lights.QuestType, "Light up" },
+			{ "reach", "Go to" }, { "read", "Read" }, { "open", "Open" }, { "kill", "Defeat" }, { "catch", "Catch" }, { "collect", "Collect" }, { "pages", "Find pages" }, { "blueprint", "Blueprint" }, { Islanders.QuestType, "Talk to" }, { Collectibles.QuestType, "Find set" }, { Lights.QuestType, "Light up" }, { IslanderWalks.QuestType, "Escort" },
 			{ QuestSteps.Signal, "Signal / object is" }, { QuestSteps.Bring, "Bring items" }, { QuestSteps.Craft, "Craft or cook" }, { QuestSteps.Fish, "Catch fish" }, { QuestSteps.Gather, "Gather / harvest" },
 		};
 
@@ -377,6 +377,7 @@ namespace DynamicIslands.Editor
 			{ Islanders.QuestType, "Talk to an islander (Story_Islander, by its name; empty = any islander): done when the dialogue closes" },
 			{ Lights.QuestType, "Switch on a number of the puzzle lights of a group on this island (its Count; the quest panel counts them)" },
 			{ Collectibles.QuestType, "Find a number of the pieces of a collectible set on this island (objects with that Set; the HUD counts them)" },
+			{ IslanderWalks.QuestType, "Bring an islander to a trigger zone: Name@zone. While this step is the current one the islander follows the nearest player (it waits when they are over 12 m away); in the zone it stays" },
 			{ QuestSteps.Signal, "Wait for a signal (a lever's \"lever\", the generator's \"power\", an action's own) or an object's state (Gate=open, closed, shown, hidden): a signal sent before counts" },
 			{ QuestSteps.Bring, "Hand a number of a Raft item to an islander (by talking) or a chest (at the chest): Item@Name; the items are taken" },
 			{ QuestSteps.Craft, "Craft or cook a number of a Raft item at the island while this step is the current one (empty = anything)" },
@@ -393,6 +394,7 @@ namespace DynamicIslands.Editor
 			{ Islanders.QuestType, "islander's name (\u25BE lists this island's; empty = any)" },
 			{ Collectibles.QuestType, "set name (\u25BE lists this island's sets)" },
 			{ Lights.QuestType, "light group (\u25BE lists this island's groups)" },
+			{ IslanderWalks.QuestType, "Name@zone (\u25BE lists this island's islanders and zones)" },
 			{ QuestSteps.Signal, "signal, or Name=open (\u25BE lists this island's)" },
 			{ QuestSteps.Bring, "Item@Name (\u2026 item, \u25BE who takes it)" },
 			{ QuestSteps.Craft, "Raft item (\u2026 to choose; empty = any)" },
@@ -450,7 +452,7 @@ namespace DynamicIslands.Editor
 						RedoRow(s);
 					});
 				}, "Choose one of Raft's items", 28, 28f, 12);
-			if ((s.Type == "kill" || s.Type == "catch" || IslandQuest.Counted(s.Type) || QuestSteps.HasCount(s.Type)) && s.Type != QuestSteps.Signal)
+			if ((s.Type == "kill" || s.Type == "catch" || IslandQuest.Counted(s.Type) || QuestSteps.HasCount(s.Type)) && s.Type != QuestSteps.Signal && s.Type != IslanderWalks.QuestType)
 			{
 				InputField count = UIKit.Field(row, "1", s.Count.ToString(), 28f, "How many");
 				UIKit.Size(count.gameObject, 44, 28);
