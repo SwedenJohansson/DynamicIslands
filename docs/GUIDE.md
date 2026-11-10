@@ -1961,6 +1961,11 @@ Select any object → **Behaviour & events...**. No code needed:
   **Keypad code** field under **Behaviour & events...** in the object panel; it shows once players can use the object) a keypad opens first, as on Tangaroa:
   the right digits run the object's use (its checks and actions), a wrong code says so, and once opened it stays open
   for everyone. Put the code on a note somewhere on the island.
+- **Laser:** any object can be a **laser emitter** (**Shoots a beam**: a red beam along its front, the blue gizmo arrow,
+  from its middle, **reaches** 1-200 m, 60 by default) or a **mirror** (sends a beam that reaches it on along its own
+  front; give it **Opens and closes** with a turn so players can turn it). The first object the beam reaches gets
+  "a laser beam reaches it". Hide the emitter to turn the beam off, show it to turn it on. Saved in the island; every
+  player sees the beam.
 - **Collision:** Raft's own, walk through, one box, or solid.
 - **When ... then:** when a player uses it, walks into a zone, reads a note, opens a chest, all the animals of a
   spot are defeated, a boss spot's second **phase** begins ([5.1](#51-creatures)), or a **laser beam** reaches it → show / hide objects, **show/hide** (hidden ones appear, shown ones
