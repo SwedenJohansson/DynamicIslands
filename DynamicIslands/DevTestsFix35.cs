@@ -277,7 +277,7 @@ namespace DynamicIslands
 
 		// Aims Raft's own raycast at each raft surface that takes the item until Raft's build check says green: found[0] set, realSpot the quad;
 		// found[1] the last answer. (a raft block's surfaces are switched off until a placeable is held: inactive ones count too)
-		static IEnumerator GreenSpot(BlockCreator bc, Item_Base item, Network_Player player, string[] found)
+		static IEnumerator GreenSpot(BlockCreator bc, Item_Base item, Network_Player player, string[] found, bool costFree = false)
 		{
 			realSpot = null; found[1] = "no surface";
 			List<BlockQuad> quads = Resources.FindObjectsOfTypeAll<BlockQuad>().Where(q => q != null && q.gameObject.scene.IsValid() && q.quadType != null && FaceFor(q, item).HasValue)
@@ -291,7 +291,7 @@ namespace DynamicIslands
 				BlockQuad atCursor = Traverse.Create(bc).Field("quadAtCursor").GetValue<BlockQuad>();
 				object err = ghost != null ? HarmonyLib.AccessTools.Method(typeof(BlockCreator), "CanBuildBlock").Invoke(bc, new object[] { ghost }) : null;
 				found[1] = quads.Count + " surfaces, " + (atCursor != null ? "aimed" : "no quad at cursor") + ", " + (err != null ? err.ToString() : "no ghost");
-				if (atCursor != null && err != null && Convert.ToInt32(err) == 0) { realSpot = q; found[0] = "yes"; yield break; }
+				if (atCursor != null && err != null && (Convert.ToInt32(err) == 0 || (costFree && err.ToString() == "NoResources"))) { realSpot = q; found[0] = "yes"; yield break; }
 			}
 		}
 
@@ -339,7 +339,7 @@ namespace DynamicIslands
 						{
 							bc.SetBlockTypeToBuild(wallItem);
 							string[] wf = new string[2];
-							yield return GreenSpot(bc, wallItem, player, wf);
+							yield return GreenSpot(bc, wallItem, player, wf, true); // (the wall is put up by the cheat: its cost does not matter)
 							Block wg = Traverse.Create(bc).Field("selectedBlock").GetValue<Block>();
 							if (wf[0] != null && wg != null)
 							{
