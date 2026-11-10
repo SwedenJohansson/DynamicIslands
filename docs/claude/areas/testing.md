@@ -30,6 +30,7 @@ Automated tests and content tools, run as `CI*` console commands. Players never 
 - `DevTestsScenarios.cs` -> `Sc*` helpers to bring, use and remove islands in a world; many `CISc*` scenario tests.
 - `DevTestsEditorStart.cs` -> the start window, plan on the main menu, Use in a plan..., Edit island, plan tabs (`CICreateWindow`, `CIPlanFromMenu`, `CIUseInPlan`, `CIEditIslandFromMenu`, `CIPlanTabs`, `CIStoryNewIsland`).
 - `DevTestsMultiplayer.cs`, `DevTestsMultiplayerFull.cs` -> two-player helpers (`PutPlayerNear`, `OnRaftCommand`, `AnimalsOf`).
+- `DevTestsLaserAny.cs` -> `CILaserAny` (editor, QE13: the Behaviour & events window's Laser row on plain logs, saves `cilaserany`), `CILaserAnyPlay` (world, host: the beam, mirror, event, range).
 - `DynamicIslands.cs` -> calls `DevTests.Init` through reflection at start-up, if the type exists.
 - `compile.ps1`, `pack.ps1` -> `-Release` leaves `DevTests*.cs` out.
 
