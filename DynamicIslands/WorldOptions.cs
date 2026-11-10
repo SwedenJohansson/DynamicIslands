@@ -230,6 +230,8 @@ namespace DynamicIslands.Editor
 			ResetStep("FogSight.Reset", () => global::DynamicIslands.Editor.FogSight.Reset());
 			ResetStep("GhostShip.Reset", () => global::DynamicIslands.Editor.GhostShip.Reset());
 			ResetStep("GlowSea.Reset", () => global::DynamicIslands.Editor.GlowSea.Reset());
+			// the map key (M) hides the corner map for this world only: each world starts with it shown when its Island minimap option is on (user 11-10)
+			ResetStep("Minimap.Mode", () => global::DynamicIslands.Editor.Minimap.Mode = global::DynamicIslands.Editor.Minimap.Corner);
 			ResetStep("StormSeas.Reset", () => global::DynamicIslands.Editor.StormSeas.Reset());
 			ResetStep("TraderRaft.Reset", () => global::DynamicIslands.Editor.TraderRaft.Reset());
 			ResetStep("UpgradeTable.Reset", () => global::DynamicIslands.Editor.UpgradeTable.Reset());
@@ -340,6 +342,8 @@ namespace DynamicIslands.Editor
 			ResetStep("FogSight.Reset", () => global::DynamicIslands.Editor.FogSight.Reset());
 			ResetStep("GhostShip.Reset", () => global::DynamicIslands.Editor.GhostShip.Reset());
 			ResetStep("GlowSea.Reset", () => global::DynamicIslands.Editor.GlowSea.Reset());
+			// the map key (M) hides the corner map for this world only: each world starts with it shown when its Island minimap option is on (user 11-10)
+			ResetStep("Minimap.Mode", () => global::DynamicIslands.Editor.Minimap.Mode = global::DynamicIslands.Editor.Minimap.Corner);
 			ResetStep("StormSeas.Reset", () => global::DynamicIslands.Editor.StormSeas.Reset());
 			ResetStep("TraderRaft.Reset", () => global::DynamicIslands.Editor.TraderRaft.Reset());
 			ResetStep("LightningStrikes.Reset", () => global::DynamicIslands.Editor.LightningStrikes.Reset());
