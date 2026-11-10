@@ -570,8 +570,8 @@ edge, pointing the way). Green dots are **map markers** the builder placed.
 - **+** and **-** zoom in and out (1x, 2x, 4x), around you (the keypad's + and - too).
 - The map shows only near an island (within its land and 80 m; a ghost ship or a drifting raft counts as one); at open
   sea it hides. Its picture is taken when you come to the island and every 30 s.
-- A map you hid with **M** stays hidden on the next island until you press **M** again. At sea, where there is no
-  map, **M**, **+** and **-** do nothing.
+- A map you hid with **M** stays hidden on the next island until you press **M** again, in that world only: every
+  world you load or join starts with the map shown. At sea, where there is no map, **M**, **+** and **-** do nothing.
 - **G** **pings** the spot you look at (up to 300 m; looking at the sky, 50 m ahead): everyone in the world sees a red
   beam with your name there, a red dot on the map and hears a short sound, for 6 seconds. One ping a second at most;
   a new ping of yours replaces your last one.
@@ -1961,6 +1961,11 @@ Select any object → **Behaviour & events...**. No code needed:
   **Keypad code** field under **Behaviour & events...** in the object panel; it shows once players can use the object) a keypad opens first, as on Tangaroa:
   the right digits run the object's use (its checks and actions), a wrong code says so, and once opened it stays open
   for everyone. Put the code on a note somewhere on the island.
+- **Laser:** any object can be a **laser emitter** (**Shoots a beam**: a red beam along its front, the blue gizmo arrow,
+  from its middle, **reaches** 1-200 m, 60 by default) or a **mirror** (sends a beam that reaches it on along its own
+  front; give it **Opens and closes** with a turn so players can turn it). The first object the beam reaches gets
+  "a laser beam reaches it". Hide the emitter to turn the beam off, show it to turn it on. Saved in the island; every
+  player sees the beam.
 - **Collision:** Raft's own, walk through, one box, or solid.
 - **When ... then:** when a player uses it, walks into a zone, reads a note, opens a chest, all the animals of a
   spot are defeated, a boss spot's second **phase** begins ([5.1](#51-creatures)), or a **laser beam** reaches it → show / hide objects, **show/hide** (hidden ones appear, shown ones
@@ -4565,7 +4570,7 @@ the save you came from (the mod's islands and quests come back with it too).
 Raft closes (also with Alt+F4 or the window's X), about 3 seconds after each quest step, quest finish and story step
 (at most once a minute), and with Raft's own saves every few minutes; players who joined rely on the host's save. A
 crash, Task Manager or a power cut closes Raft without a save: the islands' chests, quests and story come back as at
-Raft's last save. Leaving with **Esc > Quit game** saves only if you answer Raft's question with a save (the mod adds no save of its own once Raft has let go of the world: such a save had no world id, and worlds saved that way shared one inventory before 3.4; such a world gets its own id back when it loads, from one of its older saves, with the inventory of that save). **Esc > Main menu** is the safest way to stop; after changing a setting during play, let Raft save
+Raft's last save. Leaving with **Esc > Quit game** saves only if you answer Raft's question with a save (the mod adds no save of its own once Raft has let go of the world: such a save had no world id, and worlds saved that way shared one inventory before 3.4; such a world gets its own id back when it loads, from one of its older saves, with the inventory of that save; when no older save has it, the world gets a new id with the inventory it has now, and in the next 60 days a player who joins it and starts afresh there gets their own inventory from then back, once). **Esc > Main menu** is the safest way to stop; after changing a setting during play, let Raft save
 before you stop.
 
 **My island is far away / I can't find it.** Build Raft's Receiver: custom islands are green dots with their distance.

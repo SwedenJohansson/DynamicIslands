@@ -136,6 +136,15 @@ namespace DynamicIslands.Editor
 		/// <summary>Tests: why the last local tick did not feed.</summary>
 		internal static string Why = "";
 
+		/// <summary>Clients: the food of a feed sent to the host, taken from the bag only when the host answers that the animal
+		/// follows (a refusal - not hungry, too far, already tamed - keeps it); no answer within PendingSeconds: kept too.</summary>
+		static string pendingFood;
+		static float pendingUntil;
+		const float PendingSeconds = 6f;
+
+		/// <summary>Tests: the last answer this player got for its own feed (-1 none yet), and how much food a feed took.</summary>
+		internal static int LastAnswer = -1, FoodTaken;
+
 		static void LocalTick()
 		{
 			Why = "no island";
@@ -163,21 +172,38 @@ namespace DynamicIslands.Editor
 							return;
 						}
 						if (Time.time < feedPause) { Why = "pause"; return; }
+						if (pendingFood != null && Time.time < pendingUntil) { Why = "waiting for the host"; return; }
+						pendingFood = null;
 						held += 0.25f;
 						if (held < FeedSeconds) { Why = "holding " + held; return; }
 						Why = "fed";
 						held = 0f;
 						feedPause = Time.time + 2f;
-						p.Inventory.RemoveItem(food, 1);
 						Fed++;
 						Vector3 at = ai.transform.position;
-						if (Raft_Network.IsHost) HostFeed(e, s.Key.Index, MechFeatures.LocalId, at);
-						else IslandNetwork.SendToTheHost(new IslandNetMessage { Kind = IslandNetMessage.Mech, Name = "feed", Ids = new[] { e.Id, s.Key.Index }, Offsets = new[] { at.x, at.y, at.z } });
+						// the food goes only when the animal takes it (the host decides; a refusal keeps it)
+						if (Raft_Network.IsHost) { if (HostFeed(e, s.Key.Index, MechFeatures.LocalId, at)) TakeFood(p, food); }
+						else SendFeed(e, s.Key.Index, at, food);
 						return;
 					}
 				}
 			}
 			held = 0f;
+		}
+
+		/// <summary>Client: a feed to the host; the food waits for its answer (OnTamed).</summary>
+		internal static void SendFeed(IslandWorldState.Entry e, int spot, Vector3 at, string food)
+		{
+			pendingFood = food;
+			pendingUntil = Time.time + PendingSeconds;
+			IslandNetwork.SendToTheHost(new IslandNetMessage { Kind = IslandNetMessage.Mech, Name = "feed", Ids = new[] { e.Id, spot }, Offsets = new[] { at.x, at.y, at.z } });
+		}
+
+		static void TakeFood(Network_Player p, string food)
+		{
+			if (p == null || p.Inventory == null || string.IsNullOrEmpty(food) || p.Inventory.GetItemCount(food) <= 0) return;
+			p.Inventory.RemoveItem(food, 1);
+			FoodTaken++;
 		}
 
 		/// <summary>The spot's animal nearest this player within FeedDistance (host: its own list, not tamed yet; clients: by kind near the spot).</summary>
@@ -214,9 +240,9 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<AI_NetworkBehaviour, Tamed> tamed = new Dictionary<AI_NetworkBehaviour, Tamed>();
 
 		/// <summary>Host: a player fed an animal of this spot near this place - the nearest one not tamed yet follows them.</summary>
-		internal static void HostFeed(IslandWorldState.Entry e, int spot, ulong player, Vector3 near)
+		internal static bool HostFeed(IslandWorldState.Entry e, int spot, ulong player, Vector3 near)
 		{
-			if (e == null || e.Root == null) return;
+			if (e == null || e.Root == null) { Refused++; Result(player, 0, "animal"); return false; }
 			IslandObjectRef r = Behaviours.RefsOf(e).FirstOrDefault(x => x.Index == spot);
 			CreatureSpawnPoint s = r != null ? r.GetComponent<CreatureSpawnPoint>() : null;
 			string target = s == null ? null : Current(e).FirstOrDefault(t => { string w, z; IslanderWalks.SplitTarget(t, out w, out z); return KindIs(s.Kind, w) || r.Name.Equals(w, StringComparison.OrdinalIgnoreCase); });
@@ -227,17 +253,18 @@ namespace DynamicIslands.Editor
 			{
 				Refused++;
 				Result(player, 0, s != null ? s.Kind.Label : "animal");
-				return;
+				return false;
 			}
 			string who, pen;
 			IslanderWalks.SplitTarget(target, out who, out pen);
 			AI_State_CirculateSpawn st = ai.GetComponentsInChildren<AI_State_CirculateSpawn>(true).FirstOrDefault();
-			if (st == null) { Refused++; Result(player, 0, s.Kind.Label); Debug.Log("[CUSTOM ISLANDS] Taming: a " + s.Kind.Label + " without a circulate state"); return; }
+			if (st == null) { Refused++; Result(player, 0, s.Kind.Label); Debug.Log("[CUSTOM ISLANDS] Taming: a " + s.Kind.Label + " without a circulate state"); return false; }
 			Traverse tv = Traverse.Create(st);
 			tamed[ai] = new Tamed { E = e, Spot = spot, Owner = player, Pen = pen, Target = target, St = st, Home = st.SpawnPointPosition,
 				Radius = tv.Field("circulationRadius").GetValue<float>(), RadiusMin = tv.Field("circulationRadiusMin").GetValue<float>(), PlayerDistance = tv.Field("playerDistance").GetValue<float>() };
 			Debug.Log("[CUSTOM ISLANDS] Taming: a " + s.Kind.Label + " of '" + e.HostName + "' follows player " + player);
 			Result(player, 1, s.Kind.Label);
+			return true;
 		}
 
 		/// <summary>Host -> the player: 0 = nothing to feed there, 1 = it follows you, 2 = it is in the pen.</summary>
@@ -249,6 +276,7 @@ namespace DynamicIslands.Editor
 
 		static void Told(int kind, string label)
 		{
+			if (kind == 0 || kind == 1) LastAnswer = kind;
 			string a = label.ToLowerInvariant();
 			MechFeatures.Tell(kind == 1 ? "The " + a + " eats from your hand. It follows you now - lead it to its pen" : kind == 2 ? "The " + a + " is in its pen" : "The " + a + " isn't hungry");
 		}
@@ -259,6 +287,9 @@ namespace DynamicIslands.Editor
 			string[] f = (msg.Data ?? "").Split('|');
 			ulong who;
 			if (f.Length < 2 || !ulong.TryParse(f[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out who) || who != MechFeatures.LocalId) return;
+			// the answer to this player's feed: the food goes only if the animal took it
+			if (msg.Count == 1 && pendingFood != null) TakeFood(RAPI.GetLocalPlayer(), pendingFood);
+			if (msg.Count == 0 || msg.Count == 1) pendingFood = null;
 			Told(msg.Count, f[1]);
 		}
 
@@ -407,7 +438,7 @@ namespace DynamicIslands.Editor
 		{
 			if (msg.Ids == null || msg.Ids.Length < 2 || msg.Offsets == null || msg.Offsets.Length < 3) return;
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == msg.Ids[0]);
-			if (e == null || !PlayerTrust.MayMark(from, e.Id, "a fed animal")) { Refused++; return; }
+			if (e == null || !PlayerTrust.MayMark(from, e.Id, "a fed animal")) { Refused++; Result(from, 0, "animal"); return; }
 			HostFeed(e, msg.Ids[1], from, new Vector3(msg.Offsets[0], msg.Offsets[1], msg.Offsets[2]));
 		}
 
@@ -416,6 +447,7 @@ namespace DynamicIslands.Editor
 			tamed.Clear();
 			steps.Clear();
 			held = 0f;
+			pendingFood = null;
 			nearby = new AI_NetworkBehaviour[0];
 		}
 	}

@@ -83,6 +83,7 @@
     <Compile Include="DevTestsMech.cs" />
     <Compile Include="DevTestsPlayerFeatures.cs" />
     <Compile Include="DevTestsQuestPuzzle.cs" />
+    <Compile Include="DevTestsLaserAny.cs" />
     <Compile Include="DevTestsGapBehaviours.cs" />
     <Compile Include="DevTestsQuestGap.cs" />
     <Compile Include="DevTestsQuestSkip.cs" />
@@ -133,6 +134,7 @@
     <Compile Include="DevTestsReadyPieces.cs" />
     <Compile Include="DevTestsT8cb.cs" />
     <Compile Include="DevTestsMp34.cs" />
+    <Compile Include="DevTestsMp34b.cs" />
     <Compile Include="DevTestsMp1030.cs" />
     <Compile Include="DevTestsBringBack.cs" />
     <Compile Include="DevTestsLibrary.cs" />
@@ -290,6 +292,7 @@
     <Compile Include="RaftFeatures.cs" />
     <Compile Include="DevTestsLeftovers.cs" />
     <Compile Include="DevTestsNoIdWorld.cs" />
+    <Compile Include="DevTestsInvCopy.cs" />
     <Compile Include="EditorLighting.cs" />
     <Compile Include="RaftSkySea.cs" />
     <Compile Include="ScrambledBlueprints.cs" />
