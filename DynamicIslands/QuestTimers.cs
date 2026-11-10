@@ -152,7 +152,7 @@ namespace DynamicIslands.Editor
 				timers.Remove(id);
 				lastSent.Remove(id);
 				IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == t.Island);
-				if (e != null) e.State.Remove(KeyBase + t.Quest);
+				if (e != null && e.Root != null) e.State.Remove(KeyBase + t.Quest); // (an island unloaded keeps its seconds left)
 				t.Mode = Stop;
 				Send(t, Stop);
 			}
