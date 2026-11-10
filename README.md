@@ -536,7 +536,7 @@ It counts with plans that use random islands (Random islands, or a plan with ran
 - **Long voyage:** random custom islands come half as often (after every 6-12 of Raft's own islands instead of 3-6)
   and at least 1.6 km apart, so food, water and the raft matter more between stops.
 - **Iron raft:** the raft's blocks take half damage from shark bites; the hammer and the axe take pieces down as before.
-- **Shared EXP:** when a player defeats a monster, every other player within 50 m gets 60 % of its EXP too.
+- **Shared EXP:** with the level up system on, when a player defeats a monster, every other player within 50 m gets 60 % of its EXP too.
 - **Night is dangerous:** at night monsters have x1.3 health and damage and the shark comes for the raft more often;
   by day both are calmer.
 - **Daily quest:** each morning a small task for the crew (gather some planks, plastic, palm leaves or scrap, catch a few

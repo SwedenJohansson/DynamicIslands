@@ -63,7 +63,7 @@ namespace DynamicIslands.Editor
 			"A storage opens only for the player who built it: each player keeps their own things. Storages built before the option was on (or by nobody) open for everyone.",
 			"Random custom islands come half as often and lie further apart, so food, water and the raft matter more between stops. Raft's own islands, and quest and plan islands, keep their places.",
 			"The raft's blocks take half damage from shark bites: fewer repairs. Taking pieces down with the hammer or the axe works as always, and shark bait is eaten as fast as ever.",
-			"When a player defeats a monster, every other player within 50 m gets 60 % of its EXP too (less what their own hits on it already earned). Only defeated monsters count; playing alone nothing changes.",
+			"With the level up system on: when a player defeats a monster, every other player within 50 m gets 60 % of its EXP too (less what their own hits on it already earned). Only defeated monsters count; playing alone nothing changes.",
 			"After dark monsters are tougher (x1.3 health and damage on top of the monster difficulty) and the shark comes for the raft more often; by day both are calmer (x0.85, the shark less often).",
 			"Each morning the crew gets a small task for the day: gather some planks, plastic, palm leaves or scrap, catch a few fish or defeat a few monsters. Done before dark, everyone gets a small reward (basic resources or food); not done, it runs out.",
 			"Now and then a second shark comes beside the usual one: rust-red, and it doesn't leave on its own - only when it's killed. Once it is, no other comes for several days. Never before day 3. Now and then it is a giant: twice the size, much tougher.",
@@ -97,7 +97,7 @@ namespace DynamicIslands.Editor
 			"A storage opens only for the player who built it: each player keeps their own things.",
 			"Random custom islands come half as often and lie further apart. Raft's own, quest and plan islands stay where they are.",
 			"The raft's blocks take half damage from shark bites: fewer repairs.",
-			"Players within 50 m of a defeated monster get 60 % of its EXP too.",
+			"With levels on: players within 50 m of a defeated monster get 60 % of its EXP too.",
 			"After dark monsters are tougher and the shark comes more often; by day both are calmer.",
 			"Each morning the crew gets a small task. Done before dark, everyone gets a small reward.",
 			"Now and then a second, rust-red shark comes and stays until it is killed. Sometimes it is a giant. Never before day 3.",
@@ -229,6 +229,7 @@ namespace DynamicIslands.Editor
 			ResetStep("Kraken.Reset", () => global::DynamicIslands.Editor.Kraken.Reset());
 			ResetStep("FogSight.Reset", () => global::DynamicIslands.Editor.FogSight.Reset());
 			ResetStep("GhostShip.Reset", () => global::DynamicIslands.Editor.GhostShip.Reset());
+			ResetStep("GlowSea.Reset", () => global::DynamicIslands.Editor.GlowSea.Reset());
 			ResetStep("StormSeas.Reset", () => global::DynamicIslands.Editor.StormSeas.Reset());
 			ResetStep("TraderRaft.Reset", () => global::DynamicIslands.Editor.TraderRaft.Reset());
 			ResetStep("UpgradeTable.Reset", () => global::DynamicIslands.Editor.UpgradeTable.Reset());
@@ -338,6 +339,7 @@ namespace DynamicIslands.Editor
 			ResetStep("Kraken.Reset", () => global::DynamicIslands.Editor.Kraken.Reset());
 			ResetStep("FogSight.Reset", () => global::DynamicIslands.Editor.FogSight.Reset());
 			ResetStep("GhostShip.Reset", () => global::DynamicIslands.Editor.GhostShip.Reset());
+			ResetStep("GlowSea.Reset", () => global::DynamicIslands.Editor.GlowSea.Reset());
 			ResetStep("StormSeas.Reset", () => global::DynamicIslands.Editor.StormSeas.Reset());
 			ResetStep("TraderRaft.Reset", () => global::DynamicIslands.Editor.TraderRaft.Reset());
 			ResetStep("LightningStrikes.Reset", () => global::DynamicIslands.Editor.LightningStrikes.Reset());
@@ -386,6 +388,8 @@ namespace DynamicIslands.Editor
 				{
 					string o = a.TrimStart('+', '-').ToLowerInvariant();
 					if (!All.Contains(o)) { Debug.Log("[CUSTOM ISLANDS] Unknown option '" + a + "' (" + string.Join(", ", All) + ")"); continue; }
+					// (a retired option is not offered for new worlds: the World settings window has no box to take it off again)
+					if (IsRetired(o) && !a.StartsWith("-")) { Debug.Log("[CUSTOM ISLANDS] '" + o + "' is retired and not offered for new worlds"); continue; }
 					if (a.StartsWith("-")) next.Remove(o); else next.Add(o);
 				}
 				SaveDefaults(next);

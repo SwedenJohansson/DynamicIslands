@@ -3644,7 +3644,7 @@ hammer or the axe works exactly as before, and shark bait is eaten as fast as ev
 
 #### Shared EXP
 
-When a player defeats a monster, **every other player within 50 m** of it gets **60 %** of its EXP too (less what
+With the [level up system](#96-the-level-up-system) on, when a player defeats a monster, **every other player within 50 m** of it gets **60 %** of its EXP too (less what
 their own hits on it already earned, so a helper ends up with at least 60 %). It doesn't count as a defeated monster
 for them. Only defeated monsters are shared; playing alone nothing changes. See [Earning EXP](#earning-exp) for what each
 monster is worth.
