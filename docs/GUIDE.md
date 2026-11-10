@@ -570,8 +570,8 @@ edge, pointing the way). Green dots are **map markers** the builder placed.
 - **+** and **-** zoom in and out (1x, 2x, 4x), around you (the keypad's + and - too).
 - The map shows only near an island (within its land and 80 m; a ghost ship or a drifting raft counts as one); at open
   sea it hides. Its picture is taken when you come to the island and every 30 s.
-- A map you hid with **M** stays hidden on the next island until you press **M** again. At sea, where there is no
-  map, **M**, **+** and **-** do nothing.
+- A map you hid with **M** stays hidden on the next island until you press **M** again, in that world only: every
+  world you load or join starts with the map shown. At sea, where there is no map, **M**, **+** and **-** do nothing.
 - **G** **pings** the spot you look at (up to 300 m; looking at the sky, 50 m ahead): everyone in the world sees a red
   beam with your name there, a red dot on the map and hears a short sound, for 6 seconds. One ping a second at most;
   a new ping of yours replaces your last one.
