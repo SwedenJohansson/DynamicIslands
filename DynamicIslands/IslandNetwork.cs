@@ -699,11 +699,41 @@ namespace DynamicIslands.Editor
 
 		#region Receiving
 
+		/// <summary>Kinds only the host sends to a player: the world's state (islands, options, rules, story chain, saves...).
+		/// A player drops one from anyone else (AUDIT 11-09 #14: a modified peer could set them on a public lobby).</summary>
+		internal static readonly HashSet<int> HostOnlyKinds = new HashSet<int> {
+			IslandNetMessage.Islands, IslandNetMessage.Remove, IslandNetMessage.SyncRequest, IslandNetMessage.WorldRules,
+			IslandNetMessage.ObjectSet, IslandNetMessage.QuestItemsBack, IslandNetMessage.AlphaHealth, IslandNetMessage.WorldOptions,
+			IslandNetMessage.Randomizer, IslandNetMessage.RogueShark, IslandNetMessage.WorldCopy, IslandNetMessage.WorldSave,
+			IslandNetMessage.StormSeas, IslandNetMessage.WhaleBreach, IslandNetMessage.VendingHatch, IslandNetMessage.StoryChain,
+			IslandNetMessage.QuestCount, IslandNetMessage.CreatureSpots, IslandNetMessage.Announce };
+
+		/// <summary>Tests: how many host-only messages from someone else a player dropped.</summary>
+		internal static int DroppedNotFromHost;
+		/// <summary>Tests: the host's id a player checks against (0: Raft's HostID).</summary>
+		internal static ulong HostIdOverride;
+
+		/// <summary>On a player: a host-only kind (HostOnlyKinds) sent by someone other than the host (known). The host takes all.</summary>
+		internal static bool NotFromHost(IslandNetMessage msg, ulong from, bool isHost)
+		{
+			if (isHost || msg == null || !HostOnlyKinds.Contains(msg.Kind)) return false;
+			ulong host = HostIdOverride;
+			if (host == 0UL)
+				try { Raft_Network network = ComponentManager<Raft_Network>.Value; host = network != null ? network.HostID.Id : 0UL; } catch { }
+			return host != 0UL && from != 0UL && from != host;
+		}
+
 		/// <summary>Returns true if the message was ours.</summary>
 		public static bool OnMessage(object message, Network_UserId from)
 		{
 			var msg = message as IslandNetMessage;
 			if (msg == null) return false;
+			if (NotFromHost(msg, from.Id, Raft_Network.IsHost))
+			{
+				DroppedNotFromHost++;
+				Debug.LogWarning("[CUSTOM ISLANDS] [net] Dropped a host-only message (kind " + msg.Kind + ") from " + from.Id + ", who isn't the host");
+				return true;
+			}
 			try
 			{
 				switch (msg.Kind)

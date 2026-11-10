@@ -1,0 +1,227 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using UnityEngine;
+
+namespace DynamicIslands
+{
+	/// <summary>Audit 11-09 player bugs, round 3.5: item index clashes (#8), the reinforced storage's prefab (#11), one "-Latest"
+	/// in a received world (#15), host-only messages from someone else (#14), hints with the bound keys (#12), and the island
+	/// banner over the level-up box (#13).</summary>
+	public static partial class DevTests
+	{
+		[ConsoleCommand(name: "CIIndexClash", docs: "Dev, in game: every upgrade's live/declared index round-trips; an upgrade whose index another item holds moves to a free one (>= 29600), is listed as a clash, and the other item keeps its index")]
+		public static void IndexClashCommand() { StartTest(IndexClashRoutine()); }
+
+		static IEnumerator IndexClashRoutine()
+		{
+			bool ok = true;
+			List<ExtraUpgrades.Upgrade> made = ExtraUpgrades.All.Concat(ExtraUpgrades.CosmeticItems).Where(u => u.Item != null).ToList();
+			Check(ref ok, made.Count > 0, "upgrades made: " + made.Count);
+			List<string> bad = made.Where(u => ExtraUpgrades.LiveIndex(u.Declared) != u.Index || ExtraUpgrades.DeclaredIndex(u.Index) != u.Declared
+				|| u.Item.UniqueIndex != u.Index).Select(u => u.Name + " " + u.Declared + "/" + u.Index).ToList();
+			Check(ref ok, bad.Count == 0, "live/declared index round trip" + (bad.Count > 0 ? " - WRONG " + string.Join(", ", bad.ToArray()) : ""));
+			Check(ref ok, made.All(u => u.Index == u.Declared), "no other mod: every upgrade keeps its declared index (saves stay stable)");
+			Check(ref ok, ExtraUpgrades.Clashed.Count == 0, "no clashes listed: " + ExtraUpgrades.Clashed.Count);
+			Check(ref ok, ExtraUpgrades.LiveIndex(12345) == 12345 && ExtraUpgrades.DeclaredIndex(12345) == 12345, "an index not ours maps to itself");
+
+			Item_Base rope = ItemManager.GetItemByName("Rope");
+			if (rope == null) { Fail("index clash: Raft has no Rope"); yield break; }
+			var test = new ExtraUpgrades.Upgrade { Index = rope.UniqueIndex, Name = "DI_TestClash", BaseName = "Rope", Display = "Test clash", Tint = Color.white, Description = "test" };
+			bool madeIt = false;
+			try { madeIt = ExtraUpgrades.Make(test); }
+			catch (Exception e) { Check(ref ok, false, "Make threw: " + e.Message); }
+			try
+			{
+				Check(ref ok, madeIt && test.Item != null, "an upgrade on a taken index is still made");
+				Check(ref ok, test.Declared == rope.UniqueIndex && test.Index >= 29600 && test.Index != rope.UniqueIndex, "it moved: declared " + test.Declared + " -> " + test.Index);
+				Item_Base atNew = ItemManager.GetItemByIndex(test.Index);
+				Check(ref ok, atNew != null && atNew.UniqueName == "DI_TestClash", "its new index holds it: " + (atNew != null ? atNew.UniqueName : "null"));
+				Item_Base atOld = ItemManager.GetItemByIndex(rope.UniqueIndex);
+				Check(ref ok, atOld == rope, "the other item keeps its index: " + (atOld != null ? atOld.UniqueName : "null"));
+				Check(ref ok, ExtraUpgrades.DeclaredIndex(test.Index) == rope.UniqueIndex, "its declared index is known (the upgrade table file keeps it)");
+				Check(ref ok, ExtraUpgrades.Clashed.Contains("Test clash"), "listed as a clash (the one-time warning names it)");
+				Check(ref ok, made.All(u => u.Index != test.Index), "the free index is no other upgrade's");
+			}
+			finally { ExtraUpgrades.ForgetForTest(test); }
+			Check(ref ok, ItemManager.GetItemByName("DI_TestClash") == null && ExtraUpgrades.Clashed.Count == 0, "test item taken out again");
+			yield return null;
+			if (ok) Log("PASS: index clash"); else Fail("index clash");
+		}
+
+		[ConsoleCommand(name: "CIBigStoragePrefab", docs: "Dev, in game: the reinforced storage's block prefab already has the bigger inventory at registration (not only once a block wakes)")]
+		public static void BigStoragePrefabCommand() { StartTest(BigStoragePrefabRoutine()); }
+
+		static IEnumerator BigStoragePrefabRoutine()
+		{
+			bool ok = true;
+			ExtraUpgrades.Upgrade u = ExtraUpgrades.Find("DI_ReinforcedStorage");
+			if (u == null || u.Item == null || u.Base == null) { Fail("big storage prefab: no reinforced storage"); yield break; }
+			Func<Item_Base, int> slots = it =>
+			{
+				Block[] p = it.settings_buildable != null ? it.settings_buildable.GetBlockPrefabs() : null;
+				Storage_Small s = p != null ? p.Where(b => b != null).Select(b => b.GetComponentInChildren<Storage_Small>(true)).FirstOrDefault(x => x != null) : null;
+				return s != null && s.inventoryPrefab != null ? s.inventoryPrefab.GetComponentsInChildren<Slot>(true).Length : -1;
+			};
+			int baseSlots = slots(u.Base), bigSlots = slots(u.Item);
+			Check(ref ok, baseSlots > 0, "large storage prefab slots: " + baseSlots);
+			Check(ref ok, bigSlots >= Mathf.CeilToInt(baseSlots * ExtraUpgrades.StorageSlotsFactor), "reinforced storage prefab slots at registration: " + bigSlots + " (want >= " + Mathf.CeilToInt(baseSlots * ExtraUpgrades.StorageSlotsFactor) + ")");
+			yield return null;
+			if (ok) Log("PASS: big storage prefab"); else Fail("big storage prefab");
+		}
+
+		[ConsoleCommand(name: "CIWorldShareLatest", docs: "Dev, anywhere: a received world folder never keeps two \"-Latest\" saves (own one moves to a free dated name, a received one goes), and a world the host renamed is moved, not doubled")]
+		public static void WorldShareLatestCommand() { StartTest(WorldShareLatestRoutine()); }
+
+		static IEnumerator WorldShareLatestRoutine()
+		{
+			bool ok = true;
+			string root = Path.Combine(Path.GetTempPath(), "CI_WorldShareLatest");
+			try
+			{
+				if (Directory.Exists(root)) Directory.Delete(root, true);
+				string w = Path.Combine(root, "World");
+				Func<string, bool, string> mk = (name, received) =>
+				{
+					string d = Path.Combine(w, name);
+					Directory.CreateDirectory(d);
+					if (received) File.WriteAllText(Path.Combine(d, WorldSaveShare.ReceivedFile), "1");
+					return d;
+				};
+				// 1. the player's own -Latest, its dated name taken by their own backup: it takes the minute before
+				mk("2026.11.10-12.00", false);
+				WorldSaveShare.RetireLatest(mk("2026.11.10-12.00-Latest", false));
+				Check(ref ok, !Directory.Exists(Path.Combine(w, "2026.11.10-12.00-Latest")) && Directory.Exists(Path.Combine(w, "2026.11.10-11.59")), "own -Latest with its name taken -> 2026.11.10-11.59");
+				// 2. a received -Latest whose dated copy exists: it goes
+				mk("2026.11.10-13.00", true);
+				WorldSaveShare.RetireLatest(mk("2026.11.10-13.00-Latest", true));
+				Check(ref ok, !Directory.Exists(Path.Combine(w, "2026.11.10-13.00-Latest")) && Directory.Exists(Path.Combine(w, "2026.11.10-13.00")), "received -Latest with a dated copy -> removed");
+				// 3. the player's own -Latest, a received dated copy in the way: that copy is replaced
+				string inWay = mk("2026.11.10-14.00", true);
+				WorldSaveShare.RetireLatest(mk("2026.11.10-14.00-Latest", false));
+				Check(ref ok, !Directory.Exists(inWay + "-Latest") && Directory.Exists(inWay) && !File.Exists(Path.Combine(inWay, WorldSaveShare.ReceivedFile)), "own -Latest over a received copy -> takes its name");
+				// 4. no clash: a plain rename
+				WorldSaveShare.RetireLatest(mk("2026.11.10-15.00-Latest", false));
+				Check(ref ok, Directory.Exists(Path.Combine(w, "2026.11.10-15.00")), "own -Latest, name free -> dated");
+				Check(ref ok, Directory.GetDirectories(w).Count(d => d.EndsWith("-Latest")) == 0, "no -Latest left");
+				Check(ref ok, WorldSaveShare.FreeDatedName(Path.Combine(w, "not a date")).EndsWith("not a date (2)"), "an undated name gets (2)");
+
+				// 5. the host renamed the world: the old folder (marker = this world) moves to the new name
+				Guid g = Guid.NewGuid();
+				string old = Path.Combine(root, "Old name");
+				Directory.CreateDirectory(old);
+				File.WriteAllLines(Path.Combine(old, WorldSaveShare.MarkerFile), new[] { g.ToString() });
+				string got = WorldSaveShare.WorldFolderFor(root, "New name", g);
+				Check(ref ok, got == Path.Combine(root, "New name") && Directory.Exists(got) && !Directory.Exists(old), "renamed world moved: " + Path.GetFileName(got));
+				// 6. the new name is another world's: the old folder is used as it is
+				Guid g2 = Guid.NewGuid();
+				string other = Path.Combine(root, "Taken");
+				Directory.CreateDirectory(other);
+				File.WriteAllLines(Path.Combine(other, WorldSaveShare.MarkerFile), new[] { Guid.NewGuid().ToString() });
+				string taken2 = Path.Combine(root, "Taken (" + g2.ToString().Substring(0, 8) + ")");
+				Directory.CreateDirectory(taken2);
+				File.WriteAllLines(Path.Combine(taken2, WorldSaveShare.MarkerFile), new[] { Guid.NewGuid().ToString() });
+				string mine = Path.Combine(root, "Mine before");
+				Directory.CreateDirectory(mine);
+				File.WriteAllLines(Path.Combine(mine, WorldSaveShare.MarkerFile), new[] { g2.ToString() });
+				got = WorldSaveShare.WorldFolderFor(root, "Taken", g2);
+				Check(ref ok, got == mine, "new name taken by other worlds -> the old folder is kept: " + Path.GetFileName(got));
+				// 7. a new world: its own name
+				got = WorldSaveShare.WorldFolderFor(root, "Fresh", Guid.NewGuid());
+				Check(ref ok, got == Path.Combine(root, "Fresh"), "a new world gets its name");
+			}
+			catch (Exception e) { Check(ref ok, false, "threw: " + e); }
+			finally { try { Directory.Delete(root, true); } catch { } }
+			yield return null;
+			if (ok) Log("PASS: world share latest"); else Fail("world share latest");
+		}
+
+		[ConsoleCommand(name: "CIHostOnlyMsgs", docs: "Dev, anywhere: a player drops host-only mod messages that don't come from the host; the host and other kinds are untouched")]
+		public static void HostOnlyMsgsCommand() { StartTest(HostOnlyMsgsRoutine()); }
+
+		static IEnumerator HostOnlyMsgsRoutine()
+		{
+			bool ok = true;
+			ulong was = IslandNetwork.HostIdOverride;
+			IslandNetwork.HostIdOverride = 111UL;
+			try
+			{
+				foreach (int kind in IslandNetwork.HostOnlyKinds)
+				{
+					var m = new IslandNetMessage { Kind = kind };
+					if (!IslandNetwork.NotFromHost(m, 222UL, false)) Check(ref ok, false, "kind " + kind + " from a player not dropped");
+					if (IslandNetwork.NotFromHost(m, 111UL, false)) Check(ref ok, false, "kind " + kind + " from the host dropped");
+					if (IslandNetwork.NotFromHost(m, 222UL, true)) Check(ref ok, false, "kind " + kind + " dropped on the host");
+				}
+				Check(ref ok, IslandNetwork.HostOnlyKinds.Count >= 19, "host-only kinds checked: " + IslandNetwork.HostOnlyKinds.Count);
+				foreach (int kind in new[] { IslandNetMessage.ObjectUsed, IslandNetMessage.QuestStep, IslandNetMessage.FileRequest, IslandNetMessage.FileChunk, IslandNetMessage.Claim, IslandNetMessage.Ping, IslandNetMessage.PlayerPlace })
+					Check(ref ok, !IslandNetwork.NotFromHost(new IslandNetMessage { Kind = kind }, 222UL, false), "kind " + kind + " (players send it) passes");
+				Check(ref ok, !IslandNetwork.NotFromHost(new IslandNetMessage { Kind = IslandNetMessage.Islands }, 0UL, false), "unknown sender: passes (never drops on missing data)");
+				IslandNetwork.HostIdOverride = 0UL;
+				if (ComponentManager<Raft_Network>.Value == null || Raft_Network.IsHost)
+					Check(ref ok, !IslandNetwork.NotFromHost(new IslandNetMessage { Kind = IslandNetMessage.Islands }, 222UL, Raft_Network.IsHost), "no host id known / on the host: passes");
+			}
+			finally { IslandNetwork.HostIdOverride = was; }
+			yield return null;
+			if (ok) Log("PASS: host-only messages"); else Fail("host-only messages");
+		}
+
+		[ConsoleCommand(name: "CIHintKeys", docs: "Dev, in game: the notebook/journal/stats hints name the keys as bound now - Raft's notebook rebound shows the new key")]
+		public static void HintKeysCommand() { StartTest(HintKeysRoutine()); }
+
+		static IEnumerator HintKeysRoutine()
+		{
+			bool ok = true;
+			Check(ref ok, ModKeys.JournalName == ModKeys.Name(ModKeys.Journal) && ModKeys.StatsName == ModKeys.Name(ModKeys.Stats), "journal/stats names: " + ModKeys.JournalName + " / " + ModKeys.StatsName);
+			Keybind kb;
+			if (MyInput.Keybinds == null || !MyInput.Keybinds.TryGetValue("NoteBookToggle", out kb) || kb == null)
+				Check(ref ok, false, "Raft's NoteBookToggle keybind not found (keys: " + (MyInput.Keybinds != null ? string.Join(",", MyInput.Keybinds.Keys.ToArray()) : "none") + ")");
+			else
+			{
+				KeyCode was = kb.MainKey;
+				Check(ref ok, ModKeys.RaftNotebook == was, "notebook key as bound: " + ModKeys.RaftNotebookName);
+				try
+				{
+					kb.MainKey = was == KeyCode.K ? KeyCode.L : KeyCode.K;
+					Check(ref ok, ModKeys.RaftNotebook == kb.MainKey && ModKeys.RaftNotebookName == ModKeys.Name(kb.MainKey), "rebound notebook -> hint says " + ModKeys.RaftNotebookName);
+				}
+				finally { kb.MainKey = was; }
+			}
+			yield return null;
+			if (ok) Log("PASS: hint keys"); else Fail("hint keys");
+		}
+
+		[ConsoleCommand(name: "CIBannerOverlap", docs: "Dev, in game: a long island banner and a level-up box shown together don't overlap; the box goes back up after")]
+		public static void BannerOverlapCommand() { StartTest(BannerOverlapRoutine()); }
+
+		static IEnumerator BannerOverlapRoutine()
+		{
+			bool ok = true;
+			if (RAPI.GetLocalPlayer() == null) { Fail("banner overlap: needs a world"); yield break; }
+			IslandInfo.HideNow();
+			LevelHud.Announce("Level up!", "Test level 99", true);
+			yield return new WaitForSecondsRealtime(0.5f);
+			Rect? alone = LevelHud.BannerScreenRect;
+			foreach (int lines in new[] { 1, 4, 9 })
+			{
+				IslandInfo.HideNow();
+				IslandInfo.Show("Overlap test island", "CI", string.Join(" ", Enumerable.Repeat("A long island description that wraps over several lines of the banner.", lines).ToArray()));
+				LevelHud.Announce("Level up!", "Test level 99", true);
+				yield return new WaitForSecondsRealtime(0.5f);
+				Rect? isl = IslandInfo.BannerScreenRect, lvl = LevelHud.BannerScreenRect;
+				Check(ref ok, isl.HasValue && lvl.HasValue, lines + " line(s): both up");
+				if (isl.HasValue && lvl.HasValue)
+					Check(ref ok, !isl.Value.Overlaps(lvl.Value) && lvl.Value.yMax <= isl.Value.yMin, lines + " line(s): island " + isl.Value.yMin.ToString("0") + ".." + isl.Value.yMax.ToString("0")
+						+ ", level box " + lvl.Value.yMin.ToString("0") + ".." + lvl.Value.yMax.ToString("0"));
+			}
+			IslandInfo.HideNow();
+			yield return new WaitForSecondsRealtime(0.3f);
+			Rect? back = LevelHud.BannerScreenRect;
+			if (alone.HasValue && back.HasValue) Check(ref ok, Mathf.Abs(back.Value.yMax - alone.Value.yMax) < 1f, "level box back in its place: " + back.Value.yMax.ToString("0") + " (was " + alone.Value.yMax.ToString("0") + ")");
+			LevelHud.Clear();
+			if (ok) Log("PASS: banner overlap"); else Fail("banner overlap");
+		}
+	}
+}

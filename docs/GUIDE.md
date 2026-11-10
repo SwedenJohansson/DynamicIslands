@@ -3775,6 +3775,10 @@ twice the fuel. In a machine it shows as a blue battery. Switch the option off a
 crafting menu again (large batteries already made keep working, what is built stays); switch it back on and the ones
 learned are back.
 
+Each upgrade has an item number of its own (29400 and up). If another mod already uses one of them, that upgrade
+moves to a free number (29600 and up) and the game tells you once; keep the same mods for that world, so its saved
+upgrades stay what they were.
+
 ##### The upgrade research table
 
 The upgrades are learned at a research table of their own, not with their base: learning the battery doesn't teach

@@ -16,6 +16,12 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Shelter Atoll's ammo cave hill meets the sand gently**: on dry land (`cave.foot=dry`) the hill's foot now flares out into the sand instead of meeting it at a hard, steep line, and the rock beside the cave's opening slopes up from the beach instead of standing as sheer dark walls. The way in stays open.
 - **Radio Tower Remade's trawler** rests on its pad from stern to bow; its stern no longer hangs out over the sea.
 - **Recipes: dig stroke ends and shaft tops**: The Rootcore's core room is the first with a `dig ... shaft` ladder shaft (in 3.3). The recipe player now prints where each dig stroke ends (x z, floor height, the ground over it), to set ladders, rats and zones down in a dug room, and the offline cave check (`content.ps1 cavecheck`) knows a shaft's top as a second mouth.
+- **Upgrades and another mod's items**: when another mod already uses one of an upgrade's item numbers, the upgrade now moves to a free number (from 29600) and you get one warning in game, instead of the upgrade missing. Without such a mod, every upgrade keeps its number, so saves are unchanged.
+- **Reinforced storage** has its extra slots from the start, also for a storage built or loaded before its block first woke up.
+- **Received worlds show once**: a world the host sent never leaves two "-Latest" saves in your world list, and a world the host renamed moves to its new name instead of showing twice.
+- **Multiplayer**: players ignore host-only Custom Islands messages that come from anyone but the host.
+- **Hints name your keys**: the notebook, journal and stats hints say the key as bound now (Raft's notebook key too), not a fixed letter.
+- **Level-up box below the island banner**: a long island banner no longer covers the level-up box; the box moves down while the banner is up.
 
 ---
 

@@ -612,7 +612,8 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   telescope (2x zoom), titanium greatsword and spear (1.5x damage), long paddle (2x push), floodlight (2x as far),
   steel pot and fast juicer (2x as fast), titanium machete (1.5x damage), sturdy scarecrow (never wears out), master hammer
   (2x repair), longbow (1.5x draw and range), bright head light and bright lamp (2x as far), lumber axe (2x as fast) and marine binoculars (2x zoom, titanium;
-  see furthest with Binoculars see through fog).
+  see furthest with Binoculars see through fog). Item numbers 29400 and up; one another mod already uses moves to a
+  free number (29600 and up), with one warning in game.
 - The host can change them in a world: `WorldOptions` shows them; `WorldOptions +ghostrafts -privatestorage` (any
   option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades, stormseas, ufo, glowsea, lightning, ghostship, whalebreach, fogbanks, kraken, fogsight, mirrorislands, minimap, fullerislands).
 - Multiplayer: the options, their seed and the storages' builders are in the world file and sent to every player
