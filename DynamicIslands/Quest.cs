@@ -753,6 +753,12 @@ namespace DynamicIslands.Editor
 		}
 
 		public static bool PanelShown { get { return panel != null && panel.gameObject.activeSelf; } }
+
+		/// <summary>Tests: the panel's current step line ("" when none shows).</summary>
+		internal static string PanelCurrent
+		{
+			get { Text t = stepLines.FirstOrDefault(x => x != null && x.gameObject.activeSelf && x.text.Contains("►")); return PanelShown && t != null ? t.text : ""; }
+		}
 		/// <summary>How many steps the panel shows at a time; a longer quest scrolls (the user, 2026-10-03: a 32-step quest
 		/// covered the right side of the screen).</summary>
 		public const int VisibleSteps = 5;
