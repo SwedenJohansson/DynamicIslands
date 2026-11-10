@@ -463,6 +463,15 @@ namespace DynamicIslands.Editor
 			text.characterLimit = 80;
 			text.onEndEdit.AddListener(v => s.Text = v.Trim());
 			fields.Add(text);
+			// A time limit (QE9): run out and the step starts again; empty or 0 = none
+			InputField secs = UIKit.Field(row, "time", s.Seconds > 0 ? s.Seconds.ToString() : "", 28f,
+				"Time limit in seconds (empty = none): players near the island see a countdown; run out and this step starts again" +
+				(QuestTimers.Unsafe(s.Type) ? ". Careful: this kind of step can't be undone (what was killed, handed over or read stays so) - best for reach, zone, talk or puzzle steps" : ""));
+			UIKit.Size(secs.gameObject, 52, 28);
+			secs.contentType = InputField.ContentType.IntegerNumber;
+			secs.characterLimit = 4;
+			secs.onEndEdit.AddListener(v => { int n; s.Seconds = int.TryParse(v, out n) ? Mathf.Clamp(n, 0, QuestTimers.MaxSeconds) : 0; });
+			fields.Add(secs);
 			UIKit.Button(row, "\u25B2", () => { int index = quest.Steps.IndexOf(s); if (index > 0) { Keep(); quest.Steps.Reverse(index - 1, 2); Renumber(); } }, "Earlier", 26, 28f, 11);
 			UIKit.Button(row, "\u25BC", () => { int index = quest.Steps.IndexOf(s); if (index >= 0 && index < quest.Steps.Count - 1) { Keep(); quest.Steps.Reverse(index, 2); Renumber(); } }, "Later", 26, 28f, 11);
 			Button del = UIKit.Button(row, "\u00D7", () => { Keep(); RemoveStep(s); }, "Remove this step", 26, 28f, 12);

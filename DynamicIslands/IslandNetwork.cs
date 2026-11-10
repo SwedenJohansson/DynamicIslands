@@ -871,6 +871,7 @@ namespace DynamicIslands.Editor
 						else if (msg.Name == "ufo") global::DynamicIslands.Editor.UfoSightings.OnMessage(msg);
 						else if (msg.Name == "ending") global::DynamicIslands.Editor.StoryCredits.OnMessage(msg);
 						else if (msg.Name == "path") global::DynamicIslands.Editor.CameraPath.OnMessage(msg);
+						else if (msg.Name == "timer") global::DynamicIslands.Editor.QuestTimers.OnMessage(msg);
 						else global::DynamicIslands.Editor.TriggerSounds.OnMessage(msg);
 						break;
 					case IslandNetMessage.UpgradeTable:
