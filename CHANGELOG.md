@@ -12,6 +12,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next (not released yet)
 
 - **A bear den's hill can be kept small** (island makers): `cave.dome=<m>` on a cave piece keeps its rounded hill within that many metres of the den, as tall but steeper. Without it every den is as before.
+- **Bear den fronts:** the hill in front of a lone den's arch now slopes down to the sand over more of its front, where it used to stop at a sheer step beside the way in.
 
 ## 3.4 alpha - 2026-11-10: Player fixes, new quest steps and islanders
 
