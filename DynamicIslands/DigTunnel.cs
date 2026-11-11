@@ -714,7 +714,7 @@ namespace DynamicIslands.Editor
 		/// copied back from the graphics card once (Graphics.Blit to a small RenderTexture). mat: made once, its texture
 		/// replaced. Null when the ground has no layers.
 		/// </summary>
-		static Material BakedGround(Terrain land, Rect r, ref Material mat)
+		internal static Material BakedGround(Terrain land, Rect r, ref Material mat)
 		{
 			TerrainData td = land != null ? land.terrainData : null;
 			TerrainLayer[] layers = td != null ? td.terrainLayers : null;

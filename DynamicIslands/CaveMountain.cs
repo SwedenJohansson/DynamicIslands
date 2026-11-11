@@ -889,7 +889,7 @@ namespace DynamicIslands.Editor
 							bool behind = bi >= 0 && bk >= 0 && bi < nx && bk < nz && on[bi, bk];
 							if (aheadCut && !behind) { Why[i, k] = 'x'; continue; }
 							float face = behind ? height[bi, bk] : m.FloorY + m.ArchUp;
-							float want = Mathf.Max(Mathf.Min(face, m.FloorY + m.ArchUp * Mathf.Clamp01(1f - past / LoneEdge) + LoneSide * sl * (1f + sl / ShoulderCurve)) - LoneFall * past, Mathf.Min(lf, ground[i, k]) - 0.6f);
+							float want = Mathf.Max(Mathf.Min(face, m.FloorY + m.ArchUp * Mathf.Clamp01(1f - past / LoneEdge) + LoneSide * sl * (1f + sl / LoneCurve)) - LoneFall * past, Mathf.Min(lf, ground[i, k]) - 0.6f);
 							if (past > LoneRun) { Why[i, k] = 'n'; continue; }
 							// (within LoneSink m of the ground it dives into it, LoneDive times as steep: it lay just over the flat sand
 							// as a pale flat panel with a hard edge, Caisson Yard and Shelter Atoll r48-r50)
@@ -1055,6 +1055,9 @@ namespace DynamicIslands.Editor
 		/// LoneRun m; right beside the way in it is the arch's height at the mouth and down to the floor LoneEdge m out (a funnel
 		/// opening out to the sand: at the arch's height all along, the way in ran between two straight cut walls, 11-09 r47).</summary>
 		internal const float LoneEdgeRise = 1.2f, LoneEdgeBand = 8f; // (how steeply a lone den's skin may rise off its edge, and how far past LoneRun that holds)
+		// (LoneCurve: how much steeper a lone den's cheeks get a m off the arch - at ShoulderCurve (4) they rose 3 m a cell, sheer cheeks
+		// round the arch, Shelter Atoll 11-11 r73; the wall flares out to them now, PlugFlare)
+		internal const float LoneCurve = 7f;
 		internal const float LoneSlot = 0.3f, LoneSide = 1.2f, LoneFall = 1.7f, LoneRun = 14f, LoneEdge = 2f, LoneSink = 1.5f, LoneDive = 2.5f;
 		// (cave.foot=dry: how many times the shoulders' cells are lowered toward their neighbours' mean)
 		internal const int RoundPasses = 3;
@@ -1187,7 +1190,7 @@ namespace DynamicIslands.Editor
 							if (past > 0f)
 							{
 								float sl = Mathf.Max(0f, Mathf.Abs(Vector3.Dot(d, m.Side) - m.InsideSide) - (m.ArchHalf + LoneSlot));
-								float cap = m.FloorY + m.ArchUp * Mathf.Clamp01(1f - past / LoneEdge) + LoneSide * sl * (1f + sl / ShoulderCurve) - LoneFall * past;
+								float cap = m.FloorY + m.ArchUp * Mathf.Clamp01(1f - past / LoneEdge) + LoneSide * sl * (1f + sl / LoneCurve) - LoneFall * past;
 								h = Mathf.Min(h, Mathf.Max(cap, g - DomeSink));
 							}
 						}
@@ -1565,7 +1568,12 @@ namespace DynamicIslands.Editor
 				}
 				else if (atWay)
 				{
-					if (Mathf.Min(ga, gb) <= way - 0.15f) Band(e0, e, Mathf.Min(ga, way), Mathf.Min(gb, way), way, way, n, verts, norms, uvs, tris, origin);
+					// (beside a lone den's way out over the sand, where its cheek has dived into the sand, no higher than the skin's own
+					// edge: the skirt rose to the den's floor there, 8-11 m out from the arch, a flat tan panel from the sand up to the
+					// floor's height beside the sea skip's cells, Shelter Atoll 11-11 r73/r74)
+					float wy = way;
+					if (Why != null && (Why[i1, k1] == 'L' || Why[i2, k2] == 'L')) wy = Mathf.Min(way, Mathf.Max(e0.y, e.y));
+					if (Mathf.Min(ga, gb) <= wy - 0.15f) Band(e0, e, Mathf.Min(ga, wy), Mathf.Min(gb, wy), wy, wy, n, verts, norms, uvs, tris, origin);
 					// (cave.foot=dry: beside the opening, rock from head height over the way in up to the dome)
 					if (dry && Mathf.Min(e0.y, e.y) > way + DryHead) Band(e0, e, way + DryHead, way + DryHead, e0.y, e.y, n, verts, norms, uvs, tris, origin);
 				}

@@ -344,6 +344,9 @@ namespace DynamicIslands.Editor
 		public const float PlugFunnel = 2.2f;
 		/// <summary>How far a lone den's wall's outer edge leans out to the mouth: no straight edge of a wall set back behind the hill.</summary>
 		public const float PlugLean = 1.6f;
+		/// <summary>How far at most a lone den's wall flares out beside its arch (m), and how fast off the arch's side (m a m): the sides of
+		/// a rock funnel meeting the hill's cheeks, not a flat panel between them.</summary>
+		public const float PlugFlare = 3.5f, PlugFlareSlope = 1.4f;
 		/// <summary>How much further out than the cells' plane (2 m in from the den's mouth) a lone den's wall is drawn.</summary>
 		public const float PlugForward = 1.8f;
 		/// <summary>How far behind the hill's skin a lone den's wall's outside is set where the skin is just in front of it (m).</summary>
@@ -1088,6 +1091,21 @@ namespace DynamicIslands.Editor
 				- PlugFunnel * (1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(archQ(px, py) - 1f)))
 				// (and leans out at its outer edge, over the hill's own edge at the mouth: the wall's straight side, 2 m behind it, showed)
 				+ PlugLean * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((archQ(px, py) - 1.6f) / 0.8f));
+			// (and beside the arch it flares out to the hill's cheeks, unevenly: drawn flat between them it stood as a flat panel at the
+			// back of a box notch, twice the arch's width, Shelter Atoll 11-11 r73 - now the sides of a rock funnel out of the hill.
+			// Only where the cheeks are, beside the arch and up to a little over its top; the cells are still found at depth0's
+			// plane, as before, since out past the den's mouth none of them would pass as closing its hollow)
+			Func<float, float, float> depth0 = depth;
+			Func<float, float, float> flare = (px, py) =>
+			{
+				float side = Mathf.Abs(px - hcx) - ha * 1.05f;
+				if (side <= 0f) return 0f;
+				float low = 1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((py - (hcy + hb)) / 2.5f));
+				float rough = 0.7f + 0.6f * Mathf.PerlinNoise(px / 2.3f + 61.7f, py / 2.3f + 19.3f);
+				return low * rough * Mathf.Min(PlugFlare, PlugFlareSlope * side * (1f + side / 3f))
+					+ low * PlugRelief * 1.3f * Mathf.Clamp01(side / 1.5f) * (2f * Mathf.PerlinNoise(px / 1.1f + 9.9f, py / 1.1f + 88.1f) - 1f);
+			};
+			depth = (px, py) => depth0(px, py) + flare(px, py);
 			// (each cell: 0 none, 1 wall, 2 the way in)
 			var state = new int[nx, ny];
 			for (int i = 0; i < nx; i++)
@@ -1206,7 +1224,7 @@ namespace DynamicIslands.Editor
 					{
 						if (state[i, k] != 1) { hollow[i, k] = state[i, k] == 2; continue; }
 						float cx = x0 + (i + 0.5f) * cell, cy = y0 + (k + 0.5f) * cell;
-						Vector3 w = go.transform.TransformPoint(new Vector3(cx, cy, z + depth(cx, cy)));
+						Vector3 w = go.transform.TransformPoint(new Vector3(cx, cy, z + depth0(cx, cy)));
 						int u = firstMet(w, up), r = firstMet(w, right), l = firstMet(w, -right);
 						hollow[i, k] = denMet(w, up) == -1 && denMet(w, right) == -1 && denMet(w, -right) == -1 && denMet(w, -up) == -1;
 						open[i, k] = !hollow[i, k] && !(u == 1 && r == 1 && l == 1 && firstMet(w, outward) == 1);

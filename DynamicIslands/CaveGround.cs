@@ -651,8 +651,13 @@ namespace DynamicIslands.Editor
 			}
 			Debug.Log("[CUSTOM ISLANDS] Apron " + cave.name + (raise ? " (both ways)" : " (down only)") + ": " + pts.Count + " room points, " + nearN + " near, "
 				+ moved + " moved, " + offSide + " to the side or behind, " + lower + " already there or lower, " + wet + " at the sea, " + slabHits + " to the slab's top");
-			if (moved == 0) return 0;
+			if (moved == 0)
+			{
+				if (!raise && dugTo == null) Skirt(land, cave, cols, mid, along, sideDir, open, endAt, endFloor, latLo, latHi);
+				return 0;
+			}
 			data.SetHeights(x0, z0, h);
+			if (!raise && dugTo == null) Skirt(land, cave, cols, mid, along, sideDir, open, endAt, endFloor, latLo, latHi);
 			if (dugTo != null)
 			{
 				// (as kept: the heights are stored rounded, and the editor puts back only a point still at its kept height)
@@ -665,6 +670,153 @@ namespace DynamicIslands.Editor
 					}
 			}
 			return moved;
+		}
+
+		/// <summary>An open cave's sand skirt (a child of the cave piece).</summary>
+		public const string SkirtName = "CaveSkirt";
+		/// <summary>How far a skirt reaches in over an open floor from where the sand comes up through it, how far out it lies on top,
+		/// how far further out it has dived under the sand and how deep (m); its points this far apart along the edge.</summary>
+		const float SkirtIn = 0.45f, SkirtTop = 0.3f, SkirtOut = 0.6f, SkirtDive = 0.3f, SkirtStep = 0.25f;
+
+		/// <summary>
+		/// A strip of sand laid over an open cave's floor's front edge (11-11 user, gen-large r68): the sand's grid triangles cut the
+		/// floor's sloped dirt lip along a sawtooth line however the ground was eased (r26-r68). Along the open end, where the sand
+		/// comes up through the floor is found each SkirtStep m and that line evened out; the strip lies just over the floor and
+		/// sand from SkirtIn m inside it to SkirtTop m out, then dives under the sand, steeply: the dirt meets sand along the strip's
+		/// own smooth edge. Drawn in the ground's own look, baked (Raft's big rock if that fails). Not in the editor.
+		/// </summary>
+		static void Skirt(Terrain land, Transform cave, Collider[] cols, Vector3 mid, Vector3 along, Vector3 sideDir, bool[] open, float[] endAt, float[] endFloor, float[] latLo, float[] latHi)
+		{
+			Transform old = cave.Find(SkirtName);
+			if (old != null)
+			{
+				// (its baked look its own: let go with it)
+				MeshRenderer om = old.GetComponent<MeshRenderer>();
+				Material oldLook = om != null ? om.sharedMaterial : null;
+				if (oldLook != null && oldLook.name == "DigTunnelGroundBaked") { if (oldLook.mainTexture != null) UnityEngine.Object.DestroyImmediate(oldLook.mainTexture); UnityEngine.Object.DestroyImmediate(oldLook); }
+				UnityEngine.Object.DestroyImmediate(old.gameObject);
+			}
+			GameObject rock = PlaceableCatalog.Get(CaveTool.WallRock);
+			MeshRenderer rockLook = rock != null ? rock.GetComponentInChildren<MeshRenderer>(true) : null;
+			if (rockLook == null || rockLook.sharedMaterial == null) return;
+			float oy = land.transform.position.y;
+			Func<Vector3, float> terr = p => land.SampleHeight(p) + oy;
+			var verts = new List<Vector3>();
+			var tris = new List<int>();
+			int strips = 0;
+			for (int e = 0; e < 2; e++)
+			{
+				if (!open[e] || float.IsInfinity(endFloor[e]) || float.IsInfinity(latLo[e])) continue;
+				Vector3 outDir = e == 0 ? along : -along;
+				float lSign = e == 0 ? 1f : -1f; // (the strip's corners wound the same way round at either end)
+				float yFrom = endFloor[e] + SlabLook;
+				Func<float, float, Vector3> pt = (sv, l) => mid + outDir * sv + sideDir * l;
+				Func<Vector3, float> slab = p =>
+				{
+					float t = SlabTop(cols, new Vector3(p.x, yFrom, p.z));
+					return !float.IsNegativeInfinity(t) && Mathf.Abs(t - endFloor[e]) < SlabLook ? t : float.NegativeInfinity;
+				};
+				var ls = new List<float>();
+				var cs = new List<float>(); // (where the sand comes up through the floor, NaN: not found)
+				for (float l = latLo[e] - 1f; l <= latHi[e] + 1.01f; l += SkirtStep)
+				{
+					// (outward from well inside: the last point where the floor still lies over the sand, then where it doesn't)
+					float found = float.NaN;
+					bool over = false;
+					for (float sv = endAt[e] - 4f; sv <= endAt[e] + OpenEdgeReach + 1f; sv += 0.1f)
+					{
+						Vector3 p = pt(sv, l);
+						float t = slab(p);
+						bool o = !float.IsNegativeInfinity(t) && t > terr(p);
+						if (over && !o) { found = sv; break; }
+						over |= o;
+					}
+					ls.Add(l); cs.Add(found);
+				}
+				// (r75: the strip broke off where no point was found - gaps of up to 2.5 m bridged between their ends)
+				for (int j = 0; j < cs.Count; j++)
+				{
+					if (!float.IsNaN(cs[j])) continue;
+					int a0 = j - 1, a1 = j;
+					while (a1 < cs.Count && float.IsNaN(cs[a1])) a1++;
+					if (a0 >= 0 && a1 < cs.Count && (a1 - a0) * SkirtStep <= 2.5f)
+						for (int g = a0 + 1; g < a1; g++) cs[g] = Mathf.Lerp(cs[a0], cs[a1], (g - a0) / (float)(a1 - a0));
+					j = a1;
+				}
+				// (the line evened out along the edge, among its found points only: twice over 1.75 m)
+				for (int pass = 0; pass < 2; pass++)
+				{
+					var nc = new List<float>(cs);
+					for (int j = 0; j < cs.Count; j++)
+					{
+						if (float.IsNaN(cs[j])) continue;
+						float sum = 0f; int n = 0;
+						for (int d = -3; d <= 3; d++) { int a = j + d; if (a >= 0 && a < cs.Count && !float.IsNaN(cs[a])) { sum += cs[a]; n++; } }
+						nc[j] = sum / n;
+					}
+					cs = nc;
+				}
+				int prev = -1;
+				for (int j = 0; j < cs.Count; j++)
+				{
+					if (float.IsNaN(cs[j])) { prev = -1; continue; }
+					float c = cs[j], l = ls[j];
+					Vector3 a = pt(c - SkirtIn, l), b = pt(c + SkirtTop, l), d = pt(c + SkirtTop + SkirtOut, l);
+					float ta = slab(a);
+					float ya = Mathf.Max(float.IsNegativeInfinity(ta) ? float.NegativeInfinity : ta, terr(a)) + 0.04f;
+					float tb = slab(b);
+					float yb = Mathf.Max(float.IsNegativeInfinity(tb) ? float.NegativeInfinity : tb, terr(b)) + 0.04f;
+					int n0 = verts.Count;
+					verts.Add(new Vector3(a.x, ya, a.z)); verts.Add(new Vector3(b.x, yb, b.z)); verts.Add(new Vector3(d.x, terr(d) - SkirtDive, d.z));
+					if (prev >= 0)
+					{
+						// (from above: prev row then this one, wound so its face is up whichever end)
+						for (int r = 0; r < 2; r++)
+						{
+							int p0 = prev + r, p1 = prev + r + 1, q0 = n0 + r, q1 = n0 + r + 1;
+							if (lSign > 0f) tris.AddRange(new[] { p0, q0, q1, p0, q1, p1 });
+							else tris.AddRange(new[] { p0, q1, q0, p0, p1, q1 });
+						}
+						strips++;
+					}
+					prev = n0;
+				}
+			}
+			if (tris.Count == 0) return;
+			var go = new GameObject(SkirtName);
+			go.layer = cave.gameObject.layer;
+			go.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+			go.transform.SetParent(cave, true);
+			var local = verts.Select(v => go.transform.InverseTransformPoint(v)).ToList();
+			var mesh = new Mesh { name = SkirtName };
+			mesh.SetVertices(local);
+			mesh.SetTriangles(tris, 0);
+			// (its winding checked by its normals: any facing down are turned over)
+			mesh.RecalculateNormals();
+			if (mesh.normals.Length > 0 && go.transform.TransformDirection(mesh.normals[0]).y < 0f)
+			{
+				for (int t = 0; t < tris.Count; t += 3) { int x = tris[t + 1]; tris[t + 1] = tris[t + 2]; tris[t + 2] = x; }
+				mesh.SetTriangles(tris, 0);
+			}
+			// (lit as flat sand: the rock's shader draws sand on faces that look up)
+			Vector3 upLocal = go.transform.InverseTransformDirection(Vector3.up).normalized;
+			mesh.SetNormals(Enumerable.Repeat(upLocal, local.Count).ToList());
+			// (r75: Raft's rock drew its sand ochre beside the ground's - the strip wears the ground's own look, its layers
+			// baked as the dug tunnel's rim bakes them, laid by where each corner is over the terrain; the rock if that fails)
+			Vector3 lo = land.transform.position, size = land.terrainData.size;
+			var uv = verts.Select(v => new Vector2((v.x - lo.x) / size.x, (v.z - lo.z) / size.z)).ToList();
+			float u0 = uv.Min(q => q.x), u1 = uv.Max(q => q.x), v0 = uv.Min(q => q.y), v1 = uv.Max(q => q.y);
+			Material look = null;
+			try { look = DigTunnel.BakedGround(land, Rect.MinMaxRect(u0, v0, Mathf.Max(u1, u0 + 1e-4f), Mathf.Max(v1, v0 + 1e-4f)), ref look); }
+			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Skirt " + cave.name + ": the ground's look - " + ex.Message); look = null; }
+			if (look != null) mesh.SetUVs(0, uv);
+			else mesh.SetUVs(0, verts.Select(v => new Vector2(v.x, v.z) / 14f).ToList());
+			mesh.RecalculateBounds();
+			go.AddComponent<MeshFilter>().sharedMesh = mesh;
+			var mr = go.AddComponent<MeshRenderer>();
+			mr.sharedMaterial = look ?? rockLook.sharedMaterial;
+			mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+			Debug.Log("[CUSTOM ISLANDS] Skirt " + cave.name + ": " + strips + " pieces over its open floor's edge");
 		}
 
 		/// <summary>
