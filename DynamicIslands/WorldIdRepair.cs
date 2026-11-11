@@ -261,6 +261,7 @@ namespace DynamicIslands
 		static void Postfix()
 		{
 			try { WorldIdRepair.AfterWorldRead(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] World id repair: " + e.Message); }
+			try { DayRepair.AfterWorldRead(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Day repair: " + e.Message); }
 		}
 	}
 }
